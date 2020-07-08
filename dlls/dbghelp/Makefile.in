@@ -2,20 +2,20 @@ MODULE    = dbghelp.dll
 IMPORTLIB = dbghelp
 EXTRADEFS = -D_IMAGEHLP_SOURCE_
 DELAYIMPORTS = version
-EXTRAINCL = $(Z_CFLAGS)
-EXTRALIBS = $(Z_LIBS) $(CORESERVICES_LIBS) $(COREFOUNDATION_LIBS)
+
+EXTRADLLFLAGS = -mno-cygwin
 
 C_SRCS = \
 	coff.c \
 	cpu_arm.c \
 	cpu_arm64.c \
 	cpu_i386.c \
-	cpu_ppc.c \
 	cpu_x86_64.c \
 	dbghelp.c \
 	dwarf.c \
 	elf_module.c \
 	image.c \
+	inflate.c \
 	macho_module.c \
 	minidump.c \
 	module.c \

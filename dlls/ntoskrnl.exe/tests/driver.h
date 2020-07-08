@@ -34,6 +34,7 @@
 #define IOCTL_WINETEST_GET_FSCONTEXT    CTL_CODE(FILE_DEVICE_UNKNOWN, 0x809, METHOD_BUFFERED, FILE_ANY_ACCESS)
 #define IOCTL_WINETEST_RETURN_STATUS    CTL_CODE(FILE_DEVICE_UNKNOWN, 0x80a, METHOD_BUFFERED, FILE_ANY_ACCESS)
 #define IOCTL_WINETEST_MISMATCHED_STATUS CTL_CODE(FILE_DEVICE_UNKNOWN, 0x80b, METHOD_NEITHER, FILE_ANY_ACCESS)
+#define IOCTL_WINETEST_COMPLETION       CTL_CODE(FILE_DEVICE_UNKNOWN, 0x80c, METHOD_NEITHER, FILE_ANY_ACCESS)
 
 static const char teststr[] = "Wine is not an emulator";
 
@@ -42,6 +43,9 @@ struct test_input
     int running_under_wine;
     int winetest_report_success;
     int winetest_debug;
+    DWORD process_id;
+    SIZE_T teststr_offset;
+    ULONG64 *modified_value;
     WCHAR path[1];
 };
 

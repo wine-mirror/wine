@@ -375,7 +375,8 @@ struct strarray find_tool( const char *name, const char * const *names )
 
     while (*names)
     {
-        if ((file = find_binary( target_alias, *names )))
+        if ((file = find_binary( target_alias, *names ))
+            || (names == alt_names && (file = find_binary( "llvm", *names ))))
         {
             struct strarray ret = empty_strarray;
             strarray_add_one( &ret, file );
@@ -683,6 +684,12 @@ void output_standard_file_header(void)
     else
         output( "/* File generated automatically; do not edit! */\n" );
     output( "/* This file can be copied, modified and distributed without restriction. */\n\n" );
+    if (safe_seh)
+    {
+        output( "\t.def    @feat.00; .scl 3; .type 0; .endef\n" );
+        output( "\t.globl  @feat.00\n" );
+        output( ".set @feat.00, 1\n" );
+    }
 }
 
 /* dump a byte stream into the assembly code */
@@ -1014,19 +1021,7 @@ unsigned int get_alignment(unsigned int align)
 /* return the page size for the target CPU */
 unsigned int get_page_size(void)
 {
-    switch(target_cpu)
-    {
-    case CPU_x86:
-    case CPU_x86_64:
-    case CPU_POWERPC:
-    case CPU_ARM:
-        return 0x1000;
-    case CPU_ARM64:
-        return 0x10000;
-    }
-    /* unreached */
-    assert(0);
-    return 0;
+    return 0x1000;  /* same on all platforms */
 }
 
 /* return the size of a pointer on the target CPU */

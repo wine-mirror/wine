@@ -20,6 +20,7 @@
 #define COBJMACROS
 #include <initguid.h>
 #include <oledb.h>
+#include <olectl.h>
 #include <msado15_backcompat.h>
 #include "wine/test.h"
 
@@ -60,6 +61,7 @@ static LONG get_refs_recordset( _Recordset *recordset )
 static void test_Recordset(void)
 {
     _Recordset *recordset;
+    IRunnableObject *runtime;
     ISupportErrorInfo *errorinfo;
     Fields *fields, *fields2;
     Field *field;
@@ -71,6 +73,10 @@ static void test_Recordset(void)
 
     hr = CoCreateInstance( &CLSID_Recordset, NULL, CLSCTX_INPROC_SERVER, &IID__Recordset, (void **)&recordset );
     ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = _Recordset_QueryInterface( recordset, &IID_IRunnableObject, (void**)&runtime);
+    ok(hr == E_NOINTERFACE, "Unexpected IRunnableObject interface\n");
+    ok(runtime == NULL, "expected NULL\n");
 
     /* _Recordset object supports ISupportErrorInfo */
     errorinfo = NULL;
@@ -666,18 +672,24 @@ static void test_Connection(void)
     _Connection *connection;
     IRunnableObject *runtime;
     ISupportErrorInfo *errorinfo;
+    IConnectionPointContainer *pointcontainer;
     LONG state, timeout;
-    BSTR str, str2;
+    BSTR str, str2, str3;
 
     hr = CoCreateInstance(&CLSID_Connection, NULL, CLSCTX_INPROC_SERVER, &IID__Connection, (void**)&connection);
     ok( hr == S_OK, "got %08x\n", hr );
 
     hr = _Connection_QueryInterface(connection, &IID_IRunnableObject, (void**)&runtime);
     ok(hr == E_NOINTERFACE, "Unexpected IRunnableObject interface\n");
+    ok(runtime == NULL, "expected NULL\n");
 
     hr = _Connection_QueryInterface(connection, &IID_ISupportErrorInfo, (void**)&errorinfo);
     ok(hr == S_OK, "Failed to get ISupportErrorInfo interface\n");
     ISupportErrorInfo_Release(errorinfo);
+
+    hr = _Connection_QueryInterface(connection, &IID_IConnectionPointContainer, (void**)&pointcontainer);
+    ok(hr == S_OK, "Failed to get IConnectionPointContainer interface %08x\n", hr);
+    IConnectionPointContainer_Release(pointcontainer);
 
 if (0)   /* Crashes on windows */
 {
@@ -689,6 +701,9 @@ if (0)   /* Crashes on windows */
     hr = _Connection_get_State(connection, &state);
     ok(hr == S_OK, "Failed to get state, hr 0x%08x\n", hr);
     ok(state == adStateClosed, "Unexpected state value 0x%08x\n", state);
+
+    hr = _Connection_Close(connection);
+    ok(hr == MAKE_ADO_HRESULT(adErrObjectClosed), "got %08x\n", hr);
 
     timeout = 0;
     hr = _Connection_get_CommandTimeout(connection, &timeout);
@@ -722,8 +737,30 @@ if (0) /* Crashes on windows */
     hr = _Connection_get_ConnectionString(connection, &str2);
     ok(hr == S_OK, "Failed, hr 0x%08x\n", hr);
     ok(!wcscmp(str, str2), "wrong string %s\n", wine_dbgstr_w(str2));
+
+    hr = _Connection_Open(connection, NULL, NULL, NULL, 0);
+    todo_wine ok(hr == E_FAIL, "Failed, hr 0x%08x\n", hr);
+
+    /* Open adds trailing ; if it's missing */
+    str3 = SysAllocString(L"Provider=MSDASQL.1;Persist Security Info=False;Data Source=wine_test;");
+    hr = _Connection_Open(connection, NULL, NULL, NULL, adConnectUnspecified);
+    todo_wine ok(hr == E_FAIL, "Failed, hr 0x%08x\n", hr);
+
+    str2 = NULL;
+    hr = _Connection_get_ConnectionString(connection, &str2);
+    ok(hr == S_OK, "Failed, hr 0x%08x\n", hr);
+    todo_wine ok(!wcscmp(str3, str2) || broken(!wcscmp(str, str2)) /* XP */, "wrong string %s\n", wine_dbgstr_w(str2));
+
+    hr = _Connection_Open(connection, str, NULL, NULL, adConnectUnspecified);
+    todo_wine ok(hr == E_FAIL, "Failed, hr 0x%08x\n", hr);
     SysFreeString(str);
+
+    str2 = NULL;
+    hr = _Connection_get_ConnectionString(connection, &str2);
+    ok(hr == S_OK, "Failed, hr 0x%08x\n", hr);
+    todo_wine ok(!wcscmp(str3, str2) || broken(!wcscmp(str, str2)) /* XP */, "wrong string %s\n", wine_dbgstr_w(str2));
     SysFreeString(str2);
+    SysFreeString(str3);
 
     hr = _Connection_put_ConnectionString(connection, NULL);
     ok(hr == S_OK, "Failed, hr 0x%08x\n", hr);
@@ -742,6 +779,8 @@ static void test_Command(void)
     _ADO *ado;
     Command15 *command15;
     Command25 *command25;
+    CommandTypeEnum cmd_type = adCmdUnspecified;
+    BSTR cmd_text = (BSTR)"test";
 
     hr = CoCreateInstance( &CLSID_Command, NULL, CLSCTX_INPROC_SERVER, &IID__Command, (void **)&command );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -758,13 +797,262 @@ static void test_Command(void)
     ok( hr == S_OK, "got %08x\n", hr );
     Command25_Release( command25 );
 
+    hr = _Command_get_CommandType( command, &cmd_type );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( cmd_type == adCmdUnknown, "got %08x\n", cmd_type );
+
+    _Command_put_CommandType( command, adCmdText );
+    hr = _Command_get_CommandType( command, &cmd_type );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( cmd_type == adCmdText, "got %08x\n", cmd_type );
+
+    hr = _Command_put_CommandType( command, 0xdeadbeef );
+    ok( hr == MAKE_ADO_HRESULT( adErrInvalidArgument ), "got %08x\n", hr );
+
+    hr = _Command_get_CommandText( command, &cmd_text );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !cmd_text, "got %s\n", wine_dbgstr_w( cmd_text ));
+
+    hr = _Command_put_CommandText( command, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    cmd_text = SysAllocString( L"" );
+    hr = _Command_put_CommandText( command, cmd_text );
+    ok( hr == S_OK, "got %08x\n", hr );
+    SysFreeString( cmd_text );
+
+    hr = _Command_get_CommandText( command,  &cmd_text );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( cmd_text && !*cmd_text, "got %p\n", cmd_text );
+
+    cmd_text = SysAllocString( L"test" );
+    hr = _Command_put_CommandText( command, cmd_text );
+    ok( hr == S_OK, "got %08x\n", hr );
+    SysFreeString( cmd_text );
+
+    hr = _Command_get_CommandText( command,  &cmd_text );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !wcscmp( L"test", cmd_text ), "got %p\n", wine_dbgstr_w( cmd_text ) );
+
     _Command_Release( command );
+}
+
+struct conn_event {
+    ConnectionEventsVt conn_event_sink;
+    LONG refs;
+};
+
+static HRESULT WINAPI conneventvt_QueryInterface( ConnectionEventsVt *iface, REFIID riid, void **obj )
+{
+    struct conn_event *conn_event = CONTAINING_RECORD( iface, struct conn_event, conn_event_sink );
+
+    if (IsEqualGUID( &IID_ConnectionEventsVt, riid ))
+    {
+        InterlockedIncrement( &conn_event->refs );
+        *obj = iface;
+        return S_OK;
+    }
+
+    ok( 0, "unexpected call\n" );
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI conneventvt_AddRef( ConnectionEventsVt *iface )
+{
+    struct conn_event *conn_event = CONTAINING_RECORD( iface, struct conn_event, conn_event_sink );
+    return InterlockedIncrement( &conn_event->refs );
+}
+
+static ULONG WINAPI conneventvt_Release( ConnectionEventsVt *iface )
+{
+    struct conn_event *conn_event = CONTAINING_RECORD( iface, struct conn_event, conn_event_sink );
+    return InterlockedDecrement( &conn_event->refs );
+}
+
+static HRESULT WINAPI conneventvt_InfoMessage( ConnectionEventsVt *iface, Error *error,
+        EventStatusEnum *status, _Connection *Connection )
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI conneventvt_BeginTransComplete( ConnectionEventsVt *iface, LONG TransactionLevel,
+        Error *error, EventStatusEnum *status, _Connection *connection )
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI conneventvt_CommitTransComplete( ConnectionEventsVt *iface, Error *error,
+        EventStatusEnum *status, _Connection *connection )
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI conneventvt_RollbackTransComplete( ConnectionEventsVt *iface, Error *error,
+        EventStatusEnum *status, _Connection *connection )
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI conneventvt_WillExecute( ConnectionEventsVt *iface, BSTR *source,
+        CursorTypeEnum *cursor_type, LockTypeEnum *lock_type, LONG *options, EventStatusEnum *status,
+        _Command *command, _Recordset *record_set, _Connection *connection )
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI conneventvt_ExecuteComplete( ConnectionEventsVt *iface, LONG records_affected,
+        Error *error, EventStatusEnum *status, _Command *command, _Recordset *record_set,
+        _Connection *connection )
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI conneventvt_WillConnect( ConnectionEventsVt *iface, BSTR *string, BSTR *userid,
+        BSTR *password, LONG *options, EventStatusEnum *status, _Connection *connection )
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI conneventvt_ConnectComplete( ConnectionEventsVt *iface, Error *error,
+        EventStatusEnum *status, _Connection *connection )
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI conneventvt_Disconnect( ConnectionEventsVt *iface, EventStatusEnum *status,
+        _Connection *connection )
+{
+    return E_NOTIMPL;
+}
+
+static const ConnectionEventsVtVtbl conneventvt_vtbl = {
+    conneventvt_QueryInterface,
+    conneventvt_AddRef,
+    conneventvt_Release,
+    conneventvt_InfoMessage,
+    conneventvt_BeginTransComplete,
+    conneventvt_CommitTransComplete,
+    conneventvt_RollbackTransComplete,
+    conneventvt_WillExecute,
+    conneventvt_ExecuteComplete,
+    conneventvt_WillConnect,
+    conneventvt_ConnectComplete,
+    conneventvt_Disconnect
+};
+
+static HRESULT WINAPI supporterror_QueryInterface( ISupportErrorInfo *iface, REFIID riid, void **obj )
+{
+    if (IsEqualGUID( &IID_ISupportErrorInfo, riid ))
+    {
+        *obj = iface;
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI supporterror_AddRef( ISupportErrorInfo *iface )
+{
+    return 2;
+}
+
+static ULONG WINAPI supporterror_Release( ISupportErrorInfo *iface )
+{
+    return 1;
+}
+
+static HRESULT WINAPI supporterror_InterfaceSupportsErrorInfo( ISupportErrorInfo *iface, REFIID riid )
+{
+    return E_NOTIMPL;
+}
+
+static const struct ISupportErrorInfoVtbl support_error_vtbl =
+{
+    supporterror_QueryInterface,
+    supporterror_AddRef,
+    supporterror_Release,
+    supporterror_InterfaceSupportsErrorInfo
+};
+
+static void test_ConnectionPoint(void)
+{
+    HRESULT hr;
+    ULONG refs;
+    DWORD cookie;
+    IConnectionPoint *point;
+    IConnectionPointContainer *pointcontainer;
+    struct conn_event conn_event = { { &conneventvt_vtbl }, 0 };
+    ISupportErrorInfo support_err_sink = { &support_error_vtbl };
+
+    hr = CoCreateInstance( &CLSID_Connection, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IConnectionPointContainer, (void**)&pointcontainer );
+
+    hr = IConnectionPointContainer_FindConnectionPoint( pointcontainer, &DIID_ConnectionEvents, NULL );
+    ok( hr == E_POINTER, "got %08x\n", hr );
+
+    hr = IConnectionPointContainer_FindConnectionPoint( pointcontainer, &DIID_RecordsetEvents, &point );
+    ok( hr == CONNECT_E_NOCONNECTION, "got %08x\n", hr );
+
+    hr = IConnectionPointContainer_FindConnectionPoint( pointcontainer, &DIID_ConnectionEvents, &point );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    /* nothing advised yet */
+    hr = IConnectionPoint_Unadvise( point, 3 );
+    ok( hr == E_FAIL, "got %08x\n", hr );
+
+    hr = IConnectionPoint_Advise( point, NULL, NULL );
+    ok( hr == E_FAIL, "got %08x\n", hr );
+
+    hr = IConnectionPoint_Advise( point, (void*)&conn_event.conn_event_sink, NULL );
+    ok( hr == E_FAIL, "got %08x\n", hr );
+
+    cookie = 0xdeadbeef;
+    hr = IConnectionPoint_Advise( point, NULL, &cookie );
+    ok( hr == E_FAIL, "got %08x\n", hr );
+    ok( cookie == 0xdeadbeef, "got %08x\n", cookie );
+
+    /* unsupported sink */
+    cookie = 0xdeadbeef;
+    hr = IConnectionPoint_Advise( point, (void*)&support_err_sink, &cookie );
+    ok( hr == E_FAIL, "got %08x\n", hr );
+    ok( !cookie, "got %08x\n", cookie );
+
+    cookie = 0;
+    hr = IConnectionPoint_Advise( point, (void*)&conn_event.conn_event_sink, &cookie );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( cookie, "got %08x\n", cookie );
+
+    /* invalid cookie */
+    hr = IConnectionPoint_Unadvise( point, 0 );
+    ok( hr == E_FAIL, "got %08x\n", hr );
+
+    /* wrong cookie */
+    hr = IConnectionPoint_Unadvise( point, cookie + 1 );
+    ok( hr == E_FAIL, "got %08x\n", hr );
+
+    hr = IConnectionPoint_Unadvise( point, cookie );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    /* sinks are released when the connection is destroyed */
+    cookie = 0;
+    hr = IConnectionPoint_Advise( point, (void*)&conn_event.conn_event_sink, &cookie );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( cookie, "got %08x\n", cookie );
+    ok( conn_event.refs == 1, "got %d\n", conn_event.refs );
+
+    refs = IConnectionPoint_Release( point );
+    ok( refs == 1, "got %u", refs );
+
+    IConnectionPointContainer_Release( pointcontainer );
+
+    ok( !conn_event.refs, "got %d\n", conn_event.refs );
 }
 
 START_TEST(msado15)
 {
     CoInitialize( NULL );
     test_Connection();
+    test_ConnectionPoint();
     test_Fields();
     test_Recordset();
     test_Stream();

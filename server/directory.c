@@ -142,30 +142,28 @@ static struct object *directory_lookup_name( struct object *obj, struct unicode_
     struct directory *dir = (struct directory *)obj;
     struct object *found;
     struct unicode_str tmp;
-    const WCHAR *p;
 
     assert( obj->ops == &directory_ops );
 
     if (!name) return NULL;  /* open the directory itself */
 
-    if (!(p = memchrW( name->str, '\\', name->len / sizeof(WCHAR) )))
-        /* Last element in the path name */
-        tmp.len = name->len;
-    else
-        tmp.len = (p - name->str) * sizeof(WCHAR);
-
     tmp.str = name->str;
+    tmp.len = get_path_element( name->str, name->len );
+
     if ((found = find_object( dir->entries, &tmp, attr )))
     {
-        /* Skip trailing \\ */
-        if (p)
+        /* Skip trailing \\ and move to the next element */
+        if (tmp.len < name->len)
         {
-            p++;
             tmp.len += sizeof(WCHAR);
+            name->str += tmp.len / sizeof(WCHAR);
+            name->len -= tmp.len;
         }
-        /* Move to the next element*/
-        name->str = p;
-        name->len -= tmp.len;
+        else
+        {
+            name->str = NULL;
+            name->len = 0;
+        }
         return found;
     }
 
@@ -173,7 +171,7 @@ static struct object *directory_lookup_name( struct object *obj, struct unicode_
     {
         if (tmp.len == 0) /* Double backslash */
             set_error( STATUS_OBJECT_NAME_INVALID );
-        else if (p)  /* Path still has backslashes */
+        else if (tmp.len < name->len)  /* Path still has backslashes */
             set_error( STATUS_OBJECT_PATH_NOT_FOUND );
     }
     return NULL;
@@ -272,12 +270,12 @@ static void create_session( unsigned int id )
     static const struct unicode_str link_local_str = {link_localW, sizeof(link_localW)};
     static const struct unicode_str link_session_str = {link_sessionW, sizeof(link_sessionW)};
 
-    static const WCHAR fmt_u[] = {'%','u',0};
     static struct directory *dir_bno_global, *dir_sessions, *dir_bnolinks;
     struct directory *dir_id, *dir_bno, *dir_dosdevices, *dir_windows, *dir_winstation;
     struct object *link_global, *link_local, *link_session, *link_bno, *link_windows;
     struct unicode_str id_str;
-    WCHAR id_strW[10];
+    char id_strA[10];
+    WCHAR *id_strW;
 
     if (!id)
     {
@@ -289,9 +287,8 @@ static void create_session( unsigned int id )
         make_object_static( (struct object *)dir_sessions );
     }
 
-    sprintfW( id_strW, fmt_u, id );
-    id_str.str = id_strW;
-    id_str.len = strlenW( id_strW ) * sizeof(WCHAR);
+    sprintf( id_strA, "%u", id );
+    id_strW = ascii_to_unicode_str( id_strA, &id_str );
     dir_id = create_directory( &dir_sessions->obj, &id_str, 0, HASH_SIZE, NULL );
     dir_dosdevices = create_directory( &dir_id->obj, &dir_dosdevices_str, 0, HASH_SIZE, NULL );
 
@@ -327,6 +324,7 @@ static void create_session( unsigned int id )
     release_object( dir_windows );
     release_object( dir_bno );
     release_object( dir_id );
+    free( id_strW );
 }
 
 void init_directories(void)
@@ -382,9 +380,13 @@ void init_directories(void)
     };
     static const struct unicode_str keyed_event_crit_sect_str = {keyed_event_crit_sectW, sizeof(keyed_event_crit_sectW)};
 
+    /* mappings */
+    static const WCHAR user_dataW[] = {'_','_','w','i','n','e','_','u','s','e','r','_','s','h','a','r','e','d','_','d','a','t','a'};
+    static const struct unicode_str user_data_str = {user_dataW, sizeof(user_dataW)};
+
     struct directory *dir_driver, *dir_device, *dir_global, *dir_kernel;
     struct object *link_dosdev, *link_global, *link_nul, *link_pipe, *link_mailslot;
-    struct object *named_pipe_device, *mailslot_device, *null_device;
+    struct object *named_pipe_device, *mailslot_device, *null_device, *user_data_mapping;
     struct keyed_event *keyed_event;
     unsigned int i;
 
@@ -430,6 +432,10 @@ void init_directories(void)
     }
     keyed_event = create_keyed_event( &dir_kernel->obj, &keyed_event_crit_sect_str, 0, NULL );
     make_object_static( (struct object *)keyed_event );
+
+    /* user data mapping */
+    user_data_mapping = create_user_data_mapping( &dir_kernel->obj, &user_data_str, 0, NULL );
+    make_object_static( user_data_mapping );
 
     /* the objects hold references so we can release these directories */
     release_object( dir_global );

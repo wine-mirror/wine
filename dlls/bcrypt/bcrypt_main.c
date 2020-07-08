@@ -31,13 +31,13 @@
 #include "windef.h"
 #include "winbase.h"
 #include "ntsecapi.h"
+#include "wincrypt.h"
 #include "bcrypt.h"
 
 #include "bcrypt_internal.h"
 
 #include "wine/debug.h"
 #include "wine/heap.h"
-#include "wine/library.h"
 #include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(bcrypt);
@@ -119,6 +119,7 @@ builtin_algorithms[] =
     {  BCRYPT_RSA_SIGN_ALGORITHM,   BCRYPT_SIGNATURE_INTERFACE,             0,      0,    0 },
     {  BCRYPT_ECDSA_P256_ALGORITHM, BCRYPT_SIGNATURE_INTERFACE,             0,      0,    0 },
     {  BCRYPT_ECDSA_P384_ALGORITHM, BCRYPT_SIGNATURE_INTERFACE,             0,      0,    0 },
+    {  BCRYPT_DSA_ALGORITHM,        BCRYPT_SIGNATURE_INTERFACE,             0,      0,    0 },
     {  BCRYPT_RNG_ALGORITHM,        BCRYPT_RNG_INTERFACE,                   0,      0,    0 },
 };
 
@@ -542,6 +543,13 @@ static NTSTATUS get_rsa_property( enum mode_id mode, const WCHAR *prop, UCHAR *b
     return STATUS_NOT_IMPLEMENTED;
 }
 
+static NTSTATUS get_dsa_property( enum mode_id mode, const WCHAR *prop, UCHAR *buf, ULONG size, ULONG *ret_size )
+{
+    if (!strcmpW( prop, BCRYPT_PADDING_SCHEMES )) return STATUS_NOT_SUPPORTED;
+    FIXME( "unsupported property %s\n", debugstr_w(prop) );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
 NTSTATUS get_alg_property( const struct algorithm *alg, const WCHAR *prop, UCHAR *buf, ULONG size, ULONG *ret_size )
 {
     NTSTATUS status;
@@ -558,11 +566,14 @@ NTSTATUS get_alg_property( const struct algorithm *alg, const WCHAR *prop, UCHAR
     case ALG_ID_RSA:
         return get_rsa_property( alg->mode, prop, buf, size, ret_size );
 
+    case ALG_ID_DSA:
+        return get_dsa_property( alg->mode, prop, buf, size, ret_size );
+
     default:
         break;
     }
 
-    FIXME( "unsupported property %s\n", debugstr_w(prop) );
+    FIXME( "unsupported property %s algorithm %u\n", debugstr_w(prop), alg->id );
     return STATUS_NOT_IMPLEMENTED;
 }
 
@@ -925,15 +936,8 @@ static NTSTATUS key_export( struct key *key, const WCHAR *type, UCHAR *output, U
         memcpy( output + sizeof(len), key->u.s.secret, key->u.s.secret_len );
         return STATUS_SUCCESS;
     }
-    else if (!strcmpW( type, BCRYPT_RSAPUBLIC_BLOB ))
-    {
-        *size = key->u.a.pubkey_len;
-        if (output_len < key->u.a.pubkey_len) return STATUS_SUCCESS;
-
-        memcpy( output, key->u.a.pubkey, key->u.a.pubkey_len );
-        return STATUS_SUCCESS;
-    }
-    else if (!strcmpW( type, BCRYPT_ECCPUBLIC_BLOB ))
+    else if (!strcmpW( type, BCRYPT_RSAPUBLIC_BLOB ) || !strcmpW( type, BCRYPT_DSA_PUBLIC_BLOB ) ||
+             !strcmpW( type, BCRYPT_ECCPUBLIC_BLOB ))
     {
         *size = key->u.a.pubkey_len;
         if (output_len < key->u.a.pubkey_len) return STATUS_SUCCESS;
@@ -944,6 +948,10 @@ static NTSTATUS key_export( struct key *key, const WCHAR *type, UCHAR *output, U
     else if (!strcmpW( type, BCRYPT_ECCPRIVATE_BLOB ))
     {
         return key_export_ecc( key, output, output_len, size );
+    }
+    else if (!strcmpW( type, LEGACY_DSA_V2_PRIVATE_BLOB ))
+    {
+        return key_export_dsa_capi( key, output, output_len, size );
     }
 
     FIXME( "unsupported key type %s\n", debugstr_w(type) );
@@ -1234,6 +1242,70 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
 
         size = sizeof(*rsa_blob) + rsa_blob->cbPublicExp + rsa_blob->cbModulus;
         if ((status = key_asymmetric_init( key, alg, rsa_blob->BitLength, (BYTE *)rsa_blob, size )))
+        {
+            heap_free( key );
+            return status;
+        }
+
+        *ret_key = key;
+        return STATUS_SUCCESS;
+    }
+    else if (!strcmpW( type, BCRYPT_DSA_PUBLIC_BLOB ))
+    {
+        BCRYPT_DSA_KEY_BLOB *dsa_blob = (BCRYPT_DSA_KEY_BLOB *)input;
+        ULONG size;
+
+        if (input_len < sizeof(*dsa_blob)) return STATUS_INVALID_PARAMETER;
+        if ((alg->id != ALG_ID_DSA) || dsa_blob->dwMagic != BCRYPT_DSA_PUBLIC_MAGIC)
+            return STATUS_NOT_SUPPORTED;
+
+        if (!(key = heap_alloc_zero( sizeof(*key) ))) return STATUS_NO_MEMORY;
+        key->hdr.magic = MAGIC_KEY;
+
+        size = sizeof(*dsa_blob) + dsa_blob->cbKey * 3;
+        if ((status = key_asymmetric_init( key, alg, dsa_blob->cbKey * 8, (BYTE *)dsa_blob, size )))
+        {
+            heap_free( key );
+            return status;
+        }
+
+        *ret_key = key;
+        return STATUS_SUCCESS;
+    }
+    else if (!strcmpW( type, LEGACY_DSA_V2_PRIVATE_BLOB ))
+    {
+        BLOBHEADER *hdr = (BLOBHEADER *)input;
+        DSSPUBKEY *pubkey;
+
+        if (input_len < sizeof(*hdr)) return STATUS_INVALID_PARAMETER;
+
+        if (hdr->bType != PRIVATEKEYBLOB && hdr->bVersion != 2 && hdr->aiKeyAlg != CALG_DSS_SIGN)
+        {
+            FIXME( "blob type %u version %u alg id %u not supported\n", hdr->bType, hdr->bVersion, hdr->aiKeyAlg );
+            return STATUS_NOT_SUPPORTED;
+        }
+        if (alg->id != ALG_ID_DSA)
+        {
+            FIXME( "algorithm %u does not support importing blob of type %s\n", alg->id, debugstr_w(type) );
+            return STATUS_NOT_SUPPORTED;
+        }
+
+        if (input_len < sizeof(*hdr) + sizeof(*pubkey)) return STATUS_INVALID_PARAMETER;
+        pubkey = (DSSPUBKEY *)(hdr + 1);
+        if (pubkey->magic != MAGIC_DSS2) return STATUS_NOT_SUPPORTED;
+
+        if (input_len < sizeof(*hdr) + sizeof(*pubkey) + (pubkey->bitlen / 8) * 2 + 40 + sizeof(DSSSEED))
+            return STATUS_INVALID_PARAMETER;
+
+        if (!(key = heap_alloc_zero( sizeof(*key) ))) return STATUS_NO_MEMORY;
+        key->hdr.magic = MAGIC_KEY;
+
+        if ((status = key_asymmetric_init( key, alg, pubkey->bitlen, NULL, 0 )))
+        {
+            heap_free( key );
+            return status;
+        }
+        if ((status = key_import_dsa_capi( key, input, input_len )))
         {
             heap_free( key );
             return status;
@@ -1608,6 +1680,53 @@ NTSTATUS WINAPI BCryptSetProperty( BCRYPT_HANDLE handle, const WCHAR *prop, UCHA
         WARN( "unknown magic %08x\n", object->magic );
         return STATUS_INVALID_HANDLE;
     }
+}
+
+#define HMAC_PAD_LEN 64
+NTSTATUS WINAPI BCryptDeriveKeyCapi( BCRYPT_HASH_HANDLE handle, BCRYPT_ALG_HANDLE halg, UCHAR *key, ULONG keylen, ULONG flags )
+{
+    struct hash *hash = handle;
+    UCHAR buf[MAX_HASH_OUTPUT_BYTES * 2];
+    NTSTATUS status;
+    ULONG len;
+
+    TRACE( "%p, %p, %p, %u, %08x\n", handle, halg, key, keylen, flags );
+
+    if (!key || !keylen) return STATUS_INVALID_PARAMETER;
+    if (!hash || hash->hdr.magic != MAGIC_HASH) return STATUS_INVALID_HANDLE;
+    if (keylen > builtin_algorithms[hash->alg_id].hash_length * 2) return STATUS_INVALID_PARAMETER;
+
+    if (halg)
+    {
+        FIXME( "algorithm handle not supported\n" );
+        return STATUS_NOT_IMPLEMENTED;
+    }
+
+    len = builtin_algorithms[hash->alg_id].hash_length;
+    if ((status = BCryptFinishHash( handle, buf, len, 0 ))) return status;
+
+    if (len < keylen)
+    {
+        UCHAR pad1[HMAC_PAD_LEN], pad2[HMAC_PAD_LEN];
+        ULONG i;
+
+        for (i = 0; i < sizeof(pad1); i++)
+        {
+            pad1[i] = 0x36 ^ (i < len ? buf[i] : 0);
+            pad2[i] = 0x5c ^ (i < len ? buf[i] : 0);
+        }
+
+        if ((status = prepare_hash( hash )) ||
+            (status = BCryptHashData( handle, pad1, sizeof(pad1), 0 )) ||
+            (status = BCryptFinishHash( handle, buf, len, 0 ))) return status;
+
+        if ((status = prepare_hash( hash )) ||
+            (status = BCryptHashData( handle, pad2, sizeof(pad2), 0 )) ||
+            (status = BCryptFinishHash( handle, buf + len, len, 0 ))) return status;
+    }
+
+    memcpy( key, buf, keylen );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS pbkdf2( BCRYPT_HASH_HANDLE handle, UCHAR *pwd, ULONG pwd_len, UCHAR *salt, ULONG salt_len,

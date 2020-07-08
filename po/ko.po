@@ -46,8 +46,8 @@ msgstr "지원 정보(&S)"
 msgid "&Modify..."
 msgstr "수정(&M)..."
 
-#: appwiz.rc:69 appwiz.rc:45 cryptui.rc:351 msacm32.rc:40 winecfg.rc:200
-#: winecfg.rc:237 wordpad.rc:256
+#: appwiz.rc:69 appwiz.rc:45 cryptui.rc:351 msacm32.rc:40 winecfg.rc:199
+#: winecfg.rc:236 wordpad.rc:256
 msgid "&Remove"
 msgstr "제거(&R)"
 
@@ -66,7 +66,7 @@ msgstr "지원 정보"
 #: notepad.rc:117 oleview.rc:161 oleview.rc:174 progman.rc:106 progman.rc:124
 #: progman.rc:142 progman.rc:158 progman.rc:180 progman.rc:199 progman.rc:216
 #: regedit.rc:296 regedit.rc:307 regedit.rc:320 regedit.rc:336 regedit.rc:349
-#: regedit.rc:362 taskmgr.rc:442 taskmgr.rc:517 winecfg.rc:214 winecfg.rc:224
+#: regedit.rc:362 taskmgr.rc:442 taskmgr.rc:517 winecfg.rc:213 winecfg.rc:223
 #: wineconsole.rc:135 winefile.rc:127 winefile.rc:150 winefile.rc:180
 #: winemine.rc:73 winemine.rc:84 winemine.rc:98 wordpad.rc:215 wordpad.rc:226
 #: wordpad.rc:244 wordpad.rc:257
@@ -149,8 +149,8 @@ msgstr "설치(&I)"
 #: notepad.rc:118 oleview.rc:162 oleview.rc:175 progman.rc:107 progman.rc:125
 #: progman.rc:143 progman.rc:159 progman.rc:181 progman.rc:200 progman.rc:217
 #: regedit.rc:297 regedit.rc:308 regedit.rc:321 regedit.rc:337 regedit.rc:350
-#: regedit.rc:363 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34 winecfg.rc:215
-#: winecfg.rc:225 wineconsole.rc:136 winefile.rc:128 winefile.rc:151
+#: regedit.rc:363 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34 winecfg.rc:214
+#: winecfg.rc:224 wineconsole.rc:136 winefile.rc:128 winefile.rc:151
 #: winefile.rc:181 winemine.rc:99 wordpad.rc:216 wordpad.rc:227 wordpad.rc:245
 #: wordpad.rc:258
 msgid "Cancel"
@@ -189,7 +189,7 @@ msgid ""
 msgstr ""
 "새 소프트웨어를 설치하거나 설치된 소프트웨어를 컴퓨터에서 제거할 수 있습니다."
 
-#: appwiz.rc:33 taskmgr.rc:262 winecfg.rc:33
+#: appwiz.rc:33 taskmgr.rc:262 winecfg.rc:32
 msgid "Applications"
 msgstr "프로그램"
 
@@ -347,7 +347,7 @@ msgstr "마법사"
 msgid "< &Back"
 msgstr "< 뒤로(&B)"
 
-#: comctl32.rc:85 version.rc:60
+#: comctl32.rc:85 version.rc:61
 msgid "&Next >"
 msgstr "다음(&N) >"
 
@@ -583,7 +583,7 @@ msgstr "글꼴(&F):"
 msgid "Font St&yle:"
 msgstr "글꼴 스타일(&Y):"
 
-#: comdlg32.rc:260 comdlg32.rc:439 winecfg.rc:294
+#: comdlg32.rc:260 comdlg32.rc:439 winecfg.rc:292
 msgid "&Size:"
 msgstr "크기(&S):"
 
@@ -599,7 +599,7 @@ msgstr "취소선(&K)"
 msgid "&Underline"
 msgstr "밑줄(&U)"
 
-#: comdlg32.rc:270 winecfg.rc:292
+#: comdlg32.rc:270 winecfg.rc:290
 msgid "&Color:"
 msgstr "색상(&C):"
 
@@ -684,7 +684,7 @@ msgstr "단어 단위로(&W)"
 msgid "Match &Case"
 msgstr "대/소문자 구분(&C)"
 
-#: comdlg32.rc:325 joy.rc:71
+#: comdlg32.rc:325 joy.rc:72
 msgid "Direction"
 msgstr "방향"
 
@@ -773,7 +773,7 @@ msgstr "복사본 개수(&C):"
 msgid "C&ollate"
 msgstr "정렬(&O)"
 
-#: comdlg32.rc:414 winecfg.rc:300
+#: comdlg32.rc:414 winecfg.rc:298
 msgid "Si&ze:"
 msgstr "크기(&Z):"
 
@@ -1222,7 +1222,7 @@ msgstr "mm"
 msgid "&User name:"
 msgstr "사용자 이름(&U):"
 
-#: credui.rc:48 cryptui.rc:402 version.rc:80
+#: credui.rc:48 cryptui.rc:402 version.rc:81
 msgid "&Password:"
 msgstr "암호(&P):"
 
@@ -2248,7 +2248,7 @@ msgstr ""
 msgid "&File name:"
 msgstr "파일 이름(&F):"
 
-#: cryptui.rc:301 cryptui.rc:323 cryptui.rc:437 winecfg.rc:313
+#: cryptui.rc:301 cryptui.rc:323 cryptui.rc:437 winecfg.rc:311
 msgid "B&rowse..."
 msgstr "찾기(&R)..."
 
@@ -2999,7 +2999,7 @@ msgstr "재설정"
 msgid "Player"
 msgstr "플레이어"
 
-#: dinput.rc:43 winecfg.rc:89
+#: dinput.rc:43 winecfg.rc:88
 msgid "Device"
 msgstr "장치"
 
@@ -3099,7 +3099,7 @@ msgstr "기호"
 msgid "OEM/DOS"
 msgstr "OEM/도"
 
-#: gdi32.rc:45 version.rc:99 wldap32.rc:112
+#: gdi32.rc:45 version.rc:100 wldap32.rc:112
 msgid "Other"
 msgstr "다른 문제"
 
@@ -3164,7 +3164,7 @@ msgstr "홈(&H)"
 msgid "&Stop"
 msgstr "멈추기(&S)"
 
-#: hhctrl.rc:64 hhctrl.rc:81 version.rc:72 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 version.rc:73 shdoclc.rc:59
 msgid "&Refresh"
 msgstr "다시 읽기(&R)"
 
@@ -3540,27 +3540,27 @@ msgstr "증가"
 msgid "High"
 msgstr "높음"
 
-#: joy.rc:36
+#: joy.rc:37
 msgid "Joysticks"
 msgstr "조이스틱"
 
-#: joy.rc:39 winecfg.rc:213
+#: joy.rc:40 winecfg.rc:212
 msgid "&Disable"
 msgstr "사용하지 않음(&D)"
 
-#: joy.rc:40
+#: joy.rc:41
 msgid "&Enable"
 msgstr "가능(&E)"
 
-#: joy.rc:41
+#: joy.rc:42
 msgid "Connected"
 msgstr "연결됨"
 
-#: joy.rc:43
+#: joy.rc:44
 msgid "Disabled"
 msgstr "불가능"
 
-#: joy.rc:45
+#: joy.rc:46
 msgid ""
 "After disabling or enabling a device, the connected joysticks won't be "
 "updated here until you restart this applet."
@@ -3568,23 +3568,23 @@ msgstr ""
 "장치를 비활성화하거나 활성화한 후, 이 애플릿을 다시 시작할 때까지 연결된 조이"
 "스틱을 업데이트하지 않습니다."
 
-#: joy.rc:50
+#: joy.rc:51
 msgid "Test Joystick"
 msgstr "조이스틱 테스트"
 
-#: joy.rc:54
+#: joy.rc:55
 msgid "Buttons"
 msgstr "버튼"
 
-#: joy.rc:63
+#: joy.rc:64
 msgid "Test Force Feedback"
 msgstr "강제 피드백 테스트"
 
-#: joy.rc:67
+#: joy.rc:68
 msgid "Available Effects"
 msgstr "가능한 효과들"
 
-#: joy.rc:69
+#: joy.rc:70
 msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."
@@ -3595,6 +3595,10 @@ msgstr ""
 #: joy.rc:31
 msgid "Game Controllers"
 msgstr "게임 컨트롤러"
+
+#: joy.rc:32
+msgid "Test and configure game controllers."
+msgstr ""
 
 #: jscript.rc:28
 msgid "Error converting object to primitive type"
@@ -3609,191 +3613,209 @@ msgid "Subscript out of range"
 msgstr "첨자가 범위를 벗어남"
 
 #: jscript.rc:31
+#, fuzzy
+#| msgid "Out of paper; "
+msgid "Out of stack space"
+msgstr "종이 초과; "
+
+#: jscript.rc:32
 msgid "Object required"
 msgstr "객체가 필요함"
 
-#: jscript.rc:32
+#: jscript.rc:33
 msgid "Automation server can't create object"
 msgstr "자동화 서버가 객체를 만들 수 없음"
 
-#: jscript.rc:33
+#: jscript.rc:34
 msgid "Object doesn't support this property or method"
 msgstr "객체는 이 속성이나 메소드를 지원하지 않음"
 
-#: jscript.rc:34
+#: jscript.rc:35
 msgid "Object doesn't support this action"
 msgstr "객체는 이 행동을 지원하지 않음"
 
-#: jscript.rc:35
+#: jscript.rc:36
 msgid "Argument not optional"
 msgstr "인수는 옵션이 아닙니다"
 
-#: jscript.rc:36
+#: jscript.rc:37
 msgid "Syntax error"
 msgstr "문법 오류"
 
-#: jscript.rc:37
+#: jscript.rc:38
 msgid "Expected ';'"
 msgstr "';' 필요"
 
-#: jscript.rc:38
+#: jscript.rc:39
 msgid "Expected '('"
 msgstr "'(' 필요"
 
-#: jscript.rc:39
+#: jscript.rc:40
 msgid "Expected ')'"
 msgstr "')' 필요"
 
-#: jscript.rc:40
+#: jscript.rc:41
 msgid "Expected identifier"
 msgstr "필요한 식별자"
 
-#: jscript.rc:41
+#: jscript.rc:42
 msgid "Expected '='"
 msgstr "'=' 필요"
 
-#: jscript.rc:42
+#: jscript.rc:43
 msgid "Invalid character"
 msgstr "잘못된 문자"
 
-#: jscript.rc:43
+#: jscript.rc:44
 msgid "Unterminated string constant"
 msgstr "끝나지 않은 문자열 상수"
 
-#: jscript.rc:44
+#: jscript.rc:45
 msgid "'return' statement outside of function"
 msgstr "함수 밖에 'return'문장이 있음"
 
-#: jscript.rc:45
+#: jscript.rc:46
 msgid "Can't have 'break' outside of loop"
 msgstr "루프 바깥에는 'break'를 사용할 수 없음"
 
-#: jscript.rc:46
+#: jscript.rc:47
 msgid "Can't have 'continue' outside of loop"
 msgstr "루프 바깥에는 'continue'를 사용할 수 없음"
 
-#: jscript.rc:47
+#: jscript.rc:48
 msgid "Label redefined"
 msgstr "레이블이 중복정의됨"
 
-#: jscript.rc:48
+#: jscript.rc:49
 msgid "Label not found"
 msgstr "레이블을 찾을 수 없음"
 
-#: jscript.rc:49
+#: jscript.rc:50
 msgid "Expected '@end'"
 msgstr "'@end'가 필요합니다"
 
-#: jscript.rc:50
+#: jscript.rc:51
 msgid "Conditional compilation is turned off"
 msgstr "조건부 컴파일이 해제되어 있음"
 
-#: jscript.rc:51
+#: jscript.rc:52
 msgid "Expected '@'"
 msgstr "'@'가 필요합니다"
 
-#: jscript.rc:75
+#: jscript.rc:78
 msgid "Microsoft JScript compilation error"
 msgstr ""
 
-#: jscript.rc:76
+#: jscript.rc:79
 msgid "Microsoft JScript runtime error"
 msgstr ""
 
-#: jscript.rc:77
+#: jscript.rc:80
 #, fuzzy
 #| msgid "Unknown error"
 msgid "Unknown runtime error"
 msgstr "알 수 없는 오류"
 
-#: jscript.rc:54
+#: jscript.rc:55
 msgid "Number expected"
 msgstr "숫자가 필요합니다"
 
-#: jscript.rc:52
+#: jscript.rc:53
 msgid "Function expected"
 msgstr "함수가 필요합니다"
 
-#: jscript.rc:53
+#: jscript.rc:54
 msgid "'[object]' is not a date object"
 msgstr "'[object]'가 날짜 객체가 아닙니다"
 
-#: jscript.rc:55
+#: jscript.rc:56
 msgid "Object expected"
 msgstr "객체가 필요합니다"
 
-#: jscript.rc:56
+#: jscript.rc:57
 msgid "Illegal assignment"
 msgstr "잘못된 할당"
 
-#: jscript.rc:57
+#: jscript.rc:58
 msgid "'|' is undefined"
 msgstr "'|'가 정의도지 않았습니다"
 
-#: jscript.rc:58
+#: jscript.rc:59
 msgid "Boolean object expected"
 msgstr "볼린 객제가 필요함"
 
-#: jscript.rc:59
+#: jscript.rc:60
 msgid "Cannot delete '|'"
 msgstr "'|'를 지울 수 없음"
 
-#: jscript.rc:60
+#: jscript.rc:61
 msgid "VBArray object expected"
 msgstr "VBArray 갹체가 필요함"
 
-#: jscript.rc:61
+#: jscript.rc:62
 msgid "JScript object expected"
 msgstr "JScript 객체가 필요함"
 
-#: jscript.rc:62
+#: jscript.rc:63
+#, fuzzy
+#| msgid "Array object expected"
+msgid "Enumerator object expected"
+msgstr "배열 객체가 필요합니다"
+
+#: jscript.rc:64
+#, fuzzy
+#| msgid "Boolean object expected"
+msgid "Regular Expression object expected"
+msgstr "볼린 객제가 필요함"
+
+#: jscript.rc:65
 msgid "Syntax error in regular expression"
 msgstr "정규 표현식에 문법오류가 있음"
 
-#: jscript.rc:63
+#: jscript.rc:66
 msgid "Exception thrown and not caught"
 msgstr ""
 
-#: jscript.rc:65
+#: jscript.rc:68
 msgid "URI to be encoded contains invalid characters"
 msgstr "인코딩할 URI에 올바르지 않은 문자가 들어 있습니다"
 
-#: jscript.rc:64
+#: jscript.rc:67
 msgid "URI to be decoded is incorrect"
 msgstr "디코딩할 URI가 올바르지 않습니다"
 
-#: jscript.rc:66
+#: jscript.rc:69
 msgid "Number of fraction digits is out of range"
 msgstr "분수 자리수 값이 범위를 벗어났습니다"
 
-#: jscript.rc:67
+#: jscript.rc:70
 msgid "Precision is out of range"
 msgstr "정밀도가 범위를 벗어났습니다"
 
-#: jscript.rc:68
+#: jscript.rc:71
 msgid "Array length must be a finite positive integer"
 msgstr "배열 길이는 유한한 양의 정수이어야 합니다"
 
-#: jscript.rc:69
+#: jscript.rc:72
 msgid "Array object expected"
 msgstr "배열 객체가 필요합니다"
 
-#: jscript.rc:70
+#: jscript.rc:73
 msgid ""
 "'writable' attribute on the property descriptor cannot be set to 'true' on "
 "this object"
 msgstr ""
 "속성 설명자의 'writable' 특성은 이 개체에서 'true'로 설정할 수 없습니다"
 
-#: jscript.rc:71
+#: jscript.rc:74
 msgid "Cannot redefine non-configurable property '|'"
 msgstr "구성되지 않은 요소 '|'를 재처리할 수 없습니다"
 
-#: jscript.rc:72
+#: jscript.rc:75
 msgid "Cannot modify non-writable property '|'"
 msgstr "쓰기 가능하지 않은 요소 '|'를 편집할 수 없습니다"
 
-#: jscript.rc:73
+#: jscript.rc:76
 msgid "Property cannot have both accessors and a value"
 msgstr "속성은 접근자와 값을 모두 가질 수 없습니다"
 
@@ -3802,6 +3824,7 @@ msgid "Wine kernel DLL"
 msgstr "Wine 커널 DLL"
 
 #: ../../include/wine/wine_common_ver.rc:134 winemac.rc:32 wineboot.rc:42
+#: winecfg.rc:137
 msgid "Wine"
 msgstr "Wine"
 
@@ -7265,7 +7288,7 @@ msgstr "하이퍼링크"
 msgid "Hyperlink Information"
 msgstr "하이퍼링크 정보"
 
-#: mshtml.rc:43 winecfg.rc:245
+#: mshtml.rc:43 winecfg.rc:243
 msgid "&Type:"
 msgstr "형식(&T):"
 
@@ -8304,141 +8327,141 @@ msgstr "작동"
 msgid "Off"
 msgstr "비작동"
 
-#: version.rc:55
+#: version.rc:56
 #, fuzzy
 #| msgid "video"
 msgid "Provider"
 msgstr "비디오"
 
-#: version.rc:58
+#: version.rc:59
 #, fuzzy
 #| msgid "Select the format you want to use:"
 msgid "Select the data you want to connect to:"
 msgstr "사용할 파일 형식 선택:"
 
-#: version.rc:65
+#: version.rc:66
 #, fuzzy
 #| msgid "Connections"
 msgid "Connection"
 msgstr "연결"
 
-#: version.rc:68
+#: version.rc:69
 #, fuzzy
 #| msgid "Select the format you want to use:"
 msgid "Specify the following to connect to ODBC data:"
 msgstr "사용할 파일 형식 선택:"
 
-#: version.rc:69
+#: version.rc:70
 msgid "1. Specify the source of data:"
 msgstr ""
 
-#: version.rc:70
+#: version.rc:71
 #, fuzzy
 #| msgid "Please enter your name"
 msgid "Use &data source name"
 msgstr "이름을 입력해 주세요"
 
-#: version.rc:73
+#: version.rc:74
 #, fuzzy
 #| msgid "Reset Connections"
 msgid "Use c&onnection string"
 msgstr "연결 재설정"
 
-#: version.rc:74
+#: version.rc:75
 #, fuzzy
 #| msgid "Connections"
 msgid "&Connection string:"
 msgstr "연결"
 
-#: version.rc:76
+#: version.rc:77
 #, fuzzy
 #| msgid "A&dd..."
 msgid "B&uild..."
 msgstr "추가(&D)..."
 
-#: version.rc:77
+#: version.rc:78
 msgid "2. Enter information to log on to the server"
 msgstr ""
 
-#: version.rc:78
+#: version.rc:79
 #, fuzzy
 #| msgid "&User name:"
 msgid "User &name:"
 msgstr "사용자 이름(&U):"
 
-#: version.rc:82
+#: version.rc:83
 #, fuzzy
 #| msgid "&Blank page"
 msgid "&Blank password"
 msgstr "빈 페이지(&B)"
 
-#: version.rc:83
+#: version.rc:84
 #, fuzzy
 #| msgid "Wrong password.\n"
 msgid "Allow &saving password"
 msgstr "잘못된 암호.\n"
 
-#: version.rc:84
+#: version.rc:85
 msgid "3. Enter the &initial catalog to use:"
 msgstr ""
 
-#: version.rc:86
+#: version.rc:87
 #, fuzzy
 #| msgid "Reset Connections"
 msgid "&Test Connection"
 msgstr "연결 재설정"
 
-#: version.rc:91 winemine.rc:65
+#: version.rc:92 winemine.rc:65
 msgid "Advanced"
 msgstr "중급자"
 
-#: version.rc:94
+#: version.rc:95
 #, fuzzy
 #| msgid "Network share"
 msgid "Network settings"
 msgstr "네트워크 공유"
 
-#: version.rc:95
+#: version.rc:96
 #, fuzzy
 #| msgid "Bad impersonation level.\n"
 msgid "&Impersonation level:"
 msgstr "나쁜 가장 수준.\n"
 
-#: version.rc:97
+#: version.rc:98
 msgid "P&rotection level:"
 msgstr ""
 
-#: version.rc:100
+#: version.rc:101
 #, fuzzy
 #| msgid "Connected"
 msgid "Connect:"
 msgstr "연결됨"
 
-#: version.rc:102
+#: version.rc:103
 #, fuzzy
 #| msgid "seconds"
 msgid "seconds."
 msgstr "초"
 
-#: version.rc:103
+#: version.rc:104
 #, fuzzy
 #| msgid "Success"
 msgid "A&ccess:"
 msgstr "성공"
 
-#: version.rc:109
+#: version.rc:110
 #, fuzzy
 #| msgid "&All"
 msgid "All"
 msgstr "모두(&A)"
 
-#: version.rc:113
+#: version.rc:114
 msgid ""
 "These are the initialization properties for this type of data. To edit a "
 "value, select a property, then choose Edit Value below."
 msgstr ""
 
-#: version.rc:114
+#: version.rc:115
 #, fuzzy
 #| msgid "&Edit..."
 msgid "&Edit Value..."
@@ -8455,6 +8478,12 @@ msgstr "속성"
 #| msgid "Please select a file."
 msgid "Please select a provider."
 msgstr "파일을 선택하십시오."
+
+#: version.rc:51
+msgid ""
+"Provider is no longer available. Ensure that the provider is installed "
+"properly."
+msgstr ""
 
 #: version.rc:36
 #, fuzzy
@@ -8692,7 +8721,7 @@ msgctxt "unit: bits"
 msgid "b"
 msgstr "bit"
 
-#: sane.rc:34 wineps.rc:49 winecfg.rc:183
+#: sane.rc:34 wineps.rc:49 winecfg.rc:182
 msgctxt "unit: dots/inch"
 msgid "dpi"
 msgstr "dpi"
@@ -9187,7 +9216,7 @@ msgstr ""
 msgid "&Open:"
 msgstr "열기(&O):"
 
-#: shell32.rc:343 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:243
+#: shell32.rc:343 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:241
 #: winefile.rc:129
 msgid "&Browse..."
 msgstr "찾아보기(&B)..."
@@ -9276,7 +9305,7 @@ msgstr "원래 위치"
 msgid "Date deleted"
 msgstr "지워진 날짜"
 
-#: shell32.rc:156 winecfg.rc:101 winefile.rc:99
+#: shell32.rc:156 winecfg.rc:100 winefile.rc:99
 msgctxt "display name"
 msgid "Desktop"
 msgstr "바탕 화면"
@@ -9617,7 +9646,7 @@ msgstr "Wine 라이선스"
 msgid "Trash"
 msgstr "휴지통"
 
-#: shlwapi.rc:38 user32.rc:71 regedit.rc:204 winecfg.rc:87 winefile.rc:97
+#: shlwapi.rc:38 user32.rc:71 regedit.rc:204 winecfg.rc:86 winefile.rc:97
 msgid "Error"
 msgstr "오류"
 
@@ -9648,127 +9677,127 @@ msgstr " 초"
 msgid "Select Source"
 msgstr "원본 선택"
 
-#: tzres.rc:84
+#: tzres.rc:88
 msgid "China Standard Time"
 msgstr "중국 표준 시간"
 
-#: tzres.rc:85
+#: tzres.rc:89
 msgid "China Daylight Time"
 msgstr "중국 일광 절약 시간"
 
-#: tzres.rc:164
+#: tzres.rc:170
 msgid "North Asia Standard Time"
 msgstr "북아시아 표준 시간"
 
-#: tzres.rc:165
+#: tzres.rc:171
 msgid "North Asia Daylight Time"
 msgstr "북아시아 일광 절약 시간"
 
-#: tzres.rc:106
+#: tzres.rc:110
 msgid "Georgian Standard Time"
 msgstr "그루지아 표준 시간"
 
-#: tzres.rc:107
+#: tzres.rc:111
 msgid "Georgian Daylight Time"
 msgstr "그루지아 일광 절약 시간"
 
-#: tzres.rc:156
+#: tzres.rc:162
 msgid "Nepal Standard Time"
 msgstr "네팔 표준 시간"
 
-#: tzres.rc:157
+#: tzres.rc:163
 msgid "Nepal Daylight Time"
 msgstr "네팔 일광 절약 시간"
 
-#: tzres.rc:62
+#: tzres.rc:64
 msgid "Cape Verde Standard Time"
 msgstr "카보베르데 표준 시간"
 
-#: tzres.rc:63
+#: tzres.rc:65
 msgid "Cape Verde Daylight Time"
 msgstr "카보베르데 일광 절약 시간"
 
-#: tzres.rc:116
+#: tzres.rc:120
 #, fuzzy
 #| msgid "Hawaiian Standard Time"
 msgid "Haiti Standard Time"
 msgstr "하와이 표준 시간"
 
-#: tzres.rc:117
+#: tzres.rc:121
 #, fuzzy
 #| msgid "Hawaiian Daylight Time"
 msgid "Haiti Daylight Time"
 msgstr "하와이 일광 절약 시간"
 
-#: tzres.rc:76
+#: tzres.rc:78
 msgid "Central European Standard Time"
 msgstr "중앙 유럽 표준 시간"
 
-#: tzres.rc:77
+#: tzres.rc:79
 msgid "Central European Daylight Time"
 msgstr "중앙 유럽 일관 절약 시간"
 
-#: tzres.rc:144
+#: tzres.rc:150
 msgid "Morocco Standard Time"
 msgstr "모로코 표준 시간"
 
-#: tzres.rc:145
+#: tzres.rc:151
 msgid "Morocco Daylight Time"
 msgstr "모로코 일광 절약 시간"
 
-#: tzres.rc:74
+#: tzres.rc:76
 msgid "Central Europe Standard Time"
 msgstr "중앙 유럽 표준 시간"
 
-#: tzres.rc:75
+#: tzres.rc:77
 msgid "Central Europe Daylight Time"
 msgstr "중앙 유럽 일광 절약 시간"
 
-#: tzres.rc:122
+#: tzres.rc:126
 msgid "Iran Standard Time"
 msgstr "이란 표준 시간"
 
-#: tzres.rc:123
+#: tzres.rc:127
 msgid "Iran Daylight Time"
 msgstr "이란 일광 절약 시간"
 
-#: tzres.rc:154
+#: tzres.rc:160
 msgid "Namibia Standard Time"
 msgstr "나미비아 표준 시간"
 
-#: tzres.rc:155
+#: tzres.rc:161
 msgid "Namibia Daylight Time"
 msgstr "나미비아 일광 절약 시간"
 
-#: tzres.rc:204
+#: tzres.rc:210
 msgid "Tonga Standard Time"
 msgstr "통가 표준 시간"
 
-#: tzres.rc:205
+#: tzres.rc:211
 msgid "Tonga Daylight Time"
 msgstr "통가 일괄 절약 시간"
 
-#: tzres.rc:148
+#: tzres.rc:154
 msgid "Mountain Standard Time (Mexico)"
 msgstr "산지 표준 시간 (멕시코)"
 
-#: tzres.rc:149
+#: tzres.rc:155
 msgid "Mountain Daylight Time (Mexico)"
 msgstr "산지 일광 절약 시간 (멕시코)"
 
-#: tzres.rc:108
+#: tzres.rc:112
 msgid "GMT Standard Time"
 msgstr "GMT 표준 시간"
 
-#: tzres.rc:109
+#: tzres.rc:113
 msgid "GMT Daylight Time"
 msgstr "GMT 일광 절약 시간"
 
-#: tzres.rc:70
+#: tzres.rc:72
 msgid "Central Asia Standard Time"
 msgstr "중앙 아시아 표준 시간"
 
-#: tzres.rc:71
+#: tzres.rc:73
 msgid "Central Asia Daylight Time"
 msgstr "중앙 아시아 일광 절약 시간"
 
@@ -9780,35 +9809,35 @@ msgstr "아랍 표준 시간"
 msgid "Arabic Daylight Time"
 msgstr "아랍 일광 절약 시간"
 
-#: tzres.rc:136
+#: tzres.rc:140
 msgid "Magadan Standard Time"
 msgstr "마가단 표준 시간"
 
-#: tzres.rc:137
+#: tzres.rc:141
 msgid "Magadan Daylight Time"
 msgstr "마가단 일광 절약 시간"
 
-#: tzres.rc:160
+#: tzres.rc:166
 msgid "Newfoundland Standard Time"
 msgstr "뉴펀들랜드 표준 시간"
 
-#: tzres.rc:161
+#: tzres.rc:167
 msgid "Newfoundland Daylight Time"
 msgstr "뉴펀들랜드 일광 절약 시간"
 
-#: tzres.rc:228
+#: tzres.rc:234
 msgid "West Pacific Standard Time"
 msgstr "서태평양 표준 시간"
 
-#: tzres.rc:229
+#: tzres.rc:235
 msgid "West Pacific Daylight Time"
 msgstr "서태평양 일광 절약 시간"
 
-#: tzres.rc:168
+#: tzres.rc:174
 msgid "Pacific Standard Time"
 msgstr "태평양 표준 시간"
 
-#: tzres.rc:169
+#: tzres.rc:175
 msgid "Pacific Daylight Time"
 msgstr "태평양 일광 절약 시간"
 
@@ -9820,67 +9849,67 @@ msgstr "아제르바이잔 표준 시간"
 msgid "Azerbaijan Daylight Time"
 msgstr "아제르바이잔 일광 절약 시간"
 
-#: tzres.rc:186
+#: tzres.rc:192
 msgid "Samoa Standard Time"
 msgstr "사모아 표준 시간"
 
-#: tzres.rc:187
+#: tzres.rc:193
 msgid "Samoa Daylight Time"
 msgstr "사모아 일광 절약 시간"
 
-#: tzres.rc:128
+#: tzres.rc:132
 msgid "Kaliningrad Standard Time"
 msgstr "칼리닌그라드 표준 시간"
 
-#: tzres.rc:129
+#: tzres.rc:133
 msgid "Kaliningrad Daylight Time"
 msgstr "칼리닌그라드 일광 절약 시간"
 
-#: tzres.rc:170
+#: tzres.rc:176
 msgid "Pacific Standard Time (Mexico)"
 msgstr "태평양 표준 시간 (멕시코)"
 
-#: tzres.rc:171
+#: tzres.rc:177
 msgid "Pacific Daylight Time (Mexico)"
 msgstr "태평양 일광 절약 시간 (멕시코)"
 
-#: tzres.rc:140
+#: tzres.rc:146
 msgid "Middle East Standard Time"
 msgstr "중동 표준 시간"
 
-#: tzres.rc:141
+#: tzres.rc:147
 msgid "Middle East Daylight Time"
 msgstr "중동 일광 절약 시간"
 
-#: tzres.rc:202
+#: tzres.rc:208
 msgid "Tokyo Standard Time"
 msgstr "도쿄 표준 시간"
 
-#: tzres.rc:203
+#: tzres.rc:209
 msgid "Tokyo Daylight Time"
 msgstr "도쿄 일광 절약 시간"
 
-#: tzres.rc:134
+#: tzres.rc:138
 msgid "Line Islands Standard Time"
 msgstr "라인 제도 표준 시간"
 
-#: tzres.rc:135
+#: tzres.rc:139
 msgid "Line Islands Daylight Time"
 msgstr "라인 제도 일광 절약 시간"
 
-#: tzres.rc:126
+#: tzres.rc:130
 msgid "Jordan Standard Time"
 msgstr "요르단 표준 시간"
 
-#: tzres.rc:127
+#: tzres.rc:131
 msgid "Jordan Daylight Time"
 msgstr "요르단 일광 절약 시간"
 
-#: tzres.rc:80
+#: tzres.rc:82
 msgid "Central Standard Time"
 msgstr "중부 표준 시간"
 
-#: tzres.rc:81
+#: tzres.rc:83
 msgid "Central Daylight Time"
 msgstr "중부 일광 절약 시간"
 
@@ -9892,11 +9921,11 @@ msgstr "아조레스 표준 시간"
 msgid "Azores Daylight Time"
 msgstr "아조레스 일광 절약 시간"
 
-#: tzres.rc:162
+#: tzres.rc:168
 msgid "North Asia East Standard Time"
 msgstr "북아시아 동부 표준 시간"
 
-#: tzres.rc:163
+#: tzres.rc:169
 msgid "North Asia East Daylight Time"
 msgstr "북아시아 동부 일광 절약 시간"
 
@@ -9908,95 +9937,107 @@ msgstr "아르헨티나 표준 시간"
 msgid "Argentina Daylight Time"
 msgstr "아르헨티나 일광 절약 시간"
 
-#: tzres.rc:150
+#: tzres.rc:142
+#, fuzzy
+#| msgid "Mauritius Standard Time"
+msgid "Marquesas Standard Time"
+msgstr "모리셔스 표준 시간"
+
+#: tzres.rc:143
+#, fuzzy
+#| msgid "Mauritius Daylight Time"
+msgid "Marquesas Daylight Time"
+msgstr "모리셔스 일광 절약 시간"
+
+#: tzres.rc:156
 msgid "Myanmar Standard Time"
 msgstr "미얀마 표준 시간"
 
-#: tzres.rc:151
+#: tzres.rc:157
 msgid "Myanmar Daylight Time"
 msgstr "미얀마 일광 절약 시간"
 
-#: tzres.rc:214 tzres.rc:215
+#: tzres.rc:220 tzres.rc:221
 msgid "Coordinated Universal Time"
 msgstr "협정 세계시"
 
-#: tzres.rc:120
+#: tzres.rc:124
 msgid "India Standard Time"
 msgstr "인도 표준 시간"
 
-#: tzres.rc:121
+#: tzres.rc:125
 msgid "India Daylight Time"
 msgstr "인도 일광 절약 시간"
 
-#: tzres.rc:114
+#: tzres.rc:118
 msgid "GTB Standard Time"
 msgstr "GTB 표준 시간"
 
-#: tzres.rc:115
+#: tzres.rc:119
 msgid "GTB Daylight Time"
 msgstr "GTB 일광 절약 시간"
 
-#: tzres.rc:206
+#: tzres.rc:212
 msgid "Turkey Standard Time"
 msgstr "터키 표준 시간"
 
-#: tzres.rc:207
+#: tzres.rc:213
 msgid "Turkey Daylight Time"
 msgstr "터키 일광 절약 시간"
 
-#: tzres.rc:102
+#: tzres.rc:106
 msgid "Fiji Standard Time"
 msgstr "피지 표준 시간"
 
-#: tzres.rc:103
+#: tzres.rc:107
 msgid "Fiji Daylight Time"
 msgstr "피지 일광 절약 시간"
 
-#: tzres.rc:60
+#: tzres.rc:62
 msgid "Canada Central Standard Time"
 msgstr "캐나다 중부 표준 시간"
 
-#: tzres.rc:61
+#: tzres.rc:63
 msgid "Canada Central Daylight Time"
 msgstr "캐나다 중부 일광 절약 시간"
 
-#: tzres.rc:198
+#: tzres.rc:204
 msgid "Taipei Standard Time"
 msgstr "타이베이 표준 시간"
 
-#: tzres.rc:199
+#: tzres.rc:205
 msgid "Taipei Daylight Time"
 msgstr "타이베이 일광 절약 시간"
 
-#: tzres.rc:224
+#: tzres.rc:230
 msgid "W. Europe Standard Time"
 msgstr "서유럽 표준 시간"
 
-#: tzres.rc:225
+#: tzres.rc:231
 msgid "W. Europe Daylight Time"
 msgstr "서유럽 일광 절약 시간"
 
-#: tzres.rc:142
+#: tzres.rc:148
 msgid "Montevideo Standard Time"
 msgstr "몬데비데오 표준 시간"
 
-#: tzres.rc:143
+#: tzres.rc:149
 msgid "Montevideo Daylight Time"
 msgstr "몬데비데오 일광 절약 시간"
 
-#: tzres.rc:172
+#: tzres.rc:178
 msgid "Pakistan Standard Time"
 msgstr "파키스탄 표준 시간"
 
-#: tzres.rc:173
+#: tzres.rc:179
 msgid "Pakistan Daylight Time"
 msgstr "파키스탄 일광 절약 시간"
 
-#: tzres.rc:64
+#: tzres.rc:66
 msgid "Caucasus Standard Time"
 msgstr "코코서스 표준 시간"
 
-#: tzres.rc:65
+#: tzres.rc:67
 msgid "Caucasus Daylight Time"
 msgstr "코코서스 일광 절약 시간"
 
@@ -10008,27 +10049,27 @@ msgstr "오스트레일리아 동부 표준 시간"
 msgid "AUS Eastern Daylight Time"
 msgstr "오스트레일리아 동부 일광 절약 시간"
 
-#: tzres.rc:152
+#: tzres.rc:158
 msgid "N. Central Asia Standard Time"
 msgstr "중앙 아시아 북부 표준 시간"
 
-#: tzres.rc:153
+#: tzres.rc:159
 msgid "N. Central Asia Daylight Time"
 msgstr "중앙 아시아 북부 일광 절약 시간"
 
-#: tzres.rc:96
+#: tzres.rc:100
 msgid "Eastern Standard Time"
 msgstr "동부 표준 시간"
 
-#: tzres.rc:97
+#: tzres.rc:101
 msgid "Eastern Daylight Time"
 msgstr "동부 일광 절약 시간"
 
-#: tzres.rc:82
+#: tzres.rc:84
 msgid "Central Standard Time (Mexico)"
 msgstr "중부 표준 시간 (멕시코)"
 
-#: tzres.rc:83
+#: tzres.rc:85
 msgid "Central Daylight Time (Mexico)"
 msgstr "중부 일광 절약 시간 (멕시코)"
 
@@ -10040,67 +10081,67 @@ msgstr "대서양 표준 시간"
 msgid "Atlantic Daylight Time"
 msgstr "대서양 일광 절약 시간"
 
-#: tzres.rc:146
+#: tzres.rc:152
 msgid "Mountain Standard Time"
 msgstr "산지 표준 시간"
 
-#: tzres.rc:147
+#: tzres.rc:153
 msgid "Mountain Daylight Time"
 msgstr "산지 일광 절약 시간"
 
-#: tzres.rc:210
+#: tzres.rc:216
 msgid "US Eastern Standard Time"
 msgstr "미국 동부 표준 시간"
 
-#: tzres.rc:211
+#: tzres.rc:217
 msgid "US Eastern Daylight Time"
 msgstr "미국 동부 일광 절약 시간"
 
-#: tzres.rc:200
+#: tzres.rc:206
 msgid "Tasmania Standard Time"
 msgstr "태즈매이니아 표준 시간"
 
-#: tzres.rc:201
+#: tzres.rc:207
 msgid "Tasmania Daylight Time"
 msgstr "태즈매이니아 일광 절약 시간"
 
-#: tzres.rc:68
+#: tzres.rc:70
 msgid "Central America Standard Time"
 msgstr "중앙 아메리카 표준 시간"
 
-#: tzres.rc:69
+#: tzres.rc:71
 msgid "Central America Daylight Time"
 msgstr "중앙 아메리카 일광 절약 시간"
 
-#: tzres.rc:212
+#: tzres.rc:218
 msgid "US Mountain Standard Time"
 msgstr "미국 산지 표준 시간"
 
-#: tzres.rc:213
+#: tzres.rc:219
 msgid "US Mountain Daylight Time"
 msgstr "미국 산지 일광 절약 시간"
 
-#: tzres.rc:192
+#: tzres.rc:198
 msgid "South Africa Standard Time"
 msgstr "남아프리카 표준 시간"
 
-#: tzres.rc:193
+#: tzres.rc:199
 msgid "South Africa Daylight Time"
 msgstr "남아프리카 일광 절약 시간"
 
-#: tzres.rc:66
+#: tzres.rc:68
 msgid "Cen. Australia Standard Time"
 msgstr "중부 오스트레일리아 표준 시간"
 
-#: tzres.rc:67
+#: tzres.rc:69
 msgid "Cen. Australia Daylight Time"
 msgstr "중부 오스트레일리아 일광 절약 시간"
 
-#: tzres.rc:194
+#: tzres.rc:200
 msgid "Sri Lanka Standard Time"
 msgstr "스리랑카 표준 시간"
 
-#: tzres.rc:195
+#: tzres.rc:201
 msgid "Sri Lanka Daylight Time"
 msgstr "스리랑카 일광 절약 시간"
 
@@ -10112,19 +10153,19 @@ msgstr "아프가니스탄 표준 시간"
 msgid "Afghanistan Daylight Time"
 msgstr "아프가니스탄 일광 절약 시간"
 
-#: tzres.rc:230
+#: tzres.rc:236
 msgid "Yakutsk Standard Time"
 msgstr "야쿠츠크 표준 시간"
 
-#: tzres.rc:231
+#: tzres.rc:237
 msgid "Yakutsk Daylight Time"
 msgstr "야쿠츠크 일광 절약 시간"
 
-#: tzres.rc:180
+#: tzres.rc:186
 msgid "SA Eastern Standard Time"
 msgstr "SA 동부 표준 시간"
 
-#: tzres.rc:181
+#: tzres.rc:187
 msgid "SA Eastern Daylight Time"
 msgstr "SA 동부 일광 절약 시간"
 
@@ -10144,35 +10185,35 @@ msgstr "아라비아 표준 시간"
 msgid "Arabian Daylight Time"
 msgstr "아라비아 일광 절약 시간"
 
-#: tzres.rc:178
+#: tzres.rc:184
 msgid "Russian Standard Time"
 msgstr "러시아 표준 시간"
 
-#: tzres.rc:179
+#: tzres.rc:185
 msgid "Russian Daylight Time"
 msgstr "러시아 일광 절약 시간"
 
-#: tzres.rc:176
+#: tzres.rc:182
 msgid "Romance Standard Time"
 msgstr "로망스 표준 시간"
 
-#: tzres.rc:177
+#: tzres.rc:183
 msgid "Romance Daylight Time"
 msgstr "로망스 일광 절약 시간"
 
-#: tzres.rc:100
+#: tzres.rc:104
 msgid "Ekaterinburg Standard Time"
 msgstr "예카테린부르크 표준 시간"
 
-#: tzres.rc:101
+#: tzres.rc:105
 msgid "Ekaterinburg Daylight Time"
 msgstr "예카테린부르크 일광 절약 시간"
 
-#: tzres.rc:196
+#: tzres.rc:202
 msgid "Syria Standard Time"
 msgstr "시리아 표준 시간"
 
-#: tzres.rc:197
+#: tzres.rc:203
 msgid "Syria Daylight Time"
 msgstr "시리아 일광 절약 시간"
 
@@ -10184,27 +10225,27 @@ msgstr "오스트레일리아 중부 표준 시간"
 msgid "AUS Central Daylight Time"
 msgstr "오스트레일리아 중부 일광 절약 시간"
 
-#: tzres.rc:112
+#: tzres.rc:116
 msgid "Greenwich Standard Time"
 msgstr "그리니치 표준 시간"
 
-#: tzres.rc:113
+#: tzres.rc:117
 msgid "Greenwich Daylight Time"
 msgstr "그리니치 일광 절약 시간"
 
-#: tzres.rc:208
+#: tzres.rc:214
 msgid "Ulaanbaatar Standard Time"
 msgstr "울란바토르 표준 시간"
 
-#: tzres.rc:209
+#: tzres.rc:215
 msgid "Ulaanbaatar Daylight Time"
 msgstr "울란바토르 일광 절약 시간"
 
-#: tzres.rc:124
+#: tzres.rc:128
 msgid "Israel Standard Time"
 msgstr "이스라엘 표준 시간"
 
-#: tzres.rc:125
+#: tzres.rc:129
 msgid "Israel Daylight Time"
 msgstr "이스라엘 일광 절약 시간"
 
@@ -10216,19 +10257,19 @@ msgstr "발글라데시 표준 시간"
 msgid "Bangladesh Daylight Time"
 msgstr "방글라데시 일광 절약 시간"
 
-#: tzres.rc:182
+#: tzres.rc:188
 msgid "SA Pacific Standard Time"
 msgstr "SA 태평양 표준 시간"
 
-#: tzres.rc:183
+#: tzres.rc:189
 msgid "SA Pacific Daylight Time"
 msgstr "SA 태평양 일광 절약 시간"
 
-#: tzres.rc:226
+#: tzres.rc:232
 msgid "West Asia Standard Time"
 msgstr "서아시아 표준 시간"
 
-#: tzres.rc:227
+#: tzres.rc:233
 msgid "West Asia Daylight Time"
 msgstr "서아시아 일광 절약 시간"
 
@@ -10240,27 +10281,27 @@ msgstr "알래스카 표준 시간"
 msgid "Alaskan Daylight Time"
 msgstr "알래스카 일광 절약 시간"
 
-#: tzres.rc:174
+#: tzres.rc:180
 msgid "Paraguay Standard Time"
 msgstr "파라과이 표준 시간"
 
-#: tzres.rc:175
+#: tzres.rc:181
 msgid "Paraguay Daylight Time"
 msgstr "파라과이 일광 절약 시간"
 
-#: tzres.rc:86
+#: tzres.rc:90
 msgid "Dateline Standard Time"
 msgstr "날짜 변경선 표준 시간"
 
-#: tzres.rc:87
+#: tzres.rc:91
 msgid "Dateline Daylight Time"
 msgstr "날짜 변경선 일광 절약 시간"
 
-#: tzres.rc:132
+#: tzres.rc:136
 msgid "Libya Standard Time"
 msgstr "리비아 표준 시간"
 
-#: tzres.rc:133
+#: tzres.rc:137
 msgid "Libya Daylight Time"
 msgstr "리비아 일광 절약 시간"
 
@@ -10272,35 +10313,47 @@ msgstr "바이아 표준 시간"
 msgid "Bahia Daylight Time"
 msgstr "바이아 일광 절약 시간"
 
-#: tzres.rc:216
+#: tzres.rc:222
 msgid "Venezuela Standard Time"
 msgstr "베네수엘라 표준 시간"
 
-#: tzres.rc:217
+#: tzres.rc:223
 msgid "Venezuela Daylight Time"
 msgstr "베네수엘라 일광 절약 시간"
 
-#: tzres.rc:118
+#: tzres.rc:60
+#, fuzzy
+#| msgid "Mountain Standard Time"
+msgid "Bougainville Standard Time"
+msgstr "산지 표준 시간"
+
+#: tzres.rc:61
+#, fuzzy
+#| msgid "Mountain Daylight Time"
+msgid "Bougainville Daylight Time"
+msgstr "산지 일광 절약 시간"
+
+#: tzres.rc:122
 msgid "Hawaiian Standard Time"
 msgstr "하와이 표준 시간"
 
-#: tzres.rc:119
+#: tzres.rc:123
 msgid "Hawaiian Daylight Time"
 msgstr "하와이 일광 절약 시간"
 
-#: tzres.rc:188
+#: tzres.rc:194
 msgid "SE Asia Standard Time"
 msgstr "동남 아시아 표준 시간"
 
-#: tzres.rc:189
+#: tzres.rc:195
 msgid "SE Asia Daylight Time"
 msgstr "동남 아시아 일광 절약 시간"
 
-#: tzres.rc:158
+#: tzres.rc:164
 msgid "New Zealand Standard Time"
 msgstr "뉴질랜드 표준 시간"
 
-#: tzres.rc:159
+#: tzres.rc:165
 msgid "New Zealand Daylight Time"
 msgstr "뉴질랜드 일광 절약 시간"
 
@@ -10316,11 +10369,11 @@ msgstr "아르헨티나 표준 시간"
 msgid "Aleutian Daylight Time"
 msgstr "아르헨티나 일광 절약 시간"
 
-#: tzres.rc:72
+#: tzres.rc:74
 msgid "Central Brazilian Standard Time"
 msgstr "브라질 중부 표준 시간"
 
-#: tzres.rc:73
+#: tzres.rc:75
 msgid "Central Brazilian Daylight Time"
 msgstr "브라질 중부 일광 절약 시간"
 
@@ -10332,131 +10385,143 @@ msgstr "벨로루시 표준 시간"
 msgid "Belarus Daylight Time"
 msgstr "벨로루시 표준 시간"
 
-#: tzres.rc:184
+#: tzres.rc:190
 msgid "SA Western Standard Time"
 msgstr "SA 서부 표준 시간"
 
-#: tzres.rc:185
+#: tzres.rc:191
 msgid "SA Western Daylight Time"
 msgstr "SA 서부 일광 절약 시간"
 
-#: tzres.rc:110
+#: tzres.rc:114
 msgid "Greenland Standard Time"
 msgstr "그린란드 표준 시간"
 
-#: tzres.rc:111
+#: tzres.rc:115
 msgid "Greenland Daylight Time"
 msgstr "그린란드 일광 절약 시간"
 
-#: tzres.rc:94
+#: tzres.rc:98
 msgid "Easter Island Standard Time"
 msgstr "이스터 섬 표준 시간"
 
-#: tzres.rc:95
+#: tzres.rc:99
 msgid "Easter Island Daylight Time"
 msgstr "이스터 섬 일광 절약 시간"
 
-#: tzres.rc:98
+#: tzres.rc:102
 msgid "Egypt Standard Time"
 msgstr "이집트 표준 시간"
 
-#: tzres.rc:99
+#: tzres.rc:103
 msgid "Egypt Daylight Time"
 msgstr "이집트 일광 절약 시간"
 
-#: tzres.rc:138
+#: tzres.rc:144
 msgid "Mauritius Standard Time"
 msgstr "모리셔스 표준 시간"
 
-#: tzres.rc:139
+#: tzres.rc:145
 msgid "Mauritius Daylight Time"
 msgstr "모리셔스 일광 절약 시간"
 
-#: tzres.rc:218
+#: tzres.rc:224
 msgid "Vladivostok Standard Time"
 msgstr "블라디보스토크 표준 시간"
 
-#: tzres.rc:219
+#: tzres.rc:225
 msgid "Vladivostok Daylight Time"
 msgstr "블라디보스토크 일광 절약 시간"
 
-#: tzres.rc:190
+#: tzres.rc:196
 msgid "Singapore Standard Time"
 msgstr "싱가포르 표준 시간"
 
-#: tzres.rc:191
+#: tzres.rc:197
 msgid "Singapore Daylight Time"
 msgstr "싱가포르 일광 절약 시간"
 
-#: tzres.rc:130
+#: tzres.rc:134
 msgid "Korea Standard Time"
 msgstr "대한민국 표준 시간"
 
-#: tzres.rc:131
+#: tzres.rc:135
 msgid "Korea Daylight Time"
 msgstr "대한민국 일광 절약 시간"
 
-#: tzres.rc:88
+#: tzres.rc:86
+#, fuzzy
+#| msgid "Easter Island Standard Time"
+msgid "Chatham Islands Standard Time"
+msgstr "이스터 섬 표준 시간"
+
+#: tzres.rc:87
+#, fuzzy
+#| msgid "Easter Island Daylight Time"
+msgid "Chatham Islands Daylight Time"
+msgstr "이스터 섬 일광 절약 시간"
+
+#: tzres.rc:92
 msgid "E. Africa Standard Time"
 msgstr "동아프리카 표준 시간"
 
-#: tzres.rc:89
+#: tzres.rc:93
 msgid "E. Africa Daylight Time"
 msgstr "동아프리카 일광 절약 시간"
 
-#: tzres.rc:104
+#: tzres.rc:108
 msgid "FLE Standard Time"
 msgstr "FLE 표준 시간"
 
-#: tzres.rc:105
+#: tzres.rc:109
 msgid "FLE Daylight Time"
 msgstr "FLE 일광 절약 시간"
 
-#: tzres.rc:92
+#: tzres.rc:96
 msgid "E. South America Standard Time"
 msgstr "남아메리카 동부 표준 시간"
 
-#: tzres.rc:93
+#: tzres.rc:97
 msgid "E. South America Daylight Time"
 msgstr "남아메리카 동부 일광 절약 시간"
 
-#: tzres.rc:78
+#: tzres.rc:80
 msgid "Central Pacific Standard Time"
 msgstr "중앙 태평양 표준 시간"
 
-#: tzres.rc:79
+#: tzres.rc:81
 msgid "Central Pacific Daylight Time"
 msgstr "중앙 태평양 일광 절약 시간"
 
-#: tzres.rc:222
+#: tzres.rc:228
 msgid "W. Central Africa Standard Time"
 msgstr "중앙아프리카 서부 표준 시간"
 
-#: tzres.rc:223
+#: tzres.rc:229
 msgid "W. Central Africa Daylight Time"
 msgstr "중앙아프리카 서부 일광 절약 시간"
 
-#: tzres.rc:166
+#: tzres.rc:172
 msgid "Pacific SA Standard Time"
 msgstr "태평양 SA 표준 시간"
 
-#: tzres.rc:167
+#: tzres.rc:173
 msgid "Pacific SA Daylight Time"
 msgstr "태평양 SA 일광 절약 시간"
 
-#: tzres.rc:90
+#: tzres.rc:94
 msgid "E. Australia Standard Time"
 msgstr "오스트레일리아 동부 표준 시간"
 
-#: tzres.rc:91
+#: tzres.rc:95
 msgid "E. Australia Daylight Time"
 msgstr "오스트레일리아 동부 일광 절약 시간"
 
-#: tzres.rc:220
+#: tzres.rc:226
 msgid "W. Australia Standard Time"
 msgstr "오스트레일리아 서부 표준 시간"
 
-#: tzres.rc:221
+#: tzres.rc:227
 msgid "W. Australia Daylight Time"
 msgstr "오스트레일리아 서부 일광 절약 시간"
 
@@ -11603,7 +11668,7 @@ msgstr "아날로그(&L)"
 msgid "Digi&tal"
 msgstr "디지털(&T)"
 
-#: clock.rc:35 notepad.rc:53 winecfg.rc:307 winefile.rc:63 wordpad.rc:84
+#: clock.rc:35 notepad.rc:53 winecfg.rc:305 winefile.rc:63 wordpad.rc:84
 msgid "&Font..."
 msgstr "글꼴(&F)..."
 
@@ -15385,7 +15450,7 @@ msgid "The Wine configuration in %s is being updated, please wait..."
 msgstr "Wine 설정(%s)을 업데이트하고 있습니다. 잠시만 기다려주십시오..."
 
 # 라이선스 문구는 번역하지 않습니다.
-#: winecfg.rc:141
+#: winecfg.rc:140
 msgid ""
 "This program is free software; you can redistribute it and/or modify it "
 "under the terms of the GNU Lesser General Public License as published by the "
@@ -15397,23 +15462,23 @@ msgstr ""
 "Free Software Foundation; either version 2.1 of the License, or (at your "
 "option) any later version."
 
-#: winecfg.rc:143
+#: winecfg.rc:142
 msgid "Windows registration information"
 msgstr "Windows 등록 정보"
 
-#: winecfg.rc:144
+#: winecfg.rc:143
 msgid "&Owner:"
 msgstr "소유자(&O):"
 
-#: winecfg.rc:146
+#: winecfg.rc:145
 msgid "Organi&zation:"
 msgstr "조직(&Z):"
 
-#: winecfg.rc:154
+#: winecfg.rc:153
 msgid "Application settings"
 msgstr "프로그램 설정"
 
-#: winecfg.rc:155
+#: winecfg.rc:154
 msgid ""
 "Wine can mimic different Windows versions for each application. This tab is "
 "linked to the Libraries and Graphics tabs to allow you to change system-wide "
@@ -15423,55 +15488,55 @@ msgstr ""
 "은 라이브러리 및 그래픽 탭과 연결되어 시스템 전체 또는 프로그램별 설정을 바"
 "꿀 수 있습니다."
 
-#: winecfg.rc:159
+#: winecfg.rc:158
 msgid "Add appli&cation..."
 msgstr "프로그램 추가(&C)..."
 
-#: winecfg.rc:160
+#: winecfg.rc:159
 msgid "&Remove application"
 msgstr "프로그램 제거(&R)"
 
-#: winecfg.rc:161
+#: winecfg.rc:160
 msgid "&Windows Version:"
 msgstr "Windows 버전(&W):"
 
-#: winecfg.rc:169
+#: winecfg.rc:168
 msgid "Window settings"
 msgstr "창 설정"
 
-#: winecfg.rc:170
+#: winecfg.rc:169
 msgid "Automatically capture the &mouse in full-screen windows"
 msgstr "전체 화면 창에서 자동으로 마우스 잡기(&M)"
 
-#: winecfg.rc:171
+#: winecfg.rc:170
 msgid "Allow the window manager to &decorate the windows"
 msgstr "창관리자가 Wine 창을 꾸미도록 합니다(&D)"
 
-#: winecfg.rc:172
+#: winecfg.rc:171
 msgid "Allow the &window manager to control the windows"
 msgstr "창관리자가 Wine 창을 관리하도록 합니다(&W)"
 
-#: winecfg.rc:173
+#: winecfg.rc:172
 msgid "&Emulate a virtual desktop"
 msgstr "하나의 창 안에서 가상 데스트톱 흉내내기(&E)"
 
-#: winecfg.rc:175
+#: winecfg.rc:174
 msgid "Desktop &size:"
 msgstr "데스크톱 크기(&S):"
 
-#: winecfg.rc:180
+#: winecfg.rc:179
 msgid "Screen resolution"
 msgstr "화면 해상도"
 
-#: winecfg.rc:184
+#: winecfg.rc:183
 msgid "This is a sample text using 10 point Tahoma"
 msgstr "10pt 크기의 Tahoma 및 연결된 글꼴을 사용하는 텍스트 예제입니다"
 
-#: winecfg.rc:191
+#: winecfg.rc:190
 msgid "DLL overrides"
 msgstr "DLL 재정의"
 
-#: winecfg.rc:192
+#: winecfg.rc:191
 msgid ""
 "Dynamic Link Libraries can be specified individually to be either builtin "
 "(provided by Wine) or native (taken from Windows or provided by the "
@@ -15480,262 +15545,258 @@ msgstr ""
 "각각의 동적 링크 라이브러리는 내장(Wine이 제공) 또는 네이티브(Windows나 프로"
 "그램이 제공)로 지정할 수 있습니다."
 
-#: winecfg.rc:194
+#: winecfg.rc:193
 msgid "&New override for library:"
 msgstr "새로 재정의할 라이브러리(&N):"
 
-#: winecfg.rc:196
+#: winecfg.rc:195
 msgid "A&dd"
 msgstr "추가(&D)"
 
-#: winecfg.rc:197
+#: winecfg.rc:196
 msgid "Existing &overrides:"
 msgstr "현재 재정의 DLL 목록(&O):"
 
-#: winecfg.rc:199
+#: winecfg.rc:198
 msgid "&Edit..."
 msgstr "편집(&E)..."
 
-#: winecfg.rc:205
+#: winecfg.rc:204
 msgid "Edit Override"
 msgstr "재정의 편집"
 
-#: winecfg.rc:208
+#: winecfg.rc:207
 msgid "Load order"
 msgstr "로드 순서"
 
-#: winecfg.rc:209
+#: winecfg.rc:208
 msgid "&Builtin (Wine)"
 msgstr "내장(&B) (Wine)"
 
-#: winecfg.rc:210
+#: winecfg.rc:209
 msgid "&Native (Windows)"
 msgstr "네이티브(&N) (Windows)"
 
-#: winecfg.rc:211
+#: winecfg.rc:210
 msgid "Buil&tin then Native"
 msgstr "내장, 네이티브 (&T)"
 
-#: winecfg.rc:212
+#: winecfg.rc:211
 msgid "Nati&ve then Builtin"
 msgstr "네이티브, 내장 (&V)"
 
-#: winecfg.rc:220
+#: winecfg.rc:219
 msgid "Select Drive Letter"
 msgstr "드라이브 문자 선택"
 
-#: winecfg.rc:232
+#: winecfg.rc:231
 msgid "Drive configuration"
 msgstr "드라이브 구성"
 
-#: winecfg.rc:233
+#: winecfg.rc:232
 msgid ""
 "Failed to connect to the mount manager; the drive configuration cannot be "
 "edited."
 msgstr ""
 "마운트 관리자에 연결할 수 없습니다. 드라이브 구성을 편집할 수 없습니다."
 
-#: winecfg.rc:236
+#: winecfg.rc:235
 msgid "A&dd..."
 msgstr "추가(&D)..."
 
-#: winecfg.rc:238
-msgid "Aut&odetect"
-msgstr "자동으로 구성(&O)"
-
-#: winecfg.rc:241
+#: winecfg.rc:239
 msgid "&Path:"
 msgstr "경로(&P):"
 
-#: winecfg.rc:248 winecfg.rc:38
+#: winecfg.rc:246 winecfg.rc:37
 msgid "Show Advan&ced"
 msgstr "추가 옵션(&C) 보이기"
 
-#: winecfg.rc:249
+#: winecfg.rc:247
 msgid "De&vice:"
 msgstr "장치(&V):"
 
-#: winecfg.rc:251
+#: winecfg.rc:249
 msgid "Bro&wse..."
 msgstr "찾아보기(&W)..."
 
-#: winecfg.rc:253
+#: winecfg.rc:251
 msgid "&Label:"
 msgstr "레이블(&L):"
 
-#: winecfg.rc:255
+#: winecfg.rc:253
 msgid "S&erial:"
 msgstr "시리얼(&E):"
 
-#: winecfg.rc:258
+#: winecfg.rc:256
 msgid "&Show dot files"
 msgstr "숨김 파일(dot 파일) 보기(&S)"
 
-#: winecfg.rc:265
+#: winecfg.rc:263
 msgid "Driver diagnostics"
 msgstr "드라이버 진단"
 
-#: winecfg.rc:267
+#: winecfg.rc:265
 msgid "Defaults"
 msgstr "기본"
 
-#: winecfg.rc:268
+#: winecfg.rc:266
 msgid "Output device:"
 msgstr "출력 장치:"
 
-#: winecfg.rc:269
+#: winecfg.rc:267
 msgid "Voice output device:"
 msgstr "음성 출력 장치:"
 
-#: winecfg.rc:270
+#: winecfg.rc:268
 msgid "Input device:"
 msgstr "입력 장치:"
 
-#: winecfg.rc:271
+#: winecfg.rc:269
 msgid "Voice input device:"
 msgstr "음성 입력 장치:"
 
-#: winecfg.rc:276
+#: winecfg.rc:274
 msgid "&Test Sound"
 msgstr "소리 테스트(&T)"
 
-#: winecfg.rc:277 winecfg.rc:90
+#: winecfg.rc:275 winecfg.rc:89
 msgid "Speaker configuration"
 msgstr "스피커 설정"
 
-#: winecfg.rc:280
+#: winecfg.rc:278
 msgid "Speakers:"
 msgstr "스피커:"
 
-#: winecfg.rc:288
+#: winecfg.rc:286
 msgid "Appearance"
 msgstr "모양새"
 
-#: winecfg.rc:289
+#: winecfg.rc:287
 msgid "&Theme:"
 msgstr "테마(&T):"
 
-#: winecfg.rc:291
+#: winecfg.rc:289
 msgid "&Install theme..."
 msgstr "테마 설치(&I)..."
 
-#: winecfg.rc:296
+#: winecfg.rc:294
 msgid "It&em:"
 msgstr "목록(&E):"
 
-#: winecfg.rc:298
+#: winecfg.rc:296
 msgid "C&olor:"
 msgstr "색상(&O):"
 
-#: winecfg.rc:304
+#: winecfg.rc:302
 msgid "MIME types"
 msgstr "MIME 형식"
 
-#: winecfg.rc:305
+#: winecfg.rc:303
 msgid "Manage file &associations"
 msgstr "Wine이 호스트 시스템의 파일 연결을 수정합니다(&A)"
 
-#: winecfg.rc:308
+#: winecfg.rc:306
 msgid "Folders"
 msgstr "폴더"
 
-#: winecfg.rc:311
+#: winecfg.rc:309
 msgid "&Link to:"
 msgstr "연결 대상(&L):"
 
-#: winecfg.rc:34
+#: winecfg.rc:33
 msgid "Libraries"
 msgstr "라이브러리"
 
-#: winecfg.rc:35
+#: winecfg.rc:34
 msgid "Drives"
 msgstr "드라이브"
 
-#: winecfg.rc:36
+#: winecfg.rc:35
 msgid "Select the Unix target directory, please."
 msgstr "유닉스 목적 폴더를 선택하십시오."
 
-#: winecfg.rc:37
+#: winecfg.rc:36
 msgid "Hide Advan&ced"
 msgstr "추가 옵션 숨기기(&C)"
 
-#: winecfg.rc:39
+#: winecfg.rc:38
 msgid "(No Theme)"
 msgstr "(테마 선택하지 않음)"
 
-#: winecfg.rc:40
+#: winecfg.rc:39
 msgid "Graphics"
 msgstr "그래픽"
 
-#: winecfg.rc:41
+#: winecfg.rc:40
 msgid "Desktop Integration"
 msgstr "데스크톱"
 
-#: winecfg.rc:42
+#: winecfg.rc:41
 msgid "Audio"
 msgstr "오디오"
 
-#: winecfg.rc:43
+#: winecfg.rc:42
 msgid "About"
 msgstr "정보"
 
-#: winecfg.rc:44
+#: winecfg.rc:43
 msgid "Wine configuration"
 msgstr "Wine 설정"
 
-#: winecfg.rc:46
+#: winecfg.rc:45
 msgid "Theme files (*.msstyles; *.theme)"
 msgstr "테마 파일 (*.msstyles; *.theme)"
 
-#: winecfg.rc:47
+#: winecfg.rc:46
 msgid "Select a theme file"
 msgstr "테마 파일 선택"
 
-#: winecfg.rc:48
+#: winecfg.rc:47
 msgid "Folder"
 msgstr "폴더"
 
-#: winecfg.rc:49
+#: winecfg.rc:48
 msgid "Links to"
 msgstr "연결 위치"
 
-#: winecfg.rc:45
+#: winecfg.rc:44
 msgid "Wine configuration for %s"
 msgstr "%s에 대한 Wine 설정"
 
-#: winecfg.rc:84
+#: winecfg.rc:83
 msgid "Selected driver: %s"
 msgstr "선택된 드라이버: %s"
 
-#: winecfg.rc:85
+#: winecfg.rc:84
 msgid "(None)"
 msgstr "(없음)"
 
-#: winecfg.rc:86
+#: winecfg.rc:85
 msgid "Audio test failed!"
 msgstr "오디오 테스트 실패!"
 
-#: winecfg.rc:88
+#: winecfg.rc:87
 msgid "(System default)"
 msgstr "(시스템 기본)"
 
-#: winecfg.rc:91
+#: winecfg.rc:90
 msgid "5.1 Surround"
 msgstr "5.1 써라운드"
 
-#: winecfg.rc:92
+#: winecfg.rc:91
 msgid "Quadraphonic"
 msgstr "4 채널"
 
-#: winecfg.rc:93
+#: winecfg.rc:92
 msgid "Stereo"
 msgstr "스테레오"
 
-#: winecfg.rc:94
+#: winecfg.rc:93
 msgid "Mono"
 msgstr "모노"
 
-#: winecfg.rc:54
+#: winecfg.rc:53
 msgid ""
 "Changing the load order of this library is not recommended.\n"
 "Are you sure you want to do this?"
@@ -15743,67 +15804,67 @@ msgstr ""
 "이 라이브러리의 로드 순서를 변경하는 것을 권장하지 않습니다.\n"
 "계속하시겠습니까?"
 
-#: winecfg.rc:55
+#: winecfg.rc:54
 msgid "Warning: system library"
 msgstr "경고: 시스템 라이브러리"
 
-#: winecfg.rc:56
+#: winecfg.rc:55
 msgid "native"
 msgstr "네이티브"
 
-#: winecfg.rc:57
+#: winecfg.rc:56
 msgid "builtin"
 msgstr "내장"
 
-#: winecfg.rc:58
+#: winecfg.rc:57
 msgid "native, builtin"
 msgstr "네이티브, 내장"
 
-#: winecfg.rc:59
+#: winecfg.rc:58
 msgid "builtin, native"
 msgstr "내장, 네이티브"
 
-#: winecfg.rc:60
+#: winecfg.rc:59
 msgid "disabled"
 msgstr "사용하지 않음"
 
-#: winecfg.rc:61
+#: winecfg.rc:60
 msgid "Default Settings"
 msgstr "기본 설정"
 
-#: winecfg.rc:62
+#: winecfg.rc:61
 msgid "Wine Programs (*.exe; *.exe.so)"
 msgstr "Wine 프로그램 (*.exe,*.exe.so)"
 
-#: winecfg.rc:63
+#: winecfg.rc:62
 msgid "Use global settings"
 msgstr "전역 설정 사용"
 
-#: winecfg.rc:64
+#: winecfg.rc:63
 msgid "Select an executable file"
 msgstr "실행 파일 선택"
 
-#: winecfg.rc:69
+#: winecfg.rc:68
 msgid "Autodetect"
 msgstr "자동으로 찾기"
 
-#: winecfg.rc:70
+#: winecfg.rc:69
 msgid "Local hard disk"
 msgstr "로컬 하드 디스크"
 
-#: winecfg.rc:71
+#: winecfg.rc:70
 msgid "Network share"
 msgstr "네트워크 공유"
 
-#: winecfg.rc:72
+#: winecfg.rc:71
 msgid "Floppy disk"
 msgstr "플로피 디스크"
 
-#: winecfg.rc:73
+#: winecfg.rc:72
 msgid "CD-ROM"
 msgstr "CD-ROM"
 
-#: winecfg.rc:74
+#: winecfg.rc:73
 msgid ""
 "You cannot add any more drives.\n"
 "\n"
@@ -15814,11 +15875,11 @@ msgstr ""
 "각각의 드라이브는 A에서 Z까지의 문자를 가지기 때문에, 26개보다 더 많은 드라이"
 "브를 추가할 수 없습니다."
 
-#: winecfg.rc:75
+#: winecfg.rc:74
 msgid "System drive"
 msgstr "시스템 드라이브"
 
-#: winecfg.rc:76
+#: winecfg.rc:75
 msgid ""
 "Are you sure you want to delete drive C?\n"
 "\n"
@@ -15831,16 +15892,16 @@ msgstr ""
 "면 비정상적인 방법으로 종료합니다. 계속 진행려면, C 드라이브를 다시 만드십시"
 "오!"
 
-#: winecfg.rc:77
+#: winecfg.rc:76
 msgctxt "Drive letter"
 msgid "Letter"
 msgstr "문자"
 
-#: winecfg.rc:78
+#: winecfg.rc:77
 msgid "Target folder"
 msgstr "목표 폴더"
 
-#: winecfg.rc:79
+#: winecfg.rc:78
 msgid ""
 "You don't have a drive C. This is not so great.\n"
 "\n"
@@ -15850,127 +15911,127 @@ msgstr ""
 "\n"
 "드라이브 탭에서 [추가]를 클릭해서 만드는 것을 잊지 마십시오!\n"
 
-#: winecfg.rc:99
+#: winecfg.rc:98
 msgid "Controls Background"
 msgstr "컨트롤 배경"
 
-#: winecfg.rc:100
+#: winecfg.rc:99
 msgid "Controls Text"
 msgstr "컨트롤 문자"
 
-#: winecfg.rc:102
+#: winecfg.rc:101
 msgid "Menu Background"
 msgstr "메뉴 배경"
 
-#: winecfg.rc:103
+#: winecfg.rc:102
 msgid "Menu Text"
 msgstr "메뉴 문자"
 
-#: winecfg.rc:104
+#: winecfg.rc:103
 msgid "Scrollbar"
 msgstr "스크롤바"
 
-#: winecfg.rc:105
+#: winecfg.rc:104
 msgid "Selection Background"
 msgstr "선택 영역 배경"
 
-#: winecfg.rc:106
+#: winecfg.rc:105
 msgid "Selection Text"
 msgstr "선택 영역 문자"
 
-#: winecfg.rc:107
+#: winecfg.rc:106
 msgid "Tooltip Background"
 msgstr "도구팁 배경"
 
-#: winecfg.rc:108
+#: winecfg.rc:107
 msgid "Tooltip Text"
 msgstr "도구팁 문자"
 
-#: winecfg.rc:109
+#: winecfg.rc:108
 msgid "Window Background"
 msgstr "창 배경"
 
-#: winecfg.rc:110
+#: winecfg.rc:109
 msgid "Window Text"
 msgstr "창 문자"
 
-#: winecfg.rc:111
+#: winecfg.rc:110
 msgid "Active Title Bar"
 msgstr "활성 제목 표시줄"
 
-#: winecfg.rc:112
+#: winecfg.rc:111
 msgid "Active Title Text"
 msgstr "활성 제목 표시줄 문자"
 
-#: winecfg.rc:113
+#: winecfg.rc:112
 msgid "Inactive Title Bar"
 msgstr "비활성 제목 표시줄"
 
-#: winecfg.rc:114
+#: winecfg.rc:113
 msgid "Inactive Title Text"
 msgstr "비활성 제목 표시줄 문자"
 
-#: winecfg.rc:115
+#: winecfg.rc:114
 msgid "Message Box Text"
 msgstr "메시지 상자 문자"
 
-#: winecfg.rc:116
+#: winecfg.rc:115
 msgid "Application Workspace"
 msgstr "프로그램 작업공간"
 
-#: winecfg.rc:117
+#: winecfg.rc:116
 msgid "Window Frame"
 msgstr "창 프레임"
 
-#: winecfg.rc:118
+#: winecfg.rc:117
 msgid "Active Border"
 msgstr "활성 테두리"
 
-#: winecfg.rc:119
+#: winecfg.rc:118
 msgid "Inactive Border"
 msgstr "비활성 테두리"
 
-#: winecfg.rc:120
+#: winecfg.rc:119
 msgid "Controls Shadow"
 msgstr "컨트롤 그림자"
 
-#: winecfg.rc:121
+#: winecfg.rc:120
 msgid "Gray Text"
 msgstr "회색 문자"
 
-#: winecfg.rc:122
+#: winecfg.rc:121
 msgid "Controls Highlight"
 msgstr "컨트롤 하이라이트"
 
-#: winecfg.rc:123
+#: winecfg.rc:122
 msgid "Controls Dark Shadow"
 msgstr "컨트롤 그림자 2"
 
-#: winecfg.rc:124
+#: winecfg.rc:123
 msgid "Controls Light"
 msgstr "컨트롤 밝은 부분"
 
-#: winecfg.rc:125
+#: winecfg.rc:124
 msgid "Controls Alternate Background"
 msgstr "컨트롤 배경 2"
 
-#: winecfg.rc:126
+#: winecfg.rc:125
 msgid "Hot Tracked Item"
 msgstr "집중 추적 항목"
 
-#: winecfg.rc:127
+#: winecfg.rc:126
 msgid "Active Title Bar Gradient"
 msgstr "활성 제목 표시줄 그라데이션"
 
-#: winecfg.rc:128
+#: winecfg.rc:127
 msgid "Inactive Title Bar Gradient"
 msgstr "비활성 제목 표시줄 그라데이션"
 
-#: winecfg.rc:129
+#: winecfg.rc:128
 msgid "Menu Highlight"
 msgstr "메뉴 하이라이트"
 
-#: winecfg.rc:130
+#: winecfg.rc:129
 msgid "Menu Bar"
 msgstr "메뉴바"
 

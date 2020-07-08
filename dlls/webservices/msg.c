@@ -1901,14 +1901,6 @@ static HRESULT insert_mapped_headers( struct msg *msg, HINTERNET req )
 
 HRESULT message_insert_http_headers( WS_MESSAGE *handle, HINTERNET req )
 {
-    static const WCHAR contenttypeW[] =
-        {'C','o','n','t','e','n','t','-','T','y','p','e',0};
-    static const WCHAR soapxmlW[] =
-        {'a','p','p','l','i','c','a','t','i','o','n','/','s','o','a','p','+','x','m','l',0};
-    static const WCHAR textxmlW[] =
-        {'t','e','x','t','/','x','m','l',0};
-    static const WCHAR charsetW[] =
-        {'c','h','a','r','s','e','t','=','u','t','f','-','8',0};
     struct msg *msg = (struct msg *)handle;
     HRESULT hr = E_OUTOFMEMORY;
     WCHAR *header = NULL, *buf;
@@ -1925,11 +1917,11 @@ HRESULT message_insert_http_headers( WS_MESSAGE *handle, HINTERNET req )
     switch (msg->version_env)
     {
     case WS_ENVELOPE_VERSION_SOAP_1_1:
-        header = build_http_header( contenttypeW, textxmlW, &len );
+        header = build_http_header( L"Content-Type", L"text/xml", &len );
         break;
 
     case WS_ENVELOPE_VERSION_SOAP_1_2:
-        header = build_http_header( contenttypeW, soapxmlW, &len );
+        header = build_http_header( L"Content-Type", L"application/soap+xml", &len );
         break;
 
     default:
@@ -1942,7 +1934,7 @@ HRESULT message_insert_http_headers( WS_MESSAGE *handle, HINTERNET req )
     heap_free( header );
 
     hr = E_OUTOFMEMORY;
-    if (!(header = build_http_header( contenttypeW, charsetW, &len ))) goto done;
+    if (!(header = build_http_header( L"Content-Type", L"charset=utf-8", &len ))) goto done;
     if ((hr = insert_http_header( req, header, len, WINHTTP_ADDREQ_FLAG_COALESCE_WITH_SEMICOLON )) != S_OK)
         goto done;
     heap_free( header );
@@ -1952,8 +1944,6 @@ HRESULT message_insert_http_headers( WS_MESSAGE *handle, HINTERNET req )
     {
     case WS_ENVELOPE_VERSION_SOAP_1_1:
     {
-        static const WCHAR soapactionW[] = {'S','O','A','P','A','c','t','i','o','n',0};
-
         if (!(len = MultiByteToWideChar( CP_UTF8, 0, (char *)msg->action->bytes, msg->action->length, NULL, 0 )))
             break;
 
@@ -1964,7 +1954,7 @@ HRESULT message_insert_http_headers( WS_MESSAGE *handle, HINTERNET req )
         buf[len + 1] = '"';
         buf[len + 2] = 0;
 
-        header = build_http_header( soapactionW, buf, &len );
+        header = build_http_header( L"SOAPAction", buf, &len );
         heap_free( buf );
         if (!header) goto done;
 
@@ -1973,21 +1963,20 @@ HRESULT message_insert_http_headers( WS_MESSAGE *handle, HINTERNET req )
     }
     case WS_ENVELOPE_VERSION_SOAP_1_2:
     {
-        static const WCHAR actionW[] = {'a','c','t','i','o','n','=','"'};
-        ULONG len_action = ARRAY_SIZE( actionW );
+        ULONG len_action = ARRAY_SIZE( L"action=\"" ) - 1;
 
         if (!(len = MultiByteToWideChar( CP_UTF8, 0, (char *)msg->action->bytes, msg->action->length, NULL, 0 )))
             break;
 
         hr = E_OUTOFMEMORY;
         if (!(buf = heap_alloc( (len + len_action + 2) * sizeof(WCHAR) ))) goto done;
-        memcpy( buf, actionW, len_action * sizeof(WCHAR) );
+        memcpy( buf, L"action=\"", len_action * sizeof(WCHAR) );
         MultiByteToWideChar( CP_UTF8, 0, (char *)msg->action->bytes, msg->action->length, buf + len_action, len );
         len += len_action;
         buf[len++] = '"';
         buf[len] = 0;
 
-        header = build_http_header( contenttypeW, buf, &len );
+        header = build_http_header( L"Content-Type", buf, &len );
         heap_free( buf );
         if (!header) goto done;
 

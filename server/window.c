@@ -88,6 +88,7 @@ struct window
     DPI_AWARENESS    dpi_awareness;   /* DPI awareness mode */
     lparam_t         user_data;       /* user-specific data */
     WCHAR           *text;            /* window caption text */
+    data_size_t      text_len;        /* length of window caption */
     unsigned int     paint_flags;     /* various painting flags */
     int              prop_inuse;      /* number of in-use window properties */
     int              prop_alloc;      /* number of allocated window properties */
@@ -506,6 +507,7 @@ static struct window *create_window( struct window *parent, struct window *owner
     win->dpi            = 0;
     win->user_data      = 0;
     win->text           = NULL;
+    win->text_len       = 0;
     win->paint_flags    = 0;
     win->prop_inuse     = 0;
     win->prop_alloc     = 0;
@@ -2407,10 +2409,10 @@ DECL_HANDLER(get_window_text)
 {
     struct window *win = get_window( req->handle );
 
-    if (win && win->text)
+    if (win && win->text_len)
     {
-        reply->length = strlenW( win->text );
-        set_reply_data( win->text, min( reply->length * sizeof(WCHAR), get_reply_max_size() ));
+        reply->length = win->text_len / sizeof(WCHAR);
+        set_reply_data( win->text, min( win->text_len, get_reply_max_size() ));
     }
 }
 
@@ -2418,21 +2420,16 @@ DECL_HANDLER(get_window_text)
 /* set the window text */
 DECL_HANDLER(set_window_text)
 {
+    data_size_t len;
+    WCHAR *text = NULL;
     struct window *win = get_window( req->handle );
 
-    if (win)
-    {
-        WCHAR *text = NULL;
-        data_size_t len = get_req_data_size() / sizeof(WCHAR);
-        if (len)
-        {
-            if (!(text = mem_alloc( (len+1) * sizeof(WCHAR) ))) return;
-            memcpy( text, get_req_data(), len * sizeof(WCHAR) );
-            text[len] = 0;
-        }
-        free( win->text );
-        win->text = text;
-    }
+    if (!win) return;
+    len = (get_req_data_size() / sizeof(WCHAR)) * sizeof(WCHAR);
+    if (len && !(text = memdup( get_req_data(), len ))) return;
+    free( win->text );
+    win->text = text;
+    win->text_len = len;
 }
 
 

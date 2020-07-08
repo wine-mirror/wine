@@ -10,12 +10,15 @@ SOURCES = \
 	wine.pl.UTF-8.man.in \
 	wine_info.plist.in \
 	winebus.inf.in \
-	winehid.inf.in
+	winehid.inf.in \
+	wineusb.inf.in
 
 PROGRAMS = $(WINELOADER_PROGRAMS)
 INSTALL_LIB = $(WINELOADER_PROGRAMS)
 
 preloader_EXTRADEFS = -fno-builtin
+
+main_EXTRADEFS = -DDLLDIR=\"${dlldir}\" -DBIN_TO_DLLDIR=\"`$(MAKEDEP) -R ${bindir} ${dlldir}`\"
 
 wine_OBJS = main.o
 wine_DEPS = $(WINELOADER_DEPENDS)
@@ -26,7 +29,9 @@ wine64_DEPS = $(WINELOADER_DEPENDS)
 wine64_LDFLAGS = $(WINELOADER_LDFLAGS) $(LDEXECFLAGS) -lwine $(PTHREAD_LIBS)
 
 wine_preloader_OBJS = preloader.o preloader_mac.o
+wine_preloader_DEPS = $(WINELOADER_DEPENDS)
 wine_preloader_LDFLAGS = $(WINEPRELOADER_LDFLAGS)
 
 wine64_preloader_OBJS = preloader.o preloader_mac.o
+wine64_preloader_DEPS = $(WINELOADER_DEPENDS)
 wine64_preloader_LDFLAGS = $(WINEPRELOADER_LDFLAGS)

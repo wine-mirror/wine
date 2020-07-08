@@ -1379,9 +1379,7 @@ static LRESULT COMBOEX_DrawItem (COMBOEX_INFO *infoPtr, DRAWITEMSTRUCT const *di
     } else {
 	/* drawing combo/edit entry */
 	if (IsWindowVisible(infoPtr->hwndEdit)) {
-	    /* if we have an edit control, the slave the
-             * selection state to the Edit focus state
-	     */
+	    /* if we have an edit control, set the selection state from the edit focus state */
 	    if (infoPtr->flags & WCBE_EDITFOCUSED)
 		drawstate = ILD_SELECTED;
 	} else

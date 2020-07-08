@@ -1155,23 +1155,9 @@ void DDRAW_dump_DDCAPS(const DDCAPS *lpcaps)
     TRACE(" - ddsCaps : "); DDRAW_dump_DDSCAPS2(&lpcaps->ddsCaps);
 }
 
-/*****************************************************************************
- * multiply_matrix
- *
- * Multiplies 2 4x4 matrices src1 and src2, and stores the result in dest.
- *
- * Params:
- *  dest: Pointer to the destination matrix
- *  src1: Pointer to the first source matrix
- *  src2: Pointer to the second source matrix
- *
- *****************************************************************************/
-void
-multiply_matrix(D3DMATRIX *dest,
-                const D3DMATRIX *src1,
-                const D3DMATRIX *src2)
+void multiply_matrix(struct wined3d_matrix *dst, const struct wined3d_matrix *src1, const struct wined3d_matrix *src2)
 {
-    D3DMATRIX temp;
+    struct wined3d_matrix temp;
 
     /* Now do the multiplication 'by hand'.
        I know that all this could be optimised, but this will be done later :-) */
@@ -1195,8 +1181,7 @@ multiply_matrix(D3DMATRIX *dest,
     temp._34 = (src1->_14 * src2->_31) + (src1->_24 * src2->_32) + (src1->_34 * src2->_33) + (src1->_44 * src2->_34);
     temp._44 = (src1->_14 * src2->_41) + (src1->_24 * src2->_42) + (src1->_34 * src2->_43) + (src1->_44 * src2->_44);
 
-    /* And copy the new matrix in the good storage.. */
-    memcpy(dest, &temp, 16 * sizeof(D3DVALUE));
+    *dst = temp;
 }
 
 HRESULT
@@ -1204,8 +1189,11 @@ hr_ddraw_from_wined3d(HRESULT hr)
 {
     switch(hr)
     {
-        case WINED3DERR_INVALIDCALL: return DDERR_INVALIDPARAMS;
-        default: return hr;
+        case WINED3DERR_INVALIDCALL:        return DDERR_INVALIDPARAMS;
+        case WINED3DERR_NOTAVAILABLE:       return DDERR_UNSUPPORTED;
+        case WINEDDERR_NOTAOVERLAYSURFACE:  return DDERR_NOTAOVERLAYSURFACE;
+        case WINEDDERR_OVERLAYNOTVISIBLE:   return DDERR_OVERLAYNOTVISIBLE;
+        default:                            return hr;
     }
 }
 

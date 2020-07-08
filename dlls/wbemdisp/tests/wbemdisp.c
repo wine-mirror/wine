@@ -28,6 +28,7 @@
 
 DEFINE_GUID(CLSID_WINMGMTS,0x172bddf8,0xceea,0x11d1,0x8b,0x05,0x00,0x60,0x08,0x06,0xd9,0xb6);
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
+DEFINE_OLEGUID(CLSID_PointerMoniker,0x306,0,0);
 
 static const LCID english = MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT);
 
@@ -73,6 +74,7 @@ static void test_ParseDisplayName(void)
     BSTR str;
     ULONG i, eaten, count;
     HRESULT hr;
+    CLSID clsid;
 
     hr = CoCreateInstance( &CLSID_WINMGMTS, NULL, CLSCTX_INPROC_SERVER, &IID_IParseDisplayName, (void **)&displayname );
     if (hr != S_OK)
@@ -95,6 +97,10 @@ static void test_ParseDisplayName(void)
         ok( eaten == tests[i].eaten, "%u: got %u\n", i, eaten );
         if (moniker)
         {
+            hr = IMoniker_GetClassID( moniker, &clsid );
+            ok( hr == S_OK, "%u: got %x\n", i, hr );
+            ok( IsEqualCLSID( &clsid, &CLSID_PointerMoniker ), "%u: got %s\n", i, wine_dbgstr_guid( &clsid ) );
+
             obj = NULL;
             hr = IMoniker_BindToObject( moniker, ctx, NULL, tests[i].iid, (void **)&obj );
             ok( hr == S_OK, "%u: got %x\n", i, hr );
@@ -113,6 +119,10 @@ static void test_ParseDisplayName(void)
     if (moniker)
     {
         ISWbemServices *services = NULL;
+
+        hr = IMoniker_GetClassID( moniker, &clsid );
+        ok( hr == S_OK, "%u: got %x\n", i, hr );
+        ok( IsEqualCLSID( &clsid, &CLSID_PointerMoniker ), "got %s\n", wine_dbgstr_guid( &clsid ) );
 
         hr = IMoniker_BindToObject( moniker, ctx, NULL, &IID_IUnknown, (void **)&services );
         ok( hr == S_OK, "got %x\n", hr );
@@ -259,6 +269,11 @@ static void test_ParseDisplayName(void)
     if (moniker)
     {
         ISWbemObject *sobj = NULL;
+
+        hr = IMoniker_GetClassID( moniker, &clsid );
+        ok( hr == S_OK, "%u: got %x\n", i, hr );
+        ok( IsEqualCLSID( &clsid, &CLSID_PointerMoniker ), "got %s\n", wine_dbgstr_guid( &clsid ) );
+
         hr = IMoniker_BindToObject( moniker, ctx, NULL, &IID_ISWbemObject, (void **)&sobj );
         ok( hr == S_OK, "got %x\n",hr );
         if (sobj)

@@ -27,10 +27,7 @@
  * parameter than usual.
  */
 
-#include "config.h"
-
 #define NONAMELESSUNION
-
 #include <stdlib.h>
 #include <string.h>
 #include "wine/winbase16.h"
@@ -81,8 +78,6 @@ typedef struct
 /*
  * We make addr = 4n + 2 and set *((WORD *)addr - 1) = &addr like Windows does
  * in case something actually relies on this.
- * Note that if the architecture does not allow unaligned accesses, we make
- * addr = 4n + 4 to avoid returning unaligned pointers from LocalAlloc etc.
  *
  * An unused handle has lock = flags = 0xff. In windows addr is that of next
  * free handle, at the moment in wine we set it to 0.
@@ -91,12 +86,7 @@ typedef struct
  * (LMEM_DISCARDED >> 8)
  */
 
-#ifdef ALLOW_UNALIGNED_ACCESS
-# define MOVEABLE_PREFIX sizeof(HLOCAL16)
-#else
-# define MOVEABLE_PREFIX sizeof(int)
-#endif
-
+#define MOVEABLE_PREFIX sizeof(HLOCAL16)
 
 #include "pshpack1.h"
 
@@ -1785,8 +1775,8 @@ HANDLE WINAPI Local32Init16( WORD segment, DWORD tableSize,
 
     nrBlocks      = (totSize + 0x7fff) >> 15;
     selectorTable = HeapAlloc( header->heap,  0, nrBlocks * 2 );
-    selectorEven  = SELECTOR_AllocBlock( base, totSize, WINE_LDT_FLAGS_DATA );
-    selectorOdd   = SELECTOR_AllocBlock( base + 0x8000, totSize - 0x8000, WINE_LDT_FLAGS_DATA );
+    selectorEven  = SELECTOR_AllocBlock( base, totSize, LDT_FLAGS_DATA );
+    selectorOdd   = SELECTOR_AllocBlock( base + 0x8000, totSize - 0x8000, LDT_FLAGS_DATA );
     if ( !selectorTable || !selectorEven || !selectorOdd )
     {
         HeapFree( header->heap, 0, selectorTable );

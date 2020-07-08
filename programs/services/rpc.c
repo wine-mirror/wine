@@ -19,6 +19,7 @@
  */
 
 #define WIN32_LEAN_AND_MEAN
+#define NONAMELESSSTRUCT
 #define NONAMELESSUNION
 
 #include <stdarg.h>
@@ -1133,6 +1134,8 @@ static BOOL process_send_command(struct process_entry *process, const void *data
     DWORD count, ret;
     BOOL r;
 
+    overlapped.u.s.Offset = 0;
+    overlapped.u.s.OffsetHigh = 0;
     overlapped.hEvent = process->overlapped_event;
     r = WriteFile(process->control_pipe, data, size, &count, &overlapped);
     if (!r && GetLastError() == ERROR_IO_PENDING)
@@ -1362,55 +1365,23 @@ DWORD __cdecl svcctl_CloseServiceHandle(
     return ERROR_SUCCESS;
 }
 
-static void SC_RPC_LOCK_destroy(SC_RPC_LOCK hLock)
-{
-    struct sc_lock *lock = hLock;
-    scmdatabase_unlock_startup(lock->db);
-    HeapFree(GetProcessHeap(), 0, lock);
-}
-
 void __RPC_USER SC_RPC_LOCK_rundown(SC_RPC_LOCK hLock)
 {
-    SC_RPC_LOCK_destroy(hLock);
 }
 
-DWORD __cdecl svcctl_LockServiceDatabase(
-    SC_RPC_HANDLE hSCManager,
-    SC_RPC_LOCK *phLock)
+DWORD __cdecl svcctl_LockServiceDatabase(SC_RPC_HANDLE manager, SC_RPC_LOCK *lock)
 {
-    struct sc_manager_handle *manager;
-    struct sc_lock *lock;
-    DWORD err;
+    TRACE("(%p, %p)\n", manager, lock);
 
-    WINE_TRACE("(%p, %p)\n", hSCManager, phLock);
-
-    if ((err = validate_scm_handle(hSCManager, SC_MANAGER_LOCK, &manager)) != ERROR_SUCCESS)
-        return err;
-
-    if (!scmdatabase_lock_startup(manager->db, 0))
-        return ERROR_SERVICE_DATABASE_LOCKED;
-
-    lock = HeapAlloc(GetProcessHeap(), 0, sizeof(struct sc_lock));
-    if (!lock)
-    {
-        scmdatabase_unlock_startup(manager->db);
-        return ERROR_NOT_ENOUGH_SERVER_MEMORY;
-    }
-
-    lock->db = manager->db;
-    *phLock = lock;
-
+    *lock = (SC_RPC_LOCK)0xdeadbeef;
     return ERROR_SUCCESS;
 }
 
-DWORD __cdecl svcctl_UnlockServiceDatabase(
-    SC_RPC_LOCK *phLock)
+DWORD __cdecl svcctl_UnlockServiceDatabase(SC_RPC_LOCK *lock)
 {
-    WINE_TRACE("(&%p)\n", *phLock);
+    TRACE("(&%p)\n", *lock);
 
-    SC_RPC_LOCK_destroy(*phLock);
-    *phLock = NULL;
-
+    *lock = NULL;
     return ERROR_SUCCESS;
 }
 

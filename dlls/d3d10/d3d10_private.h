@@ -61,6 +61,11 @@ enum d3d10_effect_object_operation
     D3D10_EOO_ANONYMOUS_SHADER = 7,
 };
 
+struct d3d10_matrix
+{
+    float m[4][4];
+};
+
 struct d3d10_effect_object
 {
     struct d3d10_effect_pass *pass;
@@ -74,6 +79,15 @@ struct d3d10_effect_object
         ID3D10PixelShader *ps;
         ID3D10GeometryShader *gs;
     } object;
+};
+
+struct d3d10_effect_shader_resource
+{
+    D3D10_SHADER_INPUT_TYPE in_type;
+    unsigned int bind_point;
+    unsigned int bind_count;
+
+    struct d3d10_effect_variable *variable;
 };
 
 struct d3d10_effect_shader_signature
@@ -94,6 +108,9 @@ struct d3d10_effect_shader_variable
         ID3D10PixelShader *ps;
         ID3D10GeometryShader *gs;
     } shader;
+
+    unsigned int resource_count;
+    struct d3d10_effect_shader_resource *resources;
 };
 
 struct d3d10_effect_state_object_variable
@@ -112,6 +129,12 @@ struct d3d10_effect_state_object_variable
         ID3D10BlendState *blend;
         ID3D10SamplerState *sampler;
     } object;
+};
+
+struct d3d10_effect_resource_variable
+{
+    ID3D10ShaderResourceView **srv;
+    BOOL parent;
 };
 
 struct d3d10_effect_buffer_variable
@@ -179,6 +202,7 @@ struct d3d10_effect_variable
         struct d3d10_effect_state_object_variable state;
         struct d3d10_effect_shader_variable shader;
         struct d3d10_effect_buffer_variable buffer;
+        struct d3d10_effect_resource_variable resource;
     } u;
 };
 

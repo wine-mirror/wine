@@ -3293,6 +3293,9 @@ typedef enum {
     DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_BASE_TYPE           = 6,
     DISPLAYCONFIG_DEVICE_INFO_GET_SUPPORT_VIRTUAL_RESOLUTION = 7,
     DISPLAYCONFIG_DEVICE_INFO_SET_SUPPORT_VIRTUAL_RESOLUTION = 8,
+    DISPLAYCONFIG_DEVICE_INFO_GET_ADVANCED_COLOR_INFO        = 9,
+    DISPLAYCONFIG_DEVICE_INFO_SET_ADVANCED_COLOR_STATE       = 10,
+    DISPLAYCONFIG_DEVICE_INFO_GET_SDR_WHITE_LEVEL            = 11,
     DISPLAYCONFIG_DEVICE_INFO_FORCE_UINT32                   = 0xffffffff
 } DISPLAYCONFIG_DEVICE_INFO_TYPE;
 
@@ -3429,6 +3432,16 @@ typedef enum
     DISPLAYCONFIG_OUTPUT_TECHNOLOGY_FORCE_UINT32 = (int) 0xffffffff
 } DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY;
 
+typedef enum
+{
+    DISPLAYCONFIG_COLOR_ENCODING_RGB = 0,
+    DISPLAYCONFIG_COLOR_ENCODING_YCBCR444 = 1,
+    DISPLAYCONFIG_COLOR_ENCODING_YCBCR422 = 2,
+    DISPLAYCONFIG_COLOR_ENCODING_YCBCR420 = 3,
+    DISPLAYCONFIG_COLOR_ENCODING_INTENSITY = 4,
+    DISPLAYCONFIG_COLOR_ENCODING_FORCE_UINT32 = 0xffffffff
+} DISPLAYCONFIG_COLOR_ENCODING;
+
 typedef struct DISPLAYCONFIG_2DREGION
 {
     UINT32 cx;
@@ -3525,10 +3538,129 @@ typedef struct DISPLAYCONFIG_MODE_INFO
     } DUMMYUNIONNAME;
 } DISPLAYCONFIG_MODE_INFO;
 
+typedef struct DISPLAYCONFIG_SOURCE_DEVICE_NAME {
+    DISPLAYCONFIG_DEVICE_INFO_HEADER header;
+    WCHAR                            viewGdiDeviceName[CCHDEVICENAME];
+} DISPLAYCONFIG_SOURCE_DEVICE_NAME;
+
+typedef struct DISPLAYCONFIG_TARGET_DEVICE_NAME_FLAGS {
+    union {
+        struct {
+            UINT32 friendlyNameFromEdid :1;
+            UINT32 friendlyNameForced :1;
+            UINT32 edidIdsValid :1;
+            UINT32 reserved :29;
+        } DUMMYSTRUCTNAME;
+        UINT32 value;
+    } DUMMYUNIONNAME;
+} DISPLAYCONFIG_TARGET_DEVICE_NAME_FLAGS;
+
+typedef struct DISPLAYCONFIG_TARGET_DEVICE_NAME {
+    DISPLAYCONFIG_DEVICE_INFO_HEADER       header;
+    DISPLAYCONFIG_TARGET_DEVICE_NAME_FLAGS flags;
+    DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY  outputTechnology;
+    UINT16                                 edidManufactureId;
+    UINT16                                 edidProductCodeId;
+    UINT32                                 connectorInstance;
+    WCHAR                                  monitorFriendlyDeviceName[64];
+    WCHAR                                  monitorDevicePath[128];
+} DISPLAYCONFIG_TARGET_DEVICE_NAME;
+
+typedef struct DISPLAYCONFIG_TARGET_PREFERRED_MODE {
+    DISPLAYCONFIG_DEVICE_INFO_HEADER header;
+    UINT32                           width;
+    UINT32                           height;
+    DISPLAYCONFIG_TARGET_MODE        targetMode;
+} DISPLAYCONFIG_TARGET_PREFERRED_MODE;
+
+typedef struct DISPLAYCONFIG_ADAPTER_NAME {
+    DISPLAYCONFIG_DEVICE_INFO_HEADER header;
+    WCHAR                            adapterDevicePath[128];
+} DISPLAYCONFIG_ADAPTER_NAME;
+
+typedef struct DISPLAYCONFIG_SET_TARGET_PERSISTENCE {
+    DISPLAYCONFIG_DEVICE_INFO_HEADER header;
+    union {
+        struct {
+            UINT32 bootPersistenceOn :1;
+            UINT32 reserved :31;
+        } DUMMYSTRUCTNAME;
+        UINT32 value;
+    } DUMMYUNIONNAME;
+} DISPLAYCONFIG_SET_TARGET_PERSISTENCE;
+
+typedef struct DISPLAYCONFIG_TARGET_BASE_TYPE {
+    DISPLAYCONFIG_DEVICE_INFO_HEADER      header;
+    DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY baseOutputTechnology;
+} DISPLAYCONFIG_TARGET_BASE_TYPE;
+
+typedef struct DISPLAYCONFIG_SUPPORT_VIRTUAL_RESOLUTION {
+    DISPLAYCONFIG_DEVICE_INFO_HEADER header;
+    union {
+        struct {
+            UINT32 disableMonitorVirtualResolution :1;
+            UINT32 reserved :31;
+        } DUMMYSTRUCTNAME;
+        UINT32 value;
+    } DUMMYUNIONNAME;
+} DISPLAYCONFIG_SUPPORT_VIRTUAL_RESOLUTION;
+
+typedef struct DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO {
+    DISPLAYCONFIG_DEVICE_INFO_HEADER header;
+    union {
+        struct {
+            UINT32 advancedColorSupported :1;
+            UINT32 advancedColorEnabled :1;
+            UINT32 wideColorEnforced :1;
+            UINT32 advancedColorForceDisabled :1;
+            UINT32 reserved :28;
+        } DUMMYSTRUCTNAME;
+        UINT32 value;
+    } DUMMYUNIONNAME;
+    DISPLAYCONFIG_COLOR_ENCODING colorEncoding;
+    UINT32                       bitsPerColorChannel;
+} DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO;
+
+typedef struct DISPLAYCONFIG_SET_ADVANCED_COLOR_STATE {
+    DISPLAYCONFIG_DEVICE_INFO_HEADER header;
+    union {
+        struct {
+            UINT32 enableAdvancedColor :1;
+            UINT32 reserved :31;
+        } DUMMYSTRUCTNAME;
+        UINT32 value;
+    } DUMMYUNIONNAME;
+} DISPLAYCONFIG_SET_ADVANCED_COLOR_STATE;
+
+typedef struct DISPLAYCONFIG_SDR_WHITE_LEVEL {
+    DISPLAYCONFIG_DEVICE_INFO_HEADER header;
+    ULONG                            SDRWhiteLevel;
+} DISPLAYCONFIG_SDR_WHITE_LEVEL;
+
+#define DISPLAYCONFIG_PATH_MODE_IDX_INVALID             0xffffffff
+#define DISPLAYCONFIG_PATH_TARGET_MODE_IDX_INVALID      0xffff
+#define DISPLAYCONFIG_PATH_DESKTOP_IMAGE_IDX_INVALID    0xffff
+#define DISPLAYCONFIG_PATH_SOURCE_MODE_IDX_INVALID      0xffff
+#define DISPLAYCONFIG_PATH_CLONE_GROUP_INVALID          0xffff
+
+#define DISPLAYCONFIG_SOURCE_IN_USE                     0x00000001
+
+#define DISPLAYCONFIG_TARGET_IN_USE                     0x00000001
+#define DISPLAYCONFIG_TARGET_FORCIBLE                   0x00000002
+#define DISPLAYCONFIG_TARGET_FORCED_AVAILABILITY_BOOT   0x00000004
+#define DISPLAYCONFIG_TARGET_FORCED_AVAILABILITY_PATH   0x00000008
+#define DISPLAYCONFIG_TARGET_FORCED_AVAILABILITY_SYSTEM 0x00000010
+#define DISPLAYCONFIG_TARGET_IS_HMD                     0x00000020
+
+#define DISPLAYCONFIG_PATH_ACTIVE                       0x00000001
+#define DISPLAYCONFIG_PATH_SUPPORT_VIRTUAL_MODE         0x00000008
+
 /* For GetDisplayConfigBufferSizes */
 #define QDC_ALL_PATHS                           0x00000001
 #define QDC_ONLY_ACTIVE_PATHS                   0x00000002
 #define QDC_DATABASE_CURRENT                    0x00000004
+#define QDC_VIRTUAL_MODE_AWARE                  0x00000010
+#define QDC_INCLUDE_HMD                         0x00000020
 
 #define GDI_ERROR                               (~0u)
 #define HGDI_ERROR                              ((HANDLE)~(ULONG_PTR)0)

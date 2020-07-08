@@ -4273,6 +4273,1321 @@ static void test_effect_state_group_defaults(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+/*
+ * test_effect_scalar_variable
+ */
+#if 0
+cbuffer cb
+{
+    float f0, f_a[2];
+    int i0, i_a[2];
+    bool b0, b_a[2];
+};
+#endif
+static DWORD fx_test_scalar_variable[] =
+{
+    0x43425844, 0xe4da4aa6, 0x1380ddc5, 0x445edad5,
+    0x08581666, 0x00000001, 0x0000020b, 0x00000001,
+    0x00000024, 0x30315846, 0x000001df, 0xfeff1001,
+    0x00000001, 0x00000006, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x000000d3,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x66006263,
+    0x74616f6c, 0x00000700, 0x00000100, 0x00000000,
+    0x00000400, 0x00001000, 0x00000400, 0x00090900,
+    0x00306600, 0x00000007, 0x00000001, 0x00000002,
+    0x00000014, 0x00000010, 0x00000008, 0x00000909,
+    0x00615f66, 0x00746e69, 0x0000004c, 0x00000001,
+    0x00000000, 0x00000004, 0x00000010, 0x00000004,
+    0x00000911, 0x4c003069, 0x01000000, 0x02000000,
+    0x14000000, 0x10000000, 0x08000000, 0x11000000,
+    0x69000009, 0x6200615f, 0x006c6f6f, 0x0000008f,
+    0x00000001, 0x00000000, 0x00000004, 0x00000010,
+    0x00000004, 0x00000921, 0x8f003062, 0x01000000,
+    0x02000000, 0x14000000, 0x10000000, 0x08000000,
+    0x21000000, 0x62000009, 0x0400615f, 0x70000000,
+    0x00000000, 0x06000000, 0xff000000, 0x00ffffff,
+    0x29000000, 0x0d000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x48000000,
+    0x2c000000, 0x00000000, 0x10000000, 0x00000000,
+    0x00000000, 0x00000000, 0x6c000000, 0x50000000,
+    0x00000000, 0x24000000, 0x00000000, 0x00000000,
+    0x00000000, 0x8b000000, 0x6f000000, 0x00000000,
+    0x30000000, 0x00000000, 0x00000000, 0x00000000,
+    0xb0000000, 0x94000000, 0x00000000, 0x44000000,
+    0x00000000, 0x00000000, 0x00000000, 0xcf000000,
+    0xb3000000, 0x00000000, 0x50000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000,
+};
+
+static void test_scalar_methods(ID3D10EffectScalarVariable *var, D3D10_SHADER_VARIABLE_TYPE type,
+        const char *name)
+{
+    float ret_f, expected_f;
+    int ret_i, expected_i;
+    BOOL ret_b, expected_b;
+    HRESULT hr;
+
+    hr = var->lpVtbl->SetFloat(var, 5.0f);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    hr = var->lpVtbl->GetFloat(var, &ret_f);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    expected_f = type == D3D10_SVT_BOOL ? -1.0f : 5.0f;
+    ok(ret_f == expected_f, "Variable %s, got unexpected value %.8e.\n", name, ret_f);
+
+    hr = var->lpVtbl->GetInt(var, &ret_i);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    expected_i = type == D3D10_SVT_BOOL ? -1 : 5;
+    ok(ret_i == expected_i, "Variable %s, got unexpected value %#x.\n", name, ret_i);
+
+    hr = var->lpVtbl->GetBool(var, &ret_b);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    ok(ret_b == -1, "Variable %s, got unexpected value %#x.\n", name, ret_b);
+
+    hr = var->lpVtbl->SetInt(var, 2);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    hr = var->lpVtbl->GetFloat(var, &ret_f);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    expected_f = type == D3D10_SVT_BOOL ? -1.0f : 2.0f;
+    ok(ret_f == expected_f, "Variable %s, got unexpected value %.8e.\n", name, ret_f);
+
+    hr = var->lpVtbl->GetInt(var, &ret_i);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    expected_i = type == D3D10_SVT_BOOL ? -1 : 2;
+    ok(ret_i == expected_i, "Variable %s, got unexpected value %#x.\n", name, ret_i);
+
+    hr = var->lpVtbl->GetBool(var, &ret_b);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    ok(ret_b == -1, "Variable %s, got unexpected value %#x.\n", name, ret_b);
+
+    hr = var->lpVtbl->SetBool(var, 1);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    hr = var->lpVtbl->GetFloat(var, &ret_f);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    ok(ret_f == -1.0f, "Variable %s, got unexpected value %.8e.\n", name, ret_f);
+
+    hr = var->lpVtbl->GetInt(var, &ret_i);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    ok(ret_i == -1, "Variable %s, got unexpected value %#x.\n", name, ret_i);
+
+    hr = var->lpVtbl->GetBool(var, &ret_b);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    expected_b = type == D3D10_SVT_BOOL ? 1 : -1;
+    ok(ret_b == expected_b, "Variable %s, got unexpected value %#x.\n", name, ret_b);
+
+    hr = var->lpVtbl->SetBool(var, 32);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    hr = var->lpVtbl->GetFloat(var, &ret_f);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    ok(ret_f == -1.0f, "Variable %s, got unexpected value %.8e.\n", name, ret_f);
+
+    hr = var->lpVtbl->GetInt(var, &ret_i);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    ok(ret_i == -1, "Variable %s, got unexpected value %#x.\n", name, ret_i);
+
+    hr = var->lpVtbl->GetBool(var, &ret_b);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    expected_b = type == D3D10_SVT_BOOL ? 32 : -1;
+    ok(ret_b == expected_b, "Variable %s, got unexpected value %#x.\n", name, ret_b);
+}
+
+static void test_scalar_array_methods(ID3D10EffectScalarVariable *var, D3D10_SHADER_VARIABLE_TYPE type,
+        const char *name)
+{
+    float set_f[2], ret_f[2], expected_f;
+    int set_i[6], ret_i[6], expected_i, expected_i_a[2];
+    BOOL set_b[2], ret_b[2], expected_b, expected_b_a[6];
+    unsigned int i;
+    HRESULT hr;
+
+    set_f[0] = 10.0f; set_f[1] = 20.0f;
+    hr = var->lpVtbl->SetFloatArray(var, set_f, 0, 2);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    hr = var->lpVtbl->GetFloatArray(var, ret_f, 0, 2);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < 2; ++i)
+    {
+        expected_f = type == D3D10_SVT_BOOL ? -1.0f : set_f[i];
+        ok(ret_f[i] == expected_f, "Variable %s, got unexpected value %.8e.\n", name, ret_f[i]);
+    }
+
+    hr = var->lpVtbl->GetIntArray(var, ret_i, 0, 2);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < 2; ++i)
+    {
+        expected_i = type == D3D10_SVT_BOOL ? -1 : (int)set_f[i];
+        ok(ret_i[i] == expected_i, "Variable %s, got unexpected value %#x.\n", name, ret_i[i]);
+    }
+
+    hr = var->lpVtbl->GetBoolArray(var, ret_b, 0, 2);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < 2; ++i)
+        ok(ret_b[i] == -1, "Variable %s, got unexpected value %#x.\n", name, ret_b[i]);
+
+    set_i[0] = 5; set_i[1] = 6;
+    hr = var->lpVtbl->SetIntArray(var, set_i, 0, 2);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    hr = var->lpVtbl->GetFloatArray(var, ret_f, 0, 2);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < 2; ++i)
+    {
+        expected_f = type == D3D10_SVT_BOOL ? -1.0f : (float)set_i[i];
+        ok(ret_f[i] == expected_f, "Variable %s, got unexpected value %.8e.\n", name, ret_f[i]);
+    }
+
+    hr = var->lpVtbl->GetIntArray(var, ret_i, 0, 2);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < 2; ++i)
+    {
+        expected_i = type == D3D10_SVT_BOOL ? -1 : set_i[i];
+        ok(ret_i[i] == expected_i, "Variable %s, got unexpected value %#x.\n", name, ret_i[i]);
+    }
+
+    hr = var->lpVtbl->GetBoolArray(var, ret_b, 0, 2);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < 2; ++i)
+        ok(ret_b[i] == -1, "Variable %s, got unexpected value %#x.\n", name, ret_b[i]);
+
+    set_b[0] = 1; set_b[1] = 1;
+    hr = var->lpVtbl->SetBoolArray(var, set_b, 0, 2);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    hr = var->lpVtbl->GetFloatArray(var, ret_f, 0, 2);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < 2; ++i)
+        ok(ret_f[i] == -1.0f, "Variable %s, got unexpected value %.8e.\n", name, ret_f[i]);
+
+    hr = var->lpVtbl->GetIntArray(var, ret_i, 0, 2);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < 2; ++i)
+        ok(ret_i[i] == -1, "Variable %s, got unexpected value %#x.\n", name, ret_i[i]);
+
+    hr = var->lpVtbl->GetBoolArray(var, ret_b, 0, 2);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < 2; ++i)
+    {
+        expected_b = type == D3D10_SVT_BOOL ? 1 : -1;
+        ok(ret_b[i] == expected_b, "Variable %s, got unexpected value %#x.\n", name, ret_b[i]);
+    }
+
+    set_b[0] = 10; set_b[1] = 20;
+    hr = var->lpVtbl->SetBoolArray(var, set_b, 0, 2);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    hr = var->lpVtbl->GetFloatArray(var, ret_f, 0, 2);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < 2; ++i)
+        ok(ret_f[i] == -1.0f, "Variable %s, got unexpected value %.8e.\n", name, ret_f[i]);
+
+    hr = var->lpVtbl->GetIntArray(var, ret_i, 0, 2);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < 2; ++i)
+        ok(ret_i[i] == -1, "Variable %s, got unexpected value %#x.\n", name, ret_i[i]);
+
+    hr = var->lpVtbl->GetBoolArray(var, ret_b, 0, 2);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < 2; ++i)
+    {
+        expected_b = type == D3D10_SVT_BOOL ? set_b[i] : -1;
+        ok(ret_b[i] == expected_b, "Variable %s, got unexpected value %#x.\n", name, ret_b[i]);
+    }
+
+    /* Array offset tests. Offset argument goes unused for scalar arrays. */
+    set_i[0] = 0; set_i[1] = 0;
+    hr = var->lpVtbl->SetIntArray(var, set_i, 0, 2);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    /* After this, if offset is in use, return should be { 0, 5 }. */
+    set_i[0] = 5;
+    hr = var->lpVtbl->SetIntArray(var, set_i, 1, 1);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    hr = var->lpVtbl->GetIntArray(var, ret_i, 0, 2);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    expected_b_a[0] = -1; expected_b_a[1] = 0;
+    expected_i_a[0] =  5; expected_i_a[1] = 0;
+    for (i = 0; i < 2; ++i)
+    {
+        expected_i = type == D3D10_SVT_BOOL ? expected_b_a[i] : expected_i_a[i];
+        ok(ret_i[i] == expected_i, "Variable %s, got unexpected value %#x.\n", name, ret_i[i]);
+    }
+
+    /* Test the offset on GetArray methods. If offset was in use, we'd get
+     * back 5 given that the variable was previously set to { 0, 5 }. */
+    hr = var->lpVtbl->GetIntArray(var, ret_i, 1, 1);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    expected_i = type == D3D10_SVT_BOOL ? -1 : 5;
+    ok(ret_i[0] == expected_i, "Variable %s, got unexpected value %#x.\n", name, ret_i[0]);
+
+    /* Try setting offset larger than number of elements. */
+    set_i[0] = 0; set_i[1] = 0;
+    hr = var->lpVtbl->SetIntArray(var, set_i, 0, 2);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    set_i[0] = 1;
+    hr = var->lpVtbl->SetIntArray(var, set_i, 6, 1);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    /* Since offset goes unused, a larger offset than the number of elements
+     * in the array should have no effect. */
+    hr = var->lpVtbl->GetIntArray(var, ret_i, 0, 1);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    expected_i = type == D3D10_SVT_BOOL ? -1 : 1;
+    ok(ret_i[0] == expected_i, "Variable %s, got unexpected value %#x.\n", name, ret_i[0]);
+
+    memset(ret_i, 0, sizeof(ret_i));
+    hr = var->lpVtbl->GetIntArray(var, ret_i, 6, 1);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    expected_i = type == D3D10_SVT_BOOL ? -1 : 1;
+    ok(ret_i[0] == expected_i, "Variable %s, got unexpected value %#x.\n", name, ret_i[0]);
+
+    if (0)
+    {
+        /* Windows array setting function has no bounds checking, so this test
+         * ends up writing over into the adjacent variables in the local buffer. */
+        set_i[0] = 1; set_i[1] = 2; set_i[2] = 3; set_i[3] = 4; set_i[4] = 5; set_i[5] = 6;
+        hr = var->lpVtbl->SetIntArray(var, set_i, 0, 6);
+        ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+        memset(ret_i, 0, sizeof(ret_i));
+        hr = var->lpVtbl->GetIntArray(var, ret_i, 0, 6);
+        ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+        expected_i_a[0] = 1; expected_i_a[1] = 2; expected_i_a[2] = 0; expected_i_a[3] = 0;
+        expected_i_a[4] = 0; expected_i_a[5] = 0;
+        expected_b_a[0] = -1; expected_b_a[1] = -1; expected_b_a[2] = 0; expected_b_a[3] = 0;
+        expected_b_a[4] = 0; expected_b_a[5] = 0;
+        for (i = 0; i < 6; ++i)
+        {
+            expected_i = type == D3D10_SVT_BOOL ? expected_b_a[i] : expected_i_a[i];
+            ok(ret_i[i] == expected_i, "Variable %s, got unexpected value %#x.\n", name, ret_i[i]);
+        }
+    }
+}
+
+static void test_effect_scalar_variable(void)
+{
+    static const struct
+    {
+        const char *name;
+        D3D_SHADER_VARIABLE_TYPE type;
+        BOOL array;
+    }
+    tests[] =
+    {
+        {"f0", D3D10_SVT_FLOAT},
+        {"i0", D3D10_SVT_INT},
+        {"b0", D3D10_SVT_BOOL},
+        {"f_a", D3D10_SVT_FLOAT, TRUE},
+        {"i_a", D3D10_SVT_INT, TRUE},
+        {"b_a", D3D10_SVT_BOOL, TRUE},
+    };
+    D3D10_EFFECT_TYPE_DESC type_desc;
+    ID3D10EffectScalarVariable *s_v;
+    ID3D10EffectVariable *var;
+    ID3D10EffectType *type;
+    ID3D10Device *device;
+    ID3D10Effect *effect;
+    unsigned int i;
+    ULONG refcount;
+    HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device.\n");
+        return;
+    }
+
+    hr = create_effect(fx_test_scalar_variable, 0, device, NULL, &effect);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    /* Check each different scalar type, make sure the variable returned is
+     * valid, set it to a value, and make sure what we get back is the same
+     * as what we set it to. */
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        var = effect->lpVtbl->GetVariableByName(effect, tests[i].name);
+        type = var->lpVtbl->GetType(var);
+        hr = type->lpVtbl->GetDesc(type, &type_desc);
+        ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", tests[i].name, hr);
+        ok(type_desc.Type == tests[i].type, "Variable %s, got unexpected type %#x.\n",
+                tests[i].name, type_desc.Type);
+        s_v = var->lpVtbl->AsScalar(var);
+        test_scalar_methods(s_v, tests[i].type, tests[i].name);
+        if (tests[i].array)
+            test_scalar_array_methods(s_v, tests[i].type, tests[i].name);
+    }
+
+    effect->lpVtbl->Release(effect);
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
+/*
+ * test_effect_vector_variable
+ */
+#if 0
+cbuffer cb
+{
+    float4 v_f0, v_f_a[2];
+    int3 v_i0, v_i_a[3];
+    bool2 v_b0, v_b_a[4];
+};
+#endif
+static DWORD fx_test_vector_variable[] =
+{
+    0x43425844, 0x581ae0ae, 0xa906b020, 0x26bba03e,
+    0x5d7dfba2, 0x00000001, 0x0000021a, 0x00000001,
+    0x00000024, 0x30315846, 0x000001ee, 0xfeff1001,
+    0x00000001, 0x00000006, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x000000e2,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x66006263,
+    0x74616f6c, 0x00070034, 0x00010000, 0x00000000,
+    0x00100000, 0x00100000, 0x00100000, 0x210a0000,
+    0x5f760000, 0x07003066, 0x01000000, 0x02000000,
+    0x20000000, 0x10000000, 0x20000000, 0x0a000000,
+    0x76000021, 0x615f665f, 0x746e6900, 0x00510033,
+    0x00010000, 0x00000000, 0x000c0000, 0x00100000,
+    0x000c0000, 0x19120000, 0x5f760000, 0x51003069,
+    0x01000000, 0x03000000, 0x2c000000, 0x10000000,
+    0x24000000, 0x12000000, 0x76000019, 0x615f695f,
+    0x6f6f6200, 0x9900326c, 0x01000000, 0x00000000,
+    0x08000000, 0x10000000, 0x08000000, 0x22000000,
+    0x76000011, 0x0030625f, 0x00000099, 0x00000001,
+    0x00000004, 0x00000038, 0x00000010, 0x00000020,
+    0x00001122, 0x5f625f76, 0x00040061, 0x00c00000,
+    0x00000000, 0x00060000, 0xffff0000, 0x0000ffff,
+    0x002a0000, 0x000e0000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x004b0000,
+    0x002f0000, 0x00000000, 0x00100000, 0x00000000,
+    0x00000000, 0x00000000, 0x00720000, 0x00560000,
+    0x00000000, 0x00300000, 0x00000000, 0x00000000,
+    0x00000000, 0x00930000, 0x00770000, 0x00000000,
+    0x00400000, 0x00000000, 0x00000000, 0x00000000,
+    0x00bb0000, 0x009f0000, 0x00000000, 0x00700000,
+    0x00000000, 0x00000000, 0x00000000, 0x00dc0000,
+    0x00c00000, 0x00000000, 0x00800000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000,
+};
+
+static void test_vector_methods(ID3D10EffectVectorVariable *var, D3D10_SHADER_VARIABLE_TYPE type,
+        const char *name, unsigned int components)
+{
+    float set_f[4], ret_f[4], expected_f, expected_f_v[4];
+    int set_i[4], ret_i[4], expected_i, expected_i_v[4];
+    BOOL set_b[4], ret_b[4], expected_b;
+    unsigned int i;
+    HRESULT hr;
+
+    set_f[0] = 1.0f; set_f[1] = 2.0f; set_f[2] = 3.0f; set_f[3] = 4.0f;
+    hr = var->lpVtbl->SetFloatVector(var, set_f);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    hr = var->lpVtbl->GetFloatVector(var, ret_f);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components; ++i)
+    {
+        expected_f = type == D3D10_SVT_BOOL ? -1.0f : set_f[i];
+        ok(ret_f[i] == expected_f, "Variable %s, got unexpected value %.8e.\n", name, ret_f[i]);
+    }
+
+    hr = var->lpVtbl->GetIntVector(var, ret_i);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components; ++i)
+    {
+        expected_i = type == D3D10_SVT_BOOL ? -1 : (int)set_f[i];
+        ok(ret_i[i] == expected_i, "Variable %s, got unexpected value %#x.\n", name, ret_i[i]);
+    }
+
+    hr = var->lpVtbl->GetBoolVector(var, ret_b);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components; ++i)
+        ok(ret_b[i] == -1, "Variable %s, got unexpected value %#x.\n", name, ret_b[i]);
+
+    set_i[0] = 5; set_i[1] = 6; set_i[2] = 7; set_i[3] = 8;
+    hr = var->lpVtbl->SetIntVector(var, set_i);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    hr = var->lpVtbl->GetFloatVector(var, ret_f);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components; ++i)
+    {
+        expected_f = type == D3D10_SVT_BOOL ? -1.0f : (float)set_i[i];
+        ok(ret_f[i] == expected_f, "Variable %s, got unexpected value %.8e.\n", name, ret_f[i]);
+    }
+
+    hr = var->lpVtbl->GetIntVector(var, ret_i);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components; ++i)
+    {
+        expected_i = type == D3D10_SVT_BOOL ? -1 : set_i[i];
+        ok(ret_i[i] == expected_i, "Variable %s, got unexpected value %#x.\n", name, ret_i[i]);
+    }
+
+    hr = var->lpVtbl->GetBoolVector(var, ret_b);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components; ++i)
+        ok(ret_b[i] == -1, "Variable %s, got unexpected value %#x.\n", name, ret_b[i]);
+
+    set_b[0] = 1; set_b[1] = 0; set_b[2] = 1; set_b[3] = 0;
+    hr = var->lpVtbl->SetBoolVector(var, set_b);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    hr = var->lpVtbl->GetFloatVector(var, ret_f);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    expected_f_v[0] = -1.0f; expected_f_v[1] = 0.0f; expected_f_v[2] = -1.0f; expected_f_v[3] = 0.0f;
+    for (i = 0; i < components; ++i)
+        ok(ret_f[i] == expected_f_v[i], "Variable %s, got unexpected value %.8e.\n", name, ret_f[i]);
+
+    hr = var->lpVtbl->GetIntVector(var, ret_i);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    expected_i_v[0] = -1; expected_i_v[1] = 0; expected_i_v[2] = -1; expected_i_v[3] = 0;
+    for (i = 0; i < components; ++i)
+        ok(ret_i[i] == expected_i_v[i], "Variable %s, got unexpected value %#x.\n", name, ret_i[i]);
+
+    hr = var->lpVtbl->GetBoolVector(var, ret_b);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components; ++i)
+    {
+        expected_b = type == D3D10_SVT_BOOL ? set_b[i] : expected_i_v[i];
+        ok(ret_b[i] == expected_b, "Variable %s, got unexpected value %#x.\n", name, ret_b[i]);
+    }
+
+    set_b[0] = 5; set_b[1] = 10; set_b[2] = 15; set_b[3] = 20;
+    hr = var->lpVtbl->SetBoolVector(var, set_b);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    hr = var->lpVtbl->GetFloatVector(var, ret_f);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components; ++i)
+        ok(ret_f[i] == -1.0f, "Variable %s, got unexpected value %.8e.\n", name, ret_f[i]);
+
+    hr = var->lpVtbl->GetIntVector(var, ret_i);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components; ++i)
+        ok(ret_i[i] == -1, "Variable %s, got unexpected value %#x.\n", name, ret_i[i]);
+
+    hr = var->lpVtbl->GetBoolVector(var, ret_b);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components; ++i)
+    {
+        expected_b = type == D3D10_SVT_BOOL ? set_b[i] : -1;
+        ok(ret_b[i] == expected_b, "Variable %s, got unexpected value %#x.\n", name, ret_b[i]);
+    }
+}
+
+static void test_vector_array_methods(ID3D10EffectVectorVariable *var, D3D10_SHADER_VARIABLE_TYPE type,
+        const char *name, unsigned int components, unsigned int elements)
+{
+    float set_f[9], ret_f[9], expected_f, expected_f_a[9];
+    int set_i[9], ret_i[9], expected_i, expected_i_a[9];
+    BOOL set_b[9], ret_b[9], expected_b;
+    unsigned int i;
+    HRESULT hr;
+
+    set_f[0] = 1.0f; set_f[1] = 2.0f; set_f[2] = 3.0f; set_f[3] = 4.0f;
+    set_f[4] = 5.0f; set_f[5] = 6.0f; set_f[6] = 7.0f; set_f[7] = 8.0f;
+    set_f[8] = 9.0f;
+    hr = var->lpVtbl->SetFloatVectorArray(var, set_f, 0, elements);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    hr = var->lpVtbl->GetFloatVectorArray(var, ret_f, 0, elements);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components * elements; ++i)
+    {
+        expected_f = type == D3D10_SVT_BOOL ? -1.0f : set_f[i];
+        ok(ret_f[i] == expected_f, "Variable %s, got unexpected value %.8e.\n", name, ret_f[i]);
+    }
+
+    hr = var->lpVtbl->GetIntVectorArray(var, ret_i, 0, elements);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components * elements; ++i)
+    {
+        expected_i = type == D3D10_SVT_BOOL ? -1 : (int)set_f[i];
+        ok(ret_i[i] == expected_i, "Variable %s, got unexpected value %#x.\n", name, ret_i[i]);
+    }
+
+    hr = var->lpVtbl->GetBoolVectorArray(var, ret_b, 0, elements);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components * elements; ++i)
+        ok(ret_b[i] == -1, "Variable %s, got unexpected value %#x.\n", name, ret_b[i]);
+
+    set_i[0] = 10; set_i[1] = 11; set_i[2] = 12; set_i[3] = 13;
+    set_i[4] = 14; set_i[5] = 15; set_i[6] = 16; set_i[7] = 17;
+    set_i[8] = 18;
+    hr = var->lpVtbl->SetIntVectorArray(var, set_i, 0, elements);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    hr = var->lpVtbl->GetFloatVectorArray(var, ret_f, 0, elements);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components * elements; ++i)
+    {
+        expected_f = type == D3D10_SVT_BOOL ? -1.0f : (float)set_i[i];
+        ok(ret_f[i] == expected_f, "Variable %s, got unexpected value %.8e.\n", name, ret_f[i]);
+    }
+
+    hr = var->lpVtbl->GetIntVectorArray(var, ret_i, 0, elements);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components * elements; ++i)
+    {
+        expected_i = type == D3D10_SVT_BOOL ? -1 : set_i[i];
+        ok(ret_i[i] == expected_i, "Variable %s, got unexpected value %#x.\n", name, ret_i[i]);
+    }
+
+    hr = var->lpVtbl->GetBoolVectorArray(var, ret_b, 0, elements);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components * elements; ++i)
+        ok(ret_b[i] == -1, "Variable %s, got unexpected value %#x.\n", name, ret_b[i]);
+
+    set_b[0] = 1; set_b[1] = 0; set_b[2] = 1; set_b[3] = 1;
+    set_b[4] = 1; set_b[5] = 0; set_b[6] = 0; set_b[7] = 1;
+    set_b[8] = 1;
+    hr = var->lpVtbl->SetBoolVectorArray(var, set_b, 0, elements);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    hr = var->lpVtbl->GetFloatVectorArray(var, ret_f, 0, elements);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    expected_f_a[0] = -1.0f; expected_f_a[1] = 0.0f; expected_f_a[2] = -1.0f; expected_f_a[3] = -1.0f;
+    expected_f_a[4] = -1.0f; expected_f_a[5] = 0.0f; expected_f_a[6] =  0.0f; expected_f_a[7] = -1.0f;
+    expected_f_a[8] = -1.0f;
+    for (i = 0; i < components * elements; ++i)
+        ok(ret_f[i] == expected_f_a[i], "Variable %s, got unexpected value %.8e.\n", name, ret_f[i]);
+
+    hr = var->lpVtbl->GetIntVectorArray(var, ret_i, 0, elements);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    expected_i_a[0] = -1; expected_i_a[1] = 0; expected_i_a[2] = -1; expected_i_a[3] = -1;
+    expected_i_a[4] = -1; expected_i_a[5] = 0; expected_i_a[6] =  0; expected_i_a[7] = -1;
+    expected_i_a[8] = -1;
+    for (i = 0; i < components * elements; ++i)
+        ok(ret_i[i] == expected_i_a[i], "Variable %s, got unexpected value %#x.\n", name, ret_i[i]);
+
+    hr = var->lpVtbl->GetBoolVectorArray(var, ret_b, 0, elements);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components * elements; ++i)
+    {
+        expected_b = type == D3D10_SVT_BOOL ? set_b[i] : expected_i_a[i];
+        ok(ret_b[i] == expected_b, "Variable %s, got unexpected value %#x.\n", name, ret_b[i]);
+    }
+
+    set_b[0] = 5;  set_b[1] = 10; set_b[2] = 15; set_b[3] = 20;
+    set_b[4] = 25; set_b[5] = 30; set_b[6] = 35; set_b[7] = 40;
+    set_b[8] = 45;
+    hr = var->lpVtbl->SetBoolVectorArray(var, set_b, 0, elements);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    hr = var->lpVtbl->GetFloatVectorArray(var, ret_f, 0, elements);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components * elements; ++i)
+        ok(ret_f[i] == -1.0f, "Variable %s, got unexpected value %.8e.\n", name, ret_f[i]);
+
+    hr = var->lpVtbl->GetIntVectorArray(var, ret_i, 0, elements);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components * elements; ++i)
+        ok(ret_i[i] == -1, "Variable %s, got unexpected value %#x.\n", name, ret_i[i]);
+
+    hr = var->lpVtbl->GetBoolVectorArray(var, ret_b, 0, elements);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components * elements; ++i)
+    {
+        expected_b = type == D3D10_SVT_BOOL ? set_b[i] : -1;
+        ok(ret_b[i] == expected_b, "Variable %s, got unexpected value %#x.\n", name, ret_b[i]);
+    }
+
+    /* According to MSDN, the offset argument goes unused for VectorArray
+     * methods, same as the ScalarArray methods. This test shows that's not
+     * the case. */
+    set_b[0] = 0; set_b[1] = 0; set_b[2] = 0; set_b[3] = 0;
+    set_b[4] = 0; set_b[5] = 0; set_b[6] = 0; set_b[7] = 0;
+    set_b[8] = 0;
+    hr = var->lpVtbl->SetBoolVectorArray(var, set_b, 0, elements);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    set_b[0] = 1; set_b[1] = 1; set_b[2] = 1; set_b[3] = 1;
+    hr = var->lpVtbl->SetBoolVectorArray(var, set_b, 1, 1);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    /* If the previous offset of 1 worked, then the first vector value of the
+     * array should still be false. */
+    hr = var->lpVtbl->GetFloatVectorArray(var, ret_f, 0, 1);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components; ++i)
+        ok(ret_f[i] == 0, "Variable %s, got unexpected value %.8e.\n", name, ret_f[i]);
+
+    hr = var->lpVtbl->GetIntVectorArray(var, ret_i, 0, 1);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components; ++i)
+        ok(ret_i[i] == 0, "Variable %s, got unexpected value %#x.\n", name, ret_i[i]);
+
+    hr = var->lpVtbl->GetBoolVectorArray(var, ret_b, 0, 1);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components; ++i)
+        ok(!ret_b[i], "Variable %s, got unexpected value %#x.\n", name, ret_b[i]);
+
+    /* Test the GetFloatVectorArray offset argument. If it works, we should
+     * get a vector with all values set to true. */
+    hr = var->lpVtbl->GetFloatVectorArray(var, ret_f, 1, 1);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components; ++i)
+        ok(ret_f[i] == -1.0f, "Variable %s, got unexpected value %.8e.\n", name, ret_f[i]);
+
+    hr = var->lpVtbl->GetIntVectorArray(var, ret_i, 1, 1);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components; ++i)
+        ok(ret_i[i] == -1, "Variable %s, got unexpected value %#x.\n", name, ret_i[i]);
+
+    hr = var->lpVtbl->GetBoolVectorArray(var, ret_b, 1, 1);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < components; ++i)
+    {
+        expected_b = type == D3D10_SVT_BOOL ? 1 : -1;
+        ok(ret_b[i] == expected_b, "Variable %s, got unexpected value %#x.\n", name, ret_b[i]);
+    }
+
+    if (0)
+    {
+        /* Windows array setting function has no bounds checking on offset values
+         * either, so this ends up writing into adjacent variables. */
+        hr = var->lpVtbl->SetBoolVectorArray(var, set_b, elements + 1, 1);
+        ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+        hr = var->lpVtbl->GetBoolVectorArray(var, ret_b, elements + 1, 1);
+        ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+        for (i = 0; i < components; ++i)
+        {
+            expected_b = type == D3D10_SVT_BOOL ? 1 : -1;
+            ok(ret_b[i] == expected_b, "Variable %s, got unexpected value %#x.\n", name, ret_b[i]);
+        }
+    }
+}
+
+static void test_effect_vector_variable(void)
+{
+    static const struct
+    {
+        const char *name;
+        D3D_SHADER_VARIABLE_TYPE type;
+        unsigned int components;
+        unsigned int elements;
+    }
+    tests[] =
+    {
+        {"v_f0", D3D10_SVT_FLOAT, 4, 1},
+        {"v_i0", D3D10_SVT_INT, 3, 1},
+        {"v_b0", D3D10_SVT_BOOL, 2, 1},
+        {"v_f_a", D3D10_SVT_FLOAT, 4, 2},
+        {"v_i_a", D3D10_SVT_INT, 3, 3},
+        {"v_b_a", D3D10_SVT_BOOL, 2, 4},
+    };
+    ID3D10EffectVectorVariable *v_var;
+    D3D10_EFFECT_TYPE_DESC type_desc;
+    ID3D10EffectVariable *var;
+    ID3D10EffectType *type;
+    ID3D10Device *device;
+    ID3D10Effect *effect;
+    unsigned int i;
+    ULONG refcount;
+    HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device.\n");
+        return;
+    }
+
+    hr = create_effect(fx_test_vector_variable, 0, device, NULL, &effect);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        var = effect->lpVtbl->GetVariableByName(effect, tests[i].name);
+        type = var->lpVtbl->GetType(var);
+        hr = type->lpVtbl->GetDesc(type, &type_desc);
+        ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", tests[i].name, hr);
+        ok(type_desc.Type == tests[i].type, "Variable %s, got unexpected type %#x.\n",
+                tests[i].name, type_desc.Type);
+        v_var = var->lpVtbl->AsVector(var);
+        test_vector_methods(v_var, tests[i].type, tests[i].name, tests[i].components);
+        if (tests[i].elements > 1)
+            test_vector_array_methods(v_var, tests[i].type, tests[i].name, tests[i].components, tests[i].elements);
+    }
+
+    effect->lpVtbl->Release(effect);
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
+/*
+ * test_effect_matrix_variable
+ */
+#if 0
+cbuffer cb
+{
+    float4x4 m_f0;
+    float4x4 m_f_a[2];
+
+    row_major int2x3 m_i0;
+
+    bool3x2 m_b0;
+    bool3x2 m_b_a[2];
+};
+#endif
+
+static DWORD fx_test_matrix_variable[] =
+{
+    0x43425844, 0xc95a5c42, 0xa138d3cb, 0x8a4ef493,
+    0x3515b7ee, 0x00000001, 0x000001e2, 0x00000001,
+    0x00000024, 0x30315846, 0x000001b6, 0xfeff1001,
+    0x00000001, 0x00000005, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x000000c6,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x66006263,
+    0x74616f6c, 0x00347834, 0x00000007, 0x00000001,
+    0x00000000, 0x00000040, 0x00000040, 0x00000040,
+    0x0000640b, 0x30665f6d, 0x00000700, 0x00000100,
+    0x00000200, 0x00008000, 0x00004000, 0x00008000,
+    0x00640b00, 0x665f6d00, 0x6900615f, 0x7832746e,
+    0x00530033, 0x00010000, 0x00000000, 0x001c0000,
+    0x00200000, 0x00180000, 0x1a130000, 0x5f6d0000,
+    0x62003069, 0x336c6f6f, 0x7b003278, 0x01000000,
+    0x00000000, 0x1c000000, 0x20000000, 0x18000000,
+    0x23000000, 0x6d000053, 0x0030625f, 0x0000007b,
+    0x00000001, 0x00000002, 0x0000003c, 0x00000020,
+    0x00000030, 0x00005323, 0x5f625f6d, 0x00040061,
+    0x01400000, 0x00000000, 0x00050000, 0xffff0000,
+    0x0000ffff, 0x002c0000, 0x00100000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x004d0000, 0x00310000, 0x00000000, 0x00400000,
+    0x00000000, 0x00000000, 0x00000000, 0x00760000,
+    0x005a0000, 0x00000000, 0x00c00000, 0x00000000,
+    0x00000000, 0x00000000, 0x009f0000, 0x00830000,
+    0x00000000, 0x00e00000, 0x00000000, 0x00000000,
+    0x00000000, 0x00c00000, 0x00a40000, 0x00000000,
+    0x01000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000,
+};
+
+struct d3d10_matrix
+{
+    float m[4][4];
+};
+
+static void set_test_matrix(struct d3d10_matrix *m, D3D10_SHADER_VARIABLE_TYPE type,
+        unsigned int row_count, unsigned int col_count, unsigned int elements)
+{
+    unsigned int row, col, elem;
+    float tmp_f;
+    int tmp_i;
+    BOOL tmp_b;
+
+    memset(m, 0, elements * sizeof(*m));
+    switch (type)
+    {
+        case D3D10_SVT_FLOAT:
+            tmp_f = 1.0f;
+            for (elem = 0; elem < elements; ++elem)
+            {
+                for (row = 0; row < row_count; ++row)
+                {
+                    for (col = 0; col < col_count; ++col)
+                    {
+                        m[elem].m[row][col] = tmp_f;
+                        ++tmp_f;
+                    }
+                }
+            }
+            break;
+
+        case D3D10_SVT_INT:
+            tmp_i = 1;
+            for (elem = 0; elem < elements; ++elem)
+            {
+                for (row = 0; row < row_count; ++row)
+                {
+                    for (col = 0; col < col_count; ++col)
+                    {
+                        m[elem].m[row][col] = *(float *)&tmp_i;
+                        ++tmp_i;
+                    }
+                }
+            }
+            break;
+
+        case D3D10_SVT_BOOL:
+            tmp_b = FALSE;
+            for (elem = 0; elem < elements; ++elem)
+            {
+                tmp_b = !tmp_b;
+                for (row = 0; row < row_count; ++row)
+                {
+                    for (col = 0; col < col_count; ++col)
+                    {
+                        m[elem].m[row][col] = *(float *)&tmp_b;
+                        tmp_b = !tmp_b;
+                    }
+                }
+            }
+            break;
+
+        default:
+            break;
+    }
+}
+
+static void transpose_matrix(struct d3d10_matrix *src, struct d3d10_matrix *dst,
+        unsigned int row_count, unsigned int col_count)
+{
+    unsigned int row, col;
+
+    for (row = 0; row < col_count; ++row)
+    {
+        for (col = 0; col < row_count; ++col)
+            dst->m[row][col] = src->m[col][row];
+    }
+}
+
+static void compare_matrix(const char *name, unsigned int line, struct d3d10_matrix *a,
+        struct d3d10_matrix *b, unsigned int row_count, unsigned int col_count, BOOL transpose)
+{
+    unsigned int row, col;
+    float tmp;
+
+    for (row = 0; row < row_count; ++row)
+    {
+        for (col = 0; col < col_count; ++col)
+        {
+            tmp = !transpose ? b->m[row][col] : b->m[col][row];
+            ok_(__FILE__, line)(a->m[row][col] == tmp,
+                    "Variable %s (%u, %u), got unexpected value 0x%08x.\n", name, row, col,
+                    *(unsigned int *)&tmp);
+        }
+    }
+}
+
+static void test_matrix_methods(ID3D10EffectMatrixVariable *var, D3D10_SHADER_VARIABLE_TYPE type,
+        const char *name, unsigned int row_count, unsigned int col_count)
+{
+    struct d3d10_matrix m_set, m_ret, m_expected;
+    HRESULT hr;
+
+    set_test_matrix(&m_set, type, row_count, col_count, 1);
+
+    hr = var->lpVtbl->SetMatrix(var, &m_set.m[0][0]);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    memset(&m_ret.m[0][0], 0, sizeof(m_ret));
+    hr = var->lpVtbl->GetMatrix(var, &m_ret.m[0][0]);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    compare_matrix(name, __LINE__, &m_set, &m_ret, row_count, col_count, FALSE);
+
+    memset(&m_ret.m[0][0], 0, sizeof(m_ret));
+    hr = var->lpVtbl->GetMatrixTranspose(var, &m_ret.m[0][0]);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    compare_matrix(name, __LINE__, &m_set, &m_ret, row_count, col_count, TRUE);
+
+    hr = var->lpVtbl->SetMatrixTranspose(var, &m_set.m[0][0]);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    memset(&m_ret.m[0][0], 0, sizeof(m_ret));
+    hr = var->lpVtbl->GetMatrix(var, &m_ret.m[0][0]);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    compare_matrix(name, __LINE__, &m_ret, &m_set, row_count, col_count, TRUE);
+
+    memset(&m_ret.m[0][0], 0, sizeof(m_ret));
+    memset(&m_expected.m[0][0], 0, sizeof(m_expected));
+    hr = var->lpVtbl->GetMatrixTranspose(var, &m_ret.m[0][0]);
+    transpose_matrix(&m_set, &m_expected, row_count, col_count);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    compare_matrix(name, __LINE__, &m_expected, &m_ret, row_count, col_count, TRUE);
+}
+
+static void test_matrix_array_methods(ID3D10EffectMatrixVariable *var, D3D10_SHADER_VARIABLE_TYPE type,
+        const char *name, unsigned int row_count, unsigned int col_count, unsigned int elements)
+{
+    struct d3d10_matrix m_set[2], m_ret[2], m_expected;
+    unsigned int i;
+    HRESULT hr;
+
+    set_test_matrix(&m_set[0], type, row_count, col_count, elements);
+
+    hr = var->lpVtbl->SetMatrixArray(var, &m_set[0].m[0][0], 0, elements);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    memset(m_ret, 0, sizeof(m_ret));
+    hr = var->lpVtbl->GetMatrixArray(var, &m_ret[0].m[0][0], 0, elements);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < elements; ++i)
+        compare_matrix(name, __LINE__, &m_set[i], &m_ret[i], row_count, col_count, FALSE);
+
+    memset(m_ret, 0, sizeof(m_ret));
+    hr = var->lpVtbl->GetMatrixTransposeArray(var, &m_ret[0].m[0][0], 0, elements);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < elements; ++i)
+        compare_matrix(name, __LINE__, &m_set[i], &m_ret[i], row_count, col_count, TRUE);
+
+    hr = var->lpVtbl->SetMatrixTransposeArray(var, &m_set[0].m[0][0], 0, elements);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    memset(m_ret, 0, sizeof(m_ret));
+    hr = var->lpVtbl->GetMatrixArray(var, &m_ret[0].m[0][0], 0, elements);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < elements; ++i)
+        compare_matrix(name, __LINE__, &m_ret[i], &m_set[i], row_count, col_count, TRUE);
+
+    memset(m_ret, 0, sizeof(m_ret));
+    memset(&m_expected, 0, sizeof(m_expected));
+    hr = var->lpVtbl->GetMatrixTransposeArray(var, &m_ret[0].m[0][0], 0, elements);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    for (i = 0; i < elements; ++i)
+    {
+        memset(&m_expected, 0, sizeof(m_expected));
+        transpose_matrix(&m_set[i], &m_expected, row_count, col_count);
+        compare_matrix(name, __LINE__, &m_expected, &m_ret[i], row_count, col_count, TRUE);
+    }
+
+    /* Offset tests. */
+    memset(m_ret, 0, sizeof(m_ret));
+    hr = var->lpVtbl->SetMatrixArray(var, &m_ret[0].m[0][0], 0, elements);
+
+    hr = var->lpVtbl->SetMatrixArray(var, &m_set[0].m[0][0], 1, 1);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    hr = var->lpVtbl->GetMatrixArray(var, &m_ret[0].m[0][0], 1, 1);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    compare_matrix(name, __LINE__, &m_ret[0], &m_set[0], row_count, col_count, FALSE);
+
+    memset(m_ret, 0, sizeof(m_ret));
+    hr = var->lpVtbl->SetMatrixArray(var, &m_ret[0].m[0][0], 0, elements);
+
+    hr = var->lpVtbl->SetMatrixTransposeArray(var, &m_set[0].m[0][0], 1, 1);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+    memset(&m_expected, 0, sizeof(m_expected));
+    hr = var->lpVtbl->GetMatrixTransposeArray(var, &m_ret[0].m[0][0], 1, 1);
+    ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+    transpose_matrix(&m_set[0], &m_expected, row_count, col_count);
+    compare_matrix(name, __LINE__, &m_expected, &m_ret[0], row_count, col_count, TRUE);
+
+    if (0)
+    {
+        /* Like vector array functions, matrix array functions will allow for
+         * writing out of bounds into adjacent memory. */
+        hr = var->lpVtbl->SetMatrixArray(var, &m_set[0].m[0][0], elements + 1, 1);
+        ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+        memset(m_ret, 0, sizeof(m_ret));
+        hr = var->lpVtbl->GetMatrixArray(var, &m_ret[0].m[0][0], elements + 1, 1);
+        ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+        compare_matrix(name, __LINE__, &m_expected, &m_ret[0], row_count, col_count, TRUE);
+
+        hr = var->lpVtbl->SetMatrixTransposeArray(var, &m_set[0].m[0][0], elements + 1, 1);
+        ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+
+        memset(&m_expected, 0, sizeof(m_expected));
+        hr = var->lpVtbl->GetMatrixTransposeArray(var, &m_ret[0].m[0][0], elements + 1, 1);
+        ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", name, hr);
+        transpose_matrix(&m_set[0], &m_expected, row_count, col_count);
+        compare_matrix(name, __LINE__, &m_expected, &m_ret[0], row_count, col_count, TRUE);
+    }
+}
+
+static void test_effect_matrix_variable(void)
+{
+    static const struct
+    {
+        const char *name;
+        D3D_SHADER_VARIABLE_TYPE type;
+        unsigned int rows;
+        unsigned int columns;
+        unsigned int elements;
+    }
+    tests[] =
+    {
+        {"m_f0", D3D10_SVT_FLOAT, 4, 4, 1},
+        {"m_i0", D3D10_SVT_INT, 2, 3, 1},
+        {"m_b0", D3D10_SVT_BOOL, 3, 2, 1},
+        {"m_f_a", D3D10_SVT_FLOAT, 4, 4, 2},
+        {"m_b_a", D3D10_SVT_BOOL, 3, 2, 2},
+    };
+    ID3D10EffectMatrixVariable *m_var;
+    D3D10_EFFECT_TYPE_DESC type_desc;
+    ID3D10EffectVariable *var;
+    ID3D10EffectType *type;
+    ID3D10Device *device;
+    ID3D10Effect *effect;
+    unsigned int i;
+    ULONG refcount;
+    HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
+
+    hr = create_effect(fx_test_matrix_variable, 0, device, NULL, &effect);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        var = effect->lpVtbl->GetVariableByName(effect, tests[i].name);
+        type = var->lpVtbl->GetType(var);
+        hr = type->lpVtbl->GetDesc(type, &type_desc);
+        ok(hr == S_OK, "Variable %s, got unexpected hr %#x.\n", tests[i].name, hr);
+        ok(type_desc.Type == tests[i].type, "Variable %s, got unexpected type %#x.\n",
+                tests[i].name, type_desc.Type);
+        m_var = var->lpVtbl->AsMatrix(var);
+        test_matrix_methods(m_var, tests[i].type, tests[i].name, tests[i].rows, tests[i].columns);
+        if (tests[i].elements > 1)
+            test_matrix_array_methods(m_var, tests[i].type, tests[i].name, tests[i].rows, tests[i].columns,
+                    tests[i].elements);
+    }
+
+    effect->lpVtbl->Release(effect);
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
+/*
+ * test_effect_resource_variable
+ */
+#if 0
+Texture2D t0;
+Texture2D t_a[2];
+
+float4 VS( float4 Pos : POSITION ) : SV_POSITION { return float4(1.0f, 1.0f, 1.0f, 1.0f); }
+
+float4 PS( float4 Pos : SV_POSITION ) : SV_Target
+{
+    uint4 tmp;
+
+    tmp = t0.Load(int3(0, 0, 0));
+    tmp = t_a[0].Load(int4(0, 0, 0, 0));
+    tmp = t_a[1].Load(int4(0, 0, 0, 0));
+    return float4(1.0f, 1.0f, 0.0f, 1.0f) + tmp;
+}
+
+technique10 rsrc_test
+{
+    pass p0
+    {
+        SetVertexShader(CompileShader(vs_4_0, VS()));
+        SetPixelShader(CompileShader(ps_4_0, PS()));
+    }
+}
+#endif
+static DWORD fx_test_resource_variable[] =
+{
+    0x43425844, 0x767a8421, 0xdcbfffe6, 0x83df123d, 0x189ce72a, 0x00000001, 0x0000065a, 0x00000001,
+    0x00000024, 0x30315846, 0x0000062e, 0xfeff1001, 0x00000000, 0x00000000, 0x00000002, 0x00000000,
+    0x00000000, 0x00000000, 0x00000001, 0x00000582, 0x00000000, 0x00000003, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0x00000002, 0x00000000, 0x74786554,
+    0x32657275, 0x00040044, 0x00020000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x000c0000,
+    0x30740000, 0x00000400, 0x00000200, 0x00000200, 0x00000000, 0x00000000, 0x00000000, 0x00000c00,
+    0x615f7400, 0x72737200, 0x65745f63, 0x70007473, 0x01b40030, 0x58440000, 0x338d4342, 0xc5a69f46,
+    0x56883ae5, 0xa98fccc2, 0x00018ead, 0x01b40000, 0x00050000, 0x00340000, 0x008c0000, 0x00c00000,
+    0x00f40000, 0x01380000, 0x44520000, 0x00504645, 0x00000000, 0x00000000, 0x00000000, 0x001c0000,
+    0x04000000, 0x0100fffe, 0x001c0000, 0x694d0000, 0x736f7263, 0x2074666f, 0x20295228, 0x4c534c48,
+    0x61685320, 0x20726564, 0x706d6f43, 0x72656c69, 0x322e3920, 0x35392e39, 0x31332e32, 0xab003131,
+    0x5349abab, 0x002c4e47, 0x00010000, 0x00080000, 0x00200000, 0x00000000, 0x00000000, 0x00030000,
+    0x00000000, 0x000f0000, 0x4f500000, 0x49544953, 0xab004e4f, 0x534fabab, 0x002c4e47, 0x00010000,
+    0x00080000, 0x00200000, 0x00000000, 0x00010000, 0x00030000, 0x00000000, 0x000f0000, 0x56530000,
+    0x534f505f, 0x4f495449, 0x4853004e, 0x003c5244, 0x00400000, 0x000f0001, 0x00670000, 0x20f20400,
+    0x00000010, 0x00010000, 0x00360000, 0x20f20800, 0x00000010, 0x40020000, 0x00000000, 0x00003f80,
+    0x00003f80, 0x00003f80, 0x003e3f80, 0x54530100, 0x00745441, 0x00020000, 0x00000000, 0x00000000,
+    0x00010000, 0x00000000, 0x00000000, 0x00000000, 0x00010000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00010000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x005a0000, 0x00000000, 0x035c0000, 0x58440000, 0xe3754342, 0x3e477f40,
+    0xed6f143f, 0xf16d26ce, 0x00010c3a, 0x035c0000, 0x00050000, 0x00340000, 0x00d00000, 0x01040000,
+    0x01380000, 0x02e00000, 0x44520000, 0x00944645, 0x00000000, 0x00000000, 0x00020000, 0x001c0000,
+    0x04000000, 0x0100ffff, 0x00630000, 0x005c0000, 0x00020000, 0x00050000, 0x00040000, 0xffff0000,
+    0x0000ffff, 0x00010000, 0x000c0000, 0x005f0000, 0x00020000, 0x00050000, 0x00040000, 0xffff0000,
+    0x0001ffff, 0x00020000, 0x000c0000, 0x30740000, 0x615f7400, 0x63694d00, 0x6f736f72, 0x28207466,
+    0x48202952, 0x204c534c, 0x64616853, 0x43207265, 0x69706d6f, 0x2072656c, 0x39322e39, 0x3235392e,
+    0x3131332e, 0x53490031, 0x002c4e47, 0x00010000, 0x00080000, 0x00200000, 0x00000000, 0x00010000,
+    0x00030000, 0x00000000, 0x000f0000, 0x56530000, 0x534f505f, 0x4f495449, 0x534f004e, 0x002c4e47,
+    0x00010000, 0x00080000, 0x00200000, 0x00000000, 0x00000000, 0x00030000, 0x00000000, 0x000f0000,
+    0x56530000, 0x7261545f, 0x00746567, 0x4853abab, 0x01a05244, 0x00400000, 0x00680000, 0x18580000,
+    0x70000400, 0x00000010, 0x55550000, 0x18580000, 0x70000400, 0x00010010, 0x55550000, 0x18580000,
+    0x70000400, 0x00020010, 0x55550000, 0x00650000, 0x20f20300, 0x00000010, 0x00680000, 0x00020200,
+    0x002d0000, 0x00f20a00, 0x00000010, 0x40020000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x7e460000, 0x00000010, 0x001c0000, 0x00f20500, 0x00000010, 0x0e460000, 0x00000010, 0x00560000,
+    0x00f20500, 0x00000010, 0x0e460000, 0x00000010, 0x002d0000, 0x00f20a00, 0x00010010, 0x40020000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x7e460000, 0x00010010, 0x00000000, 0x00f20700,
+    0x00000010, 0x0e460000, 0x00000010, 0x0e460000, 0x00010010, 0x001c0000, 0x00f20500, 0x00000010,
+    0x0e460000, 0x00000010, 0x00560000, 0x00f20500, 0x00000010, 0x0e460000, 0x00000010, 0x002d0000,
+    0x00f20a00, 0x00010010, 0x40020000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x7e460000,
+    0x00020010, 0x00000000, 0x00f20700, 0x00000010, 0x0e460000, 0x00000010, 0x0e460000, 0x00010010,
+    0x001c0000, 0x00f20500, 0x00000010, 0x0e460000, 0x00000010, 0x00560000, 0x00f20500, 0x00000010,
+    0x0e460000, 0x00000010, 0x00000000, 0x20f20a00, 0x00000010, 0x0e460000, 0x00000010, 0x40020000,
+    0x00000000, 0x00003f80, 0x00003f80, 0x00000000, 0x003e3f80, 0x54530100, 0x00745441, 0x000d0000,
+    0x00020000, 0x00000000, 0x00010000, 0x00030000, 0x00000000, 0x00000000, 0x00010000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00060000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x021a0000, 0x00000000, 0x002a0000, 0x000e0000,
+    0x00000000, 0xffff0000, 0x0000ffff, 0x00490000, 0x002d0000, 0x00000000, 0xffff0000, 0x0000ffff,
+    0x004d0000, 0x00010000, 0x00000000, 0x00570000, 0x00020000, 0x00000000, 0x00060000, 0x00000000,
+    0x00070000, 0x02120000, 0x00070000, 0x00000000, 0x00070000, 0x057a0000, 0x00000000,
+};
+
+static void create_effect_texture_resource(ID3D10Device *device, ID3D10ShaderResourceView **srv,
+        ID3D10Texture2D **tex)
+{
+    D3D10_TEXTURE2D_DESC tex_desc;
+    HRESULT hr;
+
+    tex_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    tex_desc.Width  = 8;
+    tex_desc.Height = 8;
+    tex_desc.ArraySize = 1;
+    tex_desc.MipLevels = 0;
+    tex_desc.BindFlags = D3D10_BIND_SHADER_RESOURCE;
+    tex_desc.Usage = D3D10_USAGE_DEFAULT;
+    tex_desc.CPUAccessFlags = 0;
+    tex_desc.SampleDesc.Count = 1;
+    tex_desc.SampleDesc.Quality = 0;
+    tex_desc.MiscFlags = 0;
+
+    hr = ID3D10Device_CreateTexture2D(device, &tex_desc, NULL, tex);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D10Device_CreateShaderResourceView(device, (ID3D10Resource *)*tex, NULL, srv);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+}
+
+#define get_effect_shader_resource_variable(a) get_effect_shader_resource_variable_(__LINE__, a)
+static ID3D10EffectShaderResourceVariable *get_effect_shader_resource_variable_(unsigned int line,
+        ID3D10EffectVariable *var)
+{
+    D3D10_EFFECT_TYPE_DESC type_desc;
+    ID3D10EffectType *type;
+    HRESULT hr;
+
+    type = var->lpVtbl->GetType(var);
+    ok_(__FILE__, line)(!!type, "Got unexpected type %p.\n", type);
+    hr = type->lpVtbl->GetDesc(type, &type_desc);
+    ok_(__FILE__, line)(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok_(__FILE__, line)(type_desc.Type == D3D10_SVT_TEXTURE2D, "Type is %x, expected %x.\n",
+            type_desc.Type, D3D10_SVT_TEXTURE2D);
+    return var->lpVtbl->AsShaderResource(var);
+}
+
+static void test_effect_resource_variable(void)
+{
+    ID3D10ShaderResourceView *srv0, *srv_a[2], *srv_tmp[2];
+    ID3D10EffectShaderResourceVariable *t0, *t_a, *t_a_0;
+    ID3D10EffectTechnique *technique;
+    ID3D10Texture2D *tex0, *tex_a[2];
+    ID3D10EffectVariable *var;
+    ID3D10EffectPass *pass;
+    ID3D10Device *device;
+    ID3D10Effect *effect;
+    unsigned int i;
+    ULONG refcount;
+    HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device.\n");
+        return;
+    }
+
+    hr = create_effect(fx_test_resource_variable, 0, device, NULL, &effect);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    var = effect->lpVtbl->GetVariableByName(effect, "t0");
+    t0 = get_effect_shader_resource_variable(var);
+    create_effect_texture_resource(device, &srv0, &tex0);
+    hr = t0->lpVtbl->SetResource(t0, srv0);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    var = effect->lpVtbl->GetVariableByName(effect, "t_a");
+    t_a = get_effect_shader_resource_variable(var);
+    for (i = 0; i < 2; ++i)
+        create_effect_texture_resource(device, &srv_a[i], &tex_a[i]);
+    hr = t_a->lpVtbl->SetResourceArray(t_a, srv_a, 0, 2);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    /* Apply the pass to bind the resource to the shader. */
+    technique = effect->lpVtbl->GetTechniqueByName(effect, "rsrc_test");
+    ok(!!technique, "Got unexpected technique %p.\n", technique);
+    pass = technique->lpVtbl->GetPassByName(technique, "p0");
+    ok(!!pass, "Got unexpected pass %p.\n", pass);
+    hr = pass->lpVtbl->Apply(pass, 0);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    ID3D10Device_PSGetShaderResources(device, 0, 1, &srv_tmp[0]);
+    ok(srv_tmp[0] == srv0, "Got unexpected shader resource view %p.\n", srv_tmp[0]);
+    ID3D10ShaderResourceView_Release(srv_tmp[0]);
+
+    ID3D10Device_PSGetShaderResources(device, 1, 2, srv_tmp);
+    for (i = 0; i < 2; ++i)
+    {
+        ok(srv_tmp[i] == srv_a[i], "Got unexpected shader resource view %p.\n", srv_tmp[i]);
+        ID3D10ShaderResourceView_Release(srv_tmp[i]);
+    }
+
+    /* Test individual array element variable SetResource. */
+    var = t_a->lpVtbl->GetElement(t_a, 1);
+    t_a_0 = get_effect_shader_resource_variable(var);
+    hr = t_a_0->lpVtbl->SetResource(t_a_0, srv0);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = pass->lpVtbl->Apply(pass, 0);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    ID3D10Device_PSGetShaderResources(device, 1, 2, srv_tmp);
+    ok(srv_tmp[0] == srv_a[0], "Got unexpected shader resource view %p.\n", srv_tmp[0]);
+    ok(srv_tmp[1] == srv0, "Got unexpected shader resource view %p.\n", srv_tmp[1]);
+    for (i = 0; i < 2; ++i)
+        ID3D10ShaderResourceView_Release(srv_tmp[i]);
+
+    /* Test offset. */
+    hr = t_a->lpVtbl->SetResourceArray(t_a, srv_a, 1, 1);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = pass->lpVtbl->Apply(pass, 0);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    ID3D10Device_PSGetShaderResources(device, 1, 2, srv_tmp);
+    ok(srv_tmp[0] == srv_a[0], "Got unexpected shader resource view %p.\n", srv_tmp[0]);
+    ok(srv_tmp[1] == srv_a[0], "Got unexpected shader resource view %p.\n", srv_tmp[1]);
+    for (i = 0; i < 2; ++i)
+        ID3D10ShaderResourceView_Release(srv_tmp[i]);
+
+    if (0)
+    {
+        /* This crashes on Windows. */
+        hr = t_a->lpVtbl->SetResourceArray(t_a, srv_a, 2, 2);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    }
+
+    ID3D10ShaderResourceView_Release(srv0);
+    ID3D10Texture2D_Release(tex0);
+    for (i = 0; i < 2; ++i)
+    {
+        ID3D10ShaderResourceView_Release(srv_a[i]);
+        ID3D10Texture2D_Release(tex_a[i]);
+    }
+
+    effect->lpVtbl->Release(effect);
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 START_TEST(effect)
 {
     test_effect_constant_buffer_type();
@@ -4285,4 +5600,8 @@ START_TEST(effect)
     test_effect_get_variable_by();
     test_effect_state_groups();
     test_effect_state_group_defaults();
+    test_effect_scalar_variable();
+    test_effect_vector_variable();
+    test_effect_matrix_variable();
+    test_effect_resource_variable();
 }

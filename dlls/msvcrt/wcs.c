@@ -725,8 +725,8 @@ static int puts_clbk_str_c99_a(void *ctx, int len, const char *str)
 /*********************************************************************
  *              __stdio_common_vsprintf (UCRTBASE.@)
  */
-int CDECL __stdio_common_vsprintf( unsigned __int64 options, char *str, MSVCRT_size_t len, const char *format,
-                                   MSVCRT__locale_t locale, __ms_va_list valist )
+int CDECL MSVCRT__stdio_common_vsprintf( unsigned __int64 options, char *str, MSVCRT_size_t len, const char *format,
+                                         MSVCRT__locale_t locale, __ms_va_list valist )
 {
     static const char nullbyte = '\0';
     struct _str_ctx_a ctx = {len, str};
@@ -744,7 +744,9 @@ int CDECL __stdio_common_vsprintf( unsigned __int64 options, char *str, MSVCRT_s
         return ret>len ? -1 : ret;
     if(ret>=len) {
         if(len) str[len-1] = 0;
-        return (options & UCRTBASE_PRINTF_STANDARD_SNPRINTF_BEHAVIOUR) ? ret : -2;
+        if(options & UCRTBASE_PRINTF_STANDARD_SNPRINTF_BEHAVIOUR)
+            return ret;
+        return len > 0 ? -2 : -1;
     }
     return ret;
 }
@@ -1284,7 +1286,9 @@ int CDECL MSVCRT__stdio_common_vswprintf( unsigned __int64 options,
         return ret>len ? -1 : ret;
     if(ret>=len) {
         if(len) str[len-1] = 0;
-        return (options & UCRTBASE_PRINTF_STANDARD_SNPRINTF_BEHAVIOUR) ? ret : -2;
+        if(options & UCRTBASE_PRINTF_STANDARD_SNPRINTF_BEHAVIOUR)
+            return ret;
+        return len > 0 ? -2 : -1;
     }
     return ret;
 }
@@ -1965,6 +1969,14 @@ int CDECL MSVCRT__iswxdigit_l( MSVCRT_wchar_t wc, MSVCRT__locale_t locale )
 INT CDECL MSVCRT__iswctype_l( MSVCRT_wchar_t wc, MSVCRT_wctype_t type, MSVCRT__locale_t locale )
 {
     return (get_char_typeW(wc) & 0xffff) & type;
+}
+
+/*********************************************************************
+ *		iswctype    (MSVCRT.@)
+ */
+INT CDECL MSVCRT_iswctype( MSVCRT_wchar_t wc, MSVCRT_wctype_t type )
+{
+    return (get_char_typeW(wc) & 0xfff) & type;
 }
 
 /*********************************************************************

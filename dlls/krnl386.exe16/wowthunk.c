@@ -18,10 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
-#include <assert.h>
 #include <stdarg.h>
 #include <errno.h>
 
@@ -57,18 +53,14 @@ static SEGPTR call16_ret_addr;  /* segptr to __wine_call_to_16_ret routine */
 BOOL WOWTHUNK_Init(void)
 {
     /* allocate the code selector for CallTo16 routines */
-    LDT_ENTRY entry;
-    WORD codesel = wine_ldt_alloc_entries(1);
-
+    WORD codesel = SELECTOR_AllocBlock( __wine_call16_start,
+                                        (BYTE *)(&CallTo16_TebSelector + 1) - __wine_call16_start,
+                                        LDT_FLAGS_CODE | LDT_FLAGS_32BIT );
     if (!codesel) return FALSE;
-    wine_ldt_set_base( &entry, __wine_call16_start );
-    wine_ldt_set_limit( &entry, (BYTE *)(&CallTo16_TebSelector + 1) - __wine_call16_start - 1 );
-    wine_ldt_set_flags( &entry, WINE_LDT_FLAGS_CODE | WINE_LDT_FLAGS_32BIT );
-    wine_ldt_set_entry( codesel, &entry );
 
       /* Patch the return addresses for CallTo16 routines */
 
-    CallTo16_DataSelector = wine_get_ds();
+    CallTo16_DataSelector = get_ds();
     call16_ret_addr = MAKESEGPTR( codesel, (BYTE *)__wine_call_to_16_ret - __wine_call16_start );
     CALL32_CBClient_RetAddr =
         MAKESEGPTR( codesel, (BYTE *)CALL32_CBClient_Ret - __wine_call16_start );
@@ -116,7 +108,7 @@ static BOOL fix_selector( CONTEXT *context )
     default:
         return FALSE;
     }
-    stack = wine_ldt_get_ptr( context->SegSs, context->Esp );
+    stack = ldt_get_ptr( context->SegSs, context->Esp );
     TRACE( "fixing up selector %x for pop instruction\n", *stack );
     *stack = 0;
     return TRUE;
@@ -141,7 +133,7 @@ static DWORD call16_handler( EXCEPTION_RECORD *record, EXCEPTION_REGISTRATION_RE
     else if (record->ExceptionCode == EXCEPTION_ACCESS_VIOLATION ||
              record->ExceptionCode == EXCEPTION_PRIV_INSTRUCTION)
     {
-        if (wine_ldt_is_system(context->SegCs))
+        if (ldt_is_system(context->SegCs))
         {
             if (fix_selector( context )) return ExceptionContinueExecution;
         }
@@ -155,7 +147,7 @@ static DWORD call16_handler( EXCEPTION_RECORD *record, EXCEPTION_REGISTRATION_RE
             /* check for Win16 __GP handler */
             if ((gpHandler = HasGPHandler16( MAKESEGPTR( context->SegCs, context->Eip ) )))
             {
-                WORD *stack = wine_ldt_get_ptr( context->SegSs, context->Esp );
+                WORD *stack = ldt_get_ptr( context->SegSs, context->Esp );
                 *--stack = context->SegCs;
                 *--stack = context->Eip;
 
@@ -427,8 +419,6 @@ BOOL WINAPI K32WOWCallback16Ex( DWORD vpfn16, DWORD dwFlags,
                            (WORD)context->Ebp, (WORD)context->SegDs, (WORD)context->SegEs );
             SYSLEVEL_CheckNotLevel( 2 );
         }
-
-        assert( !(context->EFlags & 0x00020000) ); /* vm86 mode no longer supported */
 
         /* push return address */
         if (dwFlags & WCB16_REGS_LONG)

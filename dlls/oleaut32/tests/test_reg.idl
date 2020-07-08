@@ -163,4 +163,17 @@ library register_test
         UINT32 field;
         HRESULT hr;
     };
+
+    [
+        uuid(f073cd92-a199-11ea-bb37-0242ac130002),
+        dllname("test.dll")
+    ]
+    module TestGetDllEntry
+    {
+        [propget, entry(1)]
+        int test1([out] int *i);
+
+        [propput, entry(2)]
+        int test1([in] int i);
+    };
 }

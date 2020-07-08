@@ -117,6 +117,46 @@ static NTSTATUS set_report_data(BYTE *report, INT reportLength, INT startBit, IN
     return HIDP_STATUS_SUCCESS;
 }
 
+static NTSTATUS get_report_data_array(BYTE *report, UINT reportLength, UINT startBit, UINT elemSize,
+                                      UINT numElements, PCHAR values, UINT valuesSize)
+{
+    BYTE byte, *end, *p = report + startBit / 8;
+    ULONG size = elemSize * numElements;
+    ULONG m, bit_index = startBit % 8;
+    BYTE *data = (BYTE*)values;
+
+    if ((startBit + size) / 8 > reportLength)
+        return HIDP_STATUS_INVALID_REPORT_LENGTH;
+
+    if (valuesSize < (size + 7) / 8)
+        return HIDP_STATUS_BUFFER_TOO_SMALL;
+
+    end = report + (startBit + size + 7) / 8;
+
+    data--;
+    byte = *p++;
+    while (p != end)
+    {
+        *(++data) = byte >> bit_index;
+        byte = *p++;
+        *data |= byte << (8 - bit_index);
+    }
+
+    /* Handle the end and mask out bits beyond */
+    m = (startBit + size) % 8;
+    m = m ? m : 8;
+
+    if (m > bit_index)
+        *(++data) = (byte >> bit_index) & ((1 << (m - bit_index)) - 1);
+    else
+        *data &= (1 << (m + 8 - bit_index)) - 1;
+
+    if (++data < (BYTE*)values + valuesSize)
+        memset(data, 0, (BYTE*)values + valuesSize - data);
+
+    return HIDP_STATUS_SUCCESS;
+}
+
 
 NTSTATUS WINAPI HidP_GetButtonCaps(HIDP_REPORT_TYPE ReportType, PHIDP_BUTTON_CAPS ButtonCaps,
                                    PUSHORT ButtonCapsLength, PHIDP_PREPARSED_DATA PreparsedData)
@@ -319,6 +359,31 @@ NTSTATUS WINAPI HidP_GetUsageValue(HIDP_REPORT_TYPE ReportType, USAGE UsagePage,
     {
         return get_report_data((BYTE*)Report, ReportLength,
                                element.valueStartBit, element.bitCount, UsageValue);
+    }
+
+    return rc;
+}
+
+
+NTSTATUS WINAPI HidP_GetUsageValueArray(HIDP_REPORT_TYPE ReportType, USAGE UsagePage, USHORT LinkCollection,
+                                        USAGE Usage, PCHAR UsageValue, USHORT UsageValueByteLength,
+                                        PHIDP_PREPARSED_DATA PreparsedData, PCHAR Report, ULONG ReportLength)
+{
+    WINE_HID_ELEMENT element;
+    NTSTATUS rc;
+
+    TRACE("(%i, %x, %i, %i, %p, %u, %p, %p, %i)\n", ReportType, UsagePage, LinkCollection, Usage, UsageValue,
+          UsageValueByteLength, PreparsedData, Report, ReportLength);
+
+    rc = find_usage(ReportType, UsagePage, LinkCollection, Usage, PreparsedData, Report, ValueElement, &element);
+
+    if (rc == HIDP_STATUS_SUCCESS)
+    {
+        if (element.caps.value.IsRange || element.caps.value.ReportCount <= 1 || !element.bitCount)
+            return HIDP_STATUS_NOT_VALUE_ARRAY;
+
+        return get_report_data_array((BYTE*)Report, ReportLength, element.valueStartBit, element.bitCount,
+                                     element.caps.value.ReportCount, UsageValue, UsageValueByteLength);
     }
 
     return rc;

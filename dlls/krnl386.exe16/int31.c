@@ -18,9 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdarg.h>
 
 #include "windef.h"
@@ -240,21 +237,16 @@ void WINAPI DOSVM_Int31Handler( CONTEXT *context )
 
     case 0x0006:  /* Get selector base address */
         TRACE( "get selector base address (0x%04x)\n", BX_reg(context) );
+        if (!ldt_is_valid( BX_reg(context) ))
         {
-            LDT_ENTRY entry;
-            WORD sel = BX_reg(context);
-            wine_ldt_get_entry( sel, &entry );
-            if (wine_ldt_is_empty(&entry))
-            {
-                context->Eax = 0x8022;  /* invalid selector */
-                SET_CFLAG(context);
-            }
-            else
-            {
-                void *base = wine_ldt_get_base(&entry);
-                SET_CX( context, HIWORD(base) );
-                SET_DX( context, LOWORD(base) );
-            }
+            context->Eax = 0x8022;  /* invalid selector */
+            SET_CFLAG(context);
+        }
+        else
+        {
+            void *base = ldt_get_base( BX_reg(context) );
+            SET_CX( context, HIWORD(base) );
+            SET_DX( context, LOWORD(base) );
         }
         break;
 
@@ -301,7 +293,7 @@ void WINAPI DOSVM_Int31Handler( CONTEXT *context )
         {
             LDT_ENTRY *entry = CTX_SEG_OFF_TO_LIN( context, context->SegEs,
                                                    context->Edi );
-            wine_ldt_get_entry( BX_reg(context), entry );
+            ldt_get_entry( BX_reg(context), entry );
         }
         break;
 
@@ -310,7 +302,7 @@ void WINAPI DOSVM_Int31Handler( CONTEXT *context )
         {
             LDT_ENTRY *entry = CTX_SEG_OFF_TO_LIN( context, context->SegEs,
                                                    context->Edi );
-            wine_ldt_set_entry( BX_reg(context), entry );
+            if (!ldt_is_system( BX_reg(context) )) ldt_set_entry( BX_reg(context), *entry );
         }
         break;
 
@@ -454,7 +446,7 @@ void WINAPI DOSVM_Int31Handler( CONTEXT *context )
             SET_AX( context, 0x005a );  /* DPMI version 0.90 */
             SET_BX( context, 0x0005 );  /* Flags: 32-bit, virtual memory */
             SET_CL( context, si.wProcessorLevel );
-            SET_DX( context, 0x0870 );  /* Master/slave interrupt controller base */
+            SET_DX( context, 0x0870 );  /* Interrupt controller base */
         }
         break;
 

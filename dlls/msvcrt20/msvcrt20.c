@@ -20,13 +20,9 @@
 
 #include <stdarg.h>
 #include <math.h>
+#include <process.h>
 
 #include "windef.h"
-
-extern void CDECL __getmainargs(int *argc, char** *argv, char** *envp,
-                                int expand_wildcards, int *new_mode);
-extern void CDECL __wgetmainargs(int *argc, WCHAR** *wargv, WCHAR** *wenvp,
-                                 int expand_wildcards, int *new_mode);
 
 /*********************************************************************
  *		__getmainargs (MSVCRT20.@)

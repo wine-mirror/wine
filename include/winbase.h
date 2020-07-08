@@ -1409,7 +1409,7 @@ typedef struct tagCOMMCONFIG {
 	DWORD dwProviderSubType;
 	DWORD dwProviderOffset;
 	DWORD dwProviderSize;
-	DWORD wcProviderData[1];
+	WCHAR wcProviderData[1];
 } COMMCONFIG, *LPCOMMCONFIG;
 
 typedef struct tagCOMMPROP {
@@ -2079,6 +2079,7 @@ WINBASEAPI BOOL        WINAPI FreeResource(HGLOBAL);
 WINADVAPI  PVOID       WINAPI FreeSid(PSID);
 WINADVAPI  BOOL        WINAPI GetAce(PACL,DWORD,LPVOID*);
 WINADVAPI  BOOL        WINAPI GetAclInformation(PACL,LPVOID,DWORD,ACL_INFORMATION_CLASS);
+WINBASEAPI DWORD       WINAPI GetActiveProcessorCount(WORD);
 WINBASEAPI HRESULT     WINAPI GetApplicationRestartSettings(HANDLE,WCHAR*,DWORD*,DWORD*);
 WINBASEAPI UINT        WINAPI GetAtomNameA(ATOM,LPSTR,INT);
 WINBASEAPI UINT        WINAPI GetAtomNameW(ATOM,LPWSTR,INT);
@@ -2619,6 +2620,9 @@ WINBASEAPI BOOL        WINAPI SetDllDirectoryA(LPCSTR);
 WINBASEAPI BOOL        WINAPI SetDllDirectoryW(LPCWSTR);
 #define                       SetDllDirectory WINELIB_NAME_AW(SetDllDirectory)
 WINBASEAPI BOOL        WINAPI SetEndOfFile(HANDLE);
+WINBASEAPI BOOL        WINAPI SetEnvironmentStringsA(char *);
+WINBASEAPI BOOL        WINAPI SetEnvironmentStringsW(WCHAR *);
+#define                       SetEnvironmentStrings WINELIB_NAME_AW(SetEnvironmentStrings)
 WINBASEAPI BOOL        WINAPI SetEnvironmentVariableA(LPCSTR,LPCSTR);
 WINBASEAPI BOOL        WINAPI SetEnvironmentVariableW(LPCWSTR,LPCWSTR);
 #define                       SetEnvironmentVariable WINELIB_NAME_AW(SetEnvironmentVariable)
@@ -2904,122 +2908,134 @@ extern WCHAR * CDECL wine_get_dos_file_name( LPCSTR str );
 
 /* Interlocked functions */
 
-#ifdef __i386__
-# if defined(__GNUC__) && !defined(_NTSYSTEM_) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 2)))
-
-static FORCEINLINE LONG WINAPI InterlockedCompareExchange( LONG volatile *dest, LONG xchg, LONG compare )
-{
-    LONG ret;
-    __asm__ __volatile__( "lock; cmpxchgl %2,(%1)"
-                          : "=a" (ret) : "r" (dest), "r" (xchg), "0" (compare) : "memory" );
-    return ret;
-}
-
-static FORCEINLINE LONG WINAPI InterlockedExchange( LONG volatile *dest, LONG val )
-{
-    LONG ret;
-    __asm__ __volatile__( "lock; xchgl %0,(%1)"
-                          : "=r" (ret) :"r" (dest), "0" (val) : "memory" );
-    return ret;
-}
-
-static FORCEINLINE LONG WINAPI InterlockedExchangeAdd( LONG volatile *dest, LONG incr )
-{
-    LONG ret;
-    __asm__ __volatile__( "lock; xaddl %0,(%1)"
-                          : "=r" (ret) : "r" (dest), "0" (incr) : "memory" );
-    return ret;
-}
-
-static FORCEINLINE LONG WINAPI InterlockedIncrement( LONG volatile *dest )
-{
-    return InterlockedExchangeAdd( dest, 1 ) + 1;
-}
-
-static FORCEINLINE LONG WINAPI InterlockedDecrement( LONG volatile *dest )
-{
-    return InterlockedExchangeAdd( dest, -1 ) - 1;
-}
-
-# else  /* __GNUC__ */
-
-WINBASEAPI LONG WINAPI InterlockedCompareExchange(LONG volatile*,LONG,LONG);
-WINBASEAPI LONG WINAPI InterlockedDecrement(LONG volatile*);
-WINBASEAPI LONG WINAPI InterlockedExchange(LONG volatile*,LONG);
-WINBASEAPI LONG WINAPI InterlockedExchangeAdd(LONG volatile*,LONG);
-WINBASEAPI LONG WINAPI InterlockedIncrement(LONG volatile*);
-
-# endif  /* __GNUC__ */
-
-static FORCEINLINE PVOID WINAPI InterlockedCompareExchangePointer( PVOID volatile *dest, PVOID xchg, PVOID compare )
-{
-    return (PVOID)InterlockedCompareExchange( (LONG volatile*)dest, (LONG)xchg, (LONG)compare );
-}
-
-static FORCEINLINE PVOID WINAPI InterlockedExchangePointer( PVOID volatile *dest, PVOID val )
-{
-    return (PVOID)InterlockedExchange( (LONG volatile*)dest, (LONG)val );
-}
-
-WINBASEAPI LONGLONG WINAPI InterlockedCompareExchange64(LONGLONG volatile*,LONGLONG,LONGLONG);
-
-#elif defined(_MSC_VER)
+#ifdef _MSC_VER
 
 #pragma intrinsic(_InterlockedCompareExchange)
-#pragma intrinsic(_InterlockedCompareExchangePointer)
 #pragma intrinsic(_InterlockedCompareExchange64)
 #pragma intrinsic(_InterlockedExchange)
-#pragma intrinsic(_InterlockedExchangePointer)
 #pragma intrinsic(_InterlockedExchangeAdd)
 #pragma intrinsic(_InterlockedIncrement)
 #pragma intrinsic(_InterlockedDecrement)
 
+long      _InterlockedCompareExchange(long volatile*,long,long);
+long long _InterlockedCompareExchange64(long long volatile*,long long,long long);
+long      _InterlockedDecrement(long volatile*);
+long      _InterlockedExchange(long volatile*,long);
+long      _InterlockedExchangeAdd(long volatile*,long);
+long      _InterlockedIncrement(long volatile*);
+
 static FORCEINLINE LONG WINAPI InterlockedCompareExchange( LONG volatile *dest, LONG xchg, LONG compare )
 {
-    return _InterlockedCompareExchange( dest, xchg, compare );
-}
-
-static FORCEINLINE PVOID WINAPI InterlockedCompareExchangePointer( PVOID volatile *dest, PVOID xchg, PVOID compare )
-{
-    return _InterlockedCompareExchangePointer( dest, xchg, compare );
+    return _InterlockedCompareExchange( (long volatile *)dest, xchg, compare );
 }
 
 static FORCEINLINE LONGLONG WINAPI InterlockedCompareExchange64( LONGLONG volatile *dest, LONGLONG xchg, LONGLONG compare )
 {
-    return _InterlockedCompareExchange64( dest, xchg, compare );
+    return _InterlockedCompareExchange64( (long long volatile *)dest, compare, xchg );
 }
 
 static FORCEINLINE LONG WINAPI InterlockedExchange( LONG volatile *dest, LONG val )
 {
-    return _InterlockedExchange( dest, val );
-}
-
-static FORCEINLINE PVOID WINAPI InterlockedExchangePointer( PVOID volatile *dest, PVOID val )
-{
-    return _InterlockedExchangePointer( dest, val );
+    return _InterlockedExchange( (long volatile *)dest, val );
 }
 
 static FORCEINLINE LONG WINAPI InterlockedExchangeAdd( LONG volatile *dest, LONG incr )
 {
-    return _InterlockedExchangeAdd( dest, incr );
+    return _InterlockedExchangeAdd( (long volatile *)dest, incr );
 }
 
 static FORCEINLINE LONG WINAPI InterlockedIncrement( LONG volatile *dest )
 {
-    return _InterlockedIncrement( dest );
+    return _InterlockedIncrement( (long volatile *)dest );
 }
 
 static FORCEINLINE LONG WINAPI InterlockedDecrement( LONG volatile *dest )
 {
-    return _InterlockedDecrement( dest );
+    return _InterlockedDecrement( (long volatile *)dest );
 }
+
+#ifndef __i386__
+
+#pragma intrinsic(_InterlockedCompareExchangePointer)
+#pragma intrinsic(_InterlockedExchangePointer)
+
+#define InterlockedCompareExchangePointer    _InterlockedCompareExchangePointer
+#define InterlockedExchangePointer           _InterlockedExchangePointer
+
+void *InterlockedCompareExchangePointer(void *volatile*,void*,void*);
+void *InterlockedExchangePointer(void *volatile*,void*);
+
+#else
+
+static FORCEINLINE void *WINAPI InterlockedCompareExchangePointer( void *volatile *dest, void *xchg, void *compare )
+{
+    return (void *)_InterlockedCompareExchange( (long volatile*)dest, (long)xchg, (long)compare );
+}
+
+static FORCEINLINE void *WINAPI InterlockedExchangePointer( void *volatile *dest, void *val )
+{
+    return (void *)_InterlockedExchange( (long volatile*)dest, (long)val );
+}
+
+#endif
 
 #elif defined(__GNUC__)
 
 static FORCEINLINE LONG WINAPI InterlockedCompareExchange( LONG volatile *dest, LONG xchg, LONG compare )
 {
+#ifdef __GCC_HAVE_SYNC_COMPARE_AND_SWAP_4
     return __sync_val_compare_and_swap( dest, compare, xchg );
+#else
+    LONG ret;
+    __asm__ __volatile__( "lock; cmpxchgl %2,(%1)"
+                          : "=a" (ret) : "r" (dest), "r" (xchg), "0" (compare) : "memory" );
+    return ret;
+#endif
 }
+
+static FORCEINLINE LONG WINAPI InterlockedExchange( LONG volatile *dest, LONG val )
+{
+    LONG ret;
+#if defined(__i386__) || defined(__x86_64__)
+    __asm__ __volatile__( "lock; xchgl %0,(%1)"
+                          : "=r" (ret) :"r" (dest), "0" (val) : "memory" );
+#else
+    do ret = *dest; while (!__sync_bool_compare_and_swap( dest, ret, val ));
+#endif
+    return ret;
+}
+
+static FORCEINLINE LONG WINAPI InterlockedExchangeAdd( LONG volatile *dest, LONG incr )
+{
+#ifdef __GCC_HAVE_SYNC_COMPARE_AND_SWAP_4
+    return __sync_fetch_and_add( dest, incr );
+#else
+    LONG ret;
+    __asm__ __volatile__( "lock; xaddl %0,(%1)"
+                          : "=r" (ret) : "r" (dest), "0" (incr) : "memory" );
+    return ret;
+#endif
+}
+
+static FORCEINLINE LONG WINAPI InterlockedIncrement( LONG volatile *dest )
+{
+#ifdef __GCC_HAVE_SYNC_COMPARE_AND_SWAP_4
+    return __sync_add_and_fetch( dest, 1 );
+#else
+    return InterlockedExchangeAdd( dest, 1 ) + 1;
+#endif
+}
+
+static FORCEINLINE LONG WINAPI InterlockedDecrement( LONG volatile *dest )
+{
+#ifdef __GCC_HAVE_SYNC_COMPARE_AND_SWAP_4
+    return __sync_add_and_fetch( dest, -1 );
+#else
+    return InterlockedExchangeAdd( dest, -1 ) - 1;
+#endif
+}
+
+#ifdef _WIN64
 
 static FORCEINLINE PVOID WINAPI InterlockedCompareExchangePointer( PVOID volatile *dest, PVOID xchg, PVOID compare )
 {
@@ -3029,17 +3045,6 @@ static FORCEINLINE PVOID WINAPI InterlockedCompareExchangePointer( PVOID volatil
 static FORCEINLINE LONGLONG WINAPI InterlockedCompareExchange64( LONGLONG volatile *dest, LONGLONG xchg, LONGLONG compare )
 {
     return __sync_val_compare_and_swap( dest, compare, xchg );
-}
-
-static FORCEINLINE LONG WINAPI InterlockedExchange( LONG volatile *dest, LONG val )
-{
-    LONG ret;
-#ifdef __x86_64__
-    __asm__ __volatile__( "lock; xchgl %0,(%1)" : "=r" (ret) :"r" (dest), "0" (val) : "memory" );
-#else
-    do ret = *dest; while (!__sync_bool_compare_and_swap( dest, ret, val ));
-#endif
-    return ret;
 }
 
 static FORCEINLINE PVOID WINAPI InterlockedExchangePointer( PVOID volatile *dest, PVOID val )
@@ -3053,22 +3058,30 @@ static FORCEINLINE PVOID WINAPI InterlockedExchangePointer( PVOID volatile *dest
     return ret;
 }
 
-static FORCEINLINE LONG WINAPI InterlockedExchangeAdd( LONG volatile *dest, LONG incr )
+#else
+
+static FORCEINLINE PVOID WINAPI InterlockedCompareExchangePointer( PVOID volatile *dest, PVOID xchg, PVOID compare )
 {
-    return __sync_fetch_and_add( dest, incr );
+    return (PVOID)InterlockedCompareExchange( (LONG volatile*)dest, (LONG)xchg, (LONG)compare );
 }
 
-static FORCEINLINE LONG WINAPI InterlockedIncrement( LONG volatile *dest )
+static FORCEINLINE PVOID WINAPI InterlockedExchangePointer( PVOID volatile *dest, PVOID val )
 {
-    return __sync_add_and_fetch( dest, 1 );
+    return (PVOID)InterlockedExchange( (LONG volatile*)dest, (LONG)val );
 }
 
-static FORCEINLINE LONG WINAPI InterlockedDecrement( LONG volatile *dest )
+#ifdef __GCC_HAVE_SYNC_COMPARE_AND_SWAP_8
+static FORCEINLINE LONGLONG WINAPI InterlockedCompareExchange64( LONGLONG volatile *dest, LONGLONG xchg, LONGLONG compare )
 {
-    return __sync_add_and_fetch( dest, -1 );
+    return __sync_val_compare_and_swap( dest, compare, xchg );
 }
+#else
+WINBASEAPI LONGLONG WINAPI InterlockedCompareExchange64(LONGLONG volatile*,LONGLONG,LONGLONG);
+#endif
 
-#endif  /* __i386__ */
+#endif
+
+#endif  /* __GNUC__ */
 
 #ifdef __WINESRC__
 

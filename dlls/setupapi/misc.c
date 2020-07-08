@@ -31,6 +31,7 @@
 #include "softpub.h"
 #include "mscat.h"
 #include "shlobj.h"
+#include "shlwapi.h"
 
 #include "wine/debug.h"
 
@@ -933,6 +934,8 @@ static BOOL find_existing_inf(const WCHAR *source, WCHAR *target)
             if (dest_file == INVALID_HANDLE_VALUE)
                 continue;
 
+            SetFilePointer( source_file, 0, NULL, FILE_BEGIN );
+
             if (GetFileSizeEx( dest_file, &dest_file_size )
                     && dest_file_size.QuadPart == source_file_size.QuadPart
                     && !compare_files( source_file, dest_file ))
@@ -960,10 +963,11 @@ BOOL WINAPI SetupCopyOEMInfW( PCWSTR source, PCWSTR location,
                               DWORD buffer_size, DWORD *required_size, WCHAR **filepart )
 {
     BOOL ret = FALSE;
-    WCHAR target[MAX_PATH], catalog_file[MAX_PATH], *p;
+    WCHAR target[MAX_PATH], catalog_file[MAX_PATH], pnf_path[MAX_PATH], *p;
     static const WCHAR inf[] = { '\\','i','n','f','\\',0 };
     static const WCHAR wszVersion[] = { 'V','e','r','s','i','o','n',0 };
     static const WCHAR wszCatalogFile[] = { 'C','a','t','a','l','o','g','F','i','l','e',0 };
+    FILE *pnf_file;
     unsigned int i;
     DWORD size;
     HINF hinf;
@@ -1066,6 +1070,19 @@ BOOL WINAPI SetupCopyOEMInfW( PCWSTR source, PCWSTR location,
 done:
     if (style & SP_COPY_DELETESOURCE)
         DeleteFileW( source );
+
+    if (ret)
+    {
+        wcscpy(pnf_path, target);
+        PathRemoveExtensionW(pnf_path);
+        PathAddExtensionW(pnf_path, L".pnf");
+        if ((pnf_file = _wfopen(pnf_path, L"w")))
+        {
+            fputws(PNF_HEADER, pnf_file);
+            fputws(source, pnf_file);
+            fclose(pnf_file);
+        }
+    }
 
     size = lstrlenW( target ) + 1;
     if (dest)

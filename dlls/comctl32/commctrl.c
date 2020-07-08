@@ -2,6 +2,7 @@
  * Common controls functions
  *
  * Copyright 1997 Dimitrie O. Paun
+ *           1998 Juergen Schmied <j.schmied@metronet.de>
  * Copyright 1998,2000 Eric Kohl
  * Copyright 2014-2015 Michael Müller
  *
@@ -56,6 +57,9 @@
 #include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
+
+#define COBJMACROS
+#define NONAMELESSUNION
 
 #include "windef.h"
 #include "winbase.h"
@@ -1732,4 +1736,962 @@ HRESULT WINAPI LoadIconMetric(HINSTANCE hinst, const WCHAR *name, int size, HICO
     }
 
     return LoadIconWithScaleDown(hinst, name, cx, cy, icon);
+}
+
+static const WCHAR strMRUList[] = { 'M','R','U','L','i','s','t',0 };
+
+/**************************************************************************
+ * Alloc [COMCTL32.71]
+ *
+ * Allocates memory block from the dll's private heap
+ */
+void * WINAPI Alloc(DWORD size)
+{
+    return LocalAlloc(LMEM_ZEROINIT, size);
+}
+
+/**************************************************************************
+ * ReAlloc [COMCTL32.72]
+ *
+ * Changes the size of an allocated memory block or allocates a memory
+ * block using the dll's private heap.
+ *
+ */
+void * WINAPI ReAlloc(void *src, DWORD size)
+{
+    if (src)
+        return LocalReAlloc(src, size, LMEM_ZEROINIT | LMEM_MOVEABLE);
+    else
+        return LocalAlloc(LMEM_ZEROINIT, size);
+}
+
+/**************************************************************************
+ * Free [COMCTL32.73]
+ *
+ * Frees an allocated memory block from the dll's private heap.
+ */
+BOOL WINAPI Free(void *mem)
+{
+    return !LocalFree(mem);
+}
+
+/**************************************************************************
+ * GetSize [COMCTL32.74]
+ */
+DWORD WINAPI GetSize(void *mem)
+{
+    return LocalSize(mem);
+}
+
+/**************************************************************************
+ * MRU-Functions  {COMCTL32}
+ *
+ * NOTES
+ * The MRU-API is a set of functions to manipulate lists of M.R.U. (Most Recently
+ * Used) items. It is an undocumented API that is used (at least) by the shell
+ * and explorer to implement their recent documents feature.
+ *
+ * Since these functions are undocumented, they are unsupported by MS and
+ * may change at any time.
+ *
+ * Internally, the list is implemented as a last in, last out list of items
+ * persisted into the system registry under a caller chosen key. Each list
+ * item is given a one character identifier in the Ascii range from 'a' to
+ * '}'. A list of the identifiers in order from newest to oldest is stored
+ * under the same key in a value named "MRUList".
+ *
+ * Items are re-ordered by changing the order of the values in the MRUList
+ * value. When a new item is added, it becomes the new value of the oldest
+ * identifier, and that identifier is moved to the front of the MRUList value.
+ *
+ * Wine stores MRU-lists in the same registry format as Windows, so when
+ * switching between the builtin and native comctl32.dll no problems or
+ * incompatibilities should occur.
+ *
+ * The following undocumented structure is used to create an MRU-list:
+ *|typedef INT (CALLBACK *MRUStringCmpFn)(LPCTSTR lhs, LPCTSTR rhs);
+ *|typedef INT (CALLBACK *MRUBinaryCmpFn)(LPCVOID lhs, LPCVOID rhs, DWORD length);
+ *|
+ *|typedef struct tagMRUINFO
+ *|{
+ *|    DWORD   cbSize;
+ *|    UINT    uMax;
+ *|    UINT    fFlags;
+ *|    HKEY    hKey;
+ *|    LPTSTR  lpszSubKey;
+ *|    PROC    lpfnCompare;
+ *|} MRUINFO, *LPMRUINFO;
+ *
+ * MEMBERS
+ *  cbSize      [I] The size of the MRUINFO structure. This must be set
+ *                  to sizeof(MRUINFO) by the caller.
+ *  uMax        [I] The maximum number of items allowed in the list. Because
+ *                  of the limited number of identifiers, this should be set to
+ *                  a value from 1 to 30 by the caller.
+ *  fFlags      [I] If bit 0 is set, the list will be used to store binary
+ *                  data, otherwise it is assumed to store strings. If bit 1
+ *                  is set, every change made to the list will be reflected in
+ *                  the registry immediately, otherwise changes will only be
+ *                  written when the list is closed.
+ *  hKey        [I] The registry key that the list should be written under.
+ *                  This must be supplied by the caller.
+ *  lpszSubKey  [I] A caller supplied name of a subkey under hKey to write
+ *                  the list to. This may not be blank.
+ *  lpfnCompare [I] A caller supplied comparison function, which may be either
+ *                  an MRUStringCmpFn if dwFlags does not have bit 0 set, or a
+ *                  MRUBinaryCmpFn otherwise.
+ *
+ * FUNCTIONS
+ *  - Create an MRU-list with CreateMRUList() or CreateMRUListLazy().
+ *  - Add items to an MRU-list with AddMRUString() or AddMRUData().
+ *  - Remove items from an MRU-list with DelMRUString().
+ *  - Find data in an MRU-list with FindMRUString() or FindMRUData().
+ *  - Iterate through an MRU-list with EnumMRUList().
+ *  - Free an MRU-list with FreeMRUList().
+ */
+
+typedef INT (CALLBACK *MRUStringCmpFnA)(LPCSTR lhs, LPCSTR rhs);
+typedef INT (CALLBACK *MRUStringCmpFnW)(LPCWSTR lhs, LPCWSTR rhs);
+typedef INT (CALLBACK *MRUBinaryCmpFn)(LPCVOID lhs, LPCVOID rhs, DWORD length);
+
+struct MRUINFOA
+{
+    DWORD  cbSize;
+    UINT   uMax;
+    UINT   fFlags;
+    HKEY   hKey;
+    LPSTR  lpszSubKey;
+    union
+    {
+        MRUStringCmpFnA string_cmpfn;
+        MRUBinaryCmpFn  binary_cmpfn;
+    } u;
+};
+
+struct MRUINFOW
+{
+    DWORD   cbSize;
+    UINT    uMax;
+    UINT    fFlags;
+    HKEY    hKey;
+    LPWSTR  lpszSubKey;
+    union
+    {
+        MRUStringCmpFnW string_cmpfn;
+        MRUBinaryCmpFn  binary_cmpfn;
+    } u;
+};
+
+/* MRUINFO.fFlags */
+#define MRU_STRING     0 /* list will contain strings */
+#define MRU_BINARY     1 /* list will contain binary data */
+#define MRU_CACHEWRITE 2 /* only save list order to reg. is FreeMRUList */
+
+/* If list is a string list lpfnCompare has the following prototype
+ * int CALLBACK MRUCompareString(LPCSTR s1, LPCSTR s2)
+ * for binary lists the prototype is
+ * int CALLBACK MRUCompareBinary(LPCVOID data1, LPCVOID data2, DWORD cbData)
+ * where cbData is the no. of bytes to compare.
+ * Need to check what return value means identical - 0?
+ */
+
+typedef struct tagWINEMRUITEM
+{
+    DWORD          size;        /* size of data stored               */
+    DWORD          itemFlag;    /* flags                             */
+    BYTE           datastart;
+} WINEMRUITEM, *LPWINEMRUITEM;
+
+/* itemFlag */
+#define WMRUIF_CHANGED   0x0001 /* this dataitem changed             */
+
+typedef struct tagWINEMRULIST
+{
+    struct MRUINFOW extview;    /* original create information       */
+    BOOL           isUnicode;   /* is compare fn Unicode */
+    DWORD          wineFlags;   /* internal flags                    */
+    DWORD          cursize;     /* current size of realMRU           */
+    LPWSTR         realMRU;     /* pointer to string of index names  */
+    LPWINEMRUITEM  *array;      /* array of pointers to data         */
+                                /* in 'a' to 'z' order               */
+} WINEMRULIST, *LPWINEMRULIST;
+
+/* wineFlags */
+#define WMRUF_CHANGED  0x0001   /* MRU list has changed              */
+
+/**************************************************************************
+ *              MRU_SaveChanged (internal)
+ *
+ * Local MRU saving code
+ */
+static void MRU_SaveChanged(WINEMRULIST *mp)
+{
+    UINT i, err;
+    HKEY newkey;
+    WCHAR realname[2];
+    WINEMRUITEM *witem;
+
+    /* or should we do the following instead of RegOpenKeyEx:
+     */
+
+    /* open the sub key */
+    if ((err = RegOpenKeyExW(mp->extview.hKey, mp->extview.lpszSubKey, 0, KEY_WRITE, &newkey)))
+    {
+        /* not present - what to do ??? */
+        ERR("Could not open key, error=%d, attempting to create\n", err);
+        if ((err = RegCreateKeyExW( mp->extview.hKey, mp->extview.lpszSubKey, 0, NULL, REG_OPTION_NON_VOLATILE,
+                KEY_READ | KEY_WRITE, 0, &newkey, 0)))
+        {
+            ERR("failed to create key /%s/, err=%d\n", debugstr_w(mp->extview.lpszSubKey), err);
+            return;
+        }
+    }
+
+    if (mp->wineFlags & WMRUF_CHANGED)
+    {
+        mp->wineFlags &= ~WMRUF_CHANGED;
+        if ((err = RegSetValueExW(newkey, strMRUList, 0, REG_SZ, (BYTE *)mp->realMRU,
+                (lstrlenW(mp->realMRU) + 1)*sizeof(WCHAR))))
+        {
+            ERR("error saving MRUList, err=%d\n", err);
+        }
+        TRACE("saving MRUList=/%s/\n", debugstr_w(mp->realMRU));
+    }
+
+    realname[1] = 0;
+    for (i = 0; i < mp->cursize; ++i)
+    {
+        witem = mp->array[i];
+        if (witem->itemFlag & WMRUIF_CHANGED)
+        {
+            witem->itemFlag &= ~WMRUIF_CHANGED;
+            realname[0] = 'a' + i;
+            if ((err = RegSetValueExW(newkey, realname, 0, (mp->extview.fFlags & MRU_BINARY) ?
+                    REG_BINARY : REG_SZ, &witem->datastart, witem->size)))
+            {
+                ERR("error saving /%s/, err=%d\n", debugstr_w(realname), err);
+            }
+            TRACE("saving value for name /%s/ size=%d\n", debugstr_w(realname), witem->size);
+        }
+    }
+    RegCloseKey(newkey);
+}
+
+/**************************************************************************
+ *              FreeMRUList [COMCTL32.152]
+ *
+ * Frees a most-recently-used items list.
+ */
+void WINAPI FreeMRUList(HANDLE hMRUList)
+{
+    WINEMRULIST *mp = hMRUList;
+    unsigned int i;
+
+    TRACE("%p.\n", hMRUList);
+
+    if (!hMRUList)
+        return;
+
+    if (mp->wineFlags & WMRUF_CHANGED)
+    {
+        /* need to open key and then save the info */
+        MRU_SaveChanged(mp);
+    }
+
+    for (i = 0; i < mp->extview.uMax; ++i)
+        Free(mp->array[i]);
+
+    Free(mp->realMRU);
+    Free(mp->array);
+    Free(mp->extview.lpszSubKey);
+    Free(mp);
+}
+
+/**************************************************************************
+ *                  FindMRUData [COMCTL32.169]
+ *
+ * Searches binary list for item that matches data of given length.
+ * Returns position in list order 0 -> MRU and value corresponding to item's reg.
+ * name will be stored in it ('a' -> 0).
+ *
+ */
+INT WINAPI FindMRUData(HANDLE hList, const void *data, DWORD cbData, int *pos)
+{
+    const WINEMRULIST *mp = hList;
+    INT ret;
+    UINT i;
+    LPSTR dataA = NULL;
+
+    if (!mp || !mp->extview.u.string_cmpfn)
+        return -1;
+
+    if (!(mp->extview.fFlags & MRU_BINARY) && !mp->isUnicode)
+    {
+        DWORD len = WideCharToMultiByte(CP_ACP, 0, data, -1, NULL, 0, NULL, NULL);
+        dataA = Alloc(len);
+        WideCharToMultiByte(CP_ACP, 0, data, -1, dataA, len, NULL, NULL);
+    }
+
+    for (i = 0; i < mp->cursize; ++i)
+    {
+        if (mp->extview.fFlags & MRU_BINARY)
+        {
+            if (!mp->extview.u.binary_cmpfn(data, &mp->array[i]->datastart, cbData))
+                break;
+        }
+        else
+        {
+            if (mp->isUnicode)
+            {
+                if (!mp->extview.u.string_cmpfn(data, (LPWSTR)&mp->array[i]->datastart))
+                    break;
+            }
+            else
+            {
+                DWORD len = WideCharToMultiByte(CP_ACP, 0, (LPWSTR)&mp->array[i]->datastart, -1,
+                        NULL, 0, NULL, NULL);
+                LPSTR itemA = Alloc(len);
+                INT cmp;
+                WideCharToMultiByte(CP_ACP, 0, (LPWSTR)&mp->array[i]->datastart, -1, itemA, len, NULL, NULL);
+
+                cmp = mp->extview.u.string_cmpfn((LPWSTR)dataA, (LPWSTR)itemA);
+                Free(itemA);
+                if (!cmp)
+                    break;
+            }
+        }
+    }
+
+    Free(dataA);
+    if (i < mp->cursize)
+        ret = i;
+    else
+        ret = -1;
+    if (pos && (ret != -1))
+        *pos = 'a' + i;
+
+    TRACE("%p, %p, %d, %p, returning %d.\n", hList, data, cbData, pos, ret);
+
+    return ret;
+}
+
+/**************************************************************************
+ *              AddMRUData [COMCTL32.167]
+ *
+ * Add item to MRU binary list.  If item already exists in list then it is
+ * simply moved up to the top of the list and not added again.  If list is
+ * full then the least recently used item is removed to make room.
+ *
+ */
+INT WINAPI AddMRUData(HANDLE hList, const void *data, DWORD cbData)
+{
+    WINEMRULIST *mp = hList;
+    WINEMRUITEM *witem;
+    INT i, replace;
+
+    if ((replace = FindMRUData(hList, data, cbData, NULL)) >= 0)
+    {
+        /* Item exists, just move it to the front */
+        LPWSTR pos = wcschr(mp->realMRU, replace + 'a');
+        while (pos > mp->realMRU)
+        {
+            pos[0] = pos[-1];
+            pos--;
+        }
+    }
+    else
+    {
+        /* either add a new entry or replace oldest */
+        if (mp->cursize < mp->extview.uMax)
+        {
+            /* Add in a new item */
+            replace = mp->cursize;
+            mp->cursize++;
+        }
+        else
+        {
+            /* get the oldest entry and replace data */
+            replace = mp->realMRU[mp->cursize - 1] - 'a';
+            Free(mp->array[replace]);
+        }
+
+        /* Allocate space for new item and move in the data */
+        mp->array[replace] = witem = Alloc(cbData + sizeof(WINEMRUITEM));
+        witem->itemFlag |= WMRUIF_CHANGED;
+        witem->size = cbData;
+        memcpy( &witem->datastart, data, cbData);
+
+        /* now rotate MRU list */
+        for (i = mp->cursize - 1; i >= 1; --i)
+            mp->realMRU[i] = mp->realMRU[i-1];
+    }
+
+    /* The new item gets the front spot */
+    mp->wineFlags |= WMRUF_CHANGED;
+    mp->realMRU[0] = replace + 'a';
+
+    TRACE("(%p, %p, %d) adding data, /%c/ now most current\n", hList, data, cbData, replace+'a');
+
+    if (!(mp->extview.fFlags & MRU_CACHEWRITE))
+    {
+        /* save changed stuff right now */
+        MRU_SaveChanged(mp);
+    }
+
+    return replace;
+}
+
+/**************************************************************************
+ *              AddMRUStringW [COMCTL32.401]
+ *
+ * Add an item to an MRU string list.
+ *
+ */
+INT WINAPI AddMRUStringW(HANDLE hList, const WCHAR *str)
+{
+    TRACE("%p, %s.\n", hList, debugstr_w(str));
+
+    if (!hList)
+        return -1;
+
+    if (!str || IsBadStringPtrW(str, -1))
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
+
+    return AddMRUData(hList, str, (lstrlenW(str) + 1) * sizeof(WCHAR));
+}
+
+/**************************************************************************
+ *              AddMRUStringA [COMCTL32.153]
+ */
+INT WINAPI AddMRUStringA(HANDLE hList, const char *str)
+{
+    WCHAR *strW;
+    DWORD len;
+    INT ret;
+
+    TRACE("%p, %s.\n", hList, debugstr_a(str));
+
+    if (!hList)
+        return -1;
+
+    if (IsBadStringPtrA(str, -1))
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
+
+    len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0) * sizeof(WCHAR);
+    strW = Alloc(len);
+    if (!strW)
+        return -1;
+
+    MultiByteToWideChar(CP_ACP, 0, str, -1, strW, len/sizeof(WCHAR));
+    ret = AddMRUData(hList, strW, len);
+    Free(strW);
+    return ret;
+}
+
+/**************************************************************************
+ *              DelMRUString [COMCTL32.156]
+ *
+ * Removes item from either string or binary list (despite its name)
+ *
+ * PARAMS
+ *    hList [I] list handle
+ *    nItemPos [I] item position to remove 0 -> MRU
+ *
+ * RETURNS
+ *    TRUE if successful, FALSE if nItemPos is out of range.
+ */
+BOOL WINAPI DelMRUString(HANDLE hList, INT nItemPos)
+{
+    FIXME("(%p, %d): stub\n", hList, nItemPos);
+    return TRUE;
+}
+
+/**************************************************************************
+ *                  FindMRUStringW [COMCTL32.402]
+ */
+INT WINAPI FindMRUStringW(HANDLE hList, const WCHAR *str, int *pos)
+{
+    return FindMRUData(hList, str, (lstrlenW(str) + 1) * sizeof(WCHAR), pos);
+}
+
+/**************************************************************************
+ *                  FindMRUStringA [COMCTL32.155]
+ *
+ * Searches string list for item that matches given string.
+ *
+ * RETURNS
+ *    Position in list 0 -> MRU.  -1 if item not found.
+ */
+INT WINAPI FindMRUStringA(HANDLE hList, const char *str, int *pos)
+{
+    DWORD len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
+    WCHAR *strW = Alloc(len * sizeof(*strW));
+    INT ret;
+
+    MultiByteToWideChar(CP_ACP, 0, str, -1, strW, len);
+    ret = FindMRUData(hList, strW, len * sizeof(WCHAR), pos);
+    Free(strW);
+    return ret;
+}
+
+/*************************************************************************
+ *                 create_mru_list (internal)
+ */
+static HANDLE create_mru_list(WINEMRULIST *mp)
+{
+    UINT i, err;
+    HKEY newkey;
+    DWORD datasize, dwdisp;
+    WCHAR realname[2];
+    WINEMRUITEM *witem;
+    DWORD type;
+
+    /* get space to save indices that will turn into names
+     * but in order of most to least recently used
+     */
+    mp->realMRU = Alloc((mp->extview.uMax + 2) * sizeof(WCHAR));
+
+    /* get space to save pointers to actual data in order of
+     * 'a' to 'z' (0 to n).
+     */
+    mp->array = Alloc(mp->extview.uMax * sizeof(LPVOID));
+
+    /* open the sub key */
+    if ((err = RegCreateKeyExW(mp->extview.hKey, mp->extview.lpszSubKey, 0, NULL, REG_OPTION_NON_VOLATILE,
+            KEY_READ | KEY_WRITE, 0, &newkey, &dwdisp)))
+    {
+        /* error - what to do ??? */
+        ERR("(%u %u %x %p %s %p): Could not open key, error=%d\n", mp->extview.cbSize, mp->extview.uMax, mp->extview.fFlags,
+                mp->extview.hKey, debugstr_w(mp->extview.lpszSubKey), mp->extview.u.string_cmpfn, err);
+        return 0;
+    }
+
+    /* get values from key 'MRUList' */
+    if (newkey)
+    {
+        datasize = (mp->extview.uMax + 1) * sizeof(WCHAR);
+        if (RegQueryValueExW( newkey, strMRUList, 0, &type, (BYTE *)mp->realMRU, &datasize))
+        {
+            /* not present - set size to 1 (will become 0 later) */
+            datasize = 1;
+            *mp->realMRU = 0;
+        }
+        else
+            datasize /= sizeof(WCHAR);
+
+        TRACE("MRU list = %s, datasize = %d\n", debugstr_w(mp->realMRU), datasize);
+
+        mp->cursize = datasize - 1;
+        /* datasize now has number of items in the MRUList */
+
+        /* get actual values for each entry */
+        realname[1] = 0;
+        for (i = 0; i < mp->cursize; ++i)
+        {
+            realname[0] = 'a' + i;
+            if (RegQueryValueExW(newkey, realname, 0, &type, 0, &datasize))
+            {
+                /* not present - what to do ??? */
+                ERR("Key %s not found 1\n", debugstr_w(realname));
+            }
+            mp->array[i] = witem = Alloc(datasize + sizeof(WINEMRUITEM));
+            witem->size = datasize;
+            if (RegQueryValueExW(newkey, realname, 0, &type, &witem->datastart, &datasize))
+            {
+                /* not present - what to do ??? */
+                ERR("Key %s not found 2\n", debugstr_w(realname));
+            }
+        }
+        RegCloseKey( newkey );
+    }
+    else
+        mp->cursize = 0;
+
+    TRACE("(%u %u %x %p %s %p): Current Size = %d\n", mp->extview.cbSize, mp->extview.uMax, mp->extview.fFlags,
+            mp->extview.hKey, debugstr_w(mp->extview.lpszSubKey), mp->extview.u.string_cmpfn, mp->cursize);
+    return mp;
+}
+
+/**************************************************************************
+ *                  CreateMRUListLazyW [COMCTL32.404]
+ */
+HANDLE WINAPI CreateMRUListLazyW(const struct MRUINFOW *info, DWORD dwParam2, DWORD dwParam3, DWORD dwParam4)
+{
+    WINEMRULIST *mp;
+
+    /* Native does not check for a NULL. */
+    if (!info->hKey || IsBadStringPtrW(info->lpszSubKey, -1))
+        return NULL;
+
+    mp = Alloc(sizeof(*mp));
+    memcpy(&mp->extview, info, sizeof(*info));
+    mp->extview.lpszSubKey = Alloc((lstrlenW(info->lpszSubKey) + 1) * sizeof(WCHAR));
+    lstrcpyW(mp->extview.lpszSubKey, info->lpszSubKey);
+    mp->isUnicode = TRUE;
+
+    return create_mru_list(mp);
+}
+
+/**************************************************************************
+ *                  CreateMRUListLazyA [COMCTL32.157]
+ *
+ * Creates a most-recently-used list.
+ */
+HANDLE WINAPI CreateMRUListLazyA(const struct MRUINFOA *info, DWORD dwParam2, DWORD dwParam3, DWORD dwParam4)
+{
+    WINEMRULIST *mp;
+    DWORD len;
+
+    /* Native does not check for a NULL lpcml */
+
+    if (!info->hKey || IsBadStringPtrA(info->lpszSubKey, -1))
+        return 0;
+
+    mp = Alloc(sizeof(*mp));
+    memcpy(&mp->extview, info, sizeof(*info));
+    len = MultiByteToWideChar(CP_ACP, 0, info->lpszSubKey, -1, NULL, 0);
+    mp->extview.lpszSubKey = Alloc(len * sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, info->lpszSubKey, -1, mp->extview.lpszSubKey, len);
+    mp->isUnicode = FALSE;
+    return create_mru_list(mp);
+}
+
+/**************************************************************************
+ *              CreateMRUListW [COMCTL32.400]
+ */
+HANDLE WINAPI CreateMRUListW(const struct MRUINFOW *info)
+{
+    return CreateMRUListLazyW(info, 0, 0, 0);
+}
+
+/**************************************************************************
+ *              CreateMRUListA [COMCTL32.151]
+ */
+HANDLE WINAPI CreateMRUListA(const struct MRUINFOA *info)
+{
+     return CreateMRUListLazyA(info, 0, 0, 0);
+}
+
+/**************************************************************************
+ *                EnumMRUListW [COMCTL32.403]
+ *
+ * Enumerate item in a most-recently-used list
+ *
+ * PARAMS
+ *    hList [I] list handle
+ *    nItemPos [I] item position to enumerate
+ *    lpBuffer [O] buffer to receive item
+ *    nBufferSize [I] size of buffer
+ *
+ * RETURNS
+ *    For binary lists specifies how many bytes were copied to buffer, for
+ *    string lists specifies full length of string.  Enumerating past the end
+ *    of list returns -1.
+ *    If lpBuffer == NULL or nItemPos is -ve return value is no. of items in
+ *    the list.
+ */
+INT WINAPI EnumMRUListW(HANDLE hList, INT nItemPos, void *buffer, DWORD nBufferSize)
+{
+    const WINEMRULIST *mp = hList;
+    const WINEMRUITEM *witem;
+    INT desired, datasize;
+
+    if (!mp) return -1;
+    if ((nItemPos < 0) || !buffer) return mp->cursize;
+    if (nItemPos >= mp->cursize) return -1;
+    desired = mp->realMRU[nItemPos];
+    desired -= 'a';
+    TRACE("nItemPos=%d, desired=%d\n", nItemPos, desired);
+    witem = mp->array[desired];
+    datasize = min(witem->size, nBufferSize);
+    memcpy(buffer, &witem->datastart, datasize);
+    TRACE("(%p, %d, %p, %d): returning len=%d\n", hList, nItemPos, buffer, nBufferSize, datasize);
+    return datasize;
+}
+
+/**************************************************************************
+ *                EnumMRUListA [COMCTL32.154]
+ */
+INT WINAPI EnumMRUListA(HANDLE hList, INT nItemPos, void *buffer, DWORD nBufferSize)
+{
+    const WINEMRULIST *mp = hList;
+    WINEMRUITEM *witem;
+    INT desired, datasize;
+    DWORD lenA;
+
+    if (!mp) return -1;
+    if ((nItemPos < 0) || !buffer) return mp->cursize;
+    if (nItemPos >= mp->cursize) return -1;
+    desired = mp->realMRU[nItemPos];
+    desired -= 'a';
+    TRACE("nItemPos=%d, desired=%d\n", nItemPos, desired);
+    witem = mp->array[desired];
+    if (mp->extview.fFlags & MRU_BINARY)
+    {
+        datasize = min(witem->size, nBufferSize);
+        memcpy(buffer, &witem->datastart, datasize);
+    }
+    else
+    {
+        lenA = WideCharToMultiByte(CP_ACP, 0, (LPWSTR)&witem->datastart, -1, NULL, 0, NULL, NULL);
+        datasize = min(lenA, nBufferSize);
+        WideCharToMultiByte(CP_ACP, 0, (LPWSTR)&witem->datastart, -1, buffer, datasize, NULL, NULL);
+        ((char *)buffer)[ datasize - 1 ] = '\0';
+        datasize = lenA - 1;
+    }
+    TRACE("(%p, %d, %p, %d): returning len=%d\n", hList, nItemPos, buffer, nBufferSize, datasize);
+    return datasize;
+}
+
+/**************************************************************************
+ * Str_GetPtrWtoA [internal]
+ *
+ * Converts a unicode string into a multi byte string
+ *
+ */
+
+INT Str_GetPtrWtoA(const WCHAR *src, char *dst, INT nMaxLen)
+{
+    INT len;
+
+    TRACE("%s, %p, %d.\n", debugstr_w(src), dst, nMaxLen);
+
+    if (!dst && src)
+        return WideCharToMultiByte(CP_ACP, 0, src, -1, 0, 0, NULL, NULL);
+
+    if (!nMaxLen)
+        return 0;
+
+    if (!src)
+    {
+        dst[0] = 0;
+        return 0;
+    }
+
+    len = WideCharToMultiByte(CP_ACP, 0, src, -1, 0, 0, NULL, NULL);
+    if (len >= nMaxLen)
+        len = nMaxLen - 1;
+
+    WideCharToMultiByte(CP_ACP, 0, src, -1, dst, len, NULL, NULL);
+    dst[len] = '\0';
+
+    return len;
+}
+
+/**************************************************************************
+ * Str_GetPtrAtoW [internal]
+ *
+ * Converts a multibyte string into a unicode string
+ */
+
+INT Str_GetPtrAtoW(const char *src, WCHAR *dst, INT nMaxLen)
+{
+    INT len;
+
+    TRACE("%s, %p, %d.\n", debugstr_a(src), dst, nMaxLen);
+
+    if (!dst && src)
+        return MultiByteToWideChar(CP_ACP, 0, src, -1, 0, 0);
+
+    if (!nMaxLen)
+        return 0;
+
+    if (!src)
+    {
+        *dst = 0;
+        return 0;
+    }
+
+    len = MultiByteToWideChar(CP_ACP, 0, src, -1, 0, 0);
+    if (len >= nMaxLen)
+        len = nMaxLen - 1;
+
+    MultiByteToWideChar(CP_ACP, 0, src, -1, dst, len);
+    dst[len] = 0;
+
+    return len;
+}
+
+/**************************************************************************
+ * Str_SetPtrAtoW [internal]
+ *
+ * Converts a multi byte string to a unicode string.
+ * If the pointer to the destination buffer is NULL a buffer is allocated.
+ * If the destination buffer is too small to keep the converted multi byte
+ * string the destination buffer is reallocated. If the source pointer is
+ */
+BOOL Str_SetPtrAtoW(WCHAR **dst, const char *src)
+{
+    TRACE("%p, %s.\n", dst, debugstr_a(src));
+
+    if (src)
+    {
+        INT len = MultiByteToWideChar(CP_ACP, 0, src, -1, NULL, 0);
+        LPWSTR ptr = ReAlloc(*dst, len * sizeof(**dst));
+
+        if (!ptr)
+            return FALSE;
+        MultiByteToWideChar(CP_ACP, 0, src, -1, ptr, len);
+        *dst = ptr;
+    }
+    else
+    {
+        Free(*dst);
+        *dst = NULL;
+    }
+
+    return TRUE;
+}
+
+/**************************************************************************
+ * Str_SetPtrWtoA [internal]
+ *
+ * Converts a unicode string to a multi byte string.
+ * If the pointer to the destination buffer is NULL a buffer is allocated.
+ * If the destination buffer is too small to keep the converted wide
+ * string the destination buffer is reallocated. If the source pointer is
+ * NULL, the destination buffer is freed.
+ */
+BOOL Str_SetPtrWtoA(char **dst, const WCHAR *src)
+{
+    TRACE("%p, %s.\n", dst, debugstr_w(src));
+
+    if (src)
+    {
+        INT len = WideCharToMultiByte(CP_ACP, 0, src, -1, NULL, 0, NULL, FALSE);
+        LPSTR ptr = ReAlloc(*dst, len * sizeof(**dst));
+
+        if (!ptr)
+            return FALSE;
+        WideCharToMultiByte(CP_ACP, 0, src, -1, ptr, len, NULL, FALSE);
+        *dst = ptr;
+    }
+    else
+    {
+        Free(*dst);
+        *dst = NULL;
+    }
+
+    return TRUE;
+}
+
+/**************************************************************************
+ * Notification functions
+ */
+
+struct NOTIFYDATA
+{
+    HWND hwndFrom;
+    HWND hwndTo;
+    DWORD  dwParam3;
+    DWORD  dwParam4;
+    DWORD  dwParam5;
+    DWORD  dwParam6;
+};
+
+/**************************************************************************
+ * DoNotify [Internal]
+ */
+
+static LRESULT DoNotify(const struct NOTIFYDATA *notify, UINT code, NMHDR *hdr)
+{
+    NMHDR nmhdr;
+    NMHDR *lpNmh = NULL;
+    UINT idFrom = 0;
+
+    TRACE("%p, %p, %d, %p, %#x.\n", notify->hwndFrom, notify->hwndTo, code, hdr, notify->dwParam5);
+
+    if (!notify->hwndTo)
+        return 0;
+
+    if (notify->hwndFrom == (HWND)-1)
+    {
+        lpNmh = hdr;
+        idFrom = hdr->idFrom;
+    }
+    else
+    {
+        if (notify->hwndFrom)
+            idFrom = GetDlgCtrlID(notify->hwndFrom);
+
+        lpNmh = hdr ? hdr : &nmhdr;
+        lpNmh->hwndFrom = notify->hwndFrom;
+        lpNmh->idFrom = idFrom;
+        lpNmh->code = code;
+    }
+
+    return SendMessageW(notify->hwndTo, WM_NOTIFY, idFrom, (LPARAM)lpNmh);
+}
+
+/**************************************************************************
+ * SendNotify [COMCTL32.341]
+ *
+ * Sends a WM_NOTIFY message to the specified window.
+ *
+ */
+LRESULT WINAPI SendNotify(HWND hwndTo, HWND hwndFrom, UINT code, NMHDR *hdr)
+{
+    struct NOTIFYDATA notify;
+
+    TRACE("%p, %p, %d, %p.\n", hwndTo, hwndFrom, code, hdr);
+
+    notify.hwndFrom = hwndFrom;
+    notify.hwndTo   = hwndTo;
+    notify.dwParam5 = 0;
+    notify.dwParam6 = 0;
+
+    return DoNotify(&notify, code, hdr);
+}
+
+/**************************************************************************
+ * SendNotifyEx [COMCTL32.342]
+ *
+ * Sends a WM_NOTIFY message to the specified window.
+ *
+ * PARAMS
+ *     hwndFrom [I] Window to receive the message
+ *     hwndTo   [I] Window that the message is from
+ *     code     [I] Notification code
+ *     hdr      [I] The NMHDR and any additional information to send or NULL
+ *     dwParam5 [I] Unknown
+ *
+ * RETURNS
+ *     Success: return value from notification
+ *     Failure: 0
+ *
+ * NOTES
+ *     If hwndFrom is -1 then the identifier of the control sending the
+ *     message is taken from the NMHDR structure.
+ *     If hwndFrom is not -1 then lpHdr can be NULL.
+ */
+LRESULT WINAPI SendNotifyEx(HWND hwndTo, HWND hwndFrom, UINT code, NMHDR *hdr, DWORD dwParam5)
+{
+    struct NOTIFYDATA notify;
+    HWND hwndNotify;
+
+    TRACE("(%p %p %d %p %#x)\n", hwndFrom, hwndTo, code, hdr, dwParam5);
+
+    hwndNotify = hwndTo;
+    if (!hwndTo)
+    {
+        if (IsWindow(hwndFrom))
+        {
+            hwndNotify = GetParent(hwndFrom);
+            if (!hwndNotify)
+                return 0;
+        }
+    }
+
+    notify.hwndFrom = hwndFrom;
+    notify.hwndTo   = hwndNotify;
+    notify.dwParam5 = dwParam5;
+    notify.dwParam6 = 0;
+
+    return DoNotify(&notify, code, hdr);
 }

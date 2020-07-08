@@ -70,7 +70,7 @@ extern "C" {
  * -- AJ
  */
 
-#ifndef __GNUC__
+#if !defined(__GNUC__) && !defined(__clang__)
 #define __attribute__(x) /* nothing */
 #endif
 
@@ -105,9 +105,9 @@ typedef struct { int reg; } __wine_jmp_buf;
 
 extern int __cdecl __attribute__ ((__nothrow__,__returns_twice__)) __wine_setjmpex( __wine_jmp_buf *buf,
                                                    EXCEPTION_REGISTRATION_RECORD *frame ) DECLSPEC_HIDDEN;
-extern void __cdecl __wine_longjmp( __wine_jmp_buf *buf, int retval ) DECLSPEC_HIDDEN DECLSPEC_NORETURN;
-extern void __cdecl __wine_rtl_unwind( EXCEPTION_REGISTRATION_RECORD* frame, EXCEPTION_RECORD *record,
-                                       void (*target)(void) ) DECLSPEC_HIDDEN DECLSPEC_NORETURN;
+extern void DECLSPEC_NORETURN __cdecl __wine_longjmp( __wine_jmp_buf *buf, int retval ) DECLSPEC_HIDDEN;
+extern void DECLSPEC_NORETURN __cdecl __wine_rtl_unwind( EXCEPTION_REGISTRATION_RECORD* frame, EXCEPTION_RECORD *record,
+                                                         void (*target)(void) ) DECLSPEC_HIDDEN;
 extern DWORD __cdecl __wine_exception_handler( EXCEPTION_RECORD *record,
                                                EXCEPTION_REGISTRATION_RECORD *frame,
                                                CONTEXT *context,

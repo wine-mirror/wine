@@ -237,11 +237,11 @@ static void d2d_brush_init(struct d2d_brush *brush, ID2D1Factory *factory,
         enum d2d_brush_type type, const D2D1_BRUSH_PROPERTIES *desc, const struct ID2D1BrushVtbl *vtbl)
 {
     static const D2D1_MATRIX_3X2_F identity =
-    {
+    {{{
         1.0f, 0.0f,
         0.0f, 1.0f,
         0.0f, 0.0f,
-    };
+    }}};
 
     brush->ID2D1Brush_iface.lpVtbl = vtbl;
     brush->refcount = 1;
@@ -962,7 +962,7 @@ static void STDMETHODCALLTYPE d2d_bitmap_brush_SetInterpolationMode(ID2D1BitmapB
             return;
     }
 
-    brush->u.bitmap.interpolation_mode = mode;
+    brush->u.bitmap.interpolation_mode = d2d1_1_interp_mode_from_d2d1(mode);
     if (brush->u.bitmap.sampler_state)
     {
         ID3D10SamplerState_Release(brush->u.bitmap.sampler_state);
@@ -1010,8 +1010,8 @@ static D2D1_BITMAP_INTERPOLATION_MODE STDMETHODCALLTYPE d2d_bitmap_brush_GetInte
     switch (brush->u.bitmap.interpolation_mode)
     {
         case D2D1_INTERPOLATION_MODE_NEAREST_NEIGHBOR:
+            return D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR;
         case D2D1_INTERPOLATION_MODE_LINEAR:
-            return brush->u.bitmap.interpolation_mode;
         default:
             return D2D1_BITMAP_INTERPOLATION_MODE_LINEAR;
     }
@@ -1262,7 +1262,7 @@ static BOOL d2d_brush_fill_cb(const struct d2d_brush *brush,
 }
 
 HRESULT d2d_brush_get_ps_cb(struct d2d_brush *brush, struct d2d_brush *opacity_brush,
-        BOOL outline, struct d2d_device_context *render_target, ID3D10Buffer **ps_cb)
+        BOOL outline, BOOL is_arc, struct d2d_device_context *render_target, ID3D10Buffer **ps_cb)
 {
     D3D10_SUBRESOURCE_DATA buffer_data;
     struct d2d_ps_cb cb_data = {0};
@@ -1270,6 +1270,7 @@ HRESULT d2d_brush_get_ps_cb(struct d2d_brush *brush, struct d2d_brush *opacity_b
     HRESULT hr;
 
     cb_data.outline = outline;
+    cb_data.is_arc = is_arc;
     if (!d2d_brush_fill_cb(brush, render_target, &cb_data.colour_brush))
         return E_NOTIMPL;
     if (!d2d_brush_fill_cb(opacity_brush, render_target, &cb_data.opacity_brush))

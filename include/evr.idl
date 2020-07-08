@@ -107,3 +107,116 @@ interface IMFVideoRenderer : IUnknown
         [in] IMFVideoPresenter *pVideoPresenter
     );
 }
+
+typedef enum _MF_SERVICE_LOOKUP_TYPE
+{
+    MF_SERVICE_LOOKUP_UPSTREAM,
+    MF_SERVICE_LOOKUP_UPSTREAM_DIRECT,
+    MF_SERVICE_LOOKUP_DOWNSTREAM,
+    MF_SERVICE_LOOKUP_DOWNSTREAM_DIRECT,
+    MF_SERVICE_LOOKUP_ALL,
+    MF_SERVICE_LOOKUP_GLOBAL,
+} MF_SERVICE_LOOKUP_TYPE;
+
+[
+    object,
+    uuid(fa993889-4383-415a-a930-dd472a8cf6f7),
+    local
+]
+interface IMFTopologyServiceLookup : IUnknown
+{
+    HRESULT LookupService(
+        [in] MF_SERVICE_LOOKUP_TYPE lookup_type,
+        [in] DWORD index,
+        [in] REFGUID service,
+        [in] REFIID riid,
+        [out, iid_is(riid)] void **objects,
+        [in, out] DWORD *num_objects
+    );
+}
+
+[
+    object,
+    uuid(fa99388a-4383-415a-a930-dd472a8cf6f7),
+    local
+]
+interface IMFTopologyServiceLookupClient : IUnknown
+{
+    HRESULT InitServicePointers(
+        [in] IMFTopologyServiceLookup *service_lookup
+    );
+    HRESULT ReleaseServicePointers();
+}
+
+[
+    object,
+    uuid(a38d9567-5a9c-4f3c-b293-8eb415b279ba),
+    local
+]
+interface IMFVideoDeviceID : IUnknown
+{
+    HRESULT GetDeviceID(
+        [out] IID *device_id
+    );
+}
+
+[
+    object,
+    uuid(a5c6c53f-c202-4aa5-9695-175ba8c508a5)
+]
+interface IMFVideoMixerControl : IUnknown
+{
+    HRESULT SetStreamZOrder(
+        [in] DWORD stream_id,
+        [in] DWORD zorder
+    );
+    HRESULT GetStreamZOrder(
+        [in] DWORD stream_id,
+        [out] DWORD *zorder
+    );
+    HRESULT SetStreamOutputRect(
+        [in] DWORD stream_id,
+        [in] const MFVideoNormalizedRect *rect
+    );
+    HRESULT GetStreamOutputRect(
+        [in] DWORD stream_id,
+        [out] MFVideoNormalizedRect *rect
+    );
+}
+
+[
+    object,
+    uuid(8459616d-966e-4930-b658-54fa7e5a16d3)
+]
+interface IMFVideoMixerControl2 : IMFVideoMixerControl
+{
+    HRESULT SetMixingPrefs(
+        [in] DWORD flags
+    );
+    HRESULT GetMixingPrefs(
+        [out] DWORD *flags
+    );
+}
+
+[
+    object,
+    uuid(56c294d0-753e-4260-8d61-a3d8820b1d54),
+    local
+]
+interface IMFDesiredSample : IUnknown
+{
+    HRESULT GetDesiredSampleTimeAndDuration(
+        [out] LONGLONG *sample_time,
+        [out] LONGLONG *sample_duration
+    );
+
+    void SetDesiredSampleTimeAndDuration(
+        [in] LONGLONG sample_time,
+        [in] LONGLONG sample_duration
+    );
+
+    void Clear();
+}
+
+cpp_quote("HRESULT WINAPI MFCreateVideoMixer(IUnknown *owner, REFIID riid_device, REFIID riid, void **obj);")
+cpp_quote("HRESULT WINAPI MFCreateVideoSampleFromSurface(IUnknown *surface, IMFSample **sample);")

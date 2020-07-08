@@ -19,8 +19,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define _WIN32_WINNT 0x0501
-
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>

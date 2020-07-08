@@ -22,8 +22,14 @@
 #define __GST_PRIVATE_INCLUDED__
 
 #include <stdarg.h>
+#include <stdio.h>
+#include <gst/gst.h>
+#include <gst/video/video.h>
+#include <gst/audio/audio.h>
 
 #define COBJMACROS
+#define NONAMELESSSTRUCT
+#define NONAMELESSUNION
 #include "windef.h"
 #include "winbase.h"
 #include "wtypes.h"
@@ -35,16 +41,17 @@
 
 #define MEDIATIME_FROM_BYTES(x) ((LONGLONG)(x) * 10000000)
 
-IUnknown * CALLBACK avi_splitter_create(IUnknown *outer, HRESULT *phr) DECLSPEC_HIDDEN;
-IUnknown * CALLBACK mpeg_splitter_create(IUnknown *outer, HRESULT *phr) DECLSPEC_HIDDEN;
-IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *pUnkOuter, HRESULT *phr);
-IUnknown * CALLBACK wave_parser_create(IUnknown *outer, HRESULT *phr) DECLSPEC_HIDDEN;
+extern LONG object_locks;
+
+HRESULT avi_splitter_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
+HRESULT gstdemux_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
+HRESULT mpeg_splitter_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
+HRESULT wave_parser_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
 
 BOOL init_gstreamer(void) DECLSPEC_HIDDEN;
 
 void start_dispatch_thread(void) DECLSPEC_HIDDEN;
 
 extern HRESULT mfplat_get_class_object(REFCLSID rclsid, REFIID riid, void **obj) DECLSPEC_HIDDEN;
-extern HRESULT mfplat_can_unload_now(void) DECLSPEC_HIDDEN;
 
 #endif /* __GST_PRIVATE_INCLUDED__ */

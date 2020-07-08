@@ -85,6 +85,7 @@ static BOOL load_desktop_driver( HWND hwnd, HMODULE *module )
     else
     {
         size = sizeof(driver_load_error);
+        *module = NULL;
         RegQueryValueExA( hkey, "DriverError", NULL, NULL, (BYTE *)driver_load_error, &size );
     }
     RegCloseKey( hkey );

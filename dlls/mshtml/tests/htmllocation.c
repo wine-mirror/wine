@@ -87,18 +87,6 @@ static const struct location_test location_tests[] = {
         NULL,
         NULL
     },
-    {
-        "FILE",
-        "file://C:\\windows\\win.ini",
-        "file:///C:/windows/win.ini",
-        "file:",
-        NULL,
-        NULL,
-        "",
-        "C:\\windows\\win.ini",
-        NULL,
-        NULL
-    }
 };
 
 static int str_eq_wa(LPCWSTR strw, const char *stra)
@@ -314,6 +302,9 @@ static void perform_test(const struct location_test* test)
     hres = CoCreateInstance(&CLSID_HTMLDocument, NULL,
             CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER, &IID_IHTMLDocument2,
             (void**)&doc);
+#if !defined(__i386__) && !defined(__x86_64__)
+    todo_wine
+#endif
     ok(hres == S_OK, "%s: CoCreateInstance failed: 0x%08x\n", test->name, hres);
     if(FAILED(hres)){
         IMoniker_Release(url_mon);

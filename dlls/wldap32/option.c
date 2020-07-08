@@ -206,7 +206,7 @@ ULONG CDECL ldap_get_optionW( WLDAP32_LDAP *ld, int option, void *value )
 
         if (!featureU.ldapaif_name) return WLDAP32_LDAP_NO_MEMORY;
 
-        ret = map_error( ldap_get_option( ld, option, &featureU ));
+        ret = map_error( ldap_get_option( ld->ld, option, &featureU ));
 
         featureW->ldapaif_version = featureU.ldapaif_version;
         strfreeU( featureU.ldapaif_name );
@@ -220,7 +220,7 @@ ULONG CDECL ldap_get_optionW( WLDAP32_LDAP *ld, int option, void *value )
         memset( &infoU, 0, sizeof(LDAPAPIInfo) );
         infoU.ldapai_info_version = infoW->ldapai_info_version;
 
-        ret = map_error( ldap_get_option( ld, option, &infoU ));
+        ret = map_error( ldap_get_option( ld->ld, option, &infoU ));
 
         infoW->ldapai_api_version = infoU.ldapai_api_version;
         infoW->ldapai_protocol_version = infoU.ldapai_protocol_version;
@@ -253,7 +253,7 @@ ULONG CDECL ldap_get_optionW( WLDAP32_LDAP *ld, int option, void *value )
     case WLDAP32_LDAP_OPT_REFERRALS:
     case WLDAP32_LDAP_OPT_SIZELIMIT:
     case WLDAP32_LDAP_OPT_TIMELIMIT:
-        return map_error( ldap_get_option( ld, option, value ));
+        return map_error( ldap_get_option( ld->ld, option, value ));
 
     case WLDAP32_LDAP_OPT_CACHE_ENABLE:
     case WLDAP32_LDAP_OPT_CACHE_FN_PTRS:
@@ -398,6 +398,63 @@ ULONG CDECL ldap_set_optionA( WLDAP32_LDAP *ld, int option, void *value )
     return ret;
 }
 
+#ifdef HAVE_LDAP
+
+static BOOL query_supported_server_ctrls( WLDAP32_LDAP *ld )
+{
+    char *attrs[] = { (char *)"supportedControl", NULL };
+    LDAPMessage *res, *entry;
+
+    if ( ld->ld_server_ctrls ) return TRUE;
+
+    if (ldap_search_ext_s( ld->ld, (char *)"", LDAP_SCOPE_BASE, (char *)"(objectClass=*)", attrs, FALSE,
+                           NULL, NULL, NULL, 0, &res ) != LDAP_SUCCESS)
+        return FALSE;
+
+    entry = ldap_first_entry( ld->ld, res );
+    if (entry)
+    {
+        ULONG count, i;
+
+        ld->ld_server_ctrls = ldap_get_values_len( ld->ld, entry, attrs[0] );
+        count = ldap_count_values_len( ld->ld_server_ctrls );
+        for (i = 0; i < count; i++)
+            TRACE("%u: %s\n", i, debugstr_an( ld->ld_server_ctrls[i]->bv_val, ld->ld_server_ctrls[i]->bv_len ));
+    }
+
+    ldap_msgfree( res );
+
+    return ld->ld_server_ctrls != NULL;
+}
+
+static BOOL is_supported_server_ctrls( WLDAP32_LDAP *ld, LDAPControl **ctrls )
+{
+    ULONG user_count, server_count, i, n, supported = 0;
+
+    if (!query_supported_server_ctrls( ld ))
+        return TRUE; /* can't verify, let the server handle it on next query */
+
+    user_count = controlarraylenU( ctrls );
+    server_count = ldap_count_values_len( ld->ld_server_ctrls );
+
+    for (n = 0; n < user_count; n++)
+    {
+        TRACE("looking for %s\n", debugstr_a(ctrls[n]->ldctl_oid));
+
+        for (i = 0; i < server_count; i++)
+        {
+            if (!strncmp( ctrls[n]->ldctl_oid, ld->ld_server_ctrls[i]->bv_val, ld->ld_server_ctrls[i]->bv_len))
+            {
+                supported++;
+                break;
+            }
+        }
+    }
+
+    return supported == user_count;
+}
+#endif
+
 /***********************************************************************
  *      ldap_set_optionW     (WLDAP32.@)
  *
@@ -433,7 +490,10 @@ ULONG CDECL ldap_set_optionW( WLDAP32_LDAP *ld, int option, void *value )
         ctrlsU = controlarrayWtoU( value );
         if (!ctrlsU) return WLDAP32_LDAP_NO_MEMORY;
 
-        ret = map_error( ldap_set_option( ld, option, ctrlsU ));
+        if (!is_supported_server_ctrls( ld, ctrlsU ))
+            ret = WLDAP32_LDAP_PARAM_ERROR;
+        else
+            ret = map_error( ldap_set_option( ld->ld, option, ctrlsU ));
         controlarrayfreeU( ctrlsU );
         return ret;
     }
@@ -444,7 +504,7 @@ ULONG CDECL ldap_set_optionW( WLDAP32_LDAP *ld, int option, void *value )
     case WLDAP32_LDAP_OPT_REFERRALS:
     case WLDAP32_LDAP_OPT_SIZELIMIT:
     case WLDAP32_LDAP_OPT_TIMELIMIT:
-        return map_error( ldap_set_option( ld, option, value ));
+        return map_error( ldap_set_option( ld->ld, option, value ));
 
     case WLDAP32_LDAP_OPT_CACHE_ENABLE:
     case WLDAP32_LDAP_OPT_CACHE_FN_PTRS:

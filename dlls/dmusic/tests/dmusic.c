@@ -30,6 +30,12 @@
 #include "dmusicf.h"
 #include "dmksctrl.h"
 
+static BOOL compare_time(REFERENCE_TIME x, REFERENCE_TIME y, unsigned int max_diff)
+{
+    REFERENCE_TIME diff = x > y ? x - y : y - x;
+    return diff <= max_diff;
+}
+
 static void test_dmusic(void)
 {
     IDirectMusic *dmusic = NULL;
@@ -800,7 +806,7 @@ static void test_master_clock(void)
     hr = IReferenceClock_GetTime(clock, &time1);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     time2 = counter.QuadPart * 10000000.0 / freq.QuadPart;
-    ok(abs(time1 - time2) < 20 * 10000, "Expected about %s, got %s.\n",
+    ok(compare_time(time1,  time2, 20 * 10000), "Expected about %s, got %s.\n",
             wine_dbgstr_longlong(time2), wine_dbgstr_longlong(time1));
 
     hr = IReferenceClock_GetTime(clock, &time2);

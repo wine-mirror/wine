@@ -26,7 +26,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcp);
 
-#if defined(__i386__) && !defined(__MINGW32__)
+#ifdef __ASM_USE_THISCALL_WRAPPER
 
 #define DEFINE_VTBL_WRAPPER(off)            \
     __ASM_GLOBAL_FUNC(vtbl_wrapper_ ## off, \
@@ -57,10 +57,6 @@ DEFINE_VTBL_WRAPPER(56);
 void* (__cdecl *MSVCRT_operator_new)(MSVCP_size_t);
 void (__cdecl *MSVCRT_operator_delete)(void*);
 void* (__cdecl *MSVCRT_set_new_handler)(void*);
-
-#if _MSVCP_VER >= 140
-int* (__cdecl *UCRTBASE___processing_throw)(void);
-#endif
 
 #if _MSVCP_VER >= 110
 critical_section* (__thiscall *critical_section_ctor)(critical_section*);
@@ -129,7 +125,6 @@ static void init_cxx_funcs(void)
     MSVCRT_operator_new = operator_new;
     MSVCRT_operator_delete = operator_delete;
     MSVCRT_set_new_handler = (void*)GetProcAddress(hmod, "_set_new_handler");
-    UCRTBASE___processing_throw = (void*)GetProcAddress(hmod, "__processing_throw");
 
     hcon = LoadLibraryA( CONCRT_NAME(_MSVCP_VER) );
     if (!hcon) FIXME( "%s not loaded\n", CONCRT_NAME(_MSVCP_VER) );
@@ -230,8 +225,3 @@ __int64 * __cdecl std_Fpz_func(void)
 {
     return &std_Fpz;
 }
-
-#if defined(__MINGW32__) && _MSVCP_VER >= 80 && _MSVCP_VER <= 90
-/* Hack: prevent Mingw from importing mingw_helpers.o which conflicts with encode/decode_pointer */
-int mingw_app_type = 0;
-#endif

@@ -6,5 +6,6 @@ PARENTSRC = ../../d3dcompiler_43/tests
 C_SRCS = \
 	asm.c \
 	blob.c \
-	hlsl.c \
+	hlsl_d3d11.c \
+	hlsl_d3d9.c \
 	reflection.c

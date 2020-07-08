@@ -92,8 +92,6 @@ static inline IDirectInputDevice8W *IDirectInputDevice8W_from_impl(SysMouseImpl 
     return &This->base.IDirectInputDevice8W_iface;
 }
 
-static int dinput_mouse_hook( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARAM lparam );
-
 static void _dump_mouse_state(const DIMOUSESTATE2 *m_state)
 {
     int i;
@@ -213,7 +211,6 @@ static SysMouseImpl *alloc_device(REFGUID rguid, IDirectInputImpl *dinput)
     InitializeCriticalSection(&newDevice->base.crit);
     newDevice->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": SysMouseImpl*->base.crit");
     newDevice->base.dinput = dinput;
-    newDevice->base.event_proc = dinput_mouse_hook;
 
     get_app_key(&hkey, &appkey);
     if (!get_config_key(hkey, appkey, "MouseWarpOverride", buffer, sizeof(buffer)))
@@ -241,10 +238,6 @@ static SysMouseImpl *alloc_device(REFGUID rguid, IDirectInputImpl *dinput)
 
     newDevice->base.data_format.wine_df = df;
     IDirectInput_AddRef(&newDevice->base.dinput->IDirectInput7A_iface);
-
-    EnterCriticalSection(&dinput->crit);
-    list_add_tail(&dinput->devices_list, &newDevice->base.entry);
-    LeaveCriticalSection(&dinput->crit);
 
     return newDevice;
 
@@ -314,7 +307,7 @@ const struct dinput_device mouse_device = {
  */
 
 /* low-level mouse hook */
-static int dinput_mouse_hook( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARAM lparam )
+int dinput_mouse_hook( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARAM lparam )
 {
     MSLLHOOKSTRUCT *hook = (MSLLHOOKSTRUCT *)lparam;
     SysMouseImpl* This = impl_from_IDirectInputDevice8A(iface);

@@ -20,9 +20,71 @@
 
 #include <gst/gst.h>
 
+#include "objbase.h"
+
 #include "wine/list.h"
 
 #include "gst_cbs.h"
+
+static pthread_key_t wine_gst_key;
+
+void mark_wine_thread(void)
+{
+    /* set it to non-NULL to indicate that this is a Wine thread */
+    pthread_setspecific(wine_gst_key, &wine_gst_key);
+}
+
+static BOOL is_wine_thread(void)
+{
+    return pthread_getspecific(wine_gst_key) != NULL;
+}
+
+static pthread_mutex_t cb_list_lock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t cb_list_cond = PTHREAD_COND_INITIALIZER;
+static struct list cb_list = LIST_INIT(cb_list);
+
+static void CALLBACK perform_cb(TP_CALLBACK_INSTANCE *instance, void *user)
+{
+    struct cb_data *cbdata = user;
+
+    if (cbdata->type < GSTDEMUX_MAX)
+        perform_cb_gstdemux(cbdata);
+
+    pthread_mutex_lock(&cbdata->lock);
+    cbdata->finished = 1;
+    pthread_cond_broadcast(&cbdata->cond);
+    pthread_mutex_unlock(&cbdata->lock);
+}
+
+static DWORD WINAPI dispatch_thread(void *user)
+{
+    struct cb_data *cbdata;
+
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
+
+    pthread_mutex_lock(&cb_list_lock);
+
+    while (1)
+    {
+        while (list_empty(&cb_list)) pthread_cond_wait(&cb_list_cond, &cb_list_lock);
+
+        cbdata = LIST_ENTRY(list_head(&cb_list), struct cb_data, entry);
+        list_remove(&cbdata->entry);
+        TrySubmitThreadpoolCallback(&perform_cb, cbdata, NULL);
+    }
+
+    pthread_mutex_unlock(&cb_list_lock);
+
+    CoUninitialize();
+
+    return 0;
+}
+
+void start_dispatch_thread(void)
+{
+    pthread_key_create(&wine_gst_key, NULL);
+    CloseHandle(CreateThread(NULL, 0, &dispatch_thread, NULL, 0, NULL));
+}
 
 /* gstreamer calls our callbacks from threads that Wine did not create. Some
  * callbacks execute code which requires Wine to have created the thread
@@ -31,7 +93,7 @@
  * callbacks in code which avoids the Wine thread requirement, and then
  * dispatch those callbacks on a thread that is known to be created by Wine.
  *
- * This file must not contain any code that depends on the Wine TEB!
+ * This thread must not run any code that depends on the Wine TEB!
  */
 
 static void call_cb(struct cb_data *cbdata)
@@ -89,9 +151,9 @@ void existing_new_pad_wrapper(GstElement *bin, GstPad *pad, gpointer user)
 {
     struct cb_data cbdata = { EXISTING_NEW_PAD };
 
-    cbdata.u.existing_new_pad_data.bin = bin;
-    cbdata.u.existing_new_pad_data.pad = pad;
-    cbdata.u.existing_new_pad_data.user = user;
+    cbdata.u.pad_added_data.element = bin;
+    cbdata.u.pad_added_data.pad = pad;
+    cbdata.u.pad_added_data.user = user;
 
     call_cb(&cbdata);
 }
@@ -123,11 +185,11 @@ gboolean activate_mode_wrapper(GstPad *pad, GstObject *parent, GstPadMode mode, 
     return cbdata.u.activate_mode_data.ret;
 }
 
-void no_more_pads_wrapper(GstElement *decodebin, gpointer user)
+void no_more_pads_wrapper(GstElement *element, gpointer user)
 {
     struct cb_data cbdata = { NO_MORE_PADS };
 
-    cbdata.u.no_more_pads_data.decodebin = decodebin;
+    cbdata.u.no_more_pads_data.element = element;
     cbdata.u.no_more_pads_data.user = user;
 
     call_cb(&cbdata);
@@ -138,15 +200,15 @@ GstFlowReturn request_buffer_src_wrapper(GstPad *pad, GstObject *parent, guint64
 {
     struct cb_data cbdata = { REQUEST_BUFFER_SRC };
 
-    cbdata.u.request_buffer_src_data.pad = pad;
-    cbdata.u.request_buffer_src_data.parent = parent;
-    cbdata.u.request_buffer_src_data.ofs = ofs;
-    cbdata.u.request_buffer_src_data.len = len;
-    cbdata.u.request_buffer_src_data.buf = buf;
+    cbdata.u.getrange_data.pad = pad;
+    cbdata.u.getrange_data.parent = parent;
+    cbdata.u.getrange_data.ofs = ofs;
+    cbdata.u.getrange_data.len = len;
+    cbdata.u.getrange_data.buf = buf;
 
     call_cb(&cbdata);
 
-    return cbdata.u.request_buffer_src_data.ret;
+    return cbdata.u.getrange_data.ret;
 }
 
 gboolean event_src_wrapper(GstPad *pad, GstObject *parent, GstEvent *event)
@@ -192,9 +254,9 @@ void removed_decoded_pad_wrapper(GstElement *bin, GstPad *pad, gpointer user)
 {
     struct cb_data cbdata = { REMOVED_DECODED_PAD };
 
-    cbdata.u.removed_decoded_pad_data.bin = bin;
-    cbdata.u.removed_decoded_pad_data.pad = pad;
-    cbdata.u.removed_decoded_pad_data.user = user;
+    cbdata.u.pad_removed_data.element = bin;
+    cbdata.u.pad_removed_data.pad = pad;
+    cbdata.u.pad_removed_data.user = user;
 
     call_cb(&cbdata);
 }

@@ -142,7 +142,7 @@ typedef struct
     SIZE dim;           /* [cx,cy] - dimensions of calendars matrix, row/column count */
 } MONTHCAL_INFO, *LPMONTHCAL_INFO;
 
-static const WCHAR themeClass[] = { 'S','c','r','o','l','l','b','a','r',0 };
+static const WCHAR themeClass[] = L"Scrollbar";
 
 /* empty SYSTEMTIME const */
 static const SYSTEMTIME st_null;
@@ -782,7 +782,6 @@ static void MONTHCAL_CircleDay(const MONTHCAL_INFO *infoPtr, HDC hdc,
 static void MONTHCAL_DrawDay(const MONTHCAL_INFO *infoPtr, HDC hdc, const SYSTEMTIME *st,
                              int bold, const PAINTSTRUCT *ps)
 {
-  static const WCHAR fmtW[] = { '%','d',0 };
   WCHAR buf[10];
   RECT r, r_temp;
   COLORREF oldCol = 0;
@@ -811,7 +810,7 @@ static void MONTHCAL_DrawDay(const MONTHCAL_INFO *infoPtr, HDC hdc, const SYSTEM
   SelectObject(hdc, bold ? infoPtr->hBoldFont : infoPtr->hFont);
 
   old_bkmode = SetBkMode(hdc, TRANSPARENT);
-  wsprintfW(buf, fmtW, st->wDay);
+  wsprintfW(buf, L"%d", st->wDay);
   DrawTextW(hdc, buf, -1, &r, DT_CENTER | DT_VCENTER | DT_SINGLELINE );
   SetBkMode(hdc, old_bkmode);
 
@@ -862,12 +861,6 @@ static void MONTHCAL_PaintButton(MONTHCAL_INFO *infoPtr, HDC hdc, enum nav_direc
 /* paint a title with buttons and month/year string */
 static void MONTHCAL_PaintTitle(MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT *ps, INT calIdx)
 {
-  static const WCHAR mmmmW[] = {'M','M','M','M',0};
-  static const WCHAR mmmW[] = {'M','M','M',0};
-  static const WCHAR mmW[] = {'M','M',0};
-  static const WCHAR fmtyearW[] = {'%','l','d',0};
-  static const WCHAR fmtmmW[] = {'%','0','2','d',0};
-  static const WCHAR fmtmW[] = {'%','d',0};
   RECT *title = &infoPtr->calendars[calIdx].title;
   const SYSTEMTIME *st = &infoPtr->calendars[calIdx].month;
   WCHAR monthW[80], strW[80], fmtW[80], yearW[6] /* valid year range is 1601-30827 */;
@@ -887,18 +880,18 @@ static void MONTHCAL_PaintTitle(MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRU
   DrawTextW(hdc, strW, lstrlenW(strW), title, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 
   GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SYEARMONTH, fmtW, ARRAY_SIZE(fmtW));
-  wsprintfW(yearW, fmtyearW, st->wYear);
+  wsprintfW(yearW, L"%ld", st->wYear);
 
   /* month is trickier as it's possible to have different format pictures, we'll
      test for M, MM, MMM, and MMMM */
-  if (wcsstr(fmtW, mmmmW))
+  if (wcsstr(fmtW, L"MMMM"))
     GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SMONTHNAME1+st->wMonth-1, monthW, ARRAY_SIZE(monthW));
-  else if (wcsstr(fmtW, mmmW))
+  else if (wcsstr(fmtW, L"MMM"))
     GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SABBREVMONTHNAME1+st->wMonth-1, monthW, ARRAY_SIZE(monthW));
-  else if (wcsstr(fmtW, mmW))
-    wsprintfW(monthW, fmtmmW, st->wMonth);
+  else if (wcsstr(fmtW, L"MM"))
+    wsprintfW(monthW, L"%02d", st->wMonth);
   else
-    wsprintfW(monthW, fmtmW, st->wMonth);
+    wsprintfW(monthW, L"%d", st->wMonth);
 
   /* update hit boxes */
   yearoffset = 0;
@@ -946,7 +939,6 @@ static void MONTHCAL_PaintTitle(MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRU
 static void MONTHCAL_PaintWeeknumbers(const MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT *ps, INT calIdx)
 {
   const SYSTEMTIME *date = &infoPtr->calendars[calIdx].month;
-  static const WCHAR fmt_weekW[] = { '%','d',0 };
   INT mindays, weeknum, weeknum1, startofprescal;
   INT i, prev_month;
   SYSTEMTIME st;
@@ -1032,15 +1024,15 @@ static void MONTHCAL_PaintWeeknumbers(const MONTHCAL_INFO *infoPtr, HDC hdc, con
   for(i = 0; i < 6; i++) {
     if((i == 0) && (weeknum > 50))
     {
-        wsprintfW(buf, fmt_weekW, weeknum);
+        wsprintfW(buf, L"%d", weeknum);
         weeknum = 0;
     }
     else if((i == 5) && (weeknum > 47))
     {
-	wsprintfW(buf, fmt_weekW, 1);
+        wsprintfW(buf, L"%d", 1);
     }
     else
-	wsprintfW(buf, fmt_weekW, weeknum + i);
+        wsprintfW(buf, L"%d", weeknum + i);
 
     DrawTextW(hdc, buf, -1, &r, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
     OffsetRect(&r, 0, infoPtr->height_increment);
@@ -1056,7 +1048,6 @@ static void MONTHCAL_PaintWeeknumbers(const MONTHCAL_INFO *infoPtr, HDC hdc, con
 /* bottom today date */
 static void MONTHCAL_PaintTodayTitle(const MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT *ps)
 {
-  static const WCHAR fmt_todayW[] = { '%','s',' ','%','s',0 };
   WCHAR buf_todayW[30], buf_dateW[20], buf[80];
   RECT text_rect, box_rect;
   HFONT old_font;
@@ -1075,7 +1066,7 @@ static void MONTHCAL_PaintTodayTitle(const MONTHCAL_INFO *infoPtr, HDC hdc, cons
   old_font = SelectObject(hdc, infoPtr->hBoldFont);
   SetTextColor(hdc, infoPtr->colors[MCSC_TEXT]);
 
-  wsprintfW(buf, fmt_todayW, buf_todayW, buf_dateW);
+  wsprintfW(buf, L"%s %s", buf_todayW, buf_dateW);
   DrawTextW(hdc, buf, -1, &text_rect, DT_CALCRECT | DT_LEFT | DT_VCENTER | DT_SINGLELINE);
   DrawTextW(hdc, buf, -1, &text_rect, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
 
@@ -2484,7 +2475,6 @@ MONTHCAL_SetFocus(const MONTHCAL_INFO *infoPtr)
 /* sets the size information */
 static void MONTHCAL_UpdateSize(MONTHCAL_INFO *infoPtr)
 {
-  static const WCHAR O0W[] = { '0','0',0 };
   RECT *title=&infoPtr->calendars[0].title;
   RECT *prev=&infoPtr->titlebtnprev;
   RECT *next=&infoPtr->titlebtnnext;
@@ -2526,8 +2516,7 @@ static void MONTHCAL_UpdateSize(MONTHCAL_INFO *infoPtr)
       }
       else /* locale independent fallback on failure */
       {
-          static const WCHAR sunW[] = { 'S','u','n' };
-          GetTextExtentPoint32W(hdc, sunW, ARRAY_SIZE(sunW), &sz);
+          GetTextExtentPoint32W(hdc, L"Sun", 3, &sz);
           day_width = sz.cx;
           break;
       }
@@ -2537,7 +2526,7 @@ static void MONTHCAL_UpdateSize(MONTHCAL_INFO *infoPtr)
 
   /* recalculate the height and width increments and offsets */
   size.cx = 0;
-  GetTextExtentPoint32W(hdc, O0W, 2, &size);
+  GetTextExtentPoint32W(hdc, L"00", 2, &size);
 
   /* restore the originally selected font */
   SelectObject(hdc, font);

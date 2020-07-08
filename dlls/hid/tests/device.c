@@ -253,11 +253,38 @@ static void process_data(HIDP_CAPS Caps, PHIDP_PREPARSED_DATA ppd, CHAR *data, D
         trace("\tValues:\n");
         for (i = 0; i < length; i++)
         {
-            status = HidP_GetUsageValue(HidP_Input, values[i].UsagePage, 0,
-                values[i].Range.UsageMin, &value, ppd, data, data_length);
-            ok(status == HIDP_STATUS_SUCCESS, "Failed to get value [%i,%i] (%x)\n",
-                values[i].UsagePage, values[i].Range.UsageMin, status);
-            trace("[%02x, %02x]: %u\n",values[i].UsagePage, values[i].Range.UsageMin, value);
+            ok(values[i].ReportCount, "Zero ReportCount for [%i,%i]\n", values[i].UsagePage, values[i].NotRange.Usage);
+            if (values[i].IsRange || values[i].ReportCount <= 1)
+            {
+                status = HidP_GetUsageValue(HidP_Input, values[i].UsagePage, 0,
+                    values[i].Range.UsageMin, &value, ppd, data, data_length);
+                ok(status == HIDP_STATUS_SUCCESS, "Failed to get value [%i,%i] (%x)\n",
+                    values[i].UsagePage, values[i].Range.UsageMin, status);
+                trace("[%02x, %02x]: %u\n", values[i].UsagePage, values[i].Range.UsageMin, value);
+            }
+            else
+            {
+                USHORT k, array_size = (values[i].BitSize * values[i].ReportCount + 7) / 8;
+                PCHAR array = HeapAlloc(GetProcessHeap(), 0, array_size);
+                char *dump = HeapAlloc(GetProcessHeap(), 0, array_size * 3 + 1);
+
+                status = HidP_GetUsageValueArray(HidP_Input, values[i].UsagePage, 0,
+                    values[i].NotRange.Usage, array, array_size, ppd, data, data_length);
+                ok(status == HIDP_STATUS_SUCCESS, "Failed to get value array [%i,%i] (%x)\n",
+                    values[i].UsagePage, values[i].NotRange.Usage, status);
+                dump[0] = 0;
+                for (k = 0; k < array_size; k++)
+                {
+                    char bytestr[5];
+                    sprintf(bytestr, " %02x", (BYTE)array[k]);
+                    strcat(dump, bytestr);
+                }
+                trace("[%02x, %02x] element bit size %u num elements %u:%s\n", values[i].UsagePage,
+                    values[i].NotRange.Usage, values[i].BitSize, values[i].ReportCount, dump);
+
+                HeapFree(GetProcessHeap(), 0, dump);
+                HeapFree(GetProcessHeap(), 0, array);
+            }
         }
 
         HeapFree(GetProcessHeap(), 0, values);

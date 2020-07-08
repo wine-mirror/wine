@@ -471,6 +471,58 @@ static void test_mmioOpen(char *fname)
     mmioClose(hmmio, 0);
 }
 
+static void test_mmioOpen_create(void)
+{
+    HMMIO hmmio;
+    HANDLE handle;
+    WCHAR cwd[MAX_PATH], temp_dir[MAX_PATH];
+    /* According to docs, filename must be no more than 128 bytes, but it will
+     * actually allow longer than that. */
+    WCHAR filename[] = L"very_long_filename_"
+        L"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        L"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        L"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+
+    GetCurrentDirectoryW(ARRAY_SIZE(cwd), cwd);
+    GetTempPathW(ARRAY_SIZE(temp_dir), temp_dir);
+    SetCurrentDirectoryW(temp_dir);
+
+    DeleteFileW(filename);
+
+    /* open with MMIO_DENYNONE */
+    hmmio = mmioOpenW(filename, NULL, MMIO_CREATE | MMIO_WRITE | MMIO_DENYNONE);
+    ok(hmmio != NULL, "mmioOpen failed\n");
+
+    /* MMIO_DENYNONE lets us open it here, too */
+    handle = CreateFileW(filename, GENERIC_READ,
+            FILE_SHARE_WRITE | FILE_SHARE_READ | FILE_SHARE_DELETE, NULL,
+            OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(handle != INVALID_HANDLE_VALUE, "Couldn't open non-exclusive file\n");
+    CloseHandle(handle);
+
+    mmioClose(hmmio, 0);
+
+    DeleteFileW(filename);
+
+    /* open with MMIO_EXCLUSIVE */
+    hmmio = mmioOpenW(filename, NULL, MMIO_CREATE | MMIO_WRITE | MMIO_EXCLUSIVE);
+    ok(hmmio != NULL, "mmioOpen failed\n");
+
+    /* should fail due to MMIO_EXCLUSIVE */
+    handle = CreateFileW(filename, GENERIC_READ,
+            FILE_SHARE_WRITE | FILE_SHARE_READ | FILE_SHARE_DELETE, NULL,
+            OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(handle == INVALID_HANDLE_VALUE, "Opening exclusive file should have failed\n");
+    if(handle != INVALID_HANDLE_VALUE)
+        CloseHandle(handle);
+
+    mmioClose(hmmio, 0);
+
+    DeleteFileW(filename);
+
+    SetCurrentDirectoryW(cwd);
+}
+
 static void test_mmioSetBuffer(char *fname)
 {
     char buf[256];
@@ -1016,6 +1068,7 @@ START_TEST(mmio)
     test_mmioDescend(fname);
     test_mmioOpen(NULL);
     test_mmioOpen(fname);
+    test_mmioOpen_create();
     test_mmioSetBuffer(NULL);
     test_mmioSetBuffer(fname);
     test_mmioOpen_fourcc();

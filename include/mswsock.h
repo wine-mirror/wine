@@ -164,6 +164,8 @@ typedef struct _WSACMSGHDR {
     /* followed by UCHAR cmsg_data[] */
 } WSACMSGHDR, *PWSACMSGHDR, *LPWSACMSGHDR;
 
+typedef WSACMSGHDR CMSGHDR, *PCMSGHDR;
+
 typedef enum _NLA_BLOB_DATA_TYPE {
     NLA_RAW_DATA,
     NLA_INTERFACE,       /* interface name, type and speed */

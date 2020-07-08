@@ -93,6 +93,38 @@ static inline LPWSTR strUtoW( char *str )
     return ret;
 }
 
+static inline LPWSTR strnAtoW( LPCSTR str, DWORD inlen, DWORD *outlen )
+{
+    LPWSTR ret = NULL;
+    *outlen = 0;
+    if (str)
+    {
+        DWORD len = MultiByteToWideChar( CP_ACP, 0, str, inlen, NULL, 0 );
+        if ((ret = heap_alloc( len * sizeof(WCHAR) )))
+        {
+            MultiByteToWideChar( CP_ACP, 0, str, inlen, ret, len );
+            *outlen = len;
+        }
+    }
+    return ret;
+}
+
+static inline char *strnWtoU( LPCWSTR str, DWORD inlen, DWORD *outlen )
+{
+    LPSTR ret = NULL;
+    *outlen = 0;
+    if (str)
+    {
+        DWORD len = WideCharToMultiByte( CP_UTF8, 0, str, inlen, NULL, 0, NULL, NULL );
+        if ((ret = heap_alloc( len )))
+        {
+            WideCharToMultiByte( CP_UTF8, 0, str, inlen, ret, len, NULL, NULL );
+            *outlen = len;
+        }
+    }
+    return ret;
+}
+
 static inline void strfreeA( LPSTR str )
 {
     heap_free( str );
@@ -203,6 +235,26 @@ static inline LPWSTR *strarrayUtoW( char **strarray )
             LPWSTR *q = strarrayW;
 
             while (*p) *q++ = strUtoW( *p++ );
+            *q = NULL;
+        }
+    }
+    return strarrayW;
+}
+
+static inline LPWSTR *strarraydupW( LPWSTR *strarray )
+{
+    LPWSTR *strarrayW = NULL;
+    DWORD size;
+
+    if (strarray)
+    {
+        size = sizeof(WCHAR*) * (strarraylenW( strarray ) + 1);
+        if ((strarrayW = heap_alloc( size )))
+        {
+            LPWSTR *p = strarray;
+            LPWSTR *q = strarrayW;
+
+            while (*p) *q++ = strdupW( *p++ );
             *q = NULL;
         }
     }
@@ -514,8 +566,34 @@ static inline LDAPControlW *controlUtoW( LDAPControl *control )
     }
 
     controlW->ldctl_oid = strUtoW( control->ldctl_oid );
-    controlW->ldctl_value.bv_len = len; 
-    controlW->ldctl_value.bv_val = val; 
+    controlW->ldctl_value.bv_len = len;
+    controlW->ldctl_value.bv_val = val;
+    controlW->ldctl_iscritical = control->ldctl_iscritical;
+
+    return controlW;
+}
+
+static inline LDAPControlW *controldupW( LDAPControlW *control )
+{
+    LDAPControlW *controlW;
+    DWORD len = control->ldctl_value.bv_len;
+    char *val = NULL;
+
+    if (control->ldctl_value.bv_val)
+    {
+        if (!(val = heap_alloc( len ))) return NULL;
+        memcpy( val, control->ldctl_value.bv_val, len );
+    }
+
+    if (!(controlW = heap_alloc( sizeof(LDAPControlW) )))
+    {
+        heap_free( val );
+        return NULL;
+    }
+
+    controlW->ldctl_oid = strdupW( control->ldctl_oid );
+    controlW->ldctl_value.bv_len = len;
+    controlW->ldctl_value.bv_val = val;
     controlW->ldctl_iscritical = control->ldctl_iscritical;
 
     return controlW;
@@ -646,6 +724,26 @@ static inline LDAPControlW **controlarrayUtoW( LDAPControl **controlarray )
             LDAPControlW **q = controlarrayW;
 
             while (*p) *q++ = controlUtoW( *p++ );
+            *q = NULL;
+        }
+    }
+    return controlarrayW;
+}
+
+static inline LDAPControlW **controlarraydupW( LDAPControlW **controlarray )
+{
+    LDAPControlW **controlarrayW = NULL;
+    DWORD size;
+
+    if (controlarray)
+    {
+        size = sizeof(LDAPControlW*) * (controlarraylenW( controlarray ) + 1);
+        if ((controlarrayW = heap_alloc( size )))
+        {
+            LDAPControlW **p = controlarray;
+            LDAPControlW **q = controlarrayW;
+
+            while (*p) *q++ = controldupW( *p++ );
             *q = NULL;
         }
     }

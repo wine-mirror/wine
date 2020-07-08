@@ -1132,6 +1132,40 @@ static void check_png_format(IStream *stream, const WICPixelFormatGUID *format)
         ok(0, "unknown PNG pixel format %s\n", wine_dbgstr_guid(format));
 }
 
+static void check_gif_format(IStream *stream, const WICPixelFormatGUID *format)
+{
+#include "pshpack1.h"
+    struct logical_screen_descriptor
+    {
+        char signature[6];
+        USHORT width;
+        USHORT height;
+        BYTE packed;
+        /* global_color_table_flag : 1;
+         * color_resolution : 3;
+         * sort_flag : 1;
+         * global_color_table_size : 3;
+         */
+        BYTE background_color_index;
+        BYTE pixel_aspect_ratio;
+    } lsd;
+#include "poppack.h"
+    UINT color_resolution;
+    HRESULT hr;
+
+    memset(&lsd, 0, sizeof(lsd));
+    hr = IStream_Read(stream, &lsd, sizeof(lsd), NULL);
+    ok(hr == S_OK, "IStream_Read error %#x\n", hr);
+
+    ok(!memcmp(lsd.signature, "GIF89a", 6), "wrong GIF signature %.6s\n", lsd.signature);
+
+    ok(lsd.width == 32, "wrong width %u\n", lsd.width);
+    ok(lsd.height == 2, "wrong height %u\n", lsd.height);
+    color_resolution = 1 << (((lsd.packed >> 4) & 0x07) + 1);
+    ok(color_resolution == 256, "wrong color resolution %u\n", color_resolution);
+    ok(lsd.pixel_aspect_ratio == 0, "wrong pixel_aspect_ratio %u\n", lsd.pixel_aspect_ratio);
+}
+
 static void check_bitmap_format(IStream *stream, const CLSID *encoder, const WICPixelFormatGUID *format)
 {
     HRESULT hr;
@@ -1147,6 +1181,8 @@ static void check_bitmap_format(IStream *stream, const CLSID *encoder, const WIC
         check_bmp_format(stream, format);
     else if (IsEqualGUID(encoder, &CLSID_WICTiffEncoder))
         check_tiff_format(stream, format);
+    else if (IsEqualGUID(encoder, &CLSID_WICGifEncoder))
+        check_gif_format(stream, format);
     else
         ok(0, "unknown encoder %s\n", wine_dbgstr_guid(encoder));
 
@@ -1241,6 +1277,8 @@ static void test_multi_encoder(const struct bitmap_data **srcs, const CLSID* cls
         container_format = &GUID_ContainerFormatTiff;
     else if (IsEqualGUID(clsid_encoder, &CLSID_WICJpegEncoder))
         container_format = &GUID_ContainerFormatJpeg;
+    else if (IsEqualGUID(clsid_encoder, &CLSID_WICGifEncoder))
+        container_format = &GUID_ContainerFormatGif;
     else
         ok(0, "Unknown encoder %s.\n", wine_dbgstr_guid(clsid_encoder));
 
@@ -1265,7 +1303,7 @@ static void test_multi_encoder(const struct bitmap_data **srcs, const CLSID* cls
 
     hr = CoCreateInstance(clsid_encoder, NULL, CLSCTX_INPROC_SERVER,
         &IID_IWICBitmapEncoder, (void**)&encoder);
-    ok(SUCCEEDED(hr), "CoCreateInstance failed, hr=%x\n", hr);
+    ok(SUCCEEDED(hr), "CoCreateInstance(%s) failed, hr=%x\n", wine_dbgstr_guid(clsid_encoder), hr);
     if (SUCCEEDED(hr))
     {
         hglobal = GlobalAlloc(GMEM_MOVEABLE, 0);
@@ -1290,7 +1328,10 @@ static void test_multi_encoder(const struct bitmap_data **srcs, const CLSID* cls
             if (palette)
             {
                 hr = IWICBitmapEncoder_SetPalette(encoder, palette);
-                ok(hr == WINCODEC_ERR_UNSUPPORTEDOPERATION, "wrong error %#x\n", hr);
+                if (IsEqualGUID(clsid_encoder, &CLSID_WICGifEncoder))
+                    ok(hr == S_OK, "SetPalette failed, hr=%#x\n", hr);
+                else
+                    ok(hr == WINCODEC_ERR_UNSUPPORTEDOPERATION, "wrong error %#x\n", hr);
                 hr = S_OK;
             }
 
@@ -1429,13 +1470,19 @@ static void test_multi_encoder(const struct bitmap_data **srcs, const CLSID* cls
                 ok(hr == S_OK, "CreatePalette error %#x\n", hr);
 
                 hr = IWICBitmapDecoder_CopyPalette(decoder, frame_palette);
-                ok(hr == WINCODEC_ERR_PALETTEUNAVAILABLE, "wrong error %#x\n", hr);
+                if (IsEqualGUID(clsid_decoder, &CLSID_WICGifDecoder))
+                    ok(hr == WINCODEC_ERR_WRONGSTATE, "wrong error %#x\n", hr);
+                else
+                    ok(hr == WINCODEC_ERR_PALETTEUNAVAILABLE, "wrong error %#x\n", hr);
 
                 hr = IWICBitmapDecoder_Initialize(decoder, stream, WICDecodeMetadataCacheOnDemand);
                 ok(SUCCEEDED(hr), "Initialize failed, hr=%x\n", hr);
 
                 hr = IWICBitmapDecoder_CopyPalette(decoder, frame_palette);
-                ok(hr == WINCODEC_ERR_PALETTEUNAVAILABLE, "wrong error %#x\n", hr);
+                if (IsEqualGUID(clsid_decoder, &CLSID_WICGifDecoder))
+                    ok(hr == S_OK || broken(hr == WINCODEC_ERR_FRAMEMISSING) /* XP */, "CopyPalette failed, hr=%#x\n", hr);
+                else
+                    ok(hr == WINCODEC_ERR_PALETTEUNAVAILABLE, "wrong error %#x\n", hr);
 
                 hr = S_OK;
                 i=0;
@@ -1495,7 +1542,8 @@ static void test_multi_encoder(const struct bitmap_data **srcs, const CLSID* cls
                                 }
                             }
                             else if (IsEqualGUID(clsid_decoder, &CLSID_WICBmpDecoder) ||
-                                     IsEqualGUID(clsid_decoder, &CLSID_WICTiffDecoder))
+                                     IsEqualGUID(clsid_decoder, &CLSID_WICTiffDecoder) ||
+                                     IsEqualGUID(clsid_decoder, &CLSID_WICGifDecoder))
                             {
                                 if (IsEqualGUID(&pixelformat, &GUID_WICPixelFormatBlackWhite) ||
                                     IsEqualGUID(&pixelformat, &GUID_WICPixelFormat8bppIndexed))
@@ -1844,6 +1892,9 @@ START_TEST(converter)
     test_invalid_conversion();
     test_default_converter();
     test_converter_8bppIndexed();
+
+    test_encoder(&testdata_8bppIndexed, &CLSID_WICGifEncoder,
+                 &testdata_8bppIndexed, &CLSID_WICGifDecoder, "GIF encoder 8bppIndexed");
 
     test_encoder(&testdata_BlackWhite, &CLSID_WICPngEncoder,
                  &testdata_BlackWhite, &CLSID_WICPngDecoder, "PNG encoder BlackWhite");

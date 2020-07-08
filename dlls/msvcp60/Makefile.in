@@ -1,6 +1,7 @@
 MODULE    = msvcp60.dll
 EXTRADEFS = -D_MSVCP_VER=60
 PARENTSRC = ../msvcp90
+IMPORTS   = msvcrt
 
 EXTRADLLFLAGS = -mno-cygwin
 

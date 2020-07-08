@@ -87,7 +87,6 @@ typedef PVOID USBD_INTERFACE_HANDLE;
 #define USBD_STATUS_ERROR                            ((USBD_STATUS)0x80000000)
 #define USBD_STATUS_HALTED                           ((USBD_STATUS)0xC0000000)
 
-#define USBD_STATUS_CANCELED                         ((USBD_STATUS)0x00010000)
 #define USBD_STATUS_CANCELING                        ((USBD_STATUS)0x00020000)
 #define USBD_STATUS_CRC                              ((USBD_STATUS)0xC0000001)
 #define USBD_STATUS_BTSTUFF                          ((USBD_STATUS)0xC0000002)
@@ -131,6 +130,7 @@ typedef PVOID USBD_INTERFACE_HANDLE;
 #define USBD_STATUS_TIMEOUT                          ((USBD_STATUS)0xC0006000)
 #define USBD_STATUS_DEVICE_GONE                      ((USBD_STATUS)0xC0007000)
 #define USBD_STATUS_STATUS_NOT_MAPPED                ((USBD_STATUS)0xC0008000)
+#define USBD_STATUS_CANCELED                         ((USBD_STATUS)0xC0010000)
 #define USBD_STATUS_ISO_NOT_ACCESSED_BY_HW           ((USBD_STATUS)0xC0020000)
 #define USBD_STATUS_ISO_TD_ERROR                     ((USBD_STATUS)0xC0030000)
 #define USBD_STATUS_ISO_NA_LATE_USBPORT              ((USBD_STATUS)0xC0040000)

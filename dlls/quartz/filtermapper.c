@@ -42,6 +42,298 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
+struct enum_reg_filters
+{
+    IEnumRegFilters IEnumRegFilters_iface;
+    LONG refcount;
+
+    unsigned int index, count;
+    REGFILTER *filters;
+};
+
+static struct enum_reg_filters *impl_from_IEnumRegFilters(IEnumRegFilters *iface)
+{
+    return CONTAINING_RECORD(iface, struct enum_reg_filters, IEnumRegFilters_iface);
+}
+
+static HRESULT WINAPI enum_reg_filters_QueryInterface(IEnumRegFilters *iface, REFIID iid, void **out)
+{
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_IUnknown) || IsEqualGUID(iid, &IID_IEnumRegFilters))
+    {
+        IEnumRegFilters_AddRef(iface);
+        *out = iface;
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI enum_reg_filters_AddRef(IEnumRegFilters *iface)
+{
+    struct enum_reg_filters *enumerator = impl_from_IEnumRegFilters(iface);
+    ULONG refcount = InterlockedIncrement(&enumerator->refcount);
+    TRACE("%p increasing refcount to %u.\n", enumerator, refcount);
+    return refcount;
+}
+
+static ULONG WINAPI enum_reg_filters_Release(IEnumRegFilters *iface)
+{
+    struct enum_reg_filters *enumerator = impl_from_IEnumRegFilters(iface);
+    ULONG refcount = InterlockedDecrement(&enumerator->refcount);
+    unsigned int i;
+
+    TRACE("%p decreasing refcount to %u.\n", enumerator, refcount);
+    if (!refcount)
+    {
+        for (i = 0; i < enumerator->count; ++i)
+            free(enumerator->filters[i].Name);
+        free(enumerator->filters);
+        free(enumerator);
+    }
+    return refcount;
+}
+
+static HRESULT WINAPI enum_reg_filters_Next(IEnumRegFilters *iface, ULONG count,
+        REGFILTER **filters, ULONG *ret_count)
+{
+    struct enum_reg_filters *enumerator = impl_from_IEnumRegFilters(iface);
+    unsigned int i;
+
+    TRACE("iface %p, count %u, filters %p, ret_count %p.\n", iface, count, filters, ret_count);
+
+    for (i = 0; i < count && enumerator->index + i < enumerator->count; ++i)
+    {
+        REGFILTER *filter = &enumerator->filters[enumerator->index + i];
+
+        if (!(filters[i] = CoTaskMemAlloc(sizeof(REGFILTER) + (wcslen(filter->Name) + 1) * sizeof(WCHAR))))
+        {
+            while (i--)
+                CoTaskMemFree(filters[i]);
+            memset(filters, 0, count * sizeof(*filters));
+            *ret_count = 0;
+            return E_OUTOFMEMORY;
+        }
+
+        filters[i]->Clsid = filter->Clsid;
+        filters[i]->Name = (WCHAR *)(filters[i] + 1);
+        wcscpy(filters[i]->Name, filter->Name);
+    }
+
+    enumerator->index += i;
+    if (ret_count)
+        *ret_count = i;
+    return i ? S_OK : S_FALSE;
+}
+
+static HRESULT WINAPI enum_reg_filters_Skip(IEnumRegFilters *iface, ULONG count)
+{
+    TRACE("iface %p, count %u, unimplemented.\n", iface, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI enum_reg_filters_Reset(IEnumRegFilters *iface)
+{
+    struct enum_reg_filters *enumerator = impl_from_IEnumRegFilters(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    enumerator->index = 0;
+    return S_OK;
+}
+
+static HRESULT WINAPI enum_reg_filters_Clone(IEnumRegFilters *iface, IEnumRegFilters **out)
+{
+    TRACE("iface %p, out %p, unimplemented.\n", iface, out);
+    return E_NOTIMPL;
+}
+
+static const IEnumRegFiltersVtbl enum_reg_filters_vtbl =
+{
+    enum_reg_filters_QueryInterface,
+    enum_reg_filters_AddRef,
+    enum_reg_filters_Release,
+    enum_reg_filters_Next,
+    enum_reg_filters_Skip,
+    enum_reg_filters_Reset,
+    enum_reg_filters_Clone,
+};
+
+static HRESULT enum_reg_filters_create(REGFILTER *filters, unsigned int count, IEnumRegFilters **out)
+{
+    struct enum_reg_filters *object;
+    unsigned int i;
+
+    *out = NULL;
+
+    if (!(object = calloc(1, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    if (!(object->filters = malloc(count * sizeof(*object->filters))))
+    {
+        free(object);
+        return E_OUTOFMEMORY;
+    }
+
+    for (i = 0; i < count; ++i)
+    {
+        object->filters[i].Clsid = filters[i].Clsid;
+        if (!(object->filters[i].Name = wcsdup(filters[i].Name)))
+        {
+            while (i--)
+                free(object->filters[i].Name);
+            free(object->filters);
+            free(object);
+            return E_OUTOFMEMORY;
+        }
+    }
+
+    object->IEnumRegFilters_iface.lpVtbl = &enum_reg_filters_vtbl;
+    object->refcount = 1;
+    object->count = count;
+
+    TRACE("Created enumerator %p.\n", object);
+    *out = &object->IEnumRegFilters_iface;
+    return S_OK;
+}
+
+struct enum_moniker
+{
+    IEnumMoniker IEnumMoniker_iface;
+    LONG refcount;
+
+    unsigned int index, count;
+    IMoniker **filters;
+};
+
+static struct enum_moniker *impl_from_IEnumMoniker(IEnumMoniker *iface)
+{
+    return CONTAINING_RECORD(iface, struct enum_moniker, IEnumMoniker_iface);
+}
+
+static HRESULT WINAPI enum_moniker_QueryInterface(IEnumMoniker *iface, REFIID iid, void **out)
+{
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_IUnknown) || IsEqualGUID(iid, &IID_IEnumMoniker))
+    {
+        IEnumMoniker_AddRef(iface);
+        *out = iface;
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI enum_moniker_AddRef(IEnumMoniker *iface)
+{
+    struct enum_moniker *enumerator = impl_from_IEnumMoniker(iface);
+    ULONG refcount = InterlockedIncrement(&enumerator->refcount);
+    TRACE("%p increasing refcount to %u.\n", enumerator, refcount);
+    return refcount;
+}
+
+static ULONG WINAPI enum_moniker_Release(IEnumMoniker *iface)
+{
+    struct enum_moniker *enumerator = impl_from_IEnumMoniker(iface);
+    ULONG refcount = InterlockedDecrement(&enumerator->refcount);
+    unsigned int i;
+
+    TRACE("%p decreasing refcount to %u.\n", enumerator, refcount);
+    if (!refcount)
+    {
+        for (i = 0; i < enumerator->count; ++i)
+            IMoniker_Release(enumerator->filters[i]);
+        free(enumerator->filters);
+        free(enumerator);
+    }
+    return refcount;
+}
+
+static HRESULT WINAPI enum_moniker_Next(IEnumMoniker *iface, ULONG count,
+        IMoniker **filters, ULONG *ret_count)
+{
+    struct enum_moniker *enumerator = impl_from_IEnumMoniker(iface);
+    unsigned int i;
+
+    TRACE("iface %p, count %u, filters %p, ret_count %p.\n", iface, count, filters, ret_count);
+
+    for (i = 0; i < count && enumerator->index + i < enumerator->count; ++i)
+        IMoniker_AddRef(filters[i] = enumerator->filters[enumerator->index + i]);
+
+    enumerator->index += i;
+    if (ret_count)
+        *ret_count = i;
+    return i ? S_OK : S_FALSE;
+}
+
+static HRESULT WINAPI enum_moniker_Skip(IEnumMoniker *iface, ULONG count)
+{
+    struct enum_moniker *enumerator = impl_from_IEnumMoniker(iface);
+
+    TRACE("iface %p, count %u.\n", iface, count);
+
+    enumerator->index += count;
+    return S_OK;
+}
+
+static HRESULT WINAPI enum_moniker_Reset(IEnumMoniker *iface)
+{
+    struct enum_moniker *enumerator = impl_from_IEnumMoniker(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    enumerator->index = 0;
+    return S_OK;
+}
+
+static HRESULT WINAPI enum_moniker_Clone(IEnumMoniker *iface, IEnumMoniker **out)
+{
+    TRACE("iface %p, out %p, unimplemented.\n", iface, out);
+    return E_NOTIMPL;
+}
+
+static const IEnumMonikerVtbl enum_moniker_vtbl =
+{
+    enum_moniker_QueryInterface,
+    enum_moniker_AddRef,
+    enum_moniker_Release,
+    enum_moniker_Next,
+    enum_moniker_Skip,
+    enum_moniker_Reset,
+    enum_moniker_Clone,
+};
+
+static HRESULT enum_moniker_create(IMoniker **filters, unsigned int count, IEnumMoniker **out)
+{
+    struct enum_moniker *object;
+
+    *out = NULL;
+
+    if (!(object = calloc(1, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    if (!(object->filters = malloc(count * sizeof(*object->filters))))
+    {
+        free(object);
+        return E_OUTOFMEMORY;
+    }
+    memcpy(object->filters, filters, count * sizeof(*filters));
+
+    object->IEnumMoniker_iface.lpVtbl = &enum_moniker_vtbl;
+    object->refcount = 1;
+    object->count = count;
+
+    TRACE("Created enumerator %p.\n", object);
+    *out = &object->IEnumMoniker_iface;
+    return S_OK;
+}
+
 typedef struct FilterMapper3Impl
 {
     IUnknown IUnknown_inner;
@@ -193,7 +485,11 @@ static ULONG WINAPI Inner_Release(IUnknown *iface)
     TRACE("(%p)->(): new ref = %d\n", This, ref);
 
     if (ref == 0)
+    {
         CoTaskMemFree(This);
+
+        InterlockedDecrement(&object_locks);
+    }
 
     return ref;
 }
@@ -908,7 +1204,7 @@ static HRESULT WINAPI FilterMapper3_EnumMatchingFilters(
             /* no need to AddRef here as already AddRef'd above */
             ppMoniker[i] = ((struct MONIKER_MERIT *)monikers.pData)[i].pMoniker;
         }
-        hr = EnumMonikerImpl_Create(ppMoniker, nMonikerCount, ppEnum);
+        hr = enum_moniker_create(ppMoniker, nMonikerCount, ppEnum);
         CoTaskMemFree(ppMoniker);
     }
 
@@ -1026,7 +1322,7 @@ static HRESULT WINAPI FilterMapper_EnumMatchingFilters(
     if (!nb_mon)
     {
         IEnumMoniker_Release(ppEnumMoniker);
-        return IEnumRegFiltersImpl_Construct(NULL, 0, ppEnum);
+        return enum_reg_filters_create(NULL, 0, ppEnum);
     }
 
     regfilters = CoTaskMemAlloc(nb_mon * sizeof(REGFILTER));
@@ -1083,7 +1379,7 @@ static HRESULT WINAPI FilterMapper_EnumMatchingFilters(
 
     if (SUCCEEDED(hr))
     {
-        hr = IEnumRegFiltersImpl_Construct(regfilters, nb_mon, ppEnum);
+        hr = enum_reg_filters_create(regfilters, idx, ppEnum);
     }
 
     for (idx = 0; idx < nb_mon; idx++)
@@ -1386,11 +1682,9 @@ static const IAMFilterDataVtbl AMFilterDataVtbl = {
     AMFilterData_CreateFilterData
 };
 
-HRESULT FilterMapper2_create(IUnknown *pUnkOuter, LPVOID *ppObj)
+HRESULT filter_mapper_create(IUnknown *pUnkOuter, IUnknown **out)
 {
     FilterMapper3Impl * pFM2impl;
-
-    TRACE("(%p, %p)\n", pUnkOuter, ppObj);
 
     pFM2impl = CoTaskMemAlloc(sizeof(*pFM2impl));
     if (!pFM2impl)
@@ -1407,25 +1701,7 @@ HRESULT FilterMapper2_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     else
         pFM2impl->outer_unk = &pFM2impl->IUnknown_inner;
 
-    *ppObj = &pFM2impl->IUnknown_inner;
-
-    TRACE("-- created at %p\n", pFM2impl);
-
+    TRACE("Created filter mapper %p.\n", pFM2impl);
+    *out = &pFM2impl->IUnknown_inner;
     return S_OK;
-}
-
-HRESULT FilterMapper_create(IUnknown *pUnkOuter, LPVOID *ppObj)
-{
-    FilterMapper3Impl *pFM2impl;
-    HRESULT hr;
-
-    TRACE("(%p, %p)\n", pUnkOuter, ppObj);
-
-    hr = FilterMapper2_create(pUnkOuter, (LPVOID*)&pFM2impl);
-    if (FAILED(hr))
-        return hr;
-
-    *ppObj = &pFM2impl->IFilterMapper_iface;
-
-    return hr;
 }

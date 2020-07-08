@@ -21,9 +21,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,7 +32,6 @@
 #include "wownt32.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
-#include "wine/unicode.h"
 #include "kernel16_private.h"
 #include "wine/debug.h"
 
@@ -213,7 +209,7 @@ static DWORD NE_FindNameTableId( NE_MODULE *pModule, LPCSTR typeId, LPCSTR resId
                 if (p[1] & 0x8000)
                 {
                     if (!HIWORD(typeId)) continue;
-                    if (_strnicmp( typeId, (char *)(p + 3), -1 )) continue;
+                    if (stricmp( typeId, (char *)(p + 3) )) continue;
                 }
                 else if (HIWORD(typeId) || (((DWORD)typeId & ~0x8000)!= p[1]))
                   continue;
@@ -223,7 +219,7 @@ static DWORD NE_FindNameTableId( NE_MODULE *pModule, LPCSTR typeId, LPCSTR resId
                 if (p[2] & 0x8000)
                 {
                     if (!HIWORD(resId)) continue;
-                    if (_strnicmp( resId, (char*)(p+3)+strlen((char*)(p+3))+1, -1 )) continue;
+                    if (stricmp( resId, (char*)(p+3)+strlen((char*)(p+3))+1 )) continue;
 
                 }
                 else if (HIWORD(resId) || ((LOWORD(resId) & ~0x8000) != p[2]))
@@ -445,7 +441,7 @@ static void convert_name( LPVOID *dst, LPCVOID *src )
     default:
         len = WideCharToMultiByte( CP_ACP, 0, *src, -1, *dst, 0x7fffffff, NULL,NULL );
         *dst = (char *)*dst + len;
-        *src = (LPCWSTR)*src + strlenW( *src ) + 1;
+        *src = (LPCWSTR)*src + lstrlenW( *src ) + 1;
         break;
     }
 }
@@ -487,7 +483,7 @@ VOID WINAPI ConvertDialog32To16( LPCVOID dialog32, DWORD size, LPVOID dialog16 )
     /* Transfer window caption */
     WideCharToMultiByte( CP_ACP, 0, dialog32, -1, dialog16, 0x7fffffff, NULL, NULL );
     dialog16 = (LPSTR)dialog16 + strlen( dialog16 ) + 1;
-    dialog32 = (LPCWSTR)dialog32 + strlenW( dialog32 ) + 1;
+    dialog32 = (LPCWSTR)dialog32 + lstrlenW( dialog32 ) + 1;
 
     /* Transfer font info */
     if (style & DS_SETFONT)
@@ -500,7 +496,7 @@ VOID WINAPI ConvertDialog32To16( LPCVOID dialog32, DWORD size, LPVOID dialog16 )
         }
         WideCharToMultiByte( CP_ACP, 0, dialog32, -1, dialog16, 0x7fffffff, NULL, NULL );  /* faceName */
         dialog16 = (LPSTR)dialog16 + strlen( dialog16 ) + 1;
-        dialog32 = (LPCWSTR)dialog32 + strlenW( dialog32 ) + 1;
+        dialog32 = (LPCWSTR)dialog32 + lstrlenW( dialog32 ) + 1;
     }
 
     /* Transfer dialog items */
@@ -548,7 +544,7 @@ VOID WINAPI ConvertDialog32To16( LPCVOID dialog32, DWORD size, LPVOID dialog16 )
         default:
             WideCharToMultiByte( CP_ACP, 0, dialog32, -1, dialog16, 0x7fffffff, NULL, NULL );
             dialog16 = (LPSTR)dialog16 + strlen( dialog16 ) + 1;
-            dialog32 = (LPCWSTR)dialog32 + strlenW( dialog32 ) + 1;
+            dialog32 = (LPCWSTR)dialog32 + lstrlenW( dialog32 ) + 1;
             break;
         }
 
@@ -606,7 +602,7 @@ WORD WINAPI GetDialog32Size16( LPCVOID dialog32 )
     {
     case 0x0000:  p = (const WORD *)p + 1; break;
     case 0xffff:  p = (const WORD *)p + 2; break;
-    default:      p = (LPCWSTR)p + strlenW( p ) + 1; break;
+    default:      p = (LPCWSTR)p + lstrlenW( p ) + 1; break;
     }
 
     /* Skip class name */
@@ -614,11 +610,11 @@ WORD WINAPI GetDialog32Size16( LPCVOID dialog32 )
     {
     case 0x0000:  p = (const WORD *)p + 1; break;
     case 0xffff:  p = (const WORD *)p + 2; break;
-    default:      p = (LPCWSTR)p + strlenW( p ) + 1; break;
+    default:      p = (LPCWSTR)p + lstrlenW( p ) + 1; break;
     }
 
     /* Skip window caption */
-    p = (LPCWSTR)p + strlenW( p ) + 1;
+    p = (LPCWSTR)p + lstrlenW( p ) + 1;
 
     /* Skip font info */
     if (style & DS_SETFONT)
@@ -629,7 +625,7 @@ WORD WINAPI GetDialog32Size16( LPCVOID dialog32 )
             p = (const WORD *)p + 1; /* weight */
             p = (const WORD *)p + 1; /* italic */
         }
-        p = (LPCWSTR)p + strlenW( p ) + 1;  /* faceName */
+        p = (LPCWSTR)p + lstrlenW( p ) + 1;  /* faceName */
     }
 
     /* Skip dialog items */
@@ -665,7 +661,7 @@ WORD WINAPI GetDialog32Size16( LPCVOID dialog32 )
         {
         case 0x0000:  p = (const WORD *)p + 1; break;
         case 0xffff:  p = (const WORD *)p + 2; break;
-        default:      p = (LPCWSTR)p + strlenW( p ) + 1; break;
+        default:      p = (LPCWSTR)p + lstrlenW( p ) + 1; break;
         }
 
         /* Skip window name */
@@ -673,7 +669,7 @@ WORD WINAPI GetDialog32Size16( LPCVOID dialog32 )
         {
         case 0x0000:  p = (const WORD *)p + 1; break;
         case 0xffff:  p = (const WORD *)p + 2; break;
-        default:      p = (LPCWSTR)p + strlenW( p ) + 1; break;
+        default:      p = (LPCWSTR)p + lstrlenW( p ) + 1; break;
         }
 
         /* Skip data */
@@ -718,7 +714,7 @@ VOID WINAPI ConvertMenu32To16( LPCVOID menu32, DWORD size, LPVOID menu16 )
 
             WideCharToMultiByte( CP_ACP, 0, menu32, -1, menu16, 0x7fffffff, NULL, NULL );
             menu16 = (LPSTR)menu16 + strlen( menu16 ) + 1;
-            menu32 = (LPCWSTR)menu32 + strlenW( menu32 ) + 1;
+            menu32 = (LPCWSTR)menu32 + lstrlenW( menu32 ) + 1;
 
             if ( flags & MF_END )
                 level--;
@@ -733,7 +729,7 @@ VOID WINAPI ConvertMenu32To16( LPCVOID menu32, DWORD size, LPVOID menu16 )
 
             WideCharToMultiByte( CP_ACP, 0, menu32, -1, menu16, 0x7fffffff, NULL, NULL );
             menu16 = (LPSTR)menu16 + strlen( menu16 ) + 1;
-            menu32 = (LPCWSTR)menu32 + strlenW( menu32 ) + 1;
+            menu32 = (LPCWSTR)menu32 + lstrlenW( menu32 ) + 1;
 
             /* align on DWORD boundary (32-bit only) */
             menu32 = (LPCVOID)(((UINT_PTR)menu32 + 3) & ~3);
@@ -772,7 +768,7 @@ WORD WINAPI GetMenu32Size16( LPCVOID menu32 )
             else
                 level++;
 
-            p = (LPCWSTR)p + strlenW( p ) + 1;
+            p = (LPCWSTR)p + lstrlenW( p ) + 1;
 
             if ( flags & MF_END )
                 level--;
@@ -784,7 +780,7 @@ WORD WINAPI GetMenu32Size16( LPCVOID menu32 )
             p = (const DWORD *)p + 1; /* ID */
             flags = get_word(&p);
 
-            p = (LPCWSTR)p + strlenW( p ) + 1;
+            p = (LPCWSTR)p + lstrlenW( p ) + 1;
 
             /* align on DWORD boundary (32-bit only) */
             p = (LPCVOID)(((UINT_PTR)p + 3) & ~3);

@@ -18,10 +18,16 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <stdint.h>
 #define COBJMACROS
+#include "ocidl.h"
+#include "olectl.h"
+#include "initguid.h"
 #include "dshow.h"
+#include "qedit.h"
 #include "d3d9.h"
 #include "vmr9.h"
+#include "wmcodecdsp.h"
 #include "wine/heap.h"
 #include "wine/strmbase.h"
 #include "wine/test.h"
@@ -44,10 +50,42 @@ static IBaseFilter *create_vmr9(DWORD mode)
     return filter;
 }
 
+static HRESULT set_mixing_mode(IBaseFilter *filter, DWORD count)
+{
+    IVMRFilterConfig9 *config;
+    HRESULT hr;
+
+    hr = IBaseFilter_QueryInterface(filter, &IID_IVMRFilterConfig9, (void **)&config);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IVMRFilterConfig9_SetNumberOfStreams(config, count);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    IVMRFilterConfig9_Release(config);
+    return hr;
+}
+
 static inline BOOL compare_media_types(const AM_MEDIA_TYPE *a, const AM_MEDIA_TYPE *b)
 {
     return !memcmp(a, b, offsetof(AM_MEDIA_TYPE, pbFormat))
         && !memcmp(a->pbFormat, b->pbFormat, a->cbFormat);
+}
+
+static BOOL compare_double(double f, double g, unsigned int ulps)
+{
+    uint64_t x = *(ULONGLONG *)&f;
+    uint64_t y = *(ULONGLONG *)&g;
+
+    if (f < 0)
+        x = ~x + 1;
+    else
+        x |= ((ULONGLONG)1)<<63;
+    if (g < 0)
+        y = ~y + 1;
+    else
+        y |= ((ULONGLONG)1)<<63;
+
+    return (x>y ? x-y : y-x) <= ulps;
 }
 
 static IFilterGraph2 *create_graph(void)
@@ -133,16 +171,14 @@ static void test_filter_config(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IVMRFilterConfig9_GetNumberOfStreams(config, &count);
-    todo_wine ok(hr == VFW_E_VMR_NOT_IN_MIXER_MODE, "Got hr %#x.\n", hr);
+    ok(hr == VFW_E_VMR_NOT_IN_MIXER_MODE, "Got hr %#x.\n", hr);
 
     hr = IVMRFilterConfig9_SetNumberOfStreams(config, 3);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IVMRFilterConfig9_GetNumberOfStreams(config, &count);
-    todo_wine {
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
-        ok(count == 3, "Got count %u.\n", count);
-    }
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(count == 3, "Got count %u.\n", count);
 
     hr = IVMRFilterConfig9_GetRenderingMode(config, &mode);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -158,10 +194,8 @@ static void test_filter_config(void)
     ok(mode == VMR9Mode_Windowless, "Got mode %#x.\n", mode);
 
     hr = IVMRFilterConfig9_GetNumberOfStreams(config, &count);
-    todo_wine {
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
-        ok(count == 3, "Got count %u.\n", count);
-    }
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(count == 3, "Got count %u.\n", count);
 
     ref = IVMRFilterConfig9_Release(config);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
@@ -193,17 +227,13 @@ static HRESULT check_interface_(unsigned int line, void *iface, REFIID riid, BOO
     return hr;
 }
 
-static void test_interfaces(void)
+static void test_common_interfaces(IBaseFilter *filter)
 {
-    IBaseFilter *filter = create_vmr9(0);
-    ULONG ref;
     IPin *pin;
 
     check_interface(filter, &IID_IAMCertifiedOutputProtection, TRUE);
     check_interface(filter, &IID_IAMFilterMiscFlags, TRUE);
     check_interface(filter, &IID_IBaseFilter, TRUE);
-    check_interface(filter, &IID_IBasicVideo, TRUE);
-    todo_wine check_interface(filter, &IID_IBasicVideo2, TRUE);
     todo_wine check_interface(filter, &IID_IKsPropertySet, TRUE);
     check_interface(filter, &IID_IMediaFilter, TRUE);
     check_interface(filter, &IID_IMediaPosition, TRUE);
@@ -212,14 +242,10 @@ static void test_interfaces(void)
     check_interface(filter, &IID_IQualityControl, TRUE);
     todo_wine check_interface(filter, &IID_IQualProp, TRUE);
     check_interface(filter, &IID_IUnknown, TRUE);
-    check_interface(filter, &IID_IVideoWindow, TRUE);
     todo_wine check_interface(filter, &IID_IVMRAspectRatioControl9, TRUE);
     todo_wine check_interface(filter, &IID_IVMRDeinterlaceControl9, TRUE);
     check_interface(filter, &IID_IVMRFilterConfig9, TRUE);
-    todo_wine check_interface(filter, &IID_IVMRMixerBitmap9, TRUE);
-    /* IVMRMonitorConfig9 may not be available if the d3d9 device has
-     * insufficient support. */
-    check_interface_broken(filter, &IID_IVMRMonitorConfig9, TRUE);
+    check_interface(filter, &IID_IVMRMixerBitmap9, TRUE);
 
     check_interface(filter, &IID_IBasicAudio, FALSE);
     check_interface(filter, &IID_IDirectDrawVideo, FALSE);
@@ -231,12 +257,9 @@ static void test_interfaces(void)
     todo_wine check_interface(filter, &IID_IVMRFilterConfig, FALSE);
     check_interface(filter, &IID_IVMRMixerBitmap, FALSE);
     check_interface(filter, &IID_IVMRMixerControl, FALSE);
-    check_interface(filter, &IID_IVMRMixerControl9, FALSE);
     todo_wine check_interface(filter, &IID_IVMRMonitorConfig, FALSE);
     check_interface(filter, &IID_IVMRSurfaceAllocatorNotify, FALSE);
-    check_interface(filter, &IID_IVMRSurfaceAllocatorNotify9, FALSE);
     check_interface(filter, &IID_IVMRWindowlessControl, FALSE);
-    check_interface(filter, &IID_IVMRWindowlessControl9, FALSE);
 
     IBaseFilter_FindPin(filter, L"VMR Input0", &pin);
 
@@ -251,65 +274,74 @@ static void test_interfaces(void)
     check_interface(pin, &IID_IMediaSeeking, FALSE);
 
     IPin_Release(pin);
+}
 
-    IBaseFilter_Release(filter);
+static void test_interfaces(void)
+{
+    IBaseFilter *filter = create_vmr9(0);
+    ULONG ref;
+
+    test_common_interfaces(filter);
+
+    check_interface(filter, &IID_IBasicVideo, TRUE);
+    todo_wine check_interface(filter, &IID_IBasicVideo2, TRUE);
+    check_interface(filter, &IID_IVideoWindow, TRUE);
+    /* IVMRMonitorConfig9 may not be available if the d3d9 device has
+     * insufficient support. */
+    check_interface_broken(filter, &IID_IVMRMonitorConfig9, TRUE);
+
+    check_interface(filter, &IID_IVMRMixerControl9, FALSE);
+    check_interface(filter, &IID_IVMRSurfaceAllocatorNotify9, FALSE);
+    check_interface(filter, &IID_IVMRWindowlessControl9, FALSE);
+
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+
     filter = create_vmr9(VMR9Mode_Windowless);
+    test_common_interfaces(filter);
 
+    /* IVMRMonitorConfig9 may not be available if the d3d9 device has
+     * insufficient support. */
     check_interface_broken(filter, &IID_IVMRMonitorConfig9, TRUE);
     check_interface(filter, &IID_IVMRWindowlessControl9, TRUE);
 
     todo_wine check_interface(filter, &IID_IBasicVideo, FALSE);
     check_interface(filter, &IID_IBasicVideo2, FALSE);
     todo_wine check_interface(filter, &IID_IVideoWindow, FALSE);
-    check_interface(filter, &IID_IVMRSurfaceAllocatorNotify, FALSE);
-    check_interface(filter, &IID_IVMRSurfaceAllocatorNotify9, FALSE);
-    check_interface(filter, &IID_IVMRMixerControl, FALSE);
     check_interface(filter, &IID_IVMRMixerControl9, FALSE);
-    todo_wine check_interface(filter, &IID_IVMRMonitorConfig, FALSE);
-    todo_wine check_interface(filter, &IID_IVMRWindowlessControl, FALSE);
+    check_interface(filter, &IID_IVMRSurfaceAllocatorNotify9, FALSE);
 
-    IBaseFilter_FindPin(filter, L"VMR Input0", &pin);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
 
-    check_interface(pin, &IID_IMemInputPin, TRUE);
-    check_interface(pin, &IID_IOverlay, TRUE);
-    check_interface(pin, &IID_IPin, TRUE);
-    todo_wine check_interface(pin, &IID_IQualityControl, TRUE);
-    check_interface(pin, &IID_IUnknown, TRUE);
-
-    check_interface(pin, &IID_IKsPropertySet, FALSE);
-    check_interface(pin, &IID_IMediaPosition, FALSE);
-    check_interface(pin, &IID_IMediaSeeking, FALSE);
-
-    IPin_Release(pin);
-
-    IBaseFilter_Release(filter);
     filter = create_vmr9(VMR9Mode_Renderless);
+    test_common_interfaces(filter);
 
     check_interface(filter, &IID_IVMRSurfaceAllocatorNotify9, TRUE);
 
     todo_wine check_interface(filter, &IID_IBasicVideo, FALSE);
     check_interface(filter, &IID_IBasicVideo2, FALSE);
     todo_wine check_interface(filter, &IID_IVideoWindow, FALSE);
-    check_interface(filter, &IID_IVMRMixerControl, FALSE);
-    todo_wine check_interface(filter, &IID_IVMRMonitorConfig, FALSE);
     todo_wine check_interface(filter, &IID_IVMRMonitorConfig9, FALSE);
-    todo_wine check_interface(filter, &IID_IVMRSurfaceAllocatorNotify, FALSE);
-    check_interface(filter, &IID_IVMRWindowlessControl, FALSE);
     check_interface(filter, &IID_IVMRWindowlessControl9, FALSE);
 
-    IBaseFilter_FindPin(filter, L"VMR Input0", &pin);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
 
-    check_interface(pin, &IID_IMemInputPin, TRUE);
-    check_interface(pin, &IID_IOverlay, TRUE);
-    check_interface(pin, &IID_IPin, TRUE);
-    todo_wine check_interface(pin, &IID_IQualityControl, TRUE);
-    check_interface(pin, &IID_IUnknown, TRUE);
+    filter = create_vmr9(VMR9Mode_Windowed);
+    set_mixing_mode(filter, 1);
+    test_common_interfaces(filter);
 
-    check_interface(pin, &IID_IKsPropertySet, FALSE);
-    check_interface(pin, &IID_IMediaPosition, FALSE);
-    check_interface(pin, &IID_IMediaSeeking, FALSE);
+    check_interface(filter, &IID_IBasicVideo, TRUE);
+    todo_wine check_interface(filter, &IID_IBasicVideo2, TRUE);
+    check_interface(filter, &IID_IVideoWindow, TRUE);
+    check_interface(filter, &IID_IVMRMixerControl9, TRUE);
+    /* IVMRMonitorConfig9 may not be available if the d3d9 device has
+     * insufficient support. */
+    check_interface_broken(filter, &IID_IVMRMonitorConfig9, TRUE);
 
-    IPin_Release(pin);
+    check_interface(filter, &IID_IVMRSurfaceAllocatorNotify9, FALSE);
+    check_interface(filter, &IID_IVMRWindowlessControl9, FALSE);
 
     ref = IBaseFilter_Release(filter);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
@@ -358,12 +390,12 @@ static void test_aggregation(void)
     ULONG ref;
 
     filter = (IBaseFilter *)0xdeadbeef;
-    hr = CoCreateInstance(&CLSID_VideoMixingRenderer, &test_outer, CLSCTX_INPROC_SERVER,
+    hr = CoCreateInstance(&CLSID_VideoMixingRenderer9, &test_outer, CLSCTX_INPROC_SERVER,
             &IID_IBaseFilter, (void **)&filter);
     ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
     ok(!filter, "Got interface %p.\n", filter);
 
-    hr = CoCreateInstance(&CLSID_VideoMixingRenderer, &test_outer, CLSCTX_INPROC_SERVER,
+    hr = CoCreateInstance(&CLSID_VideoMixingRenderer9, &test_outer, CLSCTX_INPROC_SERVER,
             &IID_IUnknown, (void **)&unk);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
@@ -407,21 +439,6 @@ static void test_aggregation(void)
     ref = IUnknown_Release(unk);
     ok(!ref, "Got unexpected refcount %d.\n", ref);
     ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
-}
-
-static HRESULT set_mixing_mode(IBaseFilter *filter)
-{
-    IVMRFilterConfig9 *config;
-    HRESULT hr;
-
-    hr = IBaseFilter_QueryInterface(filter, &IID_IVMRFilterConfig9, (void **)&config);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-
-    hr = IVMRFilterConfig9_SetNumberOfStreams(config, 2);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
-
-    IVMRFilterConfig9_Release(config);
-    return hr;
 }
 
 static void test_enum_pins(void)
@@ -510,43 +527,42 @@ static void test_enum_pins(void)
 
     IEnumPins_Release(enum2);
 
-    if (SUCCEEDED(set_mixing_mode(filter)))
-    {
-        hr = IEnumPins_Next(enum1, 1, pins, NULL);
-        ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    set_mixing_mode(filter, 2);
 
-        hr = IEnumPins_Reset(enum1);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IEnumPins_Next(enum1, 1, pins, NULL);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
-        hr = IEnumPins_Next(enum1, 1, pins, NULL);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
-        IPin_Release(pins[0]);
+    hr = IEnumPins_Reset(enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-        hr = IEnumPins_Next(enum1, 1, pins, NULL);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
-        IPin_Release(pins[0]);
+    hr = IEnumPins_Next(enum1, 1, pins, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    IPin_Release(pins[0]);
 
-        hr = IEnumPins_Next(enum1, 1, pins, NULL);
-        ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    hr = IEnumPins_Next(enum1, 1, pins, NULL);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    if (hr == S_OK) IPin_Release(pins[0]);
 
-        hr = IEnumPins_Reset(enum1);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IEnumPins_Next(enum1, 1, pins, NULL);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
-        hr = IEnumPins_Next(enum1, 2, pins, &count);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
-        ok(count == 2, "Got count %u.\n", count);
-        IPin_Release(pins[0]);
-        IPin_Release(pins[1]);
+    hr = IEnumPins_Reset(enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-        hr = IEnumPins_Reset(enum1);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IEnumPins_Next(enum1, 2, pins, &count);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(count == 2, "Got count %u.\n", count);
+    IPin_Release(pins[0]);
+    if (count > 1) IPin_Release(pins[1]);
 
-        hr = IEnumPins_Next(enum1, 3, pins, &count);
-        ok(hr == S_FALSE, "Got hr %#x.\n", hr);
-        ok(count == 2, "Got count %u.\n", count);
-        IPin_Release(pins[0]);
-        IPin_Release(pins[1]);
-    }
+    hr = IEnumPins_Reset(enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumPins_Next(enum1, 3, pins, &count);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    todo_wine ok(count == 2, "Got count %u.\n", count);
+    IPin_Release(pins[0]);
+    if (count > 1) IPin_Release(pins[1]);
 
     IEnumPins_Release(enum1);
     ref = IBaseFilter_Release(filter);
@@ -580,29 +596,31 @@ static void test_find_pin(void)
     hr = IBaseFilter_FindPin(filter, L"VMR Input1", &pin);
     ok(hr == VFW_E_NOT_FOUND, "Got hr %#x.\n", hr);
 
-    if (SUCCEEDED(set_mixing_mode(filter)))
+    set_mixing_mode(filter, 2);
+
+    IEnumPins_Reset(enum_pins);
+
+    hr = IBaseFilter_FindPin(filter, L"VMR Input0", &pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IEnumPins_Next(enum_pins, 1, &pin2, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(pin == pin2, "Pins did not match.\n");
+    IPin_Release(pin);
+    IPin_Release(pin2);
+
+    hr = IBaseFilter_FindPin(filter, L"VMR Input1", &pin);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    if (hr == S_OK)
     {
-        IEnumPins_Reset(enum_pins);
-
-        hr = IBaseFilter_FindPin(filter, L"VMR Input0", &pin);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
         hr = IEnumPins_Next(enum_pins, 1, &pin2, NULL);
         ok(hr == S_OK, "Got hr %#x.\n", hr);
         ok(pin == pin2, "Pins did not match.\n");
         IPin_Release(pin);
         IPin_Release(pin2);
-
-        hr = IBaseFilter_FindPin(filter, L"VMR Input1", &pin);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
-        hr = IEnumPins_Next(enum_pins, 1, &pin2, NULL);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
-        ok(pin == pin2, "Pins did not match.\n");
-        IPin_Release(pin);
-        IPin_Release(pin2);
-
-        hr = IBaseFilter_FindPin(filter, L"VMR Input2", &pin);
-        ok(hr == VFW_E_NOT_FOUND, "Got hr %#x.\n", hr);
     }
+
+    hr = IBaseFilter_FindPin(filter, L"VMR Input2", &pin);
+    ok(hr == VFW_E_NOT_FOUND, "Got hr %#x.\n", hr);
 
     IEnumPins_Release(enum_pins);
     ref = IBaseFilter_Release(filter);
@@ -640,9 +658,12 @@ static void test_pin_info(void)
 
     IPin_Release(pin);
 
-    if (SUCCEEDED(set_mixing_mode(filter)))
+    set_mixing_mode(filter, 2);
+
+    hr = IBaseFilter_FindPin(filter, L"VMR Input1", &pin);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    if (hr == S_OK)
     {
-        IBaseFilter_FindPin(filter, L"VMR Input1", &pin);
         hr = IPin_QueryPinInfo(pin, &info);
         ok(info.pFilter == filter, "Expected filter %p, got %p.\n", filter, info.pFilter);
         ok(info.dir == PINDIR_INPUT, "Got direction %d.\n", info.dir);
@@ -871,11 +892,6 @@ static const struct strmbase_filter_ops testfilter_ops =
     .filter_destroy = testfilter_destroy,
 };
 
-static HRESULT testsource_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
-{
-    return S_OK;
-}
-
 static HRESULT WINAPI testsource_DecideAllocator(struct strmbase_source *iface,
         IMemInputPin *peer, IMemAllocator **allocator)
 {
@@ -884,8 +900,6 @@ static HRESULT WINAPI testsource_DecideAllocator(struct strmbase_source *iface,
 
 static const struct strmbase_source_ops testsource_ops =
 {
-    .base.pin_query_accept = testsource_query_accept,
-    .base.pin_get_media_type = strmbase_pin_get_media_type,
     .pfnAttemptConnection = BaseOutputPinImpl_AttemptConnection,
     .pfnDecideAllocator = testsource_DecideAllocator,
 };
@@ -966,13 +980,14 @@ static DWORD WINAPI frame_thread(void *arg)
     return hr;
 }
 
-static HANDLE send_frame(IMemInputPin *sink)
+static HANDLE send_frame_time(IMemInputPin *sink, REFERENCE_TIME start_time, DWORD color)
 {
     struct frame_thread_params *params = heap_alloc(sizeof(*params));
-    REFERENCE_TIME start_time, end_time;
     IMemAllocator *allocator;
+    REFERENCE_TIME end_time;
     IMediaSample *sample;
     HANDLE thread;
+    LONG size, i;
     HRESULT hr;
     BYTE *data;
 
@@ -982,14 +997,16 @@ static HANDLE send_frame(IMemInputPin *sink)
     hr = IMemAllocator_GetBuffer(allocator, &sample, NULL, NULL, 0);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
+    size = IMediaSample_GetSize(sample);
     hr = IMediaSample_GetPointer(sample, &data);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    memset(data, 0x55, 32 * 16 * 4);
+    for (i = 0; i < size / sizeof(DWORD); ++i)
+        ((DWORD *)data)[i] = color;
 
-    hr = IMediaSample_SetActualDataLength(sample, 32 * 16 * 4);
+    hr = IMediaSample_SetActualDataLength(sample, size);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-    start_time = 0;
+    start_time *= 10000000;
     end_time = start_time + 10000000;
     hr = IMediaSample_SetTime(sample, &start_time, &end_time);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -1002,6 +1019,11 @@ static HANDLE send_frame(IMemInputPin *sink)
     return thread;
 }
 
+static HANDLE send_frame(IMemInputPin *sink)
+{
+    return send_frame_time(sink, 0, 0x007f007f);
+}
+
 static HRESULT join_thread_(int line, HANDLE thread)
 {
     DWORD ret;
@@ -1012,16 +1034,25 @@ static HRESULT join_thread_(int line, HANDLE thread)
 }
 #define join_thread(a) join_thread_(__LINE__, a)
 
-static void test_filter_state(IMemInputPin *input, IFilterGraph2 *graph)
+static void commit_allocator(IMemInputPin *input)
 {
     IMemAllocator *allocator;
-    IMediaControl *control;
+    HRESULT hr;
+
+    hr = IMemInputPin_GetAllocator(input, &allocator);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMemAllocator_Commit(allocator);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    IMemAllocator_Release(allocator);
+}
+
+static void test_filter_state(IMemInputPin *input, IMediaControl *control)
+{
+    IMemAllocator *allocator;
     IMediaSample *sample;
     OAFilterState state;
     HANDLE thread;
     HRESULT hr;
-
-    IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
 
     thread = send_frame(input);
     hr = join_thread(thread);
@@ -1124,9 +1155,7 @@ static void test_filter_state(IMemInputPin *input, IFilterGraph2 *graph)
     hr = IMediaControl_GetState(control, 0, &state);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-    hr = IMemAllocator_Commit(allocator);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-
+    commit_allocator(input);
     hr = IMediaControl_Pause(control);
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
@@ -1153,25 +1182,15 @@ static void test_filter_state(IMemInputPin *input, IFilterGraph2 *graph)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     IMemAllocator_Release(allocator);
-    IMediaControl_Release(control);
 }
 
-static void test_flushing(IPin *pin, IMemInputPin *input, IFilterGraph2 *graph)
+static void test_flushing(IPin *pin, IMemInputPin *input, IMediaControl *control)
 {
-    IMemAllocator *allocator;
-    IMediaControl *control;
     OAFilterState state;
     HANDLE thread;
     HRESULT hr;
 
-    IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
-
-    hr = IMemInputPin_GetAllocator(input, &allocator);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    hr = IMemAllocator_Commit(allocator);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    IMemAllocator_Release(allocator);
-
+    commit_allocator(input);
     hr = IMediaControl_Pause(control);
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
@@ -1223,19 +1242,224 @@ static void test_flushing(IPin *pin, IMemInputPin *input, IFilterGraph2 *graph)
 
     hr = IMediaControl_Stop(control);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
+}
 
-    IMediaControl_Release(control);
+static unsigned int check_ec_complete(IMediaEvent *eventsrc, DWORD timeout)
+{
+    LONG_PTR param1, param2;
+    unsigned int ret = 0;
+    HRESULT hr;
+    LONG code;
+
+    while ((hr = IMediaEvent_GetEvent(eventsrc, &code, &param1, &param2, timeout)) == S_OK)
+    {
+        if (code == EC_COMPLETE)
+        {
+            ok(param1 == S_OK, "Got param1 %#lx.\n", param1);
+            ok(!param2, "Got param2 %#lx.\n", param2);
+            ret++;
+        }
+        IMediaEvent_FreeEventParams(eventsrc, code, param1, param2);
+        timeout = 0;
+    }
+    ok(hr == E_ABORT, "Got hr %#x.\n", hr);
+
+    return ret;
+}
+
+static void test_eos(IPin *pin, IMemInputPin *input, IMediaControl *control)
+{
+    IMediaEvent *eventsrc;
+    OAFilterState state;
+    HRESULT hr;
+    BOOL ret;
+
+    IMediaControl_QueryInterface(control, &IID_IMediaEvent, (void **)&eventsrc);
+
+    commit_allocator(input);
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ret = check_ec_complete(eventsrc, 0);
+    ok(!ret, "Got unexpected EC_COMPLETE.\n");
+
+    hr = IPin_EndOfStream(pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaControl_GetState(control, 1000, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ret = check_ec_complete(eventsrc, 0);
+    todo_wine ok(!ret, "Got unexpected EC_COMPLETE.\n");
+
+    hr = join_thread(send_frame(input));
+    todo_wine ok(hr == E_UNEXPECTED, "Got hr %#x.\n", hr);
+
+    hr = IMediaControl_Run(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ret = check_ec_complete(eventsrc, 0);
+    todo_wine ok(ret == 1, "Expected EC_COMPLETE.\n");
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ret = check_ec_complete(eventsrc, 0);
+    ok(!ret, "Got unexpected EC_COMPLETE.\n");
+
+    /* We do not receive an EC_COMPLETE notification until the last sample is
+     * done rendering. */
+
+    commit_allocator(input);
+    hr = IMediaControl_Run(control);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    hr = join_thread(send_frame(input));
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMediaControl_GetState(control, 1000, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ret = check_ec_complete(eventsrc, 0);
+    ok(!ret, "Got unexpected EC_COMPLETE.\n");
+
+    hr = IPin_EndOfStream(pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ret = check_ec_complete(eventsrc, 0);
+    todo_wine ok(!ret, "Got unexpected EC_COMPLETE.\n");
+    ret = check_ec_complete(eventsrc, 1600);
+    todo_wine ok(ret == 1, "Expected EC_COMPLETE.\n");
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ret = check_ec_complete(eventsrc, 0);
+    ok(!ret, "Got unexpected EC_COMPLETE.\n");
+
+    /* Test sending EOS while flushing. */
+
+    commit_allocator(input);
+    hr = IMediaControl_Run(control);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    hr = join_thread(send_frame(input));
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IPin_BeginFlush(pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IPin_EndOfStream(pin);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    hr = IPin_EndFlush(pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ret = check_ec_complete(eventsrc, 0);
+    todo_wine ok(!ret, "Got unexpected EC_COMPLETE.\n");
+
+    /* Test sending EOS and then flushing or stopping. */
+
+    commit_allocator(input);
+    hr = IMediaControl_Run(control);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    hr = join_thread(send_frame(input));
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMediaControl_GetState(control, 1000, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IPin_EndOfStream(pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ret = check_ec_complete(eventsrc, 0);
+    todo_wine ok(!ret, "Got unexpected EC_COMPLETE.\n");
+
+    hr = IPin_BeginFlush(pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IPin_EndFlush(pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = join_thread(send_frame(input));
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IPin_EndOfStream(pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ret = check_ec_complete(eventsrc, 0);
+    ok(!ret, "Got unexpected EC_COMPLETE.\n");
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ret = check_ec_complete(eventsrc, 0);
+    ok(!ret, "Got unexpected EC_COMPLETE.\n");
+
+    IMediaEvent_Release(eventsrc);
+}
+
+static void test_sample_time(IPin *pin, IMemInputPin *input, IMediaControl *control)
+{
+    OAFilterState state;
+    HANDLE thread;
+    HRESULT hr;
+
+    commit_allocator(input);
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IMediaControl_GetState(control, 0, &state);
+    ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#x.\n", hr);
+
+    thread = send_frame_time(input, 1, 0x000000ff); /* blue */
+
+    hr = IMediaControl_GetState(control, 1000, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ok(WaitForSingleObject(thread, 100) == WAIT_TIMEOUT, "Thread should block in Receive().\n");
+
+    hr = IMediaControl_Run(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ok(WaitForSingleObject(thread, 500) == WAIT_TIMEOUT, "Thread should block in Receive().\n");
+
+    hr = join_thread(thread);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    /* Sample time is relative to the time passed to Run(). Thus a sample
+     * stamped at or earlier than 1s will now be displayed immediately, because
+     * that time has already passed.
+     * One may manually verify that all of the frames in this function are
+     * rendered, including (by adding a Sleep() after sending the frame) the
+     * cyan and green frames. Thus the VMR does not attempt to drop any frames
+     * that it considers late. This remains true if the frames are marked as
+     * discontinuous. */
+
+    hr = join_thread(send_frame_time(input, 1, 0x0000ffff)); /* cyan */
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = join_thread(send_frame_time(input, 0, 0x0000ff00)); /* green */
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = join_thread(send_frame_time(input, -2, 0x00ff0000)); /* red */
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    thread = send_frame_time(input, 2, 0x00ff00ff); /* magenta */
+    ok(WaitForSingleObject(thread, 500) == WAIT_TIMEOUT, "Thread should block in Receive().\n");
+    hr = join_thread(thread);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    thread = send_frame_time(input, 1000000, 0x00ffffff); /* white */
+    ok(WaitForSingleObject(thread, 100) == WAIT_TIMEOUT, "Thread should block in Receive().\n");
+
+    hr = IPin_BeginFlush(pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = join_thread(thread);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IPin_EndFlush(pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    thread = send_frame_time(input, 1000000, 0x00ffff00); /* yellow */
+    ok(WaitForSingleObject(thread, 100) == WAIT_TIMEOUT, "Thread should block in Receive().\n");
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = join_thread(thread);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 }
 
 static void test_current_image(IBaseFilter *filter, IMemInputPin *input,
-        IFilterGraph2 *graph, const BITMAPINFOHEADER *req_bih)
+        IMediaControl *control, const BITMAPINFOHEADER *req_bih)
 {
     LONG buffer[(sizeof(BITMAPINFOHEADER) + 32 * 16 * 4) / 4];
     const BITMAPINFOHEADER *bih = (BITMAPINFOHEADER *)buffer;
     const DWORD *data = (DWORD *)((char *)buffer + sizeof(BITMAPINFOHEADER));
     BITMAPINFOHEADER expect_bih = *req_bih;
-    IMemAllocator *allocator;
-    IMediaControl *control;
     OAFilterState state;
     IBasicVideo *video;
     unsigned int i;
@@ -1245,7 +1469,6 @@ static void test_current_image(IBaseFilter *filter, IMemInputPin *input,
 
     expect_bih.biSizeImage = 32 * 16 * 4;
 
-    IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
     IBaseFilter_QueryInterface(filter, &IID_IBasicVideo, (void **)&video);
 
     hr = IBasicVideo_GetCurrentImage(video, NULL, NULL);
@@ -1266,12 +1489,7 @@ static void test_current_image(IBaseFilter *filter, IMemInputPin *input,
     ok(!memcmp(bih, &expect_bih, sizeof(BITMAPINFOHEADER)), "Bitmap headers didn't match.\n");
     /* The contents seem to reflect the last frame rendered. */
 
-    hr = IMemInputPin_GetAllocator(input, &allocator);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    hr = IMemAllocator_Commit(allocator);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    IMemAllocator_Release(allocator);
-
+    commit_allocator(input);
     hr = IMediaControl_Pause(control);
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
@@ -1298,11 +1516,8 @@ static void test_current_image(IBaseFilter *filter, IMemInputPin *input,
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(size == sizeof(buffer), "Got size %d.\n", size);
     ok(!memcmp(bih, &expect_bih, sizeof(BITMAPINFOHEADER)), "Bitmap headers didn't match.\n");
-    if (0) /* FIXME: Rendering is currently broken on Wine. */
-    {
-        for (i = 0; i < 32 * 16; ++i)
-            ok((data[i] & 0xffffff) == 0x555555, "Got unexpected color %08x at %u.\n", data[i], i);
-    }
+    for (i = 0; i < 32 * 16; ++i)
+        ok((data[i] & 0xffffff) == 0x7f007f, "Got unexpected color %08x at %u.\n", data[i], i);
 
     hr = IMediaControl_Run(control);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -1314,17 +1529,13 @@ static void test_current_image(IBaseFilter *filter, IMemInputPin *input,
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(size == sizeof(buffer), "Got size %d.\n", size);
     ok(!memcmp(bih, &expect_bih, sizeof(BITMAPINFOHEADER)), "Bitmap headers didn't match.\n");
-    if (0) /* FIXME: Rendering is currently broken on Wine. */
-    {
-        for (i = 0; i < 32 * 16; ++i)
-            ok((data[i] & 0xffffff) == 0x555555, "Got unexpected color %08x at %u.\n", data[i], i);
-    }
+    for (i = 0; i < 32 * 16; ++i)
+        ok((data[i] & 0xffffff) == 0x7f007f, "Got unexpected color %08x at %u.\n", data[i], i);
 
     hr = IMediaControl_Stop(control);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     IBasicVideo_Release(video);
-    IMediaControl_Release(control);
 }
 
 static void test_connect_pin(void)
@@ -1350,6 +1561,7 @@ static void test_connect_pin(void)
     IFilterGraph2 *graph = create_graph();
     struct testfilter source;
     IMemAllocator *allocator;
+    IMediaControl *control;
     IMemInputPin *input;
     unsigned int i, j;
     AM_MEDIA_TYPE mt;
@@ -1370,6 +1582,7 @@ static void test_connect_pin(void)
 
     IFilterGraph2_AddFilter(graph, &source.filter.IBaseFilter_iface, NULL);
     IFilterGraph2_AddFilter(graph, filter, NULL);
+    IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
 
     IBaseFilter_FindPin(filter, L"VMR Input0", &pin);
     IPin_QueryInterface(pin, &IID_IMemInputPin, (void **)&input);
@@ -1388,17 +1601,13 @@ static void test_connect_pin(void)
                 skip("Got E_FAIL when connecting.\n");
                 goto out;
             }
-            todo_wine_if (bpp_tests[j] == 24)
-                ok(hr == S_OK, "Got hr %#x for subtype %s and bpp %u.\n", hr,
-                        wine_dbgstr_guid(subtype_tests[i]), bpp_tests[j]);
+            ok(hr == S_OK, "Got hr %#x for subtype %s and bpp %u.\n", hr,
+                    wine_dbgstr_guid(subtype_tests[i]), bpp_tests[j]);
 
-            if (hr == S_OK)
-            {
-                hr = IFilterGraph2_Disconnect(graph, &source.source.pin.IPin_iface);
-                ok(hr == S_OK, "Got hr %#x.\n", hr);
-                hr = IFilterGraph2_Disconnect(graph, pin);
-                ok(hr == S_OK, "Got hr %#x.\n", hr);
-            }
+            hr = IFilterGraph2_Disconnect(graph, &source.source.pin.IPin_iface);
+            ok(hr == S_OK, "Got hr %#x.\n", hr);
+            hr = IFilterGraph2_Disconnect(graph, pin);
+            ok(hr == S_OK, "Got hr %#x.\n", hr);
         }
     }
 
@@ -1459,9 +1668,11 @@ static void test_connect_pin(void)
     hr = IMemInputPin_ReceiveCanBlock(input);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-    test_filter_state(input, graph);
-    test_flushing(pin, input, graph);
-    test_current_image(filter, input, graph, &vih.bmiHeader);
+    test_filter_state(input, control);
+    test_flushing(pin, input, control);
+    test_eos(pin, input, control);
+    test_sample_time(pin, input, control);
+    test_current_image(filter, input, control, &vih.bmiHeader);
 
     hr = IFilterGraph2_Disconnect(graph, pin);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -1479,10 +1690,11 @@ static void test_connect_pin(void)
     ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
 
 out:
-    IMemInputPin_Release(input);
-    IPin_Release(pin);
+    IMediaControl_Release(control);
     ref = IFilterGraph2_Release(graph);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
+    IMemInputPin_Release(input);
+    IPin_Release(pin);
     ref = IBaseFilter_Release(filter);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
     ref = IBaseFilter_Release(&source.filter.IBaseFilter_iface);
@@ -1507,6 +1719,38 @@ static void test_overlay(void)
     hr = IOverlay_GetWindowHandle(overlay, &hwnd);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(hwnd && hwnd != (HWND)0xdeadbeef, "Got invalid window %p.\n", hwnd);
+
+    IOverlay_Release(overlay);
+    IPin_Release(pin);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+    filter = create_vmr9(VMR9Mode_Windowless);
+    IBaseFilter_FindPin(filter, L"VMR Input0", &pin);
+
+    hr = IPin_QueryInterface(pin, &IID_IOverlay, (void **)&overlay);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hwnd = (HWND)0xdeadbeef;
+    hr = IOverlay_GetWindowHandle(overlay, &hwnd);
+    ok(hr == VFW_E_WRONG_STATE, "Got hr %#x.\n", hr);
+    ok(hwnd == (HWND)0xdeadbeef, "Got window %p.\n", hwnd);
+
+    IOverlay_Release(overlay);
+    IPin_Release(pin);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+    filter = create_vmr9(VMR9Mode_Renderless);
+    IBaseFilter_FindPin(filter, L"VMR Input0", &pin);
+
+    hr = IPin_QueryInterface(pin, &IID_IOverlay, (void **)&overlay);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hwnd = (HWND)0xdeadbeef;
+    hr = IOverlay_GetWindowHandle(overlay, &hwnd);
+    ok(hr == VFW_E_WRONG_STATE, "Got hr %#x.\n", hr);
+    ok(hwnd == (HWND)0xdeadbeef, "Got window %p.\n", hwnd);
 
     IOverlay_Release(overlay);
     IPin_Release(pin);
@@ -1833,21 +2077,21 @@ static void test_video_window_position(IVideoWindow *window, HWND hwnd, HWND our
     ok(top == 0, "Got top %d.\n", top);
     hr = IVideoWindow_get_Width(window, &width);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(width == expect_width, "Got width %d.\n", width);
+    ok(width == expect_width, "Got width %d.\n", width);
     hr = IVideoWindow_get_Height(window, &height);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(height == expect_height, "Got height %d.\n", height);
+    ok(height == expect_height, "Got height %d.\n", height);
     hr = IVideoWindow_GetWindowPosition(window, &left, &top, &width, &height);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(left == 0, "Got left %d.\n", left);
     ok(top == 0, "Got top %d.\n", top);
-    todo_wine ok(width == expect_width, "Got width %d.\n", width);
-    todo_wine ok(height == expect_height, "Got height %d.\n", height);
+    ok(width == expect_width, "Got width %d.\n", width);
+    ok(height == expect_height, "Got height %d.\n", height);
     GetWindowRect(hwnd, &rect);
     ok(rect.left == 0, "Got window left %d.\n", rect.left);
     ok(rect.top == 0, "Got window top %d.\n", rect.top);
-    todo_wine ok(rect.right == expect_width, "Got window right %d.\n", rect.right);
-    todo_wine ok(rect.bottom == expect_height, "Got window bottom %d.\n", rect.bottom);
+    ok(rect.right == expect_width, "Got window right %d.\n", rect.right);
+    ok(rect.bottom == expect_height, "Got window bottom %d.\n", rect.bottom);
 
     hr = IVideoWindow_put_Left(window, 10);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -1860,21 +2104,21 @@ static void test_video_window_position(IVideoWindow *window, HWND hwnd, HWND our
     ok(top == 0, "Got top %d.\n", top);
     hr = IVideoWindow_get_Width(window, &width);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(width == expect_width, "Got width %d.\n", width);
+    ok(width == expect_width, "Got width %d.\n", width);
     hr = IVideoWindow_get_Height(window, &height);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(height == expect_height, "Got height %d.\n", height);
+    ok(height == expect_height, "Got height %d.\n", height);
     hr = IVideoWindow_GetWindowPosition(window, &left, &top, &width, &height);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(left == 10, "Got left %d.\n", left);
     ok(top == 0, "Got top %d.\n", top);
-    todo_wine ok(width == expect_width, "Got width %d.\n", width);
-    todo_wine ok(height == expect_height, "Got height %d.\n", height);
+    ok(width == expect_width, "Got width %d.\n", width);
+    ok(height == expect_height, "Got height %d.\n", height);
     GetWindowRect(hwnd, &rect);
     ok(rect.left == 10, "Got window left %d.\n", rect.left);
     ok(rect.top == 0, "Got window top %d.\n", rect.top);
-    todo_wine ok(rect.right == 10 + expect_width, "Got window right %d.\n", rect.right);
-    todo_wine ok(rect.bottom == expect_height, "Got window bottom %d.\n", rect.bottom);
+    ok(rect.right == 10 + expect_width, "Got window right %d.\n", rect.right);
+    ok(rect.bottom == expect_height, "Got window bottom %d.\n", rect.bottom);
 
     hr = IVideoWindow_put_Height(window, 200);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -1887,7 +2131,7 @@ static void test_video_window_position(IVideoWindow *window, HWND hwnd, HWND our
     ok(top == 0, "Got top %d.\n", top);
     hr = IVideoWindow_get_Width(window, &width);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(width == expect_width, "Got width %d.\n", width);
+    ok(width == expect_width, "Got width %d.\n", width);
     hr = IVideoWindow_get_Height(window, &height);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(height == 200, "Got height %d.\n", height);
@@ -1895,12 +2139,12 @@ static void test_video_window_position(IVideoWindow *window, HWND hwnd, HWND our
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(left == 10, "Got left %d.\n", left);
     ok(top == 0, "Got top %d.\n", top);
-    todo_wine ok(width == expect_width, "Got width %d.\n", width);
+    ok(width == expect_width, "Got width %d.\n", width);
     ok(height == 200, "Got height %d.\n", height);
     GetWindowRect(hwnd, &rect);
     ok(rect.left == 10, "Got window left %d.\n", rect.left);
     ok(rect.top == 0, "Got window top %d.\n", rect.top);
-    todo_wine ok(rect.right == 10 + expect_width, "Got window right %d.\n", rect.right);
+    ok(rect.right == 10 + expect_width, "Got window right %d.\n", rect.right);
     ok(rect.bottom == 200, "Got window bottom %d.\n", rect.bottom);
 
     hr = IVideoWindow_SetWindowPosition(window, 100, 200, 300, 400);
@@ -2325,6 +2569,1384 @@ out:
     DestroyWindow(our_hwnd);
 }
 
+static IDirect3DDevice9 *create_device(HWND window)
+{
+    D3DPRESENT_PARAMETERS present_parameters =
+    {
+        .Windowed = TRUE,
+        .hDeviceWindow = window,
+        .SwapEffect = D3DSWAPEFFECT_DISCARD,
+        .BackBufferWidth = 640,
+        .BackBufferHeight = 480,
+        .BackBufferFormat = D3DFMT_A8R8G8B8,
+    };
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    HRESULT hr;
+
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+
+    hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, window,
+            D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device);
+    IDirect3D9_Release(d3d);
+    if (FAILED(hr))
+    {
+        skip("Failed to create a 3D device, hr %#x.\n", hr);
+        return NULL;
+    }
+    return device;
+}
+
+static void test_allocate_surface_helper(void)
+{
+    VMR9AllocationInfo info =
+    {
+        .dwFlags = VMR9AllocFlag_OffscreenSurface,
+        .dwWidth = 32,
+        .dwHeight = 16,
+        .Format = D3DFMT_X8R8G8B8,
+        .Pool = D3DPOOL_DEFAULT,
+        .MinBuffers = 2,
+        .szAspectRatio = {32, 16},
+        .szNativeSize = {32, 16},
+    };
+    IBaseFilter *filter = create_vmr9(VMR9Mode_Renderless);
+    IVMRSurfaceAllocatorNotify9 *notify;
+    IDirect3DSurface9 *surfaces[2] = {};
+    IDirect3DDevice9 *device, *device2;
+    RECT rect = {0, 0, 640, 480};
+    IDirect3DTexture9 *container;
+    D3DSURFACE_DESC desc;
+    DWORD count;
+    HWND window;
+    HRESULT hr;
+    ULONG ref;
+
+    AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, FALSE);
+    window = CreateWindowA("static", "quartz_test", WS_OVERLAPPEDWINDOW, 0, 0,
+            rect.right - rect.left, rect.bottom - rect.top, NULL, NULL, NULL, NULL);
+    if (!(device = create_device(window)))
+    {
+        IBaseFilter_Release(filter);
+        DestroyWindow(window);
+        return;
+    }
+
+    IBaseFilter_QueryInterface(filter, &IID_IVMRSurfaceAllocatorNotify9, (void **)&notify);
+
+    count = 2;
+    hr = IVMRSurfaceAllocatorNotify9_AllocateSurfaceHelper(notify, &info, &count, surfaces);
+    todo_wine ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+
+    hr = IVMRSurfaceAllocatorNotify9_SetD3DDevice(notify, device, MonitorFromWindow(window, MONITOR_DEFAULTTOPRIMARY));
+    if (hr == E_NOINTERFACE)
+    {
+        win_skip("Direct3D does not support video rendering.\n");
+        goto out;
+    }
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    if (0) /* crashes on Windows */
+    {
+        hr = IVMRSurfaceAllocatorNotify9_AllocateSurfaceHelper(notify, NULL, &count, surfaces);
+        ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+        hr = IVMRSurfaceAllocatorNotify9_AllocateSurfaceHelper(notify, &info, NULL, surfaces);
+        ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    }
+
+    hr = IVMRSurfaceAllocatorNotify9_AllocateSurfaceHelper(notify, &info, &count, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+    hr = IVMRSurfaceAllocatorNotify9_AllocateSurfaceHelper(notify, &info, &count, surfaces);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(count == 2, "Got count %u.\n", count);
+    ok(!!surfaces[0], "Surface 0 was not allocated.\n");
+    ok(!!surfaces[1], "Surface 1 was not allocated.\n");
+
+    hr = IDirect3DSurface9_GetDevice(surfaces[0], &device2);
+    ok(hr == D3D_OK, "Got hr %#x.\n", hr);
+    ok(device2 == device, "Devices did not match.\n");
+    IDirect3DDevice9_Release(device2);
+
+    hr = IDirect3DSurface9_GetContainer(surfaces[0], &IID_IDirect3DTexture9, (void **)&container);
+    ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
+
+    hr = IDirect3DSurface9_GetDesc(surfaces[0], &desc);
+    ok(hr == D3D_OK, "Got hr %#x.\n", hr);
+    ok(desc.Format == info.Format, "Got format %#x.\n", desc.Format);
+    ok(desc.Type == D3DRTYPE_SURFACE, "Got type %u.\n", desc.Type);
+    ok(!desc.Usage, "Got usage %#x.\n", desc.Usage);
+    ok(desc.Pool == D3DPOOL_DEFAULT, "Got pool %u.\n", desc.Pool);
+    ok(desc.MultiSampleType == D3DMULTISAMPLE_NONE, "Got multisample type %u.\n", desc.MultiSampleType);
+    ok(!desc.MultiSampleQuality, "Got multisample quality %u.\n", desc.MultiSampleQuality);
+    ok(desc.Width == 32, "Got width %u.\n", desc.Width);
+    ok(desc.Height == 16, "Got height %u.\n", desc.Height);
+
+    IDirect3DSurface9_Release(surfaces[0]);
+    IDirect3DSurface9_Release(surfaces[1]);
+
+    surfaces[0] = surfaces[1] = NULL;
+    count = 1;
+    hr = IVMRSurfaceAllocatorNotify9_AllocateSurfaceHelper(notify, &info, &count, surfaces);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(!count, "Got count %u.\n", count);
+    ok(!surfaces[0], "Surface 0 was allocated.\n");
+    ok(!surfaces[1], "Surface 1 was allocated.\n");
+
+    count = 2;
+    info.MinBuffers = 1;
+    hr = IVMRSurfaceAllocatorNotify9_AllocateSurfaceHelper(notify, &info, &count, surfaces);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(count == 2, "Got count %u.\n", count);
+    ok(!!surfaces[0], "Surface 0 was not allocated.\n");
+    ok(!!surfaces[1], "Surface 1 was not allocated.\n");
+    IDirect3DSurface9_Release(surfaces[0]);
+    IDirect3DSurface9_Release(surfaces[1]);
+
+    count = 2;
+    info.dwFlags = VMR9AllocFlag_TextureSurface;
+    surfaces[0] = surfaces[1] = NULL;
+    hr = IVMRSurfaceAllocatorNotify9_AllocateSurfaceHelper(notify, &info, &count, surfaces);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(count == 2, "Got count %u.\n", count);
+    ok(!!surfaces[0], "Surface 0 was not allocated.\n");
+    ok(!!surfaces[1], "Surface 1 was not allocated.\n");
+
+    hr = IDirect3DSurface9_GetDevice(surfaces[0], &device2);
+    ok(hr == D3D_OK, "Got hr %#x.\n", hr);
+    ok(device2 == device, "Devices did not match.\n");
+    IDirect3DDevice9_Release(device2);
+
+    hr = IDirect3DSurface9_GetContainer(surfaces[0], &IID_IDirect3DTexture9, (void **)&container);
+    ok(hr == D3D_OK, "Got hr %#x.\n", hr);
+    IDirect3DTexture9_Release(container);
+
+    hr = IDirect3DSurface9_GetDesc(surfaces[1], &desc);
+    ok(hr == D3D_OK, "Got hr %#x.\n", hr);
+    ok(desc.Format == info.Format, "Got format %#x.\n", desc.Format);
+    ok(desc.Type == D3DRTYPE_SURFACE, "Got type %u.\n", desc.Type);
+    ok(desc.Usage == D3DUSAGE_DYNAMIC, "Got usage %#x.\n", desc.Usage);
+    ok(desc.Pool == D3DPOOL_DEFAULT, "Got pool %u.\n", desc.Pool);
+    ok(desc.MultiSampleType == D3DMULTISAMPLE_NONE, "Got multisample type %u.\n", desc.MultiSampleType);
+    ok(!desc.MultiSampleQuality, "Got multisample quality %u.\n", desc.MultiSampleQuality);
+    ok(desc.Width == 32, "Got width %u.\n", desc.Width);
+    ok(desc.Height == 16, "Got height %u.\n", desc.Height);
+
+    IDirect3DSurface9_Release(surfaces[0]);
+    IDirect3DSurface9_Release(surfaces[1]);
+
+    info.Format = D3DFMT_R8G8B8;
+    surfaces[0] = surfaces[1] = NULL;
+    hr = IVMRSurfaceAllocatorNotify9_AllocateSurfaceHelper(notify, &info, &count, surfaces);
+    ok(hr == D3DERR_INVALIDCALL, "Got hr %#x.\n", hr);
+    ok(!count, "Got count %u.\n", count);
+    ok(!surfaces[0], "Surface 0 was allocated.\n");
+    ok(!surfaces[1], "Surface 1 was allocated.\n");
+
+    info.Format = 0;
+    info.dwFlags = VMR9AllocFlag_3DRenderTarget;
+    count = 1;
+    hr = IVMRSurfaceAllocatorNotify9_AllocateSurfaceHelper(notify, &info, &count, surfaces);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(count == 1, "Got count %u.\n", count);
+    ok(!!surfaces[0], "Surface 0 was not allocated.\n");
+    ok(info.Format != 0, "Expected a format.\n");
+
+    hr = IDirect3DSurface9_GetDesc(surfaces[0], &desc);
+    ok(hr == D3D_OK, "Got hr %#x.\n", hr);
+    ok(desc.Format == info.Format, "Expected format %#x, got %#x.\n", info.Format, desc.Format);
+    ok(desc.Type == D3DRTYPE_SURFACE, "Got type %u.\n", desc.Type);
+    ok(desc.Usage == D3DUSAGE_RENDERTARGET, "Got usage %#x.\n", desc.Usage);
+    ok(desc.Pool == D3DPOOL_DEFAULT, "Got pool %u.\n", desc.Pool);
+    ok(desc.MultiSampleType == D3DMULTISAMPLE_NONE, "Got multisample type %u.\n", desc.MultiSampleType);
+    ok(!desc.MultiSampleQuality, "Got multisample quality %u.\n", desc.MultiSampleQuality);
+    ok(desc.Width == 32, "Got width %u.\n", desc.Width);
+    ok(desc.Height == 16, "Got height %u.\n", desc.Height);
+
+    IDirect3DSurface9_Release(surfaces[0]);
+
+out:
+    IVMRSurfaceAllocatorNotify9_Release(notify);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IDirect3DDevice9_Release(device);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    DestroyWindow(window);
+}
+
+static IVMRSurfaceAllocator9 allocator_iface;
+static IVMRImagePresenter9 presenter_iface;
+static LONG allocator_refcount = 1;
+static D3DFORMAT allocator_format;
+static DWORD allocator_accept_flags;
+static IDirect3DSurface9 *allocator_surfaces[5];
+static IVMRSurfaceAllocatorNotify9 *allocator_notify;
+static unsigned int allocator_got_PresentImage, allocator_got_TerminateDevice;
+
+static HRESULT WINAPI presenter_QueryInterface(IVMRImagePresenter9 *iface, REFIID iid, void **out)
+{
+    return IVMRSurfaceAllocator9_QueryInterface(&allocator_iface, iid, out);
+}
+
+static ULONG WINAPI presenter_AddRef(IVMRImagePresenter9 *iface)
+{
+    return IVMRSurfaceAllocator9_AddRef(&allocator_iface);
+}
+
+static ULONG WINAPI presenter_Release(IVMRImagePresenter9 *iface)
+{
+    return IVMRSurfaceAllocator9_Release(&allocator_iface);
+}
+
+static HRESULT WINAPI presenter_StartPresenting(IVMRImagePresenter9 *iface, DWORD_PTR cookie)
+{
+    if (winetest_debug > 1) trace("StartPresenting()\n");
+    ok(cookie == 0xabacab, "Got cookie %#lx.\n", cookie);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI presenter_StopPresenting(IVMRImagePresenter9 *iface, DWORD_PTR cookie)
+{
+    if (winetest_debug > 1) trace("StopPresenting()\n");
+    ok(cookie == 0xabacab, "Got cookie %#lx.\n", cookie);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI presenter_PresentImage(IVMRImagePresenter9 *iface, DWORD_PTR cookie, VMR9PresentationInfo *info)
+{
+    static const RECT rect;
+    if (winetest_debug > 1) trace("PresentImage()\n");
+    ok(cookie == 0xabacab, "Got cookie %#lx.\n", cookie);
+    todo_wine ok(info->dwFlags == VMR9Sample_TimeValid, "Got flags %#x.\n", info->dwFlags);
+    ok(!info->rtStart, "Got start time %s.\n", wine_dbgstr_longlong(info->rtStart));
+    ok(info->rtEnd == 10000000, "Got end time %s.\n", wine_dbgstr_longlong(info->rtEnd));
+    todo_wine ok(info->szAspectRatio.cx == 120, "Got aspect ratio width %d.\n", info->szAspectRatio.cx);
+    todo_wine ok(info->szAspectRatio.cy == 60, "Got aspect ratio height %d.\n", info->szAspectRatio.cy);
+    ok(EqualRect(&info->rcSrc, &rect), "Got source rect %s.\n", wine_dbgstr_rect(&info->rcSrc));
+    ok(EqualRect(&info->rcDst, &rect), "Got dest rect %s.\n", wine_dbgstr_rect(&info->rcDst));
+    ok(!info->dwReserved1, "Got dwReserved1 %#x.\n", info->dwReserved1);
+    ok(!info->dwReserved2, "Got dwReserved2 %#x.\n", info->dwReserved2);
+
+    ++allocator_got_PresentImage;
+    return S_OK;
+}
+
+static const IVMRImagePresenter9Vtbl presenter_vtbl =
+{
+    presenter_QueryInterface,
+    presenter_AddRef,
+    presenter_Release,
+    presenter_StartPresenting,
+    presenter_StopPresenting,
+    presenter_PresentImage,
+};
+
+static HRESULT WINAPI allocator_QueryInterface(IVMRSurfaceAllocator9 *iface, REFIID iid, void **out)
+{
+    if (winetest_debug > 1) trace("QueryInterface(%s)\n", wine_dbgstr_guid(iid));
+
+    if (IsEqualGUID(iid, &IID_IVMRImagePresenter9))
+    {
+        *out = &presenter_iface;
+        IVMRImagePresenter9_AddRef(&presenter_iface);
+        return S_OK;
+    }
+    ok(!IsEqualGUID(iid, &IID_IVMRSurfaceAllocatorEx9), "Unexpected query for IVMRSurfaceAllocatorEx9.\n");
+    *out = NULL;
+    return E_NOTIMPL;
+}
+
+static ULONG WINAPI allocator_AddRef(IVMRSurfaceAllocator9 *iface)
+{
+    return InterlockedIncrement(&allocator_refcount);
+}
+
+static ULONG WINAPI allocator_Release(IVMRSurfaceAllocator9 *iface)
+{
+    return InterlockedDecrement(&allocator_refcount);
+}
+
+static HRESULT WINAPI allocator_InitializeDevice(IVMRSurfaceAllocator9 *iface,
+        DWORD_PTR cookie, VMR9AllocationInfo *info, DWORD *buffer_count)
+{
+    if (winetest_debug > 1) trace("InitializeDevice(flags %#x, format %u)\n",
+            info->dwFlags, info->Format);
+    ok(cookie == 0xabacab, "Got cookie %#lx.\n", cookie);
+    ok(info->dwWidth == 32, "Got width %u.\n", info->dwWidth);
+    ok(info->dwHeight == 16, "Got height %u.\n", info->dwHeight);
+    todo_wine ok(info->MinBuffers == 5, "Got buffer count %u.\n", info->MinBuffers);
+    ok(info->Pool == D3DPOOL_DEFAULT, "Got pool %u\n", info->Pool);
+    todo_wine ok(info->szAspectRatio.cx == 120, "Got aspect ratio width %d.\n", info->szAspectRatio.cx);
+    todo_wine ok(info->szAspectRatio.cy == 60, "Got aspect ratio height %d.\n", info->szAspectRatio.cy);
+    ok(info->szNativeSize.cx == 32, "Got native width %d.\n", info->szNativeSize.cx);
+    ok(info->szNativeSize.cy == 16, "Got native height %d.\n", info->szNativeSize.cy);
+    todo_wine ok(*buffer_count == 5, "Got buffer count %u.\n", *buffer_count);
+
+    allocator_format = info->Format;
+
+    if (info->dwFlags != allocator_accept_flags)
+        return 0xdeadbeef;
+    return IVMRSurfaceAllocatorNotify9_AllocateSurfaceHelper(allocator_notify,
+            info, buffer_count, allocator_surfaces);
+}
+
+static HRESULT WINAPI allocator_TerminateDevice(IVMRSurfaceAllocator9 *iface, DWORD_PTR cookie)
+{
+    if (winetest_debug > 1) trace("TerminateDevice()\n");
+    ok(cookie == 0xabacab, "Got cookie %#lx.\n", cookie);
+    /* Don't dereference the surfaces here, to mimic How to Survive. */
+    ++allocator_got_TerminateDevice;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI allocator_GetSurface(IVMRSurfaceAllocator9 *iface,
+        DWORD_PTR cookie, DWORD index, DWORD flags, IDirect3DSurface9 **surface)
+{
+    if (winetest_debug > 1) trace("GetSurface(index %u)\n", index);
+    ok(cookie == 0xabacab, "Got cookie %#lx.\n", cookie);
+    ok(!flags, "Got flags %#x.\n", flags);
+    ok(index < 5, "Got index %u.\n", index);
+
+    /* Don't reference the surface here, to mimic How to Survive. */
+    *surface = allocator_surfaces[index];
+    return S_OK;
+}
+
+static HRESULT WINAPI allocator_AdviseNotify(IVMRSurfaceAllocator9 *iface, IVMRSurfaceAllocatorNotify9 *notify)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static const IVMRSurfaceAllocator9Vtbl allocator_vtbl =
+{
+    allocator_QueryInterface,
+    allocator_AddRef,
+    allocator_Release,
+    allocator_InitializeDevice,
+    allocator_TerminateDevice,
+    allocator_GetSurface,
+    allocator_AdviseNotify,
+};
+
+static IVMRSurfaceAllocator9 allocator_iface = {&allocator_vtbl};
+static IVMRImagePresenter9 presenter_iface = {&presenter_vtbl};
+
+static void test_renderless_present(IFilterGraph2 *graph, IMemInputPin *input)
+{
+    IMediaControl *control;
+    OAFilterState state;
+    HANDLE thread;
+    HRESULT hr;
+
+    IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
+
+    allocator_got_PresentImage = 0;
+
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    thread = send_frame(input);
+    hr = IMediaControl_GetState(control, 1000, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaControl_Run(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = join_thread(thread);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(allocator_got_PresentImage == 1, "Got %u calls to PresentImage().\n", allocator_got_PresentImage);
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    IMediaControl_Release(control);
+}
+
+static void test_renderless_formats(void)
+{
+    VIDEOINFOHEADER vih =
+    {
+        .rcSource = {4, 6, 16, 12},
+        .rcTarget = {40, 60, 160, 120},
+        .bmiHeader.biSize = sizeof(BITMAPINFOHEADER),
+        .bmiHeader.biWidth = 32,
+        .bmiHeader.biHeight = 16,
+    };
+    AM_MEDIA_TYPE req_mt =
+    {
+        .majortype = MEDIATYPE_Video,
+        .formattype = FORMAT_VideoInfo,
+        .cbFormat = sizeof(vih),
+        .pbFormat = (BYTE *)&vih,
+    };
+    ALLOCATOR_PROPERTIES req_props = {5, 32 * 16 * 4, 1, 0}, ret_props;
+    IVMRSurfaceAllocatorNotify9 *notify;
+    RECT rect = {0, 0, 640, 480};
+    struct testfilter source;
+    IDirect3DDevice9 *device;
+    IMemAllocator *allocator;
+    IFilterGraph2 *graph;
+    IMemInputPin *input;
+    IBaseFilter *filter;
+    unsigned int i;
+    HWND window;
+    HRESULT hr;
+    ULONG ref;
+    IPin *pin;
+
+    static const struct
+    {
+        const GUID *subtype;
+        D3DFORMAT format;
+        DWORD flags;
+    }
+    tests[] =
+    {
+        {&MEDIASUBTYPE_ARGB1555, D3DFMT_A1R5G5B5, VMR9AllocFlag_TextureSurface},
+        {&MEDIASUBTYPE_ARGB32, D3DFMT_A8R8G8B8, VMR9AllocFlag_TextureSurface},
+        {&MEDIASUBTYPE_ARGB4444, D3DFMT_A4R4G4B4, VMR9AllocFlag_TextureSurface},
+
+        {&MEDIASUBTYPE_RGB555, D3DFMT_X1R5G5B5, VMR9AllocFlag_OffscreenSurface},
+        {&MEDIASUBTYPE_RGB555, D3DFMT_X1R5G5B5, VMR9AllocFlag_TextureSurface},
+        {&MEDIASUBTYPE_RGB565, D3DFMT_R5G6B5, VMR9AllocFlag_OffscreenSurface},
+        {&MEDIASUBTYPE_RGB565, D3DFMT_R5G6B5, VMR9AllocFlag_TextureSurface},
+        {&MEDIASUBTYPE_RGB24, D3DFMT_R8G8B8, VMR9AllocFlag_OffscreenSurface},
+        {&MEDIASUBTYPE_RGB24, D3DFMT_R8G8B8, VMR9AllocFlag_TextureSurface},
+        {&MEDIASUBTYPE_RGB32, D3DFMT_X8R8G8B8, VMR9AllocFlag_OffscreenSurface},
+        {&MEDIASUBTYPE_RGB32, D3DFMT_X8R8G8B8, VMR9AllocFlag_TextureSurface},
+
+        {&MEDIASUBTYPE_NV12, MAKEFOURCC('N','V','1','2'), VMR9AllocFlag_OffscreenSurface},
+        {&MEDIASUBTYPE_UYVY, D3DFMT_UYVY, VMR9AllocFlag_OffscreenSurface},
+        {&MEDIASUBTYPE_YUY2, D3DFMT_YUY2, VMR9AllocFlag_OffscreenSurface},
+        {&MEDIASUBTYPE_YV12, MAKEFOURCC('Y','V','1','2'), VMR9AllocFlag_OffscreenSurface},
+    };
+
+    AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, FALSE);
+    window = CreateWindowA("static", "quartz_test", WS_OVERLAPPEDWINDOW, 0, 0,
+            rect.right - rect.left, rect.bottom - rect.top, NULL, NULL, NULL, NULL);
+    if (!(device = create_device(window)))
+    {
+        DestroyWindow(window);
+        return;
+    }
+
+    filter = create_vmr9(VMR9Mode_Renderless);
+    IBaseFilter_QueryInterface(filter, &IID_IVMRSurfaceAllocatorNotify9, (void **)&notify);
+
+    hr = IVMRSurfaceAllocatorNotify9_SetD3DDevice(notify, device, MonitorFromWindow(window, MONITOR_DEFAULTTOPRIMARY));
+    if (hr == E_NOINTERFACE)
+    {
+        win_skip("Direct3D does not support video rendering.\n");
+        goto out;
+    }
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IVMRSurfaceAllocatorNotify9_AdviseSurfaceAllocator(notify, 0xabacab, &allocator_iface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    allocator_notify = notify;
+
+    testfilter_init(&source);
+    graph = create_graph();
+    IFilterGraph2_AddFilter(graph, &source.filter.IBaseFilter_iface, NULL);
+    IFilterGraph2_AddFilter(graph, filter, NULL);
+    IBaseFilter_FindPin(filter, L"VMR Input0", &pin);
+    IPin_QueryInterface(pin, &IID_IMemInputPin, (void **)&input);
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        req_mt.subtype = *tests[i].subtype;
+        allocator_accept_flags = tests[i].flags;
+
+        hr = IFilterGraph2_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &req_mt);
+        /* Connection never fails on Native, but Wine currently creates D3D
+         * surfaces during IPin::ReceiveConnection() instead of
+         * IMemAllocator::SetProperties(), so let that fail here for now. */
+        if (hr != S_OK)
+        {
+            skip("Format %u (%#x), flags %#x are not supported, hr %#x.\n",
+                    tests[i].format, tests[i].format, tests[i].flags, hr);
+            continue;
+        }
+        ok(hr == S_OK, "Test %u: Got hr %#x.\n", i, hr);
+
+        hr = IMemInputPin_GetAllocator(input, &allocator);
+        todo_wine ok(hr == S_OK, "Test %u: Got hr %#x.\n", i, hr);
+        if (hr != S_OK)
+        {
+            test_allocator(input);
+            hr = IMemInputPin_GetAllocator(input, &allocator);
+        }
+
+        hr = IMemAllocator_SetProperties(allocator, &req_props, &ret_props);
+        if (hr != S_OK)
+        {
+            skip("Format %u (%#x), flags %#x are not supported, hr %#x.\n",
+                    tests[i].format, tests[i].format, tests[i].flags, hr);
+            IMemAllocator_Release(allocator);
+            hr = IFilterGraph2_Disconnect(graph, &source.source.pin.IPin_iface);
+            ok(hr == S_OK, "Test %u: Got hr %#x.\n", i, hr);
+            hr = IFilterGraph2_Disconnect(graph, pin);
+            ok(hr == S_OK, "Test %u: Got hr %#x.\n", i, hr);
+            continue;
+        }
+        ok(!memcmp(&ret_props, &req_props, sizeof(req_props)), "Properties did not match.\n");
+        hr = IMemAllocator_Commit(allocator);
+        ok(hr == S_OK, "Test %u: Got hr %#x.\n", i, hr);
+
+        ok(allocator_format == tests[i].format, "Test %u: Got format %u (%#x).\n",
+                i, allocator_format, allocator_format);
+
+        test_renderless_present(graph, input);
+
+        hr = IMemAllocator_Decommit(allocator);
+        ok(hr == S_OK, "Test %u: Got hr %#x.\n", i, hr);
+        IMemAllocator_Release(allocator);
+
+        hr = IFilterGraph2_Disconnect(graph, &source.source.pin.IPin_iface);
+        ok(hr == S_OK, "Test %u: Got hr %#x.\n", i, hr);
+        hr = IFilterGraph2_Disconnect(graph, pin);
+        ok(hr == S_OK, "Test %u: Got hr %#x.\n", i, hr);
+    }
+
+    ref = IFilterGraph2_Release(graph);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    IMemInputPin_Release(input);
+    IPin_Release(pin);
+
+out:
+    IVMRSurfaceAllocatorNotify9_Release(notify);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(allocator_refcount == 1, "Got outstanding refcount %d.\n", allocator_refcount);
+    ref = IDirect3DDevice9_Release(device);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    DestroyWindow(window);
+}
+
+static void test_mixing_mode(void)
+{
+    IVMRWindowlessControl9 *windowless_control;
+    IVMRMixerControl9 *mixer_control;
+    IVMRFilterConfig9 *config;
+    DWORD stream_count = 0;
+    IBaseFilter *filter;
+    unsigned int i;
+    HWND window;
+    HRESULT hr;
+    ULONG ref;
+
+    static const VMR9Mode modes[] =
+    {
+        0,
+        VMR9Mode_Windowed,
+        VMR9Mode_Windowless,
+        VMR9Mode_Renderless,
+    };
+
+    for (i = 0; i < ARRAY_SIZE(modes); ++i)
+    {
+        filter = create_vmr9(modes[i]);
+        IBaseFilter_QueryInterface(filter, &IID_IVMRFilterConfig9, (void **)&config);
+
+        hr = IBaseFilter_QueryInterface(filter, &IID_IVMRMixerControl9, (void **)&mixer_control);
+        ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
+
+        hr = IVMRFilterConfig9_GetNumberOfStreams(config, &stream_count);
+        ok(hr == VFW_E_VMR_NOT_IN_MIXER_MODE, "Got hr %#x.\n", hr);
+
+        hr = IVMRFilterConfig9_SetNumberOfStreams(config, 1);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+        hr = IVMRFilterConfig9_GetNumberOfStreams(config, &stream_count);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(stream_count == 1, "Got %u streams.\n", stream_count);
+
+        hr = IBaseFilter_QueryInterface(filter, &IID_IVMRMixerControl9, (void **)&mixer_control);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        IVMRMixerControl9_Release(mixer_control);
+
+        hr = IVMRFilterConfig9_SetNumberOfStreams(config, 2);
+        ok(hr == VFW_E_WRONG_STATE, "Got hr %#x.\n", hr);
+
+        hr = IVMRFilterConfig9_GetNumberOfStreams(config, &stream_count);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(stream_count == 1, "Got %u streams.\n", stream_count);
+
+        IVMRFilterConfig9_Release(config);
+        ref = IBaseFilter_Release(filter);
+        ok(!ref, "Got outstanding refcount %d.\n", ref);
+    }
+
+    filter = create_vmr9(VMR9Mode_Windowless);
+    IBaseFilter_QueryInterface(filter, &IID_IVMRFilterConfig9, (void **)&config);
+    IBaseFilter_QueryInterface(filter, &IID_IVMRWindowlessControl9, (void **)&windowless_control);
+
+    window = CreateWindowA("static", "quartz_test", WS_OVERLAPPEDWINDOW, 0, 0, 640, 480, 0, 0, 0, 0);
+    ok(!!window, "Failed to create a window.\n");
+    hr = IVMRWindowlessControl9_SetVideoClippingWindow(windowless_control, window);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IVMRFilterConfig9_GetNumberOfStreams(config, &stream_count);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(stream_count == 4, "Got %u streams.\n", stream_count);
+
+    hr = IBaseFilter_QueryInterface(filter, &IID_IVMRMixerControl9, (void **)&mixer_control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    IVMRMixerControl9_Release(mixer_control);
+
+    hr = IVMRFilterConfig9_SetNumberOfStreams(config, 2);
+    ok(hr == VFW_E_WRONG_STATE, "Got hr %#x.\n", hr);
+
+    hr = IVMRFilterConfig9_GetNumberOfStreams(config, &stream_count);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(stream_count == 4, "Got %u streams.\n", stream_count);
+
+    IVMRWindowlessControl9_Release(windowless_control);
+    IVMRFilterConfig9_Release(config);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    DestroyWindow(window);
+}
+
+static void test_clipping_window(void)
+{
+    VIDEOINFOHEADER vih =
+    {
+        .bmiHeader.biSize = sizeof(BITMAPINFOHEADER),
+        .bmiHeader.biWidth = 32,
+        .bmiHeader.biHeight = 16,
+        .bmiHeader.biBitCount = 32,
+    };
+    AM_MEDIA_TYPE mt =
+    {
+        .majortype = MEDIATYPE_Video,
+        .subtype = MEDIASUBTYPE_RGB32,
+        .formattype = FORMAT_VideoInfo,
+        .cbFormat = sizeof(vih),
+        .pbFormat = (BYTE *)&vih,
+    };
+    IBaseFilter *filter = create_vmr9(VMR9Mode_Windowless);
+    IVMRWindowlessControl9 *windowless_control;
+    IFilterGraph2 *graph = create_graph();
+    struct testfilter source;
+    HWND window;
+    HRESULT hr;
+    ULONG ref;
+    IPin *pin;
+
+    IBaseFilter_QueryInterface(filter, &IID_IVMRWindowlessControl9, (void **)&windowless_control);
+    IBaseFilter_FindPin(filter, L"VMR Input0", &pin);
+    testfilter_init(&source);
+    IFilterGraph2_AddFilter(graph, &source.filter.IBaseFilter_iface, L"source");
+    IFilterGraph2_AddFilter(graph, filter, L"vmr9");
+    window = CreateWindowA("static", "quartz_test", WS_OVERLAPPEDWINDOW, 0, 0, 640, 480, 0, 0, 0, 0);
+    ok(!!window, "Failed to create a window.\n");
+
+    hr = IVMRWindowlessControl9_SetVideoClippingWindow(windowless_control, NULL);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    hr = IVMRWindowlessControl9_SetVideoClippingWindow(windowless_control, (HWND)0xdeadbeef);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
+    hr = IFilterGraph2_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IVMRWindowlessControl9_SetVideoClippingWindow(windowless_control, window);
+    ok(hr == VFW_E_WRONG_STATE, "Got hr %#x.\n", hr);
+
+    hr = IFilterGraph2_Disconnect(graph, &source.source.pin.IPin_iface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IFilterGraph2_Disconnect(graph, pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IVMRWindowlessControl9_SetVideoClippingWindow(windowless_control, window);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ref = IFilterGraph2_Release(graph);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    IPin_Release(pin);
+    IVMRWindowlessControl9_Release(windowless_control);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    DestroyWindow(window);
+}
+
+static void test_surface_allocator_notify_refcount(void)
+{
+    IBaseFilter *filter = create_vmr9(VMR9Mode_Renderless);
+    IVMRSurfaceAllocatorNotify9 *notify;
+    HRESULT hr;
+    ULONG ref;
+
+    allocator_got_TerminateDevice = 0;
+
+    set_mixing_mode(filter, 2);
+
+    IBaseFilter_QueryInterface(filter, &IID_IVMRSurfaceAllocatorNotify9, (void **)&notify);
+
+    hr = IVMRSurfaceAllocatorNotify9_AdviseSurfaceAllocator(notify, 0xabacab, &allocator_iface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(allocator_got_TerminateDevice == 1, "Got %u calls to TerminateDevice().\n",
+            allocator_got_TerminateDevice);
+    ok(allocator_refcount == 1, "Got outstanding refcount %d.\n", allocator_refcount);
+
+    ref = IVMRSurfaceAllocatorNotify9_Release(notify);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
+static void check_source_position_(int line, IBasicVideo *video,
+        LONG expect_left, LONG expect_top, LONG expect_width, LONG expect_height)
+{
+    LONG left, top, width, height, l;
+    HRESULT hr;
+
+    left = top = width = height = 0xdeadbeef;
+    hr = IBasicVideo_GetSourcePosition(video, &left, &top, &width, &height);
+    ok_(__FILE__,line)(hr == S_OK, "Got hr %#x.\n", hr);
+    ok_(__FILE__,line)(left == expect_left, "Got left %d.\n", left);
+    ok_(__FILE__,line)(top == expect_top, "Got top %d.\n", top);
+    ok_(__FILE__,line)(width == expect_width, "Got width %d.\n", width);
+    ok_(__FILE__,line)(height == expect_height, "Got height %d.\n", height);
+
+    l = 0xdeadbeef;
+    hr = IBasicVideo_get_SourceLeft(video, &l);
+    ok_(__FILE__,line)(hr == S_OK, "Failed to get left, hr %#x.\n", hr);
+    ok_(__FILE__,line)(l == left, "Got left %d.\n", l);
+
+    l = 0xdeadbeef;
+    hr = IBasicVideo_get_SourceTop(video, &l);
+    ok_(__FILE__,line)(hr == S_OK, "Failed to get top, hr %#x.\n", hr);
+    ok_(__FILE__,line)(l == top, "Got top %d.\n", l);
+
+    l = 0xdeadbeef;
+    hr = IBasicVideo_get_SourceWidth(video, &l);
+    ok_(__FILE__,line)(hr == S_OK, "Failed to get width, hr %#x.\n", hr);
+    ok_(__FILE__,line)(l == width, "Got width %d.\n", l);
+
+    l = 0xdeadbeef;
+    hr = IBasicVideo_get_SourceHeight(video, &l);
+    ok_(__FILE__,line)(hr == S_OK, "Failed to get height, hr %#x.\n", hr);
+    ok_(__FILE__,line)(l == height, "Got height %d.\n", l);
+}
+#define check_source_position(a,b,c,d,e) check_source_position_(__LINE__,a,b,c,d,e)
+
+static void test_basic_video_source(IBasicVideo *video)
+{
+    HRESULT hr;
+
+    check_source_position(video, 0, 0, 600, 400);
+    hr = IBasicVideo_IsUsingDefaultSource(video);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_put_SourceLeft(video, -10);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_put_SourceLeft(video, 10);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_put_SourceTop(video, -10);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_put_SourceTop(video, 10);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_put_SourceWidth(video, -500);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_put_SourceWidth(video, 0);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_put_SourceWidth(video, 700);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_put_SourceWidth(video, 500);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_source_position(video, 0, 0, 500, 400);
+    hr = IBasicVideo_IsUsingDefaultSource(video);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_put_SourceHeight(video, -300);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_put_SourceHeight(video, 0);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_put_SourceHeight(video, 600);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_put_SourceHeight(video, 300);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_source_position(video, 0, 0, 500, 300);
+    hr = IBasicVideo_IsUsingDefaultSource(video);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_put_SourceLeft(video, -10);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_put_SourceLeft(video, 10);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_source_position(video, 10, 0, 500, 300);
+    hr = IBasicVideo_IsUsingDefaultSource(video);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_put_SourceTop(video, -10);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_put_SourceTop(video, 20);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_source_position(video, 10, 20, 500, 300);
+    hr = IBasicVideo_IsUsingDefaultSource(video);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_SetSourcePosition(video, 4, 5, 60, 40);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_source_position(video, 4, 5, 60, 40);
+    hr = IBasicVideo_IsUsingDefaultSource(video);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_SetSourcePosition(video, 0, 0, 600, 400);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_source_position(video, 0, 0, 600, 400);
+    hr = IBasicVideo_IsUsingDefaultSource(video);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_SetSourcePosition(video, 4, 5, 60, 40);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_SetDefaultSourcePosition(video);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_source_position(video, 0, 0, 600, 400);
+    hr = IBasicVideo_IsUsingDefaultSource(video);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+}
+
+static void check_destination_position_(int line, IBasicVideo *video,
+        LONG expect_left, LONG expect_top, LONG expect_width, LONG expect_height)
+{
+    LONG left, top, width, height, l;
+    HRESULT hr;
+
+    left = top = width = height = 0xdeadbeef;
+    hr = IBasicVideo_GetDestinationPosition(video, &left, &top, &width, &height);
+    ok_(__FILE__,line)(hr == S_OK, "Failed to get position, hr %#x.\n", hr);
+    ok_(__FILE__,line)(left == expect_left, "Got left %d.\n", left);
+    ok_(__FILE__,line)(top == expect_top, "Got top %d.\n", top);
+    ok_(__FILE__,line)(width == expect_width, "Got width %d.\n", width);
+    ok_(__FILE__,line)(height == expect_height, "Got height %d.\n", height);
+
+    l = 0xdeadbeef;
+    hr = IBasicVideo_get_DestinationLeft(video, &l);
+    ok_(__FILE__,line)(hr == S_OK, "Failed to get left, hr %#x.\n", hr);
+    ok_(__FILE__,line)(l == left, "Got left %d.\n", l);
+
+    l = 0xdeadbeef;
+    hr = IBasicVideo_get_DestinationTop(video, &l);
+    ok_(__FILE__,line)(hr == S_OK, "Failed to get top, hr %#x.\n", hr);
+    ok_(__FILE__,line)(l == top, "Got top %d.\n", l);
+
+    l = 0xdeadbeef;
+    hr = IBasicVideo_get_DestinationWidth(video, &l);
+    ok_(__FILE__,line)(hr == S_OK, "Failed to get width, hr %#x.\n", hr);
+    ok_(__FILE__,line)(l == width, "Got width %d.\n", l);
+
+    l = 0xdeadbeef;
+    hr = IBasicVideo_get_DestinationHeight(video, &l);
+    ok_(__FILE__,line)(hr == S_OK, "Failed to get height, hr %#x.\n", hr);
+    ok_(__FILE__,line)(l == height, "Got height %d.\n", l);
+}
+#define check_destination_position(a,b,c,d,e) check_destination_position_(__LINE__,a,b,c,d,e)
+
+static void test_basic_video_destination(IBasicVideo *video)
+{
+    IVideoWindow *window;
+    HRESULT hr;
+    RECT rect;
+
+    IBasicVideo_QueryInterface(video, &IID_IVideoWindow, (void **)&window);
+
+    check_destination_position(video, 0, 0, 600, 400);
+    hr = IBasicVideo_IsUsingDefaultDestination(video);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_put_DestinationLeft(video, -10);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_destination_position(video, -10, 0, 600, 400);
+    hr = IBasicVideo_IsUsingDefaultDestination(video);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_put_DestinationLeft(video, 10);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_destination_position(video, 10, 0, 600, 400);
+    hr = IBasicVideo_IsUsingDefaultDestination(video);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_put_DestinationTop(video, -20);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_destination_position(video, 10, -20, 600, 400);
+    hr = IBasicVideo_IsUsingDefaultDestination(video);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_put_DestinationTop(video, 20);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_destination_position(video, 10, 20, 600, 400);
+    hr = IBasicVideo_IsUsingDefaultDestination(video);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_put_DestinationWidth(video, -700);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_put_DestinationWidth(video, 0);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_put_DestinationWidth(video, 700);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_destination_position(video, 10, 20, 700, 400);
+    hr = IBasicVideo_IsUsingDefaultDestination(video);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_put_DestinationWidth(video, 500);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_destination_position(video, 10, 20, 500, 400);
+    hr = IBasicVideo_IsUsingDefaultDestination(video);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_put_DestinationHeight(video, -500);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_put_DestinationHeight(video, 0);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_put_DestinationHeight(video, 500);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_destination_position(video, 10, 20, 500, 500);
+    hr = IBasicVideo_IsUsingDefaultDestination(video);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_put_DestinationHeight(video, 300);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_destination_position(video, 10, 20, 500, 300);
+    hr = IBasicVideo_IsUsingDefaultDestination(video);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_SetDestinationPosition(video, 4, 5, 60, 40);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_destination_position(video, 4, 5, 60, 40);
+    hr = IBasicVideo_IsUsingDefaultDestination(video);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_SetDestinationPosition(video, 0, 0, 600, 400);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_destination_position(video, 0, 0, 600, 400);
+    hr = IBasicVideo_IsUsingDefaultDestination(video);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_SetDestinationPosition(video, 4, 5, 60, 40);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_SetDefaultDestinationPosition(video);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_destination_position(video, 0, 0, 600, 400);
+    hr = IBasicVideo_IsUsingDefaultDestination(video);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    SetRect(&rect, 100, 200, 500, 500);
+    AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, FALSE);
+    hr = IVideoWindow_SetWindowPosition(window, rect.left, rect.top,
+            rect.right - rect.left, rect.bottom - rect.top);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_destination_position(video, 0, 0, 400, 300);
+    hr = IBasicVideo_IsUsingDefaultDestination(video);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_SetDestinationPosition(video, 0, 0, 400, 300);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_destination_position(video, 0, 0, 400, 300);
+    hr = IBasicVideo_IsUsingDefaultDestination(video);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    SetRect(&rect, 100, 200, 600, 600);
+    AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, FALSE);
+    hr = IVideoWindow_SetWindowPosition(window, rect.left, rect.top,
+            rect.right - rect.left, rect.bottom - rect.top);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_destination_position(video, 0, 0, 400, 300);
+    hr = IBasicVideo_IsUsingDefaultDestination(video);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    IVideoWindow_Release(window);
+}
+
+static void test_basic_video(void)
+{
+    ALLOCATOR_PROPERTIES req_props = {1, 600 * 400 * 4, 1, 0}, ret_props;
+    VIDEOINFOHEADER vih =
+    {
+        .AvgTimePerFrame = 200000,
+        .rcSource = {4, 6, 16, 12},
+        .rcTarget = {40, 60, 120, 160},
+        .bmiHeader.biSize = sizeof(BITMAPINFOHEADER),
+        .bmiHeader.biBitCount = 32,
+        .bmiHeader.biWidth = 600,
+        .bmiHeader.biHeight = 400,
+        .bmiHeader.biPlanes = 1,
+        .bmiHeader.biCompression = BI_RGB,
+    };
+    AM_MEDIA_TYPE req_mt =
+    {
+        .majortype = MEDIATYPE_Video,
+        .subtype = MEDIASUBTYPE_RGB32,
+        .formattype = FORMAT_VideoInfo,
+        .cbFormat = sizeof(vih),
+        .pbFormat = (BYTE *)&vih,
+    };
+    IBaseFilter *filter = create_vmr9(VMR9Mode_Windowed);
+    IFilterGraph2 *graph = create_graph();
+    LONG left, top, width, height, l;
+    struct testfilter source;
+    IMemAllocator *allocator;
+    IMemInputPin *input;
+    ITypeInfo *typeinfo;
+    IBasicVideo *video;
+    TYPEATTR *typeattr;
+    REFTIME reftime;
+    HRESULT hr;
+    UINT count;
+    ULONG ref;
+    IPin *pin;
+
+    IBaseFilter_QueryInterface(filter, &IID_IBasicVideo, (void **)&video);
+    IBaseFilter_FindPin(filter, L"VMR Input0", &pin);
+    IPin_QueryInterface(pin, &IID_IMemInputPin, (void **)&input);
+
+    hr = IBasicVideo_GetTypeInfoCount(video, &count);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(count == 1, "Got count %u.\n", count);
+
+    hr = IBasicVideo_GetTypeInfo(video, 0, 0, &typeinfo);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = ITypeInfo_GetTypeAttr(typeinfo, &typeattr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(typeattr->typekind == TKIND_DISPATCH, "Got kind %u.\n", typeattr->typekind);
+    ok(IsEqualGUID(&typeattr->guid, &IID_IBasicVideo), "Got IID %s.\n", wine_dbgstr_guid(&typeattr->guid));
+    ITypeInfo_ReleaseTypeAttr(typeinfo, typeattr);
+    ITypeInfo_Release(typeinfo);
+
+    hr = IBasicVideo_get_AvgTimePerFrame(video, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_get_AvgTimePerFrame(video, &reftime);
+    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_get_BitRate(video, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_get_BitRate(video, &l);
+    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_get_BitErrorRate(video, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_get_BitErrorRate(video, &l);
+    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_get_VideoWidth(video, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_get_VideoHeight(video, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_get_SourceLeft(video, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_get_SourceWidth(video, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_get_SourceTop(video, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_get_SourceHeight(video, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_get_DestinationLeft(video, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_get_DestinationWidth(video, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_get_DestinationTop(video, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_get_DestinationHeight(video, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_GetSourcePosition(video, NULL, &top, &width, &height);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_GetSourcePosition(video, &left, NULL, &width, &height);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_GetSourcePosition(video, &left, &top, NULL, &height);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_GetSourcePosition(video, &left, &top, &width, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_GetDestinationPosition(video, NULL, &top, &width, &height);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_GetDestinationPosition(video, &left, NULL, &width, &height);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_GetDestinationPosition(video, &left, &top, NULL, &height);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_GetDestinationPosition(video, &left, &top, &width, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_GetVideoSize(video, &width, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_GetVideoSize(video, NULL, &height);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_GetVideoPaletteEntries(video, 0, 1, NULL, &l);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_GetVideoPaletteEntries(video, 0, 1, &l, NULL);
+    todo_wine ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
+
+    testfilter_init(&source);
+    IFilterGraph2_AddFilter(graph, &source.filter.IBaseFilter_iface, L"vmr9");
+    IFilterGraph2_AddFilter(graph, filter, L"source");
+    hr = IFilterGraph2_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &req_mt);
+    if (hr == E_FAIL)
+    {
+        skip("Got E_FAIL when connecting.\n");
+        goto out;
+    }
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMemInputPin_GetAllocator(input, &allocator);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    if (hr == S_OK)
+    {
+        hr = IMemAllocator_SetProperties(allocator, &req_props, &ret_props);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(!memcmp(&ret_props, &req_props, sizeof(req_props)), "Properties did not match.\n");
+        hr = IMemAllocator_Commit(allocator);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        IMemAllocator_Release(allocator);
+    }
+
+    reftime = 0.0;
+    hr = IBasicVideo_get_AvgTimePerFrame(video, &reftime);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(compare_double(reftime, 0.02, 1 << 28), "Got frame rate %.16e.\n", reftime);
+
+    l = 0xdeadbeef;
+    hr = IBasicVideo_get_BitRate(video, &l);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!l, "Got bit rate %d.\n", l);
+
+    l = 0xdeadbeef;
+    hr = IBasicVideo_get_BitErrorRate(video, &l);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!l, "Got bit rate %d.\n", l);
+
+    hr = IBasicVideo_GetVideoPaletteEntries(video, 0, 1, &l, NULL);
+    todo_wine ok(hr == VFW_E_NO_PALETTE_AVAILABLE, "Got hr %#x.\n", hr);
+
+    width = height = 0xdeadbeef;
+    hr = IBasicVideo_GetVideoSize(video, &width, &height);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(width == 600, "Got width %d.\n", width);
+    ok(height == 400, "Got height %d.\n", height);
+
+    test_basic_video_source(video);
+    test_basic_video_destination(video);
+
+out:
+    ref = IFilterGraph2_Release(graph);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    IBasicVideo_Release(video);
+    IMemInputPin_Release(input);
+    IPin_Release(pin);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IBaseFilter_Release(&source.filter.IBaseFilter_iface);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
+static void test_windowless_size(void)
+{
+    ALLOCATOR_PROPERTIES req_props = {1, 32 * 16 * 4, 1, 0}, ret_props;
+    VIDEOINFOHEADER vih =
+    {
+        .bmiHeader.biSize = sizeof(BITMAPINFOHEADER),
+        .bmiHeader.biWidth = 32,
+        .bmiHeader.biHeight = 16,
+        .bmiHeader.biBitCount = 32,
+        .bmiHeader.biPlanes = 1,
+    };
+    AM_MEDIA_TYPE mt =
+    {
+        .majortype = MEDIATYPE_Video,
+        .subtype = MEDIASUBTYPE_RGB32,
+        .formattype = FORMAT_VideoInfo,
+        .cbFormat = sizeof(vih),
+        .pbFormat = (BYTE *)&vih,
+    };
+    IBaseFilter *filter = create_vmr9(VMR9Mode_Windowless);
+    LONG width, height, aspect_width, aspect_height;
+    IVMRWindowlessControl9 *windowless_control;
+    IFilterGraph2 *graph = create_graph();
+    VMR9AspectRatioMode aspect_mode;
+    struct testfilter source;
+    IMemAllocator *allocator;
+    RECT src, dst, expect;
+    IMemInputPin *input;
+    HWND window;
+    HRESULT hr;
+    ULONG ref;
+    IPin *pin;
+
+    IBaseFilter_QueryInterface(filter, &IID_IVMRWindowlessControl9, (void **)&windowless_control);
+    IBaseFilter_FindPin(filter, L"VMR Input0", &pin);
+    IPin_QueryInterface(pin, &IID_IMemInputPin, (void **)&input);
+    testfilter_init(&source);
+    IFilterGraph2_AddFilter(graph, &source.filter.IBaseFilter_iface, L"source");
+    IFilterGraph2_AddFilter(graph, filter, L"vmr9");
+    window = CreateWindowA("static", "quartz_test", WS_OVERLAPPEDWINDOW, 0, 0, 640, 480, 0, 0, 0, 0);
+    ok(!!window, "Failed to create a window.\n");
+
+    hr = IVMRWindowlessControl9_SetVideoClippingWindow(windowless_control, window);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IFilterGraph2_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMemInputPin_GetAllocator(input, &allocator);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    if (hr == S_OK)
+    {
+        hr = IMemAllocator_SetProperties(allocator, &req_props, &ret_props);
+        IMemAllocator_Release(allocator);
+        if (hr == E_FAIL)
+        {
+            skip("Got E_FAIL when setting allocator properties.\n");
+            goto out;
+        }
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(!memcmp(&ret_props, &req_props, sizeof(req_props)), "Properties did not match.\n");
+    }
+
+    hr = IVMRWindowlessControl9_GetNativeVideoSize(windowless_control, NULL, &height, &aspect_width, &aspect_height);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    hr = IVMRWindowlessControl9_GetNativeVideoSize(windowless_control, &width, NULL, &aspect_width, &aspect_height);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+    aspect_mode = 0xdeadbeef;
+    hr = IVMRWindowlessControl9_GetAspectRatioMode(windowless_control, &aspect_mode);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(aspect_mode == VMR9ARMode_None, "Got mode %u.\n", aspect_mode);
+
+    width = height = 0xdeadbeef;
+    hr = IVMRWindowlessControl9_GetNativeVideoSize(windowless_control, &width, &height, NULL, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(width == 32, "Got width %d.\n", width);
+    ok(height == 16, "Got height %d.\n", height);
+
+    aspect_width = aspect_height = 0xdeadbeef;
+    hr = IVMRWindowlessControl9_GetNativeVideoSize(windowless_control, &width, &height, &aspect_width, &aspect_height);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(aspect_width == 32, "Got width %d.\n", aspect_width);
+    ok(aspect_height == 16, "Got height %d.\n", aspect_height);
+
+    memset(&src, 0xcc, sizeof(src));
+    hr = IVMRWindowlessControl9_GetVideoPosition(windowless_control, &src, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    SetRect(&expect, 0, 0, 32, 16);
+    ok(EqualRect(&src, &expect), "Got source rect %s.\n", wine_dbgstr_rect(&src));
+
+    memset(&dst, 0xcc, sizeof(dst));
+    hr = IVMRWindowlessControl9_GetVideoPosition(windowless_control, NULL, &dst);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    SetRect(&expect, 0, 0, 0, 0);
+    todo_wine ok(EqualRect(&dst, &expect), "Got dest rect %s.\n", wine_dbgstr_rect(&dst));
+
+    SetRect(&src, 4, 6, 16, 12);
+    hr = IVMRWindowlessControl9_SetVideoPosition(windowless_control, &src, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    memset(&src, 0xcc, sizeof(src));
+    memset(&dst, 0xcc, sizeof(dst));
+    hr = IVMRWindowlessControl9_GetVideoPosition(windowless_control, &src, &dst);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    SetRect(&expect, 4, 6, 16, 12);
+    ok(EqualRect(&src, &expect), "Got source rect %s.\n", wine_dbgstr_rect(&src));
+    SetRect(&expect, 0, 0, 0, 0);
+    todo_wine ok(EqualRect(&dst, &expect), "Got dest rect %s.\n", wine_dbgstr_rect(&dst));
+
+    SetRect(&dst, 40, 60, 120, 160);
+    hr = IVMRWindowlessControl9_SetVideoPosition(windowless_control, NULL, &dst);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    memset(&src, 0xcc, sizeof(src));
+    memset(&dst, 0xcc, sizeof(dst));
+    hr = IVMRWindowlessControl9_GetVideoPosition(windowless_control, &src, &dst);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    SetRect(&expect, 4, 6, 16, 12);
+    ok(EqualRect(&src, &expect), "Got source rect %s.\n", wine_dbgstr_rect(&src));
+    SetRect(&expect, 40, 60, 120, 160);
+    ok(EqualRect(&dst, &expect), "Got dest rect %s.\n", wine_dbgstr_rect(&dst));
+
+    GetWindowRect(window, &src);
+    SetRect(&expect, 0, 0, 640, 480);
+    ok(EqualRect(&src, &expect), "Got window rect %s.\n", wine_dbgstr_rect(&src));
+
+    hr = IVMRWindowlessControl9_SetAspectRatioMode(windowless_control, VMR9ARMode_LetterBox);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    aspect_mode = 0xdeadbeef;
+    hr = IVMRWindowlessControl9_GetAspectRatioMode(windowless_control, &aspect_mode);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(aspect_mode == VMR9ARMode_LetterBox, "Got mode %u.\n", aspect_mode);
+
+    memset(&src, 0xcc, sizeof(src));
+    memset(&dst, 0xcc, sizeof(dst));
+    hr = IVMRWindowlessControl9_GetVideoPosition(windowless_control, &src, &dst);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    SetRect(&expect, 4, 6, 16, 12);
+    ok(EqualRect(&src, &expect), "Got source rect %s.\n", wine_dbgstr_rect(&src));
+    SetRect(&expect, 40, 60, 120, 160);
+    ok(EqualRect(&dst, &expect), "Got dest rect %s.\n", wine_dbgstr_rect(&dst));
+
+    SetRect(&src, 0, 0, 32, 16);
+    SetRect(&dst, 0, 0, 640, 480);
+    hr = IVMRWindowlessControl9_SetVideoPosition(windowless_control, &src, &dst);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    memset(&src, 0xcc, sizeof(src));
+    memset(&dst, 0xcc, sizeof(dst));
+    hr = IVMRWindowlessControl9_GetVideoPosition(windowless_control, &src, &dst);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    SetRect(&expect, 0, 0, 32, 16);
+    ok(EqualRect(&src, &expect), "Got source rect %s.\n", wine_dbgstr_rect(&src));
+    SetRect(&expect, 0, 0, 640, 480);
+    ok(EqualRect(&dst, &expect), "Got dest rect %s.\n", wine_dbgstr_rect(&dst));
+
+out:
+    ref = IFilterGraph2_Release(graph);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    IMemInputPin_Release(input);
+    IPin_Release(pin);
+    IVMRWindowlessControl9_Release(windowless_control);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    DestroyWindow(window);
+}
+
+static void test_mixing_prefs(void)
+{
+    IBaseFilter *filter = create_vmr9(VMR9Mode_Windowed);
+    IVMRMixerControl9 *mixer_control;
+    DWORD flags;
+    HRESULT hr;
+    ULONG ref;
+
+    set_mixing_mode(filter, 1);
+
+    hr = IBaseFilter_QueryInterface(filter, &IID_IVMRMixerControl9, (void **)&mixer_control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IVMRMixerControl9_GetMixingPrefs(mixer_control, &flags);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(flags == (MixerPref9_NoDecimation | MixerPref9_ARAdjustXorY | MixerPref9_BiLinearFiltering
+            | MixerPref9_RenderTargetRGB), "Got flags %#x.\n", flags);
+
+    hr = IVMRMixerControl9_SetMixingPrefs(mixer_control, MixerPref9_NoDecimation
+            | MixerPref9_ARAdjustXorY | MixerPref9_PointFiltering | MixerPref9_RenderTargetRGB);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IVMRMixerControl9_GetMixingPrefs(mixer_control, &flags);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(flags == (MixerPref9_NoDecimation | MixerPref9_ARAdjustXorY | MixerPref9_PointFiltering
+            | MixerPref9_RenderTargetRGB), "Got flags %#x.\n", flags);
+
+    IVMRMixerControl9_Release(mixer_control);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 START_TEST(vmr9)
 {
     IBaseFilter *filter;
@@ -2352,6 +3974,14 @@ START_TEST(vmr9)
     test_connect_pin();
     test_overlay();
     test_video_window();
+    test_allocate_surface_helper();
+    test_renderless_formats();
+    test_mixing_mode();
+    test_clipping_window();
+    test_surface_allocator_notify_refcount();
+    test_basic_video();
+    test_windowless_size();
+    test_mixing_prefs();
 
     CoUninitialize();
 }

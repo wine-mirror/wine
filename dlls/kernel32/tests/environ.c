@@ -36,6 +36,7 @@ static BOOL (WINAPI *pGetComputerNameExA)(COMPUTER_NAME_FORMAT,LPSTR,LPDWORD);
 static BOOL (WINAPI *pGetComputerNameExW)(COMPUTER_NAME_FORMAT,LPWSTR,LPDWORD);
 static BOOL (WINAPI *pOpenProcessToken)(HANDLE,DWORD,PHANDLE);
 static BOOL (WINAPI *pGetUserProfileDirectoryA)(HANDLE,LPSTR,LPDWORD);
+static BOOL (WINAPI *pSetEnvironmentStringsW)(WCHAR *);
 
 static void init_functionpointers(void)
 {
@@ -45,6 +46,7 @@ static void init_functionpointers(void)
 
     pGetComputerNameExA = (void *)GetProcAddress(hkernel32, "GetComputerNameExA");
     pGetComputerNameExW = (void *)GetProcAddress(hkernel32, "GetComputerNameExW");
+    pSetEnvironmentStringsW = (void *)GetProcAddress(hkernel32, "SetEnvironmentStringsW");
     pOpenProcessToken = (void *)GetProcAddress(hadvapi32, "OpenProcessToken");
     pGetUserProfileDirectoryA = (void *)GetProcAddress(huserenv,
                                                        "GetUserProfileDirectoryA");
@@ -104,9 +106,12 @@ static void test_GetSetEnvironmentVariableA(void)
        GetLastError());
 
     /* Try to retrieve the environment variable we just set */
+    SetLastError(0xdeadbeef);
     ret_size = GetEnvironmentVariableA(name, NULL, 0);
     ok(ret_size == strlen(value) + 1,
        "should return length with terminating 0 ret_size=%d\n", ret_size);
+    ok(GetLastError() == 0xdeadbeef,
+       "should not fail with zero size but GetLastError=%d\n", GetLastError());
 
     lstrcpyA(buf, "foo");
     ret_size = GetEnvironmentVariableA(name, buf, lstrlenA(value));
@@ -155,13 +160,23 @@ static void test_GetSetEnvironmentVariableA(void)
        "should not fail with empty value but GetLastError=%d\n", GetLastError());
 
     lstrcpyA(buf, "foo");
-    SetLastError(0);
+    SetLastError(0xdeadbeef);
     ret_size = GetEnvironmentVariableA(name, buf, lstrlenA(value) + 1);
     ok(ret_size == 0 &&
-       ((GetLastError() == 0 && lstrcmpA(buf, "") == 0) ||
+       ((GetLastError() == 0xdeadbeef && lstrcmpA(buf, "") == 0) ||
         (GetLastError() == ERROR_ENVVAR_NOT_FOUND)),
        "%s should be set to \"\" (NT) or removed (Win9x) but ret_size=%d GetLastError=%d and buf=%s\n",
        name, ret_size, GetLastError(), buf);
+
+    SetLastError(0xdeadbeef);
+    ret_size = GetEnvironmentVariableA(name, NULL, 0);
+    ok(ret_size == 1 ||
+       broken(ret_size == 0), /* XP */
+       "should return 1 for empty string but ret_size=%d GetLastError=%d\n",
+       ret_size, GetLastError());
+    ok(GetLastError() == 0xdeadbeef ||
+       broken(GetLastError() == ERROR_MORE_DATA), /* XP */
+       "should not fail with zero size but GetLastError=%d\n", GetLastError());
 
     /* Test the limits */
     SetLastError(0xdeadbeef);
@@ -206,10 +221,13 @@ static void test_GetSetEnvironmentVariableW(void)
        GetLastError());
 
     /* Try to retrieve the environment variable we just set */
+    SetLastError(0xdeadbeef);
     ret_size = GetEnvironmentVariableW(name, NULL, 0);
     ok(ret_size == lstrlenW(value) + 1,
        "should return length with terminating 0 ret_size=%d\n",
        ret_size);
+    ok(GetLastError() == 0xdeadbeef,
+       "should not fail with zero size but GetLastError=%d\n", GetLastError());
 
     lstrcpyW(buf, fooW);
     ret_size = GetEnvironmentVariableW(name, buf, lstrlenW(value));
@@ -260,14 +278,24 @@ static void test_GetSetEnvironmentVariableW(void)
     ok(ret == TRUE, "should not fail with empty value but GetLastError=%d\n", GetLastError());
 
     lstrcpyW(buf, fooW);
-    SetLastError(0);
+    SetLastError(0xdeadbeef);
     ret_size = GetEnvironmentVariableW(name, buf, lstrlenW(value) + 1);
     ok(ret_size == 0 &&
-       ((GetLastError() == 0 && lstrcmpW(buf, empty_strW) == 0) ||
+       ((GetLastError() == 0xdeadbeef && lstrcmpW(buf, empty_strW) == 0) ||
         (GetLastError() == ERROR_ENVVAR_NOT_FOUND)),
        "should be set to \"\" (NT) or removed (Win9x) but ret_size=%d GetLastError=%d\n",
        ret_size, GetLastError());
     ok(lstrcmpW(buf, empty_strW) == 0, "should copy an empty string\n");
+
+    SetLastError(0xdeadbeef);
+    ret_size = GetEnvironmentVariableW(name, NULL, 0);
+    ok(ret_size == 1 ||
+       broken(ret_size == 0), /* XP */
+       "should return 1 for empty string but ret_size=%d GetLastError=%d\n",
+       ret_size, GetLastError());
+    ok(GetLastError() == 0xdeadbeef ||
+       broken(GetLastError() == ERROR_MORE_DATA), /* XP */
+       "should not fail with zero size but GetLastError=%d\n", GetLastError());
 
     /* Test the limits */
     SetLastError(0xdeadbeef);
@@ -602,6 +630,89 @@ static void test_GetEnvironmentStringsW(void)
     FreeEnvironmentStringsW(env2);
 }
 
+#define copy_string(dst, src) memcpy(dst, src, sizeof(src))
+
+static void check_env_var_(int line, const char *var, const char *value)
+{
+    char buffer[20];
+    DWORD size = GetEnvironmentVariableA(var, buffer, sizeof(buffer));
+    if (value)
+    {
+        ok_(__FILE__, line)(size == strlen(value), "wrong size %u\n", size);
+        ok_(__FILE__, line)(!strcmp(buffer, value), "wrong value %s\n", debugstr_a(buffer));
+    }
+    else
+    {
+        ok_(__FILE__, line)(!size, "wrong size %u\n", size);
+        ok_(__FILE__, line)(GetLastError() == ERROR_ENVVAR_NOT_FOUND, "got error %u\n", GetLastError());
+    }
+}
+#define check_env_var(a, b) check_env_var_(__LINE__, a, b)
+
+static void test_SetEnvironmentStrings(void)
+{
+    static const WCHAR testenv[] = L"testenv1=unus\0testenv3=tres\0";
+    WCHAR env[200];
+    WCHAR *old_env;
+    BOOL ret;
+
+    if (!pSetEnvironmentStringsW)
+    {
+        win_skip("SetEnvironmentStringsW() is not available\n");
+        return;
+    }
+
+    ret = SetEnvironmentVariableA("testenv1", "heis");
+    ok(ret, "got error %u\n", GetLastError());
+    ret = SetEnvironmentVariableA("testenv2", "dyo");
+    ok(ret, "got error %u\n", GetLastError());
+
+    old_env = GetEnvironmentStringsW();
+
+    memcpy(env, testenv, sizeof(testenv));
+    ret = pSetEnvironmentStringsW(env);
+    ok(ret, "got error %u\n", GetLastError());
+    ok(!memcmp(env, testenv, sizeof(testenv)), "input parameter should not be changed\n");
+
+    check_env_var("testenv1", "unus");
+    check_env_var("testenv2", NULL);
+    check_env_var("testenv3", "tres");
+    check_env_var("PATH", NULL);
+
+    ret = pSetEnvironmentStringsW(old_env);
+    ok(ret, "got error %u\n", GetLastError());
+
+    check_env_var("testenv1", "heis");
+    check_env_var("testenv2", "dyo");
+    check_env_var("testenv3", NULL);
+
+    SetEnvironmentVariableA("testenv1", NULL);
+    SetEnvironmentVariableA("testenv2", NULL);
+
+    copy_string(env, L"testenv\0");
+    SetLastError(0xdeadbeef);
+    ret = pSetEnvironmentStringsW(env);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got error %u\n", GetLastError());
+
+    copy_string(env, L"=unus\0");
+    SetLastError(0xdeadbeef);
+    ret = pSetEnvironmentStringsW(env);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got error %u\n", GetLastError());
+
+    copy_string(env, L"one=two=three four=five\0");
+    ret = pSetEnvironmentStringsW(env);
+    ok(ret, "got error %u\n", GetLastError());
+
+    check_env_var("one", "two=three four=five");
+
+    ret = pSetEnvironmentStringsW(old_env);
+    ok(ret, "got error %u\n", GetLastError());
+    ret = FreeEnvironmentStringsW(old_env);
+    ok(ret, "got error %u\n", GetLastError());
+}
+
 START_TEST(environ)
 {
     init_functionpointers();
@@ -614,4 +725,5 @@ START_TEST(environ)
     test_GetComputerNameExA();
     test_GetComputerNameExW();
     test_GetEnvironmentStringsW();
+    test_SetEnvironmentStrings();
 }

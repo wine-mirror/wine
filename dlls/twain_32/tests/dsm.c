@@ -72,7 +72,10 @@ static BOOL get_onevalue(TW_HANDLE hcontainer, TW_UINT32 *ret, TW_UINT16 *type)
         return TRUE;
     }
     else
+    {
         *ret = 0;
+        if (type) *type = 0;
+    }
     return FALSE;
 }
 

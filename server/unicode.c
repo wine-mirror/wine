@@ -51,6 +51,40 @@ static inline char to_hex( char ch )
     return tolower(ch) - 'a' + 10;
 }
 
+static inline WCHAR to_lower( WCHAR ch )
+{
+    extern const WCHAR wine_casemap_lower[];
+    return ch + wine_casemap_lower[wine_casemap_lower[ch >> 8] + (ch & 0xff)];
+}
+
+int memicmp_strW( const WCHAR *str1, const WCHAR *str2, data_size_t len )
+{
+    int ret = 0;
+
+    for (len /= sizeof(WCHAR); len; str1++, str2++, len--)
+        if ((ret = to_lower(*str1) - to_lower(*str2))) break;
+    return ret;
+}
+
+unsigned int hash_strW( const WCHAR *str, data_size_t len, unsigned int hash_size )
+{
+    unsigned int i, hash = 0;
+
+    for (i = 0; i < len / sizeof(WCHAR); i++) hash = hash * 65599 + to_lower( str[i] );
+    return hash % hash_size;
+}
+
+WCHAR *ascii_to_unicode_str( const char *str, struct unicode_str *ret )
+{
+    data_size_t i, len = strlen(str);
+    WCHAR *p;
+
+    ret->len = len * sizeof(WCHAR);
+    ret->str = p = mem_alloc( ret->len );
+    if (p) for (i = 0; i < len; i++) p[i] = (unsigned char)str[i];
+    return p;
+}
+
 /* parse an escaped string back into Unicode */
 /* return the number of chars read from the input, or -1 on output overflow */
 int parse_strW( WCHAR *buffer, data_size_t *len, const char *src, char endchar )
@@ -156,7 +190,7 @@ int dump_strW( const WCHAR *str, data_size_t len, FILE *f, const char escape[2] 
     char *pos = buffer;
     int count = 0;
 
-    for (; len; str++, len--)
+    for (len /= sizeof(WCHAR); len; str++, len--)
     {
         if (pos > buffer + sizeof(buffer) - 8)
         {

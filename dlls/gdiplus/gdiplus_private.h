@@ -123,7 +123,7 @@ extern GpStatus trace_path(GpGraphics *graphics, GpPath *path) DECLSPEC_HIDDEN;
 typedef struct region_element region_element;
 extern void delete_element(region_element *element) DECLSPEC_HIDDEN;
 
-extern GpStatus get_hatch_data(GpHatchStyle hatchstyle, const char **result) DECLSPEC_HIDDEN;
+extern GpStatus get_hatch_data(GpHatchStyle hatchstyle, const unsigned char **result) DECLSPEC_HIDDEN;
 
 static inline INT gdip_round(REAL x)
 {
@@ -407,6 +407,7 @@ struct GpMetafile{
     BOOL auto_frame; /* If true, determine the frame automatically */
     GpPointF auto_frame_min, auto_frame_max;
     DWORD next_object_id;
+    UINT limit_dpi;
 
     /* playback */
     GpGraphics *playback_graphics;

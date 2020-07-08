@@ -117,7 +117,7 @@ static void run_child(WCHAR *secret)
 
     wsprintfW(cmdline, format, progname, secret);
     ok(CreateProcessW(NULL, cmdline, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info), "CreateProcess\n");
-    winetest_wait_child_process(info.hProcess);
+    wait_child_process(info.hProcess);
     ok(CloseHandle(info.hProcess), "CloseHandle\n");
     ok(CloseHandle(info.hThread), "CloseHandle\n");
 }

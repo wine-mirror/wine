@@ -39,15 +39,21 @@ static GpStatus (WINGDIPAPI *pGdipInitializePalette)(ColorPalette*,PaletteType,I
 #define expect(expected, got) ok((got) == (expected), "Expected %d, got %d\n", (UINT)(expected), (UINT)(got))
 #define expectf(expected, got) ok(fabs((expected) - (got)) < 0.0001, "Expected %f, got %f\n", (expected), (got))
 
-static BOOL color_match(ARGB c1, ARGB c2, BYTE max_diff)
+static BOOL compare_uint(unsigned int x, unsigned int y, unsigned int max_diff)
 {
-    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff) return FALSE;
+    unsigned int diff = x > y ? x - y : y - x;
+    return diff <= max_diff;
+}
+
+BOOL color_match(ARGB c1, ARGB c2, BYTE max_diff)
+{
+    if (!compare_uint(c1 & 0xff, c2 & 0xff, max_diff)) return FALSE;
     c1 >>= 8; c2 >>= 8;
-    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff) return FALSE;
+    if (!compare_uint(c1 & 0xff, c2 & 0xff, max_diff)) return FALSE;
     c1 >>= 8; c2 >>= 8;
-    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff) return FALSE;
+    if (!compare_uint(c1 & 0xff, c2 & 0xff, max_diff)) return FALSE;
     c1 >>= 8; c2 >>= 8;
-    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff) return FALSE;
+    if (!compare_uint(c1 & 0xff, c2 & 0xff, max_diff)) return FALSE;
     return TRUE;
 }
 
@@ -3488,8 +3494,11 @@ static void test_dispose(void)
     stat = GdipDisposeImage(image);
     expect(Ok, stat);
 
+    if (0) {
+    /* Can crash with page heap or if the heap region is decommitted. */
     stat = GdipDisposeImage(image);
     expect(ObjectBusy, stat);
+    }
 
     memset(invalid_image, 0, 256);
     stat = GdipDisposeImage((GpImage*)invalid_image);
@@ -3580,20 +3589,22 @@ static void test_image_properties(void)
         UINT prop_size2; /* if win7 behaves differently */
         UINT prop_id;
         UINT prop_id2; /* if win7 behaves differently */
+        INT palette_size;
     }
     td[] =
     {
-        { pngimage, sizeof(pngimage), ImageTypeBitmap, 4, ~0, 1, 20, 0x5110, 0x132 },
-        { jpgimage, sizeof(jpgimage), ImageTypeBitmap, 2, ~0, 128, 0, 0x5090, 0x5091 },
-        { tiffimage, sizeof(tiffimage), ImageTypeBitmap, 16, 0, 4, 0, 0xfe, 0 },
-        { bmpimage, sizeof(bmpimage), ImageTypeBitmap, 0, 0, 0, 0, 0, 0 },
-        { wmfimage, sizeof(wmfimage), ImageTypeMetafile, 0, 0, 0, 0, 0, 0 }
+        { pngimage, sizeof(pngimage), ImageTypeBitmap, 4, ~0, 1, 20, 0x5110, 0x132, 12 },
+        { jpgimage, sizeof(jpgimage), ImageTypeBitmap, 2, ~0, 128, 0, 0x5090, 0x5091, 12 },
+        { tiffimage, sizeof(tiffimage), ImageTypeBitmap, 16, 0, 4, 0, 0xfe, 0, 12 },
+        { bmpimage, sizeof(bmpimage), ImageTypeBitmap, 0, 0, 0, 0, 0, 0, 16 },
+        { wmfimage, sizeof(wmfimage), ImageTypeMetafile, 0, 0, 0, 0, 0, 0, -GenericError }
     };
     GpStatus status;
     GpImage *image;
     UINT prop_count, prop_size, i;
     PROPID prop_id[16] = { 0 };
     ImageType image_type;
+    INT palette_size;
     union
     {
         PropertyItem data;
@@ -3613,6 +3624,21 @@ static void test_image_properties(void)
         ok(status == Ok, "%u: GdipGetImageType error %d\n", i, status);
         ok(td[i].image_type == image_type, "%u: expected image_type %d, got %d\n",
            i, td[i].image_type, image_type);
+
+        palette_size = -1;
+        status = GdipGetImagePaletteSize(image, &palette_size);
+        if (td[i].palette_size >= 0)
+        {
+            ok(status == Ok, "%u: GdipGetImagePaletteSize error %d\n", i, status);
+            ok(td[i].palette_size == palette_size, "%u: expected palette_size %d, got %d\n",
+               i, td[i].palette_size, palette_size);
+        }
+        else
+        {
+            ok(status == -td[i].palette_size, "%u: GdipGetImagePaletteSize returned %d\n", i, status);
+            ok(palette_size == 0, "%u: expected palette_size 0, got %d\n",
+               i, palette_size);
+        }
 
         status = GdipGetPropertyCount(image, &prop_count);
         ok(status == Ok, "%u: GdipGetPropertyCount error %d\n", i, status);
@@ -4491,7 +4517,7 @@ static void test_DrawImage_SourceCopy(void)
     expect(0, dst_pixels[0]);
     expect(0xffff0000, dst_pixels[1]);
     expect(0, dst_pixels[2]);
-    todo_wine expect(0, dst_pixels[3]);
+    expect(0, dst_pixels[3]);
 
     status = GdipDeleteGraphics(graphics);
     expect(Ok, status);
@@ -5103,23 +5129,17 @@ static void test_CloneBitmapArea(void)
 
 static void test_supported_encoders(void)
 {
-    static const WCHAR bmp_mimetype[] = { 'i', 'm', 'a','g', 'e', '/', 'b', 'm', 'p',0 };
-    static const WCHAR jpeg_mimetype[] = { 'i','m','a','g','e','/','j','p','e','g',0 };
-    static const WCHAR gif_mimetype[] = { 'i','m','a','g','e','/','g','i','f',0 };
-    static const WCHAR tiff_mimetype[] = { 'i','m','a','g','e','/','t','i','f','f',0 };
-    static const WCHAR png_mimetype[] = { 'i','m','a','g','e','/','p','n','g',0 };
     static const struct test_data
     {
         LPCWSTR mime;
         const GUID *format;
-        BOOL todo;
     } td[] =
     {
-        { bmp_mimetype, &ImageFormatBMP, FALSE },
-        { jpeg_mimetype, &ImageFormatJPEG, FALSE },
-        { gif_mimetype, &ImageFormatGIF, TRUE },
-        { tiff_mimetype, &ImageFormatTIFF, FALSE },
-        { png_mimetype, &ImageFormatPNG, FALSE }
+        { L"image/bmp", &ImageFormatBMP },
+        { L"image/jpeg", &ImageFormatJPEG },
+        { L"image/gif", &ImageFormatGIF },
+        { L"image/tiff", &ImageFormatTIFF },
+        { L"image/png", &ImageFormatPNG }
     };
     GUID format, clsid;
     BOOL ret;
@@ -5145,8 +5165,7 @@ static void test_supported_encoders(void)
         ok(hr == S_OK, "CreateStreamOnHGlobal error %#x\n", hr);
 
         status = GdipSaveImageToStream((GpImage *)bm, stream, &clsid, NULL);
-        todo_wine_if (td[i].todo)
-            ok(status == Ok, "GdipSaveImageToStream error %d\n", status);
+        ok(status == Ok, "%s encoder, GdipSaveImageToStream error %d\n", wine_dbgstr_w(td[i].mime), status);
 
         IStream_Release(stream);
     }
@@ -5619,6 +5638,75 @@ static void test_png_color_formats(void)
 #undef PNG_COLOR_TYPE_GRAY_ALPHA
 #undef PNG_COLOR_TYPE_RGB_ALPHA
 
+static void test_png_save_palette(void)
+{
+    GpStatus status;
+    GpBitmap *bitmap;
+    HGLOBAL hglob;
+    BOOL result;
+    IStream *stream;
+    GUID enc_format, clsid;
+    LARGE_INTEGER seek;
+    ULARGE_INTEGER pos;
+    UINT i, ptr;
+    BYTE *data;
+
+    PixelFormat formats[] = {
+        PixelFormat1bppIndexed,
+        PixelFormat4bppIndexed,
+        PixelFormat8bppIndexed,
+        PixelFormat16bppGrayScale,
+        PixelFormat16bppRGB555,
+        PixelFormat16bppRGB565,
+        PixelFormat16bppARGB1555,
+        PixelFormat24bppRGB,
+        PixelFormat32bppRGB,
+        PixelFormat32bppARGB,
+        PixelFormat32bppPARGB,
+    };
+
+    result = get_encoder_clsid(L"image/png", &enc_format, &clsid);
+    ok(result, "getting PNG encoding clsid failed");
+
+    hglob = GlobalAlloc(GMEM_MOVEABLE | GMEM_NODISCARD | GMEM_ZEROINIT, 1024);
+
+    for (i = 0; i < ARRAY_SIZE(formats); i++)
+    {
+        status = GdipCreateBitmapFromScan0(8, 8, 0, formats[i], NULL, &bitmap);
+        ok(status == Ok, "Unexpected return value %d creating bitmap for PixelFormat %#x\n", status, formats[i]);
+
+        CreateStreamOnHGlobal(hglob, FALSE, &stream);
+        status = GdipSaveImageToStream((GpImage *)bitmap, stream, &clsid, NULL);
+        GdipDisposeImage((GpImage*)bitmap);
+
+        todo_wine_if(formats[i] == PixelFormat16bppGrayScale)
+        ok(formats[i] == PixelFormat16bppGrayScale ?
+                (status == GenericError || status == Win32Error) : status == Ok,
+            "Unexpected return value %d saving image for PixelFormat %#x\n", status, formats[i]);
+
+        if (status == Ok)
+        {
+            data = GlobalLock(hglob);
+            seek.QuadPart = 0;
+            IStream_Seek(stream, seek, STREAM_SEEK_CUR, &pos);
+            for (ptr = 0; ptr < pos.QuadPart - 4; ptr++)
+                if (!memcmp(data + ptr, "PLTE", 4))
+                    break;
+            memset(data, 0, 1024);
+            GlobalUnlock(hglob);
+
+            if (IsIndexedPixelFormat(formats[i]))
+                ok(ptr < pos.QuadPart - 4, "Expected palette not found for PixelFormat %#x\n", formats[i]);
+            else
+                ok(ptr >= pos.QuadPart - 4, "Unexpected palette found for PixelFormat %#x\n", formats[i]);
+        }
+
+        IStream_Release(stream);
+    }
+
+    GlobalFree(hglob);
+}
+
 static void test_GdipLoadImageFromStream(void)
 {
     IStream *stream;
@@ -5862,6 +5950,7 @@ START_TEST(image)
 
     test_GdipInitializePalette();
     test_png_color_formats();
+    test_png_save_palette();
     test_supported_encoders();
     test_CloneBitmapArea();
     test_ARGB_conversion();

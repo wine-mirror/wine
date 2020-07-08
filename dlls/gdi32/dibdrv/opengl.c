@@ -24,7 +24,6 @@
 #include "gdi_private.h"
 #include "dibdrv.h"
 
-#include "wine/library.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dib);
@@ -99,22 +98,21 @@ static BOOL init_opengl(void)
 {
     static BOOL init_done = FALSE;
     static void *osmesa_handle;
-    char buffer[200];
     unsigned int i;
 
     if (init_done) return (osmesa_handle != NULL);
     init_done = TRUE;
 
-    osmesa_handle = wine_dlopen( SONAME_LIBOSMESA, RTLD_NOW, buffer, sizeof(buffer) );
+    osmesa_handle = dlopen( SONAME_LIBOSMESA, RTLD_NOW );
     if (osmesa_handle == NULL)
     {
-        ERR( "Failed to load OSMesa: %s\n", buffer );
+        ERR( "Failed to load OSMesa: %s\n", dlerror() );
         return FALSE;
     }
 
-#define LOAD_FUNCPTR(f) do if (!(p##f = wine_dlsym( osmesa_handle, #f, buffer, sizeof(buffer) ))) \
+#define LOAD_FUNCPTR(f) do if (!(p##f = dlsym( osmesa_handle, #f ))) \
     { \
-        ERR( "%s not found in %s (%s), disabling.\n", #f, SONAME_LIBOSMESA, buffer ); \
+        ERR( "%s not found in %s (%s), disabling.\n", #f, SONAME_LIBOSMESA, dlerror() ); \
         goto failed; \
     } while(0)
 
@@ -137,7 +135,7 @@ static BOOL init_opengl(void)
     return TRUE;
 
 failed:
-    wine_dlclose( osmesa_handle, NULL, 0 );
+    dlclose( osmesa_handle );
     osmesa_handle = NULL;
     return FALSE;
 }
@@ -145,7 +143,7 @@ failed:
 /**********************************************************************
  *	     dibdrv_wglDescribePixelFormat
  */
-static int dibdrv_wglDescribePixelFormat( HDC hdc, int fmt, UINT size, PIXELFORMATDESCRIPTOR *descr )
+static int WINAPI dibdrv_wglDescribePixelFormat( HDC hdc, int fmt, UINT size, PIXELFORMATDESCRIPTOR *descr )
 {
     int ret = ARRAY_SIZE( pixel_formats );
 
@@ -182,7 +180,7 @@ static int dibdrv_wglDescribePixelFormat( HDC hdc, int fmt, UINT size, PIXELFORM
 /***********************************************************************
  *		dibdrv_wglCopyContext
  */
-static BOOL dibdrv_wglCopyContext( struct wgl_context *src, struct wgl_context *dst, UINT mask )
+static BOOL WINAPI dibdrv_wglCopyContext( struct wgl_context *src, struct wgl_context *dst, UINT mask )
 {
     FIXME( "not supported yet\n" );
     return FALSE;
@@ -191,7 +189,7 @@ static BOOL dibdrv_wglCopyContext( struct wgl_context *src, struct wgl_context *
 /***********************************************************************
  *		dibdrv_wglCreateContext
  */
-static struct wgl_context *dibdrv_wglCreateContext( HDC hdc )
+static struct wgl_context * WINAPI dibdrv_wglCreateContext( HDC hdc )
 {
     struct wgl_context *context;
 
@@ -213,7 +211,7 @@ static struct wgl_context *dibdrv_wglCreateContext( HDC hdc )
 /***********************************************************************
  *		dibdrv_wglDeleteContext
  */
-static BOOL dibdrv_wglDeleteContext( struct wgl_context *context )
+static BOOL WINAPI dibdrv_wglDeleteContext( struct wgl_context *context )
 {
     pOSMesaDestroyContext( context->context );
     HeapFree( GetProcessHeap(), 0, context );
@@ -223,7 +221,7 @@ static BOOL dibdrv_wglDeleteContext( struct wgl_context *context )
 /***********************************************************************
  *		dibdrv_wglGetPixelFormat
  */
-static int dibdrv_wglGetPixelFormat( HDC hdc )
+static int WINAPI dibdrv_wglGetPixelFormat( HDC hdc )
 {
     DC *dc = get_dc_ptr( hdc );
     int ret = 0;
@@ -239,7 +237,7 @@ static int dibdrv_wglGetPixelFormat( HDC hdc )
 /***********************************************************************
  *		dibdrv_wglGetProcAddress
  */
-static PROC dibdrv_wglGetProcAddress( const char *proc )
+static PROC WINAPI dibdrv_wglGetProcAddress( const char *proc )
 {
     if (!strncmp( proc, "wgl", 3 )) return NULL;
     return (PROC)pOSMesaGetProcAddress( proc );
@@ -248,7 +246,7 @@ static PROC dibdrv_wglGetProcAddress( const char *proc )
 /***********************************************************************
  *		dibdrv_wglMakeCurrent
  */
-static BOOL dibdrv_wglMakeCurrent( HDC hdc, struct wgl_context *context )
+static BOOL WINAPI dibdrv_wglMakeCurrent( HDC hdc, struct wgl_context *context )
 {
     HBITMAP bitmap;
     BITMAPOBJ *bmp;
@@ -303,7 +301,7 @@ static BOOL dibdrv_wglMakeCurrent( HDC hdc, struct wgl_context *context )
 /**********************************************************************
  *	     dibdrv_wglSetPixelFormat
  */
-static BOOL dibdrv_wglSetPixelFormat( HDC hdc, int fmt, const PIXELFORMATDESCRIPTOR *descr )
+static BOOL WINAPI dibdrv_wglSetPixelFormat( HDC hdc, int fmt, const PIXELFORMATDESCRIPTOR *descr )
 {
     if (fmt <= 0 || fmt > ARRAY_SIZE( pixel_formats )) return FALSE;
     return GdiSetPixelFormat( hdc, fmt, descr );
@@ -312,7 +310,7 @@ static BOOL dibdrv_wglSetPixelFormat( HDC hdc, int fmt, const PIXELFORMATDESCRIP
 /***********************************************************************
  *		dibdrv_wglShareLists
  */
-static BOOL dibdrv_wglShareLists( struct wgl_context *org, struct wgl_context *dest )
+static BOOL WINAPI dibdrv_wglShareLists( struct wgl_context *org, struct wgl_context *dest )
 {
     FIXME( "not supported yet\n" );
     return FALSE;
@@ -321,7 +319,7 @@ static BOOL dibdrv_wglShareLists( struct wgl_context *org, struct wgl_context *d
 /***********************************************************************
  *		dibdrv_wglSwapBuffers
  */
-static BOOL dibdrv_wglSwapBuffers( HDC hdc )
+static BOOL WINAPI dibdrv_wglSwapBuffers( HDC hdc )
 {
     return TRUE;
 }

@@ -77,7 +77,7 @@ struct __wine_debug_channel
 #define __WINE_IS_DEBUG_ON(dbcl,dbch) \
   (__WINE_GET_DEBUGGING##dbcl(dbch) && (__wine_dbg_get_channel_flags(dbch) & (1 << __WINE_DBCL##dbcl)))
 
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__clang__)
 
 #define __WINE_DPRINTF(dbcl,dbch) \
   do { if(__WINE_GET_DEBUGGING(dbcl,(dbch))) { \

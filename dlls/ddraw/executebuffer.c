@@ -74,13 +74,13 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer, struct d3d
             case D3DOP_POINT:
             {
                 const D3DPOINT *p = (D3DPOINT *)instr;
-                wined3d_device_apply_stateblock(device->wined3d_device, device->state);
                 wined3d_device_set_primitive_type(device->wined3d_device, WINED3D_PT_POINTLIST, 0);
-                wined3d_device_set_stream_source(device->wined3d_device, 0,
+                wined3d_stateblock_set_stream_source(device->state, 0,
                         buffer->dst_vertex_buffer, 0, sizeof(D3DTLVERTEX));
-                wined3d_device_set_vertex_declaration(device->wined3d_device,
+                wined3d_stateblock_set_vertex_declaration(device->state,
                         ddraw_find_decl(device->ddraw, D3DFVF_TLVERTEX));
 
+                wined3d_device_apply_stateblock(device->wined3d_device, device->state);
                 for (i = 0; i < count; ++i)
                     wined3d_device_draw_primitive(device->wined3d_device, p[i].wFirst, p[i].wCount);
 
@@ -106,8 +106,6 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer, struct d3d
                     wined3d_device_set_primitive_type(device->wined3d_device, WINED3D_PT_TRIANGLELIST, 0);
                     primitive_size = 3;
                 }
-
-                wined3d_device_apply_stateblock(device->wined3d_device, device->state);
 
                 index_count = count * primitive_size;
                 if (buffer->index_size < index_count)
@@ -185,11 +183,12 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer, struct d3d
 
                 wined3d_resource_unmap(wined3d_buffer_get_resource(buffer->index_buffer), 0);
 
-                wined3d_device_set_stream_source(device->wined3d_device, 0,
+                wined3d_stateblock_set_stream_source(device->state, 0,
                         buffer->dst_vertex_buffer, 0, sizeof(D3DTLVERTEX));
-                wined3d_device_set_vertex_declaration(device->wined3d_device,
+                wined3d_stateblock_set_vertex_declaration(device->state,
                         ddraw_find_decl(device->ddraw, D3DFVF_TLVERTEX));
-                wined3d_device_set_index_buffer(device->wined3d_device, buffer->index_buffer, WINED3DFMT_R16_UINT, 0);
+                wined3d_stateblock_set_index_buffer(device->state, buffer->index_buffer, WINED3DFMT_R16_UINT);
+                wined3d_device_apply_stateblock(device->wined3d_device, device->state);
                 wined3d_device_draw_indexed_primitive(device->wined3d_device, index_pos, index_count);
 
                 buffer->index_pos = index_pos + index_count;
@@ -206,7 +205,7 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer, struct d3d
                 for (i = 0; i < count; ++i)
                 {
                     D3DMATRIXMULTIPLY *ci = (D3DMATRIXMULTIPLY *)instr;
-                    D3DMATRIX *a, *b, *c;
+                    struct wined3d_matrix *a, *b, *c;
 
                     a = ddraw_get_object(&device->handle_table, ci->hDestMatrix - 1, DDRAW_HANDLE_MATRIX);
                     b = ddraw_get_object(&device->handle_table, ci->hSrcMatrix1 - 1, DDRAW_HANDLE_MATRIX);
@@ -303,14 +302,14 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer, struct d3d
                     {
                         case D3DPROCESSVERTICES_TRANSFORMLIGHT:
                         case D3DPROCESSVERTICES_TRANSFORM:
-                            wined3d_device_apply_stateblock(device->wined3d_device, device->state);
-                            wined3d_device_set_stream_source(device->wined3d_device, 0,
+                            wined3d_stateblock_set_stream_source(device->state, 0,
                                     buffer->src_vertex_buffer, buffer->src_vertex_pos * sizeof(D3DVERTEX), sizeof(D3DVERTEX));
-                            wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_LIGHTING,
+                            wined3d_stateblock_set_render_state(device->state, WINED3D_RS_LIGHTING,
                                     op == D3DPROCESSVERTICES_TRANSFORMLIGHT && !!device->material);
-                            wined3d_device_set_vertex_declaration(device->wined3d_device,
+                            wined3d_stateblock_set_vertex_declaration(device->state,
                                     ddraw_find_decl(device->ddraw, op == D3DPROCESSVERTICES_TRANSFORMLIGHT
                                     ? D3DFVF_VERTEX : D3DFVF_LVERTEX));
+                            wined3d_device_apply_stateblock(device->wined3d_device, device->state);
                             wined3d_device_process_vertices(device->wined3d_device, ci->wStart, ci->wDest,
                                     ci->dwCount, buffer->dst_vertex_buffer, NULL, 0, D3DFVF_TLVERTEX);
                             break;

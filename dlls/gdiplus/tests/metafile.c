@@ -379,6 +379,7 @@ static void test_empty(void)
     static const GpRectF frame = {0.0, 0.0, 100.0, 100.0};
     static const GpPointF dst_points[3] = {{0.0,0.0},{100.0,0.0},{0.0,100.0}};
     static const WCHAR description[] = {'w','i','n','e','t','e','s','t',0};
+    UINT limit_dpi;
 
     hdc = CreateCompatibleDC(0);
 
@@ -408,6 +409,42 @@ static void test_empty(void)
     if (stat != Ok)
         return;
 
+    stat = GdipGetMetafileDownLevelRasterizationLimit(metafile, NULL);
+    expect(InvalidParameter, stat);
+
+    stat = GdipGetMetafileDownLevelRasterizationLimit(NULL, &limit_dpi);
+    expect(InvalidParameter, stat);
+
+    limit_dpi = 0xdeadbeef;
+    stat = GdipGetMetafileDownLevelRasterizationLimit(metafile, &limit_dpi);
+    expect(Ok, stat);
+    ok(limit_dpi == 96, "limit_dpi was %d\n", limit_dpi);
+
+    stat = GdipSetMetafileDownLevelRasterizationLimit(metafile, 255);
+    expect(Ok, stat);
+
+    limit_dpi = 0xdeadbeef;
+    stat = GdipGetMetafileDownLevelRasterizationLimit(metafile, &limit_dpi);
+    expect(Ok, stat);
+    ok(limit_dpi == 255, "limit_dpi was %d\n", limit_dpi);
+
+    stat = GdipSetMetafileDownLevelRasterizationLimit(metafile, 0);
+    expect(Ok, stat);
+
+    limit_dpi = 0xdeadbeef;
+    stat = GdipGetMetafileDownLevelRasterizationLimit(metafile, &limit_dpi);
+    expect(Ok, stat);
+    ok(limit_dpi == 96, "limit_dpi was %d\n", limit_dpi);
+
+    stat = GdipSetMetafileDownLevelRasterizationLimit(metafile, 1);
+    expect(InvalidParameter, stat);
+
+    stat = GdipSetMetafileDownLevelRasterizationLimit(metafile, 9);
+    expect(InvalidParameter, stat);
+
+    stat = GdipSetMetafileDownLevelRasterizationLimit(metafile, 10);
+    expect(Ok, stat);
+
     stat = GdipGetHemfFromMetafile(metafile, &hemf);
     expect(InvalidParameter, stat);
 
@@ -419,6 +456,14 @@ static void test_empty(void)
 
     stat = GdipDeleteGraphics(graphics);
     expect(Ok, stat);
+
+    limit_dpi = 0xdeadbeef;
+    stat = GdipGetMetafileDownLevelRasterizationLimit(metafile, &limit_dpi);
+    expect(WrongState, stat);
+    expect(0xdeadbeef, limit_dpi);
+
+    stat = GdipSetMetafileDownLevelRasterizationLimit(metafile, 200);
+    expect(WrongState, stat);
 
     check_metafile(metafile, empty_records, "empty metafile", dst_points, &frame, UnitPixel);
 

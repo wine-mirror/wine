@@ -40,6 +40,7 @@ struct _EPROCESS
 {
     DISPATCHER_HEADER header;
     PROCESS_BASIC_INFORMATION info;
+    BOOL wow64;
 };
 
 struct _KTHREAD
@@ -48,6 +49,7 @@ struct _KTHREAD
     PEPROCESS process;
     CLIENT_ID id;
     unsigned int critical_region;
+    KAFFINITY user_affinity;
 };
 
 struct _ETHREAD

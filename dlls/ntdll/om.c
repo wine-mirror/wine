@@ -351,28 +351,8 @@ NTSTATUS WINAPI NtDuplicateObject( HANDLE source_process, HANDLE source,
                                    HANDLE dest_process, PHANDLE dest,
                                    ACCESS_MASK access, ULONG attributes, ULONG options )
 {
-    NTSTATUS ret;
-    SERVER_START_REQ( dup_handle )
-    {
-        req->src_process = wine_server_obj_handle( source_process );
-        req->src_handle  = wine_server_obj_handle( source );
-        req->dst_process = wine_server_obj_handle( dest_process );
-        req->access      = access;
-        req->attributes  = attributes;
-        req->options     = options;
-
-        if (!(ret = wine_server_call( req )))
-        {
-            if (dest) *dest = wine_server_ptr_handle( reply->handle );
-            if (reply->closed && reply->self)
-            {
-                int fd = server_remove_fd_from_cache( source );
-                if (fd != -1) close( fd );
-            }
-        }
-    }
-    SERVER_END_REQ;
-    return ret;
+    return unix_funcs->NtDuplicateObject( source_process, source, dest_process,
+                                          dest, access, attributes, options );
 }
 
 static LONG WINAPI invalid_handle_exception_handler( EXCEPTION_POINTERS *eptr )
@@ -384,16 +364,7 @@ static LONG WINAPI invalid_handle_exception_handler( EXCEPTION_POINTERS *eptr )
 /* Everquest 2 / Pirates of the Burning Sea hooks NtClose, so we need a wrapper */
 NTSTATUS close_handle( HANDLE handle )
 {
-    NTSTATUS ret;
-    int fd = server_remove_fd_from_cache( handle );
-
-    SERVER_START_REQ( close_handle )
-    {
-        req->handle = wine_server_obj_handle( handle );
-        ret = wine_server_call( req );
-    }
-    SERVER_END_REQ;
-    if (fd != -1) close( fd );
+    NTSTATUS ret = unix_funcs->NtClose( handle );
 
     if (ret == STATUS_INVALID_HANDLE && handle && NtCurrentTeb()->Peb->BeingDebugged)
     {

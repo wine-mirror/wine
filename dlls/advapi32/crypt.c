@@ -612,7 +612,7 @@ BOOL WINAPI CryptAcquireContextA (HCRYPTPROV *phProv, LPCSTR pszContainer,
  * PARAMS
  *  hProv       [I] Handle to the CSP whose reference is being incremented.
  *  pdwReserved [IN] Reserved for future use and must be NULL.
- *  dwFlags     [I] Reserved for future use and must be NULL.
+ *  dwFlags     [I] Reserved for future use and must be 0.
  *
  * RETURNS
  *  Success: TRUE
@@ -636,7 +636,7 @@ BOOL WINAPI CryptContextAddRef (HCRYPTPROV hProv, DWORD *pdwReserved, DWORD dwFl
 		return FALSE;
 	}
 
-	pProv->refcount++;
+	InterlockedIncrement(&pProv->refcount);
 	return TRUE;
 }
 
@@ -647,22 +647,22 @@ BOOL WINAPI CryptContextAddRef (HCRYPTPROV hProv, DWORD *pdwReserved, DWORD dwFl
  *
  * PARAMS
  *  hProv   [I] Handle of a CSP.
- *  dwFlags [I] Reserved for future use and must be NULL.
+ *  dwFlags [I] Reserved for future use and must be 0.
  *
  * RETURNS
  *  Success: TRUE
  *  Failure: FALSE
  */
-BOOL WINAPI CryptReleaseContext (HCRYPTPROV hProv, ULONG_PTR dwFlags)
+BOOL WINAPI CryptReleaseContext (HCRYPTPROV hProv, DWORD dwFlags)
 {
 	PCRYPTPROV pProv = (PCRYPTPROV)hProv;
 	BOOL ret = TRUE;
 
-	TRACE("(0x%lx, %08lx)\n", hProv, dwFlags);
+	TRACE("(0x%lx, %08x)\n", hProv, dwFlags);
 
 	if (!pProv)
 	{
-		SetLastError(NTE_BAD_UID);
+		SetLastError(ERROR_INVALID_PARAMETER);
 		return FALSE;
 	}
 
@@ -672,8 +672,7 @@ BOOL WINAPI CryptReleaseContext (HCRYPTPROV hProv, ULONG_PTR dwFlags)
 		return FALSE;
 	}
 
-	pProv->refcount--;
-	if (pProv->refcount <= 0) 
+	if (InterlockedDecrement(&pProv->refcount) == 0)
 	{
 		ret = pProv->pFuncs->pCPReleaseContext(pProv->hPrivate, dwFlags);
 		pProv->dwMagic = 0;
@@ -736,7 +735,7 @@ BOOL WINAPI CryptGenRandom (HCRYPTPROV hProv, DWORD dwLen, BYTE *pbBuffer)
  *  hProv   [I] Handle of a CSP.
  *  Algid   [I] Identifies the hash algorithm to use.
  *  hKey    [I] Key for the hash (if required).
- *  dwFlags [I] Reserved for future use and must be NULL.
+ *  dwFlags [I] Reserved for future use and must be 0.
  *  phHash  [O] Address of the future handle to the new hash object.
  *
  * RETURNS
@@ -971,7 +970,7 @@ BOOL WINAPI CryptDestroyKey (HCRYPTKEY hKey)
  *
  * PARAMS
  *  hHash       [I] Handle to the hash to be copied.
- *  pdwReserved [I] Reserved for future use and must be zero.
+ *  pdwReserved [I] Reserved for future use and must be NULL.
  *  dwFlags     [I] Reserved for future use and must be zero.
  *  phHash      [O] Address of the handle to receive the copy.
  *

@@ -28,6 +28,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_IMC1, MAKEFOURCC('I','M','C','1'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_IMC2, MAKEFOURCC('I','M','C','2'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_IMC3, MAKEFOURCC('I','M','C','3'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_IMC4, MAKEFOURCC('I','M','C','4'));
+
 struct media_type
 {
     struct attributes attributes;
@@ -43,7 +48,6 @@ struct stream_desc
     IMFMediaType **media_types;
     unsigned int media_types_count;
     IMFMediaType *current_type;
-    CRITICAL_SECTION cs;
 };
 
 struct presentation_desc_entry
@@ -58,7 +62,6 @@ struct presentation_desc
     IMFPresentationDescriptor IMFPresentationDescriptor_iface;
     struct presentation_desc_entry *descriptors;
     unsigned int count;
-    CRITICAL_SECTION cs;
 };
 
 static HRESULT presentation_descriptor_init(struct presentation_desc *object, DWORD count);
@@ -666,7 +669,6 @@ static ULONG WINAPI stream_descriptor_Release(IMFStreamDescriptor *iface)
         if (stream_desc->current_type)
             IMFMediaType_Release(stream_desc->current_type);
         clear_attributes_object(&stream_desc->attributes);
-        DeleteCriticalSection(&stream_desc->cs);
         heap_free(stream_desc);
     }
 
@@ -1041,12 +1043,47 @@ static ULONG WINAPI mediatype_handler_Release(IMFMediaTypeHandler *iface)
     return IMFStreamDescriptor_Release(&stream_desc->IMFStreamDescriptor_iface);
 }
 
+static BOOL stream_descriptor_is_mediatype_supported(IMFMediaType *media_type, IMFMediaType *candidate)
+{
+    DWORD flags = 0;
+
+    if (FAILED(IMFMediaType_IsEqual(media_type, candidate, &flags)))
+        return FALSE;
+
+    return (flags & (MF_MEDIATYPE_EQUAL_MAJOR_TYPES | MF_MEDIATYPE_EQUAL_FORMAT_TYPES)) ==
+            (MF_MEDIATYPE_EQUAL_MAJOR_TYPES | MF_MEDIATYPE_EQUAL_FORMAT_TYPES);
+}
+
 static HRESULT WINAPI mediatype_handler_IsMediaTypeSupported(IMFMediaTypeHandler *iface, IMFMediaType *in_type,
         IMFMediaType **out_type)
 {
-    FIXME("%p, %p, %p.\n", iface, in_type, out_type);
+    struct stream_desc *stream_desc = impl_from_IMFMediaTypeHandler(iface);
+    BOOL supported = FALSE;
+    unsigned int i;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %p.\n", iface, in_type, out_type);
+
+    if (!in_type)
+        return E_POINTER;
+
+    if (out_type)
+        *out_type = NULL;
+
+    EnterCriticalSection(&stream_desc->attributes.cs);
+
+    supported = stream_desc->current_type && stream_descriptor_is_mediatype_supported(stream_desc->current_type, in_type);
+    if (!supported)
+    {
+        for (i = 0; i < stream_desc->media_types_count; ++i)
+        {
+            if ((supported = stream_descriptor_is_mediatype_supported(stream_desc->media_types[i], in_type)))
+                break;
+        }
+    }
+
+    LeaveCriticalSection(&stream_desc->attributes.cs);
+
+    return supported ? S_OK : MF_E_INVALIDMEDIATYPE;
 }
 
 static HRESULT WINAPI mediatype_handler_GetMediaTypeCount(IMFMediaTypeHandler *iface, DWORD *count)
@@ -1088,12 +1125,12 @@ static HRESULT WINAPI mediatype_handler_SetCurrentMediaType(IMFMediaTypeHandler 
     if (!type)
         return E_POINTER;
 
-    EnterCriticalSection(&stream_desc->cs);
+    EnterCriticalSection(&stream_desc->attributes.cs);
     if (stream_desc->current_type)
         IMFMediaType_Release(stream_desc->current_type);
     stream_desc->current_type = type;
     IMFMediaType_AddRef(stream_desc->current_type);
-    LeaveCriticalSection(&stream_desc->cs);
+    LeaveCriticalSection(&stream_desc->attributes.cs);
 
     return S_OK;
 }
@@ -1105,7 +1142,7 @@ static HRESULT WINAPI mediatype_handler_GetCurrentMediaType(IMFMediaTypeHandler 
 
     TRACE("%p, %p.\n", iface, type);
 
-    EnterCriticalSection(&stream_desc->cs);
+    EnterCriticalSection(&stream_desc->attributes.cs);
     if (stream_desc->current_type)
     {
         *type = stream_desc->current_type;
@@ -1113,7 +1150,7 @@ static HRESULT WINAPI mediatype_handler_GetCurrentMediaType(IMFMediaTypeHandler 
     }
     else
         hr = MF_E_NOT_INITIALIZED;
-    LeaveCriticalSection(&stream_desc->cs);
+    LeaveCriticalSection(&stream_desc->attributes.cs);
 
     return hr;
 }
@@ -1125,12 +1162,12 @@ static HRESULT WINAPI mediatype_handler_GetMajorType(IMFMediaTypeHandler *iface,
 
     TRACE("%p, %p.\n", iface, type);
 
-    EnterCriticalSection(&stream_desc->cs);
+    EnterCriticalSection(&stream_desc->attributes.cs);
     if (stream_desc->current_type)
         hr = IMFMediaType_GetGUID(stream_desc->current_type, &MF_MT_MAJOR_TYPE, type);
     else
         hr = MF_E_ATTRIBUTENOTFOUND;
-    LeaveCriticalSection(&stream_desc->cs);
+    LeaveCriticalSection(&stream_desc->attributes.cs);
 
     return hr;
 }
@@ -1176,7 +1213,6 @@ HRESULT WINAPI MFCreateStreamDescriptor(DWORD identifier, DWORD count,
     object->IMFMediaTypeHandler_iface.lpVtbl = &mediatypehandlervtbl;
     object->identifier = identifier;
     object->media_types = heap_alloc(count * sizeof(*object->media_types));
-    InitializeCriticalSection(&object->cs);
     if (!object->media_types)
     {
         IMFStreamDescriptor_Release(&object->IMFStreamDescriptor_iface);
@@ -1239,7 +1275,6 @@ static ULONG WINAPI presentation_descriptor_Release(IMFPresentationDescriptor *i
                 IMFStreamDescriptor_Release(presentation_desc->descriptors[i].descriptor);
         }
         clear_attributes_object(&presentation_desc->attributes);
-        DeleteCriticalSection(&presentation_desc->cs);
         heap_free(presentation_desc->descriptors);
         heap_free(presentation_desc);
     }
@@ -1553,9 +1588,9 @@ static HRESULT WINAPI presentation_descriptor_GetStreamDescriptorByIndex(IMFPres
     if (index >= presentation_desc->count)
         return E_INVALIDARG;
 
-    EnterCriticalSection(&presentation_desc->cs);
+    EnterCriticalSection(&presentation_desc->attributes.cs);
     *selected = presentation_desc->descriptors[index].selected;
-    LeaveCriticalSection(&presentation_desc->cs);
+    LeaveCriticalSection(&presentation_desc->attributes.cs);
 
     *descriptor = presentation_desc->descriptors[index].descriptor;
     IMFStreamDescriptor_AddRef(*descriptor);
@@ -1572,9 +1607,9 @@ static HRESULT WINAPI presentation_descriptor_SelectStream(IMFPresentationDescri
     if (index >= presentation_desc->count)
         return E_INVALIDARG;
 
-    EnterCriticalSection(&presentation_desc->cs);
+    EnterCriticalSection(&presentation_desc->attributes.cs);
     presentation_desc->descriptors[index].selected = TRUE;
-    LeaveCriticalSection(&presentation_desc->cs);
+    LeaveCriticalSection(&presentation_desc->attributes.cs);
 
     return S_OK;
 }
@@ -1588,9 +1623,9 @@ static HRESULT WINAPI presentation_descriptor_DeselectStream(IMFPresentationDesc
     if (index >= presentation_desc->count)
         return E_INVALIDARG;
 
-    EnterCriticalSection(&presentation_desc->cs);
+    EnterCriticalSection(&presentation_desc->attributes.cs);
     presentation_desc->descriptors[index].selected = FALSE;
-    LeaveCriticalSection(&presentation_desc->cs);
+    LeaveCriticalSection(&presentation_desc->attributes.cs);
 
     return S_OK;
 }
@@ -1610,7 +1645,7 @@ static HRESULT WINAPI presentation_descriptor_Clone(IMFPresentationDescriptor *i
 
     presentation_descriptor_init(object, presentation_desc->count);
 
-    EnterCriticalSection(&presentation_desc->cs);
+    EnterCriticalSection(&presentation_desc->attributes.cs);
 
     for (i = 0; i < presentation_desc->count; ++i)
     {
@@ -1620,7 +1655,7 @@ static HRESULT WINAPI presentation_descriptor_Clone(IMFPresentationDescriptor *i
 
     attributes_CopyAllItems(&presentation_desc->attributes, (IMFAttributes *)&object->IMFPresentationDescriptor_iface);
 
-    LeaveCriticalSection(&presentation_desc->cs);
+    LeaveCriticalSection(&presentation_desc->attributes.cs);
 
     *descriptor = &object->IMFPresentationDescriptor_iface;
 
@@ -1677,7 +1712,6 @@ static HRESULT presentation_descriptor_init(struct presentation_desc *object, DW
         return hr;
     object->IMFPresentationDescriptor_iface.lpVtbl = &presentationdescriptorvtbl;
     object->descriptors = heap_alloc_zero(count * sizeof(*object->descriptors));
-    InitializeCriticalSection(&object->cs);
     if (!object->descriptors)
     {
         IMFPresentationDescriptor_Release(&object->IMFPresentationDescriptor_iface);
@@ -1733,7 +1767,10 @@ HRESULT WINAPI MFCreatePresentationDescriptor(DWORD count, IMFStreamDescriptor *
 struct uncompressed_video_format
 {
     const GUID *subtype;
-    unsigned int bytes_per_pixel;
+    unsigned char bytes_per_pixel;
+    unsigned char alignment;
+    unsigned char bottom_up;
+    unsigned char yuv;
 };
 
 static int __cdecl uncompressed_video_format_compare(const void *a, const void *b)
@@ -1743,38 +1780,153 @@ static int __cdecl uncompressed_video_format_compare(const void *a, const void *
     return memcmp(guid, format->subtype, sizeof(*guid));
 }
 
+static const struct uncompressed_video_format video_formats[] =
+{
+    { &MFVideoFormat_RGB24,         4, 3, 1, 0 },
+    { &MFVideoFormat_ARGB32,        4, 3, 1, 0 },
+    { &MFVideoFormat_RGB32,         4, 3, 1, 0 },
+    { &MFVideoFormat_RGB565,        2, 3, 1, 0 },
+    { &MFVideoFormat_RGB555,        2, 3, 1, 0 },
+    { &MFVideoFormat_A2R10G10B10,   4, 3, 1, 0 },
+    { &MFVideoFormat_RGB8,          1, 3, 1, 0 },
+    { &MFVideoFormat_L8,            1, 3, 1, 0 },
+    { &MFVideoFormat_AYUV,          4, 3, 0, 1 },
+    { &MFVideoFormat_I420,          1, 0, 0, 1 },
+    { &MFVideoFormat_IMC1,          2, 3, 0, 1 },
+    { &MFVideoFormat_IMC2,          1, 0, 0, 1 },
+    { &MFVideoFormat_IMC3,          2, 3, 0, 1 },
+    { &MFVideoFormat_IMC4,          1, 0, 0, 1 },
+    { &MFVideoFormat_NV12,          1, 0, 0, 1 },
+    { &MFVideoFormat_D16,           2, 3, 0, 0 },
+    { &MFVideoFormat_L16,           2, 3, 0, 0 },
+    { &MFVideoFormat_UYVY,          2, 0, 0, 1 },
+    { &MFVideoFormat_YUY2,          2, 0, 0, 1 },
+    { &MFVideoFormat_YV12,          1, 0, 0, 1 },
+    { &MFVideoFormat_A16B16G16R16F, 8, 3, 1, 0 },
+};
+
+static struct uncompressed_video_format *mf_get_video_format(const GUID *subtype)
+{
+    return bsearch(subtype, video_formats, ARRAY_SIZE(video_formats), sizeof(*video_formats),
+            uncompressed_video_format_compare);
+}
+
+static unsigned int mf_get_stride_for_format(const struct uncompressed_video_format *format, unsigned int width)
+{
+    return (width * format->bytes_per_pixel + format->alignment) & ~format->alignment;
+}
+
+unsigned int mf_format_get_stride(const GUID *subtype, unsigned int width, BOOL *is_yuv)
+{
+    struct uncompressed_video_format *format = mf_get_video_format(subtype);
+
+    if (format)
+    {
+        *is_yuv = format->yuv;
+        return mf_get_stride_for_format(format, width);
+    }
+
+    return 0;
+}
+
+/***********************************************************************
+ *      MFGetStrideForBitmapInfoHeader (mfplat.@)
+ */
+HRESULT WINAPI MFGetStrideForBitmapInfoHeader(DWORD fourcc, DWORD width, LONG *stride)
+{
+    struct uncompressed_video_format *format;
+    GUID subtype;
+
+    TRACE("%s, %u, %p.\n", debugstr_fourcc(fourcc), width, stride);
+
+    memcpy(&subtype, &MFVideoFormat_Base, sizeof(subtype));
+    subtype.Data1 = fourcc;
+
+    if (!(format = mf_get_video_format(&subtype)))
+    {
+        *stride = 0;
+        return MF_E_INVALIDMEDIATYPE;
+    }
+
+    *stride = mf_get_stride_for_format(format, width);
+    if (format->bottom_up)
+        *stride *= -1;
+
+    return S_OK;
+}
+
 /***********************************************************************
  *      MFCalculateImageSize (mfplat.@)
  */
 HRESULT WINAPI MFCalculateImageSize(REFGUID subtype, UINT32 width, UINT32 height, UINT32 *size)
 {
-    static const struct uncompressed_video_format video_formats[] =
-    {
-        { &MFVideoFormat_RGB24,         3 },
-        { &MFVideoFormat_ARGB32,        4 },
-        { &MFVideoFormat_RGB32,         4 },
-        { &MFVideoFormat_RGB565,        2 },
-        { &MFVideoFormat_RGB555,        2 },
-        { &MFVideoFormat_A2R10G10B10,   4 },
-        { &MFVideoFormat_RGB8,          1 },
-        { &MFVideoFormat_A16B16G16R16F, 8 },
-    };
     struct uncompressed_video_format *format;
+    unsigned int stride;
 
     TRACE("%s, %u, %u, %p.\n", debugstr_mf_guid(subtype), width, height, size);
 
-    format = bsearch(subtype, video_formats, ARRAY_SIZE(video_formats), sizeof(*video_formats),
-            uncompressed_video_format_compare);
-    if (format)
+    if (!(format = mf_get_video_format(subtype)))
     {
-         *size = ((width * format->bytes_per_pixel + 3) & ~3) * height;
-    }
-    else
-    {
-         *size = 0;
+        *size = 0;
+        return E_INVALIDARG;
     }
 
-    return format ? S_OK : E_INVALIDARG;
+    switch (subtype->Data1)
+    {
+        case MAKEFOURCC('I','M','C','2'):
+        case MAKEFOURCC('I','M','C','4'):
+        case MAKEFOURCC('N','V','1','2'):
+        case MAKEFOURCC('Y','V','1','2'):
+        case MAKEFOURCC('I','4','2','0'):
+            /* 2 x 2 block, interleaving UV for half the height */
+            *size = ((width + 1) & ~1) * height * 3 / 2;
+            break;
+        case D3DFMT_L8:
+        case D3DFMT_L16:
+        case D3DFMT_D16:
+            *size = width * format->bytes_per_pixel * height;
+            break;
+        default:
+            stride = mf_get_stride_for_format(format, width);
+            *size = stride * height;
+    }
+
+    return S_OK;
+}
+
+/***********************************************************************
+ *      MFGetPlaneSize (mfplat.@)
+ */
+HRESULT WINAPI MFGetPlaneSize(DWORD fourcc, DWORD width, DWORD height, DWORD *size)
+{
+    struct uncompressed_video_format *format;
+    unsigned int stride;
+    GUID subtype;
+
+    TRACE("%s, %u, %u, %p.\n", debugstr_fourcc(fourcc), width, height, size);
+
+    memcpy(&subtype, &MFVideoFormat_Base, sizeof(subtype));
+    subtype.Data1 = fourcc;
+
+    if (!(format = mf_get_video_format(&subtype)))
+        return MF_E_INVALIDMEDIATYPE;
+
+    stride = mf_get_stride_for_format(format, width);
+
+    switch (fourcc)
+    {
+        case MAKEFOURCC('I','M','C','2'):
+        case MAKEFOURCC('I','M','C','4'):
+        case MAKEFOURCC('N','V','1','2'):
+        case MAKEFOURCC('Y','V','1','2'):
+        case MAKEFOURCC('I','4','2','0'):
+            *size = stride * height * 3 / 2;
+            break;
+        default:
+            *size = stride * height;
+    }
+
+    return S_OK;
 }
 
 /***********************************************************************
@@ -1939,4 +2091,83 @@ HRESULT WINAPI MFCreateWaveFormatExFromMFMediaType(IMFMediaType *mediatype, WAVE
     *ret_format = format;
 
     return S_OK;
+}
+
+static void mediatype_set_uint32(IMFMediaType *mediatype, const GUID *attr, unsigned int value, HRESULT *hr)
+{
+    if (SUCCEEDED(*hr))
+        *hr = IMFMediaType_SetUINT32(mediatype, attr, value);
+}
+
+static void mediatype_set_guid(IMFMediaType *mediatype, const GUID *attr, const GUID *value, HRESULT *hr)
+{
+    if (SUCCEEDED(*hr))
+        *hr = IMFMediaType_SetGUID(mediatype, attr, value);
+}
+
+/***********************************************************************
+ *      MFInitMediaTypeFromWaveFormatEx (mfplat.@)
+ */
+HRESULT WINAPI MFInitMediaTypeFromWaveFormatEx(IMFMediaType *mediatype, const WAVEFORMATEX *format, UINT32 size)
+{
+    const WAVEFORMATEXTENSIBLE *wfex = (const WAVEFORMATEXTENSIBLE *)format;
+    GUID subtype;
+    HRESULT hr;
+
+    TRACE("%p, %p, %u.\n", mediatype, format, size);
+
+    if (!mediatype || !format)
+        return E_POINTER;
+
+    if (format->cbSize && format->cbSize < sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX))
+        return E_INVALIDARG;
+
+    if (format->cbSize + sizeof(*format) > size)
+        return E_INVALIDARG;
+
+    hr = IMFMediaType_DeleteAllItems(mediatype);
+
+    mediatype_set_guid(mediatype, &MF_MT_MAJOR_TYPE, &MFMediaType_Audio, &hr);
+
+    if (format->wFormatTag == WAVE_FORMAT_EXTENSIBLE)
+    {
+        memcpy(&subtype, &wfex->SubFormat, sizeof(subtype));
+
+        if (wfex->dwChannelMask)
+            mediatype_set_uint32(mediatype, &MF_MT_AUDIO_CHANNEL_MASK, wfex->dwChannelMask, &hr);
+
+        if (format->wBitsPerSample && wfex->Samples.wValidBitsPerSample)
+            mediatype_set_uint32(mediatype, &MF_MT_AUDIO_VALID_BITS_PER_SAMPLE, wfex->Samples.wValidBitsPerSample, &hr);
+    }
+    else
+    {
+        memcpy(&subtype, &MFAudioFormat_Base, sizeof(subtype));
+        subtype.Data1 = format->wFormatTag;
+
+        mediatype_set_uint32(mediatype, &MF_MT_AUDIO_PREFER_WAVEFORMATEX, 1, &hr);
+    }
+    mediatype_set_guid(mediatype, &MF_MT_SUBTYPE, &subtype, &hr);
+
+    if (format->nChannels)
+        mediatype_set_uint32(mediatype, &MF_MT_AUDIO_NUM_CHANNELS, format->nChannels, &hr);
+
+    if (format->nSamplesPerSec)
+        mediatype_set_uint32(mediatype, &MF_MT_AUDIO_SAMPLES_PER_SECOND, format->nSamplesPerSec, &hr);
+
+    if (format->nAvgBytesPerSec)
+        mediatype_set_uint32(mediatype, &MF_MT_AUDIO_AVG_BYTES_PER_SECOND, format->nAvgBytesPerSec, &hr);
+
+    if (format->nBlockAlign)
+        mediatype_set_uint32(mediatype, &MF_MT_AUDIO_BLOCK_ALIGNMENT, format->nBlockAlign, &hr);
+
+    if (format->wBitsPerSample)
+        mediatype_set_uint32(mediatype, &MF_MT_AUDIO_BITS_PER_SAMPLE, format->wBitsPerSample, &hr);
+
+    if (IsEqualGUID(&subtype, &MFAudioFormat_PCM) ||
+            IsEqualGUID(&subtype, &MFAudioFormat_Float))
+    {
+        mediatype_set_uint32(mediatype, &MF_MT_ALL_SAMPLES_INDEPENDENT, 1, &hr);
+    }
+
+    return hr;
 }

@@ -890,162 +890,19 @@ BOOL WINAPI GetNumberOfConsoleMouseButtons(LPDWORD nrofbuttons)
 }
 
 /******************************************************************
- *		CONSOLE_DefaultHandler
- *
- * Final control event handler
- */
-static BOOL WINAPI CONSOLE_DefaultHandler(DWORD dwCtrlType)
-{
-    FIXME("Terminating process %x on event %x\n", GetCurrentProcessId(), dwCtrlType);
-    ExitProcess(0);
-    /* should never go here */
-    return TRUE;
-}
-
-/******************************************************************************
- * SetConsoleCtrlHandler [KERNEL32.@]  Adds function to calling process list
- *
- * PARAMS
- *    func [I] Address of handler function
- *    add  [I] Handler to add or remove
- *
- * RETURNS
- *    Success: TRUE
- *    Failure: FALSE
- */
-
-struct ConsoleHandler
-{
-    PHANDLER_ROUTINE            handler;
-    struct ConsoleHandler*      next;
-};
-
-static struct ConsoleHandler    CONSOLE_DefaultConsoleHandler = {CONSOLE_DefaultHandler, NULL};
-static struct ConsoleHandler*   CONSOLE_Handlers = &CONSOLE_DefaultConsoleHandler;
-
-/*****************************************************************************/
-
-/******************************************************************
- *		SetConsoleCtrlHandler (KERNEL32.@)
- */
-BOOL WINAPI SetConsoleCtrlHandler(PHANDLER_ROUTINE func, BOOL add)
-{
-    BOOL        ret = TRUE;
-
-    TRACE("(%p,%i)\n", func, add);
-
-    if (!func)
-    {
-        RtlEnterCriticalSection(&CONSOLE_CritSect);
-        if (add)
-            NtCurrentTeb()->Peb->ProcessParameters->ConsoleFlags |= 1;
-        else
-            NtCurrentTeb()->Peb->ProcessParameters->ConsoleFlags &= ~1;
-        RtlLeaveCriticalSection(&CONSOLE_CritSect);
-    }
-    else if (add)
-    {
-        struct ConsoleHandler*  ch = HeapAlloc(GetProcessHeap(), 0, sizeof(struct ConsoleHandler));
-
-        if (!ch) return FALSE;
-        ch->handler = func;
-        RtlEnterCriticalSection(&CONSOLE_CritSect);
-        ch->next = CONSOLE_Handlers;
-        CONSOLE_Handlers = ch;
-        RtlLeaveCriticalSection(&CONSOLE_CritSect);
-    }
-    else
-    {
-        struct ConsoleHandler**  ch;
-        RtlEnterCriticalSection(&CONSOLE_CritSect);
-        for (ch = &CONSOLE_Handlers; *ch; ch = &(*ch)->next)
-        {
-            if ((*ch)->handler == func) break;
-        }
-        if (*ch)
-        {
-            struct ConsoleHandler*   rch = *ch;
-
-            /* sanity check */
-            if (rch == &CONSOLE_DefaultConsoleHandler)
-            {
-                ERR("Who's trying to remove default handler???\n");
-                SetLastError(ERROR_INVALID_PARAMETER);
-                ret = FALSE;
-            }
-            else
-            {
-                *ch = rch->next;
-                HeapFree(GetProcessHeap(), 0, rch);
-            }
-        }
-        else
-        {
-            WARN("Attempt to remove non-installed CtrlHandler %p\n", func);
-            SetLastError(ERROR_INVALID_PARAMETER);
-            ret = FALSE;
-        }
-        RtlLeaveCriticalSection(&CONSOLE_CritSect);
-    }
-    return ret;
-}
-
-static LONG WINAPI CONSOLE_CtrlEventHandler(EXCEPTION_POINTERS *eptr)
-{
-    TRACE("(%x)\n", eptr->ExceptionRecord->ExceptionCode);
-    return EXCEPTION_EXECUTE_HANDLER;
-}
-
-/******************************************************************
- *		CONSOLE_SendEventThread
- *
- * Internal helper to pass an event to the list on installed handlers
- */
-static DWORD WINAPI CONSOLE_SendEventThread(void* pmt)
-{
-    DWORD_PTR                   event = (DWORD_PTR)pmt;
-    struct ConsoleHandler*      ch;
-
-    if (event == CTRL_C_EVENT)
-    {
-        BOOL    caught_by_dbg = TRUE;
-        /* First, try to pass the ctrl-C event to the debugger (if any)
-         * If it continues, there's nothing more to do
-         * Otherwise, we need to send the ctrl-C event to the handlers
-         */
-        __TRY
-        {
-            RaiseException( DBG_CONTROL_C, 0, 0, NULL );
-        }
-        __EXCEPT(CONSOLE_CtrlEventHandler)
-        {
-            caught_by_dbg = FALSE;
-        }
-        __ENDTRY;
-        if (caught_by_dbg) return 0;
-        /* the debugger didn't continue... so, pass to ctrl handlers */
-    }
-    RtlEnterCriticalSection(&CONSOLE_CritSect);
-    for (ch = CONSOLE_Handlers; ch; ch = ch->next)
-    {
-        if (ch->handler(event)) break;
-    }
-    RtlLeaveCriticalSection(&CONSOLE_CritSect);
-    return 1;
-}
-
-/******************************************************************
  *		CONSOLE_HandleCtrlC
  *
  * Check whether the shall manipulate CtrlC events
  */
-int     CONSOLE_HandleCtrlC(unsigned sig)
+LONG CALLBACK CONSOLE_HandleCtrlC( EXCEPTION_POINTERS *eptr )
 {
+    extern DWORD WINAPI CtrlRoutine( void *arg );
     HANDLE thread;
 
+    if (eptr->ExceptionRecord->ExceptionCode != CONTROL_C_EXIT) return EXCEPTION_CONTINUE_SEARCH;
+
     /* FIXME: better test whether a console is attached to this process ??? */
-    extern    unsigned CONSOLE_GetNumHistoryEntries(void);
-    if (CONSOLE_GetNumHistoryEntries() == (unsigned)-1) return 0;
+    if (CONSOLE_GetNumHistoryEntries() == (unsigned)-1) return EXCEPTION_CONTINUE_SEARCH;
 
     /* check if we have to ignore ctrl-C events */
     if (!(NtCurrentTeb()->Peb->ProcessParameters->ConsoleFlags & 1))
@@ -1059,13 +916,10 @@ int     CONSOLE_HandleCtrlC(unsigned sig)
          *    console critical section, we need another execution environment where
          *    we can wait on this critical section 
          */
-        thread = CreateThread(NULL, 0, CONSOLE_SendEventThread, (void*)CTRL_C_EVENT, 0, NULL);
-        if (thread == NULL)
-            return 0;
-
-        CloseHandle(thread);
+        thread = CreateThread(NULL, 0, CtrlRoutine, (void*)CTRL_C_EVENT, 0, NULL);
+        if (thread) CloseHandle(thread);
     }
-    return 1;
+    return EXCEPTION_CONTINUE_EXECUTION;
 }
 
 /******************************************************************
@@ -1252,12 +1106,7 @@ BOOL WINAPI WriteConsoleW(HANDLE hConsoleOutput, LPCVOID lpBuffer, DWORD nNumber
                 FIXME("Conversion not supported yet\n");
         }
         HeapFree(GetProcessHeap(), 0, ptr);
-        if (status != STATUS_SUCCESS)
-        {
-            SetLastError(RtlNtStatusToDosError(status));
-            return FALSE;
-        }
-        return TRUE;
+        return set_ntstatus( status );
     }
 
     if (!GetConsoleMode(hConsoleOutput, &mode) || !GetConsoleScreenBufferInfo(hConsoleOutput, &csbi))
@@ -1802,7 +1651,7 @@ static COORD get_console_font_size(HANDLE hConsole, DWORD index)
     return c;
 }
 
-#if defined(__i386__) && !defined(__MINGW32__)
+#if defined(__i386__) && !defined(__MINGW32__) && !defined(_MSC_VER)
 #undef GetConsoleFontSize
 DWORD WINAPI GetConsoleFontSize(HANDLE hConsole, DWORD index)
 {

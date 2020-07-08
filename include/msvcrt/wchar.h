@@ -9,7 +9,9 @@
 #define __WINE_WCHAR_H
 
 #include <corecrt_wctype.h>
+#include <corecrt_wdirect.h>
 #include <corecrt_wio.h>
+#include <corecrt_wprocess.h>
 #include <corecrt_wstdio.h>
 #include <corecrt_wstdlib.h>
 #include <corecrt_wstring.h>
@@ -27,40 +29,10 @@ extern "C" {
 
 typedef int mbstate_t;
 
-#ifndef _WDIRECT_DEFINED
-#define _WDIRECT_DEFINED
-int      __cdecl _wchdir(const wchar_t*);
-wchar_t* __cdecl _wgetcwd(wchar_t*,int);
-wchar_t* __cdecl _wgetdcwd(int,wchar_t*,int);
-int      __cdecl _wmkdir(const wchar_t*);
-int      __cdecl _wrmdir(const wchar_t*);
-#endif /* _WDIRECT_DEFINED */
-
 #ifndef _WLOCALE_DEFINED
 #define _WLOCALE_DEFINED
 wchar_t* __cdecl _wsetlocale(int,const wchar_t*);
 #endif /* _WLOCALE_DEFINED */
-
-#ifndef _WPROCESS_DEFINED
-#define _WPROCESS_DEFINED
-int      WINAPIV _wexecl(const wchar_t*,const wchar_t*,...);
-int      WINAPIV _wexecle(const wchar_t*,const wchar_t*,...);
-int      WINAPIV _wexeclp(const wchar_t*,const wchar_t*,...);
-int      WINAPIV _wexeclpe(const wchar_t*,const wchar_t*,...);
-int      __cdecl _wexecv(const wchar_t*,const wchar_t* const *);
-int      __cdecl _wexecve(const wchar_t*,const wchar_t* const *,const wchar_t* const *);
-int      __cdecl _wexecvp(const wchar_t*,const wchar_t* const *);
-int      __cdecl _wexecvpe(const wchar_t*,const wchar_t* const *,const wchar_t* const *);
-int      WINAPIV _wspawnl(int,const wchar_t*,const wchar_t*,...);
-int      WINAPIV _wspawnle(int,const wchar_t*,const wchar_t*,...);
-int      WINAPIV _wspawnlp(int,const wchar_t*,const wchar_t*,...);
-int      WINAPIV _wspawnlpe(int,const wchar_t*,const wchar_t*,...);
-int      __cdecl _wspawnv(int,const wchar_t*,const wchar_t* const *);
-int      __cdecl _wspawnve(int,const wchar_t*,const wchar_t* const *,const wchar_t* const *);
-int      __cdecl _wspawnvp(int,const wchar_t*,const wchar_t* const *);
-int      __cdecl _wspawnvpe(int,const wchar_t*,const wchar_t* const *,const wchar_t* const *);
-int      __cdecl _wsystem(const wchar_t*);
-#endif /* _WPROCESS_DEFINED */
 
 wchar_t __cdecl btowc(int);
 size_t  __cdecl mbrlen(const char *,size_t,mbstate_t*);

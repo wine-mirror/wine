@@ -28,7 +28,6 @@
 #include "winbase.h"
 #include "winnls.h"
 #include "x11drv.h"
-#include "wine/library.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 #include "wintab.h"
@@ -327,18 +326,18 @@ MAKE_FUNCPTR(XFreeDeviceState)
 
 static INT X11DRV_XInput_Init(void)
 {
-    xinput_handle = wine_dlopen(SONAME_LIBXI, RTLD_NOW, NULL, 0);
+    xinput_handle = dlopen(SONAME_LIBXI, RTLD_NOW);
     if (xinput_handle)
     {
-#define LOAD_FUNCPTR(f) if((p##f = wine_dlsym(xinput_handle, #f, NULL, 0)) == NULL) goto sym_not_found;
-        LOAD_FUNCPTR(XListInputDevices)
-        LOAD_FUNCPTR(XFreeDeviceList)
-        LOAD_FUNCPTR(XOpenDevice)
-        LOAD_FUNCPTR(XGetDeviceButtonMapping)
-        LOAD_FUNCPTR(XCloseDevice)
-        LOAD_FUNCPTR(XSelectExtensionEvent)
-        LOAD_FUNCPTR(XQueryDeviceState)
-        LOAD_FUNCPTR(XFreeDeviceState)
+#define LOAD_FUNCPTR(f) if((p##f = dlsym(xinput_handle, #f)) == NULL) goto sym_not_found
+        LOAD_FUNCPTR(XListInputDevices);
+        LOAD_FUNCPTR(XFreeDeviceList);
+        LOAD_FUNCPTR(XOpenDevice);
+        LOAD_FUNCPTR(XGetDeviceButtonMapping);
+        LOAD_FUNCPTR(XCloseDevice);
+        LOAD_FUNCPTR(XSelectExtensionEvent);
+        LOAD_FUNCPTR(XQueryDeviceState);
+        LOAD_FUNCPTR(XFreeDeviceState);
 #undef LOAD_FUNCPTR
         return 1;
     }
@@ -395,7 +394,7 @@ static BOOL match_token(const char *haystack, const char *needle)
 static BOOL is_tablet_cursor(const char *name, const char *type)
 {
     int i;
-    static const char *tablet_cursor_whitelist[] = {
+    static const char *tablet_cursor_allowlist[] = {
         "wacom",
         "wizardpen",
         "acecad",
@@ -407,10 +406,10 @@ static BOOL is_tablet_cursor(const char *name, const char *type)
         NULL
     };
 
-    for (i=0; tablet_cursor_whitelist[i] != NULL; i++) {
-        if (name && match_token(name, tablet_cursor_whitelist[i]))
+    for (i=0; tablet_cursor_allowlist[i] != NULL; i++) {
+        if (name && match_token(name, tablet_cursor_allowlist[i]))
             return TRUE;
-        if (type && match_token(type, tablet_cursor_whitelist[i]))
+        if (type && match_token(type, tablet_cursor_allowlist[i]))
             return TRUE;
     }
     return FALSE;
@@ -419,7 +418,7 @@ static BOOL is_tablet_cursor(const char *name, const char *type)
 static UINT get_cursor_type(const char *name, const char *type)
 {
     int i;
-    static const char* tablet_stylus_whitelist[] = {
+    static const char* tablet_stylus_allowlist[] = {
         "stylus",
         "wizardpen",
         "acecad",
@@ -428,14 +427,14 @@ static UINT get_cursor_type(const char *name, const char *type)
     };
 
     /* First check device type to avoid cases where name is "Pen and Eraser" and type is "ERASER" */
-    for (i=0; tablet_stylus_whitelist[i] != NULL; i++) {
-        if (type && match_token(type, tablet_stylus_whitelist[i]))
+    for (i=0; tablet_stylus_allowlist[i] != NULL; i++) {
+        if (type && match_token(type, tablet_stylus_allowlist[i]))
             return CSR_TYPE_PEN;
     }
     if (type && match_token(type, "eraser"))
         return CSR_TYPE_ERASER;
-    for (i=0; tablet_stylus_whitelist[i] != NULL; i++) {
-        if (name && match_token(name, tablet_stylus_whitelist[i]))
+    for (i=0; tablet_stylus_allowlist[i] != NULL; i++) {
+        if (name && match_token(name, tablet_stylus_allowlist[i]))
             return CSR_TYPE_PEN;
     }
     if (name && match_token(name, "eraser"))
@@ -620,7 +619,7 @@ BOOL CDECL X11DRV_LoadTabletInfo(HWND hwnddefault)
 
             if (! is_tablet_cursor(target->name, device_type))
             {
-                WARN("Skipping device %d [name %s|type %s]; not apparently a tablet cursor type device.  If this is wrong, please report it to wine-devel@winehq.org\n",
+                WARN("Skipping device %d [name %s|type %s]; not apparently a tablet cursor type device\n",
                      loop, devices[loop].name, debugstr_a(device_type));
                 break;
             }

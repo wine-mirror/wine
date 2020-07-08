@@ -42,7 +42,6 @@
 #include "mmreg.h"
 #include "msacm.h"
 #include "msacmdrv.h"
-#include "wine/library.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(gsm);
@@ -58,8 +57,8 @@ FUNCPTR(gsm_encode);
 FUNCPTR(gsm_decode);
 
 #define LOAD_FUNCPTR(f) \
-    if((p##f = wine_dlsym(libgsm_handle, #f, NULL, 0)) == NULL) { \
-        wine_dlclose(libgsm_handle, NULL, 0); \
+    if((p##f = dlsym(libgsm_handle, #f)) == NULL) { \
+        dlclose(libgsm_handle); \
         libgsm_handle = NULL; \
         return FALSE; \
     }
@@ -69,9 +68,7 @@ FUNCPTR(gsm_decode);
  */
 static BOOL GSM_drvLoad(void)
 {
-    char error[128];
-
-    libgsm_handle = wine_dlopen(SONAME_LIBGSM, RTLD_NOW, error, sizeof(error));
+    libgsm_handle = dlopen(SONAME_LIBGSM, RTLD_NOW);
     if (libgsm_handle)
     {
         LOAD_FUNCPTR(gsm_create);
@@ -83,7 +80,7 @@ static BOOL GSM_drvLoad(void)
     }
     else
     {
-        ERR("Couldn't load " SONAME_LIBGSM ": %s\n", error);
+        ERR("Couldn't load " SONAME_LIBGSM ": %s\n", dlerror());
         return FALSE;
     }
 }
@@ -94,7 +91,7 @@ static BOOL GSM_drvLoad(void)
 static LRESULT GSM_drvFree(void)
 {
     if (libgsm_handle)
-        wine_dlclose(libgsm_handle, NULL, 0);
+        dlclose(libgsm_handle);
     return 1;
 }
 

@@ -27,6 +27,35 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(bytecodewriter);
 
+static BOOL array_reserve(void **elements, unsigned int *capacity, unsigned int count, unsigned int size)
+{
+    unsigned int max_capacity, new_capacity;
+    void *new_elements;
+
+    if (count <= *capacity)
+        return TRUE;
+
+    max_capacity = ~0u / size;
+    if (count > max_capacity)
+        return FALSE;
+
+    new_capacity = max(8, *capacity);
+    while (new_capacity < count && new_capacity <= max_capacity / 2)
+        new_capacity *= 2;
+    if (new_capacity < count)
+        new_capacity = count;
+
+    if (!(new_elements = d3dcompiler_realloc(*elements, new_capacity * size)))
+    {
+        ERR("Failed to allocate memory.\n");
+        return FALSE;
+    }
+
+    *elements = new_elements;
+    *capacity = new_capacity;
+    return TRUE;
+}
+
 /****************************************************************
  * General assembler shader construction helper routines follow *
  ****************************************************************/
@@ -73,30 +102,11 @@ struct instruction *alloc_instr(unsigned int srcs) {
  *  instr: Instruction to add to the shader
  */
 BOOL add_instruction(struct bwriter_shader *shader, struct instruction *instr) {
-    struct instruction      **new_instructions;
-
     if(!shader) return FALSE;
 
-    if(shader->instr_alloc_size == 0) {
-        shader->instr = d3dcompiler_alloc(sizeof(*shader->instr) * INSTRARRAY_INITIAL_SIZE);
-        if(!shader->instr) {
-            ERR("Failed to allocate the shader instruction array\n");
-            return FALSE;
-        }
-        shader->instr_alloc_size = INSTRARRAY_INITIAL_SIZE;
-    } else if(shader->instr_alloc_size == shader->num_instrs) {
-        new_instructions = d3dcompiler_realloc(shader->instr,
-                                       sizeof(*shader->instr) * (shader->instr_alloc_size) * 2);
-        if(!new_instructions) {
-            ERR("Failed to grow the shader instruction array\n");
-            return FALSE;
-        }
-        shader->instr = new_instructions;
-        shader->instr_alloc_size = shader->instr_alloc_size * 2;
-    } else if(shader->num_instrs > shader->instr_alloc_size) {
-        ERR("More instructions than allocated. This should not happen\n");
+    if (!array_reserve((void **)&shader->instr, &shader->instr_alloc_size,
+            shader->num_instrs + 1, sizeof(*shader->instr)))
         return FALSE;
-    }
 
     shader->instr[shader->num_instrs] = instr;
     shader->num_instrs++;
@@ -298,6 +308,52 @@ BOOL record_sampler(struct bwriter_shader *shader, DWORD samptype, DWORD mod, DW
     return TRUE;
 }
 
+struct bytecode_buffer
+{
+    DWORD *data;
+    unsigned int size, alloc_size;
+    HRESULT state;
+};
+
+struct bc_writer;
+
+typedef void (*instr_writer)(struct bc_writer *writer, const struct instruction *instr,
+        struct bytecode_buffer *buffer);
+
+struct bytecode_backend
+{
+    void (*header)(struct bc_writer *writer, const struct bwriter_shader *shader,
+            struct bytecode_buffer *buffer);
+    void (*end)(struct bc_writer *writer, const struct bwriter_shader *shader,
+            struct bytecode_buffer *buffer);
+    void (*srcreg)(struct bc_writer *writer, const struct shader_reg *reg,
+            struct bytecode_buffer *buffer);
+    void (*dstreg)(struct bc_writer *writer, const struct shader_reg *reg,
+            struct bytecode_buffer *buffer, DWORD shift, DWORD mod);
+    void (*opcode)(struct bc_writer *writer, const struct instruction *instr,
+            DWORD token, struct bytecode_buffer *buffer);
+
+    const struct instr_handler_table
+    {
+        DWORD opcode;
+        instr_writer func;
+    } *instructions;
+};
+
+struct bc_writer
+{
+    const struct bytecode_backend *funcs;
+    const struct bwriter_shader *shader;
+
+    HRESULT state;
+
+    /* Vertex shader varying mapping. */
+    DWORD oPos_regnum, oD_regnum[2], oT_regnum[8], oFog_regnum, oFog_mask, oPts_regnum, oPts_mask;
+
+    /* Pixel shader varying mapping. */
+    DWORD t_regnum[8], v_regnum[2];
+};
+
 
 /* shader bytecode buffer manipulation functions.
  * allocate_buffer creates a new buffer structure, put_dword adds a new
@@ -310,13 +366,6 @@ static struct bytecode_buffer *allocate_buffer(void) {
 
     ret = d3dcompiler_alloc(sizeof(*ret));
     if(!ret) return NULL;
-
-    ret->alloc_size = BYTECODEBUFFER_INITIAL_SIZE;
-    ret->data = d3dcompiler_alloc(sizeof(DWORD) * ret->alloc_size);
-    if(!ret->data) {
-        d3dcompiler_free(ret);
-        return NULL;
-    }
     ret->state = S_OK;
     return ret;
 }
@@ -324,22 +373,31 @@ static struct bytecode_buffer *allocate_buffer(void) {
 static void put_dword(struct bytecode_buffer *buffer, DWORD value) {
     if(FAILED(buffer->state)) return;
 
-    if(buffer->alloc_size == buffer->size) {
-        DWORD *newarray;
-        buffer->alloc_size *= 2;
-        newarray = d3dcompiler_realloc(buffer->data,
-                               sizeof(DWORD) * buffer->alloc_size);
-        if(!newarray) {
-            ERR("Failed to grow the buffer data memory\n");
-            buffer->state = E_OUTOFMEMORY;
-            return;
-        }
-        buffer->data = newarray;
+    if (!array_reserve((void **)&buffer->data, &buffer->alloc_size, buffer->size + 1, sizeof(*buffer->data)))
+    {
+        buffer->state = E_OUTOFMEMORY;
+        return;
     }
+
     buffer->data[buffer->size++] = value;
 }
 
 /* bwriter -> d3d9 conversion functions. */
+
+static DWORD sm1_version(const struct bwriter_shader *shader)
+{
+    switch (shader->type)
+    {
+    case ST_VERTEX:
+        return D3DVS_VERSION(shader->major_version, shader->minor_version);
+    case ST_PIXEL:
+        return D3DPS_VERSION(shader->major_version, shader->minor_version);
+    default:
+        ERR("Invalid shader type %#x.\n", shader->type);
+        return 0;
+    }
+}
+
 static DWORD d3d9_swizzle(DWORD bwriter_swizzle)
 {
     DWORD ret = 0;
@@ -577,9 +635,9 @@ static DWORD d3dsp_register( D3DSHADER_PARAM_REGISTER_TYPE type, DWORD num )
 /******************************************************
  * Implementation of the writer functions starts here *
  ******************************************************/
-static void write_declarations(struct bc_writer *This,
-                               struct bytecode_buffer *buffer, BOOL len,
-                               const struct declaration *decls, unsigned int num, DWORD type) {
+static void write_declarations(struct bc_writer *This, struct bytecode_buffer *buffer,
+        const struct declaration *decls, unsigned int num, DWORD type)
+{
     DWORD i;
     DWORD instr_dcl = D3DSIO_DCL;
     DWORD token;
@@ -587,9 +645,8 @@ static void write_declarations(struct bc_writer *This,
 
     ZeroMemory(&reg, sizeof(reg));
 
-    if(len) {
+    if (This->shader->major_version > 1)
         instr_dcl |= 2 << D3DSI_INSTLENGTH_SHIFT;
-    }
 
     for(i = 0; i < num; i++) {
         if(decls[i].builtin) continue;
@@ -744,7 +801,7 @@ static void vs_1_x_header(struct bc_writer *This, const struct bwriter_shader *s
         return;
     }
 
-    write_declarations(This, buffer, FALSE, shader->inputs, shader->num_inputs, BWRITERSPR_INPUT);
+    write_declarations(This, buffer, shader->inputs, shader->num_inputs, BWRITERSPR_INPUT);
     write_constF(shader, buffer, FALSE);
 }
 
@@ -924,7 +981,8 @@ static void vs_12_dstreg(struct bc_writer *This, const struct shader_reg *reg,
             break;
 
         case BWRITERSPR_PREDICATE:
-            if(This->version != BWRITERVS_VERSION(2, 1)){
+            if (This->shader->major_version != 2 || This->shader->minor_version != 1)
+            {
                 WARN("Predicate register is allowed only in vs_2_x\n");
                 This->state = E_INVALIDARG;
                 return;
@@ -1553,7 +1611,7 @@ static void vs_2_header(struct bc_writer *This,
         return;
     }
 
-    write_declarations(This, buffer, TRUE, shader->inputs, shader->num_inputs, BWRITERSPR_INPUT);
+    write_declarations(This, buffer, shader->inputs, shader->num_inputs, BWRITERSPR_INPUT);
     write_constF(shader, buffer, TRUE);
     write_constB(shader, buffer, TRUE);
     write_constI(shader, buffer, TRUE);
@@ -1619,7 +1677,8 @@ static void vs_2_srcreg(struct bc_writer *This,
             break;
 
         case BWRITERSPR_PREDICATE:
-            if(This->version != BWRITERVS_VERSION(2, 1)){
+            if (This->shader->major_version != 2 || This->shader->minor_version != 1)
+            {
                 WARN("Predicate register is allowed only in vs_2_x\n");
                 This->state = E_INVALIDARG;
                 return;
@@ -1819,7 +1878,7 @@ static void ps_2_header(struct bc_writer *This, const struct bwriter_shader *sha
         return;
     }
 
-    write_declarations(This, buffer, TRUE, shader->inputs, shader->num_inputs, BWRITERSPR_INPUT);
+    write_declarations(This, buffer, shader->inputs, shader->num_inputs, BWRITERSPR_INPUT);
     write_samplers(shader, buffer);
     write_constF(shader, buffer, TRUE);
     write_constB(shader, buffer, TRUE);
@@ -1856,7 +1915,8 @@ static void ps_2_srcreg(struct bc_writer *This,
             break;
 
         case BWRITERSPR_PREDICATE:
-            if(This->version != BWRITERPS_VERSION(2, 1)){
+            if (This->shader->minor_version == 0)
+            {
                 WARN("Predicate register not supported in ps_2_0\n");
                 This->state = E_INVALIDARG;
             }
@@ -1902,7 +1962,8 @@ static void ps_2_0_dstreg(struct bc_writer *This,
             break;
 
         case BWRITERSPR_PREDICATE:
-            if(This->version != BWRITERPS_VERSION(2, 1)){
+            if (This->shader->minor_version == 0)
+            {
                 WARN("Predicate register not supported in ps_2_0\n");
                 This->state = E_INVALIDARG;
             }
@@ -2046,8 +2107,8 @@ static const struct bytecode_backend ps_2_x_backend = {
 };
 
 static void sm_3_header(struct bc_writer *This, const struct bwriter_shader *shader, struct bytecode_buffer *buffer) {
-    write_declarations(This, buffer, TRUE, shader->inputs, shader->num_inputs, BWRITERSPR_INPUT);
-    write_declarations(This, buffer, TRUE, shader->outputs, shader->num_outputs, BWRITERSPR_OUTPUT);
+    write_declarations(This, buffer, shader->inputs, shader->num_inputs, BWRITERSPR_INPUT);
+    write_declarations(This, buffer, shader->outputs, shader->num_outputs, BWRITERSPR_OUTPUT);
     write_constF(shader, buffer, TRUE);
     write_constB(shader, buffer, TRUE);
     write_constI(shader, buffer, TRUE);
@@ -2057,6 +2118,7 @@ static void sm_3_header(struct bc_writer *This, const struct bwriter_shader *sha
 static void sm_3_srcreg(struct bc_writer *This,
                         const struct shader_reg *reg,
                         struct bytecode_buffer *buffer) {
+    const struct bwriter_shader *shader = This->shader;
     DWORD token = (1u << 31); /* Bit 31 of registers is 1 */
     DWORD d3d9reg;
 
@@ -2066,14 +2128,16 @@ static void sm_3_srcreg(struct bc_writer *This,
     token |= d3d9_srcmod(reg->srcmod);
 
     if(reg->rel_reg) {
-        if(reg->type == BWRITERSPR_CONST && This->version == BWRITERPS_VERSION(3, 0)) {
+        if (reg->type == BWRITERSPR_CONST && shader->type == ST_PIXEL)
+        {
             WARN("c%u[...] is unsupported in ps_3_0\n", reg->regnum);
             This->state = E_INVALIDARG;
             return;
         }
-        if(((reg->rel_reg->type == BWRITERSPR_ADDR && This->version == BWRITERVS_VERSION(3, 0)) ||
-           reg->rel_reg->type == BWRITERSPR_LOOP) &&
-           reg->rel_reg->regnum == 0) {
+
+        if (((reg->rel_reg->type == BWRITERSPR_ADDR && shader->type == ST_VERTEX)
+                || reg->rel_reg->type == BWRITERSPR_LOOP) && reg->rel_reg->regnum == 0)
+        {
             token |= D3DVS_ADDRMODE_RELATIVE & D3DVS_ADDRESSMODE_MASK;
         } else {
             WARN("Unsupported relative addressing register\n");
@@ -2096,12 +2160,13 @@ static void sm_3_dstreg(struct bc_writer *This,
                         const struct shader_reg *reg,
                         struct bytecode_buffer *buffer,
                         DWORD shift, DWORD mod) {
+    const struct bwriter_shader *shader = This->shader;
     DWORD token = (1u << 31); /* Bit 31 of registers is 1 */
     DWORD d3d9reg;
 
     if(reg->rel_reg) {
-        if(This->version == BWRITERVS_VERSION(3, 0) &&
-           reg->type == BWRITERSPR_OUTPUT) {
+        if (shader->type == ST_VERTEX && reg->type == BWRITERSPR_OUTPUT)
+        {
             token |= D3DVS_ADDRMODE_RELATIVE & D3DVS_ADDRESSMODE_MASK;
         } else {
             WARN("Relative addressing not supported for this shader type or register type\n");
@@ -2262,187 +2327,29 @@ static const struct bytecode_backend ps_3_backend = {
     ps_3_handlers
 };
 
-static void init_vs10_dx9_writer(struct bc_writer *writer) {
-    TRACE("Creating DirectX9 vertex shader 1.0 writer\n");
-    writer->funcs = &vs_1_x_backend;
+static const struct
+{
+    enum shader_type type;
+    unsigned char major, minor;
+    const struct bytecode_backend *backend;
 }
+shader_backends[] =
+{
+    {ST_VERTEX, 1, 0, &vs_1_x_backend},
+    {ST_VERTEX, 1, 1, &vs_1_x_backend},
+    {ST_VERTEX, 2, 0, &vs_2_0_backend},
+    {ST_VERTEX, 2, 1, &vs_2_x_backend},
+    {ST_VERTEX, 3, 0, &vs_3_backend},
 
-static void init_vs11_dx9_writer(struct bc_writer *writer) {
-    TRACE("Creating DirectX9 vertex shader 1.1 writer\n");
-    writer->funcs = &vs_1_x_backend;
-}
-
-static void init_vs20_dx9_writer(struct bc_writer *writer) {
-    TRACE("Creating DirectX9 vertex shader 2.0 writer\n");
-    writer->funcs = &vs_2_0_backend;
-}
-
-static void init_vs2x_dx9_writer(struct bc_writer *writer) {
-    TRACE("Creating DirectX9 vertex shader 2.x writer\n");
-    writer->funcs = &vs_2_x_backend;
-}
-
-static void init_vs30_dx9_writer(struct bc_writer *writer) {
-    TRACE("Creating DirectX9 vertex shader 3.0 writer\n");
-    writer->funcs = &vs_3_backend;
-}
-
-static void init_ps10_dx9_writer(struct bc_writer *writer) {
-    TRACE("Creating DirectX9 pixel shader 1.0 writer\n");
-    writer->funcs = &ps_1_0123_backend;
-}
-
-static void init_ps11_dx9_writer(struct bc_writer *writer) {
-    TRACE("Creating DirectX9 pixel shader 1.1 writer\n");
-    writer->funcs = &ps_1_0123_backend;
-}
-
-static void init_ps12_dx9_writer(struct bc_writer *writer) {
-    TRACE("Creating DirectX9 pixel shader 1.2 writer\n");
-    writer->funcs = &ps_1_0123_backend;
-}
-
-static void init_ps13_dx9_writer(struct bc_writer *writer) {
-    TRACE("Creating DirectX9 pixel shader 1.3 writer\n");
-    writer->funcs = &ps_1_0123_backend;
-}
-
-static void init_ps14_dx9_writer(struct bc_writer *writer) {
-    TRACE("Creating DirectX9 pixel shader 1.4 writer\n");
-    writer->funcs = &ps_1_4_backend;
-}
-
-static void init_ps20_dx9_writer(struct bc_writer *writer) {
-    TRACE("Creating DirectX9 pixel shader 2.0 writer\n");
-    writer->funcs = &ps_2_0_backend;
-}
-
-static void init_ps2x_dx9_writer(struct bc_writer *writer) {
-    TRACE("Creating DirectX9 pixel shader 2.x writer\n");
-    writer->funcs = &ps_2_x_backend;
-}
-
-static void init_ps30_dx9_writer(struct bc_writer *writer) {
-    TRACE("Creating DirectX9 pixel shader 3.0 writer\n");
-    writer->funcs = &ps_3_backend;
-}
-
-static struct bc_writer *create_writer(DWORD version, DWORD dxversion) {
-    struct bc_writer *ret = d3dcompiler_alloc(sizeof(*ret));
-
-    if(!ret) {
-        WARN("Failed to allocate a bytecode writer instance\n");
-        return NULL;
-    }
-
-    switch(version) {
-        case BWRITERVS_VERSION(1, 0):
-            if(dxversion != 9) {
-                WARN("Unsupported dxversion for vertex shader 1.0 requested: %u\n", dxversion);
-                goto fail;
-            }
-            init_vs10_dx9_writer(ret);
-            break;
-        case BWRITERVS_VERSION(1, 1):
-            if(dxversion != 9) {
-                WARN("Unsupported dxversion for vertex shader 1.1 requested: %u\n", dxversion);
-                goto fail;
-            }
-            init_vs11_dx9_writer(ret);
-            break;
-        case BWRITERVS_VERSION(2, 0):
-            if(dxversion != 9) {
-                WARN("Unsupported dxversion for vertex shader 2.0 requested: %u\n", dxversion);
-                goto fail;
-            }
-            init_vs20_dx9_writer(ret);
-            break;
-        case BWRITERVS_VERSION(2, 1):
-            if(dxversion != 9) {
-                WARN("Unsupported dxversion for vertex shader 2.x requested: %u\n", dxversion);
-                goto fail;
-            }
-            init_vs2x_dx9_writer(ret);
-            break;
-        case BWRITERVS_VERSION(3, 0):
-            if(dxversion != 9) {
-                WARN("Unsupported dxversion for vertex shader 3.0 requested: %u\n", dxversion);
-                goto fail;
-            }
-            init_vs30_dx9_writer(ret);
-            break;
-
-        case BWRITERPS_VERSION(1, 0):
-            if(dxversion != 9) {
-                WARN("Unsupported dxversion for pixel shader 1.0 requested: %u\n", dxversion);
-                goto fail;
-            }
-            init_ps10_dx9_writer(ret);
-            break;
-        case BWRITERPS_VERSION(1, 1):
-            if(dxversion != 9) {
-                WARN("Unsupported dxversion for pixel shader 1.1 requested: %u\n", dxversion);
-                goto fail;
-            }
-            init_ps11_dx9_writer(ret);
-            break;
-        case BWRITERPS_VERSION(1, 2):
-            if(dxversion != 9) {
-                WARN("Unsupported dxversion for pixel shader 1.2 requested: %u\n", dxversion);
-                goto fail;
-            }
-            init_ps12_dx9_writer(ret);
-            break;
-        case BWRITERPS_VERSION(1, 3):
-            if(dxversion != 9) {
-                WARN("Unsupported dxversion for pixel shader 1.3 requested: %u\n", dxversion);
-                goto fail;
-            }
-            init_ps13_dx9_writer(ret);
-            break;
-        case BWRITERPS_VERSION(1, 4):
-            if(dxversion != 9) {
-                WARN("Unsupported dxversion for pixel shader 1.4 requested: %u\n", dxversion);
-                goto fail;
-            }
-            init_ps14_dx9_writer(ret);
-            break;
-
-        case BWRITERPS_VERSION(2, 0):
-            if(dxversion != 9) {
-                WARN("Unsupported dxversion for pixel shader 2.0 requested: %u\n", dxversion);
-                goto fail;
-            }
-            init_ps20_dx9_writer(ret);
-            break;
-
-        case BWRITERPS_VERSION(2, 1):
-            if(dxversion != 9) {
-                WARN("Unsupported dxversion for pixel shader 2.x requested: %u\n", dxversion);
-                goto fail;
-            }
-            init_ps2x_dx9_writer(ret);
-            break;
-
-        case BWRITERPS_VERSION(3, 0):
-            if(dxversion != 9) {
-                WARN("Unsupported dxversion for pixel shader 3.0 requested: %u\n", dxversion);
-                goto fail;
-            }
-            init_ps30_dx9_writer(ret);
-            break;
-
-        default:
-            WARN("Unexpected shader version requested: %08x\n", version);
-            goto fail;
-    }
-    ret->version = version;
-    return ret;
-
-fail:
-    d3dcompiler_free(ret);
-    return NULL;
-}
+    {ST_PIXEL, 1, 0, &ps_1_0123_backend},
+    {ST_PIXEL, 1, 1, &ps_1_0123_backend},
+    {ST_PIXEL, 1, 2, &ps_1_0123_backend},
+    {ST_PIXEL, 1, 3, &ps_1_0123_backend},
+    {ST_PIXEL, 1, 4, &ps_1_4_backend},
+    {ST_PIXEL, 2, 0, &ps_2_0_backend},
+    {ST_PIXEL, 2, 1, &ps_2_x_backend},
+    {ST_PIXEL, 3, 0, &ps_3_backend},
+};
 
 static HRESULT call_instr_handler(struct bc_writer *writer,
                                   const struct instruction *instr,
@@ -2466,7 +2373,7 @@ static HRESULT call_instr_handler(struct bc_writer *writer,
     return E_INVALIDARG;
 }
 
-HRESULT SlWriteBytecode(const struct bwriter_shader *shader, int dxversion, DWORD **result, DWORD *size)
+HRESULT shader_write_bytecode(const struct bwriter_shader *shader, DWORD **result, DWORD *size)
 {
     struct bc_writer *writer;
     struct bytecode_buffer *buffer = NULL;
@@ -2477,15 +2384,31 @@ HRESULT SlWriteBytecode(const struct bwriter_shader *shader, int dxversion, DWOR
         ERR("NULL shader structure, aborting\n");
         return E_FAIL;
     }
-    writer = create_writer(shader->version, dxversion);
-    *result = NULL;
 
-    if(!writer) {
-        WARN("Could not create a bytecode writer instance. Either unsupported version\n");
-        WARN("or out of memory\n");
-        hr = E_FAIL;
-        goto error;
+    if (!(writer = d3dcompiler_alloc(sizeof(*writer))))
+        return E_OUTOFMEMORY;
+
+    for (i = 0; i < ARRAY_SIZE(shader_backends); ++i)
+    {
+        if (shader->type == shader_backends[i].type
+                && shader->major_version == shader_backends[i].major
+                && shader->minor_version == shader_backends[i].minor)
+        {
+            writer->funcs = shader_backends[i].backend;
+            break;
+        }
     }
+
+    if (!writer->funcs)
+    {
+        FIXME("Unsupported shader type %#x, version %u.%u.\n",
+                shader->type, shader->major_version, shader->minor_version);
+        d3dcompiler_free(writer);
+        return E_NOTIMPL;
+    }
+
+    writer->shader = shader;
+    *result = NULL;
 
     buffer = allocate_buffer();
     if(!buffer) {
@@ -2495,7 +2418,7 @@ HRESULT SlWriteBytecode(const struct bwriter_shader *shader, int dxversion, DWOR
     }
 
     /* Write shader type and version */
-    put_dword(buffer, shader->version);
+    put_dword(buffer, sm1_version(shader));
 
     writer->funcs->header(writer, shader, buffer);
     if(FAILED(writer->state)) {

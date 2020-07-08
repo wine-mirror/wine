@@ -395,7 +395,7 @@ struct reader
     WS_READ_CALLBACK             input_cb;
     void                        *input_cb_state;
     struct xmlbuf               *input_buf;
-    const unsigned char         *input_data;
+    unsigned char               *input_conv;
     ULONG                        input_size;
     ULONG                        text_conv_offset;
     unsigned char               *stream_buf;
@@ -519,6 +519,7 @@ static void free_reader( struct reader *reader )
     clear_prefixes( reader->prefixes, reader->nb_prefixes );
     heap_free( reader->prefixes );
     heap_free( reader->stream_buf );
+    heap_free( reader->input_conv );
 
     reader->cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection( &reader->cs );
@@ -2654,7 +2655,17 @@ static HRESULT read_node_text( struct reader * );
 
 static HRESULT read_startelement_text( struct reader *reader )
 {
+    HRESULT hr;
+
+    if (read_cmp( reader, "<?", 2 ) == S_OK)
+    {
+        if ((hr = read_xmldecl( reader )) != S_OK) return hr;
+    }
     read_skip_whitespace( reader );
+    if (read_cmp( reader, "<", 1 ) == S_OK)
+    {
+        if ((hr = read_element_text( reader )) != S_OK) return hr;
+    }
     if (read_cmp( reader, "/>", 2 ) == S_OK)
     {
         read_skip( reader, 2 );
@@ -3021,8 +3032,7 @@ static HRESULT read_node_text( struct reader *reader )
         else if (reader->state == READER_STATE_CDATA) return read_endcdata( reader );
         else if (read_cmp( reader, "<?", 2 ) == S_OK)
         {
-            hr = read_xmldecl( reader );
-            if (FAILED( hr )) return hr;
+            if ((hr = read_xmldecl( reader )) != S_OK) return hr;
         }
         else if (read_cmp( reader, "</", 2 ) == S_OK) return read_endelement_text( reader );
         else if (read_cmp( reader, "<![CDATA[", 9 ) == S_OK) return read_startcdata( reader );
@@ -4334,9 +4344,24 @@ static HRESULT get_text( struct reader *reader, WS_TYPE_MAPPING mapping, const W
     {
     case WS_ATTRIBUTE_TYPE_MAPPING:
     {
-        ULONG index;
-        if (!(*found = find_attribute( reader, localname, ns, &index ))) return S_OK;
-        return get_attribute_text( reader, index, ret );
+        ULONG i;
+        WS_XML_ELEMENT_NODE *elem = &reader->current->hdr;
+
+        *found = FALSE;
+        for (i = 0; i < elem->attributeCount; i++)
+        {
+            const WS_XML_STRING *localname2 = elem->attributes[i]->localName;
+            const WS_XML_STRING *ns2 = elem->attributes[i]->ns;
+
+            if (cmp_name( localname->bytes, localname->length, localname2->bytes, localname2->length )) continue;
+            if (!ns->length || !cmp_name( ns->bytes, ns->length, ns2->bytes, ns2->length ))
+            {
+                *found = TRUE;
+                break;
+            }
+        }
+        if (!*found) return S_OK;
+        return get_attribute_text( reader, i, ret );
     }
     case WS_ELEMENT_TYPE_MAPPING:
     case WS_ELEMENT_CONTENT_TYPE_MAPPING:
@@ -5049,6 +5074,13 @@ static HRESULT text_to_uint64( const WS_XML_TEXT *text, UINT64 *val )
     {
         const WS_XML_UTF8_TEXT *text_utf8 = (const WS_XML_UTF8_TEXT *)text;
         hr = str_to_uint64( text_utf8->value.bytes, text_utf8->value.length, MAX_UINT64, val );
+        break;
+    }
+    case WS_XML_TEXT_TYPE_INT32:
+    {
+        const WS_XML_INT32_TEXT *text_int32 = (const WS_XML_INT32_TEXT *)text;
+        *val = text_int32->value;
+        hr = S_OK;
         break;
     }
     case WS_XML_TEXT_TYPE_INT64:
@@ -5937,6 +5969,29 @@ static HRESULT read_type_qname( struct reader *reader, WS_TYPE_MAPPING mapping,
     return S_OK;
 }
 
+static HRESULT read_type_description( struct reader *reader, WS_TYPE_MAPPING mapping,
+                                      const WS_XML_STRING *localname, const WS_XML_STRING *ns,
+                                      const WS_STRUCT_DESCRIPTION *desc, WS_READ_OPTION option,
+                                      WS_HEAP *heap, void *ret, ULONG size, BOOL *found )
+{
+    switch (option)
+    {
+    case WS_READ_REQUIRED_POINTER:
+    case WS_READ_OPTIONAL_POINTER:
+    {
+        if (size != sizeof(desc)) return E_INVALIDARG;
+        *(const WS_STRUCT_DESCRIPTION **)ret = desc;
+        *found = TRUE;
+        break;
+    }
+    default:
+        FIXME( "read option %u not supported\n", option );
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
+}
+
 static BOOL is_empty_text_node( const struct node *node )
 {
     const WS_XML_TEXT_NODE *text = (const WS_XML_TEXT_NODE *)node;
@@ -6078,6 +6133,9 @@ ULONG get_type_size( WS_TYPE type, const void *desc )
         const WS_UNION_DESCRIPTION *desc_union = desc;
         return desc_union->size;
     }
+    case WS_ANY_ATTRIBUTES_TYPE:
+        return 0;
+
     default:
         ERR( "unhandled type %u\n", type );
         return 0;
@@ -6131,7 +6189,8 @@ static WS_READ_OPTION get_field_read_option( WS_TYPE type, ULONG options )
     }
 }
 
-static HRESULT read_type_field( struct reader *, const WS_FIELD_DESCRIPTION *, WS_HEAP *, char *, ULONG );
+static HRESULT read_type_field( struct reader *, const WS_STRUCT_DESCRIPTION *, const WS_FIELD_DESCRIPTION *,
+                                WS_HEAP *, char *, ULONG );
 
 static HRESULT read_type_union( struct reader *reader, const WS_UNION_DESCRIPTION *desc, WS_HEAP *heap, void *ret,
                                 ULONG size, BOOL *found )
@@ -6159,7 +6218,7 @@ static HRESULT read_type_union( struct reader *reader, const WS_UNION_DESCRIPTIO
     else
     {
         ULONG offset = desc->fields[i]->field.offset;
-        if ((hr = read_type_field( reader, &desc->fields[i]->field, heap, ret, offset )) != S_OK) return hr;
+        if ((hr = read_type_field( reader, NULL, &desc->fields[i]->field, heap, ret, offset )) != S_OK) return hr;
         *(int *)((char *)ret + desc->enumOffset) = desc->fields[i]->value;
     }
 
@@ -6263,8 +6322,8 @@ static HRESULT read_type_text( struct reader *reader, const WS_FIELD_DESCRIPTION
     return hr;
 }
 
-static HRESULT read_type_field( struct reader *reader, const WS_FIELD_DESCRIPTION *desc, WS_HEAP *heap, char *buf,
-                                ULONG offset )
+static HRESULT read_type_field( struct reader *reader, const WS_STRUCT_DESCRIPTION *desc_struct,
+                                const WS_FIELD_DESCRIPTION *desc, WS_HEAP *heap, char *buf, ULONG offset )
 {
     char *ptr;
     WS_READ_OPTION option;
@@ -6289,8 +6348,9 @@ static HRESULT read_type_field( struct reader *reader, const WS_FIELD_DESCRIPTIO
     switch (desc->mapping)
     {
     case WS_TYPE_ATTRIBUTE_FIELD_MAPPING:
-        FIXME( "WS_TYPE_ATTRIBUTE_FIELD_MAPPING not supported\n" );
-        return S_OK;
+        hr = read_type( reader, WS_ATTRIBUTE_TYPE_MAPPING, desc->type, desc->localName, desc->ns,
+                        desc_struct, option, heap, ptr, size, &found );
+        break;
 
     case WS_ATTRIBUTE_FIELD_MAPPING:
         hr = read_type( reader, WS_ATTRIBUTE_TYPE_MAPPING, desc->type, desc->localName, desc->ns,
@@ -6390,7 +6450,7 @@ static HRESULT read_type_struct( struct reader *reader, WS_TYPE_MAPPING mapping,
     for (i = 0; i < desc->fieldCount; i++)
     {
         offset = desc->fields[i]->offset;
-        if ((hr = read_type_field( reader, desc->fields[i], heap, buf, offset )) != S_OK) break;
+        if ((hr = read_type_field( reader, desc, desc->fields[i], heap, buf, offset )) != S_OK) break;
     }
 
     switch (option)
@@ -6617,6 +6677,10 @@ static HRESULT read_type( struct reader *reader, WS_TYPE_MAPPING mapping, WS_TYP
         hr = read_type_qname( reader, mapping, localname, ns, desc, option, heap, value, size, found );
         break;
 
+    case WS_DESCRIPTION_TYPE:
+        hr = read_type_description( reader, mapping, localname, ns, desc, option, heap, value, size, found );
+        break;
+
     case WS_STRUCT_TYPE:
         hr = read_type_struct( reader, mapping, localname, ns, desc, option, heap, value, size, found );
         break;
@@ -6830,18 +6894,40 @@ static WS_CHARSET detect_charset( const unsigned char *data, ULONG size, ULONG *
     return ret;
 }
 
-static void set_input_buffer( struct reader *reader, const unsigned char *data, ULONG size )
+static HRESULT utf16le_to_utf8( const unsigned char *data, ULONG size, unsigned char **buf, ULONG *buflen )
+{
+    if (size % sizeof(WCHAR)) return E_INVALIDARG;
+    *buflen = WideCharToMultiByte( CP_UTF8, 0, (const WCHAR *)data, size / sizeof(WCHAR), NULL, 0, NULL, NULL );
+    if (!(*buf = heap_alloc( *buflen ))) return E_OUTOFMEMORY;
+    WideCharToMultiByte( CP_UTF8, 0, (const WCHAR *)data, size / sizeof(WCHAR), (char *)*buf, *buflen, NULL, NULL );
+    return S_OK;
+}
+
+static HRESULT set_input_buffer( struct reader *reader, const unsigned char *data, ULONG size )
 {
     reader->input_type  = WS_XML_READER_INPUT_TYPE_BUFFER;
     reader->input_buf   = NULL;
-    reader->input_data  = data;
-    reader->input_size  = size;
 
-    reader->read_size   = reader->input_size;
-    reader->read_pos    = 0;
-    reader->read_bufptr = reader->input_data;
+    if (reader->input_enc == WS_XML_READER_ENCODING_TYPE_TEXT && reader->input_charset == WS_CHARSET_UTF16LE)
+    {
+        unsigned char *buf;
+        ULONG buflen;
+        HRESULT hr;
 
+        if ((hr = utf16le_to_utf8( data, size, &buf, &buflen )) != S_OK) return hr;
+        heap_free( reader->input_conv );
+        reader->read_bufptr = reader->input_conv = buf;
+        reader->read_size   = reader->input_size = buflen;
+    }
+    else
+    {
+        reader->read_bufptr = data;
+        reader->read_size   = reader->input_size = size;
+    }
+
+    reader->read_pos         = 0;
     reader->text_conv_offset = 0;
+    return S_OK;
 }
 
 static void set_input_stream( struct reader *reader, WS_READ_CALLBACK callback, void *state )
@@ -6850,7 +6936,6 @@ static void set_input_stream( struct reader *reader, WS_READ_CALLBACK callback, 
     reader->input_cb       = callback;
     reader->input_cb_state = state;
     reader->input_buf      = NULL;
-    reader->input_data     = reader->stream_buf;
     reader->input_size     = STREAM_BUFSIZE;
 
     if (reader->read_pos >= reader->read_size) reader->read_size = 0;
@@ -6859,9 +6944,8 @@ static void set_input_stream( struct reader *reader, WS_READ_CALLBACK callback, 
         memmove( reader->stream_buf, reader->stream_buf + reader->read_pos, reader->read_size - reader->read_pos );
         reader->read_size -= reader->read_pos;
     }
-    reader->read_pos    = 0;
-    reader->read_bufptr = reader->input_data;
-
+    reader->read_pos         = 0;
+    reader->read_bufptr      = reader->stream_buf;
     reader->text_conv_offset = 0;
 }
 
@@ -6934,7 +7018,8 @@ HRESULT WINAPI WsSetInput( WS_XML_READER *handle, const WS_XML_READER_ENCODING *
     case WS_XML_READER_INPUT_TYPE_BUFFER:
     {
         const WS_XML_READER_BUFFER_INPUT *buf = (const WS_XML_READER_BUFFER_INPUT *)input;
-        set_input_buffer( reader, (const unsigned char *)buf->encodedData + offset, buf->encodedDataSize - offset );
+        hr = set_input_buffer( reader, (const unsigned char *)buf->encodedData + offset, buf->encodedDataSize - offset );
+        if (hr != S_OK) goto done;
         break;
     }
     case WS_XML_READER_INPUT_TYPE_STREAM:
@@ -6963,22 +7048,35 @@ done:
     return hr;
 }
 
-static void set_input_xml_buffer( struct reader *reader, struct xmlbuf *buf )
+static HRESULT set_input_xml_buffer( struct reader *reader, struct xmlbuf *xmlbuf )
 {
     reader->input_type    = WS_XML_READER_INPUT_TYPE_BUFFER;
-    reader->input_buf     = buf;
-    reader->input_enc     = buf->encoding;
-    reader->input_charset = buf->charset;
-    reader->input_data    = buf->bytes.bytes;
-    reader->input_size    = buf->bytes.length;
-    reader->dict_static   = buf->dict_static;
-    reader->dict          = buf->dict;
+    reader->input_buf     = xmlbuf;
+    reader->input_enc     = xmlbuf->encoding;
+    reader->input_charset = xmlbuf->charset;
+    reader->dict_static   = xmlbuf->dict_static;
+    reader->dict          = xmlbuf->dict;
 
-    reader->read_size   = reader->input_size;
-    reader->read_pos    = 0;
-    reader->read_bufptr = reader->input_data;
+    if (reader->input_enc == WS_XML_READER_ENCODING_TYPE_TEXT && reader->input_charset == WS_CHARSET_UTF16LE)
+    {
+        unsigned char *buf;
+        ULONG buflen;
+        HRESULT hr;
 
+        if ((hr = utf16le_to_utf8( xmlbuf->bytes.bytes, xmlbuf->bytes.length, &buf, &buflen )) != S_OK) return hr;
+        heap_free( reader->input_conv );
+        reader->read_bufptr = reader->input_conv = buf;
+        reader->read_size   = reader->input_size = buflen;
+    }
+    else
+    {
+        reader->read_bufptr = xmlbuf->bytes.bytes;
+        reader->read_size   = reader->input_size = xmlbuf->bytes.length;
+    }
+
+    reader->read_pos         = 0;
     reader->text_conv_offset = 0;
+    return S_OK;
 }
 
 /**************************************************************************
@@ -7015,7 +7113,7 @@ HRESULT WINAPI WsSetInputToBuffer( WS_XML_READER *handle, WS_XML_BUFFER *buffer,
     }
 
     if ((hr = init_reader( reader )) != S_OK) goto done;
-    set_input_xml_buffer( reader, xmlbuf );
+    if ((hr = set_input_xml_buffer( reader, xmlbuf )) != S_OK) goto done;
 
     if (!(node = alloc_node( WS_XML_NODE_TYPE_BOF ))) hr = E_OUTOFMEMORY;
     else read_insert_bof( reader, node );
@@ -7385,7 +7483,7 @@ static ULONG get_field_size( const WS_FIELD_DESCRIPTION *desc )
 static HRESULT read_param( struct reader *reader, const WS_FIELD_DESCRIPTION *desc, WS_HEAP *heap, void *ret )
 {
     if (!ret && !(ret = ws_alloc_zero( heap, get_field_size(desc) ))) return WS_E_QUOTA_EXCEEDED;
-    return read_type_field( reader, desc, heap, ret, 0 );
+    return read_type_field( reader, NULL, desc, heap, ret, 0 );
 }
 
 static HRESULT read_param_array( struct reader *reader, const WS_FIELD_DESCRIPTION *desc, WS_HEAP *heap,

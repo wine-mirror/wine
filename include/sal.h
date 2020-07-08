@@ -217,6 +217,7 @@
 #define _Ret_opt_z_cap_(count)
 #define _Ret_range_(exp,exp2)
 #define _Ret_writes_bytes_maybenull_(count)
+#define _Ret_writes_z_(count)
 #define _Ret_z_
 
 #define _Return_type_success_(count)

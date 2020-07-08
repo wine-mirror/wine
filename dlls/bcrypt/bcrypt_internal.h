@@ -32,7 +32,10 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "wincrypt.h"
 #include "bcrypt.h"
+
+#define MAGIC_DSS2 ('D' | ('S' << 8) | ('S' << 16) | ('2' << 24))
 
 typedef struct
 {
@@ -137,6 +140,7 @@ enum alg_id
     ALG_ID_RSA_SIGN,
     ALG_ID_ECDSA_P256,
     ALG_ID_ECDSA_P384,
+    ALG_ID_DSA,
 
     /* rng */
     ALG_ID_RNG,
@@ -175,6 +179,7 @@ struct key_asymmetric
     ULONG             bitlen;     /* ignored for ECC keys */
     UCHAR            *pubkey;
     ULONG             pubkey_len;
+    DSSSEED           dss_seed;
 };
 
 struct key
@@ -249,7 +254,9 @@ NTSTATUS key_asymmetric_sign( struct key *, void *, UCHAR *, ULONG, UCHAR *, ULO
 NTSTATUS key_asymmetric_verify( struct key *, void *, UCHAR *, ULONG, UCHAR *, ULONG, DWORD ) DECLSPEC_HIDDEN;
 NTSTATUS key_destroy( struct key * ) DECLSPEC_HIDDEN;
 BOOL key_is_symmetric( struct key * ) DECLSPEC_HIDDEN;
+NTSTATUS key_export_dsa_capi( struct key *, UCHAR *, ULONG, ULONG * ) DECLSPEC_HIDDEN;
 NTSTATUS key_export_ecc( struct key *, UCHAR *, ULONG, ULONG * ) DECLSPEC_HIDDEN;
+NTSTATUS key_import_dsa_capi( struct key *, UCHAR *, ULONG ) DECLSPEC_HIDDEN;
 NTSTATUS key_import_ecc( struct key *, UCHAR *, ULONG ) DECLSPEC_HIDDEN;
 
 BOOL is_zero_vector( const UCHAR *, ULONG ) DECLSPEC_HIDDEN;

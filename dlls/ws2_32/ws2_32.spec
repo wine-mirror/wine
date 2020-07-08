@@ -50,6 +50,7 @@
 
 500 stub     WEP
 
+@ stdcall FreeAddrInfoEx(ptr)
 @ stdcall FreeAddrInfoExW(ptr)
 @ stdcall FreeAddrInfoW(ptr)
 @ stdcall GetAddrInfoExCancel(ptr)
@@ -117,6 +118,7 @@
 @ stdcall WSCDeinstallProvider(ptr ptr)
 @ stdcall WSCEnableNSProvider(ptr long)
 @ stdcall WSCEnumProtocols(ptr ptr ptr ptr)
+@ stdcall WSCGetProviderInfo(ptr long ptr ptr long ptr)
 @ stdcall WSCGetProviderPath(ptr ptr ptr ptr)
 @ stdcall WSCInstallNameSpace(wstr wstr long long ptr)
 @ stdcall WSCInstallProvider(ptr wstr ptr long ptr)

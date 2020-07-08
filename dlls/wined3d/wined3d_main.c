@@ -459,6 +459,39 @@ static void wined3d_wndproc_mutex_unlock(void)
     LeaveCriticalSection(&wined3d_wndproc_cs);
 }
 
+static struct wined3d_output * wined3d_get_output_from_window(const struct wined3d *wined3d,
+        HWND hwnd)
+{
+    unsigned int adapter_idx, output_idx;
+    struct wined3d_adapter *adapter;
+    MONITORINFOEXW monitor_info;
+    HMONITOR monitor;
+
+    TRACE("wined3d %p, hwnd %p.\n", wined3d, hwnd);
+
+    monitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+    monitor_info.cbSize = sizeof(monitor_info);
+    if (!GetMonitorInfoW(monitor, (MONITORINFO *)&monitor_info))
+    {
+        ERR("GetMonitorInfoW failed, error %#x.\n", GetLastError());
+        return NULL;
+    }
+
+    for (adapter_idx = 0; adapter_idx < wined3d->adapter_count; ++adapter_idx)
+    {
+        adapter = wined3d->adapters[adapter_idx];
+        for (output_idx = 0; output_idx < adapter->output_count; ++output_idx)
+        {
+            if (!lstrcmpiW(adapter->outputs[output_idx].device_name, monitor_info.szDevice))
+                return &adapter->outputs[output_idx];
+        }
+    }
+
+    /* Because wined3d only supports one output right now. A window can be on non-primary outputs
+     * and thus fails to get its correct output. In this case, return the primary output for now */
+    return &wined3d->adapters[0]->outputs[0];
+}
+
 static struct wined3d_wndproc *wined3d_find_wndproc(HWND window, struct wined3d *wined3d)
 {
     unsigned int i;
@@ -541,6 +574,7 @@ static LRESULT CALLBACK wined3d_hook_proc(int code, WPARAM wparam, LPARAM lparam
     struct wined3d_swapchain_desc swapchain_desc;
     struct wined3d_swapchain *swapchain;
     struct wined3d_wndproc *entry;
+    struct wined3d_output *output;
     MSG *msg = (MSG *)lparam;
     unsigned int i;
 
@@ -564,8 +598,14 @@ static LRESULT CALLBACK wined3d_hook_proc(int code, WPARAM wparam, LPARAM lparam
 
             wined3d_swapchain_get_desc(swapchain, &swapchain_desc);
             swapchain_desc.windowed = !swapchain_desc.windowed;
-            wined3d_swapchain_state_set_fullscreen(&swapchain->state, &swapchain_desc,
-                    swapchain->device->wined3d, swapchain->device->adapter->ordinal, NULL);
+            if (!(output = wined3d_get_output_from_window(swapchain->device->wined3d,
+                    swapchain->state.device_window)))
+            {
+                ERR("Failed to get output from window %p.\n", swapchain->state.device_window);
+                break;
+            }
+            swapchain_desc.output = output;
+            wined3d_swapchain_state_set_fullscreen(&swapchain->state, &swapchain_desc, NULL);
 
             wined3d_wndproc_mutex_unlock();
 

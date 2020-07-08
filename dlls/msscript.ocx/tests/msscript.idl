@@ -63,7 +63,7 @@ library MSScriptControl
     ]
     interface IScriptProcedureCollection : IDispatch {
         [id(DISPID_NEWENUM), propget]
-        HRESULT _NewEnum([out, retval] IUnknown *ppenumProcedures);
+        HRESULT _NewEnum([out, retval] IUnknown **ppenumProcedures);
 
         [id(DISPID_VALUE), propget]
         HRESULT Item(
@@ -87,7 +87,7 @@ library MSScriptControl
         HRESULT Name([out, retval] BSTR *pbstrName);
 
         [id(0x03e8), propget]
-        HRESULT CodeObject([out, retval] IDispatch *ppdispObject);
+        HRESULT CodeObject([out, retval] IDispatch **ppdispObject);
 
         [id(0x03e9), propget]
         HRESULT Procedures([out, retval] IScriptProcedureCollection **ppdispProcedures);
@@ -120,7 +120,7 @@ library MSScriptControl
     ]
     interface IScriptModuleCollection : IDispatch {
         [id(DISPID_NEWENUM), propget]
-        HRESULT _NewEnum([out, retval] IUnknown *ppenumContexts);
+        HRESULT _NewEnum([out, retval] IUnknown **ppenumContexts);
 
         [id(DISPID_VALUE), propget]
         HRESULT Item(

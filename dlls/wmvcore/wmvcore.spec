@@ -17,4 +17,4 @@
 @ stub WMCreateWriterNetworkSink
 @ stdcall WMCreateWriterPriv(ptr)
 @ stub WMCreateWriterPushSink
-@ stub WMIsContentProtected
+@ stdcall WMIsContentProtected(wstr ptr)

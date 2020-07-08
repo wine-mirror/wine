@@ -19,9 +19,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-/* 0x0600 makes PROCESS_ALL_ACCESS not compatible with pre-Vista versions */
-#define _WIN32_WINNT 0x0500
-
 #include <stdarg.h>
 
 #include "ntstatus.h"
@@ -39,7 +36,7 @@
 #include "wine/test.h"
 
 static NTSTATUS (WINAPI *pNtQuerySystemInformation)(SYSTEM_INFORMATION_CLASS, PVOID, ULONG, PULONG);
-static NTSTATUS (WINAPI *pNtQueryVirtualMemory)(HANDLE, LPCVOID, ULONG, PVOID, SIZE_T, SIZE_T *);
+static NTSTATUS (WINAPI *pNtQueryVirtualMemory)(HANDLE, LPCVOID, MEMORY_INFORMATION_CLASS, PVOID, SIZE_T, SIZE_T *);
 static BOOL  (WINAPI *pIsWow64Process)(HANDLE, BOOL *);
 static BOOL  (WINAPI *pWow64DisableWow64FsRedirection)(void **);
 static BOOL  (WINAPI *pWow64RevertWow64FsRedirection)(void *);

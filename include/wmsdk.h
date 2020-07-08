@@ -20,7 +20,5 @@
 /* #include <winapifamily.h> */
 
 #include "wmsdkidl.h"
-
-/* Currently unimplemented */
-/* #include "asferr.h" */
+#include "asferr.h"
 #include "nserror.h"

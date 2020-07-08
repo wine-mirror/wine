@@ -48,8 +48,8 @@ msgstr "Informação de &Suporte"
 msgid "&Modify..."
 msgstr "&Modificar..."
 
-#: appwiz.rc:69 appwiz.rc:45 cryptui.rc:351 msacm32.rc:40 winecfg.rc:200
-#: winecfg.rc:237 wordpad.rc:256
+#: appwiz.rc:69 appwiz.rc:45 cryptui.rc:351 msacm32.rc:40 winecfg.rc:199
+#: winecfg.rc:236 wordpad.rc:256
 msgid "&Remove"
 msgstr "&Remover"
 
@@ -68,7 +68,7 @@ msgstr "Informação de Suporte"
 #: notepad.rc:117 oleview.rc:161 oleview.rc:174 progman.rc:106 progman.rc:124
 #: progman.rc:142 progman.rc:158 progman.rc:180 progman.rc:199 progman.rc:216
 #: regedit.rc:296 regedit.rc:307 regedit.rc:320 regedit.rc:336 regedit.rc:349
-#: regedit.rc:362 taskmgr.rc:442 taskmgr.rc:517 winecfg.rc:214 winecfg.rc:224
+#: regedit.rc:362 taskmgr.rc:442 taskmgr.rc:517 winecfg.rc:213 winecfg.rc:223
 #: wineconsole.rc:135 winefile.rc:127 winefile.rc:150 winefile.rc:180
 #: winemine.rc:73 winemine.rc:84 winemine.rc:98 wordpad.rc:215 wordpad.rc:226
 #: wordpad.rc:244 wordpad.rc:257
@@ -152,8 +152,8 @@ msgstr "&Instalar"
 #: notepad.rc:118 oleview.rc:162 oleview.rc:175 progman.rc:107 progman.rc:125
 #: progman.rc:143 progman.rc:159 progman.rc:181 progman.rc:200 progman.rc:217
 #: regedit.rc:297 regedit.rc:308 regedit.rc:321 regedit.rc:337 regedit.rc:350
-#: regedit.rc:363 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34 winecfg.rc:215
-#: winecfg.rc:225 wineconsole.rc:136 winefile.rc:128 winefile.rc:151
+#: regedit.rc:363 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34 winecfg.rc:214
+#: winecfg.rc:224 wineconsole.rc:136 winefile.rc:128 winefile.rc:151
 #: winefile.rc:181 winemine.rc:99 wordpad.rc:216 wordpad.rc:227 wordpad.rc:245
 #: wordpad.rc:258
 msgid "Cancel"
@@ -193,7 +193,7 @@ msgstr ""
 "Permite a instalação de novo software ou a remoção de software existente no "
 "seu computador."
 
-#: appwiz.rc:33 taskmgr.rc:262 winecfg.rc:33
+#: appwiz.rc:33 taskmgr.rc:262 winecfg.rc:32
 msgid "Applications"
 msgstr "Aplicativos"
 
@@ -351,7 +351,7 @@ msgstr "Assistente"
 msgid "< &Back"
 msgstr "< &Voltar"
 
-#: comctl32.rc:85 version.rc:60
+#: comctl32.rc:85 version.rc:61
 msgid "&Next >"
 msgstr "&Avançar >"
 
@@ -587,7 +587,7 @@ msgstr "&Fonte:"
 msgid "Font St&yle:"
 msgstr "&Estilo da Fonte:"
 
-#: comdlg32.rc:260 comdlg32.rc:439 winecfg.rc:294
+#: comdlg32.rc:260 comdlg32.rc:439 winecfg.rc:292
 msgid "&Size:"
 msgstr "Taman&ho:"
 
@@ -603,7 +603,7 @@ msgstr "&Riscado"
 msgid "&Underline"
 msgstr "&Sublinhado"
 
-#: comdlg32.rc:270 winecfg.rc:292
+#: comdlg32.rc:270 winecfg.rc:290
 msgid "&Color:"
 msgstr "&Cor:"
 
@@ -688,7 +688,7 @@ msgstr "Palavra &Inteira"
 msgid "Match &Case"
 msgstr "&Maiúsculas/minúsculas"
 
-#: comdlg32.rc:325 joy.rc:71
+#: comdlg32.rc:325 joy.rc:72
 msgid "Direction"
 msgstr "Direção"
 
@@ -777,7 +777,7 @@ msgstr "Número de &cópias:"
 msgid "C&ollate"
 msgstr "&Agrupar"
 
-#: comdlg32.rc:414 winecfg.rc:300
+#: comdlg32.rc:414 winecfg.rc:298
 msgid "Si&ze:"
 msgstr "Ta&manho:"
 
@@ -1227,7 +1227,7 @@ msgstr "mm"
 msgid "&User name:"
 msgstr "&Nome de usuário:"
 
-#: credui.rc:48 cryptui.rc:402 version.rc:80
+#: credui.rc:48 cryptui.rc:402 version.rc:81
 msgid "&Password:"
 msgstr "&Senha:"
 
@@ -2257,7 +2257,7 @@ msgstr ""
 msgid "&File name:"
 msgstr "Nome do &arquivo:"
 
-#: cryptui.rc:301 cryptui.rc:323 cryptui.rc:437 winecfg.rc:313
+#: cryptui.rc:301 cryptui.rc:323 cryptui.rc:437 winecfg.rc:311
 msgid "B&rowse..."
 msgstr "&Navegar..."
 
@@ -3027,7 +3027,7 @@ msgstr "Reiniciar"
 msgid "Player"
 msgstr "Jogador"
 
-#: dinput.rc:43 winecfg.rc:89
+#: dinput.rc:43 winecfg.rc:88
 msgid "Device"
 msgstr "Dispositivo"
 
@@ -3128,7 +3128,7 @@ msgstr "Símbolo"
 msgid "OEM/DOS"
 msgstr "OEM/DOS"
 
-#: gdi32.rc:45 version.rc:99 wldap32.rc:112
+#: gdi32.rc:45 version.rc:100 wldap32.rc:112
 msgid "Other"
 msgstr "Outro"
 
@@ -3193,7 +3193,7 @@ msgstr "&Início"
 msgid "&Stop"
 msgstr "&Parar"
 
-#: hhctrl.rc:64 hhctrl.rc:81 version.rc:72 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 version.rc:73 shdoclc.rc:59
 msgid "&Refresh"
 msgstr "&Recarregar"
 
@@ -3571,27 +3571,27 @@ msgstr "Elevada"
 msgid "High"
 msgstr "Alta"
 
-#: joy.rc:36
+#: joy.rc:37
 msgid "Joysticks"
 msgstr "Controles"
 
-#: joy.rc:39 winecfg.rc:213
+#: joy.rc:40 winecfg.rc:212
 msgid "&Disable"
 msgstr "&Desativar"
 
-#: joy.rc:40
+#: joy.rc:41
 msgid "&Enable"
 msgstr "&Habilitar"
 
-#: joy.rc:41
+#: joy.rc:42
 msgid "Connected"
 msgstr "Conectado"
 
-#: joy.rc:43
+#: joy.rc:44
 msgid "Disabled"
 msgstr "Desativado"
 
-#: joy.rc:45
+#: joy.rc:46
 msgid ""
 "After disabling or enabling a device, the connected joysticks won't be "
 "updated here until you restart this applet."
@@ -3599,23 +3599,23 @@ msgstr ""
 "Depois de habilitar/desabilitar um dispositivo, os controles conectados não "
 "serão atualizados até que o applet seja reaberto."
 
-#: joy.rc:50
+#: joy.rc:51
 msgid "Test Joystick"
 msgstr "Testar Controle"
 
-#: joy.rc:54
+#: joy.rc:55
 msgid "Buttons"
 msgstr "Botões"
 
-#: joy.rc:63
+#: joy.rc:64
 msgid "Test Force Feedback"
 msgstr "Testar Force Feedback"
 
-#: joy.rc:67
+#: joy.rc:68
 msgid "Available Effects"
 msgstr "Efeitos Disponíveis"
 
-#: joy.rc:69
+#: joy.rc:70
 msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."
@@ -3626,6 +3626,10 @@ msgstr ""
 #: joy.rc:31
 msgid "Game Controllers"
 msgstr "Controles de Jogos"
+
+#: joy.rc:32
+msgid "Test and configure game controllers."
+msgstr ""
 
 #: jscript.rc:28
 msgid "Error converting object to primitive type"
@@ -3640,176 +3644,194 @@ msgid "Subscript out of range"
 msgstr "Índice fora do intervalo"
 
 #: jscript.rc:31
+#, fuzzy
+#| msgid "Out of paper; "
+msgid "Out of stack space"
+msgstr "Sem papel; "
+
+#: jscript.rc:32
 msgid "Object required"
 msgstr "Objeto requerido"
 
-#: jscript.rc:32
+#: jscript.rc:33
 msgid "Automation server can't create object"
 msgstr "O servidor de automação não conseguiu criar o objeto"
 
-#: jscript.rc:33
+#: jscript.rc:34
 msgid "Object doesn't support this property or method"
 msgstr "O objeto não suporta esta propriedade ou método"
 
-#: jscript.rc:34
+#: jscript.rc:35
 msgid "Object doesn't support this action"
 msgstr "O objeto não suporta esta ação"
 
-#: jscript.rc:35
+#: jscript.rc:36
 msgid "Argument not optional"
 msgstr "Argumento não opcional"
 
-#: jscript.rc:36
+#: jscript.rc:37
 msgid "Syntax error"
 msgstr "Erro de sintaxe"
 
-#: jscript.rc:37
+#: jscript.rc:38
 msgid "Expected ';'"
 msgstr "';' esperado"
 
-#: jscript.rc:38
+#: jscript.rc:39
 msgid "Expected '('"
 msgstr "'(' esperado"
 
-#: jscript.rc:39
+#: jscript.rc:40
 msgid "Expected ')'"
 msgstr "')' esperado"
 
-#: jscript.rc:40
+#: jscript.rc:41
 msgid "Expected identifier"
 msgstr "Identificador esperado"
 
-#: jscript.rc:41
+#: jscript.rc:42
 msgid "Expected '='"
 msgstr "'=' esperado"
 
-#: jscript.rc:42
+#: jscript.rc:43
 msgid "Invalid character"
 msgstr "Caractere inválido"
 
-#: jscript.rc:43
+#: jscript.rc:44
 msgid "Unterminated string constant"
 msgstr "Cadeia constante não terminada"
 
-#: jscript.rc:44
+#: jscript.rc:45
 msgid "'return' statement outside of function"
 msgstr "'return' fora de função"
 
-#: jscript.rc:45
+#: jscript.rc:46
 msgid "Can't have 'break' outside of loop"
 msgstr "Não pode haver 'break' fora de um laço"
 
-#: jscript.rc:46
+#: jscript.rc:47
 msgid "Can't have 'continue' outside of loop"
 msgstr "Não pode haver 'continue' fora de um laço"
 
-#: jscript.rc:47
+#: jscript.rc:48
 msgid "Label redefined"
 msgstr "Rótulo redefinido"
 
-#: jscript.rc:48
+#: jscript.rc:49
 msgid "Label not found"
 msgstr "Rótulo não encontrado"
 
-#: jscript.rc:49
+#: jscript.rc:50
 msgid "Expected '@end'"
 msgstr "'@end' esperado"
 
-#: jscript.rc:50
+#: jscript.rc:51
 msgid "Conditional compilation is turned off"
 msgstr "Compilação condicional está desligada"
 
-#: jscript.rc:51
+#: jscript.rc:52
 msgid "Expected '@'"
 msgstr "'@' esperado"
 
-#: jscript.rc:75
+#: jscript.rc:78
 msgid "Microsoft JScript compilation error"
 msgstr ""
 
-#: jscript.rc:76
+#: jscript.rc:79
 msgid "Microsoft JScript runtime error"
 msgstr ""
 
-#: jscript.rc:77
+#: jscript.rc:80
 #, fuzzy
 #| msgid "Unknown error"
 msgid "Unknown runtime error"
 msgstr "Erro desconhecido"
 
-#: jscript.rc:54
+#: jscript.rc:55
 msgid "Number expected"
 msgstr "Número esperado"
 
-#: jscript.rc:52
+#: jscript.rc:53
 msgid "Function expected"
 msgstr "Função esperada"
 
-#: jscript.rc:53
+#: jscript.rc:54
 msgid "'[object]' is not a date object"
 msgstr "'[object]' não é um objeto de data"
 
-#: jscript.rc:55
+#: jscript.rc:56
 msgid "Object expected"
 msgstr "Objeto esperado"
 
-#: jscript.rc:56
+#: jscript.rc:57
 msgid "Illegal assignment"
 msgstr "Atribuição ilegal"
 
-#: jscript.rc:57
+#: jscript.rc:58
 msgid "'|' is undefined"
 msgstr "'|' é indefinido"
 
-#: jscript.rc:58
+#: jscript.rc:59
 msgid "Boolean object expected"
 msgstr "Objeto booleano esperado"
 
-#: jscript.rc:59
+#: jscript.rc:60
 msgid "Cannot delete '|'"
 msgstr "Não é possível excluir '|'"
 
-#: jscript.rc:60
+#: jscript.rc:61
 msgid "VBArray object expected"
 msgstr "Objeto VBArray esperado"
 
-#: jscript.rc:61
+#: jscript.rc:62
 msgid "JScript object expected"
 msgstr "Objeto JScript esperado"
 
-#: jscript.rc:62
+#: jscript.rc:63
+#, fuzzy
+#| msgid "Array object expected"
+msgid "Enumerator object expected"
+msgstr "Objeto tipo vetor esperado"
+
+#: jscript.rc:64
+#, fuzzy
+#| msgid "Boolean object expected"
+msgid "Regular Expression object expected"
+msgstr "Objeto booleano esperado"
+
+#: jscript.rc:65
 msgid "Syntax error in regular expression"
 msgstr "Erro de sintaxe na expressão regular"
 
-#: jscript.rc:63
+#: jscript.rc:66
 msgid "Exception thrown and not caught"
 msgstr ""
 
-#: jscript.rc:65
+#: jscript.rc:68
 msgid "URI to be encoded contains invalid characters"
 msgstr "URI a ser codificado contém caracteres inválidos"
 
-#: jscript.rc:64
+#: jscript.rc:67
 msgid "URI to be decoded is incorrect"
 msgstr "URI a ser decodificado está incorreto"
 
-#: jscript.rc:66
+#: jscript.rc:69
 msgid "Number of fraction digits is out of range"
 msgstr "Número de dígitos fracionários fora do limite"
 
-#: jscript.rc:67
+#: jscript.rc:70
 msgid "Precision is out of range"
 msgstr "Precisão fora do limite"
 
-#: jscript.rc:68
+#: jscript.rc:71
 msgid "Array length must be a finite positive integer"
 msgstr "Tamanho do vetor tem que ser um inteiro finito positivo"
 
-#: jscript.rc:69
+#: jscript.rc:72
 msgid "Array object expected"
 msgstr "Objeto tipo vetor esperado"
 
-#: jscript.rc:70
+#: jscript.rc:73
 msgid ""
 "'writable' attribute on the property descriptor cannot be set to 'true' on "
 "this object"
@@ -3817,15 +3839,15 @@ msgstr ""
 "atributo 'gravável' no descritor de propriedades não pode ser setado para "
 "'verdade' neste objeto"
 
-#: jscript.rc:71
+#: jscript.rc:74
 msgid "Cannot redefine non-configurable property '|'"
 msgstr "Não pode redefinir propriedade não configurável '|'"
 
-#: jscript.rc:72
+#: jscript.rc:75
 msgid "Cannot modify non-writable property '|'"
 msgstr "Não pode modificar propriedade não gravável '|'"
 
-#: jscript.rc:73
+#: jscript.rc:76
 msgid "Property cannot have both accessors and a value"
 msgstr "Propriedade não pode ter ambos acessores e valor"
 
@@ -3834,6 +3856,7 @@ msgid "Wine kernel DLL"
 msgstr "Biblioteca de kernel Wine"
 
 #: ../../include/wine/wine_common_ver.rc:134 winemac.rc:32 wineboot.rc:42
+#: winecfg.rc:137
 msgid "Wine"
 msgstr "Wine"
 
@@ -7301,7 +7324,7 @@ msgstr "Hiperlink"
 msgid "Hyperlink Information"
 msgstr "Informação do Hiperlink"
 
-#: mshtml.rc:43 winecfg.rc:245
+#: mshtml.rc:43 winecfg.rc:243
 msgid "&Type:"
 msgstr "&Tipo:"
 
@@ -8341,141 +8364,141 @@ msgstr "Ligado"
 msgid "Off"
 msgstr "Desligado"
 
-#: version.rc:55
+#: version.rc:56
 #, fuzzy
 #| msgid "video"
 msgid "Provider"
 msgstr "vídeo"
 
-#: version.rc:58
+#: version.rc:59
 #, fuzzy
 #| msgid "Select the format you want to use:"
 msgid "Select the data you want to connect to:"
 msgstr "Selecione o formato que deseja utilizar:"
 
-#: version.rc:65
+#: version.rc:66
 #, fuzzy
 #| msgid "Connections"
 msgid "Connection"
 msgstr "Conexões"
 
-#: version.rc:68
+#: version.rc:69
 #, fuzzy
 #| msgid "Select the format you want to use:"
 msgid "Specify the following to connect to ODBC data:"
 msgstr "Selecione o formato que deseja utilizar:"
 
-#: version.rc:69
+#: version.rc:70
 msgid "1. Specify the source of data:"
 msgstr ""
 
-#: version.rc:70
+#: version.rc:71
 #, fuzzy
 #| msgid "Please enter your name"
 msgid "Use &data source name"
 msgstr "Por favor, escreva seu nome"
 
-#: version.rc:73
+#: version.rc:74
 #, fuzzy
 #| msgid "Reset Connections"
 msgid "Use c&onnection string"
 msgstr "Reiniciar Conexões"
 
-#: version.rc:74
+#: version.rc:75
 #, fuzzy
 #| msgid "Connections"
 msgid "&Connection string:"
 msgstr "Conexões"
 
-#: version.rc:76
+#: version.rc:77
 #, fuzzy
 #| msgid "A&dd..."
 msgid "B&uild..."
 msgstr "&Adicionar..."
 
-#: version.rc:77
+#: version.rc:78
 msgid "2. Enter information to log on to the server"
 msgstr ""
 
-#: version.rc:78
+#: version.rc:79
 #, fuzzy
 #| msgid "&User name:"
 msgid "User &name:"
 msgstr "&Nome de usuário:"
 
-#: version.rc:82
+#: version.rc:83
 #, fuzzy
 #| msgid "&Blank page"
 msgid "&Blank password"
 msgstr "Página em &branco"
 
-#: version.rc:83
+#: version.rc:84
 #, fuzzy
 #| msgid "Wrong password.\n"
 msgid "Allow &saving password"
 msgstr "Senha errada.\n"
 
-#: version.rc:84
+#: version.rc:85
 msgid "3. Enter the &initial catalog to use:"
 msgstr ""
 
-#: version.rc:86
+#: version.rc:87
 #, fuzzy
 #| msgid "Reset Connections"
 msgid "&Test Connection"
 msgstr "Reiniciar Conexões"
 
-#: version.rc:91 winemine.rc:65
+#: version.rc:92 winemine.rc:65
 msgid "Advanced"
 msgstr "Avançado"
 
-#: version.rc:94
+#: version.rc:95
 #, fuzzy
 #| msgid "Network share"
 msgid "Network settings"
 msgstr "Compartilhamento de rede"
 
-#: version.rc:95
+#: version.rc:96
 #, fuzzy
 #| msgid "Bad impersonation level.\n"
 msgid "&Impersonation level:"
 msgstr "Nível de personificação impróprio.\n"
 
-#: version.rc:97
+#: version.rc:98
 msgid "P&rotection level:"
 msgstr ""
 
-#: version.rc:100
+#: version.rc:101
 #, fuzzy
 #| msgid "Connected"
 msgid "Connect:"
 msgstr "Conectado"
 
-#: version.rc:102
+#: version.rc:103
 #, fuzzy
 #| msgid "seconds"
 msgid "seconds."
 msgstr "segundos"
 
-#: version.rc:103
+#: version.rc:104
 #, fuzzy
 #| msgid "Success"
 msgid "A&ccess:"
 msgstr "Sucesso"
 
-#: version.rc:109
+#: version.rc:110
 #, fuzzy
 #| msgid "&All"
 msgid "All"
 msgstr "&Todos"
 
-#: version.rc:113
+#: version.rc:114
 msgid ""
 "These are the initialization properties for this type of data. To edit a "
 "value, select a property, then choose Edit Value below."
 msgstr ""
 
-#: version.rc:114
+#: version.rc:115
 #, fuzzy
 #| msgid "&Edit..."
 msgid "&Edit Value..."
@@ -8492,6 +8515,12 @@ msgstr "Propriedades"
 #| msgid "Please select a file."
 msgid "Please select a provider."
 msgstr "Por favor, selecione um arquivo."
+
+#: version.rc:51
+msgid ""
+"Provider is no longer available. Ensure that the provider is installed "
+"properly."
+msgstr ""
 
 #: version.rc:36
 #, fuzzy
@@ -8734,7 +8763,7 @@ msgctxt "unit: bits"
 msgid "b"
 msgstr "b"
 
-#: sane.rc:34 wineps.rc:49 winecfg.rc:183
+#: sane.rc:34 wineps.rc:49 winecfg.rc:182
 msgctxt "unit: dots/inch"
 msgid "dpi"
 msgstr "ppp"
@@ -9230,7 +9259,7 @@ msgstr ""
 msgid "&Open:"
 msgstr "&Abrir:"
 
-#: shell32.rc:343 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:243
+#: shell32.rc:343 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:241
 #: winefile.rc:129
 msgid "&Browse..."
 msgstr "&Procurar..."
@@ -9319,7 +9348,7 @@ msgstr "Localização original"
 msgid "Date deleted"
 msgstr "Data de exclusão"
 
-#: shell32.rc:156 winecfg.rc:101 winefile.rc:99
+#: shell32.rc:156 winecfg.rc:100 winefile.rc:99
 msgctxt "display name"
 msgid "Desktop"
 msgstr "Área de Trabalho"
@@ -9663,7 +9692,7 @@ msgstr "Licença do Wine"
 msgid "Trash"
 msgstr "Lixeira"
 
-#: shlwapi.rc:38 user32.rc:71 regedit.rc:204 winecfg.rc:87 winefile.rc:97
+#: shlwapi.rc:38 user32.rc:71 regedit.rc:204 winecfg.rc:86 winefile.rc:97
 msgid "Error"
 msgstr "Erro"
 
@@ -9694,127 +9723,127 @@ msgstr " s"
 msgid "Select Source"
 msgstr "Selecionar Pasta"
 
-#: tzres.rc:84
+#: tzres.rc:88
 msgid "China Standard Time"
 msgstr "Hora padrão da China"
 
-#: tzres.rc:85
+#: tzres.rc:89
 msgid "China Daylight Time"
 msgstr "Horário de verão da China"
 
-#: tzres.rc:164
+#: tzres.rc:170
 msgid "North Asia Standard Time"
 msgstr "Hora padrão do Norte da Asia"
 
-#: tzres.rc:165
+#: tzres.rc:171
 msgid "North Asia Daylight Time"
 msgstr "Horário de verão Norte da Asia"
 
-#: tzres.rc:106
+#: tzres.rc:110
 msgid "Georgian Standard Time"
 msgstr "Hora padrão da Georgia"
 
-#: tzres.rc:107
+#: tzres.rc:111
 msgid "Georgian Daylight Time"
 msgstr "Horário de verão da Georgia"
 
-#: tzres.rc:156
+#: tzres.rc:162
 msgid "Nepal Standard Time"
 msgstr "Hora padrão do Nepal"
 
-#: tzres.rc:157
+#: tzres.rc:163
 msgid "Nepal Daylight Time"
 msgstr "Horário de verão do Nepal"
 
-#: tzres.rc:62
+#: tzres.rc:64
 msgid "Cape Verde Standard Time"
 msgstr "Hora padrão de Cabo Verde"
 
-#: tzres.rc:63
+#: tzres.rc:65
 msgid "Cape Verde Daylight Time"
 msgstr "Horário de verão de Cabo Verde"
 
-#: tzres.rc:116
+#: tzres.rc:120
 #, fuzzy
 #| msgid "Hawaiian Standard Time"
 msgid "Haiti Standard Time"
 msgstr "Hora padrão do Avaí"
 
-#: tzres.rc:117
+#: tzres.rc:121
 #, fuzzy
 #| msgid "Hawaiian Daylight Time"
 msgid "Haiti Daylight Time"
 msgstr "Horário de verão do Avaí"
 
-#: tzres.rc:76
+#: tzres.rc:78
 msgid "Central European Standard Time"
 msgstr "Hora padrão da Europa Central"
 
-#: tzres.rc:77
+#: tzres.rc:79
 msgid "Central European Daylight Time"
 msgstr "Horário de verão da Europa Central"
 
-#: tzres.rc:144
+#: tzres.rc:150
 msgid "Morocco Standard Time"
 msgstr "Hora padrão do Marrocos"
 
-#: tzres.rc:145
+#: tzres.rc:151
 msgid "Morocco Daylight Time"
 msgstr "Horário de verão do Marrocos"
 
-#: tzres.rc:74
+#: tzres.rc:76
 msgid "Central Europe Standard Time"
 msgstr "Hora padrão da Europa Central"
 
-#: tzres.rc:75
+#: tzres.rc:77
 msgid "Central Europe Daylight Time"
 msgstr "Horário de verão da Europa Central"
 
-#: tzres.rc:122
+#: tzres.rc:126
 msgid "Iran Standard Time"
 msgstr "Hora padrão do Irã"
 
-#: tzres.rc:123
+#: tzres.rc:127
 msgid "Iran Daylight Time"
 msgstr "Horário de verão do Irã"
 
-#: tzres.rc:154
+#: tzres.rc:160
 msgid "Namibia Standard Time"
 msgstr "Hora padrão da Namíbia"
 
-#: tzres.rc:155
+#: tzres.rc:161
 msgid "Namibia Daylight Time"
 msgstr "Horário de verão da Namíbia"
 
-#: tzres.rc:204
+#: tzres.rc:210
 msgid "Tonga Standard Time"
 msgstr "Hora padrão de Tonga"
 
-#: tzres.rc:205
+#: tzres.rc:211
 msgid "Tonga Daylight Time"
 msgstr "Horário de verão de Tonga"
 
-#: tzres.rc:148
+#: tzres.rc:154
 msgid "Mountain Standard Time (Mexico)"
 msgstr "Hora padrão de Montanha"
 
-#: tzres.rc:149
+#: tzres.rc:155
 msgid "Mountain Daylight Time (Mexico)"
 msgstr "Horário de verão de Montanha"
 
-#: tzres.rc:108
+#: tzres.rc:112
 msgid "GMT Standard Time"
 msgstr "Hora padrão GMT"
 
-#: tzres.rc:109
+#: tzres.rc:113
 msgid "GMT Daylight Time"
 msgstr "Horário de verão GMT"
 
-#: tzres.rc:70
+#: tzres.rc:72
 msgid "Central Asia Standard Time"
 msgstr "Hora padrão da Asia Central"
 
-#: tzres.rc:71
+#: tzres.rc:73
 msgid "Central Asia Daylight Time"
 msgstr "Horário de verão da Asia Central"
 
@@ -9826,35 +9855,35 @@ msgstr "Hora padrão Árabe"
 msgid "Arabic Daylight Time"
 msgstr "Horário de verão da Arábia"
 
-#: tzres.rc:136
+#: tzres.rc:140
 msgid "Magadan Standard Time"
 msgstr "Hora padrão de Magadan"
 
-#: tzres.rc:137
+#: tzres.rc:141
 msgid "Magadan Daylight Time"
 msgstr "Horário de verão Magadan"
 
-#: tzres.rc:160
+#: tzres.rc:166
 msgid "Newfoundland Standard Time"
 msgstr "Hora padrão de Terra Nova"
 
-#: tzres.rc:161
+#: tzres.rc:167
 msgid "Newfoundland Daylight Time"
 msgstr "Horário de verão Nova Zelândia"
 
-#: tzres.rc:228
+#: tzres.rc:234
 msgid "West Pacific Standard Time"
 msgstr "Hora padrão do Pacífico Ocidental"
 
-#: tzres.rc:229
+#: tzres.rc:235
 msgid "West Pacific Daylight Time"
 msgstr "Horário de verão Pacífico Oeste"
 
-#: tzres.rc:168
+#: tzres.rc:174
 msgid "Pacific Standard Time"
 msgstr "Hora padrão do Pacífico"
 
-#: tzres.rc:169
+#: tzres.rc:175
 msgid "Pacific Daylight Time"
 msgstr "Horário de verão Pacífico"
 
@@ -9866,67 +9895,67 @@ msgstr "Hora padrão do Azerbaijão"
 msgid "Azerbaijan Daylight Time"
 msgstr "Horário de verão do Azerbaijão"
 
-#: tzres.rc:186
+#: tzres.rc:192
 msgid "Samoa Standard Time"
 msgstr "Hora padrão de Samoa"
 
-#: tzres.rc:187
+#: tzres.rc:193
 msgid "Samoa Daylight Time"
 msgstr "Horário de verão de Samoa"
 
-#: tzres.rc:128
+#: tzres.rc:132
 msgid "Kaliningrad Standard Time"
 msgstr "Hora padrão de Kaliningrado"
 
-#: tzres.rc:129
+#: tzres.rc:133
 msgid "Kaliningrad Daylight Time"
 msgstr "Horário de verão de Kaliningrado"
 
-#: tzres.rc:170
+#: tzres.rc:176
 msgid "Pacific Standard Time (Mexico)"
 msgstr "Hora padrão do Pacífico(México)"
 
-#: tzres.rc:171
+#: tzres.rc:177
 msgid "Pacific Daylight Time (Mexico)"
 msgstr "Horário de verão do Pacífico(México)"
 
-#: tzres.rc:140
+#: tzres.rc:146
 msgid "Middle East Standard Time"
 msgstr "Hora padrão do Oriente Médio"
 
-#: tzres.rc:141
+#: tzres.rc:147
 msgid "Middle East Daylight Time"
 msgstr "Horário de verão do Oriente Médio"
 
-#: tzres.rc:202
+#: tzres.rc:208
 msgid "Tokyo Standard Time"
 msgstr "Hora padrão de Tóquio"
 
-#: tzres.rc:203
+#: tzres.rc:209
 msgid "Tokyo Daylight Time"
 msgstr "Horário de verão Tóquio"
 
-#: tzres.rc:134
+#: tzres.rc:138
 msgid "Line Islands Standard Time"
 msgstr "Hora padrão das Ilhas Equatoriais"
 
-#: tzres.rc:135
+#: tzres.rc:139
 msgid "Line Islands Daylight Time"
 msgstr "Horário de verão das Ilhas Equatoriais"
 
-#: tzres.rc:126
+#: tzres.rc:130
 msgid "Jordan Standard Time"
 msgstr "Hora padrão da Jordânia"
 
-#: tzres.rc:127
+#: tzres.rc:131
 msgid "Jordan Daylight Time"
 msgstr "Horário de verão da Jordânia"
 
-#: tzres.rc:80
+#: tzres.rc:82
 msgid "Central Standard Time"
 msgstr "Hora padrão Central"
 
-#: tzres.rc:81
+#: tzres.rc:83
 msgid "Central Daylight Time"
 msgstr "Horário de verão Central"
 
@@ -9938,11 +9967,11 @@ msgstr "Hora padrão de Açores"
 msgid "Azores Daylight Time"
 msgstr "Horário de verão de Açores"
 
-#: tzres.rc:162
+#: tzres.rc:168
 msgid "North Asia East Standard Time"
 msgstr "Hora padrão do Norte da Ásia"
 
-#: tzres.rc:163
+#: tzres.rc:169
 msgid "North Asia East Daylight Time"
 msgstr "Horário de verão Norte da Asia"
 
@@ -9954,95 +9983,107 @@ msgstr "Hora padrão da Argentina"
 msgid "Argentina Daylight Time"
 msgstr "Horário de verão da Argentina"
 
-#: tzres.rc:150
+#: tzres.rc:142
+#, fuzzy
+#| msgid "Mauritius Standard Time"
+msgid "Marquesas Standard Time"
+msgstr "Hora padrão da Mauritânia"
+
+#: tzres.rc:143
+#, fuzzy
+#| msgid "Mauritius Daylight Time"
+msgid "Marquesas Daylight Time"
+msgstr "Horário de verão da Mauritânia"
+
+#: tzres.rc:156
 msgid "Myanmar Standard Time"
 msgstr "Hora padrão de Myanmar"
 
-#: tzres.rc:151
+#: tzres.rc:157
 msgid "Myanmar Daylight Time"
 msgstr "Horário de verão de Myanmar"
 
-#: tzres.rc:214 tzres.rc:215
+#: tzres.rc:220 tzres.rc:221
 msgid "Coordinated Universal Time"
 msgstr "Tempo Universal Coordenado"
 
-#: tzres.rc:120
+#: tzres.rc:124
 msgid "India Standard Time"
 msgstr "Hora padrão da Índia"
 
-#: tzres.rc:121
+#: tzres.rc:125
 msgid "India Daylight Time"
 msgstr "Horário de verão da Índia"
 
-#: tzres.rc:114
+#: tzres.rc:118
 msgid "GTB Standard Time"
 msgstr "Hora padrão GTB"
 
-#: tzres.rc:115
+#: tzres.rc:119
 msgid "GTB Daylight Time"
 msgstr "Horário de verão GTB"
 
-#: tzres.rc:206
+#: tzres.rc:212
 msgid "Turkey Standard Time"
 msgstr "Hora padrão da Turquia"
 
-#: tzres.rc:207
+#: tzres.rc:213
 msgid "Turkey Daylight Time"
 msgstr "Horário de verão da Turquia"
 
-#: tzres.rc:102
+#: tzres.rc:106
 msgid "Fiji Standard Time"
 msgstr "Hora padrão de Fiji"
 
-#: tzres.rc:103
+#: tzres.rc:107
 msgid "Fiji Daylight Time"
 msgstr "Horário de verão de Fiji"
 
-#: tzres.rc:60
+#: tzres.rc:62
 msgid "Canada Central Standard Time"
 msgstr "Hora padrão do Canadá Central"
 
-#: tzres.rc:61
+#: tzres.rc:63
 msgid "Canada Central Daylight Time"
 msgstr "Horário de verão Canada Central"
 
-#: tzres.rc:198
+#: tzres.rc:204
 msgid "Taipei Standard Time"
 msgstr "Hora padrão de Taipei"
 
-#: tzres.rc:199
+#: tzres.rc:205
 msgid "Taipei Daylight Time"
 msgstr "Horário de verão de Taipei"
 
-#: tzres.rc:224
+#: tzres.rc:230
 msgid "W. Europe Standard Time"
 msgstr "Hora padrão da Europa Ocidental"
 
-#: tzres.rc:225
+#: tzres.rc:231
 msgid "W. Europe Daylight Time"
 msgstr "Horário de verão Oeste da Europa"
 
-#: tzres.rc:142
+#: tzres.rc:148
 msgid "Montevideo Standard Time"
 msgstr "Hora padrão de Montevidéu"
 
-#: tzres.rc:143
+#: tzres.rc:149
 msgid "Montevideo Daylight Time"
 msgstr "Horário de verão de Montevidéu"
 
-#: tzres.rc:172
+#: tzres.rc:178
 msgid "Pakistan Standard Time"
 msgstr "Hora padrão do Paquistão"
 
-#: tzres.rc:173
+#: tzres.rc:179
 msgid "Pakistan Daylight Time"
 msgstr "Horário de verão do Paquistão"
 
-#: tzres.rc:64
+#: tzres.rc:66
 msgid "Caucasus Standard Time"
 msgstr "Hora padrão do Cáucaso"
 
-#: tzres.rc:65
+#: tzres.rc:67
 msgid "Caucasus Daylight Time"
 msgstr "Horário de verão do Cáucaso"
 
@@ -10054,27 +10095,27 @@ msgstr "Hora padrão da Austrália Oriental"
 msgid "AUS Eastern Daylight Time"
 msgstr "Horário de verão da Austrália Oriental"
 
-#: tzres.rc:152
+#: tzres.rc:158
 msgid "N. Central Asia Standard Time"
 msgstr "Hora padrão do Norte da Ásia"
 
-#: tzres.rc:153
+#: tzres.rc:159
 msgid "N. Central Asia Daylight Time"
 msgstr "Horário de verão da Asia Central"
 
-#: tzres.rc:96
+#: tzres.rc:100
 msgid "Eastern Standard Time"
 msgstr "Hora padrão do Leste"
 
-#: tzres.rc:97
+#: tzres.rc:101
 msgid "Eastern Daylight Time"
 msgstr "Horário de verão do Leste"
 
-#: tzres.rc:82
+#: tzres.rc:84
 msgid "Central Standard Time (Mexico)"
 msgstr "Hora padrão Central(México)"
 
-#: tzres.rc:83
+#: tzres.rc:85
 msgid "Central Daylight Time (Mexico)"
 msgstr "Horário de verão Central(México)"
 
@@ -10086,67 +10127,67 @@ msgstr "Hora padrão do Atlântico"
 msgid "Atlantic Daylight Time"
 msgstr "Horário de verão do Atlântico"
 
-#: tzres.rc:146
+#: tzres.rc:152
 msgid "Mountain Standard Time"
 msgstr "Hora padrão de Montanha"
 
-#: tzres.rc:147
+#: tzres.rc:153
 msgid "Mountain Daylight Time"
 msgstr "Horário de verão de Montanha"
 
-#: tzres.rc:210
+#: tzres.rc:216
 msgid "US Eastern Standard Time"
 msgstr "Hora padrão do Leste dos EUA"
 
-#: tzres.rc:211
+#: tzres.rc:217
 msgid "US Eastern Daylight Time"
 msgstr "Horário de verão do Leste EUA"
 
-#: tzres.rc:200
+#: tzres.rc:206
 msgid "Tasmania Standard Time"
 msgstr "Hora padrão da Tasmânia"
 
-#: tzres.rc:201
+#: tzres.rc:207
 msgid "Tasmania Daylight Time"
 msgstr "Horário de verão da Tasmânia"
 
-#: tzres.rc:68
+#: tzres.rc:70
 msgid "Central America Standard Time"
 msgstr "Hora padrão da América Central"
 
-#: tzres.rc:69
+#: tzres.rc:71
 msgid "Central America Daylight Time"
 msgstr "Horário de verão da América Central"
 
-#: tzres.rc:212
+#: tzres.rc:218
 msgid "US Mountain Standard Time"
 msgstr "Hora padrão de Montanha(EUA)"
 
-#: tzres.rc:213
+#: tzres.rc:219
 msgid "US Mountain Daylight Time"
 msgstr "Horário de verão de Montanha(EUA)"
 
-#: tzres.rc:192
+#: tzres.rc:198
 msgid "South Africa Standard Time"
 msgstr "Hora padrão da África do Sul"
 
-#: tzres.rc:193
+#: tzres.rc:199
 msgid "South Africa Daylight Time"
 msgstr "Horário de verão da África do Sul"
 
-#: tzres.rc:66
+#: tzres.rc:68
 msgid "Cen. Australia Standard Time"
 msgstr "Hora padrão da Austrália"
 
-#: tzres.rc:67
+#: tzres.rc:69
 msgid "Cen. Australia Daylight Time"
 msgstr "Horário de verão da Austrália Central"
 
-#: tzres.rc:194
+#: tzres.rc:200
 msgid "Sri Lanka Standard Time"
 msgstr "Hora padrão do Sri Lanka"
 
-#: tzres.rc:195
+#: tzres.rc:201
 msgid "Sri Lanka Daylight Time"
 msgstr "Horário de verão do Sri Lanka"
 
@@ -10158,19 +10199,19 @@ msgstr "Hora padrão do Afeganistão"
 msgid "Afghanistan Daylight Time"
 msgstr "Horário de verão do Afeganistão"
 
-#: tzres.rc:230
+#: tzres.rc:236
 msgid "Yakutsk Standard Time"
 msgstr "Hora padrão de Iacutusque"
 
-#: tzres.rc:231
+#: tzres.rc:237
 msgid "Yakutsk Daylight Time"
 msgstr "Horário de verão de Iacutusque"
 
-#: tzres.rc:180
+#: tzres.rc:186
 msgid "SA Eastern Standard Time"
 msgstr "Hora padrão do Leste da América do Sul"
 
-#: tzres.rc:181
+#: tzres.rc:187
 msgid "SA Eastern Daylight Time"
 msgstr "Horário de verão do Leste da América do Sul"
 
@@ -10190,35 +10231,35 @@ msgstr "Hora padrão da Arábia Saudita"
 msgid "Arabian Daylight Time"
 msgstr "Horário de verão da Arábia Saudita"
 
-#: tzres.rc:178
+#: tzres.rc:184
 msgid "Russian Standard Time"
 msgstr "Hora padrão da Rússia"
 
-#: tzres.rc:179
+#: tzres.rc:185
 msgid "Russian Daylight Time"
 msgstr "Horário de verão da Rússia"
 
-#: tzres.rc:176
+#: tzres.rc:182
 msgid "Romance Standard Time"
 msgstr "Hora padrão Românica"
 
-#: tzres.rc:177
+#: tzres.rc:183
 msgid "Romance Daylight Time"
 msgstr "Horário de verão da România"
 
-#: tzres.rc:100
+#: tzres.rc:104
 msgid "Ekaterinburg Standard Time"
 msgstr "Hora padrão de Ecaterimburgo"
 
-#: tzres.rc:101
+#: tzres.rc:105
 msgid "Ekaterinburg Daylight Time"
 msgstr "Horário de verão de Ecaterimburgo"
 
-#: tzres.rc:196
+#: tzres.rc:202
 msgid "Syria Standard Time"
 msgstr "Hora padrão da Síria"
 
-#: tzres.rc:197
+#: tzres.rc:203
 msgid "Syria Daylight Time"
 msgstr "Horário de verão da Síria"
 
@@ -10230,27 +10271,27 @@ msgstr "Hora padrão da Austrália Central"
 msgid "AUS Central Daylight Time"
 msgstr "Horário de verão da Austrália Central"
 
-#: tzres.rc:112
+#: tzres.rc:116
 msgid "Greenwich Standard Time"
 msgstr "Hora padrão de Greenwich"
 
-#: tzres.rc:113
+#: tzres.rc:117
 msgid "Greenwich Daylight Time"
 msgstr "Horário de verão de Greenwich"
 
-#: tzres.rc:208
+#: tzres.rc:214
 msgid "Ulaanbaatar Standard Time"
 msgstr "Hora padrão do Norte da Ásia"
 
-#: tzres.rc:209
+#: tzres.rc:215
 msgid "Ulaanbaatar Daylight Time"
 msgstr "Horário de verão de Ulaanbaatar"
 
-#: tzres.rc:124
+#: tzres.rc:128
 msgid "Israel Standard Time"
 msgstr "Hora padrão de Israel"
 
-#: tzres.rc:125
+#: tzres.rc:129
 msgid "Israel Daylight Time"
 msgstr "Horário de verão de Israel"
 
@@ -10262,19 +10303,19 @@ msgstr "Hora padrão de Bangladesh"
 msgid "Bangladesh Daylight Time"
 msgstr "Horário de verão de Bangladesh"
 
-#: tzres.rc:182
+#: tzres.rc:188
 msgid "SA Pacific Standard Time"
 msgstr "Hora padrão do Pacífico da América do Sul"
 
-#: tzres.rc:183
+#: tzres.rc:189
 msgid "SA Pacific Daylight Time"
 msgstr "Horário de verão do Pacífico América do Sul"
 
-#: tzres.rc:226
+#: tzres.rc:232
 msgid "West Asia Standard Time"
 msgstr "Hora padrão do Oeste da Ásia"
 
-#: tzres.rc:227
+#: tzres.rc:233
 msgid "West Asia Daylight Time"
 msgstr "Horário de verão do Oeste da Ásia"
 
@@ -10286,27 +10327,27 @@ msgstr "Hora padrão do Alasca"
 msgid "Alaskan Daylight Time"
 msgstr "Horário de verão do Alasca"
 
-#: tzres.rc:174
+#: tzres.rc:180
 msgid "Paraguay Standard Time"
 msgstr "Hora padrão do Paraguai"
 
-#: tzres.rc:175
+#: tzres.rc:181
 msgid "Paraguay Daylight Time"
 msgstr "Horário de verão do Paraguai"
 
-#: tzres.rc:86
+#: tzres.rc:90
 msgid "Dateline Standard Time"
 msgstr "Hora padrão do Meridiano"
 
-#: tzres.rc:87
+#: tzres.rc:91
 msgid "Dateline Daylight Time"
 msgstr "Horário de verão do Meridiano"
 
-#: tzres.rc:132
+#: tzres.rc:136
 msgid "Libya Standard Time"
 msgstr "Hora padrão da Líbia"
 
-#: tzres.rc:133
+#: tzres.rc:137
 msgid "Libya Daylight Time"
 msgstr "Horário de verão da Líbia"
 
@@ -10318,35 +10359,47 @@ msgstr "Hora padrão da Bahia"
 msgid "Bahia Daylight Time"
 msgstr "Horário de verão da Bahia"
 
-#: tzres.rc:216
+#: tzres.rc:222
 msgid "Venezuela Standard Time"
 msgstr "Hora padrão da Venezuela"
 
-#: tzres.rc:217
+#: tzres.rc:223
 msgid "Venezuela Daylight Time"
 msgstr "Horário de verão da Venezuela"
 
-#: tzres.rc:118
+#: tzres.rc:60
+#, fuzzy
+#| msgid "Mountain Standard Time"
+msgid "Bougainville Standard Time"
+msgstr "Hora padrão de Montanha"
+
+#: tzres.rc:61
+#, fuzzy
+#| msgid "Mountain Daylight Time"
+msgid "Bougainville Daylight Time"
+msgstr "Horário de verão de Montanha"
+
+#: tzres.rc:122
 msgid "Hawaiian Standard Time"
 msgstr "Hora padrão do Avaí"
 
-#: tzres.rc:119
+#: tzres.rc:123
 msgid "Hawaiian Daylight Time"
 msgstr "Horário de verão do Avaí"
 
-#: tzres.rc:188
+#: tzres.rc:194
 msgid "SE Asia Standard Time"
 msgstr "Hora padrão do Sudeste da Ásia"
 
-#: tzres.rc:189
+#: tzres.rc:195
 msgid "SE Asia Daylight Time"
 msgstr "Horário de verão do Sudeste da Ásia"
 
-#: tzres.rc:158
+#: tzres.rc:164
 msgid "New Zealand Standard Time"
 msgstr "Hora padrão da Nova Zelândia"
 
-#: tzres.rc:159
+#: tzres.rc:165
 msgid "New Zealand Daylight Time"
 msgstr "Horário de verão da Nova Zelândia"
 
@@ -10362,11 +10415,11 @@ msgstr "Hora padrão da Argentina"
 msgid "Aleutian Daylight Time"
 msgstr "Horário de verão da Argentina"
 
-#: tzres.rc:72
+#: tzres.rc:74
 msgid "Central Brazilian Standard Time"
 msgstr "Hora padrão Central do Brasil"
 
-#: tzres.rc:73
+#: tzres.rc:75
 msgid "Central Brazilian Daylight Time"
 msgstr "Horário de verão Brasil Central"
 
@@ -10378,131 +10431,143 @@ msgstr "Hora padrão de Belarus"
 msgid "Belarus Daylight Time"
 msgstr "Horário de verão de Belarus"
 
-#: tzres.rc:184
+#: tzres.rc:190
 msgid "SA Western Standard Time"
 msgstr "Hora padrão do Oeste da América do Sul"
 
-#: tzres.rc:185
+#: tzres.rc:191
 msgid "SA Western Daylight Time"
 msgstr "Horário de verão do Oeste da América do Sul"
 
-#: tzres.rc:110
+#: tzres.rc:114
 msgid "Greenland Standard Time"
 msgstr "Hora padrão da Groenlândia"
 
-#: tzres.rc:111
+#: tzres.rc:115
 msgid "Greenland Daylight Time"
 msgstr "Horário de verão da Groenlândia"
 
-#: tzres.rc:94
+#: tzres.rc:98
 msgid "Easter Island Standard Time"
 msgstr "Hora padrão da Ilha da Páscoa"
 
-#: tzres.rc:95
+#: tzres.rc:99
 msgid "Easter Island Daylight Time"
 msgstr "Horário de verão da Ilha da Páscoa"
 
-#: tzres.rc:98
+#: tzres.rc:102
 msgid "Egypt Standard Time"
 msgstr "Hora padrão do Egito"
 
-#: tzres.rc:99
+#: tzres.rc:103
 msgid "Egypt Daylight Time"
 msgstr "Horário de verão do Egito"
 
-#: tzres.rc:138
+#: tzres.rc:144
 msgid "Mauritius Standard Time"
 msgstr "Hora padrão da Mauritânia"
 
-#: tzres.rc:139
+#: tzres.rc:145
 msgid "Mauritius Daylight Time"
 msgstr "Horário de verão da Mauritânia"
 
-#: tzres.rc:218
+#: tzres.rc:224
 msgid "Vladivostok Standard Time"
 msgstr "Hora padrão de Vladivostoque"
 
-#: tzres.rc:219
+#: tzres.rc:225
 msgid "Vladivostok Daylight Time"
 msgstr "Horário de verão de Vladivostoque"
 
-#: tzres.rc:190
+#: tzres.rc:196
 msgid "Singapore Standard Time"
 msgstr "Hora padrão de Singapura"
 
-#: tzres.rc:191
+#: tzres.rc:197
 msgid "Singapore Daylight Time"
 msgstr "Horário de verão de Singapura"
 
-#: tzres.rc:130
+#: tzres.rc:134
 msgid "Korea Standard Time"
 msgstr "Hora padrão da Coreia"
 
-#: tzres.rc:131
+#: tzres.rc:135
 msgid "Korea Daylight Time"
 msgstr "Horário de verão da Coreia"
 
-#: tzres.rc:88
+#: tzres.rc:86
+#, fuzzy
+#| msgid "Easter Island Standard Time"
+msgid "Chatham Islands Standard Time"
+msgstr "Hora padrão da Ilha da Páscoa"
+
+#: tzres.rc:87
+#, fuzzy
+#| msgid "Easter Island Daylight Time"
+msgid "Chatham Islands Daylight Time"
+msgstr "Horário de verão da Ilha da Páscoa"
+
+#: tzres.rc:92
 msgid "E. Africa Standard Time"
 msgstr "Hora padrão da África Oriental"
 
-#: tzres.rc:89
+#: tzres.rc:93
 msgid "E. Africa Daylight Time"
 msgstr "Horário de verão da África Oriental"
 
-#: tzres.rc:104
+#: tzres.rc:108
 msgid "FLE Standard Time"
 msgstr "Hora padrão FLE"
 
-#: tzres.rc:105
+#: tzres.rc:109
 msgid "FLE Daylight Time"
 msgstr "Horário de verão FLE"
 
-#: tzres.rc:92
+#: tzres.rc:96
 msgid "E. South America Standard Time"
 msgstr "Hora padrão de Brasília"
 
-#: tzres.rc:93
+#: tzres.rc:97
 msgid "E. South America Daylight Time"
 msgstr "Horário de verão do Leste da América do Sul"
 
-#: tzres.rc:78
+#: tzres.rc:80
 msgid "Central Pacific Standard Time"
 msgstr "Hora padrão do Pacífico Central"
 
-#: tzres.rc:79
+#: tzres.rc:81
 msgid "Central Pacific Daylight Time"
 msgstr "Horário de verão do Pacífico Central"
 
-#: tzres.rc:222
+#: tzres.rc:228
 msgid "W. Central Africa Standard Time"
 msgstr "Hora padrão do Oeste da África Central"
 
-#: tzres.rc:223
+#: tzres.rc:229
 msgid "W. Central Africa Daylight Time"
 msgstr "Horário de verão do Oeste da África Central"
 
-#: tzres.rc:166
+#: tzres.rc:172
 msgid "Pacific SA Standard Time"
 msgstr "Hora padrão do Pacífico América do Sul"
 
-#: tzres.rc:167
+#: tzres.rc:173
 msgid "Pacific SA Daylight Time"
 msgstr "Horário de verão do Pacífico da América do Sul"
 
-#: tzres.rc:90
+#: tzres.rc:94
 msgid "E. Australia Standard Time"
 msgstr "Hora padrão da Austrália Oriental"
 
-#: tzres.rc:91
+#: tzres.rc:95
 msgid "E. Australia Daylight Time"
 msgstr "Horário de verão da Austrália Oriental"
 
-#: tzres.rc:220
+#: tzres.rc:226
 msgid "W. Australia Standard Time"
 msgstr "Hora padrão do Oeste da Austrália"
 
-#: tzres.rc:221
+#: tzres.rc:227
 msgid "W. Australia Daylight Time"
 msgstr "Horário de verão da Austrália Ocidental"
 
@@ -11692,7 +11757,7 @@ msgstr "&Analógico"
 msgid "Digi&tal"
 msgstr "Digi&tal"
 
-#: clock.rc:35 notepad.rc:53 winecfg.rc:307 winefile.rc:63 wordpad.rc:84
+#: clock.rc:35 notepad.rc:53 winecfg.rc:305 winefile.rc:63 wordpad.rc:84
 msgid "&Font..."
 msgstr "&Fonte..."
 
@@ -15521,7 +15586,7 @@ msgid "The Wine configuration in %s is being updated, please wait..."
 msgstr ""
 "A configuração do Wine em %s está sendo atualizada, por favor, aguarde..."
 
-#: winecfg.rc:141
+#: winecfg.rc:140
 msgid ""
 "This program is free software; you can redistribute it and/or modify it "
 "under the terms of the GNU Lesser General Public License as published by the "
@@ -15533,23 +15598,23 @@ msgstr ""
 "Software Foundation; tanto na versão 2.1 desta licença ou (à sua escolha) "
 "qualquer versão posterior."
 
-#: winecfg.rc:143
+#: winecfg.rc:142
 msgid "Windows registration information"
 msgstr "Informações de registro do Windows"
 
-#: winecfg.rc:144
+#: winecfg.rc:143
 msgid "&Owner:"
 msgstr "&Proprietário:"
 
-#: winecfg.rc:146
+#: winecfg.rc:145
 msgid "Organi&zation:"
 msgstr "&Organização:"
 
-#: winecfg.rc:154
+#: winecfg.rc:153
 msgid "Application settings"
 msgstr "Configurações de Aplicativo"
 
-#: winecfg.rc:155
+#: winecfg.rc:154
 msgid ""
 "Wine can mimic different Windows versions for each application. This tab is "
 "linked to the Libraries and Graphics tabs to allow you to change system-wide "
@@ -15559,55 +15624,55 @@ msgstr ""
 "aba é ligada às abas Bibliotecas e Gráficos para permitir alterar "
 "configurações globais ou por aplicativo também nessas abas."
 
-#: winecfg.rc:159
+#: winecfg.rc:158
 msgid "Add appli&cation..."
 msgstr "Adicionar apli&cativo..."
 
-#: winecfg.rc:160
+#: winecfg.rc:159
 msgid "&Remove application"
 msgstr "&Remover aplicativo"
 
-#: winecfg.rc:161
+#: winecfg.rc:160
 msgid "&Windows Version:"
 msgstr "Versão do &Windows:"
 
-#: winecfg.rc:169
+#: winecfg.rc:168
 msgid "Window settings"
 msgstr "Configurações de Janela"
 
-#: winecfg.rc:170
+#: winecfg.rc:169
 msgid "Automatically capture the &mouse in full-screen windows"
 msgstr "Capturar o &mouse automaticamente em janelas em tela cheia"
 
-#: winecfg.rc:171
+#: winecfg.rc:170
 msgid "Allow the window manager to &decorate the windows"
 msgstr "Permitir que o gerenciador de janelas &decore as janelas"
 
-#: winecfg.rc:172
+#: winecfg.rc:171
 msgid "Allow the &window manager to control the windows"
 msgstr "Permitir que o gerenciador de janelas &controle as janelas"
 
-#: winecfg.rc:173
+#: winecfg.rc:172
 msgid "&Emulate a virtual desktop"
 msgstr "&Emular uma área de trabalho virtual"
 
-#: winecfg.rc:175
+#: winecfg.rc:174
 msgid "Desktop &size:"
 msgstr "Tamanho da Tela:"
 
-#: winecfg.rc:180
+#: winecfg.rc:179
 msgid "Screen resolution"
 msgstr "Resolução da Tela"
 
-#: winecfg.rc:184
+#: winecfg.rc:183
 msgid "This is a sample text using 10 point Tahoma"
 msgstr "Este é um texto exemplo usando Tahoma 10 pontos"
 
-#: winecfg.rc:191
+#: winecfg.rc:190
 msgid "DLL overrides"
 msgstr "Substituições de DLL"
 
-#: winecfg.rc:192
+#: winecfg.rc:191
 msgid ""
 "Dynamic Link Libraries can be specified individually to be either builtin "
 "(provided by Wine) or native (taken from Windows or provided by the "
@@ -15617,55 +15682,55 @@ msgstr ""
 "embutidas (fornecidas pelo Wine) ou nativas (tiradas do Windows ou "
 "fornecidas pelo aplicativo)."
 
-#: winecfg.rc:194
+#: winecfg.rc:193
 msgid "&New override for library:"
 msgstr "&Nova substituição para a biblioteca:"
 
-#: winecfg.rc:196
+#: winecfg.rc:195
 msgid "A&dd"
 msgstr "&Adicionar"
 
-#: winecfg.rc:197
+#: winecfg.rc:196
 msgid "Existing &overrides:"
 msgstr "Substituições e&xistentes:"
 
-#: winecfg.rc:199
+#: winecfg.rc:198
 msgid "&Edit..."
 msgstr "&Editar..."
 
-#: winecfg.rc:205
+#: winecfg.rc:204
 msgid "Edit Override"
 msgstr "Editar Substituição"
 
-#: winecfg.rc:208
+#: winecfg.rc:207
 msgid "Load order"
 msgstr "Ordem de Carregamento"
 
-#: winecfg.rc:209
+#: winecfg.rc:208
 msgid "&Builtin (Wine)"
 msgstr "&Embutida (Wine)"
 
-#: winecfg.rc:210
+#: winecfg.rc:209
 msgid "&Native (Windows)"
 msgstr "&Nativa (Windows)"
 
-#: winecfg.rc:211
+#: winecfg.rc:210
 msgid "Buil&tin then Native"
 msgstr "E&mbutida depois Nativa"
 
-#: winecfg.rc:212
+#: winecfg.rc:211
 msgid "Nati&ve then Builtin"
 msgstr "Nati&va depois Embutida"
 
-#: winecfg.rc:220
+#: winecfg.rc:219
 msgid "Select Drive Letter"
 msgstr "Selecione a Letra"
 
-#: winecfg.rc:232
+#: winecfg.rc:231
 msgid "Drive configuration"
 msgstr "Configuração de unidades"
 
-#: winecfg.rc:233
+#: winecfg.rc:232
 msgid ""
 "Failed to connect to the mount manager; the drive configuration cannot be "
 "edited."
@@ -15673,207 +15738,203 @@ msgstr ""
 "Falha de conexão com o gerenciador de montagem; a configuração da unidade "
 "não pôde ser alterada."
 
-#: winecfg.rc:236
+#: winecfg.rc:235
 msgid "A&dd..."
 msgstr "&Adicionar..."
 
-#: winecfg.rc:238
-msgid "Aut&odetect"
-msgstr "Auto &detectar"
-
-#: winecfg.rc:241
+#: winecfg.rc:239
 msgid "&Path:"
 msgstr "&Caminho:"
 
-#: winecfg.rc:248 winecfg.rc:38
+#: winecfg.rc:246 winecfg.rc:37
 msgid "Show Advan&ced"
 msgstr "M&ostrar Avançado"
 
-#: winecfg.rc:249
+#: winecfg.rc:247
 msgid "De&vice:"
 msgstr "Dispositi&vo:"
 
-#: winecfg.rc:251
+#: winecfg.rc:249
 msgid "Bro&wse..."
 msgstr "Nave&gar..."
 
-#: winecfg.rc:253
+#: winecfg.rc:251
 msgid "&Label:"
 msgstr "&Rótulo:"
 
-#: winecfg.rc:255
+#: winecfg.rc:253
 msgid "S&erial:"
 msgstr "&Serial:"
 
-#: winecfg.rc:258
+#: winecfg.rc:256
 msgid "&Show dot files"
 msgstr "Mostrar arquivos com &ponto"
 
-#: winecfg.rc:265
+#: winecfg.rc:263
 msgid "Driver diagnostics"
 msgstr "Diagnósticos de driver"
 
-#: winecfg.rc:267
+#: winecfg.rc:265
 msgid "Defaults"
 msgstr "Dispositivos Padrões"
 
-#: winecfg.rc:268
+#: winecfg.rc:266
 msgid "Output device:"
 msgstr "Saída:"
 
-#: winecfg.rc:269
+#: winecfg.rc:267
 msgid "Voice output device:"
 msgstr "Saída de voz:"
 
-#: winecfg.rc:270
+#: winecfg.rc:268
 msgid "Input device:"
 msgstr "Entrada:"
 
-#: winecfg.rc:271
+#: winecfg.rc:269
 msgid "Voice input device:"
 msgstr "Entrada de voz:"
 
-#: winecfg.rc:276
+#: winecfg.rc:274
 msgid "&Test Sound"
 msgstr "&Testar Som"
 
-#: winecfg.rc:277 winecfg.rc:90
+#: winecfg.rc:275 winecfg.rc:89
 msgid "Speaker configuration"
 msgstr "Configuração dos alto-falantes"
 
-#: winecfg.rc:280
+#: winecfg.rc:278
 msgid "Speakers:"
 msgstr "Alto-falantes:"
 
-#: winecfg.rc:288
+#: winecfg.rc:286
 msgid "Appearance"
 msgstr "Aparência"
 
-#: winecfg.rc:289
+#: winecfg.rc:287
 msgid "&Theme:"
 msgstr "&Tema:"
 
-#: winecfg.rc:291
+#: winecfg.rc:289
 msgid "&Install theme..."
 msgstr "&Instalar tema..."
 
-#: winecfg.rc:296
+#: winecfg.rc:294
 msgid "It&em:"
 msgstr "It&em:"
 
-#: winecfg.rc:298
+#: winecfg.rc:296
 msgid "C&olor:"
 msgstr "C&or:"
 
-#: winecfg.rc:304
+#: winecfg.rc:302
 msgid "MIME types"
 msgstr "Tipos MIME"
 
-#: winecfg.rc:305
+#: winecfg.rc:303
 msgid "Manage file &associations"
 msgstr "Gerenciar &associação de arquivos"
 
-#: winecfg.rc:308
+#: winecfg.rc:306
 msgid "Folders"
 msgstr "Pastas"
 
-#: winecfg.rc:311
+#: winecfg.rc:309
 msgid "&Link to:"
 msgstr "&Atalho para:"
 
-#: winecfg.rc:34
+#: winecfg.rc:33
 msgid "Libraries"
 msgstr "Bibliotecas"
 
-#: winecfg.rc:35
+#: winecfg.rc:34
 msgid "Drives"
 msgstr "Unidades"
 
-#: winecfg.rc:36
+#: winecfg.rc:35
 msgid "Select the Unix target directory, please."
 msgstr "Por favor, selecione o diretório Unix alvo."
 
-#: winecfg.rc:37
+#: winecfg.rc:36
 msgid "Hide Advan&ced"
 msgstr "&Ocultar Avançado"
 
-#: winecfg.rc:39
+#: winecfg.rc:38
 msgid "(No Theme)"
 msgstr "(Sem Tema)"
 
-#: winecfg.rc:40
+#: winecfg.rc:39
 msgid "Graphics"
 msgstr "Gráficos"
 
-#: winecfg.rc:41
+#: winecfg.rc:40
 msgid "Desktop Integration"
 msgstr "Integração com Área de Trabalho"
 
-#: winecfg.rc:42
+#: winecfg.rc:41
 msgid "Audio"
 msgstr "Áudio"
 
-#: winecfg.rc:43
+#: winecfg.rc:42
 msgid "About"
 msgstr "Sobre"
 
-#: winecfg.rc:44
+#: winecfg.rc:43
 msgid "Wine configuration"
 msgstr "Configuração do Wine"
 
-#: winecfg.rc:46
+#: winecfg.rc:45
 msgid "Theme files (*.msstyles; *.theme)"
 msgstr "Arquivos de tema (*.msstyles; *.theme)"
 
-#: winecfg.rc:47
+#: winecfg.rc:46
 msgid "Select a theme file"
 msgstr "Selecione um arquivo de tema"
 
-#: winecfg.rc:48
+#: winecfg.rc:47
 msgid "Folder"
 msgstr "Pasta"
 
-#: winecfg.rc:49
+#: winecfg.rc:48
 msgid "Links to"
 msgstr "Atalho para"
 
-#: winecfg.rc:45
+#: winecfg.rc:44
 msgid "Wine configuration for %s"
 msgstr "Configuração do Wine para %s"
 
-#: winecfg.rc:84
+#: winecfg.rc:83
 msgid "Selected driver: %s"
 msgstr "Driver selecionado: %s"
 
-#: winecfg.rc:85
+#: winecfg.rc:84
 msgid "(None)"
 msgstr "(Nenhum)"
 
-#: winecfg.rc:86
+#: winecfg.rc:85
 msgid "Audio test failed!"
 msgstr "Falha no teste de áudio!"
 
-#: winecfg.rc:88
+#: winecfg.rc:87
 msgid "(System default)"
 msgstr "(Padrão do sistema)"
 
-#: winecfg.rc:91
+#: winecfg.rc:90
 msgid "5.1 Surround"
 msgstr "Surround 5.1"
 
-#: winecfg.rc:92
+#: winecfg.rc:91
 msgid "Quadraphonic"
 msgstr "Quadrafônico"
 
-#: winecfg.rc:93
+#: winecfg.rc:92
 msgid "Stereo"
 msgstr "Estéreo"
 
-#: winecfg.rc:94
+#: winecfg.rc:93
 msgid "Mono"
 msgstr "Mono"
 
-#: winecfg.rc:54
+#: winecfg.rc:53
 msgid ""
 "Changing the load order of this library is not recommended.\n"
 "Are you sure you want to do this?"
@@ -15881,67 +15942,67 @@ msgstr ""
 "Não é recomendado alterar a ordem de carregamento desta biblioteca.\n"
 "Tem certeza que quer fazer isto?"
 
-#: winecfg.rc:55
+#: winecfg.rc:54
 msgid "Warning: system library"
 msgstr "Aviso: biblioteca do sistema"
 
-#: winecfg.rc:56
+#: winecfg.rc:55
 msgid "native"
 msgstr "nativa"
 
-#: winecfg.rc:57
+#: winecfg.rc:56
 msgid "builtin"
 msgstr "embutida"
 
-#: winecfg.rc:58
+#: winecfg.rc:57
 msgid "native, builtin"
 msgstr "nativa, embutida"
 
-#: winecfg.rc:59
+#: winecfg.rc:58
 msgid "builtin, native"
 msgstr "embutida, nativa"
 
-#: winecfg.rc:60
+#: winecfg.rc:59
 msgid "disabled"
 msgstr "desativada"
 
-#: winecfg.rc:61
+#: winecfg.rc:60
 msgid "Default Settings"
 msgstr "Configurações Padrão"
 
-#: winecfg.rc:62
+#: winecfg.rc:61
 msgid "Wine Programs (*.exe; *.exe.so)"
 msgstr "Programas Wine (*.exe,*.exe.so)"
 
-#: winecfg.rc:63
+#: winecfg.rc:62
 msgid "Use global settings"
 msgstr "Usar configurações globais"
 
-#: winecfg.rc:64
+#: winecfg.rc:63
 msgid "Select an executable file"
 msgstr "Selecione um arquivo executável"
 
-#: winecfg.rc:69
+#: winecfg.rc:68
 msgid "Autodetect"
 msgstr "Auto detectar"
 
-#: winecfg.rc:70
+#: winecfg.rc:69
 msgid "Local hard disk"
 msgstr "Disco rígido local"
 
-#: winecfg.rc:71
+#: winecfg.rc:70
 msgid "Network share"
 msgstr "Compartilhamento de rede"
 
-#: winecfg.rc:72
+#: winecfg.rc:71
 msgid "Floppy disk"
 msgstr "Disquete"
 
-#: winecfg.rc:73
+#: winecfg.rc:72
 msgid "CD-ROM"
 msgstr "CD-ROM"
 
-#: winecfg.rc:74
+#: winecfg.rc:73
 msgid ""
 "You cannot add any more drives.\n"
 "\n"
@@ -15952,11 +16013,11 @@ msgstr ""
 "Cada unidade deve ter uma letra, de A a Z, então não é possível ter mais que "
 "26."
 
-#: winecfg.rc:75
+#: winecfg.rc:74
 msgid "System drive"
 msgstr "Unidade do sistema"
 
-#: winecfg.rc:76
+#: winecfg.rc:75
 msgid ""
 "Are you sure you want to delete drive C?\n"
 "\n"
@@ -15968,16 +16029,16 @@ msgstr ""
 "A maior parte dos aplicativos Windows esperam que a unidade C exista e não "
 "funcionarão caso contrário. Se continuar, lembre-se de recriá-la!"
 
-#: winecfg.rc:77
+#: winecfg.rc:76
 msgctxt "Drive letter"
 msgid "Letter"
 msgstr "Letra"
 
-#: winecfg.rc:78
+#: winecfg.rc:77
 msgid "Target folder"
 msgstr "Diretório alvo"
 
-#: winecfg.rc:79
+#: winecfg.rc:78
 msgid ""
 "You don't have a drive C. This is not so great.\n"
 "\n"
@@ -15987,127 +16048,127 @@ msgstr ""
 "\n"
 "Lembre-se de clicar em 'Adicionar' na aba Unidades para criar uma!\n"
 
-#: winecfg.rc:99
+#: winecfg.rc:98
 msgid "Controls Background"
 msgstr "Fundo do Botão"
 
-#: winecfg.rc:100
+#: winecfg.rc:99
 msgid "Controls Text"
 msgstr "Texto do Botão"
 
-#: winecfg.rc:102
+#: winecfg.rc:101
 msgid "Menu Background"
 msgstr "Fundo do Menu"
 
-#: winecfg.rc:103
+#: winecfg.rc:102
 msgid "Menu Text"
 msgstr "Texto do Menu"
 
-#: winecfg.rc:104
+#: winecfg.rc:103
 msgid "Scrollbar"
 msgstr "Barra de Rolagem"
 
-#: winecfg.rc:105
+#: winecfg.rc:104
 msgid "Selection Background"
 msgstr "Fundo de Seleção"
 
-#: winecfg.rc:106
+#: winecfg.rc:105
 msgid "Selection Text"
 msgstr "Texto de Seleção"
 
-#: winecfg.rc:107
+#: winecfg.rc:106
 msgid "Tooltip Background"
 msgstr "Fundo da Dica"
 
-#: winecfg.rc:108
+#: winecfg.rc:107
 msgid "Tooltip Text"
 msgstr "Texto da Dica"
 
-#: winecfg.rc:109
+#: winecfg.rc:108
 msgid "Window Background"
 msgstr "Fundo da Janela"
 
-#: winecfg.rc:110
+#: winecfg.rc:109
 msgid "Window Text"
 msgstr "Texto da Janela"
 
-#: winecfg.rc:111
+#: winecfg.rc:110
 msgid "Active Title Bar"
 msgstr "Barra de Título Ativa"
 
-#: winecfg.rc:112
+#: winecfg.rc:111
 msgid "Active Title Text"
 msgstr "Texto de Título Ativo"
 
-#: winecfg.rc:113
+#: winecfg.rc:112
 msgid "Inactive Title Bar"
 msgstr "Barra de Título Inativa"
 
-#: winecfg.rc:114
+#: winecfg.rc:113
 msgid "Inactive Title Text"
 msgstr "Texto de Título Inativo"
 
-#: winecfg.rc:115
+#: winecfg.rc:114
 msgid "Message Box Text"
 msgstr "Texto da Caixa de Mensagens"
 
-#: winecfg.rc:116
+#: winecfg.rc:115
 msgid "Application Workspace"
 msgstr "Área do Aplicativo"
 
-#: winecfg.rc:117
+#: winecfg.rc:116
 msgid "Window Frame"
 msgstr "Corpo da Janela"
 
-#: winecfg.rc:118
+#: winecfg.rc:117
 msgid "Active Border"
 msgstr "Borda Ativa"
 
-#: winecfg.rc:119
+#: winecfg.rc:118
 msgid "Inactive Border"
 msgstr "Borda Inativa"
 
-#: winecfg.rc:120
+#: winecfg.rc:119
 msgid "Controls Shadow"
 msgstr "Sombra dos Botões"
 
-#: winecfg.rc:121
+#: winecfg.rc:120
 msgid "Gray Text"
 msgstr "Texto Inativo"
 
-#: winecfg.rc:122
+#: winecfg.rc:121
 msgid "Controls Highlight"
 msgstr "Realce do Botão"
 
-#: winecfg.rc:123
+#: winecfg.rc:122
 msgid "Controls Dark Shadow"
 msgstr "Sombra Escura do Botão"
 
-#: winecfg.rc:124
+#: winecfg.rc:123
 msgid "Controls Light"
 msgstr "Luz do Botão"
 
-#: winecfg.rc:125
+#: winecfg.rc:124
 msgid "Controls Alternate Background"
 msgstr "Fundo Alternativo do Botão"
 
-#: winecfg.rc:126
+#: winecfg.rc:125
 msgid "Hot Tracked Item"
 msgstr "Elemento Ativo"
 
-#: winecfg.rc:127
+#: winecfg.rc:126
 msgid "Active Title Bar Gradient"
 msgstr "Gradiente da Barra Ativa"
 
-#: winecfg.rc:128
+#: winecfg.rc:127
 msgid "Inactive Title Bar Gradient"
 msgstr "Gradiente da Barra Inativa"
 
-#: winecfg.rc:129
+#: winecfg.rc:128
 msgid "Menu Highlight"
 msgstr "Realce de Menu"
 
-#: winecfg.rc:130
+#: winecfg.rc:129
 msgid "Menu Bar"
 msgstr "Barra de Menu"
 

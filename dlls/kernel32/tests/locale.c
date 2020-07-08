@@ -25,6 +25,8 @@
  *  the control panel i8n page), we will still get the expected results.
  */
 
+#define _CRT_NON_CONFORMING_WCSTOK
+
 #include <assert.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -83,11 +85,17 @@ static LANGID (WINAPI *pSetThreadUILanguage)(LANGID);
 static LANGID (WINAPI *pGetThreadUILanguage)(VOID);
 static INT (WINAPI *pNormalizeString)(NORM_FORM, LPCWSTR, INT, LPWSTR, INT);
 static INT (WINAPI *pFindStringOrdinal)(DWORD, LPCWSTR lpStringSource, INT, LPCWSTR, INT, BOOL);
+static BOOL (WINAPI *pGetNLSVersion)(NLS_FUNCTION,LCID,NLSVERSIONINFO*);
+static BOOL (WINAPI *pGetNLSVersionEx)(NLS_FUNCTION,LPCWSTR,NLSVERSIONINFOEX*);
+static DWORD (WINAPI *pIsValidNLSVersion)(NLS_FUNCTION,LPCWSTR,NLSVERSIONINFOEX*);
 static NTSTATUS (WINAPI *pRtlNormalizeString)(ULONG, LPCWSTR, INT, LPWSTR, INT*);
 static NTSTATUS (WINAPI *pRtlIsNormalizedString)(ULONG, LPCWSTR, INT, BOOLEAN*);
 static NTSTATUS (WINAPI *pNtGetNlsSectionPtr)(ULONG,ULONG,void*,void**,SIZE_T*);
 static void (WINAPI *pRtlInitCodePageTable)(USHORT*,CPTABLEINFO*);
 static NTSTATUS (WINAPI *pRtlCustomCPToUnicodeN)(CPTABLEINFO*,WCHAR*,DWORD,DWORD*,const char*,DWORD);
+static NTSTATUS (WINAPI *pRtlGetSystemPreferredUILanguages)(DWORD,ULONG,ULONG*,WCHAR*,ULONG*);
+static NTSTATUS (WINAPI *pRtlGetThreadPreferredUILanguages)(DWORD,ULONG*,WCHAR*,ULONG*);
+static NTSTATUS (WINAPI *pRtlGetUserPreferredUILanguages)(DWORD,ULONG,ULONG*,WCHAR*,ULONG*);
 
 static void InitFunctionPointers(void)
 {
@@ -123,6 +131,9 @@ static void InitFunctionPointers(void)
   X(GetThreadUILanguage);
   X(NormalizeString);
   X(FindStringOrdinal);
+  X(GetNLSVersion);
+  X(GetNLSVersionEx);
+  X(IsValidNLSVersion);
 
   mod = GetModuleHandleA("ntdll");
   X(RtlUpcaseUnicodeChar);
@@ -132,6 +143,9 @@ static void InitFunctionPointers(void)
   X(NtGetNlsSectionPtr);
   X(RtlInitCodePageTable);
   X(RtlCustomCPToUnicodeN);
+  X(RtlGetSystemPreferredUILanguages);
+  X(RtlGetThreadPreferredUILanguages);
+  X(RtlGetUserPreferredUILanguages);
 #undef X
 }
 
@@ -4197,7 +4211,7 @@ static void test_GetCPInfo(void)
                 for (i = 0; i <= sizeof(buf); i++)
                 {
                     memset( wbuf, 0xcc, sizeof(wbuf) );
-                    RtlCustomCPToUnicodeN( &table, wbuf, sizeof(wbuf), &reslen, (char *)buf, i );
+                    pRtlCustomCPToUnicodeN( &table, wbuf, sizeof(wbuf), &reslen, (char *)buf, i );
                     for (j = 0; j < 4; j++) if (expect[i][j] == 0xcccc) break;
                     ok( reslen == j * sizeof(WCHAR), "%u: wrong len %u\n", i, reslen );
                     for (j = 0; j < 4; j++)
@@ -4416,99 +4430,46 @@ static void test_GetStringTypeW(void)
 static void test_IdnToNameprepUnicode(void)
 {
     struct {
-        DWORD in_len;
-        const WCHAR in[64];
+        int in_len;
+        const WCHAR in[80];
+        DWORD flags;
         DWORD ret;
         DWORD broken_ret;
-        const WCHAR out[64];
-        DWORD flags;
-        DWORD err;
+        const WCHAR out[80];
+        NTSTATUS status;
+        NTSTATUS broken_status;
     } test_data[] = {
-        {
-            5, {'t','e','s','t',0},
-            5, 5, {'t','e','s','t',0},
-            0, 0xdeadbeef
-        },
-        {
-            3, {'a',0xe111,'b'},
-            0, 0, {0},
-            0, ERROR_INVALID_NAME
-        },
-        {
-            4, {'t',0,'e',0},
-            0, 0, {0},
-            0, ERROR_INVALID_NAME
-        },
-        {
-            1, {'T',0},
-            1, 1, {'T',0},
-            0, 0xdeadbeef
-        },
-        {
-            1, {0},
-            0, 0, {0},
-            0, ERROR_INVALID_NAME
-        },
-        {
-            6, {' ','-','/','[',']',0},
-            6, 6, {' ','-','/','[',']',0},
-            0, 0xdeadbeef
-        },
-        {
-            3, {'a','-','a'},
-            3, 3, {'a','-','a'},
-            IDN_USE_STD3_ASCII_RULES, 0xdeadbeef
-        },
-        {
-            3, {'a','a','-'},
-            0, 0, {0},
-            IDN_USE_STD3_ASCII_RULES, ERROR_INVALID_NAME
-        },
-        {
-            10, {'T',0xdf,0x130,0x143,0x37a,0x6a,0x30c,' ',0xaa,0},
-            12, 12, {'t','s','s','i',0x307,0x144,' ',0x3b9,0x1f0,' ','a',0},
-            0, 0xdeadbeef
-        },
-        {
-            11, {'t',0xad,0x34f,0x1806,0x180b,0x180c,0x180d,0x200b,0x200c,0x200d,0},
-            2, 0, {'t',0},
-            0, 0xdeadbeef
-        },
-        {
-            2, {0x3b0, 0},
-            2, 2, {0x3b0, 0},
-            0, 0xdeadbeef,
-        },
-        {
-            2, {0x221, 0},
-            0, 2, {0},
-            0, ERROR_NO_UNICODE_TRANSLATION
-        },
-        {
-            2, {0x221, 0},
-            2, 2, {0x221, 0},
-            IDN_ALLOW_UNASSIGNED, 0xdeadbeef
-        },
-        {
-            5, {'a','.','.','a',0},
-            0, 0, {0},
-            0, ERROR_INVALID_NAME
-        },
-        {
-            3, {'a','.',0},
-            3, 3, {'a','.',0},
-            0, 0xdeadbeef
-        },
+        /* 0 */
+        { 5, L"test", 0, 5, 5, L"test" },
+        { 3, L"a\xe111z", 0, 0, 0, L"a\xe111z", 0, STATUS_NO_UNICODE_TRANSLATION },
+        { 4, L"t\0e", 0, 0, 0, {0}, STATUS_NO_UNICODE_TRANSLATION, STATUS_NO_UNICODE_TRANSLATION },
+        { 1, L"T", 0, 1, 1, L"T" },
+        { 1, {0}, 0, 0 },
+        /* 5 */
+        { 6, L" -/[]", 0, 6, 6, L" -/[]" },
+        { 3, L"a-a", IDN_USE_STD3_ASCII_RULES, 3, 3, L"a-a" },
+        { 3, L"aa-", IDN_USE_STD3_ASCII_RULES, 0, 0, L"aa-" },
+        { -1, L"T\xdf\x130\x143\x37a\x6a\x30c \xaa", 0, 12, 12, L"tssi\x307\x144 \x3b9\x1f0 a" },
+        { 11, L"t\xad\x34f\x1806\x180b\x180c\x180d\x200b\x200c\x200d", 0, 0, 2, L"t",
+          STATUS_NO_UNICODE_TRANSLATION },
+        /* 10 */
+        { 2, {0x3b0}, 0, 2, 2, {0x3b0} },
+        { 2, {0x380}, 0, 0, 2, {0x380} },
+        { 2, {0x380}, IDN_ALLOW_UNASSIGNED, 2, 2, {0x380} },
+        { 5, L"a..a", 0, 0, 0, L"a..a" },
+        { 3, L"a.", 0, 3, 3, L"a." },
+        /* 15 */
+        { 5, L"T.\x105.A", 0, 5, 5, L"t.\x105.a" },
+        { 5, L"T.*.A", 0, 5, 5, L"T.*.A" },
+        { 5, L"X\xff0e.Z", 0, 0, 0, L"x..z" },
+        { 63, L"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 0,
+          63, 63, L"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" },
+        { 64, L"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 0,
+          0, 0, L"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" },
     };
 
     WCHAR buf[1024];
     DWORD i, ret, err;
-
-    if (!pIdnToNameprepUnicode)
-    {
-        win_skip("IdnToNameprepUnicode is not available\n");
-        return;
-    }
 
     ret = pIdnToNameprepUnicode(0, test_data[0].in,
             test_data[0].in_len, NULL, 0);
@@ -4519,7 +4480,7 @@ static void test_IdnToNameprepUnicode(void)
             test_data[1].in_len, NULL, 0);
     err = GetLastError();
     ok(ret == test_data[1].ret, "ret = %d\n", ret);
-    ok(err == test_data[1].err, "err = %d\n", err);
+    ok(err == ret ? 0xdeadbeef : ERROR_INVALID_NAME, "err = %d\n", err);
 
     SetLastError(0xdeadbeef);
     ret = pIdnToNameprepUnicode(0, test_data[0].in, -1, buf, ARRAY_SIZE(buf));
@@ -4559,166 +4520,227 @@ static void test_IdnToNameprepUnicode(void)
     for (i=0; i<ARRAY_SIZE(test_data); i++)
     {
         SetLastError(0xdeadbeef);
+        memset( buf, 0xcc, sizeof(buf) );
         ret = pIdnToNameprepUnicode(test_data[i].flags, test_data[i].in, test_data[i].in_len,
                 buf, ARRAY_SIZE(buf));
         err = GetLastError();
 
         ok(ret == test_data[i].ret || broken(ret == test_data[i].broken_ret), "%d: ret = %d\n", i, ret);
 
-        if(ret != test_data[i].ret)
-            continue;
-
-        ok(err == test_data[i].err, "%d) err = %d\n", i, err);
-        ok(!memcmp(test_data[i].out, buf, ret*sizeof(WCHAR)),
-                "%d) buf = %s\n", i, wine_dbgstr_wn(buf, ret));
+        if (ret == test_data[i].ret)
+        {
+            ok(err == ret ? 0xdeadbeef : ERROR_INVALID_NAME, "%d: err = %d\n", i, err);
+            ok(!wcsncmp(test_data[i].out, buf, ret), "%d: buf = %s\n", i, wine_dbgstr_wn(buf, ret));
+        }
+        if (pRtlNormalizeString)
+        {
+            NTSTATUS status;
+            int len = ARRAY_SIZE(buf);
+            memset( buf, 0xcc, sizeof(buf) );
+            status = pRtlNormalizeString( 13, test_data[i].in, test_data[i].in_len, buf, &len );
+            ok( status == test_data[i].status || broken(status == test_data[i].broken_status),
+                "%d: failed %x\n", i, status );
+            if (!status) ok( !wcsnicmp(test_data[i].out, buf, len), "%d: buf = %s\n", i, wine_dbgstr_wn(buf, len));
+        }
     }
 }
 
 static void test_IdnToAscii(void)
 {
     struct {
-        DWORD in_len;
-        const WCHAR in[64];
-        DWORD ret;
-        const WCHAR out[64];
+        int in_len;
+        const WCHAR in[80];
         DWORD flags;
-        DWORD err;
+        DWORD ret;
+        DWORD broken_ret;
+        const WCHAR out[80];
     } test_data[] = {
-        {
-            5, {'T','e','s','t',0},
-            5, {'T','e','s','t',0},
-            0, 0xdeadbeef
-        },
-        {
-            5, {'T','e',0x017c,'s','t',0},
-            12, {'x','n','-','-','t','e','s','t','-','c','b','b',0},
-            0, 0xdeadbeef
-        },
-        {
-            12, {'t','e',0x0105,'s','t','.','t','e',0x017c,'s','t',0},
-            26, {'x','n','-','-','t','e','s','t','-','c','t','a','.','x','n','-','-','t','e','s','t','-','c','b','b',0},
-            0, 0xdeadbeef
-        },
-        {
-            3, {0x0105,'.',0},
-            9, {'x','n','-','-','2','d','a','.',0},
-            0, 0xdeadbeef
-        },
-        {
-            10, {'h','t','t','p',':','/','/','t',0x0106,0},
-            17, {'x','n','-','-','h','t','t','p',':','/','/','t','-','7','8','a',0},
-            0, 0xdeadbeef
-        },
-        {
-            10, {0x4e3a,0x8bf4,0x4e0d,0x4ed6,0x5011,0x10d,0x11b,0x305c,0x306a,0},
-            35, {'x','n','-','-','b','e','a','2','a','1','6','3','1','a','v','b','a',
-                'v','4','4','t','y','h','a','3','2','b','9','1','e','g','s','2','t',0},
-            0, 0xdeadbeef
-        },
-        {
-            2, {0x221,0},
-            8, {'x','n','-','-','6','l','a',0},
-            IDN_ALLOW_UNASSIGNED, 0xdeadbeef
-        },
+        /* 0 */
+        { 5, L"Test", 0, 5, 5, L"Test" },
+        { 5, L"Te\x017cst", 0, 12, 12, L"xn--test-cbb" },
+        { 12, L"te\x0105st.te\x017cst", 0, 26, 26, L"xn--test-cta.xn--test-cbb" },
+        { 3, {0x0105,'.',0}, 0, 9, 9, L"xn--2da." },
+        { 10, L"http://t\x106", 0, 17, 17, L"xn--http://t-78a" },
+        /* 5 */
+        { -1, L"\x4e3a\x8bf4\x4e0d\x4ed6\x5011\x10d\x11b\x305c\x306a", 0,
+          35, 35, L"xn--bea2a1631avbav44tyha32b91egs2t" },
+        { 2, L"\x380", IDN_ALLOW_UNASSIGNED, 8, 8, L"xn--7va" },
+        { 63, L"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 0,
+          63, 63, L"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" },
+        { 64, L"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 0, 0 },
+        { -1, L"\xe4z123456789012345678901234567890123456789012345678901234", 0,
+          64, 64, L"xn--z123456789012345678901234567890123456789012345678901234-9te" },
+        /* 10 */
+        { -1, L"\xd803\xde78\x46b5-\xa861.\x2e87", 0, 28, 0, L"xn----bm3an932a1l5d.xn--xvj" },
+        { -1, L"\x06ef\x06ef", 0, 9, 0, L"xn--cmba" },
+        { -1, L"-\x07e1\xff61\x2184", 0, 18, 0, L"xn----8cd.xn--r5g" },
     };
 
     WCHAR buf[1024];
     DWORD i, ret, err;
 
-    if (!pIdnToAscii)
-    {
-        win_skip("IdnToAscii is not available\n");
-        return;
-    }
-
     for (i=0; i<ARRAY_SIZE(test_data); i++)
     {
         SetLastError(0xdeadbeef);
-        ret = pIdnToAscii(test_data[i].flags, test_data[i].in,
-                test_data[i].in_len, buf, sizeof(buf));
+        ret = pIdnToAscii(test_data[i].flags, test_data[i].in, test_data[i].in_len, buf, ARRAY_SIZE(buf));
         err = GetLastError();
-        ok(ret == test_data[i].ret, "%d) ret = %d\n", i, ret);
-        ok(err == test_data[i].err, "%d) err = %d\n", i, err);
-        ok(!memcmp(test_data[i].out, buf, ret*sizeof(WCHAR)),
-                "%d) buf = %s\n", i, wine_dbgstr_wn(buf, ret));
+        ok(ret == test_data[i].ret || broken(ret == test_data[i].broken_ret), "%d: ret = %d\n", i, ret);
+        ok(err == ret ? 0xdeadbeef : ERROR_INVALID_NAME, "%d: err = %d\n", i, err);
+        ok(!wcsnicmp(test_data[i].out, buf, ret), "%d: buf = %s\n", i, wine_dbgstr_wn(buf, ret));
     }
 }
 
 static void test_IdnToUnicode(void)
 {
     struct {
-        DWORD in_len;
-        const WCHAR in[64];
-        DWORD ret;
-        const WCHAR out[64];
+        int in_len;
+        const WCHAR in[80];
         DWORD flags;
-        DWORD err;
+        DWORD ret;
+        DWORD broken_ret;
+        const WCHAR out[80];
     } test_data[] = {
-        {
-            5, {'T','e','s','.',0},
-            5, {'T','e','s','.',0},
-            0, 0xdeadbeef
-        },
-        {
-            2, {0x105,0},
-            0, {0},
-            0, ERROR_INVALID_NAME
-        },
-        {
-            33, {'x','n','-','-','4','d','b','c','a','g','d','a','h','y','m','b',
-                'x','e','k','h','e','h','6','e','0','a','7','f','e','i','0','b',0},
-            23, {0x05dc,0x05de,0x05d4,0x05d4,0x05dd,0x05e4,0x05e9,0x05d5,0x05d8,
-                0x05dc,0x05d0,0x05de,0x05d3,0x05d1,0x05e8,0x05d9,0x05dd,0x05e2,
-                0x05d1,0x05e8,0x05d9,0x05ea,0},
-            0, 0xdeadbeef
-        },
-        {
-            34, {'t','e','s','t','.','x','n','-','-','k','d','a','9','a','g','5','e',
-                '9','j','n','f','s','j','.','x','n','-','-','p','d','-','f','n','a'},
-            16, {'t','e','s','t','.',0x0105,0x0119,0x015b,0x0107,
-                0x0142,0x00f3,0x017c,'.','p',0x0119,'d'},
-            0, 0xdeadbeef
-        },
-        {
-            64, {'a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a',
-                'a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a',
-                'a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a',
-                'a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a'},
-            0, {0},
-            0, ERROR_INVALID_NAME
-        },
-        {
-            8, {'x','n','-','-','6','l','a',0},
-            2, {0x221,0},
-            IDN_ALLOW_UNASSIGNED, 0xdeadbeef
-        },
+        /* 0 */
+        { 5, L"Tes.", 0, 5, 5, L"Tes." },
+        { 2, L"\x105", 0, 0 },
+        { 33, L"xn--4dbcagdahymbxekheh6e0a7fei0b", 0,
+          23, 23, L"\x05dc\x05de\x05d4\x05d4\x05dd\x05e4\x05e9\x05d5\x05d8\x05dc\x05d0\x05de\x05d3\x05d1\x05e8\x05d9\x05dd\x05e2\x05d1\x05e8\x05d9\x05ea" },
+        { 34, L"test.xn--kda9ag5e9jnfsj.xn--pz-fna", 0,
+          16, 16, L"test.\x0105\x0119\x015b\x0107\x0142\x00f3\x017c.p\x0119z" },
+        { 63, L"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 0,
+          63, 63, L"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" },
+        /* 5 */
+        { 64, L"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 0, 0 },
+        { 8, L"xn--7va", IDN_ALLOW_UNASSIGNED, 2, 2, L"\x380" },
+        { 8, L"xn--7va", 0, 0, 0, L"\x380" },
+        { -1, L"xn----bm3an932a1l5d.xn--xvj", 0, 8, 0, L"\xd803\xde78\x46b5-\xa861.\x2e87" },
+        { -1, L"xn--z123456789012345678901234567890123456789012345678901234-9te", 0,
+          57, 57, L"\xe4z123456789012345678901234567890123456789012345678901234" },
+        /* 10 */
+        { -1, L"foo.bar", 0, 8, 8, L"foo.bar" },
+        { -1, L"d.xn----dha", 0, 5, 5, L"d.\x00fc-" },
     };
 
     WCHAR buf[1024];
     DWORD i, ret, err;
 
-    if (!pIdnToUnicode)
+    for (i=0; i<ARRAY_SIZE(test_data); i++)
     {
-        win_skip("IdnToUnicode is not available\n");
+        ret = pIdnToUnicode(test_data[i].flags, test_data[i].in, test_data[i].in_len, NULL, 0);
+        ok(ret == test_data[i].ret || broken(ret == test_data[i].broken_ret), "%d: ret = %d\n", i, ret);
+
+        SetLastError(0xdeadbeef);
+        ret = pIdnToUnicode(test_data[i].flags, test_data[i].in, test_data[i].in_len, buf, ARRAY_SIZE(buf));
+        err = GetLastError();
+        ok(ret == test_data[i].ret || broken(ret == test_data[i].broken_ret), "%d: ret = %d\n", i, ret);
+        ok(err == ret ? 0xdeadbeef : ERROR_INVALID_NAME, "%d: err = %d\n", i, err);
+        ok(!wcsncmp(test_data[i].out, buf, ret), "%d: buf = %s\n", i, wine_dbgstr_wn(buf, ret));
+    }
+}
+
+static BOOL is_idn_error( const WCHAR *str )
+{
+    WCHAR *p, err[256];
+    lstrcpyW( err, str );
+    for (p = wcstok( err, L" []" ); p; p = wcstok( NULL, L" []" ) )
+    {
+        if (*p == 'B' || !wcscmp( p, L"V8" )) continue;  /* BiDi */
+        if (!wcscmp( p, L"V2" )) continue;  /* CheckHyphens */
+        if (!wcscmp( p, L"V5" )) continue;  /* Combining marks */
+        return TRUE;
+    }
+    return FALSE;
+}
+
+static void test_Idn(void)
+{
+    FILE *f;
+
+    if (!pIdnToAscii || !pIdnToUnicode || !pIdnToNameprepUnicode)
+    {
+        win_skip("Idn support is not available\n");
         return;
     }
 
-    for (i=0; i<ARRAY_SIZE(test_data); i++)
-    {
-        ret = pIdnToUnicode(test_data[i].flags, test_data[i].in,
-                test_data[i].in_len, NULL, 0);
-        ok(ret == test_data[i].ret, "%d) ret = %d\n", i, ret);
+    test_IdnToNameprepUnicode();
+    test_IdnToAscii();
+    test_IdnToUnicode();
 
-        SetLastError(0xdeadbeef);
-        ret = pIdnToUnicode(test_data[i].flags, test_data[i].in,
-                test_data[i].in_len, buf, sizeof(buf));
-        err = GetLastError();
-        ok(ret == test_data[i].ret, "%d) ret = %d\n", i, ret);
-        ok(err == test_data[i].err, "%d) err = %d\n", i, err);
-        ok(!memcmp(test_data[i].out, buf, ret*sizeof(WCHAR)),
-                "%d) buf = %s\n", i, wine_dbgstr_wn(buf, ret));
+    /* optionally run the full test file from Unicode.org
+     * available at https://www.unicode.org/Public/idna/latest/IdnaTestV2.txt
+     */
+    if ((f = fopen( "IdnaTestV2.txt", "r" )))
+    {
+        char *p, *end, buffer[2048];
+        WCHAR columns[7][256], dst[256], *expect, *error;
+        int i, ret, line = 0;
+
+        while (fgets( buffer, sizeof(buffer), f ))
+        {
+            line++;
+            if ((p = strchr( buffer, '#' ))) *p = 0;
+            if (!(p = strtok( buffer, ";" ))) continue;
+            for (i = 0; i < 7 && p; i++)
+            {
+                while (*p == ' ') p++;
+                for (end = p + strlen(p); end > p; end--) if (end[-1] != ' ') break;
+                *end = 0;
+                MultiByteToWideChar( CP_UTF8, 0, p, -1, columns[i], 256 );
+                p = strtok( NULL, ";" );
+            }
+            if (i < 7) continue;
+
+            expect = columns[5];
+            if (!*expect) expect = columns[3];
+            if (!*expect) expect = columns[1];
+            if (!*expect) expect = columns[0];
+            error = columns[6];
+            if (!*error) error = columns[4];
+            if (!*error) error = columns[2];
+            SetLastError( 0xdeadbeef );
+            memset( dst, 0xcc, sizeof(dst) );
+            ret = pIdnToAscii( 0, columns[0], -1, dst, ARRAY_SIZE(dst) );
+            if (!is_idn_error( error ))
+            {
+                ok( ret, "line %u: toAscii failed for %s expected %s\n", line,
+                    debugstr_w(columns[0]), debugstr_w(expect) );
+                if (ret) ok( !wcscmp( dst, expect ), "line %u: got %s expected %s\n",
+                             line, debugstr_w(dst), debugstr_w(expect) );
+            }
+            else
+            {
+                ok( !ret, "line %u: toAscii didn't fail for %s got %s expected error %s\n",
+                    line, debugstr_w(columns[0]), debugstr_w(dst), debugstr_w(error) );
+            }
+
+            expect = columns[1];
+            if (!*expect) expect = columns[0];
+            error = columns[2];
+            SetLastError( 0xdeadbeef );
+            memset( dst, 0xcc, sizeof(dst) );
+            ret = pIdnToUnicode( IDN_USE_STD3_ASCII_RULES, columns[0], -1, dst, ARRAY_SIZE(dst) );
+            for (i = 0; columns[0][i]; i++) if (columns[0][i] > 0x7f) break;
+            if (columns[0][i])
+            {
+                ok( !ret, "line %u: didn't fail for unicode chars in %s\n", line, debugstr_w(columns[0]) );
+            }
+            else if (!is_idn_error( error ))
+            {
+                ok( ret, "line %u: toUnicode failed for %s expected %s\n", line,
+                    debugstr_w(columns[0]), debugstr_w(expect) );
+                if (ret) ok( !wcscmp( dst, expect ), "line %u: got %s expected %s\n",
+                             line, debugstr_w(dst), debugstr_w(expect) );
+            }
+            else
+            {
+                ok( !ret, "line %u: toUnicode didn't fail for %s got %s expected error %s\n",
+                    line, debugstr_w(columns[0]), debugstr_w(dst), debugstr_w(error) );
+            }
+        }
+        fclose( f );
     }
 }
+
 
 static void test_GetLocaleInfoEx(void)
 {
@@ -5312,9 +5334,9 @@ static void test_invariant(void)
 static void test_GetSystemPreferredUILanguages(void)
 {
     BOOL ret;
+    NTSTATUS status;
     ULONG count, size, size_id, size_name, size_buffer;
     WCHAR *buffer;
-
 
     if (!pGetSystemPreferredUILanguages)
     {
@@ -5323,7 +5345,7 @@ static void test_GetSystemPreferredUILanguages(void)
     }
 
     /* (in)valid first parameter */
-    count = 0xdeadbeef;
+    count = 0;
     size = 0;
     SetLastError(0xdeadbeef);
     ret = pGetSystemPreferredUILanguages(0, &count, NULL, &size);
@@ -5331,7 +5353,6 @@ static void test_GetSystemPreferredUILanguages(void)
     ok(count, "Expected count > 0\n");
     ok(size % 6 == 1, "Expected size (%d) %% 6 == 1\n", size);
 
-    count = 0xdeadbeef;
     size = 0;
     SetLastError(0xdeadbeef);
     ret = pGetSystemPreferredUILanguages(MUI_FULL_LANGUAGE, &count, NULL, &size);
@@ -5339,7 +5360,6 @@ static void test_GetSystemPreferredUILanguages(void)
     ok(ERROR_INVALID_PARAMETER == GetLastError(),
        "Expected error ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
-    count = 0xdeadbeef;
     size = 0;
     SetLastError(0xdeadbeef);
     ret = pGetSystemPreferredUILanguages(MUI_LANGUAGE_ID | MUI_FULL_LANGUAGE, &count, NULL, &size);
@@ -5347,7 +5367,6 @@ static void test_GetSystemPreferredUILanguages(void)
     ok(ERROR_INVALID_PARAMETER == GetLastError(),
        "Expected error ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
-    count = 0xdeadbeef;
     size = 0;
     SetLastError(0xdeadbeef);
     ret = pGetSystemPreferredUILanguages(MUI_LANGUAGE_ID | MUI_LANGUAGE_NAME, &count, NULL, &size);
@@ -5355,7 +5374,7 @@ static void test_GetSystemPreferredUILanguages(void)
     ok(ERROR_INVALID_PARAMETER == GetLastError(),
        "Expected error ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
-    count = 0xdeadbeef;
+    count = 0;
     size = 0;
     SetLastError(0xdeadbeef);
     ret = pGetSystemPreferredUILanguages(MUI_LANGUAGE_ID | MUI_MACHINE_LANGUAGE_SETTINGS, &count, NULL, &size);
@@ -5363,7 +5382,7 @@ static void test_GetSystemPreferredUILanguages(void)
     ok(count, "Expected count > 0\n");
     ok(size % 5 == 1, "Expected size (%d) %% 5 == 1\n", size);
 
-    count = 0xdeadbeef;
+    count = 0;
     size = 0;
     SetLastError(0xdeadbeef);
     ret = pGetSystemPreferredUILanguages(MUI_LANGUAGE_NAME | MUI_MACHINE_LANGUAGE_SETTINGS, &count, NULL, &size);
@@ -5377,7 +5396,6 @@ static void test_GetSystemPreferredUILanguages(void)
      */
 
     /* invalid third parameter */
-    count = 0xdeadbeef;
     size = 1;
     SetLastError(0xdeadbeef);
     ret = pGetSystemPreferredUILanguages(MUI_LANGUAGE_ID, &count, NULL, &size);
@@ -5390,7 +5408,7 @@ static void test_GetSystemPreferredUILanguages(void)
      * -> unhandled exception c0000005
      */
 
-    count = 0xdeadbeef;
+    count = 0;
     size_id = 0;
     SetLastError(0xdeadbeef);
     ret = pGetSystemPreferredUILanguages(MUI_LANGUAGE_ID, &count, NULL, &size_id);
@@ -5398,7 +5416,7 @@ static void test_GetSystemPreferredUILanguages(void)
     ok(count, "Expected count > 0\n");
     ok(size_id  % 5 == 1, "Expected size (%d) %% 5 == 1\n", size_id);
 
-    count = 0xdeadbeef;
+    count = 0;
     size_name = 0;
     SetLastError(0xdeadbeef);
     ret = pGetSystemPreferredUILanguages(MUI_LANGUAGE_NAME, &count, NULL, &size_name);
@@ -5420,7 +5438,7 @@ static void test_GetSystemPreferredUILanguages(void)
         return;
     }
 
-    count = 0xdeadbeef;
+    count = 0;
     size = size_buffer;
     memset(buffer, 0x5a, size_buffer * sizeof(WCHAR));
     SetLastError(0xdeadbeef);
@@ -5433,7 +5451,7 @@ static void test_GetSystemPreferredUILanguages(void)
            "Expected last two WCHARs being empty, got 0x%x 0x%x\n",
            buffer[size -2], buffer[size -1]);
 
-    count = 0xdeadbeef;
+    count = 0;
     size = size_buffer;
     memset(buffer, 0x5a, size_buffer * sizeof(WCHAR));
     SetLastError(0xdeadbeef);
@@ -5446,7 +5464,7 @@ static void test_GetSystemPreferredUILanguages(void)
            "Expected last two WCHARs being empty, got 0x%x 0x%x\n",
            buffer[size -2], buffer[size -1]);
 
-    count = 0xdeadbeef;
+    count = 0;
     size = size_buffer;
     SetLastError(0xdeadbeef);
     ret = pGetSystemPreferredUILanguages(MUI_LANGUAGE_NAME, &count, buffer, &size);
@@ -5458,7 +5476,7 @@ static void test_GetSystemPreferredUILanguages(void)
            "Expected last two WCHARs being empty, got 0x%x 0x%x\n",
            buffer[size -2], buffer[size -1]);
 
-    count = 0xdeadbeef;
+    count = 0;
     size = 0;
     SetLastError(0xdeadbeef);
     ret = pGetSystemPreferredUILanguages(MUI_MACHINE_LANGUAGE_SETTINGS, &count, NULL, &size);
@@ -5470,15 +5488,57 @@ static void test_GetSystemPreferredUILanguages(void)
            "Expected last two WCHARs being empty, got 0x%x 0x%x\n",
            buffer[size -2], buffer[size -1]);
 
-    count = 0xdeadbeef;
+    /* ntdll version is the same, but apparently takes an extra second parameter */
+    count = 0;
+    size = size_buffer;
+    memset(buffer, 0x5a, size_buffer * sizeof(WCHAR));
+    status = pRtlGetSystemPreferredUILanguages(MUI_LANGUAGE_ID, 0, &count, buffer, &size);
+    ok(!status, "got %x\n", status);
+    ok(count, "Expected count > 0\n");
+    ok(size % 5 == 1, "Expected size (%d) %% 5 == 1\n", size);
+    if (ret && size % 5 == 1)
+        ok(!buffer[size -2] && !buffer[size -1],
+           "Expected last two WCHARs being empty, got 0x%x 0x%x\n",
+           buffer[size -2], buffer[size -1]);
+
+    count = 0;
+    size = size_buffer;
+    status = pRtlGetSystemPreferredUILanguages(MUI_LANGUAGE_NAME, 0, &count, buffer, &size);
+    ok(!status, "got %x\n", status);
+    ok(count, "Expected count > 0\n");
+    ok(size % 6 == 1, "Expected size (%d) %% 6 == 1\n", size);
+    if (ret && size % 5 == 1)
+        ok(!buffer[size -2] && !buffer[size -1],
+           "Expected last two WCHARs being empty, got 0x%x 0x%x\n",
+           buffer[size -2], buffer[size -1]);
+
+    count = 0;
+    size = 0;
+    status = pRtlGetSystemPreferredUILanguages(MUI_MACHINE_LANGUAGE_SETTINGS, 0, &count, NULL, &size);
+    ok(!status, "got %x\n", status);
+    ok(count, "Expected count > 0\n");
+    ok(size % 6 == 1, "Expected size (%d) %% 6 == 1\n", size);
+    if (ret && size % 6 == 1)
+        ok(!buffer[size -2] && !buffer[size -1],
+           "Expected last two WCHARs being empty, got 0x%x 0x%x\n",
+           buffer[size -2], buffer[size -1]);
+
+    size = 0;
+    SetLastError(0xdeadbeef);
+    ret = pGetSystemPreferredUILanguages(MUI_LANGUAGE_ID, &count, buffer, &size);
+    ok(!ret, "Expected GetSystemPreferredUILanguages to fail\n");
+    ok(ERROR_INSUFFICIENT_BUFFER == GetLastError(),
+       "Expected error ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+    ok(size == size_id, "expected %u, got %u\n", size_id, size);
+
     size = 1;
     SetLastError(0xdeadbeef);
     ret = pGetSystemPreferredUILanguages(MUI_LANGUAGE_ID, &count, buffer, &size);
     ok(!ret, "Expected GetSystemPreferredUILanguages to fail\n");
     ok(ERROR_INSUFFICIENT_BUFFER == GetLastError(),
        "Expected error ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+    ok(size == size_id, "expected %u, got %u\n", size_id, size);
 
-    count = 0xdeadbeef;
     size = size_id -1;
     memset(buffer, 0x5a, size_buffer * sizeof(WCHAR));
     SetLastError(0xdeadbeef);
@@ -5486,8 +5546,8 @@ static void test_GetSystemPreferredUILanguages(void)
     ok(!ret, "Expected GetSystemPreferredUILanguages to fail\n");
     ok(ERROR_INSUFFICIENT_BUFFER == GetLastError(),
        "Expected error ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+    ok(size == size_id, "expected %u, got %u\n", size_id, size);
 
-    count = 0xdeadbeef;
     size = size_id -2;
     memset(buffer, 0x5a, size_buffer * sizeof(WCHAR));
     SetLastError(0xdeadbeef);
@@ -5495,6 +5555,7 @@ static void test_GetSystemPreferredUILanguages(void)
     ok(!ret, "Expected GetSystemPreferredUILanguages to fail\n");
     ok(ERROR_INSUFFICIENT_BUFFER == GetLastError(),
        "Expected error ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+    ok(size == size_id + 2 || size == size_id + 1 /* before win10 1809 */, "expected %u, got %u\n", size_id + 2, size);
 
     HeapFree(GetProcessHeap(), 0, buffer);
 }
@@ -5502,7 +5563,8 @@ static void test_GetSystemPreferredUILanguages(void)
 static void test_GetThreadPreferredUILanguages(void)
 {
     BOOL ret;
-    ULONG count, size;
+    NTSTATUS status;
+    ULONG count, size, size_id;
     WCHAR *buf;
 
     if (!pGetThreadPreferredUILanguages)
@@ -5522,15 +5584,64 @@ static void test_GetThreadPreferredUILanguages(void)
     ret = pGetThreadPreferredUILanguages(MUI_LANGUAGE_ID|MUI_UI_FALLBACK, &count, buf, &size);
     ok(ret, "got %u\n", GetLastError());
     ok(count, "expected count > 0\n");
+
+    size_id = count = 0;
+    ret = pGetThreadPreferredUILanguages(MUI_LANGUAGE_ID, &count, NULL, &size_id);
+    ok(ret, "got %u\n", GetLastError());
+    ok(count, "expected count > 0\n");
+    ok(size_id, "expected size > 0\n");
+    ok(size_id <= size, "expected size > 0\n");
+
+    /* ntdll function is the same */
+    size_id = count = 0;
+    status = pRtlGetThreadPreferredUILanguages(MUI_LANGUAGE_ID, &count, NULL, &size_id);
+    ok(!status, "got %x\n", status);
+    ok(count, "expected count > 0\n");
+    ok(size_id, "expected size > 0\n");
+    ok(size_id <= size, "expected size > 0\n");
+
+    size = 0;
+    SetLastError(0xdeadbeef);
+    ret = pGetThreadPreferredUILanguages(MUI_LANGUAGE_ID, &count, buf, &size);
+    ok(!ret, "Expected GetThreadPreferredUILanguages to fail\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "Expected error ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+    ok(size == size_id, "expected %u, got %u\n", size_id, size);
+
+    size = 1;
+    SetLastError(0xdeadbeef);
+    ret = pGetThreadPreferredUILanguages(MUI_LANGUAGE_ID, &count, buf, &size);
+    ok(!ret, "Expected GetThreadPreferredUILanguages to fail\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "Expected error ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+    ok(size == size_id, "expected %u, got %u\n", size_id, size);
+
+    size = size_id - 1;
+    SetLastError(0xdeadbeef);
+    ret = pGetThreadPreferredUILanguages(MUI_LANGUAGE_ID, &count, buf, &size);
+    ok(!ret, "Expected GetThreadPreferredUILanguages to fail\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "Expected error ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+    ok(size == size_id, "expected %u, got %u\n", size_id, size);
+
+    size = size_id - 2;
+    SetLastError(0xdeadbeef);
+    ret = pGetThreadPreferredUILanguages(0, &count, buf, &size);
+    ok(!ret, "Expected GetThreadPreferredUILanguages to fail\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "Expected error ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+todo_wine
+    ok(size == size_id || size == size_id - 1 /* before win10 1809 */, "expected %u, got %u\n", size_id, size);
+
     HeapFree(GetProcessHeap(), 0, buf);
 }
 
 static void test_GetUserPreferredUILanguages(void)
 {
     BOOL ret;
+    NTSTATUS status;
     ULONG count, size, size_id, size_name, size_buffer;
     WCHAR *buffer;
-
 
     if (!pGetUserPreferredUILanguages)
     {
@@ -5538,7 +5649,6 @@ static void test_GetUserPreferredUILanguages(void)
         return;
     }
 
-    count = 0xdeadbeef;
     size = 0;
     SetLastError(0xdeadbeef);
     ret = pGetUserPreferredUILanguages(MUI_FULL_LANGUAGE, &count, NULL, &size);
@@ -5546,7 +5656,6 @@ static void test_GetUserPreferredUILanguages(void)
     ok(ERROR_INVALID_PARAMETER == GetLastError(),
        "Expected error ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
-    count = 0xdeadbeef;
     size = 0;
     SetLastError(0xdeadbeef);
     ret = pGetUserPreferredUILanguages(MUI_LANGUAGE_ID | MUI_FULL_LANGUAGE, &count, NULL, &size);
@@ -5554,7 +5663,6 @@ static void test_GetUserPreferredUILanguages(void)
     ok(ERROR_INVALID_PARAMETER == GetLastError(),
        "Expected error ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
-    count = 0xdeadbeef;
     size = 0;
     SetLastError(0xdeadbeef);
     ret = pGetUserPreferredUILanguages(MUI_LANGUAGE_ID | MUI_MACHINE_LANGUAGE_SETTINGS, &count, NULL, &size);
@@ -5562,7 +5670,6 @@ static void test_GetUserPreferredUILanguages(void)
     ok(ERROR_INVALID_PARAMETER == GetLastError(),
        "Expected error ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
-    count = 0xdeadbeef;
     size = 1;
     SetLastError(0xdeadbeef);
     ret = pGetUserPreferredUILanguages(MUI_LANGUAGE_ID, &count, NULL, &size);
@@ -5570,7 +5677,7 @@ static void test_GetUserPreferredUILanguages(void)
     ok(ERROR_INVALID_PARAMETER == GetLastError(),
        "Expected error ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
-    count = 0xdeadbeef;
+    count = 0;
     size_id = 0;
     SetLastError(0xdeadbeef);
     ret = pGetUserPreferredUILanguages(MUI_LANGUAGE_ID, &count, NULL, &size_id);
@@ -5578,7 +5685,7 @@ static void test_GetUserPreferredUILanguages(void)
     ok(count, "Expected count > 0\n");
     ok(size_id  % 5 == 1, "Expected size (%d) %% 5 == 1\n", size_id);
 
-    count = 0xdeadbeef;
+    count = 0;
     size_name = 0;
     SetLastError(0xdeadbeef);
     ret = pGetUserPreferredUILanguages(MUI_LANGUAGE_NAME, &count, NULL, &size_name);
@@ -5593,9 +5700,18 @@ static void test_GetUserPreferredUILanguages(void)
         return;
     }
 
+    /* ntdll version is the same, but apparently takes an extra second parameter */
+    count = 0;
+    size_id = 0;
+    SetLastError(0xdeadbeef);
+    status = pRtlGetUserPreferredUILanguages(MUI_LANGUAGE_ID, 0, &count, NULL, &size_id);
+    ok(!status, "got %x\n", status);
+    ok(count, "Expected count > 0\n");
+    ok(size_id  % 5 == 1, "Expected size (%d) %% 5 == 1\n", size_id);
+
     buffer = HeapAlloc(GetProcessHeap(), 0, size_buffer * sizeof(WCHAR));
 
-    count = 0xdeadbeef;
+    count = 0;
     size = size_buffer;
     memset(buffer, 0x5a, size_buffer * sizeof(WCHAR));
     SetLastError(0xdeadbeef);
@@ -5608,7 +5724,7 @@ static void test_GetUserPreferredUILanguages(void)
            "Expected last two WCHARs being empty, got 0x%x 0x%x\n",
            buffer[size -2], buffer[size -1]);
 
-    count = 0xdeadbeef;
+    count = 0;
     size = size_buffer;
     memset(buffer, 0x5a, size_buffer * sizeof(WCHAR));
     SetLastError(0xdeadbeef);
@@ -5621,7 +5737,7 @@ static void test_GetUserPreferredUILanguages(void)
            "Expected last two WCHARs being empty, got 0x%x 0x%x\n",
            buffer[size -2], buffer[size -1]);
 
-    count = 0xdeadbeef;
+    count = 0;
     size = size_buffer;
     SetLastError(0xdeadbeef);
     ret = pGetUserPreferredUILanguages(MUI_LANGUAGE_NAME, &count, buffer, &size);
@@ -5633,7 +5749,6 @@ static void test_GetUserPreferredUILanguages(void)
            "Expected last two WCHARs being empty, got 0x%x 0x%x\n",
            buffer[size -2], buffer[size -1]);
 
-    count = 0xdeadbeef;
     size = 1;
     SetLastError(0xdeadbeef);
     ret = pGetUserPreferredUILanguages(MUI_LANGUAGE_ID, &count, buffer, &size);
@@ -5641,7 +5756,6 @@ static void test_GetUserPreferredUILanguages(void)
     ok(ERROR_INSUFFICIENT_BUFFER == GetLastError(),
        "Expected error ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
 
-    count = 0xdeadbeef;
     size = size_id -1;
     memset(buffer, 0x5a, size_buffer * sizeof(WCHAR));
     SetLastError(0xdeadbeef);
@@ -5650,7 +5764,7 @@ static void test_GetUserPreferredUILanguages(void)
     ok(ERROR_INSUFFICIENT_BUFFER == GetLastError(),
        "Expected error ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
 
-    count = 0xdeadbeef;
+    count = 0;
     size = size_id -2;
     memset(buffer, 0x5a, size_buffer * sizeof(WCHAR));
     SetLastError(0xdeadbeef);
@@ -6419,7 +6533,6 @@ static void test_SpecialCasing(void)
         WCHAR ch;
         WCHAR exp;      /* 0 if self */
         WCHAR exp_ling; /* 0 if exp */
-        BOOL todo;
     } tests[] = {
         {deDEW, LCMAP_UPPERCASE, 0x00DF},   /* LATIN SMALL LETTER SHARP S */
 
@@ -6528,29 +6641,29 @@ static void test_SpecialCasing(void)
 
         {enUSW, LCMAP_UPPERCASE, 'i', 'I'}, /* LATIN SMALL LETTER I */
         {ltLTW, LCMAP_UPPERCASE, 'i', 'I'}, /* LATIN SMALL LETTER I */
-        {trTRW, LCMAP_UPPERCASE, 'i', 'I', 0x0130, TRUE}, /* LATIN SMALL LETTER I */
-        {TRTRW, LCMAP_UPPERCASE, 'i', 'I', 0x0130, TRUE}, /* LATIN SMALL LETTER I */
-        {azCyrlazW, LCMAP_UPPERCASE, 'i', 'I', 0x0130, TRUE}, /* LATIN SMALL LETTER I */
-        {azLatnazW, LCMAP_UPPERCASE, 'i', 'I', 0x0130, TRUE}, /* LATIN SMALL LETTER I */
+        {trTRW, LCMAP_UPPERCASE, 'i', 'I', 0x0130}, /* LATIN SMALL LETTER I */
+        {TRTRW, LCMAP_UPPERCASE, 'i', 'I', 0x0130}, /* LATIN SMALL LETTER I */
+        {azCyrlazW, LCMAP_UPPERCASE, 'i', 'I', 0x0130}, /* LATIN SMALL LETTER I */
+        {azLatnazW, LCMAP_UPPERCASE, 'i', 'I', 0x0130}, /* LATIN SMALL LETTER I */
 
         {enUSW, LCMAP_LOWERCASE, 'I', 'i'}, /* LATIN CAPITAL LETTER I */
         {ltLTW, LCMAP_LOWERCASE, 'I', 'i'}, /* LATIN CAPITAL LETTER I */
-        {trTRW, LCMAP_LOWERCASE, 'I', 'i', 0x0131, TRUE}, /* LATIN CAPITAL LETTER I */
-        {TRTRW, LCMAP_LOWERCASE, 'I', 'i', 0x0131, TRUE}, /* LATIN CAPITAL LETTER I */
-        {azCyrlazW, LCMAP_LOWERCASE, 'I', 'i', 0x0131, TRUE}, /* LATIN CAPITAL LETTER I */
-        {azLatnazW, LCMAP_LOWERCASE, 'I', 'i', 0x0131, TRUE}, /* LATIN CAPITAL LETTER I */
+        {trTRW, LCMAP_LOWERCASE, 'I', 'i', 0x0131}, /* LATIN CAPITAL LETTER I */
+        {TRTRW, LCMAP_LOWERCASE, 'I', 'i', 0x0131}, /* LATIN CAPITAL LETTER I */
+        {azCyrlazW, LCMAP_LOWERCASE, 'I', 'i', 0x0131}, /* LATIN CAPITAL LETTER I */
+        {azLatnazW, LCMAP_LOWERCASE, 'I', 'i', 0x0131}, /* LATIN CAPITAL LETTER I */
 
-        {enUSW, LCMAP_LOWERCASE, 0x0130,0,'i', TRUE}, /* LATIN CAPITAL LETTER I WITH DOT ABOVE */
-        {trTRW, LCMAP_LOWERCASE, 0x0130,0,'i', TRUE}, /* LATIN CAPITAL LETTER I WITH DOT ABOVE */
-        {TRTRW, LCMAP_LOWERCASE, 0x0130,0,'i', TRUE}, /* LATIN CAPITAL LETTER I WITH DOT ABOVE */
-        {azCyrlazW, LCMAP_LOWERCASE, 0x0130,0,'i', TRUE}, /* LATIN CAPITAL LETTER I WITH DOT ABOVE */
-        {azLatnazW, LCMAP_LOWERCASE, 0x0130,0,'i', TRUE}, /* LATIN CAPITAL LETTER I WITH DOT ABOVE */
+        {enUSW, LCMAP_LOWERCASE, 0x0130,0,'i'}, /* LATIN CAPITAL LETTER I WITH DOT ABOVE */
+        {trTRW, LCMAP_LOWERCASE, 0x0130,0,'i'}, /* LATIN CAPITAL LETTER I WITH DOT ABOVE */
+        {TRTRW, LCMAP_LOWERCASE, 0x0130,0,'i'}, /* LATIN CAPITAL LETTER I WITH DOT ABOVE */
+        {azCyrlazW, LCMAP_LOWERCASE, 0x0130,0,'i'}, /* LATIN CAPITAL LETTER I WITH DOT ABOVE */
+        {azLatnazW, LCMAP_LOWERCASE, 0x0130,0,'i'}, /* LATIN CAPITAL LETTER I WITH DOT ABOVE */
 
-        {enUSW, LCMAP_UPPERCASE, 0x0131,0,'I', TRUE}, /* LATIN SMALL LETTER DOTLESS I */
-        {trTRW, LCMAP_UPPERCASE, 0x0131,0,'I', TRUE}, /* LATIN SMALL LETTER DOTLESS I */
-        {TRTRW, LCMAP_UPPERCASE, 0x0131,0,'I', TRUE}, /* LATIN SMALL LETTER DOTLESS I */
-        {azCyrlazW, LCMAP_UPPERCASE, 0x0131,0,'I', TRUE}, /* LATIN SMALL LETTER DOTLESS I */
-        {azLatnazW, LCMAP_UPPERCASE, 0x0131,0,'I', TRUE}, /* LATIN SMALL LETTER DOTLESS I */
+        {enUSW, LCMAP_UPPERCASE, 0x0131,0,'I'}, /* LATIN SMALL LETTER DOTLESS I */
+        {trTRW, LCMAP_UPPERCASE, 0x0131,0,'I'}, /* LATIN SMALL LETTER DOTLESS I */
+        {TRTRW, LCMAP_UPPERCASE, 0x0131,0,'I'}, /* LATIN SMALL LETTER DOTLESS I */
+        {azCyrlazW, LCMAP_UPPERCASE, 0x0131,0,'I'}, /* LATIN SMALL LETTER DOTLESS I */
+        {azLatnazW, LCMAP_UPPERCASE, 0x0131,0,'I'}, /* LATIN SMALL LETTER DOTLESS I */
     };
 
     if (!pLCMapStringEx)
@@ -6576,11 +6689,230 @@ static void test_SpecialCasing(void)
         ok(ret == 1, "expected 1, got %d for %04x for %s\n", ret, tests[i].ch,
             wine_dbgstr_w(tests[i].lang));
         exp = tests[i].exp_ling ? tests[i].exp_ling : exp;
-        todo_wine_if(tests[i].todo)
         ok(buffer[0] == exp || broken(buffer[0] != exp),
             "expected %04x, got %04x for %04x for %s\n",
             exp, buffer[0], tests[i].ch, wine_dbgstr_w(tests[i].lang));
     }
+}
+
+static void test_NLSVersion(void)
+{
+    static const GUID guid_null = { 0 };
+    static const GUID guid_def  = { 0x000000001, 0x57ee, 0x1e5c, {0x00,0xb4,0xd0,0x00,0x0b,0xb1,0xe1,0x1e}};
+    static const GUID guid_fr   = { 0x000000003, 0x57ee, 0x1e5c, {0x00,0xb4,0xd0,0x00,0x0b,0xb1,0xe1,0x1e}};
+    static const GUID guid_ja   = { 0x000000046, 0x57ee, 0x1e5c, {0x00,0xb4,0xd0,0x00,0x0b,0xb1,0xe1,0x1e}};
+    BOOL ret;
+    NLSVERSIONINFOEX info;
+
+    if (!pGetNLSVersion)
+    {
+        win_skip( "GetNLSVersion not available\n" );
+        return;
+    }
+
+    SetLastError( 0xdeadbeef );
+    memset( &info, 0xcc, sizeof(info) );
+    info.dwNLSVersionInfoSize = offsetof( NLSVERSIONINFO, dwEffectiveId );
+    ret = pGetNLSVersion( COMPARE_STRING, MAKELANGID( LANG_FRENCH, SUBLANG_FRENCH_CANADIAN ),
+                          (NLSVERSIONINFO *)&info );
+    ok( ret, "GetNLSVersion failed err %u\n", GetLastError() );
+
+    SetLastError( 0xdeadbeef );
+    memset( &info, 0xcc, sizeof(info) );
+    info.dwNLSVersionInfoSize = sizeof(info);
+    ret = pGetNLSVersion( COMPARE_STRING, MAKELANGID( LANG_FRENCH, SUBLANG_FRENCH_CANADIAN ),
+                          (NLSVERSIONINFO *)&info );
+    ok( ret || GetLastError() == ERROR_INSUFFICIENT_BUFFER /* < Vista */,
+        "GetNLSVersion failed err %u\n", GetLastError() );
+    if (ret)
+    {
+        ok( info.dwEffectiveId == MAKELANGID( LANG_FRENCH, SUBLANG_FRENCH_CANADIAN ),
+            "wrong id %x\n", info.dwEffectiveId );
+        ok( IsEqualIID( &info.guidCustomVersion, &guid_fr ) ||
+            broken( IsEqualIID( &info.guidCustomVersion, &guid_null )),  /* <= win7 */
+            "wrong guid %s\n", debugstr_guid(&info.guidCustomVersion) );
+    }
+
+    SetLastError( 0xdeadbeef );
+    info.dwNLSVersionInfoSize = 8;
+    ret = pGetNLSVersion( COMPARE_STRING, LOCALE_USER_DEFAULT, (NLSVERSIONINFO *)&info );
+    ok( !ret, "GetNLSVersion succeeded\n" );
+    ok( GetLastError() == ERROR_INSUFFICIENT_BUFFER, "wrong error %u\n", GetLastError() );
+
+    SetLastError( 0xdeadbeef );
+    info.dwNLSVersionInfoSize = sizeof(info);
+    ret = pGetNLSVersion( 2, LOCALE_USER_DEFAULT, (NLSVERSIONINFO *)&info );
+    ok( !ret, "GetNLSVersion succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_FLAGS ||
+        broken( GetLastError() == ERROR_INSUFFICIENT_BUFFER ), /* win2003 */
+        "wrong error %u\n", GetLastError() );
+
+    SetLastError( 0xdeadbeef );
+    info.dwNLSVersionInfoSize = sizeof(info);
+    ret = pGetNLSVersion( COMPARE_STRING, 0xdeadbeef, (NLSVERSIONINFO *)&info );
+    ok( !ret, "GetNLSVersion succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+
+    if (pGetNLSVersionEx)
+    {
+        SetLastError( 0xdeadbeef );
+        memset( &info, 0xcc, sizeof(info) );
+        info.dwNLSVersionInfoSize = sizeof(info);
+        ret = pGetNLSVersionEx( COMPARE_STRING, L"ja-JP", &info );
+        ok( ret, "GetNLSVersionEx failed err %u\n", GetLastError() );
+        ok( info.dwEffectiveId == MAKELANGID( LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN ),
+            "wrong id %x\n", info.dwEffectiveId );
+        ok( IsEqualIID( &info.guidCustomVersion, &guid_ja ) ||
+            broken( IsEqualIID( &info.guidCustomVersion, &guid_null )),  /* <= win7 */
+            "wrong guid %s\n", debugstr_guid(&info.guidCustomVersion) );
+        trace( "version %08x %08x %08x %s\n", info.dwNLSVersion, info.dwDefinedVersion, info.dwEffectiveId,
+               debugstr_guid(&info.guidCustomVersion) );
+
+        SetLastError( 0xdeadbeef );
+        memset( &info, 0xcc, sizeof(info) );
+        info.dwNLSVersionInfoSize = sizeof(info);
+        ret = pGetNLSVersionEx( COMPARE_STRING, L"fr", &info );
+        ok( !ret == !pIsValidLocaleName(L"fr"), "GetNLSVersionEx doesn't match IsValidLocaleName\n" );
+        if (ret)
+        {
+            ok( info.dwEffectiveId == MAKELANGID( LANG_FRENCH, SUBLANG_DEFAULT ),
+                "wrong id %x\n", info.dwEffectiveId );
+            ok( IsEqualIID( &info.guidCustomVersion, &guid_fr ) ||
+                broken( IsEqualIID( &info.guidCustomVersion, &guid_null )),  /* <= win7 */
+                "wrong guid %s\n", debugstr_guid(&info.guidCustomVersion) );
+        }
+
+        SetLastError( 0xdeadbeef );
+        info.dwNLSVersionInfoSize = sizeof(info) - 1;
+        ret = pGetNLSVersionEx( COMPARE_STRING, L"en-US", &info );
+        ok( !ret, "GetNLSVersionEx succeeded\n" );
+        ok( GetLastError() == ERROR_INSUFFICIENT_BUFFER, "wrong error %u\n", GetLastError() );
+
+        SetLastError( 0xdeadbeef );
+        memset( &info, 0xcc, sizeof(info) );
+        info.dwNLSVersionInfoSize = offsetof( NLSVERSIONINFO, dwEffectiveId );
+        ret = pGetNLSVersionEx( COMPARE_STRING, L"en-US", &info );
+        ok( ret, "GetNLSVersionEx failed err %u\n", GetLastError() );
+        ok( info.dwEffectiveId == 0xcccccccc, "wrong id %x\n", info.dwEffectiveId );
+
+        SetLastError( 0xdeadbeef );
+        info.dwNLSVersionInfoSize = sizeof(info);
+        ret = pGetNLSVersionEx( 2, L"en-US", &info );
+        ok( !ret, "GetNLSVersionEx succeeded\n" );
+        ok( GetLastError() == ERROR_INVALID_FLAGS, "wrong error %u\n", GetLastError() );
+
+        SetLastError( 0xdeadbeef );
+        info.dwNLSVersionInfoSize = sizeof(info);
+        ret = pGetNLSVersionEx( COMPARE_STRING, L"foobar", &info );
+        ok( !ret, "GetNLSVersionEx succeeded\n" );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+
+        SetLastError( 0xdeadbeef );
+        memset( &info, 0xcc, sizeof(info) );
+        info.dwNLSVersionInfoSize = sizeof(info);
+        ret = pGetNLSVersionEx( COMPARE_STRING, L"zz-XX", &info );
+        if (!ret) ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+        ok( !ret == !pIsValidLocaleName(L"zz-XX"), "GetNLSVersionEx doesn't match IsValidLocaleName\n" );
+        if (ret)
+        {
+            ok( info.dwEffectiveId == LOCALE_CUSTOM_UNSPECIFIED, "wrong id %x\n", info.dwEffectiveId );
+            ok( IsEqualIID( &info.guidCustomVersion, &guid_def ),
+                "wrong guid %s\n", debugstr_guid(&info.guidCustomVersion) );
+        }
+
+        SetLastError( 0xdeadbeef );
+        memset( &info, 0xcc, sizeof(info) );
+        info.dwNLSVersionInfoSize = sizeof(info);
+        ret = pGetNLSVersionEx( COMPARE_STRING, LOCALE_NAME_INVARIANT, &info );
+        ok( ret, "GetNLSVersionEx failed err %u\n", GetLastError() );
+        if (ret)
+        {
+            ok( info.dwEffectiveId == LOCALE_INVARIANT, "wrong id %x\n", info.dwEffectiveId );
+            ok( IsEqualIID( &info.guidCustomVersion, &guid_def ) ||
+                broken( IsEqualIID( &info.guidCustomVersion, &guid_null )),  /* <= win7 */
+                "wrong guid %s\n", debugstr_guid(&info.guidCustomVersion) );
+        }
+        else ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+    }
+    else win_skip( "GetNLSVersionEx not available\n" );
+
+    if (pIsValidNLSVersion)
+    {
+        info.dwNLSVersionInfoSize = sizeof(info);
+        pGetNLSVersion( COMPARE_STRING, LOCALE_USER_DEFAULT, (NLSVERSIONINFO *)&info );
+
+        SetLastError( 0xdeadbeef );
+        info.dwNLSVersionInfoSize = sizeof(info);
+        ret = pIsValidNLSVersion( COMPARE_STRING, L"ja-JP", &info );
+        ok( ret, "IsValidNLSVersion failed err %u\n", GetLastError() );
+        ok( GetLastError() == 0xdeadbeef, "wrong error %u\n", GetLastError() );
+
+        SetLastError( 0xdeadbeef );
+        info.dwNLSVersionInfoSize = offsetof( NLSVERSIONINFO, dwEffectiveId );
+        ret = pIsValidNLSVersion( COMPARE_STRING, L"en-US", &info );
+        ok( ret, "IsValidNLSVersion failed err %u\n", GetLastError() );
+        ok( GetLastError() == 0xdeadbeef, "wrong error %u\n", GetLastError() );
+
+        SetLastError( 0xdeadbeef );
+        info.dwNLSVersionInfoSize = sizeof(info);
+        ret = pIsValidNLSVersion( 2, L"en-US", &info );
+        ok( !ret, "IsValidNLSVersion succeeded\n" );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+
+        SetLastError( 0xdeadbeef );
+        info.dwNLSVersionInfoSize = sizeof(info);
+        ret = pIsValidNLSVersion( COMPARE_STRING, L"foobar", &info );
+        ok( !ret, "IsValidNLSVersion succeeded\n" );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+
+        SetLastError( 0xdeadbeef );
+        memset( &info, 0xcc, sizeof(info) );
+        info.dwNLSVersionInfoSize = sizeof(info);
+        ret = pIsValidNLSVersion( COMPARE_STRING, L"en-US", &info );
+        ok( !ret, "IsValidNLSVersion succeeded\n" );
+        ok( GetLastError() == ERROR_SUCCESS, "wrong error %u\n", GetLastError() );
+
+        info.dwNLSVersionInfoSize = sizeof(info);
+        pGetNLSVersion( COMPARE_STRING, LOCALE_USER_DEFAULT, (NLSVERSIONINFO *)&info );
+        info.dwNLSVersion++;
+        SetLastError( 0xdeadbeef );
+        ret = pIsValidNLSVersion( COMPARE_STRING, L"en-US", &info );
+        ok( ret, "IsValidNLSVersion failed err %u\n", GetLastError() );
+        ok( GetLastError() == 0xdeadbeef, "wrong error %u\n", GetLastError() );
+
+        info.dwNLSVersion += 0x100;
+        SetLastError( 0xdeadbeef );
+        ret = pIsValidNLSVersion( COMPARE_STRING, L"en-US", &info );
+        ok( !ret, "IsValidNLSVersion succeeded\n" );
+        ok( GetLastError() == 0, "wrong error %u\n", GetLastError() );
+
+        info.dwNLSVersion -= 0x200;
+        SetLastError( 0xdeadbeef );
+        ret = pIsValidNLSVersion( COMPARE_STRING, L"en-US", &info );
+        ok( !ret, "IsValidNLSVersion succeeded\n" );
+        ok( GetLastError() == 0, "wrong error %u\n", GetLastError() );
+
+        info.dwNLSVersion += 0x100;
+        info.dwDefinedVersion += 0x100;
+        SetLastError( 0xdeadbeef );
+        ret = pIsValidNLSVersion( COMPARE_STRING, L"en-US", &info );
+        ok( ret, "IsValidNLSVersion failed err %u\n", GetLastError() );
+        ok( GetLastError() == 0xdeadbeef, "wrong error %u\n", GetLastError() );
+
+        info.dwDefinedVersion -= 0x100;
+        info.guidCustomVersion.Data1 = 0x123;
+        SetLastError( 0xdeadbeef );
+        ret = pIsValidNLSVersion( COMPARE_STRING, L"en-US", &info );
+        ok( !ret, "IsValidNLSVersion succeeded\n" );
+        ok( GetLastError() == 0, "wrong error %u\n", GetLastError() );
+
+        info.guidCustomVersion = guid_null;
+        SetLastError( 0xdeadbeef );
+        ret = pIsValidNLSVersion( COMPARE_STRING, L"en-US", &info );
+        ok( ret, "IsValidNLSVersion failed err %u\n", GetLastError() );
+        ok( GetLastError() == 0xdeadbeef, "wrong error %u\n", GetLastError() );
+    }
+    else win_skip( "IsValidNLSVersion not available\n" );
 }
 
 START_TEST(locale)
@@ -6618,9 +6950,7 @@ START_TEST(locale)
   test_EnumUILanguageA();
   test_GetCPInfo();
   test_GetStringTypeW();
-  test_IdnToNameprepUnicode();
-  test_IdnToAscii();
-  test_IdnToUnicode();
+  test_Idn();
   test_IsValidLocaleName();
   test_CompareStringOrdinal();
   test_GetGeoInfo();
@@ -6634,6 +6964,7 @@ START_TEST(locale)
   test_SetThreadUILanguage();
   test_NormalizeString();
   test_SpecialCasing();
+  test_NLSVersion();
   /* this requires collation table patch to make it MS compatible */
   if (0) test_sorting();
 }

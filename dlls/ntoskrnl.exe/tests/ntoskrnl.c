@@ -27,6 +27,7 @@
 #include "winsvc.h"
 #include "winioctl.h"
 #include "winternl.h"
+#include "winsock2.h"
 #include "wine/test.h"
 #include "wine/heap.h"
 
@@ -109,17 +110,25 @@ static SC_HANDLE load_driver(char *filename, const char *resname, const char *dr
     return service;
 }
 
-static BOOL start_driver(HANDLE service)
+static BOOL start_driver(HANDLE service, BOOL vista_plus)
 {
     SERVICE_STATUS status;
     BOOL ret;
 
     SetLastError(0xdeadbeef);
     ret = StartServiceA(service, 0, NULL);
-    if (!ret && (GetLastError() == ERROR_DRIVER_BLOCKED || GetLastError() == ERROR_INVALID_IMAGE_HASH))
+    if (!ret && (GetLastError() == ERROR_DRIVER_BLOCKED || GetLastError() == ERROR_INVALID_IMAGE_HASH
+            || (vista_plus && GetLastError() == ERROR_FILE_NOT_FOUND)))
     {
-        /* If Secure Boot is enabled or the machine is 64-bit, it will reject an unsigned driver. */
-        skip("Failed to start service; probably your machine doesn't accept unsigned drivers.\n");
+        if (vista_plus && GetLastError() == ERROR_FILE_NOT_FOUND)
+        {
+            skip("Windows Vista or newer is required to run this service.\n");
+        }
+        else
+        {
+            /* If Secure Boot is enabled or the machine is 64-bit, it will reject an unsigned driver. */
+            skip("Failed to start service; probably your machine doesn't accept unsigned drivers.\n");
+        }
         DeleteService(service);
         CloseServiceHandle(service);
         return FALSE;
@@ -143,13 +152,15 @@ static BOOL start_driver(HANDLE service)
     return TRUE;
 }
 
+static ULONG64 modified_value;
+
 static void main_test(void)
 {
     static const WCHAR dokW[] = {'d','o','k',0};
     WCHAR temppathW[MAX_PATH], pathW[MAX_PATH];
     struct test_input *test_input;
-    UNICODE_STRING pathU;
     DWORD len, written, read;
+    UNICODE_STRING pathU;
     LONG new_failures;
     char buffer[512];
     HANDLE okfile;
@@ -165,6 +176,11 @@ static void main_test(void)
     test_input->running_under_wine = !strcmp(winetest_platform, "wine");
     test_input->winetest_report_success = winetest_report_success;
     test_input->winetest_debug = winetest_debug;
+    test_input->process_id = GetCurrentProcessId();
+    test_input->teststr_offset = (SIZE_T)((BYTE *)&teststr - (BYTE *)NtCurrentTeb()->Peb->ImageBaseAddress);
+    test_input->modified_value = &modified_value;
+    modified_value = 0;
+
     memcpy(test_input->path, pathU.Buffer, len);
     res = DeviceIoControl(device, IOCTL_WINETEST_MAIN_TEST, test_input,
                           offsetof( struct test_input, path[len / sizeof(WCHAR)]),
@@ -498,6 +514,80 @@ static void test_driver3(void)
     DeleteFileA(filename);
 }
 
+static DWORD WINAPI wsk_test_thread(void *parameter)
+{
+    static const char test_send_string[] = "Client test string 1.";
+    static const WORD version = MAKEWORD(2, 2);
+    struct sockaddr_in addr;
+    char buffer[256];
+    int ret, err;
+    WSADATA data;
+    SOCKET s;
+
+    ret = WSAStartup(version, &data);
+    ok(!ret, "WSAStartup() failed, ret %u.\n", ret);
+
+    s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ok(s != INVALID_SOCKET, "Error creating socket, WSAGetLastError() %u.\n", WSAGetLastError());
+
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(12345);
+    addr.sin_addr.s_addr = htonl(0x7f000001);
+
+    ret = connect(s, (struct sockaddr *)&addr, sizeof(addr));
+    while (ret && ((err = WSAGetLastError()) == WSAECONNREFUSED || err == WSAECONNABORTED))
+    {
+        SwitchToThread();
+        ret = connect(s, (struct sockaddr *)&addr, sizeof(addr));
+    }
+    ok(!ret, "Error connecting, WSAGetLastError() %u.\n", WSAGetLastError());
+
+    ret = send(s, test_send_string, sizeof(test_send_string), 0);
+    ok(ret == sizeof(test_send_string), "Got unexpected ret %d.\n", ret);
+
+    ret = recv(s, buffer, sizeof(buffer), 0);
+    ok(ret == sizeof(buffer), "Got unexpected ret %d.\n", ret);
+    ok(!strcmp(buffer, "Server test string 1."), "Received unexpected data.\n");
+
+    closesocket(s);
+    return TRUE;
+}
+
+static void test_driver4(void)
+{
+    char filename[MAX_PATH];
+    SC_HANDLE service;
+    HANDLE hthread;
+    DWORD written;
+    BOOL ret;
+
+    if (!(service = load_driver(filename, "driver4.dll", "WineTestDriver4")))
+        return;
+
+    if (!start_driver(service, TRUE))
+    {
+        DeleteFileA(filename);
+        return;
+    }
+
+    device = CreateFileA("\\\\.\\WineTestDriver4", 0, 0, NULL, OPEN_EXISTING, 0, NULL);
+    ok(device != INVALID_HANDLE_VALUE, "failed to open device: %u\n", GetLastError());
+
+    hthread = CreateThread(NULL, 0, wsk_test_thread, NULL, 0, NULL);
+    main_test();
+    WaitForSingleObject(hthread, INFINITE);
+
+    ret = DeviceIoControl(device, IOCTL_WINETEST_DETACH, NULL, 0, NULL, 0, &written, NULL);
+    ok(ret, "DeviceIoControl failed: %u\n", GetLastError());
+
+    CloseHandle(device);
+
+    unload_driver(service);
+    ret = DeleteFileA(filename);
+    ok(ret, "DeleteFile failed: %u\n", GetLastError());
+}
+
 START_TEST(ntoskrnl)
 {
     char filename[MAX_PATH], filename2[MAX_PATH];
@@ -515,7 +605,7 @@ START_TEST(ntoskrnl)
     subtest("driver");
     if (!(service = load_driver(filename, "driver.dll", "WineTestDriver")))
         return;
-    if (!start_driver(service))
+    if (!start_driver(service, FALSE))
     {
         DeleteFileA(filename);
         return;
@@ -527,7 +617,10 @@ START_TEST(ntoskrnl)
 
     test_basic_ioctl();
     test_mismatched_status_ioctl();
+
     main_test();
+    todo_wine ok(modified_value == 0xdeadbeeffeedcafe, "Got unexpected value %#I64x.\n", modified_value);
+
     test_overlapped();
     test_load_driver(service2);
     test_file_handles();
@@ -548,4 +641,6 @@ START_TEST(ntoskrnl)
     ok(ret, "DeleteFile failed: %u\n", GetLastError());
 
     test_driver3();
+    subtest("driver4");
+    test_driver4();
 }

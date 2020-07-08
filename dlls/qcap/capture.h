@@ -27,6 +27,9 @@ Capture *qcap_driver_init(struct strmbase_source *,USHORT) DECLSPEC_HIDDEN;
 HRESULT qcap_driver_destroy(Capture*) DECLSPEC_HIDDEN;
 HRESULT qcap_driver_check_format(Capture*,const AM_MEDIA_TYPE*) DECLSPEC_HIDDEN;
 HRESULT qcap_driver_set_format(Capture*,AM_MEDIA_TYPE*) DECLSPEC_HIDDEN;
+HRESULT qcap_driver_get_caps(Capture *device, LONG index, AM_MEDIA_TYPE **pmt,
+        VIDEO_STREAM_CONFIG_CAPS *vscc) DECLSPEC_HIDDEN;
+LONG qcap_driver_get_caps_count(Capture *device) DECLSPEC_HIDDEN;
 HRESULT qcap_driver_get_format(const Capture*,AM_MEDIA_TYPE**) DECLSPEC_HIDDEN;
 HRESULT qcap_driver_get_prop_range(Capture*,VideoProcAmpProperty,LONG*,LONG*,LONG*,LONG*,LONG*) DECLSPEC_HIDDEN;
 HRESULT qcap_driver_get_prop(Capture*,VideoProcAmpProperty,LONG*,LONG*) DECLSPEC_HIDDEN;

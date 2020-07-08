@@ -475,7 +475,7 @@ INT WINAPI wglChoosePixelFormat(HDC hdc, const PIXELFORMATDESCRIPTOR* ppfd)
     {
         if (!wglDescribePixelFormat( hdc, i, sizeof(format), &format )) continue;
 
-        if (ppfd->iPixelType != format.iPixelType)
+        if ((ppfd->iPixelType == PFD_TYPE_COLORINDEX) != (format.iPixelType == PFD_TYPE_COLORINDEX))
         {
             TRACE( "pixel type mismatch for iPixelFormat=%d\n", i );
             continue;
@@ -947,6 +947,15 @@ int WINAPI wglSetLayerPaletteEntries(HDC hdc,
   FIXME("(): stub!\n");
 
   return 0;
+}
+
+/***********************************************************************
+ *		wglGetDefaultProcAddress (OPENGL32.@)
+ */
+PROC WINAPI wglGetDefaultProcAddress( LPCSTR name )
+{
+    FIXME( "%s: stub\n", debugstr_a(name));
+    return NULL;
 }
 
 /***********************************************************************

@@ -36,18 +36,17 @@ static HINSTANCE instance_evr;
 
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
 {
-    TRACE("(%p, %d, %p)\n", instance, reason, reserved);
-
-    switch (reason)
+    if (reason == DLL_WINE_PREATTACH)
+        return FALSE; /* prefer native version */
+    else if (reason == DLL_PROCESS_ATTACH)
     {
-        case DLL_WINE_PREATTACH:
-            return FALSE;    /* prefer native version */
-        case DLL_PROCESS_ATTACH:
-            instance_evr = instance;
-            DisableThreadLibraryCalls(instance);
-            break;
+        instance_evr = instance;
+        DisableThreadLibraryCalls(instance);
     }
-
+    else if (reason == DLL_PROCESS_DETACH && !reserved)
+    {
+        strmbase_release_typelibs();
+    }
     return TRUE;
 }
 
@@ -72,6 +71,7 @@ struct object_creation_info
 static const struct object_creation_info object_creation[] =
 {
     { &CLSID_EnhancedVideoRenderer, evr_filter_create },
+    { &CLSID_MFVideoMixer9, evr_mixer_create },
 };
 
 static HRESULT WINAPI classfactory_QueryInterface(IClassFactory *iface, REFIID riid, void **ppobj)

@@ -1240,11 +1240,6 @@ static const struct strmbase_filter_ops testsink_ops =
     .filter_destroy = testsink_destroy,
 };
 
-static HRESULT testsink_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
-{
-    return S_OK;
-}
-
 static HRESULT testsink_get_media_type(struct strmbase_pin *iface, unsigned int index, AM_MEDIA_TYPE *mt)
 {
     struct testsink *filter = impl_sink_from_strmbase_filter(iface->filter);
@@ -1274,7 +1269,6 @@ static void testsink_disconnect(struct strmbase_sink *iface)
 
 static const struct strmbase_sink_ops testsink_pin_ops =
 {
-    .base.pin_query_accept = testsink_query_accept,
     .base.pin_get_media_type = testsink_get_media_type,
     .sink_connect = testsink_connect,
     .sink_disconnect = testsink_disconnect,
@@ -1363,12 +1357,7 @@ static void test_connect_pin(void)
 
     req_mt.majortype = MEDIATYPE_Video;
     hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.pin.pin.IPin_iface, &req_mt);
-    todo_wine ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
-    if (hr == S_OK)
-    {
-        IFilterGraph2_Disconnect(graph, source);
-        IFilterGraph2_Disconnect(graph, &testsink.pin.pin.IPin_iface);
-    }
+    ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
     req_mt.majortype = MEDIATYPE_Stream;
 
     req_mt.subtype = MEDIASUBTYPE_RGB8;
@@ -1379,12 +1368,7 @@ static void test_connect_pin(void)
     IFilterGraph2_Disconnect(graph, &testsink.pin.pin.IPin_iface);
     req_mt.subtype = GUID_NULL;
     hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.pin.pin.IPin_iface, &req_mt);
-    todo_wine ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
-    if (hr == S_OK)
-    {
-        IFilterGraph2_Disconnect(graph, source);
-        IFilterGraph2_Disconnect(graph, &testsink.pin.pin.IPin_iface);
-    }
+    ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
     req_mt.subtype = MEDIASUBTYPE_Avi;
 
     /* Test connection with wildcards. */
@@ -1445,12 +1429,7 @@ static void test_connect_pin(void)
      * consistent with its being rejected by IPin::QueryAccept(). */
     testsink.reject_avi = TRUE;
     hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.pin.pin.IPin_iface, NULL);
-    todo_wine ok(hr == VFW_E_NO_ACCEPTABLE_TYPES, "Got hr %#x.\n", hr);
-    if (hr == S_OK)
-    {
-        IFilterGraph2_Disconnect(graph, source);
-        IFilterGraph2_Disconnect(graph, &testsink.pin.pin.IPin_iface);
-    }
+    ok(hr == VFW_E_NO_ACCEPTABLE_TYPES, "Got hr %#x.\n", hr);
 
     /* But any types we expose are tried. */
     testsink.mt = &mt;
@@ -1459,17 +1438,12 @@ static void test_connect_pin(void)
     mt.subtype = MEDIASUBTYPE_RGB8;
     mt.formattype = FORMAT_None;
     hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.pin.pin.IPin_iface, NULL);
-    todo_wine ok(hr == VFW_E_NO_ACCEPTABLE_TYPES, "Got hr %#x.\n", hr);
-    if (hr == S_OK)
-    {
-        IFilterGraph2_Disconnect(graph, source);
-        IFilterGraph2_Disconnect(graph, &testsink.pin.pin.IPin_iface);
-    }
+    ok(hr == VFW_E_NO_ACCEPTABLE_TYPES, "Got hr %#x.\n", hr);
 
     mt.majortype = MEDIATYPE_Stream;
     hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.pin.pin.IPin_iface, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(compare_media_types(&testsink.pin.pin.mt, &mt), "Media types didn't match.\n");
+    ok(compare_media_types(&testsink.pin.pin.mt, &mt), "Media types didn't match.\n");
     IFilterGraph2_Disconnect(graph, source);
     IFilterGraph2_Disconnect(graph, &testsink.pin.pin.IPin_iface);
 

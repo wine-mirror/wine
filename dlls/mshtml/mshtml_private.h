@@ -981,9 +981,12 @@ void nsAString_SetData(nsAString*,const PRUnichar*) DECLSPEC_HIDDEN;
 UINT32 nsAString_GetData(const nsAString*,const PRUnichar**) DECLSPEC_HIDDEN;
 void nsAString_Finish(nsAString*) DECLSPEC_HIDDEN;
 
+#define NSSTR_IMPLICIT_PX    0x01
+#define NSSTR_COLOR          0x02
+
 HRESULT map_nsresult(nsresult) DECLSPEC_HIDDEN;
 HRESULT return_nsstr(nsresult,nsAString*,BSTR*) DECLSPEC_HIDDEN;
-HRESULT return_nsstr_variant(nsresult nsres, nsAString *nsstr, VARIANT *p) DECLSPEC_HIDDEN;
+HRESULT return_nsstr_variant(nsresult,nsAString*,unsigned,VARIANT*) DECLSPEC_HIDDEN;
 HRESULT variant_to_nsstr(VARIANT*,BOOL,nsAString*) DECLSPEC_HIDDEN;
 HRESULT return_nsform(nsresult,nsIDOMHTMLFormElement*,IHTMLFormElement**) DECLSPEC_HIDDEN;
 

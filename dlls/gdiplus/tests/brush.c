@@ -1634,6 +1634,239 @@ static void test_getHatchStyle(void)
     GdipDeleteBrush((GpBrush *)brush);
 }
 
+static ARGB COLORREF2ARGB(COLORREF color)
+{
+    return 0xff000000 |
+        (color & 0xff) << 16 |
+        (color & 0xff00) |
+        (color & 0xff0000) >> 16;
+}
+
+extern BOOL color_match(ARGB c1, ARGB c2, BYTE max_diff);
+
+static void test_hatchBrushStyles(void)
+{
+    static const struct
+    {
+        short pattern[8];
+        GpHatchStyle hs;
+    }
+    styles[] =
+    {
+        { {0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0xffff}, HatchStyleHorizontal },
+        { {0xc000, 0xc000, 0xc000, 0xc000, 0xc000, 0xc000, 0xc000, 0xc000}, HatchStyleVertical },
+        { {0x4006, 0x0019, 0x0064, 0x0190, 0x0640, 0x1900, 0x6400, 0x9001}, HatchStyleForwardDiagonal },
+        { {0x9001, 0x6400, 0x1900, 0x0640, 0x0190, 0x0064, 0x0019, 0x4006}, HatchStyleBackwardDiagonal },
+        { {0xc000, 0xc000, 0xc000, 0xc000, 0xc000, 0xc000, 0xc000, 0xffff}, HatchStyleCross },
+        { {0x9006, 0x6419, 0x1964, 0x0690, 0x0690, 0x1964, 0x6419, 0x9006}, HatchStyleDiagonalCross },
+        { {0x0000, 0x0000, 0x0000, 0x00c0, 0x0000, 0x0000, 0x0000, 0xc000}, HatchStyle05Percent },
+        { {0x0000, 0x00c0, 0x0000, 0xc000, 0x0000, 0x00c0, 0x0000, 0xc000}, HatchStyle10Percent },
+        { {0x0000, 0x0c0c, 0x0000, 0xc0c0, 0x0000, 0x0c0c, 0x0000, 0xc0c0}, HatchStyle20Percent },
+        { {0x0c0c, 0xc0c0, 0x0c0c, 0xc0c0, 0x0c0c, 0xc0c0, 0x0c0c, 0xc0c0}, HatchStyle25Percent },
+        { {0x0303, 0xcccc, 0x3030, 0xcccc, 0x0303, 0xcccc, 0x3030, 0xcccc}, HatchStyle30Percent },
+        { {0x0333, 0xcccc, 0x3333, 0xcccc, 0x3303, 0xcccc, 0x3333, 0xcccc}, HatchStyle40Percent },
+        { {0x3333, 0xcccc, 0x3333, 0xcccc, 0x3333, 0xcccc, 0x3333, 0xcccc}, HatchStyle50Percent },
+        { {0x3333, 0xcfcf, 0x3333, 0xfcfc, 0x3333, 0xcfcf, 0x3333, 0xfcfc}, HatchStyle60Percent },
+        { {0xf3f3, 0x3f3f, 0xf3f3, 0x3f3f, 0xf3f3, 0x3f3f, 0xf3f3, 0x3f3f}, HatchStyle70Percent },
+        { {0xffff, 0xf3f3, 0xffff, 0x3f3f, 0xffff, 0xf3f3, 0xffff, 0x3f3f}, HatchStyle75Percent },
+        { {0xffff, 0xfffc, 0xffff, 0xfcff, 0xffff, 0xfffc, 0xffff, 0xfcff}, HatchStyle80Percent },
+        { {0x3fff, 0xffff, 0xffff, 0xffff, 0xff3f, 0xffff, 0xffff, 0xffff}, HatchStyle90Percent },
+        { {0x0303, 0x0c0c, 0x3030, 0xc0c0, 0x0303, 0x0c0c, 0x3030, 0xc0c0}, HatchStyleLightDownwardDiagonal },
+        { {0xc0c0, 0x3030, 0x0c0c, 0x0303, 0xc0c0, 0x3030, 0x0c0c, 0x0303}, HatchStyleLightUpwardDiagonal },
+        { {0xc3c3, 0x0f0f, 0x3c3c, 0xf0f0, 0xc3c3, 0x0f0f, 0x3c3c, 0xf0f0}, HatchStyleDarkDownwardDiagonal },
+        { {0xc3c3, 0xf0f0, 0x3c3c, 0x0f0f, 0xc3c3, 0xf0f0, 0x3c3c, 0x0f0f}, HatchStyleDarkUpwardDiagonal },
+        { {0xc00f, 0x003f, 0x00fc, 0x03f0, 0x0fc0, 0x3f00, 0xfc00, 0xf003}, HatchStyleWideDownwardDiagonal },
+        { {0xf003, 0xfc00, 0x3f00, 0x0fc0, 0x03f0, 0x00fc, 0x003f, 0xc00f}, HatchStyleWideUpwardDiagonal },
+        { {0xc0c0, 0xc0c0, 0xc0c0, 0xc0c0, 0xc0c0, 0xc0c0, 0xc0c0, 0xc0c0}, HatchStyleLightVertical },
+        { {0x0000, 0x0000, 0x0000, 0xffff, 0x0000, 0x0000, 0x0000, 0xffff}, HatchStyleLightHorizontal },
+        { {0x3333, 0x3333, 0x3333, 0x3333, 0x3333, 0x3333, 0x3333, 0x3333}, HatchStyleNarrowVertical },
+        { {0x0000, 0xffff, 0x0000, 0xffff, 0x0000, 0xffff, 0x0000, 0xffff}, HatchStyleNarrowHorizontal },
+        { {0xf0f0, 0xf0f0, 0xf0f0, 0xf0f0, 0xf0f0, 0xf0f0, 0xf0f0, 0xf0f0}, HatchStyleDarkVertical },
+        { {0x0000, 0x0000, 0xffff, 0xffff, 0x0000, 0x0000, 0xffff, 0xffff}, HatchStyleDarkHorizontal },
+        { {0x0000, 0x0000, 0x0303, 0x0c0c, 0x3030, 0xc0c0, 0x0000, 0x0000}, HatchStyleDashedDownwardDiagonal },
+        { {0x0000, 0x0000, 0xc0c0, 0x3030, 0x0c0c, 0x0303, 0x0000, 0x0000}, HatchStyleDashedUpwardDiagonal },
+        { {0x0000, 0x0000, 0x0000, 0x00ff, 0x0000, 0x0000, 0x0000, 0xff00}, HatchStyleDashedHorizontal },
+        { {0x00c0, 0x00c0, 0x00c0, 0x00c0, 0xc000, 0xc000, 0xc000, 0xc000}, HatchStyleDashedVertical },
+        { {0x0030, 0x0c00, 0x0003, 0x0300, 0x000c, 0x3000, 0x00c0, 0xc000}, HatchStyleSmallConfetti },
+        { {0xc0f3, 0x00f0, 0xf000, 0xf3c0, 0x03cf, 0x000f, 0x0f00, 0xcf03}, HatchStyleLargeConfetti },
+        { {0x03c0, 0x0c30, 0x300c, 0xc003, 0x03c0, 0x0c30, 0x300c, 0xc003}, HatchStyleZigZag },
+        { {0xf000, 0x0c33, 0x03c0, 0x0000, 0xf000, 0x0c33, 0x03c0, 0x0000}, HatchStyleWave },
+        { {0xc003, 0x300c, 0x0c30, 0x03c0, 0x00c0, 0x0030, 0x000c, 0x0003}, HatchStyleDiagonalBrick },
+        { {0x00c0, 0x00c0, 0x00c0, 0xffff, 0xc000, 0xc000, 0xc000, 0xffff}, HatchStyleHorizontalBrick },
+        { {0x3303, 0x0c0c, 0x0330, 0xc0c0, 0x3033, 0x0c0c, 0x3330, 0xc0c0}, HatchStyleWeave },
+        { {0xff00, 0xff00, 0xff00, 0xff00, 0x3333, 0xcccc, 0x3333, 0xcccc}, HatchStylePlaid },
+        { {0xc000, 0x0003, 0xc000, 0x0000, 0x0300, 0x00c0, 0x0300, 0x0000}, HatchStyleDivot },
+        { {0x0000, 0xc000, 0x0000, 0xc000, 0x0000, 0xc000, 0x0000, 0xcccc}, HatchStyleDottedGrid },
+        { {0x0000, 0x0c0c, 0x0000, 0x00c0, 0x0000, 0x0c0c, 0x0000, 0xc000}, HatchStyleDottedDiamond },
+        { {0x0003, 0x0003, 0x000c, 0x00f0, 0x0f00, 0x30c0, 0xc030, 0x000f}, HatchStyleShingle },
+        { {0xc3c3, 0xffff, 0x3c3c, 0xffff, 0xc3c3, 0xffff, 0x3c3c, 0xffff}, HatchStyleTrellis },
+        { {0xffc0, 0xffc0, 0xc3c0, 0x3f3f, 0xc0ff, 0xc0ff, 0xc0c3, 0x3f3f}, HatchStyleSphere },
+        { {0xc0c0, 0xc0c0, 0xc0c0, 0xffff, 0xc0c0, 0xc0c0, 0xc0c0, 0xffff}, HatchStyleSmallGrid },
+        { {0xc3c3, 0x3c3c, 0x3c3c, 0xc3c3, 0xc3c3, 0x3c3c, 0x3c3c, 0xc3c3}, HatchStyleSmallCheckerBoard },
+        { {0x00ff, 0x00ff, 0x00ff, 0x00ff, 0xff00, 0xff00, 0xff00, 0xff00}, HatchStyleLargeCheckerBoard },
+        { {0x0003, 0xc00c, 0x3030, 0x0cc0, 0x0300, 0x0cc0, 0x3030, 0xc00c}, HatchStyleOutlinedDiamond },
+        { {0x0000, 0x0300, 0x0fc0, 0x3ff0, 0xfffc, 0x3ff0, 0x0fc0, 0x0300}, HatchStyleSolidDiamond },
+    };
+    static const ARGB exp_colors[] = { 0xffffffff, 0xffbfbfbf, 0xff151515, 0xff000000 };
+    static const ARGB fore_color = 0xff000000;
+    static const ARGB back_color = 0xffffffff;
+    static const int width = 16, height = 16;
+    GpStatus status;
+    HDC hdc;
+    GpGraphics *graphics_hdc;
+    GpGraphics *graphics_image;
+    GpBitmap *bitmap;
+    GpHatch *brush = NULL;
+    BOOL match_hdc;
+    BOOL match_image;
+    int x, y;
+    int i;
+
+    hdc = GetDC(hwnd);
+    status = GdipCreateFromHDC(hdc, &graphics_hdc);
+    expect(Ok, status);
+    ok(graphics_hdc != NULL, "Expected the graphics context to be initialized.\n");
+
+    status = GdipCreateBitmapFromScan0(width, height, 0, PixelFormat32bppRGB, NULL, &bitmap);
+    expect(Ok, status);
+    status = GdipGetImageGraphicsContext((GpImage *)bitmap, &graphics_image);
+    expect(Ok, status);
+    ok(graphics_image != NULL, "Expected the graphics context to be initialized.\n");
+
+    for (i = 0; i < ARRAY_SIZE(styles); i++)
+    {
+        status = GdipCreateHatchBrush(styles[i].hs, fore_color, back_color, &brush);
+        expect(Ok, status);
+        ok(brush != NULL, "Expected the brush to be initialized.\n");
+        status = GdipFillRectangleI(graphics_hdc, (GpBrush *)brush, 0, 0, width, height);
+        expect(Ok, status);
+        status = GdipFillRectangleI(graphics_image, (GpBrush *)brush, 0, 0, width, height);
+        expect(Ok, status);
+        status = GdipDeleteBrush((GpBrush *)brush);
+        expect(Ok, status);
+        brush = NULL;
+
+        match_hdc = TRUE;
+        match_image = TRUE;
+        for(y = 0; y < width && (match_hdc || match_image); y++)
+        {
+            for(x = 0; x < height && (match_hdc || match_image); x++)
+            {
+                ARGB color;
+                int cindex = (styles[i].pattern[7-(y%8)] >> (2*(7-(x%8)))) & 3;
+
+                color = COLORREF2ARGB(GetPixel(hdc, x, y));
+                if (!color_match(color, exp_colors[cindex], 1))
+                    match_hdc = FALSE;
+
+                GdipBitmapGetPixel(bitmap, x, y, &color);
+                if (!color_match(color, exp_colors[cindex], 1))
+                    match_image = FALSE;
+            }
+        }
+        ok(match_hdc, "Unexpected pattern for hatch style %#x with hdc.\n", styles[i].hs);
+        ok(match_image, "Unexpected pattern for hatch style %#x with image.\n", styles[i].hs);
+    }
+
+    status = GdipDeleteGraphics(graphics_image);
+    expect(Ok, status);
+    status = GdipDisposeImage((GpImage*)bitmap);
+    expect(Ok, status);
+
+    status = GdipDeleteGraphics(graphics_hdc);
+    expect(Ok, status);
+    ReleaseDC(hwnd, hdc);
+}
+
+static void test_renderingOrigin(void)
+{
+    static const int width = 8, height = 8;
+    GpStatus status;
+    HDC hdc;
+    GpBitmap *bitmap;
+    GpGraphics *graphics_hdc;
+    GpGraphics *graphics_image;
+    GpHatch *brush;
+    BOOL match_hdc;
+    BOOL match_image;
+    static const INT tests[][2] = {{3, 6}, {-7, -4}};
+    static const ARGB fore_color = 0xff000000;
+    static const ARGB back_color = 0xffffffff;
+    INT x, y;
+    int i;
+
+    hdc = GetDC(hwnd);
+    GdipCreateFromHDC(hdc, &graphics_hdc);
+
+    GdipCreateBitmapFromScan0(width, height, 0, PixelFormat32bppRGB, NULL, &bitmap);
+    GdipGetImageGraphicsContext((GpImage *)bitmap, &graphics_image);
+
+    GdipCreateHatchBrush(HatchStyleCross, fore_color, back_color, &brush);
+
+    x = y = 0xdeadbeef;
+    status = GdipGetRenderingOrigin(graphics_image, &x, &y);
+    expect(Ok, status);
+    ok(x == 0 && y == 0, "Expected (%d, %d) got (%d, %d)\n", 0, 0, x, y);
+    x = y = 0xdeadbeef;
+    status = GdipGetRenderingOrigin(graphics_image, &x, &y);
+    expect(Ok, status);
+    ok(x == 0 && y == 0, "Expected (%d, %d) got (%d, %d)\n", 0, 0, x, y);
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        const INT exp_x = ((tests[i][0] % 8) + 8) % 8;
+        const INT exp_y = ((tests[i][1] % 8) + 8) % 8;
+
+        status = GdipSetRenderingOrigin(graphics_image, tests[i][0], tests[i][1]);
+        expect(Ok, status);
+        status = GdipSetRenderingOrigin(graphics_hdc, tests[i][0], tests[i][1]);
+        expect(Ok, status);
+
+        status = GdipGetRenderingOrigin(graphics_image, &x, &y);
+        expect(Ok, status);
+        ok(x == tests[i][0] && y == tests[i][1], "Expected (%d, %d) got (%d, %d)\n",
+                tests[i][0], tests[i][1], x, y);
+        status = GdipGetRenderingOrigin(graphics_image, &x, &y);
+        expect(Ok, status);
+        ok(x == tests[i][0] && y == tests[i][1], "Expected (%d, %d) got (%d, %d)\n",
+                tests[i][0], tests[i][1], x, y);
+
+        GdipFillRectangleI(graphics_image, (GpBrush *)brush, 0, 0, width, height);
+        GdipFillRectangleI(graphics_hdc, (GpBrush *)brush, 0, 0, width, height);
+
+        match_hdc = TRUE;
+        match_image = TRUE;
+        for (y = 0; y < height && (match_hdc || match_image); y++)
+        {
+            for (x = 0; x < width && (match_hdc || match_image); x++)
+            {
+                ARGB color;
+                const ARGB exp_color = (x == exp_x || y == exp_y) ? fore_color : back_color;
+
+                color = COLORREF2ARGB(GetPixel(hdc, x, y));
+                if (color != exp_color)
+                    match_hdc = FALSE;
+
+                GdipBitmapGetPixel(bitmap, x, y, &color);
+                if (color != exp_color)
+                    match_image = FALSE;
+            }
+        }
+        ok(match_hdc, "Hatch brush rendered incorrectly on hdc with rendering origin (%d, %d).\n",
+                tests[i][0], tests[i][1]);
+        ok(match_image, "Hatch brush rendered incorrectly on image with rendering origin (%d, %d).\n",
+                tests[i][0], tests[i][1]);
+    }
+
+    GdipDeleteBrush((GpBrush *)brush);
+
+    GdipDeleteGraphics(graphics_image);
+    GdipDisposeImage((GpImage*)bitmap);
+
+    GdipDeleteGraphics(graphics_hdc);
+    ReleaseDC(hwnd, hdc);
+}
+
 START_TEST(brush)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -1686,6 +1919,8 @@ START_TEST(brush)
     test_pathgradientpresetblend();
     test_pathgradientblend();
     test_getHatchStyle();
+    test_hatchBrushStyles();
+    test_renderingOrigin();
 
     GdiplusShutdown(gdiplusToken);
     DestroyWindow(hwnd);

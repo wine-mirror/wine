@@ -110,6 +110,7 @@ struct driver
     WCHAR manufacturer[LINE_LEN];
     WCHAR mfg_key[LINE_LEN];
     WCHAR description[LINE_LEN];
+    WCHAR section[LINE_LEN];
 };
 
 /* is used to identify if a DeviceInfoSet pointer is
@@ -735,6 +736,7 @@ static void delete_device(struct device *device)
 
     RegCloseKey(device->key);
     heap_free(device->instanceId);
+    heap_free(device->drivers);
 
     LIST_FOR_EACH_ENTRY_SAFE(iface, next, &device->interfaces,
             struct device_iface, entry)
@@ -1843,18 +1845,18 @@ BOOL WINAPI SetupDiGetDeviceInstanceIdW(HDEVINFO devinfo, SP_DEVINFO_DATA *devic
 }
 
 /***********************************************************************
- *              SetupDiGetActualSectionToInstallA (SETUPAPI.@)
+ *              SetupDiGetActualSectionToInstallExA (SETUPAPI.@)
  */
-BOOL WINAPI SetupDiGetActualSectionToInstallA(HINF hinf, const char *section,
-        char *section_ext, DWORD size, DWORD *needed, char **extptr)
+BOOL WINAPI SetupDiGetActualSectionToInstallExA(HINF hinf, const char *section, SP_ALTPLATFORM_INFO *altplatform,
+        char *section_ext, DWORD size, DWORD *needed, char **extptr, void *reserved)
 {
     WCHAR sectionW[LINE_LEN], section_extW[LINE_LEN], *extptrW;
     BOOL ret;
 
     MultiByteToWideChar(CP_ACP, 0, section, -1, sectionW, ARRAY_SIZE(sectionW));
 
-    ret = SetupDiGetActualSectionToInstallW(hinf, sectionW, section_extW,
-            ARRAY_SIZE(section_extW), NULL, &extptrW);
+    ret = SetupDiGetActualSectionToInstallExW(hinf, sectionW, altplatform, section_extW,
+            ARRAY_SIZE(section_extW), NULL, &extptrW, reserved);
     if (ret)
     {
         if (needed)
@@ -1877,70 +1879,91 @@ BOOL WINAPI SetupDiGetActualSectionToInstallA(HINF hinf, const char *section,
 }
 
 /***********************************************************************
- *		SetupDiGetActualSectionToInstallW (SETUPAPI.@)
+ *              SetupDiGetActualSectionToInstallA (SETUPAPI.@)
  */
-BOOL WINAPI SetupDiGetActualSectionToInstallW(
-        HINF InfHandle,
-        PCWSTR InfSectionName,
-        PWSTR InfSectionWithExt,
-        DWORD InfSectionWithExtSize,
-        PDWORD RequiredSize,
-        PWSTR *Extension)
+BOOL WINAPI SetupDiGetActualSectionToInstallA(HINF hinf, const char *section, char *section_ext,
+        DWORD size, DWORD *needed, char **extptr)
 {
-    WCHAR szBuffer[MAX_PATH];
-    DWORD dwLength;
-    DWORD dwFullLength;
-    LONG lLineCount = -1;
+    return SetupDiGetActualSectionToInstallExA(hinf, section, NULL, section_ext, size,
+        needed, extptr, NULL);
+}
 
-    lstrcpyW(szBuffer, InfSectionName);
-    dwLength = lstrlenW(szBuffer);
+/***********************************************************************
+ *              SetupDiGetActualSectionToInstallExW (SETUPAPI.@)
+ */
+BOOL WINAPI SetupDiGetActualSectionToInstallExW(HINF hinf, const WCHAR *section, SP_ALTPLATFORM_INFO *altplatform,
+        WCHAR *section_ext, DWORD size, DWORD *needed, WCHAR **extptr, void *reserved)
+{
+    WCHAR buffer[MAX_PATH];
+    DWORD len;
+    DWORD full_len;
+    LONG line_count = -1;
+
+    TRACE("hinf %p, section %s, altplatform %p, ext %p, size %d, needed %p, extptr %p, reserved %p.\n",
+            hinf, debugstr_w(section), altplatform, section_ext, size, needed, extptr, reserved);
+
+    if (altplatform)
+        FIXME("SP_ALTPLATFORM_INFO unsupported\n");
+
+    lstrcpyW(buffer, section);
+    len = lstrlenW(buffer);
 
     if (OsVersionInfo.dwPlatformId == VER_PLATFORM_WIN32_NT)
     {
-	/* Test section name with '.NTx86' extension */
-	lstrcpyW(&szBuffer[dwLength], NtPlatformExtension);
-	lLineCount = SetupGetLineCountW(InfHandle, szBuffer);
+        /* Test section name with '.NTx86' extension */
+        lstrcpyW(&buffer[len], NtPlatformExtension);
+        line_count = SetupGetLineCountW(hinf, buffer);
 
-	if (lLineCount == -1)
-	{
-	    /* Test section name with '.NT' extension */
-	    lstrcpyW(&szBuffer[dwLength], NtExtension);
-	    lLineCount = SetupGetLineCountW(InfHandle, szBuffer);
-	}
+        if (line_count == -1)
+        {
+            /* Test section name with '.NT' extension */
+            lstrcpyW(&buffer[len], NtExtension);
+            line_count = SetupGetLineCountW(hinf, buffer);
+        }
     }
     else
     {
-	/* Test section name with '.Win' extension */
-	lstrcpyW(&szBuffer[dwLength], WinExtension);
-	lLineCount = SetupGetLineCountW(InfHandle, szBuffer);
+        /* Test section name with '.Win' extension */
+        lstrcpyW(&buffer[len], WinExtension);
+        line_count = SetupGetLineCountW(hinf, buffer);
     }
 
-    if (lLineCount == -1)
-        szBuffer[dwLength] = 0;
+    if (line_count == -1)
+        buffer[len] = 0;
 
-    dwFullLength = lstrlenW(szBuffer);
+    full_len = lstrlenW(buffer);
 
-    if (InfSectionWithExt != NULL && InfSectionWithExtSize != 0)
+    if (section_ext != NULL && size != 0)
     {
-	if (InfSectionWithExtSize < (dwFullLength + 1))
-	{
-	    SetLastError(ERROR_INSUFFICIENT_BUFFER);
-	    return FALSE;
-	}
+        if (size < (full_len + 1))
+        {
+            SetLastError(ERROR_INSUFFICIENT_BUFFER);
+            return FALSE;
+        }
 
-	lstrcpyW(InfSectionWithExt, szBuffer);
-	if (Extension != NULL)
-	{
-	    *Extension = (dwLength == dwFullLength) ? NULL : &InfSectionWithExt[dwLength];
-	}
+        lstrcpyW(section_ext, buffer);
+        if (extptr != NULL)
+        {
+            *extptr = (len == full_len) ? NULL : &section_ext[len];
+        }
     }
 
-    if (RequiredSize != NULL)
+    if (needed != NULL)
     {
-	*RequiredSize = dwFullLength + 1;
+        *needed = full_len + 1;
     }
 
     return TRUE;
+}
+
+/***********************************************************************
+ *              SetupDiGetActualSectionToInstallW (SETUPAPI.@)
+ */
+BOOL WINAPI SetupDiGetActualSectionToInstallW(HINF hinf, const WCHAR *section, WCHAR *section_ext,
+        DWORD size, DWORD *needed, WCHAR **extptr)
+{
+    return SetupDiGetActualSectionToInstallExW(hinf, section, NULL, section_ext, size,
+            needed, extptr, NULL);
 }
 
 /***********************************************************************
@@ -4186,7 +4209,11 @@ BOOL WINAPI SetupDiGetINFClassW(PCWSTR inf, LPGUID class_guid, PWSTR class_name,
     have_name = 0 < dret;
 
     if (dret >= MAX_PATH -1) FIXME("buffer might be too small\n");
-    if (have_guid && !have_name) FIXME("class name lookup via guid not implemented\n");
+    if (have_guid && !have_name)
+    {
+        class_name[0] = '\0';
+        FIXME("class name lookup via guid not implemented\n");
+    }
 
     if (have_name)
     {
@@ -4229,6 +4256,7 @@ static LSTATUS get_device_property(struct device *device, const DEVPROPKEY *prop
     {
         value_size = prop_buff_size;
         ls = RegQueryValueExW(hkey, NULL, NULL, &value_type, prop_buff, &value_size);
+        RegCloseKey(hkey);
     }
 
     switch (ls)
@@ -4332,7 +4360,7 @@ CONFIGRET WINAPI CM_Get_DevNode_PropertyW(DEVINST dev, const DEVPROPKEY *key, DE
  */
 BOOL WINAPI SetupDiInstallDeviceInterfaces(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data)
 {
-    WCHAR section[LINE_LEN], section_ext[LINE_LEN], iface_section[LINE_LEN], refstr[LINE_LEN], guidstr[39];
+    WCHAR section_ext[LINE_LEN], iface_section[LINE_LEN], refstr[LINE_LEN], guidstr[39];
     UINT install_flags = SPINST_ALL;
     struct device_iface *iface;
     struct device *device;
@@ -4359,9 +4387,7 @@ BOOL WINAPI SetupDiInstallDeviceInterfaces(HDEVINFO devinfo, SP_DEVINFO_DATA *de
     if ((hinf = SetupOpenInfFileW(driver->inf_path, NULL, INF_STYLE_WIN4, NULL)) == INVALID_HANDLE_VALUE)
         return FALSE;
 
-    SetupFindFirstLineW(hinf, driver->mfg_key, driver->description, &ctx);
-    SetupGetStringFieldW(&ctx, 1, section, ARRAY_SIZE(section), NULL);
-    SetupDiGetActualSectionToInstallW(hinf, section, section_ext, ARRAY_SIZE(section_ext), NULL, NULL);
+    SetupDiGetActualSectionToInstallW(hinf, driver->section, section_ext, ARRAY_SIZE(section_ext), NULL, NULL);
 
     if (device->params.Flags & DI_NOFILECOPY)
         install_flags &= ~SPINST_FILES;
@@ -4409,12 +4435,11 @@ BOOL WINAPI SetupDiInstallDeviceInterfaces(HDEVINFO devinfo, SP_DEVINFO_DATA *de
 BOOL WINAPI SetupDiRegisterCoDeviceInstallers(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data)
 {
     static const WCHAR coinstallersW[] = {'.','C','o','I','n','s','t','a','l','l','e','r','s',0};
-    WCHAR coinst_key[LINE_LEN], coinst_key_ext[LINE_LEN];
+    WCHAR coinst_key_ext[LINE_LEN];
     struct device *device;
     struct driver *driver;
     void *callback_ctx;
     HKEY driver_key;
-    INFCONTEXT ctx;
     HINF hinf;
     LONG l;
 
@@ -4433,9 +4458,7 @@ BOOL WINAPI SetupDiRegisterCoDeviceInstallers(HDEVINFO devinfo, SP_DEVINFO_DATA 
     if ((hinf = SetupOpenInfFileW(driver->inf_path, NULL, INF_STYLE_WIN4, NULL)) == INVALID_HANDLE_VALUE)
         return FALSE;
 
-    SetupFindFirstLineW(hinf, driver->mfg_key, driver->description, &ctx);
-    SetupGetStringFieldW(&ctx, 1, coinst_key, ARRAY_SIZE(coinst_key), NULL);
-    SetupDiGetActualSectionToInstallW(hinf, coinst_key, coinst_key_ext, ARRAY_SIZE(coinst_key_ext), NULL, NULL);
+    SetupDiGetActualSectionToInstallW(hinf, driver->section, coinst_key_ext, ARRAY_SIZE(coinst_key_ext), NULL, NULL);
     lstrcatW(coinst_key_ext, coinstallersW);
 
     if ((l = create_driver_key(device, &driver_key)))
@@ -4564,6 +4587,8 @@ static void enum_compat_drivers_from_file(struct device *device, const WCHAR *pa
                     lstrcpyW(device->drivers[count - 1].mfg_key, mfg_key_ext);
                     SetupGetStringFieldW(&ctx, 0, device->drivers[count - 1].description,
                             ARRAY_SIZE(device->drivers[count - 1].description), NULL);
+                    SetupGetStringFieldW(&ctx, 1, device->drivers[count - 1].section,
+                            ARRAY_SIZE(device->drivers[count - 1].section), NULL);
 
                     TRACE("Found compatible driver: manufacturer %s, desc %s.\n",
                             debugstr_w(mfg_name), debugstr_w(device->drivers[count - 1].description));
@@ -4645,16 +4670,43 @@ BOOL WINAPI SetupDiBuildDriverInfoList(HDEVINFO devinfo, SP_DEVINFO_DATA *device
     return TRUE;
 }
 
+static BOOL copy_driver_data(SP_DRVINFO_DATA_W *data, const struct driver *driver)
+{
+    INFCONTEXT ctx;
+    HINF hinf;
+
+    if ((hinf = SetupOpenInfFileW(driver->inf_path, NULL, INF_STYLE_WIN4, NULL)) == INVALID_HANDLE_VALUE)
+        return FALSE;
+
+    data->ProviderName[0] = 0;
+    if (SetupFindFirstLineW(hinf, L"Version", L"Provider", &ctx))
+        SetupGetStringFieldW(&ctx, 1, data->ProviderName, ARRAY_SIZE(data->ProviderName), NULL);
+    wcscpy(data->Description, driver->description);
+    wcscpy(data->MfgName, driver->manufacturer);
+    data->DriverType = SPDIT_COMPATDRIVER;
+    data->Reserved = (ULONG_PTR)driver;
+
+    SetupCloseInfFile(hinf);
+
+    return TRUE;
+}
+
+static void driver_data_wtoa(SP_DRVINFO_DATA_A *a, const SP_DRVINFO_DATA_W *w)
+{
+    a->DriverType = w->DriverType;
+    a->Reserved = w->Reserved;
+    WideCharToMultiByte(CP_ACP, 0, w->Description, -1, a->Description, sizeof(a->Description), NULL, NULL);
+    WideCharToMultiByte(CP_ACP, 0, w->MfgName, -1, a->MfgName, sizeof(a->MfgName), NULL, NULL);
+    WideCharToMultiByte(CP_ACP, 0, w->ProviderName, -1, a->ProviderName, sizeof(a->ProviderName), NULL, NULL);
+}
+
 /***********************************************************************
  *              SetupDiEnumDriverInfoW (SETUPAPI.@)
  */
 BOOL WINAPI SetupDiEnumDriverInfoW(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data,
         DWORD type, DWORD index, SP_DRVINFO_DATA_W *driver_data)
 {
-    static const WCHAR providerW[] = {'P','r','o','v','i','d','e','r',0};
     struct device *device;
-    INFCONTEXT ctx;
-    HINF hinf;
 
     TRACE("devinfo %p, device_data %p, type %#x, index %u, driver_data %p.\n",
             devinfo, device_data, type, index, driver_data);
@@ -4675,19 +4727,7 @@ BOOL WINAPI SetupDiEnumDriverInfoW(HDEVINFO devinfo, SP_DEVINFO_DATA *device_dat
         return FALSE;
     }
 
-    if ((hinf = SetupOpenInfFileW(device->drivers[index].inf_path, NULL, INF_STYLE_WIN4, NULL)) == INVALID_HANDLE_VALUE)
-        return FALSE;
-
-    driver_data->ProviderName[0] = 0;
-    if (SetupFindFirstLineW(hinf, Version, providerW, &ctx))
-        SetupGetStringFieldW(&ctx, 1, driver_data->ProviderName, ARRAY_SIZE(driver_data->ProviderName), NULL);
-    lstrcpyW(driver_data->Description, device->drivers[index].description);
-    lstrcpyW(driver_data->MfgName, device->drivers[index].manufacturer);
-    driver_data->DriverType = SPDIT_COMPATDRIVER;
-
-    SetupCloseInfFile(hinf);
-
-    return TRUE;
+    return copy_driver_data(driver_data, &device->drivers[index]);
 }
 
 /***********************************************************************
@@ -4701,14 +4741,8 @@ BOOL WINAPI SetupDiEnumDriverInfoA(HDEVINFO devinfo, SP_DEVINFO_DATA *device_dat
 
     driver_dataW.cbSize = sizeof(driver_dataW);
     ret = SetupDiEnumDriverInfoW(devinfo, device_data, type, index, &driver_dataW);
-    driver_data->DriverType = driver_dataW.DriverType;
-    driver_data->Reserved = driver_dataW.Reserved;
-    WideCharToMultiByte(CP_ACP, 0, driver_dataW.Description, -1, driver_data->Description,
-            sizeof(driver_data->Description), NULL, NULL);
-    WideCharToMultiByte(CP_ACP, 0, driver_dataW.MfgName, -1, driver_data->MfgName,
-            sizeof(driver_data->MfgName), NULL, NULL);
-    WideCharToMultiByte(CP_ACP, 0, driver_dataW.ProviderName, -1, driver_data->ProviderName,
-            sizeof(driver_data->ProviderName), NULL, NULL);
+    if (ret) driver_data_wtoa(driver_data, &driver_dataW);
+
     return ret;
 }
 
@@ -4726,7 +4760,7 @@ BOOL WINAPI SetupDiSelectBestCompatDrv(HDEVINFO devinfo, SP_DEVINFO_DATA *device
 
     if (!device->driver_count)
     {
-        ERR("No compatible drivers were enumerated for device %s.\n", debugstr_w(device->instanceId));
+        WARN("No compatible drivers were enumerated for device %s.\n", debugstr_w(device->instanceId));
         SetLastError(ERROR_NO_COMPAT_DRIVERS);
         return FALSE;
     }
@@ -4734,6 +4768,193 @@ BOOL WINAPI SetupDiSelectBestCompatDrv(HDEVINFO devinfo, SP_DEVINFO_DATA *device
     WARN("Semi-stub, selecting the first available driver.\n");
 
     device->selected_driver = &device->drivers[0];
+
+    return TRUE;
+}
+
+/***********************************************************************
+ *              SetupDiGetSelectedDriverW (SETUPAPI.@)
+ */
+BOOL WINAPI SetupDiGetSelectedDriverW(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data, SP_DRVINFO_DATA_W *driver_data)
+{
+    struct device *device;
+
+    TRACE("devinfo %p, device_data %p, driver_data %p.\n", devinfo, device_data, driver_data);
+
+    if (!(device = get_device(devinfo, device_data)))
+        return FALSE;
+
+    if (!device->selected_driver)
+    {
+        SetLastError(ERROR_NO_DRIVER_SELECTED);
+        return FALSE;
+    }
+
+    return copy_driver_data(driver_data, device->selected_driver);
+}
+
+/***********************************************************************
+ *              SetupDiGetSelectedDriverA (SETUPAPI.@)
+ */
+BOOL WINAPI SetupDiGetSelectedDriverA(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data, SP_DRVINFO_DATA_A *driver_data)
+{
+    SP_DRVINFO_DATA_W driver_dataW;
+    BOOL ret;
+
+    driver_dataW.cbSize = sizeof(driver_dataW);
+    if ((ret = SetupDiGetSelectedDriverW(devinfo, device_data, &driver_dataW)))
+        driver_data_wtoa(driver_data, &driver_dataW);
+    return ret;
+}
+
+/***********************************************************************
+ *              SetupDiGetDriverInfoDetailW (SETUPAPI.@)
+ */
+BOOL WINAPI SetupDiGetDriverInfoDetailW(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data,
+        SP_DRVINFO_DATA_W *driver_data, SP_DRVINFO_DETAIL_DATA_W *detail_data, const DWORD size, DWORD *ret_size)
+{
+    struct driver *driver = (struct driver *)driver_data->Reserved;
+    DWORD size_needed, i, id_size = 1;
+    WCHAR id[MAX_DEVICE_ID_LEN];
+    INFCONTEXT ctx;
+    HANDLE file;
+    HINF hinf;
+
+    TRACE("devinfo %p, device_data %p, driver_data %p, detail_data %p, size %u, ret_size %p.\n",
+            devinfo, device_data, driver_data, detail_data, size, ret_size);
+
+    if ((detail_data || size) && size < sizeof(SP_DRVINFO_DETAIL_DATA_W))
+    {
+        SetLastError(ERROR_INVALID_USER_BUFFER);
+        return FALSE;
+    }
+
+    if ((hinf = SetupOpenInfFileW(driver->inf_path, NULL, INF_STYLE_WIN4, NULL)) == INVALID_HANDLE_VALUE)
+        return FALSE;
+
+    SetupFindFirstLineW(hinf, driver->mfg_key, driver->description, &ctx);
+    for (i = 2; SetupGetStringFieldW(&ctx, i, id, ARRAY_SIZE(id), NULL); ++i)
+        id_size += wcslen(id) + 1;
+
+    size_needed = FIELD_OFFSET(SP_DRVINFO_DETAIL_DATA_W, HardwareID[id_size]);
+    if (ret_size)
+        *ret_size = size_needed;
+    if (!detail_data)
+        return TRUE;
+
+    detail_data->CompatIDsLength = detail_data->CompatIDsOffset = 0;
+    detail_data->HardwareID[0] = 0;
+
+    if (size >= size_needed)
+    {
+        id_size = 0;
+        for (i = 2; SetupGetStringFieldW(&ctx, i, id, ARRAY_SIZE(id), NULL); ++i)
+        {
+            wcscpy(&detail_data->HardwareID[id_size], id);
+            if (i == 3)
+                detail_data->CompatIDsOffset = id_size;
+            id_size += wcslen(id) + 1;
+        }
+        detail_data->HardwareID[id_size++] = 0;
+        if (i > 3)
+            detail_data->CompatIDsLength = id_size - detail_data->CompatIDsOffset;
+    }
+
+    SetupCloseInfFile(hinf);
+
+    if ((file = CreateFileW(driver->inf_path, 0, 0, NULL, OPEN_EXISTING, 0, NULL)) == INVALID_HANDLE_VALUE)
+        return FALSE;
+    GetFileTime(file, NULL, NULL, &detail_data->InfDate);
+    CloseHandle(file);
+
+    wcscpy(detail_data->SectionName, driver->section);
+    wcscpy(detail_data->InfFileName, driver->inf_path);
+    wcscpy(detail_data->DrvDescription, driver->description);
+
+    if (size < size_needed)
+    {
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+/***********************************************************************
+ *              SetupDiGetDriverInfoDetailA (SETUPAPI.@)
+ */
+BOOL WINAPI SetupDiGetDriverInfoDetailA(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data,
+        SP_DRVINFO_DATA_A *driver_data, SP_DRVINFO_DETAIL_DATA_A *detail_data, const DWORD size, DWORD *ret_size)
+{
+    struct driver *driver = (struct driver *)driver_data->Reserved;
+    DWORD size_needed, i, id_size = 1;
+    char id[MAX_DEVICE_ID_LEN];
+    INFCONTEXT ctx;
+    HANDLE file;
+    HINF hinf;
+
+    TRACE("devinfo %p, device_data %p, driver_data %p, detail_data %p, size %u, ret_size %p.\n",
+            devinfo, device_data, driver_data, detail_data, size, ret_size);
+
+    if ((detail_data || size) && size < sizeof(SP_DRVINFO_DETAIL_DATA_A))
+    {
+        SetLastError(ERROR_INVALID_USER_BUFFER);
+        return FALSE;
+    }
+
+    if ((hinf = SetupOpenInfFileW(driver->inf_path, NULL, INF_STYLE_WIN4, NULL)) == INVALID_HANDLE_VALUE)
+        return FALSE;
+
+    SetupFindFirstLineW(hinf, driver->mfg_key, driver->description, &ctx);
+    for (i = 2; SetupGetStringFieldA(&ctx, i, id, ARRAY_SIZE(id), NULL); ++i)
+        id_size += strlen(id) + 1;
+
+    size_needed = FIELD_OFFSET(SP_DRVINFO_DETAIL_DATA_A, HardwareID[id_size]);
+    if (ret_size)
+        *ret_size = size_needed;
+    if (!detail_data)
+    {
+        SetupCloseInfFile(hinf);
+        return TRUE;
+    }
+
+    detail_data->CompatIDsLength = detail_data->CompatIDsOffset = 0;
+    detail_data->HardwareID[0] = 0;
+
+    if (size >= size_needed)
+    {
+        id_size = 0;
+        for (i = 2; SetupGetStringFieldA(&ctx, i, id, ARRAY_SIZE(id), NULL); ++i)
+        {
+            strcpy(&detail_data->HardwareID[id_size], id);
+            if (i == 3)
+                detail_data->CompatIDsOffset = id_size;
+            id_size += strlen(id) + 1;
+        }
+        detail_data->HardwareID[id_size++] = 0;
+        if (i > 3)
+            detail_data->CompatIDsLength = id_size - detail_data->CompatIDsOffset;
+    }
+
+    SetupCloseInfFile(hinf);
+
+    if ((file = CreateFileW(driver->inf_path, 0, 0, NULL, OPEN_EXISTING, 0, NULL)) == INVALID_HANDLE_VALUE)
+        return FALSE;
+    GetFileTime(file, NULL, NULL, &detail_data->InfDate);
+    CloseHandle(file);
+
+    WideCharToMultiByte(CP_ACP, 0, driver->section, -1, detail_data->SectionName,
+            sizeof(detail_data->SectionName), NULL, NULL);
+    WideCharToMultiByte(CP_ACP, 0, driver->inf_path, -1, detail_data->InfFileName,
+            sizeof(detail_data->InfFileName), NULL, NULL);
+    WideCharToMultiByte(CP_ACP, 0, driver->description, -1, detail_data->DrvDescription,
+            sizeof(detail_data->InfFileName), NULL, NULL);
+
+    if (size < size_needed)
+    {
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+        return FALSE;
+    }
 
     return TRUE;
 }
@@ -4802,11 +5023,11 @@ BOOL WINAPI SetupDiInstallDevice(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data)
     static const WCHAR dotservicesW[] = {'.','S','e','r','v','i','c','e','s',0};
     static const WCHAR addserviceW[] = {'A','d','d','S','e','r','v','i','c','e',0};
     static const WCHAR rootW[] = {'r','o','o','t','\\',0};
-    WCHAR section[LINE_LEN], section_ext[LINE_LEN], subsection[LINE_LEN], inf_path[MAX_PATH], *extptr, *filepart;
-    WCHAR svc_name[LINE_LEN], field[LINE_LEN];
+    WCHAR section_ext[LINE_LEN], subsection[LINE_LEN], inf_path[MAX_PATH], *extptr, *filepart;
     UINT install_flags = SPINST_ALL;
     HKEY driver_key, device_key;
     SC_HANDLE manager, service;
+    WCHAR svc_name[LINE_LEN];
     struct device *device;
     struct driver *driver;
     void *callback_ctx;
@@ -4829,13 +5050,10 @@ BOOL WINAPI SetupDiInstallDevice(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data)
     if ((hinf = SetupOpenInfFileW(driver->inf_path, NULL, INF_STYLE_WIN4, NULL)) == INVALID_HANDLE_VALUE)
         return FALSE;
 
-    SetupFindFirstLineW(hinf, driver->mfg_key, driver->description, &ctx);
+    RegSetValueExW(device->key, L"DeviceDesc", 0, REG_SZ, (BYTE *)driver->description,
+            wcslen(driver->description) * sizeof(WCHAR));
 
-    SetupGetStringFieldW(&ctx, 0, field, ARRAY_SIZE(field), NULL);
-    RegSetValueExW(device->key, L"DeviceDesc", 0, REG_SZ, (BYTE *)field, wcslen(field) * sizeof(WCHAR));
-
-    SetupGetStringFieldW(&ctx, 1, section, ARRAY_SIZE(section), NULL);
-    SetupDiGetActualSectionToInstallW(hinf, section, section_ext, ARRAY_SIZE(section_ext), NULL, &extptr);
+    SetupDiGetActualSectionToInstallW(hinf, driver->section, section_ext, ARRAY_SIZE(section_ext), NULL, &extptr);
 
     if ((l = create_driver_key(device, &driver_key)))
     {
@@ -4894,7 +5112,7 @@ BOOL WINAPI SetupDiInstallDevice(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data)
     TRACE("Copied INF file %s to %s.\n", debugstr_w(driver->inf_path), debugstr_w(inf_path));
 
     RegSetValueExW(driver_key, infpathW, 0, REG_SZ, (BYTE *)filepart, lstrlenW(filepart) * sizeof(WCHAR));
-    RegSetValueExW(driver_key, infsectionW, 0, REG_SZ, (BYTE *)section, lstrlenW(section) * sizeof(WCHAR));
+    RegSetValueExW(driver_key, infsectionW, 0, REG_SZ, (BYTE *)driver->section, lstrlenW(driver->section) * sizeof(WCHAR));
     if (extptr)
         RegSetValueExW(driver_key, infsectionextW, 0, REG_SZ, (BYTE *)extptr, lstrlenW(extptr) * sizeof(WCHAR));
 

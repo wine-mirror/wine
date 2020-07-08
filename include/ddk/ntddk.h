@@ -107,6 +107,8 @@ typedef enum _CONFIGURATION_TYPE
     MaximumType
 } CONFIGURATION_TYPE, *PCONFIGURATION_TYPE;
 
+#define IMAGE_ADDRESSING_MODE_32BIT 3
+
 typedef struct _IMAGE_INFO
 {
     union
@@ -118,7 +120,11 @@ typedef struct _IMAGE_INFO
             ULONG SystemModeImage      : 1;
             ULONG ImageMappedToAllPids : 1;
             ULONG ExtendedInfoPresent  : 1;
-            ULONG Reserved             : 21;
+            ULONG MachineTypeMismatch : 1;
+            ULONG ImageSignatureLevel : 4;
+            ULONG ImageSignatureType : 3;
+            ULONG ImagePartialMap : 1;
+            ULONG Reserved : 12;
         } DUMMYSTRUCTNAME;
     } DUMMYUNIONNAME;
     PVOID  ImageBase;
@@ -223,8 +229,10 @@ NTSTATUS  WINAPI KeExpandKernelStackAndCallout(PEXPAND_STACK_CALLOUT,void*,SIZE_
 void      WINAPI KeSetTargetProcessorDpc(PRKDPC,CCHAR);
 BOOLEAN   WINAPI MmIsAddressValid(void *);
 HANDLE    WINAPI PsGetProcessId(PEPROCESS);
+void *    WINAPI PsGetProcessSectionBaseAddress(PEPROCESS);
 HANDLE    WINAPI PsGetThreadId(PETHREAD);
 HANDLE    WINAPI PsGetThreadProcessId(PETHREAD);
+NTSTATUS  WINAPI PsRemoveLoadImageNotifyRoutine(PLOAD_IMAGE_NOTIFY_ROUTINE);
 NTSTATUS  WINAPI PsSetCreateProcessNotifyRoutine(PCREATE_PROCESS_NOTIFY_ROUTINE,BOOLEAN);
 NTSTATUS  WINAPI PsSetCreateProcessNotifyRoutineEx(PCREATE_PROCESS_NOTIFY_ROUTINE_EX,BOOLEAN);
 NTSTATUS  WINAPI PsSetCreateThreadNotifyRoutine(PCREATE_THREAD_NOTIFY_ROUTINE);

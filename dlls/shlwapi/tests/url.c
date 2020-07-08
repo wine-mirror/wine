@@ -1052,6 +1052,22 @@ static void test_UrlCanonicalizeA(void)
 
     urllen = lstrlenA(winehqA);
 
+    /* Parameter checks */
+    dwSize = ARRAY_SIZE(szReturnUrl);
+    hr = pUrlCanonicalizeA(NULL, szReturnUrl, &dwSize, URL_UNESCAPE);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+
+    dwSize = ARRAY_SIZE(szReturnUrl);
+    hr = pUrlCanonicalizeA(winehqA, NULL, &dwSize, URL_UNESCAPE);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+
+    hr = pUrlCanonicalizeA(winehqA, szReturnUrl, NULL, URL_UNESCAPE);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+
+    dwSize = 0;
+    hr = pUrlCanonicalizeA(winehqA, szReturnUrl, &dwSize, URL_UNESCAPE);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+
     /* buffer has no space for the result */
     dwSize=urllen-1;
     memset(szReturnUrl, '#', urllen+4);
@@ -1136,6 +1152,22 @@ static void test_UrlCanonicalizeW(void)
         return;
     }
     urllen = lstrlenW(winehqW);
+
+    /* Parameter checks */
+    dwSize = ARRAY_SIZE(szReturnUrl);
+    hr = pUrlCanonicalizeW(NULL, szReturnUrl, &dwSize, URL_UNESCAPE);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+
+    dwSize = ARRAY_SIZE(szReturnUrl);
+    hr = pUrlCanonicalizeW(winehqW, NULL, &dwSize, URL_UNESCAPE);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+
+    hr = pUrlCanonicalizeW(winehqW, szReturnUrl, NULL, URL_UNESCAPE);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+
+    dwSize = 0;
+    hr = pUrlCanonicalizeW(winehqW, szReturnUrl, &dwSize, URL_UNESCAPE);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
 
     /* buffer has no space for the result */
     dwSize = (urllen-1);

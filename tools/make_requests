@@ -43,9 +43,10 @@ my %formats =
     "mem_size_t"    => [  8,   8,  "&dump_uint64" ],
     "affinity_t"    => [  8,   8,  "&dump_uint64" ],
     "timeout_t"     => [  8,   8,  "&dump_timeout" ],
+    "abstime_t"     => [  8,   8,  "&dump_abstime" ],
     "rectangle_t"   => [  16,  4,  "&dump_rectangle" ],
     "char_info_t"   => [  4,   2,  "&dump_char_info" ],
-    "apc_call_t"    => [  40,  8,  "&dump_apc_call" ],
+    "apc_call_t"    => [  48,  8,  "&dump_apc_call" ],
     "apc_result_t"  => [  40,  8,  "&dump_apc_result" ],
     "async_data_t"  => [  40,  8,  "&dump_async_data" ],
     "irp_params_t"  => [  32,  8,  "&dump_irp_params" ],
@@ -406,10 +407,23 @@ print SERVER_PROT "    struct reply_header reply_header;\n";
 foreach my $req (@requests) { print SERVER_PROT "    struct ${req}_reply ${req}_reply;\n"; }
 print SERVER_PROT "};\n\n";
 
-printf SERVER_PROT "#define SERVER_PROTOCOL_VERSION %d\n\n", $protocol + 1;
+print SERVER_PROT "/* ### protocol_version begin ### */\n\n";
+printf SERVER_PROT "#define SERVER_PROTOCOL_VERSION %d\n\n", $protocol;
+print SERVER_PROT "/* ### protocol_version end ### */\n\n";
 print SERVER_PROT "#endif /* __WINE_WINE_SERVER_PROTOCOL_H */\n";
 close SERVER_PROT;
-update_file( "include/wine/server_protocol.h" );
+
+if (update_file( "include/wine/server_protocol.h" ))
+{
+    my @version_lines = ();
+
+    push @version_lines, sprintf( "#define SERVER_PROTOCOL_VERSION %d\n", $protocol + 1 );
+
+    replace_in_file( "include/wine/server_protocol.h",
+                     "### protocol_version begin ###",
+                     "### protocol_version end ###",
+                     @version_lines );
+}
 
 ### Output the dumping function tables
 

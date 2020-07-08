@@ -22,38 +22,45 @@
 #pragma makedep implib
 #endif
 
-#ifdef __MINGW32__
+#if _MSVCR_VER >= 140
+#define _UCRT
+#endif
 
 #include <stdarg.h>
+#include <stdlib.h>
+#include <process.h>
 
 #include "windef.h"
 #include "winbase.h"
-
-/* FIXME: Use msvcrt headers once we move to PE file */
-void __cdecl exit(int);
-void __cdecl __getmainargs(int *, char ***, char ***, int, int *);
-void __cdecl __set_app_type(int);
+#include "winternl.h"
 
 int __cdecl main(int argc, char **argv, char **env);
 
 static const IMAGE_NT_HEADERS *get_nt_header( void )
 {
-    extern IMAGE_DOS_HEADER __ImageBase;
-    return (const IMAGE_NT_HEADERS *)((char *)&__ImageBase + __ImageBase.e_lfanew);
+    IMAGE_DOS_HEADER *dos = (IMAGE_DOS_HEADER *)NtCurrentTeb()->Peb->ImageBaseAddress;
+    return (const IMAGE_NT_HEADERS *)((char *)dos + dos->e_lfanew);
 }
 
 int __cdecl mainCRTStartup(void)
 {
-    int argc, new_mode =  0, ret;
+    int argc, ret;
     char **argv, **env;
 
+#ifdef _UCRT
+    _configure_narrow_argv(_crt_argv_unexpanded_arguments);
+    _initialize_narrow_environment();
+    argc = *__p___argc();
+    argv = *__p___argv();
+    env = _get_initial_narrow_environment();
+#else
+    int new_mode =  0;
     __getmainargs(&argc, &argv, &env, 0, &new_mode);
-    __set_app_type(get_nt_header()->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI ? 2 : 1);
+#endif
+    _set_app_type(get_nt_header()->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI ? _crt_gui_app : _crt_console_app);
 
     ret = main(argc, argv, env);
 
     exit(ret);
     return ret;
 }
-
-#endif

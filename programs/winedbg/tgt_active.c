@@ -728,11 +728,11 @@ version_table[] =
 
 static const char *get_windows_version(void)
 {
-    OSVERSIONINFOEXW info = { sizeof(OSVERSIONINFOEXW) };
+    RTL_OSVERSIONINFOEXW info = { sizeof(RTL_OSVERSIONINFOEXW) };
     static char str[64];
     int i;
 
-    GetVersionExW( (OSVERSIONINFOW *)&info );
+    RtlGetVersion( &info );
 
     for (i = 0; i < ARRAY_SIZE(version_table); i++)
     {
@@ -756,8 +756,6 @@ static void output_system_info(void)
     static const char platform[] = "i386";
 #elif defined(__x86_64__)
     static const char platform[] = "x86_64";
-#elif defined(__powerpc__)
-    static const char platform[] = "powerpc";
 #elif defined(__arm__)
     static const char platform[] = "arm";
 #elif defined(__aarch64__)

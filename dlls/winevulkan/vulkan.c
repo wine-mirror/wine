@@ -21,11 +21,18 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winreg.h"
 #include "winuser.h"
+#include "initguid.h"
+#include "devguid.h"
+#include "setupapi.h"
 
 #include "vulkan_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
+
+DEFINE_DEVPROPKEY(DEVPROPKEY_GPU_LUID, 0x60b193cb, 0x5276, 0x4d0f, 0x96, 0xfc, 0xf1, 0x73, 0xab, 0xad, 0x3e, 0xc6, 2);
+DEFINE_DEVPROPKEY(WINE_DEVPROPKEY_GPU_VULKAN_UUID, 0x233a9ef3, 0xafc4, 0x4abd, 0xb5, 0x64, 0xc3, 0x2f, 0x21, 0xf1, 0x53, 0x5c, 2);
 
 /* For now default to 4 as it felt like a reasonable version feature wise to support.
  * Don't support the optional vk_icdGetPhysicalDeviceProcAddr introduced in this version
@@ -50,6 +57,7 @@ static void *wine_vk_find_struct_(void *s, VkStructureType t)
 
 static void *wine_vk_get_global_proc_addr(const char *name);
 
+static HINSTANCE hinstance;
 static const struct vulkan_funcs *vk_funcs;
 static VkResult (*p_vkEnumerateInstanceVersion)(uint32_t *version);
 
@@ -1243,6 +1251,95 @@ VkResult WINAPI wine_vkGetPhysicalDeviceImageFormatProperties2KHR(VkPhysicalDevi
     return res;
 }
 
+static HANDLE get_display_device_init_mutex(void)
+{
+    static const WCHAR init_mutexW[] = {'d','i','s','p','l','a','y','_','d','e','v','i','c','e','_','i','n','i','t',0};
+    HANDLE mutex = CreateMutexW(NULL, FALSE, init_mutexW);
+
+    WaitForSingleObject(mutex, INFINITE);
+    return mutex;
+}
+
+static void release_display_device_init_mutex(HANDLE mutex)
+{
+    ReleaseMutex(mutex);
+    CloseHandle(mutex);
+}
+
+/* Wait until graphics driver is loaded by explorer */
+static void wait_graphics_driver_ready(void)
+{
+    static BOOL ready = FALSE;
+
+    if (!ready)
+    {
+        SendMessageW(GetDesktopWindow(), WM_NULL, 0, 0);
+        ready = TRUE;
+    }
+}
+
+static void fill_luid_property(VkPhysicalDeviceProperties2 *properties2)
+{
+    static const WCHAR pci[] = {'P','C','I',0};
+    VkPhysicalDeviceIDProperties *id;
+    SP_DEVINFO_DATA device_data;
+    DWORD type, device_idx = 0;
+    HDEVINFO devinfo;
+    HANDLE mutex;
+    GUID uuid;
+    LUID luid;
+
+    if (!(id = wine_vk_find_struct(properties2, PHYSICAL_DEVICE_ID_PROPERTIES)))
+        return;
+
+    wait_graphics_driver_ready();
+    mutex = get_display_device_init_mutex();
+    devinfo = SetupDiGetClassDevsW(&GUID_DEVCLASS_DISPLAY, pci, NULL, 0);
+    device_data.cbSize = sizeof(device_data);
+    while (SetupDiEnumDeviceInfo(devinfo, device_idx++, &device_data))
+    {
+        if (!SetupDiGetDevicePropertyW(devinfo, &device_data, &WINE_DEVPROPKEY_GPU_VULKAN_UUID,
+                &type, (BYTE *)&uuid, sizeof(uuid), NULL, 0))
+            continue;
+
+        if (!IsEqualGUID(&uuid, id->deviceUUID))
+            continue;
+
+        if (SetupDiGetDevicePropertyW(devinfo, &device_data, &DEVPROPKEY_GPU_LUID, &type,
+                (BYTE *)&luid, sizeof(luid), NULL, 0))
+        {
+            memcpy(&id->deviceLUID, &luid, sizeof(id->deviceLUID));
+            id->deviceLUIDValid = VK_TRUE;
+            id->deviceNodeMask = 1;
+            break;
+        }
+    }
+    SetupDiDestroyDeviceInfoList(devinfo);
+    release_display_device_init_mutex(mutex);
+
+    TRACE("deviceName:%s deviceLUIDValid:%d LUID:%08x:%08x deviceNodeMask:%#x.\n",
+            properties2->properties.deviceName, id->deviceLUIDValid, luid.HighPart, luid.LowPart,
+            id->deviceNodeMask);
+}
+
+void WINAPI wine_vkGetPhysicalDeviceProperties2(VkPhysicalDevice phys_dev,
+        VkPhysicalDeviceProperties2 *properties2)
+{
+    TRACE("%p, %p\n", phys_dev, properties2);
+
+    thunk_vkGetPhysicalDeviceProperties2(phys_dev, properties2);
+    fill_luid_property(properties2);
+}
+
+void WINAPI wine_vkGetPhysicalDeviceProperties2KHR(VkPhysicalDevice phys_dev,
+        VkPhysicalDeviceProperties2 *properties2)
+{
+    TRACE("%p, %p\n", phys_dev, properties2);
+
+    thunk_vkGetPhysicalDeviceProperties2KHR(phys_dev, properties2);
+    fill_luid_property(properties2);
+}
+
 void WINAPI wine_vkGetPhysicalDeviceExternalSemaphoreProperties(VkPhysicalDevice phys_dev,
         const VkPhysicalDeviceExternalSemaphoreInfo *semaphore_info, VkExternalSemaphoreProperties *properties)
 {
@@ -1268,6 +1365,7 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, void *reserved)
     switch (reason)
     {
         case DLL_PROCESS_ATTACH:
+            hinstance = hinst;
             DisableThreadLibraryCalls(hinst);
             return wine_vk_init();
     }
@@ -1306,4 +1404,64 @@ static void *wine_vk_get_global_proc_addr(const char *name)
 void *native_vkGetInstanceProcAddrWINE(VkInstance instance, const char *name)
 {
     return vk_funcs->p_vkGetInstanceProcAddr(instance, name);
+}
+
+
+static const WCHAR winevulkan_json_resW[] = {'w','i','n','e','v','u','l','k','a','n','_','j','s','o','n',0};
+static const WCHAR winevulkan_json_pathW[] = {'\\','w','i','n','e','v','u','l','k','a','n','.','j','s','o','n',0};
+static const WCHAR vulkan_driversW[] = {'S','o','f','t','w','a','r','e','\\','K','h','r','o','n','o','s','\\',
+                                        'V','u','l','k','a','n','\\','D','r','i','v','e','r','s',0};
+
+HRESULT WINAPI DllRegisterServer(void)
+{
+    WCHAR json_path[MAX_PATH];
+    HRSRC rsrc;
+    const char *data;
+    DWORD datalen, written, zero = 0;
+    HANDLE file;
+    HKEY key;
+
+    /* Create the JSON manifest and registry key to register this ICD with the official Vulkan loader. */
+    TRACE("\n");
+    rsrc = FindResourceW(hinstance, winevulkan_json_resW, (const WCHAR *)RT_RCDATA);
+    data = LockResource(LoadResource(hinstance, rsrc));
+    datalen = SizeofResource(hinstance, rsrc);
+
+    GetSystemDirectoryW(json_path, ARRAY_SIZE(json_path));
+    lstrcatW(json_path, winevulkan_json_pathW);
+    file = CreateFileW(json_path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (file == INVALID_HANDLE_VALUE)
+    {
+        ERR("Unable to create JSON manifest.\n");
+        return E_UNEXPECTED;
+    }
+    WriteFile(file, data, datalen, &written, NULL);
+    CloseHandle(file);
+
+    if (!RegCreateKeyExW(HKEY_LOCAL_MACHINE, vulkan_driversW, 0, NULL, 0, KEY_SET_VALUE, NULL, &key, NULL))
+    {
+        RegSetValueExW(key, json_path, 0, REG_DWORD, (const BYTE *)&zero, sizeof(zero));
+        RegCloseKey(key);
+    }
+    return S_OK;
+}
+
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    WCHAR json_path[MAX_PATH];
+    HKEY key;
+
+    /* Remove the JSON manifest and registry key */
+    TRACE("\n");
+    GetSystemDirectoryW(json_path, ARRAY_SIZE(json_path));
+    lstrcatW(json_path, winevulkan_json_pathW);
+    DeleteFileW(json_path);
+
+    if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, vulkan_driversW, 0, KEY_SET_VALUE, &key) == ERROR_SUCCESS)
+    {
+        RegDeleteValueW(key, json_path);
+        RegCloseKey(key);
+    }
+
+    return S_OK;
 }

@@ -39,10 +39,12 @@
 #include "ddk/wdm.h"
 #include "ddk/ntifs.h"
 #include "wine/debug.h"
+#include "wine/exception.h"
 #include "wine/heap.h"
 #include "wine/rbtree.h"
 
 #include "ntoskrnl_private.h"
+#include "plugplay.h"
 
 #include "initguid.h"
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
@@ -298,7 +300,7 @@ static BOOL install_device_driver( DEVICE_OBJECT *device, HDEVINFO set, SP_DEVIN
     {
         if (!SetupDiCallClassInstaller(dif_list[i], set, sp_device) && GetLastError() != ERROR_DI_DO_DEFAULT)
         {
-            ERR("Install function %#x failed, error %#x.\n", dif_list[i], GetLastError());
+            WARN("Install function %#x failed, error %#x.\n", dif_list[i], GetLastError());
             return FALSE;
         }
     }
@@ -651,6 +653,34 @@ static NTSTATUS create_device_symlink( DEVICE_OBJECT *device, UNICODE_STRING *sy
     return ret;
 }
 
+void  __RPC_FAR * __RPC_USER MIDL_user_allocate( SIZE_T len )
+{
+    return heap_alloc( len );
+}
+
+void __RPC_USER MIDL_user_free( void __RPC_FAR *ptr )
+{
+    heap_free( ptr );
+}
+
+static LONG WINAPI rpc_filter( EXCEPTION_POINTERS *eptr )
+{
+    return I_RpcExceptionFilter( eptr->ExceptionRecord->ExceptionCode );
+}
+
+static void send_devicechange( DWORD code, void *data, unsigned int size )
+{
+    __TRY
+    {
+        plugplay_send_event( code, data, size );
+    }
+    __EXCEPT(rpc_filter)
+    {
+        WARN("Failed to send event, exception %#x.\n", GetExceptionCode());
+    }
+    __ENDTRY
+}
+
 /***********************************************************************
  *           IoSetDeviceInterfaceState   (NTOSKRNL.EXE.@)
  */
@@ -756,9 +786,7 @@ NTSTATUS WINAPI IoSetDeviceInterfaceState( UNICODE_STRING *name, BOOLEAN enable 
         broadcast->dbcc_devicetype = DBT_DEVTYP_DEVICEINTERFACE;
         broadcast->dbcc_classguid = iface->interface_class;
         lstrcpynW( broadcast->dbcc_name, name->Buffer, namelen + 1 );
-        BroadcastSystemMessageW( BSF_FORCEIFHUNG | BSF_QUERY, NULL, WM_DEVICECHANGE,
-            enable ? DBT_DEVICEARRIVAL : DBT_DEVICEREMOVECOMPLETE, (LPARAM)broadcast );
-
+        send_devicechange( enable ? DBT_DEVICEARRIVAL : DBT_DEVICEREMOVECOMPLETE, broadcast, len );
         heap_free( broadcast );
     }
     return ret;
@@ -842,6 +870,35 @@ NTSTATUS WINAPI IoRegisterDeviceInterface(DEVICE_OBJECT *device, const GUID *cla
     RtlFreeUnicodeString( &device_path );
 
     return status;
+}
+
+/***********************************************************************
+ *           IoOpenDeviceRegistryKey   (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI IoOpenDeviceRegistryKey( DEVICE_OBJECT *device, ULONG type, ACCESS_MASK access, HANDLE *key )
+{
+    SP_DEVINFO_DATA sp_device = {sizeof(sp_device)};
+    WCHAR device_instance_id[MAX_DEVICE_ID_LEN];
+    NTSTATUS status;
+    HDEVINFO set;
+
+    TRACE("device %p, type %#x, access %#x, key %p.\n", device, type, access, key);
+
+    if ((status = get_device_instance_id( device, device_instance_id )))
+    {
+        ERR("Failed to get device instance ID, error %#x.\n", status);
+        return status;
+    }
+
+    set = SetupDiCreateDeviceInfoList( &GUID_NULL, NULL );
+
+    SetupDiOpenDeviceInfoW( set, device_instance_id, NULL, 0, &sp_device );
+
+    *key = SetupDiOpenDevRegKey( set, &sp_device, DICS_FLAG_GLOBAL, 0, type, access );
+    SetupDiDestroyDeviceInfoList( set );
+    if (*key == INVALID_HANDLE_VALUE)
+        return GetLastError();
+    return STATUS_SUCCESS;
 }
 
 /***********************************************************************
@@ -973,12 +1030,26 @@ static NTSTATUS WINAPI pnp_manager_driver_entry( DRIVER_OBJECT *driver, UNICODE_
 void pnp_manager_start(void)
 {
     static const WCHAR driver_nameW[] = {'\\','D','r','i','v','e','r','\\','P','n','p','M','a','n','a','g','e','r',0};
+    WCHAR endpoint[] = L"\\pipe\\wine_plugplay";
+    WCHAR protseq[] = L"ncalrpc";
     UNICODE_STRING driver_nameU;
+    RPC_WSTR binding_str;
     NTSTATUS status;
+    RPC_STATUS err;
 
     RtlInitUnicodeString( &driver_nameU, driver_nameW );
     if ((status = IoCreateDriver( &driver_nameU, pnp_manager_driver_entry )))
         ERR("Failed to create PnP manager driver, status %#x.\n", status);
+
+    if ((err = RpcStringBindingComposeW( NULL, protseq, NULL, endpoint, NULL, &binding_str )))
+    {
+        ERR("RpcStringBindingCompose() failed, error %#x\n", err);
+        return;
+    }
+    err = RpcBindingFromStringBindingW( binding_str, &plugplay_binding_handle );
+    RpcStringFreeW( &binding_str );
+    if (err)
+        ERR("RpcBindingFromStringBinding() failed, error %#x\n", err);
 }
 
 static void destroy_root_pnp_device( struct wine_rb_entry *entry, void *context )
@@ -991,6 +1062,7 @@ void pnp_manager_stop(void)
 {
     wine_rb_destroy( &root_pnp_devices, destroy_root_pnp_device, NULL );
     IoDeleteDriver( pnp_manager );
+    RpcBindingFree( &plugplay_binding_handle );
 }
 
 void pnp_manager_enumerate_root_devices( const WCHAR *driver_name )

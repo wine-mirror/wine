@@ -513,8 +513,10 @@ static void test_CreatePolyPolygonRgn(void)
     POINT points_mixed[] = { {0, 0}, {0, 0}, {0, 0}, {6, 6}, {6, 6}, {6, 6} };
     POINT points_six[] = { {6, 6}, {6, 6}, {6, 6} };
     POINT points_line[] = { {1, 0}, {11, 0}, {21, 0}};
+    POINT points_overflow[] = { {0, 0}, {1, 0}, {0, 0x80000000} };
     INT counts_single_poly[] = { 3 };
     INT counts_two_poly[] = { 3, 3 };
+    INT counts_overflow[] = { ARRAY_SIZE(points_overflow) };
     int ret;
     RECT rect;
 
@@ -539,6 +541,13 @@ static void test_CreatePolyPolygonRgn(void)
     DeleteObject(region);
 
     region = CreatePolyPolygonRgn(points_mixed, counts_two_poly, ARRAY_SIZE(counts_two_poly), ALTERNATE);
+    ok (region != NULL, "region must not be NULL\n");
+    ret = GetRgnBox(region, &rect);
+    ok (ret == NULLREGION, "Expected NULLREGION, got %d\n", ret);
+    DeleteObject(region);
+
+    /* Test with points that overflow the edge table */
+    region = CreatePolyPolygonRgn(points_overflow, counts_overflow, ARRAY_SIZE(counts_overflow), ALTERNATE);
     ok (region != NULL, "region must not be NULL\n");
     ret = GetRgnBox(region, &rect);
     ok (ret == NULLREGION, "Expected NULLREGION, got %d\n", ret);

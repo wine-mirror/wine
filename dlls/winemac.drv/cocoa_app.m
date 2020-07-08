@@ -1229,9 +1229,9 @@ static NSString* WineLocalizedString(unsigned int stringID)
         case kCGEventRightMouseDragged:
         case kCGEventOtherMouseDragged:
             return TRUE;
+        default:
+            return FALSE;
         }
-
-        return FALSE;
     }
 
     - (int) warpsFinishedByEventTime:(CGEventTimestamp)eventTime location:(CGPoint)eventLocation

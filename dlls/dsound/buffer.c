@@ -999,6 +999,7 @@ HRESULT secondarybuffer_create(DirectSoundDevice *device, const DSBUFFERDESC *ds
 	LPWAVEFORMATEX wfex = dsbd->lpwfxFormat;
 	HRESULT err = DS_OK;
 	DWORD capf = 0;
+	size_t bufsize;
 
         TRACE("(%p,%p,%p)\n", device, dsbd, buffer);
 
@@ -1054,19 +1055,15 @@ HRESULT secondarybuffer_create(DirectSoundDevice *device, const DSBUFFERDESC *ds
 	TRACE("capf = 0x%08x, device->drvcaps.dwFlags = 0x%08x\n", capf, device->drvcaps.dwFlags);
 
 	/* Allocate an empty buffer */
-	dsb->buffer = HeapAlloc(GetProcessHeap(),0,sizeof(*(dsb->buffer)));
+	bufsize = (sizeof(*(dsb->buffer)) + sizeof(void *) - 1) & ~(sizeof(void *) - 1);
+	dsb->buffer = HeapAlloc(GetProcessHeap(),0,bufsize + dsb->buflen);
         if (!dsb->buffer) {
                 IDirectSoundBuffer8_Release(&dsb->IDirectSoundBuffer8_iface);
 		return DSERR_OUTOFMEMORY;
 	}
 
 	/* Allocate system memory for buffer */
-	dsb->buffer->memory = HeapAlloc(GetProcessHeap(),0,dsb->buflen);
-        if (!dsb->buffer->memory) {
-		WARN("out of memory\n");
-                IDirectSoundBuffer8_Release(&dsb->IDirectSoundBuffer8_iface);
-		return DSERR_OUTOFMEMORY;
-	}
+	dsb->buffer->memory = (BYTE *)dsb->buffer + bufsize;
 
 	dsb->buffer->ref = 1;
 	dsb->buffer->lockedbytes = 0;
@@ -1136,10 +1133,8 @@ void secondarybuffer_destroy(IDirectSoundBufferImpl *This)
 
     This->buffer->ref--;
     list_remove(&This->entry);
-    if (This->buffer->ref == 0) {
-        HeapFree(GetProcessHeap(), 0, This->buffer->memory);
+    if (This->buffer->ref == 0)
         HeapFree(GetProcessHeap(), 0, This->buffer);
-    }
 
     HeapFree(GetProcessHeap(), 0, This->notifies);
     HeapFree(GetProcessHeap(), 0, This->pwfx);

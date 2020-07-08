@@ -80,6 +80,7 @@ struct dwrite_font_data
     FONTSIGNATURE fontsig;
     UINT32 flags; /* enum font_flags */
     struct dwrite_font_propvec propvec;
+    struct dwrite_cmap cmap;
     /* Static axis for weight/width/italic. */
     DWRITE_FONT_AXIS_VALUE axis[3];
 
@@ -100,8 +101,8 @@ struct dwrite_font_data
     LOGFONTW lf;
 
     /* used to mark font as tested when scanning for simulation candidate */
-    BOOL bold_sim_tested : 1;
-    BOOL oblique_sim_tested : 1;
+    unsigned int bold_sim_tested : 1;
+    unsigned int oblique_sim_tested : 1;
 };
 
 struct dwrite_fontfamily_data
@@ -114,9 +115,9 @@ struct dwrite_fontfamily_data
     size_t size;
     size_t count;
 
-    BOOL has_normal_face : 1;
-    BOOL has_oblique_face : 1;
-    BOOL has_italic_face : 1;
+    unsigned int has_normal_face : 1;
+    unsigned int has_oblique_face : 1;
+    unsigned int has_italic_face : 1;
 };
 
 struct dwrite_fontcollection
@@ -272,11 +273,31 @@ static UINT16 dwrite_get_font_upem(void *context)
     return fontface->metrics.designUnitsPerEm;
 }
 
+static UINT16 dwritefontface_get_glyph(struct dwrite_fontface *fontface, unsigned int ch)
+{
+    dwrite_cmap_init(&fontface->cmap, NULL, fontface->index, fontface->type);
+    return opentype_cmap_get_glyph(&fontface->cmap, ch);
+}
+
+static BOOL dwrite_has_glyph(void *context, unsigned int codepoint)
+{
+    struct dwrite_fontface *fontface = context;
+    return !!dwritefontface_get_glyph(fontface, codepoint);
+}
+
+static UINT16 dwrite_get_glyph(void *context, unsigned int codepoint)
+{
+    struct dwrite_fontface *fontface = context;
+    return dwritefontface_get_glyph(fontface, codepoint);
+}
+
 static const struct shaping_font_ops dwrite_font_ops =
 {
     dwrite_grab_font_table,
     dwrite_release_font_table,
     dwrite_get_font_upem,
+    dwrite_has_glyph,
+    dwrite_get_glyph,
 };
 
 struct scriptshaping_cache *fontface_get_shaping_cache(struct dwrite_fontface *fontface)
@@ -451,6 +472,7 @@ static void release_font_data(struct dwrite_font_data *data)
     if (data->family_names)
         IDWriteLocalizedStrings_Release(data->family_names);
 
+    dwrite_cmap_release(&data->cmap);
     IDWriteFontFile_Release(data->file);
     heap_free(data->facename);
     heap_free(data);
@@ -565,8 +587,6 @@ static ULONG WINAPI dwritefontface_Release(IDWriteFontFace5 *iface)
             heap_free(fontface->cached);
         }
         release_scriptshaping_cache(fontface->shaping_cache);
-        if (fontface->cmap.context)
-            IDWriteFontFace5_ReleaseFontTable(iface, fontface->cmap.context);
         if (fontface->vdmx.context)
             IDWriteFontFace5_ReleaseFontTable(iface, fontface->vdmx.context);
         if (fontface->gasp.context)
@@ -598,6 +618,7 @@ static ULONG WINAPI dwritefontface_Release(IDWriteFontFace5 *iface)
 
         freetype_notify_cacheremove(iface);
 
+        dwrite_cmap_release(&fontface->cmap);
         IDWriteFactory7_Release(fontface->factory);
         heap_free(fontface);
     }
@@ -714,29 +735,27 @@ static HRESULT WINAPI dwritefontface_GetDesignGlyphMetrics(IDWriteFontFace5 *ifa
     return S_OK;
 }
 
-static HRESULT fontface_get_glyphs(struct dwrite_fontface *fontface, UINT32 const *codepoints,
-        UINT32 count, UINT16 *glyphs)
-{
-    if (!glyphs)
-        return E_INVALIDARG;
-
-    if (!codepoints) {
-        memset(glyphs, 0, count * sizeof(*glyphs));
-        return E_INVALIDARG;
-    }
-
-    freetype_get_glyphs(&fontface->IDWriteFontFace5_iface, fontface->charmap, codepoints, count, glyphs);
-    return S_OK;
-}
-
 static HRESULT WINAPI dwritefontface_GetGlyphIndices(IDWriteFontFace5 *iface, UINT32 const *codepoints,
     UINT32 count, UINT16 *glyphs)
 {
     struct dwrite_fontface *fontface = impl_from_IDWriteFontFace5(iface);
+    unsigned int i;
 
     TRACE("%p, %p, %u, %p.\n", iface, codepoints, count, glyphs);
 
-    return fontface_get_glyphs(fontface, codepoints, count, glyphs);
+    if (!glyphs)
+        return E_INVALIDARG;
+
+    if (!codepoints)
+    {
+        memset(glyphs, 0, count * sizeof(*glyphs));
+        return E_INVALIDARG;
+    }
+
+    for (i = 0; i < count; ++i)
+        glyphs[i] = dwritefontface_get_glyph(fontface, codepoints[i]);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritefontface_TryGetFontTable(IDWriteFontFace5 *iface, UINT32 table_tag,
@@ -986,7 +1005,6 @@ static HRESULT WINAPI dwritefontface1_GetUnicodeRanges(IDWriteFontFace5 *iface, 
     DWRITE_UNICODE_RANGE *ranges, UINT32 *count)
 {
     struct dwrite_fontface *fontface = impl_from_IDWriteFontFace5(iface);
-    struct file_stream_desc stream_desc;
 
     TRACE("%p, %u, %p, %p.\n", iface, max_count, ranges, count);
 
@@ -994,10 +1012,8 @@ static HRESULT WINAPI dwritefontface1_GetUnicodeRanges(IDWriteFontFace5 *iface, 
     if (max_count && !ranges)
         return E_INVALIDARG;
 
-    stream_desc.stream = fontface->stream;
-    stream_desc.face_index = fontface->index;
-    stream_desc.face_type = fontface->type;
-    return opentype_cmap_get_unicode_ranges(&stream_desc, max_count, ranges, count);
+    dwrite_cmap_init(&fontface->cmap, NULL, fontface->index, fontface->type);
+    return opentype_cmap_get_unicode_ranges(&fontface->cmap, max_count, ranges, count);
 }
 
 static BOOL WINAPI dwritefontface1_IsMonospacedFont(IDWriteFontFace5 *iface)
@@ -1150,11 +1166,13 @@ static HRESULT WINAPI dwritefontface1_GetRecommendedRenderingMode(IDWriteFontFac
 }
 
 static HRESULT WINAPI dwritefontface1_GetVerticalGlyphVariants(IDWriteFontFace5 *iface, UINT32 glyph_count,
-    const UINT16 *nominal_indices, UINT16 *vertical_indices)
+        const UINT16 *nominal_glyphs, UINT16 *glyphs)
 {
-    FIXME("%p, %u, %p, %p: stub\n", iface, glyph_count, nominal_indices, vertical_indices);
+    struct dwrite_fontface *fontface = impl_from_IDWriteFontFace5(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %u, %p, %p.\n", iface, glyph_count, nominal_glyphs, glyphs);
+
+    return opentype_get_vertical_glyph_variants(fontface, glyph_count, nominal_glyphs, glyphs);
 }
 
 static BOOL WINAPI dwritefontface1_HasVerticalGlyphVariants(IDWriteFontFace5 *iface)
@@ -1385,15 +1403,10 @@ static HRESULT WINAPI dwritefontface3_GetInformationalStrings(IDWriteFontFace5 *
 static BOOL WINAPI dwritefontface3_HasCharacter(IDWriteFontFace5 *iface, UINT32 ch)
 {
     struct dwrite_fontface *fontface = impl_from_IDWriteFontFace5(iface);
-    UINT16 index;
 
     TRACE("%p, %#x.\n", iface, ch);
 
-    index = 0;
-    if (FAILED(fontface_get_glyphs(fontface, &ch, 1, &index)))
-        return FALSE;
-
-    return index != 0;
+    return !!dwritefontface_get_glyph(fontface, ch);
 }
 
 static HRESULT WINAPI dwritefontface3_GetRecommendedRenderingMode(IDWriteFontFace5 *iface, FLOAT emSize, FLOAT dpiX, FLOAT dpiY,
@@ -1532,7 +1545,10 @@ static HRESULT WINAPI dwritefontface5_GetFontAxisValues(IDWriteFontFace5 *iface,
 
 static BOOL WINAPI dwritefontface5_HasVariations(IDWriteFontFace5 *iface)
 {
-    FIXME("%p: stub\n", iface);
+    static int once;
+
+    if (!once++)
+        FIXME("%p: stub\n", iface);
 
     return FALSE;
 }
@@ -1940,35 +1956,23 @@ static void WINAPI dwritefont_GetMetrics(IDWriteFont3 *iface, DWRITE_FONT_METRIC
     memcpy(metrics, &This->data->metrics, sizeof(*metrics));
 }
 
-static HRESULT font_has_character(struct dwrite_font *font, UINT32 ch, BOOL *exists)
+static BOOL dwritefont_has_character(struct dwrite_font *font, UINT32 ch)
 {
-    IDWriteFontFace5 *fontface;
-    UINT16 index;
-    HRESULT hr;
-
-    *exists = FALSE;
-
-    hr = get_fontface_from_font(font, &fontface);
-    if (FAILED(hr))
-        return hr;
-
-    index = 0;
-    hr = IDWriteFontFace5_GetGlyphIndices(fontface, &ch, 1, &index);
-    IDWriteFontFace5_Release(fontface);
-    if (FAILED(hr))
-        return hr;
-
-    *exists = index != 0;
-    return S_OK;
+    UINT16 glyph;
+    dwrite_cmap_init(&font->data->cmap, font->data->file, font->data->face_index, font->data->face_type);
+    glyph = opentype_cmap_get_glyph(&font->data->cmap, ch);
+    return glyph != 0;
 }
 
 static HRESULT WINAPI dwritefont_HasCharacter(IDWriteFont3 *iface, UINT32 ch, BOOL *exists)
 {
-    struct dwrite_font *This = impl_from_IDWriteFont3(iface);
+    struct dwrite_font *font = impl_from_IDWriteFont3(iface);
 
-    TRACE("(%p)->(%#x %p)\n", This, ch, exists);
+    TRACE("%p, %#x, %p.\n", iface, ch, exists);
 
-    return font_has_character(This, ch, exists);
+    *exists = dwritefont_has_character(font, ch);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritefont_CreateFontFace(IDWriteFont3 *iface, IDWriteFontFace **fontface)
@@ -1998,8 +2002,6 @@ static HRESULT WINAPI dwritefont1_GetUnicodeRanges(IDWriteFont3 *iface, UINT32 m
         UINT32 *count)
 {
     struct dwrite_font *font = impl_from_IDWriteFont3(iface);
-    struct file_stream_desc stream_desc;
-    HRESULT hr;
 
     TRACE("%p, %u, %p, %p.\n", iface, max_count, ranges, count);
 
@@ -2007,13 +2009,8 @@ static HRESULT WINAPI dwritefont1_GetUnicodeRanges(IDWriteFont3 *iface, UINT32 m
     if (max_count && !ranges)
         return E_INVALIDARG;
 
-    if (FAILED(hr = get_filestream_from_file(font->data->file, &stream_desc.stream)))
-        return hr;
-    stream_desc.face_index = font->data->face_index;
-    stream_desc.face_type = font->data->face_type;
-    hr = opentype_cmap_get_unicode_ranges(&stream_desc, max_count, ranges, count);
-    IDWriteFontFileStream_Release(stream_desc.stream);
-    return hr;
+    dwrite_cmap_init(&font->data->cmap, font->data->file, font->data->face_index, font->data->face_type);
+    return opentype_cmap_get_unicode_ranges(&font->data->cmap, max_count, ranges, count);
 }
 
 static BOOL WINAPI dwritefont1_IsMonospacedFont(IDWriteFont3 *iface)
@@ -2070,12 +2067,11 @@ static HRESULT WINAPI dwritefont3_GetFontFaceReference(IDWriteFont3 *iface, IDWr
 
 static BOOL WINAPI dwritefont3_HasCharacter(IDWriteFont3 *iface, UINT32 ch)
 {
-    struct dwrite_font *This = impl_from_IDWriteFont3(iface);
-    BOOL ret;
+    struct dwrite_font *font = impl_from_IDWriteFont3(iface);
 
-    TRACE("(%p)->(%#x)\n", This, ch);
+    TRACE("%p, %#x.\n", iface, ch);
 
-    return font_has_character(This, ch, &ret) == S_OK && ret;
+    return dwritefont_has_character(font, ch);
 }
 
 static DWRITE_LOCALITY WINAPI dwritefont3_GetLocality(IDWriteFont3 *iface)
@@ -3006,11 +3002,23 @@ static HRESULT WINAPI dwritefontcollection1_GetFontFamily(IDWriteFontCollection3
 }
 
 static HRESULT WINAPI dwritefontcollection2_GetFontFamily(IDWriteFontCollection3 *iface,
-        UINT32 index, IDWriteFontFamily2 **family)
+        UINT32 index, IDWriteFontFamily2 **ret)
 {
-    FIXME("%p, %u, %p.\n", iface, index, family);
+    struct dwrite_fontcollection *collection = impl_from_IDWriteFontCollection3(iface);
+    struct dwrite_fontfamily *family;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %u, %p.\n", iface, index, ret);
+
+    *ret = NULL;
+
+    if (index >= collection->count)
+        return E_FAIL;
+
+    if (SUCCEEDED(hr = create_fontfamily(collection, index, &family)))
+        *ret = &family->IDWriteFontFamily2_iface;
+
+    return hr;
 }
 
 static HRESULT WINAPI dwritefontcollection2_GetMatchingFonts(IDWriteFontCollection3 *iface,
@@ -4899,7 +4907,6 @@ HRESULT create_fontface(const struct fontface_desc *desc, struct list *cached_li
     fontface->refcount = 1;
     fontface->type = desc->face_type;
     fontface->file_count = desc->files_number;
-    fontface->cmap.exists = TRUE;
     fontface->vdmx.exists = TRUE;
     fontface->gasp.exists = TRUE;
     fontface->cpal.exists = TRUE;
@@ -4929,7 +4936,6 @@ HRESULT create_fontface(const struct fontface_desc *desc, struct list *cached_li
         }
     }
 
-    fontface->charmap = freetype_get_charmap_index(&fontface->IDWriteFontFace5_iface);
     if (freetype_has_kerning_pairs(&fontface->IDWriteFontFace5_iface))
         fontface->flags |= FONTFACE_HAS_KERNING_PAIRS;
     if (opentype_has_vertical_variants(&fontface->IDWriteFontFace5_iface))
@@ -4975,6 +4981,8 @@ HRESULT create_fontface(const struct fontface_desc *desc, struct list *cached_li
         if (fontface->info_strings[i])
             IDWriteLocalizedStrings_AddRef(fontface->info_strings[i]);
     }
+    fontface->cmap.stream = fontface->stream;
+    IDWriteFontFileStream_AddRef(fontface->cmap.stream);
     release_font_data(font_data);
 
     fontface->cached = factory_cache_fontface(fontface->factory, cached_list, &fontface->IDWriteFontFace5_iface);
@@ -6836,7 +6844,7 @@ static const IDWriteInMemoryFontFileLoaderVtbl inmemoryfontfileloadervtbl =
     inmemoryfontfileloader_GetFileCount,
 };
 
-HRESULT create_inmemory_fileloader(IDWriteFontFileLoader **ret)
+HRESULT create_inmemory_fileloader(IDWriteInMemoryFontFileLoader **ret)
 {
     struct dwrite_inmemory_fileloader *loader;
 
@@ -6849,7 +6857,7 @@ HRESULT create_inmemory_fileloader(IDWriteFontFileLoader **ret)
     loader->IDWriteInMemoryFontFileLoader_iface.lpVtbl = &inmemoryfontfileloadervtbl;
     loader->ref = 1;
 
-    *ret = (IDWriteFontFileLoader *)&loader->IDWriteInMemoryFontFileLoader_iface;
+    *ret = &loader->IDWriteInMemoryFontFileLoader_iface;
 
     return S_OK;
 }

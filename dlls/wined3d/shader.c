@@ -1123,6 +1123,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, DWORD co
                     }
                     reg_maps->resource_info[reg_idx].type = semantic->resource_type;
                     reg_maps->resource_info[reg_idx].data_type = semantic->resource_data_type;
+                    wined3d_bitmap_set(reg_maps->resource_map, reg_idx);
                     break;
 
                 case WINED3DSPR_UAV:
@@ -1146,9 +1147,14 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, DWORD co
         {
             struct wined3d_shader_register *reg = &ins.declaration.src.reg;
             if (reg->idx[0].offset >= WINED3D_MAX_CBS)
+            {
                 ERR("Invalid CB index %u.\n", reg->idx[0].offset);
+            }
             else
+            {
                 reg_maps->cb_sizes[reg->idx[0].offset] = reg->idx[1].offset;
+                wined3d_bitmap_set(&reg_maps->cb_map, reg->idx[0].offset);
+            }
         }
         else if (ins.handler_idx == WINED3DSIH_DCL_GLOBAL_FLAGS)
         {
@@ -1266,6 +1272,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, DWORD co
             reg_maps->resource_info[reg_idx].type = WINED3D_SHADER_RESOURCE_BUFFER;
             reg_maps->resource_info[reg_idx].data_type = WINED3D_DATA_UINT;
             reg_maps->resource_info[reg_idx].flags = WINED3D_VIEW_BUFFER_RAW;
+            wined3d_bitmap_set(reg_maps->resource_map, reg_idx);
         }
         else if (ins.handler_idx == WINED3DSIH_DCL_RESOURCE_STRUCTURED)
         {
@@ -1279,6 +1286,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, DWORD co
             reg_maps->resource_info[reg_idx].data_type = WINED3D_DATA_UINT;
             reg_maps->resource_info[reg_idx].flags = 0;
             reg_maps->resource_info[reg_idx].stride = ins.declaration.structured_resource.byte_stride / 4;
+            wined3d_bitmap_set(reg_maps->resource_map, reg_idx);
         }
         else if (ins.handler_idx == WINED3DSIH_DCL_SAMPLER)
         {
@@ -1605,6 +1613,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, DWORD co
                     reg_maps->resource_info[reg_idx].type = WINED3D_SHADER_RESOURCE_TEXTURE_2D;
                     reg_maps->resource_info[reg_idx].data_type = WINED3D_DATA_FLOAT;
                     shader_record_sample(reg_maps, reg_idx, reg_idx, reg_idx);
+                    wined3d_bitmap_set(reg_maps->resource_map, reg_idx);
 
                     /* texbem is only valid with < 1.4 pixel shaders */
                     if (ins.handler_idx == WINED3DSIH_TEXBEM
@@ -3532,7 +3541,7 @@ void find_vs_compile_args(const struct wined3d_state *state, const struct wined3
             == WINED3D_FOG_NONE ? VS_FOG_COORD : VS_FOG_Z;
     args->clip_enabled = state->render_states[WINED3D_RS_CLIPPING]
             && state->render_states[WINED3D_RS_CLIPPLANEENABLE];
-    args->point_size = state->gl_primitive_type == GL_POINTS;
+    args->point_size = state->primitive_type == WINED3D_PT_POINTLIST;
     args->per_vertex_point_size = shader->reg_maps.point_size;
     args->next_shader_type = hull_shader ? WINED3D_SHADER_TYPE_HULL
             : geometry_shader ? WINED3D_SHADER_TYPE_GEOMETRY : WINED3D_SHADER_TYPE_PIXEL;
@@ -3890,7 +3899,7 @@ void find_gs_compile_args(const struct wined3d_state *state, const struct wined3
     args->output_count = pixel_shader ? pixel_shader->limits->packed_input : shader->limits->packed_output;
 
     if (!(args->primitive_type = shader->u.gs.input_type))
-        args->primitive_type = d3d_primitive_type_from_gl(state->gl_primitive_type);
+        args->primitive_type = state->primitive_type;
 
     init_interpolation_compile_args(args->interpolation_mode, pixel_shader, context->d3d_info);
 }
@@ -3904,12 +3913,12 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
     unsigned int i;
 
     memset(args, 0, sizeof(*args)); /* FIXME: Make sure all bits are set. */
-    if (!d3d_info->srgb_write_control && needs_srgb_write(context, state, state->fb))
+    if (!d3d_info->srgb_write_control && needs_srgb_write(d3d_info, state, &state->fb))
     {
         static unsigned int warned = 0;
 
         args->srgb_correction = 1;
-        if (state->render_states[WINED3D_RS_ALPHABLENDENABLE] && !warned++)
+        if (state->blend_state && state->blend_state->desc.rt[0].enable && !warned++)
             WARN("Blending into a sRGB render target with no GL_ARB_framebuffer_sRGB "
                     "support, expect rendering artifacts.\n");
     }
@@ -4146,7 +4155,7 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
     }
 
     args->pointsprite = state->render_states[WINED3D_RS_POINTSPRITEENABLE]
-            && state->gl_primitive_type == GL_POINTS;
+            && state->primitive_type == WINED3D_PT_POINTLIST;
 
     if (d3d_info->ffp_alpha_test)
         args->alpha_test_func = WINED3D_CMP_ALWAYS - 1;
@@ -4161,12 +4170,14 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
     args->render_offscreen = shader->reg_maps.vpos && gl_info->supported[ARB_FRAGMENT_COORD_CONVENTIONS]
             ? context->render_offscreen : 0;
 
-    for (i = 0; i < ARRAY_SIZE(state->fb->render_targets); ++i)
+    for (i = 0; i < ARRAY_SIZE(state->fb.render_targets); ++i)
     {
-        struct wined3d_rendertarget_view *rtv = state->fb->render_targets[i];
+        struct wined3d_rendertarget_view *rtv = state->fb.render_targets[i];
         if (rtv && rtv->format->id == WINED3DFMT_A8_UNORM && !is_identity_fixup(rtv->format->color_fixup))
             args->rt_alpha_swizzle |= 1u << i;
     }
+
+    args->dual_source_blend = state->blend_state && state->blend_state->dual_source;
 }
 
 static HRESULT pixel_shader_init(struct wined3d_shader *shader, struct wined3d_device *device,

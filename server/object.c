@@ -127,17 +127,9 @@ void *memdup( const void *data, size_t len )
 
 /*****************************************************************/
 
-static int get_name_hash( const struct namespace *namespace, const WCHAR *name, data_size_t len )
-{
-    WCHAR hash = 0;
-    len /= sizeof(WCHAR);
-    while (len--) hash ^= tolowerW(*name++);
-    return hash % namespace->hash_size;
-}
-
 void namespace_add( struct namespace *namespace, struct object_name *ptr )
 {
-    int hash = get_name_hash( namespace, ptr->name, ptr->len );
+    unsigned int hash = hash_strW( ptr->name, ptr->len, namespace->hash_size );
 
     list_add_head( &namespace->names[hash], &ptr->entry );
 }
@@ -215,7 +207,7 @@ void *alloc_object( const struct object_ops *ops )
 }
 
 /* free an object once it has been destroyed */
-void free_object( struct object *obj )
+static void free_object( struct object *obj )
 {
     free( obj->sd );
 #ifdef DEBUG_OBJECTS
@@ -274,6 +266,15 @@ struct object *lookup_named_object( struct object *root, const struct unicode_st
 
     if (name_left) *name_left = name_tmp;
     return parent;
+}
+
+/* return length of first path element in name */
+data_size_t get_path_element( const WCHAR *name, data_size_t len )
+{
+    data_size_t i;
+
+    for (i = 0; i < len / sizeof(WCHAR); i++) if (name[i] == '\\') break;
+    return i * sizeof(WCHAR);
 }
 
 static struct object *create_object( struct object *parent, const struct object_ops *ops,
@@ -373,7 +374,7 @@ static void dump_name( struct object *obj )
     if (!name) return;
     if (name->parent) dump_name( name->parent );
     fputs( "\\\\", stderr );
-    dump_strW( name->name, name->len / sizeof(WCHAR), stderr, "[]" );
+    dump_strW( name->name, name->len, stderr, "[]" );
 }
 
 /* dump the name of an object to stderr */
@@ -441,14 +442,14 @@ struct object *find_object( const struct namespace *namespace, const struct unic
 
     if (!name || !name->len) return NULL;
 
-    list = &namespace->names[ get_name_hash( namespace, name->str, name->len ) ];
+    list = &namespace->names[ hash_strW( name->str, name->len, namespace->hash_size ) ];
     LIST_FOR_EACH( p, list )
     {
         const struct object_name *ptr = LIST_ENTRY( p, struct object_name, entry );
         if (ptr->len != name->len) continue;
         if (attributes & OBJ_CASE_INSENSITIVE)
         {
-            if (!strncmpiW( ptr->name, name->str, name->len/sizeof(WCHAR) ))
+            if (!memicmp_strW( ptr->name, name->str, name->len ))
                 return grab_object( ptr->obj );
         }
         else

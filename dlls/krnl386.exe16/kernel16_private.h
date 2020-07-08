@@ -25,7 +25,6 @@
 #include "winreg.h"
 #include "winternl.h"
 #include "wine/asm.h"
-#include "wine/library.h"
 
 #include "pshpack1.h"
 
@@ -232,11 +231,39 @@ extern void NE_DllProcessAttach( HMODULE16 hModule ) DECLSPEC_HIDDEN;
 extern void NE_CallUserSignalProc( HMODULE16 hModule, UINT16 code ) DECLSPEC_HIDDEN;
 
 /* selector.c */
+#define LDT_SIZE 8192
+struct ldt_copy
+{
+    void         *base[LDT_SIZE];
+    unsigned int  limit[LDT_SIZE];
+    unsigned char flags[LDT_SIZE];
+};
+extern const struct ldt_copy *ldt_copy DECLSPEC_HIDDEN;
+
+#define LDT_FLAGS_DATA      0x13  /* Data segment */
+#define LDT_FLAGS_CODE      0x1b  /* Code segment */
+#define LDT_FLAGS_32BIT     0x40  /* Segment is 32-bit (code or stack) */
+
+static inline void *ldt_get_base( WORD sel ) { return ldt_copy->base[sel >> 3]; }
+static inline unsigned int ldt_get_limit( WORD sel ) { return ldt_copy->limit[sel >> 3]; }
+static inline unsigned char ldt_get_flags( WORD sel ) { return ldt_copy->flags[sel >> 3]; }
+
+extern void init_selectors(void) DECLSPEC_HIDDEN;
+extern BOOL ldt_is_system( WORD sel ) DECLSPEC_HIDDEN;
+extern BOOL ldt_is_valid( WORD sel ) DECLSPEC_HIDDEN;
+extern void *ldt_get_ptr( WORD sel, DWORD offset ) DECLSPEC_HIDDEN;
+extern BOOL ldt_get_entry( WORD sel, LDT_ENTRY *entry ) DECLSPEC_HIDDEN;
+extern void ldt_set_entry( WORD sel, LDT_ENTRY entry ) DECLSPEC_HIDDEN;
 extern WORD SELECTOR_AllocBlock( const void *base, DWORD size, unsigned char flags ) DECLSPEC_HIDDEN;
 extern WORD SELECTOR_ReallocBlock( WORD sel, const void *base, DWORD size ) DECLSPEC_HIDDEN;
 extern void SELECTOR_FreeBlock( WORD sel ) DECLSPEC_HIDDEN;
 #define IS_SELECTOR_32BIT(sel) \
-   (wine_ldt_is_system(sel) || (wine_ldt_copy.flags[LOWORD(sel) >> 3] & WINE_LDT_FLAGS_32BIT))
+   (ldt_is_system(sel) || (ldt_copy->flags[LOWORD(sel) >> 3] & LDT_FLAGS_32BIT))
+
+static inline WORD get_cs(void) { WORD res; __asm__( "movw %%cs,%0" : "=r" (res) ); return res; }
+static inline WORD get_ds(void) { WORD res; __asm__( "movw %%ds,%0" : "=r" (res) ); return res; }
+static inline WORD get_fs(void) { WORD res; __asm__( "movw %%fs,%0" : "=r" (res) ); return res; }
+static inline WORD get_gs(void) { WORD res; __asm__( "movw %%gs,%0" : "=r" (res) ); return res; }
 
 /* relay16.c */
 extern int relay_call_from_16( void *entry_point, unsigned char *args16, CONTEXT *context ) DECLSPEC_HIDDEN;

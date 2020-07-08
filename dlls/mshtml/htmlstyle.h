@@ -44,6 +44,7 @@ struct HTMLStyle {
 
 /* NOTE: Make sure to keep in sync with style_tbl in htmlstyle.c */
 typedef enum {
+    STYLEID_ANIMATION_NAME,
     STYLEID_BACKGROUND,
     STYLEID_BACKGROUND_ATTACHMENT,
     STYLEID_BACKGROUND_CLIP,
@@ -80,6 +81,15 @@ typedef enum {
     STYLEID_CLEAR,
     STYLEID_CLIP,
     STYLEID_COLOR,
+    STYLEID_COLUMN_COUNT,
+    STYLEID_COLUMN_FILL,
+    STYLEID_COLUMN_GAP,
+    STYLEID_COLUMN_RULE,
+    STYLEID_COLUMN_RULE_COLOR,
+    STYLEID_COLUMN_RULE_STYLE,
+    STYLEID_COLUMN_RULE_WIDTH,
+    STYLEID_COLUMN_SPAN,
+    STYLEID_COLUMN_WIDTH,
     STYLEID_CURSOR,
     STYLEID_DIRECTION,
     STYLEID_DISPLAY,
@@ -118,6 +128,7 @@ typedef enum {
     STYLEID_PADDING_TOP,
     STYLEID_PAGE_BREAK_AFTER,
     STYLEID_PAGE_BREAK_BEFORE,
+    STYLEID_PERSPECTIVE,
     STYLEID_POSITION,
     STYLEID_RIGHT,
     STYLEID_TABLE_LAYOUT,
@@ -126,6 +137,8 @@ typedef enum {
     STYLEID_TEXT_INDENT,
     STYLEID_TEXT_TRANSFORM,
     STYLEID_TOP,
+    STYLEID_TRANSFORM,
+    STYLEID_TRANSITION,
     STYLEID_VERTICAL_ALIGN,
     STYLEID_VISIBILITY,
     STYLEID_WHITE_SPACE,
@@ -137,7 +150,7 @@ typedef enum {
 } styleid_t;
 
 HRESULT HTMLStyle_Create(HTMLElement*,HTMLStyle**) DECLSPEC_HIDDEN;
-HRESULT create_computed_style(nsIDOMCSSStyleDeclaration*,IHTMLCSSStyleDeclaration**) DECLSPEC_HIDDEN;
+HRESULT create_computed_style(nsIDOMCSSStyleDeclaration*,compat_mode_t,IHTMLCSSStyleDeclaration**) DECLSPEC_HIDDEN;
 void init_css_style(CSSStyle*,nsIDOMCSSStyleDeclaration*,style_qi_t,
                     dispex_static_data_t*,compat_mode_t) DECLSPEC_HIDDEN;
 

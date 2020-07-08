@@ -416,7 +416,7 @@ WCHAR * WINAPI StrStrNIW(const WCHAR *str, const WCHAR *search, UINT max_len)
 
     for (i = max_len; *str && (i > 0); i--, str++)
     {
-        if (!wcsnicmp(str, search, len))
+        if (!StrCmpNIW(str, search, len))
             return (WCHAR *)str;
     }
 
@@ -849,8 +849,7 @@ BOOL WINAPI StrToInt64ExA(const char *str, DWORD flags, LONGLONG *ret)
         WARN("Unknown flags %#x\n", flags);
 
     /* Skip leading space, '+', '-' */
-    while (*str == ' ' || (*str >= '\t' && *str <= '\r'))
-        str = CharNextA(str);
+    while (*str == ' ' || *str == '\t' || *str == '\n') str++;
 
     if (*str == '-')
     {
@@ -913,8 +912,7 @@ BOOL WINAPI StrToInt64ExW(const WCHAR *str, DWORD flags, LONGLONG *ret)
         WARN("Unknown flags %#x.\n", flags);
 
     /* Skip leading space, '+', '-' */
-    while (iswspace(*str))
-        str++;
+    while (*str == ' ' || *str == '\t' || *str == '\n') str++;
 
     if (*str == '-')
     {
@@ -924,21 +922,23 @@ BOOL WINAPI StrToInt64ExW(const WCHAR *str, DWORD flags, LONGLONG *ret)
     else if (*str == '+')
         str++;
 
-    if (flags & STIF_SUPPORT_HEX && *str == '0' && towlower(str[1]) == 'x')
+    if (flags & STIF_SUPPORT_HEX && *str == '0' && (str[1] == 'x' || str[1] == 'X'))
     {
         /* Read hex number */
         str += 2;
 
-        if (!iswxdigit(*str))
+        if (!isxdigit(*str))
             return FALSE;
 
-        while (iswxdigit(*str))
+        while (isxdigit(*str))
         {
             value *= 16;
-            if (iswdigit(*str))
+            if (*str >= '0' && *str <= '9')
                 value += (*str - '0');
+            else if (*str >= 'A' && *str <= 'Z')
+                value += 10 + (*str - 'A');
             else
-                value += 10 + (towlower(*str) - 'a');
+                value += 10 + (*str - 'a');
             str++;
         }
 
@@ -947,10 +947,10 @@ BOOL WINAPI StrToInt64ExW(const WCHAR *str, DWORD flags, LONGLONG *ret)
     }
 
     /* Read decimal number */
-    if (!iswdigit(*str))
+    if (*str < '0' || *str > '9')
         return FALSE;
 
-    while (iswdigit(*str))
+    while (*str >= '0' && *str <= '9')
     {
         value *= 10;
         value += (*str - '0');
@@ -994,7 +994,7 @@ int WINAPI StrToIntA(const char *str)
     if (!str)
         return 0;
 
-    if (*str == '-' || isdigit(*str))
+    if (*str == '-' || (*str >= '0' && *str <= '9'))
         StrToIntExA(str, 0, &value);
 
     return value;
@@ -1009,7 +1009,7 @@ int WINAPI StrToIntW(const WCHAR *str)
     if (!str)
         return 0;
 
-    if (*str == '-' || iswdigit(*str))
+    if (*str == '-' || (*str >= '0' && *str <= '9'))
         StrToIntExW(str, 0, &value);
     return value;
 }
@@ -1310,11 +1310,11 @@ int WINAPI StrCmpLogicalW(const WCHAR *str, const WCHAR *comp)
     {
         if (!*comp)
             return 1;
-        else if (iswdigit(*str))
+        else if (*str >= '0' && *str <= '9')
         {
             int str_value, comp_value;
 
-            if (!iswdigit(*comp))
+            if (*comp < '0' || *comp > '9')
                 return -1;
 
             /* Compare the numbers */
@@ -1327,12 +1327,10 @@ int WINAPI StrCmpLogicalW(const WCHAR *str, const WCHAR *comp)
                 return 1;
 
             /* Skip */
-            while (iswdigit(*str))
-                str++;
-            while (iswdigit(*comp))
-                comp++;
+            while (*str >= '0' && *str <= '9') str++;
+            while (*comp >= '0' && *comp <= '9') comp++;
         }
-        else if (iswdigit(*comp))
+        else if (*comp >= '0' && *comp <= '9')
             return 1;
         else
         {

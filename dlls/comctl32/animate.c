@@ -94,12 +94,11 @@ static void ANIMATE_Notify(const ANIMATE_INFO *infoPtr, UINT notif)
 
 static BOOL ANIMATE_LoadResW(ANIMATE_INFO *infoPtr, HINSTANCE hInst, LPCWSTR lpName)
 {
-    static const WCHAR aviW[] = { 'A', 'V', 'I', 0 };
     HRSRC 	hrsrc;
     MMIOINFO	mminfo;
     LPVOID	lpAvi;
 
-    hrsrc = FindResourceW(hInst, lpName, aviW);
+    hrsrc = FindResourceW(hInst, lpName, L"AVI");
     if (!hrsrc)
 	return FALSE;
 
@@ -794,12 +793,11 @@ static BOOL ANIMATE_Stop(ANIMATE_INFO *infoPtr)
 
 static BOOL ANIMATE_Create(HWND hWnd, const CREATESTRUCTW *lpcs)
 {
-    static const WCHAR msvfw32W[] = { 'm', 's', 'v', 'f', 'w', '3', '2', '.', 'd', 'l', 'l', 0 };
     ANIMATE_INFO *infoPtr;
 
     if (!fnIC.hModule)
     {
-	fnIC.hModule = LoadLibraryW(msvfw32W);
+	fnIC.hModule = LoadLibraryW(L"msvfw32.dll");
 	if (!fnIC.hModule) return FALSE;
 
 	fnIC.fnICOpen        = (void*)GetProcAddress(fnIC.hModule, "ICOpen");

@@ -33,7 +33,6 @@
 #include "winternl.h"
 #include "wine/exception.h"
 #include "ntdll_misc.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(relay);
@@ -93,15 +92,6 @@ static inline int strcmpAW( const char *strA, const WCHAR *strW )
     return (unsigned char)*strA - *strW;
 }
 
-/* compare an ASCII and a Unicode string without depending on the current codepage */
-static inline int strncmpiAW( const char *strA, const WCHAR *strW, int n )
-{
-    int ret = 0;
-    for ( ; n > 0; n--, strA++, strW++)
-        if ((ret = toupperW((unsigned char)*strA) - toupperW(*strW)) || !*strA) break;
-    return ret;
-}
-
 /***********************************************************************
  *           build_list
  *
@@ -113,24 +103,24 @@ static const WCHAR **build_list( const WCHAR *buffer )
     const WCHAR *p = buffer;
     const WCHAR **ret;
 
-    while ((p = strchrW( p, ';' )))
+    while ((p = wcschr( p, ';' )))
     {
         count++;
         p++;
     }
     /* allocate count+1 pointers, plus the space for a copy of the string */
     if ((ret = RtlAllocateHeap( GetProcessHeap(), 0,
-                                (count+1) * sizeof(WCHAR*) + (strlenW(buffer)+1) * sizeof(WCHAR) )))
+                                (count+1) * sizeof(WCHAR*) + (wcslen(buffer)+1) * sizeof(WCHAR) )))
     {
         WCHAR *str = (WCHAR *)(ret + count + 1);
         WCHAR *q = str;
 
-        strcpyW( str, buffer );
+        wcscpy( str, buffer );
         count = 0;
         for (;;)
         {
             ret[count++] = q;
-            if (!(q = strchrW( q, ';' ))) break;
+            if (!(q = wcschr( q, ';' ))) break;
             *q++ = 0;
         }
         ret[count++] = NULL;
@@ -225,18 +215,18 @@ static DWORD WINAPI init_debug_lists( RTL_RUN_ONCE *once, void *param, void **co
  *
  * Check if a given module and function is in the list.
  */
-static BOOL check_list( const char *module, int ordinal, const char *func, const WCHAR *const *list )
+static BOOL check_list( const WCHAR *module, int ordinal, const char *func, const WCHAR *const *list )
 {
     char ord_str[10];
 
     sprintf( ord_str, "%d", ordinal );
     for(; *list; list++)
     {
-        const WCHAR *p = strrchrW( *list, '.' );
+        const WCHAR *p = wcsrchr( *list, '.' );
         if (p && p > *list)  /* check module and function */
         {
             int len = p - *list;
-            if (strncmpiAW( module, *list, len-1 ) || module[len]) continue;
+            if (wcsnicmp( module, *list, len - 1 ) || module[len]) continue;
             if (p[1] == '*' && !p[2]) return TRUE;
             if (!strcmpAW( ord_str, p + 1 )) return TRUE;
             if (func && !strcmpAW( func, p + 1 )) return TRUE;
@@ -255,7 +245,7 @@ static BOOL check_list( const char *module, int ordinal, const char *func, const
  *
  * Check if a given function must be included in the relay output.
  */
-static BOOL check_relay_include( const char *module, int ordinal, const char *func )
+static BOOL check_relay_include( const WCHAR *module, int ordinal, const char *func )
 {
     if (debug_relay_excludelist && check_list( module, ordinal, func, debug_relay_excludelist ))
         return FALSE;
@@ -292,9 +282,9 @@ static BOOL check_from_module( const WCHAR **includelist, const WCHAR **excludel
     {
         int len;
 
-        if (!strcmpiW( *listitem, module )) return !show;
-        len = strlenW( *listitem );
-        if (!strncmpiW( *listitem, module, len ) && !strcmpiW( module + len, dllW ))
+        if (!wcsicmp( *listitem, module )) return !show;
+        len = wcslen( *listitem );
+        if (!wcsnicmp( *listitem, module, len ) && !wcsicmp( module + len, dllW ))
             return !show;
     }
     return show;
@@ -898,6 +888,7 @@ void RELAY_SetupDLL( HMODULE module )
     DWORD size, entry_point_rva, old_prot;
     struct relay_descr *descr;
     struct relay_private_data *data;
+    WCHAR dllnameW[sizeof(data->dllname)];
     const WORD *ordptr;
     void *func_base;
     SIZE_T func_size;
@@ -923,6 +914,7 @@ void RELAY_SetupDLL( HMODULE module )
     len = min( len, sizeof(data->dllname) - 1 );
     memcpy( data->dllname, (char *)module + exports->Name, len );
     data->dllname[len] = 0;
+    ascii_to_unicode( dllnameW, data->dllname, len + 1 );
 
     /* fetch name pointer for all entry points and store them in the private structure */
 
@@ -944,7 +936,7 @@ void RELAY_SetupDLL( HMODULE module )
     for (i = 0; i < exports->NumberOfFunctions; i++, funcs++)
     {
         if (!descr->entry_point_offsets[i]) continue;   /* not a normal function */
-        if (!check_relay_include( data->dllname, i + exports->Base, data->entry_points[i].name ))
+        if (!check_relay_include( dllnameW, i + exports->Base, data->entry_points[i].name ))
             continue;  /* don't include this entry point */
 
         data->entry_points[i].orig_func = (char *)module + *funcs;
@@ -1035,9 +1027,14 @@ static SNOOP_RETURNENTRIES *firstrets;
  */
 static BOOL SNOOP_ShowDebugmsgSnoop(const char *module, int ordinal, const char *func)
 {
-    if (debug_snoop_excludelist && check_list( module, ordinal, func, debug_snoop_excludelist ))
+    WCHAR moduleW[40];
+    int len = strlen(module);
+
+    if (len >= ARRAY_SIZE( moduleW )) return FALSE;
+    ascii_to_unicode( moduleW, module, len + 1 );
+    if (debug_snoop_excludelist && check_list( moduleW, ordinal, func, debug_snoop_excludelist ))
         return FALSE;
-    if (debug_snoop_includelist && !check_list( module, ordinal, func, debug_snoop_includelist ))
+    if (debug_snoop_includelist && !check_list( moduleW, ordinal, func, debug_snoop_includelist ))
         return FALSE;
     return TRUE;
 }

@@ -20,7 +20,6 @@
  *
  */
 
-#include "config.h"   /* Needed for the PACKAGE_STRING definition */
 #include "resource.h"
 
 #pragma makedep po
@@ -134,9 +133,9 @@ STYLE WS_CHILD
 FONT 8, "MS Shell Dlg"
 BEGIN
     CONTROL         "", IDC_ABT_PANEL, "STATIC", SS_OWNERDRAW, 0, 0, 260, 140
-    LTEXT           "",IDC_ABT_TITLE_TEXT,105,30,55,30
+    LTEXT           "Wine",IDC_ABT_TITLE_TEXT,105,30,55,30
     LTEXT           "",IDC_ABT_PANEL_TEXT,160,43,140,8
-    CONTROL         "",IDC_ABT_WEB_LINK,"SysLink", LWS_TRANSPARENT, 105,53,106,8
+    CONTROL         "#msgctxt#do not translate#<a href=\"https://www.winehq.org\">https://www.winehq.org</a>",IDC_ABT_WEB_LINK,"SysLink", LWS_TRANSPARENT, 105,53,106,8
     LTEXT           "This program is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.",
                     IDC_ABT_LICENSE_TEXT,105,64,145,66
     GROUPBOX        "Windows registration information", IDC_STATIC, 15, 155, 230, 55
@@ -234,7 +233,6 @@ BEGIN
                     LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,18,232,76
     PUSHBUTTON      "A&dd...",IDC_BUTTON_ADD,15,98,53,14
     PUSHBUTTON      "&Remove",IDC_BUTTON_REMOVE,72,98,53,14
-    PUSHBUTTON      "Aut&odetect",IDC_BUTTON_AUTODETECT,146,98,100,14
 
     /* editing drive details */
     LTEXT           "&Path:",IDC_STATIC_PATH,15,123,42,9

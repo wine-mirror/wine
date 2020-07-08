@@ -657,10 +657,12 @@ struct x11drv_mode_info
 };
 
 extern void X11DRV_init_desktop( Window win, unsigned int width, unsigned int height ) DECLSPEC_HIDDEN;
-extern void X11DRV_resize_desktop(unsigned int width, unsigned int height) DECLSPEC_HIDDEN;
+extern void X11DRV_resize_desktop(BOOL) DECLSPEC_HIDDEN;
 extern BOOL is_virtual_desktop(void) DECLSPEC_HIDDEN;
 extern BOOL is_desktop_fullscreen(void) DECLSPEC_HIDDEN;
+extern BOOL is_detached_mode(const DEVMODEW *) DECLSPEC_HIDDEN;
 extern BOOL create_desktop_win_data( Window win ) DECLSPEC_HIDDEN;
+extern BOOL get_primary_adapter(WCHAR *) DECLSPEC_HIDDEN;
 extern void X11DRV_Settings_AddDepthModes(void) DECLSPEC_HIDDEN;
 extern void X11DRV_Settings_AddOneMode(unsigned int width, unsigned int height, unsigned int bpp, unsigned int freq) DECLSPEC_HIDDEN;
 unsigned int X11DRV_Settings_GetModeCount(void) DECLSPEC_HIDDEN;
@@ -688,6 +690,8 @@ struct x11drv_gpu
     UINT device_id;
     UINT subsys_id;
     UINT revision_id;
+    /* Vulkan device UUID */
+    GUID vulkan_uuid;
 };
 
 /* Represent an adapter in EnumDisplayDevices context */
@@ -752,9 +756,12 @@ struct x11drv_display_device_handler
     void (*register_event_handlers)(void);
 };
 
+extern HANDLE get_display_device_init_mutex(void) DECLSPEC_HIDDEN;
+extern void release_display_device_init_mutex(HANDLE) DECLSPEC_HIDDEN;
 extern void X11DRV_DisplayDevices_SetHandler(const struct x11drv_display_device_handler *handler) DECLSPEC_HIDDEN;
 extern void X11DRV_DisplayDevices_Init(BOOL force) DECLSPEC_HIDDEN;
 extern void X11DRV_DisplayDevices_RegisterEventHandlers(void) DECLSPEC_HIDDEN;
+extern void X11DRV_DisplayDevices_Update(BOOL) DECLSPEC_HIDDEN;
 /* Display device handler used in virtual desktop mode */
 extern struct x11drv_display_device_handler desktop_handler DECLSPEC_HIDDEN;
 

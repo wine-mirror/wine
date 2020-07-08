@@ -22,7 +22,6 @@
 #define COBJMACROS
 
 #include "windef.h"
-#include "initguid.h"
 #include "objbase.h"
 #include "wincodec.h"
 #include "wincodecsdk.h"
@@ -1085,6 +1084,185 @@ static void test_create_decoder(void)
     IWICImagingFactory_Release(factory);
 }
 
+static void test_writesource_palette(void)
+{
+    IWICImagingFactory *factory;
+    HRESULT hr;
+    WICColor encode_palette[2] = {0xff111111, 0xffcccccc};
+    WICColor source_palette[2] = {0xff555555, 0xffaaaaaa};
+    WICColor result_palette[2];
+    UINT result_colors;
+    IWICBitmap *bitmap;
+    IWICPalette *palette;
+    IStream *stream;
+    IWICBitmapEncoder *encoder;
+    IWICBitmapFrameEncode *frame_encode;
+    IPropertyBag2 *encode_options;
+    GUID pixelformat;
+    IWICBitmapDecoder *decoder;
+    IWICBitmapFrameDecode *frame_decode;
+
+    hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
+        &IID_IWICImagingFactory, (void **)&factory);
+    ok(hr == S_OK, "CoCreateInstance error %#x\n", hr);
+
+    /* Encoder with palette set */
+    hr = IWICImagingFactory_CreateBitmap(factory, 1, 1, &GUID_WICPixelFormat1bppIndexed,
+        WICBitmapCacheOnDemand, &bitmap);
+    ok(hr == S_OK, "CreateBitmap error %#x\n", hr);
+
+    hr = IWICImagingFactory_CreatePalette(factory, &palette);
+    ok(hr == S_OK, "CreatePalette error %#x\n", hr);
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok(hr == S_OK, "CreateStream error %#x\n", hr);
+
+    hr = IWICImagingFactory_CreateEncoder(factory, &GUID_ContainerFormatBmp, &GUID_VendorMicrosoft, &encoder);
+    ok(hr == S_OK, "CreateDecoder error %#x\n", hr);
+
+    hr = IWICBitmapEncoder_Initialize(encoder, stream, WICBitmapEncoderNoCache);
+    ok(hr == S_OK, "IWICBitmapEncoder_Initialize error %#x\n", hr);
+
+    hr = IWICBitmapEncoder_CreateNewFrame(encoder, &frame_encode, &encode_options);
+    ok(hr == S_OK, "CreateNewFrame error %#x\n", hr);
+
+    hr = IWICBitmapFrameEncode_Initialize(frame_encode, encode_options);
+    ok(hr == S_OK, "IWICBitmapFrameEncode_Initialize error %#x\n", hr);
+
+    IPropertyBag2_Release(encode_options);
+
+    hr = IWICBitmapFrameEncode_SetSize(frame_encode, 1, 1);
+    ok(hr == S_OK, "SetSize error %#x\n", hr);
+
+    pixelformat = GUID_WICPixelFormat1bppIndexed;
+    hr = IWICBitmapFrameEncode_SetPixelFormat(frame_encode, &pixelformat);
+    ok(hr == S_OK, "SetPixelFormat error %#x\n", hr);
+    ok(!memcmp(&pixelformat, &GUID_WICPixelFormat1bppIndexed, sizeof(pixelformat)), "pixel format changed\n");
+
+    hr = IWICPalette_InitializeCustom(palette, encode_palette, 2);
+    ok(hr == S_OK, "InitializeCustom error %#x\n", hr);
+
+    hr = IWICBitmapFrameEncode_SetPalette(frame_encode, palette);
+    ok(hr == S_OK, "SetPalette error %#x\n", hr);
+
+    hr = IWICPalette_InitializeCustom(palette, source_palette, 2);
+    ok(hr == S_OK, "InitializeCustom error %#x\n", hr);
+
+    hr = IWICBitmap_SetPalette(bitmap, palette);
+    ok(hr == S_OK, "SetPalette error %#x\n", hr);
+
+    hr = IWICBitmapFrameEncode_WriteSource(frame_encode, (IWICBitmapSource*)bitmap, NULL);
+    ok(hr == S_OK, "WriteSource error %#x\n", hr);
+
+    hr = IWICBitmapFrameEncode_Commit(frame_encode);
+    ok(hr == S_OK, "Commit error %#x\n", hr);
+
+    IWICBitmapFrameEncode_Release(frame_encode);
+
+    hr = IWICBitmapEncoder_Commit(encoder);
+    ok(hr == S_OK, "Commit error %#x\n", hr);
+
+    IWICBitmapEncoder_Release(encoder);
+
+    hr = IWICImagingFactory_CreateDecoderFromStream(factory, stream, NULL, WICDecodeMetadataCacheOnLoad, &decoder);
+    ok(hr == S_OK, "CreateDecoderFromStream error %#x\n", hr);
+
+    hr = IWICBitmapDecoder_GetFrame(decoder, 0, &frame_decode);
+    ok(hr == S_OK, "GetFrame error %#x\n", hr);
+
+    hr = IWICBitmapFrameDecode_CopyPalette(frame_decode, palette);
+    ok(hr == S_OK, "CopyPalette error %#x\n", hr);
+
+    hr = IWICPalette_GetColors(palette, 2, result_palette, &result_colors);
+    ok(hr == S_OK, "GetColors error %#x\n", hr);
+    ok(result_colors == 2, "Got %i colors\n", result_colors);
+    ok(result_palette[0] == encode_palette[0], "Unexpected palette entry: %x\n", result_palette[0]);
+    ok(result_palette[1] == encode_palette[1], "Unexpected palette entry: %x\n", result_palette[0]);
+
+    IWICBitmapFrameDecode_Release(frame_decode);
+    IWICBitmapDecoder_Release(decoder);
+    IStream_Release(stream);
+
+    /* Encoder with no palette set */
+    hr = IWICImagingFactory_CreateEncoder(factory, &GUID_ContainerFormatBmp, &GUID_VendorMicrosoft, &encoder);
+    ok(hr == S_OK, "CreateDecoder error %#x\n", hr);
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok(hr == S_OK, "CreateStream error %#x\n", hr);
+
+    hr = IWICBitmapEncoder_Initialize(encoder, stream, WICBitmapEncoderNoCache);
+    ok(hr == S_OK, "IWICBitmapEncoder_Initialize error %#x\n", hr);
+
+    hr = IWICBitmapEncoder_CreateNewFrame(encoder, &frame_encode, &encode_options);
+    ok(hr == S_OK, "CreateNewFrame error %#x\n", hr);
+
+    hr = IWICBitmapFrameEncode_Initialize(frame_encode, encode_options);
+    ok(hr == S_OK, "IWICBitmapFrameEncode_Initialize error %#x\n", hr);
+
+    IPropertyBag2_Release(encode_options);
+
+    hr = IWICBitmapFrameEncode_SetSize(frame_encode, 1, 1);
+    ok(hr == S_OK, "SetSize error %#x\n", hr);
+
+    pixelformat = GUID_WICPixelFormat1bppIndexed;
+    hr = IWICBitmapFrameEncode_SetPixelFormat(frame_encode, &pixelformat);
+    ok(hr == S_OK, "SetPixelFormat error %#x\n", hr);
+    ok(!memcmp(&pixelformat, &GUID_WICPixelFormat1bppIndexed, sizeof(pixelformat)), "pixel format changed\n");
+
+    hr = IWICPalette_InitializeCustom(palette, source_palette, 2);
+    ok(hr == S_OK, "InitializeCustom error %#x\n", hr);
+
+    hr = IWICBitmap_SetPalette(bitmap, palette);
+    ok(hr == S_OK, "SetPalette error %#x\n", hr);
+
+    hr = IWICBitmapFrameEncode_WriteSource(frame_encode, (IWICBitmapSource*)bitmap, NULL);
+    if (hr == WINCODEC_ERR_PALETTEUNAVAILABLE)
+    {
+        win_skip("old WriteSource palette behavior\n"); /* winxp */
+        IWICBitmapFrameEncode_Release(frame_encode);
+        IWICBitmapEncoder_Release(encoder);
+        IStream_Release(stream);
+        IWICPalette_Release(palette);
+        IWICBitmap_Release(bitmap);
+        IWICImagingFactory_Release(factory);
+        return;
+    }
+    ok(hr == S_OK, "WriteSource error %#x\n", hr);
+
+    hr = IWICBitmapFrameEncode_Commit(frame_encode);
+    ok(hr == S_OK, "Commit error %#x\n", hr);
+
+    IWICBitmapFrameEncode_Release(frame_encode);
+
+    hr = IWICBitmapEncoder_Commit(encoder);
+    ok(hr == S_OK, "Commit error %#x\n", hr);
+
+    IWICBitmapEncoder_Release(encoder);
+
+    hr = IWICImagingFactory_CreateDecoderFromStream(factory, stream, NULL, WICDecodeMetadataCacheOnLoad, &decoder);
+    ok(hr == S_OK, "CreateDecoderFromStream error %#x\n", hr);
+
+    hr = IWICBitmapDecoder_GetFrame(decoder, 0, &frame_decode);
+    ok(hr == S_OK, "GetFrame error %#x\n", hr);
+
+    hr = IWICBitmapFrameDecode_CopyPalette(frame_decode, palette);
+    ok(hr == S_OK, "CopyPalette error %#x\n", hr);
+
+    hr = IWICPalette_GetColors(palette, 2, result_palette, &result_colors);
+    ok(hr == S_OK, "GetColors error %#x\n", hr);
+    ok(result_colors == 2, "Got %i colors\n", result_colors);
+    ok(result_palette[0] == source_palette[0], "Unexpected palette entry: %x\n", result_palette[0]);
+    ok(result_palette[1] == source_palette[1], "Unexpected palette entry: %x\n", result_palette[0]);
+
+    IWICBitmapFrameDecode_Release(frame_decode);
+    IWICBitmapDecoder_Release(decoder);
+    IStream_Release(stream);
+
+    IWICPalette_Release(palette);
+    IWICBitmap_Release(bitmap);
+    IWICImagingFactory_Release(factory);
+}
+
 START_TEST(bmpformat)
 {
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
@@ -1097,6 +1275,7 @@ START_TEST(bmpformat)
     test_componentinfo();
     test_createfromstream();
     test_create_decoder();
+    test_writesource_palette();
 
     CoUninitialize();
 }

@@ -96,8 +96,10 @@ void wined3d_display_mode_from_dxgi1(struct wined3d_display_mode *wined3d_mode,
 DXGI_USAGE dxgi_usage_from_wined3d_bind_flags(unsigned int wined3d_bind_flags) DECLSPEC_HIDDEN;
 unsigned int wined3d_bind_flags_from_dxgi_usage(DXGI_USAGE usage) DECLSPEC_HIDDEN;
 unsigned int dxgi_swapchain_flags_from_wined3d(unsigned int wined3d_flags) DECLSPEC_HIDDEN;
+HRESULT dxgi_get_output_from_window(IDXGIFactory *factory, HWND window, IDXGIOutput **dxgi_output)
+        DECLSPEC_HIDDEN;
 HRESULT wined3d_swapchain_desc_from_dxgi(struct wined3d_swapchain_desc *wined3d_desc,
-        HWND window, const DXGI_SWAP_CHAIN_DESC1 *dxgi_desc,
+        IDXGIOutput *dxgi_containing_output, HWND window, const DXGI_SWAP_CHAIN_DESC1 *dxgi_desc,
         const DXGI_SWAP_CHAIN_FULLSCREEN_DESC *dxgi_fullscreen_desc) DECLSPEC_HIDDEN;
 
 HRESULT dxgi_get_private_data(struct wined3d_private_store *store,
@@ -144,11 +146,13 @@ struct dxgi_output
 {
     IDXGIOutput4 IDXGIOutput4_iface;
     LONG refcount;
+    struct wined3d_output *wined3d_output;
     struct wined3d_private_store private_store;
     struct dxgi_adapter *adapter;
 };
 
-HRESULT dxgi_output_create(struct dxgi_adapter *adapter, struct dxgi_output **output) DECLSPEC_HIDDEN;
+HRESULT dxgi_output_create(struct dxgi_adapter *adapter, unsigned int output_idx,
+        struct dxgi_output **output) DECLSPEC_HIDDEN;
 struct dxgi_output *unsafe_impl_from_IDXGIOutput(IDXGIOutput *iface) DECLSPEC_HIDDEN;
 
 /* IDXGIAdapter */
@@ -156,6 +160,7 @@ struct dxgi_adapter
 {
     IWineDXGIAdapter IWineDXGIAdapter_iface;
     LONG refcount;
+    struct wined3d_adapter *wined3d_adapter;
     struct wined3d_private_store private_store;
     UINT ordinal;
     struct dxgi_factory *factory;

@@ -285,9 +285,8 @@ struct __thread_data {
     int                             unk5[1];
     MSVCRT_terminate_function       terminate_handler;
     MSVCRT_unexpected_function      unexpected_handler;
-    MSVCRT__se_translator_function  se_translator;
-    void                           *unk6[3];
-    int                             unk7;
+    MSVCRT__se_translator_function  se_translator;      /* preserve offset to exc_record and processing_throw */
+    void                           *unk6;
     EXCEPTION_RECORD               *exc_record;
     CONTEXT                        *ctx_record;
     int                             processing_throw;
@@ -1192,6 +1191,7 @@ int __cdecl      MSVCRT_strcmp(const char*, const char*);
 char* __cdecl    MSVCRT_strstr(const char*, const char*);
 unsigned int __cdecl MSVCRT__get_output_format(void);
 char* __cdecl MSVCRT_strtok_s(char*, const char*, char**);
+char* __cdecl MSVCRT__itoa(int, char*, int);
 double parse_double(MSVCRT_wchar_t (*)(void*), void (*)(void*), void*, MSVCRT_pthreadlocinfo, int*);
 
 /* Maybe one day we'll enable the invalid parameter handlers with the full set of information (msvcrXXd)

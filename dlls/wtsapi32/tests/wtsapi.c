@@ -90,19 +90,66 @@ static void test_WTSEnumerateProcessesW(void)
     WTSFreeMemory(info);
 }
 
-static void test_WTSQuerySessionInformationW(void)
+static void test_WTSQuerySessionInformation(void)
 {
     BOOL ret;
-    WCHAR *buf;
+    WCHAR *buf1;
+    char *buf2;
     DWORD count;
 
+    SetLastError(0xdeadbeef);
     count = 0;
-    buf = NULL;
-    ret = WTSQuerySessionInformationW(WTS_CURRENT_SERVER_HANDLE, WTS_CURRENT_SESSION, WTSUserName, &buf, &count);
+    ret = WTSQuerySessionInformationW(WTS_CURRENT_SERVER_HANDLE, WTS_CURRENT_SESSION, WTSUserName, NULL, &count);
+    ok(!ret, "got %u\n", GetLastError());
+    ok(count == 0, "got %u\n", count);
+    ok(GetLastError() == ERROR_INVALID_USER_BUFFER, "got %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    count = 1;
+    ret = WTSQuerySessionInformationW(WTS_CURRENT_SERVER_HANDLE, WTS_CURRENT_SESSION, WTSUserName, NULL, &count);
+    ok(!ret, "got %u\n", GetLastError());
+    ok(count == 1, "got %u\n", count);
+    ok(GetLastError() == ERROR_INVALID_USER_BUFFER, "got %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = WTSQuerySessionInformationW(WTS_CURRENT_SERVER_HANDLE, WTS_CURRENT_SESSION, WTSUserName, &buf1, NULL);
+    ok(!ret, "got %u\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_USER_BUFFER, "got %u\n", GetLastError());
+
+    count = 0;
+    buf1 = NULL;
+    ret = WTSQuerySessionInformationW(WTS_CURRENT_SERVER_HANDLE, WTS_CURRENT_SESSION, WTSUserName, &buf1, &count);
     ok(ret, "got %u\n", GetLastError());
-    ok(buf != NULL, "buf not set\n");
-    ok(count == (lstrlenW(buf) + 1) * sizeof(WCHAR), "got %u\n", count);
-    WTSFreeMemory(buf);
+    ok(buf1 != NULL, "buf not set\n");
+    ok(count == (lstrlenW(buf1) + 1) * sizeof(WCHAR), "expected %u, got %u\n", (lstrlenW(buf1) + 1) * sizeof(WCHAR), count);
+    WTSFreeMemory(buf1);
+
+    SetLastError(0xdeadbeef);
+    count = 0;
+    ret = WTSQuerySessionInformationA(WTS_CURRENT_SERVER_HANDLE, WTS_CURRENT_SESSION, WTSUserName, NULL, &count);
+    ok(!ret, "got %u\n", GetLastError());
+    ok(count == 0, "got %u\n", count);
+    ok(GetLastError() == ERROR_INVALID_USER_BUFFER, "got %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    count = 1;
+    ret = WTSQuerySessionInformationA(WTS_CURRENT_SERVER_HANDLE, WTS_CURRENT_SESSION, WTSUserName, NULL, &count);
+    ok(!ret, "got %u\n", GetLastError());
+    ok(count == 1, "got %u\n", count);
+    ok(GetLastError() == ERROR_INVALID_USER_BUFFER, "got %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = WTSQuerySessionInformationA(WTS_CURRENT_SERVER_HANDLE, WTS_CURRENT_SESSION, WTSUserName, &buf2, NULL);
+    ok(!ret, "got %u\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_USER_BUFFER, "got %u\n", GetLastError());
+
+    count = 0;
+    buf2 = NULL;
+    ret = WTSQuerySessionInformationA(WTS_CURRENT_SERVER_HANDLE, WTS_CURRENT_SESSION, WTSUserName, &buf2, &count);
+    ok(ret, "got %u\n", GetLastError());
+    ok(buf2 != NULL, "buf not set\n");
+    ok(count == lstrlenA(buf2) + 1, "expected %u, got %u\n", lstrlenA(buf2) + 1, count);
+    WTSFreeMemory(buf2);
 }
 
 static void test_WTSQueryUserToken(void)
@@ -118,6 +165,6 @@ static void test_WTSQueryUserToken(void)
 START_TEST (wtsapi)
 {
     test_WTSEnumerateProcessesW();
-    test_WTSQuerySessionInformationW();
+    test_WTSQuerySessionInformation();
     test_WTSQueryUserToken();
 }

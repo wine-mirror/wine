@@ -1143,6 +1143,8 @@ static HRESULT insert_static_object(ME_TextEditor *editor, HENHMETAFILE hemf, HB
       stgm.u.hBitmap = hbmp;
       fm.cfFormat = CF_BITMAP;
   }
+  else return E_FAIL;
+
   stgm.pUnkForRelease = NULL;
 
   fm.ptd = NULL;

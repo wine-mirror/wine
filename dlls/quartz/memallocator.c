@@ -911,15 +911,15 @@ static void StdMemAllocator_Destroy(IMemAllocator *iface)
     DeleteCriticalSection(&This->csState);
 
     CoTaskMemFree(This);
+
+    InterlockedDecrement(&object_locks);
 }
 
-HRESULT StdMemAllocator_create(LPUNKNOWN lpUnkOuter, LPVOID * ppv)
+HRESULT mem_allocator_create(IUnknown *lpUnkOuter, IUnknown **out)
 {
     StdMemAllocator * pMemAlloc;
     HRESULT hr;
 
-    *ppv = NULL;
-    
     if (lpUnkOuter)
         return CLASS_E_NOAGGREGATION;
 
@@ -932,7 +932,7 @@ HRESULT StdMemAllocator_create(LPUNKNOWN lpUnkOuter, LPVOID * ppv)
     pMemAlloc->pMemory = NULL;
 
     if (SUCCEEDED(hr = BaseMemAllocator_Init(StdMemAllocator_Alloc, StdMemAllocator_Free, NULL, NULL, NULL, StdMemAllocator_Destroy, &pMemAlloc->csState, &pMemAlloc->base)))
-        *ppv = pMemAlloc;
+        *out = (IUnknown *)&pMemAlloc->base.IMemAllocator_iface;
     else
         CoTaskMemFree(pMemAlloc);
 

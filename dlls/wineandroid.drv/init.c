@@ -32,7 +32,6 @@
 #include "winreg.h"
 #include "android.h"
 #include "wine/server.h"
-#include "wine/library.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(android);
@@ -444,7 +443,7 @@ static const JNINativeMethod methods[] =
 
 #define DECL_FUNCPTR(f) typeof(f) * p##f = NULL
 #define LOAD_FUNCPTR(lib, func) do { \
-    if ((p##func = wine_dlsym( lib, #func, NULL, 0 )) == NULL) \
+    if ((p##func = dlsym( lib, #func )) == NULL) \
         { ERR( "can't find symbol %s\n", #func); return; } \
     } while(0)
 
@@ -567,9 +566,8 @@ static void load_hardware_libs(void)
     const struct hw_module_t *module;
     int ret;
     void *libhardware;
-    char error[256];
 
-    if ((libhardware = wine_dlopen( "libhardware.so", RTLD_GLOBAL, error, sizeof(error) )))
+    if ((libhardware = dlopen( "libhardware.so", RTLD_GLOBAL )))
     {
         LOAD_FUNCPTR( libhardware, hw_get_module );
     }
@@ -578,9 +576,9 @@ static void load_hardware_libs(void)
         /* Android >= N disallows loading libhardware, so we load libandroid (which imports
          * libhardware), and then we can find libhardware in the list of loaded libraries.
          */
-        if (!wine_dlopen( "libandroid.so", RTLD_GLOBAL, error, sizeof(error) ))
+        if (!dlopen( "libandroid.so", RTLD_GLOBAL ))
         {
-            ERR( "failed to load libandroid.so: %s\n", error );
+            ERR( "failed to load libandroid.so: %s\n", dlerror() );
             return;
         }
         dl_iterate_phdr( enum_libs, 0 );
@@ -603,16 +601,15 @@ static void load_hardware_libs(void)
 static void load_android_libs(void)
 {
     void *libandroid, *liblog;
-    char error[1024];
 
-    if (!(libandroid = wine_dlopen( "libandroid.so", RTLD_GLOBAL, error, sizeof(error) )))
+    if (!(libandroid = dlopen( "libandroid.so", RTLD_GLOBAL )))
     {
-        ERR( "failed to load libandroid.so: %s\n", error );
+        ERR( "failed to load libandroid.so: %s\n", dlerror() );
         return;
     }
-    if (!(liblog = wine_dlopen( "liblog.so", RTLD_GLOBAL, error, sizeof(error) )))
+    if (!(liblog = dlopen( "liblog.so", RTLD_GLOBAL )))
     {
-        ERR( "failed to load liblog.so: %s\n", error );
+        ERR( "failed to load liblog.so: %s\n", dlerror() );
         return;
     }
     LOAD_FUNCPTR( liblog, __android_log_print );
@@ -635,7 +632,8 @@ static BOOL process_attach(void)
     if ((java_vm = wine_get_java_vm()))  /* running under Java */
     {
 #ifdef __i386__
-        WORD old_fs = wine_get_fs();
+        WORD old_fs;
+        __asm__( "mov %%fs,%0" : "=r" (old_fs) );
 #endif
         load_android_libs();
         (*java_vm)->AttachCurrentThread( java_vm, &jni_env, 0 );
@@ -643,7 +641,8 @@ static BOOL process_attach(void)
         (*jni_env)->RegisterNatives( jni_env, class, methods, ARRAY_SIZE( methods ));
         (*jni_env)->DeleteLocalRef( jni_env, class );
 #ifdef __i386__
-        wine_set_fs( old_fs );  /* the Java VM hijacks %fs for its own purposes, restore it */
+        /* the Java VM hijacks %fs for its own purposes, restore it */
+        __asm__( "mov %0,%%fs" :: "r" (old_fs) );
 #endif
     }
     return TRUE;

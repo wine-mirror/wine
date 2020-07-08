@@ -30,6 +30,7 @@
 
 /* FIXME: We suppose that page size is 4096 */
 #undef PAGE_SIZE
+#undef PAGE_SHIFT
 #define PAGE_SIZE   0x1000
 #define PAGE_SHIFT  12
 
@@ -51,6 +52,7 @@ struct _KAPC;
 struct _IRP;
 struct _DEVICE_OBJECT;
 struct _DRIVER_OBJECT;
+struct _KPROCESS;
 
 typedef VOID (WINAPI *PKDEFERRED_ROUTINE)(struct _KDPC *, PVOID, PVOID, PVOID);
 typedef VOID (WINAPI *PKSTART_ROUTINE)(PVOID);
@@ -120,6 +122,12 @@ typedef struct _KMUTANT {
     BOOLEAN Abandoned;
     UCHAR ApcDisable;
 } KMUTANT, *PKMUTANT, *RESTRICTED_POINTER PRKMUTANT, KMUTEX, *PKMUTEX, *RESTRICTED_POINTER PRKMUTEX;
+
+typedef struct _DEFERRED_REVERSE_BARRIER
+{
+    ULONG Barrier;
+    ULONG TotalProcessors;
+} DEFERRED_REVERSE_BARRIER;
 
 typedef enum _KWAIT_REASON
 {
@@ -217,11 +225,21 @@ typedef struct _IO_TIMER_ROUTINE *PIO_TIMER_ROUTINE;
 typedef struct _ETHREAD *PETHREAD;
 typedef struct _KTHREAD *PKTHREAD, *PRKTHREAD;
 typedef struct _EPROCESS *PEPROCESS;
+typedef struct _KPROCESS KPROCESS, *PKPROCESS, *PRKPROCESS;
 typedef struct _IO_WORKITEM *PIO_WORKITEM;
 typedef struct _OBJECT_TYPE *POBJECT_TYPE;
 typedef struct _OBJECT_HANDLE_INFORMATION *POBJECT_HANDLE_INFORMATION;
 typedef struct _ZONE_HEADER *PZONE_HEADER;
 typedef struct _LOOKASIDE_LIST_EX *PLOOKASIDE_LIST_EX;
+
+typedef struct _KAPC_STATE
+{
+     LIST_ENTRY ApcListHead[2];
+     PKPROCESS Process;
+     UCHAR KernelApcInProgress;
+     UCHAR KernelApcPending;
+     UCHAR UserApcPending;
+} KAPC_STATE, *PKAPC_STATE;
 
 #define FM_LOCK_BIT 0x1
 
@@ -1169,52 +1187,105 @@ typedef enum _ALTERNATIVE_ARCHITECTURE_TYPE
 #define NX_SUPPORT_POLICY_OPTIN         2
 #define NX_SUPPORT_POLICY_OPTOUT        3
 
-#define MAX_WOW64_SHARED_ENTRIES 16
+#define XSTATE_LEGACY_FLOATING_POINT        0
+#define XSTATE_LEGACY_SSE                   1
+#define XSTATE_GSSE                         2
+
+#define XSTATE_MASK_LEGACY_FLOATING_POINT   (1 << XSTATE_LEGACY_FLOATING_POINT)
+#define XSTATE_MASK_LEGACY_SSE              (1 << XSTATE_LEGACY_SSE)
+#define XSTATE_MASK_LEGACY                  (XSTATE_MASK_LEGACY_FLOATING_POINT | XSTATE_MASK_LEGACY_SSE)
+#define XSTATE_MASK_GSSE                    (1 << XSTATE_GSSE)
+
+#define MAXIMUM_XSTATE_FEATURES             64
+
+typedef struct _XSTATE_FEATURE
+{
+  ULONG Offset;
+  ULONG Size;
+} XSTATE_FEATURE, *PXSTATE_FEATURE;
+
+typedef struct _XSTATE_CONFIGURATION
+{
+  ULONG64 EnabledFeatures;
+  ULONG Size;
+  ULONG OptimizedSave:1;
+  XSTATE_FEATURE Features[MAXIMUM_XSTATE_FEATURES];
+} XSTATE_CONFIGURATION, *PXSTATE_CONFIGURATION;
 
 typedef struct _KUSER_SHARED_DATA {
-    ULONG TickCountLowDeprecated;
-    ULONG TickCountMultiplier;
-    volatile KSYSTEM_TIME InterruptTime;
-    volatile KSYSTEM_TIME SystemTime;
-    volatile KSYSTEM_TIME TimeZoneBias;
-    USHORT ImageNumberLow;
-    USHORT ImageNumberHigh;
-    WCHAR NtSystemRoot[260];
-    ULONG MaxStackTraceDepth;
-    ULONG CryptoExponent;
-    ULONG TimeZoneId;
-    ULONG LargePageMinimum;
-    ULONG Reserved2[7];
-    NT_PRODUCT_TYPE NtProductType;
-    BOOLEAN ProductTypeIsValid;
-    ULONG NtMajorVersion;
-    ULONG NtMinorVersion;
-    BOOLEAN ProcessorFeatures[PROCESSOR_FEATURE_MAX];
-    ULONG Reserved1;
-    ULONG Reserved3;
-    volatile ULONG TimeSlip;
-    ALTERNATIVE_ARCHITECTURE_TYPE AlternativeArchitecture;
-    LARGE_INTEGER SystemExpirationDate;
-    ULONG SuiteMask;
-    BOOLEAN KdDebuggerEnabled;
-    UCHAR NXSupportPolicy;
-    volatile ULONG ActiveConsoleId;
-    volatile ULONG DismountCount;
-    ULONG ComPlusPackage;
-    ULONG LastSystemRITEventTickCount;
-    ULONG NumberOfPhysicalPages;
-    BOOLEAN SafeBootMode;
-    ULONG TraceLogging;
-    ULONGLONG TestRetInstruction;
-    ULONG SystemCall;
-    ULONG SystemCallReturn;
-    ULONGLONG SystemCallPad[3];
+    ULONG TickCountLowDeprecated;                          /* 0x000 */
+    ULONG TickCountMultiplier;                             /* 0x004 */
+    volatile KSYSTEM_TIME InterruptTime;                   /* 0x008 */
+    volatile KSYSTEM_TIME SystemTime;                      /* 0x014 */
+    volatile KSYSTEM_TIME TimeZoneBias;                    /* 0x020 */
+    USHORT ImageNumberLow;                                 /* 0x02c */
+    USHORT ImageNumberHigh;                                /* 0x02e */
+    WCHAR NtSystemRoot[260];                               /* 0x030 */
+    ULONG MaxStackTraceDepth;                              /* 0x238 */
+    ULONG CryptoExponent;                                  /* 0x23c */
+    ULONG TimeZoneId;                                      /* 0x240 */
+    ULONG LargePageMinimum;                                /* 0x244 */
+    ULONG AitSamplingValue;                                /* 0x248 */
+    ULONG AppCompatFlag;                                   /* 0x24c */
+    ULONGLONG RNGSeedVersion;                              /* 0x250 */
+    ULONG GlobalValidationRunLevel;                        /* 0x258 */
+    volatile ULONG TimeZoneBiasStamp;                      /* 0x25c */
+    ULONG NtBuildNumber;                                   /* 0x260 */
+    NT_PRODUCT_TYPE NtProductType;                         /* 0x264 */
+    BOOLEAN ProductTypeIsValid;                            /* 0x268 */
+    USHORT NativeProcessorArchitecture;                    /* 0x26a */
+    ULONG NtMajorVersion;                                  /* 0x26c */
+    ULONG NtMinorVersion;                                  /* 0x270 */
+    BOOLEAN ProcessorFeatures[PROCESSOR_FEATURE_MAX];      /* 0x274 */
+    ULONG Reserved1;                                       /* 0x2b4 */
+    ULONG Reserved3;                                       /* 0x2b8 */
+    volatile ULONG TimeSlip;                               /* 0x2bc */
+    ALTERNATIVE_ARCHITECTURE_TYPE AlternativeArchitecture; /* 0x2c0 */
+    ULONG BootId;                                          /* 0x2c4 */
+    LARGE_INTEGER SystemExpirationDate;                    /* 0x2c8 */
+    ULONG SuiteMask;                                       /* 0x2d0 */
+    BOOLEAN KdDebuggerEnabled;                             /* 0x2d4 */
+    UCHAR NXSupportPolicy;                                 /* 0x2d5 */
+    volatile ULONG ActiveConsoleId;                        /* 0x2d8 */
+    volatile ULONG DismountCount;                          /* 0x2dc */
+    ULONG ComPlusPackage;                                  /* 0x2e0 */
+    ULONG LastSystemRITEventTickCount;                     /* 0x2e4 */
+    ULONG NumberOfPhysicalPages;                           /* 0x2e8 */
+    BOOLEAN SafeBootMode;                                  /* 0x2ec */
+    UCHAR VirtualizationFlags;                             /* 0x2ed */
+    ULONG TraceLogging;                                    /* 0x2f0 */
+    ULONGLONG TestRetInstruction;                          /* 0x2f8 */
+    ULONG SystemCall;                                      /* 0x300 */
+    ULONG SystemCallReturn;                                /* 0x304 */
+    ULONGLONG SystemCallPad[3];                            /* 0x308 */
     union {
-        volatile KSYSTEM_TIME TickCount;
+        volatile KSYSTEM_TIME TickCount;                   /* 0x320 */
         volatile ULONG64 TickCountQuad;
     } DUMMYUNIONNAME;
-    ULONG Cookie;
-    ULONG Wow64SharedInformation[MAX_WOW64_SHARED_ENTRIES];
+    ULONG Cookie;                                          /* 0x330 */
+    LONGLONG ConsoleSessionForegroundProcessId;            /* 0x338 */
+    ULONGLONG TimeUpdateLock;                              /* 0x340 */
+    ULONGLONG BaselineSystemTimeQpc;                       /* 0x348 */
+    ULONGLONG BaselineInterruptTimeQpc;                    /* 0x350 */
+    ULONGLONG QpcSystemTimeIncrement;                      /* 0x358 */
+    ULONGLONG QpcInterruptTimeIncrement;                   /* 0x360 */
+    UCHAR QpcSystemTimeIncrementShift;                     /* 0x368 */
+    UCHAR QpcInterruptTimeIncrementShift;                  /* 0x369 */
+    USHORT UnparkedProcessorCount;                         /* 0x36a */
+    ULONG EnclaveFeatureMask[4];                           /* 0x36c */
+    ULONG TelemetryCoverageRound;                          /* 0x37c */
+    USHORT UserModeGlobalLogger[16];                       /* 0x380 */
+    ULONG ImageFileExecutionOptions;                       /* 0x3a0 */
+    ULONG LangGenerationCount;                             /* 0x3a4 */
+    ULONG ActiveProcessorAffinity;                         /* 0x3a8 */
+    volatile ULONGLONG InterruptTimeBias;                  /* 0x3b0 */
+    volatile ULONGLONG QpcBias;                            /* 0x3b8 */
+    ULONG ActiveProcessorCount;                            /* 0x3c0 */
+    volatile UCHAR ActiveGroupCount;                       /* 0x3c4 */
+    USHORT QpcData;                                        /* 0x3c6 */
+    LARGE_INTEGER TimeZoneBiasEffectiveStart;              /* 0x3c8 */
+    LARGE_INTEGER TimeZoneBiasEffectiveEnd;                /* 0x3d0 */
+    XSTATE_CONFIGURATION XState;                           /* 0x3d8 */
 } KSHARED_USER_DATA, *PKSHARED_USER_DATA;
 
 typedef enum _MEMORY_CACHING_TYPE {
@@ -1296,6 +1367,7 @@ typedef void * (NTAPI *PALLOCATE_FUNCTION)(POOL_TYPE, SIZE_T, ULONG);
 typedef void * (NTAPI *PALLOCATE_FUNCTION_EX)(POOL_TYPE, SIZE_T, ULONG, PLOOKASIDE_LIST_EX);
 typedef void (NTAPI *PFREE_FUNCTION)(void *);
 typedef void (NTAPI *PFREE_FUNCTION_EX)(void *, PLOOKASIDE_LIST_EX);
+typedef void (NTAPI *PCALLBACK_FUNCTION)(void *, void *, void *);
 
 #ifdef _WIN64
 #define LOOKASIDE_ALIGN DECLSPEC_CACHEALIGN
@@ -1527,6 +1599,14 @@ static inline void IoMarkIrpPending(IRP *irp)
     IoGetCurrentIrpStackLocation(irp)->Control |= SL_PENDING_RETURNED;
 }
 
+static inline void IoCopyCurrentIrpStackLocationToNext(IRP *irp)
+{
+    IO_STACK_LOCATION *current = IoGetCurrentIrpStackLocation(irp);
+    IO_STACK_LOCATION *next = IoGetNextIrpStackLocation(irp);
+    memcpy(next, current, FIELD_OFFSET(IO_STACK_LOCATION, CompletionRoutine));
+    next->Control = 0;
+}
+
 #define KernelMode 0
 #define UserMode   1
 
@@ -1567,9 +1647,11 @@ PSLIST_ENTRY WINAPI ExInterlockedPushEntrySList(PSLIST_HEADER,PSLIST_ENTRY,PKSPI
 LIST_ENTRY * WINAPI ExInterlockedRemoveHeadList(LIST_ENTRY*,KSPIN_LOCK*);
 BOOLEAN   WINAPI ExIsResourceAcquiredExclusiveLite(ERESOURCE*);
 ULONG     WINAPI ExIsResourceAcquiredSharedLite(ERESOURCE*);
+void *    WINAPI ExRegisterCallback(PCALLBACK_OBJECT,PCALLBACK_FUNCTION,void*);
 void    FASTCALL ExReleaseFastMutexUnsafe(PFAST_MUTEX);
 void      WINAPI ExReleaseResourceForThreadLite(ERESOURCE*,ERESOURCE_THREAD);
 ULONG     WINAPI ExSetTimerResolution(ULONG,BOOLEAN);
+void      WINAPI ExUnregisterCallback(void*);
 
 void      WINAPI IoAcquireCancelSpinLock(KIRQL*);
 NTSTATUS  WINAPI IoAcquireRemoveLockEx(IO_REMOVE_LOCK*,void*,const char*,ULONG, ULONG);
@@ -1607,11 +1689,16 @@ void      WINAPI IoGetStackLimits(ULONG_PTR*,ULONG_PTR*);
 void      WINAPI IoInitializeIrp(IRP*,USHORT,CCHAR);
 VOID      WINAPI IoInitializeRemoveLockEx(PIO_REMOVE_LOCK,ULONG,ULONG,ULONG,ULONG);
 void      WINAPI IoInvalidateDeviceRelations(PDEVICE_OBJECT,DEVICE_RELATION_TYPE);
+#ifdef _WIN64
+BOOLEAN   WINAPI IoIs32bitProcess(IRP*);
+#endif
+NTSTATUS  WINAPI IoOpenDeviceRegistryKey(DEVICE_OBJECT*,ULONG,ACCESS_MASK,HANDLE*);
 void      WINAPI IoQueueWorkItem(PIO_WORKITEM,PIO_WORKITEM_ROUTINE,WORK_QUEUE_TYPE,void*);
 NTSTATUS  WINAPI IoRegisterDeviceInterface(PDEVICE_OBJECT,const GUID*,PUNICODE_STRING,PUNICODE_STRING);
 void      WINAPI IoReleaseCancelSpinLock(KIRQL);
 void      WINAPI IoReleaseRemoveLockAndWaitEx(IO_REMOVE_LOCK*,void*,ULONG);
 void      WINAPI IoReleaseRemoveLockEx(IO_REMOVE_LOCK*,void*,ULONG);
+void      WINAPI IoReuseIrp(IRP*,NTSTATUS);
 NTSTATUS  WINAPI IoSetDeviceInterfaceState(UNICODE_STRING*,BOOLEAN);
 NTSTATUS  WINAPI IoWMIRegistrationControl(PDEVICE_OBJECT,ULONG);
 
@@ -1628,7 +1715,10 @@ BOOLEAN   WINAPI KeCancelTimer(KTIMER*);
 void      WINAPI KeClearEvent(PRKEVENT);
 NTSTATUS  WINAPI KeDelayExecutionThread(KPROCESSOR_MODE,BOOLEAN,LARGE_INTEGER*);
 void      WINAPI KeEnterCriticalRegion(void);
+void      WINAPI KeGenericCallDpc(PKDEFERRED_ROUTINE,PVOID);
+ULONG     WINAPI KeGetCurrentProcessorNumber(void);
 PKTHREAD  WINAPI KeGetCurrentThread(void);
+void      WINAPI KeInitializeDpc(KDPC*,PKDEFERRED_ROUTINE,void*);
 void      WINAPI KeInitializeEvent(PRKEVENT,EVENT_TYPE,BOOLEAN);
 void      WINAPI KeInitializeMutex(PRKMUTEX,ULONG);
 void      WINAPI KeInitializeSemaphore(PRKSEMAPHORE,LONG,LONG);
@@ -1636,6 +1726,8 @@ void      WINAPI KeInitializeSpinLock(KSPIN_LOCK*);
 void      WINAPI KeInitializeTimerEx(PKTIMER,TIMER_TYPE);
 void      WINAPI KeInitializeTimer(KTIMER*);
 void      WINAPI KeLeaveCriticalRegion(void);
+ULONG     WINAPI KeQueryActiveProcessorCountEx(USHORT);
+KAFFINITY WINAPI KeQueryActiveProcessors(void);
 void      WINAPI KeQuerySystemTime(LARGE_INTEGER*);
 void      WINAPI KeQueryTickCount(LARGE_INTEGER*);
 ULONG     WINAPI KeQueryTimeIncrement(void);
@@ -1646,10 +1738,15 @@ void      WINAPI KeReleaseSpinLock(KSPIN_LOCK*,KIRQL);
 void      WINAPI KeReleaseSpinLockFromDpcLevel(KSPIN_LOCK*);
 LONG      WINAPI KeResetEvent(PRKEVENT);
 void      WINAPI KeRevertToUserAffinityThread(void);
+void      WINAPI KeRevertToUserAffinityThreadEx(KAFFINITY affinity);
 LONG      WINAPI KeSetEvent(PRKEVENT,KPRIORITY,BOOLEAN);
 KPRIORITY WINAPI KeSetPriorityThread(PKTHREAD,KPRIORITY);
 void      WINAPI KeSetSystemAffinityThread(KAFFINITY);
+KAFFINITY WINAPI KeSetSystemAffinityThreadEx(KAFFINITY affinity);
+BOOLEAN   WINAPI KeSetTimer(KTIMER*,LARGE_INTEGER,KDPC*);
 BOOLEAN   WINAPI KeSetTimerEx(KTIMER*,LARGE_INTEGER,LONG,KDPC*);
+void      WINAPI KeSignalCallDpcDone(void*);
+BOOLEAN   WINAPI KeSignalCallDpcSynchronize(void*);
 NTSTATUS  WINAPI KeWaitForMultipleObjects(ULONG,void*[],WAIT_TYPE,KWAIT_REASON,KPROCESSOR_MODE,BOOLEAN,LARGE_INTEGER*,KWAIT_BLOCK*);
 NTSTATUS  WINAPI KeWaitForSingleObject(void*,KWAIT_REASON,KPROCESSOR_MODE,BOOLEAN,LARGE_INTEGER*);
 
@@ -1657,9 +1754,10 @@ PVOID     WINAPI MmAllocateContiguousMemory(SIZE_T,PHYSICAL_ADDRESS);
 PVOID     WINAPI MmAllocateNonCachedMemory(SIZE_T);
 PMDL      WINAPI MmAllocatePagesForMdl(PHYSICAL_ADDRESS,PHYSICAL_ADDRESS,PHYSICAL_ADDRESS,SIZE_T);
 void      WINAPI MmBuildMdlForNonPagedPool(MDL*);
+NTSTATUS  WINAPI MmCopyVirtualMemory(PEPROCESS,void*,PEPROCESS,void*,SIZE_T,KPROCESSOR_MODE,SIZE_T*);
 void      WINAPI MmFreeNonCachedMemory(PVOID,SIZE_T);
 void *    WINAPI MmGetSystemRoutineAddress(UNICODE_STRING*);
-PVOID     WINAPI MmMapLockedPagesSpecifyCache(PMDL,KPROCESSOR_MODE,MEMORY_CACHING_TYPE,PVOID,ULONG,ULONG);
+PVOID     WINAPI MmMapLockedPagesSpecifyCache(PMDLX,KPROCESSOR_MODE,MEMORY_CACHING_TYPE,PVOID,ULONG,MM_PAGE_PRIORITY);
 MM_SYSTEMSIZE WINAPI MmQuerySystemSize(void);
 void      WINAPI MmProbeAndLockPages(PMDLX, KPROCESSOR_MODE, LOCK_OPERATION);
 void      WINAPI MmUnmapLockedPages(void*, PMDL);
@@ -1675,7 +1773,7 @@ static inline void *MmGetSystemAddressForMdlSafe(MDL *mdl, ULONG priority)
 void    FASTCALL ObfReferenceObject(void*);
 void      WINAPI ObDereferenceObject(void*);
 USHORT    WINAPI ObGetFilterVersion(void);
-NTSTATUS  WINAPI ObRegisterCallbacks(POB_CALLBACK_REGISTRATION*, void**);
+NTSTATUS  WINAPI ObRegisterCallbacks(POB_CALLBACK_REGISTRATION, void**);
 NTSTATUS  WINAPI ObReferenceObjectByHandle(HANDLE,ACCESS_MASK,POBJECT_TYPE,KPROCESSOR_MODE,PVOID*,POBJECT_HANDLE_INFORMATION);
 NTSTATUS  WINAPI ObReferenceObjectByName(UNICODE_STRING*,ULONG,ACCESS_STATE*,ACCESS_MASK,POBJECT_TYPE,KPROCESSOR_MODE,void*,void**);
 NTSTATUS  WINAPI ObReferenceObjectByPointer(void*,ACCESS_MASK,POBJECT_TYPE,KPROCESSOR_MODE);
@@ -1694,6 +1792,11 @@ HANDLE    WINAPI PsGetProcessInheritedFromUniqueProcessId(PEPROCESS);
 BOOLEAN   WINAPI PsGetVersion(ULONG*,ULONG*,ULONG*,UNICODE_STRING*);
 NTSTATUS  WINAPI PsTerminateSystemThread(NTSTATUS);
 
+#ifdef __x86_64__
+void      WINAPI RtlCopyMemoryNonTemporal(void*,const void*,SIZE_T);
+#else
+#define RtlCopyMemoryNonTemporal RtlCopyMemory
+#endif
 BOOLEAN   WINAPI RtlIsNtDdiVersionAvailable(ULONG);
 
 NTSTATUS  WINAPI ZwAddBootEntry(PUNICODE_STRING,PUNICODE_STRING);

@@ -68,9 +68,9 @@ static inline IDirectInputDevice8W *IDirectInputDevice8W_from_impl(SysKeyboardIm
     return &This->base.IDirectInputDevice8W_iface;
 }
 
-static BYTE map_dik_code(DWORD scanCode, DWORD vkCode, DWORD subType)
+static BYTE map_dik_code(DWORD scanCode, DWORD vkCode, DWORD subType, DWORD version)
 {
-    if (!scanCode)
+    if (!scanCode && version < 0x0800)
         scanCode = MapVirtualKeyW(vkCode, MAPVK_VK_TO_VSC);
 
     if (subType == DIDEVTYPEKEYBOARD_JAPAN106)
@@ -103,7 +103,7 @@ static BYTE map_dik_code(DWORD scanCode, DWORD vkCode, DWORD subType)
     return scanCode;
 }
 
-static int KeyboardCallback( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARAM lparam )
+int dinput_keyboard_hook( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARAM lparam )
 {
     SysKeyboardImpl *This = impl_from_IDirectInputDevice8A(iface);
     int dik_code, ret = This->base.dwCoopLevel & DISCL_EXCLUSIVE;
@@ -125,7 +125,7 @@ static int KeyboardCallback( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARAM 
         case VK_NUMLOCK : dik_code = DIK_NUMLOCK; break;
         case VK_SUBTRACT: dik_code = DIK_SUBTRACT; break;
         default:
-            dik_code = map_dik_code(hook->scanCode & 0xff, hook->vkCode, This->subtype);
+            dik_code = map_dik_code(hook->scanCode & 0xff, hook->vkCode, This->subtype, This->base.dinput->dwVersion);
             if (hook->flags & LLKHF_EXTENDED) dik_code |= 0x80;
     }
     new_diks = hook->flags & LLKHF_UP ? 0 : 0x80;
@@ -264,7 +264,6 @@ static SysKeyboardImpl *alloc_device(REFGUID rguid, IDirectInputImpl *dinput)
     newDevice->base.ref = 1;
     memcpy(&newDevice->base.guid, rguid, sizeof(*rguid));
     newDevice->base.dinput = dinput;
-    newDevice->base.event_proc = KeyboardCallback;
     InitializeCriticalSection(&newDevice->base.crit);
     newDevice->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": SysKeyboardImpl*->base.crit");
     newDevice->subtype = get_keyboard_subtype();
@@ -282,7 +281,7 @@ static SysKeyboardImpl *alloc_device(REFGUID rguid, IDirectInputImpl *dinput)
         if (!GetKeyNameTextA(((i & 0x7f) << 16) | ((i & 0x80) << 17), buf, sizeof(buf)))
             continue;
 
-        dik_code = map_dik_code(i, 0, newDevice->subtype);
+        dik_code = map_dik_code(i, 0, newDevice->subtype, dinput->dwVersion);
         memcpy(&df->rgodf[idx], &c_dfDIKeyboard.rgodf[dik_code], df->dwObjSize);
         df->rgodf[idx++].dwType = DIDFT_MAKEINSTANCE(dik_code) | DIDFT_PSHBUTTON;
     }
@@ -290,10 +289,6 @@ static SysKeyboardImpl *alloc_device(REFGUID rguid, IDirectInputImpl *dinput)
 
     newDevice->base.data_format.wine_df = df;
     IDirectInput_AddRef(&newDevice->base.dinput->IDirectInput7A_iface);
-
-    EnterCriticalSection(&dinput->crit);
-    list_add_tail(&dinput->devices_list, &newDevice->base.entry);
-    LeaveCriticalSection(&dinput->crit);
 
     return newDevice;
 

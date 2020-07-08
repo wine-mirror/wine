@@ -105,101 +105,6 @@ static ULONG remove_vectored_handler( struct list *handler_list, VECTORED_HANDLE
 
 
 /**********************************************************************
- *           wait_suspend
- *
- * Wait until the thread is no longer suspended.
- */
-void wait_suspend( CONTEXT *context )
-{
-    LARGE_INTEGER timeout;
-    int saved_errno = errno;
-    context_t server_context;
-    DWORD flags = context->ContextFlags;
-
-    context_to_server( &server_context, context );
-
-    /* store the context we got at suspend time */
-    SERVER_START_REQ( set_suspend_context )
-    {
-        wine_server_add_data( req, &server_context, sizeof(server_context) );
-        wine_server_call( req );
-    }
-    SERVER_END_REQ;
-
-    /* wait with 0 timeout, will only return once the thread is no longer suspended */
-    timeout.QuadPart = 0;
-    server_select( NULL, 0, SELECT_INTERRUPTIBLE, &timeout );
-
-    /* retrieve the new context */
-    SERVER_START_REQ( get_suspend_context )
-    {
-        wine_server_set_reply( req, &server_context, sizeof(server_context) );
-        wine_server_call( req );
-        if (wine_server_reply_size( reply ))
-        {
-            context_from_server( context, &server_context );
-            context->ContextFlags |= flags;  /* unchanged registers are still available */
-        }
-    }
-    SERVER_END_REQ;
-
-    errno = saved_errno;
-}
-
-
-/**********************************************************************
- *           send_debug_event
- *
- * Send an EXCEPTION_DEBUG_EVENT event to the debugger.
- */
-NTSTATUS send_debug_event( EXCEPTION_RECORD *rec, int first_chance, CONTEXT *context )
-{
-    NTSTATUS ret;
-    DWORD i;
-    obj_handle_t handle = 0;
-    client_ptr_t params[EXCEPTION_MAXIMUM_PARAMETERS];
-    context_t server_context;
-    select_op_t select_op;
-
-    if (!NtCurrentTeb()->Peb->BeingDebugged) return 0;  /* no debugger present */
-
-    for (i = 0; i < min( rec->NumberParameters, EXCEPTION_MAXIMUM_PARAMETERS ); i++)
-        params[i] = rec->ExceptionInformation[i];
-
-    context_to_server( &server_context, context );
-
-    SERVER_START_REQ( queue_exception_event )
-    {
-        req->first   = first_chance;
-        req->code    = rec->ExceptionCode;
-        req->flags   = rec->ExceptionFlags;
-        req->record  = wine_server_client_ptr( rec->ExceptionRecord );
-        req->address = wine_server_client_ptr( rec->ExceptionAddress );
-        req->len     = i * sizeof(params[0]);
-        wine_server_add_data( req, params, req->len );
-        wine_server_add_data( req, &server_context, sizeof(server_context) );
-        if (!wine_server_call( req )) handle = reply->handle;
-    }
-    SERVER_END_REQ;
-    if (!handle) return 0;
-
-    select_op.wait.op = SELECT_WAIT;
-    select_op.wait.handles[0] = handle;
-    server_select( &select_op, offsetof( select_op_t, wait.handles[1] ), SELECT_INTERRUPTIBLE, NULL );
-
-    SERVER_START_REQ( get_exception_status )
-    {
-        req->handle = handle;
-        wine_server_set_reply( req, &server_context, sizeof(server_context) );
-        ret = wine_server_call( req );
-    }
-    SERVER_END_REQ;
-    if (ret >= 0) context_from_server( context, &server_context );
-    return ret;
-}
-
-
-/**********************************************************************
  *           call_vectored_handlers
  *
  * Call the vectored handlers chain.
@@ -260,6 +165,15 @@ void raise_status( NTSTATUS status, EXCEPTION_RECORD *rec )
     ExceptionRec.ExceptionRecord  = rec;
     ExceptionRec.NumberParameters = 0;
     for (;;) RtlRaiseException( &ExceptionRec );  /* never returns */
+}
+
+
+/*******************************************************************
+ *		NtRaiseException (NTDLL.@)
+ */
+NTSTATUS WINAPI NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance )
+{
+    return unix_funcs->NtRaiseException( rec, context, first_chance );
 }
 
 
@@ -605,7 +519,7 @@ static RUNTIME_FUNCTION *find_function_info( ULONG_PTR pc, ULONG_PTR base,
 /**********************************************************************
  *           lookup_function_info
  */
-RUNTIME_FUNCTION *lookup_function_info( ULONG_PTR pc, ULONG_PTR *base, LDR_MODULE **module )
+RUNTIME_FUNCTION *lookup_function_info( ULONG_PTR pc, ULONG_PTR *base, LDR_DATA_TABLE_ENTRY **module )
 {
     RUNTIME_FUNCTION *func = NULL;
     struct dynamic_unwind_entry *entry;
@@ -614,12 +528,12 @@ RUNTIME_FUNCTION *lookup_function_info( ULONG_PTR pc, ULONG_PTR *base, LDR_MODUL
     /* PE module or wine module */
     if (!LdrFindEntryForAddress( (void *)pc, module ))
     {
-        *base = (ULONG_PTR)(*module)->BaseAddress;
-        if ((func = RtlImageDirectoryEntryToData( (*module)->BaseAddress, TRUE,
+        *base = (ULONG_PTR)(*module)->DllBase;
+        if ((func = RtlImageDirectoryEntryToData( (*module)->DllBase, TRUE,
                                                   IMAGE_DIRECTORY_ENTRY_EXCEPTION, &size )))
         {
             /* lookup in function table */
-            func = find_function_info( pc, (ULONG_PTR)(*module)->BaseAddress, func, size/sizeof(*func) );
+            func = find_function_info( pc, (ULONG_PTR)(*module)->DllBase, func, size/sizeof(*func) );
         }
     }
     else
@@ -652,7 +566,7 @@ RUNTIME_FUNCTION *lookup_function_info( ULONG_PTR pc, ULONG_PTR *base, LDR_MODUL
 PRUNTIME_FUNCTION WINAPI RtlLookupFunctionEntry( ULONG_PTR pc, ULONG_PTR *base,
                                                  UNWIND_HISTORY_TABLE *table )
 {
-    LDR_MODULE *module;
+    LDR_DATA_TABLE_ENTRY *module;
     RUNTIME_FUNCTION *func;
 
     /* FIXME: should use the history table to make things faster */

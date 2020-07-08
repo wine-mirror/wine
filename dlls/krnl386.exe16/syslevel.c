@@ -18,19 +18,14 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <stdarg.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
 #include <sys/types.h>
+
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
 #include "wine/winbase16.h"
 #include "kernel16_private.h"
-#include "wine/library.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(syslevel);
@@ -108,7 +103,7 @@ VOID WINAPI _EnterSysLevel(SYSLEVEL *lock)
     TRACE("(%p, level %d): thread %x count after  %d\n",
           lock, lock->level, GetCurrentThreadId(), thread_data->sys_count[lock->level] );
 
-    if (lock == &Win16Mutex) CallTo16_TebSelector = wine_get_fs();
+    if (lock == &Win16Mutex) CallTo16_TebSelector = get_fs();
 }
 
 /************************************************************************

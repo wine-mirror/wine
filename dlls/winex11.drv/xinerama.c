@@ -27,7 +27,6 @@
 #ifdef HAVE_X11_EXTENSIONS_XINERAMA_H
 #include <X11/extensions/Xinerama.h>
 #endif
-#include "wine/library.h"
 #include "x11drv.h"
 #include "wine/debug.h"
 #include "wine/heap.h"
@@ -86,14 +85,14 @@ static void load_xinerama(void)
 {
     void *handle;
 
-    if (!(handle = wine_dlopen(SONAME_LIBXINERAMA, RTLD_NOW, NULL, 0)))
+    if (!(handle = dlopen(SONAME_LIBXINERAMA, RTLD_NOW)))
     {
         WARN( "failed to open %s\n", SONAME_LIBXINERAMA );
         return;
     }
-    pXineramaQueryExtension = wine_dlsym( handle, "XineramaQueryExtension", NULL, 0 );
+    pXineramaQueryExtension = dlsym( handle, "XineramaQueryExtension" );
     if (!pXineramaQueryExtension) WARN( "XineramaQueryScreens not found\n" );
-    pXineramaQueryScreens = wine_dlsym( handle, "XineramaQueryScreens", NULL, 0 );
+    pXineramaQueryScreens = dlsym( handle, "XineramaQueryScreens" );
     if (!pXineramaQueryScreens) WARN( "XineramaQueryScreens not found\n" );
 }
 

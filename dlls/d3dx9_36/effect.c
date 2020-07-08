@@ -1469,11 +1469,7 @@ static HRESULT d3dx_set_shader_const_state(struct d3dx_effect *effect, enum SHAD
     D3DXVECTOR4 value;
     HRESULT ret;
 
-    if (op < 0 || op > SCT_PSINT)
-    {
-        FIXME("Unknown op %u.\n", op);
-        return D3DERR_INVALIDCALL;
-    }
+    assert(op < ARRAY_SIZE(const_tbl));
     element_count = param->bytes / const_tbl[op].elem_size;
     TRACE("%s, index %u, element_count %u.\n", const_tbl[op].name, index, element_count);
     if (param->type != const_tbl[op].type)
@@ -2206,7 +2202,7 @@ static D3DXHANDLE WINAPI d3dx_effect_GetParameterBySemantic(ID3DXEffect *iface, 
                 continue;
             }
 
-            if (!_strnicmp(temp_param->semantic, semantic, -1))
+            if (!stricmp(temp_param->semantic, semantic))
             {
                 TRACE("Returning parameter %p\n", temp_param);
                 return get_parameter_handle(temp_param);
@@ -2229,7 +2225,7 @@ static D3DXHANDLE WINAPI d3dx_effect_GetParameterBySemantic(ID3DXEffect *iface, 
                 continue;
             }
 
-            if (!_strnicmp(temp_param->semantic, semantic, -1))
+            if (!stricmp(temp_param->semantic, semantic))
             {
                 TRACE("Returning parameter %p\n", temp_param);
                 return get_parameter_handle(temp_param);
@@ -5568,6 +5564,12 @@ static HRESULT d3dx_parse_state(struct d3dx_effect *effect, struct d3dx_state *s
     state->type = ST_CONSTANT;
 
     read_dword(ptr, &state->operation);
+    if (state->operation >= ARRAY_SIZE(state_table))
+    {
+        WARN("Unknown state operation %u.\n", state->operation);
+        return D3DERR_INVALIDCALL;
+    }
+
     TRACE("Operation: %#x (%s)\n", state->operation, state_table[state->operation].name);
 
     read_dword(ptr, &state->index);

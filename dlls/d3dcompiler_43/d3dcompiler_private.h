@@ -115,12 +115,9 @@ struct samplerdecl {
     DWORD                   mod;
 };
 
-#define INSTRARRAY_INITIAL_SIZE 8
 struct bwriter_shader {
     enum shader_type        type;
-
-    /* Shader version selected */
-    DWORD                   version;
+    unsigned char major_version, minor_version;
 
     /* Local constants. Every constant that is not defined below is loaded from
      * the global constant set at shader runtime
@@ -151,6 +148,8 @@ static inline void *d3dcompiler_alloc(SIZE_T size)
 
 static inline void *d3dcompiler_realloc(void *ptr, SIZE_T size)
 {
+    if (!ptr)
+        return d3dcompiler_alloc(size);
     return HeapReAlloc(GetProcessHeap(), 0, ptr, size);
 }
 
@@ -294,65 +293,6 @@ static inline void set_parse_status(enum parse_status *current, enum parse_statu
     else if (update == PARSE_WARN && *current == PARSE_SUCCESS)
         *current = PARSE_WARN;
 }
-
-/* A reasonable value as initial size */
-#define BYTECODEBUFFER_INITIAL_SIZE 32
-struct bytecode_buffer {
-    DWORD *data;
-    DWORD size;
-    DWORD alloc_size;
-    /* For tracking rare out of memory situations without passing
-     * return values around everywhere
-     */
-    HRESULT state;
-};
-
-struct bc_writer; /* Predeclaration for use in vtable parameters */
-
-typedef void (*instr_writer)(struct bc_writer *This,
-                             const struct instruction *instr,
-                             struct bytecode_buffer *buffer);
-
-struct bytecode_backend {
-    void (*header)(struct bc_writer *This, const struct bwriter_shader *shader,
-                   struct bytecode_buffer *buffer);
-    void (*end)(struct bc_writer *This, const struct bwriter_shader *shader,
-                struct bytecode_buffer *buffer);
-    void (*srcreg)(struct bc_writer *This, const struct shader_reg *reg,
-                   struct bytecode_buffer *buffer);
-    void (*dstreg)(struct bc_writer *This, const struct shader_reg *reg,
-                   struct bytecode_buffer *buffer, DWORD shift, DWORD mod);
-    void (*opcode)(struct bc_writer *This, const struct instruction *instr,
-                   DWORD token, struct bytecode_buffer *buffer);
-
-    const struct instr_handler_table {
-        DWORD opcode;
-        instr_writer func;
-    } *instructions;
-};
-
-/* Bytecode writing stuff */
-struct bc_writer {
-    const struct bytecode_backend *funcs;
-
-    /* Avoid result checking */
-    HRESULT                       state;
-
-    DWORD                         version;
-
-    /* Vertex shader varying mapping */
-    DWORD                         oPos_regnum;
-    DWORD                         oD_regnum[2];
-    DWORD                         oT_regnum[8];
-    DWORD                         oFog_regnum;
-    DWORD                         oFog_mask;
-    DWORD                         oPts_regnum;
-    DWORD                         oPts_mask;
-
-    /* Pixel shader specific members */
-    DWORD                         t_regnum[8];
-    DWORD                         v_regnum[2];
-};
 
 /* Debug utility routines */
 const char *debug_print_srcmod(DWORD mod) DECLSPEC_HIDDEN;
@@ -591,7 +531,7 @@ enum bwriterdeclusage
 #define T3_REG          5
 
 struct bwriter_shader *SlAssembleShader(const char *text, char **messages) DECLSPEC_HIDDEN;
-HRESULT SlWriteBytecode(const struct bwriter_shader *shader, int dxversion, DWORD **result, DWORD *size) DECLSPEC_HIDDEN;
+HRESULT shader_write_bytecode(const struct bwriter_shader *shader, DWORD **result, DWORD *size) DECLSPEC_HIDDEN;
 void SlDeleteShader(struct bwriter_shader *shader) DECLSPEC_HIDDEN;
 
 /* The general IR structure is inspired by Mesa GLSL hir, even though the code
@@ -655,6 +595,7 @@ enum hlsl_sampler_dim
    HLSL_SAMPLER_DIM_2D,
    HLSL_SAMPLER_DIM_3D,
    HLSL_SAMPLER_DIM_CUBE,
+   HLSL_SAMPLER_DIM_MAX = HLSL_SAMPLER_DIM_CUBE
 };
 
 enum hlsl_matrix_majority
@@ -674,6 +615,7 @@ struct hlsl_type
     unsigned int modifiers;
     unsigned int dimx;
     unsigned int dimy;
+    unsigned int reg_size;
     union
     {
         struct list *elements;
@@ -692,6 +634,7 @@ struct hlsl_struct_field
     const char *name;
     const char *semantic;
     DWORD modifiers;
+    unsigned int reg_offset;
 };
 
 struct source_location
@@ -705,10 +648,9 @@ enum hlsl_ir_node_type
 {
     HLSL_IR_ASSIGNMENT = 0,
     HLSL_IR_CONSTANT,
-    HLSL_IR_CONSTRUCTOR,
-    HLSL_IR_DEREF,
     HLSL_IR_EXPR,
     HLSL_IR_IF,
+    HLSL_IR_LOAD,
     HLSL_IR_LOOP,
     HLSL_IR_JUMP,
     HLSL_IR_SWIZZLE,
@@ -721,6 +663,12 @@ struct hlsl_ir_node
     struct hlsl_type *data_type;
 
     struct source_location loc;
+
+    /* Liveness ranges. "index" is the index of this instruction. Since this is
+     * essentially an SSA value, the earliest live point is the index. This is
+     * true even for loops, since currently we can't have a reference to a
+     * value generated in an earlier iteration of the loop. */
+    unsigned int index, last_read;
 };
 
 #define HLSL_STORAGE_EXTERN          0x00000001
@@ -734,14 +682,14 @@ struct hlsl_ir_node
 #define HLSL_MODIFIER_CONST          0x00000100
 #define HLSL_MODIFIER_ROW_MAJOR      0x00000200
 #define HLSL_MODIFIER_COLUMN_MAJOR   0x00000400
-#define HLSL_MODIFIER_IN             0x00000800
-#define HLSL_MODIFIER_OUT            0x00001000
+#define HLSL_STORAGE_IN              0x00000800
+#define HLSL_STORAGE_OUT             0x00001000
 
 #define HLSL_TYPE_MODIFIERS_MASK     (HLSL_MODIFIER_PRECISE | HLSL_STORAGE_VOLATILE | \
                                       HLSL_MODIFIER_CONST | HLSL_MODIFIER_ROW_MAJOR | \
                                       HLSL_MODIFIER_COLUMN_MAJOR)
 
-#define HLSL_MODIFIERS_COMPARISON_MASK (HLSL_MODIFIER_ROW_MAJOR | HLSL_MODIFIER_COLUMN_MAJOR)
+#define HLSL_MODIFIERS_MAJORITY_MASK (HLSL_MODIFIER_ROW_MAJOR | HLSL_MODIFIER_COLUMN_MAJOR)
 
 struct reg_reservation
 {
@@ -759,7 +707,7 @@ struct hlsl_ir_var
     const struct reg_reservation *reg_reservation;
     struct list scope_entry, param_entry;
 
-    struct hlsl_var_allocation *allocation;
+    unsigned int first_write, last_read;
 };
 
 struct hlsl_ir_function
@@ -773,6 +721,7 @@ struct hlsl_ir_function
 struct hlsl_ir_function_decl
 {
     struct hlsl_type *return_type;
+    struct hlsl_ir_var *return_var;
     struct source_location loc;
     struct wine_rb_entry entry;
     struct hlsl_ir_function *func;
@@ -794,14 +743,7 @@ struct hlsl_ir_loop
     struct hlsl_ir_node node;
     /* loop condition is stored in the body (as "if (!condition) break;") */
     struct list *body;
-};
-
-struct hlsl_ir_assignment
-{
-    struct hlsl_ir_node node;
-    struct hlsl_ir_node *lhs;
-    struct hlsl_ir_node *rhs;
-    unsigned char writemask;
+    unsigned int next_index; /* liveness index of the end of the loop */
 };
 
 enum hlsl_ir_expr_op {
@@ -890,7 +832,6 @@ struct hlsl_ir_jump
 {
     struct hlsl_ir_node node;
     enum hlsl_ir_jump_type type;
-    struct hlsl_ir_node *return_value;
 };
 
 struct hlsl_ir_swizzle
@@ -900,31 +841,24 @@ struct hlsl_ir_swizzle
     DWORD swizzle;
 };
 
-enum hlsl_ir_deref_type
+struct hlsl_deref
 {
-    HLSL_IR_DEREF_VAR,
-    HLSL_IR_DEREF_ARRAY,
-    HLSL_IR_DEREF_RECORD,
+    struct hlsl_ir_var *var;
+    struct hlsl_ir_node *offset;
 };
 
-struct hlsl_ir_deref
+struct hlsl_ir_load
 {
     struct hlsl_ir_node node;
-    enum hlsl_ir_deref_type type;
-    union
-    {
-        struct hlsl_ir_var *var;
-        struct
-        {
-            struct hlsl_ir_node *array;
-            struct hlsl_ir_node *index;
-        } array;
-        struct
-        {
-            struct hlsl_ir_node *record;
-            struct hlsl_struct_field *field;
-        } record;
-    } v;
+    struct hlsl_deref src;
+};
+
+struct hlsl_ir_assignment
+{
+    struct hlsl_ir_node node;
+    struct hlsl_deref lhs;
+    struct hlsl_ir_node *rhs;
+    unsigned char writemask;
 };
 
 struct hlsl_ir_constant
@@ -932,24 +866,12 @@ struct hlsl_ir_constant
     struct hlsl_ir_node node;
     union
     {
-        union
-        {
-            unsigned u[16];
-            int i[16];
-            float f[16];
-            double d[16];
-            BOOL b[16];
-        } value;
-        struct hlsl_ir_constant *array_elements;
-        struct list *struct_elements;
-    } v;
-};
-
-struct hlsl_ir_constructor
-{
-    struct hlsl_ir_node node;
-    struct hlsl_ir_node *args[16];
-    unsigned int args_count;
+        unsigned u[16];
+        int i[16];
+        float f[16];
+        double d[16];
+        BOOL b[16];
+    } value;
 };
 
 struct hlsl_scope
@@ -1046,8 +968,17 @@ struct hlsl_parse_ctx
 
     struct list types;
     struct wine_rb_tree functions;
+    const struct hlsl_ir_function_decl *cur_function;
 
     enum hlsl_matrix_majority matrix_majority;
+
+    struct
+    {
+        struct hlsl_type *scalar[HLSL_TYPE_LAST_SCALAR + 1];
+        struct hlsl_type *vector[HLSL_TYPE_LAST_SCALAR + 1][4];
+        struct hlsl_type *sampler[HLSL_SAMPLER_DIM_MAX + 1];
+        struct hlsl_type *Void;
+    } builtin_types;
 };
 
 extern struct hlsl_parse_ctx hlsl_ctx DECLSPEC_HIDDEN;
@@ -1060,8 +991,8 @@ enum hlsl_error_level
 };
 
 void WINAPIV hlsl_message(const char *fmt, ...) PRINTF_ATTR(1,2) DECLSPEC_HIDDEN;
-void WINAPIV hlsl_report_message(const char *filename, DWORD line, DWORD column,
-        enum hlsl_error_level level, const char *fmt, ...) PRINTF_ATTR(5,6) DECLSPEC_HIDDEN;
+void WINAPIV hlsl_report_message(const struct source_location loc,
+        enum hlsl_error_level level, const char *fmt, ...) PRINTF_ATTR(3,4) DECLSPEC_HIDDEN;
 
 static inline struct hlsl_ir_expr *expr_from_node(const struct hlsl_ir_node *node)
 {
@@ -1069,10 +1000,10 @@ static inline struct hlsl_ir_expr *expr_from_node(const struct hlsl_ir_node *nod
     return CONTAINING_RECORD(node, struct hlsl_ir_expr, node);
 }
 
-static inline struct hlsl_ir_deref *deref_from_node(const struct hlsl_ir_node *node)
+static inline struct hlsl_ir_load *load_from_node(const struct hlsl_ir_node *node)
 {
-    assert(node->type == HLSL_IR_DEREF);
-    return CONTAINING_RECORD(node, struct hlsl_ir_deref, node);
+    assert(node->type == HLSL_IR_LOAD);
+    return CONTAINING_RECORD(node, struct hlsl_ir_load, node);
 }
 
 static inline struct hlsl_ir_constant *constant_from_node(const struct hlsl_ir_node *node)
@@ -1099,12 +1030,6 @@ static inline struct hlsl_ir_swizzle *swizzle_from_node(const struct hlsl_ir_nod
     return CONTAINING_RECORD(node, struct hlsl_ir_swizzle, node);
 }
 
-static inline struct hlsl_ir_constructor *constructor_from_node(const struct hlsl_ir_node *node)
-{
-    assert(node->type == HLSL_IR_CONSTRUCTOR);
-    return CONTAINING_RECORD(node, struct hlsl_ir_constructor, node);
-}
-
 static inline struct hlsl_ir_if *if_from_node(const struct hlsl_ir_node *node)
 {
     assert(node->type == HLSL_IR_IF);
@@ -1122,14 +1047,23 @@ static inline struct hlsl_ir_node *node_from_list(struct list *list)
     return LIST_ENTRY(list_tail(list), struct hlsl_ir_node, entry);
 }
 
+static inline void init_node(struct hlsl_ir_node *node, enum hlsl_ir_node_type type,
+        struct hlsl_type *data_type, struct source_location loc)
+{
+    node->type = type;
+    node->data_type = data_type;
+    node->loc = loc;
+}
+
 BOOL add_declaration(struct hlsl_scope *scope, struct hlsl_ir_var *decl, BOOL local_var) DECLSPEC_HIDDEN;
 struct hlsl_ir_var *get_variable(struct hlsl_scope *scope, const char *name) DECLSPEC_HIDDEN;
 void free_declaration(struct hlsl_ir_var *decl) DECLSPEC_HIDDEN;
 struct hlsl_type *new_hlsl_type(const char *name, enum hlsl_type_class type_class,
         enum hlsl_base_type base_type, unsigned dimx, unsigned dimy) DECLSPEC_HIDDEN;
 struct hlsl_type *new_array_type(struct hlsl_type *basic_type, unsigned int array_size) DECLSPEC_HIDDEN;
-struct hlsl_type *clone_hlsl_type(struct hlsl_type *old) DECLSPEC_HIDDEN;
+struct hlsl_type *clone_hlsl_type(struct hlsl_type *old, unsigned int default_majority) DECLSPEC_HIDDEN;
 struct hlsl_type *get_type(struct hlsl_scope *scope, const char *name, BOOL recursive) DECLSPEC_HIDDEN;
+BOOL is_row_major(const struct hlsl_type *type) DECLSPEC_HIDDEN;
 BOOL find_function(const char *name) DECLSPEC_HIDDEN;
 unsigned int components_count_type(struct hlsl_type *type) DECLSPEC_HIDDEN;
 BOOL compare_hlsl_types(const struct hlsl_type *t1, const struct hlsl_type *t2) DECLSPEC_HIDDEN;
@@ -1138,21 +1072,22 @@ struct hlsl_ir_expr *new_expr(enum hlsl_ir_expr_op op, struct hlsl_ir_node **ope
         struct source_location *loc) DECLSPEC_HIDDEN;
 struct hlsl_ir_expr *new_cast(struct hlsl_ir_node *node, struct hlsl_type *type,
 	struct source_location *loc) DECLSPEC_HIDDEN;
-struct hlsl_ir_deref *new_var_deref(struct hlsl_ir_var *var) DECLSPEC_HIDDEN;
-struct hlsl_ir_deref *new_record_deref(struct hlsl_ir_node *record, struct hlsl_struct_field *field) DECLSPEC_HIDDEN;
+struct hlsl_ir_node *implicit_conversion(struct hlsl_ir_node *node, struct hlsl_type *type,
+        struct source_location *loc) DECLSPEC_HIDDEN;
 struct hlsl_ir_node *make_assignment(struct hlsl_ir_node *left, enum parse_assign_op assign_op,
-        DWORD writemask, struct hlsl_ir_node *right) DECLSPEC_HIDDEN;
+        struct hlsl_ir_node *right) DECLSPEC_HIDDEN;
 void push_scope(struct hlsl_parse_ctx *ctx) DECLSPEC_HIDDEN;
 BOOL pop_scope(struct hlsl_parse_ctx *ctx) DECLSPEC_HIDDEN;
-struct hlsl_ir_function_decl *new_func_decl(struct hlsl_type *return_type, struct list *parameters) DECLSPEC_HIDDEN;
 void init_functions_tree(struct wine_rb_tree *funcs) DECLSPEC_HIDDEN;
 void add_function_decl(struct wine_rb_tree *funcs, char *name, struct hlsl_ir_function_decl *decl,
         BOOL intrinsic) DECLSPEC_HIDDEN;
-struct bwriter_shader *parse_hlsl_shader(const char *text, enum shader_type type, DWORD major, DWORD minor,
-        const char *entrypoint, char **messages) DECLSPEC_HIDDEN;
+HRESULT parse_hlsl_shader(const char *text, enum shader_type type, DWORD major, DWORD minor,
+        const char *entrypoint, ID3D10Blob **shader, char **messages) DECLSPEC_HIDDEN;
 
+const char *debug_base_type(const struct hlsl_type *type) DECLSPEC_HIDDEN;
 const char *debug_hlsl_type(const struct hlsl_type *type) DECLSPEC_HIDDEN;
 const char *debug_modifiers(DWORD modifiers) DECLSPEC_HIDDEN;
+const char *debug_node_type(enum hlsl_ir_node_type type) DECLSPEC_HIDDEN;
 void debug_dump_ir_function_decl(const struct hlsl_ir_function_decl *func) DECLSPEC_HIDDEN;
 
 void free_hlsl_type(struct hlsl_type *type) DECLSPEC_HIDDEN;

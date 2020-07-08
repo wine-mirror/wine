@@ -257,7 +257,6 @@ static void test_WsInitializeMessage(void)
 
 static void test_WsAddressMessage(void)
 {
-    static WCHAR localhost[] = {'h','t','t','p',':','/','/','l','o','c','a','l','h','o','s','t','/',0};
     HRESULT hr;
     WS_MESSAGE *msg;
     WS_ENDPOINT_ADDRESS endpoint;
@@ -304,8 +303,8 @@ static void test_WsAddressMessage(void)
     ok( hr == S_OK, "got %08x\n", hr );
 
     memset( &endpoint, 0, sizeof(endpoint) );
-    endpoint.url.chars  = localhost;
-    endpoint.url.length = ARRAY_SIZE( localhost );
+    endpoint.url.chars  = (WCHAR *)L"http://localhost/";
+    endpoint.url.length = ARRAY_SIZE( L"http://localhost/" ) - 1;
     hr = WsAddressMessage( msg, &endpoint, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
@@ -639,12 +638,11 @@ static void test_WsSetHeader(void)
         "<a:MessageID>urn:uuid:00000000-0000-0000-0000-000000000000</a:MessageID>"
         "<a:Action s:mustUnderstand=\"1\">action2</a:Action></s:Header>"
         "<s:Body/></s:Envelope>";
-    static const WCHAR action[] = {'a','c','t','i','o','n',0};
     static const WS_XML_STRING action2 = {7, (BYTE *)"action2"};
     HRESULT hr;
     WS_MESSAGE *msg;
     WS_XML_WRITER *writer;
-    const WCHAR *ptr = action;
+    const WCHAR *ptr = L"action";
 
     hr = WsSetHeader( NULL, 0, 0, 0, NULL, 0, NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
@@ -848,8 +846,6 @@ static void test_WsAddCustomHeader(void)
         "<header2 xmlns=\"ns\">value2</header2></s:Header><s:Body/></s:Envelope>";
     static WS_XML_STRING header = {6, (BYTE *)"header"}, ns = {2, (BYTE *)"ns"};
     static WS_XML_STRING header2 = {7, (BYTE *)"header2"};
-    static WCHAR valueW[] = {'v','a','l','u','e',0};
-    static WCHAR value2W[] = {'v','a','l','u','e','2',0};
     HRESULT hr;
     WS_MESSAGE *msg;
     WS_ELEMENT_DESCRIPTION desc;
@@ -891,12 +887,12 @@ static void test_WsAddCustomHeader(void)
     ok( hr == S_OK, "got %08x\n", hr );
     check_output_header( msg, expected2, -1, strstr(expected2, "urn:uuid:") - expected2, 46, __LINE__ );
 
-    test.value = valueW;
+    test.value = L"value";
     hr = WsAddCustomHeader( msg, &desc, WS_WRITE_REQUIRED_VALUE, &test, sizeof(test), 0, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     check_output_header( msg, expected, -1, strstr(expected, "urn:uuid:") - expected, 46, __LINE__ );
 
-    test.value = value2W;
+    test.value = L"value2";
     hr = WsAddCustomHeader( msg, &desc, WS_WRITE_REQUIRED_VALUE, &test, sizeof(test), 0, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     check_output_header( msg, expected3, -1, strstr(expected3, "urn:uuid:") - expected3, 46, __LINE__ );
@@ -1243,9 +1239,8 @@ static void test_WsGetHeader(void)
         "<Action s:mustUnderstand=\"1\" "
         "xmlns=\"http://schemas.microsoft.com/ws/2005/05/addressing/none\">action</Action>"
         "</s:Header><s:Body/></s:Envelope>";
-    static WCHAR action[] = {'a','c','t','i','o','n',0};
     WS_MESSAGE *msg;
-    WCHAR *ptr;
+    const WCHAR *ptr;
     HRESULT hr;
 
     hr = WsGetHeader( NULL, 0, 0, 0, NULL, NULL, 0, NULL );
@@ -1275,7 +1270,7 @@ static void test_WsGetHeader(void)
     hr = WsGetHeader( msg, WS_ACTION_HEADER, WS_WSZ_TYPE, WS_READ_REQUIRED_POINTER, NULL, NULL, 0, NULL );
     ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
 
-    ptr = action;
+    ptr = L"action";
     hr = WsSetHeader( msg, WS_ACTION_HEADER, WS_WSZ_TYPE, WS_WRITE_REQUIRED_POINTER, &ptr, sizeof(ptr), NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     check_output_header( msg, expected, -1, strstr(expected, "urn:uuid:") - expected, 46, __LINE__ );
@@ -1291,7 +1286,7 @@ static void test_WsGetHeader(void)
     hr = WsGetHeader( msg, WS_ACTION_HEADER, WS_WSZ_TYPE, WS_READ_REQUIRED_POINTER, NULL, &ptr, sizeof(ptr), NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( ptr != NULL, "ptr not set\n" );
-    ok( !memcmp( ptr, action, sizeof(action) ), "wrong data\n" );
+    ok( !memcmp( ptr, L"action", sizeof(L"action") ), "wrong data\n" );
     WsFreeMessage( msg );
 
     hr = WsCreateMessage( WS_ENVELOPE_VERSION_NONE, WS_ADDRESSING_VERSION_TRANSPORT, NULL, 0, &msg, NULL );
@@ -1300,7 +1295,7 @@ static void test_WsGetHeader(void)
     hr = WsInitializeMessage( msg,  WS_REQUEST_MESSAGE, NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
-    ptr = action;
+    ptr = L"action";
     hr = WsSetHeader( msg, WS_ACTION_HEADER, WS_WSZ_TYPE, WS_WRITE_REQUIRED_POINTER, &ptr, sizeof(ptr), NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     if (hr == S_OK) check_output_header( msg, expected2, -1, 0, 0, __LINE__ );
@@ -1309,7 +1304,7 @@ static void test_WsGetHeader(void)
     hr = WsGetHeader( msg, WS_ACTION_HEADER, WS_WSZ_TYPE, WS_READ_REQUIRED_POINTER, NULL, &ptr, sizeof(ptr), NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( ptr != NULL, "ptr not set\n" );
-    ok( !memcmp( ptr, action, sizeof(action) ), "wrong data\n" );
+    ok( !memcmp( ptr, L"action", sizeof(L"action") ), "wrong data\n" );
     WsFreeMessage( msg );
 
     hr = WsCreateMessage( WS_ENVELOPE_VERSION_SOAP_1_2, WS_ADDRESSING_VERSION_TRANSPORT, NULL, 0, &msg, NULL );
@@ -1318,7 +1313,7 @@ static void test_WsGetHeader(void)
     hr = WsInitializeMessage( msg,  WS_REQUEST_MESSAGE, NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
-    ptr = action;
+    ptr = L"action";
     hr = WsSetHeader( msg, WS_ACTION_HEADER, WS_WSZ_TYPE, WS_WRITE_REQUIRED_POINTER, &ptr, sizeof(ptr), NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     if (hr == S_OK) check_output_header( msg, expected3, -1, 0, 0, __LINE__ );
@@ -1327,7 +1322,7 @@ static void test_WsGetHeader(void)
     hr = WsGetHeader( msg, WS_ACTION_HEADER, WS_WSZ_TYPE, WS_READ_REQUIRED_POINTER, NULL, &ptr, sizeof(ptr), NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( ptr != NULL, "ptr not set\n" );
-    ok( !memcmp( ptr, action, sizeof(action) ), "wrong data\n" );
+    ok( !memcmp( ptr, L"action", sizeof(L"action") ), "wrong data\n" );
     WsFreeMessage( msg );
 }
 
@@ -1336,7 +1331,6 @@ static void test_WsGetCustomHeader(void)
     static char expected[] =
         "<Envelope><Header><Custom xmlns=\"ns\">value</Custom></Header><Body/></Envelope>";
     static WS_XML_STRING custom = {6, (BYTE *)"Custom"}, ns = {2, (BYTE *)"ns"};
-    static WCHAR valueW[] = {'v','a','l','u','e',0};
     WS_ELEMENT_DESCRIPTION desc;
     WS_STRUCT_DESCRIPTION s;
     WS_FIELD_DESCRIPTION f, *fields[1];
@@ -1375,7 +1369,7 @@ static void test_WsGetCustomHeader(void)
     desc.type             = WS_STRUCT_TYPE;
     desc.typeDescription  = &s;
 
-    test.value = valueW;
+    test.value = L"value";
     hr = WsAddCustomHeader( msg, &desc, WS_WRITE_REQUIRED_VALUE, &test, sizeof(test), 0, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     check_output_header( msg, expected, -1, 0, 0, __LINE__ );
@@ -1394,7 +1388,7 @@ static void test_WsGetCustomHeader(void)
                             NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( test.value != NULL, "value not set\n" );
-    ok( !memcmp( test.value, valueW, sizeof(valueW) ), "wrong value\n" );
+    ok( !memcmp( test.value, L"value", sizeof(L"value") ), "wrong value\n" );
     WsFreeMessage( msg );
 }
 

@@ -95,20 +95,25 @@ static LPCWSTR COMM_ParseParity(LPCWSTR ptr, LPBYTE lpparity)
 	   member of DCB and not fParity even when parity is specified in the
 	   device control string */
 
-	switch(toupperW(*ptr++))
+	switch(*ptr++)
 	{
+	case 'e':
 	case 'E':
 		*lpparity = EVENPARITY;
 		break;
+	case 'm':
 	case 'M':
 		*lpparity = MARKPARITY;
 		break;
+	case 'n':
 	case 'N':
 		*lpparity = NOPARITY;
 		break;
+	case 'o':
 	case 'O':
 		*lpparity = ODDPARITY;
 		break;
+	case 's':
 	case 'S':
 		*lpparity = SPACEPARITY;
 		break;
@@ -239,7 +244,7 @@ static BOOL COMM_BuildOldCommDCB(LPCWSTR device, LPDCB lpdcb)
 	{
 		device++;
 		while(*device == ' ') device++;
-		if(*device) last = toupperW(*device++);
+		if(*device) last = *device++;
 		while(*device == ' ') device++;
 	}
 
@@ -255,6 +260,7 @@ static BOOL COMM_BuildOldCommDCB(LPCWSTR device, LPDCB lpdcb)
 		lpdcb->fDtrControl = DTR_CONTROL_ENABLE;
 		lpdcb->fRtsControl = RTS_CONTROL_ENABLE;
 		break;
+	case 'x':
 	case 'X':
 		lpdcb->fInX = TRUE;
 		lpdcb->fOutX = TRUE;
@@ -263,6 +269,7 @@ static BOOL COMM_BuildOldCommDCB(LPCWSTR device, LPDCB lpdcb)
 		lpdcb->fDtrControl = DTR_CONTROL_ENABLE;
 		lpdcb->fRtsControl = RTS_CONTROL_ENABLE;
 		break;
+	case 'p':
 	case 'P':
 		lpdcb->fInX = FALSE;
 		lpdcb->fOutX = FALSE;

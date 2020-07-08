@@ -1291,6 +1291,12 @@ static HRESULT WINAPI Widget_iface_ptr(IWidget *iface, ISomethingFromDispatch **
     return S_OK;
 }
 
+static HRESULT WINAPI Widget_iface_noptr(IWidget *iface, IUnknown unk, IDispatch disp, ISomethingFromDispatch sfd)
+{
+    check_iface_marshal((IUnknown *)unk.lpVtbl, (IDispatch *)disp.lpVtbl, (ISomethingFromDispatch *)sfd.lpVtbl);
+    return S_OK;
+}
+
 static HRESULT WINAPI Widget_bstr(IWidget *iface, BSTR in, BSTR *out, BSTR *in_ptr, BSTR *in_out)
 {
     UINT len;
@@ -1571,6 +1577,22 @@ static HRESULT WINAPI Widget_Coclass_ptr(IWidget *iface, Coclass1 **in, Coclass1
     return S_OK;
 }
 
+static HRESULT WINAPI Widget_Coclass_noptr(IWidget *iface, Coclass1 class1, Coclass2 class2, Coclass3 class3)
+{
+    HRESULT hr;
+
+    hr = ICoclass1_test(class1.iface);
+    ok(hr == 1, "Got hr %#x.\n", hr);
+
+    hr = ICoclass2_test(class2.iface);
+    ok(hr == 2, "Got hr %#x.\n", hr);
+
+    hr = ICoclass1_test(class3.iface);
+    ok(hr == 1, "Got hr %#x.\n", hr);
+
+    return S_OK;
+}
+
 static HRESULT WINAPI Widget_no_in_out(IWidget *iface, BSTR str, int i)
 {
     ok(SysStringLen(str) == 4, "unexpected len\n");
@@ -1623,6 +1645,7 @@ static const struct IWidgetVtbl Widget_VTable =
     Widget_iface_in,
     Widget_iface_out,
     Widget_iface_ptr,
+    Widget_iface_noptr,
     Widget_bstr,
     Widget_variant,
     Widget_safearray,
@@ -1637,6 +1660,7 @@ static const struct IWidgetVtbl Widget_VTable =
     Widget_myint,
     Widget_Coclass,
     Widget_Coclass_ptr,
+    Widget_Coclass_noptr,
     Widget_no_in_out,
 };
 
@@ -2169,6 +2193,9 @@ static void test_marshal_iface(IWidget *widget, IDispatch *disp)
     ISomethingFromDispatch *sfd1, *sfd2, *sfd3, *proxy_sfd, *sfd_in, *sfd_out, *sfd_in_out;
     IUnknown *proxy_unk, *proxy_unk2, *unk_in, *unk_out, *unk_in_out;
     IDispatch *proxy_disp;
+    IUnknown unk_noptr;
+    IDispatch disp_noptr;
+    ISomethingFromDispatch sfd_noptr;
     HRESULT hr;
 
     testmode = 0;
@@ -2249,6 +2276,18 @@ static void test_marshal_iface(IWidget *widget, IDispatch *disp)
     hr = IWidget_iface_ptr(widget, &sfd_in, &sfd_out, &sfd_in_out);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(!sfd_in_out, "Got [in, out] %p.\n", sfd_in_out);
+    release_iface(sfd3);
+
+    sfd1 = create_disp_obj();
+    sfd2 = create_disp_obj();
+    sfd3 = create_disp_obj();
+    unk_noptr.lpVtbl = (IUnknownVtbl *)sfd1;
+    disp_noptr.lpVtbl = (IDispatchVtbl *)sfd2;
+    sfd_noptr.lpVtbl = (ISomethingFromDispatchVtbl *)sfd3;
+    hr = IWidget_iface_noptr(widget, unk_noptr, disp_noptr, sfd_noptr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    release_iface(sfd1);
+    release_iface(sfd2);
     release_iface(sfd3);
 
     /* Test with Invoke(). Note that since we pass VT_UNKNOWN, we don't get our
@@ -2649,6 +2688,9 @@ static void test_marshal_coclass(IWidget *widget, IDispatch *disp)
     struct coclass_obj *class1, *class2, *class3;
     IUnknown *unk_in, *unk_out, *unk_in_out;
     ICoclass1 *in, *out, *in_out;
+    Coclass1 class1_noptr;
+    Coclass2 class2_noptr;
+    Coclass3 class3_noptr;
     HRESULT hr;
 
     class1 = create_coclass_obj();
@@ -2719,6 +2761,18 @@ static void test_marshal_coclass(IWidget *widget, IDispatch *disp)
             (Coclass1 **)&out, (Coclass1 **)&in_out);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(!in_out, "Got [in, out] %p.\n", in_out);
+
+    class1 = create_coclass_obj();
+    class2 = create_coclass_obj();
+    class3 = create_coclass_obj();
+    class1_noptr.iface = &class1->ICoclass1_iface;
+    class2_noptr.iface = &class2->ICoclass2_iface;
+    class3_noptr.iface = &class3->ICoclass1_iface;
+    hr = IWidget_Coclass_noptr(widget, class1_noptr, class2_noptr, class3_noptr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    release_iface(&class1->ICoclass1_iface);
+    release_iface(&class2->ICoclass1_iface);
+    release_iface(&class3->ICoclass1_iface);
 
     /* Test with Invoke(). Note that since we pass VT_UNKNOWN, we don't get our
      * interface back, but rather an IUnknown. */

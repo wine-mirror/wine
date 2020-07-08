@@ -1,0 +1,100 @@
+/*
+ * Copyright 2020 Nikolay Sivov for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+import "unknwn.idl";
+import "audioclient.idl";
+import "propsys.idl";
+
+typedef [v1_enum] enum AudioObjectType
+{
+    AudioObjectType_None             = 0,
+    AudioObjectType_Dynamic          = 0x00000001,
+    AudioObjectType_FrontLeft        = 0x00000002,
+    AudioObjectType_FrontRight       = 0x00000004,
+    AudioObjectType_FrontCenter      = 0x00000008,
+    AudioObjectType_LowFrequency     = 0x00000010,
+    AudioObjectType_SideLeft         = 0x00000020,
+    AudioObjectType_SideRight        = 0x00000040,
+    AudioObjectType_BackLeft         = 0x00000080,
+    AudioObjectType_BackRight        = 0x00000100,
+    AudioObjectType_TopFrontLeft     = 0x00000200,
+    AudioObjectType_TopFrontRight    = 0x00000400,
+    AudioObjectType_TopBackLeft      = 0x00000800,
+    AudioObjectType_TopBackRight     = 0x00001000,
+    AudioObjectType_BottomFrontLeft  = 0x00002000,
+    AudioObjectType_BottomFrontRight = 0x00004000,
+    AudioObjectType_BottomBackLeft   = 0x00008000,
+    AudioObjectType_BottomBackRight  = 0x00010000,
+    AudioObjectType_BackCenter       = 0x00020000,
+} AudioObjectType;
+
+[
+    object,
+    uuid(dcdaa858-895a-4a22-a5eb-67bda506096d),
+    pointer_default(unique),
+    local
+]
+interface IAudioFormatEnumerator : IUnknown
+{
+    HRESULT GetCount(
+        [out] UINT32 *count);
+
+    HRESULT GetFormat(
+        [in] UINT32 index,
+        [out] WAVEFORMATEX **format);
+}
+
+[
+    object,
+    uuid(bbf8e066-aaaa-49be-9a4d-fd2a858ea27f),
+    pointer_default(unique),
+    local
+]
+interface ISpatialAudioClient : IUnknown
+{
+    HRESULT GetStaticObjectPosition(
+        [in] AudioObjectType type,
+        [out] float *x,
+        [out] float *y,
+        [out] float *z);
+
+    HRESULT GetNativeStaticObjectTypeMask(
+        [out] AudioObjectType *mask);
+
+    HRESULT GetMaxDynamicObjectCount(
+        [out] UINT32 *value);
+
+    HRESULT GetSupportedAudioObjectFormatEnumerator(
+        [out] IAudioFormatEnumerator **enumerator);
+
+    HRESULT GetMaxFrameCount(
+        [in] WAVEFORMATEX const *format,
+        [out] UINT32 *count);
+
+    HRESULT IsAudioObjectFormatSupported(
+        [in] WAVEFORMATEX const *format);
+
+    HRESULT IsSpatialAudioStreamAvailable(
+        [in] REFIID stream_uuid,
+        [in] PROPVARIANT const *info);
+
+    HRESULT ActivateSpatialAudioStream(
+        [in] PROPVARIANT const *params,
+        [in] REFIID riid,
+        [out, iid_is(riid)] void **stream);
+}

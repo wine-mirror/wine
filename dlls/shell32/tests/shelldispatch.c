@@ -1018,6 +1018,7 @@ static void test_ShellWindows(void)
 {
     IShellWindows *shellwindows;
     LONG cookie, cookie2, ret;
+    ITEMIDLIST *pidl;
     IDispatch *disp;
     VARIANT v, v2;
     HRESULT hr;
@@ -1034,15 +1035,12 @@ static void test_ShellWindows(void)
     ok(hr == HRESULT_FROM_WIN32(RPC_X_NULL_REF_POINTER), "got 0x%08x\n", hr);
 
     hr = IShellWindows_Register(shellwindows, NULL, 0, SWC_EXPLORER, &cookie);
-todo_wine
     ok(hr == E_POINTER, "got 0x%08x\n", hr);
 
     hr = IShellWindows_Register(shellwindows, (IDispatch*)shellwindows, 0, SWC_EXPLORER, &cookie);
-todo_wine
     ok(hr == E_POINTER, "got 0x%08x\n", hr);
 
     hr = IShellWindows_Register(shellwindows, (IDispatch*)shellwindows, 0, SWC_EXPLORER, &cookie);
-todo_wine
     ok(hr == E_POINTER, "got 0x%08x\n", hr);
 
     hwnd = CreateWindowExA(0, "button", "test", BS_CHECKBOX | WS_VISIBLE | WS_POPUP,
@@ -1051,34 +1049,56 @@ todo_wine
 
     cookie = 0;
     hr = IShellWindows_Register(shellwindows, NULL, HandleToLong(hwnd), SWC_EXPLORER, &cookie);
-todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(cookie != 0, "got %d\n", cookie);
-}
+
     cookie2 = 0;
     hr = IShellWindows_Register(shellwindows, NULL, HandleToLong(hwnd), SWC_EXPLORER, &cookie2);
-todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(cookie2 != 0 && cookie2 != cookie, "got %d\n", cookie2);
-}
+
+    pidl = ILCreateFromPathA("C:\\");
+    V_VT(&v) = VT_ARRAY | VT_UI1;
+    V_ARRAY(&v) = SafeArrayCreateVector(VT_UI1, 0, ILGetSize(pidl));
+    memcpy(V_ARRAY(&v)->pvData, pidl, ILGetSize(pidl));
+
+    VariantInit(&v2);
+    hr = IShellWindows_FindWindowSW(shellwindows, &v, &v2, SWC_EXPLORER, &ret, 0, &disp);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(!ret, "Got window %#x.\n", ret);
+    ok(!disp, "Got IDispatch %p.\n", &disp);
+
+    hr = IShellWindows_OnNavigate(shellwindows, 0, &v);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
+    hr = IShellWindows_OnNavigate(shellwindows, cookie, &v);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IShellWindows_FindWindowSW(shellwindows, &v, &v2, SWC_EXPLORER, &ret, 0, &disp);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(ret == (LONG)(LONG_PTR)hwnd, "Expected %p, got %#x.\n", hwnd, ret);
+    ok(!disp, "Got IDispatch %p.\n", &disp);
+
     hr = IShellWindows_Revoke(shellwindows, cookie);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IShellWindows_FindWindowSW(shellwindows, &v, &v2, SWC_EXPLORER, &ret, 0, &disp);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(!ret, "Got window %#x.\n", ret);
+    ok(!disp, "Got IDispatch %p.\n", &disp);
+
     hr = IShellWindows_Revoke(shellwindows, cookie2);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IShellWindows_Revoke(shellwindows, 0);
-todo_wine
     ok(hr == S_FALSE, "got 0x%08x\n", hr);
 
     /* we can register ourselves as desktop, but FindWindowSW still returns real desktop window */
     cookie = 0;
     hr = IShellWindows_Register(shellwindows, NULL, HandleToLong(hwnd), SWC_DESKTOP, &cookie);
-todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(cookie != 0, "got %d\n", cookie);
-}
+
     disp = (void*)0xdeadbeef;
     ret = 0xdead;
     VariantInit(&v);
@@ -1208,7 +1228,6 @@ todo_wine
     ok(ret == 0, "got %d\n", ret);
 
     hr = IShellWindows_Revoke(shellwindows, cookie);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
     DestroyWindow(hwnd);
     IShellWindows_Release(shellwindows);

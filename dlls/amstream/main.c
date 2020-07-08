@@ -74,7 +74,8 @@ struct object_creation_info
 static const struct object_creation_info object_creation[] =
 {
     { &CLSID_AMMultiMediaStream, multimedia_stream_create },
-    { &CLSID_AMDirectDrawStream, multimedia_stream_create },
+    { &CLSID_AMDirectDrawStream, ddraw_stream_create },
+    { &CLSID_AMAudioStream, audio_stream_create },
     { &CLSID_AMAudioData, AMAudioData_create },
     { &CLSID_MediaStreamFilter, filter_create }
 };

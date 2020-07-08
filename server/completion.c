@@ -37,7 +37,6 @@
 #include "windef.h"
 #include "winternl.h"
 
-#include "wine/unicode.h"
 #include "object.h"
 #include "file.h"
 #include "handle.h"

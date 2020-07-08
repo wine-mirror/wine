@@ -5,7 +5,6 @@ C_SRCS = \
 	ffs.c \
 	fstatvfs.c \
 	getopt.c \
-	interlocked.c \
 	isfinite.c \
 	isinf.c \
 	isnan.c \
@@ -20,7 +19,6 @@ C_SRCS = \
 	statvfs.c \
 	string.c \
 	strnlen.c \
-	stubs.c \
 	symlink.c \
 	usleep.c \
 	wctype.c

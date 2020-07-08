@@ -75,7 +75,6 @@ static struct list *file_get_kernel_obj_list( struct object *obj );
 static void file_destroy( struct object *obj );
 
 static int file_get_poll_events( struct fd *fd );
-static int file_flush( struct fd *fd, struct async *async );
 static enum server_fd_type file_get_fd_type( struct fd *fd );
 
 static const struct object_ops file_ops =
@@ -108,7 +107,7 @@ static const struct fd_ops file_fd_ops =
     file_get_fd_type,             /* get_fd_type */
     no_fd_read,                   /* read */
     no_fd_write,                  /* write */
-    file_flush,                   /* flush */
+    no_fd_flush,                  /* flush */
     default_fd_get_file_info,     /* get_file_info */
     no_fd_get_volume_info,        /* get_volume_info */
     default_fd_ioctl,             /* ioctl */
@@ -191,6 +190,12 @@ static struct object *create_file_obj( struct fd *fd, unsigned int access, mode_
     return &file->obj;
 }
 
+int is_file_executable( const char *name )
+{
+    int len = strlen( name );
+    return len >= 4 && (!strcasecmp( name + len - 4, ".exe") || !strcasecmp( name + len - 4, ".com" ));
+}
+
 static struct object *create_file( struct fd *root, const char *nameptr, data_size_t len,
                                    unsigned int access, unsigned int sharing, int create,
                                    unsigned int options, unsigned int attrs,
@@ -236,8 +241,7 @@ static struct object *create_file( struct fd *root, const char *nameptr, data_si
     else
         mode = (attrs & FILE_ATTRIBUTE_READONLY) ? 0444 : 0666;
 
-    if (len >= 4 &&
-        (!strcasecmp( name + len - 4, ".exe" ) || !strcasecmp( name + len - 4, ".com" )))
+    if (is_file_executable( name ))
     {
         if (mode & S_IRUSR)
             mode |= S_IXUSR;
@@ -289,17 +293,6 @@ static int file_get_poll_events( struct fd *fd )
     if (file->access & FILE_UNIX_READ_ACCESS) events |= POLLIN;
     if (file->access & FILE_UNIX_WRITE_ACCESS) events |= POLLOUT;
     return events;
-}
-
-static int file_flush( struct fd *fd, struct async *async )
-{
-    int unix_fd = get_unix_fd( fd );
-    if (unix_fd != -1 && fsync( unix_fd ) == -1)
-    {
-        file_set_error();
-        return 0;
-    }
-    return 1;
 }
 
 static enum server_fd_type file_get_fd_type( struct fd *fd )

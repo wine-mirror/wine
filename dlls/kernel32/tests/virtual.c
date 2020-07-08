@@ -2865,8 +2865,8 @@ static void test_atl_thunk_emulation( ULONG dep_flags )
     success = VirtualProtect( base, size, PAGE_READWRITE, &old_prot );
     ok( success, "VirtualProtect failed %u\n", GetLastError() );
 
-    ret = (DWORD_PTR)atl5_test_func;
-    ret = call_proc_excpt( (void *)base, &ret - 1 );
+    results[1] = atl5_test_func;
+    ret = call_proc_excpt( (void *)base, results );
     /* FIXME: We don't check the content of the registers EAX/ECX yet */
     ok( ret == 44, "call returned wrong result, expected 44, got %d\n", ret );
     ok( num_guard_page_calls == 0, "expected no STATUS_GUARD_PAGE_VIOLATION exception, got %d exceptions\n", num_guard_page_calls );
@@ -4154,7 +4154,7 @@ static void test_shared_memory(BOOL is_child)
         sprintf(cmdline, "\"%s\" virtual sharedmem", argv[0]);
         ret = CreateProcessA(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
         ok(ret, "CreateProcess(%s) error %d\n", cmdline, GetLastError());
-        winetest_wait_child_process(pi.hProcess);
+        wait_child_process(pi.hProcess);
         CloseHandle(pi.hThread);
         CloseHandle(pi.hProcess);
     }
@@ -4194,7 +4194,7 @@ static void test_shared_memory_ro(BOOL is_child, DWORD child_access)
         sprintf(cmdline, "\"%s\" virtual sharedmemro %x", argv[0], child_access);
         ret = CreateProcessA(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
         ok(ret, "CreateProcess(%s) error %d\n", cmdline, GetLastError());
-        winetest_wait_child_process(pi.hProcess);
+        wait_child_process(pi.hProcess);
         CloseHandle(pi.hThread);
         CloseHandle(pi.hProcess);
 

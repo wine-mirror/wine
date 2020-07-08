@@ -88,7 +88,7 @@
 @ stdcall URLOpenBlockingStreamA(ptr str ptr long ptr)
 @ stdcall URLOpenBlockingStreamW(ptr wstr ptr long ptr)
 @ stub URLOpenPullStreamA
-@ stub URLOpenPullStreamW
+@ stdcall URLOpenPullStreamW(ptr wstr long ptr)
 @ stdcall URLOpenStreamA(ptr str long ptr)
 @ stdcall URLOpenStreamW(ptr wstr long ptr)
 @ stub UrlMkBuildVersion

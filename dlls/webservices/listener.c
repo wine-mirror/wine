@@ -286,7 +286,6 @@ void WINAPI WsFreeListener( WS_LISTENER *handle )
 
 HRESULT resolve_hostname( const WCHAR *host, USHORT port, struct sockaddr *addr, int *addr_len, int flags )
 {
-    static const WCHAR fmtW[] = {'%','u',0};
     WCHAR service[6];
     ADDRINFOW hints, *res, *info;
     HRESULT hr = WS_E_ADDRESS_NOT_AVAILABLE;
@@ -296,7 +295,7 @@ HRESULT resolve_hostname( const WCHAR *host, USHORT port, struct sockaddr *addr,
     hints.ai_family = AF_INET;
 
     *addr_len = 0;
-    swprintf( service, ARRAY_SIZE(service), fmtW, port );
+    swprintf( service, ARRAY_SIZE(service), L"%u", port );
     if (GetAddrInfoW( host, service, &hints, &res )) return HRESULT_FROM_WIN32( WSAGetLastError() );
 
     info = res;

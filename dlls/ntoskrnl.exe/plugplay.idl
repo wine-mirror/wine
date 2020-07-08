@@ -1,0 +1,2 @@
+#pragma makedep client
+#include "wine/plugplay.idl"

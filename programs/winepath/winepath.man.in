@@ -27,8 +27,6 @@ format.
 separate output with \\0 character, instead of a newline.
 .IP \fB\-h\fR,\fB\ \-\-help
 shows winepath help message and exit.
-.IP \fB\-v\fR,\fB\ \-\-version
-shows version information and exit.
 .SH BUGS
 Bugs can be reported on the
 .UR https://bugs.winehq.org

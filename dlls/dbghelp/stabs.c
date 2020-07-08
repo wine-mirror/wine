@@ -29,61 +29,38 @@
  *     available (hopefully) from http://sources.redhat.com/gdb/onlinedocs
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <sys/types.h>
 #include <fcntl.h>
-#ifdef HAVE_SYS_STAT_H
-# include <sys/stat.h>
-#endif
-#ifdef HAVE_SYS_MMAN_H
-#include <sys/mman.h>
-#endif
 #include <limits.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
 #include <stdio.h>
 #include <assert.h>
 #include <stdarg.h>
-
-#ifdef HAVE_MACH_O_NLIST_H
-# include <mach-o/nlist.h>
-#endif
 
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
 
 #include "dbghelp_private.h"
+#include "image_private.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dbghelp_stabs);
 
 /* Masks for n_type field */
-#ifndef N_STAB
 #define N_STAB		0xe0
-#endif
-#ifndef N_TYPE
+#define N_PEXT		0x10
 #define N_TYPE		0x1e
-#endif
-#ifndef N_EXT
 #define N_EXT		0x01
-#endif
 
 /* Values for (n_type & N_TYPE) */
-#ifndef N_UNDF
 #define N_UNDF		0x00
-#endif
-#ifndef N_ABS
 #define N_ABS		0x02
-#endif
-
+#define N_INDR		0x0a
+#define N_SECT		0x0e
 #define N_GSYM		0x20
 #define N_FUN		0x24
 #define N_STSYM		0x26
@@ -105,15 +82,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(dbghelp_stabs);
 #define N_LBRAC		0xc0
 #define N_EXCL		0xc2
 #define N_RBRAC		0xe0
-
-struct stab_nlist
-{
-    unsigned            n_strx;
-    unsigned char       n_type;
-    char                n_other;
-    short               n_desc;
-    unsigned            n_value;
-};
 
 static void stab_strcpy(char* dest, int sz, const char* source)
 {
@@ -153,7 +121,7 @@ static void stab_strcpy(char* dest, int sz, const char* source)
 typedef struct
 {
    char*		name;
-   unsigned long	value;
+   ULONG_PTR            value;
    struct symt**        vector;
    int			nrofentries;
 } include_def;
@@ -169,7 +137,7 @@ static struct symt**            cu_vector = NULL;
 static int 		        cu_nrofentries = 0;
 static struct symt_basic*       stabs_basic[36];
 
-static int stabs_new_include(const char* file, unsigned long val)
+static int stabs_new_include(const char* file, ULONG_PTR val)
 {
     if (num_include_def == num_alloc_include_def)
     {
@@ -194,7 +162,7 @@ static int stabs_new_include(const char* file, unsigned long val)
     return num_include_def++;
 }
 
-static int stabs_find_include(const char* file, unsigned long val)
+static int stabs_find_include(const char* file, ULONG_PTR val)
 {
     int		i;
 
@@ -248,7 +216,7 @@ static void stabs_free_includes(void)
     cu_nrofentries = 0;
 }
 
-static struct symt** stabs_find_ref(long filenr, long subnr)
+static struct symt** stabs_find_ref(LONG_PTR filenr, LONG_PTR subnr)
 {
     struct symt**       ret;
 
@@ -294,7 +262,7 @@ static struct symt** stabs_find_ref(long filenr, long subnr)
 
 static struct symt** stabs_read_type_enum(const char** x)
 {
-    long        filenr, subnr;
+    LONG_PTR    filenr, subnr;
     const char* iter;
     char*       end;
 
@@ -418,7 +386,7 @@ static int stabs_pts_read_id(struct ParseTypedefData* ptd)
     return -1;
 }
 
-static int stabs_pts_read_number(struct ParseTypedefData* ptd, long* v)
+static int stabs_pts_read_number(struct ParseTypedefData* ptd, LONG_PTR* v)
 {
     char*	last;
 
@@ -429,7 +397,7 @@ static int stabs_pts_read_number(struct ParseTypedefData* ptd, long* v)
 }
 
 static int stabs_pts_read_type_reference(struct ParseTypedefData* ptd,
-                                         long* filenr, long* subnr)
+                                         LONG_PTR* filenr, LONG_PTR* subnr)
 {
     if (*ptd->ptr == '(')
     {
@@ -604,7 +572,7 @@ static inline int stabs_pts_read_method_info(struct ParseTypedefData* ptd)
         ptd->ptr++;
         if (mthd == '*')
         {
-            long int            ofs;
+            LONG_PTR            ofs;
 
             PTS_ABORTIF(ptd, stabs_pts_read_number(ptd, &ofs) == -1);
             PTS_ABORTIF(ptd, *ptd->ptr++ != ';');
@@ -620,7 +588,7 @@ static inline int stabs_pts_read_method_info(struct ParseTypedefData* ptd)
 static inline int stabs_pts_read_aggregate(struct ParseTypedefData* ptd, 
                                            struct symt_udt* sdt)
 {
-    long        	sz, ofs;
+    LONG_PTR    	sz, ofs;
     struct symt*        adt;
     struct symt*        dt = NULL;
     int			idx;
@@ -631,7 +599,7 @@ static inline int stabs_pts_read_aggregate(struct ParseTypedefData* ptd,
     doadd = symt_set_udt_size(ptd->module, sdt, sz);
     if (*ptd->ptr == '!') /* C++ inheritance */
     {
-        long     num_classes;
+        LONG_PTR num_classes;
 
         ptd->ptr++;
         PTS_ABORTIF(ptd, stabs_pts_read_number(ptd, &num_classes) == -1);
@@ -678,7 +646,7 @@ static inline int stabs_pts_read_aggregate(struct ParseTypedefData* ptd,
 
         if (ptd->ptr[0] == '$' && ptd->ptr[1] == 'v')
         {
-            long        x;
+            LONG_PTR    x;
 
             if (ptd->ptr[2] == 'f')
             {
@@ -762,7 +730,7 @@ static inline int stabs_pts_read_aggregate(struct ParseTypedefData* ptd,
 static inline int stabs_pts_read_enum(struct ParseTypedefData* ptd, 
                                       struct symt_enum* edt)
 {
-    long        value;
+    LONG_PTR    value;
     int		idx;
 
     while (*ptd->ptr != ';')
@@ -781,7 +749,7 @@ static inline int stabs_pts_read_enum(struct ParseTypedefData* ptd,
 static inline int stabs_pts_read_array(struct ParseTypedefData* ptd,
                                        struct symt** adt)
 {
-    long                lo, hi;
+    LONG_PTR            lo, hi;
     struct symt*        range_dt;
     struct symt*        base_dt;
 
@@ -806,10 +774,10 @@ static int stabs_pts_read_type_def(struct ParseTypedefData* ptd, const char* typ
                                    struct symt** ret_dt)
 {
     int			idx;
-    long		sz = -1;
+    LONG_PTR		sz = -1;
     struct symt*	new_dt = NULL;     /* newly created data type */
     struct symt*	ref_dt;		   /* referenced data type (pointer...) */
-    long		filenr1, subnr1, tmp;
+    LONG_PTR		filenr1, subnr1, tmp;
 
     /* things are a bit complicated because of the way the typedefs are stored inside
      * the file, because addresses can change when realloc is done, so we must call
@@ -970,8 +938,8 @@ static int stabs_pts_read_type_def(struct ParseTypedefData* ptd, const char* typ
             break;
         case 'R':
             {
-                long    type, len, unk;
-                int     basic;
+                LONG_PTR type, len, unk;
+                int      basic;
                 
                 PTS_ABORTIF(ptd, stabs_pts_read_number(ptd, &type) == -1);
                 PTS_ABORTIF(ptd, *ptd->ptr++ != ';');	/* ';' */
@@ -1122,8 +1090,8 @@ struct pending_line
 {
     int                 source_idx;
     int                 line_num;
-    unsigned long       offset;
-    unsigned long       load_offset;
+    ULONG_PTR           offset;
+    ULONG_PTR           load_offset;
 };
 
 struct pending_object
@@ -1175,8 +1143,8 @@ static inline void pending_add_var(struct pending_list* pending, const char* nam
 }
 
 static inline void pending_add_line(struct pending_list* pending, int source_idx,
-                                    int line_num, unsigned long offset,
-                                    unsigned long load_offset)
+                                    int line_num, ULONG_PTR offset,
+                                    ULONG_PTR load_offset)
 {
     pending_make_room(pending);
     pending->objs[pending->num].tag = PENDING_LINE;
@@ -1225,7 +1193,7 @@ static void pending_flush(struct pending_list* pending, struct module* module,
  *   function (assuming that current function ends where next function starts)
  */
 static void stabs_finalize_function(struct module* module, struct symt_function* func,
-                                    unsigned long size)
+                                    ULONG_PTR size)
 {
     IMAGEHLP_LINE64     il;
     struct location     loc;
@@ -1261,8 +1229,8 @@ static inline void stabbuf_append(char **buf, unsigned *buf_size, const char *st
     strcpy(*buf+buf_len, str);
 }
 
-BOOL stabs_parse(struct module* module, unsigned long load_offset, 
-                 const char* pv_stab_ptr, int stablen,
+BOOL stabs_parse(struct module* module, ULONG_PTR load_offset,
+                 const char* pv_stab_ptr, size_t nstab, size_t stabsize,
                  const char* strs, int strtablen,
                  stabs_def_cb callback, void* user)
 {
@@ -1271,7 +1239,6 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
     struct symt_compiland*      compiland = NULL;
     char*                       srcpath = NULL;
     int                         i;
-    int                         nstab;
     const char*                 ptr;
     char*                       stabbuff;
     unsigned int                stabbufflen;
@@ -1287,14 +1254,8 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
     BOOL                        ret = TRUE;
     struct location             loc;
     unsigned char               type;
-    size_t                      stabsize = sizeof(struct stab_nlist);
     uint64_t                    n_value;
 
-#ifdef __APPLE__
-    if (module->process->is_64bit)
-        stabsize = sizeof(struct nlist_64);
-#endif
-    nstab = stablen / stabsize;
     strs_end = strs + strtablen;
 
     memset(stabs_basic, 0, sizeof(stabs_basic));
@@ -1313,11 +1274,7 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
     for (i = 0; i < nstab; i++)
     {
         stab_ptr = (struct stab_nlist *)(pv_stab_ptr + i * stabsize);
-        n_value = stab_ptr->n_value;
-#ifdef __APPLE__
-        if (module->process->is_64bit)
-            n_value = ((struct nlist_64 *)stab_ptr)->n_value;
-#endif
+        n_value = stabsize == sizeof(struct macho64_nlist) ? ((struct macho64_nlist *)stab_ptr)->n_value : stab_ptr->n_value;
         ptr = strs + stab_ptr->n_strx;
         if ((ptr > strs_end) || (ptr + strlen(ptr) > strs_end))
         {
@@ -1343,7 +1300,10 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
         if (stab_ptr->n_type & N_STAB)
             type = stab_ptr->n_type;
         else
+        {
             type = (stab_ptr->n_type & N_TYPE);
+            if (module->type == DMT_MACHO) type &= ~N_PEXT;
+        }
 
         /* only symbol entries contain a typedef */
         switch (type)
@@ -1478,7 +1438,7 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
                 case 35:
                 case 36: loc.reg = CV_REG_MM0 + n_value - 29; break;
                 default:
-                    FIXME("Unknown register value (%lu)\n", (unsigned long)n_value);
+                    FIXME("Unknown register value (%lu)\n", (ULONG_PTR)n_value);
                     loc.reg = CV_REG_NONE;
                     break;
                 }
@@ -1512,7 +1472,7 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
             assert(source_idx >= 0);
             if (curr_func != NULL)
             {
-                unsigned long offset = n_value;
+                ULONG_PTR offset = n_value;
                 if (module->type == DMT_MACHO)
                     offset -= curr_func->address - load_offset;
                 symt_add_func_line(module, curr_func, source_idx, 
@@ -1628,7 +1588,7 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
 	case N_EXCL:
             if (stabs_add_include(stabs_find_include(ptr, n_value)) < 0)
             {
-                ERR("Excluded header not found (%s,%ld)\n", ptr, (unsigned long)n_value);
+                ERR("Excluded header not found (%s,%ld)\n", ptr, (ULONG_PTR)n_value);
                 module_reset_debug_info(module);
                 ret = FALSE;
                 goto done;
@@ -1640,19 +1600,17 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
         case N_BNSYM:
         case N_ENSYM:
         case N_OSO:
+        case N_INDR:
             /* Always ignore these, they seem to be used only on Darwin. */
             break;
         case N_ABS:
-#ifdef N_SECT
         case N_SECT:
-#endif
             /* FIXME: Other definition types (N_TEXT, N_DATA, N_BSS, ...)? */
             if (callback)
             {
                 BOOL is_public = (stab_ptr->n_type & N_EXT);
                 BOOL is_global = is_public;
 
-#ifdef N_PEXT
                 /* "private extern"; shared among compilation units in a shared
                  * library, but not accessible from outside the library. */
                 if (stab_ptr->n_type & N_PEXT)
@@ -1660,7 +1618,6 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
                     is_public = FALSE;
                     is_global = TRUE;
                 }
-#endif
 
                 if (*ptr == '_') ptr++;
                 stab_strcpy(symname, sizeof(symname), ptr);
@@ -1675,7 +1632,7 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
         }
         stabbuff[0] = '\0';
         TRACE("0x%02x %lx %s\n",
-              stab_ptr->n_type, (unsigned long)n_value, debugstr_a(strs + stab_ptr->n_strx));
+              stab_ptr->n_type, (ULONG_PTR)n_value, debugstr_a(strs + stab_ptr->n_strx));
     }
     module->module.SymType = SymDia;
     module->module.CVSig = 'S' | ('T' << 8) | ('A' << 16) | ('B' << 24);

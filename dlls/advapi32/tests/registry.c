@@ -772,8 +772,26 @@ static void test_get_value(void)
     ok(type == REG_DWORD, "type=%d\n", type);
     ok(dw == 0x12345678, "dw=%d\n", dw);
 
+    /* Check RRF_SUBKEY_WOW64*KEY validation on a case without a subkey */
+    ret = pRegGetValueA(hkey_main, NULL, "DWORD", RRF_RT_REG_DWORD | RRF_SUBKEY_WOW6464KEY | RRF_SUBKEY_WOW6432KEY, NULL, NULL, NULL);
+    ok(ret == ERROR_INVALID_PARAMETER || broken(ret == ERROR_SUCCESS), /* Before Win10 */
+       "ret=%d\n", ret);
+    ret = pRegGetValueA(hkey_main, NULL, "DWORD", RRF_RT_REG_DWORD | RRF_SUBKEY_WOW6464KEY, NULL, NULL, NULL);
+    ok(ret == ERROR_SUCCESS, "ret=%d\n", ret);
+    ret = pRegGetValueA(hkey_main, NULL, "DWORD", RRF_RT_REG_DWORD | RRF_SUBKEY_WOW6432KEY, NULL, NULL, NULL);
+    ok(ret == ERROR_SUCCESS, "ret=%d\n", ret);
+
     /* Query by subkey-name */
     ret = pRegGetValueA(HKEY_CURRENT_USER, "Software\\Wine\\Test", "DWORD", RRF_RT_REG_DWORD, NULL, NULL, NULL);
+    ok(ret == ERROR_SUCCESS, "ret=%d\n", ret);
+
+    /* Check RRF_SUBKEY_WOW64*KEY validation on a case with a subkey */
+    ret = pRegGetValueA(HKEY_CURRENT_USER, "Software\\Wine\\Test", "DWORD", RRF_RT_REG_DWORD | RRF_SUBKEY_WOW6464KEY | RRF_SUBKEY_WOW6432KEY, NULL, NULL, NULL);
+    ok(ret == ERROR_INVALID_PARAMETER || broken(ret == ERROR_SUCCESS), /* Before Win10 */
+       "ret=%d\n", ret);
+    ret = pRegGetValueA(HKEY_CURRENT_USER, "Software\\Wine\\Test", "DWORD", RRF_RT_REG_DWORD | RRF_SUBKEY_WOW6464KEY, NULL, NULL, NULL);
+    ok(ret == ERROR_SUCCESS, "ret=%d\n", ret);
+    ret = pRegGetValueA(HKEY_CURRENT_USER, "Software\\Wine\\Test", "DWORD", RRF_RT_REG_DWORD | RRF_SUBKEY_WOW6432KEY, NULL, NULL, NULL);
     ok(ret == ERROR_SUCCESS, "ret=%d\n", ret);
 
     /* Query REG_DWORD using RRF_RT_REG_BINARY (restricted) */
@@ -1081,6 +1099,11 @@ static void test_reg_open_key(void)
     ok(!RegCloseKey(hkResult), "got invalid hkey\n");
 
     /* empty subkey of NULL */
+    hkResult = hkPreserve;
+    ret = RegOpenKeyExW(NULL, L"", 0, KEY_QUERY_VALUE, &hkResult);
+    ok(ret == ERROR_INVALID_HANDLE, "expected ERROR_INVALID_HANDLE, got %d\n", ret);
+    ok(hkResult == NULL || broken(hkResult == hkPreserve /* Windows XP */), "expected hkResult == NULL\n");
+
     hkResult = hkPreserve;
     ret = RegOpenKeyExA(NULL, "", 0, KEY_QUERY_VALUE, &hkResult);
     ok(ret == ERROR_INVALID_HANDLE, "expected ERROR_INVALID_HANDLE, got %d\n", ret);

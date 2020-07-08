@@ -831,18 +831,22 @@ static void test_TypeInfo(void)
     static WCHAR wszBogus[] = { 'b','o','g','u','s',0 };
     static WCHAR wszGetTypeInfo[] = { 'G','e','t','T','y','p','e','I','n','f','o',0 };
     static WCHAR wszClone[] = {'C','l','o','n','e',0};
+    static WCHAR wszTestDll[] = {'t','e','s','t','.','d','l','l',0};
     OLECHAR* bogus = wszBogus;
     OLECHAR* pwszGetTypeInfo = wszGetTypeInfo;
     OLECHAR* pwszClone = wszClone;
     DISPID dispidMember;
     DISPPARAMS dispparams;
     GUID bogusguid = {0x806afb4f,0x13f7,0x42d2,{0x89,0x2c,0x6c,0x97,0xc3,0x6a,0x36,0xc1}};
+    static const GUID moduleTestGetDllEntryGuid = {0xf073cd92,0xa199,0x11ea,{0xbb,0x37,0x02,0x42,0xac,0x13,0x00,0x02}};
     VARIANT var, res, args[2];
     UINT count, i;
     TYPEKIND kind;
     const WCHAR *filename;
     TYPEATTR *attr;
     LONG l;
+    WORD ordinal;
+    BSTR bstrDllName, bstrName;
 
     hr = LoadTypeLib(wszStdOle2, &pTypeLib);
     ok_ole_success(hr, LoadTypeLib);
@@ -1024,6 +1028,49 @@ static void test_TypeInfo(void)
     filename = create_test_typelib(3, L"TYPELIB");
     hr = LoadTypeLib(filename, &pTypeLib);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    /* test GetDllEntry */
+    hr = ITypeLib_GetTypeInfoOfGuid(pTypeLib, &moduleTestGetDllEntryGuid, &pTypeInfo);
+    ok_ole_success(hr, ITypeLib_GetTypeInfoOfGuid);
+    ok(pTypeInfo != NULL, "got NULL typeinfo\n");
+
+    /* wrong memberid -- wrong invkind */
+    hr = ITypeInfo_GetDllEntry(pTypeInfo, 0x6000000d, INVOKE_FUNC, &bstrDllName, &bstrName, &ordinal);
+    ok(hr == TYPE_E_ELEMENTNOTFOUND, "ITypeInfo_GetDllEntry should have returned TYPE_E_ELEMENTNOTFOUND instead of 0x%08x\n", hr);
+
+    hr = ITypeInfo_GetDllEntry(pTypeInfo, 0x6000000d, INVOKE_PROPERTYPUTREF, &bstrDllName, &bstrName, &ordinal);
+    ok(hr == TYPE_E_ELEMENTNOTFOUND, "ITypeInfo_GetDllEntry should have returned TYPE_E_ELEMENTNOTFOUND instead of 0x%08x\n", hr);
+
+    /* wrong memberid -- correct invkind */
+    hr = ITypeInfo_GetDllEntry(pTypeInfo, 0x6000000d, INVOKE_PROPERTYGET, &bstrDllName, &bstrName, &ordinal);
+    ok(hr == TYPE_E_ELEMENTNOTFOUND, "ITypeInfo_GetDllEntry should have returned TYPE_E_ELEMENTNOTFOUND instead of 0x%08x\n", hr);
+
+    hr = ITypeInfo_GetDllEntry(pTypeInfo, 0x6000000d, INVOKE_PROPERTYPUT, &bstrDllName, &bstrName, &ordinal);
+    ok(hr == TYPE_E_ELEMENTNOTFOUND, "ITypeInfo_GetDllEntry should have returned TYPE_E_ELEMENTNOTFOUND instead of 0x%08x\n", hr);
+
+    /* correct memberid -- wrong invkind */
+    hr = ITypeInfo_GetDllEntry(pTypeInfo, 0x60000000, INVOKE_FUNC, &bstrDllName, &bstrName, &ordinal);
+    ok(hr == TYPE_E_ELEMENTNOTFOUND, "ITypeInfo_GetDllEntry should have returned TYPE_E_ELEMENTNOTFOUND instead of 0x%08x\n", hr);
+
+    hr = ITypeInfo_GetDllEntry(pTypeInfo, 0x60000000, INVOKE_PROPERTYPUTREF, &bstrDllName, &bstrName, &ordinal);
+    ok(hr == TYPE_E_ELEMENTNOTFOUND, "ITypeInfo_GetDllEntry should have returned TYPE_E_ELEMENTNOTFOUND instead of 0x%08x\n", hr);
+
+    /* correct memberid -- correct invkind */
+    hr = ITypeInfo_GetDllEntry(pTypeInfo, 0x60000000, INVOKE_PROPERTYGET, &bstrDllName, &bstrName, &ordinal);
+    ok_ole_success(hr, ITypeInfo_GetDllEntry);
+    ok(!lstrcmpW(bstrDllName, wszTestDll), "got %s\n", wine_dbgstr_w(bstrDllName));
+    ok(bstrName == NULL, "got %s\n", wine_dbgstr_w(bstrName));
+    ok(ordinal == 1, "got ordinal: %04x\n", ordinal);
+    SysFreeString(bstrDllName);
+
+    hr = ITypeInfo_GetDllEntry(pTypeInfo, 0x60000000, INVOKE_PROPERTYPUT, &bstrDllName, &bstrName, &ordinal);
+    ok_ole_success(hr, ITypeInfo_GetDllEntry);
+    ok(!lstrcmpW(bstrDllName, wszTestDll), "got %s\n", wine_dbgstr_w(bstrDllName));
+    ok(bstrName == NULL, "got %s\n", wine_dbgstr_w(bstrName));
+    ok(ordinal == 2, "got ordinal: %04x\n", ordinal);
+    SysFreeString(bstrDllName);
+
+    ITypeInfo_Release(pTypeInfo);
 
     hr = ITypeLib_GetTypeInfoOfGuid(pTypeLib, &IID_IInvokeTest, &pTypeInfo);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -1577,7 +1624,7 @@ static void test_inheritance(void)
 {
     HRESULT hr;
     ITypeLib *pTL;
-    ITypeInfo *pTI, *pTI_p;
+    ITypeInfo *pTI, *pTI_p, *dual_ti;
     TYPEATTR *pTA;
     HREFTYPE href;
     FUNCDESC *pFD;
@@ -1720,7 +1767,7 @@ static void test_inheritance(void)
     hr = ITypeInfo_GetTypeAttr(pTI, &pTA);
     ok(hr == S_OK, "hr %08x\n", hr);
     ok(pTA->typekind == TKIND_DISPATCH, "kind %04x\n", pTA->typekind);
-    ok(pTA->cbSizeVft == 7 * sizeof(void *), "sizevft %d\n", pTA->cbSizeVft);
+    ok(pTA->cbSizeVft == sizeof(IDispatchVtbl), "sizevft %d\n", pTA->cbSizeVft);
     ok(pTA->wTypeFlags == TYPEFLAG_FDISPATCHABLE, "typeflags %x\n", pTA->wTypeFlags);
     ok(pTA->cFuncs == 3, "cfuncs %d\n", pTA->cFuncs);
     ok(pTA->cImplTypes == 1, "cimpltypes %d\n", pTA->cImplTypes);
@@ -1813,6 +1860,60 @@ static void test_inheritance(void)
     ok(pFD->memid == 0x60020000, "memid %08x\n", pFD->memid);
     ok(pFD->oVft == 5 * sizeof(void *), "oVft %d\n", pFD->oVft);
     ITypeInfo_ReleaseFuncDesc(pTI, pFD);
+    ITypeInfo_Release(pTI);
+
+    /* ItestIF13 is dual with inherited dual ifaces */
+    hr = ITypeLib_GetTypeInfoOfGuid(pTL, &IID_ItestIF13, &pTI);
+    ok(hr == S_OK, "hr %08x\n", hr);
+
+    hr = ITypeInfo_GetTypeAttr(pTI, &pTA);
+    ok(hr == S_OK, "hr %08x\n", hr);
+    ok(pTA->typekind == TKIND_DISPATCH, "kind %04x\n", pTA->typekind);
+    ok(pTA->cbSizeVft == 7 * sizeof(void *), "sizevft %d\n", pTA->cbSizeVft);
+    ok(pTA->wTypeFlags == (TYPEFLAG_FDISPATCHABLE|TYPEFLAG_FDUAL), "typeflags %x\n", pTA->wTypeFlags);
+    ok(pTA->cFuncs == 10, "cfuncs %d\n", pTA->cFuncs);
+    ok(pTA->cImplTypes == 1, "cimpltypes %d\n", pTA->cImplTypes);
+    ITypeInfo_ReleaseTypeAttr(pTI, pTA);
+
+    hr = ITypeInfo_GetRefTypeOfImplType(pTI, 0, &href);
+    ok(hr == S_OK, "hr %08x\n", hr);
+    hr = ITypeInfo_GetRefTypeInfo(pTI, href, &pTI_p);
+    ok(hr == S_OK, "hr %08x\n", hr);
+    hr = ITypeInfo_GetTypeAttr(pTI_p, &pTA);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(IsEqualGUID(&pTA->guid, &IID_IDispatch), "guid %s\n", wine_dbgstr_guid(&pTA->guid));
+    ITypeInfo_ReleaseTypeAttr(pTI_p, pTA);
+
+    hr = ITypeInfo_GetFuncDesc(pTI, 9, &pFD);
+    ok(hr == S_OK, "hr %08x\n", hr);
+    ok(pFD->memid == 0x1236, "memid %08x\n", pFD->memid);
+    ITypeInfo_ReleaseFuncDesc(pTI, pFD);
+
+    hr = ITypeInfo_GetRefTypeInfo(pTI, -2, &dual_ti);
+    ok(hr == S_OK, "hr %08x\n", hr);
+
+    hr = ITypeInfo_GetTypeAttr(dual_ti, &pTA);
+    ok(hr == S_OK, "hr %08x\n", hr);
+    ok(pTA->typekind == TKIND_INTERFACE, "kind %04x\n", pTA->typekind);
+    ok(pTA->cbSizeVft == sizeof(ItestIF13Vtbl), "sizevft %d\n", pTA->cbSizeVft);
+    ok(pTA->wTypeFlags == (TYPEFLAG_FDISPATCHABLE|TYPEFLAG_FOLEAUTOMATION|TYPEFLAG_FDUAL), "typeflags %x\n", pTA->wTypeFlags);
+    ok(pTA->cFuncs == 1, "cfuncs %d\n", pTA->cFuncs);
+    ok(pTA->cImplTypes == 1, "cimpltypes %d\n", pTA->cImplTypes);
+    ITypeInfo_ReleaseTypeAttr(dual_ti, pTA);
+
+    hr = ITypeInfo_GetRefTypeOfImplType(dual_ti, 0, &href);
+    ok(hr == S_OK, "hr %08x\n", hr);
+    hr = ITypeInfo_GetRefTypeInfo(dual_ti, href, &pTI_p);
+    ok(hr == S_OK, "hr %08x\n", hr);
+    hr = ITypeInfo_GetTypeAttr(pTI_p, &pTA);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(pTA->typekind == TKIND_INTERFACE, "kind %04x\n", pTA->typekind);
+    ok(pTA->cbSizeVft == sizeof(ItestIF12Vtbl), "sizevft %d\n", pTA->cbSizeVft);
+    ok(IsEqualGUID(&pTA->guid, &IID_ItestIF12), "guid %s\n", wine_dbgstr_guid(&pTA->guid));
+    ITypeInfo_ReleaseTypeAttr(pTI_p, pTA);
+    ITypeInfo_Release(pTI_p);
+
+    ITypeInfo_Release(dual_ti);
     ITypeInfo_Release(pTI);
 
     ITypeLib_Release(pTL);
@@ -5038,7 +5139,8 @@ static void test_register_typelib(BOOL system_registration)
         { TKIND_DISPATCH,  TYPEFLAG_FDISPATCHABLE },
         { TKIND_INTERFACE, TYPEFLAG_FDISPATCHABLE },
         { TKIND_INTERFACE, TYPEFLAG_FDISPATCHABLE },
-        { TKIND_RECORD, 0 }
+        { TKIND_RECORD, 0 },
+        { TKIND_MODULE, 0 },
     };
 
     trace("Starting %s typelib registration tests\n",
@@ -5072,7 +5174,7 @@ static void test_register_typelib(BOOL system_registration)
     ok(hr == S_OK, "got %08x\n", hr);
 
     count = ITypeLib_GetTypeInfoCount(typelib);
-    ok(count == 14, "got %d\n", count);
+    ok(count == 15, "got %d\n", count);
 
     for(i = 0; i < count; i++)
     {

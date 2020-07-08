@@ -1890,6 +1890,9 @@ static LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPAR
             return USER_Driver->pClipCursor( &rect );
         }
         return USER_Driver->pClipCursor( NULL );
+    case WM_WINE_UPDATEWINDOWSTATE:
+        update_window_state( hwnd );
+        return 0;
     default:
         if (msg >= WM_WINE_FIRST_DRIVER_MSG && msg <= WM_WINE_LAST_DRIVER_MSG)
             return USER_Driver->pWindowMessage( hwnd, msg, wparam, lparam );

@@ -404,8 +404,7 @@ static DWORD WINAPI input_thread(void *param)
 
         /* Indicate pressed buttons */
         for (i = 0; i < data->joysticks[data->chosen_joystick].num_buttons; i++)
-            if (state.rgbButtons[i])
-                SendMessageW(data->graphics.buttons[i], BM_SETSTATE, TRUE, 0);
+            SendMessageW(data->graphics.buttons[i], BM_SETSTATE, !!state.rgbButtons[i], 0);
 
         /* Indicate axis positions, axes showing are hardcoded for now */
         axes_pos[0][0] = state.lX;
@@ -438,10 +437,6 @@ static DWORD WINAPI input_thread(void *param)
         }
 
         Sleep(TEST_POLL_TIME);
-
-        /* Reset button state */
-        for (i = 0; i < data->joysticks[data->chosen_joystick].num_buttons; i++)
-            SendMessageW(data->graphics.buttons[i], BM_SETSTATE, FALSE, 0);
     }
 
     return 0;

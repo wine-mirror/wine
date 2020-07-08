@@ -1,0 +1,9 @@
+MODULE    = directmanipulation.dll
+IMPORTS   = uuid
+
+EXTRADLLFLAGS = -mno-cygwin
+
+IDL_SRCS = directmanip.idl
+
+C_SRCS = \
+	directmanipulation.c

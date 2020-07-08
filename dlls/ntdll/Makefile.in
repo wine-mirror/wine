@@ -3,17 +3,15 @@ MODULE    = ntdll.dll
 IMPORTLIB = ntdll
 IMPORTS   = winecrt0
 EXTRAINCL = $(UNWIND_CFLAGS)
-EXTRALIBS = $(IOKIT_LIBS) $(RT_LIBS) $(PTHREAD_LIBS) $(UNWIND_LIBS)
+EXTRALIBS = -lwine $(IOKIT_LIBS) $(COREFOUNDATION_LIBS) $(CORESERVICES_LIBS) $(RT_LIBS) $(PTHREAD_LIBS) $(UNWIND_LIBS) $(I386_LIBS)
 EXTRADLLFLAGS = -nodefaultlibs -Wl,--image-base,0x7bc00000
 
 C_SRCS = \
 	actctx.c \
 	atom.c \
-	cdrom.c \
 	critsection.c \
 	crypt.c \
 	debugbuffer.c \
-	debugtools.c \
 	directory.c \
 	env.c \
 	error.c \
@@ -38,21 +36,52 @@ C_SRCS = \
 	rtlbitmap.c \
 	rtlstr.c \
 	sec.c \
-	serial.c \
 	server.c \
 	signal_arm.c \
 	signal_arm64.c \
 	signal_i386.c \
-	signal_powerpc.c \
 	signal_x86_64.c \
 	string.c \
 	sync.c \
-	tape.c \
 	thread.c \
 	threadpool.c \
 	time.c \
+	unix/cdrom.c \
+	unix/debug.c \
+	unix/env.c \
+	unix/file.c \
+	unix/loader.c \
+	unix/process.c \
+	unix/serial.c \
+	unix/server.c \
+	unix/signal_arm.c \
+	unix/signal_arm64.c \
+	unix/signal_i386.c \
+	unix/signal_x86_64.c \
+	unix/sync.c \
+	unix/tape.c \
+	unix/thread.c \
+	unix/virtual.c \
 	version.c \
 	virtual.c \
 	wcstring.c
 
 RC_SRCS = version.rc
+
+EXTRA_OBJS = unix/version.o
+
+server_EXTRADEFS = \
+	-DBINDIR=\"${bindir}\" \
+	-DBIN_TO_DLLDIR=\"`$(MAKEDEP) -R ${bindir} ${dlldir}`\" \
+	-DDLL_TO_BINDIR=\"`$(MAKEDEP) -R ${dlldir} ${bindir}`\"
+
+unix_loader_EXTRADEFS = \
+	-DBINDIR=\"${bindir}\" \
+	-DDLL_TO_BINDIR=\"`$(MAKEDEP) -R ${dlldir} ${bindir}`\" \
+	-DBIN_TO_DATADIR=\"`$(MAKEDEP) -R ${bindir} ${datadir}/wine`\"
+
+unix/version.c: dummy
+	version=`(GIT_DIR=$(top_srcdir)/.git git describe HEAD 2>/dev/null || echo "wine-$(PACKAGE_VERSION)") | sed -n -e '$$s/\(.*\)/const char wine_build[] = "\1";/p'` && (echo $$version | cmp -s - $@) || echo $$version >$@ || (rm -f $@ && exit 1)
+
+dummy:
+.PHONY: dummy

@@ -288,7 +288,7 @@ static WINE_CLIPFORMAT *insert_clipboard_format(UINT id, CFStringRef type)
         }
 
         format->type = CFStringCreateWithFormat(NULL, NULL, CFSTR("%@%S"),
-                                                registered_name_type_prefix, buffer);
+                                                registered_name_type_prefix, (const WCHAR*)buffer);
     }
 
     list_add_tail(&format_list, &format->entry);
@@ -1783,7 +1783,7 @@ static void update_clipboard(void)
     static BOOL updating;
 
     TRACE("is_clipboard_owner %d last_clipboard_update %llu now %llu\n",
-          is_clipboard_owner, last_clipboard_update, GetTickCount64());
+          is_clipboard_owner, (unsigned long long)last_clipboard_update, (unsigned long long)GetTickCount64());
 
     if (updating) return;
     updating = TRUE;

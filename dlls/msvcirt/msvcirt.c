@@ -199,9 +199,7 @@ extern const vtable_ptr MSVCP_strstream_vtable;
 /* ??_7stdiostream@@6B@ */
 extern const vtable_ptr MSVCP_stdiostream_vtable;
 
-#ifndef __GNUC__
-void __asm_dummy_vtables(void) {
-#endif
+__ASM_BLOCK_BEGIN(vtables)
     __ASM_VTABLE(streambuf,
             VTABLE_ADD_FUNC(streambuf_vector_dtor)
             VTABLE_ADD_FUNC(streambuf_sync)
@@ -270,9 +268,7 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(iostream_vector_dtor));
     __ASM_VTABLE(stdiostream,
             VTABLE_ADD_FUNC(iostream_vector_dtor));
-#ifndef __GNUC__
-}
-#endif
+__ASM_BLOCK_END
 
 #define ALIGNED_SIZE(size, alignment) (((size)+((alignment)-1))/(alignment)*(alignment))
 #define VBTABLE_ENTRY(class, offset, vbase) ALIGNED_SIZE(sizeof(class), TYPE_ALIGNMENT(vbase))-offset
@@ -4463,7 +4459,7 @@ void __cdecl ios_sync_with_stdio(void)
 }
 
 
-#if defined(__i386__) && !defined(__MINGW32__)
+#ifdef __ASM_USE_THISCALL_WRAPPER
 
 #define DEFINE_VTBL_WRAPPER(off)            \
     __ASM_GLOBAL_FUNC(vtbl_wrapper_ ## off, \

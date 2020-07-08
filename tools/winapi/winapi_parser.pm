@@ -240,7 +240,21 @@ sub parse_c_file($$) {
 
 	# remove preprocessor directives
 	if(s/^\s*\#/\#/s) {
-	    if(/^(\#.*?)\\$/s) {
+            if (/^#\s*if\s+0\s*$/ms) {
+                # Skip #if 0 ... #endif sections entirely.
+                # They are typically used as 'super comments' and may not
+                # contain C code. This totally ignores nesting.
+                if(s/^(\s*#\s*if\s+0\s*\n.*?\n\s*#\s*endif\s*)\n//s) {
+                    my @lines = split(/\n/, $1);
+                    $_ = "\n" x $#lines;
+                    &$preprocessor_found_callback("if", "0");
+                    $again = 1;
+                } else {
+                    $lookahead = 1;
+                }
+                next readmore;
+            }
+	    elsif(/^(\#.*?)\\$/s) {
 		$_ = "$1\n";
 		$lookahead = 1;
 		next;
@@ -492,7 +506,11 @@ sub parse_c_file($$) {
 
 		    # die "$file: $.: syntax error: '$argument_type':'$argument_name'\n";
 		} else {
-		    die "$file: $.: syntax error: '$argument'\n";
+                    # This is either a complex argument type, typically
+                    # involving parentheses, or a macro argument. This is rare
+                    # so just ignore the 'function' declaration.
+		    print STDERR "$file: $.: cannot parse declaration argument (ignoring): '$argument'\n";
+                    next readmore;
 		}
 
 		$argument_type =~ s/\s*(?:const|volatile)\s*/ /g; # Remove const/volatile
@@ -556,7 +574,7 @@ sub parse_c_file($$) {
 	} elsif(/(DEFAULT|DECLARE)_DEBUG_CHANNEL\s*\((\S+)\)/s) {
 	    $_ = $'; $again = 1;
 	    push @$debug_channels, $1;
-	} elsif(/typedef\s+(enum|interface|struct|union)(?:\s+(\w+))?\s*\{/s) {
+	} elsif(/typedef\s+(enum|interface|struct|union)(?:\s+DECLSPEC_ALIGN\(\d+\))?(?:\s+(\w+))?\s*\{/s) {
 	    $_ = $'; $again = 1;
 	    $level++;
 	    my $type = $1;
@@ -620,10 +638,10 @@ sub parse_c_file($$) {
 	    &$type_end([$name]);
 	} elsif(/typedef[^\{;]*;/s) {
 	    $_ = $'; $again = 1;
-	    $output->write("$file: $.: can't parse: '$&'\n");
+	    $output->write("$file: $.: could not parse typedef: '$&'\n");
 	} elsif(/typedef[^\{]*\{[^\}]*\}[^;];/s) {
 	    $_ = $'; $again = 1;
-	    $output->write("$file: $.: can't parse: '$&'\n");
+	    $output->write("$file: $.: could not parse multi-line typedef: '$&'\n");
 	} elsif(/\'[^\']*\'/s) {
 	    $_ = $'; $again = 1;
 	} elsif(/\"(?:[^\\\"]*|\\.)*\"/s) {

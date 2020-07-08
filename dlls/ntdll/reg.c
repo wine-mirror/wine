@@ -38,7 +38,6 @@
 #include "wine/library.h"
 #include "ntdll_misc.h"
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(reg);
 
@@ -1099,7 +1098,7 @@ static NTSTATUS RTL_ReportRegistryValue(PKEY_VALUE_FULL_INFORMATION pInfo,
                 for (offset = 0; offset <= pInfo->DataLength; offset += len + sizeof(WCHAR))
                     {
                     wstr = (WCHAR*)(((CHAR*)pInfo) + offset);
-                    len = strlenW(wstr) * sizeof(WCHAR);
+                    len = wcslen(wstr) * sizeof(WCHAR);
                     status = pQuery->QueryRoutine(pQuery->Name, pInfo->Type, wstr, len,
                         pContext, pQuery->EntryContext);
                     if(status != STATUS_SUCCESS && status != STATUS_BUFFER_TOO_SMALL)
@@ -1111,7 +1110,7 @@ static NTSTATUS RTL_ReportRegistryValue(PKEY_VALUE_FULL_INFORMATION pInfo,
                 while(count<=pInfo->DataLength)
                 {
                     String = (WCHAR*)(((CHAR*)pInfo) + pInfo->DataOffset)+count;
-                    count+=strlenW(String)+1;
+                    count+=wcslen(String)+1;
                     RtlInitUnicodeString(&src, (WCHAR*)(((CHAR*)pInfo) + pInfo->DataOffset));
                     res = 0;
                     dst.MaximumLength = 0;
@@ -1187,13 +1186,13 @@ static NTSTATUS RTL_KeyHandleCreateObject(ULONG RelativeTo, PCWSTR Path, POBJECT
         return STATUS_INVALID_PARAMETER;
     }
 
-    len = (strlenW(base) + strlenW(Path) + 1) * sizeof(WCHAR);
+    len = (wcslen(base) + wcslen(Path) + 1) * sizeof(WCHAR);
     str->Buffer = RtlAllocateHeap(GetProcessHeap(), 0, len);
     if (str->Buffer == NULL)
         return STATUS_NO_MEMORY;
 
-    strcpyW(str->Buffer, base);
-    strcatW(str->Buffer, Path);
+    wcscpy(str->Buffer, base);
+    wcscat(str->Buffer, Path);
     str->Length = len - sizeof(WCHAR);
     str->MaximumLength = len;
     InitializeObjectAttributes(regkey, str, OBJ_CASE_INSENSITIVE, NULL, NULL);

@@ -116,7 +116,8 @@ static void wined3d_output_cleanup(const struct wined3d_output *output)
     D3DKMTCloseAdapter(&close_adapter_desc);
 }
 
-static HRESULT wined3d_output_init(struct wined3d_output *output, const WCHAR *device_name)
+static HRESULT wined3d_output_init(struct wined3d_output *output, unsigned int ordinal,
+        struct wined3d_adapter *adapter, const WCHAR *device_name)
 {
     D3DKMT_OPENADAPTERFROMGDIDISPLAYNAME open_adapter_desc;
     D3DKMT_CREATEDEVICE create_device_desc = {{0}};
@@ -136,6 +137,9 @@ static HRESULT wined3d_output_init(struct wined3d_output *output, const WCHAR *d
         return E_FAIL;
     }
 
+    output->ordinal = ordinal;
+    lstrcpyW(output->device_name, device_name);
+    output->adapter = adapter;
     output->kmt_adapter = open_adapter_desc.hAdapter;
     output->kmt_device = create_device_desc.hDevice;
     output->vidpn_source_id = open_adapter_desc.VidPnSourceId;
@@ -155,7 +159,11 @@ UINT64 adapter_adjust_memory(struct wined3d_adapter *adapter, INT64 amount)
 
 void wined3d_adapter_cleanup(struct wined3d_adapter *adapter)
 {
-    wined3d_output_cleanup(&adapter->output);
+    unsigned int output_idx;
+
+    for (output_idx = 0; output_idx < adapter->output_count; ++output_idx)
+        wined3d_output_cleanup(&adapter->outputs[output_idx]);
+    heap_free(adapter->outputs);
     heap_free(adapter->formats);
 }
 
@@ -422,6 +430,7 @@ static const struct wined3d_gpu_description gpu_description_table[] =
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_TITANX_PASCAL,      "NVIDIA TITAN X (Pascal)",          DRIVER_NVIDIA_GEFORCE8,  12288},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_TITANV,             "NVIDIA TITAN V",                   DRIVER_NVIDIA_GEFORCE8,  12288},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX1650SUPER,"NVIDIA GeForce GTX 1650 SUPER",   DRIVER_NVIDIA_GEFORCE8,  4096},
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX1660SUPER,"NVIDIA GeForce GTX 1660 SUPER",   DRIVER_NVIDIA_GEFORCE8,  6144},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX1660TI,  "NVIDIA GeForce GTX 1660 Ti",       DRIVER_NVIDIA_GEFORCE8,  6144},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_RTX2060,    "NVIDIA GeForce RTX 2060",          DRIVER_NVIDIA_GEFORCE8,  6144},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_RTX2070,    "NVIDIA GeForce RTX 2070",          DRIVER_NVIDIA_GEFORCE8,  8192},
@@ -865,12 +874,40 @@ enum wined3d_pci_device wined3d_gpu_from_feature_level(enum wined3d_pci_vendor *
     return device_id;
 }
 
+struct wined3d_adapter * CDECL wined3d_get_adapter(const struct wined3d *wined3d, unsigned int idx)
+{
+    TRACE("wined3d %p, idx %u.\n", wined3d, idx);
+
+    if (idx >= wined3d->adapter_count)
+        return NULL;
+
+    return wined3d->adapters[idx];
+}
+
 UINT CDECL wined3d_get_adapter_count(const struct wined3d *wined3d)
 {
     TRACE("wined3d %p, reporting %u adapters.\n",
             wined3d, wined3d->adapter_count);
 
     return wined3d->adapter_count;
+}
+
+struct wined3d_output * CDECL wined3d_adapter_get_output(const struct wined3d_adapter *adapter,
+        unsigned int idx)
+{
+    TRACE("adapter %p, idx %u.\n", adapter, idx);
+
+    if (idx >= adapter->output_count)
+        return NULL;
+
+    return &adapter->outputs[idx];
+}
+
+unsigned int CDECL wined3d_adapter_get_output_count(const struct wined3d_adapter *adapter)
+{
+    TRACE("adapter %p, reporting %u outputs.\n", adapter, adapter->output_count);
+
+    return adapter->output_count;
 }
 
 HRESULT CDECL wined3d_register_software_device(struct wined3d *wined3d, void *init_function)
@@ -880,54 +917,43 @@ HRESULT CDECL wined3d_register_software_device(struct wined3d *wined3d, void *in
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_get_output_desc(const struct wined3d *wined3d, unsigned int adapter_idx,
-        struct wined3d_output_desc *desc)
+static BOOL CALLBACK enum_monitor_proc(HMONITOR monitor, HDC hdc, RECT *rect, LPARAM lparam)
 {
-    enum wined3d_display_rotation rotation;
-    const struct wined3d_adapter *adapter;
-    struct wined3d_display_mode mode;
-    HMONITOR monitor;
-    HRESULT hr;
+    struct wined3d_output_desc *desc = (struct wined3d_output_desc *)lparam;
+    MONITORINFOEXW monitor_info;
 
-    TRACE("wined3d %p, adapter_idx %u, desc %p.\n", wined3d, adapter_idx, desc);
+    monitor_info.cbSize = sizeof(monitor_info);
+    if (GetMonitorInfoW(monitor, (MONITORINFO *)&monitor_info) &&
+            !lstrcmpiW(desc->device_name, monitor_info.szDevice))
+    {
+        desc->monitor = monitor;
+        desc->desktop_rect = monitor_info.rcMonitor;
+        desc->attached_to_desktop = TRUE;
+        return FALSE;
+    }
 
-    if (adapter_idx >= wined3d->adapter_count)
-        return WINED3DERR_INVALIDCALL;
-
-    adapter = wined3d->adapters[adapter_idx];
-    if (!(monitor = MonitorFromPoint(adapter->monitor_position, MONITOR_DEFAULTTOPRIMARY)))
-        return WINED3DERR_INVALIDCALL;
-
-    if (FAILED(hr = wined3d_get_adapter_display_mode(wined3d, adapter_idx, &mode, &rotation)))
-        return hr;
-
-    memcpy(desc->device_name, adapter->device_name, sizeof(desc->device_name));
-    SetRect(&desc->desktop_rect, 0, 0, mode.width, mode.height);
-    OffsetRect(&desc->desktop_rect, adapter->monitor_position.x, adapter->monitor_position.y);
-    /* FIXME: We should get this from EnumDisplayDevices() when the adapters
-     * are created. */
-    desc->attached_to_desktop = TRUE;
-    desc->rotation = rotation;
-    desc->monitor = monitor;
-
-    return WINED3D_OK;
+    return TRUE;
 }
 
-struct wined3d_output * CDECL wined3d_get_adapter_output(const struct wined3d *wined3d, unsigned int adapter_idx)
+HRESULT CDECL wined3d_output_get_desc(const struct wined3d_output *output,
+        struct wined3d_output_desc *desc)
 {
-    TRACE("wined3d %p, adapter_idx %u.\n", wined3d, adapter_idx);
+    struct wined3d_display_mode mode;
 
-    if (adapter_idx >= wined3d->adapter_count)
-        return NULL;
+    TRACE("output %p, desc %p.\n", output, desc);
 
-    return &wined3d->adapters[adapter_idx]->output;
+    memset(desc, 0, sizeof(*desc));
+    desc->ordinal = output->ordinal;
+    lstrcpyW(desc->device_name, output->device_name);
+    EnumDisplayMonitors(NULL, NULL, enum_monitor_proc, (LPARAM)desc);
+    return wined3d_output_get_display_mode(output, &mode, &desc->rotation);
 }
 
 /* FIXME: GetAdapterModeCount and EnumAdapterModes currently only returns modes
      of the same bpp but different resolutions                                  */
 
 /* Note: dx9 supplies a format. Calls from d3d8 supply WINED3DFMT_UNKNOWN */
-UINT CDECL wined3d_get_adapter_mode_count(const struct wined3d *wined3d, UINT adapter_idx,
+unsigned int CDECL wined3d_output_get_mode_count(const struct wined3d_output *output,
         enum wined3d_format_id format_id, enum wined3d_scanline_ordering scanline_ordering)
 {
     const struct wined3d_adapter *adapter;
@@ -937,20 +963,17 @@ UINT CDECL wined3d_get_adapter_mode_count(const struct wined3d *wined3d, UINT ad
     UINT format_bits;
     DEVMODEW mode;
 
-    TRACE("wined3d %p, adapter_idx %u, format %s, scanline_ordering %#x.\n",
-            wined3d, adapter_idx, debug_d3dformat(format_id), scanline_ordering);
+    TRACE("output %p, format %s, scanline_ordering %#x.\n",
+            output, debug_d3dformat(format_id), scanline_ordering);
 
-    if (adapter_idx >= wined3d->adapter_count)
-        return 0;
-
-    adapter = wined3d->adapters[adapter_idx];
+    adapter = output->adapter;
     format = wined3d_get_format(adapter, format_id, WINED3D_BIND_RENDER_TARGET);
     format_bits = format->byte_count * CHAR_BIT;
 
     memset(&mode, 0, sizeof(mode));
     mode.dmSize = sizeof(mode);
 
-    while (EnumDisplaySettingsExW(adapter->device_name, j++, &mode, 0))
+    while (EnumDisplaySettingsExW(output->device_name, j++, &mode, 0))
     {
         if (mode.dmFields & DM_DISPLAYFLAGS)
         {
@@ -974,15 +997,15 @@ UINT CDECL wined3d_get_adapter_mode_count(const struct wined3d *wined3d, UINT ad
         }
     }
 
-    TRACE("Returning %u matching modes (out of %u total) for adapter %u.\n", i, j, adapter_idx);
+    TRACE("Returning %u matching modes (out of %u total) for output %p.\n", i, j, output);
 
     return i;
 }
 
 /* Note: dx9 supplies a format. Calls from d3d8 supply WINED3DFMT_UNKNOWN */
-HRESULT CDECL wined3d_enum_adapter_modes(const struct wined3d *wined3d, UINT adapter_idx,
+HRESULT CDECL wined3d_output_get_mode(const struct wined3d_output *output,
         enum wined3d_format_id format_id, enum wined3d_scanline_ordering scanline_ordering,
-        UINT mode_idx, struct wined3d_display_mode *mode)
+        unsigned int mode_idx, struct wined3d_display_mode *mode)
 {
     const struct wined3d_adapter *adapter;
     const struct wined3d_format *format;
@@ -991,13 +1014,13 @@ HRESULT CDECL wined3d_enum_adapter_modes(const struct wined3d *wined3d, UINT ada
     UINT i = 0;
     int j = 0;
 
-    TRACE("wined3d %p, adapter_idx %u, format %s, scanline_ordering %#x, mode_idx %u, mode %p.\n",
-            wined3d, adapter_idx, debug_d3dformat(format_id), scanline_ordering, mode_idx, mode);
+    TRACE("output %p, format %s, scanline_ordering %#x, mode_idx %u, mode %p.\n",
+            output, debug_d3dformat(format_id), scanline_ordering, mode_idx, mode);
 
-    if (!mode || adapter_idx >= wined3d->adapter_count)
+    if (!mode)
         return WINED3DERR_INVALIDCALL;
 
-    adapter = wined3d->adapters[adapter_idx];
+    adapter = output->adapter;
     format = wined3d_get_format(adapter, format_id, WINED3D_BIND_RENDER_TARGET);
     format_bits = format->byte_count * CHAR_BIT;
 
@@ -1006,7 +1029,7 @@ HRESULT CDECL wined3d_enum_adapter_modes(const struct wined3d *wined3d, UINT ada
 
     while (i <= mode_idx)
     {
-        if (!EnumDisplaySettingsExW(adapter->device_name, j++, &m, 0))
+        if (!EnumDisplaySettingsExW(output->device_name, j++, &m, 0))
         {
             WARN("Invalid mode_idx %u.\n", mode_idx);
             return WINED3DERR_INVALIDCALL;
@@ -1058,20 +1081,20 @@ HRESULT CDECL wined3d_enum_adapter_modes(const struct wined3d *wined3d, UINT ada
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_find_closest_matching_adapter_mode(const struct wined3d *wined3d,
-        unsigned int adapter_idx, struct wined3d_display_mode *mode)
+HRESULT CDECL wined3d_output_find_closest_matching_mode(const struct wined3d_output *output,
+        struct wined3d_display_mode *mode)
 {
     unsigned int i, j, mode_count, matching_mode_count, closest;
     struct wined3d_display_mode **matching_modes;
     struct wined3d_display_mode *modes;
     HRESULT hr;
 
-    TRACE("wined3d %p, adapter_idx %u, mode %p.\n", wined3d, adapter_idx, mode);
+    TRACE("output %p, mode %p.\n", output, mode);
 
-    if (!(mode_count = wined3d_get_adapter_mode_count(wined3d, adapter_idx,
-            mode->format_id, WINED3D_SCANLINE_ORDERING_UNKNOWN)))
+    if (!(mode_count = wined3d_output_get_mode_count(output, mode->format_id,
+            WINED3D_SCANLINE_ORDERING_UNKNOWN)))
     {
-        WARN("Adapter has 0 matching modes.\n");
+        WARN("Output has 0 matching modes.\n");
         return E_FAIL;
     }
 
@@ -1085,8 +1108,8 @@ HRESULT CDECL wined3d_find_closest_matching_adapter_mode(const struct wined3d *w
 
     for (i = 0; i < mode_count; ++i)
     {
-        if (FAILED(hr = wined3d_enum_adapter_modes(wined3d, adapter_idx,
-                mode->format_id, WINED3D_SCANLINE_ORDERING_UNKNOWN, i, &modes[i])))
+        if (FAILED(hr = wined3d_output_get_mode(output, mode->format_id,
+                WINED3D_SCANLINE_ORDERING_UNKNOWN, i, &modes[i])))
         {
             heap_free(matching_modes);
             heap_free(modes);
@@ -1122,8 +1145,7 @@ HRESULT CDECL wined3d_find_closest_matching_adapter_mode(const struct wined3d *w
     if (!mode->width || !mode->height)
     {
         struct wined3d_display_mode current_mode;
-        if (FAILED(hr = wined3d_get_adapter_display_mode(wined3d, adapter_idx,
-                &current_mode, NULL)))
+        if (FAILED(hr = wined3d_output_get_display_mode(output, &current_mode, NULL)))
         {
             heap_free(matching_modes);
             heap_free(modes);
@@ -1158,24 +1180,27 @@ HRESULT CDECL wined3d_find_closest_matching_adapter_mode(const struct wined3d *w
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_get_adapter_display_mode(const struct wined3d *wined3d, UINT adapter_idx,
+struct wined3d_adapter * CDECL wined3d_output_get_adapter(const struct wined3d_output *output)
+{
+    TRACE("output %p.\n", output);
+
+    return output->adapter;
+}
+
+HRESULT CDECL wined3d_output_get_display_mode(const struct wined3d_output *output,
         struct wined3d_display_mode *mode, enum wined3d_display_rotation *rotation)
 {
-    const struct wined3d_adapter *adapter;
     DEVMODEW m;
 
-    TRACE("wined3d %p, adapter_idx %u, display_mode %p, rotation %p.\n",
-            wined3d, adapter_idx, mode, rotation);
+    TRACE("output %p, display_mode %p, rotation %p.\n", output, mode, rotation);
 
-    if (!mode || adapter_idx >= wined3d->adapter_count)
+    if (!mode)
         return WINED3DERR_INVALIDCALL;
-
-    adapter = wined3d->adapters[adapter_idx];
 
     memset(&m, 0, sizeof(m));
     m.dmSize = sizeof(m);
 
-    EnumDisplaySettingsExW(adapter->device_name, ENUM_CURRENT_SETTINGS, &m, 0);
+    EnumDisplaySettingsExW(output->device_name, ENUM_CURRENT_SETTINGS, &m, 0);
     mode->width = m.dmPelsWidth;
     mode->height = m.dmPelsHeight;
     mode->refresh_rate = DEFAULT_REFRESH_RATE;
@@ -1187,12 +1212,12 @@ HRESULT CDECL wined3d_get_adapter_display_mode(const struct wined3d *wined3d, UI
      * are pretty angry if they SetDisplayMode from 24 to 16 bpp and find out
      * that GetDisplayMode still returns 24 bpp. This should probably be
      * handled in winex11 instead. */
-    if (adapter->screen_format && adapter->screen_format != mode->format_id)
+    if (output->screen_format && output->screen_format != mode->format_id)
     {
         WARN("Overriding format %s with stored format %s.\n",
                 debug_d3dformat(mode->format_id),
-                debug_d3dformat(adapter->screen_format));
-        mode->format_id = adapter->screen_format;
+                debug_d3dformat(output->screen_format));
+        mode->format_id = output->screen_format;
     }
 
     if (!(m.dmFields & DM_DISPLAYFLAGS))
@@ -1231,20 +1256,14 @@ HRESULT CDECL wined3d_get_adapter_display_mode(const struct wined3d *wined3d, UI
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_set_adapter_display_mode(struct wined3d *wined3d,
-        UINT adapter_idx, const struct wined3d_display_mode *mode)
+HRESULT CDECL wined3d_output_set_display_mode(struct wined3d_output *output,
+        const struct wined3d_display_mode *mode)
 {
-    struct wined3d_adapter *adapter;
     DEVMODEW new_mode, current_mode;
-    RECT clip_rc;
     LONG ret;
     enum wined3d_format_id new_format_id;
 
-    TRACE("wined3d %p, adapter_idx %u, mode %p.\n", wined3d, adapter_idx, mode);
-
-    if (adapter_idx >= wined3d->adapter_count)
-        return WINED3DERR_INVALIDCALL;
-    adapter = wined3d->adapters[adapter_idx];
+    TRACE("output %p, mode %p.\n", output, mode);
 
     memset(&new_mode, 0, sizeof(new_mode));
     new_mode.dmSize = sizeof(new_mode);
@@ -1257,7 +1276,7 @@ HRESULT CDECL wined3d_set_adapter_display_mode(struct wined3d *wined3d,
         TRACE("mode %ux%u@%u %s %#x.\n", mode->width, mode->height, mode->refresh_rate,
                 debug_d3dformat(mode->format_id), mode->scanline_ordering);
 
-        format = wined3d_get_format(adapter, mode->format_id, WINED3D_BIND_RENDER_TARGET);
+        format = wined3d_get_format(output->adapter, mode->format_id, WINED3D_BIND_RENDER_TARGET);
 
         new_mode.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
         new_mode.dmBitsPerPel = format->byte_count * CHAR_BIT;
@@ -1278,7 +1297,7 @@ HRESULT CDECL wined3d_set_adapter_display_mode(struct wined3d *wined3d,
     }
     else
     {
-        if (!EnumDisplaySettingsW(adapter->device_name, ENUM_REGISTRY_SETTINGS, &new_mode))
+        if (!EnumDisplaySettingsW(output->device_name, ENUM_REGISTRY_SETTINGS, &new_mode))
         {
             ERR("Failed to read mode from registry.\n");
             return WINED3DERR_NOTAVAILABLE;
@@ -1287,7 +1306,7 @@ HRESULT CDECL wined3d_set_adapter_display_mode(struct wined3d *wined3d,
     }
 
     /* Only change the mode if necessary. */
-    if (!EnumDisplaySettingsW(adapter->device_name, ENUM_CURRENT_SETTINGS, &current_mode))
+    if (!EnumDisplaySettingsW(output->device_name, ENUM_CURRENT_SETTINGS, &current_mode))
     {
         ERR("Failed to get current display mode.\n");
     }
@@ -1300,11 +1319,11 @@ HRESULT CDECL wined3d_set_adapter_display_mode(struct wined3d *wined3d,
             || !(new_mode.dmFields & DM_DISPLAYFLAGS)))
     {
         TRACE("Skipping redundant mode setting call.\n");
-        adapter->screen_format = new_format_id;
+        output->screen_format = new_format_id;
         return WINED3D_OK;
     }
 
-    ret = ChangeDisplaySettingsExW(adapter->device_name, &new_mode, NULL, CDS_FULLSCREEN, NULL);
+    ret = ChangeDisplaySettingsExW(output->device_name, &new_mode, NULL, CDS_FULLSCREEN, NULL);
     if (ret != DISP_CHANGE_SUCCESSFUL)
     {
         if (new_mode.dmFields & DM_DISPLAYFREQUENCY)
@@ -1312,50 +1331,27 @@ HRESULT CDECL wined3d_set_adapter_display_mode(struct wined3d *wined3d,
             WARN("ChangeDisplaySettingsExW failed, trying without the refresh rate.\n");
             new_mode.dmFields &= ~DM_DISPLAYFREQUENCY;
             new_mode.dmDisplayFrequency = 0;
-            ret = ChangeDisplaySettingsExW(adapter->device_name, &new_mode, NULL, CDS_FULLSCREEN, NULL);
+            ret = ChangeDisplaySettingsExW(output->device_name, &new_mode, NULL, CDS_FULLSCREEN, NULL);
         }
         if (ret != DISP_CHANGE_SUCCESSFUL)
             return WINED3DERR_NOTAVAILABLE;
     }
 
     /* Store the new values. */
-    adapter->screen_format = new_format_id;
-
-    /* And finally clip mouse to our screen. */
-    SetRect(&clip_rc, 0, 0, new_mode.dmPelsWidth, new_mode.dmPelsHeight);
-    ClipCursor(&clip_rc);
+    output->screen_format = new_format_id;
 
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_get_adapter_identifier(const struct wined3d *wined3d,
-        UINT adapter_idx, DWORD flags, struct wined3d_adapter_identifier *identifier)
+HRESULT CDECL wined3d_adapter_get_identifier(const struct wined3d_adapter *adapter,
+        DWORD flags, struct wined3d_adapter_identifier *identifier)
 {
-    const struct wined3d_adapter *adapter;
-
-    TRACE("wined3d %p, adapter_idx %u, flags %#x, identifier %p.\n",
-            wined3d, adapter_idx, flags, identifier);
+    TRACE("adapter %p, flags %#x, identifier %p.\n", adapter, flags, identifier);
 
     wined3d_mutex_lock();
 
-    if (adapter_idx >= wined3d->adapter_count)
-        goto fail;
-
-    adapter = wined3d->adapters[adapter_idx];
-
     wined3d_copy_name(identifier->driver, adapter->driver_info.name, identifier->driver_size);
     wined3d_copy_name(identifier->description, adapter->driver_info.description, identifier->description_size);
-
-    /* Note that d3d8 doesn't supply a device name. */
-    if (identifier->device_name_size)
-    {
-        if (!WideCharToMultiByte(CP_ACP, 0, adapter->device_name, -1, identifier->device_name,
-                identifier->device_name_size, NULL, NULL))
-        {
-            ERR("Failed to convert device name, last error %#x.\n", GetLastError());
-            goto fail;
-        }
-    }
 
     identifier->driver_version.u.HighPart = adapter->driver_info.version_high;
     identifier->driver_version.u.LowPart = adapter->driver_info.version_low;
@@ -1374,13 +1370,9 @@ HRESULT CDECL wined3d_get_adapter_identifier(const struct wined3d *wined3d,
     wined3d_mutex_unlock();
 
     return WINED3D_OK;
-
-fail:
-    wined3d_mutex_unlock();
-    return WINED3DERR_INVALIDCALL;
 }
 
-HRESULT CDECL wined3d_get_adapter_raster_status(const struct wined3d *wined3d, UINT adapter_idx,
+HRESULT CDECL wined3d_output_get_raster_status(const struct wined3d_output *output,
         struct wined3d_raster_status *raster_status)
 {
     LONGLONG freq_per_frame, freq_per_line;
@@ -1389,11 +1381,9 @@ HRESULT CDECL wined3d_get_adapter_raster_status(const struct wined3d *wined3d, U
     static UINT once;
 
     if (!once++)
-        FIXME("wined3d %p, adapter_idx %u, raster_status %p semi-stub!\n",
-                wined3d, adapter_idx, raster_status);
+        FIXME("output %p, raster_status %p semi-stub!\n", output, raster_status);
     else
-        WARN("wined3d %p, adapter_idx %u, raster_status %p semi-stub!\n",
-                wined3d, adapter_idx, raster_status);
+        WARN("output %p, raster_status %p semi-stub!\n", output, raster_status);
 
     /* Obtaining the raster status is a widely implemented but optional
      * feature. When this method returns OK StarCraft 2 expects the
@@ -1404,7 +1394,7 @@ HRESULT CDECL wined3d_get_adapter_raster_status(const struct wined3d *wined3d, U
 
     if (!QueryPerformanceCounter(&counter) || !QueryPerformanceFrequency(&freq_per_sec))
         return WINED3DERR_INVALIDCALL;
-    if (FAILED(wined3d_get_adapter_display_mode(wined3d, adapter_idx, &mode, NULL)))
+    if (FAILED(wined3d_output_get_display_mode(output, &mode, NULL)))
         return WINED3DERR_INVALIDCALL;
     if (mode.refresh_rate == DEFAULT_REFRESH_RATE)
         mode.refresh_rate = 60;
@@ -1427,23 +1417,17 @@ HRESULT CDECL wined3d_get_adapter_raster_status(const struct wined3d *wined3d, U
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_check_depth_stencil_match(const struct wined3d *wined3d,
-        UINT adapter_idx, enum wined3d_device_type device_type, enum wined3d_format_id adapter_format_id,
+HRESULT CDECL wined3d_check_depth_stencil_match(const struct wined3d_adapter *adapter,
+        enum wined3d_device_type device_type, enum wined3d_format_id adapter_format_id,
         enum wined3d_format_id render_target_format_id, enum wined3d_format_id depth_stencil_format_id)
 {
     const struct wined3d_format *rt_format;
     const struct wined3d_format *ds_format;
-    const struct wined3d_adapter *adapter;
 
-    TRACE("wined3d %p, adapter_idx %u, device_type %s,  "
-            "adapter_format %s, render_target_format %s, depth_stencil_format %s.\n",
-            wined3d, adapter_idx, debug_d3ddevicetype(device_type), debug_d3dformat(adapter_format_id),
+    TRACE("adapter %p, device_type %s, adapter_format %s, render_target_format %s, "
+            "depth_stencil_format %s.\n",
+            adapter, debug_d3ddevicetype(device_type), debug_d3dformat(adapter_format_id),
             debug_d3dformat(render_target_format_id), debug_d3dformat(depth_stencil_format_id));
-
-    if (adapter_idx >= wined3d->adapter_count)
-        return WINED3DERR_INVALIDCALL;
-
-    adapter = wined3d->adapters[adapter_idx];
 
     rt_format = wined3d_get_format(adapter, render_target_format_id, WINED3D_BIND_RENDER_TARGET);
     ds_format = wined3d_get_format(adapter, depth_stencil_format_id, WINED3D_BIND_DEPTH_STENCIL);
@@ -1453,7 +1437,7 @@ HRESULT CDECL wined3d_check_depth_stencil_match(const struct wined3d *wined3d,
         WARN("Format %s is not render target format.\n", debug_d3dformat(rt_format->id));
         return WINED3DERR_NOTAVAILABLE;
     }
-    if (!(ds_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL)))
+    if (!(ds_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_DEPTH_STENCIL))
     {
         WARN("Format %s is not depth/stencil format.\n", debug_d3dformat(ds_format->id));
         return WINED3DERR_NOTAVAILABLE;
@@ -1472,21 +1456,18 @@ HRESULT CDECL wined3d_check_depth_stencil_match(const struct wined3d *wined3d,
     return WINED3DERR_NOTAVAILABLE;
 }
 
-HRESULT CDECL wined3d_check_device_multisample_type(const struct wined3d *wined3d, UINT adapter_idx,
+HRESULT CDECL wined3d_check_device_multisample_type(const struct wined3d_adapter *adapter,
         enum wined3d_device_type device_type, enum wined3d_format_id surface_format_id, BOOL windowed,
         enum wined3d_multisample_type multisample_type, DWORD *quality_levels)
 {
-    const struct wined3d_adapter *adapter;
     const struct wined3d_format *format;
     HRESULT hr = WINED3D_OK;
 
-    TRACE("wined3d %p, adapter_idx %u, device_type %s, surface_format %s, "
+    TRACE("adapter %p, device_type %s, surface_format %s, "
             "windowed %#x, multisample_type %#x, quality_levels %p.\n",
-            wined3d, adapter_idx, debug_d3ddevicetype(device_type), debug_d3dformat(surface_format_id),
+            adapter, debug_d3ddevicetype(device_type), debug_d3dformat(surface_format_id),
             windowed, multisample_type, quality_levels);
 
-    if (adapter_idx >= wined3d->adapter_count)
-        return WINED3DERR_INVALIDCALL;
     if (surface_format_id == WINED3DFMT_UNKNOWN)
         return WINED3DERR_INVALIDCALL;
     if (multisample_type < WINED3D_MULTISAMPLE_NONE)
@@ -1497,7 +1478,6 @@ HRESULT CDECL wined3d_check_device_multisample_type(const struct wined3d *wined3
         return WINED3DERR_NOTAVAILABLE;
     }
 
-    adapter = wined3d->adapters[adapter_idx];
     format = wined3d_get_format(adapter, surface_format_id, 0);
 
     if (multisample_type && !(format->multisample_types & 1u << (multisample_type - 1)))
@@ -1525,16 +1505,6 @@ static BOOL wined3d_check_depth_stencil_format(const struct wined3d_adapter *ada
 {
     if (!ds_format->depth_size && !ds_format->stencil_size)
         return FALSE;
-    if (!(ds_format->flags[gl_type] & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL)))
-        return FALSE;
-
-    /* Blacklist formats not supported on Windows */
-    if (ds_format->id == WINED3DFMT_S1_UINT_D15_UNORM /* Breaks the shadowvol2 dx7 sdk sample */
-            || ds_format->id == WINED3DFMT_S4X4_UINT_D24_UNORM)
-    {
-        TRACE("Format %s is blacklisted.\n", debug_d3dformat(ds_format->id));
-        return FALSE;
-    }
 
     return adapter->adapter_ops->adapter_check_format(adapter, adapter_format, NULL, ds_format);
 }
@@ -1559,28 +1529,24 @@ static BOOL wined3d_check_surface_format(const struct wined3d_format *format)
  *
  * For now lets report this on all formats, but in the future we may want to
  * restrict it to some should applications need that. */
-HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT adapter_idx,
-        enum wined3d_device_type device_type, enum wined3d_format_id adapter_format_id, DWORD usage,
-        unsigned int bind_flags, enum wined3d_resource_type resource_type, enum wined3d_format_id check_format_id)
+HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d,
+        const struct wined3d_adapter *adapter, enum wined3d_device_type device_type,
+        enum wined3d_format_id adapter_format_id, DWORD usage, unsigned int bind_flags,
+        enum wined3d_resource_type resource_type, enum wined3d_format_id check_format_id)
 {
     const struct wined3d_format *adapter_format, *format;
     enum wined3d_gl_resource_type gl_type, gl_type_end;
-    const struct wined3d_adapter *adapter;
     BOOL mipmap_gen_supported = TRUE;
     unsigned int allowed_bind_flags;
     DWORD format_flags = 0;
     DWORD allowed_usage;
 
-    TRACE("wined3d %p, adapter_idx %u, device_type %s, adapter_format %s, usage %s, %s, "
+    TRACE("wined3d %p, adapter %p, device_type %s, adapter_format %s, usage %s, %s, "
             "bind_flags %s, resource_type %s, check_format %s.\n",
-            wined3d, adapter_idx, debug_d3ddevicetype(device_type), debug_d3dformat(adapter_format_id),
+            wined3d, adapter, debug_d3ddevicetype(device_type), debug_d3dformat(adapter_format_id),
             debug_d3dusage(usage), debug_d3dusagequery(usage), wined3d_debug_bind_flags(bind_flags),
             debug_d3dresourcetype(resource_type), debug_d3dformat(check_format_id));
 
-    if (adapter_idx >= wined3d->adapter_count)
-        return WINED3DERR_INVALIDCALL;
-
-    adapter = wined3d->adapters[adapter_idx];
     adapter_format = wined3d_get_format(adapter, adapter_format_id, WINED3D_BIND_RENDER_TARGET);
     format = wined3d_get_format(adapter, check_format_id, bind_flags);
 
@@ -1682,6 +1648,8 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
         format_flags |= WINED3DFMT_FLAG_TEXTURE;
     if (bind_flags & WINED3D_BIND_RENDER_TARGET)
         format_flags |= WINED3DFMT_FLAG_RENDERTARGET;
+    if (bind_flags & WINED3D_BIND_DEPTH_STENCIL)
+        format_flags |= WINED3DFMT_FLAG_DEPTH_STENCIL;
     if (usage & WINED3DUSAGE_QUERY_FILTER)
         format_flags |= WINED3DFMT_FLAG_FILTERING;
     if (usage & WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING)
@@ -1703,13 +1671,6 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
 
     for (; gl_type <= gl_type_end; ++gl_type)
     {
-        if ((format->flags[gl_type] & format_flags) != format_flags)
-        {
-            TRACE("Requested format flags %#x, but format %s only has %#x.\n",
-                    format_flags, debug_d3dformat(check_format_id), format->flags[gl_type]);
-            return WINED3DERR_NOTAVAILABLE;
-        }
-
         if ((bind_flags & WINED3D_BIND_RENDER_TARGET)
                 && !adapter->adapter_ops->adapter_check_format(adapter, adapter_format, format, NULL))
         {
@@ -1730,6 +1691,13 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
             return WINED3DERR_NOTAVAILABLE;
         }
 
+        if ((format->flags[gl_type] & format_flags) != format_flags)
+        {
+            TRACE("Requested format flags %#x, but format %s only has %#x.\n",
+                    format_flags, debug_d3dformat(check_format_id), format->flags[gl_type]);
+            return WINED3DERR_NOTAVAILABLE;
+        }
+
         if (!(format->flags[gl_type] & WINED3DFMT_FLAG_GEN_MIPMAP))
             mipmap_gen_supported = FALSE;
     }
@@ -1743,50 +1711,43 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
     return WINED3D_OK;
 }
 
-UINT CDECL wined3d_calculate_format_pitch(const struct wined3d *wined3d, UINT adapter_idx,
-        enum wined3d_format_id format_id, UINT width)
+unsigned int CDECL wined3d_calculate_format_pitch(const struct wined3d_adapter *adapter,
+        enum wined3d_format_id format_id, unsigned int width)
 {
-    const struct wined3d_adapter *adapter;
     unsigned int row_pitch, slice_pitch;
 
-    TRACE("wined3d %p, adapter_idx %u, format_id %s, width %u.\n",
-            wined3d, adapter_idx, debug_d3dformat(format_id), width);
+    TRACE("adapter %p, format_id %s, width %u.\n", adapter, debug_d3dformat(format_id), width);
 
-    if (adapter_idx >= wined3d->adapter_count)
-        return ~0u;
-
-    adapter = wined3d->adapters[adapter_idx];
     wined3d_format_calculate_pitch(wined3d_get_format(adapter, format_id, 0),
             1, width, 1, &row_pitch, &slice_pitch);
 
     return row_pitch;
 }
 
-HRESULT CDECL wined3d_check_device_format_conversion(const struct wined3d *wined3d, UINT adapter_idx,
-        enum wined3d_device_type device_type, enum wined3d_format_id src_format, enum wined3d_format_id dst_format)
+HRESULT CDECL wined3d_check_device_format_conversion(const struct wined3d_output *output,
+        enum wined3d_device_type device_type, enum wined3d_format_id src_format,
+        enum wined3d_format_id dst_format)
 {
-    FIXME("wined3d %p, adapter_idx %u, device_type %s, src_format %s, dst_format %s stub!\n",
-            wined3d, adapter_idx, debug_d3ddevicetype(device_type), debug_d3dformat(src_format),
+    FIXME("output %p, device_type %s, src_format %s, dst_format %s stub!\n",
+            output, debug_d3ddevicetype(device_type), debug_d3dformat(src_format),
             debug_d3dformat(dst_format));
 
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_check_device_type(const struct wined3d *wined3d, UINT adapter_idx,
-        enum wined3d_device_type device_type, enum wined3d_format_id display_format,
-        enum wined3d_format_id backbuffer_format, BOOL windowed)
+HRESULT CDECL wined3d_check_device_type(const struct wined3d *wined3d,
+        const struct wined3d_output *output, enum wined3d_device_type device_type,
+        enum wined3d_format_id display_format, enum wined3d_format_id backbuffer_format,
+        BOOL windowed)
 {
     BOOL present_conversion = wined3d->flags & WINED3D_PRESENT_CONVERSION;
 
-    TRACE("wined3d %p, adapter_idx %u, device_type %s, display_format %s, backbuffer_format %s, windowed %#x.\n",
-            wined3d, adapter_idx, debug_d3ddevicetype(device_type), debug_d3dformat(display_format),
+    TRACE("wined3d %p, output %p, device_type %s, display_format %s, backbuffer_format %s, windowed %#x.\n",
+            wined3d, output, debug_d3ddevicetype(device_type), debug_d3dformat(display_format),
             debug_d3dformat(backbuffer_format), windowed);
 
-    if (adapter_idx >= wined3d->adapter_count)
-        return WINED3DERR_INVALIDCALL;
-
     /* The task of this function is to check whether a certain display / backbuffer format
-     * combination is available on the given adapter. In fullscreen mode microsoft specified
+     * combination is available on the given output. In fullscreen mode microsoft specified
      * that the display format shouldn't provide alpha and that ignoring alpha the backbuffer
      * and display format should match exactly.
      * In windowed mode format conversion can occur and this depends on the driver. */
@@ -1804,8 +1765,8 @@ HRESULT CDECL wined3d_check_device_type(const struct wined3d *wined3d, UINT adap
     if (!windowed)
     {
         /* If the requested display format is not available, don't continue. */
-        if (!wined3d_get_adapter_mode_count(wined3d, adapter_idx,
-                display_format, WINED3D_SCANLINE_ORDERING_UNKNOWN))
+        if (!wined3d_output_get_mode_count(output, display_format,
+                WINED3D_SCANLINE_ORDERING_UNKNOWN))
         {
             TRACE("No available modes for display format %s.\n", debug_d3dformat(display_format));
             return WINED3DERR_NOTAVAILABLE;
@@ -1828,8 +1789,8 @@ HRESULT CDECL wined3d_check_device_type(const struct wined3d *wined3d, UINT adap
         if (backbuffer_format == WINED3DFMT_UNKNOWN)
             backbuffer_format = display_format;
 
-        if (FAILED(wined3d_check_device_format_conversion(wined3d, adapter_idx,
-                device_type, backbuffer_format, display_format)))
+        if (FAILED(wined3d_check_device_format_conversion(output, device_type, backbuffer_format,
+                display_format)))
         {
             TRACE("Format conversion from %s to %s not supported.\n",
                     debug_d3dformat(backbuffer_format), debug_d3dformat(display_format));
@@ -1875,8 +1836,9 @@ HRESULT CDECL wined3d_check_device_type(const struct wined3d *wined3d, UINT adap
     }
 
     /* Validate that the back buffer format is usable for render targets. */
-    if (FAILED(wined3d_check_device_format(wined3d, adapter_idx, device_type, display_format,
-            0, WINED3D_BIND_RENDER_TARGET, WINED3D_RTYPE_TEXTURE_2D, backbuffer_format)))
+    if (FAILED(wined3d_check_device_format(wined3d, output->adapter, device_type,
+            display_format, 0, WINED3D_BIND_RENDER_TARGET, WINED3D_RTYPE_TEXTURE_2D,
+            backbuffer_format)))
     {
         TRACE("Format %s not allowed for render targets.\n", debug_d3dformat(backbuffer_format));
         return WINED3DERR_NOTAVAILABLE;
@@ -1885,27 +1847,21 @@ HRESULT CDECL wined3d_check_device_type(const struct wined3d *wined3d, UINT adap
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, unsigned int adapter_idx,
+HRESULT CDECL wined3d_get_device_caps(const struct wined3d_adapter *adapter,
         enum wined3d_device_type device_type, struct wined3d_caps *caps)
 {
     const struct wined3d_d3d_info *d3d_info;
     struct wined3d_vertex_caps vertex_caps;
-    const struct wined3d_adapter *adapter;
     DWORD ckey_caps, blit_caps, fx_caps;
     struct fragment_caps fragment_caps;
     struct shader_caps shader_caps;
 
-    TRACE("wined3d %p, adapter_idx %u, device_type %s, caps %p.\n",
-            wined3d, adapter_idx, debug_d3ddevicetype(device_type), caps);
+    TRACE("adapter %p, device_type %s, caps %p.\n",
+            adapter, debug_d3ddevicetype(device_type), caps);
 
-    if (adapter_idx >= wined3d->adapter_count)
-        return WINED3DERR_INVALIDCALL;
-
-    adapter = wined3d->adapters[adapter_idx];
     d3d_info = &adapter->d3d_info;
 
     caps->DeviceType = (device_type == WINED3D_DEVICE_TYPE_HAL) ? WINED3D_DEVICE_TYPE_HAL : WINED3D_DEVICE_TYPE_REF;
-    caps->AdapterOrdinal           = adapter_idx;
 
     caps->Caps                     = 0;
     caps->Caps2                    = WINED3DCAPS2_CANRENDERWINDOWED |
@@ -2095,9 +2051,6 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, unsigned in
     caps->DevCaps2                          = WINED3DDEVCAPS2_STREAMOFFSET |
                                               WINED3DDEVCAPS2_VERTEXELEMENTSCANSHARESTREAMOFFSET;
     caps->MaxNpatchTessellationLevel        = 0;
-    caps->MasterAdapterOrdinal              = 0;
-    caps->AdapterOrdinalInGroup             = 0;
-    caps->NumberOfAdaptersInGroup           = 1;
 
     caps->NumSimultaneousRTs = d3d_info->limits.max_rt_count;
 
@@ -2308,24 +2261,19 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, unsigned in
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_create(struct wined3d *wined3d, unsigned int adapter_idx,
+HRESULT CDECL wined3d_device_create(struct wined3d *wined3d, struct wined3d_adapter *adapter,
         enum wined3d_device_type device_type, HWND focus_window, DWORD flags, BYTE surface_alignment,
         const enum wined3d_feature_level *feature_levels, unsigned int feature_level_count,
         struct wined3d_device_parent *device_parent, struct wined3d_device **device)
 {
-    const struct wined3d_adapter *adapter;
     struct wined3d_device *object;
     HRESULT hr;
 
-    TRACE("wined3d %p, adapter_idx %u, device_type %#x, focus_window %p, flags %#x, "
+    TRACE("wined3d %p, adapter %p, device_type %#x, focus_window %p, flags %#x, "
             "surface_alignment %u, feature_levels %p, feature_level_count %u, device_parent %p, device %p.\n",
-            wined3d, adapter_idx, device_type, focus_window, flags, surface_alignment,
+            wined3d, adapter, device_type, focus_window, flags, surface_alignment,
             feature_levels, feature_level_count, device_parent, device);
 
-    if (adapter_idx >= wined3d->adapter_count)
-        return WINED3DERR_INVALIDCALL;
-
-    adapter = wined3d->adapters[adapter_idx];
     if (FAILED(hr = adapter->adapter_ops->adapter_create_device(wined3d, adapter,
             device_type, focus_window, flags, surface_alignment,
             feature_levels, feature_level_count, device_parent, &object)))
@@ -2338,6 +2286,177 @@ HRESULT CDECL wined3d_device_create(struct wined3d *wined3d, unsigned int adapte
 
     return WINED3D_OK;
 }
+
+static const struct wined3d_state_entry_template misc_state_template_no3d[] =
+{
+    {STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_VERTEX),   {STATE_VDECL}},
+    {STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_HULL),     {STATE_VDECL}},
+    {STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_DOMAIN),   {STATE_VDECL}},
+    {STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_GEOMETRY), {STATE_VDECL}},
+    {STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_PIXEL),    {STATE_VDECL}},
+    {STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_COMPUTE),  {STATE_VDECL}},
+    {STATE_GRAPHICS_SHADER_RESOURCE_BINDING,              {STATE_VDECL}},
+    {STATE_GRAPHICS_UNORDERED_ACCESS_VIEW_BINDING,        {STATE_VDECL}},
+    {STATE_COMPUTE_SHADER_RESOURCE_BINDING,               {STATE_VDECL}},
+    {STATE_COMPUTE_UNORDERED_ACCESS_VIEW_BINDING,         {STATE_VDECL}},
+    {STATE_STREAM_OUTPUT,                                 {STATE_VDECL}},
+    {STATE_BLEND,                                         {STATE_VDECL}},
+    {STATE_BLEND_FACTOR,                                  {STATE_VDECL}},
+    {STATE_STREAMSRC,                                     {STATE_VDECL}},
+    {STATE_VDECL,                                         {STATE_VDECL, state_nop}},
+    {STATE_RASTERIZER,                                    {STATE_VDECL}},
+    {STATE_SCISSORRECT,                                   {STATE_VDECL}},
+    {STATE_POINTSPRITECOORDORIGIN,                        {STATE_VDECL}},
+
+    {STATE_TEXTURESTAGE(0, WINED3D_TSS_BUMPENV_MAT00),    {STATE_VDECL}},
+    {STATE_TEXTURESTAGE(0, WINED3D_TSS_BUMPENV_MAT01),    {STATE_VDECL}},
+    {STATE_TEXTURESTAGE(0, WINED3D_TSS_BUMPENV_MAT10),    {STATE_VDECL}},
+    {STATE_TEXTURESTAGE(0, WINED3D_TSS_BUMPENV_MAT11),    {STATE_VDECL}},
+    {STATE_TEXTURESTAGE(1, WINED3D_TSS_BUMPENV_MAT00),    {STATE_VDECL}},
+    {STATE_TEXTURESTAGE(1, WINED3D_TSS_BUMPENV_MAT01),    {STATE_VDECL}},
+    {STATE_TEXTURESTAGE(1, WINED3D_TSS_BUMPENV_MAT10),    {STATE_VDECL}},
+    {STATE_TEXTURESTAGE(1, WINED3D_TSS_BUMPENV_MAT11),    {STATE_VDECL}},
+    {STATE_TEXTURESTAGE(2, WINED3D_TSS_BUMPENV_MAT00),    {STATE_VDECL}},
+    {STATE_TEXTURESTAGE(2, WINED3D_TSS_BUMPENV_MAT01),    {STATE_VDECL}},
+    {STATE_TEXTURESTAGE(2, WINED3D_TSS_BUMPENV_MAT10),    {STATE_VDECL}},
+    {STATE_TEXTURESTAGE(2, WINED3D_TSS_BUMPENV_MAT11),    {STATE_VDECL}},
+    {STATE_TEXTURESTAGE(3, WINED3D_TSS_BUMPENV_MAT00),    {STATE_VDECL}},
+    {STATE_TEXTURESTAGE(3, WINED3D_TSS_BUMPENV_MAT01),    {STATE_VDECL}},
+    {STATE_TEXTURESTAGE(3, WINED3D_TSS_BUMPENV_MAT10),    {STATE_VDECL}},
+    {STATE_TEXTURESTAGE(3, WINED3D_TSS_BUMPENV_MAT11),    {STATE_VDECL}},
+    {STATE_TEXTURESTAGE(4, WINED3D_TSS_BUMPENV_MAT00),    {STATE_VDECL}},
+    {STATE_TEXTURESTAGE(4, WINED3D_TSS_BUMPENV_MAT01),    {STATE_VDECL}},
+    {STATE_TEXTURESTAGE(4, WINED3D_TSS_BUMPENV_MAT10),    {STATE_VDECL}},
+    {STATE_TEXTURESTAGE(4, WINED3D_TSS_BUMPENV_MAT11),    {STATE_VDECL}},
+    {STATE_TEXTURESTAGE(5, WINED3D_TSS_BUMPENV_MAT00),    {STATE_VDECL}},
+    {STATE_TEXTURESTAGE(5, WINED3D_TSS_BUMPENV_MAT01),    {STATE_VDECL}},
+    {STATE_TEXTURESTAGE(5, WINED3D_TSS_BUMPENV_MAT10),    {STATE_VDECL}},
+    {STATE_TEXTURESTAGE(5, WINED3D_TSS_BUMPENV_MAT11),    {STATE_VDECL}},
+    {STATE_TEXTURESTAGE(6, WINED3D_TSS_BUMPENV_MAT00),    {STATE_VDECL}},
+    {STATE_TEXTURESTAGE(6, WINED3D_TSS_BUMPENV_MAT01),    {STATE_VDECL}},
+    {STATE_TEXTURESTAGE(6, WINED3D_TSS_BUMPENV_MAT10),    {STATE_VDECL}},
+    {STATE_TEXTURESTAGE(6, WINED3D_TSS_BUMPENV_MAT11),    {STATE_VDECL}},
+    {STATE_TEXTURESTAGE(7, WINED3D_TSS_BUMPENV_MAT00),    {STATE_VDECL}},
+    {STATE_TEXTURESTAGE(7, WINED3D_TSS_BUMPENV_MAT01),    {STATE_VDECL}},
+    {STATE_TEXTURESTAGE(7, WINED3D_TSS_BUMPENV_MAT10),    {STATE_VDECL}},
+    {STATE_TEXTURESTAGE(7, WINED3D_TSS_BUMPENV_MAT11),    {STATE_VDECL}},
+    {STATE_TEXTURESTAGE(0, WINED3D_TSS_BUMPENV_LSCALE),   {STATE_VDECL}},
+    {STATE_TEXTURESTAGE(0, WINED3D_TSS_BUMPENV_LOFFSET),  {STATE_VDECL}},
+    {STATE_TEXTURESTAGE(1, WINED3D_TSS_BUMPENV_LSCALE),   {STATE_VDECL}},
+    {STATE_TEXTURESTAGE(1, WINED3D_TSS_BUMPENV_LOFFSET),  {STATE_VDECL}},
+    {STATE_TEXTURESTAGE(2, WINED3D_TSS_BUMPENV_LSCALE),   {STATE_VDECL}},
+    {STATE_TEXTURESTAGE(2, WINED3D_TSS_BUMPENV_LOFFSET),  {STATE_VDECL}},
+    {STATE_TEXTURESTAGE(3, WINED3D_TSS_BUMPENV_LSCALE),   {STATE_VDECL}},
+    {STATE_TEXTURESTAGE(3, WINED3D_TSS_BUMPENV_LOFFSET),  {STATE_VDECL}},
+    {STATE_TEXTURESTAGE(4, WINED3D_TSS_BUMPENV_LSCALE),   {STATE_VDECL}},
+    {STATE_TEXTURESTAGE(4, WINED3D_TSS_BUMPENV_LOFFSET),  {STATE_VDECL}},
+    {STATE_TEXTURESTAGE(5, WINED3D_TSS_BUMPENV_LSCALE),   {STATE_VDECL}},
+    {STATE_TEXTURESTAGE(5, WINED3D_TSS_BUMPENV_LOFFSET),  {STATE_VDECL}},
+    {STATE_TEXTURESTAGE(6, WINED3D_TSS_BUMPENV_LSCALE),   {STATE_VDECL}},
+    {STATE_TEXTURESTAGE(6, WINED3D_TSS_BUMPENV_LOFFSET),  {STATE_VDECL}},
+    {STATE_TEXTURESTAGE(7, WINED3D_TSS_BUMPENV_LSCALE),   {STATE_VDECL}},
+    {STATE_TEXTURESTAGE(7, WINED3D_TSS_BUMPENV_LOFFSET),  {STATE_VDECL}},
+
+    {STATE_VIEWPORT,                                      {STATE_VDECL}},
+    {STATE_INDEXBUFFER,                                   {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_ANTIALIAS),                  {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_TEXTUREPERSPECTIVE),         {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_ZENABLE),                    {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_WRAPU),                      {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_WRAPV),                      {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_LINEPATTERN),                {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_MONOENABLE),                 {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_ROP2),                       {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_PLANEMASK),                  {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_ZWRITEENABLE),               {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_LASTPIXEL),                  {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_ZFUNC),                      {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_DITHERENABLE),               {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_SUBPIXEL),                   {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_SUBPIXELX),                  {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_STIPPLEDALPHA),              {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_STIPPLEENABLE),              {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_MIPMAPLODBIAS),              {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_ANISOTROPY),                 {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_FLUSHBATCH),                 {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_TRANSLUCENTSORTINDEPENDENT), {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_STENCILENABLE),              {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_STENCILFAIL),                {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_STENCILZFAIL),               {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_STENCILPASS),                {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_STENCILFUNC),                {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_STENCILREF),                 {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_STENCILMASK),                {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_STENCILWRITEMASK),           {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_TWOSIDEDSTENCILMODE),        {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_BACK_STENCILFAIL),           {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_BACK_STENCILZFAIL),          {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_BACK_STENCILPASS),           {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_BACK_STENCILFUNC),           {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_WRAP0),                      {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_WRAP1),                      {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_WRAP2),                      {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_WRAP3),                      {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_WRAP4),                      {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_WRAP5),                      {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_WRAP6),                      {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_WRAP7),                      {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_WRAP8),                      {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_WRAP9),                      {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_WRAP10),                     {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_WRAP11),                     {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_WRAP12),                     {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_WRAP13),                     {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_WRAP14),                     {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_WRAP15),                     {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_EXTENTS),                    {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_COLORKEYBLENDENABLE),        {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_SOFTWAREVERTEXPROCESSING),   {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_PATCHEDGESTYLE),             {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_PATCHSEGMENTS),              {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_POSITIONDEGREE),             {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_NORMALDEGREE),               {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_MINTESSELLATIONLEVEL),       {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_MAXTESSELLATIONLEVEL),       {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_ADAPTIVETESS_X),             {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_ADAPTIVETESS_Y),             {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_ADAPTIVETESS_Z),             {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_ADAPTIVETESS_W),             {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_ENABLEADAPTIVETESSELLATION), {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_MULTISAMPLEANTIALIAS),       {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_MULTISAMPLEMASK),            {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_DEBUGMONITORTOKEN),          {STATE_VDECL}},
+    {STATE_RENDER(WINED3D_RS_ZVISIBLE),                   {STATE_VDECL}},
+    /* Samplers */
+    {STATE_SAMPLER(0),                                    {STATE_VDECL}},
+    {STATE_SAMPLER(1),                                    {STATE_VDECL}},
+    {STATE_SAMPLER(2),                                    {STATE_VDECL}},
+    {STATE_SAMPLER(3),                                    {STATE_VDECL}},
+    {STATE_SAMPLER(4),                                    {STATE_VDECL}},
+    {STATE_SAMPLER(5),                                    {STATE_VDECL}},
+    {STATE_SAMPLER(6),                                    {STATE_VDECL}},
+    {STATE_SAMPLER(7),                                    {STATE_VDECL}},
+    {STATE_SAMPLER(8),                                    {STATE_VDECL}},
+    {STATE_SAMPLER(9),                                    {STATE_VDECL}},
+    {STATE_SAMPLER(10),                                   {STATE_VDECL}},
+    {STATE_SAMPLER(11),                                   {STATE_VDECL}},
+    {STATE_SAMPLER(12),                                   {STATE_VDECL}},
+    {STATE_SAMPLER(13),                                   {STATE_VDECL}},
+    {STATE_SAMPLER(14),                                   {STATE_VDECL}},
+    {STATE_SAMPLER(15),                                   {STATE_VDECL}},
+    {STATE_SAMPLER(16), /* Vertex sampler 0 */            {STATE_VDECL}},
+    {STATE_SAMPLER(17), /* Vertex sampler 1 */            {STATE_VDECL}},
+    {STATE_SAMPLER(18), /* Vertex sampler 2 */            {STATE_VDECL}},
+    {STATE_SAMPLER(19), /* Vertex sampler 3 */            {STATE_VDECL}},
+    {STATE_BASEVERTEXINDEX,                               {STATE_VDECL}},
+    {STATE_FRAMEBUFFER,                                   {STATE_VDECL}},
+    {STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL),             {STATE_VDECL}},
+    {STATE_SHADER(WINED3D_SHADER_TYPE_HULL),              {STATE_VDECL}},
+    {STATE_SHADER(WINED3D_SHADER_TYPE_DOMAIN),            {STATE_VDECL}},
+    {STATE_SHADER(WINED3D_SHADER_TYPE_GEOMETRY),          {STATE_VDECL}},
+    {STATE_SHADER(WINED3D_SHADER_TYPE_COMPUTE),           {STATE_VDECL}},
+    {0}, /* Terminate */
+};
 
 static void adapter_no3d_destroy(struct wined3d_adapter *adapter)
 {
@@ -2356,8 +2475,8 @@ static HRESULT adapter_no3d_create_device(struct wined3d *wined3d, const struct 
     if (!(device_no3d = heap_alloc_zero(sizeof(*device_no3d))))
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = wined3d_device_init(&device_no3d->d, wined3d, adapter->ordinal, device_type,
-            focus_window, flags, surface_alignment, levels, level_count, device_parent)))
+    if (FAILED(hr = wined3d_device_init(&device_no3d->d, wined3d, adapter->ordinal, device_type, focus_window,
+            flags, surface_alignment, levels, level_count, adapter->gl_info.supported, device_parent)))
     {
         WARN("Failed to initialize device, hr %#x.\n", hr);
         heap_free(device_no3d);
@@ -2446,12 +2565,14 @@ static void adapter_no3d_uninit_3d(struct wined3d_device *device)
 
     context_no3d = &wined3d_device_no3d(device)->context_no3d;
     device->blitter->ops->blitter_destroy(device->blitter, NULL);
+    wined3d_cs_finish(device->cs, WINED3D_CS_QUEUE_DEFAULT);
+
     device_context_remove(device, context_no3d);
     wined3d_context_cleanup(context_no3d);
 }
 
 static void *adapter_no3d_map_bo_address(struct wined3d_context *context,
-        const struct wined3d_bo_address *data, size_t size, uint32_t bind_flags, uint32_t map_flags)
+        const struct wined3d_bo_address *data, size_t size, uint32_t map_flags)
 {
     if (data->buffer_object)
     {
@@ -2462,16 +2583,15 @@ static void *adapter_no3d_map_bo_address(struct wined3d_context *context,
     return data->addr;
 }
 
-static void adapter_no3d_unmap_bo_address(struct wined3d_context *context, const struct wined3d_bo_address *data,
-        uint32_t bind_flags, unsigned int range_count, const struct wined3d_map_range *ranges)
+static void adapter_no3d_unmap_bo_address(struct wined3d_context *context,
+        const struct wined3d_bo_address *data, unsigned int range_count, const struct wined3d_range *ranges)
 {
     if (data->buffer_object)
         ERR("Unsupported buffer object %#lx.\n", data->buffer_object);
 }
 
 static void adapter_no3d_copy_bo_address(struct wined3d_context *context,
-        const struct wined3d_bo_address *dst, uint32_t dst_bind_flags,
-        const struct wined3d_bo_address *src, uint32_t src_bind_flags, size_t size)
+        const struct wined3d_bo_address *dst, const struct wined3d_bo_address *src, size_t size)
 {
     if (dst->buffer_object)
         ERR("Unsupported dst buffer object %#lx.\n", dst->buffer_object);
@@ -2717,6 +2837,18 @@ static void adapter_no3d_flush_context(struct wined3d_context *context)
     TRACE("context %p.\n", context);
 }
 
+static void adapter_no3d_draw_primitive(struct wined3d_device *device,
+        const struct wined3d_state *state, const struct wined3d_draw_parameters *parameters)
+{
+    ERR("device %p, state %p, parameters %p.\n", device, state, parameters);
+}
+
+static void adapter_no3d_dispatch_compute(struct wined3d_device *device,
+        const struct wined3d_state *state, const struct wined3d_dispatch_parameters *parameters)
+{
+    ERR("device %p, state %p, parameters %p.\n", device, state, parameters);
+}
+
 void adapter_no3d_clear_uav(struct wined3d_context *context,
         struct wined3d_unordered_access_view *view, const struct wined3d_uvec4 *clear_value)
 {
@@ -2725,36 +2857,38 @@ void adapter_no3d_clear_uav(struct wined3d_context *context,
 
 static const struct wined3d_adapter_ops wined3d_adapter_no3d_ops =
 {
-    adapter_no3d_destroy,
-    adapter_no3d_create_device,
-    adapter_no3d_destroy_device,
-    adapter_no3d_acquire_context,
-    adapter_no3d_release_context,
-    adapter_no3d_get_wined3d_caps,
-    adapter_no3d_check_format,
-    adapter_no3d_init_3d,
-    adapter_no3d_uninit_3d,
-    adapter_no3d_map_bo_address,
-    adapter_no3d_unmap_bo_address,
-    adapter_no3d_copy_bo_address,
-    adapter_no3d_create_swapchain,
-    adapter_no3d_destroy_swapchain,
-    adapter_no3d_create_buffer,
-    adapter_no3d_destroy_buffer,
-    adapter_no3d_create_texture,
-    adapter_no3d_destroy_texture,
-    adapter_no3d_create_rendertarget_view,
-    adapter_no3d_destroy_rendertarget_view,
-    adapter_no3d_create_shader_resource_view,
-    adapter_no3d_destroy_shader_resource_view,
-    adapter_no3d_create_unordered_access_view,
-    adapter_no3d_destroy_unordered_access_view,
-    adapter_no3d_create_sampler,
-    adapter_no3d_destroy_sampler,
-    adapter_no3d_create_query,
-    adapter_no3d_destroy_query,
-    adapter_no3d_flush_context,
-    adapter_no3d_clear_uav,
+    .adapter_destroy = adapter_no3d_destroy,
+    .adapter_create_device = adapter_no3d_create_device,
+    .adapter_destroy_device = adapter_no3d_destroy_device,
+    .adapter_acquire_context = adapter_no3d_acquire_context,
+    .adapter_release_context = adapter_no3d_release_context,
+    .adapter_get_wined3d_caps = adapter_no3d_get_wined3d_caps,
+    .adapter_check_format = adapter_no3d_check_format,
+    .adapter_init_3d = adapter_no3d_init_3d,
+    .adapter_uninit_3d = adapter_no3d_uninit_3d,
+    .adapter_map_bo_address = adapter_no3d_map_bo_address,
+    .adapter_unmap_bo_address = adapter_no3d_unmap_bo_address,
+    .adapter_copy_bo_address = adapter_no3d_copy_bo_address,
+    .adapter_create_swapchain = adapter_no3d_create_swapchain,
+    .adapter_destroy_swapchain = adapter_no3d_destroy_swapchain,
+    .adapter_create_buffer = adapter_no3d_create_buffer,
+    .adapter_destroy_buffer = adapter_no3d_destroy_buffer,
+    .adapter_create_texture = adapter_no3d_create_texture,
+    .adapter_destroy_texture = adapter_no3d_destroy_texture,
+    .adapter_create_rendertarget_view = adapter_no3d_create_rendertarget_view,
+    .adapter_destroy_rendertarget_view = adapter_no3d_destroy_rendertarget_view,
+    .adapter_create_shader_resource_view = adapter_no3d_create_shader_resource_view,
+    .adapter_destroy_shader_resource_view = adapter_no3d_destroy_shader_resource_view,
+    .adapter_create_unordered_access_view = adapter_no3d_create_unordered_access_view,
+    .adapter_destroy_unordered_access_view = adapter_no3d_destroy_unordered_access_view,
+    .adapter_create_sampler = adapter_no3d_create_sampler,
+    .adapter_destroy_sampler = adapter_no3d_destroy_sampler,
+    .adapter_create_query = adapter_no3d_create_query,
+    .adapter_destroy_query = adapter_no3d_destroy_query,
+    .adapter_flush_context = adapter_no3d_flush_context,
+    .adapter_draw_primitive = adapter_no3d_draw_primitive,
+    .adapter_dispatch_compute = adapter_no3d_dispatch_compute,
+    .adapter_clear_uav = adapter_no3d_clear_uav,
 };
 
 static void wined3d_adapter_no3d_init_d3d_info(struct wined3d_adapter *adapter, unsigned int wined3d_creation_flags)
@@ -2798,6 +2932,7 @@ static struct wined3d_adapter *wined3d_adapter_no3d_create(unsigned int ordinal,
 
     adapter->vertex_pipe = &none_vertex_pipe;
     adapter->fragment_pipe = &none_fragment_pipe;
+    adapter->misc_state_template = misc_state_template_no3d;
     adapter->shader_backend = &none_shader_backend;
 
     wined3d_adapter_no3d_init_d3d_info(adapter, wined3d_creation_flags);
@@ -2811,25 +2946,36 @@ BOOL wined3d_adapter_init(struct wined3d_adapter *adapter, unsigned int ordinal,
         const struct wined3d_adapter_ops *adapter_ops)
 {
     DISPLAY_DEVICEW display_device;
+    unsigned int output_idx;
+    BOOL ret = FALSE;
     HRESULT hr;
 
     adapter->ordinal = ordinal;
+    adapter->output_count = 0;
 
     display_device.cb = sizeof(display_device);
     EnumDisplayDevicesW(NULL, ordinal, &display_device, 0);
     TRACE("Display device: %s.\n", debugstr_w(display_device.DeviceName));
     strcpyW(adapter->device_name, display_device.DeviceName);
-    if (FAILED(hr = wined3d_output_init(&adapter->output, adapter->device_name)))
+
+    if (!(adapter->outputs = heap_calloc(1, sizeof(*adapter->outputs))))
     {
-        ERR("Failed to initialise output, hr %#x.\n", hr);
+        ERR("Failed to allocate outputs.\n");
         return FALSE;
     }
+
+    if (FAILED(hr = wined3d_output_init(&adapter->outputs[0], 0, adapter,
+            display_device.DeviceName)))
+    {
+        ERR("Failed to initialise output, hr %#x.\n", hr);
+        goto done;
+    }
+    adapter->output_count = 1;
 
     if (!AllocateLocallyUniqueId(&adapter->luid))
     {
         ERR("Failed to set adapter LUID (%#x).\n", GetLastError());
-        wined3d_output_cleanup(&adapter->output);
-        return FALSE;
+        goto done;
     }
     TRACE("Allocated LUID %08x:%08x for adapter %p.\n",
             adapter->luid.HighPart, adapter->luid.LowPart, adapter);
@@ -2839,8 +2985,15 @@ BOOL wined3d_adapter_init(struct wined3d_adapter *adapter, unsigned int ordinal,
 
     adapter->formats = NULL;
     adapter->adapter_ops = adapter_ops;
-
-    return TRUE;
+    ret = TRUE;
+done:
+    if (!ret)
+    {
+        for (output_idx = 0; output_idx < adapter->output_count; ++output_idx)
+            wined3d_output_cleanup(&adapter->outputs[output_idx]);
+        heap_free(adapter->outputs);
+    }
+    return ret;
 }
 
 static struct wined3d_adapter *wined3d_adapter_create(unsigned int ordinal, DWORD wined3d_creation_flags)

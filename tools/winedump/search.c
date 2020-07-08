@@ -337,18 +337,3 @@ static const char *get_type (parsed_symbol *sym, const char *proto, int arg)
   }
   return proto_str;
 }
-
-
-#ifdef __GNUC__
-/*******************************************************************
- *         search_cleanup
- *
- * Free memory used while searching (a niceity)
- */
-void search_cleanup (void) __attribute__ ((destructor));
-void search_cleanup (void)
-{
-  free (grep_buff);
-  free (fgrep_buff);
-}
-#endif

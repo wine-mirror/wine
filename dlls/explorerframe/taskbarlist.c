@@ -227,7 +227,7 @@ static HRESULT STDMETHODCALLTYPE taskbar_list_SetOverlayIcon(ITaskbarList4 *ifac
     FIXME("iface %p, hwnd %p, hIcon %p, pszDescription %s stub!\n", iface, hwnd, hIcon,
           debugstr_w(pszDescription));
 
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE taskbar_list_SetThumbnailTooltip(ITaskbarList4 *iface,

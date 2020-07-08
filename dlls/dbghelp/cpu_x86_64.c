@@ -726,7 +726,7 @@ static void*    x86_64_find_runtime_function(struct module* module, DWORD64 addr
     return NULL;
 }
 
-static unsigned x86_64_map_dwarf_register(unsigned regno, BOOL eh_frame)
+static unsigned x86_64_map_dwarf_register(unsigned regno, const struct module* module, BOOL eh_frame)
 {
     unsigned    reg;
 
@@ -931,7 +931,7 @@ static BOOL x86_64_fetch_minidump_module(struct dump_context* dc, unsigned index
         const RUNTIME_FUNCTION* rtf;
         ULONG                   size;
 
-        if (!(pcs = process_find_by_handle(dc->hProcess)) ||
+        if (!(pcs = process_find_by_handle(dc->process->handle)) ||
             !(module = module_find_by_addr(pcs, dc->modules[index].base, DMT_UNKNOWN)))
             return FALSE;
         rtf = (const RUNTIME_FUNCTION*)pe_map_directory(module, IMAGE_DIRECTORY_ENTRY_EXCEPTION, &size);
@@ -949,9 +949,7 @@ static BOOL x86_64_fetch_minidump_module(struct dump_context* dc, unsigned index
                     /* we need to read into the other process */
                     /* rtf = (RUNTIME_FUNCTION*)(module->module.BaseOfImage + (rtf->UnwindData & ~1)); */
                 }
-                if (ReadProcessMemory(dc->hProcess,
-                                      (void*)(dc->modules[index].base + rtf->UnwindData),
-                                      &ui, sizeof(ui), NULL))
+                if (read_process_memory(dc->process, dc->modules[index].base + rtf->UnwindData, &ui, sizeof(ui)))
                     minidump_add_memory_block(dc, dc->modules[index].base + rtf->UnwindData,
                                               FIELD_OFFSET(UNWIND_INFO, UnwindCode) + ui.CountOfCodes * sizeof(UNWIND_CODE), 0);
                 rtf++;

@@ -27,11 +27,11 @@
 #include "winuser.h"
 #include "winternl.h"
 #include "winnt.h"
-#include "wine/library.h"
 #include "wine/debug.h"
 #include "wine/wgl.h"
 #include "wine/wgl_driver.h"
 
+#define GL_SILENCE_DEPRECATION
 #define __gl_h_
 #define __gltypes_h_
 #include <OpenGL/OpenGL.h>
@@ -4242,11 +4242,10 @@ static void load_extensions(void)
 }
 
 
-static BOOL init_opengl(void)
+static BOOL CALLBACK init_opengl(INIT_ONCE *init_once, void *context, void **param)
 {
     static BOOL init_done = FALSE;
     unsigned int i;
-    char buffer[200];
 
     if (init_done) return (opengl_handle != NULL);
     init_done = TRUE;
@@ -4260,17 +4259,17 @@ static BOOL init_opengl(void)
         return FALSE;
     }
 
-    opengl_handle = wine_dlopen("/System/Library/Frameworks/OpenGL.framework/OpenGL", RTLD_LAZY|RTLD_LOCAL|RTLD_NOLOAD, buffer, sizeof(buffer));
+    opengl_handle = dlopen("/System/Library/Frameworks/OpenGL.framework/OpenGL", RTLD_LAZY|RTLD_LOCAL|RTLD_NOLOAD);
     if (!opengl_handle)
     {
-        ERR("Failed to load OpenGL: %s\n", buffer);
+        ERR("Failed to load OpenGL: %s\n", dlerror());
         ERR("OpenGL support is disabled.\n");
         return FALSE;
     }
 
     for (i = 0; i < ARRAY_SIZE(opengl_func_names); i++)
     {
-        if (!(((void **)&opengl_funcs.gl)[i] = wine_dlsym(opengl_handle, opengl_func_names[i], NULL, 0)))
+        if (!(((void **)&opengl_funcs.gl)[i] = dlsym(opengl_handle, opengl_func_names[i])))
         {
             ERR("%s not found in OpenGL, disabling.\n", opengl_func_names[i]);
             goto failed;
@@ -4295,12 +4294,12 @@ static BOOL init_opengl(void)
 
     /* redirect some OpenGL extension functions */
 #define REDIRECT(func) \
-    do { if ((p##func = wine_dlsym(opengl_handle, #func, NULL, 0))) { opengl_funcs.ext.p_##func = macdrv_##func; } } while(0)
+    do { if ((p##func = dlsym(opengl_handle, #func))) { opengl_funcs.ext.p_##func = macdrv_##func; } } while(0)
     REDIRECT(glCopyColorTable);
 #undef REDIRECT
 
     if (gluCheckExtension((GLubyte*)"GL_APPLE_flush_render", (GLubyte*)gl_info.glExtensions))
-        pglFlushRenderAPPLE = wine_dlsym(opengl_handle, "glFlushRenderAPPLE", NULL, 0);
+        pglFlushRenderAPPLE = dlsym(opengl_handle, "glFlushRenderAPPLE");
 
     load_extensions();
     if (!init_pixel_formats())
@@ -4309,7 +4308,7 @@ static BOOL init_opengl(void)
     return TRUE;
 
 failed:
-    wine_dlclose(opengl_handle, NULL, 0);
+    dlclose(opengl_handle);
     opengl_handle = NULL;
     return FALSE;
 }
@@ -4341,7 +4340,7 @@ void sync_gl_view(struct macdrv_win_data* data, const RECT* old_whole_rect, cons
 /**********************************************************************
  *              macdrv_wglDescribePixelFormat
  */
-int macdrv_wglDescribePixelFormat(HDC hdc, int fmt, UINT size, PIXELFORMATDESCRIPTOR *descr)
+static int WINAPI macdrv_wglDescribePixelFormat(HDC hdc, int fmt, UINT size, PIXELFORMATDESCRIPTOR *descr)
 {
     const pixel_format *pf;
     const struct color_mode *mode;
@@ -4407,7 +4406,7 @@ int macdrv_wglDescribePixelFormat(HDC hdc, int fmt, UINT size, PIXELFORMATDESCRI
 /***********************************************************************
  *              macdrv_wglCopyContext
  */
-static BOOL macdrv_wglCopyContext(struct wgl_context *src, struct wgl_context *dst, UINT mask)
+static BOOL WINAPI macdrv_wglCopyContext(struct wgl_context *src, struct wgl_context *dst, UINT mask)
 {
     CGLError err;
 
@@ -4422,7 +4421,7 @@ static BOOL macdrv_wglCopyContext(struct wgl_context *src, struct wgl_context *d
 /***********************************************************************
  *              macdrv_wglCreateContext
  */
-static struct wgl_context *macdrv_wglCreateContext(HDC hdc)
+static struct wgl_context * WINAPI macdrv_wglCreateContext(HDC hdc)
 {
     struct wgl_context *context;
 
@@ -4436,7 +4435,7 @@ static struct wgl_context *macdrv_wglCreateContext(HDC hdc)
 /***********************************************************************
  *              macdrv_wglDeleteContext
  */
-static BOOL macdrv_wglDeleteContext(struct wgl_context *context)
+static BOOL WINAPI macdrv_wglDeleteContext(struct wgl_context *context)
 {
     TRACE("deleting context %p/%p/%p\n", context, context->context, context->cglcontext);
 
@@ -4451,7 +4450,7 @@ static BOOL macdrv_wglDeleteContext(struct wgl_context *context)
 /***********************************************************************
  *              macdrv_wglGetPixelFormat
  */
-static int macdrv_wglGetPixelFormat(HDC hdc)
+static int WINAPI macdrv_wglGetPixelFormat(HDC hdc)
 {
     int format;
 
@@ -4473,12 +4472,12 @@ static int macdrv_wglGetPixelFormat(HDC hdc)
 /***********************************************************************
  *              macdrv_wglGetProcAddress
  */
-static PROC macdrv_wglGetProcAddress(const char *proc)
+static PROC WINAPI macdrv_wglGetProcAddress(const char *proc)
 {
     void *ret;
 
     if (!strncmp(proc, "wgl", 3)) return NULL;
-    ret = wine_dlsym(opengl_handle, proc, NULL, 0);
+    ret = dlsym(opengl_handle, proc);
     if (ret)
     {
         if (TRACE_ON(wgl))
@@ -4498,7 +4497,7 @@ static PROC macdrv_wglGetProcAddress(const char *proc)
 /***********************************************************************
  *              macdrv_wglMakeCurrent
  */
-static BOOL macdrv_wglMakeCurrent(HDC hdc, struct wgl_context *context)
+static BOOL WINAPI macdrv_wglMakeCurrent(HDC hdc, struct wgl_context *context)
 {
     TRACE("hdc %p context %p/%p/%p\n", hdc, context, (context ? context->context : NULL),
           (context ? context->cglcontext : NULL));
@@ -4509,7 +4508,7 @@ static BOOL macdrv_wglMakeCurrent(HDC hdc, struct wgl_context *context)
 /**********************************************************************
  *              macdrv_wglSetPixelFormat
  */
-static BOOL macdrv_wglSetPixelFormat(HDC hdc, int fmt, const PIXELFORMATDESCRIPTOR *descr)
+static BOOL WINAPI macdrv_wglSetPixelFormat(HDC hdc, int fmt, const PIXELFORMATDESCRIPTOR *descr)
 {
     return set_pixel_format(hdc, fmt, FALSE);
 }
@@ -4517,7 +4516,7 @@ static BOOL macdrv_wglSetPixelFormat(HDC hdc, int fmt, const PIXELFORMATDESCRIPT
 /***********************************************************************
  *              macdrv_wglShareLists
  */
-static BOOL macdrv_wglShareLists(struct wgl_context *org, struct wgl_context *dest)
+static BOOL WINAPI macdrv_wglShareLists(struct wgl_context *org, struct wgl_context *dest)
 {
     macdrv_opengl_context saved_context;
     CGLContextObj saved_cglcontext;
@@ -4570,7 +4569,7 @@ static BOOL macdrv_wglShareLists(struct wgl_context *org, struct wgl_context *de
 /**********************************************************************
  *              macdrv_wglSwapBuffers
  */
-static BOOL macdrv_wglSwapBuffers(HDC hdc)
+static BOOL WINAPI macdrv_wglSwapBuffers(HDC hdc)
 {
     struct wgl_context *context = NtCurrentTeb()->glContext;
     BOOL match = FALSE;
@@ -4655,13 +4654,15 @@ static struct opengl_funcs opengl_funcs =
  */
 struct opengl_funcs * CDECL macdrv_wine_get_wgl_driver(PHYSDEV dev, UINT version)
 {
+    static INIT_ONCE opengl_init = INIT_ONCE_STATIC_INIT;
+
     if (version != WINE_WGL_DRIVER_VERSION)
     {
         ERR("version mismatch, opengl32 wants %u but macdrv has %u\n", version, WINE_WGL_DRIVER_VERSION);
         return NULL;
     }
 
-    if (!init_opengl()) return (void *)-1;
+    if (!InitOnceExecuteOnce(&opengl_init, init_opengl, NULL, NULL)) return (void *)-1;
 
     return &opengl_funcs;
 }

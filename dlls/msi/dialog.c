@@ -66,6 +66,7 @@ struct msi_control_tag
     LPWSTR value;
     HBITMAP hBitmap;
     HICON hIcon;
+    HIMAGELIST hImageList;
     LPWSTR tabnext;
     LPWSTR type;
     HMODULE hDll;
@@ -159,6 +160,7 @@ static const WCHAR szVolumeSelectCombo[] = { 'V','o','l','u','m','e','S','e','l'
 static const WCHAR szSelectionDescription[] = {'S','e','l','e','c','t','i','o','n','D','e','s','c','r','i','p','t','i','o','n',0};
 static const WCHAR szSelectionPath[] = {'S','e','l','e','c','t','i','o','n','P','a','t','h',0};
 static const WCHAR szHyperLink[] = {'H','y','p','e','r','L','i','n','k',0};
+static const WCHAR szListView[] = {'L','i','s','t','V','i','e','w',0};
 
 /* dialog sequencing */
 
@@ -401,6 +403,8 @@ static void msi_destroy_control( msi_control *t )
         DeleteObject( t->hBitmap );
     if( t->hIcon )
         DestroyIcon( t->hIcon );
+    if ( t->hImageList )
+        ImageList_Destroy( t->hImageList );
     msi_free( t->tabnext );
     msi_free( t->type );
     if (t->hDll)
@@ -431,6 +435,7 @@ static msi_control *dialog_create_window( msi_dialog *dialog, MSIRECORD *rec, DW
     control->value = NULL;
     control->hBitmap = NULL;
     control->hIcon = NULL;
+    control->hImageList = NULL;
     control->hDll = NULL;
     control->tabnext = strdupW( MSI_RecordGetString( rec, 11) );
     control->type = strdupW( MSI_RecordGetString( rec, 3 ) );
@@ -1009,38 +1014,120 @@ static UINT msi_dialog_button_handler( msi_dialog *dialog, msi_control *control,
     return r;
 }
 
+static HBITMAP msi_load_picture( MSIDATABASE *db, const WCHAR *name, INT cx, INT cy, DWORD flags )
+{
+    HBITMAP hOleBitmap = 0, hBitmap = 0, hOldSrcBitmap, hOldDestBitmap;
+    MSIRECORD *rec = NULL;
+    IStream *stm = NULL;
+    IPicture *pic = NULL;
+    HDC srcdc, destdc;
+    BITMAP bm;
+    UINT r;
+
+    rec = msi_get_binary_record( db, name );
+    if (!rec)
+        goto end;
+
+    r = MSI_RecordGetIStream( rec, 2, &stm );
+    msiobj_release( &rec->hdr );
+    if (r != ERROR_SUCCESS)
+        goto end;
+
+    r = OleLoadPicture( stm, 0, TRUE, &IID_IPicture, (void **)&pic );
+    IStream_Release( stm );
+    if (FAILED( r ))
+    {
+        ERR("failed to load picture\n");
+        goto end;
+    }
+
+    r = IPicture_get_Handle( pic, (OLE_HANDLE *)&hOleBitmap );
+    if (FAILED( r ))
+    {
+        ERR("failed to get bitmap handle\n");
+        goto end;
+    }
+
+    /* make the bitmap the desired size */
+    r = GetObjectW( hOleBitmap, sizeof(bm), &bm );
+    if (r != sizeof(bm))
+    {
+        ERR("failed to get bitmap size\n");
+        goto end;
+    }
+
+    if (flags & LR_DEFAULTSIZE)
+    {
+        cx = bm.bmWidth;
+        cy = bm.bmHeight;
+    }
+
+    srcdc = CreateCompatibleDC( NULL );
+    hOldSrcBitmap = SelectObject( srcdc, hOleBitmap );
+    destdc = CreateCompatibleDC( NULL );
+    hBitmap = CreateCompatibleBitmap( srcdc, cx, cy );
+    hOldDestBitmap = SelectObject( destdc, hBitmap );
+    StretchBlt( destdc, 0, 0, cx, cy, srcdc, 0, 0, bm.bmWidth, bm.bmHeight, SRCCOPY );
+    SelectObject( srcdc, hOldSrcBitmap );
+    SelectObject( destdc, hOldDestBitmap );
+    DeleteDC( srcdc );
+    DeleteDC( destdc );
+
+end:
+    if (pic) IPicture_Release( pic );
+    return hBitmap;
+}
+
 static UINT msi_dialog_button_control( msi_dialog *dialog, MSIRECORD *rec )
 {
     msi_control *control;
-    UINT attributes, style;
+    UINT attributes, style, cx = 0, cy = 0, flags = 0;
+    WCHAR *name = NULL;
 
     TRACE("%p %p\n", dialog, rec);
 
     style = WS_TABSTOP;
     attributes = MSI_RecordGetInteger( rec, 8 );
-    if( attributes & msidbControlAttributesIcon )
-        style |= BS_ICON;
+    if (attributes & msidbControlAttributesIcon) style |= BS_ICON;
+    else if (attributes & msidbControlAttributesBitmap)
+    {
+        style |= BS_BITMAP;
+        if (attributes & msidbControlAttributesFixedSize) flags |= LR_DEFAULTSIZE;
+        else
+        {
+            cx = msi_dialog_scale_unit( dialog, MSI_RecordGetInteger(rec, 6) );
+            cy = msi_dialog_scale_unit( dialog, MSI_RecordGetInteger(rec, 7) );
+        }
+    }
 
     control = msi_dialog_add_control( dialog, rec, szButton, style );
-    if( !control )
+    if (!control)
         return ERROR_FUNCTION_FAILED;
 
     control->handler = msi_dialog_button_handler;
 
     if (attributes & msidbControlAttributesIcon)
     {
-        /* set the icon */
-        LPWSTR name = msi_get_binary_name( dialog->package, rec );
+        name = msi_get_binary_name( dialog->package, rec );
         control->hIcon = msi_load_icon( dialog->package->db, name, attributes );
         if (control->hIcon)
         {
             SendMessageW( control->hwnd, BM_SETIMAGE, IMAGE_ICON, (LPARAM) control->hIcon );
         }
-        else
-            ERR("Failed to load icon %s\n", debugstr_w(name));
-        msi_free( name );
+        else ERR("Failed to load icon %s\n", debugstr_w(name));
+    }
+    else if (attributes & msidbControlAttributesBitmap)
+    {
+        name = msi_get_binary_name( dialog->package, rec );
+        control->hBitmap = msi_load_picture( dialog->package->db, name, cx, cy, flags );
+        if (control->hBitmap)
+        {
+            SendMessageW( control->hwnd, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM) control->hBitmap );
+        }
+        else ERR("Failed to load bitmap %s\n", debugstr_w(name));
     }
 
+    msi_free( name );
     return ERROR_SUCCESS;
 }
 
@@ -1336,72 +1423,6 @@ static UINT msi_dialog_scrolltext_control( msi_dialog *dialog, MSIRECORD *rec )
     return ERROR_SUCCESS;
 }
 
-static HBITMAP msi_load_picture( MSIDATABASE *db, LPCWSTR name,
-                                 INT cx, INT cy, DWORD flags )
-{
-    HBITMAP hOleBitmap = 0, hBitmap = 0, hOldSrcBitmap, hOldDestBitmap;
-    MSIRECORD *rec = NULL;
-    IStream *stm = NULL;
-    IPicture *pic = NULL;
-    HDC srcdc, destdc;
-    BITMAP bm;
-    UINT r;
-
-    rec = msi_get_binary_record( db, name );
-    if( !rec )
-        goto end;
-
-    r = MSI_RecordGetIStream( rec, 2, &stm );
-    msiobj_release( &rec->hdr );
-    if( r != ERROR_SUCCESS )
-        goto end;
-
-    r = OleLoadPicture( stm, 0, TRUE, &IID_IPicture, (LPVOID*) &pic );
-    IStream_Release( stm );
-    if( FAILED( r ) )
-    {
-        ERR("failed to load picture\n");
-        goto end;
-    }
-
-    r = IPicture_get_Handle( pic, (OLE_HANDLE*) &hOleBitmap );
-    if( FAILED( r ) )
-    {
-        ERR("failed to get bitmap handle\n");
-        goto end;
-    }
- 
-    /* make the bitmap the desired size */
-    r = GetObjectW( hOleBitmap, sizeof bm, &bm );
-    if (r != sizeof bm )
-    {
-        ERR("failed to get bitmap size\n");
-        goto end;
-    }
-
-    if (flags & LR_DEFAULTSIZE)
-    {
-        cx = bm.bmWidth;
-        cy = bm.bmHeight;
-    }
-
-    srcdc = CreateCompatibleDC( NULL );
-    hOldSrcBitmap = SelectObject( srcdc, hOleBitmap );
-    destdc = CreateCompatibleDC( NULL );
-    hBitmap = CreateCompatibleBitmap( srcdc, cx, cy );
-    hOldDestBitmap = SelectObject( destdc, hBitmap );
-    StretchBlt( destdc, 0, 0, cx, cy,
-                srcdc, 0, 0, bm.bmWidth, bm.bmHeight, SRCCOPY);
-    SelectObject( srcdc, hOldSrcBitmap );
-    SelectObject( destdc, hOldDestBitmap );
-    DeleteDC( srcdc );
-    DeleteDC( destdc );
-
-end:
-    if ( pic )
-        IPicture_Release( pic );
-    return hBitmap;
-}
 
 static UINT msi_dialog_bitmap_control( msi_dialog *dialog, MSIRECORD *rec )
 {
@@ -3522,6 +3543,107 @@ static UINT msi_dialog_hyperlink( msi_dialog *dialog, MSIRECORD *rec )
     return ERROR_SUCCESS;
 }
 
+/******************** ListView *****************************************/
+
+struct listview_param
+{
+    msi_dialog *dialog;
+    msi_control *control;
+};
+
+static UINT msi_dialog_listview_handler( msi_dialog *dialog, msi_control *control, WPARAM param )
+{
+    NMHDR *nmhdr = (NMHDR *)param;
+
+    FIXME("code %#x (%d)\n", nmhdr->code, nmhdr->code);
+
+    return ERROR_SUCCESS;
+}
+
+static UINT msi_listview_add_item( MSIRECORD *rec, LPVOID param )
+{
+    struct listview_param *lv_param = (struct listview_param *)param;
+    LPCWSTR text, binary;
+    LVITEMW item;
+    HICON hIcon;
+
+    text = MSI_RecordGetString( rec, 4 );
+    binary = MSI_RecordGetString( rec, 5 );
+    hIcon = msi_load_icon( lv_param->dialog->package->db, binary, 0 );
+
+    TRACE("Adding: text %s, binary %s, icon %p\n", debugstr_w(text), debugstr_w(binary), hIcon);
+
+    memset( &item, 0, sizeof(item) );
+    item.mask = LVIF_TEXT | LVIF_IMAGE;
+    deformat_string( lv_param->dialog->package, text, &item.pszText );
+    item.iImage = ImageList_AddIcon( lv_param->control->hImageList, hIcon );
+    item.iItem = item.iImage;
+    SendMessageW( lv_param->control->hwnd, LVM_INSERTITEMW, 0, (LPARAM)&item );
+
+    DestroyIcon( hIcon );
+
+    return ERROR_SUCCESS;
+}
+
+static UINT msi_listview_add_items( msi_dialog *dialog, msi_control *control )
+{
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','L','i','s','t','V','i','e','w','`',' ','W','H','E','R','E',' ',
+        '`','P','r','o','p','e','r','t','y','`',' ','=',' ','\'','%','s','\'',' ',
+        'O','R','D','E','R',' ','B','Y',' ','`','O','r','d','e','r','`',0};
+    MSIQUERY *view;
+    struct listview_param lv_param = { dialog, control };
+
+    if (MSI_OpenQuery( dialog->package->db, &view, query, control->property ) == ERROR_SUCCESS)
+    {
+        MSI_IterateRecords( view, NULL, msi_listview_add_item, &lv_param );
+        msiobj_release( &view->hdr );
+    }
+
+    return ERROR_SUCCESS;
+}
+
+static UINT msi_dialog_listview( msi_dialog *dialog, MSIRECORD *rec )
+{
+    msi_control *control;
+    LPCWSTR prop;
+    DWORD style, attributes;
+    LVCOLUMNW col;
+    RECT rc;
+
+    style = LVS_REPORT | LVS_NOCOLUMNHEADER | LVS_SHAREIMAGELISTS | LVS_SINGLESEL |
+            LVS_SHOWSELALWAYS | WS_VSCROLL | WS_HSCROLL | WS_BORDER | WS_TABSTOP | WS_CHILD;
+    attributes = MSI_RecordGetInteger( rec, 8 );
+    if ( ~attributes & msidbControlAttributesSorted )
+        style |= LVS_SORTASCENDING;
+    control = msi_dialog_add_control( dialog, rec, WC_LISTVIEWW, style );
+    if (!control)
+        return ERROR_FUNCTION_FAILED;
+
+    prop = MSI_RecordGetString( rec, 9 );
+    control->property = msi_dialog_dup_property( dialog, prop, FALSE );
+
+    control->hImageList = ImageList_Create( 16, 16, ILC_COLOR32, 0, 1);
+    SendMessageW( control->hwnd, LVM_SETIMAGELIST, LVSIL_SMALL, (LPARAM)control->hImageList );
+
+    col.mask = LVCF_FMT | LVCF_WIDTH;
+    col.fmt = LVCFMT_LEFT;
+    col.cx = 16;
+    SendMessageW( control->hwnd, LVM_INSERTCOLUMNW, 0, (LPARAM)&col );
+
+    GetClientRect( control->hwnd, &rc );
+    col.cx = rc.right - 16;
+    SendMessageW( control->hwnd, LVM_INSERTCOLUMNW, 0, (LPARAM)&col );
+
+    if (control->property)
+        msi_listview_add_items( dialog, control );
+
+    control->handler = msi_dialog_listview_handler;
+
+    return ERROR_SUCCESS;
+}
+
 static const struct control_handler msi_dialog_handler[] =
 {
     { szText, msi_dialog_text_control },
@@ -3544,7 +3666,8 @@ static const struct control_handler msi_dialog_handler[] =
     { szDirectoryList, msi_dialog_directory_list },
     { szVolumeCostList, msi_dialog_volumecost_list },
     { szVolumeSelectCombo, msi_dialog_volumeselect_combo },
-    { szHyperLink, msi_dialog_hyperlink }
+    { szHyperLink, msi_dialog_hyperlink },
+    { szListView, msi_dialog_listview }
 };
 
 static UINT msi_dialog_create_controls( MSIRECORD *rec, LPVOID param )

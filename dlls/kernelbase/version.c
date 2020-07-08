@@ -28,6 +28,8 @@
 #include <stdio.h>
 #include <sys/types.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #include "windef.h"
@@ -59,6 +61,13 @@ typedef struct
     WORD  count;
     DWORD resloader;
 } NE_TYPEINFO;
+
+struct version_info
+{
+    DWORD major;
+    DWORD minor;
+    DWORD build;
+};
 
 /***********************************************************************
  * Version Info Structure
@@ -114,6 +123,114 @@ typedef struct
     (VS_VERSION_INFO_STRUCT16 *)( (LPBYTE)ver + (((ver)->wLength + 3) & ~3) )
 #define VersionInfo32_Next( ver ) \
     (VS_VERSION_INFO_STRUCT32 *)( (LPBYTE)ver + (((ver)->wLength + 3) & ~3) )
+
+
+/***********************************************************************
+ * Win8 info, reported if app doesn't provide compat GUID in manifest.
+ */
+static const struct version_info windows8_version_info = { 6, 2, 0x23f0 };
+
+
+/***********************************************************************
+ * Windows versions that need compatibility GUID specified in manifest
+ * in order to be reported by the APIs.
+ */
+static const struct
+{
+    struct version_info info;
+    GUID guid;
+} version_data[] =
+{
+    /* Windows 8.1 */
+    {
+        { 6, 3, 0x2580 },
+        {0x1f676c76,0x80e1,0x4239,{0x95,0xbb,0x83,0xd0,0xf6,0xd0,0xda,0x78}}
+    },
+    /* Windows 10 */
+    {
+        { 10, 0, 0x42ee },
+        {0x8e0f7a12,0xbfb3,0x4fe8,{0xb9,0xa5,0x48,0xfd,0x50,0xa1,0x5a,0x9a}}
+    }
+};
+
+
+/******************************************************************************
+ *  init_current_version
+ *
+ * Initialize the current_version variable.
+ *
+ * For compatibility, Windows 8.1 and later report Win8 version unless the app
+ * has a manifest that confirms its compatibility with newer versions of Windows.
+ *
+ */
+static RTL_OSVERSIONINFOEXW current_version;
+
+static BOOL CALLBACK init_current_version(PINIT_ONCE init_once, PVOID parameter, PVOID *context)
+{
+    /*ACTIVATION_CONTEXT_COMPATIBILITY_INFORMATION*/DWORD *acci;
+    const struct version_info *ver;
+    SIZE_T req;
+    int idx;
+
+    current_version.dwOSVersionInfoSize = sizeof(current_version);
+    if (!set_ntstatus( RtlGetVersion(&current_version) )) return FALSE;
+
+    for (idx = ARRAY_SIZE(version_data); idx--;)
+        if ( current_version.dwMajorVersion >  version_data[idx].info.major ||
+            (current_version.dwMajorVersion == version_data[idx].info.major &&
+             current_version.dwMinorVersion >= version_data[idx].info.minor))
+            break;
+
+    if (idx < 0) return TRUE;
+    ver = &windows8_version_info;
+
+    if (RtlQueryInformationActivationContext(0, NtCurrentTeb()->Peb->ActivationContextData, NULL,
+            CompatibilityInformationInActivationContext, NULL, 0, &req) != STATUS_BUFFER_TOO_SMALL
+        || !req)
+        goto done;
+
+    if (!(acci = HeapAlloc(GetProcessHeap(), 0, req)))
+    {
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+        return FALSE;
+    }
+
+    if (RtlQueryInformationActivationContext(0, NtCurrentTeb()->Peb->ActivationContextData, NULL,
+            CompatibilityInformationInActivationContext, acci, req, &req) == STATUS_SUCCESS)
+    {
+        do
+        {
+            COMPATIBILITY_CONTEXT_ELEMENT *elements = (COMPATIBILITY_CONTEXT_ELEMENT*)(acci + 1);
+            DWORD i, count = *acci;
+
+            for (i = 0; i < count; i++)
+            {
+                if (elements[i].Type == ACTCTX_COMPATIBILITY_ELEMENT_TYPE_OS &&
+                    IsEqualGUID(&elements[i].Id, &version_data[idx].guid))
+                {
+                    ver = &version_data[idx].info;
+
+                    if (ver->major == current_version.dwMajorVersion &&
+                        ver->minor == current_version.dwMinorVersion)
+                        ver = NULL;
+
+                    idx = 0;  /* break from outer loop */
+                    break;
+                }
+            }
+        } while (idx--);
+    }
+    HeapFree(GetProcessHeap(), 0, acci);
+
+done:
+    if (ver)
+    {
+        current_version.dwMajorVersion = ver->major;
+        current_version.dwMinorVersion = ver->minor;
+        current_version.dwBuildNumber  = ver->build;
+    }
+    return TRUE;
+}
 
 
 /**********************************************************************
@@ -1017,10 +1134,6 @@ BOOL WINAPI VerQueryValueA( LPCVOID pBlock, LPCSTR lpSubBlock,
 BOOL WINAPI VerQueryValueW( LPCVOID pBlock, LPCWSTR lpSubBlock,
                                LPVOID *lplpBuffer, PUINT puLen )
 {
-    static const WCHAR rootW[] = { '\\', 0 };
-    static const WCHAR varfileinfoW[] = { '\\','V','a','r','F','i','l','e','I','n','f','o',
-                                          '\\','T','r','a','n','s','l','a','t','i','o','n', 0 };
-
     const VS_VERSION_INFO_STRUCT32 *info = pBlock;
 
     TRACE("(%p,%s,%p,%p)\n",
@@ -1030,7 +1143,7 @@ BOOL WINAPI VerQueryValueW( LPCVOID pBlock, LPCWSTR lpSubBlock,
         return FALSE;
 
     if (!lpSubBlock || !lpSubBlock[0])
-        lpSubBlock = rootW;
+        lpSubBlock = L"\\";
 
     if ( VersionInfoIs16( info ) )
     {
@@ -1050,7 +1163,7 @@ BOOL WINAPI VerQueryValueW( LPCVOID pBlock, LPCWSTR lpSubBlock,
 
         HeapFree(GetProcessHeap(), 0, lpSubBlockA);
 
-        if (ret && wcsicmp( lpSubBlock, rootW ) && wcsicmp( lpSubBlock, varfileinfoW ))
+        if (ret && wcscmp( lpSubBlock, L"\\" ) && wcsicmp( lpSubBlock, L"\\VarFileInfo\\Translation" ))
         {
             /* Set lpBuffer so it points to the 'empty' area where we store
              * the converted strings
@@ -1219,7 +1332,6 @@ DWORD WINAPI VerFindFileA( DWORD flags, LPCSTR filename, LPCSTR win_dir, LPCSTR 
 DWORD WINAPI VerFindFileW( DWORD flags, LPCWSTR filename, LPCWSTR win_dir, LPCWSTR app_dir,
                            LPWSTR cur_dir, PUINT curdir_len, LPWSTR dest, PUINT dest_len )
 {
-    static const WCHAR emptyW;
     DWORD retval = 0;
     const WCHAR *curDir;
     const WCHAR *destDir;
@@ -1231,7 +1343,7 @@ DWORD WINAPI VerFindFileW( DWORD flags, LPCWSTR filename, LPCWSTR win_dir, LPCWS
     /* Figure out where the file should go; shared files default to the
        system directory */
 
-    curDir = &emptyW;
+    curDir = L"";
 
     if(flags & VFFF_ISSHAREDFILE)
     {
@@ -1249,7 +1361,7 @@ DWORD WINAPI VerFindFileW( DWORD flags, LPCWSTR filename, LPCWSTR win_dir, LPCWS
     }
     else /* not a shared file */
     {
-        destDir = app_dir ? app_dir : &emptyW;
+        destDir = app_dir ? app_dir : L"";
         if(filename)
         {
             if(file_existsW(destDir, filename, FALSE)) curDir = destDir;
@@ -1308,11 +1420,17 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetProductInfo( DWORD os_major, DWORD os_minor,
  */
 DWORD WINAPI GetVersion(void)
 {
-    DWORD result = MAKELONG( MAKEWORD( NtCurrentTeb()->Peb->OSMajorVersion,
-                                       NtCurrentTeb()->Peb->OSMinorVersion ),
-                             (NtCurrentTeb()->Peb->OSPlatformId ^ 2) << 14 );
-    if (NtCurrentTeb()->Peb->OSPlatformId == VER_PLATFORM_WIN32_NT)
-        result |= LOWORD(NtCurrentTeb()->Peb->OSBuildNumber) << 16;
+    OSVERSIONINFOEXW info;
+    DWORD result;
+
+    info.dwOSVersionInfoSize = sizeof(info);
+    if (!GetVersionExW( (OSVERSIONINFOW *)&info )) return 0;
+
+    result = MAKELONG( MAKEWORD( info.dwMajorVersion, info.dwMinorVersion ),
+                       (info.dwPlatformId ^ 2) << 14 );
+
+    if (info.dwPlatformId == VER_PLATFORM_WIN32_NT)
+        result |= LOWORD(info.dwBuildNumber) << 16;
     return result;
 }
 
@@ -1322,7 +1440,7 @@ DWORD WINAPI GetVersion(void)
  */
 BOOL WINAPI GetVersionExA( OSVERSIONINFOA *info )
 {
-    RTL_OSVERSIONINFOEXW infoW;
+    OSVERSIONINFOEXW infoW;
 
     if (info->dwOSVersionInfoSize != sizeof(OSVERSIONINFOA) &&
         info->dwOSVersionInfoSize != sizeof(OSVERSIONINFOEXA))
@@ -1333,7 +1451,7 @@ BOOL WINAPI GetVersionExA( OSVERSIONINFOA *info )
     }
 
     infoW.dwOSVersionInfoSize = sizeof(infoW);
-    if (!set_ntstatus( RtlGetVersion( &infoW ))) return FALSE;
+    if (!GetVersionExW( (OSVERSIONINFOW *)&infoW )) return FALSE;
 
     info->dwMajorVersion = infoW.dwMajorVersion;
     info->dwMinorVersion = infoW.dwMinorVersion;
@@ -1359,11 +1477,80 @@ BOOL WINAPI GetVersionExA( OSVERSIONINFOA *info )
  */
 BOOL WINAPI GetVersionExW( OSVERSIONINFOW *info )
 {
+    static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
+
     if (info->dwOSVersionInfoSize != sizeof(OSVERSIONINFOW) &&
         info->dwOSVersionInfoSize != sizeof(OSVERSIONINFOEXW))
     {
         WARN( "wrong OSVERSIONINFO size from app (got: %d)\n", info->dwOSVersionInfoSize );
         return FALSE;
     }
-    return set_ntstatus( RtlGetVersion( (RTL_OSVERSIONINFOEXW *)info ));
+
+    if (!InitOnceExecuteOnce(&init_once, init_current_version, NULL, NULL)) return FALSE;
+
+    info->dwMajorVersion = current_version.dwMajorVersion;
+    info->dwMinorVersion = current_version.dwMinorVersion;
+    info->dwBuildNumber  = current_version.dwBuildNumber;
+    info->dwPlatformId   = current_version.dwPlatformId;
+    wcscpy( info->szCSDVersion, current_version.szCSDVersion );
+
+    if (info->dwOSVersionInfoSize == sizeof(OSVERSIONINFOEXW))
+    {
+        OSVERSIONINFOEXW *vex = (OSVERSIONINFOEXW *)info;
+        vex->wServicePackMajor = current_version.wServicePackMajor;
+        vex->wServicePackMinor = current_version.wServicePackMinor;
+        vex->wSuiteMask        = current_version.wSuiteMask;
+        vex->wProductType      = current_version.wProductType;
+    }
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *         GetCurrentPackageFamilyName   (kernelbase.@)
+ */
+LONG WINAPI /* DECLSPEC_HOTPATCH */ GetCurrentPackageFamilyName( UINT32 *length, WCHAR *name )
+{
+    FIXME( "(%p %p): stub\n", length, name );
+    return APPMODEL_ERROR_NO_PACKAGE;
+}
+
+
+/***********************************************************************
+ *         GetCurrentPackageFullName   (kernelbase.@)
+ */
+LONG WINAPI /* DECLSPEC_HOTPATCH */ GetCurrentPackageFullName( UINT32 *length, WCHAR *name )
+{
+    FIXME( "(%p %p): stub\n", length, name );
+    return APPMODEL_ERROR_NO_PACKAGE;
+}
+
+
+/***********************************************************************
+ *         GetCurrentPackageId   (kernelbase.@)
+ */
+LONG WINAPI /* DECLSPEC_HOTPATCH */ GetCurrentPackageId( UINT32 *len, BYTE *buffer )
+{
+    FIXME( "(%p %p): stub\n", len, buffer );
+    return APPMODEL_ERROR_NO_PACKAGE;
+}
+
+
+/***********************************************************************
+ *         GetPackageFullName   (kernelbase.@)
+ */
+LONG WINAPI /* DECLSPEC_HOTPATCH */ GetPackageFullName( HANDLE process, UINT32 *length, WCHAR *name )
+{
+    FIXME( "(%p %p %p): stub\n", process, length, name );
+    return APPMODEL_ERROR_NO_PACKAGE;
+}
+
+
+/***********************************************************************
+ *         GetPackageFamilyName   (kernelbase.@)
+ */
+LONG WINAPI /* DECLSPEC_HOTPATCH */ GetPackageFamilyName( HANDLE process, UINT32 *length, WCHAR *name )
+{
+    FIXME( "(%p %p %p): stub\n", process, length, name );
+    return APPMODEL_ERROR_NO_PACKAGE;
 }

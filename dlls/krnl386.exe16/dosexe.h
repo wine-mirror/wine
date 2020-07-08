@@ -25,45 +25,25 @@
 #include <sys/types.h>
 
 #include "windef.h"
-#include "wine/library.h"
 #include "wine/windef16.h"
 #include "winbase.h"
 #include "winnt.h"     /* for PCONTEXT */
+#include "kernel16_private.h"
 
 #define MAX_DOS_DRIVES  26
 
 /* amount of space reserved for relay stack */
 #define DOSVM_RELAY_DATA_SIZE 4096
 
-/* various real-mode code stubs */
-struct DPMI_segments
-{
-    WORD int16_sel;
-    WORD relay_code_sel;
-    WORD relay_data_sel;
-};
-
 typedef void (*DOSRELAY)(CONTEXT*,void*);
-typedef void (WINAPI *RMCBPROC)(CONTEXT*);
 typedef void (WINAPI *INTPROC)(CONTEXT*);
 
 extern WORD DOSVM_psp DECLSPEC_HIDDEN;     /* psp of current DOS task */
-extern WORD DOSVM_retval DECLSPEC_HIDDEN;  /* return value of previous DOS task */
-extern struct DPMI_segments *DOSVM_dpmi_segments DECLSPEC_HIDDEN;
-
-/*
- * Declare some CONTEXT.EFlags bits.
- * IF_MASK is only pushed into real mode stack.
- */
-#define V86_FLAG 0x00020000
-#define TF_MASK  0x00000100
-#define IF_MASK  0x00000200
-#define VIF_MASK 0x00080000
-#define VIP_MASK 0x00100000
+extern WORD int16_sel DECLSPEC_HIDDEN;
+extern WORD relay_code_sel DECLSPEC_HIDDEN;
+extern WORD relay_data_sel DECLSPEC_HIDDEN;
 
 #define ADD_LOWORD(dw,val)  ((dw) = ((dw) & 0xffff0000) | LOWORD((DWORD)(dw)+(val)))
-
-#define PTR_REAL_TO_LIN(seg,off) ((void*)(((unsigned int)(seg) << 4) + LOWORD(off)))
 
 /* NOTE: Interrupts might get called from four modes: real mode, 16-bit,
  *       32-bit segmented (DPMI32) and 32-bit linear (via DeviceIoControl).
@@ -84,7 +64,7 @@ extern struct DPMI_segments *DOSVM_dpmi_segments DECLSPEC_HIDDEN;
  *       segmented mode is recognized by checking whether 'seg' is 32-bit
  *       selector which is neither system selector nor zero.
  */
-#define CTX_SEG_OFF_TO_LIN(context,seg,off) (wine_ldt_get_ptr((seg),(off)))
+#define CTX_SEG_OFF_TO_LIN(context,seg,off) (ldt_get_ptr((seg),(off)))
 
 #define INT_BARF(context,num) \
     ERR( "int%x: unknown/not implemented parameters:\n" \
@@ -218,13 +198,6 @@ typedef struct
 
 /* dosvm.c */
 extern void DOSVM_Exit( WORD retval ) DECLSPEC_HIDDEN;
-extern LPVOID DOSVM_AllocDataUMB(DWORD, WORD *) DECLSPEC_HIDDEN;
-extern void DOSVM_InitSegments(void) DECLSPEC_HIDDEN;
-
-/* dma.c */
-extern int DMA_Transfer(int channel,int reqlength,void* buffer) DECLSPEC_HIDDEN;
-extern void DMA_ioport_out( WORD port, BYTE val ) DECLSPEC_HIDDEN;
-extern BYTE DMA_ioport_in( WORD port ) DECLSPEC_HIDDEN;
 
 /* dosmem.c */
 extern BIOSDATA *DOSVM_BiosData( void ) DECLSPEC_HIDDEN;
@@ -242,9 +215,6 @@ extern void WINAPI DOSVM_Int3bHandler(CONTEXT*) DECLSPEC_HIDDEN;
 extern void WINAPI DOSVM_Int3cHandler(CONTEXT*) DECLSPEC_HIDDEN;
 extern void WINAPI DOSVM_Int3dHandler(CONTEXT*) DECLSPEC_HIDDEN;
 extern void WINAPI DOSVM_Int3eHandler(CONTEXT*) DECLSPEC_HIDDEN;
-
-/* int13.c */
-extern void WINAPI DOSVM_Int13Handler(CONTEXT*) DECLSPEC_HIDDEN;
 
 /* int15.c */
 extern void WINAPI DOSVM_Int15Handler(CONTEXT*) DECLSPEC_HIDDEN;
@@ -266,10 +236,6 @@ extern void WINAPI DOSVM_Int2fHandler(CONTEXT*) DECLSPEC_HIDDEN;
 /* int31.c */
 extern void WINAPI DOSVM_Int31Handler(CONTEXT*) DECLSPEC_HIDDEN;
 
-/* int67.c */
-extern void WINAPI DOSVM_Int67Handler(CONTEXT*) DECLSPEC_HIDDEN;
-extern void EMS_Ioctl_Handler(CONTEXT*) DECLSPEC_HIDDEN;
-
 /* interrupts.c */
 extern void        __wine_call_int_handler( CONTEXT *, BYTE ) DECLSPEC_HIDDEN;
 extern BOOL        DOSVM_EmulateInterruptPM( CONTEXT *, BYTE ) DECLSPEC_HIDDEN;
@@ -283,9 +249,5 @@ extern void DOSVM_outport( int port, int size, DWORD value ) DECLSPEC_HIDDEN;
 /* relay.c */
 void DOSVM_RelayHandler( CONTEXT * ) DECLSPEC_HIDDEN;
 void DOSVM_BuildCallFrame( CONTEXT *, DOSRELAY, LPVOID ) DECLSPEC_HIDDEN;
-
-/* soundblaster.c */
-extern void SB_ioport_out( WORD port, BYTE val ) DECLSPEC_HIDDEN;
-extern BYTE SB_ioport_in( WORD port ) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_DOSEXE_H */

@@ -143,6 +143,17 @@ my %remap_types =
      "HGLRC" => "struct wgl_context *",
      "HPBUFFERARB" => "struct wgl_pbuffer *",
     );
+
+my %khronos_types =
+    (
+     "khronos_int8_t" => "signed char",
+     "khronos_uint8_t" => "unsigned char",
+     "khronos_int16_t" => "short",
+     "khronos_uint16_t" => "unsigned short",
+     "khronos_int32_t" => "int",
+     "khronos_uint32_t" => "unsigned int",
+     "khronos_float_t" => "float",
+    );
 #
 # Used to convert some types
 #
@@ -211,14 +222,14 @@ sub GenerateThunk($$$)
     return $ret;
 }
 
-sub generate_null_func($$)
+sub generate_null_func($$$)
 {
-    my ($name, $func_ref) = @_;
+    my ($name, $func_ref, $callconv) = @_;
     my $ret;
 
     return "" if $name eq "glDebugEntry";
 
-    $ret = get_func_proto( "static %s null_%s(%s)", $name, $func_ref, 1 );
+    $ret = get_func_proto( "static %s$callconv null_%s(%s)", $name, $func_ref, 1 );
     $ret .= " {";
     if ($name eq "glGetError")
     {
@@ -317,8 +328,11 @@ if ($version eq "1.0") {
 #
 # Fetch the registry files
 #
--f "gl.xml" || system "wget https://raw.github.com/KhronosGroup/OpenGL-Registry/master/xml/gl.xml" || die "cannot download gl.xml";
--f "wgl.xml" || system "wget https://raw.github.com/KhronosGroup/OpenGL-Registry/master/xml/wgl.xml" || die "cannot download wgl.xml";
+my $url="https://raw.githubusercontent.com/KhronosGroup/OpenGL-Registry";
+my $commit="03e1bfb87c4664d34dc7822fb591841eec747094";
+
+-f "gl-$commit.xml" || system "wget", "-O", "gl-$commit.xml", "$url/$commit/xml/gl.xml" || die "cannot download gl.xml";
+-f "wgl-$commit.xml" || system "wget", "-O", "wgl-$commit.xml", "$url/$commit/xml/wgl.xml" || die "cannot download wgl.xml";
 
 
 #
@@ -366,6 +380,8 @@ my %remapped_wgl_functions =
      "wglUseFontBitmaps" => 0,
      "wglUseFontOutlines" => 0,
     );
+
+my @extra_wgl_functions = ( "wglGetDefaultProcAddress" );
 
 my %supported_wgl_extensions =
    (
@@ -488,6 +504,10 @@ sub parse_file($)
                 }
                 $wgl_functions{$name} = $functions{$cmd->{name}};
             }
+            foreach my $name (@extra_wgl_functions)
+            {
+                $wgl_functions{$name} = $functions{$name} if defined $functions{$name};
+            }
         }
         next unless defined $norm_categories{$feature->{name}};
         foreach my $cmd ($feature->findnodes("./require/command"))
@@ -559,8 +579,8 @@ sub parse_file($)
     }
 }
 
-parse_file( "gl.xml" );
-parse_file( "wgl.xml" );
+parse_file( "gl-$commit.xml" );
+parse_file( "wgl-$commit.xml" );
 parse_file( "winegl.xml" );
 
 #
@@ -597,7 +617,7 @@ print HEADER "    struct\n    {\n";
 foreach (sort keys %wgl_functions)
 {
     next unless defined $supported_wgl_functions{$_};
-    print HEADER get_func_proto("        %-10s (WINE_GLAPI *p_%s)(%s);\n", $_, $wgl_functions{$_}, 1);
+    print HEADER get_func_proto("        %-10s (WINAPI *p_%s)(%s);\n", $_, $wgl_functions{$_}, 1);
 }
 print HEADER "    } wgl;\n\n";
 
@@ -644,7 +664,9 @@ print HEADER "#endif\n\n";
 
 foreach (@gl_types)
 {
-    printf HEADER $gl_types{$_}->textContent() . "\n";
+    my $type = $gl_types{$_}->textContent();
+    foreach my $t (keys %khronos_types) { $type =~ s/\s(\Q$t\E)\s/ $khronos_types{$t} /; }
+    printf HEADER $type . "\n";
 }
 print HEADER "\n";
 
@@ -701,13 +723,13 @@ foreach (sort keys %norm_functions) {
 
 foreach (sort keys %wgl_functions) {
     next unless defined $supported_wgl_functions{$_};
-    print NORM generate_null_func($_, $wgl_functions{$_});
+    print NORM generate_null_func($_, $wgl_functions{$_}, " WINAPI");
 }
 foreach (sort keys %norm_functions) {
-    print NORM generate_null_func($_, $norm_functions{$_});
+    print NORM generate_null_func($_, $norm_functions{$_}, "");
 }
 foreach (sort keys %ext_functions) {
-    print NORM generate_null_func($_, $ext_functions{$_});
+    print NORM generate_null_func($_, $ext_functions{$_}, "");
 }
 
 print NORM "\nstruct opengl_funcs null_opengl_funcs =\n{\n    {\n";

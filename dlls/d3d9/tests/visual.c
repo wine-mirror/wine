@@ -63,16 +63,19 @@ static HWND create_window(void)
     return hwnd;
 }
 
+static BOOL compare_uint(unsigned int x, unsigned int y, unsigned int max_diff)
+{
+    unsigned int diff = x > y ? x - y : y - x;
+
+    return diff <= max_diff;
+}
+
 static BOOL color_match(D3DCOLOR c1, D3DCOLOR c2, BYTE max_diff)
 {
-    if (abs((int)(c1 & 0xff) - (int)(c2 & 0xff)) > max_diff) return FALSE;
-    c1 >>= 8; c2 >>= 8;
-    if (abs((int)(c1 & 0xff) - (int)(c2 & 0xff)) > max_diff) return FALSE;
-    c1 >>= 8; c2 >>= 8;
-    if (abs((int)(c1 & 0xff) - (int)(c2 & 0xff)) > max_diff) return FALSE;
-    c1 >>= 8; c2 >>= 8;
-    if (abs((int)(c1 & 0xff) - (int)(c2 & 0xff)) > max_diff) return FALSE;
-    return TRUE;
+    return compare_uint(c1 & 0xff, c2 & 0xff, max_diff)
+            && compare_uint((c1 >> 8) & 0xff, (c2 >> 8) & 0xff, max_diff)
+            && compare_uint((c1 >> 16) & 0xff, (c2 >> 16) & 0xff, max_diff)
+            && compare_uint((c1 >> 24) & 0xff, (c2 >> 24) & 0xff, max_diff);
 }
 
 static BOOL compare_float(float f, float g, unsigned int ulps)
@@ -1511,7 +1514,7 @@ static void test_clear_different_size_surfaces(void)
             depth = (WORD *)((BYTE *)lr.pBits + y * lr.Pitch);
             for (x = 0; x < 4; ++x)
             {
-                ok(abs(depth[x] - 0x7fff) <= 2, "Got depth 0x%04x at %u, %u.\n", depth[x], x, y);
+                ok(compare_uint(depth[x], 0x7fff, 2), "Got depth 0x%04x at %u, %u.\n", depth[x], x, y);
             }
         }
         hr = IDirect3DSurface9_UnlockRect(ds);
@@ -1726,7 +1729,7 @@ static void color_fill_test(void)
             /* Windows drivers disagree on how to promote the 8 bit per channel
              * input argument to 16 bit for D3DFMT_G16R16. */
             ok(color_match(surface_data[0], formats[i].fill_value, 2) &&
-                    abs((expected_a) - (fill_a)) < 3,
+                    compare_uint(expected_a, fill_a, 2),
                     "Expected clear value 0x%08x, got 0x%08x, fmt=%s.\n",
                     formats[i].fill_value, surface_data[0], formats[i].name);
             hr = IDirect3DSurface9_UnlockRect(surface);
@@ -3157,7 +3160,7 @@ done:
 }
 
 static void generate_bumpmap_textures(IDirect3DDevice9 *device) {
-    unsigned int i, x, y;
+    int i, x, y;
     HRESULT hr;
     IDirect3DTexture9 *texture[2] = {NULL, NULL};
     D3DLOCKED_RECT locked_rect;
@@ -3828,16 +3831,32 @@ static void fill_surface(IDirect3DSurface9 *surface, DWORD color, DWORD flags)
 
 static void stretchrect_test(void)
 {
-    IDirect3DSurface9 *surf_tex_rt32, *surf_tex_rt64, *surf_tex_rt_dest64, *surf_tex_rt_dest640_480;
-    IDirect3DSurface9 *surf_offscreen32, *surf_offscreen64, *surf_offscreen_dest64;
+    enum surface_type
+    {
+        OFFSCREEN_32,
+        OFFSCREEN_64,
+        OFFSCREEN_DST_64,
+        RT_32,
+        RT_64,
+        RT_DST_64,
+        TEX_RT_32,
+        TEX_RT_64,
+        TEX_RT_DST_64,
+        TEX_RT_DST_640_480,
+        TEX_32,
+        TEX_64,
+        TEX_DST_64,
+        BACKBUFFER,
+        SURFACE_TYPE_COUNT,
+    };
+
     IDirect3DTexture9 *tex_rt32, *tex_rt64, *tex_rt_dest64, *tex_rt_dest640_480;
-    IDirect3DSurface9 *surf_tex32, *surf_tex64, *surf_tex_dest64;
-    IDirect3DSurface9 *surf_rt32, *surf_rt64, *surf_rt_dest64;
+    IDirect3DSurface9 *surfaces[SURFACE_TYPE_COUNT];
     IDirect3DTexture9 *tex32, *tex64, *tex_dest64;
     IDirect3DSurface9 *surf_temp32, *surf_temp64;
-    IDirect3DSurface9 *backbuffer;
     IDirect3DDevice9 *device;
     IDirect3D9 *d3d;
+    unsigned int i;
     D3DCOLOR color;
     ULONG refcount;
     HWND window;
@@ -3852,6 +3871,75 @@ static void stretchrect_test(void)
     static const RECT dst_rect64 = {0, 0, 64, 64};
     static const RECT dst_rect64_flipy = {0, 64, 64, 0};
 
+    static const struct error_condition_test
+    {
+        enum surface_type src;
+        const RECT *src_rect;
+        enum surface_type dst;
+        const RECT *dst_rect;
+        D3DTEXTUREFILTERTYPE filter;
+        BOOL allowed;
+        BOOL todo;
+    }
+    error_condition_tests[] =
+    {
+        {OFFSCREEN_64, &src_rect64_flipy, OFFSCREEN_DST_64,   &dst_rect64,       D3DTEXF_NONE},
+        {OFFSCREEN_64, &src_rect64,       OFFSCREEN_DST_64,   &dst_rect64_flipy, D3DTEXF_NONE},
+        {OFFSCREEN_64, &src_rect64_flipy, TEX_RT_DST_64,      &dst_rect64,       D3DTEXF_NONE},
+        {OFFSCREEN_64, &src_rect64,       TEX_RT_DST_64,      &dst_rect64_flipy, D3DTEXF_NONE},
+        {OFFSCREEN_64, &src_rect64_flipy, RT_DST_64,          &dst_rect64,       D3DTEXF_NONE},
+        {OFFSCREEN_64, &src_rect64,       RT_DST_64,          &dst_rect64_flipy, D3DTEXF_NONE},
+        {OFFSCREEN_64, NULL,              TEX_DST_64,         NULL,              D3DTEXF_NONE},
+        {OFFSCREEN_32, NULL,              OFFSCREEN_64,       NULL,              D3DTEXF_NONE,            FALSE, TRUE},
+        {OFFSCREEN_32, NULL,              TEX_DST_64,         NULL,              D3DTEXF_NONE},
+        {TEX_64,       NULL,              OFFSCREEN_64,       NULL,              D3DTEXF_NONE,            FALSE, TRUE},
+        {TEX_64,       &src_rect64_flipy, TEX_RT_DST_64,      &dst_rect64,       D3DTEXF_NONE},
+        {TEX_64,       &src_rect64,       TEX_RT_DST_64,      &dst_rect64_flipy, D3DTEXF_NONE},
+        {TEX_64,       &src_rect64_flipy, RT_DST_64,          &dst_rect64,       D3DTEXF_NONE},
+        {TEX_64,       &src_rect64,       RT_DST_64,          &dst_rect64_flipy, D3DTEXF_NONE},
+        {TEX_64,       NULL,              TEX_DST_64,         NULL,              D3DTEXF_NONE},
+        {TEX_32,       NULL,              OFFSCREEN_64,       NULL,              D3DTEXF_NONE,            FALSE, TRUE},
+        {TEX_32,       NULL,              TEX_DST_64,         NULL,              D3DTEXF_NONE},
+        {TEX_RT_64,    NULL,              OFFSCREEN_64,       NULL,              D3DTEXF_NONE,            FALSE, TRUE},
+        {TEX_RT_64,    &src_rect64_flipy, TEX_RT_DST_64,      &dst_rect64,       D3DTEXF_NONE},
+        {TEX_RT_64,    &src_rect64,       TEX_RT_DST_64,      &dst_rect64_flipy, D3DTEXF_NONE},
+        {TEX_RT_64,    &src_rect64_flipy, RT_DST_64,          &dst_rect64,       D3DTEXF_NONE},
+        {TEX_RT_64,    &src_rect64,       RT_DST_64,          &dst_rect64_flipy, D3DTEXF_NONE},
+        {TEX_RT_64,    NULL,              TEX_DST_64,         NULL,              D3DTEXF_NONE},
+        {TEX_RT_32,    NULL,              OFFSCREEN_64,       NULL,              D3DTEXF_NONE,            FALSE, TRUE},
+        {TEX_RT_32,    NULL,              TEX_DST_64,         NULL,              D3DTEXF_NONE},
+        {RT_64,        NULL,              OFFSCREEN_64,       NULL,              D3DTEXF_NONE,            FALSE, TRUE},
+        {RT_64,        &src_rect64_flipy, TEX_RT_DST_64,      &dst_rect64,       D3DTEXF_NONE},
+        {RT_64,        &src_rect64,       TEX_RT_DST_64,      &dst_rect64_flipy, D3DTEXF_NONE},
+        {RT_64,        &src_rect64_flipy, RT_DST_64,          &dst_rect64_flipy, D3DTEXF_NONE},
+        {RT_64,        &src_rect64,       RT_DST_64,          &dst_rect64_flipy, D3DTEXF_NONE},
+        {RT_64,        NULL,              TEX_DST_64,         NULL,              D3DTEXF_NONE},
+        {RT_32,        NULL,              OFFSCREEN_64,       NULL,              D3DTEXF_NONE,            FALSE, TRUE},
+        {RT_32,        NULL,              TEX_DST_64,         NULL,              D3DTEXF_NONE},
+        {BACKBUFFER,   &src_rect_flipy,   TEX_RT_DST_640_480, &dst_rect,         D3DTEXF_NONE},
+        {BACKBUFFER,   &src_rect,         TEX_RT_DST_640_480, &dst_rect_flipy,   D3DTEXF_NONE},
+        /* Test filter. */
+        {OFFSCREEN_64, NULL,              OFFSCREEN_DST_64,   NULL,              D3DTEXF_NONE,            TRUE},
+        {OFFSCREEN_64, NULL,              OFFSCREEN_DST_64,   NULL,              D3DTEXF_ANISOTROPIC},
+        {OFFSCREEN_32, NULL,              TEX_RT_DST_64,      NULL,              D3DTEXF_NONE,            TRUE},
+        {OFFSCREEN_32, NULL,              TEX_RT_DST_64,      NULL,              D3DTEXF_ANISOTROPIC},
+        {OFFSCREEN_64, NULL,              TEX_RT_DST_64,      NULL,              D3DTEXF_ANISOTROPIC},
+        {OFFSCREEN_64, NULL,              TEX_RT_DST_64,      NULL,              D3DTEXF_PYRAMIDALQUAD},
+        {OFFSCREEN_64, NULL,              TEX_RT_DST_64,      NULL,              D3DTEXF_GAUSSIANQUAD},
+        {OFFSCREEN_64, NULL,              TEX_RT_DST_64,      NULL,              D3DTEXF_ANISOTROPIC},
+        {OFFSCREEN_64, NULL,              TEX_RT_DST_64,      NULL,              D3DTEXF_CONVOLUTIONMONO},
+        {OFFSCREEN_64, NULL,              TEX_RT_DST_64,      NULL,              0xbadf},
+        {TEX_64,       NULL,              RT_DST_64,          NULL,              D3DTEXF_NONE,            TRUE},
+        {TEX_64,       NULL,              RT_DST_64,          NULL,              D3DTEXF_ANISOTROPIC},
+        {RT_64,        NULL,              RT_DST_64,          NULL,              D3DTEXF_ANISOTROPIC},
+        {TEX_RT_64,    NULL,              TEX_RT_DST_64,      NULL,              D3DTEXF_NONE,            TRUE},
+        {TEX_RT_64,    NULL,              TEX_RT_DST_64,      NULL,              D3DTEXF_ANISOTROPIC},
+        {RT_64,        NULL,              TEX_RT_DST_64,      NULL,              D3DTEXF_NONE,            TRUE},
+        {RT_64,        NULL,              TEX_RT_DST_64,      NULL,              D3DTEXF_ANISOTROPIC},
+        {BACKBUFFER,   NULL,              TEX_RT_DST_640_480, NULL,              D3DTEXF_NONE,            TRUE},
+        {BACKBUFFER,   NULL,              TEX_RT_DST_640_480, NULL,              D3DTEXF_ANISOTROPIC},
+    };
+
     window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d, "Failed to create a D3D object.\n");
@@ -3864,164 +3952,131 @@ static void stretchrect_test(void)
     /* Create our temporary surfaces in system memory. */
     hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 32, 32,
             D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &surf_temp32, NULL);
-    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 64, 64,
             D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &surf_temp64, NULL);
-    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     /* Create offscreen plain surfaces in D3DPOOL_DEFAULT. */
     hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 32, 32,
-            D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &surf_offscreen32, NULL);
-    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+            D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &surfaces[OFFSCREEN_32], NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 64, 64,
-            D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &surf_offscreen64, NULL);
-    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+            D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &surfaces[OFFSCREEN_64], NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 64, 64,
-            D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &surf_offscreen_dest64, NULL);
-    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+            D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &surfaces[OFFSCREEN_DST_64], NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     /* Create render target surfaces. */
     hr = IDirect3DDevice9_CreateRenderTarget(device, 32, 32,
-            D3DFMT_A8R8G8B8, D3DMULTISAMPLE_NONE, 0, TRUE, &surf_rt32, NULL );
-    ok(SUCCEEDED(hr), "Failed to create render target, hr %#x.\n", hr);
+            D3DFMT_A8R8G8B8, D3DMULTISAMPLE_NONE, 0, TRUE, &surfaces[RT_32], NULL );
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9_CreateRenderTarget(device, 64, 64,
-            D3DFMT_A8R8G8B8, D3DMULTISAMPLE_NONE, 0, TRUE, &surf_rt64, NULL );
-    ok(SUCCEEDED(hr), "Failed to create render target, hr %#x.\n", hr);
+            D3DFMT_A8R8G8B8, D3DMULTISAMPLE_NONE, 0, TRUE, &surfaces[RT_64], NULL );
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9_CreateRenderTarget(device, 64, 64,
-            D3DFMT_A8R8G8B8, D3DMULTISAMPLE_NONE, 0, TRUE, &surf_rt_dest64, NULL );
-    ok(SUCCEEDED(hr), "Failed to create render target, hr %#x.\n", hr);
-    hr = IDirect3DDevice9_GetBackBuffer(device, 0, 0, D3DBACKBUFFER_TYPE_MONO, &backbuffer);
-    ok(SUCCEEDED(hr), "Failed to get back buffer, hr %#x.\n", hr);
+            D3DFMT_A8R8G8B8, D3DMULTISAMPLE_NONE, 0, TRUE, &surfaces[RT_DST_64], NULL );
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_GetBackBuffer(device, 0, 0, D3DBACKBUFFER_TYPE_MONO, &surfaces[BACKBUFFER]);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     /* Create render target textures. */
     hr = IDirect3DDevice9_CreateTexture(device, 32, 32, 1, D3DUSAGE_RENDERTARGET,
             D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &tex_rt32, NULL);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9_CreateTexture(device, 64, 64, 1, D3DUSAGE_RENDERTARGET,
             D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &tex_rt64, NULL);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9_CreateTexture(device, 64, 64, 1, D3DUSAGE_RENDERTARGET,
             D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &tex_rt_dest64, NULL);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9_CreateTexture(device, 640, 480, 1, D3DUSAGE_RENDERTARGET,
             D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &tex_rt_dest640_480, NULL);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
-    hr = IDirect3DTexture9_GetSurfaceLevel(tex_rt32, 0, &surf_tex_rt32);
-    ok(SUCCEEDED(hr), "Failed to get surface level, hr %#x.\n", hr);
-    hr = IDirect3DTexture9_GetSurfaceLevel(tex_rt64, 0, &surf_tex_rt64);
-    ok(SUCCEEDED(hr), "Failed to get surface level, hr %#x.\n", hr);
-    hr = IDirect3DTexture9_GetSurfaceLevel(tex_rt_dest64, 0, &surf_tex_rt_dest64);
-    ok(SUCCEEDED(hr), "Failed to get surface level, hr %#x.\n", hr);
-    hr = IDirect3DTexture9_GetSurfaceLevel(tex_rt_dest640_480, 0, &surf_tex_rt_dest640_480);
-    ok(SUCCEEDED(hr), "Failed to get surface level, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DTexture9_GetSurfaceLevel(tex_rt32, 0, &surfaces[TEX_RT_32]);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DTexture9_GetSurfaceLevel(tex_rt64, 0, &surfaces[TEX_RT_64]);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DTexture9_GetSurfaceLevel(tex_rt_dest64, 0, &surfaces[TEX_RT_DST_64]);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DTexture9_GetSurfaceLevel(tex_rt_dest640_480, 0, &surfaces[TEX_RT_DST_640_480]);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     /* Create regular textures in D3DPOOL_DEFAULT. */
     hr = IDirect3DDevice9_CreateTexture(device, 32, 32, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &tex32, NULL);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9_CreateTexture(device, 64, 64, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &tex64, NULL);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9_CreateTexture(device, 64, 64, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &tex_dest64, NULL);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
-    hr = IDirect3DTexture9_GetSurfaceLevel(tex32, 0, &surf_tex32);
-    ok(SUCCEEDED(hr), "Failed to get surface level, hr %#x.\n", hr);
-    hr = IDirect3DTexture9_GetSurfaceLevel(tex64, 0, &surf_tex64);
-    ok(SUCCEEDED(hr), "Failed to get surface level, hr %#x.\n", hr);
-    hr = IDirect3DTexture9_GetSurfaceLevel(tex_dest64, 0, &surf_tex_dest64);
-    ok(SUCCEEDED(hr), "Failed to get surface level, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DTexture9_GetSurfaceLevel(tex32, 0, &surfaces[TEX_32]);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DTexture9_GetSurfaceLevel(tex64, 0, &surfaces[TEX_64]);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DTexture9_GetSurfaceLevel(tex_dest64, 0, &surfaces[TEX_DST_64]);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     /**********************************************************************
      * Tests for when the source parameter is an offscreen plain surface. *
      **********************************************************************/
 
     /* Fill the offscreen 64x64 surface with green. */
-    fill_surface(surf_offscreen64, 0xff00ff00, 0);
+    fill_surface(surfaces[OFFSCREEN_64], 0xff00ff00, 0);
 
     /* offscreenplain ==> offscreenplain, same size. */
-    hr = IDirect3DDevice9_StretchRect(device, surf_offscreen64, NULL, surf_offscreen_dest64, NULL, D3DTEXF_NONE);
+    hr = IDirect3DDevice9_StretchRect(device, surfaces[OFFSCREEN_64], NULL,
+            surfaces[OFFSCREEN_DST_64], NULL, D3DTEXF_NONE);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    color = getPixelColorFromSurface(surf_offscreen_dest64, 32, 32);
+    color = getPixelColorFromSurface(surfaces[OFFSCREEN_DST_64], 32, 32);
     ok(color == 0xff00ff00, "Got unexpected color 0x%08x.\n", color);
     /* Blit without scaling. */
-    hr = IDirect3DDevice9_StretchRect(device, surf_offscreen64, &src_rect64,
-            surf_offscreen_dest64, &dst_rect64, D3DTEXF_NONE);
+    hr = IDirect3DDevice9_StretchRect(device, surfaces[OFFSCREEN_64], &src_rect64,
+            surfaces[OFFSCREEN_DST_64], &dst_rect64, D3DTEXF_NONE);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    /* Flipping in y-direction through src_rect, no scaling (not allowed). */
-    hr = IDirect3DDevice9_StretchRect(device, surf_offscreen64, &src_rect64_flipy,
-            surf_offscreen_dest64, &dst_rect64, D3DTEXF_NONE);
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
-    /* Flipping in y-direction through dst_rect, no scaling (not allowed). */
-    hr = IDirect3DDevice9_StretchRect(device, surf_offscreen64, &src_rect64,
-            surf_offscreen_dest64, &dst_rect64_flipy, D3DTEXF_NONE);
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
 
     /* offscreenplain ==> rendertarget texture, same size. */
-    hr = IDirect3DDevice9_StretchRect(device, surf_offscreen64, NULL, surf_tex_rt_dest64, NULL, D3DTEXF_NONE);
+    hr = IDirect3DDevice9_StretchRect(device, surfaces[OFFSCREEN_64], NULL,
+            surfaces[TEX_RT_DST_64], NULL, D3DTEXF_NONE);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     /* We can't lock rendertarget textures, so copy to our temp surface first. */
-    hr = IDirect3DDevice9_GetRenderTargetData(device, surf_tex_rt_dest64, surf_temp64);
-    ok(SUCCEEDED(hr), "Failed to get render target data, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_GetRenderTargetData(device, surfaces[TEX_RT_DST_64], surf_temp64);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     color = getPixelColorFromSurface(surf_temp64, 32, 32);
     ok(color == 0xff00ff00, "Got unexpected color 0x%08x.\n", color);
     /* Blit without scaling. */
-    hr = IDirect3DDevice9_StretchRect(device, surf_offscreen64, &src_rect64,
-            surf_tex_rt_dest64, &dst_rect64, D3DTEXF_NONE);
+    hr = IDirect3DDevice9_StretchRect(device, surfaces[OFFSCREEN_64], &src_rect64,
+            surfaces[TEX_RT_DST_64], &dst_rect64, D3DTEXF_NONE);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    /* Flipping in y-direction through src_rect, no scaling (not allowed). */
-    hr = IDirect3DDevice9_StretchRect(device, surf_offscreen64, &src_rect64_flipy,
-            surf_tex_rt_dest64, &dst_rect64, D3DTEXF_NONE);
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
-    /* Flipping in y-direction through dst_rect, no scaling (not allowed). */
-    hr = IDirect3DDevice9_StretchRect(device, surf_offscreen64, &src_rect64,
-            surf_tex_rt_dest64, &dst_rect64_flipy, D3DTEXF_NONE);
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
 
     /* offscreenplain ==> rendertarget surface, same size. */
-    hr = IDirect3DDevice9_StretchRect(device, surf_offscreen64, NULL, surf_rt_dest64, NULL, D3DTEXF_NONE);
+    hr = IDirect3DDevice9_StretchRect(device, surfaces[OFFSCREEN_64], NULL, surfaces[RT_DST_64], NULL, D3DTEXF_NONE);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    color = getPixelColorFromSurface(surf_rt_dest64, 32, 32);
+    color = getPixelColorFromSurface(surfaces[RT_DST_64], 32, 32);
     ok(color == 0xff00ff00, "Got unexpected color 0x%08x.\n", color);
     /* Blit without scaling. */
-    hr = IDirect3DDevice9_StretchRect(device, surf_offscreen64, &src_rect64,
-            surf_rt_dest64, &dst_rect64, D3DTEXF_NONE);
+    hr = IDirect3DDevice9_StretchRect(device, surfaces[OFFSCREEN_64], &src_rect64,
+            surfaces[RT_DST_64], &dst_rect64, D3DTEXF_NONE);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    /* Flipping in y-direction through src_rect, no scaling (not allowed). */
-    hr = IDirect3DDevice9_StretchRect(device, surf_offscreen64, &src_rect64_flipy,
-            surf_rt_dest64, &dst_rect64, D3DTEXF_NONE);
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
-    /* Flipping in y-direction through dst_rect, no scaling (not allowed). */
-    hr = IDirect3DDevice9_StretchRect(device, surf_offscreen64, &src_rect64,
-            surf_rt_dest64, &dst_rect64_flipy, D3DTEXF_NONE);
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
-
-    /* offscreenplain ==> texture, same size (should fail). */
-    hr = IDirect3DDevice9_StretchRect(device, surf_offscreen64, NULL, surf_tex_dest64, NULL, D3DTEXF_NONE);
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
 
     /* Fill the smaller offscreen surface with red. */
-    fill_surface(surf_offscreen32, 0xffff0000, 0);
-
-    /* offscreenplain ==> offscreenplain, scaling (should fail). */
-    hr = IDirect3DDevice9_StretchRect(device, surf_offscreen32, NULL, surf_offscreen64, NULL, D3DTEXF_NONE);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    fill_surface(surfaces[OFFSCREEN_32], 0xffff0000, 0);
 
     /* offscreenplain ==> rendertarget texture, scaling. */
-    hr = IDirect3DDevice9_StretchRect(device, surf_offscreen32, NULL, surf_tex_rt_dest64, NULL, D3DTEXF_NONE);
+    hr = IDirect3DDevice9_StretchRect(device, surfaces[OFFSCREEN_32], NULL,
+            surfaces[TEX_RT_DST_64], NULL, D3DTEXF_NONE);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     /* We can't lock rendertarget textures, so copy to our temp surface first. */
-    hr = IDirect3DDevice9_GetRenderTargetData(device, surf_tex_rt_dest64, surf_temp64);
-    ok(SUCCEEDED(hr), "Failed to get render target data, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_GetRenderTargetData(device, surfaces[TEX_RT_DST_64], surf_temp64);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     color = getPixelColorFromSurface(surf_temp64, 48, 48);
     ok(color == 0xffff0000, "Got unexpected color 0x%08x.\n", color);
 
     /* offscreenplain ==> rendertarget surface, scaling. */
-    hr = IDirect3DDevice9_StretchRect(device, surf_offscreen32, NULL, surf_rt_dest64, NULL, D3DTEXF_NONE);
+    hr = IDirect3DDevice9_StretchRect(device, surfaces[OFFSCREEN_32], NULL, surfaces[RT_DST_64], NULL, D3DTEXF_NONE);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    color = getPixelColorFromSurface(surf_rt_dest64, 48, 48);
+    color = getPixelColorFromSurface(surfaces[RT_DST_64], 48, 48);
     ok(color == 0xffff0000, "Got unexpected color 0x%08x.\n", color);
-
-    /* offscreenplain ==> texture, scaling (should fail). */
-    hr = IDirect3DDevice9_StretchRect(device, surf_offscreen32, NULL, surf_tex_dest64, NULL, D3DTEXF_NONE);
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
 
     /*************************************************************
      * Tests for when the source parameter is a regular texture. *
@@ -4030,84 +4085,52 @@ static void stretchrect_test(void)
     /* Fill the surface of the regular texture with blue. */
     /* Can't fill the surf_tex directly because it's created in D3DPOOL_DEFAULT. */
     fill_surface(surf_temp64, 0xff0000ff, 0);
-    hr = IDirect3DDevice9_UpdateSurface(device, surf_temp64, NULL, surf_tex64, NULL);
-    ok(SUCCEEDED(hr), "Failed to update surface, hr %#x.\n", hr);
-
-    /* texture ==> offscreenplain, same size. */
-    hr = IDirect3DDevice9_StretchRect(device, surf_tex64, NULL, surf_offscreen64, NULL, D3DTEXF_NONE);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_UpdateSurface(device, surf_temp64, NULL, surfaces[TEX_64], NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     /* texture ==> rendertarget texture, same size. */
-    hr = IDirect3DDevice9_StretchRect(device, surf_tex64, NULL, surf_tex_rt_dest64, NULL, D3DTEXF_NONE);
+    hr = IDirect3DDevice9_StretchRect(device, surfaces[TEX_64], NULL, surfaces[TEX_RT_DST_64], NULL, D3DTEXF_NONE);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     /* We can't lock rendertarget textures, so copy to our temp surface first. */
-    hr = IDirect3DDevice9_GetRenderTargetData(device, surf_tex_rt_dest64, surf_temp64);
-    ok(SUCCEEDED(hr), "Failed to get render target data, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_GetRenderTargetData(device, surfaces[TEX_RT_DST_64], surf_temp64);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     color = getPixelColorFromSurface(surf_temp64, 32, 32);
     ok(color == 0xff0000ff, "Got unexpected color 0x%08x.\n", color);
     /* Blit without scaling. */
-    hr = IDirect3DDevice9_StretchRect(device, surf_tex64, &src_rect64,
-            surf_tex_rt_dest64, &dst_rect64, D3DTEXF_NONE);
+    hr = IDirect3DDevice9_StretchRect(device, surfaces[TEX_64], &src_rect64,
+            surfaces[TEX_RT_DST_64], &dst_rect64, D3DTEXF_NONE);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    /* Flipping in y-direction through src_rect, no scaling (not allowed). */
-    hr = IDirect3DDevice9_StretchRect(device, surf_tex64, &src_rect64_flipy,
-            surf_tex_rt_dest64, &dst_rect64, D3DTEXF_NONE);
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
-    /* Flipping in y-direction through dst_rect, no scaling (not allowed). */
-    hr = IDirect3DDevice9_StretchRect(device, surf_tex64, &src_rect64,
-            surf_tex_rt_dest64, &dst_rect64_flipy, D3DTEXF_NONE);
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
 
     /* texture ==> rendertarget surface, same size. */
-    hr = IDirect3DDevice9_StretchRect(device, surf_tex64, NULL, surf_rt_dest64, NULL, D3DTEXF_NONE);
+    hr = IDirect3DDevice9_StretchRect(device, surfaces[TEX_64], NULL, surfaces[RT_DST_64], NULL, D3DTEXF_NONE);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    color = getPixelColorFromSurface(surf_rt_dest64, 32, 32);
+    color = getPixelColorFromSurface(surfaces[RT_DST_64], 32, 32);
     ok(color == 0xff0000ff, "Got unexpected color 0x%08x.\n", color);
     /* Blit without scaling. */
-    hr = IDirect3DDevice9_StretchRect(device, surf_tex64, &src_rect64,
-            surf_rt_dest64, &dst_rect64, D3DTEXF_NONE);
+    hr = IDirect3DDevice9_StretchRect(device, surfaces[TEX_64], &src_rect64,
+            surfaces[RT_DST_64], &dst_rect64, D3DTEXF_NONE);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    /* Flipping in y-direction through src_rect, no scaling (not allowed). */
-    hr = IDirect3DDevice9_StretchRect(device, surf_tex64, &src_rect64_flipy,
-            surf_rt_dest64, &dst_rect64, D3DTEXF_NONE);
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
-    /* Flipping in y-direction through dst_rect, no scaling (not allowed). */
-    hr = IDirect3DDevice9_StretchRect(device, surf_tex64, &src_rect64,
-            surf_rt_dest64, &dst_rect64_flipy, D3DTEXF_NONE);
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
-
-    /* texture ==> texture, same size (should fail). */
-    hr = IDirect3DDevice9_StretchRect(device, surf_tex64, NULL, surf_tex_dest64, NULL, D3DTEXF_NONE);
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
 
     /* Fill the surface of the smaller regular texture with red. */
     /* Can't fill the surf_tex directly because it's created in D3DPOOL_DEFAULT. */
     fill_surface(surf_temp32, 0xffff0000, 0);
-    hr = IDirect3DDevice9_UpdateSurface(device, surf_temp32, NULL, surf_tex32, NULL);
-    ok(SUCCEEDED(hr), "Failed to update surface, hr %#x.\n", hr);
-
-    /* texture ==> offscreenplain, scaling (should fail). */
-    hr = IDirect3DDevice9_StretchRect(device, surf_tex32, NULL, surf_offscreen64, NULL, D3DTEXF_NONE);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_UpdateSurface(device, surf_temp32, NULL, surfaces[TEX_32], NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     /* texture ==> rendertarget texture, scaling. */
-    hr = IDirect3DDevice9_StretchRect(device, surf_tex32, NULL, surf_tex_rt_dest64, NULL, D3DTEXF_NONE);
+    hr = IDirect3DDevice9_StretchRect(device, surfaces[TEX_32], NULL, surfaces[TEX_RT_DST_64], NULL, D3DTEXF_NONE);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     /* We can't lock rendertarget textures, so copy to our temp surface first. */
-    hr = IDirect3DDevice9_GetRenderTargetData(device, surf_tex_rt_dest64, surf_temp64);
-    ok(SUCCEEDED(hr), "Failed to get render target data, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_GetRenderTargetData(device, surfaces[TEX_RT_DST_64], surf_temp64);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     color = getPixelColorFromSurface(surf_temp64, 48, 48);
     ok(color == 0xffff0000, "Got unexpected color 0x%08x.\n", color);
 
     /* texture ==> rendertarget surface, scaling. */
-    hr = IDirect3DDevice9_StretchRect(device, surf_tex32, NULL, surf_rt_dest64, NULL, D3DTEXF_NONE);
+    hr = IDirect3DDevice9_StretchRect(device, surfaces[TEX_32], NULL, surfaces[RT_DST_64], NULL, D3DTEXF_NONE);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    color = getPixelColorFromSurface(surf_rt_dest64, 48, 48);
+    color = getPixelColorFromSurface(surfaces[RT_DST_64], 48, 48);
     ok(color == 0xffff0000, "Got unexpected color 0x%08x.\n", color);
-
-    /* texture ==> texture, scaling (should fail). */
-    hr = IDirect3DDevice9_StretchRect(device, surf_tex32, NULL, surf_tex_dest64, NULL, D3DTEXF_NONE);
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
 
     /******************************************************************
      * Tests for when the source parameter is a rendertarget texture. *
@@ -4116,206 +4139,137 @@ static void stretchrect_test(void)
     /* Fill the surface of the rendertarget texture with white. */
     /* Can't fill the surf_tex_rt directly because it's created in D3DPOOL_DEFAULT. */
     fill_surface(surf_temp64, 0xffffffff, 0);
-    hr = IDirect3DDevice9_UpdateSurface(device, surf_temp64, NULL, surf_tex_rt64, NULL);
-    ok(SUCCEEDED(hr), "Failed to update surface, hr %#x.\n", hr);
-
-    /* rendertarget texture ==> offscreenplain, same size. */
-    hr = IDirect3DDevice9_StretchRect(device, surf_tex_rt64, NULL, surf_offscreen64, NULL, D3DTEXF_NONE);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_UpdateSurface(device, surf_temp64, NULL, surfaces[TEX_RT_64], NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     /* rendertarget texture ==> rendertarget texture, same size. */
-    hr = IDirect3DDevice9_StretchRect(device, surf_tex_rt64, NULL, surf_tex_rt_dest64, NULL, D3DTEXF_NONE);
+    hr = IDirect3DDevice9_StretchRect(device, surfaces[TEX_RT_64], NULL, surfaces[TEX_RT_DST_64], NULL, D3DTEXF_NONE);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     /* We can't lock rendertarget textures, so copy to our temp surface first. */
-    hr = IDirect3DDevice9_GetRenderTargetData(device, surf_tex_rt_dest64, surf_temp64);
-    ok(SUCCEEDED(hr), "Failed to get render target data, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_GetRenderTargetData(device, surfaces[TEX_RT_DST_64], surf_temp64);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     color = getPixelColorFromSurface(surf_temp64, 32, 32);
     ok(color == 0xffffffff, "Got unexpected color 0x%08x.\n", color);
     /* Blit without scaling. */
-    hr = IDirect3DDevice9_StretchRect(device, surf_tex_rt64, &src_rect64,
-            surf_tex_rt_dest64, &dst_rect64, D3DTEXF_NONE);
+    hr = IDirect3DDevice9_StretchRect(device, surfaces[TEX_RT_64], &src_rect64,
+            surfaces[TEX_RT_DST_64], &dst_rect64, D3DTEXF_NONE);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    /* Flipping in y-direction through src_rect, no scaling (not allowed). */
-    hr = IDirect3DDevice9_StretchRect(device, surf_tex_rt64, &src_rect64_flipy,
-            surf_tex_rt_dest64, &dst_rect64, D3DTEXF_NONE);
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
-    /* Flipping in y-direction through dst_rect, no scaling (not allowed). */
-    hr = IDirect3DDevice9_StretchRect(device, surf_tex_rt64, &src_rect64,
-            surf_tex_rt_dest64, &dst_rect64_flipy, D3DTEXF_NONE);
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
 
     /* rendertarget texture ==> rendertarget surface, same size. */
-    hr = IDirect3DDevice9_StretchRect(device, surf_tex_rt64, NULL, surf_rt_dest64, NULL, D3DTEXF_NONE);
+    hr = IDirect3DDevice9_StretchRect(device, surfaces[TEX_RT_64], NULL, surfaces[RT_DST_64], NULL, D3DTEXF_NONE);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    color = getPixelColorFromSurface(surf_rt_dest64, 32, 32);
+    color = getPixelColorFromSurface(surfaces[RT_DST_64], 32, 32);
     ok(color == 0xffffffff, "Got unexpected color 0x%08x.\n", color);
     /* Blit without scaling. */
-    hr = IDirect3DDevice9_StretchRect(device, surf_tex_rt64, &src_rect64,
-            surf_rt_dest64, &dst_rect64, D3DTEXF_NONE);
+    hr = IDirect3DDevice9_StretchRect(device, surfaces[TEX_RT_64], &src_rect64,
+            surfaces[RT_DST_64], &dst_rect64, D3DTEXF_NONE);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    /* Flipping in y-direction through src_rect, no scaling (not allowed). */
-    hr = IDirect3DDevice9_StretchRect(device, surf_tex_rt64, &src_rect64_flipy,
-            surf_rt_dest64, &dst_rect64, D3DTEXF_NONE);
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
-    /* Flipping in y-direction through dst_rect, no scaling (not allowed). */
-    hr = IDirect3DDevice9_StretchRect(device, surf_tex_rt64, &src_rect64,
-            surf_rt_dest64, &dst_rect64_flipy, D3DTEXF_NONE);
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
-
-    /* rendertarget texture ==> texture, same size (should fail). */
-    hr = IDirect3DDevice9_StretchRect(device, surf_tex_rt64, NULL, surf_tex_dest64, NULL, D3DTEXF_NONE);
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
 
     /* Fill the surface of the smaller rendertarget texture with red. */
     /* Can't fill the surf_tex_rt directly because it's created in D3DPOOL_DEFAULT. */
     fill_surface(surf_temp32, 0xffff0000, 0);
-    hr = IDirect3DDevice9_UpdateSurface(device, surf_temp32, NULL, surf_tex_rt32, NULL);
-    ok(SUCCEEDED(hr), "Failed to update surface, hr %#x.\n", hr);
-
-    /* rendertarget texture ==> offscreenplain, scaling (should fail). */
-    hr = IDirect3DDevice9_StretchRect(device, surf_tex_rt32, NULL, surf_offscreen64, NULL, D3DTEXF_NONE);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_UpdateSurface(device, surf_temp32, NULL, surfaces[TEX_RT_32], NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     /* rendertarget texture ==> rendertarget texture, scaling. */
-    hr = IDirect3DDevice9_StretchRect(device, surf_tex_rt32, NULL, surf_tex_rt_dest64, NULL, D3DTEXF_NONE);
+    hr = IDirect3DDevice9_StretchRect(device, surfaces[TEX_RT_32], NULL, surfaces[TEX_RT_DST_64], NULL, D3DTEXF_NONE);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     /* We can't lock rendertarget textures, so copy to our temp surface first. */
-    hr = IDirect3DDevice9_GetRenderTargetData(device, surf_tex_rt_dest64, surf_temp64);
-    ok(SUCCEEDED(hr), "Failed to get render target data, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_GetRenderTargetData(device, surfaces[TEX_RT_DST_64], surf_temp64);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     color = getPixelColorFromSurface(surf_temp64, 48, 48);
     ok(color == 0xffff0000, "Got unexpected color 0x%08x.\n", color);
 
     /* rendertarget texture ==> rendertarget surface, scaling. */
-    hr = IDirect3DDevice9_StretchRect(device, surf_tex_rt32, NULL, surf_rt_dest64, NULL, D3DTEXF_NONE);
+    hr = IDirect3DDevice9_StretchRect(device, surfaces[TEX_RT_32], NULL, surfaces[RT_DST_64], NULL, D3DTEXF_NONE);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    color = getPixelColorFromSurface(surf_rt_dest64, 48, 48);
+    color = getPixelColorFromSurface(surfaces[RT_DST_64], 48, 48);
     ok(color == 0xffff0000, "Got unexpected color 0x%08x.\n", color);
-
-    /* rendertarget texture ==> texture, scaling (should fail). */
-    hr = IDirect3DDevice9_StretchRect(device, surf_tex_rt32, NULL, surf_tex_dest64, NULL, D3DTEXF_NONE);
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
 
     /******************************************************************
      * Tests for when the source parameter is a rendertarget surface. *
      ******************************************************************/
 
     /* Fill the surface of the rendertarget surface with black. */
-    fill_surface(surf_rt64, 0xff000000, 0);
-
-    /* rendertarget texture ==> offscreenplain, same size. */
-    hr = IDirect3DDevice9_StretchRect(device, surf_rt64, NULL, surf_offscreen64, NULL, D3DTEXF_NONE);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    fill_surface(surfaces[RT_64], 0xff000000, 0);
 
     /* rendertarget surface ==> rendertarget texture, same size. */
-    hr = IDirect3DDevice9_StretchRect(device, surf_rt64, NULL, surf_tex_rt_dest64, NULL, D3DTEXF_NONE);
+    hr = IDirect3DDevice9_StretchRect(device, surfaces[RT_64], NULL, surfaces[TEX_RT_DST_64], NULL, D3DTEXF_NONE);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     /* We can't lock rendertarget textures, so copy to our temp surface first. */
-    hr = IDirect3DDevice9_GetRenderTargetData(device, surf_tex_rt_dest64, surf_temp64);
-    ok(SUCCEEDED(hr), "Failed to get render target data, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_GetRenderTargetData(device, surfaces[TEX_RT_DST_64], surf_temp64);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     color = getPixelColorFromSurface(surf_temp64, 32, 32);
     ok(color == 0xff000000, "Got unexpected color 0x%08x.\n", color);
     /* Blit without scaling. */
-    hr = IDirect3DDevice9_StretchRect(device, surf_rt64, &src_rect64,
-            surf_tex_rt_dest64, &dst_rect64, D3DTEXF_NONE);
+    hr = IDirect3DDevice9_StretchRect(device, surfaces[RT_64], &src_rect64,
+            surfaces[TEX_RT_DST_64], &dst_rect64, D3DTEXF_NONE);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    /* Flipping in y-direction through src_rect, no scaling (not allowed). */
-    hr = IDirect3DDevice9_StretchRect(device, surf_rt64, &src_rect64_flipy,
-            surf_tex_rt_dest64, &dst_rect64, D3DTEXF_NONE);
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
-    /* Flipping in y-direction through dst_rect, no scaling (not allowed). */
-    hr = IDirect3DDevice9_StretchRect(device, surf_rt64, &src_rect64,
-            surf_tex_rt_dest64, &dst_rect64_flipy, D3DTEXF_NONE);
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
 
     /* rendertarget surface ==> rendertarget surface, same size. */
-    hr = IDirect3DDevice9_StretchRect(device, surf_rt64, NULL, surf_rt_dest64, NULL, D3DTEXF_NONE);
+    hr = IDirect3DDevice9_StretchRect(device, surfaces[RT_64], NULL, surfaces[RT_DST_64], NULL, D3DTEXF_NONE);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    color = getPixelColorFromSurface(surf_rt_dest64, 32, 32);
+    color = getPixelColorFromSurface(surfaces[RT_DST_64], 32, 32);
     ok(color == 0xff000000, "Got unexpected color 0x%08x.\n", color);
     /* Blit without scaling. */
-    hr = IDirect3DDevice9_StretchRect(device, surf_rt64, &src_rect64,
-            surf_rt_dest64, &dst_rect64, D3DTEXF_NONE);
+    hr = IDirect3DDevice9_StretchRect(device, surfaces[RT_64], &src_rect64,
+            surfaces[RT_DST_64], &dst_rect64, D3DTEXF_NONE);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    /* Flipping in y-direction through src_rect, no scaling (not allowed). */
-    hr = IDirect3DDevice9_StretchRect(device, surf_rt64, &src_rect64_flipy,
-            surf_rt_dest64, &dst_rect64_flipy, D3DTEXF_NONE);
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
-    /* Flipping in y-direction through dst_rect, no scaling (not allowed). */
-    hr = IDirect3DDevice9_StretchRect(device, surf_rt64, &src_rect64,
-            surf_rt_dest64, &dst_rect64_flipy, D3DTEXF_NONE);
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
-
-    /* rendertarget surface ==> texture, same size (should fail). */
-    hr = IDirect3DDevice9_StretchRect(device, surf_rt64, NULL, surf_tex_dest64, NULL, D3DTEXF_NONE);
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
 
     /* Fill the surface of the smaller rendertarget texture with red. */
-    fill_surface(surf_rt32, 0xffff0000, 0);
-
-    /* rendertarget surface ==> offscreenplain, scaling (should fail). */
-    hr = IDirect3DDevice9_StretchRect(device, surf_rt32, NULL, surf_offscreen64, NULL, D3DTEXF_NONE);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    fill_surface(surfaces[RT_32], 0xffff0000, 0);
 
     /* rendertarget surface ==> rendertarget texture, scaling. */
-    hr = IDirect3DDevice9_StretchRect(device, surf_rt32, NULL, surf_tex_rt_dest64, NULL, D3DTEXF_NONE);
+    hr = IDirect3DDevice9_StretchRect(device, surfaces[RT_32], NULL, surfaces[TEX_RT_DST_64], NULL, D3DTEXF_NONE);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     /* We can't lock rendertarget textures, so copy to our temp surface first. */
-    hr = IDirect3DDevice9_GetRenderTargetData(device, surf_tex_rt_dest64, surf_temp64);
-    ok(SUCCEEDED(hr), "Failed to get render target data, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_GetRenderTargetData(device, surfaces[TEX_RT_DST_64], surf_temp64);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     color = getPixelColorFromSurface(surf_temp64, 48, 48);
     ok(color == 0xffff0000, "Got unexpected color 0x%08x.\n", color);
 
     /* rendertarget surface ==> rendertarget surface, scaling. */
-    hr = IDirect3DDevice9_StretchRect(device, surf_rt32, NULL, surf_rt_dest64, NULL, D3DTEXF_NONE);
+    hr = IDirect3DDevice9_StretchRect(device, surfaces[RT_32], NULL, surfaces[RT_DST_64], NULL, D3DTEXF_NONE);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    color = getPixelColorFromSurface(surf_rt_dest64, 48, 48);
+    color = getPixelColorFromSurface(surfaces[RT_DST_64], 48, 48);
     ok(color == 0xffff0000, "Got unexpected color 0x%08x.\n", color);
-
-    /* rendertarget surface ==> texture, scaling (should fail). */
-    hr = IDirect3DDevice9_StretchRect(device, surf_rt32, NULL, surf_tex_dest64, NULL, D3DTEXF_NONE);
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
 
     /* backbuffer ==> surface tests (no scaling). */
     /* Blit with NULL rectangles. */
-    hr = IDirect3DDevice9_StretchRect(device, backbuffer, NULL, surf_tex_rt_dest640_480, NULL, D3DTEXF_NONE);
+    hr = IDirect3DDevice9_StretchRect(device, surfaces[BACKBUFFER], NULL,
+            surfaces[TEX_RT_DST_640_480], NULL, D3DTEXF_NONE);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     /* Blit without scaling. */
-    hr = IDirect3DDevice9_StretchRect(device, backbuffer, &src_rect,
-            surf_tex_rt_dest640_480, &dst_rect, D3DTEXF_NONE);
+    hr = IDirect3DDevice9_StretchRect(device, surfaces[BACKBUFFER], &src_rect,
+            surfaces[TEX_RT_DST_640_480], &dst_rect, D3DTEXF_NONE);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    /* Flipping in y-direction through src_rect, no scaling (not allowed). */
-    hr = IDirect3DDevice9_StretchRect(device, backbuffer, &src_rect_flipy,
-            surf_tex_rt_dest640_480, &dst_rect, D3DTEXF_NONE);
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
-    /* Flipping in y-direction through dst_rect, no scaling (not allowed). */
-    hr = IDirect3DDevice9_StretchRect(device, backbuffer, &src_rect,
-            surf_tex_rt_dest640_480, &dst_rect_flipy, D3DTEXF_NONE);
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+
+    /* Test error conditions. */
+    for (i = 0; i < ARRAY_SIZE(error_condition_tests); ++i)
+    {
+        const struct error_condition_test *test = &error_condition_tests[i];
+
+        hr = IDirect3DDevice9_StretchRect(device, surfaces[test->src], test->src_rect,
+                surfaces[test->dst], test->dst_rect, test->filter);
+        todo_wine_if(test->todo)
+            ok(hr == test->allowed ? D3D_OK : D3DERR_INVALIDCALL, "Test %u, got unexpected hr %#x.\n", i, hr);
+    }
 
     /* TODO: Test format conversions. */
 
-    IDirect3DSurface9_Release(backbuffer);
-    IDirect3DSurface9_Release(surf_rt32);
-    IDirect3DSurface9_Release(surf_rt64);
-    IDirect3DSurface9_Release(surf_rt_dest64);
+    for (i = 0; i < ARRAY_SIZE(surfaces); ++i)
+    {
+        IDirect3DSurface9_Release(surfaces[i]);
+    }
+
     IDirect3DSurface9_Release(surf_temp32);
     IDirect3DSurface9_Release(surf_temp64);
-    IDirect3DSurface9_Release(surf_offscreen32);
-    IDirect3DSurface9_Release(surf_offscreen64);
-    IDirect3DSurface9_Release(surf_offscreen_dest64);
-    IDirect3DSurface9_Release(surf_tex_rt32);
     IDirect3DTexture9_Release(tex_rt32);
-    IDirect3DSurface9_Release(surf_tex_rt64);
     IDirect3DTexture9_Release(tex_rt64);
-    IDirect3DSurface9_Release(surf_tex_rt_dest64);
     IDirect3DTexture9_Release(tex_rt_dest64);
-    IDirect3DSurface9_Release(surf_tex_rt_dest640_480);
     IDirect3DTexture9_Release(tex_rt_dest640_480);
-    IDirect3DSurface9_Release(surf_tex32);
     IDirect3DTexture9_Release(tex32);
-    IDirect3DSurface9_Release(surf_tex64);
     IDirect3DTexture9_Release(tex64);
-    IDirect3DSurface9_Release(surf_tex_dest64);
     IDirect3DTexture9_Release(tex_dest64);
     refcount = IDirect3DDevice9_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
@@ -4332,7 +4286,7 @@ static void test_multisample_stretch_rect(void)
         D3DTEXF_POINT,
         D3DTEXF_LINEAR,
     };
-    IDirect3DSurface9 *rt, *ms_rt, *rt_r5g6b5;
+    IDirect3DSurface9 *rt, *ms_rt, *ms_rt2, *rt_r5g6b5;
     struct surface_readback rb;
     IDirect3DDevice9 *device;
     DWORD quality_levels;
@@ -4367,27 +4321,30 @@ static void test_multisample_stretch_rect(void)
 
     hr = IDirect3DDevice9_CreateRenderTarget(device, 128, 128,
             D3DFMT_A8R8G8B8, D3DMULTISAMPLE_NONE, 0, FALSE, &rt, NULL);
-    ok(hr == S_OK, "Failed to create render target, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9_CreateRenderTarget(device, 128, 128,
             D3DFMT_A8R8G8B8, D3DMULTISAMPLE_2_SAMPLES, quality_levels - 1, FALSE, &ms_rt, NULL);
-    ok(hr == S_OK, "Failed to create render target, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_CreateRenderTarget(device, 128, 128,
+            D3DFMT_A8R8G8B8, D3DMULTISAMPLE_2_SAMPLES, quality_levels - 1, FALSE, &ms_rt2, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_SetRenderTarget(device, 0, ms_rt);
-    ok(hr == D3D_OK, "Failed to set render target, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x00ff00ff, 0.0f, 0);
-    ok(hr == D3D_OK, "Failed to clear, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_SetRenderTarget(device, 0, rt);
-    ok(hr == D3D_OK, "Failed to set render target, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(filters); ++i)
     {
         hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0f, 0);
-        ok(hr == D3D_OK, "Test %u: Failed to clear, hr %#x.\n", i, hr);
+        ok(hr == D3D_OK, "Test %u, got unexpected hr %#x.\n", i, hr);
         hr = IDirect3DDevice9_StretchRect(device, ms_rt, NULL, rt, NULL, filters[i]);
-        ok(hr == S_OK, "Test %u: Failed to stretch rect, hr %#x.\n", i, hr);
+        ok(hr == D3D_OK, "Test %u, got unexpected hr %#x.\n", i, hr);
         color = getPixelColor(device, 64, 64);
-        ok(color == 0x00ff00ff, "Test %u: Got color 0x%08x.\n", i, color);
+        ok(color == 0x00ff00ff, "Test %u, got unexpected color 0x%08x.\n", i, color);
     }
 
     /* Scaling */
@@ -4395,29 +4352,67 @@ static void test_multisample_stretch_rect(void)
     for (i = 0; i < ARRAY_SIZE(filters); ++i)
     {
         hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0f, 0);
-        ok(hr == D3D_OK, "Test %u: Failed to clear, hr %#x.\n", i, hr);
+        ok(hr == D3D_OK, "Test %u, got unexpected hr %#x.\n", i, hr);
+        hr = IDirect3DDevice9_StretchRect(device, rt, NULL, ms_rt2, NULL, D3DTEXF_NONE);
+        ok(hr == D3D_OK, "Test %u, got unexpected hr %#x.\n", i, hr);
+
         hr = IDirect3DDevice9_StretchRect(device, ms_rt, NULL, rt, &rect, filters[i]);
-        ok(hr == S_OK, "Test %u: Failed to stretch rect, hr %#x.\n", i, hr);
+        ok(hr == D3D_OK, "Test %u, got unexpected hr %#x.\n", i, hr);
         get_rt_readback(rt, &rb);
         color = get_readback_color(&rb, 32, 32);
-        ok(color == 0x00ff00ff, "Test %u: Got color 0x%08x.\n", i, color);
+        ok(color == 0x00ff00ff, "Test %u, got unexpected color 0x%08x.\n", i, color);
         color = get_readback_color(&rb, 64, 64);
-        ok(color == 0xffffffff, "Test %u: Got color 0x%08x.\n", i, color);
+        ok(color == 0xffffffff, "Test %u, got unexpected color 0x%08x.\n", i, color);
         color = get_readback_color(&rb, 96, 96);
-        ok(color == 0xffffffff, "Test %u: Got color 0x%08x.\n", i, color);
+        ok(color == 0xffffffff, "Test %u, got unexpected color 0x%08x.\n", i, color);
         release_surface_readback(&rb);
 
         hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0f, 0);
-        ok(hr == D3D_OK, "Test %u: Failed to clear, hr %#x.\n", i, hr);
+        ok(hr == D3D_OK, "Test %u, got unexpected hr %#x.\n", i, hr);
         hr = IDirect3DDevice9_StretchRect(device, ms_rt, &rect, rt, NULL, filters[i]);
-        ok(hr == S_OK, "Test %u: Failed to stretch rect, hr %#x.\n", i, hr);
+        ok(hr == D3D_OK, "Test %u, got unexpected hr %#x.\n", i, hr);
         get_rt_readback(rt, &rb);
         color = get_readback_color(&rb, 32, 32);
-        ok(color == 0x00ff00ff, "Test %u: Got color 0x%08x.\n", i, color);
+        ok(color == 0x00ff00ff, "Test %u, got unexpected color 0x%08x.\n", i, color);
         color = get_readback_color(&rb, 64, 64);
-        ok(color == 0x00ff00ff, "Test %u: Got color 0x%08x.\n", i, color);
+        ok(color == 0x00ff00ff, "Test %u, got unexpected color 0x%08x.\n", i, color);
         color = get_readback_color(&rb, 96, 96);
-        ok(color == 0x00ff00ff, "Test %u: Got color 0x%08x.\n", i, color);
+        ok(color == 0x00ff00ff, "Test %u, got unexpected color 0x%08x.\n", i, color);
+        release_surface_readback(&rb);
+
+        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffff00, 0.0f, 0);
+        ok(hr == D3D_OK, "Test %u, got unexpected hr %#x.\n", i, hr);
+        hr = IDirect3DDevice9_StretchRect(device, rt, NULL, ms_rt, &rect, filters[i]);
+        ok(hr == D3D_OK, "Test %u, got unexpected hr %#x.\n", i, hr);
+        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0f, 0);
+        ok(hr == D3D_OK, "Test %u, got unexpected hr %#x.\n", i, hr);
+        hr = IDirect3DDevice9_StretchRect(device, ms_rt, &rect, rt, NULL, filters[i]);
+        ok(hr == D3D_OK, "Test %u, got unexpected hr %#x.\n", i, hr);
+        get_rt_readback(rt, &rb);
+        color = get_readback_color(&rb, 32, 32);
+        ok(color == 0xffffff00, "Test %u, got unexpected color 0x%08x.\n", i, color);
+        color = get_readback_color(&rb, 64, 64);
+        ok(color == 0xffffff00, "Test %u, got unexpected color 0x%08x.\n", i, color);
+        color = get_readback_color(&rb, 96, 96);
+        ok(color == 0xffffff00, "Test %u, got unexpected color 0x%08x.\n", i, color);
+        release_surface_readback(&rb);
+
+        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x00ff00ff, 0.0f, 0);
+        ok(hr == D3D_OK, "Test %u, got unexpected hr %#x.\n", i, hr);
+        hr = IDirect3DDevice9_StretchRect(device, rt, NULL, ms_rt, NULL, D3DTEXF_NONE);
+        ok(hr == D3D_OK, "Test %u, got unexpected hr %#x.\n", i, hr);
+
+        hr = IDirect3DDevice9_StretchRect(device, ms_rt, &rect, ms_rt2, NULL, filters[i]);
+        ok(hr == D3D_OK, "Test %u, got unexpected hr %#x.\n", i, hr);
+        hr = IDirect3DDevice9_StretchRect(device, ms_rt2, &rect, rt, NULL, filters[i]);
+        ok(hr == D3D_OK, "Test %u, got unexpected hr %#x.\n", i, hr);
+        get_rt_readback(rt, &rb);
+        color = get_readback_color(&rb, 32, 32);
+        ok(color == 0x00ff00ff, "Test %u, got unexpected color 0x%08x.\n", i, color);
+        color = get_readback_color(&rb, 64, 64);
+        ok(color == 0x00ff00ff, "Test %u, got unexpected color 0x%08x.\n", i, color);
+        color = get_readback_color(&rb, 96, 96);
+        ok(color == 0x00ff00ff, "Test %u, got unexpected color 0x%08x.\n", i, color);
         release_surface_readback(&rb);
     }
 
@@ -4433,18 +4428,19 @@ static void test_multisample_stretch_rect(void)
     for (i = 0; i < ARRAY_SIZE(filters); ++i)
     {
         hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0f, 0);
-        ok(hr == D3D_OK, "Test %u: Failed to clear, hr %#x.\n", i, hr);
+        ok(hr == D3D_OK, "Test %u, got unexpected hr %#x.\n", i, hr);
         hr = IDirect3DDevice9_StretchRect(device, ms_rt, NULL, rt_r5g6b5, NULL, filters[i]);
-        ok(hr == S_OK, "Test %u: Failed to stretch rect, hr %#x.\n", i, hr);
+        ok(hr == D3D_OK, "Test %u, got unexpected hr %#x.\n", i, hr);
         hr = IDirect3DDevice9_StretchRect(device, rt_r5g6b5, NULL, rt, NULL, filters[i]);
-        ok(hr == S_OK, "Test %u: Failed to stretch rect, hr %#x.\n", i, hr);
+        ok(hr == D3D_OK, "Test %u, got unexpected hr %#x.\n", i, hr);
         color = getPixelColor(device, 64, 64);
-        ok(color == 0x00ff00ff, "Test %u: Got color 0x%08x.\n", i, color);
+        ok(color == 0x00ff00ff, "Test %u, got unexpected color 0x%08x.\n", i, color);
     }
 
     IDirect3DSurface9_Release(rt_r5g6b5);
 
 done:
+    IDirect3DSurface9_Release(ms_rt2);
     IDirect3DSurface9_Release(ms_rt);
     IDirect3DSurface9_Release(rt);
     refcount = IDirect3DDevice9_Release(device);

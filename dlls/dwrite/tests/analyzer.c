@@ -1748,9 +1748,6 @@ if (0) {
     IDWriteFontFace_Release(fontface);
 
     /* Test setting glyph properties from GDEF. */
-if (strcmp(winetest_platform, "wine"))
-{
-
     hr = IDWriteFactory_GetSystemFontCollection(factory, &syscoll, FALSE);
     ok(hr == S_OK, "Failed to get system collection, hr %#x.\n", hr);
 
@@ -1794,18 +1791,8 @@ if (strcmp(winetest_platform, "wine"))
     }
 
     IDWriteFontCollection_Release(syscoll);
-}
 
     IDWriteTextAnalyzer_Release(analyzer);
-}
-
-static BOOL has_feature(const DWRITE_FONT_FEATURE_TAG *tags, UINT32 count, DWRITE_FONT_FEATURE_TAG feature)
-{
-    UINT32 i;
-
-    for (i = 0; i < count; i++)
-        if (tags[i] == feature) return TRUE;
-    return FALSE;
 }
 
 static void test_GetTypographicFeatures(void)
@@ -1818,7 +1805,6 @@ static void test_GetTypographicFeatures(void)
     DWRITE_SCRIPT_ANALYSIS sa;
     UINT32 count;
     HRESULT hr;
-    BOOL ret;
 
     hr = IDWriteFactory_CreateTextAnalyzer(factory, &analyzer);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -1835,45 +1821,31 @@ static void test_GetTypographicFeatures(void)
     get_script_analysis(L"abc", &sa);
     count = 0;
     hr = IDWriteTextAnalyzer2_GetTypographicFeatures(analyzer2, fontface, sa, NULL, 0, &count, NULL);
-todo_wine {
-    ok(hr == E_NOT_SUFFICIENT_BUFFER, "got 0x%08x\n", hr);
-    ok(count > 0, "got %u\n", count);
-}
+    ok(hr == E_NOT_SUFFICIENT_BUFFER, "Unexpected hr %#x.\n", hr);
+    ok(!!count, "Unexpected count %u.\n", count);
+
     /* invalid locale name is ignored */
     get_script_analysis(L"abc", &sa);
     count = 0;
     hr = IDWriteTextAnalyzer2_GetTypographicFeatures(analyzer2, fontface, sa, L"cadabra", 0, &count, NULL);
-todo_wine {
-    ok(hr == E_NOT_SUFFICIENT_BUFFER, "got 0x%08x\n", hr);
-    ok(count > 0, "got %u\n", count);
-}
-    /* both GSUB and GPOS features are reported */
+    ok(hr == E_NOT_SUFFICIENT_BUFFER, "Unexpected hr %#x.\n", hr);
+    ok(!!count, "Unexpected count %u.\n", count);
+
+    /* Make some calls for different scripts. */
+
     get_script_analysis(arabicW, &sa);
     memset(tags, 0, sizeof(tags));
     count = 0;
     hr = IDWriteTextAnalyzer2_GetTypographicFeatures(analyzer2, fontface, sa, NULL, ARRAY_SIZE(tags), &count, tags);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-todo_wine {
-    ok(count > 0, "got %u\n", count);
-    ret = has_feature(tags, count, DWRITE_FONT_FEATURE_TAG_CONTEXTUAL_ALTERNATES);
-    ok(ret, "expected 'calt' feature\n");
-    ret = has_feature(tags, count, DWRITE_FONT_FEATURE_TAG_MARK_TO_MARK_POSITIONING);
-    ok(ret, "expected 'mkmk' feature\n");
-}
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!!count, "Unexpected count %u.\n", count);
+
     get_script_analysis(L"abc", &sa);
     memset(tags, 0, sizeof(tags));
     count = 0;
     hr = IDWriteTextAnalyzer2_GetTypographicFeatures(analyzer2, fontface, sa, NULL, ARRAY_SIZE(tags), &count, tags);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-todo_wine {
-    ok(count > 0, "got %u\n", count);
-    ret = has_feature(tags, count, DWRITE_FONT_FEATURE_TAG_GLYPH_COMPOSITION_DECOMPOSITION);
-    ok(ret, "expected 'ccmp' feature\n");
-    ret = has_feature(tags, count, DWRITE_FONT_FEATURE_TAG_MARK_TO_MARK_POSITIONING);
-    ok(ret, "expected 'mkmk' feature\n");
-}
-    ret = has_feature(tags, count, DWRITE_FONT_FEATURE_TAG_CONTEXTUAL_ALTERNATES);
-    ok(!ret, "unexpected 'calt' feature\n");
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!!count, "Unexpected count %u.\n", count);
 
     IDWriteFontFace_Release(fontface);
     IDWriteTextAnalyzer2_Release(analyzer2);
@@ -2488,39 +2460,48 @@ static void test_GetBaseline(void)
 
     fontface = create_fontface();
 
-    /* Tahoma doesn't have BASE table, it doesn't work even with simulation enabled */
+    /* Tahoma does not have a BASE table. */
+
     exists = TRUE;
     baseline = 456;
-    hr = IDWriteTextAnalyzer1_GetBaseline(analyzer1,
-       fontface,
-       DWRITE_BASELINE_DEFAULT,
-       FALSE,
-       TRUE,
-       sa,
-       NULL,
-       &baseline,
-       &exists);
-todo_wine {
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(baseline == 0, "got %d\n", baseline);
-    ok(exists == FALSE, "got %d\n", exists);
-}
+    hr = IDWriteTextAnalyzer1_GetBaseline(analyzer1, fontface, DWRITE_BASELINE_DEFAULT, FALSE,
+           TRUE, sa, NULL, &baseline, &exists);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!baseline, "Unexpected baseline %d.\n", baseline);
+    ok(!exists, "Unexpected flag %d.\n", exists);
+
     exists = TRUE;
     baseline = 456;
-    hr = IDWriteTextAnalyzer1_GetBaseline(analyzer1,
-       fontface,
-       DWRITE_BASELINE_ROMAN,
-       FALSE,
-       TRUE,
-       sa,
-       NULL,
-       &baseline,
-       &exists);
-todo_wine {
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(baseline == 0, "got %d\n", baseline);
-    ok(exists == FALSE, "got %d\n", exists);
-}
+    hr = IDWriteTextAnalyzer1_GetBaseline(analyzer1, fontface, DWRITE_BASELINE_DEFAULT, FALSE,
+           FALSE, sa, NULL, &baseline, &exists);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!baseline, "Unexpected baseline %d.\n", baseline);
+    ok(!exists, "Unexpected flag %d.\n", exists);
+
+    exists = TRUE;
+    baseline = 0;
+    hr = IDWriteTextAnalyzer1_GetBaseline(analyzer1, fontface, DWRITE_BASELINE_CENTRAL, FALSE,
+           TRUE, sa, NULL, &baseline, &exists);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(baseline != 0, "Unexpected baseline %d.\n", baseline);
+    ok(!exists, "Unexpected flag %d.\n", exists);
+
+    exists = TRUE;
+    baseline = 0;
+    hr = IDWriteTextAnalyzer1_GetBaseline(analyzer1, fontface, DWRITE_BASELINE_CENTRAL, FALSE,
+           FALSE, sa, NULL, &baseline, &exists);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!baseline, "Unexpected baseline %d.\n", baseline);
+    ok(!exists, "Unexpected flag %d.\n", exists);
+
+    exists = TRUE;
+    baseline = 456;
+    hr = IDWriteTextAnalyzer1_GetBaseline(analyzer1, fontface, DWRITE_BASELINE_DEFAULT + 100, FALSE,
+           TRUE, sa, NULL, &baseline, &exists);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    ok(!baseline, "Unexpected baseline %d.\n", baseline);
+    ok(!exists, "Unexpected flag %d.\n", exists);
+
     IDWriteFontFace_Release(fontface);
     IDWriteTextAnalyzer1_Release(analyzer1);
 }

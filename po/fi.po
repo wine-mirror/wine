@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2018-12-30 02:40+0200\n"
+"PO-Revision-Date: 2020-06-17 12:10+0300\n"
 "Last-Translator: Lauri Kenttä <lauri.kentta@gmail.com>\n"
 "Language-Team: Finnish\n"
 "Language: fi\n"
@@ -46,8 +46,8 @@ msgstr "&Tukitiedot"
 msgid "&Modify..."
 msgstr "&Muokkaa..."
 
-#: appwiz.rc:69 appwiz.rc:45 cryptui.rc:351 msacm32.rc:40 winecfg.rc:200
-#: winecfg.rc:237 wordpad.rc:256
+#: appwiz.rc:69 appwiz.rc:45 cryptui.rc:351 msacm32.rc:40 winecfg.rc:199
+#: winecfg.rc:236 wordpad.rc:256
 msgid "&Remove"
 msgstr "&Poista"
 
@@ -66,7 +66,7 @@ msgstr "Tukitietoja"
 #: notepad.rc:117 oleview.rc:161 oleview.rc:174 progman.rc:106 progman.rc:124
 #: progman.rc:142 progman.rc:158 progman.rc:180 progman.rc:199 progman.rc:216
 #: regedit.rc:296 regedit.rc:307 regedit.rc:320 regedit.rc:336 regedit.rc:349
-#: regedit.rc:362 taskmgr.rc:442 taskmgr.rc:517 winecfg.rc:214 winecfg.rc:224
+#: regedit.rc:362 taskmgr.rc:442 taskmgr.rc:517 winecfg.rc:213 winecfg.rc:223
 #: wineconsole.rc:135 winefile.rc:127 winefile.rc:150 winefile.rc:180
 #: winemine.rc:73 winemine.rc:84 winemine.rc:98 wordpad.rc:215 wordpad.rc:226
 #: wordpad.rc:244 wordpad.rc:257
@@ -148,8 +148,8 @@ msgstr "&Asenna"
 #: notepad.rc:118 oleview.rc:162 oleview.rc:175 progman.rc:107 progman.rc:125
 #: progman.rc:143 progman.rc:159 progman.rc:181 progman.rc:200 progman.rc:217
 #: regedit.rc:297 regedit.rc:308 regedit.rc:321 regedit.rc:337 regedit.rc:350
-#: regedit.rc:363 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34 winecfg.rc:215
-#: winecfg.rc:225 wineconsole.rc:136 winefile.rc:128 winefile.rc:151
+#: regedit.rc:363 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34 winecfg.rc:214
+#: winecfg.rc:224 wineconsole.rc:136 winefile.rc:128 winefile.rc:151
 #: winefile.rc:181 winemine.rc:99 wordpad.rc:216 wordpad.rc:227 wordpad.rc:245
 #: wordpad.rc:258
 msgid "Cancel"
@@ -186,7 +186,7 @@ msgid ""
 "computer."
 msgstr "Voit asentaa uusia ohjelmia tai poistaa ohjelmia tietokoneeltasi."
 
-#: appwiz.rc:33 taskmgr.rc:262 winecfg.rc:33
+#: appwiz.rc:33 taskmgr.rc:262 winecfg.rc:32
 msgid "Applications"
 msgstr "Sovellukset"
 
@@ -344,7 +344,7 @@ msgstr "Velho"
 msgid "< &Back"
 msgstr "< &Edellinen"
 
-#: comctl32.rc:85 version.rc:60
+#: comctl32.rc:85 version.rc:61
 msgid "&Next >"
 msgstr "&Seuraava >"
 
@@ -580,7 +580,7 @@ msgstr "&Fontti:"
 msgid "Font St&yle:"
 msgstr "Fontin t&yyli:"
 
-#: comdlg32.rc:260 comdlg32.rc:439 winecfg.rc:294
+#: comdlg32.rc:260 comdlg32.rc:439 winecfg.rc:292
 msgid "&Size:"
 msgstr "&Koko:"
 
@@ -596,7 +596,7 @@ msgstr "Yli&viivaus"
 msgid "&Underline"
 msgstr "A&lleviivaus"
 
-#: comdlg32.rc:270 winecfg.rc:292
+#: comdlg32.rc:270 winecfg.rc:290
 msgid "&Color:"
 msgstr "&Väri:"
 
@@ -679,7 +679,7 @@ msgstr "&Koko sana"
 msgid "Match &Case"
 msgstr "Kirjaink&oko"
 
-#: comdlg32.rc:325 joy.rc:71
+#: comdlg32.rc:325 joy.rc:72
 msgid "Direction"
 msgstr "Suunta"
 
@@ -768,7 +768,7 @@ msgstr "Kopioiden &määrä:"
 msgid "C&ollate"
 msgstr "&Kokoa"
 
-#: comdlg32.rc:414 winecfg.rc:300
+#: comdlg32.rc:414 winecfg.rc:298
 msgid "Si&ze:"
 msgstr "&Koko:"
 
@@ -1217,7 +1217,7 @@ msgstr "mm"
 msgid "&User name:"
 msgstr "&Käyttäjänimi:"
 
-#: credui.rc:48 cryptui.rc:402 version.rc:80
+#: credui.rc:48 cryptui.rc:402 version.rc:81
 msgid "&Password:"
 msgstr "&Salasana:"
 
@@ -2244,7 +2244,7 @@ msgstr ""
 msgid "&File name:"
 msgstr "&Tiedostonimi:"
 
-#: cryptui.rc:301 cryptui.rc:323 cryptui.rc:437 winecfg.rc:313
+#: cryptui.rc:301 cryptui.rc:323 cryptui.rc:437 winecfg.rc:311
 msgid "B&rowse..."
 msgstr "&Selaa..."
 
@@ -3007,7 +3007,7 @@ msgstr "Nollaa"
 msgid "Player"
 msgstr "Soitin"
 
-#: dinput.rc:43 winecfg.rc:89
+#: dinput.rc:43 winecfg.rc:88
 msgid "Device"
 msgstr "Laite"
 
@@ -3107,7 +3107,7 @@ msgstr "Symbolit"
 msgid "OEM/DOS"
 msgstr "OEM/DOS"
 
-#: gdi32.rc:45 version.rc:99 wldap32.rc:112
+#: gdi32.rc:45 version.rc:100 wldap32.rc:112
 msgid "Other"
 msgstr "Muu"
 
@@ -3172,7 +3172,7 @@ msgstr "&Alkuun"
 msgid "&Stop"
 msgstr "&Pysäytä"
 
-#: hhctrl.rc:64 hhctrl.rc:81 version.rc:72 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 version.rc:73 shdoclc.rc:59
 msgid "&Refresh"
 msgstr "P&äivitä"
 
@@ -3550,27 +3550,27 @@ msgstr "Korotettu"
 msgid "High"
 msgstr "Korkea"
 
-#: joy.rc:36
+#: joy.rc:37
 msgid "Joysticks"
 msgstr "Joystickit"
 
-#: joy.rc:39 winecfg.rc:213
+#: joy.rc:40 winecfg.rc:212
 msgid "&Disable"
 msgstr "&Poista käytöstä"
 
-#: joy.rc:40
+#: joy.rc:41
 msgid "&Enable"
 msgstr "&Ota käyttöön"
 
-#: joy.rc:41
+#: joy.rc:42
 msgid "Connected"
 msgstr "Yhdistetty"
 
-#: joy.rc:43
+#: joy.rc:44
 msgid "Disabled"
 msgstr "Ei käytössä"
 
-#: joy.rc:45
+#: joy.rc:46
 msgid ""
 "After disabling or enabling a device, the connected joysticks won't be "
 "updated here until you restart this applet."
@@ -3578,23 +3578,23 @@ msgstr ""
 "Kun laite poistetaan käytöstä tai otetaan käyttöön, liitetyt ohjaimet eivät "
 "päivity tähän, ellei tätä sovelmaa käynnistetä uudelleen."
 
-#: joy.rc:50
+#: joy.rc:51
 msgid "Test Joystick"
 msgstr "Testaa joystickia"
 
-#: joy.rc:54
+#: joy.rc:55
 msgid "Buttons"
 msgstr "Painikkeet"
 
-#: joy.rc:63
+#: joy.rc:64
 msgid "Test Force Feedback"
 msgstr "Testaa voimapalautetta"
 
-#: joy.rc:67
+#: joy.rc:68
 msgid "Available Effects"
 msgstr "Mahdolliset efektit"
 
-#: joy.rc:69
+#: joy.rc:70
 msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."
@@ -3605,6 +3605,10 @@ msgstr ""
 #: joy.rc:31
 msgid "Game Controllers"
 msgstr "Peliohjaimet"
+
+#: joy.rc:32
+msgid "Test and configure game controllers."
+msgstr "Testaa ja säädä peliohjaimia."
 
 #: jscript.rc:28
 msgid "Error converting object to primitive type"
@@ -3619,189 +3623,201 @@ msgid "Subscript out of range"
 msgstr "Indeksi alueen ulkopuolella"
 
 #: jscript.rc:31
+msgid "Out of stack space"
+msgstr "Pinosta loppui tila"
+
+#: jscript.rc:32
 msgid "Object required"
 msgstr "Vaaditaan objekti"
 
-#: jscript.rc:32
+#: jscript.rc:33
 msgid "Automation server can't create object"
 msgstr "Automaatiopalvelin ei voi luoda objektia"
 
-#: jscript.rc:33
+#: jscript.rc:34
 msgid "Object doesn't support this property or method"
 msgstr "Objekti ei tue tätä ominaisuutta tai metodia"
 
-#: jscript.rc:34
+#: jscript.rc:35
 msgid "Object doesn't support this action"
 msgstr "Objekti ei tue tätä toimintoa"
 
-#: jscript.rc:35
+#: jscript.rc:36
 msgid "Argument not optional"
 msgstr "Argumentti ei ole valinnainen"
 
-#: jscript.rc:36
+#: jscript.rc:37
 msgid "Syntax error"
 msgstr "Syntaksivirhe"
 
-#: jscript.rc:37
+#: jscript.rc:38
 msgid "Expected ';'"
 msgstr "Odotettiin merkkiä ';'"
 
-#: jscript.rc:38
+#: jscript.rc:39
 msgid "Expected '('"
 msgstr "Odotettiin merkkiä '('"
 
-#: jscript.rc:39
+#: jscript.rc:40
 msgid "Expected ')'"
 msgstr "Odotettiin merkkiä ')'"
 
-#: jscript.rc:40
+#: jscript.rc:41
 msgid "Expected identifier"
 msgstr "Odotettiin tunnistetta"
 
-#: jscript.rc:41
+#: jscript.rc:42
 msgid "Expected '='"
 msgstr "Odotettiin merkkiä '='"
 
-#: jscript.rc:42
+#: jscript.rc:43
 msgid "Invalid character"
 msgstr "Virheellinen merkki"
 
-#: jscript.rc:43
+#: jscript.rc:44
 msgid "Unterminated string constant"
 msgstr "Päättymätön merkkijonovakio"
 
-#: jscript.rc:44
+#: jscript.rc:45
 msgid "'return' statement outside of function"
 msgstr "'return' funktion ulkopuolella"
 
-#: jscript.rc:45
+#: jscript.rc:46
 msgid "Can't have 'break' outside of loop"
 msgstr "'break' ei voi esiintyä silmukan ulkopuolella"
 
-#: jscript.rc:46
+#: jscript.rc:47
 msgid "Can't have 'continue' outside of loop"
 msgstr "'continue' ei voi esiintyä silmukan ulkopuolella"
 
-#: jscript.rc:47
+#: jscript.rc:48
 msgid "Label redefined"
 msgstr "Nimiö määritelty toistamiseen"
 
-#: jscript.rc:48
+#: jscript.rc:49
 msgid "Label not found"
 msgstr "Nimiötä ei löydy"
 
-#: jscript.rc:49
+#: jscript.rc:50
 msgid "Expected '@end'"
 msgstr "Odotettiin sanaa '@end'"
 
-#: jscript.rc:50
+#: jscript.rc:51
 msgid "Conditional compilation is turned off"
 msgstr "Ehdollinen kääntäminen on pois käytöstä"
 
-#: jscript.rc:51
+#: jscript.rc:52
 msgid "Expected '@'"
 msgstr "Odotettiin merkkiä '@'"
 
-#: jscript.rc:75
+#: jscript.rc:78
 msgid "Microsoft JScript compilation error"
 msgstr "Microsoft JScript -käännösvirhe"
 
-#: jscript.rc:76
+#: jscript.rc:79
 msgid "Microsoft JScript runtime error"
 msgstr "Microsoft JScript -suoritusvirhe"
 
-#: jscript.rc:77
+#: jscript.rc:80
 msgid "Unknown runtime error"
 msgstr "Tuntematon ajonaikainen virhe"
 
-#: jscript.rc:54
+#: jscript.rc:55
 msgid "Number expected"
 msgstr "Odotettiin lukua"
 
-#: jscript.rc:52
+#: jscript.rc:53
 msgid "Function expected"
 msgstr "Odotettiin funktiota"
 
-#: jscript.rc:53
+#: jscript.rc:54
 msgid "'[object]' is not a date object"
 msgstr "'[objekti]' ei ole päivämääräobjekti"
 
-#: jscript.rc:55
+#: jscript.rc:56
 msgid "Object expected"
 msgstr "Odotettiin objektia"
 
-#: jscript.rc:56
+#: jscript.rc:57
 msgid "Illegal assignment"
 msgstr "Virheellinen sijoitus"
 
-#: jscript.rc:57
+#: jscript.rc:58
 msgid "'|' is undefined"
 msgstr "'|' on määrittelemätön"
 
-#: jscript.rc:58
+#: jscript.rc:59
 msgid "Boolean object expected"
 msgstr "Odotettiin totuusarvoa"
 
-#: jscript.rc:59
+#: jscript.rc:60
 msgid "Cannot delete '|'"
 msgstr "Ei voida poistaa '|':tä"
 
-#: jscript.rc:60
+#: jscript.rc:61
 msgid "VBArray object expected"
 msgstr "Odotettiin VBArray-objektia"
 
-#: jscript.rc:61
+#: jscript.rc:62
 msgid "JScript object expected"
 msgstr "Odotettiin JScript-objektia"
 
-#: jscript.rc:62
+#: jscript.rc:63
+msgid "Enumerator object expected"
+msgstr "Odotettiin Enumerator-objektia"
+
+#: jscript.rc:64
+msgid "Regular Expression object expected"
+msgstr "Odotettiin säännöllistä lauseketta"
+
+#: jscript.rc:65
 msgid "Syntax error in regular expression"
 msgstr "Syntaksivirhe säännöllisessä lausekkeessa"
 
-#: jscript.rc:63
+#: jscript.rc:66
 msgid "Exception thrown and not caught"
 msgstr "Poikkeusta ei otettu kiinni"
 
-#: jscript.rc:65
+#: jscript.rc:68
 msgid "URI to be encoded contains invalid characters"
 msgstr "Enkoodattava URI sisältää virheellisiä merkkejä"
 
-#: jscript.rc:64
+#: jscript.rc:67
 msgid "URI to be decoded is incorrect"
 msgstr "Dekoodattava URI on virheellinen"
 
-#: jscript.rc:66
+#: jscript.rc:69
 msgid "Number of fraction digits is out of range"
 msgstr "Desimaalien määrä ei kelpaa"
 
-#: jscript.rc:67
+#: jscript.rc:70
 msgid "Precision is out of range"
 msgstr "Tarkkuus ei kelpaa"
 
-#: jscript.rc:68
+#: jscript.rc:71
 msgid "Array length must be a finite positive integer"
 msgstr "Taulukon pituuden täytyy olla positiivinen kokonaisluku"
 
-#: jscript.rc:69
+#: jscript.rc:72
 msgid "Array object expected"
 msgstr "Odotettiin taulukkoa"
 
-#: jscript.rc:70
+#: jscript.rc:73
 msgid ""
 "'writable' attribute on the property descriptor cannot be set to 'true' on "
 "this object"
 msgstr ""
 "Attribuutti 'writable' ei voi olla 'true' tämän objektin ominaisuuksissa"
 
-#: jscript.rc:71
+#: jscript.rc:74
 msgid "Cannot redefine non-configurable property '|'"
 msgstr "Ei-konfiguroitavaa ominaisuutta '|' ei voi määritellä uudestaan"
 
-#: jscript.rc:72
+#: jscript.rc:75
 msgid "Cannot modify non-writable property '|'"
 msgstr "Kirjoitussuojattua ominaisuutta '|' ei voi muokata"
 
-#: jscript.rc:73
+#: jscript.rc:76
 msgid "Property cannot have both accessors and a value"
 msgstr "Ominaisuudella ei voi olla sekä hakufunktiota että arvoa"
 
@@ -3810,6 +3826,7 @@ msgid "Wine kernel DLL"
 msgstr "Winen ydin-DLL"
 
 #: ../../include/wine/wine_common_ver.rc:134 winemac.rc:32 wineboot.rc:42
+#: winecfg.rc:137
 msgid "Wine"
 msgstr "Wine"
 
@@ -6835,10 +6852,8 @@ msgid "Sink has not been finalized.\n"
 msgstr "Ulostuloa ei ole viimeistelty.\n"
 
 #: mferror.mc:732
-#, fuzzy
-#| msgid "Sink was already stopped.\n"
 msgid "Clock was stopped\n"
-msgstr "Ulostulo oli jo pysäytetty.\n"
+msgstr "Kello oli pysäytetty\n"
 
 #: mferror.mc:32
 msgid "Media Foundation platform is not initialized.\n"
@@ -7217,10 +7232,8 @@ msgid "Clock state was already set.\n"
 msgstr "Kellon tila oli jo asetettu.\n"
 
 #: mferror.mc:725
-#, fuzzy
-#| msgid "Clock is not available.\n"
 msgid "Clock is not simple\n"
-msgstr "Kello ei saatavilla.\n"
+msgstr "Kello ei ole yksinkertainen\n"
 
 #: mpr.rc:35 wininet.rc:37
 msgid "Enter Network Password"
@@ -7274,7 +7287,7 @@ msgstr "Hyperlinkki"
 msgid "Hyperlink Information"
 msgstr "Tietoja hyperlinkistä"
 
-#: mshtml.rc:43 winecfg.rc:245
+#: mshtml.rc:43 winecfg.rc:243
 msgid "&Type:"
 msgstr "&Tyyppi:"
 
@@ -8315,133 +8328,123 @@ msgstr "Päällä"
 msgid "Off"
 msgstr "Pois päältä"
 
-#: version.rc:55
+#: version.rc:56
 msgid "Provider"
 msgstr "Tarjoaja"
 
-#: version.rc:58
+#: version.rc:59
 msgid "Select the data you want to connect to:"
 msgstr "Valitse tietolähde, johon haluat yhdistää:"
 
-#: version.rc:65
+#: version.rc:66
 msgid "Connection"
 msgstr "Yhteys"
 
-#: version.rc:68
+#: version.rc:69
 msgid "Specify the following to connect to ODBC data:"
 msgstr "Määritä seuraavat, jotta voit yhdistää ODBC-tietolähteeseen:"
 
-#: version.rc:69
+#: version.rc:70
 msgid "1. Specify the source of data:"
 msgstr "1. Määritä tietolähde:"
 
-#: version.rc:70
+#: version.rc:71
 msgid "Use &data source name"
 msgstr "Käytä tietolähteen &nimeä"
 
-#: version.rc:73
+#: version.rc:74
 msgid "Use c&onnection string"
 msgstr "Syötä yhteysasetukset &merkkijonona"
 
-#: version.rc:74
+#: version.rc:75
 msgid "&Connection string:"
 msgstr "Yhteys&asetukset:"
 
-#: version.rc:76
+#: version.rc:77
 msgid "B&uild..."
 msgstr "&Luo..."
 
-#: version.rc:77
+#: version.rc:78
 msgid "2. Enter information to log on to the server"
 msgstr "2. Syötä palvelimen kirjautumistiedot"
 
-#: version.rc:78
+#: version.rc:79
 msgid "User &name:"
 msgstr "&Tunnus:"
 
-#: version.rc:82
+#: version.rc:83
 msgid "&Blank password"
 msgstr "&Ei salasanaa"
 
-#: version.rc:83
+#: version.rc:84
 msgid "Allow &saving password"
 msgstr "Sa&lli salasanan tallennus"
 
-#: version.rc:84
+#: version.rc:85
 msgid "3. Enter the &initial catalog to use:"
 msgstr "3. Syötä ensiksi käytettävä &katalogi:"
 
-#: version.rc:86
+#: version.rc:87
 msgid "&Test Connection"
 msgstr "Testaa y&hteyttä"
 
-#: version.rc:91 winemine.rc:65
+#: version.rc:92 winemine.rc:65
 msgid "Advanced"
 msgstr "Kehittynyt"
 
-#: version.rc:94
-#, fuzzy
-#| msgid "Network share"
-msgid "Network settings"
-msgstr "Verkkojako"
-
 #: version.rc:95
-#, fuzzy
-#| msgid "Bad impersonation level.\n"
+msgid "Network settings"
+msgstr "Verkkoasetukset"
+
+#: version.rc:96
 msgid "&Impersonation level:"
-msgstr "Tekeytymistaso ei kelpaa.\n"
+msgstr "&Tekeytymistaso:"
 
-#: version.rc:97
+#: version.rc:98
 msgid "P&rotection level:"
-msgstr ""
+msgstr "&Suojaustaso:"
 
-#: version.rc:100
-#, fuzzy
-#| msgid "Connected"
+#: version.rc:101
 msgid "Connect:"
-msgstr "Yhdistetty"
-
-#: version.rc:102
-#, fuzzy
-#| msgid "seconds"
-msgid "seconds."
-msgstr "sekuntia"
+msgstr "Yhdistä:"
 
 #: version.rc:103
-#, fuzzy
-#| msgid "Success"
+msgid "seconds."
+msgstr "sekuntia."
+
+#: version.rc:104
 msgid "A&ccess:"
-msgstr "Onnistui"
+msgstr "&Käyttöoikeus:"
 
-#: version.rc:109
-#, fuzzy
-#| msgid "&All"
+#: version.rc:110
 msgid "All"
-msgstr "&Kaikki"
+msgstr "Kaikki"
 
-#: version.rc:113
+#: version.rc:114
 msgid ""
 "These are the initialization properties for this type of data. To edit a "
 "value, select a property, then choose Edit Value below."
 msgstr ""
+"Nämä ovat tietotyypin alustusominaisuudet. Muokataksesi arvoa valitse ensin "
+"ominaisuus ja paina sitten Muokkaa arvoa -painiketta."
 
-#: version.rc:114
-#, fuzzy
-#| msgid "&Edit..."
+#: version.rc:115
 msgid "&Edit Value..."
-msgstr "&Muokkaa..."
+msgstr "&Muokkaa arvoa..."
 
 #: version.rc:49
-#, fuzzy
-#| msgid "Data Link Properties"
 msgid "Data Link Error"
-msgstr "Datayhteyden ominaisuudet"
+msgstr "Datayhteysvirhe"
 
 #: version.rc:50
-#, fuzzy
-#| msgid "Please select a file."
 msgid "Please select a provider."
-msgstr "Valitse tiedosto."
+msgstr "Valitse tarjoaja."
+
+#: version.rc:51
+msgid ""
+"Provider is no longer available. Ensure that the provider is installed "
+"properly."
+msgstr "Tarjoajaa ei ole enää saatavilla. Varmista, että se on asennettu."
 
 #: version.rc:36
 msgid "Data Link Properties"
@@ -8452,38 +8455,32 @@ msgid "OLE DB Provider(s)"
 msgstr "OLE DB -tarjoaja(t)"
 
 #: version.rc:41
-#, fuzzy
-#| msgid "Ready"
 msgid "Read"
-msgstr "Valmis"
+msgstr "Luku"
 
 #: version.rc:42
-#, fuzzy
-#| msgid "Readme:"
 msgid "ReadWrite"
-msgstr "Ohjeet:"
+msgstr "Luku ja kirjoitus"
 
 #: version.rc:43
 msgid "Share Deny None"
-msgstr ""
+msgstr "Salli samaan aikaan käyttö"
 
 #: version.rc:44
 msgid "Share Deny Read"
-msgstr ""
+msgstr "Estä samaan aikaan lukeminen"
 
 #: version.rc:45
 msgid "Share Deny Write"
-msgstr ""
+msgstr "Estä samaan aikaan kirjoittaminen"
 
 #: version.rc:46
 msgid "Share Exclusive"
-msgstr ""
+msgstr "Estä kaikki samaan aikaan käyttö"
 
 #: version.rc:47
-#, fuzzy
-#| msgid "I/O Writes"
 msgid "Write"
-msgstr "I/O – kirjoituksia"
+msgstr "Kirjoitus"
 
 #: oledlg.rc:55
 msgid "Insert Object"
@@ -8680,7 +8677,7 @@ msgctxt "unit: bits"
 msgid "b"
 msgstr "b"
 
-#: sane.rc:34 wineps.rc:49 winecfg.rc:183
+#: sane.rc:34 wineps.rc:49 winecfg.rc:182
 msgctxt "unit: dots/inch"
 msgid "dpi"
 msgstr "dpi"
@@ -9174,7 +9171,7 @@ msgstr "Anna ohjelma, dokumentti tai Internet-osoite, niin Wine avaa sen."
 msgid "&Open:"
 msgstr "&Avaa:"
 
-#: shell32.rc:343 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:243
+#: shell32.rc:343 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:241
 #: winefile.rc:129
 msgid "&Browse..."
 msgstr "&Selaa..."
@@ -9263,7 +9260,7 @@ msgstr "Alkuperäinen sijainti"
 msgid "Date deleted"
 msgstr "Poistoaika"
 
-#: shell32.rc:156 winecfg.rc:101 winefile.rc:99
+#: shell32.rc:156 winecfg.rc:100 winefile.rc:99
 msgctxt "display name"
 msgid "Desktop"
 msgstr "Työpöytä"
@@ -9607,7 +9604,7 @@ msgstr "Winen lisenssi"
 msgid "Trash"
 msgstr "Roskakori"
 
-#: shlwapi.rc:38 user32.rc:71 regedit.rc:204 winecfg.rc:87 winefile.rc:97
+#: shlwapi.rc:38 user32.rc:71 regedit.rc:204 winecfg.rc:86 winefile.rc:97
 msgid "Error"
 msgstr "Virhe"
 
@@ -9638,127 +9635,123 @@ msgstr " s"
 msgid "Select Source"
 msgstr "Valitse lähde"
 
-#: tzres.rc:84
+#: tzres.rc:88
 msgid "China Standard Time"
 msgstr "Kiinan normaaliaika"
 
-#: tzres.rc:85
+#: tzres.rc:89
 msgid "China Daylight Time"
 msgstr "Kiinan kesäaika"
 
-#: tzres.rc:164
+#: tzres.rc:170
 msgid "North Asia Standard Time"
 msgstr "Pohjois-Aasian normaaliaika"
 
-#: tzres.rc:165
+#: tzres.rc:171
 msgid "North Asia Daylight Time"
 msgstr "Pohjois-Aasian kesäaika"
 
-#: tzres.rc:106
+#: tzres.rc:110
 msgid "Georgian Standard Time"
 msgstr "Georgian normaaliaika"
 
-#: tzres.rc:107
+#: tzres.rc:111
 msgid "Georgian Daylight Time"
 msgstr "Georgian kesäaika"
 
-#: tzres.rc:156
+#: tzres.rc:162
 msgid "Nepal Standard Time"
 msgstr "Nepalin normaaliaika"
 
-#: tzres.rc:157
+#: tzres.rc:163
 msgid "Nepal Daylight Time"
 msgstr "Nepalin kesäaika"
 
-#: tzres.rc:62
+#: tzres.rc:64
 msgid "Cape Verde Standard Time"
 msgstr "Kap Verden normaaliaika"
 
-#: tzres.rc:63
+#: tzres.rc:65
 msgid "Cape Verde Daylight Time"
 msgstr "Kap Verden kesäaika"
 
-#: tzres.rc:116
-#, fuzzy
-#| msgid "Hawaiian Standard Time"
+#: tzres.rc:120
 msgid "Haiti Standard Time"
-msgstr "Havaijin normaaliaika"
+msgstr "Haitin normaaliaika"
 
-#: tzres.rc:117
-#, fuzzy
-#| msgid "Hawaiian Daylight Time"
+#: tzres.rc:121
 msgid "Haiti Daylight Time"
-msgstr "Havaijin kesäaika"
+msgstr "Haitin kesäaika"
 
-#: tzres.rc:76
+#: tzres.rc:78
 msgid "Central European Standard Time"
 msgstr "Keski-Euroopan normaaliaika"
 
-#: tzres.rc:77
+#: tzres.rc:79
 msgid "Central European Daylight Time"
 msgstr "Keski-Euroopan kesäaika"
 
-#: tzres.rc:144
+#: tzres.rc:150
 msgid "Morocco Standard Time"
 msgstr "Marokon normaaliaika"
 
-#: tzres.rc:145
+#: tzres.rc:151
 msgid "Morocco Daylight Time"
 msgstr "Marokon kesäaika"
 
-#: tzres.rc:74
+#: tzres.rc:76
 msgid "Central Europe Standard Time"
 msgstr "Keski-Euroopan normaaliaika"
 
-#: tzres.rc:75
+#: tzres.rc:77
 msgid "Central Europe Daylight Time"
 msgstr "Keski-Euroopan kesäaika"
 
-#: tzres.rc:122
+#: tzres.rc:126
 msgid "Iran Standard Time"
 msgstr "Iranin normaaliaika"
 
-#: tzres.rc:123
+#: tzres.rc:127
 msgid "Iran Daylight Time"
 msgstr "Iranin kesäaika"
 
-#: tzres.rc:154
+#: tzres.rc:160
 msgid "Namibia Standard Time"
 msgstr "Namibian normaaliaika"
 
-#: tzres.rc:155
+#: tzres.rc:161
 msgid "Namibia Daylight Time"
 msgstr "Namibian kesäaika"
 
-#: tzres.rc:204
+#: tzres.rc:210
 msgid "Tonga Standard Time"
 msgstr "Tongan normaaliaika"
 
-#: tzres.rc:205
+#: tzres.rc:211
 msgid "Tonga Daylight Time"
 msgstr "Tongan kesäaika"
 
-#: tzres.rc:148
+#: tzres.rc:154
 msgid "Mountain Standard Time (Mexico)"
 msgstr "Kalliovuorten normaaliaika (Meksiko)"
 
-#: tzres.rc:149
+#: tzres.rc:155
 msgid "Mountain Daylight Time (Mexico)"
 msgstr "Kalliovuorten kesäaika (Meksiko)"
 
-#: tzres.rc:108
+#: tzres.rc:112
 msgid "GMT Standard Time"
 msgstr "GMT-normaaliaika"
 
-#: tzres.rc:109
+#: tzres.rc:113
 msgid "GMT Daylight Time"
 msgstr "GMT-kesäaika"
 
-#: tzres.rc:70
+#: tzres.rc:72
 msgid "Central Asia Standard Time"
 msgstr "Keski-Aasian normaaliaika"
 
-#: tzres.rc:71
+#: tzres.rc:73
 msgid "Central Asia Daylight Time"
 msgstr "Keski-Aasian kesäaika"
 
@@ -9770,35 +9763,35 @@ msgstr "Arabian normaaliaika"
 msgid "Arabic Daylight Time"
 msgstr "Arabian kesäaika"
 
-#: tzres.rc:136
+#: tzres.rc:140
 msgid "Magadan Standard Time"
 msgstr "Magadanin normaaliaika"
 
-#: tzres.rc:137
+#: tzres.rc:141
 msgid "Magadan Daylight Time"
 msgstr "Magadanin kesäaika"
 
-#: tzres.rc:160
+#: tzres.rc:166
 msgid "Newfoundland Standard Time"
 msgstr "Newfoundlandin normaaliaika"
 
-#: tzres.rc:161
+#: tzres.rc:167
 msgid "Newfoundland Daylight Time"
 msgstr "Newfoundlandin kesäaika"
 
-#: tzres.rc:228
+#: tzres.rc:234
 msgid "West Pacific Standard Time"
 msgstr "Länsi-Tyynenmeren normaaliaika"
 
-#: tzres.rc:229
+#: tzres.rc:235
 msgid "West Pacific Daylight Time"
 msgstr "Länsi-Tyynenmeren kesäaika"
 
-#: tzres.rc:168
+#: tzres.rc:174
 msgid "Pacific Standard Time"
 msgstr "Tyynenmeren normaaliaika"
 
-#: tzres.rc:169
+#: tzres.rc:175
 msgid "Pacific Daylight Time"
 msgstr "Tyynenmeren kesäaika"
 
@@ -9810,67 +9803,67 @@ msgstr "Azerbaidžanin normaaliaika"
 msgid "Azerbaijan Daylight Time"
 msgstr "Azerbaidžanin kesäaika"
 
-#: tzres.rc:186
+#: tzres.rc:192
 msgid "Samoa Standard Time"
 msgstr "Samoan normaaliaika"
 
-#: tzres.rc:187
+#: tzres.rc:193
 msgid "Samoa Daylight Time"
 msgstr "Samoan kesäaika"
 
-#: tzres.rc:128
+#: tzres.rc:132
 msgid "Kaliningrad Standard Time"
 msgstr "Kaliningradin normaaliaika"
 
-#: tzres.rc:129
+#: tzres.rc:133
 msgid "Kaliningrad Daylight Time"
 msgstr "Kaliningradin kesäaika"
 
-#: tzres.rc:170
+#: tzres.rc:176
 msgid "Pacific Standard Time (Mexico)"
 msgstr "Tyynenmeren normaaliaika (Meksiko)"
 
-#: tzres.rc:171
+#: tzres.rc:177
 msgid "Pacific Daylight Time (Mexico)"
 msgstr "Tyynenmeren kesäaika (Meksiko)"
 
-#: tzres.rc:140
+#: tzres.rc:146
 msgid "Middle East Standard Time"
 msgstr "Lähi-idän normaaliaika"
 
-#: tzres.rc:141
+#: tzres.rc:147
 msgid "Middle East Daylight Time"
 msgstr "Lähi-idän kesäaika"
 
-#: tzres.rc:202
+#: tzres.rc:208
 msgid "Tokyo Standard Time"
 msgstr "Tokion normaaliaika"
 
-#: tzres.rc:203
+#: tzres.rc:209
 msgid "Tokyo Daylight Time"
 msgstr "Tokion kesäaika"
 
-#: tzres.rc:134
+#: tzres.rc:138
 msgid "Line Islands Standard Time"
 msgstr "Linesaarten normaaliaika"
 
-#: tzres.rc:135
+#: tzres.rc:139
 msgid "Line Islands Daylight Time"
 msgstr "Linesaarten kesäaika"
 
-#: tzres.rc:126
+#: tzres.rc:130
 msgid "Jordan Standard Time"
 msgstr "Jordanian normaaliaika"
 
-#: tzres.rc:127
+#: tzres.rc:131
 msgid "Jordan Daylight Time"
 msgstr "Jordanian kesäaika"
 
-#: tzres.rc:80
+#: tzres.rc:82
 msgid "Central Standard Time"
 msgstr "Keskinen normaaliaika"
 
-#: tzres.rc:81
+#: tzres.rc:83
 msgid "Central Daylight Time"
 msgstr "Keskinen kesäaika"
 
@@ -9882,11 +9875,11 @@ msgstr "Azorien normaaliaika"
 msgid "Azores Daylight Time"
 msgstr "Azorien kesäaika"
 
-#: tzres.rc:162
+#: tzres.rc:168
 msgid "North Asia East Standard Time"
 msgstr "Itäisen Pohjois-Aasian normaaliaika"
 
-#: tzres.rc:163
+#: tzres.rc:169
 msgid "North Asia East Daylight Time"
 msgstr "Itäisen Pohjois-Aasian kesäaika"
 
@@ -9898,95 +9891,103 @@ msgstr "Argentiinan normaaliaika"
 msgid "Argentina Daylight Time"
 msgstr "Argentiinan kesäaika"
 
-#: tzres.rc:150
+#: tzres.rc:142
+msgid "Marquesas Standard Time"
+msgstr "Marquesassaarten normaaliaika"
+
+#: tzres.rc:143
+msgid "Marquesas Daylight Time"
+msgstr "Marquesassaarten kesäaika"
+
+#: tzres.rc:156
 msgid "Myanmar Standard Time"
 msgstr "Myanmarin normaaliaika"
 
-#: tzres.rc:151
+#: tzres.rc:157
 msgid "Myanmar Daylight Time"
 msgstr "Myanmarin kesäaika"
 
-#: tzres.rc:214 tzres.rc:215
+#: tzres.rc:220 tzres.rc:221
 msgid "Coordinated Universal Time"
 msgstr "UTC-aika"
 
-#: tzres.rc:120
+#: tzres.rc:124
 msgid "India Standard Time"
 msgstr "Intian normaaliaika"
 
-#: tzres.rc:121
+#: tzres.rc:125
 msgid "India Daylight Time"
 msgstr "Intian kesäaika"
 
-#: tzres.rc:114
+#: tzres.rc:118
 msgid "GTB Standard Time"
 msgstr "GT-normaaliaika"
 
-#: tzres.rc:115
+#: tzres.rc:119
 msgid "GTB Daylight Time"
 msgstr "GT-kesäaika"
 
-#: tzres.rc:206
+#: tzres.rc:212
 msgid "Turkey Standard Time"
 msgstr "Turkin normaaliaika"
 
-#: tzres.rc:207
+#: tzres.rc:213
 msgid "Turkey Daylight Time"
 msgstr "Turkin kesäaika"
 
-#: tzres.rc:102
+#: tzres.rc:106
 msgid "Fiji Standard Time"
 msgstr "Fidžin normaaliaika"
 
-#: tzres.rc:103
+#: tzres.rc:107
 msgid "Fiji Daylight Time"
 msgstr "Fidžin kesäaika"
 
-#: tzres.rc:60
+#: tzres.rc:62
 msgid "Canada Central Standard Time"
 msgstr "Kanadan keskinen normaaliaika"
 
-#: tzres.rc:61
+#: tzres.rc:63
 msgid "Canada Central Daylight Time"
 msgstr "Kanadan keskinen kesäaika"
 
-#: tzres.rc:198
+#: tzres.rc:204
 msgid "Taipei Standard Time"
 msgstr "Taipein normaaliaika"
 
-#: tzres.rc:199
+#: tzres.rc:205
 msgid "Taipei Daylight Time"
 msgstr "Taipein kesäaika"
 
-#: tzres.rc:224
+#: tzres.rc:230
 msgid "W. Europe Standard Time"
 msgstr "Länsi-Euroopan normaaliaika"
 
-#: tzres.rc:225
+#: tzres.rc:231
 msgid "W. Europe Daylight Time"
 msgstr "Länsi-Euroopan kesäaika"
 
-#: tzres.rc:142
+#: tzres.rc:148
 msgid "Montevideo Standard Time"
 msgstr "Montevideon normaaliaika"
 
-#: tzres.rc:143
+#: tzres.rc:149
 msgid "Montevideo Daylight Time"
 msgstr "Montevideon kesäaika"
 
-#: tzres.rc:172
+#: tzres.rc:178
 msgid "Pakistan Standard Time"
 msgstr "Pakistanin normaaliaika"
 
-#: tzres.rc:173
+#: tzres.rc:179
 msgid "Pakistan Daylight Time"
 msgstr "Pakistanin kesäaika"
 
-#: tzres.rc:64
+#: tzres.rc:66
 msgid "Caucasus Standard Time"
 msgstr "Kaukasuksen normaaliaika"
 
-#: tzres.rc:65
+#: tzres.rc:67
 msgid "Caucasus Daylight Time"
 msgstr "Kaukasuksen kesäaika"
 
@@ -9998,27 +9999,27 @@ msgstr "Australian itäinen normaaliaika"
 msgid "AUS Eastern Daylight Time"
 msgstr "Australian itäinen kesäaika"
 
-#: tzres.rc:152
+#: tzres.rc:158
 msgid "N. Central Asia Standard Time"
 msgstr "Pohjoisen Keski-Aasian normaaliaika"
 
-#: tzres.rc:153
+#: tzres.rc:159
 msgid "N. Central Asia Daylight Time"
 msgstr "Pohjoisen Keski-Aasian kesäaika"
 
-#: tzres.rc:96
+#: tzres.rc:100
 msgid "Eastern Standard Time"
 msgstr "Itäinen normaaliaika"
 
-#: tzres.rc:97
+#: tzres.rc:101
 msgid "Eastern Daylight Time"
 msgstr "Itäinen kesäaika"
 
-#: tzres.rc:82
+#: tzres.rc:84
 msgid "Central Standard Time (Mexico)"
 msgstr "Keskinen normaaliaika (Meksiko)"
 
-#: tzres.rc:83
+#: tzres.rc:85
 msgid "Central Daylight Time (Mexico)"
 msgstr "Keskinen kesäaika (Meksiko)"
 
@@ -10030,67 +10031,67 @@ msgstr "Atlantin normaaliaika"
 msgid "Atlantic Daylight Time"
 msgstr "Atlantin kesäaika"
 
-#: tzres.rc:146
+#: tzres.rc:152
 msgid "Mountain Standard Time"
 msgstr "Kalliovuorten normaaliaika"
 
-#: tzres.rc:147
+#: tzres.rc:153
 msgid "Mountain Daylight Time"
 msgstr "Kalliovuorten kesäaika"
 
-#: tzres.rc:210
+#: tzres.rc:216
 msgid "US Eastern Standard Time"
 msgstr "Itäinen normaaliaika (USA)"
 
-#: tzres.rc:211
+#: tzres.rc:217
 msgid "US Eastern Daylight Time"
 msgstr "Itäinen kesäaika (USA)"
 
-#: tzres.rc:200
+#: tzres.rc:206
 msgid "Tasmania Standard Time"
 msgstr "Tasmanian normaaliaika"
 
-#: tzres.rc:201
+#: tzres.rc:207
 msgid "Tasmania Daylight Time"
 msgstr "Tasmanian kesäaika"
 
-#: tzres.rc:68
+#: tzres.rc:70
 msgid "Central America Standard Time"
 msgstr "Keski-Amerikan normaaliaika"
 
-#: tzres.rc:69
+#: tzres.rc:71
 msgid "Central America Daylight Time"
 msgstr "Keski-Amerikan kesäaika"
 
-#: tzres.rc:212
+#: tzres.rc:218
 msgid "US Mountain Standard Time"
 msgstr "Kalliovuorten normaaliaika (USA)"
 
-#: tzres.rc:213
+#: tzres.rc:219
 msgid "US Mountain Daylight Time"
 msgstr "Kalliovuorten kesäaika (USA)"
 
-#: tzres.rc:192
+#: tzres.rc:198
 msgid "South Africa Standard Time"
 msgstr "Etelä-Afrikan normaaliaika"
 
-#: tzres.rc:193
+#: tzres.rc:199
 msgid "South Africa Daylight Time"
 msgstr "Etelä-Afrikan kesäaika"
 
-#: tzres.rc:66
+#: tzres.rc:68
 msgid "Cen. Australia Standard Time"
 msgstr "Keski-Australian normaaliaika"
 
-#: tzres.rc:67
+#: tzres.rc:69
 msgid "Cen. Australia Daylight Time"
 msgstr "Keski-Australian kesäaika"
 
-#: tzres.rc:194
+#: tzres.rc:200
 msgid "Sri Lanka Standard Time"
 msgstr "Sri Lankan normaaliaika"
 
-#: tzres.rc:195
+#: tzres.rc:201
 msgid "Sri Lanka Daylight Time"
 msgstr "Sri Lankan kesäaika"
 
@@ -10102,19 +10103,19 @@ msgstr "Afganistanin normaaliaika"
 msgid "Afghanistan Daylight Time"
 msgstr "Afganistanin kesäaika"
 
-#: tzres.rc:230
+#: tzres.rc:236
 msgid "Yakutsk Standard Time"
 msgstr "Jakutskin normaaliaika"
 
-#: tzres.rc:231
+#: tzres.rc:237
 msgid "Yakutsk Daylight Time"
 msgstr "Jakutskin kesäaika"
 
-#: tzres.rc:180
+#: tzres.rc:186
 msgid "SA Eastern Standard Time"
 msgstr "Etelä-Amerikan itäinen normaaliaika"
 
-#: tzres.rc:181
+#: tzres.rc:187
 msgid "SA Eastern Daylight Time"
 msgstr "Etelä-Amerikan itäinen kesäaika"
 
@@ -10134,35 +10135,35 @@ msgstr "Arabian normaaliaika"
 msgid "Arabian Daylight Time"
 msgstr "Arabian kesäaika"
 
-#: tzres.rc:178
+#: tzres.rc:184
 msgid "Russian Standard Time"
 msgstr "Venäjän normaaliaika"
 
-#: tzres.rc:179
+#: tzres.rc:185
 msgid "Russian Daylight Time"
 msgstr "Venäjän kesäaika"
 
-#: tzres.rc:176
+#: tzres.rc:182
 msgid "Romance Standard Time"
 msgstr "Romaaninen normaaliaika"
 
-#: tzres.rc:177
+#: tzres.rc:183
 msgid "Romance Daylight Time"
 msgstr "Romaaninen kesäaika"
 
-#: tzres.rc:100
+#: tzres.rc:104
 msgid "Ekaterinburg Standard Time"
 msgstr "Jekaterinburgin normaaliaika"
 
-#: tzres.rc:101
+#: tzres.rc:105
 msgid "Ekaterinburg Daylight Time"
 msgstr "Jekaterinburgin kesäaika"
 
-#: tzres.rc:196
+#: tzres.rc:202
 msgid "Syria Standard Time"
 msgstr "Syyrian normaaliaika"
 
-#: tzres.rc:197
+#: tzres.rc:203
 msgid "Syria Daylight Time"
 msgstr "Syyrian kesäaika"
 
@@ -10174,27 +10175,27 @@ msgstr "Australian keskinen normaaliaika"
 msgid "AUS Central Daylight Time"
 msgstr "Australian keskinen kesäaika"
 
-#: tzres.rc:112
+#: tzres.rc:116
 msgid "Greenwich Standard Time"
 msgstr "Greenwichin normaaliaika"
 
-#: tzres.rc:113
+#: tzres.rc:117
 msgid "Greenwich Daylight Time"
 msgstr "Greenwichin kesäaika"
 
-#: tzres.rc:208
+#: tzres.rc:214
 msgid "Ulaanbaatar Standard Time"
 msgstr "Ulaanbaatarin normaaliaika"
 
-#: tzres.rc:209
+#: tzres.rc:215
 msgid "Ulaanbaatar Daylight Time"
 msgstr "Ulaanbaatarin kesäaika"
 
-#: tzres.rc:124
+#: tzres.rc:128
 msgid "Israel Standard Time"
 msgstr "Israelin normaaliaika"
 
-#: tzres.rc:125
+#: tzres.rc:129
 msgid "Israel Daylight Time"
 msgstr "Israelin kesäaika"
 
@@ -10206,19 +10207,19 @@ msgstr "Bangladeshin normaaliaika"
 msgid "Bangladesh Daylight Time"
 msgstr "Bangladeshin kesäaika"
 
-#: tzres.rc:182
+#: tzres.rc:188
 msgid "SA Pacific Standard Time"
 msgstr "Etelä-Amerikan Tyynenmeren normaaliaika"
 
-#: tzres.rc:183
+#: tzres.rc:189
 msgid "SA Pacific Daylight Time"
 msgstr "Etelä-Amerikan Tyynenmeren kesäaika"
 
-#: tzres.rc:226
+#: tzres.rc:232
 msgid "West Asia Standard Time"
 msgstr "Länsi-Aasian normaaliaika"
 
-#: tzres.rc:227
+#: tzres.rc:233
 msgid "West Asia Daylight Time"
 msgstr "Länsi-Aasian kesäaika"
 
@@ -10230,27 +10231,27 @@ msgstr "Alaskan normaaliaika"
 msgid "Alaskan Daylight Time"
 msgstr "Alaskan kesäaika"
 
-#: tzres.rc:174
+#: tzres.rc:180
 msgid "Paraguay Standard Time"
 msgstr "Paraguayn normaaliaika"
 
-#: tzres.rc:175
+#: tzres.rc:181
 msgid "Paraguay Daylight Time"
 msgstr "Paraguayn kesäaika"
 
-#: tzres.rc:86
+#: tzres.rc:90
 msgid "Dateline Standard Time"
 msgstr "Päivämäärärajan normaaliaika"
 
-#: tzres.rc:87
+#: tzres.rc:91
 msgid "Dateline Daylight Time"
 msgstr "Päivämäärärajan kesäaika"
 
-#: tzres.rc:132
+#: tzres.rc:136
 msgid "Libya Standard Time"
 msgstr "Libyan normaaliaika"
 
-#: tzres.rc:133
+#: tzres.rc:137
 msgid "Libya Daylight Time"
 msgstr "Libyan kesäaika"
 
@@ -10262,55 +10263,59 @@ msgstr "Bahian normaaliaika"
 msgid "Bahia Daylight Time"
 msgstr "Bahian kesäaika"
 
-#: tzres.rc:216
+#: tzres.rc:222
 msgid "Venezuela Standard Time"
 msgstr "Venezuelan normaaliaika"
 
-#: tzres.rc:217
+#: tzres.rc:223
 msgid "Venezuela Daylight Time"
 msgstr "Venezuelan kesäaika"
 
-#: tzres.rc:118
+#: tzres.rc:60
+msgid "Bougainville Standard Time"
+msgstr "Bougainvillen normaaliaika"
+
+#: tzres.rc:61
+msgid "Bougainville Daylight Time"
+msgstr "Bougainvillen kesäaika"
+
+#: tzres.rc:122
 msgid "Hawaiian Standard Time"
 msgstr "Havaijin normaaliaika"
 
-#: tzres.rc:119
+#: tzres.rc:123
 msgid "Hawaiian Daylight Time"
 msgstr "Havaijin kesäaika"
 
-#: tzres.rc:188
+#: tzres.rc:194
 msgid "SE Asia Standard Time"
 msgstr "Kaakkois-Aasian normaaliaika"
 
-#: tzres.rc:189
+#: tzres.rc:195
 msgid "SE Asia Daylight Time"
 msgstr "Kaakkois-Aasian kesäaika"
 
-#: tzres.rc:158
+#: tzres.rc:164
 msgid "New Zealand Standard Time"
 msgstr "Uuden-Seelannin normaaliaika"
 
-#: tzres.rc:159
+#: tzres.rc:165
 msgid "New Zealand Daylight Time"
 msgstr "Uuden-Seelannin kesäaika"
 
 #: tzres.rc:34
-#, fuzzy
-#| msgid "Argentina Standard Time"
 msgid "Aleutian Standard Time"
-msgstr "Argentiinan normaaliaika"
+msgstr "Aleuttien normaaliaika"
 
 #: tzres.rc:35
-#, fuzzy
-#| msgid "Argentina Daylight Time"
 msgid "Aleutian Daylight Time"
-msgstr "Argentiinan kesäaika"
+msgstr "Aleuttien kesäaika"
 
-#: tzres.rc:72
+#: tzres.rc:74
 msgid "Central Brazilian Standard Time"
 msgstr "Keski-Brasilian normaaliaika"
 
-#: tzres.rc:73
+#: tzres.rc:75
 msgid "Central Brazilian Daylight Time"
 msgstr "Keski-Brasilian kesäaika"
 
@@ -10322,131 +10327,139 @@ msgstr "Valko-Venäjän normaaliaika"
 msgid "Belarus Daylight Time"
 msgstr "Valko-Venäjän kesäaika"
 
-#: tzres.rc:184
+#: tzres.rc:190
 msgid "SA Western Standard Time"
 msgstr "Etelä-Amerikan läntinen normaaliaika"
 
-#: tzres.rc:185
+#: tzres.rc:191
 msgid "SA Western Daylight Time"
 msgstr "Etelä-Amerikan läntinen kesäaika"
 
-#: tzres.rc:110
+#: tzres.rc:114
 msgid "Greenland Standard Time"
 msgstr "Grönlannin normaaliaika"
 
-#: tzres.rc:111
+#: tzres.rc:115
 msgid "Greenland Daylight Time"
 msgstr "Grönlannin kesäaika"
 
-#: tzres.rc:94
+#: tzres.rc:98
 msgid "Easter Island Standard Time"
 msgstr "Pääsiäissaarten normaaliaika"
 
-#: tzres.rc:95
+#: tzres.rc:99
 msgid "Easter Island Daylight Time"
 msgstr "Pääsiäissaarten kesäaika"
 
-#: tzres.rc:98
+#: tzres.rc:102
 msgid "Egypt Standard Time"
 msgstr "Egyptin normaaliaika"
 
-#: tzres.rc:99
+#: tzres.rc:103
 msgid "Egypt Daylight Time"
 msgstr "Egyptin kesäaika"
 
-#: tzres.rc:138
+#: tzres.rc:144
 msgid "Mauritius Standard Time"
 msgstr "Mauritiuksen normaaliaika"
 
-#: tzres.rc:139
+#: tzres.rc:145
 msgid "Mauritius Daylight Time"
 msgstr "Mauritiuksen kesäaika"
 
-#: tzres.rc:218
+#: tzres.rc:224
 msgid "Vladivostok Standard Time"
 msgstr "Vladivostokin normaaliaika"
 
-#: tzres.rc:219
+#: tzres.rc:225
 msgid "Vladivostok Daylight Time"
 msgstr "Vladivostokin kesäaika"
 
-#: tzres.rc:190
+#: tzres.rc:196
 msgid "Singapore Standard Time"
 msgstr "Singaporen normaaliaika"
 
-#: tzres.rc:191
+#: tzres.rc:197
 msgid "Singapore Daylight Time"
 msgstr "Singaporen kesäaika"
 
-#: tzres.rc:130
+#: tzres.rc:134
 msgid "Korea Standard Time"
 msgstr "Korean normaaliaika"
 
-#: tzres.rc:131
+#: tzres.rc:135
 msgid "Korea Daylight Time"
 msgstr "Korean kesäaika"
 
-#: tzres.rc:88
+#: tzres.rc:86
+msgid "Chatham Islands Standard Time"
+msgstr "Chathamsaarten normaaliaika"
+
+#: tzres.rc:87
+msgid "Chatham Islands Daylight Time"
+msgstr "Chathamsaarten kesäaika"
+
+#: tzres.rc:92
 msgid "E. Africa Standard Time"
 msgstr "Itä-Afrikan normaaliaika"
 
-#: tzres.rc:89
+#: tzres.rc:93
 msgid "E. Africa Daylight Time"
 msgstr "Itä-Afrikan kesäaika"
 
-#: tzres.rc:104
+#: tzres.rc:108
 msgid "FLE Standard Time"
 msgstr "Suomen normaaliaika"
 
-#: tzres.rc:105
+#: tzres.rc:109
 msgid "FLE Daylight Time"
 msgstr "Suomen kesäaika"
 
-#: tzres.rc:92
+#: tzres.rc:96
 msgid "E. South America Standard Time"
 msgstr "Itäisen Etelä-Amerikan normaaliaika"
 
-#: tzres.rc:93
+#: tzres.rc:97
 msgid "E. South America Daylight Time"
 msgstr "Itäisen Etelä-Amerikan kesäaika"
 
-#: tzres.rc:78
+#: tzres.rc:80
 msgid "Central Pacific Standard Time"
 msgstr "Keski-Tyynenmeren normaaliaika"
 
-#: tzres.rc:79
+#: tzres.rc:81
 msgid "Central Pacific Daylight Time"
 msgstr "Keski-Tyynenmeren kesäaika"
 
-#: tzres.rc:222
+#: tzres.rc:228
 msgid "W. Central Africa Standard Time"
 msgstr "Läntisen Keski-Afrikan normaaliaika"
 
-#: tzres.rc:223
+#: tzres.rc:229
 msgid "W. Central Africa Daylight Time"
 msgstr "Läntisen Keski-Afrikan kesäaika"
 
-#: tzres.rc:166
+#: tzres.rc:172
 msgid "Pacific SA Standard Time"
 msgstr "Tyynenmeren Etelä-Amerikan normaaliaika"
 
-#: tzres.rc:167
+#: tzres.rc:173
 msgid "Pacific SA Daylight Time"
 msgstr "Tyynenmeren Etelä-Amerikan kesäaika"
 
-#: tzres.rc:90
+#: tzres.rc:94
 msgid "E. Australia Standard Time"
 msgstr "Itä-Australian normaaliaika"
 
-#: tzres.rc:91
+#: tzres.rc:95
 msgid "E. Australia Daylight Time"
 msgstr "Itä-Australian kesäaika"
 
-#: tzres.rc:220
+#: tzres.rc:226
 msgid "W. Australia Standard Time"
 msgstr "Länsi-Australian normaaliaika"
 
-#: tzres.rc:221
+#: tzres.rc:227
 msgid "W. Australia Daylight Time"
 msgstr "Länsi-Australian kesäaika"
 
@@ -11596,7 +11609,7 @@ msgstr "&Analoginen"
 msgid "Digi&tal"
 msgstr "Di&gitaalinen"
 
-#: clock.rc:35 notepad.rc:53 winecfg.rc:307 winefile.rc:63 wordpad.rc:84
+#: clock.rc:35 notepad.rc:53 winecfg.rc:305 winefile.rc:63 wordpad.rc:84
 msgid "&Font..."
 msgstr "&Fontti..."
 
@@ -15383,7 +15396,7 @@ msgstr ""
 msgid "The Wine configuration in %s is being updated, please wait..."
 msgstr "Winen asetuksia kohteessa %s päivitetään, ole hyvä ja odota..."
 
-#: winecfg.rc:141
+#: winecfg.rc:140
 msgid ""
 "This program is free software; you can redistribute it and/or modify it "
 "under the terms of the GNU Lesser General Public License as published by the "
@@ -15394,23 +15407,23 @@ msgstr ""
 "Foundationin GNU Lesser General Public License (LGPL) määrää joko lisenssin "
 "versiossa 2.1 tai (halutessasi) missä tahansa uudemmassa versiossa."
 
-#: winecfg.rc:143
+#: winecfg.rc:142
 msgid "Windows registration information"
 msgstr "Windowsin rekisteröintitiedot"
 
-#: winecfg.rc:144
+#: winecfg.rc:143
 msgid "&Owner:"
 msgstr "&Omistaja:"
 
-#: winecfg.rc:146
+#: winecfg.rc:145
 msgid "Organi&zation:"
 msgstr "Or&ganisaatio:"
 
-#: winecfg.rc:154
+#: winecfg.rc:153
 msgid "Application settings"
 msgstr "Sovellusten asetukset"
 
-#: winecfg.rc:155
+#: winecfg.rc:154
 msgid ""
 "Wine can mimic different Windows versions for each application. This tab is "
 "linked to the Libraries and Graphics tabs to allow you to change system-wide "
@@ -15420,55 +15433,55 @@ msgstr ""
 "välilehti toimii yhdessä Kirjastot- ja Grafiikka-välilehtien kanssa sallien "
 "järjestelmän laajuiset ja sovelluskohtaiset asetukset."
 
-#: winecfg.rc:159
+#: winecfg.rc:158
 msgid "Add appli&cation..."
 msgstr "&Lisää sovellus..."
 
-#: winecfg.rc:160
+#: winecfg.rc:159
 msgid "&Remove application"
 msgstr "&Poista sovellus"
 
-#: winecfg.rc:161
+#: winecfg.rc:160
 msgid "&Windows Version:"
 msgstr "&Windowsin versio:"
 
-#: winecfg.rc:169
+#: winecfg.rc:168
 msgid "Window settings"
 msgstr "Ikkuna-asetukset"
 
-#: winecfg.rc:170
+#: winecfg.rc:169
 msgid "Automatically capture the &mouse in full-screen windows"
 msgstr "Kaappaa hiiri kokoruututilassa automaattisesti"
 
-#: winecfg.rc:171
+#: winecfg.rc:170
 msgid "Allow the window manager to &decorate the windows"
 msgstr "Salli ikkunointiohjelman määrätä ikkunoiden &tyyli"
 
-#: winecfg.rc:172
+#: winecfg.rc:171
 msgid "Allow the &window manager to control the windows"
 msgstr "Salli ikkunointiohjelman &hallita ikkunoita"
 
-#: winecfg.rc:173
+#: winecfg.rc:172
 msgid "&Emulate a virtual desktop"
 msgstr "&Emuloi virtuaalista työpöytää"
 
-#: winecfg.rc:175
+#: winecfg.rc:174
 msgid "Desktop &size:"
 msgstr "Työpöydän &koko:"
 
-#: winecfg.rc:180
+#: winecfg.rc:179
 msgid "Screen resolution"
 msgstr "Näytön resoluutio"
 
-#: winecfg.rc:184
+#: winecfg.rc:183
 msgid "This is a sample text using 10 point Tahoma"
 msgstr "Tämä on näyteteksti 10 pisteen Tahoma-fontilla"
 
-#: winecfg.rc:191
+#: winecfg.rc:190
 msgid "DLL overrides"
 msgstr "DLL-tiedostojen ohitukset"
 
-#: winecfg.rc:192
+#: winecfg.rc:191
 msgid ""
 "Dynamic Link Libraries can be specified individually to be either builtin "
 "(provided by Wine) or native (taken from Windows or provided by the "
@@ -15478,261 +15491,257 @@ msgstr ""
 "sisäänrakennettua (Winen tarjoamaa) tai natiivia (Windows-asennuksesta "
 "otettua tai sovelluksen tarjoamaa) versiota."
 
-#: winecfg.rc:194
+#: winecfg.rc:193
 msgid "&New override for library:"
 msgstr "&Uusi ohitus kirjastolle:"
 
-#: winecfg.rc:196
+#: winecfg.rc:195
 msgid "A&dd"
 msgstr "&Lisää"
 
-#: winecfg.rc:197
+#: winecfg.rc:196
 msgid "Existing &overrides:"
 msgstr "&Olemassaolevat ohitukset:"
 
-#: winecfg.rc:199
+#: winecfg.rc:198
 msgid "&Edit..."
 msgstr "&Muokkaa..."
 
-#: winecfg.rc:205
+#: winecfg.rc:204
 msgid "Edit Override"
 msgstr "Muokkaa ohitusta"
 
-#: winecfg.rc:208
+#: winecfg.rc:207
 msgid "Load order"
 msgstr "&Latausjärjestys"
 
-#: winecfg.rc:209
+#: winecfg.rc:208
 msgid "&Builtin (Wine)"
 msgstr "&Sisäinen (Wine)"
 
-#: winecfg.rc:210
+#: winecfg.rc:209
 msgid "&Native (Windows)"
 msgstr "&Natiivi (Windows)"
 
-#: winecfg.rc:211
+#: winecfg.rc:210
 msgid "Buil&tin then Native"
 msgstr "S&isäinen, sitten natiivi"
 
-#: winecfg.rc:212
+#: winecfg.rc:211
 msgid "Nati&ve then Builtin"
 msgstr "Na&tiivi, sitten sisäinen"
 
-#: winecfg.rc:220
+#: winecfg.rc:219
 msgid "Select Drive Letter"
 msgstr "Valitse aseman kirjain"
 
-#: winecfg.rc:232
+#: winecfg.rc:231
 msgid "Drive configuration"
 msgstr "Asemien asetukset"
 
-#: winecfg.rc:233
+#: winecfg.rc:232
 msgid ""
 "Failed to connect to the mount manager; the drive configuration cannot be "
 "edited."
 msgstr "Levyasemien hallintaan ei saatu yhteyttä. Asemia ei voi muokata."
 
-#: winecfg.rc:236
+#: winecfg.rc:235
 msgid "A&dd..."
 msgstr "&Lisää..."
 
-#: winecfg.rc:238
-msgid "Aut&odetect"
-msgstr "&Hae automaattisesti"
-
-#: winecfg.rc:241
+#: winecfg.rc:239
 msgid "&Path:"
 msgstr "P&olku:"
 
-#: winecfg.rc:248 winecfg.rc:38
+#: winecfg.rc:246 winecfg.rc:37
 msgid "Show Advan&ced"
 msgstr "Näytä lisä&asetukset"
 
-#: winecfg.rc:249
+#: winecfg.rc:247
 msgid "De&vice:"
 msgstr "La&ite:"
 
-#: winecfg.rc:251
+#: winecfg.rc:249
 msgid "Bro&wse..."
 msgstr "S&elaa..."
 
-#: winecfg.rc:253
+#: winecfg.rc:251
 msgid "&Label:"
 msgstr "&Nimi:"
 
-#: winecfg.rc:255
+#: winecfg.rc:253
 msgid "S&erial:"
 msgstr "Sarjanumer&o:"
 
-#: winecfg.rc:258
+#: winecfg.rc:256
 msgid "&Show dot files"
 msgstr "N&äytä pistetiedostot"
 
-#: winecfg.rc:265
+#: winecfg.rc:263
 msgid "Driver diagnostics"
 msgstr "Ajurin diagnostiikka"
 
-#: winecfg.rc:267
+#: winecfg.rc:265
 msgid "Defaults"
 msgstr "Oletukset"
 
-#: winecfg.rc:268
+#: winecfg.rc:266
 msgid "Output device:"
 msgstr "Ulostulolaite:"
 
-#: winecfg.rc:269
+#: winecfg.rc:267
 msgid "Voice output device:"
 msgstr "Äänen ulostulolaite:"
 
-#: winecfg.rc:270
+#: winecfg.rc:268
 msgid "Input device:"
 msgstr "Sisääntulolaite:"
 
-#: winecfg.rc:271
+#: winecfg.rc:269
 msgid "Voice input device:"
 msgstr "Äänen sisääntulolaite:"
 
-#: winecfg.rc:276
+#: winecfg.rc:274
 msgid "&Test Sound"
 msgstr "&Testiääni"
 
-#: winecfg.rc:277 winecfg.rc:90
+#: winecfg.rc:275 winecfg.rc:89
 msgid "Speaker configuration"
 msgstr "Kaiutinasetukset"
 
-#: winecfg.rc:280
+#: winecfg.rc:278
 msgid "Speakers:"
 msgstr "Kaiuttimet:"
 
-#: winecfg.rc:288
+#: winecfg.rc:286
 msgid "Appearance"
 msgstr "Ulkonäkö"
 
-#: winecfg.rc:289
+#: winecfg.rc:287
 msgid "&Theme:"
 msgstr "&Teema:"
 
-#: winecfg.rc:291
+#: winecfg.rc:289
 msgid "&Install theme..."
 msgstr "&Asenna teema..."
 
-#: winecfg.rc:296
+#: winecfg.rc:294
 msgid "It&em:"
 msgstr "Ko&hta:"
 
-#: winecfg.rc:298
+#: winecfg.rc:296
 msgid "C&olor:"
 msgstr "&Väri:"
 
-#: winecfg.rc:304
+#: winecfg.rc:302
 msgid "MIME types"
 msgstr "MIME-tyypit"
 
-#: winecfg.rc:305
+#: winecfg.rc:303
 msgid "Manage file &associations"
 msgstr "&Muokkaa tiedostosidoksia"
 
-#: winecfg.rc:308
+#: winecfg.rc:306
 msgid "Folders"
 msgstr "Kansiot"
 
-#: winecfg.rc:311
+#: winecfg.rc:309
 msgid "&Link to:"
 msgstr "&Linkitä kohteeseen:"
 
-#: winecfg.rc:34
+#: winecfg.rc:33
 msgid "Libraries"
 msgstr "Kirjastot"
 
-#: winecfg.rc:35
+#: winecfg.rc:34
 msgid "Drives"
 msgstr "Asemat"
 
-#: winecfg.rc:36
+#: winecfg.rc:35
 msgid "Select the Unix target directory, please."
 msgstr "Valitse unix-kohdekansio."
 
-#: winecfg.rc:37
+#: winecfg.rc:36
 msgid "Hide Advan&ced"
 msgstr "Piilota lisä&asetukset"
 
-#: winecfg.rc:39
+#: winecfg.rc:38
 msgid "(No Theme)"
 msgstr "(Ei teemaa)"
 
-#: winecfg.rc:40
+#: winecfg.rc:39
 msgid "Graphics"
 msgstr "Grafiikka"
 
-#: winecfg.rc:41
+#: winecfg.rc:40
 msgid "Desktop Integration"
 msgstr "Työpöytäintegraatio"
 
-#: winecfg.rc:42
+#: winecfg.rc:41
 msgid "Audio"
 msgstr "Ääni"
 
-#: winecfg.rc:43
+#: winecfg.rc:42
 msgid "About"
 msgstr "Tietoja"
 
-#: winecfg.rc:44
+#: winecfg.rc:43
 msgid "Wine configuration"
 msgstr "Winen asetukset"
 
-#: winecfg.rc:46
+#: winecfg.rc:45
 msgid "Theme files (*.msstyles; *.theme)"
 msgstr "Teematiedostot (*.msstyles; *.theme)"
 
-#: winecfg.rc:47
+#: winecfg.rc:46
 msgid "Select a theme file"
 msgstr "Valitse teematiedosto"
 
-#: winecfg.rc:48
+#: winecfg.rc:47
 msgid "Folder"
 msgstr "Kansio"
 
-#: winecfg.rc:49
+#: winecfg.rc:48
 msgid "Links to"
 msgstr "Linkittää kohteeseen"
 
-#: winecfg.rc:45
+#: winecfg.rc:44
 msgid "Wine configuration for %s"
 msgstr "Winen asetukset %s:lle"
 
-#: winecfg.rc:84
+#: winecfg.rc:83
 msgid "Selected driver: %s"
 msgstr "Valittu ajuri: %s"
 
-#: winecfg.rc:85
+#: winecfg.rc:84
 msgid "(None)"
 msgstr "(Tyhjä)"
 
-#: winecfg.rc:86
+#: winecfg.rc:85
 msgid "Audio test failed!"
 msgstr "Äänitesti epäonnistui!"
 
-#: winecfg.rc:88
+#: winecfg.rc:87
 msgid "(System default)"
 msgstr "(Järjestelmän oletus)"
 
-#: winecfg.rc:91
+#: winecfg.rc:90
 msgid "5.1 Surround"
 msgstr "5.1 Surround"
 
-#: winecfg.rc:92
+#: winecfg.rc:91
 msgid "Quadraphonic"
 msgstr "Neliääninen"
 
-#: winecfg.rc:93
+#: winecfg.rc:92
 msgid "Stereo"
 msgstr "Stereo"
 
-#: winecfg.rc:94
+#: winecfg.rc:93
 msgid "Mono"
 msgstr "Mono"
 
-#: winecfg.rc:54
+#: winecfg.rc:53
 msgid ""
 "Changing the load order of this library is not recommended.\n"
 "Are you sure you want to do this?"
@@ -15740,67 +15749,67 @@ msgstr ""
 "Tämän kirjaston lataamisjärjestyksen muuttamista ei suositella.\n"
 "Haluatko silti jatkaa?"
 
-#: winecfg.rc:55
+#: winecfg.rc:54
 msgid "Warning: system library"
 msgstr "Varoitus: järjestelmäkirjasto"
 
-#: winecfg.rc:56
+#: winecfg.rc:55
 msgid "native"
 msgstr "natiivi"
 
-#: winecfg.rc:57
+#: winecfg.rc:56
 msgid "builtin"
 msgstr "sisäinen"
 
-#: winecfg.rc:58
+#: winecfg.rc:57
 msgid "native, builtin"
 msgstr "natiivi, sisäinen"
 
-#: winecfg.rc:59
+#: winecfg.rc:58
 msgid "builtin, native"
 msgstr "sisäinen, natiivi"
 
-#: winecfg.rc:60
+#: winecfg.rc:59
 msgid "disabled"
 msgstr "ei käytössä"
 
-#: winecfg.rc:61
+#: winecfg.rc:60
 msgid "Default Settings"
 msgstr "Oletusasetukset"
 
-#: winecfg.rc:62
+#: winecfg.rc:61
 msgid "Wine Programs (*.exe; *.exe.so)"
 msgstr "Wine-ohjelmat (*.exe; *.exe.so)"
 
-#: winecfg.rc:63
+#: winecfg.rc:62
 msgid "Use global settings"
 msgstr "Käytä globaaleja asetuksia"
 
-#: winecfg.rc:64
+#: winecfg.rc:63
 msgid "Select an executable file"
 msgstr "Valitse suoritettava tiedosto"
 
-#: winecfg.rc:69
+#: winecfg.rc:68
 msgid "Autodetect"
 msgstr "Hae automaattisesti"
 
-#: winecfg.rc:70
+#: winecfg.rc:69
 msgid "Local hard disk"
 msgstr "Paikallinen kovalevy"
 
-#: winecfg.rc:71
+#: winecfg.rc:70
 msgid "Network share"
 msgstr "Verkkojako"
 
-#: winecfg.rc:72
+#: winecfg.rc:71
 msgid "Floppy disk"
 msgstr "Levyke"
 
-#: winecfg.rc:73
+#: winecfg.rc:72
 msgid "CD-ROM"
 msgstr "CD-ROM"
 
-#: winecfg.rc:74
+#: winecfg.rc:73
 msgid ""
 "You cannot add any more drives.\n"
 "\n"
@@ -15810,11 +15819,11 @@ msgstr ""
 "\n"
 "Joka asemalla on oltava tunnus A:sta Z:aan, joten niitä voi olla enintään 26."
 
-#: winecfg.rc:75
+#: winecfg.rc:74
 msgid "System drive"
 msgstr "Järjestelmäasema"
 
-#: winecfg.rc:76
+#: winecfg.rc:75
 msgid ""
 "Are you sure you want to delete drive C?\n"
 "\n"
@@ -15826,16 +15835,16 @@ msgstr ""
 "Monet Windows-ohjelmat olettavat, että C-asema on olemassa, ja saattavat "
 "kaatua oudosti, jos sitä ei ole. Jos jatkat, muista luoda uusi C-asema!"
 
-#: winecfg.rc:77
+#: winecfg.rc:76
 msgctxt "Drive letter"
 msgid "Letter"
 msgstr "Kirjain"
 
-#: winecfg.rc:78
+#: winecfg.rc:77
 msgid "Target folder"
 msgstr "Kohdekansio"
 
-#: winecfg.rc:79
+#: winecfg.rc:78
 msgid ""
 "You don't have a drive C. This is not so great.\n"
 "\n"
@@ -15845,127 +15854,127 @@ msgstr ""
 "\n"
 "Muista painaa Asemat-välilehdellä 'Lisää' ja luoda se!\n"
 
-#: winecfg.rc:99
+#: winecfg.rc:98
 msgid "Controls Background"
 msgstr "Kontrollien tausta"
 
-#: winecfg.rc:100
+#: winecfg.rc:99
 msgid "Controls Text"
 msgstr "Kontrollien teksti"
 
-#: winecfg.rc:102
+#: winecfg.rc:101
 msgid "Menu Background"
 msgstr "Valikon tausta"
 
-#: winecfg.rc:103
+#: winecfg.rc:102
 msgid "Menu Text"
 msgstr "Valikon teksti"
 
-#: winecfg.rc:104
+#: winecfg.rc:103
 msgid "Scrollbar"
 msgstr "Vierityspalkki"
 
-#: winecfg.rc:105
+#: winecfg.rc:104
 msgid "Selection Background"
 msgstr "Valintojen tausta"
 
-#: winecfg.rc:106
+#: winecfg.rc:105
 msgid "Selection Text"
 msgstr "Valintojen teksti"
 
-#: winecfg.rc:107
+#: winecfg.rc:106
 msgid "Tooltip Background"
 msgstr "Työkaluvihjeen tausta"
 
-#: winecfg.rc:108
+#: winecfg.rc:107
 msgid "Tooltip Text"
 msgstr "Työkaluvihjeen teksti"
 
-#: winecfg.rc:109
+#: winecfg.rc:108
 msgid "Window Background"
 msgstr "Ikkunan tausta"
 
-#: winecfg.rc:110
+#: winecfg.rc:109
 msgid "Window Text"
 msgstr "Ikkunan teksti"
 
-#: winecfg.rc:111
+#: winecfg.rc:110
 msgid "Active Title Bar"
 msgstr "Aktiivinen otsikkopalkki"
 
-#: winecfg.rc:112
+#: winecfg.rc:111
 msgid "Active Title Text"
 msgstr "Aktiivinen otsikkoteksti"
 
-#: winecfg.rc:113
+#: winecfg.rc:112
 msgid "Inactive Title Bar"
 msgstr "Epäaktiivinen otsikkopalkki"
 
-#: winecfg.rc:114
+#: winecfg.rc:113
 msgid "Inactive Title Text"
 msgstr "Epäaktiivinen otsikkoteksti"
 
-#: winecfg.rc:115
+#: winecfg.rc:114
 msgid "Message Box Text"
 msgstr "Viestilaatikon teksti"
 
-#: winecfg.rc:116
+#: winecfg.rc:115
 msgid "Application Workspace"
 msgstr "Ohjelmien työtila"
 
-#: winecfg.rc:117
+#: winecfg.rc:116
 msgid "Window Frame"
 msgstr "Ikkunanreuna"
 
-#: winecfg.rc:118
+#: winecfg.rc:117
 msgid "Active Border"
 msgstr "Aktiivinen reunus"
 
-#: winecfg.rc:119
+#: winecfg.rc:118
 msgid "Inactive Border"
 msgstr "Epäaktiivinen reunus"
 
-#: winecfg.rc:120
+#: winecfg.rc:119
 msgid "Controls Shadow"
 msgstr "Kontrollien varjo"
 
-#: winecfg.rc:121
+#: winecfg.rc:120
 msgid "Gray Text"
 msgstr "Harmaa teksti"
 
-#: winecfg.rc:122
+#: winecfg.rc:121
 msgid "Controls Highlight"
 msgstr "Kontrollien korostus"
 
-#: winecfg.rc:123
+#: winecfg.rc:122
 msgid "Controls Dark Shadow"
 msgstr "Kontrollien syvä varjo"
 
-#: winecfg.rc:124
+#: winecfg.rc:123
 msgid "Controls Light"
 msgstr "Kontrollien valo"
 
-#: winecfg.rc:125
+#: winecfg.rc:124
 msgid "Controls Alternate Background"
 msgstr "Kontrollien vaihtoehtotausta"
 
-#: winecfg.rc:126
+#: winecfg.rc:125
 msgid "Hot Tracked Item"
 msgstr "Aktiivinen elementti"
 
-#: winecfg.rc:127
+#: winecfg.rc:126
 msgid "Active Title Bar Gradient"
 msgstr "Aktiivisen otsikkopalkin liukuväri"
 
-#: winecfg.rc:128
+#: winecfg.rc:127
 msgid "Inactive Title Bar Gradient"
 msgstr "Epäaktiivisen otsikkopalkin liukuväri"
 
-#: winecfg.rc:129
+#: winecfg.rc:128
 msgid "Menu Highlight"
 msgstr "Valikon korostus"
 
-#: winecfg.rc:130
+#: winecfg.rc:129
 msgid "Menu Bar"
 msgstr "Valikkopalkki"
 

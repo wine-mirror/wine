@@ -22,20 +22,16 @@
 use strict;
 
 # base URLs for www.unicode.org files
-my $UNIVERSION = "12.1.0";
-my $MAPPINGS = "http://www.unicode.org/Public/MAPPINGS";
-my $UNIDATA = "http://www.unicode.org/Public/$UNIVERSION/ucd/UCD.zip";
+my $UNIVERSION = "13.0.0";
+my $UNIDATA  = "https://www.unicode.org/Public/$UNIVERSION/ucd/UCD.zip";
 my $IDNADATA = "https://www.unicode.org/Public/idna/$UNIVERSION";
+my $JISDATA  = "https://www.unicode.org/Public/MAPPINGS/OBSOLETE/EASTASIA/JIS";
 my $REPORTS = "http://www.unicode.org/reports";
-my $RFCS = "http://www.rfc-editor.org/rfc";
 my $MSDATA = "https://download.microsoft.com/download/C/F/7/CF713A5E-9FBC-4FD6-9246-275F65C0E498";
 my $MSCODEPAGES = "$MSDATA/Windows Supported Code Page Data Files.zip";
 
 # Sort keys file
 my $SORTKEYS = "tr10/allkeys.txt";
-
-# RFC3454 (stringprep data)
-my $STRINGPREP = "rfc3454.txt";
 
 # Default char for undefined mappings
 my $DEF_CHAR = ord '?';
@@ -114,6 +110,7 @@ my @allfiles =
 
 my %ctype =
 (
+     # CT_CTYPE1
     "upper"  => 0x0001,
     "lower"  => 0x0002,
     "digit"  => 0x0004,
@@ -122,8 +119,22 @@ my %ctype =
     "cntrl"  => 0x0020,
     "blank"  => 0x0040,
     "xdigit" => 0x0080,
-    "alpha"  => 0x0100,
-    "defin"  => 0x0200
+    "alpha"  => 0x0100 | 0x80000000,
+    "defin"  => 0x0200,
+     # CT_CTYPE3 in high 16 bits
+    "nonspacing"    => 0x00010000,
+    "diacritic"     => 0x00020000,
+    "vowelmark"     => 0x00040000,
+    "symbol"        => 0x00080000,
+    "katakana"      => 0x00100000,
+    "hiragana"      => 0x00200000,
+    "halfwidth"     => 0x00400000,
+    "fullwidth"     => 0x00800000,
+    "ideograph"     => 0x01000000,
+    "kashida"       => 0x02000000,
+    "lexical"       => 0x04000000,
+    "highsurrogate" => 0x08000000,
+    "lowsurrogate"  => 0x10000000,
 );
 
 my %bracket_types =
@@ -188,15 +199,8 @@ my %matra_types =
     "Top_And_Bottom_And_Right"  => 0x0c,
     "Overstruck"  => 0x0d,
     "Invisible"  => 0x0e,
-    "Bottom_And_Left"  => 0x0f
-);
-
-my %nameprep_flags =
-(
-    "unassigned" => 0x01,
-    "prohibited" => 0x02,
-    "bidi_ral"   => 0x04,
-    "bidi_l"     => 0x08
+    "Bottom_And_Left"  => 0x0f,
+    "Top_And_Bottom_And_Left"  => 0x10,
 );
 
 my %break_types =
@@ -259,7 +263,7 @@ my %categories =
     "Lu" => $ctype{"defin"}|$ctype{"alpha"}|$ctype{"upper"}, # Letter, Uppercase
     "Ll" => $ctype{"defin"}|$ctype{"alpha"}|$ctype{"lower"}, # Letter, Lowercase
     "Lt" => $ctype{"defin"}|$ctype{"alpha"}|$ctype{"upper"}|$ctype{"lower"},    # Letter, Titlecase
-    "Mn" => $ctype{"defin"},                    # Mark, Non-Spacing
+    "Mn" => $ctype{"defin"}|$ctype{"nonspacing"}, # Mark, Non-Spacing
     "Mc" => $ctype{"defin"},                    # Mark, Spacing Combining
     "Me" => $ctype{"defin"},                    # Mark, Enclosing
     "Nd" => $ctype{"defin"}|$ctype{"digit"},    # Number, Decimal Digit
@@ -282,10 +286,10 @@ my %categories =
     "Pi" => $ctype{"defin"}|$ctype{"punct"},    # Punctuation, Initial quote
     "Pf" => $ctype{"defin"}|$ctype{"punct"},    # Punctuation, Final quote
     "Po" => $ctype{"defin"}|$ctype{"punct"},    # Punctuation, Other
-    "Sm" => $ctype{"defin"},                    # Symbol, Math
-    "Sc" => $ctype{"defin"},                    # Symbol, Currency
-    "Sk" => $ctype{"defin"},                    # Symbol, Modifier
-    "So" => $ctype{"defin"}                     # Symbol, Other
+    "Sm" => $ctype{"defin"}|$ctype{"symbol"},   # Symbol, Math
+    "Sc" => $ctype{"defin"}|$ctype{"symbol"},   # Symbol, Currency
+    "Sk" => $ctype{"defin"}|$ctype{"symbol"},   # Symbol, Modifier
+    "So" => $ctype{"defin"}|$ctype{"symbol"}    # Symbol, Other
 );
 
 # a few characters need additional categories that cannot be determined automatically
@@ -302,7 +306,31 @@ my %special_categories =
     "punct"  => [ 0x24, 0x2b, 0x3c..0x3e, 0x5e, 0x60, 0x7c, 0x7e, 0xa2..0xbe,
                   0xd7, 0xf7 ],
     "digit"  => [ 0xb2, 0xb3, 0xb9 ],
-    "lower"  => [ 0x2071, 0x207f ]
+    "lower"  => [ 0xaa, 0xba, 0x2071, 0x207f ],
+    "nonspacing" => [ 0xc0..0xc5, 0xc7..0xcf, 0xd1..0xd6, 0xd8..0xdd, 0xe0..0xe5, 0xe7..0xef,
+                      0xf1..0xf6, 0xf8..0xfd, 0xff, 0x6de, 0x1929..0x192b, 0x302e..0x302f ],
+    "diacritic" => [ 0x5e, 0x60, 0xb7, 0xd8, 0xf8 ],
+    "symbol" => [ 0x09..0x0d, 0x20..0x23, 0x25, 0x26, 0x28..0x2a, 0x2c, 0x2e..0x2f, 0x3a..0x40,
+                  0x5b..0x60, 0x7b..0x7e, 0xa0..0xa9, 0xab..0xb1, 0xb4..0xb8, 0xbb, 0xbf,
+                  0x02b9..0x02ba, 0x02c6..0x02cf ],
+    "halfwidth" => [ 0x20..0x7e, 0xa2..0xa3, 0xa5..0xa6, 0xac, 0xaf, 0x20a9 ],
+    "fullwidth" => [ 0x2018..0x2019, 0x201c..0x201d, 0x3000..0x3002, 0x300c..0x300d, 0x309b..0x309c,
+                     0x30a1..0x30ab, 0x30ad, 0x30ad, 0x30af, 0x30b1, 0x30b3, 0x30b5, 0x30b7, 0x30b9,
+                     0x30bb, 0x30bd, 0x30bf, 0x30c1, 0x30c3, 0x30c4, 0x30c6, 0x30c8, 0x30ca..0x30cf,
+                     0x30d2, 0x30d5, 0x30d8, 0x30db, 0x30de..0x30ed, 0x30ef, 0x30f2..0x30f3, 0x30fb,
+                     0x3131..0x3164 ],
+    "ideograph" => [ 0x3006..0x3007 ],
+    "lexical" => [ 0x22, 0x24, 0x27, 0x2d, 0x2f, 0x3d, 0x40, 0x5c, 0x5e..0x60, 0x7e,
+                   0xa8, 0xaa, 0xad, 0xaf, 0xb4, 0xb8, 0xba,
+                   0x02b0..0x02b8, 0x02bc, 0x02c7, 0x02ca..0x02cb, 0x02cf, 0x02d8..0x02dd, 0x02e0..0x02e3,
+                   0x037a, 0x0384..0x0385, 0x0387, 0x0559..0x055a, 0x0640, 0x1fbd..0x1fc1,
+                   0x1fcd..0x1fcf, 0x1fdd..0x1fdf, 0x1fed..0x1fef, 0x1ffd..0x1ffe, 0x2010..0x2015,
+                   0x2032..0x2034, 0x2038, 0x2043..0x2044, 0x207b..0x207c, 0x207f, 0x208b..0x208c,
+                   0x2212, 0x2215..0x2216, 0x2500, 0x2504..0x2505, 0x2508..0x2509, 0x254c..0x254d,
+                   0x3003, 0x301c, 0x3030..0x3035, 0x309b..0x309e, 0x30fd..0x30fe, 0xfe31..0xfe32,
+                   0xfe58, 0xfe63, 0xfe66, 0xfe68..0xfe69, 0xfe6b, 0xff04, 0xff07, 0xff0d, 0xff0f,
+                   0xff1d, 0xff20, 0xff3c, 0xff3e, 0xff40, 0xff5e ],
+    "kashida" => [ 0x0640 ],
 );
 
 my %directions =
@@ -342,7 +370,7 @@ my %c2_types =
     "ET"  => 5,    # C2_EUROPETERMINATOR
     "AN"  => 6,    # C2_ARABICNUMBER
     "CS"  => 7,    # C2_COMMONSEPARATOR
-    "NSM" => 0,    # C2_NOTAPPLICABLE
+    "NSM" => 11,   # C2_OTHERNEUTRAL
     "BN"  => 0,    # C2_NOTAPPLICABLE
     "B"   => 8,    # C2_BLOCKSEPARATOR
     "S"   => 9,    # C2_SEGMENTSEPARATOR
@@ -412,6 +440,7 @@ my @decomp_compat_table = ();
 my @comp_exclusions = ();
 my @idna_decomp_table = ();
 my @idna_disallowed = ();
+my %registry_keys;
 my $default_char;
 my $default_wchar;
 
@@ -446,28 +475,33 @@ sub to_utf16(@)
 sub open_data_file($$)
 {
     my ($base, $name) = @_;
-    (my $dir = "data/$name") =~ s/\/[^\/]+$//;
+    my $cache = ($ENV{XDG_CACHE_HOME} || "$ENV{HOME}/.cache") . "/wine";
+    (my $dir = "$cache/$name") =~ s/\/[^\/]+$//;
+    my $suffix = ($base =~ /\/\Q$UNIVERSION\E/) ? "-$UNIVERSION" : "";
     local *FILE;
-    unless (-f "data/$name")
+
+    if ($base =~ /.*\/([^\/]+)\.zip$/)
     {
-        system "mkdir", "-p", $dir;
-        if ($base =~ /.*\/([^\/]+\.zip)$/)
+        my $zip = "$1$suffix.zip";
+        unless (-f "$cache/$zip")
         {
-            my $zip = $1;
-            unless (-f "data/$zip")
-            {
-                print "Fetching $base...\n";
-                !system "wget", "-q", "-O", "data/$zip", "$base" or die "cannot fetch $base";
-            }
-            !system "unzip", "-q", "-d", "data", "data/$zip", $name or die "cannot extract $name from $zip";
+            system "mkdir", "-p", $cache;
+            print "Fetching $base...\n";
+            !system "wget", "-q", "-O", "$cache/$zip", $base or die "cannot fetch $base";
         }
-        else
-        {
-            print "Fetching $base/$name...\n";
-            !system "wget", "-q", "-O", "data/$name", "$base/$name" or die "cannot fetch $base/$name";
-        }
+        open FILE, "-|", "unzip", "-p", "$cache/$zip", $name or die "cannot extract $name from $zip";
     }
-    open FILE, "<data/$name" or die "cannot open data/$name";
+    else
+    {
+        (my $dest = "$cache/$name") =~ s/(.*)(\.[^\/.]+)$/$1$suffix$2/;
+        unless (-f $dest)
+        {
+            system "mkdir", "-p", $dir;
+            print "Fetching $base/$name...\n";
+            !system "wget", "-q", "-O", $dest, "$base/$name" or die "cannot fetch $base/$name";
+        }
+        open FILE, "<$dest" or die "cannot open $dest";
+    }
     return *FILE;
 }
 
@@ -563,6 +597,28 @@ sub compose_hangul(@)
 }
 
 ################################################################
+# remove linguistic-only mappings from the case table
+sub remove_linguistic_mappings($$)
+{
+    my ($upper, $lower) = @_;
+
+    # remove case mappings that don't round-trip
+
+    for (my $i = 0; $i < @{$upper}; $i++)
+    {
+        next unless defined ${$upper}[$i];
+        my $ch = ${$upper}[$i];
+        ${$upper}[$i] = undef unless defined ${$lower}[$ch] && ${$lower}[$ch] == $i;
+    }
+    for (my $i = 0; $i < @{$lower}; $i++)
+    {
+        next unless defined ${$lower}[$i];
+        my $ch = ${$lower}[$i];
+        ${$lower}[$i] = undef unless defined ${$upper}[$ch] && ${$upper}[$ch] == $i;
+    }
+}
+
+################################################################
 # read in the Unicode database files
 sub load_data()
 {
@@ -577,7 +633,6 @@ sub load_data()
 	my ($code, $name, $cat, $comb, $bidi,
             $decomp, $dec, $dig, $num, $mirror,
             $oldname, $comment, $upper, $lower, $title) = split /;/;
-        my $dst;
         my $src = hex $code;
 
         die "unknown category $cat" unless defined $categories{$cat};
@@ -604,6 +659,19 @@ sub load_data()
             $digitmap_table[$src] = ord $dig;
         }
         $combining_class_table[$src] = ($cat ne "Co") ? $comb : 0x100; # Private Use
+
+        $category_table[$src] |= $ctype{"nonspacing"}    if $bidi eq "NSM";
+        $category_table[$src] |= $ctype{"diacritic"}     if $name =~ /^(COMBINING)|(MODIFIER LETTER)\W/;
+        $category_table[$src] |= $ctype{"vowelmark"}     if $name =~ /\sVOWEL/ || $oldname =~ /\sVOWEL/;
+        $category_table[$src] |= $ctype{"halfwidth"}     if $name =~ /^HALFWIDTH\s/;
+        $category_table[$src] |= $ctype{"fullwidth"}     if $name =~ /^FULLWIDTH\s/;
+        $category_table[$src] |= $ctype{"hiragana"}      if $name =~ /(HIRAGANA)|(\WKANA\W)/;
+        $category_table[$src] |= $ctype{"katakana"}      if $name =~ /(KATAKANA)|(\WKANA\W)/;
+        $category_table[$src] |= $ctype{"ideograph"}     if $name =~ /^<CJK Ideograph/;
+        $category_table[$src] |= $ctype{"ideograph"}     if $name =~ /^CJK COMPATIBILITY IDEOGRAPH/;
+        $category_table[$src] |= $ctype{"ideograph"}     if $name =~ /^HANGZHOU/;
+        $category_table[$src] |= $ctype{"highsurrogate"} if $name =~ /High Surrogate/;
+        $category_table[$src] |= $ctype{"lowsurrogate"}  if $name =~ /Low Surrogate/;
 
         # copy the category and direction for everything between First/Last pairs
         if ($name =~ /, First>/) { $start = $src; }
@@ -632,30 +700,15 @@ sub load_data()
             if ($1 eq "isolated" || $1 eq "final" || $1 eq "initial" || $1 eq "medial")
             {
                 ${joining_forms{$1}}[hex $2] = $src;
-                next;
             }
-            next unless ($1 eq "font" ||
-                         $1 eq "noBreak" ||
-                         $1 eq "circle" ||
-                         $1 eq "super" ||
-                         $1 eq "sub" ||
-                         $1 eq "wide" ||
-                         $1 eq "narrow" ||
-                         $1 eq "compat" ||
-                         $1 eq "small");
-            $dst = hex $2;
         }
         elsif ($decomp =~ /^<compat>\s+0020\s+([0-9a-fA-F]+)/)
         {
             # decomposition "<compat> 0020 1234" -> combining accent
-            $dst = hex $1;
         }
         elsif ($decomp =~ /^([0-9a-fA-F]+)/)
         {
-            # decomposition contains only char values without prefix -> use first char
-            $dst = hex $1;
-            $category_table[$src] |= $category_table[$dst] if defined $category_table[$dst];
-            # store decomposition if it contains two chars
+            # store decomposition
             if ($decomp =~ /^([0-9a-fA-F]+)\s+([0-9a-fA-F]+)$/)
             {
                 $decomp_table[$src] = $decomp_compat_table[$src] = [ hex $1, hex $2 ];
@@ -666,34 +719,26 @@ sub load_data()
                 $decomp_table[$src] = $decomp_compat_table[$src] = [ hex $1 ];
             }
         }
-        else
-        {
-            next;
-        }
     }
     close $UNICODE_DATA;
 
     # patch the category of some special characters
 
+    for (my $i = 0; $i < @decomp_table; $i++)
+    {
+        next unless defined $decomp_table[$i];
+        $category_table[$i] |= $category_table[$decomp_table[$i]->[0]];
+    }
     foreach my $cat (keys %special_categories)
     {
         my $flag = $ctype{$cat};
         foreach my $i (@{$special_categories{$cat}}) { $category_table[$i] |= $flag; }
     }
-
-    # remove case mappings that don't round-trip
-
-    for (my $i = 0; $i < @toupper_table; $i++)
+    for (my $i = 0; $i < @decomp_compat_table; $i++)
     {
-        next unless defined $toupper_table[$i];
-        my $ch = $toupper_table[$i];
-        $toupper_table[$i] = undef unless defined $tolower_table[$ch] && $tolower_table[$ch] == $i;
-    }
-    for (my $i = 0; $i < @tolower_table; $i++)
-    {
-        next unless defined $tolower_table[$i];
-        my $ch = $tolower_table[$i];
-        $tolower_table[$i] = undef unless defined $toupper_table[$ch] && $toupper_table[$ch] == $i;
+        next unless defined $decomp_compat_table[$i];
+        next unless @{$decomp_compat_table[$i]} == 2;
+        $category_table[$i] |= $category_table[$decomp_compat_table[$i]->[1]] & $ctype{"diacritic"};
     }
 
     # load the composition exclusions
@@ -758,6 +803,23 @@ sub load_data()
     close $IDNA;
 }
 
+
+################################################################
+# add a new registry key
+sub add_registry_key($$)
+{
+    my ($key, $defval) = @_;
+    $registry_keys{$key} = [ $defval ] unless defined $registry_keys{$key};
+}
+
+################################################################
+# add a new registry value
+sub add_registry_value($$$)
+{
+    my ($key, $name, $value) = @_;
+    add_registry_key( $key, undef );
+    push @{$registry_keys{$key}}, "'$name' = s '$value'";
+}
 
 ################################################################
 # define a new lead byte
@@ -837,7 +899,7 @@ sub dump_eucjp_codepage()
         }
     }
 
-    my $INPUT = open_data_file( $MAPPINGS, "OBSOLETE/EASTASIA/JIS/JIS0208.TXT" );
+    my $INPUT = open_data_file( $JISDATA, "JIS0208.TXT" );
     while (<$INPUT>)
     {
         next if /^\#/;  # skip comments
@@ -852,7 +914,7 @@ sub dump_eucjp_codepage()
     }
     close $INPUT;
 
-    $INPUT = open_data_file( $MAPPINGS, "OBSOLETE/EASTASIA/JIS/JIS0212.TXT" );
+    $INPUT = open_data_file( $JISDATA, "JIS0212.TXT" );
     while (<$INPUT>)
     {
         next if /^\#/;  # skip comments
@@ -1099,7 +1161,7 @@ sub dump_indic($)
             }
             next;
         }
-        elsif (/^\s*([0-9a-fA-F]+)..\s*([0-9a-fA-F]+)\s*;\s*([A-Za-z_]+)\s*#/)
+        elsif (/^\s*([0-9a-fA-F]+)\.\.\s*([0-9a-fA-F]+)\s*;\s*([A-Za-z_]+)\s*#/)
         {
             my $type = $3;
             die "unknown indic $type" unless defined $indic_types{$type};
@@ -1122,20 +1184,20 @@ sub dump_indic($)
         next if /^\#/;  # skip comments
         next if /^\s*$/;  # skip empty lines
         next if /\x1a/;  # skip ^Z
-        if (/^\s*([0-9a-fA-F]+)\s*;\s*([a-zA-Z]+)\s*#/)
+        if (/^\s*([0-9a-fA-F]+)\s*;\s*([a-zA-Z_]+)\s*#/)
         {
             my $type = $2;
             die "unknown matra $type" unless defined $matra_types{$type};
-            $indic_table[hex $1] += $matra_types{$type} << 8;
+            $indic_table[hex $1] |= $matra_types{$type} << 8;
             next;
         }
-        elsif (/^\s*([0-9a-fA-F]+)..\s*([0-9a-fA-F]+)\s*;\s*([A-Za-z_]+)\s*#/)
+        elsif (/^\s*([0-9a-fA-F]+)\.\.\s*([0-9a-fA-F]+)\s*;\s*([A-Za-z_]+)\s*#/)
         {
             my $type = $3;
             die "unknown matra $type" unless defined $matra_types{$type};
             foreach my $i (hex $1 .. hex $2)
             {
-                $indic_table[$i] += $matra_types{$type} << 8;
+                $indic_table[$i] |= $matra_types{$type} << 8;
             }
             next;
         }
@@ -1178,7 +1240,7 @@ sub dump_linebreak($)
             $break_table[hex $1] = $break_types{$type};
             next;
         }
-        elsif (/^\s*([0-9a-fA-F]+)..\s*([0-9a-fA-F]+)\s*;\s*([0-9A-Z][0-9A-Z][0-9A-Z])+\s*/)
+        elsif (/^\s*([0-9a-fA-F]+)\.\.\s*([0-9a-fA-F]+)\s*;\s*([0-9A-Z][0-9A-Z][0-9A-Z])+\s*/)
         {
             my $type = $3;
             die "unknown breaktype $type" unless defined $break_types{$type};
@@ -1195,7 +1257,7 @@ sub dump_linebreak($)
             $break_table[hex $1] = $break_types{$type};
             next;
         }
-        elsif (/^\s*([0-9a-fA-F]+)..\s*([0-9a-fA-F]+)\s*;\s*([0-9A-Z][0-9A-Z])+\s*/)
+        elsif (/^\s*([0-9a-fA-F]+)\.\.\s*([0-9a-fA-F]+)\s*;\s*([0-9A-Z][0-9A-Z])+\s*/)
         {
             my $type = $3;
             die "unknown breaktype $type" unless defined $break_types{$type};
@@ -1378,6 +1440,11 @@ my %scripts =
     "Medefaidrin"            => 146,
     "Old_Sogdian"            => 147,
     "Sogdian"                => 148,
+    # Win10 2004
+    "Elymaic"                => 149,
+    "Nyiakeng_Puachue_Hmong" => 150,
+    "Nandinagari"            => 151,
+    "Wancho"                 => 152,
 );
 
 ################################################################
@@ -1409,7 +1476,7 @@ sub dump_scripts($)
             }
             next;
         }
-        elsif (/^\s*([0-9a-fA-F]+)..\s*([0-9a-fA-F]+)\s*;\s*([a-zA-Z_]+)\s*/)
+        elsif (/^\s*([0-9a-fA-F]+)\.\.\s*([0-9a-fA-F]+)\s*;\s*([a-zA-Z_]+)\s*/)
         {
             $type = $3;
             if (defined $scripts{$type})
@@ -1603,7 +1670,7 @@ sub dump_vertical($)
             }
             next;
         }
-        elsif (/^\s*([0-9a-fA-F]+)..\s*([0-9a-fA-F]+)\s*;\s*([A-Za-z_]+)\s*/)
+        elsif (/^\s*([0-9a-fA-F]+)\.\.\s*([0-9a-fA-F]+)\s*;\s*([A-Za-z_]+)\s*/)
         {
             my $type = $3;
             die "unknown vertical $type" unless defined $vertical_types{$type};
@@ -1660,9 +1727,13 @@ sub dump_case_mappings($)
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
     print OUTPUT "#include \"windef.h\"\n\n";
 
-    dump_case_table( "wine_casemap_lower", @tolower_table );
+    my @upper = @toupper_table;
+    my @lower = @tolower_table;
+    remove_linguistic_mappings( \@upper, \@lower );
+
+    dump_case_table( "wine_casemap_lower", @lower );
     print OUTPUT "\n";
-    dump_case_table( "wine_casemap_upper", @toupper_table );
+    dump_case_table( "wine_casemap_upper", @upper );
     close OUTPUT;
     save_file($filename);
 }
@@ -1802,17 +1873,21 @@ sub dump_binary_case_table(@)
 
     my @row_array = compress_array( $level1, 0, @difftable[0..$max_char-1] );
     my @array = compress_array( $level2, 0, @row_array[0..$level1-1] );
-    for (my $i = $level2; $i < @array; $i++) { $array[$i] += @array - $level1; }
-    return @array, @row_array[$level1..$#row_array];
+    my $offset = @array - $level1;
+    for (my $i = $level2; $i < @array; $i++) { $array[$i] += $offset; }
+    return pack "S<*", 1 + $offset + @row_array, @array, @row_array[$level1..$#row_array];
 }
-
 
 ################################################################
 # dump case mappings for l_intl.nls
 sub dump_intl_nls($)
 {
-    my @upper = dump_binary_case_table( @toupper_table );
-    my @lower = dump_binary_case_table( @tolower_table );
+    my @upper_table = @toupper_table;
+    my @lower_table = @tolower_table;
+    remove_linguistic_mappings( \@upper_table, \@lower_table );
+
+    my $upper = dump_binary_case_table( @upper_table );
+    my $lower = dump_binary_case_table( @lower_table );
 
     my $filename = shift;
     open OUTPUT,">$filename.new" or die "Cannot create $filename";
@@ -1820,213 +1895,8 @@ sub dump_intl_nls($)
 
     binmode OUTPUT;
     print OUTPUT pack "S<", 1;  # version
-    print OUTPUT pack "S<*", 1 + scalar @upper, @upper;
-    print OUTPUT pack "S<*", 1 + scalar @lower, @lower;
-    close OUTPUT;
-    save_file($filename);
-}
-
-
-sub load_nameprep_range_table($$$)
-{
-    my ($INPUT, $val, $table_ref) = @_;
-
-    while (<$INPUT>)
-    {
-        if (/^\s*([0-9a-fA-F]+)-([0-9a-fA-F]+)/)
-        {
-            my $last = hex $2;
-            $last = 65535 if($last >= 65536);
-            foreach my $i (hex $1 .. $last)
-            {
-                $table_ref->[$i] |= $val;
-            }
-            next;
-        }
-        elsif (/^\s*([0-9a-fA-F]+)/)
-        {
-            if (hex $1 < 65536)
-            {
-                $table_ref->[hex $1] |= $val;
-            }
-            next;
-        }
-
-        return if (/End\sTable/);
-    }
-}
-
-sub load_nameprep_map_table($$)
-{
-    my ($INPUT, $table_ref) = @_;
-
-    while (<$INPUT>)
-    {
-        if (/^\s*([0-9a-fA-F]+);\s;/)
-        {
-            # special value for map to nothing
-            $table_ref->[hex $1] = [0xffff, 0xffff, 0xffff];
-            next;
-        }
-        elsif (/^\s*([0-9a-fA-F]+);\s([0-9a-fA-F]+);/)
-        {
-            $table_ref->[hex $1] = [hex $2, 0, 0];
-            next;
-        }
-        elsif (/^\s*([0-9a-fA-F]+);\s([0-9a-fA-F]+)\s([0-9a-fA-F]+);/)
-        {
-            $table_ref->[hex $1] = [hex $2, hex $3, 0];
-            next;
-        }
-        elsif (/^\s*([0-9a-fA-F]+);\s([0-9a-fA-F]+)\s([0-9a-fA-F]+)\s([0-9a-fA-F]+);/)
-        {
-            $table_ref->[hex $1] = [hex $2, hex $3, hex $4];
-            next;
-        }
-
-        return if (/End\sTable/);
-    }
-}
-
-################################################################
-# dump mapping table, prohibited characters set, unassigned
-# characters, bidirectional rules used by nameprep algorithm
-sub dump_nameprep($)
-{
-    my $filename = shift;
-    my @mapping_table = ();
-    my @flags_table;
-
-    my $INPUT = open_data_file( $RFCS, $STRINGPREP );
-    while (<$INPUT>)
-    {
-        next unless /Start\sTable/;
-
-        load_nameprep_range_table($INPUT, $nameprep_flags{"unassigned"}, \@flags_table) if (/A.1/);
-        load_nameprep_range_table($INPUT, $nameprep_flags{"prohibited"}, \@flags_table) if (/C.1.2/);
-        load_nameprep_range_table($INPUT, $nameprep_flags{"prohibited"}, \@flags_table) if (/C.2.2/);
-        load_nameprep_range_table($INPUT, $nameprep_flags{"prohibited"}, \@flags_table) if (/C.3/);
-        load_nameprep_range_table($INPUT, $nameprep_flags{"prohibited"}, \@flags_table) if (/C.4/);
-        load_nameprep_range_table($INPUT, $nameprep_flags{"prohibited"}, \@flags_table) if (/C.5/);
-        load_nameprep_range_table($INPUT, $nameprep_flags{"prohibited"}, \@flags_table) if (/C.6/);
-        load_nameprep_range_table($INPUT, $nameprep_flags{"prohibited"}, \@flags_table) if (/C.7/);
-        load_nameprep_range_table($INPUT, $nameprep_flags{"prohibited"}, \@flags_table) if (/C.8/);
-        load_nameprep_range_table($INPUT, $nameprep_flags{"prohibited"}, \@flags_table) if (/C.9/);
-        load_nameprep_range_table($INPUT, $nameprep_flags{"bidi_ral"}, \@flags_table) if (/D.1/);
-        load_nameprep_range_table($INPUT, $nameprep_flags{"bidi_l"}, \@flags_table) if (/D.2/);
-
-        load_nameprep_map_table($INPUT, \@mapping_table) if (/B.1/);
-        load_nameprep_map_table($INPUT, \@mapping_table) if (/B.2/);
-    }
-    close $INPUT;
-
-    open OUTPUT,">$filename.new" or die "Cannot create $filename";
-    print "Building $filename\n";
-    print OUTPUT "/* Nameprep algorithm related data */\n";
-    print OUTPUT "/* generated from $RFCS/$STRINGPREP */\n";
-    print OUTPUT "/* DO NOT EDIT!! */\n\n";
-    print OUTPUT "#include \"windef.h\"\n\n";
-
-    dump_two_level_mapping( "nameprep_char_type", 0, 16, @flags_table );
-
-    ######### mapping table
-    # first determine all the 16-char subsets that contain something
-    my @filled = ();
-    my $pos = 16*3;  # for the null subset
-    for (my $i = 0; $i < 65536; $i++)
-    {
-        next unless defined $mapping_table[$i];
-        $filled[$i >> 4] = $pos;
-        $pos += 16*3;
-        $i |= 15;
-    }
-    my $total = $pos;
-
-    # now count the 256-char subsets that contain something
-    my @filled_idx = (256) x 256;
-    $pos = 256 + 16;
-    for (my $i = 0; $i < 4096; $i++)
-    {
-        next unless $filled[$i];
-        $filled_idx[$i >> 4] = $pos;
-        $pos += 16;
-        $i |= 15;
-    }
-    my $null_offset = $pos;
-    $total += $pos;
-
-    # add the index offsets to the subsets positions
-    for (my $i = 0; $i < 4096; $i++)
-    {
-        next unless $filled[$i];
-        $filled[$i] += $null_offset;
-    }
-
-    # dump the main index
-    printf OUTPUT "const unsigned short DECLSPEC_HIDDEN nameprep_mapping[%d] =\n", $total;
-    printf OUTPUT "{\n    /* index */\n";
-    printf OUTPUT "%s", dump_array( 16, 0, @filled_idx );
-    printf OUTPUT ",\n    /* null sub-index */\n%s", dump_array( 16, 0, ($null_offset) x 16 );
-
-    # dump the second-level indexes
-    for (my $i = 0; $i < 256; $i++)
-    {
-        next unless ($filled_idx[$i] > 256);
-        my @table = @filled[($i<<4)..($i<<4)+15];
-        for (my $j = 0; $j < 16; $j++) { $table[$j] ||= $null_offset; }
-        printf OUTPUT ",\n    /* sub-index %02x */\n", $i;
-        printf OUTPUT "%s", dump_array( 16, 0, @table );
-    }
-
-    # dump the 16-char subsets
-    printf OUTPUT ",\n    /* null mapping */\n";
-    printf OUTPUT "%s", dump_array( 16, 0, (0) x 48 );
-
-    for (my $i = 0; $i < 4096; $i++)
-    {
-        next unless $filled[$i];
-        my @table = (0) x 48;
-        for (my $j = 0; $j < 16; $j++)
-        {
-            if (defined $mapping_table[($i<<4) + $j])
-            {
-                $table[3 * $j] = ${$mapping_table[($i << 4) + $j]}[0];
-                $table[3 * $j + 1] = ${$mapping_table[($i << 4) + $j]}[1];
-                $table[3 * $j + 2] = ${$mapping_table[($i << 4) + $j]}[2];
-            }
-        }
-        printf OUTPUT ",\n    /* 0x%03x0 .. 0x%03xf */\n", $i, $i;
-        printf OUTPUT "%s", dump_array( 16, 0, @table );
-    }
-
-    printf OUTPUT "\n};\n";
-
-    close OUTPUT;
-    save_file($filename);
-}
-
-
-################################################################
-# dump the GetStringTypeW table
-sub dump_string_type_table($)
-{
-    my $filename = shift;
-    open OUTPUT,">$filename.new" or die "Cannot create $filename";
-    printf "Building $filename\n";
-    printf OUTPUT "/* Unicode wctype table */\n";
-    printf OUTPUT "/* Automatically generated; DO NOT EDIT!! */\n\n";
-    printf OUTPUT "#include \"windef.h\"\n\n";
-
-    my @table = @category_table;
-
-    # add the direction in the high 4 bits of the category
-    for (my $i = 0; $i < 65536; $i++)
-    {
-        $table[$i] |= $c2_types{$direction_table[$i]} << 12 if defined $direction_table[$i];
-    }
-
-    dump_two_level_mapping( "wctype_table", 0, 16, @table );
-
+    print OUTPUT $upper;
+    print OUTPUT $lower;
     close OUTPUT;
     save_file($filename);
 }
@@ -2068,7 +1938,7 @@ sub dump_ctype_tables($)
     printf OUTPUT "/* Automatically generated; DO NOT EDIT!! */\n\n";
     printf OUTPUT "#include \"windef.h\"\n\n";
 
-    my @table = @category_table;
+    my @table = map { ($_ || 0) & 0xffff; } @category_table;
 
     # add the direction in the high 4 bits of the category
     for (my $i = 0; $i < 65536; $i++)
@@ -2348,6 +2218,8 @@ sub dump_norm_table($)
 
     close OUTPUT;
     save_file($filename);
+
+    add_registry_value( "Normalization", sprintf( "%x", $forms{$type} ), "norm$type.nls" );
 }
 
 
@@ -2366,6 +2238,8 @@ sub output_codepage_file($)
 
     close OUTPUT;
     save_file($output);
+
+    add_registry_value( "Codepage", sprintf( "%d", $codepage ), sprintf( "c_%03d.nls", $codepage ));
 }
 
 ################################################################
@@ -2464,6 +2338,429 @@ sub dump_msdata_codepage($)
     output_codepage_file( $codepage );
 }
 
+################################################################
+# align a string length
+sub align_string($$)
+{
+    my ($align, $str) = @_;
+    $str .= pack "C*", (0) x ($align - length($str) % $align) if length($str) % $align;
+    return $str;
+}
+
+################################################################
+# pack a GUID string
+sub pack_guid($)
+{
+    $_ = shift;
+    /([0-9A-Fa-f]{8})-([0-9A-Fa-f]{4})-([0-9A-Fa-f]{4})-([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})-([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})/;
+    return pack "L<S<2C8", hex $1, hex $2, hex $3, hex $4, hex $5, hex $6, hex $7, hex $8, hex $9, hex $10, hex $11;
+}
+
+################################################################
+# comparison function for compression sort
+sub cmp_compression
+{
+    return scalar @{$a} <=> scalar @{$b} ||
+        $a->[4] <=> $b->[4] ||
+        $a->[5] <=> $b->[5] ||
+        $a->[6] <=> $b->[6] ||
+        $a->[7] <=> $b->[7] ||
+        $a->[8] <=> $b->[8] ||
+        $a->[9] <=> $b->[9] ||
+        $a->[10] <=> $b->[10] ||
+        $a->[11] <=> $b->[11] ||
+        $a->[12] <=> $b->[12];
+}
+
+################################################################
+# build a binary sort keys table
+sub dump_sortkey_table($$)
+{
+    my ($filename, $download) = @_;
+
+    my @keys;
+    my ($part, $section, $subsection, $guid, $version, $ling_flag);
+    my @multiple_weights;
+    my @expansions;
+    my @compressions;
+    my %exceptions;
+    my %guids;
+    my %compr_flags;
+    my %locales;
+    my $default_guid = "00000001-57ee-1e5c-00b4-d0000bb1e11e";
+    my $jamostr = "";
+
+    my $re_hex = '0x[0-9A-Fa-f]+';
+    my $re_key = '(\d+\s+\d+\s+\d+\s+\d+)';
+    $guids{$default_guid} = { };
+
+    my %flags = ( "HAS_3_BYTE_WEIGHTS" => 0x01, "REVERSEDIACRITICS" => 0x10, "DOUBLECOMPRESSION" => 0x20, "INVERSECASING" => 0x40 );
+
+    my $KEYS = open_data_file( $MSDATA, $download );
+
+    printf "Building $filename\n";
+
+    while (<$KEYS>)
+    {
+        s/\s*;.*$//;
+        next if /^\s*$/;  # skip empty lines
+        if (/^\s*(SORTKEY|SORTTABLES)/)
+        {
+            $part = $1;
+            next;
+        }
+        if (/^\s*(ENDSORTKEY|ENDSORTTABLES)/)
+        {
+            $part = $section = "";
+            next;
+        }
+        if (/^\s*(DEFAULT|RELEASE|REVERSEDIACRITICS|DOUBLECOMPRESSION|INVERSECASING|MULTIPLEWEIGHTS|EXPANSION|COMPATIBILITY|COMPRESSION|EXCEPTION|JAMOSORT)\s+/)
+        {
+            $section = $1;
+            $guid = undef;
+            next;
+        }
+        next unless $part;
+        if ("$part.$section" eq "SORTKEY.DEFAULT")
+        {
+            if (/^\s*($re_hex)\s+$re_key/)
+            {
+                $keys[hex $1] = [ split(/\s+/,$2) ];
+                next;
+            }
+        }
+        elsif ("$part.$section" eq "SORTTABLES.RELEASE")
+        {
+            if (/^\s*NLSVERSION\s+0x([0-9A-Fa-f]+)/)
+            {
+                $version = hex $1;
+                next;
+            }
+            if (/^\s*DEFINEDVERSION\s+0x([0-9A-Fa-f]+)/)
+            {
+                # ignore for now
+                next;
+            }
+        }
+        elsif ("$part.$section" eq "SORTTABLES.REVERSEDIACRITICS" ||
+               "$part.$section" eq "SORTTABLES.DOUBLECOMPRESSION" ||
+               "$part.$section" eq "SORTTABLES.INVERSECASING")
+        {
+            if (/^\s*SORTGUID\s+([-0-9A-Fa-f]+)/)
+            {
+                $guid = lc $1;
+                $guids{$guid} = { } unless defined $guids{$guid};
+                $guids{$guid}->{flags} |= $flags{$section};
+                next;
+            }
+            if (/^\s*LOCALENAME\s+([A-Za-z0-9-_]+)/)
+            {
+                $locales{$1} = $guid;
+                next;
+            }
+        }
+        elsif ("$part.$section" eq "SORTTABLES.MULTIPLEWEIGHTS")
+        {
+            if (/^\s*(\d+)\s+(\d+)/)
+            {
+                push @multiple_weights, $1, $2;
+                next;
+            }
+        }
+        elsif ("$part.$section" eq "SORTTABLES.EXPANSION")
+        {
+            if (/^\s*0x([0-9A-Fa-f]+)\s+0x([0-9A-Fa-f]+)\s+0x([0-9A-Fa-f]+)/)
+            {
+                my $pos = scalar @expansions / 2;
+                $keys[hex $1] = [ 2, 0, $pos & 0xff, $pos >> 8 ] unless defined $keys[hex $1];
+                push @expansions, hex $2, hex $3;
+                next;
+            }
+        }
+        elsif ("$part.$section" eq "SORTTABLES.COMPATIBILITY")
+        {
+            if (/^\s*0x([0-9A-Fa-f]+)\s+0x([0-9A-Fa-f]+)/)
+            {
+                $keys[hex $1] = $keys[hex $2];
+                next;
+            }
+        }
+        elsif ("$part.$section" eq "SORTTABLES.COMPRESSION")
+        {
+            if (/^\s*SORTGUID\s+([-0-9A-Fa-f]+)\s+\d*\s*([A-Z0-9_]+)?/)
+            {
+                if ($subsection || !$guid)  # start a new one
+                {
+                    $guid = lc $1;
+                    $subsection = "";
+                    $guids{$guid} = { } unless defined $guids{$guid};
+                    $guids{$guid}->{flags} |= $flags{$2} if $2;
+                    $guids{$guid}->{compr} = @compressions;
+                    $exceptions{"$guid-"} = [ ] unless defined $exceptions{"$guid-"};
+                    $compr_flags{$guid} = [ ] unless defined $compr_flags{$guid};
+                    push @compressions, [ ];
+                }
+                else  # merge with current one
+                {
+                    $guids{lc $1} = { } unless defined $guids{lc $1};
+                    $guids{lc $1}->{flags} |= $flags{$2} if $2;
+                    $guids{lc $1}->{compr} = $guids{$guid}->{compr};
+                    $compr_flags{lc $1} = $compr_flags{$guid};
+                }
+                next;
+            }
+            if (/^\s*LOCALENAME\s+([A-Za-z0-9-_]+)/)
+            {
+                $locales{$1} = $guid;
+                next;
+            }
+            if (/^\s*(TWO|THREE|FOUR|FIVE|SIX|SEVEN|EIGHT)/)
+            {
+                $subsection = $1;
+                next;
+            }
+            if ($subsection && /^\s*(($re_hex\s+){2,8})$re_key/)
+            {
+                my @comp = map { hex $_; } split(/\s+/,$1);
+                push @{$compressions[$#compressions]}, [ split(/\s+/,$3), @comp ];
+                # add compression flags
+                $compr_flags{$guid}->[$comp[0]] |= @comp >= 6 ? 0xc0 : @comp >= 4 ? 0x80 : 0x40;
+                next;
+            }
+        }
+        elsif ("$part.$section" eq "SORTTABLES.EXCEPTION")
+        {
+            if (/^\s*SORTGUID\s+([-0-9A-Fa-f]+)\s+\d*\s*(LINGUISTIC_CASING)?/)
+            {
+                $guid = lc $1;
+                $guids{$guid} = { } unless defined $guids{lc $1};
+                $ling_flag = ($2 ? "+" : "-");
+                $exceptions{"$guid$ling_flag"} = [ ] unless defined $exceptions{"$guid$ling_flag"};
+                next;
+            }
+            if (/^\s*LOCALENAME\s+([A-Za-z0-9-_]+)/)
+            {
+                $locales{$1} = $guid;
+                next;
+            }
+            if (/^\s*($re_hex)\s+$re_key/)
+            {
+                $exceptions{"$guid$ling_flag"}->[hex $1] = [ split(/\s+/,$2) ];
+                next;
+            }
+        }
+        elsif ("$part.$section" eq "SORTTABLES.JAMOSORT")
+        {
+            if (/^\s*$re_hex\s+(($re_hex\s*){5})/)
+            {
+                $jamostr .= pack "C8", map { hex $_; } split /\s+/, $1;
+                next;
+            }
+        }
+        die "$download: $part.$section: unrecognized line $_\n";
+    }
+    close $KEYS;
+
+    # Sortkey table
+
+    my $table;
+    for (my $i = 0; $i < 0x10000; $i++)
+    {
+        my @k = defined $keys[$i] ? @{$keys[$i]} : (0) x 4;
+        $table .= pack "C4", $k[1], $k[0], $k[2], $k[3];
+    }
+
+    foreach my $id (sort keys %exceptions)
+    {
+        my $pos = length($table) / 4;
+        my @exc = @{$exceptions{$id}};
+        my @filled;
+        my $key = (substr( $id, -1 ) eq "+" ? "ling_except" : "except");
+        my $guid = substr( $id, 0, -1 );
+        $guids{$guid}->{$key} = $pos;
+        $pos += 0x100;
+        my @flags = @{$compr_flags{$guid}} if defined $compr_flags{$guid};
+        for (my $j = 0; $j < 0x10000; $j++)
+        {
+            next unless defined $exc[$j] || defined $flags[$j];
+            $filled[$j >> 8] = 1;
+            $j |= 0xff;
+        }
+        for (my $j = 0; $j < 0x100; $j++)
+        {
+            $table .= pack "L<", $filled[$j] ? $pos : $j * 0x100;
+            $pos += 0x100 if $filled[$j];
+        }
+        for (my $j = 0; $j < 0x10000; $j++)
+        {
+            next unless $filled[$j >> 8];
+            my @k = defined $exc[$j] ? @{$exc[$j]} : defined $keys[$j] ? @{$keys[$j]} : (0) x 4;
+            $k[3] |= $flags[$j] || 0;
+            $table .= pack "C4", $k[1], $k[0], $k[2], $k[3];
+        }
+    }
+
+    # Case mapping tables
+
+    # standard table
+    my @casemaps;
+    my @upper = @toupper_table;
+    my @lower = @tolower_table;
+    remove_linguistic_mappings( \@upper, \@lower );
+    $casemaps[0] = pack( "S<*", 1) . dump_binary_case_table( @upper ) . dump_binary_case_table( @lower );
+
+    # linguistic table
+    $casemaps[1] = pack( "S<*", 1) . dump_binary_case_table( @toupper_table ) . dump_binary_case_table( @tolower_table );
+
+    # Turkish table
+    @upper = @toupper_table;
+    @lower = @tolower_table;
+    $upper[ord 'i'] = 0x130; # LATIN CAPITAL LETTER I WITH DOT ABOVE
+    $lower[ord 'I'] = 0x131; # LATIN SMALL LETTER DOTLESS I
+    $casemaps[2] = pack( "S<*", 1) . dump_binary_case_table( @upper ) . dump_binary_case_table( @lower );
+    my $casemaps = align_string( 8, $casemaps[0] . $casemaps[1] . $casemaps[2] );
+
+    # Char type table
+
+    my @table;
+    my $types = "";
+    my %typestr;
+    for (my $i = 0; $i < 0x10000; $i++)
+    {
+        my $str = pack "S<3",
+            ($category_table[$i] || 0) & 0xffff,
+            defined($direction_table[$i]) ? $c2_types{$direction_table[$i]} : 0,
+            ($category_table[$i] || 0) >> 16;
+
+        if (!defined($typestr{$str}))
+        {
+            $typestr{$str} = length($types) / 6;
+            $types .= $str;
+        }
+        $table[$i] = $typestr{$str};
+    }
+
+    my @rows = compress_array( 4096, 0, @table[0..65535] );
+    my @array = compress_array( 256, 0, @rows[0..4095] );
+    for (my $i = 0; $i < 256; $i++) { $array[$i] *= 2; }  # we need byte offsets
+    for (my $i = 256; $i < @array; $i++) { $array[$i] += 2 * @array - 4096; }
+
+    my $arraystr = pack("S<*", @array) . pack("C*", @rows[4096..$#rows]);
+    my $chartypes = pack "S<2", 4 + length($types) + length($arraystr), 2 + length($types);
+    $chartypes = align_string( 8, $chartypes . $types . $arraystr );
+
+    # Sort tables
+
+    # guids
+    my $sorttables = pack "L<2", $version, scalar %guids;
+    foreach my $id (sort keys %guids)
+    {
+        my %guid = %{$guids{$id}};
+        my $flags = $guid{flags} || 0;
+        my $map = length($casemaps[0]) + (defined $guid{ling_except} ? length($casemaps[1]) : 0);
+        $sorttables .= pack_guid($id) . pack "L<5",
+            $flags,
+            defined($guid{compr}) ? $guid{compr} : 0xffffffff,
+            $guid{except} || 0,
+            $guid{ling_except} || 0,
+            $map / 2;
+    }
+
+    # expansions
+    $sorttables .= pack "L<S<*", scalar @expansions / 2, @expansions;
+
+    # compressions
+    $sorttables .= pack "L<", scalar @compressions;
+    my $rowstr = "";
+    foreach my $c (@compressions)
+    {
+        my $pos = length($rowstr) / 2;
+        my $min = 0xffff;
+        my $max = 0;
+        my @lengths = (0) x 8;
+        foreach my $r (sort cmp_compression @{$c})
+        {
+            my @row = @{$r};
+            $lengths[scalar @row - 6]++;
+            foreach my $val (@row[4..$#row])
+            {
+                $min = $val if $min > $val;
+                $max = $val if $max < $val;
+            }
+            $rowstr .= align_string( 4, pack "S<*", @row[4..$#row] );
+            $rowstr .= pack "C4", $row[1], $row[0], $row[2], $row[3];
+        }
+        $sorttables .= pack "L<S<10", $pos, $min, $max, @lengths;
+    }
+    $sorttables .= $rowstr;
+
+    # multiple weights
+    $sorttables .= align_string( 4, pack "L<C*", scalar @multiple_weights / 2, @multiple_weights );
+
+    # jamo sort
+    $sorttables .= pack("L<", length($jamostr) / 8) . $jamostr;
+
+    # Locales
+
+    add_registry_key( "Sorting\\Ids", "{$default_guid}" );
+    foreach my $loc (sort keys %locales)
+    {
+        # skip specific locales that match more general ones
+        my @parts = split /[-_]/, $loc;
+        next if @parts > 1 && defined($locales{$parts[0]}) && $locales{$parts[0]} eq $locales{$loc};
+        next if @parts > 2 && defined($locales{"$parts[0]-$parts[1]"}) && $locales{"$parts[0]-$parts[1]"} eq $locales{$loc};
+        add_registry_value( "Sorting\\Ids", $loc, "\{$locales{$loc}\}" );
+    }
+
+    # File header
+
+    my @header;
+    $header[0] = 16;
+    $header[1] = $header[0] + length $table;
+    $header[2] = $header[1] + length $casemaps;
+    $header[3] = $header[2] + length $chartypes;
+
+    open OUTPUT, ">$filename.new" or die "Cannot create $filename";
+    print OUTPUT pack "L<*", @header;
+    print OUTPUT $table, $casemaps, $chartypes, $sorttables;
+    close OUTPUT;
+    save_file($filename);
+}
+
+
+################################################################
+# build the script to create registry keys
+sub dump_registry_script($%)
+{
+    my ($filename, %keys) = @_;
+    my $indent = 1;
+
+    printf "Building %s\n", $filename;
+    open OUTPUT, ">$filename.new" or die "Cannot create $filename";
+    print OUTPUT "HKLM\n{\n";
+    foreach my $k (split /\\/, "SYSTEM\\CurrentControlSet\\Control\\Nls")
+    {
+        printf OUTPUT "%*sNoRemove %s\n%*s{\n", 4 * $indent, "", $k, 4 * $indent, "";
+        $indent++;
+    }
+    foreach my $k (sort keys %keys)
+    {
+        my @subkeys = split /\\/, $k;
+        my ($def, @vals) = @{$keys{$k}};
+        for (my $i = 0; $i < @subkeys; $i++)
+        {
+            printf OUTPUT "%*s%s%s\n%*s{\n", 4 * $indent, "", $subkeys[$i],
+                $i == $#subkeys && $def ? " = s '$def'" : "", 4 * $indent, "";
+            $indent++;
+        }
+        foreach my $v (@vals) { printf OUTPUT "%*sval $v\n", 4 * $indent, ""; }
+        for (my $i = 0; $i < @subkeys; $i++) { printf OUTPUT "%*s}\n", 4 * --$indent, ""; }
+    }
+    while ($indent) { printf OUTPUT "%*s}\n", 4 * --$indent, ""; }
+    close OUTPUT;
+    save_file($filename);
+}
+
 
 ################################################################
 # save a file if modified
@@ -2482,32 +2779,6 @@ sub save_file($)
 
 
 ################################################################
-# replace the contents of a file between ### cpmap ### marks
-
-sub REPLACE_IN_FILE($@)
-{
-    my $name = shift;
-    my @data = @_;
-    my @lines = ();
-    open(FILE,$name) or die "Can't open $name";
-    while (<FILE>)
-    {
-	push @lines, $_;
-	last if /\#\#\# cpmap begin \#\#\#/;
-    }
-    push @lines, @data;
-    while (<FILE>)
-    {
-	if (/\#\#\# cpmap end \#\#\#/) { push @lines, "\n", $_; last; }
-    }
-    push @lines, <FILE>;
-    open(FILE,">$name.new") or die "Can't modify $name";
-    print FILE @lines;
-    close(FILE);
-    save_file($name);
-}
-
-################################################################
 # main routine
 
 chdir ".." if -f "./make_unicode";
@@ -2518,7 +2789,6 @@ dump_ctype_tables( "libs/port/wctype.c" );
 dump_bidi_dir_table( "dlls/gdi32/direction.c" );
 dump_bidi_dir_table( "dlls/usp10/direction.c" );
 dump_bidi_dir_table( "dlls/dwrite/direction.c" );
-dump_string_type_table( "dlls/kernelbase/wctype.c" );
 dump_digit_folding( "dlls/kernelbase/digitmap.c" );
 dump_mirroring( "dlls/usp10/mirror.c" );
 dump_mirroring( "dlls/dwrite/mirror.c" );
@@ -2531,15 +2801,16 @@ dump_scripts( "dlls/dwrite/scripts" );
 dump_indic( "dlls/usp10/indicsyllable.c" );
 dump_vertical( "dlls/gdi32/vertical.c" );
 dump_vertical( "dlls/wineps.drv/vertical.c" );
-dump_nameprep( "dlls/kernel32/nameprep.c" );
 dump_intl_nls("nls/l_intl.nls");
 dump_norm_table( "nls/normnfc.nls" );
 dump_norm_table( "nls/normnfd.nls" );
 dump_norm_table( "nls/normnfkc.nls" );
 dump_norm_table( "nls/normnfkd.nls" );
 dump_norm_table( "nls/normidna.nls" );
+dump_sortkey_table( "nls/sortdefault.nls", "Windows 10 Sorting Weight Table.txt" );
 foreach my $file (@allfiles) { dump_msdata_codepage( $file ); }
 dump_eucjp_codepage();
+dump_registry_script( "dlls/kernelbase/kernelbase.rgs", %registry_keys );
 
 exit 0;
 

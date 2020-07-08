@@ -2276,6 +2276,40 @@ static void test_bcm_get_ideal_size(void)
     DeleteObject(hfont);
 }
 
+static void test_style(void)
+{
+    DWORD type, expected_type;
+    HWND button;
+    LRESULT ret;
+    DWORD i, j;
+
+    for (i = BS_PUSHBUTTON; i <= BS_DEFCOMMANDLINK; ++i)
+    {
+        button = CreateWindowA(WC_BUTTONA, "test", i, 0, 0, 50, 50, NULL, 0, 0, NULL);
+        ok(button != NULL, "Expected button not null.\n");
+
+        type = GetWindowLongW(button, GWL_STYLE) & BS_TYPEMASK;
+        expected_type = (i == BS_USERBUTTON ? BS_PUSHBUTTON : i);
+        ok(type == expected_type, "Expected type %#x, got %#x.\n", expected_type, type);
+
+        for (j = BS_PUSHBUTTON; j <= BS_DEFCOMMANDLINK; ++j)
+        {
+            ret = SendMessageA(button, BM_SETSTYLE, j, FALSE);
+            ok(ret == 0, "Expected %#x, got %#lx.\n", 0, ret);
+
+            type = GetWindowLongW(button, GWL_STYLE) & BS_TYPEMASK;
+            if (i >= BS_SPLITBUTTON && j <= BS_DEFPUSHBUTTON)
+                expected_type = (i & ~BS_DEFPUSHBUTTON) | j;
+            else
+                expected_type = j;
+
+            ok(type == expected_type || broken(type == j), /* XP */
+                    "Original type %#x, expected new type %#x, got %#x.\n", i, expected_type, type);
+        }
+        DestroyWindow(button);
+    }
+}
+
 START_TEST(button)
 {
     ULONG_PTR ctx_cookie;
@@ -2298,6 +2332,7 @@ START_TEST(button)
     test_get_set_textmargin();
     test_state();
     test_bcm_get_ideal_size();
+    test_style();
 
     unload_v6_module(ctx_cookie, hCtx);
 }

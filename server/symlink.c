@@ -81,7 +81,7 @@ static void symlink_dump( struct object *obj, int verbose )
     assert( obj->ops == &symlink_ops );
 
     fputs( "Symlink target=\"", stderr );
-    dump_strW( symlink->target, symlink->len / sizeof(WCHAR), stderr, "\"\"" );
+    dump_strW( symlink->target, symlink->len, stderr, "\"\"" );
     fputs( "\"\n", stderr );
 }
 

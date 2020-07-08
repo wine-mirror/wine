@@ -191,7 +191,7 @@ interface IAudioClock2 : IUnknown
 [
     local,
     pointer_default(unique),
-    uuid("f6e4c0a0-46d9-4fb9-be21-57a3ef2b626c"),
+    uuid("f6e4c0a0-46d9-4fb8-be21-57a3ef2b626c"),
     object,
 ]
 interface IAudioClockAdjustment : IUnknown

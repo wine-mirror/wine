@@ -1,9 +1,9 @@
 @ stdcall CallbackMayRunLong(ptr) kernel32.CallbackMayRunLong
-@ stub CancelThreadpoolIo
+@ stdcall CancelThreadpoolIo(ptr) kernel32.CancelThreadpoolIo
 @ stdcall CloseThreadpool(ptr) kernel32.CloseThreadpool
 @ stdcall CloseThreadpoolCleanupGroup(ptr) kernel32.CloseThreadpoolCleanupGroup
 @ stdcall CloseThreadpoolCleanupGroupMembers(ptr long ptr) kernel32.CloseThreadpoolCleanupGroupMembers
-@ stub CloseThreadpoolIo
+@ stdcall CloseThreadpoolIo(ptr) kernel32.CloseThreadpoolIo
 @ stdcall CloseThreadpoolTimer(ptr) kernel32.CloseThreadpoolTimer
 @ stdcall CloseThreadpoolWait(ptr) kernel32.CloseThreadpoolWait
 @ stdcall CloseThreadpoolWork(ptr) kernel32.CloseThreadpoolWork
@@ -31,7 +31,7 @@
 @ stdcall StartThreadpoolIo(ptr) kernel32.StartThreadpoolIo
 @ stdcall SubmitThreadpoolWork(ptr) kernel32.SubmitThreadpoolWork
 @ stdcall TrySubmitThreadpoolCallback(ptr ptr ptr) kernel32.TrySubmitThreadpoolCallback
-@ stub WaitForThreadpoolIoCallbacks
+@ stdcall WaitForThreadpoolIoCallbacks(ptr) kernel32.WaitForThreadpoolIoCallbacks
 @ stdcall WaitForThreadpoolTimerCallbacks(ptr long) kernel32.WaitForThreadpoolTimerCallbacks
 @ stdcall WaitForThreadpoolWaitCallbacks(ptr long) kernel32.WaitForThreadpoolWaitCallbacks
 @ stdcall WaitForThreadpoolWorkCallbacks(ptr long) kernel32.WaitForThreadpoolWorkCallbacks

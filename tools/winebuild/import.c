@@ -1539,16 +1539,16 @@ static void build_unix_import_lib( DLLSPEC *spec )
 }
 
 /* output an import library for a Win32 module and additional object files */
-void output_import_lib( DLLSPEC *spec, char **argv )
+void output_static_lib( DLLSPEC *spec, char **argv )
 {
     if (target_platform == PLATFORM_WINDOWS)
     {
-        build_windows_import_lib( spec );
-        if (argv[0]) build_library( output_file_name, argv, 0 );
+        if (spec) build_windows_import_lib( spec );
+        if (argv[0] || !spec) build_library( output_file_name, argv, !spec );
     }
     else
     {
-        build_unix_import_lib( spec );
+        if (spec) build_unix_import_lib( spec );
         build_library( output_file_name, argv, 1 );
     }
 }

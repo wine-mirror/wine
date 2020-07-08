@@ -3287,6 +3287,15 @@ static void trace_devmode(const DEVMODEW *devmode)
     TRACE("\n");
 }
 
+static BOOL is_detached_mode(const DEVMODEW *mode)
+{
+    return mode->dmFields & DM_POSITION &&
+           mode->dmFields & DM_PELSWIDTH &&
+           mode->dmFields & DM_PELSHEIGHT &&
+           mode->dmPelsWidth == 0 &&
+           mode->dmPelsHeight == 0;
+}
+
 /***********************************************************************
  *		ChangeDisplaySettingsExW (USER32.@)
  */
@@ -3299,6 +3308,9 @@ LONG WINAPI ChangeDisplaySettingsExW( LPCWSTR devname, LPDEVMODEW devmode, HWND 
 
     TRACE("%s %p %p %#x %p\n", debugstr_w(devname), devmode, hwnd, flags, lparam);
     TRACE("flags=%s\n", _CDS_flags(flags));
+
+    if (!devname && !devmode)
+        return USER_Driver->pChangeDisplaySettingsEx(NULL, NULL, hwnd, flags, lparam);
 
     if (!devname && devmode)
     {
@@ -3315,7 +3327,8 @@ LONG WINAPI ChangeDisplaySettingsExW( LPCWSTR devname, LPDEVMODEW devmode, HWND 
         if (devmode->dmSize < FIELD_OFFSET(DEVMODEW, dmICMMethod))
             return DISP_CHANGE_BADMODE;
 
-        if (((devmode->dmFields & DM_BITSPERPEL) && devmode->dmBitsPerPel) ||
+        if (is_detached_mode(devmode) ||
+            ((devmode->dmFields & DM_BITSPERPEL) && devmode->dmBitsPerPel) ||
             ((devmode->dmFields & DM_PELSWIDTH) && devmode->dmPelsWidth) ||
             ((devmode->dmFields & DM_PELSHEIGHT) && devmode->dmPelsHeight) ||
             ((devmode->dmFields & DM_DISPLAYFREQUENCY) && devmode->dmDisplayFrequency))
@@ -3344,15 +3357,6 @@ LONG WINAPI ChangeDisplaySettingsExW( LPCWSTR devname, LPDEVMODEW devmode, HWND 
     return USER_Driver->pChangeDisplaySettingsEx(devname, devmode, hwnd, flags, lparam);
 }
 
-
-/***********************************************************************
- *              DisplayConfigGetDeviceInfo (USER32.@)
- */
-LONG WINAPI DisplayConfigGetDeviceInfo(DISPLAYCONFIG_DEVICE_INFO_HEADER *packet)
-{
-    FIXME("stub: %p\n", packet);
-    return ERROR_NOT_SUPPORTED;
-}
 
 /***********************************************************************
  *		EnumDisplaySettingsW (USER32.@)
@@ -3906,7 +3910,7 @@ static BOOL update_monitor_cache(void)
     HANDLE mutex = NULL;
     DWORD state_flags;
     BOOL ret = FALSE;
-    BOOL mirrored_slave;
+    BOOL is_replica;
     DWORD i = 0, j;
     DWORD type;
 
@@ -3952,17 +3956,17 @@ static BOOL update_monitor_cache(void)
                                         (BYTE *)&monitors[monitor_count].rcMonitor, sizeof(RECT), NULL, 0 ))
             goto fail;
 
-        /* Mirrored slave monitors also don't get enumerated */
-        mirrored_slave = FALSE;
+        /* Replicas in mirroring monitor sets don't get enumerated */
+        is_replica = FALSE;
         for (j = 0; j < monitor_count; j++)
         {
             if (EqualRect(&monitors[j].rcMonitor, &monitors[monitor_count].rcMonitor))
             {
-                mirrored_slave = TRUE;
+                is_replica = TRUE;
                 break;
             }
         }
-        if (mirrored_slave)
+        if (is_replica)
             continue;
 
         if (!SetupDiGetDevicePropertyW( devinfo, &device_data, &WINE_DEVPROPKEY_MONITOR_RCWORK, &type,
@@ -4126,28 +4130,34 @@ static BOOL CALLBACK enum_mon_callback( HMONITOR monitor, HDC hdc, LPRECT rect, 
 
 BOOL CDECL nulldrv_EnumDisplayMonitors( HDC hdc, RECT *rect, MONITORENUMPROC proc, LPARAM lp )
 {
-    RECT default_rect = {0, 0, 640, 480};
-    DWORD i;
+    RECT monitor_rect;
+    DWORD i = 0;
 
     TRACE("(%p, %p, %p, 0x%lx)\n", hdc, rect, proc, lp);
 
     if (update_monitor_cache())
     {
-        EnterCriticalSection( &monitors_section );
-        for (i = 0; i < monitor_count; i++)
+        while (TRUE)
         {
-            if (!proc( (HMONITOR)(UINT_PTR)(i + 1), hdc, &monitors[i].rcMonitor, lp ))
+            EnterCriticalSection( &monitors_section );
+            if (i >= monitor_count)
             {
                 LeaveCriticalSection( &monitors_section );
-                return FALSE;
+                return TRUE;
             }
+            monitor_rect = monitors[i].rcMonitor;
+            LeaveCriticalSection( &monitors_section );
+
+            if (!proc( (HMONITOR)(UINT_PTR)(i + 1), hdc, &monitor_rect, lp ))
+                return FALSE;
+
+            ++i;
         }
-        LeaveCriticalSection( &monitors_section );
-        return TRUE;
     }
 
     /* Fallback to report one monitor if using SetupAPI failed */
-    if (!proc( NULLDRV_DEFAULT_HMONITOR, hdc, &default_rect, lp ))
+    SetRect( &monitor_rect, 0, 0, 640, 480 );
+    if (!proc( NULLDRV_DEFAULT_HMONITOR, hdc, &monitor_rect, lp ))
         return FALSE;
     return TRUE;
 }
@@ -4487,4 +4497,97 @@ BOOL WINAPI LogicalToPhysicalPoint( HWND hwnd, POINT *point )
 BOOL WINAPI PhysicalToLogicalPoint( HWND hwnd, POINT *point )
 {
     return TRUE;
+}
+
+/**********************************************************************
+ *              GetDisplayConfigBufferSizes (USER32.@)
+ */
+LONG WINAPI GetDisplayConfigBufferSizes(UINT32 flags, UINT32 *num_path_info, UINT32 *num_mode_info)
+{
+    FIXME("(0x%x %p %p): stub\n", flags, num_path_info, num_mode_info);
+
+    if (!num_path_info || !num_mode_info)
+        return ERROR_INVALID_PARAMETER;
+
+    *num_path_info = 0;
+    *num_mode_info = 0;
+    return ERROR_NOT_SUPPORTED;
+}
+
+/***********************************************************************
+ *              QueryDisplayConfig (USER32.@)
+ */
+LONG WINAPI QueryDisplayConfig(UINT32 flags, UINT32 *numpathelements, DISPLAYCONFIG_PATH_INFO *pathinfo,
+                               UINT32 *numinfoelements, DISPLAYCONFIG_MODE_INFO *modeinfo,
+                               DISPLAYCONFIG_TOPOLOGY_ID *topologyid)
+{
+    FIXME("(%08x %p %p %p %p %p)\n", flags, numpathelements, pathinfo, numinfoelements, modeinfo, topologyid);
+
+    if (!numpathelements || !numinfoelements)
+        return ERROR_INVALID_PARAMETER;
+
+    if (!*numpathelements || !*numinfoelements)
+        return ERROR_INVALID_PARAMETER;
+
+    if (!flags)
+        return ERROR_INVALID_PARAMETER;
+
+    return ERROR_NOT_SUPPORTED;
+}
+
+/***********************************************************************
+ *              DisplayConfigGetDeviceInfo (USER32.@)
+ */
+LONG WINAPI DisplayConfigGetDeviceInfo(DISPLAYCONFIG_DEVICE_INFO_HEADER *packet)
+{
+    FIXME("stub: %p\n", packet);
+
+    if (!packet || packet->size < sizeof(*packet))
+        return ERROR_GEN_FAILURE;
+
+    switch (packet->type)
+    {
+    case DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_NAME:
+    {
+        DISPLAYCONFIG_SOURCE_DEVICE_NAME *source_name = (DISPLAYCONFIG_SOURCE_DEVICE_NAME *)packet;
+        if (packet->size < sizeof(*source_name))
+            return ERROR_INVALID_PARAMETER;
+
+        return ERROR_NOT_SUPPORTED;
+    }
+    case DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME:
+    {
+        DISPLAYCONFIG_TARGET_DEVICE_NAME *target_name = (DISPLAYCONFIG_TARGET_DEVICE_NAME *)packet;
+        if (packet->size < sizeof(*target_name))
+            return ERROR_INVALID_PARAMETER;
+
+        return ERROR_NOT_SUPPORTED;
+    }
+    case DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_PREFERRED_MODE:
+    {
+        DISPLAYCONFIG_TARGET_PREFERRED_MODE *preferred_mode = (DISPLAYCONFIG_TARGET_PREFERRED_MODE *)packet;
+        if (packet->size < sizeof(*preferred_mode))
+            return ERROR_INVALID_PARAMETER;
+
+        return ERROR_NOT_SUPPORTED;
+    }
+    case DISPLAYCONFIG_DEVICE_INFO_GET_ADAPTER_NAME:
+    {
+        DISPLAYCONFIG_ADAPTER_NAME *adapter_name = (DISPLAYCONFIG_ADAPTER_NAME *)packet;
+        if (packet->size < sizeof(*adapter_name))
+            return ERROR_INVALID_PARAMETER;
+
+        return ERROR_NOT_SUPPORTED;
+    }
+    case DISPLAYCONFIG_DEVICE_INFO_SET_TARGET_PERSISTENCE:
+    case DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_BASE_TYPE:
+    case DISPLAYCONFIG_DEVICE_INFO_GET_SUPPORT_VIRTUAL_RESOLUTION:
+    case DISPLAYCONFIG_DEVICE_INFO_SET_SUPPORT_VIRTUAL_RESOLUTION:
+    case DISPLAYCONFIG_DEVICE_INFO_GET_ADVANCED_COLOR_INFO:
+    case DISPLAYCONFIG_DEVICE_INFO_SET_ADVANCED_COLOR_STATE:
+    case DISPLAYCONFIG_DEVICE_INFO_GET_SDR_WHITE_LEVEL:
+    default:
+        FIXME("Unimplemented packet type: %u\n", packet->type);
+        return ERROR_INVALID_PARAMETER;
+    }
 }

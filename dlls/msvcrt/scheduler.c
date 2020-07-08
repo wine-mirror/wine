@@ -1058,7 +1058,7 @@ void __cdecl _CurrentScheduler__ScheduleTask(void (__cdecl *proc)(void*), void *
     CurrentScheduler_ScheduleTask(proc, data);
 }
 
-#if defined(__i386__) && !defined(__MINGW32__)
+#ifdef __ASM_USE_THISCALL_WRAPPER
 
 #define DEFINE_VTBL_WRAPPER(off)            \
     __ASM_GLOBAL_FUNC(vtbl_wrapper_ ## off, \
@@ -1094,9 +1094,7 @@ DEFINE_RTTI_DATA1(SchedulerBase, 0, &Scheduler_rtti_base_descriptor, ".?AVSchedu
 DEFINE_RTTI_DATA2(ThreadScheduler, 0, &SchedulerBase_rtti_base_descriptor,
         &Scheduler_rtti_base_descriptor, ".?AVThreadScheduler@details@Concurrency@@")
 
-#ifndef __GNUC__
-void __asm_dummy_vtables(void) {
-#endif
+__ASM_BLOCK_BEGIN(scheduler_vtables)
     __ASM_VTABLE(ExternalContextBase,
             VTABLE_ADD_FUNC(ExternalContextBase_GetId)
             VTABLE_ADD_FUNC(ExternalContextBase_GetVirtualProcessorId)
@@ -1125,9 +1123,7 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(ThreadScheduler_IsAvailableLocation)
 #endif
             );
-#ifndef __GNUC__
-}
-#endif
+__ASM_BLOCK_END
 
 void msvcrt_init_scheduler(void *base)
 {

@@ -63,9 +63,6 @@ BOOL WINAPI WinHttpCheckPlatform( void )
     return TRUE;
 }
 
-/***********************************************************************
- *          session_destroy (internal)
- */
 static void session_destroy( struct object_header *hdr )
 {
     struct session *session = (struct session *)hdr;
@@ -296,9 +293,6 @@ end:
     return handle;
 }
 
-/***********************************************************************
- *          connect_destroy (internal)
- */
 static void connect_destroy( struct object_header *hdr )
 {
     struct connect *connect = (struct connect *)hdr;
@@ -581,9 +575,6 @@ end:
     return hconnect;
 }
 
-/***********************************************************************
- *          request_destroy (internal)
- */
 static void request_destroy( struct object_header *hdr )
 {
     struct request *request = (struct request *)hdr;
@@ -1038,6 +1029,10 @@ static BOOL request_set_option( struct object_header *hdr, DWORD option, void *b
             return FALSE;
         }
 
+    case WINHTTP_OPTION_UPGRADE_TO_WEB_SOCKET:
+        request->flags |= REQUEST_FLAG_WEBSOCKET_UPGRADE;
+        return TRUE;
+
     case WINHTTP_OPTION_CONNECT_RETRIES:
         FIXME("WINHTTP_OPTION_CONNECT_RETRIES\n");
         return TRUE;
@@ -1063,7 +1058,7 @@ static BOOL add_accept_types_header( struct request *request, const WCHAR **type
     if (!types) return TRUE;
     while (*types)
     {
-        if (!process_header( request, L"Accept", *types, flags, TRUE )) return FALSE;
+        if (process_header( request, L"Accept", *types, flags, TRUE )) return FALSE;
         types++;
     }
     return TRUE;
@@ -1395,7 +1390,7 @@ static BOOL is_domain_suffix( const char *domain, const char *suffix )
     int len_domain = strlen( domain ), len_suffix = strlen( suffix );
 
     if (len_suffix > len_domain) return FALSE;
-    if (!_strnicmp( domain + len_domain - len_suffix, suffix, -1 )) return TRUE;
+    if (!stricmp( domain + len_domain - len_suffix, suffix )) return TRUE;
     return FALSE;
 }
 

@@ -1,5 +1,5 @@
 MODULE    = wing.dll16
 IMPORTS   = gdi32
-EXTRADLLFLAGS = -m16 -mno-cygwin
+EXTRADLLFLAGS = -m16
 
 C_SRCS = wing.c

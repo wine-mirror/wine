@@ -450,7 +450,7 @@ static void test_NtQueryDirectoryFile(void)
 {
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING ntdirname, mask;
-    char testdirA[MAX_PATH];
+    char testdirA[MAX_PATH], buffer[MAX_PATH];
     WCHAR testdirW[MAX_PATH];
     int i;
     IO_STATUS_BLOCK io;
@@ -462,7 +462,7 @@ static void test_NtQueryDirectoryFile(void)
     FILE_NAMES_INFORMATION *names;
     const WCHAR *filename = fbdi->FileName;
     NTSTATUS status;
-    HANDLE dirh;
+    HANDLE dirh, h;
 
     /* Clean up from prior aborted run, if any, then set up test files */
     ok(GetTempPathA(MAX_PATH, testdirA), "couldn't get temp dir\n");
@@ -727,6 +727,18 @@ static void test_NtQueryDirectoryFile(void)
                                     FileBothDirectoryInformation, TRUE, NULL, TRUE );
     ok(status == STATUS_INVALID_HANDLE, "wrong status %x\n", status);
     ok(U(io).Status == 0xdeadbeef, "wrong status %x\n", U(io).Status);
+
+    GetModuleFileNameA( 0, buffer, sizeof(buffer) );
+    h = CreateFileA( buffer, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
+    if (h != INVALID_HANDLE_VALUE)
+    {
+        U(io).Status = 0xdeadbeef;
+        status = pNtQueryDirectoryFile( h, 0, NULL, NULL, &io, data, data_size,
+                                        FileBothDirectoryInformation, TRUE, NULL, TRUE );
+        ok(status == STATUS_INVALID_PARAMETER, "wrong status %x\n", status);
+        ok(U(io).Status == 0xdeadbeef, "wrong status %x\n", U(io).Status);
+        CloseHandle ( h );
+    }
 
 done:
     test_directory_sort( testdirW );

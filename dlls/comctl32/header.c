@@ -111,7 +111,7 @@ static void HEADER_FreeCallbackItems(HEADER_ITEM *lpItem);
 static LRESULT HEADER_SendNotify(const HEADER_INFO *infoPtr, UINT code, NMHDR *hdr);
 static LRESULT HEADER_SendCtrlCustomDraw(const HEADER_INFO *infoPtr, DWORD dwDrawStage, HDC hdc, const RECT *rect);
 
-static const WCHAR themeClass[] = {'H','e','a','d','e','r',0};
+static const WCHAR themeClass[] = L"Header";
 
 static void HEADER_StoreHDItemInHeader(HEADER_ITEM *lpItem, UINT mask, const HDITEMW *phdi, BOOL fUnicode)
 {
@@ -146,9 +146,7 @@ static void HEADER_StoreHDItemInHeader(HEADER_ITEM *lpItem, UINT mask, const HDI
 
         if (phdi->pszText != LPSTR_TEXTCALLBACKW) /* covers != TEXTCALLBACKA too */
         {
-            static const WCHAR emptyString[] = {0};
-
-            LPCWSTR pszText = (phdi->pszText != NULL ? phdi->pszText : emptyString);
+            const WCHAR *pszText = phdi->pszText != NULL ? phdi->pszText : L"";
             if (fUnicode)
                 Str_SetPtrW(&lpItem->pszText, pszText);
             else

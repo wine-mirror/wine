@@ -50,7 +50,7 @@ extern "C" {
 # endif
 #endif
 
-#ifndef __stdcall
+#if !defined(_MSC_VER) && !defined(__stdcall)
 # ifdef __i386__
 #  ifdef __GNUC__
 #   if (__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 2)) || defined(__APPLE__)
@@ -58,8 +58,6 @@ extern "C" {
 #   else
 #    define __stdcall __attribute__((__stdcall__))
 #   endif
-#  elif defined(_MSC_VER)
-    /* Nothing needs to be done. __stdcall already exists */
 #  else
 #   error You need to define __stdcall for your compiler
 #  endif
@@ -78,7 +76,7 @@ extern "C" {
 # endif  /* __i386__ */
 #endif /* __stdcall */
 
-#ifndef __cdecl
+#if !defined(_MSC_VER) && !defined(__cdecl)
 # if defined(__i386__) && defined(__GNUC__)
 #   if (__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 2)) || defined(__APPLE__)
 #   define __cdecl __attribute__((__cdecl__)) __attribute__((__force_align_arg_pointer__))
@@ -95,18 +93,16 @@ extern "C" {
 #   define __cdecl __attribute__((pcs("aapcs-vfp")))
 # elif defined(__aarch64__) && defined (__GNUC__)
 #  define __cdecl __attribute__((ms_abi))
-# elif !defined(_MSC_VER)
+# else
 #  define __cdecl
 # endif
 #endif /* __cdecl */
 
-#ifndef __fastcall
-# ifndef _MSC_VER
-#  define __fastcall __stdcall
-# endif
+#if !defined(_MSC_VER) && !defined(__fastcall)
+# define __fastcall __stdcall
 #endif
 
-#ifndef __thiscall
+#if (!defined(_MSC_VER) || !defined(__clang__)) && !defined(__thiscall)
 # define __thiscall __stdcall
 #endif
 
@@ -140,12 +136,7 @@ extern "C" {
 #define __ONLY_IN_WINELIB(x)	x
 #endif
 
-#ifndef pascal
-#define pascal      __ONLY_IN_WINELIB(__stdcall)
-#endif
-#ifndef _pascal
-#define _pascal	    __ONLY_IN_WINELIB(__stdcall)
-#endif
+#ifndef _MSC_VER
 #ifndef _stdcall
 #define _stdcall    __ONLY_IN_WINELIB(__stdcall)
 #endif
@@ -155,16 +146,23 @@ extern "C" {
 #ifndef __fastcall
 #define __fastcall  __ONLY_IN_WINELIB(__stdcall)
 #endif
-#ifndef __export
-#define __export    __ONLY_IN_WINELIB(__stdcall)
-#endif
 #ifndef cdecl
 #define cdecl       __ONLY_IN_WINELIB(__cdecl)
 #endif
 #ifndef _cdecl
 #define _cdecl      __ONLY_IN_WINELIB(__cdecl)
 #endif
+#endif /* _MSC_VER */
 
+#ifndef pascal
+#define pascal      __ONLY_IN_WINELIB(__stdcall)
+#endif
+#ifndef _pascal
+#define _pascal     __ONLY_IN_WINELIB(__stdcall)
+#endif
+#ifndef __export
+#define __export    __ONLY_IN_WINELIB(__stdcall)
+#endif
 #ifndef near
 #define near        __ONLY_IN_WINELIB(/* nothing */)
 #endif
@@ -239,25 +237,32 @@ extern "C" {
 
 /* Standard data types */
 
+#ifndef BASETYPES
+#define BASETYPES
+typedef unsigned char UCHAR, *PUCHAR;
+typedef unsigned short USHORT, *PUSHORT;
+#ifdef WINE_USE_LONG
+typedef unsigned long ULONG, *PULONG;
+#else
+typedef unsigned int ULONG, *PULONG;
+#endif
+#endif
+
 typedef void                                   *LPVOID;
 typedef const void                             *LPCVOID;
 typedef int             BOOL,       *PBOOL,    *LPBOOL;
 typedef unsigned char   BYTE,       *PBYTE,    *LPBYTE;
-typedef unsigned char   UCHAR,      *PUCHAR;
 typedef unsigned short  WORD,       *PWORD,    *LPWORD;
-typedef unsigned short  USHORT,     *PUSHORT;
 typedef int             INT,        *PINT,     *LPINT;
 typedef unsigned int    UINT,       *PUINT;
 typedef float           FLOAT,      *PFLOAT;
 typedef char                        *PSZ;
-#ifdef _MSC_VER
+#ifdef WINE_USE_LONG
 typedef long                                   *LPLONG;
 typedef unsigned long   DWORD,      *PDWORD,   *LPDWORD;
-typedef unsigned long   ULONG,      *PULONG;
 #else
 typedef int                                    *LPLONG;
 typedef unsigned int    DWORD,      *PDWORD,   *LPDWORD;
-typedef unsigned int    ULONG,      *PULONG;
 #endif
 
 /* Macros to map Winelib names to the correct implementation name */

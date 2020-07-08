@@ -53,7 +53,6 @@
 #include "kernel_private.h"
 #include "psapi.h"
 #include "wine/exception.h"
-#include "wine/library.h"
 #include "wine/server.h"
 #include "wine/unicode.h"
 #include "wine/asm.h"
@@ -94,12 +93,18 @@ __ASM_GLOBAL_FUNC( call_process_entry,
                     __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
                     "movl %esp,%ebp\n\t"
                     __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
-                    "pushl 4(%ebp)\n\t"  /* deliberately mis-align the stack by 8, Doom 3 needs this */
+                    "pushl %ebx\n\t"
+                    __ASM_CFI(".cfi_rel_offset %ebx,-4\n\t")
+                    "movl 8(%ebp),%ebx\n\t"
+                    /* deliberately mis-align the stack by 8, Doom 3 needs this */
                     "pushl 4(%ebp)\n\t"  /* Driller expects readable address at this offset */
                     "pushl 4(%ebp)\n\t"
-                    "pushl 8(%ebp)\n\t"
+                    "pushl %ebx\n\t"
                     "call *12(%ebp)\n\t"
-                    "leave\n\t"
+                    "leal -4(%ebp),%esp\n\t"
+                    "popl %ebx\n\t"
+                    __ASM_CFI(".cfi_same_value %ebx\n\t")
+                    "popl %ebp\n\t"
                     __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
                     __ASM_CFI(".cfi_same_value %ebp\n\t")
                     "ret" )
@@ -446,61 +451,6 @@ BOOL WINAPI GetProcessAffinityMask( HANDLE hProcess, PDWORD_PTR process_mask, PD
 
 
 /***********************************************************************
- *           GetProcessVersion    (KERNEL32.@)
- */
-DWORD WINAPI GetProcessVersion( DWORD pid )
-{
-    HANDLE process;
-    NTSTATUS status;
-    PROCESS_BASIC_INFORMATION pbi;
-    SIZE_T count;
-    PEB peb;
-    IMAGE_DOS_HEADER dos;
-    IMAGE_NT_HEADERS nt;
-    DWORD ver = 0;
-
-    if (!pid || pid == GetCurrentProcessId())
-    {
-        IMAGE_NT_HEADERS *pnt;
-
-        if ((pnt = RtlImageNtHeader( NtCurrentTeb()->Peb->ImageBaseAddress )))
-            return ((pnt->OptionalHeader.MajorSubsystemVersion << 16) |
-                    pnt->OptionalHeader.MinorSubsystemVersion);
-        return 0;
-    }
-
-    process = OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, FALSE, pid);
-    if (!process) return 0;
-
-    status = NtQueryInformationProcess(process, ProcessBasicInformation, &pbi, sizeof(pbi), NULL);
-    if (status) goto err;
-
-    status = NtReadVirtualMemory(process, pbi.PebBaseAddress, &peb, sizeof(peb), &count);
-    if (status || count != sizeof(peb)) goto err;
-
-    memset(&dos, 0, sizeof(dos));
-    status = NtReadVirtualMemory(process, peb.ImageBaseAddress, &dos, sizeof(dos), &count);
-    if (status || count != sizeof(dos)) goto err;
-    if (dos.e_magic != IMAGE_DOS_SIGNATURE) goto err;
-
-    memset(&nt, 0, sizeof(nt));
-    status = NtReadVirtualMemory(process, (char *)peb.ImageBaseAddress + dos.e_lfanew, &nt, sizeof(nt), &count);
-    if (status || count != sizeof(nt)) goto err;
-    if (nt.Signature != IMAGE_NT_SIGNATURE) goto err;
-
-    ver = MAKELONG(nt.OptionalHeader.MinorSubsystemVersion, nt.OptionalHeader.MajorSubsystemVersion);
-
-err:
-    CloseHandle(process);
-
-    if (status != STATUS_SUCCESS)
-        SetLastError(RtlNtStatusToDosError(status));
-
-    return ver;
-}
-
-
-/***********************************************************************
  *		SetProcessWorkingSetSize	[KERNEL32.@]
  * Sets the min/max working set sizes for a specified process.
  *
@@ -519,15 +469,6 @@ BOOL WINAPI SetProcessWorkingSetSize(HANDLE process, SIZE_T minset, SIZE_T maxse
 }
 
 /***********************************************************************
- *           K32EmptyWorkingSet (KERNEL32.@)
- */
-BOOL WINAPI K32EmptyWorkingSet(HANDLE hProcess)
-{
-    return SetProcessWorkingSetSize(hProcess, (SIZE_T)-1, (SIZE_T)-1);
-}
-
-
-/***********************************************************************
  *           GetProcessWorkingSetSize    (KERNEL32.@)
  */
 BOOL WINAPI GetProcessWorkingSetSize(HANDLE process, SIZE_T *minset, SIZE_T *maxset)
@@ -543,235 +484,6 @@ BOOL WINAPI GetProcessIoCounters(HANDLE hProcess, PIO_COUNTERS ioc)
 {
     return set_ntstatus( NtQueryInformationProcess(hProcess, ProcessIoCounters, ioc, sizeof(*ioc), NULL ));
 }
-
-/******************************************************************
- *		QueryFullProcessImageNameA (KERNEL32.@)
- */
-BOOL WINAPI QueryFullProcessImageNameA(HANDLE hProcess, DWORD dwFlags, LPSTR lpExeName, PDWORD pdwSize)
-{
-    BOOL retval;
-    DWORD pdwSizeW = *pdwSize;
-    LPWSTR lpExeNameW = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, *pdwSize * sizeof(WCHAR));
-
-    retval = QueryFullProcessImageNameW(hProcess, dwFlags, lpExeNameW, &pdwSizeW);
-
-    if(retval)
-        retval = (0 != WideCharToMultiByte(CP_ACP, 0, lpExeNameW, -1,
-                               lpExeName, *pdwSize, NULL, NULL));
-    if(retval)
-        *pdwSize = strlen(lpExeName);
-
-    HeapFree(GetProcessHeap(), 0, lpExeNameW);
-    return retval;
-}
-
-/******************************************************************
- *		QueryFullProcessImageNameW (KERNEL32.@)
- */
-BOOL WINAPI QueryFullProcessImageNameW(HANDLE hProcess, DWORD dwFlags, LPWSTR lpExeName, PDWORD pdwSize)
-{
-    BYTE buffer[sizeof(UNICODE_STRING) + MAX_PATH*sizeof(WCHAR)];  /* this buffer should be enough */
-    UNICODE_STRING *dynamic_buffer = NULL;
-    UNICODE_STRING *result = NULL;
-    NTSTATUS status;
-    DWORD needed;
-
-    /* FIXME: On Windows, ProcessImageFileName return an NT path. In Wine it
-     * is a DOS path and we depend on this. */
-    status = NtQueryInformationProcess(hProcess, ProcessImageFileName, buffer,
-                                       sizeof(buffer) - sizeof(WCHAR), &needed);
-    if (status == STATUS_INFO_LENGTH_MISMATCH)
-    {
-        dynamic_buffer = HeapAlloc(GetProcessHeap(), 0, needed + sizeof(WCHAR));
-        status = NtQueryInformationProcess(hProcess, ProcessImageFileName, (LPBYTE)dynamic_buffer, needed, &needed);
-        result = dynamic_buffer;
-    }
-    else
-        result = (PUNICODE_STRING)buffer;
-
-    if (status) goto cleanup;
-
-    if (dwFlags & PROCESS_NAME_NATIVE)
-    {
-        WCHAR drive[3];
-        WCHAR device[1024];
-        DWORD ntlen, devlen;
-
-        if (result->Buffer[1] != ':' || result->Buffer[0] < 'A' || result->Buffer[0] > 'Z')
-        {
-            /* We cannot convert it to an NT device path so fail */
-            status = STATUS_NO_SUCH_DEVICE;
-            goto cleanup;
-        }
-
-        /* Find this drive's NT device path */
-        drive[0] = result->Buffer[0];
-        drive[1] = ':';
-        drive[2] = 0;
-        if (!QueryDosDeviceW(drive, device, ARRAY_SIZE(device)))
-        {
-            status = STATUS_NO_SUCH_DEVICE;
-            goto cleanup;
-        }
-
-        devlen = lstrlenW(device);
-        ntlen = devlen + (result->Length/sizeof(WCHAR) - 2);
-        if (ntlen + 1 > *pdwSize)
-        {
-            status = STATUS_BUFFER_TOO_SMALL;
-            goto cleanup;
-        }
-        *pdwSize = ntlen;
-
-        memcpy(lpExeName, device, devlen * sizeof(*device));
-        memcpy(lpExeName + devlen, result->Buffer + 2, result->Length - 2 * sizeof(WCHAR));
-        lpExeName[*pdwSize] = 0;
-        TRACE("NT path: %s\n", debugstr_w(lpExeName));
-    }
-    else
-    {
-        if (result->Length/sizeof(WCHAR) + 1 > *pdwSize)
-        {
-            status = STATUS_BUFFER_TOO_SMALL;
-            goto cleanup;
-        }
-
-        *pdwSize = result->Length/sizeof(WCHAR);
-        memcpy( lpExeName, result->Buffer, result->Length );
-        lpExeName[*pdwSize] = 0;
-    }
-
-cleanup:
-    HeapFree(GetProcessHeap(), 0, dynamic_buffer);
-    return set_ntstatus( status );
-}
-
-/***********************************************************************
- *           K32GetProcessImageFileNameA (KERNEL32.@)
- */
-DWORD WINAPI K32GetProcessImageFileNameA( HANDLE process, LPSTR file, DWORD size )
-{
-    return QueryFullProcessImageNameA(process, PROCESS_NAME_NATIVE, file, &size) ? size : 0;
-}
-
-/***********************************************************************
- *           K32GetProcessImageFileNameW (KERNEL32.@)
- */
-DWORD WINAPI K32GetProcessImageFileNameW( HANDLE process, LPWSTR file, DWORD size )
-{
-    return QueryFullProcessImageNameW(process, PROCESS_NAME_NATIVE, file, &size) ? size : 0;
-}
-
-/***********************************************************************
- *           K32EnumProcesses (KERNEL32.@)
- */
-BOOL WINAPI K32EnumProcesses(DWORD *lpdwProcessIDs, DWORD cb, DWORD *lpcbUsed)
-{
-    SYSTEM_PROCESS_INFORMATION *spi;
-    ULONG size = 0x4000;
-    void *buf = NULL;
-    NTSTATUS status;
-
-    do {
-        size *= 2;
-        HeapFree(GetProcessHeap(), 0, buf);
-        buf = HeapAlloc(GetProcessHeap(), 0, size);
-        if (!buf)
-            return FALSE;
-
-        status = NtQuerySystemInformation(SystemProcessInformation, buf, size, NULL);
-    } while(status == STATUS_INFO_LENGTH_MISMATCH);
-
-    if (!set_ntstatus( status ))
-    {
-        HeapFree(GetProcessHeap(), 0, buf);
-        return FALSE;
-    }
-
-    spi = buf;
-
-    for (*lpcbUsed = 0; cb >= sizeof(DWORD); cb -= sizeof(DWORD))
-    {
-        *lpdwProcessIDs++ = HandleToUlong(spi->UniqueProcessId);
-        *lpcbUsed += sizeof(DWORD);
-
-        if (spi->NextEntryOffset == 0)
-            break;
-
-        spi = (SYSTEM_PROCESS_INFORMATION *)(((PCHAR)spi) + spi->NextEntryOffset);
-    }
-
-    HeapFree(GetProcessHeap(), 0, buf);
-    return TRUE;
-}
-
-/***********************************************************************
- *           K32QueryWorkingSet (KERNEL32.@)
- */
-BOOL WINAPI K32QueryWorkingSet( HANDLE process, LPVOID buffer, DWORD size )
-{
-    TRACE( "(%p, %p, %d)\n", process, buffer, size );
-
-    return set_ntstatus( NtQueryVirtualMemory( process, NULL, MemoryWorkingSetList, buffer, size, NULL ));
-}
-
-/***********************************************************************
- *           K32QueryWorkingSetEx (KERNEL32.@)
- */
-BOOL WINAPI K32QueryWorkingSetEx( HANDLE process, LPVOID buffer, DWORD size )
-{
-    TRACE( "(%p, %p, %d)\n", process, buffer, size );
-
-    return set_ntstatus( NtQueryVirtualMemory( process, NULL, MemoryWorkingSetExInformation, buffer,  size, NULL ));
-}
-
-/***********************************************************************
- *           K32GetProcessMemoryInfo (KERNEL32.@)
- *
- * Retrieve memory usage information for a given process
- *
- */
-BOOL WINAPI K32GetProcessMemoryInfo(HANDLE process,
-                                    PPROCESS_MEMORY_COUNTERS pmc, DWORD cb)
-{
-    VM_COUNTERS vmc;
-
-    if (cb < sizeof(PROCESS_MEMORY_COUNTERS))
-    {
-        SetLastError(ERROR_INSUFFICIENT_BUFFER);
-        return FALSE;
-    }
-
-    if (!set_ntstatus( NtQueryInformationProcess( process, ProcessVmCounters, &vmc, sizeof(vmc), NULL )))
-        return FALSE;
-
-    pmc->cb = sizeof(PROCESS_MEMORY_COUNTERS);
-    pmc->PageFaultCount = vmc.PageFaultCount;
-    pmc->PeakWorkingSetSize = vmc.PeakWorkingSetSize;
-    pmc->WorkingSetSize = vmc.WorkingSetSize;
-    pmc->QuotaPeakPagedPoolUsage = vmc.QuotaPeakPagedPoolUsage;
-    pmc->QuotaPagedPoolUsage = vmc.QuotaPagedPoolUsage;
-    pmc->QuotaPeakNonPagedPoolUsage = vmc.QuotaPeakNonPagedPoolUsage;
-    pmc->QuotaNonPagedPoolUsage = vmc.QuotaNonPagedPoolUsage;
-    pmc->PagefileUsage = vmc.PagefileUsage;
-    pmc->PeakPagefileUsage = vmc.PeakPagefileUsage;
-
-    return TRUE;
-}
-
-/***********************************************************************
- * ProcessIdToSessionId   (KERNEL32.@)
- * This function is available on Terminal Server 4SP4 and Windows 2000
- */
-BOOL WINAPI ProcessIdToSessionId( DWORD procid, DWORD *sessionid_ptr )
-{
-    if (procid != GetCurrentProcessId())
-        FIXME("Unsupported for other processes.\n");
-
-    *sessionid_ptr = NtCurrentTeb()->Peb->SessionId;
-    return TRUE;
-}
-
 
 /***********************************************************************
  *		RegisterServiceProcess (KERNEL32.@)
@@ -801,6 +513,107 @@ HANDLE WINAPI KERNEL32_GetCurrentProcess(void)
 {
     return (HANDLE)~(ULONG_PTR)0;
 }
+
+
+/***********************************************************************
+ *           CreateActCtxA   (KERNEL32.@)
+ */
+HANDLE WINAPI DECLSPEC_HOTPATCH CreateActCtxA( const ACTCTXA *actctx )
+{
+    ACTCTXW actw;
+    SIZE_T len;
+    HANDLE ret = INVALID_HANDLE_VALUE;
+    LPWSTR src = NULL, assdir = NULL, resname = NULL, appname = NULL;
+
+    TRACE("%p %08x\n", actctx, actctx ? actctx->dwFlags : 0);
+
+    if (!actctx || actctx->cbSize != sizeof(*actctx))
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return INVALID_HANDLE_VALUE;
+    }
+
+    actw.cbSize = sizeof(actw);
+    actw.dwFlags = actctx->dwFlags;
+    if (actctx->lpSource)
+    {
+        len = MultiByteToWideChar(CP_ACP, 0, actctx->lpSource, -1, NULL, 0);
+        src = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        if (!src) return INVALID_HANDLE_VALUE;
+        MultiByteToWideChar(CP_ACP, 0, actctx->lpSource, -1, src, len);
+    }
+    actw.lpSource = src;
+
+    if (actw.dwFlags & ACTCTX_FLAG_PROCESSOR_ARCHITECTURE_VALID)
+        actw.wProcessorArchitecture = actctx->wProcessorArchitecture;
+    if (actw.dwFlags & ACTCTX_FLAG_LANGID_VALID)
+        actw.wLangId = actctx->wLangId;
+    if (actw.dwFlags & ACTCTX_FLAG_ASSEMBLY_DIRECTORY_VALID)
+    {
+        len = MultiByteToWideChar(CP_ACP, 0, actctx->lpAssemblyDirectory, -1, NULL, 0);
+        assdir = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        if (!assdir) goto done;
+        MultiByteToWideChar(CP_ACP, 0, actctx->lpAssemblyDirectory, -1, assdir, len);
+        actw.lpAssemblyDirectory = assdir;
+    }
+    if (actw.dwFlags & ACTCTX_FLAG_RESOURCE_NAME_VALID)
+    {
+        if ((ULONG_PTR)actctx->lpResourceName >> 16)
+        {
+            len = MultiByteToWideChar(CP_ACP, 0, actctx->lpResourceName, -1, NULL, 0);
+            resname = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+            if (!resname) goto done;
+            MultiByteToWideChar(CP_ACP, 0, actctx->lpResourceName, -1, resname, len);
+            actw.lpResourceName = resname;
+        }
+        else actw.lpResourceName = (LPCWSTR)actctx->lpResourceName;
+    }
+    if (actw.dwFlags & ACTCTX_FLAG_APPLICATION_NAME_VALID)
+    {
+        len = MultiByteToWideChar(CP_ACP, 0, actctx->lpApplicationName, -1, NULL, 0);
+        appname = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        if (!appname) goto done;
+        MultiByteToWideChar(CP_ACP, 0, actctx->lpApplicationName, -1, appname, len);
+        actw.lpApplicationName = appname;
+    }
+    if (actw.dwFlags & ACTCTX_FLAG_HMODULE_VALID)
+        actw.hModule = actctx->hModule;
+
+    ret = CreateActCtxW(&actw);
+
+done:
+    HeapFree(GetProcessHeap(), 0, src);
+    HeapFree(GetProcessHeap(), 0, assdir);
+    HeapFree(GetProcessHeap(), 0, resname);
+    HeapFree(GetProcessHeap(), 0, appname);
+    return ret;
+}
+
+/***********************************************************************
+ *           FindActCtxSectionStringA   (KERNEL32.@)
+ */
+BOOL WINAPI FindActCtxSectionStringA( DWORD flags, const GUID *guid, ULONG id, const char *search,
+                                      ACTCTX_SECTION_KEYED_DATA *info )
+{
+    LPWSTR searchW;
+    DWORD len;
+    BOOL ret;
+
+    TRACE("%08x %s %u %s %p\n", flags, debugstr_guid(guid), id, debugstr_a(search), info);
+
+    if (!search || !info)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    len = MultiByteToWideChar(CP_ACP, 0, search, -1, NULL, 0);
+    searchW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, search, -1, searchW, len);
+    ret = FindActCtxSectionStringW( flags, guid, id, searchW, info );
+    HeapFree(GetProcessHeap(), 0, searchW);
+    return ret;
+}
+
 
 /***********************************************************************
  *           CmdBatNotification   (KERNEL32.@)
@@ -889,12 +702,63 @@ HRESULT WINAPI RegisterApplicationRecoveryCallback(APPLICATION_RECOVERY_CALLBACK
 }
 
 /***********************************************************************
- *           GetApplicationRestartSettings       (KERNEL32.@)
+ *           GetActiveProcessorGroupCount (KERNEL32.@)
  */
-HRESULT WINAPI GetApplicationRestartSettings(HANDLE process, WCHAR *cmdline, DWORD *size, DWORD *flags)
+WORD WINAPI GetActiveProcessorGroupCount(void)
 {
-    FIXME("%p, %p, %p, %p)\n", process, cmdline, size, flags);
-    return E_NOTIMPL;
+    FIXME("semi-stub, always returning 1\n");
+    return 1;
+}
+
+/***********************************************************************
+ *           GetActiveProcessorCount (KERNEL32.@)
+ */
+DWORD WINAPI GetActiveProcessorCount(WORD group)
+{
+    DWORD cpus = system_info.NumberOfProcessors;
+
+    FIXME("semi-stub, returning %u\n", cpus);
+    return cpus;
+}
+
+/***********************************************************************
+ *           GetMaximumProcessorCount (KERNEL32.@)
+ */
+DWORD WINAPI GetMaximumProcessorCount(WORD group)
+{
+    DWORD cpus = system_info.NumberOfProcessors;
+
+    FIXME("semi-stub, returning %u\n", cpus);
+    return cpus;
+}
+
+/***********************************************************************
+ *           GetEnabledXStateFeatures (KERNEL32.@)
+ */
+DWORD64 WINAPI GetEnabledXStateFeatures(void)
+{
+    FIXME("\n");
+    return 0;
+}
+
+/***********************************************************************
+ *           GetFirmwareEnvironmentVariableA     (KERNEL32.@)
+ */
+DWORD WINAPI GetFirmwareEnvironmentVariableA(LPCSTR name, LPCSTR guid, PVOID buffer, DWORD size)
+{
+    FIXME("stub: %s %s %p %u\n", debugstr_a(name), debugstr_a(guid), buffer, size);
+    SetLastError(ERROR_INVALID_FUNCTION);
+    return 0;
+}
+
+/***********************************************************************
+ *           GetFirmwareEnvironmentVariableW     (KERNEL32.@)
+ */
+DWORD WINAPI GetFirmwareEnvironmentVariableW(LPCWSTR name, LPCWSTR guid, PVOID buffer, DWORD size)
+{
+    FIXME("stub: %s %s %p %u\n", debugstr_w(name), debugstr_w(guid), buffer, size);
+    SetLastError(ERROR_INVALID_FUNCTION);
+    return 0;
 }
 
 /**********************************************************************
@@ -932,12 +796,9 @@ BOOL WINAPI GetNumaAvailableMemoryNodeEx(USHORT node, PULONGLONG available_bytes
  */
 BOOL WINAPI GetNumaProcessorNode(UCHAR processor, PUCHAR node)
 {
-    SYSTEM_INFO si;
-
     TRACE("(%d, %p)\n", processor, node);
 
-    GetSystemInfo( &si );
-    if (processor < si.dwNumberOfProcessors)
+    if (processor < system_info.NumberOfProcessors)
     {
         *node = 0;
         return TRUE;
@@ -990,17 +851,6 @@ BOOL WINAPI GetProcessDEPPolicy(HANDLE process, LPDWORD flags, PBOOL permanent)
 
     if (permanent) *permanent = (dep_flags & MEM_EXECUTE_OPTION_PERMANENT) != 0;
     return TRUE;
-}
-
-/**********************************************************************
- *           FlushProcessWriteBuffers     (KERNEL32.@)
- */
-VOID WINAPI FlushProcessWriteBuffers(void)
-{
-    static int once = 0;
-
-    if (!once++)
-        FIXME(": stub\n");
 }
 
 /***********************************************************************
@@ -1142,15 +992,5 @@ BOOL WINAPI UmsThreadYield(void *param)
 {
     FIXME( "%p: stub\n", param );
     SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-    return FALSE;
-}
-
-/**********************************************************************
- *           BaseFlushAppcompatCache     (KERNEL32.@)
- */
-BOOL WINAPI BaseFlushAppcompatCache(void)
-{
-    FIXME(": stub\n");
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }

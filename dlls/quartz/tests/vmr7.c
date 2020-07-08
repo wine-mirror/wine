@@ -273,7 +273,7 @@ static void test_interfaces(void)
     check_interface(filter, &IID_IVMRMixerControl, FALSE);
     check_interface(filter, &IID_IVMRMixerControl9, FALSE);
     todo_wine check_interface(filter, &IID_IVMRMonitorConfig9, FALSE);
-    todo_wine check_interface(filter, &IID_IVMRWindowlessControl9, FALSE);
+    check_interface(filter, &IID_IVMRWindowlessControl9, FALSE);
 
     IBaseFilter_FindPin(filter, L"VMR Input0", &pin);
 
@@ -300,7 +300,7 @@ static void test_interfaces(void)
     check_interface(filter, &IID_IVMRMixerControl, FALSE);
     todo_wine check_interface(filter, &IID_IVMRMonitorConfig, FALSE);
     todo_wine check_interface(filter, &IID_IVMRMonitorConfig9, FALSE);
-    todo_wine check_interface(filter, &IID_IVMRSurfaceAllocatorNotify9, FALSE);
+    check_interface(filter, &IID_IVMRSurfaceAllocatorNotify9, FALSE);
     check_interface(filter, &IID_IVMRWindowlessControl, FALSE);
     check_interface(filter, &IID_IVMRWindowlessControl9, FALSE);
 
@@ -867,11 +867,6 @@ static const struct strmbase_filter_ops testfilter_ops =
     .filter_destroy = testfilter_destroy,
 };
 
-static HRESULT testsource_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
-{
-    return S_OK;
-}
-
 static HRESULT WINAPI testsource_DecideAllocator(struct strmbase_source *iface,
         IMemInputPin *peer, IMemAllocator **allocator)
 {
@@ -880,8 +875,6 @@ static HRESULT WINAPI testsource_DecideAllocator(struct strmbase_source *iface,
 
 static const struct strmbase_source_ops testsource_ops =
 {
-    .base.pin_query_accept = testsource_query_accept,
-    .base.pin_get_media_type = strmbase_pin_get_media_type,
     .pfnAttemptConnection = BaseOutputPinImpl_AttemptConnection,
     .pfnDecideAllocator = testsource_DecideAllocator,
 };
@@ -1832,21 +1825,21 @@ static void test_video_window_position(IVideoWindow *window, HWND hwnd, HWND our
     ok(top == 0, "Got top %d.\n", top);
     hr = IVideoWindow_get_Width(window, &width);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(width == expect_width, "Got width %d.\n", width);
+    ok(width == expect_width, "Got width %d.\n", width);
     hr = IVideoWindow_get_Height(window, &height);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(height == expect_height, "Got height %d.\n", height);
+    ok(height == expect_height, "Got height %d.\n", height);
     hr = IVideoWindow_GetWindowPosition(window, &left, &top, &width, &height);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(left == 0, "Got left %d.\n", left);
     ok(top == 0, "Got top %d.\n", top);
-    todo_wine ok(width == expect_width, "Got width %d.\n", width);
-    todo_wine ok(height == expect_height, "Got height %d.\n", height);
+    ok(width == expect_width, "Got width %d.\n", width);
+    ok(height == expect_height, "Got height %d.\n", height);
     GetWindowRect(hwnd, &rect);
     ok(rect.left == 0, "Got window left %d.\n", rect.left);
     ok(rect.top == 0, "Got window top %d.\n", rect.top);
-    todo_wine ok(rect.right == expect_width, "Got window right %d.\n", rect.right);
-    todo_wine ok(rect.bottom == expect_height, "Got window bottom %d.\n", rect.bottom);
+    ok(rect.right == expect_width, "Got window right %d.\n", rect.right);
+    ok(rect.bottom == expect_height, "Got window bottom %d.\n", rect.bottom);
 
     hr = IVideoWindow_put_Left(window, 10);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -1859,21 +1852,21 @@ static void test_video_window_position(IVideoWindow *window, HWND hwnd, HWND our
     ok(top == 0, "Got top %d.\n", top);
     hr = IVideoWindow_get_Width(window, &width);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(width == expect_width, "Got width %d.\n", width);
+    ok(width == expect_width, "Got width %d.\n", width);
     hr = IVideoWindow_get_Height(window, &height);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(height == expect_height, "Got height %d.\n", height);
+    ok(height == expect_height, "Got height %d.\n", height);
     hr = IVideoWindow_GetWindowPosition(window, &left, &top, &width, &height);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(left == 10, "Got left %d.\n", left);
     ok(top == 0, "Got top %d.\n", top);
-    todo_wine ok(width == expect_width, "Got width %d.\n", width);
-    todo_wine ok(height == expect_height, "Got height %d.\n", height);
+    ok(width == expect_width, "Got width %d.\n", width);
+    ok(height == expect_height, "Got height %d.\n", height);
     GetWindowRect(hwnd, &rect);
     ok(rect.left == 10, "Got window left %d.\n", rect.left);
     ok(rect.top == 0, "Got window top %d.\n", rect.top);
-    todo_wine ok(rect.right == 10 + expect_width, "Got window right %d.\n", rect.right);
-    todo_wine ok(rect.bottom == expect_height, "Got window bottom %d.\n", rect.bottom);
+    ok(rect.right == 10 + expect_width, "Got window right %d.\n", rect.right);
+    ok(rect.bottom == expect_height, "Got window bottom %d.\n", rect.bottom);
 
     hr = IVideoWindow_put_Height(window, 200);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -1886,7 +1879,7 @@ static void test_video_window_position(IVideoWindow *window, HWND hwnd, HWND our
     ok(top == 0, "Got top %d.\n", top);
     hr = IVideoWindow_get_Width(window, &width);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(width == expect_width, "Got width %d.\n", width);
+    ok(width == expect_width, "Got width %d.\n", width);
     hr = IVideoWindow_get_Height(window, &height);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(height == 200, "Got height %d.\n", height);
@@ -1894,12 +1887,12 @@ static void test_video_window_position(IVideoWindow *window, HWND hwnd, HWND our
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(left == 10, "Got left %d.\n", left);
     ok(top == 0, "Got top %d.\n", top);
-    todo_wine ok(width == expect_width, "Got width %d.\n", width);
+    ok(width == expect_width, "Got width %d.\n", width);
     ok(height == 200, "Got height %d.\n", height);
     GetWindowRect(hwnd, &rect);
     ok(rect.left == 10, "Got window left %d.\n", rect.left);
     ok(rect.top == 0, "Got window top %d.\n", rect.top);
-    todo_wine ok(rect.right == 10 + expect_width, "Got window right %d.\n", rect.right);
+    ok(rect.right == 10 + expect_width, "Got window right %d.\n", rect.right);
     ok(rect.bottom == 200, "Got window bottom %d.\n", rect.bottom);
 
     hr = IVideoWindow_SetWindowPosition(window, 100, 200, 300, 400);
@@ -2301,6 +2294,455 @@ static void test_video_window(void)
     DestroyWindow(our_hwnd);
 }
 
+static void check_source_position_(int line, IBasicVideo *video,
+        LONG expect_left, LONG expect_top, LONG expect_width, LONG expect_height)
+{
+    LONG left, top, width, height, l;
+    HRESULT hr;
+
+    left = top = width = height = 0xdeadbeef;
+    hr = IBasicVideo_GetSourcePosition(video, &left, &top, &width, &height);
+    ok_(__FILE__,line)(hr == S_OK, "Got hr %#x.\n", hr);
+    ok_(__FILE__,line)(left == expect_left, "Got left %d.\n", left);
+    ok_(__FILE__,line)(top == expect_top, "Got top %d.\n", top);
+    ok_(__FILE__,line)(width == expect_width, "Got width %d.\n", width);
+    ok_(__FILE__,line)(height == expect_height, "Got height %d.\n", height);
+
+    l = 0xdeadbeef;
+    hr = IBasicVideo_get_SourceLeft(video, &l);
+    ok_(__FILE__,line)(hr == S_OK, "Failed to get left, hr %#x.\n", hr);
+    ok_(__FILE__,line)(l == left, "Got left %d.\n", l);
+
+    l = 0xdeadbeef;
+    hr = IBasicVideo_get_SourceTop(video, &l);
+    ok_(__FILE__,line)(hr == S_OK, "Failed to get top, hr %#x.\n", hr);
+    ok_(__FILE__,line)(l == top, "Got top %d.\n", l);
+
+    l = 0xdeadbeef;
+    hr = IBasicVideo_get_SourceWidth(video, &l);
+    ok_(__FILE__,line)(hr == S_OK, "Failed to get width, hr %#x.\n", hr);
+    ok_(__FILE__,line)(l == width, "Got width %d.\n", l);
+
+    l = 0xdeadbeef;
+    hr = IBasicVideo_get_SourceHeight(video, &l);
+    ok_(__FILE__,line)(hr == S_OK, "Failed to get height, hr %#x.\n", hr);
+    ok_(__FILE__,line)(l == height, "Got height %d.\n", l);
+}
+#define check_source_position(a,b,c,d,e) check_source_position_(__LINE__,a,b,c,d,e)
+
+static void test_basic_video_source(IBasicVideo *video)
+{
+    HRESULT hr;
+
+    check_source_position(video, 0, 0, 600, 400);
+    hr = IBasicVideo_IsUsingDefaultSource(video);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_put_SourceLeft(video, -10);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_put_SourceLeft(video, 10);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_put_SourceTop(video, -10);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_put_SourceTop(video, 10);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_put_SourceWidth(video, -500);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_put_SourceWidth(video, 0);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_put_SourceWidth(video, 700);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_put_SourceWidth(video, 500);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_source_position(video, 0, 0, 500, 400);
+    hr = IBasicVideo_IsUsingDefaultSource(video);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_put_SourceHeight(video, -300);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_put_SourceHeight(video, 0);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_put_SourceHeight(video, 600);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_put_SourceHeight(video, 300);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_source_position(video, 0, 0, 500, 300);
+    hr = IBasicVideo_IsUsingDefaultSource(video);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_put_SourceLeft(video, -10);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_put_SourceLeft(video, 10);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_source_position(video, 10, 0, 500, 300);
+    hr = IBasicVideo_IsUsingDefaultSource(video);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_put_SourceTop(video, -10);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_put_SourceTop(video, 20);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_source_position(video, 10, 20, 500, 300);
+    hr = IBasicVideo_IsUsingDefaultSource(video);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_SetSourcePosition(video, 4, 5, 60, 40);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_source_position(video, 4, 5, 60, 40);
+    hr = IBasicVideo_IsUsingDefaultSource(video);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_SetSourcePosition(video, 0, 0, 600, 400);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_source_position(video, 0, 0, 600, 400);
+    hr = IBasicVideo_IsUsingDefaultSource(video);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_SetSourcePosition(video, 4, 5, 60, 40);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_SetDefaultSourcePosition(video);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_source_position(video, 0, 0, 600, 400);
+    hr = IBasicVideo_IsUsingDefaultSource(video);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+}
+
+static void check_destination_position_(int line, IBasicVideo *video,
+        LONG expect_left, LONG expect_top, LONG expect_width, LONG expect_height)
+{
+    LONG left, top, width, height, l;
+    HRESULT hr;
+
+    left = top = width = height = 0xdeadbeef;
+    hr = IBasicVideo_GetDestinationPosition(video, &left, &top, &width, &height);
+    ok_(__FILE__,line)(hr == S_OK, "Failed to get position, hr %#x.\n", hr);
+    ok_(__FILE__,line)(left == expect_left, "Got left %d.\n", left);
+    ok_(__FILE__,line)(top == expect_top, "Got top %d.\n", top);
+    ok_(__FILE__,line)(width == expect_width, "Got width %d.\n", width);
+    ok_(__FILE__,line)(height == expect_height, "Got height %d.\n", height);
+
+    l = 0xdeadbeef;
+    hr = IBasicVideo_get_DestinationLeft(video, &l);
+    ok_(__FILE__,line)(hr == S_OK, "Failed to get left, hr %#x.\n", hr);
+    ok_(__FILE__,line)(l == left, "Got left %d.\n", l);
+
+    l = 0xdeadbeef;
+    hr = IBasicVideo_get_DestinationTop(video, &l);
+    ok_(__FILE__,line)(hr == S_OK, "Failed to get top, hr %#x.\n", hr);
+    ok_(__FILE__,line)(l == top, "Got top %d.\n", l);
+
+    l = 0xdeadbeef;
+    hr = IBasicVideo_get_DestinationWidth(video, &l);
+    ok_(__FILE__,line)(hr == S_OK, "Failed to get width, hr %#x.\n", hr);
+    ok_(__FILE__,line)(l == width, "Got width %d.\n", l);
+
+    l = 0xdeadbeef;
+    hr = IBasicVideo_get_DestinationHeight(video, &l);
+    ok_(__FILE__,line)(hr == S_OK, "Failed to get height, hr %#x.\n", hr);
+    ok_(__FILE__,line)(l == height, "Got height %d.\n", l);
+}
+#define check_destination_position(a,b,c,d,e) check_destination_position_(__LINE__,a,b,c,d,e)
+
+static void test_basic_video_destination(IBasicVideo *video)
+{
+    IVideoWindow *window;
+    HRESULT hr;
+    RECT rect;
+
+    IBasicVideo_QueryInterface(video, &IID_IVideoWindow, (void **)&window);
+
+    check_destination_position(video, 0, 0, 600, 400);
+    hr = IBasicVideo_IsUsingDefaultDestination(video);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_put_DestinationLeft(video, -10);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_destination_position(video, -10, 0, 600, 400);
+    hr = IBasicVideo_IsUsingDefaultDestination(video);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_put_DestinationLeft(video, 10);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_destination_position(video, 10, 0, 600, 400);
+    hr = IBasicVideo_IsUsingDefaultDestination(video);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_put_DestinationTop(video, -20);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_destination_position(video, 10, -20, 600, 400);
+    hr = IBasicVideo_IsUsingDefaultDestination(video);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_put_DestinationTop(video, 20);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_destination_position(video, 10, 20, 600, 400);
+    hr = IBasicVideo_IsUsingDefaultDestination(video);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_put_DestinationWidth(video, -700);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_put_DestinationWidth(video, 0);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_put_DestinationWidth(video, 700);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_destination_position(video, 10, 20, 700, 400);
+    hr = IBasicVideo_IsUsingDefaultDestination(video);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_put_DestinationWidth(video, 500);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_destination_position(video, 10, 20, 500, 400);
+    hr = IBasicVideo_IsUsingDefaultDestination(video);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_put_DestinationHeight(video, -500);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_put_DestinationHeight(video, 0);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_put_DestinationHeight(video, 500);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_destination_position(video, 10, 20, 500, 500);
+    hr = IBasicVideo_IsUsingDefaultDestination(video);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_put_DestinationHeight(video, 300);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_destination_position(video, 10, 20, 500, 300);
+    hr = IBasicVideo_IsUsingDefaultDestination(video);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_SetDestinationPosition(video, 4, 5, 60, 40);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_destination_position(video, 4, 5, 60, 40);
+    hr = IBasicVideo_IsUsingDefaultDestination(video);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_SetDestinationPosition(video, 0, 0, 600, 400);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_destination_position(video, 0, 0, 600, 400);
+    hr = IBasicVideo_IsUsingDefaultDestination(video);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_SetDestinationPosition(video, 4, 5, 60, 40);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_SetDefaultDestinationPosition(video);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_destination_position(video, 0, 0, 600, 400);
+    hr = IBasicVideo_IsUsingDefaultDestination(video);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    SetRect(&rect, 100, 200, 500, 500);
+    AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, FALSE);
+    hr = IVideoWindow_SetWindowPosition(window, rect.left, rect.top,
+            rect.right - rect.left, rect.bottom - rect.top);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_destination_position(video, 0, 0, 400, 300);
+    hr = IBasicVideo_IsUsingDefaultDestination(video);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_SetDestinationPosition(video, 0, 0, 400, 300);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_destination_position(video, 0, 0, 400, 300);
+    hr = IBasicVideo_IsUsingDefaultDestination(video);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    SetRect(&rect, 100, 200, 600, 600);
+    AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, FALSE);
+    hr = IVideoWindow_SetWindowPosition(window, rect.left, rect.top,
+            rect.right - rect.left, rect.bottom - rect.top);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_destination_position(video, 0, 0, 400, 300);
+    hr = IBasicVideo_IsUsingDefaultDestination(video);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    IVideoWindow_Release(window);
+}
+
+static void test_basic_video(void)
+{
+    ALLOCATOR_PROPERTIES req_props = {1, 600 * 400 * 4, 1, 0}, ret_props;
+    VIDEOINFOHEADER vih =
+    {
+        .AvgTimePerFrame = 200000,
+        .rcSource = {4, 6, 16, 12},
+        .rcTarget = {40, 60, 120, 160},
+        .bmiHeader.biSize = sizeof(BITMAPINFOHEADER),
+        .bmiHeader.biBitCount = 32,
+        .bmiHeader.biWidth = 600,
+        .bmiHeader.biHeight = 400,
+        .bmiHeader.biPlanes = 1,
+        .bmiHeader.biCompression = BI_RGB,
+    };
+    AM_MEDIA_TYPE req_mt =
+    {
+        .majortype = MEDIATYPE_Video,
+        .subtype = MEDIASUBTYPE_RGB32,
+        .formattype = FORMAT_VideoInfo,
+        .cbFormat = sizeof(vih),
+        .pbFormat = (BYTE *)&vih,
+    };
+    IBaseFilter *filter = create_vmr7(VMR9Mode_Windowed);
+    IFilterGraph2 *graph = create_graph();
+    LONG left, top, width, height, l;
+    struct testfilter source;
+    IMemAllocator *allocator;
+    IMemInputPin *input;
+    ITypeInfo *typeinfo;
+    IBasicVideo *video;
+    TYPEATTR *typeattr;
+    REFTIME reftime;
+    HRESULT hr;
+    UINT count;
+    ULONG ref;
+    IPin *pin;
+
+    IBaseFilter_QueryInterface(filter, &IID_IBasicVideo, (void **)&video);
+    IBaseFilter_FindPin(filter, L"VMR Input0", &pin);
+    IPin_QueryInterface(pin, &IID_IMemInputPin, (void **)&input);
+
+    hr = IBasicVideo_GetTypeInfoCount(video, &count);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(count == 1, "Got count %u.\n", count);
+
+    hr = IBasicVideo_GetTypeInfo(video, 0, 0, &typeinfo);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = ITypeInfo_GetTypeAttr(typeinfo, &typeattr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(typeattr->typekind == TKIND_DISPATCH, "Got kind %u.\n", typeattr->typekind);
+    ok(IsEqualGUID(&typeattr->guid, &IID_IBasicVideo), "Got IID %s.\n", wine_dbgstr_guid(&typeattr->guid));
+    ITypeInfo_ReleaseTypeAttr(typeinfo, typeattr);
+    ITypeInfo_Release(typeinfo);
+
+    hr = IBasicVideo_get_AvgTimePerFrame(video, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_get_AvgTimePerFrame(video, &reftime);
+    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_get_BitRate(video, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_get_BitRate(video, &l);
+    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_get_BitErrorRate(video, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_get_BitErrorRate(video, &l);
+    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_get_VideoWidth(video, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_get_VideoHeight(video, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_get_SourceLeft(video, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_get_SourceWidth(video, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_get_SourceTop(video, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_get_SourceHeight(video, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_get_DestinationLeft(video, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_get_DestinationWidth(video, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_get_DestinationTop(video, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_get_DestinationHeight(video, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_GetSourcePosition(video, NULL, &top, &width, &height);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_GetSourcePosition(video, &left, NULL, &width, &height);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_GetSourcePosition(video, &left, &top, NULL, &height);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_GetSourcePosition(video, &left, &top, &width, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_GetDestinationPosition(video, NULL, &top, &width, &height);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_GetDestinationPosition(video, &left, NULL, &width, &height);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_GetDestinationPosition(video, &left, &top, NULL, &height);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_GetDestinationPosition(video, &left, &top, &width, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_GetVideoSize(video, &width, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_GetVideoSize(video, NULL, &height);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+    hr = IBasicVideo_GetVideoPaletteEntries(video, 0, 1, NULL, &l);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    hr = IBasicVideo_GetVideoPaletteEntries(video, 0, 1, &l, NULL);
+    todo_wine ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
+
+    testfilter_init(&source);
+    IFilterGraph2_AddFilter(graph, &source.filter.IBaseFilter_iface, L"vmr9");
+    IFilterGraph2_AddFilter(graph, filter, L"source");
+    hr = IFilterGraph2_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &req_mt);
+    if (hr == E_FAIL)
+    {
+        skip("Got E_FAIL when connecting.\n");
+        goto out;
+    }
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMemInputPin_GetAllocator(input, &allocator);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    if (hr == S_OK)
+    {
+        hr = IMemAllocator_SetProperties(allocator, &req_props, &ret_props);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(!memcmp(&ret_props, &req_props, sizeof(req_props)), "Properties did not match.\n");
+        hr = IMemAllocator_Commit(allocator);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        IMemAllocator_Release(allocator);
+    }
+
+    reftime = 0.0;
+    hr = IBasicVideo_get_AvgTimePerFrame(video, &reftime);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(reftime == 0.02, "Got frame rate %.16e.\n", reftime);
+
+    l = 0xdeadbeef;
+    hr = IBasicVideo_get_BitRate(video, &l);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!l, "Got bit rate %d.\n", l);
+
+    l = 0xdeadbeef;
+    hr = IBasicVideo_get_BitErrorRate(video, &l);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!l, "Got bit rate %d.\n", l);
+
+    hr = IBasicVideo_GetVideoPaletteEntries(video, 0, 1, &l, NULL);
+    todo_wine ok(hr == VFW_E_NO_PALETTE_AVAILABLE, "Got hr %#x.\n", hr);
+
+    width = height = 0xdeadbeef;
+    hr = IBasicVideo_GetVideoSize(video, &width, &height);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(width == 600, "Got width %d.\n", width);
+    ok(height == 400, "Got height %d.\n", height);
+
+    test_basic_video_source(video);
+    test_basic_video_destination(video);
+
+out:
+    ref = IFilterGraph2_Release(graph);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    IBasicVideo_Release(video);
+    IMemInputPin_Release(input);
+    IPin_Release(pin);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IBaseFilter_Release(&source.filter.IBaseFilter_iface);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 START_TEST(vmr7)
 {
     CoInitialize(NULL);
@@ -2317,6 +2759,7 @@ START_TEST(vmr7)
     test_connect_pin();
     test_overlay();
     test_video_window();
+    test_basic_video();
 
     CoUninitialize();
 }

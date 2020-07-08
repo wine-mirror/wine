@@ -37,6 +37,11 @@ static inline IDirectMusicLyricsTrack *impl_from_IDirectMusicTrack8(IDirectMusic
     return CONTAINING_RECORD(iface, IDirectMusicLyricsTrack, IDirectMusicTrack8_iface);
 }
 
+static inline IDirectMusicLyricsTrack *impl_from_IPersistStream(IPersistStream *iface)
+{
+    return CONTAINING_RECORD(iface, IDirectMusicLyricsTrack, dmobj.IPersistStream_iface);
+}
+
 static HRESULT WINAPI lyrics_track_QueryInterface(IDirectMusicTrack8 *iface, REFIID riid,
         void **ret_iface)
 {
@@ -236,10 +241,94 @@ static const IDirectMusicTrack8Vtbl dmtrack8_vtbl = {
     lyrics_track_Join
 };
 
+static HRESULT parse_lyrics_track_events(IDirectMusicLyricsTrack *This, IStream *stream,
+                struct chunk_entry *lyric)
+{
+    struct chunk_entry chunk = {.parent = lyric};
+    HRESULT hr;
+    DMUS_IO_LYRICSTRACK_EVENTHEADER header;
+    WCHAR name[256];
+
+    TRACE("Parsing segment form in %p: %s\n", stream, debugstr_chunk(lyric));
+
+    while ((hr = stream_next_chunk(stream, &chunk)) == S_OK) {
+        if (chunk.id == FOURCC_LIST && chunk.type == DMUS_FOURCC_LYRICSTRACKEVENT_LIST) {
+            struct chunk_entry child = {.parent = &chunk};
+
+            if (FAILED(hr = stream_next_chunk(stream, &child)))
+                return  hr;
+
+            if (child.id != DMUS_FOURCC_LYRICSTRACKEVENTHEADER_CHUNK)
+                return DMUS_E_UNSUPPORTED_STREAM;
+
+            if (FAILED(hr = stream_chunk_get_data(stream, &child, &header, child.size))) {
+                WARN("Failed to read data of %s\n", debugstr_chunk(&child));
+                return hr;
+            }
+
+            TRACE("Found DMUS_IO_LYRICSTRACK_EVENTHEADER\n");
+            TRACE("  - dwFlags 0x%08x\n", header.dwFlags);
+            TRACE("  - dwTimingFlags 0x%08x\n", header.dwTimingFlags);
+            TRACE("  - lTimeLogical %d\n", header.lTimeLogical);
+            TRACE("  - lTimePhysical %d\n", header.lTimePhysical);
+
+            if (FAILED(hr = stream_next_chunk(stream, &child)))
+                return  hr;
+
+            if (child.id != DMUS_FOURCC_LYRICSTRACKEVENTTEXT_CHUNK)
+                return DMUS_E_UNSUPPORTED_STREAM;
+
+            if (FAILED(hr = stream_chunk_get_data(stream, &child, &name, child.size))) {
+                WARN("Failed to read data of %s\n", debugstr_chunk(&child));
+                return hr;
+            }
+
+            TRACE("Found DMUS_FOURCC_LYRICSTRACKEVENTTEXT_CHUNK\n");
+            TRACE("  - name %s\n", debugstr_w(name));
+        }
+    }
+
+    return SUCCEEDED(hr) ? S_OK : hr;
+}
+
+static HRESULT parse_lyricstrack_list(IDirectMusicLyricsTrack *This, IStream *stream, struct chunk_entry *lyric)
+{
+    HRESULT hr;
+    struct chunk_entry chunk = {.parent = lyric};
+
+    TRACE("Parsing segment form in %p: %s\n", stream, debugstr_chunk(lyric));
+
+    if (FAILED(hr = stream_next_chunk(stream, &chunk)))
+        return hr;
+
+    if (chunk.id == FOURCC_LIST && chunk.type == DMUS_FOURCC_LYRICSTRACKEVENTS_LIST)
+        hr = parse_lyrics_track_events(This, stream, &chunk);
+    else
+        hr = DMUS_E_UNSUPPORTED_STREAM;
+
+    return SUCCEEDED(hr) ? S_OK : hr;
+}
+
 static HRESULT WINAPI lyrics_IPersistStream_Load(IPersistStream *iface, IStream *stream)
 {
-	FIXME(": Loading not implemented yet\n");
-	return S_OK;
+    IDirectMusicLyricsTrack *This = impl_from_IPersistStream(iface);
+    HRESULT hr;
+    struct chunk_entry chunk = {0};
+
+    TRACE("%p, %p\n", This, stream);
+
+    if (!stream)
+        return E_POINTER;
+
+    if ((hr = stream_get_chunk(stream, &chunk) != S_OK))
+        return hr;
+
+    if (chunk.id == FOURCC_LIST && chunk.type == DMUS_FOURCC_LYRICSTRACK_LIST)
+        hr = parse_lyricstrack_list(This, stream, &chunk);
+    else
+        hr = DMUS_E_UNSUPPORTED_STREAM;
+
+    return hr;
 }
 
 static const IPersistStreamVtbl persiststream_vtbl = {

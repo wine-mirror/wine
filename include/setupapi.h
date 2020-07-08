@@ -1516,8 +1516,8 @@ BOOL     WINAPI SetupDiGetActualModelsSectionW(PINFCONTEXT, PSP_ALTPLATFORM_INFO
 BOOL     WINAPI SetupDiGetActualSectionToInstallA(HINF, PCSTR, PSTR, DWORD, PDWORD, PSTR *);
 BOOL     WINAPI SetupDiGetActualSectionToInstallW(HINF, PCWSTR, PWSTR, DWORD, PDWORD, PWSTR *);
 #define         SetupDiGetActualSectionToInstall WINELIB_NAME_AW(SetupDiGetActualSectionToInstall)
-BOOL     WINAPI SetupDiGetActualSectionToInstallExA(HINF, PCSTR, PSTR, DWORD, PDWORD, PSTR *, PVOID);
-BOOL     WINAPI SetupDiGetActualSectionToInstallExW(HINF, PCWSTR, PWSTR, DWORD, PDWORD, PWSTR *, PVOID);
+BOOL     WINAPI SetupDiGetActualSectionToInstallExA(HINF, PCSTR, PSP_ALTPLATFORM_INFO, PSTR, DWORD, PDWORD, PSTR *, PVOID);
+BOOL     WINAPI SetupDiGetActualSectionToInstallExW(HINF, PCWSTR, PSP_ALTPLATFORM_INFO, PWSTR, DWORD, PDWORD, PWSTR *, PVOID);
 #define         SetupDiGetActualSectionToInstallEx WINELIB_NAME_AW(SetupDiGetActualSectionToInstallEx)
 BOOL     WINAPI SetupDiGetClassBitmapIndex(const GUID *, PINT);
 BOOL     WINAPI SetupDiGetClassDescriptionA(const GUID*, PSTR, DWORD, PDWORD);

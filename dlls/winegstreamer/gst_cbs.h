@@ -42,7 +42,8 @@ enum CB_TYPE {
     REMOVED_DECODED_PAD,
     AUTOPLUG_BLACKLIST,
     UNKNOWN_TYPE,
-    QUERY_SINK
+    QUERY_SINK,
+    GSTDEMUX_MAX
 };
 
 struct cb_data {
@@ -54,11 +55,11 @@ struct cb_data {
             gpointer user;
             GstBusSyncReply ret;
         } watch_bus_data;
-        struct existing_new_pad_data {
-            GstElement *bin;
+        struct pad_added_data {
+            GstElement *element;
             GstPad *pad;
             gpointer user;
-        } existing_new_pad_data;
+        } pad_added_data;
         struct query_function_data {
             GstPad *pad;
             GstObject *parent;
@@ -73,17 +74,17 @@ struct cb_data {
             gboolean ret;
         } activate_mode_data;
         struct no_more_pads_data {
-            GstElement *decodebin;
+            GstElement *element;
             gpointer user;
         } no_more_pads_data;
-        struct request_buffer_src_data {
+        struct getrange_data {
             GstPad *pad;
             GstObject *parent;
             guint64 ofs;
             guint len;
             GstBuffer **buf;
             GstFlowReturn ret;
-        } request_buffer_src_data;
+        } getrange_data;
         struct event_src_data {
             GstPad *pad;
             GstObject *parent;
@@ -102,11 +103,11 @@ struct cb_data {
             GstBuffer *buf;
             GstFlowReturn ret;
         } got_data_sink_data;
-        struct removed_decoded_pad_data {
-            GstElement *bin;
+        struct pad_removed_data {
+            GstElement *element;
             GstPad *pad;
             gpointer user;
-        } removed_decoded_pad_data;
+        } pad_removed_data;
         struct autoplug_blacklist_data {
             GstElement *bin;
             GstPad *pad;
@@ -135,12 +136,8 @@ struct cb_data {
     struct list entry;
 };
 
-extern pthread_mutex_t cb_list_lock DECLSPEC_HIDDEN;
-extern pthread_cond_t cb_list_cond DECLSPEC_HIDDEN;
-extern struct list cb_list DECLSPEC_HIDDEN;
-void CALLBACK perform_cb(TP_CALLBACK_INSTANCE *instance, void *user) DECLSPEC_HIDDEN;
-BOOL is_wine_thread(void) DECLSPEC_HIDDEN;
 void mark_wine_thread(void) DECLSPEC_HIDDEN;
+void perform_cb_gstdemux(struct cb_data *data) DECLSPEC_HIDDEN;
 
 GstBusSyncReply watch_bus_wrapper(GstBus *bus, GstMessage *msg, gpointer user) DECLSPEC_HIDDEN;
 void existing_new_pad_wrapper(GstElement *bin, GstPad *pad, gpointer user) DECLSPEC_HIDDEN;

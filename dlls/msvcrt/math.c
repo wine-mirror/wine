@@ -1735,7 +1735,7 @@ char * CDECL MSVCRT__ecvt( double number, int ndigits, int *decpt, int *sign )
     /* handle cases with zero ndigits or less */
     prec = ndigits;
     if( prec < 1) prec = 2;
-    len = snprintf(data->efcvt_buffer, 80, "%.*le", prec - 1, number);
+    len = MSVCRT__snprintf(data->efcvt_buffer, 80, "%.*le", prec - 1, number);
     /* take the decimal "point away */
     if( prec != 1)
         memmove( data->efcvt_buffer + 1, data->efcvt_buffer + 2, len - 1 );
@@ -1795,7 +1795,7 @@ int CDECL MSVCRT__ecvt_s( char *buffer, MSVCRT_size_t length, double number, int
         number = -number;
     } else
         *sign = FALSE;
-    len = snprintf(result, prec + 7, "%.*le", prec - 1, number);
+    len = MSVCRT__snprintf(result, prec + 7, "%.*le", prec - 1, number);
     /* take the decimal "point away */
     if( prec != 1)
         memmove( result + 1, result + 2, len - 1 );
@@ -1837,7 +1837,7 @@ char * CDECL MSVCRT__fcvt( double number, int ndigits, int *decpt, int *sign )
 	number = -number;
     } else *sign = 0;
 
-    stop = snprintf(buf, 80, "%.*f", ndigits < 0 ? 0 : ndigits, number);
+    stop = MSVCRT__snprintf(buf, 80, "%.*f", ndigits < 0 ? 0 : ndigits, number);
     ptr1 = buf;
     ptr2 = data->efcvt_buffer;
     first = NULL;
@@ -1920,7 +1920,7 @@ int CDECL MSVCRT__fcvt_s(char* outbuffer, MSVCRT_size_t size, double number, int
 	number = -number;
     } else *sign = 0;
 
-    stop = snprintf(buf, 80, "%.*f", ndigits < 0 ? 0 : ndigits, number);
+    stop = MSVCRT__snprintf(buf, 80, "%.*f", ndigits < 0 ? 0 : ndigits, number);
     ptr1 = buf;
     ptr2 = outbuffer;
     first = NULL;

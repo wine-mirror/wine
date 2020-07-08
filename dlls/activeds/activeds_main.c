@@ -61,10 +61,14 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 /*****************************************************
  * ADsGetObject     [ACTIVEDS.3]
  */
-HRESULT WINAPI ADsGetObject(LPCWSTR lpszPathName, REFIID riid, VOID** ppObject)
+HRESULT WINAPI ADsGetObject(LPCWSTR path, REFIID riid, void **obj)
 {
-    FIXME("(%s)->(%s,%p)!stub\n",debugstr_w(lpszPathName), debugstr_guid(riid), ppObject);
-    return E_NOTIMPL;
+    HRESULT hr;
+
+    hr = ADsOpenObject(path, NULL, NULL, ADS_SECURE_AUTHENTICATION, riid, obj);
+    if (hr != S_OK)
+        hr = ADsOpenObject(path, NULL, NULL, 0, riid, obj);
+    return hr;
 }
 
 /*****************************************************
@@ -97,10 +101,44 @@ HRESULT WINAPI ADsEnumerateNext(IEnumVARIANT* pEnumVariant, ULONG cElements, VAR
 /*****************************************************
  * ADsBuildVarArrayStr     [ACTIVEDS.7]
  */
-HRESULT WINAPI ADsBuildVarArrayStr(LPWSTR *lppPathNames, DWORD dwPathNames, VARIANT* pvar)
+HRESULT WINAPI ADsBuildVarArrayStr(LPWSTR *str, DWORD count, VARIANT *var)
 {
-    FIXME("(%p, %d, %p)!stub\n",*lppPathNames, dwPathNames, pvar);
-    return E_NOTIMPL;
+    HRESULT hr;
+    SAFEARRAY *sa;
+    LONG idx, end = count;
+
+    TRACE("(%p, %u, %p)\n", str, count, var);
+
+    if (!var) return E_ADS_BAD_PARAMETER;
+
+    sa = SafeArrayCreateVector(VT_VARIANT, 0, count);
+    if (!sa) return E_OUTOFMEMORY;
+
+    VariantInit(var);
+    for (idx = 0; idx < end; idx++)
+    {
+        VARIANT item;
+
+        V_VT(&item) = VT_BSTR;
+        V_BSTR(&item) = SysAllocString(str[idx]);
+        if (!V_BSTR(&item))
+        {
+            hr = E_OUTOFMEMORY;
+            goto fail;
+        }
+
+        hr = SafeArrayPutElement(sa, &idx, &item);
+        SysFreeString(V_BSTR(&item));
+        if (hr != S_OK) goto fail;
+    }
+
+    V_VT(var) = VT_ARRAY | VT_VARIANT;
+    V_ARRAY(var) = sa;
+    return S_OK;
+
+fail:
+    SafeArrayDestroy(sa);
+    return hr;
 }
 
 /*****************************************************
@@ -127,10 +165,10 @@ HRESULT WINAPI ADsOpenObject(LPCWSTR path, LPCWSTR user, LPCWSTR password, DWORD
     if (!path || !riid || !obj)
         return E_INVALIDARG;
 
-    if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\ADs\\Providers", 0, KEY_READ, &hkey))
-        return E_ADS_BAD_PATHNAME;
+    hr = E_FAIL;
 
-    hr = E_ADS_BAD_PATHNAME;
+    if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\ADs\\Providers", 0, KEY_READ, &hkey))
+        return hr;
 
     for (;;)
     {

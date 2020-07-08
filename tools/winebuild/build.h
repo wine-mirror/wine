@@ -303,7 +303,7 @@ extern void output_get_pc_thunk(void);
 extern void output_module( DLLSPEC *spec );
 extern void output_stubs( DLLSPEC *spec );
 extern void output_imports( DLLSPEC *spec );
-extern void output_import_lib( DLLSPEC *spec, char **argv );
+extern void output_static_lib( DLLSPEC *spec, char **argv );
 extern void output_exports( DLLSPEC *spec );
 extern int load_res32_file( const char *name, DLLSPEC *spec );
 extern void output_resources( DLLSPEC *spec );
@@ -321,6 +321,7 @@ extern void output_fake_module16( DLLSPEC *spec16 );
 extern void output_res_o_file( DLLSPEC *spec );
 extern void output_asm_relays16(void);
 extern void make_builtin_files( char *argv[] );
+extern void fixup_constructors( char *argv[] );
 
 extern void add_16bit_exports( DLLSPEC *spec32, DLLSPEC *spec16 );
 extern int parse_spec_file( FILE *file, DLLSPEC *spec );
@@ -363,6 +364,7 @@ extern int link_ext_symbols;
 extern int force_pointer_size;
 extern int unwind_tables;
 extern int unix_lib;
+extern int safe_seh;
 
 extern char *input_file_name;
 extern char *spec_file_name;

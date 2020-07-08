@@ -42,7 +42,6 @@
 #include "winternl.h"
 #include "ddk/wdm.h"
 #include "ddk/hidtypes.h"
-#include "wine/library.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
 #include "hidusage.h"
@@ -265,24 +264,14 @@ static void set_button_value(struct platform_private *ext, int index, int value)
     }
 }
 
-static void set_axis_value(struct platform_private *ext, int index, short value)
+static void set_axis_value(struct platform_private *ext, int index, short value, BOOL controller)
 {
-    int offset;
-    offset = ext->axis_start + index * sizeof(WORD);
+    WORD *report = (WORD *)(ext->report_buffer + ext->axis_start);
 
-    switch (index)
-    {
-    case SDL_CONTROLLER_AXIS_LEFTX:
-    case SDL_CONTROLLER_AXIS_LEFTY:
-    case SDL_CONTROLLER_AXIS_RIGHTX:
-    case SDL_CONTROLLER_AXIS_RIGHTY:
-        *((WORD*)&ext->report_buffer[offset]) = LE_WORD(value) + 32768;
-        break;
-    case SDL_CONTROLLER_AXIS_TRIGGERLEFT:
-    case SDL_CONTROLLER_AXIS_TRIGGERRIGHT:
-        *((WORD*)&ext->report_buffer[offset]) = LE_WORD(value);
-        break;
-    }
+    if (controller && (index == SDL_CONTROLLER_AXIS_TRIGGERLEFT || index == SDL_CONTROLLER_AXIS_TRIGGERRIGHT))
+        report[index] = LE_WORD(value);
+    else
+        report[index] = LE_WORD(value) + 32768;
 }
 
 static void set_ball_value(struct platform_private *ext, int index, int value1, int value2)
@@ -510,7 +499,7 @@ static BOOL build_report_descriptor(struct platform_private *ext)
 
     /* Initialize axis in the report */
     for (i = 0; i < axis_count; i++)
-        set_axis_value(ext, i, pSDL_JoystickGetAxis(ext->sdl_joystick, i));
+        set_axis_value(ext, i, pSDL_JoystickGetAxis(ext->sdl_joystick, i), FALSE);
     for (i = 0; i < hat_count; i++)
         set_hat_value(ext, i, pSDL_JoystickGetHat(ext->sdl_joystick, i));
 
@@ -608,7 +597,7 @@ static BOOL build_mapped_report_descriptor(struct platform_private *ext)
 
     /* Initialize axis in the report */
     for (i = SDL_CONTROLLER_AXIS_LEFTX; i < SDL_CONTROLLER_AXIS_MAX; i++)
-        set_axis_value(ext, i, pSDL_GameControllerGetAxis(ext->sdl_controller, i));
+        set_axis_value(ext, i, pSDL_GameControllerGetAxis(ext->sdl_controller, i), TRUE);
 
     set_hat_value(ext, 0, compose_dpad_value(ext->sdl_controller));
 
@@ -787,7 +776,7 @@ static BOOL set_report_from_event(SDL_Event *event)
 
             if (ie->axis < 6)
             {
-                set_axis_value(private, ie->axis, ie->value);
+                set_axis_value(private, ie->axis, ie->value, FALSE);
                 process_hid_report(device, private->report_buffer, private->buffer_length);
             }
             break;
@@ -873,7 +862,7 @@ static BOOL set_mapped_report_from_event(SDL_Event *event)
         {
             SDL_ControllerAxisEvent *ie = &event->caxis;
 
-            set_axis_value(private, ie->axis, ie->value);
+            set_axis_value(private, ie->axis, ie->value, TRUE);
             process_hid_report(device, private->report_buffer, private->buffer_length);
             break;
         }
@@ -1111,7 +1100,7 @@ void sdl_driver_unload( void )
 
     WaitForSingleObject(deviceloop_handle, INFINITE);
     CloseHandle(deviceloop_handle);
-    wine_dlclose(sdl_handle, NULL, 0);
+    dlclose(sdl_handle);
 }
 
 NTSTATUS sdl_driver_init(void)
@@ -1124,12 +1113,12 @@ NTSTATUS sdl_driver_init(void)
 
     if (sdl_handle == NULL)
     {
-        sdl_handle = wine_dlopen(SONAME_LIBSDL2, RTLD_NOW, NULL, 0);
+        sdl_handle = dlopen(SONAME_LIBSDL2, RTLD_NOW);
         if (!sdl_handle) {
             WARN("could not load %s\n", SONAME_LIBSDL2);
             return STATUS_UNSUCCESSFUL;
         }
-#define LOAD_FUNCPTR(f) if((p##f = wine_dlsym(sdl_handle, #f, NULL, 0)) == NULL){WARN("Can't find symbol %s\n", #f); goto sym_not_found;}
+#define LOAD_FUNCPTR(f) if((p##f = dlsym(sdl_handle, #f)) == NULL){WARN("Can't find symbol %s\n", #f); goto sym_not_found;}
         LOAD_FUNCPTR(SDL_GetError);
         LOAD_FUNCPTR(SDL_Init);
         LOAD_FUNCPTR(SDL_JoystickClose);
@@ -1169,9 +1158,9 @@ NTSTATUS sdl_driver_init(void)
         LOAD_FUNCPTR(SDL_RegisterEvents);
         LOAD_FUNCPTR(SDL_PushEvent);
 #undef LOAD_FUNCPTR
-        pSDL_JoystickGetProduct = wine_dlsym(sdl_handle, "SDL_JoystickGetProduct", NULL, 0);
-        pSDL_JoystickGetProductVersion = wine_dlsym(sdl_handle, "SDL_JoystickGetProductVersion", NULL, 0);
-        pSDL_JoystickGetVendor = wine_dlsym(sdl_handle, "SDL_JoystickGetVendor", NULL, 0);
+        pSDL_JoystickGetProduct = dlsym(sdl_handle, "SDL_JoystickGetProduct");
+        pSDL_JoystickGetProductVersion = dlsym(sdl_handle, "SDL_JoystickGetProductVersion");
+        pSDL_JoystickGetVendor = dlsym(sdl_handle, "SDL_JoystickGetVendor");
     }
 
     map_controllers = check_bus_option(&controller_mode, 1);
@@ -1199,7 +1188,7 @@ NTSTATUS sdl_driver_init(void)
     CloseHandle(events[1]);
 
 sym_not_found:
-    wine_dlclose(sdl_handle, NULL, 0);
+    dlclose(sdl_handle);
     sdl_handle = NULL;
     return STATUS_UNSUCCESSFUL;
 }

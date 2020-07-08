@@ -5,6 +5,7 @@ IMPORTS   = mfuuid uuid mfplat ole32
 EXTRADLLFLAGS = -mno-cygwin
 
 C_SRCS = \
-	main.c
+	reader.c \
+	writer.c
 
 IDL_SRCS = mf_classes.idl

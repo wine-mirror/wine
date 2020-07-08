@@ -115,7 +115,6 @@ static void test_WsCreateChannel(void)
 
 static void test_WsOpenChannel(void)
 {
-    WCHAR url[] = {'h','t','t','p',':','/','/','l','o','c','a','l','h','o','s','t'};
     HRESULT hr;
     WS_CHANNEL *channel;
     WS_ENDPOINT_ADDRESS addr;
@@ -134,8 +133,8 @@ static void test_WsOpenChannel(void)
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
     memset( &addr, 0, sizeof(addr) );
-    addr.url.length = ARRAY_SIZE( url );
-    addr.url.chars  = url;
+    addr.url.length = ARRAY_SIZE( L"http://localhost" ) - 1;
+    addr.url.chars  = (WCHAR *)L"http://localhost";
     hr = WsOpenChannel( NULL, &addr, NULL, NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
@@ -159,7 +158,6 @@ static void test_WsOpenChannel(void)
 
 static void test_WsResetChannel(void)
 {
-    WCHAR url[] = {'h','t','t','p',':','/','/','l','o','c','a','l','h','o','s','t'};
     HRESULT hr;
     WS_CHANNEL *channel;
     WS_CHANNEL_STATE state;
@@ -179,8 +177,8 @@ static void test_WsResetChannel(void)
     ok( hr == S_OK, "got %08x\n", hr );
 
     memset( &addr, 0, sizeof(addr) );
-    addr.url.length = ARRAY_SIZE( url );
-    addr.url.chars  = url;
+    addr.url.length = ARRAY_SIZE( L"http://localhost" ) - 1;
+    addr.url.chars  = (WCHAR *)L"http://localhost";
     hr = WsOpenChannel( channel, &addr, NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
@@ -274,12 +272,6 @@ static void test_WsCreateListener(void)
 
 static void test_WsOpenListener(void)
 {
-    WCHAR str[] =
-        {'n','e','t','.','t','c','p',':','/','/','+',':','2','0','1','7','/','p','a','t','h'};
-    WCHAR str2[] =
-        {'n','e','t','.','t','c','p',':','/','/','l','o','c','a','l','h','o','s','t',':','2','0','1','7'};
-    WCHAR str3[] =
-        {'n','e','t','.','t','c','p',':','/','/','1','2','7','.','0','.','0','.','1',':','2','0','1','7'};
     WS_STRING url;
     WS_LISTENER *listener;
     HRESULT hr;
@@ -300,9 +292,8 @@ static void test_WsOpenListener(void)
 
     hr = WsOpenListener( listener, NULL, NULL, NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
-
-    url.length = ARRAY_SIZE( str );
-    url.chars  = str;
+    url.length = ARRAY_SIZE( L"net.tcp://+:2017/path" ) - 1;
+    url.chars  = (WCHAR *)L"net.tcp://+:2017/path";
     hr = WsOpenListener( NULL, &url, NULL, NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
@@ -320,8 +311,8 @@ static void test_WsOpenListener(void)
     hr = WsCreateListener( WS_CHANNEL_TYPE_DUPLEX_SESSION, WS_TCP_CHANNEL_BINDING, NULL, 0, NULL, &listener, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
-    url.length = ARRAY_SIZE( str2 );
-    url.chars  = str2;
+    url.length = ARRAY_SIZE( L"net.tcp://localhost:2017" ) - 1;
+    url.chars  = (WCHAR *)L"net.tcp://localhost:2017";
     hr = WsOpenListener( listener, &url, NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
@@ -333,8 +324,8 @@ static void test_WsOpenListener(void)
     hr = WsCreateListener( WS_CHANNEL_TYPE_DUPLEX_SESSION, WS_TCP_CHANNEL_BINDING, NULL, 0, NULL, &listener, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
-    url.length = ARRAY_SIZE( str3 );
-    url.chars  = str3;
+    url.length = ARRAY_SIZE( L"net.tcp://127.0.0.1:2017" ) - 1;
+    url.chars  = (WCHAR *)L"net.tcp://127.0.0.1:2017";
     hr = WsOpenListener( listener, &url, NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
@@ -385,9 +376,7 @@ static void test_WsCreateChannelForListener(void)
 
 static void test_WsResetListener(void)
 {
-    WCHAR str[] =
-        {'n','e','t','.','t','c','p',':','/','/','+',':','2','0','1','7','/','p','a','t','h'};
-    WS_STRING url = { ARRAY_SIZE( str ), str };
+    WS_STRING url = { ARRAY_SIZE( L"net.tcp://+:2017/path" ) - 1, (WCHAR *)L"net.tcp://+:2017/path" };
     WS_LISTENER *listener;
     WS_LISTENER_STATE state;
     WS_LISTENER_PROPERTY prop;
@@ -432,11 +421,6 @@ static void test_WsResetListener(void)
 
     WsFreeListener( listener );
 }
-
-static const WCHAR fmt_soap_udp[] =
-    {'s','o','a','p','.','u','d','p',':','/','/','l','o','c','a','l','h','o','s','t',':','%','u',0};
-static const WCHAR fmt_net_tcp[] =
-    {'n','e','t','.','t','c','p',':','/','/','l','o','c','a','l','h','o','s','t',':','%','u',0};
 
 struct listener_info
 {
@@ -494,7 +478,7 @@ static void client_message_read_write( const struct listener_info *info )
     ok( hr == S_OK, "got %08x\n", hr );
 
     memset( &addr, 0, sizeof(addr) );
-    addr.url.length = wsprintfW( buf, fmt_soap_udp, info->port );
+    addr.url.length = wsprintfW( buf, L"soap.udp://localhost:%u", info->port );
     addr.url.chars  = buf;
     hr = WsOpenChannel( channel, &addr, NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -635,7 +619,7 @@ static void client_duplex_session( const struct listener_info *info )
     ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
 
     memset( &addr, 0, sizeof(addr) );
-    addr.url.length = wsprintfW( buf, fmt_net_tcp, info->port );
+    addr.url.length = wsprintfW( buf, L"net.tcp://localhost:%u", info->port );
     addr.url.chars  = buf;
     hr = WsOpenChannel( channel, &addr, NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -707,7 +691,7 @@ static void server_accept_channel( WS_CHANNEL *channel )
 
 static void client_accept_channel( const struct listener_info *info )
 {
-    const WCHAR *fmt = (info->binding == WS_TCP_CHANNEL_BINDING) ? fmt_net_tcp : fmt_soap_udp;
+    const WCHAR *fmt = (info->binding == WS_TCP_CHANNEL_BINDING) ?  L"net.tcp://localhost:%u" : L"soap.udp://localhost:%u";
     WS_XML_STRING localname = {9, (BYTE *)"localname"}, ns = {2, (BYTE *)"ns"}, action = {6, (BYTE *)"action"};
     WCHAR buf[64];
     WS_LISTENER *listener;
@@ -827,7 +811,7 @@ static void client_request_reply( const struct listener_info *info )
     ok( hr == S_OK, "got %08x\n", hr );
 
     memset( &addr, 0, sizeof(addr) );
-    addr.url.length = wsprintfW( buf, fmt_net_tcp, info->port );
+    addr.url.length = wsprintfW( buf, L"net.tcp://localhost:%u", info->port );
     addr.url.chars  = buf;
     hr = WsOpenChannel( channel, &addr, NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -867,7 +851,7 @@ static void client_request_reply( const struct listener_info *info )
 static DWORD CALLBACK listener_proc( void *arg )
 {
     struct listener_info *info = arg;
-    const WCHAR *fmt = (info->binding == WS_TCP_CHANNEL_BINDING) ? fmt_net_tcp : fmt_soap_udp;
+    const WCHAR *fmt = (info->binding == WS_TCP_CHANNEL_BINDING) ? L"net.tcp://localhost:%u" : L"soap.udp://localhost:%u";
     WS_LISTENER *listener;
     WS_CHANNEL *channel;
     WCHAR buf[64];
@@ -973,7 +957,6 @@ done:
 
 static HRESULT set_firewall( enum firewall_op op )
 {
-    static const WCHAR testW[] = {'w','e','b','s','e','r','v','i','c','e','s','_','t','e','s','t',0};
     HRESULT hr, init;
     INetFwMgr *mgr = NULL;
     INetFwPolicy *policy = NULL;
@@ -1013,7 +996,7 @@ static HRESULT set_firewall( enum firewall_op op )
     hr = INetFwAuthorizedApplication_put_ProcessImageFileName( app, image );
     if (hr != S_OK) goto done;
 
-    name = SysAllocString( testW );
+    name = SysAllocString( L"webservices_test" );
     hr = INetFwAuthorizedApplication_put_Name( app, name );
     SysFreeString( name );
     ok( hr == S_OK, "got %08x\n", hr );

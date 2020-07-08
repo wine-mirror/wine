@@ -27,12 +27,134 @@ WINE_DEFAULT_DEBUG_CHANNEL(amstream);
 
 static const WCHAR sink_id[] = L"I{A35FF56B-9FDA-11D0-8FDF-00C04FD9189D}";
 
+struct queued_receive
+{
+    struct list entry;
+    IMediaSample *sample;
+    DWORD length;
+    BYTE *pointer;
+    DWORD position;
+    STREAM_TIME start_time;
+};
+
+struct audio_stream
+{
+    IAMMediaStream IAMMediaStream_iface;
+    IAudioMediaStream IAudioMediaStream_iface;
+    IMemInputPin IMemInputPin_iface;
+    IPin IPin_iface;
+    LONG ref;
+
+    IMultiMediaStream* parent;
+    MSPID purpose_id;
+    STREAM_TYPE stream_type;
+    CRITICAL_SECTION cs;
+    IMediaStreamFilter *filter;
+
+    IPin *peer;
+    IMemAllocator *allocator;
+    AM_MEDIA_TYPE mt;
+    WAVEFORMATEX format;
+    FILTER_STATE state;
+    REFERENCE_TIME segment_start;
+    BOOL eos;
+    BOOL flushing;
+    struct list receive_queue;
+    struct list update_queue;
+};
+
 typedef struct {
     IAudioStreamSample IAudioStreamSample_iface;
     LONG ref;
-    IMediaStream *parent;
+    struct audio_stream *parent;
     IAudioData *audio_data;
+    STREAM_TIME start_time;
+    STREAM_TIME end_time;
+    HANDLE update_event;
+
+    struct list entry;
+    DWORD length;
+    BYTE *pointer;
+    DWORD position;
+    HRESULT update_hr;
 } IAudioStreamSampleImpl;
+
+static void remove_queued_receive(struct queued_receive *receive)
+{
+    list_remove(&receive->entry);
+    IMediaSample_Release(receive->sample);
+    free(receive);
+}
+
+static void remove_queued_update(IAudioStreamSampleImpl *sample)
+{
+    HRESULT hr;
+
+    hr = IAudioData_SetActual(sample->audio_data, sample->position);
+    if (FAILED(hr))
+        sample->update_hr = hr;
+
+    list_remove(&sample->entry);
+    SetEvent(sample->update_event);
+}
+
+static void flush_receive_queue(struct audio_stream *stream)
+{
+    struct list *entry;
+
+    while ((entry = list_head(&stream->receive_queue)))
+        remove_queued_receive(LIST_ENTRY(entry, struct queued_receive, entry));
+}
+
+static STREAM_TIME stream_time_from_position(struct audio_stream *stream, struct queued_receive *receive)
+{
+    const WAVEFORMATEX *format = (WAVEFORMATEX *)stream->mt.pbFormat;
+    return receive->start_time + (receive->position * 10000000 + format->nAvgBytesPerSec / 2) / format->nAvgBytesPerSec;
+}
+
+static void process_update(IAudioStreamSampleImpl *sample, struct queued_receive *receive)
+{
+    DWORD advance;
+
+    advance = min(receive->length - receive->position, sample->length - sample->position);
+    memcpy(&sample->pointer[sample->position], &receive->pointer[receive->position], advance);
+
+    if (!sample->position)
+        sample->start_time = stream_time_from_position(sample->parent, receive);
+
+    receive->position += advance;
+    sample->position += advance;
+
+    sample->end_time = stream_time_from_position(sample->parent, receive);
+
+    sample->update_hr = (sample->position == sample->length) ? S_OK : MS_S_PENDING;
+}
+
+static void process_updates(struct audio_stream *stream)
+{
+    while (!list_empty(&stream->update_queue) && !list_empty(&stream->receive_queue))
+    {
+        IAudioStreamSampleImpl *sample = LIST_ENTRY(list_head(&stream->update_queue), IAudioStreamSampleImpl, entry);
+        struct queued_receive *receive = LIST_ENTRY(list_head(&stream->receive_queue), struct queued_receive, entry);
+
+        process_update(sample, receive);
+
+        if (sample->update_hr != MS_S_PENDING)
+            remove_queued_update(sample);
+        if (receive->position == receive->length)
+            remove_queued_receive(receive);
+    }
+    if (stream->eos)
+    {
+        while (!list_empty(&stream->update_queue))
+        {
+            IAudioStreamSampleImpl *sample = LIST_ENTRY(list_head(&stream->update_queue), IAudioStreamSampleImpl, entry);
+
+            sample->update_hr = sample->position ? S_OK : MS_S_ENDOFSTREAM;
+            remove_queued_update(sample);
+        }
+    }
+}
 
 static inline IAudioStreamSampleImpl *impl_from_IAudioStreamSample(IAudioStreamSample *iface)
 {
@@ -78,7 +200,10 @@ static ULONG WINAPI IAudioStreamSampleImpl_Release(IAudioStreamSample *iface)
     TRACE("(%p)->(): new ref = %u\n", iface, ref);
 
     if (!ref)
+    {
+        CloseHandle(This->update_event);
         HeapFree(GetProcessHeap(), 0, This);
+    }
 
     return ref;
 }
@@ -94,9 +219,19 @@ static HRESULT WINAPI IAudioStreamSampleImpl_GetMediaStream(IAudioStreamSample *
 static HRESULT WINAPI IAudioStreamSampleImpl_GetSampleTimes(IAudioStreamSample *iface, STREAM_TIME *start_time,
                                                                  STREAM_TIME *end_time, STREAM_TIME *current_time)
 {
-    FIXME("(%p)->(%p,%p,%p): stub\n", iface, start_time, end_time, current_time);
+    IAudioStreamSampleImpl *sample = impl_from_IAudioStreamSample(iface);
 
-    return E_NOTIMPL;
+    TRACE("sample %p, start_time %p, end_time %p, current_time %p.\n", sample, start_time, end_time, current_time);
+
+    if (current_time)
+        IMediaStreamFilter_GetCurrentStreamTime(sample->parent->filter, current_time);
+
+    if (start_time)
+        *start_time = sample->start_time;
+    if (end_time)
+        *end_time = sample->end_time;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IAudioStreamSampleImpl_SetSampleTimes(IAudioStreamSample *iface, const STREAM_TIME *start_time,
@@ -107,19 +242,100 @@ static HRESULT WINAPI IAudioStreamSampleImpl_SetSampleTimes(IAudioStreamSample *
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IAudioStreamSampleImpl_Update(IAudioStreamSample *iface, DWORD flags, HANDLE event,
-                                                         PAPCFUNC func_APC, DWORD APC_data)
+static HRESULT WINAPI IAudioStreamSampleImpl_Update(IAudioStreamSample *iface,
+        DWORD flags, HANDLE event, PAPCFUNC apc_func, DWORD apc_data)
 {
-    FIXME("(%p)->(%x,%p,%p,%u): stub\n", iface, flags, event, func_APC, APC_data);
+    IAudioStreamSampleImpl *sample = impl_from_IAudioStreamSample(iface);
+    BYTE *pointer;
+    DWORD length;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("sample %p, flags %#x, event %p, apc_func %p, apc_data %#x.\n",
+            sample, flags, event, apc_func, apc_data);
+
+    hr = IAudioData_GetInfo(sample->audio_data, &length, &pointer, NULL);
+    if (FAILED(hr))
+        return hr;
+
+    if (event && apc_func)
+        return E_INVALIDARG;
+
+    if (apc_func)
+    {
+        FIXME("APC support is not implemented!\n");
+        return E_NOTIMPL;
+    }
+
+    if (event)
+    {
+        FIXME("Event parameter support is not implemented!\n");
+        return E_NOTIMPL;
+    }
+
+    if (flags & ~SSUPDATE_ASYNC)
+    {
+        FIXME("Unsupported flags %#x.\n", flags);
+        return E_NOTIMPL;
+    }
+
+    EnterCriticalSection(&sample->parent->cs);
+
+    if (sample->parent->state != State_Running)
+    {
+        LeaveCriticalSection(&sample->parent->cs);
+        return MS_E_NOTRUNNING;
+    }
+    if (!sample->parent->peer)
+    {
+        LeaveCriticalSection(&sample->parent->cs);
+        return MS_S_ENDOFSTREAM;
+    }
+    if (MS_S_PENDING == sample->update_hr)
+    {
+        LeaveCriticalSection(&sample->parent->cs);
+        return MS_E_BUSY;
+    }
+
+    sample->length = length;
+    sample->pointer = pointer;
+    sample->position = 0;
+    sample->update_hr = MS_S_PENDING;
+    ResetEvent(sample->update_event);
+    list_add_tail(&sample->parent->update_queue, &sample->entry);
+
+    process_updates(sample->parent);
+    hr = sample->update_hr;
+
+    LeaveCriticalSection(&sample->parent->cs);
+
+    if (hr != MS_S_PENDING || (flags & SSUPDATE_ASYNC))
+        return hr;
+
+    WaitForSingleObject(sample->update_event, INFINITE);
+
+    return sample->update_hr;
 }
 
 static HRESULT WINAPI IAudioStreamSampleImpl_CompletionStatus(IAudioStreamSample *iface, DWORD flags, DWORD milliseconds)
 {
-    FIXME("(%p)->(%x,%u): stub\n", iface, flags, milliseconds);
+    IAudioStreamSampleImpl *sample = impl_from_IAudioStreamSample(iface);
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("sample %p, flags %#x, milliseconds %u.\n", sample, flags, milliseconds);
+
+    if (flags)
+    {
+        FIXME("Unhandled flags %#x.\n", flags);
+        return E_NOTIMPL;
+    }
+
+    EnterCriticalSection(&sample->parent->cs);
+
+    hr = sample->update_hr;
+
+    LeaveCriticalSection(&sample->parent->cs);
+
+    return hr;
 }
 
 /*** IAudioStreamSample methods ***/
@@ -146,7 +362,7 @@ static const struct IAudioStreamSampleVtbl AudioStreamSample_Vtbl =
     IAudioStreamSampleImpl_GetAudioData
 };
 
-static HRESULT audiostreamsample_create(IAudioMediaStream *parent, IAudioData *audio_data, IAudioStreamSample **audio_stream_sample)
+static HRESULT audiostreamsample_create(struct audio_stream *parent, IAudioData *audio_data, IAudioStreamSample **audio_stream_sample)
 {
     IAudioStreamSampleImpl *object;
 
@@ -158,33 +374,14 @@ static HRESULT audiostreamsample_create(IAudioMediaStream *parent, IAudioData *a
 
     object->IAudioStreamSample_iface.lpVtbl = &AudioStreamSample_Vtbl;
     object->ref = 1;
-    object->parent = (IMediaStream*)parent;
+    object->parent = parent;
     object->audio_data = audio_data;
+    object->update_event = CreateEventW(NULL, FALSE, FALSE, NULL);
 
     *audio_stream_sample = &object->IAudioStreamSample_iface;
 
     return S_OK;
 }
-
-struct audio_stream
-{
-    IAMMediaStream IAMMediaStream_iface;
-    IAudioMediaStream IAudioMediaStream_iface;
-    IMemInputPin IMemInputPin_iface;
-    IPin IPin_iface;
-    LONG ref;
-
-    IMultiMediaStream* parent;
-    MSPID purpose_id;
-    STREAM_TYPE stream_type;
-    CRITICAL_SECTION cs;
-    IMediaStreamFilter *filter;
-
-    IPin *peer;
-    IMemAllocator *allocator;
-    AM_MEDIA_TYPE mt;
-    WAVEFORMATEX format;
-};
 
 static inline struct audio_stream *impl_from_IAMMediaStream(IAMMediaStream *iface)
 {
@@ -258,18 +455,18 @@ static ULONG WINAPI audio_IAMMediaStream_Release(IAMMediaStream *iface)
 
 /*** IMediaStream methods ***/
 static HRESULT WINAPI audio_IAMMediaStream_GetMultiMediaStream(IAMMediaStream *iface,
-        IMultiMediaStream** multi_media_stream)
+        IMultiMediaStream **mmstream)
 {
-    struct audio_stream *This = impl_from_IAMMediaStream(iface);
+    struct audio_stream *stream = impl_from_IAMMediaStream(iface);
 
-    TRACE("(%p/%p)->(%p)\n", This, iface, multi_media_stream);
+    TRACE("stream %p, mmstream %p.\n", stream, mmstream);
 
-    if (!multi_media_stream)
+    if (!mmstream)
         return E_POINTER;
 
-    IMultiMediaStream_AddRef(This->parent);
-    *multi_media_stream = This->parent;
-
+    if (stream->parent)
+        IMultiMediaStream_AddRef(stream->parent);
+    *mmstream = stream->parent;
     return S_OK;
 }
 
@@ -331,30 +528,56 @@ static HRESULT WINAPI audio_IAMMediaStream_SendEndOfStream(IAMMediaStream *iface
 static HRESULT WINAPI audio_IAMMediaStream_Initialize(IAMMediaStream *iface, IUnknown *source_object, DWORD flags,
                                                     REFMSPID purpose_id, const STREAM_TYPE stream_type)
 {
-    struct audio_stream *This = impl_from_IAMMediaStream(iface);
+    struct audio_stream *stream = impl_from_IAMMediaStream(iface);
 
-    FIXME("(%p/%p)->(%p,%x,%p,%u) stub!\n", This, iface, source_object, flags, purpose_id, stream_type);
+    TRACE("stream %p, source_object %p, flags %x, purpose_id %s, stream_type %u.\n", stream, source_object, flags,
+            debugstr_guid(purpose_id), stream_type);
 
-    return S_FALSE;
+    if (!purpose_id)
+        return E_POINTER;
+
+    if (source_object)
+        FIXME("Specifying a stream object is not yet supported.\n");
+
+    if (flags & AMMSF_CREATEPEER)
+        FIXME("AMMSF_CREATEPEER is not yet supported.\n");
+
+    stream->purpose_id = *purpose_id;
+    stream->stream_type = stream_type;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI audio_IAMMediaStream_SetState(IAMMediaStream *iface, FILTER_STATE state)
 {
-    struct audio_stream *This = impl_from_IAMMediaStream(iface);
+    struct audio_stream *stream = impl_from_IAMMediaStream(iface);
 
-    FIXME("(%p/%p)->(%u) stub!\n", This, iface, state);
+    TRACE("stream %p, state %u.\n", stream, state);
 
-    return S_FALSE;
+    EnterCriticalSection(&stream->cs);
+
+    if (state == State_Stopped)
+        flush_receive_queue(stream);
+    if (stream->state == State_Stopped)
+        stream->eos = FALSE;
+
+    stream->state = state;
+
+    LeaveCriticalSection(&stream->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI audio_IAMMediaStream_JoinAMMultiMediaStream(IAMMediaStream *iface,
-        IAMMultiMediaStream *am_multi_media_stream)
+        IAMMultiMediaStream *mmstream)
 {
-    struct audio_stream *This = impl_from_IAMMediaStream(iface);
+    struct audio_stream *stream = impl_from_IAMMediaStream(iface);
 
-    FIXME("(%p/%p)->(%p) stub!\n", This, iface, am_multi_media_stream);
+    TRACE("stream %p, mmstream %p.\n", stream, mmstream);
 
-    return S_FALSE;
+    stream->parent = (IMultiMediaStream *)mmstream;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI audio_IAMMediaStream_JoinFilter(IAMMediaStream *iface, IMediaStreamFilter *filter)
@@ -423,76 +646,45 @@ static ULONG WINAPI audio_IAudioMediaStream_Release(IAudioMediaStream *iface)
     return IAMMediaStream_Release(&This->IAMMediaStream_iface);
 }
 
-/*** IMediaStream methods ***/
 static HRESULT WINAPI audio_IAudioMediaStream_GetMultiMediaStream(IAudioMediaStream *iface,
-        IMultiMediaStream **multi_media_stream)
+        IMultiMediaStream **mmstream)
 {
-    struct audio_stream *This = impl_from_IAudioMediaStream(iface);
-
-    TRACE("(%p/%p)->(%p)\n", iface, This, multi_media_stream);
-
-    if (!multi_media_stream)
-        return E_POINTER;
-
-    IMultiMediaStream_AddRef(This->parent);
-    *multi_media_stream = This->parent;
-
-    return S_OK;
+    struct audio_stream *stream = impl_from_IAudioMediaStream(iface);
+    return IAMMediaStream_GetMultiMediaStream(&stream->IAMMediaStream_iface, mmstream);
 }
 
 static HRESULT WINAPI audio_IAudioMediaStream_GetInformation(IAudioMediaStream *iface,
         MSPID *purpose_id, STREAM_TYPE *type)
 {
-    struct audio_stream *This = impl_from_IAudioMediaStream(iface);
-
-    TRACE("(%p/%p)->(%p,%p)\n", iface, This, purpose_id, type);
-
-    if (purpose_id)
-        *purpose_id = This->purpose_id;
-    if (type)
-        *type = This->stream_type;
-
-    return S_OK;
+    struct audio_stream *stream = impl_from_IAudioMediaStream(iface);
+    return IAMMediaStream_GetInformation(&stream->IAMMediaStream_iface, purpose_id, type);
 }
 
 static HRESULT WINAPI audio_IAudioMediaStream_SetSameFormat(IAudioMediaStream *iface,
-        IMediaStream *stream_format, DWORD flags)
+        IMediaStream *other, DWORD flags)
 {
-    struct audio_stream *This = impl_from_IAudioMediaStream(iface);
-
-    FIXME("(%p/%p)->(%p,%x) stub!\n", iface, This, stream_format, flags);
-
-    return S_FALSE;
+    struct audio_stream *stream = impl_from_IAudioMediaStream(iface);
+    return IAMMediaStream_SetSameFormat(&stream->IAMMediaStream_iface, other, flags);
 }
 
 static HRESULT WINAPI audio_IAudioMediaStream_AllocateSample(IAudioMediaStream *iface,
         DWORD flags, IStreamSample **sample)
 {
-    struct audio_stream *This = impl_from_IAudioMediaStream(iface);
-
-    FIXME("(%p/%p)->(%x,%p) stub!\n", iface, This, flags, sample);
-
-    return S_FALSE;
+    struct audio_stream *stream = impl_from_IAudioMediaStream(iface);
+    return IAMMediaStream_AllocateSample(&stream->IAMMediaStream_iface, flags, sample);
 }
 
 static HRESULT WINAPI audio_IAudioMediaStream_CreateSharedSample(IAudioMediaStream *iface,
         IStreamSample *existing_sample, DWORD flags, IStreamSample **sample)
 {
-    struct audio_stream *This = impl_from_IAudioMediaStream(iface);
-
-    FIXME("(%p/%p)->(%p,%x,%p) stub!\n", iface, This, existing_sample, flags, sample);
-
-    return S_FALSE;
+    struct audio_stream *stream = impl_from_IAudioMediaStream(iface);
+    return IAMMediaStream_CreateSharedSample(&stream->IAMMediaStream_iface, existing_sample, flags, sample);
 }
 
-static HRESULT WINAPI audio_IAudioMediaStream_SendEndOfStream(IAudioMediaStream *iface,
-        DWORD flags)
+static HRESULT WINAPI audio_IAudioMediaStream_SendEndOfStream(IAudioMediaStream *iface, DWORD flags)
 {
-    struct audio_stream *This = impl_from_IAudioMediaStream(iface);
-
-    FIXME("(%p/%p)->(%x) stub!\n", iface, This, flags);
-
-    return S_FALSE;
+    struct audio_stream *stream = impl_from_IAudioMediaStream(iface);
+    return IAMMediaStream_SendEndOfStream(&stream->IAMMediaStream_iface, flags);
 }
 
 /*** IAudioMediaStream methods ***/
@@ -558,7 +750,7 @@ static HRESULT WINAPI audio_IAudioMediaStream_CreateSample(IAudioMediaStream *if
     if (!audio_data)
         return E_POINTER;
 
-    return audiostreamsample_create(iface, audio_data, sample);
+    return audiostreamsample_create(This, audio_data, sample);
 }
 
 static const struct IAudioMediaStreamVtbl audio_IAudioMediaStream_vtbl =
@@ -912,27 +1104,73 @@ static HRESULT WINAPI audio_sink_QueryInternalConnections(IPin *iface, IPin **pi
 
 static HRESULT WINAPI audio_sink_EndOfStream(IPin *iface)
 {
-    FIXME("iface %p, stub!\n", iface);
-    return E_NOTIMPL;
+    struct audio_stream *stream = impl_from_IPin(iface);
+
+    TRACE("stream %p.\n", stream);
+
+    EnterCriticalSection(&stream->cs);
+
+    if (stream->eos || stream->flushing)
+    {
+        LeaveCriticalSection(&stream->cs);
+        return E_FAIL;
+    }
+
+    stream->eos = TRUE;
+
+    process_updates(stream);
+
+    LeaveCriticalSection(&stream->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI audio_sink_BeginFlush(IPin *iface)
 {
-    FIXME("iface %p, stub!\n", iface);
-    return E_NOTIMPL;
+    struct audio_stream *stream = impl_from_IPin(iface);
+
+    TRACE("stream %p.\n", stream);
+
+    EnterCriticalSection(&stream->cs);
+
+    stream->flushing = TRUE;
+    stream->eos = FALSE;
+    flush_receive_queue(stream);
+
+    LeaveCriticalSection(&stream->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI audio_sink_EndFlush(IPin *iface)
 {
-    FIXME("iface %p, stub!\n", iface);
-    return E_NOTIMPL;
+    struct audio_stream *stream = impl_from_IPin(iface);
+
+    TRACE("stream %p.\n", stream);
+
+    EnterCriticalSection(&stream->cs);
+
+    stream->flushing = FALSE;
+
+    LeaveCriticalSection(&stream->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI audio_sink_NewSegment(IPin *iface, REFERENCE_TIME start, REFERENCE_TIME stop, double rate)
 {
-    FIXME("iface %p, start %s, stop %s, rate %0.16e, stub!\n",
-            iface, wine_dbgstr_longlong(start), wine_dbgstr_longlong(stop), rate);
-    return E_NOTIMPL;
+    struct audio_stream *stream = impl_from_IPin(iface);
+
+    TRACE("stream %p, start %s, stop %s, rate %0.16e\n",
+            stream, wine_dbgstr_longlong(start), wine_dbgstr_longlong(stop), rate);
+
+    EnterCriticalSection(&stream->cs);
+
+    stream->segment_start = start;
+
+    LeaveCriticalSection(&stream->cs);
+
+    return S_OK;
 }
 
 static const IPinVtbl audio_sink_vtbl =
@@ -1022,8 +1260,56 @@ static HRESULT WINAPI audio_meminput_GetAllocatorRequirements(IMemInputPin *ifac
 
 static HRESULT WINAPI audio_meminput_Receive(IMemInputPin *iface, IMediaSample *sample)
 {
-    FIXME("iface %p, sample %p, stub!\n", iface, sample);
-    return E_NOTIMPL;
+    struct audio_stream *stream = impl_from_IMemInputPin(iface);
+    struct queued_receive *receive;
+    REFERENCE_TIME start_time = 0;
+    REFERENCE_TIME end_time = 0;
+    BYTE *pointer;
+    HRESULT hr;
+
+    TRACE("stream %p, sample %p.\n", stream, sample);
+
+    EnterCriticalSection(&stream->cs);
+
+    if (stream->state == State_Stopped)
+    {
+        LeaveCriticalSection(&stream->cs);
+        return VFW_E_WRONG_STATE;
+    }
+    if (stream->flushing)
+    {
+        LeaveCriticalSection(&stream->cs);
+        return S_FALSE;
+    }
+
+    hr = IMediaSample_GetPointer(sample, &pointer);
+    if (FAILED(hr))
+    {
+        LeaveCriticalSection(&stream->cs);
+        return hr;
+    }
+
+    IMediaSample_GetTime(sample, &start_time, &end_time);
+
+    receive = calloc(1, sizeof(*receive));
+    if (!receive)
+    {
+        LeaveCriticalSection(&stream->cs);
+        return E_OUTOFMEMORY;
+    }
+
+    receive->length = IMediaSample_GetActualDataLength(sample);
+    receive->pointer = pointer;
+    receive->sample = sample;
+    receive->start_time = start_time + stream->segment_start;
+    IMediaSample_AddRef(receive->sample);
+    list_add_tail(&stream->receive_queue, &receive->entry);
+
+    process_updates(stream);
+
+    LeaveCriticalSection(&stream->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI audio_meminput_ReceiveMultiple(IMemInputPin *iface,
@@ -1052,15 +1338,12 @@ static const IMemInputPinVtbl audio_meminput_vtbl =
     audio_meminput_ReceiveCanBlock,
 };
 
-HRESULT audio_stream_create(IMultiMediaStream *parent, const MSPID *purpose_id,
-        IUnknown *stream_object, STREAM_TYPE stream_type, IAMMediaStream **media_stream)
+HRESULT audio_stream_create(IUnknown *outer, void **out)
 {
     struct audio_stream *object;
 
-    TRACE("(%p,%s,%p,%p)\n", parent, debugstr_guid(purpose_id), stream_object, media_stream);
-
-    if (stream_object)
-        FIXME("Specifying a stream object is not yet supported.\n");
+    if (outer)
+        return CLASS_E_NOAGGREGATION;
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
@@ -1073,11 +1356,12 @@ HRESULT audio_stream_create(IMultiMediaStream *parent, const MSPID *purpose_id,
     object->ref = 1;
 
     InitializeCriticalSection(&object->cs);
-    object->parent = parent;
-    object->purpose_id = *purpose_id;
-    object->stream_type = stream_type;
+    list_init(&object->receive_queue);
+    list_init(&object->update_queue);
 
-    *media_stream = &object->IAMMediaStream_iface;
+    TRACE("Created audio stream %p.\n", object);
+
+    *out = &object->IAMMediaStream_iface;
 
     return S_OK;
 }

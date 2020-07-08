@@ -26,8 +26,11 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
+#include "winnls.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "psapi.h"
+#include "werapi.h"
 
 #include "wine/exception.h"
 #include "wine/server.h"
@@ -158,9 +161,7 @@ void WINAPI DECLSPEC_HOTPATCH FatalAppExitA( UINT action, LPCSTR str )
  */
 void WINAPI DECLSPEC_HOTPATCH FatalAppExitW( UINT action, LPCWSTR str )
 {
-    static const WCHAR User32DllW[] = {'u','s','e','r','3','2','.','d','l','l',0};
-
-    HMODULE mod = GetModuleHandleW( User32DllW );
+    HMODULE mod = GetModuleHandleW( L"user32.dll" );
     MessageBoxW_funcptr pMessageBoxW = NULL;
 
     if (mod) pMessageBoxW = (MessageBoxW_funcptr)GetProcAddress( mod, "MessageBoxW" );
@@ -216,8 +217,7 @@ void WINAPI DECLSPEC_HOTPATCH OutputDebugStringA( LPCSTR str )
     if (!mutex_inited)
     {
         /* first call to OutputDebugString, initialize mutex handle */
-        static const WCHAR mutexname[] = {'D','B','W','i','n','M','u','t','e','x',0};
-        HANDLE mutex = CreateMutexExW( NULL, mutexname, 0, SYNCHRONIZE );
+        HANDLE mutex = CreateMutexExW( NULL, L"DBWinMutex", 0, SYNCHRONIZE );
         if (mutex)
         {
             if (InterlockedCompareExchangePointer( &DBWinMutex, mutex, 0 ) != 0)
@@ -229,20 +229,17 @@ void WINAPI DECLSPEC_HOTPATCH OutputDebugStringA( LPCSTR str )
 
     if (DBWinMutex)
     {
-        static const WCHAR shmname[] = {'D','B','W','I','N','_','B','U','F','F','E','R',0};
-        static const WCHAR eventbuffername[] = {'D','B','W','I','N','_','B','U','F','F','E','R','_','R','E','A','D','Y',0};
-        static const WCHAR eventdataname[] = {'D','B','W','I','N','_','D','A','T','A','_','R','E','A','D','Y',0};
         HANDLE mapping;
 
-        mapping = OpenFileMappingW( FILE_MAP_WRITE, FALSE, shmname );
+        mapping = OpenFileMappingW( FILE_MAP_WRITE, FALSE, L"DBWIN_BUFFER" );
         if (mapping)
         {
             LPVOID buffer;
             HANDLE eventbuffer, eventdata;
 
             buffer = MapViewOfFile( mapping, FILE_MAP_WRITE, 0, 0, 0 );
-            eventbuffer = OpenEventW( SYNCHRONIZE, FALSE, eventbuffername );
-            eventdata = OpenEventW( EVENT_MODIFY_STATE, FALSE, eventdataname );
+            eventbuffer = OpenEventW( SYNCHRONIZE, FALSE, L"DBWIN_BUFFER_READY" );
+            eventdata = OpenEventW( EVENT_MODIFY_STATE, FALSE, L"DBWIN_DATA_READY" );
 
             if (buffer && eventbuffer && eventdata)
             {
@@ -519,16 +516,6 @@ static BOOL start_debugger( EXCEPTION_POINTERS *epointers, HANDLE event )
     BOOL ret = FALSE;
     char buffer[256];
 
-    static const WCHAR AeDebugW[] = {'\\','R','e','g','i','s','t','r','y','\\',
-                                     'M','a','c','h','i','n','e','\\',
-                                     'S','o','f','t','w','a','r','e','\\',
-                                     'M','i','c','r','o','s','o','f','t','\\',
-                                     'W','i','n','d','o','w','s',' ','N','T','\\',
-                                     'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-                                     'A','e','D','e','b','u','g',0};
-    static const WCHAR DebuggerW[] = {'D','e','b','u','g','g','e','r',0};
-    static const WCHAR AutoW[] = {'A','u','t','o',0};
-
     format_exception_msg( epointers, buffer, sizeof(buffer) );
     MESSAGE( "wine: %s (thread %04x), starting debugger...\n", buffer, GetCurrentThreadId() );
 
@@ -538,14 +525,14 @@ static BOOL start_debugger( EXCEPTION_POINTERS *epointers, HANDLE event )
     attr.Attributes = 0;
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
-    RtlInitUnicodeString( &nameW, AeDebugW );
+    RtlInitUnicodeString( &nameW, L"\\Registry\\Machine\\Software\\Microsoft\\Windows NT\\CurrentVersion\\AeDebug" );
 
     if (!NtOpenKey( &dbg_key, KEY_READ, &attr ))
     {
         KEY_VALUE_PARTIAL_INFORMATION *info;
         DWORD format_size = 0;
 
-        RtlInitUnicodeString( &nameW, DebuggerW );
+        RtlInitUnicodeString( &nameW, L"Debugger" );
         if (NtQueryValueKey( dbg_key, &nameW, KeyValuePartialInformation,
                              NULL, 0, &format_size ) == STATUS_BUFFER_TOO_SMALL)
         {
@@ -570,7 +557,7 @@ static BOOL start_debugger( EXCEPTION_POINTERS *epointers, HANDLE event )
             HeapFree( GetProcessHeap(), 0, data );
         }
 
-        RtlInitUnicodeString( &nameW, AutoW );
+        RtlInitUnicodeString( &nameW, L"Auto" );
         if (!NtQueryValueKey( dbg_key, &nameW, KeyValuePartialInformation,
                               buffer, sizeof(buffer)-sizeof(WCHAR), &format_size ))
        {
@@ -596,9 +583,8 @@ static BOOL start_debugger( EXCEPTION_POINTERS *epointers, HANDLE event )
     }
     else
     {
-        static const WCHAR fmtW[] = {'w','i','n','e','d','b','g',' ','-','-','a','u','t','o',' ','%','l','d',' ','%','l','d',0};
         cmdline = HeapAlloc( GetProcessHeap(), 0, 80 * sizeof(WCHAR) );
-        swprintf( cmdline, 80, fmtW, (long)GetCurrentProcessId(), (long)HandleToLong(event) );
+        swprintf( cmdline, 80, L"winedbg --auto %ld %ld", (long)GetCurrentProcessId(), (long)HandleToLong(event) );
     }
 
     if (!autostart)
@@ -625,15 +611,14 @@ static BOOL start_debugger( EXCEPTION_POINTERS *epointers, HANDLE event )
     env = GetEnvironmentStringsW();
     if (!TRACE_ON(winedbg))
     {
-        static const WCHAR winedebugW[] = {'W','I','N','E','D','E','B','U','G','=',0};
         for (p = env; *p; p += lstrlenW(p) + 1)
         {
-            if (!wcsncmp( p, winedebugW, lstrlenW(winedebugW) ))
+            if (!wcsncmp( p, L"WINEDEBUG=", 10 ))
             {
                 WCHAR *next = p + lstrlenW(p);
                 WCHAR *end = next + 1;
                 while (*end) end += lstrlenW(end) + 1;
-                memmove( p + lstrlenW(winedebugW), next, end + 1 - next );
+                memmove( p + 10, next, end + 1 - next );
                 break;
             }
         }
@@ -784,4 +769,948 @@ LONG WINAPI UnhandledExceptionFilter( EXCEPTION_POINTERS *epointers )
             return EXCEPTION_EXECUTE_HANDLER;
     }
     return EXCEPTION_CONTINUE_SEARCH;
+}
+
+
+/***********************************************************************
+ *         WerGetFlags   (kernelbase.@)
+ */
+HRESULT WINAPI /* DECLSPEC_HOTPATCH */ WerGetFlags( HANDLE process, DWORD *flags )
+{
+    FIXME( "(%p, %p) stub\n", process, flags );
+    return E_NOTIMPL;
+}
+
+
+/***********************************************************************
+ *         WerRegisterFile   (kernelbase.@)
+ */
+HRESULT WINAPI /* DECLSPEC_HOTPATCH */ WerRegisterFile( const WCHAR *file, WER_REGISTER_FILE_TYPE type,
+                                                        DWORD flags )
+{
+    FIXME( "(%s, %d, %d) stub\n", debugstr_w(file), type, flags );
+    return E_NOTIMPL;
+}
+
+
+/***********************************************************************
+ *         WerRegisterMemoryBlock   (kernelbase.@)
+ */
+HRESULT WINAPI /* DECLSPEC_HOTPATCH */ WerRegisterMemoryBlock( void *block, DWORD size )
+{
+    FIXME( "(%p %d) stub\n", block, size );
+    return E_NOTIMPL;
+}
+
+
+/***********************************************************************
+ *         WerRegisterRuntimeExceptionModule   (kernelbase.@)
+ */
+HRESULT WINAPI /* DECLSPEC_HOTPATCH */ WerRegisterRuntimeExceptionModule( const WCHAR *dll, void *context )
+{
+    FIXME( "(%s, %p) stub\n", debugstr_w(dll), context );
+    return S_OK;
+}
+
+
+/***********************************************************************
+ *         WerSetFlags   (kernelbase.@)
+ */
+HRESULT WINAPI /* DECLSPEC_HOTPATCH */ WerSetFlags( DWORD flags )
+{
+    FIXME("(%d) stub\n", flags);
+    return E_NOTIMPL;
+}
+
+
+/***********************************************************************
+ *         WerUnregisterFile   (kernelbase.@)
+ */
+HRESULT WINAPI /* DECLSPEC_HOTPATCH */ WerUnregisterFile( const WCHAR *file )
+{
+    FIXME( "(%s) stub\n", debugstr_w(file) );
+    return E_NOTIMPL;
+}
+
+
+/***********************************************************************
+ *         WerUnregisterMemoryBlock   (kernelbase.@)
+ */
+HRESULT WINAPI /* DECLSPEC_HOTPATCH */ WerUnregisterMemoryBlock( void *block )
+{
+    FIXME( "(%p) stub\n", block );
+    return E_NOTIMPL;
+}
+
+
+/***********************************************************************
+ *         WerUnregisterRuntimeExceptionModule   (kernelbase.@)
+ */
+HRESULT WINAPI /* DECLSPEC_HOTPATCH */ WerUnregisterRuntimeExceptionModule( const WCHAR *dll, void *context )
+{
+    FIXME( "(%s, %p) stub\n", debugstr_w(dll), context );
+    return S_OK;
+}
+
+
+/***********************************************************************
+ * psapi functions
+ ***********************************************************************/
+
+
+typedef struct _PEB32
+{
+    BOOLEAN InheritedAddressSpace;
+    BOOLEAN ReadImageFileExecOptions;
+    BOOLEAN BeingDebugged;
+    BOOLEAN SpareBool;
+    DWORD   Mutant;
+    DWORD   ImageBaseAddress;
+    DWORD   LdrData;
+} PEB32;
+
+typedef struct _LIST_ENTRY32
+{
+    DWORD Flink;
+    DWORD Blink;
+} LIST_ENTRY32;
+
+typedef struct _PEB_LDR_DATA32
+{
+    ULONG        Length;
+    BOOLEAN      Initialized;
+    DWORD        SsHandle;
+    LIST_ENTRY32 InLoadOrderModuleList;
+} PEB_LDR_DATA32;
+
+typedef struct _UNICODE_STRING32
+{
+    USHORT Length;
+    USHORT MaximumLength;
+    DWORD  Buffer;
+} UNICODE_STRING32;
+
+typedef struct _LDR_DATA_TABLE_ENTRY32
+{
+    LIST_ENTRY32        InLoadOrderModuleList;
+    LIST_ENTRY32        InMemoryOrderModuleList;
+    LIST_ENTRY32        InInitializationOrderModuleList;
+    DWORD               BaseAddress;
+    DWORD               EntryPoint;
+    ULONG               SizeOfImage;
+    UNICODE_STRING32    FullDllName;
+    UNICODE_STRING32    BaseDllName;
+} LDR_DATA_TABLE_ENTRY32;
+
+struct module_iterator
+{
+    HANDLE                 process;
+    LIST_ENTRY            *head;
+    LIST_ENTRY            *current;
+    BOOL                   wow64;
+    LDR_DATA_TABLE_ENTRY   ldr_module;
+    LDR_DATA_TABLE_ENTRY32 ldr_module32;
+};
+
+
+static BOOL init_module_iterator( struct module_iterator *iter, HANDLE process )
+{
+    PROCESS_BASIC_INFORMATION pbi;
+    PPEB_LDR_DATA ldr_data;
+
+    if (!IsWow64Process( process, &iter->wow64 )) return FALSE;
+
+    /* get address of PEB */
+    if (!set_ntstatus( NtQueryInformationProcess( process, ProcessBasicInformation,
+                                                  &pbi, sizeof(pbi), NULL )))
+        return FALSE;
+
+    if (is_win64 && iter->wow64)
+    {
+        PEB_LDR_DATA32 *ldr_data32_ptr;
+        DWORD ldr_data32, first_module;
+        PEB32 *peb32;
+
+        peb32 = (PEB32 *)(DWORD_PTR)pbi.PebBaseAddress;
+        if (!ReadProcessMemory( process, &peb32->LdrData, &ldr_data32, sizeof(ldr_data32), NULL ))
+            return FALSE;
+        ldr_data32_ptr = (PEB_LDR_DATA32 *)(DWORD_PTR) ldr_data32;
+        if (!ReadProcessMemory( process, &ldr_data32_ptr->InLoadOrderModuleList.Flink,
+                                &first_module, sizeof(first_module), NULL ))
+            return FALSE;
+        iter->head = (LIST_ENTRY *)&ldr_data32_ptr->InLoadOrderModuleList;
+        iter->current = (LIST_ENTRY *)(DWORD_PTR)first_module;
+        iter->process = process;
+        return TRUE;
+    }
+
+    /* read address of LdrData from PEB */
+    if (!ReadProcessMemory( process, &pbi.PebBaseAddress->LdrData, &ldr_data, sizeof(ldr_data), NULL ))
+        return FALSE;
+
+    /* read address of first module from LdrData */
+    if (!ReadProcessMemory( process, &ldr_data->InLoadOrderModuleList.Flink,
+                            &iter->current, sizeof(iter->current), NULL ))
+        return FALSE;
+
+    iter->head = &ldr_data->InLoadOrderModuleList;
+    iter->process = process;
+    return TRUE;
+}
+
+
+static int module_iterator_next( struct module_iterator *iter )
+{
+    if (iter->current == iter->head) return 0;
+
+    if (is_win64 && iter->wow64)
+    {
+        LIST_ENTRY32 *entry32 = (LIST_ENTRY32 *)iter->current;
+
+        if (!ReadProcessMemory( iter->process,
+                                CONTAINING_RECORD(entry32, LDR_DATA_TABLE_ENTRY32, InLoadOrderModuleList),
+                                &iter->ldr_module32, sizeof(iter->ldr_module32), NULL ))
+            return -1;
+        iter->current = (LIST_ENTRY *)(DWORD_PTR)iter->ldr_module32.InLoadOrderModuleList.Flink;
+        return 1;
+    }
+
+    if (!ReadProcessMemory( iter->process,
+                            CONTAINING_RECORD(iter->current, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks),
+                            &iter->ldr_module, sizeof(iter->ldr_module), NULL ))
+         return -1;
+
+    iter->current = iter->ldr_module.InLoadOrderLinks.Flink;
+    return 1;
+}
+
+
+static BOOL get_ldr_module( HANDLE process, HMODULE module, LDR_DATA_TABLE_ENTRY *ldr_module )
+{
+    struct module_iterator iter;
+    INT ret;
+
+    if (!init_module_iterator( &iter, process )) return FALSE;
+
+    while ((ret = module_iterator_next( &iter )) > 0)
+        /* When hModule is NULL we return the process image - which will be
+         * the first module since our iterator uses InLoadOrderModuleList */
+        if (!module || module == iter.ldr_module.DllBase)
+        {
+            *ldr_module = iter.ldr_module;
+            return TRUE;
+        }
+
+    if (ret == 0) SetLastError( ERROR_INVALID_HANDLE );
+    return FALSE;
+}
+
+
+static BOOL get_ldr_module32( HANDLE process, HMODULE module, LDR_DATA_TABLE_ENTRY32 *ldr_module )
+{
+    struct module_iterator iter;
+    INT ret;
+
+    if (!init_module_iterator( &iter, process )) return FALSE;
+
+    while ((ret = module_iterator_next( &iter )) > 0)
+        /* When hModule is NULL we return the process image - which will be
+         * the first module since our iterator uses InLoadOrderModuleList */
+        if (!module || (DWORD)(DWORD_PTR)module == iter.ldr_module32.BaseAddress)
+        {
+            *ldr_module = iter.ldr_module32;
+            return TRUE;
+        }
+
+    if (ret == 0) SetLastError( ERROR_INVALID_HANDLE );
+    return FALSE;
+}
+
+
+/***********************************************************************
+ *         K32EmptyWorkingSet   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH K32EmptyWorkingSet( HANDLE process )
+{
+    return SetProcessWorkingSetSizeEx( process, (SIZE_T)-1, (SIZE_T)-1, 0 );
+}
+
+
+/***********************************************************************
+ *         K32EnumDeviceDrivers   (kernelbase.@)
+ */
+BOOL WINAPI K32EnumDeviceDrivers( void **image_base, DWORD count, DWORD *needed )
+{
+    FIXME( "(%p, %d, %p): stub\n", image_base, count, needed );
+    if (needed) *needed = 0;
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *         K32EnumPageFilesA   (kernelbase.@)
+ */
+BOOL WINAPI /* DECLSPEC_HOTPATCH */ K32EnumPageFilesA( PENUM_PAGE_FILE_CALLBACKA callback, void *context )
+{
+    FIXME( "(%p, %p) stub\n", callback, context );
+    return FALSE;
+}
+
+
+/***********************************************************************
+ *         K32EnumPageFilesW   (kernelbase.@)
+ */
+BOOL WINAPI /* DECLSPEC_HOTPATCH */ K32EnumPageFilesW( PENUM_PAGE_FILE_CALLBACKW callback, void *context )
+{
+    FIXME( "(%p, %p) stub\n", callback, context );
+    return FALSE;
+}
+
+
+/***********************************************************************
+ *         K32EnumProcessModules   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH K32EnumProcessModules( HANDLE process, HMODULE *module,
+                                                     DWORD count, DWORD *needed )
+{
+    struct module_iterator iter;
+    DWORD size = 0;
+    INT ret;
+
+    if (process == GetCurrentProcess())
+    {
+        PPEB_LDR_DATA ldr_data = NtCurrentTeb()->Peb->LdrData;
+        PLIST_ENTRY head = &ldr_data->InLoadOrderModuleList;
+        PLIST_ENTRY entry = head->Flink;
+
+        if (count && !module)
+        {
+            SetLastError( ERROR_NOACCESS );
+            return FALSE;
+        }
+        while (entry != head)
+        {
+            LDR_DATA_TABLE_ENTRY *ldr = CONTAINING_RECORD( entry, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks );
+            if (count >= sizeof(HMODULE))
+            {
+                *module++ = ldr->DllBase;
+                count -= sizeof(HMODULE);
+            }
+            size += sizeof(HMODULE);
+            entry = entry->Flink;
+        }
+        if (!needed)
+        {
+            SetLastError( ERROR_NOACCESS );
+            return FALSE;
+        }
+        *needed = size;
+        return TRUE;
+    }
+
+    if (!init_module_iterator( &iter, process )) return FALSE;
+
+    if (count && !module)
+    {
+        SetLastError( ERROR_NOACCESS );
+        return FALSE;
+    }
+
+    while ((ret = module_iterator_next( &iter )) > 0)
+    {
+        if (count >= sizeof(HMODULE))
+        {
+            if (sizeof(void *) == 8 && iter.wow64)
+                *module++ = (HMODULE) (DWORD_PTR)iter.ldr_module32.BaseAddress;
+            else
+                *module++ = iter.ldr_module.DllBase;
+            count -= sizeof(HMODULE);
+        }
+        size += sizeof(HMODULE);
+    }
+
+    if (!needed)
+    {
+        SetLastError( ERROR_NOACCESS );
+        return FALSE;
+    }
+    *needed = size;
+    return ret == 0;
+}
+
+
+/***********************************************************************
+ *         K32EnumProcessModulesEx   (kernelbase.@)
+ */
+BOOL WINAPI K32EnumProcessModulesEx( HANDLE process, HMODULE *module, DWORD count,
+                                     DWORD *needed, DWORD filter )
+{
+    FIXME( "(%p, %p, %d, %p, %d) semi-stub\n", process, module, count, needed, filter );
+    return K32EnumProcessModules( process, module, count, needed );
+}
+
+
+/***********************************************************************
+ *         K32EnumProcesses   (kernelbase.@)
+ */
+BOOL WINAPI K32EnumProcesses( DWORD *ids, DWORD count, DWORD *used )
+{
+    SYSTEM_PROCESS_INFORMATION *spi;
+    ULONG size = 0x4000;
+    void *buf = NULL;
+    NTSTATUS status;
+
+    do
+    {
+        size *= 2;
+        HeapFree( GetProcessHeap(), 0, buf );
+        if (!(buf = HeapAlloc( GetProcessHeap(), 0, size ))) return FALSE;
+        status = NtQuerySystemInformation( SystemProcessInformation, buf, size, NULL );
+    } while (status == STATUS_INFO_LENGTH_MISMATCH);
+
+    if (!set_ntstatus( status ))
+    {
+        HeapFree( GetProcessHeap(), 0, buf );
+        return FALSE;
+    }
+    spi = buf;
+    for (*used = 0; count >= sizeof(DWORD); count -= sizeof(DWORD))
+    {
+        *ids++ = HandleToUlong( spi->UniqueProcessId );
+        *used += sizeof(DWORD);
+        if (spi->NextEntryOffset == 0) break;
+        spi = (SYSTEM_PROCESS_INFORMATION *)(((PCHAR)spi) + spi->NextEntryOffset);
+    }
+    HeapFree( GetProcessHeap(), 0, buf );
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *         K32GetDeviceDriverBaseNameA   (kernelbase.@)
+ */
+DWORD WINAPI DECLSPEC_HOTPATCH K32GetDeviceDriverBaseNameA( void *image_base, char *name, DWORD size )
+{
+    FIXME( "(%p, %p, %d): stub\n", image_base, name, size );
+    if (name && size) name[0] = 0;
+    return 0;
+}
+
+
+/***********************************************************************
+ *         K32GetDeviceDriverBaseNameW   (kernelbase.@)
+ */
+DWORD WINAPI DECLSPEC_HOTPATCH K32GetDeviceDriverBaseNameW( void *image_base, WCHAR *name, DWORD size )
+{
+    FIXME( "(%p, %p, %d): stub\n", image_base, name, size );
+    if (name && size) name[0] = 0;
+    return 0;
+}
+
+
+/***********************************************************************
+ *         K32GetDeviceDriverFileNameA   (kernelbase.@)
+ */
+DWORD WINAPI DECLSPEC_HOTPATCH K32GetDeviceDriverFileNameA( void *image_base, char *name, DWORD size )
+{
+    FIXME( "(%p, %p, %d): stub\n", image_base, name, size );
+    if (name && size) name[0] = 0;
+    return 0;
+}
+
+
+/***********************************************************************
+ *         K32GetDeviceDriverFileNameW   (kernelbase.@)
+ */
+DWORD WINAPI DECLSPEC_HOTPATCH K32GetDeviceDriverFileNameW( void *image_base, WCHAR *name, DWORD size )
+{
+    FIXME( "(%p, %p, %d): stub\n", image_base, name, size );
+    if (name && size) name[0] = 0;
+    return 0;
+}
+
+
+/***********************************************************************
+ *         K32GetMappedFileNameA   (kernelbase.@)
+ */
+DWORD WINAPI DECLSPEC_HOTPATCH K32GetMappedFileNameA( HANDLE process, void *addr, char *name, DWORD size )
+{
+    FIXME( "(%p, %p, %p, %d): stub\n", process, addr, name, size );
+    if (name && size) name[0] = 0;
+    return 0;
+}
+
+
+/***********************************************************************
+ *         K32GetMappedFileNameW   (kernelbase.@)
+ */
+DWORD WINAPI DECLSPEC_HOTPATCH K32GetMappedFileNameW( HANDLE process, void *addr, WCHAR *name, DWORD size )
+{
+    FIXME( "(%p, %p, %p, %d): stub\n", process, addr, name, size );
+    if (name && size) name[0] = 0;
+    return 0;
+}
+
+
+/***********************************************************************
+ *         K32GetModuleBaseNameA   (kernelbase.@)
+ */
+DWORD WINAPI DECLSPEC_HOTPATCH K32GetModuleBaseNameA( HANDLE process, HMODULE module,
+                                                      char *name, DWORD size )
+{
+    WCHAR *name_w;
+    DWORD len, ret = 0;
+
+    if (!name || !size)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+    if (!(name_w = HeapAlloc( GetProcessHeap(), 0, sizeof(WCHAR) * size ))) return 0;
+
+    len = K32GetModuleBaseNameW( process, module, name_w, size );
+    TRACE( "%d, %s\n", len, debugstr_w(name_w) );
+    if (len)
+    {
+        ret = WideCharToMultiByte( CP_ACP, 0, name_w, len, name, size, NULL, NULL );
+        if (ret < size) name[ret] = 0;
+    }
+    HeapFree( GetProcessHeap(), 0, name_w );
+    return ret;
+}
+
+
+/***********************************************************************
+ *         K32GetModuleBaseNameW   (kernelbase.@)
+ */
+DWORD WINAPI DECLSPEC_HOTPATCH K32GetModuleBaseNameW( HANDLE process, HMODULE module,
+                                                      WCHAR *name, DWORD size )
+{
+    BOOL wow64;
+
+    if (!IsWow64Process( process, &wow64 )) return 0;
+
+    if (is_win64 && wow64)
+    {
+        LDR_DATA_TABLE_ENTRY32 ldr_module32;
+
+        if (!get_ldr_module32(process, module, &ldr_module32)) return 0;
+        size = min( ldr_module32.BaseDllName.Length / sizeof(WCHAR), size );
+        if (!ReadProcessMemory( process, (void *)(DWORD_PTR)ldr_module32.BaseDllName.Buffer,
+                                name, size * sizeof(WCHAR), NULL ))
+            return 0;
+    }
+    else
+    {
+        LDR_DATA_TABLE_ENTRY ldr_module;
+
+        if (!get_ldr_module( process, module, &ldr_module )) return 0;
+        size = min( ldr_module.BaseDllName.Length / sizeof(WCHAR), size );
+        if (!ReadProcessMemory( process, ldr_module.BaseDllName.Buffer,
+                                name, size * sizeof(WCHAR), NULL ))
+            return 0;
+    }
+    name[size] = 0;
+    return size;
+}
+
+
+/***********************************************************************
+ *         K32GetModuleFileNameExA   (kernelbase.@)
+ */
+DWORD WINAPI DECLSPEC_HOTPATCH K32GetModuleFileNameExA( HANDLE process, HMODULE module,
+                                                        char *name, DWORD size )
+{
+    WCHAR *ptr;
+    DWORD len;
+
+    TRACE( "(process=%p, module=%p, %p, %d)\n", process, module, name, size );
+
+    if (!name || !size)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+    if (process == GetCurrentProcess())
+    {
+        len = GetModuleFileNameA( module, name, size );
+        name[size - 1] = '\0';
+        return len;
+    }
+
+    if (!(ptr = HeapAlloc( GetProcessHeap(), 0, size * sizeof(WCHAR) ))) return 0;
+    len = K32GetModuleFileNameExW( process, module, ptr, size );
+    if (!len)
+    {
+        name[0] = 0;
+    }
+    else
+    {
+        if (!WideCharToMultiByte( CP_ACP, 0, ptr, -1, name, size, NULL, NULL ))
+        {
+            name[size - 1] = 0;
+            len = size;
+        }
+        else if (len < size) len = strlen( name );
+    }
+    HeapFree( GetProcessHeap(), 0, ptr );
+    return len;
+}
+
+
+/***********************************************************************
+ *         K32GetModuleFileNameExW   (kernelbase.@)
+ */
+DWORD WINAPI DECLSPEC_HOTPATCH K32GetModuleFileNameExW( HANDLE process, HMODULE module,
+                                                        WCHAR *name, DWORD size )
+{
+    BOOL wow64;
+    DWORD len;
+
+    if (!size) return 0;
+
+    if (!IsWow64Process( process, &wow64 )) return 0;
+
+    if (is_win64 && wow64)
+    {
+        LDR_DATA_TABLE_ENTRY32 ldr_module32;
+
+        if (!get_ldr_module32( process, module, &ldr_module32 )) return 0;
+        len = ldr_module32.FullDllName.Length / sizeof(WCHAR);
+        if (!ReadProcessMemory( process, (void *)(DWORD_PTR)ldr_module32.FullDllName.Buffer,
+                                name, min( len, size ) * sizeof(WCHAR), NULL ))
+            return 0;
+    }
+    else
+    {
+        LDR_DATA_TABLE_ENTRY ldr_module;
+
+        if (!get_ldr_module(process, module, &ldr_module)) return 0;
+        len = ldr_module.FullDllName.Length / sizeof(WCHAR);
+        if (!ReadProcessMemory( process, ldr_module.FullDllName.Buffer,
+                                name, min( len, size ) * sizeof(WCHAR), NULL ))
+            return 0;
+    }
+
+    if (len < size)
+    {
+        name[len] = 0;
+        return len;
+    }
+    else
+    {
+        name[size - 1] = 0;
+        return size;
+    }
+}
+
+
+/***********************************************************************
+ *         K32GetModuleInformation   (kernelbase.@)
+ */
+BOOL WINAPI K32GetModuleInformation( HANDLE process, HMODULE module, MODULEINFO *modinfo, DWORD count )
+{
+    BOOL wow64;
+
+    if (count < sizeof(MODULEINFO))
+    {
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        return FALSE;
+    }
+
+    if (!IsWow64Process( process, &wow64 )) return FALSE;
+
+    if (is_win64 && wow64)
+    {
+        LDR_DATA_TABLE_ENTRY32 ldr_module32;
+
+        if (!get_ldr_module32( process, module, &ldr_module32 )) return FALSE;
+        modinfo->lpBaseOfDll = (void *)(DWORD_PTR)ldr_module32.BaseAddress;
+        modinfo->SizeOfImage = ldr_module32.SizeOfImage;
+        modinfo->EntryPoint  = (void *)(DWORD_PTR)ldr_module32.EntryPoint;
+    }
+    else
+    {
+        LDR_DATA_TABLE_ENTRY ldr_module;
+
+        if (!get_ldr_module( process, module, &ldr_module )) return FALSE;
+        modinfo->lpBaseOfDll = ldr_module.DllBase;
+        modinfo->SizeOfImage = ldr_module.SizeOfImage;
+        modinfo->EntryPoint  = ldr_module.EntryPoint;
+    }
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *         K32GetPerformanceInfo   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH K32GetPerformanceInfo( PPERFORMANCE_INFORMATION info, DWORD size )
+{
+    SYSTEM_PERFORMANCE_INFORMATION perf;
+    SYSTEM_BASIC_INFORMATION basic;
+    SYSTEM_PROCESS_INFORMATION *process, *spi;
+    DWORD info_size;
+    NTSTATUS status;
+
+    TRACE( "(%p, %d)\n", info, size );
+
+    if (size < sizeof(*info))
+    {
+        SetLastError( ERROR_BAD_LENGTH );
+        return FALSE;
+    }
+
+    status = NtQuerySystemInformation( SystemPerformanceInformation, &perf, sizeof(perf), NULL );
+    if (!set_ntstatus( status )) return FALSE;
+    status = NtQuerySystemInformation( SystemBasicInformation, &basic, sizeof(basic), NULL );
+    if (!set_ntstatus( status )) return FALSE;
+
+    info->cb                 = sizeof(*info);
+    info->CommitTotal        = perf.TotalCommittedPages;
+    info->CommitLimit        = perf.TotalCommitLimit;
+    info->CommitPeak         = perf.PeakCommitment;
+    info->PhysicalTotal      = basic.MmNumberOfPhysicalPages;
+    info->PhysicalAvailable  = perf.AvailablePages;
+    info->SystemCache        = 0;
+    info->KernelTotal        = perf.PagedPoolUsage + perf.NonPagedPoolUsage;
+    info->KernelPaged        = perf.PagedPoolUsage;
+    info->KernelNonpaged     = perf.NonPagedPoolUsage;
+    info->PageSize           = basic.PageSize;
+
+    /* fields from SYSTEM_PROCESS_INFORMATION */
+    NtQuerySystemInformation( SystemProcessInformation, NULL, 0, &info_size );
+    for (;;)
+    {
+        process = HeapAlloc( GetProcessHeap(), 0, info_size );
+        if (!process)
+        {
+            SetLastError( ERROR_OUTOFMEMORY );
+            return FALSE;
+        }
+        status = NtQuerySystemInformation( SystemProcessInformation, process, info_size, &info_size );
+        if (!status) break;
+        HeapFree( GetProcessHeap(), 0, process );
+        if (status != STATUS_INFO_LENGTH_MISMATCH)
+        {
+            SetLastError( RtlNtStatusToDosError( status ) );
+            return FALSE;
+        }
+    }
+    info->HandleCount = info->ProcessCount = info->ThreadCount = 0;
+    spi = process;
+    for (;;)
+    {
+        info->ProcessCount++;
+        info->HandleCount += spi->HandleCount;
+        info->ThreadCount += spi->dwThreadCount;
+        if (spi->NextEntryOffset == 0) break;
+        spi = (SYSTEM_PROCESS_INFORMATION *)((char *)spi + spi->NextEntryOffset);
+    }
+    HeapFree( GetProcessHeap(), 0, process );
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *         K32GetProcessImageFileNameA   (kernelbase.@)
+ */
+DWORD WINAPI DECLSPEC_HOTPATCH K32GetProcessImageFileNameA( HANDLE process, char *file, DWORD size )
+{
+    return QueryFullProcessImageNameA( process, PROCESS_NAME_NATIVE, file, &size ) ? size : 0;
+}
+
+
+/***********************************************************************
+ *         K32GetProcessImageFileNameW   (kernelbase.@)
+ */
+DWORD WINAPI DECLSPEC_HOTPATCH K32GetProcessImageFileNameW( HANDLE process, WCHAR *file, DWORD size )
+{
+    return QueryFullProcessImageNameW( process, PROCESS_NAME_NATIVE, file, &size ) ? size : 0;
+}
+
+
+/***********************************************************************
+ *         K32GetProcessMemoryInfo   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH K32GetProcessMemoryInfo( HANDLE process, PROCESS_MEMORY_COUNTERS *pmc,
+                                                       DWORD count )
+{
+    VM_COUNTERS vmc;
+
+    if (count < sizeof(PROCESS_MEMORY_COUNTERS))
+    {
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        return FALSE;
+    }
+
+    if (!set_ntstatus( NtQueryInformationProcess( process, ProcessVmCounters, &vmc, sizeof(vmc), NULL )))
+        return FALSE;
+
+    pmc->cb = sizeof(PROCESS_MEMORY_COUNTERS);
+    pmc->PageFaultCount = vmc.PageFaultCount;
+    pmc->PeakWorkingSetSize = vmc.PeakWorkingSetSize;
+    pmc->WorkingSetSize = vmc.WorkingSetSize;
+    pmc->QuotaPeakPagedPoolUsage = vmc.QuotaPeakPagedPoolUsage;
+    pmc->QuotaPagedPoolUsage = vmc.QuotaPagedPoolUsage;
+    pmc->QuotaPeakNonPagedPoolUsage = vmc.QuotaPeakNonPagedPoolUsage;
+    pmc->QuotaNonPagedPoolUsage = vmc.QuotaNonPagedPoolUsage;
+    pmc->PagefileUsage = vmc.PagefileUsage;
+    pmc->PeakPagefileUsage = vmc.PeakPagefileUsage;
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *         K32GetWsChanges   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH K32GetWsChanges( HANDLE process, PSAPI_WS_WATCH_INFORMATION *info, DWORD size )
+{
+    TRACE( "(%p, %p, %d)\n", process, info, size );
+    return set_ntstatus( NtQueryInformationProcess( process, ProcessWorkingSetWatch, info, size, NULL ));
+}
+
+
+/***********************************************************************
+ *         K32GetWsChangesEx   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH K32GetWsChangesEx( HANDLE process, PSAPI_WS_WATCH_INFORMATION_EX *info,
+                                                 DWORD *size )
+{
+    FIXME( "(%p, %p, %p)\n", process, info, size );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+}
+
+
+/***********************************************************************
+ *         K32InitializeProcessForWsWatch   (kernelbase.@)
+ */
+BOOL WINAPI /* DECLSPEC_HOTPATCH */ K32InitializeProcessForWsWatch( HANDLE process )
+{
+    FIXME( "(process=%p): stub\n", process );
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *         K32QueryWorkingSet   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH K32QueryWorkingSet( HANDLE process, void *buffer, DWORD size )
+{
+    TRACE( "(%p, %p, %d)\n", process, buffer, size );
+    return set_ntstatus( NtQueryVirtualMemory( process, NULL, MemoryWorkingSetList, buffer, size, NULL ));
+}
+
+
+/***********************************************************************
+ *         K32QueryWorkingSetEx   (kernelbase.@)
+ */
+BOOL WINAPI K32QueryWorkingSetEx( HANDLE process, void *buffer, DWORD size )
+{
+    TRACE( "(%p, %p, %d)\n", process, buffer, size );
+    return set_ntstatus( NtQueryVirtualMemory( process, NULL, MemoryWorkingSetExInformation,
+                                               buffer, size, NULL ));
+}
+
+
+/******************************************************************
+ *         QueryFullProcessImageNameA   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH QueryFullProcessImageNameA( HANDLE process, DWORD flags,
+                                                          char *name, DWORD *size )
+{
+    BOOL ret;
+    DWORD sizeW = *size;
+    WCHAR *nameW = HeapAlloc( GetProcessHeap(), 0, *size * sizeof(WCHAR) );
+
+    ret = QueryFullProcessImageNameW( process, flags, nameW, &sizeW );
+    if (ret) ret = (WideCharToMultiByte( CP_ACP, 0, nameW, -1, name, *size, NULL, NULL) > 0);
+    if (ret) *size = strlen( name );
+    HeapFree( GetProcessHeap(), 0, nameW );
+    return ret;
+}
+
+
+/******************************************************************
+ *         QueryFullProcessImageNameW   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH QueryFullProcessImageNameW( HANDLE process, DWORD flags,
+                                                          WCHAR *name, DWORD *size )
+{
+    BYTE buffer[sizeof(UNICODE_STRING) + MAX_PATH*sizeof(WCHAR)];  /* this buffer should be enough */
+    UNICODE_STRING *dynamic_buffer = NULL;
+    UNICODE_STRING *result = NULL;
+    NTSTATUS status;
+    DWORD needed;
+
+    /* FIXME: On Windows, ProcessImageFileName return an NT path. In Wine it
+     * is a DOS path and we depend on this. */
+    status = NtQueryInformationProcess( process, ProcessImageFileName, buffer,
+                                        sizeof(buffer) - sizeof(WCHAR), &needed );
+    if (status == STATUS_INFO_LENGTH_MISMATCH)
+    {
+        dynamic_buffer = HeapAlloc( GetProcessHeap(), 0, needed + sizeof(WCHAR) );
+        status = NtQueryInformationProcess( process, ProcessImageFileName, dynamic_buffer,
+                                            needed, &needed );
+        result = dynamic_buffer;
+    }
+    else
+        result = (UNICODE_STRING *)buffer;
+
+    if (status) goto cleanup;
+
+    if (flags & PROCESS_NAME_NATIVE)
+    {
+        WCHAR drive[3];
+        WCHAR device[1024];
+        DWORD ntlen, devlen;
+
+        if (result->Buffer[1] != ':' || result->Buffer[0] < 'A' || result->Buffer[0] > 'Z')
+        {
+            /* We cannot convert it to an NT device path so fail */
+            status = STATUS_NO_SUCH_DEVICE;
+            goto cleanup;
+        }
+
+        /* Find this drive's NT device path */
+        drive[0] = result->Buffer[0];
+        drive[1] = ':';
+        drive[2] = 0;
+        if (!QueryDosDeviceW(drive, device, ARRAY_SIZE(device)))
+        {
+            status = STATUS_NO_SUCH_DEVICE;
+            goto cleanup;
+        }
+
+        devlen = lstrlenW(device);
+        ntlen = devlen + (result->Length/sizeof(WCHAR) - 2);
+        if (ntlen + 1 > *size)
+        {
+            status = STATUS_BUFFER_TOO_SMALL;
+            goto cleanup;
+        }
+        *size = ntlen;
+
+        memcpy( name, device, devlen * sizeof(*device) );
+        memcpy( name + devlen, result->Buffer + 2, result->Length - 2 * sizeof(WCHAR) );
+        name[*size] = 0;
+        TRACE( "NT path: %s\n", debugstr_w(name) );
+    }
+    else
+    {
+        if (result->Length/sizeof(WCHAR) + 1 > *size)
+        {
+            status = STATUS_BUFFER_TOO_SMALL;
+            goto cleanup;
+        }
+
+        *size = result->Length/sizeof(WCHAR);
+        memcpy( name, result->Buffer, result->Length );
+        name[*size] = 0;
+    }
+
+cleanup:
+    HeapFree( GetProcessHeap(), 0, dynamic_buffer );
+    return set_ntstatus( status );
 }

@@ -23,6 +23,7 @@
 #include "mfapi.h"
 #include "mfidl.h"
 #include "mferror.h"
+#include "d3d9types.h"
 
 #include "wine/heap.h"
 #include "wine/debug.h"
@@ -114,6 +115,8 @@ static inline BOOL mf_array_reserve(void **elements, size_t *capacity, size_t co
     return TRUE;
 }
 
+extern unsigned int mf_format_get_stride(const GUID *subtype, unsigned int width, BOOL *is_yuv) DECLSPEC_HIDDEN;
+
 static inline const char *debugstr_propvar(const PROPVARIANT *v)
 {
     if (!v)
@@ -142,4 +145,61 @@ static inline const char *debugstr_propvar(const PROPVARIANT *v)
         default:
             return wine_dbg_sprintf("%p {vt %#x}", v, v->vt);
     }
+}
+
+static inline const char *debugstr_fourcc(DWORD format)
+{
+    static const struct format_name
+    {
+        unsigned int format;
+        const char *name;
+    } formats[] =
+    {
+        { D3DFMT_R8G8B8,        "R8G8B8" },
+        { D3DFMT_A8R8G8B8,      "A8R8G8B8" },
+        { D3DFMT_X8R8G8B8,      "X8R8G8B8" },
+        { D3DFMT_R5G6B5,        "R5G6B5" },
+        { D3DFMT_X1R5G5B5,      "X1R5G6B5" },
+        { D3DFMT_A2B10G10R10,   "A2B10G10R10" },
+        { D3DFMT_P8,            "P8" },
+        { D3DFMT_L8,            "L8" },
+        { D3DFMT_D16,           "D16" },
+        { D3DFMT_L16,           "L16" },
+        { D3DFMT_A16B16G16R16F, "A16B16G16R16F" },
+    };
+    int i;
+
+    if ((format & 0xff) == format)
+    {
+        for (i = 0; i < ARRAY_SIZE(formats); ++i)
+        {
+            if (formats[i].format == format)
+                return wine_dbg_sprintf("%s", wine_dbgstr_an(formats[i].name, -1));
+        }
+
+        return wine_dbg_sprintf("%#x", format);
+    }
+
+    return wine_dbgstr_an((char *)&format, 4);
+}
+
+static inline const char *debugstr_time(LONGLONG time)
+{
+    ULONGLONG abstime = time >= 0 ? time : -time;
+    unsigned int i = 0, j = 0;
+    char buffer[23], rev[23];
+
+    while (abstime || i <= 8)
+    {
+        buffer[i++] = '0' + (abstime % 10);
+        abstime /= 10;
+        if (i == 7) buffer[i++] = '.';
+    }
+    if (time < 0) buffer[i++] = '-';
+
+    while (i--) rev[j++] = buffer[i];
+    while (rev[j-1] == '0' && rev[j-2] != '.') --j;
+    rev[j] = 0;
+
+    return wine_dbg_sprintf("%s", rev);
 }

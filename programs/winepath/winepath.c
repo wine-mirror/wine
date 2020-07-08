@@ -21,12 +21,11 @@
  */
 
 #define WIN32_LEAN_AND_MEAN
-
-#include "config.h"
-
 #include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <fcntl.h>
+#include <io.h>
 
 #include "wine/debug.h"
 
@@ -56,7 +55,6 @@ static int option(int shortopt, const WCHAR *longopt)
     "                directory to the short format\n"
     "  -0            separate output with \\0 character, instead of a newline\n"
     "  -h, --help    output this help message and exit\n"
-    "  -v, --version output version information and exit\n"
     "\n"
     "If more than one option is given then the input paths are output in\n"
     "all formats specified, in the order long, short, Unix, Windows.\n"
@@ -66,9 +64,6 @@ static int option(int shortopt, const WCHAR *longopt)
         case 'h':
             printf("Usage: %s [OPTION] [PATH]...\n", progname);
             printf(helpmsg);
-            exit(0);
-        case 'v':
-            printf("%s version " PACKAGE_VERSION "\n", progname);
             exit(0);
         case 'l':
             return LONGFORMAT;
@@ -96,14 +91,7 @@ static int option(int shortopt, const WCHAR *longopt)
  */
 static int parse_options(WCHAR *argv[])
 {
-    static const WCHAR longW[] = { 'l','o','n','g',0 };
-    static const WCHAR shortW[] = { 's','h','o','r','t',0 };
-    static const WCHAR unixW[] = { 'u','n','i','x',0 };
-    static const WCHAR windowsW[] = { 'w','i','n','d','o','w','s',0 };
-    static const WCHAR helpW[] = { 'h','e','l','p',0 };
-    static const WCHAR versionW[] = { 'v','e','r','s','i','o','n',0 };
-    static const WCHAR nullW[] = { 0 };
-    static const WCHAR *longopts[] = { longW, shortW, unixW, windowsW, helpW, versionW, nullW };
+    static const WCHAR *longopts[] = { L"long", L"short", L"unix", L"windows", L"help", NULL };
     int outputformats = 0;
     BOOL done = FALSE;
     int i, j;
@@ -122,10 +110,10 @@ static int parse_options(WCHAR *argv[])
                 done = TRUE;
             } else {
                 /* long option */
-                for (j = 0; longopts[j][0]; j++)
+                for (j = 0; longopts[j]; j++)
                     if (!lstrcmpiW(argv[i]+2, longopts[j]))
                         break;
-                outputformats |= option(longopts[j][0], argv[i]);
+                if (longopts[j]) outputformats |= option(longopts[j][0], argv[i]);
             }
         } else {
             /* short options */
@@ -153,6 +141,8 @@ int __cdecl wmain(int argc, WCHAR *argv[])
     int outputformats;
     int i;
     int separator;
+
+    setmode( fileno(stdout), O_BINARY );  /* avoid crlf */
 
     outputformats = parse_options(argv);
 

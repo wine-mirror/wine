@@ -263,7 +263,7 @@ static void init_ ## type ## _cxx(char *base) \
 #define DEFINE_CXX_DATA4(name, cl1, cl2, cl3, cl4, dtor) \
     DEFINE_CXX_DATA(name, 4, cl1, cl2, cl3, cl4, dtor)
 
-#if defined(__i386__) && !defined(__MINGW32__)
+#ifdef __ASM_USE_THISCALL_WRAPPER
 
 #define CALL_VTBL_FUNC(this, off, ret, type, args) ((ret (WINAPI*)type)&vtbl_wrapper_##off)args
 

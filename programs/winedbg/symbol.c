@@ -144,7 +144,7 @@ static BOOL fill_sym_lvalue(const SYMBOL_INFO* sym, ULONG_PTR base,
         PEB                       peb;
         PEB_LDR_DATA              ldr_data;
         PLIST_ENTRY               head, current;
-        LDR_MODULE                ldr_module;
+        LDR_DATA_TABLE_ENTRY      ldr_module;
         unsigned                  tlsindex = -1;
 
         if (NtQueryInformationProcess(dbg_curr_process->handle, ProcessBasicInformation,
@@ -165,14 +165,14 @@ static BOOL fill_sym_lvalue(const SYMBOL_INFO* sym, ULONG_PTR base,
         head = &((PEB_LDR_DATA*)peb.LdrData)->InLoadOrderModuleList;
         do
         {
-            if (!dbg_read_memory(CONTAINING_RECORD(current, LDR_MODULE, InLoadOrderModuleList),
+            if (!dbg_read_memory(CONTAINING_RECORD(current, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks),
                                  &ldr_module, sizeof(ldr_module))) goto tls_error;
-            if ((DWORD_PTR)ldr_module.BaseAddress == sym->ModBase)
+            if ((DWORD_PTR)ldr_module.DllBase == sym->ModBase)
             {
                 tlsindex = ldr_module.TlsIndex;
                 break;
             }
-            current = ldr_module.InLoadOrderModuleList.Flink;
+            current = ldr_module.InLoadOrderLinks.Flink;
         } while (current != head);
 
         addr += tlsindex * sizeof(DWORD_PTR);

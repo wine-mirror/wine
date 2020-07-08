@@ -54,7 +54,7 @@ extern int receive_fd( struct process *process );
 extern int send_client_fd( struct process *process, int fd, obj_handle_t handle );
 extern void read_request( struct thread *thread );
 extern void write_reply( struct thread *thread );
-extern unsigned int get_tick_count(void);
+extern timeout_t monotonic_counter(void);
 extern void open_master_socket(void);
 extern void close_master_socket( timeout_t timeout );
 extern void shutdown_master_socket(void);
@@ -65,6 +65,12 @@ extern int server_dir_fd, config_dir_fd;
 
 extern void trace_request(void);
 extern void trace_reply( enum request req, const union generic_reply *reply );
+
+/* get current tick count to return to client */
+static inline unsigned int get_tick_count(void)
+{
+    return monotonic_counter() / 10000;
+}
 
 /* get the request vararg data */
 static inline const void *get_req_data(void)
@@ -399,14 +405,13 @@ DECL_HANDLER(alloc_user_handle);
 DECL_HANDLER(free_user_handle);
 DECL_HANDLER(set_cursor);
 DECL_HANDLER(update_rawinput_devices);
-DECL_HANDLER(get_suspend_context);
-DECL_HANDLER(set_suspend_context);
 DECL_HANDLER(create_job);
 DECL_HANDLER(open_job);
 DECL_HANDLER(assign_job);
 DECL_HANDLER(process_in_job);
 DECL_HANDLER(set_job_limits);
 DECL_HANDLER(set_job_completion_port);
+DECL_HANDLER(get_job_info);
 DECL_HANDLER(terminate_job);
 DECL_HANDLER(suspend_process);
 DECL_HANDLER(resume_process);
@@ -702,21 +707,21 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_free_user_handle,
     (req_handler)req_set_cursor,
     (req_handler)req_update_rawinput_devices,
-    (req_handler)req_get_suspend_context,
-    (req_handler)req_set_suspend_context,
     (req_handler)req_create_job,
     (req_handler)req_open_job,
     (req_handler)req_assign_job,
     (req_handler)req_process_in_job,
     (req_handler)req_set_job_limits,
     (req_handler)req_set_job_completion_port,
+    (req_handler)req_get_job_info,
     (req_handler)req_terminate_job,
     (req_handler)req_suspend_process,
     (req_handler)req_resume_process,
 };
 
+C_ASSERT( sizeof(abstime_t) == 8 );
 C_ASSERT( sizeof(affinity_t) == 8 );
-C_ASSERT( sizeof(apc_call_t) == 40 );
+C_ASSERT( sizeof(apc_call_t) == 48 );
 C_ASSERT( sizeof(apc_param_t) == 8 );
 C_ASSERT( sizeof(apc_result_t) == 40 );
 C_ASSERT( sizeof(async_data_t) == 40 );
@@ -810,7 +815,6 @@ C_ASSERT( FIELD_OFFSET(struct terminate_thread_request, handle) == 12 );
 C_ASSERT( FIELD_OFFSET(struct terminate_thread_request, exit_code) == 16 );
 C_ASSERT( sizeof(struct terminate_thread_request) == 24 );
 C_ASSERT( FIELD_OFFSET(struct terminate_thread_reply, self) == 8 );
-C_ASSERT( FIELD_OFFSET(struct terminate_thread_reply, last) == 12 );
 C_ASSERT( sizeof(struct terminate_thread_reply) == 16 );
 C_ASSERT( FIELD_OFFSET(struct get_process_info_request, handle) == 12 );
 C_ASSERT( sizeof(struct get_process_info_request) == 16 );
@@ -889,7 +893,7 @@ C_ASSERT( FIELD_OFFSET(struct unload_dll_request, base) == 16 );
 C_ASSERT( sizeof(struct unload_dll_request) == 24 );
 C_ASSERT( FIELD_OFFSET(struct queue_apc_request, handle) == 12 );
 C_ASSERT( FIELD_OFFSET(struct queue_apc_request, call) == 16 );
-C_ASSERT( sizeof(struct queue_apc_request) == 56 );
+C_ASSERT( sizeof(struct queue_apc_request) == 64 );
 C_ASSERT( FIELD_OFFSET(struct queue_apc_reply, handle) == 8 );
 C_ASSERT( FIELD_OFFSET(struct queue_apc_reply, self) == 12 );
 C_ASSERT( sizeof(struct queue_apc_reply) == 16 );
@@ -931,10 +935,10 @@ C_ASSERT( sizeof(struct open_thread_reply) == 16 );
 C_ASSERT( FIELD_OFFSET(struct select_request, flags) == 12 );
 C_ASSERT( FIELD_OFFSET(struct select_request, cookie) == 16 );
 C_ASSERT( FIELD_OFFSET(struct select_request, timeout) == 24 );
-C_ASSERT( FIELD_OFFSET(struct select_request, prev_apc) == 32 );
+C_ASSERT( FIELD_OFFSET(struct select_request, size) == 32 );
+C_ASSERT( FIELD_OFFSET(struct select_request, prev_apc) == 36 );
 C_ASSERT( sizeof(struct select_request) == 40 );
-C_ASSERT( FIELD_OFFSET(struct select_reply, timeout) == 8 );
-C_ASSERT( FIELD_OFFSET(struct select_reply, call) == 16 );
+C_ASSERT( FIELD_OFFSET(struct select_reply, call) == 8 );
 C_ASSERT( FIELD_OFFSET(struct select_reply, apc_handle) == 56 );
 C_ASSERT( sizeof(struct select_reply) == 64 );
 C_ASSERT( FIELD_OFFSET(struct create_event_request, access) == 12 );
@@ -1374,7 +1378,6 @@ C_ASSERT( FIELD_OFFSET(struct queue_exception_event_reply, handle) == 8 );
 C_ASSERT( sizeof(struct queue_exception_event_reply) == 16 );
 C_ASSERT( FIELD_OFFSET(struct get_exception_status_request, handle) == 12 );
 C_ASSERT( sizeof(struct get_exception_status_request) == 16 );
-C_ASSERT( sizeof(struct get_exception_status_reply) == 8 );
 C_ASSERT( FIELD_OFFSET(struct continue_debug_event_request, pid) == 12 );
 C_ASSERT( FIELD_OFFSET(struct continue_debug_event_request, tid) == 16 );
 C_ASSERT( FIELD_OFFSET(struct continue_debug_event_request, status) == 20 );
@@ -1482,13 +1485,12 @@ C_ASSERT( FIELD_OFFSET(struct get_timer_info_reply, signaled) == 16 );
 C_ASSERT( sizeof(struct get_timer_info_reply) == 24 );
 C_ASSERT( FIELD_OFFSET(struct get_thread_context_request, handle) == 12 );
 C_ASSERT( FIELD_OFFSET(struct get_thread_context_request, flags) == 16 );
-C_ASSERT( FIELD_OFFSET(struct get_thread_context_request, suspend) == 20 );
 C_ASSERT( sizeof(struct get_thread_context_request) == 24 );
 C_ASSERT( FIELD_OFFSET(struct get_thread_context_reply, self) == 8 );
+C_ASSERT( FIELD_OFFSET(struct get_thread_context_reply, handle) == 12 );
 C_ASSERT( sizeof(struct get_thread_context_reply) == 16 );
 C_ASSERT( FIELD_OFFSET(struct set_thread_context_request, handle) == 12 );
-C_ASSERT( FIELD_OFFSET(struct set_thread_context_request, suspend) == 16 );
-C_ASSERT( sizeof(struct set_thread_context_request) == 24 );
+C_ASSERT( sizeof(struct set_thread_context_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct set_thread_context_reply, self) == 8 );
 C_ASSERT( sizeof(struct set_thread_context_reply) == 16 );
 C_ASSERT( FIELD_OFFSET(struct get_selector_entry_request, handle) == 12 );
@@ -2377,7 +2379,8 @@ C_ASSERT( sizeof(struct set_fd_disp_info_request) == 24 );
 C_ASSERT( FIELD_OFFSET(struct set_fd_name_info_request, handle) == 12 );
 C_ASSERT( FIELD_OFFSET(struct set_fd_name_info_request, rootdir) == 16 );
 C_ASSERT( FIELD_OFFSET(struct set_fd_name_info_request, link) == 20 );
-C_ASSERT( sizeof(struct set_fd_name_info_request) == 24 );
+C_ASSERT( FIELD_OFFSET(struct set_fd_name_info_request, replace) == 24 );
+C_ASSERT( sizeof(struct set_fd_name_info_request) == 32 );
 C_ASSERT( FIELD_OFFSET(struct get_window_layered_info_request, handle) == 12 );
 C_ASSERT( sizeof(struct get_window_layered_info_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct get_window_layered_info_reply, color_key) == 8 );
@@ -2412,9 +2415,6 @@ C_ASSERT( FIELD_OFFSET(struct set_cursor_reply, new_clip) == 32 );
 C_ASSERT( FIELD_OFFSET(struct set_cursor_reply, last_change) == 48 );
 C_ASSERT( sizeof(struct set_cursor_reply) == 56 );
 C_ASSERT( sizeof(struct update_rawinput_devices_request) == 16 );
-C_ASSERT( sizeof(struct get_suspend_context_request) == 16 );
-C_ASSERT( sizeof(struct get_suspend_context_reply) == 8 );
-C_ASSERT( sizeof(struct set_suspend_context_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct create_job_request, access) == 12 );
 C_ASSERT( sizeof(struct create_job_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct create_job_reply, handle) == 8 );
@@ -2438,6 +2438,11 @@ C_ASSERT( FIELD_OFFSET(struct set_job_completion_port_request, job) == 12 );
 C_ASSERT( FIELD_OFFSET(struct set_job_completion_port_request, port) == 16 );
 C_ASSERT( FIELD_OFFSET(struct set_job_completion_port_request, key) == 24 );
 C_ASSERT( sizeof(struct set_job_completion_port_request) == 32 );
+C_ASSERT( FIELD_OFFSET(struct get_job_info_request, handle) == 12 );
+C_ASSERT( sizeof(struct get_job_info_request) == 16 );
+C_ASSERT( FIELD_OFFSET(struct get_job_info_reply, total_processes) == 8 );
+C_ASSERT( FIELD_OFFSET(struct get_job_info_reply, active_processes) == 12 );
+C_ASSERT( sizeof(struct get_job_info_reply) == 16 );
 C_ASSERT( FIELD_OFFSET(struct terminate_job_request, handle) == 12 );
 C_ASSERT( FIELD_OFFSET(struct terminate_job_request, status) == 16 );
 C_ASSERT( sizeof(struct terminate_job_request) == 24 );

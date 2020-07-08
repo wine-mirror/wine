@@ -75,8 +75,8 @@ struct thread
     int                    exit_code;     /* thread exit code */
     int                    unix_pid;      /* Unix pid of client */
     int                    unix_tid;      /* Unix tid of client */
-    context_t             *context;       /* current context if in an exception handler */
-    context_t             *suspend_context; /* current context if suspended */
+    struct context        *context;       /* current context */
+    client_ptr_t           suspend_cookie;/* wait cookie of suspending select */
     client_ptr_t           teb;           /* TEB address (in client address space) */
     client_ptr_t           entry_point;   /* entry point (in client address space) */
     affinity_t             affinity;      /* affinity mask */
@@ -114,7 +114,6 @@ extern enum select_op get_wait_queue_select_op( struct wait_queue_entry *entry )
 extern client_ptr_t get_wait_queue_key( struct wait_queue_entry *entry );
 extern void make_wait_abandoned( struct wait_queue_entry *entry );
 extern void stop_thread( struct thread *thread );
-extern void stop_thread_if_suspended( struct thread *thread );
 extern int wake_thread( struct thread *thread );
 extern int wake_thread_queue_entry( struct wait_queue_entry *entry );
 extern int add_queue( struct object *obj, struct wait_queue_entry *entry );

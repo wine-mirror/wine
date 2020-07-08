@@ -20,7 +20,6 @@
  */
 
 
-#include "config.h"
 #include <assert.h>
 #include <stdlib.h>
 #include "wine/debug.h"
@@ -205,7 +204,7 @@ void* vector_add(struct vector* v, struct pool* pool)
  */
 struct key2index
 {
-    unsigned long       key;
+    ULONG_PTR           key;
     unsigned            index;
 };
 
@@ -221,7 +220,7 @@ void sparse_array_init(struct sparse_array* sa, unsigned elt_sz, unsigned bucket
  * Returns the first index which key is >= at passed key
  */
 static struct key2index* sparse_array_lookup(const struct sparse_array* sa,
-                                             unsigned long key, unsigned* idx)
+                                             ULONG_PTR key, unsigned* idx)
 {
     struct key2index*   pk2i;
     unsigned            low, high;
@@ -267,7 +266,7 @@ static struct key2index* sparse_array_lookup(const struct sparse_array* sa,
     return pk2i;
 }
 
-void*   sparse_array_find(const struct sparse_array* sa, unsigned long key)
+void*   sparse_array_find(const struct sparse_array* sa, ULONG_PTR key)
 {
     unsigned            idx;
     struct key2index*   pk2i;
@@ -277,7 +276,7 @@ void*   sparse_array_find(const struct sparse_array* sa, unsigned long key)
     return NULL;
 }
 
-void*   sparse_array_add(struct sparse_array* sa, unsigned long key, 
+void*   sparse_array_add(struct sparse_array* sa, ULONG_PTR key,
                          struct pool* pool)
 {
     unsigned            idx, i;

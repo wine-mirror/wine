@@ -23,13 +23,9 @@
 
 #include <time.h>
 #include <math.h>
-#ifdef HAVE_SYS_UTSNAME_H
-#include <sys/utsname.h>
-#endif
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
-#include "wine/library.h"
 #include "wine/debug.h"
 #include "ntdll_misc.h"
 #include "wmistr.h"
@@ -41,7 +37,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 LPCSTR debugstr_ObjectAttributes(const OBJECT_ATTRIBUTES *oa)
 {
     if (!oa) return "<null>";
-    return wine_dbg_sprintf( "{name=%s, attr=0x%08x, hRoot=%p, sd=%p}\n",
+    return wine_dbg_sprintf( "{name=%s, attr=0x%08x, hRoot=%p, sd=%p}",
                              debugstr_us(oa->ObjectName), oa->Attributes,
                              oa->RootDirectory, oa->SecurityDescriptor );
 }
@@ -57,7 +53,7 @@ LPCSTR debugstr_us( const UNICODE_STRING *us )
  */
 const char * CDECL NTDLL_wine_get_version(void)
 {
-    return wine_get_version();
+    return unix_funcs->get_version();
 }
 
 /*********************************************************************
@@ -65,7 +61,7 @@ const char * CDECL NTDLL_wine_get_version(void)
  */
 const char * CDECL NTDLL_wine_get_build_id(void)
 {
-    return wine_get_build_id();
+    return unix_funcs->get_build_id();
 }
 
 /*********************************************************************
@@ -73,21 +69,7 @@ const char * CDECL NTDLL_wine_get_build_id(void)
  */
 void CDECL NTDLL_wine_get_host_version( const char **sysname, const char **release )
 {
-#ifdef HAVE_SYS_UTSNAME_H
-    static struct utsname buf;
-    static BOOL init_done;
-
-    if (!init_done)
-    {
-        uname( &buf );
-        init_done = TRUE;
-    }
-    if (sysname) *sysname = buf.sysname;
-    if (release) *release = buf.release;
-#else
-    if (sysname) *sysname = "";
-    if (release) *release = "";
-#endif
+    return unix_funcs->get_host_version( sysname, release );
 }
 
 /*********************************************************************
@@ -585,7 +567,7 @@ ULONG WINAPI EtwTraceMessageVa( TRACEHANDLE handle, ULONG flags, LPGUID guid, US
 /******************************************************************************
  *                  EtwTraceMessage (NTDLL.@)
  */
-ULONG WINAPIV EtwTraceMessage( TRACEHANDLE handle, ULONG flags, LPGUID guid, USHORT number, ... )
+ULONG WINAPIV EtwTraceMessage( TRACEHANDLE handle, ULONG flags, LPGUID guid, /*USHORT*/ ULONG number, ... )
 {
     __ms_va_list valist;
     ULONG ret;

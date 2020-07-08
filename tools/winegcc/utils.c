@@ -34,6 +34,12 @@
 # define min(x,y) (((x) < (y)) ? (x) : (y))
 #endif
 
+#if defined(_WIN32) && !defined(__CYGWIN__)
+# define PATH_SEPARATOR ';'
+#else
+# define PATH_SEPARATOR ':'
+#endif
+
 int verbose = 0;
 
 void error(const char* s, ...)
@@ -267,7 +273,7 @@ static char* try_lib_path(const char* dir, const char* pre,
 static file_type guess_lib_type(enum target_platform platform, const char* dir,
                                 const char* library, const char *suffix, char** file)
 {
-    if (platform != PLATFORM_WINDOWS && platform != PLATFORM_CYGWIN)
+    if (platform != PLATFORM_WINDOWS && platform != PLATFORM_MINGW && platform != PLATFORM_CYGWIN)
     {
         /* Unix shared object */
         if ((*file = try_lib_path(dir, "lib", library, ".so", file_so)))
@@ -305,18 +311,44 @@ file_type get_lib_type(enum target_platform platform, strarray* path, const char
 
 const char *find_binary( const strarray* prefix, const char *name )
 {
+    char *file_name, *args;
+    static strarray *path;
     unsigned int i;
 
-    if (!prefix) return name;
     if (strchr( name, '/' )) return name;
 
-    for (i = 0; i < prefix->size; i++)
+    file_name = xstrdup( name );
+    if ((args = strchr( file_name, ' ' ))) *args++ = 0;
+
+    if (prefix)
     {
-        struct stat st;
-        char *prog = strmake( "%s/%s%s", prefix->base[i], name, EXEEXT );
-        if (stat( prog, &st ) == 0 && S_ISREG( st.st_mode ) && (st.st_mode & 0111)) return prog;
+        for (i = 0; i < prefix->size; i++)
+        {
+            struct stat st;
+            char *prog = strmake( "%s/%s%s", prefix->base[i], file_name, EXEEXT );
+            if (stat( prog, &st ) == 0 && S_ISREG( st.st_mode ) && (st.st_mode & 0111))
+                return args ? strmake( "%s %s", prog, args ) : prog;
+            free( prog );
+        }
     }
-    return name;
+    if (!path)
+    {
+        path = strarray_alloc();
+
+        /* then append the PATH directories */
+        if (getenv( "PATH" ))
+        {
+            char *p = xstrdup( getenv( "PATH" ));
+            while (*p)
+            {
+                strarray_add( path, p );
+                while (*p && *p != PATH_SEPARATOR) p++;
+                if (!*p) break;
+                *p++ = 0;
+            }
+        }
+    }
+    return prefix == path ? NULL : find_binary( path, name );
 }
 
 int spawn(const strarray* prefix, const strarray* args, int ignore_errors)
@@ -333,7 +365,11 @@ int spawn(const strarray* prefix, const strarray* args, int ignore_errors)
 
     if (verbose)
     {
-	for(i = 0; argv[i]; i++) printf("%s ", argv[i]);
+	for(i = 0; argv[i]; i++)
+	{
+	    if (strpbrk(argv[i], " \t\n\r")) printf("\"%s\" ", argv[i]);
+	    else printf("%s ", argv[i]);
+	}
 	printf("\n");
     }
 

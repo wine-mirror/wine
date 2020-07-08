@@ -183,7 +183,7 @@ static RPC_STATUS get_epm_handle_server(RPC_BINDING_HANDLE *epm_handle)
 
 static LONG WINAPI rpc_filter(EXCEPTION_POINTERS *__eptr)
 {
-    switch (GetExceptionCode())
+    switch (__eptr->ExceptionRecord->ExceptionCode)
     {
         case EXCEPTION_ACCESS_VIOLATION:
         case EXCEPTION_ILLEGAL_INSTRUCTION:

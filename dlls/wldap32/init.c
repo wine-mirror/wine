@@ -205,12 +205,19 @@ static char *urlify_hostnames( const char *scheme, char *hostnames, ULONG port )
 WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
 
 #ifdef HAVE_LDAP
-static LDAP *create_context( const char *url )
+static WLDAP32_LDAP *create_context( const char *url )
 {
-    LDAP *ld;
+    WLDAP32_LDAP *ld;
     int version = LDAP_VERSION3;
-    if (ldap_initialize( &ld, url ) != LDAP_SUCCESS) return NULL;
-    ldap_set_option( ld, LDAP_OPT_PROTOCOL_VERSION, &version );
+
+    ld = heap_alloc_zero( sizeof( *ld ));
+    if (!ld) return NULL;
+    if (ldap_initialize( &ld->ld, url ) != LDAP_SUCCESS)
+    {
+        heap_free( ld );
+        return NULL;
+    }
+    ldap_set_option( ld->ld, LDAP_OPT_PROTOCOL_VERSION, &version );
     return ld;
 }
 #endif
@@ -268,7 +275,7 @@ exit:
 WLDAP32_LDAP * CDECL cldap_openW( PWCHAR hostname, ULONG portnumber )
 {
 #ifdef HAVE_LDAP
-    LDAP *ld = NULL;
+    WLDAP32_LDAP *ld = NULL;
     char *hostnameU = NULL, *url = NULL;
 
     TRACE( "(%s, %d)\n", debugstr_w(hostname), portnumber );
@@ -377,7 +384,7 @@ exit:
 WLDAP32_LDAP * CDECL ldap_initW( const PWCHAR hostname, ULONG portnumber )
 {
 #ifdef HAVE_LDAP
-    LDAP *ld = NULL;
+    WLDAP32_LDAP *ld = NULL;
     char *hostnameU = NULL, *url = NULL;
 
     TRACE( "(%s, %d)\n", debugstr_w(hostname), portnumber );
@@ -459,7 +466,7 @@ exit:
 WLDAP32_LDAP * CDECL ldap_openW( PWCHAR hostname, ULONG portnumber )
 {
 #ifdef HAVE_LDAP
-    LDAP *ld = NULL;
+    WLDAP32_LDAP *ld = NULL;
     char *hostnameU = NULL, *url = NULL;
 
     TRACE( "(%s, %d)\n", debugstr_w(hostname), portnumber );
@@ -562,7 +569,7 @@ WLDAP32_LDAP * CDECL ldap_sslinitW( PWCHAR hostname, ULONG portnumber, int secur
         url = urlify_hostnames( "ldap://", hostnameU, portnumber );
 
     if (!url) goto exit;
-    ldap_initialize( &ld, url );
+    ldap_initialize( &ld->ld, url );
 
 exit:
     strfreeU( hostnameU );
@@ -652,7 +659,7 @@ ULONG CDECL ldap_start_tls_sW( WLDAP32_LDAP *ld, PULONG retval, WLDAP32_LDAPMess
         if (!clientctrlsU) goto exit;
     }
 
-    ret = map_error( ldap_start_tls_s( ld, serverctrlsU, clientctrlsU ));
+    ret = map_error( ldap_start_tls_s( ld->ld, serverctrlsU, clientctrlsU ));
 
 exit:
     controlarrayfreeU( serverctrlsU );

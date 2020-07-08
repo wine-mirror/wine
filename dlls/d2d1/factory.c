@@ -681,6 +681,38 @@ BOOL WINAPI D2D1InvertMatrix(D2D1_MATRIX_3X2_F *matrix)
     return d2d_matrix_invert(matrix, &m);
 }
 
+HRESULT WINAPI D2D1CreateDevice(IDXGIDevice *dxgi_device,
+        const D2D1_CREATION_PROPERTIES *properties, ID2D1Device **device)
+{
+    D2D1_CREATION_PROPERTIES default_properties = {0};
+    D2D1_FACTORY_OPTIONS factory_options;
+    ID3D11Device *d3d_device;
+    ID2D1Factory1 *factory;
+    HRESULT hr;
+
+    TRACE("dxgi_device %p, properties %p, device %p.\n", dxgi_device, properties, device);
+
+    if (!properties)
+    {
+        if (SUCCEEDED(IDXGIDevice_QueryInterface(dxgi_device, &IID_ID3D11Device, (void **)&d3d_device)))
+        {
+            if (!(ID3D11Device_GetCreationFlags(d3d_device) & D3D11_CREATE_DEVICE_SINGLETHREADED))
+                default_properties.threadingMode = D2D1_THREADING_MODE_MULTI_THREADED;
+            ID3D11Device_Release(d3d_device);
+        }
+        properties = &default_properties;
+    }
+
+    factory_options.debugLevel = properties->debugLevel;
+    if (FAILED(hr = D2D1CreateFactory(properties->threadingMode,
+            &IID_ID2D1Factory1, &factory_options, (void **)&factory)))
+        return hr;
+
+    hr = ID2D1Factory1_CreateDevice(factory, dxgi_device, device);
+    ID2D1Factory1_Release(factory);
+    return hr;
+}
+
 static BOOL get_config_key_dword(HKEY default_key, HKEY application_key, const char *name, DWORD *value)
 {
     DWORD type, data, size;

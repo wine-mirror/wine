@@ -18,9 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
@@ -33,8 +30,6 @@
 #include "winternl.h"
 #include "kernel16_private.h"
 #include "dosexe.h"
-#include "wine/unicode.h"
-#include "wine/library.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(relay);
@@ -59,56 +54,41 @@ typedef struct {
 } RELAY_Stack16;
 
 
-static const WCHAR **debug_relay_excludelist;
-static const WCHAR **debug_relay_includelist;
-static const WCHAR **debug_snoop_excludelist;
-static const WCHAR **debug_snoop_includelist;
+static const char **debug_relay_excludelist;
+static const char **debug_relay_includelist;
+static const char **debug_snoop_excludelist;
+static const char **debug_snoop_includelist;
 
-/* compare an ASCII and a Unicode string without depending on the current codepage */
-static inline int strcmpiAW( const char *strA, const WCHAR *strW )
-{
-    while (*strA && (toupperW((unsigned char)*strA) == toupperW(*strW))) { strA++; strW++; }
-    return toupperW((unsigned char)*strA) - toupperW(*strW);
-}
-
-/* compare an ASCII and a Unicode string without depending on the current codepage */
-static inline int strncmpiAW( const char *strA, const WCHAR *strW, int n )
-{
-    int ret = 0;
-    for ( ; n > 0; n--, strA++, strW++)
-        if ((ret = toupperW((unsigned char)*strA) - toupperW(*strW)) || !*strA) break;
-    return ret;
-}
 
 /***********************************************************************
  *           build_list
  *
  * Build a function list from a ';'-separated string.
  */
-static const WCHAR **build_list( const WCHAR *buffer )
+static const char **build_list( const WCHAR *buffer )
 {
     int count = 1;
     const WCHAR *p = buffer;
-    const WCHAR **ret;
+    const char **ret;
 
-    while ((p = strchrW( p, ';' )))
+    while ((p = wcschr( p, ';' )))
     {
         count++;
         p++;
     }
     /* allocate count+1 pointers, plus the space for a copy of the string */
     if ((ret = RtlAllocateHeap( GetProcessHeap(), 0,
-                                (count+1) * sizeof(WCHAR*) + (strlenW(buffer)+1) * sizeof(WCHAR) )))
+                                (count + 1) * sizeof(char *) + (lstrlenW(buffer) + 1) )))
     {
-        WCHAR *str = (WCHAR *)(ret + count + 1);
-        WCHAR *p = str;
+        char *str = (char *)(ret + count + 1);
+        char *p = str;
 
-        strcpyW( str, buffer );
+        while ((*str++ = *buffer++));
         count = 0;
         for (;;)
         {
             ret[count++] = p;
-            if (!(p = strchrW( p, ';' ))) break;
+            if (!(p = strchr( p, ';' ))) break;
             *p++ = 0;
         }
         ret[count++] = NULL;
@@ -185,25 +165,25 @@ void RELAY16_InitDebugLists(void)
  *
  * Check if a given module and function is in the list.
  */
-static BOOL check_list( const char *module, int ordinal, const char *func, const WCHAR **list )
+static BOOL check_list( const char *module, int ordinal, const char *func, const char **list )
 {
     char ord_str[10];
 
     sprintf( ord_str, "%d", ordinal );
     for(; *list; list++)
     {
-        const WCHAR *p = strrchrW( *list, '.' );
+        const char *p = strrchr( *list, '.' );
         if (p && p > *list)  /* check module and function */
         {
             int len = p - *list;
-            if (strncmpiAW( module, *list, len-1 ) || module[len]) continue;
+            if (_strnicmp( module, *list, len-1 ) || module[len]) continue;
             if (p[1] == '*' && !p[2]) return TRUE;
-            if (!strcmpiAW( ord_str, p + 1 )) return TRUE;
-            if (func && !strcmpiAW( func, p + 1 )) return TRUE;
+            if (!strcmp( ord_str, p + 1 )) return TRUE;
+            if (func && !stricmp( func, p + 1 )) return TRUE;
         }
         else  /* function only */
         {
-            if (func && !strcmpiAW( func, *list )) return TRUE;
+            if (func && !stricmp( func, *list )) return TRUE;
         }
     }
     return FALSE;
@@ -601,7 +581,7 @@ int relay_call_from_16( void *entry_point, unsigned char *args16, CONTEXT *conte
 static RELAY_Stack16 *RELAY_GetPointer( DWORD offset )
 {
     offset = offset / sizeof(RELAY_Stack16) * sizeof(RELAY_Stack16);
-    return MapSL(MAKESEGPTR(DOSVM_dpmi_segments->relay_data_sel, offset));
+    return MapSL(MAKESEGPTR(relay_data_sel, offset));
 }
 
 
@@ -637,9 +617,9 @@ static void RELAY_MakeShortContext( CONTEXT *context )
     stack->stack_bottom = RELAY_MAGIC;
     stack->stack_top = RELAY_MAGIC;
 
-    context->SegSs = DOSVM_dpmi_segments->relay_data_sel;
+    context->SegSs = relay_data_sel;
     context->Esp = offset;
-    context->SegCs = DOSVM_dpmi_segments->relay_code_sel;
+    context->SegCs = relay_code_sel;
     context->Eip = 3;
 }
 
@@ -712,7 +692,7 @@ void DOSVM_RelayHandler( CONTEXT *context )
  */
 void DOSVM_BuildCallFrame( CONTEXT *context, DOSRELAY relay, LPVOID data )
 {
-    WORD  code_sel = DOSVM_dpmi_segments->relay_code_sel;
+    WORD  code_sel = relay_code_sel;
 
     /*
      * Allocate separate stack for relay call.
@@ -740,6 +720,6 @@ void DOSVM_BuildCallFrame( CONTEXT *context, DOSRELAY relay, LPVOID data )
     /*
      * Adjust code pointer.
      */
-    context->SegCs = wine_get_cs();
+    context->SegCs = get_cs();
     context->Eip = (DWORD)__wine_call_from_16_regs;
 }

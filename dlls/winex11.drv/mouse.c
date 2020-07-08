@@ -51,7 +51,6 @@ MAKE_FUNCPTR(XcursorLibraryLoadCursor);
 
 #include "x11drv.h"
 #include "wine/server.h"
-#include "wine/library.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
@@ -75,8 +74,8 @@ static const UINT button_down_flags[NB_BUTTONS] =
     MOUSEEVENTF_RIGHTDOWN,
     MOUSEEVENTF_WHEEL,
     MOUSEEVENTF_WHEEL,
-    MOUSEEVENTF_XDOWN,  /* FIXME: horizontal wheel */
-    MOUSEEVENTF_XDOWN,
+    MOUSEEVENTF_HWHEEL,
+    MOUSEEVENTF_HWHEEL,
     MOUSEEVENTF_XDOWN,
     MOUSEEVENTF_XDOWN
 };
@@ -88,8 +87,8 @@ static const UINT button_up_flags[NB_BUTTONS] =
     MOUSEEVENTF_RIGHTUP,
     0,
     0,
-    MOUSEEVENTF_XUP,
-    MOUSEEVENTF_XUP,
+    0,
+    0,
     MOUSEEVENTF_XUP,
     MOUSEEVENTF_XUP
 };
@@ -101,8 +100,8 @@ static const UINT button_down_data[NB_BUTTONS] =
     0,
     WHEEL_DELTA,
     -WHEEL_DELTA,
-    XBUTTON1,
-    XBUTTON2,
+    -WHEEL_DELTA,
+    WHEEL_DELTA,
     XBUTTON1,
     XBUTTON2
 };
@@ -114,8 +113,8 @@ static const UINT button_up_data[NB_BUTTONS] =
     0,
     0,
     0,
-    XBUTTON1,
-    XBUTTON2,
+    0,
+    0,
     XBUTTON1,
     XBUTTON2
 };
@@ -151,14 +150,13 @@ MAKE_FUNCPTR(XISelectEvents);
 void X11DRV_Xcursor_Init(void)
 {
 #ifdef SONAME_LIBXCURSOR
-    xcursor_handle = wine_dlopen(SONAME_LIBXCURSOR, RTLD_NOW, NULL, 0);
-    if (!xcursor_handle)  /* wine_dlopen failed. */
+    xcursor_handle = dlopen(SONAME_LIBXCURSOR, RTLD_NOW);
+    if (!xcursor_handle)
     {
         WARN("Xcursor failed to load.  Using fallback code.\n");
         return;
     }
-#define LOAD_FUNCPTR(f) \
-        p##f = wine_dlsym(xcursor_handle, #f, NULL, 0)
+#define LOAD_FUNCPTR(f) p##f = dlsym(xcursor_handle, #f)
 
     LOAD_FUNCPTR(XcursorImageCreate);
     LOAD_FUNCPTR(XcursorImageDestroy);
@@ -1868,7 +1866,7 @@ void X11DRV_XInput2_Init(void)
 {
 #if defined(SONAME_LIBXI) && defined(HAVE_X11_EXTENSIONS_XINPUT2_H)
     int event, error;
-    void *libxi_handle = wine_dlopen( SONAME_LIBXI, RTLD_NOW, NULL, 0 );
+    void *libxi_handle = dlopen( SONAME_LIBXI, RTLD_NOW );
 
     if (!libxi_handle)
     {
@@ -1876,7 +1874,7 @@ void X11DRV_XInput2_Init(void)
         return;
     }
 #define LOAD_FUNCPTR(f) \
-    if (!(p##f = wine_dlsym( libxi_handle, #f, NULL, 0))) \
+    if (!(p##f = dlsym( libxi_handle, #f))) \
     { \
         WARN("Failed to load %s.\n", #f); \
         return; \

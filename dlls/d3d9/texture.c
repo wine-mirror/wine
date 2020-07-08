@@ -367,7 +367,7 @@ static HRESULT WINAPI d3d9_texture_2d_GetLevelDesc(IDirect3DTexture9 *iface, UIN
         desc->Type = D3DRTYPE_SURFACE;
         desc->Usage = texture->usage;
         desc->Pool = d3dpool_from_wined3daccess(wined3d_desc.access, wined3d_desc.usage);
-        desc->MultiSampleType = wined3d_desc.multisample_type;
+        desc->MultiSampleType = d3dmultisample_type_from_wined3d(wined3d_desc.multisample_type);
         desc->MultiSampleQuality = wined3d_desc.multisample_quality;
         desc->Width = wined3d_desc.width;
         desc->Height = wined3d_desc.height;
@@ -543,7 +543,7 @@ static ULONG WINAPI d3d9_texture_cube_AddRef(IDirect3DCubeTexture9 *iface)
         wined3d_mutex_lock();
         LIST_FOR_EACH_ENTRY(surface, &texture->rtv_list, struct d3d9_surface, rtv_entry)
         {
-            wined3d_rendertarget_view_decref(surface->wined3d_rtv);
+            wined3d_rendertarget_view_incref(surface->wined3d_rtv);
         }
         wined3d_texture_incref(texture->wined3d_texture);
         wined3d_mutex_unlock();
@@ -774,7 +774,7 @@ static HRESULT WINAPI d3d9_texture_cube_GetLevelDesc(IDirect3DCubeTexture9 *ifac
         desc->Type = D3DRTYPE_SURFACE;
         desc->Usage = texture->usage;
         desc->Pool = d3dpool_from_wined3daccess(wined3d_desc.access, wined3d_desc.usage);
-        desc->MultiSampleType = wined3d_desc.multisample_type;
+        desc->MultiSampleType = d3dmultisample_type_from_wined3d(wined3d_desc.multisample_type);
         desc->MultiSampleQuality = wined3d_desc.multisample_quality;
         desc->Width = wined3d_desc.width;
         desc->Height = wined3d_desc.height;
@@ -1296,7 +1296,9 @@ static const struct wined3d_parent_ops d3d9_texture_wined3d_parent_ops =
 HRESULT texture_init(struct d3d9_texture *texture, struct d3d9_device *device,
         UINT width, UINT height, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool)
 {
+    struct wined3d_adapter *wined3d_adapter;
     struct wined3d_resource_desc desc;
+    unsigned int output_idx;
     DWORD flags = 0;
     HRESULT hr;
 
@@ -1346,7 +1348,9 @@ HRESULT texture_init(struct d3d9_texture *texture, struct d3d9_device *device,
             return D3DERR_INVALIDCALL;
         }
         wined3d_mutex_lock();
-        hr = wined3d_check_device_format(device->d3d_parent->wined3d, WINED3DADAPTER_DEFAULT,
+        output_idx = device->adapter_ordinal;
+        wined3d_adapter = wined3d_output_get_adapter(device->d3d_parent->wined3d_outputs[output_idx]);
+        hr = wined3d_check_device_format(device->d3d_parent->wined3d, wined3d_adapter,
                 WINED3D_DEVICE_TYPE_HAL, WINED3DFMT_B8G8R8A8_UNORM, WINED3DUSAGE_QUERY_GENMIPMAP,
                 WINED3D_BIND_SHADER_RESOURCE, WINED3D_RTYPE_TEXTURE_2D, wined3dformat_from_d3dformat(format));
         wined3d_mutex_unlock();

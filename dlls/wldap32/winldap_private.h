@@ -101,8 +101,13 @@ typedef struct berelement
 #define WLDAP32_LDAP_OPT_SECURITY_CONTEXT       0x99
 #define WLDAP32_LDAP_OPT_ROOTDSE_CACHE          0x9a
 
-typedef struct ldap
+#define WLDAP32_LDAP_AUTH_NEGOTIATE             0x486
+
+typedef struct wldap32
 {
+#ifdef HAVE_LDAP
+    LDAP *ld;
+#endif
     struct
     {
         UINT_PTR sb_sd;
@@ -126,6 +131,7 @@ typedef struct ldap
     ULONG ld_cldaptimeout;
     ULONG ld_refhoplimit;
     ULONG ld_options;
+    struct berval **ld_server_ctrls;
 } WLDAP32_LDAP, *WLDAP32_PLDAP;
 
 typedef struct ldapmodA {
@@ -228,7 +234,16 @@ typedef struct WLDAP32_ldapvlvinfo
     VOID *ldvlv_extradata;
 } WLDAP32_LDAPVLVInfo, *WLDAP32_PLDAPVLVInfo;
 
-typedef struct ldapsearch LDAPSearch, *PLDAPSearch;
+typedef struct ldapsearch
+{
+    WCHAR *dn, *filter, **attrs;
+    ULONG scope, attrsonly;
+    LDAPControlW **serverctrls;
+    LDAPControlW **clientctrls;
+    struct l_timeval timeout;
+    ULONG sizelimit;
+    struct berval *cookie;
+} LDAPSearch, *PLDAPSearch;
 
 typedef struct ldapsortkeyA
 {

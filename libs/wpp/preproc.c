@@ -692,7 +692,7 @@ int ppy_error(const char *s, ...)
 {
 	va_list ap;
 	va_start(ap, s);
-	generic_msg(s, "Error", ppy_text, ap);
+	generic_msg(s, "error", ppy_text, ap);
 	va_end(ap);
 	exit(1);
 }
@@ -701,7 +701,7 @@ int ppy_warning(const char *s, ...)
 {
 	va_list ap;
 	va_start(ap, s);
-	generic_msg(s, "Warning", ppy_text, ap);
+	generic_msg(s, "warning", ppy_text, ap);
 	va_end(ap);
 	return 0;
 }

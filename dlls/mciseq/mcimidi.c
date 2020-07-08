@@ -230,6 +230,7 @@ static WORD MIDI_mciReadVaryLen(WINE_MCIMIDI* wmm, LPDWORD lpdw)
 
     do {
 	if (MIDI_mciReadByte(wmm, &byte) != 0) {
+            *lpdw = 0;
 	    return 0;
 	}
 	value = (value << 7) + (byte & 0x7F);

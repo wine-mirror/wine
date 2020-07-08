@@ -90,11 +90,12 @@ typedef struct _BUTTON_INFO
     HIMAGELIST       glyph;      /* this is a font character code when split_style doesn't have BCSS_IMAGE */
     SIZE             glyph_size;
     RECT             text_margin;
+    HANDLE           image; /* Original handle set with BM_SETIMAGE and returned with BM_GETIMAGE. */
     union
     {
         HICON   icon;
         HBITMAP bitmap;
-        HANDLE  image;
+        HANDLE  image; /* Duplicated handle used for drawing. */
     } u;
 } BUTTON_INFO;
 
@@ -488,6 +489,10 @@ static LRESULT CALLBACK BUTTON_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
 
     case WM_NCDESTROY:
         SetWindowLongPtrW( hWnd, 0, 0 );
+        if (infoPtr->image_type == IMAGE_BITMAP)
+            DeleteObject(infoPtr->u.bitmap);
+        else if (infoPtr->image_type == IMAGE_ICON)
+            DestroyIcon(infoPtr->u.icon);
         heap_free(infoPtr->note);
         heap_free(infoPtr);
         break;
@@ -842,8 +847,14 @@ static LRESULT CALLBACK BUTTON_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
         break;
 
     case BM_SETSTYLE:
-        btn_type = wParam & BS_TYPEMASK;
-        style = (style & ~BS_TYPEMASK) | btn_type;
+    {
+        DWORD new_btn_type;
+
+        new_btn_type= wParam & BS_TYPEMASK;
+        if (btn_type >= BS_SPLITBUTTON && new_btn_type <= BS_DEFPUSHBUTTON)
+            new_btn_type = (btn_type & ~BS_DEFPUSHBUTTON) | new_btn_type;
+
+        style = (style & ~BS_TYPEMASK) | new_btn_type;
         SetWindowLongW( hWnd, GWL_STYLE, style );
 
         /* Only redraw if lParam flag is set.*/
@@ -851,7 +862,7 @@ static LRESULT CALLBACK BUTTON_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
             InvalidateRect( hWnd, NULL, TRUE );
 
         break;
-
+    }
     case BM_CLICK:
 	SendMessageW( hWnd, WM_LBUTTONDOWN, 0, 0 );
 	SendMessageW( hWnd, WM_LBUTTONUP, 0, 0 );
@@ -859,13 +870,14 @@ static LRESULT CALLBACK BUTTON_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
 
     case BM_SETIMAGE:
         infoPtr->image_type = (DWORD)wParam;
-        oldHbitmap = infoPtr->u.image;
-        infoPtr->u.image = (HANDLE)lParam;
-	InvalidateRect( hWnd, NULL, FALSE );
-	return (LRESULT)oldHbitmap;
+        oldHbitmap = infoPtr->image;
+        infoPtr->u.image = CopyImage((HANDLE)lParam, infoPtr->image_type, 0, 0, 0);
+        infoPtr->image = (HANDLE)lParam;
+        InvalidateRect( hWnd, NULL, FALSE );
+        return (LRESULT)oldHbitmap;
 
     case BM_GETIMAGE:
-        return (LRESULT)infoPtr->u.image;
+        return (LRESULT)infoPtr->image;
 
     case BCM_SETIMAGELIST:
     {

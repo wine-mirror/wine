@@ -174,7 +174,7 @@ static inline int __cdecl _vsnprintf_s(char *buffer, size_t size, size_t count, 
     return ret < 0 ? -1 : ret;
 }
 
-static inline int __cdecl _snprintf_s(char *buffer, size_t size, size_t count, const char *format, ...)
+static inline int WINAPIV _snprintf_s(char *buffer, size_t size, size_t count, const char *format, ...)
 {
     int ret;
     __ms_va_list args;

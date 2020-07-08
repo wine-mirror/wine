@@ -3050,7 +3050,7 @@ static void test_process_security(void)
                           STANDARD_RIGHTS_ALL | SPECIFIC_RIGHTS_ALL );
     TEST_GRANTED_ACCESS2( info.hThread, THREAD_ALL_ACCESS_NT4,
                           STANDARD_RIGHTS_ALL | SPECIFIC_RIGHTS_ALL );
-    winetest_wait_child_process( info.hProcess );
+    wait_child_process( info.hProcess );
 
     FreeSid(EveryoneSid);
     CloseHandle( info.hProcess );
@@ -5099,6 +5099,7 @@ static void test_GetUserNameA(void)
     ok(buffer_len == required_len ||
        broken(buffer_len == required_len / sizeof(WCHAR)), /* XP+ */
        "Outputted buffer length was %u\n", buffer_len);
+    ok(GetLastError() == 0xdeadbeef, "Last error was %u\n", GetLastError());
 
     /* Use the reported buffer size from the last GetUserNameA call and pass
      * a length that is one less than the required value. */
@@ -5168,6 +5169,7 @@ static void test_GetUserNameW(void)
     ok(ret == TRUE, "GetUserNameW returned %d, last error %u\n", ret, GetLastError());
     ok(memcmp(buffer, filler, sizeof(filler)) != 0, "Output buffer was untouched\n");
     ok(buffer_len == required_len, "Outputted buffer length was %u\n", buffer_len);
+    ok(GetLastError() == 0xdeadbeef, "Last error was %u\n", GetLastError());
 
     /* GetUserNameW on XP and newer writes a truncated portion of the username string to the buffer. */
     SetLastError(0xdeadbeef);
@@ -7189,7 +7191,7 @@ static void test_token_security_descriptor(void)
     sprintf(buffer, "%s security test_token_sd", myARGV[0]);
     ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &info);
     ok(ret, "CreateProcess failed with error %u\n", GetLastError());
-    winetest_wait_child_process(info.hProcess);
+    wait_child_process(info.hProcess);
     CloseHandle(info.hProcess);
     CloseHandle(info.hThread);
 

@@ -34,6 +34,11 @@ static NTSTATUS (WINAPI *pRtlInt64ToUnicodeString)(ULONGLONG, ULONG, UNICODE_STR
 static NTSTATUS (WINAPI *pRtlLargeIntegerToChar)(ULONGLONG *, ULONG, ULONG, PCHAR);
 static NTSTATUS (WINAPI *pRtlUnicodeStringToAnsiString)(STRING *, const UNICODE_STRING *, BOOLEAN);
 
+static LONGLONG (WINAPI *p_alldiv)( LONGLONG a, LONGLONG b );
+static LONGLONG (WINAPI *p_allrem)( LONGLONG a, LONGLONG b );
+static LONGLONG (WINAPI *p_allmul)( LONGLONG a, LONGLONG b );
+static ULONGLONG (WINAPI *p_aulldiv)( ULONGLONG a, ULONGLONG b );
+static ULONGLONG (WINAPI *p_aullrem)( ULONGLONG a, ULONGLONG b );
 
 static void InitFunctionPtrs(void)
 {
@@ -45,6 +50,12 @@ static void InitFunctionPtrs(void)
 	pRtlInt64ToUnicodeString = (void *)GetProcAddress(hntdll, "RtlInt64ToUnicodeString");
 	pRtlLargeIntegerToChar = (void *)GetProcAddress(hntdll, "RtlLargeIntegerToChar");
 	pRtlUnicodeStringToAnsiString = (void *)GetProcAddress(hntdll, "RtlUnicodeStringToAnsiString");
+
+        p_alldiv = (void *)GetProcAddress(hntdll, "_alldiv");
+        p_allrem = (void *)GetProcAddress(hntdll, "_allrem");
+        p_allmul = (void *)GetProcAddress(hntdll, "_allmul");
+        p_aulldiv = (void *)GetProcAddress(hntdll, "_aulldiv");
+        p_aullrem = (void *)GetProcAddress(hntdll, "_aullrem");
     } /* if */
 }
 
@@ -432,6 +443,55 @@ static void test_RtlLargeIntegerToChar(void)
        largeint2str[0].base, largeint2str[0].MaximumLength, result, STATUS_ACCESS_VIOLATION);
 }
 
+static void test_builtins(void)
+{
+#ifdef __i386__
+    ULONGLONG u;
+    LONGLONG l;
+
+    l = p_alldiv(100, 7);
+    ok(l == 14, "_alldiv returned %s\n", wine_dbgstr_longlong(l));
+
+    l = p_alldiv(-100, 7);
+    ok(l == -14, "_alldiv returned %s\n", wine_dbgstr_longlong(l));
+
+    l = p_alldiv(0x2000000040ll, 0x100000007ll);
+    ok(l == 0x1f, "_alldiv returned %s\n", wine_dbgstr_longlong(l));
+
+    u = p_aulldiv(100, 7);
+    ok(u == 14, "_aulldiv returned %s\n", wine_dbgstr_longlong(u));
+
+    u = p_aulldiv(-100, 7);
+    ok(u == 0x2492492492492484ull, "_alldiv returned %s\n", wine_dbgstr_longlong(u));
+
+    u = p_aulldiv(0x2000000040ull, 0x100000007ull);
+    ok(u == 0x1f, "_aulldiv returned %s\n", wine_dbgstr_longlong(u));
+
+    l = p_allrem(100, 7);
+    ok(l == 2, "_allrem returned %s\n", wine_dbgstr_longlong(l));
+
+    l = p_allrem(-100, 7);
+    ok(l == -2, "_allrem returned %s\n", wine_dbgstr_longlong(l));
+
+    l = p_allrem(0x2000000040ll, 0x100000007ll);
+    ok(l == 0xffffff67, "_allrem returned %s\n", wine_dbgstr_longlong(l));
+
+    u = p_aullrem(100, 7);
+    ok(u == 2, "_aullrem returned %s\n", wine_dbgstr_longlong(u));
+
+    u = p_aullrem(-100, 7);
+    ok(u == 0, "_allrem returned %s\n", wine_dbgstr_longlong(u));
+
+    u = p_aullrem(0x2000000040ull, 0x100000007ull);
+    ok(u == 0xffffff67, "_aullrem returned %s\n", wine_dbgstr_longlong(u));
+
+    l = p_allmul(3, 4);
+    ok(l == 12, "_allmul = %s\n", wine_dbgstr_longlong(l));
+
+    l = p_allmul(0x300000001ll, 4);
+    ok(l == 0xc00000004, "_allmul = %s\n", wine_dbgstr_longlong(l));
+#endif /* __i386__ */
+}
 
 START_TEST(large_int)
 {
@@ -443,4 +503,5 @@ START_TEST(large_int)
 	    test_RtlInt64ToUnicodeString();
     if (pRtlLargeIntegerToChar)
         test_RtlLargeIntegerToChar();
+    test_builtins();
 }

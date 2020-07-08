@@ -18,7 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
 
 #include <unistd.h>
 #include "dbghelp_private.h"
@@ -68,8 +67,21 @@ WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 
 unsigned   dbghelp_options = SYMOPT_UNDNAME;
 BOOL       dbghelp_opt_native = FALSE;
+SYSTEM_INFO sysinfo;
 
 static struct process* process_first /* = NULL */;
+
+BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
+{
+    switch (reason)
+    {
+    case DLL_PROCESS_ATTACH:
+        GetSystemInfo(&sysinfo);
+        DisableThreadLibraryCalls(instance);
+        break;
+    }
+    return TRUE;
+}
 
 /******************************************************************
  *		process_find_by_handle
@@ -135,16 +147,14 @@ const char* wine_dbgstr_addr(const ADDRESS64* addr)
     }
 }
 
-extern struct cpu       cpu_i386, cpu_x86_64, cpu_ppc, cpu_arm, cpu_arm64;
+extern struct cpu       cpu_i386, cpu_x86_64, cpu_arm, cpu_arm64;
 
-static struct cpu*      dbghelp_cpus[] = {&cpu_i386, &cpu_x86_64, &cpu_ppc, &cpu_arm, &cpu_arm64, NULL};
+static struct cpu*      dbghelp_cpus[] = {&cpu_i386, &cpu_x86_64, &cpu_arm, &cpu_arm64, NULL};
 struct cpu*             dbghelp_current_cpu =
 #if defined(__i386__)
     &cpu_i386
 #elif defined(__x86_64__)
     &cpu_x86_64
-#elif defined(__powerpc__)
-    &cpu_ppc
 #elif defined(__arm__)
     &cpu_arm
 #elif defined(__aarch64__)
@@ -255,17 +265,96 @@ static BOOL WINAPI process_invade_cb(PCWSTR name, ULONG64 base, ULONG size, PVOI
     return TRUE;
 }
 
+const WCHAR *process_getenv(const struct process *process, const WCHAR *name)
+{
+    size_t name_len;
+    const WCHAR *iter;
+
+    if (!process->environment) return NULL;
+    name_len = lstrlenW(name);
+
+    for (iter = process->environment; *iter; iter += lstrlenW(iter) + 1)
+    {
+        if (!wcsnicmp(iter, name, name_len) && iter[name_len] == '=')
+            return iter + name_len + 1;
+    }
+
+    return NULL;
+}
+
 /******************************************************************
  *		check_live_target
  *
  */
 static BOOL check_live_target(struct process* pcs)
 {
+    PROCESS_BASIC_INFORMATION pbi;
+    ULONG_PTR base = 0, env = 0;
+
     if (!GetProcessId(pcs->handle)) return FALSE;
     if (GetEnvironmentVariableA("DBGHELP_NOLIVE", NULL, 0)) return FALSE;
-    if (!elf_read_wine_loader_dbg_info(pcs))
-        macho_read_wine_loader_dbg_info(pcs);
-    return TRUE;
+
+    if (NtQueryInformationProcess( pcs->handle, ProcessBasicInformation,
+                                   &pbi, sizeof(pbi), NULL ))
+        return FALSE;
+
+    if (!pcs->is_64bit)
+    {
+        DWORD env32;
+        PEB32 peb32;
+        C_ASSERT(sizeof(void*) != 4 || FIELD_OFFSET(RTL_USER_PROCESS_PARAMETERS, Environment) == 0x48);
+        if (!ReadProcessMemory(pcs->handle, pbi.PebBaseAddress, &peb32, sizeof(peb32), NULL)) return FALSE;
+        base = peb32.Reserved[0];
+        if (read_process_memory(pcs, peb32.ProcessParameters + 0x48, &env32, sizeof(env32))) env = env32;
+    }
+    else
+    {
+        PEB peb;
+        if (!ReadProcessMemory(pcs->handle, pbi.PebBaseAddress, &peb, sizeof(peb), NULL)) return FALSE;
+        base = peb.Reserved[0];
+        ReadProcessMemory(pcs->handle, &peb.ProcessParameters->Environment, &env, sizeof(env), NULL);
+    }
+
+    /* read debuggee environment block */
+    if (env)
+    {
+        size_t buf_size = 0, i, last_null = -1;
+        WCHAR *buf = NULL;
+
+        do
+        {
+            size_t read_size = sysinfo.dwAllocationGranularity - (env & (sysinfo.dwAllocationGranularity - 1));
+            if (buf)
+            {
+                WCHAR *new_buf;
+                if (!(new_buf = realloc(buf, buf_size + read_size))) break;
+                buf = new_buf;
+            }
+            else if(!(buf = malloc(read_size))) break;
+
+            if (!read_process_memory(pcs, env, (char*)buf + buf_size, read_size)) break;
+            for (i = buf_size / sizeof(WCHAR); i < (buf_size + read_size) / sizeof(WCHAR); i++)
+            {
+                if (buf[i]) continue;
+                if (last_null + 1 == i)
+                {
+                    pcs->environment = realloc(buf, (i + 1) * sizeof(WCHAR));
+                    buf = NULL;
+                    break;
+                }
+                last_null = i;
+            }
+            env += read_size;
+            buf_size += read_size;
+        }
+        while (buf);
+        free(buf);
+    }
+
+    if (!base) return FALSE;
+
+    TRACE("got debug info address %#lx from PEB %p\n", base, pbi.PebBaseAddress);
+    return elf_read_wine_loader_dbg_info(pcs, base) || macho_read_wine_loader_dbg_info(pcs, base);
 }
 
 /******************************************************************
@@ -321,6 +410,7 @@ BOOL WINAPI SymInitializeW(HANDLE hProcess, PCWSTR UserSearchPath, BOOL fInvadeP
 
     pcs->handle = hProcess;
     pcs->is_64bit = (sizeof(void *) == 8 || wow64) && !child_wow64;
+    pcs->loader = &no_loader_ops; /* platform-specific initialization will override it if loader debug info can be found */
 
     if (UserSearchPath)
     {
@@ -366,8 +456,7 @@ BOOL WINAPI SymInitializeW(HANDLE hProcess, PCWSTR UserSearchPath, BOOL fInvadeP
     {
         if (fInvadeProcess)
             EnumerateLoadedModulesW64(hProcess, process_invade_cb, hProcess);
-        elf_synchronize_module_list(pcs);
-        macho_synchronize_module_list(pcs);
+        pcs->loader->synchronize_module_list(pcs);
     }
     else if (fInvadeProcess)
     {
@@ -419,6 +508,7 @@ BOOL WINAPI SymCleanup(HANDLE hProcess)
             while ((*ppcs)->lmodules) module_remove(*ppcs, (*ppcs)->lmodules);
 
             HeapFree(GetProcessHeap(), 0, (*ppcs)->search_path);
+            free((*ppcs)->environment);
             next = (*ppcs)->next;
             HeapFree(GetProcessHeap(), 0, *ppcs);
             *ppcs = next;
@@ -723,14 +813,14 @@ void WINAPI WinDbgExtensionDllInit(PWINDBG_EXTENSION_APIS lpExtensionApis,
 {
 }
 
-DWORD calc_crc32(int fd)
+DWORD calc_crc32(HANDLE handle)
 {
     BYTE buffer[8192];
     DWORD crc = 0;
-    int len;
+    DWORD len;
 
-    lseek(fd, 0, SEEK_SET);
-    while ((len = read(fd, buffer, sizeof(buffer))) > 0)
+    SetFilePointer(handle, 0, 0, FILE_BEGIN);
+    while (ReadFile(handle, buffer, sizeof(buffer), &len, NULL) && len)
         crc = RtlComputeCrc32(crc, buffer, len);
     return crc;
 }

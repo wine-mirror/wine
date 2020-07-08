@@ -28,6 +28,9 @@
 #include "wincodec.h"
 #include "wine/heap.h"
 
+static HRESULT (WINAPI *pD2D1CreateDevice)(IDXGIDevice *dxgi_device,
+        const D2D1_CREATION_PROPERTIES *properties, ID2D1Device **device);
+
 static BOOL use_mt = TRUE;
 
 static struct test_entry
@@ -346,20 +349,19 @@ static DWORD get_readback_colour(struct resource_readback *rb, unsigned int x, u
     return ((DWORD *)((BYTE *)rb->map_desc.pData + y * rb->map_desc.RowPitch))[x];
 }
 
+static BOOL compare_uint(unsigned int x, unsigned int y, unsigned int max_diff)
+{
+    unsigned int diff = x > y ? x - y : y - x;
+
+    return diff <= max_diff;
+}
+
 static BOOL compare_colour(DWORD c1, DWORD c2, BYTE max_diff)
 {
-    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff)
-        return FALSE;
-    c1 >>= 8; c2 >>= 8;
-    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff)
-        return FALSE;
-    c1 >>= 8; c2 >>= 8;
-    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff)
-        return FALSE;
-    c1 >>= 8; c2 >>= 8;
-    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff)
-        return FALSE;
-    return TRUE;
+    return compare_uint(c1 & 0xff, c2 & 0xff, max_diff)
+            && compare_uint((c1 >> 8) & 0xff, (c2 >> 8) & 0xff, max_diff)
+            && compare_uint((c1 >> 16) & 0xff, (c2 >> 16) & 0xff, max_diff)
+            && compare_uint((c1 >> 24) & 0xff, (c2 >> 24) & 0xff, max_diff);
 }
 
 static BOOL compare_float(float f, float g, unsigned int ulps)
@@ -1097,11 +1099,11 @@ static void test_clip(void)
     HRESULT hr;
     BOOL match;
     static const D2D1_MATRIX_3X2_F identity =
-    {
+    {{{
         1.0f, 0.0f,
         0.0f, 1.0f,
         0.0f, 0.0f,
-    };
+    }}};
 
     if (!(device = create_device()))
     {
@@ -1250,7 +1252,7 @@ static void test_clip(void)
     translate_matrix(&matrix, 0.1f, 0.0f);
     ID2D1RenderTarget_SetTransform(rt, &matrix);
     set_rect(&rect, 110.0f, 250.25f, 150.0f, 300.25f);
-    set_color(&color, 0.0f, 0.5f, 1.0f, 1.0f);
+    set_color(&color, 0.0f, 1.0f, 0.0f, 1.0f);
     ID2D1RenderTarget_PushAxisAlignedClip(rt, &rect, D2D1_ANTIALIAS_MODE_ALIASED);
     ID2D1RenderTarget_Clear(rt, &color);
     ID2D1RenderTarget_PopAxisAlignedClip(rt);
@@ -1277,7 +1279,7 @@ static void test_clip(void)
 
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    match = compare_surface(surface, "a958d1fe69ee880200d47b206948e4c1ef382748");
+    match = compare_surface(surface, "cb418ec4a7c8407b5e36db06fc6292a06bb8476c");
     ok(match, "Surface does not match.\n");
 
     ID2D1RenderTarget_Release(rt);
@@ -1303,23 +1305,23 @@ static void test_state_block(void)
     HWND window;
     HRESULT hr;
     static const D2D1_MATRIX_3X2_F identity =
-    {
+    {{{
         1.0f, 0.0f,
         0.0f, 1.0f,
         0.0f, 0.0f,
-    };
+    }}};
     static const D2D1_MATRIX_3X2_F transform1 =
-    {
+    {{{
         1.0f, 2.0f,
         3.0f, 4.0f,
         5.0f, 6.0f,
-    };
+    }}};
     static const D2D1_MATRIX_3X2_F transform2 =
-    {
+    {{{
         7.0f,  8.0f,
         9.0f,  10.0f,
         11.0f, 12.0f,
-    };
+    }}};
 
     if (!(device = create_device()))
     {
@@ -6846,7 +6848,7 @@ static void test_fill_geometry(void)
             "yjIMjwEWhwEcggEgfiR6KHYscy5xMG40azZpOGc6ZTxjPmI+YUBfQl1EXERbRlpGWUhYSFdKVkpV"
             "TFRMVExTTlJOUk5STlJOUVBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUU5STlJOUk5STlNMVExUTFVK"
             "VkpXSFhIWUZaRltEXERdQl9AYT5iPmM8ZTpnOGk2azRuMHEucyx2KHokfiCCARyHARaPAQzKMgAA");
-    todo_wine ok(match, "Figure does not match.\n");
+     ok(match, "Figure does not match.\n");
 
     ID2D1RenderTarget_BeginDraw(rt);
     set_color(&color, 0.396f, 0.180f, 0.537f, 1.0f);
@@ -6892,7 +6894,7 @@ static void test_fill_geometry(void)
             "szI6YURZSlROUVBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQ"
             "UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQ"
             "UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUU5USllEYTqzMgAA");
-    todo_wine ok(match, "Figure does not match.\n");
+    ok(match, "Figure does not match.\n");
 
     match = compare_figure(surface,   0, 160, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
@@ -6904,7 +6906,7 @@ static void test_fill_geometry(void)
             "tjI0aDxhQlxGWEpVTFNOUk5RUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQ"
             "UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQ"
             "UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFFOUk5TTFVKWEZcQmA+ZzS2MgAA");
-    todo_wine ok(match, "Figure does not match.\n");
+    ok(match, "Figure does not match.\n");
 
     match = compare_figure(surface,   0, 320, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
@@ -6916,7 +6918,7 @@ static void test_fill_geometry(void)
             "sDJAWkxSUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQ"
             "UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQ"
             "UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFJMWkCwMgAA");
-    todo_wine ok(match, "Figure does not match.\n");
+    ok(match, "Figure does not match.\n");
 
     ID2D1RenderTarget_BeginDraw(rt);
     set_color(&color, 0.396f, 0.180f, 0.537f, 1.0f);
@@ -6962,7 +6964,7 @@ static void test_fill_geometry(void)
             "yjIMjwEWhwEcggEgfiR6KHYscy5xMG40azZpOGc6ZTxjPmI+YUBfQl1EXERbRlpGWUhYSFdKVkpV"
             "TFRMVExTTlJOUk5STlJOUVBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUU5STlJOUk5STlNMVExUTFVK"
             "VkpXSFhIWUZaRltEXERdQl9AYT5iPmM8ZTpnOGk2azRuMHEucyx2KHokfiCCARyHARaPAQzKMgAA");
-    todo_wine ok(match, "Figure does not match.\n");
+    ok(match, "Figure does not match.\n");
 
     match = compare_figure(surface,   0, 160, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
@@ -6974,7 +6976,7 @@ static void test_fill_geometry(void)
             "uTIucDJsNmk4ZzplPGM+YUBgQF9CXkJdRFxEW0ZaRllIWEhXSlZKVkpWSlVMVExUTFRMU05STlJO"
             "Uk5STlJOUk9QUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFFPUU5STlJOUk5STlJOU0xU"
             "TFRMVExVSlZKVkpWSldIWEhZRlpGW0RcRF1CXkJfQGBAYT5jPGU6ZzhpNmwycC65MgAA");
-    todo_wine ok(match, "Figure does not match.\n");
+    ok(match, "Figure does not match.\n");
 
     match = compare_figure(surface,   0, 320, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
@@ -6986,7 +6988,7 @@ static void test_fill_geometry(void)
             "vzIiczhhRldMUlBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQ"
             "UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQ"
             "UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUkxXRmA6cSS+MgAA");
-    todo_wine ok(match, "Figure does not match.\n");
+    ok(match, "Figure does not match.\n");
 
     hr = ID2D1Factory_CreatePathGeometry(factory, &geometry);
     ok(SUCCEEDED(hr), "Failed to create path geometry, hr %#x.\n", hr);
@@ -7912,6 +7914,7 @@ static void test_bezier_intersect(void)
 
 static void test_create_device(void)
 {
+    D2D1_CREATION_PROPERTIES properties = {0};
     ID3D10Device1 *d3d_device;
     IDXGIDevice *dxgi_device;
     ID2D1Factory1 *factory;
@@ -7943,6 +7946,19 @@ static void test_create_device(void)
     ok(factory2 == (ID2D1Factory *)factory, "Got unexpected factory %p, expected %p.\n", factory2, factory);
     ID2D1Factory_Release(factory2);
     ID2D1Device_Release(device);
+
+    if (pD2D1CreateDevice)
+    {
+        hr = pD2D1CreateDevice(dxgi_device, NULL, &device);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        ID2D1Device_Release(device);
+
+        hr = pD2D1CreateDevice(dxgi_device, &properties, &device);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        ID2D1Device_Release(device);
+    }
+    else
+        win_skip("D2D1CreateDevice() is unavailable.\n");
 
     IDXGIDevice_Release(dxgi_device);
     ID3D10Device1_Release(d3d_device);
@@ -8614,57 +8630,57 @@ static void test_invert_matrix(void)
     }
     invert_tests[] =
     {
-        { { 0 }, { 0 }, FALSE },
+        { {{{ 0 }}}, {{{ 0 }}}, FALSE },
         {
-            {
+            {{{
                1.0f, 2.0f,
                1.0f, 2.0f,
                4.0f, 8.0f
-            },
-            {
+            }}},
+            {{{
                1.0f, 2.0f,
                1.0f, 2.0f,
                4.0f, 8.0f
-            },
+            }}},
             FALSE
         },
         {
-            {
+            {{{
                2.0f, 0.0f,
                0.0f, 2.0f,
                4.0f, 8.0f
-            },
-            {
+            }}},
+            {{{
                0.5f, -0.0f,
               -0.0f,  0.5f,
               -2.0f, -4.0f
-            },
+            }}},
             TRUE
         },
         {
-            {
+            {{{
                2.0f, 1.0f,
                2.0f, 2.0f,
                4.0f, 8.0f
-            },
-            {
+            }}},
+            {{{
                1.0f, -0.5f,
               -1.0f,  1.0f,
                4.0f, -6.0f
-            },
+            }}},
             TRUE
         },
         {
-            {
+            {{{
                2.0f, 1.0f,
                3.0f, 1.0f,
                4.0f, 8.0f
-            },
-            {
+            }}},
+            {{{
               -1.0f,  1.0f,
                3.0f, -2.0f,
              -20.0f, 12.0f
-            },
+            }}},
             TRUE
         },
     };
@@ -8698,13 +8714,13 @@ static void test_skew_matrix(void)
     }
     skew_tests[] =
     {
-        { 0.0f, 0.0f, { 0.0f, 0.0f }, { 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f } },
-        { 45.0f, 0.0f, { 0.0f, 0.0f }, { 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f } },
-        { 0.0f, 0.0f, { 10.0f, -3.0f }, { 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f } },
-        { -45.0f, 45.0f, { 0.1f, 0.5f }, { 1.0f, 1.0f, -1.0f, 1.0f, 0.5f, -0.1f } },
-        { -45.0f, 45.0f, { 1.0f, 2.0f }, { 1.0f, 1.0f, -1.0f, 1.0f, 2.0f, -1.0f } },
-        { 45.0f, -45.0f, { 1.0f, 2.0f }, { 1.0f, -1.0f, 1.0f, 1.0f, -2.0f, 1.0f } },
-        { 30.0f, -60.0f, { 12.0f, -5.0f }, { 1.0f, -1.7320509f, 0.577350259f, 1.0f, 2.88675117f, 20.7846107f } },
+        { 0.0f, 0.0f, { 0.0f, 0.0f }, {{{ 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f }}} },
+        { 45.0f, 0.0f, { 0.0f, 0.0f }, {{{ 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f }}} },
+        { 0.0f, 0.0f, { 10.0f, -3.0f }, {{{ 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f }}} },
+        { -45.0f, 45.0f, { 0.1f, 0.5f }, {{{ 1.0f, 1.0f, -1.0f, 1.0f, 0.5f, -0.1f }}} },
+        { -45.0f, 45.0f, { 1.0f, 2.0f }, {{{ 1.0f, 1.0f, -1.0f, 1.0f, 2.0f, -1.0f }}} },
+        { 45.0f, -45.0f, { 1.0f, 2.0f }, {{{ 1.0f, -1.0f, 1.0f, 1.0f, -2.0f, 1.0f }}} },
+        { 30.0f, -60.0f, { 12.0f, -5.0f }, {{{ 1.0f, -1.7320509f, 0.577350259f, 1.0f, 2.88675117f, 20.7846107f }}} },
     };
     unsigned int i;
 
@@ -9341,10 +9357,83 @@ static void test_dpi(void)
     DestroyWindow(window);
 }
 
+static void test_wic_bitmap_format(void)
+{
+    IWICImagingFactory *wic_factory;
+    IDXGISwapChain *swapchain;
+    D2D1_PIXEL_FORMAT format;
+    IWICBitmap *wic_bitmap;
+    ID2D1RenderTarget *rt;
+    ID3D10Device1 *device;
+    IDXGISurface *surface;
+    ID2D1Bitmap *bitmap;
+    unsigned int i;
+    HWND window;
+    HRESULT hr;
+
+    static const struct
+    {
+        const WICPixelFormatGUID *wic;
+        D2D1_PIXEL_FORMAT d2d;
+    }
+    tests[] =
+    {
+        {&GUID_WICPixelFormat32bppPBGRA, {DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED}},
+        {&GUID_WICPixelFormat32bppPRGBA, {DXGI_FORMAT_R8G8B8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED}},
+        {&GUID_WICPixelFormat32bppBGR,   {DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE}},
+    };
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
+    window = create_window();
+    swapchain = create_swapchain(device, window, TRUE);
+    hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
+    ok(hr == S_OK, "Failed to get buffer, hr %#x.\n", hr);
+    rt = create_render_target(surface);
+    ok(!!rt, "Failed to create render target.\n");
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
+    hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IWICImagingFactory, (void **)&wic_factory);
+    ok(hr == S_OK, "Failed to create WIC imaging factory, hr %#x.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        hr = IWICImagingFactory_CreateBitmap(wic_factory, 16, 16,
+                tests[i].wic, WICBitmapCacheOnDemand, &wic_bitmap);
+        ok(hr == S_OK, "%s: Failed to create WIC bitmap, hr %#x.\n", debugstr_guid(tests[i].wic), hr);
+
+        hr = ID2D1RenderTarget_CreateBitmapFromWicBitmap(rt, (IWICBitmapSource *)wic_bitmap, NULL, &bitmap);
+        ok(hr == S_OK, "%s: Failed to create bitmap from WIC source, hr %#x.\n", debugstr_guid(tests[i].wic), hr);
+
+        format = ID2D1Bitmap_GetPixelFormat(bitmap);
+        ok(format.format == tests[i].d2d.format, "%s: Got unexpected DXGI format %#x.\n",
+                debugstr_guid(tests[i].wic), format.format);
+        ok(format.alphaMode == tests[i].d2d.alphaMode, "%s: Got unexpected alpha mode %#x.\n",
+                debugstr_guid(tests[i].wic), format.alphaMode);
+
+        ID2D1Bitmap_Release(bitmap);
+        IWICBitmap_Release(wic_bitmap);
+    }
+
+    IWICImagingFactory_Release(wic_factory);
+    CoUninitialize();
+    ID2D1RenderTarget_Release(rt);
+    IDXGISurface_Release(surface);
+    IDXGISwapChain_Release(swapchain);
+    ID3D10Device1_Release(device);
+    DestroyWindow(window);
+}
+
 START_TEST(d2d1)
 {
     unsigned int argc, i;
     char **argv;
+
+    pD2D1CreateDevice = (void *)GetProcAddress(GetModuleHandleA("d2d1.dll"), "D2D1CreateDevice");
 
     use_mt = !getenv("WINETEST_NO_MT_D3D");
 
@@ -9390,6 +9479,7 @@ START_TEST(d2d1)
     queue_test(test_command_list);
     queue_test(test_max_bitmap_size);
     queue_test(test_dpi);
+    queue_test(test_wic_bitmap_format);
 
     run_queued_tests();
 }

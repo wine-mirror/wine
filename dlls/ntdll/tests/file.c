@@ -652,7 +652,8 @@ static void read_file_test(void)
     iosb.Information = 0xdeadbeef;
     offset.QuadPart = strlen(text) + 2;
     status = pNtReadFile( handle, event, apc, &apc_count, &iosb, buffer, 2, &offset, NULL );
-    ok(status == STATUS_PENDING || status == STATUS_END_OF_FILE /* before Vista */, "expected STATUS_PENDING or STATUS_END_OF_FILE, got %#x\n", status);
+    ok(status == STATUS_PENDING || broken(status == STATUS_END_OF_FILE) /* before Vista */,
+            "expected STATUS_PENDING, got %#x\n", status);
     if (status == STATUS_PENDING)  /* vista */
     {
         WaitForSingleObject( event, 1000 );
@@ -1502,8 +1503,8 @@ static void test_file_rename_information(void)
     pRtlDosPathNameToNtPathName_U( newpath, &name_str, NULL, NULL );
     DeleteFileW( newpath );
     fri = HeapAlloc( GetProcessHeap(), 0, sizeof(FILE_RENAME_INFORMATION) + name_str.Length );
-    fri->Replace = FALSE;
-    fri->RootDir = NULL;
+    fri->ReplaceIfExists = FALSE;
+    fri->RootDirectory = NULL;
     fri->FileNameLength = name_str.Length;
     memcpy( fri->FileName, name_str.Buffer, name_str.Length );
     pRtlFreeUnicodeString( &name_str );
@@ -1540,8 +1541,8 @@ static void test_file_rename_information(void)
     ok( res != 0, "failed to create temp file\n" );
     pRtlDosPathNameToNtPathName_U( newpath, &name_str, NULL, NULL );
     fri = HeapAlloc( GetProcessHeap(), 0, sizeof(FILE_RENAME_INFORMATION) + name_str.Length );
-    fri->Replace = FALSE;
-    fri->RootDir = NULL;
+    fri->ReplaceIfExists = FALSE;
+    fri->RootDirectory = NULL;
     fri->FileNameLength = name_str.Length;
     memcpy( fri->FileName, name_str.Buffer, name_str.Length );
     pRtlFreeUnicodeString( &name_str );
@@ -1570,8 +1571,8 @@ static void test_file_rename_information(void)
     ok( res != 0, "failed to create temp file\n" );
     pRtlDosPathNameToNtPathName_U( newpath, &name_str, NULL, NULL );
     fri = HeapAlloc( GetProcessHeap(), 0, sizeof(FILE_RENAME_INFORMATION) + name_str.Length );
-    fri->Replace = TRUE;
-    fri->RootDir = NULL;
+    fri->ReplaceIfExists = TRUE;
+    fri->RootDirectory = NULL;
     fri->FileNameLength = name_str.Length;
     memcpy( fri->FileName, name_str.Buffer, name_str.Length );
     pRtlFreeUnicodeString( &name_str );
@@ -1603,8 +1604,8 @@ static void test_file_rename_information(void)
 
     pRtlDosPathNameToNtPathName_U( newpath, &name_str, NULL, NULL );
     fri = HeapAlloc( GetProcessHeap(), 0, sizeof(FILE_RENAME_INFORMATION) + name_str.Length );
-    fri->Replace = FALSE;
-    fri->RootDir = NULL;
+    fri->ReplaceIfExists = FALSE;
+    fri->RootDirectory = NULL;
     fri->FileNameLength = name_str.Length;
     memcpy( fri->FileName, name_str.Buffer, name_str.Length );
     pRtlFreeUnicodeString( &name_str );
@@ -1637,8 +1638,8 @@ static void test_file_rename_information(void)
 
     pRtlDosPathNameToNtPathName_U( newpath, &name_str, NULL, NULL );
     fri = HeapAlloc( GetProcessHeap(), 0, sizeof(FILE_RENAME_INFORMATION) + name_str.Length );
-    fri->Replace = TRUE;
-    fri->RootDir = NULL;
+    fri->ReplaceIfExists = TRUE;
+    fri->RootDirectory = NULL;
     fri->FileNameLength = name_str.Length;
     memcpy( fri->FileName, name_str.Buffer, name_str.Length );
     pRtlFreeUnicodeString( &name_str );
@@ -1672,8 +1673,8 @@ static void test_file_rename_information(void)
     pRtlDosPathNameToNtPathName_U( newpath, &name_str, NULL, NULL );
     DeleteFileW( newpath );
     fri = HeapAlloc( GetProcessHeap(), 0, sizeof(FILE_RENAME_INFORMATION) + name_str.Length );
-    fri->Replace = FALSE;
-    fri->RootDir = NULL;
+    fri->ReplaceIfExists = FALSE;
+    fri->RootDirectory = NULL;
     fri->FileNameLength = name_str.Length;
     memcpy( fri->FileName, name_str.Buffer, name_str.Length );
     pRtlFreeUnicodeString( &name_str );
@@ -1719,8 +1720,8 @@ static void test_file_rename_information(void)
     pRtlDosPathNameToNtPathName_U( newpath, &name_str, NULL, NULL );
     DeleteFileW( newpath );
     fri = HeapAlloc( GetProcessHeap(), 0, sizeof(FILE_RENAME_INFORMATION) + name_str.Length );
-    fri->Replace = FALSE;
-    fri->RootDir = NULL;
+    fri->ReplaceIfExists = FALSE;
+    fri->RootDirectory = NULL;
     fri->FileNameLength = name_str.Length;
     memcpy( fri->FileName, name_str.Buffer, name_str.Length );
     pRtlFreeUnicodeString( &name_str );
@@ -1759,8 +1760,8 @@ static void test_file_rename_information(void)
     ok( res != 0, "failed to create temp file\n" );
     pRtlDosPathNameToNtPathName_U( newpath, &name_str, NULL, NULL );
     fri = HeapAlloc( GetProcessHeap(), 0, sizeof(FILE_RENAME_INFORMATION) + name_str.Length );
-    fri->Replace = FALSE;
-    fri->RootDir = NULL;
+    fri->ReplaceIfExists = FALSE;
+    fri->RootDirectory = NULL;
     fri->FileNameLength = name_str.Length;
     memcpy( fri->FileName, name_str.Buffer, name_str.Length );
     pRtlFreeUnicodeString( &name_str );
@@ -1795,8 +1796,8 @@ static void test_file_rename_information(void)
 
     pRtlDosPathNameToNtPathName_U( newpath, &name_str, NULL, NULL );
     fri = HeapAlloc( GetProcessHeap(), 0, sizeof(FILE_RENAME_INFORMATION) + name_str.Length );
-    fri->Replace = FALSE;
-    fri->RootDir = NULL;
+    fri->ReplaceIfExists = FALSE;
+    fri->RootDirectory = NULL;
     fri->FileNameLength = name_str.Length;
     memcpy( fri->FileName, name_str.Buffer, name_str.Length );
     pRtlFreeUnicodeString( &name_str );
@@ -1829,8 +1830,8 @@ static void test_file_rename_information(void)
     ok( res != 0, "failed to create temp file\n" );
     pRtlDosPathNameToNtPathName_U( newpath, &name_str, NULL, NULL );
     fri = HeapAlloc( GetProcessHeap(), 0, sizeof(FILE_RENAME_INFORMATION) + name_str.Length );
-    fri->Replace = TRUE;
-    fri->RootDir = NULL;
+    fri->ReplaceIfExists = TRUE;
+    fri->RootDirectory = NULL;
     fri->FileNameLength = name_str.Length;
     memcpy( fri->FileName, name_str.Buffer, name_str.Length );
     pRtlFreeUnicodeString( &name_str );
@@ -1865,8 +1866,8 @@ static void test_file_rename_information(void)
 
     pRtlDosPathNameToNtPathName_U( newpath, &name_str, NULL, NULL );
     fri = HeapAlloc( GetProcessHeap(), 0, sizeof(FILE_RENAME_INFORMATION) + name_str.Length );
-    fri->Replace = TRUE;
-    fri->RootDir = NULL;
+    fri->ReplaceIfExists = TRUE;
+    fri->RootDirectory = NULL;
     fri->FileNameLength = name_str.Length;
     memcpy( fri->FileName, name_str.Buffer, name_str.Length );
     pRtlFreeUnicodeString( &name_str );
@@ -1902,8 +1903,8 @@ static void test_file_rename_information(void)
     ok( success != 0, "failed to create temp directory\n" );
     pRtlDosPathNameToNtPathName_U( newpath, &name_str, NULL, NULL );
     fri = HeapAlloc( GetProcessHeap(), 0, sizeof(FILE_RENAME_INFORMATION) + name_str.Length );
-    fri->Replace = FALSE;
-    fri->RootDir = NULL;
+    fri->ReplaceIfExists = FALSE;
+    fri->RootDirectory = NULL;
     fri->FileNameLength = name_str.Length;
     memcpy( fri->FileName, name_str.Buffer, name_str.Length );
     pRtlFreeUnicodeString( &name_str );
@@ -1938,8 +1939,8 @@ static void test_file_rename_information(void)
     ok( success != 0, "failed to create temp directory\n" );
     pRtlDosPathNameToNtPathName_U( newpath, &name_str, NULL, NULL );
     fri = HeapAlloc( GetProcessHeap(), 0, sizeof(FILE_RENAME_INFORMATION) + name_str.Length );
-    fri->Replace = TRUE;
-    fri->RootDir = NULL;
+    fri->ReplaceIfExists = TRUE;
+    fri->RootDirectory = NULL;
     fri->FileNameLength = name_str.Length;
     memcpy( fri->FileName, name_str.Buffer, name_str.Length );
     pRtlFreeUnicodeString( &name_str );
@@ -1977,8 +1978,8 @@ static void test_file_rename_information(void)
 
     pRtlDosPathNameToNtPathName_U( newpath, &name_str, NULL, NULL );
     fri = HeapAlloc( GetProcessHeap(), 0, sizeof(FILE_RENAME_INFORMATION) + name_str.Length );
-    fri->Replace = TRUE;
-    fri->RootDir = NULL;
+    fri->ReplaceIfExists = TRUE;
+    fri->RootDirectory = NULL;
     fri->FileNameLength = name_str.Length;
     memcpy( fri->FileName, name_str.Buffer, name_str.Length );
     pRtlFreeUnicodeString( &name_str );
@@ -2011,8 +2012,8 @@ static void test_file_rename_information(void)
     ok( success != 0, "failed to create temp directory\n" );
     pRtlDosPathNameToNtPathName_U( newpath, &name_str, NULL, NULL );
     fri = HeapAlloc( GetProcessHeap(), 0, sizeof(FILE_RENAME_INFORMATION) + name_str.Length );
-    fri->Replace = FALSE;
-    fri->RootDir = NULL;
+    fri->ReplaceIfExists = FALSE;
+    fri->RootDirectory = NULL;
     fri->FileNameLength = name_str.Length;
     memcpy( fri->FileName, name_str.Buffer, name_str.Length );
     pRtlFreeUnicodeString( &name_str );
@@ -2044,8 +2045,8 @@ static void test_file_rename_information(void)
     ok( success != 0, "failed to create temp directory\n" );
     pRtlDosPathNameToNtPathName_U( newpath, &name_str, NULL, NULL );
     fri = HeapAlloc( GetProcessHeap(), 0, sizeof(FILE_RENAME_INFORMATION) + name_str.Length );
-    fri->Replace = TRUE;
-    fri->RootDir = NULL;
+    fri->ReplaceIfExists = TRUE;
+    fri->RootDirectory = NULL;
     fri->FileNameLength = name_str.Length;
     memcpy( fri->FileName, name_str.Buffer, name_str.Length );
     pRtlFreeUnicodeString( &name_str );
@@ -2079,8 +2080,8 @@ static void test_file_rename_information(void)
     ok( handle2 != INVALID_HANDLE_VALUE, "CreateFileW failed\n" );
 
     fri = HeapAlloc( GetProcessHeap(), 0, sizeof(FILE_RENAME_INFORMATION) + lstrlenW(filename) * sizeof(WCHAR) );
-    fri->Replace = FALSE;
-    fri->RootDir = handle2;
+    fri->ReplaceIfExists = FALSE;
+    fri->RootDirectory = handle2;
     fri->FileNameLength = lstrlenW(filename) * sizeof(WCHAR);
     memcpy( fri->FileName, filename, fri->FileNameLength );
 
@@ -2097,7 +2098,7 @@ static void test_file_rename_information(void)
     res = pNtQueryInformationFile( handle, &io, fni, sizeof(FILE_NAME_INFORMATION) + MAX_PATH * sizeof(WCHAR), FileNameInformation );
     ok( res == STATUS_SUCCESS, "res expected STATUS_SUCCESS, got %x\n", res );
     fni->FileName[ fni->FileNameLength / sizeof(WCHAR) ] = 0;
-    todo_wine ok( !lstrcmpiW(fni->FileName, newpath + 2), "FileName expected %s, got %s\n",
+    ok( !lstrcmpiW(fni->FileName, newpath + 2), "FileName expected %s, got %s\n",
                   wine_dbgstr_w(newpath + 2), wine_dbgstr_w(fni->FileName) );
     HeapFree( GetProcessHeap(), 0, fni );
 
@@ -2106,6 +2107,30 @@ static void test_file_rename_information(void)
     HeapFree( GetProcessHeap(), 0, fri );
     delete_object( oldpath );
     delete_object( newpath );
+
+    /* oldpath == newpath */
+    res = GetTempFileNameW( tmp_path, fooW, 0, oldpath );
+    ok( res != 0, "failed to create temp file\n" );
+    handle = CreateFileW( oldpath, GENERIC_WRITE | DELETE, 0, NULL, CREATE_ALWAYS, 0, 0 );
+    ok( handle != INVALID_HANDLE_VALUE, "CreateFileW failed\n" );
+
+    pRtlDosPathNameToNtPathName_U( oldpath, &name_str, NULL, NULL );
+    fri = HeapAlloc( GetProcessHeap(), 0, sizeof(FILE_RENAME_INFORMATION) + name_str.Length );
+    fri->ReplaceIfExists = FALSE;
+    fri->RootDirectory = NULL;
+    fri->FileNameLength = name_str.Length;
+    memcpy( fri->FileName, name_str.Buffer, name_str.Length );
+    pRtlFreeUnicodeString( &name_str );
+
+    U(io).Status = 0xdeadbeef;
+    res = pNtSetInformationFile( handle, &io, fri, sizeof(FILE_RENAME_INFORMATION) + fri->FileNameLength, FileRenameInformation );
+    ok( U(io).Status == STATUS_SUCCESS, "got io status %#x\n", U(io).Status );
+    ok( res == STATUS_SUCCESS, "got status %x\n", res );
+    ok( GetFileAttributesW( oldpath ) != INVALID_FILE_ATTRIBUTES, "file should exist\n" );
+
+    CloseHandle( handle );
+    HeapFree( GetProcessHeap(), 0, fri );
+    delete_object( oldpath );
 }
 
 static void test_file_link_information(void)
@@ -2735,6 +2760,36 @@ static void test_file_link_information(void)
     HeapFree( GetProcessHeap(), 0, fli );
     delete_object( oldpath );
     delete_object( newpath );
+
+    /* oldpath == newpath */
+    res = GetTempFileNameW( tmp_path, fooW, 0, oldpath );
+    ok( res != 0, "failed to create temp file\n" );
+    handle = CreateFileW( oldpath, GENERIC_WRITE | DELETE, 0, NULL, CREATE_ALWAYS, 0, 0 );
+    ok( handle != INVALID_HANDLE_VALUE, "CreateFileW failed\n" );
+
+    pRtlDosPathNameToNtPathName_U( oldpath, &name_str, NULL, NULL );
+    fli = HeapAlloc( GetProcessHeap(), 0, sizeof(FILE_RENAME_INFORMATION) + name_str.Length );
+    fli->ReplaceIfExists = FALSE;
+    fli->RootDirectory = NULL;
+    fli->FileNameLength = name_str.Length;
+    memcpy( fli->FileName, name_str.Buffer, name_str.Length );
+    pRtlFreeUnicodeString( &name_str );
+
+    U(io).Status = 0xdeadbeef;
+    res = pNtSetInformationFile( handle, &io, fli, sizeof(FILE_LINK_INFORMATION) + fli->FileNameLength, FileLinkInformation );
+    todo_wine ok( U(io).Status == 0xdeadbeef, "got io status %#x\n", U(io).Status );
+    ok( res == STATUS_OBJECT_NAME_COLLISION, "got status %x\n", res );
+
+    fli->ReplaceIfExists = TRUE;
+    U(io).Status = 0xdeadbeef;
+    res = pNtSetInformationFile( handle, &io, fli, sizeof(FILE_LINK_INFORMATION) + fli->FileNameLength, FileLinkInformation );
+    ok( U(io).Status == STATUS_SUCCESS, "got io status %#x\n", U(io).Status );
+    ok( res == STATUS_SUCCESS, "got status %x\n", res );
+    ok( GetFileAttributesW( oldpath ) != INVALID_FILE_ATTRIBUTES, "file should exist\n" );
+
+    CloseHandle( handle );
+    HeapFree( GetProcessHeap(), 0, fli );
+    delete_object( oldpath );
 }
 
 static void test_file_both_information(void)
@@ -3130,17 +3185,14 @@ todo_wine
     CloseHandle( handle2 );
     fdi.DoDeleteFile = TRUE;
     res = pNtSetInformationFile( handle, &io, &fdi, sizeof fdi, FileDispositionInformation );
-    todo_wine
     ok( res == STATUS_DIRECTORY_NOT_EMPTY, "unexpected FileDispositionInformation result (expected STATUS_DIRECTORY_NOT_EMPTY, got %x)\n", res );
     fileDeleted = DeleteFileA( buffer );
     ok( fileDeleted, "File should have been deleted\n" );
     buffer[dirpos] = '\0';
     CloseHandle( handle );
     fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
-    todo_wine
     ok( !fileDeleted, "Directory shouldn't have been deleted\n" );
     fileDeleted = RemoveDirectoryA( buffer );
-todo_wine
     ok( fileDeleted, "Directory should have been deleted\n" );
 }
 
@@ -3846,8 +3898,6 @@ static void test_query_volume_information_file(void)
 
     ffvi = (FILE_FS_VOLUME_INFORMATION *)buf;
 
-todo_wine
-{
     ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %d\n", status);
     ok(U(io).Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %d\n", U(io).Status);
 
@@ -3855,10 +3905,9 @@ todo_wine
     "expected %d, got %lu\n", (FIELD_OFFSET(FILE_FS_VOLUME_INFORMATION, VolumeLabel) + ffvi->VolumeLabelLength),
      io.Information);
 
-    ok(ffvi->VolumeCreationTime.QuadPart != 0, "Missing VolumeCreationTime\n");
+    todo_wine ok(ffvi->VolumeCreationTime.QuadPart != 0, "Missing VolumeCreationTime\n");
     ok(ffvi->VolumeSerialNumber != 0, "Missing VolumeSerialNumber\n");
     ok(ffvi->SupportsObjects == 1,"expected 1, got %d\n", ffvi->SupportsObjects);
-}
     ok(ffvi->VolumeLabelLength == lstrlenW(ffvi->VolumeLabel) * sizeof(WCHAR), "got %d\n", ffvi->VolumeLabelLength);
 
     trace("VolumeSerialNumber: %x VolumeLabelName: %s\n", ffvi->VolumeSerialNumber, wine_dbgstr_w(ffvi->VolumeLabel));
@@ -3901,12 +3950,12 @@ static void test_query_attribute_information_file(void)
 
     ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %d\n", status);
     ok(U(io).Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %d\n", U(io).Status);
-    ok(ffai->FileSystemAttribute != 0, "Missing FileSystemAttribute\n");
+    ok(ffai->FileSystemAttributes != 0, "Missing FileSystemAttributes\n");
     ok(ffai->MaximumComponentNameLength != 0, "Missing MaximumComponentNameLength\n");
     ok(ffai->FileSystemNameLength != 0, "Missing FileSystemNameLength\n");
 
-    trace("FileSystemAttribute: %x MaximumComponentNameLength: %x FileSystemName: %s\n",
-          ffai->FileSystemAttribute, ffai->MaximumComponentNameLength,
+    trace("FileSystemAttributes: %x MaximumComponentNameLength: %x FileSystemName: %s\n",
+          ffai->FileSystemAttributes, ffai->MaximumComponentNameLength,
           wine_dbgstr_wn(ffai->FileSystemName, ffai->FileSystemNameLength / sizeof(WCHAR)));
 
     CloseHandle( dir );
@@ -4489,7 +4538,8 @@ static void test_read_write(void)
     ret = ReadFile(hfile, buf, sizeof(buf), &bytes, &ovl);
     ok(!ret, "ReadFile should fail\n");
     ret = GetLastError();
-    ok(ret == ERROR_IO_PENDING || ret == ERROR_HANDLE_EOF /* before Vista */, "expected ERROR_IO_PENDING or ERROR_HANDLE_EOF, got %d\n", ret);
+    ok(ret == ERROR_IO_PENDING || broken(ret == ERROR_HANDLE_EOF) /* before Vista */,
+            "expected ERROR_IO_PENDING, got %d\n", ret);
     ok(bytes == 0, "bytes %u\n", bytes);
 
     off = SetFilePointer(hfile, 0, NULL, FILE_CURRENT);
@@ -4810,14 +4860,26 @@ static void test_flush_buffers_file(void)
     status = pNtFlushBuffersFile(hfile, (IO_STATUS_BLOCK *)0xdeadbeaf);
     ok(status == STATUS_ACCESS_VIOLATION, "expected STATUS_ACCESS_VIOLATION, got %#x.\n", status);
 
+    io_status_block.Information = 0xdeadbeef;
+    io_status_block.Status = 0xdeadbeef;
     status = pNtFlushBuffersFile(hfile, &io_status_block);
     ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x.\n", status);
+    ok(io_status_block.Status == STATUS_SUCCESS, "Got unexpected io_status_block.Status %#x.\n",
+            io_status_block.Status);
+    ok(!io_status_block.Information, "Got unexpected io_status_block.Information %#lx.\n",
+            io_status_block.Information);
 
     status = pNtFlushBuffersFile(hfileread, &io_status_block);
     ok(status == STATUS_ACCESS_DENIED, "expected STATUS_ACCESS_DENIED, got %#x.\n", status);
 
+    io_status_block.Information = 0xdeadbeef;
+    io_status_block.Status = 0xdeadbeef;
     status = pNtFlushBuffersFile(NULL, &io_status_block);
     ok(status == STATUS_INVALID_HANDLE, "expected STATUS_INVALID_HANDLE, got %#x.\n", status);
+    ok(io_status_block.Status == 0xdeadbeef, "Got unexpected io_status_block.Status %#x.\n",
+            io_status_block.Status);
+    ok(io_status_block.Information == 0xdeadbeef, "Got unexpected io_status_block.Information %#lx.\n",
+            io_status_block.Information);
 
     CloseHandle(hfileread);
     CloseHandle(hfile);
@@ -4827,6 +4889,15 @@ static void test_flush_buffers_file(void)
 
     status = pNtFlushBuffersFile(hfile, &io_status_block);
     ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x.\n", status);
+
+    io_status_block.Information = 0xdeadbeef;
+    io_status_block.Status = 0xdeadbeef;
+    status = pNtFlushBuffersFile((HANDLE)0xdeadbeef, &io_status_block);
+    ok(status == STATUS_INVALID_HANDLE, "expected STATUS_INVALID_HANDLE, got %#x.\n", status);
+    ok(io_status_block.Status == 0xdeadbeef, "Got unexpected io_status_block.Status %#x.\n",
+            io_status_block.Status);
+    ok(io_status_block.Information == 0xdeadbeef, "Got unexpected io_status_block.Information %#lx.\n",
+            io_status_block.Information);
 
     CloseHandle(hfile);
     DeleteFileA(buffer);

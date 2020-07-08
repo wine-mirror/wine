@@ -45,16 +45,19 @@ static BOOL refdevice = FALSE;
 static HRESULT (WINAPI *pDirectDrawCreateEx)(GUID *driver_guid,
         void **ddraw, REFIID interface_iid, IUnknown *outer);
 
+static BOOL compare_uint(unsigned int x, unsigned int y, unsigned int max_diff)
+{
+    unsigned int diff = x > y ? x - y : y - x;
+
+    return diff <= max_diff;
+}
+
 static BOOL color_match(D3DCOLOR c1, D3DCOLOR c2, BYTE max_diff)
 {
-    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff) return FALSE;
-    c1 >>= 8; c2 >>= 8;
-    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff) return FALSE;
-    c1 >>= 8; c2 >>= 8;
-    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff) return FALSE;
-    c1 >>= 8; c2 >>= 8;
-    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff) return FALSE;
-    return TRUE;
+    return compare_uint(c1 & 0xff, c2 & 0xff, max_diff)
+            && compare_uint((c1 >> 8) & 0xff, (c2 >> 8) & 0xff, max_diff)
+            && compare_uint((c1 >> 16) & 0xff, (c2 >> 16) & 0xff, max_diff)
+            && compare_uint((c1 >> 24) & 0xff, (c2 >> 24) & 0xff, max_diff);
 }
 
 static HRESULT WINAPI enum_z_fmt(DDPIXELFORMAT *fmt, void *ctx)

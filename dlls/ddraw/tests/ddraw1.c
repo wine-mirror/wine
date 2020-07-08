@@ -49,18 +49,6 @@ struct create_window_thread_param
     HANDLE thread;
 };
 
-static BOOL compare_color(D3DCOLOR c1, D3DCOLOR c2, BYTE max_diff)
-{
-    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff) return FALSE;
-    c1 >>= 8; c2 >>= 8;
-    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff) return FALSE;
-    c1 >>= 8; c2 >>= 8;
-    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff) return FALSE;
-    c1 >>= 8; c2 >>= 8;
-    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff) return FALSE;
-    return TRUE;
-}
-
 static BOOL compare_float(float f, float g, unsigned int ulps)
 {
     int x = *(int *)&f;
@@ -83,6 +71,47 @@ static BOOL compare_vec4(const struct vec4 *vec, float x, float y, float z, floa
             && compare_float(vec->y, y, ulps)
             && compare_float(vec->z, z, ulps)
             && compare_float(vec->w, w, ulps);
+}
+
+static BOOL compare_uint(unsigned int x, unsigned int y, unsigned int max_diff)
+{
+    unsigned int diff = x > y ? x - y : y - x;
+
+    return diff <= max_diff;
+}
+
+static BOOL compare_color(D3DCOLOR c1, D3DCOLOR c2, BYTE max_diff)
+{
+    return compare_uint(c1 & 0xff, c2 & 0xff, max_diff)
+            && compare_uint((c1 >> 8) & 0xff, (c2 >> 8) & 0xff, max_diff)
+            && compare_uint((c1 >> 16) & 0xff, (c2 >> 16) & 0xff, max_diff)
+            && compare_uint((c1 >> 24) & 0xff, (c2 >> 24) & 0xff, max_diff);
+}
+
+static void get_virtual_rect(RECT *rect)
+{
+    rect->left = GetSystemMetrics(SM_XVIRTUALSCREEN);
+    rect->top = GetSystemMetrics(SM_YVIRTUALSCREEN);
+    rect->right = rect->left + GetSystemMetrics(SM_CXVIRTUALSCREEN);
+    rect->bottom = rect->top + GetSystemMetrics(SM_CYVIRTUALSCREEN);
+}
+
+/* Try to make sure pending X events have been processed before continuing */
+static void flush_events(void)
+{
+    int diff = 200;
+    DWORD time;
+    MSG msg;
+
+    time = GetTickCount() + diff;
+    while (diff > 0)
+    {
+        if (MsgWaitForMultipleObjects(0, NULL, FALSE, 100, QS_ALLINPUT) == WAIT_TIMEOUT)
+            break;
+        while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE))
+            DispatchMessageA(&msg);
+        diff = time - GetTickCount();
+    }
 }
 
 static BOOL ddraw_get_identifier(IDirectDraw *ddraw, DDDEVICEIDENTIFIER *identifier)
@@ -1085,6 +1114,7 @@ static void test_coop_level_d3d_state(void)
     IDirect3DViewport *viewport;
     IDirect3DDevice *device;
     D3DMATERIAL material;
+    DDSURFACEDESC lock;
     IDirectDraw *ddraw;
     D3DCOLOR color;
     HWND window;
@@ -1106,18 +1136,31 @@ static void test_coop_level_d3d_state(void)
     viewport_set_background(device, viewport, background);
 
     hr = IDirect3DDevice_QueryInterface(device, &IID_IDirectDrawSurface, (void **)&rt);
-    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DViewport_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET);
-    ok(SUCCEEDED(hr), "Failed to clear viewport, hr %#x.\n", hr);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     color = get_surface_color(rt, 320, 240);
     ok(compare_color(color, 0x00ff0000, 1), "Got unexpected color 0x%08x.\n", color);
 
     hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
-    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface_IsLost(rt);
     ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#x.\n", hr);
+
+    memset(&lock, 0, sizeof(lock));
+    lock.dwSize = sizeof(lock);
+    lock.lpSurface = (void *)0xdeadbeef;
+    hr = IDirectDrawSurface_Lock(rt, NULL, &lock, DDLOCK_READONLY, NULL);
+    ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#x.\n", hr);
+    ok(lock.lpSurface == (void *)0xdeadbeef, "Got unexpected lock.lpSurface %p.\n", lock.lpSurface);
+
     hr = restore_surfaces(ddraw);
-    ok(SUCCEEDED(hr), "Failed to restore surfaces, hr %#x.\n", hr);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface_Lock(rt, NULL, &lock, DDLOCK_READONLY, NULL);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface2_Unlock(rt, NULL);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
     memset(&material, 0, sizeof(material));
     material.dwSize = sizeof(material);
@@ -1126,13 +1169,13 @@ static void test_coop_level_d3d_state(void)
     U3(U(material).diffuse).b = 0.0f;
     U4(U(material).diffuse).a = 1.0f;
     hr = IDirect3DMaterial_SetMaterial(background, &material);
-    ok(SUCCEEDED(hr), "Failed to set material data, hr %#x.\n", hr);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice_QueryInterface(device, &IID_IDirectDrawSurface, (void **)&surface);
-    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     ok(surface == rt, "Got unexpected surface %p.\n", surface);
     hr = IDirect3DViewport_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET);
-    ok(SUCCEEDED(hr), "Failed to clear viewport, hr %#x.\n", hr);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     color = get_surface_color(rt, 320, 240);
     ok(compare_color(color, 0x0000ff00, 1) || broken(compare_color(color, 0x00000000, 1)),
             "Got unexpected color 0x%08x.\n", color);
@@ -4413,22 +4456,30 @@ static void test_surface_discard(void)
     unsigned int i;
 
     window = create_window();
-    ddraw = create_ddraw();
-    ok(!!ddraw, "Failed to create a ddraw object.\n");
-    if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
-    {
-        skip("Failed to create a 3D device, skipping test.\n");
-        IDirectDraw_Release(ddraw);
-        DestroyWindow(window);
-        return;
-    }
-
-    hr = IDirect3DDevice_QueryInterface(device, &IID_IDirectDrawSurface, (void **)&target);
-    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
         BOOL discarded;
+
+        /* Sigh. Anything other than the first run of the loop randomly fails with
+         * DDERR_SURFACELOST on my Radeon Pro 560 on Win10 19.09. Most of the time
+         * the blit fails, but with sleeps added between surface creation and lock
+         * the lock can fail too. Interestingly ddraw claims the render target has
+         * been lost, not the test surface.
+         *
+         * Recreating ddraw every iteration seems to fix this. */
+        ddraw = create_ddraw();
+        ok(!!ddraw, "Failed to create a ddraw object.\n");
+        if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
+        {
+            skip("Failed to create a 3D device, skipping test.\n");
+            IDirectDraw_Release(ddraw);
+            DestroyWindow(window);
+            return;
+        }
+
+        hr = IDirect3DDevice_QueryInterface(device, &IID_IDirectDrawSurface, (void**)&target);
+        ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
 
         memset(&ddsd, 0, sizeof(ddsd));
         ddsd.dwSize = sizeof(ddsd);
@@ -4475,11 +4526,12 @@ static void test_surface_discard(void)
         /* Windows 7 reliably changes the address of surfaces that are discardable (Nvidia Kepler,
          * AMD r500, evergreen). Windows XP, at least on AMD r200, never changes the pointer. */
         ok(!discarded || tests[i].discard, "Expected surface not to be discarded, case %u\n", i);
+
+        IDirectDrawSurface_Release(target);
+        IDirect3DDevice_Release(device);
+        IDirectDraw_Release(ddraw);
     }
 
-    IDirectDrawSurface_Release(target);
-    IDirect3DDevice_Release(device);
-    IDirectDraw_Release(ddraw);
     DestroyWindow(window);
 }
 
@@ -7258,6 +7310,7 @@ static void test_palette_alpha(void)
 static void test_lost_device(void)
 {
     IDirectDrawSurface *surface, *back_buffer;
+    IDirectDrawSurface *sysmem_surface;
     DDSURFACEDESC surface_desc;
     HWND window1, window2;
     IDirectDraw *ddraw;
@@ -7273,7 +7326,7 @@ static void test_lost_device(void)
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
     hr = IDirectDraw_SetCooperativeLevel(ddraw, window1, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
-    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
     memset(&surface_desc, 0, sizeof(surface_desc));
     surface_desc.dwSize = sizeof(surface_desc);
@@ -7281,11 +7334,22 @@ static void test_lost_device(void)
     surface_desc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_COMPLEX | DDSCAPS_FLIP;
     surface_desc.dwBackBufferCount = 1;
     hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &surface, NULL);
-    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY;
+    surface_desc.dwWidth = 100;
+    surface_desc.dwHeight = 100;
+    hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &sysmem_surface, NULL);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirectDrawSurface_IsLost(surface);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface_Flip(surface, NULL, DDFLIP_WAIT);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface_IsLost(sysmem_surface);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
     ret = SetForegroundWindow(GetDesktopWindow());
@@ -7294,6 +7358,8 @@ static void test_lost_device(void)
     ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface_Flip(surface, NULL, DDFLIP_WAIT);
     ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface_IsLost(sysmem_surface);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
     ret = SetForegroundWindow(window1);
     ok(ret, "Failed to set foreground window.\n");
@@ -7301,12 +7367,16 @@ static void test_lost_device(void)
     ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface_Flip(surface, NULL, DDFLIP_WAIT);
     ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface_IsLost(sysmem_surface);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = restore_surfaces(ddraw);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface_IsLost(surface);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface_Flip(surface, NULL, DDFLIP_WAIT);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface_IsLost(sysmem_surface);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirectDraw_SetCooperativeLevel(ddraw, window1, DDSCL_NORMAL);
@@ -7316,6 +7386,8 @@ static void test_lost_device(void)
     hr = IDirectDrawSurface_Flip(surface, NULL, DDFLIP_WAIT);
     ok(hr == DDERR_NOEXCLUSIVEMODE || broken(ddraw_is_warp(ddraw) && hr == DDERR_SURFACELOST),
             "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface_IsLost(sysmem_surface);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
     /* Trying to restore the primary will crash, probably because flippable
      * surfaces can't exist in DDSCL_NORMAL. */
@@ -7325,7 +7397,7 @@ static void test_lost_device(void)
     surface_desc.dwFlags = DDSD_CAPS;
     surface_desc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
     hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &surface, NULL);
-    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirectDrawSurface_IsLost(surface);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
@@ -7334,20 +7406,28 @@ static void test_lost_device(void)
     ok(ret, "Failed to set foreground window.\n");
     hr = IDirectDrawSurface_IsLost(surface);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface_IsLost(sysmem_surface);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
     ret = SetForegroundWindow(window1);
     ok(ret, "Failed to set foreground window.\n");
     hr = IDirectDrawSurface_IsLost(surface);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface_IsLost(sysmem_surface);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirectDraw_SetCooperativeLevel(ddraw, window1, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface_IsLost(surface);
     ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface_IsLost(sysmem_surface);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = restore_surfaces(ddraw);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface_IsLost(surface);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface_IsLost(sysmem_surface);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
     IDirectDrawSurface_Release(surface);
@@ -7357,13 +7437,15 @@ static void test_lost_device(void)
     surface_desc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_COMPLEX | DDSCAPS_FLIP;
     surface_desc.dwBackBufferCount = 1;
     hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &surface, NULL);
-    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirectDraw_SetCooperativeLevel(ddraw, window1, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface_IsLost(surface);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface_Flip(surface, NULL, DDFLIP_WAIT);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface_IsLost(sysmem_surface);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirectDraw_SetCooperativeLevel(ddraw, window1, DDSCL_NORMAL | DDSCL_FULLSCREEN);
@@ -7372,6 +7454,8 @@ static void test_lost_device(void)
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface_Flip(surface, NULL, DDFLIP_WAIT);
     ok(hr == DDERR_NOEXCLUSIVEMODE, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface_IsLost(sysmem_surface);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirectDraw_SetCooperativeLevel(ddraw, window1, DDSCL_NORMAL);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
@@ -7379,6 +7463,8 @@ static void test_lost_device(void)
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface_Flip(surface, NULL, DDFLIP_WAIT);
     ok(hr == DDERR_NOEXCLUSIVEMODE, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface_IsLost(sysmem_surface);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirectDraw_SetCooperativeLevel(ddraw, window2, DDSCL_NORMAL);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
@@ -7386,6 +7472,8 @@ static void test_lost_device(void)
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface_Flip(surface, NULL, DDFLIP_WAIT);
     ok(hr == DDERR_NOEXCLUSIVEMODE, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface_IsLost(sysmem_surface);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirectDraw_SetCooperativeLevel(ddraw, window2, DDSCL_NORMAL | DDSCL_FULLSCREEN);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
@@ -7393,6 +7481,8 @@ static void test_lost_device(void)
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface_Flip(surface, NULL, DDFLIP_WAIT);
     ok(hr == DDERR_NOEXCLUSIVEMODE, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface_IsLost(sysmem_surface);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirectDraw_SetCooperativeLevel(ddraw, window2, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
@@ -7400,6 +7490,8 @@ static void test_lost_device(void)
     ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface_Flip(surface, NULL, DDFLIP_WAIT);
     ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface_IsLost(sysmem_surface);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
     memset(&caps, 0, sizeof(caps));
     caps.dwCaps = DDSCAPS_FLIP;
@@ -7414,6 +7506,7 @@ static void test_lost_device(void)
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     IDirectDrawSurface_Release(back_buffer);
 
+    IDirectDrawSurface_Release(sysmem_surface);
     IDirectDrawSurface_Release(surface);
     refcount = IDirectDraw_Release(ddraw);
     ok(!refcount, "Got unexpected refcount %u.\n", refcount);
@@ -11747,7 +11840,7 @@ static void test_depth_readback(void)
             depth = *((DWORD *)ptr) & z_mask;
             expected_depth = (x * (0.9 / 640.0) + y * (0.1 / 480.0)) * z_mask;
             max_diff = ((0.5f * 0.9f) / 640.0f) * z_mask;
-            ok(abs(expected_depth - depth) <= max_diff,
+            ok(compare_uint(expected_depth, depth, max_diff),
                     "z_depth %u: Got depth 0x%08x (diff %d), expected 0x%08x+/-%u, at %u, %u.\n",
                     z_depth, depth, expected_depth - depth, expected_depth, max_diff, x, y);
         }
@@ -12000,9 +12093,29 @@ static void test_clear(void)
 
 struct enum_surfaces_param
 {
+    IDirectDraw *ddraw;
+    DDSURFACEDESC modes[20];
+    unsigned int mode_count;
+
     IDirectDrawSurface *surfaces[8];
     unsigned int count;
 };
+
+static HRESULT CALLBACK build_mode_list_cb(DDSURFACEDESC *desc, void *context)
+{
+    struct enum_surfaces_param *param = context;
+    IDirectDrawSurface *surface;
+
+    if (SUCCEEDED(IDirectDraw_CreateSurface(param->ddraw, desc, &surface, NULL)))
+    {
+        if (param->mode_count < ARRAY_SIZE(param->modes))
+            param->modes[param->mode_count] = *desc;
+        ++param->mode_count;
+        IDirectDrawSurface_Release(surface);
+    }
+
+    return DDENUMRET_OK;
+}
 
 static HRESULT WINAPI enum_surfaces_cb(IDirectDrawSurface *surface, DDSURFACEDESC *desc, void *context)
 {
@@ -12026,18 +12139,54 @@ static HRESULT WINAPI enum_surfaces_cb(IDirectDrawSurface *surface, DDSURFACEDES
     return DDENUMRET_OK;
 }
 
+static HRESULT WINAPI enum_surfaces_create_cb(IDirectDrawSurface *surface, DDSURFACEDESC *desc, void *context)
+{
+    static const DWORD expect_flags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PITCH | DDSD_PIXELFORMAT;
+    struct enum_surfaces_param *param = context;
+
+    ok(!surface, "Unexpected surface %p.\n", surface);
+    ok((desc->dwFlags & expect_flags) == expect_flags, "Got unexpected flags %#x.\n", desc->dwFlags);
+    if (param->count < ARRAY_SIZE(param->modes))
+    {
+        const DDSURFACEDESC *expect = &param->modes[param->count];
+        ok(desc->dwWidth == expect->dwWidth, "Expected width %u, got %u.\n", expect->dwWidth, desc->dwWidth);
+        ok(desc->dwHeight == expect->dwHeight, "Expected height %u, got %u.\n", expect->dwHeight, desc->dwHeight);
+        ok(!memcmp(&U4(*desc).ddpfPixelFormat, &U4(*expect).ddpfPixelFormat, sizeof(U4(*desc).ddpfPixelFormat)),
+                "Pixel formats didn't match.\n");
+    }
+
+    ++param->count;
+
+    return DDENUMRET_OK;
+}
+
 static void test_enum_surfaces(void)
 {
-    struct enum_surfaces_param param = {{0}};
+    struct enum_surfaces_param param = {0};
+    DDPIXELFORMAT current_format;
     IDirectDraw *ddraw;
     DDSURFACEDESC desc;
     HRESULT hr;
 
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
+    param.ddraw = ddraw;
+
+    memset(&desc, 0, sizeof(desc));
+    desc.dwSize = sizeof(desc);
+    hr = IDirectDraw_GetDisplayMode(ddraw, &desc);
+    ok(hr == DD_OK, "Failed to get display mode, hr %#x.\n", hr);
+    current_format = desc.ddpfPixelFormat;
 
     hr = IDirectDraw_SetCooperativeLevel(ddraw, NULL, DDSCL_NORMAL);
-    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+    ok(hr == DD_OK, "Failed to set cooperative level, hr %#x.\n", hr);
+
+    hr = IDirectDraw_EnumSurfaces(ddraw, DDENUMSURFACES_ALL, NULL, NULL, enum_surfaces_cb);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirectDraw_EnumSurfaces(ddraw, DDENUMSURFACES_CANBECREATED | DDENUMSURFACES_ALL,
+            NULL, NULL, enum_surfaces_cb);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
 
     memset(&desc, 0, sizeof(desc));
     desc.dwSize = sizeof(desc);
@@ -12057,6 +12206,7 @@ static void test_enum_surfaces(void)
     ok(hr == DDERR_NOTFOUND, "Got unexpected hr %#x.\n", hr);
     ok(!param.surfaces[3], "Got unexpected pointer %p.\n", param.surfaces[3]);
 
+    param.count = 0;
     hr = IDirectDraw_EnumSurfaces(ddraw, DDENUMSURFACES_DOESEXIST | DDENUMSURFACES_ALL,
             &desc, &param, enum_surfaces_cb);
     ok(SUCCEEDED(hr), "Failed to enumerate surfaces, hr %#x.\n", hr);
@@ -12068,9 +12218,106 @@ static void test_enum_surfaces(void)
     ok(SUCCEEDED(hr), "Failed to enumerate surfaces, hr %#x.\n", hr);
     ok(param.count == 3, "Got unexpected number of enumerated surfaces %u.\n", param.count);
 
+    desc.dwFlags = DDSD_WIDTH | DDSD_HEIGHT;
+    param.count = 0;
+    hr = IDirectDraw_EnumSurfaces(ddraw, DDENUMSURFACES_DOESEXIST | DDENUMSURFACES_MATCH,
+            &desc, &param, enum_surfaces_cb);
+    ok(hr == DD_OK, "Failed to enumerate surfaces, hr %#x.\n", hr);
+    ok(param.count == 1, "Got unexpected number of enumerated surfaces %u.\n", param.count);
+
+    param.count = 0;
+    hr = IDirectDraw_EnumSurfaces(ddraw, DDENUMSURFACES_DOESEXIST | DDENUMSURFACES_NOMATCH,
+            &desc, &param, enum_surfaces_cb);
+    ok(hr == DD_OK, "Failed to enumerate surfaces, hr %#x.\n", hr);
+    ok(param.count == 2, "Got unexpected number of enumerated surfaces %u.\n", param.count);
+
+    desc.dwFlags = 0;
+    param.count = 0;
+    hr = IDirectDraw_EnumSurfaces(ddraw, DDENUMSURFACES_DOESEXIST | DDENUMSURFACES_MATCH,
+            &desc, &param, enum_surfaces_cb);
+    ok(hr == DD_OK, "Failed to enumerate surfaces, hr %#x.\n", hr);
+    ok(param.count == 3, "Got unexpected number of enumerated surfaces %u.\n", param.count);
+
+    desc.dwFlags = 0;
+    param.count = 0;
+    hr = IDirectDraw_EnumSurfaces(ddraw, DDENUMSURFACES_DOESEXIST, &desc, &param, enum_surfaces_cb);
+    ok(hr == DD_OK, "Failed to enumerate surfaces, hr %#x.\n", hr);
+    ok(param.count == 3, "Got unexpected number of enumerated surfaces %u.\n", param.count);
+
     IDirectDrawSurface_Release(param.surfaces[2]);
     IDirectDrawSurface_Release(param.surfaces[1]);
     IDirectDrawSurface_Release(param.surfaces[0]);
+
+    param.count = 0;
+    hr = IDirectDraw_EnumSurfaces(ddraw, DDENUMSURFACES_DOESEXIST | DDENUMSURFACES_ALL,
+            NULL, &param, enum_surfaces_cb);
+    ok(hr == DD_OK, "Failed to enumerate surfaces, hr %#x.\n", hr);
+    ok(!param.count, "Got unexpected number of enumerated surfaces %u.\n", param.count);
+
+    memset(&desc, 0, sizeof(desc));
+    desc.dwSize = sizeof(desc);
+    desc.dwFlags = DDSD_CAPS;
+    desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
+
+    hr = IDirectDraw_EnumSurfaces(ddraw, DDENUMSURFACES_CANBECREATED | DDENUMSURFACES_ALL,
+            &desc, &param, enum_surfaces_create_cb);
+    ok(hr == DDERR_INVALIDPARAMS, "Failed to enumerate surfaces, hr %#x.\n", hr);
+
+    hr = IDirectDraw_EnumSurfaces(ddraw, DDENUMSURFACES_CANBECREATED | DDENUMSURFACES_NOMATCH,
+            &desc, &param, enum_surfaces_create_cb);
+    ok(hr == DDERR_INVALIDPARAMS, "Failed to enumerate surfaces, hr %#x.\n", hr);
+
+    hr = IDirectDraw_EnumSurfaces(ddraw, DDENUMSURFACES_CANBECREATED,
+            &desc, &param, enum_surfaces_create_cb);
+    ok(hr == DDERR_INVALIDPARAMS, "Failed to enumerate surfaces, hr %#x.\n", hr);
+
+    /* When not passed width and height, the callback is called with every
+     * available display resolution. */
+
+    param.mode_count = 0;
+    desc.dwFlags |= DDSD_PIXELFORMAT;
+    U4(desc).ddpfPixelFormat = current_format;
+    hr = IDirectDraw_EnumDisplayModes(ddraw, 0, &desc, &param, build_mode_list_cb);
+    ok(hr == DD_OK, "Failed to build mode list, hr %#x.\n", hr);
+
+    param.count = 0;
+    desc.dwFlags &= ~DDSD_PIXELFORMAT;
+    hr = IDirectDraw_EnumSurfaces(ddraw, DDENUMSURFACES_CANBECREATED | DDENUMSURFACES_MATCH,
+            &desc, &param, enum_surfaces_create_cb);
+    ok(hr == DD_OK, "Failed to enumerate surfaces, hr %#x.\n", hr);
+    ok(param.count == param.mode_count, "Expected %u surfaces, got %u.\n", param.mode_count, param.count);
+
+    desc.dwFlags |= DDSD_WIDTH | DDSD_HEIGHT;
+    desc.dwWidth = desc.dwHeight = 32;
+
+    param.modes[0].dwWidth = param.modes[0].dwHeight = 32;
+
+    param.count = 0;
+    hr = IDirectDraw_EnumSurfaces(ddraw, DDENUMSURFACES_CANBECREATED | DDENUMSURFACES_MATCH,
+            &desc, &param, enum_surfaces_create_cb);
+    ok(hr == DD_OK, "Failed to enumerate surfaces, hr %#x.\n", hr);
+    ok(param.count == 1, "Got unexpected number of enumerated surfaces %u.\n", param.count);
+
+    hr = IDirectDraw_CreateSurface(ddraw, &desc, &param.surfaces[0], NULL);
+    ok(hr == DD_OK, "Failed to create surface, hr %#x.\n", hr);
+    param.count = 0;
+    hr = IDirectDraw_EnumSurfaces(ddraw, DDENUMSURFACES_CANBECREATED | DDENUMSURFACES_DOESEXIST | DDENUMSURFACES_MATCH,
+            &desc, &param, enum_surfaces_create_cb);
+    ok(hr == DD_OK, "Failed to enumerate surfaces, hr %#x.\n", hr);
+    ok(param.count == 1, "Got unexpected number of enumerated surfaces %u.\n", param.count);
+    IDirectDrawSurface_Release(param.surfaces[0]);
+
+    desc.dwFlags |= DDSD_PIXELFORMAT;
+    desc.ddpfPixelFormat.dwSize = sizeof(desc.ddpfPixelFormat);
+    desc.ddpfPixelFormat.dwFlags = DDPF_FOURCC;
+    desc.ddpfPixelFormat.dwFourCC = 0xdeadbeef;
+
+    param.count = 0;
+    hr = IDirectDraw_EnumSurfaces(ddraw, DDENUMSURFACES_CANBECREATED | DDENUMSURFACES_MATCH,
+            &desc, &param, enum_surfaces_create_cb);
+    ok(hr == DD_OK, "Failed to enumerate surfaces, hr %#x.\n", hr);
+    ok(!param.count, "Got unexpected number of enumerated surfaces %u.\n", param.count);
+
     IDirectDraw_Release(ddraw);
 }
 
@@ -13181,6 +13428,309 @@ static void test_d32_support(void)
     DestroyWindow(window);
 }
 
+struct find_different_mode_param
+{
+    unsigned int old_width;
+    unsigned int old_height;
+    unsigned int new_width;
+    unsigned int new_height;
+};
+
+static HRESULT CALLBACK find_different_mode_callback(DDSURFACEDESC *surface_desc, void *context)
+{
+    struct find_different_mode_param *param = context;
+
+    if (U1(U4(*surface_desc).ddpfPixelFormat).dwRGBBitCount != registry_mode.dmBitsPerPel)
+        return DDENUMRET_OK;
+
+    if (surface_desc->dwWidth != param->old_width && surface_desc->dwHeight != param->old_height)
+    {
+        param->new_width = surface_desc->dwWidth;
+        param->new_height = surface_desc->dwHeight;
+        return DDENUMRET_CANCEL;
+    }
+
+    return DDENUMRET_OK;
+}
+
+static void test_cursor_clipping(void)
+{
+    struct find_different_mode_param param;
+    DDSURFACEDESC surface_desc;
+    RECT rect, clip_rect;
+    IDirectDraw *ddraw;
+    HWND window;
+    HRESULT hr;
+
+    window = create_window();
+    ok(!!window, "Failed to create a window.\n");
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    hr = IDirectDraw_GetDisplayMode(ddraw, &surface_desc);
+    ok(hr == DD_OK, "GetDisplayMode failed, hr %#x.\n", hr);
+
+    memset(&param, 0, sizeof(param));
+    param.old_width = surface_desc.dwWidth;
+    param.old_height = surface_desc.dwHeight;
+    hr = IDirectDraw_EnumDisplayModes(ddraw, 0, NULL, &param, find_different_mode_callback);
+    ok(hr == DD_OK, "EnumDisplayModes failed, hr %#x.\n", hr);
+    if (!(param.new_width && param.new_height))
+    {
+        skip("Failed to find a different mode than %ux%u.\n", param.old_width, param.old_height);
+        goto done;
+    }
+
+    ok(ClipCursor(NULL), "ClipCursor failed, error %#x.\n", GetLastError());
+    get_virtual_rect(&rect);
+    ok(GetClipCursor(&clip_rect), "GetClipCursor failed, error %#x.\n", GetLastError());
+    ok(EqualRect(&clip_rect, &rect), "Expect clip rect %s, got %s.\n", wine_dbgstr_rect(&rect),
+            wine_dbgstr_rect(&clip_rect));
+
+    /* Set cooperative level to normal */
+    hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    ok(hr == DD_OK, "SetCooperativeLevel failed, hr %#x.\n", hr);
+    flush_events();
+    get_virtual_rect(&rect);
+    ok(GetClipCursor(&clip_rect), "GetClipCursor failed, error %#x.\n", GetLastError());
+    ok(EqualRect(&clip_rect, &rect), "Expect clip rect %s, got %s.\n", wine_dbgstr_rect(&rect),
+            wine_dbgstr_rect(&clip_rect));
+
+    hr = set_display_mode(ddraw, param.new_width, param.new_height);
+    ok(hr == DD_OK || hr == DDERR_UNSUPPORTED, "SetDisplayMode failed, hr %#x.\n", hr);
+    if (FAILED(hr))
+    {
+        win_skip("SetDisplayMode failed, hr %#x.\n", hr);
+        goto done;
+    }
+    flush_events();
+    get_virtual_rect(&rect);
+    ok(GetClipCursor(&clip_rect), "GetClipCursor failed, error %#x.\n", GetLastError());
+    ok(EqualRect(&clip_rect, &rect), "Expect clip rect %s, got %s.\n", wine_dbgstr_rect(&rect),
+            wine_dbgstr_rect(&clip_rect));
+
+    hr = IDirectDraw_RestoreDisplayMode(ddraw);
+    ok(hr == DD_OK, "RestoreDisplayMode failed, hr %#x.\n", hr);
+    flush_events();
+    get_virtual_rect(&rect);
+    ok(GetClipCursor(&clip_rect), "GetClipCursor failed, error %#x.\n", GetLastError());
+    ok(EqualRect(&clip_rect, &rect), "Expect clip rect %s, got %s.\n", wine_dbgstr_rect(&rect),
+            wine_dbgstr_rect(&clip_rect));
+
+    /* Switch to full screen cooperative level */
+    hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
+    ok(hr == DD_OK, "SetCooperativeLevel failed, hr %#x.\n", hr);
+    flush_events();
+    SetRect(&rect, 0, 0, param.old_width, param.old_height);
+    ok(GetClipCursor(&clip_rect), "GetClipCursor failed, error %#x.\n", GetLastError());
+    ok(EqualRect(&clip_rect, &rect), "Expect clip rect %s, got %s.\n", wine_dbgstr_rect(&rect),
+            wine_dbgstr_rect(&clip_rect));
+
+    hr = set_display_mode(ddraw, param.new_width, param.new_height);
+    ok(hr == DD_OK || hr == DDERR_UNSUPPORTED, "SetDisplayMode failed, hr %#x.\n", hr);
+    if (FAILED(hr))
+    {
+        win_skip("SetDisplayMode failed, hr %#x.\n", hr);
+        goto done;
+    }
+    flush_events();
+    SetRect(&rect, 0, 0, param.new_width, param.new_height);
+    ok(GetClipCursor(&clip_rect), "GetClipCursor failed, error %#x.\n", GetLastError());
+    ok(EqualRect(&clip_rect, &rect), "Expect clip rect %s, got %s.\n", wine_dbgstr_rect(&rect),
+            wine_dbgstr_rect(&clip_rect));
+
+    /* Restore display mode */
+    hr = IDirectDraw_RestoreDisplayMode(ddraw);
+    ok(hr == DD_OK, "RestoreDisplayMode failed, hr %#x.\n", hr);
+    flush_events();
+    SetRect(&rect, 0, 0, param.old_width, param.old_height);
+    ok(GetClipCursor(&clip_rect), "GetClipCursor failed, error %#x.\n", GetLastError());
+    ok(EqualRect(&clip_rect, &rect), "Expect clip rect %s, got %s.\n", wine_dbgstr_rect(&rect),
+            wine_dbgstr_rect(&clip_rect));
+
+    /* Switch to normal cooperative level */
+    hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    ok(hr == DD_OK, "SetCooperativeLevel failed, hr %#x.\n", hr);
+    flush_events();
+    get_virtual_rect(&rect);
+    ok(GetClipCursor(&clip_rect), "GetClipCursor failed, error %#x.\n", GetLastError());
+    ok(EqualRect(&clip_rect, &rect), "Expect clip rect %s, got %s.\n", wine_dbgstr_rect(&rect),
+            wine_dbgstr_rect(&clip_rect));
+
+done:
+    IDirectDraw_Release(ddraw);
+    DestroyWindow(window);
+}
+
+static void check_vtbl_protection_(int line, const void *vtbl, SIZE_T size)
+{
+    MEMORY_BASIC_INFORMATION info;
+    SIZE_T ret = VirtualQuery(vtbl, &info, size);
+    ok_(__FILE__, line)(ret == sizeof(info), "Failed to query memory.\n");
+    ok_(__FILE__, line)(info.Protect & (PAGE_READWRITE | PAGE_WRITECOPY), "Got protection %#x.\n", info.Protect);
+}
+#define check_vtbl_protection(a) check_vtbl_protection_(__LINE__, a, sizeof(*(a)))
+
+static void test_vtbl_protection(void)
+{
+    PALETTEENTRY palette_entries[256];
+    IDirectDrawSurface7 *surface7;
+    IDirectDrawSurface4 *surface4;
+    IDirectDrawSurface3 *surface3;
+    IDirectDrawSurface2 *surface2;
+    IDirectDrawSurface *surface1;
+    IDirectDrawPalette *palette;
+    DDSURFACEDESC surface_desc;
+    IDirectDraw *ddraw;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    window = create_window();
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+    hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
+    hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &surface1, NULL);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface_QueryInterface(surface1, &IID_IDirectDrawSurface2, (void **)&surface2);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface_QueryInterface(surface1, &IID_IDirectDrawSurface3, (void **)&surface3);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface_QueryInterface(surface1, &IID_IDirectDrawSurface4, (void **)&surface4);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface_QueryInterface(surface1, &IID_IDirectDrawSurface7, (void **)&surface7);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
+    memset(palette_entries, 0, sizeof(palette_entries));
+    hr = IDirectDraw_CreatePalette(ddraw, DDPCAPS_8BIT | DDPCAPS_ALLOW256,
+            palette_entries, &palette, NULL);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
+    check_vtbl_protection(ddraw->lpVtbl);
+    check_vtbl_protection(palette->lpVtbl);
+    check_vtbl_protection(surface1->lpVtbl);
+    check_vtbl_protection(surface2->lpVtbl);
+    check_vtbl_protection(surface3->lpVtbl);
+    check_vtbl_protection(surface4->lpVtbl);
+    check_vtbl_protection(surface7->lpVtbl);
+
+    IDirectDrawPalette_Release(palette);
+    IDirectDrawSurface_Release(surface1);
+    IDirectDrawSurface2_Release(surface2);
+    IDirectDrawSurface3_Release(surface3);
+    IDirectDrawSurface4_Release(surface4);
+    IDirectDrawSurface7_Release(surface7);
+    refcount = IDirectDraw_Release(ddraw);
+    ok(!refcount, "%u references left.\n", refcount);
+    DestroyWindow(window);
+}
+
+static BOOL CALLBACK test_window_position_cb(HMONITOR monitor, HDC hdc, RECT *monitor_rect,
+        LPARAM lparam)
+{
+    RECT primary_rect, window_rect;
+    IDirectDraw *ddraw;
+    HWND window;
+    HRESULT hr;
+    BOOL ret;
+
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+    window = CreateWindowA("static", "ddraw_test", WS_POPUP | WS_VISIBLE, monitor_rect->left,
+            monitor_rect->top, monitor_rect->right - monitor_rect->left,
+            monitor_rect->bottom - monitor_rect->top, NULL, NULL, NULL, NULL);
+    ok(!!window, "Failed to create a window.\n");
+    flush_events();
+
+    hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
+    ok(hr == DD_OK, "SetCooperativeLevel failed, hr %#x.\n", hr);
+    flush_events();
+    ret = GetWindowRect(window, &window_rect);
+    ok(ret, "GetWindowRect failed, error %#x.\n", GetLastError());
+    SetRect(&primary_rect, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
+    ok(EqualRect(&window_rect, &primary_rect), "Expect window rect %s, got %s.\n",
+            wine_dbgstr_rect(&primary_rect), wine_dbgstr_rect(&window_rect));
+
+    /* Window activation should restore the window to fit the whole primary monitor */
+    ret = SetWindowPos(window, 0, monitor_rect->left, monitor_rect->top, 0, 0,
+            SWP_NOZORDER | SWP_NOSIZE);
+    ok(ret, "SetWindowPos failed, error %#x.\n", GetLastError());
+    ret = SetForegroundWindow(GetDesktopWindow());
+    ok(ret, "Failed to set foreground window.\n");
+    flush_events();
+    ret = ShowWindow(window, SW_RESTORE);
+    ok(ret, "Failed to restore window, error %#x.\n", GetLastError());
+    flush_events();
+    ret = SetForegroundWindow(window);
+    ok(ret, "SetForegroundWindow failed, error %#x.\n", GetLastError());
+    flush_events();
+    ret = GetWindowRect(window, &window_rect);
+    ok(ret, "GetWindowRect failed, error %#x.\n", GetLastError());
+    ok(EqualRect(&window_rect, &primary_rect), "Expect window rect %s, got %s.\n",
+            wine_dbgstr_rect(&primary_rect), wine_dbgstr_rect(&window_rect));
+
+    hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    ok(hr == DD_OK, "SetCooperativeLevel failed, hr %#x.\n", hr);
+    ret = GetWindowRect(window, &window_rect);
+    ok(ret, "GetWindowRect failed, error %#x.\n", GetLastError());
+    ok(EqualRect(&window_rect, &primary_rect), "Expect window rect %s, got %s.\n",
+            wine_dbgstr_rect(&primary_rect), wine_dbgstr_rect(&window_rect));
+
+    DestroyWindow(window);
+    IDirectDraw_Release(ddraw);
+    return TRUE;
+}
+
+static void test_window_position(void)
+{
+    EnumDisplayMonitors(NULL, NULL, test_window_position_cb, 0);
+}
+
+static BOOL CALLBACK test_get_display_mode_cb(HMONITOR monitor, HDC hdc, RECT *monitor_rect,
+        LPARAM lparam)
+{
+    DDSURFACEDESC surface_desc;
+    IDirectDraw *ddraw;
+    HWND window;
+    HRESULT hr;
+    BOOL ret;
+
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+    window = create_window();
+    ok(!!window, "Failed to create a window.\n");
+
+    /* Test that DirectDraw doesn't use the device window to determine which monitor to use */
+    ret = SetWindowPos(window, 0, monitor_rect->left, monitor_rect->top, 0, 0,
+            SWP_NOZORDER | SWP_NOSIZE);
+    ok(ret, "SetWindowPos failed, error %#x.\n", GetLastError());
+
+    surface_desc.dwSize = sizeof(surface_desc);
+    hr = IDirectDraw_GetDisplayMode(ddraw, &surface_desc);
+    ok(hr == DD_OK, "GetDisplayMode failed, hr %#x.\n", hr);
+    ok(surface_desc.dwWidth == GetSystemMetrics(SM_CXSCREEN), "Expect width %d, got %d.\n",
+            GetSystemMetrics(SM_CXSCREEN), surface_desc.dwWidth);
+    ok(surface_desc.dwHeight == GetSystemMetrics(SM_CYSCREEN), "Expect height %d, got %d.\n",
+            GetSystemMetrics(SM_CYSCREEN), surface_desc.dwHeight);
+
+    DestroyWindow(window);
+    IDirectDraw_Release(ddraw);
+    return TRUE;
+}
+
+static void test_get_display_mode(void)
+{
+    EnumDisplayMonitors(NULL, NULL, test_get_display_mode_cb, 0);
+}
+
 START_TEST(ddraw1)
 {
     DDDEVICEIDENTIFIER identifier;
@@ -13293,4 +13843,8 @@ START_TEST(ddraw1)
     test_clipper_refcount();
     test_caps();
     test_d32_support();
+    test_cursor_clipping();
+    test_vtbl_protection();
+    test_window_position();
+    test_get_display_mode();
 }

@@ -171,7 +171,7 @@ static void run_process( const char *args )
     ok( CreateProcessA( NULL, cmd, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &info ),
         "CreateProcess %s failed\n", cmd );
 
-    winetest_wait_child_process( info.hProcess );
+    wait_child_process( info.hProcess );
     CloseHandle( info.hProcess );
     CloseHandle( info.hThread );
 }

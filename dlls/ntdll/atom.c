@@ -33,7 +33,7 @@
 #include "windef.h"
 
 #include "wine/server.h"
-#include "wine/unicode.h"
+#include "ntdll_misc.h"
 
 #include "wine/debug.h"
 
@@ -109,7 +109,7 @@ static ULONG integral_atom_name(WCHAR* buffer, ULONG len, RTL_ATOM atom)
     WCHAR tmp[16];
     int ret;
 
-    ret = sprintfW( tmp, fmt, atom );
+    ret = NTDLL_swprintf( tmp, fmt, atom );
     if (!len) return ret * sizeof(WCHAR);
     if (len <= ret) ret = len - 1;
     memcpy( buffer, tmp, ret * sizeof(WCHAR) );
@@ -212,7 +212,7 @@ NTSTATUS WINAPI RtlAddAtomToAtomTable( RTL_ATOM_TABLE table, const WCHAR* name, 
     if (!table) status = STATUS_INVALID_PARAMETER;
     else
     {
-        size_t len = IS_INTATOM(name) ?  0 : strlenW(name);
+        size_t len = IS_INTATOM(name) ?  0 : wcslen(name);
         status = is_integral_atom( name, len, atom );
         if (status == STATUS_MORE_ENTRIES)
         {
@@ -242,7 +242,7 @@ NTSTATUS WINAPI RtlLookupAtomInAtomTable( RTL_ATOM_TABLE table, const WCHAR* nam
     if (!table) status = STATUS_INVALID_PARAMETER;
     else
     {
-        size_t len = IS_INTATOM(name) ? 0 : strlenW(name);
+        size_t len = IS_INTATOM(name) ? 0 : wcslen(name);
         status = is_integral_atom( name, len, atom );
         if (status == STATUS_MORE_ENTRIES)
         {

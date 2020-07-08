@@ -169,7 +169,7 @@ BOOL PSDRV_SelectBuiltinFont(PHYSDEV dev, HFONT hfont,
 
     /* Look for a matching font family */
     for(family = physDev->pi->Fonts; family; family = family->next) {
-        if(!_strnicmp(FaceName, family->FamilyName, -1))
+        if(!stricmp(FaceName, family->FamilyName))
 	    break;
     }
 

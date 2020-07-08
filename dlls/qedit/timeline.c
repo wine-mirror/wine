@@ -421,7 +421,7 @@ static const IAMTimelineVtbl IAMTimeline_VTable =
     Timeline_IAMTimeline_GetDefaultEffectB,
 };
 
-HRESULT AMTimeline_create(IUnknown *pUnkOuter, LPVOID *ppv)
+HRESULT timeline_create(IUnknown *pUnkOuter, IUnknown **ppv)
 {
     TimelineImpl* obj = NULL;
 

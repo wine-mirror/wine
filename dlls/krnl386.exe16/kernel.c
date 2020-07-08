@@ -35,6 +35,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(module);
 
 extern DWORD WINAPI GetProcessFlags( DWORD processid );
 
+void *dummy = RaiseException;  /* force importing it from kernel32 */
+
 static DWORD process_dword;
 
 /***********************************************************************
@@ -71,6 +73,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
     switch(reason)
     {
     case DLL_PROCESS_ATTACH:
+        init_selectors();
         if (LoadLibrary16( "krnl386.exe" ) < 32) return FALSE;
         /* fall through */
     case DLL_THREAD_ATTACH:
@@ -112,8 +115,8 @@ BOOL WINAPI KERNEL_DllEntryPoint( DWORD reasion, HINSTANCE16 inst, WORD ds,
 
     NE_SetEntryPoint( inst, 178, GetWinFlags16() );
 
-    NE_SetEntryPoint( inst, 454, wine_get_cs() );
-    NE_SetEntryPoint( inst, 455, wine_get_ds() );
+    NE_SetEntryPoint( inst, 454, get_cs() );
+    NE_SetEntryPoint( inst, 455, get_ds() );
 
     NE_SetEntryPoint( inst, 183, DOSMEM_0000H );       /* KERNEL.183: __0000H */
     NE_SetEntryPoint( inst, 173, DOSMEM_BiosSysSeg );  /* KERNEL.173: __ROMBIOS */
@@ -128,7 +131,7 @@ BOOL WINAPI KERNEL_DllEntryPoint( DWORD reasion, HINSTANCE16 inst, WORD ds,
 #define SET_ENTRY_POINT( num, addr ) \
     NE_SetEntryPoint( inst, (num), GLOBAL_CreateBlock( GMEM_FIXED, \
                       DOSMEM_MapDosToLinear(addr), 0x10000, inst, \
-                      WINE_LDT_FLAGS_DATA ))
+                      LDT_FLAGS_DATA ))
 
     SET_ENTRY_POINT( 174, 0xa0000 );  /* KERNEL.174: __A000H */
     SET_ENTRY_POINT( 181, 0xb0000 );  /* KERNEL.181: __B000H */

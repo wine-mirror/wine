@@ -82,6 +82,16 @@ typedef enum MFSESSION_GETFULLTOPOLOGY_FLAGS
     MFSESSION_GETFULLTOPOLOGY_CURRENT = 0x00000001,
 } MFSESSION_GETFULLTOPOLOGY_FLAGS;
 
+typedef enum _MF_CONNECT_METHOD
+{
+    MF_CONNECT_DIRECT                          = 0x00000000,
+    MF_CONNECT_ALLOW_CONVERTER                 = 0x00000001,
+    MF_CONNECT_ALLOW_DECODER                   = 0x00000003,
+    MF_CONNECT_RESOLVE_INDEPENDENT_OUTPUTTYPES = 0x00000004,
+    MF_CONNECT_AS_OPTIONAL                     = 0x00010000,
+    MF_CONNECT_AS_OPTIONAL_BRANCH              = 0x00020000,
+} MF_CONNECT_METHOD;
+
 typedef enum _MF_TOPOLOGY_RESOLUTION_STATUS_FLAGS
 {
     MF_TOPOLOGY_RESOLUTION_SUCCEEDED            = 0x00000000,
@@ -218,6 +228,29 @@ interface IMFTopology : IMFAttributes
     HRESULT GetNodeByID([in] TOPOID id, [out] IMFTopologyNode **node);
     HRESULT GetSourceNodeCollection([out] IMFCollection **collection);
     HRESULT GetOutputNodeCollection([out] IMFCollection **collection);
+}
+
+typedef struct _MFTOPONODE_ATTRIBUTE_UPDATE
+{
+    TOPOID NodeId;
+    GUID guidAttributeKey;
+    MF_ATTRIBUTE_TYPE attrType;
+    [switch_type(DWORD), switch_is(attrType)] union
+    {
+        [case(MF_ATTRIBUTE_UINT32)] UINT32 u32;
+        [case(MF_ATTRIBUTE_UINT64)] UINT64 u64;
+        [case(MF_ATTRIBUTE_DOUBLE)] double d;
+    };
+} MFTOPONODE_ATTRIBUTE_UPDATE;
+
+[
+    object,
+    uuid(676aa6dd-238a-410d-bb99-65668d01605a),
+]
+interface IMFTopologyNodeAttributeEditor : IUnknown
+{
+    HRESULT UpdateNodeAttributes([in] TOPOID id, [in] DWORD count,
+            [in, size_is(count)] MFTOPONODE_ATTRIBUTE_UPDATE *attr_updates);
 }
 
 [
@@ -571,6 +604,20 @@ interface IMFSampleGrabberSinkCallback2 : IMFSampleGrabberSinkCallback
         [in] IMFAttributes *attributes);
 }
 
+[
+    object,
+    uuid(26afea53-d9ed-42b5-ab80-e64f9ee34779),
+    local
+]
+interface IMFSeekInfo : IUnknown
+{
+    HRESULT GetNearestKeyFrames(
+        [in] const GUID *format,
+        [in] const PROPVARIANT *position,
+        [out] PROPVARIANT *prev_frame,
+        [out] PROPVARIANT *next_frame);
+}
+
 cpp_quote("HRESULT WINAPI CreatePropertyStore(IPropertyStore **store);")
 cpp_quote("HRESULT WINAPI MFCreateAudioRenderer(IMFAttributes *config, IMFMediaSink **sink);")
 cpp_quote("HRESULT WINAPI MFCreateAudioRendererActivate(IMFActivate **activate);")
@@ -581,6 +628,7 @@ cpp_quote("HRESULT WINAPI MFCreatePresentationClock(IMFPresentationClock **clock
 cpp_quote("HRESULT WINAPI MFCreatePresentationDescriptor(DWORD count, IMFStreamDescriptor **descriptors,")
 cpp_quote("     IMFPresentationDescriptor **presentation_desc);")
 cpp_quote("HRESULT WINAPI MFCreateSimpleTypeHandler(IMFMediaTypeHandler **handler);")
+cpp_quote("HRESULT WINAPI MFCreateSampleCopierMFT(IMFTransform **transform);")
 cpp_quote("HRESULT WINAPI MFCreateSampleGrabberSinkActivate(IMFMediaType *media_type,")
 cpp_quote("        IMFSampleGrabberSinkCallback *callback, IMFActivate **activate);")
 cpp_quote("HRESULT WINAPI MFCreateSequencerSource(IUnknown *reserved, IMFSequencerSource **seq_source);" )
@@ -595,8 +643,10 @@ cpp_quote("HRESULT WINAPI MFCreateTopoLoader(IMFTopoLoader **loader);")
 cpp_quote("HRESULT WINAPI MFCreateVideoRendererActivate(HWND hwnd, IMFActivate **activate);")
 cpp_quote("HRESULT WINAPI MFEnumDeviceSources(IMFAttributes *attributes, IMFActivate ***sources, UINT32 *count);")
 cpp_quote("HRESULT WINAPI MFGetSupportedMimeTypes(PROPVARIANT *array);")
+cpp_quote("HRESULT WINAPI MFGetSupportedSchemes(PROPVARIANT *array);")
 cpp_quote("HRESULT WINAPI MFGetService(IUnknown *object, REFGUID service, REFIID iid, void **obj);")
 cpp_quote("MFTIME  WINAPI MFGetSystemTime(void);")
+cpp_quote("HRESULT WINAPI MFGetTopoNodeCurrentType(IMFTopologyNode *node, DWORD stream, BOOL output, IMFMediaType **type);")
 cpp_quote("HRESULT WINAPI MFShutdownObject(IUnknown *object);")
 
 typedef enum _MFMEDIASOURCE_CHARACTERISTICS
@@ -637,6 +687,19 @@ interface IMFMediaSource : IMFMediaEventGenerator
     HRESULT Stop();
     HRESULT Pause();
     HRESULT Shutdown();
+}
+
+[
+    object,
+    uuid(3c9b2eb9-86d5-4514-a394-f56664f9f0d8)
+]
+interface IMFMediaSourceEx : IMFMediaSource
+{
+    HRESULT GetSourceAttributes([out] IMFAttributes **attributes);
+    HRESULT GetStreamAttributes(
+        [in] DWORD streamid,
+        [out] IMFAttributes **attributes);
+    HRESULT SetD3DManager([in] IUnknown *manager);
 }
 
 [
@@ -688,6 +751,16 @@ interface IMFPresentationClock : IMFClock
     HRESULT Pause();
 }
 
+[
+    object,
+    uuid(6ef2a662-47c0-4666-b13d-cbb717f2fa2c)
+]
+interface IMFClockConsumer : IUnknown
+{
+    HRESULT SetPresentationClock([in] IMFPresentationClock *clock);
+    HRESULT GetPresentationClock([out] IMFPresentationClock **clock);
+}
+
 cpp_quote("#define MEDIASINK_FIXED_STREAMS                0x00000001")
 cpp_quote("#define MEDIASINK_CANNOT_MATCH_CLOCK           0x00000002")
 cpp_quote("#define MEDIASINK_RATELESS                     0x00000004")
@@ -713,6 +786,40 @@ interface IMFMediaSink : IUnknown
     HRESULT SetPresentationClock([in] IMFPresentationClock *clock);
     HRESULT GetPresentationClock([out] IMFPresentationClock **clock);
     HRESULT Shutdown();
+}
+
+[
+    object,
+    uuid(eaecb74a-9a50-42ce-9541-6a7f57aa4ad7),
+    local
+]
+interface IMFFinalizableMediaSink : IMFMediaSink
+{
+    HRESULT BeginFinalize(
+        [in] IMFAsyncCallback *callback,
+        [in] IUnknown *state);
+
+    HRESULT EndFinalize([in] IMFAsyncResult *result);
+}
+
+[
+    object,
+    uuid(5dfd4b2a-7674-4110-a4e6-8a68fd5f3688)
+]
+interface IMFMediaSinkPreroll : IUnknown
+{
+    HRESULT NotifyPreroll([in] MFTIME start_time);
+}
+
+[
+    object,
+    uuid(9db7aa41-3cc5-40d4-8509-555804ad34cc)
+]
+interface IMFStreamingSinkConfig : IUnknown
+{
+    HRESULT StartStreaming(
+        [in] BOOL is_byte_offset,
+        [in] QWORD seek_offset);
 }
 
 [
@@ -771,6 +878,75 @@ interface IMFQualityManager : IUnknown
     HRESULT Shutdown();
 }
 
+typedef enum _MF_QUALITY_DROP_MODE
+{
+    MF_DROP_MODE_NONE,
+    MF_DROP_MODE_1,
+    MF_DROP_MODE_2,
+    MF_DROP_MODE_3,
+    MF_DROP_MODE_4,
+    MF_DROP_MODE_5,
+    MF_NUM_DROP_MODES
+} MF_QUALITY_DROP_MODE;
+
+typedef enum _MF_QUALITY_LEVEL
+{
+    MF_QUALITY_NORMAL,
+    MF_QUALITY_NORMAL_MINUS_1,
+    MF_QUALITY_NORMAL_MINUS_2,
+    MF_QUALITY_NORMAL_MINUS_3,
+    MF_QUALITY_NORMAL_MINUS_4,
+    MF_QUALITY_NORMAL_MINUS_5,
+    MF_NUM_QUALITY_LEVELS
+} MF_QUALITY_LEVEL;
+
+[
+    object,
+    uuid(ec15e2e9-e36b-4f7c-8758-77d452ef4ce7)
+]
+interface IMFQualityAdvise : IUnknown
+{
+    HRESULT SetDropMode([in] MF_QUALITY_DROP_MODE mode);
+    HRESULT SetQualityLevel([in] MF_QUALITY_LEVEL level);
+    HRESULT GetDropMode([out] MF_QUALITY_DROP_MODE *mode);
+    HRESULT GetQualityLevel([out] MF_QUALITY_LEVEL *level);
+    HRESULT DropTime([in] LONGLONG interval);
+}
+
+[
+    object,
+    uuid(f3706f0d-8ea2-4886-8000-7155e9ec2eae)
+]
+interface IMFQualityAdvise2 : IMFQualityAdvise
+{
+    HRESULT NotifyQualityEvent(
+        [in] IMFMediaEvent *event,
+        [out] DWORD *flags);
+}
+
+[
+    object,
+    uuid(dfcd8e4d-30b5-4567-acaa-8eb5b7853dc9)
+]
+interface IMFQualityAdviseLimits : IUnknown
+{
+    HRESULT GetMaximumDropMode([out] MF_QUALITY_DROP_MODE *mode);
+    HRESULT GetMinimumQualityLevel([out] MF_QUALITY_LEVEL *level);
+}
+
+[
+    object,
+    uuid(245bf8e9-0755-40f7-88a5-ae0f18d55e17),
+    local
+]
+interface IMFTrackedSample : IUnknown
+{
+    HRESULT SetAllocator(
+        [in] IMFAsyncCallback *sample_allocator,
+        [in, unique] IUnknown *state
+    );
+}
+
 typedef struct _MFT_REGISTRATION_INFO
 {
     CLSID clsid;
@@ -801,13 +977,78 @@ interface IMFMediaSourceTopologyProvider : IUnknown
     HRESULT GetMediaSourceTopology([in] IMFPresentationDescriptor *pd, [out] IMFTopology **topology);
 }
 
-cpp_quote("#define MF_RESOLUTION_MEDIASOURCE                                           0x00000001")
-cpp_quote("#define MF_RESOLUTION_BYTESTREAM                                            0x00000002")
-cpp_quote("#define MF_RESOLUTION_CONTENT_DOES_NOT_HAVE_TO_MATCH_EXTENSION_OR_MIME_TYPE 0x00000010")
-cpp_quote("#define MF_RESOLUTION_KEEP_BYTE_STREAM_ALIVE_ON_FAIL                        0x00000020")
-cpp_quote("#define MF_RESOLUTION_READ                                                  0x00010000")
-cpp_quote("#define MF_RESOLUTION_WRITE                                                 0x00020000")
-cpp_quote("#define MF_RESOLUTION_DISABLE_LOCAL_PLUGINS                                 0x00000040")
+enum
+{
+    MF_RESOLUTION_MEDIASOURCE                                           = 0x00000001,
+    MF_RESOLUTION_BYTESTREAM                                            = 0x00000002,
+    MF_RESOLUTION_CONTENT_DOES_NOT_HAVE_TO_MATCH_EXTENSION_OR_MIME_TYPE = 0x00000010,
+    MF_RESOLUTION_KEEP_BYTE_STREAM_ALIVE_ON_FAIL                        = 0x00000020,
+    MF_RESOLUTION_DISABLE_LOCAL_PLUGINS                                 = 0x00000040,
+    MF_RESOLUTION_PLUGIN_CONTROL_POLICY_APPROVED_ONLY                   = 0x00000080,
+    MF_RESOLUTION_PLUGIN_CONTROL_POLICY_WEB_ONLY                        = 0x00000100,
+    MF_RESOLUTION_PLUGIN_CONTROL_POLICY_WEB_ONLY_EDGEMODE               = 0x00000200,
+    MF_RESOLUTION_ENABLE_STORE_PLUGINS                                  = 0x00000400,
+    MF_RESOLUTION_READ                                                  = 0x00010000,
+    MF_RESOLUTION_WRITE                                                 = 0x00020000,
+};
+
+[
+    object,
+    uuid(089edf13-cf71-4338-8d13-9e569dbdc319),
+]
+interface IMFSimpleAudioVolume : IUnknown
+{
+    HRESULT SetMasterVolume([in] float level);
+    HRESULT GetMasterVolume([out] float *level);
+    HRESULT SetMute([in] BOOL mute);
+    HRESULT GetMute([out] BOOL *mute);
+}
+
+[
+    object,
+    uuid(76b1bbdb-4ec8-4f36-b106-70a9316df593),
+]
+interface IMFAudioStreamVolume : IUnknown
+{
+    HRESULT GetChannelCount([out] UINT32 *count);
+    HRESULT SetChannelVolume(
+        [in] UINT32 index,
+        [in] const float level);
+    HRESULT GetChannelVolume(
+        [in] UINT32 index,
+        [out] float *level);
+    HRESULT SetAllVolumes(
+        [in] UINT32 count,
+        [in, size_is(count)] const float *volumes);
+    HRESULT GetAllVolumes(
+        [in] UINT32 count,
+        [out, size_is(count)] float *volumes);
+}
+
+[
+    object,
+    uuid(a0638c2b-6465-4395-9ae7-a321a9fd2856),
+    local
+]
+interface IMFAudioPolicy : IUnknown
+{
+    HRESULT SetGroupingParam([in] REFGUID param);
+    HRESULT GetGroupingParam([out] GUID *param);
+    HRESULT SetDisplayName([in] LPCWSTR name);
+    HRESULT GetDisplayName([out] LPWSTR *name);
+    HRESULT SetIconPath([in] LPCWSTR path);
+    HRESULT GetIconPath([out] LPWSTR *path);
+}
+
+enum
+{
+    MF_ACTIVATE_CUSTOM_MIXER_ALLOWFAIL = 0x00000001,
+};
+
+enum
+{
+    MF_ACTIVATE_CUSTOM_PRESENTER_ALLOWFAIL = 0x00000001,
+};
 
 cpp_quote("#ifdef __cplusplus")
 cpp_quote("static inline HRESULT MFSetAttributeSize(IMFAttributes *attributes, REFGUID key, UINT32 width, UINT32 height)")
@@ -819,6 +1060,12 @@ cpp_quote("{")
 cpp_quote("    return attributes->SetUINT64(key, ((UINT64)numerator << 32) | denominator);")
 cpp_quote("}")
 cpp_quote("#endif")
+
+cpp_quote("#define MF_AUDIO_RENDERER_ATTRIBUTE_FLAGS_CROSSPROCESS              0x00000001")
+cpp_quote("#define MF_AUDIO_RENDERER_ATTRIBUTE_FLAGS_NOPERSIST                 0x00000002")
+cpp_quote("#define MF_AUDIO_RENDERER_ATTRIBUTE_FLAGS_DONT_ALLOW_FORMAT_CHANGES 0x00000004")
+
+cpp_quote("EXTERN_GUID(MF_ACTIVATE_MFT_LOCKED,        0xc1f6093c, 0x7f65, 0x4fbd, 0x9e, 0x39, 0x5f, 0xae, 0xc3, 0xc4, 0xfb, 0xd7);")
 
 cpp_quote("EXTERN_GUID(MF_SD_LANGUAGE,                0x00af2180, 0xbdc2, 0x423c, 0xab, 0xca, 0xf5, 0x03, 0x59, 0x3b, 0xc1, 0x21);")
 cpp_quote("EXTERN_GUID(MF_SD_MUTUALLY_EXCLUSIVE,      0x023ef79c, 0x388d, 0x487f, 0xac, 0x17, 0x69, 0x6c, 0xd6, 0xe3, 0xc6, 0xf5);")
@@ -902,6 +1149,12 @@ cpp_quote("EXTERN_GUID(MF_TOPOLOGY_STATIC_PLAYBACK_OPTIMIZATIONS, 0xb86cac42, 0x
 
 cpp_quote("EXTERN_GUID(MF_RATE_CONTROL_SERVICE, 0x866fa297, 0xb802, 0x4bf8, 0x9d, 0xc9, 0x5e, 0x3b, 0x6a, 0x9f, 0x53, 0xc9);")
 cpp_quote("EXTERN_GUID(MF_LOCAL_MFT_REGISTRATION_SERVICE, 0xddf5cf9c, 0x4506, 0x45aa, 0xab, 0xf0, 0x6d, 0x5d, 0x94, 0xdd, 0x1b, 0x4a);")
+cpp_quote("EXTERN_C const GUID MF_SCRUBBING_SERVICE;")
+cpp_quote("EXTERN_GUID(MF_TOPONODE_ATTRIBUTE_EDITOR_SERVICE, 0x65656e1a, 0x077f, 0x4472, 0x83, 0xef, 0x31, 0x6f, 0x11, 0xd5, 0x08, 0x7a);")
+cpp_quote("EXTERN_GUID(MR_POLICY_VOLUME_SERVICE, 0x1abaa2ac, 0x9d3b, 0x47c6, 0xab, 0x48, 0xc5, 0x95, 0x06, 0xde, 0x78, 0x4d);")
+cpp_quote("EXTERN_GUID(MR_CAPTURE_POLICY_VOLUME_SERVICE, 0x24030acd, 0x107a, 0x4265, 0x97, 0x5c, 0x41, 0x4e, 0x33, 0xe6, 0x5f, 0x2a);")
+cpp_quote("EXTERN_GUID(MR_STREAM_VOLUME_SERVICE, 0xf8b5fa2f, 0x32ef, 0x46f5, 0xb1, 0x72, 0x13, 0x21, 0x21, 0x2f, 0xb2, 0xc4);")
+cpp_quote("EXTERN_GUID(MR_AUDIO_POLICY_SERVICE, 0x911fd737, 0x6775, 0x4ab0, 0xa6, 0x14, 0x29, 0x78, 0x62, 0xfd, 0xac, 0x88);")
 
 cpp_quote("EXTERN_GUID(MF_SAMPLEGRABBERSINK_SAMPLE_TIME_OFFSET, 0x62e3d776, 0x8100, 0x4e03, 0xa6, 0xe8, 0xbd, 0x38, 0x57, 0xac, 0x9c, 0x47);")
 cpp_quote("EXTERN_GUID(MF_SAMPLEGRABBERSINK_IGNORE_CLOCK, 0x0efda2c0, 0x2b69, 0x4e2e, 0xab, 0x8d, 0x46, 0xdc, 0xbf, 0xf7, 0xd2, 0x5d);")
@@ -914,5 +1167,19 @@ cpp_quote("EXTERN_GUID(MF_SESSION_SERVER_CONTEXT, 0xafe5b291, 0x50fa, 0x46e8, 0x
 cpp_quote("EXTERN_GUID(MF_SESSION_REMOTE_SOURCE_MODE, 0xf4033ef4, 0x9bb3, 0x4378, 0x94, 0x1f, 0x85, 0xa0, 0x85, 0x6b, 0xc2, 0x44);")
 cpp_quote("EXTERN_GUID(MF_SESSION_APPROX_EVENT_OCCURRENCE_TIME, 0x190e852f, 0x6238, 0x42d1, 0xb5, 0xaf, 0x69, 0xea, 0x33, 0x8e, 0xf8, 0x50);")
 cpp_quote("EXTERN_GUID(MF_PMP_SERVER_CONTEXT, 0x2f00c910, 0xd2cf, 0x4278, 0x8b, 0x6a, 0xd0, 0x77, 0xfa, 0xc3, 0xa2, 0x5f);")
+
+cpp_quote("EXTERN_GUID(MF_AUDIO_RENDERER_ATTRIBUTE_FLAGS, 0xede4b5e0, 0xf805, 0x4d6c, 0x99, 0xb3, 0xdb, 0x01, 0xbf, 0x95, 0xdf, 0xab);")
+cpp_quote("EXTERN_GUID(MF_AUDIO_RENDERER_ATTRIBUTE_SESSION_ID, 0xede4b5e3, 0xf805, 0x4d6c, 0x99, 0xb3, 0xdb, 0x01, 0xbf, 0x95, 0xdf, 0xab);")
+cpp_quote("EXTERN_GUID(MF_AUDIO_RENDERER_ATTRIBUTE_ENDPOINT_ID, 0xb10aaec3, 0xef71, 0x4cc3, 0xb8, 0x73, 0x05, 0xa9, 0xa0, 0x8b, 0x9f, 0x8e);")
+cpp_quote("EXTERN_GUID(MF_AUDIO_RENDERER_ATTRIBUTE_ENDPOINT_ROLE, 0x6ba644ff, 0x27c5, 0x4d02, 0x98, 0x87, 0xc2, 0x86, 0x19, 0xfd, 0xb9, 0x1b);")
+cpp_quote("EXTERN_GUID(MF_AUDIO_RENDERER_ATTRIBUTE_STREAM_CATEGORY, 0xa9770471, 0x92ec, 0x4df4, 0x94, 0xfe, 0x81, 0xc3, 0x6f, 0x0c, 0x3a, 0x7a);")
+
+cpp_quote("EXTERN_GUID(MF_ACTIVATE_VIDEO_WINDOW, 0x9a2dbbdd, 0xf57e, 0x4162, 0x82, 0xb9, 0x68, 0x31, 0x37, 0x76, 0x82, 0xd3);")
+cpp_quote("EXTERN_GUID(MF_ACTIVATE_CUSTOM_VIDEO_MIXER_CLSID, 0xba491360, 0xbe50, 0x451e, 0x95, 0xab, 0x6d, 0x4a, 0xcc, 0xc7, 0xda, 0xd8);")
+cpp_quote("EXTERN_GUID(MF_ACTIVATE_CUSTOM_VIDEO_MIXER_ACTIVATE, 0xba491361, 0xbe50, 0x451e, 0x95, 0xab, 0x6d, 0x4a, 0xcc, 0xc7, 0xda, 0xd8);")
+cpp_quote("EXTERN_GUID(MF_ACTIVATE_CUSTOM_VIDEO_MIXER_FLAGS, 0xba491362, 0xbe50, 0x451e, 0x95, 0xab, 0x6d, 0x4a, 0xcc, 0xc7, 0xda, 0xd8);")
+cpp_quote("EXTERN_GUID(MF_ACTIVATE_CUSTOM_VIDEO_PRESENTER_CLSID, 0xba491364, 0xbe50, 0x451e, 0x95, 0xab, 0x6d, 0x4a, 0xcc, 0xc7, 0xda, 0xd8);")
+cpp_quote("EXTERN_GUID(MF_ACTIVATE_CUSTOM_VIDEO_PRESENTER_ACTIVATE, 0xba491365, 0xbe50, 0x451e, 0x95, 0xab, 0x6d, 0x4a, 0xcc, 0xc7, 0xda, 0xd8);")
+cpp_quote("EXTERN_GUID(MF_ACTIVATE_CUSTOM_VIDEO_PRESENTER_FLAGS, 0xba491366, 0xbe50, 0x451e, 0x95, 0xab, 0x6d, 0x4a, 0xcc, 0xc7, 0xda, 0xd8);")
 
 cpp_quote("EXTERN_GUID(CLSID_VideoProcessorMFT, 0x88753b26, 0x5b24, 0x49bd, 0xb2, 0xe7, 0xc, 0x44, 0x5c, 0x78, 0xc9, 0x82);")

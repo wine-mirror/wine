@@ -21,6 +21,22 @@
 #define COBJMACROS
 #include "dshow.h"
 #include "wine/test.h"
+#include "wine/strmbase.h"
+
+#define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
+static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOOL supported)
+{
+    IUnknown *iface = iface_ptr;
+    HRESULT hr, expected_hr;
+    IUnknown *unk;
+
+    expected_hr = supported ? S_OK : E_NOINTERFACE;
+
+    hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x, expected %#x.\n", hr, expected_hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(unk);
+}
 
 static void test_media_types(IPin *pin)
 {
@@ -59,6 +75,105 @@ static void test_media_types(IPin *pin)
     ok(hr != S_OK, "Got hr %#x.\n", hr);
 }
 
+static void test_stream_config(IPin *pin)
+{
+    VIDEOINFOHEADER *video_info, *video_info2;
+    AM_MEDIA_TYPE *format, *format2;
+    VIDEO_STREAM_CONFIG_CAPS vscc;
+    IAMStreamConfig *stream_config;
+    LONG depth, compression;
+    LONG count, size;
+    HRESULT hr;
+
+    hr = IPin_QueryInterface(pin, &IID_IAMStreamConfig, (void **)&stream_config);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAMStreamConfig_GetFormat(stream_config, &format);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(IsEqualGUID(&format->majortype, &MEDIATYPE_Video), "Got wrong majortype: %s.\n",
+            debugstr_guid(&format->majortype));
+
+    hr = IAMStreamConfig_SetFormat(stream_config, format);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    format->majortype = MEDIATYPE_Audio;
+    hr = IAMStreamConfig_SetFormat(stream_config, format);
+    ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+
+    format->majortype = MEDIATYPE_Video;
+    video_info = (VIDEOINFOHEADER *)format->pbFormat;
+    video_info->bmiHeader.biWidth--;
+    video_info->bmiHeader.biHeight--;
+    hr = IAMStreamConfig_SetFormat(stream_config, format);
+    ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+
+    depth = video_info->bmiHeader.biBitCount;
+    compression = video_info->bmiHeader.biCompression;
+    video_info->bmiHeader.biWidth++;
+    video_info->bmiHeader.biHeight++;
+    video_info->bmiHeader.biBitCount = 0;
+    video_info->bmiHeader.biCompression = 0;
+    hr = IAMStreamConfig_SetFormat(stream_config, format);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAMStreamConfig_GetFormat(stream_config, &format2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(IsEqualGUID(&format2->majortype, &MEDIATYPE_Video), "Got wrong majortype: %s.\n",
+            debugstr_guid(&format2->majortype));
+    video_info2 = (VIDEOINFOHEADER *)format2->pbFormat;
+    ok(video_info2->bmiHeader.biBitCount == depth, "Got wrong depth: %d.\n",
+            video_info2->bmiHeader.biBitCount);
+    ok(video_info2->bmiHeader.biCompression == compression,
+            "Got wrong compression: %d.\n", video_info2->bmiHeader.biCompression);
+    FreeMediaType(format2);
+
+    video_info->bmiHeader.biWidth = 10000000;
+    video_info->bmiHeader.biHeight = 10000000;
+    hr = IAMStreamConfig_SetFormat(stream_config, format);
+    ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+    FreeMediaType(format);
+
+    count = 0xdeadbeef;
+    size = 0xdeadbeef;
+    /* Crash on Windows */
+    if (0)
+    {
+        hr = IAMStreamConfig_GetNumberOfCapabilities(stream_config, &count, NULL);
+        ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+        hr = IAMStreamConfig_GetNumberOfCapabilities(stream_config, NULL, &size);
+        ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+        hr = IAMStreamConfig_GetStreamCaps(stream_config, 0, NULL, (BYTE *)&vscc);
+        ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+        hr = IAMStreamConfig_GetStreamCaps(stream_config, 0, &format, NULL);
+        ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    }
+
+    hr = IAMStreamConfig_GetNumberOfCapabilities(stream_config, &count, &size);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(count != 0xdeadbeef, "Got wrong count: %d.\n", count);
+    ok(size == sizeof(VIDEO_STREAM_CONFIG_CAPS), "Got wrong size: %d.\n", size);
+
+    hr = IAMStreamConfig_GetStreamCaps(stream_config, 100000, NULL, NULL);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IAMStreamConfig_GetStreamCaps(stream_config, 100000, &format, (BYTE *)&vscc);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IAMStreamConfig_GetStreamCaps(stream_config, 0, &format, (BYTE *)&vscc);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(IsEqualGUID(&format->majortype, &MEDIATYPE_Video), "Got wrong majortype: %s.\n",
+            debugstr_guid(&MEDIATYPE_Video));
+    ok(IsEqualGUID(&vscc.guid, &FORMAT_VideoInfo)
+            || IsEqualGUID(&vscc.guid, &FORMAT_VideoInfo2), "Got wrong guid: %s.\n",
+            debugstr_guid(&vscc.guid));
+    FreeMediaType(format);
+
+    IAMStreamConfig_Release(stream_config);
+}
+
 static void test_capture(IBaseFilter *filter)
 {
     IEnumPins *enum_pins;
@@ -73,11 +188,67 @@ static void test_capture(IBaseFilter *filter)
         PIN_DIRECTION pin_direction;
         IPin_QueryDirection(pin, &pin_direction);
         if (pin_direction == PINDIR_OUTPUT)
+        {
             test_media_types(pin);
+            test_stream_config(pin);
+
+            todo_wine check_interface(pin, &IID_IAMBufferNegotiation, TRUE);
+            check_interface(pin, &IID_IAMStreamConfig, TRUE);
+            todo_wine check_interface(pin, &IID_IAMStreamControl, TRUE);
+            check_interface(pin, &IID_IKsPropertySet, TRUE);
+            todo_wine check_interface(pin, &IID_IMediaSeeking, TRUE);
+            check_interface(pin, &IID_IPin, TRUE);
+            todo_wine check_interface(pin, &IID_IQualityControl, TRUE);
+            todo_wine check_interface(pin, &IID_ISpecifyPropertyPages, TRUE);
+
+            check_interface(pin, &IID_IAMCrossbar, FALSE);
+            check_interface(pin, &IID_IAMDroppedFrames, FALSE);
+            check_interface(pin, &IID_IAMFilterMiscFlags, FALSE);
+            check_interface(pin, &IID_IAMPushSource, FALSE);
+            check_interface(pin, &IID_IAMTVTuner, FALSE);
+            check_interface(pin, &IID_IAMVideoCompression, FALSE);
+            check_interface(pin, &IID_IAMVideoProcAmp, FALSE);
+            check_interface(pin, &IID_IPersistPropertyBag, FALSE);
+        }
         IPin_Release(pin);
     }
 
     IEnumPins_Release(enum_pins);
+
+    check_interface(filter, &IID_IAMFilterMiscFlags, TRUE);
+    check_interface(filter, &IID_IAMVideoControl, TRUE);
+    check_interface(filter, &IID_IAMVideoProcAmp, TRUE);
+    check_interface(filter, &IID_IBaseFilter, TRUE);
+    todo_wine check_interface(filter, &IID_IKsPropertySet, TRUE);
+    todo_wine check_interface(filter, &IID_IMediaSeeking, TRUE);
+    check_interface(filter, &IID_IPersistPropertyBag, TRUE);
+    todo_wine check_interface(filter, &IID_ISpecifyPropertyPages, TRUE);
+
+    check_interface(filter, &IID_IAMCrossbar, FALSE);
+    check_interface(filter, &IID_IAMPushSource, FALSE);
+    check_interface(filter, &IID_IAMStreamConfig, FALSE);
+    check_interface(filter, &IID_IAMTVTuner, FALSE);
+    check_interface(filter, &IID_IAMVideoCompression, FALSE);
+    check_interface(filter, &IID_IAMVfwCaptureDialogs, FALSE);
+    check_interface(filter, &IID_IPin, FALSE);
+    check_interface(filter, &IID_IReferenceClock, FALSE);
+    check_interface(filter, &IID_IOverlayNotify, FALSE);
+}
+
+static void test_misc_flags(IBaseFilter *filter)
+{
+    IAMFilterMiscFlags *misc_flags;
+    ULONG flags;
+    HRESULT hr;
+
+    hr = IBaseFilter_QueryInterface(filter, &IID_IAMFilterMiscFlags, (void **)&misc_flags);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    flags = IAMFilterMiscFlags_GetMiscFlags(misc_flags);
+    ok(flags == AM_FILTER_MISC_FLAGS_IS_SOURCE
+            || broken(!flags) /* win7 */, "Got wrong flags: %#x.\n", flags);
+
+    IAMFilterMiscFlags_Release(misc_flags);
 }
 
 START_TEST(videocapture)
@@ -117,6 +288,7 @@ START_TEST(videocapture)
         if (hr == S_OK)
         {
             test_capture(filter);
+            test_misc_flags(filter);
             ref = IBaseFilter_Release(filter);
             ok(!ref, "Got outstanding refcount %d.\n", ref);
         }

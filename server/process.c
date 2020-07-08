@@ -156,6 +156,7 @@ struct job
     struct object obj;             /* object header */
     struct list process_list;      /* list of all processes */
     int num_processes;             /* count of running processes */
+    int total_processes;           /* count of processes which have been assigned */
     unsigned int limit_flags;      /* limit flags */
     int terminating;               /* job is terminating */
     int signaled;                  /* job is signaled */
@@ -198,6 +199,7 @@ static struct job *create_job_object( struct object *root, const struct unicode_
             /* initialize it if it didn't already exist */
             list_init( &job->process_list );
             job->num_processes = 0;
+            job->total_processes = 0;
             job->limit_flags = 0;
             job->terminating = 0;
             job->signaled = 0;
@@ -240,6 +242,7 @@ static void add_job_process( struct job *job, struct process *process )
     process->job = (struct job *)grab_object( job );
     list_add_tail( &job->process_list, &process->job_entry );
     job->num_processes++;
+    job->total_processes++;
 
     add_job_completion( job, JOB_OBJECT_MSG_NEW_PROCESS, get_process_id(process) );
 }
@@ -339,21 +342,24 @@ static void kill_all_processes(void);
 
 #define PTID_OFFSET 8  /* offset for first ptid value */
 
+static unsigned int index_from_ptid(unsigned int id) { return id / 4; }
+static unsigned int ptid_from_index(unsigned int index) { return index * 4; }
+
 /* allocate a new process or thread id */
 unsigned int alloc_ptid( void *ptr )
 {
     struct ptid_entry *entry;
-    unsigned int id;
+    unsigned int index;
 
     if (used_ptid_entries < alloc_ptid_entries)
     {
-        id = used_ptid_entries + PTID_OFFSET;
+        index = used_ptid_entries + PTID_OFFSET;
         entry = &ptid_entries[used_ptid_entries++];
     }
     else if (next_free_ptid && num_free_ptids >= 256)
     {
-        id = next_free_ptid;
-        entry = &ptid_entries[id - PTID_OFFSET];
+        index = next_free_ptid;
+        entry = &ptid_entries[index - PTID_OFFSET];
         if (!(next_free_ptid = entry->next)) last_free_ptid = 0;
         num_free_ptids--;
     }
@@ -368,35 +374,37 @@ unsigned int alloc_ptid( void *ptr )
         }
         ptid_entries = entry;
         alloc_ptid_entries = count;
-        id = used_ptid_entries + PTID_OFFSET;
+        index = used_ptid_entries + PTID_OFFSET;
         entry = &ptid_entries[used_ptid_entries++];
     }
 
     entry->ptr = ptr;
-    return id;
+    return ptid_from_index( index );
 }
 
 /* free a process or thread id */
 void free_ptid( unsigned int id )
 {
-    struct ptid_entry *entry = &ptid_entries[id - PTID_OFFSET];
+    unsigned int index = index_from_ptid( id );
+    struct ptid_entry *entry = &ptid_entries[index - PTID_OFFSET];
 
     entry->ptr  = NULL;
     entry->next = 0;
 
     /* append to end of free list so that we don't reuse it too early */
-    if (last_free_ptid) ptid_entries[last_free_ptid - PTID_OFFSET].next = id;
-    else next_free_ptid = id;
-    last_free_ptid = id;
+    if (last_free_ptid) ptid_entries[last_free_ptid - PTID_OFFSET].next = index;
+    else next_free_ptid = index;
+    last_free_ptid = index;
     num_free_ptids++;
 }
 
 /* retrieve the pointer corresponding to a process or thread id */
 void *get_ptid_entry( unsigned int id )
 {
-    if (id < PTID_OFFSET) return NULL;
-    if (id - PTID_OFFSET >= used_ptid_entries) return NULL;
-    return ptid_entries[id - PTID_OFFSET].ptr;
+    unsigned int index = index_from_ptid( id );
+    if (index < PTID_OFFSET) return NULL;
+    if (index - PTID_OFFSET >= used_ptid_entries) return NULL;
+    return ptid_entries[index - PTID_OFFSET].ptr;
 }
 
 /* return the main thread of the process */
@@ -1434,6 +1442,13 @@ DECL_HANDLER(get_process_info)
         reply->cpu              = process->cpu;
         reply->debugger_present = !!process->debugger;
         reply->debug_children   = process->debug_children;
+        if (get_reply_max_size())
+        {
+            const pe_image_info_t *info;
+            struct process_dll *exe = get_process_exe_module( process );
+            if (exe && (info = get_mapping_image_info( process, exe->base )))
+                set_reply_data( info, min( sizeof(*info), get_reply_max_size() ));
+        }
         release_object( process );
     }
 }
@@ -1713,6 +1728,18 @@ DECL_HANDLER(process_in_job)
         release_object( job );
     }
     release_object( process );
+}
+
+/* retrieve information about a job */
+DECL_HANDLER(get_job_info)
+{
+    struct job *job = get_job_obj( current->process, req->handle, JOB_OBJECT_QUERY );
+
+    if (!job) return;
+
+    reply->total_processes = job->total_processes;
+    reply->active_processes = job->num_processes;
+    release_object( job );
 }
 
 /* terminate all processes associated with the job */

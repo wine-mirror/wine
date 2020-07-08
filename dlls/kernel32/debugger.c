@@ -150,13 +150,7 @@ void WINAPI DECLSPEC_HOTPATCH OutputDebugStringA( LPCSTR str )
  */
 BOOL WINAPI DebugBreakProcess(HANDLE process)
 {
-    NTSTATUS status;
-
-    TRACE("(%p)\n", process);
-
-    status = DbgUiIssueRemoteBreakin(process);
-    if (status) SetLastError(RtlNtStatusToDosError(status));
-    return !status;
+    return set_ntstatus( DbgUiIssueRemoteBreakin( process ));
 }
 
 

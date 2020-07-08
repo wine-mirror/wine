@@ -86,6 +86,18 @@ HRESULT WINAPI WMCreateBackupRestorer(IUnknown *callback, IWMLicenseBackup **lic
     return E_NOTIMPL;
 }
 
+HRESULT WINAPI WMIsContentProtected(const WCHAR *filename, BOOL *protected)
+{
+    FIXME("(%s %p): semi-stub\n", wine_dbgstr_w(filename), protected);
+
+    if (!filename || !protected)
+        return E_INVALIDARG;
+
+    *protected = FALSE;
+
+    return S_FALSE;
+}
+
 typedef struct {
     IWMProfileManager2 IWMProfileManager2_iface;
     LONG ref;

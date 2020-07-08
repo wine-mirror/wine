@@ -32,6 +32,7 @@
 #include "winnls.h"
 #include "winsvc.h"
 #include "shlobj.h"
+#include "shlwapi.h"
 #include "objidl.h"
 #include "objbase.h"
 #include "setupapi.h"
@@ -112,6 +113,29 @@ static WCHAR *dup_section_line_field( HINF hinf, const WCHAR *section, const WCH
     return buffer;
 }
 
+static void get_inf_src_path( HINF hinf, WCHAR *path )
+{
+    const WCHAR *inf_path = PARSER_get_inf_filename( hinf );
+    WCHAR pnf_path[MAX_PATH];
+    FILE *pnf;
+
+    wcscpy( pnf_path, inf_path );
+    PathRemoveExtensionW( pnf_path );
+    PathAddExtensionW( pnf_path, L".pnf" );
+    if ((pnf = _wfopen( pnf_path, L"r" )))
+    {
+        if (fgetws( path, MAX_PATH, pnf ) && !wcscmp( path, PNF_HEADER ))
+        {
+            fgetws( path, MAX_PATH, pnf );
+            TRACE("using original source path %s\n", debugstr_w(path));
+            fclose( pnf );
+            return;
+        }
+        fclose( pnf );
+    }
+    wcscpy( path, inf_path );
+}
+
 /***********************************************************************
  *            copy_files_callback
  *
@@ -141,7 +165,7 @@ static BOOL copy_files_callback( HINF hinf, PCWSTR field, void *arg )
         }
         else
         {
-            lstrcpyW( src_root, PARSER_get_inf_filename( hinf ) );
+            get_inf_src_path( hinf, src_root );
             if ((p = wcsrchr( src_root, '\\' ))) *p = 0;
         }
     }

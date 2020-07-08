@@ -2669,10 +2669,18 @@ UINT WINAPI waveOutGetDevCapsW(UINT_PTR uDeviceID, LPWAVEOUTCAPSW lpCaps,
 
         caps = &mapper_caps;
     }else{
-        if(uDeviceID >= g_outmmdevices_count)
-            return MMSYSERR_BADDEVICEID;
+        if(uDeviceID >= g_outmmdevices_count){
+            WINMM_Device *device = WINMM_GetDeviceFromHWAVE((HWAVE)uDeviceID);
 
-        caps = &read_map(g_out_map, uDeviceID)->out_caps;
+            if(!WINMM_ValidateAndLock(device))
+                return MMSYSERR_BADDEVICEID;
+
+            caps = &device->parent->out_caps;
+
+            LeaveCriticalSection(&device->lock);
+        }else{
+            caps = &read_map(g_out_map, uDeviceID)->out_caps;
+        }
     }
 
     memcpy(lpCaps, caps, min(uSize, sizeof(*lpCaps)));
@@ -3336,10 +3344,18 @@ UINT WINAPI waveInGetDevCapsW(UINT_PTR uDeviceID, LPWAVEINCAPSW lpCaps, UINT uSi
 
         caps = &mapper_caps;
     }else{
-        if(uDeviceID >= g_inmmdevices_count)
-            return MMSYSERR_BADDEVICEID;
+        if(uDeviceID >= g_inmmdevices_count){
+            WINMM_Device *device = WINMM_GetDeviceFromHWAVE((HWAVE)uDeviceID);
 
-        caps = &read_map(g_in_map, uDeviceID)->in_caps;
+            if(!WINMM_ValidateAndLock(device))
+                return MMSYSERR_BADDEVICEID;
+
+            caps = &device->parent->in_caps;
+
+            LeaveCriticalSection(&device->lock);
+        }else{
+            caps = &read_map(g_in_map, uDeviceID)->in_caps;
+        }
     }
 
     memcpy(lpCaps, caps, min(uSize, sizeof(*lpCaps)));

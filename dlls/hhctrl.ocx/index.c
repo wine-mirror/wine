@@ -137,9 +137,9 @@ static IndexItem *parse_index_sitemap_object(HHInfo *info, stream_t *stream)
 
         TRACE("%s\n", node.buf);
 
-        if(!_strnicmp(node_name.buf, "param", -1)) {
+        if(!stricmp(node_name.buf, "param")) {
             parse_index_obj_node_param(item, node.buf, info->pCHMInfo->codePage);
-        }else if(!_strnicmp(node_name.buf, "/object", -1)) {
+        }else if(!stricmp(node_name.buf, "/object")) {
             break;
         }else {
             WARN("Unhandled tag! %s\n", node_name.buf);
@@ -173,7 +173,7 @@ static IndexItem *parse_li(HHInfo *info, stream_t *stream)
 
         TRACE("%s\n", node.buf);
 
-        if(!_strnicmp(node_name.buf, "object", -1)) {
+        if(!stricmp(node_name.buf, "object")) {
             const char *ptr;
             int len;
 
@@ -228,7 +228,7 @@ static void parse_hhindex(HHInfo *info, IStream *str, IndexItem *item)
 
         TRACE("%s\n", node.buf);
 
-        if(!_strnicmp(node_name.buf, "li", -1)) {
+        if(!stricmp(node_name.buf, "li")) {
             IndexItem *new_item;
 
             new_item = parse_li(info, &stream);
@@ -246,9 +246,9 @@ static void parse_hhindex(HHInfo *info, IStream *str, IndexItem *item)
                 item = item->next;
                 item->indentLevel = indent_level;
             }
-        }else if(!_strnicmp(node_name.buf, "ul", -1)) {
+        }else if(!stricmp(node_name.buf, "ul")) {
             indent_level++;
-        }else if(!_strnicmp(node_name.buf, "/ul", -1)) {
+        }else if(!stricmp(node_name.buf, "/ul")) {
             indent_level--;
         }else {
             WARN("Unhandled tag! %s\n", node_name.buf);

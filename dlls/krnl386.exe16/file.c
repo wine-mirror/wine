@@ -23,11 +23,9 @@
  *    Right now, they simply call the CopyFile method.
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdarg.h>
 #include <stdio.h>
+#include <string.h>
 #include <assert.h>
 
 #include "winerror.h"
@@ -36,7 +34,6 @@
 #include "winternl.h"
 #include "wine/winbase16.h"
 #include "kernel16_private.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(file);
@@ -461,10 +458,13 @@ LONG WINAPI _hwrite16( HFILE16 hFile, LPCSTR buffer, LONG count )
 UINT WINAPI GetTempDrive( BYTE ignored )
 {
     WCHAR buffer[MAX_PATH];
-    BYTE ret;
+    BYTE ret = 'C';
 
-    if (GetTempPathW( MAX_PATH, buffer )) ret = (BYTE)toupperW(buffer[0]);
-    else ret = 'C';
+    if (GetTempPathW( MAX_PATH, buffer ))
+    {
+        ret = buffer[0];
+        if (ret >= 'a' && ret <= 'z') ret += 'A' - 'a';
+    }
     return MAKELONG( ret | (':' << 8), 1 );
 }
 

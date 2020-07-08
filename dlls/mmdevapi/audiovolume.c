@@ -159,7 +159,8 @@ static HRESULT WINAPI AEV_GetMasterVolumeLevelScalar(IAudioEndpointVolumeEx *ifa
     if (!level)
         return E_POINTER;
     FIXME("stub\n");
-    return E_NOTIMPL;
+    *level = 1.0;
+    return S_OK;
 }
 
 static HRESULT WINAPI AEV_SetChannelVolumeLevel(IAudioEndpointVolumeEx *iface, UINT chan, float leveldb, const GUID *ctx)

@@ -1,4 +1,6 @@
 TESTDLL   = ucrtbase.dll
+IMPORTS   = ucrtbase
+EXTRADEFS = -fno-builtin
 
 C_SRCS = \
 	cpp.c \

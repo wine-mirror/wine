@@ -367,12 +367,9 @@ static HRESULT WINAPI xapocf_CreateInstance(IClassFactory *iface, IUnknown *pOut
     }
 
     hr = IXAPO_QueryInterface(&object->IXAPO_iface, riid, ppobj);
-    if(FAILED(hr)){
-        HeapFree(GetProcessHeap(), 0, object);
-        return hr;
-    }
+    IXAPO_Release(&object->IXAPO_iface);
 
-    return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI xapocf_LockServer(IClassFactory *iface, BOOL dolock)

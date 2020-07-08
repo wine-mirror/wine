@@ -3,7 +3,7 @@
 # This file is generated from Vulkan vk.xml file covered
 # by the following copyright and permission notice:
 #
-# Copyright (c) 2015-2019 The Khronos Group Inc.
+# Copyright (c) 2015-2020 The Khronos Group Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@
 @ stdcall vkBindImageMemory2(ptr long ptr) winevulkan.wine_vkBindImageMemory2
 @ stdcall vkCmdBeginQuery(ptr int64 long long) winevulkan.wine_vkCmdBeginQuery
 @ stdcall vkCmdBeginRenderPass(ptr ptr long) winevulkan.wine_vkCmdBeginRenderPass
+@ stdcall vkCmdBeginRenderPass2(ptr ptr ptr) winevulkan.wine_vkCmdBeginRenderPass2
 @ stdcall vkCmdBindDescriptorSets(ptr long int64 long long ptr long ptr) winevulkan.wine_vkCmdBindDescriptorSets
 @ stdcall vkCmdBindIndexBuffer(ptr int64 int64 long) winevulkan.wine_vkCmdBindIndexBuffer
 @ stdcall vkCmdBindPipeline(ptr long int64) winevulkan.wine_vkCmdBindPipeline
@@ -65,12 +66,16 @@
 @ stdcall vkCmdDraw(ptr long long long long) winevulkan.wine_vkCmdDraw
 @ stdcall vkCmdDrawIndexed(ptr long long long long long) winevulkan.wine_vkCmdDrawIndexed
 @ stdcall vkCmdDrawIndexedIndirect(ptr int64 int64 long long) winevulkan.wine_vkCmdDrawIndexedIndirect
+@ stdcall vkCmdDrawIndexedIndirectCount(ptr int64 int64 int64 int64 long long) winevulkan.wine_vkCmdDrawIndexedIndirectCount
 @ stdcall vkCmdDrawIndirect(ptr int64 int64 long long) winevulkan.wine_vkCmdDrawIndirect
+@ stdcall vkCmdDrawIndirectCount(ptr int64 int64 int64 int64 long long) winevulkan.wine_vkCmdDrawIndirectCount
 @ stdcall vkCmdEndQuery(ptr int64 long) winevulkan.wine_vkCmdEndQuery
 @ stdcall vkCmdEndRenderPass(ptr) winevulkan.wine_vkCmdEndRenderPass
+@ stdcall vkCmdEndRenderPass2(ptr ptr) winevulkan.wine_vkCmdEndRenderPass2
 @ stdcall vkCmdExecuteCommands(ptr long ptr) winevulkan.wine_vkCmdExecuteCommands
 @ stdcall vkCmdFillBuffer(ptr int64 int64 int64 long) winevulkan.wine_vkCmdFillBuffer
 @ stdcall vkCmdNextSubpass(ptr long) winevulkan.wine_vkCmdNextSubpass
+@ stdcall vkCmdNextSubpass2(ptr ptr ptr) winevulkan.wine_vkCmdNextSubpass2
 @ stdcall vkCmdPipelineBarrier(ptr long long long long ptr long ptr long ptr) winevulkan.wine_vkCmdPipelineBarrier
 @ stdcall vkCmdPushConstants(ptr int64 long long long ptr) winevulkan.wine_vkCmdPushConstants
 @ stdcall vkCmdResetEvent(ptr int64 long) winevulkan.wine_vkCmdResetEvent
@@ -111,6 +116,7 @@
 @ stdcall vkCreatePipelineLayout(ptr ptr ptr ptr) winevulkan.wine_vkCreatePipelineLayout
 @ stdcall vkCreateQueryPool(ptr ptr ptr ptr) winevulkan.wine_vkCreateQueryPool
 @ stdcall vkCreateRenderPass(ptr ptr ptr ptr) winevulkan.wine_vkCreateRenderPass
+@ stdcall vkCreateRenderPass2(ptr ptr ptr ptr) winevulkan.wine_vkCreateRenderPass2
 @ stdcall vkCreateSampler(ptr ptr ptr ptr) winevulkan.wine_vkCreateSampler
 @ stdcall vkCreateSamplerYcbcrConversion(ptr ptr ptr ptr) winevulkan.wine_vkCreateSamplerYcbcrConversion
 @ stdcall vkCreateSemaphore(ptr ptr ptr ptr) winevulkan.wine_vkCreateSemaphore
@@ -155,13 +161,16 @@
 @ stdcall vkFreeCommandBuffers(ptr int64 long ptr) winevulkan.wine_vkFreeCommandBuffers
 @ stdcall vkFreeDescriptorSets(ptr int64 long ptr) winevulkan.wine_vkFreeDescriptorSets
 @ stdcall vkFreeMemory(ptr int64 ptr) winevulkan.wine_vkFreeMemory
+@ stdcall vkGetBufferDeviceAddress(ptr ptr) winevulkan.wine_vkGetBufferDeviceAddress
 @ stdcall vkGetBufferMemoryRequirements(ptr int64 ptr) winevulkan.wine_vkGetBufferMemoryRequirements
 @ stdcall vkGetBufferMemoryRequirements2(ptr ptr ptr) winevulkan.wine_vkGetBufferMemoryRequirements2
+@ stdcall vkGetBufferOpaqueCaptureAddress(ptr ptr) winevulkan.wine_vkGetBufferOpaqueCaptureAddress
 @ stdcall vkGetDescriptorSetLayoutSupport(ptr ptr ptr) winevulkan.wine_vkGetDescriptorSetLayoutSupport
 @ stdcall vkGetDeviceGroupPeerMemoryFeatures(ptr long long long ptr) winevulkan.wine_vkGetDeviceGroupPeerMemoryFeatures
 @ stdcall vkGetDeviceGroupPresentCapabilitiesKHR(ptr ptr) winevulkan.wine_vkGetDeviceGroupPresentCapabilitiesKHR
 @ stdcall vkGetDeviceGroupSurfacePresentModesKHR(ptr int64 ptr) winevulkan.wine_vkGetDeviceGroupSurfacePresentModesKHR
 @ stdcall vkGetDeviceMemoryCommitment(ptr int64 ptr) winevulkan.wine_vkGetDeviceMemoryCommitment
+@ stdcall vkGetDeviceMemoryOpaqueCaptureAddress(ptr ptr) winevulkan.wine_vkGetDeviceMemoryOpaqueCaptureAddress
 @ stdcall vkGetDeviceProcAddr(ptr str) winevulkan.wine_vkGetDeviceProcAddr
 @ stdcall vkGetDeviceQueue(ptr long long ptr) winevulkan.wine_vkGetDeviceQueue
 @ stdcall vkGetDeviceQueue2(ptr ptr ptr) winevulkan.wine_vkGetDeviceQueue2
@@ -204,6 +213,7 @@
 @ stdcall vkGetPipelineCacheData(ptr int64 ptr ptr) winevulkan.wine_vkGetPipelineCacheData
 @ stdcall vkGetQueryPoolResults(ptr int64 long long long ptr int64 long) winevulkan.wine_vkGetQueryPoolResults
 @ stdcall vkGetRenderAreaGranularity(ptr int64 ptr) winevulkan.wine_vkGetRenderAreaGranularity
+@ stdcall vkGetSemaphoreCounterValue(ptr int64 ptr) winevulkan.wine_vkGetSemaphoreCounterValue
 @ stdcall vkGetSwapchainImagesKHR(ptr int64 ptr ptr) winevulkan.wine_vkGetSwapchainImagesKHR
 @ stdcall vkInvalidateMappedMemoryRanges(ptr long ptr) winevulkan.wine_vkInvalidateMappedMemoryRanges
 @ stdcall vkMapMemory(ptr int64 int64 int64 long ptr) winevulkan.wine_vkMapMemory
@@ -217,9 +227,12 @@
 @ stdcall vkResetDescriptorPool(ptr int64 long) winevulkan.wine_vkResetDescriptorPool
 @ stdcall vkResetEvent(ptr int64) winevulkan.wine_vkResetEvent
 @ stdcall vkResetFences(ptr long ptr) winevulkan.wine_vkResetFences
+@ stdcall vkResetQueryPool(ptr int64 long long) winevulkan.wine_vkResetQueryPool
 @ stdcall vkSetEvent(ptr int64) winevulkan.wine_vkSetEvent
+@ stdcall vkSignalSemaphore(ptr ptr) winevulkan.wine_vkSignalSemaphore
 @ stdcall vkTrimCommandPool(ptr int64 long) winevulkan.wine_vkTrimCommandPool
 @ stdcall vkUnmapMemory(ptr int64) winevulkan.wine_vkUnmapMemory
 @ stdcall vkUpdateDescriptorSetWithTemplate(ptr int64 int64 ptr) winevulkan.wine_vkUpdateDescriptorSetWithTemplate
 @ stdcall vkUpdateDescriptorSets(ptr long ptr long ptr) winevulkan.wine_vkUpdateDescriptorSets
 @ stdcall vkWaitForFences(ptr long ptr long int64) winevulkan.wine_vkWaitForFences
+@ stdcall vkWaitSemaphores(ptr ptr int64) winevulkan.wine_vkWaitSemaphores

@@ -726,7 +726,8 @@ static void *allocate_large_block( HEAP *heap, DWORD flags, SIZE_T size )
     LPVOID address = NULL;
 
     if (block_size < size) return NULL;  /* overflow */
-    if (virtual_alloc_aligned( &address, 0, &block_size, MEM_COMMIT, get_protection_type( flags ), 5 ))
+    if (NtAllocateVirtualMemory( NtCurrentProcess(), &address, 0, &block_size,
+                                 MEM_COMMIT, get_protection_type( flags )))
     {
         WARN("Could not allocate block for %08lx bytes\n", size );
         return NULL;
@@ -1331,7 +1332,7 @@ static BOOL HEAP_IsRealArena( HEAP *heapPtr,   /* [in] ptr to the heap */
                               *             does not complain    */
 {
     SUBHEAP *subheap;
-    BOOL ret = TRUE;
+    BOOL ret = FALSE;
     const ARENA_LARGE *large_arena;
 
     flags &= HEAP_NO_SERIALIZE;
@@ -1353,16 +1354,11 @@ static BOOL HEAP_IsRealArena( HEAP *heapPtr,   /* [in] ptr to the heap */
                     ERR("Heap %p: block %p is not inside heap\n", heapPtr, block );
                 else if (WARN_ON(heap))
                     WARN("Heap %p: block %p is not inside heap\n", heapPtr, block );
-                ret = FALSE;
             }
-            else
-                ret = validate_large_arena( heapPtr, large_arena, quiet );
-        } else
-            ret = HEAP_ValidateInUseArena( subheap, arena, quiet );
-
-        if (!(flags & HEAP_NO_SERIALIZE))
-            RtlLeaveCriticalSection( &heapPtr->critSection );
-        return ret;
+            else ret = validate_large_arena( heapPtr, large_arena, quiet );
+        }
+        else ret = HEAP_ValidateInUseArena( subheap, arena, quiet );
+        goto done;
     }
 
     LIST_FOR_EACH_ENTRY( subheap, &heapPtr->subheap_list, SUBHEAP, entry )
@@ -1372,27 +1368,23 @@ static BOOL HEAP_IsRealArena( HEAP *heapPtr,   /* [in] ptr to the heap */
         {
             if (*(DWORD *)ptr & ARENA_FLAG_FREE)
             {
-                if (!HEAP_ValidateFreeArena( subheap, (ARENA_FREE *)ptr )) {
-                    ret = FALSE;
-                    break;
-                }
+                if (!HEAP_ValidateFreeArena( subheap, (ARENA_FREE *)ptr )) goto done;
                 ptr += sizeof(ARENA_FREE) + (*(DWORD *)ptr & ARENA_SIZE_MASK);
             }
             else
             {
-                if (!HEAP_ValidateInUseArena( subheap, (ARENA_INUSE *)ptr, NOISY )) {
-                    ret = FALSE;
-                    break;
-                }
+                if (!HEAP_ValidateInUseArena( subheap, (ARENA_INUSE *)ptr, NOISY )) goto done;
                 ptr += sizeof(ARENA_INUSE) + (*(DWORD *)ptr & ARENA_SIZE_MASK);
             }
         }
-        if (!ret) break;
     }
 
     LIST_FOR_EACH_ENTRY( large_arena, &heapPtr->large_list, ARENA_LARGE, entry )
-        if (!(ret = validate_large_arena( heapPtr, large_arena, quiet ))) break;
+        if (!validate_large_arena( heapPtr, large_arena, quiet )) goto done;
 
+    ret = TRUE;
+
+done:
     if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
     return ret;
 }
@@ -1517,14 +1509,9 @@ void heap_set_debug_flags( HANDLE handle )
     if ((heap->flags & HEAP_GROWABLE) && !heap->pending_free &&
         ((flags & HEAP_FREE_CHECKING_ENABLED) || RUNNING_ON_VALGRIND))
     {
-        void *ptr = NULL;
-        SIZE_T size = MAX_FREE_PENDING * sizeof(*heap->pending_free);
-
-        if (!virtual_alloc_aligned( &ptr, 0, &size, MEM_COMMIT, PAGE_READWRITE, 4 ))
-        {
-            heap->pending_free = ptr;
-            heap->pending_pos = 0;
-        }
+        heap->pending_free = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                              MAX_FREE_PENDING * sizeof(*heap->pending_free) );
+        heap->pending_pos = 0;
     }
 }
 
@@ -1631,12 +1618,7 @@ HANDLE WINAPI RtlDestroyHeap( HANDLE heap )
         NtFreeVirtualMemory( NtCurrentProcess(), &addr, &size, MEM_RELEASE );
     }
     subheap_notify_free_all(&heapPtr->subheap);
-    if (heapPtr->pending_free)
-    {
-        size = 0;
-        addr = heapPtr->pending_free;
-        NtFreeVirtualMemory( NtCurrentProcess(), &addr, &size, MEM_RELEASE );
-    }
+    RtlFreeHeap( GetProcessHeap(), 0, heapPtr->pending_free );
     size = 0;
     addr = heapPtr->subheap.base;
     NtFreeVirtualMemory( NtCurrentProcess(), &addr, &size, MEM_RELEASE );

@@ -48,7 +48,7 @@ static ADDRESS_MODE get_selector_type(HANDLE hThread, const CONTEXT* ctx, WORD s
 }
 
 static BOOL i386_build_addr(HANDLE hThread, const CONTEXT* ctx, ADDRESS64* addr,
-                            unsigned seg, unsigned long offset)
+                            unsigned seg, ULONG_PTR offset)
 {
     addr->Mode    = AddrModeFlat;
     addr->Segment = seg;
@@ -508,7 +508,7 @@ done_err:
     return FALSE;
 }
 
-static unsigned i386_map_dwarf_register(unsigned regno, BOOL eh_frame)
+static unsigned i386_map_dwarf_register(unsigned regno, const struct module* module, BOOL eh_frame)
 {
     unsigned    reg;
 
@@ -520,13 +520,11 @@ static unsigned i386_map_dwarf_register(unsigned regno, BOOL eh_frame)
     case  3: reg = CV_REG_EBX; break;
     case  4:
     case  5:
-#ifdef __APPLE__
         /* On OS X, DWARF eh_frame uses a different mapping for the registers.  It's
            apparently the mapping as emitted by GCC, at least at some point in its history. */
-        if (eh_frame)
+        if (eh_frame && module->type == DMT_MACHO)
             reg = (regno == 4) ? CV_REG_EBP : CV_REG_ESP;
         else
-#endif
             reg = (regno == 4) ? CV_REG_ESP : CV_REG_EBP;
         break;
     case  6: reg = CV_REG_ESI; break;

@@ -1,5 +1,5 @@
 /*
- * Unit test suite for ntdll path functions
+ * Unit test suite for ntdll functions
  *
  * Copyright 2003 Eric Pouech
  *
@@ -19,10 +19,6 @@
  */
 
 #include <stdarg.h>
-
-#ifndef _WIN32_WINNT
-#define _WIN32_WINNT 0x500 /* For NTSTATUS */
-#endif
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS

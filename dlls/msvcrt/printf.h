@@ -82,7 +82,7 @@ static inline int FUNC_NAME(pf_fill)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ct
 {
     int i, r = 0, written;
 
-    if(flags->Sign && !strchr("diaeEfFgG", flags->Format))
+    if(flags->Sign && !strchr("diaAeEfFgG", flags->Format))
         flags->Sign = 0;
 
     if(left && flags->Sign) {
@@ -276,13 +276,258 @@ static inline int FUNC_NAME(pf_handle_string)(FUNC_NAME(puts_clbk) pf_puts, void
         return FUNC_NAME(pf_output_format_wstr)(pf_puts, puts_ctx, str, len, flags, locale);
 }
 
+static inline int FUNC_NAME(pf_output_special_fp)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx,
+        double v, FUNC_NAME(pf_flags) *flags, MSVCRT__locale_t locale,
+        BOOL legacy_msvcrt_compat, BOOL three_digit_exp)
+{
+    APICHAR pfx[16], sfx[8], *p;
+    int len = 0, r, frac_len, pfx_len, sfx_len;
+
+    if(!legacy_msvcrt_compat) {
+        const char *str;
+
+        if(isinf(v)) {
+            if(strchr("AEFG", flags->Format)) str = "INF";
+            else str = "inf";
+        }else {
+            if(strchr("AEFG", flags->Format)) str = (flags->Sign == '-' ? "NAN(IND)" : "NAN");
+            else str = (flags->Sign == '-' ? "nan(ind)" : "nan");
+        }
+
+        flags->Precision = -1;
+        flags->PadZero = 0;
+        return FUNC_NAME(pf_output_format_str)(pf_puts, puts_ctx, str, -1, flags, locale);
+    }
+
+    /* workaround a bug in native implementation */
+    if(flags->Format=='g' || flags->Format=='G')
+        flags->Precision--;
+
+    p = pfx;
+    if(flags->PadZero && (flags->Format=='a' || flags->Format=='A')) {
+        if (flags->Sign) *p++ = flags->Sign;
+        *p++ = '0';
+        *p++ = (flags->Format=='a' ? 'x' : 'X');
+        r = pf_puts(puts_ctx, p-pfx, pfx);
+        if(r < 0) return r;
+        len += r;
+
+        flags->FieldLength -= p-pfx;
+    }
+
+    p = pfx;
+    if(!flags->PadZero && (flags->Format=='a' || flags->Format=='A')) {
+        *p++ = '0';
+        *p++ = (flags->Format=='a' ? 'x' : 'X');
+    }
+
+    *p++ = '1';
+    *p++ = *(locale ? locale->locinfo : get_locinfo())->lconv->decimal_point;
+    *p++ = '#';
+    frac_len = 1;
+
+    if(isinf(v)) {
+        *p++ = 'I';
+        *p++ = 'N';
+        *p++ = 'F';
+        frac_len += 3;
+    }else if(flags->Sign == '-') {
+        *p++ = 'I';
+        *p++ = 'N';
+        *p++ = 'D';
+        frac_len += 3;
+    }else {
+        *p++ = 'Q';
+        *p++ = 'N';
+        *p++ = 'A';
+        *p++ = 'N';
+        frac_len += 4;
+    }
+    *p = 0;
+    pfx_len = p - pfx;
+
+    if(len) flags->Sign = 0;
+
+    if(flags->Precision>=0 && flags->Precision<frac_len)
+        p[flags->Precision - frac_len - 1]++;
+
+    p = sfx;
+    if(strchr("aAeE", flags->Format)) {
+        if(flags->Format == 'a') *p++ = 'p';
+        else if(flags->Format == 'A') *p++ = 'P';
+        else if(flags->Format == 'e') *p++ = 'e';
+        else *p++ = 'E';
+
+        *p++ = '+';
+        *p++ = '0';
+
+        if(flags->Format == 'e' || flags->Format == 'E') {
+            *p++ = '0';
+            if(three_digit_exp) *p++ = '0';
+        }
+    }
+    *p = 0;
+
+    if(!flags->Alternate && (flags->Format == 'g' || flags->Format == 'G')) sfx_len = frac_len;
+    else sfx_len = flags->Precision;
+
+    if(sfx_len == -1) {
+        if(strchr("fFeE", flags->Format)) sfx_len = 6;
+        else if(flags->Format == 'a' || flags->Format == 'A') sfx_len = 13;
+    }
+    sfx_len += p - sfx - frac_len;
+
+    if(sfx_len > 0) flags->FieldLength -= sfx_len;
+    if(flags->Precision >= 0) {
+        if(!flags->Precision) flags->Precision--;
+        flags->Precision += pfx_len - frac_len;
+    }
+#ifdef PRINTF_WIDE
+    r = FUNC_NAME(pf_output_format_wstr)(pf_puts, puts_ctx, pfx, -1, flags, locale);
+#else
+    r = FUNC_NAME(pf_output_format_str)(pf_puts, puts_ctx, pfx, -1, flags, locale);
+#endif
+    if(r < 0) return r;
+    len += r;
+
+    flags->FieldLength = sfx_len;
+    flags->PadZero = '0';
+    flags->Precision = -1;
+    flags->Sign = 0;
+#ifdef PRINTF_WIDE
+    r = FUNC_NAME(pf_output_format_wstr)(pf_puts, puts_ctx, sfx, -1, flags, locale);
+#else
+    r = FUNC_NAME(pf_output_format_str)(pf_puts, puts_ctx, sfx, -1, flags, locale);
+#endif
+    if(r < 0) return r;
+    len += r;
+
+    return len;
+}
+
+static inline int FUNC_NAME(pf_output_hex_fp)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx,
+        double v, FUNC_NAME(pf_flags) *flags, MSVCRT__locale_t locale)
+{
+#define EXP_BITS 11
+#define MANT_BITS 53
+    const APICHAR digits[2][16] = {
+        { '0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f' },
+        { '0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F' }
+    };
+
+    APICHAR pfx[16], sfx[8], *p;
+    ULONGLONG mant;
+    int len = 0, sfx_len = 0, r, exp;
+
+    mant = (*(ULONGLONG*)&v) << 1;
+    exp = (mant >> MANT_BITS);
+    exp -= (1 << (EXP_BITS - 1)) - 1;
+    mant = (mant << EXP_BITS) >> (EXP_BITS+1);
+
+    p = pfx;
+    if(flags->PadZero) {
+        if(flags->Sign) *p++ = flags->Sign;
+        *p++ = '0';
+        *p++ = (flags->Format=='a' ? 'x' : 'X');
+        r = pf_puts(puts_ctx, p-pfx, pfx);
+        if(r < 0) return r;
+        len += r;
+
+        flags->FieldLength -= p-pfx;
+        flags->Sign = 0;
+        p = pfx;
+    }else {
+        *p++ = '0';
+        *p++ = (flags->Format=='a' ? 'x' : 'X');
+    }
+    if(exp == -(1 << (EXP_BITS-1))+1) {
+        if(!mant) exp = 0;
+        else exp++;
+        *p++ = '0';
+    }else {
+        *p++ = '1';
+    }
+    *p++ = *(locale ? locale->locinfo : get_locinfo())->lconv->decimal_point;
+    for(r=MANT_BITS/4-1; r>=0; r--) {
+        p[r] = digits[flags->Format == 'A'][mant & 15];
+        mant >>= 4;
+    }
+    if(!flags->Precision) {
+        if(p[0] > '8') p[-2]++;
+        if(!flags->Alternate) p--;
+    }else if(flags->Precision>0 && flags->Precision<MANT_BITS/4) {
+        BOOL round_up = (p[flags->Precision] > '8');
+        for(r=flags->Precision-1; r>=0 && round_up; r--) {
+            round_up = FALSE;
+            if(p[r]=='f' || p[r]=='F') {
+                p[r] = '0';
+                round_up = TRUE;
+            }else if(p[r] == '9') {
+                p[r] = (flags->Format == 'a' ? 'a' : 'A');
+            }else {
+                p[r]++;
+            }
+        }
+        if(round_up) p[-2]++;
+        p += flags->Precision;
+    }else {
+        p += MANT_BITS/4;
+        if(flags->Precision > MANT_BITS/4) sfx_len += flags->Precision - MANT_BITS/4;
+    }
+    *p = 0;
+
+    p = sfx;
+    *p++ = (flags->Format == 'a' ? 'p' : 'P');
+    if(exp < 0) {
+        *p++ = '-';
+        exp = -exp;
+    }else {
+        *p++ = '+';
+    }
+    for(r=3; r>=0; r--) {
+        p[r] = exp%10 + '0';
+        exp /= 10;
+        if(!exp) break;
+    }
+    for(exp=0; exp<4-r; exp++)
+        p[exp] = p[exp+r];
+    p += exp;
+    *p = 0;
+    sfx_len += p - sfx;
+
+    flags->FieldLength -= sfx_len;
+    flags->Precision = -1;
+#ifdef PRINTF_WIDE
+    r = FUNC_NAME(pf_output_format_wstr)(pf_puts, puts_ctx, pfx, -1, flags, locale);
+#else
+    r = FUNC_NAME(pf_output_format_str)(pf_puts, puts_ctx, pfx, -1, flags, locale);
+#endif
+    if(r < 0) return r;
+    len += r;
+
+    flags->FieldLength = sfx_len;
+    flags->PadZero = '0';
+    flags->Sign = 0;
+#ifdef PRINTF_WIDE
+    r = FUNC_NAME(pf_output_format_wstr)(pf_puts, puts_ctx, sfx, -1, flags, locale);
+#else
+    r = FUNC_NAME(pf_output_format_str)(pf_puts, puts_ctx, sfx, -1, flags, locale);
+#endif
+    if(r < 0) return r;
+    len += r;
+
+    return len;
+}
+
 static inline void FUNC_NAME(pf_rebuild_format_string)(char *p, FUNC_NAME(pf_flags) *flags)
 {
     *p++ = '%';
     if(flags->Alternate)
         *p++ = flags->Alternate;
     if(flags->Precision >= 0) {
-        p += sprintf(p, ".%d", flags->Precision);
+        *p++ = '.';
+        MSVCRT__itoa(flags->Precision, p, 10);
+        p += strlen(p);
     }
     *p++ = flags->Format;
     *p++ = 0;
@@ -604,128 +849,65 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
 #endif
             if(tmp != buf)
                 HeapFree(GetProcessHeap(), 0, tmp);
-        } else if(flags.Format && strchr("aeEfFgG", flags.Format)) {
+        } else if(flags.Format && strchr("aAeEfFgG", flags.Format)) {
             char float_fmt[20], buf_a[32], *tmp = buf_a, *decimal_point;
             int len = flags.Precision + 10;
             double val = pf_args(args_ctx, pos, VT_R8, valist).get_double;
             int r;
-            BOOL inf = FALSE, nan = FALSE, ind = FALSE;
 
-            if(isinf(val))
-                inf = TRUE;
-            else if(isnan(val)) {
-                if(!signbit(val))
-                    nan = TRUE;
-                else
-                    ind = TRUE;
-            }
-
-            if(inf || nan || ind) {
-                if(ind || val<0)
-                    flags.Sign = '-';
-
-                if(flags.Format=='g' || flags.Format=='G')
-                    val = (nan ? 1.12345 : 1.1234); /* fraction will be overwritten with #INF, #IND or #QNAN string */
-                else
-                    val = 1;
-
-                if(flags.Format=='a') {
-                    if(flags.Precision==-1)
-                        flags.Precision = 6; /* strlen("#INF00") */
-                }
-            }
-
-            if(flags.Format=='f' || flags.Format=='F') {
-                if(val>-10.0 && val<10.0)
-                    i = 1;
-                else
-                    i = 1 + log10(val<0 ? -val : val);
-                /* Default precision is 6, additional space for sign, separator and nullbyte is required */
-                i += (flags.Precision==-1 ? 6 : flags.Precision) + 3;
-
-                if(i > len)
-                    len = i;
-            }
-
-            if(len > sizeof(buf_a))
-                tmp = HeapAlloc(GetProcessHeap(), 0, len);
-            if(!tmp)
-                return -1;
-
-            FUNC_NAME(pf_rebuild_format_string)(float_fmt, &flags);
-            if(val < 0) {
+            if(signbit(val)) {
                 flags.Sign = '-';
                 val = -val;
             }
 
-            if((inf || nan || ind) && !legacy_msvcrt_compat) {
-                static const char inf_str[] = "inf";
-                static const char ind_str[] = "nan(ind)";
-                static const char nan_str[] = "nan";
-                if(inf)
-                    sprintf(tmp, inf_str);
-                else if(ind)
-                    sprintf(tmp, ind_str);
-                else
-                    sprintf(tmp, nan_str);
-                if (strchr("EFG", flags.Format))
-                    for(i=0; tmp[i]; i++)
-                        tmp[i] = MSVCRT__toupper_l(tmp[i], NULL);
-            } else {
+            if(isinf(val) || isnan(val))
+                i = FUNC_NAME(pf_output_special_fp)(pf_puts, puts_ctx, val, &flags,
+                        locale, legacy_msvcrt_compat, three_digit_exp);
+            else if(flags.Format=='a' || flags.Format=='A')
+                i = FUNC_NAME(pf_output_hex_fp)(pf_puts, puts_ctx, val, &flags, locale);
+            else {
+                if(flags.Format=='f' || flags.Format=='F') {
+                    if(val<10.0)
+                        i = 1;
+                    else
+                        i = 1 + log10(val);
+                    /* Default precision is 6, additional space for sign, separator and nullbyte is required */
+                    i += (flags.Precision==-1 ? 6 : flags.Precision) + 3;
+
+                    if(i > len)
+                        len = i;
+                }
+
+                if(len > sizeof(buf_a))
+                    tmp = HeapAlloc(GetProcessHeap(), 0, len);
+                if(!tmp)
+                    return -1;
+
+                FUNC_NAME(pf_rebuild_format_string)(float_fmt, &flags);
+
                 sprintf(tmp, float_fmt, val);
                 if(MSVCRT__toupper_l(flags.Format, NULL)=='E' || MSVCRT__toupper_l(flags.Format, NULL)=='G')
                     FUNC_NAME(pf_fixup_exponent)(tmp, three_digit_exp);
+
+                decimal_point = strchr(tmp, '.');
+                if(decimal_point)
+                    *decimal_point = *(locale ? locale->locinfo : get_locinfo())->lconv->decimal_point;
+
+                len = strlen(tmp);
+                i = FUNC_NAME(pf_fill)(pf_puts, puts_ctx, len, &flags, TRUE);
+                if(i < 0)
+                    return i;
+                r = FUNC_NAME(pf_output_str)(pf_puts, puts_ctx, tmp, len, locale);
+                if(r < 0)
+                    return r;
+                i += r;
+                if(tmp != buf_a)
+                    HeapFree(GetProcessHeap(), 0, tmp);
+                r = FUNC_NAME(pf_fill)(pf_puts, puts_ctx, len, &flags, FALSE);
+                if(r < 0)
+                    return r;
+                i += r;
             }
-
-            decimal_point = strchr(tmp, '.');
-            if(decimal_point) {
-                *decimal_point = *(locale ? locale->locinfo : get_locinfo())->lconv->decimal_point;
-
-                if(inf || nan || ind) {
-                    static const char inf_str[] = "#INF";
-                    static const char ind_str[] = "#IND";
-                    static const char nan_str[] = "#QNAN";
-
-                    const char *str;
-                    int size;
-
-                    if(inf) {
-                        str = inf_str;
-                        size = sizeof(inf_str);
-                    }else if(ind) {
-                        str = ind_str;
-                        size = sizeof(ind_str);
-                    }else {
-                        str = nan_str;
-                        size = sizeof(nan_str);
-                    }
-
-                    for(i=1; i<size; i++) {
-                        if(decimal_point[i]<'0' || decimal_point[i]>'9')
-                            break;
-
-                        decimal_point[i] = str[i-1];
-                    }
-
-                    if(i!=size && i!=1)
-                        decimal_point[i-1]++;
-                }
-            }
-
-            len = strlen(tmp);
-            i = FUNC_NAME(pf_fill)(pf_puts, puts_ctx, len, &flags, TRUE);
-            if(i < 0)
-                return i;
-            r = FUNC_NAME(pf_output_str)(pf_puts, puts_ctx, tmp, len, locale);
-            if(r < 0)
-                return r;
-            i += r;
-            if(tmp != buf_a)
-                HeapFree(GetProcessHeap(), 0, tmp);
-            r = FUNC_NAME(pf_fill)(pf_puts, puts_ctx, len, &flags, FALSE);
-            if(r < 0)
-                return r;
-            i += r;
         } else {
             if(invoke_invalid_param_handler) {
                 MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);

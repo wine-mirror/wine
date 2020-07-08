@@ -18,18 +18,12 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <assert.h>
 #include <fcntl.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
 #include <ctype.h>
 
 #include "windef.h"
@@ -95,7 +89,7 @@ static inline void patch_code_segment( NE_MODULE *pModule )
             call[i].glue = __wine_call_from_16_regs;
         else
             call[i].glue = __wine_call_from_16;
-        call[i].flatcs = wine_get_cs();
+        call[i].flatcs = get_cs();
     }
 
     if (TRACE_ON(relay))  /* patch relay functions to all point to relay_call_from_16 */
@@ -398,7 +392,6 @@ FARPROC16 NE_GetEntryPointEx( HMODULE16 hModule, WORD ordinal, BOOL16 snoop )
     ET_BUNDLE *bundle;
 
     if (!(pModule = NE_GetPtr( hModule ))) return 0;
-    assert( !(pModule->ne_flags & NE_FFLAGS_WIN32) );
 
     bundle = (ET_BUNDLE *)((BYTE *)pModule + pModule->ne_enttab);
     while ((ordinal < bundle->first + 1) || (ordinal > bundle->last))
@@ -452,7 +445,6 @@ BOOL16 NE_SetEntryPoint( HMODULE16 hModule, WORD ordinal, WORD offset )
     int i;
 
     if (!(pModule = NE_GetPtr( hModule ))) return FALSE;
-    assert( !(pModule->ne_flags & NE_FFLAGS_WIN32) );
 
     bundle = (ET_BUNDLE *)((BYTE *)pModule + pModule->ne_enttab);
     while ((ordinal < bundle->first + 1) || (ordinal > bundle->last))
@@ -693,7 +685,6 @@ static HMODULE16 build_module( const void *mapping, SIZE_T mapping_size, LPCSTR 
     ofs->fFixedDisk = 1;
     strcpy( ofs->szPathName, path );
     pData += ofs->cBytes + 1;
-    assert( (BYTE *)pModule + size <= pData );
 
     /* Get the non-resident names table */
 
@@ -921,7 +912,7 @@ static HMODULE16 NE_DoLoadBuiltinModule( const IMAGE_DOS_HEADER *mz_header, cons
     }
 
     patch_code_segment( pModule );
-    *(void **)mz_header->e_res2 = &wine_ldt_copy;
+    *(const void **)mz_header->e_res2 = ldt_copy->base;
 
     return hInstance;
 }
@@ -980,7 +971,7 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
                 /* if module has a 32-bit owner, match the load order of the owner */
                 if ((main_module = (void *)GetProcAddress( mod32, "__wine_spec_main_module" )))
                 {
-                    LDR_MODULE *ldr;
+                    LDR_DATA_TABLE_ENTRY *ldr;
                     HMODULE main_owner = LoadLibraryA( main_module );
 
                     if (!main_owner)
@@ -1471,7 +1462,7 @@ HMODULE16 WINAPI GetModuleHandle16( LPCSTR name )
 	    loadedfn--;
 	}
 	/* case insensitive compare ... */
-	if (!_strnicmp(loadedfn, s, -1))
+	if (!stricmp(loadedfn, s))
 	    return hModule;
     }
     return 0;
@@ -1791,7 +1782,7 @@ static HMODULE16 NE_GetModuleByFilename( LPCSTR name )
             loadedfn--;
         }
         /* case insensitive compare ... */
-        if (!_strnicmp(loadedfn, s, -1))
+        if (!stricmp(loadedfn, s))
             return hModule;
     }
     /* If basename (without ext) matches the module name of a module:
@@ -1938,7 +1929,6 @@ static HMODULE16 create_dummy_module( HMODULE module32 )
     /* Module name */
     pStr = (char *)pSegment;
     pModule->ne_restab = pStr - (char *)pModule;
-    assert(len<256);
     *pStr = len;
     lstrcpynA( pStr+1, basename, len+1 );
     pStr += len+2;

@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2015 Austin English
+ * Copyright (C) 2020 Vijay Kiran Kamuju
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -17,6 +18,8 @@
  */
 #ifndef __MS_ASN1_H__
 #define __MS_ASN1_H__
+
+#include <pshpack8.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -43,6 +46,11 @@ typedef ASN1uint16_t ASN1choice_t;
 typedef ASN1uint32_t ASN1magic_t;
 typedef ASN1ztcharstring_t ASN1objectdescriptor_t;
 
+#define ASN1_MAKE_VERSION(major,minor) (((major) << 16) | (minor))
+#define ASN1_THIS_VERSION ASN1_MAKE_VERSION(1,0)
+
+#define ASN1DECFREE_NON_PDU_ID ((ASN1uint32_t)-1)
+
 typedef void (WINAPI *ASN1FreeFun_t)(void *data);
 typedef void (WINAPI *ASN1GenericFun_t)(void);
 
@@ -63,6 +71,30 @@ typedef struct tagASN1BerFunArr_t {
   const ASN1BerEncFun_t *apfnEncoder;
   const ASN1BerDecFun_t *apfnDecoder;
 } ASN1BerFunArr_t;
+
+enum
+{
+    ASN1FLAGS_NONE     = 0x00000000,
+    ASN1FLAGS_NOASSERT = 0x00001000
+};
+
+enum
+{
+    ASN1ENCODE_APPEND         = 0x00000001,
+    ASN1ENCODE_REUSEBUFFER    = 0x00000004,
+    ASN1ENCODE_SETBUFFER      = 0x00000008,
+    ASN1ENCODE_ALLOCATEBUFFER = 0x00000010,
+    ASN1ENCODE_NOASSERT       = ASN1FLAGS_NOASSERT
+};
+
+enum
+{
+    ASN1DECODE_APPENDED       = 0x00000001,
+    ASN1DECODE_REWINDBUFFER   = 0x00000004,
+    ASN1DECODE_SETBUFFER      = 0x00000008,
+    ASN1DECODE_AUTOFREEBUFFER = 0x00000010,
+    ASN1DECODE_NOASSERT       = ASN1FLAGS_NOASSERT
+};
 
 typedef struct tagASN1bitstring_t
 {
@@ -128,6 +160,16 @@ typedef enum tagASN1error_e
   ASN1_WRN_NOEOD = 1002,
 } ASN1error_e;
 
+enum
+{
+  ASN1_CHOICE_BASE = 1,
+  ASN1_CHOICE_INVALID = -1,
+  ASN1_CHOICE_EXTENSION = 0
+};
+
+#define ASN1_SUCCEEDED(ret) (((int)(ret)) >= 0)
+#define ASN1_FAILED(ret)    (((int)(ret)) < 0)
+
 typedef struct tagASN1generalizedtime_t
 {
   ASN1uint16_t year;
@@ -147,18 +189,51 @@ typedef struct tagASN1intx_t
   ASN1octet_t *value;
 } ASN1intx_t;
 
-typedef struct tagASN1module_t {
+typedef struct tagASN1module_t
+{
   ASN1magic_t nModuleName;
   ASN1encodingrule_e eRule;
   ASN1uint32_t dwFlags;
   ASN1uint32_t cPDUs;
   const ASN1FreeFun_t *apfnFreeMemory;
   const ASN1uint32_t *acbStructSize;
-  union {
-    ASN1PerFunArr_t PER;
-    ASN1BerFunArr_t BER;
+  union
+  {
+      ASN1PerFunArr_t PER;
+      ASN1BerFunArr_t BER;
   };
 } *ASN1module_t;
+
+struct ASN1encoding_s
+{
+  ASN1magic_t magic;
+  ASN1uint32_t version;
+  ASN1module_t module;
+  ASN1octet_t *buf;
+  ASN1uint32_t size;
+  ASN1uint32_t len;
+  ASN1error_e err;
+  ASN1uint32_t bit;
+  ASN1octet_t *pos;
+  ASN1uint32_t cbExtraHeader;
+  ASN1encodingrule_e eRule;
+  ASN1uint32_t dwFlags;
+};
+
+struct ASN1decoding_s
+{
+  ASN1magic_t magic;
+  ASN1uint32_t version;
+  ASN1module_t module;
+  ASN1octet_t *buf;
+  ASN1uint32_t size;
+  ASN1uint32_t len;
+  ASN1error_e err;
+  ASN1uint32_t bit;
+  ASN1octet_t *pos;
+  ASN1encodingrule_e eRule;
+  ASN1uint32_t dwFlags;
+};
 
 typedef struct ASN1objectidentifier_s
 {
@@ -236,6 +311,7 @@ void         WINAPI ASN1_CloseEncoder(ASN1encoding_t);
 void         WINAPI ASN1_CloseEncoder2(ASN1encoding_t);
 void         WINAPI ASN1_CloseModule(ASN1module_t);
 ASN1error_e  WINAPI ASN1_CreateDecoder(ASN1module_t, ASN1decoding_t*,ASN1octet_t*, ASN1uint32_t, ASN1decoding_t);
+ASN1error_e  WINAPI ASN1_CreateDecoderEx(ASN1module_t, ASN1decoding_t*,ASN1octet_t*, ASN1uint32_t, ASN1decoding_t, ASN1uint32_t);
 ASN1error_e  WINAPI ASN1_CreateEncoder(ASN1module_t, ASN1encoding_t*, ASN1octet_t*, ASN1uint32_t, ASN1encoding_t);
 ASN1module_t WINAPI ASN1_CreateModule(ASN1uint32_t,ASN1encodingrule_e,ASN1uint32_t,ASN1uint32_t,const ASN1GenericFun_t [],const ASN1GenericFun_t [],const ASN1FreeFun_t [],const ASN1uint32_t [],ASN1magic_t);
 ASN1error_e  WINAPI ASN1_Decode(ASN1decoding_t, void** , ASN1uint32_t, ASN1uint32_t, ASN1octet_t*, ASN1uint32_t);
@@ -286,5 +362,7 @@ void         WINAPI ASN1ztcharstring_free(ASN1charstring_t*);
 #ifdef __cplusplus
 }
 #endif
+
+#include <poppack.h>
 
 #endif /* __MS_ASN1_H__ */

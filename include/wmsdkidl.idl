@@ -1896,6 +1896,7 @@ cpp_quote("HRESULT WINAPI WMCreateSyncReader(IUnknown*,DWORD,IWMSyncReader**);")
 cpp_quote("HRESULT WINAPI WMCreateEditor(IWMMetadataEditor**);")
 cpp_quote("HRESULT WINAPI WMCreateBackupRestorer(IUnknown*,IWMLicenseBackup**);")
 cpp_quote("HRESULT WINAPI WMCreateProfileManager(IWMProfileManager**);")
+cpp_quote("HRESULT WINAPI WMIsContentProtected(const WCHAR*, BOOL*);")
 
 
 cpp_quote("EXTERN_GUID(WMMEDIASUBTYPE_Base,   0x00000000,0x0000,0x0010,0x80,0x00,0x00,0xaa,0x00,0x38,0x9b,0x71);")

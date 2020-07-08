@@ -264,6 +264,55 @@ static void run_find_unicode_(const BYTE *input, int input_len, const BYTE *out_
         run_find_stdin_(wstr_quoted_test, input, input_len, out_expected_mangled, out_expected_mangled_len, exitcode_expected, file, line);
 }
 
+static void run_find_file_multi(void)
+{
+    char path_temp_file1[MAX_PATH];
+    char path_temp_file2[MAX_PATH];
+    char path_temp_file3[MAX_PATH];
+    char path_temp_dir[MAX_PATH];
+    HANDLE handle_file;
+    WCHAR commandline_new[MAX_PATH];
+    char out_expected[500];
+    const char* input = "ab\nbd";
+
+    GetTempPathA(ARRAY_SIZE(path_temp_dir), path_temp_dir);
+    GetTempFileNameA(path_temp_dir, "", 0, path_temp_file1);
+    GetTempFileNameA(path_temp_dir, "", 0, path_temp_file2);
+    GetTempFileNameA(path_temp_dir, "", 0, path_temp_file3);
+    handle_file = CreateFileA(path_temp_file1, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    write_to_handle(handle_file, (BYTE*)input, strlen(input));
+    CloseHandle(handle_file);
+    handle_file = CreateFileA(path_temp_file2, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    write_to_handle(handle_file, (BYTE*)input, strlen(input));
+    CloseHandle(handle_file);
+
+    wsprintfW(commandline_new, L"\"b\" C:\\doesnotexist1 %hs C:\\doesnotexist1 %hs C:\\doesnotexist1 %hs",  path_temp_file1, path_temp_file2, path_temp_file3);
+
+    /* Keep file open during the test */
+    handle_file = CreateFileA(path_temp_file3, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+
+    CharUpperA(path_temp_file1);
+    CharUpperA(path_temp_file2);
+    CharUpperA(path_temp_file3);
+    wsprintfA(out_expected,
+        "File not found - C:\\DOESNOTEXIST1\r\n"
+        "\r\n---------- %s\r\n"
+        "ab\r\nbd\r\n"
+        "File not found - C:\\DOESNOTEXIST1\r\n"
+        "\r\n---------- %s\r\n"
+        "ab\r\nbd\r\n"
+        "File not found - C:\\DOESNOTEXIST1\r\n"
+        "File not found - %s\r\n",
+        path_temp_file1, path_temp_file2, path_temp_file3);
+
+    run_find_stdin_(commandline_new, (BYTE*)"", 0, (BYTE*)out_expected, strlen(out_expected), 0, __FILE__, __LINE__);
+
+    CloseHandle(handle_file);
+    DeleteFileA(path_temp_file1);
+    DeleteFileA(path_temp_file2);
+    DeleteFileA(path_temp_file3);
+}
+
 static void test_errors(void)
 {
     run_find_stdin_str("",       "", "FIND: Parameter format not correct\r\n", 2);
@@ -272,7 +321,6 @@ static void test_errors(void)
     todo_wine /* Quotes are not properly passed into wine yet */
     run_find_stdin_str("\"test", "", "FIND: Parameter format not correct\r\n", 2);
     run_find_stdin_str("\"test\" /XYZ", "", "FIND: Invalid switch\r\n", 2);
-    todo_wine
     run_find_stdin_str("\"test\" C:\\doesnotexist.dat", "", "File not found - C:\\DOESNOTEXIST.DAT\r\n", 1);
 }
 
@@ -348,19 +396,12 @@ static void test_unicode_support_stdin(void)
 
 static void test_file_search(void)
 {
-    todo_wine
     run_find_file_str("\"\"", "test", "", 1);
-    todo_wine
     run_find_file_str("\"test\"", "", "", 1);
-    todo_wine
     run_find_file_str("\"test\"", "test",  "test\r\n", 0);
-    todo_wine
     run_find_file_str("\"test\"", "test2", "test2\r\n", 0);
-    todo_wine
     run_find_file_str("\"test\"", "test\r2", "test\r2\r\n", 0);
-    todo_wine
     run_find_file_str("\"test2\"", "test",  "", 1);
-    todo_wine
     run_find_file_str("\"test\"", "test\nother\ntest2\ntest3", "test\r\ntest2\r\ntest3\r\n", 0);
 }
 
@@ -369,31 +410,21 @@ static void test_unicode_support_file(void)
     /* Test unicode support on files */
 
     /* Test UTF-8 BOM */
-    todo_wine
     run_find_file_unicode(str_en_utf8_nobom, str_en_utf8_nobom, 0);
-    todo_wine
     run_find_file_unicode(str_en_utf8_bom, str_en_utf8_bom,  0);
 
     /* Test russian characters */
-    todo_wine
     run_find_file_unicode(str_rus_utf8_bom, str_rus_utf8_bom, 0);
-    todo_wine
     run_find_file_unicode(str_rus_utf8_nobom, str_rus_utf8_nobom, 0);
 
     /* Test japanese characters */
-    todo_wine
     run_find_file_unicode(str_jap_utf8_nobom, str_jap_utf8_nobom, 0);
-    todo_wine
     run_find_file_unicode(str_jap_utf8_bom, str_jap_utf8_bom, 0);
-    todo_wine
     run_find_file_unicode(str_jap_shiftjis, str_jap_shiftjis, 0);
 
     /* Test unsupported encodings */
-    todo_wine
     run_find_file_unicode(str_jap_utf16le_nobom, str_empty, 1);
-    todo_wine
     run_find_file_unicode(str_jap_utf16be_bom,   str_empty, 1);
-    todo_wine
     run_find_file_unicode(str_jap_utf16be_nobom, str_empty, 1);
 
     /* Test utf16le */
@@ -411,6 +442,7 @@ START_TEST(find)
     else
     {
         test_errors();
+        run_find_file_multi();
     }
     test_singleline_without_switches();
     test_multiline();

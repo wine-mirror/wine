@@ -21,4 +21,6 @@ C_SRCS = \
 	sync.c \
 	thread.c \
 	version.c \
-	wctype.c
+	volume.c
+
+RC_SRCS = kernelbase.rc

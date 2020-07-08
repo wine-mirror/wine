@@ -154,6 +154,8 @@ function test_style_props() {
     test_exposed("setProperty", v >= 9);
     test_exposed("removeProperty", v >= 9);
     test_exposed("background-clip", v >= 9);
+    test_exposed("msTransform", v >= 9);
+    test_exposed("transform", v >= 10);
 
     style = document.body.currentStyle;
 
@@ -167,6 +169,7 @@ function test_style_props() {
     test_exposed("setProperty", v >= 9);
     test_exposed("removeProperty", v >= 9);
     test_exposed("background-clip", v >= 9);
+    test_exposed("transform", v >= 10);
 
     if(window.getComputedStyle) {
         style = window.getComputedStyle(document.body);
@@ -181,6 +184,7 @@ function test_style_props() {
         test_exposed("setProperty", v >= 9);
         test_exposed("removeProperty", v >= 9);
         test_exposed("background-clip", v >= 9);
+        test_exposed("transform", v >= 10);
     }
 
     next_test();

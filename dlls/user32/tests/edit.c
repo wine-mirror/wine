@@ -1743,6 +1743,75 @@ static BOOL is_font_installed(const char*name)
     return ret;
 }
 
+static WNDPROC orig_class_proc;
+
+static LRESULT CALLBACK test_class_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    RECT rect;
+    LRESULT result, r;
+
+    switch (message)
+    {
+        case WM_NCCREATE:
+            result = CallWindowProcA(orig_class_proc, hwnd, message, wParam, lParam);
+
+            memset(&rect, 0, sizeof(rect));
+            SendMessageA(hwnd, EM_GETRECT, 0, (LPARAM)&rect);
+            ok(!rect.right && !rect.bottom, "Invalid size after NCCREATE: %d x %d\n", rect.right, rect.bottom);
+
+            /* test that messages between WM_NCCREATE and WM_CREATE
+               don't crash or cause unexpected behavior */
+            r = SendMessageA(hwnd, EM_SETSEL, 0, 0);
+            ok(r == 1, "Returned %ld, expected 1.\n", r);
+            r = SendMessageA(hwnd, WM_SIZE, 0, 0x00100010);
+            todo_wine ok(r == 1, "Returned %ld, expected 1.\n", r);
+            r = SendMessageA(hwnd, EM_LINESCROLL, 1, 1);
+            ok(r == 1, "Returned %ld, expected 1.\n", r);
+
+            return result;
+
+        case WM_CREATE:
+            /* test that messages between WM_NCCREATE and WM_CREATE
+               don't crash or cause unexpected behavior */
+            r = SendMessageA(hwnd, EM_SETSEL, 0, 0);
+            ok(r == 1, "Returned %ld, expected 1.\n", r);
+            r = SendMessageA(hwnd, WM_SIZE, 0, 0x00100010);
+            todo_wine ok(r == 1, "Returned %ld, expected 1.\n", r);
+            r = SendMessageA(hwnd, EM_LINESCROLL, 1, 1);
+            ok(r == 1, "Returned %ld, expected 1.\n", r);
+
+            break;
+    }
+
+    return CallWindowProcA(orig_class_proc, hwnd, message, wParam, lParam);
+}
+
+static void test_initialization(void)
+{
+    BOOL ret;
+    ATOM atom;
+    HWND hwEdit;
+    WNDCLASSA cls;
+
+    ret = GetClassInfoA(NULL, "Edit", &cls);
+    ok(ret, "Failed to get class info.\n");
+
+    orig_class_proc = cls.lpfnWndProc;
+    cls.lpfnWndProc = test_class_proc;
+    cls.lpszClassName = "TestClassName";
+
+    atom = RegisterClassA(&cls);
+    ok(atom != 0, "Failed to register class.\n");
+
+    hwEdit = CreateWindowExA(0, (LPCSTR)MAKEINTATOM(atom), "Text Text",
+        ES_MULTILINE | WS_BORDER | ES_AUTOHSCROLL | ES_AUTOVSCROLL | WS_VSCROLL,
+        10, 10, 300, 300, NULL, NULL, hinst, NULL);
+    ok(hwEdit != NULL, "Failed to create a window.\n");
+
+    DestroyWindow(hwEdit);
+    UnregisterClassA((LPCSTR)MAKEINTATOM(atom), hinst);
+}
+
 static void test_margins(void)
 {
     HWND hwEdit;
@@ -3268,6 +3337,7 @@ START_TEST(edit)
     test_edit_control_6();
     test_edit_control_limittext();
     test_edit_control_scroll();
+    test_initialization();
     test_margins();
     test_margins_font_change();
     test_text_position();

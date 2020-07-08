@@ -58,46 +58,12 @@
 
 DEFINE_EXPECT(invalid_parameter_handler);
 
-/* make sure we use the correct errno */
-#undef errno
-#define errno (*p_errno())
-
-#define UCRTBASE_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION (0x0001)
-#define UCRTBASE_PRINTF_STANDARD_SNPRINTF_BEHAVIOUR      (0x0002)
-#define UCRTBASE_PRINTF_LEGACY_WIDE_SPECIFIERS           (0x0004)
-#define UCRTBASE_PRINTF_LEGACY_MSVCRT_COMPATIBILITY      (0x0008)
-#define UCRTBASE_PRINTF_LEGACY_THREE_DIGIT_EXPONENTS     (0x0010)
-
 static inline float __port_ind(void)
 {
     static const unsigned __ind_bytes = 0xffc00000;
     return *(const float *)&__ind_bytes;
 }
 #define IND __port_ind()
-
-static int (__cdecl *p_vfprintf)(unsigned __int64 options, FILE *file, const char *format,
-                                 void *locale, __ms_va_list valist);
-static int (__cdecl *p_vfwprintf)(unsigned __int64 options, FILE *file, const wchar_t *format,
-                                  void *locale, __ms_va_list valist);
-static int (__cdecl *p_vsprintf)(unsigned __int64 options, char *str, size_t len, const char *format,
-                                 void *locale, __ms_va_list valist);
-static int (__cdecl *p_vsnprintf_s)(unsigned __int64 options, char *str, size_t sizeOfBuffer, size_t count, const char *format,
-                                    void *locale, __ms_va_list valist);
-static int (__cdecl *p_vsprintf_s)(unsigned __int64 options, char *str, size_t count, const char *format,
-                                    void *locale, __ms_va_list valist);
-static int (__cdecl *p_vswprintf)(unsigned __int64 options, wchar_t *str, size_t len, const wchar_t *format,
-                                  void *locale, __ms_va_list valist);
-static int (__cdecl *p_vsnwprintf_s)(unsigned __int64 options, WCHAR *str, size_t sizeOfBuffer, size_t count, const WCHAR *format,
-                                    void *locale, __ms_va_list valist);
-
-static FILE *(__cdecl *p_fopen)(const char *name, const char *mode);
-static int (__cdecl *p_fclose)(FILE *file);
-static long (__cdecl *p_ftell)(FILE *file);
-static char *(__cdecl *p_fgets)(char *str, int size, FILE *file);
-static wchar_t *(__cdecl *p_fgetws)(wchar_t *str, int size, FILE *file);
-
-static _invalid_parameter_handler (__cdecl *p_set_invalid_parameter_handler)(_invalid_parameter_handler);
-static int* (__cdecl *p_errno)(void);
 
 static void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
         const wchar_t *function, const wchar_t *file,
@@ -111,102 +77,88 @@ static void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
     ok(arg == 0, "arg = %lx\n", (UINT_PTR)arg);
 }
 
-static BOOL init( void )
-{
-    HMODULE hmod = LoadLibraryA("ucrtbase.dll");
-
-    if (!hmod)
-    {
-        win_skip("ucrtbase.dll not installed\n");
-        return FALSE;
-    }
-
-    p_vfprintf = (void *)GetProcAddress(hmod, "__stdio_common_vfprintf");
-    p_vfwprintf = (void *)GetProcAddress(hmod, "__stdio_common_vfwprintf");
-    p_vsprintf = (void *)GetProcAddress(hmod, "__stdio_common_vsprintf");
-    p_vsnprintf_s = (void *)GetProcAddress(hmod, "__stdio_common_vsnprintf_s");
-    p_vsnwprintf_s = (void *)GetProcAddress(hmod, "__stdio_common_vsnwprintf_s");
-    p_vsprintf_s = (void *)GetProcAddress(hmod, "__stdio_common_vsprintf_s");
-    p_vswprintf = (void *)GetProcAddress(hmod, "__stdio_common_vswprintf");
-
-    p_fopen = (void *)GetProcAddress(hmod, "fopen");
-    p_fclose = (void *)GetProcAddress(hmod, "fclose");
-    p_ftell = (void *)GetProcAddress(hmod, "ftell");
-    p_fgets = (void *)GetProcAddress(hmod, "fgets");
-    p_fgetws = (void *)GetProcAddress(hmod, "fgetws");
-
-    p_set_invalid_parameter_handler = (void *)GetProcAddress(hmod, "_set_invalid_parameter_handler");
-    p_errno = (void *)GetProcAddress(hmod, "_errno");
-    return TRUE;
-}
-
 static int WINAPIV vsprintf_wrapper(unsigned __int64 options, char *str,
                                     size_t len, const char *format, ...)
 {
     int ret;
     __ms_va_list valist;
     __ms_va_start(valist, format);
-    ret = p_vsprintf(options, str, len, format, NULL, valist);
+    ret = __stdio_common_vsprintf(options, str, len, format, NULL, valist);
     __ms_va_end(valist);
     return ret;
 }
 
 static void test_snprintf (void)
 {
-    const char *tests[] = {"short", "justfit", "justfits", "muchlonger"};
+    const char *tests[] = {"short", "justfit", "justfits", "muchlonger", "", "1"};
     char buffer[8];
-    const int bufsiz = sizeof buffer;
-    unsigned int i;
+    int bufsizes[] = { 0, 1, sizeof(buffer) };
+    unsigned int i, j;
 
-    /* Legacy _snprintf style termination */
-    for (i = 0; i < ARRAY_SIZE(tests); i++) {
-        const char *fmt  = tests[i];
-        const int expect = strlen(fmt) > bufsiz ? -1 : strlen(fmt);
-        const int n      = vsprintf_wrapper (UCRTBASE_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION, buffer, bufsiz, fmt);
-        const int valid  = n < 0 ? bufsiz : (n == bufsiz ? n : n+1);
+    for (j = 0; j < ARRAY_SIZE(bufsizes); j++) {
+        const int bufsiz = bufsizes[j];
+        /* Legacy _snprintf style termination */
+        for (i = 0; i < ARRAY_SIZE(tests); i++) {
+            const char *fmt  = tests[i];
+            const int expect = strlen(fmt) > bufsiz ? -1 : strlen(fmt);
+            const int n      = vsprintf_wrapper (_CRT_INTERNAL_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION, buffer, bufsiz, fmt);
+            const int valid  = n < 0 ? bufsiz : (n == bufsiz ? n : n+1);
 
-        ok (n == expect, "\"%s\": expected %d, returned %d\n",
-            fmt, expect, n);
-        ok (!memcmp (fmt, buffer, valid),
-            "\"%s\": rendered \"%.*s\"\n", fmt, valid, buffer);
+            ok (n == expect, "\"%s\": expected %d, returned %d\n",
+                fmt, expect, n);
+            ok (!memcmp (fmt, buffer, valid),
+                "\"%s\": rendered \"%.*s\"\n", fmt, valid, buffer);
+        }
+
+        /* C99 snprintf style termination */
+        for (i = 0; i < ARRAY_SIZE(tests); i++) {
+            const char *fmt  = tests[i];
+            const int expect = strlen(fmt);
+            const int n      = vsprintf_wrapper (_CRT_INTERNAL_PRINTF_STANDARD_SNPRINTF_BEHAVIOR, buffer, bufsiz, fmt);
+            const int valid  = n >= bufsiz ? (bufsiz > 0 ? bufsiz - 1 : 0) : n < 0 ? 0 : n;
+
+            ok (n == expect, "\"%s\": expected %d, returned %d\n",
+                fmt, expect, n);
+            ok (!memcmp (fmt, buffer, valid),
+                "\"%s\": rendered \"%.*s\" bufsiz %d\n", fmt, valid, buffer, bufsiz);
+            ok (bufsiz == 0 || buffer[valid] == '\0',
+                "\"%s\": Missing null termination (ret %d) - is %d (bufsiz %d)\n", fmt, n, buffer[valid], bufsiz);
+        }
+
+        /* swprintf style termination */
+        for (i = 0; i < ARRAY_SIZE(tests); i++) {
+            const char *fmt  = tests[i];
+            const int expect = strlen(fmt) >= bufsiz ? bufsiz > 0 ? -2 : -1 : strlen(fmt);
+            const int n      = vsprintf_wrapper (0, buffer, bufsiz, fmt);
+            const int valid  = n < 0 ? bufsiz > 0 ? bufsiz - 1 : 0 : n;
+
+            ok (n == expect, "\"%s\": expected %d, returned %d\n",
+                fmt, expect, n);
+            ok (!memcmp (fmt, buffer, valid),
+                "\"%s\": rendered \"%.*s\" bufsiz %d\n", fmt, valid, buffer, bufsiz);
+            ok (bufsiz == 0 || buffer[valid] == '\0',
+                "\"%s\": Missing null termination (ret %d) - is %d\n", fmt, n, buffer[valid]);
+        }
     }
 
-    /* C99 snprintf style termination */
-    for (i = 0; i < ARRAY_SIZE(tests); i++) {
-        const char *fmt  = tests[i];
-        const int expect = strlen(fmt);
-        const int n      = vsprintf_wrapper (UCRTBASE_PRINTF_STANDARD_SNPRINTF_BEHAVIOUR, buffer, bufsiz, fmt);
-        const int valid  = n >= bufsiz ? bufsiz - 1 : n < 0 ? 0 : n;
-
-        ok (n == expect, "\"%s\": expected %d, returned %d\n",
-            fmt, expect, n);
-        ok (!memcmp (fmt, buffer, valid),
-            "\"%s\": rendered \"%.*s\"\n", fmt, valid, buffer);
-        ok (buffer[valid] == '\0',
-            "\"%s\": Missing null termination (ret %d) - is %d\n", fmt, n, buffer[valid]);
-    }
-
-    /* swprintf style termination */
-    for (i = 0; i < ARRAY_SIZE(tests); i++) {
-        const char *fmt  = tests[i];
-        const int expect = strlen(fmt) >= bufsiz ? -2 : strlen(fmt);
-        const int n      = vsprintf_wrapper (0, buffer, bufsiz, fmt);
-        const int valid  = n < 0 ? bufsiz - 1 : n;
-
-        ok (n == expect, "\"%s\": expected %d, returned %d\n",
-            fmt, expect, n);
-        ok (!memcmp (fmt, buffer, valid),
-            "\"%s\": rendered \"%.*s\"\n", fmt, valid, buffer);
-        ok (buffer[valid] == '\0',
-            "\"%s\": Missing null termination (ret %d) - is %d\n", fmt, n, buffer[valid]);
-    }
-
-    ok (vsprintf_wrapper (UCRTBASE_PRINTF_STANDARD_SNPRINTF_BEHAVIOUR, NULL, 0, "abcd") == 4,
+    ok (vsprintf_wrapper (_CRT_INTERNAL_PRINTF_STANDARD_SNPRINTF_BEHAVIOR, NULL, 0, "abcd") == 4,
         "Failure to snprintf to NULL\n");
-    ok (vsprintf_wrapper (UCRTBASE_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION, NULL, 0, "abcd") == 4,
+    ok (vsprintf_wrapper (_CRT_INTERNAL_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION, NULL, 0, "abcd") == 4,
         "Failure to snprintf to NULL\n");
     ok (vsprintf_wrapper (0, NULL, 0, "abcd") == 4,
         "Failure to snprintf to NULL\n");
+    ok (vsprintf_wrapper (_CRT_INTERNAL_PRINTF_STANDARD_SNPRINTF_BEHAVIOR, buffer, 0, "abcd") == 4,
+        "Failure to snprintf to zero length buffer\n");
+    ok (vsprintf_wrapper (_CRT_INTERNAL_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION, buffer, 0, "abcd") == -1,
+        "Failure to snprintf to zero length buffer\n");
+    ok (vsprintf_wrapper (0, buffer, 0, "abcd") == -1,
+        "Failure to snprintf to zero length buffer\n");
+    ok (vsprintf_wrapper (_CRT_INTERNAL_PRINTF_STANDARD_SNPRINTF_BEHAVIOR, buffer, 0, "") == 0,
+        "Failure to snprintf a zero length string to a zero length buffer\n");
+    ok (vsprintf_wrapper (_CRT_INTERNAL_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION, buffer, 0, "") == 0,
+        "Failure to snprintf a zero length string to a zero length buffer\n");
+    ok (vsprintf_wrapper (0, buffer, 0, "") == -1,
+        "Failure to snprintf a zero length string to a zero length buffer\n");
 }
 
 static int WINAPIV vswprintf_wrapper(unsigned __int64 options, wchar_t *str,
@@ -215,7 +167,7 @@ static int WINAPIV vswprintf_wrapper(unsigned __int64 options, wchar_t *str,
     int ret;
     __ms_va_list valist;
     __ms_va_start(valist, format);
-    ret = p_vswprintf(options, str, len, format, NULL, valist);
+    ret = __stdio_common_vswprintf(options, str, len, format, NULL, valist);
     __ms_va_end(valist);
     return ret;
 }
@@ -226,6 +178,7 @@ static void test_swprintf (void)
     const wchar_t str_justfit[]    = {'j','u','s','t','f','i','t',0};
     const wchar_t str_justfits[]   = {'j','u','s','t','f','i','t','s',0};
     const wchar_t str_muchlonger[] = {'m','u','c','h','l','o','n','g','e','r',0};
+    const wchar_t str_empty[]      = {0};
     const wchar_t *tests[] = {str_short, str_justfit, str_justfits, str_muchlonger};
 
     wchar_t buffer[8];
@@ -237,7 +190,7 @@ static void test_swprintf (void)
     for (i = 0; i < ARRAY_SIZE(tests); i++) {
         const wchar_t *fmt = tests[i];
         const int expect   = wcslen(fmt) > bufsiz ? -1 : wcslen(fmt);
-        const int n        = vswprintf_wrapper (UCRTBASE_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION, buffer, bufsiz, fmt);
+        const int n        = vswprintf_wrapper (_CRT_INTERNAL_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION, buffer, bufsiz, fmt);
         const int valid    = n < 0 ? bufsiz : (n == bufsiz ? n : n+1);
 
         WideCharToMultiByte (CP_ACP, 0, buffer, -1, narrow, sizeof(narrow), NULL, NULL);
@@ -252,7 +205,7 @@ static void test_swprintf (void)
     for (i = 0; i < ARRAY_SIZE(tests); i++) {
         const wchar_t *fmt = tests[i];
         const int expect   = wcslen(fmt);
-        const int n        = vswprintf_wrapper (UCRTBASE_PRINTF_STANDARD_SNPRINTF_BEHAVIOUR, buffer, bufsiz, fmt);
+        const int n        = vswprintf_wrapper (_CRT_INTERNAL_PRINTF_STANDARD_SNPRINTF_BEHAVIOR, buffer, bufsiz, fmt);
         const int valid    = n >= bufsiz ? bufsiz - 1 : n < 0 ? 0 : n;
 
         WideCharToMultiByte (CP_ACP, 0, buffer, -1, narrow, sizeof(narrow), NULL, NULL);
@@ -282,12 +235,24 @@ static void test_swprintf (void)
             "\"%s\": Missing null termination (ret %d) - is %d\n", narrow_fmt, n, buffer[valid]);
     }
 
-    ok (vswprintf_wrapper (UCRTBASE_PRINTF_STANDARD_SNPRINTF_BEHAVIOUR, NULL, 0, str_short) == 5,
+    ok (vswprintf_wrapper (_CRT_INTERNAL_PRINTF_STANDARD_SNPRINTF_BEHAVIOR, NULL, 0, str_short) == 5,
         "Failure to swprintf to NULL\n");
-    ok (vswprintf_wrapper (UCRTBASE_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION, NULL, 0, str_short) == 5,
+    ok (vswprintf_wrapper (_CRT_INTERNAL_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION, NULL, 0, str_short) == 5,
         "Failure to swprintf to NULL\n");
     ok (vswprintf_wrapper (0, NULL, 0, str_short) == 5,
         "Failure to swprintf to NULL\n");
+    ok (vswprintf_wrapper (_CRT_INTERNAL_PRINTF_STANDARD_SNPRINTF_BEHAVIOR, buffer, 0, str_short) == 5,
+        "Failure to swprintf to a zero length buffer\n");
+    ok (vswprintf_wrapper (_CRT_INTERNAL_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION, buffer, 0, str_short) == -1,
+        "Failure to swprintf to a zero length buffer\n");
+    ok (vswprintf_wrapper (0, buffer, 0, str_short) == -1,
+        "Failure to swprintf to a zero length buffer\n");
+    ok (vswprintf_wrapper (_CRT_INTERNAL_PRINTF_STANDARD_SNPRINTF_BEHAVIOR, buffer, 0, str_empty) == 0,
+        "Failure to swprintf a zero length string to a zero length buffer\n");
+    ok (vswprintf_wrapper (_CRT_INTERNAL_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION, buffer, 0, str_empty) == 0,
+        "Failure to swprintf a zero length string to a zero length buffer\n");
+    ok (vswprintf_wrapper (0, buffer, 0, str_empty) == -1,
+        "Failure to swprintf a zero length string to a zero length buffer\n");
 }
 
 static int WINAPIV vfprintf_wrapper(FILE *file,
@@ -296,7 +261,7 @@ static int WINAPIV vfprintf_wrapper(FILE *file,
     int ret;
     __ms_va_list valist;
     __ms_va_start(valist, format);
-    ret = p_vfprintf(0, file, format, NULL, valist);
+    ret = __stdio_common_vfprintf(0, file, format, NULL, valist);
     __ms_va_end(valist);
     return ret;
 }
@@ -305,61 +270,61 @@ static void test_fprintf(void)
 {
     static const char file_name[] = "fprintf.tst";
 
-    FILE *fp = p_fopen(file_name, "wb");
+    FILE *fp = fopen(file_name, "wb");
     char buf[1024];
     int ret;
 
     ret = vfprintf_wrapper(fp, "simple test\n");
     ok(ret == 12, "ret = %d\n", ret);
-    ret = p_ftell(fp);
+    ret = ftell(fp);
     ok(ret == 12, "ftell returned %d\n", ret);
 
     ret = vfprintf_wrapper(fp, "contains%cnull\n", '\0');
     ok(ret == 14, "ret = %d\n", ret);
-    ret = p_ftell(fp);
+    ret = ftell(fp);
     ok(ret == 26, "ftell returned %d\n", ret);
 
-    p_fclose(fp);
+    fclose(fp);
 
-    fp = p_fopen(file_name, "rb");
-    p_fgets(buf, sizeof(buf), fp);
-    ret = p_ftell(fp);
+    fp = fopen(file_name, "rb");
+    fgets(buf, sizeof(buf), fp);
+    ret = ftell(fp);
     ok(ret == 12, "ftell returned %d\n", ret);
     ok(!strcmp(buf, "simple test\n"), "buf = %s\n", buf);
 
-    p_fgets(buf, sizeof(buf), fp);
-    ret = p_ftell(fp);
+    fgets(buf, sizeof(buf), fp);
+    ret = ftell(fp);
     ok(ret == 26, "ret = %d\n", ret);
     ok(!memcmp(buf, "contains\0null\n", 14), "buf = %s\n", buf);
 
-    p_fclose(fp);
+    fclose(fp);
 
-    fp = p_fopen(file_name, "wt");
+    fp = fopen(file_name, "wt");
 
     ret = vfprintf_wrapper(fp, "simple test\n");
     ok(ret == 12, "ret = %d\n", ret);
-    ret = p_ftell(fp);
+    ret = ftell(fp);
     ok(ret == 13, "ftell returned %d\n", ret);
 
     ret = vfprintf_wrapper(fp, "contains%cnull\n", '\0');
     ok(ret == 14, "ret = %d\n", ret);
-    ret = p_ftell(fp);
+    ret = ftell(fp);
     ok(ret == 28, "ftell returned %d\n", ret);
 
-    p_fclose(fp);
+    fclose(fp);
 
-    fp = p_fopen(file_name, "rb");
-    p_fgets(buf, sizeof(buf), fp);
-    ret = p_ftell(fp);
+    fp = fopen(file_name, "rb");
+    fgets(buf, sizeof(buf), fp);
+    ret = ftell(fp);
     ok(ret == 13, "ftell returned %d\n", ret);
     ok(!strcmp(buf, "simple test\r\n"), "buf = %s\n", buf);
 
-    p_fgets(buf, sizeof(buf), fp);
-    ret = p_ftell(fp);
+    fgets(buf, sizeof(buf), fp);
+    ret = ftell(fp);
     ok(ret == 28, "ret = %d\n", ret);
     ok(!memcmp(buf, "contains\0null\r\n", 15), "buf = %s\n", buf);
 
-    p_fclose(fp);
+    fclose(fp);
     unlink(file_name);
 }
 
@@ -369,7 +334,7 @@ static int WINAPIV vfwprintf_wrapper(FILE *file,
     int ret;
     __ms_va_list valist;
     __ms_va_start(valist, format);
-    ret = p_vfwprintf(0, file, format, NULL, valist);
+    ret = __stdio_common_vfwprintf(0, file, format, NULL, valist);
     __ms_va_end(valist);
     return ret;
 }
@@ -381,66 +346,63 @@ static void test_fwprintf(void)
     static const WCHAR cont_fmt[] = {'c','o','n','t','a','i','n','s','%','c','n','u','l','l','\n',0};
     static const WCHAR cont[] = {'c','o','n','t','a','i','n','s','\0','n','u','l','l','\n',0};
 
-    FILE *fp = p_fopen(file_name, "wb");
+    FILE *fp = fopen(file_name, "wb");
     wchar_t bufw[1024];
     char bufa[1024];
     int ret;
 
     ret = vfwprintf_wrapper(fp, simple);
     ok(ret == 12, "ret = %d\n", ret);
-    ret = p_ftell(fp);
+    ret = ftell(fp);
     ok(ret == 24, "ftell returned %d\n", ret);
 
     ret = vfwprintf_wrapper(fp, cont_fmt, '\0');
     ok(ret == 14, "ret = %d\n", ret);
-    ret = p_ftell(fp);
+    ret = ftell(fp);
     ok(ret == 52, "ftell returned %d\n", ret);
 
-    p_fclose(fp);
+    fclose(fp);
 
-    fp = p_fopen(file_name, "rb");
-    p_fgetws(bufw, ARRAY_SIZE(bufw), fp);
-    ret = p_ftell(fp);
+    fp = fopen(file_name, "rb");
+    fgetws(bufw, ARRAY_SIZE(bufw), fp);
+    ret = ftell(fp);
     ok(ret == 24, "ftell returned %d\n", ret);
     ok(!wcscmp(bufw, simple), "buf = %s\n", wine_dbgstr_w(bufw));
 
-    p_fgetws(bufw, ARRAY_SIZE(bufw), fp);
-    ret = p_ftell(fp);
+    fgetws(bufw, ARRAY_SIZE(bufw), fp);
+    ret = ftell(fp);
     ok(ret == 52, "ret = %d\n", ret);
     ok(!memcmp(bufw, cont, 28), "buf = %s\n", wine_dbgstr_w(bufw));
 
-    p_fclose(fp);
+    fclose(fp);
 
-    fp = p_fopen(file_name, "wt");
+    fp = fopen(file_name, "wt");
 
     ret = vfwprintf_wrapper(fp, simple);
     ok(ret == 12, "ret = %d\n", ret);
-    ret = p_ftell(fp);
+    ret = ftell(fp);
     ok(ret == 13, "ftell returned %d\n", ret);
 
     ret = vfwprintf_wrapper(fp, cont_fmt, '\0');
     ok(ret == 14, "ret = %d\n", ret);
-    ret = p_ftell(fp);
+    ret = ftell(fp);
     ok(ret == 28, "ftell returned %d\n", ret);
 
-    p_fclose(fp);
+    fclose(fp);
 
-    fp = p_fopen(file_name, "rb");
-    p_fgets(bufa, sizeof(bufa), fp);
-    ret = p_ftell(fp);
+    fp = fopen(file_name, "rb");
+    fgets(bufa, sizeof(bufa), fp);
+    ret = ftell(fp);
     ok(ret == 13, "ftell returned %d\n", ret);
     ok(!strcmp(bufa, "simple test\r\n"), "buf = %s\n", bufa);
 
-    p_fgets(bufa, sizeof(bufa), fp);
-    ret = p_ftell(fp);
+    fgets(bufa, sizeof(bufa), fp);
+    ret = ftell(fp);
     ok(ret == 28, "ret = %d\n", ret);
     ok(!memcmp(bufa, "contains\0null\r\n", 15), "buf = %s\n", bufa);
 
-    p_fclose(fp);
+    fclose(fp);
     unlink(file_name);
-
-    ok(p_set_invalid_parameter_handler(test_invalid_parameter_handler) == NULL,
-            "Invalid parameter handler was already set\n");
 
     /* NULL format */
     errno = 0xdeadbeef;
@@ -460,10 +422,7 @@ static void test_fwprintf(void)
 
     /* format using % with NULL arglist*/
     /* crashes on Windows */
-    /* ret = p_vfwprintf(0, fp, cont_fmt, NULL, NULL); */
-
-    ok(p_set_invalid_parameter_handler(NULL) == test_invalid_parameter_handler,
-            "Cannot reset invalid parameter handler\n");
+    /* ret = __stdio_common_vfwprintf(0, fp, cont_fmt, NULL, NULL); */
 }
 
 static int WINAPIV _vsnprintf_s_wrapper(char *str, size_t sizeOfBuffer,
@@ -472,7 +431,7 @@ static int WINAPIV _vsnprintf_s_wrapper(char *str, size_t sizeOfBuffer,
     int ret;
     __ms_va_list valist;
     __ms_va_start(valist, format);
-    ret = p_vsnprintf_s(0, str, sizeOfBuffer, count, format, NULL, valist);
+    ret = __stdio_common_vsnprintf_s(0, str, sizeOfBuffer, count, format, NULL, valist);
     __ms_va_end(valist);
     return ret;
 }
@@ -524,7 +483,7 @@ static int WINAPIV _vsnwprintf_s_wrapper(WCHAR *str, size_t sizeOfBuffer,
     int ret;
     __ms_va_list valist;
     __ms_va_start(valist, format);
-    ret = p_vsnwprintf_s(0, str, sizeOfBuffer, count, format, NULL, valist);
+    ret = __stdio_common_vsnwprintf_s(0, str, sizeOfBuffer, count, format, NULL, valist);
     __ms_va_end(valist);
     return ret;
 }
@@ -587,13 +546,13 @@ static void test_printf_legacy_wide(void)
 
     vsprintf_wrapper(0, buffer, sizeof(buffer), narrow_fmt, narrow, wide);
     ok(!strcmp(buffer, out), "buffer wrong, got=%s\n", buffer);
-    vsprintf_wrapper(UCRTBASE_PRINTF_LEGACY_WIDE_SPECIFIERS, buffer, sizeof(buffer), narrow_fmt, narrow, wide);
+    vsprintf_wrapper(_CRT_INTERNAL_PRINTF_LEGACY_WIDE_SPECIFIERS, buffer, sizeof(buffer), narrow_fmt, narrow, wide);
     ok(!strcmp(buffer, out), "buffer wrong, got=%s\n", buffer);
 
     vswprintf_wrapper(0, wbuffer, sizeof(wbuffer), std_wide_fmt, narrow, wide);
     WideCharToMultiByte(CP_ACP, 0, wbuffer, -1, buffer, sizeof(buffer), NULL, NULL);
     ok(!strcmp(buffer, out), "buffer wrong, got=%s\n", buffer);
-    vswprintf_wrapper(UCRTBASE_PRINTF_LEGACY_WIDE_SPECIFIERS, wbuffer, sizeof(wbuffer), legacy_wide_fmt, narrow, wide);
+    vswprintf_wrapper(_CRT_INTERNAL_PRINTF_LEGACY_WIDE_SPECIFIERS, wbuffer, sizeof(wbuffer), legacy_wide_fmt, narrow, wide);
     WideCharToMultiByte(CP_ACP, 0, wbuffer, -1, buffer, sizeof(buffer), NULL, NULL);
     ok(!strcmp(buffer, out), "buffer wrong, got=%s\n", buffer);
 }
@@ -607,20 +566,20 @@ static void test_printf_legacy_msvcrt(void)
      * a length modifier. */
     vsprintf_wrapper(0, buf, sizeof(buf), "%F", 1.23);
     ok(!strcmp(buf, "1.230000"), "buf = %s\n", buf);
-    vsprintf_wrapper(UCRTBASE_PRINTF_LEGACY_MSVCRT_COMPATIBILITY, buf, sizeof(buf), "%Fd %Nd", 123, 456);
+    vsprintf_wrapper(_CRT_INTERNAL_PRINTF_LEGACY_MSVCRT_COMPATIBILITY, buf, sizeof(buf), "%Fd %Nd", 123, 456);
     ok(!strcmp(buf, "123 456"), "buf = %s\n", buf);
 
     vsprintf_wrapper(0, buf, sizeof(buf), "%f %F %f %e %E %g %G", INFINITY, INFINITY, -INFINITY, INFINITY, INFINITY, INFINITY, INFINITY);
     ok(!strcmp(buf, "inf INF -inf inf INF inf INF"), "buf = %s\n", buf);
-    vsprintf_wrapper(UCRTBASE_PRINTF_LEGACY_MSVCRT_COMPATIBILITY, buf, sizeof(buf), "%f", INFINITY);
+    vsprintf_wrapper(_CRT_INTERNAL_PRINTF_LEGACY_MSVCRT_COMPATIBILITY, buf, sizeof(buf), "%f", INFINITY);
     ok(!strcmp(buf, "1.#INF00"), "buf = %s\n", buf);
     vsprintf_wrapper(0, buf, sizeof(buf), "%f %F", NAN, NAN);
     ok(!strcmp(buf, "nan NAN"), "buf = %s\n", buf);
-    vsprintf_wrapper(UCRTBASE_PRINTF_LEGACY_MSVCRT_COMPATIBILITY, buf, sizeof(buf), "%f", NAN);
+    vsprintf_wrapper(_CRT_INTERNAL_PRINTF_LEGACY_MSVCRT_COMPATIBILITY, buf, sizeof(buf), "%f", NAN);
     ok(!strcmp(buf, "1.#QNAN0"), "buf = %s\n", buf);
     vsprintf_wrapper(0, buf, sizeof(buf), "%f %F", IND, IND);
     ok(!strcmp(buf, "-nan(ind) -NAN(IND)"), "buf = %s\n", buf);
-    vsprintf_wrapper(UCRTBASE_PRINTF_LEGACY_MSVCRT_COMPATIBILITY, buf, sizeof(buf), "%f", IND);
+    vsprintf_wrapper(_CRT_INTERNAL_PRINTF_LEGACY_MSVCRT_COMPATIBILITY, buf, sizeof(buf), "%f", IND);
     ok(!strcmp(buf, "-1.#IND00"), "buf = %s\n", buf);
 }
 
@@ -630,7 +589,7 @@ static void test_printf_legacy_three_digit_exp(void)
 
     vsprintf_wrapper(0, buf, sizeof(buf), "%E", 1.23);
     ok(!strcmp(buf, "1.230000E+00"), "buf = %s\n", buf);
-    vsprintf_wrapper(UCRTBASE_PRINTF_LEGACY_THREE_DIGIT_EXPONENTS, buf, sizeof(buf), "%E", 1.23);
+    vsprintf_wrapper(_CRT_INTERNAL_PRINTF_LEGACY_THREE_DIGIT_EXPONENTS, buf, sizeof(buf), "%E", 1.23);
     ok(!strcmp(buf, "1.230000E+000"), "buf = %s\n", buf);
     vsprintf_wrapper(0, buf, sizeof(buf), "%E", 1.23e+123);
     ok(!strcmp(buf, "1.230000E+123"), "buf = %s\n", buf);
@@ -645,7 +604,7 @@ static void test_printf_c99(void)
      * as size_t size for integers. */
      for (i = 0; i < 2; i++) {
         unsigned __int64 options = (i == 0) ? 0 :
-            UCRTBASE_PRINTF_LEGACY_MSVCRT_COMPATIBILITY;
+            _CRT_INTERNAL_PRINTF_LEGACY_MSVCRT_COMPATIBILITY;
 
         /* z modifier accepts size_t argument */
         vsprintf_wrapper(options, buf, sizeof(buf), "%zx %d", SIZE_MAX, 1);
@@ -689,9 +648,141 @@ static void test_printf_natural_string(void)
     ok(!lstrcmpW(wbuffer, wide_out), "buffer wrong, got=%s\n", wine_dbgstr_w(wbuffer));
 }
 
+static void test_printf_fp(void)
+{
+    static const int flags[] = {
+        0,
+        _CRT_INTERNAL_PRINTF_LEGACY_MSVCRT_COMPATIBILITY,
+        _CRT_INTERNAL_PRINTF_LEGACY_THREE_DIGIT_EXPONENTS,
+        _CRT_INTERNAL_PRINTF_LEGACY_MSVCRT_COMPATIBILITY
+            | _CRT_INTERNAL_PRINTF_LEGACY_THREE_DIGIT_EXPONENTS
+    };
+    const struct {
+        const char *fmt;
+        double d;
+        const char *res[ARRAY_SIZE(flags)];
+    } tests[] = {
+        { "%a", NAN, { "nan", "0x1.#QNAN00000000p+0", "nan", "0x1.#QNAN00000000p+0" }},
+        { "%A", NAN, { "NAN", "0X1.#QNAN00000000P+0", "NAN", "0X1.#QNAN00000000P+0" }},
+        { "%e", NAN, { "nan", "1.#QNAN0e+00", "nan", "1.#QNAN0e+000" }},
+        { "%E", NAN, { "NAN", "1.#QNAN0E+00", "NAN", "1.#QNAN0E+000" }},
+        { "%g", NAN, { "nan", "1.#QNAN", "nan", "1.#QNAN" }},
+        { "%G", NAN, { "NAN", "1.#QNAN", "NAN", "1.#QNAN" }},
+        { "%21a", NAN, { "                  nan", " 0x1.#QNAN00000000p+0", "                  nan", " 0x1.#QNAN00000000p+0" }},
+        { "%20e", NAN, { "                 nan", "        1.#QNAN0e+00", "                 nan", "       1.#QNAN0e+000" }},
+        { "%20g", NAN, { "                 nan", "             1.#QNAN", "                 nan", "             1.#QNAN" }},
+        { "%.21a", NAN, { "nan", "0x1.#QNAN0000000000000000p+0", "nan", "0x1.#QNAN0000000000000000p+0" }},
+        { "%.20e", NAN, { "nan", "1.#QNAN000000000000000e+00", "nan", "1.#QNAN000000000000000e+000" }},
+        { "%.20g", NAN, { "nan", "1.#QNAN", "nan", "1.#QNAN" }},
+        { "%.021a", NAN, { "nan", "0x1.#QNAN0000000000000000p+0", "nan", "0x1.#QNAN0000000000000000p+0" }},
+        { "%.020e", NAN, { "nan", "1.#QNAN000000000000000e+00", "nan", "1.#QNAN000000000000000e+000" }},
+        { "%.020g", NAN, { "nan", "1.#QNAN", "nan", "1.#QNAN" }},
+        { "%#.21a", NAN, { "nan", "0x1.#QNAN0000000000000000p+0", "nan", "0x1.#QNAN0000000000000000p+0" }},
+        { "%#.20e", NAN, { "nan", "1.#QNAN000000000000000e+00", "nan", "1.#QNAN000000000000000e+000" }},
+        { "%#.20g", NAN, { "nan", "1.#QNAN00000000000000", "nan", "1.#QNAN00000000000000" }},
+        { "%.1g", NAN, { "nan", "1", "nan", "1" }},
+        { "%.2g", NAN, { "nan", "1.$", "nan", "1.$" }},
+        { "%.3g", NAN, { "nan", "1.#R", "nan", "1.#R" }},
+
+        { "%a", IND, { "-nan(ind)", "-0x1.#IND000000000p+0", "-nan(ind)", "-0x1.#IND000000000p+0" }},
+        { "%e", IND, { "-nan(ind)", "-1.#IND00e+00", "-nan(ind)", "-1.#IND00e+000" }},
+        { "%g", IND, { "-nan(ind)", "-1.#IND", "-nan(ind)", "-1.#IND" }},
+        { "%21a", IND, { "            -nan(ind)", "-0x1.#IND000000000p+0", "            -nan(ind)", "-0x1.#IND000000000p+0" }},
+        { "%20e", IND, { "           -nan(ind)", "       -1.#IND00e+00", "           -nan(ind)", "      -1.#IND00e+000" }},
+        { "%20g", IND, { "           -nan(ind)", "             -1.#IND", "           -nan(ind)", "             -1.#IND" }},
+        { "%.21a", IND, { "-nan(ind)", "-0x1.#IND00000000000000000p+0", "-nan(ind)", "-0x1.#IND00000000000000000p+0" }},
+        { "%.20e", IND, { "-nan(ind)", "-1.#IND0000000000000000e+00", "-nan(ind)", "-1.#IND0000000000000000e+000" }},
+        { "%.20g", IND, { "-nan(ind)", "-1.#IND", "-nan(ind)", "-1.#IND" }},
+        { "%.021a", IND, { "-nan(ind)", "-0x1.#IND00000000000000000p+0", "-nan(ind)", "-0x1.#IND00000000000000000p+0" }},
+        { "%.020e", IND, { "-nan(ind)", "-1.#IND0000000000000000e+00", "-nan(ind)", "-1.#IND0000000000000000e+000" }},
+        { "%.020g", IND, { "-nan(ind)", "-1.#IND", "-nan(ind)", "-1.#IND" }},
+        { "%#.21a", IND, { "-nan(ind)", "-0x1.#IND00000000000000000p+0", "-nan(ind)", "-0x1.#IND00000000000000000p+0" }},
+        { "%#.20e", IND, { "-nan(ind)", "-1.#IND0000000000000000e+00", "-nan(ind)", "-1.#IND0000000000000000e+000" }},
+        { "%#.20g", IND, { "-nan(ind)", "-1.#IND000000000000000", "-nan(ind)", "-1.#IND000000000000000" }},
+
+        { "%a", INFINITY, { "inf", "0x1.#INF000000000p+0", "inf", "0x1.#INF000000000p+0" }},
+        { "%e", INFINITY, { "inf", "1.#INF00e+00", "inf", "1.#INF00e+000" }},
+        { "%g", INFINITY, { "inf", "1.#INF", "inf", "1.#INF" }},
+        { "%21a", INFINITY, { "                  inf", " 0x1.#INF000000000p+0", "                  inf", " 0x1.#INF000000000p+0" }},
+        { "%20e", INFINITY, { "                 inf", "        1.#INF00e+00", "                 inf", "       1.#INF00e+000" }},
+        { "%20g", INFINITY, { "                 inf", "              1.#INF", "                 inf", "              1.#INF" }},
+        { "%.21a", INFINITY, { "inf", "0x1.#INF00000000000000000p+0", "inf", "0x1.#INF00000000000000000p+0" }},
+        { "%.20e", INFINITY, { "inf", "1.#INF0000000000000000e+00", "inf", "1.#INF0000000000000000e+000" }},
+        { "%.20g", INFINITY, { "inf", "1.#INF", "inf", "1.#INF" }},
+        { "%.021a", INFINITY, { "inf", "0x1.#INF00000000000000000p+0", "inf", "0x1.#INF00000000000000000p+0" }},
+        { "%.020e", INFINITY, { "inf", "1.#INF0000000000000000e+00", "inf", "1.#INF0000000000000000e+000" }},
+        { "%.020g", INFINITY, { "inf", "1.#INF", "inf", "1.#INF" }},
+        { "%#.21a", INFINITY, { "inf", "0x1.#INF00000000000000000p+0", "inf", "0x1.#INF00000000000000000p+0" }},
+        { "%#.20e", INFINITY, { "inf", "1.#INF0000000000000000e+00", "inf", "1.#INF0000000000000000e+000" }},
+        { "%#.20g", INFINITY, { "inf", "1.#INF000000000000000", "inf", "1.#INF000000000000000" }},
+
+        { "%a", -INFINITY, { "-inf", "-0x1.#INF000000000p+0", "-inf", "-0x1.#INF000000000p+0" }},
+        { "%e", -INFINITY, { "-inf", "-1.#INF00e+00", "-inf", "-1.#INF00e+000" }},
+        { "%g", -INFINITY, { "-inf", "-1.#INF", "-inf", "-1.#INF" }},
+        { "%21a", -INFINITY, { "                 -inf", "-0x1.#INF000000000p+0", "                 -inf", "-0x1.#INF000000000p+0" }},
+        { "%20e", -INFINITY, { "                -inf", "       -1.#INF00e+00", "                -inf", "      -1.#INF00e+000" }},
+        { "%20g", -INFINITY, { "                -inf", "             -1.#INF", "                -inf", "             -1.#INF" }},
+        { "%.21a", -INFINITY, { "-inf", "-0x1.#INF00000000000000000p+0", "-inf", "-0x1.#INF00000000000000000p+0" }},
+        { "%.20e", -INFINITY, { "-inf", "-1.#INF0000000000000000e+00", "-inf", "-1.#INF0000000000000000e+000" }},
+        { "%.20g", -INFINITY, { "-inf", "-1.#INF", "-inf", "-1.#INF" }},
+        { "%.021a", -INFINITY, { "-inf", "-0x1.#INF00000000000000000p+0", "-inf", "-0x1.#INF00000000000000000p+0" }},
+        { "%.020e", -INFINITY, { "-inf", "-1.#INF0000000000000000e+00", "-inf", "-1.#INF0000000000000000e+000" }},
+        { "%.020g", -INFINITY, { "-inf", "-1.#INF", "-inf", "-1.#INF" }},
+        { "%#.21a", -INFINITY, { "-inf", "-0x1.#INF00000000000000000p+0", "-inf", "-0x1.#INF00000000000000000p+0" }},
+        { "%#.20e", -INFINITY, { "-inf", "-1.#INF0000000000000000e+00", "-inf", "-1.#INF0000000000000000e+000" }},
+        { "%#.20g", -INFINITY, { "-inf", "-1.#INF000000000000000", "-inf", "-1.#INF000000000000000" }},
+
+        { "%a", 0, { "0x0.0000000000000p+0" }},
+        { "%A", 0, { "0X0.0000000000000P+0" }},
+        { "%a", 0.5, { "0x1.0000000000000p-1" }},
+        { "%a", 1, { "0x1.0000000000000p+0" }},
+        { "%a", 20, { "0x1.4000000000000p+4" }},
+        { "%a", -1, { "-0x1.0000000000000p+0" }},
+        { "%a", 0.1, { "0x1.999999999999ap-4" }},
+        { "%24a", 0.1, { "    0x1.999999999999ap-4" }},
+        { "%024a", 0.1, { "0x00001.999999999999ap-4" }},
+        { "%.2a", 0.1, { "0x1.9ap-4" }},
+        { "%.20a", 0.1, { "0x1.999999999999a0000000p-4" }},
+        { "%.a", 0.1e-20, { "0x1p-70" }},
+        { "%a", 0.1e-20, { "0x1.2e3b40a0e9b4fp-70" }},
+        { "%a", 4.9406564584124654e-324, { "0x0.0000000000001p-1022" }},
+        { "%.0a", -1.5, { "-0x1p+0" }},
+        { "%.0a", -0.5, { "-0x1p-1" }},
+        { "%.0a", 0.5, { "0x1p-1" }},
+        { "%.0a", 1.5, { "0x1p+0" }},
+        { "%.0a", 1.99, { "0x2p+0" }},
+        { "%.0a", 2, { "0x1p+1" }},
+        { "%.0a", 9.5, { "0x1p+3" }},
+        { "%.0a", 10.5, { "0x1p+3" }},
+        { "%#.0a", -1.5, { "-0x1.p+0" }},
+        { "%#.0a", -0.5, { "-0x1.p-1" }},
+        { "%#.0a", 0.5, { "0x1.p-1" }},
+        { "%#.0a", 1.5, { "0x1.p+0" }},
+    };
+
+    const char *res = NULL;
+    char buf[100];
+    int i, j, r;
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        for (j = 0; j < ARRAY_SIZE(flags); j++)
+        {
+            if (tests[i].res[j]) res = tests[i].res[j];
+
+            r = vsprintf_wrapper(flags[j], buf, sizeof(buf), tests[i].fmt, tests[i].d);
+            ok(r == strlen(res), "%d,%d) r = %d, expected %d\n",
+                    i, j, r, strlen(res));
+            ok(!strcmp(buf, res), "%d,%d) buf = %s, expected %s\n",
+                    i, j, buf, res);
+        }
+    }
+}
+
 START_TEST(printf)
 {
-    if (!init()) return;
+    ok(_set_invalid_parameter_handler(test_invalid_parameter_handler) == NULL,
+            "Invalid parameter handler was already set\n");
 
     test_snprintf();
     test_swprintf();
@@ -704,4 +795,5 @@ START_TEST(printf)
     test_printf_legacy_three_digit_exp();
     test_printf_c99();
     test_printf_natural_string();
+    test_printf_fp();
 }

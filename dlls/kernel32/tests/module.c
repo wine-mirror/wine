@@ -68,8 +68,6 @@ static const struct
             IMAGE_FILE_MACHINE_I386, /* Machine */
 #elif defined __x86_64__
             IMAGE_FILE_MACHINE_AMD64, /* Machine */
-#elif defined __powerpc__
-            IMAGE_FILE_MACHINE_POWERPC, /* Machine */
 #elif defined __arm__
             IMAGE_FILE_MACHINE_ARMNT, /* Machine */
 #elif defined __aarch64__

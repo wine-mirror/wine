@@ -81,8 +81,6 @@ FARPROC WINAPI get_proc_address( HMODULE module, LPCSTR function )
  */
 static BOOL load_library_as_datafile( LPCWSTR load_path, DWORD flags, LPCWSTR name, HMODULE *mod_ret )
 {
-    static const WCHAR dotDLL[] = {'.','d','l','l',0};
-
     WCHAR filenameW[MAX_PATH];
     HANDLE mapping, file = INVALID_HANDLE_VALUE;
     HMODULE module = 0;
@@ -92,7 +90,7 @@ static BOOL load_library_as_datafile( LPCWSTR load_path, DWORD flags, LPCWSTR na
 
     if (flags & LOAD_LIBRARY_AS_IMAGE_RESOURCE) protect |= SEC_IMAGE;
 
-    if (SearchPathW( NULL, name, dotDLL, ARRAY_SIZE( filenameW ), filenameW, NULL ))
+    if (SearchPathW( NULL, name, L".dll", ARRAY_SIZE( filenameW ), filenameW, NULL ))
     {
         file = CreateFileW( filenameW, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_DELETE,
                             NULL, OPEN_EXISTING, 0, 0 );
@@ -303,7 +301,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetModuleFileNameW( HMODULE module, LPWSTR filena
 {
     ULONG len = 0;
     ULONG_PTR magic;
-    LDR_MODULE *pldr;
+    LDR_DATA_TABLE_ENTRY *pldr;
     WIN16_SUBSYSTEM_TIB *win16_tib;
 
     if (!module && ((win16_tib = NtCurrentTeb()->Tib.SubSystemTib)) && win16_tib->exe_name)
@@ -543,6 +541,15 @@ HMODULE WINAPI /* DECLSPEC_HOTPATCH */ LoadPackagedLibrary( LPCWSTR name, DWORD 
     FIXME( "semi-stub, name %s, reserved %#x.\n", debugstr_w(name), reserved );
     SetLastError( APPMODEL_ERROR_NO_PACKAGE );
     return NULL;
+}
+
+
+/***********************************************************************
+ *      LoadAppInitDlls    (kernelbase.@)
+ */
+void WINAPI LoadAppInitDlls(void)
+{
+    TRACE( "\n" );
 }
 
 

@@ -283,7 +283,7 @@ int needs_space_after(type_t *t)
           (!is_ptr(t) && (!is_array(t) || !type_array_is_decl_as_ptr(t) || t->name)));
 }
 
-int decl_needs_parens(const type_t *t)
+static int decl_needs_parens(const type_t *t)
 {
     if (type_is_alias(t))
         return FALSE;

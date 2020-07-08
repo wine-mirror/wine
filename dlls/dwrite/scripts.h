@@ -1,5 +1,5 @@
 /* Unicode Script IDs */
-/* generated from http://www.unicode.org/Public/12.1.0/ucd/UCD.zip:Scripts.txt */
+/* generated from https://www.unicode.org/Public/13.0.0/ucd/UCD.zip:Scripts.txt */
 /* DO NOT EDIT!! */
 
 enum unicode_script_id {
@@ -152,5 +152,9 @@ enum unicode_script_id {
     Script_Medefaidrin = 146,
     Script_Old_Sogdian = 147,
     Script_Sogdian = 148,
-    Script_LastId = 148
+    Script_Elymaic = 149,
+    Script_Nyiakeng_Puachue_Hmong = 150,
+    Script_Nandinagari = 151,
+    Script_Wancho = 152,
+    Script_LastId = 152
 };

@@ -22,21 +22,16 @@
 #include "config.h"
 #include "wine/port.h"
 
-#include <locale.h>
-#include <langinfo.h>
+#include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
 
-#ifdef __APPLE__
-# include <CoreFoundation/CFLocale.h>
-# include <CoreFoundation/CFString.h>
-#endif
-
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
+#include "windef.h"
+#include "winbase.h"
+#include "winnls.h"
 #include "ntdll_misc.h"
-#include "wine/library.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(nls);
@@ -67,6 +62,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(nls);
 
 enum nls_section_type
 {
+    NLS_SECTION_SORTKEYS = 9,
     NLS_SECTION_CASEMAP = 10,
     NLS_SECTION_CODEPAGE = 11,
     NLS_SECTION_NORMALIZE = 12
@@ -234,7 +230,7 @@ static NTSTATUS load_norm_table( ULONG form, const struct norm_table **info )
             if (i && tables[i] < tables[i-1]) goto invalid;
         }
 
-        if (interlocked_cmpxchg_ptr( (void **)&norm_tables[form], data, NULL ))
+        if (InterlockedCompareExchangePointer( (void **)&norm_tables[form], data, NULL ))
             RtlFreeHeap( GetProcessHeap(), 0, data );
     }
     *info = norm_tables[form];
@@ -437,6 +433,12 @@ static NTSTATUS decompose_string( const struct norm_table *info, const WCHAR *sr
         props = get_char_props( info, ch );
         if (!(decomp = get_decomposition( info, ch, props, buffer, &decomp_len )))
         {
+            /* allow final null */
+            if (!ch && src_pos == src_len - 1 && dst_pos < *dst_len)
+            {
+                dst[dst_pos++] = 0;
+                break;
+            }
             *dst_len = src_pos;
             return STATUS_NO_UNICODE_TRANSLATION;
         }
@@ -542,6 +544,9 @@ static NTSTATUS open_nls_data_file( ULONG type, ULONG id, HANDLE *file )
     {'\\','R','e','g','i','s','t','r','y','\\','M','a','c','h','i','n','e','\\','S','y','s','t','e','m','\\',
      'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
      'C','o','n','t','r','o','l','\\','N','l','s','\\','%','s',0};
+    static const WCHAR sortdirW[] = {'C',':','\\','w','i','n','d','o','w','s','\\',
+                                     'g','l','o','b','a','l','i','z','a','t','i','o','n','\\',
+                                     's','o','r','t','i','n','g','\\',0};
     static const WCHAR cpW[] = {'C','o','d','e','p','a','g','e',0};
     static const WCHAR normW[] = {'N','o','r','m','a','l','i','z','a','t','i','o','n',0};
     static const WCHAR langW[] = {'L','a','n','g','u','a','g','e',0};
@@ -558,61 +563,74 @@ static NTSTATUS open_nls_data_file( ULONG type, ULONG id, HANDLE *file )
     static const WCHAR normnfkcW[] = {'n','o','r','m','n','f','k','c','.','n','l','s',0};
     static const WCHAR normnfkdW[] = {'n','o','r','m','n','f','k','d','.','n','l','s',0};
     static const WCHAR normidnaW[] = {'n','o','r','m','i','d','n','a','.','n','l','s',0};
+    static const WCHAR sortkeysW[] = {'s','o','r','t','d','e','f','a','u','l','t','.','n','l','s',0};
 
     DWORD size;
     HANDLE handle;
-    NTSTATUS status;
+    NTSTATUS status = STATUS_OBJECT_NAME_NOT_FOUND;
     IO_STATUS_BLOCK io;
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW, valueW;
     WCHAR buffer[MAX_PATH], value[10];
-    const WCHAR *name = NULL;
+    const WCHAR *name = NULL, *dir = system_dir;
     KEY_VALUE_PARTIAL_INFORMATION *info;
 
     /* get filename from registry */
 
     switch (type)
     {
+    case NLS_SECTION_SORTKEYS:
+        if (id) return STATUS_INVALID_PARAMETER_1;
+        buffer[0] = 0;
+        break;
     case NLS_SECTION_CASEMAP:
         if (id) return STATUS_UNSUCCESSFUL;
-        sprintfW( buffer, keyfmtW, langW );
-        sprintfW( value, langfmtW, LANGIDFROMLCID(system_lcid) );
+        NTDLL_swprintf( buffer, keyfmtW, langW );
+        NTDLL_swprintf( value, langfmtW, LANGIDFROMLCID(system_lcid) );
         break;
     case NLS_SECTION_CODEPAGE:
-        sprintfW( buffer, keyfmtW, cpW );
-        sprintfW( value, cpfmtW, id );
+        NTDLL_swprintf( buffer, keyfmtW, cpW );
+        NTDLL_swprintf( value, cpfmtW, id );
         break;
     case NLS_SECTION_NORMALIZE:
-        sprintfW( buffer, keyfmtW, normW );
-        sprintfW( value, normfmtW, id );
+        NTDLL_swprintf( buffer, keyfmtW, normW );
+        NTDLL_swprintf( value, normfmtW, id );
         break;
     default:
         return STATUS_INVALID_PARAMETER_1;
     }
-    RtlInitUnicodeString( &nameW, buffer );
-    RtlInitUnicodeString( &valueW, value );
-    InitializeObjectAttributes( &attr, &nameW, 0, 0, NULL );
-    if (!(status = NtOpenKey( &handle, KEY_READ, &attr )))
+
+    if (buffer[0])
     {
-        info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
-        size = sizeof(buffer) - sizeof(WCHAR);
-        if (!(status = NtQueryValueKey( handle, &valueW, KeyValuePartialInformation, info, size, &size )))
+        RtlInitUnicodeString( &nameW, buffer );
+        RtlInitUnicodeString( &valueW, value );
+        InitializeObjectAttributes( &attr, &nameW, 0, 0, NULL );
+        if (!(status = NtOpenKey( &handle, KEY_READ, &attr )))
         {
-            ((WCHAR *)info->Data)[info->DataLength / sizeof(WCHAR)] = 0;
-            name = (WCHAR *)info->Data;
+            info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
+            size = sizeof(buffer) - sizeof(WCHAR);
+            if (!(status = NtQueryValueKey( handle, &valueW, KeyValuePartialInformation, info, size, &size )))
+            {
+                ((WCHAR *)info->Data)[info->DataLength / sizeof(WCHAR)] = 0;
+                name = (WCHAR *)info->Data;
+            }
+            NtClose( handle );
         }
-        NtClose( handle );
     }
 
     if (!name || !*name)  /* otherwise some hardcoded defaults */
     {
         switch (type)
         {
+        case NLS_SECTION_SORTKEYS:
+            name = sortkeysW;
+            dir = sortdirW;
+            break;
         case NLS_SECTION_CASEMAP:
             name = intlW;
             break;
         case NLS_SECTION_CODEPAGE:
-            sprintfW( buffer, cpdefaultW, id );
+            NTDLL_swprintf( buffer, cpdefaultW, id );
             name = buffer;
             break;
         case NLS_SECTION_NORMALIZE:
@@ -631,15 +649,15 @@ static NTSTATUS open_nls_data_file( ULONG type, ULONG id, HANDLE *file )
 
     /* try to open file in system dir */
 
-    valueW.MaximumLength = (strlenW(name) + strlenW(system_dir) + 5) * sizeof(WCHAR);
+    valueW.MaximumLength = (wcslen(name) + wcslen(dir) + 5) * sizeof(WCHAR);
     if (!(valueW.Buffer = RtlAllocateHeap( GetProcessHeap(), 0, valueW.MaximumLength )))
         return STATUS_NO_MEMORY;
-    valueW.Length = sprintfW( valueW.Buffer, pathfmtW, system_dir, name ) * sizeof(WCHAR);
+    valueW.Length = NTDLL_swprintf( valueW.Buffer, pathfmtW, dir, name ) * sizeof(WCHAR);
     InitializeObjectAttributes( &attr, &valueW, 0, 0, NULL );
     status = NtOpenFile( file, GENERIC_READ, &attr, &io, FILE_SHARE_READ, FILE_SYNCHRONOUS_IO_ALERT );
     if (!status) TRACE( "found %s\n", debugstr_w( valueW.Buffer ));
     RtlFreeUnicodeString( &valueW );
-    if (status != STATUS_OBJECT_NAME_NOT_FOUND) return status;
+    if (status != STATUS_OBJECT_NAME_NOT_FOUND && status != STATUS_OBJECT_PATH_NOT_FOUND) return status;
 
     /* not found, try in build or data dir */
 
@@ -651,14 +669,14 @@ static NTSTATUS open_nls_data_file( ULONG type, ULONG id, HANDLE *file )
         if (RtlQueryEnvironmentVariable_U( NULL, &nameW, &valueW ) != STATUS_BUFFER_TOO_SMALL)
             return status;
     }
-    valueW.MaximumLength = valueW.Length + sizeof(dataprefixW) + strlenW(name) * sizeof(WCHAR);
+    valueW.MaximumLength = valueW.Length + sizeof(dataprefixW) + wcslen(name) * sizeof(WCHAR);
     if (!(valueW.Buffer = RtlAllocateHeap( GetProcessHeap(), 0, valueW.MaximumLength )))
         return STATUS_NO_MEMORY;
     if (!RtlQueryEnvironmentVariable_U( NULL, &nameW, &valueW ))
     {
-        strcatW( valueW.Buffer, dataprefixW );
-        strcatW( valueW.Buffer, name );
-        valueW.Length = strlenW(valueW.Buffer) * sizeof(WCHAR);
+        wcscat( valueW.Buffer, dataprefixW );
+        wcscat( valueW.Buffer, name );
+        valueW.Length = wcslen(valueW.Buffer) * sizeof(WCHAR);
         InitializeObjectAttributes( &attr, &valueW, 0, 0, NULL );
         status = NtOpenFile( file, GENERIC_READ, &attr, &io, FILE_SHARE_READ, FILE_SYNCHRONOUS_IO_ALERT );
         if (!status) TRACE( "found %s\n", debugstr_w( valueW.Buffer ));
@@ -668,215 +686,23 @@ static NTSTATUS open_nls_data_file( ULONG type, ULONG id, HANDLE *file )
 }
 
 
-#if !defined(__APPLE__) && !defined(__ANDROID__)  /* these platforms always use UTF-8 */
-
-/* charset to codepage map, sorted by name */
-static const struct { const char *name; UINT cp; } charset_names[] =
-{
-    { "ANSIX341968", 20127 },
-    { "BIG5", 950 },
-    { "BIG5HKSCS", 950 },
-    { "CP1250", 1250 },
-    { "CP1251", 1251 },
-    { "CP1252", 1252 },
-    { "CP1253", 1253 },
-    { "CP1254", 1254 },
-    { "CP1255", 1255 },
-    { "CP1256", 1256 },
-    { "CP1257", 1257 },
-    { "CP1258", 1258 },
-    { "CP932", 932 },
-    { "CP936", 936 },
-    { "CP949", 949 },
-    { "CP950", 950 },
-    { "EUCJP", 20932 },
-    { "EUCKR", 949 },
-    { "GB18030", 936  /* 54936 */ },
-    { "GB2312", 936 },
-    { "GBK", 936 },
-    { "IBM037", 37 },
-    { "IBM1026", 1026 },
-    { "IBM424", 20424 },
-    { "IBM437", 437 },
-    { "IBM500", 500 },
-    { "IBM850", 850 },
-    { "IBM852", 852 },
-    { "IBM855", 855 },
-    { "IBM857", 857 },
-    { "IBM860", 860 },
-    { "IBM861", 861 },
-    { "IBM862", 862 },
-    { "IBM863", 863 },
-    { "IBM864", 864 },
-    { "IBM865", 865 },
-    { "IBM866", 866 },
-    { "IBM869", 869 },
-    { "IBM874", 874 },
-    { "IBM875", 875 },
-    { "ISO88591", 28591 },
-    { "ISO885913", 28603 },
-    { "ISO885915", 28605 },
-    { "ISO88592", 28592 },
-    { "ISO88593", 28593 },
-    { "ISO88594", 28594 },
-    { "ISO88595", 28595 },
-    { "ISO88596", 28596 },
-    { "ISO88597", 28597 },
-    { "ISO88598", 28598 },
-    { "ISO88599", 28599 },
-    { "KOI8R", 20866 },
-    { "KOI8U", 21866 },
-    { "TIS620", 28601 },
-    { "UTF8", CP_UTF8 }
-};
-
-static void load_unix_cptable( unsigned int cp )
-{
-    const char *build_dir = wine_get_build_dir();
-    const char *data_dir = wine_get_data_dir();
-    const char *dir = build_dir ? build_dir : data_dir;
-    struct stat st;
-    char *name;
-    USHORT *data;
-    int fd;
-
-    if (!(name = RtlAllocateHeap( GetProcessHeap(), 0, strlen(dir) + 22 ))) return;
-    sprintf( name, "%s/nls/c_%03u.nls", dir, cp );
-    if ((fd = open( name, O_RDONLY )) != -1)
-    {
-        fstat( fd, &st );
-        if ((data = RtlAllocateHeap( GetProcessHeap(), 0, st.st_size )) &&
-            st.st_size > 0x10000 &&
-            read( fd, data, st.st_size ) == st.st_size)
-        {
-            RtlInitCodePageTable( data, &unix_table );
-        }
-        else
-        {
-            RtlFreeHeap( GetProcessHeap(), 0, data );
-        }
-        close( fd );
-    }
-    else ERR( "failed to load %s\n", debugstr_a(name) );
-    RtlFreeHeap( GetProcessHeap(), 0, name );
-}
-
 void init_unix_codepage(void)
 {
-    char charset_name[16];
-    const char *name;
-    size_t i, j;
-    int min = 0, max = ARRAY_SIZE(charset_names) - 1;
-
-    setlocale( LC_CTYPE, "" );
-    if (!(name = nl_langinfo( CODESET ))) return;
-
-    /* remove punctuation characters from charset name */
-    for (i = j = 0; name[i] && j < sizeof(charset_name)-1; i++)
-        if (isalnum((unsigned char)name[i])) charset_name[j++] = name[i];
-    charset_name[j] = 0;
-
-    while (min <= max)
-    {
-        int pos = (min + max) / 2;
-        int res = _strnicmp( charset_names[pos].name, charset_name, -1 );
-        if (!res)
-        {
-            if (charset_names[pos].cp != CP_UTF8) load_unix_cptable( charset_names[pos].cp );
-            return;
-        }
-        if (res > 0) max = pos - 1;
-        else min = pos + 1;
-    }
-    ERR( "unrecognized charset '%s'\n", name );
+    unix_funcs->get_unix_codepage( &unix_table );
 }
 
-#else  /* __APPLE__ || __ANDROID__ */
 
-void init_unix_codepage(void)
+static LCID locale_to_lcid( WCHAR *win_name )
 {
-#ifdef __APPLE__
-    const struct norm_table *info;
-    load_norm_table( NormalizationC, &info );
-#endif
-}
-
-#endif  /* __APPLE__ || __ANDROID__ */
-
-/* Unix format is: lang[_country][.charset][@modifier]
- * Windows format is: lang[-script][-country][_modifier] */
-static LCID unix_locale_to_lcid( const char *unix_name )
-{
-    static const WCHAR sepW[] = {'_','.','@',0};
-    static const WCHAR posixW[] = {'P','O','S','I','X',0};
-    static const WCHAR cW[] = {'C',0};
-    static const WCHAR euroW[] = {'e','u','r','o',0};
-    static const WCHAR latinW[] = {'l','a','t','i','n',0};
-    static const WCHAR latnW[] = {'-','L','a','t','n',0};
-    WCHAR buffer[LOCALE_NAME_MAX_LENGTH], win_name[LOCALE_NAME_MAX_LENGTH];
-    WCHAR *p, *country = NULL, *modifier = NULL;
-    DWORD len;
+    WCHAR *p;
     LCID lcid;
-
-    if (!unix_name || !unix_name[0] || !strcmp( unix_name, "C" ))
-    {
-        unix_name = getenv( "LC_ALL" );
-        if (!unix_name || !unix_name[0]) return 0;
-    }
-
-    len = ntdll_umbstowcs( unix_name, strlen(unix_name), buffer, ARRAY_SIZE(buffer) );
-    if (len == ARRAY_SIZE(buffer)) return 0;
-    buffer[len] = 0;
-
-    if (!(p = strpbrkW( buffer, sepW )))
-    {
-        if (!strcmpW( buffer, posixW ) || !strcmpW( buffer, cW ))
-            return MAKELCID( MAKELANGID(LANG_ENGLISH,SUBLANG_DEFAULT), SORT_DEFAULT );
-        strcpyW( win_name, buffer );
-    }
-    else
-    {
-        if (*p == '_')
-        {
-            *p++ = 0;
-            country = p;
-            p = strpbrkW( p, sepW + 1 );
-        }
-        if (p && *p == '.')
-        {
-            *p++ = 0;
-            /* charset, ignore */
-            p = strchrW( p, '@' );
-        }
-        if (p)
-        {
-            *p++ = 0;
-            modifier = p;
-        }
-    }
-
-    /* rebuild a Windows name */
-
-    strcpyW( win_name, buffer );
-    if (modifier)
-    {
-        if (!strcmpW( modifier, latinW )) strcatW( win_name, latnW );
-        else if (!strcmpW( modifier, euroW )) {} /* ignore */
-        else return 0;
-    }
-    if (country)
-    {
-        p = win_name + strlenW(win_name);
-        *p++ = '-';
-        strcpyW( p, country );
-    }
 
     if (!RtlLocaleNameToLcid( win_name, &lcid, 0 )) return lcid;
 
     /* try neutral name */
-    if (country)
+    if ((p = wcsrchr( win_name, '-' )))
     {
-        p[-1] = 0;
+        *p = 0;
         if (!RtlLocaleNameToLcid( win_name, &lcid, 2 ))
         {
             if (SUBLANGID(lcid) == SUBLANG_NEUTRAL)
@@ -893,71 +719,20 @@ static LCID unix_locale_to_lcid( const char *unix_name )
  */
 void init_locale( HMODULE module )
 {
+    WCHAR system_locale[LOCALE_NAME_MAX_LENGTH];
+    WCHAR user_locale[LOCALE_NAME_MAX_LENGTH];
     LCID system_lcid, user_lcid;
+
+#ifdef __APPLE__
+    const struct norm_table *info;
+    load_norm_table( NormalizationC, &info );
+#endif
 
     kernel32_handle = module;
 
-    setlocale( LC_ALL, "" );
-
-    system_lcid = unix_locale_to_lcid( setlocale( LC_CTYPE, NULL ));
-    user_lcid = unix_locale_to_lcid( setlocale( LC_MESSAGES, NULL ));
-
-#ifdef __APPLE__
-    if (!system_lcid)
-    {
-        char buffer[LOCALE_NAME_MAX_LENGTH];
-
-        CFLocaleRef locale = CFLocaleCopyCurrent();
-        CFStringRef lang = CFLocaleGetValue( locale, kCFLocaleLanguageCode );
-        CFStringRef country = CFLocaleGetValue( locale, kCFLocaleCountryCode );
-        CFStringRef locale_string;
-
-        if (country)
-            locale_string = CFStringCreateWithFormat(NULL, NULL, CFSTR("%@_%@"), lang, country);
-        else
-            locale_string = CFStringCreateCopy(NULL, lang);
-
-        CFStringGetCString(locale_string, buffer, sizeof(buffer), kCFStringEncodingUTF8);
-        system_lcid = unix_locale_to_lcid( buffer );
-        CFRelease(locale);
-        CFRelease(locale_string);
-    }
-    if (!user_lcid)
-    {
-        /* Retrieve the preferred language as chosen in System Preferences. */
-        char buffer[LOCALE_NAME_MAX_LENGTH];
-        CFArrayRef preferred_langs = CFLocaleCopyPreferredLanguages();
-        if (preferred_langs && CFArrayGetCount( preferred_langs ))
-        {
-            CFStringRef preferred_lang = CFArrayGetValueAtIndex( preferred_langs, 0 );
-            CFDictionaryRef components = CFLocaleCreateComponentsFromLocaleIdentifier( NULL, preferred_lang );
-            if (components)
-            {
-                CFStringRef lang = CFDictionaryGetValue( components, kCFLocaleLanguageCode );
-                CFStringRef country = CFDictionaryGetValue( components, kCFLocaleCountryCode );
-                CFLocaleRef locale = NULL;
-                CFStringRef locale_string;
-
-                if (!country)
-                {
-                    locale = CFLocaleCopyCurrent();
-                    country = CFLocaleGetValue( locale, kCFLocaleCountryCode );
-                }
-                if (country)
-                    locale_string = CFStringCreateWithFormat( NULL, NULL, CFSTR("%@_%@"), lang, country );
-                else
-                    locale_string = CFStringCreateCopy( NULL, lang );
-                CFStringGetCString( locale_string, buffer, sizeof(buffer), kCFStringEncodingUTF8 );
-                CFRelease( locale_string );
-                if (locale) CFRelease( locale );
-                CFRelease( components );
-                user_lcid = unix_locale_to_lcid( buffer );
-            }
-        }
-        if (preferred_langs) CFRelease( preferred_langs );
-    }
-#endif
-
+    unix_funcs->get_locales( system_locale, user_locale );
+    system_lcid = locale_to_lcid( system_locale );
+    user_lcid = locale_to_lcid( user_locale );
     if (!system_lcid) system_lcid = MAKELCID( MAKELANGID(LANG_ENGLISH,SUBLANG_DEFAULT), SORT_DEFAULT );
     if (!user_lcid) user_lcid = system_lcid;
 
@@ -965,8 +740,6 @@ void init_locale( HMODULE module )
     NtSetDefaultLocale( TRUE, user_lcid );
     NtSetDefaultLocale( FALSE, system_lcid );
     TRACE( "system=%04x user=%04x\n", system_lcid, user_lcid );
-
-    setlocale( LC_NUMERIC, "C" );  /* FIXME: oleaut32 depends on this */
 }
 
 
@@ -1103,6 +876,105 @@ NTSTATUS WINAPI NtSetDefaultUILanguage( LANGID lang )
 NTSTATUS WINAPI NtQueryInstallUILanguage( LANGID *lang )
 {
     *lang = system_ui_language;
+    return STATUS_SUCCESS;
+}
+
+
+static NTSTATUS get_dummy_preferred_ui_language( DWORD flags, LANGID lang, ULONG *count,
+                                                 WCHAR *buffer, ULONG *size )
+{
+    WCHAR name[LOCALE_NAME_MAX_LENGTH + 2];
+    NTSTATUS status;
+    ULONG len;
+
+    FIXME("(0x%x %p %p %p) returning a dummy value (current locale)\n", flags, count, buffer, size);
+
+    status = load_string( (flags & MUI_LANGUAGE_ID) ? LOCALE_ILANGUAGE : LOCALE_SNAME,
+                          lang, name, ARRAY_SIZE(name) );
+    if (status) return status;
+
+    len = wcslen( name ) + 2;
+    name[len - 1] = 0;
+    if (buffer)
+    {
+        if (len > *size)
+        {
+            *size = len;
+            return STATUS_BUFFER_TOO_SMALL;
+        }
+        memcpy( buffer, name, len * sizeof(WCHAR) );
+    }
+    *size = len;
+    *count = 1;
+    TRACE("returned variable content: %d, \"%s\", %d\n", *count, debugstr_w(buffer), *size);
+    return STATUS_SUCCESS;
+
+}
+
+/**************************************************************************
+ *      RtlGetProcessPreferredUILanguages   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlGetProcessPreferredUILanguages( DWORD flags, ULONG *count, WCHAR *buffer, ULONG *size )
+{
+    FIXME( "%08x, %p, %p %p\n", flags, count, buffer, size );
+    return get_dummy_preferred_ui_language( flags, user_ui_language, count, buffer, size );
+}
+
+
+/**************************************************************************
+ *      RtlGetSystemPreferredUILanguages   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlGetSystemPreferredUILanguages( DWORD flags, ULONG unknown, ULONG *count,
+                                                  WCHAR *buffer, ULONG *size )
+{
+    if (flags & ~(MUI_LANGUAGE_NAME | MUI_LANGUAGE_ID | MUI_MACHINE_LANGUAGE_SETTINGS)) return STATUS_INVALID_PARAMETER;
+    if ((flags & MUI_LANGUAGE_NAME) && (flags & MUI_LANGUAGE_ID)) return STATUS_INVALID_PARAMETER;
+    if (*size && !buffer) return STATUS_INVALID_PARAMETER;
+
+    return get_dummy_preferred_ui_language( flags, system_ui_language, count, buffer, size );
+}
+
+
+/**************************************************************************
+ *      RtlGetThreadPreferredUILanguages   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlGetThreadPreferredUILanguages( DWORD flags, ULONG *count, WCHAR *buffer, ULONG *size )
+{
+    FIXME( "%08x, %p, %p %p\n", flags, count, buffer, size );
+    return get_dummy_preferred_ui_language( flags, user_ui_language, count, buffer, size );
+}
+
+
+/**************************************************************************
+ *      RtlGetUserPreferredUILanguages   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlGetUserPreferredUILanguages( DWORD flags, ULONG unknown, ULONG *count,
+                                                WCHAR *buffer, ULONG *size )
+{
+    if (flags & ~(MUI_LANGUAGE_NAME | MUI_LANGUAGE_ID)) return STATUS_INVALID_PARAMETER;
+    if ((flags & MUI_LANGUAGE_NAME) && (flags & MUI_LANGUAGE_ID)) return STATUS_INVALID_PARAMETER;
+    if (*size && !buffer) return STATUS_INVALID_PARAMETER;
+
+    return get_dummy_preferred_ui_language( flags, user_ui_language, count, buffer, size );
+}
+
+
+/**************************************************************************
+ *      RtlSetProcessPreferredUILanguages   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlSetProcessPreferredUILanguages( DWORD flags, PCZZWSTR buffer, ULONG *count )
+{
+    FIXME( "%u, %p, %p\n", flags, buffer, count );
+    return STATUS_SUCCESS;
+}
+
+
+/**************************************************************************
+ *      RtlSetThreadPreferredUILanguages   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlSetThreadPreferredUILanguages( DWORD flags, PCZZWSTR buffer, ULONG *count )
+{
+    FIXME( "%u, %p, %p\n", flags, buffer, count );
     return STATUS_SUCCESS;
 }
 
@@ -1264,6 +1136,40 @@ BOOLEAN WINAPI RtlPrefixUnicodeString( const UNICODE_STRING *s1, const UNICODE_S
             if (s1->Buffer[i] != s2->Buffer[i]) return FALSE;
     }
     return TRUE;
+}
+
+
+
+/******************************************************************************
+ *	RtlHashUnicodeString   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlHashUnicodeString( const UNICODE_STRING *string, BOOLEAN case_insensitive,
+                                      ULONG alg, ULONG *hash )
+{
+    unsigned int i;
+
+    if (!string || !hash) return STATUS_INVALID_PARAMETER;
+
+    switch (alg)
+    {
+    case HASH_STRING_ALGORITHM_DEFAULT:
+    case HASH_STRING_ALGORITHM_X65599:
+        break;
+    default:
+        return STATUS_INVALID_PARAMETER;
+    }
+
+    *hash = 0;
+    if (!case_insensitive)
+        for (i = 0; i < string->Length / sizeof(WCHAR); i++)
+            *hash = *hash * 65599 + string->Buffer[i];
+    else if (nls_info.UpperCaseTable)
+        for (i = 0; i < string->Length / sizeof(WCHAR); i++)
+            *hash = *hash * 65599 + casemap( nls_info.UpperCaseTable, string->Buffer[i] );
+    else  /* locale not setup yet */
+        for (i = 0; i < string->Length / sizeof(WCHAR); i++)
+            *hash = *hash * 65599 + casemap_ascii( string->Buffer[i] );
+    return STATUS_SUCCESS;
 }
 
 
@@ -1441,7 +1347,9 @@ NTSTATUS WINAPI RtlUnicodeToOemN( char *dst, DWORD dstlen, DWORD *reslen,
  */
 WCHAR WINAPI RtlDowncaseUnicodeChar( WCHAR wch )
 {
-    return casemap( nls_info.LowerCaseTable, wch );
+    if (nls_info.LowerCaseTable) return casemap( nls_info.LowerCaseTable, wch );
+    if (wch >= 'A' && wch <= 'Z') wch += 'a' - 'A';
+    return wch;
 }
 
 
@@ -1568,6 +1476,26 @@ NTSTATUS WINAPI RtlUpcaseUnicodeToOemN( char *dst, DWORD dstlen, DWORD *reslen,
 }
 
 
+/*********************************************************************
+ *	towlower   (NTDLL.@)
+ */
+WCHAR __cdecl NTDLL_towlower( WCHAR ch )
+{
+    if (ch >= 0x100) return ch;
+    return casemap( nls_info.LowerCaseTable, ch );
+}
+
+
+/*********************************************************************
+ *           towupper    (NTDLL.@)
+ */
+WCHAR __cdecl NTDLL_towupper( WCHAR ch )
+{
+    if (nls_info.UpperCaseTable) return casemap( nls_info.UpperCaseTable, ch );
+    return casemap_ascii( ch );
+}
+
+
 /******************************************************************
  *      RtlLocaleNameToLcid   (NTDLL.@)
  */
@@ -1594,23 +1522,23 @@ NTSTATUS WINAPI RtlLocaleNameToLcid( const WCHAR *name, LCID *lcid, ULONG flags 
         *lcid = LANG_INVARIANT;
         goto found;
     }
-    if (strlenW( name ) >= LOCALE_NAME_MAX_LENGTH) return STATUS_INVALID_PARAMETER_1;
-    strcpyW( lang, name );
+    if (wcslen( name ) >= LOCALE_NAME_MAX_LENGTH) return STATUS_INVALID_PARAMETER_1;
+    wcscpy( lang, name );
 
-    if ((p = strpbrkW( lang, sepW )) && *p == '-')
+    if ((p = wcspbrk( lang, sepW )) && *p == '-')
     {
         *p++ = 0;
         country = p;
-        if ((p = strpbrkW( p, sepW )) && *p == '-')
+        if ((p = wcspbrk( p, sepW )) && *p == '-')
         {
             *p++ = 0;
             script = country;
             country = p;
-            p = strpbrkW( p, sepW );
+            p = wcspbrk( p, sepW );
         }
         if (p) *p = 0;  /* FIXME: modifier is ignored */
         /* second value can be script or country, check length to resolve the ambiguity */
-        if (!script && strlenW( country ) == 4)
+        if (!script && wcslen( country ) == 4)
         {
             script = country;
             country = NULL;
@@ -1629,24 +1557,24 @@ NTSTATUS WINAPI RtlLocaleNameToLcid( const WCHAR *name, LCID *lcid, ULONG flags 
 
         if (PRIMARYLANGID(id) == LANG_NEUTRAL) continue;
 
-        if (!load_string( LOCALE_SNAME, id, buf, ARRAY_SIZE(buf) ) && !strcmpiW( name, buf ))
+        if (!load_string( LOCALE_SNAME, id, buf, ARRAY_SIZE(buf) ) && !wcsicmp( name, buf ))
         {
             *lcid = MAKELCID( id, SORT_DEFAULT );  /* FIXME: handle sort order */
             goto found;
         }
 
-        if (load_string( LOCALE_SISO639LANGNAME, id, buf, ARRAY_SIZE(buf) ) || strcmpiW( lang, buf ))
+        if (load_string( LOCALE_SISO639LANGNAME, id, buf, ARRAY_SIZE(buf) ) || wcsicmp( lang, buf ))
             continue;
 
         if (script)
         {
-            unsigned int len = strlenW( script );
+            unsigned int len = wcslen( script );
             if (load_string( LOCALE_SSCRIPTS, id, buf, ARRAY_SIZE(buf) )) continue;
             p = buf;
             while (*p)
             {
-                if (!strncmpiW( p, script, len ) && (!p[len] || p[len] == ';')) break;
-                if (!(p = strchrW( p, ';'))) break;
+                if (!wcsnicmp( p, script, len ) && (!p[len] || p[len] == ';')) break;
+                if (!(p = wcschr( p, ';'))) break;
                 p++;
             }
             if (!p || !*p) continue;
@@ -1904,7 +1832,7 @@ NTSTATUS WINAPI RtlIsNormalizedString( ULONG form, const WCHAR *str, INT len, BO
 
     if ((status = load_norm_table( form, &info ))) return status;
 
-    if (len == -1) len = strlenW( str );
+    if (len == -1) len = wcslen( str );
 
     for (i = 0; i < len && result; i += r)
     {
@@ -1934,6 +1862,8 @@ NTSTATUS WINAPI RtlIsNormalizedString( ULONG form, const WCHAR *str, INT len, BO
                 /* ignore other chars in Hangul range */
                 if (ch >= HANGUL_LBASE && ch < HANGUL_LBASE + 0x100) continue;
                 if (ch >= HANGUL_SBASE && ch < HANGUL_SBASE + 0x2c00) continue;
+                /* allow final null */
+                if (!ch && i == len - 1) continue;
                 return STATUS_NO_UNICODE_TRANSLATION;
             }
         }
@@ -1953,7 +1883,7 @@ NTSTATUS WINAPI RtlIsNormalizedString( ULONG form, const WCHAR *str, INT len, BO
         WCHAR *buffer = RtlAllocateHeap( GetProcessHeap(), 0, dstlen * sizeof(WCHAR) );
         if (!buffer) return STATUS_NO_MEMORY;
         status = RtlNormalizeString( form, str, len, buffer, &dstlen );
-        result = !status && (dstlen == len) && !strncmpW( buffer, str, len );
+        result = !status && (dstlen == len) && !wcsncmp( buffer, str, len );
         RtlFreeHeap( GetProcessHeap(), 0, buffer );
     }
     *res = result;
@@ -1975,7 +1905,7 @@ NTSTATUS WINAPI RtlNormalizeString( ULONG form, const WCHAR *src, INT src_len, W
 
     if ((status = load_norm_table( form, &info ))) return status;
 
-    if (src_len == -1) src_len = strlenW(src) + 1;
+    if (src_len == -1) src_len = wcslen(src) + 1;
 
     if (!*dst_len)
     {
@@ -2009,4 +1939,355 @@ NTSTATUS WINAPI RtlNormalizeString( ULONG form, const WCHAR *src, INT src_len, W
     RtlFreeHeap( GetProcessHeap(), 0, buf );
     *dst_len = buf_len;
     return status;
+}
+
+
+/* Punycode parameters */
+enum { BASE = 36, TMIN = 1, TMAX = 26, SKEW = 38, DAMP = 700 };
+
+static BOOL check_invalid_chars( const struct norm_table *info, DWORD flags,
+                                 const unsigned int *buffer, int len )
+{
+    int i;
+
+    for (i = 0; i < len; i++)
+    {
+        switch (buffer[i])
+        {
+        case 0x200c:  /* zero-width non-joiner */
+        case 0x200d:  /* zero-width joiner */
+            if (!i || get_combining_class( info, buffer[i - 1] ) != 9) return TRUE;
+            break;
+        case 0x2260:  /* not equal to */
+        case 0x226e:  /* not less than */
+        case 0x226f:  /* not greater than */
+            if (flags & IDN_USE_STD3_ASCII_RULES) return TRUE;
+            break;
+        }
+        switch (get_char_props( info, buffer[i] ))
+        {
+        case 0xbf:
+            return TRUE;
+        case 0xff:
+            if (buffer[i] >= HANGUL_SBASE && buffer[i] < HANGUL_SBASE + 0x2c00) break;
+            return TRUE;
+        case 0x7f:
+            if (!(flags & IDN_ALLOW_UNASSIGNED)) return TRUE;
+            break;
+        }
+    }
+
+    if ((flags & IDN_USE_STD3_ASCII_RULES) && len && (buffer[0] == '-' || buffer[len - 1] == '-'))
+        return TRUE;
+
+    return FALSE;
+}
+
+
+/******************************************************************************
+ *      RtlIdnToAscii   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlIdnToAscii( DWORD flags, const WCHAR *src, INT srclen, WCHAR *dst, INT *dstlen )
+{
+    static const WCHAR prefixW[] = {'x','n','-','-'};
+    const struct norm_table *info;
+    NTSTATUS status;
+    WCHAR normstr[256], res[256];
+    unsigned int ch, buffer[64];
+    int i, len, start, end, out_label, out = 0, normlen = ARRAY_SIZE(normstr);
+
+    TRACE( "%x %s %p %d\n", flags, debugstr_wn(src, srclen), dst, *dstlen );
+
+    if ((status = load_norm_table( 13, &info ))) return status;
+
+    if ((status = RtlIdnToNameprepUnicode( flags, src, srclen, normstr, &normlen ))) return status;
+
+    /* implementation of Punycode based on RFC 3492 */
+
+    for (start = 0; start < normlen; start = end + 1)
+    {
+        int n = 0x80, bias = 72, delta = 0, b = 0, h, buflen = 0;
+
+        out_label = out;
+        for (i = start; i < normlen; i += len)
+        {
+            if (!(len = get_utf16( normstr + i, normlen - i, &ch ))) break;
+            if (!ch || ch == '.') break;
+            if (ch < 0x80) b++;
+            buffer[buflen++] = ch;
+        }
+        end = i;
+
+        if (b == end - start)
+        {
+            if (end < normlen) b++;
+            if (out + b > ARRAY_SIZE(res)) return STATUS_INVALID_IDN_NORMALIZATION;
+            memcpy( res + out, normstr + start, b * sizeof(WCHAR) );
+            out += b;
+            continue;
+        }
+
+        if (buflen >= 4 && buffer[2] == '-' && buffer[3] == '-') return STATUS_INVALID_IDN_NORMALIZATION;
+        if (check_invalid_chars( info, flags, buffer, buflen )) return STATUS_INVALID_IDN_NORMALIZATION;
+
+        if (out + 5 + b > ARRAY_SIZE(res)) return STATUS_INVALID_IDN_NORMALIZATION;
+        memcpy( res + out, prefixW, sizeof(prefixW) );
+        out += ARRAY_SIZE(prefixW);
+        if (b)
+        {
+            for (i = start; i < end; i++) if (normstr[i] < 0x80) res[out++] = normstr[i];
+            res[out++] = '-';
+        }
+
+        for (h = b; h < buflen; delta++, n++)
+        {
+            int m = 0x10ffff, q, k;
+
+            for (i = 0; i < buflen; i++) if (buffer[i] >= n && m > buffer[i]) m = buffer[i];
+            delta += (m - n) * (h + 1);
+            n = m;
+
+            for (i = 0; i < buflen; i++)
+            {
+                if (buffer[i] == n)
+                {
+                    for (q = delta, k = BASE; ; k += BASE)
+                    {
+                        int t = k <= bias ? TMIN : k >= bias + TMAX ? TMAX : k - bias;
+                        int disp = q < t ? q : t + (q - t) % (BASE - t);
+                        if (out + 1 > ARRAY_SIZE(res)) return STATUS_INVALID_IDN_NORMALIZATION;
+                        res[out++] = disp <= 25 ? 'a' + disp : '0' + disp - 26;
+                        if (q < t) break;
+                        q = (q - t) / (BASE - t);
+                    }
+                    delta /= (h == b ? DAMP : 2);
+                    delta += delta / (h + 1);
+                    for (k = 0; delta > ((BASE - TMIN) * TMAX) / 2; k += BASE) delta /= BASE - TMIN;
+                    bias = k + ((BASE - TMIN + 1) * delta) / (delta + SKEW);
+                    delta = 0;
+                    h++;
+                }
+                else if (buffer[i] < n) delta++;
+            }
+        }
+
+        if (out - out_label > 63) return STATUS_INVALID_IDN_NORMALIZATION;
+
+        if (end < normlen)
+        {
+            if (out + 1 > ARRAY_SIZE(res)) return STATUS_INVALID_IDN_NORMALIZATION;
+            res[out++] = normstr[end];
+        }
+    }
+
+    if (*dstlen)
+    {
+        if (out <= *dstlen) memcpy( dst, res, out * sizeof(WCHAR) );
+        else status = STATUS_BUFFER_TOO_SMALL;
+    }
+    *dstlen = out;
+    return status;
+}
+
+
+/******************************************************************************
+ *      RtlIdnToNameprepUnicode   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlIdnToNameprepUnicode( DWORD flags, const WCHAR *src, INT srclen,
+                                         WCHAR *dst, INT *dstlen )
+{
+    const struct norm_table *info;
+    unsigned int ch;
+    NTSTATUS status;
+    WCHAR buf[256];
+    int i, start, len, buflen = ARRAY_SIZE(buf);
+
+    if (flags & ~(IDN_ALLOW_UNASSIGNED | IDN_USE_STD3_ASCII_RULES)) return STATUS_INVALID_PARAMETER;
+    if (!src || srclen < -1) return STATUS_INVALID_PARAMETER;
+
+    TRACE( "%x %s %p %d\n", flags, debugstr_wn(src, srclen), dst, *dstlen );
+
+    if ((status = load_norm_table( 13, &info ))) return status;
+
+    if (srclen == -1) srclen = wcslen(src) + 1;
+
+    for (i = 0; i < srclen; i++) if (src[i] < 0x20 || src[i] >= 0x7f) break;
+
+    if (i == srclen || (i == srclen - 1 && !src[i]))  /* ascii only */
+    {
+        if (srclen > buflen) return STATUS_INVALID_IDN_NORMALIZATION;
+        memcpy( buf, src, srclen * sizeof(WCHAR) );
+        buflen = srclen;
+    }
+    else if ((status = RtlNormalizeString( 13, src, srclen, buf, &buflen )))
+    {
+        if (status == STATUS_NO_UNICODE_TRANSLATION) status = STATUS_INVALID_IDN_NORMALIZATION;
+        return status;
+    }
+
+    for (i = start = 0; i < buflen; i += len)
+    {
+        if (!(len = get_utf16( buf + i, buflen - i, &ch ))) break;
+        if (!ch) break;
+        if (ch == '.')
+        {
+            if (start == i) return STATUS_INVALID_IDN_NORMALIZATION;
+            /* maximal label length is 63 characters */
+            if (i - start > 63) return STATUS_INVALID_IDN_NORMALIZATION;
+            if ((flags & IDN_USE_STD3_ASCII_RULES) && (buf[start] == '-' || buf[i-1] == '-'))
+                return STATUS_INVALID_IDN_NORMALIZATION;
+            start = i + 1;
+            continue;
+        }
+        if (flags & IDN_USE_STD3_ASCII_RULES)
+        {
+            if ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') ||
+                (ch >= '0' && ch <= '9') || ch == '-') continue;
+            return STATUS_INVALID_IDN_NORMALIZATION;
+        }
+        if (!(flags & IDN_ALLOW_UNASSIGNED))
+        {
+            if (get_char_props( info, ch ) == 0x7f) return STATUS_INVALID_IDN_NORMALIZATION;
+        }
+    }
+    if (!i || i - start > 63) return STATUS_INVALID_IDN_NORMALIZATION;
+    if ((flags & IDN_USE_STD3_ASCII_RULES) && (buf[start] == '-' || buf[i-1] == '-'))
+        return STATUS_INVALID_IDN_NORMALIZATION;
+
+    if (*dstlen)
+    {
+        if (buflen <= *dstlen) memcpy( dst, buf, buflen * sizeof(WCHAR) );
+        else status = STATUS_BUFFER_TOO_SMALL;
+    }
+    *dstlen = buflen;
+    return status;
+}
+
+
+/******************************************************************************
+ *      RtlIdnToUnicode   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlIdnToUnicode( DWORD flags, const WCHAR *src, INT srclen, WCHAR *dst, INT *dstlen )
+{
+    const struct norm_table *info;
+    int i, buflen, start, end, out_label, out = 0;
+    NTSTATUS status;
+    UINT buffer[64];
+    WCHAR ch;
+
+    if (!src || srclen < -1) return STATUS_INVALID_PARAMETER;
+    if (srclen == -1) srclen = wcslen( src ) + 1;
+
+    TRACE( "%x %s %p %d\n", flags, debugstr_wn(src, srclen), dst, *dstlen );
+
+    if ((status = load_norm_table( 13, &info ))) return status;
+
+    for (start = 0; start < srclen; )
+    {
+        int n = 0x80, bias = 72, pos = 0, old_pos, w, k, t, delim = 0, digit, delta;
+
+        out_label = out;
+        for (i = start; i < srclen; i++)
+        {
+            ch = src[i];
+            if (ch > 0x7f || (i != srclen - 1 && !ch)) return STATUS_INVALID_IDN_NORMALIZATION;
+            if (!ch || ch == '.') break;
+            if (ch == '-') delim = i;
+
+            if (!(flags & IDN_USE_STD3_ASCII_RULES)) continue;
+            if ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') ||
+                (ch >= '0' && ch <= '9') || ch == '-')
+                continue;
+            return STATUS_INVALID_IDN_NORMALIZATION;
+        }
+        end = i;
+
+        /* last label may be empty */
+        if (start == end && ch) return STATUS_INVALID_IDN_NORMALIZATION;
+
+        if (end - start < 4 ||
+            (src[start] != 'x' && src[start] != 'X') ||
+            (src[start + 1] != 'n' && src[start + 1] != 'N') ||
+            src[start + 2] != '-' || src[start + 3] != '-')
+        {
+            if (end - start > 63) return STATUS_INVALID_IDN_NORMALIZATION;
+
+            if ((flags & IDN_USE_STD3_ASCII_RULES) && (src[start] == '-' || src[end - 1] == '-'))
+                return STATUS_INVALID_IDN_NORMALIZATION;
+
+            if (end < srclen) end++;
+            if (*dstlen)
+            {
+                if (out + end - start <= *dstlen)
+                    memcpy( dst + out, src + start, (end - start) * sizeof(WCHAR));
+                else return STATUS_BUFFER_TOO_SMALL;
+            }
+            out += end - start;
+            start = end;
+            continue;
+        }
+
+        if (delim == start + 3) delim++;
+        buflen = 0;
+        for (i = start + 4; i < delim && buflen < ARRAY_SIZE(buffer); i++) buffer[buflen++] = src[i];
+        if (buflen) i++;
+        while (i < end)
+        {
+            old_pos = pos;
+            w = 1;
+            for (k = BASE; ; k += BASE)
+            {
+                if (i >= end) return STATUS_INVALID_IDN_NORMALIZATION;
+                ch = src[i++];
+                if (ch >= 'a' && ch <= 'z') digit = ch - 'a';
+                else if (ch >= 'A' && ch <= 'Z') digit = ch - 'A';
+                else if (ch >= '0' && ch <= '9') digit = ch - '0' + 26;
+                else return STATUS_INVALID_IDN_NORMALIZATION;
+                pos += digit * w;
+                t = k <= bias ? TMIN : k >= bias + TMAX ? TMAX : k - bias;
+                if (digit < t) break;
+                w *= BASE - t;
+            }
+
+            delta = (pos - old_pos) / (!old_pos ? DAMP : 2);
+            delta += delta / (buflen + 1);
+            for (k = 0; delta > ((BASE - TMIN) * TMAX) / 2; k += BASE) delta /= BASE - TMIN;
+            bias = k + ((BASE - TMIN + 1) * delta) / (delta + SKEW);
+            n += pos / (buflen + 1);
+            pos %= buflen + 1;
+
+            if (buflen >= ARRAY_SIZE(buffer) - 1) return STATUS_INVALID_IDN_NORMALIZATION;
+            memmove( buffer + pos + 1, buffer + pos, (buflen - pos) * sizeof(*buffer) );
+            buffer[pos++] = n;
+            buflen++;
+        }
+
+        if (check_invalid_chars( info, flags, buffer, buflen )) return STATUS_INVALID_IDN_NORMALIZATION;
+
+        for (i = 0; i < buflen; i++)
+        {
+            int len = 1 + (buffer[i] >= 0x10000);
+            if (*dstlen)
+            {
+                if (out + len <= *dstlen) put_utf16( dst + out, buffer[i] );
+                else return STATUS_BUFFER_TOO_SMALL;
+            }
+            out += len;
+        }
+
+        if (out - out_label > 63) return STATUS_INVALID_IDN_NORMALIZATION;
+
+        if (end < srclen)
+        {
+            if (*dstlen)
+            {
+                if (out + 1 <= *dstlen) dst[out] = src[end];
+                else return STATUS_BUFFER_TOO_SMALL;
+            }
+            out++;
+        }
+        start = end + 1;
+    }
+    *dstlen = out;
+    return STATUS_SUCCESS;
 }

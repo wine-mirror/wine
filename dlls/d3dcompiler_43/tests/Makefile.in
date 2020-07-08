@@ -5,5 +5,6 @@ EXTRADEFS = -DD3D_COMPILER_VERSION=43
 C_SRCS = \
 	asm.c \
 	blob.c \
-	hlsl.c \
+	hlsl_d3d11.c \
+	hlsl_d3d9.c \
 	reflection.c

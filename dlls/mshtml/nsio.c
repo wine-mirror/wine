@@ -1180,7 +1180,7 @@ static nsresult NSAPI nsChannel_SetRequestMethod(nsIHttpChannel *iface,
 
     nsACString_GetData(aRequestMethod, &method);
     for(i=0; i < ARRAY_SIZE(request_method_strings); i++) {
-        if(!_strnicmp(method, request_method_strings[i], -1)) {
+        if(!stricmp(method, request_method_strings[i])) {
             This->request_method = i;
             return NS_OK;
         }

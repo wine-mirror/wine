@@ -94,6 +94,58 @@ typedef enum MF_MEDIA_ENGINE_CREATEFLAGS
     MF_MEDIA_ENGINE_CREATEFLAGS_MASK = 0x1f
 } MF_MEDIA_ENGINE_CREATEFLAGS;
 
+typedef enum MF_MEDIA_ENGINE_EVENT
+{
+    MF_MEDIA_ENGINE_EVENT_LOADSTART = 1,
+    MF_MEDIA_ENGINE_EVENT_PROGRESS = 2,
+    MF_MEDIA_ENGINE_EVENT_SUSPEND = 3,
+    MF_MEDIA_ENGINE_EVENT_ABORT = 4,
+    MF_MEDIA_ENGINE_EVENT_ERROR = 5,
+    MF_MEDIA_ENGINE_EVENT_EMPTIED = 6,
+    MF_MEDIA_ENGINE_EVENT_STALLED = 7,
+    MF_MEDIA_ENGINE_EVENT_PLAY = 8,
+    MF_MEDIA_ENGINE_EVENT_PAUSE = 9,
+    MF_MEDIA_ENGINE_EVENT_LOADEDMETADATA = 10,
+    MF_MEDIA_ENGINE_EVENT_LOADEDDATA = 11,
+    MF_MEDIA_ENGINE_EVENT_WAITING = 12,
+    MF_MEDIA_ENGINE_EVENT_PLAYING = 13,
+    MF_MEDIA_ENGINE_EVENT_CANPLAY = 14,
+    MF_MEDIA_ENGINE_EVENT_CANPLAYTHROUGH = 15,
+    MF_MEDIA_ENGINE_EVENT_SEEKING = 16,
+    MF_MEDIA_ENGINE_EVENT_SEEKED = 17,
+    MF_MEDIA_ENGINE_EVENT_TIMEUPDATE = 18,
+    MF_MEDIA_ENGINE_EVENT_ENDED = 19,
+    MF_MEDIA_ENGINE_EVENT_RATECHANGE = 20,
+    MF_MEDIA_ENGINE_EVENT_DURATIONCHANGE = 21,
+    MF_MEDIA_ENGINE_EVENT_VOLUMECHANGE = 22,
+    MF_MEDIA_ENGINE_EVENT_FORMATCHANGE = 1000,
+    MF_MEDIA_ENGINE_EVENT_PURGEQUEUEDEVENTS  = 1001,
+    MF_MEDIA_ENGINE_EVENT_TIMELINE_MARKER = 1002,
+    MF_MEDIA_ENGINE_EVENT_BALANCECHANGE = 1003,
+    MF_MEDIA_ENGINE_EVENT_DOWNLOADCOMPLETE = 1004,
+    MF_MEDIA_ENGINE_EVENT_BUFFERINGSTARTED = 1005,
+    MF_MEDIA_ENGINE_EVENT_BUFFERINGENDED = 1006,
+    MF_MEDIA_ENGINE_EVENT_FRAMESTEPCOMPLETED = 1007,
+    MF_MEDIA_ENGINE_EVENT_NOTIFYSTABLESTATE = 1008,
+    MF_MEDIA_ENGINE_EVENT_FIRSTFRAMEREADY = 1009,
+    MF_MEDIA_ENGINE_EVENT_TRACKSCHANGE = 1010,
+    MF_MEDIA_ENGINE_EVENT_OPMINFO = 1011,
+    MF_MEDIA_ENGINE_EVENT_RESOURCELOST = 1012,
+    MF_MEDIA_ENGINE_EVENT_DELAYLOADEVENT_CHANGED = 1013,
+    MF_MEDIA_ENGINE_EVENT_STREAMRENDERINGERROR = 1014,
+    MF_MEDIA_ENGINE_EVENT_SUPPORTEDRATES_CHANGED = 1015,
+    MF_MEDIA_ENGINE_EVENT_AUDIOENDPOINTCHANGE = 1016,
+} MF_MEDIA_ENGINE_EVENT;
+
+typedef enum MF_MEDIA_ENGINE_READY
+{
+    MF_MEDIA_ENGINE_READY_HAVE_NOTHING,
+    MF_MEDIA_ENGINE_READY_HAVE_METADATA,
+    MF_MEDIA_ENGINE_READY_HAVE_CURRENT_DATA,
+    MF_MEDIA_ENGINE_READY_HAVE_FUTURE_DATA,
+    MF_MEDIA_ENGINE_READY_HAVE_ENOUGH_DATA,
+} MF_MEDIA_ENGINE_READY;
+
 [
     object,
     uuid(fc0e10d2-ab2a-4501-a951-06bb1075184c),
@@ -192,6 +244,79 @@ interface IMFMediaEngine : IUnknown
     HRESULT TransferVideoFrame([in] IUnknown *surface, [in] const MFVideoNormalizedRect *src,
                                [in] const RECT *dst, [in] const MFARGB *color);
     HRESULT OnVideoStreamTick([out] LONGLONG *time);
+}
+
+typedef enum MF_MEDIA_ENGINE_STATISTIC
+{
+    MF_MEDIA_ENGINE_STATISTIC_FRAMES_RENDERED,
+    MF_MEDIA_ENGINE_STATISTIC_FRAMES_DROPPED,
+    MF_MEDIA_ENGINE_STATISTIC_BYTES_DOWNLOADED,
+    MF_MEDIA_ENGINE_STATISTIC_BUFFER_PROGRESS,
+    MF_MEDIA_ENGINE_STATISTIC_FRAMES_PER_SECOND,
+    MF_MEDIA_ENGINE_STATISTIC_PLAYBACK_JITTER,
+    MF_MEDIA_ENGINE_STATISTIC_FRAMES_CORRUPTED,
+    MF_MEDIA_ENGINE_STATISTIC_TOTAL_FRAME_DELAY,
+} MF_MEDIA_ENGINE_STATISTIC;
+
+typedef enum MF_MEDIA_ENGINE_S3D_PACKING_MODE
+{
+    MF_MEDIA_ENGINE_S3D_PACKING_MODE_NONE,
+    MF_MEDIA_ENGINE_S3D_PACKING_MODE_SIDE_BY_SIDE,
+    MF_MEDIA_ENGINE_S3D_PACKING_MODE_TOP_BOTTOM
+} MF_MEDIA_ENGINE_S3D_PACKING_MODE;
+
+typedef enum MF_MEDIA_ENGINE_SEEK_MODE
+{
+    MF_MEDIA_ENGINE_SEEK_MODE_NORMAL,
+    MF_MEDIA_ENGINE_SEEK_MODE_APPROXIMATE,
+} MF_MEDIA_ENGINE_SEEK_MODE;
+
+[
+    object,
+    uuid(83015ead-b1e6-40d0-a98a-37145ffe1ad1),
+    local,
+    pointer_default(unique)
+]
+interface IMFMediaEngineEx : IMFMediaEngine
+{
+    HRESULT SetSourceFromByteStream([in] IMFByteStream *bytestream, [in] BSTR url);
+    HRESULT GetStatistics([in] MF_MEDIA_ENGINE_STATISTIC stat_id, [out] PROPVARIANT *stat);
+    HRESULT UpdateVideoStream([in] const MFVideoNormalizedRect *src,
+            [in] const RECT *dst, [in] const MFARGB *border_color);
+    double GetBalance();
+    HRESULT SetBalance([in] double balance);
+    BOOL IsPlaybackRateSupported([in] double rate);
+    HRESULT FrameStep([in] BOOL forward);
+    HRESULT GetResourceCharacteristics([out] DWORD *flags);
+    HRESULT GetPresentationAttribute([in] REFGUID attribute, [out] PROPVARIANT *value);
+    HRESULT GetNumberOfStreams([out] DWORD *stream_count);
+    HRESULT GetStreamAttribute([in] DWORD stream_index, [in] REFGUID attribute, [out] PROPVARIANT *value);
+    HRESULT GetStreamSelection([in] DWORD stream_index, [out] BOOL *enabled);
+    HRESULT SetStreamSelection([in] DWORD stream_index, [in] BOOL enabled);
+    HRESULT ApplyStreamSelections();
+    HRESULT IsProtected([out] BOOL *protected);
+    HRESULT InsertVideoEffect([in] IUnknown *effect, [in] BOOL is_optional);
+    HRESULT InsertAudioEffect([in] IUnknown *effect, [in] BOOL is_optional);
+    HRESULT RemoveAllEffects();
+    HRESULT SetTimelineMarkerTimer([in] double timeout);
+    HRESULT GetTimelineMarkerTimer([out] double *timeout);
+    HRESULT CancelTimelineMarkerTimer();
+    BOOL IsStereo3D();
+    HRESULT GetStereo3DFramePackingMode([out] MF_MEDIA_ENGINE_S3D_PACKING_MODE *mode);
+    HRESULT SetStereo3DFramePackingMode([in] MF_MEDIA_ENGINE_S3D_PACKING_MODE mode);
+    HRESULT GetStereo3DRenderMode([out] MF3DVideoOutputType *output_type);
+    HRESULT SetStereo3DRenderMode([in] MF3DVideoOutputType output_type);
+    HRESULT EnableWindowlessSwapchainMode([in] BOOL enable);
+    HRESULT GetVideoSwapchainHandle([out] HANDLE *swapchain);
+    HRESULT EnableHorizontalMirrorMode([in] BOOL enable);
+    HRESULT GetAudioStreamCategory([out] UINT32 *category);
+    HRESULT SetAudioStreamCategory([in] UINT32 category);
+    HRESULT GetAudioEndpointRole([out] UINT32 *role);
+    HRESULT SetAudioEndpointRole([in] UINT32 role);
+    HRESULT GetRealTimeMode([out] BOOL *enabled);
+    HRESULT SetRealTimeMode([in] BOOL enable);
+    HRESULT SetCurrentTimeEx([in] double seektime, [in] MF_MEDIA_ENGINE_SEEK_MODE mode);
+    HRESULT EnableTimeUpdateTimer([in] BOOL enable);
 }
 
 [

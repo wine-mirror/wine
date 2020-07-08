@@ -119,6 +119,10 @@ HRESULT WINAPI D3DX11CreateTextureFromFileW(ID3D11Device *device, const WCHAR *f
 HRESULT WINAPI D3DX11CreateTextureFromMemory(ID3D11Device *device, const void *src_data, SIZE_T src_data_size,
         D3DX11_IMAGE_LOAD_INFO *loadinfo, ID3DX11ThreadPump *pump, ID3D11Resource **texture, HRESULT *hresult);
 HRESULT WINAPI D3DX11FilterTexture(ID3D11DeviceContext *context, ID3D11Resource *texture, UINT src_level, UINT filter);
+HRESULT WINAPI D3DX11GetImageInfoFromFileA(const char *filename, ID3DX11ThreadPump *pump, D3DX11_IMAGE_INFO *img_info,
+        HRESULT *hresult);
+HRESULT WINAPI D3DX11GetImageInfoFromFileW(const WCHAR *filename, ID3DX11ThreadPump *pump, D3DX11_IMAGE_INFO *img_info,
+        HRESULT *hresult);
 HRESULT WINAPI D3DX11GetImageInfoFromMemory(const void *src_data, SIZE_T src_data_size, ID3DX11ThreadPump *pump,
         D3DX11_IMAGE_INFO *img_info, HRESULT *hresult);
 HRESULT WINAPI D3DX11SaveTextureToFileA(ID3D11DeviceContext *context, ID3D11Resource *texture,

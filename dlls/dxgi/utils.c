@@ -503,8 +503,10 @@ unsigned int wined3d_bind_flags_from_dxgi_usage(DXGI_USAGE dxgi_usage)
         wined3d_bind_flags |= WINED3D_BIND_SHADER_RESOURCE;
     if (dxgi_usage & DXGI_USAGE_RENDER_TARGET_OUTPUT)
         wined3d_bind_flags |= WINED3D_BIND_RENDER_TARGET;
+    if (dxgi_usage & DXGI_USAGE_UNORDERED_ACCESS)
+        wined3d_bind_flags |= WINED3D_BIND_UNORDERED_ACCESS;
 
-    dxgi_usage &= ~(DXGI_USAGE_SHADER_INPUT | DXGI_USAGE_RENDER_TARGET_OUTPUT);
+    dxgi_usage &= ~(DXGI_USAGE_SHADER_INPUT | DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_UNORDERED_ACCESS);
     if (dxgi_usage)
         FIXME("Unhandled DXGI usage %#x.\n", dxgi_usage);
     return wined3d_bind_flags;
@@ -559,9 +561,12 @@ static unsigned int wined3d_swapchain_flags_from_dxgi(unsigned int flags)
     return wined3d_flags;
 }
 
-HRESULT wined3d_swapchain_desc_from_dxgi(struct wined3d_swapchain_desc *wined3d_desc, HWND window,
-        const DXGI_SWAP_CHAIN_DESC1 *dxgi_desc, const DXGI_SWAP_CHAIN_FULLSCREEN_DESC *dxgi_fullscreen_desc)
+HRESULT wined3d_swapchain_desc_from_dxgi(struct wined3d_swapchain_desc *wined3d_desc,
+        IDXGIOutput *dxgi_containing_output, HWND window, const DXGI_SWAP_CHAIN_DESC1 *dxgi_desc,
+        const DXGI_SWAP_CHAIN_FULLSCREEN_DESC *dxgi_fullscreen_desc)
 {
+    struct dxgi_output *dxgi_output = unsafe_impl_from_IDXGIOutput(dxgi_containing_output);
+
     if (dxgi_desc->Scaling != DXGI_SCALING_STRETCH)
         FIXME("Ignoring scaling %#x.\n", dxgi_desc->Scaling);
     if (dxgi_desc->AlphaMode != DXGI_ALPHA_MODE_IGNORE)
@@ -590,6 +595,7 @@ HRESULT wined3d_swapchain_desc_from_dxgi(struct wined3d_swapchain_desc *wined3d_
             return DXGI_ERROR_INVALID_CALL;
     }
 
+    wined3d_desc->output = dxgi_output->wined3d_output;
     wined3d_desc->backbuffer_width = dxgi_desc->Width;
     wined3d_desc->backbuffer_height = dxgi_desc->Height;
     wined3d_desc->backbuffer_format = wined3dformat_from_dxgi_format(dxgi_desc->Format);

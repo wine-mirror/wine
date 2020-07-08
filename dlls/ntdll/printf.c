@@ -32,7 +32,6 @@
 #include "windef.h"
 #include "winternl.h"
 #include "ntdll_misc.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
@@ -56,7 +55,7 @@ typedef struct pf_flags_t
 {
     char Sign, LeftAlign, Alternate, PadZero;
     int FieldLength, Precision;
-    char IntegerLength, IntegerDouble;
+    char IntegerLength, IntegerDouble, IntegerNative;
     char WideString;
     char Format;
 } pf_flags;
@@ -71,7 +70,7 @@ static inline int pf_output_stringW( pf_output *out, LPCWSTR str, int len )
     SIZE_T space = out->len - out->used;
 
     if( len < 0 )
-        len = strlenW( str );
+        len = wcslen( str );
     if( out->unicode )
     {
         LPWSTR p = out->buf.W + out->used;
@@ -212,8 +211,15 @@ static inline int pf_output_format_W( pf_output *out, LPCWSTR str,
 {
     int r = 0;
 
-    if( len < 0 )
-        len = strlenW( str );
+    if (len < 0)
+    {
+        /* Do not search past the length specified by the precision. */
+        if (flags->Precision >= 0)
+        {
+            for (len = 0; len < flags->Precision; len++) if (!str[len]) break;
+        }
+        else len = wcslen( str );
+    }
 
     if (flags->Precision >= 0 && flags->Precision < len)
         len = flags->Precision;
@@ -234,8 +240,15 @@ static inline int pf_output_format_A( pf_output *out, LPCSTR str,
 {
     int r = 0;
 
-    if( len < 0 )
-        len = strlen( str );
+    if (len < 0)
+    {
+        /* Do not search past the length specified by the precision. */
+        if (flags->Precision >= 0)
+        {
+            for (len = 0; len < flags->Precision; len++) if (!str[len]) break;
+        }
+        else len = strlen( str );
+    }
 
     if (flags->Precision >= 0 && flags->Precision < len)
         len = flags->Precision;
@@ -271,80 +284,20 @@ static int pf_handle_string_format( pf_output *out, const void* str, int len,
         return pf_output_format_W( out, str, len, flags);
 }
 
-static inline BOOL pf_is_integer_format( char fmt )
-{
-    static const char float_fmts[] = "diouxX";
-    if (!fmt)
-        return FALSE;
-    return strchr( float_fmts, fmt ) != 0;
-}
-
-static inline BOOL pf_is_double_format( char fmt )
-{
-    static const char float_fmts[] = "aeEfgG";
-    if (!fmt)
-        return FALSE;
-    return strchr( float_fmts, fmt ) != 0;
-}
-
-static inline BOOL pf_is_valid_format( char fmt )
-{
-    static const char float_fmts[] = "acCdeEfgGinouxX";
-    if (!fmt)
-        return FALSE;
-    return strchr( float_fmts, fmt ) != 0;
-}
-
-static void pf_rebuild_format_string( char *p, pf_flags *flags )
-{
-    *p++ = '%';
-    if( flags->Sign )
-        *p++ = flags->Sign;
-    if( flags->LeftAlign )
-        *p++ = flags->LeftAlign;
-    if( flags->Alternate )
-        *p++ = flags->Alternate;
-    if( flags->PadZero )
-        *p++ = flags->PadZero;
-    if( flags->FieldLength )
-    {
-        sprintf(p, "%d", flags->FieldLength);
-        p += strlen(p);
-    }
-    if( flags->Precision >= 0 )
-    {
-        sprintf(p, ".%d", flags->Precision);
-        p += strlen(p);
-    }
-    *p++ = flags->Format;
-    *p++ = 0;
-}
-
 /* pf_integer_conv:  prints x to buf, including alternate formats and
    additional precision digits, but not field characters or the sign */
-static void pf_integer_conv( char *buf, int buf_len, pf_flags *flags,
-                             LONGLONG x )
+static void pf_integer_conv( char *buf, pf_flags *flags, LONGLONG x )
 {
     unsigned int base;
     const char *digits;
-
     int i, j, k;
-    char number[40], *tmp = number;
 
-    if( buf_len > sizeof number )
-    {
-        if (!(tmp = RtlAllocateHeap( GetProcessHeap(), 0, buf_len )))
-        {
-            buf[0] = '\0';
-            return;
-        }
-    }
-
-    base = 10;
     if( flags->Format == 'o' )
         base = 8;
     else if( flags->Format == 'x' || flags->Format == 'X' )
         base = 16;
+    else
+        base = 10;
 
     if( flags->Format == 'X' )
         digits = "0123456789ABCDEFX";
@@ -357,82 +310,44 @@ static void pf_integer_conv( char *buf, int buf_len, pf_flags *flags,
         flags->Sign = '-';
     }
 
-    /* Do conversion (backwards) */
     i = 0;
-    if( x == 0 && flags->Precision )
-        tmp[i++] = '0';
+    if( x == 0 )
+    {
+        flags->Alternate = 0;
+        if( flags->Precision )
+            buf[i++] = '0';
+    }
     else
         while( x != 0 )
         {
             j = (ULONGLONG) x % base;
             x = (ULONGLONG) x / base;
-            tmp[i++] = digits[j];
+            buf[i++] = digits[j];
         }
     k = flags->Precision - i;
     while( k-- > 0 )
-        tmp[i++] = '0';
+        buf[i++] = '0';
     if( flags->Alternate )
     {
         if( base == 16 )
         {
-            tmp[i++] = digits[16];
-            tmp[i++] = '0';
+            buf[i++] = digits[16];
+            buf[i++] = '0';
         }
-        else if( base == 8 && tmp[i-1] != '0' )
-            tmp[i++] = '0';
+        else if( base == 8 && buf[i-1] != '0' )
+            buf[i++] = '0';
     }
 
-    /* Reverse for buf */
-    j = 0;
-    while( i-- > 0 )
-        buf[j++] = tmp[i];
-    buf[j] = '\0';
-
     /* Adjust precision so pf_fill won't truncate the number later */
-    flags->Precision = strlen( buf );
+    flags->Precision = i;
 
-    if( tmp != number )
-        RtlFreeHeap( GetProcessHeap(), 0, tmp );
-
-    return;
-}
-
-/* pf_fixup_exponent: convert a string containing a 2 digit exponent
-   to 3 digits, accounting for padding, in place. Needed to match
-   the native printf's which always use 3 digits. */
-static void pf_fixup_exponent( char *buf )
-{
-    char* tmp = buf;
-
-    while (tmp[0] && NTDLL_tolower(tmp[0]) != 'e')
-        tmp++;
-
-    if (tmp[0] && (tmp[1] == '+' || tmp[1] == '-') &&
-        isdigit(tmp[2]) && isdigit(tmp[3]))
-    {
-        char final;
-
-        if (isdigit(tmp[4]))
-            return; /* Exponent already 3 digits */
-
-        /* We have a 2 digit exponent. Prepend '0' to make it 3 */
-        tmp += 2;
-        final = tmp[2];
-        tmp[2] = tmp[1];
-        tmp[1] = tmp[0];
-        tmp[0] = '0';
-        if (final == '\0')
-        {
-            /* We didn't expand into trailing space, so this string isn't left
-             * justified. Terminate the string and strip a ' ' at the start of
-             * the string if there is one (as there may be if the string is
-             * right justified).
-             */
-            tmp[3] = '\0';
-            if (buf[0] == ' ')
-                memmove(buf, buf + 1, (tmp - buf) + 3);
-        }
-        /* Otherwise, we expanded into trailing space -> nothing to do */
+    buf[i] = '\0';
+    j = 0;
+    while(--i > j) {
+        char tmp = buf[j];
+        buf[j] = buf[i];
+        buf[i] = tmp;
+        j++;
     }
 }
 
@@ -454,7 +369,7 @@ static int pf_vsnprintf( pf_output *out, const WCHAR *format, __ms_va_list valis
 
     while (*p)
     {
-        q = strchrW( p, '%' );
+        q = wcschr( p, '%' );
 
         /* there are no % characters left: output the rest of the string */
         if( !q )
@@ -547,7 +462,12 @@ static int pf_vsnprintf( pf_output *out, const WCHAR *format, __ms_va_list valis
         /* deal with integer width modifier */
         while( *p )
         {
-            if( *p == 'h' || *p == 'l' || *p == 'L' )
+            if (*p == 'l' && *(p+1) == 'l')
+            {
+                flags.IntegerDouble++;
+                p += 2;
+            }
+            else if( *p == 'h' || *p == 'l' || *p == 'L' )
             {
                 flags.IntegerLength = *p;
                 p++;
@@ -574,6 +494,13 @@ static int pf_vsnprintf( pf_output *out, const WCHAR *format, __ms_va_list valis
             }
             else if( *p == 'w' )
                 flags.WideString = *p++;
+            else if ((*p == 'z' || *p == 't') && p[1] && strchr("diouxX", p[1]))
+                flags.IntegerNative = *p++;
+            else if (*p == 'j')
+            {
+                flags.IntegerDouble++;
+                p++;
+            }
             else if( *p == 'F' )
                 p++; /* ignore */
             else
@@ -606,12 +533,13 @@ static int pf_vsnprintf( pf_output *out, const WCHAR *format, __ms_va_list valis
         {
             char pointer[32];
             void *ptr = va_arg( valist, void * );
-
+            int prec = flags.Precision;
+            flags.Format = 'X';
+            flags.PadZero = '0';
+            flags.Precision = 2*sizeof(void*);
+            pf_integer_conv( pointer, &flags, (ULONG_PTR)ptr );
             flags.PadZero = 0;
-            if( flags.Alternate )
-                sprintf(pointer, "0X%0*lX", 2 * (int)sizeof(ptr), (ULONG_PTR)ptr);
-            else
-                sprintf(pointer, "%0*lX", 2 * (int)sizeof(ptr), (ULONG_PTR)ptr);
+            flags.Precision = prec;
             r = pf_output_format_A( out, pointer, -1, &flags );
         }
 
@@ -621,60 +549,30 @@ static int pf_vsnprintf( pf_output *out, const WCHAR *format, __ms_va_list valis
             int *x = va_arg(valist, int *);
             *x = out->used;
         }
-
-        /* deal with 64-bit integers */
-        else if( pf_is_integer_format( flags.Format ) && flags.IntegerDouble )
+        else if( flags.Format && strchr("diouxX", flags.Format ))
         {
             char number[40], *x = number;
+            int max_len;
 
-            /* Estimate largest possible required buffer size:
-               * Chooses the larger of the field or precision
-               * Includes extra bytes: 1 byte for null, 1 byte for sign,
-                 4 bytes for exponent, 2 bytes for alternate formats, 1 byte
-                 for a decimal, and 1 byte for an additional float digit. */
-            int x_len = ((flags.FieldLength > flags.Precision) ?
-                        flags.FieldLength : flags.Precision) + 10;
+            /* 0 padding is added after '0x' if Alternate flag is in use */
+            if((flags.Format=='x' || flags.Format=='X') && flags.PadZero && flags.Alternate
+                    && !flags.LeftAlign && flags.Precision<flags.FieldLength-2)
+                flags.Precision = flags.FieldLength - 2;
 
-            if( x_len >= sizeof number)
-                if (!(x = RtlAllocateHeap( GetProcessHeap(), 0, x_len )))
-                    return -1;
+            max_len = (flags.FieldLength>flags.Precision ? flags.FieldLength : flags.Precision) + 10;
+            if(max_len > ARRAY_SIZE(number))
+                if (!(x = RtlAllocateHeap( GetProcessHeap(), 0, max_len ))) return -1;
 
-            pf_integer_conv( x, x_len, &flags, va_arg(valist, LONGLONG) );
+            if(flags.IntegerDouble || (flags.IntegerNative && sizeof(void*) == 8))
+                pf_integer_conv( x, &flags, va_arg(valist, LONGLONG) );
+            else if(flags.Format=='d' || flags.Format=='i')
+                pf_integer_conv( x, &flags, flags.IntegerLength!='h' ?
+                                 va_arg(valist, int) : (short)va_arg(valist, int) );
+            else
+                pf_integer_conv( x, &flags, flags.IntegerLength!='h' ?
+                                 (unsigned int)va_arg(valist, int) : (unsigned short)va_arg(valist, int) );
 
             r = pf_output_format_A( out, x, -1, &flags );
-            if( x != number )
-                RtlFreeHeap( GetProcessHeap(), 0, x );
-        }
-
-        /* deal with integers and floats using libc's printf */
-        else if( pf_is_valid_format( flags.Format ) )
-        {
-            char fmt[20], number[40], *x = number;
-
-            /* Estimate largest possible required buffer size:
-               * Chooses the larger of the field or precision
-               * Includes extra bytes: 1 byte for null, 1 byte for sign,
-                 4 bytes for exponent, 2 bytes for alternate formats, 1 byte
-                 for a decimal, and 1 byte for an additional float digit. */
-            int x_len = ((flags.FieldLength > flags.Precision) ?
-                        flags.FieldLength : flags.Precision) + 10;
-
-            if( x_len >= sizeof number)
-                if (!(x = RtlAllocateHeap( GetProcessHeap(), 0, x_len )))
-                    return -1;
-
-            pf_rebuild_format_string( fmt, &flags );
-
-            if( pf_is_double_format( flags.Format ) )
-            {
-                sprintf( x, fmt, va_arg(valist, double) );
-                if (NTDLL_tolower(flags.Format) == 'e' || NTDLL_tolower(flags.Format) == 'g')
-                    pf_fixup_exponent( x );
-            }
-            else
-                sprintf( x, fmt, va_arg(valist, int) );
-
-            r = pf_output_stringA( out, x, -1 );
             if( x != number )
                 RtlFreeHeap( GetProcessHeap(), 0, x );
         }
@@ -799,6 +697,27 @@ int CDECL _vsnprintf_s( char *str, SIZE_T size, SIZE_T len, const char *format, 
 }
 
 
+/***********************************************************************
+ *                  _vsnwprintf_s   (NTDLL.@)
+ */
+int CDECL _vsnwprintf_s( WCHAR *str, SIZE_T size, SIZE_T len, const WCHAR *format, __ms_va_list args )
+{
+    pf_output out;
+    int r;
+
+    out.unicode = TRUE;
+    out.buf.W = str;
+    out.used = 0;
+    out.len = min( size, len );
+
+    r = pf_vsnprintf( &out, format, args );
+    if (out.used < size) str[out.used] = 0;
+    else str[0] = 0;
+    if (r == size) r = -1;
+    return r;
+}
+
+
 /*********************************************************************
  *                  _snprintf_s   (NTDLL.@)
  */
@@ -815,11 +734,53 @@ int WINAPIV _snprintf_s( char *str, SIZE_T size, SIZE_T len, const char *format,
 
 
 /*********************************************************************
+ *                  _snwprintf_s   (NTDLL.@)
+ */
+int WINAPIV _snwprintf_s( WCHAR *str, SIZE_T size, SIZE_T len, const WCHAR *format, ... )
+{
+    int ret;
+    __ms_va_list valist;
+
+    __ms_va_start( valist, format );
+    ret = _vsnwprintf_s( str, size, len, format, valist );
+    __ms_va_end( valist );
+    return ret;
+}
+
+
+/*********************************************************************
  *                  vsprintf   (NTDLL.@)
  */
 int CDECL NTDLL_vsprintf( char *str, const char *format, __ms_va_list args )
 {
     return NTDLL__vsnprintf( str, size_max, format, args );
+}
+
+
+/*********************************************************************
+ *                  vsprintf_s   (NTDLL.@)
+ */
+int CDECL vsprintf_s( char *str, SIZE_T size, const char *format, __ms_va_list args )
+{
+    return _vsnprintf_s( str, size, size, format, args );
+}
+
+
+/*********************************************************************
+ *                  _vswprintf   (NTDLL.@)
+ */
+int CDECL NTDLL__vswprintf( WCHAR *str, const WCHAR *format, __ms_va_list args )
+{
+    return NTDLL__vsnwprintf( str, size_max, format, args );
+}
+
+
+/*********************************************************************
+ *                  vswprintf_s   (NTDLL.@)
+ */
+int CDECL vswprintf_s( WCHAR *str, SIZE_T size, const WCHAR *format, __ms_va_list args )
+{
+    return _vsnwprintf_s( str, size, size, format, args );
 }
 
 
@@ -838,6 +799,21 @@ int WINAPIV NTDLL_sprintf( char *str, const char *format, ... )
 }
 
 
+/*********************************************************************
+ *                  sprintf_s   (NTDLL.@)
+ */
+int WINAPIV sprintf_s( char *str, SIZE_T size, const char *format, ... )
+{
+    int ret;
+    __ms_va_list valist;
+
+    __ms_va_start( valist, format );
+    ret = vsprintf_s( str, size, format, valist );
+    __ms_va_end( valist );
+    return ret;
+}
+
+
 /***********************************************************************
  *                  swprintf   (NTDLL.@)
  */
@@ -848,6 +824,21 @@ int WINAPIV NTDLL_swprintf( WCHAR *str, const WCHAR *format, ... )
 
     __ms_va_start(valist, format);
     ret = NTDLL__vsnwprintf( str, size_max, format, valist );
+    __ms_va_end(valist);
+    return ret;
+}
+
+
+/***********************************************************************
+ *                  swprintf_s   (NTDLL.@)
+ */
+int WINAPIV swprintf_s( WCHAR *str, SIZE_T size, const WCHAR *format, ... )
+{
+    int ret;
+    __ms_va_list valist;
+
+    __ms_va_start(valist, format);
+    ret = vswprintf_s( str, size, format, valist );
     __ms_va_end(valist);
     return ret;
 }

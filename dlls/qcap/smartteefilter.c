@@ -321,7 +321,7 @@ static const struct strmbase_source_ops preview_ops =
     .pfnDecideAllocator = SmartTeeFilterPreview_DecideAllocator,
 };
 
-IUnknown* WINAPI QCAP_createSmartTeeFilter(IUnknown *outer, HRESULT *phr)
+HRESULT smart_tee_create(IUnknown *outer, IUnknown **out)
 {
     static const WCHAR captureW[] = {'C','a','p','t','u','r','e',0};
     static const WCHAR previewW[] = {'P','r','e','v','i','e','w',0};
@@ -330,10 +330,7 @@ IUnknown* WINAPI QCAP_createSmartTeeFilter(IUnknown *outer, HRESULT *phr)
     HRESULT hr;
 
     if (!(object = CoTaskMemAlloc(sizeof(*object))))
-    {
-        *phr = E_OUTOFMEMORY;
-        return NULL;
-    }
+        return E_OUTOFMEMORY;
     memset(object, 0, sizeof(*object));
 
     strmbase_filter_init(&object->filter, outer, &CLSID_SmartTee, &filter_ops);
@@ -342,14 +339,15 @@ IUnknown* WINAPI QCAP_createSmartTeeFilter(IUnknown *outer, HRESULT *phr)
             &IID_IMemAllocator, (void **)&object->sink.pAllocator);
     if (FAILED(hr))
     {
-        *phr = hr;
         strmbase_filter_cleanup(&object->filter);
-        return NULL;
+        CoTaskMemFree(object);
+        return hr;
     }
 
     strmbase_source_init(&object->capture, &object->filter, captureW, &capture_ops);
     strmbase_source_init(&object->preview, &object->filter, previewW, &preview_ops);
 
-    *phr = S_OK;
-    return &object->filter.IUnknown_inner;
+    TRACE("Created smart tee %p.\n", object);
+    *out = &object->filter.IUnknown_inner;
+    return S_OK;
 }

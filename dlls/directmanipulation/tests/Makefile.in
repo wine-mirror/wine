@@ -1,0 +1,5 @@
+TESTDLL   = directmanipulation.dll
+IMPORTS   = uuid ole32
+
+C_SRCS = \
+	manipulation.c

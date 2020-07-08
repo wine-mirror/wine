@@ -18,9 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-/* Needed for PRODUCT_* defines and GetProductInfo() */
-#define _WIN32_WINNT 0x0600
-
 #include "wine/test.h"
 #include "winbase.h"
 #include "winternl.h"
@@ -193,8 +190,6 @@ static void test_VerifyVersionInfo(void)
         DWORD condition3;
         DWORD typemask4;
         DWORD condition4;
-
-        BOOL todo;
     } verify_version_tests[] =
     {
         {
@@ -610,7 +605,7 @@ static void test_VerifyVersionInfo(void)
 
         if (rtlinfo.dwMajorVersion != 6 || rtlinfo.dwMinorVersion != 2)
         {
-            win_skip("GetVersionEx and VerifyVersionInfo are faking values\n");
+            skip("GetVersionEx and VerifyVersionInfo are faking values\n");
             return;
         }
     }
@@ -665,12 +660,9 @@ static void test_VerifyVersionInfo(void)
 
         SetLastError(0xdeadbeef);
         ret = VerifyVersionInfoA(&info, test->verifymask, mask);
-    todo_wine_if(test->todo)
-    {
         ok(test->err ? !ret : ret, "%u: unexpected return value %d.\n", i, ret);
         if (!ret)
             ok(GetLastError() == test->err, "%u: unexpected error code %d, expected %d.\n", i, GetLastError(), test->err);
-    }
     }
 
     /* test handling of version numbers */

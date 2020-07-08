@@ -99,8 +99,6 @@ typedef enum
     ADS_SEARCHPREF_EXTENDED_DN
 } ADS_SEARCHPREF_ENUM;
 
-typedef ADS_SEARCHPREF_ENUM *PADS_SEARCHPREF_INFO;
-
 typedef enum
 {
     ADS_STATUS_S_OK,
@@ -140,6 +138,13 @@ typedef enum
     ADSTYPE_DN_WITH_BINARY,
     ADSTYPE_DN_WITH_STRING
 } ADSTYPEENUM;
+
+typedef enum
+{
+    ADS_SCOPE_BASE,
+    ADS_SCOPE_ONELEVEL,
+    ADS_SCOPE_SUBTREE
+} ADS_SCOPEENUM;
 
 typedef enum
 {
@@ -320,7 +325,7 @@ typedef struct _adsvalue
         ADS_NT_SECURITY_DESCRIPTOR SecurityDescriptor;
         PADS_DN_WITH_BINARY pDNWithBinary;
         PADS_DN_WITH_STRING pDNWithString;
-    };
+    } DUMMYUNIONNAME;
 } ADSVALUE, *PADSVALUE;
 
 typedef struct ads_searchpref_info
@@ -328,7 +333,7 @@ typedef struct ads_searchpref_info
     ADS_SEARCHPREF dwSearchPref;
     ADSVALUE vValue;
     ADS_STATUS dwStatus;
-} ADS_SEARCHPREF_INFO;
+} ADS_SEARCHPREF_INFO, *PADS_SEARCHPREF_INFO;
 
 typedef struct ads_search_column
 {
@@ -338,6 +343,55 @@ typedef struct ads_search_column
     DWORD dwNumValues;
     HANDLE hReserved;
 } ADS_SEARCH_COLUMN, *PADS_SEARCH_COLUMN;
+
+typedef struct _ads_object_info
+{
+    LPWSTR pszRDN;
+    LPWSTR pszObjectDN;
+    LPWSTR pszParentDN;
+    LPWSTR pszSchemaDN;
+    LPWSTR pszClassName;
+} ADS_OBJECT_INFO, *PADS_OBJECT_INFO;
+
+typedef struct _ads_attr_info
+{
+    LPWSTR pszAttrName;
+    DWORD dwControlCode;
+    ADSTYPE dwADsType;
+    PADSVALUE pADsValues;
+    DWORD dwNumValues;
+} ADS_ATTR_INFO, *PADS_ATTR_INFO;
+
+typedef enum
+{
+    ADS_SECURITY_INFO_OWNER = 0x1,
+    ADS_SECURITY_INFO_GROUP = 0x2,
+    ADS_SECURITY_INFO_DACL  = 0x4,
+    ADS_SECURITY_INFO_SACL  = 0x8
+} ADS_SECURITY_INFO_ENUM;
+
+typedef enum
+{
+    ADS_SETTYPE_FULL = 1,
+    ADS_SETTYPE_PROVIDER = 2,
+    ADS_SETTYPE_SERVER = 3,
+    ADS_SETTYPE_DN = 4
+} ADS_SETTYPE_ENUM;
+
+typedef enum
+{
+    ADS_FORMAT_WINDOWS = 1,
+    ADS_FORMAT_WINDOWS_NO_SERVER = 2,
+    ADS_FORMAT_WINDOWS_DN = 3,
+    ADS_FORMAT_WINDOWS_PARENT = 4,
+    ADS_FORMAT_X500 = 5,
+    ADS_FORMAT_X500_NO_SERVER = 6,
+    ADS_FORMAT_X500_DN = 7,
+    ADS_FORMAT_X500_PARENT = 8,
+    ADS_FORMAT_SERVER = 9,
+    ADS_FORMAT_PROVIDER = 10,
+    ADS_FORMAT_LEAF = 11
+} ADS_FORMAT_ENUM;
 
 /*****************************************************************************
  *    IADsContainer interface
@@ -795,6 +849,23 @@ interface IDirectorySearch : IUnknown
 }
 
 /*****************************************************************************
+ *    IDirectoryObject interface
+ */
+[
+    odl,
+    local,
+    uuid(e798de2c-22e4-11d0-84fe-00c04fd8d503)
+]
+interface IDirectoryObject : IUnknown
+{
+    HRESULT GetObjectInformation(PADS_OBJECT_INFO *info);
+    HRESULT GetObjectAttributes(LPWSTR *names, DWORD count, PADS_ATTR_INFO *attrs, DWORD *count_returned);
+    HRESULT SetObjectAttributes(PADS_ATTR_INFO attrs, DWORD count, DWORD *count_set);
+    HRESULT CreateDSObject(LPWSTR name, PADS_ATTR_INFO attrs, DWORD count, IDispatch **obj);
+    HRESULT DeleteDSObject(LPWSTR name);
+}
+
+/*****************************************************************************
  *    IID_IADsOpenDSObject interface
  */
 [
@@ -806,6 +877,30 @@ interface IDirectorySearch : IUnknown
 interface IADsOpenDSObject : IDispatch
 {
     HRESULT OpenDSObject([in] BSTR path, [in] BSTR user, [in] BSTR password, [in] long reserved, [out,retval] IDispatch **obj);
+}
+
+/*****************************************************************************
+ *   IADsPathname interface
+ */
+[
+    odl,
+    uuid(d592aed4-f420-11d0-a36e-00c04fb950dc),
+    dual,
+    oleautomation
+]
+interface IADsPathname : IDispatch
+{
+    HRESULT Set(BSTR path, long type);
+    HRESULT SetDisplayType(long type);
+    HRESULT Retrieve(long type, BSTR *path);
+    HRESULT GetNumElements(long *count);
+    HRESULT GetElement(long index, BSTR *element);
+    HRESULT AddLeafElement(BSTR element);
+    HRESULT RemoveLeafElement(void);
+    HRESULT CopyPath(IDispatch **path);
+    HRESULT GetEscapedElement(long reserved, BSTR element, BSTR *str);
+    HRESULT get_EscapedMode(long *mode);
+    HRESULT put_EscapedMode(long mode);
 }
 
 /*****************************************************************************

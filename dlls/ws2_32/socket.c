@@ -154,6 +154,7 @@
 #include "winnt.h"
 #define USE_WC_PREFIX   /* For CMSG_DATA */
 #include "iphlpapi.h"
+#include "ip2string.h"
 #include "wine/server.h"
 #include "wine/debug.h"
 #include "wine/exception.h"
@@ -275,6 +276,17 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
       0, 0, { (DWORD_PTR)(__FILE__ ": csWSgetXXXbyYYY") }
 };
 static CRITICAL_SECTION csWSgetXXXbyYYY = { &critsect_debug, -1, 0, 0, 0, 0 };
+
+static in_addr_t *if_addr_cache;
+static unsigned int if_addr_cache_size;
+static CRITICAL_SECTION cs_if_addr_cache;
+static CRITICAL_SECTION_DEBUG cs_if_addr_cache_debug =
+{
+    0, 0, &cs_if_addr_cache,
+    { &cs_if_addr_cache_debug.ProcessLocksList, &cs_if_addr_cache_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": cs_if_addr_cache") }
+};
+static CRITICAL_SECTION cs_if_addr_cache = { &cs_if_addr_cache_debug, -1, 0, 0, 0, 0 };
 
 union generic_unix_sockaddr
 {
@@ -761,6 +773,7 @@ static const int ws_proto_map[][2] =
     MAP_OPTION( IPPROTO_ICMP ),
     MAP_OPTION( IPPROTO_IGMP ),
     MAP_OPTION( IPPROTO_RAW ),
+    MAP_OPTION( IPPROTO_IPIP ),
     {FROM_PROTOCOL_INFO, FROM_PROTOCOL_INFO},
 };
 
@@ -3346,6 +3359,33 @@ static BOOL interface_bind( SOCKET s, int fd, struct sockaddr *addr )
             FIXME("Broadcast packets on interface-bound sockets are not currently supported on this platform, "
                   "receiving broadcast packets will not work on socket %04lx.\n", s);
 #endif
+            if (ret)
+            {
+                EnterCriticalSection(&cs_if_addr_cache);
+                if (if_addr_cache_size <= adapter->Index)
+                {
+                    unsigned int new_size;
+                    in_addr_t *new;
+
+                    new_size = max(if_addr_cache_size * 2, adapter->Index + 1);
+                    if (!(new = heap_realloc(if_addr_cache, sizeof(*if_addr_cache) * new_size)))
+                    {
+                        ERR("No memory.\n");
+                        ret = FALSE;
+                        LeaveCriticalSection(&cs_if_addr_cache);
+                        break;
+                    }
+                    memset(new + if_addr_cache_size, 0, sizeof(*if_addr_cache)
+                            * (new_size - if_addr_cache_size));
+                    if_addr_cache = new;
+                    if_addr_cache_size = new_size;
+                }
+                if (if_addr_cache[adapter->Index] && if_addr_cache[adapter->Index] != adapter_addr)
+                    WARN("Adapter addr for iface index %u has changed.\n", adapter->Index);
+
+                if_addr_cache[adapter->Index] = adapter_addr;
+                LeaveCriticalSection(&cs_if_addr_cache);
+            }
             break;
         }
     }
@@ -3750,27 +3790,12 @@ static void interface_bind_check(int fd, struct sockaddr_in *addr)
 #endif
     if (!ret)
     {
-        PIP_ADAPTER_INFO adapters, adapter;
-        DWORD adap_size;
-
-        if (GetAdaptersInfo(NULL, &adap_size) != ERROR_BUFFER_OVERFLOW)
-            return;
-        adapters = HeapAlloc(GetProcessHeap(), 0, adap_size);
-        if (adapters && GetAdaptersInfo(adapters, &adap_size) == NO_ERROR)
-        {
-            /* Search the IPv4 adapter list for the appropriate bound interface */
-            for (adapter = adapters; adapter != NULL; adapter = adapter->Next)
-            {
-                in_addr_t adapter_addr;
-                if (adapter->Index != ifindex) continue;
-
-                adapter_addr = inet_addr(adapter->IpAddressList.IpAddress.String);
-                addr->sin_addr.s_addr = adapter_addr;
-                TRACE("reporting interface address from adapter %d\n", ifindex);
-                break;
-            }
-        }
-        HeapFree(GetProcessHeap(), 0, adapters);
+        EnterCriticalSection(&cs_if_addr_cache);
+        if (ifindex < if_addr_cache_size)
+            addr->sin_addr.s_addr = if_addr_cache[ifindex];
+        else
+            ERR("No cache entry for ifindex %u.\n", ifindex);
+        LeaveCriticalSection(&cs_if_addr_cache);
     }
 #endif
 }
@@ -7244,6 +7269,24 @@ void WINAPI FreeAddrInfoW(PADDRINFOW ai)
 }
 
 /***********************************************************************
+ *      FreeAddrInfoEx      (WS2_32.@)
+ */
+void WINAPI FreeAddrInfoEx(ADDRINFOEXA *ai)
+{
+    TRACE("(%p)\n", ai);
+
+    while (ai)
+    {
+        ADDRINFOEXA *next;
+        HeapFree(GetProcessHeap(), 0, ai->ai_canonname);
+        HeapFree(GetProcessHeap(), 0, ai->ai_addr);
+        next = ai->ai_next;
+        HeapFree(GetProcessHeap(), 0, ai);
+        ai = next;
+    }
+}
+
+/***********************************************************************
  *      FreeAddrInfoExW      (WS2_32.@)
  */
 void WINAPI FreeAddrInfoExW(ADDRINFOEXW *ai)
@@ -8349,10 +8392,8 @@ int WINAPI WSARemoveServiceClass(LPGUID info)
  */
 PCSTR WINAPI WS_inet_ntop( INT family, PVOID addr, PSTR buffer, SIZE_T len )
 {
-#ifdef HAVE_INET_NTOP
-    struct WS_in6_addr *in6;
-    struct WS_in_addr  *in;
-    PCSTR pdst;
+    NTSTATUS status;
+    ULONG size = min( len, (ULONG)-1 );
 
     TRACE("family %d, addr (%p), buffer (%p), len %ld\n", family, addr, buffer, len);
     if (!buffer)
@@ -8365,14 +8406,12 @@ PCSTR WINAPI WS_inet_ntop( INT family, PVOID addr, PSTR buffer, SIZE_T len )
     {
     case WS_AF_INET:
     {
-        in = addr;
-        pdst = inet_ntop( AF_INET, &in->WS_s_addr, buffer, len );
+        status = RtlIpv4AddressToStringExA( (IN_ADDR *)addr, 0, buffer, &size );
         break;
     }
     case WS_AF_INET6:
     {
-        in6 = addr;
-        pdst = inet_ntop( AF_INET6, in6->WS_s6_addr, buffer, len );
+        status = RtlIpv6AddressToStringExA( (IN6_ADDR *)addr, 0, 0, buffer, &size );
         break;
     }
     default:
@@ -8380,22 +8419,18 @@ PCSTR WINAPI WS_inet_ntop( INT family, PVOID addr, PSTR buffer, SIZE_T len )
         return NULL;
     }
 
-    if (!pdst) SetLastError( STATUS_INVALID_PARAMETER );
-    return pdst;
-#else
-    FIXME( "not supported on this platform\n" );
-    SetLastError( WSAEAFNOSUPPORT );
+    if (status == STATUS_SUCCESS) return buffer;
+    SetLastError( STATUS_INVALID_PARAMETER );
     return NULL;
-#endif
 }
 
 /***********************************************************************
 *              inet_pton                      (WS2_32.@)
 */
-INT WINAPI WS_inet_pton( INT family, PCSTR addr, PVOID buffer)
+INT WINAPI WS_inet_pton(INT family, const char *addr, void *buffer)
 {
-#ifdef HAVE_INET_PTON
-    int unixaf, ret;
+    NTSTATUS status;
+    const char *terminator;
 
     TRACE("family %d, addr %s, buffer (%p)\n", family, debugstr_a(addr), buffer);
 
@@ -8405,21 +8440,20 @@ INT WINAPI WS_inet_pton( INT family, PCSTR addr, PVOID buffer)
         return SOCKET_ERROR;
     }
 
-    unixaf = convert_af_w2u(family);
-    if (unixaf != AF_INET && unixaf != AF_INET6)
+    switch (family)
     {
+    case WS_AF_INET:
+        status = RtlIpv4StringToAddressA(addr, TRUE, &terminator, buffer);
+        break;
+    case WS_AF_INET6:
+        status = RtlIpv6StringToAddressA(addr, &terminator, buffer);
+        break;
+    default:
         SetLastError(WSAEAFNOSUPPORT);
         return SOCKET_ERROR;
     }
 
-    ret = inet_pton(unixaf, addr, buffer);
-    if (ret == -1) SetLastError(wsaErrno());
-    return ret;
-#else
-    FIXME( "not supported on this platform\n" );
-    SetLastError( WSAEAFNOSUPPORT );
-    return SOCKET_ERROR;
-#endif
+    return (status == STATUS_SUCCESS && *terminator == 0);
 }
 
 /***********************************************************************
@@ -8448,6 +8482,7 @@ INT WINAPI InetPtonW(INT family, PCWSTR addr, PVOID buffer)
     WideCharToMultiByte(CP_ACP, 0, addr, -1, addrA, len, NULL, NULL);
 
     ret = WS_inet_pton(family, addrA, buffer);
+    if (!ret) SetLastError(WSAEINVAL);
 
     HeapFree(GetProcessHeap(), 0, addrA);
     return ret;
@@ -8483,7 +8518,7 @@ INT WINAPI WSAStringToAddressA(LPSTR AddressString,
                                LPINT lpAddressLength)
 {
     INT res=0;
-    LPSTR workBuffer=NULL,ptrPort;
+    NTSTATUS status;
 
     TRACE( "(%s, %x, %p, %p, %p)\n", debugstr_a(AddressString), AddressFamily,
            lpProtocolInfo, lpAddress, lpAddressLength );
@@ -8499,21 +8534,11 @@ INT WINAPI WSAStringToAddressA(LPSTR AddressString,
     if (lpProtocolInfo)
         FIXME("ProtocolInfo not implemented.\n");
 
-    workBuffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                            strlen(AddressString) + 1);
-    if (!workBuffer)
-    {
-        SetLastError(WSA_NOT_ENOUGH_MEMORY);
-        return SOCKET_ERROR;
-    }
-
-    strcpy(workBuffer, AddressString);
-
     switch(AddressFamily)
     {
     case WS_AF_INET:
     {
-        struct in_addr inetaddr;
+        SOCKADDR_IN *addr4 = (SOCKADDR_IN *)lpAddress;
 
         /* If lpAddressLength is too small, tell caller the size we need */
         if (*lpAddressLength < sizeof(SOCKADDR_IN))
@@ -8522,38 +8547,21 @@ INT WINAPI WSAStringToAddressA(LPSTR AddressString,
             res = WSAEFAULT;
             break;
         }
-        *lpAddressLength = sizeof(SOCKADDR_IN);
         memset(lpAddress, 0, sizeof(SOCKADDR_IN));
 
-        ((LPSOCKADDR_IN)lpAddress)->sin_family = WS_AF_INET;
-
-        ptrPort = strchr(workBuffer, ':');
-        if(ptrPort)
+        status = RtlIpv4StringToAddressExA(AddressString, FALSE, &addr4->sin_addr, &addr4->sin_port);
+        if (status != STATUS_SUCCESS)
         {
-            /* User may have entered an IPv6 and asked to parse as IPv4 */
-            if(strchr(ptrPort + 1, ':'))
-            {
-                res = WSAEINVAL;
-                break;
-            }
-            ((LPSOCKADDR_IN)lpAddress)->sin_port = htons(atoi(ptrPort+1));
-            *ptrPort = '\0';
-        }
-
-        if(inet_aton(workBuffer, &inetaddr) > 0)
-        {
-            ((LPSOCKADDR_IN)lpAddress)->sin_addr.WS_s_addr = inetaddr.s_addr;
-            res = 0;
-        }
-        else
             res = WSAEINVAL;
-
+            break;
+        }
+        addr4->sin_family = WS_AF_INET;
+        *lpAddressLength = sizeof(SOCKADDR_IN);
         break;
     }
     case WS_AF_INET6:
     {
-        struct in6_addr inetaddr;
-        char *ptrAddr = workBuffer;
+        SOCKADDR_IN6 *addr6 = (SOCKADDR_IN6 *)lpAddress;
 
         /* If lpAddressLength is too small, tell caller the size we need */
         if (*lpAddressLength < sizeof(SOCKADDR_IN6))
@@ -8562,42 +8570,16 @@ INT WINAPI WSAStringToAddressA(LPSTR AddressString,
             res = WSAEFAULT;
             break;
         }
-#ifdef HAVE_INET_PTON
-        *lpAddressLength = sizeof(SOCKADDR_IN6);
         memset(lpAddress, 0, sizeof(SOCKADDR_IN6));
 
-        ((LPSOCKADDR_IN6)lpAddress)->sin6_family = WS_AF_INET6;
-
-        /* Valid IPv6 addresses can also be surrounded by [ ], and in this case
-         * a port number may follow after like in [fd12:3456:7890::1]:12345
-         * We need to cut the brackets and find the port if any. */
-
-        if(*workBuffer == '[')
+        status = RtlIpv6StringToAddressExA(AddressString, &addr6->sin6_addr, &addr6->sin6_scope_id, &addr6->sin6_port);
+        if (status != STATUS_SUCCESS)
         {
-            ptrPort = strchr(workBuffer, ']');
-            if (!ptrPort)
-            {
-                SetLastError(WSAEINVAL);
-                return SOCKET_ERROR;
-            }
-
-            if (ptrPort[1] == ':')
-                ((LPSOCKADDR_IN6)lpAddress)->sin6_port = htons(atoi(ptrPort + 2));
-
-            *ptrPort = '\0';
-            ptrAddr = workBuffer + 1;
-        }
-
-        if(inet_pton(AF_INET6, ptrAddr, &inetaddr) > 0)
-        {
-            memcpy(&((LPSOCKADDR_IN6)lpAddress)->sin6_addr, &inetaddr,
-                    sizeof(struct in6_addr));
-            res = 0;
-        }
-        else
-#endif /* HAVE_INET_PTON */
             res = WSAEINVAL;
-
+            break;
+        }
+        addr6->sin6_family = WS_AF_INET6;
+        *lpAddressLength = sizeof(SOCKADDR_IN6);
         break;
     }
     default:
@@ -8605,8 +8587,6 @@ INT WINAPI WSAStringToAddressA(LPSTR AddressString,
         TRACE("Unsupported address family specified: %d.\n", AddressFamily);
         res = WSAEINVAL;
     }
-
-    HeapFree(GetProcessHeap(), 0, workBuffer);
 
     if (!res) return 0;
     SetLastError(res);
@@ -8999,6 +8979,27 @@ INT WINAPI WSCEnableNSProvider( LPGUID provider, BOOL enable )
 {
     FIXME( "(%s 0x%08x) Stub!\n", debugstr_guid(provider), enable );
     return 0;
+}
+
+/***********************************************************************
+ *              WSCGetProviderInfo
+ */
+INT WINAPI WSCGetProviderInfo( LPGUID provider, WSC_PROVIDER_INFO_TYPE info_type,
+                               PBYTE info, size_t* len, DWORD flags, LPINT errcode )
+{
+    FIXME( "(%s 0x%08x %p %p 0x%08x %p) Stub!\n",
+           debugstr_guid(provider), info_type, info, len, flags, errcode );
+
+    if (!errcode)
+        return SOCKET_ERROR;
+
+    if (!provider) {
+        *errcode = WSAEFAULT;
+        return SOCKET_ERROR;
+    }
+
+    *errcode = WSANO_RECOVERY;
+    return SOCKET_ERROR;
 }
 
 /***********************************************************************

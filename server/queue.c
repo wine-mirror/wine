@@ -89,7 +89,7 @@ struct message
 struct timer
 {
     struct list     entry;     /* entry in timer list */
-    timeout_t       when;      /* next expiration */
+    abstime_t       when;      /* next expiration */
     unsigned int    rate;      /* timer rate in ms */
     user_handle_t   win;       /* window handle */
     unsigned int    msg;       /* message to post */
@@ -1154,7 +1154,7 @@ static void set_next_timer( struct msg_queue *queue )
     if ((ptr = list_head( &queue->pending_timers )))
     {
         struct timer *timer = LIST_ENTRY( ptr, struct timer, entry );
-        queue->timeout = add_timeout_user( timer->when, timer_callback, queue );
+        queue->timeout = add_timeout_user( abstime_to_timeout(timer->when), timer_callback, queue );
     }
     /* set/clear QS_TIMER bit */
     if (list_empty( &queue->expired_timers ))
@@ -1206,7 +1206,7 @@ static void link_timer( struct msg_queue *queue, struct timer *timer )
     for (ptr = queue->pending_timers.next; ptr != &queue->pending_timers; ptr = ptr->next)
     {
         struct timer *t = LIST_ENTRY( ptr, struct timer, entry );
-        if (t->when >= timer->when) break;
+        if (t->when <= timer->when) break;
     }
     list_add_before( ptr, &timer->entry );
 }
@@ -1223,7 +1223,7 @@ static void free_timer( struct msg_queue *queue, struct timer *timer )
 static void restart_timer( struct msg_queue *queue, struct timer *timer )
 {
     list_remove( &timer->entry );
-    while (timer->when <= current_time) timer->when += (timeout_t)timer->rate * 10000;
+    while (-timer->when <= monotonic_time) timer->when -= (timeout_t)timer->rate * 10000;
     link_timer( queue, timer );
     set_next_timer( queue );
 }
@@ -1255,7 +1255,7 @@ static struct timer *set_timer( struct msg_queue *queue, unsigned int rate )
     if (timer)
     {
         timer->rate = max( rate, 1 );
-        timer->when = current_time + (timeout_t)timer->rate * 10000;
+        timer->when = -monotonic_time - (timeout_t)timer->rate * 10000;
         link_timer( queue, timer );
         /* check if we replaced the next timer */
         if (list_head( &queue->pending_timers ) == &timer->entry) set_next_timer( queue );

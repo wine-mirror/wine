@@ -35,6 +35,7 @@
 #define WIN32_NO_STATUS
 #include "windef.h"
 #include "winternl.h"
+#include "ddk/wdm.h"
 
 #include "file.h"
 #include "handle.h"
@@ -126,6 +127,7 @@ struct memory_view
     struct fd      *fd;              /* fd for mapped file */
     struct ranges  *committed;       /* list of committed ranges in this mapping */
     struct shared_map *shared;       /* temp file for shared PE mapping */
+    pe_image_info_t image;           /* image info (for PE image mapping) */
     unsigned int    flags;           /* SEC_* flags */
     client_ptr_t    base;            /* view base address (in process addr space) */
     mem_size_t      size;            /* view size */
@@ -579,7 +581,7 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
         } opt;
     } nt;
     off_t pos;
-    int size;
+    int size, opt_size;
     size_t mz_size, clr_va, clr_size;
     unsigned int i, cpu_mask = get_supported_cpu_mask();
 
@@ -595,7 +597,8 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
     size = pread( unix_fd, &nt, sizeof(nt), pos );
     if (size < sizeof(nt.Signature) + sizeof(nt.FileHeader)) return STATUS_INVALID_IMAGE_PROTECT;
     /* zero out Optional header in the case it's not present or partial */
-    size = min( size, sizeof(nt.Signature) + sizeof(nt.FileHeader) + nt.FileHeader.SizeOfOptionalHeader );
+    opt_size = max( nt.FileHeader.SizeOfOptionalHeader, offsetof( IMAGE_OPTIONAL_HEADER32, CheckSum ));
+    size = min( size, sizeof(nt.Signature) + sizeof(nt.FileHeader) + opt_size );
     if (size < sizeof(nt)) memset( (char *)&nt + size, 0, sizeof(nt) - size );
     if (nt.Signature != IMAGE_NT_SIGNATURE)
     {
@@ -779,10 +782,10 @@ static unsigned int get_mapping_flags( obj_handle_t handle, unsigned int flags )
 }
 
 
-static struct object *create_mapping( struct object *root, const struct unicode_str *name,
-                                      unsigned int attr, mem_size_t size, unsigned int flags,
-                                      obj_handle_t handle, unsigned int file_access,
-                                      const struct security_descriptor *sd )
+static struct mapping *create_mapping( struct object *root, const struct unicode_str *name,
+                                       unsigned int attr, mem_size_t size, unsigned int flags,
+                                       obj_handle_t handle, unsigned int file_access,
+                                       const struct security_descriptor *sd )
 {
     struct mapping *mapping;
     struct file *file;
@@ -795,7 +798,7 @@ static struct object *create_mapping( struct object *root, const struct unicode_
     if (!(mapping = create_named_object( root, &mapping_ops, name, attr, sd )))
         return NULL;
     if (get_error() == STATUS_OBJECT_NAME_EXISTS)
-        return &mapping->obj;  /* Nothing else to do */
+        return mapping;  /* Nothing else to do */
 
     mapping->size        = size;
     mapping->fd          = NULL;
@@ -834,7 +837,7 @@ static struct object *create_mapping( struct object *root, const struct unicode_
         if (flags & SEC_IMAGE)
         {
             unsigned int err = get_image_params( mapping, st.st_size, unix_fd );
-            if (!err) return &mapping->obj;
+            if (!err) return mapping;
             set_error( err );
             goto error;
         }
@@ -870,14 +873,14 @@ static struct object *create_mapping( struct object *root, const struct unicode_
                                                  FILE_SYNCHRONOUS_IO_NONALERT ))) goto error;
         allow_fd_caching( mapping->fd );
     }
-    return &mapping->obj;
+    return mapping;
 
  error:
     release_object( mapping );
     return NULL;
 }
 
-struct mapping *get_mapping_obj( struct process *process, obj_handle_t handle, unsigned int access )
+static struct mapping *get_mapping_obj( struct process *process, obj_handle_t handle, unsigned int access )
 {
     return (struct mapping *)get_handle_obj( process, handle, access, &mapping_ops );
 }
@@ -890,6 +893,15 @@ struct file *get_mapping_file( struct process *process, client_ptr_t base,
 
     if (!view || !view->fd) return NULL;
     return create_file_for_fd_obj( view->fd, access, sharing );
+}
+
+/* get the image info for a SEC_IMAGE mapping */
+const pe_image_info_t *get_mapping_image_info( struct process *process, client_ptr_t base )
+{
+    struct memory_view *view = find_mapped_view( process, base );
+
+    if (!view || !(view->flags & SEC_IMAGE)) return NULL;
+    return &view->image;
 }
 
 static void mapping_dump( struct object *obj, int verbose )
@@ -943,25 +955,39 @@ int get_page_size(void)
     return page_mask + 1;
 }
 
+struct object *create_user_data_mapping( struct object *root, const struct unicode_str *name,
+                                        unsigned int attr, const struct security_descriptor *sd )
+{
+    void *ptr;
+    struct mapping *mapping;
+
+    if (!(mapping = create_mapping( root, name, OBJ_OPENIF, sizeof(KSHARED_USER_DATA),
+                                    SEC_COMMIT, 0, FILE_READ_DATA | FILE_WRITE_DATA, NULL ))) return NULL;
+    ptr = mmap( NULL, mapping->size, PROT_WRITE, MAP_SHARED, get_unix_fd( mapping->fd ), 0 );
+    if (ptr != MAP_FAILED) user_shared_data = ptr;
+    return &mapping->obj;
+}
+
 /* create a file mapping */
 DECL_HANDLER(create_mapping)
 {
-    struct object *root, *obj;
+    struct object *root;
+    struct mapping *mapping;
     struct unicode_str name;
     const struct security_descriptor *sd;
     const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, &root );
 
     if (!objattr) return;
 
-    if ((obj = create_mapping( root, &name, objattr->attributes, req->size, req->flags,
-                               req->file_handle, req->file_access, sd )))
+    if ((mapping = create_mapping( root, &name, objattr->attributes, req->size, req->flags,
+                                   req->file_handle, req->file_access, sd )))
     {
         if (get_error() == STATUS_OBJECT_NAME_EXISTS)
-            reply->handle = alloc_handle( current->process, obj, req->access, objattr->attributes );
+            reply->handle = alloc_handle( current->process, &mapping->obj, req->access, objattr->attributes );
         else
-            reply->handle = alloc_handle_no_access_check( current->process, obj,
+            reply->handle = alloc_handle_no_access_check( current->process, &mapping->obj,
                                                           req->access, objattr->attributes );
-        release_object( obj );
+        release_object( mapping );
     }
 
     if (root) release_object( root );
@@ -1049,6 +1075,7 @@ DECL_HANDLER(map_view)
         view->fd        = !is_fd_removable( mapping->fd ) ? (struct fd *)grab_object( mapping->fd ) : NULL;
         view->committed = mapping->committed ? (struct ranges *)grab_object( mapping->committed ) : NULL;
         view->shared    = mapping->shared ? (struct shared_map *)grab_object( mapping->shared ) : NULL;
+        if (mapping->flags & SEC_IMAGE) view->image = mapping->image;
         list_add_tail( &current->process->views, &view->entry );
     }
 

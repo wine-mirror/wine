@@ -18,8 +18,8 @@
 @ stdcall GetLocaleInfoA(long long ptr long) kernel32.GetLocaleInfoA
 @ stdcall GetLocaleInfoEx(wstr long ptr long) kernel32.GetLocaleInfoEx
 @ stdcall GetLocaleInfoW(long long ptr long) kernel32.GetLocaleInfoW
-@ stub GetNLSVersion
-@ stub GetNLSVersionEx
+@ stdcall GetNLSVersion(long long ptr) kernel32.GetNLSVersion
+@ stdcall GetNLSVersionEx(long wstr ptr) kernel32.GetNLSVersionEx
 @ stdcall GetOEMCP() kernel32.GetOEMCP
 @ stdcall GetProcessPreferredUILanguages(long ptr ptr ptr) kernel32.GetProcessPreferredUILanguages
 @ stdcall GetSystemDefaultLCID() kernel32.GetSystemDefaultLCID
@@ -43,7 +43,7 @@
 @ stdcall IsValidLanguageGroup(long long) kernel32.IsValidLanguageGroup
 @ stdcall IsValidLocale(long long) kernel32.IsValidLocale
 @ stdcall IsValidLocaleName(wstr) kernel32.IsValidLocaleName
-@ stub IsValidNLSVersion
+@ stdcall IsValidNLSVersion(long wstr ptr) kernel32.IsValidNLSVersion
 @ stdcall LCMapStringA(long long str long ptr long) kernel32.LCMapStringA
 @ stdcall LCMapStringEx(wstr long wstr long ptr long ptr ptr long) kernel32.LCMapStringEx
 @ stdcall LCMapStringW(long long wstr long ptr long) kernel32.LCMapStringW

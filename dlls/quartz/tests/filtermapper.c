@@ -23,15 +23,57 @@
 #include "wine/test.h"
 #include "winbase.h"
 #include "dshow.h"
-#include "winternl.h"
+#include "mediaobj.h"
 #include "initguid.h"
+#include "dmo.h"
 #include "wine/fil_data.h"
+
+static const GUID testclsid = {0x77777777};
+
+static IFilterMapper3 *create_mapper(void)
+{
+    IFilterMapper3 *ret;
+    HRESULT hr;
+    hr = CoCreateInstance(&CLSID_FilterMapper2, NULL, CLSCTX_INPROC_SERVER, &IID_IFilterMapper3, (void **)&ret);
+    ok(hr == S_OK, "Failed to create filter mapper, hr %#x.\n", hr);
+    return ret;
+}
 
 static ULONG get_refcount(void *iface)
 {
     IUnknown *unknown = iface;
     IUnknown_AddRef(unknown);
     return IUnknown_Release(unknown);
+}
+
+#define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
+static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOOL supported)
+{
+    IUnknown *iface = iface_ptr;
+    HRESULT hr, expected_hr;
+    IUnknown *unk;
+
+    expected_hr = supported ? S_OK : E_NOINTERFACE;
+
+    hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x, expected %#x.\n", hr, expected_hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(unk);
+}
+
+static void test_interfaces(void)
+{
+    IFilterMapper3 *mapper = create_mapper();
+
+    check_interface(mapper, &IID_IAMFilterData, TRUE);
+    check_interface(mapper, &IID_IFilterMapper, TRUE);
+    check_interface(mapper, &IID_IFilterMapper2, TRUE);
+    check_interface(mapper, &IID_IFilterMapper3, TRUE);
+    check_interface(mapper, &IID_IUnknown, TRUE);
+
+    check_interface(mapper, &IID_IFilterGraph, FALSE);
+
+    IFilterMapper3_Release(mapper);
 }
 
 /* Helper function, checks if filter with given name was enumerated. */
@@ -80,7 +122,7 @@ static void test_fm2_enummatchingfilters(void)
     IEnumMoniker *pEnum = NULL;
     BOOL found, registered = TRUE;
     REGFILTER *regfilter;
-    ULONG count;
+    ULONG count, ref;
 
     ZeroMemory(&rgf2, sizeof(rgf2));
 
@@ -188,6 +230,8 @@ static void test_fm2_enummatchingfilters(void)
         }
         IEnumRegFilters_Release(enum_reg);
         ok(found, "IFilterMapper didn't find filter\n");
+
+        IFilterMapper_Release(mapper);
     }
 
     if (pEnum) IEnumMoniker_Release(pEnum);
@@ -217,7 +261,8 @@ static void test_fm2_enummatchingfilters(void)
     out:
 
     if (pEnum) IEnumMoniker_Release(pEnum);
-    if (pMapper) IFilterMapper2_Release(pMapper);
+    ref = IFilterMapper2_Release(pMapper);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
 static void test_legacy_filter_registration(void)
@@ -321,63 +366,6 @@ static void test_legacy_filter_registration(void)
 
     IFilterMapper_Release(mapper);
     IFilterMapper2_Release(mapper2);
-}
-
-static ULONG getRefcount(IUnknown *iface)
-{
-    IUnknown_AddRef(iface);
-    return IUnknown_Release(iface);
-}
-
-static void test_ifiltermapper_from_filtergraph(void)
-{
-    IFilterGraph2* pgraph2 = NULL;
-    IFilterMapper2 *pMapper2 = NULL;
-    IFilterGraph *filtergraph = NULL;
-    HRESULT hr;
-    ULONG refcount;
-
-    hr = CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, &IID_IFilterGraph2, (LPVOID*)&pgraph2);
-    ok(hr == S_OK, "CoCreateInstance failed with %08x\n", hr);
-    if (!pgraph2) goto out;
-
-    hr = IFilterGraph2_QueryInterface(pgraph2, &IID_IFilterMapper2, (LPVOID*)&pMapper2);
-    ok(hr == S_OK, "IFilterGraph2_QueryInterface failed with %08x\n", hr);
-    if (!pMapper2) goto out;
-
-    refcount = getRefcount((IUnknown*)pgraph2);
-    ok(refcount == 2, "unexpected reference count: %u\n", refcount);
-    refcount = getRefcount((IUnknown*)pMapper2);
-    ok(refcount == 2, "unexpected reference count: %u\n", refcount);
-
-    IFilterMapper2_AddRef(pMapper2);
-    refcount = getRefcount((IUnknown*)pgraph2);
-    ok(refcount == 3, "unexpected reference count: %u\n", refcount);
-    refcount = getRefcount((IUnknown*)pMapper2);
-    ok(refcount == 3, "unexpected reference count: %u\n", refcount);
-    IFilterMapper2_Release(pMapper2);
-
-    hr = IFilterMapper2_QueryInterface(pMapper2, &IID_IFilterGraph, (LPVOID*)&filtergraph);
-    ok(hr == S_OK, "IFilterMapper2_QueryInterface failed with %08x\n", hr);
-    if (!filtergraph) goto out;
-
-    IFilterMapper2_Release(pMapper2);
-    pMapper2 = NULL;
-    IFilterGraph_Release(filtergraph);
-    filtergraph = NULL;
-
-    hr = CoCreateInstance(&CLSID_FilterMapper2, NULL, CLSCTX_INPROC_SERVER, &IID_IFilterMapper2, (LPVOID*)&pMapper2);
-    ok(hr == S_OK, "CoCreateInstance failed with %08x\n", hr);
-    if (!pMapper2) goto out;
-
-    hr = IFilterMapper2_QueryInterface(pMapper2, &IID_IFilterGraph, (LPVOID*)&filtergraph);
-    ok(hr == E_NOINTERFACE, "IFilterMapper2_QueryInterface unexpected result: %08x\n", hr);
-
-    out:
-
-    if (pMapper2) IFilterMapper2_Release(pMapper2);
-    if (filtergraph) IFilterGraph_Release(filtergraph);
-    if (pgraph2) IFilterGraph2_Release(pgraph2);
 }
 
 static void test_register_filter_with_null_clsMinorType(void)
@@ -620,16 +608,66 @@ static void test_aggregation(void)
     ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
 }
 
+static void test_dmo(void)
+{
+    DMO_PARTIAL_MEDIATYPE mt = {MEDIATYPE_Audio, MEDIASUBTYPE_PCM};
+    IEnumMoniker *enumerator;
+    IFilterMapper3 *mapper;
+    IMoniker *moniker;
+    WCHAR *name;
+    HRESULT hr;
+    BOOL found;
+    ULONG ref;
+
+    hr = DMORegister(L"dmo test", &testclsid, &DMOCATEGORY_AUDIO_DECODER, 0, 1, &mt, 1, &mt);
+    if (hr == E_FAIL)
+    {
+        skip("Not enough permissions to register DMOs.\n");
+        return;
+    }
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    mapper = create_mapper();
+
+    hr = IFilterMapper3_EnumMatchingFilters(mapper, &enumerator, 0, FALSE, 0,
+            FALSE, 0, NULL, NULL, NULL, FALSE, FALSE, 0, NULL, NULL, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    found = FALSE;
+    while (IEnumMoniker_Next(enumerator, 1, &moniker, NULL) == S_OK)
+    {
+        hr = IMoniker_GetDisplayName(moniker, NULL, NULL, &name);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+        if (!wcscmp(name, L"@device:dmo:{77777777-0000-0000-0000-000000000000}{57F2DB8B-E6BB-4513-9D43-DCD2A6593125}"))
+            found = TRUE;
+
+        CoTaskMemFree(name);
+        IMoniker_Release(moniker);
+    }
+    IEnumMoniker_Release(enumerator);
+    ok(found, "DMO should be enumerated.\n");
+
+    /* DMOs are enumerated by IFilterMapper in Windows 7 and higher. */
+
+    ref = IFilterMapper3_Release(mapper);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+    hr = DMOUnregister(&testclsid, &DMOCATEGORY_AUDIO_DECODER);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+}
+
 START_TEST(filtermapper)
 {
     CoInitialize(NULL);
 
+    test_interfaces();
     test_fm2_enummatchingfilters();
     test_legacy_filter_registration();
-    test_ifiltermapper_from_filtergraph();
     test_register_filter_with_null_clsMinorType();
     test_parse_filter_data();
     test_aggregation();
+    test_dmo();
 
     CoUninitialize();
 }

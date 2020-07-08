@@ -27,14 +27,19 @@
 #define WNODE_FLAG_TOO_SMALL             0x00000020
 #define WNODE_FLAG_INSTANCES_SAME        0x00000040
 #define WNODE_FLAG_STATIC_INSTANCE_NAMES 0x00000080
+#define WNODE_FLAG_INTERNAL              0x00000100
 #define WNODE_FLAG_USE_TIMESTAMP         0x00000200
+#define WNODE_FLAG_PERSIST_EVENT         0x00000400
 #define WNODE_FLAG_EVENT_REFERENCE       0x00002000
+#define WNODE_FLAG_ANSI_INSTANCENAMES    0x00004000
 #define WNODE_FLAG_METHOD_ITEM           0x00008000
 #define WNODE_FLAG_PDO_INSTANCE_NAMES    0x00010000
 #define WNODE_FLAG_TRACED_GUID           0x00020000
 #define WNODE_FLAG_LOG_WNODE             0x00040000
 #define WNODE_FLAG_USE_GUID_PTR          0x00080000
 #define WNODE_FLAG_USE_MOF_PTR           0x00100000
+#define WNODE_FLAG_NO_HEADER             0x00200000
+#define WNODE_FLAG_SEND_DATA_BLOCK       0x00400000
 #define WNODE_FLAG_SEVERITY_MASK         0xFF000000
 
 typedef enum
@@ -49,12 +54,13 @@ typedef enum
     WMI_DISABLE_CONNECTION = 7,
     WMI_REGINFO = 8,
     WMI_EXECUTE_METHOD = 9,
+    WMI_CAPTURE_STATE = 10
 } WMIDPREQUESTCODE;
 
 typedef struct _WNODE_HEADER
 {
     ULONG BufferSize;
-    ULONG ProvicerId;
+    ULONG ProviderId;
     union
     {
         ULONG64 HistoricalContext;
@@ -63,10 +69,10 @@ typedef struct _WNODE_HEADER
             ULONG Version;
             ULONG Linkage;
         } DUMMYSTRUCTNAME;
-
     } DUMMYUNIONNAME;
     union
     {
+        ULONG CountLost;
         HANDLE KernelHandle;
         LARGE_INTEGER TimeStamp;
     } DUMMYUNIONNAME2;

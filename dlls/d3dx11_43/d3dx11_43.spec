@@ -27,8 +27,8 @@
 @ stub D3DX11CreateTextureFromResourceW
 @ stub D3DX11CreateThreadPump
 @ stdcall D3DX11FilterTexture(ptr ptr long long)
-@ stub D3DX11GetImageInfoFromFileA
-@ stub D3DX11GetImageInfoFromFileW
+@ stdcall D3DX11GetImageInfoFromFileA(str ptr ptr ptr)
+@ stdcall D3DX11GetImageInfoFromFileW(wstr ptr ptr ptr)
 @ stdcall D3DX11GetImageInfoFromMemory(ptr long ptr ptr ptr)
 @ stub D3DX11GetImageInfoFromResourceA
 @ stub D3DX11GetImageInfoFromResourceW

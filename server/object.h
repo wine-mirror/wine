@@ -135,6 +135,7 @@ extern WCHAR *get_object_full_name( struct object *obj, data_size_t *ret_len );
 extern void dump_object_name( struct object *obj );
 extern struct object *lookup_named_object( struct object *root, const struct unicode_str *name,
                                            unsigned int attr, struct unicode_str *name_left );
+extern data_size_t get_path_element( const WCHAR *name, data_size_t len );
 extern void *create_named_object( struct object *parent, const struct object_ops *ops,
                                   const struct unicode_str *name, unsigned int attributes,
                                   const struct security_descriptor *sd );
@@ -206,6 +207,7 @@ extern void sock_init(void);
 
 extern int set_process_debugger( struct process *process, struct thread *debugger );
 extern void generate_debug_event( struct thread *thread, int code, const void *arg );
+extern void resume_delayed_debug_events( struct thread *thread );
 extern void generate_startup_debug_events( struct process *process, client_ptr_t entry );
 extern void debug_exit_thread( struct thread *thread );
 

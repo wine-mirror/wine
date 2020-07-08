@@ -69,4 +69,5 @@ SOURCES = \
 	normnfc.nls \
 	normnfd.nls \
 	normnfkc.nls \
-	normnfkd.nls
+	normnfkd.nls \
+	sortdefault.nls

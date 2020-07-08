@@ -19,7 +19,6 @@
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
-#include "initguid.h"
 #define COBJMACROS
 #include "objbase.h"
 #include "rpcproxy.h"

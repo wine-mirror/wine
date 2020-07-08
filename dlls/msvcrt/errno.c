@@ -323,9 +323,9 @@ char* CDECL MSVCRT__strerror(const char* str)
     if (err < 0 || err > MSVCRT__sys_nerr) err = MSVCRT__sys_nerr;
 
     if (str && *str)
-        sprintf( data->strerror_buffer, "%s: %s\n", str, MSVCRT__sys_errlist[err] );
+        MSVCRT_sprintf( data->strerror_buffer, "%s: %s\n", str, MSVCRT__sys_errlist[err] );
     else
-        sprintf( data->strerror_buffer, "%s\n", MSVCRT__sys_errlist[err] );
+        MSVCRT_sprintf( data->strerror_buffer, "%s\n", MSVCRT__sys_errlist[err] );
 
     return data->strerror_buffer;
 }

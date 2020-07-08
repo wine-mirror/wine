@@ -129,11 +129,25 @@ static inline struct fd *get_obj_fd( struct object *obj ) { return obj->ops->get
 
 struct timeout_user;
 extern timeout_t current_time;
+extern timeout_t monotonic_time;
+extern struct _KUSER_SHARED_DATA *user_shared_data;
 
 #define TICKS_PER_SEC 10000000
 
 typedef void (*timeout_callback)( void *private );
 
+static inline abstime_t timeout_to_abstime( timeout_t timeout )
+{
+    return timeout > 0 ? timeout : timeout - monotonic_time;
+}
+
+static inline timeout_t abstime_to_timeout( abstime_t abstime )
+{
+    if (abstime > 0) return abstime;
+    return -abstime < monotonic_time ? 0 : abstime + monotonic_time;
+}
+
+extern void set_current_time( void );
 extern struct timeout_user *add_timeout_user( timeout_t when, timeout_callback func, void *private );
 extern void remove_timeout_user( struct timeout_user *user );
 extern const char *get_timeout_str( timeout_t timeout );
@@ -149,15 +163,17 @@ extern void file_set_error(void);
 extern struct object_type *file_get_type( struct object *obj );
 extern struct security_descriptor *mode_to_sd( mode_t mode, const SID *user, const SID *group );
 extern mode_t sd_to_mode( const struct security_descriptor *sd, const SID *owner );
+extern int is_file_executable( const char *name );
 
 /* file mapping functions */
 
-extern struct mapping *get_mapping_obj( struct process *process, obj_handle_t handle,
-                                        unsigned int access );
 extern struct file *get_mapping_file( struct process *process, client_ptr_t base,
                                       unsigned int access, unsigned int sharing );
+extern const pe_image_info_t *get_mapping_image_info( struct process *process, client_ptr_t base );
 extern void free_mapped_views( struct process *process );
 extern int get_page_size(void);
+extern struct object *create_user_data_mapping( struct object *root, const struct unicode_str *name,
+                                                unsigned int attr, const struct security_descriptor *sd );
 
 /* device functions */
 

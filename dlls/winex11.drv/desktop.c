@@ -145,7 +145,10 @@ static LONG X11DRV_desktop_SetCurrentMode(int mode)
          */
     }
     TRACE("Resizing Wine desktop window to %dx%d\n", dd_modes[mode].width, dd_modes[mode].height);
-    X11DRV_resize_desktop(dd_modes[mode].width, dd_modes[mode].height);
+
+    desktop_width = dd_modes[mode].width;
+    desktop_height = dd_modes[mode].height;
+    X11DRV_DisplayDevices_Update( TRUE );
     return DISP_CHANGE_SUCCESSFUL;
 }
 
@@ -321,29 +324,6 @@ BOOL CDECL X11DRV_create_desktop( UINT width, UINT height )
     return TRUE;
 }
 
-static BOOL CALLBACK update_windows_on_desktop_resize( HWND hwnd, LPARAM lparam )
-{
-    struct x11drv_win_data *data;
-    UINT mask = (UINT)lparam;
-
-    if (!(data = get_win_data( hwnd ))) return TRUE;
-
-    /* update the full screen state */
-    update_net_wm_states( data );
-
-    if (mask && data->whole_window)
-    {
-        POINT pos = virtual_screen_to_root( data->whole_rect.left, data->whole_rect.top );
-        XWindowChanges changes;
-        changes.x = pos.x;
-        changes.y = pos.y;
-        XReconfigureWMWindow( data->display, data->whole_window, data->vis.screen, mask, &changes );
-    }
-    release_win_data( data );
-    if (hwnd == GetForegroundWindow()) clip_fullscreen_window( hwnd, TRUE );
-    return TRUE;
-}
-
 BOOL is_desktop_fullscreen(void)
 {
     RECT primary_rect = get_primary_monitor_rect();
@@ -387,36 +367,34 @@ static void update_desktop_fullscreen( unsigned int width, unsigned int height)
 /***********************************************************************
  *		X11DRV_resize_desktop
  */
-void X11DRV_resize_desktop( unsigned int width, unsigned int height )
+void X11DRV_resize_desktop( BOOL send_display_change )
 {
-    RECT old_virtual_rect, new_virtual_rect;
+    RECT primary_rect, virtual_rect;
     HWND hwnd = GetDesktopWindow();
-    UINT mask = 0;
+    INT width, height;
 
-    old_virtual_rect = get_virtual_screen_rect();
-    desktop_width = width;
-    desktop_height = height;
-    X11DRV_DisplayDevices_Init( TRUE );
-    new_virtual_rect = get_virtual_screen_rect();
-
-    if (old_virtual_rect.left != new_virtual_rect.left) mask |= CWX;
-    if (old_virtual_rect.top != new_virtual_rect.top) mask |= CWY;
+    virtual_rect = get_virtual_screen_rect();
+    primary_rect = get_primary_monitor_rect();
+    width = primary_rect.right;
+    height = primary_rect.bottom;
 
     if (GetWindowThreadProcessId( hwnd, NULL ) != GetCurrentThreadId())
     {
-        SendMessageW( hwnd, WM_X11DRV_RESIZE_DESKTOP, 0, MAKELPARAM( width, height ) );
+        SendMessageW( hwnd, WM_X11DRV_RESIZE_DESKTOP, 0, (LPARAM)send_display_change );
     }
     else
     {
         TRACE( "desktop %p change to (%dx%d)\n", hwnd, width, height );
         update_desktop_fullscreen( width, height );
-        SetWindowPos( hwnd, 0, new_virtual_rect.left, new_virtual_rect.top,
-                      new_virtual_rect.right - new_virtual_rect.left, new_virtual_rect.bottom - new_virtual_rect.top,
+        SetWindowPos( hwnd, 0, virtual_rect.left, virtual_rect.top,
+                      virtual_rect.right - virtual_rect.left, virtual_rect.bottom - virtual_rect.top,
                       SWP_NOZORDER | SWP_NOACTIVATE | SWP_DEFERERASE );
         ungrab_clipping_window();
-        SendMessageTimeoutW( HWND_BROADCAST, WM_DISPLAYCHANGE, screen_bpp,
-                             MAKELPARAM( width, height ), SMTO_ABORTIFHUNG, 2000, NULL );
-    }
 
-    EnumWindows( update_windows_on_desktop_resize, (LPARAM)mask );
+        if (send_display_change)
+        {
+            SendMessageTimeoutW( HWND_BROADCAST, WM_DISPLAYCHANGE, screen_bpp, MAKELPARAM( width, height ),
+                                 SMTO_ABORTIFHUNG, 2000, NULL );
+        }
+    }
 }

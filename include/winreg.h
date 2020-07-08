@@ -81,6 +81,9 @@ typedef LONG LSTATUS;
 #define RRF_RT_DWORD            (RRF_RT_REG_BINARY | RRF_RT_REG_DWORD)
 #define RRF_RT_QWORD            (RRF_RT_REG_BINARY | RRF_RT_REG_QWORD)
 #define RRF_RT_ANY              0xffff
+#define RRF_SUBKEY_WOW6464KEY   (1 << 16)
+#define RRF_SUBKEY_WOW6432KEY   (1 << 17)
+#define RRF_WOW64_MASK          (RRF_SUBKEY_WOW6432KEY | RRF_SUBKEY_WOW6464KEY)
 #define RRF_NOEXPAND            (1 << 28)
 #define RRF_ZEROONFAILURE       (1 << 29)
 

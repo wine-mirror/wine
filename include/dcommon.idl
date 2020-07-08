@@ -23,6 +23,12 @@ typedef struct
 {
     long x, y;
 } POINT;
+
+typedef struct
+{
+    long left, top, right, bottom;
+} RECT;
+
 typedef unsigned int UINT32;
 cpp_quote("#endif")
 
@@ -52,7 +58,7 @@ typedef enum D2D1_ALPHA_MODE
     D2D1_ALPHA_MODE_PREMULTIPLIED = 1,
     D2D1_ALPHA_MODE_STRAIGHT = 2,
     D2D1_ALPHA_MODE_IGNORE = 3,
-    D2D1_ALPHA_MODE_FORCE_DWORD = 0xffffffff,
+    D2D1_ALPHA_MODE_FORCE_DWORD = 0xffffffff
 } D2D1_ALPHA_MODE;
 
 typedef struct D2D1_PIXEL_FORMAT
@@ -69,11 +75,75 @@ typedef struct D2D_POINT_2F
 
 typedef POINT D2D_POINT_2L, D2D1_POINT_2L;
 
+typedef struct D2D_VECTOR_2F
+{
+    float x;
+    float y;
+} D2D_VECTOR_2F;
+
+typedef struct D2D_VECTOR_3F
+{
+    float x;
+    float y;
+    float z;
+} D2D_VECTOR_3F;
+
+typedef struct D2D_VECTOR_4F
+{
+    float x;
+    float y;
+    float z;
+    float w;
+} D2D_VECTOR_4F;
+
+typedef RECT D2D_RECT_L, D2D1_RECT_L;
+
 typedef struct D2D_SIZE_U
 {
     UINT32 width;
     UINT32 height;
 } D2D_SIZE_U, D2D1_SIZE_U;
+
+typedef struct D2D_MATRIX_3X2_F
+{
+    union
+    {
+        struct
+        {
+            float m11;
+            float m12;
+            float m21;
+            float m22;
+            float dx;
+            float dy;
+        };
+
+        struct
+        {
+            float _11, _12;
+            float _21, _22;
+            float _31, _32;
+        };
+
+        float m[3][2];
+    };
+} D2D_MATRIX_3X2_F;
+
+typedef struct D2D_MATRIX_4X3_F
+{
+    union
+    {
+        struct
+        {
+            float _11, _12, _13;
+            float _21, _22, _23;
+            float _31, _32, _33;
+            float _41, _42, _43;
+        };
+
+        float m[4][3];
+    };
+} D2D_MATRIX_4X3_F;
 
 typedef struct D2D_MATRIX_4X4_F
 {
@@ -90,3 +160,20 @@ typedef struct D2D_MATRIX_4X4_F
         float m[4][4];
     };
 } D2D_MATRIX_4X4_F;
+
+typedef struct D2D_MATRIX_5X4_F
+{
+    union
+    {
+        struct
+        {
+            float _11, _12, _13, _14;
+            float _21, _22, _23, _24;
+            float _31, _32, _33, _34;
+            float _41, _42, _43, _44;
+            float _51, _52, _53, _54;
+        };
+
+        float m[5][4];
+    };
+} D2D_MATRIX_5X4_F;

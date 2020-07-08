@@ -50,7 +50,7 @@
 @ stub MFCreateProxyLocator
 @ stub MFCreateRemoteDesktopPlugin
 @ stub MFCreateSAMIByteStreamPlugin
-@ stub MFCreateSampleCopierMFT
+@ stdcall MFCreateSampleCopierMFT(ptr)
 @ stdcall MFCreateSampleGrabberSinkActivate(ptr ptr ptr)
 @ stub MFCreateSecureHttpSchemePlugin
 @ stub MFCreateSequencerSegmentOffset
@@ -74,8 +74,8 @@
 @ stub MFGetMultipleServiceProviders
 @ stdcall MFGetService(ptr ptr ptr ptr)
 @ stdcall MFGetSupportedMimeTypes(ptr)
-@ stub MFGetSupportedSchemes
-@ stub MFGetTopoNodeCurrentType
+@ stdcall MFGetSupportedSchemes(ptr)
+@ stdcall MFGetTopoNodeCurrentType(ptr long long ptr)
 @ stub MFReadSequencerSegmentOffset
 @ stub MFRequireProtectedEnvironment
 @ stdcall MFShutdownObject(ptr)

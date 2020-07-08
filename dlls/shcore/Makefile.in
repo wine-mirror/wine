@@ -1,4 +1,5 @@
 MODULE    = shcore.dll
+IMPORTLIB = shcore
 IMPORTS   = user32 gdi32 ole32 advapi32
 
 EXTRADLLFLAGS = -mno-cygwin

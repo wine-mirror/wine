@@ -1,0 +1,8 @@
+MODULE    = wineusb.sys
+IMPORTS   = ntoskrnl
+EXTRALIBS = $(USB_LIBS)
+EXTRAINCL = $(USB_CFLAGS)
+EXTRADLLFLAGS = -Wl,--subsystem,native
+
+C_SRCS = \
+	wineusb.c

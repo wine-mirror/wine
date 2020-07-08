@@ -53,16 +53,16 @@ static const struct
     WICBitmapPaletteType palette_type;
 } pixel_formats[] =
 {
-    { &GUID_WICPixelFormatBlackWhite, PixelFormat1bppIndexed, WICBitmapPaletteTypeFixedBW },
     { &GUID_WICPixelFormat1bppIndexed, PixelFormat1bppIndexed, WICBitmapPaletteTypeFixedBW },
+    { &GUID_WICPixelFormatBlackWhite, PixelFormat1bppIndexed, WICBitmapPaletteTypeFixedBW },
     { &GUID_WICPixelFormat4bppIndexed, PixelFormat4bppIndexed, WICBitmapPaletteTypeFixedHalftone8 },
-    { &GUID_WICPixelFormat8bppGray, PixelFormat8bppIndexed, WICBitmapPaletteTypeFixedGray256 },
     { &GUID_WICPixelFormat8bppIndexed, PixelFormat8bppIndexed, WICBitmapPaletteTypeFixedHalftone256 },
-    { &GUID_WICPixelFormat16bppBGR555, PixelFormat16bppRGB555, WICBitmapPaletteTypeFixedHalftone256 },
-    { &GUID_WICPixelFormat24bppBGR, PixelFormat24bppRGB, WICBitmapPaletteTypeFixedHalftone256 },
-    { &GUID_WICPixelFormat32bppBGR, PixelFormat32bppRGB, WICBitmapPaletteTypeFixedHalftone256 },
-    { &GUID_WICPixelFormat32bppBGRA, PixelFormat32bppARGB, WICBitmapPaletteTypeFixedHalftone256 },
-    { &GUID_WICPixelFormat32bppPBGRA, PixelFormat32bppPARGB, WICBitmapPaletteTypeFixedHalftone256 },
+    { &GUID_WICPixelFormat8bppGray, PixelFormat8bppIndexed, WICBitmapPaletteTypeFixedGray256 },
+    { &GUID_WICPixelFormat16bppBGR555, PixelFormat16bppRGB555, 0 },
+    { &GUID_WICPixelFormat24bppBGR, PixelFormat24bppRGB, 0 },
+    { &GUID_WICPixelFormat32bppBGR, PixelFormat32bppRGB, 0 },
+    { &GUID_WICPixelFormat32bppBGRA, PixelFormat32bppARGB, 0 },
+    { &GUID_WICPixelFormat32bppPBGRA, PixelFormat32bppPARGB, 0 },
     { NULL }
 };
 
@@ -82,7 +82,7 @@ static ColorPalette *get_palette(IWICBitmapFrameDecode *frame, WICBitmapPaletteT
         hr = WINCODEC_ERR_PALETTEUNAVAILABLE;
         if (frame)
             hr = IWICBitmapFrameDecode_CopyPalette(frame, wic_palette);
-        if (hr != S_OK)
+        if (hr != S_OK && palette_type != 0)
         {
             TRACE("using predefined palette %#x\n", palette_type);
             hr = IWICPalette_InitializePredefined(wic_palette, palette_type, FALSE);
@@ -124,6 +124,31 @@ static ColorPalette *get_palette(IWICBitmapFrameDecode *frame, WICBitmapPaletteT
     }
     IWICImagingFactory_Release(factory);
     return palette;
+}
+
+static HRESULT set_palette(IWICBitmapFrameEncode *frame, ColorPalette *palette)
+{
+    HRESULT hr;
+    IWICImagingFactory *factory;
+    IWICPalette *wic_palette;
+
+    hr = WICCreateImagingFactory_Proxy(WINCODEC_SDK_VERSION, &factory);
+    if (FAILED(hr))
+        return hr;
+
+    hr = IWICImagingFactory_CreatePalette(factory, &wic_palette);
+    IWICImagingFactory_Release(factory);
+    if (SUCCEEDED(hr))
+    {
+        hr = IWICPalette_InitializeCustom(wic_palette, palette->Entries, palette->Count);
+
+        if (SUCCEEDED(hr))
+            hr = IWICBitmapFrameEncode_SetPalette(frame, wic_palette);
+
+        IWICPalette_Release(wic_palette);
+    }
+
+    return hr;
 }
 
 GpStatus WINGDIPAPI GdipBitmapApplyEffect(GpBitmap* bitmap, CGpEffect* effect,
@@ -355,6 +380,11 @@ GpStatus WINGDIPAPI GdipBitmapGetPixel(GpBitmap* bitmap, INT x, INT y,
     return Ok;
 }
 
+static unsigned int absdiff(unsigned int x, unsigned int y)
+{
+    return x > y ? x - y : y - x;
+}
+
 static inline UINT get_palette_index(BYTE r, BYTE g, BYTE b, BYTE a, ColorPalette *palette)
 {
     BYTE index = 0;
@@ -374,7 +404,7 @@ static inline UINT get_palette_index(BYTE r, BYTE g, BYTE b, BYTE a, ColorPalett
     */
     for(i=0;i<palette->Count;i++) {
         ARGB color=palette->Entries[i];
-        distance=abs(b-(color & 0xff)) + abs(g-(color>>8 & 0xff)) + abs(r-(color>>16 & 0xff)) + abs(a-(color>>24 & 0xff));
+        distance=absdiff(b, color & 0xff) + absdiff(g, color>>8 & 0xff) + absdiff(r, color>>16 & 0xff) + absdiff(a, color>>24 & 0xff);
         if (distance<best_distance) {
             best_distance=distance;
             index=i;
@@ -2259,6 +2289,12 @@ GpStatus WINGDIPAPI GdipGetImagePaletteSize(GpImage *image, INT *size)
 
     if(!image || !size)
         return InvalidParameter;
+
+    if (image->type == ImageTypeMetafile)
+    {
+        *size = 0;
+        return GenericError;
+    }
 
     if (!image->palette || image->palette->Count == 0)
         *size = sizeof(ColorPalette);
@@ -4565,6 +4601,9 @@ static GpStatus encode_frame_wic(IWICBitmapEncoder *encoder, GpImage *image)
                 hr = E_FAIL;
             }
         }
+
+        if (SUCCEEDED(hr) && IsIndexedPixelFormat(gdipformat) && image->palette)
+            hr = set_palette(frameencode, image->palette);
 
         if (SUCCEEDED(hr))
         {

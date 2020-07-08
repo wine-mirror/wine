@@ -130,8 +130,8 @@ static const WCHAR allowedformatchars[] = {'d', 'h', 'H', 'm', 'M', 's', 't', 'y
 static const int maxrepetition [] = {4,2,2,2,4,2,2,4,-1};
 
 /* valid date limits */
-static const SYSTEMTIME max_allowed_date = { /* wYear */ 9999, /* wMonth */ 12, /* wDayOfWeek */ 0, /* wDay */ 31 };
-static const SYSTEMTIME min_allowed_date = { /* wYear */ 1752, /* wMonth */ 9,  /* wDayOfWeek */ 0, /* wDay */ 14 };
+static const SYSTEMTIME max_allowed_date = { .wYear = 9999, .wMonth = 12, .wDayOfWeek = 0, .wDay = 31 };
+static const SYSTEMTIME min_allowed_date = { .wYear = 1752, .wMonth = 9, .wDayOfWeek = 0, .wDay = 14 };
 
 static DWORD
 DATETIME_GetSystemTime (const DATETIME_INFO *infoPtr, SYSTEMTIME *systime)
@@ -361,9 +361,6 @@ DATETIME_SetFormatA (DATETIME_INFO *infoPtr, LPCSTR lpszFormat)
 static void
 DATETIME_ReturnTxt (const DATETIME_INFO *infoPtr, int count, LPWSTR result, int resultSize)
 {
-    static const WCHAR fmt_dW[] = { '%', 'd', 0 };
-    static const WCHAR fmt__2dW[] = { '%', '.', '2', 'd', 0 };
-    static const WCHAR fmt__3sW[] = { '%', '.', '3', 's', 0 };
     SYSTEMTIME date = infoPtr->date;
     int spec;
     WCHAR buffer[80];
@@ -395,10 +392,10 @@ DATETIME_ReturnTxt (const DATETIME_INFO *infoPtr, int count, LPWSTR result, int 
 	    *result = 0;
 	    break;
 	case ONEDIGITDAY:
-	    wsprintfW (result, fmt_dW, date.wDay);
+	    wsprintfW (result, L"%d", date.wDay);
 	    break;
 	case TWODIGITDAY:
-	    wsprintfW (result, fmt__2dW, date.wDay);
+	    wsprintfW (result, L"%.2d", date.wDay);
 	    break;
 	case THREECHARDAY:
 	    GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SABBREVDAYNAME1+(date.wDayOfWeek+6)%7, result, 4);
@@ -414,7 +411,7 @@ DATETIME_ReturnTxt (const DATETIME_INFO *infoPtr, int count, LPWSTR result, int 
 	        result[2] = 0;
 	    }
 	    else
-	        wsprintfW (result, fmt_dW, date.wHour - (date.wHour > 12 ? 12 : 0));
+	        wsprintfW (result, L"%d", date.wHour - (date.wHour > 12 ? 12 : 0));
 	    break;
 	case TWODIGIT12HOUR:
 	    if (date.wHour == 0) {
@@ -423,35 +420,35 @@ DATETIME_ReturnTxt (const DATETIME_INFO *infoPtr, int count, LPWSTR result, int 
 	        result[2] = 0;
 	    }
 	    else
-	        wsprintfW (result, fmt__2dW, date.wHour - (date.wHour > 12 ? 12 : 0));
+	        wsprintfW (result, L"%.2d", date.wHour - (date.wHour > 12 ? 12 : 0));
 	    break;
 	case ONEDIGIT24HOUR:
-	    wsprintfW (result, fmt_dW, date.wHour);
+	    wsprintfW (result, L"%d", date.wHour);
 	    break;
 	case TWODIGIT24HOUR:
-	    wsprintfW (result, fmt__2dW, date.wHour);
+	    wsprintfW (result, L"%.2d", date.wHour);
 	    break;
 	case ONEDIGITSECOND:
-	    wsprintfW (result, fmt_dW, date.wSecond);
+	    wsprintfW (result, L"%d", date.wSecond);
 	    break;
 	case TWODIGITSECOND:
-	    wsprintfW (result, fmt__2dW, date.wSecond);
+	    wsprintfW (result, L"%.2d", date.wSecond);
 	    break;
 	case ONEDIGITMINUTE:
-	    wsprintfW (result, fmt_dW, date.wMinute);
+	    wsprintfW (result, L"%d", date.wMinute);
 	    break;
 	case TWODIGITMINUTE:
-	    wsprintfW (result, fmt__2dW, date.wMinute);
+	    wsprintfW (result, L"%.2d", date.wMinute);
 	    break;
 	case ONEDIGITMONTH:
-	    wsprintfW (result, fmt_dW, date.wMonth);
+	    wsprintfW (result, L"%d", date.wMonth);
 	    break;
 	case TWODIGITMONTH:
-	    wsprintfW (result, fmt__2dW, date.wMonth);
+	    wsprintfW (result, L"%.2d", date.wMonth);
 	    break;
 	case THREECHARMONTH:
 	    GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SMONTHNAME1+date.wMonth -1, buffer, ARRAY_SIZE(buffer));
-	    wsprintfW (result, fmt__3sW, buffer);
+	    wsprintfW (result, L"%s.3s", buffer);
 	    break;
 	case FULLMONTH:
 	    GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SMONTHNAME1+date.wMonth -1,
@@ -472,14 +469,14 @@ DATETIME_ReturnTxt (const DATETIME_INFO *infoPtr, int count, LPWSTR result, int 
 	    result[1] = 0;
 	    break;
 	case ONEDIGITYEAR:
-	    wsprintfW (result, fmt_dW, date.wYear % 10);
+	    wsprintfW (result, L"%d", date.wYear % 10);
 	    break;
 	case TWODIGITYEAR:
-	    wsprintfW (result, fmt__2dW, date.wYear % 100);
+	    wsprintfW (result, L"%.2d", date.wYear % 100);
 	    break;
         case INVALIDFULLYEAR:
 	case FULLYEAR:
-	    wsprintfW (result, fmt_dW, date.wYear);
+	    wsprintfW (result, L"%d", date.wYear);
 	    break;
     }
 
@@ -601,11 +598,6 @@ static int DATETIME_GetFieldWidth (const DATETIME_INFO *infoPtr, HDC hdc, int co
 {
     /* fields are a fixed width, determined by the largest possible string */
     /* presumably, these widths should be language dependent */
-    static const WCHAR fld_d1W[] = { '2', 0 };
-    static const WCHAR fld_d2W[] = { '2', '2', 0 };
-    static const WCHAR fld_d4W[] = { '2', '2', '2', '2', 0 };
-    static const WCHAR fld_am1[] = { 'A', 0 };
-    static const WCHAR fld_am2[] = { 'A', 'M', 0 };
     int spec;
     WCHAR buffer[80];
     LPCWSTR bufptr;
@@ -640,22 +632,17 @@ static int DATETIME_GetFieldWidth (const DATETIME_INFO *infoPtr, HDC hdc, int co
 	    case TWODIGITMINUTE:
 	    case TWODIGITMONTH:
 	    case TWODIGITYEAR:
-	        bufptr = fld_d2W;
+	        bufptr = L"22";
 	        break;
             case INVALIDFULLYEAR:
 	    case FULLYEAR:
-	        bufptr = fld_d4W;
+	        bufptr = L"2222";
 	        break;
 	    case THREECHARMONTH:
 	    case FULLMONTH:
 	    case THREECHARDAY:
 	    case FULLDAY:
 	    {
-		static const WCHAR fld_day[] = {'W','e','d','n','e','s','d','a','y',0};
-		static const WCHAR fld_abbrday[] = {'W','e','d',0};
-		static const WCHAR fld_mon[] = {'S','e','p','t','e','m','b','e','r',0};
-		static const WCHAR fld_abbrmon[] = {'D','e','c',0};
-
 		const WCHAR *fall;
 		LCTYPE lctype;
 		INT i, max_count;
@@ -664,22 +651,22 @@ static int DATETIME_GetFieldWidth (const DATETIME_INFO *infoPtr, HDC hdc, int co
 		/* choose locale data type and fallback string */
 		switch (spec) {
 		case THREECHARDAY:
-		    fall   = fld_abbrday;
+		    fall   = L"Wed";
 		    lctype = LOCALE_SABBREVDAYNAME1;
 		    max_count = 7;
 		    break;
 		case FULLDAY:
-		    fall   = fld_day;
+		    fall   = L"Wednesday";
 		    lctype = LOCALE_SDAYNAME1;
 		    max_count = 7;
 		    break;
 		case THREECHARMONTH:
-		    fall   = fld_abbrmon;
+		    fall   = L"Dec";
 		    lctype = LOCALE_SABBREVMONTHNAME1;
 		    max_count = 12;
 		    break;
 		default: /* FULLMONTH */
-		    fall   = fld_mon;
+		    fall   = L"September";
 		    lctype = LOCALE_SMONTHNAME1;
 		    max_count = 12;
 		    break;
@@ -704,13 +691,13 @@ static int DATETIME_GetFieldWidth (const DATETIME_INFO *infoPtr, HDC hdc, int co
 		return cx;
 	    }
 	    case ONELETTERAMPM:
-	        bufptr = fld_am1;
+	        bufptr = L"A";
 	        break;
 	    case TWOLETTERAMPM:
-	        bufptr = fld_am2;
+	        bufptr = L"AM";
 	        break;
 	    default:
-	        bufptr = fld_d1W;
+	        bufptr = L"2";
 	        break;
         }
     }

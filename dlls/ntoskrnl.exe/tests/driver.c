@@ -35,6 +35,8 @@
 
 #include "driver.h"
 
+#include "utils.h"
+
 static const WCHAR device_name[] = {'\\','D','e','v','i','c','e',
                                     '\\','W','i','n','e','T','e','s','t','D','r','i','v','e','r',0};
 static const WCHAR upper_name[] = {'\\','D','e','v','i','c','e',
@@ -45,17 +47,6 @@ static const WCHAR driver_link[] = {'\\','D','o','s','D','e','v','i','c','e','s'
 static DRIVER_OBJECT *driver_obj;
 static DEVICE_OBJECT *lower_device, *upper_device;
 
-static HANDLE okfile;
-static LONG successes;
-static LONG failures;
-static LONG skipped;
-static LONG todo_successes;
-static LONG todo_failures;
-static int todo_level, todo_do_loop;
-static int running_under_wine;
-static int winetest_debug;
-static int winetest_report_success;
-
 static POBJECT_TYPE *pExEventObjectType, *pIoFileObjectType, *pPsThreadType, *pIoDriverObjectType;
 static PEPROCESS *pPsInitialSystemProcess;
 static void *create_caller_thread;
@@ -63,133 +54,6 @@ static void *create_caller_thread;
 static PETHREAD create_irp_thread;
 
 NTSTATUS WINAPI ZwQueryInformationProcess(HANDLE,PROCESSINFOCLASS,void*,ULONG,ULONG*);
-
-static void kvprintf(const char *format, __ms_va_list ap)
-{
-    static char buffer[512];
-    IO_STATUS_BLOCK io;
-    int len = vsnprintf(buffer, sizeof(buffer), format, ap);
-    ZwWriteFile(okfile, NULL, NULL, NULL, &io, buffer, len, NULL, NULL);
-}
-
-static void WINAPIV kprintf(const char *format, ...)
-{
-    __ms_va_list valist;
-
-    __ms_va_start(valist, format);
-    kvprintf(format, valist);
-    __ms_va_end(valist);
-}
-
-static void WINAPIV vok_(const char *file, int line, int condition, const char *msg,  __ms_va_list args)
-{
-    const char *current_file;
-
-    if (!(current_file = drv_strrchr(file, '/')) &&
-        !(current_file = drv_strrchr(file, '\\')))
-        current_file = file;
-    else
-        current_file++;
-
-    if (todo_level)
-    {
-        if (condition)
-        {
-            kprintf("%s:%d: Test succeeded inside todo block: ", current_file, line);
-            kvprintf(msg, args);
-            InterlockedIncrement(&todo_failures);
-        }
-        else
-        {
-            if (winetest_debug > 0)
-            {
-                kprintf("%s:%d: Test marked todo: ", current_file, line);
-                kvprintf(msg, args);
-            }
-            InterlockedIncrement(&todo_successes);
-        }
-    }
-    else
-    {
-        if (!condition)
-        {
-            kprintf("%s:%d: Test failed: ", current_file, line);
-            kvprintf(msg, args);
-            InterlockedIncrement(&failures);
-        }
-        else
-        {
-            if (winetest_report_success)
-                kprintf("%s:%d: Test succeeded\n", current_file, line);
-            InterlockedIncrement(&successes);
-        }
-    }
-}
-
-static void WINAPIV ok_(const char *file, int line, int condition, const char *msg, ...)
-{
-    __ms_va_list args;
-    __ms_va_start(args, msg);
-    vok_(file, line, condition, msg, args);
-    __ms_va_end(args);
-}
-
-static void vskip_(const char *file, int line, const char *msg, __ms_va_list args)
-{
-    const char *current_file;
-
-    if (!(current_file = drv_strrchr(file, '/')) &&
-        !(current_file = drv_strrchr(file, '\\')))
-        current_file = file;
-    else
-        current_file++;
-
-    kprintf("%s:%d: Tests skipped: ", current_file, line);
-    kvprintf(msg, args);
-    skipped++;
-}
-
-static void WINAPIV win_skip_(const char *file, int line, const char *msg, ...)
-{
-    __ms_va_list args;
-    __ms_va_start(args, msg);
-    if (running_under_wine)
-        vok_(file, line, 0, msg, args);
-    else
-        vskip_(file, line, msg, args);
-    __ms_va_end(args);
-}
-
-static void winetest_start_todo( int is_todo )
-{
-    todo_level = (todo_level << 1) | (is_todo != 0);
-    todo_do_loop=1;
-}
-
-static int winetest_loop_todo(void)
-{
-    int do_loop=todo_do_loop;
-    todo_do_loop=0;
-    return do_loop;
-}
-
-static void winetest_end_todo(void)
-{
-    todo_level >>= 1;
-}
-
-static int broken(int condition)
-{
-    return !running_under_wine && condition;
-}
-
-#define ok(condition, ...)  ok_(__FILE__, __LINE__, condition, __VA_ARGS__)
-#define todo_if(is_todo) for (winetest_start_todo(is_todo); \
-                              winetest_loop_todo(); \
-                              winetest_end_todo())
-#define todo_wine               todo_if(running_under_wine)
-#define todo_wine_if(is_todo)   todo_if((is_todo) && running_under_wine)
-#define win_skip(...)           win_skip_(__FILE__, __LINE__, __VA_ARGS__)
 
 static void *get_proc_address(const char *name)
 {
@@ -211,9 +75,18 @@ static void *get_proc_address(const char *name)
 static FILE_OBJECT *last_created_file;
 static unsigned int create_count, close_count;
 
+static NTSTATUS WINAPI test_irp_struct_completion_routine(DEVICE_OBJECT *reserved, IRP *irp, void *context)
+{
+    unsigned int *result = context;
+
+    *result = 1;
+    return STATUS_MORE_PROCESSING_REQUIRED;
+}
+
 static void test_irp_struct(IRP *irp, DEVICE_OBJECT *device)
 {
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
+    unsigned int irp_completion_result;
 
     ok(device == upper_device, "Expected device %p, got %p.\n", upper_device, device);
     ok(last_created_file != NULL, "last_created_file = NULL\n");
@@ -225,6 +98,34 @@ static void test_irp_struct(IRP *irp, DEVICE_OBJECT *device)
        "IRP thread is not the current thread\n");
 
     ok(IoGetRequestorProcess(irp) == IoGetCurrentProcess(), "processes didn't match\n");
+
+    irp = IoAllocateIrp(1, FALSE);
+    ok(irp->AllocationFlags == IRP_ALLOCATED_FIXED_SIZE, "Got unexpected irp->AllocationFlags %#x.\n",
+            irp->AllocationFlags);
+    ok(irp->CurrentLocation == 2,
+            "Got unexpected irp->CurrentLocation %u.\n", irp->CurrentLocation);
+    IoSetCompletionRoutine(irp, test_irp_struct_completion_routine, &irp_completion_result,
+            TRUE, TRUE, TRUE);
+
+    irp_completion_result = 0;
+
+    irp->IoStatus.Status = STATUS_SUCCESS;
+    --irp->CurrentLocation;
+    --irp->Tail.Overlay.CurrentStackLocation;
+    IoCompleteRequest(irp, IO_NO_INCREMENT);
+    ok(irp->CurrentLocation == 2,
+            "Got unexpected irp->CurrentLocation %u.\n", irp->CurrentLocation);
+    ok(irp_completion_result, "IRP completion was not called.\n");
+
+    --irp->CurrentLocation;
+    --irp->Tail.Overlay.CurrentStackLocation;
+    IoReuseIrp(irp, STATUS_UNSUCCESSFUL);
+    ok(irp->CurrentLocation == 2,
+            "Got unexpected irp->CurrentLocation %u.\n", irp->CurrentLocation);
+    ok(irp->AllocationFlags == IRP_ALLOCATED_FIXED_SIZE, "Got unexpected irp->AllocationFlags %#x.\n",
+            irp->AllocationFlags);
+
+    IoFreeIrp(irp);
 }
 
 static void test_mdl_map(void)
@@ -271,21 +172,79 @@ static const WCHAR driver2_path[] = {
     '\\','W','i','n','e','T','e','s','t','D','r','i','v','e','r','2',0
 };
 
+static IMAGE_INFO test_image_info;
+static int test_load_image_notify_count;
+static WCHAR test_load_image_name[MAX_PATH];
+
+static void WINAPI test_load_image_notify_routine(UNICODE_STRING *image_name, HANDLE process_id,
+        IMAGE_INFO *image_info)
+{
+    if (test_load_image_notify_count == -1
+            || (image_name->Buffer && wcsstr(image_name->Buffer, L".tmp")))
+    {
+        ++test_load_image_notify_count;
+        test_image_info = *image_info;
+        wcscpy(test_load_image_name, image_name->Buffer);
+    }
+}
+
 static void test_load_driver(void)
 {
-    UNICODE_STRING name;
+    static WCHAR image_path_key_name[] = L"ImagePath";
+    RTL_QUERY_REGISTRY_TABLE query_table[2];
+    UNICODE_STRING name, image_path;
     NTSTATUS ret;
+
+    ret = PsSetLoadImageNotifyRoutine(test_load_image_notify_routine);
+    ok(ret == STATUS_SUCCESS, "Got unexpected status %#x.\n", ret);
+
+    /* Routine gets registered twice on Windows. */
+    ret = PsSetLoadImageNotifyRoutine(test_load_image_notify_routine);
+    ok(ret == STATUS_SUCCESS, "Got unexpected status %#x.\n", ret);
+
+    RtlInitUnicodeString(&image_path, NULL);
+    memset(query_table, 0, sizeof(query_table));
+    query_table[0].QueryRoutine = NULL;
+    query_table[0].Name = image_path_key_name;
+    query_table[0].EntryContext = &image_path;
+    query_table[0].Flags = RTL_QUERY_REGISTRY_DIRECT | RTL_QUERY_REGISTRY_TYPECHECK;
+    query_table[0].DefaultType = REG_EXPAND_SZ << RTL_QUERY_REGISTRY_TYPECHECK_SHIFT;
+
+    ret = RtlQueryRegistryValues(RTL_REGISTRY_ABSOLUTE, driver2_path, query_table, NULL, NULL);
+    ok(ret == STATUS_SUCCESS, "Got unexpected status %#x.\n", ret);
+    ok(!!image_path.Buffer, "image_path.Buffer is NULL.\n");
 
     RtlInitUnicodeString(&name, driver2_path);
 
     ret = ZwLoadDriver(&name);
     ok(!ret, "got %#x\n", ret);
 
+    ok(test_load_image_notify_count == 2, "Got unexpected test_load_image_notify_count %u.\n",
+            test_load_image_notify_count);
+    ok(test_image_info.ImageAddressingMode == IMAGE_ADDRESSING_MODE_32BIT,
+            "Got unexpected ImageAddressingMode %#x.\n", test_image_info.ImageAddressingMode);
+    ok(test_image_info.SystemModeImage,
+            "Got unexpected SystemModeImage %#x.\n", test_image_info.SystemModeImage);
+    ok(!wcscmp(test_load_image_name, image_path.Buffer), "Image path names do not match.\n");
+
+    test_load_image_notify_count = -1;
+
     ret = ZwLoadDriver(&name);
     ok(ret == STATUS_IMAGE_ALREADY_LOADED, "got %#x\n", ret);
 
     ret = ZwUnloadDriver(&name);
     ok(!ret, "got %#x\n", ret);
+
+    ret = PsRemoveLoadImageNotifyRoutine(test_load_image_notify_routine);
+    ok(ret == STATUS_SUCCESS, "Got unexpected status %#x.\n", ret);
+    ret = PsRemoveLoadImageNotifyRoutine(test_load_image_notify_routine);
+    ok(ret == STATUS_SUCCESS, "Got unexpected status %#x.\n", ret);
+    ret = PsRemoveLoadImageNotifyRoutine(test_load_image_notify_routine);
+    ok(ret == STATUS_PROCEDURE_NOT_FOUND, "Got unexpected status %#x.\n", ret);
+
+    ok(test_load_image_notify_count == -1, "Got unexpected test_load_image_notify_count %u.\n",
+            test_load_image_notify_count);
+    RtlFreeUnicodeString(&image_path);
 }
 
 static NTSTATUS wait_single(void *obj, ULONGLONG timeout)
@@ -382,6 +341,14 @@ static void test_critical_region(BOOL is_dispatcher)
        "KeAreApcsDisabled returned %x\n", result);
 }
 
+static void sleep_1ms(void)
+{
+    LARGE_INTEGER timeout;
+
+    timeout.QuadPart = -1 * 10000;
+    KeDelayExecutionThread( KernelMode, FALSE, &timeout );
+}
+
 static void sleep(void)
 {
     LARGE_INTEGER timeout;
@@ -447,18 +414,32 @@ static void WINAPI remove_lock_thread(void *arg)
     PsTerminateSystemThread(STATUS_SUCCESS);
 }
 
+struct test_sync_dpc_context
+{
+    BOOL called;
+};
+
+static void WINAPI test_sync_dpc(KDPC *dpc, void *context, void *system_argument1, void *system_argument2)
+{
+    struct test_sync_dpc_context *c = context;
+
+    c->called = TRUE;
+}
+
 static void test_sync(void)
 {
     static const ULONG wine_tag = 0x454e4957; /* WINE */
-    KSEMAPHORE semaphore, semaphore2;
+    struct test_sync_dpc_context dpc_context;
     KEVENT manual_event, auto_event, *event;
-    KTIMER timer;
+    KSEMAPHORE semaphore, semaphore2;
     IO_REMOVE_LOCK remove_lock;
     LARGE_INTEGER timeout;
     OBJECT_ATTRIBUTES attr;
     HANDLE handle, thread;
     void *objs[2];
+    KTIMER timer;
     NTSTATUS ret;
+    KDPC dpc;
     int i;
 
     KeInitializeEvent(&manual_event, NotificationEvent, FALSE);
@@ -711,13 +692,19 @@ static void test_sync(void)
     KeCancelTimer(&timer);
     KeInitializeTimerEx(&timer, SynchronizationTimer);
 
-    KeSetTimerEx(&timer, timeout, 0, NULL);
+    memset(&dpc_context, 0, sizeof(dpc_context));
+    KeInitializeDpc(&dpc, test_sync_dpc, &dpc_context);
+
+    KeSetTimerEx(&timer, timeout, 0, &dpc);
 
     ret = wait_single(&timer, 0);
     ok(ret == WAIT_TIMEOUT, "got %#x\n", ret);
+    ok(!dpc_context.called, "DPC was called unexpectedly.\n");
 
     ret = wait_single(&timer, -40 * 10000);
     ok(ret == 0, "got %#x\n", ret);
+    sleep_1ms();
+    ok(dpc_context.called, "DPC was not called.\n");
 
     ret = wait_single(&timer, -40 * 10000);
     ok(ret == WAIT_TIMEOUT, "got %#x\n", ret);
@@ -742,6 +729,60 @@ static void test_sync(void)
 
     KeCancelTimer(&timer);
 
+    /* Test cancelling timer. */
+    dpc_context.called = 0;
+    KeSetTimerEx(&timer, timeout, 0, &dpc);
+
+    ret = wait_single(&timer, 0);
+    ok(ret == WAIT_TIMEOUT, "got %#x\n", ret);
+    ok(!dpc_context.called, "DPC was called.\n");
+
+    KeCancelTimer(&timer);
+    dpc_context.called = 0;
+    ret = wait_single(&timer, -40 * 10000);
+    ok(ret == WAIT_TIMEOUT, "got %#x\n", ret);
+    ok(!dpc_context.called, "DPC was called.\n");
+
+    KeSetTimerEx(&timer, timeout, 20, &dpc);
+    KeSetTimerEx(&timer, timeout, 0, &dpc);
+    ret = wait_single(&timer, 0);
+    ok(ret == WAIT_TIMEOUT, "got %#x\n", ret);
+
+    ret = wait_single(&timer, -40 * 10000);
+    ok(ret == 0, "got %#x\n", ret);
+
+    ret = wait_single(&timer, 0);
+    ok(ret == WAIT_TIMEOUT, "got %#x\n", ret);
+
+    ret = wait_single(&timer, -40 * 10000);
+    ok(ret == WAIT_TIMEOUT, "got %#x\n", ret);
+
+    ret = wait_single(&timer, -40 * 10000);
+    ok(ret == WAIT_TIMEOUT, "got %#x\n", ret);
+
+    KeCancelTimer(&timer);
+    /* Test reinitializing timer. */
+    KeSetTimerEx(&timer, timeout, 0, &dpc);
+    KeInitializeTimerEx(&timer, SynchronizationTimer);
+    dpc_context.called = 0;
+    ret = wait_single(&timer, -40 * 10000);
+    ok(ret == 0, "got %#x\n", ret);
+    sleep_1ms();
+    todo_wine ok(dpc_context.called, "DPC was not called.\n");
+
+    ret = wait_single(&timer, 0);
+    ok(ret == WAIT_TIMEOUT, "got %#x\n", ret);
+    sleep_1ms();
+    todo_wine ok(dpc_context.called, "DPC was not called.\n");
+
+    dpc_context.called = 0;
+    KeSetTimerEx(&timer, timeout, 0, &dpc);
+    ret = wait_single(&timer, -40 * 10000);
+    ok(ret == 0, "got %#x\n", ret);
+    sleep_1ms();
+    ok(dpc_context.called, "DPC was not called.\n");
+
+    KeCancelTimer(&timer);
     /* remove locks */
 
     IoInitializeRemoveLockEx(&remove_lock, wine_tag, 0, 0, sizeof(IO_REMOVE_LOCK_COMMON_BLOCK));
@@ -1529,6 +1570,33 @@ static void test_stack_limits(void)
     ok(low < (ULONG_PTR)&low && (ULONG_PTR)&low < high, "stack variable is not in stack limits\n");
 }
 
+static unsigned int got_completion;
+
+static NTSTATUS WINAPI completion_cb(DEVICE_OBJECT *device, IRP *irp, void *context)
+{
+    ok(device == context, "Got device %p; expected %p.\n", device, context);
+    ++got_completion;
+    return STATUS_SUCCESS;
+}
+
+static void test_completion(void)
+{
+    IO_STATUS_BLOCK io;
+    NTSTATUS ret;
+    KEVENT event;
+    IRP *irp;
+
+    KeInitializeEvent(&event, NotificationEvent, FALSE);
+
+    irp = IoBuildDeviceIoControlRequest(IOCTL_WINETEST_COMPLETION, upper_device,
+            NULL, 0, NULL, 0, FALSE, &event, &io);
+
+    IoSetCompletionRoutine(irp, completion_cb, NULL, TRUE, TRUE, TRUE);
+    ret = IoCallDriver(upper_device, irp);
+    ok(ret == STATUS_SUCCESS, "IoCallDriver returned %#x\n", ret);
+    ok(got_completion == 2, "got %u calls to completion routine\n");
+}
+
 static void test_IoAttachDeviceToDeviceStack(void)
 {
     DEVICE_OBJECT *dev1, *dev2, *dev3, *ret;
@@ -1673,6 +1741,7 @@ static void WINAPI main_test_task(DEVICE_OBJECT *device, void *context)
     test_call_driver(device);
     test_cancel_irp(device);
     test_stack_limits();
+    test_completion();
 
     /* print process report */
     if (winetest_debug)
@@ -1709,6 +1778,251 @@ static void test_executable_pool(void)
     ExFreePoolWithTag(func, tag);
 }
 #endif
+
+static void test_affinity(void)
+{
+    KAFFINITY (WINAPI *pKeSetSystemAffinityThreadEx)(KAFFINITY affinity);
+    void (WINAPI *pKeRevertToUserAffinityThreadEx)(KAFFINITY affinity);
+    ULONG (WINAPI *pKeQueryActiveProcessorCountEx)(USHORT);
+    KAFFINITY (WINAPI *pKeQueryActiveProcessors)(void);
+    KAFFINITY mask, mask_all_cpus;
+    ULONG cpu_count, count;
+
+    pKeQueryActiveProcessorCountEx = get_proc_address("KeQueryActiveProcessorCountEx");
+    if (!pKeQueryActiveProcessorCountEx)
+    {
+        win_skip("KeQueryActiveProcessorCountEx is not available.\n");
+        return;
+    }
+
+    pKeQueryActiveProcessors = get_proc_address("KeQueryActiveProcessors");
+    ok(!!pKeQueryActiveProcessors, "KeQueryActiveProcessors is not available.\n");
+
+    pKeSetSystemAffinityThreadEx = get_proc_address("KeSetSystemAffinityThreadEx");
+    ok(!!pKeSetSystemAffinityThreadEx, "KeSetSystemAffinityThreadEx is not available.\n");
+
+    pKeRevertToUserAffinityThreadEx = get_proc_address("KeRevertToUserAffinityThreadEx");
+    ok(!!pKeRevertToUserAffinityThreadEx, "KeRevertToUserAffinityThreadEx is not available.\n");
+
+    count = pKeQueryActiveProcessorCountEx(1);
+    todo_wine ok(!count, "Got unexpected count %u.\n", count);
+
+    cpu_count = pKeQueryActiveProcessorCountEx(0);
+    ok(cpu_count, "Got unexpected cpu_count %u.\n", cpu_count);
+
+    count = pKeQueryActiveProcessorCountEx(ALL_PROCESSOR_GROUPS);
+    ok(count == cpu_count, "Got unexpected count %u.\n", count);
+
+    mask_all_cpus = ~((~0u) << cpu_count);
+
+    mask = pKeQueryActiveProcessors();
+    ok(mask == mask_all_cpus, "Got unexpected mask %#lx.\n", mask);
+
+    pKeRevertToUserAffinityThreadEx(0x2);
+
+    mask = pKeSetSystemAffinityThreadEx(0);
+    ok(!mask, "Got unexpected mask %#lx.\n", mask);
+
+    pKeRevertToUserAffinityThreadEx(0x2);
+
+    mask = pKeSetSystemAffinityThreadEx(0x1);
+    ok(mask == 0x2, "Got unexpected mask %#lx.\n", mask);
+
+    mask = pKeSetSystemAffinityThreadEx(~(KAFFINITY)0);
+    ok(mask == 0x1, "Got unexpected mask %#lx.\n", mask);
+
+    pKeRevertToUserAffinityThreadEx(~(KAFFINITY)0);
+    mask = pKeSetSystemAffinityThreadEx(0x1);
+    ok(mask == mask_all_cpus, "Got unexpected mask %#lx.\n", mask);
+
+    pKeRevertToUserAffinityThreadEx(0);
+
+    mask = pKeSetSystemAffinityThreadEx(0x1);
+    ok(!mask, "Got unexpected mask %#lx.\n", mask);
+
+    KeRevertToUserAffinityThread();
+
+    mask = pKeSetSystemAffinityThreadEx(0x1);
+    ok(!mask, "Got unexpected mask %#lx.\n", mask);
+
+    KeRevertToUserAffinityThread();
+}
+
+struct test_dpc_func_context
+{
+    volatile LONG call_count;
+    volatile LONG selected_count;
+    volatile DEFERRED_REVERSE_BARRIER sync_barrier_start_value, sync_barrier_mid_value, sync_barrier_end_value;
+    volatile LONG done_barrier_start_value;
+};
+
+static BOOLEAN (WINAPI *pKeSignalCallDpcSynchronize)(void *barrier);
+static void (WINAPI *pKeSignalCallDpcDone)(void *barrier);
+
+static void WINAPI test_dpc_func(PKDPC Dpc, void *context, void *cpu_count,
+        void *reverse_barrier)
+{
+    DEFERRED_REVERSE_BARRIER *barrier = reverse_barrier;
+    struct test_dpc_func_context *data = context;
+
+    InterlockedIncrement(&data->call_count);
+
+    InterlockedCompareExchange((volatile LONG*)&data->sync_barrier_start_value.Barrier,
+            *(volatile LONG *)&barrier->Barrier, 0);
+    InterlockedCompareExchange((volatile LONG*)&data->sync_barrier_start_value.TotalProcessors,
+            *(volatile LONG *)&barrier->TotalProcessors, 0);
+
+    if (pKeSignalCallDpcSynchronize(reverse_barrier))
+        InterlockedIncrement(&data->selected_count);
+
+    InterlockedCompareExchange((volatile LONG*)&data->sync_barrier_mid_value.Barrier,
+            *(volatile LONG *)&barrier->Barrier, 0);
+    InterlockedCompareExchange((volatile LONG*)&data->sync_barrier_mid_value.TotalProcessors,
+            *(volatile LONG *)&barrier->TotalProcessors, 0);
+
+    data->done_barrier_start_value =  *(volatile LONG *)cpu_count;
+
+    if (pKeSignalCallDpcSynchronize(reverse_barrier))
+        InterlockedIncrement(&data->selected_count);
+
+    pKeSignalCallDpcSynchronize(reverse_barrier);
+    pKeSignalCallDpcSynchronize(reverse_barrier);
+
+    InterlockedCompareExchange((volatile LONG*)&data->sync_barrier_end_value.Barrier,
+            *(volatile LONG *)&barrier->Barrier, 0);
+    InterlockedCompareExchange((volatile LONG*)&data->sync_barrier_end_value.TotalProcessors,
+            *(volatile LONG *)&barrier->TotalProcessors, 0);
+
+    pKeSignalCallDpcDone(cpu_count);
+}
+
+static void test_dpc(void)
+{
+    void (WINAPI *pKeGenericCallDpc)(PKDEFERRED_ROUTINE routine, void *context);
+    struct test_dpc_func_context data;
+    KAFFINITY cpu_mask;
+    ULONG cpu_count;
+
+    pKeGenericCallDpc = get_proc_address("KeGenericCallDpc");
+    if (!pKeGenericCallDpc)
+    {
+        win_skip("KeGenericCallDpc is not available.\n");
+        return;
+    }
+
+    pKeSignalCallDpcDone = get_proc_address("KeSignalCallDpcDone");
+    ok(!!pKeSignalCallDpcDone, "KeSignalCallDpcDone is not available.\n");
+    pKeSignalCallDpcSynchronize = get_proc_address("KeSignalCallDpcSynchronize");
+    ok(!!pKeSignalCallDpcSynchronize, "KeSignalCallDpcSynchronize is not available.\n");
+
+
+    cpu_mask = KeQueryActiveProcessors();
+    cpu_count = 0;
+    while (cpu_mask)
+    {
+        if (cpu_mask & 1)
+            ++cpu_count;
+
+        cpu_mask >>= 1;
+    }
+
+    memset(&data, 0, sizeof(data));
+
+    KeSetSystemAffinityThread(0x1);
+
+    pKeGenericCallDpc(test_dpc_func, &data);
+    ok(data.call_count == cpu_count, "Got unexpected call_count %u.\n", data.call_count);
+    ok(data.selected_count == 2, "Got unexpected selected_count %u.\n", data.selected_count);
+    ok(data.sync_barrier_start_value.Barrier == cpu_count,
+            "Got unexpected sync_barrier_start_value.Barrier %d.\n",
+            data.sync_barrier_start_value.Barrier);
+    ok(data.sync_barrier_start_value.TotalProcessors == cpu_count,
+            "Got unexpected sync_barrier_start_value.TotalProcessors %d.\n",
+            data.sync_barrier_start_value.TotalProcessors);
+
+    ok(data.sync_barrier_mid_value.Barrier == (0x80000000 | cpu_count),
+            "Got unexpected sync_barrier_mid_value.Barrier %d.\n",
+            data.sync_barrier_mid_value.Barrier);
+    ok(data.sync_barrier_mid_value.TotalProcessors == cpu_count,
+            "Got unexpected sync_barrier_mid_value.TotalProcessors %d.\n",
+            data.sync_barrier_mid_value.TotalProcessors);
+
+    ok(data.sync_barrier_end_value.Barrier == cpu_count,
+            "Got unexpected sync_barrier_end_value.Barrier %d.\n",
+            data.sync_barrier_end_value.Barrier);
+    ok(data.sync_barrier_end_value.TotalProcessors == cpu_count,
+            "Got unexpected sync_barrier_end_value.TotalProcessors %d.\n",
+            data.sync_barrier_end_value.TotalProcessors);
+
+    ok(data.done_barrier_start_value == cpu_count, "Got unexpected done_barrier_start_value %d.\n", data.done_barrier_start_value);
+
+    KeRevertToUserAffinityThread();
+}
+
+static void test_process_memory(const struct test_input *test_input)
+{
+    NTSTATUS (WINAPI *pMmCopyVirtualMemory)(PEPROCESS fromprocess, void *fromaddress, PEPROCESS toprocess,
+            void *toaddress, SIZE_T bufsize, KPROCESSOR_MODE mode, SIZE_T *copied);
+    char buffer[sizeof(teststr)];
+    ULONG64 modified_value;
+    PEPROCESS process;
+    KAPC_STATE state;
+    NTSTATUS status;
+    SIZE_T size;
+    BYTE *base;
+
+    pMmCopyVirtualMemory = get_proc_address("MmCopyVirtualMemory");
+
+    status = PsLookupProcessByProcessId((HANDLE)(ULONG_PTR)test_input->process_id, &process);
+    ok(status == STATUS_SUCCESS, "Got unexpected status %#x.\n", status);
+
+    if (status)
+        return;
+
+    if (0) /* Crashes on Windows. */
+        PsGetProcessSectionBaseAddress(NULL);
+
+    base = PsGetProcessSectionBaseAddress(process);
+    ok(!!base, "Got NULL base address.\n");
+
+    ok(process == PsGetCurrentProcess(), "Got unexpected process %p, PsGetCurrentProcess() %p.\n",
+            process, PsGetCurrentProcess());
+
+    modified_value = 0xdeadbeeffeedcafe;
+    if (pMmCopyVirtualMemory)
+    {
+        size = 0xdeadbeef;
+        status = pMmCopyVirtualMemory(process, base + test_input->teststr_offset, PsGetCurrentProcess(),
+                buffer, sizeof(buffer), UserMode, &size);
+        todo_wine ok(status == STATUS_ACCESS_VIOLATION, "Got unexpected status %#x.\n", status);
+        ok(!size, "Got unexpected size %#lx.\n", size);
+
+        memset(buffer, 0, sizeof(buffer));
+        size = 0xdeadbeef;
+        if (0)  /* Passing NULL for the copied size address hangs Windows. */
+            pMmCopyVirtualMemory(process, base + test_input->teststr_offset, PsGetCurrentProcess(),
+                                 buffer, sizeof(buffer), KernelMode, NULL);
+        status = pMmCopyVirtualMemory(process, base + test_input->teststr_offset, PsGetCurrentProcess(),
+                buffer, sizeof(buffer), KernelMode, &size);
+        todo_wine ok(status == STATUS_SUCCESS, "Got unexpected status %#x.\n", status);
+        todo_wine ok(size == sizeof(buffer), "Got unexpected size %lu.\n", size);
+        todo_wine ok(!strcmp(buffer, teststr), "Got unexpected test string.\n");
+    }
+    else
+    {
+       win_skip("MmCopyVirtualMemory is not available.\n");
+    }
+
+    if (!test_input->running_under_wine)
+    {
+        KeStackAttachProcess((PKPROCESS)process, &state);
+        todo_wine ok(!strcmp(teststr, (char *)(base + test_input->teststr_offset)),
+                "Strings do not match.\n");
+        *test_input->modified_value = modified_value;
+        KeUnstackDetachProcess(&state);
+    }
+    ObDereferenceObject(process);
+}
 
 static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *stack)
 {
@@ -1763,13 +2077,18 @@ static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *st
 #if defined(__i386__) || defined(__x86_64__)
     test_executable_pool();
 #endif
+    test_affinity();
+    test_dpc();
+    test_process_memory(test_input);
 
     if (main_test_work_item) return STATUS_UNEXPECTED_IO_ERROR;
 
     main_test_work_item = IoAllocateWorkItem(lower_device);
     ok(main_test_work_item != NULL, "main_test_work_item = NULL\n");
 
+    IoMarkIrpPending(irp);
     IoQueueWorkItem(main_test_work_item, main_test_task, DelayedWorkQueue, irp);
+
     return STATUS_PENDING;
 }
 
@@ -1883,6 +2202,23 @@ static NTSTATUS test_mismatched_status_ioctl(IRP *irp, IO_STACK_LOCATION *stack,
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS test_completion_ioctl(DEVICE_OBJECT *device, IRP *irp)
+{
+    if (device == upper_device)
+    {
+        IoCopyCurrentIrpStackLocationToNext(irp);
+        IoSetCompletionRoutine(irp, completion_cb, upper_device, TRUE, TRUE, TRUE);
+        return IoCallDriver(lower_device, irp);
+    }
+    else
+    {
+        ok(device == lower_device, "Got wrong device.\n");
+        irp->IoStatus.Status = STATUS_SUCCESS;
+        IoCompleteRequest(irp, IO_NO_INCREMENT);
+        return STATUS_SUCCESS;
+    }
+}
+
 static NTSTATUS WINAPI driver_Create(DEVICE_OBJECT *device, IRP *irp)
 {
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
@@ -1946,6 +2282,8 @@ static NTSTATUS WINAPI driver_IoControl(DEVICE_OBJECT *device, IRP *irp)
             break;
         case IOCTL_WINETEST_MISMATCHED_STATUS:
             return test_mismatched_status_ioctl(irp, stack, &irp->IoStatus.Information);
+        case IOCTL_WINETEST_COMPLETION:
+            return test_completion_ioctl(device, irp);
         default:
             break;
     }
@@ -1955,7 +2293,6 @@ static NTSTATUS WINAPI driver_IoControl(DEVICE_OBJECT *device, IRP *irp)
         irp->IoStatus.Status = status;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
     }
-    else IoMarkIrpPending(irp);
     return status;
 }
 

@@ -345,7 +345,7 @@ static void test_pchannel(void)
     unsigned int i;
     HRESULT hr;
 
-    create_performance(&perf, NULL, NULL, FALSE);
+    create_performance(&perf, NULL, NULL, TRUE);
     hr = IDirectMusicPerformance8_Init(perf, NULL, NULL, NULL);
     ok(hr == S_OK, "Init failed: %08x\n", hr);
     hr = IDirectMusicPerformance8_PChannelInfo(perf, 0, &port, NULL, NULL);
@@ -610,6 +610,31 @@ static void test_notification_type(void)
     IDirectMusicPerformance8_Release(perf);
 }
 
+static void test_performance_graph(void)
+{
+    HRESULT hr;
+    IDirectMusicPerformance8 *perf;
+    IDirectMusicGraph *graph = NULL, *graph2;
+
+    create_performance(&perf, NULL, NULL, FALSE);
+    hr = IDirectMusicPerformance8_Init(perf, NULL, NULL, NULL);
+    ok(hr == S_OK, "Init failed: %08x\n", hr);
+
+    hr = IDirectMusicPerformance8_GetGraph(perf, NULL);
+    ok(hr == E_POINTER, "Failed: %08x\n", hr);
+
+    hr = IDirectMusicPerformance8_GetGraph(perf, &graph2);
+    ok(hr == DMUS_E_NOT_FOUND, "Failed: %08x\n", hr);
+    ok(graph2 == NULL, "unexpected pointer.\n");
+
+    hr = IDirectMusicPerformance8_QueryInterface(perf, &IID_IDirectMusicGraph, (void**)&graph);
+    todo_wine ok(hr == S_OK, "Failed: %08x\n", hr);
+
+    if (graph)
+        IDirectMusicGraph_Release(graph);
+    destroy_performance(perf, NULL, NULL);
+}
+
 START_TEST( performance )
 {
     HRESULT hr;
@@ -630,6 +655,7 @@ START_TEST( performance )
     test_createport();
     test_pchannel();
     test_notification_type();
+    test_performance_graph();
 
     CoUninitialize();
 }

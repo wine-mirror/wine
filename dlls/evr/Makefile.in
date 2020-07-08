@@ -1,10 +1,13 @@
 MODULE    = evr.dll
-IMPORTS   = mfuuid strmiids strmbase uuid ole32 oleaut32
+IMPORTLIB = evr
+IMPORTS   = mfuuid strmiids strmbase uuid dxguid ole32 oleaut32
+DELAYIMPORTS = mfplat
 
 EXTRADLLFLAGS = -mno-cygwin
 
 C_SRCS = \
 	evr.c \
-	main.c
+	main.c \
+	mixer.c
 
 IDL_SRCS = evr_classes.idl

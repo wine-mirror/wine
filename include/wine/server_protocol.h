@@ -199,6 +199,9 @@ typedef __int64 timeout_t;
 #define TIMEOUT_INFINITE (((timeout_t)0x7fffffff) << 32 | 0xffffffff)
 
 
+typedef __int64 abstime_t;
+
+
 typedef struct
 {
     unsigned int debug_flags;
@@ -468,9 +471,15 @@ typedef union
         enum apc_type    type;
         int              __pad;
         client_ptr_t     func;
-        timeout_t        time;
+        abstime_t        time;
         client_ptr_t     arg;
     } timer;
+} user_apc_t;
+
+typedef union
+{
+    enum apc_type type;
+    user_apc_t    user;
     struct
     {
         enum apc_type    type;
@@ -484,7 +493,7 @@ typedef union
         unsigned int     op_type;
         client_ptr_t     addr;
         mem_size_t       size;
-        unsigned int     zero_bits_64;
+        mem_size_t       zero_bits;
         unsigned int     prot;
     } virtual_alloc;
     struct
@@ -535,9 +544,9 @@ typedef union
         client_ptr_t     addr;
         mem_size_t       size;
         file_pos_t       offset;
+        mem_size_t       zero_bits;
         unsigned int     alloc_type;
-        unsigned short   zero_bits_64;
-        unsigned short   prot;
+        unsigned int     prot;
     } map_view;
     struct
     {
@@ -548,7 +557,7 @@ typedef union
     struct
     {
         enum apc_type    type;
-        int              suspend;
+        unsigned int     flags;
         client_ptr_t     func;
         client_ptr_t     arg;
         mem_size_t       reserve;
@@ -636,6 +645,7 @@ typedef union
     {
         enum apc_type    type;
         unsigned int     status;
+        process_id_t     pid;
         thread_id_t      tid;
         obj_handle_t     handle;
     } create_thread;
@@ -927,7 +937,7 @@ struct terminate_thread_reply
 {
     struct reply_header __header;
     int          self;
-    int          last;
+    char __pad_12[4];
 };
 
 
@@ -951,6 +961,7 @@ struct get_process_info_reply
     client_cpu_t cpu;
     short int    debugger_present;
     short int    debug_children;
+    /* VARARG(image,pe_image_info); */
 };
 
 
@@ -1247,18 +1258,19 @@ struct select_request
     struct request_header __header;
     int          flags;
     client_ptr_t cookie;
-    timeout_t    timeout;
+    abstime_t    timeout;
+    data_size_t  size;
     obj_handle_t prev_apc;
     /* VARARG(result,apc_result); */
-    /* VARARG(data,select_op); */
-    char __pad_36[4];
+    /* VARARG(data,select_op,size); */
+    /* VARARG(context,context); */
 };
 struct select_reply
 {
     struct reply_header __header;
-    timeout_t    timeout;
     apc_call_t   call;
     obj_handle_t apc_handle;
+    /* VARARG(context,context); */
     char __pad_60[4];
 };
 #define SELECT_ALERTABLE     1
@@ -2512,7 +2524,6 @@ struct queue_exception_event_request
     client_ptr_t  address;
     data_size_t   len;
     /* VARARG(params,uints64,len); */
-    /* VARARG(context,context); */
     char __pad_44[4];
 };
 struct queue_exception_event_reply
@@ -2532,7 +2543,6 @@ struct get_exception_status_request
 struct get_exception_status_reply
 {
     struct reply_header __header;
-    /* VARARG(context,context); */
 };
 
 
@@ -2892,14 +2902,14 @@ struct get_thread_context_request
     struct request_header __header;
     obj_handle_t handle;
     unsigned int flags;
-    int          suspend;
+    char __pad_20[4];
 };
 struct get_thread_context_reply
 {
     struct reply_header __header;
     int          self;
+    obj_handle_t handle;
     /* VARARG(context,context); */
-    char __pad_12[4];
 };
 
 
@@ -2908,9 +2918,7 @@ struct set_thread_context_request
 {
     struct request_header __header;
     obj_handle_t handle;
-    int          suspend;
     /* VARARG(context,context); */
-    char __pad_20[4];
 };
 struct set_thread_context_reply
 {
@@ -5532,7 +5540,9 @@ struct set_fd_name_info_request
     obj_handle_t handle;
     obj_handle_t rootdir;
     int          link;
+    int          replace;
     /* VARARG(filename,string); */
+    char __pad_28[4];
 };
 struct set_fd_name_info_reply
 {
@@ -5645,32 +5655,6 @@ struct update_rawinput_devices_reply
 
 
 
-struct get_suspend_context_request
-{
-    struct request_header __header;
-    char __pad_12[4];
-};
-struct get_suspend_context_reply
-{
-    struct reply_header __header;
-    /* VARARG(context,context); */
-};
-
-
-
-struct set_suspend_context_request
-{
-    struct request_header __header;
-    /* VARARG(context,context); */
-    char __pad_12[4];
-};
-struct set_suspend_context_reply
-{
-    struct reply_header __header;
-};
-
-
-
 struct create_job_request
 {
     struct request_header __header;
@@ -5756,6 +5740,20 @@ struct set_job_completion_port_request
 struct set_job_completion_port_reply
 {
     struct reply_header __header;
+};
+
+
+
+struct get_job_info_request
+{
+    struct request_header __header;
+    obj_handle_t handle;
+};
+struct get_job_info_reply
+{
+    struct reply_header __header;
+    int total_processes;
+    int active_processes;
 };
 
 
@@ -6085,14 +6083,13 @@ enum request
     REQ_free_user_handle,
     REQ_set_cursor,
     REQ_update_rawinput_devices,
-    REQ_get_suspend_context,
-    REQ_set_suspend_context,
     REQ_create_job,
     REQ_open_job,
     REQ_assign_job,
     REQ_process_in_job,
     REQ_set_job_limits,
     REQ_set_job_completion_port,
+    REQ_get_job_info,
     REQ_terminate_job,
     REQ_suspend_process,
     REQ_resume_process,
@@ -6389,14 +6386,13 @@ union generic_request
     struct free_user_handle_request free_user_handle_request;
     struct set_cursor_request set_cursor_request;
     struct update_rawinput_devices_request update_rawinput_devices_request;
-    struct get_suspend_context_request get_suspend_context_request;
-    struct set_suspend_context_request set_suspend_context_request;
     struct create_job_request create_job_request;
     struct open_job_request open_job_request;
     struct assign_job_request assign_job_request;
     struct process_in_job_request process_in_job_request;
     struct set_job_limits_request set_job_limits_request;
     struct set_job_completion_port_request set_job_completion_port_request;
+    struct get_job_info_request get_job_info_request;
     struct terminate_job_request terminate_job_request;
     struct suspend_process_request suspend_process_request;
     struct resume_process_request resume_process_request;
@@ -6691,19 +6687,22 @@ union generic_reply
     struct free_user_handle_reply free_user_handle_reply;
     struct set_cursor_reply set_cursor_reply;
     struct update_rawinput_devices_reply update_rawinput_devices_reply;
-    struct get_suspend_context_reply get_suspend_context_reply;
-    struct set_suspend_context_reply set_suspend_context_reply;
     struct create_job_reply create_job_reply;
     struct open_job_reply open_job_reply;
     struct assign_job_reply assign_job_reply;
     struct process_in_job_reply process_in_job_reply;
     struct set_job_limits_reply set_job_limits_reply;
     struct set_job_completion_port_reply set_job_completion_port_reply;
+    struct get_job_info_reply get_job_info_reply;
     struct terminate_job_reply terminate_job_reply;
     struct suspend_process_reply suspend_process_reply;
     struct resume_process_reply resume_process_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 595
+/* ### protocol_version begin ### */
+
+#define SERVER_PROTOCOL_VERSION 609
+
+/* ### protocol_version end ### */
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

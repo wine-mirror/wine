@@ -37,6 +37,8 @@
 
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
+static HINTERNET (WINAPI *pWinHttpWebSocketCompleteUpgrade)(HINTERNET,DWORD_PTR);
+
 static BOOL proxy_active(void)
 {
     WINHTTP_PROXY_INFO proxy_info;
@@ -2205,6 +2207,12 @@ static const char passportauth[] =
 "WWW-Authenticate: Passport1.4\r\n"
 "\r\n";
 
+static const char switchprotocols[] =
+"HTTP/1.1 101 Switching Protocols\r\n"
+"Server: winetest\r\n"
+"Upgrade: websocket\r\n"
+"Connection: Upgrade\r\n";
+
 static const char unauthorized[] = "Unauthorized";
 static const char hello_world[] = "Hello World";
 static const char auth_unseen[] = "Auth Unseen";
@@ -2216,6 +2224,31 @@ struct server_info
 };
 
 #define BIG_BUFFER_LEN 0x2250
+
+static void create_websocket_accept(const char *key, char *buf, unsigned int buflen)
+{
+    HCRYPTPROV provider;
+    HCRYPTHASH hash;
+    BYTE sha1[20];
+    char data[128];
+    DWORD len;
+
+    strcpy(data, key);
+    strcat(data, "258EAFA5-E914-47DA-95CA-C5AB0DC85B11");
+
+    CryptAcquireContextW(&provider, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT);
+    CryptCreateHash(provider, CALG_SHA1, 0, 0, &hash);
+    CryptHashData(hash, (BYTE *)data, strlen(data), 0);
+
+    len = sizeof(sha1);
+    CryptGetHashParam(hash, HP_HASHVAL, sha1, &len, 0);
+    CryptDestroyHash(hash);
+    CryptReleaseContext(provider, 0);
+
+    buf[0] = 0;
+    len = buflen;
+    CryptBinaryToStringA( (BYTE *)sha1, sizeof(sha1), CRYPT_STRING_BASE64, buf, &len);
+}
 
 static DWORD CALLBACK server_thread(LPVOID param)
 {
@@ -2387,6 +2420,29 @@ static DWORD CALLBACK server_thread(LPVOID param)
         else if (strstr(buffer, "GET /passport"))
         {
             send(c, passportauth, sizeof(passportauth) - 1, 0);
+        }
+        else if (strstr(buffer, "GET /websocket"))
+        {
+            char headers[256], key[32], accept[64];
+            const char *pos = strstr(buffer, "Sec-WebSocket-Key: ");
+            if (pos && strstr(buffer, "Connection: Upgrade\r\n") &&
+                (strstr(buffer, "Upgrade: websocket\r\n") || strstr(buffer, "Upgrade: Websocket\r\n")) &&
+                strstr(buffer, "Host: ") && strstr(buffer, "Sec-WebSocket-Version: 13\r\n"))
+            {
+                memcpy(headers, switchprotocols, sizeof(switchprotocols));
+                memcpy(key, pos + 19, 24);
+                key[24] = 0;
+
+                create_websocket_accept(key, accept, sizeof(accept));
+
+                strcat(headers, "Sec-WebSocket-Accept: ");
+                strcat(headers, accept);
+                strcat(headers, "\r\n\r\n");
+
+                send(c, headers, strlen(headers), 0);
+            }
+            else send(c, notokmsg, sizeof(notokmsg) - 1, 0);
+            continue;
         }
         if (strstr(buffer, "GET /quit"))
         {
@@ -3037,6 +3093,161 @@ static void test_head_request(int port)
     WinHttpCloseHandle(req);
     WinHttpCloseHandle(con);
     WinHttpCloseHandle(ses);
+}
+
+static void test_websocket(int port)
+{
+    HINTERNET session, connection, request, socket;
+    DWORD size, len, count, status, index, error;
+    WCHAR header[32];
+    char buf[128];
+    BOOL ret;
+
+    if (!pWinHttpWebSocketCompleteUpgrade)
+    {
+        win_skip("WinHttpWebSocketCompleteUpgrade not supported\n");
+        return;
+    }
+
+    session = WinHttpOpen(L"winetest", 0, NULL, NULL, 0);
+    ok(session != NULL, "got %u\n", GetLastError());
+
+    connection = WinHttpConnect(session, L"localhost", port, 0);
+    ok(connection != NULL, "got %u\n", GetLastError());
+
+    request = WinHttpOpenRequest(connection, L"GET", L"/websocket", NULL, NULL, NULL, 0);
+    ok(request != NULL, "got %u\n", GetLastError());
+
+    ret = WinHttpSetOption(request, WINHTTP_OPTION_UPGRADE_TO_WEB_SOCKET, NULL, 0);
+    ok(ret, "got %u\n", GetLastError());
+
+    size = sizeof(header);
+    SetLastError(0xdeadbeef);
+    ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_UPGRADE, NULL, &header, &size, NULL);
+    error = GetLastError();
+    ok(!ret, "success\n");
+    todo_wine ok(error == ERROR_WINHTTP_INCORRECT_HANDLE_STATE, "got %u\n", error);
+
+    size = sizeof(header);
+    SetLastError(0xdeadbeef);
+    ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_CONNECTION, NULL, &header, &size, NULL);
+    error = GetLastError();
+    ok(!ret, "success\n");
+    todo_wine ok(error == ERROR_WINHTTP_INCORRECT_HANDLE_STATE, "got %u\n", error);
+
+    index = 0;
+    size = sizeof(buf);
+    SetLastError(0xdeadbeef);
+    ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_CUSTOM | WINHTTP_QUERY_FLAG_REQUEST_HEADERS,
+                              L"Sec-WebSocket-Key", buf, &size, &index);
+    error = GetLastError();
+    ok(!ret, "success\n");
+    ok(error == ERROR_WINHTTP_HEADER_NOT_FOUND, "got %u\n", error);
+
+    index = 0;
+    size = sizeof(buf);
+    SetLastError(0xdeadbeef);
+    ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_CUSTOM | WINHTTP_QUERY_FLAG_REQUEST_HEADERS,
+                              L"Sec-WebSocket-Version", buf, &size, &index);
+    error = GetLastError();
+    ok(!ret, "success\n");
+    ok(error == ERROR_WINHTTP_HEADER_NOT_FOUND, "got %u\n", error);
+
+    ret = WinHttpSendRequest(request, NULL, 0, NULL, 0, 0, 0);
+    ok(ret, "got %u\n", GetLastError());
+
+    size = sizeof(header);
+    SetLastError(0xdeadbeef);
+    ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_UPGRADE, NULL, &header, &size, NULL);
+    error = GetLastError();
+    ok(!ret, "success\n");
+    todo_wine ok(error == ERROR_WINHTTP_INCORRECT_HANDLE_STATE, "got %u\n", error);
+
+    size = sizeof(header);
+    SetLastError(0xdeadbeef);
+    ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_CONNECTION, NULL, &header, &size, NULL);
+    error = GetLastError();
+    ok(!ret, "success\n");
+    todo_wine ok(error == ERROR_WINHTTP_INCORRECT_HANDLE_STATE, "got %u\n", error);
+
+    index = 0;
+    buf[0] = 0;
+    size = sizeof(buf);
+    ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_CUSTOM | WINHTTP_QUERY_FLAG_REQUEST_HEADERS,
+                              L"Sec-WebSocket-Key", buf, &size, &index);
+    ok(ret, "got %u\n", GetLastError());
+
+    index = 0;
+    buf[0] = 0;
+    size = sizeof(buf);
+    ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_CUSTOM | WINHTTP_QUERY_FLAG_REQUEST_HEADERS,
+                              L"Sec-WebSocket-Version", buf, &size, &index);
+    ok(ret, "got %u\n", GetLastError());
+
+    ret = WinHttpReceiveResponse(request, NULL);
+    ok(ret, "got %u\n", GetLastError());
+
+    count = 0xdeadbeef;
+    ret = WinHttpQueryDataAvailable(request, &count);
+    ok(ret, "got %u\n", GetLastError());
+    ok(!count, "got %u\n", count);
+
+    header[0] = 0;
+    size = sizeof(header);
+    ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_UPGRADE, NULL, &header, &size, NULL);
+    ok(ret, "got %u\n", GetLastError());
+    ok(!wcscmp( header, L"websocket" ), "got %s\n", wine_dbgstr_w(header));
+
+    header[0] = 0;
+    size = sizeof(header);
+    ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_CONNECTION, NULL, &header, &size, NULL);
+    ok(ret, "got %u\n", GetLastError());
+    ok(!wcscmp( header, L"Upgrade" ), "got %s\n", wine_dbgstr_w(header));
+
+    status = 0xdeadbeef;
+    size = sizeof(status);
+    ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER, NULL, &status,
+                              &size, NULL);
+    ok(ret, "got %u\n", GetLastError());
+    ok(status == HTTP_STATUS_SWITCH_PROTOCOLS, "got %u\n", status);
+
+    len = 0xdeadbeef;
+    size = sizeof(len);
+    ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_CONTENT_LENGTH | WINHTTP_QUERY_FLAG_NUMBER, NULL, &len,
+                              &size, 0);
+    ok(!ret, "success\n");
+
+    index = 0;
+    size = sizeof(buf);
+    ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_CUSTOM, L"Sec-WebSocket-Accept", buf, &size, &index);
+    ok(ret, "got %u\n", GetLastError());
+
+    socket = pWinHttpWebSocketCompleteUpgrade(request, 0);
+    ok(socket != NULL, "got %u\n", GetLastError());
+
+    header[0] = 0;
+    size = sizeof(header);
+    ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_UPGRADE, NULL, &header, &size, NULL);
+    ok(ret, "got %u\n", GetLastError());
+    ok(!wcscmp( header, L"websocket" ), "got %s\n", wine_dbgstr_w(header));
+
+    header[0] = 0;
+    size = sizeof(header);
+    ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_CONNECTION, NULL, &header, &size, NULL);
+    ok(ret, "got %u\n", GetLastError());
+    ok(!wcscmp( header, L"Upgrade" ), "got %s\n", wine_dbgstr_w(header));
+
+    index = 0;
+    size = sizeof(buf);
+    ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_CUSTOM, L"Sec-WebSocket-Accept", buf, &size, &index);
+    ok(ret, "got %u\n", GetLastError());
+
+    /* Send/Receive on websock */
+
+    WinHttpCloseHandle(request);
+    WinHttpCloseHandle(socket);
+    WinHttpCloseHandle(connection);
+    WinHttpCloseHandle(session);
 }
 
 static void test_not_modified(int port)
@@ -4710,6 +4921,9 @@ START_TEST (winhttp)
     struct server_info si;
     HANDLE thread;
     DWORD ret;
+    HMODULE mod = GetModuleHandleA("winhttp.dll");
+
+    pWinHttpWebSocketCompleteUpgrade = (void *)GetProcAddress(mod, "WinHttpWebSocketCompleteUpgrade");
 
     test_WinHttpOpenRequest();
     test_WinHttpSendRequest();
@@ -4759,6 +4973,7 @@ START_TEST (winhttp)
     test_cookies(si.port);
     test_request_path_escapes(si.port);
     test_passport_auth(si.port);
+    test_websocket(si.port);
 
     /* send the basic request again to shutdown the server thread */
     test_basic_request(si.port, NULL, L"/quit");

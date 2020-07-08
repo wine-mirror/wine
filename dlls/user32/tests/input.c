@@ -45,9 +45,6 @@
  *
  */
 
-#define _WIN32_WINNT 0x401
-#define _WIN32_IE 0x0500
-
 #include <stdarg.h>
 #include <assert.h>
 
@@ -1689,7 +1686,7 @@ static void test_GetRawInputDeviceList(void)
          * understand that; so use the \\?\ prefix instead */
         name[1] = '\\';
         file = CreateFileW(name, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
-        todo_wine_if(info.dwType != RIM_TYPEHID)
+        todo_wine_if(i == 0 || i == 1)
             ok(file != INVALID_HANDLE_VALUE, "Failed to open %s, error %u\n", wine_dbgstr_w(name), GetLastError());
 
         sz = 0;
@@ -1719,8 +1716,7 @@ static void test_GetRawInputDeviceList(void)
             {
                 /* succeeds on hardware, fails in some VMs */
                 br = HidD_GetPreparsedData(file, &preparsed);
-                todo_wine
-                    ok(br == TRUE || broken(br == FALSE), "HidD_GetPreparsedData failed\n");
+                ok(br == TRUE || broken(br == FALSE), "HidD_GetPreparsedData failed\n");
             }
 
             if (br)
@@ -2763,12 +2759,18 @@ static DWORD WINAPI get_key_state_thread(void *arg)
     ok((result & 0x8000) || broken(!(result & 0x8000)), /* > Win 2003 */
        "expected that highest bit is set, got %x\n", result);
 
+    ok((SHORT)(result & 0x007e) == 0,
+        "expected that undefined bits are unset, got %x\n", result);
+
     ReleaseSemaphore(semaphores[0], 1, NULL);
     result = WaitForSingleObject(semaphores[1], 1000);
     ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
 
     result = GetKeyState('X');
     ok(!(result & 0x8000), "expected that highest bit is unset, got %x\n", result);
+
+    ok((SHORT)(result & 0x007e) == 0,
+        "expected that undefined bits are unset, got %x\n", result);
 
     return 0;
 }
@@ -3002,6 +3004,12 @@ static void test_GetPointerType(void)
     ok(type == PT_MOUSE, " type %d\n", type );
 }
 
+static void test_UnregisterDeviceNotification(void)
+{
+    BOOL ret = UnregisterDeviceNotification(NULL);
+    ok(ret == FALSE, "Unregistering NULL Device Notification returned: %d\n", ret);
+}
+
 START_TEST(input)
 {
     POINT pos;
@@ -3048,4 +3056,6 @@ START_TEST(input)
         test_GetPointerType();
     else
         win_skip("GetPointerType is not available\n");
+
+    test_UnregisterDeviceNotification();
 }

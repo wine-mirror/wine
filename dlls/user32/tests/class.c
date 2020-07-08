@@ -18,9 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-/* To get CS_DROPSHADOW with the MSVC headers */
-#define _WIN32_WINNT 0x0501
-
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -98,6 +95,7 @@ static void ClassTest(HINSTANCE hInstance, BOOL global)
     LONG i;
     WCHAR str[20];
     ATOM classatom;
+    HINSTANCE hInstance2;
 
     cls.style         = CS_HREDRAW | CS_VREDRAW | (global?CS_GLOBALCLASS:0);
     cls.lpfnWndProc   = ClassTest_WndProc;
@@ -121,12 +119,37 @@ static void ClassTest(HINSTANCE hInstance, BOOL global)
         "RegisterClass of the same class should fail for the second time\n");
 
     /* Setup windows */
+    hInstance2 = (HINSTANCE)(((ULONG_PTR)hInstance & ~0xffff) | 0xdead);
+
+    hTestWnd = CreateWindowW (className, winName,
+       WS_OVERLAPPEDWINDOW + WS_HSCROLL + WS_VSCROLL,
+       CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, 0,
+       0, hInstance2, 0);
+    ok(hTestWnd != 0, "Failed to create window for hInstance %p\n", hInstance2);
+
+    ok((HINSTANCE)GetClassLongPtrA(hTestWnd, GCLP_HMODULE) == hInstance,
+       "Wrong GCL instance %p != %p\n",
+       (HINSTANCE)GetClassLongPtrA(hTestWnd, GCLP_HMODULE), hInstance);
+    ok((HINSTANCE)GetWindowLongPtrA(hTestWnd, GWLP_HINSTANCE) == hInstance2,
+       "Wrong GWL instance %p != %p\n",
+       (HINSTANCE)GetWindowLongPtrA(hTestWnd, GWLP_HINSTANCE), hInstance2);
+
+    DestroyWindow(hTestWnd);
+
     hTestWnd = CreateWindowW (className, winName,
        WS_OVERLAPPEDWINDOW + WS_HSCROLL + WS_VSCROLL,
        CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, 0,
        0, hInstance, 0);
 
     ok(hTestWnd!=0, "Failed to create window\n");
+
+    ok((HINSTANCE)GetClassLongPtrA(hTestWnd, GCLP_HMODULE) == hInstance,
+                        "Wrong GCL instance %p/%p\n",
+        (HINSTANCE)GetClassLongPtrA(hTestWnd, GCLP_HMODULE), hInstance);
+    ok((HINSTANCE)GetWindowLongPtrA(hTestWnd, GWLP_HINSTANCE) == hInstance,
+       "Wrong GWL instance %p/%p\n",
+        (HINSTANCE)GetWindowLongPtrA(hTestWnd, GWLP_HINSTANCE), hInstance);
+
 
     /* test initial values of valid classwords */
     for(i=0; i<NUMCLASSWORDS; i++)
@@ -1254,7 +1277,7 @@ static void test_comctl32_classes(void)
         sprintf( path_name, "%s class %s", argv[0], classes[i] );
         ok( CreateProcessA( NULL, path_name, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &info ),
             "CreateProcess failed.\n" );
-        winetest_wait_child_process( info.hProcess );
+        wait_child_process( info.hProcess );
         CloseHandle( info.hProcess );
         CloseHandle( info.hThread );
     }
@@ -1491,6 +1514,8 @@ START_TEST(class)
 
     ClassTest(hInstance,FALSE);
     ClassTest(hInstance,TRUE);
+    ClassTest((HANDLE)((ULONG_PTR)hInstance | 0x1234), FALSE);
+    ClassTest((HANDLE)((ULONG_PTR)hInstance | 0x1234), TRUE);
     CreateDialogParamTest(hInstance);
     test_styles();
     test_builtinproc();

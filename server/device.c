@@ -700,6 +700,7 @@ static struct device *create_device( struct object *root, const struct unicode_s
     {
         device->unix_path = NULL;
         device->manager = manager;
+        grab_object( device );
         list_add_tail( &manager->devices, &device->entry );
         list_init( &device->kernel_object );
         list_init( &device->files );
@@ -728,12 +729,17 @@ static void delete_file( struct device_file *file )
 {
     struct irp_call *irp, *next;
 
+    /* the pending requests may be the only thing holding a reference to the file */
+    grab_object( file );
+
     /* terminate all pending requests */
     LIST_FOR_EACH_ENTRY_SAFE( irp, next, &file->requests, struct irp_call, dev_entry )
     {
         list_remove( &irp->mgr_entry );
         set_irp_result( irp, STATUS_FILE_DELETED, NULL, 0, 0 );
     }
+
+    release_object( file );
 }
 
 static void delete_device( struct device *device )
@@ -748,6 +754,7 @@ static void delete_device( struct device *device )
     unlink_named_object( &device->obj );
     list_remove( &device->entry );
     device->manager = NULL;
+    release_object( device );
 }
 
 

@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "wtsapi32.h"
 #include "wine/debug.h"
 #include "wine/heap.h"
@@ -287,18 +288,43 @@ HANDLE WINAPI WTSOpenServerW(LPWSTR pServerName)
 /************************************************************
  *                WTSQuerySessionInformationA  (WTSAPI32.@)
  */
-BOOL WINAPI WTSQuerySessionInformationA(
-    HANDLE hServer,
-    DWORD SessionId,
-    WTS_INFO_CLASS WTSInfoClass,
-    LPSTR* Buffer,
-    DWORD* BytesReturned)
+BOOL WINAPI WTSQuerySessionInformationA(HANDLE server, DWORD session_id, WTS_INFO_CLASS class, char **buffer, DWORD *count)
 {
-    /* FIXME: Forward request to winsta.dll::WinStationQueryInformationA */
-    FIXME("Stub %p 0x%08x %d %p %p\n", hServer, SessionId, WTSInfoClass,
-        Buffer, BytesReturned);
+    WCHAR *bufferW = NULL;
 
-    return FALSE;
+    TRACE("%p 0x%08x %d %p %p\n", server, session_id, class, buffer, count);
+
+    if (!buffer || !count)
+    {
+        SetLastError(ERROR_INVALID_USER_BUFFER);
+        return FALSE;
+    }
+
+    if (!WTSQuerySessionInformationW(server, session_id, class, &bufferW, count))
+        return FALSE;
+
+    *count = WideCharToMultiByte(CP_ACP, 0, bufferW, -1, NULL, 0, NULL, NULL);
+    if (!*count)
+    {
+        WTSFreeMemory(bufferW);
+        return FALSE;
+    }
+
+    if (!(*buffer = heap_alloc(*count)))
+    {
+        WTSFreeMemory(bufferW);
+        return FALSE;
+    }
+
+    if (!(*count = WideCharToMultiByte(CP_ACP, 0, bufferW, -1, *buffer, *count, NULL, NULL)))
+    {
+        WTSFreeMemory(bufferW);
+        heap_free(*buffer);
+        return FALSE;
+    }
+
+    WTSFreeMemory(bufferW);
+    return TRUE;
 }
 
 /************************************************************
@@ -315,6 +341,12 @@ BOOL WINAPI WTSQuerySessionInformationW(
     FIXME("Stub %p 0x%08x %d %p %p\n", hServer, SessionId, WTSInfoClass,
         Buffer, BytesReturned);
 
+    if (!Buffer || !BytesReturned)
+    {
+        SetLastError(ERROR_INVALID_USER_BUFFER);
+        return FALSE;
+    }
+
     if (WTSInfoClass == WTSUserName)
     {
         WCHAR *username;
@@ -327,6 +359,11 @@ BOOL WINAPI WTSQuerySessionInformationW(
         *Buffer = username;
         *BytesReturned = count * sizeof(WCHAR);
         return TRUE;
+    }
+    else
+    {
+        *Buffer = NULL;
+        *BytesReturned = 0;
     }
     return FALSE;
 }

@@ -21,8 +21,9 @@
 
 #include "dshow.h"
 #include "evr.h"
+#include "wine/strmbase.h"
 
 HRESULT evr_filter_create(IUnknown *outer_unk, void **ppv) DECLSPEC_HIDDEN;
-
+HRESULT evr_mixer_create(IUnknown *outer_unk, void **ppv) DECLSPEC_HIDDEN;
 
 #endif /* __EVR_PRIVATE_INCLUDED__ */

@@ -7,7 +7,7 @@
 @ stub AppXLookupMoniker
 @ stub ClosePackageInfo
 @ stub FormatApplicationUserModelId
-@ stub GetPackageFamilyName
+@ stdcall GetPackageFamilyName(long ptr ptr) kernel32.GetPackageFamilyName
 @ stdcall GetPackageFullName(long ptr ptr) kernel32.GetPackageFullName
 @ stub GetPackageId
 @ stub GetPackageInfo

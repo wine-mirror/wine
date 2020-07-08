@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2019-11-29 22:03+0900\n"
+"PO-Revision-Date: 2020-05-10 19:59+0900\n"
 "Last-Translator: Akihiro Sagawa <sagawa.aki@gmail.com>\n"
 "Language-Team: Japanese\n"
 "Language: ja\n"
@@ -48,8 +48,8 @@ msgstr "サポート情報(&S)"
 msgid "&Modify..."
 msgstr "変更(&M)..."
 
-#: appwiz.rc:69 appwiz.rc:45 cryptui.rc:351 msacm32.rc:40 winecfg.rc:200
-#: winecfg.rc:237 wordpad.rc:256
+#: appwiz.rc:69 appwiz.rc:45 cryptui.rc:351 msacm32.rc:40 winecfg.rc:199
+#: winecfg.rc:236 wordpad.rc:256
 msgid "&Remove"
 msgstr "削除(&R)"
 
@@ -68,7 +68,7 @@ msgstr "サポート情報"
 #: notepad.rc:117 oleview.rc:161 oleview.rc:174 progman.rc:106 progman.rc:124
 #: progman.rc:142 progman.rc:158 progman.rc:180 progman.rc:199 progman.rc:216
 #: regedit.rc:296 regedit.rc:307 regedit.rc:320 regedit.rc:336 regedit.rc:349
-#: regedit.rc:362 taskmgr.rc:442 taskmgr.rc:517 winecfg.rc:214 winecfg.rc:224
+#: regedit.rc:362 taskmgr.rc:442 taskmgr.rc:517 winecfg.rc:213 winecfg.rc:223
 #: wineconsole.rc:135 winefile.rc:127 winefile.rc:150 winefile.rc:180
 #: winemine.rc:73 winemine.rc:84 winemine.rc:98 wordpad.rc:215 wordpad.rc:226
 #: wordpad.rc:244 wordpad.rc:257
@@ -151,8 +151,8 @@ msgstr "インストール(&I)"
 #: notepad.rc:118 oleview.rc:162 oleview.rc:175 progman.rc:107 progman.rc:125
 #: progman.rc:143 progman.rc:159 progman.rc:181 progman.rc:200 progman.rc:217
 #: regedit.rc:297 regedit.rc:308 regedit.rc:321 regedit.rc:337 regedit.rc:350
-#: regedit.rc:363 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34 winecfg.rc:215
-#: winecfg.rc:225 wineconsole.rc:136 winefile.rc:128 winefile.rc:151
+#: regedit.rc:363 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34 winecfg.rc:214
+#: winecfg.rc:224 wineconsole.rc:136 winefile.rc:128 winefile.rc:151
 #: winefile.rc:181 winemine.rc:99 wordpad.rc:216 wordpad.rc:227 wordpad.rc:245
 #: wordpad.rc:258
 msgid "Cancel"
@@ -192,7 +192,7 @@ msgstr ""
 "新しいソフトウェアをインストールすることや、既存のソフトウェアを削除すること"
 "ができます。"
 
-#: appwiz.rc:33 taskmgr.rc:262 winecfg.rc:33
+#: appwiz.rc:33 taskmgr.rc:262 winecfg.rc:32
 msgid "Applications"
 msgstr "アプリケーション"
 
@@ -350,7 +350,7 @@ msgstr "ウィザード"
 msgid "< &Back"
 msgstr "< 戻る(&B)"
 
-#: comctl32.rc:85 version.rc:60
+#: comctl32.rc:85 version.rc:61
 msgid "&Next >"
 msgstr "次へ(&N) >"
 
@@ -586,7 +586,7 @@ msgstr "フォント名(&F):"
 msgid "Font St&yle:"
 msgstr "スタイル(&Y):"
 
-#: comdlg32.rc:260 comdlg32.rc:439 winecfg.rc:294
+#: comdlg32.rc:260 comdlg32.rc:439 winecfg.rc:292
 msgid "&Size:"
 msgstr "サイズ(&S):"
 
@@ -602,7 +602,7 @@ msgstr "取り消し線(&K)"
 msgid "&Underline"
 msgstr "下線(&U)"
 
-#: comdlg32.rc:270 winecfg.rc:292
+#: comdlg32.rc:270 winecfg.rc:290
 msgid "&Color:"
 msgstr "配色(&C):"
 
@@ -685,7 +685,7 @@ msgstr "単語単位で検索(&W)"
 msgid "Match &Case"
 msgstr "大文字と小文字を区別する(&C)"
 
-#: comdlg32.rc:325 joy.rc:71
+#: comdlg32.rc:325 joy.rc:72
 msgid "Direction"
 msgstr "方向"
 
@@ -774,7 +774,7 @@ msgstr "部数(&C):"
 msgid "C&ollate"
 msgstr "部単位で印刷(&O)"
 
-#: comdlg32.rc:414 winecfg.rc:300
+#: comdlg32.rc:414 winecfg.rc:298
 msgid "Si&ze:"
 msgstr "サイズ(&Z):"
 
@@ -1225,7 +1225,7 @@ msgstr "mm"
 msgid "&User name:"
 msgstr "ユーザ名(&U):"
 
-#: credui.rc:48 cryptui.rc:402 version.rc:80
+#: credui.rc:48 cryptui.rc:402 version.rc:81
 msgid "&Password:"
 msgstr "パスワード(&P):"
 
@@ -2251,7 +2251,7 @@ msgstr ""
 msgid "&File name:"
 msgstr "ファイル名(&F):"
 
-#: cryptui.rc:301 cryptui.rc:323 cryptui.rc:437 winecfg.rc:313
+#: cryptui.rc:301 cryptui.rc:323 cryptui.rc:437 winecfg.rc:311
 msgid "B&rowse..."
 msgstr "参照(&R)..."
 
@@ -3007,7 +3007,7 @@ msgstr "リセット"
 msgid "Player"
 msgstr "プレイヤー"
 
-#: dinput.rc:43 winecfg.rc:89
+#: dinput.rc:43 winecfg.rc:88
 msgid "Device"
 msgstr "デバイス"
 
@@ -3107,7 +3107,7 @@ msgstr "シンボル"
 msgid "OEM/DOS"
 msgstr "OEM/DOS"
 
-#: gdi32.rc:45 version.rc:99 wldap32.rc:112
+#: gdi32.rc:45 version.rc:100 wldap32.rc:112
 msgid "Other"
 msgstr "その他"
 
@@ -3172,7 +3172,7 @@ msgstr "ホーム(&H)"
 msgid "&Stop"
 msgstr "中止(&S)"
 
-#: hhctrl.rc:64 hhctrl.rc:81 version.rc:72 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 version.rc:73 shdoclc.rc:59
 msgid "&Refresh"
 msgstr "更新(&R)"
 
@@ -3548,27 +3548,27 @@ msgstr "中高"
 msgid "High"
 msgstr "高"
 
-#: joy.rc:36
+#: joy.rc:37
 msgid "Joysticks"
 msgstr "ジョイスティック"
 
-#: joy.rc:39 winecfg.rc:213
+#: joy.rc:40 winecfg.rc:212
 msgid "&Disable"
 msgstr "無効化(&D)"
 
-#: joy.rc:40
+#: joy.rc:41
 msgid "&Enable"
 msgstr "有効化(&E)"
 
-#: joy.rc:41
+#: joy.rc:42
 msgid "Connected"
 msgstr "接続済み"
 
-#: joy.rc:43
+#: joy.rc:44
 msgid "Disabled"
 msgstr "無効"
 
-#: joy.rc:45
+#: joy.rc:46
 msgid ""
 "After disabling or enabling a device, the connected joysticks won't be "
 "updated here until you restart this applet."
@@ -3576,23 +3576,23 @@ msgstr ""
 "このアプレットを再起動するまでは、デバイスを無効化または有効化したあとでも、"
 "ここにある接続済みジョイスティックの一覧は更新されません。"
 
-#: joy.rc:50
+#: joy.rc:51
 msgid "Test Joystick"
 msgstr "ジョイスティックのテスト"
 
-#: joy.rc:54
+#: joy.rc:55
 msgid "Buttons"
 msgstr "ボタン"
 
-#: joy.rc:63
+#: joy.rc:64
 msgid "Test Force Feedback"
 msgstr "フォース フィードバックのテスト"
 
-#: joy.rc:67
+#: joy.rc:68
 msgid "Available Effects"
 msgstr "利用可能な効果"
 
-#: joy.rc:69
+#: joy.rc:70
 msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."
@@ -3603,6 +3603,10 @@ msgstr ""
 #: joy.rc:31
 msgid "Game Controllers"
 msgstr "ゲーム コントローラ"
+
+#: joy.rc:32
+msgid "Test and configure game controllers."
+msgstr ""
 
 #: jscript.rc:28
 msgid "Error converting object to primitive type"
@@ -3617,176 +3621,192 @@ msgid "Subscript out of range"
 msgstr "添字が範囲外です"
 
 #: jscript.rc:31
+#, fuzzy
+#| msgid "Out of paper; "
+msgid "Out of stack space"
+msgstr "用紙切れ - "
+
+#: jscript.rc:32
 msgid "Object required"
 msgstr "オブジェクトが必要です"
 
-#: jscript.rc:32
+#: jscript.rc:33
 msgid "Automation server can't create object"
 msgstr "オートメーション サーバはオブジェクトを生成できません"
 
-#: jscript.rc:33
+#: jscript.rc:34
 msgid "Object doesn't support this property or method"
 msgstr "オブジェクトはこのプロパティまたはメソッドをサポートしていません"
 
-#: jscript.rc:34
+#: jscript.rc:35
 msgid "Object doesn't support this action"
 msgstr "オブジェクトはこの操作をサポートしていません"
 
-#: jscript.rc:35
+#: jscript.rc:36
 msgid "Argument not optional"
 msgstr "引数は省略できません"
 
-#: jscript.rc:36
+#: jscript.rc:37
 msgid "Syntax error"
 msgstr "構文エラー"
 
-#: jscript.rc:37
+#: jscript.rc:38
 msgid "Expected ';'"
 msgstr "';'を期待していました"
 
-#: jscript.rc:38
+#: jscript.rc:39
 msgid "Expected '('"
 msgstr "'('を期待していました"
 
-#: jscript.rc:39
+#: jscript.rc:40
 msgid "Expected ')'"
 msgstr "')'を期待していました"
 
-#: jscript.rc:40
+#: jscript.rc:41
 msgid "Expected identifier"
 msgstr "識別子を期待していました"
 
-#: jscript.rc:41
+#: jscript.rc:42
 msgid "Expected '='"
 msgstr "'='を期待していました"
 
-#: jscript.rc:42
+#: jscript.rc:43
 msgid "Invalid character"
 msgstr "無効な文字です"
 
-#: jscript.rc:43
+#: jscript.rc:44
 msgid "Unterminated string constant"
 msgstr "文字列定数が終端していません"
 
-#: jscript.rc:44
+#: jscript.rc:45
 msgid "'return' statement outside of function"
 msgstr "return 文が関数外にあります"
 
-#: jscript.rc:45
+#: jscript.rc:46
 msgid "Can't have 'break' outside of loop"
 msgstr "ループ外で break は使えません"
 
-#: jscript.rc:46
+#: jscript.rc:47
 msgid "Can't have 'continue' outside of loop"
 msgstr "ループ外で continue は使えません"
 
-#: jscript.rc:47
+#: jscript.rc:48
 msgid "Label redefined"
 msgstr "ラベルが再定義されました"
 
-#: jscript.rc:48
+#: jscript.rc:49
 msgid "Label not found"
 msgstr "ラベルが見つかりません"
 
-#: jscript.rc:49
+#: jscript.rc:50
 msgid "Expected '@end'"
 msgstr "'@end'を期待していました"
 
-#: jscript.rc:50
+#: jscript.rc:51
 msgid "Conditional compilation is turned off"
 msgstr "条件コンパイルはオフにされています"
 
-#: jscript.rc:51
+#: jscript.rc:52
 msgid "Expected '@'"
 msgstr "'@'を期待していました"
 
-#: jscript.rc:75
+#: jscript.rc:78
 msgid "Microsoft JScript compilation error"
-msgstr ""
+msgstr "Microsoft JScript コンパイル エラー"
 
-#: jscript.rc:76
+#: jscript.rc:79
 msgid "Microsoft JScript runtime error"
-msgstr ""
+msgstr "Microsoft JScript 実行時エラー"
 
-#: jscript.rc:77
-#, fuzzy
-#| msgid "Unknown error"
+#: jscript.rc:80
 msgid "Unknown runtime error"
-msgstr "不明なエラー"
+msgstr "未知の実行時エラー"
 
-#: jscript.rc:54
+#: jscript.rc:55
 msgid "Number expected"
 msgstr "数値を期待していました"
 
-#: jscript.rc:52
+#: jscript.rc:53
 msgid "Function expected"
 msgstr "関数を期待していました"
 
-#: jscript.rc:53
+#: jscript.rc:54
 msgid "'[object]' is not a date object"
 msgstr "'[object]' は日付オブジェクトではありません"
 
-#: jscript.rc:55
+#: jscript.rc:56
 msgid "Object expected"
 msgstr "オブジェクトを期待していました"
 
-#: jscript.rc:56
+#: jscript.rc:57
 msgid "Illegal assignment"
 msgstr "不正な代入です"
 
-#: jscript.rc:57
+#: jscript.rc:58
 msgid "'|' is undefined"
 msgstr "'|'は未定義です"
 
-#: jscript.rc:58
+#: jscript.rc:59
 msgid "Boolean object expected"
 msgstr "Boolean オブジェクトを期待していました"
 
-#: jscript.rc:59
+#: jscript.rc:60
 msgid "Cannot delete '|'"
 msgstr "'|'を削除できません"
 
-#: jscript.rc:60
+#: jscript.rc:61
 msgid "VBArray object expected"
 msgstr "VBArray オブジェクトを期待していました"
 
-#: jscript.rc:61
+#: jscript.rc:62
 msgid "JScript object expected"
 msgstr "JScript オブジェクトを期待していました"
 
-#: jscript.rc:62
+#: jscript.rc:63
+#, fuzzy
+#| msgid "Array object expected"
+msgid "Enumerator object expected"
+msgstr "配列オブジェクトを期待していました"
+
+#: jscript.rc:64
+#, fuzzy
+#| msgid "Boolean object expected"
+msgid "Regular Expression object expected"
+msgstr "Boolean オブジェクトを期待していました"
+
+#: jscript.rc:65
 msgid "Syntax error in regular expression"
 msgstr "正規表現に構文誤りがあります"
 
-#: jscript.rc:63
+#: jscript.rc:66
 msgid "Exception thrown and not caught"
-msgstr ""
+msgstr "例外が送出されましたが捕捉されませんでした"
 
-#: jscript.rc:65
+#: jscript.rc:68
 msgid "URI to be encoded contains invalid characters"
 msgstr "エンコードされる URI に無効な文字が含まれています"
 
-#: jscript.rc:64
+#: jscript.rc:67
 msgid "URI to be decoded is incorrect"
 msgstr "デコードされる URI が正しくありません"
 
-#: jscript.rc:66
+#: jscript.rc:69
 msgid "Number of fraction digits is out of range"
 msgstr "小数点以下の桁数が範囲外です"
 
-#: jscript.rc:67
+#: jscript.rc:70
 msgid "Precision is out of range"
 msgstr "精度指定が範囲外です"
 
-#: jscript.rc:68
+#: jscript.rc:71
 msgid "Array length must be a finite positive integer"
 msgstr "配列の長さは有限の正整数でなければなりません"
 
-#: jscript.rc:69
+#: jscript.rc:72
 msgid "Array object expected"
 msgstr "配列オブジェクトを期待していました"
 
-#: jscript.rc:70
+#: jscript.rc:73
 msgid ""
 "'writable' attribute on the property descriptor cannot be set to 'true' on "
 "this object"
@@ -3794,15 +3814,15 @@ msgstr ""
 "このオブジェクトにおけるプロパティ記述子の 'writable' 属性は 'true' に設定で"
 "きません"
 
-#: jscript.rc:71
+#: jscript.rc:74
 msgid "Cannot redefine non-configurable property '|'"
 msgstr "変更不可のプロパティ '|' は再定義できません"
 
-#: jscript.rc:72
+#: jscript.rc:75
 msgid "Cannot modify non-writable property '|'"
 msgstr "書換不可のプロパティ '|' は変更できません"
 
-#: jscript.rc:73
+#: jscript.rc:76
 msgid "Property cannot have both accessors and a value"
 msgstr "プロパティはアクセサと値の両方になることはできません"
 
@@ -3811,6 +3831,7 @@ msgid "Wine kernel DLL"
 msgstr ""
 
 #: ../../include/wine/wine_common_ver.rc:134 winemac.rc:32 wineboot.rc:42
+#: winecfg.rc:137
 msgid "Wine"
 msgstr "Wine"
 
@@ -6838,10 +6859,8 @@ msgid "Sink has not been finalized.\n"
 msgstr "シンクは確定されていません。\n"
 
 #: mferror.mc:732
-#, fuzzy
-#| msgid "Sink was already stopped.\n"
 msgid "Clock was stopped\n"
-msgstr "シンクはすでに停止していました。\n"
+msgstr "クロックは停止されていました\n"
 
 #: mferror.mc:32
 msgid "Media Foundation platform is not initialized.\n"
@@ -7220,10 +7239,8 @@ msgid "Clock state was already set.\n"
 msgstr "クロックの状態は設定済みでした。\n"
 
 #: mferror.mc:725
-#, fuzzy
-#| msgid "Clock is not available.\n"
 msgid "Clock is not simple\n"
-msgstr "クロックは利用可能ではありません。\n"
+msgstr "クロックが単純ではありません\n"
 
 #: mpr.rc:35 wininet.rc:37
 msgid "Enter Network Password"
@@ -7277,7 +7294,7 @@ msgstr "ハイパーリンク"
 msgid "Hyperlink Information"
 msgstr "ハイパーリンクの情報"
 
-#: mshtml.rc:43 winecfg.rc:245
+#: mshtml.rc:43 winecfg.rc:243
 msgid "&Type:"
 msgstr "タイプ(&T):"
 
@@ -8317,201 +8334,161 @@ msgstr "On"
 msgid "Off"
 msgstr "Off"
 
-#: version.rc:55
-#, fuzzy
-#| msgid "video"
+#: version.rc:56
 msgid "Provider"
-msgstr "ビデオ"
+msgstr "プロバイダ"
 
-#: version.rc:58
-#, fuzzy
-#| msgid "Select the format you want to use:"
+#: version.rc:59
 msgid "Select the data you want to connect to:"
-msgstr "形式を選択してください:"
+msgstr "接続したいデータを選択してください:"
 
-#: version.rc:65
-#, fuzzy
-#| msgid "Connections"
+#: version.rc:66
 msgid "Connection"
 msgstr "接続"
 
-#: version.rc:68
-#, fuzzy
-#| msgid "Select the format you want to use:"
-msgid "Specify the following to connect to ODBC data:"
-msgstr "形式を選択してください:"
-
 #: version.rc:69
-msgid "1. Specify the source of data:"
-msgstr ""
+msgid "Specify the following to connect to ODBC data:"
+msgstr "ODBC データに接続するため以下を指定してください:"
 
 #: version.rc:70
-#, fuzzy
-#| msgid "Please enter your name"
-msgid "Use &data source name"
-msgstr "名前を入力しましょう"
+msgid "1. Specify the source of data:"
+msgstr "1. データ ソース:"
 
-#: version.rc:73
-#, fuzzy
-#| msgid "Reset Connections"
-msgid "Use c&onnection string"
-msgstr "リセットされた接続"
+#: version.rc:71
+msgid "Use &data source name"
+msgstr "利用するデータ ソース名(&D)"
 
 #: version.rc:74
-#, fuzzy
-#| msgid "Connections"
-msgid "&Connection string:"
-msgstr "接続"
+msgid "Use c&onnection string"
+msgstr "利用する接続文字列(&C)"
 
-#: version.rc:76
-#, fuzzy
-#| msgid "A&dd..."
-msgid "B&uild..."
-msgstr "追加(&D)..."
+#: version.rc:75
+msgid "&Connection string:"
+msgstr "接続文字列:"
 
 #: version.rc:77
-msgid "2. Enter information to log on to the server"
-msgstr ""
+msgid "B&uild..."
+msgstr "構築(&U)..."
 
 #: version.rc:78
-#, fuzzy
-#| msgid "&User name:"
-msgid "User &name:"
-msgstr "ユーザ名(&U):"
+msgid "2. Enter information to log on to the server"
+msgstr "2. サーバにログオンするための情報"
 
-#: version.rc:82
-#, fuzzy
-#| msgid "&Blank page"
-msgid "&Blank password"
-msgstr "空白(&B)"
+#: version.rc:79
+msgid "User &name:"
+msgstr "ユーザ名(&N):"
 
 #: version.rc:83
-#, fuzzy
-#| msgid "Wrong password.\n"
-msgid "Allow &saving password"
-msgstr "パスワードが違います。\n"
+msgid "&Blank password"
+msgstr "空のパスワード(&B)"
 
 #: version.rc:84
+msgid "Allow &saving password"
+msgstr "パスワードを保存する(&S)"
+
+#: version.rc:85
 msgid "3. Enter the &initial catalog to use:"
-msgstr ""
+msgstr "3. 最初に利用するカタログ(&I):"
 
-#: version.rc:86
-#, fuzzy
-#| msgid "Reset Connections"
+#: version.rc:87
 msgid "&Test Connection"
-msgstr "リセットされた接続"
+msgstr "接続をテスト(&T)"
 
-#: version.rc:91 winemine.rc:65
+#: version.rc:92 winemine.rc:65
 msgid "Advanced"
 msgstr "中級"
 
-#: version.rc:94
-#, fuzzy
-#| msgid "Network share"
-msgid "Network settings"
-msgstr "ネットワーク共有"
-
 #: version.rc:95
-#, fuzzy
-#| msgid "Bad impersonation level.\n"
+msgid "Network settings"
+msgstr "ネットワーク設定"
+
+#: version.rc:96
 msgid "&Impersonation level:"
-msgstr "不正な偽装レベルです。\n"
+msgstr "偽装レベル(&I):"
 
-#: version.rc:97
+#: version.rc:98
 msgid "P&rotection level:"
-msgstr ""
+msgstr "保護レベル(&R):"
 
-#: version.rc:100
-#, fuzzy
-#| msgid "Connected"
+#: version.rc:101
 msgid "Connect:"
-msgstr "接続済み"
+msgstr "接続:"
 
-#: version.rc:102
-#, fuzzy
-#| msgid "seconds"
+#: version.rc:103
 msgid "seconds."
 msgstr "秒"
 
-#: version.rc:103
-#, fuzzy
-#| msgid "Success"
+#: version.rc:104
 msgid "A&ccess:"
-msgstr "成功"
+msgstr "アクセス(&C):"
 
-#: version.rc:109
-#, fuzzy
-#| msgid "&All"
+#: version.rc:110
 msgid "All"
-msgstr "すべて(&A)"
+msgstr "すべて"
 
-#: version.rc:113
+#: version.rc:114
 msgid ""
 "These are the initialization properties for this type of data. To edit a "
 "value, select a property, then choose Edit Value below."
 msgstr ""
+"このデータ型には初期プロパティがあります。値を編集するには、プロパティを選ん"
+"でから、下にある[値の編集]を選択してください。"
 
-#: version.rc:114
-#, fuzzy
-#| msgid "&Edit..."
+#: version.rc:115
 msgid "&Edit Value..."
-msgstr "編集(&E)..."
+msgstr "値の編集(&E)..."
 
 #: version.rc:49
-#, fuzzy
-#| msgid "Properties"
 msgid "Data Link Error"
-msgstr "プロパティ"
+msgstr "データ リンク エラー"
 
 #: version.rc:50
-#, fuzzy
-#| msgid "Please select a file."
 msgid "Please select a provider."
-msgstr "ファイルを選択してください。"
+msgstr "プロバイダを選択してください。"
+
+#: version.rc:51
+msgid ""
+"Provider is no longer available. Ensure that the provider is installed "
+"properly."
+msgstr ""
+"プロバイダが有効ではありません。当該プロバイダが正しくインストールされている"
+"か確かめてください。"
 
 #: version.rc:36
-#, fuzzy
-#| msgid "Properties"
 msgid "Data Link Properties"
-msgstr "プロパティ"
+msgstr "データ リンク プロパティ"
 
 #: version.rc:37
 msgid "OLE DB Provider(s)"
-msgstr ""
+msgstr "OLE DB プロバイダ"
 
 #: version.rc:41
-#, fuzzy
-#| msgid "Ready"
 msgid "Read"
-msgstr "待機中"
+msgstr "読み取り"
 
 #: version.rc:42
-#, fuzzy
-#| msgid "Readme:"
 msgid "ReadWrite"
-msgstr "付属文書:"
+msgstr "読み書き"
 
 #: version.rc:43
 msgid "Share Deny None"
-msgstr ""
+msgstr "共有(拒否なし)"
 
 #: version.rc:44
 msgid "Share Deny Read"
-msgstr ""
+msgstr "共有(読取拒否)"
 
 #: version.rc:45
 msgid "Share Deny Write"
-msgstr ""
+msgstr "共有(書込拒否)"
 
 #: version.rc:46
 msgid "Share Exclusive"
-msgstr ""
+msgstr "共有の排他制御"
 
 #: version.rc:47
-#, fuzzy
-#| msgid "I/O Writes"
 msgid "Write"
-msgstr "I/O 書き込み"
+msgstr "書き込み"
 
 #: oledlg.rc:55
 msgid "Insert Object"
@@ -8705,7 +8682,7 @@ msgctxt "unit: bits"
 msgid "b"
 msgstr "b"
 
-#: sane.rc:34 wineps.rc:49 winecfg.rc:183
+#: sane.rc:34 wineps.rc:49 winecfg.rc:182
 msgctxt "unit: dots/inch"
 msgid "dpi"
 msgstr "dpi"
@@ -9201,7 +9178,7 @@ msgstr ""
 msgid "&Open:"
 msgstr "名前(&O):"
 
-#: shell32.rc:343 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:243
+#: shell32.rc:343 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:241
 #: winefile.rc:129
 msgid "&Browse..."
 msgstr "参照(&B)..."
@@ -9290,7 +9267,7 @@ msgstr "元の場所"
 msgid "Date deleted"
 msgstr "削除日"
 
-#: shell32.rc:156 winecfg.rc:101 winefile.rc:99
+#: shell32.rc:156 winecfg.rc:100 winefile.rc:99
 msgctxt "display name"
 msgid "Desktop"
 msgstr "デスクトップ"
@@ -9631,7 +9608,7 @@ msgstr "Wine ライセンス"
 msgid "Trash"
 msgstr "ごみ箱"
 
-#: shlwapi.rc:38 user32.rc:71 regedit.rc:204 winecfg.rc:87 winefile.rc:97
+#: shlwapi.rc:38 user32.rc:71 regedit.rc:204 winecfg.rc:86 winefile.rc:97
 msgid "Error"
 msgstr "エラー"
 
@@ -9662,127 +9639,123 @@ msgstr " 秒"
 msgid "Select Source"
 msgstr "ソースの選択"
 
-#: tzres.rc:84
+#: tzres.rc:88
 msgid "China Standard Time"
 msgstr "中国標準時間"
 
-#: tzres.rc:85
+#: tzres.rc:89
 msgid "China Daylight Time"
 msgstr "中国夏時間"
 
-#: tzres.rc:164
+#: tzres.rc:170
 msgid "North Asia Standard Time"
 msgstr "北アジア標準時"
 
-#: tzres.rc:165
+#: tzres.rc:171
 msgid "North Asia Daylight Time"
 msgstr "北アジア夏時間"
 
-#: tzres.rc:106
+#: tzres.rc:110
 msgid "Georgian Standard Time"
 msgstr "ジョージア標準時"
 
-#: tzres.rc:107
+#: tzres.rc:111
 msgid "Georgian Daylight Time"
 msgstr "ジョージア夏時間"
 
-#: tzres.rc:156
+#: tzres.rc:162
 msgid "Nepal Standard Time"
 msgstr "ネパール標準時"
 
-#: tzres.rc:157
+#: tzres.rc:163
 msgid "Nepal Daylight Time"
 msgstr "ネパール夏時間"
 
-#: tzres.rc:62
+#: tzres.rc:64
 msgid "Cape Verde Standard Time"
 msgstr "カーボベルデ標準時"
 
-#: tzres.rc:63
+#: tzres.rc:65
 msgid "Cape Verde Daylight Time"
 msgstr "カーボベルデ夏時間"
 
-#: tzres.rc:116
-#, fuzzy
-#| msgid "Hawaiian Standard Time"
+#: tzres.rc:120
 msgid "Haiti Standard Time"
-msgstr "ハワイ標準時"
+msgstr "ハイチ標準時"
 
-#: tzres.rc:117
-#, fuzzy
-#| msgid "Hawaiian Daylight Time"
+#: tzres.rc:121
 msgid "Haiti Daylight Time"
-msgstr "ハワイ夏時間"
+msgstr "ハイチ夏時間"
 
-#: tzres.rc:76
+#: tzres.rc:78
 msgid "Central European Standard Time"
 msgstr "中央ヨーロピアン標準時"
 
-#: tzres.rc:77
+#: tzres.rc:79
 msgid "Central European Daylight Time"
 msgstr "中央ヨーロピアン夏時間"
 
-#: tzres.rc:144
+#: tzres.rc:150
 msgid "Morocco Standard Time"
 msgstr "モロッコ標準時"
 
-#: tzres.rc:145
+#: tzres.rc:151
 msgid "Morocco Daylight Time"
 msgstr "モロッコ夏時間"
 
-#: tzres.rc:74
+#: tzres.rc:76
 msgid "Central Europe Standard Time"
 msgstr "中央ヨーロッパ標準時"
 
-#: tzres.rc:75
+#: tzres.rc:77
 msgid "Central Europe Daylight Time"
 msgstr "中央ヨーロッパ夏時間"
 
-#: tzres.rc:122
+#: tzres.rc:126
 msgid "Iran Standard Time"
 msgstr "イラン標準時"
 
-#: tzres.rc:123
+#: tzres.rc:127
 msgid "Iran Daylight Time"
 msgstr "イラン夏時間"
 
-#: tzres.rc:154
+#: tzres.rc:160
 msgid "Namibia Standard Time"
 msgstr "ナミビア標準時"
 
-#: tzres.rc:155
+#: tzres.rc:161
 msgid "Namibia Daylight Time"
 msgstr "ナミビア夏時間"
 
-#: tzres.rc:204
+#: tzres.rc:210
 msgid "Tonga Standard Time"
 msgstr "トンガ標準時"
 
-#: tzres.rc:205
+#: tzres.rc:211
 msgid "Tonga Daylight Time"
 msgstr "トンガ夏時間"
 
-#: tzres.rc:148
+#: tzres.rc:154
 msgid "Mountain Standard Time (Mexico)"
 msgstr "山地標準時 (メキシコ)"
 
-#: tzres.rc:149
+#: tzres.rc:155
 msgid "Mountain Daylight Time (Mexico)"
 msgstr "山地夏時間 (メキシコ)"
 
-#: tzres.rc:108
+#: tzres.rc:112
 msgid "GMT Standard Time"
 msgstr "GMT 標準時"
 
-#: tzres.rc:109
+#: tzres.rc:113
 msgid "GMT Daylight Time"
 msgstr "GMT 夏時間"
 
-#: tzres.rc:70
+#: tzres.rc:72
 msgid "Central Asia Standard Time"
 msgstr "中央アジア標準時"
 
-#: tzres.rc:71
+#: tzres.rc:73
 msgid "Central Asia Daylight Time"
 msgstr "中央アジア夏時間"
 
@@ -9794,35 +9767,35 @@ msgstr "アラビック標準時"
 msgid "Arabic Daylight Time"
 msgstr "アラビック夏時間"
 
-#: tzres.rc:136
+#: tzres.rc:140
 msgid "Magadan Standard Time"
 msgstr "マガダン標準時"
 
-#: tzres.rc:137
+#: tzres.rc:141
 msgid "Magadan Daylight Time"
 msgstr "マガダン夏時間"
 
-#: tzres.rc:160
+#: tzres.rc:166
 msgid "Newfoundland Standard Time"
 msgstr "ニューファンドランド標準時"
 
-#: tzres.rc:161
+#: tzres.rc:167
 msgid "Newfoundland Daylight Time"
 msgstr "ニューファンドランド夏時間"
 
-#: tzres.rc:228
+#: tzres.rc:234
 msgid "West Pacific Standard Time"
 msgstr "西太平洋標準時"
 
-#: tzres.rc:229
+#: tzres.rc:235
 msgid "West Pacific Daylight Time"
 msgstr "西太平洋夏時間"
 
-#: tzres.rc:168
+#: tzres.rc:174
 msgid "Pacific Standard Time"
 msgstr "太平洋標準時"
 
-#: tzres.rc:169
+#: tzres.rc:175
 msgid "Pacific Daylight Time"
 msgstr "太平洋夏時間"
 
@@ -9834,67 +9807,67 @@ msgstr "アゼルバイジャン標準時"
 msgid "Azerbaijan Daylight Time"
 msgstr "アゼルバイジャン夏時間"
 
-#: tzres.rc:186
+#: tzres.rc:192
 msgid "Samoa Standard Time"
 msgstr "サモア標準時"
 
-#: tzres.rc:187
+#: tzres.rc:193
 msgid "Samoa Daylight Time"
 msgstr "サモア夏時間"
 
-#: tzres.rc:128
+#: tzres.rc:132
 msgid "Kaliningrad Standard Time"
 msgstr "カリーニングラード標準時"
 
-#: tzres.rc:129
+#: tzres.rc:133
 msgid "Kaliningrad Daylight Time"
 msgstr "カリーニングラード夏時間"
 
-#: tzres.rc:170
+#: tzres.rc:176
 msgid "Pacific Standard Time (Mexico)"
 msgstr "太平洋標準時 (メキシコ)"
 
-#: tzres.rc:171
+#: tzres.rc:177
 msgid "Pacific Daylight Time (Mexico)"
 msgstr "太平洋夏時間 (メキシコ)"
 
-#: tzres.rc:140
+#: tzres.rc:146
 msgid "Middle East Standard Time"
 msgstr "中東標準時"
 
-#: tzres.rc:141
+#: tzres.rc:147
 msgid "Middle East Daylight Time"
 msgstr "中東夏時間"
 
-#: tzres.rc:202
+#: tzres.rc:208
 msgid "Tokyo Standard Time"
 msgstr "東京 (標準時)"
 
-#: tzres.rc:203
+#: tzres.rc:209
 msgid "Tokyo Daylight Time"
 msgstr "東京 (夏時間)"
 
-#: tzres.rc:134
+#: tzres.rc:138
 msgid "Line Islands Standard Time"
 msgstr "ライン諸島標準時"
 
-#: tzres.rc:135
+#: tzres.rc:139
 msgid "Line Islands Daylight Time"
 msgstr "ライン諸島夏時間"
 
-#: tzres.rc:126
+#: tzres.rc:130
 msgid "Jordan Standard Time"
 msgstr "ヨルダン標準時"
 
-#: tzres.rc:127
+#: tzres.rc:131
 msgid "Jordan Daylight Time"
 msgstr "ヨルダン夏時間"
 
-#: tzres.rc:80
+#: tzres.rc:82
 msgid "Central Standard Time"
 msgstr "中部標準時"
 
-#: tzres.rc:81
+#: tzres.rc:83
 msgid "Central Daylight Time"
 msgstr "中部夏時間"
 
@@ -9906,11 +9879,11 @@ msgstr "アゾレス諸島標準時"
 msgid "Azores Daylight Time"
 msgstr "アゾレス諸島夏時間"
 
-#: tzres.rc:162
+#: tzres.rc:168
 msgid "North Asia East Standard Time"
 msgstr "北アジア東部標準時"
 
-#: tzres.rc:163
+#: tzres.rc:169
 msgid "North Asia East Daylight Time"
 msgstr "北アジア東部夏時間"
 
@@ -9922,95 +9895,103 @@ msgstr "アルゼンチン標準時"
 msgid "Argentina Daylight Time"
 msgstr "アルゼンチン夏時間"
 
-#: tzres.rc:150
+#: tzres.rc:142
+msgid "Marquesas Standard Time"
+msgstr "マルキーズ標準時"
+
+#: tzres.rc:143
+msgid "Marquesas Daylight Time"
+msgstr "マルキーズ夏時間"
+
+#: tzres.rc:156
 msgid "Myanmar Standard Time"
 msgstr "ミャンマー標準時"
 
-#: tzres.rc:151
+#: tzres.rc:157
 msgid "Myanmar Daylight Time"
 msgstr "ミャンマー夏時間"
 
-#: tzres.rc:214 tzres.rc:215
+#: tzres.rc:220 tzres.rc:221
 msgid "Coordinated Universal Time"
 msgstr "協定世界時"
 
-#: tzres.rc:120
+#: tzres.rc:124
 msgid "India Standard Time"
 msgstr "インド標準時"
 
-#: tzres.rc:121
+#: tzres.rc:125
 msgid "India Daylight Time"
 msgstr "インド夏時間"
 
-#: tzres.rc:114
+#: tzres.rc:118
 msgid "GTB Standard Time"
 msgstr "GTB 標準時"
 
-#: tzres.rc:115
+#: tzres.rc:119
 msgid "GTB Daylight Time"
 msgstr "GTB 夏時間"
 
-#: tzres.rc:206
+#: tzres.rc:212
 msgid "Turkey Standard Time"
 msgstr "トルコ標準時"
 
-#: tzres.rc:207
+#: tzres.rc:213
 msgid "Turkey Daylight Time"
 msgstr "トルコ夏時間"
 
-#: tzres.rc:102
+#: tzres.rc:106
 msgid "Fiji Standard Time"
 msgstr "フィジー標準時"
 
-#: tzres.rc:103
+#: tzres.rc:107
 msgid "Fiji Daylight Time"
 msgstr "フィジー夏時間"
 
-#: tzres.rc:60
+#: tzres.rc:62
 msgid "Canada Central Standard Time"
 msgstr "カナダ中部標準時"
 
-#: tzres.rc:61
+#: tzres.rc:63
 msgid "Canada Central Daylight Time"
 msgstr "カナダ中部夏時間"
 
-#: tzres.rc:198
+#: tzres.rc:204
 msgid "Taipei Standard Time"
 msgstr "台北 (標準時)"
 
-#: tzres.rc:199
+#: tzres.rc:205
 msgid "Taipei Daylight Time"
 msgstr "台北 (夏時間)"
 
-#: tzres.rc:224
+#: tzres.rc:230
 msgid "W. Europe Standard Time"
 msgstr "西ヨーロッパ標準時"
 
-#: tzres.rc:225
+#: tzres.rc:231
 msgid "W. Europe Daylight Time"
 msgstr "西ヨーロッパ夏時間"
 
-#: tzres.rc:142
+#: tzres.rc:148
 msgid "Montevideo Standard Time"
 msgstr "モンテビデオ標準時"
 
-#: tzres.rc:143
+#: tzres.rc:149
 msgid "Montevideo Daylight Time"
 msgstr "モンテビデオ夏時間"
 
-#: tzres.rc:172
+#: tzres.rc:178
 msgid "Pakistan Standard Time"
 msgstr "パキスタン標準時"
 
-#: tzres.rc:173
+#: tzres.rc:179
 msgid "Pakistan Daylight Time"
 msgstr "パキスタン夏時間"
 
-#: tzres.rc:64
+#: tzres.rc:66
 msgid "Caucasus Standard Time"
 msgstr "コーカサス標準時"
 
-#: tzres.rc:65
+#: tzres.rc:67
 msgid "Caucasus Daylight Time"
 msgstr "コーカサス夏時間"
 
@@ -10022,27 +10003,27 @@ msgstr "オーストラリア東部標準時"
 msgid "AUS Eastern Daylight Time"
 msgstr "オーストラリア東部夏時間"
 
-#: tzres.rc:152
+#: tzres.rc:158
 msgid "N. Central Asia Standard Time"
 msgstr "北中央アジア標準時"
 
-#: tzres.rc:153
+#: tzres.rc:159
 msgid "N. Central Asia Daylight Time"
 msgstr "北中央アジア夏時間"
 
-#: tzres.rc:96
+#: tzres.rc:100
 msgid "Eastern Standard Time"
 msgstr "東部標準時"
 
-#: tzres.rc:97
+#: tzres.rc:101
 msgid "Eastern Daylight Time"
 msgstr "東部夏時間"
 
-#: tzres.rc:82
+#: tzres.rc:84
 msgid "Central Standard Time (Mexico)"
 msgstr "中部標準時 (メキシコ)"
 
-#: tzres.rc:83
+#: tzres.rc:85
 msgid "Central Daylight Time (Mexico)"
 msgstr "中部夏時間 (メキシコ)"
 
@@ -10054,67 +10035,67 @@ msgstr "大西洋標準時"
 msgid "Atlantic Daylight Time"
 msgstr "大西洋夏時間"
 
-#: tzres.rc:146
+#: tzres.rc:152
 msgid "Mountain Standard Time"
 msgstr "山地標準時"
 
-#: tzres.rc:147
+#: tzres.rc:153
 msgid "Mountain Daylight Time"
 msgstr "山地夏時間"
 
-#: tzres.rc:210
+#: tzres.rc:216
 msgid "US Eastern Standard Time"
 msgstr "米国東部標準時"
 
-#: tzres.rc:211
+#: tzres.rc:217
 msgid "US Eastern Daylight Time"
 msgstr "米国東部夏時間"
 
-#: tzres.rc:200
+#: tzres.rc:206
 msgid "Tasmania Standard Time"
 msgstr "タスマニア標準時"
 
-#: tzres.rc:201
+#: tzres.rc:207
 msgid "Tasmania Daylight Time"
 msgstr "タスマニア夏時間"
 
-#: tzres.rc:68
+#: tzres.rc:70
 msgid "Central America Standard Time"
 msgstr "中央アメリカ標準時"
 
-#: tzres.rc:69
+#: tzres.rc:71
 msgid "Central America Daylight Time"
 msgstr "中央アメリカ夏時間"
 
-#: tzres.rc:212
+#: tzres.rc:218
 msgid "US Mountain Standard Time"
 msgstr "米国山地標準時"
 
-#: tzres.rc:213
+#: tzres.rc:219
 msgid "US Mountain Daylight Time"
 msgstr "米国山地夏時間"
 
-#: tzres.rc:192
+#: tzres.rc:198
 msgid "South Africa Standard Time"
 msgstr "南アフリカ標準時"
 
-#: tzres.rc:193
+#: tzres.rc:199
 msgid "South Africa Daylight Time"
 msgstr "南アフリカ夏時間"
 
-#: tzres.rc:66
+#: tzres.rc:68
 msgid "Cen. Australia Standard Time"
 msgstr "中央オーストラリア標準時"
 
-#: tzres.rc:67
+#: tzres.rc:69
 msgid "Cen. Australia Daylight Time"
 msgstr "中央オーストラリア夏時間"
 
-#: tzres.rc:194
+#: tzres.rc:200
 msgid "Sri Lanka Standard Time"
 msgstr "スリランカ標準時"
 
-#: tzres.rc:195
+#: tzres.rc:201
 msgid "Sri Lanka Daylight Time"
 msgstr "スリランカ夏時間"
 
@@ -10126,19 +10107,19 @@ msgstr "アフガニスタン標準時"
 msgid "Afghanistan Daylight Time"
 msgstr "アフガニスタン夏時間"
 
-#: tzres.rc:230
+#: tzres.rc:236
 msgid "Yakutsk Standard Time"
 msgstr "ヤクーツク標準時"
 
-#: tzres.rc:231
+#: tzres.rc:237
 msgid "Yakutsk Daylight Time"
 msgstr "ヤクーツク夏時間"
 
-#: tzres.rc:180
+#: tzres.rc:186
 msgid "SA Eastern Standard Time"
 msgstr "南アメリカ東部標準時"
 
-#: tzres.rc:181
+#: tzres.rc:187
 msgid "SA Eastern Daylight Time"
 msgstr "南アメリカ東部標準時"
 
@@ -10158,35 +10139,35 @@ msgstr "アラビアン標準時"
 msgid "Arabian Daylight Time"
 msgstr "アラビアン夏時間"
 
-#: tzres.rc:178
+#: tzres.rc:184
 msgid "Russian Standard Time"
 msgstr "ロシア標準時"
 
-#: tzres.rc:179
+#: tzres.rc:185
 msgid "Russian Daylight Time"
 msgstr "ロシア夏時間"
 
-#: tzres.rc:176
+#: tzres.rc:182
 msgid "Romance Standard Time"
 msgstr "ロマンス標準時"
 
-#: tzres.rc:177
+#: tzres.rc:183
 msgid "Romance Daylight Time"
 msgstr "ロマンス夏時間"
 
-#: tzres.rc:100
+#: tzres.rc:104
 msgid "Ekaterinburg Standard Time"
 msgstr "エカテリンブルク標準時"
 
-#: tzres.rc:101
+#: tzres.rc:105
 msgid "Ekaterinburg Daylight Time"
 msgstr "エカテリンブルク夏時間"
 
-#: tzres.rc:196
+#: tzres.rc:202
 msgid "Syria Standard Time"
 msgstr "シリア標準時"
 
-#: tzres.rc:197
+#: tzres.rc:203
 msgid "Syria Daylight Time"
 msgstr "シリア夏時間"
 
@@ -10198,27 +10179,27 @@ msgstr "オーストラリア中部標準時"
 msgid "AUS Central Daylight Time"
 msgstr "オーストラリア中部夏時間"
 
-#: tzres.rc:112
+#: tzres.rc:116
 msgid "Greenwich Standard Time"
 msgstr "グリニッジ標準時"
 
-#: tzres.rc:113
+#: tzres.rc:117
 msgid "Greenwich Daylight Time"
 msgstr "グリニッジ夏時間"
 
-#: tzres.rc:208
+#: tzres.rc:214
 msgid "Ulaanbaatar Standard Time"
 msgstr "ウランバートル標準時"
 
-#: tzres.rc:209
+#: tzres.rc:215
 msgid "Ulaanbaatar Daylight Time"
 msgstr "ウランバートル夏時間"
 
-#: tzres.rc:124
+#: tzres.rc:128
 msgid "Israel Standard Time"
 msgstr "イスラエル標準時"
 
-#: tzres.rc:125
+#: tzres.rc:129
 msgid "Israel Daylight Time"
 msgstr "イスラエル夏時間"
 
@@ -10230,19 +10211,19 @@ msgstr "バングラデシュ標準時"
 msgid "Bangladesh Daylight Time"
 msgstr "バングラデシュ夏時間"
 
-#: tzres.rc:182
+#: tzres.rc:188
 msgid "SA Pacific Standard Time"
 msgstr "南アメリカ太平洋標準時"
 
-#: tzres.rc:183
+#: tzres.rc:189
 msgid "SA Pacific Daylight Time"
 msgstr "南アメリカ太平洋夏時間"
 
-#: tzres.rc:226
+#: tzres.rc:232
 msgid "West Asia Standard Time"
 msgstr "西アジア標準時"
 
-#: tzres.rc:227
+#: tzres.rc:233
 msgid "West Asia Daylight Time"
 msgstr "西アジア夏時間"
 
@@ -10254,27 +10235,27 @@ msgstr "アラスカ標準時"
 msgid "Alaskan Daylight Time"
 msgstr "アラスカ夏時間"
 
-#: tzres.rc:174
+#: tzres.rc:180
 msgid "Paraguay Standard Time"
 msgstr "パラグアイ標準時"
 
-#: tzres.rc:175
+#: tzres.rc:181
 msgid "Paraguay Daylight Time"
 msgstr "パラグアイ夏時間"
 
-#: tzres.rc:86
+#: tzres.rc:90
 msgid "Dateline Standard Time"
 msgstr "日付変更線 (標準時)"
 
-#: tzres.rc:87
+#: tzres.rc:91
 msgid "Dateline Daylight Time"
 msgstr "日付変更線 (夏時間)"
 
-#: tzres.rc:132
+#: tzres.rc:136
 msgid "Libya Standard Time"
 msgstr "リビア標準時"
 
-#: tzres.rc:133
+#: tzres.rc:137
 msgid "Libya Daylight Time"
 msgstr "リビア夏時間"
 
@@ -10286,55 +10267,59 @@ msgstr "バイア標準時"
 msgid "Bahia Daylight Time"
 msgstr "バイア夏時間"
 
-#: tzres.rc:216
+#: tzres.rc:222
 msgid "Venezuela Standard Time"
 msgstr "ベネズエラ標準時"
 
-#: tzres.rc:217
+#: tzres.rc:223
 msgid "Venezuela Daylight Time"
 msgstr "ベネズエラ夏時間"
 
-#: tzres.rc:118
+#: tzres.rc:60
+msgid "Bougainville Standard Time"
+msgstr "ブーゲンビル標準時"
+
+#: tzres.rc:61
+msgid "Bougainville Daylight Time"
+msgstr "ブーゲンビル夏時間"
+
+#: tzres.rc:122
 msgid "Hawaiian Standard Time"
 msgstr "ハワイ標準時"
 
-#: tzres.rc:119
+#: tzres.rc:123
 msgid "Hawaiian Daylight Time"
 msgstr "ハワイ夏時間"
 
-#: tzres.rc:188
+#: tzres.rc:194
 msgid "SE Asia Standard Time"
 msgstr "東南アジア標準時"
 
-#: tzres.rc:189
+#: tzres.rc:195
 msgid "SE Asia Daylight Time"
 msgstr "東南アジア夏時間"
 
-#: tzres.rc:158
+#: tzres.rc:164
 msgid "New Zealand Standard Time"
 msgstr "ニュージーランド標準時"
 
-#: tzres.rc:159
+#: tzres.rc:165
 msgid "New Zealand Daylight Time"
 msgstr "ニュージーランド夏時間"
 
 #: tzres.rc:34
-#, fuzzy
-#| msgid "Argentina Standard Time"
 msgid "Aleutian Standard Time"
-msgstr "アルゼンチン標準時"
+msgstr "アリューシャン標準時"
 
 #: tzres.rc:35
-#, fuzzy
-#| msgid "Argentina Daylight Time"
 msgid "Aleutian Daylight Time"
-msgstr "アルゼンチン夏時間"
+msgstr "アリューシャン夏時間"
 
-#: tzres.rc:72
+#: tzres.rc:74
 msgid "Central Brazilian Standard Time"
 msgstr "ブラジル中部標準時"
 
-#: tzres.rc:73
+#: tzres.rc:75
 msgid "Central Brazilian Daylight Time"
 msgstr "ブラジル中部夏時間"
 
@@ -10346,131 +10331,139 @@ msgstr "ベラルーシ標準時"
 msgid "Belarus Daylight Time"
 msgstr "ベラルーシ夏時間"
 
-#: tzres.rc:184
+#: tzres.rc:190
 msgid "SA Western Standard Time"
 msgstr "南アメリカ西部標準時"
 
-#: tzres.rc:185
+#: tzres.rc:191
 msgid "SA Western Daylight Time"
 msgstr "南アメリカ西部標準時"
 
-#: tzres.rc:110
+#: tzres.rc:114
 msgid "Greenland Standard Time"
 msgstr "グリーンランド標準時"
 
-#: tzres.rc:111
+#: tzres.rc:115
 msgid "Greenland Daylight Time"
 msgstr "グリーンラインド夏時間"
 
-#: tzres.rc:94
+#: tzres.rc:98
 msgid "Easter Island Standard Time"
 msgstr "イースター島標準時"
 
-#: tzres.rc:95
+#: tzres.rc:99
 msgid "Easter Island Daylight Time"
 msgstr "イースター島夏時間"
 
-#: tzres.rc:98
+#: tzres.rc:102
 msgid "Egypt Standard Time"
 msgstr "エジプト標準時"
 
-#: tzres.rc:99
+#: tzres.rc:103
 msgid "Egypt Daylight Time"
 msgstr "エジプト夏時間"
 
-#: tzres.rc:138
+#: tzres.rc:144
 msgid "Mauritius Standard Time"
 msgstr "モーリシャス標準時"
 
-#: tzres.rc:139
+#: tzres.rc:145
 msgid "Mauritius Daylight Time"
 msgstr "モーリシャス夏時間"
 
-#: tzres.rc:218
+#: tzres.rc:224
 msgid "Vladivostok Standard Time"
 msgstr "ウラジオストク標準時"
 
-#: tzres.rc:219
+#: tzres.rc:225
 msgid "Vladivostok Daylight Time"
 msgstr "ウラジオストク夏時間"
 
-#: tzres.rc:190
+#: tzres.rc:196
 msgid "Singapore Standard Time"
 msgstr "シンガポール標準時"
 
-#: tzres.rc:191
+#: tzres.rc:197
 msgid "Singapore Daylight Time"
 msgstr "シンガポール夏時間"
 
-#: tzres.rc:130
+#: tzres.rc:134
 msgid "Korea Standard Time"
 msgstr "韓国 (標準時)"
 
-#: tzres.rc:131
+#: tzres.rc:135
 msgid "Korea Daylight Time"
 msgstr "韓国 (夏時間)"
 
-#: tzres.rc:88
+#: tzres.rc:86
+msgid "Chatham Islands Standard Time"
+msgstr "チャタム諸島標準時"
+
+#: tzres.rc:87
+msgid "Chatham Islands Daylight Time"
+msgstr "チャタム諸島夏時間"
+
+#: tzres.rc:92
 msgid "E. Africa Standard Time"
 msgstr "アフリカ東部標準時"
 
-#: tzres.rc:89
+#: tzres.rc:93
 msgid "E. Africa Daylight Time"
 msgstr "アフリカ東部夏時間"
 
-#: tzres.rc:104
+#: tzres.rc:108
 msgid "FLE Standard Time"
 msgstr "FLE 標準時"
 
-#: tzres.rc:105
+#: tzres.rc:109
 msgid "FLE Daylight Time"
 msgstr "FLE 夏時間"
 
-#: tzres.rc:92
+#: tzres.rc:96
 msgid "E. South America Standard Time"
 msgstr "南アメリカ東部標準時"
 
-#: tzres.rc:93
+#: tzres.rc:97
 msgid "E. South America Daylight Time"
 msgstr "南アメリカ東部夏時間"
 
-#: tzres.rc:78
+#: tzres.rc:80
 msgid "Central Pacific Standard Time"
 msgstr "中央太平洋標準時"
 
-#: tzres.rc:79
+#: tzres.rc:81
 msgid "Central Pacific Daylight Time"
 msgstr "中央太平洋夏時間"
 
-#: tzres.rc:222
+#: tzres.rc:228
 msgid "W. Central Africa Standard Time"
 msgstr "中央アフリカ西部標準時"
 
-#: tzres.rc:223
+#: tzres.rc:229
 msgid "W. Central Africa Daylight Time"
 msgstr "中央アフリカ西部夏時間"
 
-#: tzres.rc:166
+#: tzres.rc:172
 msgid "Pacific SA Standard Time"
 msgstr "南アメリカ太平洋標準時"
 
-#: tzres.rc:167
+#: tzres.rc:173
 msgid "Pacific SA Daylight Time"
 msgstr "南アメリカ太平洋夏時間"
 
-#: tzres.rc:90
+#: tzres.rc:94
 msgid "E. Australia Standard Time"
 msgstr "オーストラリア東部標準時"
 
-#: tzres.rc:91
+#: tzres.rc:95
 msgid "E. Australia Daylight Time"
 msgstr "オーストラリア東部夏時間"
 
-#: tzres.rc:220
+#: tzres.rc:226
 msgid "W. Australia Standard Time"
 msgstr "オーストラリア西部標準時"
 
-#: tzres.rc:221
+#: tzres.rc:227
 msgid "W. Australia Daylight Time"
 msgstr "オーストラリア西部夏時間"
 
@@ -11631,7 +11624,7 @@ msgstr "アナログ(&L)"
 msgid "Digi&tal"
 msgstr "デジタル(&T)"
 
-#: clock.rc:35 notepad.rc:53 winecfg.rc:307 winefile.rc:63 wordpad.rc:84
+#: clock.rc:35 notepad.rc:53 winecfg.rc:305 winefile.rc:63 wordpad.rc:84
 msgid "&Font..."
 msgstr "フォント(&F)..."
 
@@ -15428,7 +15421,7 @@ msgstr ""
 msgid "The Wine configuration in %s is being updated, please wait..."
 msgstr "%s にある Wine 設定を更新しています。しばらくお待ちください..."
 
-#: winecfg.rc:141
+#: winecfg.rc:140
 msgid ""
 "This program is free software; you can redistribute it and/or modify it "
 "under the terms of the GNU Lesser General Public License as published by the "
@@ -15440,23 +15433,23 @@ msgstr ""
 "望によってはそれ以降の バージョン のうちどれか) の定める条件の下で 再頒布 ま"
 "たは 改変 することができます。"
 
-#: winecfg.rc:143
+#: winecfg.rc:142
 msgid "Windows registration information"
 msgstr "Windows 登録情報"
 
-#: winecfg.rc:144
+#: winecfg.rc:143
 msgid "&Owner:"
 msgstr "所有者(&O):"
 
-#: winecfg.rc:146
+#: winecfg.rc:145
 msgid "Organi&zation:"
 msgstr "組織(&Z):"
 
-#: winecfg.rc:154
+#: winecfg.rc:153
 msgid "Application settings"
 msgstr "アプリケーション設定"
 
-#: winecfg.rc:155
+#: winecfg.rc:154
 msgid ""
 "Wine can mimic different Windows versions for each application. This tab is "
 "linked to the Libraries and Graphics tabs to allow you to change system-wide "
@@ -15466,55 +15459,55 @@ msgstr ""
 "ます。 このタブはライブラリ及びグラフィック各タブと連動しますので、システム全"
 "体の設定や 個別アプリケーションの設定の変更が行えます。"
 
-#: winecfg.rc:159
+#: winecfg.rc:158
 msgid "Add appli&cation..."
 msgstr "アプリケーションを追加(&C)..."
 
-#: winecfg.rc:160
+#: winecfg.rc:159
 msgid "&Remove application"
 msgstr "アプリケーションを削除(&R)"
 
-#: winecfg.rc:161
+#: winecfg.rc:160
 msgid "&Windows Version:"
 msgstr "&Windows バージョン:"
 
-#: winecfg.rc:169
+#: winecfg.rc:168
 msgid "Window settings"
 msgstr "ウィンドウ設定"
 
-#: winecfg.rc:170
+#: winecfg.rc:169
 msgid "Automatically capture the &mouse in full-screen windows"
 msgstr "フルスクリーン ウィンドウでマウスを自動的に捕捉する(&M)"
 
-#: winecfg.rc:171
+#: winecfg.rc:170
 msgid "Allow the window manager to &decorate the windows"
 msgstr "ウィンドウ マネージャがウィンドウを装飾するのを許可する(&D)"
 
-#: winecfg.rc:172
+#: winecfg.rc:171
 msgid "Allow the &window manager to control the windows"
 msgstr "ウィンドウ マネージャがウィンドウを制御するのを許可する(&W)"
 
-#: winecfg.rc:173
+#: winecfg.rc:172
 msgid "&Emulate a virtual desktop"
 msgstr "仮想デスクトップをエミュレートする(&E)"
 
-#: winecfg.rc:175
+#: winecfg.rc:174
 msgid "Desktop &size:"
 msgstr "デスクトップの大きさ(&S):"
 
-#: winecfg.rc:180
+#: winecfg.rc:179
 msgid "Screen resolution"
 msgstr "画面の解像度"
 
-#: winecfg.rc:184
+#: winecfg.rc:183
 msgid "This is a sample text using 10 point Tahoma"
 msgstr "10 ポイントの Tahoma による見本です"
 
-#: winecfg.rc:191
+#: winecfg.rc:190
 msgid "DLL overrides"
 msgstr "DLL オーバーライド"
 
-#: winecfg.rc:192
+#: winecfg.rc:191
 msgid ""
 "Dynamic Link Libraries can be specified individually to be either builtin "
 "(provided by Wine) or native (taken from Windows or provided by the "
@@ -15523,262 +15516,258 @@ msgstr ""
 "ダイナミック リンク ライブラリ(DLL)は個別に 内蔵版(Wine提供) または ネイティ"
 "ブ版(Windows もしくはアプリケーション提供のもの)を選ぶことができます。"
 
-#: winecfg.rc:194
+#: winecfg.rc:193
 msgid "&New override for library:"
 msgstr "ライブラリの新規オーバーライド(&N):"
 
-#: winecfg.rc:196
+#: winecfg.rc:195
 msgid "A&dd"
 msgstr "追加(&D)"
 
-#: winecfg.rc:197
+#: winecfg.rc:196
 msgid "Existing &overrides:"
 msgstr "既存のオーバーライド(&O):"
 
-#: winecfg.rc:199
+#: winecfg.rc:198
 msgid "&Edit..."
 msgstr "編集(&E)..."
 
-#: winecfg.rc:205
+#: winecfg.rc:204
 msgid "Edit Override"
 msgstr "オーバーライドの編集"
 
-#: winecfg.rc:208
+#: winecfg.rc:207
 msgid "Load order"
 msgstr "読込順序"
 
-#: winecfg.rc:209
+#: winecfg.rc:208
 msgid "&Builtin (Wine)"
 msgstr "内蔵版(Wine)(&B)"
 
-#: winecfg.rc:210
+#: winecfg.rc:209
 msgid "&Native (Windows)"
 msgstr "ネイティブ版(Windows)(&N)"
 
-#: winecfg.rc:211
+#: winecfg.rc:210
 msgid "Buil&tin then Native"
 msgstr "内蔵版後にネイティブ版(&T)"
 
-#: winecfg.rc:212
+#: winecfg.rc:211
 msgid "Nati&ve then Builtin"
 msgstr "ネイティブ版後に内蔵版(&V)"
 
-#: winecfg.rc:220
+#: winecfg.rc:219
 msgid "Select Drive Letter"
 msgstr "ドライブ レターを選択"
 
-#: winecfg.rc:232
+#: winecfg.rc:231
 msgid "Drive configuration"
 msgstr "ドライブの設定"
 
-#: winecfg.rc:233
+#: winecfg.rc:232
 msgid ""
 "Failed to connect to the mount manager; the drive configuration cannot be "
 "edited."
 msgstr ""
 "マウント マネージャへの接続に失敗したため、ドライブ設定は変更できません。"
 
-#: winecfg.rc:236
+#: winecfg.rc:235
 msgid "A&dd..."
 msgstr "追加(&D)..."
 
-#: winecfg.rc:238
-msgid "Aut&odetect"
-msgstr "自動検出(&O)"
-
-#: winecfg.rc:241
+#: winecfg.rc:239
 msgid "&Path:"
 msgstr "パス(&P):"
 
-#: winecfg.rc:248 winecfg.rc:38
+#: winecfg.rc:246 winecfg.rc:37
 msgid "Show Advan&ced"
 msgstr "詳細を表示(&C)"
 
-#: winecfg.rc:249
+#: winecfg.rc:247
 msgid "De&vice:"
 msgstr "デバイス(&V):"
 
-#: winecfg.rc:251
+#: winecfg.rc:249
 msgid "Bro&wse..."
 msgstr "参照(&W)..."
 
-#: winecfg.rc:253
+#: winecfg.rc:251
 msgid "&Label:"
 msgstr "ラベル(&L):"
 
-#: winecfg.rc:255
+#: winecfg.rc:253
 msgid "S&erial:"
 msgstr "シリアル番号(&E):"
 
-#: winecfg.rc:258
+#: winecfg.rc:256
 msgid "&Show dot files"
 msgstr "ドット ファイルを表示する(&S)"
 
-#: winecfg.rc:265
+#: winecfg.rc:263
 msgid "Driver diagnostics"
 msgstr "ドライバ診断"
 
-#: winecfg.rc:267
+#: winecfg.rc:265
 msgid "Defaults"
 msgstr "デフォルト"
 
-#: winecfg.rc:268
+#: winecfg.rc:266
 msgid "Output device:"
 msgstr "出力デバイス:"
 
-#: winecfg.rc:269
+#: winecfg.rc:267
 msgid "Voice output device:"
 msgstr "音声出力デバイス:"
 
-#: winecfg.rc:270
+#: winecfg.rc:268
 msgid "Input device:"
 msgstr "入力デバイス:"
 
-#: winecfg.rc:271
+#: winecfg.rc:269
 msgid "Voice input device:"
 msgstr "音声入力デバイス:"
 
-#: winecfg.rc:276
+#: winecfg.rc:274
 msgid "&Test Sound"
 msgstr "音をテスト(&T)"
 
-#: winecfg.rc:277 winecfg.rc:90
+#: winecfg.rc:275 winecfg.rc:89
 msgid "Speaker configuration"
 msgstr "スピーカー 設定"
 
-#: winecfg.rc:280
+#: winecfg.rc:278
 msgid "Speakers:"
 msgstr "スピーカー:"
 
-#: winecfg.rc:288
+#: winecfg.rc:286
 msgid "Appearance"
 msgstr "外観"
 
-#: winecfg.rc:289
+#: winecfg.rc:287
 msgid "&Theme:"
 msgstr "テーマ(&T):"
 
-#: winecfg.rc:291
+#: winecfg.rc:289
 msgid "&Install theme..."
 msgstr "テーマのインストール(&I)..."
 
-#: winecfg.rc:296
+#: winecfg.rc:294
 msgid "It&em:"
 msgstr "項目(&E):"
 
-#: winecfg.rc:298
+#: winecfg.rc:296
 msgid "C&olor:"
 msgstr "色(&O):"
 
-#: winecfg.rc:304
+#: winecfg.rc:302
 msgid "MIME types"
 msgstr "MIME タイプ"
 
-#: winecfg.rc:305
+#: winecfg.rc:303
 msgid "Manage file &associations"
 msgstr "ファイル関連付けの管理(&A)"
 
-#: winecfg.rc:308
+#: winecfg.rc:306
 msgid "Folders"
 msgstr "フォルダ"
 
-#: winecfg.rc:311
+#: winecfg.rc:309
 msgid "&Link to:"
 msgstr "リンク先(&L):"
 
-#: winecfg.rc:34
+#: winecfg.rc:33
 msgid "Libraries"
 msgstr "ライブラリ"
 
-#: winecfg.rc:35
+#: winecfg.rc:34
 msgid "Drives"
 msgstr "ドライブ"
 
-#: winecfg.rc:36
+#: winecfg.rc:35
 msgid "Select the Unix target directory, please."
 msgstr "Unix の対象ディレクトリを選択してください。"
 
-#: winecfg.rc:37
+#: winecfg.rc:36
 msgid "Hide Advan&ced"
 msgstr "詳細を隠す(&C)"
 
-#: winecfg.rc:39
+#: winecfg.rc:38
 msgid "(No Theme)"
 msgstr "(テーマ無し)"
 
-#: winecfg.rc:40
+#: winecfg.rc:39
 msgid "Graphics"
 msgstr "画面"
 
-#: winecfg.rc:41
+#: winecfg.rc:40
 msgid "Desktop Integration"
 msgstr "デスクトップ統合"
 
-#: winecfg.rc:42
+#: winecfg.rc:41
 msgid "Audio"
 msgstr "オーディオ"
 
-#: winecfg.rc:43
+#: winecfg.rc:42
 msgid "About"
 msgstr "Wine について"
 
-#: winecfg.rc:44
+#: winecfg.rc:43
 msgid "Wine configuration"
 msgstr "Wine 設定"
 
-#: winecfg.rc:46
+#: winecfg.rc:45
 msgid "Theme files (*.msstyles; *.theme)"
 msgstr "テーマ ファイル (*.msstyles; *.theme)"
 
-#: winecfg.rc:47
+#: winecfg.rc:46
 msgid "Select a theme file"
 msgstr "テーマ ファイルの選択"
 
-#: winecfg.rc:48
+#: winecfg.rc:47
 msgid "Folder"
 msgstr "シェルフォルダ"
 
-#: winecfg.rc:49
+#: winecfg.rc:48
 msgid "Links to"
 msgstr "リンク先"
 
-#: winecfg.rc:45
+#: winecfg.rc:44
 msgid "Wine configuration for %s"
 msgstr "Wine設定 %s用"
 
-#: winecfg.rc:84
+#: winecfg.rc:83
 msgid "Selected driver: %s"
 msgstr "選択されたドライバ: %s"
 
-#: winecfg.rc:85
+#: winecfg.rc:84
 msgid "(None)"
 msgstr "(なし)"
 
-#: winecfg.rc:86
+#: winecfg.rc:85
 msgid "Audio test failed!"
 msgstr "オーディオ テストに失敗!"
 
-#: winecfg.rc:88
+#: winecfg.rc:87
 msgid "(System default)"
 msgstr "(システム デフォルト)"
 
-#: winecfg.rc:91
+#: winecfg.rc:90
 msgid "5.1 Surround"
 msgstr "5.1 サラウンド"
 
-#: winecfg.rc:92
+#: winecfg.rc:91
 msgid "Quadraphonic"
 msgstr "4 チャンネル ステレオ"
 
-#: winecfg.rc:93
+#: winecfg.rc:92
 msgid "Stereo"
 msgstr "ステレオ"
 
-#: winecfg.rc:94
+#: winecfg.rc:93
 msgid "Mono"
 msgstr "モノラル"
 
-#: winecfg.rc:54
+#: winecfg.rc:53
 msgid ""
 "Changing the load order of this library is not recommended.\n"
 "Are you sure you want to do this?"
@@ -15786,67 +15775,67 @@ msgstr ""
 "このライブラリの読み込み順序を変更することは推奨されません。\n"
 "本当に変更しますか?"
 
-#: winecfg.rc:55
+#: winecfg.rc:54
 msgid "Warning: system library"
 msgstr "警告: システム ライブラリ"
 
-#: winecfg.rc:56
+#: winecfg.rc:55
 msgid "native"
 msgstr "ネイティブ版"
 
-#: winecfg.rc:57
+#: winecfg.rc:56
 msgid "builtin"
 msgstr "内蔵版"
 
-#: winecfg.rc:58
+#: winecfg.rc:57
 msgid "native, builtin"
 msgstr "ネイティブ版、内蔵版"
 
-#: winecfg.rc:59
+#: winecfg.rc:58
 msgid "builtin, native"
 msgstr "内蔵版、ネイティブ版"
 
-#: winecfg.rc:60
+#: winecfg.rc:59
 msgid "disabled"
 msgstr "無効"
 
-#: winecfg.rc:61
+#: winecfg.rc:60
 msgid "Default Settings"
 msgstr "既定の設定"
 
-#: winecfg.rc:62
+#: winecfg.rc:61
 msgid "Wine Programs (*.exe; *.exe.so)"
 msgstr "Wine プログラム (*.exe; *.exe.so)"
 
-#: winecfg.rc:63
+#: winecfg.rc:62
 msgid "Use global settings"
 msgstr "全体設定を使う"
 
-#: winecfg.rc:64
+#: winecfg.rc:63
 msgid "Select an executable file"
 msgstr "実行可能ファイルを選択"
 
-#: winecfg.rc:69
+#: winecfg.rc:68
 msgid "Autodetect"
 msgstr "自動検出"
 
-#: winecfg.rc:70
+#: winecfg.rc:69
 msgid "Local hard disk"
 msgstr "ローカル ハード ディスク"
 
-#: winecfg.rc:71
+#: winecfg.rc:70
 msgid "Network share"
 msgstr "ネットワーク共有"
 
-#: winecfg.rc:72
+#: winecfg.rc:71
 msgid "Floppy disk"
 msgstr "フロッピー ディスク"
 
-#: winecfg.rc:73
+#: winecfg.rc:72
 msgid "CD-ROM"
 msgstr "CD-ROM"
 
-#: winecfg.rc:74
+#: winecfg.rc:73
 msgid ""
 "You cannot add any more drives.\n"
 "\n"
@@ -15857,11 +15846,11 @@ msgstr ""
 "各ドライブは A から Z までの 1 字を使う必要があるので、26 を超えることはでき"
 "ません。"
 
-#: winecfg.rc:75
+#: winecfg.rc:74
 msgid "System drive"
 msgstr "システム ドライブ"
 
-#: winecfg.rc:76
+#: winecfg.rc:75
 msgid ""
 "Are you sure you want to delete drive C?\n"
 "\n"
@@ -15874,16 +15863,16 @@ msgstr ""
 "ので、存在しない場合めちゃくちゃな死に方をするでしょう。続行するならば、再作"
 "成するのを忘れないでください!"
 
-#: winecfg.rc:77
+#: winecfg.rc:76
 msgctxt "Drive letter"
 msgid "Letter"
 msgstr "文字"
 
-#: winecfg.rc:78
+#: winecfg.rc:77
 msgid "Target folder"
 msgstr "対象のフォルダ"
 
-#: winecfg.rc:79
+#: winecfg.rc:78
 msgid ""
 "You don't have a drive C. This is not so great.\n"
 "\n"
@@ -15894,127 +15883,127 @@ msgstr ""
 "C ドライブを作成するためにドライブ タブ内の [追加] を忘れずにクリックしてくだ"
 "さい!\n"
 
-#: winecfg.rc:99
+#: winecfg.rc:98
 msgid "Controls Background"
 msgstr "コントロールの背景"
 
-#: winecfg.rc:100
+#: winecfg.rc:99
 msgid "Controls Text"
 msgstr "コントロールのテキスト"
 
-#: winecfg.rc:102
+#: winecfg.rc:101
 msgid "Menu Background"
 msgstr "メニューの背景"
 
-#: winecfg.rc:103
+#: winecfg.rc:102
 msgid "Menu Text"
 msgstr "メニューのテキスト"
 
-#: winecfg.rc:104
+#: winecfg.rc:103
 msgid "Scrollbar"
 msgstr "スクロール バー"
 
-#: winecfg.rc:105
+#: winecfg.rc:104
 msgid "Selection Background"
 msgstr "選択項目の背景"
 
-#: winecfg.rc:106
+#: winecfg.rc:105
 msgid "Selection Text"
 msgstr "選択項目のテキスト"
 
-#: winecfg.rc:107
+#: winecfg.rc:106
 msgid "Tooltip Background"
 msgstr "ヒントの背景"
 
-#: winecfg.rc:108
+#: winecfg.rc:107
 msgid "Tooltip Text"
 msgstr "ヒントのテキスト"
 
-#: winecfg.rc:109
+#: winecfg.rc:108
 msgid "Window Background"
 msgstr "ウィンドウの背景"
 
-#: winecfg.rc:110
+#: winecfg.rc:109
 msgid "Window Text"
 msgstr "ウィンドウのテキスト"
 
-#: winecfg.rc:111
+#: winecfg.rc:110
 msgid "Active Title Bar"
 msgstr "アクティブ タイトル バー"
 
-#: winecfg.rc:112
+#: winecfg.rc:111
 msgid "Active Title Text"
 msgstr "アクティブ タイトルのテキスト"
 
-#: winecfg.rc:113
+#: winecfg.rc:112
 msgid "Inactive Title Bar"
 msgstr "非アクティブ タイトル バー"
 
-#: winecfg.rc:114
+#: winecfg.rc:113
 msgid "Inactive Title Text"
 msgstr "非アクティブ タイトルのテキスト"
 
-#: winecfg.rc:115
+#: winecfg.rc:114
 msgid "Message Box Text"
 msgstr "メッセージ ボックスのテキスト"
 
-#: winecfg.rc:116
+#: winecfg.rc:115
 msgid "Application Workspace"
 msgstr "アプリケーション作業域"
 
-#: winecfg.rc:117
+#: winecfg.rc:116
 msgid "Window Frame"
 msgstr "ウィンドウの境界"
 
-#: winecfg.rc:118
+#: winecfg.rc:117
 msgid "Active Border"
 msgstr "アクティブ境界"
 
-#: winecfg.rc:119
+#: winecfg.rc:118
 msgid "Inactive Border"
 msgstr "非アクティブ境界"
 
-#: winecfg.rc:120
+#: winecfg.rc:119
 msgid "Controls Shadow"
 msgstr "コントロールの影"
 
-#: winecfg.rc:121
+#: winecfg.rc:120
 msgid "Gray Text"
 msgstr "灰色テキスト"
 
-#: winecfg.rc:122
+#: winecfg.rc:121
 msgid "Controls Highlight"
 msgstr "コントロールの明るい部分"
 
-#: winecfg.rc:123
+#: winecfg.rc:122
 msgid "Controls Dark Shadow"
 msgstr "コントロールの暗い影"
 
-#: winecfg.rc:124
+#: winecfg.rc:123
 msgid "Controls Light"
 msgstr "コントロールの明かり"
 
-#: winecfg.rc:125
+#: winecfg.rc:124
 msgid "Controls Alternate Background"
 msgstr "コントロールの別の背景"
 
-#: winecfg.rc:126
+#: winecfg.rc:125
 msgid "Hot Tracked Item"
 msgstr "選択中のアイテム"
 
-#: winecfg.rc:127
+#: winecfg.rc:126
 msgid "Active Title Bar Gradient"
 msgstr "アクティブ タイトル バーの階調"
 
-#: winecfg.rc:128
+#: winecfg.rc:127
 msgid "Inactive Title Bar Gradient"
 msgstr "非アクティブ タイトル バーの階調"
 
-#: winecfg.rc:129
+#: winecfg.rc:128
 msgid "Menu Highlight"
 msgstr "メニューの明るい部分"
 
-#: winecfg.rc:130
+#: winecfg.rc:129
 msgid "Menu Bar"
 msgstr "メニュー バー"
 

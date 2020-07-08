@@ -1,5 +1,5 @@
 TESTDLL   = evr.dll
-IMPORTS   = mfuuid strmiids uuid ole32 oleaut32
+IMPORTS   = mfuuid strmiids uuid dxguid ole32 oleaut32 evr d3d9 user32
 
 C_SRCS = \
 	evr.c

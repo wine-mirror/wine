@@ -146,7 +146,6 @@ static void test_WsCreateServiceProxyFromTemplate(void)
 
 static void test_WsOpenServiceProxy(void)
 {
-    WCHAR url[] = {'h','t','t','p',':','/','/','l','o','c','a','l','h','o','s','t','/'};
     HRESULT hr;
     WS_SERVICE_PROXY *proxy;
     WS_SERVICE_PROXY_STATE state;
@@ -164,8 +163,8 @@ static void test_WsOpenServiceProxy(void)
     ok( state == WS_SERVICE_PROXY_STATE_CREATED, "got %u\n", state );
 
     memset( &addr, 0, sizeof(addr) );
-    addr.url.length = ARRAY_SIZE( url );
-    addr.url.chars  = url;
+    addr.url.length = ARRAY_SIZE( L"http://localhost/" ) - 1;
+    addr.url.chars  = (WCHAR *)L"http://localhost/";
     hr = WsOpenServiceProxy( proxy, &addr, NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
@@ -187,7 +186,6 @@ static void test_WsOpenServiceProxy(void)
 
 static void test_WsResetServiceProxy(void)
 {
-    WCHAR url[] = {'h','t','t','p',':','/','/','l','o','c','a','l','h','o','s','t','/'};
     HRESULT hr;
     WS_SERVICE_PROXY *proxy;
     WS_ENDPOINT_ADDRESS addr;
@@ -206,8 +204,8 @@ static void test_WsResetServiceProxy(void)
     ok( state == WS_SERVICE_PROXY_STATE_CREATED, "got %u\n", state );
 
     memset( &addr, 0, sizeof(addr) );
-    addr.url.length = ARRAY_SIZE( url );
-    addr.url.chars  = url;
+    addr.url.length = ARRAY_SIZE( L"http://localhost/" ) - 1;
+    addr.url.chars  = (WCHAR *)L"http://localhost/";
     hr = WsOpenServiceProxy( proxy, &addr, NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
@@ -230,8 +228,6 @@ static void test_WsResetServiceProxy(void)
 
 static HRESULT create_channel( int port, WS_CHANNEL **ret )
 {
-    static const WCHAR fmt[] =
-        {'h','t','t','p',':','/','/','1','2','7','.','0','.','0','.','1',':','%','u',0};
     WS_CHANNEL_PROPERTY prop[2];
     WS_ENVELOPE_VERSION env_version = WS_ENVELOPE_VERSION_SOAP_1_1;
     WS_ADDRESSING_VERSION addr_version = WS_ADDRESSING_VERSION_TRANSPORT;
@@ -253,7 +249,7 @@ static HRESULT create_channel( int port, WS_CHANNEL **ret )
     if (hr != S_OK) return hr;
 
     memset( &addr, 0, sizeof(addr) );
-    addr.url.length = wsprintfW( buf, fmt, port );
+    addr.url.length = wsprintfW( buf, L"http://127.0.0.1:%u", port );
     addr.url.chars  = buf;
     hr = WsOpenChannel( channel, &addr, NULL, NULL );
     if (hr == S_OK) *ret = channel;
@@ -383,8 +379,6 @@ static WS_HTTP_HEADER_MAPPING *response_header_mappings[] =
 
 static HRESULT create_proxy( int port, WS_SERVICE_PROXY **ret )
 {
-    static const WCHAR fmt[] =
-        {'h','t','t','p',':','/','/','1','2','7','.','0','.','0','.','1',':','%','u','/',0};
     WS_ENVELOPE_VERSION env_version;
     WS_ADDRESSING_VERSION addr_version;
     WS_HTTP_MESSAGE_MAPPING mapping;
@@ -421,7 +415,7 @@ static HRESULT create_proxy( int port, WS_SERVICE_PROXY **ret )
     if (hr != S_OK) return hr;
 
     memset( &addr, 0, sizeof(addr) );
-    addr.url.length = wsprintfW( url, fmt, port );
+    addr.url.length = wsprintfW( url, L"http://127.0.0.1:%u", port );
     addr.url.chars  = url;
     hr = WsOpenServiceProxy( proxy, &addr, NULL, NULL );
     if (hr == S_OK) *ret = proxy;
@@ -485,7 +479,6 @@ static HRESULT CALLBACK send_callback( WS_MESSAGE *msg, WS_HEAP *heap, void *sta
 static HRESULT CALLBACK recv_callback( WS_MESSAGE *msg, WS_HEAP *heap, void *state, WS_ERROR *error )
 {
     static const WS_XML_STRING header = {20, (BYTE *)"MappedResponseHeader"};
-    static const WCHAR valueW[] = {'v','a','l','u','e',0};
     WCHAR *str;
     HRESULT hr;
 
@@ -493,13 +486,12 @@ static HRESULT CALLBACK recv_callback( WS_MESSAGE *msg, WS_HEAP *heap, void *sta
     hr = WsGetMappedHeader( msg, &header, WS_SINGLETON_HEADER, 0, WS_WSZ_TYPE, WS_READ_OPTIONAL_POINTER, heap,
                             &str, sizeof(str), NULL );
     ok( hr == S_OK, "got %08x\n", hr );
-    ok( !lstrcmpW(str, valueW), "wrong value %s\n", wine_dbgstr_w(str) );
+    ok( !wcscmp(str, L"value"), "wrong value %s\n", wine_dbgstr_w(str) );
     return S_OK;
 }
 
 static void test_WsCall( int port )
 {
-    static const WCHAR testW[] = {'t','e','s','t',0}, test2W[] = {'t','e','s','t','2',0};
     WS_XML_STRING str = {3, (BYTE *)"str"};
     WS_XML_STRING req = {3, (BYTE *)"req"};
     WS_XML_STRING resp = {4, (BYTE *)"resp"};
@@ -584,8 +576,8 @@ static void test_WsCall( int port )
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
     in.val   = 1;
-    str_array[0] = testW;
-    str_array[1] = test2W;
+    str_array[0] = L"test";
+    str_array[1] = L"test2";
     in.str   = str_array;
     in.count = 2;
 
@@ -620,7 +612,7 @@ static void test_WsCall( int port )
 
     hr = WsCall( proxy, &op, args, heap, prop, ARRAY_SIZE(prop), NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
-    ok( !lstrcmpW( out.str, testW ), "wrong data\n" );
+    ok( !wcscmp( out.str, L"test" ), "wrong data\n" );
     ok( out.count == 2, "got %u\n", out.count );
     ok( out.val[0] == 1, "got %u\n", out.val[0] );
     ok( out.val[1] == 2, "got %u\n", out.val[1] );

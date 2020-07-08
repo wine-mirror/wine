@@ -1521,14 +1521,15 @@ static void test_GetFontFamily(void)
 {
     IDWriteFontCollection *collection, *collection2;
     IDWriteFontCollection *syscoll;
+    IDWriteFontCollection2 *coll2;
     IDWriteFontFamily *family, *family2;
     IDWriteFontFamily1 *family1;
     IDWriteGdiInterop *interop;
     IDWriteFont *font, *font2;
     IDWriteFactory *factory;
     LOGFONTW logfont;
+    ULONG ref, count;
     HRESULT hr;
-    ULONG ref;
 
     factory = create_factory();
 
@@ -1655,6 +1656,28 @@ if (0) /* crashes on native */
     }
     else
         win_skip("IDWriteFontFamily1 is not supported.\n");
+
+    /* IDWriteFontCollection2::GetFontFamily() */
+    if (SUCCEEDED(IDWriteFontCollection_QueryInterface(syscoll, &IID_IDWriteFontCollection2, (void **)&coll2)))
+    {
+        IDWriteFontFamily2 *family2;
+
+        count = IDWriteFontCollection2_GetFontFamilyCount(coll2);
+        ok(!!count, "Unexpected family count.\n");
+
+        family2 = (void *)0xdeadbeef;
+        hr = IDWriteFontCollection2_GetFontFamily(coll2, count, &family2);
+        ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
+        ok(!family2, "Unexpected pointer.\n");
+
+        hr = IDWriteFontCollection2_GetFontFamily(coll2, 0, &family2);
+        ok(hr == S_OK, "Failed to get family, hr %#x.\n", hr);
+        IDWriteFontFamily2_Release(family2);
+
+        IDWriteFontCollection2_Release(coll2);
+    }
+    else
+        win_skip("IDWriteFontCollection2 is not supported.\n");
 
     IDWriteFontCollection_Release(syscoll);
     IDWriteFontCollection_Release(collection2);
@@ -8696,8 +8719,9 @@ static void testowner_init(struct testowner_object *object)
 static void test_inmemory_file_loader(void)
 {
     IDWriteFontFileStream *stream, *stream2, *stream3;
-    IDWriteFontFileLoader *loader, *loader2;
+    IDWriteInMemoryFontFileLoader *loader, *loader2;
     IDWriteInMemoryFontFileLoader *inmemory;
+    IDWriteFontFileLoader *fileloader;
     struct testowner_object ownerobject;
     const void *key, *data, *frag_start;
     UINT64 file_size, size, writetime;
@@ -8727,12 +8751,9 @@ static void test_inmemory_file_loader(void)
     hr = IDWriteFactory5_CreateInMemoryFontFileLoader(factory, &loader2);
     ok(hr == S_OK, "got %#x\n", hr);
     ok(loader != loader2, "unexpected pointer\n");
-    IDWriteFontFileLoader_Release(loader2);
+    IDWriteInMemoryFontFileLoader_Release(loader2);
 
-    hr = IDWriteFontFileLoader_QueryInterface(loader, &IID_IDWriteInMemoryFontFileLoader, (void **)&inmemory);
-    ok(hr == S_OK, "got %#x\n", hr);
-    IDWriteFontFileLoader_Release(loader);
-    EXPECT_REF(inmemory, 1);
+    inmemory = loader;
 
     count = IDWriteInMemoryFontFileLoader_GetFileCount(inmemory);
     ok(!count, "Unexpected file count %u.\n", count);
@@ -8742,15 +8763,15 @@ static void test_inmemory_file_loader(void)
     hr = IDWriteFontFace_GetFiles(fontface, &count, &file);
     ok(hr == S_OK, "got %#x\n", hr);
 
-    hr = IDWriteFontFile_GetLoader(file, &loader);
+    hr = IDWriteFontFile_GetLoader(file, &fileloader);
     ok(hr == S_OK, "got %#x\n", hr);
 
     hr = IDWriteFontFile_GetReferenceKey(file, &key, &key_size);
     ok(hr == S_OK, "got %#x\n", hr);
 
-    hr = IDWriteFontFileLoader_CreateStreamFromKey(loader, key, key_size, &stream);
+    hr = IDWriteFontFileLoader_CreateStreamFromKey(fileloader, key, key_size, &stream);
     ok(hr == S_OK, "got %#x\n", hr);
-    IDWriteFontFileLoader_Release(loader);
+    IDWriteFontFileLoader_Release(fileloader);
     IDWriteFontFile_Release(file);
 
     hr = IDWriteFontFileStream_GetFileSize(stream, &file_size);
@@ -8848,9 +8869,7 @@ static void test_inmemory_file_loader(void)
     hr = IDWriteFactory5_CreateInMemoryFontFileLoader(factory, &loader);
     ok(hr == S_OK, "Failed to create loader, hr %#x.\n", hr);
 
-    hr = IDWriteFontFileLoader_QueryInterface(loader, &IID_IDWriteInMemoryFontFileLoader, (void **)&inmemory);
-    ok(hr == S_OK, "Failed to get in-memory interface, hr %#x.\n", hr);
-    IDWriteFontFileLoader_Release(loader);
+    inmemory = loader;
 
     hr = IDWriteFactory5_RegisterFontFileLoader(factory, (IDWriteFontFileLoader *)inmemory);
     ok(hr == S_OK, "Failed to register loader, hr %#x.\n", hr);
@@ -9736,6 +9755,48 @@ static void test_IsColorFont(void)
     ok(refcount == 0, "Factory not released, refcount %u.\n", refcount);
 }
 
+static void test_GetVerticalGlyphVariants(void)
+{
+    UINT16 glyphs[1], glyph_variants[1];
+    IDWriteFontFace1 *fontface1;
+    IDWriteFontFace *fontface;
+    IDWriteFactory *factory;
+    unsigned int ch;
+    ULONG refcount;
+    HRESULT hr;
+    BOOL ret;
+
+    factory = create_factory();
+
+    fontface = create_fontface(factory);
+    hr = IDWriteFontFace_QueryInterface(fontface, &IID_IDWriteFontFace1, (void **)&fontface1);
+    IDWriteFontFace_Release(fontface);
+    if (FAILED(hr))
+    {
+        win_skip("GetVerticalGlyphVariants() is not supported.\n");
+        IDWriteFactory_Release(factory);
+        return;
+    }
+
+    ch = 'A';
+    *glyphs = 0;
+    hr = IDWriteFontFace1_GetGlyphIndices(fontface1, &ch, 1, glyphs);
+    ok(hr == S_OK, "Failed to get glyph, hr %#x.\n", hr);
+    ok(!!*glyphs, "Unexpected glyph %u.\n", glyphs[0]);
+
+    memset(glyph_variants, 0, sizeof(glyph_variants));
+    hr = IDWriteFontFace1_GetVerticalGlyphVariants(fontface1, 1, glyphs, glyph_variants);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(glyphs[0] == glyph_variants[0], "Unexpected glyph.\n");
+
+    ret = IDWriteFontFace1_HasVerticalGlyphVariants(fontface1);
+    ok(!ret, "Unexpected flag.\n");
+
+    IDWriteFontFace1_Release(fontface1);
+    refcount = IDWriteFactory_Release(factory);
+    ok(!refcount, "Factory not released, refcount %u.\n", refcount);
+}
+
 START_TEST(font)
 {
     IDWriteFactory *factory;
@@ -9805,6 +9866,7 @@ START_TEST(font)
     test_fontsetbuilder();
     test_font_resource();
     test_IsColorFont();
+    test_GetVerticalGlyphVariants();
 
     IDWriteFactory_Release(factory);
 }

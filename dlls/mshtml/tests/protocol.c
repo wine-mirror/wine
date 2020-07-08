@@ -139,7 +139,7 @@ static HRESULT WINAPI ProtocolSink_ReportResult(IInternetProtocolSink *iface, HR
     CHECK_EXPECT(ReportResult);
 
     if(expect_hr_win32err) {
-        ok((hrResult&0xffff0000) == ((FACILITY_WIN32 << 16)|0x80000000) || expect_hrResult,
+        ok((hrResult&0xffff0000) == ((FACILITY_WIN32 << 16)|0x80000000) || hrResult == expect_hrResult,
                 "expected win32 err or %08x got: %08x\n", expect_hrResult, hrResult);
     }else {
         ok(hrResult == expect_hrResult || (expect_hrResult == E_INVALIDARG && hrResult == MK_E_SYNTAX)
@@ -260,6 +260,30 @@ static void protocol_start(IInternetProtocol *protocol, const WCHAR *url)
     CHECK_CALLED(ReportProgress);
     CHECK_CALLED(ReportData);
     CHECK_CALLED(ReportResult);
+}
+
+static void test_res_url_fail(const WCHAR *url_suffix)
+{
+    WCHAR url[INTERNET_MAX_URL_LENGTH];
+    IInternetProtocol *protocol;
+    HRESULT hres;
+
+    wcscpy(url, res_url_base);
+    wcscat(url, url_suffix);
+
+    hres = CoCreateInstance(&CLSID_ResProtocol, NULL, CLSCTX_INPROC_SERVER, &IID_IInternetProtocol, (void**)&protocol);
+    ok(hres == S_OK, "Could not create ResProtocol instance: %08x\n", hres);
+
+    SET_EXPECT(GetBindInfo);
+    SET_EXPECT(ReportResult);
+    expect_hr_win32err = TRUE;
+    hres = IInternetProtocol_Start(protocol, url, &protocol_sink, &bind_info, 0, 0);
+    ok(HRESULT_FACILITY(hres) == FACILITY_WIN32,
+       "%s: expected win32 error, got: %08x\n", debugstr_w(url_suffix), hres);
+    CHECK_CALLED(GetBindInfo);
+    CHECK_CALLED(ReportResult);
+
+    IInternetProtocol_Release(protocol);
 }
 
 static void test_res_url(const char *url_suffix)
@@ -596,7 +620,22 @@ static void test_res_protocol(void)
 
     IUnknown_Release(unk);
 
+    test_res_url("/blank.html");
+    test_res_url("/123");
+    test_res_url("/#23/blank.html");
+    test_res_url("/#23/123");
+    test_res_url("/23/blank.html");
+    test_res_url("/23/123");
+
     test_res_url("/jstest.html");
+    test_res_url("/jstest-rtfile.html");
+    test_res_url("/#2110/jstest-rtfile.html");
+    test_res_url("/2110/jstest-rtfile.html");
+
+    test_res_url_fail(L"/doesntexist/jstest-rtfile.html");
+    test_res_url_fail(L"/2/jstest-rtfile.html");
+    test_res_url_fail(L"/23/jstest-rtfile.html"); /* no fallback from explicit RT_HTML */
+
     test_res_url("/Test/res.html");
     test_res_url("/test/dir/dir2/res.html");
 

@@ -278,7 +278,7 @@ static char *get_temp_buffer( size_t size )
     char *ret;
     int idx;
 
-    idx = interlocked_xchg_add( &pos, 1 ) % ARRAY_SIZE(list);
+    idx = pos++ % ARRAY_SIZE(list);
     if ((ret = realloc( list[idx], size ))) list[idx] = ret;
     return ret;
 }

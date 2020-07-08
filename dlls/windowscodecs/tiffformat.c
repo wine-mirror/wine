@@ -37,7 +37,6 @@
 #include "wincodecs_private.h"
 
 #include "wine/debug.h"
-#include "wine/library.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
@@ -90,13 +89,13 @@ static void *load_libtiff(void)
     EnterCriticalSection(&init_tiff_cs);
 
     if (!libtiff_handle &&
-        (libtiff_handle = wine_dlopen(SONAME_LIBTIFF, RTLD_NOW, NULL, 0)) != NULL)
+        (libtiff_handle = dlopen(SONAME_LIBTIFF, RTLD_NOW)) != NULL)
     {
         void * (*pTIFFSetWarningHandler)(void *);
         void * (*pTIFFSetWarningHandlerExt)(void *);
 
 #define LOAD_FUNCPTR(f) \
-    if((p##f = wine_dlsym(libtiff_handle, #f, NULL, 0)) == NULL) { \
+    if((p##f = dlsym(libtiff_handle, #f)) == NULL) { \
         ERR("failed to load symbol %s\n", #f); \
         libtiff_handle = NULL; \
         LeaveCriticalSection(&init_tiff_cs); \
@@ -117,9 +116,9 @@ static void *load_libtiff(void)
         LOAD_FUNCPTR(TIFFWriteScanline);
 #undef LOAD_FUNCPTR
 
-        if ((pTIFFSetWarningHandler = wine_dlsym(libtiff_handle, "TIFFSetWarningHandler", NULL, 0)))
+        if ((pTIFFSetWarningHandler = dlsym(libtiff_handle, "TIFFSetWarningHandler")))
             pTIFFSetWarningHandler(NULL);
-        if ((pTIFFSetWarningHandlerExt = wine_dlsym(libtiff_handle, "TIFFSetWarningHandlerExt", NULL, 0)))
+        if ((pTIFFSetWarningHandlerExt = dlsym(libtiff_handle, "TIFFSetWarningHandlerExt")))
             pTIFFSetWarningHandlerExt(NULL);
     }
 
@@ -320,6 +319,8 @@ static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
     }
     decode_info->planar = planar;
 
+    TRACE("planar %u, photometric %u, samples %u, bps %u\n", planar, photometric, samples, bps);
+
     switch(photometric)
     {
     case 0: /* WhiteIsZero */
@@ -384,14 +385,28 @@ static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
                 }
             }
             break;
+        case 16:
+            if (samples != 1)
+            {
+                FIXME("unhandled 16bpp grayscale sample count %u\n", samples);
+                return WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT;
+            }
+            decode_info->format = &GUID_WICPixelFormat16bppGray;
+            break;
+        case 32:
+            if (samples != 1)
+            {
+                FIXME("unhandled 32bpp grayscale sample count %u\n", samples);
+                return WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT;
+            }
+            decode_info->format = &GUID_WICPixelFormat32bppGrayFloat;
+            break;
         default:
-            FIXME("unhandled greyscale bit count %u\n", bps);
-            return E_FAIL;
+            WARN("unhandled greyscale bit count %u\n", bps);
+            return WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT;
         }
         break;
     case 2: /* RGB */
-        decode_info->bpp = bps * samples;
-
         if (samples == 4)
         {
             ret = pTIFFGetField(tiff, TIFFTAG_EXTRASAMPLES, &extra_sample_count, &extra_samples);
@@ -408,8 +423,12 @@ static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
             return E_FAIL;
         }
 
+        decode_info->bpp = max(bps, 8) * samples;
+        decode_info->source_bpp = bps * samples;
         switch(bps)
         {
+        case 1:
+        case 4:
         case 8:
             decode_info->reverse_bgr = 1;
             if (samples == 3)
@@ -447,9 +466,27 @@ static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
                     return E_FAIL;
                 }
             break;
+        case 32:
+            if (samples == 3)
+                decode_info->format = &GUID_WICPixelFormat96bppRGBFloat;
+            else
+                switch(extra_samples[0])
+                {
+                case 1: /* Associated (pre-multiplied) alpha data */
+                    decode_info->format = &GUID_WICPixelFormat128bppPRGBAFloat;
+                    break;
+                case 0: /* Unspecified data */
+                case 2: /* Unassociated alpha data */
+                    decode_info->format = &GUID_WICPixelFormat128bppRGBAFloat;
+                    break;
+                default:
+                    FIXME("unhandled extra sample type %i\n", extra_samples[0]);
+                    return E_FAIL;
+                }
+            break;
         default:
-            FIXME("unhandled RGB bit count %u\n", bps);
-            return E_FAIL;
+            WARN("unhandled RGB bit count %u\n", bps);
+            return WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT;
         }
         break;
     case 3: /* RGB Palette */
@@ -480,8 +517,31 @@ static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
             return E_NOTIMPL;
         }
         break;
+
+    case 5: /* Separated */
+        if (samples != 4)
+        {
+            FIXME("unhandled Separated sample count %u\n", samples);
+            return E_FAIL;
+        }
+
+        decode_info->bpp = bps * samples;
+        switch(bps)
+        {
+        case 8:
+            decode_info->format = &GUID_WICPixelFormat32bppCMYK;
+            break;
+        case 16:
+            decode_info->format = &GUID_WICPixelFormat64bppCMYK;
+            break;
+
+        default:
+            WARN("unhandled Separated bit count %u\n", bps);
+            return WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT;
+        }
+        break;
+
     case 4: /* Transparency mask */
-    case 5: /* CMYK */
     case 6: /* YCbCr */
     case 8: /* CIELab */
     default:
@@ -991,8 +1051,183 @@ static HRESULT TiffFrameDecode_ReadTile(TiffFrameDecode *This, UINT tile_x, UINT
     if (ret == -1)
         return E_FAIL;
 
+    /* 3bps RGB */
+    if (This->decode_info.source_bpp == 3 && This->decode_info.samples == 3 && This->decode_info.bpp == 24)
+    {
+        BYTE *srcdata, *src, *dst;
+        DWORD x, y, count, width_bytes = (This->decode_info.tile_width * 3 + 7) / 8;
+
+        count = width_bytes * This->decode_info.tile_height;
+
+        srcdata = HeapAlloc(GetProcessHeap(), 0, count);
+        if (!srcdata) return E_OUTOFMEMORY;
+        memcpy(srcdata, This->cached_tile, count);
+
+        for (y = 0; y < This->decode_info.tile_height; y++)
+        {
+            src = srcdata + y * width_bytes;
+            dst = This->cached_tile + y * This->decode_info.tile_width * 3;
+
+            for (x = 0; x < This->decode_info.tile_width; x += 8)
+            {
+                dst[2] = (src[0] & 0x80) ? 0xff : 0; /* R */
+                dst[1] = (src[0] & 0x40) ? 0xff : 0; /* G */
+                dst[0] = (src[0] & 0x20) ? 0xff : 0; /* B */
+                if (x + 1 < This->decode_info.tile_width)
+                {
+                    dst[5] = (src[0] & 0x10) ? 0xff : 0; /* R */
+                    dst[4] = (src[0] & 0x08) ? 0xff : 0; /* G */
+                    dst[3] = (src[0] & 0x04) ? 0xff : 0; /* B */
+                }
+                if (x + 2 < This->decode_info.tile_width)
+                {
+                    dst[8] = (src[0] & 0x02) ? 0xff : 0; /* R */
+                    dst[7] = (src[0] & 0x01) ? 0xff : 0; /* G */
+                    dst[6]  = (src[1] & 0x80) ? 0xff : 0; /* B */
+                }
+                if (x + 3 < This->decode_info.tile_width)
+                {
+                    dst[11] = (src[1] & 0x40) ? 0xff : 0; /* R */
+                    dst[10] = (src[1] & 0x20) ? 0xff : 0; /* G */
+                    dst[9]  = (src[1] & 0x10) ? 0xff : 0; /* B */
+                }
+                if (x + 4 < This->decode_info.tile_width)
+                {
+                    dst[14] = (src[1] & 0x08) ? 0xff : 0; /* R */
+                    dst[13] = (src[1] & 0x04) ? 0xff : 0; /* G */
+                    dst[12] = (src[1] & 0x02) ? 0xff : 0; /* B */
+                }
+                if (x + 5 < This->decode_info.tile_width)
+                {
+                    dst[17] = (src[1] & 0x01) ? 0xff : 0; /* R */
+                    dst[16] = (src[2] & 0x80) ? 0xff : 0; /* G */
+                    dst[15] = (src[2] & 0x40) ? 0xff : 0; /* B */
+                }
+                if (x + 6 < This->decode_info.tile_width)
+                {
+                    dst[20] = (src[2] & 0x20) ? 0xff : 0; /* R */
+                    dst[19] = (src[2] & 0x10) ? 0xff : 0; /* G */
+                    dst[18] = (src[2] & 0x08) ? 0xff : 0; /* B */
+                }
+                if (x + 7 < This->decode_info.tile_width)
+                {
+                    dst[23] = (src[2] & 0x04) ? 0xff : 0; /* R */
+                    dst[22] = (src[2] & 0x02) ? 0xff : 0; /* G */
+                    dst[21] = (src[2] & 0x01) ? 0xff : 0; /* B */
+                }
+                src += 3;
+                dst += 24;
+            }
+        }
+
+        HeapFree(GetProcessHeap(), 0, srcdata);
+    }
+    /* 12bps RGB */
+    else if (This->decode_info.source_bpp == 12 && This->decode_info.samples == 3 && This->decode_info.bpp == 24)
+    {
+        BYTE *srcdata, *src, *dst;
+        DWORD x, y, count, width_bytes = (This->decode_info.tile_width * 12 + 7) / 8;
+
+        count = width_bytes * This->decode_info.tile_height;
+
+        srcdata = HeapAlloc(GetProcessHeap(), 0, count);
+        if (!srcdata) return E_OUTOFMEMORY;
+        memcpy(srcdata, This->cached_tile, count);
+
+        for (y = 0; y < This->decode_info.tile_height; y++)
+        {
+            src = srcdata + y * width_bytes;
+            dst = This->cached_tile + y * This->decode_info.tile_width * 3;
+
+            for (x = 0; x < This->decode_info.tile_width; x += 2)
+            {
+                dst[0] = ((src[1] & 0xf0) >> 4) * 17; /* B */
+                dst[1] = (src[0] & 0x0f) * 17; /* G */
+                dst[2] = ((src[0] & 0xf0) >> 4) * 17; /* R */
+                if (x + 1 < This->decode_info.tile_width)
+                {
+                    dst[5] = (src[1] & 0x0f) * 17; /* B */
+                    dst[4] = ((src[2] & 0xf0) >> 4) * 17; /* G */
+                    dst[3] = (src[2] & 0x0f) * 17; /* R */
+                }
+                src += 3;
+                dst += 6;
+            }
+        }
+
+        HeapFree(GetProcessHeap(), 0, srcdata);
+    }
+    /* 4bps RGBA */
+    else if (This->decode_info.source_bpp == 4 && This->decode_info.samples == 4 && This->decode_info.bpp == 32)
+    {
+        BYTE *srcdata, *src, *dst;
+        DWORD x, y, count, width_bytes = (This->decode_info.tile_width * 3 + 7) / 8;
+
+        count = width_bytes * This->decode_info.tile_height;
+
+        srcdata = HeapAlloc(GetProcessHeap(), 0, count);
+        if (!srcdata) return E_OUTOFMEMORY;
+        memcpy(srcdata, This->cached_tile, count);
+
+        for (y = 0; y < This->decode_info.tile_height; y++)
+        {
+            src = srcdata + y * width_bytes;
+            dst = This->cached_tile + y * This->decode_info.tile_width * 4;
+
+            /* 1 source byte expands to 2 BGRA samples */
+
+            for (x = 0; x < This->decode_info.tile_width; x += 2)
+            {
+                dst[0] = (src[0] & 0x20) ? 0xff : 0; /* B */
+                dst[1] = (src[0] & 0x40) ? 0xff : 0; /* G */
+                dst[2] = (src[0] & 0x80) ? 0xff : 0; /* R */
+                dst[3] = (src[0] & 0x10) ? 0xff : 0; /* A */
+                if (x + 1 < This->decode_info.tile_width)
+                {
+                    dst[4] = (src[0] & 0x02) ? 0xff : 0; /* B */
+                    dst[5] = (src[0] & 0x04) ? 0xff : 0; /* G */
+                    dst[6] = (src[0] & 0x08) ? 0xff : 0; /* R */
+                    dst[7] = (src[0] & 0x01) ? 0xff : 0; /* A */
+                }
+                src++;
+                dst += 8;
+            }
+        }
+
+        HeapFree(GetProcessHeap(), 0, srcdata);
+    }
+    /* 16bps RGBA */
+    else if (This->decode_info.source_bpp == 16 && This->decode_info.samples == 4 && This->decode_info.bpp == 32)
+    {
+        BYTE *srcdata, *src, *dst;
+        DWORD x, y, count, width_bytes = (This->decode_info.tile_width * 12 + 7) / 8;
+
+        count = width_bytes * This->decode_info.tile_height;
+
+        srcdata = HeapAlloc(GetProcessHeap(), 0, count);
+        if (!srcdata) return E_OUTOFMEMORY;
+        memcpy(srcdata, This->cached_tile, count);
+
+        for (y = 0; y < This->decode_info.tile_height; y++)
+        {
+            src = srcdata + y * width_bytes;
+            dst = This->cached_tile + y * This->decode_info.tile_width * 4;
+
+            for (x = 0; x < This->decode_info.tile_width; x++)
+            {
+                dst[0] = ((src[1] & 0xf0) >> 4) * 17; /* B */
+                dst[1] = (src[0] & 0x0f) * 17; /* G */
+                dst[2] = ((src[0] & 0xf0) >> 4) * 17; /* R */
+                dst[3] = (src[1] & 0x0f) * 17; /* A */
+                src += 2;
+                dst += 4;
+            }
+        }
+
+        HeapFree(GetProcessHeap(), 0, srcdata);
+    }
     /* 8bpp grayscale with extra alpha */
-    if (This->decode_info.source_bpp == 16 && This->decode_info.samples == 2 && This->decode_info.bpp == 32)
+    else if (This->decode_info.source_bpp == 16 && This->decode_info.samples == 2 && This->decode_info.bpp == 32)
     {
         BYTE *src;
         DWORD *dst, count = This->decode_info.tile_width * This->decode_info.tile_height;
@@ -1769,7 +2004,9 @@ static HRESULT WINAPI TiffFrameEncode_WriteSource(IWICBitmapFrameEncode *iface,
     if (SUCCEEDED(hr))
     {
         hr = write_source(iface, pIBitmapSource, prc,
-            This->format->guid, This->format->bpp, This->width, This->height);
+            This->format->guid, This->format->bpp,
+            !This->colors && This->format->bpp <= 8 && !IsEqualGUID(This->format->guid, &GUID_WICPixelFormatBlackWhite),
+            This->width, This->height);
     }
 
     return hr;

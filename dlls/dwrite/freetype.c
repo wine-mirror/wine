@@ -32,7 +32,6 @@
 #endif /* HAVE_FT2BUILD_H */
 
 #include "windef.h"
-#include "wine/library.h"
 #include "wine/debug.h"
 
 #include "dwrite_private.h"
@@ -53,7 +52,6 @@ static CRITICAL_SECTION freetype_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 static void *ft_handle = NULL;
 static FT_Library library = 0;
 static FTC_Manager cache_manager = 0;
-static FTC_CMapCache cmap_cache = 0;
 static FTC_ImageCache image_cache = 0;
 typedef struct
 {
@@ -84,8 +82,6 @@ MAKE_FUNCPTR(FT_Outline_Get_Bitmap);
 MAKE_FUNCPTR(FT_Outline_New);
 MAKE_FUNCPTR(FT_Outline_Transform);
 MAKE_FUNCPTR(FT_Outline_Translate);
-MAKE_FUNCPTR(FTC_CMapCache_Lookup);
-MAKE_FUNCPTR(FTC_CMapCache_New);
 MAKE_FUNCPTR(FTC_ImageCache_Lookup);
 MAKE_FUNCPTR(FTC_ImageCache_New);
 MAKE_FUNCPTR(FTC_Manager_New);
@@ -179,13 +175,13 @@ BOOL init_freetype(void)
 {
     FT_Version_t FT_Version;
 
-    ft_handle = wine_dlopen(SONAME_LIBFREETYPE, RTLD_NOW, NULL, 0);
+    ft_handle = dlopen(SONAME_LIBFREETYPE, RTLD_NOW);
     if (!ft_handle) {
         WINE_MESSAGE("Wine cannot find the FreeType font library.\n");
 	return FALSE;
     }
 
-#define LOAD_FUNCPTR(f) if((p##f = wine_dlsym(ft_handle, #f, NULL, 0)) == NULL){WARN("Can't find symbol %s\n", #f); goto sym_not_found;}
+#define LOAD_FUNCPTR(f) if((p##f = dlsym(ft_handle, #f)) == NULL){WARN("Can't find symbol %s\n", #f); goto sym_not_found;}
     LOAD_FUNCPTR(FT_Done_FreeType)
     LOAD_FUNCPTR(FT_Done_Glyph)
     LOAD_FUNCPTR(FT_Get_First_Char)
@@ -207,8 +203,6 @@ BOOL init_freetype(void)
     LOAD_FUNCPTR(FT_Outline_New)
     LOAD_FUNCPTR(FT_Outline_Transform)
     LOAD_FUNCPTR(FT_Outline_Translate)
-    LOAD_FUNCPTR(FTC_CMapCache_Lookup)
-    LOAD_FUNCPTR(FTC_CMapCache_New)
     LOAD_FUNCPTR(FTC_ImageCache_Lookup)
     LOAD_FUNCPTR(FTC_ImageCache_New)
     LOAD_FUNCPTR(FTC_Manager_New)
@@ -217,11 +211,11 @@ BOOL init_freetype(void)
     LOAD_FUNCPTR(FTC_Manager_LookupSize)
     LOAD_FUNCPTR(FTC_Manager_RemoveFaceID)
 #undef LOAD_FUNCPTR
-    pFT_Outline_EmboldenXY = wine_dlsym(ft_handle, "FT_Outline_EmboldenXY", NULL, 0);
+    pFT_Outline_EmboldenXY = dlsym(ft_handle, "FT_Outline_EmboldenXY");
 
     if (pFT_Init_FreeType(&library) != 0) {
         ERR("Can't init FreeType library\n");
-	wine_dlclose(ft_handle, NULL, 0);
+	dlclose(ft_handle);
         ft_handle = NULL;
 	return FALSE;
     }
@@ -229,13 +223,12 @@ BOOL init_freetype(void)
 
     /* init cache manager */
     if (pFTC_Manager_New(library, 0, 0, 0, &face_requester, NULL, &cache_manager) != 0 ||
-        pFTC_CMapCache_New(cache_manager, &cmap_cache) != 0 ||
         pFTC_ImageCache_New(cache_manager, &image_cache) != 0) {
 
         ERR("Failed to init FreeType cache\n");
         pFTC_Manager_Done(cache_manager);
         pFT_Done_FreeType(library);
-        wine_dlclose(ft_handle, NULL, 0);
+        dlclose(ft_handle);
         ft_handle = NULL;
         return FALSE;
     }
@@ -245,7 +238,7 @@ BOOL init_freetype(void)
 
 sym_not_found:
     WINE_MESSAGE("Wine cannot find certain functions that it needs from FreeType library.\n");
-    wine_dlclose(ft_handle, NULL, 0);
+    dlclose(ft_handle);
     ft_handle = NULL;
     return FALSE;
 }
@@ -563,27 +556,6 @@ UINT16 freetype_get_glyphcount(IDWriteFontFace5 *fontface)
     return count;
 }
 
-void freetype_get_glyphs(IDWriteFontFace5 *fontface, INT charmap, UINT32 const *codepoints, UINT32 count,
-    UINT16 *glyphs)
-{
-    UINT32 i;
-
-    EnterCriticalSection(&freetype_cs);
-    for (i = 0; i < count; i++) {
-        if (charmap == -1)
-            glyphs[i] = pFTC_CMapCache_Lookup(cmap_cache, fontface, charmap, codepoints[i]);
-        else {
-            UINT32 codepoint = codepoints[i];
-            /* special handling for symbol fonts */
-            if (codepoint < 0x100) codepoint += 0xf000;
-            glyphs[i] = pFTC_CMapCache_Lookup(cmap_cache, fontface, charmap, codepoint);
-            if (!glyphs[i])
-                glyphs[i] = pFTC_CMapCache_Lookup(cmap_cache, fontface, charmap, codepoint - 0xf000);
-        }
-    }
-    LeaveCriticalSection(&freetype_cs);
-}
-
 BOOL freetype_has_kerning_pairs(IDWriteFontFace5 *fontface)
 {
     BOOL has_kerning_pairs = FALSE;
@@ -842,28 +814,6 @@ BOOL freetype_get_glyph_bitmap(struct dwrite_glyphbitmap *bitmap)
     return ret;
 }
 
-INT freetype_get_charmap_index(IDWriteFontFace5 *fontface)
-{
-    INT charmap_index = -1;
-    FT_Face face;
-
-    EnterCriticalSection(&freetype_cs);
-    if (pFTC_Manager_LookupFace(cache_manager, fontface, &face) == 0)
-    {
-        FT_Int i;
-
-        for (i = 0; i < face->num_charmaps; i++)
-            if (face->charmaps[i]->encoding == FT_ENCODING_MS_SYMBOL)
-            {
-                charmap_index = i;
-                break;
-            }
-    }
-    LeaveCriticalSection(&freetype_cs);
-
-    return charmap_index;
-}
-
 INT32 freetype_get_glyph_advance(IDWriteFontFace5 *fontface, FLOAT emSize, UINT16 index, DWRITE_MEASURING_MODE mode,
     BOOL *has_contours)
 {
@@ -924,12 +874,6 @@ UINT16 freetype_get_glyphcount(IDWriteFontFace5 *fontface)
     return 0;
 }
 
-void freetype_get_glyphs(IDWriteFontFace5 *fontface, INT charmap, UINT32 const *codepoints, UINT32 count,
-    UINT16 *glyphs)
-{
-    memset(glyphs, 0, count * sizeof(*glyphs));
-}
-
 BOOL freetype_has_kerning_pairs(IDWriteFontFace5 *fontface)
 {
     return FALSE;
@@ -948,11 +892,6 @@ void freetype_get_glyph_bbox(struct dwrite_glyphbitmap *bitmap)
 BOOL freetype_get_glyph_bitmap(struct dwrite_glyphbitmap *bitmap)
 {
     return FALSE;
-}
-
-INT freetype_get_charmap_index(IDWriteFontFace5 *fontface)
-{
-    return -1;
 }
 
 INT32 freetype_get_glyph_advance(IDWriteFontFace5 *fontface, FLOAT emSize, UINT16 index, DWRITE_MEASURING_MODE mode,

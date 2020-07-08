@@ -51,9 +51,8 @@ Build a .a import library from a spec file. The .spec file is
 specified via the \fB-E\fR option. If the output library name ends
 in .delay.a, a delayed import library is built.
 .TP
-.BI \--builtin
-Mark a PE module as a Wine builtin module, by adding the "Wine builtin
-DLL" signature string after the DOS header.
+.BI \--staticlib
+Build a .a static library from object files.
 .TP
 .B \--resources
 Generate a .o file containing all the input resources. This is useful
@@ -61,6 +60,16 @@ when building with a PE compiler, since the PE binutils cannot handle
 multiple resource files as input. For a standard Unix build, the
 resource files are automatically included when building the spec file,
 so there's no need for an intermediate .o file.
+.TP
+.BI \--builtin
+Mark a PE module as a Wine builtin module, by adding the "Wine builtin
+DLL" signature string after the DOS header.
+.TP
+.BI \--fixup-ctors
+Fixup constructors after a module has been built. This should be done
+on the final .so module if its code contains constructors, to ensure
+that Wine has a chance to initialize the module before the
+constructors are executed.
 .SH OPTIONS
 .TP
 .BI \--as-cmd= as-command
@@ -209,6 +218,9 @@ can simply listed as
 and will automatically be handled correctly (though the
 .B \-r
 option will also work for Win32 files).
+.TP
+.B --safeseh
+Mark object files as SEH compatible.
 .TP
 .B --save-temps
 Do not delete the various temporary files that \fBwinebuild\fR generates.

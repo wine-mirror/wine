@@ -56,8 +56,14 @@ static ULONG WINAPI PersistStorage_Release(IPersistStorage *iface)
 static HRESULT WINAPI PersistStorage_GetClassID(IPersistStorage *iface, CLSID *pClassID)
 {
     WebBrowser *This = impl_from_IPersistStorage(iface);
-    FIXME("(%p)->(%p)\n", This, pClassID);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, pClassID);
+
+    if (!pClassID)
+        return E_INVALIDARG;
+
+    *pClassID = This->version == 1 ? CLSID_WebBrowser_V1: CLSID_WebBrowser;
+    return S_OK;
 }
 
 static HRESULT WINAPI PersistStorage_IsDirty(IPersistStorage *iface)

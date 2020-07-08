@@ -446,7 +446,7 @@ static void do_parent(void)
 static void finish_child_process(void)
 {
     SendMessageA(child, WM_CLOSE, 0, 0);
-    winetest_wait_child_process( child_process );
+    wait_child_process( child_process );
     CloseHandle(child_process);
 }
 
@@ -2332,7 +2332,7 @@ static void test_SetCursor(void)
         ok( pGetCursorInfo( &info ), "GetCursorInfo failed\n" );
         /* global cursor doesn't change since we don't have a window */
         ok( info.hCursor == global_cursor || broken(info.hCursor != cursor), /* win9x */
-            "wrong info cursor %p/%p\n", info.hCursor, global_cursor );
+            "expected global cursor %p\n", global_cursor );
     }
     thread = CreateThread( NULL, 0, set_cursor_thread, 0, 0, &id );
     WaitForSingleObject( thread, 1000 );
@@ -2364,7 +2364,7 @@ static void test_SetCursor(void)
         info.cbSize = sizeof(info);
         ok( pGetCursorInfo( &info ), "GetCursorInfo failed\n" );
         ok( info.hCursor == global_cursor || broken(info.hCursor != cursor), /* win9x */
-            "wrong info cursor %p/%p\n", info.hCursor, global_cursor );
+            "expected global cursor %p\n", global_cursor );
     }
     SetCursor( old_cursor );
     DestroyCursor( cursor );
@@ -2381,7 +2381,7 @@ static void test_SetCursor(void)
         info.cbSize = sizeof(info);
         ok( pGetCursorInfo( &info ), "GetCursorInfo failed\n" );
         ok( info.hCursor == global_cursor || broken(info.hCursor != cursor), /* win9x */
-            "wrong info cursor %p/%p\n", info.hCursor, global_cursor );
+            "expected global cursor %p\n", global_cursor );
     }
 }
 

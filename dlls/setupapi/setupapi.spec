@@ -89,8 +89,8 @@
 @ stub CM_Get_Device_ID_List_Size_ExW
 @ stdcall CM_Get_Device_ID_Size(ptr ptr long)
 @ stub CM_Get_Device_ID_Size_Ex
-@ stub CM_Get_Device_Interface_AliasA
-@ stub CM_Get_Device_Interface_AliasW
+@ stdcall CM_Get_Device_Interface_AliasA(str ptr ptr ptr long)
+@ stdcall CM_Get_Device_Interface_AliasW(wstr ptr ptr ptr long)
 @ stub CM_Get_Device_Interface_Alias_ExA
 @ stub CM_Get_Device_Interface_Alias_ExW
 @ stub CM_Get_Device_Interface_ListA
@@ -315,8 +315,10 @@
 @ stdcall SetupDiEnumDeviceInterfaces(long ptr ptr long ptr)
 @ stdcall SetupDiEnumDriverInfoA(ptr ptr long long ptr)
 @ stdcall SetupDiEnumDriverInfoW(ptr ptr long long ptr)
-@ stdcall SetupDiGetActualSectionToInstallA(long str str long ptr ptr)
-@ stdcall SetupDiGetActualSectionToInstallW(long wstr wstr long ptr ptr)
+@ stdcall SetupDiGetActualSectionToInstallA(long str ptr long ptr ptr)
+@ stdcall SetupDiGetActualSectionToInstallExA(long str ptr ptr long ptr ptr ptr)
+@ stdcall SetupDiGetActualSectionToInstallExW(long wstr ptr ptr long ptr ptr ptr)
+@ stdcall SetupDiGetActualSectionToInstallW(long wstr ptr long ptr ptr)
 @ stdcall SetupDiGetClassBitmapIndex(ptr ptr)
 @ stdcall SetupDiGetClassDescriptionA(ptr str long ptr)
 @ stdcall SetupDiGetClassDescriptionExA(ptr str long ptr str ptr)
@@ -347,8 +349,8 @@
 @ stdcall SetupDiGetDevicePropertyW(ptr ptr ptr ptr ptr long ptr long)
 @ stdcall SetupDiGetDeviceRegistryPropertyA(long ptr long ptr ptr long ptr)
 @ stdcall SetupDiGetDeviceRegistryPropertyW(long ptr long ptr ptr long ptr)
-@ stub SetupDiGetDriverInfoDetailA
-@ stub SetupDiGetDriverInfoDetailW
+@ stdcall SetupDiGetDriverInfoDetailA(ptr ptr ptr ptr long ptr)
+@ stdcall SetupDiGetDriverInfoDetailW(ptr ptr ptr ptr long ptr)
 @ stub SetupDiGetDriverInstallParamsA
 @ stub SetupDiGetDriverInstallParamsW
 @ stub SetupDiGetHwProfileFriendlyNameA
@@ -361,8 +363,8 @@
 @ stdcall SetupDiGetINFClassA(str ptr ptr long ptr)
 @ stdcall SetupDiGetINFClassW(wstr ptr ptr long ptr)
 @ stub SetupDiGetSelectedDevice
-@ stub SetupDiGetSelectedDriverA
-@ stub SetupDiGetSelectedDriverW
+@ stdcall SetupDiGetSelectedDriverA(ptr ptr ptr)
+@ stdcall SetupDiGetSelectedDriverW(ptr ptr ptr)
 @ stub SetupDiGetWizardPage
 @ stdcall SetupDiInstallClassA(long str long ptr)
 @ stub SetupDiInstallClassExA

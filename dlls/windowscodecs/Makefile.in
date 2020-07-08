@@ -1,6 +1,6 @@
 MODULE    = windowscodecs.dll
 IMPORTLIB = windowscodecs
-IMPORTS   = uuid ole32 oleaut32 propsys rpcrt4 shlwapi user32 gdi32 advapi32
+IMPORTS   = windowscodecs uuid ole32 oleaut32 propsys rpcrt4 shlwapi user32 gdi32 advapi32
 EXTRAINCL = $(JPEG_CFLAGS) $(PNG_CFLAGS) $(TIFF_CFLAGS)
 EXTRALIBS = $(APPLICATIONSERVICES_LIBS)
 
@@ -13,6 +13,7 @@ C_SRCS = \
 	colorcontext.c \
 	colortransform.c \
 	converter.c \
+	ddsformat.c \
 	fliprotate.c \
 	gifformat.c \
 	icnsformat.c \
@@ -32,7 +33,8 @@ C_SRCS = \
 	stream.c \
 	tgaformat.c \
 	tiffformat.c \
-	ungif.c
+	ungif.c \
+	uuid.c
 
 RC_SRCS = version.rc
 

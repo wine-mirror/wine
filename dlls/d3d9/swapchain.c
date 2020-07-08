@@ -320,7 +320,7 @@ static HRESULT WINAPI d3d9_swapchain_GetDisplayModeEx(IDirect3DSwapChain9Ex *ifa
         mode->Height = wined3d_mode.height;
         mode->RefreshRate = wined3d_mode.refresh_rate;
         mode->Format = d3dformat_from_wined3dformat(wined3d_mode.format_id);
-        mode->ScanLineOrdering = wined3d_mode.scanline_ordering;
+        mode->ScanLineOrdering = d3dscanlineordering_from_wined3d(wined3d_mode.scanline_ordering);
     }
 
     return hr;

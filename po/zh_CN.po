@@ -44,8 +44,8 @@ msgstr "技术支持信息(&S)"
 msgid "&Modify..."
 msgstr "修改(&M)..."
 
-#: appwiz.rc:69 appwiz.rc:45 cryptui.rc:351 msacm32.rc:40 winecfg.rc:200
-#: winecfg.rc:237 wordpad.rc:256
+#: appwiz.rc:69 appwiz.rc:45 cryptui.rc:351 msacm32.rc:40 winecfg.rc:199
+#: winecfg.rc:236 wordpad.rc:256
 msgid "&Remove"
 msgstr "删除(&R)"
 
@@ -64,7 +64,7 @@ msgstr "技术支持信息"
 #: notepad.rc:117 oleview.rc:161 oleview.rc:174 progman.rc:106 progman.rc:124
 #: progman.rc:142 progman.rc:158 progman.rc:180 progman.rc:199 progman.rc:216
 #: regedit.rc:296 regedit.rc:307 regedit.rc:320 regedit.rc:336 regedit.rc:349
-#: regedit.rc:362 taskmgr.rc:442 taskmgr.rc:517 winecfg.rc:214 winecfg.rc:224
+#: regedit.rc:362 taskmgr.rc:442 taskmgr.rc:517 winecfg.rc:213 winecfg.rc:223
 #: wineconsole.rc:135 winefile.rc:127 winefile.rc:150 winefile.rc:180
 #: winemine.rc:73 winemine.rc:84 winemine.rc:98 wordpad.rc:215 wordpad.rc:226
 #: wordpad.rc:244 wordpad.rc:257
@@ -145,8 +145,8 @@ msgstr "安装(&I)"
 #: notepad.rc:118 oleview.rc:162 oleview.rc:175 progman.rc:107 progman.rc:125
 #: progman.rc:143 progman.rc:159 progman.rc:181 progman.rc:200 progman.rc:217
 #: regedit.rc:297 regedit.rc:308 regedit.rc:321 regedit.rc:337 regedit.rc:350
-#: regedit.rc:363 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34 winecfg.rc:215
-#: winecfg.rc:225 wineconsole.rc:136 winefile.rc:128 winefile.rc:151
+#: regedit.rc:363 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34 winecfg.rc:214
+#: winecfg.rc:224 wineconsole.rc:136 winefile.rc:128 winefile.rc:151
 #: winefile.rc:181 winemine.rc:99 wordpad.rc:216 wordpad.rc:227 wordpad.rc:245
 #: wordpad.rc:258
 msgid "Cancel"
@@ -182,7 +182,7 @@ msgid ""
 "computer."
 msgstr "允许你安装新软件或删除现有程序。"
 
-#: appwiz.rc:33 taskmgr.rc:262 winecfg.rc:33
+#: appwiz.rc:33 taskmgr.rc:262 winecfg.rc:32
 msgid "Applications"
 msgstr "应用程序"
 
@@ -336,7 +336,7 @@ msgstr "向导"
 msgid "< &Back"
 msgstr "< 上一步(&B)"
 
-#: comctl32.rc:85 version.rc:60
+#: comctl32.rc:85 version.rc:61
 msgid "&Next >"
 msgstr "下一步(&N) >"
 
@@ -572,7 +572,7 @@ msgstr "字体(&F)："
 msgid "Font St&yle:"
 msgstr "字体样式(&Y)："
 
-#: comdlg32.rc:260 comdlg32.rc:439 winecfg.rc:294
+#: comdlg32.rc:260 comdlg32.rc:439 winecfg.rc:292
 msgid "&Size:"
 msgstr "大小(&S)："
 
@@ -588,7 +588,7 @@ msgstr "删除线(&K)"
 msgid "&Underline"
 msgstr "下划线(&U)"
 
-#: comdlg32.rc:270 winecfg.rc:292
+#: comdlg32.rc:270 winecfg.rc:290
 msgid "&Color:"
 msgstr "配色(&C)："
 
@@ -614,7 +614,7 @@ msgstr "自定义颜色(&C)："
 
 #: comdlg32.rc:289
 msgid "|S&olid"
-msgstr ""
+msgstr "|纯色(&O)"
 
 #: comdlg32.rc:290
 msgid "&Red:"
@@ -651,11 +651,9 @@ msgid "&Define Custom Colors >>"
 msgstr "定义自定义颜色(&D) >>"
 
 #: comdlg32.rc:312
-#, fuzzy
-#| msgid "&No"
 msgctxt "Solid"
 msgid "&o"
-msgstr "否(&N)"
+msgstr "&o"
 
 #: comdlg32.rc:318 regedit.rc:275 regedit.rc:285
 msgid "Find"
@@ -673,7 +671,7 @@ msgstr "全字匹配(&W)"
 msgid "Match &Case"
 msgstr "区分大小写(&C)"
 
-#: comdlg32.rc:325 joy.rc:71
+#: comdlg32.rc:325 joy.rc:72
 msgid "Direction"
 msgstr "方向"
 
@@ -762,7 +760,7 @@ msgstr "份数(&C)："
 msgid "C&ollate"
 msgstr "逐份打印(&O)"
 
-#: comdlg32.rc:414 winecfg.rc:300
+#: comdlg32.rc:414 winecfg.rc:298
 msgid "Si&ze:"
 msgstr "大小(&Z):"
 
@@ -1209,7 +1207,7 @@ msgstr "毫米"
 msgid "&User name:"
 msgstr "用户名(&U)："
 
-#: credui.rc:48 cryptui.rc:402 version.rc:80
+#: credui.rc:48 cryptui.rc:402 version.rc:81
 msgid "&Password:"
 msgstr "密码(&P)："
 
@@ -2232,7 +2230,7 @@ msgstr ""
 msgid "&File name:"
 msgstr "文件名(&F)："
 
-#: cryptui.rc:301 cryptui.rc:323 cryptui.rc:437 winecfg.rc:313
+#: cryptui.rc:301 cryptui.rc:323 cryptui.rc:437 winecfg.rc:311
 msgid "B&rowse..."
 msgstr "浏览(&R)..."
 
@@ -2967,7 +2965,7 @@ msgstr "重设"
 msgid "Player"
 msgstr "播放器"
 
-#: dinput.rc:43 winecfg.rc:89
+#: dinput.rc:43 winecfg.rc:88
 msgid "Device"
 msgstr "设备"
 
@@ -3067,7 +3065,7 @@ msgstr "符号"
 msgid "OEM/DOS"
 msgstr "OEM/DOS"
 
-#: gdi32.rc:45 version.rc:99 wldap32.rc:112
+#: gdi32.rc:45 version.rc:100 wldap32.rc:112
 msgid "Other"
 msgstr "其它"
 
@@ -3132,7 +3130,7 @@ msgstr "首页(&H)"
 msgid "&Stop"
 msgstr "停止(&S)"
 
-#: hhctrl.rc:64 hhctrl.rc:81 version.rc:72 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 version.rc:73 shdoclc.rc:59
 msgid "&Refresh"
 msgstr "刷新(&R)"
 
@@ -3507,27 +3505,27 @@ msgstr "较高"
 msgid "High"
 msgstr "高"
 
-#: joy.rc:36
+#: joy.rc:37
 msgid "Joysticks"
 msgstr "操纵杆"
 
-#: joy.rc:39 winecfg.rc:213
+#: joy.rc:40 winecfg.rc:212
 msgid "&Disable"
 msgstr "停用(&D)"
 
-#: joy.rc:40
+#: joy.rc:41
 msgid "&Enable"
 msgstr "启用(&E)"
 
-#: joy.rc:41
+#: joy.rc:42
 msgid "Connected"
 msgstr "已连接"
 
-#: joy.rc:43
+#: joy.rc:44
 msgid "Disabled"
 msgstr "停用"
 
-#: joy.rc:45
+#: joy.rc:46
 msgid ""
 "After disabling or enabling a device, the connected joysticks won't be "
 "updated here until you restart this applet."
@@ -3535,23 +3533,23 @@ msgstr ""
 "在禁用或启用设备之后，已连接的操纵杆的信息将不会在这里更新，直到您重启该小工"
 "具为止。"
 
-#: joy.rc:50
+#: joy.rc:51
 msgid "Test Joystick"
 msgstr "测试操纵杆"
 
-#: joy.rc:54
+#: joy.rc:55
 msgid "Buttons"
 msgstr "按钮"
 
-#: joy.rc:63
+#: joy.rc:64
 msgid "Test Force Feedback"
 msgstr "测试力反馈"
 
-#: joy.rc:67
+#: joy.rc:68
 msgid "Available Effects"
 msgstr "可选效果"
 
-#: joy.rc:69
+#: joy.rc:70
 msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."
@@ -3560,6 +3558,10 @@ msgstr "在控制器上按任意键以激活选中的效果。可根据控制器
 #: joy.rc:31
 msgid "Game Controllers"
 msgstr "游戏控制器"
+
+#: joy.rc:32
+msgid "Test and configure game controllers."
+msgstr ""
 
 #: jscript.rc:28
 msgid "Error converting object to primitive type"
@@ -3574,190 +3576,206 @@ msgid "Subscript out of range"
 msgstr "标记越界"
 
 #: jscript.rc:31
+#, fuzzy
+#| msgid "Out of paper; "
+msgid "Out of stack space"
+msgstr "缺纸；"
+
+#: jscript.rc:32
 msgid "Object required"
 msgstr "需要对象"
 
-#: jscript.rc:32
+#: jscript.rc:33
 msgid "Automation server can't create object"
 msgstr "自动化服务器无法创建对象"
 
-#: jscript.rc:33
+#: jscript.rc:34
 msgid "Object doesn't support this property or method"
 msgstr "对象不支持此属性或方式"
 
-#: jscript.rc:34
+#: jscript.rc:35
 msgid "Object doesn't support this action"
 msgstr "对象不支持此动作"
 
-#: jscript.rc:35
+#: jscript.rc:36
 msgid "Argument not optional"
 msgstr "参数不是可选参数"
 
-#: jscript.rc:36
+#: jscript.rc:37
 msgid "Syntax error"
 msgstr "语法错误"
 
-#: jscript.rc:37
+#: jscript.rc:38
 msgid "Expected ';'"
 msgstr "期望得到 ';'"
 
-#: jscript.rc:38
+#: jscript.rc:39
 msgid "Expected '('"
 msgstr "期望得到 '('"
 
-#: jscript.rc:39
+#: jscript.rc:40
 msgid "Expected ')'"
 msgstr "期望得到 ')'"
 
-#: jscript.rc:40
+#: jscript.rc:41
 msgid "Expected identifier"
 msgstr "期望标识符"
 
-#: jscript.rc:41
+#: jscript.rc:42
 msgid "Expected '='"
 msgstr "期望得到 '='"
 
-#: jscript.rc:42
+#: jscript.rc:43
 msgid "Invalid character"
 msgstr "无效字符"
 
-#: jscript.rc:43
+#: jscript.rc:44
 msgid "Unterminated string constant"
 msgstr "未终止的字符串常量"
 
-#: jscript.rc:44
+#: jscript.rc:45
 msgid "'return' statement outside of function"
 msgstr "函数外的 'return' 语句"
 
-#: jscript.rc:45
+#: jscript.rc:46
 msgid "Can't have 'break' outside of loop"
 msgstr "循环外不能存在 'break'"
 
-#: jscript.rc:46
+#: jscript.rc:47
 msgid "Can't have 'continue' outside of loop"
 msgstr "循环外不能存在 'continue'"
 
-#: jscript.rc:47
+#: jscript.rc:48
 msgid "Label redefined"
 msgstr "标签被重复定义"
 
-#: jscript.rc:48
+#: jscript.rc:49
 msgid "Label not found"
 msgstr "找不到标签"
 
-#: jscript.rc:49
+#: jscript.rc:50
 msgid "Expected '@end'"
 msgstr "期望 '@end'"
 
-#: jscript.rc:50
+#: jscript.rc:51
 msgid "Conditional compilation is turned off"
 msgstr "条件编译已关闭"
 
-#: jscript.rc:51
+#: jscript.rc:52
 msgid "Expected '@'"
 msgstr "期望 '@'"
 
-#: jscript.rc:75
+#: jscript.rc:78
 msgid "Microsoft JScript compilation error"
-msgstr ""
+msgstr "Microsoft JScript 编译错误"
 
-#: jscript.rc:76
+#: jscript.rc:79
 msgid "Microsoft JScript runtime error"
-msgstr ""
+msgstr "Microsoft JScript 运行时错误"
 
-#: jscript.rc:77
-#, fuzzy
-#| msgid "Unknown error"
+#: jscript.rc:80
 msgid "Unknown runtime error"
-msgstr "未知错误"
+msgstr "未知运行时错误"
 
-#: jscript.rc:54
+#: jscript.rc:55
 msgid "Number expected"
 msgstr "期望得到数字"
 
-#: jscript.rc:52
+#: jscript.rc:53
 msgid "Function expected"
 msgstr "期望得到函数"
 
-#: jscript.rc:53
+#: jscript.rc:54
 msgid "'[object]' is not a date object"
 msgstr "'[object]' 不是日期对象"
 
-#: jscript.rc:55
+#: jscript.rc:56
 msgid "Object expected"
 msgstr "期望得到对象"
 
-#: jscript.rc:56
+#: jscript.rc:57
 msgid "Illegal assignment"
 msgstr "非法赋值"
 
-#: jscript.rc:57
+#: jscript.rc:58
 msgid "'|' is undefined"
 msgstr "'|' 未被定义"
 
-#: jscript.rc:58
+#: jscript.rc:59
 msgid "Boolean object expected"
 msgstr "期望得到布尔型对象"
 
-#: jscript.rc:59
+#: jscript.rc:60
 msgid "Cannot delete '|'"
 msgstr "不能删除 '|'"
 
-#: jscript.rc:60
+#: jscript.rc:61
 msgid "VBArray object expected"
 msgstr "期望得到 VBArray 对象"
 
-#: jscript.rc:61
+#: jscript.rc:62
 msgid "JScript object expected"
 msgstr "期望得到 JScript 对象"
 
-#: jscript.rc:62
+#: jscript.rc:63
+#, fuzzy
+#| msgid "Array object expected"
+msgid "Enumerator object expected"
+msgstr "期望得到 Array 对象"
+
+#: jscript.rc:64
+#, fuzzy
+#| msgid "Boolean object expected"
+msgid "Regular Expression object expected"
+msgstr "期望得到布尔型对象"
+
+#: jscript.rc:65
 msgid "Syntax error in regular expression"
 msgstr "正则表达式中出现语法错误"
 
-#: jscript.rc:63
+#: jscript.rc:66
 msgid "Exception thrown and not caught"
-msgstr ""
+msgstr "发生异常且未被捕捉"
 
-#: jscript.rc:65
+#: jscript.rc:68
 msgid "URI to be encoded contains invalid characters"
 msgstr "待编码的 URI 包含无效字符"
 
-#: jscript.rc:64
+#: jscript.rc:67
 msgid "URI to be decoded is incorrect"
 msgstr "待解码的 URI 不正确"
 
-#: jscript.rc:66
+#: jscript.rc:69
 msgid "Number of fraction digits is out of range"
 msgstr "分数位数的数字超出范围"
 
-#: jscript.rc:67
+#: jscript.rc:70
 msgid "Precision is out of range"
 msgstr "精度超出范围"
 
-#: jscript.rc:68
+#: jscript.rc:71
 msgid "Array length must be a finite positive integer"
 msgstr "数组的长度必须为一个有限正整数"
 
-#: jscript.rc:69
+#: jscript.rc:72
 msgid "Array object expected"
 msgstr "期望得到 Array 对象"
 
-#: jscript.rc:70
+#: jscript.rc:73
 msgid ""
 "'writable' attribute on the property descriptor cannot be set to 'true' on "
 "this object"
 msgstr "无法在此对象上更改属性描述符中的“writable”属性为“true”"
 
-#: jscript.rc:71
+#: jscript.rc:74
 msgid "Cannot redefine non-configurable property '|'"
 msgstr "无法重定义不可配置的属性“|”"
 
-#: jscript.rc:72
+#: jscript.rc:75
 msgid "Cannot modify non-writable property '|'"
 msgstr "无法更改不可写的属性“|”"
 
-#: jscript.rc:73
+#: jscript.rc:76
 msgid "Property cannot have both accessors and a value"
 msgstr "属性不能同时包含存取器和值"
 
@@ -3766,6 +3784,7 @@ msgid "Wine kernel DLL"
 msgstr "Wine kernel DLL"
 
 #: ../../include/wine/wine_common_ver.rc:134 winemac.rc:32 wineboot.rc:42
+#: winecfg.rc:137
 msgid "Wine"
 msgstr "Wine"
 
@@ -6790,10 +6809,8 @@ msgid "Sink has not been finalized.\n"
 msgstr "池尚未完成。\n"
 
 #: mferror.mc:732
-#, fuzzy
-#| msgid "Sink was already stopped.\n"
 msgid "Clock was stopped\n"
-msgstr "池已被停止。\n"
+msgstr "时钟已停止\n"
 
 #: mferror.mc:32
 msgid "Media Foundation platform is not initialized.\n"
@@ -7172,10 +7189,8 @@ msgid "Clock state was already set.\n"
 msgstr "已设置时钟状态。\n"
 
 #: mferror.mc:725
-#, fuzzy
-#| msgid "Clock is not available.\n"
 msgid "Clock is not simple\n"
-msgstr "时钟不可用。\n"
+msgstr "非简单时钟\n"
 
 #: mpr.rc:35 wininet.rc:37
 msgid "Enter Network Password"
@@ -7229,7 +7244,7 @@ msgstr "超链接"
 msgid "Hyperlink Information"
 msgstr "超链接信息"
 
-#: mshtml.rc:43 winecfg.rc:245
+#: mshtml.rc:43 winecfg.rc:243
 msgid "&Type:"
 msgstr "类型(&T)："
 
@@ -8264,201 +8279,159 @@ msgstr "开"
 msgid "Off"
 msgstr "关"
 
-#: version.rc:55
-#, fuzzy
-#| msgid "video"
+#: version.rc:56
 msgid "Provider"
-msgstr "视频"
+msgstr "提供者"
 
-#: version.rc:58
-#, fuzzy
-#| msgid "Select the format you want to use:"
+#: version.rc:59
 msgid "Select the data you want to connect to:"
-msgstr "选择您希望使用的格式："
+msgstr "选择您想要连接的数据源："
 
-#: version.rc:65
-#, fuzzy
-#| msgid "Connections"
+#: version.rc:66
 msgid "Connection"
 msgstr "连接"
 
-#: version.rc:68
-#, fuzzy
-#| msgid "Select the format you want to use:"
-msgid "Specify the following to connect to ODBC data:"
-msgstr "选择您希望使用的格式："
-
 #: version.rc:69
-msgid "1. Specify the source of data:"
-msgstr ""
+msgid "Specify the following to connect to ODBC data:"
+msgstr "指定以下内容以连接到 ODBC 数据源："
 
 #: version.rc:70
-#, fuzzy
-#| msgid "Please enter your name"
-msgid "Use &data source name"
-msgstr "请输入你的名字"
+msgid "1. Specify the source of data:"
+msgstr "1. 指定数据源："
 
-#: version.rc:73
-#, fuzzy
-#| msgid "Reset Connections"
-msgid "Use c&onnection string"
-msgstr "连接重置次数"
+#: version.rc:71
+msgid "Use &data source name"
+msgstr "使用数据源名称(&D)"
 
 #: version.rc:74
-#, fuzzy
-#| msgid "Connections"
-msgid "&Connection string:"
-msgstr "连接"
+msgid "Use c&onnection string"
+msgstr "使用连接字符串(&O)"
 
-#: version.rc:76
-#, fuzzy
-#| msgid "A&dd..."
-msgid "B&uild..."
-msgstr "添加(&D)..."
+#: version.rc:75
+msgid "&Connection string:"
+msgstr "连接字符串(&C)："
 
 #: version.rc:77
-msgid "2. Enter information to log on to the server"
-msgstr ""
+msgid "B&uild..."
+msgstr "构建(&U)..."
 
 #: version.rc:78
-#, fuzzy
-#| msgid "&User name:"
-msgid "User &name:"
-msgstr "用户名(&U)："
+msgid "2. Enter information to log on to the server"
+msgstr "2. 输入服务器登录信息"
 
-#: version.rc:82
-#, fuzzy
-#| msgid "&Blank page"
-msgid "&Blank password"
-msgstr "空白页面(&B)"
+#: version.rc:79
+msgid "User &name:"
+msgstr "用户名(&N)："
 
 #: version.rc:83
-#, fuzzy
-#| msgid "Wrong password.\n"
-msgid "Allow &saving password"
-msgstr "密码错误。\n"
+msgid "&Blank password"
+msgstr "空密码(&B)"
 
 #: version.rc:84
+msgid "Allow &saving password"
+msgstr "允许保存密码(&S)"
+
+#: version.rc:85
 msgid "3. Enter the &initial catalog to use:"
-msgstr ""
+msgstr "3. 输入要使用的初始目录："
 
-#: version.rc:86
-#, fuzzy
-#| msgid "Reset Connections"
+#: version.rc:87
 msgid "&Test Connection"
-msgstr "连接重置次数"
+msgstr "测试连接(&T)"
 
-#: version.rc:91 winemine.rc:65
+#: version.rc:92 winemine.rc:65
 msgid "Advanced"
 msgstr "高级"
 
-#: version.rc:94
-#, fuzzy
-#| msgid "Network share"
-msgid "Network settings"
-msgstr "网络共享文件夹"
-
 #: version.rc:95
-#, fuzzy
-#| msgid "Bad impersonation level.\n"
+msgid "Network settings"
+msgstr "网络设置"
+
+#: version.rc:96
 msgid "&Impersonation level:"
-msgstr "无效的模拟级别。\n"
+msgstr "模拟级别(&I)："
 
-#: version.rc:97
+#: version.rc:98
 msgid "P&rotection level:"
-msgstr ""
+msgstr "保护级别(&R)："
 
-#: version.rc:100
-#, fuzzy
-#| msgid "Connected"
+#: version.rc:101
 msgid "Connect:"
-msgstr "已连接"
-
-#: version.rc:102
-#, fuzzy
-#| msgid "seconds"
-msgid "seconds."
-msgstr "秒"
+msgstr "连接："
 
 #: version.rc:103
-#, fuzzy
-#| msgid "Success"
+msgid "seconds."
+msgstr "秒。"
+
+#: version.rc:104
 msgid "A&ccess:"
-msgstr "成功"
+msgstr "访问(&A)："
 
-#: version.rc:109
-#, fuzzy
-#| msgid "&All"
+#: version.rc:110
 msgid "All"
-msgstr "全部(&A)"
+msgstr "全部"
 
-#: version.rc:113
+#: version.rc:114
 msgid ""
 "These are the initialization properties for this type of data. To edit a "
 "value, select a property, then choose Edit Value below."
 msgstr ""
+"该数据类型定义了数种初始化属性。要编辑属性值，选择一项属性，然后点选“编辑数"
+"据”。"
 
-#: version.rc:114
-#, fuzzy
-#| msgid "&Edit..."
+#: version.rc:115
 msgid "&Edit Value..."
-msgstr "编辑(&E)..."
+msgstr "编辑数据(&E)..."
 
 #: version.rc:49
-#, fuzzy
-#| msgid "Properties"
 msgid "Data Link Error"
-msgstr "属性"
+msgstr "数据链错误"
 
 #: version.rc:50
-#, fuzzy
-#| msgid "Please select a file."
 msgid "Please select a provider."
-msgstr "请选择一个文件。"
+msgstr "请选择提供者。"
+
+#: version.rc:51
+msgid ""
+"Provider is no longer available. Ensure that the provider is installed "
+"properly."
+msgstr "提供者已不再可用。请确保提供者已正确安装。"
 
 #: version.rc:36
-#, fuzzy
-#| msgid "Properties"
 msgid "Data Link Properties"
-msgstr "属性"
+msgstr "数据链路属性"
 
 #: version.rc:37
 msgid "OLE DB Provider(s)"
-msgstr ""
+msgstr "OLE DB 提供者"
 
 #: version.rc:41
-#, fuzzy
-#| msgid "Ready"
 msgid "Read"
-msgstr "待命"
+msgstr "读取"
 
 #: version.rc:42
-#, fuzzy
-#| msgid "Readme:"
 msgid "ReadWrite"
-msgstr "产品说明："
+msgstr "读写"
 
 #: version.rc:43
 msgid "Share Deny None"
-msgstr ""
+msgstr "共享 拒绝 无"
 
 #: version.rc:44
 msgid "Share Deny Read"
-msgstr ""
+msgstr "共享 拒绝 可读"
 
 #: version.rc:45
 msgid "Share Deny Write"
-msgstr ""
+msgstr "共享 拒绝 可写"
 
 #: version.rc:46
 msgid "Share Exclusive"
-msgstr ""
+msgstr "共享互斥锁"
 
 #: version.rc:47
-#, fuzzy
-#| msgid "I/O Writes"
 msgid "Write"
-msgstr "I/O 写入"
+msgstr "写入"
 
 #: oledlg.rc:55
 msgid "Insert Object"
@@ -8648,7 +8621,7 @@ msgctxt "unit: bits"
 msgid "b"
 msgstr "b"
 
-#: sane.rc:34 wineps.rc:49 winecfg.rc:183
+#: sane.rc:34 wineps.rc:49 winecfg.rc:182
 msgctxt "unit: dots/inch"
 msgid "dpi"
 msgstr "dpi"
@@ -9140,7 +9113,7 @@ msgstr "输入程序，目录，文件或者Internet资源名，Wine将为您打
 msgid "&Open:"
 msgstr "打开(&O)："
 
-#: shell32.rc:343 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:243
+#: shell32.rc:343 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:241
 #: winefile.rc:129
 msgid "&Browse..."
 msgstr "浏览(&B)..."
@@ -9229,7 +9202,7 @@ msgstr "原位置"
 msgid "Date deleted"
 msgstr "删除日期"
 
-#: shell32.rc:156 winecfg.rc:101 winefile.rc:99
+#: shell32.rc:156 winecfg.rc:100 winefile.rc:99
 msgctxt "display name"
 msgid "Desktop"
 msgstr "桌面"
@@ -9565,7 +9538,7 @@ msgstr "Wine 使用许可"
 msgid "Trash"
 msgstr "回收站"
 
-#: shlwapi.rc:38 user32.rc:71 regedit.rc:204 winecfg.rc:87 winefile.rc:97
+#: shlwapi.rc:38 user32.rc:71 regedit.rc:204 winecfg.rc:86 winefile.rc:97
 msgid "Error"
 msgstr "错误"
 
@@ -9596,127 +9569,123 @@ msgstr " 秒"
 msgid "Select Source"
 msgstr "选择来源"
 
-#: tzres.rc:84
+#: tzres.rc:88
 msgid "China Standard Time"
 msgstr "中国标准时间"
 
-#: tzres.rc:85
+#: tzres.rc:89
 msgid "China Daylight Time"
 msgstr "中国夏令时"
 
-#: tzres.rc:164
+#: tzres.rc:170
 msgid "North Asia Standard Time"
 msgstr "北亚标准时间"
 
-#: tzres.rc:165
+#: tzres.rc:171
 msgid "North Asia Daylight Time"
 msgstr "北亚夏令时"
 
-#: tzres.rc:106
+#: tzres.rc:110
 msgid "Georgian Standard Time"
 msgstr "格鲁吉亚标准时间"
 
-#: tzres.rc:107
+#: tzres.rc:111
 msgid "Georgian Daylight Time"
 msgstr "格鲁吉亚夏令时"
 
-#: tzres.rc:156
+#: tzres.rc:162
 msgid "Nepal Standard Time"
 msgstr "尼泊尔标准时间"
 
-#: tzres.rc:157
+#: tzres.rc:163
 msgid "Nepal Daylight Time"
 msgstr "尼泊尔夏令时"
 
-#: tzres.rc:62
+#: tzres.rc:64
 msgid "Cape Verde Standard Time"
 msgstr "佛得角标准时间"
 
-#: tzres.rc:63
+#: tzres.rc:65
 msgid "Cape Verde Daylight Time"
 msgstr "佛得角夏令时"
 
-#: tzres.rc:116
-#, fuzzy
-#| msgid "Hawaiian Standard Time"
+#: tzres.rc:120
 msgid "Haiti Standard Time"
-msgstr "夏威夷标准时间"
+msgstr "海地标准时间"
 
-#: tzres.rc:117
-#, fuzzy
-#| msgid "Hawaiian Daylight Time"
+#: tzres.rc:121
 msgid "Haiti Daylight Time"
-msgstr "夏威夷夏令时"
+msgstr "海地夏令时"
 
-#: tzres.rc:76
+#: tzres.rc:78
 msgid "Central European Standard Time"
 msgstr "中欧标准时间"
 
-#: tzres.rc:77
+#: tzres.rc:79
 msgid "Central European Daylight Time"
 msgstr "中欧夏令时"
 
-#: tzres.rc:144
+#: tzres.rc:150
 msgid "Morocco Standard Time"
 msgstr "摩洛哥标准时间"
 
-#: tzres.rc:145
+#: tzres.rc:151
 msgid "Morocco Daylight Time"
 msgstr "摩洛哥夏令时"
 
-#: tzres.rc:74
+#: tzres.rc:76
 msgid "Central Europe Standard Time"
 msgstr "中欧标准时间"
 
-#: tzres.rc:75
+#: tzres.rc:77
 msgid "Central Europe Daylight Time"
 msgstr "中欧夏令时"
 
-#: tzres.rc:122
+#: tzres.rc:126
 msgid "Iran Standard Time"
 msgstr "伊朗标准时间"
 
-#: tzres.rc:123
+#: tzres.rc:127
 msgid "Iran Daylight Time"
 msgstr "伊朗夏令时"
 
-#: tzres.rc:154
+#: tzres.rc:160
 msgid "Namibia Standard Time"
 msgstr "纳米比亚标准时间"
 
-#: tzres.rc:155
+#: tzres.rc:161
 msgid "Namibia Daylight Time"
 msgstr "纳米比亚夏令时"
 
-#: tzres.rc:204
+#: tzres.rc:210
 msgid "Tonga Standard Time"
 msgstr "汤加标准时间"
 
-#: tzres.rc:205
+#: tzres.rc:211
 msgid "Tonga Daylight Time"
 msgstr "汤加夏令时"
 
-#: tzres.rc:148
+#: tzres.rc:154
 msgid "Mountain Standard Time (Mexico)"
 msgstr "山地标准时间（墨西哥）"
 
-#: tzres.rc:149
+#: tzres.rc:155
 msgid "Mountain Daylight Time (Mexico)"
 msgstr "山地夏令时（墨西哥）"
 
-#: tzres.rc:108
+#: tzres.rc:112
 msgid "GMT Standard Time"
 msgstr "格林尼治标准时间"
 
-#: tzres.rc:109
+#: tzres.rc:113
 msgid "GMT Daylight Time"
 msgstr "格林尼治夏令时"
 
-#: tzres.rc:70
+#: tzres.rc:72
 msgid "Central Asia Standard Time"
 msgstr "中亚标准时间"
 
-#: tzres.rc:71
+#: tzres.rc:73
 msgid "Central Asia Daylight Time"
 msgstr "中亚夏令时"
 
@@ -9728,35 +9697,35 @@ msgstr "阿拉伯标准时间"
 msgid "Arabic Daylight Time"
 msgstr "阿拉伯夏令时"
 
-#: tzres.rc:136
+#: tzres.rc:140
 msgid "Magadan Standard Time"
 msgstr "马加丹标准时间"
 
-#: tzres.rc:137
+#: tzres.rc:141
 msgid "Magadan Daylight Time"
 msgstr "马加丹夏令时"
 
-#: tzres.rc:160
+#: tzres.rc:166
 msgid "Newfoundland Standard Time"
 msgstr "纽芬兰标准时间"
 
-#: tzres.rc:161
+#: tzres.rc:167
 msgid "Newfoundland Daylight Time"
 msgstr "纽芬兰夏令时"
 
-#: tzres.rc:228
+#: tzres.rc:234
 msgid "West Pacific Standard Time"
 msgstr "西太平洋标准时间"
 
-#: tzres.rc:229
+#: tzres.rc:235
 msgid "West Pacific Daylight Time"
 msgstr "西太平洋夏令时"
 
-#: tzres.rc:168
+#: tzres.rc:174
 msgid "Pacific Standard Time"
 msgstr "太平洋标准时间"
 
-#: tzres.rc:169
+#: tzres.rc:175
 msgid "Pacific Daylight Time"
 msgstr "太平洋夏令时"
 
@@ -9768,67 +9737,67 @@ msgstr "阿塞拜疆标准时间"
 msgid "Azerbaijan Daylight Time"
 msgstr "阿塞拜疆夏令时"
 
-#: tzres.rc:186
+#: tzres.rc:192
 msgid "Samoa Standard Time"
 msgstr "萨摩亚标准时间"
 
-#: tzres.rc:187
+#: tzres.rc:193
 msgid "Samoa Daylight Time"
 msgstr "萨摩亚夏令时"
 
-#: tzres.rc:128
+#: tzres.rc:132
 msgid "Kaliningrad Standard Time"
 msgstr "加里宁格勒标准时间"
 
-#: tzres.rc:129
+#: tzres.rc:133
 msgid "Kaliningrad Daylight Time"
 msgstr "加里宁格勒夏令时"
 
-#: tzres.rc:170
+#: tzres.rc:176
 msgid "Pacific Standard Time (Mexico)"
 msgstr "太平洋标准时间（墨西哥）"
 
-#: tzres.rc:171
+#: tzres.rc:177
 msgid "Pacific Daylight Time (Mexico)"
 msgstr "太平洋夏令时（墨西哥）"
 
-#: tzres.rc:140
+#: tzres.rc:146
 msgid "Middle East Standard Time"
 msgstr "中东标准时间"
 
-#: tzres.rc:141
+#: tzres.rc:147
 msgid "Middle East Daylight Time"
 msgstr "中东夏令时"
 
-#: tzres.rc:202
+#: tzres.rc:208
 msgid "Tokyo Standard Time"
 msgstr "东京标准时间"
 
-#: tzres.rc:203
+#: tzres.rc:209
 msgid "Tokyo Daylight Time"
 msgstr "东京夏令时"
 
-#: tzres.rc:134
+#: tzres.rc:138
 msgid "Line Islands Standard Time"
 msgstr "莱恩群岛标准时间"
 
-#: tzres.rc:135
+#: tzres.rc:139
 msgid "Line Islands Daylight Time"
 msgstr "莱恩群岛夏令时"
 
-#: tzres.rc:126
+#: tzres.rc:130
 msgid "Jordan Standard Time"
 msgstr "约旦标准时间"
 
-#: tzres.rc:127
+#: tzres.rc:131
 msgid "Jordan Daylight Time"
 msgstr "约旦夏令时"
 
-#: tzres.rc:80
+#: tzres.rc:82
 msgid "Central Standard Time"
 msgstr "中部标准时间"
 
-#: tzres.rc:81
+#: tzres.rc:83
 msgid "Central Daylight Time"
 msgstr "中部夏令时"
 
@@ -9840,11 +9809,11 @@ msgstr "亚速尔群岛标准时间"
 msgid "Azores Daylight Time"
 msgstr "亚速尔群岛夏令时"
 
-#: tzres.rc:162
+#: tzres.rc:168
 msgid "North Asia East Standard Time"
 msgstr "北亚东部标准时间"
 
-#: tzres.rc:163
+#: tzres.rc:169
 msgid "North Asia East Daylight Time"
 msgstr "北亚东部夏令时"
 
@@ -9856,95 +9825,103 @@ msgstr "阿根廷标准时间"
 msgid "Argentina Daylight Time"
 msgstr "阿根廷夏令时"
 
-#: tzres.rc:150
+#: tzres.rc:142
+msgid "Marquesas Standard Time"
+msgstr "马克萨斯标准时间"
+
+#: tzres.rc:143
+msgid "Marquesas Daylight Time"
+msgstr "马克萨斯夏令时"
+
+#: tzres.rc:156
 msgid "Myanmar Standard Time"
 msgstr "缅甸标准时间"
 
-#: tzres.rc:151
+#: tzres.rc:157
 msgid "Myanmar Daylight Time"
 msgstr "缅甸夏令时"
 
-#: tzres.rc:214 tzres.rc:215
+#: tzres.rc:220 tzres.rc:221
 msgid "Coordinated Universal Time"
 msgstr "协调世界时"
 
-#: tzres.rc:120
+#: tzres.rc:124
 msgid "India Standard Time"
 msgstr "印度标准时间"
 
-#: tzres.rc:121
+#: tzres.rc:125
 msgid "India Daylight Time"
 msgstr "印度夏令时"
 
-#: tzres.rc:114
+#: tzres.rc:118
 msgid "GTB Standard Time"
 msgstr "GTB 标准时间"
 
-#: tzres.rc:115
+#: tzres.rc:119
 msgid "GTB Daylight Time"
 msgstr "GTB 夏令时"
 
-#: tzres.rc:206
+#: tzres.rc:212
 msgid "Turkey Standard Time"
 msgstr "土耳其标准时间"
 
-#: tzres.rc:207
+#: tzres.rc:213
 msgid "Turkey Daylight Time"
 msgstr "土耳其夏令时"
 
-#: tzres.rc:102
+#: tzres.rc:106
 msgid "Fiji Standard Time"
 msgstr "斐济标准时间"
 
-#: tzres.rc:103
+#: tzres.rc:107
 msgid "Fiji Daylight Time"
 msgstr "斐济夏令时"
 
-#: tzres.rc:60
+#: tzres.rc:62
 msgid "Canada Central Standard Time"
 msgstr "加拿大中部标准时间"
 
-#: tzres.rc:61
+#: tzres.rc:63
 msgid "Canada Central Daylight Time"
 msgstr "加拿大中部夏令时"
 
-#: tzres.rc:198
+#: tzres.rc:204
 msgid "Taipei Standard Time"
 msgstr "台北标准时间"
 
-#: tzres.rc:199
+#: tzres.rc:205
 msgid "Taipei Daylight Time"
 msgstr "台北夏令时"
 
-#: tzres.rc:224
+#: tzres.rc:230
 msgid "W. Europe Standard Time"
 msgstr "西欧标准时间"
 
-#: tzres.rc:225
+#: tzres.rc:231
 msgid "W. Europe Daylight Time"
 msgstr "西欧夏令时"
 
-#: tzres.rc:142
+#: tzres.rc:148
 msgid "Montevideo Standard Time"
 msgstr "蒙得维的亚标准时间"
 
-#: tzres.rc:143
+#: tzres.rc:149
 msgid "Montevideo Daylight Time"
 msgstr "蒙得维的亚夏令时"
 
-#: tzres.rc:172
+#: tzres.rc:178
 msgid "Pakistan Standard Time"
 msgstr "巴基斯坦标准时间"
 
-#: tzres.rc:173
+#: tzres.rc:179
 msgid "Pakistan Daylight Time"
 msgstr "巴基斯坦夏令时"
 
-#: tzres.rc:64
+#: tzres.rc:66
 msgid "Caucasus Standard Time"
 msgstr "高加索标准时间"
 
-#: tzres.rc:65
+#: tzres.rc:67
 msgid "Caucasus Daylight Time"
 msgstr "高加索夏令时"
 
@@ -9956,27 +9933,27 @@ msgstr "澳大利亚东部标准时间"
 msgid "AUS Eastern Daylight Time"
 msgstr "澳大利亚东部夏令时"
 
-#: tzres.rc:152
+#: tzres.rc:158
 msgid "N. Central Asia Standard Time"
 msgstr "中北亚标准时间"
 
-#: tzres.rc:153
+#: tzres.rc:159
 msgid "N. Central Asia Daylight Time"
 msgstr "中北亚夏令时"
 
-#: tzres.rc:96
+#: tzres.rc:100
 msgid "Eastern Standard Time"
 msgstr "东部标准时间"
 
-#: tzres.rc:97
+#: tzres.rc:101
 msgid "Eastern Daylight Time"
 msgstr "东部夏令时"
 
-#: tzres.rc:82
+#: tzres.rc:84
 msgid "Central Standard Time (Mexico)"
 msgstr "中部标准时间（墨西哥）"
 
-#: tzres.rc:83
+#: tzres.rc:85
 msgid "Central Daylight Time (Mexico)"
 msgstr "中部夏令时（墨西哥）"
 
@@ -9988,67 +9965,67 @@ msgstr "大西洋标准时间"
 msgid "Atlantic Daylight Time"
 msgstr "大西洋夏令时"
 
-#: tzres.rc:146
+#: tzres.rc:152
 msgid "Mountain Standard Time"
 msgstr "山地标准时间"
 
-#: tzres.rc:147
+#: tzres.rc:153
 msgid "Mountain Daylight Time"
 msgstr "山地夏令时"
 
-#: tzres.rc:210
+#: tzres.rc:216
 msgid "US Eastern Standard Time"
 msgstr "美国东部标准时间"
 
-#: tzres.rc:211
+#: tzres.rc:217
 msgid "US Eastern Daylight Time"
 msgstr "美国东部夏令时"
 
-#: tzres.rc:200
+#: tzres.rc:206
 msgid "Tasmania Standard Time"
 msgstr "塔斯马尼亚标准时间"
 
-#: tzres.rc:201
+#: tzres.rc:207
 msgid "Tasmania Daylight Time"
 msgstr "塔斯马尼亚夏令时"
 
-#: tzres.rc:68
+#: tzres.rc:70
 msgid "Central America Standard Time"
 msgstr "中美洲标准时间"
 
-#: tzres.rc:69
+#: tzres.rc:71
 msgid "Central America Daylight Time"
 msgstr "中美洲夏令时"
 
-#: tzres.rc:212
+#: tzres.rc:218
 msgid "US Mountain Standard Time"
 msgstr "美国山地标准时间"
 
-#: tzres.rc:213
+#: tzres.rc:219
 msgid "US Mountain Daylight Time"
 msgstr "美国山地夏令时"
 
-#: tzres.rc:192
+#: tzres.rc:198
 msgid "South Africa Standard Time"
 msgstr "南非标准时间"
 
-#: tzres.rc:193
+#: tzres.rc:199
 msgid "South Africa Daylight Time"
 msgstr "南非夏令时"
 
-#: tzres.rc:66
+#: tzres.rc:68
 msgid "Cen. Australia Standard Time"
 msgstr "澳大利亚中部标准时间"
 
-#: tzres.rc:67
+#: tzres.rc:69
 msgid "Cen. Australia Daylight Time"
 msgstr "澳大利亚中部夏令时"
 
-#: tzres.rc:194
+#: tzres.rc:200
 msgid "Sri Lanka Standard Time"
 msgstr "斯里兰卡标准时间"
 
-#: tzres.rc:195
+#: tzres.rc:201
 msgid "Sri Lanka Daylight Time"
 msgstr "斯里兰卡夏令时"
 
@@ -10060,19 +10037,19 @@ msgstr "阿富汗标准时间"
 msgid "Afghanistan Daylight Time"
 msgstr "阿富汗夏令时"
 
-#: tzres.rc:230
+#: tzres.rc:236
 msgid "Yakutsk Standard Time"
 msgstr "雅库次克标准时间"
 
-#: tzres.rc:231
+#: tzres.rc:237
 msgid "Yakutsk Daylight Time"
 msgstr "雅库次克夏令时"
 
-#: tzres.rc:180
+#: tzres.rc:186
 msgid "SA Eastern Standard Time"
 msgstr "南美东部标准时间"
 
-#: tzres.rc:181
+#: tzres.rc:187
 msgid "SA Eastern Daylight Time"
 msgstr "南美东部夏令时"
 
@@ -10092,35 +10069,35 @@ msgstr "阿拉伯标准时间"
 msgid "Arabian Daylight Time"
 msgstr "阿拉伯夏令时"
 
-#: tzres.rc:178
+#: tzres.rc:184
 msgid "Russian Standard Time"
 msgstr "俄罗斯标准时间"
 
-#: tzres.rc:179
+#: tzres.rc:185
 msgid "Russian Daylight Time"
 msgstr "俄罗斯夏令时"
 
-#: tzres.rc:176
+#: tzres.rc:182
 msgid "Romance Standard Time"
 msgstr "罗曼标准时间"
 
-#: tzres.rc:177
+#: tzres.rc:183
 msgid "Romance Daylight Time"
 msgstr "罗曼夏令时"
 
-#: tzres.rc:100
+#: tzres.rc:104
 msgid "Ekaterinburg Standard Time"
 msgstr "叶卡捷琳堡标准时间"
 
-#: tzres.rc:101
+#: tzres.rc:105
 msgid "Ekaterinburg Daylight Time"
 msgstr "叶卡捷琳堡夏令时"
 
-#: tzres.rc:196
+#: tzres.rc:202
 msgid "Syria Standard Time"
 msgstr "叙利亚标准时间"
 
-#: tzres.rc:197
+#: tzres.rc:203
 msgid "Syria Daylight Time"
 msgstr "叙利亚夏令时"
 
@@ -10132,27 +10109,27 @@ msgstr "澳大利亚中部标准时间"
 msgid "AUS Central Daylight Time"
 msgstr "澳大利亚中部夏令时"
 
-#: tzres.rc:112
+#: tzres.rc:116
 msgid "Greenwich Standard Time"
 msgstr "格林威治标准时间"
 
-#: tzres.rc:113
+#: tzres.rc:117
 msgid "Greenwich Daylight Time"
 msgstr "格林威治夏令时"
 
-#: tzres.rc:208
+#: tzres.rc:214
 msgid "Ulaanbaatar Standard Time"
 msgstr "乌兰巴托标准时间"
 
-#: tzres.rc:209
+#: tzres.rc:215
 msgid "Ulaanbaatar Daylight Time"
 msgstr "乌兰巴托夏令时"
 
-#: tzres.rc:124
+#: tzres.rc:128
 msgid "Israel Standard Time"
 msgstr "以色列标准时间"
 
-#: tzres.rc:125
+#: tzres.rc:129
 msgid "Israel Daylight Time"
 msgstr "以色列夏令时"
 
@@ -10164,19 +10141,19 @@ msgstr "孟加拉标准时间"
 msgid "Bangladesh Daylight Time"
 msgstr "孟加拉夏令时"
 
-#: tzres.rc:182
+#: tzres.rc:188
 msgid "SA Pacific Standard Time"
 msgstr "南美太平洋标准时间"
 
-#: tzres.rc:183
+#: tzres.rc:189
 msgid "SA Pacific Daylight Time"
 msgstr "南美太平洋夏令时"
 
-#: tzres.rc:226
+#: tzres.rc:232
 msgid "West Asia Standard Time"
 msgstr "西亚标准时间"
 
-#: tzres.rc:227
+#: tzres.rc:233
 msgid "West Asia Daylight Time"
 msgstr "西亚夏令时"
 
@@ -10188,27 +10165,27 @@ msgstr "阿拉斯加标准时间"
 msgid "Alaskan Daylight Time"
 msgstr "阿拉斯加夏令时"
 
-#: tzres.rc:174
+#: tzres.rc:180
 msgid "Paraguay Standard Time"
 msgstr "巴拉圭标准时间"
 
-#: tzres.rc:175
+#: tzres.rc:181
 msgid "Paraguay Daylight Time"
 msgstr "巴拉圭夏令时"
 
-#: tzres.rc:86
+#: tzres.rc:90
 msgid "Dateline Standard Time"
 msgstr "日期变更线标准时间"
 
-#: tzres.rc:87
+#: tzres.rc:91
 msgid "Dateline Daylight Time"
 msgstr "日期变更线夏令时"
 
-#: tzres.rc:132
+#: tzres.rc:136
 msgid "Libya Standard Time"
 msgstr "利比亚标准时间"
 
-#: tzres.rc:133
+#: tzres.rc:137
 msgid "Libya Daylight Time"
 msgstr "利比亚夏令时"
 
@@ -10220,55 +10197,59 @@ msgstr "巴伊亚标准时间"
 msgid "Bahia Daylight Time"
 msgstr "巴伊亚夏令时"
 
-#: tzres.rc:216
+#: tzres.rc:222
 msgid "Venezuela Standard Time"
 msgstr "委内瑞拉标准时间"
 
-#: tzres.rc:217
+#: tzres.rc:223
 msgid "Venezuela Daylight Time"
 msgstr "委内瑞拉夏令时"
 
-#: tzres.rc:118
+#: tzres.rc:60
+msgid "Bougainville Standard Time"
+msgstr "布干维尔标准时间"
+
+#: tzres.rc:61
+msgid "Bougainville Daylight Time"
+msgstr "布干维尔夏令时"
+
+#: tzres.rc:122
 msgid "Hawaiian Standard Time"
 msgstr "夏威夷标准时间"
 
-#: tzres.rc:119
+#: tzres.rc:123
 msgid "Hawaiian Daylight Time"
 msgstr "夏威夷夏令时"
 
-#: tzres.rc:188
+#: tzres.rc:194
 msgid "SE Asia Standard Time"
 msgstr "东南亚标准时间"
 
-#: tzres.rc:189
+#: tzres.rc:195
 msgid "SE Asia Daylight Time"
 msgstr "东南亚夏令时"
 
-#: tzres.rc:158
+#: tzres.rc:164
 msgid "New Zealand Standard Time"
 msgstr "新西兰标准时间"
 
-#: tzres.rc:159
+#: tzres.rc:165
 msgid "New Zealand Daylight Time"
 msgstr "新西兰夏令时"
 
 #: tzres.rc:34
-#, fuzzy
-#| msgid "Argentina Standard Time"
 msgid "Aleutian Standard Time"
-msgstr "阿根廷标准时间"
+msgstr "阿留申标准时间"
 
 #: tzres.rc:35
-#, fuzzy
-#| msgid "Argentina Daylight Time"
 msgid "Aleutian Daylight Time"
-msgstr "阿根廷夏令时"
+msgstr "阿留申夏令时"
 
-#: tzres.rc:72
+#: tzres.rc:74
 msgid "Central Brazilian Standard Time"
 msgstr "巴西中部标准时间"
 
-#: tzres.rc:73
+#: tzres.rc:75
 msgid "Central Brazilian Daylight Time"
 msgstr "巴西中部夏令时"
 
@@ -10280,131 +10261,139 @@ msgstr "白罗斯标准时间"
 msgid "Belarus Daylight Time"
 msgstr "白罗斯夏令时"
 
-#: tzres.rc:184
+#: tzres.rc:190
 msgid "SA Western Standard Time"
 msgstr "南美西部标准时间"
 
-#: tzres.rc:185
+#: tzres.rc:191
 msgid "SA Western Daylight Time"
 msgstr "南美西部夏令时"
 
-#: tzres.rc:110
+#: tzres.rc:114
 msgid "Greenland Standard Time"
 msgstr "格陵兰标准时间"
 
-#: tzres.rc:111
+#: tzres.rc:115
 msgid "Greenland Daylight Time"
 msgstr "格陵兰夏令时"
 
-#: tzres.rc:94
+#: tzres.rc:98
 msgid "Easter Island Standard Time"
 msgstr "复活节岛标准时间"
 
-#: tzres.rc:95
+#: tzres.rc:99
 msgid "Easter Island Daylight Time"
 msgstr "复活节岛夏令时"
 
-#: tzres.rc:98
+#: tzres.rc:102
 msgid "Egypt Standard Time"
 msgstr "埃及标准时间"
 
-#: tzres.rc:99
+#: tzres.rc:103
 msgid "Egypt Daylight Time"
 msgstr "埃及夏令时"
 
-#: tzres.rc:138
+#: tzres.rc:144
 msgid "Mauritius Standard Time"
 msgstr "毛里求斯标准时间"
 
-#: tzres.rc:139
+#: tzres.rc:145
 msgid "Mauritius Daylight Time"
 msgstr "毛里求斯夏令时"
 
-#: tzres.rc:218
+#: tzres.rc:224
 msgid "Vladivostok Standard Time"
 msgstr "符拉迪沃斯托克标准时间"
 
-#: tzres.rc:219
+#: tzres.rc:225
 msgid "Vladivostok Daylight Time"
 msgstr "符拉迪沃斯托克夏令时"
 
-#: tzres.rc:190
+#: tzres.rc:196
 msgid "Singapore Standard Time"
 msgstr "新加坡标准时间"
 
-#: tzres.rc:191
+#: tzres.rc:197
 msgid "Singapore Daylight Time"
 msgstr "新加坡夏令时"
 
-#: tzres.rc:130
+#: tzres.rc:134
 msgid "Korea Standard Time"
 msgstr "韩国标准时间"
 
-#: tzres.rc:131
+#: tzres.rc:135
 msgid "Korea Daylight Time"
 msgstr "韩国夏令时"
 
-#: tzres.rc:88
+#: tzres.rc:86
+msgid "Chatham Islands Standard Time"
+msgstr "查塔姆标准时间"
+
+#: tzres.rc:87
+msgid "Chatham Islands Daylight Time"
+msgstr "查塔姆夏令时"
+
+#: tzres.rc:92
 msgid "E. Africa Standard Time"
 msgstr "东非标准时间"
 
-#: tzres.rc:89
+#: tzres.rc:93
 msgid "E. Africa Daylight Time"
 msgstr "东非夏令时"
 
-#: tzres.rc:104
+#: tzres.rc:108
 msgid "FLE Standard Time"
 msgstr "FLE 标准时间"
 
-#: tzres.rc:105
+#: tzres.rc:109
 msgid "FLE Daylight Time"
 msgstr "FLE 夏令时"
 
-#: tzres.rc:92
+#: tzres.rc:96
 msgid "E. South America Standard Time"
 msgstr "东南美洲标准时间"
 
-#: tzres.rc:93
+#: tzres.rc:97
 msgid "E. South America Daylight Time"
 msgstr "东南美洲夏令时"
 
-#: tzres.rc:78
+#: tzres.rc:80
 msgid "Central Pacific Standard Time"
 msgstr "中太平洋标准时间"
 
-#: tzres.rc:79
+#: tzres.rc:81
 msgid "Central Pacific Daylight Time"
 msgstr "中太平洋夏令时"
 
-#: tzres.rc:222
+#: tzres.rc:228
 msgid "W. Central Africa Standard Time"
 msgstr "西中非标准时间"
 
-#: tzres.rc:223
+#: tzres.rc:229
 msgid "W. Central Africa Daylight Time"
 msgstr "西中非夏令时"
 
-#: tzres.rc:166
+#: tzres.rc:172
 msgid "Pacific SA Standard Time"
 msgstr "太平洋南美标准时间"
 
-#: tzres.rc:167
+#: tzres.rc:173
 msgid "Pacific SA Daylight Time"
 msgstr "太平洋南美夏令时"
 
-#: tzres.rc:90
+#: tzres.rc:94
 msgid "E. Australia Standard Time"
 msgstr "澳大利亚东部标准时间"
 
-#: tzres.rc:91
+#: tzres.rc:95
 msgid "E. Australia Daylight Time"
 msgstr "澳大利亚东部夏令时"
 
-#: tzres.rc:220
+#: tzres.rc:226
 msgid "W. Australia Standard Time"
 msgstr "澳大利亚西部标准时间"
 
-#: tzres.rc:221
+#: tzres.rc:227
 msgid "W. Australia Daylight Time"
 msgstr "澳大利亚西部夏令时"
 
@@ -11471,7 +11460,7 @@ msgstr "模拟时钟(&L)"
 msgid "Digi&tal"
 msgstr "数字时钟(&T)"
 
-#: clock.rc:35 notepad.rc:53 winecfg.rc:307 winefile.rc:63 wordpad.rc:84
+#: clock.rc:35 notepad.rc:53 winecfg.rc:305 winefile.rc:63 wordpad.rc:84
 msgid "&Font..."
 msgstr "字体(&F)..."
 
@@ -15198,7 +15187,7 @@ msgstr ""
 msgid "The Wine configuration in %s is being updated, please wait..."
 msgstr "正在更新位于 %s 的 Wine 配置，请稍候..."
 
-#: winecfg.rc:141
+#: winecfg.rc:140
 msgid ""
 "This program is free software; you can redistribute it and/or modify it "
 "under the terms of the GNU Lesser General Public License as published by the "
@@ -15209,23 +15198,23 @@ msgstr ""
 "（LGPL）来对其进行添加、修改和重新发布。许可协议版本为2.1，您也可以选择采用更"
 "新的版本。"
 
-#: winecfg.rc:143
+#: winecfg.rc:142
 msgid "Windows registration information"
 msgstr "Windows 注册信息"
 
-#: winecfg.rc:144
+#: winecfg.rc:143
 msgid "&Owner:"
 msgstr "姓名(&O)："
 
-#: winecfg.rc:146
+#: winecfg.rc:145
 msgid "Organi&zation:"
 msgstr "组织(&Z)："
 
-#: winecfg.rc:154
+#: winecfg.rc:153
 msgid "Application settings"
 msgstr "应用程序设置"
 
-#: winecfg.rc:155
+#: winecfg.rc:154
 msgid ""
 "Wine can mimic different Windows versions for each application. This tab is "
 "linked to the Libraries and Graphics tabs to allow you to change system-wide "
@@ -15234,55 +15223,55 @@ msgstr ""
 "对不同的程序，可以让 Wine 假装成不同版本的 Windows，也可以在“函数库”与“显"
 "示”标签页中作不同的设置。"
 
-#: winecfg.rc:159
+#: winecfg.rc:158
 msgid "Add appli&cation..."
 msgstr "增加程序设置(&C)..."
 
-#: winecfg.rc:160
+#: winecfg.rc:159
 msgid "&Remove application"
 msgstr "删除程序设置(&R)"
 
-#: winecfg.rc:161
+#: winecfg.rc:160
 msgid "&Windows Version:"
 msgstr "&Windows 版本："
 
-#: winecfg.rc:169
+#: winecfg.rc:168
 msgid "Window settings"
 msgstr "窗口设置"
 
-#: winecfg.rc:170
+#: winecfg.rc:169
 msgid "Automatically capture the &mouse in full-screen windows"
 msgstr "全屏模式下自动捕获光标(&M)"
 
-#: winecfg.rc:171
+#: winecfg.rc:170
 msgid "Allow the window manager to &decorate the windows"
 msgstr "允许窗口管理器装饰窗口(&D)"
 
-#: winecfg.rc:172
+#: winecfg.rc:171
 msgid "Allow the &window manager to control the windows"
 msgstr "允许窗口管理器控制窗口(&W)"
 
-#: winecfg.rc:173
+#: winecfg.rc:172
 msgid "&Emulate a virtual desktop"
 msgstr "虚拟桌面(&D)"
 
-#: winecfg.rc:175
+#: winecfg.rc:174
 msgid "Desktop &size:"
 msgstr "桌面大小(&S)："
 
-#: winecfg.rc:180
+#: winecfg.rc:179
 msgid "Screen resolution"
 msgstr "屏幕分辨率"
 
-#: winecfg.rc:184
+#: winecfg.rc:183
 msgid "This is a sample text using 10 point Tahoma"
 msgstr "这是使用 10 号 Tahoma 字体的示例文本"
 
-#: winecfg.rc:191
+#: winecfg.rc:190
 msgid "DLL overrides"
 msgstr "DLL 顶替"
 
-#: winecfg.rc:192
+#: winecfg.rc:191
 msgid ""
 "Dynamic Link Libraries can be specified individually to be either builtin "
 "(provided by Wine) or native (taken from Windows or provided by the "
@@ -15291,261 +15280,257 @@ msgstr ""
 "对各个动态链接库，可以选择使用 Wine 提供的内建版本，还是使用取自 Windows 或程"
 "序所提供的原装版本。"
 
-#: winecfg.rc:194
+#: winecfg.rc:193
 msgid "&New override for library:"
 msgstr "新增函数库顶替(&N)："
 
-#: winecfg.rc:196
+#: winecfg.rc:195
 msgid "A&dd"
 msgstr "添加(&D)"
 
-#: winecfg.rc:197
+#: winecfg.rc:196
 msgid "Existing &overrides:"
 msgstr "已有的函数库顶替(&O)："
 
-#: winecfg.rc:199
+#: winecfg.rc:198
 msgid "&Edit..."
 msgstr "编辑(&E)..."
 
-#: winecfg.rc:205
+#: winecfg.rc:204
 msgid "Edit Override"
 msgstr "编辑顶替"
 
-#: winecfg.rc:208
+#: winecfg.rc:207
 msgid "Load order"
 msgstr "载入顺序"
 
-#: winecfg.rc:209
+#: winecfg.rc:208
 msgid "&Builtin (Wine)"
 msgstr "内建(Wine)(&B)"
 
-#: winecfg.rc:210
+#: winecfg.rc:209
 msgid "&Native (Windows)"
 msgstr "原装(Windows)(&N)"
 
-#: winecfg.rc:211
+#: winecfg.rc:210
 msgid "Buil&tin then Native"
 msgstr "内建先于原装(&T)"
 
-#: winecfg.rc:212
+#: winecfg.rc:211
 msgid "Nati&ve then Builtin"
 msgstr "原装先于内建(&V)"
 
-#: winecfg.rc:220
+#: winecfg.rc:219
 msgid "Select Drive Letter"
 msgstr "选择驱动器盘符"
 
-#: winecfg.rc:232
+#: winecfg.rc:231
 msgid "Drive configuration"
 msgstr "驱动器设置"
 
-#: winecfg.rc:233
+#: winecfg.rc:232
 msgid ""
 "Failed to connect to the mount manager; the drive configuration cannot be "
 "edited."
 msgstr "无法连接到挂载管理器；不能修改驱动器配置。"
 
-#: winecfg.rc:236
+#: winecfg.rc:235
 msgid "A&dd..."
 msgstr "添加(&D)..."
 
-#: winecfg.rc:238
-msgid "Aut&odetect"
-msgstr "自动侦测(&O)"
-
-#: winecfg.rc:241
+#: winecfg.rc:239
 msgid "&Path:"
 msgstr "路径(&P)："
 
-#: winecfg.rc:248 winecfg.rc:38
+#: winecfg.rc:246 winecfg.rc:37
 msgid "Show Advan&ced"
 msgstr "显示高级选项(&C)"
 
-#: winecfg.rc:249
+#: winecfg.rc:247
 msgid "De&vice:"
 msgstr "设备(&V)："
 
-#: winecfg.rc:251
+#: winecfg.rc:249
 msgid "Bro&wse..."
 msgstr "浏览(&W)..."
 
-#: winecfg.rc:253
+#: winecfg.rc:251
 msgid "&Label:"
 msgstr "卷标(&L)："
 
-#: winecfg.rc:255
+#: winecfg.rc:253
 msgid "S&erial:"
 msgstr "序列号(&E)："
 
-#: winecfg.rc:258
+#: winecfg.rc:256
 msgid "&Show dot files"
 msgstr "显示隐藏文件(&S)"
 
-#: winecfg.rc:265
+#: winecfg.rc:263
 msgid "Driver diagnostics"
 msgstr "驱动程序诊断"
 
-#: winecfg.rc:267
+#: winecfg.rc:265
 msgid "Defaults"
 msgstr "默认值"
 
-#: winecfg.rc:268
+#: winecfg.rc:266
 msgid "Output device:"
 msgstr "输出设备："
 
-#: winecfg.rc:269
+#: winecfg.rc:267
 msgid "Voice output device:"
 msgstr "语音输出设备："
 
-#: winecfg.rc:270
+#: winecfg.rc:268
 msgid "Input device:"
 msgstr "输入设备："
 
-#: winecfg.rc:271
+#: winecfg.rc:269
 msgid "Voice input device:"
 msgstr "语音输入设备："
 
-#: winecfg.rc:276
+#: winecfg.rc:274
 msgid "&Test Sound"
 msgstr "测试音频(&T)"
 
-#: winecfg.rc:277 winecfg.rc:90
+#: winecfg.rc:275 winecfg.rc:89
 msgid "Speaker configuration"
 msgstr "扬声器设置"
 
-#: winecfg.rc:280
+#: winecfg.rc:278
 msgid "Speakers:"
 msgstr "扬声器："
 
-#: winecfg.rc:288
+#: winecfg.rc:286
 msgid "Appearance"
 msgstr "外观"
 
-#: winecfg.rc:289
+#: winecfg.rc:287
 msgid "&Theme:"
 msgstr "主题(&T)："
 
-#: winecfg.rc:291
+#: winecfg.rc:289
 msgid "&Install theme..."
 msgstr "安装主题(&I)..."
 
-#: winecfg.rc:296
+#: winecfg.rc:294
 msgid "It&em:"
 msgstr "物件(&E)："
 
-#: winecfg.rc:298
+#: winecfg.rc:296
 msgid "C&olor:"
 msgstr "颜色(&O)："
 
-#: winecfg.rc:304
+#: winecfg.rc:302
 msgid "MIME types"
 msgstr "MIME 类型"
 
-#: winecfg.rc:305
+#: winecfg.rc:303
 msgid "Manage file &associations"
 msgstr "管理文件关联(&A)"
 
-#: winecfg.rc:308
+#: winecfg.rc:306
 msgid "Folders"
 msgstr "文件夹"
 
-#: winecfg.rc:311
+#: winecfg.rc:309
 msgid "&Link to:"
 msgstr "映射至(&L)："
 
-#: winecfg.rc:34
+#: winecfg.rc:33
 msgid "Libraries"
 msgstr "函数库"
 
-#: winecfg.rc:35
+#: winecfg.rc:34
 msgid "Drives"
 msgstr "驱动器"
 
-#: winecfg.rc:36
+#: winecfg.rc:35
 msgid "Select the Unix target directory, please."
 msgstr "请选择目标 Unix 文件夹。"
 
-#: winecfg.rc:37
+#: winecfg.rc:36
 msgid "Hide Advan&ced"
 msgstr "隐藏高级选项(&C)"
 
-#: winecfg.rc:39
+#: winecfg.rc:38
 msgid "(No Theme)"
 msgstr "（无主题）"
 
-#: winecfg.rc:40
+#: winecfg.rc:39
 msgid "Graphics"
 msgstr "显示"
 
-#: winecfg.rc:41
+#: winecfg.rc:40
 msgid "Desktop Integration"
 msgstr "桌面整合"
 
-#: winecfg.rc:42
+#: winecfg.rc:41
 msgid "Audio"
 msgstr "音效"
 
-#: winecfg.rc:43
+#: winecfg.rc:42
 msgid "About"
 msgstr "关于"
 
-#: winecfg.rc:44
+#: winecfg.rc:43
 msgid "Wine configuration"
 msgstr "Wine 设置"
 
-#: winecfg.rc:46
+#: winecfg.rc:45
 msgid "Theme files (*.msstyles; *.theme)"
 msgstr "主题文件 (*.msstyles; *.theme)"
 
-#: winecfg.rc:47
+#: winecfg.rc:46
 msgid "Select a theme file"
 msgstr "选择主题文件"
 
-#: winecfg.rc:48
+#: winecfg.rc:47
 msgid "Folder"
 msgstr "特殊文件夹"
 
-#: winecfg.rc:49
+#: winecfg.rc:48
 msgid "Links to"
 msgstr "映射至"
 
-#: winecfg.rc:45
+#: winecfg.rc:44
 msgid "Wine configuration for %s"
 msgstr "Wine 设置：针对 %s"
 
-#: winecfg.rc:84
+#: winecfg.rc:83
 msgid "Selected driver: %s"
 msgstr "选中的驱动：%s"
 
-#: winecfg.rc:85
+#: winecfg.rc:84
 msgid "(None)"
 msgstr "(无)"
 
-#: winecfg.rc:86
+#: winecfg.rc:85
 msgid "Audio test failed!"
 msgstr "音频测试失败！"
 
-#: winecfg.rc:88
+#: winecfg.rc:87
 msgid "(System default)"
 msgstr "(系统默认)"
 
-#: winecfg.rc:91
+#: winecfg.rc:90
 msgid "5.1 Surround"
 msgstr "5.1 环绕声"
 
-#: winecfg.rc:92
+#: winecfg.rc:91
 msgid "Quadraphonic"
 msgstr "四声道录放音设备"
 
-#: winecfg.rc:93
+#: winecfg.rc:92
 msgid "Stereo"
 msgstr "双声道"
 
-#: winecfg.rc:94
+#: winecfg.rc:93
 msgid "Mono"
 msgstr "单声道"
 
-#: winecfg.rc:54
+#: winecfg.rc:53
 msgid ""
 "Changing the load order of this library is not recommended.\n"
 "Are you sure you want to do this?"
@@ -15553,67 +15538,67 @@ msgstr ""
 "不建议对这个函数库更改载入顺序。\n"
 "你确定要如此吗？"
 
-#: winecfg.rc:55
+#: winecfg.rc:54
 msgid "Warning: system library"
 msgstr "警告：系统函数库"
 
-#: winecfg.rc:56
+#: winecfg.rc:55
 msgid "native"
 msgstr "原装"
 
-#: winecfg.rc:57
+#: winecfg.rc:56
 msgid "builtin"
 msgstr "内建"
 
-#: winecfg.rc:58
+#: winecfg.rc:57
 msgid "native, builtin"
 msgstr "原装先于内建"
 
-#: winecfg.rc:59
+#: winecfg.rc:58
 msgid "builtin, native"
 msgstr "内建先于原装"
 
-#: winecfg.rc:60
+#: winecfg.rc:59
 msgid "disabled"
 msgstr "停用"
 
-#: winecfg.rc:61
+#: winecfg.rc:60
 msgid "Default Settings"
 msgstr "默认设置"
 
-#: winecfg.rc:62
+#: winecfg.rc:61
 msgid "Wine Programs (*.exe; *.exe.so)"
 msgstr "Wine 程序 (*.exe; *.exe.so)"
 
-#: winecfg.rc:63
+#: winecfg.rc:62
 msgid "Use global settings"
 msgstr "使用全局设置"
 
-#: winecfg.rc:64
+#: winecfg.rc:63
 msgid "Select an executable file"
 msgstr "选择可执行文件"
 
-#: winecfg.rc:69
+#: winecfg.rc:68
 msgid "Autodetect"
 msgstr "自动侦测"
 
-#: winecfg.rc:70
+#: winecfg.rc:69
 msgid "Local hard disk"
 msgstr "本地硬盘"
 
-#: winecfg.rc:71
+#: winecfg.rc:70
 msgid "Network share"
 msgstr "网络共享文件夹"
 
-#: winecfg.rc:72
+#: winecfg.rc:71
 msgid "Floppy disk"
 msgstr "软盘"
 
-#: winecfg.rc:73
+#: winecfg.rc:72
 msgid "CD-ROM"
 msgstr "光驱"
 
-#: winecfg.rc:74
+#: winecfg.rc:73
 msgid ""
 "You cannot add any more drives.\n"
 "\n"
@@ -15623,11 +15608,11 @@ msgstr ""
 "\n"
 "驱动器的盘符必须是英文字母 A-Z， 因此最多只允许 26 个。"
 
-#: winecfg.rc:75
+#: winecfg.rc:74
 msgid "System drive"
 msgstr "系统驱动器"
 
-#: winecfg.rc:76
+#: winecfg.rc:75
 msgid ""
 "Are you sure you want to delete drive C?\n"
 "\n"
@@ -15639,16 +15624,16 @@ msgstr ""
 "大部分 Windows 程序都假定 C 盘存在，如找不到 C 盘可能会导致严重错误。如果要继"
 "续，请重新建立此盘！"
 
-#: winecfg.rc:77
+#: winecfg.rc:76
 msgctxt "Drive letter"
 msgid "Letter"
 msgstr "盘符"
 
-#: winecfg.rc:78
+#: winecfg.rc:77
 msgid "Target folder"
 msgstr "目标文件夹"
 
-#: winecfg.rc:79
+#: winecfg.rc:78
 msgid ""
 "You don't have a drive C. This is not so great.\n"
 "\n"
@@ -15658,127 +15643,127 @@ msgstr ""
 "\n"
 "请记得点选“驱动器”标签的“添加”来建立它！\n"
 
-#: winecfg.rc:99
+#: winecfg.rc:98
 msgid "Controls Background"
 msgstr "控件背景"
 
-#: winecfg.rc:100
+#: winecfg.rc:99
 msgid "Controls Text"
 msgstr "控件文字"
 
-#: winecfg.rc:102
+#: winecfg.rc:101
 msgid "Menu Background"
 msgstr "菜单背景"
 
-#: winecfg.rc:103
+#: winecfg.rc:102
 msgid "Menu Text"
 msgstr "菜单文字"
 
-#: winecfg.rc:104
+#: winecfg.rc:103
 msgid "Scrollbar"
 msgstr "滚动条"
 
-#: winecfg.rc:105
+#: winecfg.rc:104
 msgid "Selection Background"
 msgstr "选中的文字背景"
 
-#: winecfg.rc:106
+#: winecfg.rc:105
 msgid "Selection Text"
 msgstr "选中的文字"
 
-#: winecfg.rc:107
+#: winecfg.rc:106
 msgid "Tooltip Background"
 msgstr "工具提示背景"
 
-#: winecfg.rc:108
+#: winecfg.rc:107
 msgid "Tooltip Text"
 msgstr "工具提示文字"
 
-#: winecfg.rc:109
+#: winecfg.rc:108
 msgid "Window Background"
 msgstr "窗口背景"
 
-#: winecfg.rc:110
+#: winecfg.rc:109
 msgid "Window Text"
 msgstr "窗口文字"
 
-#: winecfg.rc:111
+#: winecfg.rc:110
 msgid "Active Title Bar"
 msgstr "活动窗口标题栏"
 
-#: winecfg.rc:112
+#: winecfg.rc:111
 msgid "Active Title Text"
 msgstr "活动窗口标题栏文字"
 
-#: winecfg.rc:113
+#: winecfg.rc:112
 msgid "Inactive Title Bar"
 msgstr "非活动窗口标题栏"
 
-#: winecfg.rc:114
+#: winecfg.rc:113
 msgid "Inactive Title Text"
 msgstr "非活动窗口标题栏"
 
-#: winecfg.rc:115
+#: winecfg.rc:114
 msgid "Message Box Text"
 msgstr "消息框文字"
 
-#: winecfg.rc:116
+#: winecfg.rc:115
 msgid "Application Workspace"
 msgstr "应用程序工作区"
 
-#: winecfg.rc:117
+#: winecfg.rc:116
 msgid "Window Frame"
 msgstr "焦点控件框架"
 
-#: winecfg.rc:118
+#: winecfg.rc:117
 msgid "Active Border"
 msgstr "活动窗口边界"
 
-#: winecfg.rc:119
+#: winecfg.rc:118
 msgid "Inactive Border"
 msgstr "非活动窗口边界"
 
-#: winecfg.rc:120
+#: winecfg.rc:119
 msgid "Controls Shadow"
 msgstr "控件阴影"
 
-#: winecfg.rc:121
+#: winecfg.rc:120
 msgid "Gray Text"
 msgstr "灰色文字"
 
-#: winecfg.rc:122
+#: winecfg.rc:121
 msgid "Controls Highlight"
 msgstr "控件高亮"
 
-#: winecfg.rc:123
+#: winecfg.rc:122
 msgid "Controls Dark Shadow"
 msgstr "控件灰暗"
 
-#: winecfg.rc:124
+#: winecfg.rc:123
 msgid "Controls Light"
 msgstr "控件光亮"
 
-#: winecfg.rc:125
+#: winecfg.rc:124
 msgid "Controls Alternate Background"
 msgstr "控件切换背景"
 
-#: winecfg.rc:126
+#: winecfg.rc:125
 msgid "Hot Tracked Item"
 msgstr "鼠标拖选框"
 
-#: winecfg.rc:127
+#: winecfg.rc:126
 msgid "Active Title Bar Gradient"
 msgstr "活动窗口标题栏渐进目标色"
 
-#: winecfg.rc:128
+#: winecfg.rc:127
 msgid "Inactive Title Bar Gradient"
 msgstr "非活动窗口标题栏渐进目标色"
 
-#: winecfg.rc:129
+#: winecfg.rc:128
 msgid "Menu Highlight"
 msgstr "菜单高亮"
 
-#: winecfg.rc:130
+#: winecfg.rc:129
 msgid "Menu Bar"
 msgstr "菜单栏"
 

@@ -64,13 +64,14 @@ from enum import Enum
 LOGGER = logging.Logger("vulkan")
 LOGGER.addHandler(logging.StreamHandler())
 
-VK_XML_VERSION = "1.1.130"
-WINE_VK_VERSION = (1, 1)
+VK_XML_VERSION = "1.2.142"
+WINE_VK_VERSION = (1, 2)
 
 # Filenames to create.
 WINE_VULKAN_H = "../../include/wine/vulkan.h"
 WINE_VULKAN_DRIVER_H = "../../include/wine/vulkan_driver.h"
 WINE_VULKAN_LOADER_SPEC = "../vulkan-1/vulkan-1.spec"
+WINE_VULKAN_JSON = "winevulkan.json"
 WINE_VULKAN_SPEC = "winevulkan.spec"
 WINE_VULKAN_THUNKS_C = "vulkan_thunks.c"
 WINE_VULKAN_THUNKS_H = "vulkan_thunks.h"
@@ -83,7 +84,7 @@ WINE_VULKAN_THUNKS_H = "vulkan_thunks.h"
 EXT_BASE = 1000000000
 EXT_BLOCK_SIZE = 1000
 
-BLACKLISTED_EXTENSIONS = [
+UNSUPPORTED_EXTENSIONS = [
     # Instance extensions
     "VK_EXT_debug_report",
     # Handling of VK_EXT_debug_report requires some consideration. The win32
@@ -95,7 +96,6 @@ BLACKLISTED_EXTENSIONS = [
     "VK_EXT_validation_features",
     "VK_EXT_validation_flags",
     "VK_KHR_display", # Needs WSI work.
-    "VK_KHR_get_surface_capabilities2",
     "VK_KHR_surface_protected_capabilities",
 
     # Device extensions
@@ -138,7 +138,7 @@ CORE_EXTENSIONS = [
 # Functions part of our winevulkan graphics driver interface.
 # DRIVER_VERSION should be bumped on any change to driver interface
 # in FUNCTION_OVERRIDES
-DRIVER_VERSION = 7
+DRIVER_VERSION = 8
 
 # Table of functions for which we have a special implementation.
 # These are regular device / instance functions for which we need
@@ -165,6 +165,8 @@ FUNCTION_OVERRIDES = {
     "vkGetPhysicalDeviceExternalFenceProperties" : {"dispatch" : False, "driver" : False, "thunk" : False},
     "vkGetPhysicalDeviceExternalSemaphoreProperties" : {"dispatch" : False, "driver" : False, "thunk" : False},
     "vkGetPhysicalDeviceImageFormatProperties2" : {"dispatch" : True, "driver" : False, "thunk" : True, "private_thunk" : True},
+    "vkGetPhysicalDeviceProperties2" : {"dispatch" : True, "driver" : False, "thunk" : True, "private_thunk" : True},
+    "vkGetPhysicalDeviceProperties2KHR" : {"dispatch" : True, "driver" : False, "thunk" : True, "private_thunk" : True},
 
     # Device functions
     "vkAllocateCommandBuffers" : {"dispatch" : True, "driver" : False, "thunk" : False},
@@ -184,6 +186,10 @@ FUNCTION_OVERRIDES = {
     "vkGetPhysicalDeviceSurfaceCapabilitiesKHR" : {"dispatch" : True, "driver" : True, "thunk" : True},
     "vkGetPhysicalDeviceSurfaceFormatsKHR" : {"dispatch" : True, "driver" : True, "thunk" : True},
     "vkGetPhysicalDeviceSurfacePresentModesKHR" : {"dispatch" : True, "driver" : True, "thunk" : True},
+
+    # VK_KHR_get_surface_capabilities2
+    "vkGetPhysicalDeviceSurfaceCapabilities2KHR" : {"dispatch" : True, "driver" : True, "thunk" : True},
+    "vkGetPhysicalDeviceSurfaceFormats2KHR" : {"dispatch" : True, "driver" : True, "thunk" : True},
 
     # VK_KHR_win32_surface
     "vkCreateWin32SurfaceKHR" : {"dispatch" : True, "driver" : True, "thunk" : True},
@@ -249,7 +255,10 @@ class VkBaseType(object):
     def definition(self):
         # Definition is similar for alias or non-alias as type
         # is already set to alias.
-        return "typedef {0} {1};\n".format(self.type, self.name)
+        if not self.type is None:
+            return "typedef {0} {1};\n".format(self.type, self.name)
+        else:
+            return "struct {0};\n".format(self.name)
 
     def is_alias(self):
         return bool(self.alias)
@@ -335,11 +344,15 @@ class VkEnum(object):
         self.values = values
         self.required = False
         self.alias = alias
+        self.aliased_by = []
 
     @staticmethod
     def from_alias(enum, alias):
         name = enum.attrib.get("name")
-        return VkEnum(name, alias.values, alias=alias)
+        aliasee = VkEnum(name, alias.values, alias=alias)
+
+        alias.add_aliased_by(aliasee)
+        return aliasee
 
     @staticmethod
     def from_xml(enum):
@@ -352,24 +365,24 @@ class VkEnum(object):
             alias_name = v.attrib.get("alias")
             if alias_name:
                 alias = next(x for x in values if x.name == alias_name)
-                values.append(VkEnumValue(v.attrib.get("name"), alias.value, alias.hex))
+                values.append(VkEnumValue(v.attrib.get("name"), value=alias.value, hex=alias.hex))
             elif value:
                 # Some values are in hex form. We want to preserve the hex representation
                 # at least when we convert back to a string. Internally we want to use int.
                 if "0x" in value:
-                    values.append(VkEnumValue(v.attrib.get("name"), int(value, 0), hex=True))
+                    values.append(VkEnumValue(v.attrib.get("name"), value=int(value, 0), hex=True))
                 else:
-                    values.append(VkEnumValue(v.attrib.get("name"), int(value, 0)))
+                    values.append(VkEnumValue(v.attrib.get("name"), value=int(value, 0)))
             else:
                 # bitmask
                 value = 1 << int(v.attrib.get("bitpos"))
-                values.append(VkEnumValue(v.attrib.get("name"), value, hex=True))
+                values.append(VkEnumValue(v.attrib.get("name"), value=value, hex=True))
 
         # vulkan.h contains a *_MAX_ENUM value set to 32-bit at the time of writing,
         # which is to prepare for extensions as they can add values and hence affect
         # the size definition.
         max_name = re.sub(r'([0-9a-z_])([A-Z0-9])',r'\1_\2', name).upper() + "_MAX_ENUM"
-        values.append(VkEnumValue(max_name, 0x7fffffff, hex=True))
+        values.append(VkEnumValue(max_name, value=0x7fffffff, hex=True))
 
         return VkEnum(name, values)
 
@@ -378,38 +391,57 @@ class VkEnum(object):
 
         # Extensions can add new enum values. When an extension is promoted to Core
         # the registry defines the value twice once for old extension and once for
-        # new Core features. Ignore the duplicate entry.
+        # new Core features. Add the duplicate if it's explicitly marked as an
+        # alias, otherwise ignore it.
         for v in self.values:
-            if v.value == value.value:
+            if not value.is_alias() and v.value == value.value:
                 LOGGER.debug("Adding duplicate enum value {0} to {1}".format(v, self.name))
                 return
-        self.values.append(value)
+        # Avoid adding duplicate aliases multiple times
+        if not any(x.name == value.name for x in self.values):
+            self.values.append(value)
 
     def definition(self):
+        if self.is_alias():
+            return ""
+
         text = "typedef enum {0}\n{{\n".format(self.name)
 
         # Print values sorted, values can have been added in a random order.
-        values = sorted(self.values, key=lambda value: value.value)
+        values = sorted(self.values, key=lambda value: value.value if value.value is not None else 0x7ffffffe)
         for value in values:
             text += "    {0},\n".format(value.definition())
-        text += "}} {0};\n\n".format(self.name)
+        text += "}} {0};\n".format(self.name)
+
+        for aliasee in self.aliased_by:
+            text += "typedef {0} {1};\n".format(self.name, aliasee.name)
+
+        text += "\n"
         return text
 
     def is_alias(self):
         return bool(self.alias)
 
+    def add_aliased_by(self, aliasee):
+        self.aliased_by.append(aliasee)
+
 
 class VkEnumValue(object):
-    def __init__(self, name, value, hex=False):
+    def __init__(self, name, value=None, hex=False, alias=None):
         self.name = name
         self.value = value
         self.hex = hex
+        self.alias = alias
 
     def __repr__(self):
+        if self.is_alias():
+            return "{0}={1}".format(self.name, self.alias)
         return "{0}={1}".format(self.name, self.value)
 
     def definition(self):
         """ Convert to text definition e.g. VK_FOO = 1 """
+        if self.is_alias():
+            return "{0} = {1}".format(self.name, self.alias)
 
         # Hex is commonly used for FlagBits and sometimes within
         # a non-FlagBits enum for a bitmask value as well.
@@ -417,6 +449,9 @@ class VkEnumValue(object):
             return "{0} = 0x{1:08x}".format(self.name, self.value)
         else:
             return "{0} = {1}".format(self.name, self.value)
+
+    def is_alias(self):
+        return self.alias is not None
 
 
 class VkFunction(object):
@@ -1547,6 +1582,7 @@ class VkStruct(Sequence):
         self.union = union
         self.type_info = None # To be set later.
         self.struct_extensions = []
+        self.aliased_by = []
 
     def __getitem__(self, i):
         return self.members[i]
@@ -1557,7 +1593,10 @@ class VkStruct(Sequence):
     @staticmethod
     def from_alias(struct, alias):
         name = struct.attrib.get("name")
-        return VkStruct(name, alias.members, alias.returnedonly, alias.structextends, alias=alias)
+        aliasee = VkStruct(name, alias.members, alias.returnedonly, alias.structextends, alias=alias)
+
+        alias.add_aliased_by(aliasee)
+        return aliasee
 
     @staticmethod
     def from_xml(struct):
@@ -1642,6 +1681,10 @@ class VkStruct(Sequence):
             postfix (str, optional): text to append to end of struct name, useful for struct renaming.
         """
 
+        # Only define alias structs when doing conversions
+        if self.is_alias() and not conv:
+            return ""
+
         if self.union:
             text = "typedef union {0}".format(self.name)
         else:
@@ -1663,11 +1706,20 @@ class VkStruct(Sequence):
         if postfix is not None:
             text += "}} {0}{1};\n\n".format(self.name, postfix)
         else:
-            text += "}} {0};\n\n".format(self.name)
+            text += "}} {0};\n".format(self.name)
+
+        for aliasee in self.aliased_by:
+            text += "typedef {0} {1};\n".format(self.name, aliasee.name)
+
+        text += "\n"
+
         return text
 
     def is_alias(self):
         return bool(self.alias)
+
+    def add_aliased_by(self, aliasee):
+        self.aliased_by.append(aliasee)
 
     def needs_alignment(self):
         """ Check if structure needs alignment for 64-bit data.
@@ -2485,6 +2537,9 @@ class VkGenerator(object):
             else:
                 f.write("@ stub {0}\n".format(func.name))
 
+        f.write("@ stdcall -private DllRegisterServer()\n")
+        f.write("@ stdcall -private DllUnregisterServer()\n")
+
     def generate_vulkan_loader_spec(self, f):
         self._generate_copyright(f, spec_file=True)
 
@@ -2554,7 +2609,7 @@ class VkRegistry(object):
     def _is_extension_supported(self, extension):
         # We disable some extensions as either we haven't implemented
         # support yet or because they are for platforms other than win32.
-        return extension not in BLACKLISTED_EXTENSIONS
+        return extension not in UNSUPPORTED_EXTENSIONS
 
     def _mark_command_required(self, command):
         """ Helper function to mark a certain command and the datatypes it needs as required."""
@@ -2610,9 +2665,6 @@ class VkRegistry(object):
                 mark_struct_dependencies(struct, self.types)
             elif type_info["category"] == "bitmask":
                 mark_bitmask_dependencies(type_info["data"], self.types)
-
-        if func.is_alias():
-            func.alias.required = True
 
     def _parse_commands(self, root):
         """ Parse command section containing the Vulkan function calls. """
@@ -2686,14 +2738,31 @@ class VkRegistry(object):
 
         self.enums = OrderedDict(sorted(enums.items()))
 
-    def _process_require_enum(self, enum_elem, ext=None):
+    def _process_require_enum(self, enum_elem, ext=None, only_aliased=False):
         if "extends" in enum_elem.keys():
             enum = self.types[enum_elem.attrib["extends"]]["data"]
+
+            # Need to define VkEnumValues which were aliased to by another value. This is necessary
+            # from VK spec version 1.2.135 where the provisional VK_KHR_ray_tracing extension was
+            # added which altered VK_NV_ray_tracing's VkEnumValues to alias to the provisional
+            # extension.
+            aliased = False
+            for _, t in self.types.items():
+                if t["category"] != "enum":
+                    continue
+                if not t["data"]:
+                    continue
+                for value in t["data"].values:
+                    if value.alias == enum_elem.attrib["name"]:
+                        aliased = True
+
+            if only_aliased and not aliased:
+                return
 
             if "bitpos" in enum_elem.keys():
                 # We need to add an extra value to an existing enum type.
                 # E.g. VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_CUBIC_BIT_IMG to VkFormatFeatureFlagBits.
-                enum.add(VkEnumValue(enum_elem.attrib["name"], 1 << int(enum_elem.attrib["bitpos"]), hex=True))
+                enum.add(VkEnumValue(enum_elem.attrib["name"], value=(1 << int(enum_elem.attrib["bitpos"])), hex=True))
 
             elif "offset" in enum_elem.keys():
                 # Extensions promoted to Core, have the extension number as part
@@ -2710,12 +2779,18 @@ class VkRegistry(object):
                 if direction is not None:
                     value = -value
 
-                enum.add(VkEnumValue(enum_elem.attrib["name"], value))
+                enum.add(VkEnumValue(enum_elem.attrib["name"], value=value))
 
             elif "value" in enum_elem.keys():
-                enum.add(VkEnumValue(enum_elem.attrib["name"], int(enum_elem.attrib["value"])))
+                enum.add(VkEnumValue(enum_elem.attrib["name"], value=int(enum_elem.attrib["value"])))
+            elif "alias" in enum_elem.keys():
+                enum.add(VkEnumValue(enum_elem.attrib["name"], alias=enum_elem.attrib["alias"]))
 
         elif "value" in enum_elem.keys():
+            # Constants are not aliased, no need to add them here, they'll get added later on.
+            if only_aliased:
+                return
+
             self.consts.append(VkConstant(enum_elem.attrib["name"], enum_elem.attrib["value"]))
 
     @staticmethod
@@ -2732,7 +2807,9 @@ class VkRegistry(object):
         """ Parse extensions section and pull in any types and commands for this extension. """
         extensions = []
         exts = root.findall("./extensions/extension")
-        for ext in exts:
+        deferred_exts = []
+
+        def process_ext(ext, deferred=False):
             ext_name = ext.attrib["name"]
 
             # Set extension name on any functions calls part of this extension as we
@@ -2745,29 +2822,40 @@ class VkRegistry(object):
             # Some extensions are not ready or have numbers reserved as a place holder.
             if ext.attrib["supported"] == "disabled":
                 LOGGER.debug("Skipping disabled extension: {0}".format(ext_name))
-                continue
+                return
+
+            # Defer extensions with 'sortorder' as they are order-dependent for spec-parsing.
+            if not deferred and "sortorder" in ext.attrib:
+                deferred_exts.append(ext)
+                return
 
             # Disable highly experimental extensions as the APIs are unstable and can
             # change between minor Vulkan revisions until API is final and becomes KHR
             # or NV.
             if "KHX" in ext_name or "NVX" in ext_name:
                 LOGGER.debug("Skipping experimental extension: {0}".format(ext_name))
-                continue
+                return
+
+            # Extensions can define VkEnumValues which alias to provisional extensions. Pre-process
+            # extensions to define any required VkEnumValues before the platform check below.
+            for require in ext.findall("require"):
+                # Extensions can add enum values to Core / extension enums, so add these.
+                for enum_elem in require.findall("enum"):
+                    self._process_require_enum(enum_elem, ext, only_aliased=True)
 
             platform = ext.attrib.get("platform")
             if platform and platform != "win32":
                 LOGGER.debug("Skipping extensions {0} for platform {1}".format(ext_name, platform))
-                continue;
+                return
 
             if not self._is_extension_supported(ext_name):
-                LOGGER.debug("Skipping blacklisted extension: {0}".format(ext_name))
-                continue
+                LOGGER.debug("Skipping unsupported extension: {0}".format(ext_name))
+                return
             elif "requires" in ext.attrib:
-                # Check if this extension builds on top of another blacklisted
-                # extension.
+                # Check if this extension builds on top of another unsupported extension.
                 requires = ext.attrib["requires"].split(",")
-                if len(set(requires).intersection(BLACKLISTED_EXTENSIONS)) > 0:
-                    continue
+                if len(set(requires).intersection(UNSUPPORTED_EXTENSIONS)) > 0:
+                    return
 
             LOGGER.debug("Loading extension: {0}".format(ext_name))
 
@@ -2796,9 +2884,21 @@ class VkRegistry(object):
                     cmd_name = command.attrib["name"]
                     self._mark_command_required(cmd_name)
 
+
             # Store a list with extensions.
             ext_info = {"name" : ext_name, "type" : ext.attrib["type"]}
             extensions.append(ext_info)
+
+
+        # Process extensions, allowing for sortorder to defer extension processing
+        for ext in exts:
+            process_ext(ext)
+
+        deferred_exts.sort(key=lambda ext: ext.attrib["sortorder"])
+
+        # Respect sortorder
+        for ext in deferred_exts:
+            process_ext(ext, deferred=True)
 
         # Sort in alphabetical order.
         self.extensions = sorted(extensions, key=lambda ext: ext["name"])
@@ -2859,7 +2959,9 @@ class VkRegistry(object):
 
             if type_info["category"] == "basetype":
                 name = t.find("name").text
-                _type = t.find("type").text
+                _type = None
+                if not t.find("type") is None:
+                    _type = t.find("type").text
                 basetype = VkBaseType(name, _type)
                 base_types.append(basetype)
                 type_info["data"] = basetype
@@ -2990,6 +3092,15 @@ class VkRegistry(object):
         self.handles = sorted(handles, key=lambda handle: handle.name)
         self.structs = sorted(structs, key=lambda struct: struct.name)
 
+def generate_vulkan_json(f):
+    f.write("{\n")
+    f.write("    \"file_format_version\": \"1.0.0\",\n")
+    f.write("    \"ICD\": {\n")
+    f.write("        \"library_path\": \".\\\\winevulkan.dll\",\n")
+    f.write("        \"api_version\": \"{0}\"\n".format(VK_XML_VERSION))
+    f.write("    }\n")
+    f.write("}\n")
+
 def set_working_directory():
     path = os.path.abspath(__file__)
     path = os.path.dirname(path)
@@ -3030,6 +3141,9 @@ def main():
 
     with open(WINE_VULKAN_THUNKS_C, "w") as f:
         generator.generate_thunks_c(f, "wine_")
+
+    with open(WINE_VULKAN_JSON, "w") as f:
+        generate_vulkan_json(f)
 
     with open(WINE_VULKAN_SPEC, "w") as f:
         generator.generate_vulkan_spec(f)

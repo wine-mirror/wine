@@ -30,11 +30,6 @@
  *   we could check
  */
 
-/* Needed to get SEE_MASK_NOZONECHECKS with the PSDK */
-#define NTDDI_WINXPSP1 0x05010100
-#define NTDDI_VERSION NTDDI_WINXPSP1
-#define _WIN32_WINNT 0x0501
-
 #include <stdio.h>
 #include <assert.h>
 
@@ -1105,12 +1100,12 @@ static void test_lpFile_parsed(void)
         return;
     }
 
-    /* existing "drawback_file.noassoc" prevents finding "drawback_file.noassoc foo.shlexec" on wine */
+    /* existing "drawback_file.noassoc" prevents finding "drawback_file.noassoc foo.shlexec" on Wine */
     sprintf(fileA, "%s\\drawback_file.noassoc foo.shlexec", tmpdir);
     rc=shell_execute(NULL, fileA, NULL, NULL);
     okShell(rc > 32, "failed: rc=%lu\n", rc);
 
-    /* if quoted, existing "drawback_file.noassoc" not prevents finding "drawback_file.noassoc foo.shlexec" on wine */
+    /* if quoted, existing "drawback_file.noassoc" does not prevent finding "drawback_file.noassoc foo.shlexec" on Wine */
     sprintf(fileA, "\"%s\\drawback_file.noassoc foo.shlexec\"", tmpdir);
     rc=shell_execute(NULL, fileA, NULL, NULL);
     okShell(rc > 32 || broken(rc == SE_ERR_FNF) /* Win95/NT4 */,
@@ -1127,7 +1122,7 @@ static void test_lpFile_parsed(void)
     todo_wine okShell(rc > 32 || broken(rc == SE_ERR_FNF) /* Win9x/2000 */,
                       "failed: rc=%lu\n", rc);
 
-    /* nonexisting "drawback_nonexist.noassoc" not prevents finding "drawback_nonexist.noassoc foo.shlexec" on wine */
+    /* nonexistent "drawback_nonexist.noassoc" does not prevent finding "drawback_nonexist.noassoc foo.shlexec" on Wine */
     sprintf(fileA, "%s\\drawback_nonexist.noassoc foo.shlexec", tmpdir);
     rc=shell_execute(NULL, fileA, NULL, NULL);
     okShell(rc > 32, "failed: rc=%lu\n", rc);
@@ -2695,19 +2690,25 @@ static void init_test(void)
     /* Older versions (win 2k) fail tests if there is a space in
        the path. */
     if (dllver.dwMajorVersion <= 5)
-        strcpy(filename, "c:\\");
+        strcpy(tmpdir, "c:\\");
     else
-        GetTempPathA(sizeof(filename), filename);
-    GetTempFileNameA(filename, "wt", 0, tmpdir);
+        GetTempPathA(sizeof(tmpdir), tmpdir);
     GetLongPathNameA(tmpdir, tmpdir, sizeof(tmpdir));
+
+    /* In case of a failure it is necessary to show the path that was passed to
+     * ShellExecute(). That means the paths must not be randomized so as not to
+     * prevent the TestBot from detecting new failures.
+     */
+    strcat(tmpdir, "wtShlexecDir");
     DeleteFileA( tmpdir );
     rc = CreateDirectoryA( tmpdir, NULL );
-    ok( rc, "failed to create %s err %u\n", tmpdir, GetLastError() );
+    ok( rc || GetLastError() == ERROR_ALREADY_EXISTS,
+        "failed to create %s err %u\n", tmpdir, GetLastError() );
     /* Set %TMPDIR% for the tests */
     SetEnvironmentVariableA("TMPDIR", tmpdir);
 
-    rc = GetTempFileNameA(tmpdir, "wt", 0, child_file);
-    ok(rc != 0, "got %d\n", rc);
+    strcpy(child_file, tmpdir);
+    strcat(child_file, "\\wtShlexecFile");
     init_event(child_file);
 
     /* Set up the test files */
@@ -2828,6 +2829,7 @@ static void test_directory(void)
                         NULL, "test2.exe", params, NULL, NULL);
     okShell(rc > 32, "returned %lu\n", rc);
     okChildInt("argcA", 4);
+    todo_wine okChildString("argvA0", path);
     okChildString("argvA3", "Exec");
     okChildPath("longPath", path);
     SetCurrentDirectoryA(curdir);
@@ -2841,6 +2843,7 @@ static void test_directory(void)
                         NULL, "test2.exe", params, tmpdir, NULL);
     okShell(rc > 32, "returned %lu\n", rc);
     okChildInt("argcA", 4);
+    okChildString("argvA0", path);
     okChildString("argvA3", "Exec");
     okChildPath("longPath", path);
 
@@ -2853,6 +2856,7 @@ static void test_directory(void)
                         NULL, "test2.exe", params, "%TMPDIR%", NULL);
     okShell(rc > 32, "returned %lu\n", rc);
     okChildInt("argcA", 4);
+    okChildString("argvA0", path);
     okChildString("argvA3", "Exec");
     okChildPath("longPath", path);
 
@@ -2861,6 +2865,18 @@ static void test_directory(void)
     rc=shell_execute_ex(SEE_MASK_NOZONECHECKS|SEE_MASK_FLAG_NO_UI,
                         NULL, "test2.exe", params, dirpath, NULL);
     okShell(rc == SE_ERR_FNF, "returned %lu\n", rc);
+
+    /* Same-named executable in different directory */
+    snprintf(path, ARRAY_SIZE(path), "%s%s", tmpdir, strrchr(argv0, '\\'));
+    CopyFileA(argv0, path, FALSE);
+    rc=shell_execute_ex(SEE_MASK_NOZONECHECKS|SEE_MASK_FLAG_NO_UI,
+                        NULL, strrchr(argv0, '\\') + 1, params, tmpdir, NULL);
+    okShell(rc > 32, "returned %lu\n", rc);
+    okChildInt("argcA", 4);
+    okChildString("argvA0", path);
+    okChildString("argvA3", "Exec");
+    okChildPath("longPath", path);
+    DeleteFileA(path);
 }
 
 START_TEST(shlexec)

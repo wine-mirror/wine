@@ -36,57 +36,56 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
-typedef struct AVIDecImpl
+struct avi_decompressor
 {
-    TransformFilter tf;
+    struct strmbase_filter filter;
+    CRITICAL_SECTION stream_cs;
+
+    struct strmbase_source source;
+    IQualityControl source_IQualityControl_iface;
+    struct strmbase_passthrough passthrough;
+
+    struct strmbase_sink sink;
 
     HIC hvid;
     BITMAPINFOHEADER* pBihIn;
-    BITMAPINFOHEADER* pBihOut;
     REFERENCE_TIME late;
-} AVIDecImpl;
+};
 
-static inline AVIDecImpl *impl_from_TransformFilter( TransformFilter *iface )
+static struct avi_decompressor *impl_from_strmbase_filter(struct strmbase_filter *iface)
 {
-    return CONTAINING_RECORD(iface, AVIDecImpl, tf);
+    return CONTAINING_RECORD(iface, struct avi_decompressor, filter);
 }
 
-static HRESULT WINAPI AVIDec_StartStreaming(TransformFilter* pTransformFilter)
+static HRESULT avi_decompressor_sink_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)
 {
-    AVIDecImpl* This = impl_from_TransformFilter(pTransformFilter);
-    DWORD result;
+    struct avi_decompressor *filter = impl_from_strmbase_filter(iface->filter);
 
-    TRACE("(%p)->()\n", This);
-    This->late = -1;
-
-    result = ICDecompressBegin(This->hvid, This->pBihIn, This->pBihOut);
-    if (result != ICERR_OK)
-    {
-        ERR("Cannot start processing (%d)\n", result);
-	return E_FAIL;
-    }
-    return S_OK;
-}
-
-static HRESULT WINAPI AVIDec_EndFlush(TransformFilter *pTransformFilter) {
-    AVIDecImpl* This = impl_from_TransformFilter(pTransformFilter);
-    This->late = -1;
-    return S_OK;
-}
-
-static HRESULT WINAPI AVIDec_NotifyDrop(TransformFilter *pTransformFilter, IBaseFilter *sender, Quality qm) {
-    AVIDecImpl *This = impl_from_TransformFilter(pTransformFilter);
-
-    EnterCriticalSection(&This->tf.filter.csFilter);
-    if (qm.Late > 0)
-        This->late = qm.Late + qm.TimeStamp;
+    if (IsEqualGUID(iid, &IID_IMemInputPin))
+        *out = &filter->sink.IMemInputPin_iface;
     else
-        This->late = -1;
-    LeaveCriticalSection(&This->tf.filter.csFilter);
+        return E_NOINTERFACE;
+
+    IUnknown_AddRef((IUnknown *)*out);
     return S_OK;
 }
 
-static int AVIDec_DropSample(AVIDecImpl *This, REFERENCE_TIME tStart) {
+static HRESULT avi_decompressor_sink_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
+{
+    return S_OK;
+}
+
+static HRESULT avi_decompressor_sink_end_flush(struct strmbase_sink *iface)
+{
+    struct avi_decompressor *filter = impl_from_strmbase_filter(iface->pin.filter);
+    filter->late = -1;
+    if (filter->source.pin.peer)
+        return IPin_EndFlush(filter->source.pin.peer);
+    return S_OK;
+}
+
+static int AVIDec_DropSample(struct avi_decompressor *This, REFERENCE_TIME tStart)
+{
     if (This->late < 0)
         return 0;
 
@@ -98,9 +97,10 @@ static int AVIDec_DropSample(AVIDecImpl *This, REFERENCE_TIME tStart) {
     return 0;
 }
 
-static HRESULT WINAPI AVIDec_Receive(TransformFilter *tf, IMediaSample *pSample)
+static HRESULT WINAPI avi_decompressor_sink_Receive(struct strmbase_sink *iface, IMediaSample *pSample)
 {
-    AVIDecImpl* This = impl_from_TransformFilter(tf);
+    struct avi_decompressor *This = impl_from_strmbase_filter(iface->pin.filter);
+    VIDEOINFOHEADER *source_format;
     HRESULT hr;
     DWORD res;
     IMediaSample* pOutSample = NULL;
@@ -111,10 +111,31 @@ static HRESULT WINAPI AVIDec_Receive(TransformFilter *tf, IMediaSample *pSample)
     LONGLONG tStart, tStop;
     DWORD flags = 0;
 
+    /* We do not expect pin connection state to change while the filter is
+     * running. This guarantee is necessary, since otherwise we would have to
+     * take the filter lock, and we can't take the filter lock from a streaming
+     * thread. */
+    if (!This->source.pMemInputPin)
+    {
+        WARN("Source is not connected, returning VFW_E_NOT_CONNECTED.\n");
+        return VFW_E_NOT_CONNECTED;
+    }
+
+    source_format = (VIDEOINFOHEADER *)This->source.pin.mt.pbFormat;
+
+    if (This->filter.state == State_Stopped)
+        return VFW_E_WRONG_STATE;
+
+    if (This->sink.flushing)
+        return S_FALSE;
+
+    EnterCriticalSection(&This->stream_cs);
+
     hr = IMediaSample_GetPointer(pSample, &pbSrcStream);
     if (FAILED(hr))
     {
         ERR("Cannot get pointer to sample data (%x)\n", hr);
+        LeaveCriticalSection(&This->stream_cs);
         return hr;
     }
 
@@ -125,9 +146,10 @@ static HRESULT WINAPI AVIDec_Receive(TransformFilter *tf, IMediaSample *pSample)
     /* Update input size to match sample size */
     This->pBihIn->biSizeImage = cbSrcStream;
 
-    hr = BaseOutputPinImpl_GetDeliveryBuffer(&This->tf.source, &pOutSample, NULL, NULL, 0);
+    hr = BaseOutputPinImpl_GetDeliveryBuffer(&This->source, &pOutSample, NULL, NULL, 0);
     if (FAILED(hr)) {
         ERR("Unable to get delivery buffer (%x)\n", hr);
+        LeaveCriticalSection(&This->stream_cs);
         return hr;
     }
 
@@ -138,12 +160,15 @@ static HRESULT WINAPI AVIDec_Receive(TransformFilter *tf, IMediaSample *pSample)
     if (FAILED(hr)) {
 	ERR("Unable to get pointer to buffer (%x)\n", hr);
         IMediaSample_Release(pOutSample);
+        LeaveCriticalSection(&This->stream_cs);
         return hr;
     }
     cbDstStream = IMediaSample_GetSize(pOutSample);
-    if (cbDstStream < This->pBihOut->biSizeImage) {
-        ERR("Sample size is too small %d < %d\n", cbDstStream, This->pBihOut->biSizeImage);
+    if (cbDstStream < source_format->bmiHeader.biSizeImage)
+    {
+        ERR("Sample size is too small (%u < %u).\n", cbDstStream, source_format->bmiHeader.biSizeImage);
         IMediaSample_Release(pOutSample);
+        LeaveCriticalSection(&This->stream_cs);
         return E_FAIL;
     }
 
@@ -155,17 +180,18 @@ static HRESULT WINAPI AVIDec_Receive(TransformFilter *tf, IMediaSample *pSample)
     if (hr == S_OK && AVIDec_DropSample(This, tStart))
         flags |= ICDECOMPRESS_HURRYUP;
 
-    res = ICDecompress(This->hvid, flags, This->pBihIn, pbSrcStream, This->pBihOut, pbDstStream);
+    res = ICDecompress(This->hvid, flags, This->pBihIn, pbSrcStream, &source_format->bmiHeader, pbDstStream);
     if (res != ICERR_OK)
         ERR("Error occurred during the decompression (%x)\n", res);
 
     /* Drop sample if it's intended to be dropped */
     if (flags & ICDECOMPRESS_HURRYUP) {
         IMediaSample_Release(pOutSample);
+        LeaveCriticalSection(&This->stream_cs);
         return S_OK;
     }
 
-    IMediaSample_SetActualDataLength(pOutSample, This->pBihOut->biSizeImage);
+    IMediaSample_SetActualDataLength(pOutSample, source_format->bmiHeader.biSizeImage);
 
     IMediaSample_SetPreroll(pOutSample, (IMediaSample_IsPreroll(pSample) == S_OK));
     IMediaSample_SetDiscontinuity(pOutSample, (IMediaSample_IsDiscontinuity(pSample) == S_OK));
@@ -183,36 +209,18 @@ static HRESULT WINAPI AVIDec_Receive(TransformFilter *tf, IMediaSample *pSample)
     else
         IMediaSample_SetMediaTime(pOutSample, NULL, NULL);
 
-    hr = IMemInputPin_Receive(This->tf.source.pMemInputPin, pOutSample);
+    hr = IMemInputPin_Receive(This->source.pMemInputPin, pOutSample);
     if (hr != S_OK && hr != VFW_E_NOT_CONNECTED)
         ERR("Error sending sample (%x)\n", hr);
 
     IMediaSample_Release(pOutSample);
+    LeaveCriticalSection(&This->stream_cs);
     return hr;
 }
 
-static HRESULT WINAPI AVIDec_StopStreaming(TransformFilter* pTransformFilter)
+static HRESULT avi_decompressor_sink_connect(struct strmbase_sink *iface, IPin *peer, const AM_MEDIA_TYPE *pmt)
 {
-    AVIDecImpl* This = impl_from_TransformFilter(pTransformFilter);
-    DWORD result;
-
-    TRACE("(%p)->()\n", This);
-
-    if (!This->hvid)
-        return S_OK;
-
-    result = ICDecompressEnd(This->hvid);
-    if (result != ICERR_OK)
-    {
-        ERR("Cannot stop processing (%d)\n", result);
-        return E_FAIL;
-    }
-    return S_OK;
-}
-
-static HRESULT avi_dec_connect_sink(TransformFilter *tf, const AM_MEDIA_TYPE *pmt)
-{
-    AVIDecImpl* This = impl_from_TransformFilter(tf);
+    struct avi_decompressor *This = impl_from_strmbase_filter(iface->pin.filter);
     HRESULT hr = VFW_E_TYPE_NOT_ACCEPTED;
 
     /* Check root (GUID w/o FOURCC) */
@@ -233,25 +241,8 @@ static HRESULT avi_dec_connect_sink(TransformFilter *tf, const AM_MEDIA_TYPE *pm
         This->hvid = ICLocate(pmt->majortype.Data1, pmt->subtype.Data1, bmi, NULL, ICMODE_DECOMPRESS);
         if (This->hvid)
         {
-            AM_MEDIA_TYPE* outpmt = &This->tf.pmt;
-            const CLSID* outsubtype;
             DWORD bih_size;
-            DWORD output_depth = bmi->biBitCount;
             DWORD result;
-            FreeMediaType(outpmt);
-
-            switch(bmi->biBitCount)
-            {
-                case 32: outsubtype = &MEDIASUBTYPE_RGB32; break;
-                case 24: outsubtype = &MEDIASUBTYPE_RGB24; break;
-                case 16: outsubtype = &MEDIASUBTYPE_RGB565; break;
-                case 8:  outsubtype = &MEDIASUBTYPE_RGB8; break;
-                default:
-                    WARN("Non standard input depth %d, forced output depth to 32\n", bmi->biBitCount);
-                    outsubtype = &MEDIASUBTYPE_RGB32;
-                    output_depth = 32;
-                    break;
-            }
 
             /* Copy bitmap header from media type to 1 for input and 1 for output */
             bih_size = bmi->biSize + bmi->biClrUsed * 4;
@@ -261,37 +252,13 @@ static HRESULT avi_dec_connect_sink(TransformFilter *tf, const AM_MEDIA_TYPE *pm
                 hr = E_OUTOFMEMORY;
                 goto failed;
             }
-            This->pBihOut = CoTaskMemAlloc(bih_size);
-            if (!This->pBihOut)
-            {
-                hr = E_OUTOFMEMORY;
-                goto failed;
-            }
             memcpy(This->pBihIn, bmi, bih_size);
-            memcpy(This->pBihOut, bmi, bih_size);
 
-            /* Update output format as non compressed bitmap */
-            This->pBihOut->biCompression = 0;
-            This->pBihOut->biBitCount = output_depth;
-            This->pBihOut->biSizeImage = This->pBihOut->biWidth * This->pBihOut->biHeight * This->pBihOut->biBitCount / 8;
-            TRACE("Size: %u\n", This->pBihIn->biSize);
-            result = ICDecompressQuery(This->hvid, This->pBihIn, This->pBihOut);
-            if (result != ICERR_OK)
+            if ((result = ICDecompressQuery(This->hvid, This->pBihIn, NULL)))
             {
-                ERR("Unable to found a suitable output format (%d)\n", result);
-                goto failed;
+                WARN("No decompressor found, error %d.\n", result);
+                return VFW_E_TYPE_NOT_ACCEPTED;
             }
-
-            /* Update output media type */
-            CopyMediaType(outpmt, pmt);
-            outpmt->subtype = *outsubtype;
-
-            if (IsEqualIID(&pmt->formattype, &FORMAT_VideoInfo))
-                memcpy(&(((VIDEOINFOHEADER *)outpmt->pbFormat)->bmiHeader), This->pBihOut, This->pBihOut->biSize);
-            else if (IsEqualIID(&pmt->formattype, &FORMAT_VideoInfo2))
-                memcpy(&(((VIDEOINFOHEADER2 *)outpmt->pbFormat)->bmiHeader), This->pBihOut, This->pBihOut->biSize);
-            else
-                assert(0);
 
             TRACE("Connection accepted\n");
             return S_OK;
@@ -305,36 +272,182 @@ failed:
     return hr;
 }
 
-static HRESULT WINAPI AVIDec_BreakConnect(TransformFilter *tf, PIN_DIRECTION dir)
+static void avi_decompressor_sink_disconnect(struct strmbase_sink *iface)
 {
-    AVIDecImpl *This = impl_from_TransformFilter(tf);
+    struct avi_decompressor *filter = impl_from_strmbase_filter(iface->pin.filter);
 
-    TRACE("(%p)->()\n", This);
+    if (filter->hvid)
+        ICClose(filter->hvid);
+    CoTaskMemFree(filter->pBihIn);
+    filter->hvid = NULL;
+    filter->pBihIn = NULL;
+}
 
-    if (dir == PINDIR_INPUT)
-    {
-        if (This->hvid)
-            ICClose(This->hvid);
-        CoTaskMemFree(This->pBihIn);
-        CoTaskMemFree(This->pBihOut);
-        This->hvid = NULL;
-        This->pBihIn = NULL;
-        This->pBihOut = NULL;
-    }
+static const struct strmbase_sink_ops sink_ops =
+{
+    .base.pin_query_interface = avi_decompressor_sink_query_interface,
+    .base.pin_query_accept = avi_decompressor_sink_query_accept,
+    .base.pin_get_media_type = strmbase_pin_get_media_type,
+    .pfnReceive = avi_decompressor_sink_Receive,
+    .sink_connect = avi_decompressor_sink_connect,
+    .sink_disconnect = avi_decompressor_sink_disconnect,
+    .sink_end_flush = avi_decompressor_sink_end_flush,
+};
+
+static HRESULT avi_decompressor_source_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)
+{
+    struct avi_decompressor *filter = impl_from_strmbase_filter(iface->filter);
+
+    if (IsEqualGUID(iid, &IID_IQualityControl))
+        *out = &filter->source_IQualityControl_iface;
+    else if (IsEqualGUID(iid, &IID_IMediaSeeking))
+        *out = &filter->passthrough.IMediaSeeking_iface;
+    else
+        return E_NOINTERFACE;
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
+}
+
+static HRESULT avi_decompressor_source_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
+{
+    struct avi_decompressor *filter = impl_from_strmbase_filter(iface->filter);
+    VIDEOINFOHEADER *sink_format, *format;
+
+    if (!filter->sink.pin.peer || !IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo))
+        return S_FALSE;
+
+    sink_format = (VIDEOINFOHEADER *)filter->sink.pin.mt.pbFormat;
+    format = (VIDEOINFOHEADER *)mt->pbFormat;
+
+    if (ICDecompressQuery(filter->hvid, &sink_format->bmiHeader, &format->bmiHeader))
+        return S_FALSE;
 
     return S_OK;
 }
 
-static HRESULT WINAPI AVIDec_DecideBufferSize(TransformFilter *tf, IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest)
+static HRESULT avi_decompressor_source_get_media_type(struct strmbase_pin *iface,
+        unsigned int index, AM_MEDIA_TYPE *mt)
 {
-    AVIDecImpl *pAVI = impl_from_TransformFilter(tf);
+    static const struct
+    {
+        const GUID *subtype;
+        DWORD compression;
+        WORD bpp;
+    }
+    formats[] =
+    {
+        {&MEDIASUBTYPE_CLJR, mmioFOURCC('C','L','J','R'), 8},
+        {&MEDIASUBTYPE_UYVY, mmioFOURCC('U','Y','V','Y'), 16},
+        {&MEDIASUBTYPE_YUY2, mmioFOURCC('Y','U','Y','2'), 16},
+        {&MEDIASUBTYPE_RGB32, BI_RGB, 32},
+        {&MEDIASUBTYPE_RGB24, BI_RGB, 24},
+        {&MEDIASUBTYPE_RGB565, BI_BITFIELDS, 16},
+        {&MEDIASUBTYPE_RGB555, BI_RGB, 16},
+        {&MEDIASUBTYPE_RGB8, BI_RGB, 8},
+    };
+
+    struct avi_decompressor *filter = impl_from_strmbase_filter(iface->filter);
+    const VIDEOINFOHEADER *sink_format;
+    VIDEOINFO *format;
+
+    if (!filter->sink.pin.peer)
+        return VFW_S_NO_MORE_ITEMS;
+
+    sink_format = (VIDEOINFOHEADER *)filter->sink.pin.mt.pbFormat;
+
+    memset(mt, 0, sizeof(AM_MEDIA_TYPE));
+
+    if (index < ARRAY_SIZE(formats))
+    {
+        if (!(format = CoTaskMemAlloc(offsetof(VIDEOINFO, dwBitMasks[3]))))
+            return E_OUTOFMEMORY;
+        memset(format, 0, offsetof(VIDEOINFO, dwBitMasks[3]));
+
+        format->rcSource = sink_format->rcSource;
+        format->rcTarget = sink_format->rcTarget;
+        format->dwBitRate = sink_format->dwBitRate;
+        format->dwBitErrorRate = sink_format->dwBitErrorRate;
+        format->AvgTimePerFrame = sink_format->AvgTimePerFrame;
+
+        format->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+        format->bmiHeader.biWidth = sink_format->bmiHeader.biWidth;
+        format->bmiHeader.biHeight = sink_format->bmiHeader.biHeight;
+        format->bmiHeader.biPlanes = sink_format->bmiHeader.biPlanes;
+        format->bmiHeader.biBitCount = formats[index].bpp;
+        format->bmiHeader.biCompression = formats[index].compression;
+        format->bmiHeader.biSizeImage = format->bmiHeader.biWidth
+                * format->bmiHeader.biHeight * formats[index].bpp / 8;
+
+        if (IsEqualGUID(formats[index].subtype, &MEDIASUBTYPE_RGB565))
+        {
+            format->dwBitMasks[iRED] = 0xf800;
+            format->dwBitMasks[iGREEN] = 0x07e0;
+            format->dwBitMasks[iBLUE] = 0x001f;
+            mt->cbFormat = offsetof(VIDEOINFO, dwBitMasks[3]);
+        }
+        else
+            mt->cbFormat = sizeof(VIDEOINFOHEADER);
+
+        mt->majortype = MEDIATYPE_Video;
+        mt->subtype = *formats[index].subtype;
+        mt->bFixedSizeSamples = TRUE;
+        mt->lSampleSize = format->bmiHeader.biSizeImage;
+        mt->formattype = FORMAT_VideoInfo;
+        mt->pbFormat = (BYTE *)format;
+
+        return S_OK;
+    }
+
+    if (index == ARRAY_SIZE(formats))
+    {
+        size_t size = ICDecompressGetFormatSize(filter->hvid, &sink_format->bmiHeader);
+
+        if (!size)
+            return VFW_S_NO_MORE_ITEMS;
+
+        mt->cbFormat = offsetof(VIDEOINFOHEADER, bmiHeader) + size;
+        if (!(format = CoTaskMemAlloc(mt->cbFormat)))
+            return E_OUTOFMEMORY;
+        memset(format, 0, mt->cbFormat);
+
+        format->rcSource = sink_format->rcSource;
+        format->rcTarget = sink_format->rcTarget;
+        format->dwBitRate = sink_format->dwBitRate;
+        format->dwBitErrorRate = sink_format->dwBitErrorRate;
+        format->AvgTimePerFrame = sink_format->AvgTimePerFrame;
+
+        if (ICDecompressGetFormat(filter->hvid, &sink_format->bmiHeader, &format->bmiHeader))
+        {
+            CoTaskMemFree(format);
+            return VFW_S_NO_MORE_ITEMS;
+        }
+
+        mt->majortype = MEDIATYPE_Video;
+        mt->subtype = MEDIATYPE_Video;
+        mt->subtype.Data1 = format->bmiHeader.biCompression;
+        mt->bFixedSizeSamples = TRUE;
+        mt->lSampleSize = format->bmiHeader.biSizeImage;
+        mt->formattype = FORMAT_VideoInfo;
+        mt->pbFormat = (BYTE *)format;
+
+        return S_OK;
+    }
+
+    return VFW_S_NO_MORE_ITEMS;
+}
+
+static HRESULT WINAPI avi_decompressor_source_DecideBufferSize(struct strmbase_source *iface,
+        IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest)
+{
+    const VIDEOINFOHEADER *source_format = (VIDEOINFOHEADER *)iface->pin.mt.pbFormat;
     ALLOCATOR_PROPERTIES actual;
 
     if (!ppropInputRequest->cbAlign)
         ppropInputRequest->cbAlign = 1;
 
-    if (ppropInputRequest->cbBuffer < pAVI->pBihOut->biSizeImage)
-            ppropInputRequest->cbBuffer = pAVI->pBihOut->biSizeImage;
+    if (ppropInputRequest->cbBuffer < source_format->bmiHeader.biSizeImage)
+        ppropInputRequest->cbBuffer = source_format->bmiHeader.biSizeImage;
 
     if (!ppropInputRequest->cBuffers)
         ppropInputRequest->cBuffers = 1;
@@ -342,35 +455,174 @@ static HRESULT WINAPI AVIDec_DecideBufferSize(TransformFilter *tf, IMemAllocator
     return IMemAllocator_SetProperties(pAlloc, ppropInputRequest, &actual);
 }
 
-static const TransformFilterFuncTable AVIDec_FuncsTable = {
-    .pfnDecideBufferSize = AVIDec_DecideBufferSize,
-    .pfnStartStreaming = AVIDec_StartStreaming,
-    .pfnReceive = AVIDec_Receive,
-    .pfnStopStreaming = AVIDec_StopStreaming,
-    .transform_connect_sink = avi_dec_connect_sink,
-    .pfnBreakConnect = AVIDec_BreakConnect,
-    .pfnEndFlush = AVIDec_EndFlush,
-    .pfnNotify = AVIDec_NotifyDrop,
+static const struct strmbase_source_ops source_ops =
+{
+    .base.pin_query_interface = avi_decompressor_source_query_interface,
+    .base.pin_query_accept = avi_decompressor_source_query_accept,
+    .base.pin_get_media_type = avi_decompressor_source_get_media_type,
+    .pfnAttemptConnection = BaseOutputPinImpl_AttemptConnection,
+    .pfnDecideAllocator = BaseOutputPinImpl_DecideAllocator,
+    .pfnDecideBufferSize = avi_decompressor_source_DecideBufferSize,
 };
 
-HRESULT AVIDec_create(IUnknown *outer, void **out)
+static struct avi_decompressor *impl_from_source_IQualityControl(IQualityControl *iface)
 {
-    HRESULT hr;
-    AVIDecImpl * This;
+    return CONTAINING_RECORD(iface, struct avi_decompressor, source_IQualityControl_iface);
+}
 
-    *out = NULL;
+static HRESULT WINAPI avi_decompressor_source_qc_QueryInterface(IQualityControl *iface,
+        REFIID iid, void **out)
+{
+    struct avi_decompressor *filter = impl_from_source_IQualityControl(iface);
+    return IPin_QueryInterface(&filter->source.pin.IPin_iface, iid, out);
+}
 
-    hr = strmbase_transform_create(sizeof(AVIDecImpl), outer, &CLSID_AVIDec,
-            &AVIDec_FuncsTable, (IBaseFilter **)&This);
+static ULONG WINAPI avi_decompressor_source_qc_AddRef(IQualityControl *iface)
+{
+    struct avi_decompressor *filter = impl_from_source_IQualityControl(iface);
+    return IPin_AddRef(&filter->source.pin.IPin_iface);
+}
 
-    if (FAILED(hr))
-        return hr;
+static ULONG WINAPI avi_decompressor_source_qc_Release(IQualityControl *iface)
+{
+    struct avi_decompressor *filter = impl_from_source_IQualityControl(iface);
+    return IPin_Release(&filter->source.pin.IPin_iface);
+}
 
-    This->hvid = NULL;
-    This->pBihIn = NULL;
-    This->pBihOut = NULL;
+static HRESULT WINAPI avi_decompressor_source_qc_Notify(IQualityControl *iface,
+        IBaseFilter *sender, Quality q)
+{
+    struct avi_decompressor *filter = impl_from_source_IQualityControl(iface);
 
-    *out = &This->tf.filter.IUnknown_inner;
+    TRACE("filter %p, sender %p, type %#x, proportion %u, late %s, timestamp %s.\n",
+            filter, sender, q.Type, q.Proportion, debugstr_time(q.Late), debugstr_time(q.TimeStamp));
 
-    return hr;
+    EnterCriticalSection(&filter->stream_cs);
+    if (q.Late > 0)
+        filter->late = q.Late + q.TimeStamp;
+    else
+        filter->late = -1;
+    LeaveCriticalSection(&filter->stream_cs);
+    return S_OK;
+}
+
+static HRESULT WINAPI avi_decompressor_source_qc_SetSink(IQualityControl *iface, IQualityControl *sink)
+{
+    struct avi_decompressor *filter = impl_from_source_IQualityControl(iface);
+
+    TRACE("filter %p, sink %p.\n", filter, sink);
+
+    return S_OK;
+}
+
+static const IQualityControlVtbl source_qc_vtbl =
+{
+    avi_decompressor_source_qc_QueryInterface,
+    avi_decompressor_source_qc_AddRef,
+    avi_decompressor_source_qc_Release,
+    avi_decompressor_source_qc_Notify,
+    avi_decompressor_source_qc_SetSink,
+};
+
+static struct strmbase_pin *avi_decompressor_get_pin(struct strmbase_filter *iface, unsigned int index)
+{
+    struct avi_decompressor *filter = impl_from_strmbase_filter(iface);
+
+    if (index == 0)
+        return &filter->sink.pin;
+    else if (index == 1)
+        return &filter->source.pin;
+    return NULL;
+}
+
+static void avi_decompressor_destroy(struct strmbase_filter *iface)
+{
+    struct avi_decompressor *filter = impl_from_strmbase_filter(iface);
+
+    if (filter->sink.pin.peer)
+        IPin_Disconnect(filter->sink.pin.peer);
+    IPin_Disconnect(&filter->sink.pin.IPin_iface);
+
+    if (filter->source.pin.peer)
+        IPin_Disconnect(filter->source.pin.peer);
+    IPin_Disconnect(&filter->source.pin.IPin_iface);
+
+    strmbase_sink_cleanup(&filter->sink);
+    strmbase_source_cleanup(&filter->source);
+    strmbase_passthrough_cleanup(&filter->passthrough);
+
+    filter->stream_cs.DebugInfo->Spare[0] = 0;
+    DeleteCriticalSection(&filter->stream_cs);
+    strmbase_filter_cleanup(&filter->filter);
+    free(filter);
+
+    InterlockedDecrement(&object_locks);
+}
+
+static HRESULT avi_decompressor_init_stream(struct strmbase_filter *iface)
+{
+    struct avi_decompressor *filter = impl_from_strmbase_filter(iface);
+    VIDEOINFOHEADER *source_format;
+    LRESULT res;
+
+    filter->late = -1;
+
+    source_format = (VIDEOINFOHEADER *)filter->sink.pin.mt.pbFormat;
+    if ((res = ICDecompressBegin(filter->hvid, filter->pBihIn, &source_format->bmiHeader)))
+    {
+        ERR("ICDecompressBegin() failed, error %ld.\n", res);
+        return E_FAIL;
+    }
+
+    BaseOutputPinImpl_Active(&filter->source);
+    return S_OK;
+}
+
+static HRESULT avi_decompressor_cleanup_stream(struct strmbase_filter *iface)
+{
+    struct avi_decompressor *filter = impl_from_strmbase_filter(iface);
+    LRESULT res;
+
+    if (filter->hvid && (res = ICDecompressEnd(filter->hvid)))
+    {
+        ERR("ICDecompressEnd() failed, error %ld.\n", res);
+        return E_FAIL;
+    }
+
+    BaseOutputPinImpl_Inactive(&filter->source);
+    return S_OK;
+}
+
+static const struct strmbase_filter_ops filter_ops =
+{
+    .filter_get_pin = avi_decompressor_get_pin,
+    .filter_destroy = avi_decompressor_destroy,
+    .filter_init_stream = avi_decompressor_init_stream,
+    .filter_cleanup_stream = avi_decompressor_cleanup_stream,
+};
+
+HRESULT avi_dec_create(IUnknown *outer, IUnknown **out)
+{
+    struct avi_decompressor *object;
+
+    if (!(object = calloc(1, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    strmbase_filter_init(&object->filter, outer, &CLSID_AVIDec, &filter_ops);
+
+    InitializeCriticalSection(&object->stream_cs);
+    object->stream_cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__": avi_decompressor.stream_cs");
+
+    strmbase_sink_init(&object->sink, &object->filter, L"In", &sink_ops, NULL);
+
+    strmbase_source_init(&object->source, &object->filter, L"Out", &source_ops);
+    object->source_IQualityControl_iface.lpVtbl = &source_qc_vtbl;
+    strmbase_passthrough_init(&object->passthrough, (IUnknown *)&object->source.pin.IPin_iface);
+    ISeekingPassThru_Init(&object->passthrough.ISeekingPassThru_iface, FALSE,
+            &object->sink.pin.IPin_iface);
+
+    TRACE("Created AVI decompressor %p.\n", object);
+    *out = &object->filter.IUnknown_inner;
+
+    return S_OK;
 }

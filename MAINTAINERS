@@ -53,7 +53,7 @@ P:	Nikolay Sivov <nsivov@codeweavers.com>
 F:	dlls/comctl32/
 
 Common Item Dialog
-P:	Vincent Povirk <vincent@codeweavers.com>
+P:	Esme Povirk <vincent@codeweavers.com>
 F:	dlls/comdlg32/itemdlg.c
 F:	dlls/comdlg32/tests/itemdlg.c
 
@@ -103,14 +103,18 @@ F:	dlls/dpnet/
 F:	dlls/dpwsockx/
 
 DirectShow
+M:	Zebediah Figura <z.figura12@gmail.com>
 P:	Andrew Eikum <aeikum@codeweavers.com>
 F:	dlls/amstream/
+F:	dlls/devenum/
 F:	dlls/mciqtz32/
+F:	dlls/qasf/
 F:	dlls/qcap/
+F:	dlls/qdvd/
 F:	dlls/qedit/
 F:	dlls/quartz/
 F:	dlls/strmbase/
-F:	dlls/winegstreamer/
+F:	dlls/winegstreamer/gstdemux.c
 F:	dlls/wineqtdecoder/
 
 DirectWrite
@@ -118,7 +122,7 @@ M:	Nikolay Sivov <nsivov@codeweavers.com>
 F:	dlls/dwrite/
 
 DotNet Runtime
-M:	Vincent Povirk <vincent@codeweavers.com>
+M:	Esme Povirk <vincent@codeweavers.com>
 F:	dlls/mscoree/
 
 GDI
@@ -126,7 +130,7 @@ M:	Huw Davies <huw@codeweavers.com>
 F:	dlls/gdi32/
 
 GDIPlus
-M:	Vincent Povirk <vincent@codeweavers.com>
+M:	Esme Povirk <vincent@codeweavers.com>
 F:	dlls/gdiplus/
 
 GPhoto Driver
@@ -138,6 +142,11 @@ M:	Aric Stewart <aric@codeweavers.com>
 F:	dlls/hid/
 F:	dlls/hidclass.sys/
 F:	dlls/winehid.sys/
+
+HTTP server
+M:	Zebediah Figura <z.figura12@gmail.com>
+F:	dlls/httpapi/
+F:	dlls/http.sys/
 
 Input methods
 M:	Aric Stewart <aric@codeweavers.com>
@@ -162,6 +171,7 @@ F:	dlls/msvc*/
 
 MSI installers
 M:	Hans Leidekker <hans@codeweavers.com>
+P:	Zebediah Figura <z.figura12@gmail.com>
 F:	dlls/msi/
 
 Netstat
@@ -192,7 +202,7 @@ F:	dlls/ole32/stubmanager.c
 F:	dlls/ole32/usrmarshal.c
 
 OLE Storage
-M:	Vincent Povirk <vincent@codeweavers.com>
+M:	Esme Povirk <vincent@codeweavers.com>
 F:	dlls/ole32/filelockbytes.c
 F:	dlls/ole32/memlockbytes.c
 F:	dlls/ole32/stg_stream.c
@@ -204,6 +214,12 @@ OLE Typelibs
 P:	Andrew Eikum <aeikum@codeweavers.com>
 P:	Huw Davies <huw@codeweavers.com>
 F:	dlls/oleaut32/typelib.c
+
+Plug and Play
+P:	Zebediah Figura <z.figura12@gmail.com>
+F:	dlls/newdev/
+F:	dlls/ntoskrnl.exe/pnp.c
+F:	dlls/setupapi/devinst.c
 
 Postscript Driver
 M:	Huw Davies <huw@codeweavers.com>
@@ -222,11 +238,12 @@ F:	dlls/riched20
 
 RPC Runtime
 P:	Huw Davies <huw@codeweavers.com>
+P:	Zebediah Figura <z.figura12@gmail.com>
 F:	dlls/rpcrt4
 F:	tools/widl
 
 TWAIN
-P:	Vincent Povirk <vincent@codeweavers.com>
+P:	Esme Povirk <vincent@codeweavers.com>
 F:	dlls/twain_32/
 F:	dlls/sane.ds/
 F:	dlls/gphoto2.ds/
@@ -254,7 +271,7 @@ F:	dlls/mshtml/
 F:	dlls/shdocvw/
 
 Windows Imaging Component
-M:	Vincent Povirk <vincent@codeweavers.com>
+M:	Esme Povirk <vincent@codeweavers.com>
 F:	dlls/windowscodecs/
 F:	dlls/windowscodecsext/
 
@@ -263,6 +280,17 @@ M:	Hans Leidekker <hans@codeweavers.com>
 F:	dlls/wbemdisp/
 F:	dlls/wbemprox/
 F:	dlls/wmiutils/
+
+Windows Media Foundation
+M:	Nikolay Sivov <nsivov@codeweavers.com>
+F:	dlls/mf/
+F:	dlls/mferror/
+F:	dlls/mfmediaengine/
+F:	dlls/mfplat/
+F:	dlls/mfplay/
+F:	dlls/mfreadwrite/
+F:	dlls/mfuuid/
+F:	dlls/rtworkq/
 
 Wine server, IPC
 M:	Alexandre Julliard <julliard@winehq.org>
@@ -287,7 +315,6 @@ F:	dlls/wpcap/
 
 X11 Driver
 M:	Alexandre Julliard <julliard@winehq.org>
-P:	Vincent Povirk <vincent@codeweavers.com>
 F:	dlls/winex11.drv/
 
 XML parsing
@@ -301,7 +328,7 @@ P:	Alex Henrie <alexhenrie24@gmail.com>
 P:	Andrew Eikum <aeikum@codeweavers.com>
 P:	Huw Davies <huw@codeweavers.com>
 P:	Jacek Caban <jacek@codeweavers.com>
-P:	Vincent Povirk <vincent@codeweavers.com>
+P:	Esme Povirk <vincent@codeweavers.com>
 P:	Erich E. Hoover <erich.e.hoover@wine-staging.com>
 F:	*
 F:	*/
@@ -313,5 +340,6 @@ W:	https://wiki.winehq.org/StableRules
 Staging Branch
 M:	Alistair Leslie-Hughes <leslie_alistair@hotmail.com>
 P:	Zebediah Figura <z.figura12@gmail.com>
+P:	Paul Gofman <gofmanp@gmail.com>
 P:	Erich E. Hoover <erich.e.hoover@wine-staging.com>
 W:	https://wine-staging.com/

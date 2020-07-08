@@ -107,7 +107,6 @@
 #define NONAMELESSSTRUCT
 #define NONAMELESSUNION
 
-#include "wine/library.h"
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
@@ -887,13 +886,13 @@ static cups_ptype_t get_cups_printer_type( const cups_dest_t *dest )
 
 static void load_cups(void)
 {
-    cupshandle = wine_dlopen( SONAME_LIBCUPS, RTLD_NOW, NULL, 0 );
+    cupshandle = dlopen( SONAME_LIBCUPS, RTLD_NOW );
     if (!cupshandle) return;
 
     TRACE("%p: %s loaded\n", cupshandle, SONAME_LIBCUPS);
 
 #define DO_FUNC(x) \
-    p##x = wine_dlsym( cupshandle, #x, NULL, 0 ); \
+    p##x = dlsym( cupshandle, #x ); \
     if (!p##x) \
     { \
         ERR("failed to load symbol %s\n", #x); \
@@ -902,7 +901,7 @@ static void load_cups(void)
     }
     CUPS_FUNCS;
 #undef DO_FUNC
-#define DO_FUNC(x) p##x = wine_dlsym( cupshandle, #x, NULL, 0 )
+#define DO_FUNC(x) p##x = dlsym( cupshandle, #x )
     CUPS_OPT_FUNCS;
 #undef DO_FUNC
 }
@@ -5404,9 +5403,25 @@ BOOL WINAPI AddPrinterDriverW(LPWSTR pName, DWORD level, LPBYTE pDriverInfo)
 BOOL WINAPI AddPrintProcessorA(LPSTR pName, LPSTR pEnvironment, LPSTR pPathName,
                                LPSTR pPrintProcessorName)
 {
-    FIXME("(%s,%s,%s,%s): stub\n", debugstr_a(pName), debugstr_a(pEnvironment),
+    UNICODE_STRING NameW, EnvW, PathW, ProcessorW;
+    BOOL ret;
+
+    TRACE("(%s,%s,%s,%s)\n", debugstr_a(pName), debugstr_a(pEnvironment),
           debugstr_a(pPathName), debugstr_a(pPrintProcessorName));
-    return FALSE;
+
+    asciitounicode(&NameW, pName);
+    asciitounicode(&EnvW, pEnvironment);
+    asciitounicode(&PathW, pPathName);
+    asciitounicode(&ProcessorW, pPrintProcessorName);
+
+    ret = AddPrintProcessorW(NameW.Buffer, EnvW.Buffer, PathW.Buffer, ProcessorW.Buffer);
+
+    RtlFreeUnicodeString(&ProcessorW);
+    RtlFreeUnicodeString(&PathW);
+    RtlFreeUnicodeString(&EnvW);
+    RtlFreeUnicodeString(&NameW);
+
+    return ret;
 }
 
 /*****************************************************************************

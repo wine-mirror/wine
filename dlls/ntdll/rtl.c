@@ -42,7 +42,6 @@
 #include "winternl.h"
 #include "wine/debug.h"
 #include "wine/exception.h"
-#include "wine/unicode.h"
 #include "ntdll_misc.h"
 #include "inaddr.h"
 #include "in6addr.h"
@@ -97,6 +96,34 @@ static const DWORD CRC_table[256] =
     0x54de5729, 0x23d967bf, 0xb3667a2e, 0xc4614ab8, 0x5d681b02, 0x2a6f2b94,
     0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
 };
+
+static const int hex_table[] = {
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, /* 0x00-0x0F */
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, /* 0x10-0x1F */
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, /* 0x20-0x2F */
+     0,  1,  2,  3,  4,  5,  6,  7,  8,  9, -1, -1, -1, -1, -1, -1, /* 0x30-0x3F */
+    -1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1, /* 0x40-0x4F */
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, /* 0x50-0x5F */
+    -1, 10, 11, 12, 13, 14, 15                                      /* 0x60-0x66 */
+};
+
+#if defined(_WIN64) && !defined(_MSC_VER)
+static inline unsigned char _InterlockedCompareExchange128(__int64 *dest, __int64 xchg_high, __int64 xchg_low, __int64 *compare)
+{
+    unsigned char ret;
+#ifdef __x86_64__
+    __asm__ __volatile__( "lock cmpxchg16b %0; setz %b2"
+                          : "=m" (dest[0]), "=m" (dest[1]), "=r" (ret),
+                            "=a" (compare[0]), "=d" (compare[1])
+                          : "m" (dest[0]), "m" (dest[1]), "3" (compare[0]), "4" (compare[1]),
+                            "c" (xchg_high), "b" (xchg_low) );
+#else
+    ret = __sync_bool_compare_and_swap( (__int128 *)dest, *(__int128 *)compare,
+                                        ((__int128)xchg_high << 64) | xchg_low );
+#endif
+    return ret;
+}
+#endif
 
 /*
  *	resource functions
@@ -519,10 +546,10 @@ SIZE_T WINAPI RtlCompareMemory( const VOID *Source1, const VOID *Source2, SIZE_T
  * RETURNS
  *  The byte position of the first byte at which Source1 is not dwVal.
  */
-SIZE_T WINAPI RtlCompareMemoryUlong(const ULONG *Source1, SIZE_T Length, ULONG dwVal)
+SIZE_T WINAPI RtlCompareMemoryUlong(VOID *Source1, SIZE_T Length, ULONG dwVal)
 {
     SIZE_T i;
-    for(i = 0; i < Length/sizeof(ULONG) && Source1[i] == dwVal; i++);
+    for(i = 0; i < Length/sizeof(ULONG) && ((ULONG *)Source1)[i] == dwVal; i++);
     return i * sizeof(ULONG);
 }
 
@@ -886,15 +913,6 @@ void WINAPI RtlCopyLuidAndAttributesArray(
 
 static BOOL parse_ipv4_component(const WCHAR **str, BOOL strict, ULONG *value)
 {
-    static const int hex_table[] = {
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, /* 0x00-0x0F */
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, /* 0x10-0x1F */
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, /* 0x20-0x2F */
-         0,  1,  2,  3,  4,  5,  6,  7,  8,  9, -1, -1, -1, -1, -1, -1, /* 0x30-0x3F */
-        -1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1, /* 0x40-0x4F */
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, /* 0x50-0x5F */
-        -1, 10, 11, 12, 13, 14, 15                                      /* 0x60-0x66 */
-    };
     int base = 10, d;
     WCHAR c;
     ULONG cur_value, prev_value = 0;
@@ -1074,13 +1092,211 @@ NTSTATUS WINAPI RtlIpv4StringToAddressA(const char *str, BOOLEAN strict, const c
     return ret;
 }
 
+static BOOL parse_ipv6_component(const WCHAR **str, int base, ULONG *value)
+{
+    WCHAR *terminator;
+    if (**str >= ARRAY_SIZE(hex_table) || hex_table[**str] == -1) return FALSE;
+    *value = min(wcstoul(*str, &terminator, base), 0x7FFFFFFF);
+    if (*terminator == '0') terminator++; /* "0x" but nothing valid after */
+    else if (terminator == *str) return FALSE;
+    *str = terminator;
+    return TRUE;
+}
+
+static NTSTATUS ipv6_string_to_address(const WCHAR *str, BOOL ex,
+                                       const WCHAR **terminator, IN6_ADDR *address, ULONG *scope, USHORT *port)
+{
+    BOOL expecting_port = FALSE, has_0x = FALSE, too_big = FALSE;
+    int n_bytes = 0, n_ipv4_bytes = 0, gap = -1;
+    ULONG ip_component, scope_component = 0, port_component = 0;
+    const WCHAR *prev_str;
+
+    if (str[0] == '[')
+    {
+        if (!ex) goto error;
+        expecting_port = TRUE;
+        str++;
+    }
+
+    if (str[0] == ':')
+    {
+        if (str[1] != ':') goto error;
+        str++;
+        /* Windows bug: a double colon at the beginning is treated as 4 bytes of zeros instead of 2 */
+        address->u.Word[0] = 0;
+        n_bytes = 2;
+    }
+
+    for (;;)
+    {
+        if (!n_ipv4_bytes && *str == ':')
+        {
+            /* double colon */
+            if (gap != -1) goto error;
+            str++;
+            prev_str = str;
+            gap = n_bytes;
+            if (n_bytes == 14 || !parse_ipv6_component(&str, 16, &ip_component)) break;
+            str = prev_str;
+        }
+        else
+        {
+            prev_str = str;
+        }
+
+        if (!n_ipv4_bytes && n_bytes <= (gap != -1 ? 10 : 12))
+        {
+            if (parse_ipv6_component(&str, 10, &ip_component) && *str == '.')
+                n_ipv4_bytes = 1;
+            str = prev_str;
+        }
+
+        if (n_ipv4_bytes)
+        {
+            /* IPv4 component */
+            if (!parse_ipv6_component(&str, 10, &ip_component)) goto error;
+            if (str - prev_str > 3 || ip_component > 255)
+            {
+                too_big = TRUE;
+            }
+            else
+            {
+                if (*str != '.' && (n_ipv4_bytes < 4 || (n_bytes < 15 && gap == -1))) goto error;
+                address->u.Byte[n_bytes] = ip_component;
+                n_bytes++;
+            }
+            if (n_ipv4_bytes == 4 || *str != '.') break;
+            n_ipv4_bytes++;
+        }
+        else
+        {
+            /* IPv6 component */
+            if (!parse_ipv6_component(&str, 16, &ip_component)) goto error;
+            if (prev_str[0] == '0' && (prev_str[1] == 'x' || prev_str[1] == 'X'))
+            {
+                /* Windows "feature": the last IPv6 component can start with "0x" and be longer than 4 digits */
+                if (terminator) *terminator = prev_str + 1; /* Windows says that the "x" is the terminator */
+                if (n_bytes < 14 && gap == -1) return STATUS_INVALID_PARAMETER;
+                address->u.Word[n_bytes/2] = htons(ip_component);
+                n_bytes += 2;
+                has_0x = TRUE;
+                goto fill_gap;
+            }
+            if (*str != ':' && n_bytes < 14 && gap == -1) goto error;
+            if (str - prev_str > 4)
+                too_big = TRUE;
+            else
+                address->u.Word[n_bytes/2] = htons(ip_component);
+            n_bytes += 2;
+            if (*str != ':' || (gap != -1 && str[1] == ':')) break;
+        }
+        if (n_bytes == (gap != -1 ? 14 : 16)) break;
+        if (too_big) return STATUS_INVALID_PARAMETER;
+        str++;
+    }
+
+    if (terminator) *terminator = str;
+    if (too_big) return STATUS_INVALID_PARAMETER;
+
+fill_gap:
+    if (gap == -1)
+    {
+        if (n_bytes < 16) goto error;
+    }
+    else
+    {
+        memmove(address->u.Byte + 16 - (n_bytes - gap), address->u.Byte + gap, n_bytes - gap);
+        memset(address->u.Byte + gap, 0, 16 - n_bytes);
+    }
+
+    if (ex)
+    {
+        if (has_0x) goto error;
+
+        if (*str == '%')
+        {
+            str++;
+            if (!parse_ipv4_component(&str, TRUE, &scope_component)) goto error;
+        }
+
+        if (expecting_port)
+        {
+            if (*str != ']') goto error;
+            str++;
+            if (*str == ':')
+            {
+                str++;
+                if (!parse_ipv4_component(&str, FALSE, &port_component)) goto error;
+                if (!port_component || port_component > 0xFFFF || *str) goto error;
+                port_component = htons(port_component);
+            }
+        }
+    }
+
+    if (!terminator && *str) return STATUS_INVALID_PARAMETER;
+
+    if (scope) *scope = scope_component;
+    if (port) *port = port_component;
+
+    return STATUS_SUCCESS;
+
+error:
+    if (terminator) *terminator = str;
+    return STATUS_INVALID_PARAMETER;
+}
+
 /***********************************************************************
  * RtlIpv6StringToAddressExW [NTDLL.@]
  */
 NTSTATUS NTAPI RtlIpv6StringToAddressExW(const WCHAR *str, IN6_ADDR *address, ULONG *scope, USHORT *port)
 {
-    FIXME("(%s, %p, %p, %p): stub\n", debugstr_w(str), address, scope, port);
-    return STATUS_NOT_IMPLEMENTED;
+    TRACE("(%s, %p, %p, %p)\n", debugstr_w(str), address, scope, port);
+    if (!str || !address || !scope || !port) return STATUS_INVALID_PARAMETER;
+    return ipv6_string_to_address(str, TRUE, NULL, address, scope, port);
+}
+
+/***********************************************************************
+ * RtlIpv6StringToAddressW [NTDLL.@]
+ */
+NTSTATUS WINAPI RtlIpv6StringToAddressW(const WCHAR *str, const WCHAR **terminator, IN6_ADDR *address)
+{
+    TRACE("(%s, %p, %p)\n", debugstr_w(str), terminator, address);
+    return ipv6_string_to_address(str, FALSE, terminator, address, NULL, NULL);
+}
+
+/***********************************************************************
+ * RtlIpv6StringToAddressExA [NTDLL.@]
+ */
+NTSTATUS WINAPI RtlIpv6StringToAddressExA(const char *str, IN6_ADDR *address, ULONG *scope, USHORT *port)
+{
+    WCHAR wstr[128];
+
+    TRACE("(%s, %p, %p, %p)\n", debugstr_a(str), address, scope, port);
+
+    if (!str || !address || !scope || !port)
+        return STATUS_INVALID_PARAMETER;
+
+    RtlMultiByteToUnicodeN(wstr, sizeof(wstr), NULL, str, strlen(str) + 1);
+    wstr[ARRAY_SIZE(wstr) - 1] = 0;
+    return ipv6_string_to_address(wstr, TRUE, NULL, address, scope, port);
+}
+
+/***********************************************************************
+ * RtlIpv6StringToAddressA [NTDLL.@]
+ */
+NTSTATUS WINAPI RtlIpv6StringToAddressA(const char *str, const char **terminator, IN6_ADDR *address)
+{
+    WCHAR wstr[128];
+    const WCHAR *wterminator = NULL;
+    NTSTATUS ret;
+
+    TRACE("(%s, %p, %p)\n", debugstr_a(str), terminator, address);
+
+    RtlMultiByteToUnicodeN(wstr, sizeof(wstr), NULL, str, strlen(str) + 1);
+    wstr[ARRAY_SIZE(wstr) - 1] = 0;
+    ret = ipv6_string_to_address(wstr, FALSE, &wterminator, address, NULL, NULL);
+    if (terminator && wterminator) *terminator = str + (wterminator - wstr);
+    return ret;
 }
 
 /***********************************************************************
@@ -1111,15 +1327,15 @@ NTSTATUS WINAPI RtlIpv4AddressToStringExW(const IN_ADDR *pin, USHORT port, LPWST
 
     TRACE("(%p:0x%x, %d, %p, %p:%d)\n", pin, pin->S_un.S_addr, port, buffer, psize, *psize);
 
-    needed = sprintfW(tmp_ip, fmt_ip,
+    needed = NTDLL_swprintf(tmp_ip, fmt_ip,
                       pin->S_un.S_un_b.s_b1, pin->S_un.S_un_b.s_b2,
                       pin->S_un.S_un_b.s_b3, pin->S_un.S_un_b.s_b4);
 
-    if (port) needed += sprintfW(tmp_ip + needed, fmt_port, ntohs(port));
+    if (port) needed += NTDLL_swprintf(tmp_ip + needed, fmt_port, ntohs(port));
 
     if (*psize > needed) {
         *psize = needed + 1;
-        strcpyW(buffer, tmp_ip);
+        wcscpy(buffer, tmp_ip);
         return STATUS_SUCCESS;
     }
 
@@ -1196,6 +1412,135 @@ CHAR * WINAPI RtlIpv4AddressToStringA(const IN_ADDR *pin, LPSTR buffer)
     return buffer + size - 1;
 }
 
+static BOOL is_ipv4_in_ipv6(const IN6_ADDR *address)
+{
+    if (address->s6_words[5] == htons(0x5efe) && (address->s6_words[4] & ~htons(0x200)) == 0)
+        return TRUE;
+    if (*(UINT64 *)address != 0)
+        return FALSE;
+    if (address->s6_words[4] != 0 && address->s6_words[4] != 0xffff)
+        return FALSE;
+    if (address->s6_words[4] == 0 && address->s6_words[5] != 0 && address->s6_words[5] != 0xffff)
+        return FALSE;
+    if (address->s6_words[4] == 0xffff && address->s6_words[5] != 0)
+        return FALSE;
+    if (address->s6_words[6] == 0)
+        return FALSE;
+    return TRUE;
+}
+
+/***********************************************************************
+ * RtlIpv6AddressToStringExA [NTDLL.@]
+ */
+NTSTATUS WINAPI RtlIpv6AddressToStringExA(const IN6_ADDR *address, ULONG scope, USHORT port, char *str, ULONG *size)
+{
+    char buffer[64], *p = buffer;
+    int i, len, gap = -1, gap_len = 1, ipv6_end = 8;
+    ULONG needed;
+    NTSTATUS ret;
+
+    TRACE("(%p %u %u %p %p)\n", address, scope, port, str, size);
+
+    if (!address || !str || !size)
+        return STATUS_INVALID_PARAMETER;
+
+    if (is_ipv4_in_ipv6(address))
+        ipv6_end = 6;
+
+    for (i = 0; i < ipv6_end; i++)
+    {
+        len = 0;
+        while (!address->s6_words[i] && i < ipv6_end)
+        {
+            i++;
+            len++;
+        }
+        if (len > gap_len)
+        {
+            gap = i - len;
+            gap_len = len;
+        }
+    }
+
+    if (port) p += sprintf(p, "[");
+
+    i = 0;
+    while (i < ipv6_end)
+    {
+        if (i == gap)
+        {
+            p += sprintf(p, ":");
+            i += gap_len;
+            if (i == ipv6_end) p += sprintf(p, ":");
+            continue;
+        }
+        if (i > 0) p += sprintf(p, ":");
+        p += sprintf(p, "%x", ntohs(address->s6_words[i]));
+        i++;
+    }
+
+    if (ipv6_end == 6)
+    {
+        if (p[-1] != ':') p += sprintf(p, ":");
+        p = RtlIpv4AddressToStringA((IN_ADDR *)(address->s6_words + 6), p);
+    }
+
+    if (scope) p += sprintf(p, "%%%u", scope);
+
+    if (port) p += sprintf(p, "]:%u", ntohs(port));
+
+    needed = p - buffer + 1;
+
+    if (*size >= needed)
+    {
+        strcpy(str, buffer);
+        ret = STATUS_SUCCESS;
+    }
+    else
+    {
+        ret = STATUS_INVALID_PARAMETER;
+    }
+
+    *size = needed;
+    return ret;
+}
+
+/***********************************************************************
+ * RtlIpv6AddressToStringA [NTDLL.@]
+ */
+char * WINAPI RtlIpv6AddressToStringA(const IN6_ADDR *address, char *str)
+{
+    ULONG size = 46;
+    if (!address || !str) return str - 1;
+    str[45] = 0; /* this byte is set even though the string is always shorter */
+    RtlIpv6AddressToStringExA(address, 0, 0, str, &size);
+    return str + size - 1;
+}
+
+/***********************************************************************
+ * RtlIpv6AddressToStringExW [NTDLL.@]
+ */
+NTSTATUS WINAPI RtlIpv6AddressToStringExW(const IN6_ADDR *address, ULONG scope, USHORT port, WCHAR *str, ULONG *size)
+{
+    char cstr[64];
+    NTSTATUS ret = RtlIpv6AddressToStringExA(address, scope, port, cstr, size);
+    if (ret == STATUS_SUCCESS) RtlMultiByteToUnicodeN(str, *size * sizeof(WCHAR), NULL, cstr, *size);
+    return ret;
+}
+
+/***********************************************************************
+ * RtlIpv6AddressToStringW [NTDLL.@]
+ */
+WCHAR * WINAPI RtlIpv6AddressToStringW(const IN6_ADDR *address, WCHAR *str)
+{
+    ULONG size = 46;
+    if (!address || !str) return str;
+    str[45] = 0; /* this word is set even though the string is always shorter */
+    if (RtlIpv6AddressToStringExW(address, 0, 0, str, &size) != STATUS_SUCCESS)
+        return str;
+    return str + size - 1;
+}
+
 /***********************************************************************
  * get_pointer_obfuscator (internal)
  */
@@ -1217,7 +1562,7 @@ static DWORD_PTR get_pointer_obfuscator( void )
         /* set the high bits so dereferencing obfuscated pointers will (usually) crash */
         rand |= (ULONG_PTR)0xc0000000 << ((sizeof (DWORD_PTR) - sizeof (ULONG))*8);
 
-        interlocked_cmpxchg_ptr( (void**) &pointer_obfuscator, (void*) rand, NULL );
+        InterlockedCompareExchangePointer( (void**) &pointer_obfuscator, (void*) rand, NULL );
     }
 
     return pointer_obfuscator;
@@ -1290,7 +1635,7 @@ PSLIST_ENTRY WINAPI RtlInterlockedFlushSList(PSLIST_HEADER list)
     {
         old = *list;
         new.Header16.Sequence = old.Header16.Sequence + 1;
-    } while (!interlocked_cmpxchg128((__int64 *)list, new.s.Region, new.s.Alignment, (__int64 *)&old));
+    } while (!_InterlockedCompareExchange128((__int64 *)list, new.s.Region, new.s.Alignment, (__int64 *)&old));
     return (SLIST_ENTRY *)((ULONG_PTR)old.Header16.NextEntry << 4);
 #else
     if (!list->s.Next.Next) return NULL;
@@ -1299,8 +1644,8 @@ PSLIST_ENTRY WINAPI RtlInterlockedFlushSList(PSLIST_HEADER list)
     {
         old = *list;
         new.s.Sequence = old.s.Sequence + 1;
-    } while (interlocked_cmpxchg64((__int64 *)&list->Alignment, new.Alignment,
-                                   old.Alignment) != old.Alignment);
+    } while (InterlockedCompareExchange64((__int64 *)&list->Alignment, new.Alignment,
+                                          old.Alignment) != old.Alignment);
     return old.s.Next.Next;
 #endif
 }
@@ -1320,7 +1665,7 @@ PSLIST_ENTRY WINAPI RtlInterlockedPushEntrySList(PSLIST_HEADER list, PSLIST_ENTR
         entry->Next = (SLIST_ENTRY *)((ULONG_PTR)old.Header16.NextEntry << 4);
         new.Header16.Depth = old.Header16.Depth + 1;
         new.Header16.Sequence = old.Header16.Sequence + 1;
-    } while (!interlocked_cmpxchg128((__int64 *)list, new.s.Region, new.s.Alignment, (__int64 *)&old));
+    } while (!_InterlockedCompareExchange128((__int64 *)list, new.s.Region, new.s.Alignment, (__int64 *)&old));
     return (SLIST_ENTRY *)((ULONG_PTR)old.Header16.NextEntry << 4);
 #else
     new.s.Next.Next = entry;
@@ -1330,8 +1675,8 @@ PSLIST_ENTRY WINAPI RtlInterlockedPushEntrySList(PSLIST_HEADER list, PSLIST_ENTR
         entry->Next = old.s.Next.Next;
         new.s.Depth = old.s.Depth + 1;
         new.s.Sequence = old.s.Sequence + 1;
-    } while (interlocked_cmpxchg64((__int64 *)&list->Alignment, new.Alignment,
-                                   old.Alignment) != old.Alignment);
+    } while (InterlockedCompareExchange64((__int64 *)&list->Alignment, new.Alignment,
+                                          old.Alignment) != old.Alignment);
     return old.s.Next.Next;
 #endif
 }
@@ -1360,7 +1705,7 @@ PSLIST_ENTRY WINAPI RtlInterlockedPopEntrySList(PSLIST_HEADER list)
         {
         }
         __ENDTRY
-    } while (!interlocked_cmpxchg128((__int64 *)list, new.s.Region, new.s.Alignment, (__int64 *)&old));
+    } while (!_InterlockedCompareExchange128((__int64 *)list, new.s.Region, new.s.Alignment, (__int64 *)&old));
 #else
     do
     {
@@ -1377,8 +1722,8 @@ PSLIST_ENTRY WINAPI RtlInterlockedPopEntrySList(PSLIST_HEADER list)
         {
         }
         __ENDTRY
-    } while (interlocked_cmpxchg64((__int64 *)&list->Alignment, new.Alignment,
-                                   old.Alignment) != old.Alignment);
+    } while (InterlockedCompareExchange64((__int64 *)&list->Alignment, new.Alignment,
+                                          old.Alignment) != old.Alignment);
 #endif
     return entry;
 }
@@ -1399,7 +1744,7 @@ PSLIST_ENTRY WINAPI RtlInterlockedPushListSListEx(PSLIST_HEADER list, PSLIST_ENT
         new.Header16.Depth = old.Header16.Depth + count;
         new.Header16.Sequence = old.Header16.Sequence + 1;
         last->Next = (SLIST_ENTRY *)((ULONG_PTR)old.Header16.NextEntry << 4);
-    } while (!interlocked_cmpxchg128((__int64 *)list, new.s.Region, new.s.Alignment, (__int64 *)&old));
+    } while (!_InterlockedCompareExchange128((__int64 *)list, new.s.Region, new.s.Alignment, (__int64 *)&old));
     return (SLIST_ENTRY *)((ULONG_PTR)old.Header16.NextEntry << 4);
 #else
     new.s.Next.Next = first;
@@ -1409,8 +1754,8 @@ PSLIST_ENTRY WINAPI RtlInterlockedPushListSListEx(PSLIST_HEADER list, PSLIST_ENT
         new.s.Depth = old.s.Depth + count;
         new.s.Sequence = old.s.Sequence + 1;
         last->Next = old.s.Next.Next;
-    } while (interlocked_cmpxchg64((__int64 *)&list->Alignment, new.Alignment,
-                                   old.Alignment) != old.Alignment);
+    } while (InterlockedCompareExchange64((__int64 *)&list->Alignment, new.Alignment,
+                                          old.Alignment) != old.Alignment);
     return old.s.Next.Next;
 #endif
 }

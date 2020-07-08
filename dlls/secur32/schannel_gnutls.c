@@ -40,7 +40,6 @@
 #include "secur32_priv.h"
 
 #include "wine/debug.h"
-#include "wine/library.h"
 #include "wine/unicode.h"
 
 #if defined(SONAME_LIBGNUTLS) && !defined(HAVE_SECURITY_SECURITY_H)
@@ -50,6 +49,11 @@ WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 /* Not present in gnutls version < 2.9.10. */
 static int (*pgnutls_cipher_get_block_size)(gnutls_cipher_algorithm_t);
+
+/* Not present in gnutls version < 3.2.0. */
+static int (*pgnutls_alpn_get_selected_protocol)(gnutls_session_t, gnutls_datum_t *);
+static int (*pgnutls_alpn_set_protocols)(gnutls_session_t, const gnutls_datum_t *,
+                                         unsigned, unsigned int);
 
 /* Not present in gnutls version < 3.3.0. */
 static int (*pgnutls_privkey_import_rsa_raw)(gnutls_privkey_t, const gnutls_datum_t *,
@@ -115,6 +119,10 @@ MAKE_FUNCPTR(gnutls_x509_privkey_deinit);
 #define GNUTLS_KX_ECDHE_PSK     14
 #endif
 
+#if GNUTLS_VERSION_MAJOR < 3 || (GNUTLS_VERSION_MAJOR == 3 && GNUTLS_VERSION_MINOR < 5)
+#define GNUTLS_ALPN_SERVER_PRECEDENCE (1<<1)
+#endif
+
 static int compat_cipher_get_block_size(gnutls_cipher_algorithm_t cipher)
 {
     switch(cipher) {
@@ -152,6 +160,19 @@ static int compat_gnutls_privkey_import_rsa_raw(gnutls_privkey_t key, const gnut
 {
     FIXME("\n");
     return GNUTLS_E_UNKNOWN_PK_ALGORITHM;
+}
+
+static int compat_gnutls_alpn_get_selected_protocol(gnutls_session_t session, gnutls_datum_t *protocol)
+{
+    FIXME("\n");
+    return GNUTLS_E_INVALID_REQUEST;
+}
+
+static int compat_gnutls_alpn_set_protocols(gnutls_session_t session, const gnutls_datum_t *protocols,
+                                            unsigned size, unsigned int flags)
+{
+    FIXME("\n");
+    return GNUTLS_E_INVALID_REQUEST;
 }
 
 static ssize_t schan_pull_adapter(gnutls_transport_ptr_t transport,
@@ -586,12 +607,97 @@ again:
 
         return SEC_I_CONTINUE_NEEDED;
     }
+    else if (ret == GNUTLS_E_REHANDSHAKE)
+    {
+        TRACE("Rehandshake requested\n");
+        return SEC_I_RENEGOTIATE;
+    }
     else
     {
         pgnutls_perror(ret);
         return SEC_E_INTERNAL_ERROR;
     }
 
+    return SEC_E_OK;
+}
+
+static unsigned int parse_alpn_protocol_list(unsigned char *buffer, unsigned int buflen, gnutls_datum_t *list)
+{
+    unsigned int len, offset = 0, count = 0;
+
+    while (buflen)
+    {
+        len = buffer[offset++];
+        buflen--;
+        if (!len || len > buflen) return 0;
+        if (list)
+        {
+            list[count].data = &buffer[offset];
+            list[count].size = len;
+        }
+        buflen -= len;
+        offset += len;
+        count++;
+    }
+
+    return count;
+}
+
+void schan_imp_set_application_protocols(schan_imp_session session, unsigned char *buffer, unsigned int buflen)
+{
+    gnutls_session_t s = (gnutls_session_t)session;
+    unsigned int extension_len, extension, count = 0, offset = 0;
+    unsigned short list_len;
+    gnutls_datum_t *protocols;
+    int ret;
+
+    if (sizeof(extension_len) > buflen) return;
+    extension_len = *(unsigned int *)&buffer[offset];
+    offset += sizeof(extension_len);
+
+    if (offset + sizeof(extension) > buflen) return;
+    extension = *(unsigned int *)&buffer[offset];
+    if (extension != SecApplicationProtocolNegotiationExt_ALPN)
+    {
+        FIXME("extension %u not supported\n", extension);
+        return;
+    }
+    offset += sizeof(extension);
+
+    if (offset + sizeof(list_len) > buflen) return;
+    list_len = *(unsigned short *)&buffer[offset];
+    offset += sizeof(list_len);
+
+    if (offset + list_len > buflen) return;
+    count = parse_alpn_protocol_list(&buffer[offset], list_len, NULL);
+    if (!count || !(protocols = heap_alloc(count * sizeof(*protocols)))) return;
+
+    parse_alpn_protocol_list(&buffer[offset], list_len, protocols);
+    if ((ret = pgnutls_alpn_set_protocols(s, protocols, count, GNUTLS_ALPN_SERVER_PRECEDENCE) < 0))
+    {
+        pgnutls_perror(ret);
+    }
+
+    heap_free(protocols);
+}
+
+SECURITY_STATUS schan_imp_get_application_protocol(schan_imp_session session,
+                                                   SecPkgContext_ApplicationProtocol *protocol)
+{
+    gnutls_session_t s = (gnutls_session_t)session;
+    gnutls_datum_t selected;
+
+    memset(protocol, 0, sizeof(*protocol));
+    if (pgnutls_alpn_get_selected_protocol(s, &selected) < 0) return SEC_E_OK;
+
+    if (selected.size <= sizeof(protocol->ProtocolId))
+    {
+        protocol->ProtoNegoStatus = SecApplicationProtocolNegotiationStatus_Success;
+        protocol->ProtoNegoExt    = SecApplicationProtocolNegotiationExt_ALPN;
+        protocol->ProtocolIdSize  = selected.size;
+        memcpy(protocol->ProtocolId, selected.data, selected.size);
+        TRACE("returning %s\n", debugstr_an((const char *)selected.data, selected.size));
+    }
     return SEC_E_OK;
 }
 
@@ -873,7 +979,7 @@ BOOL schan_imp_init(void)
 {
     int ret;
 
-    libgnutls_handle = wine_dlopen(SONAME_LIBGNUTLS, RTLD_NOW, NULL, 0);
+    libgnutls_handle = dlopen(SONAME_LIBGNUTLS, RTLD_NOW);
     if (!libgnutls_handle)
     {
         ERR_(winediag)("Failed to load libgnutls, secure connections will not be available.\n");
@@ -881,7 +987,7 @@ BOOL schan_imp_init(void)
     }
 
 #define LOAD_FUNCPTR(f) \
-    if (!(p##f = wine_dlsym(libgnutls_handle, #f, NULL, 0))) \
+    if (!(p##f = dlsym(libgnutls_handle, #f))) \
     { \
         ERR("Failed to load %s\n", #f); \
         goto fail; \
@@ -926,17 +1032,27 @@ BOOL schan_imp_init(void)
     LOAD_FUNCPTR(gnutls_x509_privkey_deinit)
 #undef LOAD_FUNCPTR
 
-    if (!(pgnutls_cipher_get_block_size = wine_dlsym(libgnutls_handle, "gnutls_cipher_get_block_size", NULL, 0)))
+    if (!(pgnutls_cipher_get_block_size = dlsym(libgnutls_handle, "gnutls_cipher_get_block_size")))
     {
         WARN("gnutls_cipher_get_block_size not found\n");
         pgnutls_cipher_get_block_size = compat_cipher_get_block_size;
     }
-    if (!(pgnutls_privkey_export_x509 = wine_dlsym(libgnutls_handle, "gnutls_privkey_export_x509", NULL, 0)))
+    if (!(pgnutls_alpn_set_protocols = dlsym(libgnutls_handle, "gnutls_alpn_set_protocols")))
+    {
+        WARN("gnutls_alpn_set_protocols not found\n");
+        pgnutls_alpn_set_protocols = compat_gnutls_alpn_set_protocols;
+    }
+    if (!(pgnutls_alpn_get_selected_protocol = dlsym(libgnutls_handle, "gnutls_alpn_get_selected_protocol")))
+    {
+        WARN("gnutls_alpn_get_selected_protocol not found\n");
+        pgnutls_alpn_get_selected_protocol = compat_gnutls_alpn_get_selected_protocol;
+    }
+    if (!(pgnutls_privkey_export_x509 = dlsym(libgnutls_handle, "gnutls_privkey_export_x509")))
     {
         WARN("gnutls_privkey_export_x509 not found\n");
         pgnutls_privkey_export_x509 = compat_gnutls_privkey_export_x509;
     }
-    if (!(pgnutls_privkey_import_rsa_raw = wine_dlsym(libgnutls_handle, "gnutls_privkey_import_rsa_raw", NULL, 0)))
+    if (!(pgnutls_privkey_import_rsa_raw = dlsym(libgnutls_handle, "gnutls_privkey_import_rsa_raw")))
     {
         WARN("gnutls_privkey_import_rsa_raw not found\n");
         pgnutls_privkey_import_rsa_raw = compat_gnutls_privkey_import_rsa_raw;
@@ -959,7 +1075,7 @@ BOOL schan_imp_init(void)
     return TRUE;
 
 fail:
-    wine_dlclose(libgnutls_handle, NULL, 0);
+    dlclose(libgnutls_handle);
     libgnutls_handle = NULL;
     return FALSE;
 }
@@ -967,7 +1083,7 @@ fail:
 void schan_imp_deinit(void)
 {
     pgnutls_global_deinit();
-    wine_dlclose(libgnutls_handle, NULL, 0);
+    dlclose(libgnutls_handle);
     libgnutls_handle = NULL;
 }
 

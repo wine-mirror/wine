@@ -1,7 +1,8 @@
 TESTDLL   = dnsapi.dll
-IMPORTS   = dnsapi
+IMPORTS   = dnsapi ws2_32
 
 C_SRCS = \
 	cache.c \
 	name.c \
+	query.c \
 	record.c

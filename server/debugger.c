@@ -38,7 +38,7 @@
 #include "thread.h"
 #include "request.h"
 
-enum debug_event_state { EVENT_QUEUED, EVENT_SENT, EVENT_CONTINUED };
+enum debug_event_state { EVENT_QUEUED, EVENT_SENT, EVENT_DELAYED, EVENT_CONTINUED };
 
 /* debug event */
 struct debug_event
@@ -50,7 +50,6 @@ struct debug_event
     enum debug_event_state state;     /* event state */
     int                    status;    /* continuation status */
     debug_event_t          data;      /* event data */
-    context_t              context;   /* register context */
 };
 
 /* debug context */
@@ -265,6 +264,31 @@ static void link_event( struct debug_event *event )
     }
 }
 
+/* resume a delayed debug event already in the queue */
+static void resume_event( struct debug_event *event )
+{
+    struct debug_ctx *debug_ctx = event->debugger->debug_ctx;
+
+    assert( debug_ctx );
+    event->state = EVENT_QUEUED;
+    if (!event->sender->process->debug_event)
+    {
+        grab_object( debug_ctx );
+        wake_up( &debug_ctx->obj, 0 );
+        release_object( debug_ctx );
+    }
+}
+
+/* delay a debug event already in the queue to be replayed when thread wakes up */
+static void delay_event( struct debug_event *event )
+{
+    struct debug_ctx *debug_ctx = event->debugger->debug_ctx;
+
+    assert( debug_ctx );
+    event->state = EVENT_DELAYED;
+    if (event->sender->process->debug_event == event) event->sender->process->debug_event = NULL;
+}
+
 /* find the next event that we can send to the debugger */
 static struct debug_event *find_event_to_send( struct debug_ctx *debug_ctx )
 {
@@ -273,6 +297,7 @@ static struct debug_event *find_event_to_send( struct debug_ctx *debug_ctx )
     LIST_FOR_EACH_ENTRY( event, &debug_ctx->event_queue, struct debug_event, entry )
     {
         if (event->state == EVENT_SENT) continue;  /* already sent */
+        if (event->state == EVENT_DELAYED) continue;  /* delayed until thread resumes */
         if (event->sender->process->debug_event) continue;  /* process busy with another one */
         return event;
     }
@@ -321,11 +346,6 @@ static void debug_event_destroy( struct object *obj )
             break;
         }
     }
-    if (event->sender->context == &event->context)
-    {
-        event->sender->context = NULL;
-        stop_thread_if_suspended( event->sender );
-    }
     release_object( event->sender );
     release_object( event->debugger );
 }
@@ -365,6 +385,29 @@ static int continue_debug_event( struct process *process, struct thread *thread,
     {
         struct debug_event *event;
 
+        if (status == DBG_REPLY_LATER)
+        {
+            /* if thread is suspended, delay all its events and resume process
+             * if not, reset the event for immediate replay */
+            LIST_FOR_EACH_ENTRY( event, &debug_ctx->event_queue, struct debug_event, entry )
+            {
+                if (event->sender != thread) continue;
+                if (thread->suspend)
+                {
+                    delay_event( event );
+                    resume_process( process );
+                }
+                else if (event->state == EVENT_SENT)
+                {
+                    assert( event->sender->process->debug_event == event );
+                    event->sender->process->debug_event = NULL;
+                    resume_event( event );
+                    return 1;
+                }
+            }
+            return 1;
+        }
+
         /* find the event in the queue */
         LIST_FOR_EACH_ENTRY( event, &debug_ctx->event_queue, struct debug_event, entry )
         {
@@ -372,7 +415,6 @@ static int continue_debug_event( struct process *process, struct thread *thread,
             if (event->sender == thread)
             {
                 assert( event->sender->process->debug_event == event );
-
                 event->status = status;
                 event->state  = EVENT_CONTINUED;
                 wake_up( &event->obj, 0 );
@@ -427,6 +469,24 @@ void generate_debug_event( struct thread *thread, int code, const void *arg )
             release_object( event );
         }
         clear_error();  /* ignore errors */
+    }
+}
+
+void resume_delayed_debug_events( struct thread *thread )
+{
+    struct thread *debugger = thread->process->debugger;
+    struct debug_event *event;
+
+    if (debugger)
+    {
+        assert( debugger->debug_ctx );
+        LIST_FOR_EACH_ENTRY( event, &debugger->debug_ctx->event_queue, struct debug_event, entry )
+        {
+            if (event->sender != thread) continue;
+            if (event->state != EVENT_DELAYED) continue;
+            resume_event( event );
+            suspend_process( thread->process );
+        }
     }
 }
 
@@ -615,7 +675,8 @@ DECL_HANDLER(continue_debug_event)
     struct process *process;
 
     if (req->status != DBG_EXCEPTION_NOT_HANDLED &&
-        req->status != DBG_CONTINUE)
+        req->status != DBG_CONTINUE &&
+        req->status != DBG_REPLY_LATER)
     {
         set_error( STATUS_INVALID_PARAMETER );
         return;
@@ -679,13 +740,6 @@ DECL_HANDLER(queue_exception_event)
 
         if ((event = alloc_debug_event( thread, EXCEPTION_DEBUG_EVENT, &data )))
         {
-            const context_t *context = (const context_t *)((const char *)get_req_data() + req->len);
-            data_size_t size = get_req_data_size() - req->len;
-
-            memset( &event->context, 0, sizeof(event->context) );
-            memcpy( &event->context, context, min( sizeof(event->context), size ) );
-            thread->context = &event->context;
-
             if ((reply->handle = alloc_handle( thread->process, event, SYNCHRONIZE, 0 )))
             {
                 link_event( event );
@@ -705,18 +759,7 @@ DECL_HANDLER(get_exception_status)
                                                        0, &debug_event_ops )))
     {
         close_handle( current->process, req->handle );
-        if (event->state == EVENT_CONTINUED)
-        {
-            if (current->context == &event->context)
-            {
-                data_size_t size = min( sizeof(context_t), get_reply_max_size() );
-                set_reply_data( &event->context, size );
-                current->context = NULL;
-                stop_thread_if_suspended( current );
-            }
-            set_error( event->status );
-        }
-        else set_error( STATUS_PENDING );
+        set_error( event->state == EVENT_CONTINUED ? event->status : STATUS_PENDING );
         release_object( event );
     }
 }

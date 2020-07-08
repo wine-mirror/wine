@@ -677,8 +677,15 @@ HRESULT WINAPI ExecuteCabW(HWND hwnd, CABINFOW* pCab, LPVOID pReserved)
 
     ZeroMemory(&info, sizeof(ADVInfo));
 
-    if (pCab->pszCab && *pCab->pszCab)
-        FIXME("Cab archive not extracted!\n");
+    if ((pCab->pszCab && *pCab->pszCab) && (pCab->pszInf && *pCab->pszInf) && *pCab->szSrcPath)
+    {
+        TRACE("pszCab: %s, pszInf: %s, szSrcPath: %s\n", debugstr_w(pCab->pszCab), debugstr_w(pCab->pszInf),
+                debugstr_w(pCab->szSrcPath));
+
+        hr = ExtractFilesW(pCab->pszCab, pCab->szSrcPath, 0, pCab->pszInf, NULL, 0);
+        if (FAILED(hr))
+            ERR("Failed to extract .inf file!\n");
+    }
 
     hr = install_init(pCab->pszInf, pCab->pszSection, pCab->szSrcPath, pCab->dwFlags, &info);
     if (hr != S_OK)

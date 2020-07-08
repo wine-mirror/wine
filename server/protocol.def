@@ -214,6 +214,9 @@ struct wake_up_reply
 typedef __int64 timeout_t;
 #define TIMEOUT_INFINITE (((timeout_t)0x7fffffff) << 32 | 0xffffffff)
 
+/* absolute timeout, negative means that monotonic clock is used */
+typedef __int64 abstime_t;
+
 /* structure for process startup info */
 typedef struct
 {
@@ -484,9 +487,15 @@ typedef union
         enum apc_type    type;     /* APC_TIMER */
         int              __pad;
         client_ptr_t     func;     /* void (__stdcall *func)(void*, unsigned int, unsigned int); */
-        timeout_t        time;     /* absolute time of expiration */
+        abstime_t        time;     /* time of expiration */
         client_ptr_t     arg;      /* user argument */
     } timer;
+} user_apc_t;
+
+typedef union
+{
+    enum apc_type type;
+    user_apc_t    user;
     struct
     {
         enum apc_type    type;     /* APC_ASYNC_IO */
@@ -500,7 +509,7 @@ typedef union
         unsigned int     op_type;      /* type of operation */
         client_ptr_t     addr;         /* requested address */
         mem_size_t       size;         /* allocation size */
-        unsigned int     zero_bits_64; /* number of zero high bits */
+        mem_size_t       zero_bits;    /* number of zero high bits */
         unsigned int     prot;         /* memory protection flags */
     } virtual_alloc;
     struct
@@ -551,9 +560,9 @@ typedef union
         client_ptr_t     addr;         /* requested address */
         mem_size_t       size;         /* allocation size */
         file_pos_t       offset;       /* file offset */
+        mem_size_t       zero_bits;    /* number of zero high bits */
         unsigned int     alloc_type;   /* allocation type */
-        unsigned short   zero_bits_64; /* number of zero high bits */
-        unsigned short   prot;         /* memory protection flags */
+        unsigned int     prot;         /* memory protection flags */
     } map_view;
     struct
     {
@@ -564,7 +573,7 @@ typedef union
     struct
     {
         enum apc_type    type;      /* APC_CREATE_THREAD */
-        int              suspend;   /* suspended thread? */
+        unsigned int     flags;     /* creation flags */
         client_ptr_t     func;      /* void (__stdcall *func)(void*);  start function */
         client_ptr_t     arg;       /* argument for start function */
         mem_size_t       reserve;   /* reserve size for thread stack */
@@ -652,6 +661,7 @@ typedef union
     {
         enum apc_type    type;      /* APC_CREATE_THREAD */
         unsigned int     status;    /* status returned by call */
+        process_id_t     pid;       /* process id */
         thread_id_t      tid;       /* thread id */
         obj_handle_t     handle;    /* handle to new thread */
     } create_thread;
@@ -886,7 +896,6 @@ struct rawinput_device
     int          exit_code;    /* thread exit code */
 @REPLY
     int          self;         /* suicide? */
-    int          last;         /* last thread in this process? */
 @END
 
 
@@ -905,6 +914,7 @@ struct rawinput_device
     client_cpu_t cpu;              /* CPU that this process is running on */
     short int    debugger_present; /* process is being debugged */
     short int    debug_children;   /* inherit debugger to child processes */
+    VARARG(image,pe_image_info);   /* image info for main exe */
 @END
 
 
@@ -1096,14 +1106,16 @@ struct rawinput_device
 @REQ(select)
     int          flags;        /* wait flags (see below) */
     client_ptr_t cookie;       /* magic cookie to return to client */
-    timeout_t    timeout;      /* timeout */
+    abstime_t    timeout;      /* timeout */
+    data_size_t  size;         /* size of select_op */
     obj_handle_t prev_apc;     /* handle to previous APC */
     VARARG(result,apc_result); /* result of previous APC */
-    VARARG(data,select_op);    /* operation-specific data */
+    VARARG(data,select_op,size); /* operation-specific data */
+    VARARG(context,context);   /* suspend context */
 @REPLY
-    timeout_t    timeout;      /* timeout converted to absolute */
     apc_call_t   call;         /* APC call arguments */
     obj_handle_t apc_handle;   /* handle to next APC */
+    VARARG(context,context);   /* suspend context */
 @END
 #define SELECT_ALERTABLE     1
 #define SELECT_INTERRUPTIBLE 2
@@ -1923,7 +1935,6 @@ enum char_info_mode
     client_ptr_t  address;     /* exception address */
     data_size_t   len;         /* size of parameters */
     VARARG(params,uints64,len);/* exception parameters */
-    VARARG(context,context);   /* thread context */
 @REPLY
     obj_handle_t     handle;   /* handle to the queued event */
 @END
@@ -1932,8 +1943,6 @@ enum char_info_mode
 /* Retrieve the status of an exception event */
 @REQ(get_exception_status)
     obj_handle_t     handle;   /* handle to the queued event */
-@REPLY
-    VARARG(context,context);   /* modified thread context */
 @END
 
 
@@ -2149,11 +2158,11 @@ enum char_info_mode
 
 /* Retrieve the current context of a thread */
 @REQ(get_thread_context)
-    obj_handle_t handle;       /* thread handle */
+    obj_handle_t handle;       /* thread or context handle */
     unsigned int flags;        /* context flags */
-    int          suspend;      /* suspend the thread if needed */
 @REPLY
     int          self;         /* was it a handle to the current thread? */
+    obj_handle_t handle;       /* pending context handle */
     VARARG(context,context);   /* thread context */
 @END
 
@@ -2161,7 +2170,6 @@ enum char_info_mode
 /* Set the current context of a thread */
 @REQ(set_thread_context)
     obj_handle_t handle;       /* thread handle */
-    int          suspend;      /* suspend the thread if needed */
     VARARG(context,context);   /* thread context */
 @REPLY
     int          self;         /* was it a handle to the current thread? */
@@ -3809,6 +3817,7 @@ struct handle_info
     obj_handle_t handle;          /* handle to a file or directory */
     obj_handle_t rootdir;         /* root directory */
     int          link;            /* link instead of renaming */
+    int          replace;         /* replace an existing file? */
     VARARG(filename,string);      /* new file name */
 @END
 
@@ -3877,19 +3886,6 @@ struct handle_info
 @END
 
 
-/* Retrieve the suspended context of a thread */
-@REQ(get_suspend_context)
-@REPLY
-    VARARG(context,context);   /* thread context */
-@END
-
-
-/* Store the suspend context of a thread */
-@REQ(set_suspend_context)
-    VARARG(context,context);   /* thread context */
-@END
-
-
 /* Create a new job object */
 @REQ(create_job)
     unsigned int access;          /* wanted access rights */
@@ -3936,6 +3932,15 @@ struct handle_info
     obj_handle_t job;             /* handle to the job */
     obj_handle_t port;            /* handle to the completion port */
     client_ptr_t key;             /* key to send with completion messages */
+@END
+
+
+/* Retrieve information about a job */
+@REQ(get_job_info)
+    obj_handle_t handle;          /* handle to the job */
+@REPLY
+    int total_processes;          /* total count of processes */
+    int active_processes;         /* count of running processes */
 @END
 
 

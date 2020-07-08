@@ -39,6 +39,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
 
+#ifdef HAVE_LDAP
+static struct berval null_cookie = { 0, NULL };
+#endif
+
 /***********************************************************************
  *      ldap_create_page_controlA     (WLDAP32.@)
  *
@@ -77,7 +81,7 @@ static ULONG create_page_control( ULONG pagesize, struct WLDAP32_berval *cookie,
     LDAPControlW *ctrl;
     BerElement *ber;
     ber_tag_t tag;
-    struct berval *berval, null_cookie = { 0, NULL };
+    struct berval *berval;
     INT ret, len;
     char *val;
 
@@ -171,25 +175,81 @@ ULONG CDECL ldap_get_next_page_s( WLDAP32_LDAP *ld, PLDAPSearch search,
     struct l_timeval *timeout, ULONG pagesize, ULONG *count,
     WLDAP32_LDAPMessage **results )
 {
-    FIXME( "(%p, %p, %p, 0x%08x, %p, %p)\n", ld, search, timeout,
-           pagesize, count, results );
+#ifdef HAVE_LDAP
+    ULONG ret;
 
-    if (!ld) return ~0u;
+    TRACE( "(%p, %p, %p, %u, %p, %p)\n", ld, search, timeout,
+           pagesize, count, results );
+    if (!ld || !search || !count || !results) return ~0u;
+
+    if (search->cookie && search->cookie->bv_len == 0)
+    {
+        /* end of paged results */
+        *count = 0;
+        *results = NULL;
+        return WLDAP32_LDAP_NO_RESULTS_RETURNED;
+    }
+
+    if (search->serverctrls[0])
+    {
+        controlfreeW( search->serverctrls[0] );
+        search->serverctrls[0] = NULL;
+    }
+
+    TRACE("search->cookie: %s\n", search->cookie ? debugstr_an(search->cookie->bv_val, search->cookie->bv_len) : "NULL");
+    ret = ldap_create_page_controlW( ld, pagesize, (struct WLDAP32_berval *)search->cookie, 1, &search->serverctrls[0] );
+    if (ret != WLDAP32_LDAP_SUCCESS) return ret;
+
+    ret = ldap_search_ext_sW( ld, search->dn, search->scope,
+                              search->filter, search->attrs, search->attrsonly,
+                              search->serverctrls, search->clientctrls,
+                              search->timeout.tv_sec ? &search->timeout : NULL, search->sizelimit, results );
+    if (ret != WLDAP32_LDAP_SUCCESS) return ret;
+
+    return ldap_get_paged_count( ld, search, count, *results );
+
+#endif
     return WLDAP32_LDAP_NOT_SUPPORTED;
 }
 
 ULONG CDECL ldap_get_paged_count( WLDAP32_LDAP *ld, PLDAPSearch search,
     ULONG *count, WLDAP32_LDAPMessage *results )
 {
-    ULONG ret = WLDAP32_LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
-    FIXME( "(%p, %p, %p, %p)\n", ld, search, count, results );
+    ULONG ret;
+    LDAPControlW **server_ctrls = NULL;
 
-    if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
-    /* FIXME: save the cookie from the server here */
+    TRACE( "(%p, %p, %p, %p)\n", ld, search, count, results );
+
+    if (!ld || !count || !results) return WLDAP32_LDAP_PARAM_ERROR;
+
+    *count = 0;
+
+    ret = ldap_parse_resultW( ld, results, NULL, NULL, NULL, NULL, &server_ctrls, 0 );
+    if (ret != WLDAP32_LDAP_SUCCESS) return ret;
+
+    if (!server_ctrls) /* assume end of paged results */
+    {
+        search->cookie = &null_cookie;
+        return WLDAP32_LDAP_SUCCESS;
+    }
+
+    if (search->cookie)
+    {
+        ber_bvfree( search->cookie );
+        search->cookie = NULL;
+    }
+
+    ret = ldap_parse_page_controlW( ld, server_ctrls, count, (struct WLDAP32_berval **)&search->cookie );
+    if (ret == WLDAP32_LDAP_SUCCESS)
+        TRACE("new search->cookie: %s, count %u\n", debugstr_an(search->cookie->bv_val, search->cookie->bv_len), *count);
+
+    ldap_controls_freeW( server_ctrls );
+
+    return ret;
 
 #endif
-    return ret;
+    return WLDAP32_LDAP_NOT_SUPPORTED;
 }
 
 /***********************************************************************
@@ -262,10 +322,31 @@ ULONG CDECL ldap_parse_page_controlW( WLDAP32_LDAP *ld, PLDAPControlW *ctrls,
 
 ULONG CDECL ldap_search_abandon_page( WLDAP32_LDAP *ld, PLDAPSearch search )
 {
-    FIXME( "(%p, %p)\n", ld, search );
+#ifdef HAVE_LDAP
+    LDAPControlW **ctrls;
 
-    if (!ld) return ~0u;
+    TRACE( "(%p, %p)\n", ld, search );
+
+    if (!ld || !search) return ~0u;
+
+    strfreeW( search->dn );
+    strfreeW( search->filter );
+    strarrayfreeW( search->attrs );
+    ctrls = search->serverctrls;
+    controlfreeW( ctrls[0] ); /* page control */
+    ctrls++;
+    while (*ctrls) controlfreeW( *ctrls++ );
+    heap_free( search->serverctrls );
+    controlarrayfreeW( search->clientctrls );
+    if (search->cookie && search->cookie != &null_cookie)
+        ber_bvfree( search->cookie );
+    heap_free( search );
+
     return WLDAP32_LDAP_SUCCESS;
+
+#else
+    return WLDAP32_LDAP_NOT_SUPPORTED;
+#endif
 }
 
 PLDAPSearch CDECL ldap_search_init_pageA( WLDAP32_LDAP *ld, PCHAR dn, ULONG scope,
@@ -281,7 +362,67 @@ PLDAPSearch CDECL ldap_search_init_pageW( WLDAP32_LDAP *ld, PWCHAR dn, ULONG sco
     PWCHAR filter, PWCHAR attrs[], ULONG attrsonly, PLDAPControlW *serverctrls,
     PLDAPControlW *clientctrls, ULONG timelimit, ULONG sizelimit, PLDAPSortKeyW *sortkeys )
 {
-    FIXME( "(%p, %s, 0x%08x, %s, %p, 0x%08x)\n", ld, debugstr_w(dn),
-           scope, debugstr_w(filter), attrs, attrsonly );
+#ifdef HAVE_LDAP
+    LDAPSearch *search;
+    DWORD i, len;
+
+    TRACE( "(%p, %s, 0x%08x, %s, %p, 0x%08x, %p, %p, 0x%08x, 0x%08x, %p)\n",
+           ld, debugstr_w(dn), scope, debugstr_w(filter), attrs, attrsonly,
+           serverctrls, clientctrls, timelimit, sizelimit, sortkeys );
+
+    search = heap_alloc_zero( sizeof(*search) );
+    if (!search)
+    {
+        ld->ld_errno = WLDAP32_LDAP_NO_MEMORY;
+        return NULL;
+    }
+
+    if (dn)
+    {
+        search->dn = strdupW( dn );
+        if (!search->dn) goto fail;
+    }
+    if (filter)
+    {
+        search->filter = strdupW( filter );
+        if (!search->filter) goto fail;
+    }
+    if (attrs)
+    {
+        search->attrs = strarraydupW( attrs );
+        if (!search->attrs) goto fail;
+    }
+
+    len = serverctrls ? controlarraylenW( serverctrls ) : 0;
+    search->serverctrls = heap_alloc( sizeof(LDAPControl *) * (len + 2) );
+    if (!search->serverctrls) goto fail;
+    search->serverctrls[0] = NULL; /* reserve 0 for page control */
+    for (i = 0; i < len; i++)
+    {
+        search->serverctrls[i + 1] = controldupW( serverctrls[i] );
+        if (!search->serverctrls[i + 1]) goto fail;
+    }
+    search->serverctrls[len + 1] = NULL;
+
+    if (clientctrls)
+    {
+        search->clientctrls = controlarraydupW( clientctrls );
+        if (!search->clientctrls) goto fail;
+    }
+
+    search->scope = scope;
+    search->attrsonly = attrsonly;
+    search->timeout.tv_sec = timelimit;
+    search->timeout.tv_usec = 0;
+    search->sizelimit = sizelimit;
+    search->cookie = NULL;
+
+    return search;
+
+fail:
+    ldap_search_abandon_page( ld, search );
+    ld->ld_errno = WLDAP32_LDAP_NO_MEMORY;
+
+#endif
     return NULL;
 }

@@ -31,7 +31,7 @@
 #define JOB_ADD_CURRENT_DATE 0x08
 #define JOB_NONINTERACTIVE   0x10
 
-extern handle_t rpc_handle;
+extern handle_t atsvc_handle;
 
 static int test_failures, test_skipped;
 
@@ -69,7 +69,7 @@ START_TEST(atsvcapi)
 
     hr = RpcStringBindingComposeA(NULL, ncalrpc, NULL, NULL, NULL, &binding_str);
     ok(hr == RPC_S_OK, "RpcStringBindingCompose error %#x\n", hr);
-    hr = RpcBindingFromStringBindingA(binding_str, &rpc_handle);
+    hr = RpcBindingFromStringBindingA(binding_str, &atsvc_handle);
     ok(hr == RPC_S_OK, "RpcBindingFromStringBinding error %#x\n", hr);
     hr = RpcStringFreeA(&binding_str);
     ok(hr == RPC_S_OK, "RpcStringFree error %#x\n", hr);
@@ -173,7 +173,7 @@ skip_tests_delete:
 skip_tests:
     SetUnhandledExceptionFilter(old_exception_filter);
 
-    hr = RpcBindingFree(&rpc_handle);
+    hr = RpcBindingFree(&atsvc_handle);
     ok(hr == RPC_S_OK, "RpcBindingFree error %#x\n", hr);
 }
 

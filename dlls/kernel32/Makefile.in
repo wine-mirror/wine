@@ -3,43 +3,35 @@ MODULE    = kernel32.dll
 IMPORTLIB = kernel32
 IMPORTS   = winecrt0 kernelbase ntdll
 EXTRALIBS = $(COREFOUNDATION_LIBS) $(POLL_LIBS) $(RT_LIBS)
-EXTRADLLFLAGS = -nodefaultlibs -Wb,-F,KERNEL32.dll -Wl,--image-base,0x7b400000
+EXTRADLLFLAGS = -nodefaultlibs -Wb,-F,KERNEL32.dll -Wl,--image-base,0x7b600000
 
 C_SRCS = \
-	actctx.c \
 	atom.c \
 	comm.c \
 	computername.c \
 	console.c \
-	cpu.c \
 	debugger.c \
 	editline.c \
-	environ.c \
 	file.c \
-	format_msg.c \
 	heap.c \
 	kernel_main.c \
 	lcformat.c \
 	locale.c \
 	lzexpand.c \
 	module.c \
-	nameprep.c \
 	path.c \
 	powermgnt.c \
 	process.c \
 	profile.c \
 	resource.c \
-	string.c \
 	sync.c \
 	tape.c \
 	term.c \
 	thread.c \
-	time.c \
 	toolhelp.c \
 	version.c \
 	virtual.c \
-	volume.c \
-	wer.c
+	volume.c
 
 RC_SRCS = \
 	locale_rc.rc \

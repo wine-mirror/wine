@@ -43,6 +43,7 @@
 #include "ddk/ntddk.h"
 #include "kernel_private.h"
 #include "fileapi.h"
+#include "shlwapi.h"
 
 #include "wine/exception.h"
 #include "wine/unicode.h"
@@ -335,13 +336,10 @@ BOOL WINAPI SetFileCompletionNotificationModes( HANDLE file, UCHAR flags )
 {
     FILE_IO_COMPLETION_NOTIFICATION_INFORMATION info;
     IO_STATUS_BLOCK io;
-    NTSTATUS status;
 
     info.Flags = flags;
-    status = NtSetInformationFile( file, &io, &info, sizeof(info), FileIoCompletionNotificationInformation );
-    if (status == STATUS_SUCCESS) return TRUE;
-    SetLastError( RtlNtStatusToDosError(status) );
-    return FALSE;
+    return set_ntstatus( NtSetInformationFile( file, &io, &info, sizeof(info),
+                                               FileIoCompletionNotificationInformation ));
 }
 
 
@@ -409,197 +407,58 @@ BOOL WINAPI KERNEL32_FlushFileBuffers( HANDLE file )
 }
 
 
+/***********************************************************************
+ *           DosDateTimeToFileTime   (KERNEL32.@)
+ */
+BOOL WINAPI DosDateTimeToFileTime( WORD fatdate, WORD fattime, FILETIME *ft )
+{
+    TIME_FIELDS fields;
+    LARGE_INTEGER time;
+
+    fields.Year         = (fatdate >> 9) + 1980;
+    fields.Month        = ((fatdate >> 5) & 0x0f);
+    fields.Day          = (fatdate & 0x1f);
+    fields.Hour         = (fattime >> 11);
+    fields.Minute       = (fattime >> 5) & 0x3f;
+    fields.Second       = (fattime & 0x1f) * 2;
+    fields.Milliseconds = 0;
+    if (!RtlTimeFieldsToTime( &fields, &time )) return FALSE;
+    ft->dwLowDateTime  = time.u.LowPart;
+    ft->dwHighDateTime = time.u.HighPart;
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           FileTimeToDosDateTime   (KERNEL32.@)
+ */
+BOOL WINAPI FileTimeToDosDateTime( const FILETIME *ft, WORD *fatdate, WORD *fattime )
+{
+    TIME_FIELDS fields;
+    LARGE_INTEGER time;
+
+    if (!fatdate || !fattime)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    time.u.LowPart  = ft->dwLowDateTime;
+    time.u.HighPart = ft->dwHighDateTime;
+    RtlTimeToTimeFields( &time, &fields );
+    if (fields.Year < 1980)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    *fattime = (fields.Hour << 11) + (fields.Minute << 5) + (fields.Second / 2);
+    *fatdate = ((fields.Year - 1980) << 9) + (fields.Month << 5) + fields.Day;
+    return TRUE;
+}
+
+
 /**************************************************************************
  *                      Operations on file names                          *
  **************************************************************************/
-
-
-/**************************************************************************
- *           ReplaceFileW   (KERNEL32.@)
- *           ReplaceFile    (KERNEL32.@)
- */
-BOOL WINAPI ReplaceFileW(LPCWSTR lpReplacedFileName, LPCWSTR lpReplacementFileName,
-                         LPCWSTR lpBackupFileName, DWORD dwReplaceFlags,
-                         LPVOID lpExclude, LPVOID lpReserved)
-{
-    UNICODE_STRING nt_replaced_name, nt_replacement_name;
-    ANSI_STRING unix_replaced_name, unix_replacement_name, unix_backup_name;
-    HANDLE hReplaced = NULL, hReplacement = NULL, hBackup = NULL;
-    DWORD error = ERROR_SUCCESS;
-    UINT replaced_flags;
-    BOOL ret = FALSE;
-    NTSTATUS status;
-    IO_STATUS_BLOCK io;
-    OBJECT_ATTRIBUTES attr;
-    FILE_BASIC_INFORMATION info;
-
-    TRACE("%s %s %s 0x%08x %p %p\n", debugstr_w(lpReplacedFileName),
-          debugstr_w(lpReplacementFileName), debugstr_w(lpBackupFileName),
-          dwReplaceFlags, lpExclude, lpReserved);
-
-    if (dwReplaceFlags)
-        FIXME("Ignoring flags %x\n", dwReplaceFlags);
-
-    /* First two arguments are mandatory */
-    if (!lpReplacedFileName || !lpReplacementFileName)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-
-    unix_replaced_name.Buffer = NULL;
-    unix_replacement_name.Buffer = NULL;
-    unix_backup_name.Buffer = NULL;
-
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.Attributes = OBJ_CASE_INSENSITIVE;
-    attr.ObjectName = NULL;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
-
-    /* Open the "replaced" file for reading */
-    if (!(RtlDosPathNameToNtPathName_U(lpReplacedFileName, &nt_replaced_name, NULL, NULL)))
-    {
-        error = ERROR_PATH_NOT_FOUND;
-        goto fail;
-    }
-    replaced_flags = lpBackupFileName ? FILE_OPEN : FILE_OPEN_IF;
-    attr.ObjectName = &nt_replaced_name;
-    status = NtOpenFile(&hReplaced, GENERIC_READ|DELETE|SYNCHRONIZE,
-                        &attr, &io,
-                        FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,
-                        FILE_SYNCHRONOUS_IO_NONALERT|FILE_NON_DIRECTORY_FILE);
-    if (status == STATUS_SUCCESS)
-        status = wine_nt_to_unix_file_name(&nt_replaced_name, &unix_replaced_name, replaced_flags, FALSE);
-    RtlFreeUnicodeString(&nt_replaced_name);
-    if (status != STATUS_SUCCESS)
-    {
-        if (status == STATUS_OBJECT_NAME_NOT_FOUND)
-            error = ERROR_FILE_NOT_FOUND;
-        else
-            error = ERROR_UNABLE_TO_REMOVE_REPLACED;
-        goto fail;
-    }
-
-    /* Replacement should fail if replaced is READ_ONLY */
-    status = NtQueryInformationFile(hReplaced, &io, &info, sizeof(info), FileBasicInformation);
-    if (status != STATUS_SUCCESS)
-    {
-        error = RtlNtStatusToDosError(status);
-        goto fail;
-    }
-
-    if (info.FileAttributes & FILE_ATTRIBUTE_READONLY)
-    {
-        error = ERROR_ACCESS_DENIED;
-        goto fail;
-    }
-
-    /*
-     * Open the replacement file for reading, writing, and deleting
-     * (writing and deleting are needed when finished)
-     */
-    if (!(RtlDosPathNameToNtPathName_U(lpReplacementFileName, &nt_replacement_name, NULL, NULL)))
-    {
-        error = ERROR_PATH_NOT_FOUND;
-        goto fail;
-    }
-    attr.ObjectName = &nt_replacement_name;
-    status = NtOpenFile(&hReplacement,
-                        GENERIC_READ|GENERIC_WRITE|DELETE|WRITE_DAC|SYNCHRONIZE,
-                        &attr, &io, 0,
-                        FILE_SYNCHRONOUS_IO_NONALERT|FILE_NON_DIRECTORY_FILE);
-    if (status == STATUS_SUCCESS)
-        status = wine_nt_to_unix_file_name(&nt_replacement_name, &unix_replacement_name, FILE_OPEN, FALSE);
-    RtlFreeUnicodeString(&nt_replacement_name);
-    if (status != STATUS_SUCCESS)
-    {
-        error = RtlNtStatusToDosError(status);
-        goto fail;
-    }
-
-    /* If the user wants a backup then that needs to be performed first */
-    if (lpBackupFileName)
-    {
-        UNICODE_STRING nt_backup_name;
-        FILE_BASIC_INFORMATION replaced_info;
-
-        /* Obtain the file attributes from the "replaced" file */
-        status = NtQueryInformationFile(hReplaced, &io, &replaced_info,
-                                        sizeof(replaced_info),
-                                        FileBasicInformation);
-        if (status != STATUS_SUCCESS)
-        {
-            error = RtlNtStatusToDosError(status);
-            goto fail;
-        }
-
-        if (!(RtlDosPathNameToNtPathName_U(lpBackupFileName, &nt_backup_name, NULL, NULL)))
-        {
-            error = ERROR_PATH_NOT_FOUND;
-            goto fail;
-        }
-        attr.ObjectName = &nt_backup_name;
-        /* Open the backup with permissions to write over it */
-        status = NtCreateFile(&hBackup, GENERIC_WRITE | SYNCHRONIZE,
-                              &attr, &io, NULL, replaced_info.FileAttributes,
-                              FILE_SHARE_WRITE, FILE_OPEN_IF,
-                              FILE_SYNCHRONOUS_IO_NONALERT|FILE_NON_DIRECTORY_FILE,
-                              NULL, 0);
-        if (status == STATUS_SUCCESS)
-            status = wine_nt_to_unix_file_name(&nt_backup_name, &unix_backup_name, FILE_OPEN_IF, FALSE);
-        RtlFreeUnicodeString(&nt_backup_name);
-        if (status != STATUS_SUCCESS)
-        {
-            error = RtlNtStatusToDosError(status);
-            goto fail;
-        }
-
-        /* If an existing backup exists then copy over it */
-        if (rename(unix_replaced_name.Buffer, unix_backup_name.Buffer) == -1)
-        {
-            error = ERROR_UNABLE_TO_REMOVE_REPLACED; /* is this correct? */
-            goto fail;
-        }
-    }
-
-    /*
-     * Now that the backup has been performed (if requested), copy the replacement
-     * into place
-     */
-    if (rename(unix_replacement_name.Buffer, unix_replaced_name.Buffer) == -1)
-    {
-        if (errno == EACCES)
-        {
-            /* Inappropriate permissions on "replaced", rename will fail */
-            error = ERROR_UNABLE_TO_REMOVE_REPLACED;
-            goto fail;
-        }
-        /* on failure we need to indicate whether a backup was made */
-        if (!lpBackupFileName)
-            error = ERROR_UNABLE_TO_MOVE_REPLACEMENT;
-        else
-            error = ERROR_UNABLE_TO_MOVE_REPLACEMENT_2;
-        goto fail;
-    }
-    /* Success! */
-    ret = TRUE;
-
-    /* Perform resource cleanup */
-fail:
-    if (hBackup) CloseHandle(hBackup);
-    if (hReplaced) CloseHandle(hReplaced);
-    if (hReplacement) CloseHandle(hReplacement);
-    RtlFreeAnsiString(&unix_backup_name);
-    RtlFreeAnsiString(&unix_replacement_name);
-    RtlFreeAnsiString(&unix_replaced_name);
-
-    /* If there was an error, set the error code */
-    if(!ret)
-        SetLastError(error);
-    return ret;
-}
 
 
 /**************************************************************************
@@ -640,29 +499,6 @@ BOOL WINAPI ReplaceFileA(LPCSTR lpReplacedFileName,LPCSTR lpReplacementFileName,
     HeapFree( GetProcessHeap(), 0, replacementW );
     HeapFree( GetProcessHeap(), 0, backupW );
     return ret;
-}
-
-
-/**************************************************************************
- *           FindFirstStreamW   (KERNEL32.@)
- */
-HANDLE WINAPI FindFirstStreamW(LPCWSTR filename, STREAM_INFO_LEVELS infolevel, void *data, DWORD flags)
-{
-    FIXME("(%s, %d, %p, %x): stub!\n", debugstr_w(filename), infolevel, data, flags);
-
-    SetLastError(ERROR_HANDLE_EOF);
-    return INVALID_HANDLE_VALUE;
-}
-
-/**************************************************************************
- *           FindNextStreamW   (KERNEL32.@)
- */
-BOOL WINAPI FindNextStreamW(HANDLE handle, void *data)
-{
-    FIXME("(%p, %p): stub!\n", handle, data);
-
-    SetLastError(ERROR_HANDLE_EOF);
-    return FALSE;
 }
 
 
@@ -744,8 +580,7 @@ BOOL WINAPI DeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode,
                                            lpvOutBuffer, cbOutBuffer);
         if (lpcbBytesReturned) *lpcbBytesReturned = iosb.Information;
     }
-    if (status) SetLastError( RtlNtStatusToDosError(status) );
-    return !status;
+    return set_ntstatus( status );
 }
 
 
@@ -870,281 +705,4 @@ error:  /* We get here if there was an error opening the file */
     ofs->nErrCode = GetLastError();
     WARN("(%s): return = HFILE_ERROR error= %d\n", name,ofs->nErrCode );
     return HFILE_ERROR;
-}
-
-
-/***********************************************************************
- *           K32EnumDeviceDrivers (KERNEL32.@)
- */
-BOOL WINAPI K32EnumDeviceDrivers(void **image_base, DWORD cb, DWORD *needed)
-{
-    FIXME("(%p, %d, %p): stub\n", image_base, cb, needed);
-
-    if (needed)
-        *needed = 0;
-
-    return TRUE;
-}
-
-/***********************************************************************
- *          K32GetDeviceDriverBaseNameA (KERNEL32.@)
- */
-DWORD WINAPI K32GetDeviceDriverBaseNameA(void *image_base, LPSTR base_name, DWORD size)
-{
-    FIXME("(%p, %p, %d): stub\n", image_base, base_name, size);
-
-    if (base_name && size)
-        base_name[0] = '\0';
-
-    return 0;
-}
-
-/***********************************************************************
- *           K32GetDeviceDriverBaseNameW (KERNEL32.@)
- */
-DWORD WINAPI K32GetDeviceDriverBaseNameW(void *image_base, LPWSTR base_name, DWORD size)
-{
-    FIXME("(%p, %p, %d): stub\n", image_base, base_name, size);
-
-    if (base_name && size)
-        base_name[0] = '\0';
-
-    return 0;
-}
-
-/***********************************************************************
- *           K32GetDeviceDriverFileNameA (KERNEL32.@)
- */
-DWORD WINAPI K32GetDeviceDriverFileNameA(void *image_base, LPSTR file_name, DWORD size)
-{
-    FIXME("(%p, %p, %d): stub\n", image_base, file_name, size);
-
-    if (file_name && size)
-        file_name[0] = '\0';
-
-    return 0;
-}
-
-/***********************************************************************
- *           K32GetDeviceDriverFileNameW (KERNEL32.@)
- */
-DWORD WINAPI K32GetDeviceDriverFileNameW(void *image_base, LPWSTR file_name, DWORD size)
-{
-    FIXME("(%p, %p, %d): stub\n", image_base, file_name, size);
-
-    if (file_name && size)
-        file_name[0] = '\0';
-
-    return 0;
-}
-
-/***********************************************************************
- *           GetFinalPathNameByHandleW (KERNEL32.@)
- */
-DWORD WINAPI GetFinalPathNameByHandleW(HANDLE file, LPWSTR path, DWORD charcount, DWORD flags)
-{
-    WCHAR buffer[sizeof(OBJECT_NAME_INFORMATION) + MAX_PATH + 1];
-    OBJECT_NAME_INFORMATION *info = (OBJECT_NAME_INFORMATION*)&buffer;
-    WCHAR drive_part[MAX_PATH];
-    DWORD drive_part_len = 0;
-    NTSTATUS status;
-    DWORD result = 0;
-    ULONG dummy;
-    WCHAR *ptr;
-
-    TRACE( "(%p,%p,%d,%x)\n", file, path, charcount, flags );
-
-    if (flags & ~(FILE_NAME_OPENED | VOLUME_NAME_GUID | VOLUME_NAME_NONE | VOLUME_NAME_NT))
-    {
-        WARN("Unknown flags: %x\n", flags);
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return 0;
-    }
-
-    /* get object name */
-    status = NtQueryObject( file, ObjectNameInformation, &buffer, sizeof(buffer) - sizeof(WCHAR), &dummy );
-    if (status != STATUS_SUCCESS)
-    {
-        SetLastError( RtlNtStatusToDosError( status ) );
-        return 0;
-    }
-    if (!info->Name.Buffer)
-    {
-        SetLastError( ERROR_INVALID_HANDLE );
-        return 0;
-    }
-    if (info->Name.Length < 4 * sizeof(WCHAR) || info->Name.Buffer[0] != '\\' ||
-             info->Name.Buffer[1] != '?' || info->Name.Buffer[2] != '?' || info->Name.Buffer[3] != '\\' )
-    {
-        FIXME("Unexpected object name: %s\n", debugstr_wn(info->Name.Buffer, info->Name.Length / sizeof(WCHAR)));
-        SetLastError( ERROR_GEN_FAILURE );
-        return 0;
-    }
-
-    /* add terminating null character, remove "\\??\\" */
-    info->Name.Buffer[info->Name.Length / sizeof(WCHAR)] = 0;
-    info->Name.Length -= 4 * sizeof(WCHAR);
-    info->Name.Buffer += 4;
-
-    /* FILE_NAME_OPENED is not supported yet, and would require Wineserver changes */
-    if (flags & FILE_NAME_OPENED)
-    {
-        FIXME("FILE_NAME_OPENED not supported\n");
-        flags &= ~FILE_NAME_OPENED;
-    }
-
-    /* Get information required for VOLUME_NAME_NONE, VOLUME_NAME_GUID and VOLUME_NAME_NT */
-    if (flags == VOLUME_NAME_NONE || flags == VOLUME_NAME_GUID || flags == VOLUME_NAME_NT)
-    {
-        if (!GetVolumePathNameW( info->Name.Buffer, drive_part, MAX_PATH ))
-            return 0;
-
-        drive_part_len = strlenW(drive_part);
-        if (!drive_part_len || drive_part_len > strlenW(info->Name.Buffer) ||
-                drive_part[drive_part_len-1] != '\\' ||
-                strncmpiW( info->Name.Buffer, drive_part, drive_part_len ))
-        {
-            FIXME("Path %s returned by GetVolumePathNameW does not match file path %s\n",
-                debugstr_w(drive_part), debugstr_w(info->Name.Buffer));
-            SetLastError( ERROR_GEN_FAILURE );
-            return 0;
-        }
-    }
-
-    if (flags == VOLUME_NAME_NONE)
-    {
-        ptr    = info->Name.Buffer + drive_part_len - 1;
-        result = strlenW(ptr);
-        if (result < charcount)
-            memcpy(path, ptr, (result + 1) * sizeof(WCHAR));
-        else result++;
-    }
-    else if (flags == VOLUME_NAME_GUID)
-    {
-        WCHAR volume_prefix[51];
-
-        /* GetVolumeNameForVolumeMountPointW sets error code on failure */
-        if (!GetVolumeNameForVolumeMountPointW( drive_part, volume_prefix, 50 ))
-            return 0;
-
-        ptr    = info->Name.Buffer + drive_part_len;
-        result = strlenW(volume_prefix) + strlenW(ptr);
-        if (result < charcount)
-        {
-            path[0] = 0;
-            strcatW(path, volume_prefix);
-            strcatW(path, ptr);
-        }
-        else
-        {
-            SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-            result++;
-        }
-    }
-    else if (flags == VOLUME_NAME_NT)
-    {
-        WCHAR nt_prefix[MAX_PATH];
-
-        /* QueryDosDeviceW sets error code on failure */
-        drive_part[drive_part_len - 1] = 0;
-        if (!QueryDosDeviceW( drive_part, nt_prefix, MAX_PATH ))
-            return 0;
-
-        ptr    = info->Name.Buffer + drive_part_len - 1;
-        result = strlenW(nt_prefix) + strlenW(ptr);
-        if (result < charcount)
-        {
-            path[0] = 0;
-            strcatW(path, nt_prefix);
-            strcatW(path, ptr);
-        }
-        else
-        {
-            SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-            result++;
-        }
-    }
-    else if (flags == VOLUME_NAME_DOS)
-    {
-        static const WCHAR dos_prefix[] = {'\\','\\','?','\\', '\0'};
-
-        result = strlenW(dos_prefix) + strlenW(info->Name.Buffer);
-        if (result < charcount)
-        {
-            path[0] = 0;
-            strcatW(path, dos_prefix);
-            strcatW(path, info->Name.Buffer);
-        }
-        else
-        {
-            SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-            result++;
-        }
-    }
-    else
-    {
-        /* Windows crashes here, but we prefer returning ERROR_INVALID_PARAMETER */
-        WARN("Invalid combination of flags: %x\n", flags);
-        SetLastError( ERROR_INVALID_PARAMETER );
-    }
-
-    return result;
-}
-
-/***********************************************************************
- *           GetFinalPathNameByHandleA (KERNEL32.@)
- */
-DWORD WINAPI GetFinalPathNameByHandleA(HANDLE file, LPSTR path, DWORD charcount, DWORD flags)
-{
-    WCHAR *str;
-    DWORD result, len, cp;
-
-    TRACE( "(%p,%p,%d,%x)\n", file, path, charcount, flags);
-
-    len = GetFinalPathNameByHandleW(file, NULL, 0, flags);
-    if (len == 0)
-        return 0;
-
-    str = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-    if (!str)
-    {
-        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-        return 0;
-    }
-
-    result = GetFinalPathNameByHandleW(file, str, len, flags);
-    if (result != len - 1)
-    {
-        HeapFree(GetProcessHeap(), 0, str);
-        WARN("GetFinalPathNameByHandleW failed unexpectedly: %u\n", result);
-        return 0;
-    }
-
-    cp = AreFileApisANSI() ? CP_ACP : CP_OEMCP;
-
-    len = WideCharToMultiByte(cp, 0, str, -1, NULL, 0, NULL, NULL);
-    if (!len)
-    {
-        HeapFree(GetProcessHeap(), 0, str);
-        WARN("Failed to get multibyte length\n");
-        return 0;
-    }
-
-    if (charcount < len)
-    {
-        HeapFree(GetProcessHeap(), 0, str);
-        return len - 1;
-    }
-
-    len = WideCharToMultiByte(cp, 0, str, -1, path, charcount, NULL, NULL);
-    if (!len)
-    {
-        HeapFree(GetProcessHeap(), 0, str);
-        WARN("WideCharToMultiByte failed\n");
-        return 0;
-    }
-
-    HeapFree(GetProcessHeap(), 0, str);
-
-    return len - 1;
 }

@@ -358,3 +358,13 @@ HRESULT WINAPI URLOpenStreamW(LPUNKNOWN pCaller, LPCWSTR szURL, DWORD dwReserved
 
     return hr;
 }
+
+/***********************************************************************
+ *		URLOpenPullStreamW (URLMON.@)
+ */
+HRESULT WINAPI URLOpenPullStreamW(IUnknown *caller, const WCHAR *url, DWORD reserved,
+                                  IBindStatusCallback *callback)
+{
+    FIXME("%p %s %u %p, stub!\n", caller, debugstr_w(url), reserved, callback);
+    return E_NOTIMPL;
+}

@@ -35,16 +35,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcp);
 #define TICKSPERSEC       10000000
 #define TICKS_1601_TO_1970 (SECS_1601_TO_1970 * TICKSPERSEC)
 
-#if _MSVCP_VER >= 140
-FILE* __cdecl __acrt_iob_func(unsigned);
-#undef stdin
-#undef stdout
-#undef stderr
-#define stdin  __acrt_iob_func(STDIN_FILENO)
-#define stdout __acrt_iob_func(STDOUT_FILENO)
-#define stderr __acrt_iob_func(STDERR_FILENO)
-#endif
-
 /* ?_Index@ios_base@std@@0HA */
 int ios_base_Index = 0;
 /* ?_Sync@ios_base@std@@0_NA */
@@ -766,9 +756,7 @@ DEFINE_RTTI_DATA8(strstream, sizeof(strstream),
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
         "?AVstrstream@std@@")
 
-#ifndef __GNUC__
-void __asm_dummy_vtables(void) {
-#endif
+__ASM_BLOCK_BEGIN(ios_vtables)
     __ASM_VTABLE(iosb,
             VTABLE_ADD_FUNC(iosb_vector_dtor));
     __ASM_VTABLE(ios_base,
@@ -1191,9 +1179,7 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(basic_ios__Add_vtordisp2)
 #endif
             );
-#ifndef __GNUC__
-}
-#endif
+__ASM_BLOCK_END
 
 /* ?setp@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IAEXPAD00@Z */
 /* ?setp@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IEAAXPEAD00@Z */

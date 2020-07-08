@@ -320,7 +320,7 @@ static const NLS_FORMAT_NODE *NLS_GetFormats(LCID lcid, DWORD dwFlags)
  *
  * Determine if a locale is Unicode only, and thus invalid in ASCII calls.
  */
-BOOL NLS_IsUnicodeOnlyLcid(LCID lcid)
+static BOOL NLS_IsUnicodeOnlyLcid(LCID lcid)
 {
   lcid = ConvertDefaultLocale(lcid);
 
@@ -1766,4 +1766,38 @@ int WINAPI GetCurrencyFormatEx(LPCWSTR localename, DWORD flags, LPCWSTR value,
             debugstr_w(value), format, str, len);
 
     return GetCurrencyFormatW( LocaleNameToLCID(localename, 0), flags, value, format, str, len);
+}
+
+/*********************************************************************
+ *            GetCalendarInfoA (KERNEL32.@)
+ */
+int WINAPI GetCalendarInfoA( LCID lcid, CALID id, CALTYPE type, LPSTR data, int size, DWORD *val )
+{
+    int ret, sizeW = size;
+    LPWSTR dataW = NULL;
+
+    if (NLS_IsUnicodeOnlyLcid(lcid))
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
+    if (!size && !(type & CAL_RETURN_NUMBER)) sizeW = GetCalendarInfoW( lcid, id, type, NULL, 0, NULL );
+    if (!(dataW = HeapAlloc(GetProcessHeap(), 0, sizeW * sizeof(WCHAR)))) return 0;
+
+    ret = GetCalendarInfoW( lcid, id, type, dataW, sizeW, val );
+    if(ret && dataW && data)
+        ret = WideCharToMultiByte( CP_ACP, 0, dataW, -1, data, size, NULL, NULL );
+    else if (type & CAL_RETURN_NUMBER)
+        ret *= sizeof(WCHAR);
+    HeapFree( GetProcessHeap(), 0, dataW );
+    return ret;
+}
+
+/*********************************************************************
+ *            SetCalendarInfoA (KERNEL32.@)
+ */
+int WINAPI SetCalendarInfoA( LCID lcid, CALID id, CALTYPE type, LPCSTR data)
+{
+    FIXME("(%08x,%08x,%08x,%s): stub\n", lcid, id, type, debugstr_a(data));
+    return 0;
 }

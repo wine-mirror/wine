@@ -105,6 +105,8 @@ static ULONG WINAPI system_clock_inner_Release(IUnknown *iface)
         clock->cs.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&clock->cs);
         heap_free(clock);
+
+        InterlockedDecrement(&object_locks);
     }
     return refcount;
 }
@@ -327,7 +329,7 @@ static const IReferenceClockVtbl SystemClock_vtbl =
     SystemClockImpl_Unadvise
 };
 
-HRESULT QUARTZ_CreateSystemClock(IUnknown *outer, void **out)
+HRESULT system_clock_create(IUnknown *outer, IUnknown **out)
 {
     struct system_clock *object;
   

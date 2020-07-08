@@ -931,13 +931,19 @@ HRESULT _set_action_map(LPDIRECTINPUTDEVICE8W iface, LPDIACTIONFORMATW lpdiaf, L
 
 void queue_event(LPDIRECTINPUTDEVICE8A iface, int inst_id, DWORD data, DWORD time, DWORD seq)
 {
+    static ULONGLONG notify_ms = 0;
     IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8A(iface);
     int next_pos, ofs = id_to_offset(&This->data_format, inst_id);
+    ULONGLONG time_ms = GetTickCount64();
 
     /* Event is being set regardless of the queue state */
     if (This->hEvent) SetEvent(This->hEvent);
 
-    PostMessageW(GetDesktopWindow(), WM_WINE_NOTIFY_ACTIVITY, 0, 0);
+    if (time_ms - notify_ms > 1000)
+    {
+        PostMessageW(GetDesktopWindow(), WM_WINE_NOTIFY_ACTIVITY, 0, 0);
+        notify_ms = time_ms;
+    }
 
     if (!This->queue_len || This->overflow || ofs < 0) return;
 
@@ -995,8 +1001,10 @@ HRESULT WINAPI IDirectInputDevice2WImpl_Acquire(LPDIRECTINPUTDEVICE8W iface)
     res = This->acquired ? S_FALSE : DI_OK;
     This->acquired = 1;
     LeaveCriticalSection(&This->crit);
-    if (res == DI_OK)
-        check_dinput_hooks(iface, TRUE);
+    if (res != DI_OK) return res;
+
+    dinput_hooks_acquire_device(iface);
+    check_dinput_hooks(iface, TRUE);
 
     return res;
 }
@@ -1023,8 +1031,10 @@ HRESULT WINAPI IDirectInputDevice2WImpl_Unacquire(LPDIRECTINPUTDEVICE8W iface)
     res = !This->acquired ? DI_NOEFFECT : DI_OK;
     This->acquired = 0;
     LeaveCriticalSection(&This->crit);
-    if (res == DI_OK)
-        check_dinput_hooks(iface, FALSE);
+    if (res != DI_OK) return res;
+
+    dinput_hooks_unacquire_device(iface);
+    check_dinput_hooks(iface, FALSE);
 
     return res;
 }
@@ -1157,10 +1167,6 @@ ULONG WINAPI IDirectInputDevice2WImpl_Release(LPDIRECTINPUTDEVICE8W iface)
 
     /* Free action mapping */
     HeapFree(GetProcessHeap(), 0, This->action_map);
-
-    EnterCriticalSection( &This->dinput->crit );
-    list_remove( &This->entry );
-    LeaveCriticalSection( &This->dinput->crit );
 
     IDirectInput_Release(&This->dinput->IDirectInput7A_iface);
     This->crit.DebugInfo->Spare[0] = 0;

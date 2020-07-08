@@ -18,9 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-/* Define _WIN32_WINNT to get SetThreadIdealProcessor on Windows */
-#define _WIN32_WINNT 0x0600
-
 #include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -1178,6 +1175,20 @@ static void test_SetThreadContext(void)
     CloseHandle( thread );
 }
 
+static void test_GetThreadContext(void)
+{
+    CONTEXT ctx;
+    BOOL ret;
+
+    memset(&ctx, 0xcc, sizeof(ctx));
+    ctx.ContextFlags = CONTEXT_DEBUG_REGISTERS;
+    ret = GetThreadContext(GetCurrentThread(), &ctx);
+    ok(ret, "GetThreadContext failed: %u\n", GetLastError());
+    ok(ctx.ContextFlags == CONTEXT_DEBUG_REGISTERS, "ContextFlags = %x\n", ctx.ContextFlags);
+    ok(!ctx.Dr0, "Dr0 = %x\n", ctx.Dr0);
+    ok(!ctx.Dr1, "Dr0 = %x\n", ctx.Dr0);
+}
+
 static void test_GetThreadSelectorEntry(void)
 {
     LDT_ENTRY entry;
@@ -1198,6 +1209,21 @@ static void test_GetThreadSelectorEntry(void)
     ok(ret, "GetThreadSelectorEntry(SegCs) error %u\n", GetLastError());
     ret = GetThreadSelectorEntry(GetCurrentThread(), ctx.SegDs, &entry);
     ok(ret, "GetThreadSelectorEntry(SegDs) error %u\n", GetLastError());
+    ret = GetThreadSelectorEntry(GetCurrentThread(), ctx.SegDs & ~3, &entry);
+    ok(ret, "GetThreadSelectorEntry(SegDs) error %u\n", GetLastError());
+    ret = GetThreadSelectorEntry(GetCurrentThread(), 0, &entry);
+    ok(ret, "GetThreadSelectorEntry(SegDs) error %u\n", GetLastError());
+    ret = GetThreadSelectorEntry(GetCurrentThread(), 3, &entry);
+    ok(ret, "GetThreadSelectorEntry(SegDs) error %u\n", GetLastError());
+    SetLastError( 0xdeadbeef );
+    ret = GetThreadSelectorEntry(GetCurrentThread(), 0xdeadbeef, &entry);
+    ok(!ret, "GetThreadSelectorEntry(invalid) succeeded\n");
+    ok( GetLastError() == ERROR_GEN_FAILURE
+        || GetLastError() == ERROR_INVALID_THREAD_ID /* 32-bit */, "wrong error %u\n", GetLastError() );
+    ret = GetThreadSelectorEntry(GetCurrentThread(), ctx.SegDs + 0x100, &entry);
+    ok(!ret, "GetThreadSelectorEntry(invalid) succeeded\n");
+    ok( GetLastError() == ERROR_GEN_FAILURE
+        || GetLastError() == ERROR_NOACCESS /* 32-bit */, "wrong error %u\n", GetLastError() );
 
     memset(&entry, 0x11, sizeof(entry));
     ret = GetThreadSelectorEntry(GetCurrentThread(), ctx.SegFs, &entry);
@@ -1216,6 +1242,40 @@ static void test_GetThreadSelectorEntry(void)
     ok(entry.HighWord.Bits.Reserved_0 == 0,   "expected 0, got %u\n", entry.HighWord.Bits.Reserved_0);
     ok(entry.HighWord.Bits.Default_Big == 1,  "expected 1, got %u\n", entry.HighWord.Bits.Default_Big);
     ok(entry.HighWord.Bits.Granularity == 0,  "expected 0, got %u\n", entry.HighWord.Bits.Granularity);
+
+    memset(&entry, 0x11, sizeof(entry));
+    ret = GetThreadSelectorEntry(GetCurrentThread(), ctx.SegCs, &entry);
+    ok(ret, "GetThreadSelectorEntry(SegDs) error %u\n", GetLastError());
+    entry.HighWord.Bits.Type &= ~1; /* ignore accessed bit */
+    base  = (void *)((entry.HighWord.Bits.BaseHi << 24) | (entry.HighWord.Bits.BaseMid << 16) | entry.BaseLow);
+    limit = (entry.HighWord.Bits.LimitHi << 16) | entry.LimitLow;
+
+    ok(base == 0, "got base %p\n", base);
+    ok(limit == ~0u >> 12, "got limit %#x\n", limit);
+    ok(entry.HighWord.Bits.Type == 0x1a,      "expected 0x12, got %#x\n", entry.HighWord.Bits.Type);
+    ok(entry.HighWord.Bits.Dpl == 3,          "expected 3, got %u\n", entry.HighWord.Bits.Dpl);
+    ok(entry.HighWord.Bits.Pres == 1,         "expected 1, got %u\n", entry.HighWord.Bits.Pres);
+    ok(entry.HighWord.Bits.Sys == 0,          "expected 0, got %u\n", entry.HighWord.Bits.Sys);
+    ok(entry.HighWord.Bits.Reserved_0 == 0,   "expected 0, got %u\n", entry.HighWord.Bits.Reserved_0);
+    ok(entry.HighWord.Bits.Default_Big == 1,  "expected 1, got %u\n", entry.HighWord.Bits.Default_Big);
+    ok(entry.HighWord.Bits.Granularity == 1,  "expected 1, got %u\n", entry.HighWord.Bits.Granularity);
+
+    memset(&entry, 0x11, sizeof(entry));
+    ret = GetThreadSelectorEntry(GetCurrentThread(), ctx.SegDs, &entry);
+    ok(ret, "GetThreadSelectorEntry(SegDs) error %u\n", GetLastError());
+    entry.HighWord.Bits.Type &= ~1; /* ignore accessed bit */
+    base  = (void *)((entry.HighWord.Bits.BaseHi << 24) | (entry.HighWord.Bits.BaseMid << 16) | entry.BaseLow);
+    limit = (entry.HighWord.Bits.LimitHi << 16) | entry.LimitLow;
+
+    ok(base == 0, "got base %p\n", base);
+    ok(limit == ~0u >> 12, "got limit %#x\n", limit);
+    ok(entry.HighWord.Bits.Type == 0x12,      "expected 0x12, got %#x\n", entry.HighWord.Bits.Type);
+    ok(entry.HighWord.Bits.Dpl == 3,          "expected 3, got %u\n", entry.HighWord.Bits.Dpl);
+    ok(entry.HighWord.Bits.Pres == 1,         "expected 1, got %u\n", entry.HighWord.Bits.Pres);
+    ok(entry.HighWord.Bits.Sys == 0,          "expected 0, got %u\n", entry.HighWord.Bits.Sys);
+    ok(entry.HighWord.Bits.Reserved_0 == 0,   "expected 0, got %u\n", entry.HighWord.Bits.Reserved_0);
+    ok(entry.HighWord.Bits.Default_Big == 1,  "expected 1, got %u\n", entry.HighWord.Bits.Default_Big);
+    ok(entry.HighWord.Bits.Granularity == 1,  "expected 1, got %u\n", entry.HighWord.Bits.Granularity);
 }
 
 #endif  /* __i386__ */
@@ -1274,12 +1334,33 @@ static void CALLBACK timeout_function(PVOID p, BOOLEAN TimerOrWaitFired)
     ok(TimerOrWaitFired, "wait should have timed out\n");
 }
 
+struct waitthread_test_param
+{
+    HANDLE trigger_event;
+    HANDLE wait_event;
+    HANDLE complete_event;
+};
+
+static void CALLBACK waitthread_test_function(PVOID p, BOOLEAN TimerOrWaitFired)
+{
+    struct waitthread_test_param *param = p;
+    DWORD ret;
+
+    SetEvent(param->trigger_event);
+    ret = WaitForSingleObject(param->wait_event, 100);
+    todo_wine
+    ok(ret == WAIT_TIMEOUT, "wait should have timed out\n");
+    SetEvent(param->complete_event);
+}
+
 static void test_RegisterWaitForSingleObject(void)
 {
     BOOL ret;
-    HANDLE wait_handle;
+    HANDLE wait_handle, wait_handle2;
     HANDLE handle;
     HANDLE complete_event;
+    HANDLE waitthread_trigger_event, waitthread_wait_event;
+    struct waitthread_test_param param;
 
     if (!pRegisterWaitForSingleObject || !pUnregisterWait)
     {
@@ -1329,6 +1410,53 @@ static void test_RegisterWaitForSingleObject(void)
     ok(!ret, "Expected UnregisterWait to fail\n");
     ok(GetLastError() == ERROR_INVALID_HANDLE,
        "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
+
+    /* test WT_EXECUTEINWAITTHREAD */
+
+    SetEvent(handle);
+    ret = pRegisterWaitForSingleObject(&wait_handle, handle, signaled_function, complete_event, INFINITE, WT_EXECUTEONLYONCE | WT_EXECUTEINWAITTHREAD);
+    ok(ret, "RegisterWaitForSingleObject failed with error %d\n", GetLastError());
+
+    WaitForSingleObject(complete_event, INFINITE);
+    /* give worker thread chance to complete */
+    Sleep(100);
+
+    ret = pUnregisterWait(wait_handle);
+    ok(ret, "UnregisterWait failed with error %d\n", GetLastError());
+
+    /* test multiple waits with WT_EXECUTEINWAITTHREAD.
+     * Windows puts multiple waits on the same wait thread, and using WT_EXECUTEINWAITTHREAD causes the callbacks to run serially.
+     */
+
+    SetEvent(handle);
+    waitthread_trigger_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    waitthread_wait_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+
+    param.trigger_event = waitthread_trigger_event;
+    param.wait_event = waitthread_wait_event;
+    param.complete_event = complete_event;
+
+    ret = pRegisterWaitForSingleObject(&wait_handle2, waitthread_trigger_event, signaled_function, waitthread_wait_event,
+                                       INFINITE, WT_EXECUTEONLYONCE | WT_EXECUTEINWAITTHREAD);
+    ok(ret, "RegisterWaitForSingleObject failed with error %d\n", GetLastError());
+
+    ret = pRegisterWaitForSingleObject(&wait_handle, handle, waitthread_test_function, &param, INFINITE, WT_EXECUTEONLYONCE | WT_EXECUTEINWAITTHREAD);
+    ok(ret, "RegisterWaitForSingleObject failed with error %d\n", GetLastError());
+
+    WaitForSingleObject(complete_event, INFINITE);
+    /* give worker thread chance to complete */
+    Sleep(100);
+
+    ret = pUnregisterWait(wait_handle);
+    ok(ret, "UnregisterWait failed with error %d\n", GetLastError());
+
+    ret = pUnregisterWait(wait_handle2);
+    ok(ret, "UnregisterWait failed with error %d\n", GetLastError());
+
+    CloseHandle(waitthread_wait_event);
+    CloseHandle(waitthread_trigger_event);
+    CloseHandle(complete_event);
+    CloseHandle(handle);
 }
 
 static DWORD LS_main;
@@ -2335,6 +2463,7 @@ START_TEST(thread)
 #ifdef __i386__
    test_SetThreadContext();
    test_GetThreadSelectorEntry();
+   test_GetThreadContext();
 #endif
    test_QueueUserWorkItem();
    test_RegisterWaitForSingleObject();

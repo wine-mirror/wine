@@ -8,7 +8,7 @@
 #ifndef __WINE_DIRECT_H
 #define __WINE_DIRECT_H
 
-#include <corecrt.h>
+#include <corecrt_wdirect.h>
 
 #include <pshpack8.h>
 
@@ -34,15 +34,6 @@ int           __cdecl _getdrive(void);
 __msvcrt_ulong __cdecl _getdrives(void);
 int           __cdecl _mkdir(const char*);
 int           __cdecl _rmdir(const char*);
-
-#ifndef _WDIRECT_DEFINED
-#define _WDIRECT_DEFINED
-int      __cdecl _wchdir(const wchar_t*);
-wchar_t* __cdecl _wgetcwd(wchar_t*,int);
-wchar_t* __cdecl _wgetdcwd(int,wchar_t*,int);
-int      __cdecl _wmkdir(const wchar_t*);
-int      __cdecl _wrmdir(const wchar_t*);
-#endif /* _WDIRECT_DEFINED */
 
 #ifdef __cplusplus
 }

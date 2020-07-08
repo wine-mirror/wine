@@ -787,6 +787,7 @@ static size_t write_type_tfs(ITypeInfo *typeinfo, unsigned char *str,
     ITypeInfo *refinfo;
     TYPEATTR *attr;
     size_t off;
+    GUID guid;
 
     TRACE("vt %d%s\n", desc->vt, toplevel ? " (toplevel)" : "");
 
@@ -810,8 +811,14 @@ static size_t write_type_tfs(ITypeInfo *typeinfo, unsigned char *str,
             break;
         case TKIND_INTERFACE:
         case TKIND_DISPATCH:
+            /* These are treated as if they were interface pointers. */
+            off = *len;
+            write_ip_tfs(str, len, &attr->guid);
+            break;
         case TKIND_COCLASS:
-            assert(0);
+            off = *len;
+            get_default_iface(refinfo, attr->cImplTypes, &guid);
+            write_ip_tfs(str, len, &guid);
             break;
         case TKIND_ALIAS:
             off = write_type_tfs(refinfo, str, len, &attr->tdescAlias, toplevel, onstack);
@@ -1000,6 +1007,14 @@ static HRESULT get_param_info(ITypeInfo *typeinfo, TYPEDESC *tdesc, int is_in,
             hr = get_param_info(refinfo, &attr->tdescAlias, is_in, is_out,
                     server_size, flags, basetype, tfs_tdesc);
             break;
+
+        case TKIND_INTERFACE:
+        case TKIND_DISPATCH:
+        case TKIND_COCLASS:
+            /* These are treated as if they were interface pointers. */
+            *flags |= MustFree;
+            break;
+
         default:
             FIXME("unhandled kind %#x\n", attr->typekind);
             hr = E_NOTIMPL;
@@ -1261,18 +1276,18 @@ static HRESULT get_iface_info(ITypeInfo *typeinfo, WORD *funcs, WORD *parentfunc
     if (FAILED(hr))
         goto err;
     hr = ITypeInfo_GetRefTypeInfo(*real_typeinfo, reftype, &parentinfo);
-    if (SUCCEEDED(hr))
-    {
-        hr = ITypeInfo_GetTypeAttr(parentinfo, &typeattr);
-        ITypeInfo_Release(parentinfo);
-    }
     if (FAILED(hr))
         goto err;
 
-    *parentiid = typeattr->guid;
-    ITypeInfo_ReleaseTypeAttr(parentinfo, typeattr);
-
-    return S_OK;
+    hr = ITypeInfo_GetTypeAttr(parentinfo, &typeattr);
+    if (SUCCEEDED(hr))
+    {
+        *parentiid = typeattr->guid;
+        ITypeInfo_ReleaseTypeAttr(parentinfo, typeattr);
+    }
+    ITypeInfo_Release(parentinfo);
+    if (SUCCEEDED(hr))
+        return hr;
 
 err:
     ITypeInfo_Release(*real_typeinfo);

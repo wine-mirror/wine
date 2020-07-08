@@ -558,7 +558,7 @@ static void setdisplaymode(int i)
             ok(DD_OK==rc || DDERR_UNSUPPORTED==rc,"SetDisplayMode returned: %x\n",rc);
             if (rc == DD_OK)
             {
-                RECT r, scrn, test, virt;
+                RECT scrn, test, virt;
 
                 SetRect(&virt, 0, 0, GetSystemMetrics(SM_CXVIRTUALSCREEN), GetSystemMetrics(SM_CYVIRTUALSCREEN));
                 OffsetRect(&virt, GetSystemMetrics(SM_XVIRTUALSCREEN), GetSystemMetrics(SM_YVIRTUALSCREEN));
@@ -598,17 +598,6 @@ static void setdisplaymode(int i)
                         ok(DD_OK==rc, "SetDisplayMode returned: %x\n",rc);
                     }
                 }
-                ok(GetClipCursor(&r), "GetClipCursor() failed\n");
-                /* ddraw sets clip rect here to the screen size, even for
-                   multiple monitors */
-                ok(EqualRect(&r, &scrn), "Invalid clip rect: (%d %d) x (%d %d)\n",
-                   r.left, r.top, r.right, r.bottom);
-
-                ok(ClipCursor(NULL), "ClipCursor() failed\n");
-                ok(GetClipCursor(&r), "GetClipCursor() failed\n");
-                ok(EqualRect(&r, &virt), "Invalid clip rect: (%d %d) x (%d %d)\n",
-                   r.left, r.top, r.right, r.bottom);
-
                 rc = IDirectDraw_RestoreDisplayMode(lpDD);
                 ok(DD_OK==rc,"RestoreDisplayMode returned: %x\n",rc);
             }

@@ -637,9 +637,6 @@ static HRESULT WINAPI WshCollection_Invoke(IWshCollection *iface, DISPID dispIdM
 static HRESULT WINAPI WshCollection_Item(IWshCollection *iface, VARIANT *index, VARIANT *value)
 {
     WshCollection *This = impl_from_IWshCollection(iface);
-    static const WCHAR allusersdesktopW[] = {'A','l','l','U','s','e','r','s','D','e','s','k','t','o','p',0};
-    static const WCHAR allusersprogramsW[] = {'A','l','l','U','s','e','r','s','P','r','o','g','r','a','m','s',0};
-    static const WCHAR desktopW[] = {'D','e','s','k','t','o','p',0};
     PIDLIST_ABSOLUTE pidl;
     WCHAR pathW[MAX_PATH];
     int kind = 0;
@@ -655,11 +652,11 @@ static HRESULT WINAPI WshCollection_Item(IWshCollection *iface, VARIANT *index, 
     }
 
     folder = V_BSTR(index);
-    if (!wcsicmp(folder, desktopW))
+    if (!wcsicmp(folder, L"Desktop"))
         kind = CSIDL_DESKTOP;
-    else if (!wcsicmp(folder, allusersdesktopW))
+    else if (!wcsicmp(folder, L"AllUsersDesktop"))
         kind = CSIDL_COMMON_DESKTOPDIRECTORY;
-    else if (!wcsicmp(folder, allusersprogramsW))
+    else if (!wcsicmp(folder, L"AllUsersPrograms"))
         kind = CSIDL_COMMON_PROGRAMS;
     else
     {
@@ -908,7 +905,6 @@ static HRESULT WINAPI WshShortcut_put_Hotkey(IWshShortcut *iface, BSTR Hotkey)
 
 static HRESULT WINAPI WshShortcut_get_IconLocation(IWshShortcut *iface, BSTR *IconPath)
 {
-    static const WCHAR fmtW[] = {'%','s',',',' ','%','d',0};
     WshShortcut *This = impl_from_IWshShortcut(iface);
     WCHAR buffW[MAX_PATH], pathW[MAX_PATH];
     INT icon = 0;
@@ -922,7 +918,7 @@ static HRESULT WINAPI WshShortcut_get_IconLocation(IWshShortcut *iface, BSTR *Ic
     hr = IShellLinkW_GetIconLocation(This->link, buffW, ARRAY_SIZE(buffW), &icon);
     if (FAILED(hr)) return hr;
 
-    swprintf(pathW, ARRAY_SIZE(pathW), fmtW, buffW, icon);
+    swprintf(pathW, ARRAY_SIZE(pathW), L"%s, %d", buffW, icon);
     *IconPath = SysAllocString(pathW);
     if (!*IconPath) return E_OUTOFMEMORY;
 
@@ -1318,11 +1314,10 @@ struct popup_thread_param
 
 static DWORD WINAPI popup_thread_proc(void *arg)
 {
-    static const WCHAR defaulttitleW[] = {'W','i','n','d','o','w','s',' ','S','c','r','i','p','t',' ','H','o','s','t',0};
     struct popup_thread_param *param = (struct popup_thread_param *)arg;
 
     param->button = MessageBoxW(NULL, param->text, is_optional_argument(&param->title) ?
-            defaulttitleW : V_BSTR(&param->title), V_I4(&param->type));
+            L"Windows Script Host" : V_BSTR(&param->title), V_I4(&param->type));
     return 0;
 }
 
@@ -1420,11 +1415,11 @@ static HKEY get_root_key(const WCHAR *path)
         const WCHAR abbrev[5];
         HKEY hkey;
     } rootkeys[] = {
-        { {'H','K','E','Y','_','C','U','R','R','E','N','T','_','U','S','E','R',0},     {'H','K','C','U',0}, HKEY_CURRENT_USER },
-        { {'H','K','E','Y','_','L','O','C','A','L','_','M','A','C','H','I','N','E',0}, {'H','K','L','M',0}, HKEY_LOCAL_MACHINE },
-        { {'H','K','E','Y','_','C','L','A','S','S','E','S','_','R','O','O','T',0},     {'H','K','C','R',0}, HKEY_CLASSES_ROOT },
-        { {'H','K','E','Y','_','U','S','E','R','S',0},                                                 {0}, HKEY_USERS },
-        { {'H','K','E','Y','_','C','U','R','R','E','N','T','_','C','O','N','F','I','G',0},             {0}, HKEY_CURRENT_CONFIG }
+        { L"HKEY_CURRENT_USER",   L"HKCU", HKEY_CURRENT_USER },
+        { L"HKEY_LOCAL_MACHINE",  L"HKLM", HKEY_LOCAL_MACHINE },
+        { L"HKEY_CLASSES_ROOT",   L"HKCR", HKEY_CLASSES_ROOT },
+        { L"HKEY_USERS",          {0},     HKEY_USERS },
+        { L"HKEY_CURRENT_CONFIG", {0},     HKEY_CURRENT_CONFIG }
     };
     int i;
 
@@ -1612,11 +1607,6 @@ fail:
 
 static HRESULT WINAPI WshShell3_RegWrite(IWshShell3 *iface, BSTR name, VARIANT *value, VARIANT *type)
 {
-    static const WCHAR regexpandszW[] = {'R','E','G','_','E','X','P','A','N','D','_','S','Z',0};
-    static const WCHAR regszW[] = {'R','E','G','_','S','Z',0};
-    static const WCHAR regdwordW[] = {'R','E','G','_','D','W','O','R','D',0};
-    static const WCHAR regbinaryW[] = {'R','E','G','_','B','I','N','A','R','Y',0};
-
     DWORD regtype, data_len;
     WCHAR *subkey, *val;
     const BYTE *data;
@@ -1641,13 +1631,13 @@ static HRESULT WINAPI WshShell3_RegWrite(IWshShell3 *iface, BSTR name, VARIANT *
         if (V_VT(type) != VT_BSTR)
             return E_INVALIDARG;
 
-        if (!wcscmp(V_BSTR(type), regszW))
+        if (!wcscmp(V_BSTR(type), L"REG_SZ"))
             regtype = REG_SZ;
-        else if (!wcscmp(V_BSTR(type), regdwordW))
+        else if (!wcscmp(V_BSTR(type), L"REG_DWORD"))
             regtype = REG_DWORD;
-        else if (!wcscmp(V_BSTR(type), regexpandszW))
+        else if (!wcscmp(V_BSTR(type), L"REG_EXPAND_SZ"))
             regtype = REG_EXPAND_SZ;
-        else if (!wcscmp(V_BSTR(type), regbinaryW))
+        else if (!wcscmp(V_BSTR(type), L"REG_BINARY"))
             regtype = REG_BINARY;
         else {
             FIXME("unrecognized value type %s\n", debugstr_w(V_BSTR(type)));
@@ -1724,6 +1714,9 @@ static HRESULT WINAPI WshShell3_SendKeys(IWshShell3 *iface, BSTR Keys, VARIANT *
 
 static HRESULT WINAPI WshShell3_Exec(IWshShell3 *iface, BSTR command, IWshExec **ret)
 {
+    BSTR expandedcmd;
+    HRESULT hr;
+
     TRACE("(%s %p)\n", debugstr_w(command), ret);
 
     if (!ret)
@@ -1732,7 +1725,13 @@ static HRESULT WINAPI WshShell3_Exec(IWshShell3 *iface, BSTR command, IWshExec *
     if (!command)
         return DISP_E_EXCEPTION;
 
-    return WshExec_create(command, ret);
+    hr = WshShell3_ExpandEnvironmentStrings(iface, command, &expandedcmd);
+    if (FAILED(hr))
+        return hr;
+
+    hr = WshExec_create(expandedcmd, ret);
+    SysFreeString(expandedcmd);
+    return hr;
 }
 
 static HRESULT WINAPI WshShell3_get_CurrentDirectory(IWshShell3 *iface, BSTR *dir)

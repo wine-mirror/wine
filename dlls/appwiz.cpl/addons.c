@@ -46,20 +46,25 @@
 WINE_DEFAULT_DEBUG_CHANNEL(appwizcpl);
 
 #define GECKO_VERSION "2.47.1"
-
 #ifdef __i386__
-#define ARCH_STRING "x86"
+#define GECKO_ARCH "x86"
 #define GECKO_SHA "f00b0e2892404827e8ce6811dedfc25ae699a09955bb3df1bbb31753e51da051"
 #elif defined(__x86_64__)
-#define ARCH_STRING "x86_64"
+#define GECKO_ARCH "x86_64"
 #define GECKO_SHA "69312e79a988da3e7d292382005e92bc4d4b2a52a23c34440ae3007feb57474a"
 #else
-#define ARCH_STRING ""
+#define GECKO_ARCH ""
 #define GECKO_SHA "???"
 #endif
 
-#define MONO_VERSION "4.9.4"
-#define MONO_SHA "51a6ff38323fcda71d70ead90c252b5eaeacec542ba737dbd1d676787b210fdd"
+#define MONO_VERSION "5.1.0"
+#if defined(__i386__) || defined(__x86_64__)
+#define MONO_ARCH "x86"
+#define MONO_SHA "ae55439c7cd61d1a17f0c687967fad8ad12d9e2263972ffd5e9dde2685fd8ddd"
+#else
+#define MONO_ARCH ""
+#define MONO_SHA "???"
+#endif
 
 typedef struct {
     const char *version;
@@ -79,7 +84,7 @@ typedef struct {
 static const addon_info_t addons_info[] = {
     {
         GECKO_VERSION,
-        L"wine-gecko-" GECKO_VERSION "-" ARCH_STRING ".msi",
+        L"wine-gecko-" GECKO_VERSION "-" GECKO_ARCH ".msi",
         L"gecko",
         GECKO_SHA,
         "http://source.winehq.org/winegecko.php",
@@ -88,7 +93,7 @@ static const addon_info_t addons_info[] = {
     },
     {
         MONO_VERSION,
-        L"wine-mono-" MONO_VERSION ".msi",
+        L"wine-mono-" MONO_VERSION "-" MONO_ARCH ".msi",
         L"mono",
         MONO_SHA,
         "http://source.winehq.org/winemono.php",
@@ -315,7 +320,7 @@ static enum install_res install_from_default_dir(void)
 
     if (ret == INSTALL_NEXT)
         ret = install_from_unix_file(INSTALL_DATADIR "/wine/", addon->subdir_name, addon->file_name);
-    if (ret == INSTALL_NEXT && strcmp(INSTALL_DATADIR, "/usr/share"))
+    if (ret == INSTALL_NEXT && strcmp(INSTALL_DATADIR, "/usr/share") != 0)
         ret = install_from_unix_file("/usr/share/wine/", addon->subdir_name, addon->file_name);
     if (ret == INSTALL_NEXT)
         ret = install_from_unix_file("/opt/wine/", addon->subdir_name, addon->file_name);
@@ -617,7 +622,7 @@ static void append_url_params( WCHAR *url )
 
     memcpy(url+len, arch_formatW, sizeof(arch_formatW));
     len += ARRAY_SIZE(arch_formatW);
-    len += MultiByteToWideChar(CP_ACP, 0, ARCH_STRING, sizeof(ARCH_STRING),
+    len += MultiByteToWideChar(CP_ACP, 0, GECKO_ARCH, sizeof(GECKO_ARCH),
                                url+len, size/sizeof(WCHAR)-len)-1;
     memcpy(url+len, v_formatW, sizeof(v_formatW));
     len += ARRAY_SIZE(v_formatW);
@@ -761,7 +766,7 @@ static INT_PTR CALLBACK installer_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 
 BOOL install_addon(addon_t addon_type)
 {
-    if(!*ARCH_STRING)
+    if(!*GECKO_ARCH)
         return FALSE;
 
     addon = addons_info+addon_type;

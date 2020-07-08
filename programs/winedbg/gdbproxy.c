@@ -67,6 +67,17 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
 
+struct gdb_xpoint
+{
+    struct list entry;
+    int pid;
+    int tid;
+    enum be_xpoint_type type;
+    void *addr;
+    int size;
+    unsigned long value;
+};
+
 struct gdb_context
 {
     /* gdb information */
@@ -84,17 +95,76 @@ struct gdb_context
     int                         out_len;
     int                         out_curr_packet;
     /* generic GDB thread information */
-    struct dbg_thread*          exec_thread;    /* thread used in step & continue */
-    struct dbg_thread*          other_thread;   /* thread to be used in any other operation */
+    int                         exec_tid; /* tid used in step & continue */
+    int                         other_tid; /* tid to be used in any other operation */
+    struct list                 xpoint_list;
     /* current Win32 trap env */
-    unsigned                    last_sig;
-    BOOL                        in_trap;
-    dbg_ctx_t                   context;
+    DEBUG_EVENT                 de;
+    DWORD                       de_reply;
     /* Win32 information */
     struct dbg_process*         process;
     /* Unix environment */
     unsigned long               wine_segs[3];   /* load addresses of the ELF wine exec segments (text, bss and data) */
+    BOOL                        no_ack_mode;
 };
+
+static void gdbctx_delete_xpoint(struct gdb_context *gdbctx, struct dbg_thread *thread,
+                                 dbg_ctx_t *ctx, struct gdb_xpoint *x)
+{
+    struct dbg_process *process = thread->process;
+    struct backend_cpu *cpu = process->be_cpu;
+
+    if (!cpu->remove_Xpoint(process->handle, process->process_io, ctx, x->type, x->addr, x->value, x->size))
+        ERR("%04x:%04x: Couldn't remove breakpoint at:%p/%x type:%d\n", process->pid, thread->tid, x->addr, x->size, x->type);
+
+    list_remove(&x->entry);
+    HeapFree(GetProcessHeap(), 0, x);
+}
+
+static void gdbctx_insert_xpoint(struct gdb_context *gdbctx, struct dbg_thread *thread,
+                                 dbg_ctx_t *ctx, enum be_xpoint_type type, void *addr, int size)
+{
+    struct dbg_process *process = thread->process;
+    struct backend_cpu *cpu = process->be_cpu;
+    struct gdb_xpoint *x;
+    unsigned long value;
+
+    if (!cpu->insert_Xpoint(process->handle, process->process_io, ctx, type, addr, &value, size))
+    {
+        ERR("%04x:%04x: Couldn't insert breakpoint at:%p/%x type:%d\n", process->pid, thread->tid, addr, size, type);
+        return;
+    }
+
+    if (!(x = HeapAlloc(GetProcessHeap(), 0, sizeof(struct gdb_xpoint))))
+    {
+        ERR("%04x:%04x: Couldn't allocate memory for breakpoint at:%p/%x type:%d\n", process->pid, thread->tid, addr, size, type);
+        return;
+    }
+
+    x->pid = process->pid;
+    x->tid = thread->tid;
+    x->type = type;
+    x->addr = addr;
+    x->size = size;
+    x->value = value;
+    list_add_head(&gdbctx->xpoint_list, &x->entry);
+}
+
+static struct gdb_xpoint *gdb_find_xpoint(struct gdb_context *gdbctx, struct dbg_thread *thread,
+                                          enum be_xpoint_type type, void *addr, int size)
+{
+    struct gdb_xpoint *x;
+
+    LIST_FOR_EACH_ENTRY(x, &gdbctx->xpoint_list, struct gdb_xpoint, entry)
+    {
+        if (thread && (x->pid != thread->process->pid || x->tid != thread->tid))
+            continue;
+        if (x->type == type && x->addr == addr && x->size == size)
+            return x;
+    }
+
+    return NULL;
+}
 
 static BOOL tgt_process_gdbproxy_read(HANDLE hProcess, const void* addr,
                                       void* buffer, SIZE_T len, SIZE_T* rlen)
@@ -136,17 +206,6 @@ static inline unsigned char hex_to0(int x)
     return "0123456789abcdef"[x];
 }
 
-static int hex_to_int(const char* src, size_t len)
-{
-    unsigned int returnval = 0;
-    while (len--)
-    {
-        returnval <<= 4;
-        returnval |= hex_from0(*src++);
-    }
-    return returnval;
-}
-
 static void hex_from(void* dst, const char* src, size_t len)
 {
     unsigned char *p = dst;
@@ -177,51 +236,17 @@ static unsigned char checksum(const char* ptr, int len)
     return cksum;
 }
 
-#ifdef __i386__
-static const char target_xml[] = "";
-#elif defined(__powerpc__)
-static const char target_xml[] = "";
-#elif defined(__x86_64__)
-static const char target_xml[] = "";
-#elif defined(__arm__)
-static const char target_xml[] =
-    "l <target><architecture>arm</architecture>\n"
-    "<feature name=\"org.gnu.gdb.arm.core\">\n"
-    "    <reg name=\"r0\" bitsize=\"32\" type=\"uint32\"/>\n"
-    "    <reg name=\"r1\" bitsize=\"32\" type=\"uint32\"/>\n"
-    "    <reg name=\"r2\" bitsize=\"32\" type=\"uint32\"/>\n"
-    "    <reg name=\"r3\" bitsize=\"32\" type=\"uint32\"/>\n"
-    "    <reg name=\"r4\" bitsize=\"32\" type=\"uint32\"/>\n"
-    "    <reg name=\"r5\" bitsize=\"32\" type=\"uint32\"/>\n"
-    "    <reg name=\"r6\" bitsize=\"32\" type=\"uint32\"/>\n"
-    "    <reg name=\"r7\" bitsize=\"32\" type=\"uint32\"/>\n"
-    "    <reg name=\"r8\" bitsize=\"32\" type=\"uint32\"/>\n"
-    "    <reg name=\"r9\" bitsize=\"32\" type=\"uint32\"/>\n"
-    "    <reg name=\"r10\" bitsize=\"32\" type=\"uint32\"/>\n"
-    "    <reg name=\"r11\" bitsize=\"32\" type=\"uint32\"/>\n"
-    "    <reg name=\"r12\" bitsize=\"32\" type=\"uint32\"/>\n"
-    "    <reg name=\"sp\" bitsize=\"32\" type=\"data_ptr\"/>\n"
-    "    <reg name=\"lr\" bitsize=\"32\"/>\n"
-    "    <reg name=\"pc\" bitsize=\"32\" type=\"code_ptr\"/>\n"
-    "    <reg name=\"cpsr\" bitsize=\"32\"/>\n"
-    "</feature></target>\n";
-#elif defined(__aarch64__)
-static const char target_xml[] = "";
-#else
-# error Define the registers map for your CPU
-#endif
-
 static inline void* cpu_register_ptr(struct gdb_context *gdbctx,
     dbg_ctx_t *ctx, unsigned idx)
 {
     assert(idx < gdbctx->process->be_cpu->gdb_num_regs);
-    return (char*)ctx + gdbctx->process->be_cpu->gdb_register_map[idx].ctx_offset;
+    return (char*)ctx + gdbctx->process->be_cpu->gdb_register_map[idx].offset;
 }
 
 static inline DWORD64 cpu_register(struct gdb_context *gdbctx,
     dbg_ctx_t *ctx, unsigned idx)
 {
-    switch (gdbctx->process->be_cpu->gdb_register_map[idx].ctx_length)
+    switch (gdbctx->process->be_cpu->gdb_register_map[idx].length)
     {
     case 1: return *(BYTE*)cpu_register_ptr(gdbctx, ctx, idx);
     case 2: return *(WORD*)cpu_register_ptr(gdbctx, ctx, idx);
@@ -229,7 +254,7 @@ static inline DWORD64 cpu_register(struct gdb_context *gdbctx,
     case 8: return *(DWORD64*)cpu_register_ptr(gdbctx, ctx, idx);
     default:
         ERR("got unexpected size: %u\n",
-            (unsigned)gdbctx->process->be_cpu->gdb_register_map[idx].ctx_length);
+            (unsigned)gdbctx->process->be_cpu->gdb_register_map[idx].length);
         assert(0);
         return 0;
     }
@@ -239,30 +264,7 @@ static inline void cpu_register_hex_from(struct gdb_context *gdbctx,
     dbg_ctx_t* ctx, unsigned idx, const char **phex)
 {
     const struct gdb_register *cpu_register_map = gdbctx->process->be_cpu->gdb_register_map;
-
-    if (cpu_register_map[idx].gdb_length == cpu_register_map[idx].ctx_length)
-        hex_from(cpu_register_ptr(gdbctx, ctx, idx), *phex, cpu_register_map[idx].gdb_length);
-    else
-    {
-        DWORD64     val = 0;
-        unsigned    i;
-        BYTE        b;
-
-        for (i = 0; i < cpu_register_map[idx].gdb_length; i++)
-        {
-            hex_from(&b, *phex, 1);
-            *phex += 2;
-            val += (DWORD64)b << (8 * i);
-        }
-        switch (cpu_register_map[idx].ctx_length)
-        {
-        case 1: *(BYTE*)cpu_register_ptr(gdbctx, ctx, idx) = (BYTE)val; break;
-        case 2: *(WORD*)cpu_register_ptr(gdbctx, ctx, idx) = (WORD)val; break;
-        case 4: *(DWORD*)cpu_register_ptr(gdbctx, ctx, idx) = (DWORD)val; break;
-        case 8: *(DWORD64*)cpu_register_ptr(gdbctx, ctx, idx) = val; break;
-        default: assert(0);
-        }
-    }
+    hex_from(cpu_register_ptr(gdbctx, ctx, idx), *phex, cpu_register_map[idx].length);
 }
 
 /* =============================================== *
@@ -270,40 +272,64 @@ static inline void cpu_register_hex_from(struct gdb_context *gdbctx,
  * =============================================== *
  */
 
-static BOOL fetch_context(struct gdb_context *gdbctx, HANDLE h, dbg_ctx_t *ctx)
+static struct dbg_thread* dbg_thread_from_tid(struct gdb_context* gdbctx, int tid)
 {
-    if (!gdbctx->process->be_cpu->get_context(h, ctx))
+    struct dbg_process *process = gdbctx->process;
+    struct dbg_thread *thread;
+
+    if (!process) return NULL;
+
+    if (tid == 0) tid = gdbctx->de.dwThreadId;
+    LIST_FOR_EACH_ENTRY(thread, &process->threads, struct dbg_thread, entry)
     {
-        ERR("Failed to get context, error %u\n", GetLastError());
-        return FALSE;
+        if (tid > 0 && thread->tid != tid) continue;
+        return thread;
     }
-    return TRUE;
+
+    return NULL;
 }
 
-static BOOL handle_exception(struct gdb_context* gdbctx, EXCEPTION_DEBUG_INFO* exc)
+static void dbg_thread_set_single_step(struct dbg_thread *thread, BOOL enable)
 {
-    EXCEPTION_RECORD*   rec = &exc->ExceptionRecord;
-    BOOL                ret = FALSE;
+    struct backend_cpu *backend;
+    dbg_ctx_t ctx;
 
-    switch (rec->ExceptionCode)
+    if (!thread) return;
+    if (!thread->process) return;
+    if (!(backend = thread->process->be_cpu)) return;
+
+    if (!backend->get_context(thread->handle, &ctx))
+    {
+        ERR("get_context failed for thread %04x:%04x\n", thread->process->pid, thread->tid);
+        return;
+    }
+    backend->single_step(&ctx, enable);
+    if (!backend->set_context(thread->handle, &ctx))
+        ERR("set_context failed for thread %04x:%04x\n", thread->process->pid, thread->tid);
+}
+
+static unsigned char signal_from_debug_event(DEBUG_EVENT* de)
+{
+    DWORD ec;
+
+    if (de->dwDebugEventCode == EXIT_PROCESS_DEBUG_EVENT)
+        return SIGTERM;
+    if (de->dwDebugEventCode != EXCEPTION_DEBUG_EVENT)
+        return SIGTRAP;
+
+    ec = de->u.Exception.ExceptionRecord.ExceptionCode;
+    switch (ec)
     {
     case EXCEPTION_ACCESS_VIOLATION:
     case EXCEPTION_PRIV_INSTRUCTION:
     case EXCEPTION_STACK_OVERFLOW:
     case EXCEPTION_GUARD_PAGE:
-        gdbctx->last_sig = SIGSEGV;
-        ret = TRUE;
-        break;
+        return SIGSEGV;
     case EXCEPTION_DATATYPE_MISALIGNMENT:
-        gdbctx->last_sig = SIGBUS;
-        ret = TRUE;
-        break;
+        return SIGBUS;
     case EXCEPTION_SINGLE_STEP:
-        /* fall through */
     case EXCEPTION_BREAKPOINT:
-        gdbctx->last_sig = SIGTRAP;
-        ret = TRUE;
-        break;
+        return SIGTRAP;
     case EXCEPTION_FLT_DENORMAL_OPERAND:
     case EXCEPTION_FLT_DIVIDE_BY_ZERO:
     case EXCEPTION_FLT_INEXACT_RESULT:
@@ -311,27 +337,32 @@ static BOOL handle_exception(struct gdb_context* gdbctx, EXCEPTION_DEBUG_INFO* e
     case EXCEPTION_FLT_OVERFLOW:
     case EXCEPTION_FLT_STACK_CHECK:
     case EXCEPTION_FLT_UNDERFLOW:
-        gdbctx->last_sig = SIGFPE;
-        ret = TRUE;
-        break;
+        return SIGFPE;
     case EXCEPTION_INT_DIVIDE_BY_ZERO:
     case EXCEPTION_INT_OVERFLOW:
-        gdbctx->last_sig = SIGFPE;
-        ret = TRUE;
-        break;
+        return SIGFPE;
     case EXCEPTION_ILLEGAL_INSTRUCTION:
-        gdbctx->last_sig = SIGILL;
-        ret = TRUE;
-        break;
+        return SIGILL;
     case CONTROL_C_EXIT:
-        gdbctx->last_sig = SIGINT;
-        ret = TRUE;
-        break;
+        return SIGINT;
     case STATUS_POSSIBLE_DEADLOCK:
-        gdbctx->last_sig = SIGALRM;
-        ret = TRUE;
-        /* FIXME: we could also add here a O packet with additional information */
-        break;
+        return SIGALRM;
+    /* should not be here */
+    case EXCEPTION_INVALID_HANDLE:
+    case EXCEPTION_NAME_THREAD:
+        return SIGTRAP;
+    default:
+        ERR("Unknown exception code 0x%08x\n", ec);
+        return SIGABRT;
+    }
+}
+
+static BOOL handle_exception(struct gdb_context* gdbctx, EXCEPTION_DEBUG_INFO* exc)
+{
+    EXCEPTION_RECORD* rec = &exc->ExceptionRecord;
+
+    switch (rec->ExceptionCode)
+    {
     case EXCEPTION_NAME_THREAD:
     {
         const THREADNAME_INFO *threadname = (const THREADNAME_INFO *)rec->ExceptionInformation;
@@ -340,7 +371,7 @@ static BOOL handle_exception(struct gdb_context* gdbctx, EXCEPTION_DEBUG_INFO* e
         SIZE_T read;
 
         if (threadname->dwThreadID == -1)
-            thread = dbg_curr_thread;
+            thread = dbg_get_thread(gdbctx->process, gdbctx->de.dwThreadId);
         else
             thread = dbg_get_thread(gdbctx->process, threadname->dwThreadID);
         if (thread)
@@ -354,34 +385,37 @@ static BOOL handle_exception(struct gdb_context* gdbctx, EXCEPTION_DEBUG_INFO* e
         }
         else
             ERR("Cannot set name of thread %04x\n", threadname->dwThreadID);
-        return DBG_CONTINUE;
+        return TRUE;
     }
     case EXCEPTION_INVALID_HANDLE:
-        return DBG_CONTINUE;
+        return TRUE;
     default:
-        fprintf(stderr, "Unhandled exception code 0x%08x\n", rec->ExceptionCode);
-        gdbctx->last_sig = SIGABRT;
-        ret = TRUE;
-        break;
+        return FALSE;
     }
-    return ret;
 }
 
-static	void	handle_debug_event(struct gdb_context* gdbctx, DEBUG_EVENT* de)
+static BOOL handle_debug_event(struct gdb_context* gdbctx)
 {
+    DEBUG_EVENT *de = &gdbctx->de;
+    struct dbg_thread *thread;
+
     union {
         char                bufferA[256];
         WCHAR               buffer[256];
     } u;
 
-    dbg_curr_thread = dbg_get_thread(gdbctx->process, de->dwThreadId);
+    gdbctx->exec_tid = de->dwThreadId;
+    gdbctx->other_tid = de->dwThreadId;
+    gdbctx->de_reply = DBG_REPLY_LATER;
 
     switch (de->dwDebugEventCode)
     {
     case CREATE_PROCESS_DEBUG_EVENT:
         gdbctx->process = dbg_add_process(&be_process_gdbproxy_io, de->dwProcessId,
                                           de->u.CreateProcessInfo.hProcess);
-        if (!gdbctx->process) break;
+        if (!gdbctx->process)
+            return TRUE;
+
         memory_get_string_indirect(gdbctx->process,
                                    de->u.CreateProcessInfo.lpImageName,
                                    de->u.CreateProcessInfo.fUnicode,
@@ -403,14 +437,12 @@ static	void	handle_debug_event(struct gdb_context* gdbctx, DEBUG_EVENT* de)
         fprintf(stderr, "%04x:%04x: create thread I @%p\n", de->dwProcessId,
             de->dwThreadId, de->u.CreateProcessInfo.lpStartAddress);
 
-        assert(dbg_curr_thread == NULL); /* shouldn't be there */
         dbg_add_thread(gdbctx->process, de->dwThreadId,
                        de->u.CreateProcessInfo.hThread,
                        de->u.CreateProcessInfo.lpThreadLocalBase);
-        break;
+        return TRUE;
 
     case LOAD_DLL_DEBUG_EVENT:
-        assert(dbg_curr_thread);
         memory_get_string_indirect(gdbctx->process,
                                    de->u.LoadDll.lpImageName,
                                    de->u.LoadDll.fUnicode,
@@ -423,24 +455,21 @@ static	void	handle_debug_event(struct gdb_context* gdbctx, DEBUG_EVENT* de)
                 de->u.LoadDll.nDebugInfoSize);
         dbg_load_module(gdbctx->process->handle, de->u.LoadDll.hFile, u.buffer,
                         (DWORD_PTR)de->u.LoadDll.lpBaseOfDll, 0);
-        break;
+        return TRUE;
 
     case UNLOAD_DLL_DEBUG_EVENT:
         fprintf(stderr, "%08x:%08x: unload DLL @%p\n",
                 de->dwProcessId, de->dwThreadId, de->u.UnloadDll.lpBaseOfDll);
         SymUnloadModule(gdbctx->process->handle,
                         (DWORD_PTR)de->u.UnloadDll.lpBaseOfDll);
-        break;
+        return TRUE;
 
     case EXCEPTION_DEBUG_EVENT:
-        assert(dbg_curr_thread);
         TRACE("%08x:%08x: exception code=0x%08x\n", de->dwProcessId,
             de->dwThreadId, de->u.Exception.ExceptionRecord.ExceptionCode);
 
-        if (fetch_context(gdbctx, dbg_curr_thread->handle, &gdbctx->context))
-        {
-            gdbctx->in_trap = handle_exception(gdbctx, &de->u.Exception);
-        }
+        if (handle_exception(gdbctx, &de->u.Exception))
+            return TRUE;
         break;
 
     case CREATE_THREAD_DEBUG_EVENT:
@@ -451,17 +480,14 @@ static	void	handle_debug_event(struct gdb_context* gdbctx, DEBUG_EVENT* de)
                        de->dwThreadId,
                        de->u.CreateThread.hThread,
                        de->u.CreateThread.lpThreadLocalBase);
-        break;
+        return TRUE;
 
     case EXIT_THREAD_DEBUG_EVENT:
         fprintf(stderr, "%08x:%08x: exit thread (%u)\n",
                 de->dwProcessId, de->dwThreadId, de->u.ExitThread.dwExitCode);
-
-        assert(dbg_curr_thread);
-        if (dbg_curr_thread == gdbctx->exec_thread) gdbctx->exec_thread = NULL;
-        if (dbg_curr_thread == gdbctx->other_thread) gdbctx->other_thread = NULL;
-        dbg_del_thread(dbg_curr_thread);
-        break;
+        if ((thread = dbg_get_thread(gdbctx->process, de->dwThreadId)))
+            dbg_del_thread(thread);
+        return TRUE;
 
     case EXIT_PROCESS_DEBUG_EVENT:
         fprintf(stderr, "%08x:%08x: exit process (%u)\n",
@@ -469,64 +495,53 @@ static	void	handle_debug_event(struct gdb_context* gdbctx, DEBUG_EVENT* de)
 
         dbg_del_process(gdbctx->process);
         gdbctx->process = NULL;
-        /* now signal gdb that we're done */
-        gdbctx->last_sig = SIGTERM;
-        gdbctx->in_trap = TRUE;
-        break;
+        return FALSE;
 
     case OUTPUT_DEBUG_STRING_EVENT:
-        assert(dbg_curr_thread);
         memory_get_string(gdbctx->process,
                           de->u.DebugString.lpDebugStringData, TRUE,
                           de->u.DebugString.fUnicode, u.bufferA, sizeof(u.bufferA));
         fprintf(stderr, "%08x:%08x: output debug string (%s)\n",
             de->dwProcessId, de->dwThreadId, debugstr_a(u.bufferA));
-        break;
+        return TRUE;
 
     case RIP_EVENT:
         fprintf(stderr, "%08x:%08x: rip error=%u type=%u\n", de->dwProcessId,
             de->dwThreadId, de->u.RipInfo.dwError, de->u.RipInfo.dwType);
-        break;
+        return TRUE;
 
     default:
         FIXME("%08x:%08x: unknown event (%u)\n",
             de->dwProcessId, de->dwThreadId, de->dwDebugEventCode);
     }
+
+    LIST_FOR_EACH_ENTRY(thread, &gdbctx->process->threads, struct dbg_thread, entry)
+    {
+        if (!thread->suspended) SuspendThread(thread->handle);
+        thread->suspended = TRUE;
+    }
+
+    return FALSE;
 }
 
-static void resume_debuggee(struct gdb_context* gdbctx, DWORD cont)
+static void handle_step_or_continue(struct gdb_context* gdbctx, int tid, BOOL step, int sig)
 {
-    if (dbg_curr_thread)
+    struct dbg_process *process = gdbctx->process;
+    struct dbg_thread *thread;
+
+    if (tid == 0) tid = gdbctx->de.dwThreadId;
+    LIST_FOR_EACH_ENTRY(thread, &process->threads, struct dbg_thread, entry)
     {
-        if (!gdbctx->process->be_cpu->set_context(dbg_curr_thread->handle, &gdbctx->context))
-            ERR("Failed to set context for thread %04x, error %u\n",
-                dbg_curr_thread->tid, GetLastError());
-        if (!ContinueDebugEvent(gdbctx->process->pid, dbg_curr_thread->tid, cont))
-            ERR("Failed to continue thread %04x, error %u\n",
-                dbg_curr_thread->tid, GetLastError());
+        if (tid != -1 && thread->tid != tid) continue;
+        if (!thread->suspended) continue;
+        thread->suspended = FALSE;
+
+        if (process->pid == gdbctx->de.dwProcessId && thread->tid == gdbctx->de.dwThreadId)
+            gdbctx->de_reply = (sig == -1 ? DBG_CONTINUE : DBG_EXCEPTION_NOT_HANDLED);
+
+        dbg_thread_set_single_step(thread, step);
+        ResumeThread(thread->handle);
     }
-    else
-        ERR("Cannot find last thread\n");
-}
-
-
-static void resume_debuggee_thread(struct gdb_context* gdbctx, DWORD cont, unsigned int threadid)
-{
-
-    if (dbg_curr_thread)
-    {
-        if(dbg_curr_thread->tid  == threadid){
-            /* Windows debug and GDB don't seem to work well here, windows only likes ContinueDebugEvent being used on the reporter of the event */
-            if (!gdbctx->process->be_cpu->set_context(dbg_curr_thread->handle, &gdbctx->context))
-                ERR("Failed to set context for thread %04x, error %u\n",
-                    dbg_curr_thread->tid, GetLastError());
-            if (!ContinueDebugEvent(gdbctx->process->pid, dbg_curr_thread->tid, cont))
-                ERR("Failed to continue thread %04x, error %u\n",
-                    dbg_curr_thread->tid, GetLastError());
-        }
-    }
-    else
-        ERR("Cannot find last thread\n");
 }
 
 static BOOL	check_for_interrupt(struct gdb_context* gdbctx)
@@ -558,12 +573,12 @@ static BOOL	check_for_interrupt(struct gdb_context* gdbctx)
 
 static void    wait_for_debuggee(struct gdb_context* gdbctx)
 {
-    DEBUG_EVENT         de;
+    if (gdbctx->de.dwDebugEventCode)
+        ContinueDebugEvent(gdbctx->de.dwProcessId, gdbctx->de.dwThreadId, gdbctx->de_reply);
 
-    gdbctx->in_trap = FALSE;
     for (;;)
     {
-		if (!WaitForDebugEvent(&de, 10))
+		if (!WaitForDebugEvent(&gdbctx->de, 10))
 		{
 			if (GetLastError() == ERROR_SEM_TIMEOUT)
 			{
@@ -572,7 +587,7 @@ static void    wait_for_debuggee(struct gdb_context* gdbctx)
 						ERR("Failed to break into debuggee\n");
 						break;
 					}
-					WaitForDebugEvent(&de, INFINITE);	
+					WaitForDebugEvent(&gdbctx->de, INFINITE);
 				} else {
 					continue;
 				} 
@@ -580,21 +595,19 @@ static void    wait_for_debuggee(struct gdb_context* gdbctx)
 				break;
 			} 
 		}
-        handle_debug_event(gdbctx, &de);
-        assert(!gdbctx->process ||
-               gdbctx->process->pid == 0 ||
-               de.dwProcessId == gdbctx->process->pid);
-        assert(!dbg_curr_thread || de.dwThreadId == dbg_curr_thread->tid);
-        if (gdbctx->in_trap) break;
-        ContinueDebugEvent(de.dwProcessId, de.dwThreadId, DBG_CONTINUE);
+        if (!handle_debug_event(gdbctx))
+            break;
+        ContinueDebugEvent(gdbctx->de.dwProcessId, gdbctx->de.dwThreadId, DBG_CONTINUE);
     }
 }
 
 static void detach_debuggee(struct gdb_context* gdbctx, BOOL kill)
 {
-    assert(gdbctx->process->be_cpu);
-    gdbctx->process->be_cpu->single_step(&gdbctx->context, FALSE);
-    resume_debuggee(gdbctx, DBG_CONTINUE);
+    handle_step_or_continue(gdbctx, -1, FALSE, -1);
+
+    if (gdbctx->de.dwDebugEventCode)
+        ContinueDebugEvent(gdbctx->de.dwProcessId, gdbctx->de.dwThreadId, DBG_CONTINUE);
+
     if (!kill)
         DebugActiveProcessStop(gdbctx->process->pid);
     dbg_del_process(gdbctx->process);
@@ -760,6 +773,35 @@ static void packet_reply_close(struct gdb_context* gdbctx)
     gdbctx->out_curr_packet = -1;
 }
 
+static void packet_reply_open_xfer(struct gdb_context* gdbctx)
+{
+    packet_reply_open(gdbctx);
+    packet_reply_add(gdbctx, "m");
+}
+
+static void packet_reply_close_xfer(struct gdb_context* gdbctx, int off, int len)
+{
+    int begin = gdbctx->out_curr_packet + 1;
+    int plen;
+
+    if (begin + off < gdbctx->out_len)
+    {
+        gdbctx->out_len -= off;
+        memmove(gdbctx->out_buf + begin, gdbctx->out_buf + begin + off, gdbctx->out_len);
+    }
+    else
+    {
+        gdbctx->out_buf[gdbctx->out_curr_packet] = 'l';
+        gdbctx->out_len = gdbctx->out_curr_packet + 1;
+    }
+
+    plen = gdbctx->out_len - begin;
+    if (len >= 0 && plen > len) gdbctx->out_len -= (plen - len);
+    else gdbctx->out_buf[gdbctx->out_curr_packet] = 'l';
+
+    packet_reply_close(gdbctx);
+}
+
 static enum packet_return packet_reply(struct gdb_context* gdbctx, const char* packet)
 {
     packet_reply_open(gdbctx);
@@ -785,25 +827,10 @@ static enum packet_return packet_reply_error(struct gdb_context* gdbctx, int err
     return packet_done;
 }
 
-static inline void packet_reply_register_hex_to(struct gdb_context* gdbctx, unsigned idx)
+static inline void packet_reply_register_hex_to(struct gdb_context* gdbctx, dbg_ctx_t* ctx, unsigned idx)
 {
     const struct gdb_register *cpu_register_map = gdbctx->process->be_cpu->gdb_register_map;
-
-    if (cpu_register_map[idx].gdb_length == cpu_register_map[idx].ctx_length)
-        packet_reply_hex_to(gdbctx, cpu_register_ptr(gdbctx, &gdbctx->context, idx),
-                            cpu_register_map[idx].gdb_length);
-    else
-    {
-        DWORD64     val = cpu_register(gdbctx, &gdbctx->context, idx);
-        unsigned    i;
-
-        for (i = 0; i < cpu_register_map[idx].gdb_length; i++)
-        {
-            BYTE    b = val;
-            packet_reply_hex_to(gdbctx, &b, 1);
-            val >>= 8;
-        }
-    }
+    packet_reply_hex_to(gdbctx, cpu_register_ptr(gdbctx, ctx, idx), cpu_register_map[idx].length);
 }
 
 /* =============================================== *
@@ -811,56 +838,78 @@ static inline void packet_reply_register_hex_to(struct gdb_context* gdbctx, unsi
  * =============================================== *
  */
 
-static enum packet_return packet_reply_status(struct gdb_context* gdbctx)
+static void packet_reply_status_xpoints(struct gdb_context* gdbctx, struct dbg_thread *thread,
+                                        dbg_ctx_t *ctx)
 {
-    enum packet_return ret = packet_done;
+    struct dbg_process *process = thread->process;
+    struct backend_cpu *cpu = process->be_cpu;
+    struct gdb_xpoint *x;
 
-    packet_reply_open(gdbctx);
-
-    if (gdbctx->process != NULL)
+    LIST_FOR_EACH_ENTRY(x, &gdbctx->xpoint_list, struct gdb_xpoint, entry)
     {
-        unsigned char           sig;
-        unsigned                i;
-
-        packet_reply_add(gdbctx, "T");
-        sig = gdbctx->last_sig;
-        packet_reply_val(gdbctx, sig, 1);
-        packet_reply_add(gdbctx, "thread:");
-        packet_reply_val(gdbctx, dbg_curr_thread->tid, 4);
-        packet_reply_add(gdbctx, ";");
-
-        for (i = 0; i < gdbctx->process->be_cpu->gdb_num_regs; i++)
+        if (x->pid != process->pid || x->tid != thread->tid)
+            continue;
+        if (!cpu->is_watchpoint_set(ctx, x->value))
+            continue;
+        if (x->type == be_xpoint_watch_write)
         {
-            /* FIXME: this call will also grow the buffer...
-             * unneeded, but not harmful
-             */
-            packet_reply_val(gdbctx, i, 1);
-            packet_reply_add(gdbctx, ":");
-            packet_reply_register_hex_to(gdbctx, i);
+            packet_reply_add(gdbctx, "watch:");
+            packet_reply_val(gdbctx, (unsigned long)x->addr, sizeof(x->addr));
+            packet_reply_add(gdbctx, ";");
+        }
+        if (x->type == be_xpoint_watch_read)
+        {
+            packet_reply_add(gdbctx, "rwatch:");
+            packet_reply_val(gdbctx, (unsigned long)x->addr, sizeof(x->addr));
             packet_reply_add(gdbctx, ";");
         }
     }
-    else
-    {
-        /* Try to put an exit code
-         * Cannot use GetExitCodeProcess, wouldn't fit in a 8 bit value, so
-         * just indicate the end of process and exit */
-        packet_reply_add(gdbctx, "W00");
-        /*if (!gdbctx->extended)*/ ret |= packet_last_f;
-    }
-
-    packet_reply_close(gdbctx);
-
-    return ret;
 }
 
-#if 0
-static enum packet_return packet_extended(struct gdb_context* gdbctx)
+static enum packet_return packet_reply_status(struct gdb_context* gdbctx)
 {
-    gdbctx->extended = 1;
-    return packet_ok;
+    struct dbg_process *process = gdbctx->process;
+    struct dbg_thread *thread;
+    struct backend_cpu *backend;
+    dbg_ctx_t ctx;
+    size_t i;
+
+    switch (gdbctx->de.dwDebugEventCode)
+    {
+    default:
+        if (!process) return packet_error;
+        if (!(backend = process->be_cpu)) return packet_error;
+        if (!(thread = dbg_get_thread(process, gdbctx->de.dwThreadId)) ||
+            !backend->get_context(thread->handle, &ctx))
+            return packet_error;
+
+        packet_reply_open(gdbctx);
+        packet_reply_add(gdbctx, "T");
+        packet_reply_val(gdbctx, signal_from_debug_event(&gdbctx->de), 1);
+        packet_reply_add(gdbctx, "thread:");
+        packet_reply_val(gdbctx, gdbctx->de.dwThreadId, 4);
+        packet_reply_add(gdbctx, ";");
+        packet_reply_status_xpoints(gdbctx, thread, &ctx);
+
+        for (i = 0; i < backend->gdb_num_regs; i++)
+        {
+            packet_reply_val(gdbctx, i, 1);
+            packet_reply_add(gdbctx, ":");
+            packet_reply_register_hex_to(gdbctx, &ctx, i);
+            packet_reply_add(gdbctx, ";");
+        }
+
+        packet_reply_close(gdbctx);
+        return packet_done;
+
+    case EXIT_PROCESS_DEBUG_EVENT:
+        packet_reply_open(gdbctx);
+        packet_reply_add(gdbctx, "W");
+        packet_reply_val(gdbctx, gdbctx->de.u.ExitProcess.dwExitCode, 4);
+        packet_reply_close(gdbctx);
+        return packet_done | packet_last_f;
+    }
 }
-#endif
 
 static enum packet_return packet_last_signal(struct gdb_context* gdbctx)
 {
@@ -870,51 +919,25 @@ static enum packet_return packet_last_signal(struct gdb_context* gdbctx)
 
 static enum packet_return packet_continue(struct gdb_context* gdbctx)
 {
-    /* FIXME: add support for address in packet */
-    assert(gdbctx->in_packet_len == 0);
-    if (dbg_curr_thread != gdbctx->exec_thread && gdbctx->exec_thread)
-        FIXME("Can't continue thread %04x while on thread %04x\n",
-            gdbctx->exec_thread->tid, dbg_curr_thread->tid);
-    resume_debuggee(gdbctx, DBG_CONTINUE);
+    void *addr;
+
+    if (sscanf(gdbctx->in_packet, "%p", &addr) == 1)
+        FIXME("Continue at address %p not supported\n", addr);
+
+    handle_step_or_continue(gdbctx, gdbctx->exec_tid, FALSE, -1);
+
     wait_for_debuggee(gdbctx);
     return packet_reply_status(gdbctx);
 }
 
 static enum packet_return packet_verbose_cont(struct gdb_context* gdbctx)
 {
-    int i;
-    int defaultAction = -1; /* magic non action */
-    unsigned char sig;
-    int actions =0;
-    int actionIndex[20]; /* allow for up to 20 actions */
-    int threadIndex[20];
-    int threadCount = 0;
-    unsigned int threadIDs[100]; /* TODO: Should make this dynamic */
-    unsigned int threadID = 0;
-    struct dbg_thread*  thd;
+    char *buf = gdbctx->in_packet, *end = gdbctx->in_packet + gdbctx->in_packet_len;
 
-    /* OK we have vCont followed by..
-    * ? for query
-    * c for packet_continue
-    * Csig for packet_continue_signal
-    * s for step
-    * Ssig  for step signal
-    * and then an optional thread ID at the end..
-    * *******************************************/
-
-    /* Query */
     if (gdbctx->in_packet[4] == '?')
     {
-        /*
-          Reply:
-          `vCont[;action]...'
-          The vCont packet is supported. Each action is a supported command in the vCont packet.
-          `'
-          The vCont packet is not supported.  (this didn't seem to be obeyed!)
-        */
         packet_reply_open(gdbctx);
         packet_reply_add(gdbctx, "vCont");
-        /* add all the supported actions to the reply (all of them for now) */
         packet_reply_add(gdbctx, ";c");
         packet_reply_add(gdbctx, ";C");
         packet_reply_add(gdbctx, ";s");
@@ -923,142 +946,37 @@ static enum packet_return packet_verbose_cont(struct gdb_context* gdbctx)
         return packet_done;
     }
 
-    /* go through the packet and identify where all the actions start at */
-    for (i = 4; i < gdbctx->in_packet_len - 1; i++)
+    while (buf < end && (buf = memchr(buf + 1, ';', end - buf - 1)))
     {
-        if (gdbctx->in_packet[i] == ';')
-        {
-            threadIndex[actions] = 0;
-            actionIndex[actions++] = i;
-        }
-        else if (gdbctx->in_packet[i] == ':')
-        {
-            threadIndex[actions - 1] = i;
-        }
-    }
+        int tid = -1, sig = -1;
+        int action, n;
 
-    /* now look up the default action */
-    for (i = 0 ; i < actions; i++)
-    {
-        if (threadIndex[i] == 0)
+        switch ((action = buf[1]))
         {
-            if (defaultAction != -1)
-            {
-                fprintf(stderr,"Too many default actions specified\n");
+        default:
+            return packet_error;
+        case 'c':
+        case 's':
+            buf += 2;
+            break;
+        case 'C':
+        case 'S':
+            if (sscanf(buf, ";%*c%2x", &sig) <= 0 ||
+                sig != signal_from_debug_event(&gdbctx->de))
                 return packet_error;
-            }
-            defaultAction = i;
-        }
-    }
-
-    /* Now, I have this default action thing that needs to be applied to all non counted threads */
-
-    /* go through all the threads and stick their ids in the to be done list. */
-    LIST_FOR_EACH_ENTRY(thd, &gdbctx->process->threads, struct dbg_thread, entry)
-    {
-        threadIDs[threadCount++] = thd->tid;
-        /* check to see if we have more threads than I counted on, and tell the user what to do
-         * (they're running winedbg, so I'm sure they can fix the problem from the error message!) */
-        if (threadCount == 100)
-        {
-            fprintf(stderr, "Wow, that's a lot of threads, change threadIDs in wine/programs/winedbg/gdbproxy.c to be higher\n");
+            buf += 4;
             break;
         }
+
+        if (buf > end)
+            return packet_error;
+        if (buf < end && *buf == ':' && (n = sscanf(buf, ":%x", &tid)) <= 0)
+            return packet_error;
+
+        handle_step_or_continue(gdbctx, tid, action == 's' || action == 'S', sig);
     }
 
-    /* Ok, now we have... actionIndex full of actions and we know what threads there are, so all
-     * that remains is to apply the actions to the threads and the default action to any threads
-     * left */
-    if (dbg_curr_thread != gdbctx->exec_thread && gdbctx->exec_thread)
-        FIXME("Can't continue thread %04x while on thread %04x\n",
-            gdbctx->exec_thread->tid, dbg_curr_thread->tid);
-
-    /* deal with the threaded stuff first */
-    for (i = 0; i < actions ; i++)
-    {
-        if (threadIndex[i] != 0)
-        {
-            int j, idLength = 0;
-            if (i < actions - 1)
-            {
-                idLength = (actionIndex[i+1] - threadIndex[i]) - 1;
-            }
-            else
-            {
-                idLength = (gdbctx->in_packet_len - threadIndex[i]) - 1;
-            }
-
-            threadID = hex_to_int(gdbctx->in_packet + threadIndex[i] + 1 , idLength);
-            /* process the action */
-            switch (gdbctx->in_packet[actionIndex[i] + 1])
-            {
-            case 's': /* step */
-                gdbctx->process->be_cpu->single_step(&gdbctx->context, TRUE);
-                /* fall through*/
-            case 'c': /* continue */
-                resume_debuggee_thread(gdbctx, DBG_CONTINUE, threadID);
-                break;
-            case 'S': /* step Sig, */
-                gdbctx->process->be_cpu->single_step(&gdbctx->context, TRUE);
-                /* fall through */
-            case 'C': /* continue sig */
-                hex_from(&sig, gdbctx->in_packet + actionIndex[i] + 2, 1);
-                /* cannot change signals on the fly */
-                TRACE("sigs: %u %u\n", sig, gdbctx->last_sig);
-                if (sig != gdbctx->last_sig)
-                    return packet_error;
-                resume_debuggee_thread(gdbctx, DBG_EXCEPTION_NOT_HANDLED, threadID);
-                break;
-            }
-            for (j = 0 ; j < threadCount; j++)
-            {
-                if (threadIDs[j] == threadID)
-                {
-                    threadIDs[j] = 0;
-                    break;
-                }
-            }
-        }
-    } /* for i=0 ; i< actions */
-
-    /* now we have manage the default action */
-    if (defaultAction >= 0)
-    {
-        for (i = 0 ; i< threadCount; i++)
-        {
-            /* check to see if we've already done something to the thread*/
-            if (threadIDs[i] != 0)
-            {
-                /* if not apply the default action*/
-                threadID = threadIDs[i];
-                /* process the action (yes this is almost identical to the one above!) */
-                switch (gdbctx->in_packet[actionIndex[defaultAction] + 1])
-                {
-                case 's': /* step */
-                    gdbctx->process->be_cpu->single_step(&gdbctx->context, TRUE);
-                    /* fall through */
-                case 'c': /* continue */
-                    resume_debuggee_thread(gdbctx, DBG_CONTINUE, threadID);
-                    break;
-                case 'S':
-                     gdbctx->process->be_cpu->single_step(&gdbctx->context, TRUE);
-                     /* fall through */
-                case 'C': /* continue sig */
-                    hex_from(&sig, gdbctx->in_packet + actionIndex[defaultAction] + 2, 1);
-                    /* cannot change signals on the fly */
-                    TRACE("sigs: %u %u\n", sig, gdbctx->last_sig);
-                    if (sig != gdbctx->last_sig)
-                        return packet_error;
-                    resume_debuggee_thread(gdbctx, DBG_EXCEPTION_NOT_HANDLED, threadID);
-                    break;
-                }
-            }
-        }
-    } /* if(defaultAction >=0) */
-
     wait_for_debuggee(gdbctx);
-    if (gdbctx->process)
-        gdbctx->process->be_cpu->single_step(&gdbctx->context, FALSE);
     return packet_reply_status(gdbctx);
 }
 
@@ -1069,28 +987,115 @@ static enum packet_return packet_verbose(struct gdb_context* gdbctx)
         return packet_verbose_cont(gdbctx);
     }
 
-    WARN("Unhandled verbose packet %s\n",
-        debugstr_an(gdbctx->in_packet, gdbctx->in_packet_len));
+    if (gdbctx->in_packet_len == 14 && !memcmp(gdbctx->in_packet, "MustReplyEmpty", 14))
+        return packet_reply(gdbctx, "");
+
     return packet_error;
 }
 
 static enum packet_return packet_continue_signal(struct gdb_context* gdbctx)
 {
-    unsigned char sig;
+    void *addr;
+    int sig, n;
 
-    /* FIXME: add support for address in packet */
-    assert(gdbctx->in_packet_len == 2);
-    if (dbg_curr_thread != gdbctx->exec_thread && gdbctx->exec_thread)
-        FIXME("Can't continue thread %04x while on thread %04x\n",
-            gdbctx->exec_thread->tid, dbg_curr_thread->tid);
-    hex_from(&sig, gdbctx->in_packet, 1);
-    /* cannot change signals on the fly */
-    TRACE("sigs: %u %u\n", sig, gdbctx->last_sig);
-    if (sig != gdbctx->last_sig)
+    if ((n = sscanf(gdbctx->in_packet, "%x;%p", &sig, &addr)) == 2)
+        FIXME("Continue at address %p not supported\n", addr);
+    if (n < 1) return packet_error;
+
+    if (sig != signal_from_debug_event(&gdbctx->de))
+    {
+        ERR("Changing signals is not supported.\n");
         return packet_error;
-    resume_debuggee(gdbctx, DBG_EXCEPTION_NOT_HANDLED);
+    }
+
+    handle_step_or_continue(gdbctx, gdbctx->exec_tid, FALSE, sig);
+
     wait_for_debuggee(gdbctx);
     return packet_reply_status(gdbctx);
+}
+
+static enum packet_return packet_delete_breakpoint(struct gdb_context* gdbctx)
+{
+    struct dbg_process *process = gdbctx->process;
+    struct dbg_thread *thread;
+    struct backend_cpu *cpu;
+    struct gdb_xpoint *x;
+    dbg_ctx_t ctx;
+    char type;
+    void *addr;
+    int size;
+
+    if (!process) return packet_error;
+    if (!(cpu = process->be_cpu)) return packet_error;
+
+    if (sscanf(gdbctx->in_packet, "%c,%p,%x", &type, &addr, &size) < 3)
+        return packet_error;
+
+    if (type == '0')
+        return packet_error;
+
+    LIST_FOR_EACH_ENTRY(thread, &process->threads, struct dbg_thread, entry)
+    {
+        if (!cpu->get_context(thread->handle, &ctx))
+            continue;
+        if ((type == '1') && (x = gdb_find_xpoint(gdbctx, thread, be_xpoint_watch_exec, addr, size)))
+            gdbctx_delete_xpoint(gdbctx, thread, &ctx, x);
+        if ((type == '2' || type == '4') && (x = gdb_find_xpoint(gdbctx, thread, be_xpoint_watch_read, addr, size)))
+            gdbctx_delete_xpoint(gdbctx, thread, &ctx, x);
+        if ((type == '3' || type == '4') && (x = gdb_find_xpoint(gdbctx, thread, be_xpoint_watch_write, addr, size)))
+            gdbctx_delete_xpoint(gdbctx, thread, &ctx, x);
+        cpu->set_context(thread->handle, &ctx);
+    }
+
+    while ((type == '1') && (x = gdb_find_xpoint(gdbctx, NULL, be_xpoint_watch_exec, addr, size)))
+        gdbctx_delete_xpoint(gdbctx, NULL, NULL, x);
+    while ((type == '2' || type == '4') && (x = gdb_find_xpoint(gdbctx, NULL, be_xpoint_watch_read, addr, size)))
+        gdbctx_delete_xpoint(gdbctx, NULL, NULL, x);
+    while ((type == '3' || type == '4') && (x = gdb_find_xpoint(gdbctx, NULL, be_xpoint_watch_write, addr, size)))
+        gdbctx_delete_xpoint(gdbctx, NULL, NULL, x);
+
+    return packet_ok;
+}
+
+static enum packet_return packet_insert_breakpoint(struct gdb_context* gdbctx)
+{
+    struct dbg_process *process = gdbctx->process;
+    struct dbg_thread *thread;
+    struct backend_cpu *cpu;
+    dbg_ctx_t ctx;
+    char type;
+    void *addr;
+    int size;
+
+    if (!process) return packet_error;
+    if (!(cpu = process->be_cpu)) return packet_error;
+
+    if (memchr(gdbctx->in_packet, ';', gdbctx->in_packet_len))
+    {
+        FIXME("breakpoint commands not supported\n");
+        return packet_error;
+    }
+
+    if (sscanf(gdbctx->in_packet, "%c,%p,%x", &type, &addr, &size) < 3)
+        return packet_error;
+
+    if (type == '0')
+        return packet_error;
+
+    LIST_FOR_EACH_ENTRY(thread, &process->threads, struct dbg_thread, entry)
+    {
+        if (!cpu->get_context(thread->handle, &ctx))
+            continue;
+        if (type == '1')
+            gdbctx_insert_xpoint(gdbctx, thread, &ctx, be_xpoint_watch_exec, addr, size);
+        if (type == '2' || type == '4')
+            gdbctx_insert_xpoint(gdbctx, thread, &ctx, be_xpoint_watch_read, addr, size);
+        if (type == '3' || type == '4')
+            gdbctx_insert_xpoint(gdbctx, thread, &ctx, be_xpoint_watch_write, addr, size);
+        cpu->set_context(thread->handle, &ctx);
+    }
+
+    return packet_ok;
 }
 
 static enum packet_return packet_detach(struct gdb_context* gdbctx)
@@ -1101,20 +1106,21 @@ static enum packet_return packet_detach(struct gdb_context* gdbctx)
 
 static enum packet_return packet_read_registers(struct gdb_context* gdbctx)
 {
-    int                 i;
+    struct dbg_thread *thread = dbg_thread_from_tid(gdbctx, gdbctx->other_tid);
+    struct backend_cpu *backend;
     dbg_ctx_t ctx;
+    size_t i;
 
-    assert(gdbctx->in_trap);
+    if (!thread) return packet_error;
+    if (!thread->process) return packet_error;
+    if (!(backend = thread->process->be_cpu)) return packet_error;
 
-    if (dbg_curr_thread != gdbctx->other_thread && gdbctx->other_thread)
-    {
-        if (!fetch_context(gdbctx, gdbctx->other_thread->handle, &ctx))
-            return packet_error;
-    }
+    if (!backend->get_context(thread->handle, &ctx))
+        return packet_error;
 
     packet_reply_open(gdbctx);
-    for (i = 0; i < gdbctx->process->be_cpu->gdb_num_regs; i++)
-        packet_reply_register_hex_to(gdbctx, i);
+    for (i = 0; i < backend->gdb_num_regs; i++)
+        packet_reply_register_hex_to(gdbctx, &ctx, i);
 
     packet_reply_close(gdbctx);
     return packet_done;
@@ -1122,71 +1128,53 @@ static enum packet_return packet_read_registers(struct gdb_context* gdbctx)
 
 static enum packet_return packet_write_registers(struct gdb_context* gdbctx)
 {
-    const size_t cpu_num_regs = gdbctx->process->be_cpu->gdb_num_regs;
-    unsigned    i;
+    struct dbg_thread *thread = dbg_thread_from_tid(gdbctx, gdbctx->other_tid);
+    struct backend_cpu *backend;
     dbg_ctx_t ctx;
-    dbg_ctx_t *pctx = &gdbctx->context;
-    const char* ptr;
+    const char *ptr;
+    size_t i;
 
-    assert(gdbctx->in_trap);
-    if (dbg_curr_thread != gdbctx->other_thread && gdbctx->other_thread)
-    {
-        if (!fetch_context(gdbctx, gdbctx->other_thread->handle, pctx = &ctx))
-            return packet_error;
-    }
-    if (gdbctx->in_packet_len < cpu_num_regs * 2) return packet_error;
+    if (!thread) return packet_error;
+    if (!thread->process) return packet_error;
+    if (!(backend = thread->process->be_cpu)) return packet_error;
+
+    if (!backend->get_context(thread->handle, &ctx))
+        return packet_error;
+
+    if (gdbctx->in_packet_len < backend->gdb_num_regs * 2)
+        return packet_error;
 
     ptr = gdbctx->in_packet;
-    for (i = 0; i < cpu_num_regs; i++)
-        cpu_register_hex_from(gdbctx, pctx, i, &ptr);
+    for (i = 0; i < backend->gdb_num_regs; i++)
+        cpu_register_hex_from(gdbctx, &ctx, i, &ptr);
 
-    if (pctx != &gdbctx->context &&
-        !gdbctx->process->be_cpu->set_context(gdbctx->other_thread->handle, pctx))
+    if (!backend->set_context(thread->handle, &ctx))
     {
-        ERR("Failed to set context for tid %04x, error %u\n",
-            gdbctx->other_thread->tid, GetLastError());
+        ERR("Failed to set context for tid %04x, error %u\n", thread->tid, GetLastError());
         return packet_error;
     }
+
     return packet_ok;
 }
 
 static enum packet_return packet_kill(struct gdb_context* gdbctx)
 {
     detach_debuggee(gdbctx, TRUE);
-#if 0
-    if (!gdbctx->extended)
-        /* dunno whether GDB cares or not */
-#endif
-    wait(NULL);
-    exit(0);
-    /* assume we can't really answer something here */
-    /* return packet_done; */
+    return packet_ok | packet_last_f;
 }
 
 static enum packet_return packet_thread(struct gdb_context* gdbctx)
 {
-    char* end;
-    unsigned thread;
-
     switch (gdbctx->in_packet[0])
     {
     case 'c':
+        if (sscanf(gdbctx->in_packet, "c%x", &gdbctx->exec_tid) == 1)
+            return packet_ok;
+        return packet_error;
     case 'g':
-        if (gdbctx->in_packet[1] == '-')
-            thread = -strtol(gdbctx->in_packet + 2, &end, 16);
-        else
-            thread = strtol(gdbctx->in_packet + 1, &end, 16);
-        if (end == NULL || end > gdbctx->in_packet + gdbctx->in_packet_len)
-        {
-            ERR("Failed to parse %s\n",
-                debugstr_an(gdbctx->in_packet, gdbctx->in_packet_len));
-            return packet_error;
-        }
-        if (gdbctx->in_packet[0] == 'c')
-            gdbctx->exec_thread = dbg_get_thread(gdbctx->process, thread);
-        else
-            gdbctx->other_thread = dbg_get_thread(gdbctx->process, thread);
-        return packet_ok;
+        if (sscanf(gdbctx->in_packet, "g%x", &gdbctx->other_tid) == 1)
+            return packet_ok;
+        return packet_error;
     default:
         FIXME("Unknown thread sub-command %c\n", gdbctx->in_packet[0]);
         return packet_error;
@@ -1200,8 +1188,6 @@ static enum packet_return packet_read_memory(struct gdb_context* gdbctx)
     char                buffer[32];
     SIZE_T              r = 0;
 
-    assert(gdbctx->in_trap);
-    /* FIXME:check in_packet_len for reading %p,%x */
     if (sscanf(gdbctx->in_packet, "%p,%x", &addr, &len) != 2) return packet_error;
     if (len <= 0) return packet_error;
     TRACE("Read %u bytes at %p\n", len, addr);
@@ -1231,7 +1217,6 @@ static enum packet_return packet_write_memory(struct gdb_context* gdbctx)
     char                buffer[32];
     SIZE_T              w;
 
-    assert(gdbctx->in_trap);
     ptr = memchr(gdbctx->in_packet, ':', gdbctx->in_packet_len);
     if (ptr == NULL)
     {
@@ -1268,66 +1253,70 @@ static enum packet_return packet_write_memory(struct gdb_context* gdbctx)
 
 static enum packet_return packet_read_register(struct gdb_context* gdbctx)
 {
-    unsigned            reg;
+    struct dbg_thread *thread = dbg_thread_from_tid(gdbctx, gdbctx->other_tid);
+    struct backend_cpu *backend;
     dbg_ctx_t ctx;
-    dbg_ctx_t *pctx = &gdbctx->context;
+    size_t reg;
 
-    assert(gdbctx->in_trap);
-    reg = hex_to_int(gdbctx->in_packet, gdbctx->in_packet_len);
-    if (reg >= gdbctx->process->be_cpu->gdb_num_regs)
+    if (!thread) return packet_error;
+    if (!thread->process) return packet_error;
+    if (!(backend = thread->process->be_cpu)) return packet_error;
+
+    if (!backend->get_context(thread->handle, &ctx))
+        return packet_error;
+
+    if (sscanf(gdbctx->in_packet, "%zx", &reg) != 1)
+        return packet_error;
+    if (reg >= backend->gdb_num_regs)
     {
-        WARN("Unhandled register %u\n", reg);
+        WARN("Unhandled register %zu\n", reg);
         return packet_error;
     }
-    if (dbg_curr_thread != gdbctx->other_thread && gdbctx->other_thread)
-    {
-        if (!fetch_context(gdbctx, gdbctx->other_thread->handle, pctx = &ctx))
-            return packet_error;
-    }
 
-    TRACE("%u => %s\n", reg, wine_dbgstr_longlong(cpu_register(gdbctx, pctx, reg)));
+    TRACE("%zu => %s\n", reg, wine_dbgstr_longlong(cpu_register(gdbctx, &ctx, reg)));
 
     packet_reply_open(gdbctx);
-    packet_reply_register_hex_to(gdbctx, reg);
+    packet_reply_register_hex_to(gdbctx, &ctx, reg);
     packet_reply_close(gdbctx);
     return packet_done;
 }
 
 static enum packet_return packet_write_register(struct gdb_context* gdbctx)
 {
-    unsigned            reg;
-    char*               ptr;
+    struct dbg_thread *thread = dbg_thread_from_tid(gdbctx, gdbctx->other_tid);
+    struct backend_cpu *backend;
     dbg_ctx_t ctx;
-    dbg_ctx_t *pctx = &gdbctx->context;
+    size_t reg;
+    char *ptr;
 
-    assert(gdbctx->in_trap);
+    if (!thread) return packet_error;
+    if (!thread->process) return packet_error;
+    if (!(backend = thread->process->be_cpu)) return packet_error;
 
-    reg = strtoul(gdbctx->in_packet, &ptr, 16);
-    if (ptr == NULL || reg >= gdbctx->process->be_cpu->gdb_num_regs || *ptr++ != '=')
+    if (!backend->get_context(thread->handle, &ctx))
+        return packet_error;
+
+    if (!(ptr = strchr(gdbctx->in_packet, '=')))
+        return packet_error;
+    *ptr++ = '\0';
+
+    if (sscanf(gdbctx->in_packet, "%zx", &reg) != 1)
+        return packet_error;
+    if (reg >= backend->gdb_num_regs)
     {
-        WARN("Unhandled register %s\n",
-            debugstr_an(gdbctx->in_packet, gdbctx->in_packet_len));
         /* FIXME: if just the reg is above cpu_num_regs, don't tell gdb
          *        it wouldn't matter too much, and it fakes our support for all regs
          */
-        return (ptr == NULL) ? packet_error : packet_ok;
+        WARN("Unhandled register %zu\n", reg);
+        return packet_ok;
     }
 
-    TRACE("%u <= %s\n", reg,
-        debugstr_an(ptr, (int)(gdbctx->in_packet_len - (ptr - gdbctx->in_packet))));
+    TRACE("%zu <= %s\n", reg, debugstr_an(ptr, (int)(gdbctx->in_packet_len - (ptr - gdbctx->in_packet))));
 
-    if (dbg_curr_thread != gdbctx->other_thread && gdbctx->other_thread)
+    cpu_register_hex_from(gdbctx, &ctx, reg, (const char**)&ptr);
+    if (!backend->set_context(thread->handle, &ctx))
     {
-        if (!fetch_context(gdbctx, gdbctx->other_thread->handle, pctx = &ctx))
-            return packet_error;
-    }
-
-    cpu_register_hex_from(gdbctx, pctx, reg, (const char**)&ptr);
-    if (pctx != &gdbctx->context &&
-        !gdbctx->process->be_cpu->set_context(gdbctx->other_thread->handle, pctx))
-    {
-        ERR("Failed to set context for tid %04x, error %u\n",
-            gdbctx->other_thread->tid, GetLastError());
+        ERR("Failed to set context for tid %04x, error %u\n", thread->tid, GetLastError());
         return packet_error;
     }
 
@@ -1528,8 +1517,241 @@ static enum packet_return packet_query_remote_command(struct gdb_context* gdbctx
     return packet_reply_error(gdbctx, EINVAL);
 }
 
+static BOOL CALLBACK packet_query_libraries_cb(PCSTR mod_name, DWORD64 base, PVOID ctx)
+{
+    struct gdb_context* gdbctx = ctx;
+    MEMORY_BASIC_INFORMATION mbi;
+    IMAGE_SECTION_HEADER *sec;
+    IMAGE_DOS_HEADER *dos = NULL;
+    IMAGE_NT_HEADERS *nth = NULL;
+    IMAGEHLP_MODULE64 mod;
+    SIZE_T size, i;
+    BOOL is_wow64;
+    char buffer[0x400];
+
+    mod.SizeOfStruct = sizeof(mod);
+    SymGetModuleInfo64(gdbctx->process->handle, base, &mod);
+
+    packet_reply_add(gdbctx, "<library name=\"");
+    if (strcmp(mod.LoadedImageName, "[vdso].so") == 0)
+        packet_reply_add(gdbctx, "linux-vdso.so.1");
+    else if (mod.LoadedImageName[0] == '/')
+        packet_reply_add(gdbctx, mod.LoadedImageName);
+    else
+    {
+        UNICODE_STRING nt_name;
+        ANSI_STRING ansi_name;
+        char *unix_path, *tmp;
+
+        RtlInitAnsiString(&ansi_name, mod.LoadedImageName);
+        RtlAnsiStringToUnicodeString(&nt_name, &ansi_name, TRUE);
+
+        if ((unix_path = wine_get_unix_file_name(nt_name.Buffer)))
+        {
+            if (IsWow64Process(gdbctx->process->handle, &is_wow64) &&
+                is_wow64 && (tmp = strstr(unix_path, "system32")))
+                memcpy(tmp, "syswow64", 8);
+            packet_reply_add(gdbctx, unix_path);
+        }
+        else
+            packet_reply_add(gdbctx, mod.LoadedImageName);
+
+        HeapFree(GetProcessHeap(), 0, unix_path);
+        RtlFreeUnicodeString(&nt_name);
+    }
+    packet_reply_add(gdbctx, "\">");
+
+    size = sizeof(buffer);
+    if (VirtualQueryEx(gdbctx->process->handle, (void *)(UINT_PTR)mod.BaseOfImage, &mbi, sizeof(mbi)) >= sizeof(mbi) &&
+        mbi.Type == MEM_IMAGE && mbi.State != MEM_FREE)
+    {
+        if (ReadProcessMemory(gdbctx->process->handle, (void *)(UINT_PTR)mod.BaseOfImage, buffer, size, &size) &&
+            size >= sizeof(IMAGE_DOS_HEADER))
+            dos = (IMAGE_DOS_HEADER *)buffer;
+
+        if (dos && dos->e_magic == IMAGE_DOS_SIGNATURE && dos->e_lfanew < size)
+            nth = (IMAGE_NT_HEADERS *)(buffer + dos->e_lfanew);
+
+        if (nth && memcmp(&nth->Signature, "PE\0\0", 4))
+            nth = NULL;
+    }
+
+    if (!nth) memset(buffer, 0, sizeof(buffer));
+
+    /* if the module is not PE we have cleared buffer with 0, this makes
+     * the following computation valid in all cases. */
+    dos = (IMAGE_DOS_HEADER *)buffer;
+    nth = (IMAGE_NT_HEADERS *)(buffer + dos->e_lfanew);
+    if (IsWow64Process(gdbctx->process->handle, &is_wow64) && is_wow64)
+        sec = IMAGE_FIRST_SECTION((IMAGE_NT_HEADERS32 *)nth);
+    else
+        sec = IMAGE_FIRST_SECTION((IMAGE_NT_HEADERS64 *)nth);
+
+    for (i = 0; i < max(nth->FileHeader.NumberOfSections, 1); ++i)
+    {
+        if ((char *)(sec + i) >= buffer + size) break;
+        packet_reply_add(gdbctx, "<segment address=\"0x");
+        packet_reply_val(gdbctx, mod.BaseOfImage + sec[i].VirtualAddress, sizeof(unsigned long));
+        packet_reply_add(gdbctx, "\"/>");
+    }
+
+    packet_reply_add(gdbctx, "</library>");
+
+    return TRUE;
+}
+
+static void packet_query_libraries(struct gdb_context* gdbctx)
+{
+    BOOL opt;
+
+    /* this will resynchronize builtin dbghelp's internal ELF module list */
+    SymLoadModule(gdbctx->process->handle, 0, 0, 0, 0, 0);
+
+    packet_reply_add(gdbctx, "<library-list>");
+    opt = SymSetExtendedOption(SYMOPT_EX_WINE_NATIVE_MODULES, TRUE);
+    SymEnumerateModules64(gdbctx->process->handle, packet_query_libraries_cb, gdbctx);
+    SymSetExtendedOption(SYMOPT_EX_WINE_NATIVE_MODULES, opt);
+    packet_reply_add(gdbctx, "</library-list>");
+}
+
+static void packet_query_threads(struct gdb_context* gdbctx)
+{
+    struct dbg_process* process = gdbctx->process;
+    struct dbg_thread* thread;
+
+    packet_reply_add(gdbctx, "<threads>");
+    LIST_FOR_EACH_ENTRY(thread, &process->threads, struct dbg_thread, entry)
+    {
+        packet_reply_add(gdbctx, "<thread ");
+        packet_reply_add(gdbctx, "id=\"");
+        packet_reply_val(gdbctx, thread->tid, 4);
+        packet_reply_add(gdbctx, "\" name=\"");
+        packet_reply_add(gdbctx, thread->name);
+        packet_reply_add(gdbctx, "\"/>");
+    }
+    packet_reply_add(gdbctx, "</threads>");
+}
+
+static void packet_query_target_xml(struct gdb_context* gdbctx, struct backend_cpu* cpu)
+{
+    const char* feature_prefix = NULL;
+    const char* feature = NULL;
+    char buffer[256];
+    int i;
+
+    packet_reply_add(gdbctx, "<target>");
+    switch (cpu->machine)
+    {
+    case IMAGE_FILE_MACHINE_AMD64:
+        packet_reply_add(gdbctx, "<architecture>i386:x86-64</architecture>");
+        feature_prefix = "org.gnu.gdb.i386.";
+        break;
+    case IMAGE_FILE_MACHINE_I386:
+        packet_reply_add(gdbctx, "<architecture>i386</architecture>");
+        feature_prefix = "org.gnu.gdb.i386.";
+        break;
+    case IMAGE_FILE_MACHINE_ARMNT:
+        packet_reply_add(gdbctx, "<architecture>arm</architecture>");
+        feature_prefix = "org.gnu.gdb.arm.";
+        break;
+    case IMAGE_FILE_MACHINE_ARM64:
+        packet_reply_add(gdbctx, "<architecture>aarch64</architecture>");
+        feature_prefix = "org.gnu.gdb.aarch64.";
+        break;
+    }
+
+    for (i = 0; i < cpu->gdb_num_regs; ++i)
+    {
+        if (cpu->gdb_register_map[i].feature)
+        {
+            if (feature) packet_reply_add(gdbctx, "</feature>");
+            feature = cpu->gdb_register_map[i].feature;
+
+            packet_reply_add(gdbctx, "<feature name=\"");
+            if (feature_prefix) packet_reply_add(gdbctx, feature_prefix);
+            packet_reply_add(gdbctx, feature);
+            packet_reply_add(gdbctx, "\">");
+
+            if (strcmp(feature_prefix, "org.gnu.gdb.i386.") == 0 &&
+                strcmp(feature, "core") == 0)
+                packet_reply_add(gdbctx, "<flags id=\"i386_eflags\" size=\"4\">"
+                                         "<field name=\"CF\" start=\"0\" end=\"0\"/>"
+                                         "<field name=\"\" start=\"1\" end=\"1\"/>"
+                                         "<field name=\"PF\" start=\"2\" end=\"2\"/>"
+                                         "<field name=\"AF\" start=\"4\" end=\"4\"/>"
+                                         "<field name=\"ZF\" start=\"6\" end=\"6\"/>"
+                                         "<field name=\"SF\" start=\"7\" end=\"7\"/>"
+                                         "<field name=\"TF\" start=\"8\" end=\"8\"/>"
+                                         "<field name=\"IF\" start=\"9\" end=\"9\"/>"
+                                         "<field name=\"DF\" start=\"10\" end=\"10\"/>"
+                                         "<field name=\"OF\" start=\"11\" end=\"11\"/>"
+                                         "<field name=\"NT\" start=\"14\" end=\"14\"/>"
+                                         "<field name=\"RF\" start=\"16\" end=\"16\"/>"
+                                         "<field name=\"VM\" start=\"17\" end=\"17\"/>"
+                                         "<field name=\"AC\" start=\"18\" end=\"18\"/>"
+                                         "<field name=\"VIF\" start=\"19\" end=\"19\"/>"
+                                         "<field name=\"VIP\" start=\"20\" end=\"20\"/>"
+                                         "<field name=\"ID\" start=\"21\" end=\"21\"/>"
+                                         "</flags>");
+
+            if (strcmp(feature_prefix, "org.gnu.gdb.i386.") == 0 &&
+                strcmp(feature, "sse") == 0)
+                packet_reply_add(gdbctx, "<vector id=\"v4f\" type=\"ieee_single\" count=\"4\"/>"
+                                         "<vector id=\"v2d\" type=\"ieee_double\" count=\"2\"/>"
+                                         "<vector id=\"v16i8\" type=\"int8\" count=\"16\"/>"
+                                         "<vector id=\"v8i16\" type=\"int16\" count=\"8\"/>"
+                                         "<vector id=\"v4i32\" type=\"int32\" count=\"4\"/>"
+                                         "<vector id=\"v2i64\" type=\"int64\" count=\"2\"/>"
+                                         "<union id=\"vec128\">"
+                                         "<field name=\"v4_float\" type=\"v4f\"/>"
+                                         "<field name=\"v2_double\" type=\"v2d\"/>"
+                                         "<field name=\"v16_int8\" type=\"v16i8\"/>"
+                                         "<field name=\"v8_int16\" type=\"v8i16\"/>"
+                                         "<field name=\"v4_int32\" type=\"v4i32\"/>"
+                                         "<field name=\"v2_int64\" type=\"v2i64\"/>"
+                                         "<field name=\"uint128\" type=\"uint128\"/>"
+                                         "</union>"
+                                         "<flags id=\"i386_mxcsr\" size=\"4\">"
+                                         "<field name=\"IE\" start=\"0\" end=\"0\"/>"
+                                         "<field name=\"DE\" start=\"1\" end=\"1\"/>"
+                                         "<field name=\"ZE\" start=\"2\" end=\"2\"/>"
+                                         "<field name=\"OE\" start=\"3\" end=\"3\"/>"
+                                         "<field name=\"UE\" start=\"4\" end=\"4\"/>"
+                                         "<field name=\"PE\" start=\"5\" end=\"5\"/>"
+                                         "<field name=\"DAZ\" start=\"6\" end=\"6\"/>"
+                                         "<field name=\"IM\" start=\"7\" end=\"7\"/>"
+                                         "<field name=\"DM\" start=\"8\" end=\"8\"/>"
+                                         "<field name=\"ZM\" start=\"9\" end=\"9\"/>"
+                                         "<field name=\"OM\" start=\"10\" end=\"10\"/>"
+                                         "<field name=\"UM\" start=\"11\" end=\"11\"/>"
+                                         "<field name=\"PM\" start=\"12\" end=\"12\"/>"
+                                         "<field name=\"FZ\" start=\"15\" end=\"15\"/>"
+                                         "</flags>");
+        }
+
+        snprintf(buffer, ARRAY_SIZE(buffer), "<reg name=\"%s\" bitsize=\"%zu\"",
+                 cpu->gdb_register_map[i].name, 8 * cpu->gdb_register_map[i].length);
+        packet_reply_add(gdbctx, buffer);
+
+        if (cpu->gdb_register_map[i].type)
+        {
+            packet_reply_add(gdbctx, " type=\"");
+            packet_reply_add(gdbctx, cpu->gdb_register_map[i].type);
+            packet_reply_add(gdbctx, "\"");
+        }
+
+        packet_reply_add(gdbctx, "/>");
+    }
+
+    if (feature) packet_reply_add(gdbctx, "</feature>");
+    packet_reply_add(gdbctx, "</target>");
+}
+
 static enum packet_return packet_query(struct gdb_context* gdbctx)
 {
+    int off, len;
+    struct backend_cpu *cpu;
+
     switch (gdbctx->in_packet[0])
     {
     case 'f':
@@ -1615,15 +1837,13 @@ static enum packet_return packet_query(struct gdb_context* gdbctx)
             return packet_ok;
         if (strncmp(gdbctx->in_packet, "Supported", 9) == 0)
         {
-            if (*target_xml)
-                return packet_reply(gdbctx, "PacketSize=400;qXfer:features:read+");
-            else
-            {
-                /* no features supported */
-                packet_reply_open(gdbctx);
-                packet_reply_close(gdbctx);
-                return packet_done;
-            }
+            packet_reply_open(gdbctx);
+            packet_reply_add(gdbctx, "QStartNoAckMode+;");
+            packet_reply_add(gdbctx, "qXfer:libraries:read+;");
+            packet_reply_add(gdbctx, "qXfer:threads:read+;");
+            packet_reply_add(gdbctx, "qXfer:features:read+;");
+            packet_reply_close(gdbctx);
+            return packet_done;
         }
         break;
     case 'T':
@@ -1652,50 +1872,65 @@ static enum packet_return packet_query(struct gdb_context* gdbctx)
         }
         break;
     case 'X':
-        if (*target_xml && strncmp(gdbctx->in_packet, "Xfer:features:read:target.xml", 29) == 0)
-            return packet_reply(gdbctx, target_xml);
+        if (sscanf(gdbctx->in_packet, "Xfer:libraries:read::%x,%x", &off, &len) == 2)
+        {
+            if (!gdbctx->process) return packet_error;
+
+            packet_reply_open_xfer(gdbctx);
+            packet_query_libraries(gdbctx);
+            packet_reply_close_xfer(gdbctx, off, len);
+            return packet_done;
+        }
+
+        if (sscanf(gdbctx->in_packet, "Xfer:threads:read::%x,%x", &off, &len) == 2)
+        {
+            if (!gdbctx->process) return packet_error;
+
+            packet_reply_open_xfer(gdbctx);
+            packet_query_threads(gdbctx);
+            packet_reply_close_xfer(gdbctx, off, len);
+            return packet_done;
+        }
+
+        if (sscanf(gdbctx->in_packet, "Xfer:features:read:target.xml:%x,%x", &off, &len) == 2)
+        {
+            if (!gdbctx->process) return packet_error;
+            if (!(cpu = gdbctx->process->be_cpu)) return packet_error;
+
+            packet_reply_open_xfer(gdbctx);
+            packet_query_target_xml(gdbctx, cpu);
+            packet_reply_close_xfer(gdbctx, off, len);
+            return packet_done;
+        }
         break;
     }
     ERR("Unhandled query %s\n", debugstr_an(gdbctx->in_packet, gdbctx->in_packet_len));
     return packet_error;
 }
 
+static enum packet_return packet_set(struct gdb_context* gdbctx)
+{
+    if (strncmp(gdbctx->in_packet, "StartNoAckMode", 14) == 0)
+    {
+        gdbctx->no_ack_mode = TRUE;
+        return packet_ok;
+    }
+
+    return packet_error;
+}
+
 static enum packet_return packet_step(struct gdb_context* gdbctx)
 {
-    /* FIXME: add support for address in packet */
-    assert(gdbctx->in_packet_len == 0);
-    if (dbg_curr_thread != gdbctx->exec_thread && gdbctx->exec_thread)
-        FIXME("Can't single-step thread %04x while on thread %04x\n",
-            gdbctx->exec_thread->tid, dbg_curr_thread->tid);
-    gdbctx->process->be_cpu->single_step(&gdbctx->context, TRUE);
-    resume_debuggee(gdbctx, DBG_CONTINUE);
-    wait_for_debuggee(gdbctx);
-    gdbctx->process->be_cpu->single_step(&gdbctx->context, FALSE);
-    return packet_reply_status(gdbctx);
-}
+    void *addr;
 
-#if 0
-static enum packet_return packet_step_signal(struct gdb_context* gdbctx)
-{
-    unsigned char sig;
+    if (sscanf(gdbctx->in_packet, "%p", &addr) == 1)
+        FIXME("Continue at address %p not supported\n", addr);
 
-    /* FIXME: add support for address in packet */
-    assert(gdbctx->in_packet_len == 2);
-    if (dbg_curr_thread->tid != gdbctx->exec_thread && gdbctx->exec_thread)
-        if (gdbctx->trace & GDBPXY_TRC_COMMAND_ERROR)
-            fprintf(stderr, "NIY: step/sig on %u, while last thread is %u\n",
-                    gdbctx->exec_thread, DEBUG_CurrThread->tid);
-    hex_from(&sig, gdbctx->in_packet, 1);
-    /* cannot change signals on the fly */
-    if (gdbctx->trace & GDBPXY_TRC_COMMAND)
-        fprintf(stderr, "sigs: %u %u\n", sig, gdbctx->last_sig);
-    if (sig != gdbctx->last_sig)
-        return packet_error;
-    resume_debuggee(gdbctx, DBG_EXCEPTION_NOT_HANDLED);
+    handle_step_or_continue(gdbctx, gdbctx->exec_tid, TRUE, -1);
+
     wait_for_debuggee(gdbctx);
     return packet_reply_status(gdbctx);
 }
-#endif
 
 static enum packet_return packet_thread_alive(struct gdb_context* gdbctx)
 {
@@ -1723,7 +1958,6 @@ struct packet_entry
 
 static struct packet_entry packet_entries[] =
 {
-        /*{'!', packet_extended}, */
         {'?', packet_last_signal},
         {'c', packet_continue},
         {'C', packet_continue_signal},
@@ -1737,104 +1971,99 @@ static struct packet_entry packet_entries[] =
         {'p', packet_read_register},
         {'P', packet_write_register},
         {'q', packet_query},
-        /* {'Q', packet_set}, */
-        /* {'R', packet,restart}, only in extended mode ! */
+        {'Q', packet_set},
         {'s', packet_step},        
-        /*{'S', packet_step_signal}, hard(er) to implement */
         {'T', packet_thread_alive},
         {'v', packet_verbose},
+        {'z', packet_delete_breakpoint},
+        {'Z', packet_insert_breakpoint},
 };
 
 static BOOL extract_packets(struct gdb_context* gdbctx)
 {
-    char*               end;
-    int                 plen;
-    unsigned char       in_cksum, loc_cksum;
-    char*               ptr;
-    enum packet_return  ret = packet_error;
-    int                 num_packet = 0;
+    char *ptr, *sum = gdbctx->in_buf, *end = gdbctx->in_buf + gdbctx->in_len;
+    enum packet_return ret = packet_error;
+    unsigned int cksum;
+    int i, len;
 
-    while ((ret & packet_last_f) == 0)
+    /* ptr points to the beginning ('$') of the current packet
+     * sum points to the beginning ('#') of the current packet checksum ("#xx")
+     * len is the length of the current packet data (sum - ptr - 1)
+     * end points to the end of the received data buffer
+     */
+
+    while (!gdbctx->no_ack_mode &&
+           (ptr = memchr(sum, '$', end - sum)) &&
+           (sum = memchr(ptr, '#', end - ptr)) &&
+           (end - sum >= 3) && sscanf(sum, "#%02x", &cksum) == 1)
     {
-        TRACE("Packet: %s\n", debugstr_an(gdbctx->in_buf, gdbctx->in_len));
-        ptr = memchr(gdbctx->in_buf, '$', gdbctx->in_len);
-        if (ptr == NULL) return FALSE;
-        if (ptr != gdbctx->in_buf)
+        len = sum - ptr - 1;
+        sum += 3;
+
+        if (cksum == checksum(ptr + 1, len))
         {
-            int glen = ptr - gdbctx->in_buf; /* garbage len */
-            WARN("Removing garbage: %s\n", debugstr_an(gdbctx->in_buf, glen));
-            gdbctx->in_len -= glen;
-            memmove(gdbctx->in_buf, ptr, gdbctx->in_len);
-        }
-        end = memchr(gdbctx->in_buf + 1, '#', gdbctx->in_len);
-        if (end == NULL) return FALSE;
-        /* no checksum yet */
-        if (end + 3 > gdbctx->in_buf + gdbctx->in_len) return FALSE;
-        plen = end - gdbctx->in_buf - 1;
-        hex_from(&in_cksum, end + 1, 1);
-        loc_cksum = checksum(gdbctx->in_buf + 1, plen);
-        if (loc_cksum == in_cksum)
-        {
-            if (num_packet == 0) {
-                int                 i;
-                
-                ret = packet_error;
-                
-                write(gdbctx->sock, "+", 1);
-                assert(plen);
-                
-                /* FIXME: should use bsearch if packet_entries was sorted */
-                for (i = 0; i < ARRAY_SIZE(packet_entries); i++)
-                {
-                    if (packet_entries[i].key == gdbctx->in_buf[1]) break;
-                }
-                if (i == ARRAY_SIZE(packet_entries))
-                    WARN("Unhandled packet %s\n", debugstr_an(&gdbctx->in_buf[1], plen));
-                else
-                {
-                    gdbctx->in_packet = gdbctx->in_buf + 2;
-                    gdbctx->in_packet_len = plen - 1;
-                    ret = (packet_entries[i].handler)(gdbctx);
-                }
-                switch (ret & ~packet_last_f)
-                {
-                case packet_error:  packet_reply(gdbctx, ""); break;
-                case packet_ok:     packet_reply(gdbctx, "OK"); break;
-                case packet_done:   break;
-                }
-                TRACE("Reply: %s\n", debugstr_an(gdbctx->out_buf, gdbctx->out_len));
-                i = write(gdbctx->sock, gdbctx->out_buf, gdbctx->out_len);
-                assert(i == gdbctx->out_len);
-                /* if this fails, we'll have to use POLLOUT...
-                 */
-                gdbctx->out_len = 0;
-                num_packet++;
-            }
-            else 
-            {
-                /* FIXME: If we have more than one packet in our input buffer,
-                 * it's very likely that we took too long to answer to a given packet
-                 * and gdb is sending us the same packet again.
-                 * So we simply drop the second packet. This will lower the risk of error,
-                 * but there are still some race conditions here.
-                 * A better fix (yet not perfect) would be to have two threads:
-                 * - one managing the packets for gdb
-                 * - the second one managing the commands...
-                 * This would allow us to send the reply with the '+' character (Ack of
-                 * the command) way sooner than we do now.
-                 */
-                ERR("Dropping packet; I was too slow to respond\n");
-            }
+            TRACE("Acking: %s\n", debugstr_an(ptr, sum - ptr));
+            write(gdbctx->sock, "+", 1);
         }
         else
         {
-            write(gdbctx->sock, "+", 1);
-            ERR("Dropping packet; invalid checksum %d <> %d\n", in_cksum, loc_cksum);
+            ERR("Nacking: %s (checksum: %d != %d)\n", debugstr_an(ptr, sum - ptr),
+                cksum, checksum(ptr + 1, len));
+            write(gdbctx->sock, "-", 1);
         }
-        gdbctx->in_len -= plen + 4;
-        memmove(gdbctx->in_buf, end + 3, gdbctx->in_len);
     }
-    return TRUE;
+
+    while ((ret & packet_last_f) == 0 &&
+           (ptr = memchr(gdbctx->in_buf, '$', gdbctx->in_len)) &&
+           (sum = memchr(ptr, '#', end - ptr)) &&
+           (end - sum >= 3) && sscanf(sum, "#%02x", &cksum) == 1)
+    {
+        if (ptr != gdbctx->in_buf)
+            WARN("Ignoring: %s\n", debugstr_an(gdbctx->in_buf, ptr - gdbctx->in_buf));
+
+        len = sum - ptr - 1;
+        sum += 3;
+
+        if (cksum == checksum(ptr + 1, len))
+        {
+            TRACE("Handling: %s\n", debugstr_an(ptr, sum - ptr));
+
+            ret = packet_error;
+            gdbctx->in_packet = ptr + 2;
+            gdbctx->in_packet_len = len - 1;
+            gdbctx->in_packet[gdbctx->in_packet_len] = '\0';
+
+            for (i = 0; i < ARRAY_SIZE(packet_entries); i++)
+                if (packet_entries[i].key == ptr[1])
+                    break;
+
+            if (i == ARRAY_SIZE(packet_entries))
+                WARN("Unhandled: %s\n", debugstr_an(ptr + 1, len));
+            else if (((ret = (packet_entries[i].handler)(gdbctx)) & ~packet_last_f) == packet_error)
+                WARN("Failed: %s\n", debugstr_an(ptr + 1, len));
+
+            switch (ret & ~packet_last_f)
+            {
+            case packet_error:  packet_reply(gdbctx, ""); break;
+            case packet_ok:     packet_reply(gdbctx, "OK"); break;
+            case packet_done:   break;
+            }
+
+            TRACE("Reply: %s\n", debugstr_an(gdbctx->out_buf, gdbctx->out_len));
+            i = write(gdbctx->sock, gdbctx->out_buf, gdbctx->out_len);
+            assert(i == gdbctx->out_len);
+            gdbctx->out_len = 0;
+        }
+        else
+            WARN("Ignoring: %s (checksum: %d != %d)\n", debugstr_an(ptr, sum - ptr),
+                cksum, checksum(ptr + 1, len));
+
+        gdbctx->in_len = end - sum;
+        memmove(gdbctx->in_buf, sum, end - sum);
+        end = gdbctx->in_buf + gdbctx->in_len;
+    }
+
+    return (ret & packet_last_f);
 }
 
 static int fetch_data(struct gdb_context* gdbctx)
@@ -1848,19 +2077,21 @@ static int fetch_data(struct gdb_context* gdbctx)
         if (gdbctx->in_len + STEP > gdbctx->in_buf_alloc)
             gdbctx->in_buf = packet_realloc(gdbctx->in_buf, gdbctx->in_buf_alloc += STEP);
 #undef STEP
-        len = read(gdbctx->sock, gdbctx->in_buf + gdbctx->in_len, gdbctx->in_buf_alloc - gdbctx->in_len);
+        len = read(gdbctx->sock, gdbctx->in_buf + gdbctx->in_len, gdbctx->in_buf_alloc - gdbctx->in_len - 1);
         if (len <= 0) break;
         gdbctx->in_len += len;
         assert(gdbctx->in_len <= gdbctx->in_buf_alloc);
         if (len < gdbctx->in_buf_alloc - gdbctx->in_len) break;
     }
+
+    gdbctx->in_buf[gdbctx->in_len] = '\0';
     return gdbctx->in_len - in_len;
 }
 
 #define FLAG_NO_START   1
 #define FLAG_WITH_XTERM 2
 
-static BOOL gdb_exec(const char* wine_path, unsigned port, unsigned flags)
+static BOOL gdb_exec(unsigned port, unsigned flags)
 {
     char            buf[MAX_PATH];
     int             fd;
@@ -1874,7 +2105,6 @@ static BOOL gdb_exec(const char* wine_path, unsigned port, unsigned flags)
     fd = mkstemps(buf, 0);
     if (fd == -1) return FALSE;
     if ((f = fdopen(fd, "w+")) == NULL) return FALSE;
-    fprintf(f, "file \"%s\"\n", wine_path);
     fprintf(f, "target remote localhost:%d\n", ntohs(port));
     fprintf(f, "set prompt Wine-gdb>\\ \n");
     /* gdb 5.1 seems to require it, won't hurt anyway */
@@ -1898,13 +2128,12 @@ static BOOL gdb_exec(const char* wine_path, unsigned port, unsigned flags)
     return TRUE;
 }
 
-static BOOL gdb_startup(struct gdb_context* gdbctx, DEBUG_EVENT* de, unsigned flags, unsigned port)
+static BOOL gdb_startup(struct gdb_context* gdbctx, unsigned flags, unsigned port)
 {
     int                 sock;
     struct sockaddr_in  s_addrs = {0};
     socklen_t           s_len = sizeof(s_addrs);
     struct pollfd       pollfd;
-    IMAGEHLP_MODULE64   imh_mod;
     BOOL                ret = FALSE;
 
     /* step 1: create socket for gdb connection request */
@@ -1924,13 +2153,9 @@ static BOOL gdb_startup(struct gdb_context* gdbctx, DEBUG_EVENT* de, unsigned fl
         goto cleanup;
 
     /* step 2: do the process internal creation */
-    handle_debug_event(gdbctx, de);
+    handle_debug_event(gdbctx);
 
-    /* step3: get the wine loader name */
-    if (!dbg_get_debuggee_info(gdbctx->process->handle, &imh_mod))
-        goto cleanup;
-
-    /* step 4: fire up gdb (if requested) */
+    /* step 3: fire up gdb (if requested) */
     if (flags & FLAG_NO_START)
         fprintf(stderr, "target remote localhost:%d\n", ntohs(s_addrs.sin_port));
     else
@@ -1943,12 +2168,12 @@ static BOOL gdb_startup(struct gdb_context* gdbctx, DEBUG_EVENT* de, unsigned fl
             signal(SIGINT, SIG_IGN);
             break;
         case 0: /* in child... and alive */
-            gdb_exec(imh_mod.LoadedImageName, s_addrs.sin_port, flags);
+            gdb_exec(s_addrs.sin_port, flags);
             /* if we're here, exec failed, so report failure */
             goto cleanup;
         }
 
-    /* step 5: wait for gdb to connect actually */
+    /* step 4: wait for gdb to connect actually */
     pollfd.fd = sock;
     pollfd.events = POLLIN;
     pollfd.revents = 0;
@@ -1987,7 +2212,6 @@ cleanup:
 
 static BOOL gdb_init_context(struct gdb_context* gdbctx, unsigned flags, unsigned port)
 {
-    DEBUG_EVENT         de;
     int                 i;
 
     gdbctx->sock = -1;
@@ -1999,31 +2223,28 @@ static BOOL gdb_init_context(struct gdb_context* gdbctx, unsigned flags, unsigne
     gdbctx->out_len = 0;
     gdbctx->out_curr_packet = -1;
 
-    gdbctx->exec_thread = gdbctx->other_thread = NULL;
-    gdbctx->last_sig = 0;
-    gdbctx->in_trap = FALSE;
+    gdbctx->exec_tid = -1;
+    gdbctx->other_tid = -1;
+    list_init(&gdbctx->xpoint_list);
     gdbctx->process = NULL;
+    gdbctx->no_ack_mode = FALSE;
     for (i = 0; i < ARRAY_SIZE(gdbctx->wine_segs); i++)
         gdbctx->wine_segs[i] = 0;
 
     /* wait for first trap */
-    while (WaitForDebugEvent(&de, INFINITE))
+    while (WaitForDebugEvent(&gdbctx->de, INFINITE))
     {
-        if (de.dwDebugEventCode == CREATE_PROCESS_DEBUG_EVENT)
+        if (gdbctx->de.dwDebugEventCode == CREATE_PROCESS_DEBUG_EVENT)
         {
             /* this should be the first event we get,
              * and the only one of this type  */
-            assert(gdbctx->process == NULL && de.dwProcessId == dbg_curr_pid);
+            assert(gdbctx->process == NULL && gdbctx->de.dwProcessId == dbg_curr_pid);
             /* gdbctx->dwProcessId = pid; */
-            if (!gdb_startup(gdbctx, &de, flags, port)) return FALSE;
-            assert(!gdbctx->in_trap);
+            if (!gdb_startup(gdbctx, flags, port)) return FALSE;
         }
-        else
-        {
-            handle_debug_event(gdbctx, &de);
-            if (gdbctx->in_trap) break;
-        }
-        ContinueDebugEvent(de.dwProcessId, de.dwThreadId, DBG_CONTINUE);
+        else if (!handle_debug_event(gdbctx))
+            break;
+        ContinueDebugEvent(gdbctx->de.dwProcessId, gdbctx->de.dwThreadId, DBG_CONTINUE);
     }
     return TRUE;
 }

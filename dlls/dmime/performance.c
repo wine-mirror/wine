@@ -535,6 +535,12 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_FreePMsg(IDirectMusicPerforma
   DMUS_ItemRemoveFromQueue( This, pItem );
   LeaveCriticalSection(&This->safe);
 
+  if (pPMSG->pTool)
+    IDirectMusicTool_Release(pPMSG->pTool);
+
+  if (pPMSG->pGraph)
+    IDirectMusicGraph_Release(pPMSG->pGraph);
+
   if (pPMSG->punkUser)
     IUnknown_Release(pPMSG->punkUser);
 
@@ -543,18 +549,21 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_FreePMsg(IDirectMusicPerforma
 }
 
 static HRESULT WINAPI IDirectMusicPerformance8Impl_GetGraph(IDirectMusicPerformance8 *iface,
-        IDirectMusicGraph **ppGraph)
+        IDirectMusicGraph **graph)
 {
-  IDirectMusicPerformance8Impl *This = impl_from_IDirectMusicPerformance8(iface);
+    IDirectMusicPerformance8Impl *This = impl_from_IDirectMusicPerformance8(iface);
 
-  FIXME("(%p, %p): to check\n", This, ppGraph);
-  if (NULL != This->pToolGraph) {
-    *ppGraph = This->pToolGraph;
-    IDirectMusicGraph_AddRef(*ppGraph);
-  } else {
-    return E_FAIL;
-  }
-  return S_OK;
+    TRACE("(%p, %p)\n", This, graph);
+
+    if (!graph)
+        return E_POINTER;
+
+    *graph = This->pToolGraph;
+    if (This->pToolGraph) {
+        IDirectMusicGraph_AddRef(*graph);
+    }
+
+    return *graph ? S_OK : DMUS_E_NOT_FOUND;
 }
 
 static HRESULT WINAPI IDirectMusicPerformance8Impl_SetGraph(IDirectMusicPerformance8 *iface,

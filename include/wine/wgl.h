@@ -12,12 +12,12 @@ typedef unsigned char GLboolean;
 typedef unsigned int GLbitfield;
 typedef void GLvoid;
 typedef signed char GLbyte;
-typedef short GLshort;
-typedef int GLint;
-typedef int GLclampx;
 typedef unsigned char GLubyte;
+typedef short GLshort;
 typedef unsigned short GLushort;
+typedef int GLint;
 typedef unsigned int GLuint;
+typedef int GLclampx;
 typedef int GLsizei;
 typedef float GLfloat;
 typedef float GLclampf;
@@ -27,16 +27,16 @@ typedef void *GLeglClientBufferEXT;
 typedef void *GLeglImageOES;
 typedef char GLchar;
 typedef char GLcharARB;
-typedef unsigned short GLhalfARB;
 typedef unsigned short GLhalf;
-typedef GLint GLfixed;
+typedef unsigned short GLhalfARB;
+typedef int GLfixed;
 typedef INT_PTR GLintptr;
-typedef INT_PTR GLsizeiptr;
-typedef INT64 GLint64;
-typedef UINT64 GLuint64;
 typedef INT_PTR GLintptrARB;
+typedef INT_PTR GLsizeiptr;
 typedef INT_PTR GLsizeiptrARB;
+typedef INT64 GLint64;
 typedef INT64 GLint64EXT;
+typedef UINT64 GLuint64;
 typedef UINT64 GLuint64EXT;
 typedef struct __GLsync *GLsync;
 struct _cl_context;
@@ -1497,6 +1497,7 @@ typedef unsigned int GLhandleARB;
 #define GL_FRAMEBUFFER_DEFAULT_SAMPLES                                0x9313
 #define GL_FRAMEBUFFER_DEFAULT_WIDTH                                  0x9310
 #define GL_FRAMEBUFFER_EXT                                            0x8D40
+#define GL_FRAMEBUFFER_FLIP_Y_MESA                                    0x8BBB
 #define GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT                          0x8CD6
 #define GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT_EXT                      0x8CD6
 #define GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS_EXT                      0x8CD9
@@ -3994,6 +3995,7 @@ typedef unsigned int GLhandleARB;
 #define GL_SPRITE_SGIX                                                0x8148
 #define GL_SPRITE_TRANSLATION_SGIX                                    0x814B
 #define GL_SQUARE_NV                                                  0x90A3
+#define GL_SR8_EXT                                                    0x8FBD
 #define GL_SRC0_ALPHA                                                 0x8588
 #define GL_SRC0_RGB                                                   0x8580
 #define GL_SRC1_ALPHA                                                 0x8589
@@ -4092,6 +4094,19 @@ typedef unsigned int GLhandleARB;
 #define GL_STRICT_DEPTHFUNC_HINT_PGI                                  0x1A216
 #define GL_STRICT_LIGHTING_HINT_PGI                                   0x1A217
 #define GL_STRICT_SCISSOR_HINT_PGI                                    0x1A218
+#define GL_SUBGROUP_FEATURE_ARITHMETIC_BIT_KHR                        0x00000004
+#define GL_SUBGROUP_FEATURE_BALLOT_BIT_KHR                            0x00000008
+#define GL_SUBGROUP_FEATURE_BASIC_BIT_KHR                             0x00000001
+#define GL_SUBGROUP_FEATURE_CLUSTERED_BIT_KHR                         0x00000040
+#define GL_SUBGROUP_FEATURE_PARTITIONED_BIT_NV                        0x00000100
+#define GL_SUBGROUP_FEATURE_QUAD_BIT_KHR                              0x00000080
+#define GL_SUBGROUP_FEATURE_SHUFFLE_BIT_KHR                           0x00000010
+#define GL_SUBGROUP_FEATURE_SHUFFLE_RELATIVE_BIT_KHR                  0x00000020
+#define GL_SUBGROUP_FEATURE_VOTE_BIT_KHR                              0x00000002
+#define GL_SUBGROUP_QUAD_ALL_STAGES_KHR                               0x9535
+#define GL_SUBGROUP_SIZE_KHR                                          0x9532
+#define GL_SUBGROUP_SUPPORTED_FEATURES_KHR                            0x9534
+#define GL_SUBGROUP_SUPPORTED_STAGES_KHR                              0x9533
 #define GL_SUBPIXEL_BITS                                              0x0D50
 #define GL_SUBPIXEL_PRECISION_BIAS_X_BITS_NV                          0x9347
 #define GL_SUBPIXEL_PRECISION_BIAS_Y_BITS_NV                          0x9348
@@ -4779,6 +4794,7 @@ typedef unsigned int GLhandleARB;
 #define GL_UNSIGNED_SHORT_8_8_MESA                                    0x85BA
 #define GL_UNSIGNED_SHORT_8_8_REV_APPLE                               0x85BB
 #define GL_UNSIGNED_SHORT_8_8_REV_MESA                                0x85BB
+#define GL_UPLOAD_GPU_MASK_NVX                                        0x954A
 #define GL_UPPER_LEFT                                                 0x8CA2
 #define GL_USE_MISSING_GLYPH_NV                                       0x90AA
 #define GL_UTF16_NV                                                   0x909B
@@ -4995,8 +5011,27 @@ typedef unsigned int GLhandleARB;
 #define GL_VIEW_CLASS_64_BITS                                         0x82C6
 #define GL_VIEW_CLASS_8_BITS                                          0x82CB
 #define GL_VIEW_CLASS_96_BITS                                         0x82C5
+#define GL_VIEW_CLASS_ASTC_10x10_RGBA                                 0x9393
+#define GL_VIEW_CLASS_ASTC_10x5_RGBA                                  0x9390
+#define GL_VIEW_CLASS_ASTC_10x6_RGBA                                  0x9391
+#define GL_VIEW_CLASS_ASTC_10x8_RGBA                                  0x9392
+#define GL_VIEW_CLASS_ASTC_12x10_RGBA                                 0x9394
+#define GL_VIEW_CLASS_ASTC_12x12_RGBA                                 0x9395
+#define GL_VIEW_CLASS_ASTC_4x4_RGBA                                   0x9388
+#define GL_VIEW_CLASS_ASTC_5x4_RGBA                                   0x9389
+#define GL_VIEW_CLASS_ASTC_5x5_RGBA                                   0x938A
+#define GL_VIEW_CLASS_ASTC_6x5_RGBA                                   0x938B
+#define GL_VIEW_CLASS_ASTC_6x6_RGBA                                   0x938C
+#define GL_VIEW_CLASS_ASTC_8x5_RGBA                                   0x938D
+#define GL_VIEW_CLASS_ASTC_8x6_RGBA                                   0x938E
+#define GL_VIEW_CLASS_ASTC_8x8_RGBA                                   0x938F
 #define GL_VIEW_CLASS_BPTC_FLOAT                                      0x82D3
 #define GL_VIEW_CLASS_BPTC_UNORM                                      0x82D2
+#define GL_VIEW_CLASS_EAC_R11                                         0x9383
+#define GL_VIEW_CLASS_EAC_RG11                                        0x9384
+#define GL_VIEW_CLASS_ETC2_EAC_RGBA                                   0x9387
+#define GL_VIEW_CLASS_ETC2_RGB                                        0x9385
+#define GL_VIEW_CLASS_ETC2_RGBA                                       0x9386
 #define GL_VIEW_CLASS_RGTC1_RED                                       0x82D0
 #define GL_VIEW_CLASS_RGTC2_RG                                        0x82D1
 #define GL_VIEW_CLASS_S3TC_DXT1_RGB                                   0x82CC

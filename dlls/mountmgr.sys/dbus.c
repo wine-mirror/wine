@@ -44,7 +44,6 @@
 #include "ip2string.h"
 #include "dhcpcsdk.h"
 
-#include "wine/library.h"
 #include "wine/exception.h"
 #include "wine/debug.h"
 
@@ -116,20 +115,19 @@ HAL_FUNCS;
 static BOOL load_hal_functions(void)
 {
     void *hal_handle;
-    char error[128];
 
     /* Load libhal with RTLD_GLOBAL so that the dbus symbols are available.
      * We can't load libdbus directly since libhal may have been built against a
      * different version but with the same soname. Binary compatibility is for wimps. */
 
-    if (!(hal_handle = wine_dlopen(SONAME_LIBHAL, RTLD_NOW|RTLD_GLOBAL, error, sizeof(error))))
+    if (!(hal_handle = dlopen( SONAME_LIBHAL, RTLD_NOW | RTLD_GLOBAL )))
         goto failed;
 
-#define DO_FUNC(f) if (!(p_##f = wine_dlsym( RTLD_DEFAULT, #f, error, sizeof(error) ))) goto failed
+#define DO_FUNC(f) if (!(p_##f = dlsym( RTLD_DEFAULT, #f ))) goto failed
     DBUS_FUNCS;
 #undef DO_FUNC
 
-#define DO_FUNC(f) if (!(p_##f = wine_dlsym( hal_handle, #f, error, sizeof(error) ))) goto failed
+#define DO_FUNC(f) if (!(p_##f = dlsym( hal_handle, #f ))) goto failed
     HAL_FUNCS;
 #undef DO_FUNC
 
@@ -137,7 +135,7 @@ static BOOL load_hal_functions(void)
     return TRUE;
 
 failed:
-    WARN( "failed to load HAL support: %s\n", error );
+    WARN( "failed to load HAL support: %s\n", dlerror() );
     return FALSE;
 }
 
@@ -185,18 +183,17 @@ static GUID *parse_uuid( GUID *guid, const char *str )
 static BOOL load_dbus_functions(void)
 {
     void *handle;
-    char error[128];
 
-    if (!(handle = wine_dlopen(SONAME_LIBDBUS_1, RTLD_NOW, error, sizeof(error))))
+    if (!(handle = dlopen( SONAME_LIBDBUS_1, RTLD_NOW )))
         goto failed;
 
-#define DO_FUNC(f) if (!(p_##f = wine_dlsym( handle, #f, error, sizeof(error) ))) goto failed
+#define DO_FUNC(f) if (!(p_##f = dlsym( handle, #f ))) goto failed
     DBUS_FUNCS;
 #undef DO_FUNC
     return TRUE;
 
 failed:
-    WARN( "failed to load DBUS support: %s\n", error );
+    WARN( "failed to load DBUS support: %s\n", dlerror() );
     return FALSE;
 }
 
@@ -320,7 +317,7 @@ static void udisks_new_device( const char *udi )
     if (device)
     {
         if (removable) add_dos_device( -1, udi, device, mount_point, drive_type, guid_ptr, NULL );
-        else if (guid_ptr) add_volume( udi, device, mount_point, DEVICE_HARDDISK_VOL, guid_ptr );
+        else if (guid_ptr) add_volume( udi, device, mount_point, DEVICE_HARDDISK_VOL, guid_ptr, NULL );
     }
 
     p_dbus_message_unref( reply );
@@ -388,7 +385,7 @@ static const char *udisks2_string_from_array( DBusMessageIter *iter )
 
 /* find the drive entry in the dictionary and get its parameters */
 static void udisks2_get_drive_info( const char *drive_name, DBusMessageIter *dict,
-                                    enum device_type *drive_type, int *removable )
+                                    enum device_type *drive_type, int *removable, const char **serial )
 {
     DBusMessageIter iter, drive, variant;
     const char *name;
@@ -406,6 +403,8 @@ static void udisks2_get_drive_info( const char *drive_name, DBusMessageIter *dic
                     p_dbus_message_iter_get_basic( &variant, removable );
                 else if (!strcmp( name, "MediaCompatibility" ))
                     *drive_type = udisks_parse_media_compatibility( &variant );
+                else if (!strcmp( name, "Id" ))
+                    p_dbus_message_iter_get_basic( &variant, serial );
             }
         }
     }
@@ -418,6 +417,7 @@ static void udisks2_add_device( const char *udi, DBusMessageIter *dict, DBusMess
     const char *mount_point = NULL;
     const char *type = NULL;
     const char *drive = NULL;
+    const char *id = NULL;
     GUID guid, *guid_ptr = NULL;
     const char *iface, *name;
     int removable = FALSE;
@@ -451,7 +451,7 @@ static void udisks2_add_device( const char *udi, DBusMessageIter *dict, DBusMess
                 else if (!strcmp( name, "Drive" ))
                 {
                     p_dbus_message_iter_get_basic( &variant, &drive );
-                    udisks2_get_drive_info( drive, dict, &drive_type, &removable );
+                    udisks2_get_drive_info( drive, dict, &drive_type, &removable, &id );
                 }
                 else if (!strcmp( name, "IdUUID" ))
                 {
@@ -486,7 +486,7 @@ static void udisks2_add_device( const char *udi, DBusMessageIter *dict, DBusMess
     if (device)
     {
         if (removable) add_dos_device( -1, udi, device, mount_point, drive_type, guid_ptr, NULL );
-        else if (guid_ptr) add_volume( udi, device, mount_point, DEVICE_HARDDISK_VOL, guid_ptr );
+        else if (guid_ptr) add_volume( udi, device, mount_point, DEVICE_HARDDISK_VOL, guid_ptr, id );
     }
 }
 
@@ -802,7 +802,7 @@ static void hal_new_device( LibHalContext *ctx, const char *udi )
         /* add property watch for mount point */
         p_libhal_device_add_property_watch( ctx, udi, &error );
     }
-    else if (guid_ptr) add_volume( udi, device, mount_point, DEVICE_HARDDISK_VOL, guid_ptr );
+    else if (guid_ptr) add_volume( udi, device, mount_point, DEVICE_HARDDISK_VOL, guid_ptr, NULL );
 
 done:
     if (type) p_libhal_free_string( type );

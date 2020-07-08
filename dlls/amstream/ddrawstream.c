@@ -125,18 +125,18 @@ static ULONG WINAPI ddraw_IAMMediaStream_Release(IAMMediaStream *iface)
 
 /*** IMediaStream methods ***/
 static HRESULT WINAPI ddraw_IAMMediaStream_GetMultiMediaStream(IAMMediaStream *iface,
-        IMultiMediaStream** multi_media_stream)
+        IMultiMediaStream **mmstream)
 {
-    struct ddraw_stream *This = impl_from_IAMMediaStream(iface);
+    struct ddraw_stream *stream = impl_from_IAMMediaStream(iface);
 
-    TRACE("(%p/%p)->(%p)\n", This, iface, multi_media_stream);
+    TRACE("stream %p, mmstream %p.\n", stream, mmstream);
 
-    if (!multi_media_stream)
+    if (!mmstream)
         return E_POINTER;
 
-    IMultiMediaStream_AddRef(This->parent);
-    *multi_media_stream = This->parent;
-
+    if (stream->parent)
+        IMultiMediaStream_AddRef(stream->parent);
+    *mmstream = stream->parent;
     return S_OK;
 }
 
@@ -198,11 +198,26 @@ static HRESULT WINAPI ddraw_IAMMediaStream_SendEndOfStream(IAMMediaStream *iface
 static HRESULT WINAPI ddraw_IAMMediaStream_Initialize(IAMMediaStream *iface, IUnknown *source_object, DWORD flags,
                                                     REFMSPID purpose_id, const STREAM_TYPE stream_type)
 {
-    struct ddraw_stream *This = impl_from_IAMMediaStream(iface);
+    struct ddraw_stream *stream = impl_from_IAMMediaStream(iface);
+    HRESULT hr;
 
-    FIXME("(%p/%p)->(%p,%x,%p,%u) stub!\n", This, iface, source_object, flags, purpose_id, stream_type);
+    TRACE("stream %p, source_object %p, flags %x, purpose_id %s, stream_type %u.\n", stream, source_object, flags,
+            debugstr_guid(purpose_id), stream_type);
 
-    return S_FALSE;
+    if (!purpose_id)
+        return E_POINTER;
+
+    if (flags & AMMSF_CREATEPEER)
+        FIXME("AMMSF_CREATEPEER is not yet supported.\n");
+
+    stream->purpose_id = *purpose_id;
+    stream->stream_type = stream_type;
+
+    if (source_object
+            && FAILED(hr = IUnknown_QueryInterface(source_object, &IID_IDirectDraw7, (void **)&stream->ddraw)))
+        FIXME("Stream object doesn't implement IDirectDraw7 interface, hr %#x.\n", hr);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ddraw_IAMMediaStream_SetState(IAMMediaStream *iface, FILTER_STATE state)
@@ -214,13 +229,15 @@ static HRESULT WINAPI ddraw_IAMMediaStream_SetState(IAMMediaStream *iface, FILTE
     return S_FALSE;
 }
 
-static HRESULT WINAPI ddraw_IAMMediaStream_JoinAMMultiMediaStream(IAMMediaStream *iface, IAMMultiMediaStream *am_multi_media_stream)
+static HRESULT WINAPI ddraw_IAMMediaStream_JoinAMMultiMediaStream(IAMMediaStream *iface, IAMMultiMediaStream *mmstream)
 {
-    struct ddraw_stream *This = impl_from_IAMMediaStream(iface);
+    struct ddraw_stream *stream = impl_from_IAMMediaStream(iface);
 
-    FIXME("(%p/%p)->(%p) stub!\n", This, iface, am_multi_media_stream);
+    TRACE("stream %p, mmstream %p.\n", stream, mmstream);
 
-    return S_FALSE;
+    stream->parent = (IMultiMediaStream *)mmstream;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ddraw_IAMMediaStream_JoinFilter(IAMMediaStream *iface, IMediaStreamFilter *filter)
@@ -292,76 +309,45 @@ static ULONG WINAPI ddraw_IDirectDrawMediaStream_Release(IDirectDrawMediaStream 
     return IAMMediaStream_Release(&This->IAMMediaStream_iface);
 }
 
-/*** IMediaStream methods ***/
 static HRESULT WINAPI ddraw_IDirectDrawMediaStream_GetMultiMediaStream(IDirectDrawMediaStream *iface,
-        IMultiMediaStream **multi_media_stream)
+        IMultiMediaStream **mmstream)
 {
-    struct ddraw_stream *This = impl_from_IDirectDrawMediaStream(iface);
-
-    TRACE("(%p/%p)->(%p)\n", This, iface, multi_media_stream);
-
-    if (!multi_media_stream)
-        return E_POINTER;
-
-    IMultiMediaStream_AddRef(This->parent);
-    *multi_media_stream = This->parent;
-
-    return S_OK;
+    struct ddraw_stream *stream = impl_from_IDirectDrawMediaStream(iface);
+    return IAMMediaStream_GetMultiMediaStream(&stream->IAMMediaStream_iface, mmstream);
 }
 
 static HRESULT WINAPI ddraw_IDirectDrawMediaStream_GetInformation(IDirectDrawMediaStream *iface,
         MSPID *purpose_id, STREAM_TYPE *type)
 {
-    struct ddraw_stream *This = impl_from_IDirectDrawMediaStream(iface);
-
-    TRACE("(%p/%p)->(%p,%p)\n", This, iface, purpose_id, type);
-
-    if (purpose_id)
-        *purpose_id = This->purpose_id;
-    if (type)
-        *type = This->stream_type;
-
-    return S_OK;
+    struct ddraw_stream *stream = impl_from_IDirectDrawMediaStream(iface);
+    return IAMMediaStream_GetInformation(&stream->IAMMediaStream_iface, purpose_id, type);
 }
 
 static HRESULT WINAPI ddraw_IDirectDrawMediaStream_SetSameFormat(IDirectDrawMediaStream *iface,
-        IMediaStream *pStreamThatHasDesiredFormat, DWORD dwFlags)
+        IMediaStream *other, DWORD flags)
 {
-    struct ddraw_stream *This = impl_from_IDirectDrawMediaStream(iface);
-
-    FIXME("(%p/%p)->(%p,%x) stub!\n", This, iface, pStreamThatHasDesiredFormat, dwFlags);
-
-    return S_FALSE;
+    struct ddraw_stream *stream = impl_from_IDirectDrawMediaStream(iface);
+    return IAMMediaStream_SetSameFormat(&stream->IAMMediaStream_iface, other, flags);
 }
 
 static HRESULT WINAPI ddraw_IDirectDrawMediaStream_AllocateSample(IDirectDrawMediaStream *iface,
-        DWORD dwFlags, IStreamSample **ppSample)
+        DWORD flags, IStreamSample **sample)
 {
-    struct ddraw_stream *This = impl_from_IDirectDrawMediaStream(iface);
-
-    FIXME("(%p/%p)->(%x,%p) stub!\n", This, iface, dwFlags, ppSample);
-
-    return S_FALSE;
+    struct ddraw_stream *stream = impl_from_IDirectDrawMediaStream(iface);
+    return IAMMediaStream_AllocateSample(&stream->IAMMediaStream_iface, flags, sample);
 }
 
 static HRESULT WINAPI ddraw_IDirectDrawMediaStream_CreateSharedSample(IDirectDrawMediaStream *iface,
-        IStreamSample *pExistingSample, DWORD dwFlags, IStreamSample **ppSample)
+        IStreamSample *existing_sample, DWORD flags, IStreamSample **sample)
 {
-    struct ddraw_stream *This = impl_from_IDirectDrawMediaStream(iface);
-
-    FIXME("(%p/%p)->(%p,%x,%p) stub!\n", This, iface, pExistingSample, dwFlags, ppSample);
-
-    return S_FALSE;
+    struct ddraw_stream *stream = impl_from_IDirectDrawMediaStream(iface);
+    return IAMMediaStream_CreateSharedSample(&stream->IAMMediaStream_iface, existing_sample, flags, sample);
 }
 
-static HRESULT WINAPI ddraw_IDirectDrawMediaStream_SendEndOfStream(IDirectDrawMediaStream *iface,
-        DWORD dwFlags)
+static HRESULT WINAPI ddraw_IDirectDrawMediaStream_SendEndOfStream(IDirectDrawMediaStream *iface, DWORD flags)
 {
-    struct ddraw_stream *This = impl_from_IDirectDrawMediaStream(iface);
-
-    FIXME("(%p/%p)->(%x) stub!\n", This, iface, dwFlags);
-
-    return S_FALSE;
+    struct ddraw_stream *stream = impl_from_IDirectDrawMediaStream(iface);
+    return IAMMediaStream_SendEndOfStream(&stream->IAMMediaStream_iface, flags);
 }
 
 /*** IDirectDrawMediaStream methods ***/
@@ -390,6 +376,9 @@ static HRESULT WINAPI ddraw_IDirectDrawMediaStream_GetDirectDraw(IDirectDrawMedi
     struct ddraw_stream *This = impl_from_IDirectDrawMediaStream(iface);
 
     TRACE("(%p)->(%p)\n", iface, ddraw);
+
+    if (!ddraw)
+        return E_POINTER;
 
     *ddraw = NULL;
     if (!This->ddraw)
@@ -940,13 +929,12 @@ static const IMemInputPinVtbl ddraw_meminput_vtbl =
     ddraw_meminput_ReceiveCanBlock,
 };
 
-HRESULT ddraw_stream_create(IMultiMediaStream *parent, const MSPID *purpose_id,
-        IUnknown *stream_object, STREAM_TYPE stream_type, IAMMediaStream **media_stream)
+HRESULT ddraw_stream_create(IUnknown *outer, void **out)
 {
     struct ddraw_stream *object;
-    HRESULT hr;
 
-    TRACE("(%p,%s,%p,%p)\n", parent, debugstr_guid(purpose_id), stream_object, media_stream);
+    if (outer)
+        return CLASS_E_NOAGGREGATION;
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
@@ -960,34 +948,29 @@ HRESULT ddraw_stream_create(IMultiMediaStream *parent, const MSPID *purpose_id,
 
     InitializeCriticalSection(&object->cs);
 
-    object->parent = parent;
-    object->purpose_id = *purpose_id;
-    object->stream_type = stream_type;
+    TRACE("Created ddraw stream %p.\n", object);
 
-    if (stream_object
-            && FAILED(hr = IUnknown_QueryInterface(stream_object, &IID_IDirectDraw7, (void **)&object->ddraw)))
-        FIXME("Stream object doesn't implement IDirectDraw7 interface, hr %#x.\n", hr);
-
-    *media_stream = &object->IAMMediaStream_iface;
+    *out = &object->IAMMediaStream_iface;
 
     return S_OK;
 }
 
-typedef struct {
+struct ddraw_sample
+{
     IDirectDrawStreamSample IDirectDrawStreamSample_iface;
     LONG ref;
     IMediaStream *parent;
     IDirectDrawSurface *surface;
     RECT rect;
-} IDirectDrawStreamSampleImpl;
+};
 
-static inline IDirectDrawStreamSampleImpl *impl_from_IDirectDrawStreamSample(IDirectDrawStreamSample *iface)
+static inline struct ddraw_sample *impl_from_IDirectDrawStreamSample(IDirectDrawStreamSample *iface)
 {
-    return CONTAINING_RECORD(iface, IDirectDrawStreamSampleImpl, IDirectDrawStreamSample_iface);
+    return CONTAINING_RECORD(iface, struct ddraw_sample, IDirectDrawStreamSample_iface);
 }
 
 /*** IUnknown methods ***/
-static HRESULT WINAPI IDirectDrawStreamSampleImpl_QueryInterface(IDirectDrawStreamSample *iface,
+static HRESULT WINAPI ddraw_sample_QueryInterface(IDirectDrawStreamSample *iface,
         REFIID riid, void **ret_iface)
 {
     TRACE("(%p)->(%s,%p)\n", iface, debugstr_guid(riid), ret_iface);
@@ -1007,43 +990,43 @@ static HRESULT WINAPI IDirectDrawStreamSampleImpl_QueryInterface(IDirectDrawStre
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI IDirectDrawStreamSampleImpl_AddRef(IDirectDrawStreamSample *iface)
+static ULONG WINAPI ddraw_sample_AddRef(IDirectDrawStreamSample *iface)
 {
-    IDirectDrawStreamSampleImpl *This = impl_from_IDirectDrawStreamSample(iface);
-    ULONG ref = InterlockedIncrement(&This->ref);
+    struct ddraw_sample *sample = impl_from_IDirectDrawStreamSample(iface);
+    ULONG ref = InterlockedIncrement(&sample->ref);
 
     TRACE("(%p)->(): new ref = %u\n", iface, ref);
 
     return ref;
 }
 
-static ULONG WINAPI IDirectDrawStreamSampleImpl_Release(IDirectDrawStreamSample *iface)
+static ULONG WINAPI ddraw_sample_Release(IDirectDrawStreamSample *iface)
 {
-    IDirectDrawStreamSampleImpl *This = impl_from_IDirectDrawStreamSample(iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
+    struct ddraw_sample *sample = impl_from_IDirectDrawStreamSample(iface);
+    ULONG ref = InterlockedDecrement(&sample->ref);
 
     TRACE("(%p)->(): new ref = %u\n", iface, ref);
 
     if (!ref)
     {
-        if (This->surface)
-            IDirectDrawSurface_Release(This->surface);
-        IMediaStream_Release(This->parent);
-        HeapFree(GetProcessHeap(), 0, This);
+        if (sample->surface)
+            IDirectDrawSurface_Release(sample->surface);
+        IMediaStream_Release(sample->parent);
+        HeapFree(GetProcessHeap(), 0, sample);
     }
 
     return ref;
 }
 
 /*** IStreamSample methods ***/
-static HRESULT WINAPI IDirectDrawStreamSampleImpl_GetMediaStream(IDirectDrawStreamSample *iface, IMediaStream **media_stream)
+static HRESULT WINAPI ddraw_sample_GetMediaStream(IDirectDrawStreamSample *iface, IMediaStream **media_stream)
 {
     FIXME("(%p)->(%p): stub\n", iface, media_stream);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirectDrawStreamSampleImpl_GetSampleTimes(IDirectDrawStreamSample *iface, STREAM_TIME *start_time,
+static HRESULT WINAPI ddraw_sample_GetSampleTimes(IDirectDrawStreamSample *iface, STREAM_TIME *start_time,
                                                                  STREAM_TIME *end_time, STREAM_TIME *current_time)
 {
     FIXME("(%p)->(%p,%p,%p): stub\n", iface, start_time, end_time, current_time);
@@ -1051,7 +1034,7 @@ static HRESULT WINAPI IDirectDrawStreamSampleImpl_GetSampleTimes(IDirectDrawStre
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirectDrawStreamSampleImpl_SetSampleTimes(IDirectDrawStreamSample *iface, const STREAM_TIME *start_time,
+static HRESULT WINAPI ddraw_sample_SetSampleTimes(IDirectDrawStreamSample *iface, const STREAM_TIME *start_time,
                                                                  const STREAM_TIME *end_time)
 {
     FIXME("(%p)->(%p,%p): stub\n", iface, start_time, end_time);
@@ -1059,7 +1042,7 @@ static HRESULT WINAPI IDirectDrawStreamSampleImpl_SetSampleTimes(IDirectDrawStre
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirectDrawStreamSampleImpl_Update(IDirectDrawStreamSample *iface, DWORD flags, HANDLE event,
+static HRESULT WINAPI ddraw_sample_Update(IDirectDrawStreamSample *iface, DWORD flags, HANDLE event,
                                                          PAPCFUNC func_APC, DWORD APC_data)
 {
     FIXME("(%p)->(%x,%p,%p,%u): stub\n", iface, flags, event, func_APC, APC_data);
@@ -1067,7 +1050,7 @@ static HRESULT WINAPI IDirectDrawStreamSampleImpl_Update(IDirectDrawStreamSample
     return S_OK;
 }
 
-static HRESULT WINAPI IDirectDrawStreamSampleImpl_CompletionStatus(IDirectDrawStreamSample *iface, DWORD flags, DWORD milliseconds)
+static HRESULT WINAPI ddraw_sample_CompletionStatus(IDirectDrawStreamSample *iface, DWORD flags, DWORD milliseconds)
 {
     FIXME("(%p)->(%x,%u): stub\n", iface, flags, milliseconds);
 
@@ -1075,27 +1058,27 @@ static HRESULT WINAPI IDirectDrawStreamSampleImpl_CompletionStatus(IDirectDrawSt
 }
 
 /*** IDirectDrawStreamSample methods ***/
-static HRESULT WINAPI IDirectDrawStreamSampleImpl_GetSurface(IDirectDrawStreamSample *iface, IDirectDrawSurface **ddraw_surface,
+static HRESULT WINAPI ddraw_sample_GetSurface(IDirectDrawStreamSample *iface, IDirectDrawSurface **ddraw_surface,
                                                              RECT *rect)
 {
-    IDirectDrawStreamSampleImpl *This = impl_from_IDirectDrawStreamSample(iface);
+    struct ddraw_sample *sample = impl_from_IDirectDrawStreamSample(iface);
 
     TRACE("(%p)->(%p,%p)\n", iface, ddraw_surface, rect);
 
     if (ddraw_surface)
     {
-        *ddraw_surface = This->surface;
+        *ddraw_surface = sample->surface;
         if (*ddraw_surface)
             IDirectDrawSurface_AddRef(*ddraw_surface);
     }
 
     if (rect)
-        *rect = This->rect;
+        *rect = sample->rect;
 
     return S_OK;
 }
 
-static HRESULT WINAPI IDirectDrawStreamSampleImpl_SetRect(IDirectDrawStreamSample *iface, const RECT *rect)
+static HRESULT WINAPI ddraw_sample_SetRect(IDirectDrawStreamSample *iface, const RECT *rect)
 {
     FIXME("(%p)->(%p): stub\n", iface, rect);
 
@@ -1105,24 +1088,24 @@ static HRESULT WINAPI IDirectDrawStreamSampleImpl_SetRect(IDirectDrawStreamSampl
 static const struct IDirectDrawStreamSampleVtbl DirectDrawStreamSample_Vtbl =
 {
     /*** IUnknown methods ***/
-    IDirectDrawStreamSampleImpl_QueryInterface,
-    IDirectDrawStreamSampleImpl_AddRef,
-    IDirectDrawStreamSampleImpl_Release,
+    ddraw_sample_QueryInterface,
+    ddraw_sample_AddRef,
+    ddraw_sample_Release,
     /*** IStreamSample methods ***/
-    IDirectDrawStreamSampleImpl_GetMediaStream,
-    IDirectDrawStreamSampleImpl_GetSampleTimes,
-    IDirectDrawStreamSampleImpl_SetSampleTimes,
-    IDirectDrawStreamSampleImpl_Update,
-    IDirectDrawStreamSampleImpl_CompletionStatus,
+    ddraw_sample_GetMediaStream,
+    ddraw_sample_GetSampleTimes,
+    ddraw_sample_SetSampleTimes,
+    ddraw_sample_Update,
+    ddraw_sample_CompletionStatus,
     /*** IDirectDrawStreamSample methods ***/
-    IDirectDrawStreamSampleImpl_GetSurface,
-    IDirectDrawStreamSampleImpl_SetRect
+    ddraw_sample_GetSurface,
+    ddraw_sample_SetRect
 };
 
 static HRESULT ddrawstreamsample_create(IDirectDrawMediaStream *parent, IDirectDrawSurface *surface,
     const RECT *rect, IDirectDrawStreamSample **ddraw_stream_sample)
 {
-    IDirectDrawStreamSampleImpl *object;
+    struct ddraw_sample *object;
     HRESULT hr;
 
     TRACE("(%p)\n", ddraw_stream_sample);

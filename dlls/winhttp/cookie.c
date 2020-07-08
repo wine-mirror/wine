@@ -319,10 +319,11 @@ end:
     return ret;
 }
 
-BOOL add_cookie_headers( struct request *request )
+DWORD add_cookie_headers( struct request *request )
 {
     struct list *domain_cursor;
     struct session *session = request->connect->session;
+    DWORD ret = ERROR_SUCCESS;
 
     EnterCriticalSection( &session->cs );
 
@@ -351,7 +352,7 @@ BOOL add_cookie_headers( struct request *request )
                     if (!(header = heap_alloc( (len + 1) * sizeof(WCHAR) )))
                     {
                         LeaveCriticalSection( &session->cs );
-                        return FALSE;
+                        return ERROR_OUTOFMEMORY;
                     }
 
                     memcpy( header, cookieW, len_cookie * sizeof(WCHAR) );
@@ -363,8 +364,8 @@ BOOL add_cookie_headers( struct request *request )
                     }
 
                     TRACE("%s\n", debugstr_w(header));
-                    add_request_headers( request, header, len,
-                                         WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_COALESCE_WITH_SEMICOLON );
+                    ret = add_request_headers( request, header, len,
+                                               WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_COALESCE_WITH_SEMICOLON );
                     heap_free( header );
                 }
             }
@@ -372,5 +373,5 @@ BOOL add_cookie_headers( struct request *request )
     }
 
     LeaveCriticalSection( &session->cs );
-    return TRUE;
+    return ret;
 }

@@ -158,13 +158,6 @@ static void bidi_classify(const WCHAR *string, UINT8 *chartype, UINT32 count)
         chartype[i] = get_table_entry( bidi_direction_table, string[i] );
 }
 
-WCHAR bidi_get_mirrored_char(WCHAR ch)
-{
-    extern const WCHAR wine_mirror_map[] DECLSPEC_HIDDEN;
-    WCHAR mirror = get_table_entry( wine_mirror_map, ch );
-    return mirror ? mirror : ch;
-}
-
 /* RESOLVE EXPLICIT */
 
 static inline UINT8 get_greater_even_level(UINT8 level)

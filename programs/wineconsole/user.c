@@ -253,7 +253,7 @@ static void	WCUSER_ComputePositions(struct inner_data* data)
     }
 
     SetWindowPos(data->hWnd, 0, 0, 0, r.right - r.left + dx, r.bottom - r.top + dy,
-		 SWP_NOMOVE|SWP_NOZORDER);
+                 SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE);
     WCUSER_ShapeCursor(data, data->curcfg.cursor_size, data->curcfg.cursor_visible, TRUE);
     WCUSER_PosCursor(data);
 }
@@ -1437,7 +1437,7 @@ enum init_return WCUSER_InitBackend(struct inner_data* data)
     RegisterClassW(&wndclass);
 
     data->hWnd = CreateWindowW(wndclass.lpszClassName, NULL,
-                               WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_THICKFRAME|WS_MINIMIZEBOX|WS_HSCROLL|WS_VSCROLL,
+                               WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_THICKFRAME|WS_MINIMIZEBOX|WS_MAXIMIZEBOX|WS_HSCROLL|WS_VSCROLL,
                                CW_USEDEFAULT, CW_USEDEFAULT, 0, 0, 0, 0, wndclass.hInstance, data);
     if (!data->hWnd) return init_not_supported;
 

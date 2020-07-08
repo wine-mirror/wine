@@ -170,6 +170,14 @@
  *    macro is defined in which case we would not be here.
  */
 
+#undef STDMETHOD
+#undef STDMETHOD_
+#undef PURE
+#undef THIS_
+#undef THIS
+#undef DECLARE_INTERFACE
+#undef DECLARE_INTERFACE_
+
 #if defined(__cplusplus) && !defined(CINTERFACE)
 
 #ifdef COM_STDMETHOD_CAN_THROW

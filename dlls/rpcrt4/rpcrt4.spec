@@ -9,7 +9,6 @@
 @ stdcall CStdStubBuffer_Invoke(ptr ptr ptr)
 @ stdcall CStdStubBuffer_IsIIDSupported(ptr ptr)
 @ stdcall CStdStubBuffer_QueryInterface(ptr ptr ptr)
-@ stub CreateServerInterfaceFromStub # wxp
 @ stdcall DceErrorInqTextA (long ptr)
 @ stdcall DceErrorInqTextW (long ptr)
 @ stdcall -private DllRegisterServer()
@@ -115,6 +114,7 @@
 @ stdcall NDRSContextUnmarshall(ptr long)
 @ stdcall NDRSContextUnmarshallEx(ptr ptr long)
 @ stub NDRcopy
+@ varargs -arch=win64 Ndr64AsyncClientCall(ptr long ptr)
 @ stdcall NdrAllocate(ptr long)
 @ varargs NdrAsyncClientCall(ptr ptr)
 @ stdcall NdrAsyncServerCall(ptr)
@@ -128,6 +128,7 @@
 @ stdcall NdrClearOutParameters(ptr ptr ptr)
 @ varargs NdrClientCall2(ptr ptr)
 @ varargs -arch=i386 NdrClientCall(ptr ptr) NdrClientCall2
+@ varargs -arch=win64 NdrClientCall3(ptr long ptr)
 @ stdcall NdrClientContextMarshall(ptr ptr long)
 @ stdcall NdrClientContextUnmarshall(ptr ptr ptr)
 @ stub NdrClientInitialize
@@ -388,7 +389,7 @@
 @ stub RpcFreeAuthorizationContext # wxp
 @ stdcall RpcGetAsyncCallStatus(ptr) RpcAsyncGetCallStatus
 @ stub RpcIfIdVectorFree
-@ stub RpcIfInqId
+@ stdcall RpcIfInqId(ptr ptr)
 @ stdcall RpcImpersonateClient(ptr)
 @ stdcall RpcInitializeAsyncHandle(ptr long) RpcAsyncInitializeHandle
 @ stdcall RpcMgmtEnableIdleCleanup()

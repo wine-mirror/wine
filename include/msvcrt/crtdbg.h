@@ -70,7 +70,9 @@ typedef struct _CrtMemState
 #include <assert.h>
 #define _ASSERT(expr)                   assert(expr)
 #define _ASSERTE(expr)                  assert(expr)
-#if defined(__GNUC__) && defined(__i386__)
+#if defined(_MSC_VER)
+#define _CrtDbgBreak()                  __debugbreak()
+#elif defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
 #define _CrtDbgBreak()                  __asm__ ("\tint $0x3\n")
 #else
 #define _CrtDbgBreak()                  ((void)0)

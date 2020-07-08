@@ -50,40 +50,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(reg);
 #define HKEY_SPECIAL_ROOT_FIRST   HKEY_CLASSES_ROOT
 #define HKEY_SPECIAL_ROOT_LAST    HKEY_DYN_DATA
 
-static const WCHAR name_CLASSES_ROOT[] =
-    {'\\','R','e','g','i','s','t','r','y','\\',
-     'M','a','c','h','i','n','e','\\',
-     'S','o','f','t','w','a','r','e','\\',
-     'C','l','a','s','s','e','s',0};
-static const WCHAR name_LOCAL_MACHINE[] =
-    {'\\','R','e','g','i','s','t','r','y','\\',
-     'M','a','c','h','i','n','e',0};
-static const WCHAR name_USERS[] =
-    {'\\','R','e','g','i','s','t','r','y','\\',
-     'U','s','e','r',0};
-static const WCHAR name_PERFORMANCE_DATA[] =
-    {'\\','R','e','g','i','s','t','r','y','\\',
-     'P','e','r','f','D','a','t','a',0};
-static const WCHAR name_CURRENT_CONFIG[] =
-    {'\\','R','e','g','i','s','t','r','y','\\',
-     'M','a','c','h','i','n','e','\\',
-     'S','y','s','t','e','m','\\',
-     'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
-     'H','a','r','d','w','a','r','e',' ','P','r','o','f','i','l','e','s','\\',
-     'C','u','r','r','e','n','t',0};
-static const WCHAR name_DYN_DATA[] =
-    {'\\','R','e','g','i','s','t','r','y','\\',
-     'D','y','n','D','a','t','a',0};
-
 static const WCHAR * const root_key_names[] =
 {
-    name_CLASSES_ROOT,
+    L"\\Registry\\Machine\\Software\\Classes",
     NULL,         /* HKEY_CURRENT_USER is determined dynamically */
-    name_LOCAL_MACHINE,
-    name_USERS,
-    name_PERFORMANCE_DATA,
-    name_CURRENT_CONFIG,
-    name_DYN_DATA
+    L"\\Registry\\Machine",
+    L"\\Registry\\User",
+    L"\\Registry\\PerfData",
+    L"\\Registry\\Machine\\System\\CurrentControlSet\\Hardware Profiles\\Current",
+    L"\\Registry\\DynData"
 };
 
 static HKEY special_root_keys[ARRAY_SIZE(root_key_names)];
@@ -125,16 +100,12 @@ static inline BOOL is_version_nt(void)
 
 static BOOL is_wow6432node( const UNICODE_STRING *name )
 {
-    static const WCHAR wow6432nodeW[] = {'W','o','w','6','4','3','2','N','o','d','e'};
-
-    return (name->Length == sizeof(wow6432nodeW) &&
-            !wcsnicmp( name->Buffer, wow6432nodeW, ARRAY_SIZE( wow6432nodeW )));
+    return (name->Length == 11 * sizeof(WCHAR) && !wcsnicmp( name->Buffer, L"Wow6432Node", 11 ));
 }
 
 /* open the Wow6432Node subkey of the specified key */
 static HANDLE open_wow6432node( HANDLE key )
 {
-    static const WCHAR wow6432nodeW[] = {'W','o','w','6','4','3','2','N','o','d','e',0};
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
     HANDLE ret;
@@ -145,7 +116,7 @@ static HANDLE open_wow6432node( HANDLE key )
     attr.Attributes = 0;
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
-    RtlInitUnicodeString( &nameW, wow6432nodeW );
+    RtlInitUnicodeString( &nameW, L"Wow6432Node" );
     if (NtOpenKeyEx( &ret, MAXIMUM_ALLOWED, &attr, 0 )) ret = 0;
     return ret;
 }
@@ -162,15 +133,12 @@ static NTSTATUS create_key( HKEY *retkey, ACCESS_MASK access, OBJECT_ATTRIBUTES 
 
     if (status == STATUS_OBJECT_NAME_NOT_FOUND)
     {
-        static const WCHAR registry_root[] = {'\\','R','e','g','i','s','t','r','y','\\'};
         WCHAR *buffer = attr->ObjectName->Buffer;
         DWORD attrs, pos = 0, i = 0, len = attr->ObjectName->Length / sizeof(WCHAR);
         UNICODE_STRING str;
 
         /* don't try to create registry root */
-        if (!attr->RootDirectory && len > ARRAY_SIZE( registry_root ) &&
-            !wcsnicmp( buffer, registry_root, ARRAY_SIZE( registry_root )))
-            i += ARRAY_SIZE( registry_root );
+        if (!attr->RootDirectory && len > 10 && !wcsnicmp( buffer, L"\\Registry\\", 10 )) i += 10;
 
         while (i < len && buffer[i] != '\\') i++;
         if (i == len && !force_wow32) return status;
@@ -511,6 +479,7 @@ LSTATUS WINAPI DECLSPEC_HOTPATCH RegOpenKeyExW( HKEY hkey, LPCWSTR name, DWORD o
     if (HandleToUlong(hkey) == HandleToUlong(HKEY_CLASSES_ROOT) && name && *name == '\\') name++;
 
     if (!retkey) return ERROR_INVALID_PARAMETER;
+    *retkey = NULL;
     if (!(hkey = get_special_root_hkey( hkey, access ))) return ERROR_INVALID_HANDLE;
 
     attr.Length = sizeof(attr);
@@ -1221,11 +1190,6 @@ static void *get_provider_entry(HKEY perf, HMODULE perflib, const char *name)
 
 static BOOL load_provider(HKEY root, const WCHAR *name, struct perf_provider *provider)
 {
-    static const WCHAR object_listW[] = { 'O','b','j','e','c','t',' ','L','i','s','t',0 };
-    static const WCHAR performanceW[] = { 'P','e','r','f','o','r','m','a','n','c','e',0 };
-    static const WCHAR libraryW[] = { 'L','i','b','r','a','r','y',0 };
-    static const WCHAR linkageW[] = { 'L','i','n','k','a','g','e',0 };
-    static const WCHAR exportW[] = { 'E','x','p','o','r','t',0 };
     WCHAR buf[MAX_PATH], buf2[MAX_PATH];
     DWORD err, type, len;
     HKEY service, perf;
@@ -1235,11 +1199,11 @@ static BOOL load_provider(HKEY root, const WCHAR *name, struct perf_provider *pr
         return FALSE;
 
     provider->linkage[0] = 0;
-    err = RegOpenKeyExW(service, linkageW, 0, KEY_READ, &perf);
+    err = RegOpenKeyExW(service, L"Linkage", 0, KEY_READ, &perf);
     if (err == ERROR_SUCCESS)
     {
         len = sizeof(buf) - sizeof(WCHAR);
-        err = RegQueryValueExW(perf, exportW, NULL, &type, (BYTE *)buf, &len);
+        err = RegQueryValueExW(perf, L"Export", NULL, &type, (BYTE *)buf, &len);
         if (err == ERROR_SUCCESS && (type == REG_SZ || type == REG_MULTI_SZ))
         {
             memcpy(provider->linkage, buf, len);
@@ -1249,14 +1213,14 @@ static BOOL load_provider(HKEY root, const WCHAR *name, struct perf_provider *pr
         RegCloseKey(perf);
     }
 
-    err = RegOpenKeyExW(service, performanceW, 0, KEY_READ, &perf);
+    err = RegOpenKeyExW(service, L"Performance", 0, KEY_READ, &perf);
     RegCloseKey(service);
     if (err != ERROR_SUCCESS)
         return FALSE;
 
     provider->objects[0] = 0;
     len = sizeof(buf) - sizeof(WCHAR);
-    err = RegQueryValueExW(perf, object_listW, NULL, &type, (BYTE *)buf, &len);
+    err = RegQueryValueExW(perf, L"Object List", NULL, &type, (BYTE *)buf, &len);
     if (err == ERROR_SUCCESS && (type == REG_SZ || type == REG_MULTI_SZ))
     {
         memcpy(provider->objects, buf, len);
@@ -1265,7 +1229,7 @@ static BOOL load_provider(HKEY root, const WCHAR *name, struct perf_provider *pr
     }
 
     len = sizeof(buf) - sizeof(WCHAR);
-    err = RegQueryValueExW(perf, libraryW, NULL, &type, (BYTE *)buf, &len);
+    err = RegQueryValueExW(perf, L"Library", NULL, &type, (BYTE *)buf, &len);
     if (err != ERROR_SUCCESS || !(type == REG_SZ || type == REG_EXPAND_SZ))
         goto error;
 
@@ -1305,12 +1269,11 @@ error:
 
 static DWORD collect_data(struct perf_provider *provider, const WCHAR *query, void **data, DWORD *size, DWORD *obj_count)
 {
-    static const WCHAR globalW[] = { 'G','l','o','b','a','l',0 };
     WCHAR *linkage = provider->linkage[0] ? provider->linkage : NULL;
     DWORD err;
 
     if (!query || !query[0])
-        query = globalW;
+        query = L"Global";
 
     err = provider->pOpen(linkage);
     if (err != ERROR_SUCCESS)
@@ -1335,9 +1298,6 @@ static DWORD collect_data(struct perf_provider *provider, const WCHAR *query, vo
 
 static DWORD query_perf_data(const WCHAR *query, DWORD *type, void *data, DWORD *ret_size)
 {
-    static const WCHAR SZ_SERVICES_KEY[] = { 'S','y','s','t','e','m','\\',
-        'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
-        'S','e','r','v','i','c','e','s',0 };
     DWORD err, i, data_size;
     HKEY root;
     PERF_DATA_BLOCK *pdb;
@@ -1396,7 +1356,7 @@ static DWORD query_perf_data(const WCHAR *query, DWORD *type, void *data, DWORD 
     data_size -= pdb->HeaderLength;
     data = (char *)data + pdb->HeaderLength;
 
-    err = RegOpenKeyExW(HKEY_LOCAL_MACHINE, SZ_SERVICES_KEY, 0, KEY_READ, &root);
+    err = RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Services", 0, KEY_READ, &root);
     if (err != ERROR_SUCCESS)
         return err;
 
@@ -1739,13 +1699,22 @@ LSTATUS WINAPI RegGetValueW( HKEY hKey, LPCWSTR pszSubKey, LPCWSTR pszValue,
 
     if (pvData && !pcbData)
         return ERROR_INVALID_PARAMETER;
+
     if ((dwFlags & RRF_RT_REG_EXPAND_SZ) && !(dwFlags & RRF_NOEXPAND) &&
             ((dwFlags & RRF_RT_ANY) != RRF_RT_ANY))
         return ERROR_INVALID_PARAMETER;
 
+    if ((dwFlags & RRF_WOW64_MASK) == RRF_WOW64_MASK)
+        return ERROR_INVALID_PARAMETER;
+
     if (pszSubKey && pszSubKey[0])
     {
-        ret = RegOpenKeyExW(hKey, pszSubKey, 0, KEY_QUERY_VALUE, &hKey);
+        REGSAM samDesired = KEY_QUERY_VALUE;
+
+        if (dwFlags & RRF_WOW64_MASK)
+            samDesired |= (dwFlags & RRF_SUBKEY_WOW6432KEY) ? KEY_WOW64_32KEY : KEY_WOW64_64KEY;
+
+        ret = RegOpenKeyExW(hKey, pszSubKey, 0, samDesired, &hKey);
         if (ret != ERROR_SUCCESS) return ret;
     }
 
@@ -1835,13 +1804,22 @@ LSTATUS WINAPI RegGetValueA( HKEY hKey, LPCSTR pszSubKey, LPCSTR pszValue,
 
     if (pvData && !pcbData)
         return ERROR_INVALID_PARAMETER;
+
     if ((dwFlags & RRF_RT_REG_EXPAND_SZ) && !(dwFlags & RRF_NOEXPAND) &&
             ((dwFlags & RRF_RT_ANY) != RRF_RT_ANY))
         return ERROR_INVALID_PARAMETER;
 
+    if ((dwFlags & RRF_WOW64_MASK) == RRF_WOW64_MASK)
+        return ERROR_INVALID_PARAMETER;
+
     if (pszSubKey && pszSubKey[0])
     {
-        ret = RegOpenKeyExA(hKey, pszSubKey, 0, KEY_QUERY_VALUE, &hKey);
+        REGSAM samDesired = KEY_QUERY_VALUE;
+
+        if (dwFlags & RRF_WOW64_MASK)
+            samDesired |= (dwFlags & RRF_SUBKEY_WOW6432KEY) ? KEY_WOW64_32KEY : KEY_WOW64_64KEY;
+
+        ret = RegOpenKeyExA(hKey, pszSubKey, 0, samDesired, &hKey);
         if (ret != ERROR_SUCCESS) return ret;
     }
 
@@ -2592,7 +2570,7 @@ static int reg_mui_cache_get(const WCHAR *file_name, UINT index, WCHAR **buffer)
     LIST_FOR_EACH_ENTRY(ent, &reg_mui_cache, struct mui_cache_entry, entry)
     {
         if (ent->index == index && ent->locale == GetThreadLocale() &&
-            !wcsicmp(ent->file_name, file_name))
+            !lstrcmpiW(ent->file_name, file_name))
             goto found;
     }
     return 0;
@@ -2859,7 +2837,6 @@ LSTATUS WINAPI RegLoadMUIStringA(HKEY hKey, LPCSTR pszValue, LPSTR pszBuffer, DW
  */
 LSTATUS WINAPI RegDeleteTreeW( HKEY hkey, const WCHAR *subkey )
 {
-    static const WCHAR emptyW[] = {0};
     DWORD name_size, max_name, max_subkey;
     WCHAR *name_buf = NULL;
     LONG ret;
@@ -2898,7 +2875,7 @@ LSTATUS WINAPI RegDeleteTreeW( HKEY hkey, const WCHAR *subkey )
     /* Delete the key itself */
     if (subkey && *subkey)
     {
-        ret = RegDeleteKeyExW( hkey, emptyW, 0, 0 );
+        ret = RegDeleteKeyExW( hkey, L"", 0, 0 );
         goto cleanup;
     }
 
@@ -3916,10 +3893,6 @@ BOOL WINAPI SHRegGetBoolUSValueA(const char *subkey, const char *value, BOOL ign
 
 BOOL WINAPI SHRegGetBoolUSValueW(const WCHAR *subkey, const WCHAR *value, BOOL ignore_hkcu, BOOL default_value)
 {
-    static const WCHAR yesW[]= {'Y','E','S',0};
-    static const WCHAR trueW[] = {'T','R','U','E',0};
-    static const WCHAR noW[] = {'N','O',0};
-    static const WCHAR falseW[] = {'F','A','L','S','E',0};
     BOOL ret = default_value;
     DWORD type, datalen;
     WCHAR data[10];
@@ -3933,9 +3906,9 @@ BOOL WINAPI SHRegGetBoolUSValueW(const WCHAR *subkey, const WCHAR *value, BOOL i
         {
             case REG_SZ:
                 data[9] = '\0';
-                if (!lstrcmpiW(data, yesW) || !lstrcmpiW(data, trueW))
+                if (!lstrcmpiW(data, L"yes") || !lstrcmpiW(data, L"true"))
                     ret = TRUE;
-                else if (!lstrcmpiW(data, noW) || !lstrcmpiW(data, falseW))
+                else if (!lstrcmpiW(data, L"no") || !lstrcmpiW(data, L"false"))
                     ret = FALSE;
                 break;
             case REG_DWORD:

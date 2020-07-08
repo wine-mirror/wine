@@ -6695,6 +6695,10 @@ static void test_body_funs(IHTMLBodyElement *body, IHTMLDocument2 *doc)
     ok(V_VT(&vDefaultbg) == VT_BSTR, "bstr != NULL\n");
     ok(!V_BSTR(&vDefaultbg), "V_BSTR(bgColor) = %s\n", wine_dbgstr_w(V_BSTR(&vDefaultbg)));
 
+    hres = IHTMLDocument2_get_bgColor(doc, &vbg);
+    ok(hres == S_OK, "get_bgColor failed: %08x\n", hres);
+    ok(V_VT(&vbg) == VT_BSTR && V_BSTR(&vbg) && !wcscmp(V_BSTR(&vbg), L"#ffffff"), "bgColor = %s\n", wine_dbgstr_variant(&vbg));
+
     V_VT(&vbg) = VT_BSTR;
     V_BSTR(&vbg) = SysAllocString(L"red");
     hres = IHTMLBodyElement_put_bgColor(body, vbg);
@@ -6706,6 +6710,10 @@ static void test_body_funs(IHTMLBodyElement *body, IHTMLDocument2 *doc)
     ok(V_VT(&vbg) == VT_BSTR, "V_VT(&vbg) != VT_BSTR\n");
     ok(!lstrcmpW(V_BSTR(&vbg), L"#ff0000"), "Unexpected bgcolor %s\n", wine_dbgstr_w(V_BSTR(&vbg)));
     VariantClear(&vbg);
+
+    hres = IHTMLDocument2_get_bgColor(doc, &vbg);
+    ok(hres == S_OK, "get_bgColor failed: %08x\n", hres);
+    ok(V_VT(&vbg) == VT_BSTR && V_BSTR(&vbg) && !wcscmp(V_BSTR(&vbg), L"#ff0000"), "bgColor = %s\n", wine_dbgstr_variant(&vbg));
 
     hres = IHTMLDocument2_get_bgColor(doc, &vbg);
     ok(hres == S_OK, "get_bgColor failed: %08x\n", hres);
@@ -7564,7 +7572,7 @@ static void test_td_elem(IHTMLDocument2 *doc, IHTMLElement *div)
     HRESULT hres;
     LONG lval;
     BSTR str;
-    VARIANT vbg, vDefaultbg;
+    VARIANT vbg, vDefaultbg, v;
 
     test_elem_set_innerhtml((IUnknown*)div,
                             L"<table id=\"tbl\"><tbody>"
@@ -7625,6 +7633,52 @@ static void test_td_elem(IHTMLDocument2 *doc, IHTMLElement *div)
     ok(V_VT(&vbg) == VT_BSTR, "V_VT(&vbg) != VT_BSTR\n");
     ok(!lstrcmpW(V_BSTR(&vbg), L"#ff0000"), "Unexpected bgcolor %s\n", wine_dbgstr_w(V_BSTR(&vbg)));
     VariantClear(&vbg);
+
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = 100;
+    hres = IHTMLTableCell_put_height(cell, v);
+    ok(hres == S_OK, "put_height failed: %08x\n", hres);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IHTMLTableCell_get_height(cell, &v);
+    ok(hres == S_OK, "get_height failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR && !lstrcmpW(V_BSTR(&v), L"100"), "height = %s\n", wine_dbgstr_variant(&v));
+    VariantClear(&v);
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = SysAllocString(L"110px");
+    hres = IHTMLTableCell_put_height(cell, v);
+    ok(hres == S_OK, "put_height failed: %08x\n", hres);
+    SysFreeString(V_BSTR(&v));
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IHTMLTableCell_get_height(cell, &v);
+    ok(hres == S_OK, "get_height failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR && !lstrcmpW(V_BSTR(&v), L"110"), "height = %s\n", wine_dbgstr_variant(&v));
+    VariantClear(&v);
+
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = 200;
+    hres = IHTMLTableCell_put_width(cell, v);
+    ok(hres == S_OK, "put_width failed: %08x\n", hres);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IHTMLTableCell_get_width(cell, &v);
+    ok(hres == S_OK, "get_width failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR && !lstrcmpW(V_BSTR(&v), L"200"), "width = %s\n", wine_dbgstr_variant(&v));
+    VariantClear(&v);
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = SysAllocString(L"210px");
+    hres = IHTMLTableCell_put_width(cell, v);
+    ok(hres == S_OK, "put_width failed: %08x\n", hres);
+    SysFreeString(V_BSTR(&v));
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IHTMLTableCell_get_width(cell, &v);
+    ok(hres == S_OK, "get_width failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR && !lstrcmpW(V_BSTR(&v), L"210"), "width = %s\n", wine_dbgstr_variant(&v));
+    VariantClear(&v);
 
     /* Restore Original */
     hres = IHTMLTableCell_put_bgColor(cell, vDefaultbg);
@@ -7909,6 +7963,16 @@ static void test_table_elem(IHTMLElement *elem)
     hres = IHTMLTable_put_bgColor(table, vDefaultbg);
     ok(hres == S_OK, "put_bgColor failed: %08x\n", hres);
     VariantClear(&vDefaultbg);
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = SysAllocString(L"12px");
+    hres = IHTMLTable_put_width(table, v);
+    ok(hres == S_OK, "put_width = %08x\n", hres);
+    VariantClear(&v);
+    hres = IHTMLTable_get_width(table, &v);
+    ok(hres == S_OK, "get_width = %08x\n", hres);
+    ok(!lstrcmpW(V_BSTR(&v), L"12"), "Expected 12, got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
 
     V_VT(&v) = VT_BSTR;
     V_BSTR(&v) = SysAllocString(L"11");

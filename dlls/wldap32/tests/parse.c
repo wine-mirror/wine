@@ -2,6 +2,7 @@
  * test parsing functions
  *
  * Copyright 2008 Hans Leidekker for CodeWeavers
+ * Copyright 2020 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -25,6 +26,14 @@
 #include <winldap.h>
 
 #include "wine/test.h"
+
+#ifndef LDAP_AUTH_SIMPLE
+#define LDAP_AUTH_SIMPLE 0x80
+#endif
+
+#ifndef LDAP_OPT_SERVER_CONTROLS
+#define LDAP_OPT_SERVER_CONTROLS 0x0012
+#endif
 
 static void test_ldap_parse_sort_control( LDAP *ld )
 {
@@ -132,9 +141,143 @@ static void test_ldap_get_optionW( LDAP *ld )
     ok( version == LDAP_VERSION3, "got %u\n", version );
 }
 
+static void test_ldap_bind_sA( void )
+{
+    LDAP *ld;
+    ULONG ret;
+    int version;
+
+    ld = ldap_initA( (char *)"ldap.forumsys.com", 389 );
+    ok( ld != NULL, "ldap_init failed\n" );
+
+    version = LDAP_VERSION3;
+    ret = ldap_set_optionW( ld, LDAP_OPT_PROTOCOL_VERSION, &version );
+    if (ret == LDAP_SERVER_DOWN || ret == LDAP_UNAVAILABLE)
+    {
+        skip( "test server can't be reached\n" );
+        ldap_unbind( ld );
+        return;
+    }
+
+    ret = ldap_connect( ld, NULL );
+    ok( !ret, "ldap_connect failed 0x%08x\n", ret );
+
+    ret = ldap_bind_sA( ld, (char *)"CN=read-only-admin,DC=example,DC=com", (char *)"password", LDAP_AUTH_SIMPLE );
+    ok( !ret, "ldap_bind_s failed 0x%08x\n", ret );
+
+    ldap_unbind( ld );
+}
+
+static void test_ldap_server_control( void )
+{
+    /* SEQUENCE  { INTEGER :: 0x07 } */
+    static char mask_ber[5] = {0x30,0x03,0x02,0x01,0x07};
+    LDAP *ld;
+    ULONG ret;
+    int version;
+    LDAPControlW *ctrls[2], mask;
+    LDAPMessage *res;
+
+    ld = ldap_initA( (char *)"ldap.forumsys.com", 389 );
+    ok( ld != NULL, "ldap_init failed\n" );
+
+    version = LDAP_VERSION3;
+    ret = ldap_set_optionW( ld, LDAP_OPT_PROTOCOL_VERSION, &version );
+    if (ret == LDAP_SERVER_DOWN || ret == LDAP_UNAVAILABLE)
+    {
+        skip( "test server can't be reached\n" );
+        ldap_unbind( ld );
+        return;
+    }
+
+    ret = ldap_connect( ld, NULL );
+    ok( !ret, "ldap_connect failed 0x%08x\n", ret );
+
+    /* test setting a not supported server control */
+    mask.ldctl_oid = (WCHAR *)L"1.2.840.113556.1.4.801";
+    mask.ldctl_iscritical = TRUE;
+    mask.ldctl_value.bv_val = mask_ber;
+    mask.ldctl_value.bv_len = sizeof(mask_ber);
+    ctrls[0] = &mask;
+    ctrls[1] = NULL;
+    ret = ldap_set_optionW(ld, LDAP_OPT_SERVER_CONTROLS, ctrls);
+    ok( ret == LDAP_PARAM_ERROR, "ldap_set_optionW should fail: 0x%x\n", ret );
+
+    res = NULL;
+    ret = ldap_search_sA( ld, (char *)"OU=scientists,DC=example,DC=com", LDAP_SCOPE_BASE, (char *)"(objectclass=*)", NULL, FALSE, &res );
+    ok( !ret, "ldap_search_sA failed 0x%x\n", ret );
+    ok( res != NULL, "expected res != NULL\n" );
+
+    ldap_msgfree( res );
+    ldap_unbind( ld );
+}
+
+static void test_ldap_paged_search(void)
+{
+    LDAP *ld;
+    ULONG ret, count;
+    int version;
+    LDAPSearch *search;
+    LDAPMessage *res, *entry;
+    BerElement *ber;
+    WCHAR *attr;
+
+    ld = ldap_initA( (char *)"ldap.forumsys.com", 389 );
+    ok( ld != NULL, "ldap_init failed\n" );
+
+    version = LDAP_VERSION3;
+    ret = ldap_set_optionW( ld, LDAP_OPT_PROTOCOL_VERSION, &version );
+    if (ret == LDAP_SERVER_DOWN || ret == LDAP_UNAVAILABLE)
+    {
+        skip( "test server can't be reached\n" );
+        ldap_unbind( ld );
+        return;
+    }
+
+    search = ldap_search_init_pageW( ld, (WCHAR *)L"", LDAP_SCOPE_BASE, (WCHAR *)L"(objectclass=*)",
+                                     NULL, FALSE, NULL, NULL, 0, 0, NULL);
+    ok( search != NULL, "ldap_search_init_page failed\n" );
+
+    count = 0xdeadbeef;
+    res = NULL;
+    ret = ldap_get_next_page_s( ld, search, NULL, 1, &count, &res );
+    ok( !ret, "ldap_get_next_page_s failed 0x%x\n", ret );
+    ok( res != NULL, "expected res != NULL\n" );
+    ok( count == 0, "got %u\n", count );
+
+    count = ldap_count_entries( ld, res);
+    ok( count == 1, "got %u\n", count );
+
+    entry = ldap_first_entry( ld, res);
+    ok( res != NULL, "expected entry != NULL\n" );
+
+    attr = ldap_first_attributeW( ld, entry, &ber );
+    ok( !wcscmp( attr, L"objectClass" ), "got %s\n", wine_dbgstr_w( attr ) );
+    ldap_memfreeW( attr );
+    attr = ldap_next_attributeW( ld, entry, ber );
+    ok( !attr, "got %s\n", wine_dbgstr_w( attr ));
+
+    ber_free(ber, 0);
+    ldap_msgfree( res );
+
+    count = 0xdeadbeef;
+    res = (void *)0xdeadbeef;
+    ret = ldap_get_next_page_s( ld, search, NULL, 1, &count, &res );
+    ok( ret == LDAP_NO_RESULTS_RETURNED, "got 0x%x\n", ret );
+    ok( !res, "expected res == NULL\n" );
+    ok( count == 0, "got %u\n", count );
+
+    ldap_search_abandon_page( ld, search );
+    ldap_unbind( ld );
+}
+
 START_TEST (parse)
 {
     LDAP *ld;
+
+    test_ldap_paged_search();
+    test_ldap_server_control();
+    test_ldap_bind_sA();
 
     ld = ldap_initA((char *)"ldap.itd.umich.edu", 389 );
     ok( ld != NULL, "ldap_init failed\n" );

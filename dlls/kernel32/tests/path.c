@@ -2635,6 +2635,24 @@ static void test_LdrGetDllPath(void)
     ret = pLdrGetDllPath( fooW, LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR, &path, &unknown_ptr );
     ok( ret == STATUS_INVALID_PARAMETER, "LdrGetDllPath failed %x\n", ret );
 
+    lstrcpyW( buffer, L"\\\\?\\" );
+    lstrcatW( buffer, dlldir );
+    p = buffer + lstrlenW(buffer);
+    *p++ = '\\';
+    lstrcpyW( p, fooW );
+    ret = pLdrGetDllPath( buffer, LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR, &path, &unknown_ptr );
+    ok( !ret, "LdrGetDllPath failed %x\n", ret );
+    ok( !unknown_ptr, "unknown ptr %p\n", unknown_ptr );
+    ok( !memcmp( path, L"\\\\?\\", 4 * sizeof(WCHAR) ) && path_equal( path + 4, dlldir ),
+        "got %s expected \\\\?\\%s\n", wine_dbgstr_w(path), wine_dbgstr_w(dlldir));
+    pRtlReleasePath( path );
+
+    ret = pLdrGetDllPath( L"\\\\?\\c:\\test.dll", LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR, &path, &unknown_ptr );
+    ok( !ret, "LdrGetDllPath failed %x\n", ret );
+    ok( !unknown_ptr, "unknown ptr %p\n", unknown_ptr );
+    ok( !lstrcmpW( path, L"\\\\?\\c:" ), "got %s expected \\\\?\\c:\n", wine_dbgstr_w(path));
+    pRtlReleasePath( path );
+
     lstrcpyW( buffer, dlldir );
     p = buffer + lstrlenW(buffer);
     *p++ = '\\';

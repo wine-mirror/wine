@@ -89,6 +89,6 @@ interface IWineDXGIAdapter : IDXGIAdapter4
     local,
     uuid(ea02a0d1-4c95-488a-a82c-6034621e8c4f)
 ]
-interface IWineDXGIFactory : IDXGIFactory5
+interface IWineDXGIFactory : IDXGIFactory7
 {
 }

@@ -22,8 +22,7 @@
 #define __WINE_CONSOLE_PRIVATE_H
 
 /* console.c */
-extern int      CONSOLE_HandleCtrlC(unsigned) DECLSPEC_HIDDEN;
-/* console.c */
+extern LONG CALLBACK CONSOLE_HandleCtrlC( EXCEPTION_POINTERS *eptr ) DECLSPEC_HIDDEN;
 extern int      CONSOLE_GetHistory(int idx, WCHAR* buf, int buf_len) DECLSPEC_HIDDEN;
 extern BOOL     CONSOLE_AppendHistory(const WCHAR *p) DECLSPEC_HIDDEN;
 extern unsigned CONSOLE_GetNumHistoryEntries(void) DECLSPEC_HIDDEN;

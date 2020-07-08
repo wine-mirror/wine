@@ -175,29 +175,37 @@ doPropertySheet (HINSTANCE hInstance, HWND hOwner)
 
 /******************************************************************************
  * Name       : ProcessCmdLine
- * Description: Checks command line parameters for 'autodetect drives' option
+ * Description: Checks command line parameters
  * Parameters : lpCmdLine - the command line
- * Returns    : TRUE - if '/D' was found. Drive autodetection was carried out.
- *              FALSE - no '/D' option found in command line
- * Notes      : This is a very simple implementation, which only works 
- *              correctly if the one and only cmd line option is '/D' or
- *              no option at all. Has to be reworked, if more options are to
- *              be supported.
+ * Returns    : The return value to return from WinMain, or -1 to continue
+ *              program execution.
  */
-static BOOL
+static int
 ProcessCmdLine(LPSTR lpCmdLine)
 {
-    if ((lpCmdLine[0] == '/' || lpCmdLine[0] == '-') && 
-        (lpCmdLine[1] == 'D' || lpCmdLine[1] == 'd')) 
+    if (!(lpCmdLine[0] == '/' || lpCmdLine[0] == '-'))
     {
-        gui_mode = FALSE;
-        if (autodetect_drives()) {
-            apply_drive_changes();
-        }
-        return TRUE;
+        return -1;
+    }
+    if ((lpCmdLine[1] == 'V' || lpCmdLine[1] == 'v') && (lstrlenA(lpCmdLine) > 4))
+    {
+        return set_winver_from_string(&lpCmdLine[3]) ? 0 : 1;
     }
 
-    return FALSE;
+    if (lpCmdLine[1] == '?')
+    {
+        printf("Usage: winecfg [options]\n\n");
+        printf("Options:\n");
+        printf("  [no option] Launch the graphical version of this program.\n");
+        printf("  /v version  Set global Windows version to 'version'.\n");
+        printf("  /?          Display this information and exit.\n\n");
+        printf("Valid versions for 'version':\n\n");
+        print_windows_versions();
+
+        return 0;
+    }
+
+    return -1;
 }
 
 /*****************************************************************************
@@ -213,6 +221,7 @@ int WINAPI
 WinMain (HINSTANCE hInstance, HINSTANCE hPrev, LPSTR szCmdLine, int nShow)
 {
     BOOL is_wow64;
+    int cmd_ret;
 
     if (IsWow64Process( GetCurrentProcess(), &is_wow64 ) && is_wow64)
     {
@@ -238,15 +247,14 @@ WinMain (HINSTANCE hInstance, HINSTANCE hPrev, LPSTR szCmdLine, int nShow)
         Wow64RevertWow64FsRedirection( redir );
     }
 
-    if (ProcessCmdLine(szCmdLine)) {
-        return 0;
-    }
+    cmd_ret = ProcessCmdLine(szCmdLine);
+    if (cmd_ret >= 0) return cmd_ret;
 
     if (initialize(hInstance)) {
 	WINE_ERR("initialization failed, aborting\n");
 	ExitProcess(1);
     }
-    
+
     /*
      * The next 9 lines should be all that is needed
      * for the Wine Configuration property sheet

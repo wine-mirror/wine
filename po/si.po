@@ -49,8 +49,8 @@ msgstr "තොරතුරු සඳහා සහාය (&S)"
 msgid "&Modify..."
 msgstr "වෙනස් කරන්න... (&M)"
 
-#: appwiz.rc:69 appwiz.rc:45 cryptui.rc:351 msacm32.rc:40 winecfg.rc:200
-#: winecfg.rc:237 wordpad.rc:256
+#: appwiz.rc:69 appwiz.rc:45 cryptui.rc:351 msacm32.rc:40 winecfg.rc:199
+#: winecfg.rc:236 wordpad.rc:256
 msgid "&Remove"
 msgstr "ඉවත් කරන්න (&R)"
 
@@ -69,7 +69,7 @@ msgstr "තොරතුරු සඳහා සහාය"
 #: notepad.rc:117 oleview.rc:161 oleview.rc:174 progman.rc:106 progman.rc:124
 #: progman.rc:142 progman.rc:158 progman.rc:180 progman.rc:199 progman.rc:216
 #: regedit.rc:296 regedit.rc:307 regedit.rc:320 regedit.rc:336 regedit.rc:349
-#: regedit.rc:362 taskmgr.rc:442 taskmgr.rc:517 winecfg.rc:214 winecfg.rc:224
+#: regedit.rc:362 taskmgr.rc:442 taskmgr.rc:517 winecfg.rc:213 winecfg.rc:223
 #: wineconsole.rc:135 winefile.rc:127 winefile.rc:150 winefile.rc:180
 #: winemine.rc:73 winemine.rc:84 winemine.rc:98 wordpad.rc:215 wordpad.rc:226
 #: wordpad.rc:244 wordpad.rc:257
@@ -151,8 +151,8 @@ msgstr "ස්ථාපනය කරන්න (&I)"
 #: notepad.rc:118 oleview.rc:162 oleview.rc:175 progman.rc:107 progman.rc:125
 #: progman.rc:143 progman.rc:159 progman.rc:181 progman.rc:200 progman.rc:217
 #: regedit.rc:297 regedit.rc:308 regedit.rc:321 regedit.rc:337 regedit.rc:350
-#: regedit.rc:363 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34 winecfg.rc:215
-#: winecfg.rc:225 wineconsole.rc:136 winefile.rc:128 winefile.rc:151
+#: regedit.rc:363 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34 winecfg.rc:214
+#: winecfg.rc:224 wineconsole.rc:136 winefile.rc:128 winefile.rc:151
 #: winefile.rc:181 winemine.rc:99 wordpad.rc:216 wordpad.rc:227 wordpad.rc:245
 #: wordpad.rc:258
 msgid "Cancel"
@@ -191,7 +191,7 @@ msgstr ""
 "ඔබට ඉඩ දෙනවා අලුත් මෘදුකාංග ස්ථාපනය කරන්නට, හෝ තියෙන මෘදුකාංග ඔබගේ පරිගණකෙන් ඉවත් "
 "කරන්නට."
 
-#: appwiz.rc:33 taskmgr.rc:262 winecfg.rc:33
+#: appwiz.rc:33 taskmgr.rc:262 winecfg.rc:32
 msgid "Applications"
 msgstr "යෙදුම්"
 
@@ -349,7 +349,7 @@ msgstr "විශාරද"
 msgid "< &Back"
 msgstr "< ආපසු (&B)"
 
-#: comctl32.rc:85 version.rc:60
+#: comctl32.rc:85 version.rc:61
 msgid "&Next >"
 msgstr "ඊළඟ (&N) >"
 
@@ -585,7 +585,7 @@ msgstr "ෆොන්ටය (&F):"
 msgid "Font St&yle:"
 msgstr "ෆොන්ට විලාසය (&Y):"
 
-#: comdlg32.rc:260 comdlg32.rc:439 winecfg.rc:294
+#: comdlg32.rc:260 comdlg32.rc:439 winecfg.rc:292
 msgid "&Size:"
 msgstr "තරම (&S):"
 
@@ -601,7 +601,7 @@ msgstr "මැදි ඉරැති (&K)"
 msgid "&Underline"
 msgstr "යටිඉරි (&U)"
 
-#: comdlg32.rc:270 winecfg.rc:292
+#: comdlg32.rc:270 winecfg.rc:290
 msgid "&Color:"
 msgstr "පාට (&C)"
 
@@ -686,7 +686,7 @@ msgstr "සම්පූර්ණ වචනය පමණක් ගැලපේ (&
 msgid "Match &Case"
 msgstr ""
 
-#: comdlg32.rc:325 joy.rc:71
+#: comdlg32.rc:325 joy.rc:72
 msgid "Direction"
 msgstr "දිශාව"
 
@@ -775,7 +775,7 @@ msgstr "පිටපත් ගණන (&C):"
 msgid "C&ollate"
 msgstr "සංසන්දනය කරන්න (&O)"
 
-#: comdlg32.rc:414 winecfg.rc:300
+#: comdlg32.rc:414 winecfg.rc:298
 msgid "Si&ze:"
 msgstr "තරම (&Z):"
 
@@ -1228,7 +1228,7 @@ msgstr "mm"
 msgid "&User name:"
 msgstr "පරිශීලක නම (&U):"
 
-#: credui.rc:48 cryptui.rc:402 version.rc:80
+#: credui.rc:48 cryptui.rc:402 version.rc:81
 msgid "&Password:"
 msgstr "මුර පදය:"
 
@@ -2246,7 +2246,7 @@ msgstr ""
 msgid "&File name:"
 msgstr "ගොනුව නම (&F):"
 
-#: cryptui.rc:301 cryptui.rc:323 cryptui.rc:437 winecfg.rc:313
+#: cryptui.rc:301 cryptui.rc:323 cryptui.rc:437 winecfg.rc:311
 msgid "B&rowse..."
 msgstr "පිරික්සන්න... (&R)"
 
@@ -2956,7 +2956,7 @@ msgstr "නැවත සකසන්න"
 msgid "Player"
 msgstr "ක්‍රීඩකයා"
 
-#: dinput.rc:43 winecfg.rc:89
+#: dinput.rc:43 winecfg.rc:88
 msgid "Device"
 msgstr "ආම්පන්නය"
 
@@ -3056,7 +3056,7 @@ msgstr "ලකුණ"
 msgid "OEM/DOS"
 msgstr "OEM/DOS"
 
-#: gdi32.rc:45 version.rc:99 wldap32.rc:112
+#: gdi32.rc:45 version.rc:100 wldap32.rc:112
 msgid "Other"
 msgstr "අනිත්"
 
@@ -3121,7 +3121,7 @@ msgstr "මුල (&H)"
 msgid "&Stop"
 msgstr "නවත්තන්න (&S)"
 
-#: hhctrl.rc:64 hhctrl.rc:81 version.rc:72 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 version.rc:73 shdoclc.rc:59
 msgid "&Refresh"
 msgstr "නැවුම් කරන්න (&R)"
 
@@ -3493,49 +3493,49 @@ msgstr ""
 msgid "High"
 msgstr "වැඩි"
 
-#: joy.rc:36
+#: joy.rc:37
 msgid "Joysticks"
 msgstr "නියාමක යටි"
 
-#: joy.rc:39 winecfg.rc:213
+#: joy.rc:40 winecfg.rc:212
 msgid "&Disable"
 msgstr "ඕෆ් කරන්න (&D)"
 
-#: joy.rc:40
+#: joy.rc:41
 msgid "&Enable"
 msgstr "සබල කරන්න (&E)"
 
-#: joy.rc:41
+#: joy.rc:42
 msgid "Connected"
 msgstr "සබඳිලා"
 
-#: joy.rc:43
+#: joy.rc:44
 msgid "Disabled"
 msgstr "ඕෆ් කරලා"
 
-#: joy.rc:45
+#: joy.rc:46
 msgid ""
 "After disabling or enabling a device, the connected joysticks won't be "
 "updated here until you restart this applet."
 msgstr ""
 
-#: joy.rc:50
+#: joy.rc:51
 msgid "Test Joystick"
 msgstr ""
 
-#: joy.rc:54
+#: joy.rc:55
 msgid "Buttons"
 msgstr "බොත්තම්"
 
-#: joy.rc:63
+#: joy.rc:64
 msgid "Test Force Feedback"
 msgstr ""
 
-#: joy.rc:67
+#: joy.rc:68
 msgid "Available Effects"
 msgstr ""
 
-#: joy.rc:69
+#: joy.rc:70
 msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."
@@ -3543,6 +3543,10 @@ msgstr ""
 
 #: joy.rc:31
 msgid "Game Controllers"
+msgstr ""
+
+#: joy.rc:32
+msgid "Test and configure game controllers."
 msgstr ""
 
 #: jscript.rc:28
@@ -3559,191 +3563,209 @@ msgid "Subscript out of range"
 msgstr ""
 
 #: jscript.rc:31
+#, fuzzy
+#| msgid "Out of paper; "
+msgid "Out of stack space"
+msgstr "කඩදාසි ඉවරයි; "
+
+#: jscript.rc:32
 msgid "Object required"
 msgstr "වස්තුවක් ඕනේ"
 
-#: jscript.rc:32
+#: jscript.rc:33
 msgid "Automation server can't create object"
 msgstr ""
 
-#: jscript.rc:33
+#: jscript.rc:34
 msgid "Object doesn't support this property or method"
 msgstr ""
 
-#: jscript.rc:34
+#: jscript.rc:35
 msgid "Object doesn't support this action"
 msgstr ""
 
-#: jscript.rc:35
+#: jscript.rc:36
 msgid "Argument not optional"
 msgstr ""
 
-#: jscript.rc:36
+#: jscript.rc:37
 msgid "Syntax error"
 msgstr "වාග් රීතියේ දෝෂයක්"
 
-#: jscript.rc:37
+#: jscript.rc:38
 msgid "Expected ';'"
 msgstr "අපේක්ෂා කරේ ';'"
 
-#: jscript.rc:38
+#: jscript.rc:39
 msgid "Expected '('"
 msgstr "අපේක්ෂා කරේ '('"
 
-#: jscript.rc:39
+#: jscript.rc:40
 msgid "Expected ')'"
 msgstr "අපේක්ෂා කරේ ')'"
 
-#: jscript.rc:40
+#: jscript.rc:41
 msgid "Expected identifier"
 msgstr "අපේක්ෂා කරේ අනන්යකාරකයක්"
 
-#: jscript.rc:41
+#: jscript.rc:42
 msgid "Expected '='"
 msgstr "අපේක්ෂා කරේ '='"
 
-#: jscript.rc:42
+#: jscript.rc:43
 msgid "Invalid character"
 msgstr "අවලංගු අනුලකුණක්"
 
-#: jscript.rc:43
+#: jscript.rc:44
 msgid "Unterminated string constant"
 msgstr ""
 
-#: jscript.rc:44
+#: jscript.rc:45
 msgid "'return' statement outside of function"
 msgstr ""
 
-#: jscript.rc:45
+#: jscript.rc:46
 msgid "Can't have 'break' outside of loop"
 msgstr "ලූපයක් එළියේ 'break' තියෙන්න බැහැ"
 
-#: jscript.rc:46
+#: jscript.rc:47
 msgid "Can't have 'continue' outside of loop"
 msgstr "ලූපයක් එළියේ 'continue' තියෙන්න බැහැ"
 
-#: jscript.rc:47
+#: jscript.rc:48
 #, fuzzy
 msgid "Label redefined"
 msgstr "ලේබලය"
 
-#: jscript.rc:48
+#: jscript.rc:49
 msgid "Label not found"
 msgstr "ලේබලය හම්බු උනේ නැහැ"
 
-#: jscript.rc:49
+#: jscript.rc:50
 msgid "Expected '@end'"
 msgstr "අපේක්ෂා කරේ '@end'"
 
-#: jscript.rc:50
+#: jscript.rc:51
 msgid "Conditional compilation is turned off"
 msgstr ""
 
-#: jscript.rc:51
+#: jscript.rc:52
 msgid "Expected '@'"
 msgstr "අපේක්ෂා කරේ '='"
 
-#: jscript.rc:75
+#: jscript.rc:78
 msgid "Microsoft JScript compilation error"
 msgstr ""
 
-#: jscript.rc:76
+#: jscript.rc:79
 msgid "Microsoft JScript runtime error"
 msgstr ""
 
-#: jscript.rc:77
+#: jscript.rc:80
 #, fuzzy
 #| msgid "Unknown error"
 msgid "Unknown runtime error"
 msgstr "දන්නේ නැති දෝෂයක්"
 
-#: jscript.rc:54
+#: jscript.rc:55
 msgid "Number expected"
 msgstr "නොම්බරයක් අපේක්ෂා කරේ"
 
-#: jscript.rc:52
+#: jscript.rc:53
 msgid "Function expected"
 msgstr "ශ්රිතයක් අපේක්ෂා කරේ"
 
-#: jscript.rc:53
+#: jscript.rc:54
 msgid "'[object]' is not a date object"
 msgstr ""
 
-#: jscript.rc:55
+#: jscript.rc:56
 msgid "Object expected"
 msgstr "වස්තුවක් අපේක්ෂා කරේ"
 
-#: jscript.rc:56
+#: jscript.rc:57
 msgid "Illegal assignment"
 msgstr ""
 
-#: jscript.rc:57
+#: jscript.rc:58
 msgid "'|' is undefined"
 msgstr "'|' නිර්ණය නොකළ"
 
-#: jscript.rc:58
+#: jscript.rc:59
 msgid "Boolean object expected"
 msgstr "බූලීය වස්තුවක් අපේක්ෂා කරේ"
 
-#: jscript.rc:59
+#: jscript.rc:60
 msgid "Cannot delete '|'"
 msgstr "'|' මකන්න බැහැ"
 
-#: jscript.rc:60
+#: jscript.rc:61
 msgid "VBArray object expected"
 msgstr "VBArray වස්තුවක් අපේක්ෂා කරේ"
 
-#: jscript.rc:61
+#: jscript.rc:62
 msgid "JScript object expected"
 msgstr "JScript වස්තුවක් අපේක්ෂා කරේ"
 
-#: jscript.rc:62
+#: jscript.rc:63
+#, fuzzy
+#| msgid "Array object expected"
+msgid "Enumerator object expected"
+msgstr "ආරාව වස්තුවක් අපේක්ෂා කරේ"
+
+#: jscript.rc:64
+#, fuzzy
+#| msgid "Boolean object expected"
+msgid "Regular Expression object expected"
+msgstr "බූලීය වස්තුවක් අපේක්ෂා කරේ"
+
+#: jscript.rc:65
 msgid "Syntax error in regular expression"
 msgstr ""
 
-#: jscript.rc:63
+#: jscript.rc:66
 msgid "Exception thrown and not caught"
 msgstr ""
 
-#: jscript.rc:65
+#: jscript.rc:68
 msgid "URI to be encoded contains invalid characters"
 msgstr ""
 
-#: jscript.rc:64
+#: jscript.rc:67
 msgid "URI to be decoded is incorrect"
 msgstr ""
 
-#: jscript.rc:66
+#: jscript.rc:69
 msgid "Number of fraction digits is out of range"
 msgstr ""
 
-#: jscript.rc:67
+#: jscript.rc:70
 msgid "Precision is out of range"
 msgstr ""
 
-#: jscript.rc:68
+#: jscript.rc:71
 msgid "Array length must be a finite positive integer"
 msgstr ""
 
-#: jscript.rc:69
+#: jscript.rc:72
 msgid "Array object expected"
 msgstr "ආරාව වස්තුවක් අපේක්ෂා කරේ"
 
-#: jscript.rc:70
+#: jscript.rc:73
 msgid ""
 "'writable' attribute on the property descriptor cannot be set to 'true' on "
 "this object"
 msgstr ""
 
-#: jscript.rc:71
+#: jscript.rc:74
 msgid "Cannot redefine non-configurable property '|'"
 msgstr ""
 
-#: jscript.rc:72
+#: jscript.rc:75
 msgid "Cannot modify non-writable property '|'"
 msgstr ""
 
-#: jscript.rc:73
+#: jscript.rc:76
 msgid "Property cannot have both accessors and a value"
 msgstr ""
 
@@ -3752,6 +3774,7 @@ msgid "Wine kernel DLL"
 msgstr "Wine කර්නලයේ DLL"
 
 #: ../../include/wine/wine_common_ver.rc:134 winemac.rc:32 wineboot.rc:42
+#: winecfg.rc:137
 msgid "Wine"
 msgstr "Wine"
 
@@ -7239,7 +7262,7 @@ msgstr "අධිබැඳිය"
 msgid "Hyperlink Information"
 msgstr "අධිබැඳියේ තොරතුරු"
 
-#: mshtml.rc:43 winecfg.rc:245
+#: mshtml.rc:43 winecfg.rc:243
 msgid "&Type:"
 msgstr "වර්ගය (&T):"
 
@@ -8278,141 +8301,141 @@ msgstr ""
 msgid "Off"
 msgstr "ඕෆ්"
 
-#: version.rc:55
+#: version.rc:56
 #, fuzzy
 #| msgid "video"
 msgid "Provider"
 msgstr "වීඩියෝ"
 
-#: version.rc:58
+#: version.rc:59
 #, fuzzy
 #| msgid "Select the format you want to use:"
 msgid "Select the data you want to connect to:"
 msgstr "ඔබට පාවිච්චි කරන්න ඕනේ ආකෘතිය තෝරන්න:"
 
-#: version.rc:65
+#: version.rc:66
 #, fuzzy
 #| msgid "Connections"
 msgid "Connection"
 msgstr "සබැඳුම්"
 
-#: version.rc:68
+#: version.rc:69
 #, fuzzy
 #| msgid "Select the format you want to use:"
 msgid "Specify the following to connect to ODBC data:"
 msgstr "ඔබට පාවිච්චි කරන්න ඕනේ ආකෘතිය තෝරන්න:"
 
-#: version.rc:69
+#: version.rc:70
 msgid "1. Specify the source of data:"
 msgstr ""
 
-#: version.rc:70
+#: version.rc:71
 #, fuzzy
 #| msgid "Please enter your name"
 msgid "Use &data source name"
 msgstr "කරුණාකරලා ඔබගේ නම ඇතුල්කරන්න"
 
-#: version.rc:73
+#: version.rc:74
 #, fuzzy
 #| msgid "Connection is being made"
 msgid "Use c&onnection string"
 msgstr "සබැඳුම දැන් හදනවා"
 
-#: version.rc:74
+#: version.rc:75
 #, fuzzy
 #| msgid "Connections"
 msgid "&Connection string:"
 msgstr "සබැඳුම්"
 
-#: version.rc:76
+#: version.rc:77
 #, fuzzy
 #| msgid "A&dd..."
 msgid "B&uild..."
 msgstr "එක් කරන්න (&D)"
 
-#: version.rc:77
+#: version.rc:78
 msgid "2. Enter information to log on to the server"
 msgstr ""
 
-#: version.rc:78
+#: version.rc:79
 #, fuzzy
 #| msgid "&User name:"
 msgid "User &name:"
 msgstr "පරිශීලක නම (&U):"
 
-#: version.rc:82
+#: version.rc:83
 #, fuzzy
 #| msgid "&Blank page"
 msgid "&Blank password"
 msgstr "හිස් පිටුවක් (&B)"
 
-#: version.rc:83
+#: version.rc:84
 #, fuzzy
 #| msgid "Wrong password.\n"
 msgid "Allow &saving password"
 msgstr "වැරදි මුර පදය.\n"
 
-#: version.rc:84
+#: version.rc:85
 msgid "3. Enter the &initial catalog to use:"
 msgstr ""
 
-#: version.rc:86
+#: version.rc:87
 #, fuzzy
 #| msgid "Connections"
 msgid "&Test Connection"
 msgstr "සබැඳුම්"
 
-#: version.rc:91 winemine.rc:65
+#: version.rc:92 winemine.rc:65
 msgid "Advanced"
 msgstr "උසස්"
 
-#: version.rc:94
+#: version.rc:95
 #, fuzzy
 #| msgid "Network share"
 msgid "Network settings"
 msgstr "ජාල හවුල"
 
-#: version.rc:95
+#: version.rc:96
 #, fuzzy
 #| msgid "Bad impersonation level.\n"
 msgid "&Impersonation level:"
 msgstr "හොඳ නැති සමාරෝපනය මට්ටම.\n"
 
-#: version.rc:97
+#: version.rc:98
 msgid "P&rotection level:"
 msgstr ""
 
-#: version.rc:100
+#: version.rc:101
 #, fuzzy
 #| msgid "Connected"
 msgid "Connect:"
 msgstr "සබඳිලා"
 
-#: version.rc:102
+#: version.rc:103
 #, fuzzy
 #| msgid "seconds"
 msgid "seconds."
 msgstr "තප්පර"
 
-#: version.rc:103
+#: version.rc:104
 #, fuzzy
 #| msgid "Success"
 msgid "A&ccess:"
 msgstr "සාර්ථකත්වය"
 
-#: version.rc:109
+#: version.rc:110
 #, fuzzy
 #| msgid "&All"
 msgid "All"
 msgstr "ඔක්කොම (&A)"
 
-#: version.rc:113
+#: version.rc:114
 msgid ""
 "These are the initialization properties for this type of data. To edit a "
 "value, select a property, then choose Edit Value below."
 msgstr ""
 
-#: version.rc:114
+#: version.rc:115
 #, fuzzy
 #| msgid "&Edit..."
 msgid "&Edit Value..."
@@ -8429,6 +8452,12 @@ msgstr "ගුණාංග"
 #| msgid "Please select a file."
 msgid "Please select a provider."
 msgstr "කරුණාකරලා ගොනුවක් තෝරන්න."
+
+#: version.rc:51
+msgid ""
+"Provider is no longer available. Ensure that the provider is installed "
+"properly."
+msgstr ""
 
 #: version.rc:36
 #, fuzzy
@@ -8652,7 +8681,7 @@ msgctxt "unit: bits"
 msgid "b"
 msgstr "b"
 
-#: sane.rc:34 wineps.rc:49 winecfg.rc:183
+#: sane.rc:34 wineps.rc:49 winecfg.rc:182
 msgctxt "unit: dots/inch"
 msgid "dpi"
 msgstr "dpi"
@@ -9144,7 +9173,7 @@ msgstr ""
 msgid "&Open:"
 msgstr "විවෘත කරන්න (&O):"
 
-#: shell32.rc:343 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:243
+#: shell32.rc:343 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:241
 #: winefile.rc:129
 msgid "&Browse..."
 msgstr "පිරික්සන්න... (&B)"
@@ -9233,7 +9262,7 @@ msgstr "මුල් පිහිටුම"
 msgid "Date deleted"
 msgstr "මකපු දිනය"
 
-#: shell32.rc:156 winecfg.rc:101 winefile.rc:99
+#: shell32.rc:156 winecfg.rc:100 winefile.rc:99
 msgctxt "display name"
 msgid "Desktop"
 msgstr "වැඩතලය"
@@ -9566,7 +9595,7 @@ msgstr "Wine බලපත්රය"
 msgid "Trash"
 msgstr "කුණු"
 
-#: shlwapi.rc:38 user32.rc:71 regedit.rc:204 winecfg.rc:87 winefile.rc:97
+#: shlwapi.rc:38 user32.rc:71 regedit.rc:204 winecfg.rc:86 winefile.rc:97
 msgid "Error"
 msgstr "දෝෂයක්"
 
@@ -9597,127 +9626,127 @@ msgstr " තත්පර"
 msgid "Select Source"
 msgstr "මූලය තෝරන්න"
 
-#: tzres.rc:84
+#: tzres.rc:88
 msgid "China Standard Time"
 msgstr "චීනයේ සම්මත වෙලාව"
 
-#: tzres.rc:85
+#: tzres.rc:89
 msgid "China Daylight Time"
 msgstr "චීනයේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:164
+#: tzres.rc:170
 msgid "North Asia Standard Time"
 msgstr "උතුරු ආසියාවේ සම්මත වෙලාව"
 
-#: tzres.rc:165
+#: tzres.rc:171
 msgid "North Asia Daylight Time"
 msgstr "උතුරු ආසියාවේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:106
+#: tzres.rc:110
 msgid "Georgian Standard Time"
 msgstr "ජෝර්ජියාවේ සම්මත වෙලාව"
 
-#: tzres.rc:107
+#: tzres.rc:111
 msgid "Georgian Daylight Time"
 msgstr "ජෝර්ජියාවේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:156
+#: tzres.rc:162
 msgid "Nepal Standard Time"
 msgstr "නේපාලයේ සම්මත වෙලාව"
 
-#: tzres.rc:157
+#: tzres.rc:163
 msgid "Nepal Daylight Time"
 msgstr "නේපාලයේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:62
+#: tzres.rc:64
 msgid "Cape Verde Standard Time"
 msgstr "කේප් වර්ඩෙ සම්මත වෙලාව"
 
-#: tzres.rc:63
+#: tzres.rc:65
 msgid "Cape Verde Daylight Time"
 msgstr "කේප් වර්ඩෙ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:116
+#: tzres.rc:120
 #, fuzzy
 #| msgid "Hawaiian Standard Time"
 msgid "Haiti Standard Time"
 msgstr "හවායි සම්මත වෙලාව"
 
-#: tzres.rc:117
+#: tzres.rc:121
 #, fuzzy
 #| msgid "Hawaiian Daylight Time"
 msgid "Haiti Daylight Time"
 msgstr "හවායි දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:76
+#: tzres.rc:78
 msgid "Central European Standard Time"
 msgstr "මධ්‍යම යුරෝපයේ සම්මත වෙලාව"
 
-#: tzres.rc:77
+#: tzres.rc:79
 msgid "Central European Daylight Time"
 msgstr "මධ්‍යම යුරෝපයේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:144
+#: tzres.rc:150
 msgid "Morocco Standard Time"
 msgstr "මොරොක්කෝවේ සම්මත වෙලාව"
 
-#: tzres.rc:145
+#: tzres.rc:151
 msgid "Morocco Daylight Time"
 msgstr "මොරොක්කෝවේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:74
+#: tzres.rc:76
 msgid "Central Europe Standard Time"
 msgstr "මධ්‍යම යුරෝපයේ සම්මත වෙලාව"
 
-#: tzres.rc:75
+#: tzres.rc:77
 msgid "Central Europe Daylight Time"
 msgstr "මධ්‍යම යුරෝපයේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:122
+#: tzres.rc:126
 msgid "Iran Standard Time"
 msgstr "ඉරානයේ සම්මත වෙලාව"
 
-#: tzres.rc:123
+#: tzres.rc:127
 msgid "Iran Daylight Time"
 msgstr "ඉරානයේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:154
+#: tzres.rc:160
 msgid "Namibia Standard Time"
 msgstr "නැමීබියාවේ සම්මත වෙලාව"
 
-#: tzres.rc:155
+#: tzres.rc:161
 msgid "Namibia Daylight Time"
 msgstr "නැමීබියාවේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:204
+#: tzres.rc:210
 msgid "Tonga Standard Time"
 msgstr "ටොන්ගාවේ සම්මත වෙලාව"
 
-#: tzres.rc:205
+#: tzres.rc:211
 msgid "Tonga Daylight Time"
 msgstr "ටොන්ගාවේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:148
+#: tzres.rc:154
 msgid "Mountain Standard Time (Mexico)"
 msgstr "කන්දේ සම්මත වෙලාව (මෙක්සිකෝව)"
 
-#: tzres.rc:149
+#: tzres.rc:155
 msgid "Mountain Daylight Time (Mexico)"
 msgstr "කන්දේ දිවා ආලෝකය වෙලාව (මෙක්සිකෝව)"
 
-#: tzres.rc:108
+#: tzres.rc:112
 msgid "GMT Standard Time"
 msgstr "GMT සම්මත වෙලාව"
 
-#: tzres.rc:109
+#: tzres.rc:113
 msgid "GMT Daylight Time"
 msgstr "GMT දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:70
+#: tzres.rc:72
 msgid "Central Asia Standard Time"
 msgstr "මධ්‍යම ආසියාවේ සම්මත වෙලාව"
 
-#: tzres.rc:71
+#: tzres.rc:73
 msgid "Central Asia Daylight Time"
 msgstr "මධ්‍යම ආසියාවේ දිවා ආලෝකය වෙලාව"
 
@@ -9729,35 +9758,35 @@ msgstr "අරාබි සම්මත වෙලාව"
 msgid "Arabic Daylight Time"
 msgstr "අරාබි දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:136
+#: tzres.rc:140
 msgid "Magadan Standard Time"
 msgstr "මාගඩාන් සම්මත වෙලාව"
 
-#: tzres.rc:137
+#: tzres.rc:141
 msgid "Magadan Daylight Time"
 msgstr "මාගඩාන් දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:160
+#: tzres.rc:166
 msgid "Newfoundland Standard Time"
 msgstr "නිව්ෆවුන්ඩ්ලන්තයේ සම්මත වෙලාව"
 
-#: tzres.rc:161
+#: tzres.rc:167
 msgid "Newfoundland Daylight Time"
 msgstr "නිව්ෆවුන්ඩ්ලන්තයේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:228
+#: tzres.rc:234
 msgid "West Pacific Standard Time"
 msgstr "බටහිර පැසිෆිකයේ සම්මත වෙලාව"
 
-#: tzres.rc:229
+#: tzres.rc:235
 msgid "West Pacific Daylight Time"
 msgstr "බටහිර පැසිෆිකයේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:168
+#: tzres.rc:174
 msgid "Pacific Standard Time"
 msgstr "පැසිෆිකයේ සම්මත වෙලාව"
 
-#: tzres.rc:169
+#: tzres.rc:175
 msgid "Pacific Daylight Time"
 msgstr "පැසිෆිකයේ දිවා ආලෝකය වෙලාව"
 
@@ -9769,67 +9798,67 @@ msgstr "අසර්බයිජානයේ සම්මත වෙලාව"
 msgid "Azerbaijan Daylight Time"
 msgstr "අසර්බයිජානයේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:186
+#: tzres.rc:192
 msgid "Samoa Standard Time"
 msgstr "සැමෝවා සම්මත වෙලාව"
 
-#: tzres.rc:187
+#: tzres.rc:193
 msgid "Samoa Daylight Time"
 msgstr "සැමෝවා දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:128
+#: tzres.rc:132
 msgid "Kaliningrad Standard Time"
 msgstr "කලිනින්ග්රාඩ් සම්මත වෙලාව"
 
-#: tzres.rc:129
+#: tzres.rc:133
 msgid "Kaliningrad Daylight Time"
 msgstr "කලිනින්ග්රාඩ් දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:170
+#: tzres.rc:176
 msgid "Pacific Standard Time (Mexico)"
 msgstr "පැසිෆිකයේ සම්මත වෙලාව (මෙක්සිකෝව)"
 
-#: tzres.rc:171
+#: tzres.rc:177
 msgid "Pacific Daylight Time (Mexico)"
 msgstr "පැසිෆිකයේ දිවා ආලෝකය වෙලාව (මෙක්සිකෝව)"
 
-#: tzres.rc:140
+#: tzres.rc:146
 msgid "Middle East Standard Time"
 msgstr "මැද පෙරදිගයේ සම්මත වෙලාව"
 
-#: tzres.rc:141
+#: tzres.rc:147
 msgid "Middle East Daylight Time"
 msgstr "මැද පෙරදිගයේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:202
+#: tzres.rc:208
 msgid "Tokyo Standard Time"
 msgstr "ටෝකියෝවේ සම්මත වෙලාව"
 
-#: tzres.rc:203
+#: tzres.rc:209
 msgid "Tokyo Daylight Time"
 msgstr "ටෝකියෝවේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:134
+#: tzres.rc:138
 msgid "Line Islands Standard Time"
 msgstr "රේඛිය දූපත් සම්මත වෙලාව"
 
-#: tzres.rc:135
+#: tzres.rc:139
 msgid "Line Islands Daylight Time"
 msgstr "රේඛිය දූපත් දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:126
+#: tzres.rc:130
 msgid "Jordan Standard Time"
 msgstr "පෝර්දානයේ සම්මත වෙලාව"
 
-#: tzres.rc:127
+#: tzres.rc:131
 msgid "Jordan Daylight Time"
 msgstr "පෝර්දානයේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:80
+#: tzres.rc:82
 msgid "Central Standard Time"
 msgstr "මධ්‍යම සම්මත වෙලාව"
 
-#: tzres.rc:81
+#: tzres.rc:83
 msgid "Central Daylight Time"
 msgstr "මධ්‍යම දිවා ආලෝකය වෙලාව"
 
@@ -9841,11 +9870,11 @@ msgstr "ඇසෝරස් සම්මත වෙලාව"
 msgid "Azores Daylight Time"
 msgstr "ඇසෝරස් දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:162
+#: tzres.rc:168
 msgid "North Asia East Standard Time"
 msgstr "උතුරු ආසියාවේ නැගෙනහිර සම්මත වෙලාව"
 
-#: tzres.rc:163
+#: tzres.rc:169
 msgid "North Asia East Daylight Time"
 msgstr "උතුරු ආසියාවේ නැගෙනහිර දිවා ආලෝකය වෙලාව"
 
@@ -9857,95 +9886,107 @@ msgstr "ආර්ජන්ටිනාවේ සම්මත වෙලාව"
 msgid "Argentina Daylight Time"
 msgstr "ආර්ජන්ටිනාවේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:150
+#: tzres.rc:142
+#, fuzzy
+#| msgid "Mauritius Standard Time"
+msgid "Marquesas Standard Time"
+msgstr "මෞරිටුයුස් සම්මත වෙලාව"
+
+#: tzres.rc:143
+#, fuzzy
+#| msgid "Mauritius Daylight Time"
+msgid "Marquesas Daylight Time"
+msgstr "මෞරිටුයුස් දිවා ආලෝකය වෙලාව"
+
+#: tzres.rc:156
 msgid "Myanmar Standard Time"
 msgstr "මියන්මාරයේ සම්මත වෙලාව"
 
-#: tzres.rc:151
+#: tzres.rc:157
 msgid "Myanmar Daylight Time"
 msgstr "මියන්මාරයේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:214 tzres.rc:215
+#: tzres.rc:220 tzres.rc:221
 msgid "Coordinated Universal Time"
 msgstr "සම්බන්ධිත විශ්ව වෙලාව"
 
-#: tzres.rc:120
+#: tzres.rc:124
 msgid "India Standard Time"
 msgstr "ඉන්දියාවේ සම්මත වෙලාව"
 
-#: tzres.rc:121
+#: tzres.rc:125
 msgid "India Daylight Time"
 msgstr "ඉන්දියාවේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:114
+#: tzres.rc:118
 msgid "GTB Standard Time"
 msgstr "GTB සම්මත වෙලාව"
 
-#: tzres.rc:115
+#: tzres.rc:119
 msgid "GTB Daylight Time"
 msgstr "GTB දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:206
+#: tzres.rc:212
 msgid "Turkey Standard Time"
 msgstr "තුර්කියේ සම්මත වෙලාව"
 
-#: tzres.rc:207
+#: tzres.rc:213
 msgid "Turkey Daylight Time"
 msgstr "තුර්කියේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:102
+#: tzres.rc:106
 msgid "Fiji Standard Time"
 msgstr "ෆිජියේ සම්මත වෙලාව"
 
-#: tzres.rc:103
+#: tzres.rc:107
 msgid "Fiji Daylight Time"
 msgstr "ෆිජියේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:60
+#: tzres.rc:62
 msgid "Canada Central Standard Time"
 msgstr "මධ්‍යම කැනඩාවේ සම්මත වෙලාව"
 
-#: tzres.rc:61
+#: tzres.rc:63
 msgid "Canada Central Daylight Time"
 msgstr "මධ්‍යම කැනඩාවේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:198
+#: tzres.rc:204
 msgid "Taipei Standard Time"
 msgstr "තායිපේයේ සම්මත වෙලාව"
 
-#: tzres.rc:199
+#: tzres.rc:205
 msgid "Taipei Daylight Time"
 msgstr "තායිපේයේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:224
+#: tzres.rc:230
 msgid "W. Europe Standard Time"
 msgstr "බටහිර යුරෝපයේ සම්මත වෙලාව"
 
-#: tzres.rc:225
+#: tzres.rc:231
 msgid "W. Europe Daylight Time"
 msgstr "බටහිර යුරෝපයේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:142
+#: tzres.rc:148
 msgid "Montevideo Standard Time"
 msgstr "මොන්ටෙවිඩෝ සම්මත වෙලාව"
 
-#: tzres.rc:143
+#: tzres.rc:149
 msgid "Montevideo Daylight Time"
 msgstr "මොන්ටෙවිඩෝ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:172
+#: tzres.rc:178
 msgid "Pakistan Standard Time"
 msgstr "පකිස්ථානයේ සම්මත වෙලාව"
 
-#: tzres.rc:173
+#: tzres.rc:179
 msgid "Pakistan Daylight Time"
 msgstr "පකිස්ථානයේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:64
+#: tzres.rc:66
 msgid "Caucasus Standard Time"
 msgstr "කොකේසස් සම්මත වෙලාව"
 
-#: tzres.rc:65
+#: tzres.rc:67
 msgid "Caucasus Daylight Time"
 msgstr "කොකේසස් දිවා ආලෝකය වෙලාව"
 
@@ -9957,27 +9998,27 @@ msgstr "නැගෙනහිර ඕස්ට්රේලියාවේ සම�
 msgid "AUS Eastern Daylight Time"
 msgstr "නැගෙනහිර ඕස්ට්රේලියාවේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:152
+#: tzres.rc:158
 msgid "N. Central Asia Standard Time"
 msgstr "උතුරු මධ්‍යම ආසියාවේ සම්මත වෙලාව"
 
-#: tzres.rc:153
+#: tzres.rc:159
 msgid "N. Central Asia Daylight Time"
 msgstr "උතුරු මධ්‍යම ආසියාවේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:96
+#: tzres.rc:100
 msgid "Eastern Standard Time"
 msgstr "නැගෙනහිර සම්මත වේලාව"
 
-#: tzres.rc:97
+#: tzres.rc:101
 msgid "Eastern Daylight Time"
 msgstr "නැගෙනහිර දිවා ආලෝකය වේලාව"
 
-#: tzres.rc:82
+#: tzres.rc:84
 msgid "Central Standard Time (Mexico)"
 msgstr "මධ්‍යම සම්මත වෙලාව (මෙක්සිකෝව)"
 
-#: tzres.rc:83
+#: tzres.rc:85
 msgid "Central Daylight Time (Mexico)"
 msgstr "මධ්‍යම දිවා ආලෝකය වෙලාව (මෙක්සිකෝව)"
 
@@ -9989,67 +10030,67 @@ msgstr "අත්ලාන්තිකයේ සම්මත වෙලාව"
 msgid "Atlantic Daylight Time"
 msgstr "අත්ලාන්තිකයේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:146
+#: tzres.rc:152
 msgid "Mountain Standard Time"
 msgstr "කන්දේ සම්මත වෙලාව"
 
-#: tzres.rc:147
+#: tzres.rc:153
 msgid "Mountain Daylight Time"
 msgstr "කන්දේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:210
+#: tzres.rc:216
 msgid "US Eastern Standard Time"
 msgstr "එක්සත් ජනපදයේ නැගෙනහිරේ සම්මත වෙලාව"
 
-#: tzres.rc:211
+#: tzres.rc:217
 msgid "US Eastern Daylight Time"
 msgstr "එක්සත් ජනපදයේ නැගෙනහිරේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:200
+#: tzres.rc:206
 msgid "Tasmania Standard Time"
 msgstr "ටැස්මේනියාවේ සම්මත වෙලාව"
 
-#: tzres.rc:201
+#: tzres.rc:207
 msgid "Tasmania Daylight Time"
 msgstr "ටැස්මේනියාවේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:68
+#: tzres.rc:70
 msgid "Central America Standard Time"
 msgstr "මධ්‍යම ඇමරිකාවේ සම්මත වෙලාව"
 
-#: tzres.rc:69
+#: tzres.rc:71
 msgid "Central America Daylight Time"
 msgstr "මධ්‍යම ඇමරිකාවේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:212
+#: tzres.rc:218
 msgid "US Mountain Standard Time"
 msgstr "එක්සත් ජනපදයේ කන්දේ සම්මත වෙලාව"
 
-#: tzres.rc:213
+#: tzres.rc:219
 msgid "US Mountain Daylight Time"
 msgstr "එක්සත් ජනපදයේ කන්දේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:192
+#: tzres.rc:198
 msgid "South Africa Standard Time"
 msgstr "දකුණු අප්රිකාවේ සම්මත වෙලාව"
 
-#: tzres.rc:193
+#: tzres.rc:199
 msgid "South Africa Daylight Time"
 msgstr "දකුණු අප්රිකාවේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:66
+#: tzres.rc:68
 msgid "Cen. Australia Standard Time"
 msgstr "මධ්යම ඕස්ට්රේලියාවේ සම්මත වෙලාව"
 
-#: tzres.rc:67
+#: tzres.rc:69
 msgid "Cen. Australia Daylight Time"
 msgstr "මධ්යම ඕස්ට්රේලියාවේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:194
+#: tzres.rc:200
 msgid "Sri Lanka Standard Time"
 msgstr "ශ්‍රී ලංකාවේ සම්මත වෙලාව"
 
-#: tzres.rc:195
+#: tzres.rc:201
 msgid "Sri Lanka Daylight Time"
 msgstr "ශ්‍රී ලංකාවේ දිවා ආලෝකය වෙලාව"
 
@@ -10061,19 +10102,19 @@ msgstr "ඇෆ්ඝනිස්ථානයේ සම්මත වෙලාව"
 msgid "Afghanistan Daylight Time"
 msgstr "ඇෆ්ඝනිස්ථානයේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:230
+#: tzres.rc:236
 msgid "Yakutsk Standard Time"
 msgstr "යකුට්ස්ක් සම්මත වෙලාව"
 
-#: tzres.rc:231
+#: tzres.rc:237
 msgid "Yakutsk Daylight Time"
 msgstr "යකුට්ස්ක් දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:180
+#: tzres.rc:186
 msgid "SA Eastern Standard Time"
 msgstr "SA නැගෙනහිර සම්මත වෙලාව"
 
-#: tzres.rc:181
+#: tzres.rc:187
 msgid "SA Eastern Daylight Time"
 msgstr "SA නැගෙනහිර දිවා ආලෝකය වෙලාව"
 
@@ -10093,35 +10134,35 @@ msgstr "අරාබි ජාතිකයේ සම්මත වෙලාව"
 msgid "Arabian Daylight Time"
 msgstr "අරාබි ජාතිකයේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:178
+#: tzres.rc:184
 msgid "Russian Standard Time"
 msgstr "රුසියාවේ සම්මත වෙලාව"
 
-#: tzres.rc:179
+#: tzres.rc:185
 msgid "Russian Daylight Time"
 msgstr "රුසියාවේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:176
+#: tzres.rc:182
 msgid "Romance Standard Time"
 msgstr "Romance සම්මත වෙලාව"
 
-#: tzres.rc:177
+#: tzres.rc:183
 msgid "Romance Daylight Time"
 msgstr "Romance දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:100
+#: tzres.rc:104
 msgid "Ekaterinburg Standard Time"
 msgstr "ඊකේටර්බින්බර්ග් සම්මත වෙලාව"
 
-#: tzres.rc:101
+#: tzres.rc:105
 msgid "Ekaterinburg Daylight Time"
 msgstr "ඊකේටර්බින්බර්ග් දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:196
+#: tzres.rc:202
 msgid "Syria Standard Time"
 msgstr "සිරියාවේ සම්මත වෙලාව"
 
-#: tzres.rc:197
+#: tzres.rc:203
 msgid "Syria Daylight Time"
 msgstr "සිරියාවේ දිවා ආලෝකය වෙලාව"
 
@@ -10133,27 +10174,27 @@ msgstr "මධ්‍යම ඕස්ට්රේලියාවේ සම්ම�
 msgid "AUS Central Daylight Time"
 msgstr "මධ්‍යම ඕස්ට්රේලියාවේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:112
+#: tzres.rc:116
 msgid "Greenwich Standard Time"
 msgstr "ග්රිනිච් සම්මත වෙලාව"
 
-#: tzres.rc:113
+#: tzres.rc:117
 msgid "Greenwich Daylight Time"
 msgstr "ග්රිනිච් දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:208
+#: tzres.rc:214
 msgid "Ulaanbaatar Standard Time"
 msgstr "උලාන්බාටර් සම්මත වෙලාව"
 
-#: tzres.rc:209
+#: tzres.rc:215
 msgid "Ulaanbaatar Daylight Time"
 msgstr "උලාන්බාටර් දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:124
+#: tzres.rc:128
 msgid "Israel Standard Time"
 msgstr "ඊශ්රායෙලයේ සම්මත වෙලාව"
 
-#: tzres.rc:125
+#: tzres.rc:129
 msgid "Israel Daylight Time"
 msgstr "ඊශ්රායෙලයේ දිවා ආලෝකය වෙලාව"
 
@@ -10165,19 +10206,19 @@ msgstr "බංගලාදේශයේ සම්මත වෙලාව"
 msgid "Bangladesh Daylight Time"
 msgstr "බංගලාදේශයේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:182
+#: tzres.rc:188
 msgid "SA Pacific Standard Time"
 msgstr "SA පැසිෆිකයේ සම්මත වෙලාව"
 
-#: tzres.rc:183
+#: tzres.rc:189
 msgid "SA Pacific Daylight Time"
 msgstr "SA පැසිෆිකයේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:226
+#: tzres.rc:232
 msgid "West Asia Standard Time"
 msgstr "බටහිර ආසියාවේ සම්මත වෙලාව"
 
-#: tzres.rc:227
+#: tzres.rc:233
 msgid "West Asia Daylight Time"
 msgstr "බටහිර ආසියාවේ දිවා ආලෝකය වෙලාව"
 
@@ -10189,27 +10230,27 @@ msgstr "ඇලස්කාවේ සම්මත වෙලාව"
 msgid "Alaskan Daylight Time"
 msgstr "ඇලස්කාවේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:174
+#: tzres.rc:180
 msgid "Paraguay Standard Time"
 msgstr "පැරගුවේ සම්මත වෙලාව"
 
-#: tzres.rc:175
+#: tzres.rc:181
 msgid "Paraguay Daylight Time"
 msgstr "පැරගුවේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:86
+#: tzres.rc:90
 msgid "Dateline Standard Time"
 msgstr "Dateline සම්මත වෙලාව"
 
-#: tzres.rc:87
+#: tzres.rc:91
 msgid "Dateline Daylight Time"
 msgstr "Dateline දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:132
+#: tzres.rc:136
 msgid "Libya Standard Time"
 msgstr "ලිබියාවේ සම්මත වෙලාව"
 
-#: tzres.rc:133
+#: tzres.rc:137
 msgid "Libya Daylight Time"
 msgstr "ලිබියාවේ දිවා ආලෝකය වෙලාව"
 
@@ -10221,35 +10262,47 @@ msgstr "බහියාවේ සම්මත වෙලාව"
 msgid "Bahia Daylight Time"
 msgstr "බහියාවේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:216
+#: tzres.rc:222
 msgid "Venezuela Standard Time"
 msgstr "වෙනිසියුලාවේ සම්මත වෙලාව"
 
-#: tzres.rc:217
+#: tzres.rc:223
 msgid "Venezuela Daylight Time"
 msgstr "වෙනිසියුලාවේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:118
+#: tzres.rc:60
+#, fuzzy
+#| msgid "Mountain Standard Time"
+msgid "Bougainville Standard Time"
+msgstr "කන්දේ සම්මත වෙලාව"
+
+#: tzres.rc:61
+#, fuzzy
+#| msgid "Mountain Daylight Time"
+msgid "Bougainville Daylight Time"
+msgstr "කන්දේ දිවා ආලෝකය වෙලාව"
+
+#: tzres.rc:122
 msgid "Hawaiian Standard Time"
 msgstr "හවායි සම්මත වෙලාව"
 
-#: tzres.rc:119
+#: tzres.rc:123
 msgid "Hawaiian Daylight Time"
 msgstr "හවායි දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:188
+#: tzres.rc:194
 msgid "SE Asia Standard Time"
 msgstr "SE ආසියාවේ සම්මත වෙලාව"
 
-#: tzres.rc:189
+#: tzres.rc:195
 msgid "SE Asia Daylight Time"
 msgstr "SE ආසියාවේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:158
+#: tzres.rc:164
 msgid "New Zealand Standard Time"
 msgstr "නවසීලන්තයේ සම්මත වෙලාව"
 
-#: tzres.rc:159
+#: tzres.rc:165
 msgid "New Zealand Daylight Time"
 msgstr "නවසීලන්තයේ දිවා ආලෝකය වෙලාව"
 
@@ -10265,11 +10318,11 @@ msgstr "ආර්ජන්ටිනාවේ සම්මත වෙලාව"
 msgid "Aleutian Daylight Time"
 msgstr "ආර්ජන්ටිනාවේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:72
+#: tzres.rc:74
 msgid "Central Brazilian Standard Time"
 msgstr "මධ්‍යම බ්‍රසීලයේ සම්මත වෙලාව"
 
-#: tzres.rc:73
+#: tzres.rc:75
 msgid "Central Brazilian Daylight Time"
 msgstr "මධ්‍යම බ්‍රසීලයේ දිවා ආලෝකය වෙලාව"
 
@@ -10281,131 +10334,143 @@ msgstr "බෙලාරස් සම්මත වෙලාව"
 msgid "Belarus Daylight Time"
 msgstr "බෙලාරස් දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:184
+#: tzres.rc:190
 msgid "SA Western Standard Time"
 msgstr "SA බටහිර සම්මත වෙලාව"
 
-#: tzres.rc:185
+#: tzres.rc:191
 msgid "SA Western Daylight Time"
 msgstr "SA බටහිර දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:110
+#: tzres.rc:114
 msgid "Greenland Standard Time"
 msgstr "ග්රීන්ලන්තයේ සම්මත වෙලාව"
 
-#: tzres.rc:111
+#: tzres.rc:115
 msgid "Greenland Daylight Time"
 msgstr "ග්රීන්ලන්තයේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:94
+#: tzres.rc:98
 msgid "Easter Island Standard Time"
 msgstr "ඊස්ටර් දූපතේ සම්මත වෙලාව"
 
-#: tzres.rc:95
+#: tzres.rc:99
 msgid "Easter Island Daylight Time"
 msgstr "ඊස්ටර් දූපතේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:98
+#: tzres.rc:102
 msgid "Egypt Standard Time"
 msgstr "ඊජිප්තුවේ සම්මත වෙලාව"
 
-#: tzres.rc:99
+#: tzres.rc:103
 msgid "Egypt Daylight Time"
 msgstr "ඊජිප්තුවේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:138
+#: tzres.rc:144
 msgid "Mauritius Standard Time"
 msgstr "මෞරිටුයුස් සම්මත වෙලාව"
 
-#: tzres.rc:139
+#: tzres.rc:145
 msgid "Mauritius Daylight Time"
 msgstr "මෞරිටුයුස් දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:218
+#: tzres.rc:224
 msgid "Vladivostok Standard Time"
 msgstr "ලාඩිවොස්ටොක් සම්මත වෙලාව"
 
-#: tzres.rc:219
+#: tzres.rc:225
 msgid "Vladivostok Daylight Time"
 msgstr "ලාඩිවොස්ටොක් දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:190
+#: tzres.rc:196
 msgid "Singapore Standard Time"
 msgstr "සිංගප්පූරුවේ සම්මත වෙලාව"
 
-#: tzres.rc:191
+#: tzres.rc:197
 msgid "Singapore Daylight Time"
 msgstr "සිංගප්පූරුවේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:130
+#: tzres.rc:134
 msgid "Korea Standard Time"
 msgstr "කොරියාවේ සම්මත වෙලාව"
 
-#: tzres.rc:131
+#: tzres.rc:135
 msgid "Korea Daylight Time"
 msgstr "කොරියාවේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:88
+#: tzres.rc:86
+#, fuzzy
+#| msgid "Easter Island Standard Time"
+msgid "Chatham Islands Standard Time"
+msgstr "ඊස්ටර් දූපතේ සම්මත වෙලාව"
+
+#: tzres.rc:87
+#, fuzzy
+#| msgid "Easter Island Daylight Time"
+msgid "Chatham Islands Daylight Time"
+msgstr "ඊස්ටර් දූපතේ දිවා ආලෝකය වෙලාව"
+
+#: tzres.rc:92
 msgid "E. Africa Standard Time"
 msgstr "නැගෙනහිර අප්රිකාවේ සම්මත වෙලාව"
 
-#: tzres.rc:89
+#: tzres.rc:93
 msgid "E. Africa Daylight Time"
 msgstr "නැගෙනහිර අප්රිකාවේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:104
+#: tzres.rc:108
 msgid "FLE Standard Time"
 msgstr "FLE සම්මත වෙලාව"
 
-#: tzres.rc:105
+#: tzres.rc:109
 msgid "FLE Daylight Time"
 msgstr "FLE දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:92
+#: tzres.rc:96
 msgid "E. South America Standard Time"
 msgstr "නැගෙනහිර දකුණු ඇමරිකාවේ සම්මත වෙලාව"
 
-#: tzres.rc:93
+#: tzres.rc:97
 msgid "E. South America Daylight Time"
 msgstr "නැගෙනහිර දකුණු ඇමරිකාවේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:78
+#: tzres.rc:80
 msgid "Central Pacific Standard Time"
 msgstr "මධ්‍යම පැසිෆිකයේ සම්මත වෙලාව"
 
-#: tzres.rc:79
+#: tzres.rc:81
 msgid "Central Pacific Daylight Time"
 msgstr "මධ්‍යම පැසිෆිකයේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:222
+#: tzres.rc:228
 msgid "W. Central Africa Standard Time"
 msgstr "බටහිර මධ්‍යම අප්රිකාවේ සම්මත වෙලාව"
 
-#: tzres.rc:223
+#: tzres.rc:229
 msgid "W. Central Africa Daylight Time"
 msgstr "බටහිර මධ්‍යම අප්රිකාවේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:166
+#: tzres.rc:172
 msgid "Pacific SA Standard Time"
 msgstr "පැසිෆිකය SA සම්මත වෙලාව"
 
-#: tzres.rc:167
+#: tzres.rc:173
 msgid "Pacific SA Daylight Time"
 msgstr "පැසිෆිකය SA දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:90
+#: tzres.rc:94
 msgid "E. Australia Standard Time"
 msgstr "නැගෙනහිර ඔස්ට්රාලියාවේ සම්මත වෙලාව"
 
-#: tzres.rc:91
+#: tzres.rc:95
 msgid "E. Australia Daylight Time"
 msgstr "නැගෙනහිර ඔස්ට්රාලියාවේ දිවා ආලෝකය වෙලාව"
 
-#: tzres.rc:220
+#: tzres.rc:226
 msgid "W. Australia Standard Time"
 msgstr "බටහිර ඕස්ට්රේලියාවේ සම්මත වෙලාව"
 
-#: tzres.rc:221
+#: tzres.rc:227
 msgid "W. Australia Daylight Time"
 msgstr "බටහිර ඕස්ට්රේලියාවේ දිවා ආලෝකය වෙලාව"
 
@@ -11455,7 +11520,7 @@ msgstr "ප්‍රතිසම (&L)"
 msgid "Digi&tal"
 msgstr "ඩිජිටල් (&T)"
 
-#: clock.rc:35 notepad.rc:53 winecfg.rc:307 winefile.rc:63 wordpad.rc:84
+#: clock.rc:35 notepad.rc:53 winecfg.rc:305 winefile.rc:63 wordpad.rc:84
 msgid "&Font..."
 msgstr "ෆොන්ටය... (&F)"
 
@@ -15071,7 +15136,7 @@ msgstr ""
 msgid "The Wine configuration in %s is being updated, please wait..."
 msgstr "Wine වින්‍යාසය %s ඇතුලේ යාවත්කාලීන වේ, කරුණාකරලා බලාගෙන ඉන්න..."
 
-#: winecfg.rc:141
+#: winecfg.rc:140
 msgid ""
 "This program is free software; you can redistribute it and/or modify it "
 "under the terms of the GNU Lesser General Public License as published by the "
@@ -15083,416 +15148,412 @@ msgstr ""
 "Free Software Foundation; either version 2.1 of the License, or (at your "
 "option) any later version."
 
-#: winecfg.rc:143
+#: winecfg.rc:142
 msgid "Windows registration information"
 msgstr "Windows ලියාපදිංචිය තොරතුරු"
 
-#: winecfg.rc:144
+#: winecfg.rc:143
 msgid "&Owner:"
 msgstr "හිමිකරු (&O):"
 
-#: winecfg.rc:146
+#: winecfg.rc:145
 msgid "Organi&zation:"
 msgstr "සංවිධානය (&Z):"
 
-#: winecfg.rc:154
+#: winecfg.rc:153
 msgid "Application settings"
 msgstr "යෙදුම් සැකසීම්"
 
-#: winecfg.rc:155
+#: winecfg.rc:154
 msgid ""
 "Wine can mimic different Windows versions for each application. This tab is "
 "linked to the Libraries and Graphics tabs to allow you to change system-wide "
 "or per-application settings in those tabs as well."
 msgstr ""
 
-#: winecfg.rc:159
+#: winecfg.rc:158
 msgid "Add appli&cation..."
 msgstr "යෙදුම එක් කරන්න... (&C)"
 
-#: winecfg.rc:160
+#: winecfg.rc:159
 msgid "&Remove application"
 msgstr "යෙදුම ඉවත් කරන්න (&R)"
 
-#: winecfg.rc:161
+#: winecfg.rc:160
 msgid "&Windows Version:"
 msgstr "Windows අනුවාදය (&W):"
 
-#: winecfg.rc:169
+#: winecfg.rc:168
 msgid "Window settings"
 msgstr "කවුළු සැකසුම්"
 
-#: winecfg.rc:170
+#: winecfg.rc:169
 msgid "Automatically capture the &mouse in full-screen windows"
 msgstr ""
 
-#: winecfg.rc:171
+#: winecfg.rc:170
 msgid "Allow the window manager to &decorate the windows"
 msgstr ""
 
-#: winecfg.rc:172
+#: winecfg.rc:171
 msgid "Allow the &window manager to control the windows"
 msgstr ""
 
-#: winecfg.rc:173
+#: winecfg.rc:172
 msgid "&Emulate a virtual desktop"
 msgstr "අතථ්‍ය වැඩතලයක් අනුකරණය කරන්න (&E)"
 
-#: winecfg.rc:175
+#: winecfg.rc:174
 msgid "Desktop &size:"
 msgstr ""
 
-#: winecfg.rc:180
+#: winecfg.rc:179
 msgid "Screen resolution"
 msgstr "තිරයේ විභේදනය"
 
-#: winecfg.rc:184
+#: winecfg.rc:183
 msgid "This is a sample text using 10 point Tahoma"
 msgstr ""
 
-#: winecfg.rc:191
+#: winecfg.rc:190
 msgid "DLL overrides"
 msgstr ""
 
-#: winecfg.rc:192
+#: winecfg.rc:191
 msgid ""
 "Dynamic Link Libraries can be specified individually to be either builtin "
 "(provided by Wine) or native (taken from Windows or provided by the "
 "application)."
 msgstr ""
 
-#: winecfg.rc:194
+#: winecfg.rc:193
 msgid "&New override for library:"
 msgstr ""
 
-#: winecfg.rc:196
+#: winecfg.rc:195
 msgid "A&dd"
 msgstr "එක් කරන්න (&D)"
 
-#: winecfg.rc:197
+#: winecfg.rc:196
 msgid "Existing &overrides:"
 msgstr ""
 
-#: winecfg.rc:199
+#: winecfg.rc:198
 msgid "&Edit..."
 msgstr "වෙනස් කරන්න... (&E)"
 
-#: winecfg.rc:205
+#: winecfg.rc:204
 msgid "Edit Override"
 msgstr "Override එක වෙනස් කරන්න"
 
-#: winecfg.rc:208
+#: winecfg.rc:207
 msgid "Load order"
 msgstr ""
 
-#: winecfg.rc:209
+#: winecfg.rc:208
 msgid "&Builtin (Wine)"
 msgstr "&Builtin (Wine)"
 
-#: winecfg.rc:210
+#: winecfg.rc:209
 msgid "&Native (Windows)"
 msgstr "&Native (Windows)"
 
-#: winecfg.rc:211
+#: winecfg.rc:210
 msgid "Buil&tin then Native"
 msgstr "Buil&tin then Native"
 
-#: winecfg.rc:212
+#: winecfg.rc:211
 msgid "Nati&ve then Builtin"
 msgstr "Nati&ve then Builtin"
 
-#: winecfg.rc:220
+#: winecfg.rc:219
 msgid "Select Drive Letter"
 msgstr "ධාවකය අකුර තෝරන්න"
 
-#: winecfg.rc:232
+#: winecfg.rc:231
 msgid "Drive configuration"
 msgstr "ධාවක වින්‍යාසය"
 
-#: winecfg.rc:233
+#: winecfg.rc:232
 msgid ""
 "Failed to connect to the mount manager; the drive configuration cannot be "
 "edited."
 msgstr ""
 
-#: winecfg.rc:236
+#: winecfg.rc:235
 msgid "A&dd..."
 msgstr "එක් කරන්න (&D)"
 
-#: winecfg.rc:238
-msgid "Aut&odetect"
-msgstr "ස්වයං අනාවරිත කරන්න (&O)"
-
-#: winecfg.rc:241
+#: winecfg.rc:239
 msgid "&Path:"
 msgstr "පෙත:"
 
-#: winecfg.rc:248 winecfg.rc:38
+#: winecfg.rc:246 winecfg.rc:37
 msgid "Show Advan&ced"
 msgstr "'උසස්' පෙන්නන්න (&C)"
 
-#: winecfg.rc:249
+#: winecfg.rc:247
 msgid "De&vice:"
 msgstr "ආම්පන්නය (&V):"
 
-#: winecfg.rc:251
+#: winecfg.rc:249
 msgid "Bro&wse..."
 msgstr "පිරික්සන්න... (&W)"
 
-#: winecfg.rc:253
+#: winecfg.rc:251
 msgid "&Label:"
 msgstr "ලේබලය (&L):"
 
-#: winecfg.rc:255
+#: winecfg.rc:253
 msgid "S&erial:"
 msgstr "අනුක්‍රම (&E):"
 
-#: winecfg.rc:258
+#: winecfg.rc:256
 msgid "&Show dot files"
 msgstr "dot ගොනු පෙන්නන්න (&S)"
 
-#: winecfg.rc:265
+#: winecfg.rc:263
 msgid "Driver diagnostics"
 msgstr "ධාවක දෝෂ නිර්ණය"
 
-#: winecfg.rc:267
+#: winecfg.rc:265
 msgid "Defaults"
 msgstr "පෙරනිමි"
 
-#: winecfg.rc:268
+#: winecfg.rc:266
 msgid "Output device:"
 msgstr "ප්‍රතිදාන ආම්පන්නය:"
 
-#: winecfg.rc:269
+#: winecfg.rc:267
 msgid "Voice output device:"
 msgstr "හඬ ප්‍රතිදාන ආම්පන්නය:"
 
-#: winecfg.rc:270
+#: winecfg.rc:268
 msgid "Input device:"
 msgstr "ආදාන ආම්පන්නය:"
 
-#: winecfg.rc:271
+#: winecfg.rc:269
 msgid "Voice input device:"
 msgstr "හඬ ආදාන ආම්පන්නය:"
 
-#: winecfg.rc:276
+#: winecfg.rc:274
 msgid "&Test Sound"
 msgstr "ශ්‍රව්‍ය පරික්‍ෂණ කරන්න (&T)"
 
-#: winecfg.rc:277 winecfg.rc:90
+#: winecfg.rc:275 winecfg.rc:89
 msgid "Speaker configuration"
 msgstr "ස්පීකර වින්‍යාසය"
 
-#: winecfg.rc:280
+#: winecfg.rc:278
 msgid "Speakers:"
 msgstr "ස්පීකර"
 
-#: winecfg.rc:288
+#: winecfg.rc:286
 msgid "Appearance"
 msgstr "පෙනුම"
 
-#: winecfg.rc:289
+#: winecfg.rc:287
 msgid "&Theme:"
 msgstr "තේමාව (&T):"
 
-#: winecfg.rc:291
+#: winecfg.rc:289
 msgid "&Install theme..."
 msgstr "තේමාව ස්ථාපනය කරන්න... (&I)"
 
-#: winecfg.rc:296
+#: winecfg.rc:294
 msgid "It&em:"
 msgstr "අයිතමය (&E):"
 
-#: winecfg.rc:298
+#: winecfg.rc:296
 msgid "C&olor:"
 msgstr "පාට (&O):"
 
-#: winecfg.rc:304
+#: winecfg.rc:302
 msgid "MIME types"
 msgstr "MIME වර්ග"
 
-#: winecfg.rc:305
+#: winecfg.rc:303
 msgid "Manage file &associations"
 msgstr ""
 
-#: winecfg.rc:308
+#: winecfg.rc:306
 msgid "Folders"
 msgstr "ෆෝල්ඩර"
 
-#: winecfg.rc:311
+#: winecfg.rc:309
 msgid "&Link to:"
 msgstr ""
 
-#: winecfg.rc:34
+#: winecfg.rc:33
 msgid "Libraries"
 msgstr "පුස්තකාල"
 
-#: winecfg.rc:35
+#: winecfg.rc:34
 msgid "Drives"
 msgstr "ධාවක"
 
-#: winecfg.rc:36
+#: winecfg.rc:35
 msgid "Select the Unix target directory, please."
 msgstr "යුනික්ස් ඉලක්ක ඩිරෙක්ටරිය තෝරන්න, කරුණාකරලා."
 
-#: winecfg.rc:37
+#: winecfg.rc:36
 msgid "Hide Advan&ced"
 msgstr "'උසස්' හංගන්න (&C)"
 
-#: winecfg.rc:39
+#: winecfg.rc:38
 msgid "(No Theme)"
 msgstr "(තේමාවක් නැහැ)"
 
-#: winecfg.rc:40
+#: winecfg.rc:39
 msgid "Graphics"
 msgstr "චිත්‍රණ"
 
-#: winecfg.rc:41
+#: winecfg.rc:40
 msgid "Desktop Integration"
 msgstr "වැඩතලය අනුකලනය"
 
-#: winecfg.rc:42
+#: winecfg.rc:41
 msgid "Audio"
 msgstr "ශ්‍රව්‍ය"
 
-#: winecfg.rc:43
+#: winecfg.rc:42
 msgid "About"
 msgstr "ගැන"
 
-#: winecfg.rc:44
+#: winecfg.rc:43
 msgid "Wine configuration"
 msgstr "Wine වින්‍යාසය"
 
-#: winecfg.rc:46
+#: winecfg.rc:45
 msgid "Theme files (*.msstyles; *.theme)"
 msgstr "තේමා ගොනු (*.msstyles; *.theme)"
 
-#: winecfg.rc:47
+#: winecfg.rc:46
 msgid "Select a theme file"
 msgstr "තේමා ගොනුවක් තෝරන්න"
 
-#: winecfg.rc:48
+#: winecfg.rc:47
 msgid "Folder"
 msgstr "ෆෝල්ඩරය"
 
-#: winecfg.rc:49
+#: winecfg.rc:48
 msgid "Links to"
 msgstr ""
 
-#: winecfg.rc:45
+#: winecfg.rc:44
 msgid "Wine configuration for %s"
 msgstr "%s එකට Wine වින්‍යාසය"
 
-#: winecfg.rc:84
+#: winecfg.rc:83
 msgid "Selected driver: %s"
 msgstr "තෝරපු ධාවකය: %s"
 
-#: winecfg.rc:85
+#: winecfg.rc:84
 msgid "(None)"
 msgstr "(කිසිවක් නැත)"
 
-#: winecfg.rc:86
+#: winecfg.rc:85
 msgid "Audio test failed!"
 msgstr "ශ්‍රව්‍ය පරික්‍ෂණය අසාර්ථක උනා!"
 
-#: winecfg.rc:88
+#: winecfg.rc:87
 msgid "(System default)"
 msgstr "(පද්ධතියේ පෙරනිමිය)"
 
-#: winecfg.rc:91
+#: winecfg.rc:90
 msgid "5.1 Surround"
 msgstr "5.1 වටාපිටාව"
 
-#: winecfg.rc:92
+#: winecfg.rc:91
 msgid "Quadraphonic"
 msgstr "ක්වොඩ්රොෆොනික"
 
-#: winecfg.rc:93
+#: winecfg.rc:92
 msgid "Stereo"
 msgstr "ස්ටීරියෝ"
 
-#: winecfg.rc:94
+#: winecfg.rc:93
 msgid "Mono"
 msgstr "ඒකල"
 
-#: winecfg.rc:54
+#: winecfg.rc:53
 msgid ""
 "Changing the load order of this library is not recommended.\n"
 "Are you sure you want to do this?"
 msgstr ""
 
-#: winecfg.rc:55
+#: winecfg.rc:54
 msgid "Warning: system library"
 msgstr "අවවාදය: පද්ධතියෙ පුස්තකාලයක්"
 
-#: winecfg.rc:56
+#: winecfg.rc:55
 msgid "native"
 msgstr "native"
 
-#: winecfg.rc:57
+#: winecfg.rc:56
 msgid "builtin"
 msgstr "builtin"
 
-#: winecfg.rc:58
+#: winecfg.rc:57
 msgid "native, builtin"
 msgstr "native, builtin"
 
-#: winecfg.rc:59
+#: winecfg.rc:58
 msgid "builtin, native"
 msgstr "builtin, native"
 
-#: winecfg.rc:60
+#: winecfg.rc:59
 msgid "disabled"
 msgstr "අබලිත"
 
-#: winecfg.rc:61
+#: winecfg.rc:60
 msgid "Default Settings"
 msgstr "පෙරනිමි සැකසුම්"
 
-#: winecfg.rc:62
+#: winecfg.rc:61
 msgid "Wine Programs (*.exe; *.exe.so)"
 msgstr "Wine ක්‍රමලේඛයන් (*.exe; *.exe.so)"
 
-#: winecfg.rc:63
+#: winecfg.rc:62
 msgid "Use global settings"
 msgstr "පොදු සිටුවම් පාවිච්චි කරන්න"
 
-#: winecfg.rc:64
+#: winecfg.rc:63
 msgid "Select an executable file"
 msgstr "ක්‍රියාත්මක කළ හැකි ගොනුවක් තෝරන්න"
 
-#: winecfg.rc:69
+#: winecfg.rc:68
 msgid "Autodetect"
 msgstr "ස්වයං අනාවරිත"
 
-#: winecfg.rc:70
+#: winecfg.rc:69
 msgid "Local hard disk"
 msgstr "පෙදෙසි දෘඩ තැටිය"
 
-#: winecfg.rc:71
+#: winecfg.rc:70
 msgid "Network share"
 msgstr "ජාල හවුල"
 
-#: winecfg.rc:72
+#: winecfg.rc:71
 msgid "Floppy disk"
 msgstr "නම්‍ය ඩිස්කය"
 
-#: winecfg.rc:73
+#: winecfg.rc:72
 msgid "CD-ROM"
 msgstr "CD-ROM"
 
-#: winecfg.rc:74
+#: winecfg.rc:73
 msgid ""
 "You cannot add any more drives.\n"
 "\n"
 "Each drive must have a letter, from A to Z, so you cannot have more than 26."
 msgstr ""
 
-#: winecfg.rc:75
+#: winecfg.rc:74
 msgid "System drive"
 msgstr "පද්ධති තැටිය"
 
-#: winecfg.rc:76
+#: winecfg.rc:75
 msgid ""
 "Are you sure you want to delete drive C?\n"
 "\n"
@@ -15500,16 +15561,16 @@ msgid ""
 "it doesn't. If you proceed, remember to recreate it!"
 msgstr ""
 
-#: winecfg.rc:77
+#: winecfg.rc:76
 msgctxt "Drive letter"
 msgid "Letter"
 msgstr "අකුර"
 
-#: winecfg.rc:78
+#: winecfg.rc:77
 msgid "Target folder"
 msgstr "ඉලක්ක ෆෝල්ඩරය"
 
-#: winecfg.rc:79
+#: winecfg.rc:78
 msgid ""
 "You don't have a drive C. This is not so great.\n"
 "\n"
@@ -15519,127 +15580,127 @@ msgstr ""
 "\n"
 "මතක් කරලා 'එක් කරන්න' ඔබන්න 'ධාවක' ටැබ් එක ඇතුලේ එකක් හදන්නට!\n"
 
-#: winecfg.rc:99
+#: winecfg.rc:98
 msgid "Controls Background"
 msgstr "පාලක පසුබිම"
 
-#: winecfg.rc:100
+#: winecfg.rc:99
 msgid "Controls Text"
 msgstr "පාලක පෙළ"
 
-#: winecfg.rc:102
+#: winecfg.rc:101
 msgid "Menu Background"
 msgstr "මෙනුවේ පසුබිම"
 
-#: winecfg.rc:103
+#: winecfg.rc:102
 msgid "Menu Text"
 msgstr "මෙනුවේ පෙළ"
 
-#: winecfg.rc:104
+#: winecfg.rc:103
 msgid "Scrollbar"
 msgstr "අනුචලන තීරුව"
 
-#: winecfg.rc:105
+#: winecfg.rc:104
 msgid "Selection Background"
 msgstr "තේරීම පසුබිම"
 
-#: winecfg.rc:106
+#: winecfg.rc:105
 msgid "Selection Text"
 msgstr "තේරීම පෙළ"
 
-#: winecfg.rc:107
+#: winecfg.rc:106
 msgid "Tooltip Background"
 msgstr "මෙවලම් ඉඟියේ පසුබිම"
 
-#: winecfg.rc:108
+#: winecfg.rc:107
 msgid "Tooltip Text"
 msgstr "මෙවලම් ඉඟියේ පෙළ"
 
-#: winecfg.rc:109
+#: winecfg.rc:108
 msgid "Window Background"
 msgstr "කවුළුවේ පසුබිම"
 
-#: winecfg.rc:110
+#: winecfg.rc:109
 msgid "Window Text"
 msgstr "කවුළුවේ පෙළ"
 
-#: winecfg.rc:111
+#: winecfg.rc:110
 msgid "Active Title Bar"
 msgstr "සක්රිය නාම තීරුව"
 
-#: winecfg.rc:112
+#: winecfg.rc:111
 msgid "Active Title Text"
 msgstr "සක්රිය නාම පෙළ"
 
-#: winecfg.rc:113
+#: winecfg.rc:112
 msgid "Inactive Title Bar"
 msgstr "අක්රිය නාම තීරුව"
 
-#: winecfg.rc:114
+#: winecfg.rc:113
 msgid "Inactive Title Text"
 msgstr "අක්රිය නාම පෙළ"
 
-#: winecfg.rc:115
+#: winecfg.rc:114
 msgid "Message Box Text"
 msgstr "පණිවිඩ කොටුවේ පෙළ"
 
-#: winecfg.rc:116
+#: winecfg.rc:115
 msgid "Application Workspace"
 msgstr "යෙදුමේ වැඩබිම"
 
-#: winecfg.rc:117
+#: winecfg.rc:116
 msgid "Window Frame"
 msgstr "කවුළුව රාමුව"
 
-#: winecfg.rc:118
+#: winecfg.rc:117
 msgid "Active Border"
 msgstr "සක්රිය දාරය"
 
-#: winecfg.rc:119
+#: winecfg.rc:118
 msgid "Inactive Border"
 msgstr "අක්රිය දාරය"
 
-#: winecfg.rc:120
+#: winecfg.rc:119
 msgid "Controls Shadow"
 msgstr "පාලක හෙවනැල්ල"
 
-#: winecfg.rc:121
+#: winecfg.rc:120
 msgid "Gray Text"
 msgstr "අළු පෙළ"
 
-#: winecfg.rc:122
+#: winecfg.rc:121
 msgid "Controls Highlight"
 msgstr "පාලක උද්දීපනය"
 
-#: winecfg.rc:123
+#: winecfg.rc:122
 msgid "Controls Dark Shadow"
 msgstr "පාලක තද හෙවනැල්ල"
 
-#: winecfg.rc:124
+#: winecfg.rc:123
 msgid "Controls Light"
 msgstr "පාලක ලා"
 
-#: winecfg.rc:125
+#: winecfg.rc:124
 msgid "Controls Alternate Background"
 msgstr "පාලක වෙන පසුබිම"
 
-#: winecfg.rc:126
+#: winecfg.rc:125
 msgid "Hot Tracked Item"
 msgstr ""
 
-#: winecfg.rc:127
+#: winecfg.rc:126
 msgid "Active Title Bar Gradient"
 msgstr "සක්රිය නාම තීරුවේ අනුක්රමණය"
 
-#: winecfg.rc:128
+#: winecfg.rc:127
 msgid "Inactive Title Bar Gradient"
 msgstr "අක්රිය නාම තීරුවේ අනුක්රමණය"
 
-#: winecfg.rc:129
+#: winecfg.rc:128
 msgid "Menu Highlight"
 msgstr "මෙනු උද්දීපනය"
 
-#: winecfg.rc:130
+#: winecfg.rc:129
 msgid "Menu Bar"
 msgstr "මෙනු තීරුව"
 

@@ -27,7 +27,6 @@
 
 #include "wine/wgl.h"
 #include "wine/glu.h"
-#include "wine/library.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(glu);
@@ -116,12 +115,10 @@ static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
 static BOOL WINAPI load_libglu( INIT_ONCE *once, void *param, void **context )
 {
 #ifdef SONAME_LIBGLU
-    char error[256];
-
-    if ((libglu_handle = wine_dlopen( SONAME_LIBGLU, RTLD_NOW, error, sizeof(error) )))
+    if ((libglu_handle = dlopen( SONAME_LIBGLU, RTLD_NOW )))
         TRACE( "loaded %s\n", SONAME_LIBGLU );
     else
-        ERR( "Failed to load %s: %s\n", SONAME_LIBGLU, error );
+        ERR( "Failed to load %s: %s\n", SONAME_LIBGLU, dlerror() );
 #else
     ERR( "libGLU is needed but support was not included at build time\n" );
 #endif
@@ -133,7 +130,7 @@ static void *load_glufunc( const char *name )
     void *ret;
 
     if (!InitOnceExecuteOnce( &init_once, load_libglu, NULL, NULL )) return NULL;
-    if (!(ret = wine_dlsym( libglu_handle, name, NULL, 0 ))) ERR( "Can't find %s\n", name );
+    if (!(ret = dlsym( libglu_handle, name ))) ERR( "Can't find %s\n", name );
     return ret;
 }
 

@@ -33,6 +33,14 @@
 #define _WIN64
 #endif
 
+#ifndef _MSVCR_VER
+# define _MSVCR_VER 140
+#endif
+
+#if !defined(_UCRT) && _MSVCR_VER >= 140
+# define _UCRT
+#endif
+
 #if !defined(_MSC_VER) && !defined(__int64)
 # if defined(_WIN64) && !defined(__MINGW64__)
 #   define __int64 long
@@ -49,7 +57,7 @@
 #endif
 #endif
 
-#ifndef __stdcall
+#if !defined(_MSC_VER) && !defined(__stdcall)
 # ifdef __i386__
 #  ifdef __GNUC__
 #   if (__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 2)) || defined(__APPLE__)
@@ -57,8 +65,6 @@
 #   else
 #    define __stdcall __attribute__((__stdcall__))
 #   endif
-#  elif defined(_MSC_VER)
-    /* Nothing needs to be done. __stdcall already exists */
 #  else
 #   error You need to define __stdcall for your compiler
 #  endif
@@ -77,7 +83,7 @@
 # endif  /* __i386__ */
 #endif /* __stdcall */
 
-#ifndef __cdecl
+#if !defined(_MSC_VER) && !defined(__cdecl)
 # if defined(__i386__) && defined(__GNUC__)
 #   if (__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 2)) || defined(__APPLE__)
 #   define __cdecl __attribute__((__cdecl__)) __attribute__((__force_align_arg_pointer__))
@@ -94,7 +100,7 @@
 #   define __cdecl __attribute__((pcs("aapcs-vfp")))
 # elif defined(__aarch64__) && defined (__GNUC__)
 #  define __cdecl __attribute__((ms_abi))
-# elif !defined(_MSC_VER)
+# else
 #  define __cdecl
 # endif
 #endif /* __cdecl */
@@ -163,8 +169,13 @@
 #ifndef _MSVCRT_LONG_DEFINED
 #define _MSVCRT_LONG_DEFINED
 /* we need 32-bit longs even on 64-bit */
+#ifdef __LP64__
 typedef int __msvcrt_long;
 typedef unsigned int __msvcrt_ulong;
+#else
+typedef long __msvcrt_long;
+typedef unsigned long __msvcrt_ulong;
+#endif
 #endif
 
 #ifndef _INTPTR_T_DEFINED

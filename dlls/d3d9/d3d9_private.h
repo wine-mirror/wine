@@ -59,16 +59,19 @@ enum wined3d_format_id wined3dformat_from_d3dformat(D3DFORMAT format) DECLSPEC_H
 unsigned int wined3dmapflags_from_d3dmapflags(unsigned int flags, unsigned int usage) DECLSPEC_HIDDEN;
 void present_parameters_from_wined3d_swapchain_desc(D3DPRESENT_PARAMETERS *present_parameters,
         const struct wined3d_swapchain_desc *swapchain_desc, DWORD presentation_interval) DECLSPEC_HIDDEN;
-void d3dcaps_from_wined3dcaps(D3DCAPS9 *caps, const struct wined3d_caps *wined3d_caps) DECLSPEC_HIDDEN;
 
 struct d3d9
 {
     IDirect3D9Ex IDirect3D9Ex_iface;
     LONG refcount;
     struct wined3d *wined3d;
+    struct wined3d_output **wined3d_outputs;
+    unsigned int wined3d_output_count;
     BOOL extended;
 };
 
+void d3d9_caps_from_wined3dcaps(const struct d3d9 *d3d9, unsigned int adapter_ordinal,
+        D3DCAPS9 *caps, const struct wined3d_caps *wined3d_caps) DECLSPEC_HIDDEN;
 BOOL d3d9_init(struct d3d9 *d3d9, BOOL extended) DECLSPEC_HIDDEN;
 
 struct fvf_declaration
@@ -90,6 +93,7 @@ struct d3d9_device
     struct wined3d_device_parent device_parent;
     LONG refcount;
     struct wined3d_device *wined3d_device;
+    unsigned int adapter_ordinal;
     struct d3d9 *d3d_parent;
 
     struct fvf_declaration *fvf_decls;
@@ -120,6 +124,7 @@ struct d3d9_device
     struct wined3d_swapchain **implicit_swapchains;
 
     struct wined3d_stateblock *recording, *state, *update_state;
+    const struct wined3d_stateblock_state *stateblock_state;
 };
 
 HRESULT device_init(struct d3d9_device *device, struct d3d9 *parent, struct wined3d *wined3d,
@@ -331,6 +336,16 @@ static inline D3DPOOL d3dpool_from_wined3daccess(unsigned int access, unsigned i
     }
 }
 
+static inline D3DMULTISAMPLE_TYPE d3dmultisample_type_from_wined3d(enum wined3d_multisample_type type)
+{
+    return (D3DMULTISAMPLE_TYPE)type;
+}
+
+static inline D3DSCANLINEORDERING d3dscanlineordering_from_wined3d(enum wined3d_scanline_ordering ordering)
+{
+    return (D3DSCANLINEORDERING)ordering;
+}
+
 static inline unsigned int map_access_from_usage(unsigned int usage)
 {
     if (usage & D3DUSAGE_WRITEONLY)
@@ -377,6 +392,21 @@ static inline unsigned int wined3d_bind_flags_from_d3d9_usage(DWORD usage)
 static inline DWORD wined3dusage_from_d3dusage(unsigned int usage)
 {
     return usage & WINED3DUSAGE_MASK;
+}
+
+static inline enum wined3d_multisample_type wined3d_multisample_type_from_d3d(D3DMULTISAMPLE_TYPE type)
+{
+    return (enum wined3d_multisample_type)type;
+}
+
+static inline enum wined3d_device_type wined3d_device_type_from_d3d(D3DDEVTYPE type)
+{
+    return (enum wined3d_device_type)type;
+}
+
+static inline enum wined3d_scanline_ordering wined3d_scanline_ordering_from_d3d(D3DSCANLINEORDERING ordering)
+{
+    return (enum wined3d_scanline_ordering)ordering;
 }
 
 #endif /* __WINE_D3D9_PRIVATE_H */

@@ -35,7 +35,7 @@
 /* Background copy job vtbl and related data */
 typedef struct
 {
-    IBackgroundCopyJob3 IBackgroundCopyJob3_iface;
+    IBackgroundCopyJob4 IBackgroundCopyJob4_iface;
     IBackgroundCopyJobHttpOptions IBackgroundCopyJobHttpOptions_iface;
     LONG ref;
     LPWSTR displayName;

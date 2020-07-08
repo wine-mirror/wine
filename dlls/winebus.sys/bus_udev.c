@@ -139,8 +139,8 @@ static const BYTE ABS_TO_HID_MAP[][2] = {
     {HID_USAGE_PAGE_SIMULATION, HID_USAGE_SIMULATION_THROTTLE}, /*ABS_THROTTLE*/
     {HID_USAGE_PAGE_SIMULATION, HID_USAGE_SIMULATION_RUDDER},   /*ABS_RUDDER*/
     {HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_WHEEL},          /*ABS_WHEEL*/
-    {HID_USAGE_PAGE_SIMULATION, 0xC4},                          /*ABS_GAS*/
-    {HID_USAGE_PAGE_SIMULATION, 0xC5},                          /*ABS_BRAKE*/
+    {HID_USAGE_PAGE_SIMULATION, HID_USAGE_SIMULATION_ACCELERATOR}, /*ABS_GAS*/
+    {HID_USAGE_PAGE_SIMULATION, HID_USAGE_SIMULATION_BRAKE},    /*ABS_BRAKE*/
     {0,0},                                                      /*ABS_HAT0X*/
     {0,0},                                                      /*ABS_HAT0Y*/
     {0,0},                                                      /*ABS_HAT1X*/
@@ -149,15 +149,15 @@ static const BYTE ABS_TO_HID_MAP[][2] = {
     {0,0},                                                      /*ABS_HAT2Y*/
     {0,0},                                                      /*ABS_HAT3X*/
     {0,0},                                                      /*ABS_HAT3Y*/
-    {HID_USAGE_PAGE_DIGITIZER, 0x30},                           /*ABS_PRESSURE*/
+    {HID_USAGE_PAGE_DIGITIZER, HID_USAGE_DIGITIZER_TIP_PRESSURE}, /*ABS_PRESSURE*/
     {0, 0},                                                     /*ABS_DISTANCE*/
-    {HID_USAGE_PAGE_DIGITIZER, 0x3D},                           /*ABS_TILT_X*/
-    {HID_USAGE_PAGE_DIGITIZER, 0x3F},                           /*ABS_TILT_Y*/
+    {HID_USAGE_PAGE_DIGITIZER, HID_USAGE_DIGITIZER_X_TILT},     /*ABS_TILT_X*/
+    {HID_USAGE_PAGE_DIGITIZER, HID_USAGE_DIGITIZER_Y_TILT},     /*ABS_TILT_Y*/
     {0, 0},                                                     /*ABS_TOOL_WIDTH*/
     {0, 0},
     {0, 0},
     {0, 0},
-    {HID_USAGE_PAGE_CONSUMER, 0xE0}                             /*ABS_VOLUME*/
+    {HID_USAGE_PAGE_CONSUMER, HID_USAGE_CONSUMER_VOLUME}        /*ABS_VOLUME*/
 };
 #define HID_ABS_MAX (ABS_VOLUME+1)
 #define TOP_ABS_PAGE (HID_USAGE_PAGE_DIGITIZER+1)
@@ -245,9 +245,9 @@ static const BYTE* what_am_I(struct udev_device *dev)
     static const BYTE Keyboard[2]    = {HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_KEYBOARD};
     static const BYTE Gamepad[2]     = {HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_GAMEPAD};
     static const BYTE Keypad[2]      = {HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_KEYPAD};
-    static const BYTE Tablet[2]      = {HID_USAGE_PAGE_DIGITIZER, 0x2};
-    static const BYTE Touchscreen[2] = {HID_USAGE_PAGE_DIGITIZER, 0x4};
-    static const BYTE Touchpad[2]    = {HID_USAGE_PAGE_DIGITIZER, 0x5};
+    static const BYTE Tablet[2]      = {HID_USAGE_PAGE_DIGITIZER, HID_USAGE_DIGITIZER_PEN};
+    static const BYTE Touchscreen[2] = {HID_USAGE_PAGE_DIGITIZER, HID_USAGE_DIGITIZER_TOUCH_SCREEN};
+    static const BYTE Touchpad[2]    = {HID_USAGE_PAGE_DIGITIZER, HID_USAGE_DIGITIZER_TOUCH_PAD};
 
     struct udev_device *parent = dev;
 

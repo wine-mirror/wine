@@ -23,7 +23,9 @@
 #include "wine/exception.h"
 #include "wine/asm.h"
 
-#if defined(__GNUC__) && defined(__i386__)
+#if defined(__GNUC__) || defined(__clang__)
+
+#if defined(__i386__)
 
 __ASM_GLOBAL_FUNC( __wine_setjmpex,
                    "movl 4(%esp),%ecx\n\t"   /* jmp_buf */
@@ -62,7 +64,7 @@ __ASM_GLOBAL_FUNC( __wine_rtl_unwind,
                    "call " __ASM_STDCALL("RtlUnwind",16) "\n\t"
                    "call *16(%ebp)" )
 
-#elif defined(__GNUC__) && defined(__x86_64__)
+#elif defined(__x86_64__)
 
 __ASM_GLOBAL_FUNC( __wine_setjmpex,
                    "movq %rdx,(%rcx)\n\t"          /* jmp_buf->Frame */
@@ -134,7 +136,7 @@ __ASM_GLOBAL_FUNC( __wine_rtl_unwind,
                    /* we need an extra call to make sure the stack is correctly aligned */
                    "callq *%rax" )
 
-#elif defined(__GNUC__) && defined(__arm__)
+#elif defined(__arm__)
 
 __ASM_GLOBAL_FUNC( __wine_setjmpex,
                    "str r1, [r0]\n\t"              /* jmp_buf->Frame */
@@ -196,7 +198,7 @@ void __cdecl __wine_rtl_unwind( EXCEPTION_REGISTRATION_RECORD* frame, EXCEPTION_
     for (;;) target();
 }
 
-#elif defined(__GNUC__) && defined(__aarch64__)
+#elif defined(__aarch64__)
 
 __ASM_GLOBAL_FUNC( __wine_setjmpex,
                    "str x1,       [x0]\n\t"        /* jmp_buf->Frame */
@@ -383,3 +385,5 @@ DWORD __cdecl __wine_finally_ctx_handler( EXCEPTION_RECORD *record,
     }
     return ExceptionContinueSearch;
 }
+
+#endif /* __GNUC__ || __clang__ */

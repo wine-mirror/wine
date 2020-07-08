@@ -21,9 +21,6 @@
 #define COBJMACROS
 #define CONST_VTABLE
 
-/* needed for IInternetZoneManagerEx2 */
-#define _WIN32_IE 0x0700
-
 #include <wine/test.h>
 #include <stdarg.h>
 #include <stddef.h>
@@ -848,7 +845,7 @@ static void run_child_process(void)
     sprintf(cmdline, "\"%s\" %s domain_tests", argv[0], argv[1]);
     ret = CreateProcessA(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
     ok(ret, "Failed to spawn child process: %u\n", GetLastError());
-    winetest_wait_child_process(pi.hProcess);
+    wait_child_process(pi.hProcess);
     CloseHandle(pi.hThread);
     CloseHandle(pi.hProcess);
 }

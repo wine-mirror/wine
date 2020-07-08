@@ -40,7 +40,16 @@
     VK_INSTANCE_PFN(vkGetPhysicalDeviceQueueFamilyProperties) \
     VK_INSTANCE_PFN(vkGetPhysicalDeviceSparseImageFormatProperties) \
     /* Vulkan 1.1 */ \
-    VK_INSTANCE_EXT_PFN(vkGetPhysicalDeviceProperties2)
+    VK_INSTANCE_EXT_PFN(vkGetPhysicalDeviceFeatures2) \
+    VK_INSTANCE_EXT_PFN(vkGetPhysicalDeviceProperties2) \
+    /* VK_KHR_surface */ \
+    VK_INSTANCE_PFN(vkDestroySurfaceKHR) \
+    VK_INSTANCE_PFN(vkGetPhysicalDeviceSurfaceCapabilitiesKHR) \
+    VK_INSTANCE_PFN(vkGetPhysicalDeviceSurfaceFormatsKHR) \
+    VK_INSTANCE_PFN(vkGetPhysicalDeviceSurfacePresentModesKHR) \
+    VK_INSTANCE_PFN(vkGetPhysicalDeviceSurfaceSupportKHR) \
+    /* VK_KHR_win32_surface */ \
+    VK_INSTANCE_PFN(vkCreateWin32SurfaceKHR)
 
 #define VK_DEVICE_FUNCS() \
     VK_DEVICE_PFN(vkAllocateCommandBuffers) \
@@ -162,7 +171,13 @@
     VK_DEVICE_PFN(vkSetEvent) \
     VK_DEVICE_PFN(vkUnmapMemory) \
     VK_DEVICE_PFN(vkUpdateDescriptorSets) \
-    VK_DEVICE_PFN(vkWaitForFences)
+    VK_DEVICE_PFN(vkWaitForFences) \
+    /* VK_KHR_swapchain */ \
+    VK_DEVICE_PFN(vkAcquireNextImageKHR) \
+    VK_DEVICE_PFN(vkCreateSwapchainKHR) \
+    VK_DEVICE_PFN(vkDestroySwapchainKHR) \
+    VK_DEVICE_PFN(vkGetSwapchainImagesKHR) \
+    VK_DEVICE_PFN(vkQueuePresentKHR)
 
 #define DECLARE_VK_PFN(name) PFN_##name name;
 
@@ -181,6 +196,12 @@ struct vulkan_ops
     PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr;
 };
 
+enum wined3d_vk_extension
+{
+    WINED3D_VK_EXT_NONE,
+    WINED3D_VK_EXT_COUNT,
+};
+
 struct wined3d_vk_info
 {
     struct vulkan_ops vk_ops;
@@ -188,6 +209,7 @@ struct wined3d_vk_info
     VkInstance instance;
     unsigned int api_version;
 
+    BOOL supported[WINED3D_VK_EXT_COUNT];
 #ifdef USE_WIN32_VULKAN
     HMODULE vulkan_lib;
 #endif

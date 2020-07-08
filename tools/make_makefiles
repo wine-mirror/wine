@@ -74,6 +74,7 @@ my @source_vars = (
 );
 
 my (@makefiles, %makefiles);
+my @inf_files;
 my @nls_files;
 
 sub dirname($)
@@ -382,6 +383,10 @@ sub assign_sources_to_makefiles(@)
         {
             push @{${$make}{"=MANPAGES"}}, $name;
         }
+        elsif ($name =~ /\.inf\.in$/)
+        {
+            push @inf_files, $name unless $name eq "wine.inf.in";
+        }
         elsif ($name =~ /\.in$/)
         {
             push @{${$make}{"=IN_SRCS"}}, $name;
@@ -487,21 +492,16 @@ sub update_makefiles(@)
 
 sub update_wine_inf()
 {
-    my @lines = ("[NlsFiles]", @nls_files, "\n" );
-    replace_in_file "loader/wine.inf.in", '^\[NlsFiles\]', '^$', join( "\n", @lines );
-
-    my @codepages = grep /c_\d+\.nls/, @nls_files;
-    @lines = ( "[Nls]" );
-    foreach my $cp (sort { $a <=> $b; } map { /c_(\d+)\.nls/ && $1; } @codepages)
-    {
-        push @lines, sprintf "HKLM,System\\CurrentControlSet\\Control\\Nls\\Codepage,\"%u\",,\"c_%03u.nls\"", $cp, $cp;
-    }
-    push @lines, "\n";
-    replace_in_file "loader/wine.inf.in", '^\[Nls\]', '^$', join( "\n", @lines );
+    my @lines;
+    push @lines, "[InfFiles]", sort grep { s/\.in$//; } @inf_files;
+    push @lines, "\n[NlsFiles]", sort grep(!/^sort/, @nls_files);
+    push @lines, "\n[SortFiles]", sort grep(/^sort/, @nls_files);
+    push @lines, "\n[WineSourceDirs]\n";
+    replace_in_file "loader/wine.inf.in", '^\[InfFiles\]', '^\[WineSourceDirs\]', join( "\n", @lines );
 }
 
 my $git_dir = $ENV{GIT_DIR} || ".git";
-die "needs to be run from a git checkout" unless -d $git_dir;
+die "needs to be run from a git checkout" unless -e $git_dir;
 
 my @all_files = split /\0/, `git ls-files -c -z`;
 map { $ignored_source_files{$_} = 1; } split /\0/, `git ls-files -d -z`;

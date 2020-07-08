@@ -35,9 +35,13 @@ WINE_DECLARE_DEBUG_CHANNEL(winediag);
 #include <X11/extensions/Xrandr.h>
 #include "x11drv.h"
 
+#define VK_NO_PROTOTYPES
+#define WINE_VK_HOST
+
 #include "wine/heap.h"
-#include "wine/library.h"
 #include "wine/unicode.h"
+#include "wine/vulkan.h"
+#include "wine/vulkan_driver.h"
 
 static void *xrandr_handle;
 
@@ -60,6 +64,7 @@ MAKE_FUNCPTR(XRRFreeScreenResources)
 MAKE_FUNCPTR(XRRGetCrtcInfo)
 MAKE_FUNCPTR(XRRGetOutputInfo)
 MAKE_FUNCPTR(XRRGetScreenResources)
+MAKE_FUNCPTR(XRRGetScreenSizeRange)
 MAKE_FUNCPTR(XRRSetCrtcConfig)
 MAKE_FUNCPTR(XRRSetScreenSize)
 static typeof(XRRGetScreenResources) *pXRRGetScreenResourcesCurrent;
@@ -87,45 +92,45 @@ static int load_xrandr(void)
 {
     int r = 0;
 
-    if (wine_dlopen(SONAME_LIBXRENDER, RTLD_NOW|RTLD_GLOBAL, NULL, 0) &&
-        (xrandr_handle = wine_dlopen(SONAME_LIBXRANDR, RTLD_NOW, NULL, 0)))
+    if (dlopen(SONAME_LIBXRENDER, RTLD_NOW|RTLD_GLOBAL) &&
+        (xrandr_handle = dlopen(SONAME_LIBXRANDR, RTLD_NOW)))
     {
 
 #define LOAD_FUNCPTR(f) \
-        if((p##f = wine_dlsym(xrandr_handle, #f, NULL, 0)) == NULL) \
-            goto sym_not_found;
+        if((p##f = dlsym(xrandr_handle, #f)) == NULL) goto sym_not_found
 
-        LOAD_FUNCPTR(XRRConfigCurrentConfiguration)
-        LOAD_FUNCPTR(XRRConfigCurrentRate)
-        LOAD_FUNCPTR(XRRFreeScreenConfigInfo)
-        LOAD_FUNCPTR(XRRGetScreenInfo)
-        LOAD_FUNCPTR(XRRQueryExtension)
-        LOAD_FUNCPTR(XRRQueryVersion)
-        LOAD_FUNCPTR(XRRRates)
-        LOAD_FUNCPTR(XRRSetScreenConfig)
-        LOAD_FUNCPTR(XRRSetScreenConfigAndRate)
-        LOAD_FUNCPTR(XRRSizes)
+        LOAD_FUNCPTR(XRRConfigCurrentConfiguration);
+        LOAD_FUNCPTR(XRRConfigCurrentRate);
+        LOAD_FUNCPTR(XRRFreeScreenConfigInfo);
+        LOAD_FUNCPTR(XRRGetScreenInfo);
+        LOAD_FUNCPTR(XRRQueryExtension);
+        LOAD_FUNCPTR(XRRQueryVersion);
+        LOAD_FUNCPTR(XRRRates);
+        LOAD_FUNCPTR(XRRSetScreenConfig);
+        LOAD_FUNCPTR(XRRSetScreenConfigAndRate);
+        LOAD_FUNCPTR(XRRSizes);
         r = 1;
 
 #ifdef HAVE_XRRGETSCREENRESOURCES
-        LOAD_FUNCPTR(XRRFreeCrtcInfo)
-        LOAD_FUNCPTR(XRRFreeOutputInfo)
-        LOAD_FUNCPTR(XRRFreeScreenResources)
-        LOAD_FUNCPTR(XRRGetCrtcInfo)
-        LOAD_FUNCPTR(XRRGetOutputInfo)
-        LOAD_FUNCPTR(XRRGetScreenResources)
-        LOAD_FUNCPTR(XRRSetCrtcConfig)
-        LOAD_FUNCPTR(XRRSetScreenSize)
+        LOAD_FUNCPTR(XRRFreeCrtcInfo);
+        LOAD_FUNCPTR(XRRFreeOutputInfo);
+        LOAD_FUNCPTR(XRRFreeScreenResources);
+        LOAD_FUNCPTR(XRRGetCrtcInfo);
+        LOAD_FUNCPTR(XRRGetOutputInfo);
+        LOAD_FUNCPTR(XRRGetScreenResources);
+        LOAD_FUNCPTR(XRRGetScreenSizeRange);
+        LOAD_FUNCPTR(XRRSetCrtcConfig);
+        LOAD_FUNCPTR(XRRSetScreenSize);
         r = 2;
 #endif
 
 #ifdef HAVE_XRRGETPROVIDERRESOURCES
-        LOAD_FUNCPTR(XRRSelectInput)
-        LOAD_FUNCPTR(XRRGetOutputPrimary)
-        LOAD_FUNCPTR(XRRGetProviderResources)
-        LOAD_FUNCPTR(XRRFreeProviderResources)
-        LOAD_FUNCPTR(XRRGetProviderInfo)
-        LOAD_FUNCPTR(XRRFreeProviderInfo)
+        LOAD_FUNCPTR(XRRSelectInput);
+        LOAD_FUNCPTR(XRRGetOutputPrimary);
+        LOAD_FUNCPTR(XRRGetProviderResources);
+        LOAD_FUNCPTR(XRRFreeProviderResources);
+        LOAD_FUNCPTR(XRRGetProviderInfo);
+        LOAD_FUNCPTR(XRRFreeProviderInfo);
         r = 4;
 #endif
 
@@ -209,7 +214,7 @@ static LONG xrandr10_set_current_mode( int mode )
     if (stat == RRSetConfigSuccess)
     {
         xrandr_current_mode = mode;
-        X11DRV_resize_desktop( dd_modes[mode].width, dd_modes[mode].height );
+        X11DRV_DisplayDevices_Update( TRUE );
         return DISP_CHANGE_SUCCESSFUL;
     }
 
@@ -361,9 +366,13 @@ static int xrandr12_get_current_mode(void)
 
 static void get_screen_size( XRRScreenResources *resources, unsigned int *width, unsigned int *height )
 {
+    int min_width = 0, min_height = 0, max_width, max_height;
     XRRCrtcInfo *crtc_info;
     int i;
-    *width = *height = 0;
+
+    pXRRGetScreenSizeRange( gdi_display, root_window, &min_width, &min_height, &max_width, &max_height );
+    *width = min_width;
+    *height = min_height;
 
     for (i = 0; i < resources->ncrtc; ++i)
     {
@@ -453,7 +462,7 @@ static LONG xrandr12_set_current_mode( int mode )
     }
 
     xrandr_current_mode = mode;
-    X11DRV_resize_desktop( dd_modes[mode].width, dd_modes[mode].height );
+    X11DRV_DisplayDevices_Update( TRUE );
     return DISP_CHANGE_SUCCESSFUL;
 }
 
@@ -476,6 +485,21 @@ static XRRCrtcInfo *xrandr12_get_primary_crtc_info( XRRScreenResources *resource
     }
 
     return NULL;
+}
+
+static unsigned int get_frequency( const XRRModeInfo *mode )
+{
+    unsigned int dots = mode->hTotal * mode->vTotal;
+
+    if (!dots)
+        return 0;
+
+    if (mode->modeFlags & RR_DoubleScan)
+        dots *= 2;
+    if (mode->modeFlags & RR_Interlace)
+        dots /= 2;
+
+    return (mode->dotClock + dots / 2) / dots;
 }
 
 static int xrandr12_init_modes(void)
@@ -536,8 +560,7 @@ static int xrandr12_init_modes(void)
 
             if (mode->id == output_info->modes[i])
             {
-                unsigned int dots = mode->hTotal * mode->vTotal;
-                unsigned int refresh = dots ? (mode->dotClock + dots / 2) / dots : 0;
+                unsigned int refresh = get_frequency( mode );
 
                 TRACE("Adding mode %#lx: %ux%u@%u.\n", mode->id, mode->width, mode->height, refresh);
                 X11DRV_Settings_AddOneMode( mode->width, mode->height, 0, refresh );
@@ -662,6 +685,101 @@ static BOOL is_crtc_primary( RECT primary, const XRRCrtcInfo *crtc )
            crtc->y + crtc->height == primary.bottom;
 }
 
+VK_DEFINE_NON_DISPATCHABLE_HANDLE(VkDisplayKHR)
+
+static void get_vulkan_device_uuid( GUID *uuid, const XRRProviderInfo *provider_info )
+{
+    static const char *extensions[] =
+    {
+        VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME,
+        "VK_EXT_acquire_xlib_display",
+        "VK_EXT_direct_mode_display",
+    };
+    const struct vulkan_funcs *vulkan_funcs = get_vulkan_driver( WINE_VULKAN_DRIVER_VERSION );
+    VkResult (*pvkGetRandROutputDisplayEXT)( VkPhysicalDevice, Display *, RROutput, VkDisplayKHR * );
+    PFN_vkGetPhysicalDeviceProperties2 pvkGetPhysicalDeviceProperties2;
+    PFN_vkEnumeratePhysicalDevices pvkEnumeratePhysicalDevices;
+    uint32_t device_count, device_idx, output_idx;
+    VkPhysicalDevice *vk_physical_devices = NULL;
+    VkPhysicalDeviceProperties2 properties2;
+    VkInstanceCreateInfo create_info;
+    VkPhysicalDeviceIDProperties id;
+    VkInstance vk_instance = NULL;
+    VkDisplayKHR vk_display;
+    VkResult vr;
+
+    if (!vulkan_funcs)
+        goto done;
+
+    memset( &create_info, 0, sizeof(create_info) );
+    create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+    create_info.enabledExtensionCount = ARRAY_SIZE(extensions);
+    create_info.ppEnabledExtensionNames = extensions;
+
+    vr = vulkan_funcs->p_vkCreateInstance( &create_info, NULL, &vk_instance );
+    if (vr != VK_SUCCESS)
+    {
+        WARN("Failed to create a Vulkan instance, vr %d.\n", vr);
+        goto done;
+    }
+
+#define LOAD_VK_FUNC(f)                                                             \
+    if (!(p##f = (void *)vulkan_funcs->p_vkGetInstanceProcAddr( vk_instance, #f ))) \
+    {                                                                               \
+        WARN("Failed to load " #f ".\n");                                           \
+        goto done;                                                                  \
+    }
+
+    LOAD_VK_FUNC(vkEnumeratePhysicalDevices)
+    LOAD_VK_FUNC(vkGetPhysicalDeviceProperties2)
+    LOAD_VK_FUNC(vkGetRandROutputDisplayEXT)
+#undef LOAD_VK_FUNC
+
+    vr = pvkEnumeratePhysicalDevices( vk_instance, &device_count, NULL );
+    if (vr != VK_SUCCESS || !device_count)
+    {
+        WARN("No Vulkan device found, vr %d, device_count %d.\n", vr, device_count);
+        goto done;
+    }
+
+    if (!(vk_physical_devices = heap_calloc( device_count, sizeof(*vk_physical_devices) )))
+        goto done;
+
+    vr = pvkEnumeratePhysicalDevices( vk_instance, &device_count, vk_physical_devices );
+    if (vr != VK_SUCCESS)
+    {
+        WARN("vkEnumeratePhysicalDevices failed, vr %d.\n", vr);
+        goto done;
+    }
+
+    for (device_idx = 0; device_idx < device_count; ++device_idx)
+    {
+        for (output_idx = 0; output_idx < provider_info->noutputs; ++output_idx)
+        {
+            X11DRV_expect_error( gdi_display, XRandRErrorHandler, NULL );
+            vr = pvkGetRandROutputDisplayEXT( vk_physical_devices[device_idx], gdi_display,
+                                              provider_info->outputs[output_idx], &vk_display );
+            XSync( gdi_display, FALSE );
+            if (X11DRV_check_error() || vr != VK_SUCCESS || vk_display == VK_NULL_HANDLE)
+                continue;
+
+            memset( &id, 0, sizeof(id) );
+            id.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES;
+            properties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+            properties2.pNext = &id;
+
+            pvkGetPhysicalDeviceProperties2( vk_physical_devices[device_idx], &properties2 );
+            memcpy( uuid, id.deviceUUID, sizeof(id.deviceUUID) );
+            goto done;
+        }
+    }
+
+done:
+    heap_free( vk_physical_devices );
+    if (vk_instance)
+        vulkan_funcs->p_vkDestroyInstance( vk_instance, NULL );
+}
+
 static BOOL xrandr14_get_gpus( struct x11drv_gpu **new_gpus, int *count )
 {
     static const WCHAR wine_adapterW[] = {'W','i','n','e',' ','A','d','a','p','t','e','r',0};
@@ -724,6 +842,7 @@ static BOOL xrandr14_get_gpus( struct x11drv_gpu **new_gpus, int *count )
         }
 
         gpus[i].id = provider_resources->providers[i];
+        get_vulkan_device_uuid( &gpus[i].vulkan_uuid, provider_info );
         MultiByteToWideChar( CP_UTF8, 0, provider_info->name, -1, gpus[i].name, ARRAY_SIZE(gpus[i].name) );
         /* PCI IDs are all zero because there is currently no portable way to get it via XRandR. Some AMD drivers report
          * their PCI address in the name but many others don't */
@@ -765,7 +884,7 @@ static BOOL xrandr14_get_adapters( ULONG_PTR gpu_id, struct x11drv_adapter **new
     XRRScreenResources *screen_resources = NULL;
     XRRProviderInfo *provider_info = NULL;
     XRRCrtcInfo *enum_crtc_info, *crtc_info = NULL;
-    XRROutputInfo *output_info = NULL;
+    XRROutputInfo *enum_output_info, *output_info = NULL;
     RROutput *outputs;
     INT crtc_count, output_count;
     INT primary_adapter = 0;
@@ -829,24 +948,34 @@ static BOOL xrandr14_get_adapters( ULONG_PTR gpu_id, struct x11drv_adapter **new
         if (!output_info->crtc || !crtc_info->mode)
             detached = TRUE;
 
-        /* Ignore crtc mirroring slaves because mirrored monitors are under the same adapter */
+        /* Ignore mirroring output replicas because mirrored monitors are under the same adapter */
         mirrored = FALSE;
         if (!detached)
         {
-            for (j = 0; j < screen_resources->ncrtc; ++j)
+            for (j = 0; j < screen_resources->noutput; ++j)
             {
-                enum_crtc_info = pXRRGetCrtcInfo( gdi_display, screen_resources, screen_resources->crtcs[j] );
-                if (!enum_crtc_info)
-                    goto done;
+                enum_output_info = pXRRGetOutputInfo( gdi_display, screen_resources, screen_resources->outputs[j] );
+                if (!enum_output_info)
+                    continue;
 
-                /* Some crtcs on different providers may have the same coordinates, aka mirrored.
-                 * Choose the crtc with the lowest value as primary and the rest will then be slaves
-                 * in a mirroring set */
+                if (enum_output_info->connection != RR_Connected || !enum_output_info->crtc)
+                {
+                    pXRRFreeOutputInfo( enum_output_info );
+                    continue;
+                }
+
+                enum_crtc_info = pXRRGetCrtcInfo( gdi_display, screen_resources, enum_output_info->crtc );
+                pXRRFreeOutputInfo( enum_output_info );
+                if (!enum_crtc_info)
+                    continue;
+
+                /* Some outputs may have the same coordinates, aka mirrored. Choose the output with
+                 * the lowest value as primary and the rest will then be replicas in a mirroring set */
                 if (crtc_info->x == enum_crtc_info->x &&
                     crtc_info->y == enum_crtc_info->y &&
                     crtc_info->width == enum_crtc_info->width &&
                     crtc_info->height == enum_crtc_info->height &&
-                    output_info->crtc > screen_resources->crtcs[j])
+                    outputs[i] > screen_resources->outputs[j])
                 {
                     mirrored = TRUE;
                     pXRRFreeCrtcInfo( enum_crtc_info );
@@ -950,7 +1079,7 @@ static BOOL xrandr14_get_monitors( ULONG_PTR adapter_id, struct x11drv_monitor *
             goto done;
     }
 
-    /* Inactive but attached monitor, no need to check for mirrored/slave monitors */
+    /* Inactive but attached monitor, no need to check for mirrored/replica monitors */
     if (!output_info->crtc || !crtc_info->mode)
     {
         lstrcpyW( monitors[monitor_count].name, generic_nonpnp_monitorW );
@@ -1066,7 +1195,12 @@ static void xrandr14_free_monitors( struct x11drv_monitor *monitors )
 static BOOL xrandr14_device_change_handler( HWND hwnd, XEvent *event )
 {
     if (hwnd == GetDesktopWindow() && GetWindowThreadProcessId( hwnd, NULL ) == GetCurrentThreadId())
-        X11DRV_DisplayDevices_Init( TRUE );
+    {
+        /* Don't send a WM_DISPLAYCHANGE message here because this event may be a result from
+         * ChangeDisplaySettings(). Otherwise, ChangeDisplaySettings() would send multiple
+         * WM_DISPLAYCHANGE messages instead of just one */
+        X11DRV_DisplayDevices_Update( FALSE );
+    }
     return FALSE;
 }
 
@@ -1114,7 +1248,7 @@ void X11DRV_XRandR_Init(void)
     if (ret >= 2 && (major > 1 || (major == 1 && minor >= 2)))
     {
         if (major > 1 || (major == 1 && minor >= 3))
-            pXRRGetScreenResourcesCurrent = wine_dlsym( xrandr_handle, "XRRGetScreenResourcesCurrent", NULL, 0 );
+            pXRRGetScreenResourcesCurrent = dlsym( xrandr_handle, "XRRGetScreenResourcesCurrent" );
         if (!pXRRGetScreenResourcesCurrent)
             pXRRGetScreenResourcesCurrent = pXRRGetScreenResources;
     }

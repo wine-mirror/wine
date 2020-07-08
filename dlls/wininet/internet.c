@@ -2371,7 +2371,7 @@ static BOOL is_domain_suffix( const char *domain, const char *suffix )
     int len_domain = strlen( domain ), len_suffix = strlen( suffix );
 
     if (len_suffix > len_domain) return FALSE;
-    if (!_strnicmp( domain + len_domain - len_suffix, suffix, -1 )) return TRUE;
+    if (!stricmp( domain + len_domain - len_suffix, suffix )) return TRUE;
     return FALSE;
 }
 
@@ -2955,6 +2955,9 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
     case INTERNET_OPTION_DISABLE_PASSPORT_AUTH:
 	TRACE("Option INTERNET_OPTION_DISABLE_PASSPORT_AUTH: harmless stub, since not enabled\n");
 	break;
+    case INTERNET_OPTION_IGNORE_OFFLINE:
+        FIXME("Option INTERNET_OPTION_IGNORE_OFFLINE: STUB\n");
+        break;
     case INTERNET_OPTION_SEND_TIMEOUT:
     case INTERNET_OPTION_RECEIVE_TIMEOUT:
     case INTERNET_OPTION_DATA_SEND_TIMEOUT:
@@ -4260,9 +4263,10 @@ static BOOL calc_url_length(LPURL_COMPONENTSW lpUrlComponents,
 
         if (!url_uses_default_port(nScheme, lpUrlComponents->nPort))
         {
-            char szPort[MAX_WORD_DIGITS+1];
+            WCHAR port[MAX_WORD_DIGITS + 1];
 
-            *lpdwUrlLength += sprintf(szPort, "%d", lpUrlComponents->nPort);
+            _ltow(lpUrlComponents->nPort, port, 10);
+            *lpdwUrlLength += lstrlenW(port);
             *lpdwUrlLength += strlen(":");
         }
 
@@ -4418,10 +4422,8 @@ BOOL WINAPI InternetCreateUrlW(LPURL_COMPONENTSW lpUrlComponents, DWORD dwFlags,
 {
     DWORD dwLen;
     INTERNET_SCHEME nScheme;
-    WCHAR *start = lpszUrl;
 
     static const WCHAR slashSlashW[] = {'/','/'};
-    static const WCHAR fmtW[] = {'%','u',0};
 
     TRACE("(%p,%d,%p,%p)\n", lpUrlComponents, dwFlags, lpszUrl, lpdwUrlLength);
 
@@ -4506,9 +4508,9 @@ BOOL WINAPI InternetCreateUrlW(LPURL_COMPONENTSW lpUrlComponents, DWORD dwFlags,
 
         if (!url_uses_default_port(nScheme, lpUrlComponents->nPort))
         {
-            *lpszUrl = ':';
-            lpszUrl++;
-            lpszUrl += swprintf(lpszUrl, *lpdwUrlLength - (lpszUrl - start), fmtW, lpUrlComponents->nPort);
+            *lpszUrl++ = ':';
+            _ltow(lpUrlComponents->nPort, lpszUrl, 10);
+            lpszUrl += lstrlenW(lpszUrl);
         }
 
         /* add slash between hostname and path if necessary */

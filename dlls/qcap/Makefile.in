@@ -8,7 +8,7 @@ C_SRCS = \
 	avico.c \
 	avimux.c \
 	capturegraph.c \
-	dllfunc.c \
+	filewriter.c \
 	filter.c \
 	mediatype.c \
 	pin.c \
@@ -18,3 +18,6 @@ C_SRCS = \
 	vfwcapture.c
 
 RC_SRCS = version.rc
+
+IDL_SRCS = \
+	qcap_classes.idl

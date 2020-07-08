@@ -505,7 +505,7 @@ static int parse_descriptor(BYTE *descriptor, unsigned int index, unsigned int l
                     case TAG_MAIN_INPUT:
                     case TAG_MAIN_OUTPUT:
                     case TAG_MAIN_FEATURE:
-                        for (j = 0; caps->ReportCount; j++)
+                        for (j = 0; j < caps->ReportCount; j++)
                         {
                             feature = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*feature));
                             list_add_tail(&collection->features, &feature->entry);
@@ -520,13 +520,13 @@ static int parse_descriptor(BYTE *descriptor, unsigned int index, unsigned int l
                                 caps->u.NotRange.Usage = usages[j];
                             feature->caps = *caps;
                             feature->caps.ReportCount = 1;
-                            caps->ReportCount--;
                             feature->collection = collection;
                             if (j+1 >= usages_top)
+                            {
+                                feature->caps.ReportCount += caps->ReportCount - (j + 1);
                                 break;
+                            }
                         }
-                        if (caps->ReportCount)
-                            feature->caps.ReportCount += caps->ReportCount;
                         usages_top = 0;
                         new_caps(caps);
                         break;

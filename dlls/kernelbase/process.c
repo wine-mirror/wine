@@ -182,10 +182,12 @@ static RTL_USER_PROCESS_PARAMETERS *create_process_params( const WCHAR *filename
                                       &cmdlineW, envW, &titleW, &desktopW,
                                       NULL, &runtimeW, PROCESS_PARAMS_FLAG_NORMALIZED ))
     {
+        RtlFreeUnicodeString( &newdirW );
         RtlReleasePath( load_path );
         if (envW != env) RtlFreeHeap( GetProcessHeap(), 0, envW );
         return NULL;
     }
+    RtlFreeUnicodeString( &newdirW );
     RtlReleasePath( load_path );
 
     if (flags & CREATE_NEW_PROCESS_GROUP) params->ConsoleFlags = 1;
@@ -624,6 +626,17 @@ BOOL WINAPI DECLSPEC_HOTPATCH FlushInstructionCache( HANDLE process, LPCVOID add
 
 
 /***********************************************************************
+ *           GetApplicationRestartSettings   (kernelbase.@)
+ */
+HRESULT WINAPI /* DECLSPEC_HOTPATCH */ GetApplicationRestartSettings( HANDLE process, WCHAR *cmdline,
+                                                                      DWORD *size, DWORD *flags )
+{
+    FIXME( "%p, %p, %p, %p)\n", process, cmdline, size, flags );
+    return E_NOTIMPL;
+}
+
+
+/***********************************************************************
  *           GetCurrentProcess   (kernelbase.@)
  */
 HANDLE WINAPI kernelbase_GetCurrentProcess(void)
@@ -778,6 +791,52 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetProcessShutdownParameters( LPDWORD level, LPDWO
 }
 
 
+/*********************************************************************
+ *           GetProcessTimes   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH GetProcessTimes( HANDLE process, FILETIME *create, FILETIME *exit,
+                                               FILETIME *kernel, FILETIME *user )
+{
+    KERNEL_USER_TIMES time;
+
+    if (!set_ntstatus( NtQueryInformationProcess( process, ProcessTimes, &time, sizeof(time), NULL )))
+        return FALSE;
+
+    create->dwLowDateTime  = time.CreateTime.u.LowPart;
+    create->dwHighDateTime = time.CreateTime.u.HighPart;
+    exit->dwLowDateTime    = time.ExitTime.u.LowPart;
+    exit->dwHighDateTime   = time.ExitTime.u.HighPart;
+    kernel->dwLowDateTime  = time.KernelTime.u.LowPart;
+    kernel->dwHighDateTime = time.KernelTime.u.HighPart;
+    user->dwLowDateTime    = time.UserTime.u.LowPart;
+    user->dwHighDateTime   = time.UserTime.u.HighPart;
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           GetProcessVersion   (kernelbase.@)
+ */
+DWORD WINAPI DECLSPEC_HOTPATCH GetProcessVersion( DWORD pid )
+{
+    SECTION_IMAGE_INFORMATION info;
+    NTSTATUS status;
+    HANDLE process;
+
+    if (pid && pid != GetCurrentProcessId())
+    {
+        if (!(process = OpenProcess( PROCESS_QUERY_INFORMATION, FALSE, pid ))) return 0;
+        status = NtQueryInformationProcess( process, ProcessImageInformation, &info, sizeof(info), NULL );
+        CloseHandle( process );
+    }
+    else status = NtQueryInformationProcess( GetCurrentProcess(), ProcessImageInformation,
+                                             &info, sizeof(info), NULL );
+
+    if (!set_ntstatus( status )) return 0;
+    return MAKELONG( info.SubsystemVersionLow, info.SubsystemVersionHigh );
+}
+
+
 /***********************************************************************
  *           GetProcessWorkingSetSizeEx   (kernelbase.@)
  */
@@ -860,6 +919,29 @@ HANDLE WINAPI DECLSPEC_HOTPATCH OpenProcess( DWORD access, BOOL inherit, DWORD i
 
     if (!set_ntstatus( NtOpenProcess( &handle, access, &attr, &cid ))) return NULL;
     return handle;
+}
+
+
+/***********************************************************************
+ *           ProcessIdToSessionId   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH ProcessIdToSessionId( DWORD procid, DWORD *sessionid )
+{
+    if (procid != GetCurrentProcessId()) FIXME( "Unsupported for other process %x\n", procid );
+    *sessionid = NtCurrentTeb()->Peb->SessionId;
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           QueryProcessCycleTime   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH QueryProcessCycleTime( HANDLE process, ULONG64 *cycle )
+{
+    static int once;
+    if (!once++) FIXME( "(%p,%p): stub!\n", process, cycle );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
 }
 
 
@@ -1037,6 +1119,17 @@ void init_startup_info( RTL_USER_PROCESS_PARAMETERS *params )
 
     command_lineW = params->CommandLine.Buffer;
     if (!RtlUnicodeStringToAnsiString( &ansi, &params->CommandLine, TRUE )) command_lineA = ansi.Buffer;
+}
+
+
+/**********************************************************************
+ *           BaseFlushAppcompatCache   (kernelbase.@)
+ */
+BOOL WINAPI BaseFlushAppcompatCache(void)
+{
+    FIXME( "stub\n" );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
 }
 
 
@@ -1228,28 +1321,102 @@ LPWSTR WINAPI DECLSPEC_HOTPATCH GetEnvironmentStringsW(void)
 
 
 /***********************************************************************
+ *           SetEnvironmentStringsA   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH SetEnvironmentStringsA( char *env )
+{
+    WCHAR *envW;
+    const char *p = env;
+    DWORD len;
+    BOOL ret;
+
+    for (p = env; *p; p += strlen( p ) + 1);
+
+    len = MultiByteToWideChar( CP_ACP, 0, env, p - env, NULL, 0 );
+    if (!(envW = HeapAlloc( GetProcessHeap(), 0, len )))
+    {
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        return FALSE;
+    }
+    MultiByteToWideChar( CP_ACP, 0, env, p - env, envW, len );
+    ret = SetEnvironmentStringsW( envW );
+    HeapFree( GetProcessHeap(), 0, envW );
+    return ret;
+}
+
+
+/***********************************************************************
+ *           SetEnvironmentStringsW   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH SetEnvironmentStringsW( WCHAR *env )
+{
+    WCHAR *p;
+    WCHAR *new_env;
+    NTSTATUS status;
+
+    for (p = env; *p; p += wcslen( p ) + 1)
+    {
+        const WCHAR *eq = wcschr( p, '=' );
+        if (!eq || eq == p)
+        {
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return FALSE;
+        }
+    }
+
+    if ((status = RtlCreateEnvironment( FALSE, &new_env )))
+        return set_ntstatus( status );
+
+    for (p = env; *p; p += wcslen( p ) + 1)
+    {
+        const WCHAR *eq = wcschr( p, '=' );
+        UNICODE_STRING var, value;
+        var.Buffer = p;
+        var.Length = (eq - p) * sizeof(WCHAR);
+        RtlInitUnicodeString( &value, eq + 1 );
+        if ((status = RtlSetEnvironmentVariable( &new_env, &var, &value )))
+        {
+            RtlDestroyEnvironment( new_env );
+            return set_ntstatus( status );
+        }
+    }
+
+    RtlSetCurrentEnvironment( new_env, NULL );
+    return TRUE;
+}
+
+
+/***********************************************************************
  *           GetEnvironmentVariableA   (kernelbase.@)
  */
 DWORD WINAPI DECLSPEC_HOTPATCH GetEnvironmentVariableA( LPCSTR name, LPSTR value, DWORD size )
 {
-    UNICODE_STRING us_name;
+    UNICODE_STRING us_name, us_value;
     PWSTR valueW;
-    DWORD ret;
+    NTSTATUS status;
+    DWORD len, ret;
 
     /* limit the size to sane values */
     size = min( size, 32767 );
     if (!(valueW = HeapAlloc( GetProcessHeap(), 0, size * sizeof(WCHAR) ))) return 0;
 
     RtlCreateUnicodeStringFromAsciiz( &us_name, name );
-    SetLastError( 0 );
-    ret = GetEnvironmentVariableW( us_name.Buffer, valueW, size);
-    if (ret && ret < size) WideCharToMultiByte( CP_ACP, 0, valueW, ret + 1, value, size, NULL, NULL );
+    us_value.Length = 0;
+    us_value.MaximumLength = (size ? size - 1 : 0) * sizeof(WCHAR);
+    us_value.Buffer = valueW;
 
-    /* this is needed to tell, with 0 as a return value, the difference between:
-     * - an error (GetLastError() != 0)
-     * - returning an empty string (in this case, we need to update the buffer)
-     */
-    if (ret == 0 && size && GetLastError() == 0) value[0] = 0;
+    status = RtlQueryEnvironmentVariable_U( NULL, &us_name, &us_value );
+    len = us_value.Length / sizeof(WCHAR);
+    if (status == STATUS_BUFFER_TOO_SMALL) ret = len + 1;
+    else if (!set_ntstatus( status )) ret = 0;
+    else if (!size) ret = len + 1;
+    else
+    {
+        if (len) WideCharToMultiByte( CP_ACP, 0, valueW, len + 1, value, size, NULL, NULL );
+        value[len] = 0;
+        ret = len;
+    }
+
     RtlFreeUnicodeString( &us_name );
     HeapFree( GetProcessHeap(), 0, valueW );
     return ret;
@@ -1274,8 +1441,10 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetEnvironmentVariableW( LPCWSTR name, LPWSTR val
 
     status = RtlQueryEnvironmentVariable_U( NULL, &us_name, &us_value );
     len = us_value.Length / sizeof(WCHAR);
-    if (!set_ntstatus( status )) return (status == STATUS_BUFFER_TOO_SMALL) ? len + 1 : 0;
-    if (size) val[len] = 0;
+    if (status == STATUS_BUFFER_TOO_SMALL) return len + 1;
+    if (!set_ntstatus( status )) return 0;
+    if (!size) return len + 1;
+    val[len] = 0;
     return len;
 }
 

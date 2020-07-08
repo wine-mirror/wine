@@ -31,27 +31,21 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(webservices);
 
-static const WCHAR http[] = {'h','t','t','p'};
-static const WCHAR https[] = {'h','t','t','p','s'};
-static const WCHAR nettcp[] = {'n','e','t','.','t','c','p'};
-static const WCHAR soapudp[] = {'s','o','a','p','.','u','d','p'};
-static const WCHAR netpipe[] = {'n','e','t','.','p','i','p','e'};
-
 static WS_URL_SCHEME_TYPE scheme_type( const WCHAR *str, ULONG len )
 {
-    if (len == ARRAY_SIZE( http ) && !wcsnicmp( str, http, ARRAY_SIZE( http )))
+    if (len == ARRAY_SIZE( L"http" ) - 1 && !wcsnicmp( str, L"http", ARRAY_SIZE( L"http" ) - 1 ))
         return WS_URL_HTTP_SCHEME_TYPE;
 
-    if (len == ARRAY_SIZE( https ) && !wcsnicmp( str, https, ARRAY_SIZE( https )))
+    if (len == ARRAY_SIZE( L"https" ) - 1 && !wcsnicmp( str, L"https", ARRAY_SIZE( L"https" ) - 1 ))
         return WS_URL_HTTPS_SCHEME_TYPE;
 
-    if (len == ARRAY_SIZE( nettcp ) && !wcsnicmp( str, nettcp, ARRAY_SIZE( nettcp )))
+    if (len == ARRAY_SIZE( L"net.tcp" ) - 1 && !wcsnicmp( str, L"net.tcp", ARRAY_SIZE( L"net.tcp" ) - 1 ))
         return WS_URL_NETTCP_SCHEME_TYPE;
 
-    if (len == ARRAY_SIZE( soapudp ) && !wcsnicmp( str, soapudp, ARRAY_SIZE( soapudp )))
+    if (len == ARRAY_SIZE( L"soap.udp" ) - 1 && !wcsnicmp( str, L"soap.udp", ARRAY_SIZE( L"soap.udp" ) - 1 ))
         return WS_URL_SOAPUDP_SCHEME_TYPE;
 
-    if (len == ARRAY_SIZE( netpipe ) && !wcsnicmp( str, netpipe, ARRAY_SIZE( netpipe )))
+    if (len == ARRAY_SIZE( L"net.pipe" ) - 1 && !wcsnicmp( str, L"net.pipe", ARRAY_SIZE( L"net.pipe" ) - 1 ))
         return WS_URL_NETPIPE_SCHEME_TYPE;
 
     return ~0u;
@@ -278,24 +272,24 @@ static const WCHAR *scheme_str( WS_URL_SCHEME_TYPE scheme, ULONG *len )
     switch (scheme)
     {
     case WS_URL_HTTP_SCHEME_TYPE:
-        *len = ARRAY_SIZE( http );
-        return http;
+        *len = ARRAY_SIZE( L"http" ) - 1;
+        return L"http";
 
     case WS_URL_HTTPS_SCHEME_TYPE:
-        *len = ARRAY_SIZE( https );
-        return https;
+        *len = ARRAY_SIZE( L"https" ) - 1;
+        return L"https";
 
     case WS_URL_NETTCP_SCHEME_TYPE:
-        *len = ARRAY_SIZE( nettcp );
-        return nettcp;
+        *len = ARRAY_SIZE( L"net.tcp" ) - 1;
+        return L"net.tcp";
 
     case WS_URL_SOAPUDP_SCHEME_TYPE:
-        *len = ARRAY_SIZE( soapudp );
-        return soapudp;
+        *len = ARRAY_SIZE( L"soap.udp" ) - 1;
+        return L"soap.udp";
 
     case WS_URL_NETPIPE_SCHEME_TYPE:
-        *len = ARRAY_SIZE( netpipe );
-        return netpipe;
+        *len = ARRAY_SIZE( L"net.pipe" ) - 1;
+        return L"net.pipe";
 
     default:
         ERR( "unhandled scheme %u\n", scheme );
@@ -364,7 +358,7 @@ static HRESULT url_encode_size( const WCHAR *str, ULONG len, const char *except,
 
 static ULONG url_encode_byte( unsigned char byte, const char *except, WCHAR *buf )
 {
-    static const WCHAR hex[] = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
+    static const WCHAR hex[] = L"0123456789ABCDEF";
     switch (escape_size( byte, except ))
     {
     case 3:
@@ -426,7 +420,6 @@ static HRESULT url_encode( const WCHAR *str, ULONG len, WCHAR *buf, const char *
 HRESULT WINAPI WsEncodeUrl( const WS_URL *base, ULONG flags, WS_HEAP *heap, WS_STRING *ret,
                             WS_ERROR *error )
 {
-    static const WCHAR fmtW[] = {':','%','u',0};
     ULONG len = 0, len_scheme, len_enc, ret_size = 0;
     const WS_HTTP_URL *url = (const WS_HTTP_URL *)base;
     const WCHAR *scheme;
@@ -504,7 +497,7 @@ HRESULT WINAPI WsEncodeUrl( const WS_URL *base, ULONG flags, WS_HEAP *heap, WS_S
     if (port)
     {
         WCHAR buf[7];
-        len = swprintf( buf, ARRAY_SIZE(buf), fmtW, port );
+        len = swprintf( buf, ARRAY_SIZE(buf), L":%u", port );
         memcpy( p, buf, len * sizeof(WCHAR) );
         p += len;
     }

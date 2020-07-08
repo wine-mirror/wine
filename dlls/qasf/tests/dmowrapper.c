@@ -1153,11 +1153,6 @@ static const struct strmbase_filter_ops testfilter_ops =
     .filter_destroy = testfilter_destroy,
 };
 
-static HRESULT testsource_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
-{
-    return S_OK;
-}
-
 static HRESULT WINAPI testsource_DecideAllocator(struct strmbase_source *iface,
         IMemInputPin *input, IMemAllocator **allocator)
 {
@@ -1166,8 +1161,6 @@ static HRESULT WINAPI testsource_DecideAllocator(struct strmbase_source *iface,
 
 static const struct strmbase_source_ops testsource_ops =
 {
-    .base.pin_query_accept = testsource_query_accept,
-    .base.pin_get_media_type = strmbase_pin_get_media_type,
     .pfnAttemptConnection = BaseOutputPinImpl_AttemptConnection,
     .pfnDecideAllocator = testsource_DecideAllocator,
 };
@@ -1707,7 +1700,7 @@ static void test_streaming_events(IMediaControl *control, IPin *sink, IMemInputP
     todo_wine ok(testsink2->got_eos == 1, "Got %u calls to IPin::EndOfStream().\n", testsink2->got_eos);
 
     hr = IMemInputPin_Receive(input, sample);
-    todo_wine ok(hr == VFW_E_SAMPLE_REJECTED_EOS, "Got hr %#x.\n", hr);
+    todo_wine ok(hr == S_FALSE /* 2003 */ || hr == VFW_E_SAMPLE_REJECTED_EOS, "Got hr %#x.\n", hr);
 
     got_Flush = 0;
     ok(!testsink->got_begin_flush, "Got %u calls to IPin::BeginFlush().\n", testsink->got_begin_flush);
@@ -1835,7 +1828,7 @@ static void test_connect_pin(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(compare_media_types(&mt, &req_mt), "Media types didn't match.\n");
 
-    ok(testdmo_output_mt_set, "Ouput type should be set.\n");
+    ok(testdmo_output_mt_set, "Output type should be set.\n");
     ok(compare_media_types(&testdmo_output_mt, &req_mt), "Media types didn't match.\n");
 
     test_filter_state(control);
@@ -1878,7 +1871,7 @@ static void test_connect_pin(void)
     hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(compare_media_types(&testsink.sink.pin.mt, &mt2), "Media types didn't match.\n");
-    ok(testdmo_output_mt_set, "Ouput type should be set.\n");
+    ok(testdmo_output_mt_set, "Output type should be set.\n");
     ok(compare_media_types(&testdmo_output_mt, &mt2), "Media types didn't match.\n");
     IFilterGraph2_Disconnect(graph, source);
     IFilterGraph2_Disconnect(graph, &testsink.sink.pin.IPin_iface);

@@ -55,6 +55,21 @@ static CRITICAL_SECTION console_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 static WCHAR input_exe[MAX_PATH + 1];
 
+struct ctrl_handler
+{
+    PHANDLER_ROUTINE     func;
+    struct ctrl_handler *next;
+};
+
+static BOOL WINAPI default_ctrl_handler( DWORD type )
+{
+    FIXME( "Terminating process %x on event %x\n", GetCurrentProcessId(), type );
+    RtlExitUserProcess( 0 );
+    return TRUE;
+}
+
+static struct ctrl_handler default_handler = { default_ctrl_handler, NULL };
+static struct ctrl_handler *ctrl_handlers = &default_handler;
 
 /* map a kernel32 console handle onto a real wineserver handle */
 static inline obj_handle_t console_handle_unmap( HANDLE h )
@@ -236,6 +251,45 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateConsoleScreenBuffer( DWORD access, DWORD s
     }
     SERVER_END_REQ;
     return ret;
+}
+
+
+/******************************************************************************
+ *	CtrlRoutine   (kernelbase.@)
+ */
+DWORD WINAPI CtrlRoutine( void *arg )
+{
+    DWORD_PTR event = (DWORD_PTR)arg;
+    struct ctrl_handler *handler;
+
+    if (event == CTRL_C_EVENT)
+    {
+        BOOL caught_by_dbg = TRUE;
+        /* First, try to pass the ctrl-C event to the debugger (if any)
+         * If it continues, there's nothing more to do
+         * Otherwise, we need to send the ctrl-C event to the handlers
+         */
+        __TRY
+        {
+            RaiseException( DBG_CONTROL_C, 0, 0, NULL );
+        }
+        __EXCEPT_ALL
+        {
+            caught_by_dbg = FALSE;
+        }
+        __ENDTRY
+        if (caught_by_dbg) return 0;
+    }
+
+    if (NtCurrentTeb()->Peb->ProcessParameters->ConsoleFlags & 1) return 0;
+
+    RtlEnterCriticalSection( &console_section );
+    for (handler = ctrl_handlers; handler; handler = handler->next)
+    {
+        if (handler->func( event )) break;
+    }
+    RtlLeaveCriticalSection( &console_section );
+    return 1;
 }
 
 
@@ -577,7 +631,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetConsoleTitleW( LPWSTR title, DWORD size )
 /***********************************************************************
  *	GetLargestConsoleWindowSize   (kernelbase.@)
  */
-#if defined(__i386__) && !defined(__MINGW32__)
+#if defined(__i386__) && !defined(__MINGW32__) && !defined(_MSC_VER)
 #undef GetLargestConsoleWindowSize
 DWORD WINAPI DECLSPEC_HOTPATCH GetLargestConsoleWindowSize( HANDLE handle )
 {
@@ -986,6 +1040,57 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetConsoleCP( UINT cp )
 
 
 /******************************************************************************
+ *	SetConsoleCtrlHandler   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH SetConsoleCtrlHandler( PHANDLER_ROUTINE func, BOOL add )
+{
+    struct ctrl_handler *handler;
+    BOOL ret = FALSE;
+
+    TRACE( "(%p,%d)\n", func, add );
+
+    RtlEnterCriticalSection( &console_section );
+
+    if (!func)
+    {
+        if (add) NtCurrentTeb()->Peb->ProcessParameters->ConsoleFlags |= 1;
+        else NtCurrentTeb()->Peb->ProcessParameters->ConsoleFlags &= ~1;
+        ret = TRUE;
+    }
+    else if (add)
+    {
+        if ((handler = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*handler) )))
+        {
+            handler->func = func;
+            handler->next = ctrl_handlers;
+            ctrl_handlers = handler;
+            ret = TRUE;
+        }
+    }
+    else
+    {
+        struct ctrl_handler **p_handler;
+
+        for (p_handler = &ctrl_handlers; *p_handler; p_handler = &(*p_handler)->next)
+        {
+            if ((*p_handler)->func == func) break;
+        }
+        if (*p_handler && *p_handler != &default_handler)
+        {
+            handler = *p_handler;
+            *p_handler = handler->next;
+            RtlFreeHeap( GetProcessHeap(), 0, handler );
+            ret = TRUE;
+        }
+        else SetLastError( ERROR_INVALID_PARAMETER );
+    }
+
+    RtlLeaveCriticalSection( &console_section );
+    return ret;
+}
+
+
+/******************************************************************************
  *	SetConsoleCursorInfo   (kernelbase.@)
  */
 BOOL WINAPI DECLSPEC_HOTPATCH SetConsoleCursorInfo( HANDLE handle, CONSOLE_CURSOR_INFO *info )
@@ -1146,9 +1251,39 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetConsoleOutputCP( UINT cp )
 BOOL WINAPI DECLSPEC_HOTPATCH SetConsoleScreenBufferInfoEx( HANDLE handle,
                                                             CONSOLE_SCREEN_BUFFER_INFOEX *info )
 {
-    FIXME( "(%p %p): stub!\n", handle, info );
-    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-    return FALSE;
+    BOOL ret;
+
+    TRACE("(%p, %p)\n", handle, info);
+
+    if (info->cbSize != sizeof(CONSOLE_SCREEN_BUFFER_INFOEX))
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    SERVER_START_REQ( set_console_output_info )
+    {
+        req->handle     = console_handle_unmap( handle );
+        req->mask       = SET_CONSOLE_OUTPUT_INFO_CURSOR_POS | SET_CONSOLE_OUTPUT_INFO_SIZE |
+                          SET_CONSOLE_OUTPUT_INFO_ATTR | SET_CONSOLE_OUTPUT_INFO_POPUP_ATTR |
+                          SET_CONSOLE_OUTPUT_INFO_DISPLAY_WINDOW | SET_CONSOLE_OUTPUT_INFO_MAX_SIZE;
+        req->width      = info->dwSize.X;
+        req->height     = info->dwSize.Y;
+        req->cursor_x   = info->dwCursorPosition.X;
+        req->cursor_y   = info->dwCursorPosition.Y;
+        req->attr       = info->wAttributes;
+        req->win_left   = info->srWindow.Left;
+        req->win_top    = info->srWindow.Top;
+        req->win_right  = info->srWindow.Right;
+        req->win_bottom = info->srWindow.Bottom;
+        req->popup_attr = info->wPopupAttributes;
+        req->max_width  = min( info->dwMaximumWindowSize.X, info->dwSize.X );
+        req->max_height = min( info->dwMaximumWindowSize.Y, info->dwSize.Y );
+        ret = !wine_server_call_err( req );
+    }
+    SERVER_END_REQ;
+
+    return ret;
 }
 
 

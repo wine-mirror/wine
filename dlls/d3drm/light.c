@@ -165,7 +165,7 @@ static HRESULT WINAPI d3drm_light_SetColor(IDirect3DRMLight *iface, D3DCOLOR col
 
     TRACE("iface %p, color 0x%08x.\n", iface, color);
 
-    light->color = color;
+    light->color = 0xff000000 | color;
 
     return D3DRM_OK;
 }

@@ -41,6 +41,9 @@ static BOOL (WINAPI *pCheckRemoteDebuggerPresent)(HANDLE,PBOOL);
 
 static void (WINAPI *pDbgBreakPoint)(void);
 
+static NTSTATUS  (WINAPI *pNtSuspendProcess)(HANDLE process);
+static NTSTATUS  (WINAPI *pNtResumeProcess)(HANDLE process);
+
 static LONG child_failures;
 
 static HMODULE ntdll;
@@ -1251,9 +1254,10 @@ static void test_debugger(const char *argv0)
     struct debugger_context ctx = { 0 };
     PROCESS_INFORMATION pi;
     STARTUPINFOA si;
+    NTSTATUS status;
     HANDLE event, thread;
     BYTE *mem, buf[4096], *proc_code, *thread_proc, byte;
-    unsigned int i, worker_cnt, exception_cnt;
+    unsigned int i, worker_cnt, exception_cnt, skip_reply_later;
     struct debuggee_thread *debuggee_thread;
     char *cmd;
     BOOL ret;
@@ -1272,6 +1276,62 @@ static void test_debugger(const char *argv0)
 
     next_event(&ctx, WAIT_EVENT_TIMEOUT);
     ok(ctx.ev.dwDebugEventCode == CREATE_PROCESS_DEBUG_EVENT, "dwDebugEventCode = %d\n", ctx.ev.dwDebugEventCode);
+
+    if ((skip_reply_later = !ContinueDebugEvent(ctx.ev.dwProcessId, ctx.ev.dwThreadId, DBG_REPLY_LATER)))
+        win_skip("Skipping unsupported DBG_REPLY_LATER tests\n");
+    else
+    {
+        DEBUG_EVENT de;
+
+        de = ctx.ev;
+        ctx.ev.dwDebugEventCode = -1;
+        next_event(&ctx, WAIT_EVENT_TIMEOUT);
+        ok(de.dwDebugEventCode == ctx.ev.dwDebugEventCode,
+           "dwDebugEventCode differs: %x (was %x)\n", ctx.ev.dwDebugEventCode, de.dwDebugEventCode);
+        ok(de.dwProcessId == ctx.ev.dwProcessId,
+           "dwProcessId differs: %x (was %x)\n", ctx.ev.dwProcessId, de.dwProcessId);
+        ok(de.dwThreadId == ctx.ev.dwThreadId,
+           "dwThreadId differs: %x (was %x)\n", ctx.ev.dwThreadId, de.dwThreadId);
+
+        /* Suspending the thread should prevent other attach debug events
+         * to be received until it's resumed */
+        thread = OpenThread(THREAD_SUSPEND_RESUME, FALSE, ctx.ev.dwThreadId);
+        ok(thread != INVALID_HANDLE_VALUE, "OpenThread failed, last error:%u\n", GetLastError());
+
+        status = NtSuspendThread(thread, NULL);
+        ok(!status, "NtSuspendThread failed, last error:%u\n", GetLastError());
+
+        ok(ContinueDebugEvent(ctx.ev.dwProcessId, ctx.ev.dwThreadId, DBG_REPLY_LATER),
+           "ContinueDebugEvent failed, last error:%u\n", GetLastError());
+        ok(!WaitForDebugEvent(&ctx.ev, POLL_EVENT_TIMEOUT), "WaitForDebugEvent succeeded.\n");
+
+        status = NtResumeThread(thread, NULL);
+        ok(!status, "NtResumeThread failed, last error:%u\n", GetLastError());
+
+        ret = CloseHandle(thread);
+        ok(ret, "CloseHandle failed, last error %d.\n", GetLastError());
+
+        ok(WaitForDebugEvent(&ctx.ev, POLL_EVENT_TIMEOUT), "WaitForDebugEvent failed.\n");
+        ok(de.dwDebugEventCode == ctx.ev.dwDebugEventCode,
+           "dwDebugEventCode differs: %x (was %x)\n", ctx.ev.dwDebugEventCode, de.dwDebugEventCode);
+
+        next_event(&ctx, WAIT_EVENT_TIMEOUT);
+        ok(ctx.ev.dwDebugEventCode == LOAD_DLL_DEBUG_EVENT, "dwDebugEventCode = %d\n", ctx.ev.dwDebugEventCode);
+        de = ctx.ev;
+
+        ok(ContinueDebugEvent(ctx.ev.dwProcessId, ctx.ev.dwThreadId, DBG_REPLY_LATER),
+           "ContinueDebugEvent failed, last error:%u\n", GetLastError());
+
+        ctx.ev.dwDebugEventCode = -1;
+        next_event(&ctx, WAIT_EVENT_TIMEOUT);
+        ok(de.dwDebugEventCode == ctx.ev.dwDebugEventCode,
+           "dwDebugEventCode differs: %x (was %x)\n", ctx.ev.dwDebugEventCode, de.dwDebugEventCode);
+        ok(de.dwProcessId == ctx.ev.dwProcessId,
+           "dwProcessId differs: %x (was %x)\n", ctx.ev.dwProcessId, de.dwProcessId);
+        ok(de.dwThreadId == ctx.ev.dwThreadId,
+           "dwThreadId differs: %x (was %x)\n", ctx.ev.dwThreadId, de.dwThreadId);
+    }
+
     wait_for_breakpoint(&ctx);
     do next_event(&ctx, POLL_EVENT_TIMEOUT);
     while(ctx.ev.dwDebugEventCode != -1);
@@ -1340,6 +1400,179 @@ static void test_debugger(const char *argv0)
         ok(ctx.ev.dwDebugEventCode == EXIT_THREAD_DEBUG_EVENT, "unexpected debug event %u\n", ctx.ev.dwDebugEventCode);
     }
     else win_skip("call_debug_service_code not supported on this architecture\n");
+
+    if (skip_reply_later)
+        win_skip("Skipping unsupported DBG_REPLY_LATER tests\n");
+    else if (sizeof(loop_code) > 1)
+    {
+        HANDLE thread_a, thread_b;
+        DEBUG_EVENT de_a, de_b;
+
+        memset(buf, OP_BP, sizeof(buf));
+        memcpy(proc_code, &loop_code, sizeof(loop_code));
+        ret = WriteProcessMemory(pi.hProcess, mem, buf, sizeof(buf), NULL);
+        ok(ret, "WriteProcessMemory failed: %u\n", GetLastError());
+
+        byte = OP_BP;
+        ret = WriteProcessMemory(pi.hProcess, thread_proc + 1, &byte, 1, NULL);
+        ok(ret, "WriteProcessMemory failed: %u\n", GetLastError());
+
+        thread_a = CreateRemoteThread(pi.hProcess, NULL, 0, (void*)thread_proc, NULL, 0, NULL);
+        ok(thread_a != NULL, "CreateRemoteThread failed: %u\n", GetLastError());
+        next_event(&ctx, WAIT_EVENT_TIMEOUT);
+        ok(ctx.ev.dwDebugEventCode == CREATE_THREAD_DEBUG_EVENT, "dwDebugEventCode = %d\n", ctx.ev.dwDebugEventCode);
+        de_a = ctx.ev;
+
+        thread_b = CreateRemoteThread(pi.hProcess, NULL, 0, (void*)thread_proc, NULL, 0, NULL);
+        ok(thread_b != NULL, "CreateRemoteThread failed: %u\n", GetLastError());
+        do next_event(&ctx, POLL_EVENT_TIMEOUT);
+        while(ctx.ev.dwDebugEventCode != CREATE_THREAD_DEBUG_EVENT);
+        de_b = ctx.ev;
+
+        status = NtSuspendThread(thread_b, NULL);
+        ok(!status, "NtSuspendThread failed, last error:%u\n", GetLastError());
+        ok(ContinueDebugEvent(ctx.ev.dwProcessId, ctx.ev.dwThreadId, DBG_REPLY_LATER),
+           "ContinueDebugEvent failed, last error:%u\n", GetLastError());
+
+        ctx.ev.dwDebugEventCode = -1;
+        next_event(&ctx, WAIT_EVENT_TIMEOUT);
+        ok(ctx.ev.dwDebugEventCode == EXCEPTION_DEBUG_EVENT,
+           "dwDebugEventCode = %d\n", ctx.ev.dwDebugEventCode);
+        ok(de_a.dwProcessId == ctx.ev.dwProcessId,
+           "dwProcessId differs: %x (was %x)\n", ctx.ev.dwProcessId, de_a.dwProcessId);
+        ok(de_a.dwThreadId == ctx.ev.dwThreadId,
+           "dwThreadId differs: %x (was %x)\n", ctx.ev.dwThreadId, de_a.dwThreadId);
+        de_a = ctx.ev;
+
+        byte = 0xc3; /* ret */
+        ret = WriteProcessMemory(pi.hProcess, thread_proc + 1, &byte, 1, NULL);
+        ok(ret, "WriteProcessMemory failed: %u\n", GetLastError());
+
+        ok(pNtSuspendProcess != NULL, "NtSuspendProcess not found\n");
+        ok(pNtResumeProcess != NULL, "pNtResumeProcess not found\n");
+        if (pNtSuspendProcess && pNtResumeProcess)
+        {
+            status = pNtSuspendProcess(pi.hProcess);
+            ok(!status, "NtSuspendProcess failed, last error:%u\n", GetLastError());
+            ok(ContinueDebugEvent(ctx.ev.dwProcessId, ctx.ev.dwThreadId, DBG_REPLY_LATER),
+               "ContinueDebugEvent failed, last error:%u\n", GetLastError());
+            ok(!WaitForDebugEvent(&ctx.ev, POLL_EVENT_TIMEOUT), "WaitForDebugEvent succeeded.\n");
+
+            status = NtResumeThread(thread_b, NULL);
+            ok(!status, "NtResumeThread failed, last error:%u\n", GetLastError());
+            ok(!WaitForDebugEvent(&ctx.ev, POLL_EVENT_TIMEOUT), "WaitForDebugEvent succeeded.\n");
+
+            status = pNtResumeProcess(pi.hProcess);
+            ok(!status, "pNtResumeProcess failed, last error:%u\n", GetLastError());
+        }
+        else
+        {
+            status = NtResumeThread(thread_b, NULL);
+            ok(!status, "NtResumeThread failed, last error:%u\n", GetLastError());
+            ok(!WaitForDebugEvent(&ctx.ev, POLL_EVENT_TIMEOUT), "WaitForDebugEvent succeeded.\n");
+        }
+
+        /* Testing shows that on windows the debug event order between threads
+         * is not guaranteed.
+         *
+         * Now we expect thread_a to report:
+         * - its delayed EXCEPTION_DEBUG_EVENT
+         * - EXIT_THREAD_DEBUG_EVENT
+         *
+         * and thread_b to report:
+         * - its delayed CREATE_THREAD_DEBUG_EVENT
+         * - EXIT_THREAD_DEBUG_EVENT
+         *
+         * We should not get EXCEPTION_DEBUG_EVENT from thread_b as we updated
+         * its instructions before continuing CREATE_THREAD_DEBUG_EVENT.
+         */
+        ctx.ev.dwDebugEventCode = -1;
+        next_event(&ctx, POLL_EVENT_TIMEOUT);
+
+        if (ctx.ev.dwDebugEventCode == EXCEPTION_DEBUG_EVENT)
+        {
+            ok(de_a.dwDebugEventCode == ctx.ev.dwDebugEventCode,
+               "dwDebugEventCode differs: %x (was %x)\n", ctx.ev.dwDebugEventCode, de_a.dwDebugEventCode);
+            ok(de_a.dwProcessId == ctx.ev.dwProcessId,
+               "dwProcessId differs: %x (was %x)\n", ctx.ev.dwProcessId, de_a.dwProcessId);
+            ok(de_a.dwThreadId == ctx.ev.dwThreadId,
+               "dwThreadId differs: %x (was %x)\n", ctx.ev.dwThreadId, de_a.dwThreadId);
+
+            next_event(&ctx, POLL_EVENT_TIMEOUT);
+            if (ctx.ev.dwDebugEventCode == EXIT_THREAD_DEBUG_EVENT)
+            {
+                ok(de_a.dwProcessId == ctx.ev.dwProcessId,
+                   "dwProcessId differs: %x (was %x)\n", ctx.ev.dwProcessId, de_a.dwProcessId);
+                ok(de_a.dwThreadId == ctx.ev.dwThreadId,
+                   "dwThreadId differs: %x (was %x)\n", ctx.ev.dwThreadId, de_a.dwThreadId);
+
+                ret = CloseHandle(thread_a);
+                ok(ret, "CloseHandle failed, last error %d.\n", GetLastError());
+                thread_a = NULL;
+
+                next_event(&ctx, POLL_EVENT_TIMEOUT);
+            }
+
+            ok(de_b.dwDebugEventCode == ctx.ev.dwDebugEventCode,
+               "dwDebugEventCode differs: %x (was %x)\n", ctx.ev.dwDebugEventCode, de_b.dwDebugEventCode);
+            ok(de_b.dwProcessId == ctx.ev.dwProcessId,
+               "dwProcessId differs: %x (was %x)\n", ctx.ev.dwProcessId, de_b.dwProcessId);
+            ok(de_b.dwThreadId == ctx.ev.dwThreadId,
+               "dwThreadId differs: %x (was %x)\n", ctx.ev.dwThreadId, de_b.dwThreadId);
+        }
+        else
+        {
+            ok(de_b.dwDebugEventCode == ctx.ev.dwDebugEventCode,
+               "dwDebugEventCode differs: %x (was %x)\n", ctx.ev.dwDebugEventCode, de_b.dwDebugEventCode);
+            ok(de_b.dwProcessId == ctx.ev.dwProcessId,
+               "dwProcessId differs: %x (was %x)\n", ctx.ev.dwProcessId, de_b.dwProcessId);
+            ok(de_b.dwThreadId == ctx.ev.dwThreadId,
+               "dwThreadId differs: %x (was %x)\n", ctx.ev.dwThreadId, de_b.dwThreadId);
+
+            next_event(&ctx, POLL_EVENT_TIMEOUT);
+            if (ctx.ev.dwDebugEventCode == EXIT_THREAD_DEBUG_EVENT)
+            {
+                ok(de_b.dwProcessId == ctx.ev.dwProcessId,
+                   "dwProcessId differs: %x (was %x)\n", ctx.ev.dwProcessId, de_b.dwProcessId);
+                ok(de_b.dwThreadId == ctx.ev.dwThreadId,
+                   "dwThreadId differs: %x (was %x)\n", ctx.ev.dwThreadId, de_b.dwThreadId);
+
+                ret = CloseHandle(thread_b);
+                ok(ret, "CloseHandle failed, last error %d.\n", GetLastError());
+                thread_b = NULL;
+
+                next_event(&ctx, POLL_EVENT_TIMEOUT);
+            }
+
+            ok(de_a.dwDebugEventCode == ctx.ev.dwDebugEventCode,
+               "dwDebugEventCode differs: %x (was %x)\n", ctx.ev.dwDebugEventCode, de_a.dwDebugEventCode);
+            ok(de_a.dwProcessId == ctx.ev.dwProcessId,
+               "dwProcessId differs: %x (was %x)\n", ctx.ev.dwProcessId, de_a.dwProcessId);
+            ok(de_a.dwThreadId == ctx.ev.dwThreadId,
+               "dwThreadId differs: %x (was %x)\n", ctx.ev.dwThreadId, de_a.dwThreadId);
+        }
+
+        if (thread_a)
+        {
+            next_event(&ctx, POLL_EVENT_TIMEOUT);
+            ok(ctx.ev.dwDebugEventCode == EXIT_THREAD_DEBUG_EVENT,
+               "dwDebugEventCode = %d\n", ctx.ev.dwDebugEventCode);
+
+            ret = CloseHandle(thread_a);
+            ok(ret, "CloseHandle failed, last error %d.\n", GetLastError());
+        }
+
+
+        if (thread_b)
+        {
+            next_event(&ctx, POLL_EVENT_TIMEOUT);
+            ok(ctx.ev.dwDebugEventCode == EXIT_THREAD_DEBUG_EVENT,
+               "dwDebugEventCode = %d\n", ctx.ev.dwDebugEventCode);
+
+            ret = CloseHandle(thread_b);
+            ok(ret, "CloseHandle failed, last error %d.\n", GetLastError());
+        }
+    }
 
     if (sizeof(loop_code) > 1)
     {
@@ -1444,6 +1677,8 @@ START_TEST(debugger)
 
     ntdll = GetModuleHandleA("ntdll.dll");
     pDbgBreakPoint = (void*)GetProcAddress(ntdll, "DbgBreakPoint");
+    pNtSuspendProcess = (void*)GetProcAddress(ntdll, "NtSuspendProcess");
+    pNtResumeProcess = (void*)GetProcAddress(ntdll, "NtResumeProcess");
 
     myARGC=winetest_get_mainargs(&myARGV);
     if (myARGC >= 3 && strcmp(myARGV[2], "crash") == 0)

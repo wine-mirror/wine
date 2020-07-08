@@ -3258,7 +3258,7 @@ static void test_overlapped_transport(BOOL msg_mode, BOOL msg_read_mode)
         ok(!res && GetLastError() == ERROR_MORE_DATA, "ReadFile returned: %x %u\n", res, GetLastError());
     ok(read_bytes == 10, "read_bytes = %u\n", read_bytes);
     TerminateProcess(process, 0);
-    winetest_wait_child_process(process);
+    wait_child_process(process);
     /* after terminating process, there is no pending write and pipe buffer is empty */
     overlapped_read_async(server, buf, 10, &overlapped);
     overlapped_write_sync(client, buf, 1);
@@ -3524,7 +3524,7 @@ static void test_namedpipe_process_id(void)
     ok(server != INVALID_HANDLE_VALUE, "got %u\n", GetLastError());
 
     process = create_check_id_process("checkpid", GetProcessId(GetCurrentProcess()));
-    winetest_wait_child_process(process);
+    wait_child_process(process);
 
     CloseHandle(overlapped.hEvent);
     CloseHandle(process);
@@ -3667,7 +3667,7 @@ static void test_namedpipe_session_id(void)
     ok(server != INVALID_HANDLE_VALUE, "got %u\n", GetLastError());
 
     process = create_check_id_process("checksessionid", current);
-    winetest_wait_child_process(process);
+    wait_child_process(process);
 
     CloseHandle(overlapped.hEvent);
     CloseHandle(process);

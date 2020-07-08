@@ -240,6 +240,16 @@ static HRESULT STDMETHODCALLTYPE d3d10_blend_state_SetPrivateDataInterface(ID3D1
 
 /* ID3D10BlendState methods */
 
+static D3D10_BLEND d3d10_blend_from_d3d11(D3D11_BLEND factor)
+{
+    return (D3D10_BLEND)factor;
+}
+
+static D3D10_BLEND_OP d3d10_blend_op_from_d3d11(D3D11_BLEND_OP op)
+{
+    return (D3D10_BLEND_OP)op;
+}
+
 static void STDMETHODCALLTYPE d3d10_blend_state_GetDesc(ID3D10BlendState1 *iface, D3D10_BLEND_DESC *desc)
 {
     struct d3d_blend_state *state = impl_from_ID3D10BlendState(iface);
@@ -249,12 +259,12 @@ static void STDMETHODCALLTYPE d3d10_blend_state_GetDesc(ID3D10BlendState1 *iface
     TRACE("iface %p, desc %p.\n", iface, desc);
 
     desc->AlphaToCoverageEnable = d3d11_desc->AlphaToCoverageEnable;
-    desc->SrcBlend = d3d11_desc->RenderTarget[0].SrcBlend;
-    desc->DestBlend = d3d11_desc->RenderTarget[0].DestBlend;
-    desc->BlendOp = d3d11_desc->RenderTarget[0].BlendOp;
-    desc->SrcBlendAlpha = d3d11_desc->RenderTarget[0].SrcBlendAlpha;
-    desc->DestBlendAlpha = d3d11_desc->RenderTarget[0].DestBlendAlpha;
-    desc->BlendOpAlpha = d3d11_desc->RenderTarget[0].BlendOpAlpha;
+    desc->SrcBlend = d3d10_blend_from_d3d11(d3d11_desc->RenderTarget[0].SrcBlend);
+    desc->DestBlend = d3d10_blend_from_d3d11(d3d11_desc->RenderTarget[0].DestBlend);
+    desc->BlendOp = d3d10_blend_op_from_d3d11(d3d11_desc->RenderTarget[0].BlendOp);
+    desc->SrcBlendAlpha = d3d10_blend_from_d3d11(d3d11_desc->RenderTarget[0].SrcBlendAlpha);
+    desc->DestBlendAlpha = d3d10_blend_from_d3d11(d3d11_desc->RenderTarget[0].DestBlendAlpha);
+    desc->BlendOpAlpha = d3d10_blend_op_from_d3d11(d3d11_desc->RenderTarget[0].BlendOpAlpha);
     for (i = 0; i < D3D10_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
     {
         desc->BlendEnable[i] = d3d11_desc->RenderTarget[i].BlendEnable;
@@ -303,6 +313,16 @@ static const struct wined3d_parent_ops d3d_blend_state_wined3d_parent_ops =
     d3d_blend_state_wined3d_object_destroyed,
 };
 
+static enum wined3d_blend wined3d_blend_from_d3d11(D3D11_BLEND factor)
+{
+    return (enum wined3d_blend)factor;
+}
+
+static enum wined3d_blend_op wined3d_blend_op_from_d3d11(D3D11_BLEND_OP op)
+{
+    return (enum wined3d_blend_op)op;
+}
+
 HRESULT d3d_blend_state_create(struct d3d_device *device, const D3D11_BLEND_DESC *desc,
         struct d3d_blend_state **state)
 {
@@ -344,15 +364,7 @@ HRESULT d3d_blend_state_create(struct d3d_device *device, const D3D11_BLEND_DESC
             tmp_desc.RenderTarget[i].BlendOpAlpha = D3D11_BLEND_OP_ADD;
         }
         tmp_desc.RenderTarget[i].RenderTargetWriteMask = desc->RenderTarget[j].RenderTargetWriteMask;
-
-        if (i > 3 && tmp_desc.RenderTarget[i].RenderTargetWriteMask != D3D11_COLOR_WRITE_ENABLE_ALL)
-            FIXME("Color mask %#x not supported for render target %u.\n",
-                    tmp_desc.RenderTarget[i].RenderTargetWriteMask, i);
     }
-
-    /* glEnableIndexedEXT(GL_BLEND, ...) */
-    if (tmp_desc.IndependentBlendEnable)
-        FIXME("Per-rendertarget blend not implemented.\n");
 
     wined3d_mutex_lock();
     if ((entry = wine_rb_get(&device->blend_states, &tmp_desc)))
@@ -389,6 +401,18 @@ HRESULT d3d_blend_state_create(struct d3d_device *device, const D3D11_BLEND_DESC
     }
 
     wined3d_desc.alpha_to_coverage = desc->AlphaToCoverageEnable;
+    wined3d_desc.independent = desc->IndependentBlendEnable;
+    for (i = 0; i < D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
+    {
+        wined3d_desc.rt[i].enable = desc->RenderTarget[i].BlendEnable;
+        wined3d_desc.rt[i].src = wined3d_blend_from_d3d11(desc->RenderTarget[i].SrcBlend);
+        wined3d_desc.rt[i].dst = wined3d_blend_from_d3d11(desc->RenderTarget[i].DestBlend);
+        wined3d_desc.rt[i].op = wined3d_blend_op_from_d3d11(desc->RenderTarget[i].BlendOp);
+        wined3d_desc.rt[i].src_alpha = wined3d_blend_from_d3d11(desc->RenderTarget[i].SrcBlendAlpha);
+        wined3d_desc.rt[i].dst_alpha = wined3d_blend_from_d3d11(desc->RenderTarget[i].DestBlendAlpha);
+        wined3d_desc.rt[i].op_alpha = wined3d_blend_op_from_d3d11(desc->RenderTarget[i].BlendOpAlpha);
+        wined3d_desc.rt[i].writemask = desc->RenderTarget[i].RenderTargetWriteMask;
+    }
 
     /* We cannot fail after creating a wined3d_blend_state object. It
      * would lead to double free. */
@@ -1057,6 +1081,16 @@ static const struct wined3d_parent_ops d3d_rasterizer_state_wined3d_parent_ops =
     d3d_rasterizer_state_wined3d_object_destroyed,
 };
 
+static enum wined3d_fill_mode wined3d_fill_mode_from_d3d11(D3D11_FILL_MODE mode)
+{
+    return (enum wined3d_fill_mode)mode;
+}
+
+static enum wined3d_cull wined3d_cull_from_d3d11(D3D11_CULL_MODE mode)
+{
+    return (enum wined3d_cull)mode;
+}
+
 static HRESULT d3d_rasterizer_state_init(struct d3d_rasterizer_state *state, struct d3d_device *device,
         const D3D11_RASTERIZER_DESC *desc)
 {
@@ -1076,9 +1110,15 @@ static HRESULT d3d_rasterizer_state_init(struct d3d_rasterizer_state *state, str
         return E_FAIL;
     }
 
+    wined3d_desc.fill_mode = wined3d_fill_mode_from_d3d11(desc->FillMode);
+    wined3d_desc.cull_mode = wined3d_cull_from_d3d11(desc->CullMode);
     wined3d_desc.front_ccw = desc->FrontCounterClockwise;
-    wined3d_desc.depth_clip = desc->DepthClipEnable;
+    wined3d_desc.depth_bias = desc->DepthBias;
     wined3d_desc.depth_bias_clamp = desc->DepthBiasClamp;
+    wined3d_desc.scale_bias = desc->SlopeScaledDepthBias;
+    wined3d_desc.depth_clip = desc->DepthClipEnable;
+    wined3d_desc.scissor = desc->ScissorEnable;
+    wined3d_desc.line_antialias = desc->AntialiasedLineEnable;
 
     /* We cannot fail after creating a wined3d_rasterizer_state object. It
      * would lead to double free. */

@@ -76,6 +76,7 @@ typedef struct tagStrToIntResult
   int str_to_int;
   LONGLONG str_to_int64_ex;
   LONGLONG str_to_int64_hex;
+  BOOL failure;
 } StrToIntResult;
 
 static const StrToIntResult StrToInt_results[] = {
@@ -89,11 +90,12 @@ static const StrToIntResult StrToInt_results[] = {
      { "0x2bdc546291f4b1", 0, 0, ((LONGLONG)0x2bdc54 << 32) | 0x6291f4b1 },
      { "+0x44f4", 0, 0, 0x44f4 },
      { "-0x44fd", 0, 0, 0x44fd },
-     { "+ 88987", 0, 0, 0 },
-     { "- 55", 0, 0, 0 },
-     { "- 0", 0, 0, 0 },
-     { "+ 0x44f4", 0, 0, 0 },
-     { "--0x44fd", 0, 0, 0 },
+     { "+ 88987", 0, 0, 0, TRUE },
+
+     { "- 55", 0, 0, 0, TRUE },
+     { "- 0", 0, 0, 0, TRUE },
+     { "+ 0x44f4", 0, 0, 0, TRUE },
+     { "--0x44fd", 0, 0, 0, TRUE },
      { " 1999", 0, 1999, 1999 },
      { " +88987", 0, 88987, 88987 },
      { " 012", 0, 12, 12 },
@@ -101,6 +103,10 @@ static const StrToIntResult StrToInt_results[] = {
      { " 0x44ff", 0, 0, 0x44ff },
      { " +0x44f4", 0, 0, 0x44f4 },
      { " -0x44fd", 0, 0, 0x44fd },
+     { "\t\n +3", 0, 3, 3 },
+     { "\v+4", 0, 0, 0, TRUE },
+     { "\f+5", 0, 0, 0, TRUE },
+     { "\r+6", 0, 0, 0, TRUE },
      { NULL, 0, 0, 0 }
 };
 
@@ -488,8 +494,10 @@ static void test_StrToIntExA(void)
   {
     return_val = -1;
     bRet = StrToIntExA(result->string,0,&return_val);
-    ok(!bRet || return_val != -1, "No result returned from '%s'\n",
-       result->string);
+    if (result->failure)
+        ok(!bRet, "Got %d instead of failure for '%s'\n", return_val, result->string);
+    else
+        ok(bRet, "Failed for '%s'\n", result->string);
     if (bRet)
       ok(return_val == (int)result->str_to_int64_ex, "converted '%s' wrong (%d)\n",
          result->string, return_val);
@@ -501,8 +509,10 @@ static void test_StrToIntExA(void)
   {
     return_val = -1;
     bRet = StrToIntExA(result->string,STIF_SUPPORT_HEX,&return_val);
-    ok(!bRet || return_val != -1, "No result returned from '%s'\n",
-       result->string);
+    if (result->failure)
+        ok(!bRet, "Got %d instead of failure for '%s'\n", return_val, result->string);
+    else
+        ok(bRet, "Failed for '%s'\n", result->string);
     if (bRet)
       ok(return_val == (int)result->str_to_int64_hex, "converted '%s' wrong (%d)\n",
          result->string, return_val);
@@ -522,8 +532,10 @@ static void test_StrToIntExW(void)
     return_val = -1;
     MultiByteToWideChar(CP_ACP, 0, result->string, -1, szBuff, ARRAY_SIZE(szBuff));
     bRet = StrToIntExW(szBuff, 0, &return_val);
-    ok(!bRet || return_val != -1, "No result returned from '%s'\n",
-       result->string);
+    if (result->failure)
+        ok(!bRet, "Got %d instead of failure for '%s'\n", return_val, result->string);
+    else
+        ok(bRet, "Failed for '%s'\n", result->string);
     if (bRet)
       ok(return_val == (int)result->str_to_int64_ex, "converted '%s' wrong (%d)\n",
          result->string, return_val);
@@ -536,13 +548,23 @@ static void test_StrToIntExW(void)
     return_val = -1;
     MultiByteToWideChar(CP_ACP, 0, result->string, -1, szBuff, ARRAY_SIZE(szBuff));
     bRet = StrToIntExW(szBuff, STIF_SUPPORT_HEX, &return_val);
-    ok(!bRet || return_val != -1, "No result returned from '%s'\n",
-       result->string);
+    if (result->failure)
+        ok(!bRet, "Got %d instead of failure for '%s'\n", return_val, result->string);
+    else
+        ok(bRet, "Failed for '%s'\n", result->string);
     if (bRet)
       ok(return_val == (int)result->str_to_int64_hex, "converted '%s' wrong (%d)\n",
          result->string, return_val);
     result++;
   }
+
+  return_val = -1;
+  bRet = StrToIntExW(L"\x0661\x0662", 0, &return_val);
+  ok( !bRet, "Returned %d for Unicode digits\n", return_val );
+  bRet = StrToIntExW(L"\x07c3\x07c4", 0, &return_val);
+  ok( !bRet, "Returned %d for Unicode digits\n", return_val );
+  bRet = StrToIntExW(L"\xa0-2", 0, &return_val);
+  ok( !bRet, "Returned %d for Unicode space\n", return_val );
 }
 
 static void test_StrToInt64ExA(void)
@@ -561,8 +583,11 @@ static void test_StrToInt64ExA(void)
   {
     return_val = -1;
     bRet = pStrToInt64ExA(result->string,0,&return_val);
-    ok(!bRet || return_val != -1, "No result returned from '%s'\n",
-       result->string);
+    if (result->failure)
+        ok(!bRet, "Got %s instead of failure for '%s'\n",
+           wine_dbgstr_longlong(return_val), result->string);
+    else
+        ok(bRet, "Failed for '%s'\n", result->string);
     if (bRet)
       ok(return_val == result->str_to_int64_ex, "converted '%s' wrong (%s)\n",
          result->string, wine_dbgstr_longlong(return_val));
@@ -574,8 +599,11 @@ static void test_StrToInt64ExA(void)
   {
     return_val = -1;
     bRet = pStrToInt64ExA(result->string,STIF_SUPPORT_HEX,&return_val);
-    ok(!bRet || return_val != -1, "No result returned from '%s'\n",
-       result->string);
+    if (result->failure)
+        ok(!bRet, "Got %s instead of failure for '%s'\n",
+           wine_dbgstr_longlong(return_val), result->string);
+    else
+        ok(bRet, "Failed for '%s'\n", result->string);
     if (bRet)
       ok(return_val == result->str_to_int64_hex, "converted '%s' wrong (%s)\n",
          result->string, wine_dbgstr_longlong(return_val));
@@ -601,8 +629,11 @@ static void test_StrToInt64ExW(void)
     return_val = -1;
     MultiByteToWideChar(CP_ACP, 0, result->string, -1, szBuff, ARRAY_SIZE(szBuff));
     bRet = pStrToInt64ExW(szBuff, 0, &return_val);
-    ok(!bRet || return_val != -1, "No result returned from '%s'\n",
-       result->string);
+    if (result->failure)
+        ok(!bRet, "Got %s instead of failure for '%s'\n",
+           wine_dbgstr_longlong(return_val), result->string);
+    else
+        ok(bRet, "Failed for '%s'\n", result->string);
     if (bRet)
       ok(return_val == result->str_to_int64_ex, "converted '%s' wrong (%s)\n",
          result->string, wine_dbgstr_longlong(return_val));
@@ -615,13 +646,24 @@ static void test_StrToInt64ExW(void)
     return_val = -1;
     MultiByteToWideChar(CP_ACP, 0, result->string, -1, szBuff, ARRAY_SIZE(szBuff));
     bRet = pStrToInt64ExW(szBuff, STIF_SUPPORT_HEX, &return_val);
-    ok(!bRet || return_val != -1, "No result returned from '%s'\n",
-       result->string);
+    if (result->failure)
+        ok(!bRet, "Got %s instead of failure for '%s'\n",
+           wine_dbgstr_longlong(return_val), result->string);
+    else
+        ok(bRet, "Failed for '%s'\n", result->string);
     if (bRet)
       ok(return_val == result->str_to_int64_hex, "converted '%s' wrong (%s)\n",
          result->string, wine_dbgstr_longlong(return_val));
     result++;
   }
+
+  return_val = -1;
+  bRet = pStrToInt64ExW(L"\x0661\x0662", 0, &return_val);
+  ok( !bRet, "Returned %s for Unicode digits\n", wine_dbgstr_longlong(return_val) );
+  bRet = pStrToInt64ExW(L"\x07c3\x07c4", 0, &return_val);
+  ok( !bRet, "Returned %s for Unicode digits\n", wine_dbgstr_longlong(return_val) );
+  bRet = pStrToInt64ExW(L"\xa0-2", 0, &return_val);
+  ok( !bRet, "Returned %s for Unicode space\n", wine_dbgstr_longlong(return_val) );
 }
 
 static void test_StrDupA(void)

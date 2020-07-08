@@ -20,9 +20,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define _WIN32_WINNT 0x0600 /* For WM_CHANGEUISTATE,QS_RAWINPUT,WM_DWMxxxx */
-#define WINVER 0x0600 /* for WM_GETTITLEBARINFOEX */
-
 #include <assert.h>
 #include <limits.h>
 #include <stdarg.h>
@@ -34,6 +31,7 @@
 #include "winuser.h"
 #include "winnls.h"
 #include "dbt.h"
+#include "commctrl.h"
 
 #include "wine/test.h"
 
@@ -1923,6 +1921,41 @@ static const struct message WmSHOWNATopInvisible[] = {
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
     { WM_SIZE, sent|wparam, SIZE_RESTORED },
     { WM_MOVE, sent },
+    { 0 }
+};
+
+static const struct message WmTrackPopupMenuMinimizeWindow[] = {
+    { HCBT_CREATEWND, hook },
+    { WM_ENTERMENULOOP, sent|wparam|lparam, TRUE, 0 },
+    { WM_INITMENU, sent|lparam, 0, 0 },
+    { WM_INITMENUPOPUP, sent|lparam, 0, 0 },
+    { 0x0093, sent|optional },
+    { 0x0094, sent|optional },
+    { 0x0094, sent|optional },
+    { WM_ENTERIDLE, sent|wparam, 2 },
+    { HCBT_MINMAX, hook },
+    { HCBT_SETFOCUS, hook },
+    { WM_KILLFOCUS, sent|wparam, 0 },
+    { WM_GETTEXT, sent|optional },
+    { WM_WINDOWPOSCHANGING, sent },
+    { WM_GETMINMAXINFO, sent|defwinproc },
+    { WM_NCCALCSIZE, sent|wparam|optional, 1 },
+    { WM_WINDOWPOSCHANGED, sent },
+    { WM_MOVE, sent|defwinproc },
+    { WM_SIZE, sent|defwinproc },
+    { WM_GETTEXT, sent|optional },
+    { WM_NCCALCSIZE, sent|wparam|optional, 1 },
+    { WM_CANCELMODE, sent },
+    { WM_CAPTURECHANGED, sent|defwinproc },
+    { HCBT_DESTROYWND, hook },
+    { WM_UNINITMENUPOPUP, sent|defwinproc|lparam, 0, 0 },
+    { WM_MENUSELECT, sent|defwinproc|wparam|lparam, 0xffff0000, 0 },
+    { WM_EXITMENULOOP, sent|defwinproc|wparam|lparam, 1, 0 },
+    { WM_NCACTIVATE, sent },
+    { WM_GETTEXT, sent|defwinproc|optional },
+    { WM_GETTEXT, sent|defwinproc|optional },
+    { WM_ACTIVATE, sent },
+    { WM_ACTIVATEAPP, sent|wparam, 0 },
     { 0 }
 };
 
@@ -16305,7 +16338,7 @@ static void test_WaitForInputIdle( char *argv0 )
                 WaitForSingleObject( pi.hProcess, 1000 );  /* give it a chance to exit on its own */
             }
             TerminateProcess( pi.hProcess, 0 );  /* just in case */
-            winetest_wait_child_process( pi.hProcess );
+            wait_child_process( pi.hProcess );
             ret = WaitForInputIdle( pi.hProcess, 100 );
             ok( ret == WAIT_FAILED, "%u: WaitForInputIdle after exit error %08x\n", i, ret );
             CloseHandle( pi.hProcess );
@@ -17311,6 +17344,25 @@ static void test_layered_window(void)
 
 static HMENU hpopupmenu;
 
+static LRESULT WINAPI minimize_popup_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    LRESULT ret;
+
+    if (ignore_message( message )) return 0;
+    ret = MsgCheckProc( FALSE, hwnd, message, wParam, lParam );
+
+    switch (message) {
+    case WM_ENTERIDLE:
+        ShowWindow(hwnd, SW_MINIMIZE);
+        break;
+    case WM_TIMER:
+        EndMenu();
+        break;
+    }
+
+    return ret;
+}
+
 static LRESULT WINAPI cancel_popup_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     if (ignore_message( message )) return 0;
@@ -17392,6 +17444,21 @@ static void test_TrackPopupMenu(void)
     ret = TrackPopupMenu(hpopupmenu, 0, 100,100, 0, hwnd, NULL);
     ok_sequence(WmTrackPopupMenuAbort, "WmTrackPopupMenuAbort", TRUE);
     ok(ret == TRUE, "TrackPopupMenu failed\n");
+
+    SetWindowLongPtrA( hwnd, GWLP_WNDPROC, (LONG_PTR)minimize_popup_proc);
+
+    /* set cursor over the window, otherwise the WM_CANCELMODE message may not always be sent */
+    SetCursorPos( 0, 0 );
+    ShowWindow( hwnd, SW_SHOW );
+
+    flush_events();
+    flush_sequence();
+    SetTimer( hwnd, TIMER_ID, 500, NULL );
+    ret = TrackPopupMenu( hpopupmenu, 0, 100,100, 0, hwnd, NULL );
+    ok_sequence( WmTrackPopupMenuMinimizeWindow, "TrackPopupMenuMinimizeWindow", TRUE );
+    ok( ret == 1, "TrackPopupMenu failed with error %i\n", GetLastError() );
+    KillTimer( hwnd, TIMER_ID );
+    ShowWindow( hwnd, SW_RESTORE );
 
     SetWindowLongPtrA( hwnd, GWLP_WNDPROC, (LONG_PTR)cancel_popup_proc);
 
@@ -17815,6 +17882,37 @@ static void test_invalid_window(void)
     ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "wrong error %u\n", GetLastError());
 }
 
+static void test_button_style(void)
+{
+    DWORD type, expected_type;
+    HWND button;
+    LRESULT ret;
+    DWORD i, j;
+
+    for (i = BS_PUSHBUTTON; i <= BS_DEFCOMMANDLINK; ++i)
+    {
+        button = CreateWindowA(WC_BUTTONA, "test", i, 0, 0, 50, 50, NULL, 0, 0, NULL);
+        ok(button != NULL, "Expected button not null.\n");
+
+        type = GetWindowLongW(button, GWL_STYLE) & BS_TYPEMASK;
+        expected_type = (i == BS_USERBUTTON ? BS_PUSHBUTTON : i);
+        ok(type == expected_type, "Expected type %#x, got %#x.\n", expected_type, type);
+
+        for (j = BS_PUSHBUTTON; j <= BS_DEFCOMMANDLINK; ++j)
+        {
+            ret = SendMessageA(button, BM_SETSTYLE, j, FALSE);
+            ok(ret == 0, "Expected %#x, got %#lx.\n", 0, ret);
+
+            type = GetWindowLongW(button, GWL_STYLE) & BS_TYPEMASK;
+            expected_type = j;
+
+            ok(type == expected_type, "Original type %#x, expected new type %#x, got %#x.\n", i,
+                    expected_type, type);
+        }
+        DestroyWindow(button);
+    }
+}
+
 START_TEST(msg)
 {
     char **test_argv;
@@ -17898,6 +17996,7 @@ START_TEST(msg)
     test_mdi_messages();
     test_button_messages();
     test_button_bm_get_set_image();
+    test_button_style();
     test_autoradio_BM_CLICK();
     test_autoradio_kbd_move();
     test_static_messages();

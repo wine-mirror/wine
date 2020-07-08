@@ -2630,13 +2630,11 @@ if (0) { /* crashes on native */
     count = 0;
     hr = IDWriteTextLayout1_GetClusterMetrics(layout1, clusters, 4, &count);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-todo_wine
-    ok(count == 3, "got %u\n", count);
-if (count == 3) {
+    ok(count == 3, "Unexpected cluster count %u.\n", count);
     ok(clusters[0].length == 1, "got %u\n", clusters[0].length);
     ok(clusters[1].length == 2, "got %u\n", clusters[1].length);
     ok(clusters[2].length == 1, "got %u\n", clusters[2].length);
-}
+
     /* pair kerning flag participates in itemization - combining characters
        breaks */
     range.startPosition = 0;
@@ -5235,9 +5233,8 @@ static void test_SetUnderline(void)
 
     count = 0;
     hr = IDWriteTextLayout_GetClusterMetrics(layout, clusters, ARRAY_SIZE(clusters), &count);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-todo_wine
-    ok(count == 3, "got %u\n", count);
+    ok(hr == S_OK, "Failed to get cluster metrics, hr %#x.\n", hr);
+    ok(count == 3, "Unexpected cluster count %u.\n", count);
 
     range.startPosition = 0;
     range.length = 2;
@@ -5246,9 +5243,8 @@ todo_wine
 
     count = 0;
     hr = IDWriteTextLayout_GetClusterMetrics(layout, clusters, ARRAY_SIZE(clusters), &count);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-todo_wine
-    ok(count == 3, "got %u\n", count);
+    ok(hr == S_OK, "Failed to get cluster metrics, hr %#x.\n", hr);
+    ok(count == 3, "Unexpected cluster count %u.\n", count);
 
     flush_sequence(sequences, RENDERER_ID);
     hr = IDWriteTextLayout_Draw(layout, NULL, &testrenderer, 0.0, 0.0);

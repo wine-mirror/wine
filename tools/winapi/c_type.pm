@@ -239,8 +239,14 @@ sub _refresh($)
             }
             else
             {
-	      print STDERR "$type_name -> type_size=undef, count=$count\n" if (!defined $type_size);
-                $type_size *= int($count);
+                if (!defined $type_size)
+                {
+                    print STDERR "$type_name -> type_size=undef, count=$count\n";
+                }
+                else
+                {
+                    $type_size *= int($count);
+                }
             }
         }
         if ($bitfield_size != 0)

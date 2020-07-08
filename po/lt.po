@@ -1,18 +1,18 @@
 # Lithuanian translations for Wine
-# Aurimas Fišeras <aurimas@members.fsf.org>, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019.
+# Aurimas Fišeras <aurimas@members.fsf.org>, 2011-2020.
 msgid ""
 msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2020-02-26 10:03+0200\n"
+"PO-Revision-Date: 2020-06-05 00:17+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.3\n"
+"X-Generator: Poedit 2.3.1\n"
 "X-Project-Style: default\n"
 
 #: appwiz.rc:58
@@ -49,8 +49,8 @@ msgstr "&Priežiūros informacija"
 msgid "&Modify..."
 msgstr "&Modifikuoti..."
 
-#: appwiz.rc:69 appwiz.rc:45 cryptui.rc:351 msacm32.rc:40 winecfg.rc:200
-#: winecfg.rc:237 wordpad.rc:256
+#: appwiz.rc:69 appwiz.rc:45 cryptui.rc:351 msacm32.rc:40 winecfg.rc:199
+#: winecfg.rc:236 wordpad.rc:256
 msgid "&Remove"
 msgstr "Pa&šalinti"
 
@@ -69,7 +69,7 @@ msgstr "Priežiūros informacija"
 #: notepad.rc:117 oleview.rc:161 oleview.rc:174 progman.rc:106 progman.rc:124
 #: progman.rc:142 progman.rc:158 progman.rc:180 progman.rc:199 progman.rc:216
 #: regedit.rc:296 regedit.rc:307 regedit.rc:320 regedit.rc:336 regedit.rc:349
-#: regedit.rc:362 taskmgr.rc:442 taskmgr.rc:517 winecfg.rc:214 winecfg.rc:224
+#: regedit.rc:362 taskmgr.rc:442 taskmgr.rc:517 winecfg.rc:213 winecfg.rc:223
 #: wineconsole.rc:135 winefile.rc:127 winefile.rc:150 winefile.rc:180
 #: winemine.rc:73 winemine.rc:84 winemine.rc:98 wordpad.rc:215 wordpad.rc:226
 #: wordpad.rc:244 wordpad.rc:257
@@ -152,8 +152,8 @@ msgstr "&Įdiegti"
 #: notepad.rc:118 oleview.rc:162 oleview.rc:175 progman.rc:107 progman.rc:125
 #: progman.rc:143 progman.rc:159 progman.rc:181 progman.rc:200 progman.rc:217
 #: regedit.rc:297 regedit.rc:308 regedit.rc:321 regedit.rc:337 regedit.rc:350
-#: regedit.rc:363 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34 winecfg.rc:215
-#: winecfg.rc:225 wineconsole.rc:136 winefile.rc:128 winefile.rc:151
+#: regedit.rc:363 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34 winecfg.rc:214
+#: winecfg.rc:224 wineconsole.rc:136 winefile.rc:128 winefile.rc:151
 #: winefile.rc:181 winemine.rc:99 wordpad.rc:216 wordpad.rc:227 wordpad.rc:245
 #: wordpad.rc:258
 msgid "Cancel"
@@ -191,7 +191,7 @@ msgstr ""
 "Leidžia įdiegti naują programinę įrangą, ar pašalinti kompiuteryje jau "
 "įdiegtą."
 
-#: appwiz.rc:33 taskmgr.rc:262 winecfg.rc:33
+#: appwiz.rc:33 taskmgr.rc:262 winecfg.rc:32
 msgid "Applications"
 msgstr "Programos"
 
@@ -349,7 +349,7 @@ msgstr "Vediklis"
 msgid "< &Back"
 msgstr "< &Atgal"
 
-#: comctl32.rc:85 version.rc:60
+#: comctl32.rc:85 version.rc:61
 msgid "&Next >"
 msgstr "&Toliau >"
 
@@ -585,7 +585,7 @@ msgstr "&Šriftas:"
 msgid "Font St&yle:"
 msgstr "Šrifto &stilius:"
 
-#: comdlg32.rc:260 comdlg32.rc:439 winecfg.rc:294
+#: comdlg32.rc:260 comdlg32.rc:439 winecfg.rc:292
 msgid "&Size:"
 msgstr "&Dydis:"
 
@@ -601,7 +601,7 @@ msgstr "Per&braukimas"
 msgid "&Underline"
 msgstr "&Pabraukimas"
 
-#: comdlg32.rc:270 winecfg.rc:292
+#: comdlg32.rc:270 winecfg.rc:290
 msgid "&Color:"
 msgstr "&Spalva:"
 
@@ -684,7 +684,7 @@ msgstr "Tenkina tik &visas žodis"
 msgid "Match &Case"
 msgstr "Skirti raidžių &dydį"
 
-#: comdlg32.rc:325 joy.rc:71
+#: comdlg32.rc:325 joy.rc:72
 msgid "Direction"
 msgstr "Kryptis"
 
@@ -773,7 +773,7 @@ msgstr "&Kopijų skaičius:"
 msgid "C&ollate"
 msgstr "Su&dėst."
 
-#: comdlg32.rc:414 winecfg.rc:300
+#: comdlg32.rc:414 winecfg.rc:298
 msgid "Si&ze:"
 msgstr "D&ydis:"
 
@@ -1223,7 +1223,7 @@ msgstr "mm"
 msgid "&User name:"
 msgstr "&Naudotojo vardas:"
 
-#: credui.rc:48 cryptui.rc:402 version.rc:80
+#: credui.rc:48 cryptui.rc:402 version.rc:81
 msgid "&Password:"
 msgstr "&Slaptažodis:"
 
@@ -2254,7 +2254,7 @@ msgstr ""
 msgid "&File name:"
 msgstr "&Failas:"
 
-#: cryptui.rc:301 cryptui.rc:323 cryptui.rc:437 winecfg.rc:313
+#: cryptui.rc:301 cryptui.rc:323 cryptui.rc:437 winecfg.rc:311
 msgid "B&rowse..."
 msgstr "Pari&nkti..."
 
@@ -3016,7 +3016,7 @@ msgstr "Atkurti"
 msgid "Player"
 msgstr "Žaidėjas"
 
-#: dinput.rc:43 winecfg.rc:89
+#: dinput.rc:43 winecfg.rc:88
 msgid "Device"
 msgstr "Įtaisas"
 
@@ -3116,7 +3116,7 @@ msgstr "Simboliai"
 msgid "OEM/DOS"
 msgstr "OEM/DOS"
 
-#: gdi32.rc:45 version.rc:99 wldap32.rc:112
+#: gdi32.rc:45 version.rc:100 wldap32.rc:112
 msgid "Other"
 msgstr "Kita"
 
@@ -3181,7 +3181,7 @@ msgstr "Į p&radžią"
 msgid "&Stop"
 msgstr "&Stabdyti"
 
-#: hhctrl.rc:64 hhctrl.rc:81 version.rc:72 shdoclc.rc:59
+#: hhctrl.rc:64 hhctrl.rc:81 version.rc:73 shdoclc.rc:59
 msgid "&Refresh"
 msgstr "Atsiųsti iš &naujo"
 
@@ -3559,27 +3559,27 @@ msgstr "Padidintos"
 msgid "High"
 msgstr "Aukštos"
 
-#: joy.rc:36
+#: joy.rc:37
 msgid "Joysticks"
 msgstr "Vairasvirtės"
 
-#: joy.rc:39 winecfg.rc:213
+#: joy.rc:40 winecfg.rc:212
 msgid "&Disable"
 msgstr "&Išjungti"
 
-#: joy.rc:40
+#: joy.rc:41
 msgid "&Enable"
 msgstr "Įj&ungti"
 
-#: joy.rc:41
+#: joy.rc:42
 msgid "Connected"
 msgstr "Prijungta"
 
-#: joy.rc:43
+#: joy.rc:44
 msgid "Disabled"
 msgstr "Išjungta"
 
-#: joy.rc:45
+#: joy.rc:46
 msgid ""
 "After disabling or enabling a device, the connected joysticks won't be "
 "updated here until you restart this applet."
@@ -3587,23 +3587,23 @@ msgstr ""
 "Po įtaiso išjungimo ar įjungimo, prijungtos vairasvirtės nebus automatiškai "
 "čia atnaujintos, kol nepaleisite šios programėlės iš naujo."
 
-#: joy.rc:50
+#: joy.rc:51
 msgid "Test Joystick"
 msgstr "Testuoti vairasvirtę"
 
-#: joy.rc:54
+#: joy.rc:55
 msgid "Buttons"
 msgstr "Mygtukai"
 
-#: joy.rc:63
+#: joy.rc:64
 msgid "Test Force Feedback"
 msgstr "Testuoti „Force Feedback“"
 
-#: joy.rc:67
+#: joy.rc:68
 msgid "Available Effects"
 msgstr "Prieinami efektai"
 
-#: joy.rc:69
+#: joy.rc:70
 msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."
@@ -3614,6 +3614,10 @@ msgstr ""
 #: joy.rc:31
 msgid "Game Controllers"
 msgstr "Žaidimų valdikliai"
+
+#: joy.rc:32
+msgid "Test and configure game controllers."
+msgstr "Tikrinti ir konfigūruoti žaidimų valdiklius."
 
 #: jscript.rc:28
 msgid "Error converting object to primitive type"
@@ -3628,174 +3632,186 @@ msgid "Subscript out of range"
 msgstr "Indeksas nepatenka į rėžius"
 
 #: jscript.rc:31
+msgid "Out of stack space"
+msgstr "Trūksta vietos dėkle"
+
+#: jscript.rc:32
 msgid "Object required"
 msgstr "Reikalingas objektas"
 
-#: jscript.rc:32
+#: jscript.rc:33
 msgid "Automation server can't create object"
 msgstr "Automatizavimo serveriui nepavyko sukurti objekto"
 
-#: jscript.rc:33
+#: jscript.rc:34
 msgid "Object doesn't support this property or method"
 msgstr "Objektas nepalaiko šios savybės ar metodo"
 
-#: jscript.rc:34
+#: jscript.rc:35
 msgid "Object doesn't support this action"
 msgstr "Objektas nepalaiko šio veiksmo"
 
-#: jscript.rc:35
+#: jscript.rc:36
 msgid "Argument not optional"
 msgstr "Argumentas yra privalomas"
 
-#: jscript.rc:36
+#: jscript.rc:37
 msgid "Syntax error"
 msgstr "Sintaksės klaida"
 
-#: jscript.rc:37
+#: jscript.rc:38
 msgid "Expected ';'"
 msgstr "Tikėtasi „;“"
 
-#: jscript.rc:38
+#: jscript.rc:39
 msgid "Expected '('"
 msgstr "Tikėtasi „(“"
 
-#: jscript.rc:39
+#: jscript.rc:40
 msgid "Expected ')'"
 msgstr "Tikėtasi „)“"
 
-#: jscript.rc:40
+#: jscript.rc:41
 msgid "Expected identifier"
 msgstr "Tikėtasi identifikatoriaus"
 
-#: jscript.rc:41
+#: jscript.rc:42
 msgid "Expected '='"
 msgstr "Tikėtasi „=“"
 
-#: jscript.rc:42
+#: jscript.rc:43
 msgid "Invalid character"
 msgstr "Neteisingas simbolis"
 
-#: jscript.rc:43
+#: jscript.rc:44
 msgid "Unterminated string constant"
 msgstr "Nebaigta eilutės konstanta"
 
-#: jscript.rc:44
+#: jscript.rc:45
 msgid "'return' statement outside of function"
 msgstr "Sakinys „return“ ne funkcijoje"
 
-#: jscript.rc:45
+#: jscript.rc:46
 msgid "Can't have 'break' outside of loop"
 msgstr "Negalima turėti „break“ ne cikle"
 
-#: jscript.rc:46
+#: jscript.rc:47
 msgid "Can't have 'continue' outside of loop"
 msgstr "Negalima turėti „continue“ ne cikle"
 
-#: jscript.rc:47
+#: jscript.rc:48
 msgid "Label redefined"
 msgstr "Žymė apibrėžta iš naujo"
 
-#: jscript.rc:48
+#: jscript.rc:49
 msgid "Label not found"
 msgstr "Žymė nerasta"
 
-#: jscript.rc:49
+#: jscript.rc:50
 msgid "Expected '@end'"
 msgstr "Tikėtasi „@end“"
 
-#: jscript.rc:50
+#: jscript.rc:51
 msgid "Conditional compilation is turned off"
 msgstr "Sąlyginis kompiliavimas išjungtas"
 
-#: jscript.rc:51
+#: jscript.rc:52
 msgid "Expected '@'"
 msgstr "Tikėtasi „@“"
 
-#: jscript.rc:75
+#: jscript.rc:78
 msgid "Microsoft JScript compilation error"
 msgstr "Microsoft JScript kompiliavimo klaida"
 
-#: jscript.rc:76
+#: jscript.rc:79
 msgid "Microsoft JScript runtime error"
 msgstr "Microsoft JScript vykdymo klaida"
 
-#: jscript.rc:77
+#: jscript.rc:80
 msgid "Unknown runtime error"
 msgstr "Nežinoma vykdymo klaida"
 
-#: jscript.rc:54
+#: jscript.rc:55
 msgid "Number expected"
 msgstr "Tikėtasi skaičiaus"
 
-#: jscript.rc:52
+#: jscript.rc:53
 msgid "Function expected"
 msgstr "Tikėtasi funkcijos"
 
-#: jscript.rc:53
+#: jscript.rc:54
 msgid "'[object]' is not a date object"
 msgstr "„[objektas]“ nėra datos objektas"
 
-#: jscript.rc:55
+#: jscript.rc:56
 msgid "Object expected"
 msgstr "Tikėtasi objekto"
 
-#: jscript.rc:56
+#: jscript.rc:57
 msgid "Illegal assignment"
 msgstr "Neleistinas priskyrimas"
 
-#: jscript.rc:57
+#: jscript.rc:58
 msgid "'|' is undefined"
 msgstr "„|“ neapibrėžtas"
 
-#: jscript.rc:58
+#: jscript.rc:59
 msgid "Boolean object expected"
 msgstr "Tikėtasi loginio objekto"
 
-#: jscript.rc:59
+#: jscript.rc:60
 msgid "Cannot delete '|'"
 msgstr "Negalima pašalinti „|“"
 
-#: jscript.rc:60
+#: jscript.rc:61
 msgid "VBArray object expected"
 msgstr "Tikėtasi VBArray objekto"
 
-#: jscript.rc:61
+#: jscript.rc:62
 msgid "JScript object expected"
 msgstr "Tikėtasi JScript objekto"
 
-#: jscript.rc:62
+#: jscript.rc:63
+msgid "Enumerator object expected"
+msgstr "Tikėtasi enumeratoriaus objekto"
+
+#: jscript.rc:64
+msgid "Regular Expression object expected"
+msgstr "Tikėtasi reguliariojo reiškinio objekto"
+
+#: jscript.rc:65
 msgid "Syntax error in regular expression"
 msgstr "Sintaksės klaida reguliariajame reiškinyje"
 
-#: jscript.rc:63
+#: jscript.rc:66
 msgid "Exception thrown and not caught"
 msgstr "Išimtinė situacija sugeneruota ir neapdorota"
 
-#: jscript.rc:65
+#: jscript.rc:68
 msgid "URI to be encoded contains invalid characters"
 msgstr "Koduotiname URI yra netinkamų simbolių"
 
-#: jscript.rc:64
+#: jscript.rc:67
 msgid "URI to be decoded is incorrect"
 msgstr "Dekoduojamas URI neteisingas"
 
-#: jscript.rc:66
+#: jscript.rc:69
 msgid "Number of fraction digits is out of range"
 msgstr "Trupmeninės dalies skaitmenų skaičius nepatenka į rėžius"
 
-#: jscript.rc:67
+#: jscript.rc:70
 msgid "Precision is out of range"
 msgstr "Tikslumas nepatenka į rėžius"
 
-#: jscript.rc:68
+#: jscript.rc:71
 msgid "Array length must be a finite positive integer"
 msgstr "Masyvo dydis turi būti teigiamas sveikasis skaičius"
 
-#: jscript.rc:69
+#: jscript.rc:72
 msgid "Array object expected"
 msgstr "Tikėtasi masyvo objekto"
 
-#: jscript.rc:70
+#: jscript.rc:73
 msgid ""
 "'writable' attribute on the property descriptor cannot be set to 'true' on "
 "this object"
@@ -3803,15 +3819,15 @@ msgstr ""
 "savybės aprašo atributas „writable“ negali būti nustatytas į „tiesa“ šiam "
 "objektui"
 
-#: jscript.rc:71
+#: jscript.rc:74
 msgid "Cannot redefine non-configurable property '|'"
 msgstr "Negalima iš naujo apibrėžti nekonfigūruojamos savybės „|“"
 
-#: jscript.rc:72
+#: jscript.rc:75
 msgid "Cannot modify non-writable property '|'"
 msgstr "Negalima modifikuoti nerašomos savybės „|“"
 
-#: jscript.rc:73
+#: jscript.rc:76
 msgid "Property cannot have both accessors and a value"
 msgstr "Savybė negali turėti ir kreipiklių, ir reikšmės"
 
@@ -3820,6 +3836,7 @@ msgid "Wine kernel DLL"
 msgstr "Wine branduolio DLL"
 
 #: ../../include/wine/wine_common_ver.rc:134 winemac.rc:32 wineboot.rc:42
+#: winecfg.rc:137
 msgid "Wine"
 msgstr "Wine"
 
@@ -7281,7 +7298,7 @@ msgstr "Saitas"
 msgid "Hyperlink Information"
 msgstr "Saito informacija"
 
-#: mshtml.rc:43 winecfg.rc:245
+#: mshtml.rc:43 winecfg.rc:243
 msgid "&Type:"
 msgstr "&Tipas:"
 
@@ -8321,99 +8338,99 @@ msgstr "Įjungta"
 msgid "Off"
 msgstr "Išjungta"
 
-#: version.rc:55
+#: version.rc:56
 msgid "Provider"
 msgstr "Tiekėjas"
 
-#: version.rc:58
+#: version.rc:59
 msgid "Select the data you want to connect to:"
 msgstr "Išrinkite duomenis, prie kurių norite jungtis:"
 
-#: version.rc:65
+#: version.rc:66
 msgid "Connection"
 msgstr "Ryšys"
 
-#: version.rc:68
+#: version.rc:69
 msgid "Specify the following to connect to ODBC data:"
 msgstr "Prisijungimui prie ODBC duomenų nurodykite:"
 
-#: version.rc:69
+#: version.rc:70
 msgid "1. Specify the source of data:"
 msgstr "1. Nurodykite duomenų šaltinį:"
 
-#: version.rc:70
+#: version.rc:71
 msgid "Use &data source name"
 msgstr "Naudoti &duomenų šaltinio vardą"
 
-#: version.rc:73
+#: version.rc:74
 msgid "Use c&onnection string"
 msgstr "Naudoti r&yšio eilutę"
 
-#: version.rc:74
+#: version.rc:75
 msgid "&Connection string:"
 msgstr "&Ryšio eilutė:"
 
-#: version.rc:76
+#: version.rc:77
 msgid "B&uild..."
 msgstr "&Sukurti..."
 
-#: version.rc:77
+#: version.rc:78
 msgid "2. Enter information to log on to the server"
 msgstr "2. Įveskite informaciją prisijungimui prie serverio"
 
-#: version.rc:78
+#: version.rc:79
 msgid "User &name:"
 msgstr "&Naudotojo vardas:"
 
-#: version.rc:82
+#: version.rc:83
 msgid "&Blank password"
 msgstr "T&uščias slaptažodis"
 
-#: version.rc:83
+#: version.rc:84
 msgid "Allow &saving password"
 msgstr "Leisti &išsaugoti slaptažodį"
 
-#: version.rc:84
+#: version.rc:85
 msgid "3. Enter the &initial catalog to use:"
 msgstr "3. Įveskite &pradinį katalogą naudojimui:"
 
-#: version.rc:86
+#: version.rc:87
 msgid "&Test Connection"
 msgstr "&Tikrinti ryšį"
 
-#: version.rc:91 winemine.rc:65
+#: version.rc:92 winemine.rc:65
 msgid "Advanced"
 msgstr "Pažengęs"
 
-#: version.rc:94
+#: version.rc:95
 msgid "Network settings"
 msgstr "Tinklo nuostatos"
 
-#: version.rc:95
+#: version.rc:96
 msgid "&Impersonation level:"
 msgstr "&Apsimetimo lygis:"
 
-#: version.rc:97
+#: version.rc:98
 msgid "P&rotection level:"
 msgstr "Ap&saugos lygis:"
 
-#: version.rc:100
+#: version.rc:101
 msgid "Connect:"
 msgstr "Prisijungti:"
 
-#: version.rc:102
+#: version.rc:103
 msgid "seconds."
 msgstr "sekundės."
 
-#: version.rc:103
+#: version.rc:104
 msgid "A&ccess:"
 msgstr "&Prieiga:"
 
-#: version.rc:109
+#: version.rc:110
 msgid "All"
 msgstr "Visos"
 
-#: version.rc:113
+#: version.rc:114
 msgid ""
 "These are the initialization properties for this type of data. To edit a "
 "value, select a property, then choose Edit Value below."
@@ -8421,7 +8438,7 @@ msgstr ""
 "Tai yra šio duomenų tipo inicijavimo savybės. Reikšmei redaguoti pažymėkite "
 "savybę ir spauskite „Redaguoti reikšmę“."
 
-#: version.rc:114
+#: version.rc:115
 msgid "&Edit Value..."
 msgstr "&Redaguoti reikšmę..."
 
@@ -8432,6 +8449,12 @@ msgstr "Duomenų saito klaida"
 #: version.rc:50
 msgid "Please select a provider."
 msgstr "Išrinkite tiekėją."
+
+#: version.rc:51
+msgid ""
+"Provider is no longer available. Ensure that the provider is installed "
+"properly."
+msgstr "Tiekėjas nebeprieinamas. Įsitikinkite, kad tiekėjas įdiegtas tinkamai."
 
 #: version.rc:36
 msgid "Data Link Properties"
@@ -8663,7 +8686,7 @@ msgctxt "unit: bits"
 msgid "b"
 msgstr "b"
 
-#: sane.rc:34 wineps.rc:49 winecfg.rc:183
+#: sane.rc:34 wineps.rc:49 winecfg.rc:182
 msgctxt "unit: dots/inch"
 msgid "dpi"
 msgstr "tašk./col."
@@ -9159,7 +9182,7 @@ msgstr ""
 msgid "&Open:"
 msgstr "&Atverti:"
 
-#: shell32.rc:343 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:243
+#: shell32.rc:343 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:241
 #: winefile.rc:129
 msgid "&Browse..."
 msgstr "&Parinkti..."
@@ -9248,7 +9271,7 @@ msgstr "Originali vieta"
 msgid "Date deleted"
 msgstr "Pašalinimo data"
 
-#: shell32.rc:156 winecfg.rc:101 winefile.rc:99
+#: shell32.rc:156 winecfg.rc:100 winefile.rc:99
 msgctxt "display name"
 msgid "Desktop"
 msgstr "Darbalaukis"
@@ -9591,7 +9614,7 @@ msgstr "„Wine“ licencija"
 msgid "Trash"
 msgstr "Šiukšlinė"
 
-#: shlwapi.rc:38 user32.rc:71 regedit.rc:204 winecfg.rc:87 winefile.rc:97
+#: shlwapi.rc:38 user32.rc:71 regedit.rc:204 winecfg.rc:86 winefile.rc:97
 msgid "Error"
 msgstr "Klaida"
 
@@ -9622,123 +9645,123 @@ msgstr " sek."
 msgid "Select Source"
 msgstr "Parinkite šaltinį"
 
-#: tzres.rc:84
+#: tzres.rc:88
 msgid "China Standard Time"
 msgstr "Kinijos juostinis laikas"
 
-#: tzres.rc:85
+#: tzres.rc:89
 msgid "China Daylight Time"
 msgstr "Kinijos vasaros laikas"
 
-#: tzres.rc:164
+#: tzres.rc:170
 msgid "North Asia Standard Time"
 msgstr "Šiaurės Azijos juostinis laikas"
 
-#: tzres.rc:165
+#: tzres.rc:171
 msgid "North Asia Daylight Time"
 msgstr "Šiaurės Azijos vasaros laikas"
 
-#: tzres.rc:106
+#: tzres.rc:110
 msgid "Georgian Standard Time"
 msgstr "Gruzijos juostinis laikas"
 
-#: tzres.rc:107
+#: tzres.rc:111
 msgid "Georgian Daylight Time"
 msgstr "Gruzijos vasaros laikas"
 
-#: tzres.rc:156
+#: tzres.rc:162
 msgid "Nepal Standard Time"
 msgstr "Nepalo juostinis laikas"
 
-#: tzres.rc:157
+#: tzres.rc:163
 msgid "Nepal Daylight Time"
 msgstr "Nepalo vasaros laikas"
 
-#: tzres.rc:62
+#: tzres.rc:64
 msgid "Cape Verde Standard Time"
 msgstr "Žaliojo Kyšulio juostinis laikas"
 
-#: tzres.rc:63
+#: tzres.rc:65
 msgid "Cape Verde Daylight Time"
 msgstr "Žaliojo Kyšulio vasaros laikas"
 
-#: tzres.rc:116
+#: tzres.rc:120
 msgid "Haiti Standard Time"
 msgstr "Haičio juostinis laikas"
 
-#: tzres.rc:117
+#: tzres.rc:121
 msgid "Haiti Daylight Time"
 msgstr "Haičio vasaros laikas"
 
-#: tzres.rc:76
+#: tzres.rc:78
 msgid "Central European Standard Time"
 msgstr "Vidurio Europos juostinis laikas"
 
-#: tzres.rc:77
+#: tzres.rc:79
 msgid "Central European Daylight Time"
 msgstr "Vidurio Europos vasaros laikas"
 
-#: tzres.rc:144
+#: tzres.rc:150
 msgid "Morocco Standard Time"
 msgstr "Maroko juostinis laikas"
 
-#: tzres.rc:145
+#: tzres.rc:151
 msgid "Morocco Daylight Time"
 msgstr "Maroko vasaros laikas"
 
-#: tzres.rc:74
+#: tzres.rc:76
 msgid "Central Europe Standard Time"
 msgstr "Vidurio Europos juostinis laikas"
 
-#: tzres.rc:75
+#: tzres.rc:77
 msgid "Central Europe Daylight Time"
 msgstr "Vidurio Europos vasaros laikas"
 
-#: tzres.rc:122
+#: tzres.rc:126
 msgid "Iran Standard Time"
 msgstr "Irano juostinis laikas"
 
-#: tzres.rc:123
+#: tzres.rc:127
 msgid "Iran Daylight Time"
 msgstr "Irano vasaros laikas"
 
-#: tzres.rc:154
+#: tzres.rc:160
 msgid "Namibia Standard Time"
 msgstr "Namibijos juostinis laikas"
 
-#: tzres.rc:155
+#: tzres.rc:161
 msgid "Namibia Daylight Time"
 msgstr "Namibijos vasaros laikas"
 
-#: tzres.rc:204
+#: tzres.rc:210
 msgid "Tonga Standard Time"
 msgstr "Tongos juostinis laikas"
 
-#: tzres.rc:205
+#: tzres.rc:211
 msgid "Tonga Daylight Time"
 msgstr "Tongos vasaros laikas"
 
-#: tzres.rc:148
+#: tzres.rc:154
 msgid "Mountain Standard Time (Mexico)"
 msgstr "Kalnų juostinis laikas (Meksika)"
 
-#: tzres.rc:149
+#: tzres.rc:155
 msgid "Mountain Daylight Time (Mexico)"
 msgstr "Kalnų vasaros laikas (Meksika)"
 
-#: tzres.rc:108
+#: tzres.rc:112
 msgid "GMT Standard Time"
 msgstr "Grinvičo laikas"
 
-#: tzres.rc:109
+#: tzres.rc:113
 msgid "GMT Daylight Time"
 msgstr "Grinvičo vasaros laikas"
 
-#: tzres.rc:70
+#: tzres.rc:72
 msgid "Central Asia Standard Time"
 msgstr "Vidurio Azijos juostinis laikas"
 
-#: tzres.rc:71
+#: tzres.rc:73
 msgid "Central Asia Daylight Time"
 msgstr "Vidurio Azijos vasaros laikas"
 
@@ -9750,35 +9773,35 @@ msgstr "Arabų juostinis laikas"
 msgid "Arabic Daylight Time"
 msgstr "Arabų vasaros laikas"
 
-#: tzres.rc:136
+#: tzres.rc:140
 msgid "Magadan Standard Time"
 msgstr "Magadano juostinis laikas"
 
-#: tzres.rc:137
+#: tzres.rc:141
 msgid "Magadan Daylight Time"
 msgstr "Magadano vasaros laikas"
 
-#: tzres.rc:160
+#: tzres.rc:166
 msgid "Newfoundland Standard Time"
 msgstr "Niufaundlando juostinis laikas"
 
-#: tzres.rc:161
+#: tzres.rc:167
 msgid "Newfoundland Daylight Time"
 msgstr "Niufaundlando vasaros laikas"
 
-#: tzres.rc:228
+#: tzres.rc:234
 msgid "West Pacific Standard Time"
 msgstr "Vakarų Ramiojo vandenyno juostinis laikas"
 
-#: tzres.rc:229
+#: tzres.rc:235
 msgid "West Pacific Daylight Time"
 msgstr "Vakarų Ramiojo vandenyno vasaros laikas"
 
-#: tzres.rc:168
+#: tzres.rc:174
 msgid "Pacific Standard Time"
 msgstr "Ramiojo vandenyno juostinis laikas"
 
-#: tzres.rc:169
+#: tzres.rc:175
 msgid "Pacific Daylight Time"
 msgstr "Ramiojo vandenyno vasaros laikas"
 
@@ -9790,67 +9813,67 @@ msgstr "Azerbaidžano juostinis laikas"
 msgid "Azerbaijan Daylight Time"
 msgstr "Azerbaidžano vasaros laikas"
 
-#: tzres.rc:186
+#: tzres.rc:192
 msgid "Samoa Standard Time"
 msgstr "Samoa juostinis laikas"
 
-#: tzres.rc:187
+#: tzres.rc:193
 msgid "Samoa Daylight Time"
 msgstr "Samoa vasaros laikas"
 
-#: tzres.rc:128
+#: tzres.rc:132
 msgid "Kaliningrad Standard Time"
 msgstr "Karaliaučiaus juostinis laikas"
 
-#: tzres.rc:129
+#: tzres.rc:133
 msgid "Kaliningrad Daylight Time"
 msgstr "Karaliaučiaus vasaros laikas"
 
-#: tzres.rc:170
+#: tzres.rc:176
 msgid "Pacific Standard Time (Mexico)"
 msgstr "Ramiojo vandenyno juostinis laikas (Meksika)"
 
-#: tzres.rc:171
+#: tzres.rc:177
 msgid "Pacific Daylight Time (Mexico)"
 msgstr "Ramiojo vandenyno vasaros laikas (Meksika)"
 
-#: tzres.rc:140
+#: tzres.rc:146
 msgid "Middle East Standard Time"
 msgstr "Vidurinių Rytų juostinis laikas"
 
-#: tzres.rc:141
+#: tzres.rc:147
 msgid "Middle East Daylight Time"
 msgstr "Vidurinių Rytų vasaros laikas"
 
-#: tzres.rc:202
+#: tzres.rc:208
 msgid "Tokyo Standard Time"
 msgstr "Tokijo juostinis laikas"
 
-#: tzres.rc:203
+#: tzres.rc:209
 msgid "Tokyo Daylight Time"
 msgstr "Tokijo vasaros laikas"
 
-#: tzres.rc:134
+#: tzres.rc:138
 msgid "Line Islands Standard Time"
 msgstr "Linijinių salų juostinis laikas"
 
-#: tzres.rc:135
+#: tzres.rc:139
 msgid "Line Islands Daylight Time"
 msgstr "Linijinių salų vasaros laikas"
 
-#: tzres.rc:126
+#: tzres.rc:130
 msgid "Jordan Standard Time"
 msgstr "Jordanijos juostinis laikas"
 
-#: tzres.rc:127
+#: tzres.rc:131
 msgid "Jordan Daylight Time"
 msgstr "Jordanijos vasaros laikas"
 
-#: tzres.rc:80
+#: tzres.rc:82
 msgid "Central Standard Time"
 msgstr "Centrinis juostinis laikas"
 
-#: tzres.rc:81
+#: tzres.rc:83
 msgid "Central Daylight Time"
 msgstr "Centrinis vasaros laikas"
 
@@ -9862,11 +9885,11 @@ msgstr "Azorų juostinis laikas"
 msgid "Azores Daylight Time"
 msgstr "Azorų vasaros laikas"
 
-#: tzres.rc:162
+#: tzres.rc:168
 msgid "North Asia East Standard Time"
 msgstr "Šiaurės Azijos rytų juostinis laikas"
 
-#: tzres.rc:163
+#: tzres.rc:169
 msgid "North Asia East Daylight Time"
 msgstr "Šiaurės Azijos rytų vasaros laikas"
 
@@ -9878,95 +9901,103 @@ msgstr "Argentinos juostinis laikas"
 msgid "Argentina Daylight Time"
 msgstr "Argentinos vasaros laikas"
 
-#: tzres.rc:150
+#: tzres.rc:142
+msgid "Marquesas Standard Time"
+msgstr "Markizo juostinis laikas"
+
+#: tzres.rc:143
+msgid "Marquesas Daylight Time"
+msgstr "Markizo vasaros laikas"
+
+#: tzres.rc:156
 msgid "Myanmar Standard Time"
 msgstr "Mianmaro juostinis laikas"
 
-#: tzres.rc:151
+#: tzres.rc:157
 msgid "Myanmar Daylight Time"
 msgstr "Mianmaro vasaros laikas"
 
-#: tzres.rc:214 tzres.rc:215
+#: tzres.rc:220 tzres.rc:221
 msgid "Coordinated Universal Time"
 msgstr "Pasaulinis koordinuotasis laikas"
 
-#: tzres.rc:120
+#: tzres.rc:124
 msgid "India Standard Time"
 msgstr "Indijos juostinis laikas"
 
-#: tzres.rc:121
+#: tzres.rc:125
 msgid "India Daylight Time"
 msgstr "Indijos vasaros laikas"
 
-#: tzres.rc:114
+#: tzres.rc:118
 msgid "GTB Standard Time"
 msgstr "GTB juostinis laikas"
 
-#: tzres.rc:115
+#: tzres.rc:119
 msgid "GTB Daylight Time"
 msgstr "GTB vasaros laikas"
 
-#: tzres.rc:206
+#: tzres.rc:212
 msgid "Turkey Standard Time"
 msgstr "Turkijos juostinis laikas"
 
-#: tzres.rc:207
+#: tzres.rc:213
 msgid "Turkey Daylight Time"
 msgstr "Turkijos vasaros laikas"
 
-#: tzres.rc:102
+#: tzres.rc:106
 msgid "Fiji Standard Time"
 msgstr "Fidžio juostinis laikas"
 
-#: tzres.rc:103
+#: tzres.rc:107
 msgid "Fiji Daylight Time"
 msgstr "Fidžio vasaros laikas"
 
-#: tzres.rc:60
+#: tzres.rc:62
 msgid "Canada Central Standard Time"
 msgstr "Kanados centrinis juostinis laikas"
 
-#: tzres.rc:61
+#: tzres.rc:63
 msgid "Canada Central Daylight Time"
 msgstr "Kanados centrinis vasaros laikas"
 
-#: tzres.rc:198
+#: tzres.rc:204
 msgid "Taipei Standard Time"
 msgstr "Taipėjaus juostinis laikas"
 
-#: tzres.rc:199
+#: tzres.rc:205
 msgid "Taipei Daylight Time"
 msgstr "Taipėjaus vasaros laikas"
 
-#: tzres.rc:224
+#: tzres.rc:230
 msgid "W. Europe Standard Time"
 msgstr "Vakarinės Europos juostinis laikas"
 
-#: tzres.rc:225
+#: tzres.rc:231
 msgid "W. Europe Daylight Time"
 msgstr "Vakarinės Europos vasaros laikas"
 
-#: tzres.rc:142
+#: tzres.rc:148
 msgid "Montevideo Standard Time"
 msgstr "Montevidėjo juostinis laikas"
 
-#: tzres.rc:143
+#: tzres.rc:149
 msgid "Montevideo Daylight Time"
 msgstr "Montevidėjo vasaros laikas"
 
-#: tzres.rc:172
+#: tzres.rc:178
 msgid "Pakistan Standard Time"
 msgstr "Pakistano juostinis laikas"
 
-#: tzres.rc:173
+#: tzres.rc:179
 msgid "Pakistan Daylight Time"
 msgstr "Pakistano vasaros laikas"
 
-#: tzres.rc:64
+#: tzres.rc:66
 msgid "Caucasus Standard Time"
 msgstr "Kaukazo juostinis laikas"
 
-#: tzres.rc:65
+#: tzres.rc:67
 msgid "Caucasus Daylight Time"
 msgstr "Kaukazo vasaros laikas"
 
@@ -9978,27 +10009,27 @@ msgstr "AUS Rytinis juostinis laikas"
 msgid "AUS Eastern Daylight Time"
 msgstr "AUS Rytinis vasaros laikas"
 
-#: tzres.rc:152
+#: tzres.rc:158
 msgid "N. Central Asia Standard Time"
 msgstr "Š. Vidurio Azijos juostinis laikas"
 
-#: tzres.rc:153
+#: tzres.rc:159
 msgid "N. Central Asia Daylight Time"
 msgstr "Š. Vidurio Azijos vasaros laikas"
 
-#: tzres.rc:96
+#: tzres.rc:100
 msgid "Eastern Standard Time"
 msgstr "Rytinis juostinis laikas"
 
-#: tzres.rc:97
+#: tzres.rc:101
 msgid "Eastern Daylight Time"
 msgstr "Rytinis vasaros laikas"
 
-#: tzres.rc:82
+#: tzres.rc:84
 msgid "Central Standard Time (Mexico)"
 msgstr "Centrinis juostinis laikas (Meksika)"
 
-#: tzres.rc:83
+#: tzres.rc:85
 msgid "Central Daylight Time (Mexico)"
 msgstr "Centrinis vasaros laikas (Meksika)"
 
@@ -10010,67 +10041,67 @@ msgstr "Atlanto vandenyno juostinis laikas"
 msgid "Atlantic Daylight Time"
 msgstr "Atlanto vandenyno vasaros laikas"
 
-#: tzres.rc:146
+#: tzres.rc:152
 msgid "Mountain Standard Time"
 msgstr "Kalnų juostinis laikas"
 
-#: tzres.rc:147
+#: tzres.rc:153
 msgid "Mountain Daylight Time"
 msgstr "Kalnų vasaros laikas"
 
-#: tzres.rc:210
+#: tzres.rc:216
 msgid "US Eastern Standard Time"
 msgstr "JAV Rytinis juostinis laikas"
 
-#: tzres.rc:211
+#: tzres.rc:217
 msgid "US Eastern Daylight Time"
 msgstr "JAV Rytinis vasaros laikas"
 
-#: tzres.rc:200
+#: tzres.rc:206
 msgid "Tasmania Standard Time"
 msgstr "Tasmanijos juostinis laikas"
 
-#: tzres.rc:201
+#: tzres.rc:207
 msgid "Tasmania Daylight Time"
 msgstr "Tasmanijos vasaros laikas"
 
-#: tzres.rc:68
+#: tzres.rc:70
 msgid "Central America Standard Time"
 msgstr "Centrinės Amerikos juostinis laikas"
 
-#: tzres.rc:69
+#: tzres.rc:71
 msgid "Central America Daylight Time"
 msgstr "Centrinės Amerikos vasaros laikas"
 
-#: tzres.rc:212
+#: tzres.rc:218
 msgid "US Mountain Standard Time"
 msgstr "JAV Kalnų juostinis laikas"
 
-#: tzres.rc:213
+#: tzres.rc:219
 msgid "US Mountain Daylight Time"
 msgstr "JAV Kalnų vasaros laikas"
 
-#: tzres.rc:192
+#: tzres.rc:198
 msgid "South Africa Standard Time"
 msgstr "Pietų Afrikos juostinis laikas"
 
-#: tzres.rc:193
+#: tzres.rc:199
 msgid "South Africa Daylight Time"
 msgstr "Pietų Afrikos vasaros laikas"
 
-#: tzres.rc:66
+#: tzres.rc:68
 msgid "Cen. Australia Standard Time"
 msgstr "Vid. Australijos juostinis laikas"
 
-#: tzres.rc:67
+#: tzres.rc:69
 msgid "Cen. Australia Daylight Time"
 msgstr "Vid. Australijos vasaros laikas"
 
-#: tzres.rc:194
+#: tzres.rc:200
 msgid "Sri Lanka Standard Time"
 msgstr "Šri Lankos juostinis laikas"
 
-#: tzres.rc:195
+#: tzres.rc:201
 msgid "Sri Lanka Daylight Time"
 msgstr "Šri Lankos vasaros laikas"
 
@@ -10082,19 +10113,19 @@ msgstr "Afganistano juostinis laikas"
 msgid "Afghanistan Daylight Time"
 msgstr "Afganistano vasaros laikas"
 
-#: tzres.rc:230
+#: tzres.rc:236
 msgid "Yakutsk Standard Time"
 msgstr "Jakutsko juostinis laikas"
 
-#: tzres.rc:231
+#: tzres.rc:237
 msgid "Yakutsk Daylight Time"
 msgstr "Jakutsko vasaros laikas"
 
-#: tzres.rc:180
+#: tzres.rc:186
 msgid "SA Eastern Standard Time"
 msgstr "PA Rytinis juostinis laikas"
 
-#: tzres.rc:181
+#: tzres.rc:187
 msgid "SA Eastern Daylight Time"
 msgstr "PA Rytinis vasaros laikas"
 
@@ -10114,35 +10145,35 @@ msgstr "Arabų juostinis laikas"
 msgid "Arabian Daylight Time"
 msgstr "Arabų vasaros laikas"
 
-#: tzres.rc:178
+#: tzres.rc:184
 msgid "Russian Standard Time"
 msgstr "Rusijos juostinis laikas"
 
-#: tzres.rc:179
+#: tzres.rc:185
 msgid "Russian Daylight Time"
 msgstr "Rusijos vasaros laikas"
 
-#: tzres.rc:176
+#: tzres.rc:182
 msgid "Romance Standard Time"
 msgstr "Romanų juostinis laikas"
 
-#: tzres.rc:177
+#: tzres.rc:183
 msgid "Romance Daylight Time"
 msgstr "Romanų vasaros laikas"
 
-#: tzres.rc:100
+#: tzres.rc:104
 msgid "Ekaterinburg Standard Time"
 msgstr "Jekaterinburgo juostinis laikas"
 
-#: tzres.rc:101
+#: tzres.rc:105
 msgid "Ekaterinburg Daylight Time"
 msgstr "Jekaterinburgo vasaros laikas"
 
-#: tzres.rc:196
+#: tzres.rc:202
 msgid "Syria Standard Time"
 msgstr "Sirijos juostinis laikas"
 
-#: tzres.rc:197
+#: tzres.rc:203
 msgid "Syria Daylight Time"
 msgstr "Sirijos vasaros laikas"
 
@@ -10154,27 +10185,27 @@ msgstr "AUS Centrinis juostinis laikas"
 msgid "AUS Central Daylight Time"
 msgstr "AUS Centrinis vasaros laikas"
 
-#: tzres.rc:112
+#: tzres.rc:116
 msgid "Greenwich Standard Time"
 msgstr "Grinvičo juostinis laikas"
 
-#: tzres.rc:113
+#: tzres.rc:117
 msgid "Greenwich Daylight Time"
 msgstr "Grinvičo vasaros laikas"
 
-#: tzres.rc:208
+#: tzres.rc:214
 msgid "Ulaanbaatar Standard Time"
 msgstr "Ulan Batoro juostinis laikas"
 
-#: tzres.rc:209
+#: tzres.rc:215
 msgid "Ulaanbaatar Daylight Time"
 msgstr "Ulan Batoro vasaros laikas"
 
-#: tzres.rc:124
+#: tzres.rc:128
 msgid "Israel Standard Time"
 msgstr "Izraelio juostinis laikas"
 
-#: tzres.rc:125
+#: tzres.rc:129
 msgid "Israel Daylight Time"
 msgstr "Izraelio vasaros laikas"
 
@@ -10186,19 +10217,19 @@ msgstr "Bangladešo juostinis laikas"
 msgid "Bangladesh Daylight Time"
 msgstr "Bangladešo vasaros laikas"
 
-#: tzres.rc:182
+#: tzres.rc:188
 msgid "SA Pacific Standard Time"
 msgstr "PA Ramiojo vandenyno juostinis laikas"
 
-#: tzres.rc:183
+#: tzres.rc:189
 msgid "SA Pacific Daylight Time"
 msgstr "PA Ramiojo vandenyno vasaros laikas"
 
-#: tzres.rc:226
+#: tzres.rc:232
 msgid "West Asia Standard Time"
 msgstr "Vakarų Azijos juostinis laikas"
 
-#: tzres.rc:227
+#: tzres.rc:233
 msgid "West Asia Daylight Time"
 msgstr "Vakarų Azijos vasaros laikas"
 
@@ -10210,27 +10241,27 @@ msgstr "Aliaskos juostinis laikas"
 msgid "Alaskan Daylight Time"
 msgstr "Aliaskos vasaros laikas"
 
-#: tzres.rc:174
+#: tzres.rc:180
 msgid "Paraguay Standard Time"
 msgstr "Paragvajaus juostinis laikas"
 
-#: tzres.rc:175
+#: tzres.rc:181
 msgid "Paraguay Daylight Time"
 msgstr "Paragvajaus vasaros laikas"
 
-#: tzres.rc:86
+#: tzres.rc:90
 msgid "Dateline Standard Time"
 msgstr "Datos keitimosi linijos juostinis laikas"
 
-#: tzres.rc:87
+#: tzres.rc:91
 msgid "Dateline Daylight Time"
 msgstr "Datos keitimosi linijos vasaros laikas"
 
-#: tzres.rc:132
+#: tzres.rc:136
 msgid "Libya Standard Time"
 msgstr "Libijos juostinis laikas"
 
-#: tzres.rc:133
+#: tzres.rc:137
 msgid "Libya Daylight Time"
 msgstr "Libijos vasaros laikas"
 
@@ -10242,35 +10273,43 @@ msgstr "Bahijos juostinis laikas"
 msgid "Bahia Daylight Time"
 msgstr "Bahijos vasaros laikas"
 
-#: tzres.rc:216
+#: tzres.rc:222
 msgid "Venezuela Standard Time"
 msgstr "Venesuelos juostinis laikas"
 
-#: tzres.rc:217
+#: tzres.rc:223
 msgid "Venezuela Daylight Time"
 msgstr "Venesuelos vasaros laikas"
 
-#: tzres.rc:118
+#: tzres.rc:60
+msgid "Bougainville Standard Time"
+msgstr "Bugenvilio juostinis laikas"
+
+#: tzres.rc:61
+msgid "Bougainville Daylight Time"
+msgstr "Bugenvilio vasaros laikas"
+
+#: tzres.rc:122
 msgid "Hawaiian Standard Time"
 msgstr "Havajų juostinis laikas"
 
-#: tzres.rc:119
+#: tzres.rc:123
 msgid "Hawaiian Daylight Time"
 msgstr "Havajų vasaros laikas"
 
-#: tzres.rc:188
+#: tzres.rc:194
 msgid "SE Asia Standard Time"
 msgstr "Pietryčių Azijos juostinis laikas"
 
-#: tzres.rc:189
+#: tzres.rc:195
 msgid "SE Asia Daylight Time"
 msgstr "Pietryčių Azijos vasaros laikas"
 
-#: tzres.rc:158
+#: tzres.rc:164
 msgid "New Zealand Standard Time"
 msgstr "Naujosios Zelandijos juostinis laikas"
 
-#: tzres.rc:159
+#: tzres.rc:165
 msgid "New Zealand Daylight Time"
 msgstr "Naujosios Zelandijos vasaros laikas"
 
@@ -10282,11 +10321,11 @@ msgstr "Aleutų juostinis laikas"
 msgid "Aleutian Daylight Time"
 msgstr "Aleutų vasaros laikas"
 
-#: tzres.rc:72
+#: tzres.rc:74
 msgid "Central Brazilian Standard Time"
 msgstr "Centrinės Brazilijos juostinis laikas"
 
-#: tzres.rc:73
+#: tzres.rc:75
 msgid "Central Brazilian Daylight Time"
 msgstr "Centrinės Brazilijos vasaros laikas"
 
@@ -10298,131 +10337,139 @@ msgstr "Baltarusijos juostinis laikas"
 msgid "Belarus Daylight Time"
 msgstr "Baltarusijos vasaros laikas"
 
-#: tzres.rc:184
+#: tzres.rc:190
 msgid "SA Western Standard Time"
 msgstr "PA Vakarinis juostinis laikas"
 
-#: tzres.rc:185
+#: tzres.rc:191
 msgid "SA Western Daylight Time"
 msgstr "PA Vakarinis vasaros laikas"
 
-#: tzres.rc:110
+#: tzres.rc:114
 msgid "Greenland Standard Time"
 msgstr "Grenlandijos juostinis laikas"
 
-#: tzres.rc:111
+#: tzres.rc:115
 msgid "Greenland Daylight Time"
 msgstr "Grenlandijos vasaros laikas"
 
-#: tzres.rc:94
+#: tzres.rc:98
 msgid "Easter Island Standard Time"
 msgstr "Velykų salos juostinis laikas"
 
-#: tzres.rc:95
+#: tzres.rc:99
 msgid "Easter Island Daylight Time"
 msgstr "Velykų salos vasaros laikas"
 
-#: tzres.rc:98
+#: tzres.rc:102
 msgid "Egypt Standard Time"
 msgstr "Egipto juostinis laikas"
 
-#: tzres.rc:99
+#: tzres.rc:103
 msgid "Egypt Daylight Time"
 msgstr "Egipto vasaros laikas"
 
-#: tzres.rc:138
+#: tzres.rc:144
 msgid "Mauritius Standard Time"
 msgstr "Mauricijaus juostinis laikas"
 
-#: tzres.rc:139
+#: tzres.rc:145
 msgid "Mauritius Daylight Time"
 msgstr "Mauricijaus vasaros laikas"
 
-#: tzres.rc:218
+#: tzres.rc:224
 msgid "Vladivostok Standard Time"
 msgstr "Vladivostoko juostinis laikas"
 
-#: tzres.rc:219
+#: tzres.rc:225
 msgid "Vladivostok Daylight Time"
 msgstr "Vladivostoko vasaros laikas"
 
-#: tzres.rc:190
+#: tzres.rc:196
 msgid "Singapore Standard Time"
 msgstr "Singapūro juostinis laikas"
 
-#: tzres.rc:191
+#: tzres.rc:197
 msgid "Singapore Daylight Time"
 msgstr "Singapūro vasaros laikas"
 
-#: tzres.rc:130
+#: tzres.rc:134
 msgid "Korea Standard Time"
 msgstr "Korėjos juostinis laikas"
 
-#: tzres.rc:131
+#: tzres.rc:135
 msgid "Korea Daylight Time"
 msgstr "Korėjos vasaros laikas"
 
-#: tzres.rc:88
+#: tzres.rc:86
+msgid "Chatham Islands Standard Time"
+msgstr "Čatamo salų juostinis laikas"
+
+#: tzres.rc:87
+msgid "Chatham Islands Daylight Time"
+msgstr "Čatamo salų vasaros laikas"
+
+#: tzres.rc:92
 msgid "E. Africa Standard Time"
 msgstr "R. Afrikos juostinis laikas"
 
-#: tzres.rc:89
+#: tzres.rc:93
 msgid "E. Africa Daylight Time"
 msgstr "R. Afrikos vasaros laikas"
 
-#: tzres.rc:104
+#: tzres.rc:108
 msgid "FLE Standard Time"
 msgstr "SLE juostinis laikas"
 
-#: tzres.rc:105
+#: tzres.rc:109
 msgid "FLE Daylight Time"
 msgstr "SLE vasaros laikas"
 
-#: tzres.rc:92
+#: tzres.rc:96
 msgid "E. South America Standard Time"
 msgstr "R. Pietų Amerikos juostinis laikas"
 
-#: tzres.rc:93
+#: tzres.rc:97
 msgid "E. South America Daylight Time"
 msgstr "R. Pietų Amerikos vasaros laikas"
 
-#: tzres.rc:78
+#: tzres.rc:80
 msgid "Central Pacific Standard Time"
 msgstr "Vidurio Ramiojo vandenyno juostinis laikas"
 
-#: tzres.rc:79
+#: tzres.rc:81
 msgid "Central Pacific Daylight Time"
 msgstr "Vidurio Ramiojo vandenyno vasaros laikas"
 
-#: tzres.rc:222
+#: tzres.rc:228
 msgid "W. Central Africa Standard Time"
 msgstr "V. Vidurio Afrikos juostinis laikas"
 
-#: tzres.rc:223
+#: tzres.rc:229
 msgid "W. Central Africa Daylight Time"
 msgstr "V. Vidurio Afrikos vasaros laikas"
 
-#: tzres.rc:166
+#: tzres.rc:172
 msgid "Pacific SA Standard Time"
 msgstr "Ramiojo vandenyno PA juostinis laikas"
 
-#: tzres.rc:167
+#: tzres.rc:173
 msgid "Pacific SA Daylight Time"
 msgstr "Ramiojo vandenyno PA vasaros laikas"
 
-#: tzres.rc:90
+#: tzres.rc:94
 msgid "E. Australia Standard Time"
 msgstr "R. Australijos juostinis laikas"
 
-#: tzres.rc:91
+#: tzres.rc:95
 msgid "E. Australia Daylight Time"
 msgstr "R. Australijos vasaros laikas"
 
-#: tzres.rc:220
+#: tzres.rc:226
 msgid "W. Australia Standard Time"
 msgstr "V. Australijos juostinis laikas"
 
-#: tzres.rc:221
+#: tzres.rc:227
 msgid "W. Australia Daylight Time"
 msgstr "V. Australijos vasaros laikas"
 
@@ -11586,7 +11633,7 @@ msgstr "Ana&loginis"
 msgid "Digi&tal"
 msgstr "Skai&tmeninis"
 
-#: clock.rc:35 notepad.rc:53 winecfg.rc:307 winefile.rc:63 wordpad.rc:84
+#: clock.rc:35 notepad.rc:53 winecfg.rc:305 winefile.rc:63 wordpad.rc:84
 msgid "&Font..."
 msgstr "Š&riftas..."
 
@@ -15386,7 +15433,7 @@ msgstr ""
 msgid "The Wine configuration in %s is being updated, please wait..."
 msgstr "„Wine“ konfigūracija (%s) atnaujinama, palaukite..."
 
-#: winecfg.rc:141
+#: winecfg.rc:140
 msgid ""
 "This program is free software; you can redistribute it and/or modify it "
 "under the terms of the GNU Lesser General Public License as published by the "
@@ -15398,23 +15445,23 @@ msgstr ""
 "kurios paskelbtos Laisvosios programinės įrangos fondo (FSF); 2.1-osios arba "
 "(Jūsų pasirinkimu) bet kurios vėlesnės licencijos versijos sąlygomis."
 
-#: winecfg.rc:143
+#: winecfg.rc:142
 msgid "Windows registration information"
 msgstr "„Windows“ registracijos informacija"
 
-#: winecfg.rc:144
+#: winecfg.rc:143
 msgid "&Owner:"
 msgstr "Savininkas:"
 
-#: winecfg.rc:146
+#: winecfg.rc:145
 msgid "Organi&zation:"
 msgstr "Organizacija:"
 
-#: winecfg.rc:154
+#: winecfg.rc:153
 msgid "Application settings"
 msgstr "Programų nuostatos"
 
-#: winecfg.rc:155
+#: winecfg.rc:154
 msgid ""
 "Wine can mimic different Windows versions for each application. This tab is "
 "linked to the Libraries and Graphics tabs to allow you to change system-wide "
@@ -15425,55 +15472,55 @@ msgstr ""
 "galima keisti sistemines nuostatas ar kiekvienos programos nuostatas "
 "atskirai."
 
-#: winecfg.rc:159
+#: winecfg.rc:158
 msgid "Add appli&cation..."
 msgstr "&Pridėti programą..."
 
-#: winecfg.rc:160
+#: winecfg.rc:159
 msgid "&Remove application"
 msgstr "Pa&šalinti programą"
 
-#: winecfg.rc:161
+#: winecfg.rc:160
 msgid "&Windows Version:"
 msgstr "„Windows“ &versija:"
 
-#: winecfg.rc:169
+#: winecfg.rc:168
 msgid "Window settings"
 msgstr "Langų nuostatos"
 
-#: winecfg.rc:170
+#: winecfg.rc:169
 msgid "Automatically capture the &mouse in full-screen windows"
 msgstr "Automatiškai &užvaldyti pelę viso ekrano languose"
 
-#: winecfg.rc:171
+#: winecfg.rc:170
 msgid "Allow the window manager to &decorate the windows"
 msgstr "Leisti langų tvarkytuvei &dekoruoti langus"
 
-#: winecfg.rc:172
+#: winecfg.rc:171
 msgid "Allow the &window manager to control the windows"
 msgstr "Leisti langų tvarkytuvei &kontroliuoti langus"
 
-#: winecfg.rc:173
+#: winecfg.rc:172
 msgid "&Emulate a virtual desktop"
 msgstr "&Emuliuoti virtualų darbalaukį"
 
-#: winecfg.rc:175
+#: winecfg.rc:174
 msgid "Desktop &size:"
 msgstr "Darbalaukio d&ydis:"
 
-#: winecfg.rc:180
+#: winecfg.rc:179
 msgid "Screen resolution"
 msgstr "Ekrano skiriamoji geba"
 
-#: winecfg.rc:184
+#: winecfg.rc:183
 msgid "This is a sample text using 10 point Tahoma"
 msgstr "Tai yra pavyzdinis tekstas naudojantis 10 taškų Tahoma"
 
-#: winecfg.rc:191
+#: winecfg.rc:190
 msgid "DLL overrides"
 msgstr "DLL nustelbimai"
 
-#: winecfg.rc:192
+#: winecfg.rc:191
 msgid ""
 "Dynamic Link Libraries can be specified individually to be either builtin "
 "(provided by Wine) or native (taken from Windows or provided by the "
@@ -15482,55 +15529,55 @@ msgstr ""
 "Kiekviena dinaminė biblioteka gali būti įtaisyta (pateikta su „Wine“) ar "
 "sava (paimta iš „Windows“ ar pateikta programos)."
 
-#: winecfg.rc:194
+#: winecfg.rc:193
 msgid "&New override for library:"
 msgstr "&Naujas nustelbimas bibliotekai:"
 
-#: winecfg.rc:196
+#: winecfg.rc:195
 msgid "A&dd"
 msgstr "&Pridėti"
 
-#: winecfg.rc:197
+#: winecfg.rc:196
 msgid "Existing &overrides:"
 msgstr "Egzistuojantys n&ustelbimai:"
 
-#: winecfg.rc:199
+#: winecfg.rc:198
 msgid "&Edit..."
 msgstr "&Redaguoti..."
 
-#: winecfg.rc:205
+#: winecfg.rc:204
 msgid "Edit Override"
 msgstr "Redaguoti nustelbimą"
 
-#: winecfg.rc:208
+#: winecfg.rc:207
 msgid "Load order"
 msgstr "Įkėlimo tvarka"
 
-#: winecfg.rc:209
+#: winecfg.rc:208
 msgid "&Builtin (Wine)"
 msgstr "&Įtaisyta („Wine“)"
 
-#: winecfg.rc:210
+#: winecfg.rc:209
 msgid "&Native (Windows)"
 msgstr "&Sava („Windows“)"
 
-#: winecfg.rc:211
+#: winecfg.rc:210
 msgid "Buil&tin then Native"
 msgstr "Į&taisyta, po to sava"
 
-#: winecfg.rc:212
+#: winecfg.rc:211
 msgid "Nati&ve then Builtin"
 msgstr "S&ava, po to įtaisyta"
 
-#: winecfg.rc:220
+#: winecfg.rc:219
 msgid "Select Drive Letter"
 msgstr "Parinkite disko raidę"
 
-#: winecfg.rc:232
+#: winecfg.rc:231
 msgid "Drive configuration"
 msgstr "Diskų konfigūravimas"
 
-#: winecfg.rc:233
+#: winecfg.rc:232
 msgid ""
 "Failed to connect to the mount manager; the drive configuration cannot be "
 "edited."
@@ -15538,207 +15585,203 @@ msgstr ""
 "Nepavyko prisijungti prie diskų tvarkytuvės, diskų konfigūracija negali būti "
 "redaguojama."
 
-#: winecfg.rc:236
+#: winecfg.rc:235
 msgid "A&dd..."
 msgstr "Pri&dėti..."
 
-#: winecfg.rc:238
-msgid "Aut&odetect"
-msgstr "&Automatiškai aptikti"
-
-#: winecfg.rc:241
+#: winecfg.rc:239
 msgid "&Path:"
 msgstr "&Kelias:"
 
-#: winecfg.rc:248 winecfg.rc:38
+#: winecfg.rc:246 winecfg.rc:37
 msgid "Show Advan&ced"
 msgstr "Rodyti papild&omas"
 
-#: winecfg.rc:249
+#: winecfg.rc:247
 msgid "De&vice:"
 msgstr "Įtai&sas:"
 
-#: winecfg.rc:251
+#: winecfg.rc:249
 msgid "Bro&wse..."
 msgstr "Parinkti..."
 
-#: winecfg.rc:253
+#: winecfg.rc:251
 msgid "&Label:"
 msgstr "Va&rdas:"
 
-#: winecfg.rc:255
+#: winecfg.rc:253
 msgid "S&erial:"
 msgstr "N&umeris:"
 
-#: winecfg.rc:258
+#: winecfg.rc:256
 msgid "&Show dot files"
 msgstr "Rodyti &failus su tašku"
 
-#: winecfg.rc:265
+#: winecfg.rc:263
 msgid "Driver diagnostics"
 msgstr "Tvarkyklės diagnostika"
 
-#: winecfg.rc:267
+#: winecfg.rc:265
 msgid "Defaults"
 msgstr "Numatytosios reikšmės"
 
-#: winecfg.rc:268
+#: winecfg.rc:266
 msgid "Output device:"
 msgstr "Išvedimo įtaisas:"
 
-#: winecfg.rc:269
+#: winecfg.rc:267
 msgid "Voice output device:"
 msgstr "Balso išvedimo įtaisas:"
 
-#: winecfg.rc:270
+#: winecfg.rc:268
 msgid "Input device:"
 msgstr "Įvedimo įtaisas:"
 
-#: winecfg.rc:271
+#: winecfg.rc:269
 msgid "Voice input device:"
 msgstr "Balso įvedimo įtaisas:"
 
-#: winecfg.rc:276
+#: winecfg.rc:274
 msgid "&Test Sound"
 msgstr "&Testuoti garsą"
 
-#: winecfg.rc:277 winecfg.rc:90
+#: winecfg.rc:275 winecfg.rc:89
 msgid "Speaker configuration"
 msgstr "Garsiakalbių konfigūravimas"
 
-#: winecfg.rc:280
+#: winecfg.rc:278
 msgid "Speakers:"
 msgstr "Garsiakalbiai:"
 
-#: winecfg.rc:288
+#: winecfg.rc:286
 msgid "Appearance"
 msgstr "Išvaizda"
 
-#: winecfg.rc:289
+#: winecfg.rc:287
 msgid "&Theme:"
 msgstr "&Apipavidalinimas:"
 
-#: winecfg.rc:291
+#: winecfg.rc:289
 msgid "&Install theme..."
 msgstr "&Įdiegti apipavidalinimą..."
 
-#: winecfg.rc:296
+#: winecfg.rc:294
 msgid "It&em:"
 msgstr "&Elementas:"
 
-#: winecfg.rc:298
+#: winecfg.rc:296
 msgid "C&olor:"
 msgstr "S&palva:"
 
-#: winecfg.rc:304
+#: winecfg.rc:302
 msgid "MIME types"
 msgstr "MIME tipai"
 
-#: winecfg.rc:305
+#: winecfg.rc:303
 msgid "Manage file &associations"
 msgstr "Valdyti failų susie&jimus"
 
-#: winecfg.rc:308
+#: winecfg.rc:306
 msgid "Folders"
 msgstr "Aplankai"
 
-#: winecfg.rc:311
+#: winecfg.rc:309
 msgid "&Link to:"
 msgstr "S&usieti su:"
 
-#: winecfg.rc:34
+#: winecfg.rc:33
 msgid "Libraries"
 msgstr "Bibliotekos"
 
-#: winecfg.rc:35
+#: winecfg.rc:34
 msgid "Drives"
 msgstr "Diskai"
 
-#: winecfg.rc:36
+#: winecfg.rc:35
 msgid "Select the Unix target directory, please."
 msgstr "Išrinkite Unix paskirties aplanką."
 
-#: winecfg.rc:37
+#: winecfg.rc:36
 msgid "Hide Advan&ced"
 msgstr "Slėpti papild&omas"
 
-#: winecfg.rc:39
+#: winecfg.rc:38
 msgid "(No Theme)"
 msgstr "(nėra apipavidalinimo)"
 
-#: winecfg.rc:40
+#: winecfg.rc:39
 msgid "Graphics"
 msgstr "Grafika"
 
-#: winecfg.rc:41
+#: winecfg.rc:40
 msgid "Desktop Integration"
 msgstr "Darbalaukio integravimas"
 
-#: winecfg.rc:42
+#: winecfg.rc:41
 msgid "Audio"
 msgstr "Garsas"
 
-#: winecfg.rc:43
+#: winecfg.rc:42
 msgid "About"
 msgstr "Apie"
 
-#: winecfg.rc:44
+#: winecfg.rc:43
 msgid "Wine configuration"
 msgstr "„Wine“ konfigūravimas"
 
-#: winecfg.rc:46
+#: winecfg.rc:45
 msgid "Theme files (*.msstyles; *.theme)"
 msgstr "Apipavidalinimo failai (*.msstyles; *.theme)"
 
-#: winecfg.rc:47
+#: winecfg.rc:46
 msgid "Select a theme file"
 msgstr "Pasirinkite apipavidalinimo failą"
 
-#: winecfg.rc:48
+#: winecfg.rc:47
 msgid "Folder"
 msgstr "Aplankas"
 
-#: winecfg.rc:49
+#: winecfg.rc:48
 msgid "Links to"
 msgstr "Susietas su"
 
-#: winecfg.rc:45
+#: winecfg.rc:44
 msgid "Wine configuration for %s"
 msgstr "„Wine“ konfigūravimas: %s"
 
-#: winecfg.rc:84
+#: winecfg.rc:83
 msgid "Selected driver: %s"
 msgstr "Parinkta tvarkyklė: %s"
 
-#: winecfg.rc:85
+#: winecfg.rc:84
 msgid "(None)"
 msgstr "(jokia)"
 
-#: winecfg.rc:86
+#: winecfg.rc:85
 msgid "Audio test failed!"
 msgstr "Garso testas nepavyko!"
 
-#: winecfg.rc:88
+#: winecfg.rc:87
 msgid "(System default)"
 msgstr "(Sistemos numatytasis)"
 
-#: winecfg.rc:91
+#: winecfg.rc:90
 msgid "5.1 Surround"
 msgstr "Erdviniai 5.1"
 
-#: winecfg.rc:92
+#: winecfg.rc:91
 msgid "Quadraphonic"
 msgstr "Kvadrofoniniai"
 
-#: winecfg.rc:93
+#: winecfg.rc:92
 msgid "Stereo"
 msgstr "Stereofoniniai"
 
-#: winecfg.rc:94
+#: winecfg.rc:93
 msgid "Mono"
 msgstr "Monofoninis"
 
-#: winecfg.rc:54
+#: winecfg.rc:53
 msgid ""
 "Changing the load order of this library is not recommended.\n"
 "Are you sure you want to do this?"
@@ -15746,67 +15789,67 @@ msgstr ""
 "Keisti šios bibliotekos įkėlimo tvarką nerekomenduojama.\n"
 "Ar tikrai norite tai padaryti?"
 
-#: winecfg.rc:55
+#: winecfg.rc:54
 msgid "Warning: system library"
 msgstr "Įspėjimas: sisteminė biblioteka"
 
-#: winecfg.rc:56
+#: winecfg.rc:55
 msgid "native"
 msgstr "sava"
 
-#: winecfg.rc:57
+#: winecfg.rc:56
 msgid "builtin"
 msgstr "įtaisyta"
 
-#: winecfg.rc:58
+#: winecfg.rc:57
 msgid "native, builtin"
 msgstr "sava, įtaisyta"
 
-#: winecfg.rc:59
+#: winecfg.rc:58
 msgid "builtin, native"
 msgstr "įtaisyta, sava"
 
-#: winecfg.rc:60
+#: winecfg.rc:59
 msgid "disabled"
 msgstr "išjungta"
 
-#: winecfg.rc:61
+#: winecfg.rc:60
 msgid "Default Settings"
 msgstr "Numatytosios nuostatos"
 
-#: winecfg.rc:62
+#: winecfg.rc:61
 msgid "Wine Programs (*.exe; *.exe.so)"
 msgstr "„Wine“ programos (*.exe; *.exe.so)"
 
-#: winecfg.rc:63
+#: winecfg.rc:62
 msgid "Use global settings"
 msgstr "Naudoti globalias nuostatas"
 
-#: winecfg.rc:64
+#: winecfg.rc:63
 msgid "Select an executable file"
 msgstr "Pasirinkite vykdomąjį failą"
 
-#: winecfg.rc:69
+#: winecfg.rc:68
 msgid "Autodetect"
 msgstr "Automatiškai aptikti"
 
-#: winecfg.rc:70
+#: winecfg.rc:69
 msgid "Local hard disk"
 msgstr "Vietinis standusis diskas"
 
-#: winecfg.rc:71
+#: winecfg.rc:70
 msgid "Network share"
 msgstr "Tinklo diskas"
 
-#: winecfg.rc:72
+#: winecfg.rc:71
 msgid "Floppy disk"
 msgstr "Diskelis"
 
-#: winecfg.rc:73
+#: winecfg.rc:72
 msgid "CD-ROM"
 msgstr "CD-ROM"
 
-#: winecfg.rc:74
+#: winecfg.rc:73
 msgid ""
 "You cannot add any more drives.\n"
 "\n"
@@ -15817,11 +15860,11 @@ msgstr ""
 "Kiekvienas diskas turi turėti raidę, nuo A iki Z, todėl negalite turėti "
 "daugiau nei 26."
 
-#: winecfg.rc:75
+#: winecfg.rc:74
 msgid "System drive"
 msgstr "Sisteminis diskas"
 
-#: winecfg.rc:76
+#: winecfg.rc:75
 msgid ""
 "Are you sure you want to delete drive C?\n"
 "\n"
@@ -15833,16 +15876,16 @@ msgstr ""
 "Daugelis „Windows“ programų tikisi, kad „C“ diskas egzistuoja, ir neveikia, "
 "kai jis neegzistuoja. Jei tęsite, nepamirškite jo sukurti iš naujo!"
 
-#: winecfg.rc:77
+#: winecfg.rc:76
 msgctxt "Drive letter"
 msgid "Letter"
 msgstr "Raidė"
 
-#: winecfg.rc:78
+#: winecfg.rc:77
 msgid "Target folder"
 msgstr "Paskirties aplankas"
 
-#: winecfg.rc:79
+#: winecfg.rc:78
 msgid ""
 "You don't have a drive C. This is not so great.\n"
 "\n"
@@ -15852,127 +15895,127 @@ msgstr ""
 "\n"
 "Nepamirškite paspausti „Pridėti“ diskų kortelėje, kad jį sukurtumėte!\n"
 
-#: winecfg.rc:99
+#: winecfg.rc:98
 msgid "Controls Background"
 msgstr "Valdiklių fonas"
 
-#: winecfg.rc:100
+#: winecfg.rc:99
 msgid "Controls Text"
 msgstr "Valdiklių tekstas"
 
-#: winecfg.rc:102
+#: winecfg.rc:101
 msgid "Menu Background"
 msgstr "Meniu fonas"
 
-#: winecfg.rc:103
+#: winecfg.rc:102
 msgid "Menu Text"
 msgstr "Meniu tekstas"
 
-#: winecfg.rc:104
+#: winecfg.rc:103
 msgid "Scrollbar"
 msgstr "Slankjuostė"
 
-#: winecfg.rc:105
+#: winecfg.rc:104
 msgid "Selection Background"
 msgstr "Žymėjimo fonas"
 
-#: winecfg.rc:106
+#: winecfg.rc:105
 msgid "Selection Text"
 msgstr "Žymėjimo tekstas"
 
-#: winecfg.rc:107
+#: winecfg.rc:106
 msgid "Tooltip Background"
 msgstr "Patarimo fonas"
 
-#: winecfg.rc:108
+#: winecfg.rc:107
 msgid "Tooltip Text"
 msgstr "Patarimo tekstas"
 
-#: winecfg.rc:109
+#: winecfg.rc:108
 msgid "Window Background"
 msgstr "Lango fonas"
 
-#: winecfg.rc:110
+#: winecfg.rc:109
 msgid "Window Text"
 msgstr "Lango tekstas"
 
-#: winecfg.rc:111
+#: winecfg.rc:110
 msgid "Active Title Bar"
 msgstr "Aktyvi lango antraštės juosta"
 
-#: winecfg.rc:112
+#: winecfg.rc:111
 msgid "Active Title Text"
 msgstr "Aktyvios lango antraštės tekstas"
 
-#: winecfg.rc:113
+#: winecfg.rc:112
 msgid "Inactive Title Bar"
 msgstr "Neaktyvi lango antraštės juosta"
 
-#: winecfg.rc:114
+#: winecfg.rc:113
 msgid "Inactive Title Text"
 msgstr "Neaktyvios lango antraštės tekstas"
 
-#: winecfg.rc:115
+#: winecfg.rc:114
 msgid "Message Box Text"
 msgstr "Pranešimo lango tekstas"
 
-#: winecfg.rc:116
+#: winecfg.rc:115
 msgid "Application Workspace"
 msgstr "Programos erdvė"
 
-#: winecfg.rc:117
+#: winecfg.rc:116
 msgid "Window Frame"
 msgstr "Lango rėmelis"
 
-#: winecfg.rc:118
+#: winecfg.rc:117
 msgid "Active Border"
 msgstr "Aktyvi kraštinė"
 
-#: winecfg.rc:119
+#: winecfg.rc:118
 msgid "Inactive Border"
 msgstr "Neaktyvi kraštinė"
 
-#: winecfg.rc:120
+#: winecfg.rc:119
 msgid "Controls Shadow"
 msgstr "Valdiklių šešėlis"
 
-#: winecfg.rc:121
+#: winecfg.rc:120
 msgid "Gray Text"
 msgstr "Pilkas tekstas"
 
-#: winecfg.rc:122
+#: winecfg.rc:121
 msgid "Controls Highlight"
 msgstr "Valdiklių paryškinimas"
 
-#: winecfg.rc:123
+#: winecfg.rc:122
 msgid "Controls Dark Shadow"
 msgstr "Valdiklių tamsus šešėlis"
 
-#: winecfg.rc:124
+#: winecfg.rc:123
 msgid "Controls Light"
 msgstr "Valdiklių šviesumas"
 
-#: winecfg.rc:125
+#: winecfg.rc:124
 msgid "Controls Alternate Background"
 msgstr "Valdiklių alternatyvus fonas"
 
-#: winecfg.rc:126
+#: winecfg.rc:125
 msgid "Hot Tracked Item"
 msgstr "Sekamas elementas"
 
-#: winecfg.rc:127
+#: winecfg.rc:126
 msgid "Active Title Bar Gradient"
 msgstr "Aktyvios lango antraštės gradientas"
 
-#: winecfg.rc:128
+#: winecfg.rc:127
 msgid "Inactive Title Bar Gradient"
 msgstr "Neaktyvios lango antraštės gradientas"
 
-#: winecfg.rc:129
+#: winecfg.rc:128
 msgid "Menu Highlight"
 msgstr "Meniu paryškinimas"
 
-#: winecfg.rc:130
+#: winecfg.rc:129
 msgid "Menu Bar"
 msgstr "Meniu juosta"
 

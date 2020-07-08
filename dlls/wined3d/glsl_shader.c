@@ -1734,7 +1734,7 @@ static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context
         const struct wined3d_vec4 correction_params =
         {
             /* Position is relative to the framebuffer, not the viewport. */
-            context->render_offscreen ? 0.0f : (float)state->fb->render_targets[0]->height,
+            context->render_offscreen ? 0.0f : (float)state->fb.render_targets[0]->height,
             context->render_offscreen ? 1.0f : -1.0f,
             0.0f,
             0.0f,
@@ -7772,7 +7772,10 @@ static GLuint shader_glsl_generate_fragment_shader(const struct wined3d_context_
     {
         const struct wined3d_shader_signature *output_signature = &shader->output_signature;
 
-        shader_addline(buffer, "vec4 ps_out[%u];\n", gl_info->limits.buffers);
+        if (args->dual_source_blend)
+            shader_addline(buffer, "vec4 ps_out[2];\n");
+        else
+            shader_addline(buffer, "vec4 ps_out[%u];\n", gl_info->limits.buffers);
         if (output_signature->element_count)
         {
             for (i = 0; i < output_signature->element_count; ++i)
@@ -7787,7 +7790,12 @@ static GLuint shader_glsl_generate_fragment_shader(const struct wined3d_context_
                     continue;
                 }
                 if (shader_glsl_use_explicit_attrib_location(gl_info))
-                    shader_addline(buffer, "layout(location = %u) ", output->semantic_idx);
+                {
+                    if (args->dual_source_blend)
+                        shader_addline(buffer, "layout(location = 0, index = %u) ", output->semantic_idx);
+                    else
+                        shader_addline(buffer, "layout(location = %u) ", output->semantic_idx);
+                }
                 shader_addline(buffer, "out %s4 color_out%u;\n",
                         component_type_info[output->component_type].glsl_vector_type, output->semantic_idx);
             }
@@ -7800,7 +7808,12 @@ static GLuint shader_glsl_generate_fragment_shader(const struct wined3d_context_
             {
                 i = wined3d_bit_scan(&mask);
                 if (shader_glsl_use_explicit_attrib_location(gl_info))
-                    shader_addline(buffer, "layout(location = %u) ", i);
+                {
+                    if (args->dual_source_blend)
+                        shader_addline(buffer, "layout(location = 0, index = %u) ", i);
+                    else
+                        shader_addline(buffer, "layout(location = %u) ", i);
+                }
                 shader_addline(buffer, "out vec4 color_out%u;\n", i);
             }
         }
@@ -10335,7 +10348,7 @@ static void set_glsl_shader_program(const struct wined3d_context_gl *context_gl,
         if (vshader->reg_maps.shader_version.major < 4)
         {
             reorder_shader_id = shader_glsl_generate_vs3_rasterizer_input_setup(priv, vshader, pshader,
-                    state->gl_primitive_type == GL_POINTS && vshader->reg_maps.point_size,
+                    state->primitive_type == WINED3D_PT_POINTLIST && vshader->reg_maps.point_size,
                     d3d_info->emulated_flatshading
                     && state->render_states[WINED3D_RS_SHADEMODE] == WINED3D_SHADE_FLAT, gl_info);
             TRACE("Attaching GLSL shader object %u to program %u.\n", reorder_shader_id, program_id);
@@ -10382,10 +10395,13 @@ static void set_glsl_shader_program(const struct wined3d_context_gl *context_gl,
 
         if (!use_legacy_fragment_output(gl_info))
         {
-            for (i = 0; i < MAX_RENDER_TARGET_VIEWS; ++i)
+            for (i = 0; i < WINED3D_MAX_RENDER_TARGETS; ++i)
             {
                 string_buffer_sprintf(tmp_name, "color_out%u", i);
-                GL_EXTCALL(glBindFragDataLocation(program_id, i, tmp_name->buffer));
+                if (state->blend_state && state->blend_state->dual_source)
+                    GL_EXTCALL(glBindFragDataLocationIndexed(program_id, 0, i, tmp_name->buffer));
+                else
+                    GL_EXTCALL(glBindFragDataLocation(program_id, i, tmp_name->buffer));
                 checkGLcall("glBindFragDataLocation");
             }
         }
@@ -11793,7 +11809,8 @@ static void glsl_vertex_pointsprite_core(struct wined3d_context *context,
 {
     static unsigned int once;
 
-    if (state->gl_primitive_type == GL_POINTS && !state->render_states[WINED3D_RS_POINTSPRITEENABLE] && !once++)
+    if (state->primitive_type == WINED3D_PT_POINTLIST
+            && !state->render_states[WINED3D_RS_POINTSPRITEENABLE] && !once++)
         FIXME("Non-point sprite points not supported in core profile.\n");
 }
 
@@ -12697,6 +12714,15 @@ static void glsl_blitter_generate_yuv_shader(struct wined3d_string_buffer *buffe
             gen_nv12_read(buffer, gl_info, tex_type);
             break;
 
+        case COMPLEX_FIXUP_YUV:
+            /* With APPLE_rgb_422, things are much simpler. The only thing we
+             * have to do here is Y'CbCr to RGB conversion. */
+            shader_addline(buffer, "    vec3 yuv = vec3(texture%s(sampler, out_texcoord.xy));\n",
+                    needs_legacy_glsl_syntax(gl_info) ? tex_type : "");
+            shader_addline(buffer, "    luminance = yuv.y;\n");
+            shader_addline(buffer, "    chroma = yuv.xz;\n");
+            break;
+
         default:
             FIXME("Unsupported fixup %#x.\n", complex_fixup);
             string_buffer_free(buffer);
@@ -12756,7 +12782,7 @@ static GLuint glsl_blitter_generate_program(struct wined3d_glsl_blitter *blitter
     enum complex_fixup complex_fixup = get_complex_fixup(args->fixup);
     struct wined3d_string_buffer *buffer, *output;
     GLuint program, vshader_id, fshader_id;
-    const char *tex_type, *swizzle, *ptr;
+    const char *tex_type = NULL, *swizzle = NULL, *ptr;
     unsigned int i;
     GLint loc;
 
@@ -12820,6 +12846,7 @@ static GLuint glsl_blitter_generate_program(struct wined3d_glsl_blitter *blitter
         case COMPLEX_FIXUP_UYVY:
         case COMPLEX_FIXUP_YV12:
         case COMPLEX_FIXUP_NV12:
+        case COMPLEX_FIXUP_YUV:
             glsl_blitter_generate_yuv_shader(buffer, gl_info, args, output->buffer, tex_type, swizzle);
             break;
         case COMPLEX_FIXUP_NONE:
@@ -12948,7 +12975,7 @@ static BOOL glsl_blitter_supported(enum wined3d_blit_op blit_op, const struct wi
 
     if (blit_op == WINED3D_BLIT_OP_RAW_BLIT && dst_format->id == src_format->id)
     {
-        if (dst_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL))
+        if (dst_format->depth_size || dst_format->stencil_size)
             blit_op = WINED3D_BLIT_OP_DEPTH_BLIT;
         else
             blit_op = WINED3D_BLIT_OP_COLOR_BLIT;
@@ -13108,6 +13135,11 @@ static DWORD glsl_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_bli
         wined3d_texture_load(src_texture, context, FALSE);
     }
 
+    if (wined3d_texture_is_full_rect(dst_texture, dst_sub_resource_idx % dst_texture->level_count, dst_rect))
+        wined3d_texture_prepare_location(dst_texture, dst_sub_resource_idx, context, dst_location);
+    else
+        wined3d_texture_load_location(dst_texture, dst_sub_resource_idx, context, dst_location);
+
     wined3d_context_gl_apply_blit_state(context_gl, device);
 
     if (dst_location == WINED3D_LOCATION_DRAWABLE)
@@ -13167,6 +13199,7 @@ static DWORD glsl_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_bli
         case COMPLEX_FIXUP_UYVY:
         case COMPLEX_FIXUP_YV12:
         case COMPLEX_FIXUP_NV12:
+        case COMPLEX_FIXUP_YUV:
             src_level = src_sub_resource_idx % src_texture->level_count;
             location = GL_EXTCALL(glGetUniformLocation(program->id, "size"));
             GL_EXTCALL(glUniform2f(location, wined3d_texture_get_level_pow2_width(src_texture, src_level),

@@ -308,7 +308,7 @@ todo_wine
 
     SetEvent(event);
 
-    winetest_wait_child_process(info.hProcess);
+    wait_child_process(info.hProcess);
 
     CloseHandle(info.hProcess);
     CloseHandle(info.hThread);
@@ -473,7 +473,7 @@ static void test_module_information(void)
     ok(hr == S_OK, "Failed to detach, hr %#x.\n", hr);
 
     SetEvent(event);
-    winetest_wait_child_process(info.hProcess);
+    wait_child_process(info.hProcess);
 
     CloseHandle(info.hProcess);
     CloseHandle(info.hThread);

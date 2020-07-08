@@ -564,7 +564,7 @@ static void test_remote_cert(PCCERT_CONTEXT remote_cert)
         cert_cnt++;
     }
 
-    ok(cert_cnt == 4, "cert_cnt = %u\n", cert_cnt);
+    ok(cert_cnt == 2, "cert_cnt = %u\n", cert_cnt);
     ok(incl_remote, "context does not contain cert itself\n");
 }
 
@@ -670,14 +670,41 @@ static void test_InitializeSecurityContext(void)
     FreeCredentialsHandle(&cred_handle);
 }
 
+static SOCKET create_ssl_socket( const char *hostname )
+{
+    struct hostent *host;
+    struct sockaddr_in addr;
+    SOCKET sock;
+
+    if (!(host = gethostbyname(hostname)))
+    {
+        skip("Can't resolve \"%s\"\n", hostname);
+        return -1;
+    }
+
+    addr.sin_family = host->h_addrtype;
+    addr.sin_addr = *(struct in_addr *)host->h_addr_list[0];
+    addr.sin_port = htons(443);
+    if ((sock = socket(host->h_addrtype, SOCK_STREAM, 0)) == -1)
+    {
+        skip("Can't create socket\n");
+        return 1;
+    }
+
+    if (connect(sock, (struct sockaddr *)&addr, sizeof(addr)) == -1)
+    {
+        skip("Can't connect to \"%s\"\n", hostname);
+        closesocket(sock);
+        return -1;
+    }
+
+    return sock;
+}
+
 static void test_communication(void)
 {
     int ret;
-
-    WSADATA wsa_data;
     SOCKET sock;
-    struct hostent *host;
-    struct sockaddr_in addr;
 
     SECURITY_STATUS status;
     ULONG attrs;
@@ -705,36 +732,7 @@ static void test_communication(void)
     }
 
     /* Create a socket and connect to test.winehq.org */
-    ret = WSAStartup(0x0202, &wsa_data);
-    if (ret)
-    {
-        skip("Can't init winsock 2.2\n");
-        return;
-    }
-
-    host = gethostbyname("test.winehq.org");
-    if (!host)
-    {
-        skip("Can't resolve test.winehq.org\n");
-        return;
-    }
-
-    addr.sin_family = host->h_addrtype;
-    addr.sin_addr = *(struct in_addr *)host->h_addr_list[0];
-    addr.sin_port = htons(443);
-    sock = socket(host->h_addrtype, SOCK_STREAM, 0);
-    if (sock == SOCKET_ERROR)
-    {
-        skip("Can't create socket\n");
-        return;
-    }
-
-    ret = connect(sock, (struct sockaddr *)&addr, sizeof(addr));
-    if (ret == SOCKET_ERROR)
-    {
-        skip("Can't connect to test.winehq.org\n");
-        return;
-    }
+    if ((sock = create_ssl_socket( "test.winehq.org" )) == -1) return;
 
     /* Create client credentials */
     init_cred(&cred);
@@ -952,7 +950,7 @@ todo_wine
     status = pQueryContextAttributesA(&context, SECPKG_ATTR_STREAM_SIZES, &sizes);
     ok(status == SEC_E_OK, "QueryContextAttributesW(SECPKG_ATTR_STREAM_SIZES) failed: %08x\n", status);
 
-    status = QueryContextAttributesA(&context, SECPKG_ATTR_NEGOTIATION_INFO, &info);
+    status = pQueryContextAttributesA(&context, SECPKG_ATTR_NEGOTIATION_INFO, &info);
     ok(status == SEC_E_UNSUPPORTED_FUNCTION, "QueryContextAttributesA returned %08x\n", status);
 
     reset_buffers(&buffers[0]);
@@ -1037,12 +1035,142 @@ todo_wine
     closesocket(sock);
 }
 
+static void test_application_protocol_negotiation(void)
+{
+    int ret;
+    SOCKET sock;
+    SECURITY_STATUS status;
+    ULONG attrs;
+    SCHANNEL_CRED cred;
+    CredHandle cred_handle;
+    CtxtHandle context;
+    SecPkgContext_ApplicationProtocol protocol;
+    SecBufferDesc buffers[3];
+    SecBuffer *buf;
+    unsigned buf_size = 8192;
+    unsigned char *alpn_buffer;
+    unsigned int *extension_len;
+    unsigned short *list_len;
+    int list_start_index, offset = 0;
+
+    if (!pQueryContextAttributesA)
+    {
+        win_skip("Required secur32 functions not available\n");
+        return;
+    }
+
+    if ((sock = create_ssl_socket( "test.winehq.org" )) == -1) return;
+
+    init_cred(&cred);
+    cred.grbitEnabledProtocols = SP_PROT_TLS1_CLIENT;
+    cred.dwFlags = SCH_CRED_NO_DEFAULT_CREDS|SCH_CRED_MANUAL_CRED_VALIDATION;
+
+    status = AcquireCredentialsHandleA(NULL, (SEC_CHAR *)UNISP_NAME_A, SECPKG_CRED_OUTBOUND, NULL,
+        &cred, NULL, NULL, &cred_handle, NULL);
+    ok(status == SEC_E_OK, "got %08x\n", status);
+    if (status != SEC_E_OK) return;
+
+    init_buffers(&buffers[0], 4, buf_size);
+    init_buffers(&buffers[1], 4, buf_size);
+    init_buffers(&buffers[2], 1, 128);
+
+    alpn_buffer = buffers[2].pBuffers[0].pvBuffer;
+    extension_len = (unsigned int *)&alpn_buffer[offset];
+    offset += sizeof(*extension_len);
+    *(unsigned int *)&alpn_buffer[offset] = SecApplicationProtocolNegotiationExt_ALPN;
+    offset += sizeof(unsigned int);
+    list_len = (unsigned short *)&alpn_buffer[offset];
+    offset += sizeof(*list_len);
+    list_start_index = offset;
+
+    alpn_buffer[offset++] = sizeof("http/1.1") - 1;
+    memcpy(&alpn_buffer[offset], "http/1.1", sizeof("http/1.1") - 1);
+    offset += sizeof("http/1.1") - 1;
+    alpn_buffer[offset++] = sizeof("h2") - 1;
+    memcpy(&alpn_buffer[offset], "h2", sizeof("h2") - 1);
+    offset += sizeof("h2") - 1;
+
+    *list_len = offset - list_start_index;
+    *extension_len = *list_len + sizeof(*extension_len) + sizeof(*list_len);
+
+    buffers[2].pBuffers[0].BufferType = SECBUFFER_APPLICATION_PROTOCOLS;
+    buffers[2].pBuffers[0].cbBuffer = offset;
+
+    buffers[0].pBuffers[0].BufferType = SECBUFFER_TOKEN;
+    status = InitializeSecurityContextA(&cred_handle, NULL, (SEC_CHAR *)"localhost",
+        ISC_REQ_CONFIDENTIALITY|ISC_REQ_STREAM, 0, 0, &buffers[2], 0, &context, &buffers[0], &attrs, NULL);
+    ok(status == SEC_I_CONTINUE_NEEDED, "got %08x\n", status);
+
+    buf = &buffers[0].pBuffers[0];
+    send(sock, buf->pvBuffer, buf->cbBuffer, 0);
+    buf->cbBuffer = buf_size;
+
+    buf = &buffers[1].pBuffers[0];
+    buf->cbBuffer = buf_size;
+    ret = receive_data(sock, buf);
+    if (ret == -1)
+        return;
+
+    buffers[1].pBuffers[0].BufferType = SECBUFFER_TOKEN;
+    status = InitializeSecurityContextA(&cred_handle, &context, (SEC_CHAR *)"localhost",
+        ISC_REQ_CONFIDENTIALITY|ISC_REQ_STREAM|ISC_REQ_USE_SUPPLIED_CREDS, 0, 0, &buffers[1], 0, NULL,
+        &buffers[0], &attrs, NULL);
+    buffers[1].pBuffers[0].cbBuffer = buf_size;
+    while (status == SEC_I_CONTINUE_NEEDED)
+    {
+        buf = &buffers[0].pBuffers[0];
+        send(sock, buf->pvBuffer, buf->cbBuffer, 0);
+        buf->cbBuffer = buf_size;
+
+        buf = &buffers[1].pBuffers[0];
+        ret = receive_data(sock, buf);
+        if (ret == -1)
+            return;
+
+        buf->BufferType = SECBUFFER_TOKEN;
+        status = InitializeSecurityContextA(&cred_handle, &context, (SEC_CHAR *)"localhost",
+            ISC_REQ_USE_SUPPLIED_CREDS, 0, 0, &buffers[1], 0, NULL, &buffers[0], &attrs, NULL);
+        buffers[1].pBuffers[0].cbBuffer = buf_size;
+    }
+
+    ok (status == SEC_E_OK || broken(status == SEC_E_ILLEGAL_MESSAGE) /* winxp */, "got %08x\n", status);
+    if (status != SEC_E_OK)
+    {
+        skip("Handshake failed\n");
+        return;
+    }
+
+    memset(&protocol, 0, sizeof(protocol));
+    status = pQueryContextAttributesA(&context, SECPKG_ATTR_APPLICATION_PROTOCOL, &protocol);
+    ok(status == SEC_E_OK || broken(status == SEC_E_UNSUPPORTED_FUNCTION) /* win2k8 */, "got %08x\n", status);
+    if (status == SEC_E_OK)
+    {
+        ok(protocol.ProtoNegoStatus == SecApplicationProtocolNegotiationStatus_Success, "got %u\n", protocol.ProtoNegoStatus);
+        ok(protocol.ProtoNegoExt == SecApplicationProtocolNegotiationExt_ALPN, "got %u\n", protocol.ProtoNegoExt);
+        ok(protocol.ProtocolIdSize == 8, "got %u\n", protocol.ProtocolIdSize);
+        ok(!memcmp(protocol.ProtocolId, "http/1.1", 8), "wrong protocol id\n");
+    }
+
+    DeleteSecurityContext(&context);
+    FreeCredentialsHandle(&cred_handle);
+
+    free_buffers(&buffers[0]);
+    free_buffers(&buffers[1]);
+    free_buffers(&buffers[2]);
+
+    closesocket(sock);
+}
+
 START_TEST(schannel)
 {
+    WSADATA wsa_data;
     pQueryContextAttributesA = (void*)GetProcAddress(GetModuleHandleA("secur32.dll"), "QueryContextAttributesA");
+
+    WSAStartup(0x0202, &wsa_data);
 
     test_cread_attrs();
     testAcquireSecurityContext();
     test_InitializeSecurityContext();
     test_communication();
+    test_application_protocol_negotiation();
 }

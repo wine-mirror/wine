@@ -298,7 +298,7 @@
 298 stdcall GdipGetLogFontA(ptr ptr ptr)
 299 stdcall GdipGetLogFontW(ptr ptr ptr)
 300 stdcall GdipGetMatrixElements(ptr ptr)
-301 stub GdipGetMetafileDownLevelRasterizationLimit
+301 stdcall GdipGetMetafileDownLevelRasterizationLimit(ptr ptr)
 302 stdcall GdipGetMetafileHeaderFromEmf(ptr ptr)
 303 stdcall GdipGetMetafileHeaderFromFile(wstr ptr)
 304 stdcall GdipGetMetafileHeaderFromMetafile(ptr ptr)

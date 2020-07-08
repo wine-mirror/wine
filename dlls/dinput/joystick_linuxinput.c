@@ -595,10 +595,6 @@ static JoystickImpl *alloc_device(REFGUID rguid, IDirectInputImpl *dinput, unsig
 
     IDirectInput_AddRef(&newDevice->generic.base.dinput->IDirectInput7A_iface);
 
-    EnterCriticalSection(&dinput->crit);
-    list_add_tail(&dinput->devices_list, &newDevice->generic.base.entry);
-    LeaveCriticalSection(&dinput->crit);
-
     return newDevice;
 
 failed:
@@ -1097,7 +1093,10 @@ static HRESULT WINAPI JoystickWImpl_CreateEffect(LPDIRECTINPUTDEVICE8W iface, RE
 
     if (lpeff != NULL)
     {
-        retval = IDirectInputEffect_SetParameters(new_effect->ref, lpeff, 0);
+        retval = IDirectInputEffect_SetParameters(new_effect->ref, lpeff,
+            DIEP_AXES | DIEP_DIRECTION | DIEP_DURATION | DIEP_ENVELOPE |
+            DIEP_GAIN | DIEP_SAMPLEPERIOD | DIEP_STARTDELAY | DIEP_TRIGGERBUTTON |
+            DIEP_TRIGGERREPEATINTERVAL | DIEP_TYPESPECIFICPARAMS);
 
         if (retval != DI_OK && retval != DI_DOWNLOADSKIPPED)
         {

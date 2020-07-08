@@ -18,8 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <stdio.h>
 
 #include "wine/winbase16.h"
@@ -53,7 +51,7 @@ static const INTPROC DOSVM_VectorsBuiltin[] =
   /* 04 */ 0,                  0,                  0,                  0,
   /* 08 */ 0,                  0,                  0,                  0,
   /* 0C */ 0,                  0,                  0,                  0,
-  /* 10 */ 0,                  DOSVM_Int11Handler, DOSVM_Int12Handler, DOSVM_Int13Handler,
+  /* 10 */ 0,                  DOSVM_Int11Handler, DOSVM_Int12Handler, 0,
   /* 14 */ 0,                  DOSVM_Int15Handler, 0,                  DOSVM_Int17Handler,
   /* 18 */ 0,                  DOSVM_Int19Handler, DOSVM_Int1aHandler, 0,
   /* 1C */ 0,                  0,                  0,                  0,
@@ -72,10 +70,7 @@ static const INTPROC DOSVM_VectorsBuiltin[] =
   /* 50 */ 0,                  0,                  0,                  0,
   /* 54 */ 0,                  0,                  0,                  0,
   /* 58 */ 0,                  0,                  0,                  0,
-  /* 5C */ DOSVM_Int5cHandler, 0,                  0,                  0,
-  /* 60 */ 0,                  0,                  0,                  0,
-  /* 64 */ 0,                  0,                  0,                  DOSVM_Int67Handler,
-  /* 68 */ DOSVM_DefaultHandler
+  /* 5C */ DOSVM_Int5cHandler
 };
 
 
@@ -93,6 +88,18 @@ static const INTPROC DOSVM_VectorsBuiltin[] =
  */
 static void WINAPI DOSVM_DefaultHandler( CONTEXT *context )
 {
+}
+
+
+/**********************************************************************
+ *          DOSVM_Exit
+ */
+void DOSVM_Exit( WORD retval )
+{
+    DWORD count;
+
+    ReleaseThunkLock( &count );
+    ExitThread( retval );
 }
 
 
@@ -189,7 +196,7 @@ static void DOSVM_HardwareInterruptPM( CONTEXT *context, BYTE intnum )
 {
     FARPROC16 addr = DOSVM_GetPMHandler16( intnum );
 
-    if (SELECTOROF(addr) == DOSVM_dpmi_segments->int16_sel)
+    if (SELECTOROF(addr) == int16_sel)
     {
         TRACE( "builtin interrupt %02x has been invoked "
                "(through vector %02x)\n",
@@ -243,14 +250,14 @@ BOOL DOSVM_EmulateInterruptPM( CONTEXT *context, BYTE intnum )
 
     DOSMEM_InitDosMemory();
 
-    if (context->SegCs == DOSVM_dpmi_segments->relay_code_sel)
+    if (context->SegCs == relay_code_sel)
     {
         /*
          * This must not be called using DOSVM_BuildCallFrame.
          */
         DOSVM_RelayHandler( context );
     }
-    else if (context->SegCs == DOSVM_dpmi_segments->int16_sel)
+    else if (context->SegCs == int16_sel)
     {
         /* Restore original flags stored into the stack by the caller. */
         WORD *stack = CTX_SEG_OFF_TO_LIN(context, 
@@ -271,7 +278,7 @@ BOOL DOSVM_EmulateInterruptPM( CONTEXT *context, BYTE intnum )
                               DOSVM_IntProcRelay, 
                               DOSVM_GetBuiltinHandler(intnum) );
     }
-    else if (wine_ldt_is_system(context->SegCs))
+    else if (ldt_is_system(context->SegCs))
     {
         INTPROC proc;
         if (intnum >= ARRAY_SIZE(DOSVM_VectorsBuiltin)) return FALSE;
@@ -328,8 +335,7 @@ FARPROC16 DOSVM_GetPMHandler16( BYTE intnum )
     }
     if (!DOSVM_Vectors16[intnum])
     {
-        proc = (FARPROC16)MAKESEGPTR( DOSVM_dpmi_segments->int16_sel,
-                                                DOSVM_STUB_PM16 * intnum );
+        proc = (FARPROC16)MAKESEGPTR( int16_sel, DOSVM_STUB_PM16 * intnum );
         DOSVM_Vectors16[intnum] = proc;
     }
     return DOSVM_Vectors16[intnum];

@@ -92,19 +92,9 @@ static HRESULT WINAPI qualifier_set_QueryInterface(
 static HRESULT create_qualifier_enum( const WCHAR *class, const WCHAR *member, const WCHAR *name,
                                       IEnumWbemClassObject **iter )
 {
-    static const WCHAR fmtW[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','_','_','Q','U','A','L',
-         'I','F','I','E','R','S',' ','W','H','E','R','E',' ','C','l','a','s','s','=',
-         '\'','%','s','\'',' ','A','N','D',' ','M','e','m','b','e','r','=','\'','%','s','\'',' ',
-         'A','N','D',' ','N','a','m','e','=','\'','%','s','\'',0};
-    static const WCHAR fmt2W[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','_','_','Q','U','A','L',
-         'I','F','I','E','R','S',' ','W','H','E','R','E',' ','C','l','a','s','s','=',
-         '\'','%','s','\'',' ','A','N','D',' ','M','e','m','b','e','r','=','\'','%','s','\'',0};
-    static const WCHAR fmt3W[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','_','_','Q','U','A','L',
-         'I','F','I','E','R','S',' ','W','H','E','R','E',' ','C','l','a','s','s','=',
-         '\'','%','s','\'',0};
+    static const WCHAR fmtW[] = L"SELECT * FROM __QUALIFIERS WHERE Class='%s' AND Member='%s' AND Name='%s'";
+    static const WCHAR fmt2W[] = L"SELECT * FROM __QUALIFIERS WHERE Class='%s' AND Member='%s'";
+    static const WCHAR fmt3W[] = L"SELECT * FROM __QUALIFIERS WHERE Class='%s'";
     WCHAR *query;
     HRESULT hr;
     int len;
@@ -136,11 +126,6 @@ static HRESULT create_qualifier_enum( const WCHAR *class, const WCHAR *member, c
 static HRESULT get_qualifier_value( const WCHAR *class, const WCHAR *member, const WCHAR *name,
                                     VARIANT *val, LONG *flavor )
 {
-    static const WCHAR intvalueW[] = {'I','n','t','e','g','e','r','V','a','l','u','e',0};
-    static const WCHAR strvalueW[] = {'S','t','r','i','n','g','V','a','l','u','e',0};
-    static const WCHAR boolvalueW[] = {'B','o','o','l','V','a','l','u','e',0};
-    static const WCHAR flavorW[] = {'F','l','a','v','o','r',0};
-    static const WCHAR typeW[] = {'T','y','p','e',0};
     IEnumWbemClassObject *iter;
     IWbemClassObject *obj;
     VARIANT var;
@@ -155,22 +140,22 @@ static HRESULT get_qualifier_value( const WCHAR *class, const WCHAR *member, con
 
     if (flavor)
     {
-        hr = IWbemClassObject_Get( obj, flavorW, 0, &var, NULL, NULL );
+        hr = IWbemClassObject_Get( obj, L"Flavor", 0, &var, NULL, NULL );
         if (hr != S_OK) goto done;
         *flavor = V_I4( &var );
     }
-    hr = IWbemClassObject_Get( obj, typeW, 0, &var, NULL, NULL );
+    hr = IWbemClassObject_Get( obj, L"Type", 0, &var, NULL, NULL );
     if (hr != S_OK) goto done;
     switch (V_UI4( &var ))
     {
     case CIM_STRING:
-        hr = IWbemClassObject_Get( obj, strvalueW, 0, val, NULL, NULL );
+        hr = IWbemClassObject_Get( obj, L"StringValue", 0, val, NULL, NULL );
         break;
     case CIM_SINT32:
-        hr = IWbemClassObject_Get( obj, intvalueW, 0, val, NULL, NULL );
+        hr = IWbemClassObject_Get( obj, L"IntegerValue", 0, val, NULL, NULL );
         break;
     case CIM_BOOLEAN:
-        hr = IWbemClassObject_Get( obj, boolvalueW, 0, val, NULL, NULL );
+        hr = IWbemClassObject_Get( obj, L"BoolValue", 0, val, NULL, NULL );
         break;
     default:
         ERR("unhandled type %u\n", V_UI4( &var ));

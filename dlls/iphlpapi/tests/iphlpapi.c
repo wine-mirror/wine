@@ -75,6 +75,9 @@ static DWORD (WINAPI *pConvertInterfaceNameToLuidA)(const char*,NET_LUID*);
 static DWORD (WINAPI *pConvertInterfaceNameToLuidW)(const WCHAR*,NET_LUID*);
 static DWORD (WINAPI *pConvertLengthToIpv4Mask)(ULONG,ULONG*);
 static DWORD (WINAPI *pParseNetworkString)(const WCHAR*,DWORD,NET_ADDRESS_INFO*,USHORT*,BYTE*);
+static DWORD (WINAPI *pNotifyUnicastIpAddressChange)(ADDRESS_FAMILY, PUNICAST_IPADDRESS_CHANGE_CALLBACK,
+                                                PVOID, BOOLEAN, HANDLE *);
+static DWORD (WINAPI *pCancelMibChangeNotify2)(HANDLE);
 
 static PCHAR (WINAPI *pif_indextoname)(NET_IFINDEX,PCHAR);
 static NET_IFINDEX (WINAPI *pif_nametoindex)(const char*);
@@ -107,6 +110,8 @@ static void loadIPHlpApi(void)
     pParseNetworkString = (void *)GetProcAddress(hLibrary, "ParseNetworkString");
     pif_indextoname = (void *)GetProcAddress(hLibrary, "if_indextoname");
     pif_nametoindex = (void *)GetProcAddress(hLibrary, "if_nametoindex");
+    pNotifyUnicastIpAddressChange = (void *)GetProcAddress(hLibrary, "NotifyUnicastIpAddressChange");
+    pCancelMibChangeNotify2 = (void *)GetProcAddress(hLibrary, "CancelMibChangeNotify2");
   }
 }
 
@@ -2287,6 +2292,41 @@ static void test_ParseNetworkString(void)
     }
 }
 
+static void WINAPI test_ipaddtess_change_callback(PVOID context, PMIB_UNICASTIPADDRESS_ROW row,
+                                                 MIB_NOTIFICATION_TYPE notification_type)
+{
+    BOOL *callback_called = context;
+
+    *callback_called = TRUE;
+
+    ok(notification_type == MibInitialNotification, "Unexpected notification_type %#x.\n",
+            notification_type);
+    ok(!row, "Unexpected row %p.\n", row);
+}
+
+static void test_NotifyUnicastIpAddressChange(void)
+{
+    BOOL callback_called;
+    HANDLE handle;
+    DWORD ret;
+
+    if (!pNotifyUnicastIpAddressChange)
+    {
+        win_skip("NotifyUnicastIpAddressChange not available.\n");
+        return;
+    }
+
+    callback_called = FALSE;
+    ret = pNotifyUnicastIpAddressChange(AF_INET, test_ipaddtess_change_callback,
+            &callback_called, TRUE, &handle);
+    ok(ret == NO_ERROR, "Unexpected ret %#x.\n", ret);
+    ok(callback_called, "Callback was not called.\n");
+
+    ret = pCancelMibChangeNotify2(handle);
+    ok(ret == NO_ERROR, "Unexpected ret %#x.\n", ret);
+    ok(!CloseHandle(handle), "CloseHandle() succeeded.\n");
+}
+
 START_TEST(iphlpapi)
 {
 
@@ -2318,6 +2358,7 @@ START_TEST(iphlpapi)
     test_GetTcp6Table();
     test_GetUdp6Table();
     test_ParseNetworkString();
+    test_NotifyUnicastIpAddressChange();
     freeIPHlpApi();
   }
 }

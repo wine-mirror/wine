@@ -93,12 +93,12 @@ MonoClass* (CDECL *mono_class_from_mono_type)(MonoType *type);
 MonoClass* (CDECL *mono_class_from_name)(MonoImage *image, const char* name_space, const char *name);
 MonoMethod* (CDECL *mono_class_get_method_from_name)(MonoClass *klass, const char *name, int param_count);
 static void (CDECL *mono_config_parse)(const char *filename);
-MonoAssembly* (CDECL *mono_domain_assembly_open)(MonoDomain *domain, const char *name);
 MonoDomain* (CDECL *mono_domain_get)(void);
 MonoDomain* (CDECL *mono_domain_get_by_id)(int id);
 BOOL (CDECL *mono_domain_set)(MonoDomain *domain,BOOL force);
 void (CDECL *mono_domain_set_config)(MonoDomain *domain,const char *base_dir,const char *config_file_name);
 static void (CDECL *mono_free)(void *);
+MonoImage* (CDECL *mono_get_corlib)(void);
 static MonoImage* (CDECL *mono_image_open)(const char *fname, MonoImageOpenStatus *status);
 MonoImage* (CDECL *mono_image_open_from_module_handle)(HMODULE module_handle, char* fname, UINT has_entry_point, MonoImageOpenStatus* status);
 static void (CDECL *mono_install_assembly_preload_hook)(MonoAssemblyPreLoadFunc func, void *user_data);
@@ -198,12 +198,12 @@ static HRESULT load_mono(LPCWSTR mono_path)
         LOAD_MONO_FUNCTION(mono_class_from_mono_type);
         LOAD_MONO_FUNCTION(mono_class_from_name);
         LOAD_MONO_FUNCTION(mono_class_get_method_from_name);
-        LOAD_MONO_FUNCTION(mono_domain_assembly_open);
         LOAD_MONO_FUNCTION(mono_domain_get);
         LOAD_MONO_FUNCTION(mono_domain_get_by_id);
         LOAD_MONO_FUNCTION(mono_domain_set);
         LOAD_MONO_FUNCTION(mono_domain_set_config);
         LOAD_MONO_FUNCTION(mono_free);
+        LOAD_MONO_FUNCTION(mono_get_corlib);
         LOAD_MONO_FUNCTION(mono_image_open);
         LOAD_MONO_FUNCTION(mono_install_assembly_preload_hook);
         LOAD_MONO_FUNCTION(mono_jit_exec);
@@ -477,7 +477,7 @@ static BOOL get_install_root(LPWSTR install_dir)
     if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, dotnet_key, 0, KEY_READ, &key))
         return FALSE;
 
-    len = MAX_PATH;
+    len = MAX_PATH * sizeof(WCHAR);
     if (RegQueryValueExW(key, install_root, 0, NULL, (LPBYTE)install_dir, &len))
     {
         RegCloseKey(key);
@@ -785,7 +785,7 @@ static BOOL get_mono_path_datadir(LPWSTR path)
     static const WCHAR winebuilddirW[] = {'W','I','N','E','B','U','I','L','D','D','I','R',0};
     static const WCHAR unix_prefix[] = {'\\','?','?','\\','u','n','i','x','\\'};
     static const WCHAR monoW[] = {'\\','m','o','n','o',0};
-    static const WCHAR dotdotW[] = {'\\','.','.',0};
+    static const WCHAR dotdotmonoW[] = {'\\','.','.','\\','m','o','n','o',0};
     const WCHAR *data_dir, *suffix;
     WCHAR *package_dir;
     BOOL ret;
@@ -793,7 +793,7 @@ static BOOL get_mono_path_datadir(LPWSTR path)
     if ((data_dir = _wgetenv( winedatadirW )))
         suffix = monoW;
     else if ((data_dir = _wgetenv( winebuilddirW )))
-        suffix = dotdotW;
+        suffix = dotdotmonoW;
     else
         return FALSE;
 

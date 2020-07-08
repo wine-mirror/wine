@@ -539,7 +539,7 @@ static HRESULT WINAPI ResProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
         DWORD grfPI, HANDLE_PTR dwReserved)
 {
     InternetProtocol *This = impl_from_IInternetProtocol(iface);
-    WCHAR *url_dll, *url_file, *url, *mime, *res_type = (LPWSTR)RT_HTML, *ptr;
+    WCHAR *url_dll, *url_file, *url, *mime, *res_type, *alt_res_type = NULL, *ptr;
     DWORD grfBINDF = 0, len;
     BINDINFO bindinfo;
     HMODULE hdll;
@@ -585,10 +585,16 @@ static HRESULT WINAPI ResProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
 
     *res_type++ = 0;
     if ((url_file = wcschr(res_type, '/'))) {
+        DWORD res_type_id;
+        WCHAR *endpoint;
         *url_file++ = 0;
+        res_type_id = wcstol(res_type, &endpoint, 10);
+        if(!*endpoint)
+            res_type = MAKEINTRESOURCEW(res_type_id);
     }else {
         url_file = res_type;
-        res_type = (LPWSTR)RT_HTML;
+        res_type = MAKEINTRESOURCEW(RT_HTML);
+        alt_res_type = MAKEINTRESOURCEW(2110 /* RT_FILE */);
     }
 
     /* Ignore query and hash parts. */
@@ -608,12 +614,16 @@ static HRESULT WINAPI ResProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     TRACE("trying to find resource type %s, name %s\n", debugstr_w(res_type), debugstr_w(url_file));
 
     src = FindResourceW(hdll, url_file, res_type);
+    if(!src && alt_res_type)
+        src = FindResourceW(hdll, url_file, alt_res_type);
     if(!src) {
         LPWSTR endpoint = NULL;
         DWORD file_id = wcstol(url_file, &endpoint, 10);
-        if(endpoint == url_file+lstrlenW(url_file))
+        if(!*endpoint) {
             src = FindResourceW(hdll, MAKEINTRESOURCEW(file_id), res_type);
-
+            if(!src && alt_res_type)
+                src = FindResourceW(hdll, MAKEINTRESOURCEW(file_id), alt_res_type);
+        }
         if(!src) {
             WARN("Could not find resource\n");
             IInternetProtocolSink_ReportResult(pOIProtSink,

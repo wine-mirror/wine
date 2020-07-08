@@ -38,7 +38,6 @@
 #include "schannel.h"
 #include "secur32_priv.h"
 #include "wine/debug.h"
-#include "wine/library.h"
 
 #ifdef HAVE_SECURITY_SECURITY_H
 
@@ -1193,6 +1192,18 @@ BOOL schan_imp_allocate_certificate_credentials(schan_credentials *c, const CERT
 
 void schan_imp_free_certificate_credentials(schan_credentials *c)
 {
+}
+
+void schan_imp_set_application_protocols(schan_imp_session session, unsigned char *buffer, unsigned int buflen)
+{
+    FIXME("no support for application protocols on this platform\n");
+}
+
+SECURITY_STATUS schan_imp_get_application_protocol(schan_imp_session session,
+                                                   SecPkgContext_ApplicationProtocol *protocol)
+{
+    FIXME("no support for application protocols on this platform\n");
+    return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
 BOOL schan_imp_init(void)

@@ -1140,6 +1140,14 @@ static const IEnumAssocHandlersVtbl enumassochandlersvtbl = {
 };
 
 /**************************************************************************
+ * SHCreateAssociationRegistration [SHELL32.@]
+ */
+HRESULT WINAPI SHCreateAssociationRegistration(REFIID riid, LPVOID *ppv)
+{
+    return ApplicationAssociationRegistration_Constructor(NULL, riid, ppv);
+}
+
+/**************************************************************************
  * SHAssocEnumHandlers            [SHELL32.@]
  */
 HRESULT WINAPI SHAssocEnumHandlers(const WCHAR *extra, ASSOC_FILTER filter, IEnumAssocHandlers **enumhandlers)

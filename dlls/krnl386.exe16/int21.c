@@ -23,33 +23,24 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdarg.h>
 #include <stdio.h>
-#ifdef HAVE_SYS_STAT_H
-# include <sys/stat.h>
-#endif
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
+#include <string.h>
 
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
+#include "wincon.h"
 #include "winternl.h"
 #include "wine/winbase16.h"
 #include "kernel16_private.h"
 #include "dosexe.h"
 #include "winerror.h"
 #include "winuser.h"
-#include "wine/unicode.h"
 #include "wine/server.h"
 #include "wine/debug.h"
 #include "wine/exception.h"
 
-BOOL    WINAPI VerifyConsoleIoHandle(HANDLE);
 /*
  * Note:
  * - Most of the file related functions are wrong. NT's kernel32
@@ -264,23 +255,12 @@ typedef struct
 
 static int brk_flag;
 
-struct magic_device
+static BYTE drive_number( WCHAR letter )
 {
-    WCHAR  name[10];
-    HANDLE handle;
-    LARGE_INTEGER index;
-    void (*ioctl_handler)(CONTEXT *);
-};
-
-static void INT21_IoctlScsiMgrHandler( CONTEXT * );
-static void INT21_IoctlHPScanHandler( CONTEXT * );
-
-static struct magic_device magic_devices[] =
-{
-    { {'s','c','s','i','m','g','r','$',0}, NULL, { { 0, 0 } }, INT21_IoctlScsiMgrHandler },
-    { {'e','m','m','x','x','x','x','0',0}, NULL, { { 0, 0 } }, EMS_Ioctl_Handler },
-    { {'h','p','s','c','a','n',0},         NULL, { { 0, 0 } }, INT21_IoctlHPScanHandler },
-};
+    if (letter >= 'A' && letter <= 'Z') return letter - 'A';
+    if (letter >= 'a' && letter <= 'z') return letter - 'a';
+    return MAX_DOS_DRIVES;
+}
 
 
 /* Many calls translate a drive argument like this:
@@ -318,8 +298,7 @@ static BYTE INT21_GetCurrentDrive(void)
         TRACE( "Failed to get current drive.\n" );
         return MAX_DOS_DRIVES;
     }
-
-    return toupperW( current_directory[0] ) - 'A';
+    return drive_number( current_directory[0] );
 }
 
 
@@ -520,9 +499,8 @@ static INT21_HEAP *INT21_GetHeapPointer( void )
 
     if (!heap_pointer)
     {
-        WORD heap_selector;
-
-        heap_pointer = DOSVM_AllocDataUMB( sizeof(INT21_HEAP), &heap_selector );
+        WORD heap_selector = GlobalAlloc16( GMEM_FIXED, sizeof(INT21_HEAP) );
+        heap_pointer = GlobalLock16( heap_selector );
         heap_pointer->misc_selector = heap_selector;
         INT21_FillHeap( heap_pointer );
     }
@@ -655,7 +633,7 @@ static BOOL INT21_GetCurrentDirectory( CONTEXT *context, BOOL islong )
 
     if (!GetCurrentDirectoryW( MAX_PATH, pathW )) return FALSE;
 
-    if (toupperW(pathW[0]) - 'A' != drive || pathW[1] != ':')
+    if (drive_number( pathW[0] ) != drive || pathW[1] != ':')
     {
         /* cwd is not on the requested drive, get the environment string instead */
 
@@ -784,100 +762,10 @@ static BOOL INT21_SetCurrentDirectory( CONTEXT *context )
     result = SetEnvironmentVariableW( env_var, dirW );
 
     /* only set current directory if on the current drive */
-    if (result && (toupperW(dirW[0]) - 'A' == drive)) result = SetCurrentDirectoryW( dirW );
+    if (result && (drive_number( dirW[0] ) == drive)) result = SetCurrentDirectoryW( dirW );
 
     return result;
 }
-
-/***********************************************************************
- *           INT21_CreateMagicDeviceHandle
- *
- * Create a dummy file handle for a "magic" device.
- */
-static HANDLE INT21_CreateMagicDeviceHandle( LPCWSTR name )
-{
-    static const WCHAR prefixW[] = {'\\','?','?','\\','u','n','i','x'};
-    const char *dir = wine_get_server_dir();
-    int len;
-    HANDLE ret;
-    NTSTATUS status;
-    OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING nameW;
-    IO_STATUS_BLOCK io;
-
-    len = MultiByteToWideChar( CP_UNIXCP, 0, dir, -1, NULL, 0 );
-    nameW.Length = sizeof(prefixW) + (len + strlenW( name )) * sizeof(WCHAR);
-    nameW.MaximumLength = nameW.Length + sizeof(WCHAR);
-    if (!(nameW.Buffer = HeapAlloc( GetProcessHeap(), 0, nameW.MaximumLength )))
-    {
-        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-        return 0;
-    }
-    memcpy( nameW.Buffer, prefixW, sizeof(prefixW) );
-    MultiByteToWideChar( CP_UNIXCP, 0, dir, -1, nameW.Buffer + ARRAY_SIZE(prefixW), len );
-    len += ARRAY_SIZE(prefixW);
-    nameW.Buffer[len-1] = '/';
-    strcpyW( nameW.Buffer + len, name );
-
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.Attributes = 0;
-    attr.ObjectName = &nameW;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
-
-    status = NtCreateFile( &ret, GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE, &attr, &io, NULL, 0,
-                           FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_OPEN_IF,
-                           FILE_SYNCHRONOUS_IO_ALERT, NULL, 0 );
-    if (status)
-    {
-        ret = 0;
-        SetLastError( RtlNtStatusToDosError(status) );
-    }
-    RtlFreeUnicodeString( &nameW );
-    return ret;
-}
-
-
-/***********************************************************************
- *           INT21_OpenMagicDevice
- *
- * Open a file handle for "magic" devices like EMMXXXX0.
- */
-static HANDLE INT21_OpenMagicDevice( LPCWSTR name, DWORD access )
-{
-    unsigned int i;
-    const WCHAR *p;
-    HANDLE handle;
-
-    if (name[0] && (name[1] == ':')) name += 2;
-    if ((p = strrchrW( name, '/' ))) name = p + 1;
-    if ((p = strrchrW( name, '\\' ))) name = p + 1;
-
-    for (i = 0; i < ARRAY_SIZE(magic_devices); i++)
-    {
-        int len = strlenW( magic_devices[i].name );
-        if (!strncmpiW( magic_devices[i].name, name, len ) &&
-            (!name[len] || name[len] == '.' || name[len] == ':')) break;
-    }
-    if (i == ARRAY_SIZE(magic_devices)) return 0;
-
-    if (!magic_devices[i].handle) /* need to open it */
-    {
-        IO_STATUS_BLOCK io;
-        FILE_INTERNAL_INFORMATION info;
-
-        if (!(handle = INT21_CreateMagicDeviceHandle( magic_devices[i].name ))) return 0;
-
-        NtQueryInformationFile( handle, &io, &info, sizeof(info), FileInternalInformation );
-        magic_devices[i].index = info.IndexNumber;
-        magic_devices[i].handle = handle;
-    }
-    if (!DuplicateHandle( GetCurrentProcess(), magic_devices[i].handle,
-                          GetCurrentProcess(), &handle, access, FALSE, 0 )) handle = 0;
-    return handle;
-}
-
 
 /***********************************************************************
  *           INT21_CreateFile
@@ -1033,52 +921,44 @@ static BOOL INT21_CreateFile( CONTEXT *context,
      */
     MultiByteToWideChar(CP_OEMCP, 0, pathA, -1, pathW, MAX_PATH);
 
-    if ((winHandle = INT21_OpenMagicDevice( pathW, winAccess )))
-    {
-        dosStatus = 1;
+    winHandle = CreateFileW( pathW, winAccess, winSharing, NULL, winMode, winAttributes, 0 );
+    /* DOS allows opening files on a CDROM R/W */
+    if( winHandle == INVALID_HANDLE_VALUE &&
+        (GetLastError() == ERROR_WRITE_PROTECT ||
+         GetLastError() == ERROR_ACCESS_DENIED)) {
+        winHandle = CreateFileW( pathW, winAccess & ~GENERIC_WRITE,
+                                 winSharing, NULL, winMode, winAttributes, 0 );
     }
-    else
+
+    if (winHandle == INVALID_HANDLE_VALUE)
+        return FALSE;
+
+    /*
+     * Determine DOS file status.
+     *
+     * 1 = file opened
+     * 2 = file created
+     * 3 = file replaced
+     */
+    switch(winMode)
     {
-        winHandle = CreateFileW( pathW, winAccess, winSharing, NULL,
-                                 winMode, winAttributes, 0 );
-        /* DOS allows opening files on a CDROM R/W */
-        if( winHandle == INVALID_HANDLE_VALUE &&
-                (GetLastError() == ERROR_WRITE_PROTECT ||
-                 GetLastError() == ERROR_ACCESS_DENIED)) {
-            winHandle = CreateFileW( pathW, winAccess & ~GENERIC_WRITE,
-                    winSharing, NULL, winMode, winAttributes, 0 );
-        }
-
-        if (winHandle == INVALID_HANDLE_VALUE)
-            return FALSE;
-
-        /*
-         * Determine DOS file status.
-         *
-         * 1 = file opened
-         * 2 = file created
-         * 3 = file replaced
-         */
-        switch(winMode)
-        {
-        case OPEN_EXISTING:
-            dosStatus = 1;
-            break;
-        case TRUNCATE_EXISTING:
-            dosStatus = 3;
-            break;
-        case CREATE_NEW:
-            dosStatus = 2;
-            break;
-        case OPEN_ALWAYS:
-            dosStatus = (GetLastError() == ERROR_ALREADY_EXISTS) ? 1 : 2;
-            break;
-        case CREATE_ALWAYS:
-            dosStatus = (GetLastError() == ERROR_ALREADY_EXISTS) ? 3 : 2;
-            break;
-        default:
-            dosStatus = 0;
-        }
+    case OPEN_EXISTING:
+        dosStatus = 1;
+        break;
+    case TRUNCATE_EXISTING:
+        dosStatus = 3;
+        break;
+    case CREATE_NEW:
+        dosStatus = 2;
+        break;
+    case OPEN_ALWAYS:
+        dosStatus = (GetLastError() == ERROR_ALREADY_EXISTS) ? 1 : 2;
+        break;
+    case CREATE_ALWAYS:
+        dosStatus = (GetLastError() == ERROR_ALREADY_EXISTS) ? 3 : 2;
+        break;
+    default:
+        dosStatus = 0;
     }
 
     /*
@@ -2551,105 +2431,14 @@ static void INT21_Ioctl_Block( CONTEXT *context )
 
 
 /***********************************************************************
- *           INT21_IoctlScsiMgrHandler
- *
- * IOCTL handler for the SCSIMGR device.
- */
-static void INT21_IoctlScsiMgrHandler( CONTEXT *context )
-{
-    switch (AL_reg(context))
-    {
-    case 0x00: /* GET DEVICE INFORMATION */
-        SET_DX( context, 0xc0c0 );
-        break;
-
-    case 0x0a: /* CHECK IF HANDLE IS REMOTE */
-        SET_DX( context, 0 );
-        break;
-
-    case 0x01: /* SET DEVICE INFORMATION */
-    case 0x02: /* READ FROM CHARACTER DEVICE CONTROL CHANNEL */
-    case 0x03: /* WRITE TO CHARACTER DEVICE CONTROL CHANNEL */
-    case 0x06: /* GET INPUT STATUS */
-    case 0x07: /* GET OUTPUT STATUS */
-    case 0x0c: /* GENERIC CHARACTER DEVICE REQUEST */
-    case 0x10: /* QUERY GENERIC IOCTL CAPABILITY */
-    default:
-        INT_BARF( context, 0x21 );
-        break;
-    }
-}
-
-
-/***********************************************************************
- *           INT21_IoctlHPScanHandler
- *
- * IOCTL handler for the HPSCAN device.
- */
-static void INT21_IoctlHPScanHandler( CONTEXT *context )
-{
-    switch (AL_reg(context))
-    {
-    case 0x00: /* GET DEVICE INFORMATION */
-        SET_DX( context, 0xc0c0 );
-        break;
-
-    case 0x0a: /* CHECK IF HANDLE IS REMOTE */
-        SET_DX( context, 0 );
-        break;
-
-    case 0x01: /* SET DEVICE INFORMATION */
-    case 0x02: /* READ FROM CHARACTER DEVICE CONTROL CHANNEL */
-    case 0x03: /* WRITE TO CHARACTER DEVICE CONTROL CHANNEL */
-    case 0x06: /* GET INPUT STATUS */
-    case 0x07: /* GET OUTPUT STATUS */
-    case 0x0c: /* GENERIC CHARACTER DEVICE REQUEST */
-    case 0x10: /* QUERY GENERIC IOCTL CAPABILITY */
-    default:
-        INT_BARF( context, 0x21 );
-        break;
-    }
-}
-
-
-/***********************************************************************
  *           INT21_Ioctl_Char
  *
  * Handler for character device IOCTLs.
  */
 static void INT21_Ioctl_Char( CONTEXT *context )
 {
-    int status;
-    BOOL IsConsoleIOHandle = FALSE;
-    IO_STATUS_BLOCK io;
-    FILE_INTERNAL_INFORMATION info;
     HANDLE handle = DosFileHandleToWin32Handle(BX_reg(context));
-
-    status = NtQueryInformationFile( handle, &io, &info, sizeof(info), FileInternalInformation );
-    if (status)
-    {
-        if( VerifyConsoleIoHandle( handle))
-            IsConsoleIOHandle = TRUE;
-        else {
-            SET_AX( context, RtlNtStatusToDosError(status) );
-            SET_CFLAG( context );
-            return;
-        }
-    } else {
-        UINT i;
-        for (i = 0; i < ARRAY_SIZE(magic_devices); i++)
-        {
-            if (!magic_devices[i].handle) continue;
-            if (magic_devices[i].index.QuadPart == info.IndexNumber.QuadPart)
-            {
-                /* found it */
-                magic_devices[i].ioctl_handler( context );
-                return;
-            }
-        }
-    }
-
-    /* no magic device found, do default handling */
+    BOOL IsConsoleIOHandle = VerifyConsoleIoHandle( handle );
 
     switch (AL_reg(context))
     {
@@ -3560,7 +3349,7 @@ static BOOL INT21_CreateTempFile( CONTEXT *context )
 
     for (;;)
     {
-        sprintf( p, "wine%04x.%03d", (int)getpid(), counter );
+        sprintf( p, "wine%04x.%03d", GetCurrentThreadId(), counter );
         counter = (counter + 1) % 1000;
 
         SET_AX( context, 
@@ -3625,9 +3414,8 @@ static BOOL INT21_ToDosFCBFormat( LPCWSTR name, LPWSTR buffer )
             buffer[i] = '?';
             break;
         default:
-            if (strchrW( invalid_chars, *p )) return FALSE;
-            buffer[i] = toupperW(*p);
-            p++;
+            if (wcschr( invalid_chars, *p )) return FALSE;
+            buffer[i] = *p++;
             break;
         }
     }
@@ -3662,13 +3450,13 @@ static BOOL INT21_ToDosFCBFormat( LPCWSTR name, LPWSTR buffer )
             buffer[i] = '?';
             break;
         default:
-            if (strchrW( invalid_chars, *p )) return FALSE;
-            buffer[i] = toupperW(*p);
-            p++;
+            if (wcschr( invalid_chars, *p )) return FALSE;
+            buffer[i] = *p++;
             break;
         }
     }
     buffer[11] = '\0';
+    wcsupr( buffer );
 
     /* at most 3 character of the extension are processed
      * is something behind this ?
@@ -3694,8 +3482,8 @@ static BOOL INT21_FindFirst( CONTEXT *context )
     path = CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx);
     MultiByteToWideChar(CP_OEMCP, 0, path, -1, pathW, MAX_PATH);
 
-    p = strrchrW( pathW, '\\');
-    q = strrchrW( pathW, '/');
+    p = wcsrchr( pathW, '\\');
+    q = wcsrchr( pathW, '/');
     if (q>p) p = q;
     if (!p)
     {
@@ -3722,7 +3510,7 @@ static BOOL INT21_FindFirst( CONTEXT *context )
     /* we must have a fully qualified file name in dta->fullPath
      * (we could have a UNC path, but this would lead to some errors later on)
      */
-    dta->drive = toupperW(dta->fullPath[0]) - 'A';
+    dta->drive = drive_number( dta->fullPath[0] );
     dta->count = 0;
     dta->search_attr = CL_reg(context);
     return TRUE;
@@ -4782,8 +4570,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT *context )
 
     case 0x4d: /* GET RETURN CODE */
         TRACE("GET RETURN CODE (ERRORLEVEL)\n");
-        SET_AX( context, DOSVM_retval );
-        DOSVM_retval = 0;
+        SET_AX( context, 0 );
         break;
 
     case 0x4e: /* "FINDFIRST" - FIND FIRST MATCHING FILE */

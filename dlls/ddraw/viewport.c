@@ -28,20 +28,17 @@ WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 static void update_clip_space(struct d3d_device *device,
         struct wined3d_vec3 *scale, struct wined3d_vec3 *offset)
 {
-    D3DMATRIX clip_space =
+    struct wined3d_matrix clip_space =
     {
         scale->x,  0.0f,      0.0f,      0.0f,
         0.0f,      scale->y,  0.0f,      0.0f,
         0.0f,      0.0f,      scale->z,  0.0f,
         offset->x, offset->y, offset->z, 1.0f,
     };
-    D3DMATRIX projection;
+    struct wined3d_matrix projection;
 
     multiply_matrix(&projection, &clip_space, &device->legacy_projection);
-    wined3d_stateblock_set_transform(device->state,
-            WINED3D_TS_PROJECTION, (struct wined3d_matrix *)&projection);
-    wined3d_device_set_transform(device->wined3d_device,
-            WINED3D_TS_PROJECTION, (struct wined3d_matrix *)&projection);
+    wined3d_stateblock_set_transform(device->state, WINED3D_TS_PROJECTION, &projection);
     device->legacy_clipspace = clip_space;
 }
 
@@ -486,9 +483,10 @@ static HRESULT WINAPI d3d_viewport_TransformVertices(IDirect3DViewport3 *iface,
         DWORD dwVertexCount, D3DTRANSFORMDATA *data, DWORD dwFlags, DWORD *offscreen)
 {
     struct d3d_viewport *viewport = impl_from_IDirect3DViewport3(iface);
+    const struct wined3d_stateblock_state *state;
     D3DVIEWPORT vp = viewport->viewports.vp1;
-    D3DMATRIX view_mat, world_mat, proj_mat, mat;
     struct transform_vertices_vertex *in, *out;
+    struct wined3d_matrix mat;
     float x, y, z, w;
     unsigned int i;
     D3DHVERTEX *outH;
@@ -522,14 +520,9 @@ static HRESULT WINAPI d3d_viewport_TransformVertices(IDirect3DViewport3 *iface,
     if (activate)
         viewport_activate(viewport, TRUE);
 
-    wined3d_device_get_transform(device->wined3d_device,
-            D3DTRANSFORMSTATE_VIEW, (struct wined3d_matrix *)&view_mat);
-    wined3d_device_get_transform(device->wined3d_device,
-            WINED3D_TS_WORLD_MATRIX(0), (struct wined3d_matrix *)&world_mat);
-    wined3d_device_get_transform(device->wined3d_device,
-            WINED3D_TS_PROJECTION, (struct wined3d_matrix *)&proj_mat);
-    multiply_matrix(&mat, &view_mat, &world_mat);
-    multiply_matrix(&mat, &proj_mat, &mat);
+    state = device->stateblock_state;
+    multiply_matrix(&mat, &state->transforms[WINED3D_TS_VIEW], &state->transforms[WINED3D_TS_WORLD_MATRIX(0)]);
+    multiply_matrix(&mat, &state->transforms[WINED3D_TS_PROJECTION], &mat);
 
     /* The pointer is not tested against NULL on Windows. */
     if (dwFlags & D3DTRANSFORM_CLIPPED)

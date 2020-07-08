@@ -746,7 +746,7 @@ PPD *PSDRV_ParsePPD( const WCHAR *fname, HANDLE printer )
 	}
 
 	else if(!strcmp("*ColorDevice", tuple.key)) {
-	    if(!_strnicmp(tuple.value, "true", -1))
+	    if(!stricmp(tuple.value, "true"))
                 ppd->ColorDevice = CD_True;
             else
                 ppd->ColorDevice = CD_False;
@@ -964,13 +964,13 @@ PPD *PSDRV_ParsePPD( const WCHAR *fname, HANDLE printer )
 	}
 
 	else if(!strcmp("*TTRasterizer", tuple.key)) {
-	    if(!_strnicmp("None", tuple.value, -1))
+	    if(!stricmp("None", tuple.value))
 	        ppd->TTRasterizer = RO_None;
-	    else if(!_strnicmp("Accept68K", tuple.value, -1))
+	    else if(!stricmp("Accept68K", tuple.value))
 	        ppd->TTRasterizer = RO_Accept68K;
-	    else if(!_strnicmp("Type42", tuple.value, -1))
+	    else if(!stricmp("Type42", tuple.value))
 	        ppd->TTRasterizer = RO_Type42;
-	    else if(!_strnicmp("TrueImage", tuple.value, -1))
+	    else if(!stricmp("TrueImage", tuple.value))
 	        ppd->TTRasterizer = RO_TrueImage;
 	    else {
 	        FIXME("Unknown option %s for *TTRasterizer\n",
@@ -986,14 +986,14 @@ PPD *PSDRV_ParsePPD( const WCHAR *fname, HANDLE printer )
             duplex->Name = tuple.option;
             duplex->FullName = tuple.opttrans;
             duplex->InvocationString = tuple.value;
-            if(!_strnicmp("None", tuple.option, -1) || !_strnicmp("False", tuple.option, -1)
-               || !_strnicmp("Simplex", tuple.option, -1))
+            if(!stricmp("None", tuple.option) || !stricmp("False", tuple.option)
+               || !stricmp("Simplex", tuple.option))
                 duplex->WinDuplex = DMDUP_SIMPLEX;
-            else if(!_strnicmp("DuplexNoTumble", tuple.option, -1))
+            else if(!stricmp("DuplexNoTumble", tuple.option))
                 duplex->WinDuplex = DMDUP_VERTICAL;
-            else if(!_strnicmp("DuplexTumble", tuple.option, -1))
+            else if(!stricmp("DuplexTumble", tuple.option))
                 duplex->WinDuplex = DMDUP_HORIZONTAL;
-            else if(!_strnicmp("Notcapable", tuple.option, -1))
+            else if(!stricmp("Notcapable", tuple.option))
                 duplex->WinDuplex = 0;
             else {
                 FIXME("Unknown option %s for *Duplex defaulting to simplex\n", tuple.option);

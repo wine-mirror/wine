@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define GL_SILENCE_DEPRECATION
 #include <OpenGL/gl.h>
 #import "cocoa_opengl.h"
 
@@ -359,8 +360,9 @@ void macdrv_update_opengl_context(macdrv_opengl_context c)
                 [context clearDrawableLeavingSurfaceOnScreen];
                 context.view = view;
             }
-            else
+            else OnMainThread(^{
                 [context update];
+            });
             [context resetSurfaceIfBackingSizeChanged];
         }
     }

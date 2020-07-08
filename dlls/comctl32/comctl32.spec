@@ -63,30 +63,30 @@
 342 stdcall -noname SendNotifyEx(long long long ptr long)
 344 stdcall -ordinal TaskDialog(long long wstr wstr wstr long wstr ptr)
 345 stdcall -ordinal TaskDialogIndirect(ptr ptr ptr ptr)
-350 stdcall -noname -private StrChrA(str long)
-351 stdcall -noname -private StrRChrA(str str long)
-352 stdcall -noname -private StrCmpNA(str str long)
-353 stdcall -noname -private StrCmpNIA(str str long)
-354 stdcall -noname -private StrStrA(str str)
-355 stdcall -noname -private StrStrIA(str str)
-356 stdcall -noname -private StrCSpnA(str str)
-357 stdcall -noname -private StrToIntA(str)
-358 stdcall -noname -private StrChrW(wstr long)
-359 stdcall -noname -private StrRChrW(wstr wstr long)
-360 stdcall -noname -private StrCmpNW(wstr wstr long)
-361 stdcall -noname -private StrCmpNIW(wstr wstr long)
-362 stdcall -noname -private StrStrW(wstr wstr)
-363 stdcall -noname -private StrStrIW(wstr wstr)
-364 stdcall -noname -private StrCSpnW(wstr wstr)
-365 stdcall -noname -private StrToIntW(wstr)
-366 stdcall -noname -private StrChrIA(str long)
-367 stdcall -noname -private StrChrIW(wstr long)
-368 stdcall -noname -private StrRChrIA(str str long)
-369 stdcall -noname -private StrRChrIW(wstr wstr long)
-372 stdcall -noname -private StrRStrIA(str str str)
-373 stdcall -noname -private StrRStrIW(wstr wstr wstr)
-374 stdcall -noname -private StrCSpnIA(str str)
-375 stdcall -noname -private StrCSpnIW(wstr wstr)
+350 stdcall -noname -private StrChrA(str long) kernelbase.StrChrA
+351 stdcall -noname -private StrRChrA(str str long) kernelbase.StrRChrA
+352 stdcall -noname -private StrCmpNA(str str long) kernelbase.StrCmpNA
+353 stdcall -noname -private StrCmpNIA(str str long) kernelbase.StrCmpNIA
+354 stdcall -noname -private StrStrA(str str) kernelbase.StrStrA
+355 stdcall -noname -private StrStrIA(str str) kernelbase.StrStrIA
+356 stdcall -noname -private StrCSpnA(str str) kernelbase.StrCSpnA
+357 stdcall -noname -private StrToIntA(str) kernelbase.StrToIntA
+358 stdcall -noname -private StrChrW(wstr long) kernelbase.StrChrW
+359 stdcall -noname -private StrRChrW(wstr wstr long) kernelbase.StrRChrW
+360 stdcall -noname -private StrCmpNW(wstr wstr long) kernelbase.StrCmpNW
+361 stdcall -noname -private StrCmpNIW(wstr wstr long) kernelbase.StrCmpNIW
+362 stdcall -noname -private StrStrW(wstr wstr) kernelbase.StrStrW
+363 stdcall -noname -private StrStrIW(wstr wstr) kernelbase.StrStrIW
+364 stdcall -noname -private StrCSpnW(wstr wstr) kernelbase.StrCSpnW
+365 stdcall -noname -private StrToIntW(wstr) kernelbase.StrToIntW
+366 stdcall -noname -private StrChrIA(str long) kernelbase.StrChrIA
+367 stdcall -noname -private StrChrIW(wstr long) kernelbase.StrChrIW
+368 stdcall -noname -private StrRChrIA(str str long) kernelbase.StrRChrIA
+369 stdcall -noname -private StrRChrIW(wstr wstr long) kernelbase.StrRChrIW
+372 stdcall -noname -private StrRStrIA(str str str) kernelbase.StrRStrIA
+373 stdcall -noname -private StrRStrIW(wstr wstr wstr) kernelbase.StrRStrIW
+374 stdcall -noname -private StrCSpnIA(str str) kernelbase.StrCSpnIA
+375 stdcall -noname -private StrCSpnIW(wstr wstr) kernelbase.StrCSpnIW
 376 stdcall -noname -private IntlStrEqWorkerA(long str str long)
 377 stdcall -noname -private IntlStrEqWorkerW(long wstr wstr long)
 380 stdcall -ordinal LoadIconMetric(ptr wstr long ptr)

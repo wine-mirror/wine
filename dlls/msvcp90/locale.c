@@ -55,8 +55,6 @@ unsigned int __cdecl ___lc_codepage_func(void);
 int __cdecl ___lc_collate_cp_func(void);
 const unsigned short* __cdecl __pctype_func(void);
 const locale_facet* __thiscall locale__Getfacet(const locale*, MSVCP_size_t);
-MSVCP_size_t __cdecl _Strftime(char*, MSVCP_size_t, const char*,
-        const struct tm*, struct __lc_time_data*);
 const locale* __cdecl locale_classic(void);
 
 #if _MSVCP_VER >= 110
@@ -12739,9 +12737,7 @@ DEFINE_RTTI_DATA1(time_base, 0, &locale_facet_rtti_base_descriptor, ".?AUtime_ba
 DEFINE_RTTI_DATA2(time_get_char, 0, &time_base_rtti_base_descriptor, &locale_facet_rtti_base_descriptor, ".?AV?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@")
 DEFINE_RTTI_DATA2(time_get_wchar, 0, &time_base_rtti_base_descriptor, &locale_facet_rtti_base_descriptor, ".?AV?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@")
 
-#ifndef __GNUC__
-void __asm_dummy_vtables(void) {
-#endif
+__ASM_BLOCK_BEGIN(locale_vtables)
     __ASM_VTABLE(_Facet_base,
             VTABLE_ADD_FUNC(locale_facet_vector_dtor)
             VTABLE_ADD_FUNC(locale_facet__Incref)
@@ -13106,9 +13102,7 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(time_get_wchar_do_get)
 #endif
             );
-#ifndef __GNUC__
-}
-#endif
+__ASM_BLOCK_END
 
 void init_locale(void *base)
 {

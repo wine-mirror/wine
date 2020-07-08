@@ -47,6 +47,7 @@ static inline const char *debugstr_time(REFERENCE_TIME time)
     if (time < 0) buffer[i++] = '-';
 
     while (i--) rev[j++] = buffer[i];
+    while (rev[j-1] == '0' && rev[j-2] != '.') --j;
     rev[j] = 0;
 
     return wine_dbg_sprintf("%s", rev);
@@ -79,8 +80,8 @@ void QualityControlRender_DoQOS(QualityControlImpl *priv);
 void QualityControlRender_BeginRender(QualityControlImpl *This, REFERENCE_TIME start, REFERENCE_TIME stop);
 void QualityControlRender_EndRender(QualityControlImpl *This);
 
-HRESULT WINAPI RendererPosPassThru_RegisterMediaTime(IUnknown *iface, REFERENCE_TIME start);
-HRESULT WINAPI RendererPosPassThru_ResetMediaTime(IUnknown *iface);
-HRESULT WINAPI RendererPosPassThru_EOS(IUnknown *iface);
+void strmbase_passthrough_update_time(struct strmbase_passthrough *passthrough, REFERENCE_TIME time);
+void strmbase_passthrough_invalidate_time(struct strmbase_passthrough *passthrough);
+void strmbase_passthrough_eos(struct strmbase_passthrough *passthrough);
 
 #endif /* __WINE_STRMBASE_PRIVATE_H */

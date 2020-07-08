@@ -17,7 +17,7 @@
 @ stub WlanIhvControl
 @ stdcall WlanOpenHandle(long ptr ptr ptr)
 @ stub WlanQueryAutoConfigParameter
-@ stub WlanQueryInterface
+@ stdcall WlanQueryInterface(ptr ptr long ptr ptr ptr ptr)
 @ stub WlanReasonCodeToString
 @ stdcall WlanRegisterNotification(ptr long long ptr ptr ptr ptr)
 @ stub WlanRenameProfile

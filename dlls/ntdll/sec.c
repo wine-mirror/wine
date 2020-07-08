@@ -38,7 +38,6 @@
 #include "ntdll_misc.h"
 #include "wine/exception.h"
 #include "wine/library.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
@@ -1828,13 +1827,13 @@ NTSTATUS WINAPI RtlConvertSidToUnicodeString(
     DWORD i, len;
 
     *p++ = 'S';
-    p += sprintfW( p, formatW, sid->Revision );
-    p += sprintfW( p, formatW, MAKELONG( MAKEWORD( sid->IdentifierAuthority.Value[5],
+    p += NTDLL_swprintf( p, formatW, sid->Revision );
+    p += NTDLL_swprintf( p, formatW, MAKELONG( MAKEWORD( sid->IdentifierAuthority.Value[5],
                                                    sid->IdentifierAuthority.Value[4] ),
                                          MAKEWORD( sid->IdentifierAuthority.Value[3],
                                                    sid->IdentifierAuthority.Value[2] )));
     for (i = 0; i < sid->SubAuthorityCount; i++)
-        p += sprintfW( p, formatW, sid->SubAuthority[i] );
+        p += NTDLL_swprintf( p, formatW, sid->SubAuthority[i] );
 
     len = (p + 1 - buffer) * sizeof(WCHAR);
 

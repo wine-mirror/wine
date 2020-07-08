@@ -228,13 +228,15 @@ PWCHAR * CDECL ldap_get_valuesW( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *entry, P
     attrU = strWtoU( attr );
     if (!attrU) return NULL;
 
-    bv = ldap_get_values_len( ld, entry, attrU );
+    bv = ldap_get_values_len( ld->ld, entry, attrU );
+    if (bv)
+    {
+        retU = bv2str_array( bv );
+        ret = strarrayUtoW( retU );
 
-    retU = bv2str_array( bv );
-    ret = strarrayUtoW( retU );
-
-    ldap_value_free_len( bv );
-    strarrayfreeU( retU );
+        ldap_value_free_len( bv );
+        strarrayfreeU( retU );
+    }
     strfreeU( attrU );
 
 #endif
@@ -303,7 +305,7 @@ struct WLDAP32_berval ** CDECL ldap_get_values_lenW( WLDAP32_LDAP *ld,
     attrU = strWtoU( attr );
     if (!attrU) return NULL;
 
-    ret = ldap_get_values_len( ld, message, attrU );
+    ret = ldap_get_values_len( ld->ld, message, attrU );
 
     strfreeU( attrU );
     return (struct WLDAP32_berval **)ret;

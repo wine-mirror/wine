@@ -272,7 +272,7 @@ typedef struct _VMR9AlphaBitmap
     HDC hdc;
     IDirect3DSurface9 *pDDS;
     RECT rSrc;
-    VMR9NormalizedRect *rDest;
+    VMR9NormalizedRect rDest;
     FLOAT fAlpha;
     COLORREF clrSrcKey;
     DWORD dwFilterMode;
@@ -518,6 +518,7 @@ interface IVMRImageCompositor9 : IUnknown
 {
     HRESULT InitCompositionDevice([in] IUnknown *d3ddev);
     HRESULT TermCompositionDevice([in] IUnknown *d3ddev);
+    HRESULT SetStreamMediaType([in] DWORD stream, [in] AM_MEDIA_TYPE *mt, [in] BOOL texture);
     HRESULT CompositeImage([in] IUnknown *d3ddev, [in] IDirect3DSurface9 *d3dtarget, [in] AM_MEDIA_TYPE *mttarget,
                            [in] REFERENCE_TIME start, [in] REFERENCE_TIME stop, D3DCOLOR back,
                            [in] VMR9VideoStreamInfo *info, [in] UINT streams);

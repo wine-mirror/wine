@@ -577,7 +577,6 @@ static HRESULT WINAPI class_object_Clone(
 
 static BSTR get_body_text( const struct table *table, UINT row, UINT *len )
 {
-    static const WCHAR fmtW[] = {'\n','\t','%','s',' ','=',' ','%','s',';',0};
     BSTR value, ret;
     WCHAR *p;
     UINT i;
@@ -587,7 +586,7 @@ static BSTR get_body_text( const struct table *table, UINT row, UINT *len )
     {
         if ((value = get_value_bstr( table, row, i )))
         {
-            *len += ARRAY_SIZE( fmtW );
+            *len += ARRAY_SIZE( L"\n\t%s = %s;" );
             *len += lstrlenW( table->columns[i].name );
             *len += SysStringLen( value );
             SysFreeString( value );
@@ -599,7 +598,7 @@ static BSTR get_body_text( const struct table *table, UINT row, UINT *len )
     {
         if ((value = get_value_bstr( table, row, i )))
         {
-            p += swprintf( p, *len - (p - ret), fmtW, table->columns[i].name, value );
+            p += swprintf( p, *len - (p - ret), L"\n\t%s = %s;", table->columns[i].name, value );
             SysFreeString( value );
         }
     }
@@ -608,19 +607,17 @@ static BSTR get_body_text( const struct table *table, UINT row, UINT *len )
 
 static BSTR get_object_text( const struct view *view, UINT index )
 {
-    static const WCHAR fmtW[] =
-        {'\n','i','n','s','t','a','n','c','e',' ','o','f',' ','%','s','\n','{','%','s','\n','}',';',0};
     UINT len, len_body, row = view->result[index];
     struct table *table = get_view_table( view, index );
     BSTR ret, body;
 
-    len = ARRAY_SIZE( fmtW );
+    len = ARRAY_SIZE( L"\ninstance of %s\n{%s\n};" );
     len += lstrlenW( table->name );
     if (!(body = get_body_text( table, row, &len_body ))) return NULL;
     len += len_body;
 
     if (!(ret = SysAllocStringLen( NULL, len ))) return NULL;
-    swprintf( ret, len, fmtW, table->name, body );
+    swprintf( ret, len, L"\ninstance of %s\n{%s\n};", table->name, body );
     SysFreeString( body );
     return ret;
 }
@@ -729,9 +726,6 @@ static void set_default_value( CIMTYPE type, UINT val, BYTE *ptr )
 static HRESULT create_signature_columns_and_data( IEnumWbemClassObject *iter, UINT *num_cols,
                                            struct column **cols, BYTE **data )
 {
-    static const WCHAR parameterW[] = {'P','a','r','a','m','e','t','e','r',0};
-    static const WCHAR typeW[] = {'T','y','p','e',0};
-    static const WCHAR defaultvalueW[] = {'D','e','f','a','u','l','t','V','a','l','u','e',0};
     struct column *columns;
     BYTE *row;
     IWbemClassObject *param;
@@ -750,16 +744,16 @@ static HRESULT create_signature_columns_and_data( IEnumWbemClassObject *iter, UI
         IEnumWbemClassObject_Next( iter, WBEM_INFINITE, 1, &param, &count );
         if (!count) break;
 
-        hr = IWbemClassObject_Get( param, parameterW, 0, &val, NULL, NULL );
+        hr = IWbemClassObject_Get( param, L"Parameter", 0, &val, NULL, NULL );
         if (hr != S_OK) goto error;
         columns[i].name = heap_strdupW( V_BSTR( &val ) );
         VariantClear( &val );
 
-        hr = IWbemClassObject_Get( param, typeW, 0, &val, NULL, NULL );
+        hr = IWbemClassObject_Get( param, L"Type", 0, &val, NULL, NULL );
         if (hr != S_OK) goto error;
         columns[i].type = V_UI4( &val );
 
-        hr = IWbemClassObject_Get( param, defaultvalueW, 0, &val, NULL, NULL );
+        hr = IWbemClassObject_Get( param, L"DefaultValue", 0, &val, NULL, NULL );
         if (hr != S_OK) goto error;
         if (V_UI4( &val )) set_default_value( columns[i].type, V_UI4( &val ), row + offset );
         offset += get_type_size( columns[i].type );
@@ -802,36 +796,26 @@ static HRESULT create_signature_table( IEnumWbemClassObject *iter, WCHAR *name )
 
 static WCHAR *build_signature_table_name( const WCHAR *class, const WCHAR *method, enum param_direction dir )
 {
-    static const WCHAR fmtW[] = {'_','_','%','s','_','%','s','_','%','s',0};
-    static const WCHAR outW[] = {'O','U','T',0};
-    static const WCHAR inW[] = {'I','N',0};
-    UINT len = ARRAY_SIZE(fmtW) + ARRAY_SIZE(outW) + lstrlenW( class ) + lstrlenW( method );
+    UINT len = ARRAY_SIZE(L"__%s_%s_%s") + ARRAY_SIZE(L"OUT") + lstrlenW( class ) + lstrlenW( method );
     WCHAR *ret;
 
     if (!(ret = heap_alloc( len * sizeof(WCHAR) ))) return NULL;
-    swprintf( ret, len, fmtW, class, method, dir == PARAM_IN ? inW : outW );
+    swprintf( ret, len, L"__%s_%s_%s", class, method, dir == PARAM_IN ? L"IN" : L"OUT" );
     return wcsupr( ret );
 }
 
 HRESULT create_signature( const WCHAR *class, const WCHAR *method, enum param_direction dir,
                           IWbemClassObject **sig )
 {
-    static const WCHAR selectW[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         '_','_','P','A','R','A','M','E','T','E','R','S',' ','W','H','E','R','E',' ',
-         'C','l','a','s','s','=','\'','%','s','\'',' ','A','N','D',' ',
-         'M','e','t','h','o','d','=','\'','%','s','\'',' ','A','N','D',' ',
-         'D','i','r','e','c','t','i','o','n','%','s',0};
-    static const WCHAR geW[] = {'>','=','0',0};
-    static const WCHAR leW[] = {'<','=','0',0};
-    UINT len = ARRAY_SIZE(selectW) + ARRAY_SIZE(geW);
+    static const WCHAR selectW[] = L"SELECT * FROM __PARAMETERS WHERE Class='%s' AND Method='%s' AND Direction%s";
+    UINT len = ARRAY_SIZE(selectW) + ARRAY_SIZE(L">=0");
     IEnumWbemClassObject *iter;
     WCHAR *query, *name;
     HRESULT hr;
 
     len += lstrlenW( class ) + lstrlenW( method );
     if (!(query = heap_alloc( len * sizeof(WCHAR) ))) return E_OUTOFMEMORY;
-    swprintf( query, len, selectW, class, method, dir >= 0 ? geW : leW );
+    swprintf( query, len, selectW, class, method, dir >= 0 ? L">=0" : L"<=0" );
 
     hr = exec_query( query, &iter );
     heap_free( query );

@@ -449,7 +449,7 @@ static LRESULT call_hook( struct hook_info *info, INT code, WPARAM wparam, LPARA
     }
 
     if (info->id == WH_KEYBOARD_LL || info->id == WH_MOUSE_LL)
-        interlocked_xchg_add( &global_key_state_counter, 1 );  /* force refreshing the key state cache */
+        InterlockedIncrement( &global_key_state_counter );  /* force refreshing the key state cache */
 
     return ret;
 }

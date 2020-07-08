@@ -105,9 +105,7 @@ enum comclass_miscfields
 struct comclassredirect_data
 {
     ULONG size;
-    BYTE  res;
-    BYTE  miscmask;
-    BYTE  res1[2];
+    ULONG flags;
     DWORD model;
     GUID  clsid;
     GUID  alias;
@@ -265,10 +263,11 @@ BOOL actctx_get_miscstatus(const CLSID *clsid, DWORD aspect, DWORD *status)
     {
         struct comclassredirect_data *comclass = (struct comclassredirect_data*)data.lpData;
         enum comclass_miscfields misc = dvaspect_to_miscfields(aspect);
+        ULONG miscmask = (comclass->flags >> 8) & 0xff;
 
-        if (!(comclass->miscmask & misc))
+        if (!(miscmask & misc))
         {
-            if (!(comclass->miscmask & MiscStatus))
+            if (!(miscmask & MiscStatus))
             {
                 *status = 0;
                 return TRUE;
@@ -3139,9 +3138,7 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoGetClassObject(
 
     if (CLSCTX_INPROC & dwClsContext)
     {
-        ASSEMBLY_FILE_DETAILED_INFORMATION *file_info = NULL;
         ACTCTX_SECTION_KEYED_DATA data;
-        const CLSID *clsid = NULL;
 
         data.cbSize = sizeof(data);
         /* search activation context first */
@@ -3154,46 +3151,11 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoGetClassObject(
             clsreg.u.actctx.module_name = (WCHAR *)((BYTE *)data.lpSectionBase + comclass->name_offset);
             clsreg.u.actctx.hactctx = data.hActCtx;
             clsreg.u.actctx.threading_model = comclass->model;
-            clsid = &comclass->clsid;
-        }
-        else if (FindActCtxSectionGuid(FIND_ACTCTX_SECTION_KEY_RETURN_HACTCTX, NULL,
-                ACTIVATION_CONTEXT_SECTION_COM_INTERFACE_REDIRECTION, rclsid, &data))
-        {
-            ACTIVATION_CONTEXT_QUERY_INDEX query_index;
-            SIZE_T required_len = 0;
-
-            query_index.ulAssemblyIndex = data.ulAssemblyRosterIndex - 1;
-            query_index.ulFileIndexInAssembly = 0;
-
-            QueryActCtxW(0, data.hActCtx, &query_index, FileInformationInAssemblyOfAssemblyInActivationContext,
-                    NULL, 0, &required_len);
-            if (required_len)
-            {
-                file_info = heap_alloc(required_len);
-                if (file_info)
-                {
-                    if (QueryActCtxW(0, data.hActCtx, &query_index, FileInformationInAssemblyOfAssemblyInActivationContext,
-                            file_info, required_len, &required_len))
-                    {
-                        clsreg.u.actctx.module_name = file_info->lpFileName;
-                        clsreg.u.actctx.hactctx = data.hActCtx;
-                        clsreg.u.actctx.threading_model = ThreadingModel_Both;
-                        clsid = rclsid;
-                    }
-                    else
-                        heap_free(file_info);
-                }
-            }
-        }
-
-        if (clsreg.u.actctx.hactctx)
-        {
             clsreg.origin = CLASS_REG_ACTCTX;
 
-            hres = get_inproc_class_object(apt, &clsreg, clsid, iid, !(dwClsContext & WINE_CLSCTX_DONT_HOST), ppv);
-            ReleaseActCtx(clsreg.u.actctx.hactctx);
+            hres = get_inproc_class_object(apt, &clsreg, &comclass->clsid, iid, !(dwClsContext & WINE_CLSCTX_DONT_HOST), ppv);
+            ReleaseActCtx(data.hActCtx);
             apartment_release(apt);
-            heap_free(file_info);
             return hres;
         }
     }

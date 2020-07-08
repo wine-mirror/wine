@@ -72,6 +72,11 @@ KSERVICE_TABLE_DESCRIPTOR KeServiceDescriptorTable[4] = { { 0 } };
 
 #define MAX_SERVICE_NAME 260
 
+static TP_POOL *dpc_call_tp;
+static TP_CALLBACK_ENVIRON dpc_call_tpe;
+DECLARE_CRITICAL_SECTION(dpc_call_cs);
+static DWORD dpc_call_tls_index;
+
 /* tid of the thread running client request */
 static DWORD request_thread;
 
@@ -79,6 +84,11 @@ static DWORD request_thread;
 static DWORD client_tid;
 
 static HANDLE ntoskrnl_heap;
+
+static void *ldr_notify_cookie;
+
+static PLOAD_IMAGE_NOTIFY_ROUTINE load_image_notify_routines[8];
+static unsigned int load_image_notify_routine_count;
 
 struct wine_driver
 {
@@ -803,7 +813,7 @@ static void unload_driver( struct wine_rb_entry *entry, void *context )
 {
     struct wine_driver *driver = WINE_RB_ENTRY_VALUE( entry, struct wine_driver, entry );
     SERVICE_STATUS_HANDLE service_handle = driver->service_handle;
-    LDR_MODULE *ldr;
+    LDR_DATA_TABLE_ENTRY *ldr;
 
     if (!service_handle) return;    /* not a service */
 
@@ -825,7 +835,7 @@ static void unload_driver( struct wine_rb_entry *entry, void *context )
 
     TRACE_(relay)( "\1Ret  driver unload %p (obj=%p)\n", driver->driver_obj.DriverUnload, &driver->driver_obj );
 
-    FreeLibrary( ldr->BaseAddress );
+    FreeLibrary( ldr->DllBase );
     IoDeleteDriver( &driver->driver_obj );
 
     set_service_status( service_handle, SERVICE_STOPPED, 0 );
@@ -970,6 +980,17 @@ void WINAPI IoInitializeIrp( IRP *irp, USHORT size, CCHAR stack_size )
             (PIO_STACK_LOCATION)(irp + 1) + stack_size;
 }
 
+void WINAPI IoReuseIrp(IRP *irp, NTSTATUS iostatus)
+{
+    UCHAR AllocationFlags;
+
+    TRACE("irp %p, iostatus %#x.\n", irp, iostatus);
+
+    AllocationFlags = irp->AllocationFlags;
+    IoInitializeIrp(irp, irp->Size, irp->StackCount);
+    irp->AllocationFlags = AllocationFlags;
+    irp->IoStatus.u.Status = iostatus;
+}
 
 /***********************************************************************
  *           IoInitializeTimer   (NTOSKRNL.EXE.@)
@@ -1881,6 +1902,7 @@ VOID WINAPI IoCompleteRequest( IRP *irp, UCHAR priority_boost )
     IO_STACK_LOCATION *irpsp;
     PIO_COMPLETION_ROUTINE routine;
     NTSTATUS status, stat;
+    DEVICE_OBJECT *device;
     int call_flag = 0;
 
     TRACE( "%p %u\n", irp, priority_boost );
@@ -1902,11 +1924,14 @@ VOID WINAPI IoCompleteRequest( IRP *irp, UCHAR priority_boost )
         }
         ++irp->CurrentLocation;
         ++irp->Tail.Overlay.s.u2.CurrentStackLocation;
+        if (irp->CurrentLocation <= irp->StackCount)
+            device = IoGetCurrentIrpStackLocation(irp)->DeviceObject;
+        else
+            device = NULL;
         if (call_flag)
         {
-            TRACE( "calling %p( %p, %p, %p )\n", routine,
-                    irpsp->DeviceObject, irp, irpsp->Context );
-            stat = routine( irpsp->DeviceObject, irp, irpsp->Context );
+            TRACE( "calling %p( %p, %p, %p )\n", routine, device, irp, irpsp->Context );
+            stat = routine( device, irp, irpsp->Context );
             TRACE( "CompletionRoutine returned %x\n", stat );
             if (STATUS_MORE_PROCESSING_REQUIRED == stat)
                 return;
@@ -2054,9 +2079,22 @@ NTSTATUS WINAPI ExCreateCallback(PCALLBACK_OBJECT *obj, POBJECT_ATTRIBUTES attr,
 {
     FIXME("(%p, %p, %u, %u): stub\n", obj, attr, create, allow_multiple);
 
-    return STATUS_NOT_IMPLEMENTED;
+    return STATUS_SUCCESS;
 }
 
+void * WINAPI ExRegisterCallback(PCALLBACK_OBJECT callback_object,
+        PCALLBACK_FUNCTION callback_function, void *callback_context)
+{
+    FIXME("callback_object %p, callback_function %p, callback_context %p stub.\n",
+            callback_object, callback_function, callback_context);
+
+    return (void *)0xdeadbeef;
+}
+
+void WINAPI ExUnregisterCallback(void *callback_registration)
+{
+    FIXME("callback_registration %p stub.\n", callback_registration);
+}
 
 /***********************************************************************
  *           ExFreePool   (NTOSKRNL.EXE.@)
@@ -2196,6 +2234,7 @@ static void *create_process_object( HANDLE handle )
     process->header.Type = 3;
     process->header.WaitListHead.Blink = INVALID_HANDLE_VALUE; /* mark as kernel object */
     NtQueryInformationProcess( handle, ProcessBasicInformation, &process->info, sizeof(process->info), NULL );
+    IsWow64Process( handle, &process->wow64 );
     return process;
 }
 
@@ -2266,6 +2305,7 @@ static void *create_thread_object( HANDLE handle )
 
     thread->header.Type = 6;
     thread->header.WaitListHead.Blink = INVALID_HANDLE_VALUE; /* mark as kernel object */
+    thread->user_affinity = 0;
 
     if (!NtQueryInformationThread( handle, ThreadBasicInformation, &info, sizeof(info), NULL ))
     {
@@ -2378,12 +2418,18 @@ LONG WINAPI KeInsertQueue(PRKQUEUE Queue, PLIST_ENTRY Entry)
  */
 KAFFINITY WINAPI KeQueryActiveProcessors( void )
 {
-    DWORD_PTR AffinityMask;
+    DWORD_PTR affinity_mask;
 
-    GetProcessAffinityMask( GetCurrentProcess(), &AffinityMask, NULL);
-    return AffinityMask;
+    GetProcessAffinityMask( GetCurrentProcess(), NULL, &affinity_mask);
+    return affinity_mask;
 }
 
+ULONG WINAPI KeQueryActiveProcessorCountEx(USHORT group_number)
+{
+    TRACE("group_number %u.\n", group_number);
+
+    return GetActiveProcessorCount(group_number);
+}
 
 /**********************************************************************
  *           KeQueryInterruptTime   (NTOSKRNL.EXE.@)
@@ -2443,9 +2489,32 @@ KPRIORITY WINAPI KeSetPriorityThread( PKTHREAD Thread, KPRIORITY Priority )
 /***********************************************************************
  *           KeSetSystemAffinityThread   (NTOSKRNL.EXE.@)
  */
-VOID WINAPI KeSetSystemAffinityThread(KAFFINITY Affinity)
+VOID WINAPI KeSetSystemAffinityThread(KAFFINITY affinity)
 {
-    FIXME("(%lx) stub\n", Affinity);
+    KeSetSystemAffinityThreadEx(affinity);
+}
+
+KAFFINITY WINAPI KeSetSystemAffinityThreadEx(KAFFINITY affinity)
+{
+    DWORD_PTR system_affinity = KeQueryActiveProcessors();
+    PKTHREAD thread = KeGetCurrentThread();
+    GROUP_AFFINITY old, new;
+
+    TRACE("affinity %#lx.\n", affinity);
+
+    affinity &= system_affinity;
+
+    NtQueryInformationThread(GetCurrentThread(), ThreadGroupInformation,
+            &old, sizeof(old), NULL);
+
+    if (old.Mask != system_affinity)
+        thread->user_affinity = old.Mask;
+
+    memset(&new, 0, sizeof(new));
+    new.Mask = affinity;
+
+    return NtSetInformationThread(GetCurrentThread(), ThreadGroupInformation, &new, sizeof(new))
+            ? 0 : thread->user_affinity;
 }
 
 
@@ -2454,9 +2523,26 @@ VOID WINAPI KeSetSystemAffinityThread(KAFFINITY Affinity)
  */
 void WINAPI KeRevertToUserAffinityThread(void)
 {
-    FIXME("() stub\n");
+    KeRevertToUserAffinityThreadEx(0);
 }
 
+void WINAPI KeRevertToUserAffinityThreadEx(KAFFINITY affinity)
+{
+    DWORD_PTR system_affinity = KeQueryActiveProcessors();
+    PRKTHREAD thread = KeGetCurrentThread();
+    GROUP_AFFINITY new;
+
+    TRACE("affinity %#lx.\n", affinity);
+
+    affinity &= system_affinity;
+
+    memset(&new, 0, sizeof(new));
+    new.Mask = affinity ? affinity
+            : (thread->user_affinity ? thread->user_affinity : system_affinity);
+
+    NtSetInformationThread(GetCurrentThread(), ThreadGroupInformation, &new, sizeof(new));
+    thread->user_affinity = affinity;
+}
 
 /***********************************************************************
  *           IoRegisterFileSystem   (NTOSKRNL.EXE.@)
@@ -2754,9 +2840,9 @@ void FASTCALL ObfDereferenceObject( void *obj )
 /***********************************************************************
  *           ObRegisterCallbacks (NTOSKRNL.EXE.@)
  */
-NTSTATUS WINAPI ObRegisterCallbacks(POB_CALLBACK_REGISTRATION *callBack, void **handle)
+NTSTATUS WINAPI ObRegisterCallbacks(POB_CALLBACK_REGISTRATION callback, void **handle)
 {
-    FIXME( "stub: %p %p\n", callBack, handle );
+    FIXME( "callback %p, handle %p.\n", callback, handle );
 
     if(handle)
         *handle = UlongToHandle(0xdeadbeaf);
@@ -2924,10 +3010,21 @@ NTSTATUS WINAPI PsRemoveCreateThreadNotifyRoutine( PCREATE_THREAD_NOTIFY_ROUTINE
 /***********************************************************************
  *           PsRemoveLoadImageNotifyRoutine  (NTOSKRNL.EXE.@)
  */
- NTSTATUS WINAPI PsRemoveLoadImageNotifyRoutine(PLOAD_IMAGE_NOTIFY_ROUTINE NotifyRoutine)
+NTSTATUS WINAPI PsRemoveLoadImageNotifyRoutine(PLOAD_IMAGE_NOTIFY_ROUTINE routine)
  {
-    FIXME( "stub: %p\n", NotifyRoutine );
-    return STATUS_SUCCESS;
+    unsigned int i;
+
+    TRACE("routine %p.\n", routine);
+
+    for (i = 0; i < load_image_notify_routine_count; ++i)
+        if (load_image_notify_routines[i] == routine)
+        {
+            --load_image_notify_routine_count;
+            memmove(&load_image_notify_routines[i], &load_image_notify_routines[i + 1],
+                    sizeof(*load_image_notify_routines) * (load_image_notify_routine_count - i));
+            return STATUS_SUCCESS;
+        }
+    return STATUS_PROCEDURE_NOT_FOUND;
  }
 
 
@@ -2993,6 +3090,7 @@ PVOID WINAPI MmGetSystemRoutineAddress(PUNICODE_STRING SystemRoutineName)
         if (!pFunc)
         {
            hMod = GetModuleHandleW( halW );
+
            if (hMod) pFunc = GetProcAddress( hMod, routineNameA.Buffer );
         }
         RtlFreeAnsiString( &routineNameA );
@@ -3026,9 +3124,13 @@ MM_SYSTEMSIZE WINAPI MmQuerySystemSize(void)
 /***********************************************************************
  *           KeInitializeDpc   (NTOSKRNL.EXE.@)
  */
-VOID WINAPI KeInitializeDpc(PRKDPC Dpc, PKDEFERRED_ROUTINE DeferredRoutine, PVOID DeferredContext)
+void WINAPI KeInitializeDpc(KDPC *dpc, PKDEFERRED_ROUTINE deferred_routine, void *deferred_context)
 {
-    FIXME("stub\n");
+    FIXME("dpc %p, deferred_routine %p, deferred_context %p semi-stub.\n",
+            dpc, deferred_routine, deferred_context);
+
+    dpc->DeferredRoutine = deferred_routine;
+    dpc->DeferredContext = deferred_context;
 }
 
 /***********************************************************************
@@ -3078,7 +3180,13 @@ NTSTATUS WINAPI IoWMIOpenBlock(LPCGUID guid, ULONG desired_access, PVOID *data_b
  */
 NTSTATUS WINAPI PsSetLoadImageNotifyRoutine(PLOAD_IMAGE_NOTIFY_ROUTINE routine)
 {
-    FIXME("(%p) stub\n", routine);
+    FIXME("routine %p, semi-stub.\n", routine);
+
+    if (load_image_notify_routine_count == ARRAY_SIZE(load_image_notify_routines))
+        return STATUS_INSUFFICIENT_RESOURCES;
+
+    load_image_notify_routines[load_image_notify_routine_count++] = routine;
+
     return STATUS_SUCCESS;
 }
 
@@ -3089,34 +3197,6 @@ BOOLEAN WINAPI IoSetThreadHardErrorMode(BOOLEAN EnableHardErrors)
 {
     FIXME("stub\n");
     return FALSE;
-}
-
-/*****************************************************
- *           DllMain
- */
-BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
-{
-    static void *handler;
-    LARGE_INTEGER count;
-
-    switch(reason)
-    {
-    case DLL_PROCESS_ATTACH:
-        DisableThreadLibraryCalls( inst );
-#if defined(__i386__) || defined(__x86_64__)
-        handler = RtlAddVectoredExceptionHandler( TRUE, vectored_handler );
-#endif
-        KeQueryTickCount( &count );  /* initialize the global KeTickCount */
-        NtBuildNumber = NtCurrentTeb()->Peb->OSBuildNumber;
-        ntoskrnl_heap = HeapCreate( HEAP_CREATE_ENABLE_EXECUTE, 0, 0 );
-        break;
-    case DLL_PROCESS_DETACH:
-        if (reserved) break;
-        HeapDestroy( ntoskrnl_heap );
-        RtlRemoveVectoredExceptionHandler( handler );
-        break;
-    }
-    return TRUE;
 }
 
 /*****************************************************
@@ -3355,10 +3435,10 @@ error:
     return STATUS_UNSUCCESSFUL;
 }
 
-/* find the LDR_MODULE corresponding to the driver module */
-static LDR_MODULE *find_ldr_module( HMODULE module )
+/* find the LDR_DATA_TABLE_ENTRY corresponding to the driver module */
+static LDR_DATA_TABLE_ENTRY *find_ldr_module( HMODULE module )
 {
-    LDR_MODULE *ldr;
+    LDR_DATA_TABLE_ENTRY *ldr;
     ULONG_PTR magic;
 
     LdrLockLoaderLock( 0, NULL, &magic );
@@ -3378,133 +3458,71 @@ static inline void *get_rva( HMODULE module, DWORD va )
     return (void *)((char *)module + va);
 }
 
-/* Copied from ntdll with checks for page alignment and characteristics removed */
-static NTSTATUS perform_relocations( void *module, SIZE_T len )
+static void WINAPI ldr_notify_callback(ULONG reason, LDR_DLL_NOTIFICATION_DATA *data, void *context)
 {
-    IMAGE_NT_HEADERS *nt;
-    char *base;
-    IMAGE_BASE_RELOCATION *rel, *end;
     const IMAGE_DATA_DIRECTORY *relocs;
-    const IMAGE_SECTION_HEADER *sec;
+    IMAGE_BASE_RELOCATION *rel, *end;
+    SYSTEM_BASIC_INFORMATION info;
+    IMAGE_NT_HEADERS *nt;
     INT_PTR delta;
-    ULONG protect_old[96], i;
+    char *base;
+    HMODULE module;
 
+    if (reason != LDR_DLL_NOTIFICATION_REASON_LOADED) return;
+    TRACE( "loading %s\n", debugstr_us(data->Loaded.BaseDllName));
+
+    module = data->Loaded.DllBase;
     nt = RtlImageNtHeader( module );
     base = (char *)nt->OptionalHeader.ImageBase;
-
-    assert( module != base );
-
-    relocs = &nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC];
-
-    if (nt->FileHeader.Characteristics & IMAGE_FILE_RELOCS_STRIPPED)
-    {
-        WARN( "Need to relocate module from %p to %p, but there are no relocation records\n",
-              base, module );
-        return STATUS_CONFLICTING_ADDRESSES;
-    }
-
-    if (!relocs->Size) return STATUS_SUCCESS;
-    if (!relocs->VirtualAddress) return STATUS_CONFLICTING_ADDRESSES;
-
-    if (nt->FileHeader.NumberOfSections > ARRAY_SIZE( protect_old ))
-        return STATUS_INVALID_IMAGE_FORMAT;
-
-    sec = (const IMAGE_SECTION_HEADER *)((const char *)&nt->OptionalHeader +
-                                         nt->FileHeader.SizeOfOptionalHeader);
-    for (i = 0; i < nt->FileHeader.NumberOfSections; i++)
-    {
-        void *addr = get_rva( module, sec[i].VirtualAddress );
-        SIZE_T size = sec[i].SizeOfRawData;
-        NtProtectVirtualMemory( NtCurrentProcess(), &addr,
-                                &size, PAGE_READWRITE, &protect_old[i] );
-    }
-
-    TRACE( "relocating from %p-%p to %p-%p\n",
-           base, base + len, module, (char *)module + len );
-
-    rel = get_rva( module, relocs->VirtualAddress );
-    end = get_rva( module, relocs->VirtualAddress + relocs->Size );
-    delta = (char *)module - base;
-
-    while (rel < end - 1 && rel->SizeOfBlock)
-    {
-        if (rel->VirtualAddress >= len)
-        {
-            WARN( "invalid address %p in relocation %p\n", get_rva( module, rel->VirtualAddress ), rel );
-            return STATUS_ACCESS_VIOLATION;
-        }
-        rel = LdrProcessRelocationBlock( get_rva( module, rel->VirtualAddress ),
-                                         (rel->SizeOfBlock - sizeof(*rel)) / sizeof(USHORT),
-                                         (USHORT *)(rel + 1), delta );
-        if (!rel) return STATUS_INVALID_IMAGE_FORMAT;
-    }
-
-    for (i = 0; i < nt->FileHeader.NumberOfSections; i++)
-    {
-        void *addr = get_rva( module, sec[i].VirtualAddress );
-        SIZE_T size = sec[i].SizeOfRawData;
-        NtProtectVirtualMemory( NtCurrentProcess(), &addr,
-                                &size, protect_old[i], &protect_old[i] );
-    }
-
-    return STATUS_SUCCESS;
-}
-
-/* load the driver module file */
-static HMODULE load_driver_module( const WCHAR *name )
-{
-    IMAGE_NT_HEADERS *nt;
-    const IMAGE_IMPORT_DESCRIPTOR *imports;
-    SYSTEM_BASIC_INFORMATION info;
-    int i;
-    INT_PTR delta;
-    ULONG size;
-    DWORD old;
-    NTSTATUS status;
-    HMODULE module = LoadLibraryW( name );
-
-    if (!module) return NULL;
-    nt = RtlImageNtHeader( module );
-
-    if (!(delta = (char *)module - (char *)nt->OptionalHeader.ImageBase)) return module;
+    if (!(delta = (char *)module - base)) return;
 
     /* the loader does not apply relocations to non page-aligned binaries or executables,
      * we have to do it ourselves */
 
     NtQuerySystemInformation( SystemBasicInformation, &info, sizeof(info), NULL );
-    if (nt->OptionalHeader.SectionAlignment < info.PageSize ||
-        !(nt->FileHeader.Characteristics & IMAGE_FILE_DLL))
-    {
-        status = perform_relocations(module, nt->OptionalHeader.SizeOfImage);
-        if (status != STATUS_SUCCESS)
-            goto error;
+    if (nt->OptionalHeader.SectionAlignment >= info.PageSize && (nt->FileHeader.Characteristics & IMAGE_FILE_DLL))
+        return;
 
-        /* make sure we don't try again */
-        size = FIELD_OFFSET( IMAGE_NT_HEADERS, OptionalHeader ) + nt->FileHeader.SizeOfOptionalHeader;
-        VirtualProtect( nt, size, PAGE_READWRITE, &old );
-        nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].Size = 0;
-        VirtualProtect( nt, size, old, &old );
+    if (nt->FileHeader.Characteristics & IMAGE_FILE_RELOCS_STRIPPED)
+    {
+        WARN( "Need to relocate module from %p to %p, but there are no relocation records\n", base, module );
+        return;
     }
 
-    /* make sure imports are relocated too */
+    relocs = &nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC];
+    if (!relocs->Size || !relocs->VirtualAddress) return;
 
-    if ((imports = RtlImageDirectoryEntryToData( module, TRUE, IMAGE_DIRECTORY_ENTRY_IMPORT, &size )))
+    TRACE( "relocating from %p-%p to %p-%p\n", base, base + nt->OptionalHeader.SizeOfImage,
+           module, (char *)module + nt->OptionalHeader.SizeOfImage );
+
+    rel = get_rva( module, relocs->VirtualAddress );
+    end = get_rva( module, relocs->VirtualAddress + relocs->Size );
+
+    while (rel < end - 1 && rel->SizeOfBlock)
     {
-        for (i = 0; imports[i].Name && imports[i].FirstThunk; i++)
-        {
-            char *name = (char *)module + imports[i].Name;
-            WCHAR buffer[32], *p = buffer;
+        char *page = get_rva( module, rel->VirtualAddress );
+        DWORD old_prot1, old_prot2;
 
-            while (p < buffer + 32) if (!(*p++ = *name++)) break;
-            if (p <= buffer + 32) FreeLibrary( load_driver_module( buffer ) );
+        if (rel->VirtualAddress >= nt->OptionalHeader.SizeOfImage)
+        {
+            WARN( "invalid address %p in relocation %p\n", get_rva( module, rel->VirtualAddress ), rel );
+            return;
+        }
+
+        /* Relocation entries may hang over the end of the page, so we need to
+         * protect two pages. */
+        VirtualProtect( page, info.PageSize, PAGE_READWRITE, &old_prot1 );
+        VirtualProtect( page + info.PageSize, info.PageSize, PAGE_READWRITE, &old_prot2 );
+        rel = LdrProcessRelocationBlock( page, (rel->SizeOfBlock - sizeof(*rel)) / sizeof(USHORT),
+                                         (USHORT *)(rel + 1), delta );
+        VirtualProtect( page, info.PageSize, old_prot1, &old_prot1 );
+        VirtualProtect( page + info.PageSize, info.PageSize, old_prot2, &old_prot2 );
+        if (!rel)
+        {
+            WARN( "LdrProcessRelocationBlock failed\n" );
+            return;
         }
     }
-
-    return module;
-
-error:
-    FreeLibrary( module );
-    return NULL;
 }
 
 /* load the .sys module for a device driver */
@@ -3580,7 +3598,31 @@ static HMODULE load_driver( const WCHAR *driver_name, const UNICODE_STRING *keyn
 
     TRACE( "loading driver %s\n", wine_dbgstr_w(str) );
 
-    module = load_driver_module( str );
+    module = LoadLibraryW( str );
+
+    if (module && load_image_notify_routine_count)
+    {
+        UNICODE_STRING module_name;
+        IMAGE_NT_HEADERS *nt;
+        IMAGE_INFO info;
+        unsigned int i;
+
+        RtlInitUnicodeString(&module_name, str);
+        nt = RtlImageNtHeader(module);
+        memset(&info, 0, sizeof(info));
+        info.u.s.ImageAddressingMode = IMAGE_ADDRESSING_MODE_32BIT;
+        info.u.s.SystemModeImage = TRUE;
+        info.ImageSize = nt->OptionalHeader.SizeOfImage;
+        info.ImageBase = module;
+
+        for (i = 0; i < load_image_notify_routine_count; ++i)
+        {
+            TRACE("Calling image load notify %p.\n", load_image_notify_routines[i]);
+            load_image_notify_routines[i](&module_name, NULL, &info);
+            TRACE("Called image load notify %p.\n", load_image_notify_routines[i]);
+        }
+    }
+
     HeapFree( GetProcessHeap(), 0, path );
     return module;
 }
@@ -3757,7 +3799,7 @@ __ASM_GLOBAL_FUNC( __chkstk, "ret" );
 /**************************************************************************
  *           _chkstk   (NTOSKRNL.@)
  */
-__ASM_STDCALL_FUNC( _chkstk, 0,
+__ASM_GLOBAL_FUNC( _chkstk,
                    "negl %eax\n\t"
                    "addl %esp,%eax\n\t"
                    "xchgl %esp,%eax\n\t"
@@ -3869,11 +3911,14 @@ PVOID WINAPI PsGetProcessWow64Process(PEPROCESS process)
 /*********************************************************************
  *           MmCopyVirtualMemory    (NTOSKRNL.@)
  */
-NTSTATUS WINAPI MmCopyVirtualMemory(PEPROCESS fromprocess, PVOID fromaddress, PEPROCESS toprocess,
-                                    PVOID toaddress, SIZE_T bufsize, KPROCESSOR_MODE mode,
-                                    PSIZE_T copied)
+NTSTATUS WINAPI MmCopyVirtualMemory(PEPROCESS fromprocess, void *fromaddress, PEPROCESS toprocess,
+                                    void *toaddress, SIZE_T bufsize, KPROCESSOR_MODE mode,
+                                    SIZE_T *copied)
 {
-    FIXME("stub: %p %p %p %p %lu %d %p\n", fromprocess, fromaddress, toprocess, toaddress, bufsize, mode, copied);
+    FIXME("fromprocess %p, fromaddress %p, toprocess %p, toaddress %p, bufsize %lu, mode %d, copied %p stub.\n",
+            fromprocess, fromaddress, toprocess, toaddress, bufsize, mode, copied);
+
+    *copied = 0;
     return STATUS_NOT_IMPLEMENTED;
 }
 
@@ -3952,6 +3997,17 @@ PEPROCESS WINAPI IoGetRequestorProcess(IRP *irp)
     return irp->Tail.Overlay.Thread->kthread.process;
 }
 
+#ifdef _WIN64
+/***********************************************************************
+ *           IoIs32bitProcess   (NTOSKRNL.EXE.@)
+ */
+BOOLEAN WINAPI IoIs32bitProcess(IRP *irp)
+{
+    TRACE("irp %p.\n", irp);
+    return irp->Tail.Overlay.Thread->kthread.process->wow64;
+}
+#endif
+
 /***********************************************************************
  *           RtlIsNtDdiVersionAvailable   (NTOSKRNL.EXE.@)
  */
@@ -3959,4 +4015,241 @@ BOOLEAN WINAPI RtlIsNtDdiVersionAvailable(ULONG version)
 {
     FIXME("stub: %d\n", version);
     return FALSE;
+}
+
+BOOLEAN WINAPI KdRefreshDebuggerNotPresent(void)
+{
+    TRACE(".\n");
+
+    return !KdDebuggerEnabled;
+}
+
+struct generic_call_dpc_context
+{
+    DEFERRED_REVERSE_BARRIER *reverse_barrier;
+    PKDEFERRED_ROUTINE routine;
+    ULONG *cpu_count_barrier;
+    void *context;
+    ULONG cpu_index;
+    ULONG current_barrier_flag;
+    LONG *barrier_passed_count;
+};
+
+static void WINAPI generic_call_dpc_callback(TP_CALLBACK_INSTANCE *instance, void *context)
+{
+    struct generic_call_dpc_context *c = context;
+    GROUP_AFFINITY old, new;
+
+    TRACE("instance %p, context %p.\n", instance, context);
+
+    NtQueryInformationThread(GetCurrentThread(), ThreadGroupInformation,
+            &old, sizeof(old), NULL);
+
+    memset(&new, 0, sizeof(new));
+
+    new.Mask = 1 << c->cpu_index;
+    NtSetInformationThread(GetCurrentThread(), ThreadGroupInformation, &new, sizeof(new));
+
+    TlsSetValue(dpc_call_tls_index, context);
+    c->routine((PKDPC)0xdeadbeef, c->context, c->cpu_count_barrier, c->reverse_barrier);
+    TlsSetValue(dpc_call_tls_index, NULL);
+    NtSetInformationThread(GetCurrentThread(), ThreadGroupInformation, &old, sizeof(old));
+}
+
+void WINAPI KeGenericCallDpc(PKDEFERRED_ROUTINE routine, void *context)
+{
+    ULONG cpu_count = KeQueryActiveProcessorCountEx(ALL_PROCESSOR_GROUPS);
+    static struct generic_call_dpc_context *contexts;
+    DEFERRED_REVERSE_BARRIER reverse_barrier;
+    static ULONG last_cpu_count;
+    LONG barrier_passed_count;
+    ULONG cpu_count_barrier;
+    ULONG i;
+
+    TRACE("routine %p, context %p.\n", routine, context);
+
+    EnterCriticalSection(&dpc_call_cs);
+
+    if (!dpc_call_tp)
+    {
+        if (!(dpc_call_tp = CreateThreadpool(NULL)))
+        {
+            ERR("Could not create thread pool.\n");
+            LeaveCriticalSection(&dpc_call_cs);
+            return;
+        }
+
+        SetThreadpoolThreadMinimum(dpc_call_tp, cpu_count);
+        SetThreadpoolThreadMaximum(dpc_call_tp, cpu_count);
+
+        memset(&dpc_call_tpe, 0, sizeof(dpc_call_tpe));
+        dpc_call_tpe.Version = 1;
+        dpc_call_tpe.Pool = dpc_call_tp;
+    }
+
+    reverse_barrier.Barrier = cpu_count;
+    reverse_barrier.TotalProcessors = cpu_count;
+    cpu_count_barrier = cpu_count;
+
+    if (contexts)
+    {
+        if (last_cpu_count < cpu_count)
+        {
+            static struct generic_call_dpc_context *new_contexts;
+            if (!(new_contexts = heap_realloc(contexts, sizeof(*contexts) * cpu_count)))
+            {
+                ERR("No memory.\n");
+                LeaveCriticalSection(&dpc_call_cs);
+                return;
+            }
+            contexts = new_contexts;
+            SetThreadpoolThreadMinimum(dpc_call_tp, cpu_count);
+            SetThreadpoolThreadMaximum(dpc_call_tp, cpu_count);
+        }
+    }
+    else if (!(contexts = heap_alloc(sizeof(*contexts) * cpu_count)))
+    {
+        ERR("No memory.\n");
+        LeaveCriticalSection(&dpc_call_cs);
+        return;
+    }
+
+    memset(contexts, 0, sizeof(*contexts) * cpu_count);
+    last_cpu_count = cpu_count;
+    barrier_passed_count = 0;
+
+    for (i = 0; i < cpu_count; ++i)
+    {
+        contexts[i].reverse_barrier = &reverse_barrier;
+        contexts[i].cpu_count_barrier = &cpu_count_barrier;
+        contexts[i].routine = routine;
+        contexts[i].context = context;
+        contexts[i].cpu_index = i;
+        contexts[i].barrier_passed_count = &barrier_passed_count;
+
+        TrySubmitThreadpoolCallback(generic_call_dpc_callback, &contexts[i], &dpc_call_tpe);
+    }
+
+    while (InterlockedCompareExchange((LONG *)&cpu_count_barrier, 0, 0))
+        SwitchToThread();
+
+    LeaveCriticalSection(&dpc_call_cs);
+}
+
+
+BOOLEAN WINAPI KeSignalCallDpcSynchronize(void *barrier)
+{
+    struct generic_call_dpc_context *context = TlsGetValue(dpc_call_tls_index);
+    DEFERRED_REVERSE_BARRIER *b = barrier;
+    LONG curr_flag, comp, done_value;
+    BOOL first;
+
+    TRACE("barrier %p, context %p.\n", barrier, context);
+
+    if (!context)
+    {
+        WARN("Called outside of DPC context.\n");
+        return FALSE;
+    }
+
+    context->current_barrier_flag ^= 0x80000000;
+    curr_flag = context->current_barrier_flag;
+
+    first = !context->cpu_index;
+    comp = curr_flag + context->cpu_index;
+    done_value = curr_flag + b->TotalProcessors;
+
+    if (first)
+        InterlockedExchange((LONG *)&b->Barrier, comp);
+
+    while (InterlockedCompareExchange((LONG *)&b->Barrier, comp + 1, comp) != done_value)
+        ;
+
+    InterlockedIncrement(context->barrier_passed_count);
+
+    while (first && InterlockedCompareExchange(context->barrier_passed_count, 0, b->TotalProcessors))
+        ;
+
+    return first;
+}
+
+void WINAPI KeSignalCallDpcDone(void *barrier)
+{
+    InterlockedDecrement((LONG *)barrier);
+}
+
+void * WINAPI PsGetProcessSectionBaseAddress(PEPROCESS process)
+{
+    void *image_base;
+    NTSTATUS status;
+    SIZE_T size;
+    HANDLE h;
+
+    TRACE("process %p.\n", process);
+
+    if ((status = ObOpenObjectByPointer(process, 0, NULL, PROCESS_ALL_ACCESS, NULL, KernelMode, &h)))
+    {
+        WARN("Error opening process object, status %#x.\n", status);
+        return NULL;
+    }
+
+    status = NtReadVirtualMemory(h, &process->info.PebBaseAddress->ImageBaseAddress,
+            &image_base, sizeof(image_base), &size);
+
+    NtClose(h);
+
+    if (status || size != sizeof(image_base))
+    {
+        WARN("Error reading process memory, status %#x, size %lu.\n", status, size);
+        return NULL;
+    }
+
+    TRACE("returning %p.\n", image_base);
+    return image_base;
+}
+
+void WINAPI KeStackAttachProcess(KPROCESS *process, KAPC_STATE *apc_state)
+{
+    FIXME("process %p, apc_state %p stub.\n", process, apc_state);
+}
+
+void WINAPI KeUnstackDetachProcess(KAPC_STATE *apc_state)
+{
+    FIXME("apc_state %p stub.\n", apc_state);
+}
+
+/*****************************************************
+ *           DllMain
+ */
+BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
+{
+    static void *handler;
+    LARGE_INTEGER count;
+
+    switch(reason)
+    {
+    case DLL_PROCESS_ATTACH:
+        DisableThreadLibraryCalls( inst );
+#if defined(__i386__) || defined(__x86_64__)
+        handler = RtlAddVectoredExceptionHandler( TRUE, vectored_handler );
+#endif
+        KeQueryTickCount( &count );  /* initialize the global KeTickCount */
+        NtBuildNumber = NtCurrentTeb()->Peb->OSBuildNumber;
+        ntoskrnl_heap = HeapCreate( HEAP_CREATE_ENABLE_EXECUTE, 0, 0 );
+        dpc_call_tls_index = TlsAlloc();
+        LdrRegisterDllNotification( 0, ldr_notify_callback, NULL, &ldr_notify_cookie );
+        break;
+    case DLL_PROCESS_DETACH:
+        LdrUnregisterDllNotification( ldr_notify_cookie );
+
+        if (reserved) break;
+
+        if (dpc_call_tp)
+            CloseThreadpool(dpc_call_tp);
+
+        HeapDestroy( ntoskrnl_heap );
+        RtlRemoveVectoredExceptionHandler( handler );
+        break;
+    }
+    return TRUE;
 }

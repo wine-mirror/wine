@@ -720,17 +720,6 @@ static void test_get_displayname(void)
     CloseServiceHandle(scm_handle);
 }
 
-static int is_printable_ascii_str(const char *s)
-{
-    while (*s)
-    {
-        if (*s < 32 || *s >= 127)
-            return 0;
-        s++;
-    }
-    return 1;
-}
-
 static void test_get_servicekeyname(void)
 {
     SC_HANDLE scm_handle, svc_handle;
@@ -872,10 +861,10 @@ static void test_get_servicekeyname(void)
     servicesize = 0;
     ret = GetServiceKeyNameA(scm_handle, displayname, NULL, &servicesize);
     ok(!ret, "Expected failure\n");
-    if (!is_printable_ascii_str(displayname) &&
+    if (strcmp(displayname, "Print Spooler") != 0 &&
         GetLastError() == ERROR_SERVICE_DOES_NOT_EXIST)
     {
-        win_skip("GetServiceKeyName() does not support non-ASCII display names: %s\n", displayname); /* Windows 7 */
+        win_skip("GetServiceKeyName() does not support localized display names: %s\n", displayname); /* Windows 7 */
         CloseServiceHandle(scm_handle);
         return; /* All the tests that follow will fail too */
     }
@@ -1350,7 +1339,7 @@ static void test_enum_svc(void)
                               services, bufsize, &needed, &returned, &resume);
     ok(ret, "Expected success, got error %u\n", GetLastError());
     ok(needed == 0, "Expected needed buffer to be 0 as we are done\n");
-    ok(returned == missing, "Expected %u services to be returned\n", missing);
+    todo_wine ok(returned == missing, "Expected %u services to be returned\n", missing);
     ok(resume == 0, "Expected the resume handle to be 0\n");
     HeapFree(GetProcessHeap(), 0, services);
 

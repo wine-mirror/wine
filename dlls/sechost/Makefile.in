@@ -1,0 +1,15 @@
+MODULE    = sechost.dll
+IMPORTLIB = sechost
+IMPORTS   = kernelbase
+DELAYIMPORTS = rpcrt4
+
+EXTRADLLFLAGS = -mno-cygwin
+
+C_SRCS = \
+	security.c \
+	service.c \
+	trace.c
+
+IDL_SRCS = \
+	plugplay.idl \
+	svcctl.idl

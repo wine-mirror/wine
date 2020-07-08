@@ -200,21 +200,6 @@ BOOL WINAPI QuirkIsEnabled3(void *unk1, void *unk2)
     return FALSE;
 }
 
-/***********************************************************************
- *           WaitOnAddress   (KERNELBASE.@)
- */
-BOOL WINAPI WaitOnAddress(volatile void *addr, void *cmp, SIZE_T size, DWORD timeout)
-{
-    LARGE_INTEGER to;
-
-    if (timeout != INFINITE)
-    {
-        to.QuadPart = -(LONGLONG)timeout * 10000;
-        return set_ntstatus( RtlWaitOnAddress( (const void *)addr, cmp, size, &to ));
-    }
-    return set_ntstatus( RtlWaitOnAddress( (const void *)addr, cmp, size, NULL ));
-}
-
 HRESULT WINAPI QISearch(void *base, const QITAB *table, REFIID riid, void **obj)
 {
     const QITAB *ptr;
@@ -320,12 +305,6 @@ static HRESULT lcid_to_rfc1766(LCID lcid, WCHAR *rfc1766, INT len)
 
 HRESULT WINAPI GetAcceptLanguagesW(WCHAR *langbuf, DWORD *buflen)
 {
-    static const WCHAR keyW[] = {
-        'S','o','f','t','w','a','r','e','\\',
-        'M','i','c','r','o','s','o','f','t','\\',
-        'I','n','t','e','r','n','e','t',' ','E','x','p','l','o','r','e','r','\\',
-        'I','n','t','e','r','n','a','t','i','o','n','a','l',0};
-    static const WCHAR valueW[] = {'A','c','c','e','p','t','L','a','n','g','u','a','g','e',0};
     DWORD mystrlen, mytype;
     WCHAR *mystr;
     LCID mylcid;
@@ -342,8 +321,9 @@ HRESULT WINAPI GetAcceptLanguagesW(WCHAR *langbuf, DWORD *buflen)
     len = mystrlen * sizeof(WCHAR);
     mystr = heap_alloc(len);
     mystr[0] = 0;
-    RegOpenKeyExW(HKEY_CURRENT_USER, keyW, 0, KEY_QUERY_VALUE, &mykey);
-    lres = RegQueryValueExW(mykey, valueW, 0, &mytype, (PBYTE)mystr, &len);
+    RegOpenKeyExW(HKEY_CURRENT_USER, L"Software\\Microsoft\\Internet Explorer\\International",
+                  0, KEY_QUERY_VALUE, &mykey);
+    lres = RegQueryValueExW(mykey, L"AcceptLanguage", 0, &mytype, (PBYTE)mystr, &len);
     RegCloseKey(mykey);
     len = lstrlenW(mystr);
 

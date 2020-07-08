@@ -30,7 +30,7 @@ signature="$CHICAGO$"
 RegisterDlls=RegisterDllsSection
 WineFakeDlls=FakeDllsWin32,FakeDlls
 UpdateInis=SystemIni
-CopyFiles=InfFiles,NlsFiles
+CopyFiles=InfFiles,NlsFiles,SortFiles
 AddReg=\
     Classes,\
     ContentIndex,\
@@ -54,7 +54,7 @@ AddReg=\
 RegisterDlls=RegisterDllsSection
 WineFakeDlls=FakeDllsWin32,FakeDlls
 UpdateInis=SystemIni
-CopyFiles=InfFiles,NlsFiles
+CopyFiles=InfFiles,NlsFiles,SortFiles
 AddReg=\
     Classes,\
     ContentIndex,\
@@ -80,7 +80,7 @@ RegisterDlls=RegisterDllsSection
 WineFakeDlls=FakeDllsWin64,FakeDlls
 WinePreInstall=Wow64
 UpdateInis=SystemIni
-CopyFiles=InfFiles,NlsFiles
+CopyFiles=InfFiles,NlsFiles,SortFiles
 AddReg=\
     Classes,\
     ContentIndex,\
@@ -107,7 +107,7 @@ RegisterDlls=RegisterDllsSection
 WineFakeDlls=FakeDllsWin64,FakeDlls
 WinePreInstall=Wow64
 UpdateInis=SystemIni
-CopyFiles=InfFiles,NlsFiles
+CopyFiles=InfFiles,NlsFiles,SortFiles
 AddReg=\
     Classes,\
     ContentIndex,\
@@ -524,6 +524,7 @@ HKLM,System\CurrentControlSet\Control\Class\{745a17a0-74d3-11d0-b6fe-00a0c90f57d
 
 [CurrentVersion]
 HKCU,%CurrentVersion%\Run,,16
+HKCU,%CurrentVersionNT%\Winlogon,,16
 HKLM,%CurrentVersion%,"CommonFilesDir",,"%16427%"
 HKLM,%CurrentVersion%,"FirstInstallDateTime",1,21,81,7c,23
 HKLM,%CurrentVersion%,"ProductId",,"12345-oem-0000001-54321"
@@ -549,7 +550,6 @@ HKLM,%CurrentVersion%\Setup,"SharedDir",,"%25%"
 HKLM,%CurrentVersion%\Setup\WindowsFeatures\WindowsMediaVersion,,,"12.0.7601.18840"
 HKLM,%CurrentVersion%\Shell Extensions\Approved,,16
 HKLM,%CurrentVersion%\Uninstall,,16
-HKLM,%CurrentVersion%\Winlogon,,16
 HKLM,%CurrentVersionNT%,"InstallDate",0x10003,1273299354
 HKLM,%CurrentVersionNT%,"ProductId",,"12345-oem-0000001-54321"
 HKLM,%CurrentVersionNT%,"RegisteredOrganization",2,""
@@ -572,6 +572,7 @@ HKLM,%CurrentVersionNT%\Perflib,,16
 HKLM,%CurrentVersionNT%\Ports,,16
 HKLM,%CurrentVersionNT%\Print,,16
 HKLM,%CurrentVersionNT%\ProfileList,,16
+HKLM,%CurrentVersionNT%\Winlogon,"Shell",,"explorer.exe"
 
 [CurrentVersionWow64]
 HKLM,%CurrentVersion%,"ProgramFilesDir (x86)",,"%16426%"
@@ -764,72 +765,6 @@ HKLM,SOFTWARE\Microsoft\Active Setup\Installed Components\{6BF52A52-394A-11d3-B1
 HKLM,SOFTWARE\Microsoft\Active Setup\Installed Components\{6BF52A52-394A-11d3-B153-00C04F79FAA6},"Version",2,"12,0,7601,18840"
 
 [Nls]
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"37",,"c_037.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"437",,"c_437.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"500",,"c_500.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"737",,"c_737.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"775",,"c_775.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"850",,"c_850.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"852",,"c_852.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"855",,"c_855.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"857",,"c_857.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"860",,"c_860.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"861",,"c_861.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"862",,"c_862.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"863",,"c_863.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"864",,"c_864.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"865",,"c_865.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"866",,"c_866.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"869",,"c_869.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"874",,"c_874.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"875",,"c_875.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"932",,"c_932.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"936",,"c_936.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"949",,"c_949.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"950",,"c_950.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"1026",,"c_1026.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"1250",,"c_1250.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"1251",,"c_1251.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"1252",,"c_1252.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"1253",,"c_1253.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"1254",,"c_1254.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"1255",,"c_1255.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"1256",,"c_1256.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"1257",,"c_1257.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"1258",,"c_1258.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"1361",,"c_1361.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"10000",,"c_10000.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"10001",,"c_10001.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"10002",,"c_10002.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"10003",,"c_10003.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"10004",,"c_10004.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"10005",,"c_10005.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"10006",,"c_10006.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"10007",,"c_10007.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"10008",,"c_10008.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"10010",,"c_10010.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"10017",,"c_10017.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"10021",,"c_10021.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"10029",,"c_10029.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"10079",,"c_10079.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"10081",,"c_10081.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"10082",,"c_10082.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"20127",,"c_20127.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"20866",,"c_20866.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"20932",,"c_20932.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"21866",,"c_21866.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"28591",,"c_28591.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"28592",,"c_28592.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"28593",,"c_28593.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"28594",,"c_28594.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"28595",,"c_28595.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"28596",,"c_28596.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"28597",,"c_28597.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"28598",,"c_28598.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"28599",,"c_28599.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"28603",,"c_28603.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Codepage,"28605",,"c_28605.nls"
-
 HKLM,System\CurrentControlSet\Control\Nls\Language,"0401",,"l_intl.nls"
 HKLM,System\CurrentControlSet\Control\Nls\Language,"0402",,"l_intl.nls"
 HKLM,System\CurrentControlSet\Control\Nls\Language,"0403",,"l_intl.nls"
@@ -1152,12 +1087,6 @@ HKLM,System\CurrentControlSet\Control\Nls\Locale\Alternate Sorts,"00020804",,"a"
 HKLM,System\CurrentControlSet\Control\Nls\Locale\Alternate Sorts,"00021004",,"a"
 HKLM,System\CurrentControlSet\Control\Nls\Locale\Alternate Sorts,"00021404",,"9"
 HKLM,System\CurrentControlSet\Control\Nls\Locale\Alternate Sorts,"00030404",,"9"
-
-HKLM,System\CurrentControlSet\Control\Nls\Normalization,"1",,"normnfc.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Normalization,"2",,"normnfd.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Normalization,"5",,"normnfkc.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Normalization,"6",,"normnfkd.nls"
-HKLM,System\CurrentControlSet\Control\Nls\Normalization,"d",,"normidna.nls"
 
 [OLE]
 HKLM,"Software\Microsoft\OLE","EnableDCOM",,"Y"
@@ -2636,10 +2565,12 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,mshtml.dll,1
 11,,msisip.dll,1
 11,,qcap.dll,1
+11,,qedit.dll,1
 11,,urlmon.dll,1
 11,,windowscodecs.dll,1
 11,,winegstreamer.dll,1
 11,,wineqtdecoder.dll,1
+11,,winevulkan.dll,1
 11,,wintrust.dll,1
 11,,iexplore.exe,1
 
@@ -2672,17 +2603,27 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,gecko\plugin,npmshtml.dll
 11,Speech\Common,sapi.dll
 11,wbem,mofcomp.exe
+11,wbem,wbemdisp.dll
+11,wbem,wbemprox.dll
+11,wbem,wmic.exe
+11,wbem,wmiutils.dll
 11,WindowsPowerShell\v1.0,powershell.exe
 10,syswow64,stdole2.tlb
 11,,iexplore.exe
 11,,winetest.exe,-
 12,,fltmgr.sys,-
+12,,hidclass.sys,-
+12,,http.sys,-
 12,,ksecdd.sys,-
 12,,mountmgr.sys,-
 12,,ndis.sys,-
+12,,netio.sys,-
+12,,scsiport.sys,-
 12,,tdi.sys,-
+12,,usbd.sys,-
 12,,winebus.sys,-
 12,,winehid.sys,-
+12,,wineusb.sys,-
 ; skip .NET fake dlls in Wine Mono package
 11,,aspnet_regiis.exe,-
 11,,ngen.exe,-
@@ -2728,12 +2669,18 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,notepad.exe
 11,,winetest.exe,-
 12,,fltmgr.sys
+12,,hidclass.sys
+12,,http.sys
 12,,ksecdd.sys
 12,,mountmgr.sys
 12,,ndis.sys
+12,,netio.sys
+12,,scsiport.sys
 12,,tdi.sys
+12,,usbd.sys
 12,,winebus.sys
 12,,winehid.sys
+12,,wineusb.sys
 ; skip .NET fake dlls in Wine Mono package
 11,,aspnet_regiis.exe,-
 11,,ngen.exe,-
@@ -2896,6 +2843,17 @@ HKLM,%CurrentVersionNT%\Time Zones\Belarus Standard Time,"MUI_Dlt",,"@tzres.dll,
 HKLM,%CurrentVersionNT%\Time Zones\Belarus Standard Time,"MUI_Std",,"@tzres.dll,-56576"
 HKLM,%CurrentVersionNT%\Time Zones\Belarus Standard Time,"Std",,"Belarus Standard Time"
 HKLM,%CurrentVersionNT%\Time Zones\Belarus Standard Time,"TZI",1,4c,ff,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Bougainville Standard Time,"Display",,"Pacific/Bougainville"
+HKLM,%CurrentVersionNT%\Time Zones\Bougainville Standard Time,"Dlt",,"Bougainville Daylight Time"
+HKLM,%CurrentVersionNT%\Time Zones\Bougainville Standard Time,"MUI_Dlt",,"@tzres.dll,-51969"
+HKLM,%CurrentVersionNT%\Time Zones\Bougainville Standard Time,"MUI_Std",,"@tzres.dll,-51968"
+HKLM,%CurrentVersionNT%\Time Zones\Bougainville Standard Time,"Std",,"Bougainville Standard Time"
+HKLM,%CurrentVersionNT%\Time Zones\Bougainville Standard Time,"TZI",1,6c,fd,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Bougainville Standard Time\Dynamic DST,"2013",1,a8,fd,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Bougainville Standard Time\Dynamic DST,"2014",1,a8,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,01,00,03,00,01,00,00,00,00,00,00,00,00,00,00,00,0c,00,00,00,05,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Bougainville Standard Time\Dynamic DST,"2015",1,6c,fd,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Bougainville Standard Time\Dynamic DST,"FirstEntry",0x10001,"2013"
+HKLM,%CurrentVersionNT%\Time Zones\Bougainville Standard Time\Dynamic DST,"LastEntry",0x10001,"2015"
 HKLM,%CurrentVersionNT%\Time Zones\Canada Central Standard Time,"Display",,"America/Regina"
 HKLM,%CurrentVersionNT%\Time Zones\Canada Central Standard Time,"Dlt",,"Canada Central Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Canada Central Standard Time,"MUI_Dlt",,"@tzres.dll,-25713"
@@ -2979,6 +2937,17 @@ HKLM,%CurrentVersionNT%\Time Zones\Central Standard Time (Mexico),"MUI_Dlt",,"@t
 HKLM,%CurrentVersionNT%\Time Zones\Central Standard Time (Mexico),"MUI_Std",,"@tzres.dll,-32800"
 HKLM,%CurrentVersionNT%\Time Zones\Central Standard Time (Mexico),"Std",,"Central Standard Time (Mexico)"
 HKLM,%CurrentVersionNT%\Time Zones\Central Standard Time (Mexico),"TZI",1,68,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,00,00,05,00,02,00,00,00,00,00,00,00,00,00,04,00,00,00,01,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Chatham Islands Standard Time,"Display",,"Pacific/Chatham"
+HKLM,%CurrentVersionNT%\Time Zones\Chatham Islands Standard Time,"Dlt",,"Chatham Islands Daylight Time"
+HKLM,%CurrentVersionNT%\Time Zones\Chatham Islands Standard Time,"MUI_Dlt",,"@tzres.dll,-62305"
+HKLM,%CurrentVersionNT%\Time Zones\Chatham Islands Standard Time,"MUI_Std",,"@tzres.dll,-62304"
+HKLM,%CurrentVersionNT%\Time Zones\Chatham Islands Standard Time,"Std",,"Chatham Islands Standard Time"
+HKLM,%CurrentVersionNT%\Time Zones\Chatham Islands Standard Time,"TZI",1,03,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,04,00,00,00,01,00,03,00,2d,00,00,00,00,00,00,00,09,00,00,00,05,00,02,00,2d,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Chatham Islands Standard Time\Dynamic DST,"2006",1,03,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,03,00,00,00,03,00,03,00,2d,00,00,00,00,00,00,00,0a,00,00,00,01,00,02,00,2d,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Chatham Islands Standard Time\Dynamic DST,"2007",1,03,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,03,00,00,00,03,00,03,00,2d,00,00,00,00,00,00,00,09,00,00,00,05,00,02,00,2d,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Chatham Islands Standard Time\Dynamic DST,"2008",1,03,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,04,00,00,00,01,00,03,00,2d,00,00,00,00,00,00,00,09,00,00,00,05,00,02,00,2d,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Chatham Islands Standard Time\Dynamic DST,"FirstEntry",0x10001,"2006"
+HKLM,%CurrentVersionNT%\Time Zones\Chatham Islands Standard Time\Dynamic DST,"LastEntry",0x10001,"2008"
 HKLM,%CurrentVersionNT%\Time Zones\China Standard Time,"Display",,"Asia/Shanghai"
 HKLM,%CurrentVersionNT%\Time Zones\China Standard Time,"Dlt",,"China Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\China Standard Time,"MUI_Dlt",,"@tzres.dll,-161"
@@ -3306,6 +3275,12 @@ HKLM,%CurrentVersionNT%\Time Zones\Magadan Standard Time,"MUI_Dlt",,"@tzres.dll,
 HKLM,%CurrentVersionNT%\Time Zones\Magadan Standard Time,"MUI_Std",,"@tzres.dll,-8832"
 HKLM,%CurrentVersionNT%\Time Zones\Magadan Standard Time,"Std",,"Magadan Standard Time"
 HKLM,%CurrentVersionNT%\Time Zones\Magadan Standard Time,"TZI",1,a8,fd,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Marquesas Standard Time,"Display",,"Pacific/Marquesas"
+HKLM,%CurrentVersionNT%\Time Zones\Marquesas Standard Time,"Dlt",,"Marquesas Daylight Time"
+HKLM,%CurrentVersionNT%\Time Zones\Marquesas Standard Time,"MUI_Dlt",,"@tzres.dll,-20737"
+HKLM,%CurrentVersionNT%\Time Zones\Marquesas Standard Time,"MUI_Std",,"@tzres.dll,-20736"
+HKLM,%CurrentVersionNT%\Time Zones\Marquesas Standard Time,"Std",,"Marquesas Standard Time"
+HKLM,%CurrentVersionNT%\Time Zones\Marquesas Standard Time,"TZI",1,3a,02,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\Mauritius Standard Time,"Display",,"Indian/Mauritius"
 HKLM,%CurrentVersionNT%\Time Zones\Mauritius Standard Time,"Dlt",,"Mauritius Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Mauritius Standard Time,"MUI_Dlt",,"@tzres.dll,-60897"
@@ -3777,6 +3752,8 @@ HKLM,"System\CurrentControlSet\Services\Winsock2\Parameters\Protocol_Catalog9\Ca
 
 [VersionInfo]
 HKLM,%CurrentVersionNT%,"CurrentVersion",2,"6.1"
+HKLM,%CurrentVersionNT%,"CurrentMajorVersionNumber",0x10001,6
+HKLM,%CurrentVersionNT%,"CurrentMinorVersionNumber",0x10001,1
 HKLM,%CurrentVersionNT%,"CSDVersion",2,"Service Pack 1"
 HKLM,%CurrentVersionNT%,"CurrentBuild",2,"7601"
 HKLM,%CurrentVersionNT%,"CurrentBuildNumber",2,"7601"
@@ -3890,6 +3867,7 @@ HKLM,Software\Wine\LicenseInformation,"Shell-PremiumInBoxGames-Chess-EnableGame"
 [InfFiles]
 winebus.inf
 winehid.inf
+wineusb.inf
 
 [NlsFiles]
 c_037.nls
@@ -3964,9 +3942,14 @@ normnfd.nls
 normnfkc.nls
 normnfkd.nls
 
+[SortFiles]
+sortdefault.nls
+
 [WineSourceDirs]
-NlsFiles=nls
+NlsFiles  = nls
+SortFiles = nls
 
 [DestinationDirs]
-InfFiles = 17
-NlsFiles = 11
+InfFiles  = 17
+NlsFiles  = 11
+SortFiles = 10,globalization\sorting

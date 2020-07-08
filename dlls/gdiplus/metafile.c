@@ -810,6 +810,7 @@ GpStatus WINGDIPAPI GdipRecordMetafile(HDC hdc, EmfType type, GDIPCONST GpRectF 
     (*metafile)->comment_data = NULL;
     (*metafile)->comment_data_size = 0;
     (*metafile)->comment_data_length = 0;
+    (*metafile)->limit_dpi = 96;
     (*metafile)->hemf = NULL;
     list_init(&(*metafile)->containers);
 
@@ -4006,10 +4007,37 @@ GpStatus WINGDIPAPI GdipCreateMetafileFromStream(IStream *stream,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipGetMetafileDownLevelRasterizationLimit(GDIPCONST GpMetafile *metafile,
+    UINT *limitDpi)
+{
+    TRACE("(%p,%p)\n", metafile, limitDpi);
+
+    if (!metafile || !limitDpi)
+        return InvalidParameter;
+
+    if (!metafile->record_dc)
+        return WrongState;
+
+    *limitDpi = metafile->limit_dpi;
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipSetMetafileDownLevelRasterizationLimit(GpMetafile *metafile,
     UINT limitDpi)
 {
     TRACE("(%p,%u)\n", metafile, limitDpi);
+
+    if (limitDpi == 0)
+        limitDpi = 96;
+
+    if (!metafile || limitDpi < 10)
+        return InvalidParameter;
+
+    if (!metafile->record_dc)
+        return WrongState;
+
+    metafile->limit_dpi = limitDpi;
 
     return Ok;
 }

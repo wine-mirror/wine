@@ -46,7 +46,6 @@
 #include "wine/debug.h"
 #include "wine/unicode.h"
 #include "wine/list.h"
-#include "wine/library.h"
 
 #include "ole2.h"
 #include "mmdeviceapi.h"
@@ -237,7 +236,7 @@ static inline SessionMgr *impl_from_IAudioSessionManager2(IAudioSessionManager2 
 }
 
 #define LOAD_FUNCPTR(lib, func) do { \
-    if ((p##func = wine_dlsym( lib, #func, NULL, 0 )) == NULL) \
+    if ((p##func = dlsym( lib, #func )) == NULL) \
         { ERR( "can't find symbol %s\n", #func); return FALSE; } \
     } while(0)
 
@@ -246,11 +245,10 @@ static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
 static BOOL WINAPI load_opensles( INIT_ONCE *once, void *param, void **context )
 {
     void *libopensles;
-    char error[1024];
 
-    if (!(libopensles = wine_dlopen( "libOpenSLES.so", RTLD_GLOBAL, error, sizeof(error) )))
+    if (!(libopensles = dlopen( "libOpenSLES.so", RTLD_GLOBAL )))
     {
-        ERR( "failed to load libOpenSLES.so: %s\n", error );
+        ERR( "failed to load libOpenSLES.so: %s\n", dlerror() );
         return FALSE;
     }
     LOAD_FUNCPTR( libopensles, slCreateEngine );

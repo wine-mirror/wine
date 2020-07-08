@@ -48,7 +48,7 @@ static PCreateTextServices pCreateTextServices;
 
 /* Use a special table for x86 machines to convert the thiscall
  * calling convention.  This isn't needed on other platforms. */
-#if defined(__i386__) && !defined(__MINGW32__)
+#if  defined(__i386__) && !defined(__MINGW32__) && (!defined(_MSC_VER) || !defined(__clang__))
 static ITextServicesVtbl itextServicesStdcallVtbl;
 #define TXTSERV_VTABLE(This) (&itextServicesStdcallVtbl)
 #else /* __i386__ */
@@ -492,7 +492,7 @@ typedef struct
 
 static void setup_thiscall_wrappers(void)
 {
-#if defined(__i386__) && !defined(__MINGW32__)
+#if defined(__i386__) && !defined(__MINGW32__) && (!defined(_MSC_VER) || !defined(__clang__))
     void** pVtable;
     void** pVtableEnd;
     THISCALL_TO_STDCALL_THUNK *thunk;

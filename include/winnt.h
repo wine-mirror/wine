@@ -23,6 +23,7 @@
 
 #include <basetsd.h>
 #include <guiddef.h>
+#include <winapifamily.h>
 
 #ifndef RC_INVOKED
 #include <ctype.h>
@@ -388,11 +389,7 @@ extern "C" {
 
 /* Compile time assertion */
 
-#if defined(_MSC_VER)
-# define C_ASSERT(e) typedef char __C_ASSERT__[(e)?1:-1]
-#else
-# define C_ASSERT(e) extern void __C_ASSERT__(int [(e)?1:-1])
-#endif
+#define C_ASSERT(e) extern void __C_ASSERT__(int [(e)?1:-1])
 
 /* Eliminate Microsoft C/C++ compiler warning 4715 */
 #if defined(_MSC_VER) && (_MSC_VER > 1200)
@@ -456,7 +453,7 @@ typedef VOID           *PVOID64;
 typedef BYTE            BOOLEAN,    *PBOOLEAN;
 typedef char            CHAR,       *PCHAR;
 typedef short           SHORT,      *PSHORT;
-#ifdef _MSC_VER
+#ifdef WINE_USE_LONG
 typedef long            LONG,       *PLONG;
 #else
 typedef int             LONG,       *PLONG;
@@ -800,6 +797,7 @@ typedef struct _MEMORY_BASIC_INFORMATION
 #define CONTAINING_RECORD(address, type, field) \
   ((type *)((PCHAR)(address) - offsetof(type, field)))
 
+#define ARRAYSIZE(x) (sizeof(x) / sizeof((x)[0]))
 #ifdef __WINESRC__
 # define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 #endif
@@ -926,6 +924,10 @@ typedef enum _HEAP_INFORMATION_CLASS {
 #define PF_ARM_V8_INSTRUCTIONS_AVAILABLE        29
 #define PF_ARM_V8_CRYPTO_INSTRUCTIONS_AVAILABLE 30
 #define PF_ARM_V8_CRC32_INSTRUCTIONS_AVAILABLE  31
+#define PF_RDTSCP_INSTRUCTION_AVAILABLE         32
+#define PF_RDPID_INSTRUCTION_AVAILABLE          33
+#define PF_ARM_V81_ATOMIC_INSTRUCTIONS_AVAILABLE 34
+#define PF_MONITORX_INSTRUCTION_AVAILABLE       35
 
 
 /* Execution state flags */
@@ -1861,6 +1863,8 @@ NTSYSAPI PVOID WINAPI RtlVirtualUnwind(DWORD,DWORD,DWORD,RUNTIME_FUNCTION*,CONTE
 #define CONTEXT_FLOATING_POINT  (CONTEXT_ARM64 | 0x00000004)
 #define CONTEXT_DEBUG_REGISTERS (CONTEXT_ARM64 | 0x00000008)
 
+#define CONTEXT_UNWOUND_TO_CALL 0x20000000
+
 #define CONTEXT_FULL (CONTEXT_CONTROL | CONTEXT_INTEGER)
 #define CONTEXT_ALL  (CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_FLOATING_POINT | CONTEXT_DEBUG_REGISTERS)
 
@@ -2129,7 +2133,7 @@ typedef struct _CONTEXT
 
     DWORD ContextFlags;
     DWORD Fill[2];
-} CONTEXT;
+} CONTEXT, *PCONTEXT;
 
 #endif  /* _MIPS_ */
 
@@ -2241,7 +2245,7 @@ typedef struct
     DWORD Dr5;
     DWORD Dr6;
     DWORD Dr7;
-} CONTEXT;
+} CONTEXT, *PCONTEXT;
 
 typedef struct _STACK_FRAME_HEADER
 {
@@ -2667,10 +2671,18 @@ static FORCEINLINE struct _TEB * WINAPI NtCurrentTeb(void)
     return teb;
 }
 #elif defined(__x86_64__) && defined(_MSC_VER)
+unsigned __int64 __readgsqword(unsigned long);
 #pragma intrinsic(__readgsqword)
 static FORCEINLINE struct _TEB * WINAPI NtCurrentTeb(void)
 {
     return (struct _TEB *)__readgsqword(FIELD_OFFSET(NT_TIB, Self));
+}
+#elif defined(__arm__) && defined(__MINGW32__)
+static FORCEINLINE struct _TEB * WINAPI NtCurrentTeb(void)
+{
+    struct _TEB *teb;
+    __asm__("mrc p15, 0, %0, c13, c0, 2" : "=r" (teb));
+    return teb;
 }
 #else
 extern struct _TEB * WINAPI NtCurrentTeb(void);
@@ -3820,33 +3832,17 @@ typedef struct _IMAGE_RESOURCE_DIRECTORY {
 typedef struct _IMAGE_RESOURCE_DIRECTORY_ENTRY {
 	union {
 		struct {
-#ifdef BITFIELDS_BIGENDIAN
-			unsigned NameIsString:1;
-			unsigned NameOffset:31;
-#else
 			unsigned NameOffset:31;
 			unsigned NameIsString:1;
-#endif
 		} DUMMYSTRUCTNAME;
 		DWORD   Name;
-#ifdef WORDS_BIGENDIAN
-		WORD    __pad;
 		WORD    Id;
-#else
-		WORD    Id;
-		WORD    __pad;
-#endif
 	} DUMMYUNIONNAME;
 	union {
 		DWORD   OffsetToData;
 		struct {
-#ifdef BITFIELDS_BIGENDIAN
-			unsigned DataIsDirectory:1;
-			unsigned OffsetToDirectory:31;
-#else
 			unsigned OffsetToDirectory:31;
 			unsigned DataIsDirectory:1;
-#endif
 		} DUMMYSTRUCTNAME2;
 	} DUMMYUNIONNAME2;
 } IMAGE_RESOURCE_DIRECTORY_ENTRY,*PIMAGE_RESOURCE_DIRECTORY_ENTRY;
@@ -4340,6 +4336,12 @@ typedef struct _ACL_SIZE_INFORMATION
 #define SE_MANAGE_VOLUME_NAME           L"SeManageVolumePrivilege"
 #define SE_IMPERSONATE_NAME             L"SeImpersonatePrivilege"
 #define SE_CREATE_GLOBAL_NAME           L"SeCreateGlobalPrivilege"
+#define SE_TRUSTED_CREDMAN_ACCESS_NAME  L"SeTrustedCredManAccessPrivilege"
+#define SE_RELABEL_NAME                 L"SeRelabelPrivilege"
+#define SE_INC_WORKING_SET_NAME         L"SeIncreaseWorkingSetPrivilege"
+#define SE_TIME_ZONE_NAME               L"SeTimeZonePrivilege"
+#define SE_CREATE_SYMBOLIC_LINK_NAME    L"SeCreateSymbolicLinkPrivilege"
+#define SE_DELEGATE_SESSION_USER_IMPERSONATE_NAME L"SeDelegateSessionUserImpersonatePrivilege"
 #else /* _MSC_VER/__MINGW32__ */
 static const WCHAR SE_CREATE_TOKEN_NAME[] = { 'S','e','C','r','e','a','t','e','T','o','k','e','n','P','r','i','v','i','l','e','g','e',0 };
 static const WCHAR SE_ASSIGNPRIMARYTOKEN_NAME[] = { 'S','e','A','s','s','i','g','n','P','r','i','m','a','r','y','T','o','k','e','n','P','r','i','v','i','l','e','g','e',0 };
@@ -4370,6 +4372,12 @@ static const WCHAR SE_ENABLE_DELEGATION_NAME[] = { 'S','e','E','n','a','b','l','
 static const WCHAR SE_MANAGE_VOLUME_NAME[] = { 'S','e','M','a','n','a','g','e','V','o','l','u','m','e','P','r','i','v','i','l','e','g','e',0 };
 static const WCHAR SE_IMPERSONATE_NAME[] = { 'S','e','I','m','p','e','r','s','o','n','a','t','e','P','r','i','v','i','l','e','g','e',0 };
 static const WCHAR SE_CREATE_GLOBAL_NAME[] = { 'S','e','C','r','e','a','t','e','G','l','o','b','a','l','P','r','i','v','i','l','e','g','e',0 };
+static const WCHAR SE_TRUSTED_CREDMAN_ACCESS_NAME[] = { 'S','e','T','r','u','s','t','e','d','C','r','e','d','M','a','n','A','c','c','e','s','s','P','r','i','v','i','l','e','g','e',0 };
+static const WCHAR SE_RELABEL_NAME[] = { 'S','e','R','e','l','a','b','e','l','P','r','i','v','i','l','e','g','e',0 };
+static const WCHAR SE_INC_WORKING_SET_NAME[] = { 'S','e','I','n','c','r','e','a','s','e','W','o','r','k','i','n','g','S','e','t','P','r','i','v','i','l','e','g','e',0 };
+static const WCHAR SE_TIME_ZONE_NAME[] = { 'S','e','T','i','m','e','Z','o','n','e','P','r','i','v','i','l','e','g','e',0 };
+static const WCHAR SE_CREATE_SYMBOLIC_LINK_NAME[] = { 'S','e','C','r','e','a','t','e','S','y','m','b','o','l','i','c','L','i','n','k','P','r','i','v','i','l','e','g','e',0 };
+static const WCHAR SE_DELEGATE_SESSION_USER_IMPERSONATE_NAME[] = { 'S','e','D','e','l','e','g','a','t','e','S','e','s','s','i','o','n','U','s','e','r','I','m','p','e','r','s','o','n','a','t','e','P','r','i','v','i','l','e','g','e',0 };
 #endif
 #else /* UNICODE */
 #define SE_CREATE_TOKEN_NAME            "SeCreateTokenPrivilege"
@@ -4401,6 +4409,12 @@ static const WCHAR SE_CREATE_GLOBAL_NAME[] = { 'S','e','C','r','e','a','t','e','
 #define SE_MANAGE_VOLUME_NAME           "SeManageVolumePrivilege"
 #define SE_IMPERSONATE_NAME             "SeImpersonatePrivilege"
 #define SE_CREATE_GLOBAL_NAME           "SeCreateGlobalPrivilege"
+#define SE_TRUSTED_CREDMAN_ACCESS_NAME  "SeTrustedCredManAccessPrivilege"
+#define SE_RELABEL_NAME                 "SeRelabelPrivilege"
+#define SE_INC_WORKING_SET_NAME         "SeIncreaseWorkingSetPrivilege"
+#define SE_TIME_ZONE_NAME               "SeTimeZonePrivilege"
+#define SE_CREATE_SYMBOLIC_LINK_NAME    "SeCreateSymbolicLinkPrivilege"
+#define SE_DELEGATE_SESSION_USER_IMPERSONATE_NAME "SeDelegateSessionUserImpersonatePrivilege"
 #endif
 
 #define SE_GROUP_MANDATORY          0x00000001
@@ -5062,7 +5076,10 @@ typedef struct _ACE_HEADER {
 #define	SYSTEM_AUDIT_CALLBACK_OBJECT_ACE_TYPE 0xf
 #define	SYSTEM_ALARM_CALLBACK_OBJECT_ACE_TYPE 0x10
 #define SYSTEM_MANDATORY_LABEL_ACE_TYPE 0x11
-#define	ACCESS_MAX_MS_V5_ACE_TYPE	0x11
+#define SYSTEM_RESOURCE_ATTRIBUTE_ACE_TYPE  0x12
+#define SYSTEM_SCOPED_POLICY_ID_ACE_TYPE    0x13
+#define SYSTEM_PROCESS_TRUST_LABEL_ACE_TYPE 0x14
+#define ACCESS_MAX_MS_V5_ACE_TYPE           0x14
 
 /* inherit AceFlags */
 #define	OBJECT_INHERIT_ACE		0x01
@@ -5324,6 +5341,15 @@ typedef struct _QUOTA_LIMITS {
 #define QUOTA_LIMITS_HARDWS_MIN_DISABLE 0x00000002
 #define QUOTA_LIMITS_HARDWS_MAX_ENABLE  0x00000004
 #define QUOTA_LIMITS_HARDWS_MAX_DISABLE 0x00000008
+#define QUOTA_LIMITS_USE_DEFAULT_LIMITS 0x00000010
+
+typedef union _RATE_QUOTA_LIMIT {
+    DWORD RateData;
+    struct {
+        DWORD RatePercent:7;
+        DWORD Reserved0:25;
+    } DUMMYSTRUCTNAME;
+} RATE_QUOTA_LIMIT, *PRATE_QUOTA_LIMIT;
 
 typedef struct _QUOTA_LIMITS_EX {
     SIZE_T PagedPoolLimit;
@@ -5332,12 +5358,12 @@ typedef struct _QUOTA_LIMITS_EX {
     SIZE_T MaximumWorkingSetSize;
     SIZE_T PagefileLimit;
     LARGE_INTEGER TimeLimit;
-    SIZE_T Reserved1;
+    SIZE_T WorkingSetLimit;
     SIZE_T Reserved2;
     SIZE_T Reserved3;
     SIZE_T Reserved4;
     DWORD Flags;
-    DWORD Reserved5;
+    RATE_QUOTA_LIMIT CpuRateLimit;
 } QUOTA_LIMITS_EX, *PQUOTA_LIMITS_EX;
 
 #define SECTION_QUERY              0x0001
@@ -5452,6 +5478,8 @@ typedef struct _QUOTA_LIMITS_EX {
 #define FILE_SUPPORTS_INTEGRITY_STREAMS      0x04000000
 #define FILE_SUPPORTS_BLOCK_REFCOUNTING      0x08000000
 #define FILE_SUPPORTS_SPARSE_VDL             0x10000000
+#define FILE_DAX_VOLUME                      0x20000000
+#define FILE_SUPPORTS_GHOSTING               0x40000000
 
 /* File alignments (NT) */
 #define	FILE_BYTE_ALIGNMENT		0x00000000
@@ -6015,6 +6043,7 @@ typedef enum _CM_ERROR_CONTROL_TYPE
 } SERVICE_ERROR_TYPE;
 
 NTSYSAPI SIZE_T WINAPI RtlCompareMemory(const VOID*, const VOID*, SIZE_T);
+NTSYSAPI SIZE_T WINAPI RtlCompareMemoryUlong(VOID*, SIZE_T, ULONG);
 
 #define RtlEqualMemory(Destination, Source, Length) (!memcmp((Destination),(Source),(Length)))
 #define RtlMoveMemory(Destination, Source, Length) memmove((Destination),(Source),(Length))
@@ -6265,8 +6294,10 @@ typedef struct _ASSEMBLY_FILE_DETAILED_INFORMATION {
 typedef const ASSEMBLY_FILE_DETAILED_INFORMATION *PCASSEMBLY_FILE_DETAILED_INFORMATION;
 
 typedef enum {
-    ACTCX_COMPATIBILITY_ELEMENT_TYPE_UNKNOWN = 0,
-    ACTCX_COMPATIBILITY_ELEMENT_TYPE_OS
+    ACTCTX_COMPATIBILITY_ELEMENT_TYPE_UNKNOWN = 0,
+    ACTCTX_COMPATIBILITY_ELEMENT_TYPE_OS,
+    ACTCTX_COMPATIBILITY_ELEMENT_TYPE_MITIGATION,
+    ACTCTX_COMPATIBILITY_ELEMENT_TYPE_MAXVERSIONTESTED
 } ACTCTX_COMPATIBILITY_ELEMENT_TYPE;
 
 typedef struct _COMPATIBILITY_CONTEXT_ELEMENT {
@@ -6480,6 +6511,8 @@ typedef struct _GROUP_AFFINITY
     WORD Reserved[3];
 } GROUP_AFFINITY, *PGROUP_AFFINITY;
 
+#define ALL_PROCESSOR_GROUPS 0xffff
+
 typedef struct _PROCESSOR_NUMBER
 {
     WORD Group;
@@ -6683,6 +6716,58 @@ typedef enum _PROCESS_MITIGATION_POLICY
     ProcessSideChannelIsolationPolicy,
     MaxProcessMitigationPolicy
 } PROCESS_MITIGATION_POLICY, *PPROCESS_MITIGATION_POLICY;
+
+#ifdef _MSC_VER
+
+BOOLEAN _BitScanForward(unsigned long*,unsigned long);
+BOOLEAN _BitScanReverse(unsigned long*,unsigned long);
+
+#pragma intrinsic(_BitScanForward)
+#pragma intrinsic(_BitScanReverse)
+
+static inline BOOLEAN BitScanForward(DWORD *index, DWORD mask)
+{
+    return _BitScanForward((unsigned long*)index, mask);
+}
+
+static inline BOOLEAN BitScanReverse(DWORD *index, DWORD mask)
+{
+    return _BitScanReverse((unsigned long*)index, mask);
+}
+
+#elif defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 3)))
+
+static inline BOOLEAN BitScanForward(DWORD *index, DWORD mask)
+{
+    *index = __builtin_ctz(mask);
+    return mask != 0;
+}
+
+static inline BOOLEAN BitScanReverse(DWORD *index, DWORD mask)
+{
+    *index = 31 - __builtin_clz(mask);
+    return mask != 0;
+}
+
+#else
+
+static inline BOOLEAN BitScanForward(DWORD *index, DWORD mask)
+{
+    unsigned int r = 0;
+    while (r < 31 && !(mask & (1 << r))) r++;
+    *index = r;
+    return mask != 0;
+}
+
+static inline BOOLEAN BitScanReverse(DWORD *index, DWORD mask)
+{
+    unsigned int r = 31;
+    while (r > 0 && !(mask & (1 << r))) r--;
+    *index = r;
+    return mask != 0;
+}
+
+#endif
 
 #ifdef __cplusplus
 }

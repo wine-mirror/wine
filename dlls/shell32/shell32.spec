@@ -338,6 +338,7 @@
 @ stdcall SHBrowseForFolderW(ptr)
 @ stdcall SHChangeNotify (long long ptr ptr)
 @ stub SHChangeNotifySuspendResume
+@ stdcall SHCreateAssociationRegistration(ptr ptr)
 @ stdcall SHCreateDataObject(ptr long ptr ptr ptr ptr)
 @ stdcall SHCreateDefaultContextMenu(ptr ptr ptr)
 @ stdcall SHCreateDirectoryExA(long str ptr)

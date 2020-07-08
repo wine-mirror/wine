@@ -32,7 +32,7 @@ struct dmo_wrapper_source
 {
     struct strmbase_source pin;
     struct buffer buffer;
-    IUnknown *seeking;
+    struct strmbase_passthrough passthrough;
 };
 
 struct dmo_wrapper
@@ -405,10 +405,15 @@ static HRESULT dmo_wrapper_source_query_interface(struct strmbase_pin *iface, RE
 {
     struct dmo_wrapper_source *pin = impl_source_from_strmbase_pin(iface);
 
-    if (IsEqualGUID(iid, &IID_IMediaSeeking) || IsEqualGUID(iid, &IID_IMediaPosition))
-        return IUnknown_QueryInterface(pin->seeking, iid, out);
+    if (IsEqualGUID(iid, &IID_IMediaPosition))
+        *out = &pin->passthrough.IMediaPosition_iface;
+    else if (IsEqualGUID(iid, &IID_IMediaSeeking))
+        *out = &pin->passthrough.IMediaSeeking_iface;
+    else
+        return E_NOINTERFACE;
 
-    return E_NOINTERFACE;
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
 }
 
 static HRESULT dmo_wrapper_source_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
@@ -568,20 +573,13 @@ static HRESULT WINAPI dmo_wrapper_filter_Init(IDMOWrapperFilter *iface, REFCLSID
 
     for (i = 0; i < output_count; ++i)
     {
-        ISeekingPassThru *passthrough;
-
         swprintf(id, ARRAY_SIZE(id), L"out%u", i);
         strmbase_source_init(&sources[i].pin, &filter->filter, id, &source_ops);
         sources[i].buffer.IMediaBuffer_iface.lpVtbl = &buffer_vtbl;
 
-        if (FAILED(hr = CoCreateInstance(&CLSID_SeekingPassThru,
-                (IUnknown *)&sources[i].pin.pin.IPin_iface, CLSCTX_INPROC_SERVER,
-                &IID_IUnknown, (void **)&sources[i].seeking)))
-            ERR("Failed to create SeekingPassThru object, hr %#x.\n", hr);
-
-        IUnknown_QueryInterface(sources[i].seeking, &IID_ISeekingPassThru, (void **)&passthrough);
-        ISeekingPassThru_Init(passthrough, FALSE, &sinks[0].pin.IPin_iface);
-        ISeekingPassThru_Release(passthrough);
+        strmbase_passthrough_init(&sources[i].passthrough, (IUnknown *)&sources[i].pin.pin.IPin_iface);
+        ISeekingPassThru_Init(&sources[i].passthrough.ISeekingPassThru_iface,
+                FALSE, &sinks[0].pin.IPin_iface);
     }
 
     EnterCriticalSection(&filter->filter.csFilter);
@@ -630,7 +628,7 @@ static void dmo_wrapper_destroy(struct strmbase_filter *iface)
         strmbase_sink_cleanup(&filter->sinks[i]);
     for (i = 0; i < filter->source_count; ++i)
     {
-        IUnknown_Release(filter->sources[i].seeking);
+        strmbase_passthrough_cleanup(&filter->sources[i].passthrough);
         strmbase_source_cleanup(&filter->sources[i].pin);
     }
     free(filter->sinks);

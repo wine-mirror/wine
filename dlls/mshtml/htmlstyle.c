@@ -328,6 +328,7 @@ static const WCHAR *overflow_values[] = {
 #define ATTR_HEX_INT        0x0008
 #define ATTR_REMOVE_COMMA   0x0010
 #define ATTR_NO_NULL        0x0020
+#define ATTR_COMPAT_IE10    0x0040
 
 static const WCHAR pxW[] = {'p','x',0};
 
@@ -340,6 +341,12 @@ typedef struct {
 } style_tbl_entry_t;
 
 static const style_tbl_entry_t style_tbl[] = {
+    {
+        L"animation-name",
+        DISPID_IHTMLCSSSTYLEDECLARATION2_ANIMATIONNAME,
+        DISPID_UNKNOWN,
+        ATTR_COMPAT_IE10
+    },
     {
         backgroundW,
         DISPID_IHTMLCSSSTYLEDECLARATION_BACKGROUND,
@@ -542,6 +549,60 @@ static const style_tbl_entry_t style_tbl[] = {
         DISPID_IHTMLCSSSTYLEDECLARATION_COLOR,
         DISPID_A_COLOR,
         ATTR_HEX_INT
+    },
+    {
+        L"column-count",
+        DISPID_IHTMLCSSSTYLEDECLARATION2_COLUMNCOUNT,
+        DISPID_UNKNOWN,
+        ATTR_COMPAT_IE10
+    },
+    {
+        L"column-fill",
+        DISPID_IHTMLCSSSTYLEDECLARATION2_COLUMNFILL,
+        DISPID_UNKNOWN,
+        ATTR_COMPAT_IE10
+    },
+    {
+        L"column-gap",
+        DISPID_IHTMLCSSSTYLEDECLARATION2_COLUMNGAP,
+        DISPID_UNKNOWN,
+        ATTR_COMPAT_IE10
+    },
+    {
+        L"column-rule",
+        DISPID_IHTMLCSSSTYLEDECLARATION2_COLUMNRULE,
+        DISPID_UNKNOWN,
+        ATTR_COMPAT_IE10
+    },
+    {
+        L"column-rule-color",
+        DISPID_IHTMLCSSSTYLEDECLARATION2_COLUMNRULECOLOR,
+        DISPID_UNKNOWN,
+        ATTR_COMPAT_IE10
+    },
+    {
+        L"column-rule-style",
+        DISPID_IHTMLCSSSTYLEDECLARATION2_COLUMNRULESTYLE,
+        DISPID_UNKNOWN,
+        ATTR_COMPAT_IE10
+    },
+    {
+        L"column-rule-width",
+        DISPID_IHTMLCSSSTYLEDECLARATION2_COLUMNRULEWIDTH,
+        DISPID_UNKNOWN,
+        ATTR_COMPAT_IE10
+    },
+    {
+        L"column-span",
+        DISPID_IHTMLCSSSTYLEDECLARATION2_COLUMNSPAN,
+        DISPID_UNKNOWN,
+        ATTR_COMPAT_IE10
+    },
+    {
+        L"column-width",
+        DISPID_IHTMLCSSSTYLEDECLARATION2_COLUMNWIDTH,
+        DISPID_UNKNOWN,
+        ATTR_COMPAT_IE10
     },
     {
         cursorW,
@@ -752,6 +813,11 @@ static const style_tbl_entry_t style_tbl[] = {
         DISPID_A_PAGEBREAKBEFORE
     },
     {
+        L"perspective",
+        DISPID_IHTMLCSSSTYLEDECLARATION2_PERSPECTIVE,
+        DISPID_UNKNOWN
+    },
+    {
         positionW,
         DISPID_IHTMLCSSSTYLEDECLARATION_POSITION,
         DISPID_A_POSITION
@@ -792,6 +858,18 @@ static const style_tbl_entry_t style_tbl[] = {
         topW,
         DISPID_IHTMLCSSSTYLEDECLARATION_TOP,
         STDPROPID_XOBJ_TOP
+    },
+    {
+        L"transform",
+        DISPID_IHTMLCSSSTYLEDECLARATION2_TRANSFORM,
+        DISPID_UNKNOWN,
+        ATTR_COMPAT_IE10
+    },
+    {
+        L"transition",
+        DISPID_IHTMLCSSSTYLEDECLARATION2_TRANSITION,
+        DISPID_UNKNOWN,
+        ATTR_COMPAT_IE10
     },
     {
         vertical_alignW,
@@ -838,7 +916,7 @@ C_ASSERT(ARRAY_SIZE(style_tbl) == STYLEID_MAX_VALUE);
 static const WCHAR px_formatW[] = {'%','d','p','x',0};
 static const WCHAR emptyW[] = {0};
 
-static const style_tbl_entry_t *lookup_style_tbl(const WCHAR *name)
+static const style_tbl_entry_t *lookup_style_tbl(CSSStyle *style, const WCHAR *name)
 {
     int c, i, min = 0, max = ARRAY_SIZE(style_tbl)-1;
 
@@ -846,8 +924,11 @@ static const style_tbl_entry_t *lookup_style_tbl(const WCHAR *name)
         i = (min+max)/2;
 
         c = wcscmp(style_tbl[i].name, name);
-        if(!c)
+        if(!c) {
+            if((style_tbl[i].flags & ATTR_COMPAT_IE10) && dispex_compat_mode(&style->dispex) < COMPAT_MODE_IE10)
+                return NULL;
             return style_tbl+i;
+        }
 
         if(c > 0)
             max = i-1;
@@ -3115,7 +3196,7 @@ static HRESULT WINAPI HTMLStyle_removeAttribute(IHTMLStyle *iface, BSTR strAttri
 
     TRACE("(%p)->(%s %08x %p)\n", This, debugstr_w(strAttributeName), lFlags, pfSuccess);
 
-    style_entry = lookup_style_tbl(strAttributeName);
+    style_entry = lookup_style_tbl(&This->css_style, strAttributeName);
     if(!style_entry) {
         compat_mode_t compat_mode = dispex_compat_mode(&This->css_style.dispex);
         DISPID dispid;
@@ -4977,7 +5058,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_getPropertyValue(IHTMLCSSStyleDecl
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_w(name), value);
 
-    style_entry = lookup_style_tbl(name);
+    style_entry = lookup_style_tbl(This, name);
     nsAString_InitDepend(&name_str, style_entry ? style_entry->name : name);
     nsAString_InitDepend(&value_str, NULL);
     nsres = nsIDOMCSSStyleDeclaration_GetPropertyValue(This->nsstyle, &name_str, &value_str);
@@ -5001,7 +5082,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_removeProperty(IHTMLCSSStyleDeclar
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_w(bstrPropertyName), pbstrPropertyValue);
 
-    style_entry = lookup_style_tbl(bstrPropertyName);
+    style_entry = lookup_style_tbl(This, bstrPropertyName);
     nsAString_InitDepend(&name_str, style_entry ? style_entry->name : bstrPropertyName);
     nsAString_Init(&ret_str, NULL);
     nsres = nsIDOMCSSStyleDeclaration_RemoveProperty(This->nsstyle, &name_str, &ret_str);
@@ -5019,7 +5100,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_setProperty(IHTMLCSSStyleDeclarati
 
     TRACE("(%p)->(%s %s %s)\n", This, debugstr_w(name), debugstr_variant(value), debugstr_variant(priority));
 
-    style_entry = lookup_style_tbl(name);
+    style_entry = lookup_style_tbl(This, name);
     hres = var_to_styleval(This, value, style_entry, &value_str);
     if(FAILED(hres))
         return hres;
@@ -8779,71 +8860,71 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_colorInterpolationFilters(IHT
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_columnCount(IHTMLCSSStyleDeclaration2 *iface, VARIANT v)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
-    return E_NOTIMPL;
+    WARN("(%p)->(%s) semi-stub\n", This, debugstr_variant(&v));
+    return set_style_property_var(This, STYLEID_COLUMN_COUNT, &v);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_columnCount(IHTMLCSSStyleDeclaration2 *iface, VARIANT *p)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    WARN("(%p)->(%p) semi-stub\n", This, p);
+    return get_style_property_var(This, STYLEID_COLUMN_COUNT, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_columnWidth(IHTMLCSSStyleDeclaration2 *iface, VARIANT v)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
-    return E_NOTIMPL;
+    WARN("(%p)->(%s) semi-stub\n", This, debugstr_variant(&v));
+    return set_style_property_var(This, STYLEID_COLUMN_WIDTH, &v);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_columnWidth(IHTMLCSSStyleDeclaration2 *iface, VARIANT *p)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    WARN("(%p)->(%p) semi-stub\n", This, p);
+    return get_style_property_var(This, STYLEID_COLUMN_WIDTH, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_columnGap(IHTMLCSSStyleDeclaration2 *iface, VARIANT v)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
-    return E_NOTIMPL;
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
+    return set_style_property_var(This, STYLEID_COLUMN_GAP, &v);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_columnGap(IHTMLCSSStyleDeclaration2 *iface, VARIANT *p)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, p);
+    return get_style_property_var(This, STYLEID_COLUMN_GAP, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_columnFill(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    WARN("(%p)->(%s) semi-stub\n", This, debugstr_w(v));
+    return set_style_property(This, STYLEID_COLUMN_FILL, v);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_columnFill(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    WARN("(%p)->(%p) semi-stub\n", This, p);
+    return get_style_property(This, STYLEID_COLUMN_FILL, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_columnSpan(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    WARN("(%p)->(%s) semi-stub\n", This, debugstr_w(v));
+    return set_style_property(This, STYLEID_COLUMN_SPAN, v);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_columnSpan(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    WARN("(%p)->(%p) semi-stub\n", This, p);
+    return get_style_property(This, STYLEID_COLUMN_SPAN, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_columns(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
@@ -8863,57 +8944,57 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_columns(IHTMLCSSStyleDeclarat
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_columnRule(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    WARN("(%p)->(%s) semi-stub\n", This, debugstr_w(v));
+    return set_style_property(This, STYLEID_COLUMN_RULE, v);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_columnRule(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    WARN("(%p)->(%p) semi-stub\n", This, p);
+    return get_style_property(This, STYLEID_COLUMN_RULE, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_columnRuleColor(IHTMLCSSStyleDeclaration2 *iface, VARIANT v)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
-    return E_NOTIMPL;
+    WARN("(%p)->(%s) semi-stub\n", This, debugstr_variant(&v));
+    return set_style_property_var(This, STYLEID_COLUMN_RULE_COLOR, &v);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_columnRuleColor(IHTMLCSSStyleDeclaration2 *iface, VARIANT *p)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    WARN("(%p)->(%p) semi-stub\n", This, p);
+    return get_style_property_var(This, STYLEID_COLUMN_RULE_COLOR, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_columnRuleStyle(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    WARN("(%p)->(%s) semi-stub\n", This, debugstr_w(v));
+    return set_style_property(This, STYLEID_COLUMN_RULE_STYLE, v);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_columnRuleStyle(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    WARN("(%p)->(%p) semi-stub\n", This, p);
+    return get_style_property(This, STYLEID_COLUMN_RULE_STYLE, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_columnRuleWidth(IHTMLCSSStyleDeclaration2 *iface, VARIANT v)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
-    return E_NOTIMPL;
+    WARN("(%p)->(%s) semi-stub\n", This, debugstr_variant(&v));
+    return set_style_property_var(This, STYLEID_COLUMN_RULE_WIDTH, &v);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_columnRuleWidth(IHTMLCSSStyleDeclaration2 *iface, VARIANT *p)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    WARN("(%p)->(%p) semi-stub\n", This, p);
+    return get_style_property_var(This, STYLEID_COLUMN_RULE_WIDTH, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_breakBefore(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
@@ -9577,15 +9658,15 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msTouchSelect(IHTMLCSSStyleDe
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_transform(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+    return set_style_property(This, STYLEID_TRANSFORM, v);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_transform(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, p);
+    return get_style_property(This, STYLEID_TRANSFORM, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_transformOrigin(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
@@ -9633,15 +9714,15 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_backfaceVisibility(IHTMLCSSSt
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_perspective(IHTMLCSSStyleDeclaration2 *iface, VARIANT v)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
-    return E_NOTIMPL;
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
+    return set_style_property_var(This, STYLEID_PERSPECTIVE, &v);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_perspective(IHTMLCSSStyleDeclaration2 *iface, VARIANT *p)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, p);
+    return get_style_property_var(This, STYLEID_PERSPECTIVE, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_perspectiveOrigin(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
@@ -9717,15 +9798,15 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_transitionDelay(IHTMLCSSStyle
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_transition(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+    return set_style_property(This, STYLEID_TRANSITION, v);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_transition(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, p);
+    return get_style_property(This, STYLEID_TRANSITION, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_fontFeatureSettings(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
@@ -9745,15 +9826,15 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_fontFeatureSettings(IHTMLCSSS
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_animationName(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+    return set_style_property(This, STYLEID_ANIMATION_NAME, v);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_animationName(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, p);
+    return get_style_property(This, STYLEID_ANIMATION_NAME, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_animationDuration(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
@@ -10106,11 +10187,17 @@ static const IHTMLCSSStyleDeclaration2Vtbl HTMLCSSStyleDeclaration2Vtbl = {
     HTMLCSSStyleDeclaration2_get_animationFillMode
 };
 
+static inline CSSStyle *impl_from_DispatchEx(DispatchEx *dispex)
+{
+    return CONTAINING_RECORD(dispex, CSSStyle, dispex);
+}
+
 static HRESULT CSSStyle_get_dispid(DispatchEx *dispex, BSTR name, DWORD flags, DISPID *dispid)
 {
+    CSSStyle *This = impl_from_DispatchEx(dispex);
     const style_tbl_entry_t *style_entry;
 
-    style_entry = lookup_style_tbl(name);
+    style_entry = lookup_style_tbl(This, name);
     if(style_entry) {
         DISPID id = dispex_compat_mode(dispex) >= COMPAT_MODE_IE9
             ? style_entry->dispid : style_entry->compat_dispid;
@@ -10128,6 +10215,8 @@ void CSSStyle_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
 {
     if(mode >= COMPAT_MODE_IE9)
         dispex_info_add_interface(info, IHTMLCSSStyleDeclaration_tid, NULL);
+    if(mode >= COMPAT_MODE_IE10)
+        dispex_info_add_interface(info, IHTMLCSSStyleDeclaration2_tid, NULL);
 }
 
 const dispex_static_data_vtbl_t CSSStyle_dispex_vtbl = {
@@ -10247,14 +10336,14 @@ static dispex_static_data_t HTMLW3CComputedStyle_dispex = {
     CSSStyle_init_dispex_info
 };
 
-HRESULT create_computed_style(nsIDOMCSSStyleDeclaration *nsstyle, IHTMLCSSStyleDeclaration **p)
+HRESULT create_computed_style(nsIDOMCSSStyleDeclaration *nsstyle, compat_mode_t compat_mode, IHTMLCSSStyleDeclaration **p)
 {
     CSSStyle *style;
 
     if(!(style = heap_alloc_zero(sizeof(*style))))
         return E_OUTOFMEMORY;
 
-    init_css_style(style, nsstyle, NULL, &HTMLW3CComputedStyle_dispex, COMPAT_MODE_IE11);
+    init_css_style(style, nsstyle, NULL, &HTMLW3CComputedStyle_dispex, compat_mode);
     *p = &style->IHTMLCSSStyleDeclaration_iface;
     return S_OK;
 }

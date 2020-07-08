@@ -18,7 +18,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define NONAMELESSUNION
 #include "ntdll_test.h"
+#include "ddk/wdm.h"
 
 #define TICKSPERSEC        10000000
 #define TICKSPERMSEC       10000
@@ -29,6 +31,7 @@ static VOID (WINAPI *pRtlTimeFieldsToTime)(  PTIME_FIELDS TimeFields,  PLARGE_IN
 static NTSTATUS (WINAPI *pNtQueryPerformanceCounter)( LARGE_INTEGER *counter, LARGE_INTEGER *frequency );
 static NTSTATUS (WINAPI *pRtlQueryTimeZoneInformation)( RTL_TIME_ZONE_INFORMATION *);
 static NTSTATUS (WINAPI *pRtlQueryDynamicTimeZoneInformation)( RTL_DYNAMIC_TIME_ZONE_INFORMATION *);
+static BOOL     (WINAPI *pRtlQueryUnbiasedInterruptTime)( ULONGLONG *time );
 
 static const int MonthLengths[2][12] =
 {
@@ -153,6 +156,78 @@ static void test_RtlQueryTimeZoneInformation(void)
        wine_dbgstr_w(tzinfo.DaylightName));
 }
 
+static ULONGLONG read_ksystem_time(volatile KSYSTEM_TIME *time)
+{
+    ULONGLONG high, low;
+    do
+    {
+        high = time->High1Time;
+        low = time->LowPart;
+    }
+    while (high != time->High2Time);
+    return high << 32 | low;
+}
+
+static void test_user_shared_data_time(void)
+{
+    KSHARED_USER_DATA *user_shared_data = (void *)0x7ffe0000;
+    ULONGLONG t1, t2, t3;
+    int i = 0;
+
+    i = 0;
+    do
+    {
+        t1 = GetTickCount();
+        if (user_shared_data->NtMajorVersion <= 5 && user_shared_data->NtMinorVersion <= 1)
+            t2 = (*(volatile ULONG*)&user_shared_data->TickCountLowDeprecated * (ULONG64)user_shared_data->TickCountMultiplier) >> 24;
+        else
+            t2 = (read_ksystem_time(&user_shared_data->u.TickCount) * user_shared_data->TickCountMultiplier) >> 24;
+        t3 = GetTickCount();
+    } while(t3 < t1 && i++ < 1); /* allow for wrap, but only once */
+
+    ok(t1 <= t2, "USD TickCount / GetTickCount are out of order: %s %s\n",
+       wine_dbgstr_longlong(t1), wine_dbgstr_longlong(t2));
+    ok(t2 <= t3, "USD TickCount / GetTickCount are out of order: %s %s\n",
+       wine_dbgstr_longlong(t2), wine_dbgstr_longlong(t3));
+
+    i = 0;
+    do
+    {
+        LARGE_INTEGER system_time;
+        NtQuerySystemTime(&system_time);
+        t1 = system_time.QuadPart;
+        t2 = read_ksystem_time(&user_shared_data->SystemTime);
+        NtQuerySystemTime(&system_time);
+        t3 = system_time.QuadPart;
+    } while(t3 < t1 && i++ < 1); /* allow for wrap, but only once */
+
+    /* FIXME: not always in order, but should be close */
+    todo_wine_if(t1 > t2 && t1 - t2 < 50 * TICKSPERMSEC)
+    ok(t1 <= t2, "USD SystemTime / NtQuerySystemTime are out of order %s %s\n",
+       wine_dbgstr_longlong(t1), wine_dbgstr_longlong(t2));
+    ok(t2 <= t3, "USD SystemTime / NtQuerySystemTime are out of order %s %s\n",
+       wine_dbgstr_longlong(t2), wine_dbgstr_longlong(t3));
+
+    if (!pRtlQueryUnbiasedInterruptTime)
+        win_skip("skipping RtlQueryUnbiasedInterruptTime tests\n");
+    else
+    {
+        i = 0;
+        do
+        {
+            pRtlQueryUnbiasedInterruptTime(&t1);
+            t2 = read_ksystem_time(&user_shared_data->InterruptTime);
+            pRtlQueryUnbiasedInterruptTime(&t3);
+        } while(t3 < t1 && i++ < 1); /* allow for wrap, but only once */
+
+        ok(t1 <= t2, "USD InterruptTime / RtlQueryUnbiasedInterruptTime are out of order %s %s\n",
+           wine_dbgstr_longlong(t1), wine_dbgstr_longlong(t2));
+        ok(t2 <= t3 || broken(t2 == t3 + 82410089070) /* w864 has some weird offset on testbot */,
+           "USD InterruptTime / RtlQueryUnbiasedInterruptTime are out of order %s %s\n",
+           wine_dbgstr_longlong(t2), wine_dbgstr_longlong(t3));
+    }
+}
+
 START_TEST(time)
 {
     HMODULE mod = GetModuleHandleA("ntdll.dll");
@@ -163,6 +238,7 @@ START_TEST(time)
         (void *)GetProcAddress(mod, "RtlQueryTimeZoneInformation");
     pRtlQueryDynamicTimeZoneInformation =
         (void *)GetProcAddress(mod, "RtlQueryDynamicTimeZoneInformation");
+    pRtlQueryUnbiasedInterruptTime = (void *)GetProcAddress(mod, "RtlQueryUnbiasedInterruptTime");
 
     if (pRtlTimeToTimeFields && pRtlTimeFieldsToTime)
         test_pRtlTimeToTimeFields();
@@ -170,4 +246,5 @@ START_TEST(time)
         win_skip("Required time conversion functions are not available\n");
     test_NtQueryPerformanceCounter();
     test_RtlQueryTimeZoneInformation();
+    test_user_shared_data_time();
 }

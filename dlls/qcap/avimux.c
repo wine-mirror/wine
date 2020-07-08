@@ -1835,7 +1835,7 @@ static HRESULT create_input_pin(AviMux *avimux)
     return S_OK;
 }
 
-IUnknown * WINAPI QCAP_createAVIMux(IUnknown *outer, HRESULT *phr)
+HRESULT avi_mux_create(IUnknown *outer, IUnknown **out)
 {
     static const WCHAR output_name[] = {'A','V','I',' ','O','u','t',0};
 
@@ -1843,11 +1843,8 @@ IUnknown * WINAPI QCAP_createAVIMux(IUnknown *outer, HRESULT *phr)
     PIN_INFO info;
     HRESULT hr;
 
-    avimux = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(AviMux));
-    if(!avimux) {
-        *phr = E_OUTOFMEMORY;
-        return NULL;
-    }
+    if (!(avimux = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(AviMux))))
+        return E_OUTOFMEMORY;
 
     strmbase_filter_init(&avimux->filter, outer, &CLSID_AviDest, &filter_ops);
     avimux->IConfigAviMux_iface.lpVtbl = &ConfigAviMuxVtbl;
@@ -1870,13 +1867,13 @@ IUnknown * WINAPI QCAP_createAVIMux(IUnknown *outer, HRESULT *phr)
         strmbase_source_cleanup(&avimux->source);
         strmbase_filter_cleanup(&avimux->filter);
         HeapFree(GetProcessHeap(), 0, avimux);
-        *phr = hr;
-        return NULL;
+        return hr;
     }
 
     avimux->interleave = 10000000;
 
+    TRACE("Created AVI mux %p.\n", avimux);
     ObjectRefCount(TRUE);
-    *phr = S_OK;
-    return &avimux->filter.IUnknown_inner;
+    *out = &avimux->filter.IUnknown_inner;
+    return S_OK;
 }

@@ -48,7 +48,9 @@ typedef struct VfwCapture
 {
     struct strmbase_filter filter;
     IAMStreamConfig IAMStreamConfig_iface;
+    IAMVideoControl IAMVideoControl_iface;
     IAMVideoProcAmp IAMVideoProcAmp_iface;
+    IAMFilterMiscFlags IAMFilterMiscFlags_iface;
     IPersistPropertyBag IPersistPropertyBag_iface;
     BOOL init;
     Capture *driver_info;
@@ -67,9 +69,19 @@ static inline VfwCapture *impl_from_IAMStreamConfig(IAMStreamConfig *iface)
     return CONTAINING_RECORD(iface, VfwCapture, IAMStreamConfig_iface);
 }
 
+static inline VfwCapture *impl_from_IAMVideoControl(IAMVideoControl *iface)
+{
+    return CONTAINING_RECORD(iface, VfwCapture, IAMVideoControl_iface);
+}
+
 static inline VfwCapture *impl_from_IAMVideoProcAmp(IAMVideoProcAmp *iface)
 {
     return CONTAINING_RECORD(iface, VfwCapture, IAMVideoProcAmp_iface);
+}
+
+static inline VfwCapture *impl_from_IAMFilterMiscFlags(IAMFilterMiscFlags *iface)
+{
+    return CONTAINING_RECORD(iface, VfwCapture, IAMFilterMiscFlags_iface);
 }
 
 static inline VfwCapture *impl_from_IPersistPropertyBag(IPersistPropertyBag *iface)
@@ -115,8 +127,12 @@ static HRESULT vfw_capture_query_interface(struct strmbase_filter *iface, REFIID
 
     if (IsEqualGUID(iid, &IID_IPersistPropertyBag))
         *out = &filter->IPersistPropertyBag_iface;
+    else if (IsEqualGUID(iid, &IID_IAMVideoControl))
+        *out = &filter->IAMVideoControl_iface;
     else if (IsEqualGUID(iid, &IID_IAMVideoProcAmp))
         *out = &filter->IAMVideoProcAmp_iface;
+    else if (IsEqualGUID(iid, &IID_IAMFilterMiscFlags))
+        *out = &filter->IAMFilterMiscFlags_iface;
     else
         return E_NOINTERFACE;
 
@@ -167,7 +183,6 @@ static const struct strmbase_filter_ops filter_ops =
     .filter_cleanup_stream = vfw_capture_cleanup_stream,
 };
 
-/* AMStreamConfig interface, we only need to implement {G,S}etFormat */
 static HRESULT WINAPI AMStreamConfig_QueryInterface(IAMStreamConfig *iface, REFIID iid, void **out)
 {
     VfwCapture *filter = impl_from_IAMStreamConfig(iface);
@@ -207,6 +222,9 @@ AMStreamConfig_SetFormat(IAMStreamConfig *iface, AM_MEDIA_TYPE *pmt)
         return E_POINTER;
     }
 
+    if (!IsEqualGUID(&pmt->majortype, &MEDIATYPE_Video))
+        return E_FAIL;
+
     if (This->source.pin.peer)
     {
         hr = IPin_QueryAccept(This->source.pin.peer, pmt);
@@ -239,21 +257,30 @@ AMStreamConfig_GetFormat( IAMStreamConfig *iface, AM_MEDIA_TYPE **pmt )
     return hr;
 }
 
-static HRESULT WINAPI
-AMStreamConfig_GetNumberOfCapabilities( IAMStreamConfig *iface, int *piCount,
-                                        int *piSize )
+static HRESULT WINAPI AMStreamConfig_GetNumberOfCapabilities(IAMStreamConfig *iface,
+        int *count, int *size)
 {
-    FIXME("%p: %p %p - stub, intentional\n", iface, piCount, piSize);
-    *piCount = 0;
-    return E_NOTIMPL; /* Not implemented for this interface */
+    VfwCapture *filter = impl_from_IAMStreamConfig(iface);
+
+    TRACE("filter %p, count %p, size %p.\n", filter, count, size);
+
+    if (!count || !size)
+        return E_POINTER;
+
+    *count = qcap_driver_get_caps_count(filter->driver_info);
+    *size = sizeof(VIDEO_STREAM_CONFIG_CAPS);
+
+    return S_OK;
 }
 
-static HRESULT WINAPI
-AMStreamConfig_GetStreamCaps( IAMStreamConfig *iface, int iIndex,
-                              AM_MEDIA_TYPE **pmt, BYTE *pSCC )
+static HRESULT WINAPI AMStreamConfig_GetStreamCaps(IAMStreamConfig *iface,
+        int index, AM_MEDIA_TYPE **pmt, BYTE *vscc)
 {
-    FIXME("%p: %d %p %p - stub, intentional\n", iface, iIndex, pmt, pSCC);
-    return E_NOTIMPL; /* Not implemented for this interface */
+    VfwCapture *filter = impl_from_IAMStreamConfig(iface);
+
+    TRACE("filter %p, index %d, pmt %p, vscc %p.\n", filter, index, pmt, vscc);
+
+    return qcap_driver_get_caps(filter->driver_info, index, pmt, (VIDEO_STREAM_CONFIG_CAPS *)vscc);
 }
 
 static const IAMStreamConfigVtbl IAMStreamConfig_VTable =
@@ -504,16 +531,16 @@ static HRESULT source_query_accept(struct strmbase_pin *pin, const AM_MEDIA_TYPE
 }
 
 static HRESULT source_get_media_type(struct strmbase_pin *pin,
-        unsigned int iPosition, AM_MEDIA_TYPE *pmt)
+        unsigned int index, AM_MEDIA_TYPE *pmt)
 {
     VfwCapture *filter = impl_from_strmbase_pin(pin);
     AM_MEDIA_TYPE *vfw_pmt;
     HRESULT hr;
 
-    if (iPosition > 0)
+    if (index >= qcap_driver_get_caps_count(filter->driver_info))
         return VFW_S_NO_MORE_ITEMS;
 
-    hr = qcap_driver_get_format(filter->driver_info, &vfw_pmt);
+    hr = qcap_driver_get_caps(filter->driver_info, index, &vfw_pmt, NULL);
     if (SUCCEEDED(hr)) {
         CopyMediaType(pmt, vfw_pmt);
         DeleteMediaType(vfw_pmt);
@@ -563,21 +590,141 @@ static const struct strmbase_source_ops source_ops =
     .pfnDecideAllocator = BaseOutputPinImpl_DecideAllocator,
 };
 
-IUnknown * WINAPI QCAP_createVFWCaptureFilter(IUnknown *outer, HRESULT *phr)
+static HRESULT WINAPI misc_flags_QueryInterface(IAMFilterMiscFlags *iface, REFIID riid, void **ppv)
+{
+    VfwCapture *filter = impl_from_IAMFilterMiscFlags(iface);
+    return IUnknown_QueryInterface(filter->filter.outer_unk, riid, ppv);
+}
+
+static ULONG WINAPI misc_flags_AddRef(IAMFilterMiscFlags *iface)
+{
+    VfwCapture *filter = impl_from_IAMFilterMiscFlags(iface);
+    return IUnknown_AddRef(filter->filter.outer_unk);
+}
+
+static ULONG WINAPI misc_flags_Release(IAMFilterMiscFlags *iface)
+{
+    VfwCapture *filter = impl_from_IAMFilterMiscFlags(iface);
+    return IUnknown_Release(filter->filter.outer_unk);
+}
+
+static ULONG WINAPI misc_flags_GetMiscFlags(IAMFilterMiscFlags *iface)
+{
+    return AM_FILTER_MISC_FLAGS_IS_SOURCE;
+}
+
+static const IAMFilterMiscFlagsVtbl IAMFilterMiscFlags_VTable =
+{
+    misc_flags_QueryInterface,
+    misc_flags_AddRef,
+    misc_flags_Release,
+    misc_flags_GetMiscFlags
+};
+
+static HRESULT WINAPI video_control_QueryInterface(IAMVideoControl *iface, REFIID riid, void **ppv)
+{
+    VfwCapture *filter = impl_from_IAMVideoControl(iface);
+    return IUnknown_QueryInterface(filter->filter.outer_unk, riid, ppv);
+}
+
+static ULONG WINAPI video_control_AddRef(IAMVideoControl *iface)
+{
+    VfwCapture *filter = impl_from_IAMVideoControl(iface);
+    return IUnknown_AddRef(filter->filter.outer_unk);
+}
+
+static ULONG WINAPI video_control_Release(IAMVideoControl *iface)
+{
+    VfwCapture *filter = impl_from_IAMVideoControl(iface);
+    return IUnknown_Release(filter->filter.outer_unk);
+}
+
+static HRESULT WINAPI video_control_GetCaps(IAMVideoControl *iface, IPin *pin, LONG *flags)
+{
+    VfwCapture *filter = impl_from_IAMVideoControl(iface);
+
+    FIXME("filter %p, pin %p, flags %p: stub.\n", filter, pin, flags);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_control_SetMode(IAMVideoControl *iface, IPin *pin, LONG mode)
+{
+    VfwCapture *filter = impl_from_IAMVideoControl(iface);
+
+    FIXME("filter %p, pin %p, mode %d: stub.\n", filter, pin, mode);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_control_GetMode(IAMVideoControl *iface, IPin *pin, LONG *mode)
+{
+    VfwCapture *filter = impl_from_IAMVideoControl(iface);
+
+    FIXME("filter %p, pin %p, mode %p: stub.\n", filter, pin, mode);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_control_GetCurrentActualFrameRate(IAMVideoControl *iface, IPin *pin,
+        LONGLONG *frame_rate)
+{
+    VfwCapture *filter = impl_from_IAMVideoControl(iface);
+
+    FIXME("filter %p, pin %p, frame rate %p: stub.\n", filter, pin, frame_rate);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_control_GetMaxAvailableFrameRate(IAMVideoControl *iface, IPin *pin,
+        LONG index, SIZE dimensions, LONGLONG *frame_rate)
+{
+    VfwCapture *filter = impl_from_IAMVideoControl(iface);
+
+    FIXME("filter %p, pin %p, index %d, dimensions (%dx%d), frame rate %p: stub.\n",
+            filter, pin, index, dimensions.cx, dimensions.cy, frame_rate);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_control_GetFrameRateList(IAMVideoControl *iface, IPin *pin, LONG index,
+        SIZE dimensions, LONG *list_size, LONGLONG **frame_rate)
+{
+    VfwCapture *filter = impl_from_IAMVideoControl(iface);
+
+    FIXME("filter %p, pin %p, index %d, dimensions (%dx%d), list size %p, frame rate: %p: stub.\n",
+            filter, pin, index, dimensions.cx, dimensions.cy, list_size, frame_rate);
+
+    return E_NOTIMPL;
+}
+
+static const IAMVideoControlVtbl IAMVideoControl_VTable =
+{
+    video_control_QueryInterface,
+    video_control_AddRef,
+    video_control_Release,
+    video_control_GetCaps,
+    video_control_SetMode,
+    video_control_GetMode,
+    video_control_GetCurrentActualFrameRate,
+    video_control_GetMaxAvailableFrameRate,
+    video_control_GetFrameRateList
+};
+
+HRESULT vfw_capture_create(IUnknown *outer, IUnknown **out)
 {
     static const WCHAR source_name[] = {'O','u','t','p','u','t',0};
     VfwCapture *object;
 
     if (!(object = CoTaskMemAlloc(sizeof(*object))))
-    {
-        *phr = E_OUTOFMEMORY;
-        return NULL;
-    }
+        return E_OUTOFMEMORY;
 
     strmbase_filter_init(&object->filter, outer, &CLSID_VfwCapture, &filter_ops);
 
     object->IAMStreamConfig_iface.lpVtbl = &IAMStreamConfig_VTable;
+    object->IAMVideoControl_iface.lpVtbl = &IAMVideoControl_VTable;
     object->IAMVideoProcAmp_iface.lpVtbl = &IAMVideoProcAmp_VTable;
+    object->IAMFilterMiscFlags_iface.lpVtbl = &IAMFilterMiscFlags_VTable;
     object->IPersistPropertyBag_iface.lpVtbl = &IPersistPropertyBag_VTable;
     object->init = FALSE;
 
@@ -587,6 +734,6 @@ IUnknown * WINAPI QCAP_createVFWCaptureFilter(IUnknown *outer, HRESULT *phr)
 
     TRACE("Created VFW capture filter %p.\n", object);
     ObjectRefCount(TRUE);
-    *phr = S_OK;
-    return &object->filter.IUnknown_inner;
+    *out = &object->filter.IUnknown_inner;
+    return S_OK;
 }

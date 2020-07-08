@@ -1,6 +1,9 @@
-MODULE	  = prntvpt.dll
+MODULE    = prntvpt.dll
+IMPORTLIB = prntvpt
+IMPORTS   = winspool ole32 oleaut32
 
 EXTRADLLFLAGS = -mno-cygwin
 
 C_SRCS = \
-	main.c
+	main.c \
+	ticket.c

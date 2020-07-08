@@ -1,6 +1,6 @@
 @ stub QDLHPathDiagnostics
 @ stub QDLHStartDiagnosingPath
-@ stub QOSAddSocketToFlow
+@ stdcall QOSAddSocketToFlow(ptr long ptr long long ptr)
 @ stub QOSCancel
 @ stub QOSCloseHandle
 @ stdcall QOSCreateHandle(ptr ptr)

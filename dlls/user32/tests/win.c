@@ -20,9 +20,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-/* To get ICON_SMALL2 with the MSVC headers */
-#define _WIN32_WINNT 0x0501
-
 #include <assert.h>
 #include <limits.h>
 #include <stdlib.h>
@@ -8309,6 +8306,7 @@ static void test_fullscreen(void)
         0, WS_EX_APPWINDOW, WS_EX_TOOLWINDOW
     };
     WNDCLASSA cls;
+    int timeout;
     HWND hwnd;
     int i, j;
     POINT pt;
@@ -8431,6 +8429,32 @@ static void test_fullscreen(void)
             DestroyWindow(hwnd);
         }
     }
+
+    /* Test restoring a full screen window with WS_THICKFRAME style to normal */
+    /* Add WS_THICKFRAME style later so that the window can cover the entire monitor */
+    hwnd = CreateWindowA("fullscreen_class", NULL, WS_POPUP | WS_VISIBLE, 0, 0, mi.rcMonitor.right,
+                         mi.rcMonitor.bottom, NULL, NULL, GetModuleHandleA(NULL), NULL);
+    ok(!!hwnd, "CreateWindow failed, error %#x.\n", GetLastError());
+    flush_events(TRUE);
+
+    /* Add WS_THICKFRAME and exit full screen */
+    SetWindowLongA(hwnd, GWL_STYLE, GetWindowLongA(hwnd, GWL_STYLE) | WS_THICKFRAME);
+    SetWindowPos(hwnd, 0, 0, 0, 100, 100, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOCOPYBITS);
+    flush_events(TRUE);
+
+    /* TestBots need about 1000ms to exit full screen */
+    timeout = 1000;
+    while (timeout > 0)
+    {
+        timeout -= 200;
+        flush_events(TRUE);
+        GetWindowRect(hwnd, &rc);
+        if (rc.right - rc.left == 100 && rc.bottom - rc.top == 100)
+            break;
+    }
+    ok(rc.right - rc.left == 100, "Expect width %d, got %d.\n", 100, rc.right - rc.left);
+    ok(rc.bottom - rc.top == 100, "Expect height %d, got %d.\n", 100, rc.bottom - rc.top);
+    DestroyWindow(hwnd);
 
     UnregisterClassA("fullscreen_class", GetModuleHandleA(NULL));
 }
@@ -9451,7 +9475,7 @@ static void test_window_from_point(const char *argv0)
     ok(win == child, "WindowFromPoint returned %p, expected %p\n", win, child);
 
     SetEvent(end_event);
-    winetest_wait_child_process(info.hProcess);
+    wait_child_process(info.hProcess);
     CloseHandle(start_event);
     CloseHandle(end_event);
     CloseHandle(info.hProcess);
@@ -10302,7 +10326,7 @@ static void test_winproc_handles(const char *argv0)
     startup.cb = sizeof(startup);
     ok(CreateProcessA(NULL, cmd, NULL, NULL, FALSE, 0, NULL, NULL,
                 &startup, &info), "CreateProcess failed.\n");
-    winetest_wait_child_process(info.hProcess);
+    wait_child_process(info.hProcess);
     CloseHandle(info.hProcess);
     CloseHandle(info.hThread);
 }
@@ -11825,7 +11849,7 @@ static void test_other_process_window(const char *argv0)
     ret = WaitForSingleObject(test_done_event, 5000);
     ok(ret == WAIT_OBJECT_0, "Unexpected ret %x.\n", ret);
 
-    winetest_wait_child_process(info.hProcess);
+    wait_child_process(info.hProcess);
     CloseHandle(window_ready_event);
     CloseHandle(test_done_event);
     CloseHandle(info.hProcess);

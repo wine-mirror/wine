@@ -3607,7 +3607,7 @@ static WS_WRITE_OPTION get_field_write_option( WS_TYPE type, ULONG options )
 {
     if (options & WS_FIELD_POINTER)
     {
-        if (options & (WS_FIELD_OPTIONAL|WS_FIELD_NILLABLE)) return WS_WRITE_NILLABLE_POINTER;
+        if (options & (WS_FIELD_OPTIONAL|WS_FIELD_NILLABLE|WS_FIELD_NILLABLE_ITEM)) return WS_WRITE_NILLABLE_POINTER;
         return WS_WRITE_REQUIRED_POINTER;
     }
 
@@ -3754,14 +3754,14 @@ static HRESULT write_type_field( struct writer *writer, const WS_FIELD_DESCRIPTI
     ULONG count, size, field_options = desc->options;
     const char *ptr = buf + offset;
 
-    if (field_options & ~(WS_FIELD_POINTER|WS_FIELD_OPTIONAL|WS_FIELD_NILLABLE))
+    if (field_options & ~(WS_FIELD_POINTER|WS_FIELD_OPTIONAL|WS_FIELD_NILLABLE|WS_FIELD_NILLABLE_ITEM))
     {
         FIXME( "options 0x%x not supported\n", desc->options );
         return E_NOTIMPL;
     }
 
-    /*  zero-terminated strings are always pointers */
-    if (desc->type == WS_WSZ_TYPE) field_options |= WS_FIELD_POINTER;
+    /* zero-terminated strings and descriptions are always pointers */
+    if (desc->type == WS_WSZ_TYPE || desc->type == WS_DESCRIPTION_TYPE) field_options |= WS_FIELD_POINTER;
 
     if (field_options & WS_FIELD_POINTER)
         size = sizeof(const void *);
@@ -3771,7 +3771,7 @@ static HRESULT write_type_field( struct writer *writer, const WS_FIELD_DESCRIPTI
     if (is_nil_value( ptr, size ))
     {
         if (field_options & WS_FIELD_OPTIONAL) return S_OK;
-        if (field_options & WS_FIELD_NILLABLE)
+        if (field_options & (WS_FIELD_NILLABLE|WS_FIELD_NILLABLE_ITEM))
         {
             if (field_options & WS_FIELD_POINTER) option = WS_WRITE_NILLABLE_POINTER;
             else option = WS_WRITE_NILLABLE_VALUE;
@@ -3790,6 +3790,10 @@ static HRESULT write_type_field( struct writer *writer, const WS_FIELD_DESCRIPTI
 
     switch (desc->mapping)
     {
+    case WS_TYPE_ATTRIBUTE_FIELD_MAPPING:
+        mapping = WS_ATTRIBUTE_TYPE_MAPPING;
+        break;
+
     case WS_ATTRIBUTE_FIELD_MAPPING:
         if (!desc->localName || !desc->ns) return E_INVALIDARG;
         if ((hr = write_add_attribute( writer, NULL, desc->localName, desc->ns, FALSE )) != S_OK)
@@ -3831,6 +3835,9 @@ static HRESULT write_type_field( struct writer *writer, const WS_FIELD_DESCRIPTI
         }
         break;
 
+    case WS_ANY_ATTRIBUTES_FIELD_MAPPING:
+        return S_OK;
+
     default:
         FIXME( "field mapping %u not supported\n", desc->mapping );
         return E_NOTIMPL;
@@ -3867,6 +3874,7 @@ static HRESULT write_type_struct( struct writer *writer, WS_TYPE_MAPPING mapping
     if (desc->structOptions) FIXME( "struct options 0x%x not supported\n", desc->structOptions );
 
     if ((hr = get_value_ptr( option, value, size, desc->size, &ptr )) != S_OK) return hr;
+    if (option == WS_WRITE_NILLABLE_POINTER && !ptr) return write_add_nil_attribute( writer );
 
     for (i = 0; i < desc->fieldCount; i++)
     {
@@ -3904,6 +3912,17 @@ static HRESULT write_type_enum( struct writer *writer, WS_TYPE_MAPPING mapping,
     utf8.value.bytes   = name->bytes;
     utf8.value.length  = name->length;
     return write_type_text( writer, mapping, &utf8.text );
+}
+
+static HRESULT write_type_description( struct writer *writer, WS_TYPE_MAPPING mapping,
+                                       WS_WRITE_OPTION option, const void *value, ULONG size )
+{
+    const WS_STRUCT_DESCRIPTION *ptr;
+    HRESULT hr;
+
+    if ((hr = get_value_ptr( option, value, size, sizeof(*ptr), (const void **)&ptr )) != S_OK) return hr;
+    if (ptr) FIXME( "ignoring type description %p\n", ptr );
+    return S_OK;
 }
 
 static HRESULT write_type( struct writer *writer, WS_TYPE_MAPPING mapping, WS_TYPE type,
@@ -3965,6 +3984,9 @@ static HRESULT write_type( struct writer *writer, WS_TYPE_MAPPING mapping, WS_TY
 
     case WS_XML_QNAME_TYPE:
         return write_type_qname( writer, mapping, desc, option, value, size );
+
+    case WS_DESCRIPTION_TYPE:
+        return write_type_description( writer, mapping, option, value, size );
 
     case WS_STRUCT_TYPE:
         return write_type_struct( writer, mapping, desc, option, value, size );

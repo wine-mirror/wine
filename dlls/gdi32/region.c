@@ -2583,67 +2583,25 @@ static void REGION_FreeStorage(ScanLineListBlock *pSLLBlock)
     }
 }
 
-/***********************************************************************
- *           create_polypolygon_region
- *
- * Helper for CreatePolyPolygonRgn.
- */
-HRGN create_polypolygon_region( const POINT *Pts, const INT *Count, INT nbpolygons, INT mode,
-                                const RECT *clip_rect )
+static void scan_convert( WINEREGION *obj, EdgeTable *ET, INT mode, const RECT *clip_rect )
 {
-    HRGN hrgn = 0;
-    WINEREGION *obj = NULL;
-    INT y;                           /* current scanline        */
-    struct list WETE, *pWETE;        /* Winding Edge Table */
-    ScanLineList *pSLL;              /* current scanLineList    */
-    EdgeTable ET;                    /* header node for ET      */
-    struct list AET;                 /* header for AET     */
-    EdgeTableEntry *pETEs;           /* EdgeTableEntries pool   */
-    ScanLineListBlock SLLBlock;      /* header for scanlinelist */
+    struct list AET;
+    ScanLineList *pSLL;
     struct edge_table_entry *active;
-    unsigned int nb_points;
-    int cur_band = 0, prev_band = 0;
-    INT i, poly, total, first = 1;
+    INT i, y, first = 1, cur_band = 0, prev_band = 0;
 
-    TRACE("%p, count %d, polygons %d, mode %d\n", Pts, *Count, nbpolygons, mode);
+    if (clip_rect) ET->ymax = min( ET->ymax, clip_rect->bottom );
 
-    /* special case a rectangle */
-
-    if (((nbpolygons == 1) && ((*Count == 4) ||
-       ((*Count == 5) && (Pts[4].x == Pts[0].x) && (Pts[4].y == Pts[0].y)))) &&
-	(((Pts[0].y == Pts[1].y) &&
-	  (Pts[1].x == Pts[2].x) &&
-	  (Pts[2].y == Pts[3].y) &&
-	  (Pts[3].x == Pts[0].x)) ||
-	 ((Pts[0].x == Pts[1].x) &&
-	  (Pts[1].y == Pts[2].y) &&
-	  (Pts[2].x == Pts[3].x) &&
-	  (Pts[3].y == Pts[0].y))))
-        return CreateRectRgn( min(Pts[0].x, Pts[2].x), min(Pts[0].y, Pts[2].y),
-                              max(Pts[0].x, Pts[2].x), max(Pts[0].y, Pts[2].y) );
-
-    for(poly = total = 0; poly < nbpolygons; poly++)
-        total += Count[poly];
-    if (! (pETEs = HeapAlloc( GetProcessHeap(), 0, sizeof(EdgeTableEntry) * total )))
-	return 0;
-
-    nb_points = REGION_CreateEdgeTable( Count, nbpolygons, Pts, &ET, pETEs, &SLLBlock, clip_rect );
-    if (!(obj = alloc_region( nb_points / 2 )))
-        goto done;
-
-    if (clip_rect) ET.ymax = min( ET.ymax, clip_rect->bottom );
     list_init( &AET );
-    pSLL = ET.scanlines.next;
-    if (mode != WINDING) {
-        /*
-         *  for each scanline
-         */
-        for (y = ET.ymin; y < ET.ymax; y++) {
-            /*
-             *  Add a new edge to the active edge table when we
-             *  get to the next edge.
-             */
-            if (pSLL != NULL && y == pSLL->scanline) {
+    pSLL = ET->scanlines.next;
+
+    if (mode != WINDING)
+    {
+        for (y = ET->ymin; y < ET->ymax; y++)
+        {
+            /* Add a new edge to the active edge table when we get to the next edge. */
+            if (pSLL != NULL && y == pSLL->scanline)
+            {
                 REGION_loadAET(&AET, &pSLL->edgelist);
                 pSLL = pSLL->next;
             }
@@ -2676,33 +2634,26 @@ HRGN create_polypolygon_region( const POINT *Pts, const INT *Count, INT nbpolygo
             }
         }
     }
-    else {
-        /*
-         *  for each scanline
-         */
-        for (y = ET.ymin; y < ET.ymax; y++) {
-            /*
-             *  Add a new edge to the active edge table when we
-             *  get to the next edge.
-             */
-            if (pSLL != NULL && y == pSLL->scanline) {
+    else /* mode == WINDING */
+    {
+        struct list WETE, *pWETE;
+
+        for (y = ET->ymin; y < ET->ymax; y++)
+        {
+            /* Add a new edge to the active edge table when we get to the next edge. */
+            if (pSLL != NULL && y == pSLL->scanline)
+            {
                 REGION_loadAET(&AET, &pSLL->edgelist);
                 REGION_computeWAET( &AET, &WETE );
                 pSLL = pSLL->next;
             }
             pWETE = list_head( &WETE );
 
-            /*
-             *  for each active edge
-             */
             if (!clip_rect || y >= clip_rect->top)
             {
                 LIST_FOR_EACH_ENTRY( active, &AET, struct edge_table_entry, entry )
                 {
-                    /*
-                     *  add to the buffer only those edges that
-                     *  are in the Winding active edge table.
-                     */
+                    /* Add to the buffer only those edges that are in the Winding active edge table. */
                     if (pWETE == &active->winding_entry)
                     {
                         if (first)
@@ -2722,10 +2673,7 @@ HRGN create_polypolygon_region( const POINT *Pts, const INT *Count, INT nbpolygo
                 }
             }
 
-            /*
-             *  recompute the winding active edge table if
-             *  we just resorted or have exited an edge.
-             */
+            /* Recompute the winding active edge table if we just resorted or have exited an edge. */
             if (next_scanline( &AET, y )) REGION_computeWAET( &AET, &WETE );
 
             if (obj->numRects)
@@ -2736,7 +2684,7 @@ HRGN create_polypolygon_region( const POINT *Pts, const INT *Count, INT nbpolygo
         }
     }
 
-    assert( obj->numRects <= nb_points / 2 );
+    assert( obj->numRects <= obj->size );
 
     if (obj->numRects)
     {
@@ -2751,11 +2699,55 @@ HRGN create_polypolygon_region( const POINT *Pts, const INT *Count, INT nbpolygo
         }
     }
     REGION_compact( obj );
+}
 
-    if (!(hrgn = alloc_gdi_handle( obj, OBJ_REGION, &region_funcs )))
-        free_region( obj );
+/***********************************************************************
+ *           create_polypolygon_region
+ *
+ * Helper for CreatePolyPolygonRgn.
+ */
+HRGN create_polypolygon_region( const POINT *Pts, const INT *Count, INT nbpolygons, INT mode,
+                                const RECT *clip_rect )
+{
+    HRGN hrgn = 0;
+    WINEREGION *obj = NULL;
+    EdgeTable ET;                    /* header node for ET      */
+    EdgeTableEntry *pETEs;           /* EdgeTableEntries pool   */
+    ScanLineListBlock SLLBlock;      /* header for scanlinelist */
+    unsigned int nb_points;
+    INT poly, total;
 
-done:
+    TRACE("%p, count %d, polygons %d, mode %d\n", Pts, *Count, nbpolygons, mode);
+
+    /* special case a rectangle */
+
+    if (((nbpolygons == 1) && ((*Count == 4) ||
+       ((*Count == 5) && (Pts[4].x == Pts[0].x) && (Pts[4].y == Pts[0].y)))) &&
+	(((Pts[0].y == Pts[1].y) &&
+	  (Pts[1].x == Pts[2].x) &&
+	  (Pts[2].y == Pts[3].y) &&
+	  (Pts[3].x == Pts[0].x)) ||
+	 ((Pts[0].x == Pts[1].x) &&
+	  (Pts[1].y == Pts[2].y) &&
+	  (Pts[2].x == Pts[3].x) &&
+	  (Pts[3].y == Pts[0].y))))
+        return CreateRectRgn( min(Pts[0].x, Pts[2].x), min(Pts[0].y, Pts[2].y),
+                              max(Pts[0].x, Pts[2].x), max(Pts[0].y, Pts[2].y) );
+
+    for(poly = total = 0; poly < nbpolygons; poly++)
+        total += Count[poly];
+    if (! (pETEs = HeapAlloc( GetProcessHeap(), 0, sizeof(EdgeTableEntry) * total )))
+	return 0;
+
+    nb_points = REGION_CreateEdgeTable( Count, nbpolygons, Pts, &ET, pETEs, &SLLBlock, clip_rect );
+    if ((obj = alloc_region( nb_points / 2 )))
+    {
+        if (nb_points) scan_convert( obj, &ET, mode, clip_rect );
+
+        if (!(hrgn = alloc_gdi_handle( obj, OBJ_REGION, &region_funcs )))
+            free_region( obj );
+    }
+
     REGION_FreeStorage(SLLBlock.next);
     HeapFree( GetProcessHeap(), 0, pETEs );
     return hrgn;

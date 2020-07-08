@@ -55,6 +55,12 @@ typedef struct tagWINE_JOYSTICK {
 
 static	WINE_JOYSTICK	JOY_Sticks[MAXJOYSTICK];
 
+static BOOL compare_uint(unsigned int x, unsigned int y, unsigned int max_diff)
+{
+    unsigned int diff = x > y ? x - y : y - x;
+    return diff <= max_diff;
+}
+
 /**************************************************************************
  * 				JOY_LoadDriver		[internal]
  */
@@ -106,14 +112,14 @@ static	void	CALLBACK	JOY_Timer(HWND hWnd, UINT wMsg, UINT_PTR wTimer, DWORD dwTi
 	pos = MAKELONG(ji.wXpos, ji.wYpos);
 
 	if (!joy->bChanged ||
-	    abs(joy->ji.wXpos - ji.wXpos) > joy->threshold ||
-	    abs(joy->ji.wYpos - ji.wYpos) > joy->threshold) {
+	    !compare_uint(joy->ji.wXpos, ji.wXpos, joy->threshold) ||
+	    !compare_uint(joy->ji.wYpos, ji.wYpos, joy->threshold)) {
 	    SendMessageA(joy->hCapture, MM_JOY1MOVE + i, ji.wButtons, pos);
 	    joy->ji.wXpos = ji.wXpos;
 	    joy->ji.wYpos = ji.wYpos;
 	}
 	if (!joy->bChanged ||
-	    abs(joy->ji.wZpos - ji.wZpos) > joy->threshold) {
+	    !compare_uint(joy->ji.wZpos, ji.wZpos, joy->threshold)) {
 	    SendMessageA(joy->hCapture, MM_JOY1ZMOVE + i, ji.wButtons, pos);
 	    joy->ji.wZpos = ji.wZpos;
 	}

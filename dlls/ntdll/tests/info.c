@@ -23,6 +23,8 @@
 #include <stdio.h>
 
 static NTSTATUS (WINAPI * pNtQuerySystemInformation)(SYSTEM_INFORMATION_CLASS, PVOID, ULONG, PULONG);
+static NTSTATUS (WINAPI * pNtSetSystemInformation)(SYSTEM_INFORMATION_CLASS, PVOID, ULONG);
+static NTSTATUS (WINAPI * pRtlGetNativeSystemInformation)(SYSTEM_INFORMATION_CLASS, PVOID, ULONG, PULONG);
 static NTSTATUS (WINAPI * pNtQuerySystemInformationEx)(SYSTEM_INFORMATION_CLASS, void*, ULONG, void*, ULONG, ULONG*);
 static NTSTATUS (WINAPI * pNtPowerInformation)(POWER_INFORMATION_LEVEL, PVOID, ULONG, PVOID, ULONG);
 static NTSTATUS (WINAPI * pNtQueryInformationProcess)(HANDLE, PROCESSINFOCLASS, PVOID, ULONG, PULONG);
@@ -75,6 +77,8 @@ static BOOL InitFunctionPtrs(void)
     }
 
     NTDLL_GET_PROC(NtQuerySystemInformation);
+    NTDLL_GET_PROC(NtSetSystemInformation);
+    NTDLL_GET_PROC(RtlGetNativeSystemInformation);
     NTDLL_GET_PROC(NtPowerInformation);
     NTDLL_GET_PROC(NtQueryInformationProcess);
     NTDLL_GET_PROC(NtQueryInformationThread);
@@ -111,7 +115,7 @@ static void test_query_basic(void)
 {
     NTSTATUS status;
     ULONG ReturnLength;
-    SYSTEM_BASIC_INFORMATION sbi;
+    SYSTEM_BASIC_INFORMATION sbi, sbi2;
 
     /* This test also covers some basic parameter testing that should be the same for 
      * every information class
@@ -153,6 +157,38 @@ static void test_query_basic(void)
     /* Check if we have some return values */
     trace("Number of Processors : %d\n", sbi.NumberOfProcessors);
     ok( sbi.NumberOfProcessors > 0, "Expected more than 0 processors, got %d\n", sbi.NumberOfProcessors);
+
+    memset(&sbi2, 0, sizeof(sbi2));
+    status = pRtlGetNativeSystemInformation(SystemBasicInformation, &sbi2, sizeof(sbi2), &ReturnLength);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x.\n", status);
+    ok( sizeof(sbi2) == ReturnLength, "Unexpected length %u.\n", ReturnLength);
+
+    ok( sbi.unknown == sbi2.unknown, "Expected unknown %#x, got %#x.\n", sbi.unknown, sbi2.unknown);
+    ok( sbi.KeMaximumIncrement == sbi2.KeMaximumIncrement, "Expected KeMaximumIncrement %u, got %u.\n",
+            sbi.KeMaximumIncrement, sbi2.KeMaximumIncrement);
+    ok( sbi.PageSize == sbi2.PageSize, "Expected PageSize field %u, %u.\n", sbi.PageSize, sbi2.PageSize);
+    ok( sbi.MmNumberOfPhysicalPages == sbi2.MmNumberOfPhysicalPages,
+            "Expected MmNumberOfPhysicalPages %u, got %u.\n",
+            sbi.MmNumberOfPhysicalPages, sbi2.MmNumberOfPhysicalPages);
+    ok( sbi.MmLowestPhysicalPage == sbi2.MmLowestPhysicalPage, "Expected MmLowestPhysicalPage %u, got %u.\n",
+            sbi.MmLowestPhysicalPage, sbi2.MmLowestPhysicalPage);
+    ok( sbi.MmHighestPhysicalPage == sbi2.MmHighestPhysicalPage, "Expected MmHighestPhysicalPage %u, got %u.\n",
+            sbi.MmHighestPhysicalPage, sbi2.MmHighestPhysicalPage);
+    /* Higher 32 bits of AllocationGranularity is sometimes garbage on Windows. */
+    ok( (ULONG)sbi.AllocationGranularity == (ULONG)sbi2.AllocationGranularity,
+            "Expected AllocationGranularity %#lx, got %#lx.\n",
+            sbi.AllocationGranularity, sbi2.AllocationGranularity);
+    ok( sbi.LowestUserAddress == sbi2.LowestUserAddress, "Expected LowestUserAddress %p, got %p.\n",
+            (void *)sbi.LowestUserAddress, (void *)sbi2.LowestUserAddress);
+    /* Not testing HighestUserAddress. The field is different from NtQuerySystemInformation result
+     * on 32 bit Windows (some of Win8 versions are the exception). Whenever it is different,
+     * NtQuerySystemInformation returns user space limit (0x0x7ffeffff) and RtlGetNativeSystemInformation
+     * returns address space limit (0xfffeffff). */
+    ok( sbi.ActiveProcessorsAffinityMask == sbi2.ActiveProcessorsAffinityMask,
+            "Expected ActiveProcessorsAffinityMask %#lx, got %#lx.\n",
+            sbi.ActiveProcessorsAffinityMask, sbi2.ActiveProcessorsAffinityMask);
+    ok( sbi.NumberOfProcessors == sbi2.NumberOfProcessors, "Expected NumberOfProcessors %u, got %u.\n",
+            sbi.NumberOfProcessors, sbi2.NumberOfProcessors);
 }
 
 static void test_query_cpu(void)
@@ -285,6 +321,11 @@ static void test_query_process(void)
     int i = 0, k = 0;
     BOOL is_nt = FALSE;
     SYSTEM_BASIC_INFORMATION sbi;
+    PROCESS_BASIC_INFORMATION pbi;
+    THREAD_BASIC_INFORMATION tbi;
+    OBJECT_ATTRIBUTES attr;
+    CLIENT_ID cid;
+    HANDLE handle;
 
     /* Copy of our winternl.h structure turned into a private one */
     typedef struct _SYSTEM_PROCESS_INFORMATION_PRIVATE {
@@ -367,13 +408,19 @@ static void test_query_process(void)
         
         if (!is_nt)
         {
+            DWORD_PTR tid;
             DWORD j;
+
+            ok(!(last_pid & 3), "Unexpected PID low bits: %p\n", spi->UniqueProcessId);
             for ( j = 0; j < spi->dwThreadCount; j++) 
             {
                 k++;
                 ok ( spi->ti[j].ClientId.UniqueProcess == spi->UniqueProcessId,
                      "The owning pid of the thread (%p) doesn't equal the pid (%p) of the process\n",
                      spi->ti[j].ClientId.UniqueProcess, spi->UniqueProcessId);
+
+                tid = (DWORD_PTR)spi->ti[j].ClientId.UniqueThread;
+                ok(!(tid & 3), "Unexpected TID low bits: %p\n", spi->ti[j].ClientId.UniqueThread);
             }
         }
 
@@ -389,6 +436,50 @@ static void test_query_process(void)
     if (one_before_last_pid == 0) one_before_last_pid = last_pid;
 
     HeapFree( GetProcessHeap(), 0, spi_buf);
+
+    if (is_nt)
+    {
+        win_skip("skipping ptids low bits tests\n");
+        return;
+    }
+
+    for (i = 1; i < 4; ++i)
+    {
+        InitializeObjectAttributes( &attr, NULL, 0, NULL, NULL );
+        cid.UniqueProcess = ULongToHandle(GetCurrentProcessId() + i);
+        cid.UniqueThread = 0;
+
+        status = NtOpenProcess( &handle, PROCESS_QUERY_LIMITED_INFORMATION, &attr, &cid );
+        ok( status == STATUS_SUCCESS || broken( status == STATUS_ACCESS_DENIED ) /* wxppro */,
+            "NtOpenProcess returned:%x\n", status );
+        if (status != STATUS_SUCCESS) continue;
+
+        status = pNtQueryInformationProcess( handle, ProcessBasicInformation, &pbi, sizeof(pbi), NULL );
+        ok( status == STATUS_SUCCESS, "NtQueryInformationProcess returned:%x\n", status );
+        ok( pbi.UniqueProcessId == GetCurrentProcessId(),
+            "Expected pid %p, got %p\n", ULongToHandle(GetCurrentProcessId()), ULongToHandle(pbi.UniqueProcessId) );
+
+        NtClose( handle );
+    }
+
+    for (i = 1; i < 4; ++i)
+    {
+        InitializeObjectAttributes( &attr, NULL, 0, NULL, NULL );
+        cid.UniqueProcess = 0;
+        cid.UniqueThread = ULongToHandle(GetCurrentThreadId() + i);
+
+        status = NtOpenThread( &handle, THREAD_QUERY_LIMITED_INFORMATION, &attr, &cid );
+        ok( status == STATUS_SUCCESS || broken( status == STATUS_ACCESS_DENIED ) /* wxppro */,
+            "NtOpenThread returned:%x\n", status );
+        if (status != STATUS_SUCCESS) continue;
+
+        status = pNtQueryInformationThread( handle, ThreadBasicInformation, &tbi, sizeof(tbi), NULL );
+        ok( status == STATUS_SUCCESS, "NtQueryInformationThread returned:%x\n", status );
+        ok( tbi.ClientId.UniqueThread == ULongToHandle(GetCurrentThreadId()),
+            "Expected tid %p, got %p\n", ULongToHandle(GetCurrentThreadId()), tbi.ClientId.UniqueThread );
+
+        NtClose( handle );
+    }
 }
 
 static void test_query_procperf(void)
@@ -649,6 +740,40 @@ static void test_query_interrupt(void)
     */
 
     HeapFree( GetProcessHeap(), 0, sii);
+}
+
+static void test_time_adjustment(void)
+{
+    SYSTEM_TIME_ADJUSTMENT_QUERY query;
+    SYSTEM_TIME_ADJUSTMENT adjust;
+    NTSTATUS status;
+    ULONG len;
+
+    memset( &query, 0xcc, sizeof(query) );
+    status = pNtQuerySystemInformation( SystemTimeAdjustmentInformation, &query, sizeof(query), &len );
+    ok( status == STATUS_SUCCESS, "got %08x\n", status );
+    ok( len == sizeof(query) || broken(!len) /* winxp */, "wrong len %u\n", len );
+    ok( query.TimeAdjustmentDisabled == TRUE || query.TimeAdjustmentDisabled == FALSE,
+        "wrong value %x\n", query.TimeAdjustmentDisabled );
+
+    status = pNtQuerySystemInformation( SystemTimeAdjustmentInformation, &query, sizeof(query)-1, &len );
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "got %08x\n", status );
+    ok( len == sizeof(query) || broken(!len) /* winxp */, "wrong len %u\n", len );
+
+    status = pNtQuerySystemInformation( SystemTimeAdjustmentInformation, &query, sizeof(query)+1, &len );
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "got %08x\n", status );
+    ok( len == sizeof(query) || broken(!len) /* winxp */, "wrong len %u\n", len );
+
+    adjust.TimeAdjustment = query.TimeAdjustment;
+    adjust.TimeAdjustmentDisabled = query.TimeAdjustmentDisabled;
+    status = pNtSetSystemInformation( SystemTimeAdjustmentInformation, &adjust, sizeof(adjust) );
+    ok( status == STATUS_SUCCESS || status == STATUS_PRIVILEGE_NOT_HELD, "got %08x\n", status );
+    status = pNtSetSystemInformation( SystemTimeAdjustmentInformation, &adjust, sizeof(adjust)-1 );
+    todo_wine
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "got %08x\n", status );
+    status = pNtSetSystemInformation( SystemTimeAdjustmentInformation, &adjust, sizeof(adjust)+1 );
+    todo_wine
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "got %08x\n", status );
 }
 
 static void test_query_kerndebug(void)
@@ -1696,6 +1821,34 @@ todo_wine
     heap_free(buffer);
 }
 
+static void test_query_process_image_info(void)
+{
+    IMAGE_NT_HEADERS *nt = RtlImageNtHeader( NtCurrentTeb()->Peb->ImageBaseAddress );
+    NTSTATUS status;
+    SECTION_IMAGE_INFORMATION info;
+    ULONG len;
+
+    status = pNtQueryInformationProcess( NULL, ProcessImageInformation, &info, sizeof(info), &len );
+    ok( status == STATUS_INVALID_HANDLE || broken(status == STATUS_INVALID_PARAMETER), /* winxp */
+        "got %08x\n", status);
+
+    status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessImageInformation, &info, sizeof(info)-1, &len );
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "got %08x\n", status);
+
+    status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessImageInformation, &info, sizeof(info)+1, &len );
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "got %08x\n", status);
+
+    memset( &info, 0xcc, sizeof(info) );
+    status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessImageInformation, &info, sizeof(info), &len );
+    ok( status == STATUS_SUCCESS, "got %08x\n", status);
+    ok( len == sizeof(info), "wrong len %u\n", len );
+
+    ok( info.SubsystemVersionHigh == nt->OptionalHeader.MajorSubsystemVersion, "wrong major version %x/%x\n",
+        info.SubsystemVersionHigh, nt->OptionalHeader.MajorSubsystemVersion );
+    ok( info.SubsystemVersionLow == nt->OptionalHeader.MinorSubsystemVersion, "wrong minor version %x/%x\n",
+        info.SubsystemVersionLow, nt->OptionalHeader.MinorSubsystemVersion );
+}
+
 static void test_query_process_debug_object_handle(int argc, char **argv)
 {
     char cmdline[MAX_PATH];
@@ -2092,6 +2245,7 @@ static void test_queryvirtualmemory(void)
     MEMORY_BASIC_INFORMATION mbi;
     char stackbuf[42];
     HMODULE module;
+    void *user_shared_data = (void *)0x7ffe0000;
 
     module = GetModuleHandleA( "ntdll.dll" );
     trace("Check flags of the PE header of NTDLL.DLL at %p\n", module);
@@ -2165,6 +2319,17 @@ static void test_queryvirtualmemory(void)
             "mbi.Protect is 0x%x\n", mbi.Protect);
     }
     else skip( "bss is outside of module\n" );  /* this can happen on Mac OS */
+
+    trace("Check flags of user shared data at %p\n", user_shared_data);
+    status = pNtQueryVirtualMemory(NtCurrentProcess(), user_shared_data, MemoryBasicInformation, &mbi, sizeof(MEMORY_BASIC_INFORMATION), &readcount);
+    ok(status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    ok(readcount == sizeof(MEMORY_BASIC_INFORMATION), "Expected to read %d bytes, got %ld\n",(int)sizeof(MEMORY_BASIC_INFORMATION),readcount);
+    ok(mbi.AllocationBase == user_shared_data, "mbi.AllocationBase is 0x%p, expected 0x%p\n", mbi.AllocationBase, user_shared_data);
+    ok(mbi.AllocationProtect == PAGE_READONLY, "mbi.AllocationProtect is 0x%x, expected 0x%x\n", mbi.AllocationProtect, PAGE_READONLY);
+    ok(mbi.State == MEM_COMMIT, "mbi.State is 0x%x, expected 0x%X\n", mbi.State, MEM_COMMIT);
+    ok(mbi.Protect == PAGE_READONLY, "mbi.Protect is 0x%x\n", mbi.Protect);
+    ok(mbi.Type == MEM_PRIVATE, "mbi.Type is 0x%x, expected 0x%x\n", mbi.Type, MEM_PRIVATE);
+    ok(mbi.RegionSize == 0x1000, "mbi.RegionSize is 0x%lx, expected 0x%x\n", mbi.RegionSize, 0x1000);
 
     /* check error code when addr is higher than working set limit */
     status = pNtQueryVirtualMemory(NtCurrentProcess(), (void *)~0, MemoryBasicInformation, &mbi, sizeof(mbi), &readcount);
@@ -2416,7 +2581,11 @@ static void test_query_data_alignment(void)
     status = pNtQuerySystemInformation(SystemRecommendedSharedDataAlignment, &value, sizeof(value), &ReturnLength);
     ok(status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
     ok(sizeof(value) == ReturnLength, "Inconsistent length %u\n", ReturnLength);
+#ifdef __arm__
+    ok(value == 32, "Expected 32, got %u\n", value);
+#else
     ok(value == 64, "Expected 64, got %u\n", value);
+#endif
 }
 
 static void test_thread_lookup(void)
@@ -2527,6 +2696,10 @@ START_TEST(info)
     trace("Starting test_query_interrupt()\n");
     test_query_interrupt();
 
+    /* 0x1c SystemTimeAdjustmentInformation */
+    trace("Starting test_time_adjustment()\n");
+    test_time_adjustment();
+
     /* 0x23 SystemKernelDebuggerInformation */
     trace("Starting test_query_kerndebug()\n");
     test_query_kerndebug();
@@ -2595,6 +2768,10 @@ START_TEST(info)
     /* 0x1F ProcessDebugFlags */
     trace("Starting test_process_debug_flags()\n");
     test_query_process_debug_flags(argc, argv);
+
+    /* 0x25 ProcessImageInformation */
+    trace("Starting test_process_image_info()\n");
+    test_query_process_image_info();
 
     /* 0x4C SystemFirmwareTableInformation */
     trace("Starting test_query_firmware()\n");

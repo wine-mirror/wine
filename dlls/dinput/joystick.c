@@ -207,7 +207,7 @@ void dump_DIEFFECT(LPCDIEFFECT eff, REFGUID guid, DWORD dwFlags)
     TRACE("  - dwTriggerButton: %d\n", eff->dwTriggerButton);
     TRACE("  - dwTriggerRepeatInterval: %d\n", eff->dwTriggerRepeatInterval);
     TRACE("  - rglDirection: %p\n", eff->rglDirection);
-    if (dwFlags & DIEP_DIRECTION) {
+    if (dwFlags & DIEP_DIRECTION && eff->rglDirection) {
         TRACE("    ");
         for (i = 0; i < eff->cAxes; ++i)
             TRACE("%d ", eff->rglDirection[i]);
@@ -241,34 +241,42 @@ void dump_DIEFFECT(LPCDIEFFECT eff, REFGUID guid, DWORD dwFlags)
     if (type == DIEFT_CONSTANTFORCE) {
         if (eff->cbTypeSpecificParams != sizeof(DICONSTANTFORCE)) {
             WARN("Effect claims to be a constant force but the type-specific params are the wrong size!\n");
+        } else if (!eff->lpvTypeSpecificParams) {
+            WARN("Size of type-specific params is correct but pointer is NULL!\n");
         } else {
             _dump_DICONSTANTFORCE(eff->lpvTypeSpecificParams);
         }
     } else if (type == DIEFT_PERIODIC) {
         if (eff->cbTypeSpecificParams != sizeof(DIPERIODIC)) {
             WARN("Effect claims to be a periodic force but the type-specific params are the wrong size!\n");
+        } else if (!eff->lpvTypeSpecificParams) {
+            WARN("Size of type-specific params is correct but pointer is NULL!\n");
         } else {
             _dump_DIPERIODIC(eff->lpvTypeSpecificParams);
         }
     } else if (type == DIEFT_RAMPFORCE) {
         if (eff->cbTypeSpecificParams != sizeof(DIRAMPFORCE)) {
             WARN("Effect claims to be a ramp force but the type-specific params are the wrong size!\n");
+        } else if (!eff->lpvTypeSpecificParams) {
+            WARN("Size of type-specific params is correct but pointer is NULL!\n");
         } else {
             _dump_DIRAMPFORCE(eff->lpvTypeSpecificParams);
         }
     } else if (type == DIEFT_CONDITION) {
-        if (eff->cbTypeSpecificParams == sizeof(DICONDITION)) {
+        if (eff->cbTypeSpecificParams == sizeof(DICONDITION) && eff->lpvTypeSpecificParams) {
             _dump_DICONDITION(eff->lpvTypeSpecificParams);
-        } else if (eff->cbTypeSpecificParams == 2 * sizeof(DICONDITION)) {
+        } else if (eff->cbTypeSpecificParams == 2 * sizeof(DICONDITION) && eff->lpvTypeSpecificParams) {
             DICONDITION *condition = eff->lpvTypeSpecificParams;
             _dump_DICONDITION(&condition[0]);
             _dump_DICONDITION(&condition[1]);
         } else {
-            WARN("Effect claims to be a condition but the type-specific params are the wrong size!\n");
+            WARN("Effect claims to be a condition but the type-specific params are the wrong size or NULL!\n");
         }
     } else if (type == DIEFT_CUSTOMFORCE) {
         if (eff->cbTypeSpecificParams != sizeof(DICUSTOMFORCE)) {
             WARN("Effect claims to be a custom force but the type-specific params are the wrong size!\n");
+        } else if (!eff->lpvTypeSpecificParams) {
+            WARN("Size of type-specific params is correct but pointer is NULL!\n");
         } else {
             _dump_DICUSTOMFORCE(eff->lpvTypeSpecificParams);
         }

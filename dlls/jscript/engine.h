@@ -170,6 +170,7 @@ typedef struct _function_code_t {
     bytecode_t *bytecode;
 } function_code_t;
 
+IDispatch *lookup_global_host(script_ctx_t*) DECLSPEC_HIDDEN;
 local_ref_t *lookup_local(const function_code_t*,const WCHAR*) DECLSPEC_HIDDEN;
 
 struct _bytecode_t {
@@ -180,6 +181,7 @@ struct _bytecode_t {
     heap_pool_t heap;
 
     function_code_t global_code;
+    named_item_t *named_item;
 
     WCHAR *source;
     UINT64 source_context;
@@ -196,7 +198,7 @@ struct _bytecode_t {
     struct list entry;
 };
 
-HRESULT compile_script(script_ctx_t*,const WCHAR*,UINT64,unsigned,const WCHAR*,const WCHAR*,BOOL,BOOL,bytecode_t**) DECLSPEC_HIDDEN;
+HRESULT compile_script(script_ctx_t*,const WCHAR*,UINT64,unsigned,const WCHAR*,const WCHAR*,BOOL,BOOL,named_item_t*,bytecode_t**) DECLSPEC_HIDDEN;
 void release_bytecode(bytecode_t*) DECLSPEC_HIDDEN;
 
 static inline bytecode_t *bytecode_addref(bytecode_t *code)
@@ -279,7 +281,7 @@ typedef struct _call_frame_t {
 #define EXEC_EVAL              0x0008
 
 HRESULT exec_source(script_ctx_t*,DWORD,bytecode_t*,function_code_t*,scope_chain_t*,IDispatch*,
-        jsdisp_t*,jsdisp_t*,unsigned,jsval_t*,jsval_t*) DECLSPEC_HIDDEN;
+        jsdisp_t*,unsigned,jsval_t*,jsval_t*) DECLSPEC_HIDDEN;
 
 HRESULT create_source_function(script_ctx_t*,bytecode_t*,function_code_t*,scope_chain_t*,jsdisp_t**) DECLSPEC_HIDDEN;
 HRESULT setup_arguments_object(script_ctx_t*,call_frame_t*) DECLSPEC_HIDDEN;

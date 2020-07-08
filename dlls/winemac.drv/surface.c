@@ -70,10 +70,7 @@ struct macdrv_window_surface
     BITMAPINFO              info;   /* variable size, must be last */
 };
 
-static struct macdrv_window_surface *get_mac_surface(struct window_surface *surface)
-{
-    return (struct macdrv_window_surface *)surface;
-}
+static struct macdrv_window_surface *get_mac_surface(struct window_surface *surface);
 
 /***********************************************************************
  *              update_blit_data
@@ -208,6 +205,9 @@ static void macdrv_surface_destroy(struct window_surface *window_surface)
     struct macdrv_window_surface *surface = get_mac_surface(window_surface);
 
     TRACE("freeing %p bits %p\n", surface, surface->bits);
+    if (surface->region) DeleteObject(surface->region);
+    if (surface->drawn) DeleteObject(surface->drawn);
+    HeapFree(GetProcessHeap(), 0, surface->blit_data);
     HeapFree(GetProcessHeap(), 0, surface->bits);
     pthread_mutex_destroy(&surface->mutex);
     HeapFree(GetProcessHeap(), 0, surface);
@@ -223,6 +223,12 @@ static const struct window_surface_funcs macdrv_surface_funcs =
     macdrv_surface_flush,
     macdrv_surface_destroy,
 };
+
+static struct macdrv_window_surface *get_mac_surface(struct window_surface *surface)
+{
+    if (!surface || surface->funcs != &macdrv_surface_funcs) return NULL;
+    return (struct macdrv_window_surface *)surface;
+}
 
 /***********************************************************************
  *              create_surface
@@ -308,7 +314,7 @@ failed:
 void set_surface_use_alpha(struct window_surface *window_surface, BOOL use_alpha)
 {
     struct macdrv_window_surface *surface = get_mac_surface(window_surface);
-    surface->use_alpha = use_alpha;
+    if (surface) surface->use_alpha = use_alpha;
 }
 
 /***********************************************************************
@@ -421,6 +427,7 @@ void surface_clip_to_visible_rect(struct window_surface *window_surface, const R
 {
     struct macdrv_window_surface *surface = get_mac_surface(window_surface);
 
+    if (!surface) return;
     window_surface->funcs->lock(window_surface);
 
     if (surface->drawn)

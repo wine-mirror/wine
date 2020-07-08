@@ -72,6 +72,7 @@ static BOOLEAN (WINAPI *pRtlIsTextUnicode)(LPVOID, INT, INT *);
 static NTSTATUS (WINAPI *pRtlHashUnicodeString)(PCUNICODE_STRING,BOOLEAN,ULONG,ULONG*);
 static NTSTATUS (WINAPI *pRtlUnicodeToUTF8N)(CHAR *, ULONG, ULONG *, const WCHAR *, ULONG);
 static NTSTATUS (WINAPI *pRtlUTF8ToUnicodeN)(WCHAR *, ULONG, ULONG *, const CHAR *, ULONG);
+static NTSTATUS (WINAPI *pRtlFormatMessage)(const WCHAR*,ULONG,BOOLEAN,BOOLEAN,BOOLEAN,__ms_va_list*,LPWSTR,ULONG,ULONG*);
 
 /*static VOID (WINAPI *pRtlFreeOemString)(PSTRING);*/
 /*static VOID (WINAPI *pRtlCopyUnicodeString)(UNICODE_STRING *, const UNICODE_STRING *);*/
@@ -144,6 +145,7 @@ static void InitFunctionPtrs(void)
         pRtlHashUnicodeString = (void*)GetProcAddress(hntdll, "RtlHashUnicodeString");
         pRtlUnicodeToUTF8N = (void*)GetProcAddress(hntdll, "RtlUnicodeToUTF8N");
         pRtlUTF8ToUnicodeN = (void*)GetProcAddress(hntdll, "RtlUTF8ToUnicodeN");
+        pRtlFormatMessage = (void*)GetProcAddress(hntdll, "RtlFormatMessage");
     }
 }
 
@@ -693,6 +695,7 @@ static void test_RtlDowncaseUnicodeString(void)
 		case 0x19d: lower_ch = 0x272; break;
 		case 0x19f: lower_ch = 0x275; break;
 		case 0x1a9: lower_ch = 0x283; break;
+		case 0x1a6: lower_ch = 0x280; break;
 		case 0x1ae: lower_ch = 0x288; break;
 		case 0x1b1: lower_ch = 0x28a; break;
 		case 0x1b2: lower_ch = 0x28b; break;
@@ -701,6 +704,16 @@ static void test_RtlDowncaseUnicodeString(void)
 		case 0x1c7: lower_ch = 0x1c9; break;
 		case 0x1ca: lower_ch = 0x1cc; break;
 		case 0x1f1: lower_ch = 0x1f3; break;
+		case 0x1f6: lower_ch = 0x195; break;
+		case 0x1f7: lower_ch = 0x1bf; break;
+		case 0x220: lower_ch = 0x19e; break;
+		case 0x23a: lower_ch = 0x2c65; break;
+		case 0x23d: lower_ch = 0x19a; break;
+		case 0x23e: lower_ch = 0x2c66; break;
+		case 0x243: lower_ch = 0x180; break;
+		case 0x244: lower_ch = 0x289; break;
+		case 0x245: lower_ch = 0x28c; break;
+		case 0x37f: lower_ch = 0x3f3; break;
 		case 0x386: lower_ch = 0x3ac; break;
 		case 0x388: lower_ch = 0x3ad; break;
 		case 0x389: lower_ch = 0x3ae; break;
@@ -708,6 +721,11 @@ static void test_RtlDowncaseUnicodeString(void)
 		case 0x38c: lower_ch = 0x3cc; break;
 		case 0x38e: lower_ch = 0x3cd; break;
 		case 0x38f: lower_ch = 0x3ce; break;
+		case 0x3cf: lower_ch = 0x3d7; break;
+		case 0x3f9: lower_ch = 0x3f2; break;
+		case 0x3fd: lower_ch = 0x37b; break;
+		case 0x3fe: lower_ch = 0x37c; break;
+		case 0x3ff: lower_ch = 0x37d; break;
 		default: lower_ch = ch; break;
 	    } /* switch */
 	}
@@ -730,7 +748,8 @@ static void test_RtlDowncaseUnicodeString(void)
 
     pRtlDowncaseUnicodeString(&result_str, &source_str, 0);
     for (i = 0; i <= 1024; i++) {
-	ok(result_str.Buffer[i] == lower_str.Buffer[i] || result_str.Buffer[i] == source_str.Buffer[i] + 1,
+	ok(result_str.Buffer[i] == lower_str.Buffer[i] || result_str.Buffer[i] == source_str.Buffer[i] + 1 ||
+           broken( result_str.Buffer[i] == source_str.Buffer[i] ),
 	   "RtlDowncaseUnicodeString works wrong: '%c'[=0x%x] is converted to '%c'[=0x%x], expected: '%c'[=0x%x]\n",
 	   source_str.Buffer[i], source_str.Buffer[i],
 	   result_str.Buffer[i], result_str.Buffer[i],
@@ -1942,14 +1961,18 @@ struct hash_unicodestring_test {
 };
 
 static const struct hash_unicodestring_test hash_test[] = {
-    { {'T',0},                     FALSE, 0x00000054 },
-    { {'T','e','s','t',0},         FALSE, 0x766bb952 },
-    { {'T','e','S','t',0},         FALSE, 0x764bb172 },
-    { {'t','e','s','t',0},         FALSE, 0x4745d132 },
-    { {'t','e','s','t',0},         TRUE,  0x6689c132 },
-    { {'T','E','S','T',0},         TRUE,  0x6689c132 },
-    { {'T','E','S','T',0},         FALSE, 0x6689c132 },
-    { {'a','b','c','d','e','f',0}, FALSE, 0x971318c3 },
+    { L"T",         FALSE, 0x00000054 },
+    { L"Test",      FALSE, 0x766bb952 },
+    { L"TeSt",      FALSE, 0x764bb172 },
+    { L"test",      FALSE, 0x4745d132 },
+    { L"test",      TRUE,  0x6689c132 },
+    { L"TEST",      TRUE,  0x6689c132 },
+    { L"TEST",      FALSE, 0x6689c132 },
+    { L"t\xe9st",   FALSE, 0x8845cfb6 },
+    { L"t\xe9st",   TRUE,  0xa789bfb6 },
+    { L"T\xc9ST",   TRUE,  0xa789bfb6 },
+    { L"T\xc9ST",   FALSE, 0xa789bfb6 },
+    { L"abcdef",    FALSE, 0x971318c3 },
     { { 0 } }
 };
 
@@ -2588,6 +2611,285 @@ static void test_RtlUTF8ToUnicodeN(void)
     }
 }
 
+static NTSTATUS WINAPIV fmt( const WCHAR *src, ULONG width, BOOLEAN ignore_inserts, BOOLEAN ansi,
+                             WCHAR *buffer, ULONG size, ULONG *retsize, ... )
+{
+    __ms_va_list args;
+    NTSTATUS status;
+
+    *retsize = 0xdeadbeef;
+    __ms_va_start( args, retsize );
+    status = pRtlFormatMessage( src, width, ignore_inserts, ansi, FALSE, &args, buffer, size, retsize );
+    __ms_va_end( args );
+    return status;
+}
+
+static void WINAPIV testfmt( const WCHAR *src, const WCHAR *expect, ULONG width, BOOL ansi, ... )
+{
+    __ms_va_list args;
+    NTSTATUS status;
+    WCHAR buffer[128];
+    ULONG size = 0xdeadbeef;
+
+    memset( buffer, 0xcc, sizeof(buffer) );
+    __ms_va_start( args, ansi );
+    status = pRtlFormatMessage( src, width, FALSE, ansi, FALSE, &args, buffer, sizeof(buffer), &size );
+    __ms_va_end( args );
+    ok( !status, "%s: failed %x\n", debugstr_w(src), status );
+    ok( !lstrcmpW( buffer, expect ), "%s: got %s expected %s\n", debugstr_w(src),
+        debugstr_w(buffer), debugstr_w(expect) );
+    ok( size == (lstrlenW(expect) + 1) * sizeof(WCHAR), "%s: wrong size %u\n", debugstr_w(src), size );
+}
+
+static void test_RtlFormatMessage(void)
+{
+    WCHAR buffer[128];
+    NTSTATUS status;
+    ULONG i, size;
+
+    /* basic formats */
+    testfmt( L"test", L"test", 0, FALSE );
+    testfmt( L"", L"", 0, FALSE );
+    testfmt( L"%1", L"test", 0, FALSE, L"test" );
+    testfmt( L"%1!s!", L"test", 0, FALSE, L"test" );
+    testfmt( L"%1!s!", L"foo", 0, TRUE, "foo" );
+    testfmt( L"%1!S!", L"test", 0, FALSE, "test" );
+    testfmt( L"%1!S!", L"foo", 0, TRUE, L"foo" );
+    testfmt( L"%1!hs!%1!hS!", L"testtest", 0, FALSE, "test" );
+    testfmt( L"%1!ls!%1!lS!%1!ws!%1!wS!", L"foofoofoofoo", 0, TRUE, L"foo" );
+    testfmt( L"%1!c!", L"a", 0, FALSE, L'a' );
+    testfmt( L"%1!c!", L"b", 0, TRUE, 'b' );
+    testfmt( L"%1!C!", L"c", 0, FALSE, L'c' );
+    testfmt( L"%1!C!", L"d", 0, TRUE, 'd' );
+    testfmt( L"%1!hc!", L"e", 0, FALSE, L'e' );
+    testfmt( L"%1!hC!", L"f", 0, FALSE, L'f' );
+    testfmt( L"%1!lc!", L"g", 0, TRUE, 'g' );
+    testfmt( L"%1!lC!", L"h", 0, TRUE, 'h' );
+    testfmt( L"%1!wc!", L"i", 0, TRUE, 'i' );
+    testfmt( L"%1!wC!", L"j", 0, TRUE, 'j' );
+    testfmt( L"%1!04X!", L"BEEF", 0, FALSE, 0xbeef );
+    testfmt( L"%1!Saa!", L"testaa", 0, FALSE, "test" );
+    testfmt( L"%.%%%Z%n%t%r%!% ", L".%Z\r\n\t\r! ", 0, FALSE );
+    testfmt( L"%1!*.*u!,%1!*.*u!", L"  001, 0002", 0, FALSE, 5, 3, 1, 4, 2 );
+    testfmt( L"%1!*.*u!,%3!*.*u!", L"  001,  0002", 0, FALSE, 5, 3, 1, 6, 4, 2 );
+    testfmt( L"%1", L"(null)", 0, FALSE, NULL );
+    testfmt( L"%2", L"(null)", 0, TRUE, "abc", NULL );
+    testfmt( L"ab%1!!cd", L"abcd", 0, FALSE, L"hello" );
+    testfmt( L"abc%1!#.000000000000000000000000000x!", L"abc0x22", 0, FALSE, 34 );
+    testfmt( L"a\r\nb\rc\r\rd\r\r\ne", L"a\r\nb\r\nc\r\n\r\nd\r\n\r\ne", 0, FALSE, NULL );
+#ifdef _WIN64
+    testfmt( L"%1!#I64x! %2!x!", L"0x1234 5678", 0, FALSE, (ULONG_PTR)0x1234, 0x5678, 0xbeef );
+    testfmt( L"%1!x! %2!#I64x! %3!#I64x! %4!x!", L"dead 0x1111222233334444 0x5555666677778888 beef",
+             0, FALSE, 0xdead, 0x1111222233334444ull, 0x5555666677778888ull, 0xbeef );
+    testfmt( L"%3!#I64x! %4!#I64x! %3!x! %1!x!", L"0x3 0x4 3 1", 0, FALSE, 0xdead00000001ll, 2, 3ll, 4ll );
+    testfmt( L"%2!x! %1!I64x!", L"5678 1234", 0, FALSE, (ULONG_PTR)0x1234, 0x5678, 0xbeef );
+    testfmt( L"%2!*.*I64x! %1!u! %4!u! %2!u!", L"  00000000000000d 19 11 17", 0, FALSE,
+             19ull, 17ull, 15ull, 13ull, 11ull, 9ull );
+    {  /* argument array works differently */
+        ULONG_PTR args[] = { 19, 17, 15, 13, 11, 9, 7 };
+        memset( buffer, 0xcc, sizeof(buffer) );
+        status = pRtlFormatMessage( L"%2!*.*I64x! %1!u! %4!u! %2!u!", 0, FALSE, FALSE, TRUE,
+                                    (__ms_va_list *)args, buffer, sizeof(buffer), &size );
+        ok( !lstrcmpW( buffer, L"  00000000000000d 19 13 17" ), "got %s\n", wine_dbgstr_w(buffer) );
+        memset( buffer, 0xcc, sizeof(buffer) );
+        status = pRtlFormatMessage( L"%1!I64u! %2!u! %4!.*I64x! %5!I64u!", 0, FALSE, FALSE, TRUE,
+                                    (__ms_va_list *)args, buffer, sizeof(buffer), &size );
+        ok( !lstrcmpW( buffer, L"19 17 000000000000b 11" ), "got %s\n", wine_dbgstr_w(buffer) );
+    }
+#else
+    fmt( L"%1!#I64x! %2!x!", 0, FALSE, FALSE, buffer, sizeof(buffer), &size, 0x1234, 0x5678, 0xbeef );
+    if (lstrcmpW( buffer, L"0x567800001234 5678" ))
+    {
+        testfmt( L"%1!#I64x! %2!x!", L"0x567800001234 beef", 0, FALSE, 0x1234, 0x5678, 0xbeef );
+        testfmt( L"%1!x! %2!#I64x! %3!#I64x! %4!x!", L"dead 0x1111222233334444 0x5555666677778888 beef",
+                 0, FALSE, 0xdead, 0x1111222233334444ull, 0x5555666677778888ull, 0xbeef );
+        testfmt( L"%3!#I64x! %4!#I64x! %3!x! %1!x!", L"0x1111222233334444 0x5555666677778888 33334444 1",
+                 0, FALSE, 1, 2, 3, 4, 0x33334444, 0x11112222, 0x77778888, 0x55556666, 0xbeef, 0xbee2 );
+        testfmt( L"%2!x! %1!I64x!", L"5678 1234", 0, FALSE, 0x1234, 0x5678, 0xbeef );
+        testfmt( L"%2!*.*I64x! %1!u! %4!u! %2!u!", L"  000090000000b 19 7 15", 0, FALSE,
+                 19, 17, 15, 13, 11, 9, 7 );
+        {  /* argument array works differently */
+            ULONG_PTR args[] = { 19, 17, 15, 13, 11, 9, 7 };
+            memset( buffer, 0xcc, sizeof(buffer) );
+            status = pRtlFormatMessage( L"%2!*.*I64x! %1!u! %4!u! %2!u!", 0, FALSE, FALSE, TRUE,
+                                        (__ms_va_list *)args, buffer, sizeof(buffer), &size );
+            ok( !lstrcmpW( buffer, L"        d0000000f 19 13 17" ), "got %s\n", wine_dbgstr_w(buffer) );
+            memset( buffer, 0xcc, sizeof(buffer) );
+            status = pRtlFormatMessage( L"%1!I64u! %2!u! %4!.*I64x! %5!I64u!", 0, FALSE, FALSE, TRUE,
+                                        (__ms_va_list *)args, buffer, sizeof(buffer), &size );
+            ok( !lstrcmpW( buffer, L"19 17 0000b00000000 11" ), "got %s\n", wine_dbgstr_w(buffer) );
+        }
+    }
+    else win_skip( "I64 support broken\n" );
+#endif
+    testfmt( L"%1!Ix! %2!QQ!", L"1234 QQ", 0, FALSE, (ULONG_PTR)0x1234 );
+    testfmt( L"%1!#llx!%2!#x!%1!#hx!", L"0x1234560x789abc0x3456", 0, FALSE, 0x123456, 0x789abc );
+    lstrcpyW( buffer, L"xxxxxxxxxx" );
+    fmt( L"ab%0cd", 0, FALSE, FALSE, buffer, sizeof(buffer), &size );
+    ok( !memcmp( buffer, L"ab\0xxxxxxx", 10 * sizeof(WCHAR) ), "got %s\n", wine_dbgstr_wn(buffer, 10) );
+
+    /* max width */
+    testfmt( L"%1", L"testing\r\n", 3, FALSE, L"testing" );
+    testfmt( L"%1%2%3", L"testing\r\nabcdef\r\nfoobar\r\n", 4, FALSE, L"testing", L"abcdef", L"foobar");
+    testfmt( L"%1%2%3%4", L"test\r\nabcd\r\nabcdef\r\n", 4, FALSE, L"test", L"abcd", L"abc", L"def" );
+    testfmt( L"%1a\nb%2", L"testing\r\na\r\nbfoo bar\r\n", 3, FALSE, L"testing", L"foo bar" );
+    testfmt( L"a%tb%t%t%t%c%r%r%r%r%r%rdefg", L"a\r\nb\r\n\r\n\r\nc\r\r\r\r\r\rdef\r\ng", 3, FALSE );
+    testfmt( L"test abcd ", L"test\r\n\r\nabcd\r\n ", 4, FALSE );
+    testfmt( L"test abcdef %1 foobar", L"tes\r\nt\r\nabc\r\ndef\r\n\r\nhello\r\nfoo\r\nbar\r\n", 3, FALSE, L"hello" );
+    testfmt( L"te st\nabc d\nfoo", L"te st\r\nabc d\r\nfoo", 6, FALSE );
+    testfmt( L"te st    ab    d\nfoo", L"te st\r\n  ab\r\n d foo", 7, FALSE );
+    testfmt( L"te\tst\t\t\t\tab\t\t\td\nfoo", L"te\tst\t\t\r\n\t\tab\t\t\t\r\nd foo", 7, FALSE );
+    testfmt( L"te st\n\n\r\n\nab    d\nfoo    ", L"te st\r\n  ab\r\n d foo\r\n   ", 7, FALSE );
+    testfmt( L"te st\r\nabc d\n\nfoo\rbar", L"te st abc d  foo bar", 0xff, FALSE );
+    testfmt( L"te st%r%nabc d%nfoo%rbar", L"te st\r\r\nabc d\r\nfoo\rbar", 0xff, FALSE );
+    testfmt( L"\01\02\03\04\a\a\a\a\b\b\b\b\t\t\t\t\v\v\v\v\f\f\f\f\r\r\r\r    a",
+             L"\01\02\r\n\03\04\r\n\a\a\r\n\a\a\r\n\b\b\r\n\b\b\r\n\t\t\r\n\t\t\r\n\v\v\r\n\v\v\r\n\f\f\r\n\f\f\r\n\r\n\r\n\r\n\r\na", 2, FALSE );
+
+    for (i = 1; i < 0xffff; i++)
+    {
+        WCHAR src[] = { i, ' ', i, i, i, i, i, ' ', i, 0 };
+        WCHAR expect[16];
+        switch (i)
+        {
+        case '\t':
+            lstrcpyW( expect, L"\r\n\r\n\t" );
+            break;
+        case '\r':
+        case '\n':
+        case ' ':
+            lstrcpyW( expect, L"\r\n\r\n " );
+            break;
+        case '%':
+            lstrcpyW( expect, L" %% \r\nxxxx" );
+            break;
+        default:
+            swprintf( expect, ARRAY_SIZE(expect), L"%c\r\n%c%c%c%c\r\n%c %c", i,  i,  i,  i,  i,  i,  i );
+            break;
+        }
+        lstrcpyW( buffer, L"xxxxxxxxxx" );
+        fmt( src, 4, FALSE, FALSE, buffer, sizeof(buffer), &size );
+        ok( !lstrcmpW( buffer, expect ), "%04x: got %s\n", i, debugstr_w(buffer) );
+    }
+
+    /* args are not counted the same way with an argument array */
+    {
+        ULONG_PTR args[] = { 6, 4, 2, 5, 3, 1 };
+        memset( buffer, 0xcc, sizeof(buffer) );
+        status = pRtlFormatMessage( L"%1!*.*u!,%1!*.*u!", 0, FALSE, FALSE, TRUE, (__ms_va_list *)args,
+                                    buffer, sizeof(buffer), &size );
+        ok( !lstrcmpW( buffer, L"  0002, 00003" ), "got %s\n", wine_dbgstr_w(buffer) );
+        memset( buffer, 0xcc, sizeof(buffer) );
+        status = pRtlFormatMessage( L"%1!*.*u!,%4!*.*u!", 0, FALSE, FALSE, TRUE, (__ms_va_list *)args,
+                                    buffer, sizeof(buffer), &size );
+        ok( !lstrcmpW( buffer, L"  0002,  001" ), "got %s\n", wine_dbgstr_w(buffer) );
+    }
+
+    /* buffer overflows */
+    lstrcpyW( buffer, L"xxxxxxxxxx" );
+    status = fmt( L"testing", 0, FALSE, FALSE, buffer, 8, &size );
+    ok( status == STATUS_BUFFER_OVERFLOW, "failed %x\n", status );
+    ok( !lstrcmpW( buffer, L"testxxxxxx" ) || broken(!lstrcmpW( buffer, L"tesxxxxxxx" )), /* winxp */
+        "got %s\n", wine_dbgstr_w(buffer) );
+    ok( size == 0xdeadbeef, "wrong size %u\n", size );
+
+    lstrcpyW( buffer, L"xxxxxxxxxx" );
+    status = fmt( L"%1", 0, FALSE, FALSE, buffer, 8, &size, L"test" );
+    ok( status == STATUS_BUFFER_OVERFLOW, "failed %x\n", status );
+    ok( !memcmp( buffer, L"tes\0xxxxxx", 10 * sizeof(WCHAR) ) || broken(!lstrcmpW( buffer, L"testxxxxxx" )), /* winxp */
+        "got %s\n", wine_dbgstr_w(buffer) );
+    ok( size == 0xdeadbeef, "wrong size %u\n", size );
+
+    lstrcpyW( buffer, L"xxxxxxxxxx" );
+    status = fmt( L"%1!x!", 0, FALSE, FALSE, buffer, 8, &size, 0x12345678 );
+    ok( status == STATUS_BUFFER_OVERFLOW, "failed %x\n", status );
+    ok( !memcmp( buffer, L"123\0xxxxxx", 10 * sizeof(WCHAR) ) || broken(!lstrcmpW( buffer, L"1234xxxxxx" )), /* winxp */
+        "got %s\n", wine_dbgstr_w(buffer) );
+    ok( size == 0xdeadbeef, "wrong size %u\n", size );
+
+    lstrcpyW( buffer, L"xxxxxxxxxx" );
+    status = fmt( L"%1!*s!", 0, FALSE, FALSE, buffer, 10, &size, 5, L"abc" );
+    ok( status == STATUS_BUFFER_OVERFLOW, "failed %x\n", status );
+    ok( !memcmp( buffer, L"  ab\0xxxxx", 10 * sizeof(WCHAR) ) || broken(!lstrcmpW( buffer, L"  abcxxxxx" )), /* winxp */
+        "got %s\n", wine_dbgstr_w(buffer) );
+    ok( size == 0xdeadbeef, "wrong size %u\n", size );
+
+    lstrcpyW( buffer, L"xxxxxxxxxx" );
+    status = fmt( L"ab%n", 0, FALSE, FALSE, buffer, 6, &size );
+    ok( status == STATUS_BUFFER_OVERFLOW, "failed %x\n", status );
+    ok( !memcmp( buffer, L"abxxxxxxxx", 10 * sizeof(WCHAR) ), "got %s\n", wine_dbgstr_w(buffer) );
+    ok( size == 0xdeadbeef, "wrong size %u\n", size );
+
+    /* ignore inserts */
+    lstrcpyW( buffer, L"xxxxxxxxxx" );
+    status = fmt( L"%1!x!%r%%%n%t", 0, TRUE, FALSE, buffer, sizeof(buffer), &size );
+    ok( !lstrcmpW( buffer, L"%1!x!\r%%\r\n\t" ), "got %s\n", wine_dbgstr_w(buffer) );
+
+    lstrcpyW( buffer, L"xxxxxxxxxx" );
+    status = fmt( L"ab%0cd", 0, TRUE, FALSE, buffer, sizeof(buffer), &size );
+    ok( !status, "failed %x\n", status );
+    ok( !memcmp( buffer, L"ab\0xxxxxxx", 10 * sizeof(WCHAR) ), "got %s\n", wine_dbgstr_wn(buffer, 10) );
+
+    /* invalid args */
+    lstrcpyW( buffer, L"xxxxxxxxxx" );
+    size = 0xdeadbeef;
+    status = pRtlFormatMessage( L"abc%1", 0, FALSE, FALSE, FALSE, NULL, buffer, sizeof(buffer), &size );
+    ok( status == STATUS_INVALID_PARAMETER, "failed %x\n", status );
+    ok( !lstrcmpW( buffer, L"abcxxxxxxx" ), "got %s\n", wine_dbgstr_w(buffer) );
+    ok( size == 0xdeadbeef, "wrong size %u\n", size );
+
+    lstrcpyW( buffer, L"xxxxxxxxxx" );
+    status = pRtlFormatMessage( L"abc%1", 0, FALSE, FALSE, TRUE, NULL, buffer, sizeof(buffer), &size );
+    ok( status == STATUS_INVALID_PARAMETER, "failed %x\n", status );
+    ok( !lstrcmpW( buffer, L"abcxxxxxxx" ), "got %s\n", wine_dbgstr_w(buffer) );
+    ok( size == 0xdeadbeef, "wrong size %u\n", size );
+
+    lstrcpyW( buffer, L"xxxxxxxxxx" );
+    status = pRtlFormatMessage( L"abc%", 0, FALSE, FALSE, TRUE, NULL, buffer, sizeof(buffer), &size );
+    ok( status == STATUS_INVALID_PARAMETER, "failed %x\n", status );
+    ok( !lstrcmpW( buffer, L"abcxxxxxxx" ), "got %s\n", wine_dbgstr_w(buffer) );
+    ok( size == 0xdeadbeef, "wrong size %u\n", size );
+
+    lstrcpyW( buffer, L"xxxxxxxxxx" );
+    status = fmt( L"%1!u! %2!u", 0, FALSE, FALSE, buffer, sizeof(buffer), &size, 34 );
+    ok( status == STATUS_INVALID_PARAMETER, "failed %x\n", status );
+    ok( !lstrcmpW( buffer, L"34 xxxxxxx" ), "got %s\n", wine_dbgstr_w(buffer) );
+    ok( size == 0xdeadbeef, "wrong size %u\n", size );
+
+    lstrcpyW( buffer, L"xxxxxxxxxx" );
+    status = fmt( L"%1!**u!", 0, FALSE, FALSE, buffer, sizeof(buffer), &size, 34 );
+    ok( status == STATUS_SUCCESS, "failed %x\n", status );
+    ok( !lstrcmpW( buffer, L"*u" ), "got %s\n", wine_dbgstr_w(buffer) );
+
+    lstrcpyW( buffer, L"xxxxxxxxxx" );
+    status = fmt( L"%1!0.3+*u!", 0, FALSE, FALSE, buffer, sizeof(buffer), &size, 34 );
+    ok( status == STATUS_SUCCESS, "failed %x\n", status );
+    ok( !lstrcmpW( buffer, L"+*u" ), "got %s\n", wine_dbgstr_w(buffer) );
+
+    lstrcpyW( buffer, L"xxxxxxxxxx" );
+    status = fmt( L"aa%1!***u!", 0, FALSE, FALSE, buffer, sizeof(buffer), &size, 34 );
+    ok( status == STATUS_INVALID_PARAMETER, "failed %x\n", status );
+    ok( !lstrcmpW( buffer, L"aaxxxxxxxx" ), "got %s\n", wine_dbgstr_w(buffer) );
+    ok( size == 0xdeadbeef, "wrong size %u\n", size );
+
+    lstrcpyW( buffer, L"xxxxxxxxxx" );
+    status = fmt( L"abc%1!#.000000000000000000000000000x!", 0, FALSE, FALSE, buffer, sizeof(buffer), &size, 34 );
+    ok( status == STATUS_SUCCESS, "failed %x\n", status );
+    ok( !lstrcmpW( buffer, L"abc0x22" ), "got %s\n", wine_dbgstr_w(buffer) );
+
+    lstrcpyW( buffer, L"xxxxxxxxxx" );
+    status = fmt( L"abc%1!#.0000000000000000000000000000x!", 0, FALSE, FALSE, buffer, sizeof(buffer), &size, 34 );
+    ok( status == STATUS_INVALID_PARAMETER, "failed %x\n", status );
+    ok( !lstrcmpW( buffer, L"abcxxxxxxx" ), "got %s\n", wine_dbgstr_w(buffer) );
+    ok( size == 0xdeadbeef, "wrong size %u\n", size );
+
+    lstrcpyW( buffer, L"xxxxxxxxxx" );
+    status = fmt( L"abc%1!hsaaaaaaaaaaaaaaaaaaaaaaaaaaaaa!", 0, FALSE, FALSE, buffer, sizeof(buffer), &size, "hello" );
+    ok( status == STATUS_INVALID_PARAMETER, "failed %x\n", status );
+    ok( !lstrcmpW( buffer, L"abcxxxxxxx" ), "got %s\n", wine_dbgstr_w(buffer) );
+    ok( size == 0xdeadbeef, "wrong size %u\n", size );
+
+}
+
 START_TEST(rtlstr)
 {
     InitFunctionPtrs();
@@ -2617,11 +2919,9 @@ START_TEST(rtlstr)
     test_RtlCompareUnicodeString();
     test_RtlUpcaseUnicodeChar();
     test_RtlUpcaseUnicodeString();
-    if(0)
-    {
-	test_RtlDowncaseUnicodeString();
-    }
+    test_RtlDowncaseUnicodeString();
     test_RtlHashUnicodeString();
     test_RtlUnicodeToUTF8N();
     test_RtlUTF8ToUnicodeN();
+    test_RtlFormatMessage();
 }

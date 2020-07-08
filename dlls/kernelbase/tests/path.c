@@ -2337,6 +2337,26 @@ static void test_PathIsUNCEx(void)
     }
 }
 
+static void test_actctx(void)
+{
+    ACTCTX_SECTION_KEYED_DATA data = { sizeof(data) };
+    WCHAR exe_path[MAX_PATH];
+    char buf[1024];
+    ACTIVATION_CONTEXT_ASSEMBLY_DETAILED_INFORMATION *info = (void *)buf;
+    SIZE_T size;
+    BOOL b;
+
+    b = FindActCtxSectionStringW(FIND_ACTCTX_SECTION_KEY_RETURN_HACTCTX, NULL, ACTIVATION_CONTEXT_SECTION_DLL_REDIRECTION, L"testdll.dll", &data);
+    ok(b, "FindActCtxSectionString failed: %u\n", GetLastError());
+
+    b = QueryActCtxW(0, data.hActCtx, &data.ulAssemblyRosterIndex, AssemblyDetailedInformationInActivationContext, buf, sizeof(buf), &size);
+    ok(b, "QueryActCtx failed: %u\n", GetLastError());
+
+    GetModuleFileNameW(NULL, exe_path, ARRAY_SIZE(exe_path));
+    ok(!lstrcmpW(info->lpAssemblyManifestPath, exe_path), "lpAssemblyManifestPath = %s expected %s\n", debugstr_w(info->lpAssemblyManifestPath), debugstr_w(exe_path));
+    ok(!info->lpAssemblyDirectoryName, "lpAssemblyDirectoryName = %s\n", wine_dbgstr_w(info->lpAssemblyDirectoryName));
+}
+
 START_TEST(path)
 {
     HMODULE hmod = LoadLibraryA("kernelbase.dll");
@@ -2386,4 +2406,5 @@ START_TEST(path)
     test_PathCchStripPrefix();
     test_PathCchStripToRoot();
     test_PathIsUNCEx();
+    test_actctx();
 }

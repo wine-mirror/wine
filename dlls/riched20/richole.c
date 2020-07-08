@@ -2048,7 +2048,7 @@ static HRESULT WINAPI ITextRange_fnSetRange(ITextRange *me, LONG anchor, LONG ac
 {
     ITextRangeImpl *This = impl_from_ITextRange(me);
 
-    FIXME("(%p)->(%d %d): stub\n", This, anchor, active);
+    TRACE("(%p)->(%d %d)\n", This, anchor, active);
 
     if (!This->child.reole)
         return CO_E_RELEASED;

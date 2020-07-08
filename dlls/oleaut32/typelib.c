@@ -1701,6 +1701,19 @@ static inline TLBFuncDesc *TLB_get_funcdesc_by_memberid(ITypeInfoImpl *typeinfo,
     return NULL;
 }
 
+static inline TLBFuncDesc *TLB_get_funcdesc_by_memberid_invkind(ITypeInfoImpl *typeinfo, MEMBERID memid, INVOKEKIND invkind)
+{
+    int i;
+
+    for (i = 0; i < typeinfo->typeattr.cFuncs; ++i)
+    {
+        if (typeinfo->funcdescs[i].funcdesc.memid == memid && typeinfo->funcdescs[i].funcdesc.invkind == invkind)
+            return &typeinfo->funcdescs[i];
+    }
+
+    return NULL;
+}
+
 static inline TLBVarDesc *TLB_get_vardesc_by_memberid(ITypeInfoImpl *typeinfo, MEMBERID memid)
 {
     int i;
@@ -7804,29 +7817,25 @@ static HRESULT WINAPI ITypeInfo_fnGetDllEntry( ITypeInfo2 *iface, MEMBERID memid
     if (This->typeattr.typekind != TKIND_MODULE)
         return TYPE_E_BADMODULEKIND;
 
-    pFDesc = TLB_get_funcdesc_by_memberid(This, memid);
-    if(pFDesc){
-	    dump_TypeInfo(This);
-	    if (TRACE_ON(ole))
-		dump_TLBFuncDescOne(pFDesc);
+    pFDesc = TLB_get_funcdesc_by_memberid_invkind(This, memid, invKind);
+    if (!pFDesc) return TYPE_E_ELEMENTNOTFOUND;
 
-	    if (pBstrDllName)
-		*pBstrDllName = SysAllocString(TLB_get_bstr(This->DllName));
+    dump_TypeInfo(This);
+    if (TRACE_ON(ole)) dump_TLBFuncDescOne(pFDesc);
 
-            if (!IS_INTRESOURCE(pFDesc->Entry) && (pFDesc->Entry != (void*)-1)) {
-		if (pBstrName)
-		    *pBstrName = SysAllocString(TLB_get_bstr(pFDesc->Entry));
-		if (pwOrdinal)
-		    *pwOrdinal = -1;
-		return S_OK;
-	    }
-	    if (pBstrName)
-		*pBstrName = NULL;
-	    if (pwOrdinal)
-		*pwOrdinal = LOWORD(pFDesc->Entry);
-	    return S_OK;
-        }
-    return TYPE_E_ELEMENTNOTFOUND;
+    if (pBstrDllName) *pBstrDllName = SysAllocString(TLB_get_bstr(This->DllName));
+
+    if (!IS_INTRESOURCE(pFDesc->Entry) && (pFDesc->Entry != (void*)-1))
+    {
+        if (pBstrName) *pBstrName = SysAllocString(TLB_get_bstr(pFDesc->Entry));
+        if (pwOrdinal) *pwOrdinal = -1;
+    }
+    else
+    {
+        if (pBstrName) *pBstrName = NULL;
+        if (pwOrdinal) *pwOrdinal = LOWORD(pFDesc->Entry);
+    }
+    return S_OK;
 }
 
 /* internal function to make the inherited interfaces' methods appear
@@ -7911,7 +7920,10 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeInfo(
 	ITypeInfo  **ppTInfo)
 {
     ITypeInfoImpl *This = impl_from_ITypeInfo2(iface);
+    ITypeInfo *type_info = NULL;
     HRESULT result = E_FAIL;
+    TLBRefType *ref_type;
+    UINT i;
 
     if(!ppTInfo)
         return E_INVALIDARG;
@@ -7944,32 +7956,32 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeInfo(
          * refcount goes to zero, but we need to signal to the new instance to
          * not free its data structures when it is destroyed */
         pTypeInfoImpl->not_attached_to_typelib = TRUE;
-
         ITypeInfo_AddRef(*ppTInfo);
 
-        result = S_OK;
-    } else if ((hRefType & DISPATCH_HREF_MASK) &&
-        (This->typeattr.typekind == TKIND_DISPATCH))
-    {
-        HREFTYPE href_dispatch = hRefType;
-        result = ITypeInfoImpl_GetDispatchRefTypeInfo((ITypeInfo *)iface, &href_dispatch, ppTInfo);
-    } else {
-        TLBRefType *ref_type;
-        ITypeLib *pTLib = NULL;
-        UINT i;
+        TRACE("got dual interface %p\n", *ppTInfo);
+        return S_OK;
+    }
 
-        if(!(hRefType & 0x1)){
-            for(i = 0; i < This->pTypeLib->TypeInfoCount; ++i)
+    if ((hRefType & DISPATCH_HREF_MASK) && (This->typeattr.typekind == TKIND_DISPATCH))
+        return ITypeInfoImpl_GetDispatchRefTypeInfo((ITypeInfo *)iface, &hRefType, ppTInfo);
+
+    if(!(hRefType & 0x1))
+    {
+        for(i = 0; i < This->pTypeLib->TypeInfoCount; ++i)
+        {
+            if (This->pTypeLib->typeinfos[i]->hreftype == (hRefType&(~0x3)))
             {
-                if (This->pTypeLib->typeinfos[i]->hreftype == (hRefType&(~0x3)))
-                {
-                    result = S_OK;
-                    *ppTInfo = (ITypeInfo*)&This->pTypeLib->typeinfos[i]->ITypeInfo2_iface;
-                    ITypeInfo_AddRef(*ppTInfo);
-                    goto end;
-                }
+                result = S_OK;
+                type_info = (ITypeInfo*)&This->pTypeLib->typeinfos[i]->ITypeInfo2_iface;
+                ITypeInfo_AddRef(type_info);
+                break;
             }
         }
+    }
+
+    if (!type_info)
+    {
+        ITypeLib *pTLib = NULL;
 
         LIST_FOR_EACH_ENTRY(ref_type, &This->pTypeLib->ref_list, TLBRefType, entry)
         {
@@ -7979,7 +7991,7 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeInfo(
         if(&ref_type->entry == &This->pTypeLib->ref_list)
         {
             FIXME("Can't find pRefType for ref %x\n", hRefType);
-            goto end;
+            return E_FAIL;
         }
 
         if(ref_type->pImpTLInfo == TLB_REF_INTERNAL) {
@@ -8057,15 +8069,23 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeInfo(
         }
         if(SUCCEEDED(result)) {
             if(ref_type->index == TLB_REF_USE_GUID)
-                result = ITypeLib_GetTypeInfoOfGuid(pTLib, TLB_get_guid_null(ref_type->guid), ppTInfo);
+                result = ITypeLib_GetTypeInfoOfGuid(pTLib, TLB_get_guid_null(ref_type->guid), &type_info);
             else
-                result = ITypeLib_GetTypeInfo(pTLib, ref_type->index, ppTInfo);
+                result = ITypeLib_GetTypeInfo(pTLib, ref_type->index, &type_info);
         }
         if (pTLib != NULL)
             ITypeLib_Release(pTLib);
+        if (FAILED(result))
+        {
+            WARN("(%p) failed hreftype 0x%04x\n", This, hRefType);
+            return result;
+        }
     }
 
-end:
+    if ((hRefType & 0x2) && SUCCEEDED(ITypeInfo_GetRefTypeInfo(type_info, -2, ppTInfo)))
+        ITypeInfo_Release(type_info);
+    else *ppTInfo = type_info;
+
     TRACE("(%p) hreftype 0x%04x loaded %s (%p)\n", This, hRefType,
           SUCCEEDED(result)? "SUCCESS":"FAILURE", *ppTInfo);
     return result;

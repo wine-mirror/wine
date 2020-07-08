@@ -42,6 +42,12 @@
 struct screen_buffer;
 struct console_input_events;
 
+struct history_line
+{
+    data_size_t len;
+    WCHAR       text[1];
+};
+
 struct console_input
 {
     struct object                obj;           /* object header */
@@ -53,7 +59,8 @@ struct console_input
     INPUT_RECORD                *records;       /* input records */
     struct console_input_events *evt;           /* synchronization event with renderer */
     WCHAR                       *title;         /* console title */
-    WCHAR                      **history;       /* lines history */
+    data_size_t                  title_len;     /* length of console title */
+    struct history_line        **history;       /* lines history */
     int                          history_size;  /* number of entries in history array */
     int                          history_index; /* number of used entries in history array */
     int                          history_mode;  /* mode of history (non zero means remove doubled strings */
@@ -339,8 +346,9 @@ static struct object *create_console_input( struct thread* renderer, int fd )
     console_input->records       = NULL;
     console_input->evt           = renderer ? create_console_input_events() : NULL;
     console_input->title         = NULL;
+    console_input->title_len     = 0;
     console_input->history_size  = 50;
-    console_input->history       = calloc( console_input->history_size, sizeof(WCHAR*) );
+    console_input->history       = calloc( console_input->history_size, sizeof(*console_input->history) );
     console_input->history_index = 0;
     console_input->history_mode  = 0;
     console_input->edition_mode  = 0;
@@ -779,16 +787,15 @@ static int set_console_input_info( const struct set_console_input_info_request *
     }
     if (req->mask & SET_CONSOLE_INPUT_INFO_TITLE)
     {
-        WCHAR *new_title = mem_alloc( len + sizeof(WCHAR) );
-        if (new_title)
-        {
-            memcpy( new_title, title, len );
-            new_title[len / sizeof(WCHAR)] = 0;
-            free( console->title );
-            console->title = new_title;
-	    evt.event = CONSOLE_RENDERER_TITLE_EVENT;
-	    console_input_events_append( console, &evt );
-        }
+        WCHAR *new_title = NULL;
+
+        len = (len / sizeof(WCHAR)) * sizeof(WCHAR);
+        if (len && !(new_title = memdup( title, len ))) goto error;
+        free( console->title );
+        console->title = new_title;
+        console->title_len = len;
+        evt.event = CONSOLE_RENDERER_TITLE_EVENT;
+        console_input_events_append( console, &evt );
     }
     if (req->mask & SET_CONSOLE_INPUT_INFO_HISTORY_MODE)
     {
@@ -797,15 +804,13 @@ static int set_console_input_info( const struct set_console_input_info_request *
     if ((req->mask & SET_CONSOLE_INPUT_INFO_HISTORY_SIZE) &&
 	console->history_size != req->history_size)
     {
-	WCHAR**	mem = NULL;
-	int	i;
-	int	delta;
+	struct history_line **mem = NULL;
+	int i, delta;
 
 	if (req->history_size)
 	{
-	    mem = mem_alloc( req->history_size * sizeof(WCHAR*) );
-	    if (!mem) goto error;
-	    memset( mem, 0, req->history_size * sizeof(WCHAR*) );
+	    if (!(mem = mem_alloc( req->history_size * sizeof(*mem) ))) goto error;
+	    memset( mem, 0, req->history_size * sizeof(*mem) );
 	}
 
 	delta = (console->history_index > req->history_size) ?
@@ -1080,31 +1085,26 @@ static int set_console_output_info( struct screen_buffer *screen_buffer,
 /* appends a new line to history (history is a fixed size array) */
 static void console_input_append_hist( struct console_input* console, const WCHAR* buf, data_size_t len )
 {
-    WCHAR*	ptr = mem_alloc( (len + 1) * sizeof(WCHAR) );
-
-    if (!ptr)
-        return;
+    struct history_line *ptr;
 
     if (!console || !console->history_size)
     {
 	set_error( STATUS_INVALID_PARAMETER ); /* FIXME */
-	free( ptr );
 	return;
     }
 
-    memcpy( ptr, buf, len * sizeof(WCHAR) );
-    ptr[len] = 0;
-
+    len = (len / sizeof(WCHAR)) * sizeof(WCHAR);
     if (console->history_mode && console->history_index &&
-        !strcmpW( console->history[console->history_index - 1], ptr ))
+        console->history[console->history_index - 1]->len == len &&
+        !memcmp( console->history[console->history_index - 1]->text, buf, len ))
     {
-	/* ok, mode ask us to not use twice the same string...
-	 * so just free mem and returns
-	 */
+        /* don't duplicate entry */
 	set_error( STATUS_ALIAS_EXISTS );
-	free(ptr);
 	return;
     }
+    if (!(ptr = mem_alloc( offsetof( struct history_line, text[len / sizeof(WCHAR)] )))) return;
+    ptr->len = len;
+    memcpy( ptr->text, buf, len );
 
     if (console->history_index < console->history_size)
     {
@@ -1114,7 +1114,7 @@ static void console_input_append_hist( struct console_input* console, const WCHA
     {
 	free( console->history[0]) ;
 	memmove( &console->history[0], &console->history[1],
-		 (console->history_size - 1) * sizeof(WCHAR*) );
+		 (console->history_size - 1) * sizeof(*console->history) );
 	console->history[console->history_size - 1] = ptr;
     }
 }
@@ -1127,8 +1127,8 @@ static data_size_t console_input_get_hist( struct console_input *console, int in
     if (index >= console->history_index) set_error( STATUS_INVALID_PARAMETER );
     else
     {
-        ret = strlenW( console->history[index] ) * sizeof(WCHAR);
-        set_reply_data( console->history[index], min( ret, get_reply_max_size() ));
+        ret = console->history[index]->len;
+        set_reply_data( console->history[index]->text, min( ret, get_reply_max_size() ));
     }
     return ret;
 }
@@ -1629,12 +1629,7 @@ DECL_HANDLER(get_console_input_info)
     struct console_input *console;
 
     if (!(console = console_input_get( req->handle, FILE_READ_PROPERTIES ))) return;
-    if (console->title)
-    {
-        data_size_t len = strlenW( console->title ) * sizeof(WCHAR);
-        if (len > get_reply_max_size()) len = get_reply_max_size();
-        set_reply_data( console->title, len );
-    }
+    if (console->title) set_reply_data( console->title, min( console->title_len, get_reply_max_size() ));
     reply->history_mode  = console->history_mode;
     reply->history_size  = console->history_size;
     reply->history_index = console->history_index;
@@ -1685,7 +1680,7 @@ DECL_HANDLER(append_console_input_history)
     struct console_input *console;
 
     if (!(console = console_input_get( req->handle, FILE_WRITE_PROPERTIES ))) return;
-    console_input_append_hist( console, get_req_data(), get_req_data_size() / sizeof(WCHAR) );
+    console_input_append_hist( console, get_req_data(), get_req_data_size() );
     release_object( console );
 }
 

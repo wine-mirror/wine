@@ -866,7 +866,11 @@ static HRESULT queue_cancel_item(struct queue *queue, RTWQWORKITEM_KEY key)
         {
             key >>= 32;
             if ((key & WAIT_ITEM_KEY_MASK) == WAIT_ITEM_KEY_MASK)
+            {
+                IRtwqAsyncResult_SetStatus(item->result, RTWQ_E_OPERATION_CANCELLED);
+                invoke_async_callback(item->result);
                 CloseThreadpoolWait(item->u.wait_object);
+            }
             else if ((key & SCHEDULED_ITEM_KEY_MASK) == SCHEDULED_ITEM_KEY_MASK)
                 CloseThreadpoolTimer(item->u.timer_object);
             else
@@ -1380,7 +1384,7 @@ HRESULT WINAPI RtwqInvokeCallback(IRtwqAsyncResult *result)
 
 HRESULT WINAPI RtwqPutWorkItem(DWORD queue, LONG priority, IRtwqAsyncResult *result)
 {
-    TRACE("%d, %d, %p.\n", queue, priority, result);
+    TRACE("%#x, %d, %p.\n", queue, priority, result);
 
     return queue_put_work_item(queue, priority, result);
 }
@@ -1470,4 +1474,75 @@ HRESULT WINAPI RtwqAllocateSerialWorkQueue(DWORD target_queue, DWORD *queue)
     desc.ops = &serial_queue_ops;
     desc.target_queue = target_queue;
     return alloc_user_queue(&desc, queue);
+}
+
+HRESULT WINAPI RtwqJoinWorkQueue(DWORD queue, HANDLE hFile, HANDLE *cookie)
+{
+    FIXME("%#x, %p, %p.\n", queue, hFile, cookie);
+
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI RtwqUnjoinWorkQueue(DWORD queue, HANDLE cookie)
+{
+    FIXME("%#x, %p.\n", queue, cookie);
+
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI RtwqGetWorkQueueMMCSSClass(DWORD queue, WCHAR *class, DWORD *length)
+{
+    FIXME("%#x, %p, %p.\n", queue, class, length);
+
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI RtwqGetWorkQueueMMCSSTaskId(DWORD queue, DWORD *taskid)
+{
+    FIXME("%#x, %p.\n", queue, taskid);
+
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI RtwqGetWorkQueueMMCSSPriority(DWORD queue, LONG *priority)
+{
+    FIXME("%#x, %p.\n", queue, priority);
+
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI RtwqRegisterPlatformWithMMCSS(const WCHAR *class, DWORD *taskid, LONG priority)
+{
+    FIXME("%s, %p, %d.\n", debugstr_w(class), taskid, priority);
+
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI RtwqUnregisterPlatformFromMMCSS(void)
+{
+    FIXME("\n");
+
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI RtwqBeginRegisterWorkQueueWithMMCSS(DWORD queue, const WCHAR *class, DWORD taskid, LONG priority,
+        IRtwqAsyncCallback *callback, IUnknown *state)
+{
+    FIXME("%#x, %s, %u, %d, %p, %p.\n", queue, debugstr_w(class), taskid, priority, callback, state);
+
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI RtwqRegisterPlatformEvents(IRtwqPlatformEvents *events)
+{
+    FIXME("%p.\n", events);
+
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI RtwqUnregisterPlatformEvents(IRtwqPlatformEvents *events)
+{
+    FIXME("%p.\n", events);
+
+    return E_NOTIMPL;
 }

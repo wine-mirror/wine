@@ -38,6 +38,9 @@
 #define HEAP_VALIDATE_ALL     0x20000000
 #define HEAP_VALIDATE_PARAMS  0x40000000
 
+/* use function pointers to avoid warnings for invalid parameter tests */
+static LPVOID (WINAPI *pHeapAlloc)(HANDLE,DWORD,SIZE_T);
+static LPVOID (WINAPI *pHeapReAlloc)(HANDLE,DWORD,LPVOID,SIZE_T);
 static BOOL (WINAPI *pHeapQueryInformation)(HANDLE, HEAP_INFORMATION_CLASS, PVOID, SIZE_T, PSIZE_T);
 static BOOL (WINAPI *pGetPhysicallyInstalledSystemMemory)(ULONGLONG *);
 static ULONG (WINAPI *pRtlGetNtGlobalFlags)(void);
@@ -89,12 +92,6 @@ static void test_heap(void)
     HGLOBAL hsecond;
     SIZE_T  size, size2;
     const SIZE_T max_size = 1024, init_size = 10;
-    /* use function pointers to avoid warnings for invalid parameter tests */
-    LPVOID (WINAPI *pHeapAlloc)(HANDLE,DWORD,SIZE_T);
-    LPVOID (WINAPI *pHeapReAlloc)(HANDLE,DWORD,LPVOID,SIZE_T);
-
-    pHeapAlloc = (void *)GetProcAddress( GetModuleHandleA("kernel32"), "HeapAlloc" );
-    pHeapReAlloc = (void *)GetProcAddress( GetModuleHandleA("kernel32"), "HeapReAlloc" );
 
     /* Heap*() functions */
     mem = HeapAlloc(GetProcessHeap(), 0, 0);
@@ -941,7 +938,7 @@ static void test_heap_checks( DWORD flags )
     ret = HeapFree( GetProcessHeap(), 0, p );
     ok( ret, "HeapFree failed\n" );
 
-    p = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 17 );
+    p = pHeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 17 );
     ok( p != NULL, "HeapAlloc failed\n" );
     old = p[17];
     p[17] = 0xcc;
@@ -1006,7 +1003,7 @@ static void test_heap_checks( DWORD flags )
 
     /* now test large blocks */
 
-    p = HeapAlloc( GetProcessHeap(), 0, large_size );
+    p = pHeapAlloc( GetProcessHeap(), 0, large_size );
     ok( p != NULL, "HeapAlloc failed\n" );
 
     ret = HeapValidate( GetProcessHeap(), 0, p );
@@ -1102,7 +1099,7 @@ static void test_debug_heap( const char *argv0, DWORD flags )
     ok( ret, "failed to create child process error %u\n", GetLastError() );
     if (ret)
     {
-        winetest_wait_child_process( info.hProcess );
+        wait_child_process( info.hProcess );
         CloseHandle( info.hThread );
         CloseHandle( info.hProcess );
     }
@@ -1220,6 +1217,9 @@ START_TEST(heap)
 {
     int argc;
     char **argv;
+
+    pHeapAlloc = (void *)GetProcAddress( GetModuleHandleA("kernel32"), "HeapAlloc" );
+    pHeapReAlloc = (void *)GetProcAddress( GetModuleHandleA("kernel32"), "HeapReAlloc" );
 
     pRtlGetNtGlobalFlags = (void *)GetProcAddress( GetModuleHandleA("ntdll.dll"), "RtlGetNtGlobalFlags" );
 

@@ -270,8 +270,8 @@ static void PROFILE_Free( PROFILESECTION *section )
 /* returns TRUE if a whitespace character, else FALSE */
 static inline BOOL PROFILE_isspaceW(WCHAR c)
 {
-	/* ^Z (DOS EOF) is a space too  (found on CD-ROMs) */
-	return isspaceW(c) || c == 0x1a;
+    /* ^Z (DOS EOF) is a space too  (found on CD-ROMs) */
+    return (c >= 0x09 && c <= 0x0d) || c == 0x1a || c == 0x20;
 }
 
 static inline ENCODING PROFILE_DetectTextEncoding(const void * buffer, int * len)
@@ -311,7 +311,7 @@ static PROFILESECTION *PROFILE_Load(HANDLE hFile, ENCODING * pEncoding)
     WCHAR * szFile;
     const WCHAR *szLineStart, *szLineEnd;
     const WCHAR *szValueStart, *szEnd, *next_line;
-    int line = 0, len;
+    int len;
     PROFILESECTION *section, *first_section;
     PROFILESECTION **next_section;
     PROFILEKEY *key, *prev_key, **next_key;
@@ -402,13 +402,9 @@ static PROFILESECTION *PROFILE_Load(HANDLE hFile, ENCODING * pEncoding)
     while (next_line < szEnd)
     {
         szLineStart = next_line;
-        next_line = memchrW(szLineStart, '\n', szEnd - szLineStart);
-        if (!next_line) next_line = memchrW(szLineStart, '\r', szEnd - szLineStart);
-        if (!next_line) next_line = szEnd;
-        else next_line++;
+        while (next_line < szEnd && *next_line != '\n' && *next_line != '\r') next_line++;
+        while (next_line < szEnd && (*next_line == '\n' || *next_line == '\r')) next_line++;
         szLineEnd = next_line;
-
-        line++;
 
         /* get rid of white space */
         while (szLineStart < szLineEnd && PROFILE_isspaceW(*szLineStart)) szLineStart++;
@@ -418,16 +414,16 @@ static PROFILESECTION *PROFILE_Load(HANDLE hFile, ENCODING * pEncoding)
 
         if (*szLineStart == '[')  /* section start */
         {
-            const WCHAR * szSectionEnd;
-            if (!(szSectionEnd = memrchrW( szLineStart, ']', szLineEnd - szLineStart )))
+            for (len = szLineEnd - szLineStart; len > 0; len--) if (szLineStart[len - 1] == ']') break;
+            if (!len)
             {
-                WARN("Invalid section header at line %d: %s\n",
-                    line, debugstr_wn(szLineStart, (int)(szLineEnd - szLineStart)) );
+                WARN("Invalid section header: %s\n",
+                    debugstr_wn(szLineStart, (int)(szLineEnd - szLineStart)) );
             }
             else
             {
                 szLineStart++;
-                len = (int)(szSectionEnd - szLineStart);
+                len -= 2;
                 /* no need to allocate +1 for NULL terminating character as
                  * already included in structure */
                 if (!(section = HeapAlloc( GetProcessHeap(), 0, sizeof(*section) + len * sizeof(WCHAR) )))
@@ -450,7 +446,8 @@ static PROFILESECTION *PROFILE_Load(HANDLE hFile, ENCODING * pEncoding)
         /* get rid of white space after the name and before the start
          * of the value */
         len = szLineEnd - szLineStart;
-        if ((szValueStart = memchrW( szLineStart, '=', szLineEnd - szLineStart )) != NULL)
+        for (szValueStart = szLineStart; szValueStart < szLineEnd; szValueStart++) if (*szValueStart == '=') break;
+        if (szValueStart < szLineEnd)
         {
             const WCHAR *szNameEnd = szValueStart;
             while ((szNameEnd > szLineStart) && PROFILE_isspaceW(szNameEnd[-1])) szNameEnd--;
@@ -458,6 +455,7 @@ static PROFILESECTION *PROFILE_Load(HANDLE hFile, ENCODING * pEncoding)
             szValueStart++;
             while (szValueStart < szLineEnd && PROFILE_isspaceW(*szValueStart)) szValueStart++;
         }
+        else szValueStart = NULL;
 
         if (len || !prev_key || *prev_key->name)
         {
@@ -1600,6 +1598,23 @@ DWORD WINAPI GetPrivateProfileSectionNamesA( LPSTR buffer, DWORD size,
     return ret;
 }
 
+static int get_hex_byte( const WCHAR *p )
+{
+    int val;
+
+    if (*p >= '0' && *p <= '9') val = *p - '0';
+    else if (*p >= 'A' && *p <= 'Z') val = *p - 'A' + 10;
+    else if (*p >= 'a' && *p <= 'z') val = *p - 'a' + 10;
+    else return -1;
+    val <<= 4;
+    p++;
+    if (*p >= '0' && *p <= '9') val += *p - '0';
+    else if (*p >= 'A' && *p <= 'Z') val += *p - 'A' + 10;
+    else if (*p >= 'a' && *p <= 'z') val += *p - 'a' + 10;
+    else return -1;
+    return val;
+}
+
 /***********************************************************************
  *           GetPrivateProfileStructW (KERNEL32.@)
  *
@@ -1608,70 +1623,29 @@ DWORD WINAPI GetPrivateProfileSectionNamesA( LPSTR buffer, DWORD size,
 BOOL WINAPI GetPrivateProfileStructW (LPCWSTR section, LPCWSTR key,
                                       LPVOID buf, UINT len, LPCWSTR filename)
 {
-    BOOL	ret = FALSE;
+    BOOL ret = FALSE;
+    LPBYTE data = buf;
+    BYTE chksum = 0;
+    int val;
+    WCHAR *p, *buffer;
 
-    RtlEnterCriticalSection( &PROFILE_CritSect );
+    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, (2 * len + 3) * sizeof(WCHAR) ))) return FALSE;
 
-    if (PROFILE_Open( filename, FALSE )) {
-        PROFILEKEY *k = PROFILE_Find ( &CurProfile->section, section, key, FALSE, FALSE);
-	if (k) {
-	    TRACE("value (at %p): %s\n", k->value, debugstr_w(k->value));
-	    if (((strlenW(k->value) - 2) / 2) == len)
-	    {
-		LPWSTR end, p;
-		BOOL valid = TRUE;
-		WCHAR c;
-		DWORD chksum = 0;
+    if (GetPrivateProfileStringW( section, key, NULL, buffer, 2 * len + 3, filename ) != 2 * len + 2)
+        goto done;
 
-	        end  = k->value + strlenW(k->value); /* -> '\0' */
-	        /* check for invalid chars in ASCII coded hex string */
-	        for (p=k->value; p < end; p++)
-		{
-                    if (!isxdigitW(*p))
-		    {
-			WARN("invalid char '%x' in file %s->[%s]->%s !\n",
-                             *p, debugstr_w(filename), debugstr_w(section), debugstr_w(key));
-		        valid = FALSE;
-		        break;
-		    }
-		}
-		if (valid)
-		{
-		    BOOL highnibble = TRUE;
-		    BYTE b = 0, val;
-                    LPBYTE binbuf = buf;
-
-	            end -= 2; /* don't include checksum in output data */
-	            /* translate ASCII hex format into binary data */
-                    for (p=k->value; p < end; p++)
-            	    {
-	        	c = toupperW(*p);
-			val = (c > '9') ?
-				(c - 'A' + 10) : (c - '0');
-
-			if (highnibble)
-		    	    b = val << 4;
-			else
-			{
-		    	    b += val;
-		    	    *binbuf++ = b; /* feed binary data into output */
-		    	    chksum += b; /* calculate checksum */
-			}
-			highnibble ^= 1; /* toggle */
-            	    }
-		    /* retrieve stored checksum value */
-		    c = toupperW(*p++);
-		    b = ( (c > '9') ? (c - 'A' + 10) : (c - '0') ) << 4;
-		    c = toupperW(*p);
-		    b +=  (c > '9') ? (c - 'A' + 10) : (c - '0');
-	            if (b == (chksum & 0xff)) /* checksums match ? */
-                        ret = TRUE;
-                }
-            }
-	}
+    for (p = buffer; len; p += 2, len--)
+    {
+        if ((val = get_hex_byte( p )) == -1) goto done;
+        *data++ = val;
+        chksum += val;
     }
-    RtlLeaveCriticalSection( &PROFILE_CritSect );
+    /* retrieve stored checksum value */
+    if ((val = get_hex_byte( p )) == -1) goto done;
+    ret = ((BYTE)val == chksum);
 
+done:
+    HeapFree( GetProcessHeap(), 0, buffer );
     return ret;
 }
 
@@ -1730,17 +1704,8 @@ BOOL WINAPI WritePrivateProfileStructW (LPCWSTR section, LPCWSTR key,
     *p++ = hex[sum & 0xf];
     *p++ = '\0';
 
-    RtlEnterCriticalSection( &PROFILE_CritSect );
-
-    if (PROFILE_Open( filename, TRUE )) {
-        ret = PROFILE_SetString( section, key, outstring, FALSE);
-        if (ret) ret = PROFILE_FlushFile();
-    }
-
-    RtlLeaveCriticalSection( &PROFILE_CritSect );
-
+    ret = WritePrivateProfileStringW( section, key, outstring, filename );
     HeapFree( GetProcessHeap(), 0, outstring );
-
     return ret;
 }
 

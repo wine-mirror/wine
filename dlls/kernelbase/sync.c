@@ -42,6 +42,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(sync);
 
+static const struct _KUSER_SHARED_DATA *user_shared_data = (struct _KUSER_SHARED_DATA *)0x7ffe0000;
+
 /* check if current version is NT or Win95 */
 static inline BOOL is_version_nt(void)
 {
@@ -63,8 +65,6 @@ static inline LARGE_INTEGER *get_nt_timeout( LARGE_INTEGER *time, DWORD timeout 
 NTSTATUS WINAPI BaseGetNamedObjectDirectory( HANDLE *dir )
 {
     static HANDLE handle;
-    static const WCHAR basenameW[] = {'\\','S','e','s','s','i','o','n','s','\\','%','u',
-                                      '\\','B','a','s','e','N','a','m','e','d','O','b','j','e','c','t','s',0};
     WCHAR buffer[64];
     UNICODE_STRING str;
     OBJECT_ATTRIBUTES attr;
@@ -74,7 +74,8 @@ NTSTATUS WINAPI BaseGetNamedObjectDirectory( HANDLE *dir )
     {
         HANDLE dir;
 
-        swprintf( buffer, ARRAY_SIZE(buffer), basenameW, NtCurrentTeb()->Peb->SessionId );
+        swprintf( buffer, ARRAY_SIZE(buffer), L"\\Sessions\\%u\\BaseNamedObjects",
+                  NtCurrentTeb()->Peb->SessionId );
         RtlInitUnicodeString( &str, buffer );
         InitializeObjectAttributes(&attr, &str, 0, 0, NULL);
         status = NtOpenDirectoryObject( &dir, DIRECTORY_CREATE_OBJECT|DIRECTORY_TRAVERSE, &attr );
@@ -119,6 +120,89 @@ static BOOL get_open_object_attributes( OBJECT_ATTRIBUTES *attr, UNICODE_STRING 
     BaseGetNamedObjectDirectory( &dir );
     InitializeObjectAttributes( attr, nameW, inherit ? OBJ_INHERIT : 0, dir, NULL );
     return TRUE;
+}
+
+
+/***********************************************************************
+ * Time functions
+ ***********************************************************************/
+
+
+/*********************************************************************
+ *           GetSystemTimes   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH GetSystemTimes( FILETIME *idle, FILETIME *kernel, FILETIME *user )
+{
+    LARGE_INTEGER idle_time, kernel_time, user_time;
+    SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *info;
+    ULONG ret_size;
+    DWORD i, cpus = NtCurrentTeb()->Peb->NumberOfProcessors;
+
+    if (!(info = HeapAlloc( GetProcessHeap(), 0, sizeof(*info) * cpus )))
+    {
+        SetLastError( ERROR_OUTOFMEMORY );
+        return FALSE;
+    }
+    if (!set_ntstatus( NtQuerySystemInformation( SystemProcessorPerformanceInformation, info,
+                                                 sizeof(*info) * cpus, &ret_size )))
+    {
+        HeapFree( GetProcessHeap(), 0, info );
+        return FALSE;
+    }
+    idle_time.QuadPart = 0;
+    kernel_time.QuadPart = 0;
+    user_time.QuadPart = 0;
+    for (i = 0; i < cpus; i++)
+    {
+        idle_time.QuadPart += info[i].IdleTime.QuadPart;
+        kernel_time.QuadPart += info[i].KernelTime.QuadPart;
+        user_time.QuadPart += info[i].UserTime.QuadPart;
+    }
+    if (idle)
+    {
+        idle->dwLowDateTime  = idle_time.u.LowPart;
+        idle->dwHighDateTime = idle_time.u.HighPart;
+    }
+    if (kernel)
+    {
+        kernel->dwLowDateTime  = kernel_time.u.LowPart;
+        kernel->dwHighDateTime = kernel_time.u.HighPart;
+    }
+    if (user)
+    {
+        user->dwLowDateTime  = user_time.u.LowPart;
+        user->dwHighDateTime = user_time.u.HighPart;
+    }
+    HeapFree( GetProcessHeap(), 0, info );
+    return TRUE;
+}
+
+
+/******************************************************************************
+ *           GetTickCount   (kernelbase.@)
+ */
+ULONG WINAPI DECLSPEC_HOTPATCH GetTickCount(void)
+{
+    /* note: we ignore TickCountMultiplier */
+    return user_shared_data->u.TickCount.LowPart;
+}
+
+
+/******************************************************************************
+ *           GetTickCount64   (kernelbase.@)
+ */
+ULONGLONG WINAPI DECLSPEC_HOTPATCH GetTickCount64(void)
+{
+    ULONG high, low;
+
+    do
+    {
+        high = user_shared_data->u.TickCount.High1Time;
+        low = user_shared_data->u.TickCount.LowPart;
+    }
+    while (high != user_shared_data->u.TickCount.High2Time);
+    /* note: we ignore TickCountMultiplier */
+    return (ULONGLONG)high << 32 | low;
 }
 
 
@@ -284,6 +368,22 @@ DWORD WINAPI DECLSPEC_HOTPATCH WaitForMultipleObjectsEx( DWORD count, const HAND
         status = WAIT_FAILED;
     }
     return status;
+}
+
+
+/***********************************************************************
+ *           WaitOnAddress   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH WaitOnAddress( volatile void *addr, void *cmp, SIZE_T size, DWORD timeout )
+{
+    LARGE_INTEGER to;
+
+    if (timeout != INFINITE)
+    {
+        to.QuadPart = -(LONGLONG)timeout * 10000;
+        return set_ntstatus( RtlWaitOnAddress( (const void *)addr, cmp, size, &to ));
+    }
+    return set_ntstatus( RtlWaitOnAddress( (const void *)addr, cmp, size, NULL ));
 }
 
 
@@ -1170,10 +1270,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH CreatePipe( HANDLE *read_pipe, HANDLE *write_pipe,
     /* generate a unique pipe name (system wide) */
     for (;;)
     {
-        static const WCHAR fmtW[] = { '\\','?','?','\\','p','i','p','e','\\',
-           'W','i','n','3','2','.','P','i','p','e','s','.','%','0','8','l','u','.','%','0','8','u','\0' };
-
-        swprintf( name, ARRAY_SIZE(name), fmtW, GetCurrentProcessId(), ++index );
+        swprintf( name, ARRAY_SIZE(name), L"\\??\\pipe\\Win32.Pipes.%08lu.%08u",
+                  GetCurrentProcessId(), ++index );
         RtlInitUnicodeString( &nt_name, name );
         if (!NtCreateNamedPipeFile( read_pipe, GENERIC_READ | FILE_WRITE_ATTRIBUTES | SYNCHRONIZE,
                                     &attr, &iosb, FILE_SHARE_WRITE, FILE_OVERWRITE_IF,
@@ -1201,6 +1299,44 @@ BOOL WINAPI DECLSPEC_HOTPATCH DisconnectNamedPipe( HANDLE pipe )
     TRACE( "(%p)\n", pipe );
     return set_ntstatus( NtFsControlFile( pipe, 0, NULL, NULL, &io_block,
                                           FSCTL_PIPE_DISCONNECT, NULL, 0, NULL, 0 ));
+}
+
+
+/***********************************************************************
+ *           GetNamedPipeHandleStateW   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH GetNamedPipeHandleStateW( HANDLE pipe, DWORD *state, DWORD *instances,
+                                                        DWORD *max_count, DWORD *timeout,
+                                                        WCHAR *user, DWORD size )
+{
+    IO_STATUS_BLOCK io;
+
+    FIXME( "%p %p %p %p %p %p %d: semi-stub\n", pipe, state, instances, max_count, timeout, user, size );
+
+    if (max_count) *max_count = 0;
+    if (timeout) *timeout = 0;
+    if (user && size && !GetEnvironmentVariableW( L"WINEUSERNAME", user, size )) user[0] = 0;
+
+    if (state)
+    {
+        FILE_PIPE_INFORMATION info;
+
+        if (!set_ntstatus( NtQueryInformationFile( pipe, &io, &info, sizeof(info), FilePipeInformation )))
+            return FALSE;
+
+        *state = (info.ReadMode ? PIPE_READMODE_MESSAGE : PIPE_READMODE_BYTE) |
+                 (info.CompletionMode ? PIPE_NOWAIT : PIPE_WAIT);
+    }
+    if (instances)
+    {
+        FILE_PIPE_LOCAL_INFORMATION info;
+
+        if (!set_ntstatus( NtQueryInformationFile( pipe, &io, &info, sizeof(info),
+                                                   FilePipeLocalInformation)))
+            return FALSE;
+        *instances = info.CurrentInstances;
+    }
+    return TRUE;
 }
 
 
@@ -1336,7 +1472,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH TransactNamedPipe( HANDLE handle, LPVOID write_buf
  */
 BOOL WINAPI DECLSPEC_HOTPATCH WaitNamedPipeW( LPCWSTR name, DWORD timeout )
 {
-    static const WCHAR leadin[] = {'\\','?','?','\\','P','I','P','E','\\'};
+    static const int prefix_len = sizeof(L"\\??\\PIPE\\") - sizeof(WCHAR);
     NTSTATUS status;
     UNICODE_STRING nt_name, pipe_dev_name;
     FILE_PIPE_WAIT_FOR_BUFFER *pipe_wait;
@@ -1350,15 +1486,15 @@ BOOL WINAPI DECLSPEC_HOTPATCH WaitNamedPipeW( LPCWSTR name, DWORD timeout )
     if (!RtlDosPathNameToNtPathName_U( name, &nt_name, NULL, NULL )) return FALSE;
 
     if (nt_name.Length >= MAX_PATH * sizeof(WCHAR) ||
-        nt_name.Length < sizeof(leadin) ||
-        wcsnicmp( nt_name.Buffer, leadin, ARRAY_SIZE( leadin )) != 0)
+        nt_name.Length < prefix_len ||
+        wcsnicmp( nt_name.Buffer, L"\\??\\PIPE\\", prefix_len / sizeof(WCHAR) ))
     {
         RtlFreeUnicodeString( &nt_name );
         SetLastError( ERROR_PATH_NOT_FOUND );
         return FALSE;
     }
 
-    wait_size = sizeof(*pipe_wait) + nt_name.Length - sizeof(leadin) - sizeof(WCHAR);
+    wait_size = offsetof( FILE_PIPE_WAIT_FOR_BUFFER, Name[(nt_name.Length - prefix_len) / sizeof(WCHAR)] );
     if (!(pipe_wait = HeapAlloc( GetProcessHeap(), 0,  wait_size)))
     {
         RtlFreeUnicodeString( &nt_name );
@@ -1367,8 +1503,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH WaitNamedPipeW( LPCWSTR name, DWORD timeout )
     }
 
     pipe_dev_name.Buffer = nt_name.Buffer;
-    pipe_dev_name.Length = sizeof(leadin);
-    pipe_dev_name.MaximumLength = sizeof(leadin);
+    pipe_dev_name.Length = prefix_len;
+    pipe_dev_name.MaximumLength = prefix_len;
     InitializeObjectAttributes( &attr,&pipe_dev_name, OBJ_CASE_INSENSITIVE, NULL, NULL );
     status = NtOpenFile( &pipe_dev, FILE_READ_ATTRIBUTES | SYNCHRONIZE, &attr,
                          &iosb, FILE_SHARE_READ | FILE_SHARE_WRITE,
@@ -1386,8 +1522,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH WaitNamedPipeW( LPCWSTR name, DWORD timeout )
         pipe_wait->Timeout.QuadPart = ((ULONGLONG)0x7fffffff << 32) | 0xffffffff;
     else
         pipe_wait->Timeout.QuadPart = (ULONGLONG)timeout * -10000;
-    pipe_wait->NameLength = nt_name.Length - sizeof(leadin);
-    memcpy( pipe_wait->Name, nt_name.Buffer + ARRAY_SIZE( leadin ), pipe_wait->NameLength );
+    pipe_wait->NameLength = nt_name.Length - prefix_len;
+    memcpy( pipe_wait->Name, nt_name.Buffer + prefix_len/sizeof(WCHAR), pipe_wait->NameLength );
     RtlFreeUnicodeString( &nt_name );
 
     status = NtFsControlFile( pipe_dev, NULL, NULL, NULL, &iosb, FSCTL_PIPE_WAIT,

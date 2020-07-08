@@ -45,6 +45,7 @@
 #include "winerror.h"
 #include "win.h"
 #include "user_private.h"
+#include "dbt.h"
 #include "wine/server.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -433,7 +434,7 @@ SHORT WINAPI DECLSPEC_HOTPATCH GetAsyncKeyState( INT key )
                  * (like Adobe Photoshop CS5) expect that changes to the async key state
                  * are also immediately available in other threads. */
                 if (prev_key_state != key_state_info->state[key])
-                    counter = interlocked_xchg_add( &global_key_state_counter, 1 ) + 1;
+                    counter = InterlockedIncrement( &global_key_state_counter );
 
                 key_state_info->time    = GetTickCount();
                 key_state_info->counter = counter;
@@ -555,7 +556,7 @@ SHORT WINAPI DECLSPEC_HOTPATCH GetKeyState(INT vkey)
     {
         req->tid = GetCurrentThreadId();
         req->key = vkey;
-        if (!wine_server_call( req )) retval = (signed char)reply->state;
+        if (!wine_server_call( req )) retval = (signed char)(reply->state & 0x81);
     }
     SERVER_END_REQ;
     TRACE("key (0x%x) -> %x\n", vkey, retval);
@@ -569,6 +570,7 @@ SHORT WINAPI DECLSPEC_HOTPATCH GetKeyState(INT vkey)
 BOOL WINAPI DECLSPEC_HOTPATCH GetKeyboardState( LPBYTE state )
 {
     BOOL ret;
+    UINT i;
 
     TRACE("(%p)\n", state);
 
@@ -579,6 +581,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetKeyboardState( LPBYTE state )
         req->key = -1;
         wine_server_set_reply( req, state, 256 );
         ret = !wine_server_call_err( req );
+        for (i = 0; i < 256; i++) state[i] &= 0x81;
     }
     SERVER_END_REQ;
     return ret;
@@ -1295,4 +1298,72 @@ BOOL WINAPI EnableMouseInPointer(BOOL enable)
 
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
+}
+
+static DWORD CALLBACK devnotify_window_callback(HANDLE handle, DWORD flags, DEV_BROADCAST_HDR *header)
+{
+    SendMessageTimeoutW(handle, WM_DEVICECHANGE, flags, (LPARAM)header, SMTO_ABORTIFHUNG, 2000, NULL);
+    return 0;
+}
+
+static DWORD CALLBACK devnotify_service_callback(HANDLE handle, DWORD flags, DEV_BROADCAST_HDR *header)
+{
+    FIXME("Support for service handles is not yet implemented!\n");
+    return 0;
+}
+
+struct device_notification_details
+{
+    DWORD (CALLBACK *cb)(HANDLE handle, DWORD flags, DEV_BROADCAST_HDR *header);
+    HANDLE handle;
+};
+
+extern HDEVNOTIFY WINAPI I_ScRegisterDeviceNotification( struct device_notification_details *details,
+        void *filter, DWORD flags );
+extern BOOL WINAPI I_ScUnregisterDeviceNotification( HDEVNOTIFY handle );
+
+/***********************************************************************
+ *		RegisterDeviceNotificationA (USER32.@)
+ *
+ * See RegisterDeviceNotificationW.
+ */
+HDEVNOTIFY WINAPI RegisterDeviceNotificationA(HANDLE hRecipient, LPVOID pNotificationFilter, DWORD dwFlags)
+{
+    TRACE("(hwnd=%p, filter=%p,flags=0x%08x)\n",
+        hRecipient,pNotificationFilter,dwFlags);
+    if (pNotificationFilter)
+        FIXME("The notification filter will requires an A->W when filter support is implemented\n");
+    return RegisterDeviceNotificationW(hRecipient, pNotificationFilter, dwFlags);
+}
+
+/***********************************************************************
+ *		RegisterDeviceNotificationW (USER32.@)
+ */
+HDEVNOTIFY WINAPI RegisterDeviceNotificationW( HANDLE handle, void *filter, DWORD flags )
+{
+    struct device_notification_details details;
+
+    TRACE("handle %p, filter %p, flags %#x\n", handle, filter, flags);
+
+    if (flags & ~(DEVICE_NOTIFY_SERVICE_HANDLE | DEVICE_NOTIFY_ALL_INTERFACE_CLASSES))
+        FIXME("unhandled flags %#x\n", flags);
+
+    details.handle = handle;
+
+    if (flags & DEVICE_NOTIFY_SERVICE_HANDLE)
+        details.cb = devnotify_service_callback;
+    else
+        details.cb = devnotify_window_callback;
+
+    return I_ScRegisterDeviceNotification( &details, filter, 0 );
+}
+
+/***********************************************************************
+ *		UnregisterDeviceNotification (USER32.@)
+ */
+BOOL WINAPI UnregisterDeviceNotification( HDEVNOTIFY handle )
+{
+    TRACE("%p\n", handle);
+
+    return I_ScUnregisterDeviceNotification( handle );
 }

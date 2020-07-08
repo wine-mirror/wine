@@ -888,12 +888,6 @@ BOOL WINAPI DECLSPEC_HOTPATCH LocalUnlock( HLOCAL hmem )
  */
 HANDLE WINAPI DECLSPEC_HOTPATCH CreateMemoryResourceNotification( MEMORY_RESOURCE_NOTIFICATION_TYPE type )
 {
-    static const WCHAR lowmemW[] =
-        {'\\','K','e','r','n','e','l','O','b','j','e','c','t','s',
-         '\\','L','o','w','M','e','m','o','r','y','C','o','n','d','i','t','i','o','n',0};
-    static const WCHAR highmemW[] =
-        {'\\','K','e','r','n','e','l','O','b','j','e','c','t','s',
-         '\\','H','i','g','h','M','e','m','o','r','y','C','o','n','d','i','t','i','o','n',0};
     HANDLE ret;
     UNICODE_STRING nameW;
     OBJECT_ATTRIBUTES attr;
@@ -901,10 +895,10 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateMemoryResourceNotification( MEMORY_RESOURC
     switch (type)
     {
     case LowMemoryResourceNotification:
-        RtlInitUnicodeString( &nameW, lowmemW );
+        RtlInitUnicodeString( &nameW, L"\\KernelObjects\\LowMemoryCondition" );
         break;
     case HighMemoryResourceNotification:
-        RtlInitUnicodeString( &nameW, highmemW );
+        RtlInitUnicodeString( &nameW, L"\\KernelObjects\\HighMemoryCondition" );
         break;
     default:
         SetLastError( ERROR_INVALID_PARAMETER );

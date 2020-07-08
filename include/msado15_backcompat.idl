@@ -47,6 +47,7 @@ interface Property;
 interface Recordset15;
 interface Recordset20;
 interface Recordset21;
+interface ConnectionEventsVt;
 dispinterface ConnectionEvents;
 dispinterface RecordsetEvents;
 
@@ -511,6 +512,12 @@ typedef [uuid(00000531-0000-0010-8000-00aa006d2ea4)] enum EventReasonEnum
     adRsnMovePrevious = 14,
     adRsnMoveLast = 15
 } EventReasonEnum;
+
+typedef [uuid(00000541-0000-0010-8000-00aa006d2ea4)] enum ConnectOptionEnum
+{
+    adConnectUnspecified = -1,
+    adAsyncConnect = 0x10
+} ConnectOptionEnum;
 
 [
     uuid(00000503-0000-0010-8000-00aa006d2ea4),
@@ -1573,6 +1580,70 @@ interface _Command : Command25
     [id(0x60030014), propget]
     HRESULT NamedParameters(
         [out, retval] VARIANT_BOOL *named_parameters);
+};
+
+[
+    uuid(00000402-0000-0010-8000-00aa006d2ea4),
+    odl,
+    hidden
+]
+interface ConnectionEventsVt : IUnknown
+{
+    HRESULT InfoMessage(
+        [in] Error *error,
+        [in, out] EventStatusEnum *status,
+        [in] _Connection *connection);
+
+    HRESULT BeginTransComplete(
+        [in] LONG TransactionLevel,
+        [in] Error *error,
+        [in, out] EventStatusEnum *status,
+        [in] _Connection *connection);
+
+    HRESULT CommitTransComplete(
+        [in] Error *error,
+        [in, out] EventStatusEnum *status,
+        [in] _Connection *connection);
+
+    HRESULT RollbackTransComplete(
+        [in] Error *error,
+        [in, out] EventStatusEnum *status,
+        [in] _Connection *connection);
+
+    HRESULT WillExecute(
+        [in, out] BSTR *source,
+        [in, out] CursorTypeEnum *cursor_type,
+        [in, out] LockTypeEnum *lock_type,
+        [in, out] LONG *options,
+        [in, out] EventStatusEnum *status,
+        [in] _Command *command,
+        [in] _Recordset *record_set,
+        [in] _Connection *connection);
+
+    HRESULT ExecuteComplete(
+        [in] LONG records_affected,
+        [in] Error *error,
+        [in, out] EventStatusEnum *status,
+        [in] _Command *command,
+        [in] _Recordset *record_set,
+        [in] _Connection *connection);
+
+    HRESULT WillConnect(
+        [in, out] BSTR *string,
+        [in, out] BSTR *userid,
+        [in, out] BSTR *password,
+        [in, out] LONG *options,
+        [in, out] EventStatusEnum *status,
+        [in] _Connection *connection);
+
+    HRESULT ConnectComplete(
+        [in] Error *error,
+        [in, out] EventStatusEnum *status,
+        [in] _Connection *connection);
+
+    HRESULT Disconnect(
+        [in, out] EventStatusEnum *status,
+        [in] _Connection *connection);
 };
 
 [

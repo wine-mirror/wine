@@ -1,7 +1,7 @@
 MODULE    = mmsystem.dll16
 IMPORTS   = winmm user32
 
-EXTRADLLFLAGS = -m16 -mno-cygwin -Wb,--main-module,winmm.dll
+EXTRADLLFLAGS = -m16 -Wb,--main-module,winmm.dll
 
 C_SRCS = \
 	driver.c \

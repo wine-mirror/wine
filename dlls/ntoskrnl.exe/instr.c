@@ -33,6 +33,15 @@
 #include "wine/debug.h"
 #include "wine/exception.h"
 
+#define KSHARED_USER_DATA_PAGE_SIZE 0x1000
+
+enum instr_op
+{
+    INSTR_OP_MOV,
+    INSTR_OP_OR,
+    INSTR_OP_XOR,
+};
+
 #ifdef __i386__
 
 WINE_DEFAULT_DEBUG_CHANNEL(int);
@@ -501,20 +510,49 @@ static inline int get_op_size( int long_op, int rex )
 }
 
 /* store an operand into a register */
-static void store_reg_word( CONTEXT *context, BYTE regmodrm, const BYTE *addr, int long_op, int rex )
+static void store_reg_word( CONTEXT *context, BYTE regmodrm, const BYTE *addr, int long_op, int rex,
+        enum instr_op op )
 {
     int index = REGMODRM_REG( regmodrm, rex );
     BYTE *reg = (BYTE *)get_int_reg( context, index );
-    memcpy( reg, addr, get_op_size( long_op, rex ) );
+    int op_size = get_op_size( long_op, rex );
+    int i;
+
+    switch (op)
+    {
+        case INSTR_OP_MOV:
+            memcpy( reg, addr, op_size );
+            break;
+        case INSTR_OP_OR:
+            for (i = 0; i < op_size; ++i)
+                reg[i] |= addr[i];
+            break;
+        case INSTR_OP_XOR:
+            for (i = 0; i < op_size; ++i)
+                reg[i] ^= addr[i];
+            break;
+    }
 }
 
 /* store an operand into a byte register */
-static void store_reg_byte( CONTEXT *context, BYTE regmodrm, const BYTE *addr, int rex )
+static void store_reg_byte( CONTEXT *context, BYTE regmodrm, const BYTE *addr, int rex, enum instr_op op )
 {
     int index = REGMODRM_REG( regmodrm, rex );
     BYTE *reg = (BYTE *)get_int_reg( context, index );
     if (!rex && index >= 4 && index < 8) reg -= (4 * sizeof(DWORD64) - 1); /* special case: ah, ch, dh, bh */
-    *reg = *addr;
+
+    switch (op)
+    {
+        case INSTR_OP_MOV:
+            *reg = *addr;
+            break;
+        case INSTR_OP_OR:
+            *reg |= *addr;
+            break;
+        case INSTR_OP_XOR:
+            *reg ^= *addr;
+            break;
+    }
 }
 
 /***********************************************************************
@@ -590,15 +628,6 @@ static BYTE *INSTR_GetOperandAddr( CONTEXT *context, BYTE *instr, int addl_instr
 static void fake_syscall_function(void)
 {
     TRACE("() stub\n");
-}
-
-
-static void update_shared_data(void)
-{
-    struct _KUSER_SHARED_DATA *shared_data  = (struct _KUSER_SHARED_DATA *)wine_user_shared_data;
-
-    shared_data->u.TickCountQuad = GetTickCount64();
-    shared_data->u.TickCount.High2Time = shared_data->u.TickCount.High1Time;
 }
 
 
@@ -786,7 +815,11 @@ static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
                 context->Rax = (ULONG)syscall_address;
                 break;
             }
-            default: return ExceptionContinueSearch;
+            default:
+                FIXME("reg %#x, returning 0.\n", reg);
+                context->Rdx = 0;
+                context->Rax = 0;
+                break;
             }
             context->Rip += prefixlen + 2;
             return ExceptionContinueExecution;
@@ -799,12 +832,13 @@ static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
             unsigned int data_size = (instr[1] == 0xb7) ? 2 : 1;
             SIZE_T offset = data - user_shared_data;
 
-            if (offset <= sizeof(KSHARED_USER_DATA) - data_size)
+            if (offset <= KSHARED_USER_DATA_PAGE_SIZE - data_size)
             {
                 ULONGLONG temp = 0;
-                update_shared_data();
+
+                TRACE("USD offset %#x at %p.\n", (unsigned int)offset, (void *)context->Rip);
                 memcpy( &temp, wine_user_shared_data + offset, data_size );
-                store_reg_word( context, instr[2], (BYTE *)&temp, long_op, rex );
+                store_reg_word( context, instr[2], (BYTE *)&temp, long_op, rex, INSTR_OP_MOV );
                 context->Rip += prefixlen + len + 2;
                 return ExceptionContinueExecution;
             }
@@ -815,19 +849,35 @@ static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
 
     case 0x8a: /* mov Eb, Gb */
     case 0x8b: /* mov Ev, Gv */
+    case 0x0b: /* or  Ev, Gv */
+    case 0x33: /* xor Ev, Gv */
     {
         BYTE *data = INSTR_GetOperandAddr( context, instr + 1, prefixlen + 1, long_addr,
                                            rex, segprefix, &len );
         unsigned int data_size = (*instr == 0x8b) ? get_op_size( long_op, rex ) : 1;
         SIZE_T offset = data - user_shared_data;
 
-        if (offset <= sizeof(KSHARED_USER_DATA) - data_size)
+        if (offset <= KSHARED_USER_DATA_PAGE_SIZE - data_size)
         {
-            update_shared_data();
+            TRACE("USD offset %#x at %p.\n", (unsigned int)offset, (void *)context->Rip);
             switch (*instr)
             {
-            case 0x8a: store_reg_byte( context, instr[1], wine_user_shared_data + offset, rex ); break;
-            case 0x8b: store_reg_word( context, instr[1], wine_user_shared_data + offset, long_op, rex ); break;
+                case 0x8a:
+                    store_reg_byte( context, instr[1], wine_user_shared_data + offset,
+                            rex, INSTR_OP_MOV );
+                    break;
+                case 0x8b:
+                    store_reg_word( context, instr[1], wine_user_shared_data + offset,
+                            long_op, rex, INSTR_OP_MOV );
+                    break;
+                case 0x0b:
+                    store_reg_word( context, instr[1], wine_user_shared_data + offset,
+                            long_op, rex, INSTR_OP_OR );
+                    break;
+                case 0x33:
+                    store_reg_word( context, instr[1], wine_user_shared_data + offset,
+                            long_op, rex, INSTR_OP_XOR );
+                    break;
             }
             context->Rip += prefixlen + len + 1;
             return ExceptionContinueExecution;
@@ -843,9 +893,9 @@ static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
         SIZE_T offset = data - user_shared_data;
         len = long_addr ? sizeof(DWORD64) : sizeof(DWORD);
 
-        if (offset <= sizeof(KSHARED_USER_DATA) - data_size)
+        if (offset <= KSHARED_USER_DATA_PAGE_SIZE - data_size)
         {
-            update_shared_data();
+            TRACE("USD offset %#x at %p.\n", (unsigned int)offset, (void *)context->Rip);
             memcpy( &context->Rax, wine_user_shared_data + offset, data_size );
             context->Rip += prefixlen + len + 1;
             return ExceptionContinueExecution;

@@ -52,6 +52,18 @@ interface IRtwqAsyncCallback : IUnknown
     HRESULT Invoke([in] IRtwqAsyncResult *result);
 }
 
+[
+    object,
+    uuid(63d9255a-7ff1-4b61-8faf-ed6460dacf2b),
+    local
+]
+interface IRtwqPlatformEvents : IUnknown
+{
+    HRESULT InitializationComplete(void);
+    HRESULT ShutdownStart(void);
+    HRESULT ShutdownComplete(void);
+}
+
 cpp_quote("#define RTWQ_E_ERROR(x)            ((HRESULT)(0xc00d0000L+x))")
 cpp_quote("#define RTWQ_E_BUFFERTOOSMALL      RTWQ_E_ERROR(14001)")
 cpp_quote("#define RTWQ_E_NOT_INITIALIZED     RTWQ_E_ERROR(14006)")
@@ -80,15 +92,22 @@ cpp_quote("typedef void (WINAPI *RTWQPERIODICCALLBACK)(IUnknown *context);")
 cpp_quote("HRESULT WINAPI RtwqAddPeriodicCallback(RTWQPERIODICCALLBACK callback, IUnknown *context, DWORD *key);")
 cpp_quote("HRESULT WINAPI RtwqAllocateSerialWorkQueue(DWORD target_queue, DWORD *queue);")
 cpp_quote("HRESULT WINAPI RtwqAllocateWorkQueue(RTWQ_WORKQUEUE_TYPE queue_type, DWORD *queue);")
+cpp_quote("HRESULT WINAPI RtwqBeginRegisterWorkQueueWithMMCSS(DWORD queue, const WCHAR *class, DWORD taskid, LONG priority, IRtwqAsyncCallback *callback, IUnknown *state);")
 cpp_quote("HRESULT WINAPI RtwqCancelDeadline(HANDLE request);")
 cpp_quote("HRESULT WINAPI RtwqCancelWorkItem(RTWQWORKITEM_KEY key);")
 cpp_quote("HRESULT WINAPI RtwqCreateAsyncResult(IUnknown *object, IRtwqAsyncCallback *callback, IUnknown *state, IRtwqAsyncResult **result);")
+cpp_quote("HRESULT WINAPI RtwqGetWorkQueueMMCSSClass(DWORD queue, WCHAR *class, DWORD *length);")
+cpp_quote("HRESULT WINAPI RtwqGetWorkQueueMMCSSPriority(DWORD queue, LONG *priority);")
+cpp_quote("HRESULT WINAPI RtwqGetWorkQueueMMCSSTaskId(DWORD queue, DWORD *taskid);")
 cpp_quote("HRESULT WINAPI RtwqInvokeCallback(IRtwqAsyncResult *result);")
+cpp_quote("HRESULT WINAPI RtwqJoinWorkQueue(DWORD queue, HANDLE hFile, HANDLE *cookie);")
 cpp_quote("HRESULT WINAPI RtwqLockPlatform(void);")
 cpp_quote("HRESULT WINAPI RtwqLockSharedWorkQueue(const WCHAR *usageclass, LONG priority, DWORD *taskid, DWORD *queue);")
 cpp_quote("HRESULT WINAPI RtwqLockWorkQueue(DWORD queue);")
 cpp_quote("HRESULT WINAPI RtwqPutWaitingWorkItem(HANDLE event, LONG priority, IRtwqAsyncResult *result, RTWQWORKITEM_KEY *key);")
 cpp_quote("HRESULT WINAPI RtwqPutWorkItem(DWORD queue, LONG priority, IRtwqAsyncResult *result);")
+cpp_quote("HRESULT WINAPI RtwqRegisterPlatformEvents(IRtwqPlatformEvents *events);")
+cpp_quote("HRESULT WINAPI RtwqRegisterPlatformWithMMCSS(const WCHAR *class, DWORD *taskid, LONG priority);")
 cpp_quote("HRESULT WINAPI RtwqRemovePeriodicCallback(DWORD key);")
 cpp_quote("HRESULT WINAPI RtwqScheduleWorkItem(IRtwqAsyncResult *result, INT64 timeout, RTWQWORKITEM_KEY *key);")
 cpp_quote("HRESULT WINAPI RtwqSetDeadline(DWORD queue_id, LONGLONG deadline, HANDLE *request);")
@@ -96,5 +115,8 @@ cpp_quote("HRESULT WINAPI RtwqSetDeadline2(DWORD queue_id, LONGLONG deadline, LO
 cpp_quote("HRESULT WINAPI RtwqSetLongRunning(DWORD queue_id, BOOL enable);")
 cpp_quote("HRESULT WINAPI RtwqShutdown(void);")
 cpp_quote("HRESULT WINAPI RtwqStartup(void);")
+cpp_quote("HRESULT WINAPI RtwqUnjoinWorkQueue(DWORD queue, HANDLE cookie);")
 cpp_quote("HRESULT WINAPI RtwqUnlockPlatform(void);")
 cpp_quote("HRESULT WINAPI RtwqUnlockWorkQueue(DWORD queue);")
+cpp_quote("HRESULT WINAPI RtwqUnregisterPlatformEvents(IRtwqPlatformEvents *events);")
+cpp_quote("HRESULT WINAPI RtwqUnregisterPlatformFromMMCSS(void);")

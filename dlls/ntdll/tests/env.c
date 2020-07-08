@@ -1,5 +1,5 @@
 /*
- * Unit test suite for ntdll path functions
+ * Unit test suite for ntdll env functions
  *
  * Copyright 2003 Eric Pouech
  *
@@ -27,6 +27,7 @@ static NTSTATUS (WINAPI *pRtlMultiByteToUnicodeN)( LPWSTR dst, DWORD dstlen, LPD
 static NTSTATUS (WINAPI *pRtlCreateEnvironment)(BOOLEAN, PWSTR*);
 static NTSTATUS (WINAPI *pRtlDestroyEnvironment)(PWSTR);
 static NTSTATUS (WINAPI *pRtlQueryEnvironmentVariable_U)(PWSTR, PUNICODE_STRING, PUNICODE_STRING);
+static NTSTATUS (WINAPI* pRtlQueryEnvironmentVariable)(WCHAR*, WCHAR*, SIZE_T, WCHAR*, SIZE_T, SIZE_T*);
 static void     (WINAPI *pRtlSetCurrentEnvironment)(PWSTR, PWSTR*);
 static NTSTATUS (WINAPI *pRtlSetEnvironmentVariable)(PWSTR*, PUNICODE_STRING, PUNICODE_STRING);
 static NTSTATUS (WINAPI *pRtlExpandEnvironmentStrings_U)(LPWSTR, PUNICODE_STRING, PUNICODE_STRING, PULONG);
@@ -95,6 +96,9 @@ static void testQuery(void)
     UNICODE_STRING      name;
     UNICODE_STRING      value;
     NTSTATUS            nts;
+    SIZE_T              name_length;
+    SIZE_T              value_length;
+    SIZE_T              return_length;
     unsigned int i;
 
     for (i = 0; tests[i].var; i++)
@@ -130,6 +134,39 @@ static void testQuery(void)
             break;
         }
     }
+
+    if (pRtlQueryEnvironmentVariable)
+    {
+        for (i = 0; tests[i].var; i++)
+        {
+            const struct test* test = &tests[i];
+            name_length = strlen(test->var);
+            value_length = test->len;
+            value.Buffer = bv;
+            bv[test->len] = '@';
+
+            pRtlMultiByteToUnicodeN(bn, sizeof(bn), NULL, test->var, strlen(test->var) + 1);
+            nts = pRtlQueryEnvironmentVariable(small_env, bn, name_length, bv, value_length, &return_length);
+            ok(nts == test->status || (test->alt && nts == test->alt),
+                "[%d]: Wrong status for '%s', expecting %x got %x\n",
+                i, test->var, test->status, nts);
+            if (nts == test->status) switch (nts)
+            {
+            case STATUS_SUCCESS:
+                pRtlMultiByteToUnicodeN(bn, sizeof(bn), NULL, test->val, strlen(test->val) + 1);
+                ok(return_length == strlen(test->val), "Wrong length %ld for %s\n",
+                    return_length, test->var);
+                ok(!memcmp(bv, bn, return_length), "Wrong result for %s/%d\n", test->var, test->len);
+                ok(bv[test->len] == '@', "Writing too far away in the buffer for %s/%d\n", test->var, test->len);
+                break;
+            case STATUS_BUFFER_TOO_SMALL:
+                ok(return_length == (strlen(test->val) + 1),
+                    "Wrong returned length %ld (too small buffer) for %s\n", return_length, test->var);
+                break;
+            }
+        }
+    }
+    else win_skip("RtlQueryEnvironmentVariable not available, skipping tests\n");
 }
 
 static void testSetHelper(LPWSTR* env, const char* var, const char* val, NTSTATUS ret, NTSTATUS alt)
@@ -515,6 +552,72 @@ static void test_process_params(void)
     }
 }
 
+static NTSTATUS set_env_var(WCHAR **env, const WCHAR *var, const WCHAR *value)
+{
+    UNICODE_STRING var_string, value_string;
+    RtlInitUnicodeString(&var_string, var);
+    RtlInitUnicodeString(&value_string, value);
+    return RtlSetEnvironmentVariable(env, &var_string, &value_string);
+}
+
+static void check_env_var_(int line, const char *var, const char *value)
+{
+    char buffer[20];
+    DWORD size = GetEnvironmentVariableA(var, buffer, sizeof(buffer));
+    if (value)
+    {
+        ok_(__FILE__, line)(size == strlen(value), "wrong size %u\n", size);
+        ok_(__FILE__, line)(!strcmp(buffer, value), "wrong value %s\n", debugstr_a(buffer));
+    }
+    else
+    {
+        ok_(__FILE__, line)(!size, "wrong size %u\n", size);
+        ok_(__FILE__, line)(GetLastError() == ERROR_ENVVAR_NOT_FOUND, "got error %u\n", GetLastError());
+    }
+}
+#define check_env_var(a, b) check_env_var_(__LINE__, a, b)
+
+static void test_RtlSetCurrentEnvironment(void)
+{
+    NTSTATUS status;
+    WCHAR *old_env, *env, *prev;
+    BOOL ret;
+
+    status = RtlCreateEnvironment(FALSE, &env);
+    ok(!status, "got %#x\n", status);
+
+    ret = SetEnvironmentVariableA("testenv1", "heis");
+    ok(ret, "got error %u\n", GetLastError());
+    ret = SetEnvironmentVariableA("testenv2", "dyo");
+    ok(ret, "got error %u\n", GetLastError());
+
+    status = set_env_var(&env, L"testenv1", L"unus");
+    ok(!status, "got %#x\n", status);
+    status = set_env_var(&env, L"testenv3", L"tres");
+    ok(!status, "got %#x\n", status);
+
+    old_env = NtCurrentTeb()->Peb->ProcessParameters->Environment;
+
+    RtlSetCurrentEnvironment(env, &prev);
+    ok(prev == old_env, "got wrong previous env %p\n", prev);
+    ok(NtCurrentTeb()->Peb->ProcessParameters->Environment == env, "got wrong current env\n");
+
+    check_env_var("testenv1", "unus");
+    check_env_var("testenv2", NULL);
+    check_env_var("testenv3", "tres");
+    check_env_var("PATH", NULL);
+
+    RtlSetCurrentEnvironment(old_env, NULL);
+    ok(NtCurrentTeb()->Peb->ProcessParameters->Environment == old_env, "got wrong current env\n");
+
+    check_env_var("testenv1", "heis");
+    check_env_var("testenv2", "dyo");
+    check_env_var("testenv3", NULL);
+
+    SetEnvironmentVariableA("testenv1", NULL);
+    SetEnvironmentVariableA("testenv2", NULL);
+}
+
 START_TEST(env)
 {
     HMODULE mod = GetModuleHandleA("ntdll.dll");
@@ -525,6 +628,7 @@ START_TEST(env)
     pRtlCreateEnvironment = (void*)GetProcAddress(mod, "RtlCreateEnvironment");
     pRtlDestroyEnvironment = (void*)GetProcAddress(mod, "RtlDestroyEnvironment");
     pRtlQueryEnvironmentVariable_U = (void*)GetProcAddress(mod, "RtlQueryEnvironmentVariable_U");
+    pRtlQueryEnvironmentVariable = (void*)GetProcAddress(mod, "RtlQueryEnvironmentVariable");
     pRtlSetCurrentEnvironment = (void*)GetProcAddress(mod, "RtlSetCurrentEnvironment");
     pRtlSetEnvironmentVariable = (void*)GetProcAddress(mod, "RtlSetEnvironmentVariable");
     pRtlExpandEnvironmentStrings_U = (void*)GetProcAddress(mod, "RtlExpandEnvironmentStrings_U");
@@ -535,4 +639,5 @@ START_TEST(env)
     testSet();
     testExpand();
     test_process_params();
+    test_RtlSetCurrentEnvironment();
 }

@@ -107,6 +107,7 @@ HRESULT WINAPI D3D11CoreRegisterLayers(void)
 HRESULT WINAPI D3D11CoreCreateDevice(IDXGIFactory *factory, IDXGIAdapter *adapter, UINT flags,
         const D3D_FEATURE_LEVEL *feature_levels, UINT levels, ID3D11Device **device)
 {
+    struct d3d_device *d3d_device;
     IUnknown *dxgi_device;
     HMODULE d3d11;
     HRESULT hr;
@@ -129,6 +130,13 @@ HRESULT WINAPI D3D11CoreCreateDevice(IDXGIFactory *factory, IDXGIAdapter *adapte
         ERR("Failed to query ID3D11Device interface, returning E_FAIL.\n");
         return E_FAIL;
     }
+
+    if (!(d3d_device = impl_from_ID3D11Device(*device)))
+    {
+        ERR("Failed to retrieve device impl, returning E_FAIL.\n");
+        return E_FAIL;
+    }
+    d3d_device->d3d11_only = TRUE;
 
     return S_OK;
 }

@@ -20,17 +20,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdlib.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
 #include <sys/types.h>
-#ifdef HAVE_SYS_STAT_H
-# include <sys/stat.h>
-#endif
 #include <string.h>
 #include <stdarg.h>
 
@@ -44,8 +35,6 @@
 #include "winioctl.h"
 #include "kernel16_private.h"
 #include "dosexe.h"
-#include "wine/library.h"
-#include "wine/unicode.h"
 #include "wine/server.h"
 #include "wine/debug.h"
 
@@ -108,51 +97,6 @@ static WORD VXD_WinVersion(void)
     return (version >> 8) | (version << 8);
 }
 
-/* create a file handle to represent a VxD, by opening a dummy file in the wineserver directory */
-static HANDLE open_vxd_handle( LPCWSTR name )
-{
-    static const WCHAR prefixW[] = {'\\','?','?','\\','u','n','i','x'};
-    const char *dir = wine_get_server_dir();
-    int len;
-    HANDLE ret;
-    NTSTATUS status;
-    OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING nameW;
-    IO_STATUS_BLOCK io;
-
-    len = MultiByteToWideChar( CP_UNIXCP, 0, dir, -1, NULL, 0 );
-    nameW.Length = sizeof(prefixW) + (len + strlenW( name )) * sizeof(WCHAR);
-    nameW.MaximumLength = nameW.Length + sizeof(WCHAR);
-    if (!(nameW.Buffer = HeapAlloc( GetProcessHeap(), 0, nameW.MaximumLength )))
-    {
-        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-        return 0;
-    }
-    memcpy( nameW.Buffer, prefixW, sizeof(prefixW) );
-    MultiByteToWideChar( CP_UNIXCP, 0, dir, -1, nameW.Buffer + ARRAY_SIZE(prefixW), len );
-    len += ARRAY_SIZE(prefixW);
-    nameW.Buffer[len-1] = '/';
-    strcpyW( nameW.Buffer + len, name );
-
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.Attributes = 0;
-    attr.ObjectName = &nameW;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
-
-    status = NtCreateFile( &ret, SYNCHRONIZE, &attr, &io, NULL, 0,
-                           FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_OPEN_IF,
-                           FILE_SYNCHRONOUS_IO_ALERT, NULL, 0 );
-    if (status)
-    {
-        ret = 0;
-        SetLastError( RtlNtStatusToDosError(status) );
-    }
-    RtlFreeUnicodeString( &nameW );
-    return ret;
-}
-
 /* retrieve the DeviceIoControl function for a Vxd given a file handle */
 DeviceIoProc __wine_vxd_get_proc( HANDLE handle )
 {
@@ -201,17 +145,17 @@ HANDLE __wine_vxd_open( LPCWSTR filenameW, DWORD access, SECURITY_ATTRIBUTES *sa
 
     /* normalize the filename */
 
-    if (strlenW( filenameW ) >= ARRAY_SIZE(name) - 4 ||
-        strchrW( filenameW, '/' ) || strchrW( filenameW, '\\' ))
+    if (lstrlenW( filenameW ) >= ARRAY_SIZE(name) - 4 ||
+        wcschr( filenameW, '/' ) || wcschr( filenameW, '\\' ))
     {
         SetLastError( ERROR_FILE_NOT_FOUND );
         return 0;
     }
-    strcpyW( name, filenameW );
-    strlwrW( name );
-    p = strchrW( name, '.' );
-    if (!p) strcatW( name, dotVxDW );
-    else if (strcmpiW( p, dotVxDW ))  /* existing extension has to be .vxd */
+    lstrcpyW( name, filenameW );
+    wcslwr( name );
+    p = wcschr( name, '.' );
+    if (!p) lstrcatW( name, dotVxDW );
+    else if (wcsicmp( p, dotVxDW ))  /* existing extension has to be .vxd */
     {
         SetLastError( ERROR_FILE_NOT_FOUND );
         return 0;
@@ -240,11 +184,13 @@ HANDLE __wine_vxd_open( LPCWSTR filenameW, DWORD access, SECURITY_ATTRIBUTES *sa
         }
         if (!vxd_modules[i].module)  /* new one, register it */
         {
+            WCHAR path[MAX_PATH];
             IO_STATUS_BLOCK io;
             FILE_INTERNAL_INFORMATION info;
 
-            /* get a file handle to the dummy file */
-            if (!(handle = open_vxd_handle( name )))
+            GetModuleFileNameW( module, path, MAX_PATH );
+            handle = CreateFileW( path, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0 );
+            if (handle == INVALID_HANDLE_VALUE)
             {
                 FreeLibrary( module );
                 goto done;

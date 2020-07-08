@@ -309,10 +309,7 @@ typedef struct {
 /*08*/  WORD res08;             /* some kind of len/offset ?? */
 /*0a*/	WORD first_blk;		/* 1 based index into blk entries that
 				   corresponds to first block in file */
-/*0c*/	DWORD res0c;		/* always 0x000204ff */
-/*10*/  DWORD res10;		/* always 0x00000000 */
-/*14*/	DWORD res14;		/* always 0x000000c0 */
-/*18*/	DWORD res18;		/* always 0x46000000 */
+/*0c*/	GUID guid;		/* always 000204ff-0000-0000-c000-000000000046 */
 /*1c*/	DWORD res1c;		/* always 0x00000044 */
 /*20*/	DWORD res20;		/* always 0xffff0000 */
 } SLTG_Header;
@@ -329,12 +326,11 @@ typedef struct {
 
 /* These then get followed by this magic */
 typedef struct {
-/*00*/ BYTE res00;		/* always 0x01 */
-/*01*/ CHAR CompObj_magic[8];	/* always "CompObj" */
+/*00*/ CHAR CompObj_magic[9];	/* always "\1CompObj" */
 /*09*/ CHAR dir_magic[4];	/* always "dir" */
 } SLTG_Magic;
 
-#define SLTG_COMPOBJ_MAGIC "CompObj"
+#define SLTG_COMPOBJ_MAGIC "\1CompObj"
 #define SLTG_DIR_MAGIC "dir"
 
 /* Next we have SLTG_Header.nrOfFileBlks - 2 of Index strings.  These

@@ -42,6 +42,61 @@
 WINE_DEFAULT_DEBUG_CHANNEL(ver);
 
 
+static inline UCHAR version_update_condition(UCHAR *last_condition, UCHAR condition)
+{
+    switch (*last_condition)
+    {
+        case 0:
+            *last_condition = condition;
+            break;
+        case VER_EQUAL:
+            if (condition >= VER_EQUAL && condition <= VER_LESS_EQUAL)
+            {
+                *last_condition = condition;
+                return condition;
+            }
+            break;
+        case VER_GREATER:
+        case VER_GREATER_EQUAL:
+            if (condition >= VER_EQUAL && condition <= VER_GREATER_EQUAL)
+                return condition;
+            break;
+        case VER_LESS:
+        case VER_LESS_EQUAL:
+            if (condition == VER_EQUAL || (condition >= VER_LESS && condition <= VER_LESS_EQUAL))
+                return condition;
+            break;
+    }
+    if (!condition) *last_condition |= 0x10;
+    return *last_condition & 0xf;
+}
+
+static inline BOOL version_compare_values(ULONG left, ULONG right, UCHAR condition)
+{
+    switch (condition)
+    {
+        case VER_EQUAL:
+            if (left != right) return FALSE;
+            break;
+        case VER_GREATER:
+            if (left <= right) return FALSE;
+            break;
+        case VER_GREATER_EQUAL:
+            if (left < right) return FALSE;
+            break;
+        case VER_LESS:
+            if (left >= right) return FALSE;
+            break;
+        case VER_LESS_EQUAL:
+            if (left > right) return FALSE;
+            break;
+        default:
+            return FALSE;
+    }
+    return TRUE;
+}
+
+
 /******************************************************************************
  *        VerifyVersionInfoA   (KERNEL32.@)
  */
@@ -68,19 +123,93 @@ BOOL WINAPI VerifyVersionInfoA( LPOSVERSIONINFOEXA lpVersionInfo, DWORD dwTypeMa
 /******************************************************************************
  *        VerifyVersionInfoW   (KERNEL32.@)
  */
-BOOL WINAPI VerifyVersionInfoW( LPOSVERSIONINFOEXW lpVersionInfo, DWORD dwTypeMask,
+BOOL WINAPI VerifyVersionInfoW( LPOSVERSIONINFOEXW info, DWORD dwTypeMask,
                                 DWORDLONG dwlConditionMask)
 {
-    switch(RtlVerifyVersionInfo( lpVersionInfo, dwTypeMask, dwlConditionMask ))
+    OSVERSIONINFOEXW ver;
+
+    TRACE("(%p 0x%x 0x%s)\n", info, dwTypeMask, wine_dbgstr_longlong(dwlConditionMask));
+
+    ver.dwOSVersionInfoSize = sizeof(ver);
+    if (!GetVersionExW((OSVERSIONINFOW*)&ver)) return FALSE;
+
+    if (!dwTypeMask || !dwlConditionMask)
     {
-    case STATUS_INVALID_PARAMETER:
-        SetLastError( ERROR_BAD_ARGUMENTS );
-        return FALSE;
-    case STATUS_REVISION_MISMATCH:
-        SetLastError( ERROR_OLD_WIN_VERSION );
+        SetLastError(ERROR_BAD_ARGUMENTS);
         return FALSE;
     }
+
+    if (dwTypeMask & VER_PRODUCT_TYPE)
+    {
+        if (!version_compare_values(ver.wProductType, info->wProductType, dwlConditionMask >> 7*3 & 0x07))
+            goto mismatch;
+    }
+    if (dwTypeMask & VER_SUITENAME)
+        switch (dwlConditionMask >> 6*3 & 0x07)
+        {
+            case VER_AND:
+                if ((info->wSuiteMask & ver.wSuiteMask) != info->wSuiteMask)
+                    goto mismatch;
+                break;
+            case VER_OR:
+                if (!(info->wSuiteMask & ver.wSuiteMask) && info->wSuiteMask)
+                    goto mismatch;
+                break;
+            default:
+                SetLastError(ERROR_BAD_ARGUMENTS);
+                return FALSE;
+        }
+    if (dwTypeMask & VER_PLATFORMID)
+    {
+        if (!version_compare_values(ver.dwPlatformId, info->dwPlatformId, dwlConditionMask >> 3*3 & 0x07))
+            goto mismatch;
+    }
+    if (dwTypeMask & VER_BUILDNUMBER)
+    {
+        if (!version_compare_values(ver.dwBuildNumber, info->dwBuildNumber, dwlConditionMask >> 2*3 & 0x07))
+            goto mismatch;
+    }
+
+    if (dwTypeMask & (VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR | VER_SERVICEPACKMINOR))
+    {
+        unsigned char condition, last_condition = 0;
+        BOOL succeeded = TRUE, do_next_check = TRUE;
+
+        if (dwTypeMask & VER_MAJORVERSION)
+        {
+            condition = version_update_condition(&last_condition, dwlConditionMask >> 1*3 & 0x07);
+            succeeded = version_compare_values(ver.dwMajorVersion, info->dwMajorVersion, condition);
+            do_next_check = (ver.dwMajorVersion == info->dwMajorVersion) &&
+                ((condition >= VER_EQUAL) && (condition <= VER_LESS_EQUAL));
+        }
+        if ((dwTypeMask & VER_MINORVERSION) && do_next_check)
+        {
+            condition = version_update_condition(&last_condition, dwlConditionMask >> 0*3 & 0x07);
+            succeeded = version_compare_values(ver.dwMinorVersion, info->dwMinorVersion, condition);
+            do_next_check = (ver.dwMinorVersion == info->dwMinorVersion) &&
+                ((condition >= VER_EQUAL) && (condition <= VER_LESS_EQUAL));
+        }
+        if ((dwTypeMask & VER_SERVICEPACKMAJOR) && do_next_check)
+        {
+            condition = version_update_condition(&last_condition, dwlConditionMask >> 5*3 & 0x07);
+            succeeded = version_compare_values(ver.wServicePackMajor, info->wServicePackMajor, condition);
+            do_next_check = (ver.wServicePackMajor == info->wServicePackMajor) &&
+                ((condition >= VER_EQUAL) && (condition <= VER_LESS_EQUAL));
+        }
+        if ((dwTypeMask & VER_SERVICEPACKMINOR) && do_next_check)
+        {
+            condition = version_update_condition(&last_condition, dwlConditionMask >> 4*3 & 0x07);
+            succeeded = version_compare_values(ver.wServicePackMinor, info->wServicePackMinor, condition);
+        }
+
+        if (!succeeded) goto mismatch;
+    }
+
     return TRUE;
+
+mismatch:
+    SetLastError(ERROR_OLD_WIN_VERSION);
+    return FALSE;
 }
 
 /***********************************************************************
@@ -108,40 +237,4 @@ DWORD WINAPI SetTermsrvAppInstallMode(BOOL bInstallMode)
 {
     FIXME("(%d): stub\n", bInstallMode);
     return 0;
-}
-
-/***********************************************************************
- *           GetCurrentPackageId       (KERNEL32.@)
- */
-LONG WINAPI GetCurrentPackageId(UINT32 *len, BYTE *buffer)
-{
-    FIXME("(%p %p): stub\n", len, buffer);
-    return APPMODEL_ERROR_NO_PACKAGE;
-}
-
-/***********************************************************************
- *           GetCurrentPackageFamilyName       (KERNEL32.@)
- */
-LONG WINAPI GetCurrentPackageFamilyName(UINT32 *length, PWSTR name)
-{
-    FIXME("(%p %p): stub\n", length, name);
-    return APPMODEL_ERROR_NO_PACKAGE;
-}
-
-/***********************************************************************
- *           GetCurrentPackageFullName       (KERNEL32.@)
- */
-LONG WINAPI GetCurrentPackageFullName(UINT32 *length, PWSTR name)
-{
-    FIXME("(%p %p): stub\n", length, name);
-    return APPMODEL_ERROR_NO_PACKAGE;
-}
-
-/***********************************************************************
- *           GetPackageFullName       (KERNEL32.@)
- */
-LONG WINAPI GetPackageFullName(HANDLE process, UINT32 *length, PWSTR name)
-{
-    FIXME("(%p %p %p): stub\n", process, length, name);
-    return APPMODEL_ERROR_NO_PACKAGE;
 }

@@ -20,9 +20,6 @@
  *
  */
 
-/* ReplaceFile requires Windows 2000 or newer */
-#define _WIN32_WINNT 0x0500
-
 #include <stdarg.h>
 #include <stdlib.h>
 #include <time.h>
@@ -115,6 +112,13 @@ static void InitFunctionPointers(void)
     pReOpenFile = (void *) GetProcAddress(hkernel32, "ReOpenFile");
     pSetFileCompletionNotificationModes = (void *)GetProcAddress(hkernel32, "SetFileCompletionNotificationModes");
     pFindFirstStreamW = (void *)GetProcAddress(hkernel32, "FindFirstStreamW");
+}
+
+static void create_file( const char *path )
+{
+    FILE *f = fopen( path, "wb" );
+    fputs( path, f );
+    fclose( f );
 }
 
 static void test__hread( void )
@@ -1791,7 +1795,8 @@ static void test_DeleteFileA( void )
 {
     BOOL ret;
     char temp_path[MAX_PATH], temp_file[MAX_PATH];
-    HANDLE hfile;
+    HANDLE hfile, mapping;
+    char **argv;
 
     ret = DeleteFileA(NULL);
     ok(!ret && (GetLastError() == ERROR_INVALID_PARAMETER ||
@@ -1838,6 +1843,28 @@ static void test_DeleteFileA( void )
         "Expected ERROR_ACCESS_DENIED, got error %d\n", GetLastError());
     ret = RemoveDirectoryA("testdir");
     ok(ret, "Remove a directory failed, got error %d\n", GetLastError());
+
+    winetest_get_mainargs(&argv);
+
+    ret = CopyFileA(argv[0], temp_file, FALSE);
+    ok(ret, "got error %u\n", GetLastError());
+    hfile = CreateFileA(temp_file, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, 0, 0);
+    ok(hfile != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError());
+
+    mapping = CreateFileMappingA(hfile, NULL, PAGE_READONLY | SEC_IMAGE, 0, 0, NULL);
+    ok(!!mapping, "got error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = DeleteFileA(temp_file);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %u\n", GetLastError());
+
+    CloseHandle(mapping);
+
+    ret = DeleteFileA(temp_file);
+    ok(ret, "got error %u\n", GetLastError());
+
+    CloseHandle(hfile);
 }
 
 static void test_DeleteFileW( void )
@@ -2282,8 +2309,6 @@ static BOOL create_fake_dll( LPCSTR filename )
     nt->FileHeader.Machine = IMAGE_FILE_MACHINE_I386;
 #elif defined __x86_64__
     nt->FileHeader.Machine = IMAGE_FILE_MACHINE_AMD64;
-#elif defined __powerpc__
-    nt->FileHeader.Machine = IMAGE_FILE_MACHINE_POWERPC;
 #elif defined __arm__
     nt->FileHeader.Machine = IMAGE_FILE_MACHINE_ARMNT;
 #elif defined __aarch64__
@@ -3325,17 +3350,6 @@ static void test_OpenFile(void)
             ofs.szPathName );
     }
 
-    length = GetCurrentDirectoryA(MAX_PATH, buff) + sizeof(filename);
-
-    if (length >= MAX_PATH) 
-    {
-        trace("Buffer too small, requested length = %d, but MAX_PATH = %d.  Skipping test.\n", length, MAX_PATH);
-        return;
-    }
-    p = buff + strlen(buff);
-    if (p > buff && p[-1] != '\\') *p++ = '\\';
-    strcpy( p, filename );
-
     memset(&ofs, 0xA5, sizeof(ofs));
     SetLastError(0xfaceabee);
     /* Create an empty file */
@@ -3362,8 +3376,8 @@ static void test_OpenFile(void)
     ok( ofs.cBytes == sizeof(OFSTRUCT), "OpenFile set ofs.cBytes to %d\n", ofs.cBytes );
     ok( ofs.nErrCode == ERROR_SUCCESS || broken(ofs.nErrCode != ERROR_SUCCESS) /* win9x */,
         "OpenFile set ofs.nErrCode to %d\n", ofs.nErrCode );
-    ok( lstrcmpiA(ofs.szPathName, buff) == 0,
-        "OpenFile returned '%s', but was expected to return '%s'\n", ofs.szPathName, buff );
+    ok( lstrcmpiA(ofs.szPathName, filename) == 0,
+        "OpenFile returned '%s', but was expected to return '%s'\n", ofs.szPathName, filename );
     ret = _lclose(hFile);
     ok( !ret, "_lclose() returns %d\n", ret );
 
@@ -3377,8 +3391,8 @@ static void test_OpenFile(void)
     ok( ofs.cBytes == sizeof(OFSTRUCT), "OpenFile set ofs.cBytes to %d\n", ofs.cBytes );
     ok( ofs.nErrCode == ERROR_SUCCESS || broken(ofs.nErrCode != ERROR_SUCCESS) /* win9x */,
         "OpenFile set ofs.nErrCode to %d\n", ofs.nErrCode );
-    ok( lstrcmpiA(ofs.szPathName, buff) == 0,
-        "OpenFile returned '%s', but was expected to return '%s'\n", ofs.szPathName, buff );
+    ok( lstrcmpiA(ofs.szPathName, filename) == 0,
+        "OpenFile returned '%s', but was expected to return '%s'\n", ofs.szPathName, filename );
     ret = _lclose(hFile);
     ok( !ret, "_lclose() returns %d\n", ret );
 
@@ -3392,8 +3406,8 @@ static void test_OpenFile(void)
     ok( ofs.cBytes == sizeof(OFSTRUCT), "OpenFile set ofs.cBytes to %d\n", ofs.cBytes );
     ok( ofs.nErrCode == ERROR_SUCCESS || broken(ofs.nErrCode != ERROR_SUCCESS) /* win9x */,
         "OpenFile set ofs.nErrCode to %d\n", ofs.nErrCode );
-    ok( lstrcmpiA(ofs.szPathName, buff) == 0,
-        "OpenFile returned '%s', but was expected to return '%s'\n", ofs.szPathName, buff );
+    ok( lstrcmpiA(ofs.szPathName, filename) == 0,
+        "OpenFile returned '%s', but was expected to return '%s'\n", ofs.szPathName, filename );
     ret = _lclose(hFile);
     ok( !ret, "_lclose() returns %d\n", ret );
 
@@ -3407,8 +3421,8 @@ static void test_OpenFile(void)
     ok( ofs.cBytes == sizeof(OFSTRUCT), "OpenFile set ofs.cBytes to %d\n", ofs.cBytes );
     ok( ofs.nErrCode == ERROR_SUCCESS || broken(ofs.nErrCode != ERROR_SUCCESS) /* win9x */,
         "OpenFile set ofs.nErrCode to %d\n", ofs.nErrCode );
-    ok( lstrcmpiA(ofs.szPathName, buff) == 0,
-        "OpenFile returned '%s', but was expected to return '%s'\n", ofs.szPathName, buff );
+    ok( lstrcmpiA(ofs.szPathName, filename) == 0,
+        "OpenFile returned '%s', but was expected to return '%s'\n", ofs.szPathName, filename );
 
     memset(&ofs, 0xA5, sizeof(ofs));
     SetLastError(0xfaceabee);
@@ -3420,8 +3434,8 @@ static void test_OpenFile(void)
     ok( ofs.cBytes == sizeof(OFSTRUCT), "OpenFile set ofs.cBytes to %d\n", ofs.cBytes );
     ok( ofs.nErrCode == ERROR_SUCCESS || broken(ofs.nErrCode != ERROR_SUCCESS) /* win9x */,
         "OpenFile set ofs.nErrCode to %d\n", ofs.nErrCode );
-    ok( lstrcmpiA(ofs.szPathName, buff) == 0,
-        "OpenFile returned '%s', but was expected to return '%s'\n", ofs.szPathName, buff );
+    ok( lstrcmpiA(ofs.szPathName, filename) == 0,
+        "OpenFile returned '%s', but was expected to return '%s'\n", ofs.szPathName, filename );
 
     retval = GetFileAttributesA(filename);
     ok( retval == INVALID_FILE_ATTRIBUTES, "GetFileAttributesA succeeded on deleted file\n" );
@@ -3530,13 +3544,13 @@ static BOOL check_file_time( const FILETIME *ft1, const FILETIME *ft2, UINT tole
 {
     ULONGLONG t1 = ((ULONGLONG)ft1->dwHighDateTime << 32) | ft1->dwLowDateTime;
     ULONGLONG t2 = ((ULONGLONG)ft2->dwHighDateTime << 32) | ft2->dwLowDateTime;
-    return abs(t1 - t2) <= tolerance;
+    return (t1 > t2 ? t1 - t2 : t2 - t1) <= tolerance;
 }
 
 static void test_ReplaceFileA(void)
 {
     char replaced[MAX_PATH], replacement[MAX_PATH], backup[MAX_PATH];
-    HANDLE hReplacedFile, hReplacementFile, hBackupFile;
+    HANDLE hReplacedFile, hReplacementFile, hBackupFile, mapping;
     static const char replacedData[] = "file-to-replace";
     static const char replacementData[] = "new-file";
     static const char backupData[] = "backup-file";
@@ -3545,6 +3559,7 @@ static void test_ReplaceFileA(void)
     char temp_path[MAX_PATH];
     DWORD ret;
     BOOL retok, removeBackup = FALSE;
+    char **argv;
 
     if (!pReplaceFileA)
     {
@@ -3782,6 +3797,43 @@ static void test_ReplaceFileA(void)
            broken(GetLastError() == ERROR_ACCESS_DENIED), /* win2k */
            "DeleteFileA: error (backup) %d\n", GetLastError());
     }
+
+    ret = GetTempFileNameA(temp_path, prefix, 0, replaced);
+    ok(ret, "got error %u\n", GetLastError());
+    hReplacedFile = CreateFileA(replaced, 0, 0, NULL, OPEN_EXISTING, 0, 0);
+    ok(hReplacedFile != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError());
+
+    ret = GetTempFileNameA(temp_path, prefix, 0, replacement);
+    ok(ret, "got error %u\n", GetLastError());
+
+    ret = ReplaceFileA(replaced, replacement, NULL, 0, 0, 0);
+    ok(ret, "got error %u\n", GetLastError());
+
+    CloseHandle(hReplacedFile);
+    ret = DeleteFileA(replaced);
+    ok(ret, "got error %u\n", GetLastError());
+
+    winetest_get_mainargs(&argv);
+
+    ret = CopyFileA(argv[0], replaced, FALSE);
+    ok(ret, "got error %u\n", GetLastError());
+    hReplacedFile = CreateFileA(replaced, GENERIC_READ,
+            FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, 0, 0);
+    ok(hReplacedFile != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError());
+
+    mapping = CreateFileMappingA(hReplacedFile, NULL, PAGE_READONLY | SEC_IMAGE, 0, 0, NULL);
+    ok(!!mapping, "got error %u\n", GetLastError());
+
+    ret = GetTempFileNameA(temp_path, prefix, 0, replacement);
+    ok(ret, "got error %u\n", GetLastError());
+
+    ret = ReplaceFileA(replaced, replacement, NULL, 0, 0, 0);
+    ok(ret, "got error %u\n", GetLastError());
+
+    CloseHandle(mapping);
+    CloseHandle(hReplacedFile);
+    ret = DeleteFileA(replaced);
+    ok(ret, "got error %u\n", GetLastError());
 }
 
 /*
@@ -3843,9 +3895,10 @@ static void test_ReplaceFileW(void)
     ok(ret || GetLastError() == ERROR_ACCESS_DENIED,
        "SetFileAttributesW: error setting to read only %d\n", GetLastError());
 
+    SetLastError(0xdeadbeef);
     ret = pReplaceFileW(replaced, replacement, backup, 0, 0, 0);
-    ok(ret != ERROR_UNABLE_TO_REMOVE_REPLACED,
-        "ReplaceFileW: unexpected error %d\n", GetLastError());
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %u\n", GetLastError());
     ret = SetFileAttributesW(replaced, FILE_ATTRIBUTE_NORMAL);
     ok(ret || GetLastError() == ERROR_ACCESS_DENIED,
        "SetFileAttributesW: error setting to normal %d\n", GetLastError());
@@ -5363,7 +5416,7 @@ static void test_overlapped_read(void)
     err = GetLastError();
     /* Win8+ return ERROR_IO_PENDING like stated in MSDN, while older ones
      * return ERROR_HANDLE_EOF right away. */
-    ok(!ret && (err == ERROR_HANDLE_EOF || err == ERROR_IO_PENDING),
+    ok(!ret && (err == ERROR_IO_PENDING || broken(err == ERROR_HANDLE_EOF)),
             "Unexpected ReadFile result, ret %#x, GetLastError() %u.\n", ret, GetLastError());
     if (err == ERROR_IO_PENDING)
     {
@@ -5510,6 +5563,173 @@ static void test_SetFileTime(void)
     CloseHandle(hfile);
 }
 
+static void test_hard_link(void)
+{
+    char cwd[MAX_PATH], temp_dir[MAX_PATH], name_buffer[200], buffer[20];
+    FILE_NAME_INFORMATION *name_info = (FILE_NAME_INFORMATION *)name_buffer;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+    HANDLE file;
+    DWORD size;
+    BOOL ret;
+
+    GetCurrentDirectoryA( sizeof(cwd), cwd );
+    GetTempPathA( sizeof(temp_dir), temp_dir );
+    SetCurrentDirectoryA( temp_dir );
+
+    ret = CreateDirectoryA( "winetest_dir1", NULL );
+    ok(ret, "failed to create directory, error %u\n", GetLastError());
+    ret = CreateDirectoryA( "winetest_dir2", NULL );
+    ok(ret, "failed to create directory, error %u\n", GetLastError());
+    create_file( "winetest_file1" );
+    create_file( "winetest_file2" );
+
+    ret = CreateHardLinkA( "winetest_file3", "winetest_file1", NULL );
+    ok(ret, "got error %u\n", GetLastError());
+
+    file = CreateFileA( "winetest_file3", FILE_READ_DATA, 0, NULL, OPEN_EXISTING, 0, NULL );
+    ok(file != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError());
+
+    status = NtQueryInformationFile( file, &io, name_buffer, sizeof(name_buffer), FileNameInformation );
+    ok(!status, "got status %#x\n", status);
+    ok(!wcsncmp(name_info->FileName + (name_info->FileNameLength / sizeof(WCHAR)) - wcslen(L"\\winetest_file3"),
+            L"\\winetest_file3", wcslen(L"\\winetest_file3")), "got name %s\n",
+            debugstr_wn(name_info->FileName, name_info->FileNameLength / sizeof(WCHAR)));
+
+    ret = ReadFile( file, buffer, sizeof(buffer), &size, NULL );
+    ok(ret, "got error %u\n", GetLastError());
+    ok(!memcmp( buffer, "winetest_file1", size ), "got file contents %s\n", debugstr_an( buffer, size ));
+
+    CloseHandle( file );
+
+    ret = DeleteFileA( "winetest_file3" );
+    ok(ret, "failed to delete file, error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = CreateHardLinkA( "winetest_file2", "winetest_file1", NULL );
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_ALREADY_EXISTS, "got error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = CreateHardLinkA( "winetest_file3", "winetest_dir1", NULL );
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = CreateHardLinkA( "winetest_dir2", "winetest_dir1", NULL );
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_ACCESS_DENIED
+            || GetLastError() == ERROR_ALREADY_EXISTS /* XP */, "got error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = CreateHardLinkA( "winetest_dir1", "winetest_file1", NULL );
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_ALREADY_EXISTS, "got error %u\n", GetLastError());
+
+    ret = RemoveDirectoryA( "winetest_dir1" );
+    ok(ret, "failed to remove directory, error %u\n", GetLastError());
+    ret = RemoveDirectoryA( "winetest_dir2" );
+    ok(ret, "failed to remove directory, error %u\n", GetLastError());
+    ret = DeleteFileA( "winetest_file1" );
+    ok(ret, "failed to delete file, error %u\n", GetLastError());
+    ret = DeleteFileA( "winetest_file2" );
+    ok(ret, "failed to delete file, error %u\n", GetLastError());
+    SetCurrentDirectoryA( cwd );
+}
+
+static void test_move_file(void)
+{
+    char cwd[MAX_PATH], temp_dir[MAX_PATH];
+    HANDLE file;
+    BOOL ret;
+
+    GetCurrentDirectoryA( sizeof(cwd), cwd );
+    GetTempPathA( sizeof(temp_dir), temp_dir );
+    SetCurrentDirectoryA( temp_dir );
+
+    ret = CreateDirectoryA( "winetest_dir1", NULL );
+    ok(ret, "failed to create directory, error %u\n", GetLastError());
+    ret = CreateDirectoryA( "winetest_dir2", NULL );
+    ok(ret, "failed to create directory, error %u\n", GetLastError());
+    create_file( "winetest_file1" );
+    create_file( "winetest_file2" );
+
+    ret = MoveFileA( "winetest_file1", "winetest_file3" );
+    ok(ret, "failed to move file, error %u\n", GetLastError());
+    ret = GetFileAttributesA( "winetest_file1" );
+    ok(ret == INVALID_FILE_ATTRIBUTES, "got %#x\n", ret);
+    ret = GetFileAttributesA( "winetest_file3" );
+    ok(ret != INVALID_FILE_ATTRIBUTES, "got %#x\n", ret);
+
+    SetLastError(0xdeadbeef);
+    ret = MoveFileA( "winetest_file3", "winetest_file2" );
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_ALREADY_EXISTS, "got error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = MoveFileA( "winetest_file1", "winetest_file4" );
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "got error %u\n", GetLastError());
+
+    ret = MoveFileA( "winetest_dir1", "winetest_dir3" );
+    ok(ret, "failed to move file, error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = MoveFileA( "winetest_dir3", "winetest_dir2" );
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_ALREADY_EXISTS, "got error %u\n", GetLastError());
+
+    file = CreateFileA( "winetest_file3", DELETE, 0, NULL, OPEN_EXISTING, 0, 0 );
+    ok(file != INVALID_HANDLE_VALUE, "failed to open file, error %u\n", GetLastError());
+    ret = MoveFileA( "winetest_file3", "winetest_file1" );
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_SHARING_VIOLATION, "got error %u\n", GetLastError());
+    CloseHandle( file );
+
+    file = CreateFileA( "winetest_file3", 0, 0, NULL, OPEN_EXISTING, 0, 0 );
+    ok(file != INVALID_HANDLE_VALUE, "failed to open file, error %u\n", GetLastError());
+    ret = MoveFileA( "winetest_file3", "winetest_file1" );
+    ok(ret, "failed to move file, error %u\n", GetLastError());
+    ret = GetFileAttributesA( "winetest_file1" );
+    ok(ret != INVALID_FILE_ATTRIBUTES, "got %#x\n", ret);
+    ret = GetFileAttributesA( "winetest_file3" );
+    ok(ret == INVALID_FILE_ATTRIBUTES, "got %#x\n", ret);
+    CloseHandle( file );
+
+    ret = MoveFileExA( "winetest_file1", "winetest_file2", MOVEFILE_REPLACE_EXISTING );
+    ok(ret, "failed to move file, error %u\n", GetLastError());
+
+    file = CreateFileA( "winetest_file1", GENERIC_ALL,
+            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, CREATE_NEW, 0, 0 );
+    ok(file != INVALID_HANDLE_VALUE, "failed to open file, error %u\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = MoveFileExA( "winetest_file2", "winetest_file1", MOVEFILE_REPLACE_EXISTING );
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %u\n", GetLastError());
+    CloseHandle( file );
+
+    SetLastError(0xdeadbeef);
+    ret = MoveFileExA( "winetest_file2", "winetest_dir2", MOVEFILE_REPLACE_EXISTING );
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = MoveFileExA( "winetest_dir3", "winetest_dir2", MOVEFILE_REPLACE_EXISTING );
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %u\n", GetLastError());
+
+    ret = MoveFileExA( "winetest_dir2", "winetest_file2", MOVEFILE_REPLACE_EXISTING );
+    ok(ret, "failed to move file, error %u\n", GetLastError());
+
+    ret = RemoveDirectoryA( "winetest_dir3" );
+    ok(ret, "failed to remove directory, error %u\n", GetLastError());
+    ret = RemoveDirectoryA( "winetest_file2" );
+    ok(ret, "failed to remove directory, error %u\n", GetLastError());
+    ret = DeleteFileA( "winetest_file1" );
+    ok(ret, "failed to delete file, error %u\n", GetLastError());
+    SetCurrentDirectoryA( cwd );
+}
+
 START_TEST(file)
 {
     char temp_path[MAX_PATH];
@@ -5584,4 +5804,6 @@ START_TEST(file)
     test_find_file_stream();
     test_SetFileTime();
     test_ReOpenFile();
+    test_hard_link();
+    test_move_file();
 }

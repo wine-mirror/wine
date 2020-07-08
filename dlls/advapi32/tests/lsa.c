@@ -37,6 +37,8 @@
 
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
+static BOOL (WINAPI *pGetSystemPreferredUILanguages)(DWORD, ULONG*, WCHAR*, ULONG*);
+
 static void test_lsa(void)
 {
     NTSTATUS status;
@@ -332,6 +334,7 @@ static void check_unicode_string_(int line, const LSA_UNICODE_STRING *string, co
 
 static void test_LsaLookupSids(void)
 {
+    WCHAR langW[32];
     char user_buffer[64];
     LSA_OBJECT_ATTRIBUTES attrs = {.Length = sizeof(attrs)};
     TOKEN_USER *user = (TOKEN_USER *)user_buffer;
@@ -341,7 +344,7 @@ static void test_LsaLookupSids(void)
     LSA_HANDLE policy;
     NTSTATUS status;
     HANDLE token;
-    DWORD size;
+    DWORD num, size;
     BOOL ret;
     PSID sid;
 
@@ -387,7 +390,21 @@ static void test_LsaLookupSids(void)
 
     ok(names[0].Use == SidTypeWellKnownGroup, "got type %u\n", names[0].Use);
     ok(!names[0].DomainIndex, "got index %u\n", names[0].DomainIndex);
-    check_unicode_string(&names[0].Name, L"Everyone");
+
+    /* The group name gets translated... but not in all locales */
+    size = ARRAY_SIZE(langW);
+    if (!pGetSystemPreferredUILanguages ||
+        !pGetSystemPreferredUILanguages(MUI_LANGUAGE_ID, &num, langW, &size))
+        langW[0] = 0;
+    if (wcscmp(langW, L"0409") == 0 || wcscmp(langW, L"0411") == 0)
+        /* English and Japanese */
+        check_unicode_string(&names[0].Name, L"Everyone");
+    else if (wcscmp(langW, L"0407") == 0) /* German */
+        check_unicode_string(&names[0].Name, L"Jeder");
+    else if (wcscmp(langW, L"040C") == 0) /* French */
+        check_unicode_string(&names[0].Name, L"Tout le monde");
+    else
+        trace("<Everyone-group>.Name=%s\n", debugstr_w(names[0].Name.Buffer));
 
     LsaFreeMemory(names);
     LsaFreeMemory(list);
@@ -448,6 +465,9 @@ static void test_LsaLookupPrivilegeName(void)
 
 START_TEST(lsa)
 {
+    HMODULE hkernel32 = GetModuleHandleA("kernel32");
+    pGetSystemPreferredUILanguages = (void*)GetProcAddress(hkernel32, "GetSystemPreferredUILanguages");
+
     test_lsa();
     test_LsaLookupNames2();
     test_LsaLookupSids();

@@ -19,6 +19,7 @@
 extern "C" {
 #endif
 
+_ACRTIMP size_t __cdecl __strncnt(const char*,size_t);
 _ACRTIMP int   __cdecl _strcmpi(const char*,const char*);
 _ACRTIMP int   __cdecl _strcoll_l(const char*, const char*, _locale_t);
 _ACRTIMP char* __cdecl _strdup(const char*);
