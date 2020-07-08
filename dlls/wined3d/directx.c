@@ -2914,10 +2914,6 @@ static struct wined3d_adapter *wined3d_adapter_no3d_create(unsigned int ordinal,
     if (!(adapter = heap_alloc_zero(sizeof(*adapter))))
         return NULL;
 
-    wined3d_driver_info_init(&adapter->driver_info, &gpu_description, 0, 0);
-    adapter->vram_bytes_used = 0;
-    TRACE("Emulating 0x%s bytes of video ram.\n", wine_dbgstr_longlong(adapter->driver_info.vram_bytes));
-
     if (!wined3d_adapter_init(adapter, ordinal, &wined3d_adapter_no3d_ops))
     {
         heap_free(adapter);
@@ -2929,6 +2925,10 @@ static struct wined3d_adapter *wined3d_adapter_no3d_create(unsigned int ordinal,
         heap_free(adapter);
         return NULL;
     }
+
+    wined3d_driver_info_init(&adapter->driver_info, &gpu_description, 0, 0);
+    adapter->vram_bytes_used = 0;
+    TRACE("Emulating 0x%s bytes of video ram.\n", wine_dbgstr_longlong(adapter->driver_info.vram_bytes));
 
     adapter->vertex_pipe = &none_vertex_pipe;
     adapter->fragment_pipe = &none_fragment_pipe;
