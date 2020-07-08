@@ -432,7 +432,7 @@ static void WINAPI query_symbol_file( TP_CALLBACK_INSTANCE *instance, void *cont
     IRP *irp = context;
     MOUNTMGR_TARGET_NAME *result;
     CFStringRef query_cfstring;
-    WCHAR *unix_buf = NULL;
+    WCHAR *filename, *unix_buf = NULL;
     ANSI_STRING unix_path;
     UNICODE_STRING path;
     MDQueryRef mdquery;
@@ -489,16 +489,19 @@ static void WINAPI query_symbol_file( TP_CALLBACK_INSTANCE *instance, void *cont
     HeapFree( GetProcessHeap(), 0, unix_buf );
     if (status) goto done;
 
-    status = wine_unix_to_nt_file_name( &unix_path, &path );
+    filename = wine_get_dos_file_name( unix_path.Buffer );
     RtlFreeAnsiString( &unix_path );
-    if (status) goto done;
-
+    if (!filename)
+    {
+        status = STATUS_NO_SUCH_FILE;
+        goto done;
+    }
     result = irp->AssociatedIrp.SystemBuffer;
-    result->DeviceNameLength = path.Length;
-    size = FIELD_OFFSET(MOUNTMGR_TARGET_NAME, DeviceName[path.Length / sizeof(WCHAR)]);
+    result->DeviceNameLength = lstrlenW(filename) * sizeof(WCHAR);
+    size = FIELD_OFFSET(MOUNTMGR_TARGET_NAME, DeviceName[lstrlenW(filename)]);
     if (size <= IoGetCurrentIrpStackLocation(irp)->Parameters.DeviceIoControl.OutputBufferLength)
     {
-        memcpy( result->DeviceName, path.Buffer, path.Length );
+        memcpy( result->DeviceName, filename, lstrlenW(filename) * sizeof(WCHAR) );
         irp->IoStatus.Information = size;
         status = STATUS_SUCCESS;
     }
@@ -507,7 +510,7 @@ static void WINAPI query_symbol_file( TP_CALLBACK_INSTANCE *instance, void *cont
         irp->IoStatus.Information = sizeof(*result);
         status = STATUS_BUFFER_OVERFLOW;
     }
-    RtlFreeUnicodeString( &path );
+    RtlFreeHeap( GetProcessHeap(), 0, filename );
 
 done:
     irp->IoStatus.u.Status = status;

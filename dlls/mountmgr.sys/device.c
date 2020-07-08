@@ -1017,32 +1017,26 @@ static struct volume *find_matching_volume( const char *udi, const char *device,
 static BOOL get_volume_device_info( struct volume *volume )
 {
     const char *unix_device = volume->device->unix_device;
-    ANSI_STRING unix_name;
-    UNICODE_STRING nt_name;
-    OBJECT_ATTRIBUTES attr;
+    WCHAR *name;
     HANDLE handle;
-    NTSTATUS ret;
     CDROM_TOC toc;
     DWORD size;
     BYTE superblock[SUPERBLOCK_SIZE];
-    IO_STATUS_BLOCK io;
 
     if (!unix_device)
         return FALSE;
 
-    RtlInitAnsiString( &unix_name, unix_device );
-    if ((ret = wine_unix_to_nt_file_name( &unix_name, &nt_name )))
+    if (!(name = wine_get_dos_file_name( unix_device )))
     {
-        ERR("Failed to convert %s to NT, status %#x\n", debugstr_a(unix_device), ret);
+        ERR("Failed to convert %s to NT, err %u\n", debugstr_a(unix_device), GetLastError());
         return FALSE;
     }
-
-    InitializeObjectAttributes( &attr, &nt_name, OBJ_CASE_INSENSITIVE, 0, NULL );
-    if ((ret = NtOpenFile( &handle, GENERIC_READ | SYNCHRONIZE, &attr, &io, FILE_SHARE_READ | FILE_SHARE_WRITE,
-                           FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT )))
+    handle = CreateFileW( name, GENERIC_READ | SYNCHRONIZE, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                          NULL, OPEN_EXISTING, 0, 0 );
+    RtlFreeHeap( GetProcessHeap(), 0, name );
+    if (handle == INVALID_HANDLE_VALUE)
     {
-        WARN("Failed to open %s, status %#x\n", debugstr_a(unix_device), ret);
-        RtlFreeUnicodeString( &nt_name );
+        WARN("Failed to open %s, err %u\n", debugstr_a(unix_device), GetLastError());
         return FALSE;
     }
 
