@@ -301,10 +301,24 @@ WCHAR * CDECL wine_get_dos_file_name( LPCSTR str )
 {
     UNICODE_STRING nt_name;
     ANSI_STRING unix_name;
+    NTSTATUS status;
+    WCHAR *buffer;
     DWORD len;
 
-    RtlInitAnsiString( &unix_name, str );
-    if (!set_ntstatus( wine_unix_to_nt_file_name( &unix_name, &nt_name ))) return NULL;
+    if (str[0] != '/')  /* relative path name */
+    {
+        len = strlen( str ) + 1;
+        if (!(buffer = RtlAllocateHeap( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) return NULL;
+        MultiByteToWideChar( CP_UNIXCP, 0, str, len, buffer, len );
+        status = RtlDosPathNameToNtPathName_U_WithStatus( buffer, &nt_name, NULL, NULL );
+        RtlFreeHeap( GetProcessHeap(), 0, buffer );
+    }
+    else
+    {
+        RtlInitAnsiString( &unix_name, str );
+        status = wine_unix_to_nt_file_name( &unix_name, &nt_name );
+    }
+    if (!set_ntstatus( status )) return NULL;
     if (nt_name.Buffer[5] == ':')
     {
         /* get rid of the \??\ prefix */

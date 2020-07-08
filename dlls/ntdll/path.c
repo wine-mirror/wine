@@ -891,23 +891,10 @@ NTSTATUS WINAPI RtlSetCurrentDirectory_U(const UNICODE_STRING* dir)
  */
 NTSTATUS CDECL wine_unix_to_nt_file_name( const ANSI_STRING *name, UNICODE_STRING *nt )
 {
-    unsigned int lenW, lenA = name->Length;
+    unsigned int lenA = name->Length;
     const char *path = name->Buffer;
 
     if (!lenA) return STATUS_INVALID_PARAMETER;
-
-    if (path[0] != '/')  /* relative path name */
-    {
-        WCHAR *tmp;
-        NTSTATUS status;
-
-        if (!(tmp = RtlAllocateHeap( GetProcessHeap(), 0, (lenA + 1) * sizeof(WCHAR) )))
-            return STATUS_NO_MEMORY;
-        lenW = ntdll_umbstowcs( path, lenA, tmp, lenA );
-        tmp[lenW] = 0;
-        status = RtlDosPathNameToNtPathName_U_WithStatus( tmp, nt, NULL, NULL );
-        RtlFreeHeap( GetProcessHeap(), 0, tmp );
-        return status;
-    }
+    if (path[0] != '/') return STATUS_INVALID_PARAMETER; /* relative path not supported */
     return unix_funcs->unix_to_nt_file_name( name, nt );
 }
