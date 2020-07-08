@@ -415,7 +415,7 @@ static inline int FUNC_NAME(pf_output_hex_fp)(FUNC_NAME(puts_clbk) pf_puts, void
         { '0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F' }
     };
 
-    APICHAR pfx[16], sfx[8], *p;
+    APICHAR pfx[4+MANT_BITS/4+1], sfx[8], *p;
     ULONGLONG mant;
     int len = 0, sfx_len = 0, r, exp;
 
