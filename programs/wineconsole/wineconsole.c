@@ -242,7 +242,7 @@ static void WINECON_SetColors(struct inner_data *data, const struct config_data*
  */
 void	WINECON_GrabChanges(struct inner_data* data)
 {
-    struct console_renderer_event	evts[256];
+    struct condrv_renderer_event evts[256];
     int i, ev_found;
     DWORD num;
     HANDLE h;

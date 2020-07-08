@@ -115,7 +115,7 @@ struct console_input_events
     struct fd                     *fd;          /* pseudo-fd for ioctls */
     int                            num_alloc;   /* number of allocated events */
     int                            num_used;    /* number of actually used events */
-    struct console_renderer_event *events;
+    struct condrv_renderer_event  *events;
     struct async_queue             read_q;      /* read queue */
 };
 
@@ -354,7 +354,7 @@ static int get_renderer_events( struct console_input_events* evts, struct async 
 
 /* add an event to the console's renderer events list */
 static void console_input_events_append( struct console_input* console,
-					 struct console_renderer_event* evt)
+					 struct condrv_renderer_event* evt)
 {
     struct console_input_events* evts;
     int collapsed = FALSE;
@@ -366,7 +366,7 @@ static void console_input_events_append( struct console_input* console,
     /* try to collapse evt into current queue's events */
     if (evts->num_used)
     {
-        struct console_renderer_event* last = &evts->events[evts->num_used - 1];
+        struct condrv_renderer_event* last = &evts->events[evts->num_used - 1];
 
         if (last->event == CONSOLE_RENDERER_UPDATE_EVENT &&
             evt->event == CONSOLE_RENDERER_UPDATE_EVENT)
@@ -397,21 +397,6 @@ static void console_input_events_append( struct console_input* console,
         release_object( async );
     }
     if (evts->num_used) wake_up( &evts->obj, 0 );
-}
-
-/* retrieves events from the console's renderer events list */
-static void console_input_events_get( struct console_input_events* evts )
-{
-    data_size_t num = get_reply_max_size() / sizeof(evts->events[0]);
-
-    if (num > evts->num_used) num = evts->num_used;
-    set_reply_data( evts->events, num * sizeof(evts->events[0]) );
-    if (num < evts->num_used)
-    {
-        memmove( &evts->events[0], &evts->events[num],
-                 (evts->num_used - num) * sizeof(evts->events[0]) );
-    }
-    evts->num_used -= num;
 }
 
 static struct console_input_events *create_console_input_events(void)
@@ -491,7 +476,7 @@ static struct object *create_console_input( struct thread* renderer, int fd )
 static void generate_sb_initial_events( struct console_input *console_input )
 {
     struct screen_buffer *screen_buffer = console_input->active;
-    struct console_renderer_event evt;
+    struct condrv_renderer_event evt;
 
     evt.event = CONSOLE_RENDERER_ACTIVE_SB_EVENT;
     memset(&evt.u, 0, sizeof(evt.u));
@@ -606,7 +591,7 @@ int free_console( struct process *process )
     if (--console->num_proc == 0 && console->renderer)
     {
 	/* all processes have terminated... tell the renderer to terminate too */
-	struct console_renderer_event evt;
+	struct condrv_renderer_event evt;
 	evt.event = CONSOLE_RENDERER_EXIT_EVENT;
         memset(&evt.u, 0, sizeof(evt.u));
 	console_input_events_append( console, &evt );
@@ -873,7 +858,7 @@ static int set_console_input_info( const struct set_console_input_info_request *
 				   const WCHAR *title, data_size_t len )
 {
     struct console_input *console;
-    struct console_renderer_event evt;
+    struct condrv_renderer_event evt;
 
     if (!(console = console_input_get( req->handle, FILE_WRITE_PROPERTIES ))) goto error;
     if (console_input_is_bare(console) &&
@@ -1030,7 +1015,7 @@ static int change_screen_buffer_size( struct screen_buffer *screen_buffer,
 static int set_console_output_info( struct screen_buffer *screen_buffer,
                                     const struct set_console_output_info_request *req )
 {
-    struct console_renderer_event evt;
+    struct condrv_renderer_event evt;
     data_size_t font_name_len, offset;
     WCHAR *font_name;
 
@@ -1407,7 +1392,7 @@ static int write_console_output( struct screen_buffer *screen_buffer, data_size_
 
     if (i && screen_buffer == screen_buffer->input->active)
     {
-        struct console_renderer_event evt;
+        struct condrv_renderer_event evt;
         evt.event = CONSOLE_RENDERER_UPDATE_EVENT;
         memset(&evt.u, 0, sizeof(evt.u));
         evt.u.update.top    = y + x / screen_buffer->width;
@@ -1458,7 +1443,7 @@ static int fill_console_output( struct screen_buffer *screen_buffer, char_info_t
 
     if (count && screen_buffer == screen_buffer->input->active)
     {
-        struct console_renderer_event evt;
+        struct condrv_renderer_event evt;
         evt.event = CONSOLE_RENDERER_UPDATE_EVENT;
         memset(&evt.u, 0, sizeof(evt.u));
         evt.u.update.top    = y;
@@ -1526,7 +1511,7 @@ static void scroll_console_output( struct screen_buffer *screen_buffer, int xsrc
 {
     int				j;
     char_info_t *psrc, *pdst;
-    struct console_renderer_event evt;
+    struct condrv_renderer_event evt;
 
     if (xsrc < 0 || ysrc < 0 || xdst < 0 || ydst < 0 ||
 	xsrc + w > screen_buffer->width  ||
@@ -1818,18 +1803,6 @@ DECL_HANDLER(alloc_console)
 DECL_HANDLER(free_console)
 {
     free_console( current->process );
-}
-
-/* let the renderer peek the events it's waiting on */
-DECL_HANDLER(get_console_renderer_events)
-{
-    struct console_input_events *evt;
-
-    evt = (struct console_input_events *)get_handle_obj( current->process, req->handle,
-                                                         FILE_READ_PROPERTIES, &console_input_events_ops );
-    if (!evt) return;
-    console_input_events_get( evt );
-    release_object( evt );
 }
 
 /* open a handle to the process console */

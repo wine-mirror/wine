@@ -2028,16 +2028,6 @@ static void dump_free_console_request( const struct free_console_request *req )
 {
 }
 
-static void dump_get_console_renderer_events_request( const struct get_console_renderer_events_request *req )
-{
-    fprintf( stderr, " handle=%04x", req->handle );
-}
-
-static void dump_get_console_renderer_events_reply( const struct get_console_renderer_events_reply *req )
-{
-    dump_varargs_bytes( " data=", cur_size );
-}
-
 static void dump_open_console_request( const struct open_console_request *req )
 {
     fprintf( stderr, " from=%04x", req->from );
@@ -4652,7 +4642,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_set_socket_deferred_request,
     (dump_func)dump_alloc_console_request,
     (dump_func)dump_free_console_request,
-    (dump_func)dump_get_console_renderer_events_request,
     (dump_func)dump_open_console_request,
     (dump_func)dump_attach_console_request,
     (dump_func)dump_get_console_wait_event_request,
@@ -4948,7 +4937,6 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     NULL,
     (dump_func)dump_alloc_console_reply,
     NULL,
-    (dump_func)dump_get_console_renderer_events_reply,
     (dump_func)dump_open_console_reply,
     (dump_func)dump_attach_console_reply,
     (dump_func)dump_get_console_wait_event_reply,
@@ -5244,7 +5232,6 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "set_socket_deferred",
     "alloc_console",
     "free_console",
-    "get_console_renderer_events",
     "open_console",
     "attach_console",
     "get_console_wait_event",

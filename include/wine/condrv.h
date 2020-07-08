@@ -41,4 +41,53 @@ struct condrv_input_info
     unsigned int  input_count;    /* number of available input records */
 };
 
+/* IOCTL_CONDRV_GET_RENDERER_EVENTS result */
+struct condrv_renderer_event
+{
+    short event;
+    union
+    {
+        struct
+        {
+            short top;
+            short bottom;
+        } update;
+        struct
+        {
+            short width;
+            short height;
+        } resize;
+        struct
+        {
+            short x;
+            short y;
+        } cursor_pos;
+        struct
+        {
+            short visible;
+            short size;
+        } cursor_geom;
+        struct
+        {
+            short left;
+            short top;
+            short width;
+            short height;
+        } display;
+    } u;
+};
+
+enum condrv_renderer_event_type
+{
+    CONSOLE_RENDERER_NONE_EVENT,
+    CONSOLE_RENDERER_TITLE_EVENT,
+    CONSOLE_RENDERER_ACTIVE_SB_EVENT,
+    CONSOLE_RENDERER_SB_RESIZE_EVENT,
+    CONSOLE_RENDERER_UPDATE_EVENT,
+    CONSOLE_RENDERER_CURSOR_POS_EVENT,
+    CONSOLE_RENDERER_CURSOR_GEOM_EVENT,
+    CONSOLE_RENDERER_DISPLAY_EVENT,
+    CONSOLE_RENDERER_EXIT_EVENT,
+};
+
 #endif /* _INC_CONDRV */

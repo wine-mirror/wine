@@ -1843,63 +1843,6 @@ struct free_console_reply
 };
 
 
-#define CONSOLE_RENDERER_NONE_EVENT        0x00
-#define CONSOLE_RENDERER_TITLE_EVENT       0x01
-#define CONSOLE_RENDERER_ACTIVE_SB_EVENT   0x02
-#define CONSOLE_RENDERER_SB_RESIZE_EVENT   0x03
-#define CONSOLE_RENDERER_UPDATE_EVENT      0x04
-#define CONSOLE_RENDERER_CURSOR_POS_EVENT  0x05
-#define CONSOLE_RENDERER_CURSOR_GEOM_EVENT 0x06
-#define CONSOLE_RENDERER_DISPLAY_EVENT     0x07
-#define CONSOLE_RENDERER_EXIT_EVENT        0x08
-struct console_renderer_event
-{
-    short event;
-    union
-    {
-        struct
-        {
-            short top;
-            short bottom;
-        } update;
-        struct
-        {
-            short width;
-            short height;
-        } resize;
-        struct
-        {
-            short x;
-            short y;
-        } cursor_pos;
-        struct
-        {
-            short visible;
-            short size;
-        } cursor_geom;
-        struct
-        {
-            short left;
-            short top;
-            short width;
-            short height;
-        } display;
-    } u;
-};
-
-
-struct get_console_renderer_events_request
-{
-    struct request_header __header;
-    obj_handle_t handle;
-};
-struct get_console_renderer_events_reply
-{
-    struct reply_header __header;
-    /* VARARG(data,bytes); */
-};
-
-
 
 struct open_console_request
 {
@@ -5823,7 +5766,6 @@ enum request
     REQ_set_socket_deferred,
     REQ_alloc_console,
     REQ_free_console,
-    REQ_get_console_renderer_events,
     REQ_open_console,
     REQ_attach_console,
     REQ_get_console_wait_event,
@@ -6123,7 +6065,6 @@ union generic_request
     struct set_socket_deferred_request set_socket_deferred_request;
     struct alloc_console_request alloc_console_request;
     struct free_console_request free_console_request;
-    struct get_console_renderer_events_request get_console_renderer_events_request;
     struct open_console_request open_console_request;
     struct attach_console_request attach_console_request;
     struct get_console_wait_event_request get_console_wait_event_request;
@@ -6421,7 +6362,6 @@ union generic_reply
     struct set_socket_deferred_reply set_socket_deferred_reply;
     struct alloc_console_reply alloc_console_reply;
     struct free_console_reply free_console_reply;
-    struct get_console_renderer_events_reply get_console_renderer_events_reply;
     struct open_console_reply open_console_reply;
     struct attach_console_reply attach_console_reply;
     struct get_console_wait_event_reply get_console_wait_event_reply;
@@ -6655,7 +6595,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 620
+#define SERVER_PROTOCOL_VERSION 621
 
 /* ### protocol_version end ### */
 
