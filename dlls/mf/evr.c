@@ -478,6 +478,10 @@ static HRESULT WINAPI video_renderer_get_service_GetService(IMFGetService *iface
     {
         hr = IMFTransform_QueryInterface(renderer->mixer, &IID_IMFGetService, (void **)&gs);
     }
+    else if (IsEqualGUID(service, &MR_VIDEO_RENDER_SERVICE))
+    {
+        hr = IMFVideoPresenter_QueryInterface(renderer->presenter, &IID_IMFGetService, (void **)&gs);
+    }
     else
     {
         FIXME("Unsupported service %s.\n", debugstr_guid(service));
