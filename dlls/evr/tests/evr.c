@@ -450,6 +450,10 @@ static void test_default_mixer(void)
     hr = IMFGetService_GetService(gs, &MR_VIDEO_MIXER_SERVICE, &IID_IMFVideoProcessor, (void **)&processor);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
+    hr = IMFGetService_GetService(gs, &MR_VIDEO_MIXER_SERVICE, &IID_IMFVideoMixerControl, (void **)&unk);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IUnknown_Release(unk);
+
     hr = IMFVideoProcessor_GetBackgroundColor(processor, NULL);
     ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
 

@@ -1021,7 +1021,9 @@ static HRESULT WINAPI video_mixer_getservice_GetService(IMFGetService *iface, RE
     {
         if (IsEqualIID(riid, &IID_IMFVideoMixerBitmap) ||
                 IsEqualIID(riid, &IID_IMFVideoProcessor) ||
-                IsEqualIID(riid, &IID_IMFVideoPositionMapper))
+                IsEqualIID(riid, &IID_IMFVideoPositionMapper) ||
+                IsEqualIID(riid, &IID_IMFVideoMixerControl) ||
+                IsEqualIID(riid, &IID_IMFVideoMixerControl2))
         {
             return IMFGetService_QueryInterface(iface, riid, obj);
         }
