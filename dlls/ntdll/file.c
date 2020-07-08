@@ -214,40 +214,6 @@ NTSTATUS WINAPI NtSetVolumeInformationFile( HANDLE handle, IO_STATUS_BLOCK *io, 
     return unix_funcs->NtSetVolumeInformationFile( handle, io, info, length, class );
 }
 
-NTSTATUS server_get_unix_name( HANDLE handle, ANSI_STRING *unix_name )
-{
-    data_size_t size = 1024;
-    NTSTATUS ret;
-    char *name;
-
-    for (;;)
-    {
-        name = RtlAllocateHeap( GetProcessHeap(), 0, size + 1 );
-        if (!name) return STATUS_NO_MEMORY;
-        unix_name->MaximumLength = size + 1;
-
-        SERVER_START_REQ( get_handle_unix_name )
-        {
-            req->handle = wine_server_obj_handle( handle );
-            wine_server_set_reply( req, name, size );
-            ret = wine_server_call( req );
-            size = reply->name_len;
-        }
-        SERVER_END_REQ;
-
-        if (!ret)
-        {
-            name[size] = 0;
-            unix_name->Buffer = name;
-            unix_name->Length = size;
-            break;
-        }
-        RtlFreeHeap( GetProcessHeap(), 0, name );
-        if (ret != STATUS_BUFFER_OVERFLOW) break;
-    }
-    return ret;
-}
-
 
 /******************************************************************************
  *  NtQueryInformationFile		[NTDLL.@]

@@ -89,8 +89,6 @@ extern const WCHAR syswow64_dir[] DECLSPEC_HIDDEN;
 
 extern const struct unix_funcs *unix_funcs DECLSPEC_HIDDEN;
 
-/* file I/O */
-extern NTSTATUS server_get_unix_name( HANDLE handle, ANSI_STRING *unix_name ) DECLSPEC_HIDDEN;
 extern void init_directories(void) DECLSPEC_HIDDEN;
 
 extern struct _KUSER_SHARED_DATA *user_shared_data DECLSPEC_HIDDEN;

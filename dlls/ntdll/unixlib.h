@@ -28,7 +28,7 @@ struct msghdr;
 struct _DISPATCHER_CONTEXT;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 72
+#define NTDLL_UNIXLIB_VERSION 73
 
 struct unix_funcs
 {
@@ -161,6 +161,8 @@ struct unix_funcs
                                                  void *buffer, ULONG len, ULONG *ret_len );
     NTSTATUS      (WINAPI *NtQueryMutant)( HANDLE handle, MUTANT_INFORMATION_CLASS class,
                                            void *info, ULONG len, ULONG *ret_len );
+    NTSTATUS      (WINAPI *NtQueryObject)( HANDLE handle, OBJECT_INFORMATION_CLASS info_class,
+                                           void *ptr, ULONG len, ULONG *used_len );
     NTSTATUS      (WINAPI *NtQueryPerformanceCounter)( LARGE_INTEGER *counter, LARGE_INTEGER *frequency );
     NTSTATUS      (WINAPI *NtQuerySection)( HANDLE handle, SECTION_INFORMATION_CLASS class,
                                             void *ptr, SIZE_T size, SIZE_T *ret_size );
@@ -211,6 +213,8 @@ struct unix_funcs
                                                   void *ptr, ULONG len, FILE_INFORMATION_CLASS class );
     NTSTATUS      (WINAPI *NtSetInformationJobObject)( HANDLE handle, JOBOBJECTINFOCLASS class,
                                                        void *info, ULONG len );
+    NTSTATUS      (WINAPI *NtSetInformationObject)( HANDLE handle, OBJECT_INFORMATION_CLASS info_class,
+                                                    void *ptr, ULONG len );
     NTSTATUS      (WINAPI *NtSetInformationProcess)( HANDLE handle, PROCESSINFOCLASS class,
                                                      void *info, ULONG size );
     NTSTATUS      (WINAPI *NtSetInformationThread)( HANDLE handle, THREADINFOCLASS class,
