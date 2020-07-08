@@ -106,7 +106,6 @@ static const struct object_ops console_input_ops =
 
 static void console_input_events_dump( struct object *obj, int verbose );
 static void console_input_events_destroy( struct object *obj );
-static int console_input_events_signaled( struct object *obj, struct wait_queue_entry *entry );
 static struct fd *console_input_events_get_fd( struct object *obj );
 
 struct console_input_events
@@ -126,7 +125,7 @@ static const struct object_ops console_input_events_ops =
     no_get_type,                      /* get_type */
     add_queue,                        /* add_queue */
     remove_queue,                     /* remove_queue */
-    console_input_events_signaled,    /* signaled */
+    NULL,                             /* signaled */
     no_satisfied,                     /* satisfied */
     no_signal,                        /* signal */
     console_input_events_get_fd,      /* get_fd */
@@ -308,14 +307,6 @@ static void console_input_events_destroy( struct object *obj )
     free( evts->events );
 }
 
-/* the renderer events list is signaled when it's not empty */
-static int console_input_events_signaled( struct object *obj, struct wait_queue_entry *entry )
-{
-    struct console_input_events *evts = (struct console_input_events *)obj;
-    assert( obj->ops == &console_input_events_ops );
-    return (evts->num_used != 0);
-}
-
 static struct fd *console_input_events_get_fd( struct object* obj )
 {
     struct console_input_events *evts = (struct console_input_events*)obj;
@@ -396,7 +387,6 @@ static void console_input_events_append( struct console_input* console,
         get_renderer_events( evts, async );
         release_object( async );
     }
-    if (evts->num_used) wake_up( &evts->obj, 0 );
 }
 
 static struct console_input_events *create_console_input_events(void)
