@@ -3448,6 +3448,50 @@ BOOL WINAPI DECLSPEC_HOTPATCH ReadFileScatter( HANDLE file, FILE_SEGMENT_ELEMENT
 }
 
 
+/***********************************************************************
+ *	RemoveDirectoryA   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH RemoveDirectoryA( LPCSTR path )
+{
+    WCHAR *pathW;
+
+    if (!(pathW = file_name_AtoW( path, FALSE ))) return FALSE;
+    return RemoveDirectoryW( pathW );
+}
+
+
+/***********************************************************************
+ *	RemoveDirectoryW   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH RemoveDirectoryW( LPCWSTR path )
+{
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nt_name;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+    HANDLE handle;
+
+    TRACE( "%s\n", debugstr_w(path) );
+
+    status = RtlDosPathNameToNtPathName_U_WithStatus( path, &nt_name, NULL, NULL );
+    if (!set_ntstatus( status )) return FALSE;
+
+    InitializeObjectAttributes( &attr, &nt_name, OBJ_CASE_INSENSITIVE, 0, NULL );
+    status = NtOpenFile( &handle, DELETE | SYNCHRONIZE, &attr, &io,
+                         FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                         FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT );
+    RtlFreeUnicodeString( &nt_name );
+
+    if (!status)
+    {
+        FILE_DISPOSITION_INFORMATION info = { TRUE };
+        status = NtSetInformationFile( handle, &io, &info, sizeof(info), FileDispositionInformation );
+        NtClose( handle );
+    }
+    return set_ntstatus( status );
+}
+
+
 /**************************************************************************
  *	SetEndOfFile   (kernelbase.@)
  */

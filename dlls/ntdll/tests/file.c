@@ -3082,16 +3082,17 @@ todo_wine
     fileDeleted = RemoveDirectoryA( buffer );
     ok( fileDeleted, "Directory should have been deleted\n" );
     fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
-todo_wine
     ok( !fileDeleted, "Directory shouldn't have been deleted\n" );
     res = nt_get_file_attrs( buffer, &fdi2 );
 todo_wine
     ok( res == STATUS_DELETE_PENDING, "got %#x\n", res );
     /* can't open the deleted directory */
     handle2 = CreateFileA(buffer, DELETE, FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
+todo_wine
     ok( handle2 == INVALID_HANDLE_VALUE, "CreateFile should fail\n" );
 todo_wine
     ok(GetLastError() == ERROR_ACCESS_DENIED, "got %u\n", GetLastError());
+    if (handle2 != INVALID_HANDLE_VALUE) CloseHandle( handle2 );
     CloseHandle( handle );
     fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
     ok( fileDeleted, "Directory should have been deleted\n" );

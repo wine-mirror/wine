@@ -229,68 +229,6 @@ BOOL WINAPI CreateDirectoryExA( LPCSTR template, LPCSTR path, LPSECURITY_ATTRIBU
 
 
 /***********************************************************************
- *           RemoveDirectoryW   (KERNEL32.@)
- */
-BOOL WINAPI RemoveDirectoryW( LPCWSTR path )
-{
-    OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING nt_name;
-    ANSI_STRING unix_name;
-    IO_STATUS_BLOCK io;
-    NTSTATUS status;
-    HANDLE handle;
-    BOOL ret = FALSE;
-
-    TRACE( "%s\n", debugstr_w(path) );
-
-    if (!RtlDosPathNameToNtPathName_U( path, &nt_name, NULL, NULL ))
-    {
-        SetLastError( ERROR_PATH_NOT_FOUND );
-        return FALSE;
-    }
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.Attributes = OBJ_CASE_INSENSITIVE;
-    attr.ObjectName = &nt_name;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
-
-    if (!set_ntstatus( NtOpenFile( &handle, DELETE | SYNCHRONIZE, &attr, &io,
-                                   FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                                   FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT )))
-    {
-        RtlFreeUnicodeString( &nt_name );
-        return FALSE;
-    }
-
-    status = wine_nt_to_unix_file_name( &nt_name, &unix_name, FILE_OPEN );
-    RtlFreeUnicodeString( &nt_name );
-    if (!set_ntstatus( status ))
-    {
-        NtClose( handle );
-        return FALSE;
-    }
-
-    if (!(ret = (rmdir( unix_name.Buffer ) != -1))) FILE_SetDosError();
-    RtlFreeAnsiString( &unix_name );
-    NtClose( handle );
-    return ret;
-}
-
-
-/***********************************************************************
- *           RemoveDirectoryA   (KERNEL32.@)
- */
-BOOL WINAPI RemoveDirectoryA( LPCSTR path )
-{
-    WCHAR *pathW;
-
-    if (!(pathW = FILE_name_AtoW( path, FALSE ))) return FALSE;
-    return RemoveDirectoryW( pathW );
-}
-
-
-/***********************************************************************
  *           GetSystemDirectoryW   (KERNEL32.@)
  *
  * See comment for GetWindowsDirectoryA.

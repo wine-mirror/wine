@@ -1331,8 +1331,8 @@
 @ stdcall ReleaseSemaphoreWhenCallbackReturns(ptr long long) ntdll.TpCallbackReleaseSemaphoreOnCompletion
 # @ stub ReleaseStateLock
 @ stdcall RemapPredefinedHandleInternal(long long)
-@ stdcall RemoveDirectoryA(str) kernel32.RemoveDirectoryA
-@ stdcall RemoveDirectoryW(wstr) kernel32.RemoveDirectoryW
+@ stdcall RemoveDirectoryA(str)
+@ stdcall RemoveDirectoryW(wstr)
 @ stdcall RemoveDllDirectory(ptr)
 # @ stub RemovePackageStatus
 # @ stub RemovePackageStatusForUser
