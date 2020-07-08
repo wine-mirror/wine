@@ -3235,6 +3235,7 @@ static void test_evr(void)
     IMFActivate *activate;
     DWORD flags, count;
     IMFGetService *gs;
+    IUnknown *unk;
     UINT64 value;
     HRESULT hr;
 
@@ -3280,6 +3281,11 @@ static void test_evr(void)
 
     hr = IMFMediaSink_QueryInterface(sink, &IID_IMFGetService, (void **)&gs);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFGetService_GetService(gs, &MR_VIDEO_MIXER_SERVICE, &IID_IMFVideoMixerControl, (void **)&unk);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IUnknown_Release(unk);
+
     IMFGetService_Release(gs);
 
     hr = IMFActivate_ShutdownObject(activate);

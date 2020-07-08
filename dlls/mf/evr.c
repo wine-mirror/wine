@@ -468,9 +468,28 @@ static ULONG WINAPI video_renderer_get_service_Release(IMFGetService *iface)
 
 static HRESULT WINAPI video_renderer_get_service_GetService(IMFGetService *iface, REFGUID service, REFIID riid, void **obj)
 {
-    FIXME("%p, %s, %s, %p.\n", iface, debugstr_guid(service), debugstr_guid(riid), obj);
+    struct video_renderer *renderer = impl_from_IMFGetService(iface);
+    HRESULT hr = E_NOINTERFACE;
+    IMFGetService *gs = NULL;
 
-    return E_NOTIMPL;
+    TRACE("%p, %s, %s, %p.\n", iface, debugstr_guid(service), debugstr_guid(riid), obj);
+
+    if (IsEqualGUID(service, &MR_VIDEO_MIXER_SERVICE))
+    {
+        hr = IMFTransform_QueryInterface(renderer->mixer, &IID_IMFGetService, (void **)&gs);
+    }
+    else
+    {
+        FIXME("Unsupported service %s.\n", debugstr_guid(service));
+    }
+
+    if (gs)
+    {
+        hr = IMFGetService_GetService(gs, service, riid, obj);
+        IMFGetService_Release(gs);
+    }
+
+    return hr;
 }
 
 static const IMFGetServiceVtbl video_renderer_get_service_vtbl =
