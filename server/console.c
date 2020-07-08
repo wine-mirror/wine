@@ -79,6 +79,7 @@ static void console_input_destroy( struct object *obj );
 static struct fd *console_input_get_fd( struct object *obj );
 static struct object *console_input_open_file( struct object *obj, unsigned int access,
                                                unsigned int sharing, unsigned int options );
+static enum server_fd_type console_get_fd_type( struct fd *fd );
 
 static const struct object_ops console_input_ops =
 {
@@ -106,13 +107,15 @@ static const struct object_ops console_input_ops =
 static void console_input_events_dump( struct object *obj, int verbose );
 static void console_input_events_destroy( struct object *obj );
 static int console_input_events_signaled( struct object *obj, struct wait_queue_entry *entry );
+static struct fd *console_input_events_get_fd( struct object *obj );
 
 struct console_input_events
 {
-    struct object         obj;         /* object header */
-    int			  num_alloc;   /* number of allocated events */
-    int 		  num_used;    /* number of actually used events */
-    struct console_renderer_event*	events;
+    struct object                  obj;         /* object header */
+    struct fd                     *fd;          /* pseudo-fd for ioctls */
+    int                            num_alloc;   /* number of allocated events */
+    int                            num_used;    /* number of actually used events */
+    struct console_renderer_event *events;
 };
 
 static const struct object_ops console_input_events_ops =
@@ -125,7 +128,7 @@ static const struct object_ops console_input_events_ops =
     console_input_events_signaled,    /* signaled */
     no_satisfied,                     /* satisfied */
     no_signal,                        /* signal */
-    no_get_fd,                        /* get_fd */
+    console_input_events_get_fd,      /* get_fd */
     default_fd_map_access,            /* map_access */
     default_get_sd,                   /* get_sd */
     default_set_sd,                   /* set_sd */
@@ -136,6 +139,21 @@ static const struct object_ops console_input_events_ops =
     no_kernel_obj_list,               /* get_kernel_obj_list */
     no_close_handle,                  /* close_handle */
     console_input_events_destroy      /* destroy */
+};
+
+static const struct fd_ops console_input_events_fd_ops =
+{
+    default_fd_get_poll_events,   /* get_poll_events */
+    default_poll_event,           /* poll_event */
+    console_get_fd_type,          /* get_fd_type */
+    no_fd_read,                   /* read */
+    no_fd_write,                  /* write */
+    no_fd_flush,                  /* flush */
+    no_fd_get_file_info,          /* get_file_info */
+    no_fd_get_volume_info,        /* get_volume_info */
+    default_fd_ioctl,             /* ioctl */
+    default_fd_queue_async,       /* queue_async */
+    default_fd_reselect_async     /* reselect_async */
 };
 
 struct font_info
@@ -201,7 +219,6 @@ static const struct object_ops screen_buffer_ops =
     screen_buffer_destroy             /* destroy */
 };
 
-static enum server_fd_type console_get_fd_type( struct fd *fd );
 static int console_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 
 static const struct fd_ops console_fd_ops =
@@ -283,6 +300,7 @@ static void console_input_events_destroy( struct object *obj )
 {
     struct console_input_events *evts = (struct console_input_events *)obj;
     assert( obj->ops == &console_input_events_ops );
+    if (evts->fd) release_object( evts->fd );
     free( evts->events );
 }
 
@@ -292,6 +310,13 @@ static int console_input_events_signaled( struct object *obj, struct wait_queue_
     struct console_input_events *evts = (struct console_input_events *)obj;
     assert( obj->ops == &console_input_events_ops );
     return (evts->num_used != 0);
+}
+
+static struct fd *console_input_events_get_fd( struct object* obj )
+{
+    struct console_input_events *evts = (struct console_input_events*)obj;
+    assert( obj->ops == &console_input_events_ops );
+    return (struct fd*)grab_object( evts->fd );
 }
 
 /* add an event to the console's renderer events list */
@@ -357,6 +382,11 @@ static struct console_input_events *create_console_input_events(void)
     if (!(evt = alloc_object( &console_input_events_ops ))) return NULL;
     evt->num_alloc = evt->num_used = 0;
     evt->events = NULL;
+    if (!(evt->fd = alloc_pseudo_fd( &console_input_events_fd_ops, &evt->obj, 0 )))
+    {
+        release_object( evt );
+        return NULL;
+    }
     return evt;
 }
 
