@@ -3229,6 +3229,7 @@ static void test_evr(void)
 {
     IMFMediaEventGenerator *ev_generator;
     IMFVideoRenderer *video_renderer;
+    IMFClockStateSink *clock_sink;
     IMFMediaSinkPreroll *preroll;
     IMFMediaSink *sink, *sink2;
     IMFActivate *activate;
@@ -3271,6 +3272,10 @@ static void test_evr(void)
     hr = IMFMediaSink_QueryInterface(sink, &IID_IMFMediaEventGenerator, (void **)&ev_generator);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     IMFMediaEventGenerator_Release(ev_generator);
+
+    hr = IMFMediaSink_QueryInterface(sink, &IID_IMFClockStateSink, (void **)&clock_sink);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IMFClockStateSink_Release(clock_sink);
 
     hr = IMFActivate_ShutdownObject(activate);
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
