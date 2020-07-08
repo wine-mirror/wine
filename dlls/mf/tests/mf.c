@@ -3234,6 +3234,7 @@ static void test_evr(void)
     IMFMediaSink *sink, *sink2;
     IMFActivate *activate;
     DWORD flags, count;
+    IMFGetService *gs;
     UINT64 value;
     HRESULT hr;
 
@@ -3276,6 +3277,10 @@ static void test_evr(void)
     hr = IMFMediaSink_QueryInterface(sink, &IID_IMFClockStateSink, (void **)&clock_sink);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     IMFClockStateSink_Release(clock_sink);
+
+    hr = IMFMediaSink_QueryInterface(sink, &IID_IMFGetService, (void **)&gs);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IMFGetService_Release(gs);
 
     hr = IMFActivate_ShutdownObject(activate);
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);

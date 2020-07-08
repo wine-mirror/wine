@@ -36,6 +36,7 @@ struct video_renderer
     IMFVideoRenderer IMFVideoRenderer_iface;
     IMFClockStateSink IMFClockStateSink_iface;
     IMFMediaEventGenerator IMFMediaEventGenerator_iface;
+    IMFGetService IMFGetService_iface;
     LONG refcount;
 
     IMFMediaEventQueue *event_queue;
@@ -70,6 +71,11 @@ static struct video_renderer *impl_from_IMFClockStateSink(IMFClockStateSink *ifa
     return CONTAINING_RECORD(iface, struct video_renderer, IMFClockStateSink_iface);
 }
 
+static struct video_renderer *impl_from_IMFGetService(IMFGetService *iface)
+{
+    return CONTAINING_RECORD(iface, struct video_renderer, IMFGetService_iface);
+}
+
 static HRESULT WINAPI video_renderer_sink_QueryInterface(IMFMediaSink *iface, REFIID riid, void **obj)
 {
     struct video_renderer *renderer = impl_from_IMFMediaSink(iface);
@@ -96,6 +102,10 @@ static HRESULT WINAPI video_renderer_sink_QueryInterface(IMFMediaSink *iface, RE
     else if (IsEqualIID(riid, &IID_IMFClockStateSink))
     {
         *obj = &renderer->IMFClockStateSink_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IMFGetService))
+    {
+        *obj = &renderer->IMFGetService_iface;
     }
     else
     {
@@ -438,6 +448,39 @@ static const IMFClockStateSinkVtbl video_renderer_clock_sink_vtbl =
     video_renderer_clock_sink_OnClockSetRate,
 };
 
+static HRESULT WINAPI video_renderer_get_service_QueryInterface(IMFGetService *iface, REFIID riid, void **obj)
+{
+    struct video_renderer *renderer = impl_from_IMFGetService(iface);
+    return IMFMediaSink_QueryInterface(&renderer->IMFMediaSink_iface, riid, obj);
+}
+
+static ULONG WINAPI video_renderer_get_service_AddRef(IMFGetService *iface)
+{
+    struct video_renderer *renderer = impl_from_IMFGetService(iface);
+    return IMFMediaSink_AddRef(&renderer->IMFMediaSink_iface);
+}
+
+static ULONG WINAPI video_renderer_get_service_Release(IMFGetService *iface)
+{
+    struct video_renderer *renderer = impl_from_IMFGetService(iface);
+    return IMFMediaSink_Release(&renderer->IMFMediaSink_iface);
+}
+
+static HRESULT WINAPI video_renderer_get_service_GetService(IMFGetService *iface, REFGUID service, REFIID riid, void **obj)
+{
+    FIXME("%p, %s, %s, %p.\n", iface, debugstr_guid(service), debugstr_guid(riid), obj);
+
+    return E_NOTIMPL;
+}
+
+static const IMFGetServiceVtbl video_renderer_get_service_vtbl =
+{
+    video_renderer_get_service_QueryInterface,
+    video_renderer_get_service_AddRef,
+    video_renderer_get_service_Release,
+    video_renderer_get_service_GetService,
+};
+
 static HRESULT video_renderer_create_mixer(IMFAttributes *attributes, IMFTransform **out)
 {
     unsigned int flags = 0;
@@ -499,6 +542,7 @@ static HRESULT evr_create_object(IMFAttributes *attributes, void *user_context, 
     object->IMFVideoRenderer_iface.lpVtbl = &video_renderer_vtbl;
     object->IMFMediaEventGenerator_iface.lpVtbl = &video_renderer_events_vtbl;
     object->IMFClockStateSink_iface.lpVtbl = &video_renderer_clock_sink_vtbl;
+    object->IMFGetService_iface.lpVtbl = &video_renderer_get_service_vtbl;
     object->refcount = 1;
     InitializeCriticalSection(&object->cs);
 
