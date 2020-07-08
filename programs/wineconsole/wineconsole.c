@@ -243,20 +243,20 @@ static void WINECON_SetColors(struct inner_data *data, const struct config_data*
 void	WINECON_GrabChanges(struct inner_data* data)
 {
     struct console_renderer_event	evts[256];
-    int	i, num, ev_found;
+    int i, ev_found;
+    DWORD num;
     HANDLE h;
 
     if (data->in_grab_changes) return;
 
-    SERVER_START_REQ( get_console_renderer_events )
+    if (!DeviceIoControl( data->hSynchro, IOCTL_CONDRV_GET_RENDERER_EVENTS, NULL, 0, evts,
+                          sizeof(evts), &num, NULL ) || !num)
     {
-        wine_server_set_reply( req, evts, sizeof(evts) );
-        req->handle = wine_server_obj_handle( data->hSynchro );
-        if (!wine_server_call_err( req )) num = wine_server_reply_size(reply) / sizeof(evts[0]);
-        else num = 0;
+        ERR( "failed to get renderer events: %u\n", GetLastError() );
+        data->dying = TRUE;
+        return;
     }
-    SERVER_END_REQ;
-    if (!num) {WINE_WARN("hmm renderer signaled but no events available\n"); return;}
+    num /= sizeof(*evts);
     WINE_TRACE( "got %u events\n", num );
 
     /* FIXME: should do some event compression here (cursor pos, update) */
