@@ -1372,6 +1372,43 @@ void WINAPI wine_vkGetPhysicalDeviceExternalSemaphorePropertiesKHR(VkPhysicalDev
     properties->externalSemaphoreFeatures = 0;
 }
 
+static uint64_t unwrap_object_handle(VkObjectType type, uint64_t handle)
+{
+    switch (type)
+    {
+        case VK_OBJECT_TYPE_DEVICE:
+            return (uint64_t) (uintptr_t) ((VkDevice) (uintptr_t) handle)->device;
+        case VK_OBJECT_TYPE_QUEUE:
+            return (uint64_t) (uintptr_t) ((VkQueue) (uintptr_t) handle)->queue;
+        case VK_OBJECT_TYPE_COMMAND_BUFFER:
+            return (uint64_t) (uintptr_t) ((VkCommandBuffer) (uintptr_t) handle)->command_buffer;
+        case VK_OBJECT_TYPE_COMMAND_POOL:
+            return (uint64_t) wine_cmd_pool_from_handle(handle)->command_pool;
+        default:
+            return handle;
+    }
+}
+
+VkResult WINAPI wine_vkSetPrivateDataEXT(VkDevice device, VkObjectType object_type, uint64_t object_handle,
+        VkPrivateDataSlotEXT private_data_slot, uint64_t data)
+{
+    TRACE("%p, %#x, 0x%s, 0x%s, 0x%s\n", device, object_type, wine_dbgstr_longlong(object_handle),
+            wine_dbgstr_longlong(private_data_slot), wine_dbgstr_longlong(data));
+
+    object_handle = unwrap_object_handle(object_type, object_handle);
+    return device->funcs.p_vkSetPrivateDataEXT(device->device, object_type, object_handle, private_data_slot, data);
+}
+
+void WINAPI wine_vkGetPrivateDataEXT(VkDevice device, VkObjectType object_type, uint64_t object_handle,
+        VkPrivateDataSlotEXT private_data_slot, uint64_t *data)
+{
+    TRACE("%p, %#x, 0x%s, 0x%s, %p\n", device, object_type, wine_dbgstr_longlong(object_handle),
+            wine_dbgstr_longlong(private_data_slot), data);
+
+    object_handle = unwrap_object_handle(object_type, object_handle);
+    device->funcs.p_vkGetPrivateDataEXT(device->device, object_type, object_handle, private_data_slot, data);
+}
+
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, void *reserved)
 {
     TRACE("%p, %u, %p\n", hinst, reason, reserved);

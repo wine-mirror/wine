@@ -217,6 +217,10 @@ FUNCTION_OVERRIDES = {
     # VK_KHR_device_group
     "vkGetDeviceGroupSurfacePresentModesKHR" : {"dispatch" : True, "driver" : True, "thunk" : True},
     "vkGetPhysicalDevicePresentRectanglesKHR" : {"dispatch" : True, "driver" : True, "thunk" : True},
+
+    # VK_EXT_private_data
+    "vkGetPrivateDataEXT" : {"dispatch": True, "driver" : False, "thunk" : False},
+    "vkSetPrivateDataEXT" : {"dispatch": True, "driver" : False, "thunk" : False},
 }
 
 STRUCT_CHAIN_CONVERSIONS = [
@@ -918,6 +922,9 @@ class VkHandle(object):
 
     def native_handle(self, name):
         """ Provide access to the native handle of a wrapped object. """
+
+        # Remember to add any new native handle whose parent is VkDevice
+        # to unwrap_object_handle() in vulkan.c
 
         if self.name == "VkCommandPool":
             return "wine_cmd_pool_from_handle({0})->command_pool".format(name)
