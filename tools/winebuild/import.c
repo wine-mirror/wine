@@ -1441,19 +1441,47 @@ void output_syscalls( DLLSPEC *spec )
         switch (target_cpu)
         {
         case CPU_x86:
+            output( "\tpushl %%ebp\n" );
+            output_cfi( ".cfi_adjust_cfa_offset 4\n" );
+            output_cfi( ".cfi_rel_offset %%ebp,0\n" );
+            output( "\tmovl %%esp,%%ebp\n" );
+            output_cfi( ".cfi_def_cfa_register %%ebp\n" );
+            output( "\tpushl %%esi\n" );
+            output_cfi( ".cfi_rel_offset %%esi,-4\n" );
+            output( "\tpushl %%edi\n" );
+            output_cfi( ".cfi_rel_offset %%edi,-8\n" );
             output( "\tcmpl $%u,%%eax\n", count );
-            output( "\tjae 1f\n" );
-            output( "\taddl $4,%%esp\n" );
+            output( "\tjae 3f\n" );
             if (UsePIC)
             {
                 output( "\tmovl %%eax,%%edx\n" );
                 output( "\tcall %s\n", asm_name("__wine_spec_get_pc_thunk_eax") );
-                output( "1:\tjmp *.Lsyscall_table-1b(%%eax,%%edx,4)\n" );
+                output( "1:\tmovzbl .Lsyscall_args-1b(%%eax,%%edx,1),%%ecx\n" );
                 needs_get_pc_thunk = 1;
             }
-            else output( "\tjmp *.Lsyscall_table(,%%eax,4)\n" );
-            output( "1:\tmovl $0x%x,%%eax\n", invalid_param );
+            else output( "\tmovzbl .Lsyscall_args(%%eax),%%ecx\n" );
+            output( "\tsubl %%ecx,%%esp\n" );
+            output( "\tshrl $2,%%ecx\n" );
+            output( "\tleal 12(%%ebp),%%esi\n" );
+            output( "\tandl $~15,%%esp\n" );
+            output( "\tmovl %%esp,%%edi\n" );
+            output( "\tcld\n" );
+            output( "\trep; movsl\n" );
+            if (UsePIC)
+                output( "\tcall *.Lsyscall_table-1b(%%eax,%%edx,4)\n" );
+            else
+                output( "\tcall *.Lsyscall_table(,%%eax,4)\n" );
+            output( "\tleal -8(%%ebp),%%esp\n" );
+            output( "2:\tpopl %%edi\n" );
+            output_cfi( ".cfi_same_value %%edi\n" );
+            output( "\tpopl %%esi\n" );
+            output_cfi( ".cfi_same_value %%esi\n" );
+            output( "\tpopl %%ebp\n" );
+            output_cfi( ".cfi_def_cfa %%esp,4\n" );
+            output_cfi( ".cfi_same_value %%ebp\n" );
             output( "\tret\n" );
+            output( "3:\tmovl $0x%x,%%eax\n", invalid_param );
+            output( "\tjmp 2b\n" );
             break;
         case CPU_x86_64:
             output( "\tcmpq $%u,%%rax\n", count );
@@ -1501,6 +1529,9 @@ void output_syscalls( DLLSPEC *spec )
         output( ".Lsyscall_table:\n" );
         for (i = 0; i < count; i++)
             output( "\t%s %s\n", get_asm_ptr_keyword(), asm_name( get_link_name( syscalls[i] )));
+        output( ".Lsyscall_args:\n" );
+        for (i = 0; i < count; i++)
+            output( "\t.byte %u\n", get_args_size( syscalls[i] ));
         return;
     }
 
@@ -1515,20 +1546,19 @@ void output_syscalls( DLLSPEC *spec )
         switch (target_cpu)
         {
         case CPU_x86:
-            /* FIXME: syscall thunks not binary-compatible yet */
             if (UsePIC)
             {
                 output( "\tcall %s\n", asm_name("__wine_spec_get_pc_thunk_eax") );
                 output( "1:\tmovl %s-1b(%%eax),%%edx\n", asm_name("__wine_syscall_dispatcher") );
                 output( "\tmovl $%u,%%eax\n", i );
-                output( "\tcall *%%edx\n" );
                 needs_get_pc_thunk = 1;
             }
             else
             {
                 output( "\tmovl $%u,%%eax\n", i );
-                output( "\tcall *(%s)\n", asm_name("__wine_syscall_dispatcher") );
+                output( "\tmovl $__wine_syscall,%%edx\n" );
             }
+            output( "\tcall *%%edx\n" );
             output( "\tret $%u\n", get_args_size( odp ));
             break;
         case CPU_x86_64:
@@ -1559,6 +1589,14 @@ void output_syscalls( DLLSPEC *spec )
         output_function_size( name );
     }
 
+    if (target_cpu == CPU_x86 && !UsePIC)
+    {
+        output( "\t.align %d\n", get_alignment(16) );
+        output( "\t%s\n", func_declaration("__wine_syscall") );
+        output( "__wine_syscall:\n" );
+        output( "\tjmp *(%s)\n", asm_name("__wine_syscall_dispatcher") );
+        output_function_size( "__wine_syscall" );
+    }
     output( "\t.data\n" );
     output( "\t.align %d\n", get_alignment( get_ptr_size() ) );
     output( "%s\n", asm_globl("__wine_syscall_dispatcher") );
