@@ -2658,6 +2658,12 @@ AC_CHECK_MEMBERS([struct ifreq.ifr_hwaddr],,,
 # include <net/if.h>
 #endif])
 
+dnl Check for struct sysinfo members totalram and mem_unit
+AC_CHECK_MEMBERS([struct sysinfo.totalram, struct sysinfo.mem_unit],,,
+[#ifdef HAVE_SYS_SYSINFO_H
+# include <sys/sysinfo.h>
+#endif])
+
 dnl Check for isfinite
 ac_save_LIBS="$LIBS"
 LIBS="$LIBS -lm"

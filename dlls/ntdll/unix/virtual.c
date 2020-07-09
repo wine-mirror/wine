@@ -43,6 +43,9 @@
 #ifdef HAVE_SYS_SYSINFO_H
 # include <sys/sysinfo.h>
 #endif
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
 #ifdef HAVE_VALGRIND_VALGRIND_H
 # include <valgrind/valgrind.h>
 #endif
@@ -2481,22 +2484,26 @@ ULONG_PTR get_system_affinity_mask(void)
  */
 void virtual_get_system_info( SYSTEM_BASIC_INFORMATION *info )
 {
-#ifdef HAVE_SYSINFO
+#if defined(HAVE_STRUCT_SYSINFO_TOTALRAM) && defined(HAVE_STRUCT_SYSINFO_MEM_UNIT)
     struct sysinfo sinfo;
+
+    if (!sysinfo(&sinfo))
+    {
+        ULONG64 total = (ULONG64)sinfo.totalram * sinfo.mem_unit;
+        info->MmHighestPhysicalPage = max(1, total / page_size);
+    }
+#elif defined(_SC_PHYS_PAGES)
+    LONG64 phys_pages = sysconf( _SC_PHYS_PAGES );
+
+    info->MmHighestPhysicalPage = max(1, phys_pages);
+#else
+    info->MmHighestPhysicalPage = 0x7fffffff / page_size;
 #endif
 
     info->unknown                 = 0;
     info->KeMaximumIncrement      = 0;  /* FIXME */
     info->PageSize                = page_size;
     info->MmLowestPhysicalPage    = 1;
-    info->MmHighestPhysicalPage   = 0x7fffffff / page_size;
-#ifdef HAVE_SYSINFO
-    if (!sysinfo(&sinfo))
-    {
-        ULONG64 total = (ULONG64)sinfo.totalram * sinfo.mem_unit;
-        info->MmHighestPhysicalPage = max(1, total / page_size);
-    }
-#endif
     info->MmNumberOfPhysicalPages = info->MmHighestPhysicalPage - info->MmLowestPhysicalPage;
     info->AllocationGranularity   = granularity_mask + 1;
     info->LowestUserAddress       = (void *)0x10000;

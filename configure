@@ -19643,6 +19643,32 @@ _ACEOF
 fi
 
 
+ac_fn_c_check_member "$LINENO" "struct sysinfo" "totalram" "ac_cv_member_struct_sysinfo_totalram" "#ifdef HAVE_SYS_SYSINFO_H
+# include <sys/sysinfo.h>
+#endif
+"
+if test "x$ac_cv_member_struct_sysinfo_totalram" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_SYSINFO_TOTALRAM 1
+_ACEOF
+
+
+fi
+ac_fn_c_check_member "$LINENO" "struct sysinfo" "mem_unit" "ac_cv_member_struct_sysinfo_mem_unit" "#ifdef HAVE_SYS_SYSINFO_H
+# include <sys/sysinfo.h>
+#endif
+"
+if test "x$ac_cv_member_struct_sysinfo_mem_unit" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_SYSINFO_MEM_UNIT 1
+_ACEOF
+
+
+fi
+
+
 ac_save_LIBS="$LIBS"
 LIBS="$LIBS -lm"
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for isfinite" >&5

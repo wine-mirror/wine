@@ -950,6 +950,12 @@
 /* Define to 1 if `__st_birthtime' is a member of `struct stat'. */
 #undef HAVE_STRUCT_STAT___ST_BIRTHTIME
 
+/* Define to 1 if `mem_unit' is a member of `struct sysinfo'. */
+#undef HAVE_STRUCT_SYSINFO_MEM_UNIT
+
+/* Define to 1 if `totalram' is a member of `struct sysinfo'. */
+#undef HAVE_STRUCT_SYSINFO_TOTALRAM
+
 /* Define to 1 if `tcps_connattempt' is a member of `struct tcpstat'. */
 #undef HAVE_STRUCT_TCPSTAT_TCPS_CONNATTEMPT
 
