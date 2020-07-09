@@ -27,6 +27,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 enum video_renderer_flags
 {
     EVR_SHUT_DOWN = 0x1,
+    EVR_INIT_SERVICES = 0x2, /* Currently in InitServices() call. */
+    EVR_PRESENTER_INITED_SERVICES = 0x4,
 };
 
 struct video_renderer
@@ -38,6 +40,7 @@ struct video_renderer
     IMFMediaEventGenerator IMFMediaEventGenerator_iface;
     IMFGetService IMFGetService_iface;
     IMFTopologyServiceLookup IMFTopologyServiceLookup_iface;
+    IMediaEventSink IMediaEventSink_iface;
     LONG refcount;
 
     IMFMediaEventQueue *event_queue;
@@ -82,6 +85,24 @@ static struct video_renderer *impl_from_IMFGetService(IMFGetService *iface)
 static struct video_renderer *impl_from_IMFTopologyServiceLookup(IMFTopologyServiceLookup *iface)
 {
     return CONTAINING_RECORD(iface, struct video_renderer, IMFTopologyServiceLookup_iface);
+}
+
+static struct video_renderer *impl_from_IMediaEventSink(IMediaEventSink *iface)
+{
+    return CONTAINING_RECORD(iface, struct video_renderer, IMediaEventSink_iface);
+}
+
+static void video_renderer_release_services(struct video_renderer *renderer)
+{
+    IMFTopologyServiceLookupClient *lookup_client;
+
+    if (renderer->flags & EVR_PRESENTER_INITED_SERVICES && SUCCEEDED(IMFVideoPresenter_QueryInterface(renderer->presenter,
+            &IID_IMFTopologyServiceLookupClient, (void **)&lookup_client)))
+    {
+        IMFTopologyServiceLookupClient_ReleaseServicePointers(lookup_client);
+        IMFTopologyServiceLookupClient_Release(lookup_client);
+        renderer->flags &= ~EVR_PRESENTER_INITED_SERVICES;
+    }
 }
 
 static HRESULT WINAPI video_renderer_sink_QueryInterface(IMFMediaSink *iface, REFIID riid, void **obj)
@@ -285,6 +306,7 @@ static HRESULT WINAPI video_renderer_sink_Shutdown(IMFMediaSink *iface)
     renderer->flags |= EVR_SHUT_DOWN;
     IMFMediaEventQueue_Shutdown(renderer->event_queue);
     video_renderer_set_presentation_clock(renderer, NULL);
+    video_renderer_release_services(renderer);
     LeaveCriticalSection(&renderer->cs);
 
     return S_OK;
@@ -595,10 +617,43 @@ static HRESULT WINAPI video_renderer_service_lookup_LookupService(IMFTopologySer
         MF_SERVICE_LOOKUP_TYPE lookup_type, DWORD index, REFGUID service, REFIID riid,
         void **objects, DWORD *num_objects)
 {
+    struct video_renderer *renderer = impl_from_IMFTopologyServiceLookup(iface);
+    HRESULT hr = S_OK;
+
     TRACE("%p, %u, %u, %s, %s, %p, %p.\n", iface, lookup_type, index, debugstr_guid(service), debugstr_guid(riid),
             objects, num_objects);
 
-    return E_NOTIMPL;
+    EnterCriticalSection(&renderer->cs);
+
+    if (!(renderer->flags & EVR_INIT_SERVICES))
+        hr = MF_E_NOTACCEPTING;
+    else if (IsEqualGUID(service, &MR_VIDEO_RENDER_SERVICE))
+    {
+        if (IsEqualIID(riid, &IID_IMediaEventSink))
+        {
+            *objects = &renderer->IMediaEventSink_iface;
+            IUnknown_AddRef((IUnknown *)*objects);
+        }
+        else
+        {
+            FIXME("Unsupported interface %s for render service.\n", debugstr_guid(riid));
+            hr = E_NOINTERFACE;
+        }
+    }
+    else if (IsEqualGUID(service, &MR_VIDEO_MIXER_SERVICE))
+    {
+        FIXME("Unimplemented lookup for mixer service.\n");
+        hr = MF_E_UNSUPPORTED_SERVICE;
+    }
+    else
+    {
+        WARN("Unsupported service %s.\n", debugstr_guid(service));
+        hr = MF_E_UNSUPPORTED_SERVICE;
+    }
+
+    LeaveCriticalSection(&renderer->cs);
+
+    return hr;
 }
 
 static const IMFTopologyServiceLookupVtbl video_renderer_service_lookup_vtbl =
@@ -607,6 +662,50 @@ static const IMFTopologyServiceLookupVtbl video_renderer_service_lookup_vtbl =
     video_renderer_service_lookup_AddRef,
     video_renderer_service_lookup_Release,
     video_renderer_service_lookup_LookupService,
+};
+
+static HRESULT WINAPI video_renderer_event_sink_QueryInterface(IMediaEventSink *iface, REFIID riid, void **obj)
+{
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
+
+    if (IsEqualIID(riid, &IID_IMediaEventSink) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IMediaEventSink_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("Unsupported interface %s.\n", debugstr_guid(riid));
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI video_renderer_event_sink_AddRef(IMediaEventSink *iface)
+{
+    struct video_renderer *renderer = impl_from_IMediaEventSink(iface);
+    return IMFMediaSink_AddRef(&renderer->IMFMediaSink_iface);
+}
+
+static ULONG WINAPI video_renderer_event_sink_Release(IMediaEventSink *iface)
+{
+    struct video_renderer *renderer = impl_from_IMediaEventSink(iface);
+    return IMFMediaSink_Release(&renderer->IMFMediaSink_iface);
+}
+
+static HRESULT WINAPI video_renderer_event_sink_Notify(IMediaEventSink *iface, LONG event, LONG_PTR param1, LONG_PTR param2)
+{
+    FIXME("%p, %d, %ld, %ld.\n", iface, event, param1, param2);
+
+    return E_NOTIMPL;
+}
+
+static const IMediaEventSinkVtbl media_event_sink_vtbl =
+{
+    video_renderer_event_sink_QueryInterface,
+    video_renderer_event_sink_AddRef,
+    video_renderer_event_sink_Release,
+    video_renderer_event_sink_Notify,
 };
 
 static HRESULT video_renderer_create_mixer(IMFAttributes *attributes, IMFTransform **out)
@@ -632,8 +731,10 @@ static HRESULT video_renderer_create_mixer(IMFAttributes *attributes, IMFTransfo
     return CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IMFTransform, (void **)out);
 }
 
-static HRESULT video_renderer_create_presenter(IMFAttributes *attributes, IMFVideoPresenter **out)
+static HRESULT video_renderer_create_presenter(struct video_renderer *renderer, IMFAttributes *attributes,
+        IMFVideoPresenter **out)
 {
+    IMFTopologyServiceLookupClient *lookup_client;
     unsigned int flags = 0;
     IMFActivate *activate;
     CLSID clsid;
@@ -652,7 +753,23 @@ static HRESULT video_renderer_create_presenter(IMFAttributes *attributes, IMFVid
     if (FAILED(IMFAttributes_GetGUID(attributes, &MF_ACTIVATE_CUSTOM_VIDEO_PRESENTER_CLSID, &clsid)))
         memcpy(&clsid, &CLSID_MFVideoPresenter9, sizeof(clsid));
 
-    return CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IMFVideoPresenter, (void **)out);
+    if (SUCCEEDED(hr = CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IMFVideoPresenter, (void **)out)))
+    {
+        if (SUCCEEDED(hr = IMFVideoPresenter_QueryInterface(*out, &IID_IMFTopologyServiceLookupClient,
+                (void **)&lookup_client)))
+        {
+            renderer->flags |= EVR_INIT_SERVICES;
+            if (SUCCEEDED(hr = IMFTopologyServiceLookupClient_InitServicePointers(lookup_client,
+                    &renderer->IMFTopologyServiceLookup_iface)))
+            {
+                renderer->flags |= EVR_PRESENTER_INITED_SERVICES;
+            }
+            renderer->flags &= ~EVR_INIT_SERVICES;
+            IMFTopologyServiceLookupClient_Release(lookup_client);
+        }
+    }
+
+    return hr;
 }
 
 static HRESULT evr_create_object(IMFAttributes *attributes, void *user_context, IUnknown **obj)
@@ -672,6 +789,7 @@ static HRESULT evr_create_object(IMFAttributes *attributes, void *user_context, 
     object->IMFClockStateSink_iface.lpVtbl = &video_renderer_clock_sink_vtbl;
     object->IMFGetService_iface.lpVtbl = &video_renderer_get_service_vtbl;
     object->IMFTopologyServiceLookup_iface.lpVtbl = &video_renderer_service_lookup_vtbl;
+    object->IMediaEventSink_iface.lpVtbl = &media_event_sink_vtbl;
     object->refcount = 1;
     InitializeCriticalSection(&object->cs);
 
@@ -682,7 +800,7 @@ static HRESULT evr_create_object(IMFAttributes *attributes, void *user_context, 
     if (FAILED(hr = video_renderer_create_mixer(attributes, &object->mixer)))
         goto failed;
 
-    if (FAILED(hr = video_renderer_create_presenter(attributes, &object->presenter)))
+    if (FAILED(hr = video_renderer_create_presenter(object, attributes, &object->presenter)))
         goto failed;
 
     *obj = (IUnknown *)&object->IMFMediaSink_iface;
@@ -691,6 +809,7 @@ static HRESULT evr_create_object(IMFAttributes *attributes, void *user_context, 
 
 failed:
 
+    video_renderer_release_services(object);
     IMFMediaSink_Release(&object->IMFMediaSink_iface);
 
     return hr;
