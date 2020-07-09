@@ -3482,11 +3482,21 @@ NTSTATUS unix_to_nt_file_name( const char *name, WCHAR **nt )
 /******************************************************************
  *           wine_unix_to_nt_file_name
  */
-NTSTATUS CDECL wine_unix_to_nt_file_name( const ANSI_STRING *name, UNICODE_STRING *nt )
+NTSTATUS CDECL wine_unix_to_nt_file_name( const char *name, WCHAR *buffer, SIZE_T *size )
 {
     WCHAR *nt_name = NULL;
-    NTSTATUS status = unix_to_nt_file_name( name->Buffer, &nt_name );
-    if (nt_name) RtlInitUnicodeString( nt, nt_name );
+    NTSTATUS status;
+
+    if (name[0] != '/') return STATUS_INVALID_PARAMETER;  /* relative paths are not supported */
+
+    status = unix_to_nt_file_name( name, &nt_name );
+    if (nt_name)
+    {
+        if (*size > wcslen(nt_name)) wcscpy( buffer, nt_name );
+        else status = STATUS_BUFFER_TOO_SMALL;
+        *size = wcslen(nt_name) + 1;
+        RtlFreeHeap( GetProcessHeap(), 0, nt_name );
+    }
     return status;
 }
 

@@ -545,26 +545,34 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
         if (name[0] == '/')  /* may be a Unix path */
         {
             char *unix_name;
-            ANSI_STRING unix_str;
-            UNICODE_STRING nt_str;
+            WCHAR *nt_str;
+            SIZE_T buflen;
+            NTSTATUS status;
 
             unix_name = RtlAllocateHeap( GetProcessHeap(), 0, 3 * wcslen(name) + 1 );
             ntdll_wcstoumbs( name, wcslen(name) + 1, unix_name, 3 * wcslen(name) + 1, FALSE );
-            RtlInitAnsiString( &unix_str, unix_name );
-            unix_funcs->unix_to_nt_file_name( &unix_str, &nt_str );
-            RtlFreeAnsiString( &unix_str );
-            if (nt_str.Length > 5 * sizeof(WCHAR) && nt_str.Buffer[5] == ':')
+            buflen = strlen(unix_name) + 10;
+            for (;;)
             {
-                reqsize = nt_str.Length - 3 * sizeof(WCHAR);
+                if (!(nt_str = RtlAllocateHeap( GetProcessHeap(), 0, buflen * sizeof(WCHAR) ))) break;
+                status = unix_funcs->unix_to_nt_file_name( unix_name, nt_str, &buflen );
+                if (status != STATUS_BUFFER_TOO_SMALL) break;
+                RtlFreeHeap( GetProcessHeap(), 0, nt_str );
+            }
+            RtlFreeHeap( GetProcessHeap(), 0, unix_name );
+            if (!status && buflen > 6 && nt_str[5] == ':')
+            {
+                reqsize = (buflen - 4) * sizeof(WCHAR);
                 if (reqsize <= size)
                 {
-                    memcpy( buffer, nt_str.Buffer + 4, reqsize );
+                    memcpy( buffer, nt_str + 4, reqsize );
                     collapse_path( buffer, 3 );
                     reqsize -= sizeof(WCHAR);
                 }
-                RtlFreeUnicodeString( &nt_str );
+                RtlFreeHeap( GetProcessHeap(), 0, nt_str );
                 goto done;
             }
+            RtlFreeHeap( GetProcessHeap(), 0, nt_str );
         }
         if (cd->Buffer[1] == ':')
         {
@@ -889,12 +897,7 @@ NTSTATUS WINAPI RtlSetCurrentDirectory_U(const UNICODE_STRING* dir)
 /******************************************************************
  *           wine_unix_to_nt_file_name  (NTDLL.@) Not a Windows API
  */
-NTSTATUS CDECL wine_unix_to_nt_file_name( const ANSI_STRING *name, UNICODE_STRING *nt )
+NTSTATUS CDECL wine_unix_to_nt_file_name( const char *name, WCHAR *buffer, SIZE_T *size )
 {
-    unsigned int lenA = name->Length;
-    const char *path = name->Buffer;
-
-    if (!lenA) return STATUS_INVALID_PARAMETER;
-    if (path[0] != '/') return STATUS_INVALID_PARAMETER; /* relative path not supported */
-    return unix_funcs->unix_to_nt_file_name( name, nt );
+    return unix_funcs->unix_to_nt_file_name( name, buffer, size );
 }
