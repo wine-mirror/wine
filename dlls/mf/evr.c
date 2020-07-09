@@ -40,6 +40,8 @@ struct video_renderer
     LONG refcount;
 
     IMFMediaEventQueue *event_queue;
+    IMFPresentationClock *clock;
+
     IMFTransform *mixer;
     IMFVideoPresenter *presenter;
     unsigned int flags;
@@ -142,6 +144,8 @@ static ULONG WINAPI video_renderer_sink_Release(IMFMediaSink *iface)
             IMFTransform_Release(renderer->mixer);
         if (renderer->presenter)
             IMFVideoPresenter_Release(renderer->presenter);
+        if (renderer->clock)
+            IMFPresentationClock_Release(renderer->clock);
         DeleteCriticalSection(&renderer->cs);
         heap_free(renderer);
     }
@@ -201,18 +205,65 @@ static HRESULT WINAPI video_renderer_sink_GetStreamSinkById(IMFMediaSink *iface,
     return E_NOTIMPL;
 }
 
+static void video_renderer_set_presentation_clock(struct video_renderer *renderer, IMFPresentationClock *clock)
+{
+    if (renderer->clock)
+    {
+        IMFPresentationClock_RemoveClockStateSink(renderer->clock, &renderer->IMFClockStateSink_iface);
+        IMFPresentationClock_Release(renderer->clock);
+    }
+    renderer->clock = clock;
+    if (renderer->clock)
+    {
+        IMFPresentationClock_AddRef(renderer->clock);
+        IMFPresentationClock_AddClockStateSink(renderer->clock, &renderer->IMFClockStateSink_iface);
+    }
+}
+
 static HRESULT WINAPI video_renderer_sink_SetPresentationClock(IMFMediaSink *iface, IMFPresentationClock *clock)
 {
-    FIXME("%p, %p.\n", iface, clock);
+    struct video_renderer *renderer = impl_from_IMFMediaSink(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, clock);
+
+    EnterCriticalSection(&renderer->cs);
+
+    if (renderer->flags & EVR_SHUT_DOWN)
+        hr = MF_E_SHUTDOWN;
+    else
+        video_renderer_set_presentation_clock(renderer, clock);
+
+    LeaveCriticalSection(&renderer->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI video_renderer_sink_GetPresentationClock(IMFMediaSink *iface, IMFPresentationClock **clock)
 {
-    FIXME("%p, %p.\n", iface, clock);
+    struct video_renderer *renderer = impl_from_IMFMediaSink(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, clock);
+
+    if (!clock)
+        return E_POINTER;
+
+    EnterCriticalSection(&renderer->cs);
+
+    if (renderer->flags & EVR_SHUT_DOWN)
+        hr = MF_E_SHUTDOWN;
+    else if (renderer->clock)
+    {
+        *clock = renderer->clock;
+        IMFPresentationClock_AddRef(*clock);
+    }
+    else
+        hr = MF_E_NO_CLOCK;
+
+    LeaveCriticalSection(&renderer->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI video_renderer_sink_Shutdown(IMFMediaSink *iface)
@@ -227,6 +278,7 @@ static HRESULT WINAPI video_renderer_sink_Shutdown(IMFMediaSink *iface)
     EnterCriticalSection(&renderer->cs);
     renderer->flags |= EVR_SHUT_DOWN;
     IMFMediaEventQueue_Shutdown(renderer->event_queue);
+    video_renderer_set_presentation_clock(renderer, NULL);
     LeaveCriticalSection(&renderer->cs);
 
     return S_OK;
