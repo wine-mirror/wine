@@ -553,18 +553,18 @@ static struct screen_buffer *create_console_output( struct console_input *consol
     memset( screen_buffer->color_map, 0, sizeof(screen_buffer->color_map) );
     list_add_head( &screen_buffer_list, &screen_buffer->entry );
 
-    if (fd == -1)
-        screen_buffer->fd = NULL;
+    if (fd != -1)
+        screen_buffer->fd = create_anonymous_fd( &screen_buffer_fd_ops, fd, &screen_buffer->obj,
+                                                 FILE_SYNCHRONOUS_IO_NONALERT );
     else
+        screen_buffer->fd = alloc_pseudo_fd( &screen_buffer_fd_ops, &screen_buffer->obj,
+                                             FILE_SYNCHRONOUS_IO_NONALERT );
+    if (!screen_buffer->fd)
     {
-        if (!(screen_buffer->fd = create_anonymous_fd( &screen_buffer_fd_ops, fd, &screen_buffer->obj,
-                                                       FILE_SYNCHRONOUS_IO_NONALERT )))
-        {
-            release_object( screen_buffer );
-            return NULL;
-        }
-        allow_fd_caching(screen_buffer->fd);
+        release_object( screen_buffer );
+        return NULL;
     }
+    allow_fd_caching(screen_buffer->fd);
 
     if (!(screen_buffer->data = malloc( screen_buffer->width * screen_buffer->height *
                                         sizeof(*screen_buffer->data) )))
@@ -1634,8 +1634,51 @@ static int console_input_ioctl( struct fd *fd, ioctl_code_t code, struct async *
 
 static int screen_buffer_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 {
-    set_error( STATUS_INVALID_HANDLE );
-    return 0;
+    struct screen_buffer *screen_buffer = get_fd_user( fd );
+
+    switch (code)
+    {
+    case IOCTL_CONDRV_GET_OUTPUT_INFO:
+        {
+            struct condrv_output_info *info;
+            data_size_t size;
+
+            size = min( sizeof(*info) + screen_buffer->font.face_len, get_reply_max_size() );
+            if (size < sizeof(*info))
+            {
+                set_error( STATUS_INVALID_PARAMETER );
+                return 0;
+            }
+            if (!(info = set_reply_data_size( size ))) return 0;
+
+            info->cursor_size       = screen_buffer->cursor_size;
+            info->cursor_visible    = screen_buffer->cursor_visible;
+            info->cursor_x          = screen_buffer->cursor_x;
+            info->cursor_y          = screen_buffer->cursor_y;
+            info->width             = screen_buffer->width;
+            info->height            = screen_buffer->height;
+            info->attr              = screen_buffer->attr;
+            info->popup_attr        = screen_buffer->popup_attr;
+            info->win_left          = screen_buffer->win.left;
+            info->win_top           = screen_buffer->win.top;
+            info->win_right         = screen_buffer->win.right;
+            info->win_bottom        = screen_buffer->win.bottom;
+            info->max_width         = screen_buffer->max_width;
+            info->max_height        = screen_buffer->max_height;
+            info->font_width        = screen_buffer->font.width;
+            info->font_height       = screen_buffer->font.height;
+            info->font_weight       = screen_buffer->font.weight;
+            info->font_pitch_family = screen_buffer->font.pitch_family;
+            memcpy( info->color_map, screen_buffer->color_map, sizeof(info->color_map) );
+            size -= sizeof(*info);
+            if (size) memcpy( info + 1, screen_buffer->font.face_name, size );
+            return 1;
+        }
+
+    default:
+        set_error( STATUS_INVALID_HANDLE );
+        return 0;
+    }
 }
 
 static int console_input_events_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )

@@ -29,6 +29,9 @@
 #define IOCTL_CONDRV_PEEK                  CTL_CODE(FILE_DEVICE_CONSOLE, 12, METHOD_BUFFERED, FILE_READ_ACCESS)
 #define IOCTL_CONDRV_GET_INPUT_INFO        CTL_CODE(FILE_DEVICE_CONSOLE, 13, METHOD_BUFFERED, FILE_READ_PROPERTIES)
 
+/* console output ioctls */
+#define IOCTL_CONDRV_GET_OUTPUT_INFO       CTL_CODE(FILE_DEVICE_CONSOLE, 32, METHOD_BUFFERED, FILE_WRITE_PROPERTIES)
+
 /* console renderer ioctls */
 #define IOCTL_CONDRV_GET_RENDERER_EVENTS   CTL_CODE(FILE_DEVICE_CONSOLE, 70, METHOD_BUFFERED, FILE_READ_PROPERTIES)
 
@@ -39,6 +42,30 @@ struct condrv_input_info
     unsigned int  history_size;   /* number of lines in history */
     unsigned int  edition_mode;   /* index to the edition mode flavors */
     unsigned int  input_count;    /* number of available input records */
+};
+
+/* IOCTL_CONDRV_GET_OUTPUT_INFO result */
+struct condrv_output_info
+{
+    short int     cursor_size;        /* size of cursor (percentage filled) */
+    short int     cursor_visible;     /* cursor visibility flag */
+    short int     cursor_x;           /* position of cursor (x, y) */
+    short int     cursor_y;
+    short int     width;              /* width of the screen buffer */
+    short int     height;             /* height of the screen buffer */
+    short int     attr;               /* default fill attributes (screen colors) */
+    short int     popup_attr;         /* pop-up color attributes */
+    short int     win_left;           /* window actually displayed by renderer */
+    short int     win_top;            /* the rect area is expressed within the */
+    short int     win_right;          /* boundaries of the screen buffer */
+    short int     win_bottom;
+    short int     max_width;          /* maximum size (width x height) for the window */
+    short int     max_height;
+    short int     font_width;         /* font size (width x height) */
+    short int     font_height;
+    short int     font_weight;        /* font weight */
+    short int     font_pitch_family;  /* font pitch & family */
+    unsigned int  color_map[16];      /* color table */
 };
 
 /* IOCTL_CONDRV_GET_RENDERER_EVENTS result */
