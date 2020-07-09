@@ -990,19 +990,21 @@ static inline char *prepend( char *buffer, const char *str, size_t len )
  *
  * Open a file for a new dll. Helper for find_dll_file.
  */
-static NTSTATUS open_dll_file( UNICODE_STRING *nt_name, void **module, pe_image_info_t *image_info )
+static NTSTATUS open_dll_file( const WCHAR *name, void **module, pe_image_info_t *image_info )
 {
     struct builtin_module *builtin;
     FILE_BASIC_INFORMATION info;
     OBJECT_ATTRIBUTES attr;
     IO_STATUS_BLOCK io;
+    UNICODE_STRING nt_name;
     LARGE_INTEGER size;
     FILE_OBJECTID_BUFFER id;
     SIZE_T len = 0;
     NTSTATUS status;
     HANDLE handle, mapping;
 
-    InitializeObjectAttributes( &attr, nt_name, OBJ_CASE_INSENSITIVE, 0, NULL );
+    RtlInitUnicodeString( &nt_name, name );
+    InitializeObjectAttributes( &attr, &nt_name, OBJ_CASE_INSENSITIVE, 0, NULL );
     if ((status = NtOpenFile( &handle, GENERIC_READ | SYNCHRONIZE, &attr, &io,
                               FILE_SHARE_READ | FILE_SHARE_DELETE,
                               FILE_SYNCHRONOUS_IO_NONALERT | FILE_NON_DIRECTORY_FILE )))
@@ -1024,7 +1026,7 @@ static NTSTATUS open_dll_file( UNICODE_STRING *nt_name, void **module, pe_image_
         {
             if (!memcmp( &builtin->id, id.ObjectId, sizeof(builtin->id) ))
             {
-                TRACE( "%s is the same file as existing module %p\n", debugstr_w( nt_name->Buffer ),
+                TRACE( "%s is the same file as existing module %p\n", debugstr_w(name),
                        builtin->module );
                 NtClose( handle );
                 NtUnmapViewOfSection( NtCurrentProcess(), *module );
@@ -1055,12 +1057,12 @@ static NTSTATUS open_dll_file( UNICODE_STRING *nt_name, void **module, pe_image_
     /* ignore non-builtins */
     if (!(image_info->image_flags & IMAGE_FLAGS_WineBuiltin))
     {
-        WARN( "%s found in WINEDLLPATH but not a builtin, ignoring\n", debugstr_us(nt_name) );
+        WARN( "%s found in WINEDLLPATH but not a builtin, ignoring\n", debugstr_w(name) );
         status = STATUS_DLL_NOT_FOUND;
     }
     else if (image_info->cpu != client_cpu)
     {
-        TRACE( "%s is for CPU %u, continuing search\n", debugstr_us(nt_name), image_info->cpu );
+        TRACE( "%s is for CPU %u, continuing search\n", debugstr_w(name), image_info->cpu );
         status = STATUS_IMAGE_MACHINE_TYPE_MISMATCH;
     }
 
@@ -1080,17 +1082,14 @@ static NTSTATUS open_dll_file( UNICODE_STRING *nt_name, void **module, pe_image_
  */
 static NTSTATUS open_builtin_file( char *name, void **module, pe_image_info_t *image_info )
 {
-    ANSI_STRING strA;
-    UNICODE_STRING nt_name;
+    WCHAR *nt_name = NULL;
     NTSTATUS status;
     int fd;
 
-    nt_name.Buffer = NULL;
-    RtlInitAnsiString( &strA, name );
-    if ((status = unix_to_nt_file_name( &strA, &nt_name ))) return status;
+    if ((status = unix_to_nt_file_name( name, &nt_name ))) return status;
 
-    status = open_dll_file( &nt_name, module, image_info );
-    RtlFreeUnicodeString( &nt_name );
+    status = open_dll_file( nt_name, module, image_info );
+    RtlFreeHeap( GetProcessHeap(), 0, nt_name );
 
     if (status != STATUS_DLL_NOT_FOUND) return status;
 
@@ -1534,7 +1533,7 @@ static struct unix_funcs unix_funcs =
     server_release_fd,
     server_init_process_done,
     wine_nt_to_unix_file_name,
-    unix_to_nt_file_name,
+    wine_unix_to_nt_file_name,
     set_show_dot_files,
     load_so_dll,
     load_builtin_dll,
