@@ -2003,7 +2003,7 @@ __ASM_GLOBAL_FUNC( call_user_exception_dispatcher,
                    "movq 0x98(%rdx),%r9\n\t" /* context->Rsp */
                    "andq $~0xf,%r9\n\t"
                    "subq $0x630,%r9\n\t" /* sizeof(struct stack_layout) */
-                   "cmpq %r9,%rsp\n\t"
+                   "cmpq %rsp,%r9\n\t"
                    "cmovbq %r9,%rsp\n\t"
                    "jmp " __ASM_NAME("do_call_user_exception_dispatcher") "\n\t")
 
