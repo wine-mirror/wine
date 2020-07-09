@@ -619,7 +619,7 @@ HRESULT WINAPI MFCreateVideoRendererActivate(HWND hwnd, IMFActivate **activate)
     if (!activate)
         return E_POINTER;
 
-    hr = create_activation_object(hwnd, &evr_activate_funcs, activate);
+    hr = create_activation_object(NULL, &evr_activate_funcs, activate);
     if (SUCCEEDED(hr))
         IMFActivate_SetUINT64(*activate, &MF_ACTIVATE_VIDEO_WINDOW, (ULONG_PTR)hwnd);
 
