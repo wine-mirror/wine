@@ -2304,7 +2304,7 @@ static HRESULT WINAPI domdoc_load(
             This->properties->uri = NULL;
         }
 
-        hr = create_uri(filename, &uri);
+        hr = create_uri(This->base_uri, filename, &uri);
         if (SUCCEEDED(hr))
             hr = CreateURLMonikerEx2(NULL, uri, &mon, 0);
         if ( SUCCEEDED(hr) )

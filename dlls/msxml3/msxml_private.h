@@ -532,7 +532,7 @@ static inline const CLSID* SchemaCache_version(MSXML_VERSION v)
 typedef struct bsc_t bsc_t;
 
 HRESULT create_moniker_from_url(LPCWSTR, IMoniker**) DECLSPEC_HIDDEN;
-HRESULT create_uri(const WCHAR *, IUri **) DECLSPEC_HIDDEN;
+HRESULT create_uri(IUri *base, const WCHAR *, IUri **) DECLSPEC_HIDDEN;
 HRESULT bind_url(IMoniker*, HRESULT (*onDataAvailable)(void*,char*,DWORD), void*, bsc_t**) DECLSPEC_HIDDEN;
 HRESULT detach_bsc(bsc_t*) DECLSPEC_HIDDEN;
 IUri *get_base_uri(IUnknown *) DECLSPEC_HIDDEN;

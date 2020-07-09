@@ -242,9 +242,10 @@ static const struct IBindStatusCallbackVtbl bsc_vtbl =
     bsc_OnObjectAvailable
 };
 
-HRESULT create_uri(const WCHAR *url, IUri **uri)
+HRESULT create_uri(IUri *base, const WCHAR *url, IUri **uri)
 {
     WCHAR fileUrl[INTERNET_MAX_URL_LENGTH];
+    HRESULT hr;
 
     TRACE("%s\n", debugstr_w(url));
 
@@ -271,7 +272,17 @@ HRESULT create_uri(const WCHAR *url, IUri **uri)
         url = fileUrl;
     }
 
-    return CreateUri(url, Uri_CREATE_ALLOW_RELATIVE | Uri_CREATE_ALLOW_IMPLICIT_FILE_SCHEME, 0, uri);
+    hr = CreateUri(url, Uri_CREATE_ALLOW_RELATIVE | Uri_CREATE_ALLOW_IMPLICIT_FILE_SCHEME, 0, uri);
+    if (hr == S_OK && base)
+    {
+        IUri *rebased_uri;
+
+        hr = CoInternetCombineIUri(base, *uri, 0, &rebased_uri, 0);
+        IUri_Release(*uri);
+        *uri = rebased_uri;
+    }
+
+    return hr;
 }
 
 HRESULT create_moniker_from_url(LPCWSTR url, IMoniker **mon)
@@ -281,7 +292,7 @@ HRESULT create_moniker_from_url(LPCWSTR url, IMoniker **mon)
 
     TRACE("%s\n", debugstr_w(url));
 
-    if (FAILED(hr = create_uri(url, &uri)))
+    if (FAILED(hr = create_uri(NULL, url, &uri)))
         return hr;
 
     hr = CreateURLMonikerEx2(NULL, uri, mon, 0);
