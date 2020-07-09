@@ -73,6 +73,8 @@ struct video_mixer
 
     IDirect3DDeviceManager9 *device_manager;
 
+    IMediaEventSink *event_sink;
+
     CRITICAL_SECTION cs;
 };
 
@@ -899,16 +901,44 @@ static ULONG WINAPI video_mixer_service_client_Release(IMFTopologyServiceLookupC
 static HRESULT WINAPI video_mixer_service_client_InitServicePointers(IMFTopologyServiceLookupClient *iface,
         IMFTopologyServiceLookup *service_lookup)
 {
-    FIXME("%p, %p.\n", iface, service_lookup);
+    struct video_mixer *mixer = impl_from_IMFTopologyServiceLookupClient(iface);
+    unsigned int count;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, service_lookup);
+
+    if (!service_lookup)
+        return E_POINTER;
+
+    EnterCriticalSection(&mixer->cs);
+
+    count = 1;
+    if (FAILED(hr = IMFTopologyServiceLookup_LookupService(service_lookup, MF_SERVICE_LOOKUP_GLOBAL, 0,
+            &MR_VIDEO_RENDER_SERVICE, &IID_IMediaEventSink, (void **)&mixer->event_sink, &count)))
+    {
+        WARN("Failed to get renderer event sink, hr %#x.\n", hr);
+    }
+
+    LeaveCriticalSection(&mixer->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI video_mixer_service_client_ReleaseServicePointers(IMFTopologyServiceLookupClient *iface)
 {
-    FIXME("%p.\n", iface);
+    struct video_mixer *mixer = impl_from_IMFTopologyServiceLookupClient(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p.\n", iface);
+
+    EnterCriticalSection(&mixer->cs);
+
+    if (mixer->event_sink)
+        IMediaEventSink_Release(mixer->event_sink);
+    mixer->event_sink = NULL;
+
+    LeaveCriticalSection(&mixer->cs);
+
+    return S_OK;
 }
 
 static const IMFTopologyServiceLookupClientVtbl video_mixer_service_client_vtbl =
