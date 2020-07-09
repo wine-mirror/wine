@@ -1498,7 +1498,8 @@ void output_syscalls( DLLSPEC *spec )
             output( "\tsubq $0xb,0x8(%%rbp)\n" );
             output( "\tcmpq $%u,%%rax\n", count );
             output( "\tjae 3f\n" );
-            output( "\tmovzbq .Lsyscall_args(%%rip),%%rcx\n" );
+            output( "\tleaq .Lsyscall_args(%%rip),%%rcx\n" );
+            output( "\tmovzbl (%%rcx,%%rax),%%ecx\n" );
             output( "\tsubq $0x20,%%rcx\n" );
             output( "\tjbe 1f\n" );
             output( "\tsubq %%rcx,%%rsp\n" );
