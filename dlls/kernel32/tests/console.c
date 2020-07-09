@@ -143,6 +143,7 @@ static void testCursorInfo(HANDLE hCon)
 {
     BOOL ret;
     CONSOLE_CURSOR_INFO info;
+    HANDLE pipe1, pipe2;
 
     SetLastError(0xdeadbeef);
     ret = GetConsoleCursorInfo(NULL, NULL);
@@ -168,6 +169,15 @@ static void testCursorInfo(HANDLE hCon)
     ok(info.bVisible, "Expected the cursor to be visible\n");
     ok(GetLastError() == 0xdeadbeef, "GetLastError: expecting %u got %u\n",
        0xdeadbeef, GetLastError());
+
+    CreatePipe(&pipe1, &pipe2, NULL, 0);
+    info.dwSize = -1;
+    ret = GetConsoleCursorInfo(pipe1, &info);
+    ok(!ret, "Expected failure\n");
+    ok(info.dwSize == -1, "Expected no change for dwSize\n");
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "GetLastError: %u\n",  GetLastError());
+    CloseHandle(pipe1);
+    CloseHandle(pipe2);
 
     /* Don't test NULL CONSOLE_CURSOR_INFO, it crashes on win9x and win7 */
 }
@@ -2692,6 +2702,7 @@ static void test_GetCurrentConsoleFont(HANDLE std_output)
     CONSOLE_FONT_INFO cfi;
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     short int width, height;
+    HANDLE pipe1, pipe2;
     COORD c;
 
     memset(&cfi, 0, sizeof(CONSOLE_FONT_INFO));
@@ -2726,6 +2737,17 @@ static void test_GetCurrentConsoleFont(HANDLE std_output)
     ok(!cfi.dwFontSize.X, "got %d, expected 0\n", cfi.dwFontSize.X);
     ok(!cfi.dwFontSize.Y, "got %d, expected 0\n", cfi.dwFontSize.Y);
 
+    CreatePipe(&pipe1, &pipe2, NULL, 0);
+    memset(&cfi, 0, sizeof(CONSOLE_FONT_INFO));
+    SetLastError(0xdeadbeef);
+    ret = GetCurrentConsoleFont(pipe1, TRUE, &cfi);
+    ok(!ret, "got %d, expected 0\n", ret);
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+    ok(!cfi.dwFontSize.X, "got %d, expected 0\n", cfi.dwFontSize.X);
+    ok(!cfi.dwFontSize.Y, "got %d, expected 0\n", cfi.dwFontSize.Y);
+    CloseHandle(pipe1);
+    CloseHandle(pipe2);
+
     memset(&cfi, 0, sizeof(CONSOLE_FONT_INFO));
     SetLastError(0xdeadbeef);
     ret = GetCurrentConsoleFont(std_output, FALSE, &cfi);
@@ -2759,6 +2781,7 @@ static void test_GetCurrentConsoleFontEx(HANDLE std_output)
     CONSOLE_FONT_INFOEX cfix;
     BOOL ret;
     HANDLE std_input = GetStdHandle(STD_INPUT_HANDLE);
+    HANDLE pipe1, pipe2;
 
     hmod = GetModuleHandleA("kernel32.dll");
     pGetCurrentConsoleFontEx = (void *)GetProcAddress(hmod, "GetCurrentConsoleFontEx");
@@ -2820,6 +2843,15 @@ static void test_GetCurrentConsoleFontEx(HANDLE std_output)
     ok(!ret, "got %d, expected 0\n", ret);
     ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
 
+    CreatePipe(&pipe1, &pipe2, NULL, 0);
+    memset(&cfi, 0, sizeof(CONSOLE_FONT_INFO));
+    SetLastError(0xdeadbeef);
+    ret = pGetCurrentConsoleFontEx(pipe1, TRUE, &cfix);
+    ok(!ret, "got %d, expected 0\n", ret);
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+    CloseHandle(pipe1);
+    CloseHandle(pipe2);
+
     SetLastError(0xdeadbeef);
     ret = pGetCurrentConsoleFontEx(std_output, FALSE, &cfix);
     ok(ret, "got %d, expected non-zero\n", ret);
@@ -2859,6 +2891,7 @@ static void test_GetConsoleFontSize(HANDLE std_output)
     LONG font_width, font_height;
     HMODULE hmod;
     DWORD (WINAPI *pGetNumberOfConsoleFonts)(void);
+    HANDLE pipe1, pipe2;
 
     memset(&c, 10, sizeof(COORD));
     SetLastError(0xdeadbeef);
@@ -2873,6 +2906,16 @@ static void test_GetConsoleFontSize(HANDLE std_output)
     ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
     ok(!c.X, "got %d, expected 0\n", c.X);
     ok(!c.Y, "got %d, expected 0\n", c.Y);
+
+    CreatePipe(&pipe1, &pipe2, NULL, 0);
+    memset(&c, 10, sizeof(COORD));
+    SetLastError(0xdeadbeef);
+    c = GetConsoleFontSize(pipe1, index);
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+    ok(!c.X, "got %d, expected 0\n", c.X);
+    ok(!c.Y, "got %d, expected 0\n", c.Y);
+    CloseHandle(pipe1);
+    CloseHandle(pipe2);
 
     GetCurrentConsoleFont(std_output, FALSE, &cfi);
     memset(&c, 10, sizeof(COORD));
@@ -2914,6 +2957,7 @@ static void test_GetLargestConsoleWindowSize(HANDLE std_output)
     LONG workarea_w, workarea_h, maxcon_w, maxcon_h;
     CONSOLE_SCREEN_BUFFER_INFO sbi;
     CONSOLE_FONT_INFO cfi;
+    HANDLE pipe1, pipe2;
     DWORD index, i;
     HMODULE hmod;
     BOOL ret;
@@ -2933,6 +2977,16 @@ static void test_GetLargestConsoleWindowSize(HANDLE std_output)
     ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
     ok(!c.X, "got %d, expected 0\n", c.X);
     ok(!c.Y, "got %d, expected 0\n", c.Y);
+
+    CreatePipe(&pipe1, &pipe2, NULL, 0);
+    memset(&c, 10, sizeof(COORD));
+    SetLastError(0xdeadbeef);
+    c = GetLargestConsoleWindowSize(pipe1);
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+    ok(!c.X, "got %d, expected 0\n", c.X);
+    ok(!c.Y, "got %d, expected 0\n", c.Y);
+    CloseHandle(pipe1);
+    CloseHandle(pipe2);
 
     SystemParametersInfoW(SPI_GETWORKAREA, 0, &r, 0);
     workarea_w = r.right - r.left;
@@ -3155,6 +3209,7 @@ static void test_GetConsoleScreenBufferInfoEx(HANDLE std_output)
     HANDLE hmod;
     BOOL (WINAPI *pGetConsoleScreenBufferInfoEx)(HANDLE, CONSOLE_SCREEN_BUFFER_INFOEX *);
     CONSOLE_SCREEN_BUFFER_INFOEX csbix;
+    HANDLE pipe1, pipe2;
     BOOL ret;
     HANDLE std_input = GetStdHandle(STD_INPUT_HANDLE);
 
@@ -3192,6 +3247,14 @@ static void test_GetConsoleScreenBufferInfoEx(HANDLE std_output)
     ret = pGetConsoleScreenBufferInfoEx(std_input, &csbix);
     ok(!ret, "got %d, expected zero\n", ret);
     ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+
+    CreatePipe(&pipe1, &pipe2, NULL, 0);
+    SetLastError(0xdeadbeef);
+    ret = pGetConsoleScreenBufferInfoEx(std_input, &csbix);
+    ok(!ret, "got %d, expected zero\n", ret);
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+    CloseHandle(pipe1);
+    CloseHandle(pipe2);
 
     SetLastError(0xdeadbeef);
     ret = pGetConsoleScreenBufferInfoEx(std_output, &csbix);
