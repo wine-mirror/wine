@@ -1591,7 +1591,7 @@ void output_syscalls( DLLSPEC *spec )
             else
             {
                 output( "\tmovl $%u,%%eax\n", i );
-                output( "\tmovl $__wine_syscall,%%edx\n" );
+                output( "\tmovl $%s,%%edx\n", asm_name("__wine_syscall") );
             }
             output( "\tcall *%%edx\n" );
             output( "\tret $%u\n", get_args_size( odp ));
@@ -1650,7 +1650,7 @@ void output_syscalls( DLLSPEC *spec )
     {
         output( "\t.align %d\n", get_alignment(16) );
         output( "\t%s\n", func_declaration("__wine_syscall") );
-        output( "__wine_syscall:\n" );
+        output( "%s:\n", asm_name("__wine_syscall") );
         output( "\tjmp *(%s)\n", asm_name("__wine_syscall_dispatcher") );
         output_function_size( "__wine_syscall" );
     }
