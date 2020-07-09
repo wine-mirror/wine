@@ -642,8 +642,16 @@ static HRESULT WINAPI video_renderer_service_lookup_LookupService(IMFTopologySer
     }
     else if (IsEqualGUID(service, &MR_VIDEO_MIXER_SERVICE))
     {
-        FIXME("Unimplemented lookup for mixer service.\n");
-        hr = MF_E_UNSUPPORTED_SERVICE;
+        if (IsEqualIID(riid, &IID_IMFTransform))
+        {
+            *objects = renderer->mixer;
+            IUnknown_AddRef((IUnknown *)*objects);
+        }
+        else
+        {
+            FIXME("Unsupported interface %s for mixer service.\n", debugstr_guid(riid));
+            hr = E_NOINTERFACE;
+        }
     }
     else
     {
