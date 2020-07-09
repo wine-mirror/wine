@@ -328,6 +328,7 @@ static NTSTATUS query_unix_drive( void *buff, SIZE_T insize,
     }
 
     size = sizeof(*output);
+    if (label) size += (strlenW(label) + 1) * sizeof(WCHAR);
     if (device) size += strlen(device) + 1;
     if (mount_point) size += strlen(mount_point) + 1;
 
@@ -342,54 +343,33 @@ static NTSTATUS query_unix_drive( void *buff, SIZE_T insize,
     output->device_offset = 0;
     output->label_offset = 0;
 
-    if (size > outsize)
-    {
-        iosb->Information = 0;
-        if (size >= FIELD_OFFSET( struct mountmgr_unix_drive, size ) + sizeof(output->size))
-        {
-            output->size = size;
-            iosb->Information = FIELD_OFFSET( struct mountmgr_unix_drive, size ) + sizeof(output->size);
-        }
-        if (size >= FIELD_OFFSET( struct mountmgr_unix_drive, type ) + sizeof(output->type))
-        {
-            output->type = type;
-            iosb->Information = FIELD_OFFSET( struct mountmgr_unix_drive, type ) + sizeof(output->type);
-        }
-        status = STATUS_BUFFER_OVERFLOW;
-        goto done;
-    }
-
     ptr = (char *)(output + 1);
 
-    if (mount_point)
-    {
-        output->mount_point_offset = ptr - (char *)output;
-        strcpy( ptr, mount_point );
-        ptr += strlen(ptr) + 1;
-    }
-    else output->mount_point_offset = 0;
-
-    if (device)
-    {
-        output->device_offset = ptr - (char *)output;
-        strcpy( ptr, device );
-        ptr += strlen(ptr) + 1;
-    }
-    else output->device_offset = 0;
-
-    if (label)
+    if (label && ptr + (strlenW(label) + 1) * sizeof(WCHAR) - (char *)output <= outsize)
     {
         output->label_offset = ptr - (char *)output;
         strcpyW( (WCHAR *)ptr, label );
         ptr += (strlenW(label) + 1) * sizeof(WCHAR);
     }
-    else output->label_offset = 0;
+    if (mount_point && ptr + strlen(mount_point) + 1 - (char *)output <= outsize)
+    {
+        output->mount_point_offset = ptr - (char *)output;
+        strcpy( ptr, mount_point );
+        ptr += strlen(ptr) + 1;
+    }
+    if (device && ptr + strlen(device) + 1 - (char *)output <= outsize)
+    {
+        output->device_offset = ptr - (char *)output;
+        strcpy( ptr, device );
+        ptr += strlen(ptr) + 1;
+    }
 
     TRACE( "returning %c: dev %s mount %s type %u\n",
            letter, debugstr_a(device), debugstr_a(mount_point), type );
 
     iosb->Information = ptr - (char *)output;
-done:
+    if (size > outsize) status = STATUS_BUFFER_OVERFLOW;
+
     RtlFreeHeap( GetProcessHeap(), 0, device );
     RtlFreeHeap( GetProcessHeap(), 0, mount_point );
     RtlFreeHeap( GetProcessHeap(), 0, label );
