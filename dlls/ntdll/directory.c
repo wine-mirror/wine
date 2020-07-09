@@ -110,10 +110,10 @@ NTSTATUS WINAPI DECLSPEC_HOTPATCH NtQueryDirectoryFile( HANDLE handle, HANDLE ev
  * element doesn't have to exist; in that case STATUS_NO_SUCH_FILE is
  * returned, but the unix name is still filled in properly.
  */
-NTSTATUS CDECL wine_nt_to_unix_file_name( const UNICODE_STRING *nameW, ANSI_STRING *unix_name_ret,
+NTSTATUS CDECL wine_nt_to_unix_file_name( const UNICODE_STRING *nameW, char *nameA, SIZE_T *size,
                                           UINT disposition )
 {
-    return unix_funcs->nt_to_unix_file_name( nameW, unix_name_ret, disposition );
+    return unix_funcs->nt_to_unix_file_name( nameW, nameA, size, disposition );
 }
 
 

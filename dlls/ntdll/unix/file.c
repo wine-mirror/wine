@@ -3427,12 +3427,19 @@ NTSTATUS nt_to_unix_file_name( const UNICODE_STRING *nameW, char **unix_name_ret
  * element doesn't have to exist; in that case STATUS_NO_SUCH_FILE is
  * returned, but the unix name is still filled in properly.
  */
-NTSTATUS CDECL wine_nt_to_unix_file_name( const UNICODE_STRING *nameW, ANSI_STRING *unix_name_ret,
+NTSTATUS CDECL wine_nt_to_unix_file_name( const UNICODE_STRING *nameW, char *nameA, SIZE_T *size,
                                           UINT disposition )
 {
     char *buffer = NULL;
     NTSTATUS status = nt_to_unix_file_name( nameW, &buffer, disposition );
-    if (buffer) RtlInitAnsiString( unix_name_ret, buffer );
+
+    if (buffer)
+    {
+        if (*size > strlen(buffer)) strcpy( nameA, buffer );
+        else status = STATUS_BUFFER_TOO_SMALL;
+        *size = strlen(buffer) + 1;
+        RtlFreeHeap( GetProcessHeap(), 0, buffer );
+    }
     return status;
 }
 
