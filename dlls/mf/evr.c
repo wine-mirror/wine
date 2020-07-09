@@ -28,7 +28,8 @@ enum video_renderer_flags
 {
     EVR_SHUT_DOWN = 0x1,
     EVR_INIT_SERVICES = 0x2, /* Currently in InitServices() call. */
-    EVR_PRESENTER_INITED_SERVICES = 0x4,
+    EVR_MIXER_INITED_SERVICES = 0x4,
+    EVR_PRESENTER_INITED_SERVICES = 0x8,
 };
 
 struct video_renderer
@@ -95,6 +96,14 @@ static struct video_renderer *impl_from_IMediaEventSink(IMediaEventSink *iface)
 static void video_renderer_release_services(struct video_renderer *renderer)
 {
     IMFTopologyServiceLookupClient *lookup_client;
+
+    if (renderer->flags & EVR_MIXER_INITED_SERVICES && SUCCEEDED(IMFTransform_QueryInterface(renderer->mixer,
+            &IID_IMFTopologyServiceLookupClient, (void **)&lookup_client)))
+    {
+        IMFTopologyServiceLookupClient_ReleaseServicePointers(lookup_client);
+        IMFTopologyServiceLookupClient_Release(lookup_client);
+        renderer->flags &= ~EVR_MIXER_INITED_SERVICES;
+    }
 
     if (renderer->flags & EVR_PRESENTER_INITED_SERVICES && SUCCEEDED(IMFVideoPresenter_QueryInterface(renderer->presenter,
             &IID_IMFTopologyServiceLookupClient, (void **)&lookup_client)))
@@ -716,8 +725,10 @@ static const IMediaEventSinkVtbl media_event_sink_vtbl =
     video_renderer_event_sink_Notify,
 };
 
-static HRESULT video_renderer_create_mixer(IMFAttributes *attributes, IMFTransform **out)
+static HRESULT video_renderer_create_mixer(struct video_renderer *renderer, IMFAttributes *attributes,
+        IMFTransform **out)
 {
+    IMFTopologyServiceLookupClient *lookup_client;
     unsigned int flags = 0;
     IMFActivate *activate;
     CLSID clsid;
@@ -736,7 +747,23 @@ static HRESULT video_renderer_create_mixer(IMFAttributes *attributes, IMFTransfo
     if (FAILED(IMFAttributes_GetGUID(attributes, &MF_ACTIVATE_CUSTOM_VIDEO_MIXER_CLSID, &clsid)))
         memcpy(&clsid, &CLSID_MFVideoMixer9, sizeof(clsid));
 
-    return CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IMFTransform, (void **)out);
+    if (SUCCEEDED(hr = CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IMFTransform, (void **)out)))
+    {
+        if (SUCCEEDED(hr = IMFTransform_QueryInterface(*out, &IID_IMFTopologyServiceLookupClient,
+                (void **)&lookup_client)))
+        {
+            renderer->flags |= EVR_INIT_SERVICES;
+            if (SUCCEEDED(hr = IMFTopologyServiceLookupClient_InitServicePointers(lookup_client,
+                    &renderer->IMFTopologyServiceLookup_iface)))
+            {
+                renderer->flags |= EVR_MIXER_INITED_SERVICES;
+            }
+            renderer->flags &= ~EVR_INIT_SERVICES;
+            IMFTopologyServiceLookupClient_Release(lookup_client);
+        }
+    }
+
+    return hr;
 }
 
 static HRESULT video_renderer_create_presenter(struct video_renderer *renderer, IMFAttributes *attributes,
@@ -805,7 +832,7 @@ static HRESULT evr_create_object(IMFAttributes *attributes, void *user_context, 
         goto failed;
 
     /* Create mixer and presenter. */
-    if (FAILED(hr = video_renderer_create_mixer(attributes, &object->mixer)))
+    if (FAILED(hr = video_renderer_create_mixer(object, attributes, &object->mixer)))
         goto failed;
 
     if (FAILED(hr = video_renderer_create_presenter(object, attributes, &object->presenter)))
