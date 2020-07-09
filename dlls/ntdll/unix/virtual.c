@@ -2911,6 +2911,7 @@ unsigned int virtual_locked_server_call( void *req_ptr )
         ret = server_call_unlocked( req );
         if (has_write_watch) update_write_watches( addr, size, wine_server_reply_size( req ));
     }
+    else memset( &req->u.reply, 0, sizeof(req->u.reply) );
     server_leave_uninterrupted_section( &virtual_mutex, &sigset );
     return ret;
 }
