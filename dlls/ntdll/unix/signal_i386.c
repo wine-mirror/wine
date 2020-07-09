@@ -1584,11 +1584,22 @@ static void setup_raise_exception( ucontext_t *sigcontext, struct stack_layout *
     SS_sig(sigcontext)  = get_ds();
     stack->rec_ptr      = &stack->rec;         /* arguments for KiUserExceptionDispatcher */
     stack->context_ptr  = &stack->context;
+
+    if (stack->rec.ExceptionCode == EXCEPTION_BREAKPOINT)
+    {
+        /* fix up instruction pointer in context for EXCEPTION_BREAKPOINT */
+        stack->context.Eip--;
+    }
 }
 
 __ASM_GLOBAL_FUNC( call_user_exception_dispatcher,
                    "add $4,%esp\n\t"
-                   "jmp *8(%esp)")
+                   "movl (%esp),%eax\n\t" /* rec */
+                   "cmpl $0x80000003,(%eax)\n\t" /* ExceptionCode */
+                   "jne 1f\n\t"
+                   "movl 4(%esp),%eax\n\t" /* context */
+                   "decl 0xb8(%eax)\n\t" /* Eip */
+                   "1:\tjmp *8(%esp)")
 
 /**********************************************************************
  *		get_fpu_code

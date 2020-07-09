@@ -230,9 +230,6 @@ NTSTATUS WINAPI dispatch_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
               context->SegEs, context->SegFs, context->SegGs, context->EFlags );
     }
 
-    /* fix up instruction pointer in context for EXCEPTION_BREAKPOINT */
-    if (rec->ExceptionCode == EXCEPTION_BREAKPOINT) context->Eip--;
-
     if (call_vectored_handlers( rec, context ) == EXCEPTION_CONTINUE_EXECUTION)
         NtContinue( context, FALSE );
 

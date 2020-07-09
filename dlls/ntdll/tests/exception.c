@@ -1671,6 +1671,9 @@ static DWORD dbg_except_continue_handler(EXCEPTION_RECORD *rec, EXCEPTION_REGIST
         CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher)
 {
     ok(hook_called, "Hook was not called.\n");
+
+    ok(rec->ExceptionCode == 0x80000003, "Got unexpected ExceptionCode %#x.\n", rec->ExceptionCode);
+
     got_exception = 1;
     dbg_except_continue_handler_eip = (void *)context->Eip;
     ++context->Eip;
@@ -1682,11 +1685,22 @@ static LONG WINAPI dbg_except_continue_vectored_handler(struct _EXCEPTION_POINTE
     EXCEPTION_RECORD *rec = e->ExceptionRecord;
     CONTEXT *context = e->ContextRecord;
 
-    trace("dbg_except_continue_vectored_handler, code %#x, eip %#x.\n", rec->ExceptionCode, context->Eip);
+    trace("dbg_except_continue_vectored_handler, code %#x, eip %#x, ExceptionAddress %p.\n",
+            rec->ExceptionCode, context->Eip, rec->ExceptionAddress);
+
+    ok(rec->ExceptionCode == 0x80000003, "Got unexpected ExceptionCode %#x.\n", rec->ExceptionCode);
 
     got_exception = 1;
-    ++context->Eip;
 
+    if ((ULONG_PTR)rec->ExceptionAddress == context->Eip + 1)
+    {
+        /* XP and Vista+ have ExceptionAddress == Eip + 1, Eip is adjusted even
+         * for software raised breakpoint exception.
+         * Win2003 has Eip not adjusted and matching ExceptionAddress.
+         * Win2008 has Eip not adjuated and ExceptionAddress not filled for
+         * software raised exception. */
+        context->Eip = (ULONG_PTR)rec->ExceptionAddress;
+    }
     return EXCEPTION_CONTINUE_EXECUTION;
 }
 
@@ -1775,7 +1789,7 @@ static void test_kiuserexceptiondispatcher(void)
     ok(hook_exception_address == code_mem || broken(!hook_exception_address) /* Win2008 */,
             "Got unexpected exception address %p, expected %p.\n",
             hook_exception_address, code_mem);
-    todo_wine ok(hook_KiUserExceptionDispatcher_eip == code_mem, "Got unexpected exception address %p, expected %p.\n",
+    ok(hook_KiUserExceptionDispatcher_eip == code_mem, "Got unexpected exception address %p, expected %p.\n",
             hook_KiUserExceptionDispatcher_eip, code_mem);
     ok(dbg_except_continue_handler_eip == code_mem, "Got unexpected exception address %p, expected %p.\n",
             dbg_except_continue_handler_eip, code_mem);
@@ -1796,7 +1810,7 @@ static void test_kiuserexceptiondispatcher(void)
     pRtlRaiseException(&record);
 
     ok(got_exception, "Handler was not called.\n");
-    ok(hook_called, "Hook was not called.\n");
+    ok(hook_called || broken(!hook_called) /* 2003 */, "Hook was not called.\n");
 
     RemoveVectoredExceptionHandler(dbg_except_continue_vectored_handler);
     ret = VirtualProtect(pKiUserExceptionDispatcher, sizeof(saved_KiUserExceptionDispatcher_bytes),
@@ -2832,13 +2846,13 @@ static LONG WINAPI dbg_except_continue_vectored_handler(struct _EXCEPTION_POINTE
 
     trace("dbg_except_continue_vectored_handler, code %#x, Rip %#lx.\n", rec->ExceptionCode, context->Rip);
 
+    ok(rec->ExceptionCode == 0x80000003, "Got unexpected exception code %#x.\n", rec->ExceptionCode);
+
     got_exception = 1;
-    if (NtCurrentTeb()->Peb->BeingDebugged || !strcmp( winetest_platform, "wine" ))
-    {
-        todo_wine_if(!NtCurrentTeb()->Peb->BeingDebugged)
-        ok(NtCurrentTeb()->Peb->BeingDebugged, "context->Rip misplaced for dbg breakpoint exception.\n");
+    dbg_except_continue_handler_rip = (void *)context->Rip;
+    if (NtCurrentTeb()->Peb->BeingDebugged)
         ++context->Rip;
-    }
+
     return EXCEPTION_CONTINUE_EXECUTION;
 }
 
@@ -2934,7 +2948,7 @@ static void test_kiuserexceptiondispatcher(void)
     ok(hook_exception_address == code_mem || broken(!hook_exception_address) /* Win2008 */,
             "Got unexpected exception address %p, expected %p.\n",
             hook_exception_address, code_mem);
-    todo_wine ok(hook_KiUserExceptionDispatcher_rip == code_mem, "Got unexpected exception address %p, expected %p.\n",
+    ok(hook_KiUserExceptionDispatcher_rip == code_mem, "Got unexpected exception address %p, expected %p.\n",
             hook_KiUserExceptionDispatcher_rip, code_mem);
     ok(dbg_except_continue_handler_rip == code_mem, "Got unexpected exception address %p, expected %p.\n",
             dbg_except_continue_handler_rip, code_mem);
@@ -2969,9 +2983,26 @@ static void test_kiuserexceptiondispatcher(void)
     ok(got_exception, "Handler was not called.\n");
     ok(hook_called, "Hook was not called.\n");
 
-    NtCurrentTeb()->Peb->BeingDebugged = 0;
+    ok(hook_exception_address == (BYTE *)hook_KiUserExceptionDispatcher_rip + 1
+            || broken(!hook_exception_address) /* 2008 */, "Got unexpected addresses %p, %p.\n",
+            hook_KiUserExceptionDispatcher_rip, hook_exception_address);
 
     RemoveVectoredExceptionHandler(dbg_except_continue_vectored_handler);
+
+    memcpy(pKiUserExceptionDispatcher, patched_KiUserExceptionDispatcher_bytes,
+            sizeof(patched_KiUserExceptionDispatcher_bytes));
+    got_exception = 0;
+    hook_called = FALSE;
+    run_exception_test(dbg_except_continue_handler, NULL, except_code, ARRAY_SIZE(except_code), PAGE_EXECUTE_READ);
+
+    ok(got_exception, "Handler was not called.\n");
+    ok(hook_called, "Hook was not called.\n");
+    ok(hook_KiUserExceptionDispatcher_rip == code_mem, "Got unexpected exception address %p, expected %p.\n",
+            hook_KiUserExceptionDispatcher_rip, code_mem);
+    ok(dbg_except_continue_handler_rip == code_mem, "Got unexpected exception address %p, expected %p.\n",
+            dbg_except_continue_handler_rip, code_mem);
+
+    NtCurrentTeb()->Peb->BeingDebugged = 0;
 
     ret = VirtualProtect(pKiUserExceptionDispatcher, sizeof(saved_KiUserExceptionDispatcher_bytes),
             old_protect2, &old_protect2);

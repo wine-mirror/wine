@@ -1958,6 +1958,12 @@ static void setup_raise_exception( ucontext_t *sigcontext, struct stack_layout *
         return;
     }
 
+    if (stack->rec.ExceptionCode == EXCEPTION_BREAKPOINT)
+    {
+        /* fix up instruction pointer in context for EXCEPTION_BREAKPOINT */
+        stack->context.Rip--;
+    }
+
     /* now modify the sigcontext to return to the raise function */
     RIP_sig(sigcontext) = (ULONG_PTR)raise_func_trampoline;
     R8_sig(sigcontext)  = (ULONG_PTR)pKiUserExceptionDispatcher;
@@ -1983,6 +1989,13 @@ void WINAPI do_call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *c
 {
     memmove(&stack->context, context, sizeof(*context));
     memcpy(&stack->rec, rec, sizeof(*rec));
+
+    if (stack->rec.ExceptionCode == EXCEPTION_BREAKPOINT)
+    {
+        /* fix up instruction pointer in context for EXCEPTION_BREAKPOINT */
+        stack->context.Rip--;
+    }
+
     user_exception_dispatcher_trampoline( stack, dispatcher );
 }
 

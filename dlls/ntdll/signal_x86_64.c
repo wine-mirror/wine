@@ -564,9 +564,6 @@ NTSTATUS WINAPI dispatch_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
               context->R12, context->R13, context->R14, context->R15 );
     }
 
-    /* fix up instruction pointer in context for EXCEPTION_BREAKPOINT */
-    if (rec->ExceptionCode == EXCEPTION_BREAKPOINT) context->Rip--;
-
     if (call_vectored_handlers( rec, context ) == EXCEPTION_CONTINUE_EXECUTION)
         NtContinue( context, FALSE );
 
