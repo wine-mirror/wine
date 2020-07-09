@@ -1326,11 +1326,11 @@ BOOL WINAPI SetConsoleKeyShortcuts(BOOL set, BYTE keys, VOID *a, DWORD b)
 
 BOOL WINAPI GetCurrentConsoleFontEx(HANDLE hConsole, BOOL maxwindow, CONSOLE_FONT_INFOEX *fontinfo)
 {
-    BOOL ret;
+    DWORD size;
     struct
     {
-        unsigned int color_map[16];
-        WCHAR face_name[LF_FACESIZE];
+        struct condrv_output_info info;
+        WCHAR face_name[LF_FACESIZE - 1];
     } data;
 
     if (fontinfo->cbSize != sizeof(CONSOLE_FONT_INFOEX))
@@ -1339,37 +1339,30 @@ BOOL WINAPI GetCurrentConsoleFontEx(HANDLE hConsole, BOOL maxwindow, CONSOLE_FON
         return FALSE;
     }
 
-    SERVER_START_REQ(get_console_output_info)
+    if (!DeviceIoControl( hConsole, IOCTL_CONDRV_GET_OUTPUT_INFO, NULL, 0,
+                          &data, sizeof(data), &size, NULL ))
     {
-        req->handle = console_handle_unmap(hConsole);
-        wine_server_set_reply( req, &data, sizeof(data) - sizeof(WCHAR) );
-        if ((ret = !wine_server_call_err(req)))
-        {
-            fontinfo->nFont = 0;
-            if (maxwindow)
-            {
-                fontinfo->dwFontSize.X = min(reply->width, reply->max_width);
-                fontinfo->dwFontSize.Y = min(reply->height, reply->max_height);
-            }
-            else
-            {
-                fontinfo->dwFontSize.X = reply->win_right - reply->win_left + 1;
-                fontinfo->dwFontSize.Y = reply->win_bottom - reply->win_top + 1;
-            }
-            if (wine_server_reply_size( reply ) > sizeof(data.color_map))
-            {
-                data_size_t len = wine_server_reply_size( reply ) - sizeof(data.color_map);
-                memcpy( fontinfo->FaceName, data.face_name, len );
-                fontinfo->FaceName[len / sizeof(WCHAR)] = 0;
-            }
-            else
-                fontinfo->FaceName[0] = 0;
-            fontinfo->FontFamily = reply->font_pitch_family;
-            fontinfo->FontWeight = reply->font_weight;
-        }
+        SetLastError( ERROR_INVALID_HANDLE );
+        return FALSE;
     }
-    SERVER_END_REQ;
-    return ret;
+
+    fontinfo->nFont = 0;
+    if (maxwindow)
+    {
+        fontinfo->dwFontSize.X = min( data.info.width, data.info.max_width );
+        fontinfo->dwFontSize.Y = min( data.info.height, data.info.max_height );
+    }
+    else
+    {
+        fontinfo->dwFontSize.X = data.info.win_right - data.info.win_left + 1;
+        fontinfo->dwFontSize.Y = data.info.win_bottom - data.info.win_top + 1;
+    }
+    size -= sizeof(data.info);
+    if (size) memcpy( fontinfo->FaceName, data.face_name, size );
+    fontinfo->FaceName[size / sizeof(WCHAR)] = 0;
+    fontinfo->FontFamily = data.info.font_pitch_family;
+    fontinfo->FontWeight = data.info.font_weight;
+    return TRUE;
 }
 
 BOOL WINAPI GetCurrentConsoleFont(HANDLE hConsole, BOOL maxwindow, CONSOLE_FONT_INFO *fontinfo)
