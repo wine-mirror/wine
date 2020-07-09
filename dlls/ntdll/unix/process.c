@@ -1002,10 +1002,13 @@ NTSTATUS WINAPI NtTerminateProcess( HANDLE handle, LONG exit_code )
 
 #if defined(HAVE_MACH_MACH_H)
 
-static void fill_VM_COUNTERS( VM_COUNTERS_EX *pvmi )
+void fill_vm_counters( VM_COUNTERS_EX *pvmi, int unix_pid )
 {
 #if defined(MACH_TASK_BASIC_INFO)
     struct mach_task_basic_info info;
+
+    if (unix_pid != -1) return; /* FIXME: Retrieve information for other processes. */
+
     mach_msg_type_number_t infoCount = MACH_TASK_BASIC_INFO_COUNT;
     if(task_info(mach_task_self(), MACH_TASK_BASIC_INFO, (task_info_t)&info, &infoCount) == KERN_SUCCESS)
     {
@@ -1019,13 +1022,17 @@ static void fill_VM_COUNTERS( VM_COUNTERS_EX *pvmi )
 
 #elif defined(linux)
 
-static void fill_VM_COUNTERS( VM_COUNTERS_EX *pvmi )
+void fill_vm_counters( VM_COUNTERS_EX *pvmi, int unix_pid )
 {
     FILE *f;
-    char line[256];
+    char line[256], path[26];
     unsigned long value;
 
-    f = fopen("/proc/self/status", "r");
+    if (unix_pid == -1)
+        strcpy( path, "/proc/self/status" );
+    else
+        sprintf( path, "/proc/%u/status", unix_pid);
+    f = fopen( path, "r" );
     if (!f) return;
 
     while (fgets(line, sizeof(line), f))
@@ -1050,7 +1057,7 @@ static void fill_VM_COUNTERS( VM_COUNTERS_EX *pvmi )
 
 #else
 
-static void fill_VM_COUNTERS( VM_COUNTERS_EX *pvmi )
+void fill_vm_counters( VM_COUNTERS_EX *pvmi, int unix_pid )
 {
     /* FIXME : real data */
 }
@@ -1171,7 +1178,7 @@ NTSTATUS WINAPI NtQueryInformationProcess( HANDLE handle, PROCESSINFOCLASS class
                 else
                 {
                     memset(&pvmi, 0, sizeof(pvmi));
-                    if (handle == GetCurrentProcess()) fill_VM_COUNTERS(&pvmi);
+                    if (handle == GetCurrentProcess()) fill_vm_counters( &pvmi, -1 );
                     else
                     {
                         SERVER_START_REQ(get_process_vm_counters)
