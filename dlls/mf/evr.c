@@ -37,6 +37,7 @@ struct video_renderer
     IMFClockStateSink IMFClockStateSink_iface;
     IMFMediaEventGenerator IMFMediaEventGenerator_iface;
     IMFGetService IMFGetService_iface;
+    IMFTopologyServiceLookup IMFTopologyServiceLookup_iface;
     LONG refcount;
 
     IMFMediaEventQueue *event_queue;
@@ -76,6 +77,11 @@ static struct video_renderer *impl_from_IMFClockStateSink(IMFClockStateSink *ifa
 static struct video_renderer *impl_from_IMFGetService(IMFGetService *iface)
 {
     return CONTAINING_RECORD(iface, struct video_renderer, IMFGetService_iface);
+}
+
+static struct video_renderer *impl_from_IMFTopologyServiceLookup(IMFTopologyServiceLookup *iface)
+{
+    return CONTAINING_RECORD(iface, struct video_renderer, IMFTopologyServiceLookup_iface);
 }
 
 static HRESULT WINAPI video_renderer_sink_QueryInterface(IMFMediaSink *iface, REFIID riid, void **obj)
@@ -556,6 +562,53 @@ static const IMFGetServiceVtbl video_renderer_get_service_vtbl =
     video_renderer_get_service_GetService,
 };
 
+static HRESULT WINAPI video_renderer_service_lookup_QueryInterface(IMFTopologyServiceLookup *iface, REFIID riid, void **obj)
+{
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
+
+    if (IsEqualIID(riid, &IID_IMFTopologyServiceLookup) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IMFTopologyServiceLookup_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("Unsupported interface %s.\n", debugstr_guid(riid));
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI video_renderer_service_lookup_AddRef(IMFTopologyServiceLookup *iface)
+{
+    struct video_renderer *renderer = impl_from_IMFTopologyServiceLookup(iface);
+    return IMFMediaSink_AddRef(&renderer->IMFMediaSink_iface);
+}
+
+static ULONG WINAPI video_renderer_service_lookup_Release(IMFTopologyServiceLookup *iface)
+{
+    struct video_renderer *renderer = impl_from_IMFTopologyServiceLookup(iface);
+    return IMFMediaSink_Release(&renderer->IMFMediaSink_iface);
+}
+
+static HRESULT WINAPI video_renderer_service_lookup_LookupService(IMFTopologyServiceLookup *iface,
+        MF_SERVICE_LOOKUP_TYPE lookup_type, DWORD index, REFGUID service, REFIID riid,
+        void **objects, DWORD *num_objects)
+{
+    TRACE("%p, %u, %u, %s, %s, %p, %p.\n", iface, lookup_type, index, debugstr_guid(service), debugstr_guid(riid),
+            objects, num_objects);
+
+    return E_NOTIMPL;
+}
+
+static const IMFTopologyServiceLookupVtbl video_renderer_service_lookup_vtbl =
+{
+    video_renderer_service_lookup_QueryInterface,
+    video_renderer_service_lookup_AddRef,
+    video_renderer_service_lookup_Release,
+    video_renderer_service_lookup_LookupService,
+};
+
 static HRESULT video_renderer_create_mixer(IMFAttributes *attributes, IMFTransform **out)
 {
     unsigned int flags = 0;
@@ -618,6 +671,7 @@ static HRESULT evr_create_object(IMFAttributes *attributes, void *user_context, 
     object->IMFMediaEventGenerator_iface.lpVtbl = &video_renderer_events_vtbl;
     object->IMFClockStateSink_iface.lpVtbl = &video_renderer_clock_sink_vtbl;
     object->IMFGetService_iface.lpVtbl = &video_renderer_get_service_vtbl;
+    object->IMFTopologyServiceLookup_iface.lpVtbl = &video_renderer_service_lookup_vtbl;
     object->refcount = 1;
     InitializeCriticalSection(&object->cs);
 
