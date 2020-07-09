@@ -927,7 +927,7 @@ already_loaded:
 static NTSTATUS CDECL load_so_dll( UNICODE_STRING *nt_name, void **module )
 {
     static const WCHAR soW[] = {'.','s','o',0};
-    ANSI_STRING unix_name;
+    char *unix_name;
     NTSTATUS status;
     DWORD len;
 
@@ -937,8 +937,8 @@ static NTSTATUS CDECL load_so_dll( UNICODE_STRING *nt_name, void **module )
     len = nt_name->Length / sizeof(WCHAR);
     if (len > 3 && !wcsicmp( nt_name->Buffer + len - 3, soW )) nt_name->Length -= 3 * sizeof(WCHAR);
 
-    status = dlopen_dll( unix_name.Buffer, module );
-    RtlFreeAnsiString( &unix_name );
+    status = dlopen_dll( unix_name, module );
+    RtlFreeHeap( GetProcessHeap(), 0, unix_name );
     return status;
 }
 
@@ -1533,7 +1533,7 @@ static struct unix_funcs unix_funcs =
     server_handle_to_fd,
     server_release_fd,
     server_init_process_done,
-    nt_to_unix_file_name,
+    wine_nt_to_unix_file_name,
     unix_to_nt_file_name,
     set_show_dot_files,
     load_so_dll,

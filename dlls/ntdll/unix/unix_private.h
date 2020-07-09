@@ -124,8 +124,6 @@ extern NTSTATUS CDECL exec_process( UNICODE_STRING *path, UNICODE_STRING *cmdlin
 extern NTSTATUS CDECL unwind_builtin_dll( ULONG type, struct _DISPATCHER_CONTEXT *dispatch,
                                           CONTEXT *context ) DECLSPEC_HIDDEN;
 
-extern NTSTATUS CDECL nt_to_unix_file_name( const UNICODE_STRING *nameW, ANSI_STRING *unix_name_ret,
-                                            UINT disposition ) DECLSPEC_HIDDEN;
 extern NTSTATUS CDECL unix_to_nt_file_name( const ANSI_STRING *name, UNICODE_STRING *nt ) DECLSPEC_HIDDEN;
 extern void CDECL set_show_dot_files( BOOL enable ) DECLSPEC_HIDDEN;
 
@@ -237,6 +235,7 @@ extern NTSTATUS tape_DeviceIoControl( HANDLE device, HANDLE event, PIO_APC_ROUTI
                                       ULONG in_size, void *out_buffer, ULONG out_size ) DECLSPEC_HIDDEN;
 
 extern NTSTATUS errno_to_status( int err ) DECLSPEC_HIDDEN;
+extern NTSTATUS nt_to_unix_file_name( const UNICODE_STRING *nameW, char **name_ret, UINT disposition ) DECLSPEC_HIDDEN;
 extern void init_files(void) DECLSPEC_HIDDEN;
 extern void init_cpu_info(void) DECLSPEC_HIDDEN;
 
