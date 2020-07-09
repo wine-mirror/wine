@@ -611,7 +611,7 @@ static void WINECON_Delete(struct inner_data* data)
 static BOOL WINECON_GetServerConfig(struct inner_data* data)
 {
     struct condrv_input_info input_info;
-    BOOL  ret;
+    struct condrv_output_info output_info;
     DWORD mode;
 
     if (!DeviceIoControl(data->hConIn, IOCTL_CONDRV_GET_INPUT_INFO, NULL, 0,
@@ -625,22 +625,19 @@ static BOOL WINECON_GetServerConfig(struct inner_data* data)
     data->curcfg.insert_mode = (mode & (ENABLE_INSERT_MODE|ENABLE_EXTENDED_FLAGS)) ==
                                        (ENABLE_INSERT_MODE|ENABLE_EXTENDED_FLAGS);
 
-    SERVER_START_REQ(get_console_output_info)
-    {
-        req->handle = wine_server_obj_handle( data->hConOut );
-        ret = !wine_server_call_err( req );
-        data->curcfg.cursor_size = reply->cursor_size;
-        data->curcfg.cursor_visible = reply->cursor_visible;
-        data->curcfg.def_attr = reply->attr;
-        data->curcfg.sb_width = reply->width;
-        data->curcfg.sb_height = reply->height;
-        data->curcfg.win_width = reply->win_right - reply->win_left + 1;
-        data->curcfg.win_height = reply->win_bottom - reply->win_top + 1;
-    }
-    SERVER_END_REQ;
-    WINECON_DumpConfig("first cfg: ", &data->curcfg);
+    if (!DeviceIoControl(data->hConOut, IOCTL_CONDRV_GET_OUTPUT_INFO, NULL, 0,
+                         &output_info, sizeof(output_info), NULL, NULL))
+        return FALSE;
+    data->curcfg.cursor_size = output_info.cursor_size;
+    data->curcfg.cursor_visible = output_info.cursor_visible;
+    data->curcfg.def_attr = output_info.attr;
+    data->curcfg.sb_width = output_info.width;
+    data->curcfg.sb_height = output_info.height;
+    data->curcfg.win_width = output_info.win_right - output_info.win_left + 1;
+    data->curcfg.win_height = output_info.win_bottom - output_info.win_top + 1;
 
-    return ret;
+    WINECON_DumpConfig("first cfg: ", &data->curcfg);
+    return TRUE;
 }
 
 /******************************************************************
