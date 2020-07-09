@@ -1051,23 +1051,21 @@ static void test_get_image_info(void)
 
     CoInitialize(NULL);
 
-    todo_wine {
     hr = D3DX10GetImageInfoFromMemory(test_image[0].data, 0, NULL, &image_info, NULL);
     ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
     hr = D3DX10GetImageInfoFromMemory(NULL, test_image[0].size, NULL, &image_info, NULL);
     ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
     hr = D3DX10GetImageInfoFromMemory(&dword, sizeof(dword), NULL, &image_info, NULL);
     ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
-    }
 
     for (i = 0; i < ARRAY_SIZE(test_image); ++i)
     {
         hr = D3DX10GetImageInfoFromMemory(test_image[i].data, test_image[i].size, NULL, &image_info, NULL);
-        todo_wine ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        todo_wine_if(test_image[i].expected.ImageFileFormat == D3DX10_IFF_WMP)
+            ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
         if (hr != S_OK)
             continue;
 
-        todo_wine {
         ok(image_info.Width == test_image[i].expected.Width,
                 "Test %u: Got unexpected Width %u, expected %u.\n",
                 i, image_info.Width, test_image[i].expected.Width);
@@ -1095,7 +1093,6 @@ static void test_get_image_info(void)
         ok(image_info.ImageFileFormat == test_image[i].expected.ImageFileFormat,
                 "Test %u: Got unexpected ImageFileFormat %u, expected %u.\n",
                 i, image_info.ImageFileFormat, test_image[i].expected.ImageFileFormat);
-        }
     }
 
     CoUninitialize();

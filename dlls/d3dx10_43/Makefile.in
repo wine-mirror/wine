@@ -1,6 +1,7 @@
 MODULE    = d3dx10_43.dll
 IMPORTLIB = d3dx10
 IMPORTS   = d3d10_1 d3dcompiler dxguid
+DELAYIMPORTS = windowscodecs
 
 EXTRADLLFLAGS = -mno-cygwin
 
