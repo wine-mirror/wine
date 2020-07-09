@@ -79,7 +79,6 @@ static void console_input_destroy( struct object *obj );
 static struct fd *console_input_get_fd( struct object *obj );
 static struct object *console_input_open_file( struct object *obj, unsigned int access,
                                                unsigned int sharing, unsigned int options );
-static enum server_fd_type console_get_fd_type( struct fd *fd );
 
 static const struct object_ops console_input_ops =
 {
@@ -102,6 +101,24 @@ static const struct object_ops console_input_ops =
     no_kernel_obj_list,               /* get_kernel_obj_list */
     no_close_handle,                  /* close_handle */
     console_input_destroy             /* destroy */
+};
+
+static enum server_fd_type console_get_fd_type( struct fd *fd );
+static int console_input_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
+
+static const struct fd_ops console_input_fd_ops =
+{
+    default_fd_get_poll_events,   /* get_poll_events */
+    default_poll_event,           /* poll_event */
+    console_get_fd_type,          /* get_fd_type */
+    no_fd_read,                   /* read */
+    no_fd_write,                  /* write */
+    no_fd_flush,                  /* flush */
+    no_fd_get_file_info,          /* get_file_info */
+    no_fd_get_volume_info,        /* get_volume_info */
+    console_input_ioctl,          /* ioctl */
+    default_fd_queue_async,       /* queue_async */
+    default_fd_reselect_async     /* reselect_async */
 };
 
 static void console_input_events_dump( struct object *obj, int verbose );
@@ -221,9 +238,9 @@ static const struct object_ops screen_buffer_ops =
     screen_buffer_destroy             /* destroy */
 };
 
-static int console_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
+static int screen_buffer_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 
-static const struct fd_ops console_fd_ops =
+static const struct fd_ops screen_buffer_fd_ops =
 {
     default_fd_get_poll_events,   /* get_poll_events */
     default_poll_event,           /* poll_event */
@@ -233,7 +250,7 @@ static const struct fd_ops console_fd_ops =
     no_fd_flush,                  /* flush */
     no_fd_get_file_info,          /* get_file_info */
     no_fd_get_volume_info,        /* get_volume_info */
-    console_ioctl,                /* ioctl */
+    screen_buffer_ioctl,          /* ioctl */
     default_fd_queue_async,       /* queue_async */
     default_fd_reselect_async     /* reselect_async */
 };
@@ -446,12 +463,12 @@ static struct object *create_console_input( struct thread* renderer, int fd )
     }
     if (fd != -1) /* bare console */
     {
-        console_input->fd = create_anonymous_fd( &console_fd_ops, fd, &console_input->obj,
+        console_input->fd = create_anonymous_fd( &console_input_fd_ops, fd, &console_input->obj,
                                                  FILE_SYNCHRONOUS_IO_NONALERT );
     }
     else
     {
-        console_input->fd = alloc_pseudo_fd( &console_fd_ops, &console_input->obj,
+        console_input->fd = alloc_pseudo_fd( &console_input_fd_ops, &console_input->obj,
                                              FILE_SYNCHRONOUS_IO_NONALERT );
     }
     if (!console_input->fd)
@@ -540,7 +557,7 @@ static struct screen_buffer *create_console_output( struct console_input *consol
         screen_buffer->fd = NULL;
     else
     {
-        if (!(screen_buffer->fd = create_anonymous_fd( &console_fd_ops, fd, &screen_buffer->obj,
+        if (!(screen_buffer->fd = create_anonymous_fd( &screen_buffer_fd_ops, fd, &screen_buffer->obj,
                                                        FILE_SYNCHRONOUS_IO_NONALERT )))
         {
             release_object( screen_buffer );
@@ -1550,7 +1567,7 @@ static void scroll_console_output( struct screen_buffer *screen_buffer, int xsrc
     console_input_events_append( screen_buffer->input, &evt );
 }
 
-static int console_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
+static int console_input_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 {
     struct console_input *console = get_fd_user( fd );
 
@@ -1613,6 +1630,12 @@ static int console_ioctl( struct fd *fd, ioctl_code_t code, struct async *async 
         set_error( STATUS_INVALID_HANDLE );
         return 0;
     }
+}
+
+static int screen_buffer_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
+{
+    set_error( STATUS_INVALID_HANDLE );
+    return 0;
 }
 
 static int console_input_events_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
