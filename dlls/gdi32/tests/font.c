@@ -7168,6 +7168,106 @@ static void test_char_width(void)
     ReleaseDC(NULL, dc);
 }
 
+static void test_GetCharacterPlacement_kerning(void)
+{
+    LOGFONTA lf;
+    HFONT hfont, hfont_old;
+    KERNINGPAIR *kp;
+    HDC hdc;
+    DWORD count, ret, i, size, width, width_kern, idx;
+    WCHAR str[30];
+    GCP_RESULTSW result;
+    int kern[30], pos[30], pos_kern[30], dx[30], dx_kern[30], kern_amount;
+
+    if (!is_font_installed("Arial"))
+    {
+        skip("Arial is not installed, skipping the test\n");
+        return;
+    }
+
+    hdc = GetDC(0);
+
+    memset(&lf, 0, sizeof(lf));
+    strcpy(lf.lfFaceName, "Arial");
+    lf.lfHeight = 120;
+    hfont = CreateFontIndirectA(&lf);
+    ok(hfont != NULL, "CreateFontIndirect failed\n");
+
+    hfont_old = SelectObject(hdc, hfont);
+
+    count = GetKerningPairsW(hdc, 0, NULL);
+    kp = HeapAlloc(GetProcessHeap(), 0, count * sizeof(*kp));
+
+    ret = GetKerningPairsW(hdc, count, kp);
+    ok(ret == count, "got %u, expected %u\n", ret, count);
+
+    size = kern_amount = idx = 0;
+    for (i = 0; i < count; i++)
+    {
+        if (kp[i].wFirst >= 'A' && kp[i].wFirst <= 'z' &&
+            kp[i].wSecond >= 'A' && kp[i].wSecond <= 'z')
+        {
+            str[size++] = kp[i].wFirst;
+            str[size++] = kp[i].wSecond;
+            str[size++] = 0;
+            kern[idx] = kp[i].iKernAmount;
+            idx++;
+            kern_amount += kp[i].iKernAmount;
+            if (size >= ARRAY_SIZE(str)) break;
+        }
+    }
+
+    HeapFree(GetProcessHeap(), 0, kp);
+
+    count = size;
+
+    memset(&result, 0, sizeof(result));
+    result.lStructSize = sizeof(result);
+    result.lpCaretPos = pos;
+    result.lpDx = dx;
+    result.nGlyphs = count;
+    ret = GetCharacterPlacementW(hdc, str, count, 0, &result, 0);
+    ok(ret, "GetCharacterPlacement failed\n");
+    ok(result.nGlyphs == count, "got %u\n", result.nGlyphs);
+    width = LOWORD(ret);
+
+    memset(&result, 0, sizeof(result));
+    result.lStructSize = sizeof(result);
+    result.lpCaretPos = pos_kern;
+    result.lpDx = dx_kern;
+    result.nGlyphs = count;
+    ret = GetCharacterPlacementW(hdc, str, count, 0, &result, GCP_USEKERNING);
+    ok(ret, "GetCharacterPlacement failed\n");
+    ok(result.nGlyphs == count, "got %u\n", result.nGlyphs);
+    width_kern = LOWORD(ret);
+
+    if (width == width_kern)
+    {
+        win_skip("GCP_USEKERNING is broken on this platform\n");
+        goto done;
+    }
+
+    ok(width + kern_amount == width_kern, "%d + %d != %d\n", width, kern_amount, width_kern);
+
+    kern_amount = idx = 0;
+    for (i = 0; i < count; i += 3, idx++)
+    {
+        ok(pos[i] + kern_amount == pos_kern[i], "%d: %d + %d != %d\n", i, pos[i], kern_amount, pos_kern[i]);
+        kern_amount += kern[idx];
+        ok(pos[i+1] + kern_amount == pos_kern[i+1], "%d: %d + %d != %d\n", i, pos[i+1], kern_amount, pos_kern[i+1]);
+        ok(pos[i+2] + kern_amount == pos_kern[i+2], "%d: %d + %d != %d\n", i, pos[i+2], kern_amount, pos_kern[i+2]);
+
+        ok(dx[i] + kern[idx] == dx_kern[i], "%d: %d + %d != %d\n", i, dx[i], kern[idx], dx_kern[i]);
+        ok(dx[i+1] == dx_kern[i+1], "%d: %d != %d\n", i, dx[i+1], dx_kern[i+1]);
+        ok(dx[i+2] == dx_kern[i+2], "%d: %d != %d\n", i, dx[i+2], dx_kern[i+2]);
+    }
+
+done:
+    SelectObject(hdc, hfont_old);
+    DeleteObject(hfont);
+    ReleaseDC(0, hdc);
+}
+
 START_TEST(font)
 {
     static const char *test_names[] =
@@ -7236,6 +7336,7 @@ START_TEST(font)
     test_GetTextMetrics2("Arial", -55);
     test_GetTextMetrics2("Arial", -110);
     test_GetCharacterPlacement();
+    test_GetCharacterPlacement_kerning();
     test_GetCharWidthInfo();
     test_CreateFontIndirect();
     test_CreateFontIndirectEx();

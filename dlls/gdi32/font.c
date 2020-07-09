@@ -3278,6 +3278,55 @@ GetCharacterPlacementA(HDC hdc, LPCSTR lpString, INT uCount,
     return ret;
 }
 
+static int kern_pair(const KERNINGPAIR *kern, int count, WCHAR c1, WCHAR c2)
+{
+    int i;
+
+    for (i = 0; i < count; i++)
+    {
+        if (kern[i].wFirst == c1 && kern[i].wSecond == c2)
+            return kern[i].iKernAmount;
+    }
+
+    return 0;
+}
+
+static int *kern_string(HDC hdc, const WCHAR *str, int len, int *kern_total)
+{
+    int i, count;
+    KERNINGPAIR *kern = NULL;
+    int *ret;
+
+    *kern_total = 0;
+
+    ret = heap_alloc(len * sizeof(*ret));
+    if (!ret) return NULL;
+
+    count = GetKerningPairsW(hdc, 0, NULL);
+    if (count)
+    {
+        kern = heap_alloc(count * sizeof(*kern));
+        if (!kern)
+        {
+            heap_free(ret);
+            return NULL;
+        }
+
+        GetKerningPairsW(hdc, count, kern);
+    }
+
+    for (i = 0; i < len - 1; i++)
+    {
+        ret[i] = kern_pair(kern, count, str[i], str[i + 1]);
+        *kern_total += ret[i];
+    }
+
+    ret[len - 1] = 0; /* no kerning for last element */
+
+    heap_free(kern);
+    return ret;
+}
+
 /*************************************************************************
  * GetCharacterPlacementW [GDI32.@]
  *
@@ -3309,6 +3358,7 @@ GetCharacterPlacementW(
     DWORD ret=0;
     SIZE size;
     UINT i, nSet;
+    int *kern = NULL, kern_total = 0;
 
     TRACE("%s, %d, %d, 0x%08x\n",
           debugstr_wn(lpString, uCount), uCount, nMaxExtent, dwFlags);
@@ -3325,30 +3375,30 @@ GetCharacterPlacementW(
           lpResults->lpDx, lpResults->lpCaretPos, lpResults->lpClass,
           lpResults->lpGlyphs, lpResults->nGlyphs, lpResults->nMaxFit);
 
-    if(dwFlags&(~GCP_REORDER))
+    if (dwFlags & ~(GCP_REORDER | GCP_USEKERNING))
         FIXME("flags 0x%08x ignored\n", dwFlags);
-    if(lpResults->lpClass)
+    if (lpResults->lpClass)
         FIXME("classes not implemented\n");
     if (lpResults->lpCaretPos && (dwFlags & GCP_REORDER))
         FIXME("Caret positions for complex scripts not implemented\n");
 
     nSet = (UINT)uCount;
-    if(nSet > lpResults->nGlyphs)
+    if (nSet > lpResults->nGlyphs)
         nSet = lpResults->nGlyphs;
 
     /* return number of initialized fields */
     lpResults->nGlyphs = nSet;
 
-    if((dwFlags&GCP_REORDER)==0 )
+    if (!(dwFlags & GCP_REORDER))
     {
         /* Treat the case where no special handling was requested in a fastpath way */
         /* copy will do if the GCP_REORDER flag is not set */
-        if(lpResults->lpOutString)
+        if (lpResults->lpOutString)
             memcpy( lpResults->lpOutString, lpString, nSet * sizeof(WCHAR));
 
-        if(lpResults->lpOrder)
+        if (lpResults->lpOrder)
         {
-            for(i = 0; i < nSet; i++)
+            for (i = 0; i < nSet; i++)
                 lpResults->lpOrder[i] = i;
         }
     }
@@ -3358,6 +3408,16 @@ GetCharacterPlacementW(
                      nSet, lpResults->lpOrder, NULL, NULL );
     }
 
+    if (dwFlags & GCP_USEKERNING)
+    {
+        kern = kern_string(hdc, lpString, nSet, &kern_total);
+        if (!kern)
+        {
+            SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+            return 0;
+        }
+    }
+
     /* FIXME: Will use the placement chars */
     if (lpResults->lpDx)
     {
@@ -3365,7 +3425,11 @@ GetCharacterPlacementW(
         for (i = 0; i < nSet; i++)
         {
             if (GetCharWidth32W(hdc, lpString[i], lpString[i], &c))
-                lpResults->lpDx[i]= c;
+            {
+                lpResults->lpDx[i] = c;
+                if (dwFlags & GCP_USEKERNING)
+                    lpResults->lpDx[i] += kern[i];
+            }
         }
     }
 
@@ -3374,16 +3438,23 @@ GetCharacterPlacementW(
         int pos = 0;
 
         lpResults->lpCaretPos[0] = 0;
-        for (i = 1; i < nSet; i++)
-            if (GetTextExtentPoint32W(hdc, &(lpString[i - 1]), 1, &size))
-                lpResults->lpCaretPos[i] = (pos += size.cx);
+        for (i = 0; i < nSet - 1; i++)
+        {
+            if (dwFlags & GCP_USEKERNING)
+                pos += kern[i];
+
+            if (GetTextExtentPoint32W(hdc, &lpString[i], 1, &size))
+                lpResults->lpCaretPos[i + 1] = (pos += size.cx);
+        }
     }
 
-    if(lpResults->lpGlyphs)
+    if (lpResults->lpGlyphs)
         GetGlyphIndicesW(hdc, lpString, nSet, lpResults->lpGlyphs, 0);
 
     if (GetTextExtentPoint32W(hdc, lpString, uCount, &size))
-        ret = MAKELONG(size.cx, size.cy);
+        ret = MAKELONG(size.cx + kern_total, size.cy);
+
+    heap_free(kern);
 
     return ret;
 }
