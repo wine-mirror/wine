@@ -967,7 +967,7 @@ struct object *create_user_data_mapping( struct object *root, const struct unico
     if (ptr != MAP_FAILED)
     {
         user_shared_data = ptr;
-        user_shared_data->SystemCallPad[0] = 1;
+        user_shared_data->SystemCall = 1;
     }
     return &mapping->obj;
 }
