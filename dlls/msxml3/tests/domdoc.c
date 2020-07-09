@@ -13226,17 +13226,13 @@ static void test_load_with_site(void)
     qi_count = 0;
     hr = IObjectWithSite_SetSite(site, (IUnknown *)&sp);
     ok(hr == S_OK, "got %#x\n", hr);
-todo_wine
     ok(qi_count != 0, "got %d QI calls\n", qi_count);
 todo_wine
     ok(qi_list_contains(&IID_IXMLDOMDocument), "QI(IID_IXMLDOMDocument) was not called\n");
-todo_wine
     ok(qi_list_contains(&IID_IHTMLDocument2), "QI(IID_IHTMLDocument2) was not called\n");
-todo_wine
     ok(qi_list_contains(&IID_IServiceProvider), "QI(IID_IServiceProvider) was not called\n");
 todo_wine
     ok(qi_list_contains(&IID_IOleClientSite), "QI(IID_IOleClientSite) was not called\n");
-todo_wine
     ok(qi_list_contains_service(&SID_SContainerDispatch, &IID_IHTMLDocument2),
        "QI(SID_SContainerDispatch, IID_IHTMLDocument2) was not called\n");
 todo_wine

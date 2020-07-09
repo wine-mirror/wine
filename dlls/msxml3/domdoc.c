@@ -135,6 +135,7 @@ struct domdoc
 
     /* IObjectWithSite */
     IUnknown *site;
+    IUri *base_uri;
 
     /* IObjectSafety */
     DWORD safeopt;
@@ -963,6 +964,8 @@ static ULONG WINAPI domdoc_Release( IXMLDOMDocument3 *iface )
 
         if (This->site)
             IUnknown_Release( This->site );
+        if (This->base_uri)
+            IUri_Release( This->base_uri );
         destroy_xmlnode(&This->node);
 
         for (eid = 0; eid < EVENTID_LAST; eid++)
@@ -3551,6 +3554,12 @@ static HRESULT WINAPI domdoc_ObjectWithSite_SetSite( IObjectWithSite *iface, IUn
             This->site = NULL;
         }
 
+        if(This->base_uri)
+        {
+            IUri_Release(This->base_uri);
+            This->base_uri = NULL;
+        }
+
         return S_OK;
     }
 
@@ -3560,6 +3569,7 @@ static HRESULT WINAPI domdoc_ObjectWithSite_SetSite( IObjectWithSite *iface, IUn
         IUnknown_Release( This->site );
 
     This->site = punk;
+    This->base_uri = get_base_uri(This->site);
 
     return S_OK;
 }
@@ -3664,6 +3674,7 @@ HRESULT get_domdoc_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument3 **document)
     doc->properties = properties_from_xmlDocPtr(xmldoc);
     doc->error = S_OK;
     doc->site = NULL;
+    doc->base_uri = NULL;
     doc->safeopt = 0;
     doc->cp_list = NULL;
     doc->namespaces = NULL;

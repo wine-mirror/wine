@@ -1598,7 +1598,7 @@ static HRESULT WINAPI httprequest_ObjectWithSite_GetSite( IObjectWithSite *iface
     return IUnknown_QueryInterface( This->site, iid, ppvSite );
 }
 
-static void get_base_uri(httprequest *This)
+IUri *get_base_uri(IUnknown *site)
 {
     IServiceProvider *provider;
     IHTMLDocument2 *doc;
@@ -1606,30 +1606,30 @@ static void get_base_uri(httprequest *This)
     BSTR url;
     HRESULT hr;
 
-    hr = IUnknown_QueryInterface(This->site, &IID_IServiceProvider, (void**)&provider);
+    hr = IUnknown_QueryInterface(site, &IID_IServiceProvider, (void**)&provider);
     if(FAILED(hr))
-        return;
+        return NULL;
 
     hr = IServiceProvider_QueryService(provider, &SID_SContainerDispatch, &IID_IHTMLDocument2, (void**)&doc);
     if(FAILED(hr))
         hr = IServiceProvider_QueryService(provider, &SID_SInternetHostSecurityManager, &IID_IHTMLDocument2, (void**)&doc);
     IServiceProvider_Release(provider);
     if(FAILED(hr))
-        return;
+        return NULL;
 
     hr = IHTMLDocument2_get_URL(doc, &url);
     IHTMLDocument2_Release(doc);
     if(FAILED(hr) || !url || !*url)
-        return;
+        return NULL;
 
     TRACE("host url %s\n", debugstr_w(url));
 
     hr = CreateUri(url, 0, 0, &uri);
     SysFreeString(url);
     if(FAILED(hr))
-        return;
+        return NULL;
 
-    This->base_uri = uri;
+    return uri;
 }
 
 static HRESULT WINAPI httprequest_ObjectWithSite_SetSite( IObjectWithSite *iface, IUnknown *punk )
@@ -1648,7 +1648,7 @@ static HRESULT WINAPI httprequest_ObjectWithSite_SetSite( IObjectWithSite *iface
     if (punk)
     {
         IUnknown_AddRef( punk );
-        get_base_uri(This);
+        This->base_uri = get_base_uri(This->site);
     }
 
     return S_OK;
