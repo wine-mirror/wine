@@ -37,6 +37,7 @@
 #include "dispex.h"
 #include "objsafe.h"
 #include "mshtml.h"
+#include "docobj.h"
 #include "xmlparser.h"
 #include "initguid.h"
 #include "asptlb.h"
@@ -13114,6 +13115,148 @@ static void test_namespaces_as_attributes(void)
     free_bstrs();
 }
 
+static const IID *qi_list[32];
+static int qi_count;
+
+static BOOL qi_list_contains(REFIID iid)
+{
+    int i;
+
+    for (i = 0; i < qi_count; i++)
+    {
+        if (IsEqualGUID(qi_list[i], iid))
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
+static BOOL qi_list_contains_service(REFIID service, REFIID iid)
+{
+    int i;
+
+    for (i = 0; i < qi_count; i++)
+    {
+        if (IsEqualGUID(qi_list[i], service) && IsEqualGUID(qi_list[i + 1], iid))
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
+static HRESULT WINAPI sp_QueryInterface(IServiceProvider *iface, REFIID iid, void **ppv)
+{
+    trace("sp_QueryInterface: %s\n", wine_dbgstr_guid(iid));
+
+    if (qi_count < ARRAY_SIZE(qi_list))
+        qi_list[qi_count++] = iid;
+    else
+        ok(0, "qi_list overflow: %d\n", qi_count);
+
+    if (IsEqualGUID(iid, &IID_IUnknown) ||
+        IsEqualGUID(iid, &IID_IServiceProvider))
+    {
+        *ppv = iface;
+        return S_OK;
+    }
+
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI sp_AddRef(IServiceProvider *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI sp_Release(IServiceProvider *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI sp_QueryService(IServiceProvider *iface, REFGUID service,
+                                      REFIID iid, void **ppv)
+{
+    trace("sp_QueryService: %s, %s\n", wine_dbgstr_guid(service), wine_dbgstr_guid(iid));
+
+    if (IsEqualGUID(service, &SID_SContainerDispatch) ||
+        IsEqualGUID(service, &SID_SInternetHostSecurityManager))
+    {
+        if (qi_count + 1 < ARRAY_SIZE(qi_list))
+        {
+            qi_list[qi_count++] = service;
+            qi_list[qi_count++] = iid;
+        }
+        else
+            ok(0, "qi_list overflow: %d\n", qi_count);
+    }
+
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
+
+static const IServiceProviderVtbl sp_vtbl =
+{
+    sp_QueryInterface,
+    sp_AddRef,
+    sp_Release,
+    sp_QueryService
+};
+
+static IServiceProvider sp = { &sp_vtbl };
+
+static void test_load_with_site(void)
+{
+    char path[MAX_PATH];
+    IXMLDOMDocument2 *doc;
+    IObjectWithSite *site;
+    VARIANT var;
+    VARIANT_BOOL b;
+    HRESULT hr;
+
+    GetTempPathA(MAX_PATH, path);
+    strcat(path, "winetest.xml");
+    write_to_file(path, win1252xml);
+
+    doc = create_document(&IID_IXMLDOMDocument2);
+
+    hr = IXMLDOMDocument2_QueryInterface(doc, &IID_IObjectWithSite, (void **)&site);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    qi_count = 0;
+    hr = IObjectWithSite_SetSite(site, (IUnknown *)&sp);
+    ok(hr == S_OK, "got %#x\n", hr);
+todo_wine
+    ok(qi_count != 0, "got %d QI calls\n", qi_count);
+todo_wine
+    ok(qi_list_contains(&IID_IXMLDOMDocument), "QI(IID_IXMLDOMDocument) was not called\n");
+todo_wine
+    ok(qi_list_contains(&IID_IHTMLDocument2), "QI(IID_IHTMLDocument2) was not called\n");
+todo_wine
+    ok(qi_list_contains(&IID_IServiceProvider), "QI(IID_IServiceProvider) was not called\n");
+todo_wine
+    ok(qi_list_contains(&IID_IOleClientSite), "QI(IID_IOleClientSite) was not called\n");
+todo_wine
+    ok(qi_list_contains_service(&SID_SContainerDispatch, &IID_IHTMLDocument2),
+       "QI(SID_SContainerDispatch, IID_IHTMLDocument2) was not called\n");
+todo_wine
+    ok(qi_list_contains_service(&SID_SInternetHostSecurityManager, &IID_IXMLDOMDocument),
+       "QI(SID_SInternetHostSecurityManager, IID_IXMLDOMDocument) was not called\n");
+
+    qi_count = 0;
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = _bstr_(path);
+    hr = IXMLDOMDocument2_load(doc, var, &b);
+    ok(hr == S_OK, "got %#x\n", hr);
+    ok(b == VARIANT_TRUE, "got %d\n", b);
+    ok(qi_count == 0, "got %d QI calls\n", qi_count);
+    SysFreeString(V_BSTR(&var));
+
+    IXMLDOMDocument2_Release(doc);
+
+    DeleteFileA(path);
+}
+
 START_TEST(domdoc)
 {
     HRESULT hr;
@@ -13130,6 +13273,7 @@ START_TEST(domdoc)
         return;
     }
 
+    test_load_with_site();
     test_domdoc();
     test_persiststream();
     test_domnode();
