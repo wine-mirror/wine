@@ -669,7 +669,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetConsoleScreenBufferInfo( HANDLE handle, CONSOLE
 BOOL WINAPI DECLSPEC_HOTPATCH GetConsoleScreenBufferInfoEx( HANDLE handle,
                                                             CONSOLE_SCREEN_BUFFER_INFOEX *info )
 {
-    BOOL ret;
+    struct condrv_output_info condrv_info;
 
     if (info->cbSize != sizeof(CONSOLE_SCREEN_BUFFER_INFOEX))
     {
@@ -677,29 +677,28 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetConsoleScreenBufferInfoEx( HANDLE handle,
         return FALSE;
     }
 
-    SERVER_START_REQ( get_console_output_info )
+    if (!DeviceIoControl( handle, IOCTL_CONDRV_GET_OUTPUT_INFO, NULL, 0, &condrv_info,
+                          sizeof(condrv_info), NULL, NULL ))
     {
-        req->handle = console_handle_unmap( handle );
-        wine_server_set_reply( req, info->ColorTable, sizeof(info->ColorTable) );
-        if ((ret = !wine_server_call_err( req )))
-        {
-            info->dwSize.X              = reply->width;
-            info->dwSize.Y              = reply->height;
-            info->dwCursorPosition.X    = reply->cursor_x;
-            info->dwCursorPosition.Y    = reply->cursor_y;
-            info->wAttributes           = reply->attr;
-            info->srWindow.Left         = reply->win_left;
-            info->srWindow.Top          = reply->win_top;
-            info->srWindow.Right        = reply->win_right;
-            info->srWindow.Bottom       = reply->win_bottom;
-            info->dwMaximumWindowSize.X = min( reply->width, reply->max_width );
-            info->dwMaximumWindowSize.Y = min( reply->height, reply->max_height );
-            info->wPopupAttributes      = reply->popup_attr;
-            info->bFullscreenSupported  = FALSE;
-        }
+        SetLastError( ERROR_INVALID_HANDLE );
+        return FALSE;
     }
-    SERVER_END_REQ;
-    return ret;
+
+    info->dwSize.X              = condrv_info.width;
+    info->dwSize.Y              = condrv_info.height;
+    info->dwCursorPosition.X    = condrv_info.cursor_x;
+    info->dwCursorPosition.Y    = condrv_info.cursor_y;
+    info->wAttributes           = condrv_info.attr;
+    info->srWindow.Left         = condrv_info.win_left;
+    info->srWindow.Top          = condrv_info.win_top;
+    info->srWindow.Right        = condrv_info.win_right;
+    info->srWindow.Bottom       = condrv_info.win_bottom;
+    info->dwMaximumWindowSize.X = min( condrv_info.width, condrv_info.max_width );
+    info->dwMaximumWindowSize.Y = min( condrv_info.height, condrv_info.max_height );
+    info->wPopupAttributes      = condrv_info.popup_attr;
+    info->bFullscreenSupported  = FALSE;
+    memcpy( info->ColorTable, condrv_info.color_map, sizeof(info->ColorTable) );
+    return TRUE;
 }
 
 
