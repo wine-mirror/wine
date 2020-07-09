@@ -1619,33 +1619,6 @@ enum server_fd_type
 #define SET_CONSOLE_OUTPUT_INFO_POPUP_ATTR      0x0100
 
 
-/* Get info about a console (output only) */
-@REQ(get_console_output_info)
-    obj_handle_t handle;        /* handle to the console */
-@REPLY
-    short int    cursor_size;   /* size of cursor (percentage filled) */
-    short int    cursor_visible;/* cursor visibility flag */
-    short int    cursor_x;      /* position of cursor (x, y) */
-    short int    cursor_y;
-    short int    width;         /* width of the screen buffer */
-    short int    height;        /* height of the screen buffer */
-    short int    attr;          /* default fill attributes (screen colors) */
-    short int    popup_attr;    /* pop-up color attributes */
-    short int    win_left;      /* window actually displayed by renderer */
-    short int    win_top;       /* the rect area is expressed within the */
-    short int    win_right;     /* boundaries of the screen buffer */
-    short int    win_bottom;
-    short int    max_width;     /* maximum size (width x height) for the window */
-    short int    max_height;
-    short int    font_width;    /* font size (width x height) */
-    short int    font_height;
-    short int    font_weight;   /* font weight */
-    short int    font_pitch_family; /* font pitch & family */
-    VARARG(colors,uints,64);    /* color table */
-    VARARG(face_name,unicode_str);  /* font face name */
-@END
-
-
 /* write data (chars and/or attributes) in a screen buffer */
 @REQ(write_console_output)
     obj_handle_t handle;        /* handle to the console output */

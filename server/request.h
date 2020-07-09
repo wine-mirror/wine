@@ -193,7 +193,6 @@ DECL_HANDLER(append_console_input_history);
 DECL_HANDLER(get_console_input_history);
 DECL_HANDLER(create_console_output);
 DECL_HANDLER(set_console_output_info);
-DECL_HANDLER(get_console_output_info);
 DECL_HANDLER(write_console_output);
 DECL_HANDLER(fill_console_output);
 DECL_HANDLER(read_console_output);
@@ -491,7 +490,6 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_get_console_input_history,
     (req_handler)req_create_console_output,
     (req_handler)req_set_console_output_info,
-    (req_handler)req_get_console_output_info,
     (req_handler)req_write_console_output,
     (req_handler)req_fill_console_output,
     (req_handler)req_read_console_output,
@@ -1208,27 +1206,6 @@ C_ASSERT( FIELD_OFFSET(struct set_console_output_info_request, font_height) == 5
 C_ASSERT( FIELD_OFFSET(struct set_console_output_info_request, font_weight) == 52 );
 C_ASSERT( FIELD_OFFSET(struct set_console_output_info_request, font_pitch_family) == 54 );
 C_ASSERT( sizeof(struct set_console_output_info_request) == 56 );
-C_ASSERT( FIELD_OFFSET(struct get_console_output_info_request, handle) == 12 );
-C_ASSERT( sizeof(struct get_console_output_info_request) == 16 );
-C_ASSERT( FIELD_OFFSET(struct get_console_output_info_reply, cursor_size) == 8 );
-C_ASSERT( FIELD_OFFSET(struct get_console_output_info_reply, cursor_visible) == 10 );
-C_ASSERT( FIELD_OFFSET(struct get_console_output_info_reply, cursor_x) == 12 );
-C_ASSERT( FIELD_OFFSET(struct get_console_output_info_reply, cursor_y) == 14 );
-C_ASSERT( FIELD_OFFSET(struct get_console_output_info_reply, width) == 16 );
-C_ASSERT( FIELD_OFFSET(struct get_console_output_info_reply, height) == 18 );
-C_ASSERT( FIELD_OFFSET(struct get_console_output_info_reply, attr) == 20 );
-C_ASSERT( FIELD_OFFSET(struct get_console_output_info_reply, popup_attr) == 22 );
-C_ASSERT( FIELD_OFFSET(struct get_console_output_info_reply, win_left) == 24 );
-C_ASSERT( FIELD_OFFSET(struct get_console_output_info_reply, win_top) == 26 );
-C_ASSERT( FIELD_OFFSET(struct get_console_output_info_reply, win_right) == 28 );
-C_ASSERT( FIELD_OFFSET(struct get_console_output_info_reply, win_bottom) == 30 );
-C_ASSERT( FIELD_OFFSET(struct get_console_output_info_reply, max_width) == 32 );
-C_ASSERT( FIELD_OFFSET(struct get_console_output_info_reply, max_height) == 34 );
-C_ASSERT( FIELD_OFFSET(struct get_console_output_info_reply, font_width) == 36 );
-C_ASSERT( FIELD_OFFSET(struct get_console_output_info_reply, font_height) == 38 );
-C_ASSERT( FIELD_OFFSET(struct get_console_output_info_reply, font_weight) == 40 );
-C_ASSERT( FIELD_OFFSET(struct get_console_output_info_reply, font_pitch_family) == 42 );
-C_ASSERT( sizeof(struct get_console_output_info_reply) == 48 );
 C_ASSERT( FIELD_OFFSET(struct write_console_output_request, handle) == 12 );
 C_ASSERT( FIELD_OFFSET(struct write_console_output_request, x) == 16 );
 C_ASSERT( FIELD_OFFSET(struct write_console_output_request, y) == 20 );

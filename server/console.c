@@ -2035,49 +2035,6 @@ DECL_HANDLER(set_console_output_info)
     }
 }
 
-/* get info about a console screen buffer */
-DECL_HANDLER(get_console_output_info)
-{
-    struct screen_buffer *screen_buffer;
-    void *data;
-    data_size_t total;
-
-    if ((screen_buffer = (struct screen_buffer *)get_handle_obj( current->process, req->handle,
-                                                                 FILE_READ_PROPERTIES, &screen_buffer_ops)))
-    {
-        reply->cursor_size    = screen_buffer->cursor_size;
-        reply->cursor_visible = screen_buffer->cursor_visible;
-        reply->cursor_x       = screen_buffer->cursor_x;
-        reply->cursor_y       = screen_buffer->cursor_y;
-        reply->width          = screen_buffer->width;
-        reply->height         = screen_buffer->height;
-        reply->attr           = screen_buffer->attr;
-        reply->popup_attr     = screen_buffer->popup_attr;
-        reply->win_left       = screen_buffer->win.left;
-        reply->win_top        = screen_buffer->win.top;
-        reply->win_right      = screen_buffer->win.right;
-        reply->win_bottom     = screen_buffer->win.bottom;
-        reply->max_width      = screen_buffer->max_width;
-        reply->max_height     = screen_buffer->max_height;
-        reply->font_width     = screen_buffer->font.width;
-        reply->font_height    = screen_buffer->font.height;
-        reply->font_weight    = screen_buffer->font.weight;
-        reply->font_pitch_family = screen_buffer->font.pitch_family;
-        total = min( sizeof(screen_buffer->color_map) + screen_buffer->font.face_len, get_reply_max_size() );
-        if (total)
-        {
-            data = set_reply_data_size( total );
-            memcpy( data, screen_buffer->color_map, min( total, sizeof(screen_buffer->color_map) ));
-            if (screen_buffer->font.face_len && total > sizeof(screen_buffer->color_map))
-            {
-                memcpy( (char *)data + sizeof(screen_buffer->color_map), screen_buffer->font.face_name,
-                        min( total - sizeof(screen_buffer->color_map), screen_buffer->font.face_len ));
-            }
-        }
-        release_object( screen_buffer );
-    }
-}
-
 /* read data (chars & attrs) from a screen buffer */
 DECL_HANDLER(read_console_output)
 {
