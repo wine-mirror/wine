@@ -1261,9 +1261,9 @@ Unit tests for data structure packing
 
 %header
 
-basetsd.h
 winnt.h
 windef.h
+guiddef.h
 urlmon.h
 
 %include
