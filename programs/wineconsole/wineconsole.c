@@ -454,23 +454,24 @@ void     WINECON_SetConfig(struct inner_data* data, const struct config_data* cf
         data->curcfg.cell_height != cfg->cell_height || data->curcfg.font_pitch_family != cfg->font_pitch_family ||
         data->curcfg.font_weight != cfg->font_weight)
     {
+        struct condrv_output_info_params *params;
+        size_t len = lstrlenW(cfg->face_name);
         RECT r;
         data->fnSetFont(data, cfg->face_name, cfg->cell_height, cfg->font_weight);
         SystemParametersInfoW(SPI_GETWORKAREA, 0, &r, 0);
-        SERVER_START_REQ(set_console_output_info)
+        if ((params = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*params) + len * sizeof(WCHAR))))
         {
-            req->handle = wine_server_obj_handle( data->hConOut );
-            req->mask = SET_CONSOLE_OUTPUT_INFO_MAX_SIZE | SET_CONSOLE_OUTPUT_INFO_FONT;
-            req->max_width  = (r.right - r.left) / cfg->cell_width;
-            req->max_height = (r.bottom - r.top - GetSystemMetrics(SM_CYCAPTION)) / cfg->cell_height;
-            req->font_width = cfg->cell_width;
-            req->font_height = cfg->cell_height;
-            req->font_weight = cfg->font_weight;
-            req->font_pitch_family = cfg->font_pitch_family;
-            wine_server_add_data( req, cfg->face_name, lstrlenW(cfg->face_name) * sizeof(WCHAR) );
-            wine_server_call( req );
+            params->mask = SET_CONSOLE_OUTPUT_INFO_MAX_SIZE | SET_CONSOLE_OUTPUT_INFO_FONT;
+            params->info.max_width  = (r.right - r.left) / cfg->cell_width;
+            params->info.max_height = (r.bottom - r.top - GetSystemMetrics(SM_CYCAPTION)) / cfg->cell_height;
+            params->info.font_width = cfg->cell_width;
+            params->info.font_height = cfg->cell_height;
+            params->info.font_weight = cfg->font_weight;
+            params->info.font_pitch_family = cfg->font_pitch_family;
+            memcpy(params + 1, cfg->face_name, len * sizeof(WCHAR));
+            DeviceIoControl(data->hConOut, IOCTL_CONDRV_SET_OUTPUT_INFO, params, sizeof(*params) + len * sizeof(WCHAR),
+                            NULL, 0, NULL, NULL);
         }
-        SERVER_END_REQ;
     }
     if (data->curcfg.def_attr != cfg->def_attr)
     {
