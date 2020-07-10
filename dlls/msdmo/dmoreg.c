@@ -75,12 +75,6 @@ static const WCHAR szCat2Fmt[] =
     '%','s','\\','%','s',0
 };
 
-static const WCHAR szToGuidFmt[] =
-{
-    '{','%','s','}',0
-};
-
-
 typedef struct
 {
     IEnumDMO                    IEnumDMO_iface;
@@ -482,7 +476,6 @@ static HRESULT WINAPI IEnumDMO_fnNext(
 {
     HKEY hkey;
     WCHAR szNextKey[MAX_PATH];
-    WCHAR szGuidKey[64];
     WCHAR szKey[MAX_PATH];
     WCHAR szValue[MAX_PATH];
     DMO_PARTIAL_MEDIATYPE types[100];
@@ -490,7 +483,6 @@ static HRESULT WINAPI IEnumDMO_fnNext(
     UINT count = 0;
     HRESULT hres = S_OK;
     LONG ret;
-    GUID guid;
 
     IEnumDMOImpl *This = impl_from_IEnumDMO(iface);
 
@@ -514,7 +506,7 @@ static HRESULT WINAPI IEnumDMO_fnNext(
             break;
         }
 
-        if (string_to_guid(szNextKey, &guid) != S_OK)
+        if (string_to_guid(szNextKey, &pCLSID[count]) != S_OK)
             continue;
 
         TRACE("found %s\n", debugstr_w(szNextKey));
@@ -622,8 +614,6 @@ static HRESULT WINAPI IEnumDMO_fnNext(
                     lstrcpyW(Names[count], szValue);
             }
         }
-        wsprintfW(szGuidKey,szToGuidFmt,szNextKey);
-        CLSIDFromString(szGuidKey, &pCLSID[count]);
 
         TRACE("found match %s %s\n", debugstr_w(szValue), debugstr_w(szNextKey));
         RegCloseKey(hkey);
