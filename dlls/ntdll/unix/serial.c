@@ -950,7 +950,7 @@ static DWORD check_events(int fd, DWORD mask,
  *  TIOCMIWAIT only checks modem status line and may not be aborted by a changing mask
  *
  */
-static DWORD CALLBACK wait_for_event(LPVOID arg)
+static void CALLBACK wait_for_event(LPVOID arg)
 {
     async_commio *commio = arg;
     int fd, needs_close;
@@ -1008,13 +1008,14 @@ static DWORD CALLBACK wait_for_event(LPVOID arg)
     stop_waiting(commio->hDevice);
     if (commio->hEvent) NtSetEvent(commio->hEvent, NULL);
     free( commio );
-    return 0;
+    NtTerminateThread( GetCurrentThread(), 0 );
 }
 
 static NTSTATUS wait_on(HANDLE hDevice, int fd, HANDLE hEvent, PIO_STATUS_BLOCK piosb, DWORD* events)
 {
     async_commio*       commio;
     NTSTATUS            status;
+    HANDLE handle;
 
     if ((status = NtResetEvent(hEvent, NULL)))
         return status;
@@ -1086,9 +1087,12 @@ static NTSTATUS wait_on(HANDLE hDevice, int fd, HANDLE hEvent, PIO_STATUS_BLOCK 
         goto out_now;
     }
 
-    /* create the worker for the task */
-    status = RtlQueueWorkItem(wait_for_event, commio, 0 /* FIXME */);
+    /* create the worker thread for the task */
+    /* FIXME: should use async I/O instead */
+    status = NtCreateThreadEx( &handle, THREAD_ALL_ACCESS, NULL, GetCurrentProcess(),
+                               wait_for_event, commio, 0, 0, 0, 0, NULL );
     if (status != STATUS_SUCCESS) goto out_now;
+    NtClose( handle );
     return STATUS_PENDING;
 
 #if !defined(TIOCINQ) || (!(defined(TIOCSERGETLSR) && defined(TIOCSER_TEMT)) || !defined(TIOCINQ)) || !defined(TIOCMGET) || !defined(TIOCM_CTS) ||!defined(TIOCM_DSR) || !defined(TIOCM_RNG) || !defined(TIOCM_CAR)
