@@ -1179,20 +1179,14 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetConsoleCtrlHandler( PHANDLER_ROUTINE func, BOOL
  */
 BOOL WINAPI DECLSPEC_HOTPATCH SetConsoleCursorInfo( HANDLE handle, CONSOLE_CURSOR_INFO *info )
 {
-    BOOL ret;
+    struct condrv_output_info_params params = { SET_CONSOLE_OUTPUT_INFO_CURSOR_GEOM };
 
     TRACE( "(%p,%d,%d)\n", handle, info->dwSize, info->bVisible);
 
-    SERVER_START_REQ( set_console_output_info )
-    {
-        req->handle         = console_handle_unmap( handle );
-        req->cursor_size    = info->dwSize;
-        req->cursor_visible = info->bVisible;
-        req->mask           = SET_CONSOLE_OUTPUT_INFO_CURSOR_GEOM;
-        ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-    return ret;
+    params.info.cursor_size    = info->dwSize;
+    params.info.cursor_visible = info->bVisible;
+    return console_ioctl( handle, IOCTL_CONDRV_SET_OUTPUT_INFO, &params, sizeof(params),
+                          NULL, 0, NULL );
 }
 
 
