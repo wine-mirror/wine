@@ -125,6 +125,7 @@ typedef struct dds_frame_info {
 typedef struct DdsDecoder {
     IWICBitmapDecoder IWICBitmapDecoder_iface;
     IWICDdsDecoder IWICDdsDecoder_iface;
+    IWICWineDecoder IWICWineDecoder_iface;
     LONG ref;
     BOOL initialized;
     IStream *stream;
@@ -279,6 +280,11 @@ static inline DdsDecoder *impl_from_IWICBitmapDecoder(IWICBitmapDecoder *iface)
 static inline DdsDecoder *impl_from_IWICDdsDecoder(IWICDdsDecoder *iface)
 {
     return CONTAINING_RECORD(iface, DdsDecoder, IWICDdsDecoder_iface);
+}
+
+static inline DdsDecoder *impl_from_IWICWineDecoder(IWICWineDecoder *iface)
+{
+    return CONTAINING_RECORD(iface, DdsDecoder, IWICWineDecoder_iface);
 }
 
 static inline DdsFrameDecode *impl_from_IWICBitmapFrameDecode(IWICBitmapFrameDecode *iface)
@@ -566,6 +572,8 @@ static HRESULT WINAPI DdsDecoder_QueryInterface(IWICBitmapDecoder *iface, REFIID
         *ppv = &This->IWICBitmapDecoder_iface;
     } else if (IsEqualIID(&IID_IWICDdsDecoder, iid)) {
         *ppv = &This->IWICDdsDecoder_iface;
+    } else if (IsEqualIID(&IID_IWICWineDecoder, iid)) {
+        *ppv = &This->IWICWineDecoder_iface;
     } else {
         *ppv = NULL;
         return E_NOINTERFACE;
@@ -959,6 +967,37 @@ static const IWICDdsDecoderVtbl DdsDecoder_Dds_Vtbl = {
     DdsDecoder_Dds_GetFrame
 };
 
+static HRESULT WINAPI DdsDecoder_Wine_QueryInterface(IWICWineDecoder *iface, REFIID iid, void **ppv)
+{
+    DdsDecoder *This = impl_from_IWICWineDecoder(iface);
+    return DdsDecoder_QueryInterface(&This->IWICBitmapDecoder_iface, iid, ppv);
+}
+
+static ULONG WINAPI DdsDecoder_Wine_AddRef(IWICWineDecoder *iface)
+{
+    DdsDecoder *This = impl_from_IWICWineDecoder(iface);
+    return DdsDecoder_AddRef(&This->IWICBitmapDecoder_iface);
+}
+
+static ULONG WINAPI DdsDecoder_Wine_Release(IWICWineDecoder *iface)
+{
+    DdsDecoder *This = impl_from_IWICWineDecoder(iface);
+    return DdsDecoder_Release(&This->IWICBitmapDecoder_iface);
+}
+
+static HRESULT WINAPI DdsDecoder_Wine_Initialize(IWICWineDecoder *iface, IStream *stream, WICDecodeOptions options)
+{
+    FIXME("(This %p, stream %p, options %#x)\n", iface, stream, options);
+    return E_NOTIMPL;
+}
+
+static const IWICWineDecoderVtbl DdsDecoder_Wine_Vtbl = {
+    DdsDecoder_Wine_QueryInterface,
+    DdsDecoder_Wine_AddRef,
+    DdsDecoder_Wine_Release,
+    DdsDecoder_Wine_Initialize
+};
+
 HRESULT DdsDecoder_CreateInstance(REFIID iid, void** ppv)
 {
     DdsDecoder *This;
@@ -973,6 +1012,7 @@ HRESULT DdsDecoder_CreateInstance(REFIID iid, void** ppv)
 
     This->IWICBitmapDecoder_iface.lpVtbl = &DdsDecoder_Vtbl;
     This->IWICDdsDecoder_iface.lpVtbl = &DdsDecoder_Dds_Vtbl;
+    This->IWICWineDecoder_iface.lpVtbl = &DdsDecoder_Wine_Vtbl;
     This->ref = 1;
     This->initialized = FALSE;
     This->stream = NULL;
