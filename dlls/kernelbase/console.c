@@ -80,6 +80,28 @@ static inline obj_handle_t console_handle_unmap( HANDLE h )
     return wine_server_obj_handle( console_handle_map( h ) );
 }
 
+static BOOL console_ioctl( HANDLE handle, DWORD code, void *in_buff, DWORD in_count,
+                           void *out_buff, DWORD out_count, DWORD *read )
+{
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+
+    status = NtDeviceIoControlFile( handle, NULL, NULL, NULL, &io, code, in_buff, in_count,
+                                    out_buff, out_count );
+    switch( status )
+    {
+    case STATUS_SUCCESS:
+        if (read) *read = io.Information;
+        return TRUE;
+    case STATUS_INVALID_PARAMETER:
+        break;
+    default:
+        status = STATUS_INVALID_HANDLE;
+        break;
+    }
+    return set_ntstatus( status );
+}
+
 /* map input records to ASCII */
 static void input_records_WtoA( INPUT_RECORD *buffer, int count )
 {
@@ -162,11 +184,8 @@ static COORD get_largest_console_window_size( HANDLE handle )
     struct condrv_output_info info;
     COORD c = { 0, 0 };
 
-    if (!DeviceIoControl( handle, IOCTL_CONDRV_GET_OUTPUT_INFO, NULL, 0, &info, sizeof(info), NULL, NULL ))
-    {
-        SetLastError( ERROR_INVALID_HANDLE );
+    if (!console_ioctl( handle, IOCTL_CONDRV_GET_OUTPUT_INFO, NULL, 0, &info, sizeof(info), NULL ))
         return c;
-    }
 
     c.X = info.max_width;
     c.Y = info.max_height;
@@ -543,11 +562,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetConsoleCursorInfo( HANDLE handle, CONSOLE_CURSO
 {
     struct condrv_output_info condrv_info;
 
-    if (!DeviceIoControl( handle, IOCTL_CONDRV_GET_OUTPUT_INFO, NULL, 0, &condrv_info, sizeof(condrv_info), NULL, NULL ))
-    {
-        SetLastError( ERROR_INVALID_HANDLE );
+    if (!console_ioctl( handle, IOCTL_CONDRV_GET_OUTPUT_INFO, NULL, 0, &condrv_info, sizeof(condrv_info), NULL ))
         return FALSE;
-    }
 
     if (!info)
     {
@@ -636,12 +652,9 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetConsoleScreenBufferInfo( HANDLE handle, CONSOLE
 {
     struct condrv_output_info condrv_info;
 
-    if (!DeviceIoControl( handle , IOCTL_CONDRV_GET_OUTPUT_INFO, NULL, 0,
-                          &condrv_info, sizeof(condrv_info), NULL, NULL ))
-    {
-        SetLastError( ERROR_INVALID_HANDLE );
+    if (!console_ioctl( handle , IOCTL_CONDRV_GET_OUTPUT_INFO, NULL, 0,
+                        &condrv_info, sizeof(condrv_info), NULL ))
         return FALSE;
-    }
 
     info->dwSize.X              = condrv_info.width;
     info->dwSize.Y              = condrv_info.height;
@@ -677,12 +690,9 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetConsoleScreenBufferInfoEx( HANDLE handle,
         return FALSE;
     }
 
-    if (!DeviceIoControl( handle, IOCTL_CONDRV_GET_OUTPUT_INFO, NULL, 0, &condrv_info,
-                          sizeof(condrv_info), NULL, NULL ))
-    {
-        SetLastError( ERROR_INVALID_HANDLE );
+    if (!console_ioctl( handle, IOCTL_CONDRV_GET_OUTPUT_INFO, NULL, 0, &condrv_info,
+                        sizeof(condrv_info), NULL ))
         return FALSE;
-    }
 
     info->dwSize.X              = condrv_info.width;
     info->dwSize.Y              = condrv_info.height;
@@ -755,7 +765,7 @@ COORD WINAPI DECLSPEC_HOTPATCH GetLargestConsoleWindowSize( HANDLE handle )
 BOOL WINAPI DECLSPEC_HOTPATCH GetNumberOfConsoleInputEvents( HANDLE handle, DWORD *count )
 {
     struct condrv_input_info info;
-    if (!DeviceIoControl( handle, IOCTL_CONDRV_GET_INPUT_INFO, NULL, 0, &info, sizeof(info), NULL, NULL ))
+    if (!console_ioctl( handle, IOCTL_CONDRV_GET_INPUT_INFO, NULL, 0, &info, sizeof(info), NULL ))
         return FALSE;
     *count = info.input_count;
     return TRUE;
@@ -784,7 +794,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH PeekConsoleInputW( HANDLE handle, INPUT_RECORD *bu
                                                  DWORD length, DWORD *count )
 {
     DWORD read;
-    if (!DeviceIoControl( handle, IOCTL_CONDRV_PEEK, NULL, 0, buffer, length * sizeof(*buffer), &read, NULL ))
+    if (!console_ioctl( handle, IOCTL_CONDRV_PEEK, NULL, 0, buffer, length * sizeof(*buffer), &read ))
         return FALSE;
     if (count) *count = read / sizeof(*buffer);
     return TRUE;
