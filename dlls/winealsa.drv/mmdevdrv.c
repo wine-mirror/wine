@@ -1264,8 +1264,10 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
                 AUDCLNT_STREAMFLAGS_RATEADJUST |
                 AUDCLNT_SESSIONFLAGS_EXPIREWHENUNOWNED |
                 AUDCLNT_SESSIONFLAGS_DISPLAY_HIDE |
-                AUDCLNT_SESSIONFLAGS_DISPLAY_HIDEWHENEXPIRED)){
-        TRACE("Unknown flags: %08x\n", flags);
+                AUDCLNT_SESSIONFLAGS_DISPLAY_HIDEWHENEXPIRED |
+                AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY |
+                AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM)){
+        FIXME("Unknown flags: %08x\n", flags);
         return E_INVALIDARG;
     }
 
