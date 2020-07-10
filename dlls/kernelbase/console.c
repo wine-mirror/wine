@@ -1406,8 +1406,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetConsoleTitleW( LPCWSTR title )
  */
 BOOL WINAPI DECLSPEC_HOTPATCH SetConsoleWindowInfo( HANDLE handle, BOOL absolute, SMALL_RECT *window )
 {
+    struct condrv_output_info_params params = { SET_CONSOLE_OUTPUT_INFO_DISPLAY_WINDOW };
     SMALL_RECT rect = *window;
-    BOOL ret;
 
     TRACE( "(%p,%d,(%d,%d-%d,%d))\n", handle, absolute, rect.Left, rect.Top, rect.Right, rect.Bottom );
 
@@ -1421,19 +1421,12 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetConsoleWindowInfo( HANDLE handle, BOOL absolute
 	rect.Right  += info.srWindow.Right;
 	rect.Bottom += info.srWindow.Bottom;
     }
-    SERVER_START_REQ( set_console_output_info )
-    {
-        req->handle     = console_handle_unmap( handle );
-	req->win_left   = rect.Left;
-	req->win_top    = rect.Top;
-	req->win_right  = rect.Right;
-	req->win_bottom = rect.Bottom;
-        req->mask       = SET_CONSOLE_OUTPUT_INFO_DISPLAY_WINDOW;
-        ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
 
-    return ret;
+    params.info.win_left   = rect.Left;
+    params.info.win_top    = rect.Top;
+    params.info.win_right  = rect.Right;
+    params.info.win_bottom = rect.Bottom;
+    return console_ioctl( handle, IOCTL_CONDRV_SET_OUTPUT_INFO, &params, sizeof(params), NULL, 0, NULL );
 }
 
 
