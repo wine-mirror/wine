@@ -5665,8 +5665,8 @@ NTSTATUS WINAPI NtFsControlFile( HANDLE handle, HANDLE event, PIO_APC_ROUTINE ap
 
     case FSCTL_PIPE_IMPERSONATE:
         FIXME("FSCTL_PIPE_IMPERSONATE: impersonating self\n");
-        status = RtlImpersonateSelf( SecurityImpersonation );
-        break;
+        return server_ioctl_file( handle, event, apc, apc_context, io, code,
+                                  in_buffer, in_size, out_buffer, out_size );
 
     case FSCTL_IS_VOLUME_MOUNTED:
     case FSCTL_LOCK_VOLUME:

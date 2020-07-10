@@ -1138,6 +1138,17 @@ static int pipe_server_ioctl( struct fd *fd, ioctl_code_t code, struct async *as
         pipe_end_disconnect( &server->pipe_end, STATUS_PIPE_DISCONNECTED );
         return 1;
 
+    case FSCTL_PIPE_IMPERSONATE:
+        if (current->process->token) /* FIXME: use the client token */
+        {
+            struct token *token;
+            if (!(token = token_duplicate( current->process->token, 0, SecurityImpersonation, NULL )))
+                return 0;
+            if (current->token) release_object( current->token );
+            current->token = token;
+        }
+        return 1;
+
     default:
         return pipe_end_ioctl( &server->pipe_end, code, async );
     }
