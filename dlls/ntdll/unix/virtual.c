@@ -1009,8 +1009,14 @@ static void* try_map_free_area( void *base, void *end, ptrdiff_t step,
             return start;
         TRACE( "Found free area is already mapped, start %p.\n", start );
 
-        if (ptr != (void *)-1)
-            munmap( ptr, size );
+        if (ptr == (void *)-1)
+        {
+            ERR( "wine_anon_mmap() error %s, range %p-%p, unix_prot %#x.\n",
+                    strerror(errno), start, (char *)start + size, unix_prot );
+            return NULL;
+        }
+
+        munmap( ptr, size );
 
         if ((step > 0 && (char *)end - (char *)start < step) ||
             (step < 0 && (char *)start - (char *)base < -step) ||
