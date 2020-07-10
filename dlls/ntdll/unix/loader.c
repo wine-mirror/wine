@@ -990,31 +990,26 @@ static inline char *prepend( char *buffer, const char *str, size_t len )
  *
  * Open a file for a new dll. Helper for find_dll_file.
  */
-static NTSTATUS open_dll_file( const WCHAR *name, void **module, pe_image_info_t *image_info )
+static NTSTATUS open_dll_file( const char *name, void **module, pe_image_info_t *image_info )
 {
     struct builtin_module *builtin;
-    FILE_BASIC_INFORMATION info;
-    OBJECT_ATTRIBUTES attr;
+    OBJECT_ATTRIBUTES attr = { sizeof(attr) };
     IO_STATUS_BLOCK io;
-    UNICODE_STRING nt_name;
     LARGE_INTEGER size;
     FILE_OBJECTID_BUFFER id;
+    struct stat st;
     SIZE_T len = 0;
     NTSTATUS status;
     HANDLE handle, mapping;
 
-    RtlInitUnicodeString( &nt_name, name );
-    InitializeObjectAttributes( &attr, &nt_name, OBJ_CASE_INSENSITIVE, 0, NULL );
-    if ((status = NtOpenFile( &handle, GENERIC_READ | SYNCHRONIZE, &attr, &io,
-                              FILE_SHARE_READ | FILE_SHARE_DELETE,
-                              FILE_SYNCHRONOUS_IO_NONALERT | FILE_NON_DIRECTORY_FILE )))
+    if ((status = open_unix_file( &handle, name, GENERIC_READ | SYNCHRONIZE, &attr, 0,
+                                  FILE_SHARE_READ | FILE_SHARE_DELETE, FILE_OPEN,
+                                  FILE_SYNCHRONOUS_IO_NONALERT | FILE_NON_DIRECTORY_FILE, NULL, 0 )))
     {
-        if (status != STATUS_OBJECT_PATH_NOT_FOUND &&
-            status != STATUS_OBJECT_NAME_NOT_FOUND &&
-            !NtQueryAttributesFile( &attr, &info ))
+        if (status != STATUS_OBJECT_PATH_NOT_FOUND && status != STATUS_OBJECT_NAME_NOT_FOUND)
         {
             /* if the file exists but failed to open, report the error */
-            return status;
+            if (!stat( name, &st )) return status;
         }
         /* otherwise continue searching */
         return STATUS_DLL_NOT_FOUND;
@@ -1026,7 +1021,7 @@ static NTSTATUS open_dll_file( const WCHAR *name, void **module, pe_image_info_t
         {
             if (!memcmp( &builtin->id, id.ObjectId, sizeof(builtin->id) ))
             {
-                TRACE( "%s is the same file as existing module %p\n", debugstr_w(name),
+                TRACE( "%s is the same file as existing module %p\n", debugstr_a(name),
                        builtin->module );
                 NtClose( handle );
                 NtUnmapViewOfSection( NtCurrentProcess(), *module );
@@ -1057,12 +1052,12 @@ static NTSTATUS open_dll_file( const WCHAR *name, void **module, pe_image_info_t
     /* ignore non-builtins */
     if (!(image_info->image_flags & IMAGE_FLAGS_WineBuiltin))
     {
-        WARN( "%s found in WINEDLLPATH but not a builtin, ignoring\n", debugstr_w(name) );
+        WARN( "%s found in WINEDLLPATH but not a builtin, ignoring\n", debugstr_a(name) );
         status = STATUS_DLL_NOT_FOUND;
     }
     else if (image_info->cpu != client_cpu)
     {
-        TRACE( "%s is for CPU %u, continuing search\n", debugstr_w(name), image_info->cpu );
+        TRACE( "%s is for CPU %u, continuing search\n", debugstr_a(name), image_info->cpu );
         status = STATUS_IMAGE_MACHINE_TYPE_MISMATCH;
     }
 
@@ -1082,15 +1077,10 @@ static NTSTATUS open_dll_file( const WCHAR *name, void **module, pe_image_info_t
  */
 static NTSTATUS open_builtin_file( char *name, void **module, pe_image_info_t *image_info )
 {
-    WCHAR *nt_name = NULL;
     NTSTATUS status;
     int fd;
 
-    if ((status = unix_to_nt_file_name( name, &nt_name ))) return status;
-
-    status = open_dll_file( nt_name, module, image_info );
-    RtlFreeHeap( GetProcessHeap(), 0, nt_name );
-
+    status = open_dll_file( name, module, image_info );
     if (status != STATUS_DLL_NOT_FOUND) return status;
 
     /* try .so file */

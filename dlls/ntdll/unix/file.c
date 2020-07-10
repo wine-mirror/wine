@@ -3529,6 +3529,42 @@ void CDECL set_show_dot_files( BOOL enable )
 
 
 /******************************************************************************
+ *              open_unix_file
+ *
+ * Helper for NtCreateFile that takes a Unix path.
+ */
+NTSTATUS open_unix_file( HANDLE *handle, const char *unix_name, ACCESS_MASK access,
+                         OBJECT_ATTRIBUTES *attr, ULONG attributes, ULONG sharing, ULONG disposition,
+                         ULONG options, void *ea_buffer, ULONG ea_length )
+{
+    static UNICODE_STRING empty_string;
+    struct object_attributes *objattr;
+    OBJECT_ATTRIBUTES unix_attr = *attr;
+    NTSTATUS status;
+    data_size_t len;
+
+    unix_attr.ObjectName = &empty_string;  /* we send the unix name instead */
+    if ((status = alloc_object_attributes( &unix_attr, &objattr, &len ))) return status;
+
+    SERVER_START_REQ( create_file )
+    {
+        req->access     = access;
+        req->sharing    = sharing;
+        req->create     = disposition;
+        req->options    = options;
+        req->attrs      = attributes;
+        wine_server_add_data( req, objattr, len );
+        wine_server_add_data( req, unix_name, strlen(unix_name) );
+        status = wine_server_call( req );
+        *handle = wine_server_ptr_handle( reply->handle );
+    }
+    SERVER_END_REQ;
+    free( objattr );
+    return status;
+}
+
+
+/******************************************************************************
  *              NtCreateFile   (NTDLL.@)
  */
 NTSTATUS WINAPI NtCreateFile( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr,
@@ -3580,31 +3616,8 @@ NTSTATUS WINAPI NtCreateFile( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIBU
 
     if (io->u.Status == STATUS_SUCCESS)
     {
-        static UNICODE_STRING empty_string;
-        OBJECT_ATTRIBUTES unix_attr = *attr;
-        data_size_t len;
-        struct object_attributes *objattr;
-
-        unix_attr.ObjectName = &empty_string;  /* we send the unix name instead */
-        if ((io->u.Status = alloc_object_attributes( &unix_attr, &objattr, &len )))
-        {
-            RtlFreeHeap( GetProcessHeap(), 0, unix_name );
-            return io->u.Status;
-        }
-        SERVER_START_REQ( create_file )
-        {
-            req->access     = access;
-            req->sharing    = sharing;
-            req->create     = disposition;
-            req->options    = options;
-            req->attrs      = attributes;
-            wine_server_add_data( req, objattr, len );
-            wine_server_add_data( req, unix_name, strlen(unix_name) );
-            io->u.Status = wine_server_call( req );
-            *handle = wine_server_ptr_handle( reply->handle );
-        }
-        SERVER_END_REQ;
-        free( objattr );
+        io->u.Status = open_unix_file( handle, unix_name, access, attr, attributes,
+                                       sharing, disposition, options, ea_buffer, ea_length );
         RtlFreeHeap( GetProcessHeap(), 0, unix_name );
     }
     else WARN( "%s not found (%x)\n", debugstr_us(attr->ObjectName), io->u.Status );
