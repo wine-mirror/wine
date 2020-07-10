@@ -1993,7 +1993,8 @@ static NTSTATUS get_mountmgr_fs_info( HANDLE handle, int fd, struct mountmgr_uni
     else
         drive->letter = 'a' + letter;
 
-    RtlInitUnicodeString( &string, MOUNTMGR_DEVICE_NAME );
+    string.Buffer = (WCHAR *)MOUNTMGR_DEVICE_NAME;
+    string.Length = sizeof(MOUNTMGR_DEVICE_NAME) - sizeof(WCHAR);
     InitializeObjectAttributes( &attr, &string, 0, NULL, NULL );
     status = NtOpenFile( &mountmgr, GENERIC_READ | SYNCHRONIZE, &attr, &io,
                          FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_SYNCHRONOUS_IO_NONALERT );

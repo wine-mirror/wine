@@ -2804,16 +2804,14 @@ void virtual_clear_thread_stack( void *stack_end )
  */
 void virtual_map_user_shared_data(void)
 {
-    static const WCHAR wine_usdW[] = {'\\','K','e','r','n','e','l','O','b','j','e','c','t','s',
-                                      '\\','_','_','w','i','n','e','_','u','s','e','r','_','s','h','a','r','e','d','_','d','a','t','a',0};
-    OBJECT_ATTRIBUTES attr = {sizeof(attr)};
-    UNICODE_STRING wine_usd_str;
+    static const WCHAR nameW[] = {'\\','K','e','r','n','e','l','O','b','j','e','c','t','s',
+                                  '\\','_','_','w','i','n','e','_','u','s','e','r','_','s','h','a','r','e','d','_','d','a','t','a',0};
+    UNICODE_STRING name_str = { sizeof(nameW) - sizeof(WCHAR), sizeof(nameW), (WCHAR *)nameW };
+    OBJECT_ATTRIBUTES attr = { sizeof(attr), 0, &name_str };
     NTSTATUS status;
     HANDLE section;
     int res, fd, needs_close;
 
-    RtlInitUnicodeString( &wine_usd_str, wine_usdW );
-    InitializeObjectAttributes( &attr, &wine_usd_str, OBJ_OPENIF, NULL, NULL );
     if ((status = NtOpenSection( &section, SECTION_ALL_ACCESS, &attr )))
     {
         ERR( "failed to open the USD section: %08x\n", status );
