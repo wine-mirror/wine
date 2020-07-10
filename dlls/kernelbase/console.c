@@ -1195,23 +1195,18 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetConsoleCursorInfo( HANDLE handle, CONSOLE_CURSO
  */
 BOOL WINAPI DECLSPEC_HOTPATCH SetConsoleCursorPosition( HANDLE handle, COORD pos )
 {
+    struct condrv_output_info_params params = { SET_CONSOLE_OUTPUT_INFO_CURSOR_POS };
     CONSOLE_SCREEN_BUFFER_INFO info;
     int w, h, do_move = 0;
-    BOOL ret;
 
     TRACE( "%p %d %d\n", handle, pos.X, pos.Y );
 
-    SERVER_START_REQ( set_console_output_info )
-    {
-        req->handle         = console_handle_unmap( handle );
-        req->cursor_x       = pos.X;
-        req->cursor_y       = pos.Y;
-        req->mask           = SET_CONSOLE_OUTPUT_INFO_CURSOR_POS;
-        ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
+    params.info.cursor_x = pos.X;
+    params.info.cursor_y = pos.Y;
+    if (!console_ioctl( handle, IOCTL_CONDRV_SET_OUTPUT_INFO, &params, sizeof(params), NULL, 0, NULL ))
+        return FALSE;
 
-    if (!ret || !GetConsoleScreenBufferInfo( handle, &info )) return FALSE;
+    if (!GetConsoleScreenBufferInfo( handle, &info )) return FALSE;
 
     /* if cursor is no longer visible, scroll the visible window... */
     w = info.srWindow.Right - info.srWindow.Left + 1;
@@ -1240,8 +1235,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetConsoleCursorPosition( HANDLE handle, COORD pos
     }
     info.srWindow.Bottom = info.srWindow.Top + h - 1;
 
-    if (do_move) ret = SetConsoleWindowInfo( handle, TRUE, &info.srWindow );
-    return ret;
+    return !do_move || SetConsoleWindowInfo( handle, TRUE, &info.srWindow );
 }
 
 
