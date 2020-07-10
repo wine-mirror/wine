@@ -32,8 +32,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msdmo);
 
-#define MSDMO_MAJOR_VERSION 6
-
 static const WCHAR szDMORootKey[] = 
 {
     'D','i','r','e','c','t','S','h','o','w','\\',
@@ -139,40 +137,8 @@ static BOOL IsMediaTypeEqual(const DMO_PARTIAL_MEDIATYPE* mt1, const DMO_PARTIAL
 
 static HRESULT write_types(HKEY hkey, LPCWSTR name, const DMO_PARTIAL_MEDIATYPE* types, DWORD count)
 {
-    LONG ret;
-
-    if (MSDMO_MAJOR_VERSION > 5)
-    {
-        ret = RegSetValueExW(hkey, name, 0, REG_BINARY, (const BYTE*) types,
-                          count* sizeof(DMO_PARTIAL_MEDIATYPE));
-    }
-    else
-    {
-        HKEY skey1,skey2,skey3;
-        DWORD index = 0;
-        WCHAR szGuidKey[64];
-
-        ret = RegCreateKeyExW(hkey, name, 0, NULL, REG_OPTION_NON_VOLATILE,
-                               KEY_WRITE, NULL, &skey1, NULL);
-        if (ret)
-            return HRESULT_FROM_WIN32(ret);
-
-        while (index < count)
-        {
-            GUIDToString(szGuidKey,&types[index].type);
-            ret = RegCreateKeyExW(skey1, szGuidKey, 0, NULL,
-                        REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &skey2, NULL);
-            GUIDToString(szGuidKey,&types[index].subtype);
-            ret = RegCreateKeyExW(skey2, szGuidKey, 0, NULL,
-                        REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &skey3, NULL);
-            RegCloseKey(skey3);
-            RegCloseKey(skey2);
-            index ++;
-        }
-        RegCloseKey(skey1);
-    }
-
-    return HRESULT_FROM_WIN32(ret);
+    return HRESULT_FROM_WIN32(RegSetValueExW(hkey, name, 0, REG_BINARY,
+            (const BYTE *)types, count * sizeof(DMO_PARTIAL_MEDIATYPE)));
 }
 
 /***************************************************************
@@ -766,78 +732,11 @@ static const IEnumDMOVtbl edmovt =
 
 HRESULT read_types(HKEY root, LPCWSTR key, ULONG *supplied, ULONG requested, DMO_PARTIAL_MEDIATYPE* types )
 {
-    HRESULT ret = S_OK;
+    DWORD len = requested * sizeof(DMO_PARTIAL_MEDIATYPE);
+    LONG ret = RegQueryValueExW(root, key, NULL, NULL, (BYTE *)types, &len);
 
-    if (MSDMO_MAJOR_VERSION > 5)
-    {
-        DWORD len;
-        LONG rc;
-
-        len = requested * sizeof(DMO_PARTIAL_MEDIATYPE);
-        rc = RegQueryValueExW(root, key, NULL, NULL, (LPBYTE) types, &len);
-        ret = HRESULT_FROM_WIN32(rc);
-
-        *supplied = len / sizeof(DMO_PARTIAL_MEDIATYPE);
-    }
-    else
-    {
-        HKEY hkey;
-        WCHAR szGuidKey[64];
-
-        *supplied = 0;
-        if (ERROR_SUCCESS == RegOpenKeyExW(root, key, 0, KEY_READ, &hkey))
-        {
-          int index = 0;
-          WCHAR szNextKey[MAX_PATH];
-          DWORD len;
-          LONG rc = ERROR_SUCCESS;
-
-          while (rc == ERROR_SUCCESS)
-          {
-            len = MAX_PATH;
-            rc = RegEnumKeyExW(hkey, index, szNextKey, &len, NULL, NULL, NULL, NULL);
-            if (rc == ERROR_SUCCESS)
-            {
-              HKEY subk;
-              int sub_index = 0;
-              LONG rcs = ERROR_SUCCESS;
-              WCHAR szSubKey[MAX_PATH];
-
-              RegOpenKeyExW(hkey, szNextKey, 0, KEY_READ, &subk);
-              while (rcs == ERROR_SUCCESS)
-              {
-                len = MAX_PATH;
-                rcs = RegEnumKeyExW(subk, sub_index, szSubKey, &len, NULL, NULL, NULL, NULL);
-                if (rcs == ERROR_SUCCESS)
-                {
-                  if (*supplied >= requested)
-                  {
-                    /* Bailing */
-                    ret = S_FALSE;
-                    rc = ERROR_MORE_DATA;
-                    rcs = ERROR_MORE_DATA;
-                    break;
-                  }
-
-                  wsprintfW(szGuidKey,szToGuidFmt,szNextKey);
-                  CLSIDFromString(szGuidKey, &types[*supplied].type);
-                  wsprintfW(szGuidKey,szToGuidFmt,szSubKey);
-                  CLSIDFromString(szGuidKey, &types[*supplied].subtype);
-                  TRACE("Adding type %s subtype %s at index %i\n",
-                    debugstr_guid(&types[*supplied].type),
-                    debugstr_guid(&types[*supplied].subtype),
-                    *supplied);
-                  (*supplied)++;
-                }
-                sub_index++;
-              }
-              index++;
-            }
-          }
-          RegCloseKey(hkey);
-        }
-    }
-    return ret;
+    *supplied = len / sizeof(DMO_PARTIAL_MEDIATYPE);
+    return HRESULT_FROM_WIN32(ret);
 }
 
 /***************************************************************
