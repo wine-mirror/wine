@@ -170,6 +170,7 @@ static struct test_data {
     UINT expected_frame_count;
     const GUID *expected_pixel_format;
     WICDdsParameters expected_parameters;
+    BOOL wine_init;
 } test_data[] = {
     { test_dds_image,   sizeof(test_dds_image),   1, &GUID_WICPixelFormat32bppPBGRA,
       { 4,  4,  1, 1, 1, DXGI_FORMAT_BC1_UNORM, WICDdsTexture2D, WICDdsAlphaModePremultiplied } },
@@ -227,17 +228,39 @@ static IWICBitmapDecoder *create_decoder(void)
     return decoder;
 }
 
-static HRESULT init_decoder(IWICBitmapDecoder *decoder, IWICStream *stream, HRESULT expected, int index)
+static HRESULT init_decoder(IWICBitmapDecoder *decoder, IWICStream *stream, HRESULT expected, int index, BOOL wine_init)
 {
     HRESULT hr;
+    IWICWineDecoder *wine_decoder;
 
     hr = IWICBitmapDecoder_Initialize(decoder, (IStream*)stream, WICDecodeMetadataCacheOnDemand);
     if (index == -1) {
         ok(hr == S_OK, "Decoder initialize failed, hr %#x\n", hr);
     } else {
-        todo_wine_if(index == 1 || index == 3)
+        todo_wine_if(wine_init)
         ok(hr == expected, "Test %u: Expected hr %#x, got %#x\n", index, expected, hr);
     }
+
+    if (hr != S_OK && wine_init) {
+        hr = IWICBitmapDecoder_QueryInterface(decoder, &IID_IWICWineDecoder, (void **)&wine_decoder);
+        if (index == -1) {
+            ok(hr == S_OK || broken(hr != S_OK), "QueryInterface failed, hr %#x\n", hr);
+        } else {
+            ok(hr == S_OK || broken(hr != S_OK), "Test %u: QueryInterface failed, hr %#x\n", index, hr);
+        }
+        if (hr == S_OK) {
+            hr = IWICWineDecoder_Initialize(wine_decoder, (IStream*)stream, WICDecodeMetadataCacheOnDemand);
+            if (index == -1)  {
+                todo_wine
+                ok(hr == S_OK, "Initialize failed, hr %#x\n", hr);
+            } else {
+                todo_wine
+                ok(hr == S_OK, "Test %u: Initialize failed, hr %#x\n", index, hr);
+            }
+
+        }
+    }
+
     return hr;
 }
 
@@ -279,14 +302,15 @@ static void test_dds_decoder_initialize(void)
         void *data;
         UINT size;
         HRESULT expected;
+        BOOL wine_init;
     } test_data[] = {
         { test_dds_image,        sizeof(test_dds_image),        S_OK },
-        { test_dds_uncompressed, sizeof(test_dds_uncompressed), WINCODEC_ERR_BADHEADER },
         { test_dds_mipmaps,      sizeof(test_dds_mipmaps),      S_OK },
-        { test_dds_cube,         sizeof(test_dds_cube),         WINCODEC_ERR_BADHEADER },
         { test_dds_volume,       sizeof(test_dds_volume),       S_OK },
         { test_dds_array,        sizeof(test_dds_array),        S_OK },
         { test_dds_dxt3,         sizeof(test_dds_dxt3),         S_OK },
+        { test_dds_uncompressed, sizeof(test_dds_uncompressed), WINCODEC_ERR_BADHEADER, TRUE },
+        { test_dds_cube,         sizeof(test_dds_cube),         WINCODEC_ERR_BADHEADER, TRUE },
         { test_dds_bad_magic,  sizeof(test_dds_bad_magic),  WINCODEC_ERR_UNKNOWNIMAGEFORMAT },
         { test_dds_bad_header, sizeof(test_dds_bad_header), WINCODEC_ERR_BADHEADER },
         { &byte,   sizeof(byte),   WINCODEC_ERR_STREAMREAD },
@@ -313,7 +337,7 @@ static void test_dds_decoder_initialize(void)
         decoder = create_decoder();
         if (!decoder) goto next;
 
-        init_decoder(decoder, stream, test_data[i].expected, i);
+        init_decoder(decoder, stream, test_data[i].expected, i, test_data[i].wine_init);
 
     next:
         if (decoder) IWICBitmapDecoder_Release(decoder);
@@ -399,7 +423,7 @@ static void test_dds_decoder_image_parameters(void)
         hr = IWICDdsDecoder_GetParameters(dds_decoder, NULL);
         ok(hr == E_INVALIDARG, "Test %u: GetParameters got unexpected hr %#x\n", i, hr);
 
-        hr = init_decoder(decoder, stream, S_OK, -1);
+        hr = init_decoder(decoder, stream, S_OK, -1, test_data[i].wine_init);
         if (hr != S_OK) goto next;
 
         hr = IWICBitmapDecoder_GetFrameCount(decoder, &frame_count);
@@ -690,7 +714,7 @@ static void test_dds_decoder(void)
         if (!stream) goto next;
         decoder = create_decoder();
         if (!decoder) goto next;
-        hr = init_decoder(decoder, stream, S_OK, -1);
+        hr = init_decoder(decoder, stream, S_OK, -1, test_data[i].wine_init);
         if (hr != S_OK) goto next;
 
         test_dds_decoder_global_properties(decoder);
