@@ -1372,18 +1372,12 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetConsoleScreenBufferSize( HANDLE handle, COORD s
  */
 BOOL WINAPI DECLSPEC_HOTPATCH SetConsoleTextAttribute( HANDLE handle, WORD attr )
 {
-    BOOL ret;
+    struct condrv_output_info_params params = { SET_CONSOLE_OUTPUT_INFO_ATTR };
 
     TRACE( "(%p,%d)\n", handle, attr );
-    SERVER_START_REQ( set_console_output_info )
-    {
-        req->handle = console_handle_unmap( handle );
-        req->attr   = attr;
-        req->mask   = SET_CONSOLE_OUTPUT_INFO_ATTR;
-        ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-    return ret;
+
+    params.info.attr = attr;
+    return console_ioctl( handle, IOCTL_CONDRV_SET_OUTPUT_INFO, &params, sizeof(params), NULL, 0, NULL );
 }
 
 
