@@ -32,6 +32,35 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msdmo);
 
+BOOL array_reserve(void **elements, unsigned int *capacity, unsigned int count, unsigned int size)
+{
+    unsigned int max_capacity, new_capacity;
+    void *new_elements;
+
+    if (count <= *capacity)
+        return TRUE;
+
+    max_capacity = ~0u / size;
+    if (count > max_capacity)
+        return FALSE;
+
+    new_capacity = max(8, *capacity);
+    while (new_capacity < count && new_capacity <= max_capacity / 2)
+        new_capacity *= 2;
+    if (new_capacity < count)
+        new_capacity = count;
+
+    if (!(new_elements = realloc(*elements, new_capacity * size)))
+    {
+        ERR("Failed to allocate memory.\n");
+        return FALSE;
+    }
+
+    *elements = new_elements;
+    *capacity = new_capacity;
+    return TRUE;
+}
+
 typedef struct
 {
     IEnumDMO                    IEnumDMO_iface;
@@ -50,8 +79,6 @@ static inline IEnumDMOImpl *impl_from_IEnumDMO(IEnumDMO *iface)
 {
     return CONTAINING_RECORD(iface, IEnumDMOImpl, IEnumDMO_iface);
 }
-
-static HRESULT read_types(HKEY root, LPCWSTR key, ULONG *supplied, ULONG requested, DMO_PARTIAL_MEDIATYPE* types);
 
 static const IEnumDMOVtbl edmovt;
 
@@ -443,11 +470,12 @@ static HRESULT WINAPI IEnumDMO_fnNext(
     WCHAR ** Names,
     DWORD * pcItemsFetched)
 {
+    DMO_PARTIAL_MEDIATYPE *types = NULL;
+    unsigned int types_size = 0;
     HKEY hkey;
     WCHAR szNextKey[MAX_PATH];
     WCHAR path[MAX_PATH];
     WCHAR szValue[MAX_PATH];
-    DMO_PARTIAL_MEDIATYPE types[100];
     DWORD len;
     UINT count = 0;
     HRESULT hres = S_OK;
@@ -498,21 +526,29 @@ static HRESULT WINAPI IEnumDMO_fnNext(
 
         if (This->pInTypes)
         {
-            DWORD cInTypes, i;
+            DWORD size = types_size, i;
 
-            hres = read_types(hkey, L"InputTypes", &cInTypes, ARRAY_SIZE(types), types);
-            if (FAILED(hres))
+            while ((ret = RegQueryValueExW(hkey, L"InputTypes", NULL, NULL,
+                    (BYTE *)types, &size)) == ERROR_MORE_DATA)
+            {
+                if (!array_reserve((void **)&types, &types_size, size, 1))
+                {
+                    RegCloseKey(hkey);
+                    free(types);
+                    return E_OUTOFMEMORY;
+                }
+            }
+            if (ret)
             {
                 RegCloseKey(hkey);
                 continue;
             }
 
-            for (i = 0; i < cInTypes; i++) {
+            for (i = 0; i < size / sizeof(DMO_PARTIAL_MEDIATYPE); ++i)
                 TRACE("intype %d: type %s, subtype %s\n", i, debugstr_guid(&types[i].type),
                     debugstr_guid(&types[i].subtype));
-            }
 
-            if (!any_types_match(types, cInTypes, This->pInTypes, This->cInTypes))
+            if (!any_types_match(types, size / sizeof(DMO_PARTIAL_MEDIATYPE), This->pInTypes, This->cInTypes))
             {
                 RegCloseKey(hkey);
                 continue;
@@ -521,21 +557,29 @@ static HRESULT WINAPI IEnumDMO_fnNext(
 
         if (This->pOutTypes)
         {
-            DWORD cOutTypes, i;
+            DWORD size = types_size, i;
 
-            hres = read_types(hkey, L"OutputTypes", &cOutTypes, ARRAY_SIZE(types), types);
-            if (FAILED(hres))
+            while ((ret = RegQueryValueExW(hkey, L"OutputTypes", NULL, NULL,
+                    (BYTE *)types, &size)) == ERROR_MORE_DATA)
+            {
+                if (!array_reserve((void **)&types, &types_size, size, 1))
+                {
+                    RegCloseKey(hkey);
+                    free(types);
+                    return E_OUTOFMEMORY;
+                }
+            }
+            if (ret)
             {
                 RegCloseKey(hkey);
                 continue;
             }
 
-            for (i = 0; i < cOutTypes; i++) {
+            for (i = 0; i < size / sizeof(DMO_PARTIAL_MEDIATYPE); ++i)
                 TRACE("outtype %d: type %s, subtype %s\n", i, debugstr_guid(&types[i].type),
                     debugstr_guid(&types[i].subtype));
-            }
 
-            if (!any_types_match(types, cOutTypes, This->pOutTypes, This->cOutTypes))
+            if (!any_types_match(types, size / sizeof(DMO_PARTIAL_MEDIATYPE), This->pOutTypes, This->cOutTypes))
             {
                 RegCloseKey(hkey);
                 continue;
@@ -560,6 +604,8 @@ static HRESULT WINAPI IEnumDMO_fnNext(
         RegCloseKey(hkey);
         count++;
     }
+
+    free(types);
 
     if (pcItemsFetched) *pcItemsFetched = count;
     if (count < cItemsToFetch)
