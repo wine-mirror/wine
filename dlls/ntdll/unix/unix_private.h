@@ -264,6 +264,12 @@ static inline void ascii_to_unicode( WCHAR *dst, const char *src, size_t len )
     while (len--) *dst++ = (unsigned char)*src++;
 }
 
+static inline IMAGE_NT_HEADERS *get_exe_nt_header(void)
+{
+    IMAGE_DOS_HEADER *module = (IMAGE_DOS_HEADER *)NtCurrentTeb()->Peb->ImageBaseAddress;
+    return (IMAGE_NT_HEADERS *)((char *)module + module->e_lfanew);
+}
+
 static inline size_t ntdll_wcslen( const WCHAR *str )
 {
     const WCHAR *s = str;

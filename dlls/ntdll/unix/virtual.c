@@ -2728,7 +2728,7 @@ NTSTATUS CDECL virtual_alloc_thread_stack( INITIAL_TEB *stack, SIZE_T reserve_si
 
     if (!reserve_size || !commit_size)
     {
-        IMAGE_NT_HEADERS *nt = RtlImageNtHeader( NtCurrentTeb()->Peb->ImageBaseAddress );
+        IMAGE_NT_HEADERS *nt = get_exe_nt_header();
         if (!reserve_size) reserve_size = nt->OptionalHeader.SizeOfStackReserve;
         if (!commit_size) commit_size = nt->OptionalHeader.SizeOfStackCommit;
     }
@@ -3325,7 +3325,7 @@ void CDECL virtual_release_address_space(void)
  */
 void CDECL virtual_set_large_address_space(void)
 {
-    IMAGE_NT_HEADERS *nt = RtlImageNtHeader( NtCurrentTeb()->Peb->ImageBaseAddress );
+    IMAGE_NT_HEADERS *nt = get_exe_nt_header();
 
     if (!(nt->FileHeader.Characteristics & IMAGE_FILE_LARGE_ADDRESS_AWARE)) return;
     /* no large address space on win9x */
