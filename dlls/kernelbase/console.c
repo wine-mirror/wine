@@ -1323,7 +1323,10 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetConsoleOutputCP( UINT cp )
 BOOL WINAPI DECLSPEC_HOTPATCH SetConsoleScreenBufferInfoEx( HANDLE handle,
                                                             CONSOLE_SCREEN_BUFFER_INFOEX *info )
 {
-    BOOL ret;
+    struct condrv_output_info_params params =
+        { SET_CONSOLE_OUTPUT_INFO_CURSOR_POS | SET_CONSOLE_OUTPUT_INFO_SIZE |
+          SET_CONSOLE_OUTPUT_INFO_ATTR | SET_CONSOLE_OUTPUT_INFO_POPUP_ATTR |
+          SET_CONSOLE_OUTPUT_INFO_DISPLAY_WINDOW | SET_CONSOLE_OUTPUT_INFO_MAX_SIZE };
 
     TRACE("(%p, %p)\n", handle, info);
 
@@ -1333,29 +1336,19 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetConsoleScreenBufferInfoEx( HANDLE handle,
         return FALSE;
     }
 
-    SERVER_START_REQ( set_console_output_info )
-    {
-        req->handle     = console_handle_unmap( handle );
-        req->mask       = SET_CONSOLE_OUTPUT_INFO_CURSOR_POS | SET_CONSOLE_OUTPUT_INFO_SIZE |
-                          SET_CONSOLE_OUTPUT_INFO_ATTR | SET_CONSOLE_OUTPUT_INFO_POPUP_ATTR |
-                          SET_CONSOLE_OUTPUT_INFO_DISPLAY_WINDOW | SET_CONSOLE_OUTPUT_INFO_MAX_SIZE;
-        req->width      = info->dwSize.X;
-        req->height     = info->dwSize.Y;
-        req->cursor_x   = info->dwCursorPosition.X;
-        req->cursor_y   = info->dwCursorPosition.Y;
-        req->attr       = info->wAttributes;
-        req->win_left   = info->srWindow.Left;
-        req->win_top    = info->srWindow.Top;
-        req->win_right  = info->srWindow.Right;
-        req->win_bottom = info->srWindow.Bottom;
-        req->popup_attr = info->wPopupAttributes;
-        req->max_width  = min( info->dwMaximumWindowSize.X, info->dwSize.X );
-        req->max_height = min( info->dwMaximumWindowSize.Y, info->dwSize.Y );
-        ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-
-    return ret;
+    params.info.width      = info->dwSize.X;
+    params.info.height     = info->dwSize.Y;
+    params.info.cursor_x   = info->dwCursorPosition.X;
+    params.info.cursor_y   = info->dwCursorPosition.Y;
+    params.info.attr       = info->wAttributes;
+    params.info.win_left   = info->srWindow.Left;
+    params.info.win_top    = info->srWindow.Top;
+    params.info.win_right  = info->srWindow.Right;
+    params.info.win_bottom = info->srWindow.Bottom;
+    params.info.popup_attr = info->wPopupAttributes;
+    params.info.max_width  = min( info->dwMaximumWindowSize.X, info->dwSize.X );
+    params.info.max_height = min( info->dwMaximumWindowSize.Y, info->dwSize.Y );
+    return console_ioctl( handle, IOCTL_CONDRV_SET_OUTPUT_INFO, &params, sizeof(params), NULL, 0, NULL );
 }
 
 
