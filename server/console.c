@@ -1196,6 +1196,187 @@ static int set_console_output_info( struct screen_buffer *screen_buffer,
     return 1;
 }
 
+static int set_output_info( struct screen_buffer *screen_buffer,
+                            const struct condrv_output_info_params *params, data_size_t extra_size )
+{
+    const struct condrv_output_info *info = &params->info;
+    struct condrv_renderer_event evt;
+    WCHAR *font_name;
+
+    if (params->mask & SET_CONSOLE_OUTPUT_INFO_CURSOR_GEOM)
+    {
+        if (info->cursor_size < 1 || info->cursor_size > 100)
+        {
+            set_error( STATUS_INVALID_PARAMETER );
+            return 0;
+        }
+        if (screen_buffer->cursor_size != info->cursor_size ||
+            screen_buffer->cursor_visible != info->cursor_visible)
+        {
+            screen_buffer->cursor_size    = info->cursor_size;
+            screen_buffer->cursor_visible = info->cursor_visible;
+            evt.event = CONSOLE_RENDERER_CURSOR_GEOM_EVENT;
+            memset( &evt.u, 0, sizeof(evt.u) );
+            evt.u.cursor_geom.size    = info->cursor_size;
+            evt.u.cursor_geom.visible = info->cursor_visible;
+            console_input_events_append( screen_buffer->input, &evt );
+        }
+    }
+    if (params->mask & SET_CONSOLE_OUTPUT_INFO_CURSOR_POS)
+    {
+        if (info->cursor_x < 0 || info->cursor_x >= screen_buffer->width ||
+            info->cursor_y < 0 || info->cursor_y >= screen_buffer->height)
+        {
+            set_error( STATUS_INVALID_PARAMETER );
+            return 0;
+        }
+        if (screen_buffer->cursor_x != info->cursor_x || screen_buffer->cursor_y != info->cursor_y)
+        {
+            screen_buffer->cursor_x       = info->cursor_x;
+            screen_buffer->cursor_y       = info->cursor_y;
+            evt.event = CONSOLE_RENDERER_CURSOR_POS_EVENT;
+            memset( &evt.u, 0, sizeof(evt.u) );
+            evt.u.cursor_pos.x = info->cursor_x;
+            evt.u.cursor_pos.y = info->cursor_y;
+            console_input_events_append( screen_buffer->input, &evt );
+        }
+    }
+    if (params->mask & SET_CONSOLE_OUTPUT_INFO_SIZE)
+    {
+        unsigned cc;
+
+        /* new screen-buffer cannot be smaller than actual window */
+        if (info->width < screen_buffer->win.right - screen_buffer->win.left + 1 ||
+            info->height < screen_buffer->win.bottom - screen_buffer->win.top + 1)
+        {
+            set_error( STATUS_INVALID_PARAMETER );
+            return 0;
+        }
+        /* FIXME: there are also some basic minimum and max size to deal with */
+        if (!change_screen_buffer_size( screen_buffer, info->width, info->height )) return 0;
+
+        evt.event = CONSOLE_RENDERER_SB_RESIZE_EVENT;
+        memset(  &evt.u, 0, sizeof(evt.u) );
+        evt.u.resize.width  = info->width;
+        evt.u.resize.height = info->height;
+        console_input_events_append( screen_buffer->input, &evt );
+
+        evt.event = CONSOLE_RENDERER_UPDATE_EVENT;
+        memset( &evt.u, 0, sizeof(evt.u) );
+        evt.u.update.top    = 0;
+        evt.u.update.bottom = screen_buffer->height - 1;
+        console_input_events_append( screen_buffer->input, &evt );
+
+        /* scroll window to display sb */
+        if (screen_buffer->win.right >= info->width)
+        {
+            screen_buffer->win.right -= screen_buffer->win.left;
+            screen_buffer->win.left = 0;
+        }
+        if (screen_buffer->win.bottom >= info->height)
+        {
+            screen_buffer->win.bottom -= screen_buffer->win.top;
+            screen_buffer->win.top = 0;
+        }
+        /* reset cursor if needed (normally, if cursor was outside of new sb, the
+         * window has been shifted so that the new position of the cursor will be
+         * visible */
+        cc = 0;
+        if (screen_buffer->cursor_x >= info->width)
+        {
+            screen_buffer->cursor_x = info->width - 1;
+            cc++;
+        }
+        if (screen_buffer->cursor_y >= info->height)
+        {
+            screen_buffer->cursor_y = info->height - 1;
+            cc++;
+        }
+        if (cc)
+        {
+            evt.event = CONSOLE_RENDERER_CURSOR_POS_EVENT;
+            memset( &evt.u, 0, sizeof(evt.u) );
+            evt.u.cursor_pos.x = info->cursor_x;
+            evt.u.cursor_pos.y = info->cursor_y;
+            console_input_events_append( screen_buffer->input, &evt );
+        }
+
+        if (screen_buffer == screen_buffer->input->active &&
+            screen_buffer->input->mode & ENABLE_WINDOW_INPUT)
+        {
+            INPUT_RECORD ir;
+            ir.EventType = WINDOW_BUFFER_SIZE_EVENT;
+            ir.Event.WindowBufferSizeEvent.dwSize.X = info->width;
+            ir.Event.WindowBufferSizeEvent.dwSize.Y = info->height;
+            write_console_input( screen_buffer->input, 1, &ir );
+        }
+    }
+    if (params->mask & SET_CONSOLE_OUTPUT_INFO_ATTR)
+    {
+        screen_buffer->attr = info->attr;
+    }
+    if (params->mask & SET_CONSOLE_OUTPUT_INFO_POPUP_ATTR)
+    {
+        screen_buffer->popup_attr = info->popup_attr;
+    }
+    if (params->mask & SET_CONSOLE_OUTPUT_INFO_DISPLAY_WINDOW)
+    {
+        if (info->win_left < 0 || info->win_left > info->win_right ||
+            info->win_right >= screen_buffer->width ||
+            info->win_top < 0  || info->win_top > info->win_bottom ||
+            info->win_bottom >= screen_buffer->height)
+        {
+            set_error( STATUS_INVALID_PARAMETER );
+            return 0;
+        }
+        if (screen_buffer->win.left != info->win_left || screen_buffer->win.top != info->win_top ||
+            screen_buffer->win.right != info->win_right || screen_buffer->win.bottom != info->win_bottom)
+        {
+            screen_buffer->win.left   = info->win_left;
+            screen_buffer->win.top    = info->win_top;
+            screen_buffer->win.right  = info->win_right;
+            screen_buffer->win.bottom = info->win_bottom;
+            evt.event = CONSOLE_RENDERER_DISPLAY_EVENT;
+            memset( &evt.u, 0, sizeof(evt.u) );
+            evt.u.display.left   = info->win_left;
+            evt.u.display.top    = info->win_top;
+            evt.u.display.width  = info->win_right - info->win_left + 1;
+            evt.u.display.height = info->win_bottom - info->win_top + 1;
+            console_input_events_append( screen_buffer->input, &evt );
+        }
+    }
+    if (params->mask & SET_CONSOLE_OUTPUT_INFO_MAX_SIZE)
+    {
+        screen_buffer->max_width  = info->max_width;
+        screen_buffer->max_height = info->max_height;
+    }
+    if (params->mask & SET_CONSOLE_OUTPUT_INFO_COLORTABLE)
+    {
+        memcpy( screen_buffer->color_map, info->color_map, sizeof(info->color_map) );
+    }
+    if (params->mask & SET_CONSOLE_OUTPUT_INFO_FONT)
+    {
+        screen_buffer->font.width  = info->font_width;
+        screen_buffer->font.height = info->font_height;
+        screen_buffer->font.weight = info->font_weight;
+        screen_buffer->font.pitch_family = info->font_pitch_family;
+        if (extra_size)
+        {
+            extra_size = extra_size / sizeof(WCHAR) * sizeof(WCHAR);
+            font_name = mem_alloc( extra_size );
+            if (font_name)
+            {
+                memcpy( font_name, info + 1, extra_size );
+                free( screen_buffer->font.face_name );
+                screen_buffer->font.face_name = font_name;
+                screen_buffer->font.face_len  = extra_size;
+            }
+        }
+    }
+
+    return 1;
+}
+
 /* appends a new line to history (history is a fixed size array) */
 static void console_input_append_hist( struct console_input* console, const WCHAR* buf, data_size_t len )
 {
@@ -1673,6 +1854,22 @@ static int screen_buffer_ioctl( struct fd *fd, ioctl_code_t code, struct async *
             size -= sizeof(*info);
             if (size) memcpy( info + 1, screen_buffer->font.face_name, size );
             return 1;
+        }
+
+    case IOCTL_CONDRV_SET_OUTPUT_INFO:
+        {
+            const struct condrv_output_info_params *params = get_req_data();
+            if (get_req_data_size() < sizeof(*params))
+            {
+                set_error( STATUS_INVALID_PARAMETER );
+                return 0;
+            }
+            if (!screen_buffer->input)
+            {
+                set_error( STATUS_INVALID_HANDLE );
+                return 0;
+            }
+            return set_output_info( screen_buffer, params, get_req_data_size() - sizeof(*params) );
         }
 
     default:
