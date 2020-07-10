@@ -1263,11 +1263,11 @@ static BOOL is_hidden_file( const UNICODE_STRING *name )
  * 'buffer' must be at least 12 characters long.
  * Returns length of short name in bytes; short name is NOT null-terminated.
  */
-static ULONG hash_short_file_name( const UNICODE_STRING *name, LPWSTR buffer )
+static ULONG hash_short_file_name( const WCHAR *name, int length, LPWSTR buffer )
 {
     static const char hash_chars[32] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ012345";
 
-    LPCWSTR p, ext, end = name->Buffer + name->Length / sizeof(WCHAR);
+    LPCWSTR p, ext, end = name + length;
     LPWSTR dst;
     unsigned short hash;
     int i;
@@ -1277,22 +1277,22 @@ static ULONG hash_short_file_name( const UNICODE_STRING *name, LPWSTR buffer )
     /* insert a better algorithm here... */
     if (!is_case_sensitive)
     {
-        for (p = name->Buffer, hash = 0xbeef; p < end - 1; p++)
+        for (p = name, hash = 0xbeef; p < end - 1; p++)
             hash = (hash<<3) ^ (hash>>5) ^ towlower(*p) ^ (towlower(p[1]) << 8);
         hash = (hash<<3) ^ (hash>>5) ^ towlower(*p); /* Last character */
     }
     else
     {
-        for (p = name->Buffer, hash = 0xbeef; p < end - 1; p++)
+        for (p = name, hash = 0xbeef; p < end - 1; p++)
             hash = (hash << 3) ^ (hash >> 5) ^ *p ^ (p[1] << 8);
         hash = (hash << 3) ^ (hash >> 5) ^ *p;  /* Last character */
     }
 
     /* Find last dot for start of the extension */
-    for (p = name->Buffer + 1, ext = NULL; p < end - 1; p++) if (*p == '.') ext = p;
+    for (p = name + 1, ext = NULL; p < end - 1; p++) if (*p == '.') ext = p;
 
     /* Copy first 4 chars, replacing invalid chars with '_' */
-    for (i = 4, p = name->Buffer, dst = buffer; i > 0; i--, p++)
+    for (i = 4, p = name, dst = buffer; i > 0; i--, p++)
     {
         if (p == end || p == ext) break;
         *dst++ = is_invalid_dos_char(*p) ? '_' : *p;
@@ -1332,12 +1332,11 @@ static ULONG hash_short_file_name( const UNICODE_STRING *name, LPWSTR buffer )
  * *test1.txt*			test1.txt				*
  * h?l?o*t.dat			hellothisisatest.dat			*
  */
-static BOOLEAN match_filename( const UNICODE_STRING *name_str, const UNICODE_STRING *mask_str )
+static BOOLEAN match_filename( const WCHAR *name, int length, const UNICODE_STRING *mask_str )
 {
     BOOL mismatch;
-    const WCHAR *name = name_str->Buffer;
     const WCHAR *mask = mask_str->Buffer;
-    const WCHAR *name_end = name + name_str->Length / sizeof(WCHAR);
+    const WCHAR *name_end = name + length;
     const WCHAR *mask_end = mask + mask_str->Length / sizeof(WCHAR);
     const WCHAR *lastjoker = NULL;
     const WCHAR *next_to_retry = NULL;
@@ -1400,6 +1399,38 @@ static BOOLEAN match_filename( const UNICODE_STRING *name_str, const UNICODE_STR
 
 
 /***********************************************************************
+ *           is_legal_8dot3_name
+ *
+ * Simplified version of RtlIsNameLegalDOS8Dot3.
+ */
+static BOOLEAN is_legal_8dot3_name( const WCHAR *name, int len )
+{
+    static const WCHAR invalid_chars[] = { INVALID_DOS_CHARS,':','/','\\',0 };
+    int i, dot = -1;
+
+    if (len > 12) return FALSE;
+
+    /* a starting . is invalid, except for . and .. */
+    if (len > 0 && name[0] == '.') return (len == 1 || (len == 2 && name[1] == '.'));
+
+    for (i = 0; i < len; i++)
+    {
+        if (name[i] > 0x7f) return FALSE;
+        if (wcschr( invalid_chars, name[i] )) return FALSE;
+        if (name[i] == '.')
+        {
+            if (dot != -1) return FALSE;
+            dot = i;
+        }
+    }
+
+    if (dot == -1) return (len <= 8);
+    if (dot > 8) return FALSE;
+    return (len - dot > 1 && len - dot < 5);
+}
+
+
+/***********************************************************************
  *           append_entry
  *
  * Add a file to the directory data if it matches the mask.
@@ -1410,15 +1441,10 @@ static BOOL append_entry( struct dir_data *data, const char *long_name,
     int long_len, short_len;
     WCHAR long_nameW[MAX_DIR_ENTRY_LEN + 1];
     WCHAR short_nameW[13];
-    UNICODE_STRING str;
 
     long_len = ntdll_umbstowcs( long_name, strlen(long_name), long_nameW, ARRAY_SIZE(long_nameW) );
     if (long_len == ARRAY_SIZE(long_nameW)) return TRUE;
     long_nameW[long_len] = 0;
-
-    str.Buffer = long_nameW;
-    str.Length = long_len * sizeof(WCHAR);
-    str.MaximumLength = sizeof(long_nameW);
 
     if (short_name)
     {
@@ -1427,11 +1453,9 @@ static BOOL append_entry( struct dir_data *data, const char *long_name,
     }
     else  /* generate a short name if necessary */
     {
-        BOOLEAN spaces;
-
         short_len = 0;
-        if (!RtlIsNameLegalDOS8Dot3( &str, NULL, &spaces ) || spaces)
-            short_len = hash_short_file_name( &str, short_nameW );
+        if (!is_legal_8dot3_name( long_nameW, long_len ))
+            short_len = hash_short_file_name( long_nameW, long_len, short_nameW );
     }
     short_nameW[short_len] = 0;
     wcsupr( short_nameW );
@@ -1439,13 +1463,10 @@ static BOOL append_entry( struct dir_data *data, const char *long_name,
     TRACE( "long %s short %s mask %s\n",
            debugstr_w( long_nameW ), debugstr_w( short_nameW ), debugstr_us( mask ));
 
-    if (mask && !match_filename( &str, mask ))
+    if (mask && !match_filename( long_nameW, long_len, mask ))
     {
         if (!short_len) return TRUE;  /* no short name to match */
-        str.Buffer = short_nameW;
-        str.Length = short_len * sizeof(WCHAR);
-        str.MaximumLength = sizeof(short_nameW);
-        if (!match_filename( &str, mask )) return TRUE;
+        if (!match_filename( short_nameW, short_len, mask )) return TRUE;
     }
 
     return add_dir_data_names( data, long_nameW, short_nameW, long_name );
@@ -2496,8 +2517,7 @@ static NTSTATUS find_file_in_dir( char *unix_name, int pos, const WCHAR *name, i
                                   BOOLEAN check_case, BOOLEAN *is_win_dir )
 {
     WCHAR buffer[MAX_DIR_ENTRY_LEN];
-    UNICODE_STRING str;
-    BOOLEAN spaces, is_name_8_dot_3;
+    BOOLEAN is_name_8_dot_3;
     DIR *dir;
     struct dirent *de;
     struct stat st;
@@ -2523,10 +2543,7 @@ static NTSTATUS find_file_in_dir( char *unix_name, int pos, const WCHAR *name, i
 
     /* check if it fits in 8.3 so that we don't look for short names if we won't need them */
 
-    str.Buffer = (WCHAR *)name;
-    str.Length = length * sizeof(WCHAR);
-    str.MaximumLength = str.Length;
-    is_name_8_dot_3 = RtlIsNameLegalDOS8Dot3( &str, NULL, &spaces ) && !spaces;
+    is_name_8_dot_3 = is_legal_8dot3_name( name, length );
 #ifndef VFAT_IOCTL_READDIR_BOTH
     is_name_8_dot_3 = is_name_8_dot_3 && length >= 8 && name[4] == '~';
 #endif
@@ -2587,8 +2604,6 @@ static NTSTATUS find_file_in_dir( char *unix_name, int pos, const WCHAR *name, i
         else return STATUS_ACCESS_DENIED;
     }
     unix_name[pos - 1] = '/';
-    str.Buffer = buffer;
-    str.MaximumLength = sizeof(buffer);
     while ((de = readdir( dir )))
     {
         ret = ntdll_umbstowcs( de->d_name, strlen(de->d_name), buffer, MAX_DIR_ENTRY_LEN );
@@ -2601,11 +2616,10 @@ static NTSTATUS find_file_in_dir( char *unix_name, int pos, const WCHAR *name, i
 
         if (!is_name_8_dot_3) continue;
 
-        str.Length = ret * sizeof(WCHAR);
-        if (!RtlIsNameLegalDOS8Dot3( &str, NULL, &spaces ) || spaces)
+        if (!is_legal_8dot3_name( buffer, ret ))
         {
             WCHAR short_nameW[12];
-            ret = hash_short_file_name( &str, short_nameW );
+            ret = hash_short_file_name( buffer, ret, short_nameW );
             if (ret == length && !wcsnicmp( short_nameW, name, length ))
             {
                 strcpy( unix_name + pos, de->d_name );
