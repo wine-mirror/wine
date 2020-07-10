@@ -417,6 +417,21 @@ static ULONG WINAPI IEnumDMO_fnRelease(IEnumDMO * iface)
     return refCount;
 }
 
+static BOOL any_types_match(const DMO_PARTIAL_MEDIATYPE *a, unsigned int a_count,
+        const DMO_PARTIAL_MEDIATYPE *b, unsigned int b_count)
+{
+    unsigned int i, j;
+
+    for (i = 0; i < a_count; ++i)
+    {
+        for (j = 0; j < b_count; ++j)
+        {
+            if (IsMediaTypeEqual(&a[i], &b[j]))
+                return TRUE;
+        }
+    }
+    return FALSE;
+}
 
 /******************************************************************************
  * IEnumDMO_fnNext
@@ -483,8 +498,7 @@ static HRESULT WINAPI IEnumDMO_fnNext(
 
         if (This->pInTypes)
         {
-            UINT i, j;
-            DWORD cInTypes;
+            DWORD cInTypes, i;
 
             hres = read_types(hkey, L"InputTypes", &cInTypes, ARRAY_SIZE(types), types);
             if (FAILED(hres))
@@ -498,19 +512,7 @@ static HRESULT WINAPI IEnumDMO_fnNext(
                     debugstr_guid(&types[i].subtype));
             }
 
-            for (i = 0; i < This->cInTypes; i++)
-            {
-                for (j = 0; j < cInTypes; j++) 
-                {
-                    if (IsMediaTypeEqual(&types[j], &This->pInTypes[i]))
-                        break;
-                }
-
-                if (j >= cInTypes)
-                    break;
-            }
-
-            if (i < This->cInTypes)
+            if (!any_types_match(types, cInTypes, This->pInTypes, This->cInTypes))
             {
                 RegCloseKey(hkey);
                 continue;
@@ -519,8 +521,7 @@ static HRESULT WINAPI IEnumDMO_fnNext(
 
         if (This->pOutTypes)
         {
-            UINT i, j;
-            DWORD cOutTypes;
+            DWORD cOutTypes, i;
 
             hres = read_types(hkey, L"OutputTypes", &cOutTypes, ARRAY_SIZE(types), types);
             if (FAILED(hres))
@@ -534,19 +535,7 @@ static HRESULT WINAPI IEnumDMO_fnNext(
                     debugstr_guid(&types[i].subtype));
             }
 
-            for (i = 0; i < This->cOutTypes; i++)
-            {
-                for (j = 0; j < cOutTypes; j++) 
-                {
-                    if (IsMediaTypeEqual(&types[j], &This->pOutTypes[i]))
-                        break;
-                }
-
-                if (j >= cOutTypes)
-                    break;
-            }
-
-            if (i < This->cOutTypes)
+            if (!any_types_match(types, cOutTypes, This->pOutTypes, This->cOutTypes))
             {
                 RegCloseKey(hkey);
                 continue;
