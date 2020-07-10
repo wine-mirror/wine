@@ -103,6 +103,7 @@ typedef struct dds_info {
     UINT mip_levels;
     UINT array_size;
     UINT frame_count;
+    UINT data_offset;
     DXGI_FORMAT format;
     WICDdsDimension dimension;
     WICDdsAlphaMode alpha_mode;
@@ -128,8 +129,6 @@ typedef struct DdsDecoder {
     BOOL initialized;
     IStream *stream;
     CRITICAL_SECTION lock;
-    DDS_HEADER header;
-    DDS_HEADER_DXT10 header_dxt10;
     dds_info info;
 } DdsDecoder;
 
@@ -226,10 +225,12 @@ static void get_dds_info(dds_info* info, DDS_HEADER *header, DDS_HEADER_DXT10 *h
         info->format = header_dxt10->dxgiFormat;
         info->dimension = get_dimension(NULL, header_dxt10);
         info->alpha_mode = header_dxt10->miscFlags2 & 0x00000008;
+        info->data_offset = sizeof(DWORD) + sizeof(*header) + sizeof(*header_dxt10);
     } else {
         info->format = get_format_from_fourcc(header->ddspf.fourCC);
         info->dimension = get_dimension(header, NULL);
         info->alpha_mode = get_alpha_mode_from_fourcc(header->ddspf.fourCC);
+        info->data_offset = sizeof(DWORD) + sizeof(*header);
     }
     info->pixel_format = (info->alpha_mode == WICDdsAlphaModePremultiplied) ?
                          &GUID_WICPixelFormat32bppPBGRA : &GUID_WICPixelFormat32bppBGRA;
@@ -614,6 +615,8 @@ static HRESULT WINAPI DdsDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
                                             WICDecodeOptions cacheOptions)
 {
     DdsDecoder *This = impl_from_IWICBitmapDecoder(iface);
+    DDS_HEADER_DXT10 header_dxt10;
+    DDS_HEADER header;
     HRESULT hr;
     LARGE_INTEGER seek;
     DWORD magic;
@@ -643,27 +646,27 @@ static HRESULT WINAPI DdsDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
         goto end;
     }
 
-    hr = IStream_Read(pIStream, &This->header, sizeof(This->header), &bytesread);
+    hr = IStream_Read(pIStream, &header, sizeof(header), &bytesread);
     if (FAILED(hr)) goto end;
-    if (bytesread != sizeof(This->header)) {
+    if (bytesread != sizeof(header)) {
         hr = WINCODEC_ERR_STREAMREAD;
         goto end;
     }
-    if (This->header.size != sizeof(This->header)) {
+    if (header.size != sizeof(header)) {
         hr = WINCODEC_ERR_BADHEADER;
         goto end;
     }
 
-    if (has_extended_header(&This->header)) {
-        hr = IStream_Read(pIStream, &This->header_dxt10, sizeof(This->header_dxt10), &bytesread);
+    if (has_extended_header(&header)) {
+        hr = IStream_Read(pIStream, &header_dxt10, sizeof(header_dxt10), &bytesread);
         if (FAILED(hr)) goto end;
-        if (bytesread != sizeof(This->header_dxt10)) {
+        if (bytesread != sizeof(header_dxt10)) {
             hr = WINCODEC_ERR_STREAMREAD;
             goto end;
         }
     }
 
-    get_dds_info(&This->info, &This->header, &This->header_dxt10);
+    get_dds_info(&This->info, &header, &header_dxt10);
 
     This->initialized = TRUE;
     This->stream = pIStream;
@@ -888,8 +891,7 @@ static HRESULT WINAPI DdsDecoder_Dds_GetFrame(IWICDdsDecoder *iface,
     }
 
     bytes_per_block = get_bytes_per_block(This->info.format);
-    seek.QuadPart = sizeof(DWORD) + sizeof(DDS_HEADER);
-    if (has_extended_header(&This->header)) seek.QuadPart += sizeof(DDS_HEADER_DXT10);
+    seek.QuadPart = This->info.data_offset;
 
     width = This->info.width;
     height = This->info.height;
