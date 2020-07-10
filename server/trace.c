@@ -2142,32 +2142,6 @@ static void dump_create_console_output_reply( const struct create_console_output
     fprintf( stderr, " handle_out=%04x", req->handle_out );
 }
 
-static void dump_set_console_output_info_request( const struct set_console_output_info_request *req )
-{
-    fprintf( stderr, " handle=%04x", req->handle );
-    fprintf( stderr, ", mask=%d", req->mask );
-    fprintf( stderr, ", cursor_size=%d", req->cursor_size );
-    fprintf( stderr, ", cursor_visible=%d", req->cursor_visible );
-    fprintf( stderr, ", cursor_x=%d", req->cursor_x );
-    fprintf( stderr, ", cursor_y=%d", req->cursor_y );
-    fprintf( stderr, ", width=%d", req->width );
-    fprintf( stderr, ", height=%d", req->height );
-    fprintf( stderr, ", attr=%d", req->attr );
-    fprintf( stderr, ", popup_attr=%d", req->popup_attr );
-    fprintf( stderr, ", win_left=%d", req->win_left );
-    fprintf( stderr, ", win_top=%d", req->win_top );
-    fprintf( stderr, ", win_right=%d", req->win_right );
-    fprintf( stderr, ", win_bottom=%d", req->win_bottom );
-    fprintf( stderr, ", max_width=%d", req->max_width );
-    fprintf( stderr, ", max_height=%d", req->max_height );
-    fprintf( stderr, ", font_width=%d", req->font_width );
-    fprintf( stderr, ", font_height=%d", req->font_height );
-    fprintf( stderr, ", font_weight=%d", req->font_weight );
-    fprintf( stderr, ", font_pitch_family=%d", req->font_pitch_family );
-    dump_varargs_uints( ", colors=", min(cur_size,64) );
-    dump_varargs_unicode_str( ", face_name=", cur_size );
-}
-
 static void dump_write_console_output_request( const struct write_console_output_request *req )
 {
     fprintf( stderr, " handle=%04x", req->handle );
@@ -4623,7 +4597,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_append_console_input_history_request,
     (dump_func)dump_get_console_input_history_request,
     (dump_func)dump_create_console_output_request,
-    (dump_func)dump_set_console_output_info_request,
     (dump_func)dump_write_console_output_request,
     (dump_func)dump_fill_console_output_request,
     (dump_func)dump_read_console_output_request,
@@ -4917,7 +4890,6 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     NULL,
     (dump_func)dump_get_console_input_history_reply,
     (dump_func)dump_create_console_output_reply,
-    NULL,
     (dump_func)dump_write_console_output_reply,
     (dump_func)dump_fill_console_output_reply,
     (dump_func)dump_read_console_output_reply,
@@ -5211,7 +5183,6 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "append_console_input_history",
     "get_console_input_history",
     "create_console_output",
-    "set_console_output_info",
     "write_console_output",
     "fill_console_output",
     "read_console_output",

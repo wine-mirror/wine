@@ -1583,42 +1583,6 @@ enum server_fd_type
 @END
 
 
-/* Set info about a console (output only) */
-@REQ(set_console_output_info)
-    obj_handle_t handle;        /* handle to the console */
-    int          mask;          /* setting mask (see below) */
-    short int    cursor_size;   /* size of cursor (percentage filled) */
-    short int    cursor_visible;/* cursor visibility flag */
-    short int    cursor_x;      /* position of cursor (x, y) */
-    short int    cursor_y;
-    short int    width;         /* width of the screen buffer */
-    short int    height;        /* height of the screen buffer */
-    short int    attr;          /* default fill attributes (screen colors) */
-    short int    popup_attr;    /* pop-up color attributes */
-    short int    win_left;      /* window actually displayed by renderer */
-    short int    win_top;       /* the rect area is expressed within the */
-    short int    win_right;     /* boundaries of the screen buffer */
-    short int    win_bottom;
-    short int    max_width;     /* maximum size (width x height) for the window */
-    short int    max_height;
-    short int    font_width;    /* font size (width x height) */
-    short int    font_height;
-    short int    font_weight;   /* font weight */
-    short int    font_pitch_family; /* font pitch & family */
-    VARARG(colors,uints,64);    /* color table */
-    VARARG(face_name,unicode_str);  /* font face name */
-@END
-#define SET_CONSOLE_OUTPUT_INFO_CURSOR_GEOM     0x0001
-#define SET_CONSOLE_OUTPUT_INFO_CURSOR_POS      0x0002
-#define SET_CONSOLE_OUTPUT_INFO_SIZE            0x0004
-#define SET_CONSOLE_OUTPUT_INFO_ATTR            0x0008
-#define SET_CONSOLE_OUTPUT_INFO_DISPLAY_WINDOW  0x0010
-#define SET_CONSOLE_OUTPUT_INFO_MAX_SIZE        0x0020
-#define SET_CONSOLE_OUTPUT_INFO_FONT            0x0040
-#define SET_CONSOLE_OUTPUT_INFO_COLORTABLE      0x0080
-#define SET_CONSOLE_OUTPUT_INFO_POPUP_ATTR      0x0100
-
-
 /* write data (chars and/or attributes) in a screen buffer */
 @REQ(write_console_output)
     obj_handle_t handle;        /* handle to the console output */
