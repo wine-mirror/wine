@@ -476,6 +476,10 @@ static ULONG get_env_size( const RTL_USER_PROCESS_PARAMETERS *params, char **win
  */
 static int get_unix_curdir( const RTL_USER_PROCESS_PARAMETERS *params )
 {
+    static const WCHAR ntprefixW[] = {'\\','?','?','\\',0};
+    static const WCHAR uncprefixW[] = {'U','N','C','\\',0};
+    const UNICODE_STRING *curdir = &params->CurrentDirectory.DosPath;
+    const WCHAR *dir = curdir->Buffer;
     UNICODE_STRING nt_name;
     OBJECT_ATTRIBUTES attr;
     IO_STATUS_BLOCK io;
@@ -483,13 +487,27 @@ static int get_unix_curdir( const RTL_USER_PROCESS_PARAMETERS *params )
     HANDLE handle;
     int fd = -1;
 
-    if (!RtlDosPathNameToNtPathName_U( params->CurrentDirectory.DosPath.Buffer, &nt_name, NULL, NULL ))
-        return -1;
+    if (!(nt_name.Buffer = malloc( curdir->Length + 8 * sizeof(WCHAR) ))) return -1;
+
+    /* simplified version of RtlDosPathNameToNtPathName_U */
+    wcscpy( nt_name.Buffer, ntprefixW );
+    if (dir[0] == '\\' && dir[1] == '\\')
+    {
+        if ((dir[2] == '.' || dir[2] == '?') && dir[3] == '\\') dir += 4;
+        else
+        {
+            wcscat( nt_name.Buffer, uncprefixW );
+            dir += 2;
+        }
+    }
+    wcscat( nt_name.Buffer, dir );
+    nt_name.Length = wcslen( nt_name.Buffer ) * sizeof(WCHAR);
+
     InitializeObjectAttributes( &attr, &nt_name, OBJ_CASE_INSENSITIVE, 0, NULL );
     status = NtOpenFile( &handle, FILE_TRAVERSE | SYNCHRONIZE, &attr, &io,
                          FILE_SHARE_READ | FILE_SHARE_WRITE,
                          FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT );
-    RtlFreeUnicodeString( &nt_name );
+    free( nt_name.Buffer );
     if (status) return -1;
     server_handle_to_fd( handle, FILE_TRAVERSE, &fd, NULL );
     NtClose( handle );
