@@ -1,0 +1,11 @@
+@ stub CopyFileFromAppW
+@ stub CreateDirectoryFromAppW
+@ stub CreateFile2FromAppW
+@ stub CreateFileFromAppW
+@ stub DeleteFileFromAppW
+@ stub FindFirstFileExFromAppW
+@ stub GetFileAttributesExFromAppW
+@ stub MoveFileFromAppW
+@ stub RemoveDirectoryFromAppW
+@ stub ReplaceFileFromAppW
+@ stub SetFileAttributesFromAppW

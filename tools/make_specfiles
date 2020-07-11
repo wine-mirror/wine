@@ -237,6 +237,7 @@ my @dll_groups =
   "api-ms-win-core-file-l2-1-0",
   "api-ms-win-core-file-l2-1-1",
   "api-ms-win-core-file-l2-1-2",
+  "api-ms-win-core-file-fromapp-l1-1-0",
   "api-ms-win-core-handle-l1-1-0",
   "api-ms-win-core-heap-l1-1-0",
   "api-ms-win-core-heap-l1-2-0",
