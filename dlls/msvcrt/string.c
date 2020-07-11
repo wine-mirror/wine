@@ -32,6 +32,7 @@
 #include <limits.h>
 #include <errno.h>
 #include "msvcrt.h"
+#include "bnum.h"
 #include "winnls.h"
 #include "wine/debug.h"
 
@@ -353,8 +354,6 @@ enum round {
 
 static double make_double(int sign, int exp, ULONGLONG m, enum round round, int *err)
 {
-#define EXP_BITS 11
-#define MANT_BITS 53
     ULONGLONG bits = 0;
 
     TRACE("%c %s *2^%d (round %d)\n", sign == -1 ? '-' : '+', wine_dbgstr_longlong(m), exp, round);
@@ -572,120 +571,9 @@ static double strtod16(MSVCRT_wchar_t get(void *ctx), void unget(void *ctx),
 }
 #endif
 
-#define LIMB_DIGITS 9           /* each DWORD stores up to 9 digits */
-#define LIMB_MAX 1000000000     /* 10^9 */
-#define BNUM_IDX(i) ((i) & 127)
-/* bnum represents real number with fixed decimal point (after 2 limbs) */
-struct bnum {
-    DWORD data[128]; /* circular buffer, base 10 number */
-    int b; /* least significant digit position */
-    int e; /* most significant digit position + 1 */
-};
-
-/* Returns integral part of bnum */
-static inline ULONGLONG bnum_to_mant(struct bnum *b)
-{
-    ULONGLONG ret = (ULONGLONG)b->data[BNUM_IDX(b->e-1)] * LIMB_MAX;
-    if(b->b != b->e-1) ret += b->data[BNUM_IDX(b->e-2)];
-    return ret;
-}
-
-/* Returns TRUE if new most significant limb was added */
-static inline BOOL bnum_lshift(struct bnum *b, int shift)
-{
-    DWORD rest = 0;
-    ULONGLONG tmp;
-    int i;
-
-    /* The limbs number can change by up to 1 so shift <= 29 */
-    assert(shift <= 29);
-
-    for(i=b->b; i<b->e; i++) {
-        tmp = ((ULONGLONG)b->data[BNUM_IDX(i)] << shift) + rest;
-        rest = tmp / LIMB_MAX;
-        b->data[BNUM_IDX(i)] = tmp % LIMB_MAX;
-
-        if(i == b->b && !b->data[BNUM_IDX(i)])
-            b->b++;
-    }
-
-    if(rest) {
-        b->data[BNUM_IDX(b->e)] = rest;
-        b->e++;
-
-        if(BNUM_IDX(b->b) == BNUM_IDX(b->e)) {
-            if(b->data[BNUM_IDX(b->b)]) b->data[BNUM_IDX(b->b+1)] |= 1;
-            b->b++;
-        }
-        return TRUE;
-    }
-    return FALSE;
-}
-
-/* Returns TRUE if most significant limb was removed */
-static inline BOOL bnum_rshift(struct bnum *b, int shift)
-{
-    DWORD tmp, rest = 0;
-    BOOL ret = FALSE;
-    int i;
-
-    /* Compute LIMB_MAX << shift without accuracy loss */
-    assert(shift <= 9);
-
-    for(i=b->e-1; i>=b->b; i--) {
-        tmp = b->data[BNUM_IDX(i)] & ((1<<shift)-1);
-        b->data[BNUM_IDX(i)] = (b->data[BNUM_IDX(i)] >> shift) + rest;
-        rest = (LIMB_MAX >> shift) * tmp;
-        if(i==b->e-1 && !b->data[BNUM_IDX(i)]) {
-            b->e--;
-            ret = TRUE;
-        }
-    }
-
-    if(rest) {
-        if(BNUM_IDX(b->b-1) == BNUM_IDX(b->e)) {
-            if(rest) b->data[BNUM_IDX(b->b)] |= 1;
-        } else {
-            b->b--;
-            b->data[BNUM_IDX(b->b)] = rest;
-        }
-    }
-    return ret;
-}
-
-static inline void bnum_mult(struct bnum *b, int mult)
-{
-    DWORD rest = 0;
-    ULONGLONG tmp;
-    int i;
-
-    assert(mult <= LIMB_MAX);
-
-    for(i=b->b; i<b->e; i++) {
-        tmp = ((ULONGLONG)b->data[BNUM_IDX(i)] * mult) + rest;
-        rest = tmp / LIMB_MAX;
-        b->data[BNUM_IDX(i)] = tmp % LIMB_MAX;
-
-        if(i == b->b && !b->data[BNUM_IDX(i)])
-            b->b++;
-    }
-
-    if(rest) {
-        b->data[BNUM_IDX(b->e)] = rest;
-        b->e++;
-
-        if(BNUM_IDX(b->b) == BNUM_IDX(b->e)) {
-            if(b->data[BNUM_IDX(b->b)]) b->data[BNUM_IDX(b->b+1)] |= 1;
-            b->b++;
-        }
-    }
-}
-
 double parse_double(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *ctx),
         void *ctx, MSVCRT_pthreadlocinfo locinfo, int *err)
 {
-    static const int p10s[] = { 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000 };
-
 #if _MSVCR_VER >= 140
     MSVCRT_wchar_t _infinity[] = { 'i', 'n', 'f', 'i', 'n', 'i', 't', 'y', 0 };
     MSVCRT_wchar_t _nan[] = { 'n', 'a', 'n', 0 };
@@ -869,7 +757,7 @@ double parse_double(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *ctx),
         return make_double(sign, 0, b.data[BNUM_IDX(b.e-1)], ROUND_ZERO, err);
     off = (dp - limb_digits) % LIMB_DIGITS;
     if(off < 0) off += LIMB_DIGITS;
-    if(off) bnum_mult(&b, p10s[off-1]);
+    if(off) bnum_mult(&b, p10s[off]);
 
     if(!err) err = MSVCRT__errno();
     if(dp-1 > MSVCRT_DBL_MAX_10_EXP)
