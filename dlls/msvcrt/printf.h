@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "bnum.h"
+
 #ifdef PRINTF_WIDE
 #define APICHAR MSVCRT_wchar_t
 #define CONVCHAR char
@@ -408,8 +410,6 @@ static inline int FUNC_NAME(pf_output_special_fp)(FUNC_NAME(puts_clbk) pf_puts, 
 static inline int FUNC_NAME(pf_output_hex_fp)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx,
         double v, FUNC_NAME(pf_flags) *flags, MSVCRT__locale_t locale)
 {
-#define EXP_BITS 11
-#define MANT_BITS 53
     const APICHAR digits[2][16] = {
         { '0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f' },
         { '0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F' }
@@ -519,20 +519,6 @@ static inline int FUNC_NAME(pf_output_hex_fp)(FUNC_NAME(puts_clbk) pf_puts, void
     return len;
 }
 
-static inline void FUNC_NAME(pf_rebuild_format_string)(char *p, FUNC_NAME(pf_flags) *flags)
-{
-    *p++ = '%';
-    if(flags->Alternate)
-        *p++ = flags->Alternate;
-    if(flags->Precision >= 0) {
-        *p++ = '.';
-        MSVCRT__itoa(flags->Precision, p, 10);
-        p += strlen(p);
-    }
-    *p++ = flags->Format;
-    *p++ = 0;
-}
-
 /* pf_integer_conv:  prints x to buf, including alternate formats and
    additional precision digits, but not field characters or the sign */
 static inline void FUNC_NAME(pf_integer_conv)(APICHAR *buf, int buf_len,
@@ -595,39 +581,335 @@ static inline void FUNC_NAME(pf_integer_conv)(APICHAR *buf, int buf_len,
     }
 }
 
-static inline void FUNC_NAME(pf_fixup_exponent)(char *buf, BOOL three_digit_exp)
+static inline int FUNC_NAME(pf_output_fp)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx,
+        double v, FUNC_NAME(pf_flags) *flags, MSVCRT__locale_t locale, BOOL three_digit_exp)
 {
-    char* tmp = buf;
+    int e2, e10 = 0, round_pos, round_limb, radix_pos, first_limb_len, i, len, r, ret;
+    APICHAR buf[LIMB_DIGITS + 1];
+    BOOL trim_tail = FALSE;
+    FUNC_NAME(pf_flags) f;
+    int limb_len, prec;
+    struct bnum b;
+    ULONGLONG m;
+    DWORD l;
 
-    while(tmp[0] && MSVCRT__toupper_l(tmp[0], NULL)!='E')
-        tmp++;
+    TRACE("floting point argument: %.16le\n", v);
 
-    if(tmp[0] && (tmp[1]=='+' || tmp[1]=='-') &&
-            isdigit(tmp[2]) && isdigit(tmp[3])) {
-#if _MSVCR_VER >= 140
-        BOOL two_digit_exp = !three_digit_exp;
-#else
-        BOOL two_digit_exp = (MSVCRT__get_output_format() == MSVCRT__TWO_DIGIT_EXPONENT);
-#endif
+    if(flags->Precision == -1)
+        flags->Precision = 6;
 
-        tmp += 2;
-        if(isdigit(tmp[2])) {
-            if(two_digit_exp && tmp[0]=='0') {
-                tmp[0] = tmp[1];
-                tmp[1] = tmp[2];
-                tmp[2] = tmp[3];
-            }
+    v = frexp(v, &e2);
+    if(v) {
+        m = (ULONGLONG)1 << (MANT_BITS - 1);
+        m |= (*(ULONGLONG*)&v & (((ULONGLONG)1 << (MANT_BITS - 1)) - 1));
+        b.data[0] = m % LIMB_MAX;
+        b.data[1] = m / LIMB_MAX;
+        b.b = 0;
+        b.e = 2;
+        e2 -= MANT_BITS;
 
-            return; /* Exponent already 3 digits */
-        }else if(two_digit_exp) {
-            return;
+        while(e2 > 0) {
+            int shift = e2 > 29 ? 29 : e2;
+            if(bnum_lshift(&b, shift)) e10 += LIMB_DIGITS;
+            e2 -= shift;
+        }
+        while(e2 < 0) {
+            int shift = -e2 > 9 ? 9 : -e2;
+            if(bnum_rshift(&b, shift)) e10 -= LIMB_DIGITS;
+            e2 += shift;
+        }
+    } else {
+        b.b = 0;
+        b.e = 1;
+        b.data[0] = 0;
+        e10 = -LIMB_DIGITS;
+    }
+
+    if(!b.data[BNUM_IDX(b.e-1)])
+        first_limb_len = 1;
+    else
+        first_limb_len = floor(log10(b.data[BNUM_IDX(b.e - 1)])) + 1;
+    radix_pos = first_limb_len + LIMB_DIGITS + e10;
+
+    round_pos = flags->Precision;
+    if(flags->Format=='f' || flags->Format=='F')
+        round_pos += radix_pos;
+    else if(!flags->Precision || flags->Format=='e' || flags->Format=='E')
+        round_pos++;
+    if (round_pos <= first_limb_len)
+        round_limb = b.e + (first_limb_len - round_pos) / LIMB_DIGITS - 1;
+    else
+        round_limb = b.e - (round_pos - first_limb_len - 1) / LIMB_DIGITS - 2;
+
+    if (b.b<=round_limb && round_limb<b.e) {
+        BOOL round_up = FALSE;
+
+        if (round_pos <= first_limb_len) {
+            round_pos = first_limb_len - round_pos;
+        } else {
+            round_pos = LIMB_DIGITS - (round_pos - first_limb_len) % LIMB_DIGITS;
+            if (round_pos == LIMB_DIGITS) round_pos = 0;
         }
 
-        tmp[3] = tmp[2];
-        tmp[2] = tmp[1];
-        tmp[1] = tmp[0];
-        tmp[0] = '0';
+        if (round_pos) {
+            l = b.data[BNUM_IDX(round_limb)] % p10s[round_pos];
+            b.data[BNUM_IDX(round_limb)] -= l;
+            if(2*l >= p10s[round_pos]) round_up = TRUE;
+        } else if(round_limb - 1 >= b.b) {
+            if(2*b.data[BNUM_IDX(round_limb-1)] >= LIMB_MAX) round_up = TRUE;
+        }
+        b.b = round_limb;
+
+        if(round_up) {
+            b.data[BNUM_IDX(b.b)] += p10s[round_pos];
+            for(i = b.b; i < b.e; i++) {
+                if(b.data[BNUM_IDX(i)] < LIMB_MAX) break;
+
+                b.data[BNUM_IDX(i)] -= LIMB_MAX;
+                if(i+1 < b.e) b.data[BNUM_IDX(i+1)]++;
+                else b.data[BNUM_IDX(i+1)] = 1;
+            }
+            if(i == b.e-1) {
+                if(!b.data[BNUM_IDX(b.e-1)])
+                    i = 1;
+                else
+                    i = floor(log10(b.data[BNUM_IDX(b.e-1)])) + 1;
+                if(i != first_limb_len) {
+                    first_limb_len = i;
+                    radix_pos++;
+                }
+            } else if(i == b.e) {
+                first_limb_len = 1;
+                radix_pos++;
+                b.e++;
+            }
+        }
     }
+    else if(b.e <= round_limb) { /* got 0 or 1 after rounding */
+        b.data[BNUM_IDX(round_limb)] = b.e==round_limb && b.data[BNUM_IDX(b.e-1)]>=LIMB_MAX/2;
+        b.b = round_limb;
+        b.e = b.b + 1;
+        first_limb_len = 1;
+        radix_pos++;
+    }
+
+    if(flags->Format=='g' || flags->Format=='G') {
+        trim_tail = TRUE;
+
+        if(!v) {
+            flags->Format -= 1;
+            if(!flags->Precision) flags->Precision++;
+        } else if(radix_pos>=-3 && radix_pos<=flags->Precision) {
+            flags->Format -= 1;
+            if(!flags->Precision) flags->Precision++;
+            flags->Precision -= radix_pos;
+        } else {
+            flags->Format -= 2;
+            if(flags->Precision > 0) flags->Precision--;
+        }
+    }
+
+    if(trim_tail && !flags->Alternate) {
+        for(i=round_limb; flags->Precision>0 && i<b.e; i++) {
+            if(i>=b.b)
+                l = b.data[BNUM_IDX(i)];
+            else
+                l = 0;
+
+            if(i == round_limb) {
+                if(flags->Format=='f' || flags->Format=='F')
+                    r = radix_pos + flags->Precision;
+                else
+                    r = flags->Precision + 1;
+                r = first_limb_len + LIMB_DIGITS * (b.e-1 - b.b) - r;
+                r %= LIMB_DIGITS;
+                if(r < 0) r += LIMB_DIGITS;
+                l /= p10s[r];
+                limb_len = LIMB_DIGITS - r;
+            } else {
+                limb_len = LIMB_DIGITS;
+            }
+
+            if(!l) {
+                flags->Precision -= limb_len;
+            } else {
+                while(l % 10 == 0) {
+                    flags->Precision--;
+                    l /= 10;
+                }
+            }
+
+            if(flags->Precision <= 0) {
+                flags->Precision = 0;
+                break;
+            }
+            if(l)
+                break;
+        }
+    }
+
+    len = flags->Precision;
+    if(flags->Precision || flags->Alternate) len++;
+    if(flags->Format=='f' || flags->Format=='F') {
+        len += (radix_pos > 0 ? radix_pos : 1);
+    } else if(flags->Format=='e' || flags->Format=='E') {
+        radix_pos--;
+        if(!trim_tail || radix_pos) {
+            len += 3; /* strlen("1e+") */
+            if(three_digit_exp || radix_pos<-99 || radix_pos>99) len += 3;
+            else len += 2;
+        } else {
+            len++;
+        }
+    }
+
+    r = FUNC_NAME(pf_fill)(pf_puts, puts_ctx, len, flags, TRUE);
+    if(r < 0) return r;
+    ret = r;
+
+    f.Format = 'd';
+    f.PadZero = '0';
+    if(flags->Format=='f' || flags->Format=='F') {
+        if(radix_pos <= 0) {
+            buf[0] = '0';
+            r = pf_puts(puts_ctx, 1, buf);
+            if(r < 0) return r;
+            ret += r;
+        }
+
+        limb_len = LIMB_DIGITS;
+        for(i=b.e-1; radix_pos>0 && i>=b.b; i--) {
+            limb_len = (i == b.e-1 ? first_limb_len : LIMB_DIGITS);
+            l = b.data[BNUM_IDX(i)];
+            if(limb_len > radix_pos) {
+                f.Precision = radix_pos;
+                l /= p10s[limb_len - radix_pos];
+                limb_len = limb_len - radix_pos;
+            } else {
+                f.Precision = limb_len;
+                limb_len = LIMB_DIGITS;
+            }
+            radix_pos -= f.Precision;
+            FUNC_NAME(pf_integer_conv)(buf, ARRAY_SIZE(buf), &f, l);
+
+            r = pf_puts(puts_ctx, f.Precision, buf);
+            if(r < 0) return r;
+            ret += r;
+        }
+
+        buf[0] = '0';
+        for(; radix_pos>0; radix_pos--) {
+            r = pf_puts(puts_ctx, 1, buf);
+            if(r < 0) return r;
+            ret += r;
+        }
+
+        if(flags->Precision || flags->Alternate) {
+            buf[0] = *(locale ? locale->locinfo : get_locinfo())->lconv->decimal_point;
+            r = pf_puts(puts_ctx, 1, buf);
+            if(r < 0) return r;
+            ret += r;
+        }
+
+        prec = flags->Precision;
+        buf[0] = '0';
+        for(; prec>0 && radix_pos+LIMB_DIGITS-first_limb_len<0; radix_pos++, prec--) {
+            r = pf_puts(puts_ctx, 1, buf);
+            if(r < 0) return r;
+            ret += r;
+        }
+
+        for(; prec>0 && i>=b.b; i--) {
+            l = b.data[BNUM_IDX(i)];
+            if(limb_len != LIMB_DIGITS)
+                l %= p10s[limb_len];
+            if(limb_len > prec) {
+                f.Precision = prec;
+                l /= p10s[limb_len - prec];
+            } else {
+                f.Precision = limb_len;
+                limb_len = LIMB_DIGITS;
+            }
+            prec -= f.Precision;
+            FUNC_NAME(pf_integer_conv)(buf, ARRAY_SIZE(buf), &f, l);
+
+            r = pf_puts(puts_ctx, f.Precision, buf);
+            if(r < 0) return r;
+            ret += r;
+        }
+
+        buf[0] = '0';
+        for(; prec>0; prec--) {
+            r = pf_puts(puts_ctx, 1, buf);
+            if(r < 0) return r;
+            ret += r;
+        }
+    } else {
+        l = b.data[BNUM_IDX(b.e - 1)];
+        l /= p10s[first_limb_len - 1];
+
+        buf[0] = '0' + l;
+        r = pf_puts(puts_ctx, 1, buf);
+        if(r < 0) return r;
+        ret += r;
+
+        if(flags->Precision || flags->Alternate) {
+            buf[0] = *(locale ? locale->locinfo : get_locinfo())->lconv->decimal_point;
+            r = pf_puts(puts_ctx, 1, buf);
+            if(r < 0) return r;
+            ret += r;
+        }
+
+        prec = flags->Precision;
+        limb_len = LIMB_DIGITS;
+        for(i=b.e-1; prec>0 && i>=b.b; i--) {
+            l = b.data[BNUM_IDX(i)];
+            if(i == b.e-1) {
+                limb_len = first_limb_len - 1;
+                l %= p10s[limb_len];
+            }
+
+            if(limb_len > prec) {
+                f.Precision = prec;
+                l /= p10s[limb_len - prec];
+            } else {
+                f.Precision = limb_len;
+                limb_len = LIMB_DIGITS;
+            }
+            prec -= f.Precision;
+            FUNC_NAME(pf_integer_conv)(buf, ARRAY_SIZE(buf), &f, l);
+
+            r = pf_puts(puts_ctx, f.Precision, buf);
+            if(r < 0) return r;
+            ret += r;
+        }
+
+        buf[0] = '0';
+        for(; prec>0; prec--) {
+            r = pf_puts(puts_ctx, 1, buf);
+            if(r < 0) return r;
+            ret += r;
+        }
+
+        if(!trim_tail || radix_pos) {
+            buf[0] = flags->Format;
+            buf[1] = radix_pos < 0 ? '-' : '+';
+            r = pf_puts(puts_ctx, 2, buf);
+            if(r < 0) return r;
+            ret += r;
+
+            f.Precision = three_digit_exp ? 3 : 2;
+            FUNC_NAME(pf_integer_conv)(buf, ARRAY_SIZE(buf), &f, radix_pos);
+            r = pf_puts(puts_ctx, f.Precision, buf);
+            if(r < 0) return r;
+            ret += r;
+        }
+    }
+
+    r = FUNC_NAME(pf_fill)(pf_puts, puts_ctx, len, flags, FALSE);
+    if(r < 0) return r;
+    ret += r;
+    return ret;
 }
 
 int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const APICHAR *fmt,
@@ -645,7 +927,8 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
     BOOL legacy_msvcrt_compat = options & UCRTBASE_PRINTF_LEGACY_MSVCRT_COMPATIBILITY;
     BOOL three_digit_exp = options & UCRTBASE_PRINTF_LEGACY_THREE_DIGIT_EXPONENTS;
 #else
-    BOOL legacy_wide = TRUE, legacy_msvcrt_compat = TRUE, three_digit_exp = TRUE;
+    BOOL legacy_wide = TRUE, legacy_msvcrt_compat = TRUE;
+    BOOL three_digit_exp = MSVCRT__get_output_format() != MSVCRT__TWO_DIGIT_EXPONENT;
 #endif
 
     TRACE("Format is: %s\n", FUNC_NAME(debugstr)(fmt));
@@ -850,10 +1133,7 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
             if(tmp != buf)
                 HeapFree(GetProcessHeap(), 0, tmp);
         } else if(flags.Format && strchr("aAeEfFgG", flags.Format)) {
-            char float_fmt[20], buf_a[32], *tmp = buf_a, *decimal_point;
-            int len = flags.Precision + 10;
             double val = pf_args(args_ctx, pos, VT_R8, valist).get_double;
-            int r;
 
             if(signbit(val)) {
                 flags.Sign = '-';
@@ -865,49 +1145,8 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
                         locale, legacy_msvcrt_compat, three_digit_exp);
             else if(flags.Format=='a' || flags.Format=='A')
                 i = FUNC_NAME(pf_output_hex_fp)(pf_puts, puts_ctx, val, &flags, locale);
-            else {
-                if(flags.Format=='f' || flags.Format=='F') {
-                    if(val<10.0)
-                        i = 1;
-                    else
-                        i = 1 + log10(val);
-                    /* Default precision is 6, additional space for sign, separator and nullbyte is required */
-                    i += (flags.Precision==-1 ? 6 : flags.Precision) + 3;
-
-                    if(i > len)
-                        len = i;
-                }
-
-                if(len > sizeof(buf_a))
-                    tmp = HeapAlloc(GetProcessHeap(), 0, len);
-                if(!tmp)
-                    return -1;
-
-                FUNC_NAME(pf_rebuild_format_string)(float_fmt, &flags);
-
-                sprintf(tmp, float_fmt, val);
-                if(MSVCRT__toupper_l(flags.Format, NULL)=='E' || MSVCRT__toupper_l(flags.Format, NULL)=='G')
-                    FUNC_NAME(pf_fixup_exponent)(tmp, three_digit_exp);
-
-                decimal_point = strchr(tmp, '.');
-                if(decimal_point)
-                    *decimal_point = *(locale ? locale->locinfo : get_locinfo())->lconv->decimal_point;
-
-                len = strlen(tmp);
-                i = FUNC_NAME(pf_fill)(pf_puts, puts_ctx, len, &flags, TRUE);
-                if(i < 0)
-                    return i;
-                r = FUNC_NAME(pf_output_str)(pf_puts, puts_ctx, tmp, len, locale);
-                if(r < 0)
-                    return r;
-                i += r;
-                if(tmp != buf_a)
-                    HeapFree(GetProcessHeap(), 0, tmp);
-                r = FUNC_NAME(pf_fill)(pf_puts, puts_ctx, len, &flags, FALSE);
-                if(r < 0)
-                    return r;
-                i += r;
-            }
+            else
+                i = FUNC_NAME(pf_output_fp)(pf_puts, puts_ctx, val, &flags, locale, three_digit_exp);
         } else {
             if(invoke_invalid_param_handler) {
                 MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);

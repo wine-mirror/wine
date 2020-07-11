@@ -4590,13 +4590,7 @@ static void test_VarBstrFromR4(void)
   ok(hres == S_OK, "got hres 0x%08x\n", hres);
   if (bstr)
   {
-    todo_wine {
-    /* MSDN states that rounding of R4/R8 is dependent on the underlying
-     * bit pattern of the number and so is architecture dependent. In this
-     * case Wine returns .2 (which is more correct) and Native returns .3
-     */
     ok(memcmp(bstr, szNative, sizeof(szNative)) == 0, "string different\n");
-    }
     SysFreeString(bstr);
   }
 
@@ -4611,7 +4605,7 @@ static void test_VarBstrFromR4(void)
           ok(memcmp(bstr, szZero, sizeof(szZero)) == 0, "negative zero (got %s)\n", wtoascii(bstr));
       SysFreeString(bstr);
   }
-  
+
   /* The following tests that lcid is used for decimal separator even without LOCALE_USE_NLS */
   f = 0.5;
   hres = VarBstrFromR4(f, lcid, LOCALE_NOUSEROVERRIDE, &bstr);
