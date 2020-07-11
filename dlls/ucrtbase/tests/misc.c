@@ -520,12 +520,19 @@ static void test__sopen_s(void)
 
 static void test_lldiv(void)
 {
-    static lldiv_t* (CDECL *p_lldiv)(lldiv_t*,LONGLONG,LONGLONG) = (void*)lldiv;
     lldiv_t r;
 
-    p_lldiv(&r, (LONGLONG)0x111 << 32 | 0x222, (LONGLONG)1 << 32);
+    r = lldiv(((LONGLONG)0x111 << 32) + 0x222, (LONGLONG)1 << 32);
     ok(r.quot == 0x111, "quot = %s\n", wine_dbgstr_longlong(r.quot));
     ok(r.rem == 0x222, "rem = %s\n", wine_dbgstr_longlong(r.rem));
+
+    r = lldiv(((LONGLONG)0x69CF0012 << 32) + 0x0033E78A, 0x30);
+    ok(r.quot == ((LONGLONG)0x02345000 << 32) + 0x600114D2, "quot = %s\n", wine_dbgstr_longlong(r.quot));
+    ok(r.rem == 0x2A, "rem = %s\n", wine_dbgstr_longlong(r.rem));
+
+    r = lldiv(((LONGLONG)0x243A5678 << 32) + 0x9ABCDEF0, (LONGLONG)0x12 << 48);
+    ok(r.quot == 0x0203, "quot = %s\n", wine_dbgstr_longlong(r.quot));
+    ok(r.rem == ((LONGLONG)0x00045678 << 32) + 0x9ABCDEF0, "rem = %s\n", wine_dbgstr_longlong(r.rem));
 }
 
 static void test_isblank(void)
