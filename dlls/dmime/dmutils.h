@@ -27,9 +27,4 @@ typedef struct _DMUS_PRIVATE_CHUNK {
 	DWORD dwSize; /* size of the chunk */
 } DMUS_PRIVATE_CHUNK, *LPDMUS_PRIVATE_CHUNK;
 
-/**
- * Parsing utilities
- */
-extern HRESULT IDirectMusicUtils_IPersistStream_ParseReference (LPPERSISTSTREAM iface, DMUS_PRIVATE_CHUNK* pChunk, IStream* pStm, IDirectMusicObject** ppObject) DECLSPEC_HIDDEN;
-
 #endif /* __WINE_DMUTILS_H */

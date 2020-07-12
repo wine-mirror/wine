@@ -572,6 +572,47 @@ HRESULT dmobj_parsedescriptor(IStream *stream, const struct chunk_entry *riff,
     return hr;
 }
 
+HRESULT dmobj_parsereference(IStream *stream, const struct chunk_entry *list,
+        IDirectMusicObject **dmobj)
+{
+    struct chunk_entry chunk = {.parent = list};
+    IDirectMusicGetLoader *getloader;
+    IDirectMusicLoader *loader;
+    DMUS_OBJECTDESC desc;
+    DMUS_IO_REFERENCE reference;
+    HRESULT hr;
+
+    if (FAILED(hr = stream_next_chunk(stream, &chunk)))
+        return hr;
+    if (chunk.id != DMUS_FOURCC_REF_CHUNK)
+        return DMUS_E_UNSUPPORTED_STREAM;
+
+    if (FAILED(hr = stream_chunk_get_data(stream, &chunk, &reference, sizeof(reference)))) {
+        WARN("Failed to read data of %s\n", debugstr_chunk(&chunk));
+        return hr;
+    }
+    TRACE("REFERENCE guidClassID %s, dwValidData %#x\n", debugstr_dmguid(&reference.guidClassID),
+            reference.dwValidData);
+
+    if (FAILED(hr = dmobj_parsedescriptor(stream, list, &desc, reference.dwValidData)))
+        return hr;
+    desc.guidClass = reference.guidClassID;
+    desc.dwValidData |= DMUS_OBJ_CLASS;
+    dump_DMUS_OBJECTDESC(&desc);
+
+    if (FAILED(hr = IStream_QueryInterface(stream, &IID_IDirectMusicGetLoader, (void**)&getloader)))
+        return hr;
+    hr = IDirectMusicGetLoader_GetLoader(getloader, &loader);
+    IDirectMusicGetLoader_Release(getloader);
+    if (FAILED(hr))
+        return hr;
+
+    hr = IDirectMusicLoader_GetObject(loader, &desc, &IID_IDirectMusicObject, (void**)dmobj);
+    IDirectMusicLoader_Release(loader);
+
+    return hr;
+}
+
 /* Generic IPersistStream methods */
 static inline struct dmobject *impl_from_IPersistStream(IPersistStream *iface)
 {

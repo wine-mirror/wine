@@ -89,6 +89,10 @@ HRESULT dmobj_parsedescriptor(IStream *stream, const struct chunk_entry *riff,
 #define DMUS_OBJ_NAME_INAM   0x1000     /* 'INAM' chunk in UNFO list */
 #define DMUS_OBJ_NAME_INFO   0x2000     /* 'INAM' chunk in INFO list */
 
+/* 'DMRF' (reference list) helper */
+HRESULT dmobj_parsereference(IStream *stream, const struct chunk_entry *list,
+        IDirectMusicObject **dmobj) DECLSPEC_HIDDEN;
+
 /* Generic IPersistStream methods */
 HRESULT WINAPI dmobj_IPersistStream_QueryInterface(IPersistStream *iface, REFIID riid,
         void **ret_iface) DECLSPEC_HIDDEN;

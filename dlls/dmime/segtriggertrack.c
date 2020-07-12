@@ -304,15 +304,19 @@ static HRESULT parse_segment(IDirectMusicSegTriggerTrack *This, DMUS_PRIVATE_CHU
       break;
     }
     case FOURCC_LIST: {
+      struct chunk_entry list = {.id = FOURCC_LIST, .size = Chunk.dwSize};
+      static const LARGE_INTEGER zero;
+      IStream_Seek(pStm, zero, STREAM_SEEK_CUR, &list.offset);
+      list.offset.QuadPart -= sizeof(FOURCC) + sizeof(DWORD);
       IStream_Read (pStm, &Chunk.fccID, sizeof(FOURCC), NULL);
       TRACE_(dmfile)(": LIST chunk of type %s", debugstr_fourcc(Chunk.fccID));
+      list.type = Chunk.fccID;
       ListSize[1] = Chunk.dwSize - sizeof(FOURCC);
       ListCount[1] = 0;
       switch (Chunk.fccID) { 
       case DMUS_FOURCC_REF_LIST: {
-	FIXME_(dmfile)(": DMRF (DM References) list\n");
-        hr = IDirectMusicUtils_IPersistStream_ParseReference(&This->dmobj.IPersistStream_iface,
-                &Chunk, pStm, &pObject);
+        TRACE_(dmfile)(": DMRF (DM References) list\n");
+        hr = dmobj_parsereference(pStm, &list, &pObject);
 	if (FAILED(hr)) {
 	  ERR(": could not load Reference\n");
 	  return hr;
