@@ -117,9 +117,59 @@ static void test_DMOEnum(void)
     IEnumDMO_Release(enum_dmo);
 }
 
+static void test_DMOGetTypes(void)
+{
+    static const DMO_PARTIAL_MEDIATYPE input_types[] =
+    {
+        {{0x1111}, {0x2222}},
+        {{0x1111}, {0x3333}},
+    };
+    ULONG input_count, output_count;
+    DMO_PARTIAL_MEDIATYPE types[3];
+    HRESULT hr;
+
+    hr = DMOGetTypes(&GUID_unknowndmo, 0, &input_count, types, 0, &output_count, NULL);
+    ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+
+    hr = DMORegister(L"testdmo", &GUID_unknowndmo, &GUID_unknowncategory, 0,
+            ARRAY_SIZE(input_types), input_types, 0, NULL);
+    if (hr != S_OK)
+        return;
+
+    hr = DMOGetTypes(&GUID_unknowndmo, 0, &input_count, types, 0, &output_count, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!input_count, "Got input count %u.\n", input_count);
+    ok(!output_count, "Got output count %u.\n", output_count);
+
+    memset(types, 0, sizeof(types));
+    hr = DMOGetTypes(&GUID_unknowndmo, 1, &input_count, types, 0, &output_count, NULL);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(input_count == 1, "Got input count %u.\n", input_count);
+    ok(!output_count, "Got output count %u.\n", output_count);
+    todo_wine ok(!memcmp(types, input_types, sizeof(DMO_PARTIAL_MEDIATYPE)), "Types didn't match.\n");
+
+    memset(types, 0, sizeof(types));
+    hr = DMOGetTypes(&GUID_unknowndmo, 2, &input_count, types, 0, &output_count, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(input_count == 2, "Got input count %u.\n", input_count);
+    ok(!output_count, "Got output count %u.\n", output_count);
+    ok(!memcmp(types, input_types, 2 * sizeof(DMO_PARTIAL_MEDIATYPE)), "Types didn't match.\n");
+
+    memset(types, 0, sizeof(types));
+    hr = DMOGetTypes(&GUID_unknowndmo, 2, &input_count, types, 0, &output_count, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(input_count == 2, "Got input count %u.\n", input_count);
+    ok(!output_count, "Got output count %u.\n", output_count);
+    ok(!memcmp(types, input_types, 2 * sizeof(DMO_PARTIAL_MEDIATYPE)), "Types didn't match.\n");
+
+    hr = DMOUnregister(&GUID_unknowndmo, &GUID_unknowncategory);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+}
+
 START_TEST(msdmo)
 {
     test_DMOUnregister();
     test_DMOGetName();
     test_DMOEnum();
+    test_DMOGetTypes();
 }
