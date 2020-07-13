@@ -282,6 +282,14 @@ typedef struct WS(in_pktinfo) {
 
 #define SS_PORT(ssp) (((PSOCKADDR_IN)(ssp))->sin_port)
 
+#ifndef USE_WS_PREFIX
+#define SIO_IDEAL_SEND_BACKLOG_CHANGE _IO ('t', 122)
+#define SIO_IDEAL_SEND_BACKLOG_QUERY  _IOR('t', 123, ULONG)
+#else
+#define WS_SIO_IDEAL_SEND_BACKLOG_CHANGE WS__IO ('t', 122)
+#define WS_SIO_IDEAL_SEND_BACKLOG_QUERY  WS__IOR('t', 123, ULONG)
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
