@@ -822,7 +822,7 @@ static void testScreenBuffer(HANDLE hConOut)
     ret = WriteConsoleA(hFileOutWT, test_str1, lstrlenA(test_str1), &len, NULL);
     error = GetLastError();
     ok(!ret, "Shouldn't succeed\n");
-    todo_wine ok(error == ERROR_INVALID_HANDLE || error == ERROR_INVALID_FUNCTION,
+    ok(error == ERROR_INVALID_HANDLE || error == ERROR_INVALID_FUNCTION,
        "GetLastError: got %u\n", error);
 
     CloseHandle(hFileOutRW);

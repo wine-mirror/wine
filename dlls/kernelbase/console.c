@@ -610,18 +610,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetConsoleInputExeNameW( DWORD len, LPWSTR buffer 
  */
 BOOL WINAPI DECLSPEC_HOTPATCH GetConsoleMode( HANDLE handle, DWORD *mode )
 {
-    BOOL ret;
-
-    SERVER_START_REQ( get_console_mode )
-    {
-        req->handle = console_handle_unmap( handle );
-        if ((ret = !wine_server_call_err( req )))
-        {
-            if (mode) *mode = reply->mode;
-        }
-    }
-    SERVER_END_REQ;
-    return ret;
+    return console_ioctl( handle, IOCTL_CONDRV_GET_MODE, NULL, 0, mode, sizeof(*mode), NULL );
 }
 
 
