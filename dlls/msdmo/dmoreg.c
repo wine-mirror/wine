@@ -706,62 +706,46 @@ static const IEnumDMOVtbl edmovt =
 	IEnumDMO_fnClone,
 };
 
-
-HRESULT read_types(HKEY root, LPCWSTR key, ULONG *supplied, ULONG requested, DMO_PARTIAL_MEDIATYPE* types )
-{
-    DWORD len = requested * sizeof(DMO_PARTIAL_MEDIATYPE);
-    LONG ret = RegQueryValueExW(root, key, NULL, NULL, (BYTE *)types, &len);
-
-    *supplied = len / sizeof(DMO_PARTIAL_MEDIATYPE);
-    return HRESULT_FROM_WIN32(ret);
-}
-
 /***************************************************************
  * DMOGetTypes (MSDMO.@)
  */
-HRESULT WINAPI DMOGetTypes(REFCLSID clsidDMO,
-               ULONG ulInputTypesRequested,
-               ULONG* pulInputTypesSupplied,
-               DMO_PARTIAL_MEDIATYPE* pInputTypes,
-               ULONG ulOutputTypesRequested,
-               ULONG* pulOutputTypesSupplied,
-               DMO_PARTIAL_MEDIATYPE* pOutputTypes)
+HRESULT WINAPI DMOGetTypes(REFCLSID clsid, ULONG input_count, ULONG *ret_input_count, DMO_PARTIAL_MEDIATYPE *input,
+        ULONG output_count, ULONG *ret_output_count, DMO_PARTIAL_MEDIATYPE *output)
 {
-  HKEY root,hkey;
-  HRESULT ret = S_OK;
-  WCHAR szguid[64];
+    WCHAR guidstr[64];
+    HKEY root, key;
+    LSTATUS ret;
+    DWORD size;
 
-  TRACE ("(%s,%u,%p,%p,%u,%p,%p)\n", debugstr_guid(clsidDMO), ulInputTypesRequested,
-        pulInputTypesSupplied, pInputTypes, ulOutputTypesRequested, pulOutputTypesSupplied,
-        pOutputTypes);
+    TRACE("clsid %s, input_count %u, ret_input_count %p, input %p, output_count %u, ret_output_count %p, output %p.\n",
+            debugstr_guid(clsid), input_count, ret_input_count, input, output_count, ret_output_count, output);
 
-  if (RegOpenKeyExW(HKEY_CLASSES_ROOT, L"DirectShow\\MediaObjects", 0, KEY_READ, &root))
-    return E_FAIL;
+    if (RegOpenKeyExW(HKEY_CLASSES_ROOT, L"DirectShow\\MediaObjects", 0, KEY_READ, &root))
+        return E_FAIL;
 
-  if (ERROR_SUCCESS != RegOpenKeyExW(root,GUIDToString(szguid,clsidDMO) , 0,
-                                     KEY_READ, &hkey))
-  {
-    RegCloseKey(root);
-    return E_FAIL;
-  }
+    if (RegOpenKeyExW(root, GUIDToString(guidstr, clsid), 0, KEY_READ, &key))
+    {
+        RegCloseKey(root);
+        return E_FAIL;
+    }
 
-  if (ulInputTypesRequested > 0)
-  {
-    ret = read_types(hkey, L"InputTypes", pulInputTypesSupplied, ulInputTypesRequested, pInputTypes );
-  }
-  else
-    *pulInputTypesSupplied = 0;
+    *ret_input_count = 0;
+    if (input_count > 0)
+    {
+        size = input_count * sizeof(DMO_PARTIAL_MEDIATYPE);
+        ret = RegQueryValueExW(key, L"InputTypes", NULL, NULL, (BYTE *)input, &size);
+        if (!ret || ret == ERROR_MORE_DATA)
+            *ret_input_count = size / sizeof(DMO_PARTIAL_MEDIATYPE);
+    }
 
-  if (ulOutputTypesRequested > 0)
-  {
-    HRESULT ret2;
-    ret2 = read_types(hkey, L"OutputTypes", pulOutputTypesSupplied, ulOutputTypesRequested, pOutputTypes );
+    *ret_output_count = 0;
+    if (output_count > 0)
+    {
+        size = output_count * sizeof(DMO_PARTIAL_MEDIATYPE);
+        ret = RegQueryValueExW(key, L"OutputTypes", NULL, NULL, (BYTE *)output, &size);
+        if (!ret || ret == ERROR_MORE_DATA)
+            *ret_output_count = size / sizeof(DMO_PARTIAL_MEDIATYPE);
+    }
 
-    if (ret == S_OK)
-        ret = ret2;
-  }
-  else
-    *pulOutputTypesSupplied = 0;
-
-  return ret;
+    return S_OK;
 }
