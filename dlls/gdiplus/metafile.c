@@ -548,6 +548,20 @@ typedef struct EmfPlusFont
     WCHAR FamilyName[1];
 } EmfPlusFont;
 
+typedef struct EmfPlusDrawDriverString
+{
+    EmfPlusRecordHeader Header;
+    union
+    {
+        DWORD BrushId;
+        ARGB Color;
+    } brush;
+    DWORD DriverStringOptionsFlags;
+    DWORD MatrixPresent;
+    DWORD GlyphCount;
+    BYTE VariableData[1];
+} EmfPlusDrawDriverString;
+
 static void metafile_free_object_table_entry(GpMetafile *metafile, BYTE id)
 {
     struct emfplus_object *object = &metafile->objtable[id];
@@ -3331,6 +3345,91 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
             stat = GdipDrawRectangles(real_metafile->playback_graphics, real_metafile->objtable[pen].u.pen,
                     rects ? rects : (GpRectF *)draw->RectData.rectF, draw->Count);
             GdipFree(rects);
+            return stat;
+        }
+        case EmfPlusRecordTypeDrawDriverString:
+        {
+            GpBrush *brush;
+            DWORD expected_size;
+            UINT16 *text;
+            PointF *positions;
+            GpSolidFill *solidfill = NULL;
+            void* alignedmem = NULL;
+            GpMatrix *matrix = NULL;
+            BYTE font = flags & 0xff;
+            EmfPlusDrawDriverString *draw = (EmfPlusDrawDriverString*)header;
+
+            if (font >= EmfPlusObjectTableSize ||
+                    real_metafile->objtable[font].type != ObjectTypeFont)
+                return InvalidParameter;
+
+            expected_size = FIELD_OFFSET(EmfPlusDrawDriverString, VariableData) -
+                sizeof(EmfPlusRecordHeader);
+            if (dataSize < expected_size || draw->GlyphCount <= 0)
+                return InvalidParameter;
+
+            expected_size += draw->GlyphCount * (sizeof(*text) + sizeof(*positions));
+            if (draw->MatrixPresent)
+                expected_size += sizeof(*matrix);
+
+            /* Pad expected size to DWORD alignment. */
+            expected_size = (expected_size + 3) & ~3;
+
+            if (dataSize != expected_size)
+                return InvalidParameter;
+
+            if (flags & 0x8000)
+            {
+                stat = GdipCreateSolidFill(draw->brush.Color, (GpSolidFill**)&solidfill);
+
+                if (stat != Ok)
+                    return InvalidParameter;
+
+                brush = (GpBrush*)solidfill;
+            }
+            else
+            {
+                if (draw->brush.BrushId >= EmfPlusObjectTableSize ||
+                        real_metafile->objtable[draw->brush.BrushId].type != ObjectTypeBrush)
+                    return InvalidParameter;
+
+                brush = real_metafile->objtable[draw->brush.BrushId].u.brush;
+            }
+
+            text = (UINT16*)&draw->VariableData[0];
+
+            /* If GlyphCount is odd, all subsequent fields will be 2-byte
+               aligned rather than 4-byte aligned, which may lead to access
+               issues. Handle this case by making our own copy of positions. */
+            if (draw->GlyphCount % 2)
+            {
+                SIZE_T alloc_size = draw->GlyphCount * sizeof(*positions);
+
+                if (draw->MatrixPresent)
+                    alloc_size += sizeof(*matrix);
+
+                positions = alignedmem = heap_alloc(alloc_size);
+                if (!positions)
+                {
+                    GdipDeleteBrush((GpBrush*)solidfill);
+                    return OutOfMemory;
+                }
+
+                memcpy(positions, &text[draw->GlyphCount], alloc_size);
+            }
+            else
+                positions = (PointF*)&text[draw->GlyphCount];
+
+            if (draw->MatrixPresent)
+                matrix = (GpMatrix*)&positions[draw->GlyphCount];
+
+            stat = GdipDrawDriverString(real_metafile->playback_graphics, text, draw->GlyphCount,
+                    real_metafile->objtable[font].u.font, brush, positions,
+                    draw->DriverStringOptionsFlags, matrix);
+
+            GdipDeleteBrush((GpBrush*)solidfill);
+            heap_free(alignedmem);
+
             return stat;
         }
         default:
