@@ -593,11 +593,11 @@ static HRESULT WINAPI audio_IAMMediaStream_JoinFilter(IAMMediaStream *iface, IMe
 
 static HRESULT WINAPI audio_IAMMediaStream_JoinFilterGraph(IAMMediaStream *iface, IFilterGraph *filtergraph)
 {
-    struct audio_stream *This = impl_from_IAMMediaStream(iface);
+    struct audio_stream *stream = impl_from_IAMMediaStream(iface);
 
-    FIXME("(%p/%p)->(%p) stub!\n", This, iface, filtergraph);
+    TRACE("stream %p, filtergraph %p.\n", stream, filtergraph);
 
-    return S_FALSE;
+    return S_OK;
 }
 
 static const struct IAMMediaStreamVtbl audio_IAMMediaStream_vtbl =

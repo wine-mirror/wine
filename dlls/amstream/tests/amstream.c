@@ -4371,7 +4371,7 @@ static void check_ammediastream_join_filter_graph(const MSPID *id)
     }
 
     hr = IAMMediaStream_JoinFilterGraph(stream, graph);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     EXPECT_REF(builder, 4);
     EXPECT_REF(graph, 1);
 

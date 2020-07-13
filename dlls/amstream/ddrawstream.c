@@ -261,11 +261,11 @@ static HRESULT WINAPI ddraw_IAMMediaStream_JoinFilter(IAMMediaStream *iface, IMe
 
 static HRESULT WINAPI ddraw_IAMMediaStream_JoinFilterGraph(IAMMediaStream *iface, IFilterGraph *filtergraph)
 {
-    struct ddraw_stream *This = impl_from_IAMMediaStream(iface);
+    struct ddraw_stream *stream = impl_from_IAMMediaStream(iface);
 
-    FIXME("(%p/%p)->(%p) stub!\n", This, iface, filtergraph);
+    TRACE("stream %p, filtergraph %p.\n", stream, filtergraph);
 
-    return S_FALSE;
+    return S_OK;
 }
 
 static const struct IAMMediaStreamVtbl ddraw_IAMMediaStream_vtbl =
