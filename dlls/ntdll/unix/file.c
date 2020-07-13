@@ -1871,13 +1871,14 @@ static NTSTATUS server_get_file_info( HANDLE handle, IO_STATUS_BLOCK *io, void *
 /* retrieve device/inode number for all the drives */
 static unsigned int get_drives_info( struct file_identity info[MAX_DOS_DRIVES] )
 {
+    static pthread_mutex_t cache_mutex = PTHREAD_MUTEX_INITIALIZER;
     static struct file_identity cache[MAX_DOS_DRIVES];
     static time_t last_update;
     static unsigned int nb_drives;
     unsigned int ret;
     time_t now = time(NULL);
 
-    RtlEnterCriticalSection( &dir_section );
+    pthread_mutex_lock( &cache_mutex );
     if (now != last_update)
     {
         char *buffer, *p;
@@ -1912,7 +1913,7 @@ static unsigned int get_drives_info( struct file_identity info[MAX_DOS_DRIVES] )
     }
     memcpy( info, cache, sizeof(cache) );
     ret = nb_drives;
-    RtlLeaveCriticalSection( &dir_section );
+    pthread_mutex_unlock( &cache_mutex );
     return ret;
 }
 
