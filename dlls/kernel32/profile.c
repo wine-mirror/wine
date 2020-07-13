@@ -1473,6 +1473,9 @@ BOOL WINAPI WritePrivateProfileStringW( LPCWSTR section, LPCWSTR entry,
 					LPCWSTR string, LPCWSTR filename )
 {
     BOOL ret = FALSE;
+    HKEY key;
+
+    TRACE("(%s, %s, %s, %s)\n", debugstr_w(section), debugstr_w(entry), debugstr_w(string), debugstr_w(filename));
 
     if (!section && !entry && !string) /* documented "file flush" case */
     {
@@ -1485,6 +1488,20 @@ BOOL WINAPI WritePrivateProfileStringW( LPCWSTR section, LPCWSTR entry,
         return FALSE;
     }
     if (!entry) return PROFILE_DeleteSection( filename, section );
+
+    if (get_mapped_section_key( filename, section, entry, TRUE, &key ))
+    {
+        LSTATUS res;
+
+        if (string)
+            res = RegSetValueExW( key, entry, 0, REG_SZ, (const BYTE *)string,
+                                  (strlenW( string ) + 1) * sizeof(WCHAR) );
+        else
+            res = RegDeleteValueW( key, entry );
+        RegCloseKey( key );
+        if (res) SetLastError( res );
+        return !res;
+    }
 
     EnterCriticalSection( &PROFILE_CritSect );
 
