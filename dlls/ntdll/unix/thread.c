@@ -123,7 +123,7 @@ static void start_thread( TEB *teb )
  *
  * Update the output attributes.
  */
-static void update_attr_list( PS_ATTRIBUTE_LIST *attr, const CLIENT_ID *id )
+static void update_attr_list( PS_ATTRIBUTE_LIST *attr, const CLIENT_ID *id, TEB *teb )
 {
     SIZE_T i, count = (attr->TotalLength - sizeof(attr->TotalLength)) / sizeof(PS_ATTRIBUTE);
 
@@ -133,6 +133,12 @@ static void update_attr_list( PS_ATTRIBUTE_LIST *attr, const CLIENT_ID *id )
         {
             SIZE_T size = min( attr->Attributes[i].Size, sizeof(*id) );
             memcpy( attr->Attributes[i].ValuePtr, id, size );
+            if (attr->Attributes[i].ReturnLength) *attr->Attributes[i].ReturnLength = size;
+        }
+        else if (attr->Attributes[i].Attribute == PS_ATTRIBUTE_TEB_ADDRESS)
+        {
+            SIZE_T size = min( attr->Attributes[i].Size, sizeof(teb) );
+            memcpy( attr->Attributes[i].ValuePtr, &teb, size );
             if (attr->Attributes[i].ReturnLength) *attr->Attributes[i].ReturnLength = size;
         }
     }
@@ -181,10 +187,11 @@ NTSTATUS WINAPI NtCreateThreadEx( HANDLE *handle, ACCESS_MASK access, OBJECT_ATT
 
         if (result.create_thread.status == STATUS_SUCCESS)
         {
+            TEB *teb = wine_server_get_ptr( result.create_thread.teb );
             *handle = wine_server_ptr_handle( result.create_thread.handle );
             client_id.UniqueProcess = ULongToHandle( result.create_thread.pid );
             client_id.UniqueThread  = ULongToHandle( result.create_thread.tid );
-            if (attr_list) update_attr_list( attr_list, &client_id );
+            if (attr_list) update_attr_list( attr_list, &client_id, teb );
         }
         return result.create_thread.status;
     }
@@ -275,7 +282,7 @@ done:
         close( request_pipe[1] );
         return status;
     }
-    if (attr_list) update_attr_list( attr_list, &client_id );
+    if (attr_list) update_attr_list( attr_list, &client_id, teb );
     return STATUS_SUCCESS;
 }
 

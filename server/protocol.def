@@ -663,6 +663,7 @@ typedef union
         unsigned int     status;    /* status returned by call */
         process_id_t     pid;       /* process id */
         thread_id_t      tid;       /* thread id */
+        client_ptr_t     teb;       /* thread teb (in process address space) */
         obj_handle_t     handle;    /* handle to new thread */
     } create_thread;
     struct

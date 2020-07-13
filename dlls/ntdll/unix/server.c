@@ -533,9 +533,11 @@ static void invoke_system_apc( const apc_call_t *call, apc_result_t *result )
         break;
     case APC_CREATE_THREAD:
     {
-        PS_ATTRIBUTE_LIST attr = { sizeof(attr) };
+        ULONG_PTR buffer[offsetof( PS_ATTRIBUTE_LIST, Attributes[2] ) / sizeof(ULONG_PTR)];
+        PS_ATTRIBUTE_LIST *attr = (PS_ATTRIBUTE_LIST *)buffer;
         CLIENT_ID id;
         HANDLE handle;
+        TEB *teb;
         SIZE_T reserve = call->create_thread.reserve;
         SIZE_T commit = call->create_thread.commit;
         void *func = wine_server_get_ptr( call->create_thread.func );
@@ -545,16 +547,23 @@ static void invoke_system_apc( const apc_call_t *call, apc_result_t *result )
         if (reserve == call->create_thread.reserve && commit == call->create_thread.commit &&
             (ULONG_PTR)func == call->create_thread.func && (ULONG_PTR)arg == call->create_thread.arg)
         {
-            attr.Attributes[0].Attribute = PS_ATTRIBUTE_CLIENT_ID;
-            attr.Attributes[0].Size      = sizeof(id);
-            attr.Attributes[0].ValuePtr  = &id;
+            attr->TotalLength = sizeof(buffer);
+            attr->Attributes[0].Attribute    = PS_ATTRIBUTE_CLIENT_ID;
+            attr->Attributes[0].Size         = sizeof(id);
+            attr->Attributes[0].ValuePtr     = &id;
+            attr->Attributes[0].ReturnLength = NULL;
+            attr->Attributes[1].Attribute    = PS_ATTRIBUTE_TEB_ADDRESS;
+            attr->Attributes[1].Size         = sizeof(teb);
+            attr->Attributes[1].ValuePtr     = &teb;
+            attr->Attributes[1].ReturnLength = NULL;
             result->create_thread.status = NtCreateThreadEx( &handle, THREAD_ALL_ACCESS, NULL,
                                                              NtCurrentProcess(), func, arg,
                                                              call->create_thread.flags, 0,
-                                                             commit, reserve, &attr );
+                                                             commit, reserve, attr );
             result->create_thread.handle = wine_server_obj_handle( handle );
             result->create_thread.pid = HandleToULong(id.UniqueProcess);
             result->create_thread.tid = HandleToULong(id.UniqueThread);
+            result->create_thread.teb = wine_server_client_ptr( teb );
         }
         else result->create_thread.status = STATUS_INVALID_PARAMETER;
         break;
