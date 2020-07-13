@@ -1263,6 +1263,68 @@ static DWORD get_section( const WCHAR *filename, const WCHAR *section,
     return ret;
 }
 
+static void delete_key_values( HKEY key )
+{
+    WCHAR *entry;
+
+    while ((entry = enum_key( key, 0 )))
+    {
+        RegDeleteValueW( key, entry );
+        HeapFree( GetProcessHeap(), 0, entry );
+    }
+}
+
+static BOOL delete_section( const WCHAR *filename, const WCHAR *section )
+{
+    HKEY key, subkey, section_key;
+
+    if ((key = open_file_mapping_key( filename )))
+    {
+        if (!RegOpenKeyExW( key, section, 0, KEY_READ, &subkey ))
+        {
+            WCHAR *entry, *path;
+            HKEY entry_key;
+            DWORD i;
+
+            for (i = 0; (entry = enum_key( subkey, i )); ++i)
+            {
+                if (!(path = get_key_value( subkey, entry )))
+                {
+                    HeapFree( GetProcessHeap(), 0, path );
+                    continue;
+                }
+
+                entry_key = open_mapped_key( path, TRUE );
+                HeapFree( GetProcessHeap(), 0, path );
+                if (!entry_key)
+                {
+                    HeapFree( GetProcessHeap(), 0, entry );
+                    continue;
+                }
+
+                if (entry[0])
+                    RegDeleteValueW( entry_key, entry );
+                else
+                    delete_key_values( entry_key );
+
+                HeapFree( GetProcessHeap(), 0, entry );
+                RegCloseKey( entry_key );
+            }
+
+            RegCloseKey( subkey );
+        }
+        else if (get_mapped_section_key( filename, section, NULL, TRUE, &section_key ))
+        {
+            delete_key_values( section_key );
+            RegCloseKey( section_key );
+        }
+
+        RegCloseKey( key );
+    }
+
+    return PROFILE_DeleteSection( filename, section );
+}
+
 /********************* API functions **********************************/
 
 
@@ -1608,7 +1670,7 @@ BOOL WINAPI WritePrivateProfileStringW( LPCWSTR section, LPCWSTR entry,
         LeaveCriticalSection( &PROFILE_CritSect );
         return FALSE;
     }
-    if (!entry) return PROFILE_DeleteSection( filename, section );
+    if (!entry) return delete_section( filename, section );
 
     if (get_mapped_section_key( filename, section, entry, TRUE, &key ))
     {
@@ -1686,7 +1748,7 @@ BOOL WINAPI WritePrivateProfileSectionW( LPCWSTR section,
         LeaveCriticalSection( &PROFILE_CritSect );
         return FALSE;
     }
-    if (!string) return PROFILE_DeleteSection( filename, section );
+    if (!string) return delete_section( filename, section );
 
     if ((key = open_file_mapping_key( filename )))
     {
