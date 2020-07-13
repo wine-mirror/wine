@@ -179,7 +179,9 @@
 @ stdcall vkGetPhysicalDeviceQueueFamilyProperties2(ptr ptr ptr) winevulkan.wine_vkGetPhysicalDeviceQueueFamilyProperties2
 @ stdcall vkGetPhysicalDeviceSparseImageFormatProperties(ptr long long long long long ptr ptr) winevulkan.wine_vkGetPhysicalDeviceSparseImageFormatProperties
 @ stdcall vkGetPhysicalDeviceSparseImageFormatProperties2(ptr ptr ptr ptr) winevulkan.wine_vkGetPhysicalDeviceSparseImageFormatProperties2
+@ stdcall vkGetPhysicalDeviceSurfaceCapabilities2KHR(ptr ptr ptr) winevulkan.wine_vkGetPhysicalDeviceSurfaceCapabilities2KHR
 @ stdcall vkGetPhysicalDeviceSurfaceCapabilitiesKHR(ptr int64 ptr) winevulkan.wine_vkGetPhysicalDeviceSurfaceCapabilitiesKHR
+@ stdcall vkGetPhysicalDeviceSurfaceFormats2KHR(ptr ptr ptr ptr) winevulkan.wine_vkGetPhysicalDeviceSurfaceFormats2KHR
 @ stdcall vkGetPhysicalDeviceSurfaceFormatsKHR(ptr int64 ptr ptr) winevulkan.wine_vkGetPhysicalDeviceSurfaceFormatsKHR
 @ stdcall vkGetPhysicalDeviceSurfacePresentModesKHR(ptr int64 ptr ptr) winevulkan.wine_vkGetPhysicalDeviceSurfacePresentModesKHR
 @ stdcall vkGetPhysicalDeviceSurfaceSupportKHR(ptr long int64 ptr) winevulkan.wine_vkGetPhysicalDeviceSurfaceSupportKHR
