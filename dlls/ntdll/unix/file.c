@@ -240,15 +240,7 @@ static const BOOL is_case_sensitive = FALSE;
 
 static struct file_identity windir;
 
-static RTL_CRITICAL_SECTION dir_section;
-static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
-{
-    0, 0, &dir_section,
-    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": dir_section") }
-};
-static RTL_CRITICAL_SECTION dir_section = { &critsect_debug, -1, 0, 0, 0, 0 };
-
+static pthread_mutex_t dir_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t mnt_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 /* check if a given Unicode char is OK in a DOS short name */
@@ -2473,7 +2465,7 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event, PIO_APC_ROUTI
 
     io->Information = 0;
 
-    RtlEnterCriticalSection( &dir_section );
+    pthread_mutex_lock( &dir_mutex );
 
     cwd = open( ".", O_RDONLY );
     if (fchdir( fd ) != -1)
@@ -2500,7 +2492,7 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event, PIO_APC_ROUTI
     }
     else status = STATUS_ACCESS_DENIED;
 
-    RtlLeaveCriticalSection( &dir_section );
+    pthread_mutex_unlock( &dir_mutex );
 
     if (needs_close) close( fd );
     if (cwd != -1) close( cwd );
@@ -3064,7 +3056,7 @@ static NTSTATUS file_id_to_unix_file_name( const OBJECT_ATTRIBUTES *attr, char *
         goto done;
     }
 
-    RtlEnterCriticalSection( &dir_section );
+    pthread_mutex_lock( &dir_mutex );
     if ((old_cwd = open( ".", O_RDONLY )) != -1 && fchdir( root_fd ) != -1)
     {
         /* shortcut for ".." */
@@ -3085,7 +3077,7 @@ static NTSTATUS file_id_to_unix_file_name( const OBJECT_ATTRIBUTES *attr, char *
         if (fchdir( old_cwd ) == -1) chdir( "/" );
     }
     else status = STATUS_ACCESS_DENIED;
-    RtlLeaveCriticalSection( &dir_section );
+    pthread_mutex_unlock( &dir_mutex );
     if (old_cwd != -1) close( old_cwd );
 
 done:
@@ -3258,7 +3250,7 @@ static NTSTATUS nt_to_unix_file_name_attr( const OBJECT_ATTRIBUTES *attr, char *
         }
         else
         {
-            RtlEnterCriticalSection( &dir_section );
+            pthread_mutex_lock( &dir_mutex );
             if ((old_cwd = open( ".", O_RDONLY )) != -1 && fchdir( root_fd ) != -1)
             {
                 status = lookup_unix_name( name, name_len, &unix_name, unix_len, 1,
@@ -3266,7 +3258,7 @@ static NTSTATUS nt_to_unix_file_name_attr( const OBJECT_ATTRIBUTES *attr, char *
                 if (fchdir( old_cwd ) == -1) chdir( "/" );
             }
             else status = STATUS_ACCESS_DENIED;
-            RtlLeaveCriticalSection( &dir_section );
+            pthread_mutex_unlock( &dir_mutex );
             if (old_cwd != -1) close( old_cwd );
             if (needs_close) close( root_fd );
         }
