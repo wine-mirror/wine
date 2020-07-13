@@ -62,10 +62,16 @@ static void smart_tee_destroy(struct strmbase_filter *iface)
     CoTaskMemFree(filter);
 }
 
+static HRESULT smart_tee_wait_state(struct strmbase_filter *iface, DWORD timeout)
+{
+    return iface->state == State_Paused ? VFW_S_CANT_CUE : S_OK;
+}
+
 static const struct strmbase_filter_ops filter_ops =
 {
     .filter_get_pin = smart_tee_get_pin,
     .filter_destroy = smart_tee_destroy,
+    .filter_wait_state = smart_tee_wait_state,
 };
 
 static HRESULT sink_query_accept(struct strmbase_pin *base, const AM_MEDIA_TYPE *pmt)
