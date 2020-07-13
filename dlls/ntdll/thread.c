@@ -190,26 +190,45 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, SECURITY_DESCRIPTOR *descr,
                                      HANDLE *handle_ptr, CLIENT_ID *id )
 {
     ULONG flags = suspended ? THREAD_CREATE_FLAGS_CREATE_SUSPENDED : 0;
-    HANDLE handle;
+    ULONG_PTR buffer[offsetof( PS_ATTRIBUTE_LIST, Attributes[2] ) / sizeof(ULONG_PTR)];
+    PS_ATTRIBUTE_LIST *attr_list = (PS_ATTRIBUTE_LIST *)buffer;
+    HANDLE handle, actctx;
+    TEB *teb;
+    ULONG ret;
     NTSTATUS status;
     CLIENT_ID client_id;
     OBJECT_ATTRIBUTES attr;
-    PS_ATTRIBUTE_LIST attr_list = { sizeof(attr_list) };
 
-    attr_list.Attributes[0].Attribute = PS_ATTRIBUTE_CLIENT_ID;
-    attr_list.Attributes[0].Size      = sizeof(client_id);
-    attr_list.Attributes[0].ValuePtr  = &client_id;
+    attr_list->TotalLength = sizeof(buffer);
+    attr_list->Attributes[0].Attribute    = PS_ATTRIBUTE_CLIENT_ID;
+    attr_list->Attributes[0].Size         = sizeof(client_id);
+    attr_list->Attributes[0].ValuePtr     = &client_id;
+    attr_list->Attributes[0].ReturnLength = NULL;
+    attr_list->Attributes[1].Attribute    = PS_ATTRIBUTE_TEB_ADDRESS;
+    attr_list->Attributes[1].Size         = sizeof(teb);
+    attr_list->Attributes[1].ValuePtr     = &teb;
+    attr_list->Attributes[1].ReturnLength = NULL;
 
     InitializeObjectAttributes( &attr, NULL, 0, NULL, descr );
 
+    RtlGetActiveActivationContext( &actctx );
+    if (actctx) flags |= THREAD_CREATE_FLAGS_CREATE_SUSPENDED;
+
     status = NtCreateThreadEx( &handle, THREAD_ALL_ACCESS, &attr, process, start, param,
-                               flags, 0, stack_commit, stack_reserve, &attr_list );
+                               flags, 0, stack_commit, stack_reserve, attr_list );
     if (!status)
     {
+        if (actctx)
+        {
+            ULONG_PTR cookie;
+            RtlActivateActivationContextEx( 0, teb, actctx, &cookie );
+            if (!suspended) NtResumeThread( handle, &ret );
+        }
         if (id) *id = client_id;
         if (handle_ptr) *handle_ptr = handle;
         else NtClose( handle );
     }
+    if (actctx) RtlReleaseActivationContext( actctx );
     return status;
 }
 

@@ -88,7 +88,6 @@ struct startup_info
 {
     PRTL_THREAD_START_ROUTINE entry;
     void                     *arg;
-    HANDLE                    actctx;
 };
 
 /***********************************************************************
@@ -102,18 +101,12 @@ static void start_thread( TEB *teb )
     struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
     struct debug_info debug_info;
     BOOL suspend;
-    ULONG_PTR cookie;
 
     debug_info.str_pos = debug_info.out_pos = 0;
     thread_data->debug_info = &debug_info;
     thread_data->pthread_id = pthread_self();
     signal_init_thread( teb );
     server_init_thread( info->entry, &suspend );
-    if (info->actctx)
-    {
-        RtlActivateActivationContext( 0, info->actctx, &cookie );
-        RtlReleaseActivationContext( info->actctx );
-    }
     signal_start_thread( info->entry, info->arg, suspend, pRtlUserThreadStart, teb );
 }
 
@@ -164,7 +157,6 @@ NTSTATUS WINAPI NtCreateThreadEx( HANDLE *handle, ACCESS_MASK access, OBJECT_ATT
     int request_pipe[2];
     SIZE_T extra_stack = PTHREAD_STACK_MIN;
     CLIENT_ID client_id;
-    HANDLE actctx;
     TEB *teb;
     INITIAL_TEB stack;
     NTSTATUS status;
@@ -230,8 +222,6 @@ NTSTATUS WINAPI NtCreateThreadEx( HANDLE *handle, ACCESS_MASK access, OBJECT_ATT
         return status;
     }
 
-    RtlGetActiveActivationContext( &actctx );
-
     pthread_sigmask( SIG_BLOCK, &server_block_set, &sigset );
 
     if ((status = virtual_alloc_teb( &teb ))) goto done;
@@ -249,7 +239,6 @@ NTSTATUS WINAPI NtCreateThreadEx( HANDLE *handle, ACCESS_MASK access, OBJECT_ATT
     info = (struct startup_info *)(teb + 1);
     info->entry  = start;
     info->arg    = param;
-    info->actctx = actctx;
 
     teb->Tib.StackBase = stack.StackBase;
     teb->Tib.StackLimit = stack.StackLimit;
@@ -278,7 +267,6 @@ done:
     if (status)
     {
         NtClose( *handle );
-        RtlReleaseActivationContext( actctx );
         close( request_pipe[1] );
         return status;
     }
