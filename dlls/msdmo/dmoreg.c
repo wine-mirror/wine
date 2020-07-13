@@ -730,22 +730,16 @@ HRESULT WINAPI DMOGetTypes(REFCLSID clsid, ULONG input_count, ULONG *ret_input_c
     }
 
     *ret_input_count = 0;
-    if (input_count > 0)
-    {
-        size = input_count * sizeof(DMO_PARTIAL_MEDIATYPE);
-        ret = RegQueryValueExW(key, L"InputTypes", NULL, NULL, (BYTE *)input, &size);
-        if (!ret || ret == ERROR_MORE_DATA)
-            *ret_input_count = size / sizeof(DMO_PARTIAL_MEDIATYPE);
-    }
+    size = input_count * sizeof(DMO_PARTIAL_MEDIATYPE);
+    ret = RegQueryValueExW(key, L"InputTypes", NULL, NULL, (BYTE *)input, &size);
+    if (!ret || ret == ERROR_MORE_DATA)
+        *ret_input_count = min(input_count, size / sizeof(DMO_PARTIAL_MEDIATYPE));
 
     *ret_output_count = 0;
-    if (output_count > 0)
-    {
-        size = output_count * sizeof(DMO_PARTIAL_MEDIATYPE);
-        ret = RegQueryValueExW(key, L"OutputTypes", NULL, NULL, (BYTE *)output, &size);
-        if (!ret || ret == ERROR_MORE_DATA)
-            *ret_output_count = size / sizeof(DMO_PARTIAL_MEDIATYPE);
-    }
+    size = output_count * sizeof(DMO_PARTIAL_MEDIATYPE);
+    ret = RegQueryValueExW(key, L"OutputTypes", NULL, NULL, (BYTE *)output, &size);
+    if (!ret || ret == ERROR_MORE_DATA)
+        *ret_output_count = min(output_count, size / sizeof(DMO_PARTIAL_MEDIATYPE));
 
     return S_OK;
 }

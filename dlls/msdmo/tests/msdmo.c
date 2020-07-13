@@ -144,7 +144,7 @@ static void test_DMOGetTypes(void)
     memset(types, 0, sizeof(types));
     hr = DMOGetTypes(&GUID_unknowndmo, 1, &input_count, types, 0, &output_count, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(input_count == 1, "Got input count %u.\n", input_count);
+    ok(input_count == 1, "Got input count %u.\n", input_count);
     ok(!output_count, "Got output count %u.\n", output_count);
     todo_wine ok(!memcmp(types, input_types, sizeof(DMO_PARTIAL_MEDIATYPE)), "Types didn't match.\n");
 
