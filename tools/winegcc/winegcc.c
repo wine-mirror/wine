@@ -521,6 +521,9 @@ static strarray *get_link_args( struct options *opts, const char *output_name )
         if (opts->debug_file && strendswith(opts->debug_file, ".pdb"))
             strarray_add(link_args, strmake("-Wl,-pdb,%s", opts->debug_file));
 
+        if (!try_link( opts->prefix, link_args, "-Wl,--file-alignment,0x1000" ))
+            strarray_add( link_args, "-Wl,--file-alignment,0x1000" );
+
         strarray_addall( link_args, flags );
         return link_args;
 
