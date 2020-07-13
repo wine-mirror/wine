@@ -249,16 +249,10 @@ HANDLE WINAPI OpenConsoleW(LPCWSTR name, DWORD access, BOOL inherit, DWORD creat
  */
 BOOL WINAPI VerifyConsoleIoHandle(HANDLE handle)
 {
-    BOOL ret;
-
-    if (!is_console_handle(handle)) return FALSE;
-    SERVER_START_REQ(get_console_mode)
-    {
-	req->handle = console_handle_unmap(handle);
-	ret = !wine_server_call( req );
-    }
-    SERVER_END_REQ;
-    return ret;
+    IO_STATUS_BLOCK io;
+    DWORD mode;
+    return !NtDeviceIoControlFile( handle, NULL, NULL, NULL, &io, IOCTL_CONDRV_GET_MODE,
+                                   NULL, 0, &mode, sizeof(mode) );
 }
 
 /******************************************************************
@@ -1181,7 +1175,7 @@ BOOL CONSOLE_Init(RTL_USER_PROCESS_PARAMETERS *params)
      */
     if (!params->hStdInput || params->hStdInput == INVALID_HANDLE_VALUE)
         params->hStdInput = 0;
-    else if (VerifyConsoleIoHandle(console_handle_map(params->hStdInput)))
+    else if (VerifyConsoleIoHandle(params->hStdInput))
     {
         params->hStdInput = console_handle_map(params->hStdInput);
         save_console_mode(params->hStdInput);
@@ -1189,12 +1183,12 @@ BOOL CONSOLE_Init(RTL_USER_PROCESS_PARAMETERS *params)
 
     if (!params->hStdOutput || params->hStdOutput == INVALID_HANDLE_VALUE)
         params->hStdOutput = 0;
-    else if (VerifyConsoleIoHandle(console_handle_map(params->hStdOutput)))
+    else if (VerifyConsoleIoHandle(params->hStdOutput))
         params->hStdOutput = console_handle_map(params->hStdOutput);
 
     if (!params->hStdError || params->hStdError == INVALID_HANDLE_VALUE)
         params->hStdError = 0;
-    else if (VerifyConsoleIoHandle(console_handle_map(params->hStdError)))
+    else if (VerifyConsoleIoHandle(params->hStdError))
         params->hStdError = console_handle_map(params->hStdError);
 
     return TRUE;
