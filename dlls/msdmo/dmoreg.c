@@ -741,5 +741,7 @@ HRESULT WINAPI DMOGetTypes(REFCLSID clsid, ULONG input_count, ULONG *ret_input_c
     if (!ret || ret == ERROR_MORE_DATA)
         *ret_output_count = min(output_count, size / sizeof(DMO_PARTIAL_MEDIATYPE));
 
+    RegCloseKey(key);
+    RegCloseKey(root);
     return S_OK;
 }
