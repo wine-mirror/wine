@@ -4328,6 +4328,89 @@ static void test_ammediastream_join_filter(void)
     check_ammediastream_join_filter(&CLSID_AMDirectDrawStream);
 }
 
+static void check_ammediastream_join_filter_graph(const MSPID *id)
+{
+    IAMMultiMediaStream *mmstream = create_ammultimediastream();
+    IGraphBuilder *builder, *builder2;
+    IMediaStreamFilter *filter;
+    IAMMediaStream *stream;
+    IFilterGraph *graph;
+    FILTER_INFO info;
+    HRESULT hr;
+    ULONG ref;
+
+    hr = IAMMultiMediaStream_GetFilter(mmstream, &filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!!filter, "Expected non-null filter.\n");
+
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, id, 0, (IMediaStream **)&stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAMMultiMediaStream_GetFilterGraph(mmstream, &builder);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!!builder, "Expected non-null graph.\n");
+    EXPECT_REF(builder, 4);
+
+    hr = IMediaStreamFilter_QueryFilterInfo(filter, &info);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(info.pGraph == (IFilterGraph *)builder, "Expected graph %p, got %p.\n", (IFilterGraph *)builder, info.pGraph);
+    EXPECT_REF(builder, 5);
+    IFilterGraph_Release(info.pGraph);
+    EXPECT_REF(builder, 4);
+
+    hr = CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, &IID_IFilterGraph, (void **)&graph);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    EXPECT_REF(builder, 4);
+    EXPECT_REF(graph, 1);
+
+    /* Crashes on native. */
+    if (0)
+    {
+        hr = IAMMediaStream_JoinFilterGraph(stream, NULL);
+        ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    }
+
+    hr = IAMMediaStream_JoinFilterGraph(stream, graph);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    EXPECT_REF(builder, 4);
+    EXPECT_REF(graph, 1);
+
+    hr = IAMMultiMediaStream_GetFilterGraph(mmstream, &builder2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(builder2 == builder, "Expected graph %p, got %p.\n", builder, builder2);
+    EXPECT_REF(builder, 5);
+    EXPECT_REF(graph, 1);
+    IGraphBuilder_Release(builder2);
+    EXPECT_REF(builder, 4);
+    EXPECT_REF(graph, 1);
+
+    hr = IMediaStreamFilter_QueryFilterInfo(filter, &info);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(info.pGraph == (IFilterGraph *)builder, "Expected graph %p, got %p.\n", (IFilterGraph *)builder, info.pGraph);
+    EXPECT_REF(builder, 5);
+    EXPECT_REF(graph, 1);
+    IFilterGraph_Release(info.pGraph);
+    EXPECT_REF(builder, 4);
+    EXPECT_REF(graph, 1);
+
+    ref = IFilterGraph_Release(graph);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IAMMultiMediaStream_Release(mmstream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IGraphBuilder_Release(builder);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IMediaStreamFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IAMMediaStream_Release(stream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
+static void test_ammediastream_join_filter_graph(void)
+{
+    check_ammediastream_join_filter_graph(&MSPID_PrimaryAudio);
+    check_ammediastream_join_filter_graph(&MSPID_PrimaryVideo);
+}
+
 void test_mediastreamfilter_get_state(void)
 {
     IAMMultiMediaStream *mmstream = create_ammultimediastream();
@@ -5023,6 +5106,7 @@ START_TEST(amstream)
 
     test_ammediastream_join_am_multi_media_stream();
     test_ammediastream_join_filter();
+    test_ammediastream_join_filter_graph();
 
     test_mediastreamfilter_get_state();
     test_mediastreamfilter_stop_pause_run();
