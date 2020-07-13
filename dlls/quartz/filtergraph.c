@@ -158,7 +158,8 @@ struct filter
     BOOL sorting;
 };
 
-typedef struct _IFilterGraphImpl {
+struct filter_graph
+{
     IUnknown IUnknown_inner;
     IFilterGraph2 IFilterGraph2_iface;
     IMediaControl IMediaControl_iface;
@@ -218,18 +219,18 @@ typedef struct _IFilterGraphImpl {
     REFERENCE_TIME stream_start, stream_elapsed;
 
     LONGLONG current_pos;
-} IFilterGraphImpl;
+};
 
 struct enum_filters
 {
     IEnumFilters IEnumFilters_iface;
     LONG ref;
-    IFilterGraphImpl *graph;
+    struct filter_graph *graph;
     LONG version;
     struct list *cursor;
 };
 
-static HRESULT create_enum_filters(IFilterGraphImpl *graph, struct list *cursor, IEnumFilters **out);
+static HRESULT create_enum_filters(struct filter_graph *graph, struct list *cursor, IEnumFilters **out);
 
 static inline struct enum_filters *impl_from_IEnumFilters(IEnumFilters *iface)
 {
@@ -359,7 +360,7 @@ static const IEnumFiltersVtbl EnumFilters_vtbl =
     EnumFilters_Clone,
 };
 
-static HRESULT create_enum_filters(IFilterGraphImpl *graph, struct list *cursor, IEnumFilters **out)
+static HRESULT create_enum_filters(struct filter_graph *graph, struct list *cursor, IEnumFilters **out)
 {
     struct enum_filters *enum_filters;
 
@@ -377,14 +378,14 @@ static HRESULT create_enum_filters(IFilterGraphImpl *graph, struct list *cursor,
     return S_OK;
 }
 
-static inline IFilterGraphImpl *impl_from_IUnknown(IUnknown *iface)
+static struct filter_graph *impl_from_IUnknown(IUnknown *iface)
 {
-    return CONTAINING_RECORD(iface, IFilterGraphImpl, IUnknown_inner);
+    return CONTAINING_RECORD(iface, struct filter_graph, IUnknown_inner);
 }
 
 static HRESULT WINAPI FilterGraphInner_QueryInterface(IUnknown *iface, REFIID riid, void **ppvObj)
 {
-    IFilterGraphImpl *This = impl_from_IUnknown(iface);
+    struct filter_graph *This = impl_from_IUnknown(iface);
     TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), ppvObj);
 
     if (IsEqualGUID(&IID_IUnknown, riid)) {
@@ -458,7 +459,7 @@ static HRESULT WINAPI FilterGraphInner_QueryInterface(IUnknown *iface, REFIID ri
 
 static ULONG WINAPI FilterGraphInner_AddRef(IUnknown *iface)
 {
-    IFilterGraphImpl *This = impl_from_IUnknown(iface);
+    struct filter_graph *This = impl_from_IUnknown(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p)->(): new ref = %d\n", This, ref);
@@ -468,7 +469,7 @@ static ULONG WINAPI FilterGraphInner_AddRef(IUnknown *iface)
 
 static ULONG WINAPI FilterGraphInner_Release(IUnknown *iface)
 {
-    IFilterGraphImpl *This = impl_from_IUnknown(iface);
+    struct filter_graph *This = impl_from_IUnknown(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
     struct filter *filter, *next;
 
@@ -517,30 +518,30 @@ static ULONG WINAPI FilterGraphInner_Release(IUnknown *iface)
     return ref;
 }
 
-static inline IFilterGraphImpl *impl_from_IFilterGraph2(IFilterGraph2 *iface)
+static struct filter_graph *impl_from_IFilterGraph2(IFilterGraph2 *iface)
 {
-    return CONTAINING_RECORD(iface, IFilterGraphImpl, IFilterGraph2_iface);
+    return CONTAINING_RECORD(iface, struct filter_graph, IFilterGraph2_iface);
 }
 
 static HRESULT WINAPI FilterGraph2_QueryInterface(IFilterGraph2 *iface, REFIID iid, void **out)
 {
-    IFilterGraphImpl *graph = impl_from_IFilterGraph2(iface);
+    struct filter_graph *graph = impl_from_IFilterGraph2(iface);
     return IUnknown_QueryInterface(graph->outer_unk, iid, out);
 }
 
 static ULONG WINAPI FilterGraph2_AddRef(IFilterGraph2 *iface)
 {
-    IFilterGraphImpl *graph = impl_from_IFilterGraph2(iface);
+    struct filter_graph *graph = impl_from_IFilterGraph2(iface);
     return IUnknown_AddRef(graph->outer_unk);
 }
 
 static ULONG WINAPI FilterGraph2_Release(IFilterGraph2 *iface)
 {
-    IFilterGraphImpl *graph = impl_from_IFilterGraph2(iface);
+    struct filter_graph *graph = impl_from_IFilterGraph2(iface);
     return IUnknown_Release(graph->outer_unk);
 }
 
-static IBaseFilter *find_filter_by_name(IFilterGraphImpl *graph, const WCHAR *name)
+static IBaseFilter *find_filter_by_name(struct filter_graph *graph, const WCHAR *name)
 {
     struct filter *filter;
 
@@ -616,7 +617,7 @@ static BOOL is_renderer(struct filter *filter)
 static HRESULT WINAPI FilterGraph2_AddFilter(IFilterGraph2 *iface,
         IBaseFilter *filter, const WCHAR *name)
 {
-    IFilterGraphImpl *graph = impl_from_IFilterGraph2(iface);
+    struct filter_graph *graph = impl_from_IFilterGraph2(iface);
     BOOL duplicate_name = FALSE;
     struct filter *entry;
     unsigned int i;
@@ -684,7 +685,7 @@ static HRESULT WINAPI FilterGraph2_AddFilter(IFilterGraph2 *iface,
 
 static HRESULT WINAPI FilterGraph2_RemoveFilter(IFilterGraph2 *iface, IBaseFilter *pFilter)
 {
-    IFilterGraphImpl *This = impl_from_IFilterGraph2(iface);
+    struct filter_graph *This = impl_from_IFilterGraph2(iface);
     struct filter *entry;
     int i;
     HRESULT hr = E_FAIL;
@@ -778,7 +779,7 @@ static HRESULT WINAPI FilterGraph2_RemoveFilter(IFilterGraph2 *iface, IBaseFilte
 
 static HRESULT WINAPI FilterGraph2_EnumFilters(IFilterGraph2 *iface, IEnumFilters **out)
 {
-    IFilterGraphImpl *graph = impl_from_IFilterGraph2(iface);
+    struct filter_graph *graph = impl_from_IFilterGraph2(iface);
 
     TRACE("graph %p, out %p.\n", graph, out);
 
@@ -788,7 +789,7 @@ static HRESULT WINAPI FilterGraph2_EnumFilters(IFilterGraph2 *iface, IEnumFilter
 static HRESULT WINAPI FilterGraph2_FindFilterByName(IFilterGraph2 *iface,
         const WCHAR *name, IBaseFilter **filter)
 {
-    IFilterGraphImpl *graph = impl_from_IFilterGraph2(iface);
+    struct filter_graph *graph = impl_from_IFilterGraph2(iface);
 
     TRACE("graph %p, name %s, filter %p.\n", graph, debugstr_w(name), filter);
 
@@ -807,7 +808,7 @@ static HRESULT WINAPI FilterGraph2_FindFilterByName(IFilterGraph2 *iface,
 /* Don't allow a circular connection to form, return VFW_E_CIRCULAR_GRAPH if this would be the case.
  * A circular connection will be formed if from the filter of the output pin, the input pin can be reached
  */
-static HRESULT CheckCircularConnection(IFilterGraphImpl *This, IPin *out, IPin *in)
+static HRESULT CheckCircularConnection(struct filter_graph *This, IPin *out, IPin *in)
 {
 #if 1
     HRESULT hr;
@@ -880,7 +881,7 @@ out:
 #endif
 }
 
-static struct filter *find_sorted_filter(IFilterGraphImpl *graph, IBaseFilter *iface)
+static struct filter *find_sorted_filter(struct filter_graph *graph, IBaseFilter *iface)
 {
     struct filter *filter;
 
@@ -893,7 +894,7 @@ static struct filter *find_sorted_filter(IFilterGraphImpl *graph, IBaseFilter *i
     return NULL;
 }
 
-static void sort_filter_recurse(IFilterGraphImpl *graph, struct filter *filter, struct list *sorted)
+static void sort_filter_recurse(struct filter_graph *graph, struct filter *filter, struct list *sorted)
 {
     struct filter *peer_filter;
     IEnumPins *enumpins;
@@ -932,7 +933,7 @@ static void sort_filter_recurse(IFilterGraphImpl *graph, struct filter *filter, 
     list_add_head(sorted, &filter->entry);
 }
 
-static void sort_filters(IFilterGraphImpl *graph)
+static void sort_filters(struct filter_graph *graph)
 {
     struct list sorted = LIST_INIT(sorted), *cursor;
 
@@ -950,7 +951,7 @@ static void sort_filters(IFilterGraphImpl *graph)
 static HRESULT WINAPI FilterGraph2_ConnectDirect(IFilterGraph2 *iface, IPin *ppinIn, IPin *ppinOut,
         const AM_MEDIA_TYPE *pmt)
 {
-    IFilterGraphImpl *This = impl_from_IFilterGraph2(iface);
+    struct filter_graph *This = impl_from_IFilterGraph2(iface);
     PIN_DIRECTION dir;
     HRESULT hr;
 
@@ -1000,7 +1001,7 @@ static HRESULT WINAPI FilterGraph2_ConnectDirect(IFilterGraph2 *iface, IPin *ppi
 
 static HRESULT WINAPI FilterGraph2_Reconnect(IFilterGraph2 *iface, IPin *pin)
 {
-    IFilterGraphImpl *graph = impl_from_IFilterGraph2(iface);
+    struct filter_graph *graph = impl_from_IFilterGraph2(iface);
 
     TRACE("graph %p, pin %p.\n", graph, pin);
 
@@ -1009,7 +1010,7 @@ static HRESULT WINAPI FilterGraph2_Reconnect(IFilterGraph2 *iface, IPin *pin)
 
 static HRESULT WINAPI FilterGraph2_Disconnect(IFilterGraph2 *iface, IPin *ppin)
 {
-    IFilterGraphImpl *This = impl_from_IFilterGraph2(iface);
+    struct filter_graph *This = impl_from_IFilterGraph2(iface);
 
     TRACE("(%p/%p)->(%p)\n", This, iface, ppin);
 
@@ -1021,7 +1022,7 @@ static HRESULT WINAPI FilterGraph2_Disconnect(IFilterGraph2 *iface, IPin *ppin)
 
 static HRESULT WINAPI FilterGraph2_SetDefaultSyncSource(IFilterGraph2 *iface)
 {
-    IFilterGraphImpl *This = impl_from_IFilterGraph2(iface);
+    struct filter_graph *This = impl_from_IFilterGraph2(iface);
     IReferenceClock *pClock = NULL;
     struct filter *filter;
     HRESULT hr = S_OK;
@@ -1067,7 +1068,7 @@ struct filter_create_params
 
 static DWORD WINAPI message_thread_run(void *ctx)
 {
-    IFilterGraphImpl *graph = ctx;
+    struct filter_graph *graph = ctx;
     MSG msg;
 
     /* Make sure we have a message queue. */
@@ -1103,7 +1104,7 @@ static DWORD WINAPI message_thread_run(void *ctx)
     return 0;
 }
 
-static HRESULT create_filter(IFilterGraphImpl *graph, IMoniker *moniker, IBaseFilter **filter)
+static HRESULT create_filter(struct filter_graph *graph, IMoniker *moniker, IBaseFilter **filter)
 {
     if (graph->message_thread)
     {
@@ -1119,10 +1120,10 @@ static HRESULT create_filter(IFilterGraphImpl *graph, IMoniker *moniker, IBaseFi
         return IMoniker_BindToObject(moniker, NULL, NULL, &IID_IBaseFilter, (void **)filter);
 }
 
-static HRESULT autoplug(IFilterGraphImpl *graph, IPin *source, IPin *sink,
+static HRESULT autoplug(struct filter_graph *graph, IPin *source, IPin *sink,
         BOOL render_to_existing, unsigned int recursion_depth);
 
-static HRESULT autoplug_through_sink(IFilterGraphImpl *graph, IPin *source,
+static HRESULT autoplug_through_sink(struct filter_graph *graph, IPin *source,
         IBaseFilter *filter, IPin *middle_sink, IPin *sink,
         BOOL render_to_existing, BOOL allow_renderers, unsigned int recursion_depth)
 {
@@ -1201,7 +1202,7 @@ err:
     return E_FAIL;
 }
 
-static HRESULT autoplug_through_filter(IFilterGraphImpl *graph, IPin *source,
+static HRESULT autoplug_through_filter(struct filter_graph *graph, IPin *source,
         IBaseFilter *filter, IPin *sink, BOOL render_to_existing,
         BOOL allow_renderers, unsigned int recursion_depth)
 {
@@ -1231,7 +1232,7 @@ static HRESULT autoplug_through_filter(IFilterGraphImpl *graph, IPin *source,
 
 /* Common helper for IGraphBuilder::Connect() and IGraphBuilder::Render(), which
  * share most of the same code. Render() calls this with a NULL sink. */
-static HRESULT autoplug(IFilterGraphImpl *graph, IPin *source, IPin *sink,
+static HRESULT autoplug(struct filter_graph *graph, IPin *source, IPin *sink,
         BOOL render_to_existing, unsigned int recursion_depth)
 {
     IAMGraphBuilderCallback *callback = NULL;
@@ -1365,7 +1366,7 @@ out:
 
 static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface, IPin *source, IPin *sink)
 {
-    IFilterGraphImpl *graph = impl_from_IFilterGraph2(iface);
+    struct filter_graph *graph = impl_from_IFilterGraph2(iface);
     PIN_DIRECTION dir;
     HRESULT hr;
 
@@ -1400,7 +1401,7 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface, IPin *source, I
 
 static HRESULT WINAPI FilterGraph2_Render(IFilterGraph2 *iface, IPin *source)
 {
-    IFilterGraphImpl *graph = impl_from_IFilterGraph2(iface);
+    struct filter_graph *graph = impl_from_IFilterGraph2(iface);
     HRESULT hr;
 
     TRACE("graph %p, source %p.\n", graph, source);
@@ -1418,7 +1419,7 @@ static HRESULT WINAPI FilterGraph2_Render(IFilterGraph2 *iface, IPin *source)
 static HRESULT WINAPI FilterGraph2_RenderFile(IFilterGraph2 *iface, LPCWSTR lpcwstrFile,
         LPCWSTR lpcwstrPlayList)
 {
-    IFilterGraphImpl *This = impl_from_IFilterGraph2(iface);
+    struct filter_graph *This = impl_from_IFilterGraph2(iface);
     IBaseFilter* preader = NULL;
     IPin* ppinreader = NULL;
     IEnumPins* penumpins = NULL;
@@ -1477,7 +1478,7 @@ static HRESULT WINAPI FilterGraph2_RenderFile(IFilterGraph2 *iface, LPCWSTR lpcw
 static HRESULT WINAPI FilterGraph2_AddSourceFilter(IFilterGraph2 *iface,
         const WCHAR *filename, const WCHAR *filter_name, IBaseFilter **ret_filter)
 {
-    IFilterGraphImpl *graph = impl_from_IFilterGraph2(iface);
+    struct filter_graph *graph = impl_from_IFilterGraph2(iface);
     IFileSourceFilter *filesource;
     IBaseFilter *filter;
     HRESULT hr;
@@ -1525,7 +1526,7 @@ static HRESULT WINAPI FilterGraph2_AddSourceFilter(IFilterGraph2 *iface,
 
 static HRESULT WINAPI FilterGraph2_SetLogFile(IFilterGraph2 *iface, DWORD_PTR hFile)
 {
-    IFilterGraphImpl *This = impl_from_IFilterGraph2(iface);
+    struct filter_graph *This = impl_from_IFilterGraph2(iface);
 
     TRACE("(%p/%p)->(%08x): stub !!!\n", This, iface, (DWORD) hFile);
 
@@ -1534,7 +1535,7 @@ static HRESULT WINAPI FilterGraph2_SetLogFile(IFilterGraph2 *iface, DWORD_PTR hF
 
 static HRESULT WINAPI FilterGraph2_Abort(IFilterGraph2 *iface)
 {
-    IFilterGraphImpl *This = impl_from_IFilterGraph2(iface);
+    struct filter_graph *This = impl_from_IFilterGraph2(iface);
 
     TRACE("(%p/%p)->(): stub !!!\n", This, iface);
 
@@ -1543,7 +1544,7 @@ static HRESULT WINAPI FilterGraph2_Abort(IFilterGraph2 *iface)
 
 static HRESULT WINAPI FilterGraph2_ShouldOperationContinue(IFilterGraph2 *iface)
 {
-    IFilterGraphImpl *This = impl_from_IFilterGraph2(iface);
+    struct filter_graph *This = impl_from_IFilterGraph2(iface);
 
     TRACE("(%p/%p)->(): stub !!!\n", This, iface);
 
@@ -1554,7 +1555,7 @@ static HRESULT WINAPI FilterGraph2_ShouldOperationContinue(IFilterGraph2 *iface)
 static HRESULT WINAPI FilterGraph2_AddSourceFilterForMoniker(IFilterGraph2 *iface,
         IMoniker *pMoniker, IBindCtx *pCtx, LPCWSTR lpcwstrFilterName, IBaseFilter **ppFilter)
 {
-    IFilterGraphImpl *This = impl_from_IFilterGraph2(iface);
+    struct filter_graph *This = impl_from_IFilterGraph2(iface);
     HRESULT hr;
     IBaseFilter* pfilter;
 
@@ -1582,7 +1583,7 @@ static HRESULT WINAPI FilterGraph2_AddSourceFilterForMoniker(IFilterGraph2 *ifac
 
 static HRESULT WINAPI FilterGraph2_ReconnectEx(IFilterGraph2 *iface, IPin *pin, const AM_MEDIA_TYPE *mt)
 {
-    IFilterGraphImpl *graph = impl_from_IFilterGraph2(iface);
+    struct filter_graph *graph = impl_from_IFilterGraph2(iface);
     PIN_DIRECTION dir;
     HRESULT hr;
     IPin *peer;
@@ -1607,7 +1608,7 @@ static HRESULT WINAPI FilterGraph2_ReconnectEx(IFilterGraph2 *iface, IPin *pin, 
 
 static HRESULT WINAPI FilterGraph2_RenderEx(IFilterGraph2 *iface, IPin *source, DWORD flags, DWORD *context)
 {
-    IFilterGraphImpl *graph = impl_from_IFilterGraph2(iface);
+    struct filter_graph *graph = impl_from_IFilterGraph2(iface);
     HRESULT hr;
 
     TRACE("graph %p, source %p, flags %#x, context %p.\n", graph, source, flags, context);
@@ -1651,26 +1652,26 @@ static const IFilterGraph2Vtbl IFilterGraph2_VTable =
     FilterGraph2_RenderEx
 };
 
-static inline IFilterGraphImpl *impl_from_IMediaControl(IMediaControl *iface)
+static struct filter_graph *impl_from_IMediaControl(IMediaControl *iface)
 {
-    return CONTAINING_RECORD(iface, IFilterGraphImpl, IMediaControl_iface);
+    return CONTAINING_RECORD(iface, struct filter_graph, IMediaControl_iface);
 }
 
 static HRESULT WINAPI MediaControl_QueryInterface(IMediaControl *iface, REFIID iid, void **out)
 {
-    IFilterGraphImpl *graph = impl_from_IMediaControl(iface);
+    struct filter_graph *graph = impl_from_IMediaControl(iface);
     return IUnknown_QueryInterface(graph->outer_unk, iid, out);
 }
 
 static ULONG WINAPI MediaControl_AddRef(IMediaControl *iface)
 {
-    IFilterGraphImpl *graph = impl_from_IMediaControl(iface);
+    struct filter_graph *graph = impl_from_IMediaControl(iface);
     return IUnknown_AddRef(graph->outer_unk);
 }
 
 static ULONG WINAPI MediaControl_Release(IMediaControl *iface)
 {
-    IFilterGraphImpl *graph = impl_from_IMediaControl(iface);
+    struct filter_graph *graph = impl_from_IMediaControl(iface);
     return IUnknown_Release(graph->outer_unk);
 
 }
@@ -1678,7 +1679,7 @@ static ULONG WINAPI MediaControl_Release(IMediaControl *iface)
 /*** IDispatch methods ***/
 static HRESULT WINAPI MediaControl_GetTypeInfoCount(IMediaControl *iface, UINT *pctinfo)
 {
-    IFilterGraphImpl *This = impl_from_IMediaControl(iface);
+    struct filter_graph *This = impl_from_IMediaControl(iface);
 
     TRACE("(%p/%p)->(%p): stub !!!\n", This, iface, pctinfo);
 
@@ -1688,7 +1689,7 @@ static HRESULT WINAPI MediaControl_GetTypeInfoCount(IMediaControl *iface, UINT *
 static HRESULT WINAPI MediaControl_GetTypeInfo(IMediaControl *iface, UINT iTInfo, LCID lcid,
         ITypeInfo **ppTInfo)
 {
-    IFilterGraphImpl *This = impl_from_IMediaControl(iface);
+    struct filter_graph *This = impl_from_IMediaControl(iface);
 
     TRACE("(%p/%p)->(%d, %d, %p): stub !!!\n", This, iface, iTInfo, lcid, ppTInfo);
 
@@ -1698,7 +1699,7 @@ static HRESULT WINAPI MediaControl_GetTypeInfo(IMediaControl *iface, UINT iTInfo
 static HRESULT WINAPI MediaControl_GetIDsOfNames(IMediaControl *iface, REFIID riid,
         LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
 {
-    IFilterGraphImpl *This = impl_from_IMediaControl(iface);
+    struct filter_graph *This = impl_from_IMediaControl(iface);
 
     TRACE("(%p/%p)->(%s, %p, %d, %d, %p): stub !!!\n", This, iface, debugstr_guid(riid), rgszNames,
             cNames, lcid, rgDispId);
@@ -1710,7 +1711,7 @@ static HRESULT WINAPI MediaControl_Invoke(IMediaControl *iface, DISPID dispIdMem
         LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExepInfo,
         UINT *puArgErr)
 {
-    IFilterGraphImpl *This = impl_from_IMediaControl(iface);
+    struct filter_graph *This = impl_from_IMediaControl(iface);
 
     TRACE("(%p/%p)->(%d, %s, %d, %04x, %p, %p, %p, %p): stub !!!\n", This, iface, dispIdMember,
             debugstr_guid(riid), lcid, wFlags, pDispParams, pVarResult, pExepInfo, puArgErr);
@@ -1720,28 +1721,28 @@ static HRESULT WINAPI MediaControl_Invoke(IMediaControl *iface, DISPID dispIdMem
 
 static HRESULT WINAPI MediaControl_Run(IMediaControl *iface)
 {
-    IFilterGraphImpl *graph = impl_from_IMediaControl(iface);
+    struct filter_graph *graph = impl_from_IMediaControl(iface);
 
     return IMediaFilter_Run(&graph->IMediaFilter_iface, 0);
 }
 
 static HRESULT WINAPI MediaControl_Pause(IMediaControl *iface)
 {
-    IFilterGraphImpl *graph = impl_from_IMediaControl(iface);
+    struct filter_graph *graph = impl_from_IMediaControl(iface);
 
     return IMediaFilter_Pause(&graph->IMediaFilter_iface);
 }
 
 static HRESULT WINAPI MediaControl_Stop(IMediaControl *iface)
 {
-    IFilterGraphImpl *graph = impl_from_IMediaControl(iface);
+    struct filter_graph *graph = impl_from_IMediaControl(iface);
 
     return IMediaFilter_Stop(&graph->IMediaFilter_iface);
 }
 
 static HRESULT WINAPI MediaControl_GetState(IMediaControl *iface, LONG timeout, OAFilterState *state)
 {
-    IFilterGraphImpl *graph = impl_from_IMediaControl(iface);
+    struct filter_graph *graph = impl_from_IMediaControl(iface);
 
     if (timeout < 0) timeout = INFINITE;
 
@@ -1750,7 +1751,7 @@ static HRESULT WINAPI MediaControl_GetState(IMediaControl *iface, LONG timeout, 
 
 static HRESULT WINAPI MediaControl_RenderFile(IMediaControl *iface, BSTR strFilename)
 {
-    IFilterGraphImpl *This = impl_from_IMediaControl(iface);
+    struct filter_graph *This = impl_from_IMediaControl(iface);
 
     TRACE("(%p/%p)->(%s (%p))\n", This, iface, debugstr_w(strFilename), strFilename);
 
@@ -1760,7 +1761,7 @@ static HRESULT WINAPI MediaControl_RenderFile(IMediaControl *iface, BSTR strFile
 static HRESULT WINAPI MediaControl_AddSourceFilter(IMediaControl *iface, BSTR strFilename,
         IDispatch **ppUnk)
 {
-    IFilterGraphImpl *This = impl_from_IMediaControl(iface);
+    struct filter_graph *This = impl_from_IMediaControl(iface);
 
     FIXME("(%p/%p)->(%s (%p), %p): stub !!!\n", This, iface, debugstr_w(strFilename), strFilename, ppUnk);
 
@@ -1769,7 +1770,7 @@ static HRESULT WINAPI MediaControl_AddSourceFilter(IMediaControl *iface, BSTR st
 
 static HRESULT WINAPI MediaControl_get_FilterCollection(IMediaControl *iface, IDispatch **ppUnk)
 {
-    IFilterGraphImpl *This = impl_from_IMediaControl(iface);
+    struct filter_graph *This = impl_from_IMediaControl(iface);
 
     FIXME("(%p/%p)->(%p): stub !!!\n", This, iface, ppUnk);
 
@@ -1778,7 +1779,7 @@ static HRESULT WINAPI MediaControl_get_FilterCollection(IMediaControl *iface, ID
 
 static HRESULT WINAPI MediaControl_get_RegFilterCollection(IMediaControl *iface, IDispatch **ppUnk)
 {
-    IFilterGraphImpl *This = impl_from_IMediaControl(iface);
+    struct filter_graph *This = impl_from_IMediaControl(iface);
 
     FIXME("(%p/%p)->(%p): stub !!!\n", This, iface, ppUnk);
 
@@ -1817,7 +1818,7 @@ static void CALLBACK wait_stop_cb(TP_CALLBACK_INSTANCE *instance, void *context)
 
 static HRESULT WINAPI MediaControl_StopWhenReady(IMediaControl *iface)
 {
-    IFilterGraphImpl *graph = impl_from_IMediaControl(iface);
+    struct filter_graph *graph = impl_from_IMediaControl(iface);
     HRESULT hr;
 
     TRACE("graph %p.\n", graph);
@@ -1867,32 +1868,32 @@ static const IMediaControlVtbl IMediaControl_VTable =
     MediaControl_StopWhenReady
 };
 
-static inline IFilterGraphImpl *impl_from_IMediaSeeking(IMediaSeeking *iface)
+static struct filter_graph *impl_from_IMediaSeeking(IMediaSeeking *iface)
 {
-    return CONTAINING_RECORD(iface, IFilterGraphImpl, IMediaSeeking_iface);
+    return CONTAINING_RECORD(iface, struct filter_graph, IMediaSeeking_iface);
 }
 
 static HRESULT WINAPI MediaSeeking_QueryInterface(IMediaSeeking *iface, REFIID iid, void **out)
 {
-    IFilterGraphImpl *graph = impl_from_IMediaSeeking(iface);
+    struct filter_graph *graph = impl_from_IMediaSeeking(iface);
     return IUnknown_QueryInterface(graph->outer_unk, iid, out);
 }
 
 static ULONG WINAPI MediaSeeking_AddRef(IMediaSeeking *iface)
 {
-    IFilterGraphImpl *graph = impl_from_IMediaSeeking(iface);
+    struct filter_graph *graph = impl_from_IMediaSeeking(iface);
     return IUnknown_AddRef(graph->outer_unk);
 }
 
 static ULONG WINAPI MediaSeeking_Release(IMediaSeeking *iface)
 {
-    IFilterGraphImpl *graph = impl_from_IMediaSeeking(iface);
+    struct filter_graph *graph = impl_from_IMediaSeeking(iface);
     return IUnknown_Release(graph->outer_unk);
 }
 
-typedef HRESULT (WINAPI *fnFoundSeek)(IFilterGraphImpl *This, IMediaSeeking*, DWORD_PTR arg);
+typedef HRESULT (WINAPI *fnFoundSeek)(struct filter_graph *This, IMediaSeeking*, DWORD_PTR arg);
 
-static HRESULT all_renderers_seek(IFilterGraphImpl *This, fnFoundSeek FoundSeek, DWORD_PTR arg) {
+static HRESULT all_renderers_seek(struct filter_graph *This, fnFoundSeek FoundSeek, DWORD_PTR arg) {
     BOOL allnotimpl = TRUE;
     HRESULT hr, hr_return = S_OK;
     struct filter *filter;
@@ -1917,7 +1918,7 @@ static HRESULT all_renderers_seek(IFilterGraphImpl *This, fnFoundSeek FoundSeek,
     return hr_return;
 }
 
-static HRESULT WINAPI FoundCapabilities(IFilterGraphImpl *This, IMediaSeeking *seek, DWORD_PTR pcaps)
+static HRESULT WINAPI FoundCapabilities(struct filter_graph *This, IMediaSeeking *seek, DWORD_PTR pcaps)
 {
     HRESULT hr;
     DWORD caps = 0;
@@ -1935,7 +1936,7 @@ static HRESULT WINAPI FoundCapabilities(IFilterGraphImpl *This, IMediaSeeking *s
 /*** IMediaSeeking methods ***/
 static HRESULT WINAPI MediaSeeking_GetCapabilities(IMediaSeeking *iface, DWORD *pCapabilities)
 {
-    IFilterGraphImpl *This = impl_from_IMediaSeeking(iface);
+    struct filter_graph *This = impl_from_IMediaSeeking(iface);
     HRESULT hr;
 
     TRACE("(%p/%p)->(%p)\n", This, iface, pCapabilities);
@@ -1954,7 +1955,7 @@ static HRESULT WINAPI MediaSeeking_GetCapabilities(IMediaSeeking *iface, DWORD *
 
 static HRESULT WINAPI MediaSeeking_CheckCapabilities(IMediaSeeking *iface, DWORD *pCapabilities)
 {
-    IFilterGraphImpl *This = impl_from_IMediaSeeking(iface);
+    struct filter_graph *This = impl_from_IMediaSeeking(iface);
     DWORD originalcaps;
     HRESULT hr;
 
@@ -1980,7 +1981,7 @@ static HRESULT WINAPI MediaSeeking_CheckCapabilities(IMediaSeeking *iface, DWORD
 
 static HRESULT WINAPI MediaSeeking_IsFormatSupported(IMediaSeeking *iface, const GUID *pFormat)
 {
-    IFilterGraphImpl *This = impl_from_IMediaSeeking(iface);
+    struct filter_graph *This = impl_from_IMediaSeeking(iface);
 
     if (!pFormat)
         return E_POINTER;
@@ -1998,7 +1999,7 @@ static HRESULT WINAPI MediaSeeking_IsFormatSupported(IMediaSeeking *iface, const
 
 static HRESULT WINAPI MediaSeeking_QueryPreferredFormat(IMediaSeeking *iface, GUID *pFormat)
 {
-    IFilterGraphImpl *This = impl_from_IMediaSeeking(iface);
+    struct filter_graph *This = impl_from_IMediaSeeking(iface);
 
     if (!pFormat)
         return E_POINTER;
@@ -2011,7 +2012,7 @@ static HRESULT WINAPI MediaSeeking_QueryPreferredFormat(IMediaSeeking *iface, GU
 
 static HRESULT WINAPI MediaSeeking_GetTimeFormat(IMediaSeeking *iface, GUID *pFormat)
 {
-    IFilterGraphImpl *This = impl_from_IMediaSeeking(iface);
+    struct filter_graph *This = impl_from_IMediaSeeking(iface);
 
     if (!pFormat)
         return E_POINTER;
@@ -2024,7 +2025,7 @@ static HRESULT WINAPI MediaSeeking_GetTimeFormat(IMediaSeeking *iface, GUID *pFo
 
 static HRESULT WINAPI MediaSeeking_IsUsingTimeFormat(IMediaSeeking *iface, const GUID *pFormat)
 {
-    IFilterGraphImpl *This = impl_from_IMediaSeeking(iface);
+    struct filter_graph *This = impl_from_IMediaSeeking(iface);
 
     TRACE("(%p/%p)->(%p)\n", This, iface, pFormat);
     if (!pFormat)
@@ -2038,7 +2039,7 @@ static HRESULT WINAPI MediaSeeking_IsUsingTimeFormat(IMediaSeeking *iface, const
 
 static HRESULT WINAPI MediaSeeking_SetTimeFormat(IMediaSeeking *iface, const GUID *pFormat)
 {
-    IFilterGraphImpl *This = impl_from_IMediaSeeking(iface);
+    struct filter_graph *This = impl_from_IMediaSeeking(iface);
 
     if (!pFormat)
         return E_POINTER;
@@ -2057,7 +2058,7 @@ static HRESULT WINAPI MediaSeeking_SetTimeFormat(IMediaSeeking *iface, const GUI
     return S_OK;
 }
 
-static HRESULT WINAPI FoundDuration(IFilterGraphImpl *This, IMediaSeeking *seek, DWORD_PTR pduration)
+static HRESULT WINAPI FoundDuration(struct filter_graph *This, IMediaSeeking *seek, DWORD_PTR pduration)
 {
     HRESULT hr;
     LONGLONG duration = 0, *pdur = (LONGLONG*)pduration;
@@ -2073,7 +2074,7 @@ static HRESULT WINAPI FoundDuration(IFilterGraphImpl *This, IMediaSeeking *seek,
 
 static HRESULT WINAPI MediaSeeking_GetDuration(IMediaSeeking *iface, LONGLONG *pDuration)
 {
-    IFilterGraphImpl *This = impl_from_IMediaSeeking(iface);
+    struct filter_graph *This = impl_from_IMediaSeeking(iface);
     HRESULT hr;
 
     TRACE("(%p/%p)->(%p)\n", This, iface, pDuration);
@@ -2092,7 +2093,7 @@ static HRESULT WINAPI MediaSeeking_GetDuration(IMediaSeeking *iface, LONGLONG *p
 
 static HRESULT WINAPI MediaSeeking_GetStopPosition(IMediaSeeking *iface, LONGLONG *stop)
 {
-    IFilterGraphImpl *graph = impl_from_IMediaSeeking(iface);
+    struct filter_graph *graph = impl_from_IMediaSeeking(iface);
     HRESULT hr = E_NOTIMPL, filter_hr;
     struct filter *filter;
     LONGLONG filter_stop;
@@ -2133,7 +2134,7 @@ static HRESULT WINAPI MediaSeeking_GetStopPosition(IMediaSeeking *iface, LONGLON
 
 static HRESULT WINAPI MediaSeeking_GetCurrentPosition(IMediaSeeking *iface, LONGLONG *current)
 {
-    IFilterGraphImpl *graph = impl_from_IMediaSeeking(iface);
+    struct filter_graph *graph = impl_from_IMediaSeeking(iface);
     LONGLONG ret = graph->current_pos;
 
     TRACE("graph %p, current %p.\n", graph, current);
@@ -2162,7 +2163,7 @@ static HRESULT WINAPI MediaSeeking_GetCurrentPosition(IMediaSeeking *iface, LONG
 static HRESULT WINAPI MediaSeeking_ConvertTimeFormat(IMediaSeeking *iface, LONGLONG *pTarget,
         const GUID *pTargetFormat, LONGLONG Source, const GUID *pSourceFormat)
 {
-    IFilterGraphImpl *This = impl_from_IMediaSeeking(iface);
+    struct filter_graph *This = impl_from_IMediaSeeking(iface);
 
     TRACE("(%p/%p)->(%p, %s, 0x%s, %s)\n", This, iface, pTarget,
         debugstr_guid(pTargetFormat), wine_dbgstr_longlong(Source), debugstr_guid(pSourceFormat));
@@ -2184,7 +2185,7 @@ static HRESULT WINAPI MediaSeeking_ConvertTimeFormat(IMediaSeeking *iface, LONGL
 static HRESULT WINAPI MediaSeeking_SetPositions(IMediaSeeking *iface, LONGLONG *current_ptr,
         DWORD current_flags, LONGLONG *stop_ptr, DWORD stop_flags)
 {
-    IFilterGraphImpl *graph = impl_from_IMediaSeeking(iface);
+    struct filter_graph *graph = impl_from_IMediaSeeking(iface);
     HRESULT hr = E_NOTIMPL, filter_hr;
     struct filter *filter;
     FILTER_STATE state;
@@ -2256,7 +2257,7 @@ static HRESULT WINAPI MediaSeeking_SetPositions(IMediaSeeking *iface, LONGLONG *
 static HRESULT WINAPI MediaSeeking_GetPositions(IMediaSeeking *iface, LONGLONG *pCurrent,
         LONGLONG *pStop)
 {
-    IFilterGraphImpl *This = impl_from_IMediaSeeking(iface);
+    struct filter_graph *This = impl_from_IMediaSeeking(iface);
     HRESULT hr;
 
     TRACE("(%p/%p)->(%p, %p)\n", This, iface, pCurrent, pStop);
@@ -2270,7 +2271,7 @@ static HRESULT WINAPI MediaSeeking_GetPositions(IMediaSeeking *iface, LONGLONG *
 static HRESULT WINAPI MediaSeeking_GetAvailable(IMediaSeeking *iface, LONGLONG *pEarliest,
         LONGLONG *pLatest)
 {
-    IFilterGraphImpl *This = impl_from_IMediaSeeking(iface);
+    struct filter_graph *This = impl_from_IMediaSeeking(iface);
 
     FIXME("(%p/%p)->(%p, %p): stub !!!\n", This, iface, pEarliest, pLatest);
 
@@ -2279,7 +2280,7 @@ static HRESULT WINAPI MediaSeeking_GetAvailable(IMediaSeeking *iface, LONGLONG *
 
 static HRESULT WINAPI MediaSeeking_SetRate(IMediaSeeking *iface, double dRate)
 {
-    IFilterGraphImpl *This = impl_from_IMediaSeeking(iface);
+    struct filter_graph *This = impl_from_IMediaSeeking(iface);
 
     FIXME("(%p/%p)->(%f): stub !!!\n", This, iface, dRate);
 
@@ -2288,7 +2289,7 @@ static HRESULT WINAPI MediaSeeking_SetRate(IMediaSeeking *iface, double dRate)
 
 static HRESULT WINAPI MediaSeeking_GetRate(IMediaSeeking *iface, double *pdRate)
 {
-    IFilterGraphImpl *This = impl_from_IMediaSeeking(iface);
+    struct filter_graph *This = impl_from_IMediaSeeking(iface);
 
     FIXME("(%p/%p)->(%p): stub !!!\n", This, iface, pdRate);
 
@@ -2302,7 +2303,7 @@ static HRESULT WINAPI MediaSeeking_GetRate(IMediaSeeking *iface, double *pdRate)
 
 static HRESULT WINAPI MediaSeeking_GetPreroll(IMediaSeeking *iface, LONGLONG *pllPreroll)
 {
-    IFilterGraphImpl *This = impl_from_IMediaSeeking(iface);
+    struct filter_graph *This = impl_from_IMediaSeeking(iface);
 
     FIXME("(%p/%p)->(%p): stub !!!\n", This, iface, pllPreroll);
 
@@ -2334,27 +2335,27 @@ static const IMediaSeekingVtbl IMediaSeeking_VTable =
     MediaSeeking_GetPreroll
 };
 
-static inline IFilterGraphImpl *impl_from_IMediaPosition(IMediaPosition *iface)
+static struct filter_graph *impl_from_IMediaPosition(IMediaPosition *iface)
 {
-    return CONTAINING_RECORD(iface, IFilterGraphImpl, IMediaPosition_iface);
+    return CONTAINING_RECORD(iface, struct filter_graph, IMediaPosition_iface);
 }
 
 /*** IUnknown methods ***/
 static HRESULT WINAPI MediaPosition_QueryInterface(IMediaPosition *iface, REFIID iid, void **out)
 {
-    IFilterGraphImpl *graph = impl_from_IMediaPosition(iface);
+    struct filter_graph *graph = impl_from_IMediaPosition(iface);
     return IUnknown_QueryInterface(graph->outer_unk, iid, out);
 }
 
 static ULONG WINAPI MediaPosition_AddRef(IMediaPosition *iface)
 {
-    IFilterGraphImpl *graph = impl_from_IMediaPosition(iface);
+    struct filter_graph *graph = impl_from_IMediaPosition(iface);
     return IUnknown_AddRef(graph->outer_unk);
 }
 
 static ULONG WINAPI MediaPosition_Release(IMediaPosition *iface)
 {
-    IFilterGraphImpl *graph = impl_from_IMediaPosition(iface);
+    struct filter_graph *graph = impl_from_IMediaPosition(iface);
     return IUnknown_Release(graph->outer_unk);
 }
 
@@ -2423,7 +2424,7 @@ static HRESULT ConvertToREFTIME(IMediaSeeking *seek, LONGLONG time_in, REFTIME *
 static HRESULT WINAPI MediaPosition_get_Duration(IMediaPosition * iface, REFTIME *plength)
 {
     LONGLONG duration;
-    IFilterGraphImpl *This = impl_from_IMediaPosition( iface );
+    struct filter_graph *This = impl_from_IMediaPosition( iface );
     HRESULT hr = IMediaSeeking_GetDuration(&This->IMediaSeeking_iface, &duration);
     if (FAILED(hr))
         return hr;
@@ -2432,7 +2433,7 @@ static HRESULT WINAPI MediaPosition_get_Duration(IMediaPosition * iface, REFTIME
 
 static HRESULT WINAPI MediaPosition_put_CurrentPosition(IMediaPosition * iface, REFTIME llTime)
 {
-    IFilterGraphImpl *This = impl_from_IMediaPosition( iface );
+    struct filter_graph *This = impl_from_IMediaPosition( iface );
     LONGLONG reftime;
     HRESULT hr;
 
@@ -2445,7 +2446,7 @@ static HRESULT WINAPI MediaPosition_put_CurrentPosition(IMediaPosition * iface, 
 
 static HRESULT WINAPI MediaPosition_get_CurrentPosition(IMediaPosition * iface, REFTIME *pllTime)
 {
-    IFilterGraphImpl *This = impl_from_IMediaPosition( iface );
+    struct filter_graph *This = impl_from_IMediaPosition( iface );
     LONGLONG pos;
     HRESULT hr;
 
@@ -2457,7 +2458,7 @@ static HRESULT WINAPI MediaPosition_get_CurrentPosition(IMediaPosition * iface, 
 
 static HRESULT WINAPI MediaPosition_get_StopTime(IMediaPosition * iface, REFTIME *pllTime)
 {
-    IFilterGraphImpl *This = impl_from_IMediaPosition( iface );
+    struct filter_graph *This = impl_from_IMediaPosition( iface );
     LONGLONG pos;
     HRESULT hr = IMediaSeeking_GetStopPosition(&This->IMediaSeeking_iface, &pos);
     if (FAILED(hr))
@@ -2467,7 +2468,7 @@ static HRESULT WINAPI MediaPosition_get_StopTime(IMediaPosition * iface, REFTIME
 
 static HRESULT WINAPI MediaPosition_put_StopTime(IMediaPosition * iface, REFTIME llTime)
 {
-    IFilterGraphImpl *This = impl_from_IMediaPosition( iface );
+    struct filter_graph *This = impl_from_IMediaPosition( iface );
     LONGLONG reftime;
     HRESULT hr;
 
@@ -2492,13 +2493,13 @@ static HRESULT WINAPI MediaPosition_put_PrerollTime(IMediaPosition * iface, REFT
 
 static HRESULT WINAPI MediaPosition_put_Rate(IMediaPosition * iface, double dRate)
 {
-    IFilterGraphImpl *This = impl_from_IMediaPosition( iface );
+    struct filter_graph *This = impl_from_IMediaPosition( iface );
     return IMediaSeeking_SetRate(&This->IMediaSeeking_iface, dRate);
 }
 
 static HRESULT WINAPI MediaPosition_get_Rate(IMediaPosition * iface, double *pdRate)
 {
-    IFilterGraphImpl *This = impl_from_IMediaPosition( iface );
+    struct filter_graph *This = impl_from_IMediaPosition( iface );
     return IMediaSeeking_GetRate(&This->IMediaSeeking_iface, pdRate);
 }
 
@@ -2537,27 +2538,27 @@ static const IMediaPositionVtbl IMediaPosition_VTable =
     MediaPosition_CanSeekBackward
 };
 
-static inline IFilterGraphImpl *impl_from_IObjectWithSite(IObjectWithSite *iface)
+static struct filter_graph *impl_from_IObjectWithSite(IObjectWithSite *iface)
 {
-    return CONTAINING_RECORD(iface, IFilterGraphImpl, IObjectWithSite_iface);
+    return CONTAINING_RECORD(iface, struct filter_graph, IObjectWithSite_iface);
 }
 
 /*** IUnknown methods ***/
 static HRESULT WINAPI ObjectWithSite_QueryInterface(IObjectWithSite *iface, REFIID iid, void **out)
 {
-    IFilterGraphImpl *graph = impl_from_IObjectWithSite(iface);
+    struct filter_graph *graph = impl_from_IObjectWithSite(iface);
     return IUnknown_QueryInterface(graph->outer_unk, iid, out);
 }
 
 static ULONG WINAPI ObjectWithSite_AddRef(IObjectWithSite *iface)
 {
-    IFilterGraphImpl *graph = impl_from_IObjectWithSite(iface);
+    struct filter_graph *graph = impl_from_IObjectWithSite(iface);
     return IUnknown_AddRef(graph->outer_unk);
 }
 
 static ULONG WINAPI ObjectWithSite_Release(IObjectWithSite *iface)
 {
-    IFilterGraphImpl *graph = impl_from_IObjectWithSite(iface);
+    struct filter_graph *graph = impl_from_IObjectWithSite(iface);
     return IUnknown_Release(graph->outer_unk);
 }
 
@@ -2565,7 +2566,7 @@ static ULONG WINAPI ObjectWithSite_Release(IObjectWithSite *iface)
 
 static HRESULT WINAPI ObjectWithSite_SetSite(IObjectWithSite *iface, IUnknown *pUnkSite)
 {
-    IFilterGraphImpl *This = impl_from_IObjectWithSite( iface );
+    struct filter_graph *This = impl_from_IObjectWithSite( iface );
 
     TRACE("(%p/%p)->()\n", This, iface);
     if (This->pSite) IUnknown_Release(This->pSite);
@@ -2576,7 +2577,7 @@ static HRESULT WINAPI ObjectWithSite_SetSite(IObjectWithSite *iface, IUnknown *p
 
 static HRESULT WINAPI ObjectWithSite_GetSite(IObjectWithSite *iface, REFIID riid, PVOID *ppvSite)
 {
-    IFilterGraphImpl *This = impl_from_IObjectWithSite( iface );
+    struct filter_graph *This = impl_from_IObjectWithSite( iface );
 
     TRACE("(%p/%p)->(%s)\n", This, iface,debugstr_guid(riid));
 
@@ -2596,7 +2597,7 @@ static const IObjectWithSiteVtbl IObjectWithSite_VTable =
     ObjectWithSite_GetSite,
 };
 
-static HRESULT GetTargetInterface(IFilterGraphImpl* pGraph, REFIID riid, LPVOID* ppvObj)
+static HRESULT GetTargetInterface(struct filter_graph* pGraph, REFIID riid, LPVOID* ppvObj)
 {
     struct filter *filter;
     HRESULT hr;
@@ -2641,26 +2642,26 @@ static HRESULT GetTargetInterface(IFilterGraphImpl* pGraph, REFIID riid, LPVOID*
     return IsEqualGUID(riid, &IID_IBasicAudio) ? E_NOTIMPL : E_NOINTERFACE;
 }
 
-static inline IFilterGraphImpl *impl_from_IBasicAudio(IBasicAudio *iface)
+static struct filter_graph *impl_from_IBasicAudio(IBasicAudio *iface)
 {
-    return CONTAINING_RECORD(iface, IFilterGraphImpl, IBasicAudio_iface);
+    return CONTAINING_RECORD(iface, struct filter_graph, IBasicAudio_iface);
 }
 
 static HRESULT WINAPI BasicAudio_QueryInterface(IBasicAudio *iface, REFIID iid, void **out)
 {
-    IFilterGraphImpl *graph = impl_from_IBasicAudio(iface);
+    struct filter_graph *graph = impl_from_IBasicAudio(iface);
     return IUnknown_QueryInterface(graph->outer_unk, iid, out);
 }
 
 static ULONG WINAPI BasicAudio_AddRef(IBasicAudio *iface)
 {
-    IFilterGraphImpl *graph = impl_from_IBasicAudio(iface);
+    struct filter_graph *graph = impl_from_IBasicAudio(iface);
     return IUnknown_AddRef(graph->outer_unk);
 }
 
 static ULONG WINAPI BasicAudio_Release(IBasicAudio *iface)
 {
-    IFilterGraphImpl *graph = impl_from_IBasicAudio(iface);
+    struct filter_graph *graph = impl_from_IBasicAudio(iface);
     return IUnknown_Release(graph->outer_unk);
 }
 
@@ -2715,7 +2716,7 @@ static HRESULT WINAPI BasicAudio_Invoke(IBasicAudio *iface, DISPID id, REFIID ii
 /*** IBasicAudio methods ***/
 static HRESULT WINAPI BasicAudio_put_Volume(IBasicAudio *iface, LONG lVolume)
 {
-    IFilterGraphImpl *This = impl_from_IBasicAudio(iface);
+    struct filter_graph *This = impl_from_IBasicAudio(iface);
     IBasicAudio* pBasicAudio;
     HRESULT hr;
 
@@ -2735,7 +2736,7 @@ static HRESULT WINAPI BasicAudio_put_Volume(IBasicAudio *iface, LONG lVolume)
 
 static HRESULT WINAPI BasicAudio_get_Volume(IBasicAudio *iface, LONG *plVolume)
 {
-    IFilterGraphImpl *This = impl_from_IBasicAudio(iface);
+    struct filter_graph *This = impl_from_IBasicAudio(iface);
     IBasicAudio* pBasicAudio;
     HRESULT hr;
 
@@ -2755,7 +2756,7 @@ static HRESULT WINAPI BasicAudio_get_Volume(IBasicAudio *iface, LONG *plVolume)
 
 static HRESULT WINAPI BasicAudio_put_Balance(IBasicAudio *iface, LONG lBalance)
 {
-    IFilterGraphImpl *This = impl_from_IBasicAudio(iface);
+    struct filter_graph *This = impl_from_IBasicAudio(iface);
     IBasicAudio* pBasicAudio;
     HRESULT hr;
 
@@ -2775,7 +2776,7 @@ static HRESULT WINAPI BasicAudio_put_Balance(IBasicAudio *iface, LONG lBalance)
 
 static HRESULT WINAPI BasicAudio_get_Balance(IBasicAudio *iface, LONG *plBalance)
 {
-    IFilterGraphImpl *This = impl_from_IBasicAudio(iface);
+    struct filter_graph *This = impl_from_IBasicAudio(iface);
     IBasicAudio* pBasicAudio;
     HRESULT hr;
 
@@ -2808,26 +2809,26 @@ static const IBasicAudioVtbl IBasicAudio_VTable =
     BasicAudio_get_Balance
 };
 
-static inline IFilterGraphImpl *impl_from_IBasicVideo2(IBasicVideo2 *iface)
+static struct filter_graph *impl_from_IBasicVideo2(IBasicVideo2 *iface)
 {
-    return CONTAINING_RECORD(iface, IFilterGraphImpl, IBasicVideo2_iface);
+    return CONTAINING_RECORD(iface, struct filter_graph, IBasicVideo2_iface);
 }
 
 static HRESULT WINAPI BasicVideo_QueryInterface(IBasicVideo2 *iface, REFIID iid, void **out)
 {
-    IFilterGraphImpl *graph = impl_from_IBasicVideo2(iface);
+    struct filter_graph *graph = impl_from_IBasicVideo2(iface);
     return IUnknown_QueryInterface(graph->outer_unk, iid, out);
 }
 
 static ULONG WINAPI BasicVideo_AddRef(IBasicVideo2 *iface)
 {
-    IFilterGraphImpl *graph = impl_from_IBasicVideo2(iface);
+    struct filter_graph *graph = impl_from_IBasicVideo2(iface);
     return IUnknown_AddRef(graph->outer_unk);
 }
 
 static ULONG WINAPI BasicVideo_Release(IBasicVideo2 *iface)
 {
-    IFilterGraphImpl *graph = impl_from_IBasicVideo2(iface);
+    struct filter_graph *graph = impl_from_IBasicVideo2(iface);
     return IUnknown_Release(graph->outer_unk);
 }
 
@@ -2882,7 +2883,7 @@ static HRESULT WINAPI BasicVideo_Invoke(IBasicVideo2 *iface, DISPID id, REFIID i
 /*** IBasicVideo methods ***/
 static HRESULT WINAPI BasicVideo_get_AvgTimePerFrame(IBasicVideo2 *iface, REFTIME *pAvgTimePerFrame)
 {
-    IFilterGraphImpl *This = impl_from_IBasicVideo2(iface);
+    struct filter_graph *This = impl_from_IBasicVideo2(iface);
     IBasicVideo *pBasicVideo;
     HRESULT hr;
 
@@ -2902,7 +2903,7 @@ static HRESULT WINAPI BasicVideo_get_AvgTimePerFrame(IBasicVideo2 *iface, REFTIM
 
 static HRESULT WINAPI BasicVideo_get_BitRate(IBasicVideo2 *iface, LONG *pBitRate)
 {
-    IFilterGraphImpl *This = impl_from_IBasicVideo2(iface);
+    struct filter_graph *This = impl_from_IBasicVideo2(iface);
     IBasicVideo *pBasicVideo;
     HRESULT hr;
 
@@ -2922,7 +2923,7 @@ static HRESULT WINAPI BasicVideo_get_BitRate(IBasicVideo2 *iface, LONG *pBitRate
 
 static HRESULT WINAPI BasicVideo_get_BitErrorRate(IBasicVideo2 *iface, LONG *pBitErrorRate)
 {
-    IFilterGraphImpl *This = impl_from_IBasicVideo2(iface);
+    struct filter_graph *This = impl_from_IBasicVideo2(iface);
     IBasicVideo *pBasicVideo;
     HRESULT hr;
 
@@ -2942,7 +2943,7 @@ static HRESULT WINAPI BasicVideo_get_BitErrorRate(IBasicVideo2 *iface, LONG *pBi
 
 static HRESULT WINAPI BasicVideo_get_VideoWidth(IBasicVideo2 *iface, LONG *pVideoWidth)
 {
-    IFilterGraphImpl *This = impl_from_IBasicVideo2(iface);
+    struct filter_graph *This = impl_from_IBasicVideo2(iface);
     IBasicVideo *pBasicVideo;
     HRESULT hr;
 
@@ -2962,7 +2963,7 @@ static HRESULT WINAPI BasicVideo_get_VideoWidth(IBasicVideo2 *iface, LONG *pVide
 
 static HRESULT WINAPI BasicVideo_get_VideoHeight(IBasicVideo2 *iface, LONG *pVideoHeight)
 {
-    IFilterGraphImpl *This = impl_from_IBasicVideo2(iface);
+    struct filter_graph *This = impl_from_IBasicVideo2(iface);
     IBasicVideo *pBasicVideo;
     HRESULT hr;
 
@@ -2982,7 +2983,7 @@ static HRESULT WINAPI BasicVideo_get_VideoHeight(IBasicVideo2 *iface, LONG *pVid
 
 static HRESULT WINAPI BasicVideo_put_SourceLeft(IBasicVideo2 *iface, LONG SourceLeft)
 {
-    IFilterGraphImpl *This = impl_from_IBasicVideo2(iface);
+    struct filter_graph *This = impl_from_IBasicVideo2(iface);
     IBasicVideo *pBasicVideo;
     HRESULT hr;
 
@@ -3002,7 +3003,7 @@ static HRESULT WINAPI BasicVideo_put_SourceLeft(IBasicVideo2 *iface, LONG Source
 
 static HRESULT WINAPI BasicVideo_get_SourceLeft(IBasicVideo2 *iface, LONG *pSourceLeft)
 {
-    IFilterGraphImpl *This = impl_from_IBasicVideo2(iface);
+    struct filter_graph *This = impl_from_IBasicVideo2(iface);
     IBasicVideo *pBasicVideo;
     HRESULT hr;
 
@@ -3022,7 +3023,7 @@ static HRESULT WINAPI BasicVideo_get_SourceLeft(IBasicVideo2 *iface, LONG *pSour
 
 static HRESULT WINAPI BasicVideo_put_SourceWidth(IBasicVideo2 *iface, LONG SourceWidth)
 {
-    IFilterGraphImpl *This = impl_from_IBasicVideo2(iface);
+    struct filter_graph *This = impl_from_IBasicVideo2(iface);
     IBasicVideo *pBasicVideo;
     HRESULT hr;
 
@@ -3042,7 +3043,7 @@ static HRESULT WINAPI BasicVideo_put_SourceWidth(IBasicVideo2 *iface, LONG Sourc
 
 static HRESULT WINAPI BasicVideo_get_SourceWidth(IBasicVideo2 *iface, LONG *pSourceWidth)
 {
-    IFilterGraphImpl *This = impl_from_IBasicVideo2(iface);
+    struct filter_graph *This = impl_from_IBasicVideo2(iface);
     IBasicVideo *pBasicVideo;
     HRESULT hr;
 
@@ -3062,7 +3063,7 @@ static HRESULT WINAPI BasicVideo_get_SourceWidth(IBasicVideo2 *iface, LONG *pSou
 
 static HRESULT WINAPI BasicVideo_put_SourceTop(IBasicVideo2 *iface, LONG SourceTop)
 {
-    IFilterGraphImpl *This = impl_from_IBasicVideo2(iface);
+    struct filter_graph *This = impl_from_IBasicVideo2(iface);
     IBasicVideo *pBasicVideo;
     HRESULT hr;
 
@@ -3082,7 +3083,7 @@ static HRESULT WINAPI BasicVideo_put_SourceTop(IBasicVideo2 *iface, LONG SourceT
 
 static HRESULT WINAPI BasicVideo_get_SourceTop(IBasicVideo2 *iface, LONG *pSourceTop)
 {
-    IFilterGraphImpl *This = impl_from_IBasicVideo2(iface);
+    struct filter_graph *This = impl_from_IBasicVideo2(iface);
     IBasicVideo *pBasicVideo;
     HRESULT hr;
 
@@ -3102,7 +3103,7 @@ static HRESULT WINAPI BasicVideo_get_SourceTop(IBasicVideo2 *iface, LONG *pSourc
 
 static HRESULT WINAPI BasicVideo_put_SourceHeight(IBasicVideo2 *iface, LONG SourceHeight)
 {
-    IFilterGraphImpl *This = impl_from_IBasicVideo2(iface);
+    struct filter_graph *This = impl_from_IBasicVideo2(iface);
     IBasicVideo *pBasicVideo;
     HRESULT hr;
 
@@ -3122,7 +3123,7 @@ static HRESULT WINAPI BasicVideo_put_SourceHeight(IBasicVideo2 *iface, LONG Sour
 
 static HRESULT WINAPI BasicVideo_get_SourceHeight(IBasicVideo2 *iface, LONG *pSourceHeight)
 {
-    IFilterGraphImpl *This = impl_from_IBasicVideo2(iface);
+    struct filter_graph *This = impl_from_IBasicVideo2(iface);
     IBasicVideo *pBasicVideo;
     HRESULT hr;
 
@@ -3142,7 +3143,7 @@ static HRESULT WINAPI BasicVideo_get_SourceHeight(IBasicVideo2 *iface, LONG *pSo
 
 static HRESULT WINAPI BasicVideo_put_DestinationLeft(IBasicVideo2 *iface, LONG DestinationLeft)
 {
-    IFilterGraphImpl *This = impl_from_IBasicVideo2(iface);
+    struct filter_graph *This = impl_from_IBasicVideo2(iface);
     IBasicVideo *pBasicVideo;
     HRESULT hr;
 
@@ -3162,7 +3163,7 @@ static HRESULT WINAPI BasicVideo_put_DestinationLeft(IBasicVideo2 *iface, LONG D
 
 static HRESULT WINAPI BasicVideo_get_DestinationLeft(IBasicVideo2 *iface, LONG *pDestinationLeft)
 {
-    IFilterGraphImpl *This = impl_from_IBasicVideo2(iface);
+    struct filter_graph *This = impl_from_IBasicVideo2(iface);
     IBasicVideo *pBasicVideo;
     HRESULT hr;
 
@@ -3182,7 +3183,7 @@ static HRESULT WINAPI BasicVideo_get_DestinationLeft(IBasicVideo2 *iface, LONG *
 
 static HRESULT WINAPI BasicVideo_put_DestinationWidth(IBasicVideo2 *iface, LONG DestinationWidth)
 {
-    IFilterGraphImpl *This = impl_from_IBasicVideo2(iface);
+    struct filter_graph *This = impl_from_IBasicVideo2(iface);
     IBasicVideo *pBasicVideo;
     HRESULT hr;
 
@@ -3202,7 +3203,7 @@ static HRESULT WINAPI BasicVideo_put_DestinationWidth(IBasicVideo2 *iface, LONG 
 
 static HRESULT WINAPI BasicVideo_get_DestinationWidth(IBasicVideo2 *iface, LONG *pDestinationWidth)
 {
-    IFilterGraphImpl *This = impl_from_IBasicVideo2(iface);
+    struct filter_graph *This = impl_from_IBasicVideo2(iface);
     IBasicVideo *pBasicVideo;
     HRESULT hr;
 
@@ -3222,7 +3223,7 @@ static HRESULT WINAPI BasicVideo_get_DestinationWidth(IBasicVideo2 *iface, LONG 
 
 static HRESULT WINAPI BasicVideo_put_DestinationTop(IBasicVideo2 *iface, LONG DestinationTop)
 {
-    IFilterGraphImpl *This = impl_from_IBasicVideo2(iface);
+    struct filter_graph *This = impl_from_IBasicVideo2(iface);
     IBasicVideo *pBasicVideo;
     HRESULT hr;
 
@@ -3242,7 +3243,7 @@ static HRESULT WINAPI BasicVideo_put_DestinationTop(IBasicVideo2 *iface, LONG De
 
 static HRESULT WINAPI BasicVideo_get_DestinationTop(IBasicVideo2 *iface, LONG *pDestinationTop)
 {
-    IFilterGraphImpl *This = impl_from_IBasicVideo2(iface);
+    struct filter_graph *This = impl_from_IBasicVideo2(iface);
     IBasicVideo *pBasicVideo;
     HRESULT hr;
 
@@ -3262,7 +3263,7 @@ static HRESULT WINAPI BasicVideo_get_DestinationTop(IBasicVideo2 *iface, LONG *p
 
 static HRESULT WINAPI BasicVideo_put_DestinationHeight(IBasicVideo2 *iface, LONG DestinationHeight)
 {
-    IFilterGraphImpl *This = impl_from_IBasicVideo2(iface);
+    struct filter_graph *This = impl_from_IBasicVideo2(iface);
     IBasicVideo *pBasicVideo;
     HRESULT hr;
 
@@ -3283,7 +3284,7 @@ static HRESULT WINAPI BasicVideo_put_DestinationHeight(IBasicVideo2 *iface, LONG
 static HRESULT WINAPI BasicVideo_get_DestinationHeight(IBasicVideo2 *iface,
         LONG *pDestinationHeight)
 {
-    IFilterGraphImpl *This = impl_from_IBasicVideo2(iface);
+    struct filter_graph *This = impl_from_IBasicVideo2(iface);
     IBasicVideo *pBasicVideo;
     HRESULT hr;
 
@@ -3304,7 +3305,7 @@ static HRESULT WINAPI BasicVideo_get_DestinationHeight(IBasicVideo2 *iface,
 static HRESULT WINAPI BasicVideo_SetSourcePosition(IBasicVideo2 *iface, LONG Left, LONG Top,
         LONG Width, LONG Height)
 {
-    IFilterGraphImpl *This = impl_from_IBasicVideo2(iface);
+    struct filter_graph *This = impl_from_IBasicVideo2(iface);
     IBasicVideo *pBasicVideo;
     HRESULT hr;
 
@@ -3325,7 +3326,7 @@ static HRESULT WINAPI BasicVideo_SetSourcePosition(IBasicVideo2 *iface, LONG Lef
 static HRESULT WINAPI BasicVideo_GetSourcePosition(IBasicVideo2 *iface, LONG *pLeft, LONG *pTop,
         LONG *pWidth, LONG *pHeight)
 {
-    IFilterGraphImpl *This = impl_from_IBasicVideo2(iface);
+    struct filter_graph *This = impl_from_IBasicVideo2(iface);
     IBasicVideo *pBasicVideo;
     HRESULT hr;
 
@@ -3345,7 +3346,7 @@ static HRESULT WINAPI BasicVideo_GetSourcePosition(IBasicVideo2 *iface, LONG *pL
 
 static HRESULT WINAPI BasicVideo_SetDefaultSourcePosition(IBasicVideo2 *iface)
 {
-    IFilterGraphImpl *This = impl_from_IBasicVideo2(iface);
+    struct filter_graph *This = impl_from_IBasicVideo2(iface);
     IBasicVideo *pBasicVideo;
     HRESULT hr;
 
@@ -3366,7 +3367,7 @@ static HRESULT WINAPI BasicVideo_SetDefaultSourcePosition(IBasicVideo2 *iface)
 static HRESULT WINAPI BasicVideo_SetDestinationPosition(IBasicVideo2 *iface, LONG Left, LONG Top,
         LONG Width, LONG Height)
 {
-    IFilterGraphImpl *This = impl_from_IBasicVideo2(iface);
+    struct filter_graph *This = impl_from_IBasicVideo2(iface);
     IBasicVideo *pBasicVideo;
     HRESULT hr;
 
@@ -3387,7 +3388,7 @@ static HRESULT WINAPI BasicVideo_SetDestinationPosition(IBasicVideo2 *iface, LON
 static HRESULT WINAPI BasicVideo_GetDestinationPosition(IBasicVideo2 *iface, LONG *pLeft,
         LONG *pTop, LONG *pWidth, LONG *pHeight)
 {
-    IFilterGraphImpl *This = impl_from_IBasicVideo2(iface);
+    struct filter_graph *This = impl_from_IBasicVideo2(iface);
     IBasicVideo *pBasicVideo;
     HRESULT hr;
 
@@ -3407,7 +3408,7 @@ static HRESULT WINAPI BasicVideo_GetDestinationPosition(IBasicVideo2 *iface, LON
 
 static HRESULT WINAPI BasicVideo_SetDefaultDestinationPosition(IBasicVideo2 *iface)
 {
-    IFilterGraphImpl *This = impl_from_IBasicVideo2(iface);
+    struct filter_graph *This = impl_from_IBasicVideo2(iface);
     IBasicVideo *pBasicVideo;
     HRESULT hr;
 
@@ -3427,7 +3428,7 @@ static HRESULT WINAPI BasicVideo_SetDefaultDestinationPosition(IBasicVideo2 *ifa
 
 static HRESULT WINAPI BasicVideo_GetVideoSize(IBasicVideo2 *iface, LONG *pWidth, LONG *pHeight)
 {
-    IFilterGraphImpl *This = impl_from_IBasicVideo2(iface);
+    struct filter_graph *This = impl_from_IBasicVideo2(iface);
     IBasicVideo *pBasicVideo;
     HRESULT hr;
 
@@ -3448,7 +3449,7 @@ static HRESULT WINAPI BasicVideo_GetVideoSize(IBasicVideo2 *iface, LONG *pWidth,
 static HRESULT WINAPI BasicVideo_GetVideoPaletteEntries(IBasicVideo2 *iface, LONG StartIndex,
         LONG Entries, LONG *pRetrieved, LONG *pPalette)
 {
-    IFilterGraphImpl *This = impl_from_IBasicVideo2(iface);
+    struct filter_graph *This = impl_from_IBasicVideo2(iface);
     IBasicVideo *pBasicVideo;
     HRESULT hr;
 
@@ -3469,7 +3470,7 @@ static HRESULT WINAPI BasicVideo_GetVideoPaletteEntries(IBasicVideo2 *iface, LON
 static HRESULT WINAPI BasicVideo_GetCurrentImage(IBasicVideo2 *iface, LONG *pBufferSize,
         LONG *pDIBImage)
 {
-    IFilterGraphImpl *This = impl_from_IBasicVideo2(iface);
+    struct filter_graph *This = impl_from_IBasicVideo2(iface);
     IBasicVideo *pBasicVideo;
     HRESULT hr;
 
@@ -3489,7 +3490,7 @@ static HRESULT WINAPI BasicVideo_GetCurrentImage(IBasicVideo2 *iface, LONG *pBuf
 
 static HRESULT WINAPI BasicVideo_IsUsingDefaultSource(IBasicVideo2 *iface)
 {
-    IFilterGraphImpl *This = impl_from_IBasicVideo2(iface);
+    struct filter_graph *This = impl_from_IBasicVideo2(iface);
     IBasicVideo *pBasicVideo;
     HRESULT hr;
 
@@ -3509,7 +3510,7 @@ static HRESULT WINAPI BasicVideo_IsUsingDefaultSource(IBasicVideo2 *iface)
 
 static HRESULT WINAPI BasicVideo_IsUsingDefaultDestination(IBasicVideo2 *iface)
 {
-    IFilterGraphImpl *This = impl_from_IBasicVideo2(iface);
+    struct filter_graph *This = impl_from_IBasicVideo2(iface);
     IBasicVideo *pBasicVideo;
     HRESULT hr;
 
@@ -3530,7 +3531,7 @@ static HRESULT WINAPI BasicVideo_IsUsingDefaultDestination(IBasicVideo2 *iface)
 static HRESULT WINAPI BasicVideo2_GetPreferredAspectRatio(IBasicVideo2 *iface, LONG *plAspectX,
         LONG *plAspectY)
 {
-    IFilterGraphImpl *This = impl_from_IBasicVideo2(iface);
+    struct filter_graph *This = impl_from_IBasicVideo2(iface);
     IBasicVideo2 *pBasicVideo2;
     HRESULT hr;
 
@@ -3592,26 +3593,26 @@ static const IBasicVideo2Vtbl IBasicVideo_VTable =
     BasicVideo2_GetPreferredAspectRatio
 };
 
-static inline IFilterGraphImpl *impl_from_IVideoWindow(IVideoWindow *iface)
+static struct filter_graph *impl_from_IVideoWindow(IVideoWindow *iface)
 {
-    return CONTAINING_RECORD(iface, IFilterGraphImpl, IVideoWindow_iface);
+    return CONTAINING_RECORD(iface, struct filter_graph, IVideoWindow_iface);
 }
 
 static HRESULT WINAPI VideoWindow_QueryInterface(IVideoWindow *iface, REFIID iid, void **out)
 {
-    IFilterGraphImpl *graph = impl_from_IVideoWindow(iface);
+    struct filter_graph *graph = impl_from_IVideoWindow(iface);
     return IUnknown_QueryInterface(graph->outer_unk, iid, out);
 }
 
 static ULONG WINAPI VideoWindow_AddRef(IVideoWindow *iface)
 {
-    IFilterGraphImpl *graph = impl_from_IVideoWindow(iface);
+    struct filter_graph *graph = impl_from_IVideoWindow(iface);
     return IUnknown_AddRef(graph->outer_unk);
 }
 
 static ULONG WINAPI VideoWindow_Release(IVideoWindow *iface)
 {
-    IFilterGraphImpl *graph = impl_from_IVideoWindow(iface);
+    struct filter_graph *graph = impl_from_IVideoWindow(iface);
     return IUnknown_Release(graph->outer_unk);
 }
 
@@ -3666,7 +3667,7 @@ static HRESULT WINAPI VideoWindow_Invoke(IVideoWindow *iface, DISPID id, REFIID 
 /*** IVideoWindow methods ***/
 static HRESULT WINAPI VideoWindow_put_Caption(IVideoWindow *iface, BSTR strCaption)
 {
-    IFilterGraphImpl *This = impl_from_IVideoWindow(iface);
+    struct filter_graph *This = impl_from_IVideoWindow(iface);
     IVideoWindow *pVideoWindow;
     HRESULT hr;
 
@@ -3686,7 +3687,7 @@ static HRESULT WINAPI VideoWindow_put_Caption(IVideoWindow *iface, BSTR strCapti
 
 static HRESULT WINAPI VideoWindow_get_Caption(IVideoWindow *iface, BSTR *strCaption)
 {
-    IFilterGraphImpl *This = impl_from_IVideoWindow(iface);
+    struct filter_graph *This = impl_from_IVideoWindow(iface);
     IVideoWindow *pVideoWindow;
     HRESULT hr;
 
@@ -3706,7 +3707,7 @@ static HRESULT WINAPI VideoWindow_get_Caption(IVideoWindow *iface, BSTR *strCapt
 
 static HRESULT WINAPI VideoWindow_put_WindowStyle(IVideoWindow *iface, LONG WindowStyle)
 {
-    IFilterGraphImpl *This = impl_from_IVideoWindow(iface);
+    struct filter_graph *This = impl_from_IVideoWindow(iface);
     IVideoWindow *pVideoWindow;
     HRESULT hr;
 
@@ -3726,7 +3727,7 @@ static HRESULT WINAPI VideoWindow_put_WindowStyle(IVideoWindow *iface, LONG Wind
 
 static HRESULT WINAPI VideoWindow_get_WindowStyle(IVideoWindow *iface, LONG *WindowStyle)
 {
-    IFilterGraphImpl *This = impl_from_IVideoWindow(iface);
+    struct filter_graph *This = impl_from_IVideoWindow(iface);
     IVideoWindow *pVideoWindow;
     HRESULT hr;
 
@@ -3746,7 +3747,7 @@ static HRESULT WINAPI VideoWindow_get_WindowStyle(IVideoWindow *iface, LONG *Win
 
 static HRESULT WINAPI VideoWindow_put_WindowStyleEx(IVideoWindow *iface, LONG WindowStyleEx)
 {
-    IFilterGraphImpl *This = impl_from_IVideoWindow(iface);
+    struct filter_graph *This = impl_from_IVideoWindow(iface);
     IVideoWindow *pVideoWindow;
     HRESULT hr;
 
@@ -3766,7 +3767,7 @@ static HRESULT WINAPI VideoWindow_put_WindowStyleEx(IVideoWindow *iface, LONG Wi
 
 static HRESULT WINAPI VideoWindow_get_WindowStyleEx(IVideoWindow *iface, LONG *WindowStyleEx)
 {
-    IFilterGraphImpl *This = impl_from_IVideoWindow(iface);
+    struct filter_graph *This = impl_from_IVideoWindow(iface);
     IVideoWindow *pVideoWindow;
     HRESULT hr;
 
@@ -3786,7 +3787,7 @@ static HRESULT WINAPI VideoWindow_get_WindowStyleEx(IVideoWindow *iface, LONG *W
 
 static HRESULT WINAPI VideoWindow_put_AutoShow(IVideoWindow *iface, LONG AutoShow)
 {
-    IFilterGraphImpl *This = impl_from_IVideoWindow(iface);
+    struct filter_graph *This = impl_from_IVideoWindow(iface);
     IVideoWindow *pVideoWindow;
     HRESULT hr;
 
@@ -3806,7 +3807,7 @@ static HRESULT WINAPI VideoWindow_put_AutoShow(IVideoWindow *iface, LONG AutoSho
 
 static HRESULT WINAPI VideoWindow_get_AutoShow(IVideoWindow *iface, LONG *AutoShow)
 {
-    IFilterGraphImpl *This = impl_from_IVideoWindow(iface);
+    struct filter_graph *This = impl_from_IVideoWindow(iface);
     IVideoWindow *pVideoWindow;
     HRESULT hr;
 
@@ -3826,7 +3827,7 @@ static HRESULT WINAPI VideoWindow_get_AutoShow(IVideoWindow *iface, LONG *AutoSh
 
 static HRESULT WINAPI VideoWindow_put_WindowState(IVideoWindow *iface, LONG WindowState)
 {
-    IFilterGraphImpl *This = impl_from_IVideoWindow(iface);
+    struct filter_graph *This = impl_from_IVideoWindow(iface);
     IVideoWindow *pVideoWindow;
     HRESULT hr;
 
@@ -3846,7 +3847,7 @@ static HRESULT WINAPI VideoWindow_put_WindowState(IVideoWindow *iface, LONG Wind
 
 static HRESULT WINAPI VideoWindow_get_WindowState(IVideoWindow *iface, LONG *WindowState)
 {
-    IFilterGraphImpl *This = impl_from_IVideoWindow(iface);
+    struct filter_graph *This = impl_from_IVideoWindow(iface);
     IVideoWindow *pVideoWindow;
     HRESULT hr;
 
@@ -3866,7 +3867,7 @@ static HRESULT WINAPI VideoWindow_get_WindowState(IVideoWindow *iface, LONG *Win
 
 static HRESULT WINAPI VideoWindow_put_BackgroundPalette(IVideoWindow *iface, LONG BackgroundPalette)
 {
-    IFilterGraphImpl *This = impl_from_IVideoWindow(iface);
+    struct filter_graph *This = impl_from_IVideoWindow(iface);
     IVideoWindow *pVideoWindow;
     HRESULT hr;
 
@@ -3887,7 +3888,7 @@ static HRESULT WINAPI VideoWindow_put_BackgroundPalette(IVideoWindow *iface, LON
 static HRESULT WINAPI VideoWindow_get_BackgroundPalette(IVideoWindow *iface,
         LONG *pBackgroundPalette)
 {
-    IFilterGraphImpl *This = impl_from_IVideoWindow(iface);
+    struct filter_graph *This = impl_from_IVideoWindow(iface);
     IVideoWindow *pVideoWindow;
     HRESULT hr;
 
@@ -3907,7 +3908,7 @@ static HRESULT WINAPI VideoWindow_get_BackgroundPalette(IVideoWindow *iface,
 
 static HRESULT WINAPI VideoWindow_put_Visible(IVideoWindow *iface, LONG Visible)
 {
-    IFilterGraphImpl *This = impl_from_IVideoWindow(iface);
+    struct filter_graph *This = impl_from_IVideoWindow(iface);
     IVideoWindow *pVideoWindow;
     HRESULT hr;
 
@@ -3927,7 +3928,7 @@ static HRESULT WINAPI VideoWindow_put_Visible(IVideoWindow *iface, LONG Visible)
 
 static HRESULT WINAPI VideoWindow_get_Visible(IVideoWindow *iface, LONG *pVisible)
 {
-    IFilterGraphImpl *This = impl_from_IVideoWindow(iface);
+    struct filter_graph *This = impl_from_IVideoWindow(iface);
     IVideoWindow *pVideoWindow;
     HRESULT hr;
 
@@ -3947,7 +3948,7 @@ static HRESULT WINAPI VideoWindow_get_Visible(IVideoWindow *iface, LONG *pVisibl
 
 static HRESULT WINAPI VideoWindow_put_Left(IVideoWindow *iface, LONG Left)
 {
-    IFilterGraphImpl *This = impl_from_IVideoWindow(iface);
+    struct filter_graph *This = impl_from_IVideoWindow(iface);
     IVideoWindow *pVideoWindow;
     HRESULT hr;
 
@@ -3967,7 +3968,7 @@ static HRESULT WINAPI VideoWindow_put_Left(IVideoWindow *iface, LONG Left)
 
 static HRESULT WINAPI VideoWindow_get_Left(IVideoWindow *iface, LONG *pLeft)
 {
-    IFilterGraphImpl *This = impl_from_IVideoWindow(iface);
+    struct filter_graph *This = impl_from_IVideoWindow(iface);
     IVideoWindow *pVideoWindow;
     HRESULT hr;
 
@@ -3987,7 +3988,7 @@ static HRESULT WINAPI VideoWindow_get_Left(IVideoWindow *iface, LONG *pLeft)
 
 static HRESULT WINAPI VideoWindow_put_Width(IVideoWindow *iface, LONG Width)
 {
-    IFilterGraphImpl *This = impl_from_IVideoWindow(iface);
+    struct filter_graph *This = impl_from_IVideoWindow(iface);
     IVideoWindow *pVideoWindow;
     HRESULT hr;
 
@@ -4007,7 +4008,7 @@ static HRESULT WINAPI VideoWindow_put_Width(IVideoWindow *iface, LONG Width)
 
 static HRESULT WINAPI VideoWindow_get_Width(IVideoWindow *iface, LONG *pWidth)
 {
-    IFilterGraphImpl *This = impl_from_IVideoWindow(iface);
+    struct filter_graph *This = impl_from_IVideoWindow(iface);
     IVideoWindow *pVideoWindow;
     HRESULT hr;
 
@@ -4027,7 +4028,7 @@ static HRESULT WINAPI VideoWindow_get_Width(IVideoWindow *iface, LONG *pWidth)
 
 static HRESULT WINAPI VideoWindow_put_Top(IVideoWindow *iface, LONG Top)
 {
-    IFilterGraphImpl *This = impl_from_IVideoWindow(iface);
+    struct filter_graph *This = impl_from_IVideoWindow(iface);
     IVideoWindow *pVideoWindow;
     HRESULT hr;
 
@@ -4047,7 +4048,7 @@ static HRESULT WINAPI VideoWindow_put_Top(IVideoWindow *iface, LONG Top)
 
 static HRESULT WINAPI VideoWindow_get_Top(IVideoWindow *iface, LONG *pTop)
 {
-    IFilterGraphImpl *This = impl_from_IVideoWindow(iface);
+    struct filter_graph *This = impl_from_IVideoWindow(iface);
     IVideoWindow *pVideoWindow;
     HRESULT hr;
 
@@ -4067,7 +4068,7 @@ static HRESULT WINAPI VideoWindow_get_Top(IVideoWindow *iface, LONG *pTop)
 
 static HRESULT WINAPI VideoWindow_put_Height(IVideoWindow *iface, LONG Height)
 {
-    IFilterGraphImpl *This = impl_from_IVideoWindow(iface);
+    struct filter_graph *This = impl_from_IVideoWindow(iface);
     IVideoWindow *pVideoWindow;
     HRESULT hr;
 
@@ -4087,7 +4088,7 @@ static HRESULT WINAPI VideoWindow_put_Height(IVideoWindow *iface, LONG Height)
 
 static HRESULT WINAPI VideoWindow_get_Height(IVideoWindow *iface, LONG *pHeight)
 {
-    IFilterGraphImpl *This = impl_from_IVideoWindow(iface);
+    struct filter_graph *This = impl_from_IVideoWindow(iface);
     IVideoWindow *pVideoWindow;
     HRESULT hr;
 
@@ -4107,7 +4108,7 @@ static HRESULT WINAPI VideoWindow_get_Height(IVideoWindow *iface, LONG *pHeight)
 
 static HRESULT WINAPI VideoWindow_put_Owner(IVideoWindow *iface, OAHWND Owner)
 {
-    IFilterGraphImpl *This = impl_from_IVideoWindow(iface);
+    struct filter_graph *This = impl_from_IVideoWindow(iface);
     IVideoWindow *pVideoWindow;
     HRESULT hr;
 
@@ -4127,7 +4128,7 @@ static HRESULT WINAPI VideoWindow_put_Owner(IVideoWindow *iface, OAHWND Owner)
 
 static HRESULT WINAPI VideoWindow_get_Owner(IVideoWindow *iface, OAHWND *Owner)
 {
-    IFilterGraphImpl *This = impl_from_IVideoWindow(iface);
+    struct filter_graph *This = impl_from_IVideoWindow(iface);
     IVideoWindow *pVideoWindow;
     HRESULT hr;
 
@@ -4147,7 +4148,7 @@ static HRESULT WINAPI VideoWindow_get_Owner(IVideoWindow *iface, OAHWND *Owner)
 
 static HRESULT WINAPI VideoWindow_put_MessageDrain(IVideoWindow *iface, OAHWND Drain)
 {
-    IFilterGraphImpl *This = impl_from_IVideoWindow(iface);
+    struct filter_graph *This = impl_from_IVideoWindow(iface);
     IVideoWindow *pVideoWindow;
     HRESULT hr;
 
@@ -4167,7 +4168,7 @@ static HRESULT WINAPI VideoWindow_put_MessageDrain(IVideoWindow *iface, OAHWND D
 
 static HRESULT WINAPI VideoWindow_get_MessageDrain(IVideoWindow *iface, OAHWND *Drain)
 {
-    IFilterGraphImpl *This = impl_from_IVideoWindow(iface);
+    struct filter_graph *This = impl_from_IVideoWindow(iface);
     IVideoWindow *pVideoWindow;
     HRESULT hr;
 
@@ -4187,7 +4188,7 @@ static HRESULT WINAPI VideoWindow_get_MessageDrain(IVideoWindow *iface, OAHWND *
 
 static HRESULT WINAPI VideoWindow_get_BorderColor(IVideoWindow *iface, LONG *Color)
 {
-    IFilterGraphImpl *This = impl_from_IVideoWindow(iface);
+    struct filter_graph *This = impl_from_IVideoWindow(iface);
     IVideoWindow *pVideoWindow;
     HRESULT hr;
 
@@ -4207,7 +4208,7 @@ static HRESULT WINAPI VideoWindow_get_BorderColor(IVideoWindow *iface, LONG *Col
 
 static HRESULT WINAPI VideoWindow_put_BorderColor(IVideoWindow *iface, LONG Color)
 {
-    IFilterGraphImpl *This = impl_from_IVideoWindow(iface);
+    struct filter_graph *This = impl_from_IVideoWindow(iface);
     IVideoWindow *pVideoWindow;
     HRESULT hr;
 
@@ -4227,7 +4228,7 @@ static HRESULT WINAPI VideoWindow_put_BorderColor(IVideoWindow *iface, LONG Colo
 
 static HRESULT WINAPI VideoWindow_get_FullScreenMode(IVideoWindow *iface, LONG *FullScreenMode)
 {
-    IFilterGraphImpl *This = impl_from_IVideoWindow(iface);
+    struct filter_graph *This = impl_from_IVideoWindow(iface);
     IVideoWindow *pVideoWindow;
     HRESULT hr;
 
@@ -4247,7 +4248,7 @@ static HRESULT WINAPI VideoWindow_get_FullScreenMode(IVideoWindow *iface, LONG *
 
 static HRESULT WINAPI VideoWindow_put_FullScreenMode(IVideoWindow *iface, LONG FullScreenMode)
 {
-    IFilterGraphImpl *This = impl_from_IVideoWindow(iface);
+    struct filter_graph *This = impl_from_IVideoWindow(iface);
     IVideoWindow *pVideoWindow;
     HRESULT hr;
 
@@ -4267,7 +4268,7 @@ static HRESULT WINAPI VideoWindow_put_FullScreenMode(IVideoWindow *iface, LONG F
 
 static HRESULT WINAPI VideoWindow_SetWindowForeground(IVideoWindow *iface, LONG Focus)
 {
-    IFilterGraphImpl *This = impl_from_IVideoWindow(iface);
+    struct filter_graph *This = impl_from_IVideoWindow(iface);
     IVideoWindow *pVideoWindow;
     HRESULT hr;
 
@@ -4288,7 +4289,7 @@ static HRESULT WINAPI VideoWindow_SetWindowForeground(IVideoWindow *iface, LONG 
 static HRESULT WINAPI VideoWindow_NotifyOwnerMessage(IVideoWindow *iface, OAHWND hwnd, LONG uMsg,
         LONG_PTR wParam, LONG_PTR lParam)
 {
-    IFilterGraphImpl *This = impl_from_IVideoWindow(iface);
+    struct filter_graph *This = impl_from_IVideoWindow(iface);
     IVideoWindow *pVideoWindow;
     HRESULT hr;
 
@@ -4309,7 +4310,7 @@ static HRESULT WINAPI VideoWindow_NotifyOwnerMessage(IVideoWindow *iface, OAHWND
 static HRESULT WINAPI VideoWindow_SetWindowPosition(IVideoWindow *iface, LONG Left, LONG Top,
         LONG Width, LONG Height)
 {
-    IFilterGraphImpl *This = impl_from_IVideoWindow(iface);
+    struct filter_graph *This = impl_from_IVideoWindow(iface);
     IVideoWindow *pVideoWindow;
     HRESULT hr;
 
@@ -4330,7 +4331,7 @@ static HRESULT WINAPI VideoWindow_SetWindowPosition(IVideoWindow *iface, LONG Le
 static HRESULT WINAPI VideoWindow_GetWindowPosition(IVideoWindow *iface, LONG *pLeft, LONG *pTop,
         LONG *pWidth, LONG *pHeight)
 {
-    IFilterGraphImpl *This = impl_from_IVideoWindow(iface);
+    struct filter_graph *This = impl_from_IVideoWindow(iface);
     IVideoWindow *pVideoWindow;
     HRESULT hr;
 
@@ -4351,7 +4352,7 @@ static HRESULT WINAPI VideoWindow_GetWindowPosition(IVideoWindow *iface, LONG *p
 static HRESULT WINAPI VideoWindow_GetMinIdealImageSize(IVideoWindow *iface, LONG *pWidth,
         LONG *pHeight)
 {
-    IFilterGraphImpl *This = impl_from_IVideoWindow(iface);
+    struct filter_graph *This = impl_from_IVideoWindow(iface);
     IVideoWindow *pVideoWindow;
     HRESULT hr;
 
@@ -4372,7 +4373,7 @@ static HRESULT WINAPI VideoWindow_GetMinIdealImageSize(IVideoWindow *iface, LONG
 static HRESULT WINAPI VideoWindow_GetMaxIdealImageSize(IVideoWindow *iface, LONG *pWidth,
         LONG *pHeight)
 {
-    IFilterGraphImpl *This = impl_from_IVideoWindow(iface);
+    struct filter_graph *This = impl_from_IVideoWindow(iface);
     IVideoWindow *pVideoWindow;
     HRESULT hr;
 
@@ -4393,7 +4394,7 @@ static HRESULT WINAPI VideoWindow_GetMaxIdealImageSize(IVideoWindow *iface, LONG
 static HRESULT WINAPI VideoWindow_GetRestorePosition(IVideoWindow *iface, LONG *pLeft, LONG *pTop,
         LONG *pWidth, LONG *pHeight)
 {
-    IFilterGraphImpl *This = impl_from_IVideoWindow(iface);
+    struct filter_graph *This = impl_from_IVideoWindow(iface);
     IVideoWindow *pVideoWindow;
     HRESULT hr;
 
@@ -4413,7 +4414,7 @@ static HRESULT WINAPI VideoWindow_GetRestorePosition(IVideoWindow *iface, LONG *
 
 static HRESULT WINAPI VideoWindow_HideCursor(IVideoWindow *iface, LONG HideCursor)
 {
-    IFilterGraphImpl *This = impl_from_IVideoWindow(iface);
+    struct filter_graph *This = impl_from_IVideoWindow(iface);
     IVideoWindow *pVideoWindow;
     HRESULT hr;
 
@@ -4433,7 +4434,7 @@ static HRESULT WINAPI VideoWindow_HideCursor(IVideoWindow *iface, LONG HideCurso
 
 static HRESULT WINAPI VideoWindow_IsCursorHidden(IVideoWindow *iface, LONG *CursorHidden)
 {
-    IFilterGraphImpl *This = impl_from_IVideoWindow(iface);
+    struct filter_graph *This = impl_from_IVideoWindow(iface);
     IVideoWindow *pVideoWindow;
     HRESULT hr;
 
@@ -4502,33 +4503,33 @@ static const IVideoWindowVtbl IVideoWindow_VTable =
     VideoWindow_IsCursorHidden
 };
 
-static inline IFilterGraphImpl *impl_from_IMediaEventEx(IMediaEventEx *iface)
+static struct filter_graph *impl_from_IMediaEventEx(IMediaEventEx *iface)
 {
-    return CONTAINING_RECORD(iface, IFilterGraphImpl, IMediaEventEx_iface);
+    return CONTAINING_RECORD(iface, struct filter_graph, IMediaEventEx_iface);
 }
 
 static HRESULT WINAPI MediaEvent_QueryInterface(IMediaEventEx *iface, REFIID iid, void **out)
 {
-    IFilterGraphImpl *graph = impl_from_IMediaEventEx(iface);
+    struct filter_graph *graph = impl_from_IMediaEventEx(iface);
     return IUnknown_QueryInterface(graph->outer_unk, iid, out);
 }
 
 static ULONG WINAPI MediaEvent_AddRef(IMediaEventEx *iface)
 {
-    IFilterGraphImpl *graph = impl_from_IMediaEventEx(iface);
+    struct filter_graph *graph = impl_from_IMediaEventEx(iface);
     return IUnknown_AddRef(graph->outer_unk);
 }
 
 static ULONG WINAPI MediaEvent_Release(IMediaEventEx *iface)
 {
-    IFilterGraphImpl *graph = impl_from_IMediaEventEx(iface);
+    struct filter_graph *graph = impl_from_IMediaEventEx(iface);
     return IUnknown_Release(graph->outer_unk);
 }
 
 /*** IDispatch methods ***/
 static HRESULT WINAPI MediaEvent_GetTypeInfoCount(IMediaEventEx *iface, UINT *pctinfo)
 {
-    IFilterGraphImpl *This = impl_from_IMediaEventEx(iface);
+    struct filter_graph *This = impl_from_IMediaEventEx(iface);
 
     TRACE("(%p/%p)->(%p): stub !!!\n", This, iface, pctinfo);
 
@@ -4538,7 +4539,7 @@ static HRESULT WINAPI MediaEvent_GetTypeInfoCount(IMediaEventEx *iface, UINT *pc
 static HRESULT WINAPI MediaEvent_GetTypeInfo(IMediaEventEx *iface, UINT iTInfo, LCID lcid,
         ITypeInfo **ppTInfo)
 {
-    IFilterGraphImpl *This = impl_from_IMediaEventEx(iface);
+    struct filter_graph *This = impl_from_IMediaEventEx(iface);
 
     TRACE("(%p/%p)->(%d, %d, %p): stub !!!\n", This, iface, iTInfo, lcid, ppTInfo);
 
@@ -4548,7 +4549,7 @@ static HRESULT WINAPI MediaEvent_GetTypeInfo(IMediaEventEx *iface, UINT iTInfo, 
 static HRESULT WINAPI MediaEvent_GetIDsOfNames(IMediaEventEx *iface, REFIID riid,
         LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
 {
-    IFilterGraphImpl *This = impl_from_IMediaEventEx(iface);
+    struct filter_graph *This = impl_from_IMediaEventEx(iface);
 
     TRACE("(%p/%p)->(%s, %p, %d, %d, %p): stub !!!\n", This, iface, debugstr_guid(riid), rgszNames,
             cNames, lcid, rgDispId);
@@ -4560,7 +4561,7 @@ static HRESULT WINAPI MediaEvent_Invoke(IMediaEventEx *iface, DISPID dispIdMembe
         LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExepInfo,
         UINT *puArgErr)
 {
-    IFilterGraphImpl *This = impl_from_IMediaEventEx(iface);
+    struct filter_graph *This = impl_from_IMediaEventEx(iface);
 
     TRACE("(%p/%p)->(%d, %s, %d, %04x, %p, %p, %p, %p): stub !!!\n", This, iface, dispIdMember,
             debugstr_guid(riid), lcid, wFlags, pDispParams, pVarResult, pExepInfo, puArgErr);
@@ -4571,7 +4572,7 @@ static HRESULT WINAPI MediaEvent_Invoke(IMediaEventEx *iface, DISPID dispIdMembe
 /*** IMediaEvent methods ***/
 static HRESULT WINAPI MediaEvent_GetEventHandle(IMediaEventEx *iface, OAEVENT *hEvent)
 {
-    IFilterGraphImpl *This = impl_from_IMediaEventEx(iface);
+    struct filter_graph *This = impl_from_IMediaEventEx(iface);
 
     TRACE("(%p/%p)->(%p)\n", This, iface, hEvent);
 
@@ -4583,7 +4584,7 @@ static HRESULT WINAPI MediaEvent_GetEventHandle(IMediaEventEx *iface, OAEVENT *h
 static HRESULT WINAPI MediaEvent_GetEvent(IMediaEventEx *iface, LONG *lEventCode, LONG_PTR *lParam1,
         LONG_PTR *lParam2, LONG msTimeout)
 {
-    IFilterGraphImpl *This = impl_from_IMediaEventEx(iface);
+    struct filter_graph *This = impl_from_IMediaEventEx(iface);
     Event evt;
 
     TRACE("(%p/%p)->(%p, %p, %p, %d)\n", This, iface, lEventCode, lParam1, lParam2, msTimeout);
@@ -4603,7 +4604,7 @@ static HRESULT WINAPI MediaEvent_GetEvent(IMediaEventEx *iface, LONG *lEventCode
 static HRESULT WINAPI MediaEvent_WaitForCompletion(IMediaEventEx *iface, LONG msTimeout,
         LONG *pEvCode)
 {
-    IFilterGraphImpl *This = impl_from_IMediaEventEx(iface);
+    struct filter_graph *This = impl_from_IMediaEventEx(iface);
 
     TRACE("(%p/%p)->(%d, %p)\n", This, iface, msTimeout, pEvCode);
 
@@ -4622,7 +4623,7 @@ static HRESULT WINAPI MediaEvent_WaitForCompletion(IMediaEventEx *iface, LONG ms
 
 static HRESULT WINAPI MediaEvent_CancelDefaultHandling(IMediaEventEx *iface, LONG lEvCode)
 {
-    IFilterGraphImpl *This = impl_from_IMediaEventEx(iface);
+    struct filter_graph *This = impl_from_IMediaEventEx(iface);
 
     TRACE("(%p/%p)->(%d)\n", This, iface, lEvCode);
 
@@ -4640,7 +4641,7 @@ static HRESULT WINAPI MediaEvent_CancelDefaultHandling(IMediaEventEx *iface, LON
 
 static HRESULT WINAPI MediaEvent_RestoreDefaultHandling(IMediaEventEx *iface, LONG lEvCode)
 {
-    IFilterGraphImpl *This = impl_from_IMediaEventEx(iface);
+    struct filter_graph *This = impl_from_IMediaEventEx(iface);
 
     TRACE("(%p/%p)->(%d)\n", This, iface, lEvCode);
 
@@ -4659,7 +4660,7 @@ static HRESULT WINAPI MediaEvent_RestoreDefaultHandling(IMediaEventEx *iface, LO
 static HRESULT WINAPI MediaEvent_FreeEventParams(IMediaEventEx *iface, LONG lEvCode,
         LONG_PTR lParam1, LONG_PTR lParam2)
 {
-    IFilterGraphImpl *This = impl_from_IMediaEventEx(iface);
+    struct filter_graph *This = impl_from_IMediaEventEx(iface);
 
     TRACE("(%p/%p)->(%d, %08lx, %08lx): stub !!!\n", This, iface, lEvCode, lParam1, lParam2);
 
@@ -4670,7 +4671,7 @@ static HRESULT WINAPI MediaEvent_FreeEventParams(IMediaEventEx *iface, LONG lEvC
 static HRESULT WINAPI MediaEvent_SetNotifyWindow(IMediaEventEx *iface, OAHWND hwnd, LONG lMsg,
         LONG_PTR lInstanceData)
 {
-    IFilterGraphImpl *This = impl_from_IMediaEventEx(iface);
+    struct filter_graph *This = impl_from_IMediaEventEx(iface);
 
     TRACE("(%p/%p)->(%08lx, %d, %08lx)\n", This, iface, hwnd, lMsg, lInstanceData);
 
@@ -4683,7 +4684,7 @@ static HRESULT WINAPI MediaEvent_SetNotifyWindow(IMediaEventEx *iface, OAHWND hw
 
 static HRESULT WINAPI MediaEvent_SetNotifyFlags(IMediaEventEx *iface, LONG lNoNotifyFlags)
 {
-    IFilterGraphImpl *This = impl_from_IMediaEventEx(iface);
+    struct filter_graph *This = impl_from_IMediaEventEx(iface);
 
     TRACE("(%p/%p)->(%d)\n", This, iface, lNoNotifyFlags);
 
@@ -4697,7 +4698,7 @@ static HRESULT WINAPI MediaEvent_SetNotifyFlags(IMediaEventEx *iface, LONG lNoNo
 
 static HRESULT WINAPI MediaEvent_GetNotifyFlags(IMediaEventEx *iface, LONG *lplNoNotifyFlags)
 {
-    IFilterGraphImpl *This = impl_from_IMediaEventEx(iface);
+    struct filter_graph *This = impl_from_IMediaEventEx(iface);
 
     TRACE("(%p/%p)->(%p)\n", This, iface, lplNoNotifyFlags);
 
@@ -4731,30 +4732,30 @@ static const IMediaEventExVtbl IMediaEventEx_VTable =
 };
 
 
-static inline IFilterGraphImpl *impl_from_IMediaFilter(IMediaFilter *iface)
+static struct filter_graph *impl_from_IMediaFilter(IMediaFilter *iface)
 {
-    return CONTAINING_RECORD(iface, IFilterGraphImpl, IMediaFilter_iface);
+    return CONTAINING_RECORD(iface, struct filter_graph, IMediaFilter_iface);
 }
 
-static HRESULT WINAPI MediaFilter_QueryInterface(IMediaFilter *iface, REFIID riid, void **ppv)
+static HRESULT WINAPI MediaFilter_QueryInterface(IMediaFilter *iface, REFIID iid, void **out)
 {
-    IFilterGraphImpl *This = impl_from_IMediaFilter(iface);
+    struct filter_graph *graph = impl_from_IMediaFilter(iface);
 
-    return IUnknown_QueryInterface(This->outer_unk, riid, ppv);
+    return IUnknown_QueryInterface(graph->outer_unk, iid, out);
 }
 
 static ULONG WINAPI MediaFilter_AddRef(IMediaFilter *iface)
 {
-    IFilterGraphImpl *This = impl_from_IMediaFilter(iface);
+    struct filter_graph *graph = impl_from_IMediaFilter(iface);
 
-    return IUnknown_AddRef(This->outer_unk);
+    return IUnknown_AddRef(graph->outer_unk);
 }
 
 static ULONG WINAPI MediaFilter_Release(IMediaFilter *iface)
 {
-    IFilterGraphImpl *This = impl_from_IMediaFilter(iface);
+    struct filter_graph *graph = impl_from_IMediaFilter(iface);
 
-    return IUnknown_Release(This->outer_unk);
+    return IUnknown_Release(graph->outer_unk);
 }
 
 static HRESULT WINAPI MediaFilter_GetClassID(IMediaFilter *iface, CLSID * pClassID)
@@ -4766,7 +4767,7 @@ static HRESULT WINAPI MediaFilter_GetClassID(IMediaFilter *iface, CLSID * pClass
 
 static HRESULT WINAPI MediaFilter_Stop(IMediaFilter *iface)
 {
-    IFilterGraphImpl *graph = impl_from_IMediaFilter(iface);
+    struct filter_graph *graph = impl_from_IMediaFilter(iface);
     HRESULT hr = S_OK, filter_hr;
     struct filter *filter;
 
@@ -4809,7 +4810,7 @@ static HRESULT WINAPI MediaFilter_Stop(IMediaFilter *iface)
     return hr;
 }
 
-static void update_render_count(IFilterGraphImpl *graph)
+static void update_render_count(struct filter_graph *graph)
 {
     /* Some filters (e.g. MediaStreamFilter) can become renderers when they are
      * already in the graph. */
@@ -4824,7 +4825,7 @@ static void update_render_count(IFilterGraphImpl *graph)
 
 static HRESULT WINAPI MediaFilter_Pause(IMediaFilter *iface)
 {
-    IFilterGraphImpl *graph = impl_from_IMediaFilter(iface);
+    struct filter_graph *graph = impl_from_IMediaFilter(iface);
     HRESULT hr = S_OK, filter_hr;
     struct filter *filter;
 
@@ -4867,7 +4868,7 @@ static HRESULT WINAPI MediaFilter_Pause(IMediaFilter *iface)
 
 static HRESULT WINAPI MediaFilter_Run(IMediaFilter *iface, REFERENCE_TIME start)
 {
-    IFilterGraphImpl *graph = impl_from_IMediaFilter(iface);
+    struct filter_graph *graph = impl_from_IMediaFilter(iface);
     REFERENCE_TIME stream_start = start;
     HRESULT hr = S_OK, filter_hr;
     struct filter *filter;
@@ -4912,7 +4913,7 @@ static HRESULT WINAPI MediaFilter_Run(IMediaFilter *iface, REFERENCE_TIME start)
 
 static HRESULT WINAPI MediaFilter_GetState(IMediaFilter *iface, DWORD timeout, FILTER_STATE *state)
 {
-    IFilterGraphImpl *graph = impl_from_IMediaFilter(iface);
+    struct filter_graph *graph = impl_from_IMediaFilter(iface);
     DWORD end = GetTickCount() + timeout;
     HRESULT hr = S_OK, filter_hr;
     struct filter *filter;
@@ -4955,7 +4956,7 @@ static HRESULT WINAPI MediaFilter_GetState(IMediaFilter *iface, DWORD timeout, F
 
 static HRESULT WINAPI MediaFilter_SetSyncSource(IMediaFilter *iface, IReferenceClock *pClock)
 {
-    IFilterGraphImpl *This = impl_from_IMediaFilter(iface);
+    struct filter_graph *This = impl_from_IMediaFilter(iface);
     struct filter *filter;
     HRESULT hr = S_OK;
 
@@ -5005,7 +5006,7 @@ static HRESULT WINAPI MediaFilter_SetSyncSource(IMediaFilter *iface, IReferenceC
 
 static HRESULT WINAPI MediaFilter_GetSyncSource(IMediaFilter *iface, IReferenceClock **ppClock)
 {
-    IFilterGraphImpl *This = impl_from_IMediaFilter(iface);
+    struct filter_graph *This = impl_from_IMediaFilter(iface);
 
     TRACE("(%p/%p)->(%p)\n", This, iface, ppClock);
 
@@ -5037,36 +5038,36 @@ static const IMediaFilterVtbl IMediaFilter_VTable =
     MediaFilter_GetSyncSource
 };
 
-static inline IFilterGraphImpl *impl_from_IMediaEventSink(IMediaEventSink *iface)
+static struct filter_graph *impl_from_IMediaEventSink(IMediaEventSink *iface)
 {
-    return CONTAINING_RECORD(iface, IFilterGraphImpl, IMediaEventSink_iface);
+    return CONTAINING_RECORD(iface, struct filter_graph, IMediaEventSink_iface);
 }
 
-static HRESULT WINAPI MediaEventSink_QueryInterface(IMediaEventSink *iface, REFIID riid, void **ppv)
+static HRESULT WINAPI MediaEventSink_QueryInterface(IMediaEventSink *iface, REFIID iid, void **out)
 {
-    IFilterGraphImpl *This = impl_from_IMediaEventSink(iface);
+    struct filter_graph *graph = impl_from_IMediaEventSink(iface);
 
-    return IUnknown_QueryInterface(This->outer_unk, riid, ppv);
+    return IUnknown_QueryInterface(graph->outer_unk, iid, out);
 }
 
 static ULONG WINAPI MediaEventSink_AddRef(IMediaEventSink *iface)
 {
-    IFilterGraphImpl *This = impl_from_IMediaEventSink(iface);
+    struct filter_graph *graph = impl_from_IMediaEventSink(iface);
 
-    return IUnknown_AddRef(This->outer_unk);
+    return IUnknown_AddRef(graph->outer_unk);
 }
 
 static ULONG WINAPI MediaEventSink_Release(IMediaEventSink *iface)
 {
-    IFilterGraphImpl *This = impl_from_IMediaEventSink(iface);
+    struct filter_graph *graph = impl_from_IMediaEventSink(iface);
 
-    return IUnknown_Release(This->outer_unk);
+    return IUnknown_Release(graph->outer_unk);
 }
 
 static HRESULT WINAPI MediaEventSink_Notify(IMediaEventSink *iface, LONG EventCode,
         LONG_PTR EventParam1, LONG_PTR EventParam2)
 {
-    IFilterGraphImpl *This = impl_from_IMediaEventSink(iface);
+    struct filter_graph *This = impl_from_IMediaEventSink(iface);
     Event evt;
 
     TRACE("(%p/%p)->(%d, %ld, %ld)\n", This, iface, EventCode, EventParam1, EventParam2);
@@ -5119,37 +5120,37 @@ static const IMediaEventSinkVtbl IMediaEventSink_VTable =
     MediaEventSink_Notify
 };
 
-static inline IFilterGraphImpl *impl_from_IGraphConfig(IGraphConfig *iface)
+static struct filter_graph *impl_from_IGraphConfig(IGraphConfig *iface)
 {
-    return CONTAINING_RECORD(iface, IFilterGraphImpl, IGraphConfig_iface);
+    return CONTAINING_RECORD(iface, struct filter_graph, IGraphConfig_iface);
 }
 
-static HRESULT WINAPI GraphConfig_QueryInterface(IGraphConfig *iface, REFIID riid, void **ppv)
+static HRESULT WINAPI GraphConfig_QueryInterface(IGraphConfig *iface, REFIID iid, void **out)
 {
-    IFilterGraphImpl *This = impl_from_IGraphConfig(iface);
+    struct filter_graph *graph = impl_from_IGraphConfig(iface);
 
-    return IUnknown_QueryInterface(This->outer_unk, riid, ppv);
+    return IUnknown_QueryInterface(graph->outer_unk, iid, out);
 }
 
 static ULONG WINAPI GraphConfig_AddRef(IGraphConfig *iface)
 {
-    IFilterGraphImpl *This = impl_from_IGraphConfig(iface);
+    struct filter_graph *graph = impl_from_IGraphConfig(iface);
 
-    return IUnknown_AddRef(This->outer_unk);
+    return IUnknown_AddRef(graph->outer_unk);
 }
 
 static ULONG WINAPI GraphConfig_Release(IGraphConfig *iface)
 {
-    IFilterGraphImpl *This = impl_from_IGraphConfig(iface);
+    struct filter_graph *graph = impl_from_IGraphConfig(iface);
 
-    return IUnknown_Release(This->outer_unk);
+    return IUnknown_Release(graph->outer_unk);
 }
 
 static HRESULT WINAPI GraphConfig_Reconnect(IGraphConfig *iface, IPin *pOutputPin, IPin *pInputPin,
         const AM_MEDIA_TYPE *pmtFirstConnection, IBaseFilter *pUsingFilter, HANDLE hAbortEvent,
         DWORD dwFlags)
 {
-    IFilterGraphImpl *This = impl_from_IGraphConfig(iface);
+    struct filter_graph *This = impl_from_IGraphConfig(iface);
 
     FIXME("(%p)->(%p, %p, %p, %p, %p, %x): stub!\n", This, pOutputPin, pInputPin, pmtFirstConnection, pUsingFilter, hAbortEvent, dwFlags);
     strmbase_dump_media_type(pmtFirstConnection);
@@ -5160,7 +5161,7 @@ static HRESULT WINAPI GraphConfig_Reconnect(IGraphConfig *iface, IPin *pOutputPi
 static HRESULT WINAPI GraphConfig_Reconfigure(IGraphConfig *iface, IGraphConfigCallback *pCallback,
         void *pvContext, DWORD dwFlags, HANDLE hAbortEvent)
 {
-    IFilterGraphImpl *This = impl_from_IGraphConfig(iface);
+    struct filter_graph *This = impl_from_IGraphConfig(iface);
     HRESULT hr;
 
     WARN("(%p)->(%p, %p, %x, %p): partial stub!\n", This, pCallback, pvContext, dwFlags, hAbortEvent);
@@ -5179,7 +5180,7 @@ static HRESULT WINAPI GraphConfig_Reconfigure(IGraphConfig *iface, IGraphConfigC
 
 static HRESULT WINAPI GraphConfig_AddFilterToCache(IGraphConfig *iface, IBaseFilter *pFilter)
 {
-    IFilterGraphImpl *This = impl_from_IGraphConfig(iface);
+    struct filter_graph *This = impl_from_IGraphConfig(iface);
 
     FIXME("(%p)->(%p): stub!\n", This, pFilter);
 
@@ -5188,7 +5189,7 @@ static HRESULT WINAPI GraphConfig_AddFilterToCache(IGraphConfig *iface, IBaseFil
 
 static HRESULT WINAPI GraphConfig_EnumCacheFilter(IGraphConfig *iface, IEnumFilters **pEnum)
 {
-    IFilterGraphImpl *This = impl_from_IGraphConfig(iface);
+    struct filter_graph *This = impl_from_IGraphConfig(iface);
 
     FIXME("(%p)->(%p): stub!\n", This, pEnum);
 
@@ -5197,7 +5198,7 @@ static HRESULT WINAPI GraphConfig_EnumCacheFilter(IGraphConfig *iface, IEnumFilt
 
 static HRESULT WINAPI GraphConfig_RemoveFilterFromCache(IGraphConfig *iface, IBaseFilter *pFilter)
 {
-    IFilterGraphImpl *This = impl_from_IGraphConfig(iface);
+    struct filter_graph *This = impl_from_IGraphConfig(iface);
 
     FIXME("(%p)->(%p): stub!\n", This, pFilter);
 
@@ -5206,7 +5207,7 @@ static HRESULT WINAPI GraphConfig_RemoveFilterFromCache(IGraphConfig *iface, IBa
 
 static HRESULT WINAPI GraphConfig_GetStartTime(IGraphConfig *iface, REFERENCE_TIME *prtStart)
 {
-    IFilterGraphImpl *This = impl_from_IGraphConfig(iface);
+    struct filter_graph *This = impl_from_IGraphConfig(iface);
 
     FIXME("(%p)->(%p): stub!\n", This, prtStart);
 
@@ -5216,7 +5217,7 @@ static HRESULT WINAPI GraphConfig_GetStartTime(IGraphConfig *iface, REFERENCE_TI
 static HRESULT WINAPI GraphConfig_PushThroughData(IGraphConfig *iface, IPin *pOutputPin,
         IPinConnection *pConnection, HANDLE hEventAbort)
 {
-    IFilterGraphImpl *This = impl_from_IGraphConfig(iface);
+    struct filter_graph *This = impl_from_IGraphConfig(iface);
 
     FIXME("(%p)->(%p, %p, %p): stub!\n", This, pOutputPin, pConnection, hEventAbort);
 
@@ -5226,7 +5227,7 @@ static HRESULT WINAPI GraphConfig_PushThroughData(IGraphConfig *iface, IPin *pOu
 static HRESULT WINAPI GraphConfig_SetFilterFlags(IGraphConfig *iface, IBaseFilter *pFilter,
         DWORD dwFlags)
 {
-    IFilterGraphImpl *This = impl_from_IGraphConfig(iface);
+    struct filter_graph *This = impl_from_IGraphConfig(iface);
 
     FIXME("(%p)->(%p, %x): stub!\n", This, pFilter, dwFlags);
 
@@ -5236,7 +5237,7 @@ static HRESULT WINAPI GraphConfig_SetFilterFlags(IGraphConfig *iface, IBaseFilte
 static HRESULT WINAPI GraphConfig_GetFilterFlags(IGraphConfig *iface, IBaseFilter *pFilter,
         DWORD *dwFlags)
 {
-    IFilterGraphImpl *This = impl_from_IGraphConfig(iface);
+    struct filter_graph *This = impl_from_IGraphConfig(iface);
 
     FIXME("(%p)->(%p, %p): stub!\n", This, pFilter, dwFlags);
 
@@ -5246,7 +5247,7 @@ static HRESULT WINAPI GraphConfig_GetFilterFlags(IGraphConfig *iface, IBaseFilte
 static HRESULT WINAPI GraphConfig_RemoveFilterEx(IGraphConfig *iface, IBaseFilter *pFilter,
         DWORD dwFlags)
 {
-    IFilterGraphImpl *This = impl_from_IGraphConfig(iface);
+    struct filter_graph *This = impl_from_IGraphConfig(iface);
 
     FIXME("(%p)->(%p, %x): stub!\n", This, pFilter, dwFlags);
 
@@ -5270,35 +5271,35 @@ static const IGraphConfigVtbl IGraphConfig_VTable =
     GraphConfig_RemoveFilterEx
 };
 
-static inline IFilterGraphImpl *impl_from_IGraphVersion(IGraphVersion *iface)
+static struct filter_graph *impl_from_IGraphVersion(IGraphVersion *iface)
 {
-    return CONTAINING_RECORD(iface, IFilterGraphImpl, IGraphVersion_iface);
+    return CONTAINING_RECORD(iface, struct filter_graph, IGraphVersion_iface);
 }
 
-static HRESULT WINAPI GraphVersion_QueryInterface(IGraphVersion *iface, REFIID riid, void **ppv)
+static HRESULT WINAPI GraphVersion_QueryInterface(IGraphVersion *iface, REFIID iid, void **out)
 {
-    IFilterGraphImpl *This = impl_from_IGraphVersion(iface);
+    struct filter_graph *graph = impl_from_IGraphVersion(iface);
 
-    return IUnknown_QueryInterface(This->outer_unk, riid, ppv);
+    return IUnknown_QueryInterface(graph->outer_unk, iid, out);
 }
 
 static ULONG WINAPI GraphVersion_AddRef(IGraphVersion *iface)
 {
-    IFilterGraphImpl *This = impl_from_IGraphVersion(iface);
+    struct filter_graph *graph = impl_from_IGraphVersion(iface);
 
-    return IUnknown_AddRef(This->outer_unk);
+    return IUnknown_AddRef(graph->outer_unk);
 }
 
 static ULONG WINAPI GraphVersion_Release(IGraphVersion *iface)
 {
-    IFilterGraphImpl *This = impl_from_IGraphVersion(iface);
+    struct filter_graph *graph = impl_from_IGraphVersion(iface);
 
-    return IUnknown_Release(This->outer_unk);
+    return IUnknown_Release(graph->outer_unk);
 }
 
 static HRESULT WINAPI GraphVersion_QueryVersion(IGraphVersion *iface, LONG *pVersion)
 {
-    IFilterGraphImpl *This = impl_from_IGraphVersion(iface);
+    struct filter_graph *This = impl_from_IGraphVersion(iface);
 
     if(!pVersion)
         return E_POINTER;
@@ -5317,26 +5318,26 @@ static const IGraphVersionVtbl IGraphVersion_VTable =
     GraphVersion_QueryVersion,
 };
 
-static IFilterGraphImpl *impl_from_IVideoFrameStep(IVideoFrameStep *iface)
+static struct filter_graph *impl_from_IVideoFrameStep(IVideoFrameStep *iface)
 {
-    return CONTAINING_RECORD(iface, IFilterGraphImpl, IVideoFrameStep_iface);
+    return CONTAINING_RECORD(iface, struct filter_graph, IVideoFrameStep_iface);
 }
 
 static HRESULT WINAPI VideoFrameStep_QueryInterface(IVideoFrameStep *iface, REFIID iid, void **out)
 {
-    IFilterGraphImpl *graph = impl_from_IVideoFrameStep(iface);
+    struct filter_graph *graph = impl_from_IVideoFrameStep(iface);
     return IUnknown_QueryInterface(graph->outer_unk, iid, out);
 }
 
 static ULONG WINAPI VideoFrameStep_AddRef(IVideoFrameStep *iface)
 {
-    IFilterGraphImpl *graph = impl_from_IVideoFrameStep(iface);
+    struct filter_graph *graph = impl_from_IVideoFrameStep(iface);
     return IUnknown_AddRef(graph->outer_unk);
 }
 
 static ULONG WINAPI VideoFrameStep_Release(IVideoFrameStep *iface)
 {
-    IFilterGraphImpl *graph = impl_from_IVideoFrameStep(iface);
+    struct filter_graph *graph = impl_from_IVideoFrameStep(iface);
     return IUnknown_Release(graph->outer_unk);
 }
 
@@ -5377,7 +5378,7 @@ static const IUnknownVtbl IInner_VTable =
 
 static HRESULT filter_graph_common_create(IUnknown *outer, IUnknown **out, BOOL threaded)
 {
-    IFilterGraphImpl *object;
+    struct filter_graph *object;
     HRESULT hr;
 
     *out = NULL;
@@ -5412,7 +5413,7 @@ static HRESULT filter_graph_common_create(IUnknown *outer, IUnknown **out, BOOL 
     }
 
     InitializeCriticalSection(&object->cs);
-    object->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": IFilterGraphImpl.cs");
+    object->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": filter_graph.cs");
 
     object->defaultclock = TRUE;
     EventsQueue_Init(&object->evqueue);
