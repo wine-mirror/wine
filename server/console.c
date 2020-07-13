@@ -1576,6 +1576,14 @@ static int console_input_ioctl( struct fd *fd, ioctl_code_t code, struct async *
 
     switch (code)
     {
+    case IOCTL_CONDRV_GET_MODE:
+        if (get_reply_max_size() != sizeof(console->mode))
+        {
+            set_error( STATUS_INVALID_PARAMETER );
+            return 0;
+        }
+        return set_reply_data( &console->mode, sizeof(console->mode) ) != NULL;
+
     case IOCTL_CONDRV_READ_INPUT:
         {
             int blocking = 0;
@@ -1641,6 +1649,14 @@ static int screen_buffer_ioctl( struct fd *fd, ioctl_code_t code, struct async *
 
     switch (code)
     {
+    case IOCTL_CONDRV_GET_MODE:
+        if (get_reply_max_size() != sizeof(screen_buffer->mode))
+        {
+            set_error( STATUS_INVALID_PARAMETER );
+            return 0;
+        }
+        return set_reply_data( &screen_buffer->mode, sizeof(screen_buffer->mode) ) != NULL;
+
     case IOCTL_CONDRV_GET_OUTPUT_INFO:
         {
             struct condrv_output_info *info;
