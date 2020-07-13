@@ -2953,6 +2953,110 @@ static void test_restoredc(void)
     expect(Ok, stat);
 }
 
+static const emfplus_record drawdriverstring_records[] = {
+    { EMR_HEADER },
+    { EmfPlusRecordTypeHeader },
+    { EmfPlusRecordTypeObject, ObjectTypeFont << 8, 1, 0 },
+    { EmfPlusRecordTypeDrawDriverString, 0x8000, 1, 0 },
+    { EmfPlusRecordTypeObject, (ObjectTypeFont << 8) | 1, 1 },
+    { EmfPlusRecordTypeObject, (ObjectTypeBrush << 8) | 2, 1, 1 },
+    { EmfPlusRecordTypeDrawDriverString, 0x1, 1, 1 },
+    { EmfPlusRecordTypeEndOfFile },
+    { EMR_EOF },
+    { 0 }
+};
+
+static void test_drawdriverstring(void)
+{
+    static const GpPointF dst_points[3] = {{0.0,0.0},{100.0,0.0},{0.0,100.0}};
+    static const GpRectF frame = {0.0, 0.0, 100.0, 100.0};
+    static const PointF solidpos[4] = {{10.0,10.0}, {20.0,10.0}, {30.0,10.0}, {40.0,10.0}};
+    static const PointF hatchpos = {10.0,30.0};
+
+    GpBitmap *bitmap;
+    GpStatus stat;
+    GpGraphics *graphics;
+    GpFont *solidfont, *hatchfont;
+    GpBrush *solidbrush, *hatchbrush;
+    HDC hdc;
+    GpMatrix *matrix;
+    GpMetafile *metafile;
+    LOGFONTA logfont = { 0 };
+
+    hdc = CreateCompatibleDC(0);
+
+    strcpy(logfont.lfFaceName, "Times New Roman");
+    logfont.lfHeight = 12;
+    logfont.lfCharSet = DEFAULT_CHARSET;
+
+    stat = GdipCreateFontFromLogfontA(hdc, &logfont, &solidfont);
+    if (stat == NotTrueTypeFont || stat == FileNotFound)
+    {
+        DeleteDC(hdc);
+        skip("Times New Roman not installed.\n");
+        return;
+    }
+
+    stat = GdipCloneFont(solidfont, &hatchfont);
+    expect(Ok, stat);
+
+    stat = GdipRecordMetafile(hdc, EmfTypeEmfPlusOnly, &frame, MetafileFrameUnitPixel,
+        L"winetest", &metafile);
+    expect(Ok, stat);
+
+    DeleteDC(hdc);
+    hdc = NULL;
+
+    stat = GdipGetImageGraphicsContext((GpImage*)metafile, &graphics);
+    expect(Ok, stat);
+
+    stat = GdipCreateSolidFill((ARGB)0xff0000ff, (GpSolidFill**)&solidbrush);
+    expect(Ok, stat);
+
+    stat = GdipCreateHatchBrush(HatchStyleHorizontal, (ARGB)0xff00ff00, (ARGB)0xffff0000,
+        (GpHatch**)&hatchbrush);
+    expect(Ok, stat);
+
+    stat = GdipCreateMatrix(&matrix);
+    expect(Ok, stat);
+
+    stat = GdipDrawDriverString(graphics, L"Test", 4, solidfont, solidbrush, solidpos,
+        DriverStringOptionsCmapLookup, matrix);
+    todo_wine expect(Ok, stat);
+
+    stat = GdipSetMatrixElements(matrix, 1.5, 0.0, 0.0, 1.5, 0.0, 0.0);
+    expect(Ok, stat);
+
+    stat = GdipDrawDriverString(graphics, L"Test ", 5, hatchfont, hatchbrush, &hatchpos,
+        DriverStringOptionsCmapLookup|DriverStringOptionsRealizedAdvance, matrix);
+    todo_wine expect(Ok, stat);
+
+    stat = GdipDeleteGraphics(graphics);
+    graphics = NULL;
+
+    check_metafile(metafile, drawdriverstring_records, "drawdriverstring metafile", dst_points,
+        &frame, UnitPixel);
+    sync_metafile(&metafile, "drawdriverstring.emf");
+
+    stat = GdipCreateBitmapFromScan0(100, 100, 0, PixelFormat32bppARGB, NULL, &bitmap);
+    expect(Ok, stat);
+
+    stat = GdipGetImageGraphicsContext((GpImage*)bitmap, &graphics);
+    expect(Ok, stat);
+
+    play_metafile(metafile, graphics, drawdriverstring_records, "drawdriverstring playback",
+        dst_points, &frame, UnitPixel);
+
+    GdipDeleteMatrix(matrix);
+    GdipDeleteGraphics(graphics);
+    GdipDeleteBrush(solidbrush);
+    GdipDeleteBrush(hatchbrush);
+    GdipDeleteFont(solidfont);
+    GdipDeleteFont(hatchfont);
+    GdipDisposeImage((GpImage*)bitmap);
+    GdipDisposeImage((GpImage*)metafile);
+}
+
 START_TEST(metafile)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -3002,6 +3106,7 @@ START_TEST(metafile)
     test_drawpath();
     test_fillpath();
     test_restoredc();
+    test_drawdriverstring();
 
     GdiplusShutdown(gdiplusToken);
 }
