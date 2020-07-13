@@ -249,6 +249,7 @@ static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static RTL_CRITICAL_SECTION dir_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
+static pthread_mutex_t mnt_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 /* check if a given Unicode char is OK in a DOS short name */
 static inline BOOL is_invalid_dos_char( WCHAR ch )
@@ -567,7 +568,7 @@ static inline char *get_field( char **str )
  *
  * getmntent replacement for Android.
  *
- * NB returned static buffer is not thread safe; protect with dir_section.
+ * NB returned static buffer is not thread safe; protect with mnt_mutex.
  */
 static struct mntent *getmntent_replacement( FILE *f )
 {
@@ -775,7 +776,7 @@ static char *get_default_drive_device( const char *root )
     if (res == -1) res = stat( root, &st );
     if (res == -1) return NULL;
 
-    RtlEnterCriticalSection( &dir_section );
+    pthread_mutex_lock( &mnt_mutex );
 
 #ifdef __ANDROID__
     if ((f = fopen( "/proc/mounts", "r" )))
@@ -801,7 +802,7 @@ static char *get_default_drive_device( const char *root )
         ret = RtlAllocateHeap( GetProcessHeap(), 0, strlen(device) + 1 );
         if (ret) strcpy( ret, device );
     }
-    RtlLeaveCriticalSection( &dir_section );
+    pthread_mutex_unlock( &mnt_mutex );
 
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__ ) || defined(__DragonFly__)
     char *device = NULL;
@@ -818,7 +819,7 @@ static char *get_default_drive_device( const char *root )
     if (res == -1) res = stat( root, &st );
     if (res == -1) return NULL;
 
-    RtlEnterCriticalSection( &dir_section );
+    pthread_mutex_lock( &mnt_mutex );
 
     /* The FreeBSD parse_mount_entries doesn't require a file argument, so just
      * pass NULL.  Leave the argument in for symmetry.
@@ -829,7 +830,7 @@ static char *get_default_drive_device( const char *root )
         ret = RtlAllocateHeap( GetProcessHeap(), 0, strlen(device) + 1 );
         if (ret) strcpy( ret, device );
     }
-    RtlLeaveCriticalSection( &dir_section );
+    pthread_mutex_unlock( &mnt_mutex );
 
 #elif defined( sun )
     FILE *f;
@@ -847,7 +848,7 @@ static char *get_default_drive_device( const char *root )
     if (res == -1) res = stat( root, &st );
     if (res == -1) return NULL;
 
-    RtlEnterCriticalSection( &dir_section );
+    pthread_mutex_lock( &mnt_mutex );
 
     if ((f = fopen( "/etc/mnttab", "r" )))
     {
@@ -865,7 +866,7 @@ static char *get_default_drive_device( const char *root )
         ret = RtlAllocateHeap( GetProcessHeap(), 0, strlen(device) + 1 );
         if (ret) strcpy( ret, device );
     }
-    RtlLeaveCriticalSection( &dir_section );
+    pthread_mutex_unlock( &mnt_mutex );
 
 #elif defined(__APPLE__)
     struct statfs *mntStat;
@@ -883,7 +884,7 @@ static char *get_default_drive_device( const char *root )
     dev = st.st_dev;
     ino = st.st_ino;
 
-    RtlEnterCriticalSection( &dir_section );
+    pthread_mutex_lock( &mnt_mutex );
 
     mntSize = getmntinfo(&mntStat, MNT_NOWAIT);
 
@@ -904,7 +905,7 @@ static char *get_default_drive_device( const char *root )
             }
         }
     }
-    RtlLeaveCriticalSection( &dir_section );
+    pthread_mutex_unlock( &mnt_mutex );
 #else
     static int warned;
     if (!warned++) FIXME( "auto detection of DOS devices not supported on this platform\n" );
@@ -925,7 +926,7 @@ static char *get_device_mount_point( dev_t dev )
 #ifdef linux
     FILE *f;
 
-    RtlEnterCriticalSection( &dir_section );
+    pthread_mutex_lock( &mnt_mutex );
 
 #ifdef __ANDROID__
     if ((f = fopen( "/proc/mounts", "r" )))
@@ -973,13 +974,13 @@ static char *get_device_mount_point( dev_t dev )
         }
         fclose( f );
     }
-    RtlLeaveCriticalSection( &dir_section );
+    pthread_mutex_unlock( &mnt_mutex );
 #elif defined(__APPLE__)
     struct statfs *entry;
     struct stat st;
     int i, size;
 
-    RtlEnterCriticalSection( &dir_section );
+    pthread_mutex_lock( &mnt_mutex );
 
     size = getmntinfo( &entry, MNT_NOWAIT );
     for (i = 0; i < size; i++)
@@ -992,7 +993,7 @@ static char *get_device_mount_point( dev_t dev )
             break;
         }
     }
-    RtlLeaveCriticalSection( &dir_section );
+    pthread_mutex_unlock( &mnt_mutex );
 #else
     static int warned;
     if (!warned++) FIXME( "unmounting devices not supported on this platform\n" );
