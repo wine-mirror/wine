@@ -1876,17 +1876,9 @@ static time_t find_dst_change(unsigned long min, unsigned long max, int *is_dst)
     return min;
 }
 
-static RTL_CRITICAL_SECTION TIME_tz_section;
-static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
-{
-    0, 0, &TIME_tz_section,
-    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": TIME_tz_section") }
-};
-static RTL_CRITICAL_SECTION TIME_tz_section = { &critsect_debug, -1, 0, 0, 0, 0 };
-
 static void get_timezone_info( RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi )
 {
+    static pthread_mutex_t tz_mutex = PTHREAD_MUTEX_INITIALIZER;
     static RTL_DYNAMIC_TIME_ZONE_INFORMATION cached_tzi;
     static int current_year = -1, current_bias = 65535;
     struct tm *tm;
@@ -1894,7 +1886,7 @@ static void get_timezone_info( RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi )
     time_t year_start, year_end, tmp, dlt = 0, std = 0;
     int is_dst, bias;
 
-    RtlEnterCriticalSection( &TIME_tz_section );
+    pthread_mutex_lock( &tz_mutex );
 
     year_start = time(NULL);
     tm = gmtime(&year_start);
@@ -1904,7 +1896,7 @@ static void get_timezone_info( RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi )
     if (current_year == tm->tm_year && current_bias == bias)
     {
         *tzi = cached_tzi;
-        RtlLeaveCriticalSection( &TIME_tz_section );
+        pthread_mutex_unlock( &tz_mutex );
         return;
     }
 
@@ -1997,7 +1989,7 @@ static void get_timezone_info( RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi )
 
     find_reg_tz_info(tzi, tz_name, current_year + 1900);
     cached_tzi = *tzi;
-    RtlLeaveCriticalSection( &TIME_tz_section );
+    pthread_mutex_unlock( &tz_mutex );
 }
 
 
