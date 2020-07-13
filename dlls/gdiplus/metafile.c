@@ -1001,7 +1001,7 @@ static BOOL is_integer_rect(const GpRectF *rect)
     return TRUE;
 }
 
-static GpStatus METAFILE_PrepareBrushData(GpBrush *brush, DWORD *size)
+static GpStatus METAFILE_PrepareBrushData(GDIPCONST GpBrush *brush, DWORD *size)
 {
     switch (brush->bt)
     {
@@ -1019,7 +1019,7 @@ static GpStatus METAFILE_PrepareBrushData(GpBrush *brush, DWORD *size)
     return Ok;
 }
 
-static void METAFILE_FillBrushData(GpBrush *brush, EmfPlusBrush *data)
+static void METAFILE_FillBrushData(GDIPCONST GpBrush *brush, EmfPlusBrush *data)
 {
     data->Version = VERSION_MAGIC2;
     data->Type = brush->bt;
@@ -1045,7 +1045,7 @@ static void METAFILE_FillBrushData(GpBrush *brush, EmfPlusBrush *data)
     }
 }
 
-static GpStatus METAFILE_AddBrushObject(GpMetafile *metafile, GpBrush *brush, DWORD *id)
+static GpStatus METAFILE_AddBrushObject(GpMetafile *metafile, GDIPCONST GpBrush *brush, DWORD *id)
 {
     EmfPlusObject *object_record;
     GpStatus stat;
