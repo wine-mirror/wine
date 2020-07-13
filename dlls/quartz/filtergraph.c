@@ -510,7 +510,7 @@ static ULONG WINAPI FilterGraphInner_Release(IUnknown *iface)
             CloseHandle(This->message_thread_ret);
         }
 	DeleteCriticalSection(&This->cs);
-	CoTaskMemFree(This);
+        free(This);
 
         InterlockedDecrement(&object_locks);
     }
@@ -5377,80 +5377,64 @@ static const IUnknownVtbl IInner_VTable =
 
 static HRESULT filter_graph_common_create(IUnknown *outer, IUnknown **out, BOOL threaded)
 {
-    IFilterGraphImpl *fimpl;
+    IFilterGraphImpl *object;
     HRESULT hr;
 
     *out = NULL;
 
-    fimpl = CoTaskMemAlloc(sizeof(*fimpl));
-    fimpl->defaultclock = TRUE;
-    fimpl->IUnknown_inner.lpVtbl = &IInner_VTable;
-    fimpl->IFilterGraph2_iface.lpVtbl = &IFilterGraph2_VTable;
-    fimpl->IMediaControl_iface.lpVtbl = &IMediaControl_VTable;
-    fimpl->IMediaSeeking_iface.lpVtbl = &IMediaSeeking_VTable;
-    fimpl->IBasicAudio_iface.lpVtbl = &IBasicAudio_VTable;
-    fimpl->IBasicVideo2_iface.lpVtbl = &IBasicVideo_VTable;
-    fimpl->IVideoWindow_iface.lpVtbl = &IVideoWindow_VTable;
-    fimpl->IMediaEventEx_iface.lpVtbl = &IMediaEventEx_VTable;
-    fimpl->IMediaFilter_iface.lpVtbl = &IMediaFilter_VTable;
-    fimpl->IMediaEventSink_iface.lpVtbl = &IMediaEventSink_VTable;
-    fimpl->IGraphConfig_iface.lpVtbl = &IGraphConfig_VTable;
-    fimpl->IMediaPosition_iface.lpVtbl = &IMediaPosition_VTable;
-    fimpl->IObjectWithSite_iface.lpVtbl = &IObjectWithSite_VTable;
-    fimpl->IGraphVersion_iface.lpVtbl = &IGraphVersion_VTable;
-    fimpl->IVideoFrameStep_iface.lpVtbl = &VideoFrameStep_vtbl;
-    fimpl->ref = 1;
-    list_init(&fimpl->filters);
-    fimpl->name_index = 1;
-    fimpl->refClock = NULL;
-    fimpl->hEventCompletion = CreateEventW(0, TRUE, FALSE, 0);
-    fimpl->HandleEcComplete = TRUE;
-    fimpl->HandleEcRepaint = TRUE;
-    fimpl->HandleEcClockChanged = TRUE;
-    fimpl->notif.hWnd = 0;
-    fimpl->notif.disabled = FALSE;
-    fimpl->nRenderers = 0;
-    fimpl->EcCompleteCount = 0;
-    fimpl->refClockProvider = NULL;
-    fimpl->state = State_Stopped;
-    fimpl->pSite = NULL;
-    EventsQueue_Init(&fimpl->evqueue);
-    InitializeCriticalSection(&fimpl->cs);
-    fimpl->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": IFilterGraphImpl.cs");
-    fimpl->nItfCacheEntries = 0;
-    memcpy(&fimpl->timeformatseek, &TIME_FORMAT_MEDIA_TIME, sizeof(GUID));
-    fimpl->stream_start = fimpl->stream_elapsed = 0;
-    fimpl->punkFilterMapper2 = NULL;
-    fimpl->version = 0;
-    fimpl->current_pos = 0;
+    if (!(object = calloc(1, sizeof(*object))))
+        return E_OUTOFMEMORY;
 
-    if (threaded)
+    object->IBasicAudio_iface.lpVtbl = &IBasicAudio_VTable;
+    object->IBasicVideo2_iface.lpVtbl = &IBasicVideo_VTable;
+    object->IFilterGraph2_iface.lpVtbl = &IFilterGraph2_VTable;
+    object->IGraphConfig_iface.lpVtbl = &IGraphConfig_VTable;
+    object->IGraphVersion_iface.lpVtbl = &IGraphVersion_VTable;
+    object->IMediaControl_iface.lpVtbl = &IMediaControl_VTable;
+    object->IMediaEventEx_iface.lpVtbl = &IMediaEventEx_VTable;
+    object->IMediaEventSink_iface.lpVtbl = &IMediaEventSink_VTable;
+    object->IMediaFilter_iface.lpVtbl = &IMediaFilter_VTable;
+    object->IMediaPosition_iface.lpVtbl = &IMediaPosition_VTable;
+    object->IMediaSeeking_iface.lpVtbl = &IMediaSeeking_VTable;
+    object->IObjectWithSite_iface.lpVtbl = &IObjectWithSite_VTable;
+    object->IUnknown_inner.lpVtbl = &IInner_VTable;
+    object->IVideoFrameStep_iface.lpVtbl = &VideoFrameStep_vtbl;
+    object->IVideoWindow_iface.lpVtbl = &IVideoWindow_VTable;
+    object->ref = 1;
+    object->outer_unk = outer ? outer : &object->IUnknown_inner;
+
+    if (FAILED(hr = CoCreateInstance(&CLSID_FilterMapper2, object->outer_unk,
+            CLSCTX_INPROC_SERVER, &IID_IUnknown, (void **)&object->punkFilterMapper2)))
     {
-        fimpl->message_thread_ret = CreateEventW(NULL, FALSE, FALSE, NULL);
-        fimpl->message_thread = CreateThread(NULL, 0, message_thread_run, fimpl, 0, &fimpl->message_thread_id);
-        WaitForSingleObject(fimpl->message_thread_ret, INFINITE);
-    }
-    else
-        fimpl->message_thread = NULL;
-
-    fimpl->outer_unk = outer ? outer : &fimpl->IUnknown_inner;
-
-    /* create Filtermapper aggregated. */
-    hr = CoCreateInstance(&CLSID_FilterMapper2, fimpl->outer_unk, CLSCTX_INPROC_SERVER,
-            &IID_IUnknown, (void**)&fimpl->punkFilterMapper2);
-
-    if (FAILED(hr)) {
-        ERR("Unable to create filter mapper (%x)\n", hr);
-        if (fimpl->punkFilterMapper2) IUnknown_Release(fimpl->punkFilterMapper2);
-        CloseHandle(fimpl->hEventCompletion);
-        EventsQueue_Destroy(&fimpl->evqueue);
-        fimpl->cs.DebugInfo->Spare[0] = 0;
-        DeleteCriticalSection(&fimpl->cs);
-        CoTaskMemFree(fimpl);
+        ERR("Failed to create filter mapper, hr %#x.\n", hr);
+        free(object);
         return hr;
     }
 
-    *out = &fimpl->IUnknown_inner;
+    InitializeCriticalSection(&object->cs);
+    object->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": IFilterGraphImpl.cs");
+
+    object->defaultclock = TRUE;
+    EventsQueue_Init(&object->evqueue);
+    list_init(&object->filters);
+    object->HandleEcClockChanged = TRUE;
+    object->HandleEcComplete = TRUE;
+    object->HandleEcRepaint = TRUE;
+    object->hEventCompletion = CreateEventW(0, TRUE, FALSE, 0);
+    object->name_index = 1;
+    object->timeformatseek = TIME_FORMAT_MEDIA_TIME;
+
+    if (threaded)
+    {
+        object->message_thread_ret = CreateEventW(NULL, FALSE, FALSE, NULL);
+        object->message_thread = CreateThread(NULL, 0, message_thread_run, object, 0, &object->message_thread_id);
+        WaitForSingleObject(object->message_thread_ret, INFINITE);
+    }
+    else
+        object->message_thread = NULL;
+
+    TRACE("Created %sthreaded filter graph %p.\n", threaded ? "" : "non-", object);
+    *out = &object->IUnknown_inner;
     return S_OK;
 }
 
