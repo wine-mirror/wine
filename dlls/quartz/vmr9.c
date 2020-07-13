@@ -477,13 +477,19 @@ static HRESULT allocate_surfaces(struct quartz_vmr *filter, const AM_MEDIA_TYPE 
     return VFW_E_TYPE_NOT_ACCEPTED;
 }
 
+static void vmr_init_stream(struct strmbase_renderer *iface)
+{
+    struct quartz_vmr *filter = impl_from_IBaseFilter(&iface->filter.IBaseFilter_iface);
+
+    if (filter->window.hwnd && filter->window.AutoShow)
+        ShowWindow(filter->window.hwnd, SW_SHOW);
+}
+
 static void vmr_start_stream(struct strmbase_renderer *iface)
 {
     struct quartz_vmr *filter = impl_from_IBaseFilter(&iface->filter.IBaseFilter_iface);
 
     IVMRImagePresenter9_StartPresenting(filter->presenter, filter->cookie);
-    if (filter->window.hwnd && filter->window.AutoShow)
-        ShowWindow(filter->window.hwnd, SW_SHOW);
     SetEvent(filter->run_event);
 }
 
@@ -659,6 +665,7 @@ static const struct strmbase_renderer_ops renderer_ops =
 {
     .pfnCheckMediaType = VMR9_CheckMediaType,
     .pfnDoRenderSample = VMR9_DoRenderSample,
+    .renderer_init_stream = vmr_init_stream,
     .renderer_start_stream = vmr_start_stream,
     .renderer_stop_stream = vmr_stop_stream,
     .pfnShouldDrawSampleNow = VMR9_ShouldDrawSampleNow,

@@ -2130,14 +2130,14 @@ static void test_video_window_autoshow(IVideoWindow *window, IFilterGraph2 *grap
 
     hr = IVideoWindow_get_Visible(window, &l);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(l == OATRUE, "Got %d.\n", l);
+    ok(l == OATRUE, "Got %d.\n", l);
 
     hr = IMediaControl_Stop(control);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IVideoWindow_get_Visible(window, &l);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(l == OATRUE, "Got %d.\n", l);
+    ok(l == OATRUE, "Got %d.\n", l);
 
     hr = IVideoWindow_put_AutoShow(window, OAFALSE);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
