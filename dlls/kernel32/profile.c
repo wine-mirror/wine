@@ -1040,6 +1040,30 @@ static HKEY open_file_mapping_key( const WCHAR *filename )
     return NULL;
 }
 
+static WCHAR *enum_key( HKEY key, DWORD i )
+{
+    WCHAR *value, *new_value;
+    DWORD max = 256, len;
+    LSTATUS res;
+
+    if (!(value = HeapAlloc( GetProcessHeap(), 0, max * sizeof(WCHAR) ))) return NULL;
+    len = max;
+    while ((res = RegEnumValueW( key, i, value, &len, NULL, NULL, NULL, NULL )) == ERROR_MORE_DATA)
+    {
+        max *= 2;
+        if (!(new_value = HeapReAlloc( GetProcessHeap(), 0, value, max * sizeof(WCHAR) )))
+        {
+            HeapFree( GetProcessHeap(), 0, value );
+            return NULL;
+        }
+        value = new_value;
+        len = max;
+    }
+    if (!res) return value;
+    HeapFree( GetProcessHeap(), 0, value );
+    return NULL;
+}
+
 static WCHAR *get_key_value( HKEY key, const WCHAR *value )
 {
     DWORD size = 0;
@@ -1142,6 +1166,103 @@ static BOOL get_mapped_section_key( const WCHAR *filename, const WCHAR *section,
     return TRUE;
 }
 
+static DWORD get_mapped_section( HKEY key, WCHAR *buffer, DWORD size, BOOL return_values )
+{
+    WCHAR *entry, *value;
+    DWORD i, ret = 0;
+
+    for (i = 0; (entry = enum_key( key, i )); ++i)
+    {
+        lstrcpynW( buffer + ret, entry, size - ret - 1 );
+        ret = min( ret + strlenW( entry ) + 1, size - 1 );
+        if (return_values && ret < size - 1 && (value = get_key_value( key, entry )))
+        {
+            buffer[ret - 1] = '=';
+            lstrcpynW( buffer + ret, value, size - ret - 1 );
+            ret = min( ret + strlenW( value ) + 1, size - 1 );
+            HeapFree( GetProcessHeap(), 0, value );
+        }
+        HeapFree( GetProcessHeap(), 0, entry );
+    }
+
+    return ret;
+}
+
+static DWORD get_section( const WCHAR *filename, const WCHAR *section,
+                          WCHAR *buffer, DWORD size, BOOL return_values )
+{
+    HKEY key, subkey, section_key;
+    BOOL use_ini = TRUE;
+    DWORD ret = 0;
+    WCHAR *path;
+
+    if ((key = open_file_mapping_key( filename )))
+    {
+        if (!RegOpenKeyExW( key, section, 0, KEY_READ, &subkey ))
+        {
+            WCHAR *entry, *value;
+            HKEY entry_key;
+            DWORD i;
+
+            for (i = 0; (entry = enum_key( subkey, i )); ++i)
+            {
+                if (!(path = get_key_value( subkey, entry )))
+                {
+                    HeapFree( GetProcessHeap(), 0, entry );
+                    continue;
+                }
+
+                entry_key = open_mapped_key( path, FALSE );
+                HeapFree( GetProcessHeap(), 0, path );
+                if (!entry_key)
+                {
+                    HeapFree( GetProcessHeap(), 0, entry );
+                    continue;
+                }
+
+                if (entry[0])
+                {
+                    if ((value = get_key_value( entry_key, entry )))
+                    {
+                        lstrcpynW( buffer + ret, entry, size - ret - 1 );
+                        ret = min( ret + strlenW( entry ) + 1, size - 1 );
+                        if (return_values && ret < size - 1)
+                        {
+                            buffer[ret - 1] = '=';
+                            lstrcpynW( buffer + ret, value, size - ret - 1 );
+                            ret = min( ret + strlenW( value ) + 1, size - 1 );
+                        }
+                        HeapFree( GetProcessHeap(), 0, value );
+                    }
+                }
+                else
+                {
+                    ret = get_mapped_section( entry_key, buffer, size, return_values );
+                    use_ini = FALSE;
+                }
+
+                HeapFree( GetProcessHeap(), 0, entry );
+                RegCloseKey( entry_key );
+            }
+
+            RegCloseKey( subkey );
+        }
+        else if (get_mapped_section_key( filename, section, NULL, FALSE, &section_key ))
+        {
+            ret = get_mapped_section( section_key, buffer, size, return_values );
+            use_ini = FALSE;
+            RegCloseKey( section_key );
+        }
+
+        RegCloseKey( key );
+    }
+
+    if (use_ini)
+        ret += PROFILE_GetSection( filename, section, buffer + ret, size - ret, return_values );
+
+    return ret;
+}
+
 /********************* API functions **********************************/
 
 
@@ -1182,7 +1303,7 @@ INT WINAPI GetPrivateProfileStringW( LPCWSTR section, LPCWSTR entry,
     if (!section) return GetPrivateProfileSectionNamesW( buffer, len, filename );
     if (!entry)
     {
-        ret = PROFILE_GetSection( filename, section, buffer, len, FALSE );
+        ret = get_section( filename, section, buffer, len, FALSE );
         if (!buffer[0])
         {
             PROFILE_CopyEntry( buffer, def_val, len );
@@ -1400,7 +1521,7 @@ INT WINAPI GetPrivateProfileSectionW( LPCWSTR section, LPWSTR buffer,
 
     TRACE("(%s, %p, %d, %s)\n", debugstr_w(section), buffer, len, debugstr_w(filename));
 
-    return PROFILE_GetSection( filename, section, buffer, len, TRUE );
+    return get_section( filename, section, buffer, len, TRUE );
 }
 
 /***********************************************************************
