@@ -1501,20 +1501,6 @@ enum server_fd_type
     obj_handle_t event;
 @END
 
-/* Get a console mode (input or output) */
-@REQ(get_console_mode)
-    obj_handle_t handle;        /* handle to the console */
-@REPLY
-    int          mode;          /* console mode */
-@END
-
-
-/* Set a console mode (input or output) */
-@REQ(set_console_mode)
-    obj_handle_t handle;        /* handle to the console */
-    int          mode;          /* console mode */
-@END
-
 
 /* Set info about a console (input only) */
 @REQ(set_console_input_info)

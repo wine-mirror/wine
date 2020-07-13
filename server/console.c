@@ -715,52 +715,6 @@ static void propagate_console_signal( struct console_input *console,
     enum_processes(propagate_console_signal_cb, &csi);
 }
 
-static int get_console_mode( obj_handle_t handle )
-{
-    struct object *obj;
-    int ret = 0;
-
-    if ((obj = get_handle_obj( current->process, handle, FILE_READ_PROPERTIES, NULL )))
-    {
-        if (obj->ops == &console_input_ops)
-        {
-            ret = ((struct console_input *)obj)->mode;
-        }
-        else if (obj->ops == &screen_buffer_ops)
-        {
-            ret = ((struct screen_buffer *)obj)->mode;
-        }
-        else
-            set_error( STATUS_OBJECT_TYPE_MISMATCH );
-        release_object( obj );
-    }
-    return ret;
-}
-
-/* changes the mode of either a console input or a screen buffer */
-static int set_console_mode( obj_handle_t handle, int mode )
-{
-    struct object *obj;
-    int ret = 0;
-
-    if (!(obj = get_handle_obj( current->process, handle, FILE_WRITE_PROPERTIES, NULL )))
-        return 0;
-    if (obj->ops == &console_input_ops)
-    {
-	/* FIXME: if we remove the edit mode bits, we need (???) to clean up the history */
-        ((struct console_input *)obj)->mode = mode;
-        ret = 1;
-    }
-    else if (obj->ops == &screen_buffer_ops)
-    {
-        ((struct screen_buffer *)obj)->mode = mode;
-        ret = 1;
-    }
-    else set_error( STATUS_OBJECT_TYPE_MISMATCH );
-    release_object( obj );
-    return ret;
-}
-
 /* retrieve a pointer to the console input records */
 static int read_console_input( struct console_input *console, struct async *async, int flush )
 {
@@ -2001,18 +1955,6 @@ DECL_HANDLER(get_console_input_info)
     reply->win           = console->win;
 
     release_object( console );
-}
-
-/* get a console mode (input or output) */
-DECL_HANDLER(get_console_mode)
-{
-    reply->mode = get_console_mode( req->handle );
-}
-
-/* set a console mode (input or output) */
-DECL_HANDLER(set_console_mode)
-{
-    set_console_mode( req->handle, req->mode );
 }
 
 /* appends a string to console's history */

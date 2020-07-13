@@ -2063,22 +2063,6 @@ static void dump_get_console_wait_event_reply( const struct get_console_wait_eve
     fprintf( stderr, " event=%04x", req->event );
 }
 
-static void dump_get_console_mode_request( const struct get_console_mode_request *req )
-{
-    fprintf( stderr, " handle=%04x", req->handle );
-}
-
-static void dump_get_console_mode_reply( const struct get_console_mode_reply *req )
-{
-    fprintf( stderr, " mode=%d", req->mode );
-}
-
-static void dump_set_console_mode_request( const struct set_console_mode_request *req )
-{
-    fprintf( stderr, " handle=%04x", req->handle );
-    fprintf( stderr, ", mode=%d", req->mode );
-}
-
 static void dump_set_console_input_info_request( const struct set_console_input_info_request *req )
 {
     fprintf( stderr, " handle=%04x", req->handle );
@@ -4590,8 +4574,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_open_console_request,
     (dump_func)dump_attach_console_request,
     (dump_func)dump_get_console_wait_event_request,
-    (dump_func)dump_get_console_mode_request,
-    (dump_func)dump_set_console_mode_request,
     (dump_func)dump_set_console_input_info_request,
     (dump_func)dump_get_console_input_info_request,
     (dump_func)dump_append_console_input_history_request,
@@ -4883,8 +4865,6 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_open_console_reply,
     (dump_func)dump_attach_console_reply,
     (dump_func)dump_get_console_wait_event_reply,
-    (dump_func)dump_get_console_mode_reply,
-    NULL,
     NULL,
     (dump_func)dump_get_console_input_info_reply,
     NULL,
@@ -5176,8 +5156,6 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "open_console",
     "attach_console",
     "get_console_wait_event",
-    "get_console_mode",
-    "set_console_mode",
     "set_console_input_info",
     "get_console_input_info",
     "append_console_input_history",

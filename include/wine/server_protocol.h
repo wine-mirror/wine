@@ -1891,33 +1891,6 @@ struct get_console_wait_event_reply
 };
 
 
-struct get_console_mode_request
-{
-    struct request_header __header;
-    obj_handle_t handle;
-};
-struct get_console_mode_reply
-{
-    struct reply_header __header;
-    int          mode;
-    char __pad_12[4];
-};
-
-
-
-struct set_console_mode_request
-{
-    struct request_header __header;
-    obj_handle_t handle;
-    int          mode;
-    char __pad_20[4];
-};
-struct set_console_mode_reply
-{
-    struct reply_header __header;
-};
-
-
 
 struct set_console_input_info_request
 {
@@ -5694,8 +5667,6 @@ enum request
     REQ_open_console,
     REQ_attach_console,
     REQ_get_console_wait_event,
-    REQ_get_console_mode,
-    REQ_set_console_mode,
     REQ_set_console_input_info,
     REQ_get_console_input_info,
     REQ_append_console_input_history,
@@ -5991,8 +5962,6 @@ union generic_request
     struct open_console_request open_console_request;
     struct attach_console_request attach_console_request;
     struct get_console_wait_event_request get_console_wait_event_request;
-    struct get_console_mode_request get_console_mode_request;
-    struct set_console_mode_request set_console_mode_request;
     struct set_console_input_info_request set_console_input_info_request;
     struct get_console_input_info_request get_console_input_info_request;
     struct append_console_input_history_request append_console_input_history_request;
@@ -6286,8 +6255,6 @@ union generic_reply
     struct open_console_reply open_console_reply;
     struct attach_console_reply attach_console_reply;
     struct get_console_wait_event_reply get_console_wait_event_reply;
-    struct get_console_mode_reply get_console_mode_reply;
-    struct set_console_mode_reply set_console_mode_reply;
     struct set_console_input_info_reply set_console_input_info_reply;
     struct get_console_input_info_reply get_console_input_info_reply;
     struct append_console_input_history_reply append_console_input_history_reply;
@@ -6514,7 +6481,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 623
+#define SERVER_PROTOCOL_VERSION 624
 
 /* ### protocol_version end ### */
 
