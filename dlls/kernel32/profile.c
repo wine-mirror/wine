@@ -1674,6 +1674,7 @@ BOOL WINAPI WritePrivateProfileSectionW( LPCWSTR section,
 {
     BOOL ret = FALSE;
     LPWSTR p;
+    HKEY key, section_key;
 
     if (!section && !string)
     {
@@ -1686,6 +1687,44 @@ BOOL WINAPI WritePrivateProfileSectionW( LPCWSTR section,
         return FALSE;
     }
     if (!string) return PROFILE_DeleteSection( filename, section );
+
+    if ((key = open_file_mapping_key( filename )))
+    {
+        /* replace existing entries, but only if they are mapped, and do not
+         * delete any keys */
+
+        const WCHAR *entry, *p;
+
+        for (entry = string; *entry; entry += strlenW( entry ) + 1)
+        {
+            if ((p = strchrW( entry, '=' )))
+            {
+                WCHAR *entry_copy;
+                p++;
+                if (!(entry_copy = HeapAlloc( GetProcessHeap(), 0, (p - entry) * sizeof(WCHAR) )))
+                {
+                    SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+                    RegCloseKey( key );
+                    return FALSE;
+                }
+                lstrcpynW( entry_copy, entry, p - entry );
+                if (get_mapped_section_key( filename, section, entry_copy, TRUE, &section_key ))
+                {
+                    LSTATUS res = RegSetValueExW( section_key, entry_copy, 0, REG_SZ, (const BYTE *)p,
+                                                  (strlenW( p ) + 1) * sizeof(WCHAR) );
+                    RegCloseKey( section_key );
+                    if (res)
+                    {
+                        SetLastError( res );
+                        RegCloseKey( key );
+                        return FALSE;
+                    }
+                }
+            }
+        }
+        RegCloseKey( key );
+        return TRUE;
+    }
 
     EnterCriticalSection( &PROFILE_CritSect );
 
