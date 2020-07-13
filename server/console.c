@@ -190,7 +190,7 @@ struct screen_buffer
     struct object         obj;           /* object header */
     struct list           entry;         /* entry in list of all screen buffers */
     struct console_input *input;         /* associated console input */
-    int                   mode;          /* output mode */
+    unsigned int          mode;          /* output mode */
     int                   cursor_size;   /* size of cursor (percentage filled) */
     int                   cursor_visible;/* cursor visibility flag */
     int                   cursor_x;      /* position of cursor */
@@ -1584,6 +1584,15 @@ static int console_input_ioctl( struct fd *fd, ioctl_code_t code, struct async *
         }
         return set_reply_data( &console->mode, sizeof(console->mode) ) != NULL;
 
+    case IOCTL_CONDRV_SET_MODE:
+        if (get_req_data_size() != sizeof(console->mode))
+        {
+            set_error( STATUS_INVALID_PARAMETER );
+            return 0;
+        }
+        console->mode = *(unsigned int *)get_req_data();
+        return 1;
+
     case IOCTL_CONDRV_READ_INPUT:
         {
             int blocking = 0;
@@ -1656,6 +1665,15 @@ static int screen_buffer_ioctl( struct fd *fd, ioctl_code_t code, struct async *
             return 0;
         }
         return set_reply_data( &screen_buffer->mode, sizeof(screen_buffer->mode) ) != NULL;
+
+    case IOCTL_CONDRV_SET_MODE:
+        if (get_req_data_size() != sizeof(screen_buffer->mode))
+        {
+            set_error( STATUS_INVALID_PARAMETER );
+            return 0;
+        }
+        screen_buffer->mode = *(unsigned int *)get_req_data();
+        return 1;
 
     case IOCTL_CONDRV_GET_OUTPUT_INFO:
         {
