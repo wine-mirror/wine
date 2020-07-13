@@ -482,7 +482,7 @@ static void vmr_start_stream(struct strmbase_renderer *iface)
     struct quartz_vmr *filter = impl_from_IBaseFilter(&iface->filter.IBaseFilter_iface);
 
     IVMRImagePresenter9_StartPresenting(filter->presenter, filter->cookie);
-    if (filter->window.hwnd)
+    if (filter->window.hwnd && filter->window.AutoShow)
         ShowWindow(filter->window.hwnd, SW_SHOW);
     SetEvent(filter->run_event);
 }
