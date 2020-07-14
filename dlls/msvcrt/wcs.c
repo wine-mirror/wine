@@ -86,12 +86,48 @@ MSVCRT_wchar_t* CDECL MSVCRT__wcsdup( const MSVCRT_wchar_t* str )
   return ret;
 }
 
+/*********************************************************************
+ *              _towlower_l (MSVCRT.@)
+ */
+int CDECL MSVCRT__towlower_l(MSVCRT_wint_t c, MSVCRT__locale_t locale)
+{
+    MSVCRT_pthreadlocinfo locinfo;
+
+    if(!locale)
+        locinfo = get_locinfo();
+    else
+        locinfo = locale->locinfo;
+
+    if(!locinfo->lc_handle[MSVCRT_LC_CTYPE]) {
+        if(c >= 'A' && c <= 'Z')
+            return c + 'a' - 'A';
+        return c;
+    }
+
+    return tolowerW(c);
+}
+
+/*********************************************************************
+ *              towlower (MSVCRT.@)
+ */
+int CDECL MSVCRT_towlower(MSVCRT_wint_t c)
+{
+    return MSVCRT__towlower_l(c, NULL);
+}
+
 INT CDECL MSVCRT__wcsicmp_l(const MSVCRT_wchar_t *str1, const MSVCRT_wchar_t *str2, MSVCRT__locale_t locale)
 {
+    MSVCRT_wchar_t c1, c2;
+
     if(!MSVCRT_CHECK_PMT(str1 != NULL) || !MSVCRT_CHECK_PMT(str2 != NULL))
         return MSVCRT__NLSCMPERROR;
 
-    return strcmpiW(str1, str2);
+    do
+    {
+        c1 = MSVCRT__towlower_l(*str1++, locale);
+        c2 = MSVCRT__towlower_l(*str2++, locale);
+    } while(c1 && (c1 == c2));
+    return c1 - c2;
 }
 
 /*********************************************************************
@@ -99,7 +135,7 @@ INT CDECL MSVCRT__wcsicmp_l(const MSVCRT_wchar_t *str1, const MSVCRT_wchar_t *st
  */
 INT CDECL MSVCRT__wcsicmp( const MSVCRT_wchar_t* str1, const MSVCRT_wchar_t* str2 )
 {
-    return strcmpiW( str1, str2 );
+    return MSVCRT__wcsicmp_l(str1, str2, NULL);
 }
 
 /*********************************************************************
@@ -2538,35 +2574,6 @@ int CDECL MSVCRT__towupper_l(MSVCRT_wint_t c, MSVCRT__locale_t locale)
 int CDECL MSVCRT_towupper(MSVCRT_wint_t c)
 {
     return MSVCRT__towupper_l(c, NULL);
-}
-
-/*********************************************************************
- *              _towlower_l (MSVCRT.@)
- */
-int CDECL MSVCRT__towlower_l(MSVCRT_wint_t c, MSVCRT__locale_t locale)
-{
-    MSVCRT_pthreadlocinfo locinfo;
-
-    if(!locale)
-        locinfo = get_locinfo();
-    else
-        locinfo = locale->locinfo;
-
-    if(!locinfo->lc_handle[MSVCRT_LC_CTYPE]) {
-        if(c >= 'A' && c <= 'Z')
-            return c + 'a' - 'A';
-        return c;
-    }
-
-    return tolowerW(c);
-}
-
-/*********************************************************************
- *              towlower (MSVCRT.@)
- */
-int CDECL MSVCRT_towlower(MSVCRT_wint_t c)
-{
-    return MSVCRT__towlower_l(c, NULL);
 }
 
 /*********************************************************************
