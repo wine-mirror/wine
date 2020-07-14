@@ -1620,17 +1620,17 @@ static int msvcrt_get_flags(const MSVCRT_wchar_t* mode, int *open_flags, int* st
     mode++;
     while(*mode == ' ') mode++;
 
-    if(!strncmpiW(utf8, mode, ARRAY_SIZE(utf8)))
+    if(!MSVCRT__wcsnicmp(utf8, mode, ARRAY_SIZE(utf8)))
     {
       *open_flags |= MSVCRT__O_U8TEXT;
       mode += ARRAY_SIZE(utf8);
     }
-    else if(!strncmpiW(utf16le, mode, ARRAY_SIZE(utf16le)))
+    else if(!MSVCRT__wcsnicmp(utf16le, mode, ARRAY_SIZE(utf16le)))
     {
       *open_flags |= MSVCRT__O_U16TEXT;
       mode += ARRAY_SIZE(utf16le);
     }
-    else if(!strncmpiW(unicode, mode, ARRAY_SIZE(unicode)))
+    else if(!MSVCRT__wcsnicmp(unicode, mode, ARRAY_SIZE(unicode)))
     {
       *open_flags |= MSVCRT__O_WTEXT;
       mode += ARRAY_SIZE(unicode);

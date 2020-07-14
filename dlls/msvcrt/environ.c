@@ -63,7 +63,7 @@ MSVCRT_wchar_t * CDECL MSVCRT__wgetenv(const MSVCRT_wchar_t *name)
     {
         MSVCRT_wchar_t *str = *environ;
         MSVCRT_wchar_t *pos = strchrW(str,'=');
-        if (pos && ((pos - str) == length) && !strncmpiW(str,name,length))
+        if (pos && ((pos - str) == length) && !MSVCRT__wcsnicmp(str,name,length))
         {
             TRACE("(%s): got %s\n", debugstr_w(name), debugstr_w(pos + 1));
             return pos + 1;
