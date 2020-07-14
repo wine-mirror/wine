@@ -379,8 +379,7 @@ static void *get_dir_data_space( struct dir_data *data, unsigned int size )
     {
         unsigned int new_size = buffer ? buffer->size * 2 : dir_data_buffer_initial_size;
         if (new_size < size) new_size = size;
-        if (!(buffer = RtlAllocateHeap( GetProcessHeap(), 0,
-                                        offsetof( struct dir_data_buffer, data[new_size] ) ))) return NULL;
+        if (!(buffer = malloc( offsetof( struct dir_data_buffer, data[new_size] ) ))) return NULL;
         buffer->pos  = 0;
         buffer->size = new_size;
         buffer->next = data->buffer;
@@ -419,9 +418,7 @@ static BOOL add_dir_data_names( struct dir_data *data, const WCHAR *long_name,
     {
         unsigned int new_size = max( data->size * 2, dir_data_names_initial_size );
 
-        if (names) names = RtlReAllocateHeap( GetProcessHeap(), 0, names, new_size * sizeof(*names) );
-        else names = RtlAllocateHeap( GetProcessHeap(), 0, new_size * sizeof(*names) );
-        if (!names) return FALSE;
+        if (!(names = realloc( names, new_size * sizeof(*names) ))) return FALSE;
         data->size  = new_size;
         data->names = names;
     }
@@ -448,10 +445,10 @@ static void free_dir_data( struct dir_data *data )
     for (buffer = data->buffer; buffer; buffer = next)
     {
         next = buffer->next;
-        RtlFreeHeap( GetProcessHeap(), 0, buffer );
+        free( buffer );
     }
-    RtlFreeHeap( GetProcessHeap(), 0, data->names );
-    RtlFreeHeap( GetProcessHeap(), 0, data );
+    free( data->names );
+    free( data );
 }
 
 
@@ -468,8 +465,7 @@ static struct list dir_queue = LIST_INIT( dir_queue );
 static NTSTATUS add_dir_to_queue( const char *name )
 {
     int len = strlen( name ) + 1;
-    struct dir_name *dir = RtlAllocateHeap( GetProcessHeap(), 0,
-                                            FIELD_OFFSET( struct dir_name, name[len] ));
+    struct dir_name *dir = malloc( offsetof( struct dir_name, name[len] ));
     if (!dir) return STATUS_NO_MEMORY;
     strcpy( dir->name, name );
     list_add_tail( &dir_queue, &dir->entry );
@@ -484,7 +480,7 @@ static NTSTATUS next_dir_in_queue( char *name )
         struct dir_name *dir = LIST_ENTRY( head, struct dir_name, entry );
         strcpy( name, dir->name );
         list_remove( &dir->entry );
-        RtlFreeHeap( GetProcessHeap(), 0, dir );
+        free( dir );
         return STATUS_SUCCESS;
     }
     return STATUS_OBJECT_NAME_NOT_FOUND;
@@ -498,7 +494,7 @@ static void flush_dir_queue(void)
     {
         struct dir_name *dir = LIST_ENTRY( head, struct dir_name, entry );
         list_remove( &dir->entry );
-        RtlFreeHeap( GetProcessHeap(), 0, dir );
+        free( dir );
     }
 }
 
@@ -2293,8 +2289,7 @@ static NTSTATUS init_cached_dir_data( struct dir_data **data_ret, int fd, const 
     NTSTATUS status;
     unsigned int i;
 
-    if (!(data = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*data) )))
-        return STATUS_NO_MEMORY;
+    if (!(data = calloc( 1, sizeof(*data) ))) return STATUS_NO_MEMORY;
 
     if ((status = read_directory_data( data, fd, mask )))
     {
@@ -2310,18 +2305,9 @@ static NTSTATUS init_cached_dir_data( struct dir_data **data_ret, int fd, const 
 
     if (data->count)
     {
-        /* release unused space */
-        if (data->buffer)
-            RtlReAllocateHeap( GetProcessHeap(), HEAP_REALLOC_IN_PLACE_ONLY, data->buffer,
-                               offsetof( struct dir_data_buffer, data[data->buffer->pos] ));
-        if (data->count < data->size)
-            RtlReAllocateHeap( GetProcessHeap(), HEAP_REALLOC_IN_PLACE_ONLY, data->names,
-                               data->count * sizeof(*data->names) );
-        if (!fstat( fd, &st ))
-        {
-            data->id.dev = st.st_dev;
-            data->id.ino = st.st_ino;
-        }
+        fstat( fd, &st );
+        data->id.dev = st.st_dev;
+        data->id.ino = st.st_ino;
     }
 
     TRACE( "mask %s found %u files\n", debugstr_us( mask ), data->count );
@@ -2372,14 +2358,10 @@ static NTSTATUS get_cached_dir_data( HANDLE handle, struct dir_data **data_ret, 
     if (entry >= dir_data_cache_size)
     {
         unsigned int size = max( dir_data_cache_initial_size, max( dir_data_cache_size * 2, entry + 1 ) );
-        struct dir_data **new_cache;
+        struct dir_data **new_cache = realloc( dir_data_cache, size * sizeof(*new_cache) );
 
-        if (dir_data_cache)
-            new_cache = RtlReAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, dir_data_cache,
-                                           size * sizeof(*new_cache) );
-        else
-            new_cache = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, size * sizeof(*new_cache) );
         if (!new_cache) return STATUS_NO_MEMORY;
+        memset( new_cache + dir_data_cache_size, 0, (size - dir_data_cache_size) * sizeof(*new_cache) );
         dir_data_cache = new_cache;
         dir_data_cache_size = size;
     }
