@@ -1497,23 +1497,25 @@ void output_syscalls( DLLSPEC *spec )
              * depends on us returning to it. Adjust the return address accordingly. */
             output( "\tsubq $0xb,0x8(%%rbp)\n" );
             output( "\tcmpq $%u,%%rax\n", count );
-            output( "\tjae 3f\n" );
+            output( "\tjae 4f\n" );
             output( "\tleaq .Lsyscall_args(%%rip),%%rcx\n" );
             output( "\tmovzbl (%%rcx,%%rax),%%ecx\n" );
             output( "\tsubq $0x20,%%rcx\n" );
-            output( "\tjbe 1f\n" );
-            output( "\tsubq %%rcx,%%rsp\n" );
+            output( "\tja 1f\n" );
+            output( "\tandq $~15,%%rsp\n\t" );
+            output( "\tjmp 2f\n" );
+            output( "1:\tsubq %%rcx,%%rsp\n" );
             output( "\tshrq $3,%%rcx\n" );
             output( "\tleaq 0x38(%%rbp),%%rsi\n" );
             output( "\tandq $~15,%%rsp\n\t" );
             output( "\tmovq %%rsp,%%rdi\n" );
             output( "\tcld\n" );
             output( "\trep; movsq\n" );
-            output( "1:\tmovq %%r10,%%rcx\n" );
+            output( "2:\tmovq %%r10,%%rcx\n" );
             output( "\tsubq $0x20,%%rsp\n" );
             output( "\tleaq .Lsyscall_table(%%rip),%%r10\n" );
             output( "\tcallq *(%%r10,%%rax,8)\n" );
-            output( "2:\tleaq -0x10(%%rbp),%%rsp\n" );
+            output( "3:\tleaq -0x10(%%rbp),%%rsp\n" );
             output( "\tpopq %%rdi\n" );
             output_cfi( ".cfi_same_value %%rdi" );
             output( "\tpopq %%rsi\n" );
@@ -1523,8 +1525,8 @@ void output_syscalls( DLLSPEC *spec )
             output_cfi( ".cfi_adjust_cfa_offset -8" );
             output_cfi( ".cfi_same_value %%rbp" );
             output( "\tret\n" );
-            output( "3:\tmovl $0x%x,%%eax\n", invalid_param );
-            output( "\tjmp 2b\n" );
+            output( "4:\tmovl $0x%x,%%eax\n", invalid_param );
+            output( "\tjmp 3b\n" );
             break;
         case CPU_ARM:
             output( "\tldr r1, 4f\n" );
