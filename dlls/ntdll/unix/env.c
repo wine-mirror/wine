@@ -1064,7 +1064,7 @@ static void add_path_var( WCHAR *env, SIZE_T *pos, const char *name, const char 
     {
         if (unix_to_nt_file_name( path, &nt_name )) return;
         append_envW( env, pos, name, nt_name );
-        RtlFreeHeap( GetProcessHeap(), 0, nt_name );
+        free( nt_name );
     }
 }
 
@@ -1217,7 +1217,7 @@ void CDECL get_initial_directory( UNICODE_STRING *dir )
                 memcpy( dir->Buffer, nt_name, dir->Length );
                 dir->Buffer[1] = '\\';
             }
-            RtlFreeHeap( GetProcessHeap(), 0, nt_name );
+            free( nt_name );
         }
     }
 

@@ -1834,7 +1834,7 @@ static NTSTATUS fill_name_info( const char *unix_name, FILE_NAME_INFORMATION *in
         else *name_len = info->FileNameLength;
 
         memcpy( info->FileName, ptr, *name_len );
-        RtlFreeHeap( GetProcessHeap(), 0, nt_name );
+        free( nt_name );
     }
 
     return status;
@@ -3447,8 +3447,7 @@ NTSTATUS unix_to_nt_file_name( const char *name, WCHAR **nt )
     else if (status != STATUS_OBJECT_PATH_NOT_FOUND) return status;
 
     lenW = wcslen( prefix );
-    if (!(buffer = RtlAllocateHeap( GetProcessHeap(), 0, (lenA + lenW + 1) * sizeof(WCHAR) )))
-        return STATUS_NO_MEMORY;
+    if (!(buffer = malloc( (lenA + lenW + 1) * sizeof(WCHAR) ))) return STATUS_NO_MEMORY;
     memcpy( buffer, prefix, lenW * sizeof(WCHAR) );
     lenW += ntdll_umbstowcs( path, lenA, buffer + lenW, lenA );
     buffer[lenW] = 0;
@@ -3474,7 +3473,7 @@ NTSTATUS CDECL wine_unix_to_nt_file_name( const char *name, WCHAR *buffer, SIZE_
         if (*size > wcslen(nt_name)) wcscpy( buffer, nt_name );
         else status = STATUS_BUFFER_TOO_SMALL;
         *size = wcslen(nt_name) + 1;
-        RtlFreeHeap( GetProcessHeap(), 0, nt_name );
+        free( nt_name );
     }
     return status;
 }
@@ -6411,7 +6410,7 @@ NTSTATUS WINAPI NtQueryObject( HANDLE handle, OBJECT_INFORMATION_CLASS info_clas
                     wcscpy( p->Name.Buffer, nt_name );
                 }
                 if (used_len) *used_len = sizeof(*p) + size;
-                RtlFreeHeap( GetProcessHeap(), 0, nt_name );
+                free( nt_name );
             }
             RtlFreeHeap( GetProcessHeap(), 0, unix_name );
             break;
