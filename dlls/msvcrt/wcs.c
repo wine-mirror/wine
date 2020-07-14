@@ -209,7 +209,25 @@ int CDECL MSVCRT__wcsnicoll_l(const MSVCRT_wchar_t* str1, const MSVCRT_wchar_t* 
         locinfo = locale->locinfo;
 
     if(!locinfo->lc_handle[MSVCRT_LC_COLLATE])
-        return strncmpiW(str1, str2, count);
+    {
+        MSVCRT_wchar_t c1, c2;
+
+        if (!count)
+            return 0;
+
+        do
+        {
+            c1 = *str1++;
+            if (c1 >= 'A' && c1 <= 'Z')
+                c1 += 'a' - 'A';
+
+            c2 = *str2++;
+            if (c2 >= 'A' && c2 <= 'Z')
+                c2 += 'a' - 'A';
+        } while(--count && c1 && (c1 == c2));
+        return c1 - c2;
+    }
+
     return CompareStringW(locinfo->lc_handle[MSVCRT_LC_COLLATE], NORM_IGNORECASE,
 			  str1, MSVCRT_wcsnlen(str1, count),
                           str2, MSVCRT_wcsnlen(str2, count))-CSTR_EQUAL;
