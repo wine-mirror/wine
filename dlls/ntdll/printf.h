@@ -375,9 +375,13 @@ static int FUNC_NAME(pf_vsnprintf)( FUNC_NAME(pf_output) *out, const APICHAR *fo
                 flags.IntegerDouble = TRUE;
                 p += 2;
             }
-            else if( *p == 'l' || *p == 'L' )
+            else if( *p == 'l' )
             {
                 flags.IntegerLength = LEN_LONG;
+                p++;
+            }
+            else if( *p == 'L' )
+            {
                 p++;
             }
             else if( *p == 'h')

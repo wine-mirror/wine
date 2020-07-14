@@ -1529,6 +1529,14 @@ static void test__snprintf(void)
     ok(!memcmp(buffer, "tes", 3), "buf = %s\n", buffer);
     ok(buffer[3] == 0x7c, "buffer[3] = %x\n", buffer[3]);
 
+    res = p_snprintf(buffer, sizeof(buffer), "%ls", L"test");
+    ok(res == strlen(buffer), "wrong size %d\n", res);
+    ok(!strcmp(buffer, "test"), "got %s\n", debugstr_a(buffer));
+
+    res = p_snprintf(buffer, sizeof(buffer), "%Ls", "test");
+    ok(res == strlen(buffer), "wrong size %d\n", res);
+    ok(!strcmp(buffer, "test"), "got %s\n", debugstr_a(buffer));
+
     res = p_snprintf(buffer, sizeof(buffer), "%I64x %d", (ULONGLONG)0x1234567890, 1);
     ok(res == strlen(buffer), "wrong size %d\n", res);
     ok(!strcmp(buffer, "1234567890 1"), "got %s\n", debugstr_a(buffer));
