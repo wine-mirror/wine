@@ -947,19 +947,16 @@ BOOL WINAPI WriteConsoleW(HANDLE hConsoleOutput, LPCVOID lpBuffer, DWORD nNumber
  */
 void CONSOLE_FillLineUniform(HANDLE hConsoleOutput, int i, int j, int len, LPCHAR_INFO lpFill)
 {
-    SERVER_START_REQ( fill_console_output )
-    {
-        req->handle    = console_handle_unmap(hConsoleOutput);
-        req->mode      = CHAR_INFO_MODE_TEXTATTR;
-        req->x         = i;
-        req->y         = j;
-        req->count     = len;
-        req->wrap      = FALSE;
-        req->data.ch   = lpFill->Char.UnicodeChar;
-        req->data.attr = lpFill->Attributes;
-        wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
+    struct condrv_fill_output_params params;
+
+    params.mode  = CHAR_INFO_MODE_TEXTATTR;
+    params.x     = i;
+    params.y     = j;
+    params.count = len;
+    params.wrap  = FALSE;
+    params.ch    = lpFill->Char.UnicodeChar;
+    params.attr  = lpFill->Attributes;
+    DeviceIoControl( hConsoleOutput, IOCTL_CONDRV_FILL_OUTPUT, &params, sizeof(params), NULL, 0, NULL, NULL );
 }
 
 /******************************************************************
