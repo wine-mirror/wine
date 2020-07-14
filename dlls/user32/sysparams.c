@@ -4815,23 +4815,67 @@ done:
  */
 LONG WINAPI DisplayConfigGetDeviceInfo(DISPLAYCONFIG_DEVICE_INFO_HEADER *packet)
 {
+    LONG ret = ERROR_GEN_FAILURE;
+    HANDLE mutex;
+    HDEVINFO devinfo;
+    SP_DEVINFO_DATA device_data = {sizeof(device_data)};
+    DWORD index = 0, type;
+    LUID gpu_luid;
+
     TRACE("(%p)\n", packet);
 
     if (!packet || packet->size < sizeof(*packet))
         return ERROR_GEN_FAILURE;
+    wait_graphics_driver_ready();
 
     switch (packet->type)
     {
     case DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_NAME:
     {
         DISPLAYCONFIG_SOURCE_DEVICE_NAME *source_name = (DISPLAYCONFIG_SOURCE_DEVICE_NAME *)packet;
+        WCHAR device_name[CCHDEVICENAME];
+        LONG source_id;
 
-        FIXME("DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_NAME: stub\n");
+        TRACE("DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_NAME\n");
 
         if (packet->size < sizeof(*source_name))
             return ERROR_INVALID_PARAMETER;
 
-        return ERROR_NOT_SUPPORTED;
+        mutex = get_display_device_init_mutex();
+        devinfo = SetupDiGetClassDevsW(&GUID_DEVCLASS_MONITOR, DISPLAY, NULL, DIGCF_PRESENT);
+        if (devinfo == INVALID_HANDLE_VALUE)
+        {
+            release_display_device_init_mutex(mutex);
+            return ret;
+        }
+
+        while (SetupDiEnumDeviceInfo(devinfo, index++, &device_data))
+        {
+            if (!SetupDiGetDevicePropertyW(devinfo, &device_data, &DEVPROPKEY_MONITOR_GPU_LUID,
+                                           &type, (BYTE *)&gpu_luid, sizeof(gpu_luid), NULL, 0))
+                continue;
+
+            if ((source_name->header.adapterId.LowPart != gpu_luid.LowPart) ||
+                (source_name->header.adapterId.HighPart != gpu_luid.HighPart))
+                continue;
+
+            /* QueryDisplayConfig() derives the source ID from the adapter name. */
+            if (!SetupDiGetDevicePropertyW(devinfo, &device_data, &WINE_DEVPROPKEY_MONITOR_ADAPTERNAME,
+                                           &type, (BYTE *)device_name, sizeof(device_name), NULL, 0))
+                continue;
+
+            source_id = strtolW(device_name + ARRAY_SIZE(ADAPTER_PREFIX), NULL, 10);
+            source_id--;
+            if (source_name->header.id != source_id)
+                continue;
+
+            lstrcpyW(source_name->viewGdiDeviceName, device_name);
+            ret = ERROR_SUCCESS;
+            break;
+        }
+        SetupDiDestroyDeviceInfoList(devinfo);
+        release_display_device_init_mutex(mutex);
+        return ret;
     }
     case DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME:
     {
