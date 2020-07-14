@@ -1684,11 +1684,8 @@ if (0)
     LocalFileTimeToFileTime(&filetime, &filetime);
 
     /* no way to get required buffer length here */
-    SetLastError(0xdeadbeef);
     ret = pSHFormatDateTimeA(&filetime, NULL, NULL, 0);
     ok(ret == 0, "got %d\n", ret);
-    ok(GetLastError() == 0xdeadbeef || broken(GetLastError() == ERROR_SUCCESS /* Win7 */),
-        "expected 0xdeadbeef, got %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     buff[0] = 'a'; buff[1] = 0;
