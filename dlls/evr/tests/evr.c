@@ -1080,15 +1080,18 @@ todo_wine {
         ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
         hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMFGetService, (void **)&gs);
-        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* Win7 */, "Unexpected hr %#x.\n", hr);
 
-        /* Device manager wasn't set, sample get regular memory buffers. */
-        hr = IMFGetService_GetService(gs, &MR_BUFFER_SERVICE, &IID_IDirect3DSurface9, (void **)&surface);
-        ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+        /* Device manager wasn't set, sample gets regular memory buffers. */
+        if (SUCCEEDED(hr))
+        {
+            hr = IMFGetService_GetService(gs, &MR_BUFFER_SERVICE, &IID_IDirect3DSurface9, (void **)&surface);
+            ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+            IMFGetService_Release(gs);
+        }
 
         IMFMediaBuffer_Release(buffer);
 
-        IMFGetService_Release(gs);
         IMFSample_Release(sample);
     }
 
