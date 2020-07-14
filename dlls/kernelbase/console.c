@@ -446,7 +446,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH FillConsoleOutputCharacterA( HANDLE handle, CHAR c
 BOOL WINAPI DECLSPEC_HOTPATCH FillConsoleOutputCharacterW( HANDLE handle, WCHAR ch, DWORD length,
                                                            COORD coord, DWORD *written )
 {
-    BOOL ret;
+    struct condrv_fill_output_params params;
 
     TRACE( "(%p,%s,%d,(%dx%d),%p)\n", handle, debugstr_wn(&ch, 1), length, coord.X, coord.Y, written );
 
@@ -457,19 +457,16 @@ BOOL WINAPI DECLSPEC_HOTPATCH FillConsoleOutputCharacterW( HANDLE handle, WCHAR 
     }
 
     *written = 0;
-    SERVER_START_REQ( fill_console_output )
-    {
-        req->handle  = console_handle_unmap( handle );
-        req->x       = coord.X;
-        req->y       = coord.Y;
-        req->mode    = CHAR_INFO_MODE_TEXT;
-        req->wrap    = TRUE;
-        req->data.ch = ch;
-        req->count   = length;
-        if ((ret = !wine_server_call_err( req ))) *written = reply->written;
-    }
-    SERVER_END_REQ;
-    return ret;
+
+    params.mode  = CHAR_INFO_MODE_TEXT;
+    params.x     = coord.X;
+    params.y     = coord.Y;
+    params.count = length;
+    params.wrap  = TRUE;
+    params.ch    = ch;
+    params.attr  = 0;
+    return console_ioctl( handle, IOCTL_CONDRV_FILL_OUTPUT, &params, sizeof(params),
+                          written, sizeof(written), NULL );
 }
 
 HANDLE get_console_wait_handle( HANDLE handle )
