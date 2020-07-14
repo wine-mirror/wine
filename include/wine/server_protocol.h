@@ -353,13 +353,6 @@ typedef union
 } message_data_t;
 
 
-typedef struct
-{
-    WCHAR          ch;
-    unsigned short attr;
-} char_info_t;
-
-
 struct filesystem_event
 {
     int         action;
@@ -2015,26 +2008,6 @@ enum char_info_mode
     CHAR_INFO_MODE_ATTR,
     CHAR_INFO_MODE_TEXTATTR,
     CHAR_INFO_MODE_TEXTSTDATTR
-};
-
-
-
-struct fill_console_output_request
-{
-    struct request_header __header;
-    obj_handle_t handle;
-    int          x;
-    int          y;
-    int          mode;
-    int          count;
-    int          wrap;
-    char_info_t  data;
-};
-struct fill_console_output_reply
-{
-    struct reply_header __header;
-    int          written;
-    char __pad_12[4];
 };
 
 
@@ -5674,7 +5647,6 @@ enum request
     REQ_get_console_input_history,
     REQ_create_console_output,
     REQ_write_console_output,
-    REQ_fill_console_output,
     REQ_read_console_output,
     REQ_move_console_output,
     REQ_send_console_signal,
@@ -5969,7 +5941,6 @@ union generic_request
     struct get_console_input_history_request get_console_input_history_request;
     struct create_console_output_request create_console_output_request;
     struct write_console_output_request write_console_output_request;
-    struct fill_console_output_request fill_console_output_request;
     struct read_console_output_request read_console_output_request;
     struct move_console_output_request move_console_output_request;
     struct send_console_signal_request send_console_signal_request;
@@ -6262,7 +6233,6 @@ union generic_reply
     struct get_console_input_history_reply get_console_input_history_reply;
     struct create_console_output_reply create_console_output_reply;
     struct write_console_output_reply write_console_output_reply;
-    struct fill_console_output_reply fill_console_output_reply;
     struct read_console_output_reply read_console_output_reply;
     struct move_console_output_reply move_console_output_reply;
     struct send_console_signal_reply send_console_signal_reply;
@@ -6482,7 +6452,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 625
+#define SERVER_PROTOCOL_VERSION 626
 
 /* ### protocol_version end ### */
 

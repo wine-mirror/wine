@@ -368,13 +368,6 @@ typedef union
     struct winevent_msg_data winevent;
 } message_data_t;
 
-/* structure for console char/attribute info */
-typedef struct
-{
-    WCHAR          ch;
-    unsigned short attr;
-} char_info_t;
-
 /* structure returned in filesystem events */
 struct filesystem_event
 {
@@ -1590,20 +1583,6 @@ enum char_info_mode
     CHAR_INFO_MODE_TEXTATTR,    /* both characters and attributes */
     CHAR_INFO_MODE_TEXTSTDATTR  /* characters but use standard attributes */
 };
-
-
-/* fill a screen buffer with constant data (chars and/or attributes) */
-@REQ(fill_console_output)
-    obj_handle_t handle;        /* handle to the console output */
-    int          x;             /* position where to start writing */
-    int          y;
-    int          mode;          /* char info mode */
-    int          count;         /* number to write */
-    int          wrap;          /* wrap around at end of line? */
-    char_info_t  data;          /* data to write */
-@REPLY
-    int          written;       /* number of char infos actually written */
-@END
 
 
 /* read data (chars and/or attributes) from a screen buffer */

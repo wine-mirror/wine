@@ -108,13 +108,6 @@ static void dump_rectangle( const char *prefix, const rectangle_t *rect )
              rect->left, rect->top, rect->right, rect->bottom );
 }
 
-static void dump_char_info( const char *prefix, const char_info_t *info )
-{
-    fprintf( stderr, "%s{'", prefix );
-    dump_strW( &info->ch, sizeof(info->ch), stderr, "\'\'" );
-    fprintf( stderr, "',%04x}", info->attr );
-}
-
 static void dump_ioctl_code( const char *prefix, const ioctl_code_t *code )
 {
     switch(*code)
@@ -2141,22 +2134,6 @@ static void dump_write_console_output_reply( const struct write_console_output_r
     fprintf( stderr, " written=%d", req->written );
     fprintf( stderr, ", width=%d", req->width );
     fprintf( stderr, ", height=%d", req->height );
-}
-
-static void dump_fill_console_output_request( const struct fill_console_output_request *req )
-{
-    fprintf( stderr, " handle=%04x", req->handle );
-    fprintf( stderr, ", x=%d", req->x );
-    fprintf( stderr, ", y=%d", req->y );
-    fprintf( stderr, ", mode=%d", req->mode );
-    fprintf( stderr, ", count=%d", req->count );
-    fprintf( stderr, ", wrap=%d", req->wrap );
-    dump_char_info( ", data=", &req->data );
-}
-
-static void dump_fill_console_output_reply( const struct fill_console_output_reply *req )
-{
-    fprintf( stderr, " written=%d", req->written );
 }
 
 static void dump_read_console_output_request( const struct read_console_output_request *req )
@@ -4580,7 +4557,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_console_input_history_request,
     (dump_func)dump_create_console_output_request,
     (dump_func)dump_write_console_output_request,
-    (dump_func)dump_fill_console_output_request,
     (dump_func)dump_read_console_output_request,
     (dump_func)dump_move_console_output_request,
     (dump_func)dump_send_console_signal_request,
@@ -4871,7 +4847,6 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_console_input_history_reply,
     (dump_func)dump_create_console_output_reply,
     (dump_func)dump_write_console_output_reply,
-    (dump_func)dump_fill_console_output_reply,
     (dump_func)dump_read_console_output_reply,
     NULL,
     NULL,
@@ -5162,7 +5137,6 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "get_console_input_history",
     "create_console_output",
     "write_console_output",
-    "fill_console_output",
     "read_console_output",
     "move_console_output",
     "send_console_signal",

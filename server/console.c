@@ -2080,26 +2080,6 @@ DECL_HANDLER(write_console_output)
     }
 }
 
-/* fill a screen buffer with constant data (chars and/or attributes) */
-DECL_HANDLER(fill_console_output)
-{
-    struct screen_buffer *screen_buffer;
-
-    if ((screen_buffer = (struct screen_buffer*)get_handle_obj( current->process, req->handle,
-                                                                FILE_WRITE_DATA, &screen_buffer_ops)))
-    {
-        if (console_input_is_bare( screen_buffer->input ))
-        {
-            set_error( STATUS_OBJECT_TYPE_MISMATCH );
-            release_object( screen_buffer );
-            return;
-        }
-        reply->written = fill_console_output( screen_buffer, req->data, req->mode,
-                                              req->x, req->y, req->count, req->wrap );
-        release_object( screen_buffer );
-    }
-}
-
 /* move a rect of data in a screen buffer */
 DECL_HANDLER(move_console_output)
 {
