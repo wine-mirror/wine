@@ -141,15 +141,29 @@ INT CDECL MSVCRT__wcsicmp( const MSVCRT_wchar_t* str1, const MSVCRT_wchar_t* str
 /*********************************************************************
  *              _wcsnicmp_l (MSVCRT.@)
  */
-INT CDECL MSVCRT__wcsnicmp_l(const MSVCRT_wchar_t *str1, const MSVCRT_wchar_t *str2, INT n, MSVCRT__locale_t locale)
+INT CDECL MSVCRT__wcsnicmp_l(const MSVCRT_wchar_t *str1, const MSVCRT_wchar_t *str2,
+        MSVCRT_size_t n, MSVCRT__locale_t locale)
 {
-    return strncmpiW(str1, str2, n);
+    MSVCRT_wchar_t c1, c2;
+
+    if (!n)
+            return 0;
+
+    if(!MSVCRT_CHECK_PMT(str1 != NULL) || !MSVCRT_CHECK_PMT(str2 != NULL))
+        return MSVCRT__NLSCMPERROR;
+
+    do
+    {
+        c1 = MSVCRT__towlower_l(*str1++, locale);
+        c2 = MSVCRT__towlower_l(*str2++, locale);
+    } while(--n && c1 && (c1 == c2));
+    return c1 - c2;
 }
 
 /*********************************************************************
  *              _wcsnicmp (MSVCRT.@)
  */
-INT CDECL MSVCRT__wcsnicmp(const MSVCRT_wchar_t *str1, const MSVCRT_wchar_t *str2, INT n)
+INT CDECL MSVCRT__wcsnicmp(const MSVCRT_wchar_t *str1, const MSVCRT_wchar_t *str2, MSVCRT_size_t n)
 {
     return MSVCRT__wcsnicmp_l(str1, str2, n, NULL);
 }
