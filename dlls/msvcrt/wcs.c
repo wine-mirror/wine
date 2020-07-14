@@ -1584,6 +1584,24 @@ int WINAPIV MSVCRT_swprintf_p_l(MSVCRT_wchar_t *buffer, MSVCRT_size_t length,
 }
 
 /*********************************************************************
+ *              wcscmp (MSVCRT.@)
+ */
+int CDECL MSVCRT_wcscmp(const MSVCRT_wchar_t *str1, const MSVCRT_wchar_t *str2)
+{
+    while (*str1 && (*str1 == *str2))
+    {
+        str1++;
+        str2++;
+    }
+
+    if (*str1 < *str2)
+        return -1;
+    if (*str1 > *str2)
+        return 1;
+    return 0;
+}
+
+/*********************************************************************
  *              _wcscoll_l (MSVCRT.@)
  */
 int CDECL MSVCRT__wcscoll_l(const MSVCRT_wchar_t* str1, const MSVCRT_wchar_t* str2, MSVCRT__locale_t locale)
@@ -1596,7 +1614,7 @@ int CDECL MSVCRT__wcscoll_l(const MSVCRT_wchar_t* str1, const MSVCRT_wchar_t* st
         locinfo = locale->locinfo;
 
     if(!locinfo->lc_handle[MSVCRT_LC_COLLATE])
-        return strcmpW(str1, str2);
+        return MSVCRT_wcscmp(str1, str2);
     return CompareStringW(locinfo->lc_handle[MSVCRT_LC_COLLATE], 0, str1, -1, str2, -1)-CSTR_EQUAL;
 }
 
@@ -2667,12 +2685,4 @@ MSVCRT_size_t CDECL MSVCRT_wcsxfrm(MSVCRT_wchar_t *dest,
         const MSVCRT_wchar_t *src, MSVCRT_size_t len)
 {
     return MSVCRT__wcsxfrm_l(dest, src, len, NULL);
-}
-
-/*********************************************************************
- *              wcscmp (MSVCRT.@)
- */
-int CDECL MSVCRT_wcscmp(const MSVCRT_wchar_t *str1, const MSVCRT_wchar_t *str2)
-{
-    return strcmpW(str1, str2);
 }

@@ -4210,6 +4210,20 @@ static void test_iswdigit(void)
     }
 }
 
+static void test_wcscmp(void)
+{
+    int r;
+
+    r = wcscmp(L"a", L"z");
+    ok(r == -1, "wcscmp returned %d\n", r);
+
+    r = wcscmp(L"z", L"a");
+    ok(r == 1, "wcscmp returned %d\n", r);
+
+    r = wcscmp(L"f", L"f");
+    ok(!r, "wcscmp returned %d\n", r);
+}
+
 START_TEST(string)
 {
     char mem[100];
@@ -4359,4 +4373,5 @@ START_TEST(string)
     test_C_locale();
     test_strstr();
     test_iswdigit();
+    test_wcscmp();
 }
