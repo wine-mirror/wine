@@ -414,6 +414,21 @@ MSVCRT_wchar_t* CDECL MSVCRT__wcslwr( MSVCRT_wchar_t* str )
 }
 
 /*********************************************************************
+ *           wcsncmp    (MSVCRT.@)
+ */
+int CDECL MSVCRT_wcsncmp(const MSVCRT_wchar_t *str1, const MSVCRT_wchar_t *str2, MSVCRT_size_t n)
+{
+    if (!n)
+        return 0;
+    while(--n && *str1 && (*str1 == *str2))
+    {
+        str1++;
+        str2++;
+    }
+    return *str1 - *str2;
+}
+
+/*********************************************************************
  *              _wcsncoll_l (MSVCRT.@)
  */
 int CDECL MSVCRT__wcsncoll_l(const MSVCRT_wchar_t* str1, const MSVCRT_wchar_t* str2,
@@ -427,7 +442,7 @@ int CDECL MSVCRT__wcsncoll_l(const MSVCRT_wchar_t* str1, const MSVCRT_wchar_t* s
         locinfo = locale->locinfo;
 
     if(!locinfo->lc_handle[MSVCRT_LC_COLLATE])
-        return strncmpW(str1, str2, count);
+        return MSVCRT_wcsncmp(str1, str2, count);
     return CompareStringW(locinfo->lc_handle[MSVCRT_LC_COLLATE], 0,
               str1, MSVCRT_wcsnlen(str1, count),
               str2, MSVCRT_wcsnlen(str2, count))-CSTR_EQUAL;
@@ -2641,14 +2656,6 @@ __int64 CDECL MSVCRT__wtoi64_l(const MSVCRT_wchar_t *str, MSVCRT__locale_t local
 __int64 CDECL MSVCRT__wtoi64(const MSVCRT_wchar_t *str)
 {
     return MSVCRT__wtoi64_l(str, NULL);
-}
-
-/*********************************************************************
- *           wcsncmp    (MSVCRT.@)
- */
-int CDECL MSVCRT_wcsncmp(const MSVCRT_wchar_t *str1, const MSVCRT_wchar_t *str2, int n)
-{
-    return strncmpW(str1, str2, n);
 }
 
 /*********************************************************************
