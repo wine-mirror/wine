@@ -265,7 +265,7 @@ static const struct driver_version_information driver_version_table[] =
     {DRIVER_AMD_R600,           DRIVER_MODEL_NT5X,  "ati2dvag.dll",    10, 1280},
     {DRIVER_AMD_R300,           DRIVER_MODEL_NT6X,  "atiumdag.dll",    10, 741 },
     {DRIVER_AMD_R600,           DRIVER_MODEL_NT6X,  "atiumdag.dll",    10, 1280},
-    {DRIVER_AMD_RX,             DRIVER_MODEL_NT6X,  "aticfx32.dll",    10, 1474},
+    {DRIVER_AMD_RX,             DRIVER_MODEL_NT6X,  "aticfx32.dll", 15002,   61},
 
     /* Intel
      * The drivers are unified but not all versions support all GPUs. At some point the 2k/xp
