@@ -33,6 +33,15 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
+typedef struct
+{
+    enum { LEN_DEFAULT, LEN_SHORT, LEN_LONG } IntegerLength;
+    BOOLEAN IntegerDouble, IntegerNative, LeftAlign, Alternate, PadZero;
+    BOOLEAN WideString, NaturalString;
+    int FieldLength, Precision;
+    char Sign, Format;
+} pf_flags;
+
 static BOOL n_format_enabled = TRUE;
 
 #include "printf.h"

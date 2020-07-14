@@ -32,15 +32,6 @@
 #define signbit(x) ((x) < 0)
 #endif
 
-typedef struct FUNC_NAME(pf_flags_t)
-{
-    APICHAR Sign, LeftAlign, Alternate, PadZero;
-    int FieldLength, Precision;
-    APICHAR IntegerLength, IntegerDouble, IntegerNative;
-    APICHAR WideString, NaturalString;
-    APICHAR Format;
-} FUNC_NAME(pf_flags);
-
 struct FUNC_NAME(_str_ctx) {
     MSVCRT_size_t len;
     APICHAR *buf;
@@ -80,7 +71,7 @@ static inline const APICHAR* FUNC_NAME(pf_parse_int)(const APICHAR *fmt, int *va
 
 /* pf_fill: takes care of signs, alignment, zero and field padding */
 static inline int FUNC_NAME(pf_fill)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx,
-        int len, FUNC_NAME(pf_flags) *flags, BOOL left)
+        int len, pf_flags *flags, BOOL left)
 {
     int i, r = 0, written;
 
@@ -88,9 +79,10 @@ static inline int FUNC_NAME(pf_fill)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ct
         flags->Sign = 0;
 
     if(left && flags->Sign) {
+        APICHAR ch = flags->Sign;
         flags->FieldLength--;
         if(flags->PadZero)
-            r = pf_puts(puts_ctx, 1, &flags->Sign);
+            r = pf_puts(puts_ctx, 1, &ch);
     }
     written = r;
 
@@ -110,7 +102,8 @@ static inline int FUNC_NAME(pf_fill)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ct
 
 
     if(r>=0 && left && flags->Sign && !flags->PadZero) {
-        r = pf_puts(puts_ctx, 1, &flags->Sign);
+        APICHAR ch = flags->Sign;
+        r = pf_puts(puts_ctx, 1, &ch);
         written += r;
     }
 
@@ -193,7 +186,7 @@ static inline int FUNC_NAME(pf_output_str)(FUNC_NAME(puts_clbk) pf_puts, void *p
 }
 
 static inline int FUNC_NAME(pf_output_format_wstr)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx,
-        const MSVCRT_wchar_t *str, int len, FUNC_NAME(pf_flags) *flags, MSVCRT__locale_t locale)
+        const MSVCRT_wchar_t *str, int len, pf_flags *flags, MSVCRT__locale_t locale)
 {
     int r, ret;
 
@@ -223,7 +216,7 @@ static inline int FUNC_NAME(pf_output_format_wstr)(FUNC_NAME(puts_clbk) pf_puts,
 }
 
 static inline int FUNC_NAME(pf_output_format_str)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx,
-        const char *str, int len, FUNC_NAME(pf_flags) *flags, MSVCRT__locale_t locale)
+        const char *str, int len, pf_flags *flags, MSVCRT__locale_t locale)
 {
     int r, ret;
 
@@ -253,7 +246,7 @@ static inline int FUNC_NAME(pf_output_format_str)(FUNC_NAME(puts_clbk) pf_puts, 
 }
 
 static inline int FUNC_NAME(pf_handle_string)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx,
-        const void *str, int len, FUNC_NAME(pf_flags) *flags, MSVCRT__locale_t locale, BOOL legacy_wide)
+        const void *str, int len, pf_flags *flags, MSVCRT__locale_t locale, BOOL legacy_wide)
 {
     BOOL api_is_wide = sizeof(APICHAR) == sizeof(MSVCRT_wchar_t);
     BOOL complement_is_narrow = legacy_wide ? api_is_wide : FALSE;
@@ -267,9 +260,9 @@ static inline int FUNC_NAME(pf_handle_string)(FUNC_NAME(puts_clbk) pf_puts, void
         return FUNC_NAME(pf_output_format_str)(pf_puts, puts_ctx, "(null)", 6, flags, locale);
 #endif
 
-    if((flags->NaturalString && api_is_wide) || flags->WideString || flags->IntegerLength=='l')
+    if((flags->NaturalString && api_is_wide) || flags->WideString || flags->IntegerLength == LEN_LONG)
         return FUNC_NAME(pf_output_format_wstr)(pf_puts, puts_ctx, str, len, flags, locale);
-    if((flags->NaturalString && !api_is_wide) || flags->IntegerLength == 'h')
+    if((flags->NaturalString && !api_is_wide) || flags->IntegerLength == LEN_SHORT)
         return FUNC_NAME(pf_output_format_str)(pf_puts, puts_ctx, str, len, flags, locale);
 
     if((flags->Format=='S' || flags->Format=='C') == complement_is_narrow)
@@ -279,7 +272,7 @@ static inline int FUNC_NAME(pf_handle_string)(FUNC_NAME(puts_clbk) pf_puts, void
 }
 
 static inline int FUNC_NAME(pf_output_special_fp)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx,
-        double v, FUNC_NAME(pf_flags) *flags, MSVCRT__locale_t locale,
+        double v, pf_flags *flags, MSVCRT__locale_t locale,
         BOOL legacy_msvcrt_compat, BOOL three_digit_exp)
 {
     APICHAR pfx[16], sfx[8], *p;
@@ -297,7 +290,7 @@ static inline int FUNC_NAME(pf_output_special_fp)(FUNC_NAME(puts_clbk) pf_puts, 
         }
 
         flags->Precision = -1;
-        flags->PadZero = 0;
+        flags->PadZero = FALSE;
         return FUNC_NAME(pf_output_format_str)(pf_puts, puts_ctx, str, -1, flags, locale);
     }
 
@@ -393,7 +386,7 @@ static inline int FUNC_NAME(pf_output_special_fp)(FUNC_NAME(puts_clbk) pf_puts, 
     len += r;
 
     flags->FieldLength = sfx_len;
-    flags->PadZero = '0';
+    flags->PadZero = TRUE;
     flags->Precision = -1;
     flags->Sign = 0;
 #ifdef PRINTF_WIDE
@@ -408,7 +401,7 @@ static inline int FUNC_NAME(pf_output_special_fp)(FUNC_NAME(puts_clbk) pf_puts, 
 }
 
 static inline int FUNC_NAME(pf_output_hex_fp)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx,
-        double v, FUNC_NAME(pf_flags) *flags, MSVCRT__locale_t locale)
+        double v, pf_flags *flags, MSVCRT__locale_t locale)
 {
     const APICHAR digits[2][16] = {
         { '0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f' },
@@ -506,7 +499,7 @@ static inline int FUNC_NAME(pf_output_hex_fp)(FUNC_NAME(puts_clbk) pf_puts, void
     len += r;
 
     flags->FieldLength = sfx_len;
-    flags->PadZero = '0';
+    flags->PadZero = TRUE;
     flags->Sign = 0;
 #ifdef PRINTF_WIDE
     r = FUNC_NAME(pf_output_format_wstr)(pf_puts, puts_ctx, sfx, -1, flags, locale);
@@ -522,7 +515,7 @@ static inline int FUNC_NAME(pf_output_hex_fp)(FUNC_NAME(puts_clbk) pf_puts, void
 /* pf_integer_conv:  prints x to buf, including alternate formats and
    additional precision digits, but not field characters or the sign */
 static inline void FUNC_NAME(pf_integer_conv)(APICHAR *buf, int buf_len,
-        FUNC_NAME(pf_flags) *flags, LONGLONG x)
+        pf_flags *flags, LONGLONG x)
 {
     unsigned int base;
     const char *digits;
@@ -547,7 +540,7 @@ static inline void FUNC_NAME(pf_integer_conv)(APICHAR *buf, int buf_len,
 
     i = 0;
     if(x == 0) {
-        flags->Alternate = 0;
+        flags->Alternate = FALSE;
         if(flags->Precision)
             buf[i++] = '0';
     } else {
@@ -582,12 +575,12 @@ static inline void FUNC_NAME(pf_integer_conv)(APICHAR *buf, int buf_len,
 }
 
 static inline int FUNC_NAME(pf_output_fp)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx,
-        double v, FUNC_NAME(pf_flags) *flags, MSVCRT__locale_t locale, BOOL three_digit_exp)
+        double v, pf_flags *flags, MSVCRT__locale_t locale, BOOL three_digit_exp)
 {
     int e2, e10 = 0, round_pos, round_limb, radix_pos, first_limb_len, i, len, r, ret;
     APICHAR buf[LIMB_DIGITS + 1];
     BOOL trim_tail = FALSE;
-    FUNC_NAME(pf_flags) f;
+    pf_flags f;
     int limb_len, prec;
     struct bnum b;
     ULONGLONG m;
@@ -768,7 +761,7 @@ static inline int FUNC_NAME(pf_output_fp)(FUNC_NAME(puts_clbk) pf_puts, void *pu
     ret = r;
 
     f.Format = 'd';
-    f.PadZero = '0';
+    f.PadZero = TRUE;
     if(flags->Format=='f' || flags->Format=='F') {
         if(radix_pos <= 0) {
             buf[0] = '0';
@@ -919,7 +912,7 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
     const APICHAR *q, *p = fmt;
     APICHAR buf[32];
     int written = 0, pos, i;
-    FUNC_NAME(pf_flags) flags;
+    pf_flags flags;
     BOOL positional_params = options & MSVCRT_PRINTF_POSITIONAL_PARAMS;
     BOOL invoke_invalid_param_handler = options & MSVCRT_PRINTF_INVOKE_INVALID_PARAM_HANDLER;
 #if _MSVCR_VER >= 140
@@ -975,11 +968,11 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
                 if(flags.Sign != '+')
                     flags.Sign = *p;
             } else if(*p == '-')
-                flags.LeftAlign = *p;
+                flags.LeftAlign = TRUE;
             else if(*p == '0')
-                flags.PadZero = *p;
+                flags.PadZero = TRUE;
             else if(*p == '#')
-                flags.Alternate = *p;
+                flags.Alternate = TRUE;
             else
                 break;
 
@@ -996,7 +989,7 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
 
             flags.FieldLength = pf_args(args_ctx, i, VT_INT, valist).get_int;
             if(flags.FieldLength < 0) {
-                flags.LeftAlign = '-';
+                flags.LeftAlign = TRUE;
                 flags.FieldLength = -flags.FieldLength;
             }
         } else while(isdigit(*p)) {
@@ -1026,39 +1019,37 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
         /* parse argument size modifier */
         while(*p) {
             if(*p=='l' && *(p+1)=='l') {
-                flags.IntegerDouble++;
-                p += 2;
-            } else if(*p=='h' || *p=='l' || *p=='L') {
-                flags.IntegerLength = *p;
+                flags.IntegerDouble = TRUE;
                 p++;
+            } else if(*p=='l') {
+                flags.IntegerLength = LEN_LONG;
+            } else if(*p == 'h') {
+                flags.IntegerLength = LEN_SHORT;
             } else if(*p == 'I') {
                 if(*(p+1)=='6' && *(p+2)=='4') {
-                    flags.IntegerDouble++;
-                    p += 3;
+                    flags.IntegerDouble = TRUE;
+                    p += 2;
                 } else if(*(p+1)=='3' && *(p+2)=='2')
-                    p += 3;
+                    p += 2;
                 else if(p[1] && strchr("diouxX", p[1]))
-                    flags.IntegerNative = *p++;
+                    flags.IntegerNative = TRUE;
                 else
                     break;
             } else if(*p == 'w')
-                flags.WideString = *p++;
+                flags.WideString = TRUE;
 #if _MSVCR_VER == 0 || _MSVCR_VER >= 140
             else if((*p == 'z' || *p == 't') && p[1] && strchr("diouxX", p[1]))
-                flags.IntegerNative = *p++;
-            else if(*p == 'j') {
-                flags.IntegerDouble++;
-                p++;
-            }
+                flags.IntegerNative = TRUE;
+            else if(*p == 'j')
+                flags.IntegerDouble = TRUE;
 #endif
 #if _MSVCR_VER >= 140
             else if(*p == 'T')
-                flags.NaturalString = *p++;
+                flags.NaturalString = TRUE;
 #endif
-            else if((*p == 'F' || *p == 'N') && legacy_msvcrt_compat)
-                p++; /* ignore */
-            else
+            else if(*p != 'L' && ((*p != 'F' && *p != 'N') || !legacy_msvcrt_compat))
                 break;
+            p++;
         }
 
         flags.Format = *p;
@@ -1074,12 +1065,12 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
             if(i < 0) i = 0; /* ignore conversion error */
         } else if(flags.Format == 'p') {
             flags.Format = 'X';
-            flags.PadZero = '0';
+            flags.PadZero = TRUE;
             i = flags.Precision;
             flags.Precision = 2*sizeof(void*);
             FUNC_NAME(pf_integer_conv)(buf, ARRAY_SIZE(buf), &flags,
                                        (ULONG_PTR)pf_args(args_ctx, pos, VT_PTR, valist).get_ptr);
-            flags.PadZero = 0;
+            flags.PadZero = FALSE;
             flags.Precision = i;
 
 #ifdef PRINTF_WIDE
@@ -1117,11 +1108,13 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
                 FUNC_NAME(pf_integer_conv)(tmp, max_len, &flags, pf_args(args_ctx, pos,
                             VT_I8, valist).get_longlong);
             else if(flags.Format=='d' || flags.Format=='i')
-                FUNC_NAME(pf_integer_conv)(tmp, max_len, &flags, flags.IntegerLength!='h' ?
+                FUNC_NAME(pf_integer_conv)(tmp, max_len, &flags,
+                        flags.IntegerLength != LEN_SHORT ?
                         pf_args(args_ctx, pos, VT_INT, valist).get_int :
                         (short)pf_args(args_ctx, pos, VT_INT, valist).get_int);
             else
-                FUNC_NAME(pf_integer_conv)(tmp, max_len, &flags, flags.IntegerLength!='h' ?
+                FUNC_NAME(pf_integer_conv)(tmp, max_len, &flags,
+                        flags.IntegerLength != LEN_SHORT ?
                         (unsigned)pf_args(args_ctx, pos, VT_INT, valist).get_int :
                         (unsigned short)pf_args(args_ctx, pos, VT_INT, valist).get_int);
 
