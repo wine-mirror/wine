@@ -235,7 +235,6 @@ static IHTMLElementCollection htmlecoll = { &TestHTMLECollectionVtbl };
 /* test IHTMLDocument2 */
 static HRESULT WINAPI htmldoc2_QueryInterface(IHTMLDocument2 *iface, REFIID riid, void **ppvObject)
 {
-   trace("\n");
    *ppvObject = NULL;
    return E_NOINTERFACE;
 }

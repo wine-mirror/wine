@@ -13146,8 +13146,6 @@ static BOOL qi_list_contains_service(REFIID service, REFIID iid)
 
 static HRESULT WINAPI sp_QueryInterface(IServiceProvider *iface, REFIID iid, void **ppv)
 {
-    trace("sp_QueryInterface: %s\n", wine_dbgstr_guid(iid));
-
     if (qi_count < ARRAY_SIZE(qi_list))
         qi_list[qi_count++] = iid;
     else
@@ -13177,8 +13175,6 @@ static ULONG WINAPI sp_Release(IServiceProvider *iface)
 static HRESULT WINAPI sp_QueryService(IServiceProvider *iface, REFGUID service,
                                       REFIID iid, void **ppv)
 {
-    trace("sp_QueryService: %s, %s\n", wine_dbgstr_guid(service), wine_dbgstr_guid(iid));
-
     if (IsEqualGUID(service, &SID_SContainerDispatch) ||
         IsEqualGUID(service, &SID_SInternetHostSecurityManager))
     {
