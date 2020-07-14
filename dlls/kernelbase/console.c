@@ -163,19 +163,16 @@ static void char_info_AtoW( CHAR_INFO *buffer, int count )
 /* helper function for ScrollConsoleScreenBufferW */
 static void fill_console_output( HANDLE handle, int i, int j, int len, CHAR_INFO *fill )
 {
-    SERVER_START_REQ( fill_console_output )
-    {
-        req->handle    = console_handle_unmap( handle );
-        req->mode      = CHAR_INFO_MODE_TEXTATTR;
-        req->x         = i;
-        req->y         = j;
-        req->count     = len;
-        req->wrap      = FALSE;
-        req->data.ch   = fill->Char.UnicodeChar;
-        req->data.attr = fill->Attributes;
-        wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
+    struct condrv_fill_output_params params;
+
+    params.mode  = CHAR_INFO_MODE_TEXTATTR;
+    params.x     = i;
+    params.y     = j;
+    params.count = len;
+    params.wrap  = FALSE;
+    params.ch    = fill->Char.UnicodeChar;
+    params.attr  = fill->Attributes;
+    console_ioctl( handle, IOCTL_CONDRV_FILL_OUTPUT, &params, sizeof(params), NULL, 0, NULL );
 }
 
 /* helper function for GetLargestConsoleWindowSize */
