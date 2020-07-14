@@ -198,20 +198,26 @@ ULONG CDECL wined3d_decref(struct wined3d *wined3d)
     return refcount;
 }
 
-/* Certain applications (Steam) complain if we report an outdated driver version. In general,
- * reporting a driver version is moot because we are not the Windows driver, and we have different
- * bugs, features, etc.
+/* Certain applications (e.g. Steam) complain if we report an outdated driver
+ * version.
  *
  * The driver version has the form "x.y.z.w".
  *
- * "x" is the Windows version the driver is meant for:
+ * "x" is the Windows version / driver model the driver is meant for:
  *  4 -> 95/98/NT4
  *  5 -> 2000
- *  6 -> 2000/XP
- *  7 -> Vista
- *  8 -> Windows 7
- *  9 -> Windows 8
- * 10 -> Windows 10
+ *  6 -> XP
+ *  7 -> Vista - WDDM 1.0
+ *  8 -> Windows 7 - WDDM 1.1
+ *  9 -> Windows 8 - WDDM 1.2
+ * 10 -> Windows 8.1 - WDDM 1.3
+ * 20 -> Windows 10 - WDDM 2.0
+ * 21 -> Windows 10 Anniversary Update - WDDM 2.1
+ * 22 -> Windows 10 Creators Update - WDDM 2.2
+ * 23 -> Windows 10 Fall Creators Update - WDDM 2.3
+ * 24 -> Windows 10 April 2018 Update - WDDM 2.4
+ * 25 -> Windows 10 October 2018 Update - WDDM 2.5
+ * 26 -> Windows 10 May 2019 Update - WDDM 2.6
  *
  * "y" is the maximum Direct3D version the driver supports.
  * y  -> d3d version mapping:
@@ -705,20 +711,25 @@ void wined3d_driver_info_init(struct wined3d_driver_info *driver_info,
                     driver_os_version = 8;
                     driver_model = DRIVER_MODEL_NT6X;
                 }
+                else if (os_version.dwMinorVersion == 2)
+                {
+                    driver_os_version = 9;
+                    driver_model = DRIVER_MODEL_NT6X;
+                }
                 else
                 {
                     if (os_version.dwMinorVersion > 3)
                     {
-                        FIXME("Unhandled OS version %u.%u, reporting Win 8.\n",
+                        FIXME("Unhandled OS version %u.%u, reporting Windows 8.1.\n",
                                 os_version.dwMajorVersion, os_version.dwMinorVersion);
                     }
-                    driver_os_version = 9;
+                    driver_os_version = 10;
                     driver_model = DRIVER_MODEL_NT6X;
                 }
                 break;
 
             case 10:
-                driver_os_version = 10;
+                driver_os_version = 26;
                 driver_model = DRIVER_MODEL_NT6X;
                 break;
 
