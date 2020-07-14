@@ -789,11 +789,7 @@ static char *get_default_drive_device( const char *root )
         fclose( f );
     }
 #endif
-    if (device)
-    {
-        ret = RtlAllocateHeap( GetProcessHeap(), 0, strlen(device) + 1 );
-        if (ret) strcpy( ret, device );
-    }
+    if (device) ret = strdup( device );
     pthread_mutex_unlock( &mnt_mutex );
 
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__ ) || defined(__DragonFly__)
@@ -817,11 +813,7 @@ static char *get_default_drive_device( const char *root )
      * pass NULL.  Leave the argument in for symmetry.
      */
     device = parse_mount_entries( NULL, st.st_dev, st.st_ino );
-    if (device)
-    {
-        ret = RtlAllocateHeap( GetProcessHeap(), 0, strlen(device) + 1 );
-        if (ret) strcpy( ret, device );
-    }
+    if (device) ret = strdup( device );
     pthread_mutex_unlock( &mnt_mutex );
 
 #elif defined( sun )
@@ -853,11 +845,7 @@ static char *get_default_drive_device( const char *root )
         device = parse_vfstab_entries( f, st.st_dev, st.st_ino );
         fclose( f );
     }
-    if (device)
-    {
-        ret = RtlAllocateHeap( GetProcessHeap(), 0, strlen(device) + 1 );
-        if (ret) strcpy( ret, device );
-    }
+    if (device) ret = strdup( device );
     pthread_mutex_unlock( &mnt_mutex );
 
 #elif defined(__APPLE__)
@@ -889,7 +877,7 @@ static char *get_default_drive_device( const char *root )
         if ( strncmp(mntStat[i].f_mntfromname, path_bsd_device, strlen(path_bsd_device)) == 0)
         {
             /* set return value to the corresponding raw BSD node */
-            ret = RtlAllocateHeap( GetProcessHeap(), 0, strlen(mntStat[i].f_mntfromname) + 2 /* 2 : r and \0 */ );
+            ret = malloc( strlen(mntStat[i].f_mntfromname) + 2 /* 2 : r and \0 */ );
             if (ret)
             {
                 strcpy(ret, "/dev/r");
@@ -2796,8 +2784,7 @@ static NTSTATUS get_dos_device( const WCHAR *name, UINT name_len, char **unix_na
 
     unix_len = strlen(config_dir) + sizeof("/dosdevices/") + name_len + 1;
 
-    if (!(unix_name = RtlAllocateHeap( GetProcessHeap(), 0, unix_len )))
-        return STATUS_NO_MEMORY;
+    if (!(unix_name = malloc( unix_len ))) return STATUS_NO_MEMORY;
 
     strcpy( unix_name, config_dir );
     strcat( unix_name, "/dosdevices/" );
@@ -2843,13 +2830,12 @@ static NTSTATUS get_dos_device( const WCHAR *name, UINT name_len, char **unix_na
         }
 
         if (!new_name) break;
-
-        RtlFreeHeap( GetProcessHeap(), 0, unix_name );
+        free( unix_name );
         unix_name = new_name;
         unix_len = strlen(unix_name) + 1;
         dev = NULL; /* last try */
     }
-    RtlFreeHeap( GetProcessHeap(), 0, unix_name );
+    free( unix_name );
     return STATUS_BAD_DEVICE_TYPE;
 }
 
@@ -2984,7 +2970,7 @@ static NTSTATUS find_file_id( char **unix_name, ULONG *len, ULONGLONG file_id, d
         pos = strlen( name );
         if (pos + MAX_DIR_ENTRY_LEN >= *len / sizeof(WCHAR))
         {
-            if (!(name = RtlReAllocateHeap( GetProcessHeap(), 0, name, *len * 2 )))
+            if (!(name = realloc( name, *len * 2 )))
             {
                 closedir( dir );
                 return STATUS_NO_MEMORY;
@@ -3037,7 +3023,7 @@ static NTSTATUS file_id_to_unix_file_name( const OBJECT_ATTRIBUTES *attr, char *
     memcpy( &file_id, attr->ObjectName->Buffer, sizeof(file_id) );
 
     len = 2 * MAX_DIR_ENTRY_LEN + 4;
-    if (!(unix_name = RtlAllocateHeap( GetProcessHeap(), 0, len ))) return STATUS_NO_MEMORY;
+    if (!(unix_name = malloc( len ))) return STATUS_NO_MEMORY;
     strcpy( unix_name, "." );
 
     if ((status = server_get_unix_fd( attr->RootDirectory, 0, &root_fd, &needs_close, &type, NULL )))
@@ -3089,7 +3075,7 @@ done:
     else
     {
         TRACE( "%s not found in dir %p\n", wine_dbgstr_longlong(file_id), attr->RootDirectory );
-        RtlFreeHeap( GetProcessHeap(), 0, unix_name );
+        free( unix_name );
     }
     if (needs_close) close( root_fd );
     return status;
@@ -3160,8 +3146,7 @@ static NTSTATUS lookup_unix_name( const WCHAR *name, int name_len, char **buffer
         {
             char *new_name;
             unix_len += 2 * MAX_DIR_ENTRY_LEN;
-            if (!(new_name = RtlReAllocateHeap( GetProcessHeap(), 0, unix_name, unix_len )))
-                return STATUS_NO_MEMORY;
+            if (!(new_name = realloc( unix_name, unix_len ))) return STATUS_NO_MEMORY;
             unix_name = *buffer = new_name;
         }
 
@@ -3237,8 +3222,7 @@ static NTSTATUS nt_to_unix_file_name_attr( const OBJECT_ATTRIBUTES *attr, char *
         if (*p < 32 || wcschr( invalid_charsW, *p )) return STATUS_OBJECT_NAME_INVALID;
 
     unix_len = name_len * 3 + MAX_DIR_ENTRY_LEN + 3;
-    if (!(unix_name = RtlAllocateHeap( GetProcessHeap(), 0, unix_len )))
-        return STATUS_NO_MEMORY;
+    if (!(unix_name = malloc( unix_len ))) return STATUS_NO_MEMORY;
     unix_name[0] = '.';
 
     if (!(status = server_get_unix_fd( attr->RootDirectory, 0, &root_fd, &needs_close, &type, NULL )))
@@ -3273,7 +3257,7 @@ static NTSTATUS nt_to_unix_file_name_attr( const OBJECT_ATTRIBUTES *attr, char *
     else
     {
         TRACE( "%s not found in %s\n", debugstr_w(name), unix_name );
-        RtlFreeHeap( GetProcessHeap(), 0, unix_name );
+        free( unix_name );
     }
     return status;
 }
@@ -3350,8 +3334,7 @@ NTSTATUS nt_to_unix_file_name( const UNICODE_STRING *nameW, char **unix_name_ret
 
     unix_len = (prefix_len + name_len) * 3 + MAX_DIR_ENTRY_LEN + 3;
     unix_len += strlen(config_dir) + sizeof("/dosdevices/");
-    if (!(unix_name = RtlAllocateHeap( GetProcessHeap(), 0, unix_len )))
-        return STATUS_NO_MEMORY;
+    if (!(unix_name = malloc( unix_len ))) return STATUS_NO_MEMORY;
     strcpy( unix_name, config_dir );
     strcat( unix_name, "/dosdevices/" );
     pos = strlen(unix_name);
@@ -3359,7 +3342,7 @@ NTSTATUS nt_to_unix_file_name( const UNICODE_STRING *nameW, char **unix_name_ret
     ret = ntdll_wcstoumbs( prefix, prefix_len, unix_name + pos, unix_len - pos - 1, TRUE );
     if (ret <= 0)
     {
-        RtlFreeHeap( GetProcessHeap(), 0, unix_name );
+        free( unix_name );
         return STATUS_OBJECT_NAME_INVALID;
     }
     pos += ret;
@@ -3373,7 +3356,7 @@ NTSTATUS nt_to_unix_file_name( const UNICODE_STRING *nameW, char **unix_name_ret
         {
             if (!is_unix)
             {
-                RtlFreeHeap( GetProcessHeap(), 0, unix_name );
+                free( unix_name );
                 return STATUS_BAD_DEVICE_TYPE;
             }
             pos = 0;  /* fall back to unix root */
@@ -3389,7 +3372,7 @@ NTSTATUS nt_to_unix_file_name( const UNICODE_STRING *nameW, char **unix_name_ret
     else
     {
         TRACE( "%s not found in %s\n", debugstr_w(name), unix_name );
-        RtlFreeHeap( GetProcessHeap(), 0, unix_name );
+        free( unix_name );
     }
     return status;
 }
@@ -3415,7 +3398,7 @@ NTSTATUS CDECL wine_nt_to_unix_file_name( const UNICODE_STRING *nameW, char *nam
         if (*size > strlen(buffer)) strcpy( nameA, buffer );
         else status = STATUS_BUFFER_TOO_SMALL;
         *size = strlen(buffer) + 1;
-        RtlFreeHeap( GetProcessHeap(), 0, buffer );
+        free( buffer );
     }
     return status;
 }
@@ -3626,7 +3609,7 @@ NTSTATUS WINAPI NtCreateFile( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIBU
     {
         io->u.Status = open_unix_file( handle, unix_name, access, attr, attributes,
                                        sharing, disposition, options, ea_buffer, ea_length );
-        RtlFreeHeap( GetProcessHeap(), 0, unix_name );
+        free( unix_name );
     }
     else WARN( "%s not found (%x)\n", debugstr_us(attr->ObjectName), io->u.Status );
 
@@ -3805,7 +3788,7 @@ NTSTATUS WINAPI NtQueryFullAttributesFile( const OBJECT_ATTRIBUTES *attr,
             info->FileAttributes = basic.FileAttributes;
             if (is_hidden_file( attr->ObjectName )) info->FileAttributes |= FILE_ATTRIBUTE_HIDDEN;
         }
-        RtlFreeHeap( GetProcessHeap(), 0, unix_name );
+        free( unix_name );
     }
     else WARN( "%s not found (%x)\n", debugstr_us(attr->ObjectName), status );
     return status;
@@ -3834,7 +3817,7 @@ NTSTATUS WINAPI NtQueryAttributesFile( const OBJECT_ATTRIBUTES *attr, FILE_BASIC
             status = fill_file_info( &st, attributes, info, FileBasicInformation );
             if (is_hidden_file( attr->ObjectName )) info->FileAttributes |= FILE_ATTRIBUTE_HIDDEN;
         }
-        RtlFreeHeap( GetProcessHeap(), 0, unix_name );
+        free( unix_name );
     }
     else WARN( "%s not found (%x)\n", debugstr_us(attr->ObjectName), status );
     return status;
@@ -4397,7 +4380,7 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
             }
             SERVER_END_REQ;
 
-            RtlFreeHeap( GetProcessHeap(), 0, unix_name );
+            free( unix_name );
         }
         else io->u.Status = STATUS_INVALID_PARAMETER_3;
         break;
@@ -4434,7 +4417,7 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
             }
             SERVER_END_REQ;
 
-            RtlFreeHeap( GetProcessHeap(), 0, unix_name );
+            free( unix_name );
         }
         else io->u.Status = STATUS_INVALID_PARAMETER_3;
         break;

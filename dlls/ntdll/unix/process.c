@@ -768,7 +768,7 @@ static NTSTATUS fork_and_exec( UNICODE_STRING *path, int unixdir,
     if (stdin_fd != -1) close( stdin_fd );
     if (stdout_fd != -1) close( stdout_fd );
 done:
-    RtlFreeHeap( GetProcessHeap(), 0, unix_name );
+    free( unix_name );
     return status;
 }
 

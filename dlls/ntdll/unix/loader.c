@@ -938,7 +938,7 @@ static NTSTATUS CDECL load_so_dll( UNICODE_STRING *nt_name, void **module )
     if (len > 3 && !wcsicmp( nt_name->Buffer + len - 3, soW )) nt_name->Length -= 3 * sizeof(WCHAR);
 
     status = dlopen_dll( unix_name, module );
-    RtlFreeHeap( GetProcessHeap(), 0, unix_name );
+    free( unix_name );
     return status;
 }
 
