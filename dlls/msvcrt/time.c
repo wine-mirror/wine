@@ -1998,6 +1998,9 @@ int CDECL _timespec32_get(struct _timespec32 *ts, int base)
 {
     struct _timespec64 ts64;
 
+    if(!MSVCRT_CHECK_PMT(ts != NULL)) return 0;
+    if(base != TIME_UTC) return 0;
+
     if(_timespec64_get(&ts64, base) != base)
         return 0;
     if(ts64.tv_sec != (MSVCRT___time32_t)ts64.tv_sec)
