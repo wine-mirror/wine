@@ -1611,7 +1611,7 @@ static int msvcrt_get_flags(const MSVCRT_wchar_t* mode, int *open_flags, int* st
 
     mode++;
     while(*mode == ' ') mode++;
-    if(!MSVCRT_CHECK_PMT(!strncmpW(ccs, mode, ARRAY_SIZE(ccs))))
+    if(!MSVCRT_CHECK_PMT(!MSVCRT_wcsncmp(ccs, mode, ARRAY_SIZE(ccs))))
       return -1;
     mode += ARRAY_SIZE(ccs);
     while(*mode == ' ') mode++;
