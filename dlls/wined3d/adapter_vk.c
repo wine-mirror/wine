@@ -2082,7 +2082,10 @@ static void adapter_vk_init_driver_info(struct wined3d_adapter_vk *adapter_vk,
         gpu_description = &description;
     }
 
-    wined3d_driver_info_init(&adapter_vk->a.driver_info, gpu_description, vram_bytes, sysmem_bytes);
+    wined3d_driver_info_init(&adapter_vk->a.driver_info, gpu_description, adapter_vk->a.d3d_info.feature_level,
+            vram_bytes, sysmem_bytes);
+    TRACE("Reporting (fake) driver version 0x%08x-0x%08x.\n",
+            adapter_vk->a.driver_info.version_high, adapter_vk->a.driver_info.version_low);
 }
 
 static enum wined3d_feature_level feature_level_from_caps(const struct shader_caps *shader_caps)
@@ -2199,6 +2202,13 @@ static BOOL wined3d_adapter_vk_init(struct wined3d_adapter_vk *adapter_vk,
     if (!wined3d_adapter_init(adapter, ordinal, luid, &wined3d_adapter_vk_ops))
         goto fail_vulkan;
 
+    adapter->vertex_pipe = wined3d_spirv_vertex_pipe_init_vk();
+    adapter->fragment_pipe = wined3d_spirv_fragment_pipe_init_vk();
+    adapter->misc_state_template = misc_state_template_vk;
+    adapter->shader_backend = wined3d_spirv_shader_backend_init_vk();
+
+    wined3d_adapter_vk_init_d3d_info(adapter_vk, wined3d_creation_flags);
+
     adapter_vk_init_driver_info(adapter_vk, &properties2.properties);
     adapter->vram_bytes_used = 0;
     TRACE("Emulating 0x%s bytes of video ram.\n", wine_dbgstr_longlong(adapter->driver_info.vram_bytes));
@@ -2208,13 +2218,6 @@ static BOOL wined3d_adapter_vk_init(struct wined3d_adapter_vk *adapter_vk,
 
     if (!wined3d_adapter_vk_init_format_info(adapter_vk, vk_info))
         goto fail;
-
-    adapter->vertex_pipe = wined3d_spirv_vertex_pipe_init_vk();
-    adapter->fragment_pipe = wined3d_spirv_fragment_pipe_init_vk();
-    adapter->misc_state_template = misc_state_template_vk;
-    adapter->shader_backend = wined3d_spirv_shader_backend_init_vk();
-
-    wined3d_adapter_vk_init_d3d_info(adapter_vk, wined3d_creation_flags);
 
     return TRUE;
 

@@ -219,27 +219,34 @@ ULONG CDECL wined3d_decref(struct wined3d *wined3d)
  * 25 -> Windows 10 October 2018 Update - WDDM 2.5
  * 26 -> Windows 10 May 2019 Update - WDDM 2.6
  *
- * "y" is the maximum Direct3D version the driver supports.
- * y  -> d3d version mapping:
- * 11 -> d3d6
- * 12 -> d3d7
- * 13 -> d3d8
- * 14 -> d3d9
- * 15 -> d3d10
- * 16 -> d3d10.1
- * 17 -> d3d11
+ * "y" is the maximum Direct3D version / feature level the driver supports.
+ * 11 -> 6
+ * 12 -> 7
+ * 13 -> 8
+ * 14 -> 9
+ * 15 -> 10_0
+ * 16 -> 10_1
+ * 17 -> 11_0
+ * 18 -> 11_1
+ * 19 -> 12_0
+ * 20 -> 12_1
+ * 21 -> 12_x
  *
  * "z" is the subversion number.
  *
  * "w" is the vendor specific driver build number.
- */
+ *
+ * In practice the reported version is tied to the driver, not the actual
+ * Windows version or feature level. E.g. NVIDIA driver 445.87 advertises the
+ * exact same version 26.21.14.4587 on Windows 7 as it does on Windows 10
+ * (it's in fact the same driver). Similarly for driver 310.90 that advertises
+ * itself as 9.18.13.1090 on Windows Vista with a GeForce 9600M. */
 
 struct driver_version_information
 {
     enum wined3d_display_driver driver;
     enum wined3d_driver_model driver_model;
     const char *driver_name;            /* name of Windows driver */
-    WORD version;                       /* version word ('y'), contained in low word of DriverVersion.HighPart */
     WORD subversion;                    /* subversion word ('z'), contained in high word of DriverVersion.LowPart */
     WORD build;                         /* build number ('w'), contained in low word of DriverVersion.LowPart */
 };
@@ -252,25 +259,25 @@ static const struct driver_version_information driver_version_table[] =
      * - Radeon 9500 (R300) - X1*00 (R5xx) supported up to Catalyst 9.3 (Linux) and 10.2 (XP/Vista/Win7)
      * - Radeon 7xxx (R100) - 9250 (RV250) supported up to Catalyst 6.11 (XP)
      * - Rage 128 supported up to XP, latest official build 6.13.3279 dated October 2001 */
-    {DRIVER_AMD_RAGE_128PRO,    DRIVER_MODEL_NT5X,  "ati2dvaa.dll", 13, 3279,  0},
-    {DRIVER_AMD_R100,           DRIVER_MODEL_NT5X,  "ati2dvag.dll", 14, 10, 6614},
-    {DRIVER_AMD_R300,           DRIVER_MODEL_NT5X,  "ati2dvag.dll", 14, 10, 6764},
-    {DRIVER_AMD_R600,           DRIVER_MODEL_NT5X,  "ati2dvag.dll", 17, 10, 1280},
-    {DRIVER_AMD_R300,           DRIVER_MODEL_NT6X,  "atiumdag.dll", 14, 10, 741 },
-    {DRIVER_AMD_R600,           DRIVER_MODEL_NT6X,  "atiumdag.dll", 17, 10, 1280},
-    {DRIVER_AMD_RX,             DRIVER_MODEL_NT6X,  "aticfx32.dll", 17, 10, 1474},
+    {DRIVER_AMD_RAGE_128PRO,    DRIVER_MODEL_NT5X,  "ati2dvaa.dll",  3279,    0},
+    {DRIVER_AMD_R100,           DRIVER_MODEL_NT5X,  "ati2dvag.dll",    10, 6614},
+    {DRIVER_AMD_R300,           DRIVER_MODEL_NT5X,  "ati2dvag.dll",    10, 6764},
+    {DRIVER_AMD_R600,           DRIVER_MODEL_NT5X,  "ati2dvag.dll",    10, 1280},
+    {DRIVER_AMD_R300,           DRIVER_MODEL_NT6X,  "atiumdag.dll",    10, 741 },
+    {DRIVER_AMD_R600,           DRIVER_MODEL_NT6X,  "atiumdag.dll",    10, 1280},
+    {DRIVER_AMD_RX,             DRIVER_MODEL_NT6X,  "aticfx32.dll",    10, 1474},
 
     /* Intel
      * The drivers are unified but not all versions support all GPUs. At some point the 2k/xp
      * drivers used ialmrnt5.dll for GMA800/GMA900 but at some point the file was renamed to
      * igxprd32.dll but the GMA800 driver was never updated. */
-    {DRIVER_INTEL_GMA800,       DRIVER_MODEL_NT5X,  "ialmrnt5.dll", 14, 10, 3889},
-    {DRIVER_INTEL_GMA900,       DRIVER_MODEL_NT5X,  "igxprd32.dll", 14, 10, 4764},
-    {DRIVER_INTEL_GMA950,       DRIVER_MODEL_NT5X,  "igxprd32.dll", 14, 10, 4926},
-    {DRIVER_INTEL_GMA3000,      DRIVER_MODEL_NT5X,  "igxprd32.dll", 14, 10, 5218},
-    {DRIVER_INTEL_GMA950,       DRIVER_MODEL_NT6X,  "igdumd32.dll", 14, 10, 1504},
-    {DRIVER_INTEL_GMA3000,      DRIVER_MODEL_NT6X,  "igdumd32.dll", 15, 10, 1666},
-    {DRIVER_INTEL_HD4000,       DRIVER_MODEL_NT6X,  "igdumdim32.dll", 19, 15, 4352},
+    {DRIVER_INTEL_GMA800,       DRIVER_MODEL_NT5X,  "ialmrnt5.dll",    10, 3889},
+    {DRIVER_INTEL_GMA900,       DRIVER_MODEL_NT5X,  "igxprd32.dll",    10, 4764},
+    {DRIVER_INTEL_GMA950,       DRIVER_MODEL_NT5X,  "igxprd32.dll",    10, 4926},
+    {DRIVER_INTEL_GMA3000,      DRIVER_MODEL_NT5X,  "igxprd32.dll",    10, 5218},
+    {DRIVER_INTEL_GMA950,       DRIVER_MODEL_NT6X,  "igdumd32.dll",    10, 1504},
+    {DRIVER_INTEL_GMA3000,      DRIVER_MODEL_NT6X,  "igdumd32.dll",    10, 1666},
+    {DRIVER_INTEL_HD4000,       DRIVER_MODEL_NT6X,  "igdumdim32.dll",  15, 4352},
 
     /* Nvidia
      * - Geforce8 and newer is supported by the current 340.52 driver on XP-Win8
@@ -279,22 +286,22 @@ static const struct driver_version_information driver_version_table[] =
      * - Geforce2MX/3/4 up to 96.x on <= XP
      * - TNT/Geforce1/2 up to 71.x on <= XP
      * All version numbers used below are from the Linux nvidia drivers. */
-    {DRIVER_NVIDIA_TNT,         DRIVER_MODEL_NT5X,  "nv4_disp.dll", 14, 10, 7186},
-    {DRIVER_NVIDIA_GEFORCE2MX,  DRIVER_MODEL_NT5X,  "nv4_disp.dll", 14, 10, 9371},
-    {DRIVER_NVIDIA_GEFORCEFX,   DRIVER_MODEL_NT5X,  "nv4_disp.dll", 14, 11, 7516},
-    {DRIVER_NVIDIA_GEFORCE6,    DRIVER_MODEL_NT5X,  "nv4_disp.dll", 18, 13,  783},
-    {DRIVER_NVIDIA_GEFORCE8,    DRIVER_MODEL_NT5X,  "nv4_disp.dll", 18, 13, 4052},
-    {DRIVER_NVIDIA_GEFORCE6,    DRIVER_MODEL_NT6X,  "nvd3dum.dll",  18, 13,  783},
-    {DRIVER_NVIDIA_GEFORCE8,    DRIVER_MODEL_NT6X,  "nvd3dum.dll",  18, 13, 4052},
+    {DRIVER_NVIDIA_TNT,         DRIVER_MODEL_NT5X,  "nv4_disp.dll",    10, 7186},
+    {DRIVER_NVIDIA_GEFORCE2MX,  DRIVER_MODEL_NT5X,  "nv4_disp.dll",    10, 9371},
+    {DRIVER_NVIDIA_GEFORCEFX,   DRIVER_MODEL_NT5X,  "nv4_disp.dll",    11, 7516},
+    {DRIVER_NVIDIA_GEFORCE6,    DRIVER_MODEL_NT5X,  "nv4_disp.dll",    13,  783},
+    {DRIVER_NVIDIA_GEFORCE8,    DRIVER_MODEL_NT5X,  "nv4_disp.dll",    13, 4052},
+    {DRIVER_NVIDIA_GEFORCE6,    DRIVER_MODEL_NT6X,  "nvd3dum.dll",     13,  783},
+    {DRIVER_NVIDIA_GEFORCE8,    DRIVER_MODEL_NT6X,  "nvd3dum.dll",     13, 4052},
 
     /* Red Hat */
-    {DRIVER_REDHAT_VIRGL,       DRIVER_MODEL_GENERIC, "virgl.dll",   0,  0,    0},
+    {DRIVER_REDHAT_VIRGL,       DRIVER_MODEL_GENERIC, "virgl.dll",      0,    0},
 
     /* VMware */
-    {DRIVER_VMWARE,             DRIVER_MODEL_NT5X,  "vm3dum.dll",   14, 1,  1134},
+    {DRIVER_VMWARE,             DRIVER_MODEL_NT5X,  "vm3dum.dll",       1, 1134},
 
     /* Wine */
-    {DRIVER_WINE,               DRIVER_MODEL_GENERIC, "wined3d.dll", 0, 0,     0},
+    {DRIVER_WINE,               DRIVER_MODEL_GENERIC, "wined3d.dll",    0,    0},
 };
 
 /* The amount of video memory stored in the gpu description table is the minimum amount of video memory
@@ -602,8 +609,8 @@ static const struct driver_version_information *get_driver_version_info(enum win
         if (entry->driver == driver && (driver_model == DRIVER_MODEL_GENERIC
                 || entry->driver_model == driver_model))
         {
-            TRACE("Found driver \"%s\", version %u, subversion %u, build %u.\n",
-                    entry->driver_name, entry->version, entry->subversion, entry->build);
+            TRACE("Found driver \"%s\", subversion %u, build %u.\n",
+                    entry->driver_name, entry->subversion, entry->build);
             return entry;
         }
     }
@@ -663,14 +670,15 @@ static void wined3d_copy_name(char *dst, const char *src, unsigned int dst_size)
 }
 
 void wined3d_driver_info_init(struct wined3d_driver_info *driver_info,
-        const struct wined3d_gpu_description *gpu_desc, UINT64 vram_bytes, UINT64 sysmem_bytes)
+        const struct wined3d_gpu_description *gpu_desc, enum wined3d_feature_level feature_level,
+        UINT64 vram_bytes, UINT64 sysmem_bytes)
 {
     const struct driver_version_information *version_info;
+    WORD driver_os_version, driver_feature_level = 10;
     enum wined3d_driver_model driver_model;
     enum wined3d_display_driver driver;
     MEMORYSTATUSEX memory_status;
     OSVERSIONINFOW os_version;
-    WORD driver_os_version;
 
     memset(&os_version, 0, sizeof(os_version));
     os_version.dwOSVersionInfoSize = sizeof(os_version);
@@ -742,6 +750,49 @@ void wined3d_driver_info_init(struct wined3d_driver_info *driver_info,
         }
     }
 
+    TRACE("GPU maximum feature level %#x.\n", feature_level);
+    switch (feature_level)
+    {
+        case WINED3D_FEATURE_LEVEL_NONE:
+        case WINED3D_FEATURE_LEVEL_5:
+            if (driver_model == DRIVER_MODEL_WIN9X)
+                driver_feature_level = 5;
+            else
+                driver_feature_level = 10;
+            break;
+        case WINED3D_FEATURE_LEVEL_6:
+            driver_feature_level = 11;
+            break;
+        case WINED3D_FEATURE_LEVEL_7:
+            driver_feature_level = 12;
+            break;
+        case WINED3D_FEATURE_LEVEL_8:
+            driver_feature_level = 13;
+            break;
+        case WINED3D_FEATURE_LEVEL_9_1:
+        case WINED3D_FEATURE_LEVEL_9_2:
+        case WINED3D_FEATURE_LEVEL_9_3:
+            driver_feature_level = 14;
+            break;
+        case WINED3D_FEATURE_LEVEL_10:
+            driver_feature_level = 15;
+            break;
+        case WINED3D_FEATURE_LEVEL_10_1:
+            driver_feature_level = 16;
+            break;
+        case WINED3D_FEATURE_LEVEL_11:
+            driver_feature_level = 17;
+            break;
+        case WINED3D_FEATURE_LEVEL_11_1:
+            /* Advertise support for everything up to FL 12_x. */
+            driver_feature_level = 21;
+            break;
+    }
+    if (os_version.dwMajorVersion == 6 && !os_version.dwMinorVersion)
+        driver_feature_level = min(driver_feature_level, 18);
+    else if (os_version.dwMajorVersion < 6)
+        driver_feature_level = min(driver_feature_level, 14);
+
     driver_info->vendor = gpu_desc->vendor;
     driver_info->device = gpu_desc->device;
     wined3d_copy_name(driver_info->description, gpu_desc->description, ARRAY_SIZE(driver_info->description));
@@ -793,7 +844,7 @@ void wined3d_driver_info_init(struct wined3d_driver_info *driver_info,
             || (version_info = get_driver_version_info(driver, DRIVER_MODEL_GENERIC)))
     {
         driver_info->name = version_info->driver_name;
-        driver_info->version_high = MAKEDWORD_VERSION(driver_os_version, version_info->version);
+        driver_info->version_high = MAKEDWORD_VERSION(driver_os_version, driver_feature_level);
         driver_info->version_low = MAKEDWORD_VERSION(version_info->subversion, version_info->build);
     }
     else
@@ -801,7 +852,7 @@ void wined3d_driver_info_init(struct wined3d_driver_info *driver_info,
         ERR("No driver version info found for device %04x:%04x, driver model %#x.\n",
                 driver_info->vendor, driver_info->device, driver_model);
         driver_info->name = "Display";
-        driver_info->version_high = MAKEDWORD_VERSION(driver_os_version, 15);
+        driver_info->version_high = MAKEDWORD_VERSION(driver_os_version, driver_feature_level);
         driver_info->version_low = MAKEDWORD_VERSION(8, 6); /* NVIDIA RIVA TNT, arbitrary */
     }
 }
@@ -2941,7 +2992,7 @@ static struct wined3d_adapter *wined3d_adapter_no3d_create(unsigned int ordinal,
         return NULL;
     }
 
-    wined3d_driver_info_init(&adapter->driver_info, &gpu_description, 0, 0);
+    wined3d_driver_info_init(&adapter->driver_info, &gpu_description, WINED3D_FEATURE_LEVEL_NONE, 0, 0);
     adapter->vram_bytes_used = 0;
     TRACE("Emulating 0x%s bytes of video ram.\n", wine_dbgstr_longlong(adapter->driver_info.vram_bytes));
 

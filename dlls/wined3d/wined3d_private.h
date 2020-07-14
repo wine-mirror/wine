@@ -3197,7 +3197,7 @@ struct wined3d_driver_info
 };
 
 void wined3d_driver_info_init(struct wined3d_driver_info *driver_info,
-        const struct wined3d_gpu_description *gpu_description,
+        const struct wined3d_gpu_description *gpu_description, enum wined3d_feature_level feature_level,
         UINT64 vram_bytes, UINT64 sysmem_bytes) DECLSPEC_HIDDEN;
 
 struct wined3d_adapter_ops
@@ -3358,6 +3358,9 @@ struct wined3d_caps_gl_ctx
     const struct wined3d_gl_info *gl_info;
     GLuint test_vbo;
     GLuint test_program_id;
+
+    const struct wined3d_gpu_description *gpu_description;
+    UINT64 vram_bytes;
 };
 
 BOOL wined3d_adapter_gl_init_format_info(struct wined3d_adapter *adapter,

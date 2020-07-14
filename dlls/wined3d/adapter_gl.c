@@ -1034,9 +1034,10 @@ static const struct wined3d_gpu_description *query_gpu_description(const struct 
 
 /* Context activation is done by the caller. */
 static void fixup_extensions(struct wined3d_gl_info *gl_info, struct wined3d_caps_gl_ctx *ctx,
-        const char *gl_renderer, enum wined3d_gl_vendor gl_vendor,
-        enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
+        const char *gl_renderer, enum wined3d_gl_vendor gl_vendor)
 {
+    enum wined3d_pci_vendor card_vendor = ctx->gpu_description->vendor;
+    enum wined3d_pci_device device = ctx->gpu_description->device;
     unsigned int i;
 
     static const struct driver_quirk
@@ -3393,15 +3394,12 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter,
         {ARB_POLYGON_OFFSET_CLAMP,         MAKEDWORD_VERSION(4, 6)},
         {ARB_TEXTURE_FILTER_ANISOTROPIC,   MAKEDWORD_VERSION(4, 6)},
     };
-    struct wined3d_driver_info *driver_info = &adapter->driver_info;
     const char *gl_vendor_str, *gl_renderer_str, *gl_version_str;
-    const struct wined3d_gpu_description *gpu_description;
     struct wined3d_gl_info *gl_info = &adapter->gl_info;
+    DWORD gl_version, gl_ext_emul_mask;
     const char *WGL_Extensions = NULL;
     enum wined3d_gl_vendor gl_vendor;
-    DWORD gl_version, gl_ext_emul_mask;
     GLint context_profile = 0;
-    UINT64 vram_bytes = 0;
     unsigned int i, j;
     HDC hdc;
 
@@ -3829,7 +3827,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter,
     gl_vendor = wined3d_guess_gl_vendor(gl_info, gl_vendor_str, gl_renderer_str, gl_version_str);
     TRACE("Guessed GL vendor %#x.\n", gl_vendor);
 
-    if (!(gpu_description = query_gpu_description(gl_info, &vram_bytes)))
+    if (!(caps_gl_ctx->gpu_description = query_gpu_description(gl_info, &caps_gl_ctx->vram_bytes)))
     {
         enum wined3d_feature_level feature_level;
         struct fragment_caps fragment_caps;
@@ -3847,20 +3845,16 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter,
         device = wined3d_guess_card(feature_level, gl_renderer_str, &gl_vendor, &vendor);
         TRACE("Guessed device PCI ID 0x%04x.\n", device);
 
-        if (!(gpu_description = wined3d_get_gpu_description(vendor, device)))
+        if (!(caps_gl_ctx->gpu_description = wined3d_get_gpu_description(vendor, device)))
         {
             ERR("Card %04x:%04x not found in driver DB.\n", vendor, device);
             return FALSE;
         }
     }
-    fixup_extensions(gl_info, caps_gl_ctx, gl_renderer_str, gl_vendor,
-            gpu_description->vendor, gpu_description->device);
-    wined3d_driver_info_init(driver_info, gpu_description, vram_bytes, 0);
-    TRACE("Reporting (fake) driver version 0x%08x-0x%08x.\n",
-            driver_info->version_high, driver_info->version_low);
+    fixup_extensions(gl_info, caps_gl_ctx, gl_renderer_str, gl_vendor);
 
     adapter->vram_bytes_used = 0;
-    TRACE("Emulating 0x%s bytes of video ram.\n", wine_dbgstr_longlong(driver_info->vram_bytes));
+    TRACE("Emulating 0x%s bytes of video ram.\n", wine_dbgstr_longlong(caps_gl_ctx->vram_bytes));
 
     if (gl_info->supported[EXT_MEMORY_OBJECT])
     {
@@ -5134,6 +5128,7 @@ static BOOL wined3d_adapter_gl_init(struct wined3d_adapter_gl *adapter_gl,
         MAKEDWORD_VERSION(3, 2),
         MAKEDWORD_VERSION(1, 0),
     };
+    struct wined3d_driver_info *driver_info = &adapter_gl->a.driver_info;
     struct wined3d_gl_info *gl_info = &adapter_gl->a.gl_info;
     struct wined3d_caps_gl_ctx caps_gl_ctx = {0};
     LUID primary_luid, *luid = NULL;
@@ -5210,6 +5205,7 @@ static BOOL wined3d_adapter_gl_init(struct wined3d_adapter_gl *adapter_gl,
     }
 
     wined3d_adapter_gl_init_d3d_info(adapter_gl, wined3d_creation_flags);
+
     if (!adapter_gl->a.d3d_info.shader_color_key)
     {
         /* We do not want to deal with re-creating immutable texture storage
@@ -5217,6 +5213,11 @@ static BOOL wined3d_adapter_gl_init(struct wined3d_adapter_gl *adapter_gl,
         WARN("Disabling ARB_texture_storage because fragment pipe doesn't support colour-keying.\n");
         gl_info->supported[ARB_TEXTURE_STORAGE] = FALSE;
     }
+
+    wined3d_driver_info_init(driver_info, caps_gl_ctx.gpu_description, adapter_gl->a.d3d_info.feature_level,
+            caps_gl_ctx.vram_bytes, 0);
+    TRACE("Reporting (fake) driver version 0x%08x-0x%08x.\n",
+            driver_info->version_high, driver_info->version_low);
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_BACKBUFFER)
         ERR_(winediag)("You are using the backbuffer for offscreen rendering. "
