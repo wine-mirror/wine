@@ -1682,6 +1682,26 @@ static int screen_buffer_ioctl( struct fd *fd, ioctl_code_t code, struct async *
             return set_output_info( screen_buffer, params, get_req_data_size() - sizeof(*params) );
         }
 
+    case IOCTL_CONDRV_FILL_OUTPUT:
+        {
+            const struct condrv_fill_output_params *params = get_req_data();
+            char_info_t data;
+            DWORD written;
+            if (get_req_data_size() != sizeof(*params) ||
+                (get_reply_max_size() && get_reply_max_size() != sizeof(written)))
+            {
+                set_error( STATUS_INVALID_PARAMETER );
+                return 0;
+            }
+            data.ch   = params->ch;
+            data.attr = params->attr;
+            written = fill_console_output( screen_buffer, data, params->mode,
+                                           params->x, params->y, params->count, params->wrap );
+            if (written && get_reply_max_size() == sizeof(written))
+                set_reply_data( &written, sizeof(written) );
+            return !get_error();
+        }
+
     default:
         set_error( STATUS_INVALID_HANDLE );
         return 0;

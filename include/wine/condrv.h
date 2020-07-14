@@ -36,6 +36,7 @@
 /* console output ioctls */
 #define IOCTL_CONDRV_GET_OUTPUT_INFO       CTL_CODE(FILE_DEVICE_CONSOLE, 32, METHOD_BUFFERED, FILE_READ_PROPERTIES)
 #define IOCTL_CONDRV_SET_OUTPUT_INFO       CTL_CODE(FILE_DEVICE_CONSOLE, 33, METHOD_BUFFERED, FILE_WRITE_PROPERTIES)
+#define IOCTL_CONDRV_FILL_OUTPUT           CTL_CODE(FILE_DEVICE_CONSOLE, 35, METHOD_BUFFERED, FILE_WRITE_DATA)
 
 /* console renderer ioctls */
 #define IOCTL_CONDRV_GET_RENDERER_EVENTS   CTL_CODE(FILE_DEVICE_CONSOLE, 70, METHOD_BUFFERED, FILE_READ_PROPERTIES)
@@ -78,6 +79,18 @@ struct condrv_output_info_params
 {
     unsigned int  mask;               /* setting mask */
     struct condrv_output_info info;   /* output info */
+};
+
+/* IOCTL_CONDRV_FILL_OUTPUT params */
+struct condrv_fill_output_params
+{
+    int            x;                 /* position where to start writing */
+    int            y;
+    int            mode;              /* char info mode */
+    int            count;             /* number to write */
+    int            wrap;              /* wrap around at end of line? */
+    WCHAR          ch;                /* character to write */
+    unsigned short attr;              /* attribute to write */
 };
 
 #define SET_CONSOLE_OUTPUT_INFO_CURSOR_GEOM     0x0001
