@@ -496,32 +496,24 @@ void init_cpu_info(void)
            cpu_info.Architecture, cpu_info.Level, cpu_info.Revision, cpu_info.FeatureSet );
 }
 
-static BOOL grow_logical_proc_buf( SYSTEM_LOGICAL_PROCESSOR_INFORMATION **pdata,
-                                   SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX **pdataex, DWORD *max_len )
+static BOOL grow_logical_proc_buf( SYSTEM_LOGICAL_PROCESSOR_INFORMATION **pdata, DWORD *max_len )
 {
-    if (pdata)
-    {
-        SYSTEM_LOGICAL_PROCESSOR_INFORMATION *new_data;
+    SYSTEM_LOGICAL_PROCESSOR_INFORMATION *new_data;
 
-        *max_len *= 2;
-        new_data = RtlReAllocateHeap(GetProcessHeap(), 0, *pdata, *max_len*sizeof(*new_data));
-        if (!new_data)
-            return FALSE;
+    *max_len *= 2;
+    if (!(new_data = realloc( *pdata, *max_len*sizeof(*new_data) ))) return FALSE;
+    *pdata = new_data;
+    return TRUE;
+}
 
-        *pdata = new_data;
-    }
-    else
-    {
-        SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *new_dataex;
-
-        *max_len *= 2;
-        new_dataex = RtlReAllocateHeap(GetProcessHeap(), HEAP_ZERO_MEMORY, *pdataex, *max_len*sizeof(*new_dataex));
-        if (!new_dataex)
-            return FALSE;
-
-        *pdataex = new_dataex;
-    }
-
+static BOOL grow_logical_proc_ex_buf( SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX **pdataex, DWORD *max_len )
+{
+    SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *new_dataex;
+    DWORD new_len = *max_len * 2;
+    if (!(new_dataex = realloc( *pdataex, new_len * sizeof(*new_dataex) ))) return FALSE;
+    memset( new_dataex + *max_len, 0, (new_len - *max_len) * sizeof(*new_dataex) );
+    *pdataex = new_dataex;
+    *max_len = new_len;
     return TRUE;
 }
 
@@ -570,7 +562,7 @@ static BOOL logical_proc_info_add_by_id( SYSTEM_LOGICAL_PROCESSOR_INFORMATION **
 
         while (*len == *pmax_len)
         {
-            if (!grow_logical_proc_buf(pdata, NULL, pmax_len)) return FALSE;
+            if (!grow_logical_proc_buf(pdata, pmax_len)) return FALSE;
         }
 
         (*pdata)[i].Relationship = rel;
@@ -606,7 +598,7 @@ static BOOL logical_proc_info_add_by_id( SYSTEM_LOGICAL_PROCESSOR_INFORMATION **
 
         while (ofs + log_proc_ex_size_plus(sizeof(PROCESSOR_RELATIONSHIP)) > *pmax_len)
         {
-            if (!grow_logical_proc_buf(NULL, pdataex, pmax_len)) return FALSE;
+            if (!grow_logical_proc_ex_buf(pdataex, pmax_len)) return FALSE;
         }
 
         dataex = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)(((char *)*pdataex) + ofs);
@@ -647,7 +639,7 @@ static BOOL logical_proc_info_add_cache( SYSTEM_LOGICAL_PROCESSOR_INFORMATION **
         }
 
         while (*len == *pmax_len)
-            if (!grow_logical_proc_buf(pdata, NULL, pmax_len)) return FALSE;
+            if (!grow_logical_proc_buf(pdata, pmax_len)) return FALSE;
 
         (*pdata)[i].Relationship = RelationCache;
         (*pdata)[i].ProcessorMask = mask;
@@ -670,7 +662,7 @@ static BOOL logical_proc_info_add_cache( SYSTEM_LOGICAL_PROCESSOR_INFORMATION **
 
         while (ofs + log_proc_ex_size_plus(sizeof(CACHE_RELATIONSHIP)) > *pmax_len)
         {
-            if (!grow_logical_proc_buf(NULL, pdataex, pmax_len)) return FALSE;
+            if (!grow_logical_proc_ex_buf(pdataex, pmax_len)) return FALSE;
         }
 
         dataex = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)(((char *)*pdataex) + ofs);
@@ -698,7 +690,7 @@ static BOOL logical_proc_info_add_numa_node( SYSTEM_LOGICAL_PROCESSOR_INFORMATIO
     if (pdata)
     {
         while (*len == *pmax_len)
-            if (!grow_logical_proc_buf(pdata, NULL, pmax_len)) return FALSE;
+            if (!grow_logical_proc_buf(pdata, pmax_len)) return FALSE;
 
         (*pdata)[*len].Relationship = RelationNumaNode;
         (*pdata)[*len].ProcessorMask = mask;
@@ -711,7 +703,7 @@ static BOOL logical_proc_info_add_numa_node( SYSTEM_LOGICAL_PROCESSOR_INFORMATIO
 
         while (*len + log_proc_ex_size_plus(sizeof(NUMA_NODE_RELATIONSHIP)) > *pmax_len)
         {
-            if (!grow_logical_proc_buf(NULL, pdataex, pmax_len)) return FALSE;
+            if (!grow_logical_proc_ex_buf(pdataex, pmax_len)) return FALSE;
         }
 
         dataex = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)(((char *)*pdataex) + *len);
@@ -734,7 +726,7 @@ static BOOL logical_proc_info_add_group( SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX
     SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *dataex;
 
     while (*len + log_proc_ex_size_plus(sizeof(GROUP_RELATIONSHIP)) > *pmax_len)
-        if (!grow_logical_proc_buf(NULL, pdataex, pmax_len)) return FALSE;
+        if (!grow_logical_proc_ex_buf(pdataex, pmax_len)) return FALSE;
 
     dataex = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)(((char *)*pdataex) + *len);
 
@@ -2479,27 +2471,23 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
         /* Each logical processor may use up to 7 entries in returned table:
          * core, numa node, package, L1i, L1d, L2, L3 */
         len = 7 * NtCurrentTeb()->Peb->NumberOfProcessors;
-        buf = RtlAllocateHeap(GetProcessHeap(), 0, len * sizeof(*buf));
+        buf = malloc( len * sizeof(*buf) );
         if (!buf)
         {
             ret = STATUS_NO_MEMORY;
             break;
         }
-
         ret = create_logical_proc_info(&buf, NULL, &len, RelationAll);
-        if( ret != STATUS_SUCCESS )
+        if (!ret)
         {
-            RtlFreeHeap(GetProcessHeap(), 0, buf);
-            break;
+            if (size >= len)
+            {
+                if (!info) ret = STATUS_ACCESS_VIOLATION;
+                else memcpy( info, buf, len);
+            }
+            else ret = STATUS_INFO_LENGTH_MISMATCH;
         }
-
-        if (size >= len)
-        {
-            if (!info) ret = STATUS_ACCESS_VIOLATION;
-            else memcpy( info, buf, len);
-        }
-        else ret = STATUS_INFO_LENGTH_MISMATCH;
-        RtlFreeHeap(GetProcessHeap(), 0, buf);
+        free( buf );
         break;
     }
 
@@ -2600,29 +2588,22 @@ NTSTATUS WINAPI NtQuerySystemInformationEx( SYSTEM_INFORMATION_CLASS class,
         }
 
         len = 3 * sizeof(*buf);
-        buf = RtlAllocateHeap(GetProcessHeap(), 0, len);
-        if (!buf)
+        if (!(buf = malloc( len )))
         {
             ret = STATUS_NO_MEMORY;
             break;
         }
-
         ret = create_logical_proc_info(NULL, &buf, &len, *(DWORD *)query);
-        if (ret != STATUS_SUCCESS)
+        if (!ret)
         {
-            RtlFreeHeap(GetProcessHeap(), 0, buf);
-            break;
+            if (size >= len)
+            {
+                if (!info) ret = STATUS_ACCESS_VIOLATION;
+                else memcpy(info, buf, len);
+            }
+            else ret = STATUS_INFO_LENGTH_MISMATCH;
         }
-
-        if (size >= len)
-        {
-            if (!info) ret = STATUS_ACCESS_VIOLATION;
-            else memcpy(info, buf, len);
-        }
-        else
-            ret = STATUS_INFO_LENGTH_MISMATCH;
-
-        RtlFreeHeap(GetProcessHeap(), 0, buf);
+        free( buf );
         break;
     }
 
