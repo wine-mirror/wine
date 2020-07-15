@@ -514,8 +514,7 @@ static inline int FUNC_NAME(pf_output_hex_fp)(FUNC_NAME(puts_clbk) pf_puts, void
 
 /* pf_integer_conv:  prints x to buf, including alternate formats and
    additional precision digits, but not field characters or the sign */
-static inline void FUNC_NAME(pf_integer_conv)(APICHAR *buf, int buf_len,
-        pf_flags *flags, LONGLONG x)
+static inline void FUNC_NAME(pf_integer_conv)(APICHAR *buf, pf_flags *flags, LONGLONG x)
 {
     unsigned int base;
     const char *digits;
@@ -783,7 +782,7 @@ static inline int FUNC_NAME(pf_output_fp)(FUNC_NAME(puts_clbk) pf_puts, void *pu
                 limb_len = LIMB_DIGITS;
             }
             radix_pos -= f.Precision;
-            FUNC_NAME(pf_integer_conv)(buf, ARRAY_SIZE(buf), &f, l);
+            FUNC_NAME(pf_integer_conv)(buf, &f, l);
 
             r = pf_puts(puts_ctx, f.Precision, buf);
             if(r < 0) return r;
@@ -824,7 +823,7 @@ static inline int FUNC_NAME(pf_output_fp)(FUNC_NAME(puts_clbk) pf_puts, void *pu
                 limb_len = LIMB_DIGITS;
             }
             prec -= f.Precision;
-            FUNC_NAME(pf_integer_conv)(buf, ARRAY_SIZE(buf), &f, l);
+            FUNC_NAME(pf_integer_conv)(buf, &f, l);
 
             r = pf_puts(puts_ctx, f.Precision, buf);
             if(r < 0) return r;
@@ -870,7 +869,7 @@ static inline int FUNC_NAME(pf_output_fp)(FUNC_NAME(puts_clbk) pf_puts, void *pu
                 limb_len = LIMB_DIGITS;
             }
             prec -= f.Precision;
-            FUNC_NAME(pf_integer_conv)(buf, ARRAY_SIZE(buf), &f, l);
+            FUNC_NAME(pf_integer_conv)(buf, &f, l);
 
             r = pf_puts(puts_ctx, f.Precision, buf);
             if(r < 0) return r;
@@ -892,7 +891,7 @@ static inline int FUNC_NAME(pf_output_fp)(FUNC_NAME(puts_clbk) pf_puts, void *pu
             ret += r;
 
             f.Precision = three_digit_exp ? 3 : 2;
-            FUNC_NAME(pf_integer_conv)(buf, ARRAY_SIZE(buf), &f, radix_pos);
+            FUNC_NAME(pf_integer_conv)(buf, &f, radix_pos);
             r = pf_puts(puts_ctx, f.Precision, buf);
             if(r < 0) return r;
             ret += r;
@@ -1068,8 +1067,8 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
             flags.PadZero = TRUE;
             i = flags.Precision;
             flags.Precision = 2*sizeof(void*);
-            FUNC_NAME(pf_integer_conv)(buf, ARRAY_SIZE(buf), &flags,
-                                       (ULONG_PTR)pf_args(args_ctx, pos, VT_PTR, valist).get_ptr);
+            FUNC_NAME(pf_integer_conv)(buf, &flags,
+                    (ULONG_PTR)pf_args(args_ctx, pos, VT_PTR, valist).get_ptr);
             flags.PadZero = FALSE;
             flags.Precision = i;
 
@@ -1105,15 +1104,15 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
                 return -1;
 
             if(flags.IntegerDouble || (flags.IntegerNative && sizeof(void*) == 8))
-                FUNC_NAME(pf_integer_conv)(tmp, max_len, &flags, pf_args(args_ctx, pos,
+                FUNC_NAME(pf_integer_conv)(tmp, &flags, pf_args(args_ctx, pos,
                             VT_I8, valist).get_longlong);
             else if(flags.Format=='d' || flags.Format=='i')
-                FUNC_NAME(pf_integer_conv)(tmp, max_len, &flags,
+                FUNC_NAME(pf_integer_conv)(tmp, &flags,
                         flags.IntegerLength != LEN_SHORT ?
                         pf_args(args_ctx, pos, VT_INT, valist).get_int :
                         (short)pf_args(args_ctx, pos, VT_INT, valist).get_int);
             else
-                FUNC_NAME(pf_integer_conv)(tmp, max_len, &flags,
+                FUNC_NAME(pf_integer_conv)(tmp, &flags,
                         flags.IntegerLength != LEN_SHORT ?
                         (unsigned)pf_args(args_ctx, pos, VT_INT, valist).get_int :
                         (unsigned short)pf_args(args_ctx, pos, VT_INT, valist).get_int);
