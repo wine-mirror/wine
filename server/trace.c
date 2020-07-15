@@ -38,6 +38,7 @@
 #include "winternl.h"
 #include "winuser.h"
 #include "winioctl.h"
+#include "wine/condrv.h"
 #include "ddk/wdm.h"
 #include "ddk/ntddser.h"
 #define USE_WS_PREFIX
@@ -113,6 +114,17 @@ static void dump_ioctl_code( const char *prefix, const ioctl_code_t *code )
     switch(*code)
     {
 #define CASE(c) case c: fprintf( stderr, "%s%s", prefix, #c ); break
+        CASE(IOCTL_CONDRV_FILL_OUTPUT);
+        CASE(IOCTL_CONDRV_GET_INPUT_INFO);
+        CASE(IOCTL_CONDRV_GET_MODE);
+        CASE(IOCTL_CONDRV_GET_OUTPUT_INFO);
+        CASE(IOCTL_CONDRV_GET_RENDERER_EVENTS);
+        CASE(IOCTL_CONDRV_GET_TITLE);
+        CASE(IOCTL_CONDRV_PEEK);
+        CASE(IOCTL_CONDRV_READ_INPUT);
+        CASE(IOCTL_CONDRV_SET_MODE);
+        CASE(IOCTL_CONDRV_SET_OUTPUT_INFO);
+        CASE(IOCTL_CONDRV_WRITE_INPUT);
         CASE(FSCTL_DISMOUNT_VOLUME);
         CASE(FSCTL_PIPE_DISCONNECT);
         CASE(FSCTL_PIPE_LISTEN);
