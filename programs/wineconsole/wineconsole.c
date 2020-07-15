@@ -173,22 +173,13 @@ static void WINECON_SetInsertMode(HANDLE hConIn, unsigned int enable)
  */
 BOOL WINECON_GetConsoleTitle(HANDLE hConIn, WCHAR* buffer, size_t len)
 {
-    BOOL ret;
+    DWORD size;
 
-    if (len < sizeof(WCHAR)) return FALSE;
+    if (!DeviceIoControl(hConIn, IOCTL_CONDRV_GET_TITLE, NULL, 0, buffer, len - sizeof(WCHAR), &size, NULL))
+        return FALSE;
 
-    SERVER_START_REQ( get_console_input_info )
-    {
-        req->handle = wine_server_obj_handle( hConIn );
-        wine_server_set_reply( req, buffer, len - sizeof(WCHAR) );
-        if ((ret = !wine_server_call_err( req )))
-        {
-            len = wine_server_reply_size( reply );
-            buffer[len / sizeof(WCHAR)] = 0;
-        }
-    }
-    SERVER_END_REQ;
-    return ret;
+    buffer[size / sizeof(WCHAR)] = 0;
+    return TRUE;
 }
 
 /******************************************************************
