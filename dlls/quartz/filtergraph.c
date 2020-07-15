@@ -1723,12 +1723,16 @@ static HRESULT WINAPI MediaControl_Run(IMediaControl *iface)
 {
     struct filter_graph *graph = impl_from_IMediaControl(iface);
 
+    TRACE("graph %p.\n", graph);
+
     return IMediaFilter_Run(&graph->IMediaFilter_iface, 0);
 }
 
 static HRESULT WINAPI MediaControl_Pause(IMediaControl *iface)
 {
     struct filter_graph *graph = impl_from_IMediaControl(iface);
+
+    TRACE("graph %p.\n", graph);
 
     return IMediaFilter_Pause(&graph->IMediaFilter_iface);
 }
@@ -1737,12 +1741,16 @@ static HRESULT WINAPI MediaControl_Stop(IMediaControl *iface)
 {
     struct filter_graph *graph = impl_from_IMediaControl(iface);
 
+    TRACE("graph %p.\n", graph);
+
     return IMediaFilter_Stop(&graph->IMediaFilter_iface);
 }
 
 static HRESULT WINAPI MediaControl_GetState(IMediaControl *iface, LONG timeout, OAFilterState *state)
 {
     struct filter_graph *graph = impl_from_IMediaControl(iface);
+
+    TRACE("graph %p, timeout %u, state %p.\n", graph, timeout, state);
 
     if (timeout < 0) timeout = INFINITE;
 
@@ -4951,6 +4959,7 @@ static HRESULT WINAPI MediaFilter_GetState(IMediaFilter *iface, DWORD timeout, F
     }
 
     LeaveCriticalSection(&graph->cs);
+    TRACE("Returning %#x, state %u.\n", hr, *state);
     return hr;
 }
 
