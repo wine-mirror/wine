@@ -4923,40 +4923,57 @@ static HRESULT WINAPI MediaFilter_GetState(IMediaFilter *iface, DWORD timeout, F
 {
     struct filter_graph *graph = impl_from_IMediaFilter(iface);
     DWORD end = GetTickCount() + timeout;
-    HRESULT hr = S_OK, filter_hr;
-    struct filter *filter;
+    HRESULT hr;
 
     TRACE("graph %p, timeout %u, state %p.\n", graph, timeout, state);
 
     if (!state)
         return E_POINTER;
 
-    EnterCriticalSection(&graph->cs);
+    /* Thread safety is a little tricky here. GetState() shouldn't block other
+     * functions from being called on the filter graph. However, we can't just
+     * call IBaseFilter::GetState() in one loop and drop the lock on every
+     * iteration, since the filter list might change beneath us. So instead we
+     * do what native does, and poll for it every 10 ms. */
 
+    EnterCriticalSection(&graph->cs);
     *state = graph->state;
 
-    LIST_FOR_EACH_ENTRY(filter, &graph->filters, struct filter, entry)
+    for (;;)
     {
+        IBaseFilter *async_filter = NULL;
         FILTER_STATE filter_state;
-        int wait;
+        struct filter *filter;
 
-        if (timeout == INFINITE)
-            wait = INFINITE;
-        else if (!timeout)
-            wait = 0;
-        else
-            wait = max(end - GetTickCount(), 0);
+        hr = S_OK;
 
-        filter_hr = IBaseFilter_GetState(filter->filter, wait, &filter_state);
-        if (hr == S_OK && filter_hr == VFW_S_STATE_INTERMEDIATE)
-            hr = VFW_S_STATE_INTERMEDIATE;
-        else if (filter_hr != S_OK && filter_hr != VFW_S_STATE_INTERMEDIATE)
-            hr = filter_hr;
-        if (filter_state != graph->state)
-            ERR("Filter %p reported incorrect state %u.\n", filter->filter, filter_state);
+        LIST_FOR_EACH_ENTRY(filter, &graph->filters, struct filter, entry)
+        {
+            HRESULT filter_hr = IBaseFilter_GetState(filter->filter, 0, &filter_state);
+
+            TRACE("Filter %p returned hr %#x, state %u.\n", filter->filter, filter_hr, filter_state);
+
+            if (filter_hr == VFW_S_STATE_INTERMEDIATE)
+                async_filter = filter->filter;
+
+            if (hr == S_OK && filter_hr == VFW_S_STATE_INTERMEDIATE)
+                hr = VFW_S_STATE_INTERMEDIATE;
+            else if (filter_hr != S_OK && filter_hr != VFW_S_STATE_INTERMEDIATE)
+                hr = filter_hr;
+            if (filter_state != graph->state)
+                ERR("Filter %p reported incorrect state %u.\n", filter->filter, filter_state);
+        }
+
+        LeaveCriticalSection(&graph->cs);
+
+        if (hr != VFW_S_STATE_INTERMEDIATE || (timeout != INFINITE && GetTickCount() >= end))
+            break;
+
+        IBaseFilter_GetState(async_filter, 10, &filter_state);
+
+        EnterCriticalSection(&graph->cs);
     }
 
-    LeaveCriticalSection(&graph->cs);
     TRACE("Returning %#x, state %u.\n", hr, *state);
     return hr;
 }
