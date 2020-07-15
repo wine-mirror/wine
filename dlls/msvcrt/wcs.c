@@ -2025,19 +2025,20 @@ INT CDECL MSVCRT_iswlower( MSVCRT_wchar_t wc )
 }
 
 /*********************************************************************
- *		iswprint (MSVCRT.@)
- */
-INT CDECL MSVCRT_iswprint( MSVCRT_wchar_t wc )
-{
-    return isprintW( wc );
-}
-
-/*********************************************************************
  *		_iswprint_l (MSVCRT.@)
  */
 int CDECL MSVCRT__iswprint_l( MSVCRT_wchar_t wc, MSVCRT__locale_t locale )
 {
-    return isprintW( wc );
+    return MSVCRT__iswctype_l( wc, MSVCRT__ALPHA | MSVCRT__BLANK |
+            MSVCRT__DIGIT | MSVCRT__PUNCT, locale );
+}
+
+/*********************************************************************
+ *		iswprint (MSVCRT.@)
+ */
+INT CDECL MSVCRT_iswprint( MSVCRT_wchar_t wc )
+{
+    return MSVCRT__iswprint_l( wc, NULL );
 }
 
 /*********************************************************************
