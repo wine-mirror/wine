@@ -1929,19 +1929,19 @@ INT CDECL MSVCRT_iswctype( MSVCRT_wchar_t wc, MSVCRT_wctype_t type )
 }
 
 /*********************************************************************
- *		iswalnum (MSVCRT.@)
- */
-INT CDECL MSVCRT_iswalnum( MSVCRT_wchar_t wc )
-{
-    return isalnumW( wc );
-}
-
-/*********************************************************************
  *		_iswalnum_l (MSVCRT.@)
  */
 int CDECL MSVCRT__iswalnum_l( MSVCRT_wchar_t wc, MSVCRT__locale_t locale )
 {
-    return isalnumW( wc );
+    return MSVCRT__iswctype_l( wc, MSVCRT__ALPHA | MSVCRT__DIGIT, locale );
+}
+
+/*********************************************************************
+ *		iswalnum (MSVCRT.@)
+ */
+INT CDECL MSVCRT_iswalnum( MSVCRT_wchar_t wc )
+{
+    return MSVCRT__iswalnum_l( wc, NULL );
 }
 
 /*********************************************************************
