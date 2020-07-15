@@ -529,12 +529,24 @@ static void setup_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec )
         CONTEXT          context;
         EXCEPTION_RECORD rec;
     } *stack;
+
     void *stack_ptr = (void *)(SP_sig(sigcontext) & ~3);
+    CONTEXT context;
+    NTSTATUS status;
 
     rec->ExceptionAddress = (void *)PC_sig(sigcontext);
+    save_context( &context, sigcontext );
+
+    status = send_debug_event( rec, &context, TRUE );
+    if (status == DBG_CONTINUE || status == DBG_EXCEPTION_HANDLED)
+    {
+        restore_context( &context, sigcontext );
+        return;
+    }
+
     stack = virtual_setup_exception( stack_ptr, sizeof(*stack), rec );
     stack->rec = *rec;
-    save_context( &stack->context, sigcontext );
+    stack->context = context;
 
     /* now modify the sigcontext to return to the raise function */
     SP_sig(sigcontext) = (DWORD)stack;
