@@ -1961,19 +1961,19 @@ INT CDECL MSVCRT_iswalpha( MSVCRT_wchar_t wc )
 }
 
 /*********************************************************************
- *		iswcntrl (MSVCRT.@)
- */
-INT CDECL MSVCRT_iswcntrl( MSVCRT_wchar_t wc )
-{
-    return iscntrlW( wc );
-}
-
-/*********************************************************************
  *		_iswcntrl_l (MSVCRT.@)
  */
 int CDECL MSVCRT__iswcntrl_l( MSVCRT_wchar_t wc, MSVCRT__locale_t locale )
 {
-    return iscntrlW( wc );
+    return MSVCRT__iswctype_l( wc, MSVCRT__CONTROL, locale );
+}
+
+/*********************************************************************
+ *		iswcntrl (MSVCRT.@)
+ */
+INT CDECL MSVCRT_iswcntrl( MSVCRT_wchar_t wc )
+{
+    return MSVCRT__iswcntrl_l( wc, NULL );
 }
 
 /*********************************************************************
