@@ -4961,6 +4961,15 @@ static HRESULT WINAPI MediaFilter_GetState(IMediaFilter *iface, DWORD timeout, F
                 hr = VFW_S_STATE_INTERMEDIATE;
             else if (filter_hr != S_OK && filter_hr != VFW_S_STATE_INTERMEDIATE)
                 hr = filter_hr;
+
+            if (hr == S_OK && filter_state == State_Paused && graph->state != State_Paused)
+            {
+                async_filter = filter->filter;
+                hr = VFW_S_STATE_INTERMEDIATE;
+            }
+            else if (filter_state != graph->state && filter_state != State_Paused)
+                hr = E_FAIL;
+
             if (filter_state != graph->state)
                 ERR("Filter %p reported incorrect state %u.\n", filter->filter, filter_state);
         }

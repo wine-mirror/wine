@@ -3254,6 +3254,21 @@ static void test_filter_state(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Paused);
 
+    sink.state = State_Stopped;
+    hr = IMediaControl_GetState(control, 0, &state);
+    ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+    ok(state == State_Paused, "Got state %u.\n", state);
+
+    sink.state = State_Running;
+    hr = IMediaControl_GetState(control, 0, &state);
+    ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+    ok(state == State_Paused, "Got state %u.\n", state);
+
+    sink.state = State_Paused;
+    hr = IMediaControl_GetState(control, 0, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == State_Paused, "Got state %u.\n", state);
+
     hr = IMediaControl_Stop(control);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Stopped);
@@ -3262,9 +3277,39 @@ static void test_filter_state(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Running);
 
+    sink.state = State_Stopped;
+    hr = IMediaControl_GetState(control, 0, &state);
+    ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+    ok(state == State_Running, "Got state %u.\n", state);
+
+    sink.state = State_Paused;
+    hr = IMediaControl_GetState(control, 0, &state);
+    ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#x.\n", hr);
+    ok(state == State_Running, "Got state %u.\n", state);
+
+    sink.state = State_Running;
+    hr = IMediaControl_GetState(control, 0, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == State_Running, "Got state %u.\n", state);
+
     hr = IMediaControl_Stop(control);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Stopped);
+
+    sink.state = State_Running;
+    hr = IMediaControl_GetState(control, 0, &state);
+    ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+    ok(state == State_Stopped, "Got state %u.\n", state);
+
+    sink.state = State_Paused;
+    hr = IMediaControl_GetState(control, 0, &state);
+    ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#x.\n", hr);
+    ok(state == State_Stopped, "Got state %u.\n", state);
+
+    sink.state = State_Stopped;
+    hr = IMediaControl_GetState(control, 0, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == State_Stopped, "Got state %u.\n", state);
 
     hr = IMediaControl_Pause(control);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
