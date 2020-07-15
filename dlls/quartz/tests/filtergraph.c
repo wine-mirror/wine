@@ -1173,7 +1173,7 @@ struct testfilter
     struct testpin *pins;
     unsigned int pin_count, enum_idx;
 
-    HRESULT state_hr, seek_hr;
+    HRESULT state_hr, GetState_hr, seek_hr;
 
     IAMFilterMiscFlags IAMFilterMiscFlags_iface;
     ULONG misc_flags;
@@ -1393,7 +1393,7 @@ static HRESULT WINAPI testfilter_GetState(IBaseFilter *iface, DWORD timeout, FIL
     if (winetest_debug > 1) trace("%p->GetState(%u)\n", filter, timeout);
 
     *state = filter->state;
-    return filter->state_hr;
+    return filter->GetState_hr;
 }
 
 static HRESULT WINAPI testfilter_SetSyncSource(IBaseFilter *iface, IReferenceClock *clock)
@@ -3199,6 +3199,7 @@ static void test_filter_state(void)
     REFERENCE_TIME start_time;
     IReferenceClock *clock;
     IMediaControl *control;
+    FILTER_STATE mf_state;
     IMediaFilter *filter;
     OAFilterState state;
     HRESULT hr;
@@ -3402,33 +3403,213 @@ todo_wine
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Stopped);
 
+    /* Test asynchronous state change. */
+
     sink.state_hr = S_FALSE;
+    sink.GetState_hr = VFW_S_STATE_INTERMEDIATE;
     hr = IMediaControl_Pause(control);
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
-    sink.state_hr = VFW_S_STATE_INTERMEDIATE;
     hr = IMediaControl_GetState(control, 0, &state);
     ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#x.\n", hr);
     ok(state == State_Paused, "Got state %u.\n", state);
 
-    sink.state_hr = VFW_S_CANT_CUE;
+    sink.state_hr = sink.GetState_hr = S_OK;
+    hr = IMediaControl_GetState(control, 0, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == State_Paused, "Got state %u.\n", state);
+
+    sink.state_hr = S_FALSE;
+    sink.GetState_hr = VFW_S_STATE_INTERMEDIATE;
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IMediaControl_GetState(control, 0, &state);
+    ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#x.\n", hr);
+    ok(state == State_Stopped, "Got state %u.\n", state);
+
+    sink.state_hr = sink.GetState_hr = S_OK;
+    hr = IMediaControl_GetState(control, 0, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == State_Stopped, "Got state %u.\n", state);
+
+    /* Renderers are expected to block completing a state change into paused
+     * until they receive a sample. Because the graph can transition from
+     * stopped -> paused -> running in one call, which itself needs to be
+     * asynchronous, it actually waits on a separate thread for all filters
+     * to be ready, then calls IMediaFilter::Run() once they are.
+     *
+     * However, IMediaControl::GetState() will return VFW_S_STATE_INTERMEDIATE
+     * if filters haven't caught up to the graph yet. To make matters worse, it
+     * doesn't take the above into account, meaning that it'll gladly return
+     * VFW_S_STATE_INTERMEDIATE even if passed an infinite timeout. */
+
+    sink.state_hr = S_FALSE;
+    sink.GetState_hr = VFW_S_STATE_INTERMEDIATE;
+    hr = IMediaControl_Run(control);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IMediaControl_GetState(control, 0, &state);
+    ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#x.\n", hr);
+    ok(state == State_Running, "Got state %u.\n", state);
+    todo_wine ok(sink.state == State_Paused, "Got state %u.\n", sink.state);
+    todo_wine ok(source.state == State_Paused, "Got state %u.\n", source.state);
+
+    hr = IMediaControl_Run(control);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IMediaControl_GetState(control, 0, &state);
+    ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#x.\n", hr);
+    ok(state == State_Running, "Got state %u.\n", state);
+    todo_wine ok(sink.state == State_Paused, "Got state %u.\n", sink.state);
+    todo_wine ok(source.state == State_Paused, "Got state %u.\n", source.state);
+
+    sink.state_hr = sink.GetState_hr = S_OK;
+
+    while ((hr = IMediaControl_GetState(control, INFINITE, &state)) == VFW_S_STATE_INTERMEDIATE)
+    {
+        ok(state == State_Running, "Got state %u.\n", state);
+        todo_wine ok(sink.state == State_Paused, "Got state %u.\n", sink.state);
+        todo_wine ok(source.state == State_Paused, "Got state %u.\n", source.state);
+        Sleep(10);
+    }
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == State_Running, "Got state %u.\n", state);
+    ok(sink.state == State_Running, "Got state %u.\n", sink.state);
+    ok(source.state == State_Running, "Got state %u.\n", source.state);
+
+    /* The above logic does not apply to the running -> paused -> stopped
+     * transition. The filter graph will stop a filter regardless of whether
+     * it's completely paused. Inasmuch as stopping the filter is like flushing
+     * it—i.e. it has to succeed—this makes sense. */
+
+    sink.state_hr = S_FALSE;
+    sink.GetState_hr = VFW_S_STATE_INTERMEDIATE;
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(sink.state == State_Stopped, "Got state %u.\n", sink.state);
+    ok(source.state == State_Stopped, "Got state %u.\n", source.state);
+
+    hr = IMediaControl_GetState(control, 0, &state);
+    ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#x.\n", hr);
+    ok(state == State_Stopped, "Got state %u.\n", state);
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    sink.state_hr = sink.GetState_hr = S_OK;
+    hr = IMediaControl_GetState(control, 0, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == State_Stopped, "Got state %u.\n", state);
+
+    /* Try an asynchronous stopped->paused->running transition, but pause or
+     * stop the graph before our filter is completely paused. */
+
+    sink.state_hr = S_FALSE;
+    sink.GetState_hr = VFW_S_STATE_INTERMEDIATE;
+    hr = IMediaControl_Run(control);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    sink.state_hr = sink.GetState_hr = S_OK;
+    hr = IMediaControl_GetState(control, 0, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == State_Paused, "Got state %u.\n", state);
+    ok(sink.state == State_Paused, "Got state %u.\n", sink.state);
+    ok(source.state == State_Paused, "Got state %u.\n", source.state);
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    sink.state_hr = S_FALSE;
+    sink.GetState_hr = VFW_S_STATE_INTERMEDIATE;
+    hr = IMediaControl_Run(control);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(sink.state == State_Stopped, "Got state %u.\n", sink.state);
+    ok(source.state == State_Stopped, "Got state %u.\n", source.state);
+
+    sink.state_hr = sink.GetState_hr = S_OK;
+    hr = IMediaControl_GetState(control, 0, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == State_Stopped, "Got state %u.\n", state);
+    ok(sink.state == State_Stopped, "Got state %u.\n", sink.state);
+    ok(source.state == State_Stopped, "Got state %u.\n", source.state);
+
+    /* This logic doesn't apply when using IMediaFilter methods directly. */
+
+    sink.state_hr = S_FALSE;
+    sink.GetState_hr = VFW_S_STATE_INTERMEDIATE;
+    hr = IMediaFilter_Run(filter, 0);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IMediaFilter_GetState(filter, 0, &mf_state);
+    ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#x.\n", hr);
+    ok(mf_state == State_Running, "Got state %u.\n", mf_state);
+    ok(sink.state == State_Running, "Got state %u.\n", sink.state);
+    ok(source.state == State_Running, "Got state %u.\n", source.state);
+
+    sink.state_hr = sink.GetState_hr = S_OK;
+    hr = IMediaFilter_GetState(filter, 0, &mf_state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(mf_state == State_Running, "Got state %u.\n", mf_state);
+    ok(sink.state == State_Running, "Got state %u.\n", sink.state);
+    ok(source.state == State_Running, "Got state %u.\n", source.state);
+
+    hr = IMediaFilter_Stop(filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(sink.state == State_Stopped, "Got state %u.\n", sink.state);
+    ok(source.state == State_Stopped, "Got state %u.\n", source.state);
+
+    /* Test VFW_S_CANT_CUE. */
+
+    sink.GetState_hr = VFW_S_CANT_CUE;
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
     hr = IMediaControl_GetState(control, 0, &state);
     ok(hr == VFW_S_CANT_CUE, "Got hr %#x.\n", hr);
     ok(state == State_Paused, "Got state %u.\n", state);
 
-    sink.state_hr = VFW_S_STATE_INTERMEDIATE;
-    source.state_hr = VFW_S_CANT_CUE;
+    sink.GetState_hr = VFW_S_STATE_INTERMEDIATE;
+    source.GetState_hr = VFW_S_CANT_CUE;
     hr = IMediaControl_GetState(control, 0, &state);
     ok(hr == VFW_S_CANT_CUE, "Got hr %#x.\n", hr);
     ok(state == State_Paused, "Got state %u.\n", state);
 
-    sink.state_hr = VFW_S_CANT_CUE;
-    source.state_hr = VFW_S_STATE_INTERMEDIATE;
+    sink.GetState_hr = VFW_S_CANT_CUE;
+    source.GetState_hr = VFW_S_STATE_INTERMEDIATE;
     hr = IMediaControl_GetState(control, 0, &state);
     ok(hr == VFW_S_CANT_CUE, "Got hr %#x.\n", hr);
     ok(state == State_Paused, "Got state %u.\n", state);
 
-    sink.state_hr = source.state_hr = S_OK;
+    sink.GetState_hr = source.GetState_hr = S_OK;
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    sink.state_hr = S_FALSE;
+    sink.GetState_hr = VFW_S_STATE_INTERMEDIATE;
+    source.GetState_hr = VFW_S_CANT_CUE;
+    hr = IMediaControl_Run(control);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(sink.state == State_Running, "Got state %u.\n", sink.state);
+    ok(source.state == State_Running, "Got state %u.\n", source.state);
+
+    hr = IMediaControl_GetState(control, 0, &state);
+    ok(hr == VFW_S_CANT_CUE, "Got hr %#x.\n", hr);
+    ok(state == State_Running, "Got state %u.\n", state);
+    ok(sink.state == State_Running, "Got state %u.\n", sink.state);
+    ok(source.state == State_Running, "Got state %u.\n", source.state);
+
+    sink.state_hr = sink.GetState_hr = source.GetState_hr = S_OK;
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     /* Destroying the graph while it's running stops all filters. */
 
