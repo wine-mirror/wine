@@ -4933,8 +4933,6 @@ static HRESULT WINAPI MediaFilter_GetState(IMediaFilter *iface, DWORD timeout, F
 
     EnterCriticalSection(&graph->cs);
 
-    sort_filters(graph);
-
     *state = graph->state;
 
     LIST_FOR_EACH_ENTRY(filter, &graph->filters, struct filter, entry)
