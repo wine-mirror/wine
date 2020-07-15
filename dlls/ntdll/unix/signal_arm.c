@@ -585,18 +585,14 @@ static void segv_handler( int signal, siginfo_t *info, void *ucontext )
     /* check for page fault inside the thread stack */
     if (get_trap_code(signal, context) == TRAP_ARM_PAGEFLT)
     {
-        switch (virtual_handle_stack_fault( info->si_addr ))
-        {
-        case 1:  /* handled */
-            return;
-        case -1:  /* overflow */
-            rec = setup_exception( context, raise_segv_exception );
-            rec->ExceptionCode = EXCEPTION_STACK_OVERFLOW;
-            return;
-        }
+        DWORD err = (get_error_code(context) & 0x800) != 0;
+        NTSTATUS status = virtual_handle_fault( info->si_addr, err, (void *)SP_sig(context) );
+        if (!status) return;
+        rec = setup_exception( context, raise_segv_exception );
+        rec->ExceptionCode = status;
     }
+    else rec = setup_exception( context, raise_segv_exception );
 
-    rec = setup_exception( context, raise_segv_exception );
     if (rec->ExceptionCode == EXCEPTION_STACK_OVERFLOW) return;
 
     switch(get_trap_code(signal, context))
@@ -609,9 +605,6 @@ static void segv_handler( int signal, siginfo_t *info, void *ucontext )
         rec->NumberParameters = 2;
         rec->ExceptionInformation[0] = (get_error_code(context) & 0x800) != 0;
         rec->ExceptionInformation[1] = (ULONG_PTR)info->si_addr;
-        if (!(rec->ExceptionCode = virtual_handle_fault( (void *)rec->ExceptionInformation[1],
-                                                         rec->ExceptionInformation[0], NULL )))
-            return;
         break;
     case TRAP_ARM_ALIGNFLT:  /* Alignment check exception */
         rec->ExceptionCode = EXCEPTION_DATATYPE_MISALIGNMENT;

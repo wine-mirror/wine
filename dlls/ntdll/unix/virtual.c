@@ -2884,9 +2884,14 @@ NTSTATUS virtual_handle_fault( void *addr, DWORD err, void *stack )
     vprot = get_page_vprot( page );
     if (!is_inside_signal_stack( stack ) && (vprot & VPROT_GUARD))
     {
-        set_page_vprot_bits( page, page_size, 0, VPROT_GUARD );
-        mprotect_range( page, page_size, 0, 0 );
-        ret = STATUS_GUARD_PAGE_VIOLATION;
+        if (page < (char *)NtCurrentTeb()->DeallocationStack ||
+            page >= (char *)NtCurrentTeb()->Tib.StackBase)
+        {
+            set_page_vprot_bits( page, page_size, 0, VPROT_GUARD );
+            mprotect_range( page, page_size, 0, 0 );
+            ret = STATUS_GUARD_PAGE_VIOLATION;
+        }
+        else ret = grow_thread_stack( page );
     }
     else if (err & EXCEPTION_WRITE_FAULT)
     {

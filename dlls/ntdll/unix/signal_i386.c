@@ -1665,29 +1665,16 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     void *stack_ptr = init_handler( sigcontext );
 
     /* check for exceptions on the signal stack caused by write watches */
-    if (TRAP_sig(context) == TRAP_x86_PAGEFLT &&
-        (char *)stack_ptr >= (char *)get_signal_stack() &&
-        (char *)stack_ptr < (char *)get_signal_stack() + signal_stack_size &&
-        !virtual_handle_fault( siginfo->si_addr, (ERROR_sig(context) >> 1) & 0x09, stack_ptr ))
-    {
-        return;
-    }
-
-    /* check for page fault inside the thread stack */
     if (TRAP_sig(context) == TRAP_x86_PAGEFLT)
     {
-        switch (virtual_handle_stack_fault( siginfo->si_addr ))
-        {
-        case 1:  /* handled */
-            return;
-        case -1:  /* overflow */
-            stack = setup_exception_record( context, stack_ptr );
-            stack->rec.ExceptionCode = EXCEPTION_STACK_OVERFLOW;
-            goto done;
-        }
+        DWORD err = (ERROR_sig(context) >> 1) & 0x09;
+        NTSTATUS status = virtual_handle_fault( siginfo->si_addr, err, stack_ptr );
+        if (!status) return;
+        stack = setup_exception_record( context, stack_ptr );
+        stack->rec.ExceptionCode = status;
     }
+    else stack = setup_exception_record( context, stack_ptr );
 
-    stack = setup_exception_record( context, stack_ptr );
     if (stack->rec.ExceptionCode == EXCEPTION_STACK_OVERFLOW) goto done;
 
     switch (TRAP_sig(context))
@@ -1727,9 +1714,6 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         stack->rec.NumberParameters = 2;
         stack->rec.ExceptionInformation[0] = (ERROR_sig(context) >> 1) & 0x09;
         stack->rec.ExceptionInformation[1] = (ULONG_PTR)siginfo->si_addr;
-        stack->rec.ExceptionCode = virtual_handle_fault( (void *)stack->rec.ExceptionInformation[1],
-                                                         stack->rec.ExceptionInformation[0], NULL );
-        if (!stack->rec.ExceptionCode) return;
         if (stack->rec.ExceptionCode == EXCEPTION_ACCESS_VIOLATION &&
             stack->rec.ExceptionInformation[0] == EXCEPTION_EXECUTE_FAULT)
         {

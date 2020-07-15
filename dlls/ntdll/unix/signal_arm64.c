@@ -619,18 +619,14 @@ static void segv_handler( int signal, siginfo_t *info, void *ucontext )
     /* check for page fault inside the thread stack */
     if (signal == SIGSEGV)
     {
-        switch (virtual_handle_stack_fault( info->si_addr ))
-        {
-        case 1:  /* handled */
-            return;
-        case -1:  /* overflow */
-            stack = setup_exception( context );
-            stack->rec.ExceptionCode = EXCEPTION_STACK_OVERFLOW;
-            goto done;
-        }
+        DWORD err = (get_fault_esr( context ) & 0x40) != 0;
+        NTSTATUS status = virtual_handle_fault( info->si_addr, err, (void *)SP_sig(context) );
+        if (!status) return;
+        stack = setup_exception( context );
+        stack->rec.ExceptionCode = status;
     }
+    else stack = setup_exception( context );
 
-    stack = setup_exception( context );
     if (stack->rec.ExceptionCode == EXCEPTION_STACK_OVERFLOW) goto done;
 
     switch(signal)
@@ -642,9 +638,6 @@ static void segv_handler( int signal, siginfo_t *info, void *ucontext )
         stack->rec.NumberParameters = 2;
         stack->rec.ExceptionInformation[0] = (get_fault_esr( context ) & 0x40) != 0;
         stack->rec.ExceptionInformation[1] = (ULONG_PTR)info->si_addr;
-        if (!(stack->rec.ExceptionCode = virtual_handle_fault( (void *)stack->rec.ExceptionInformation[1],
-                                                         stack->rec.ExceptionInformation[0], NULL )))
-            return;
         break;
     case SIGBUS:  /* Alignment check exception */
         stack->rec.ExceptionCode = EXCEPTION_DATATYPE_MISALIGNMENT;

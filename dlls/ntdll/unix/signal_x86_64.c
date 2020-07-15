@@ -2125,27 +2125,16 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     stack = (struct stack_layout *)(RSP_sig(ucontext) & ~15);
 
     /* check for exceptions on the signal stack caused by write watches */
-    if (TRAP_sig(ucontext) == TRAP_x86_PAGEFLT && is_inside_signal_stack( stack ) &&
-        !virtual_handle_fault( siginfo->si_addr, (ERROR_sig(ucontext) >> 1) & 0x09, stack ))
-    {
-        return;
-    }
-
-    /* check for page fault inside the thread stack */
     if (TRAP_sig(ucontext) == TRAP_x86_PAGEFLT)
     {
-        switch (virtual_handle_stack_fault( siginfo->si_addr ))
-        {
-        case 1:  /* handled */
-            return;
-        case -1:  /* overflow */
-            stack = setup_exception( sigcontext );
-            stack->rec.ExceptionCode = EXCEPTION_STACK_OVERFLOW;
-            goto done;
-        }
+        DWORD err = (ERROR_sig(ucontext) >> 1) & 0x09;
+        NTSTATUS status = virtual_handle_fault( siginfo->si_addr, err, stack );
+        if (!status) return;
+        stack = setup_exception( sigcontext );
+        stack->rec.ExceptionCode = status;
     }
+    else stack = setup_exception( sigcontext );
 
-    stack = setup_exception( sigcontext );
     if (stack->rec.ExceptionCode == EXCEPTION_STACK_OVERFLOW) goto done;
 
     switch(TRAP_sig(ucontext))
@@ -2178,9 +2167,6 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         stack->rec.NumberParameters = 2;
         stack->rec.ExceptionInformation[0] = (ERROR_sig(ucontext) >> 1) & 0x09;
         stack->rec.ExceptionInformation[1] = (ULONG_PTR)siginfo->si_addr;
-        if (!(stack->rec.ExceptionCode = virtual_handle_fault((void *)stack->rec.ExceptionInformation[1],
-                                                              stack->rec.ExceptionInformation[0], NULL )))
-            return;
         break;
     case TRAP_x86_ALIGNFLT:  /* Alignment check exception */
         stack->rec.ExceptionCode = EXCEPTION_DATATYPE_MISALIGNMENT;
