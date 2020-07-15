@@ -2956,11 +2956,11 @@ static void test_restoredc(void)
 static const emfplus_record drawdriverstring_records[] = {
     { EMR_HEADER },
     { EmfPlusRecordTypeHeader },
-    { EmfPlusRecordTypeObject, ObjectTypeFont << 8, 1, 0 },
-    { EmfPlusRecordTypeDrawDriverString, 0x8000, 1, 0 },
-    { EmfPlusRecordTypeObject, (ObjectTypeFont << 8) | 1, 1 },
-    { EmfPlusRecordTypeObject, (ObjectTypeBrush << 8) | 2, 1, 1 },
-    { EmfPlusRecordTypeDrawDriverString, 0x1, 1, 1 },
+    { EmfPlusRecordTypeObject, ObjectTypeFont << 8 },
+    { EmfPlusRecordTypeDrawDriverString, 0x8000 },
+    { EmfPlusRecordTypeObject, (ObjectTypeFont << 8) | 1 },
+    { EmfPlusRecordTypeObject, (ObjectTypeBrush << 8) | 2 },
+    { EmfPlusRecordTypeDrawDriverString, 0x1 },
     { EmfPlusRecordTypeEndOfFile },
     { EMR_EOF },
     { 0 }
@@ -3022,14 +3022,14 @@ static void test_drawdriverstring(void)
 
     stat = GdipDrawDriverString(graphics, L"Test", 4, solidfont, solidbrush, solidpos,
         DriverStringOptionsCmapLookup, matrix);
-    todo_wine expect(Ok, stat);
+    expect(Ok, stat);
 
     stat = GdipSetMatrixElements(matrix, 1.5, 0.0, 0.0, 1.5, 0.0, 0.0);
     expect(Ok, stat);
 
     stat = GdipDrawDriverString(graphics, L"Test ", 5, hatchfont, hatchbrush, &hatchpos,
         DriverStringOptionsCmapLookup|DriverStringOptionsRealizedAdvance, matrix);
-    todo_wine expect(Ok, stat);
+    expect(Ok, stat);
 
     stat = GdipDeleteGraphics(graphics);
     graphics = NULL;

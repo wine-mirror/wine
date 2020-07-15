@@ -7427,6 +7427,10 @@ static GpStatus draw_driver_string(GpGraphics *graphics, GDIPCONST UINT16 *text,
     if (length == -1)
         length = lstrlenW(text);
 
+    if (graphics->image && graphics->image->type == ImageTypeMetafile)
+        return METAFILE_DrawDriverString((GpMetafile*)graphics->image, text, length, font,
+            format, brush, positions, flags, matrix);
+
     if (graphics->hdc && !graphics->alpha_hdc &&
         brush->bt == BrushTypeSolidColor &&
         (((GpSolidFill*)brush)->color & 0xff000000) == 0xff000000)

@@ -104,6 +104,9 @@ extern GpStatus METAFILE_DrawImagePointsRect(GpMetafile* metafile, GpImage *imag
 extern GpStatus METAFILE_AddSimpleProperty(GpMetafile *metafile, SHORT prop, SHORT val) DECLSPEC_HIDDEN;
 extern GpStatus METAFILE_DrawPath(GpMetafile *metafile, GpPen *pen, GpPath *path) DECLSPEC_HIDDEN;
 extern GpStatus METAFILE_FillPath(GpMetafile *metafile, GpBrush *brush, GpPath *path) DECLSPEC_HIDDEN;
+extern GpStatus METAFILE_DrawDriverString(GpMetafile *metafile, GDIPCONST UINT16 *text, INT length,
+    GDIPCONST GpFont *font, GDIPCONST GpStringFormat *format, GDIPCONST GpBrush *brush,
+    GDIPCONST PointF *positions, INT flags, GDIPCONST GpMatrix *matrix) DECLSPEC_HIDDEN;
 extern void METAFILE_Free(GpMetafile *metafile) DECLSPEC_HIDDEN;
 
 extern void calc_curve_bezier(const GpPointF *pts, REAL tension, REAL *x1,
