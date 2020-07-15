@@ -1945,19 +1945,19 @@ INT CDECL MSVCRT_iswalnum( MSVCRT_wchar_t wc )
 }
 
 /*********************************************************************
- *		iswalpha (MSVCRT.@)
- */
-INT CDECL MSVCRT_iswalpha( MSVCRT_wchar_t wc )
-{
-    return isalphaW( wc );
-}
-
-/*********************************************************************
  *              iswalpha_l (MSVCRT.@)
  */
 INT CDECL MSVCRT__iswalpha_l( MSVCRT_wchar_t wc, MSVCRT__locale_t locale )
 {
-    return isalphaW( wc );
+    return MSVCRT__iswctype_l( wc, MSVCRT__ALPHA, locale );
+}
+
+/*********************************************************************
+ *		iswalpha (MSVCRT.@)
+ */
+INT CDECL MSVCRT_iswalpha( MSVCRT_wchar_t wc )
+{
+    return MSVCRT__iswalpha_l( wc, NULL );
 }
 
 /*********************************************************************
