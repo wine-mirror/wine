@@ -1935,16 +1935,40 @@ static ULONG WINAPI topology_loader_Release(IMFTopoLoader *iface)
 
 struct topoloader_context
 {
+    IMFTopology *input_topology;
     IMFTopology *output_topology;
+    unsigned int marker;
     GUID key;
 };
 
+static IMFTopologyNode *topology_loader_get_node_for_marker(struct topoloader_context *context, TOPOID *id)
+{
+    IMFTopologyNode *node;
+    unsigned short i = 0;
+    unsigned int value;
+
+    while (SUCCEEDED(IMFTopology_GetNode(context->output_topology, i++, &node)))
+    {
+        if (SUCCEEDED(IMFTopologyNode_GetUINT32(node, &context->key, &value)) && value == context->marker)
+        {
+            IMFTopologyNode_GetTopoNodeID(node, id);
+            return node;
+        }
+        IMFTopologyNode_Release(node);
+    }
+
+    *id = 0;
+    return NULL;
+}
+
 static HRESULT topology_loader_clone_node(struct topoloader_context *context, IMFTopologyNode *node,
-        unsigned int marker)
+        IMFTopologyNode **ret, unsigned int marker)
 {
     IMFTopologyNode *cloned_node;
     MF_TOPOLOGY_TYPE node_type;
     HRESULT hr;
+
+    if (ret) *ret = NULL;
 
     IMFTopologyNode_GetNodeType(node, &node_type);
 
@@ -1957,7 +1981,102 @@ static HRESULT topology_loader_clone_node(struct topoloader_context *context, IM
     if (SUCCEEDED(hr))
         hr = IMFTopology_AddNode(context->output_topology, cloned_node);
 
+    if (SUCCEEDED(hr) && ret)
+    {
+        *ret = cloned_node;
+        IMFTopologyNode_AddRef(*ret);
+    }
+
     IMFTopologyNode_Release(cloned_node);
+
+    return hr;
+}
+
+typedef HRESULT (*p_topology_loader_connect_func)(struct topoloader_context *context, IMFTopologyNode *upstream_node,
+        unsigned int output_index, IMFTopologyNode *downstream_node, unsigned int input_index);
+
+static HRESULT topology_loader_connect_source_node(struct topoloader_context *context, IMFTopologyNode *upstream_node,
+        unsigned int output_index, IMFTopologyNode *downstream_node, unsigned int input_index)
+{
+    FIXME("Unimplemented.\n");
+
+    return E_NOTIMPL;
+}
+
+static HRESULT topology_loader_resolve_branch(struct topoloader_context *context, IMFTopologyNode *upstream_node,
+        unsigned int output_index, IMFTopologyNode *downstream_node, unsigned input_index)
+{
+    static const p_topology_loader_connect_func connectors[MF_TOPOLOGY_TEE_NODE+1][MF_TOPOLOGY_TEE_NODE+1] =
+    {
+          /* OUTPUT */ { NULL },
+    /* SOURCESTREAM */ { topology_loader_connect_source_node, NULL, NULL, NULL },
+       /* TRANSFORM */ { NULL },
+             /* TEE */ { NULL },
+    };
+    MF_TOPOLOGY_TYPE u_type, d_type;
+    IMFTopologyNode *node;
+    TOPOID id;
+
+    /* Downstream node might have already been cloned. */
+    IMFTopologyNode_GetTopoNodeID(downstream_node, &id);
+    if (FAILED(IMFTopology_GetNodeByID(context->output_topology, id, &node)))
+        topology_loader_clone_node(context, downstream_node, &node, context->marker + 1);
+
+    IMFTopologyNode_ConnectOutput(upstream_node, output_index, node, input_index);
+
+    IMFTopologyNode_GetNodeType(upstream_node, &u_type);
+    IMFTopologyNode_GetNodeType(downstream_node, &d_type);
+
+    if (!connectors[u_type][d_type])
+    {
+        WARN("Unsupported branch kind %d -> %d.\n", u_type, d_type);
+        return E_FAIL;
+    }
+
+    return connectors[u_type][d_type](context, upstream_node, output_index, downstream_node, input_index);
+}
+
+static HRESULT topology_loader_resolve_nodes(struct topoloader_context *context, unsigned int *layer_size)
+{
+    IMFTopologyNode *downstream_node, *node, *orig_node;
+    unsigned int input_index, size = 0;
+    MF_TOPOLOGY_TYPE node_type;
+    HRESULT hr = S_OK;
+    TOPOID id;
+
+    while ((node = topology_loader_get_node_for_marker(context, &id)))
+    {
+        ++size;
+
+        IMFTopology_GetNodeByID(context->input_topology, id, &orig_node);
+
+        IMFTopologyNode_GetNodeType(node, &node_type);
+        switch (node_type)
+        {
+            case MF_TOPOLOGY_SOURCESTREAM_NODE:
+                if (FAILED(IMFTopologyNode_GetOutput(orig_node, 0, &downstream_node, &input_index)))
+                {
+                    IMFTopology_RemoveNode(context->output_topology, node);
+                    continue;
+                }
+
+                hr = topology_loader_resolve_branch(context, node, 0, downstream_node, input_index);
+                break;
+            case MF_TOPOLOGY_TRANSFORM_NODE:
+            case MF_TOPOLOGY_TEE_NODE:
+                FIXME("Unsupported node type %d.\n", node_type);
+                break;
+            default:
+                WARN("Unexpected node type %d.\n", node_type);
+        }
+
+        IMFTopologyNode_DeleteItem(node, &context->key);
+
+        if (FAILED(hr))
+            break;
+    }
+
+    *layer_size = size;
 
     return hr;
 }
@@ -1968,6 +2087,7 @@ static HRESULT WINAPI topology_loader_Load(IMFTopoLoader *iface, IMFTopology *in
     struct topoloader_context context = { 0 };
     IMFTopology *output_topology;
     MF_TOPOLOGY_TYPE node_type;
+    unsigned int layer_size;
     IMFTopologyNode *node;
     unsigned short i = 0;
     IMFStreamSink *sink;
@@ -2016,6 +2136,7 @@ static HRESULT WINAPI topology_loader_Load(IMFTopoLoader *iface, IMFTopology *in
     if (FAILED(hr = MFCreateTopology(&output_topology)))
         return hr;
 
+    context.input_topology = input_topology;
     context.output_topology = output_topology;
     memset(&context.key, 0xff, sizeof(context.key));
 
@@ -2027,11 +2148,24 @@ static HRESULT WINAPI topology_loader_Load(IMFTopoLoader *iface, IMFTopology *in
 
         if (node_type == MF_TOPOLOGY_SOURCESTREAM_NODE)
         {
-            if (FAILED(hr = topology_loader_clone_node(&context, node, 0)))
+            if (FAILED(hr = topology_loader_clone_node(&context, node, NULL, 0)))
                 WARN("Failed to clone source node, hr %#x.\n", hr);
         }
 
         IMFTopologyNode_Release(node);
+    }
+
+    for (context.marker = 0;; ++context.marker)
+    {
+        if (FAILED(hr = topology_loader_resolve_nodes(&context, &layer_size)))
+        {
+            WARN("Failed to resolve for marker %u, hr %#x.\n", context.marker, hr);
+            break;
+        }
+
+        /* Reached last marker value. */
+        if (!layer_size)
+            break;
     }
 
     /* For now return original topology. */
