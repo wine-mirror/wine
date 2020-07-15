@@ -1913,6 +1913,22 @@ MSVCRT_size_t CDECL MSVCRT_wcrtomb( char *dst, MSVCRT_wchar_t ch, MSVCRT_mbstate
 }
 
 /*********************************************************************
+ *		_iswctype_l (MSVCRT.@)
+ */
+INT CDECL MSVCRT__iswctype_l( MSVCRT_wchar_t wc, MSVCRT_wctype_t type, MSVCRT__locale_t locale )
+{
+    return (get_char_typeW(wc) & 0xffff) & type;
+}
+
+/*********************************************************************
+ *		iswctype    (MSVCRT.@)
+ */
+INT CDECL MSVCRT_iswctype( MSVCRT_wchar_t wc, MSVCRT_wctype_t type )
+{
+    return (get_char_typeW(wc) & 0xfff) & type;
+}
+
+/*********************************************************************
  *		iswalnum (MSVCRT.@)
  */
 INT CDECL MSVCRT_iswalnum( MSVCRT_wchar_t wc )
@@ -2045,7 +2061,7 @@ INT CDECL MSVCRT_iswpunct( MSVCRT_wchar_t wc )
  */
 INT CDECL MSVCRT__iswspace_l( MSVCRT_wchar_t wc, MSVCRT__locale_t locale )
 {
-    return isspaceW( wc );
+    return MSVCRT__iswctype_l( wc, MSVCRT__SPACE, locale );
 }
 
 /*********************************************************************
@@ -2053,7 +2069,7 @@ INT CDECL MSVCRT__iswspace_l( MSVCRT_wchar_t wc, MSVCRT__locale_t locale )
  */
 INT CDECL MSVCRT_iswspace( MSVCRT_wchar_t wc )
 {
-    return isspaceW( wc );
+    return MSVCRT__iswspace_l( wc, NULL );
 }
 
 /*********************************************************************
@@ -2086,22 +2102,6 @@ INT CDECL MSVCRT_iswxdigit( MSVCRT_wchar_t wc )
 int CDECL MSVCRT__iswxdigit_l( MSVCRT_wchar_t wc, MSVCRT__locale_t locale )
 {
     return isxdigitW( wc );
-}
-
-/*********************************************************************
- *		_iswctype_l (MSVCRT.@)
- */
-INT CDECL MSVCRT__iswctype_l( MSVCRT_wchar_t wc, MSVCRT_wctype_t type, MSVCRT__locale_t locale )
-{
-    return (get_char_typeW(wc) & 0xffff) & type;
-}
-
-/*********************************************************************
- *		iswctype    (MSVCRT.@)
- */
-INT CDECL MSVCRT_iswctype( MSVCRT_wchar_t wc, MSVCRT_wctype_t type )
-{
-    return (get_char_typeW(wc) & 0xfff) & type;
 }
 
 /*********************************************************************
