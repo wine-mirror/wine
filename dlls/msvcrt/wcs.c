@@ -2046,7 +2046,7 @@ INT CDECL MSVCRT_iswprint( MSVCRT_wchar_t wc )
  */
 INT CDECL MSVCRT__iswpunct_l( MSVCRT_wchar_t wc, MSVCRT__locale_t locale )
 {
-    return ispunctW( wc );
+    return MSVCRT__iswctype_l( wc, MSVCRT__PUNCT, locale );
 }
 
 /*********************************************************************
@@ -2054,7 +2054,7 @@ INT CDECL MSVCRT__iswpunct_l( MSVCRT_wchar_t wc, MSVCRT__locale_t locale )
  */
 INT CDECL MSVCRT_iswpunct( MSVCRT_wchar_t wc )
 {
-    return ispunctW( wc );
+    return MSVCRT__iswpunct_l( wc, NULL );
 }
 
 /*********************************************************************
