@@ -1933,9 +1933,40 @@ static ULONG WINAPI topology_loader_Release(IMFTopoLoader *iface)
     return refcount;
 }
 
-static HRESULT WINAPI topology_loader_Load(IMFTopoLoader *iface, IMFTopology *input_topology,
-        IMFTopology **output_topology, IMFTopology *current_topology)
+struct topoloader_context
 {
+    IMFTopology *output_topology;
+    GUID key;
+};
+
+static HRESULT topology_loader_clone_node(struct topoloader_context *context, IMFTopologyNode *node,
+        unsigned int marker)
+{
+    IMFTopologyNode *cloned_node;
+    MF_TOPOLOGY_TYPE node_type;
+    HRESULT hr;
+
+    IMFTopologyNode_GetNodeType(node, &node_type);
+
+    if (FAILED(hr = MFCreateTopologyNode(node_type, &cloned_node)))
+        return hr;
+
+    if (SUCCEEDED(hr = IMFTopologyNode_CloneFrom(cloned_node, node)))
+        hr = IMFTopologyNode_SetUINT32(cloned_node, &context->key, marker);
+
+    if (SUCCEEDED(hr))
+        hr = IMFTopology_AddNode(context->output_topology, cloned_node);
+
+    IMFTopologyNode_Release(cloned_node);
+
+    return hr;
+}
+
+static HRESULT WINAPI topology_loader_Load(IMFTopoLoader *iface, IMFTopology *input_topology,
+        IMFTopology **ret_topology, IMFTopology *current_topology)
+{
+    struct topoloader_context context = { 0 };
+    IMFTopology *output_topology;
     MF_TOPOLOGY_TYPE node_type;
     IMFTopologyNode *node;
     unsigned short i = 0;
@@ -1943,7 +1974,7 @@ static HRESULT WINAPI topology_loader_Load(IMFTopoLoader *iface, IMFTopology *in
     IUnknown *object;
     HRESULT hr = E_FAIL;
 
-    FIXME("%p, %p, %p, %p.\n", iface, input_topology, output_topology, current_topology);
+    FIXME("%p, %p, %p, %p.\n", iface, input_topology, ret_topology, current_topology);
 
     if (current_topology)
         FIXME("Current topology instance is ignored.\n");
@@ -1982,10 +2013,32 @@ static HRESULT WINAPI topology_loader_Load(IMFTopoLoader *iface, IMFTopology *in
             return hr;
     }
 
-    if (FAILED(hr = MFCreateTopology(output_topology)))
+    if (FAILED(hr = MFCreateTopology(&output_topology)))
         return hr;
 
-    return IMFTopology_CloneFrom(*output_topology, input_topology);
+    context.output_topology = output_topology;
+    memset(&context.key, 0xff, sizeof(context.key));
+
+    /* Clone source nodes, use initial marker value. */
+    i = 0;
+    while (SUCCEEDED(IMFTopology_GetNode(input_topology, i++, &node)))
+    {
+        IMFTopologyNode_GetNodeType(node, &node_type);
+
+        if (node_type == MF_TOPOLOGY_SOURCESTREAM_NODE)
+        {
+            if (FAILED(hr = topology_loader_clone_node(&context, node, 0)))
+                WARN("Failed to clone source node, hr %#x.\n", hr);
+        }
+
+        IMFTopologyNode_Release(node);
+    }
+
+    /* For now return original topology. */
+
+    *ret_topology = output_topology;
+
+    return IMFTopology_CloneFrom(output_topology, input_topology);
 }
 
 static const IMFTopoLoaderVtbl topologyloadervtbl =
