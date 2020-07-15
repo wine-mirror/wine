@@ -2074,19 +2074,19 @@ INT CDECL MSVCRT_iswspace( MSVCRT_wchar_t wc )
 }
 
 /*********************************************************************
- *		iswupper (MSVCRT.@)
- */
-INT CDECL MSVCRT_iswupper( MSVCRT_wchar_t wc )
-{
-    return isupperW( wc );
-}
-
-/*********************************************************************
  *		_iswupper_l (MSVCRT.@)
  */
 int CDECL MSVCRT__iswupper_l( MSVCRT_wchar_t wc, MSVCRT__locale_t locale )
 {
-    return isupperW( wc );
+    return MSVCRT__iswctype_l( wc, MSVCRT__UPPER, locale );
+}
+
+/*********************************************************************
+ *		iswupper (MSVCRT.@)
+ */
+INT CDECL MSVCRT_iswupper( MSVCRT_wchar_t wc )
+{
+    return MSVCRT__iswupper_l( wc, NULL );
 }
 
 /*********************************************************************
