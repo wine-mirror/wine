@@ -1172,7 +1172,7 @@ static void test_eos(IPin *pin, IMemInputPin *input, IFilterGraph2 *graph)
      * done rendering. */
 
     hr = IMediaControl_Run(control);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     hr = join_thread(send_frame(input));
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IMediaControl_GetState(control, 1000, &state);
@@ -1195,7 +1195,7 @@ static void test_eos(IPin *pin, IMemInputPin *input, IFilterGraph2 *graph)
     /* Test sending EOS while flushing. */
 
     hr = IMediaControl_Run(control);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     hr = join_thread(send_frame(input));
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
@@ -1214,7 +1214,7 @@ static void test_eos(IPin *pin, IMemInputPin *input, IFilterGraph2 *graph)
     /* Test sending EOS and then flushing or stopping. */
 
     hr = IMediaControl_Run(control);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     hr = join_thread(send_frame(input));
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IMediaControl_GetState(control, 1000, &state);

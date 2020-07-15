@@ -3497,8 +3497,8 @@ todo_wine
     hr = IMediaControl_GetState(control, 0, &state);
     ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#x.\n", hr);
     ok(state == State_Running, "Got state %u.\n", state);
-    todo_wine ok(sink.state == State_Paused, "Got state %u.\n", sink.state);
-    todo_wine ok(source.state == State_Paused, "Got state %u.\n", source.state);
+    ok(sink.state == State_Paused, "Got state %u.\n", sink.state);
+    ok(source.state == State_Paused, "Got state %u.\n", source.state);
 
     hr = IMediaControl_Run(control);
     todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
@@ -3506,16 +3506,16 @@ todo_wine
     hr = IMediaControl_GetState(control, 0, &state);
     ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#x.\n", hr);
     ok(state == State_Running, "Got state %u.\n", state);
-    todo_wine ok(sink.state == State_Paused, "Got state %u.\n", sink.state);
-    todo_wine ok(source.state == State_Paused, "Got state %u.\n", source.state);
+    ok(sink.state == State_Paused, "Got state %u.\n", sink.state);
+    ok(source.state == State_Paused, "Got state %u.\n", source.state);
 
     sink.state_hr = sink.GetState_hr = S_OK;
 
     while ((hr = IMediaControl_GetState(control, INFINITE, &state)) == VFW_S_STATE_INTERMEDIATE)
     {
         ok(state == State_Running, "Got state %u.\n", state);
-        todo_wine ok(sink.state == State_Paused, "Got state %u.\n", sink.state);
-        todo_wine ok(source.state == State_Paused, "Got state %u.\n", source.state);
+        ok(sink.state == State_Paused, "Got state %u.\n", sink.state);
+        ok(source.state == State_Paused, "Got state %u.\n", source.state);
         Sleep(10);
     }
     ok(hr == S_OK, "Got hr %#x.\n", hr);
