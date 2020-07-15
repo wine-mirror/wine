@@ -156,7 +156,6 @@ struct _KUSER_SHARED_DATA *user_shared_data = (void *)0x7ffe0000;
 
 SIZE_T signal_stack_size = 0;
 SIZE_T signal_stack_mask = 0;
-static SIZE_T signal_stack_align;
 
 /* TEB allocation blocks */
 static TEB *teb_block;
@@ -2355,7 +2354,7 @@ void virtual_init(void)
     const struct preload_info **preload_info = dlsym( RTLD_DEFAULT, "wine_main_preload_info" );
     const char *preload = getenv( "WINEPRELOADRESERVE" );
     struct alloc_virtual_heap alloc_views;
-    size_t size;
+    size_t size, align;
     int i;
     pthread_mutexattr_t attr;
 
@@ -2383,12 +2382,12 @@ void virtual_init(void)
         }
     }
 
-    size = ROUND_SIZE( 0, sizeof(TEB) ) + max( MINSIGSTKSZ, 8192 );
+    size = teb_size + max( MINSIGSTKSZ, 8192 );
     /* find the first power of two not smaller than size */
-    signal_stack_align = page_shift;
-    while ((1u << signal_stack_align) < size) signal_stack_align++;
-    signal_stack_mask = (1 << signal_stack_align) - 1;
-    signal_stack_size = (1 << signal_stack_align) - ROUND_SIZE( 0, sizeof(TEB) );
+    align = page_shift;
+    while ((1u << align) < size) align++;
+    signal_stack_mask = (1 << align) - 1;
+    signal_stack_size = (1 << align) - teb_size;
 
     /* try to find space in a reserved area for the views and pages protection table */
 #ifdef _WIN64
@@ -2584,8 +2583,8 @@ TEB *virtual_alloc_first_teb(void)
     NTSTATUS status;
     SIZE_T data_size = page_size;
     SIZE_T peb_size = page_size;
-    SIZE_T teb_size = signal_stack_mask + 1;
-    SIZE_T total = 32 * teb_size;
+    SIZE_T block_size = signal_stack_size + teb_size;
+    SIZE_T total = 32 * block_size;
 
     /* reserve space for shared user data */
     status = NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&user_shared_data, 0, &data_size,
@@ -2599,9 +2598,9 @@ TEB *virtual_alloc_first_teb(void)
     NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&teb_block, 0, &total,
                              MEM_RESERVE | MEM_TOP_DOWN, PAGE_READWRITE );
     teb_block_pos = 30;
-    teb = (TEB *)((char *)teb_block + 30 * teb_size);
-    peb = (PEB *)((char *)teb_block + 32 * teb_size - peb_size);
-    NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&teb, 0, &teb_size, MEM_COMMIT, PAGE_READWRITE );
+    teb = (TEB *)((char *)teb_block + 30 * block_size);
+    peb = (PEB *)((char *)teb_block + 32 * block_size - peb_size);
+    NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&teb, 0, &block_size, MEM_COMMIT, PAGE_READWRITE );
     NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&peb, 0, &peb_size, MEM_COMMIT, PAGE_READWRITE );
     init_teb( teb, peb );
     *(ULONG_PTR *)peb->Reserved = get_image_address();

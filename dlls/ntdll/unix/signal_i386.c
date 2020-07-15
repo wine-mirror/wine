@@ -436,7 +436,6 @@ struct stack_layout
     DWORD             eip;
 };
 
-static const size_t teb_size = 4096;  /* we reserve one page for the TEB */
 static ULONG first_ldt_entry = 32;
 
 enum i386_trap_code
@@ -539,17 +538,6 @@ static inline int is_gdt_sel( WORD sel )
 static inline int ldt_is_system( WORD sel )
 {
     return is_gdt_sel( sel ) || ((sel >> 3) < first_ldt_entry);
-}
-
-
-/***********************************************************************
- *           get_signal_stack
- *
- * Get the base of the signal stack for the current thread.
- */
-static inline void *get_signal_stack(void)
-{
-    return (char *)NtCurrentTeb() + 4096;
 }
 
 
@@ -2205,12 +2193,6 @@ void signal_init_thread( TEB *teb )
 {
     const WORD fpu_cw = 0x27f;
     struct x86_thread_data *thread_data = (struct x86_thread_data *)teb->SystemReserved2;
-    stack_t ss;
-
-    ss.ss_sp    = (char *)teb + teb_size;
-    ss.ss_size  = signal_stack_size;
-    ss.ss_flags = 0;
-    if (sigaltstack(&ss, NULL) == -1) perror( "sigaltstack" );
 
     ldt_set_fs( thread_data->fs, teb );
     thread_data->gs = get_gs();

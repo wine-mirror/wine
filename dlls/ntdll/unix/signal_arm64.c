@@ -114,8 +114,6 @@ static DWORD64 get_fault_esr( ucontext_t *sigcontext )
 
 static pthread_key_t teb_key;
 
-static const size_t teb_size = 0x2000;  /* we reserve two pages for the TEB */
-
 typedef void (*raise_func)( EXCEPTION_RECORD *rec, CONTEXT *context );
 
 /* stack layout when calling an exception raise function */
@@ -863,13 +861,6 @@ void signal_free_thread( TEB *teb )
  */
 void signal_init_thread( TEB *teb )
 {
-    stack_t ss;
-
-    ss.ss_sp    = (char *)teb + teb_size;
-    ss.ss_size  = signal_stack_size;
-    ss.ss_flags = 0;
-    if (sigaltstack( &ss, NULL ) == -1) perror( "sigaltstack" );
-
     /* Win64/ARM applications expect the TEB pointer to be in the x18 platform register. */
     __asm__ __volatile__( "mov x18, %0" : : "r" (teb) );
 

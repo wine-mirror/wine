@@ -225,8 +225,6 @@ enum i386_trap_code
     TRAP_x86_CACHEFLT   = 19   /* Cache flush exception */
 };
 
-static const size_t teb_size = 0x2000;  /* we reserve two pages for the TEB */
-
 typedef void (*raise_func)( EXCEPTION_RECORD *rec, CONTEXT *context );
 
 /* stack layout when calling an exception raise function */
@@ -1380,17 +1378,6 @@ static inline void set_sigcontext( const CONTEXT *context, ucontext_t *sigcontex
 
 
 /***********************************************************************
- *           get_signal_stack
- *
- * Get the base of the signal stack for the current thread.
- */
-static inline void *get_signal_stack(void)
-{
-    return (char *)NtCurrentTeb() + teb_size;
-}
-
-
-/***********************************************************************
  *           is_inside_signal_stack
  *
  * Check if pointer is inside the signal stack.
@@ -2451,7 +2438,6 @@ static void *mac_thread_gsbase(void)
 void signal_init_thread( TEB *teb )
 {
     const WORD fpu_cw = 0x27f;
-    stack_t ss;
 
 #if defined __linux__
     arch_prctl( ARCH_SET_GS, teb );
@@ -2474,11 +2460,6 @@ void signal_init_thread( TEB *teb )
 #else
 # error Please define setting %gs for your architecture
 #endif
-
-    ss.ss_sp    = (char *)teb + teb_size;
-    ss.ss_size  = signal_stack_size;
-    ss.ss_flags = 0;
-    if (sigaltstack(&ss, NULL) == -1) perror( "sigaltstack" );
 
 #ifdef __GNUC__
     __asm__ volatile ("fninit; fldcw %0" : : "m" (fpu_cw));

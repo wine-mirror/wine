@@ -1508,14 +1508,19 @@ size_t server_init_thread( void *entry_point, BOOL *suspend )
     int ret;
     int reply_pipe[2];
     struct sigaction sig_act;
+    stack_t ss;
     size_t info_size;
 
+    /* ignore SIGPIPE so that we get an EPIPE error instead  */
     sig_act.sa_handler = SIG_IGN;
     sig_act.sa_flags   = 0;
     sigemptyset( &sig_act.sa_mask );
-
-    /* ignore SIGPIPE so that we get an EPIPE error instead  */
     sigaction( SIGPIPE, &sig_act, NULL );
+
+    ss.ss_sp    = get_signal_stack();
+    ss.ss_size  = signal_stack_size;
+    ss.ss_flags = 0;
+    sigaltstack( &ss, NULL );
 
     /* create the server->client communication pipes */
     if (server_pipe( reply_pipe ) == -1) server_protocol_perror( "pipe" );

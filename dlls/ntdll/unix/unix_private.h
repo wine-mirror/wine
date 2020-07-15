@@ -145,6 +145,7 @@ extern timeout_t server_start_time DECLSPEC_HIDDEN;
 extern sigset_t server_block_set DECLSPEC_HIDDEN;
 extern SIZE_T signal_stack_size DECLSPEC_HIDDEN;
 extern SIZE_T signal_stack_mask DECLSPEC_HIDDEN;
+static const SIZE_T teb_size = 0x1000 * sizeof(void *) / 4;
 extern struct _KUSER_SHARED_DATA *user_shared_data DECLSPEC_HIDDEN;
 #ifdef __i386__
 extern struct ldt_copy __wine_ldt_copy DECLSPEC_HIDDEN;
@@ -268,6 +269,11 @@ static inline IMAGE_NT_HEADERS *get_exe_nt_header(void)
 {
     IMAGE_DOS_HEADER *module = (IMAGE_DOS_HEADER *)NtCurrentTeb()->Peb->ImageBaseAddress;
     return (IMAGE_NT_HEADERS *)((char *)module + module->e_lfanew);
+}
+
+static inline void *get_signal_stack(void)
+{
+    return (char *)NtCurrentTeb() + teb_size;
 }
 
 static inline size_t ntdll_wcslen( const WCHAR *str )
