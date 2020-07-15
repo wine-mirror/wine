@@ -172,8 +172,6 @@ enum arm_trap_code
     TRAP_ARM_ALIGNFLT   = 17,  /* Alignment check exception */
 };
 
-typedef void (WINAPI *raise_func)( EXCEPTION_RECORD *rec, CONTEXT *context );
-
 
 /***********************************************************************
  *           unwind_builtin_dll
@@ -507,29 +505,29 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
 }
 
 
-extern void raise_func_trampoline_thumb( EXCEPTION_RECORD *rec, CONTEXT *context, raise_func func );
+extern void raise_func_trampoline_thumb( EXCEPTION_RECORD *rec, CONTEXT *context, void *func );
 __ASM_GLOBAL_FUNC( raise_func_trampoline_thumb,
                    ".thumb\n\t"
-                   "blx r2\n\t"
+                   "bx r2\n\t"
                    "bkpt")
 
-extern void raise_func_trampoline_arm( EXCEPTION_RECORD *rec, CONTEXT *context, raise_func func );
+extern void raise_func_trampoline_arm( EXCEPTION_RECORD *rec, CONTEXT *context, void *func );
 __ASM_GLOBAL_FUNC( raise_func_trampoline_arm,
                    ".arm\n\t"
-                   "blx r2\n\t"
+                   "bx r2\n\t"
                    "bkpt")
 
 /***********************************************************************
- *           setup_exception_record
+ *           setup_exception
  *
- * Setup the exception record and context on the thread stack.
+ * Modify the signal context to call the exception raise function.
  */
-static EXCEPTION_RECORD *setup_exception( ucontext_t *sigcontext, raise_func func, EXCEPTION_RECORD *rec )
+static void setup_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec )
 {
-    struct stack_layout
+    struct
     {
-        CONTEXT           context;
-        EXCEPTION_RECORD  rec;
+        CONTEXT          context;
+        EXCEPTION_RECORD rec;
     } *stack;
     void *stack_ptr = (void *)(SP_sig(sigcontext) & ~3);
 
@@ -544,25 +542,15 @@ static EXCEPTION_RECORD *setup_exception( ucontext_t *sigcontext, raise_func fun
         PC_sig(sigcontext) = (DWORD)raise_func_trampoline_thumb;
     else
         PC_sig(sigcontext) = (DWORD)raise_func_trampoline_arm;
-    REGn_sig(0, sigcontext) = (DWORD)&stack->rec;  /* first arg for raise_func */
-    REGn_sig(1, sigcontext) = (DWORD)&stack->context; /* second arg for raise_func */
-    REGn_sig(2, sigcontext) = (DWORD)func; /* the raise_func as third arg for the trampoline */
-    return &stack->rec;
+    REGn_sig(0, sigcontext) = (DWORD)&stack->rec;  /* first arg for KiUserExceptionDispatcher */
+    REGn_sig(1, sigcontext) = (DWORD)&stack->context; /* second arg for KiUserExceptionDispatcher */
+    REGn_sig(2, sigcontext) = (DWORD)pKiUserExceptionDispatcher;
 }
 
-extern void WINAPI call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context,
-                                                   NTSTATUS (WINAPI *dispatcher)(EXCEPTION_RECORD*,CONTEXT*) )
+void WINAPI call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context,
+                                            NTSTATUS (WINAPI *dispatcher)(EXCEPTION_RECORD*,CONTEXT*) )
 {
     dispatcher( rec, context );
-}
-
-/**********************************************************************
- *		raise_segv_exception
- */
-static void WINAPI raise_segv_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
-{
-    NTSTATUS status = NtRaiseException( rec, context, TRUE );
-    if (status) RtlRaiseStatus( status );
 }
 
 
@@ -571,12 +559,12 @@ static void WINAPI raise_segv_exception( EXCEPTION_RECORD *rec, CONTEXT *context
  *
  * Handler for SIGSEGV and related errors.
  */
-static void segv_handler( int signal, siginfo_t *info, void *ucontext )
+static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
     EXCEPTION_RECORD rec = { 0 };
-    ucontext_t *context = ucontext;
+    ucontext_t *context = sigcontext;
 
-    switch(get_trap_code(signal, context))
+    switch (get_trap_code(signal, context))
     {
     case TRAP_ARM_PRIVINFLT:   /* Invalid opcode exception */
         rec.ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
@@ -584,8 +572,8 @@ static void segv_handler( int signal, siginfo_t *info, void *ucontext )
     case TRAP_ARM_PAGEFLT:  /* Page fault */
         rec.NumberParameters = 2;
         rec.ExceptionInformation[0] = (get_error_code(context) & 0x800) != 0;
-        rec.ExceptionInformation[1] = (ULONG_PTR)info->si_addr;
-        rec.ExceptionCode = virtual_handle_fault( info->si_addr, rec.ExceptionInformation[0],
+        rec.ExceptionInformation[1] = (ULONG_PTR)siginfo->si_addr;
+        rec.ExceptionCode = virtual_handle_fault( siginfo->si_addr, rec.ExceptionInformation[0],
                                                   (void *)SP_sig(context) );
         if (!rec.ExceptionCode) return;
         break;
@@ -603,7 +591,7 @@ static void segv_handler( int signal, siginfo_t *info, void *ucontext )
         rec.ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
         break;
     }
-    setup_exception( context, raise_segv_exception, &rec );
+    setup_exception( context, &rec );
 }
 
 
@@ -612,13 +600,11 @@ static void segv_handler( int signal, siginfo_t *info, void *ucontext )
  *
  * Handler for SIGTRAP.
  */
-static void trap_handler( int signal, siginfo_t *info, void *ucontext )
+static void trap_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
-    EXCEPTION_RECORD rec;
-    CONTEXT context;
-    NTSTATUS status;
+    EXCEPTION_RECORD rec = { 0 };
 
-    switch ( info->si_code )
+    switch (siginfo->si_code)
     {
     case TRAP_TRACE:
         rec.ExceptionCode = EXCEPTION_SINGLE_STEP;
@@ -628,15 +614,7 @@ static void trap_handler( int signal, siginfo_t *info, void *ucontext )
         rec.ExceptionCode = EXCEPTION_BREAKPOINT;
         break;
     }
-
-    save_context( &context, ucontext );
-    rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
-    rec.ExceptionRecord  = NULL;
-    rec.ExceptionAddress = (LPVOID)context.Pc;
-    rec.NumberParameters = 0;
-    status = NtRaiseException( &rec, &context, TRUE );
-    if (status) RtlRaiseStatus( status );
-    restore_context( &context, ucontext );
+    setup_exception( sigcontext, &rec );
 }
 
 
@@ -647,11 +625,7 @@ static void trap_handler( int signal, siginfo_t *info, void *ucontext )
  */
 static void fpe_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
-    EXCEPTION_RECORD rec;
-    CONTEXT context;
-    NTSTATUS status;
-
-    save_context( &context, sigcontext );
+    EXCEPTION_RECORD rec = { 0 };
 
     switch (siginfo->si_code & 0xffff )
     {
@@ -697,14 +671,7 @@ static void fpe_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         rec.ExceptionCode = EXCEPTION_FLT_INVALID_OPERATION;
         break;
     }
-    rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
-    rec.ExceptionRecord  = NULL;
-    rec.ExceptionAddress = (LPVOID)context.Pc;
-    rec.NumberParameters = 0;
-    status = NtRaiseException( &rec, &context, TRUE );
-    if (status) RtlRaiseStatus( status );
-
-    restore_context( &context, sigcontext );
+    setup_exception( sigcontext, &rec );
 }
 
 
@@ -715,19 +682,9 @@ static void fpe_handler( int signal, siginfo_t *siginfo, void *sigcontext )
  */
 static void int_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
-    EXCEPTION_RECORD rec;
-    CONTEXT context;
-    NTSTATUS status;
+    EXCEPTION_RECORD rec = { CONTROL_C_EXIT };
 
-    save_context( &context, sigcontext );
-    rec.ExceptionCode    = CONTROL_C_EXIT;
-    rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
-    rec.ExceptionRecord  = NULL;
-    rec.ExceptionAddress = (LPVOID)context.Pc;
-    rec.NumberParameters = 0;
-    status = NtRaiseException( &rec, &context, TRUE );
-    if (status) RtlRaiseStatus( status );
-    restore_context( &context, sigcontext );
+    setup_exception( sigcontext, &rec );
 }
 
 
@@ -738,19 +695,9 @@ static void int_handler( int signal, siginfo_t *siginfo, void *sigcontext )
  */
 static void abrt_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
-    EXCEPTION_RECORD rec;
-    CONTEXT context;
-    NTSTATUS status;
+    EXCEPTION_RECORD rec = { EXCEPTION_WINE_ASSERTION, EH_NONCONTINUABLE };
 
-    save_context( &context, sigcontext );
-    rec.ExceptionCode    = EXCEPTION_WINE_ASSERTION;
-    rec.ExceptionFlags   = EH_NONCONTINUABLE;
-    rec.ExceptionRecord  = NULL;
-    rec.ExceptionAddress = (LPVOID)context.Pc;
-    rec.NumberParameters = 0;
-    status = NtRaiseException( &rec, &context, TRUE );
-    if (status) RtlRaiseStatus( status );
-    restore_context( &context, sigcontext );
+    setup_exception( sigcontext, &rec );
 }
 
 
@@ -846,7 +793,7 @@ void signal_init_process(void)
     struct sigaction sig_act;
 
     sig_act.sa_mask = server_block_set;
-    sig_act.sa_flags = SA_RESTART | SA_SIGINFO;
+    sig_act.sa_flags = SA_RESTART | SA_SIGINFO | SA_ONSTACK;
 
     sig_act.sa_sigaction = int_handler;
     if (sigaction( SIGINT, &sig_act, NULL ) == -1) goto error;
