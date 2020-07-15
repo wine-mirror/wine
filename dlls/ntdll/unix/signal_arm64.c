@@ -69,7 +69,9 @@
 #include "unix_private.h"
 #include "wine/debug.h"
 
+#ifdef HAVE_LIBUNWIND
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
+#endif
 
 /***********************************************************************
  * signal context platform-specific definitions
@@ -596,35 +598,46 @@ void WINAPI call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *cont
 /**********************************************************************
  *		segv_handler
  *
- * Handler for SIGSEGV and related errors.
+ * Handler for SIGSEGV.
  */
-static void segv_handler( int signal, siginfo_t *info, void *ucontext )
+static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
     EXCEPTION_RECORD rec = { 0 };
-    ucontext_t *context = ucontext;
+    ucontext_t *context = sigcontext;
 
-    switch(signal)
-    {
-    case SIGILL:   /* Invalid opcode exception */
-        rec.ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
-        break;
-    case SIGSEGV:  /* Segmentation fault */
-        rec.NumberParameters = 2;
-        rec.ExceptionInformation[0] = (get_fault_esr( context ) & 0x40) != 0;
-        rec.ExceptionInformation[1] = (ULONG_PTR)info->si_addr;
-        rec.ExceptionCode = virtual_handle_fault( info->si_addr, rec.ExceptionInformation[0],
-                                                  (void *)SP_sig(context) );
-        if (!rec.ExceptionCode) return;
-        break;
-    case SIGBUS:  /* Alignment check exception */
-        rec.ExceptionCode = EXCEPTION_DATATYPE_MISALIGNMENT;
-        break;
-    default:
-        ERR("Got unexpected signal %i\n", signal);
-        rec.ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
-        break;
-    }
+    rec.NumberParameters = 2;
+    rec.ExceptionInformation[0] = (get_fault_esr( context ) & 0x40) != 0;
+    rec.ExceptionInformation[1] = (ULONG_PTR)siginfo->si_addr;
+    rec.ExceptionCode = virtual_handle_fault( siginfo->si_addr, rec.ExceptionInformation[0],
+                                              (void *)SP_sig(context) );
+    if (!rec.ExceptionCode) return;
     setup_exception( context, &rec );
+}
+
+
+/**********************************************************************
+ *		ill_handler
+ *
+ * Handler for SIGILL.
+ */
+static void ill_handler( int signal, siginfo_t *siginfo, void *sigcontext )
+{
+    EXCEPTION_RECORD rec = { EXCEPTION_ILLEGAL_INSTRUCTION };
+
+    setup_exception( sigcontext, &rec );
+}
+
+
+/**********************************************************************
+ *		bus_handler
+ *
+ * Handler for SIGBUS.
+ */
+static void bus_handler( int signal, siginfo_t *siginfo, void *sigcontext )
+{
+    EXCEPTION_RECORD rec = { EXCEPTION_DATATYPE_MISALIGNMENT };
+
+    setup_exception( sigcontext, &rec );
 }
 
 
@@ -633,12 +646,11 @@ static void segv_handler( int signal, siginfo_t *info, void *ucontext )
  *
  * Handler for SIGTRAP.
  */
-static void trap_handler( int signal, siginfo_t *info, void *ucontext )
+static void trap_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
     EXCEPTION_RECORD rec = { 0 };
-    ucontext_t *context = ucontext;
 
-    switch (info->si_code)
+    switch (siginfo->si_code)
     {
     case TRAP_TRACE:
         rec.ExceptionCode = EXCEPTION_SINGLE_STEP;
@@ -648,7 +660,7 @@ static void trap_handler( int signal, siginfo_t *info, void *ucontext )
         rec.ExceptionCode = EXCEPTION_BREAKPOINT;
         break;
     }
-    setup_exception( context, &rec );
+    setup_exception( sigcontext, &rec );
 }
 
 
@@ -859,7 +871,9 @@ void signal_init_process(void)
     if (sigaction( SIGTRAP, &sig_act, NULL ) == -1) goto error;
     sig_act.sa_sigaction = segv_handler;
     if (sigaction( SIGSEGV, &sig_act, NULL ) == -1) goto error;
+    sig_act.sa_sigaction = ill_handler;
     if (sigaction( SIGILL, &sig_act, NULL ) == -1) goto error;
+    sig_act.sa_sigaction = bus_handler;
     if (sigaction( SIGBUS, &sig_act, NULL ) == -1) goto error;
     return;
 
