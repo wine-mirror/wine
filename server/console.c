@@ -1600,6 +1600,10 @@ static int console_input_ioctl( struct fd *fd, ioctl_code_t code, struct async *
             return set_reply_data( &info, sizeof(info) ) != NULL;
         }
 
+    case IOCTL_CONDRV_GET_TITLE:
+        if (!console->title_len) return 1;
+        return set_reply_data( console->title, min( console->title_len, get_reply_max_size() )) != NULL;
+
     default:
         set_error( STATUS_INVALID_HANDLE );
         return 0;
