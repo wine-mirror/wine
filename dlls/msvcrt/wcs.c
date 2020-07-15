@@ -2652,7 +2652,19 @@ int CDECL MSVCRT_wcslen(const MSVCRT_wchar_t *str)
  */
 MSVCRT_wchar_t* CDECL MSVCRT_wcsstr(const MSVCRT_wchar_t *str, const MSVCRT_wchar_t *sub)
 {
-    return strstrW(str, sub);
+    while(*str)
+    {
+        const MSVCRT_wchar_t *p1 = str, *p2 = sub;
+        while(*p1 && *p2 && *p1 == *p2)
+        {
+            p1++;
+            p2++;
+        }
+        if(!*p2)
+            return (MSVCRT_wchar_t*)str;
+        str++;
+    }
+    return NULL;
 }
 
 /*********************************************************************
