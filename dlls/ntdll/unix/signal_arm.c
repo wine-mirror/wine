@@ -567,23 +567,8 @@ extern void WINAPI call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEX
  */
 static void WINAPI raise_segv_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
-    NTSTATUS status;
-
-    switch(rec->ExceptionCode)
-    {
-    case EXCEPTION_ACCESS_VIOLATION:
-        if (rec->NumberParameters == 2)
-        {
-            if (!(rec->ExceptionCode = virtual_handle_fault( (void *)rec->ExceptionInformation[1],
-                                                             rec->ExceptionInformation[0], FALSE )))
-                goto done;
-        }
-        break;
-    }
-    status = NtRaiseException( rec, context, TRUE );
+    NTSTATUS status = NtRaiseException( rec, context, TRUE );
     if (status) RtlRaiseStatus( status );
-done:
-    set_cpu_context( context );
 }
 
 
@@ -624,6 +609,9 @@ static void segv_handler( int signal, siginfo_t *info, void *ucontext )
         rec->NumberParameters = 2;
         rec->ExceptionInformation[0] = (get_error_code(context) & 0x800) != 0;
         rec->ExceptionInformation[1] = (ULONG_PTR)info->si_addr;
+        if (!(rec->ExceptionCode = virtual_handle_fault( (void *)rec->ExceptionInformation[1],
+                                                         rec->ExceptionInformation[0], FALSE )))
+            return;
         break;
     case TRAP_ARM_ALIGNFLT:  /* Alignment check exception */
         rec->ExceptionCode = EXCEPTION_DATATYPE_MISALIGNMENT;
