@@ -300,6 +300,56 @@ static void test_logfont(void)
     GdipDeleteFontFamily(family);
 
     GdipDeleteFont(font);
+    font = NULL;
+
+    /* The next test must be done with a font where tmHeight -
+       tmInternalLeading != tmAscent. Times New Roman is such a font,
+       so make sure we really have it before continuing. */
+    memset(&lfa, 0, sizeof(lfa));
+    lstrcpyA(lfa.lfFaceName, "Times New Roman");
+
+    stat = GdipCreateFontFromLogfontA(hdc, &lfa, &font);
+    expect(Ok, stat);
+
+    memset(&lfa2, 0, sizeof(lfa2));
+    stat = GdipGetLogFontA(font, graphics, &lfa2);
+    expect(Ok, stat);
+
+    GdipDeleteFont(font);
+    font = NULL;
+
+    if (!lstrlenA(lfa.lfFaceName) || lstrcmpA(lfa.lfFaceName, lfa2.lfFaceName))
+    {
+        skip("Times New Roman not installed\n");
+    }
+    else
+    {
+        static const struct
+        {
+            INT input;
+            REAL expected;
+        } test_sizes[] = {{12, 9.0}, {36, 32.0}, {48, 42.0}, {72, 63.0}, {144, 127.0}};
+
+        UINT i;
+
+        memset(&lfa, 0, sizeof(lfa));
+        lstrcpyA(lfa.lfFaceName, "Times New Roman");
+
+        for (i = 0; i < sizeof(test_sizes)/sizeof(test_sizes[0]); ++i)
+        {
+            lfa.lfHeight = test_sizes[i].input;
+
+            stat = GdipCreateFontFromLogfontA(hdc, &lfa, &font);
+            expect(Ok, stat);
+
+            stat = GdipGetFontSize(font, &rval);
+            expect(Ok, stat);
+            todo_wine expectf(test_sizes[i].expected, rval);
+
+            GdipDeleteFont(font);
+            font = NULL;
+        }
+    }
 
     GdipDeleteGraphics(graphics);
     ReleaseDC(0, hdc);
