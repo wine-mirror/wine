@@ -1977,19 +1977,19 @@ INT CDECL MSVCRT_iswcntrl( MSVCRT_wchar_t wc )
 }
 
 /*********************************************************************
- *		iswdigit (MSVCRT.@)
- */
-INT CDECL MSVCRT_iswdigit( MSVCRT_wchar_t wc )
-{
-    return isdigitW( wc );
-}
-
-/*********************************************************************
  *		_iswdigit_l (MSVCRT.@)
  */
 INT CDECL MSVCRT__iswdigit_l( MSVCRT_wchar_t wc, MSVCRT__locale_t locale )
 {
-    return isdigitW( wc );
+    return MSVCRT__iswctype_l( wc, MSVCRT__DIGIT, locale );
+}
+
+/*********************************************************************
+ *		iswdigit (MSVCRT.@)
+ */
+INT CDECL MSVCRT_iswdigit( MSVCRT_wchar_t wc )
+{
+    return MSVCRT__iswdigit_l( wc, NULL );
 }
 
 /*********************************************************************
