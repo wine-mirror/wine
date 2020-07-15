@@ -104,6 +104,7 @@ typedef struct dds_info {
     UINT array_size;
     UINT frame_count;
     UINT data_offset;
+    BOOL compressed;
     DXGI_FORMAT format;
     WICDdsDimension dimension;
     WICDdsAlphaMode alpha_mode;
@@ -212,6 +213,8 @@ static void get_dds_info(dds_info* info, DDS_HEADER *header, DDS_HEADER_DXT10 *h
 {
     int i;
     UINT depth;
+
+    info->compressed = !(header->ddspf.flags & (DDPF_RGB | DDPF_LUMINANCE));
 
     info->width = header->width;
     info->height = header->height;
@@ -623,67 +626,10 @@ static HRESULT WINAPI DdsDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
                                             WICDecodeOptions cacheOptions)
 {
     DdsDecoder *This = impl_from_IWICBitmapDecoder(iface);
-    DDS_HEADER_DXT10 header_dxt10;
-    DDS_HEADER header;
-    HRESULT hr;
-    LARGE_INTEGER seek;
-    DWORD magic;
-    ULONG bytesread;
 
     TRACE("(%p,%p,%x)\n", iface, pIStream, cacheOptions);
 
-    EnterCriticalSection(&This->lock);
-
-    if (This->initialized) {
-        hr = WINCODEC_ERR_WRONGSTATE;
-        goto end;
-    }
-
-    seek.QuadPart = 0;
-    hr = IStream_Seek(pIStream, seek, SEEK_SET, NULL);
-    if (FAILED(hr)) goto end;
-
-    hr = IStream_Read(pIStream, &magic, sizeof(magic), &bytesread);
-    if (FAILED(hr)) goto end;
-    if (bytesread != sizeof(magic)) {
-        hr = WINCODEC_ERR_STREAMREAD;
-        goto end;
-    }
-    if (magic != DDS_MAGIC) {
-        hr = WINCODEC_ERR_UNKNOWNIMAGEFORMAT;
-        goto end;
-    }
-
-    hr = IStream_Read(pIStream, &header, sizeof(header), &bytesread);
-    if (FAILED(hr)) goto end;
-    if (bytesread != sizeof(header)) {
-        hr = WINCODEC_ERR_STREAMREAD;
-        goto end;
-    }
-    if (header.size != sizeof(header)) {
-        hr = WINCODEC_ERR_BADHEADER;
-        goto end;
-    }
-
-    if (has_extended_header(&header)) {
-        hr = IStream_Read(pIStream, &header_dxt10, sizeof(header_dxt10), &bytesread);
-        if (FAILED(hr)) goto end;
-        if (bytesread != sizeof(header_dxt10)) {
-            hr = WINCODEC_ERR_STREAMREAD;
-            goto end;
-        }
-    }
-
-    get_dds_info(&This->info, &header, &header_dxt10);
-
-    This->initialized = TRUE;
-    This->stream = pIStream;
-    IStream_AddRef(pIStream);
-
-end:
-    LeaveCriticalSection(&This->lock);
-
-    return hr;
+    return IWICWineDecoder_Initialize(&This->IWICWineDecoder_iface, pIStream, cacheOptions);
 }
 
 static HRESULT WINAPI DdsDecoder_GetContainerFormat(IWICBitmapDecoder *iface,
@@ -987,8 +933,68 @@ static ULONG WINAPI DdsDecoder_Wine_Release(IWICWineDecoder *iface)
 
 static HRESULT WINAPI DdsDecoder_Wine_Initialize(IWICWineDecoder *iface, IStream *stream, WICDecodeOptions options)
 {
-    FIXME("(This %p, stream %p, options %#x)\n", iface, stream, options);
-    return E_NOTIMPL;
+    DdsDecoder *This = impl_from_IWICWineDecoder(iface);
+    DDS_HEADER_DXT10 header_dxt10;
+    LARGE_INTEGER seek;
+    DDS_HEADER header;
+    ULONG bytesread;
+    DWORD magic;
+    HRESULT hr;
+
+    TRACE("(This %p, stream %p, options %#x)\n", iface, stream, options);
+
+    EnterCriticalSection(&This->lock);
+
+    if (This->initialized) {
+        hr = WINCODEC_ERR_WRONGSTATE;
+        goto end;
+    }
+
+    seek.QuadPart = 0;
+    hr = IStream_Seek(stream, seek, SEEK_SET, NULL);
+    if (FAILED(hr)) goto end;
+
+    hr = IStream_Read(stream, &magic, sizeof(magic), &bytesread);
+    if (FAILED(hr)) goto end;
+    if (bytesread != sizeof(magic)) {
+        hr = WINCODEC_ERR_STREAMREAD;
+        goto end;
+    }
+    if (magic != DDS_MAGIC) {
+        hr = WINCODEC_ERR_UNKNOWNIMAGEFORMAT;
+        goto end;
+    }
+
+    hr = IStream_Read(stream, &header, sizeof(header), &bytesread);
+    if (FAILED(hr)) goto end;
+    if (bytesread != sizeof(header)) {
+        hr = WINCODEC_ERR_STREAMREAD;
+        goto end;
+    }
+    if (header.size != sizeof(header)) {
+        hr = WINCODEC_ERR_BADHEADER;
+        goto end;
+    }
+
+    if (has_extended_header(&header)) {
+        hr = IStream_Read(stream, &header_dxt10, sizeof(header_dxt10), &bytesread);
+        if (FAILED(hr)) goto end;
+        if (bytesread != sizeof(header_dxt10)) {
+            hr = WINCODEC_ERR_STREAMREAD;
+            goto end;
+        }
+    }
+
+    get_dds_info(&This->info, &header, &header_dxt10);
+
+    This->initialized = TRUE;
+    This->stream = stream;
+    IStream_AddRef(stream);
+
+end:
+    LeaveCriticalSection(&This->lock);
+
+    return hr;
 }
 
 static const IWICWineDecoderVtbl DdsDecoder_Wine_Vtbl = {
