@@ -37,8 +37,8 @@ static BYTE test_dds_image[] = {
     0xF5, 0xA7, 0x08, 0x69, 0x74, 0xC0, 0xBF, 0xD7
 };
 
-/* 4x4 uncompressed DDS image */
-static BYTE test_dds_uncompressed[] = {
+/* 4x4 uncompressed(BGR565) DDS image */
+static BYTE test_dds_bgr565[] = {
     'D',  'D',  'S',  ' ',  0x7C, 0x00, 0x00, 0x00, 0x07, 0x10, 0x08, 0x00, 0x04, 0x00, 0x00, 0x00,
     0x04, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -168,20 +168,23 @@ static struct test_data {
     BYTE *data;
     UINT size;
     UINT expected_frame_count;
+    UINT expected_bytes_per_block;
     const GUID *expected_pixel_format;
     WICDdsParameters expected_parameters;
     BOOL wine_init;
 } test_data[] = {
-    { test_dds_image,   sizeof(test_dds_image),   1, &GUID_WICPixelFormat32bppPBGRA,
-      { 4,  4,  1, 1, 1, DXGI_FORMAT_BC1_UNORM, WICDdsTexture2D, WICDdsAlphaModePremultiplied } },
-    { test_dds_mipmaps, sizeof(test_dds_mipmaps), 3, &GUID_WICPixelFormat32bppPBGRA,
-      { 4,  4,  1, 3, 1, DXGI_FORMAT_BC1_UNORM, WICDdsTexture2D, WICDdsAlphaModePremultiplied } },
-    { test_dds_volume,  sizeof(test_dds_volume),  7, &GUID_WICPixelFormat32bppPBGRA,
-      { 4,  4,  4, 3, 1, DXGI_FORMAT_BC1_UNORM, WICDdsTexture3D, WICDdsAlphaModePremultiplied } },
-    { test_dds_array,   sizeof(test_dds_array),   9, &GUID_WICPixelFormat32bppBGRA,
-      { 4,  4,  1, 3, 3, DXGI_FORMAT_BC1_UNORM, WICDdsTexture2D, WICDdsAlphaModeUnknown } },
-    { test_dds_dxt3,    sizeof(test_dds_dxt3),    8, &GUID_WICPixelFormat32bppBGRA,
-      { 12, 12, 1, 4, 2, DXGI_FORMAT_BC2_UNORM, WICDdsTexture2D, WICDdsAlphaModeUnknown } },
+    { test_dds_bgr565,   sizeof(test_dds_bgr565),  1, 2,  &GUID_WICPixelFormat32bppBGRA,
+      { 4,  4,  1, 1, 1, DXGI_FORMAT_R8G8B8A8_UNORM,  WICDdsTexture2D, WICDdsAlphaModeUnknown }, TRUE },
+    { test_dds_image,    sizeof(test_dds_image),   1, 8,  &GUID_WICPixelFormat32bppPBGRA,
+      { 4,  4,  1, 1, 1, DXGI_FORMAT_BC1_UNORM,       WICDdsTexture2D, WICDdsAlphaModePremultiplied } },
+    { test_dds_mipmaps,  sizeof(test_dds_mipmaps), 3, 8,  &GUID_WICPixelFormat32bppPBGRA,
+      { 4,  4,  1, 3, 1, DXGI_FORMAT_BC1_UNORM,       WICDdsTexture2D, WICDdsAlphaModePremultiplied } },
+    { test_dds_volume,   sizeof(test_dds_volume),  7, 8,  &GUID_WICPixelFormat32bppPBGRA,
+      { 4,  4,  4, 3, 1, DXGI_FORMAT_BC1_UNORM,       WICDdsTexture3D, WICDdsAlphaModePremultiplied } },
+    { test_dds_array,    sizeof(test_dds_array),   9, 8,  &GUID_WICPixelFormat32bppBGRA,
+      { 4,  4,  1, 3, 3, DXGI_FORMAT_BC1_UNORM,       WICDdsTexture2D, WICDdsAlphaModeUnknown } },
+    { test_dds_dxt3,     sizeof(test_dds_dxt3),    8, 16, &GUID_WICPixelFormat32bppBGRA,
+      { 12, 12, 1, 4, 2, DXGI_FORMAT_BC2_UNORM,       WICDdsTexture2D, WICDdsAlphaModeUnknown } },
 };
 
 static IWICImagingFactory *factory = NULL;
@@ -235,7 +238,7 @@ static HRESULT init_decoder(IWICBitmapDecoder *decoder, IWICStream *stream, HRES
 
     hr = IWICBitmapDecoder_Initialize(decoder, (IStream*)stream, WICDecodeMetadataCacheOnDemand);
     if (index == -1) {
-        ok(hr == S_OK, "Decoder initialize failed, hr %#x\n", hr);
+        ok(hr == S_OK || wine_init, "Decoder initialize failed, hr %#x\n", hr);
     } else {
         ok(hr == expected, "Test %u: Expected hr %#x, got %#x\n", index, expected, hr);
     }
@@ -259,26 +262,6 @@ static HRESULT init_decoder(IWICBitmapDecoder *decoder, IWICStream *stream, HRES
     }
 
     return hr;
-}
-
-static UINT get_bytes_per_block(DXGI_FORMAT format)
-{
-    switch(format)
-    {
-    case DXGI_FORMAT_BC1_UNORM:
-    case DXGI_FORMAT_BC1_TYPELESS:
-    case DXGI_FORMAT_BC1_UNORM_SRGB:
-        return 8;
-    case DXGI_FORMAT_BC2_UNORM:
-    case DXGI_FORMAT_BC2_TYPELESS:
-    case DXGI_FORMAT_BC2_UNORM_SRGB:
-    case DXGI_FORMAT_BC3_UNORM:
-    case DXGI_FORMAT_BC3_TYPELESS:
-    case DXGI_FORMAT_BC3_UNORM_SRGB:
-        return 16;
-    default:
-        return 0;
-    }
 }
 
 static BOOL has_extended_header(const BYTE *data)
@@ -306,7 +289,7 @@ static void test_dds_decoder_initialize(void)
         { test_dds_volume,       sizeof(test_dds_volume),       S_OK },
         { test_dds_array,        sizeof(test_dds_array),        S_OK },
         { test_dds_dxt3,         sizeof(test_dds_dxt3),         S_OK },
-        { test_dds_uncompressed, sizeof(test_dds_uncompressed), WINCODEC_ERR_BADHEADER, TRUE },
+        { test_dds_bgr565,       sizeof(test_dds_bgr565),       WINCODEC_ERR_BADHEADER, TRUE },
         { test_dds_cube,         sizeof(test_dds_cube),         WINCODEC_ERR_BADHEADER, TRUE },
         { test_dds_bad_magic,  sizeof(test_dds_bad_magic),  WINCODEC_ERR_UNKNOWNIMAGEFORMAT },
         { test_dds_bad_header, sizeof(test_dds_bad_header), WINCODEC_ERR_BADHEADER },
@@ -421,7 +404,10 @@ static void test_dds_decoder_image_parameters(void)
         ok(hr == E_INVALIDARG, "Test %u: GetParameters got unexpected hr %#x\n", i, hr);
 
         hr = init_decoder(decoder, stream, S_OK, -1, test_data[i].wine_init);
-        if (hr != S_OK) goto next;
+        if (hr != S_OK) {
+            win_skip("uncompressed DDS image is not supported\n");
+            goto next;
+        }
 
         hr = IWICBitmapDecoder_GetFrameCount(decoder, &frame_count);
         ok(hr == S_OK, "Test %u: GetFrameCount failed, hr %#x\n", i, hr);
@@ -445,6 +431,7 @@ static void test_dds_decoder_image_parameters(void)
                "Test %u: Expected MipLevels %u, got %u\n", i, test_data[i].expected_parameters.MipLevels, parameters.MipLevels);
             ok(parameters.ArraySize == test_data[i].expected_parameters.ArraySize,
                "Test %u: Expected ArraySize %u, got %u\n", i, test_data[i].expected_parameters.ArraySize, parameters.ArraySize);
+            todo_wine_if(test_data[i].expected_parameters.DxgiFormat == DXGI_FORMAT_R8G8B8A8_UNORM)
             ok(parameters.DxgiFormat == test_data[i].expected_parameters.DxgiFormat,
                "Test %u: Expected DxgiFormat %#x, got %#x\n", i, test_data[i].expected_parameters.DxgiFormat, parameters.DxgiFormat);
             ok(parameters.Dimension == test_data[i].expected_parameters.Dimension,
@@ -469,6 +456,7 @@ static void test_dds_decoder_frame_properties(IWICBitmapFrameDecode *frame_decod
     HRESULT hr;
     UINT width, height ,expected_width, expected_height, slice_index, depth;
     UINT width_in_blocks, height_in_blocks, expected_width_in_blocks, expected_height_in_blocks;
+    UINT expected_block_width, expected_block_height;
     WICDdsFormatInfo format_info;
     GUID pixel_format;
 
@@ -500,22 +488,34 @@ static void test_dds_decoder_frame_properties(IWICBitmapFrameDecode *frame_decod
 
     /* frame format information tests */
 
+    if (test_data[i].expected_parameters.DxgiFormat == DXGI_FORMAT_R8G8B8A8_UNORM) {
+        expected_block_width = 1;
+        expected_block_height = 1;
+    } else {
+        expected_block_width = 4;
+        expected_block_height = 4;
+    }
+
     hr = IWICDdsFrameDecode_GetFormatInfo(dds_frame, NULL);
     ok(hr == E_INVALIDARG, "Test %u, frame %u: GetFormatInfo got unexpected hr %#x\n", i, frame_index, hr);
     hr = IWICDdsFrameDecode_GetFormatInfo(dds_frame, &format_info);
     ok(hr == S_OK, "Test %u, frame %u: GetFormatInfo failed, hr %#x\n", i, frame_index, hr);
     if (hr != S_OK) return;
 
+    todo_wine_if(test_data[i].expected_parameters.DxgiFormat == DXGI_FORMAT_R8G8B8A8_UNORM) {
     ok(format_info.DxgiFormat == test_data[i].expected_parameters.DxgiFormat,
        "Test %u, frame %u: Expected DXGI format %#x, got %#x\n",
        i, frame_index, test_data[i].expected_parameters.DxgiFormat, format_info.DxgiFormat);
-    ok(format_info.BytesPerBlock == get_bytes_per_block(format_info.DxgiFormat),
+    ok(format_info.BytesPerBlock == test_data[i].expected_bytes_per_block,
        "Test %u, frame %u: Expected bytes per block %u, got %u\n",
-       i, frame_index, get_bytes_per_block(format_info.DxgiFormat), format_info.BytesPerBlock);
-    ok(format_info.BlockWidth == 4 || format_info.BlockWidth == 1,
-       "Test %u, frame %u: Got unexpected block width %u\n", i, frame_index, format_info.BlockWidth);
-    ok(format_info.BlockHeight == 4 || format_info.BlockHeight == 1,
-       "Test %u, frame %u: Got unexpected block height %u\n", i, frame_index, format_info.BlockHeight);
+       i, frame_index, test_data[i].expected_bytes_per_block, format_info.BytesPerBlock);
+    ok(format_info.BlockWidth == expected_block_width,
+       "Test %u, frame %u: Expected block width %u, got %u\n",
+       i, frame_index, expected_block_width, format_info.BlockWidth);
+    ok(format_info.BlockHeight == expected_block_height,
+       "Test %u, frame %u: Expected block height %u, got %u\n",
+       i, frame_index, expected_block_height, format_info.BlockHeight);
+    }
 
     /* size in blocks tests */
 
@@ -529,12 +529,14 @@ static void test_dds_decoder_frame_properties(IWICBitmapFrameDecode *frame_decod
     ok(hr == S_OK, "Test %u, frame %u: GetSizeInBlocks failed, hr %#x\n", i, frame_index, hr);
     if (hr != S_OK) return;
 
-    expected_width_in_blocks = (expected_width + format_info.BlockWidth - 1) / format_info.BlockWidth;
-    expected_height_in_blocks = (expected_height + format_info.BlockHeight - 1) / format_info.BlockHeight;
+    expected_width_in_blocks = (expected_width + expected_block_width - 1) / expected_block_width;
+    expected_height_in_blocks = (expected_height + expected_block_height - 1) / expected_block_height;
+    todo_wine_if(test_data[i].expected_parameters.DxgiFormat == DXGI_FORMAT_R8G8B8A8_UNORM) {
     ok(width_in_blocks == expected_width_in_blocks,
        "Test %u, frame %u: Expected width in blocks %u, got %u\n", i, frame_index, expected_width_in_blocks, width_in_blocks);
     ok(height_in_blocks == expected_height_in_blocks,
        "Test %u, frame %u: Expected height in blocks %u, got %u\n", i, frame_index, expected_height_in_blocks, height_in_blocks);
+    }
 
     /* pixel format tests */
 
@@ -584,17 +586,20 @@ static void test_dds_decoder_frame_data(IWICDdsFrameDecode *dds_frame, UINT fram
     ok(hr == E_INVALIDARG, "Test %u, frame %u: CopyBlocks got unexpected hr %#x\n", i, frame_index, hr);
 
     hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, NULL, frame_stride - 1, sizeof(buffer), buffer);
+    todo_wine_if(test_data[i].expected_parameters.DxgiFormat == DXGI_FORMAT_R8G8B8A8_UNORM)
     ok(hr == E_INVALIDARG, "Test %u, frame %u: CopyBlocks got unexpected hr %#x\n", i, frame_index, hr);
     hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, NULL, frame_stride * 2, sizeof(buffer), buffer);
     ok(hr == S_OK, "Test %u, frame %u: CopyBlocks got unexpected hr %#x\n", i, frame_index, hr);
     hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, NULL, frame_stride, sizeof(buffer), buffer);
     ok(hr == S_OK, "Test %u, frame %u: CopyBlocks got unexpected hr %#x\n", i, frame_index, hr);
     hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, NULL, frame_stride, frame_stride * height_in_blocks - 1, buffer);
+    todo_wine_if(test_data[i].expected_parameters.DxgiFormat == DXGI_FORMAT_R8G8B8A8_UNORM)
     ok(hr == E_INVALIDARG, "Test %u, frame %u: CopyBlocks got unexpected hr %#x\n", i, frame_index, hr);
     hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, NULL, frame_stride, frame_stride * height_in_blocks, buffer);
     ok(hr == S_OK, "Test %u, frame %u: CopyBlocks got unexpected hr %#x\n", i, frame_index, hr);
 
     hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, &rect, 0, sizeof(buffer), buffer);
+    todo_wine_if(test_data[i].expected_parameters.DxgiFormat == DXGI_FORMAT_R8G8B8A8_UNORM)
     ok(hr == E_INVALIDARG, "Test %u, frame %u: CopyBlocks got unexpected hr %#x\n", i, frame_index, hr);
     hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, &rect, stride - 1, sizeof(buffer), buffer);
     ok(hr == E_INVALIDARG, "Test %u, frame %u: CopyBlocks got unexpected hr %#x\n", i, frame_index, hr);
@@ -602,11 +607,13 @@ static void test_dds_decoder_frame_data(IWICDdsFrameDecode *dds_frame, UINT fram
     ok(hr == S_OK, "Test %u, frame %u: CopyBlocks got unexpected hr %#x\n", i, frame_index, hr);
 
     hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, &rect, stride, 0, buffer);
+    todo_wine_if(test_data[i].expected_parameters.DxgiFormat == DXGI_FORMAT_R8G8B8A8_UNORM) {
     ok(hr == E_INVALIDARG, "Test %u, frame %u: CopyBlocks got unexpected hr %#x\n", i, frame_index, hr);
     hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, &rect, stride, 1, buffer);
     ok(hr == E_INVALIDARG, "Test %u, frame %u: CopyBlocks got unexpected hr %#x\n", i, frame_index, hr);
     hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, &rect, stride, stride * rect.Height - 1, buffer);
     ok(hr == E_INVALIDARG, "Test %u, frame %u: CopyBlocks got unexpected hr %#x\n", i, frame_index, hr);
+    }
     hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, &rect, stride, stride * rect.Height, buffer);
     ok(hr == S_OK, "Test %u, frame %u: CopyBlocks got unexpected hr %#x\n", i, frame_index, hr);
 
@@ -712,7 +719,10 @@ static void test_dds_decoder(void)
         decoder = create_decoder();
         if (!decoder) goto next;
         hr = init_decoder(decoder, stream, S_OK, -1, test_data[i].wine_init);
-        if (hr != S_OK) goto next;
+        if (hr != S_OK) {
+            win_skip("uncompressed DDS image is not supported\n");
+            goto next;
+        }
 
         test_dds_decoder_global_properties(decoder);
         test_dds_decoder_frame(decoder, i);
