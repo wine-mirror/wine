@@ -192,6 +192,104 @@ static void test_WSAEnumProtocolsW(void)
     }
 }
 
+struct protocol
+{
+    int prot;
+    const char *names[2];
+    BOOL missing_from_xp;
+};
+
+static const struct protocol protocols[] =
+{
+    {   0, { "ip", "IP" }},
+    {   1, { "icmp", "ICMP" }},
+    {   3, { "ggp", "GGP" }},
+    {   6, { "tcp", "TCP" }},
+    {   8, { "egp", "EGP" }},
+    {  12, { "pup", "PUP" }},
+    {  17, { "udp", "UDP" }},
+    {  20, { "hmp", "HMP" }},
+    {  22, { "xns-idp", "XNS-IDP" }},
+    {  27, { "rdp", "RDP" }},
+    {  41, { "ipv6", "IPv6" }, TRUE},
+    {  43, { "ipv6-route", "IPv6-Route" }, TRUE},
+    {  44, { "ipv6-frag", "IPv6-Frag" }, TRUE},
+    {  50, { "esp", "ESP" }},
+    {  51, { "ah", "AH" }},
+    {  58, { "ipv6-icmp", "IPv6-ICMP" }, TRUE},
+    {  59, { "ipv6-nonxt", "IPv6-NoNxt" }, TRUE},
+    {  60, { "ipv6-opts", "IPv6-Opts" }, TRUE},
+    {  66, { "rvd", "RVD" }},
+};
+
+static const struct protocol *find_protocol(int number)
+{
+    int i;
+    for (i = 0; i < ARRAY_SIZE(protocols); i++)
+    {
+        if (protocols[i].prot == number)
+            return &protocols[i];
+    }
+    return NULL;
+}
+
+static void test_getprotobyname(void)
+{
+    struct protoent *ent;
+    char all_caps_name[16];
+    int i, j;
+
+    for (i = 0; i < ARRAY_SIZE(protocols); i++)
+    {
+        for (j = 0; j < ARRAY_SIZE(protocols[0].names); j++)
+        {
+            ent = getprotobyname(protocols[i].names[j]);
+            ok((ent && ent->p_proto == protocols[i].prot) || broken(!ent && protocols[i].missing_from_xp),
+               "Expected %s to be protocol number %d, got %d\n",
+               wine_dbgstr_a(protocols[i].names[j]), protocols[i].prot, ent ? ent->p_proto : -1);
+        }
+
+        for (j = 0; protocols[i].names[0][j]; j++)
+            all_caps_name[j] = toupper(protocols[i].names[0][j]);
+        all_caps_name[j] = 0;
+        ent = getprotobyname(all_caps_name);
+        ok((ent && ent->p_proto == protocols[i].prot) || broken(!ent && protocols[i].missing_from_xp),
+           "Expected %s to be protocol number %d, got %d\n",
+           wine_dbgstr_a(all_caps_name), protocols[i].prot, ent ? ent->p_proto : -1);
+    }
+}
+
+static void test_getprotobynumber(void)
+{
+    struct protoent *ent;
+    const struct protocol *ref;
+    int i;
+
+    for (i = -1; i <= 256; i++)
+    {
+        ent = getprotobynumber(i);
+        ref = find_protocol(i);
+
+        if (!ref)
+        {
+            ok(!ent, "Expected protocol number %d to be undefined, got %s\n",
+               i, wine_dbgstr_a(ent ? ent->p_name : NULL));
+            continue;
+        }
+
+        ok((ent && ent->p_name && strcmp(ent->p_name, ref->names[0]) == 0) ||
+           broken(!ent && ref->missing_from_xp),
+           "Expected protocol number %d to be %s, got %s\n",
+           i, ref->names[0], wine_dbgstr_a(ent ? ent->p_name : NULL));
+
+        ok((ent && ent->p_aliases && ent->p_aliases[0] &&
+            strcmp(ent->p_aliases[0], ref->names[1]) == 0) ||
+           broken(!ent && ref->missing_from_xp),
+           "Expected protocol number %d alias 0 to be %s, got %s\n",
+           i, ref->names[0], wine_dbgstr_a(ent && ent->p_aliases ? ent->p_aliases[0] : NULL));
+    }
+}
+
 START_TEST( protocol )
 {
     WSADATA data;
@@ -201,4 +299,6 @@ START_TEST( protocol )
 
     test_WSAEnumProtocolsA();
     test_WSAEnumProtocolsW();
+    test_getprotobyname();
+    test_getprotobynumber();
 }

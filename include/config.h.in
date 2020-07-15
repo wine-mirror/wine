@@ -245,12 +245,6 @@
 /* Define to 1 if you have the `getopt_long_only' function. */
 #undef HAVE_GETOPT_LONG_ONLY
 
-/* Define to 1 if you have the `getprotobyname' function. */
-#undef HAVE_GETPROTOBYNAME
-
-/* Define to 1 if you have the `getprotobynumber' function. */
-#undef HAVE_GETPROTOBYNUMBER
-
 /* Define to 1 if you have the `getservbyport' function. */
 #undef HAVE_GETSERVBYPORT
 

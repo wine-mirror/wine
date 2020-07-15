@@ -6509,56 +6509,23 @@ static const struct { int prot; const char *names[3]; } protocols[] =
 {
     {   0, { "ip", "IP" }},
     {   1, { "icmp", "ICMP" }},
-    {   2, { "igmp", "IGMP" }},
     {   3, { "ggp", "GGP" }},
     {   6, { "tcp", "TCP" }},
     {   8, { "egp", "EGP" }},
-    {   9, { "igp", "IGP" }},
     {  12, { "pup", "PUP" }},
     {  17, { "udp", "UDP" }},
     {  20, { "hmp", "HMP" }},
     {  22, { "xns-idp", "XNS-IDP" }},
     {  27, { "rdp", "RDP" }},
-    {  29, { "iso-tp4", "ISO-TP4" }},
-    {  33, { "dccp", "DCCP" }},
-    {  36, { "xtp", "XTP" }},
-    {  37, { "ddp", "DDP" }},
-    {  38, { "idpr-cmtp", "IDPR-CMTP" }},
     {  41, { "ipv6", "IPv6" }},
     {  43, { "ipv6-route", "IPv6-Route" }},
     {  44, { "ipv6-frag", "IPv6-Frag" }},
-    {  45, { "idrp", "IDRP" }},
-    {  46, { "rsvp", "RSVP" }},
-    {  47, { "gre", "GRE" }},
     {  50, { "esp", "ESP" }},
     {  51, { "ah", "AH" }},
-    {  57, { "skip", "SKIP" }},
     {  58, { "ipv6-icmp", "IPv6-ICMP" }},
     {  59, { "ipv6-nonxt", "IPv6-NoNxt" }},
     {  60, { "ipv6-opts", "IPv6-Opts" }},
     {  66, { "rvd", "RVD" }},
-    {  73, { "rspf", "RSPF" }},
-    {  81, { "vmtp", "VMTP" }},
-    {  88, { "eigrp", "EIGRP" }},
-    {  89, { "ospf", "OSPFIGP" }},
-    {  93, { "ax.25", "AX.25" }},
-    {  94, { "ipip", "IPIP" }},
-    {  97, { "etherip", "ETHERIP" }},
-    {  98, { "encap", "ENCAP" }},
-    { 103, { "pim", "PIM" }},
-    { 108, { "ipcomp", "IPCOMP" }},
-    { 112, { "vrrp", "VRRP" }},
-    { 115, { "l2tp", "L2TP" }},
-    { 124, { "isis", "ISIS" }},
-    { 132, { "sctp", "SCTP" }},
-    { 133, { "fc", "FC" }},
-    { 135, { "mobility-header", "Mobility-Header" }},
-    { 136, { "udplite", "UDPLite" }},
-    { 137, { "mpls-in-ip", "MPLS-in-IP" }},
-    { 139, { "hip", "HIP" }},
-    { 140, { "shim6", "Shim6" }},
-    { 141, { "wesp", "WESP" }},
-    { 142, { "rohc", "ROHC" }},
 };
 
 /***********************************************************************
@@ -6567,23 +6534,14 @@ static const struct { int prot; const char *names[3]; } protocols[] =
 struct WS_protoent* WINAPI WS_getprotobyname(const char* name)
 {
     struct WS_protoent* retval = NULL;
-#ifdef HAVE_GETPROTOBYNAME
-    struct protoent*     proto;
-    EnterCriticalSection( &csWSgetXXXbyYYY );
-    if( (proto = getprotobyname(name)) != NULL )
-        retval = WS_create_pe( proto->p_name, proto->p_aliases, proto->p_proto );
-    LeaveCriticalSection( &csWSgetXXXbyYYY );
-#endif
-    if (!retval)
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(protocols); i++)
     {
-        unsigned int i;
-        for (i = 0; i < ARRAY_SIZE(protocols); i++)
-        {
-            if (_strnicmp( protocols[i].names[0], name, -1 )) continue;
-            retval = WS_create_pe( protocols[i].names[0], (char **)protocols[i].names + 1,
-                                   protocols[i].prot );
-            break;
-        }
+        if (_strnicmp( protocols[i].names[0], name, -1 )) continue;
+        retval = WS_create_pe( protocols[i].names[0], (char **)protocols[i].names + 1,
+                               protocols[i].prot );
+        break;
     }
     if (!retval)
     {
@@ -6601,23 +6559,14 @@ struct WS_protoent* WINAPI WS_getprotobyname(const char* name)
 struct WS_protoent* WINAPI WS_getprotobynumber(int number)
 {
     struct WS_protoent* retval = NULL;
-#ifdef HAVE_GETPROTOBYNUMBER
-    struct protoent*     proto;
-    EnterCriticalSection( &csWSgetXXXbyYYY );
-    if( (proto = getprotobynumber(number)) != NULL )
-        retval = WS_create_pe( proto->p_name, proto->p_aliases, proto->p_proto );
-    LeaveCriticalSection( &csWSgetXXXbyYYY );
-#endif
-    if (!retval)
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(protocols); i++)
     {
-        unsigned int i;
-        for (i = 0; i < ARRAY_SIZE(protocols); i++)
-        {
-            if (protocols[i].prot != number) continue;
-            retval = WS_create_pe( protocols[i].names[0], (char **)protocols[i].names + 1,
-                                   protocols[i].prot );
-            break;
-        }
+        if (protocols[i].prot != number) continue;
+        retval = WS_create_pe( protocols[i].names[0], (char **)protocols[i].names + 1,
+                               protocols[i].prot );
+        break;
     }
     if (!retval)
     {

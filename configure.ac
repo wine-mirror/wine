@@ -2245,8 +2245,6 @@ AC_CHECK_FUNCS(\
 	getaddrinfo \
 	getnameinfo \
 	getnetbyname \
-	getprotobyname \
-	getprotobynumber \
 	getservbyport \
 )
 
