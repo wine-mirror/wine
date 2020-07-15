@@ -4903,7 +4903,7 @@ static HRESULT WINAPI MediaFilter_Run(IMediaFilter *iface, REFERENCE_TIME start)
         IReferenceClock_GetTime(graph->refClock, &graph->stream_start);
         stream_start = graph->stream_start - graph->stream_elapsed;
         if (graph->state == State_Stopped)
-            stream_start += 500000;
+            stream_start += 200 * 10000;
     }
 
     LIST_FOR_EACH_ENTRY(filter, &graph->filters, struct filter, entry)
