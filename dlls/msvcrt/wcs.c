@@ -1993,19 +1993,19 @@ INT CDECL MSVCRT_iswdigit( MSVCRT_wchar_t wc )
 }
 
 /*********************************************************************
- *		iswgraph (MSVCRT.@)
- */
-INT CDECL MSVCRT_iswgraph( MSVCRT_wchar_t wc )
-{
-    return isgraphW( wc );
-}
-
-/*********************************************************************
  *		_iswgraph_l (MSVCRT.@)
  */
 int CDECL MSVCRT__iswgraph_l( MSVCRT_wchar_t wc, MSVCRT__locale_t locale )
 {
-    return isgraphW( wc );
+    return MSVCRT__iswctype_l( wc, MSVCRT__ALPHA | MSVCRT__DIGIT | MSVCRT__PUNCT, locale );
+}
+
+/*********************************************************************
+ *		iswgraph (MSVCRT.@)
+ */
+INT CDECL MSVCRT_iswgraph( MSVCRT_wchar_t wc )
+{
+    return MSVCRT__iswgraph_l( wc, NULL );
 }
 
 /*********************************************************************
