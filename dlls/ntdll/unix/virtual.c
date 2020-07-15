@@ -2845,6 +2845,33 @@ void virtual_map_user_shared_data(void)
 
 
 /***********************************************************************
+ *           grow_thread_stack
+ */
+static NTSTATUS grow_thread_stack( char *page )
+{
+    NTSTATUS ret = 0;
+    size_t guaranteed = max( NtCurrentTeb()->GuaranteedStackBytes, page_size * (is_win64 ? 2 : 1) );
+
+    set_page_vprot_bits( page, page_size, 0, VPROT_GUARD );
+    mprotect_range( page, page_size, 0, 0 );
+    if (page >= (char *)NtCurrentTeb()->DeallocationStack + page_size + guaranteed)
+    {
+        set_page_vprot_bits( page - page_size, page_size, VPROT_COMMITTED | VPROT_GUARD, 0 );
+        mprotect_range( page - page_size, page_size, 0, 0 );
+    }
+    else  /* inside guaranteed space -> overflow exception */
+    {
+        page = (char *)NtCurrentTeb()->DeallocationStack + page_size;
+        set_page_vprot_bits( page, guaranteed, VPROT_COMMITTED, VPROT_GUARD );
+        mprotect_range( page, guaranteed, 0, 0 );
+        ret = STATUS_STACK_OVERFLOW;
+    }
+    NtCurrentTeb()->Tib.StackLimit = page;
+    return ret;
+}
+
+
+/***********************************************************************
  *           virtual_handle_fault
  */
 NTSTATUS virtual_handle_fault( void *addr, DWORD err, void *stack )
@@ -3045,24 +3072,7 @@ int virtual_handle_stack_fault( void *addr )
     pthread_mutex_lock( &virtual_mutex );  /* no need for signal masking inside signal handler */
     if (get_page_vprot( addr ) & VPROT_GUARD)
     {
-        size_t guaranteed = max( NtCurrentTeb()->GuaranteedStackBytes, page_size * (is_win64 ? 2 : 1) );
-        char *page = ROUND_ADDR( addr, page_mask );
-        set_page_vprot_bits( page, page_size, 0, VPROT_GUARD );
-        mprotect_range( page, page_size, 0, 0 );
-        if (page >= (char *)NtCurrentTeb()->DeallocationStack + page_size + guaranteed)
-        {
-            set_page_vprot_bits( page - page_size, page_size, VPROT_COMMITTED | VPROT_GUARD, 0 );
-            mprotect_range( page - page_size, page_size, 0, 0 );
-            ret = 1;
-        }
-        else  /* inside guaranteed space -> overflow exception */
-        {
-            page = (char *)NtCurrentTeb()->DeallocationStack + page_size;
-            set_page_vprot_bits( page, guaranteed, VPROT_COMMITTED, VPROT_GUARD );
-            mprotect_range( page, guaranteed, 0, 0 );
-            ret = -1;
-        }
-        NtCurrentTeb()->Tib.StackLimit = page;
+        ret = grow_thread_stack( ROUND_ADDR( addr, page_mask )) ? -1 : 1;
     }
     pthread_mutex_unlock( &virtual_mutex );
     return ret;
