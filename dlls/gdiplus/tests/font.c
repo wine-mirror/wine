@@ -344,7 +344,7 @@ static void test_logfont(void)
 
             stat = GdipGetFontSize(font, &rval);
             expect(Ok, stat);
-            todo_wine expectf(test_sizes[i].expected, rval);
+            expectf(test_sizes[i].expected, rval);
 
             GdipDeleteFont(font);
             font = NULL;

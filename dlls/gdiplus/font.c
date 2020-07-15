@@ -219,7 +219,7 @@ GpStatus WINGDIPAPI GdipCreateFontFromLogfontW(HDC hdc,
     if (!*font) return OutOfMemory;
 
     (*font)->unit = UnitWorld;
-    (*font)->emSize = otm.otmTextMetrics.tmAscent;
+    (*font)->emSize = otm.otmTextMetrics.tmHeight - otm.otmTextMetrics.tmInternalLeading;
     (*font)->otm = otm;
 
     stat = GdipCreateFontFamilyFromName(facename, NULL, &(*font)->family);
