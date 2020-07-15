@@ -2333,7 +2333,7 @@ __int64 CDECL MSVCRT__wcstoi64_l(const MSVCRT_wchar_t *nptr,
     if(endptr)
         *endptr = (MSVCRT_wchar_t*)nptr;
 
-    while(isspaceW(*nptr)) nptr++;
+    while(MSVCRT__iswspace_l(*nptr, locale)) nptr++;
 
     if(*nptr == '-') {
         negative = TRUE;
@@ -2506,7 +2506,7 @@ unsigned __int64 CDECL MSVCRT__wcstoui64_l(const MSVCRT_wchar_t *nptr,
     if(endptr)
         *endptr = (MSVCRT_wchar_t*)nptr;
 
-    while(isspaceW(*nptr)) nptr++;
+    while(MSVCRT__iswspace_l(*nptr, locale)) nptr++;
 
     if(*nptr == '-') {
         negative = TRUE;
@@ -2675,7 +2675,7 @@ __int64 CDECL MSVCRT__wtoi64_l(const MSVCRT_wchar_t *str, MSVCRT__locale_t local
     ULONGLONG RunningTotal = 0;
     BOOL bMinus = FALSE;
 
-    while (isspaceW(*str)) {
+    while (MSVCRT__iswspace_l(*str, locale)) {
         str++;
     } /* while */
 
