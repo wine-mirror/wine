@@ -643,7 +643,7 @@ static void segv_handler( int signal, siginfo_t *info, void *ucontext )
         stack->rec.ExceptionInformation[0] = (get_fault_esr( context ) & 0x40) != 0;
         stack->rec.ExceptionInformation[1] = (ULONG_PTR)info->si_addr;
         if (!(stack->rec.ExceptionCode = virtual_handle_fault( (void *)stack->rec.ExceptionInformation[1],
-                                                         stack->rec.ExceptionInformation[0], FALSE )))
+                                                         stack->rec.ExceptionInformation[0], NULL )))
             return;
         break;
     case SIGBUS:  /* Alignment check exception */

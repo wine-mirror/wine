@@ -610,7 +610,7 @@ static void segv_handler( int signal, siginfo_t *info, void *ucontext )
         rec->ExceptionInformation[0] = (get_error_code(context) & 0x800) != 0;
         rec->ExceptionInformation[1] = (ULONG_PTR)info->si_addr;
         if (!(rec->ExceptionCode = virtual_handle_fault( (void *)rec->ExceptionInformation[1],
-                                                         rec->ExceptionInformation[0], FALSE )))
+                                                         rec->ExceptionInformation[0], NULL )))
             return;
         break;
     case TRAP_ARM_ALIGNFLT:  /* Alignment check exception */

@@ -2126,7 +2126,7 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 
     /* check for exceptions on the signal stack caused by write watches */
     if (TRAP_sig(ucontext) == TRAP_x86_PAGEFLT && is_inside_signal_stack( stack ) &&
-        !virtual_handle_fault( siginfo->si_addr, (ERROR_sig(ucontext) >> 1) & 0x09, TRUE ))
+        !virtual_handle_fault( siginfo->si_addr, (ERROR_sig(ucontext) >> 1) & 0x09, stack ))
     {
         return;
     }
@@ -2179,7 +2179,7 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         stack->rec.ExceptionInformation[0] = (ERROR_sig(ucontext) >> 1) & 0x09;
         stack->rec.ExceptionInformation[1] = (ULONG_PTR)siginfo->si_addr;
         if (!(stack->rec.ExceptionCode = virtual_handle_fault((void *)stack->rec.ExceptionInformation[1],
-                                                              stack->rec.ExceptionInformation[0], FALSE )))
+                                                              stack->rec.ExceptionInformation[0], NULL )))
             return;
         break;
     case TRAP_x86_ALIGNFLT:  /* Alignment check exception */

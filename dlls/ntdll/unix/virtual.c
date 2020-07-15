@@ -203,6 +203,13 @@ static struct range_entry *free_ranges;
 static struct range_entry *free_ranges_end;
 
 
+static inline BOOL is_inside_signal_stack( void *ptr )
+{
+    return ((char *)ptr >= (char *)get_signal_stack() &&
+            (char *)ptr < (char *)get_signal_stack() + signal_stack_size);
+}
+
+
 static void reserve_area( void *addr, void *end )
 {
 #ifdef __APPLE__
@@ -2840,16 +2847,15 @@ void virtual_map_user_shared_data(void)
 /***********************************************************************
  *           virtual_handle_fault
  */
-NTSTATUS virtual_handle_fault( LPCVOID addr, DWORD err, BOOL on_signal_stack )
+NTSTATUS virtual_handle_fault( void *addr, DWORD err, void *stack )
 {
     NTSTATUS ret = STATUS_ACCESS_VIOLATION;
-    void *page = ROUND_ADDR( addr, page_mask );
-    sigset_t sigset;
+    char *page = ROUND_ADDR( addr, page_mask );
     BYTE vprot;
 
-    server_enter_uninterrupted_section( &virtual_mutex, &sigset );
+    pthread_mutex_lock( &virtual_mutex );  /* no need for signal masking inside signal handler */
     vprot = get_page_vprot( page );
-    if (!on_signal_stack && (vprot & VPROT_GUARD))
+    if (!is_inside_signal_stack( stack ) && (vprot & VPROT_GUARD))
     {
         set_page_vprot_bits( page, page_size, 0, VPROT_GUARD );
         mprotect_range( page, page_size, 0, 0 );
@@ -2869,7 +2875,7 @@ NTSTATUS virtual_handle_fault( LPCVOID addr, DWORD err, BOOL on_signal_stack )
                 ret = STATUS_SUCCESS;
         }
     }
-    server_leave_uninterrupted_section( &virtual_mutex, &sigset );
+    pthread_mutex_unlock( &virtual_mutex );
     return ret;
 }
 

@@ -1668,7 +1668,7 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     if (TRAP_sig(context) == TRAP_x86_PAGEFLT &&
         (char *)stack_ptr >= (char *)get_signal_stack() &&
         (char *)stack_ptr < (char *)get_signal_stack() + signal_stack_size &&
-        !virtual_handle_fault( siginfo->si_addr, (ERROR_sig(context) >> 1) & 0x09, TRUE ))
+        !virtual_handle_fault( siginfo->si_addr, (ERROR_sig(context) >> 1) & 0x09, stack_ptr ))
     {
         return;
     }
@@ -1728,7 +1728,7 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         stack->rec.ExceptionInformation[0] = (ERROR_sig(context) >> 1) & 0x09;
         stack->rec.ExceptionInformation[1] = (ULONG_PTR)siginfo->si_addr;
         stack->rec.ExceptionCode = virtual_handle_fault( (void *)stack->rec.ExceptionInformation[1],
-                                                         stack->rec.ExceptionInformation[0], FALSE );
+                                                         stack->rec.ExceptionInformation[0], NULL );
         if (!stack->rec.ExceptionCode) return;
         if (stack->rec.ExceptionCode == EXCEPTION_ACCESS_VIOLATION &&
             stack->rec.ExceptionInformation[0] == EXCEPTION_EXECUTE_FAULT)
