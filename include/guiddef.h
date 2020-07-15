@@ -74,7 +74,7 @@ extern "C++" {
         __WINE_UUID_ATTR const GUID __wine_uuidof<type>::uuid = {l,w1,w2,{b1,b2,b3,b4,b5,b6,b7,b8}}; \
     }
 
-#define __uuidof(type) __wine_uuidof_type<typeof(type)>::inst::uuid
+#define __uuidof(type) __wine_uuidof_type<__typeof__(type)>::inst::uuid
 
 #else /* __WINE_UUID_ATTR */
 
