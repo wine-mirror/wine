@@ -539,15 +539,14 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
  *
  * Setup the exception record and context on the thread stack.
  */
-static struct stack_layout *setup_exception( ucontext_t *sigcontext )
+static struct stack_layout *setup_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec )
 {
-    EXCEPTION_RECORD rec = { 0 };
     void *stack_ptr = (void *)(SP_sig(sigcontext) & ~15);
     struct stack_layout *stack;
 
-    rec.ExceptionAddress = (void *)PC_sig(sigcontext);
-    stack = virtual_setup_exception( stack_ptr, sizeof(*stack), &rec );
-    stack->rec = rec;
+    rec->ExceptionAddress = (void *)PC_sig(sigcontext);
+    stack = virtual_setup_exception( stack_ptr, sizeof(*stack), rec );
+    stack->rec = *rec;
     save_context( &stack->context, sigcontext );
     save_fpu( &stack->context, sigcontext );
     return stack;
@@ -609,41 +608,32 @@ void WINAPI call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *cont
  */
 static void segv_handler( int signal, siginfo_t *info, void *ucontext )
 {
+    EXCEPTION_RECORD rec = { 0 };
     struct stack_layout *stack;
     ucontext_t *context = ucontext;
-
-    /* check for page fault inside the thread stack */
-    if (signal == SIGSEGV)
-    {
-        DWORD err = (get_fault_esr( context ) & 0x40) != 0;
-        NTSTATUS status = virtual_handle_fault( info->si_addr, err, (void *)SP_sig(context) );
-        if (!status) return;
-        stack = setup_exception( context );
-        stack->rec.ExceptionCode = status;
-    }
-    else stack = setup_exception( context );
-
-    if (stack->rec.ExceptionCode == EXCEPTION_STACK_OVERFLOW) goto done;
 
     switch(signal)
     {
     case SIGILL:   /* Invalid opcode exception */
-        stack->rec.ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
+        rec.ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
         break;
     case SIGSEGV:  /* Segmentation fault */
-        stack->rec.NumberParameters = 2;
-        stack->rec.ExceptionInformation[0] = (get_fault_esr( context ) & 0x40) != 0;
-        stack->rec.ExceptionInformation[1] = (ULONG_PTR)info->si_addr;
+        rec.NumberParameters = 2;
+        rec.ExceptionInformation[0] = (get_fault_esr( context ) & 0x40) != 0;
+        rec.ExceptionInformation[1] = (ULONG_PTR)info->si_addr;
+        rec.ExceptionCode = virtual_handle_fault( info->si_addr, rec.ExceptionInformation[0],
+                                                  (void *)SP_sig(context) );
+        if (!rec.ExceptionCode) return;
         break;
     case SIGBUS:  /* Alignment check exception */
-        stack->rec.ExceptionCode = EXCEPTION_DATATYPE_MISALIGNMENT;
+        rec.ExceptionCode = EXCEPTION_DATATYPE_MISALIGNMENT;
         break;
     default:
         ERR("Got unexpected signal %i\n", signal);
-        stack->rec.ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
+        rec.ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
         break;
     }
-done:
+    stack = setup_exception( context, &rec );
     setup_raise_exception( context, stack );
 }
 
@@ -655,20 +645,22 @@ done:
  */
 static void trap_handler( int signal, siginfo_t *info, void *ucontext )
 {
+    EXCEPTION_RECORD rec = { 0 };
     ucontext_t *context = ucontext;
-    struct stack_layout *stack = setup_exception( context );
+    struct stack_layout *stack;
 
     switch (info->si_code)
     {
     case TRAP_TRACE:
-        stack->rec.ExceptionCode = EXCEPTION_SINGLE_STEP;
+        rec.ExceptionCode = EXCEPTION_SINGLE_STEP;
         break;
     case TRAP_BRKPT:
     default:
-        stack->rec.ExceptionCode = EXCEPTION_BREAKPOINT;
-        stack->context.Pc += 4;
+        rec.ExceptionCode = EXCEPTION_BREAKPOINT;
+        PC_sig(context) += 4;
         break;
     }
+    stack = setup_exception( context, &rec );
     setup_raise_exception( context, stack );
 }
 
@@ -680,52 +672,54 @@ static void trap_handler( int signal, siginfo_t *info, void *ucontext )
  */
 static void fpe_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
-    struct stack_layout *stack = setup_exception( sigcontext );
+    EXCEPTION_RECORD rec = { 0 };
+    struct stack_layout *stack;
 
     switch (siginfo->si_code & 0xffff )
     {
 #ifdef FPE_FLTSUB
     case FPE_FLTSUB:
-        stack->rec.ExceptionCode = EXCEPTION_ARRAY_BOUNDS_EXCEEDED;
+        rec.ExceptionCode = EXCEPTION_ARRAY_BOUNDS_EXCEEDED;
         break;
 #endif
 #ifdef FPE_INTDIV
     case FPE_INTDIV:
-        stack->rec.ExceptionCode = EXCEPTION_INT_DIVIDE_BY_ZERO;
+        rec.ExceptionCode = EXCEPTION_INT_DIVIDE_BY_ZERO;
         break;
 #endif
 #ifdef FPE_INTOVF
     case FPE_INTOVF:
-        stack->rec.ExceptionCode = EXCEPTION_INT_OVERFLOW;
+        rec.ExceptionCode = EXCEPTION_INT_OVERFLOW;
         break;
 #endif
 #ifdef FPE_FLTDIV
     case FPE_FLTDIV:
-        stack->rec.ExceptionCode = EXCEPTION_FLT_DIVIDE_BY_ZERO;
+        rec.ExceptionCode = EXCEPTION_FLT_DIVIDE_BY_ZERO;
         break;
 #endif
 #ifdef FPE_FLTOVF
     case FPE_FLTOVF:
-        stack->rec.ExceptionCode = EXCEPTION_FLT_OVERFLOW;
+        rec.ExceptionCode = EXCEPTION_FLT_OVERFLOW;
         break;
 #endif
 #ifdef FPE_FLTUND
     case FPE_FLTUND:
-        stack->rec.ExceptionCode = EXCEPTION_FLT_UNDERFLOW;
+        rec.ExceptionCode = EXCEPTION_FLT_UNDERFLOW;
         break;
 #endif
 #ifdef FPE_FLTRES
     case FPE_FLTRES:
-        stack->rec.ExceptionCode = EXCEPTION_FLT_INEXACT_RESULT;
+        rec.ExceptionCode = EXCEPTION_FLT_INEXACT_RESULT;
         break;
 #endif
 #ifdef FPE_FLTINV
     case FPE_FLTINV:
 #endif
     default:
-        stack->rec.ExceptionCode = EXCEPTION_FLT_INVALID_OPERATION;
+        rec.ExceptionCode = EXCEPTION_FLT_INVALID_OPERATION;
         break;
     }
+    stack = setup_exception( sigcontext, &rec );
     setup_raise_exception( sigcontext, stack );
 }
 
@@ -737,9 +731,8 @@ static void fpe_handler( int signal, siginfo_t *siginfo, void *sigcontext )
  */
 static void int_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
-    struct stack_layout *stack = setup_exception( sigcontext );
-
-    stack->rec.ExceptionCode = CONTROL_C_EXIT;
+    EXCEPTION_RECORD rec = { CONTROL_C_EXIT };
+    struct stack_layout *stack = setup_exception( sigcontext, &rec );
     setup_raise_exception( sigcontext, stack );
 }
 
@@ -751,10 +744,8 @@ static void int_handler( int signal, siginfo_t *siginfo, void *sigcontext )
  */
 static void abrt_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
-    struct stack_layout *stack = setup_exception( sigcontext );
-
-    stack->rec.ExceptionCode  = EXCEPTION_WINE_ASSERTION;
-    stack->rec.ExceptionFlags = EH_NONCONTINUABLE;
+    EXCEPTION_RECORD rec = { EXCEPTION_WINE_ASSERTION, EH_NONCONTINUABLE };
+    struct stack_layout *stack = setup_exception( sigcontext, &rec );
     setup_raise_exception( sigcontext, stack );
 }
 

@@ -1833,15 +1833,14 @@ __ASM_GLOBAL_FUNC( raise_func_trampoline,
  * sigcontext so that the return from the signal handler will call
  * the raise function.
  */
-static struct stack_layout *setup_exception( ucontext_t *sigcontext )
+static struct stack_layout *setup_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec )
 {
-    EXCEPTION_RECORD rec = { 0 };
     void *stack_ptr = (void *)(RSP_sig(sigcontext) & ~15);
     struct stack_layout *stack;
 
-    rec.ExceptionAddress = (void *)RIP_sig(sigcontext);
-    stack = virtual_setup_exception( stack_ptr, sizeof(*stack), &rec );
-    stack->rec = rec;
+    rec->ExceptionAddress = (void *)RIP_sig(sigcontext);
+    stack = virtual_setup_exception( stack_ptr, sizeof(*stack), rec );
+    stack->rec = *rec;
     save_context( &stack->context, sigcontext );
     return stack;
 }
@@ -2049,6 +2048,7 @@ static inline BOOL handle_interrupt( ucontext_t *sigcontext, struct stack_layout
  */
 static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
+    EXCEPTION_RECORD rec = { 0 };
     struct stack_layout *stack;
     ucontext_t *ucontext = sigcontext;
 
@@ -2058,13 +2058,11 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     if (TRAP_sig(ucontext) == TRAP_x86_PAGEFLT)
     {
         DWORD err = (ERROR_sig(ucontext) >> 1) & 0x09;
-        NTSTATUS status = virtual_handle_fault( siginfo->si_addr, err, stack );
-        if (!status) return;
-        stack = setup_exception( sigcontext );
-        stack->rec.ExceptionCode = status;
+        rec.ExceptionCode = virtual_handle_fault( siginfo->si_addr, err, stack );
+        if (!rec.ExceptionCode) return;
     }
-    else stack = setup_exception( sigcontext );
 
+    stack = setup_exception( sigcontext, &rec );
     if (stack->rec.ExceptionCode == EXCEPTION_STACK_OVERFLOW) goto done;
 
     switch(TRAP_sig(ucontext))
@@ -2125,7 +2123,8 @@ done:
  */
 static void trap_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
-    struct stack_layout *stack = setup_exception( sigcontext );
+    EXCEPTION_RECORD rec = { 0 };
+    struct stack_layout *stack = setup_exception( sigcontext, &rec );
 
     switch (siginfo->si_code)
     {
@@ -2163,7 +2162,8 @@ static void trap_handler( int signal, siginfo_t *siginfo, void *sigcontext )
  */
 static void fpe_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
-    struct stack_layout *stack = setup_exception( sigcontext );
+    EXCEPTION_RECORD rec = { 0 };
+    struct stack_layout *stack = setup_exception( sigcontext, &rec );
 
     switch (siginfo->si_code)
     {
@@ -2205,8 +2205,8 @@ static void fpe_handler( int signal, siginfo_t *siginfo, void *sigcontext )
  */
 static void int_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
-    struct stack_layout *stack = setup_exception( sigcontext );
-    stack->rec.ExceptionCode = CONTROL_C_EXIT;
+    EXCEPTION_RECORD rec = { CONTROL_C_EXIT };
+    struct stack_layout *stack = setup_exception( sigcontext, &rec );
     setup_raise_exception( sigcontext, stack );
 }
 
@@ -2218,9 +2218,8 @@ static void int_handler( int signal, siginfo_t *siginfo, void *sigcontext )
  */
 static void abrt_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
-    struct stack_layout *stack = setup_exception( sigcontext );
-    stack->rec.ExceptionCode = EXCEPTION_WINE_ASSERTION;
-    stack->rec.ExceptionFlags = EH_NONCONTINUABLE;
+    EXCEPTION_RECORD rec = { EXCEPTION_WINE_ASSERTION, EH_NONCONTINUABLE };
+    struct stack_layout *stack = setup_exception( sigcontext, &rec );
     setup_raise_exception( sigcontext, stack );
 }
 

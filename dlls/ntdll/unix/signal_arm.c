@@ -524,19 +524,18 @@ __ASM_GLOBAL_FUNC( raise_func_trampoline_arm,
  *
  * Setup the exception record and context on the thread stack.
  */
-static EXCEPTION_RECORD *setup_exception( ucontext_t *sigcontext, raise_func func )
+static EXCEPTION_RECORD *setup_exception( ucontext_t *sigcontext, raise_func func, EXCEPTION_RECORD *rec )
 {
     struct stack_layout
     {
         CONTEXT           context;
         EXCEPTION_RECORD  rec;
     } *stack;
-    EXCEPTION_RECORD rec = { 0 };
     void *stack_ptr = (void *)(SP_sig(sigcontext) & ~3);
 
-    rec.ExceptionAddress = (void *)PC_sig(sigcontext);
-    stack = virtual_setup_exception( stack_ptr, sizeof(*stack), &rec );
-    stack->rec = rec;
+    rec->ExceptionAddress = (void *)PC_sig(sigcontext);
+    stack = virtual_setup_exception( stack_ptr, sizeof(*stack), rec );
+    stack->rec = *rec;
     save_context( &stack->context, sigcontext );
 
     /* now modify the sigcontext to return to the raise function */
@@ -574,47 +573,37 @@ static void WINAPI raise_segv_exception( EXCEPTION_RECORD *rec, CONTEXT *context
  */
 static void segv_handler( int signal, siginfo_t *info, void *ucontext )
 {
-    EXCEPTION_RECORD *rec;
+    EXCEPTION_RECORD rec = { 0 };
     ucontext_t *context = ucontext;
-
-    /* check for page fault inside the thread stack */
-    if (get_trap_code(signal, context) == TRAP_ARM_PAGEFLT)
-    {
-        DWORD err = (get_error_code(context) & 0x800) != 0;
-        NTSTATUS status = virtual_handle_fault( info->si_addr, err, (void *)SP_sig(context) );
-        if (!status) return;
-        rec = setup_exception( context, raise_segv_exception );
-        rec->ExceptionCode = status;
-    }
-    else rec = setup_exception( context, raise_segv_exception );
-
-    if (rec->ExceptionCode == EXCEPTION_STACK_OVERFLOW) return;
 
     switch(get_trap_code(signal, context))
     {
     case TRAP_ARM_PRIVINFLT:   /* Invalid opcode exception */
-        rec->ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
+        rec.ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
         break;
     case TRAP_ARM_PAGEFLT:  /* Page fault */
-        rec->ExceptionCode = EXCEPTION_ACCESS_VIOLATION;
-        rec->NumberParameters = 2;
-        rec->ExceptionInformation[0] = (get_error_code(context) & 0x800) != 0;
-        rec->ExceptionInformation[1] = (ULONG_PTR)info->si_addr;
+        rec.NumberParameters = 2;
+        rec.ExceptionInformation[0] = (get_error_code(context) & 0x800) != 0;
+        rec.ExceptionInformation[1] = (ULONG_PTR)info->si_addr;
+        rec.ExceptionCode = virtual_handle_fault( info->si_addr, rec.ExceptionInformation[0],
+                                                  (void *)SP_sig(context) );
+        if (!rec.ExceptionCode) return;
         break;
     case TRAP_ARM_ALIGNFLT:  /* Alignment check exception */
-        rec->ExceptionCode = EXCEPTION_DATATYPE_MISALIGNMENT;
+        rec.ExceptionCode = EXCEPTION_DATATYPE_MISALIGNMENT;
         break;
     case TRAP_ARM_UNKNOWN:   /* Unknown fault code */
-        rec->ExceptionCode = EXCEPTION_ACCESS_VIOLATION;
-        rec->NumberParameters = 2;
-        rec->ExceptionInformation[0] = 0;
-        rec->ExceptionInformation[1] = 0xffffffff;
+        rec.ExceptionCode = EXCEPTION_ACCESS_VIOLATION;
+        rec.NumberParameters = 2;
+        rec.ExceptionInformation[0] = 0;
+        rec.ExceptionInformation[1] = 0xffffffff;
         break;
     default:
         ERR("Got unexpected trap %d\n", get_trap_code(signal, context));
-        rec->ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
+        rec.ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
         break;
     }
+    setup_exception( context, raise_segv_exception, &rec );
 }
 
 
