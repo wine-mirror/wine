@@ -1460,72 +1460,12 @@ static BOOL check_atl_thunk( ucontext_t *sigcontext, struct stack_layout *stack 
  */
 static struct stack_layout *setup_exception_record( ucontext_t *sigcontext, void *stack_ptr )
 {
-    struct stack_layout *stack = stack_ptr;
-    DWORD exception_code = 0;
+    EXCEPTION_RECORD rec = { 0 };
+    struct stack_layout *stack;
 
-    /* stack sanity checks */
-
-    if ((char *)stack >= (char *)get_signal_stack() &&
-        (char *)stack < (char *)get_signal_stack() + signal_stack_size)
-    {
-        WINE_ERR( "nested exception on signal stack in thread %04x eip %08x esp %08x stack %p-%p\n",
-                  GetCurrentThreadId(), (unsigned int) EIP_sig(sigcontext),
-                  (unsigned int) ESP_sig(sigcontext), NtCurrentTeb()->Tib.StackLimit,
-                  NtCurrentTeb()->Tib.StackBase );
-        abort_thread(1);
-    }
-
-    if (stack - 1 > stack || /* check for overflow in subtraction */
-        (char *)stack <= (char *)NtCurrentTeb()->DeallocationStack ||
-        (char *)stack > (char *)NtCurrentTeb()->Tib.StackBase)
-    {
-        WARN( "exception outside of stack limits in thread %04x eip %08x esp %08x stack %p-%p\n",
-              GetCurrentThreadId(), (unsigned int) EIP_sig(sigcontext),
-              (unsigned int) ESP_sig(sigcontext), NtCurrentTeb()->Tib.StackLimit,
-              NtCurrentTeb()->Tib.StackBase );
-    }
-    else if ((char *)(stack - 1) < (char *)NtCurrentTeb()->DeallocationStack + 4096)
-    {
-        /* stack overflow on last page, unrecoverable */
-        UINT diff = (char *)NtCurrentTeb()->DeallocationStack + 4096 - (char *)(stack - 1);
-        WINE_ERR( "stack overflow %u bytes in thread %04x eip %08x esp %08x stack %p-%p-%p\n",
-                  diff, GetCurrentThreadId(), (unsigned int) EIP_sig(sigcontext),
-                  (unsigned int) ESP_sig(sigcontext), NtCurrentTeb()->DeallocationStack,
-                  NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );
-        abort_thread(1);
-    }
-    else if ((char *)(stack - 1) < (char *)NtCurrentTeb()->Tib.StackLimit)
-    {
-        /* stack access below stack limit, may be recoverable */
-        switch (virtual_handle_stack_fault( stack - 1 ))
-        {
-        case 0:  /* not handled */
-        {
-            UINT diff = (char *)NtCurrentTeb()->Tib.StackLimit - (char *)(stack - 1);
-            WINE_ERR( "stack overflow %u bytes in thread %04x eip %08x esp %08x stack %p-%p-%p\n",
-                      diff, GetCurrentThreadId(), (unsigned int) EIP_sig(sigcontext),
-                      (unsigned int) ESP_sig(sigcontext), NtCurrentTeb()->DeallocationStack,
-                      NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );
-            abort_thread(1);
-        }
-        case -1:  /* overflow */
-            exception_code = EXCEPTION_STACK_OVERFLOW;
-            break;
-        }
-    }
-
-    stack--;  /* push the stack_layout structure */
-#if defined(VALGRIND_MAKE_MEM_UNDEFINED)
-    VALGRIND_MAKE_MEM_UNDEFINED(stack, sizeof(*stack));
-#elif defined(VALGRIND_MAKE_WRITABLE)
-    VALGRIND_MAKE_WRITABLE(stack, sizeof(*stack));
-#endif
-    stack->rec.ExceptionRecord  = NULL;
-    stack->rec.ExceptionCode    = exception_code;
-    stack->rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
-    stack->rec.ExceptionAddress = (LPVOID)EIP_sig(sigcontext);
-    stack->rec.NumberParameters = 0;
-
+    rec.ExceptionAddress = (void *)EIP_sig(sigcontext);
+    stack = virtual_setup_exception( stack_ptr, sizeof(*stack), &rec );
+    stack->rec = rec;
     save_context( &stack->context, sigcontext );
     return stack;
 }

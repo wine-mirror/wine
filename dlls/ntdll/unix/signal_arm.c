@@ -531,17 +531,12 @@ static EXCEPTION_RECORD *setup_exception( ucontext_t *sigcontext, raise_func fun
         CONTEXT           context;
         EXCEPTION_RECORD  rec;
     } *stack;
-    DWORD exception_code = 0;
+    EXCEPTION_RECORD rec = { 0 };
+    void *stack_ptr = (void *)(SP_sig(sigcontext) & ~3);
 
-    stack = (struct stack_layout *)(SP_sig(sigcontext) & ~3);
-    stack--;  /* push the stack_layout structure */
-
-    stack->rec.ExceptionRecord  = NULL;
-    stack->rec.ExceptionCode    = exception_code;
-    stack->rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
-    stack->rec.ExceptionAddress = (LPVOID)PC_sig(sigcontext);
-    stack->rec.NumberParameters = 0;
-
+    rec.ExceptionAddress = (void *)PC_sig(sigcontext);
+    stack = virtual_setup_exception( stack_ptr, sizeof(*stack), &rec );
+    stack->rec = rec;
     save_context( &stack->context, sigcontext );
 
     /* now modify the sigcontext to return to the raise function */

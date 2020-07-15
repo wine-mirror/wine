@@ -2913,6 +2913,61 @@ NTSTATUS virtual_handle_fault( void *addr, DWORD err, void *stack )
 
 
 /***********************************************************************
+ *           virtual_setup_exception
+ */
+void *virtual_setup_exception( void *stack_ptr, size_t size, EXCEPTION_RECORD *rec )
+{
+    char *stack = stack_ptr;
+
+    if (is_inside_signal_stack( stack ))
+    {
+        ERR( "nested exception on signal stack in thread %04x addr %p stack %p (%p-%p-%p)\n",
+             GetCurrentThreadId(), rec->ExceptionAddress, stack, NtCurrentTeb()->DeallocationStack,
+             NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );
+        abort_thread(1);
+    }
+
+    if (stack - size > stack || /* check for overflow in subtraction */
+        stack <= (char *)NtCurrentTeb()->DeallocationStack ||
+        stack > (char *)NtCurrentTeb()->Tib.StackBase)
+    {
+        WARN( "exception outside of stack limits in thread %04x addr %p stack %p (%p-%p-%p)\n",
+              GetCurrentThreadId(), rec->ExceptionAddress, stack, NtCurrentTeb()->DeallocationStack,
+              NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );
+        return stack - size;
+    }
+
+    stack -= size;
+
+    if (stack < (char *)NtCurrentTeb()->DeallocationStack + 4096)
+    {
+        /* stack overflow on last page, unrecoverable */
+        UINT diff = (char *)NtCurrentTeb()->DeallocationStack + 4096 - stack;
+        ERR( "stack overflow %u bytes in thread %04x addr %p stack %p (%p-%p-%p)\n",
+             diff, GetCurrentThreadId(), rec->ExceptionAddress, stack, NtCurrentTeb()->DeallocationStack,
+             NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );
+        abort_thread(1);
+    }
+    else if (stack < (char *)NtCurrentTeb()->Tib.StackLimit)
+    {
+        pthread_mutex_lock( &virtual_mutex );  /* no need for signal masking inside signal handler */
+        if ((get_page_vprot( stack ) & VPROT_GUARD) && grow_thread_stack( ROUND_ADDR( stack, page_mask )))
+        {
+            rec->ExceptionCode = STATUS_STACK_OVERFLOW;
+            rec->NumberParameters = 0;
+        }
+        pthread_mutex_unlock( &virtual_mutex );
+    }
+#if defined(VALGRIND_MAKE_MEM_UNDEFINED)
+    VALGRIND_MAKE_MEM_UNDEFINED( stack, size );
+#elif defined(VALGRIND_MAKE_WRITABLE)
+    VALGRIND_MAKE_WRITABLE( stack, size );
+#endif
+    return stack;
+}
+
+
+/***********************************************************************
  *           check_write_access
  *
  * Check if the memory range is writable, temporarily disabling write watches if necessary.
@@ -3056,30 +3111,6 @@ BOOL virtual_is_valid_code_address( const void *addr, SIZE_T size )
     if ((view = find_view( addr, size )))
         ret = !(view->protect & VPROT_SYSTEM);  /* system views are not visible to the app */
     server_leave_uninterrupted_section( &virtual_mutex, &sigset );
-    return ret;
-}
-
-
-/***********************************************************************
- *           virtual_handle_stack_fault
- *
- * Handle an access fault inside the current thread stack.
- * Return 1 if safely handled, -1 if handled into the overflow space.
- * Called from inside a signal handler.
- */
-int virtual_handle_stack_fault( void *addr )
-{
-    int ret = 0;
-
-    if ((char *)addr < (char *)NtCurrentTeb()->DeallocationStack) return 0;
-    if ((char *)addr >= (char *)NtCurrentTeb()->Tib.StackBase) return 0;
-
-    pthread_mutex_lock( &virtual_mutex );  /* no need for signal masking inside signal handler */
-    if (get_page_vprot( addr ) & VPROT_GUARD)
-    {
-        ret = grow_thread_stack( ROUND_ADDR( addr, page_mask )) ? -1 : 1;
-    }
-    pthread_mutex_unlock( &virtual_mutex );
     return ret;
 }
 

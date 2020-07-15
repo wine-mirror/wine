@@ -1378,18 +1378,6 @@ static inline void set_sigcontext( const CONTEXT *context, ucontext_t *sigcontex
 
 
 /***********************************************************************
- *           is_inside_signal_stack
- *
- * Check if pointer is inside the signal stack.
- */
-static inline BOOL is_inside_signal_stack( void *ptr )
-{
-    return ((char *)ptr >= (char *)get_signal_stack() &&
-            (char *)ptr < (char *)get_signal_stack() + signal_stack_size);
-}
-
-
-/***********************************************************************
  *           save_context
  *
  * Set the register values from a sigcontext.
@@ -1847,72 +1835,14 @@ __ASM_GLOBAL_FUNC( raise_func_trampoline,
  */
 static struct stack_layout *setup_exception( ucontext_t *sigcontext )
 {
+    EXCEPTION_RECORD rec = { 0 };
+    void *stack_ptr = (void *)(RSP_sig(sigcontext) & ~15);
     struct stack_layout *stack;
-    DWORD exception_code = 0;
 
-    stack = (struct stack_layout *)(RSP_sig(sigcontext) & ~15);
-
-    /* stack sanity checks */
-
-    if (is_inside_signal_stack( stack ))
-    {
-        ERR( "nested exception on signal stack in thread %04x eip %016lx esp %016lx stack %p-%p\n",
-             GetCurrentThreadId(), (ULONG_PTR)RIP_sig(sigcontext), (ULONG_PTR)RSP_sig(sigcontext),
-             NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );
-        abort_thread(1);
-    }
-
-    if (stack - 1 > stack || /* check for overflow in subtraction */
-        (char *)stack <= (char *)NtCurrentTeb()->DeallocationStack ||
-        (char *)stack > (char *)NtCurrentTeb()->Tib.StackBase)
-    {
-        WARN( "exception outside of stack limits in thread %04x eip %016lx esp %016lx stack %p-%p\n",
-              GetCurrentThreadId(), (ULONG_PTR)RIP_sig(sigcontext), (ULONG_PTR)RSP_sig(sigcontext),
-              NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );
-    }
-    else if ((char *)(stack - 1) < (char *)NtCurrentTeb()->DeallocationStack + 4096)
-    {
-        /* stack overflow on last page, unrecoverable */
-        UINT diff = (char *)NtCurrentTeb()->DeallocationStack + 4096 - (char *)(stack - 1);
-        ERR( "stack overflow %u bytes in thread %04x eip %016lx esp %016lx stack %p-%p-%p\n",
-             diff, GetCurrentThreadId(), (ULONG_PTR)RIP_sig(sigcontext),
-             (ULONG_PTR)RSP_sig(sigcontext), NtCurrentTeb()->DeallocationStack,
-             NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );
-        abort_thread(1);
-    }
-    else if ((char *)(stack - 1) < (char *)NtCurrentTeb()->Tib.StackLimit)
-    {
-        /* stack access below stack limit, may be recoverable */
-        switch (virtual_handle_stack_fault( stack - 1 ))
-        {
-        case 0:  /* not handled */
-        {
-            UINT diff = (char *)NtCurrentTeb()->Tib.StackLimit - (char *)(stack - 1);
-            ERR( "stack overflow %u bytes in thread %04x eip %016lx esp %016lx stack %p-%p-%p\n",
-                 diff, GetCurrentThreadId(), (ULONG_PTR)RIP_sig(sigcontext),
-                 (ULONG_PTR)RSP_sig(sigcontext), NtCurrentTeb()->DeallocationStack,
-                 NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );
-            abort_thread(1);
-        }
-        case -1:  /* overflow */
-            exception_code = EXCEPTION_STACK_OVERFLOW;
-            break;
-        }
-    }
-
-    stack--;  /* push the stack_layout structure */
-#if defined(VALGRIND_MAKE_MEM_UNDEFINED)
-    VALGRIND_MAKE_MEM_UNDEFINED(stack, sizeof(*stack));
-#elif defined(VALGRIND_MAKE_WRITABLE)
-    VALGRIND_MAKE_WRITABLE(stack, sizeof(*stack));
-#endif
-    stack->rec.ExceptionRecord  = NULL;
-    stack->rec.ExceptionCode    = exception_code;
-    stack->rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
-    stack->rec.ExceptionAddress = (void *)RIP_sig(sigcontext);
-    stack->rec.NumberParameters = 0;
+    rec.ExceptionAddress = (void *)RIP_sig(sigcontext);
+    stack = virtual_setup_exception( stack_ptr, sizeof(*stack), &rec );
+    stack->rec = rec;
     save_context( &stack->context, sigcontext );
-
     return stack;
 }
 
