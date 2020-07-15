@@ -2090,19 +2090,19 @@ INT CDECL MSVCRT_iswupper( MSVCRT_wchar_t wc )
 }
 
 /*********************************************************************
- *		iswxdigit (MSVCRT.@)
- */
-INT CDECL MSVCRT_iswxdigit( MSVCRT_wchar_t wc )
-{
-    return isxdigitW( wc );
-}
-
-/*********************************************************************
  *		_iswxdigit_l (MSVCRT.@)
  */
 int CDECL MSVCRT__iswxdigit_l( MSVCRT_wchar_t wc, MSVCRT__locale_t locale )
 {
-    return isxdigitW( wc );
+    return MSVCRT__iswctype_l( wc, MSVCRT__HEX, locale );
+}
+
+/*********************************************************************
+ *		iswxdigit (MSVCRT.@)
+ */
+INT CDECL MSVCRT_iswxdigit( MSVCRT_wchar_t wc )
+{
+    return MSVCRT__iswxdigit_l( wc, NULL );
 }
 
 /*********************************************************************
