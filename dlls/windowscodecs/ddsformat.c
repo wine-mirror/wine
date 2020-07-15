@@ -626,10 +626,26 @@ static HRESULT WINAPI DdsDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
                                             WICDecodeOptions cacheOptions)
 {
     DdsDecoder *This = impl_from_IWICBitmapDecoder(iface);
+    HRESULT hr;
 
     TRACE("(%p,%p,%x)\n", iface, pIStream, cacheOptions);
 
-    return IWICWineDecoder_Initialize(&This->IWICWineDecoder_iface, pIStream, cacheOptions);
+    EnterCriticalSection(&This->lock);
+
+    hr = IWICWineDecoder_Initialize(&This->IWICWineDecoder_iface, pIStream, cacheOptions);
+    if (FAILED(hr)) goto end;
+
+    if (!This->info.compressed || This->info.dimension == WICDdsTextureCube) {
+        IStream_Release(pIStream);
+        This->stream = NULL;
+        This->initialized = FALSE;
+        hr = WINCODEC_ERR_BADHEADER;
+    }
+
+end:
+    LeaveCriticalSection(&This->lock);
+
+    return hr;
 }
 
 static HRESULT WINAPI DdsDecoder_GetContainerFormat(IWICBitmapDecoder *iface,

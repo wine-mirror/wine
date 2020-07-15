@@ -237,7 +237,6 @@ static HRESULT init_decoder(IWICBitmapDecoder *decoder, IWICStream *stream, HRES
     if (index == -1) {
         ok(hr == S_OK, "Decoder initialize failed, hr %#x\n", hr);
     } else {
-        todo_wine_if(wine_init)
         ok(hr == expected, "Test %u: Expected hr %#x, got %#x\n", index, expected, hr);
     }
 
@@ -251,10 +250,8 @@ static HRESULT init_decoder(IWICBitmapDecoder *decoder, IWICStream *stream, HRES
         if (hr == S_OK) {
             hr = IWICWineDecoder_Initialize(wine_decoder, (IStream*)stream, WICDecodeMetadataCacheOnDemand);
             if (index == -1)  {
-                todo_wine
                 ok(hr == S_OK, "Initialize failed, hr %#x\n", hr);
             } else {
-                todo_wine
                 ok(hr == S_OK, "Test %u: Initialize failed, hr %#x\n", index, hr);
             }
 
