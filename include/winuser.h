@@ -1217,9 +1217,9 @@ typedef struct tagSTYLESTRUCT {
   /* Offsets for GetWindowLong() and GetWindowWord() */
 #define GWL_EXSTYLE         (-20)
 #define GWL_STYLE           (-16)
+#define GWL_ID              (-12)
 #if !defined _WIN64 && !defined __WINESRC__
 # define GWL_USERDATA        (-21)
-# define GWL_ID              (-12)
 # define GWL_HWNDPARENT      (-8)
 # define GWL_HINSTANCE       (-6)
 # define GWL_WNDPROC         (-4)
