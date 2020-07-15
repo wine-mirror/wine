@@ -104,6 +104,7 @@ typedef struct dds_info {
     UINT array_size;
     UINT frame_count;
     UINT data_offset;
+    UINT bytes_per_block;
     BOOL compressed;
     DXGI_FORMAT format;
     WICDdsDimension dimension;
@@ -209,6 +210,27 @@ static WICDdsAlphaMode get_alpha_mode_from_fourcc(DWORD fourcc)
     }
 }
 
+static UINT get_bytes_per_block_from_format(DXGI_FORMAT format)
+{
+    switch (format)
+    {
+        case DXGI_FORMAT_BC1_UNORM:
+        case DXGI_FORMAT_BC1_TYPELESS:
+        case DXGI_FORMAT_BC1_UNORM_SRGB:
+            return 8;
+        case DXGI_FORMAT_BC2_UNORM:
+        case DXGI_FORMAT_BC2_TYPELESS:
+        case DXGI_FORMAT_BC2_UNORM_SRGB:
+        case DXGI_FORMAT_BC3_UNORM:
+        case DXGI_FORMAT_BC3_TYPELESS:
+        case DXGI_FORMAT_BC3_UNORM_SRGB:
+            return 16;
+        default:
+            WARN("DXGI format 0x%x is not supported in DDS decoder\n", format);
+            return 0;
+    }
+}
+
 static void get_dds_info(dds_info* info, DDS_HEADER *header, DDS_HEADER_DXT10 *header_dxt10)
 {
     int i;
@@ -231,7 +253,11 @@ static void get_dds_info(dds_info* info, DDS_HEADER *header, DDS_HEADER_DXT10 *h
         info->alpha_mode = header_dxt10->miscFlags2 & 0x00000008;
         info->data_offset = sizeof(DWORD) + sizeof(*header) + sizeof(*header_dxt10);
     } else {
-        info->format = get_format_from_fourcc(header->ddspf.fourCC);
+        if (info->compressed) {
+            info->format = get_format_from_fourcc(header->ddspf.fourCC);
+        } else {
+            info->format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        }
         info->dimension = get_dimension(header, NULL);
         info->alpha_mode = get_alpha_mode_from_fourcc(header->ddspf.fourCC);
         info->data_offset = sizeof(DWORD) + sizeof(*header);
@@ -239,7 +265,14 @@ static void get_dds_info(dds_info* info, DDS_HEADER *header, DDS_HEADER_DXT10 *h
     info->pixel_format = (info->alpha_mode == WICDdsAlphaModePremultiplied) ?
                          &GUID_WICPixelFormat32bppPBGRA : &GUID_WICPixelFormat32bppBGRA;
 
+    if (info->compressed) {
+        info->bytes_per_block = get_bytes_per_block_from_format(info->format);
+    } else {
+        info->bytes_per_block = header->ddspf.rgbBitCount / 8;
+    }
+
     /* get frame count */
+
     if (info->depth == 1) {
         info->frame_count = info->array_size * info->mip_levels;
     } else {
@@ -251,27 +284,6 @@ static void get_dds_info(dds_info* info, DDS_HEADER *header, DDS_HEADER_DXT10 *h
             if (depth > 1) depth /= 2;
         }
         info->frame_count *= info->array_size;
-    }
-}
-
-static UINT get_bytes_per_block(DXGI_FORMAT format)
-{
-    switch(format)
-    {
-        case DXGI_FORMAT_BC1_UNORM:
-        case DXGI_FORMAT_BC1_TYPELESS:
-        case DXGI_FORMAT_BC1_UNORM_SRGB:
-            return 8;
-        case DXGI_FORMAT_BC2_UNORM:
-        case DXGI_FORMAT_BC2_TYPELESS:
-        case DXGI_FORMAT_BC2_UNORM_SRGB:
-        case DXGI_FORMAT_BC3_UNORM:
-        case DXGI_FORMAT_BC3_TYPELESS:
-        case DXGI_FORMAT_BC3_UNORM_SRGB:
-            return 16;
-        default:
-            WARN("DXGI format 0x%x is not supported in DDS decoder\n", format);
-            return 0;
     }
 }
 
@@ -840,7 +852,7 @@ static HRESULT WINAPI DdsDecoder_Dds_GetFrame(IWICDdsDecoder *iface,
     DdsDecoder *This = impl_from_IWICDdsDecoder(iface);
     HRESULT hr;
     LARGE_INTEGER seek;
-    UINT width, height, depth, width_in_blocks, height_in_blocks, size;
+    UINT width, height, depth, block_width, block_height, width_in_blocks, height_in_blocks, size;
     UINT frame_width = 0, frame_height = 0, frame_width_in_blocks = 0, frame_height_in_blocks = 0, frame_size = 0;
     UINT bytes_per_block, bytesread, i;
     DdsFrameDecode *frame_decode = NULL;
@@ -860,7 +872,14 @@ static HRESULT WINAPI DdsDecoder_Dds_GetFrame(IWICDdsDecoder *iface,
         goto end;
     }
 
-    bytes_per_block = get_bytes_per_block(This->info.format);
+    bytes_per_block = This->info.bytes_per_block;
+    if (This->info.compressed) {
+        block_width = DDS_BLOCK_WIDTH;
+        block_height = DDS_BLOCK_HEIGHT;
+    } else {
+        block_width = 1;
+        block_height = 1;
+    }
     seek.QuadPart = This->info.data_offset;
 
     width = This->info.width;
@@ -868,8 +887,8 @@ static HRESULT WINAPI DdsDecoder_Dds_GetFrame(IWICDdsDecoder *iface,
     depth = This->info.depth;
     for (i = 0; i < This->info.mip_levels; i++)
     {
-        width_in_blocks = (width + DDS_BLOCK_WIDTH - 1) / DDS_BLOCK_WIDTH;
-        height_in_blocks = (height + DDS_BLOCK_HEIGHT - 1) / DDS_BLOCK_HEIGHT;
+        width_in_blocks = (width + block_width - 1) / block_width;
+        height_in_blocks = (height + block_height - 1) / block_height;
         size = width_in_blocks * height_in_blocks * bytes_per_block;
 
         if (i < mipLevel)  {
@@ -896,8 +915,8 @@ static HRESULT WINAPI DdsDecoder_Dds_GetFrame(IWICDdsDecoder *iface,
     frame_decode->info.height = frame_height;
     frame_decode->info.format = This->info.format;
     frame_decode->info.bytes_per_block = bytes_per_block;
-    frame_decode->info.block_width = DDS_BLOCK_WIDTH;
-    frame_decode->info.block_height = DDS_BLOCK_HEIGHT;
+    frame_decode->info.block_width = block_width;
+    frame_decode->info.block_height = block_height;
     frame_decode->info.width_in_blocks = frame_width_in_blocks;
     frame_decode->info.height_in_blocks = frame_height_in_blocks;
     frame_decode->info.pixel_format = This->info.pixel_format;
