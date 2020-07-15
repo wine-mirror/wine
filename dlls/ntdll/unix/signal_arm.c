@@ -104,6 +104,48 @@ typedef struct ucontext
 # define ERROR_sig(context)         REG_sig(error_code, context)
 # define TRAP_sig(context)          REG_sig(trap_no, context)
 
+struct extended_ctx
+{
+    unsigned long magic;
+    unsigned long size;
+};
+
+struct vfp_sigframe
+{
+    struct extended_ctx ctx;
+    unsigned long long fpregs[32];
+    unsigned long fpscr;
+};
+
+static void *get_extended_sigcontext( const ucontext_t *sigcontext, unsigned int magic )
+{
+    struct extended_ctx *ctx = (struct extended_ctx *)sigcontext->uc_regspace;
+    while ((char *)ctx < (char *)(sigcontext + 1) && ctx->magic && ctx->size)
+    {
+        if (ctx->magic == magic) return ctx;
+        ctx = (struct extended_ctx *)((char *)ctx + ctx->size);
+    }
+    return NULL;
+}
+
+static void save_fpu( CONTEXT *context, const ucontext_t *sigcontext )
+{
+    struct vfp_sigframe *frame = get_extended_sigcontext( sigcontext, 0x56465001 );
+
+    if (!frame) return;
+    memcpy( context->u.D, frame->fpregs, sizeof(context->u.D) );
+    context->Fpscr = frame->fpscr;
+}
+
+static void restore_fpu( const CONTEXT *context, ucontext_t *sigcontext )
+{
+    struct vfp_sigframe *frame = get_extended_sigcontext( sigcontext, 0x56465001 );
+
+    if (!frame) return;
+    memcpy( frame->fpregs, context->u.D, sizeof(context->u.D) );
+    frame->fpscr = context->Fpscr;
+}
+
 #elif defined(__FreeBSD__)
 
 /* All Registers access - only for local access */
@@ -116,6 +158,9 @@ typedef struct ucontext
 # define CPSR_sig(context)          REGn_sig(_REG_CPSR, context)  /* Current State Register */
 # define IP_sig(context)            REGn_sig(_REG_R12, context)   /* Intra-Procedure-call scratch register */
 # define FP_sig(context)            REGn_sig(_REG_FP, context)    /* Frame pointer */
+
+static void save_fpu( CONTEXT *context, const ucontext_t *sigcontext ) { }
+static void restore_fpu( const CONTEXT *context, ucontext_t *sigcontext ) { }
 
 #endif /* linux */
 
@@ -200,6 +245,7 @@ static void save_context( CONTEXT *context, const ucontext_t *sigcontext )
     context->Cpsr = CPSR_sig(sigcontext); /* Current State Register */
     context->R11  = FP_sig(sigcontext);   /* Frame pointer */
     context->R12  = IP_sig(sigcontext);   /* Intra-Procedure-call scratch register */
+    save_fpu( context, sigcontext );
 }
 
 
@@ -216,33 +262,12 @@ static void restore_context( const CONTEXT *context, ucontext_t *sigcontext )
 #undef C
 
     SP_sig(sigcontext)   = context->Sp;   /* Stack pointer */
-    LR_sig(sigcontext)   = context->Lr ;  /* Link register */
+    LR_sig(sigcontext)   = context->Lr;   /* Link register */
     PC_sig(sigcontext)   = context->Pc;   /* Program Counter */
     CPSR_sig(sigcontext) = context->Cpsr; /* Current State Register */
     FP_sig(sigcontext)   = context->R11;  /* Frame pointer */
     IP_sig(sigcontext)   = context->R12;  /* Intra-Procedure-call scratch register */
-}
-
-
-/***********************************************************************
- *           save_fpu
- *
- * Set the FPU context from a sigcontext.
- */
-static inline void save_fpu( CONTEXT *context, const ucontext_t *sigcontext )
-{
-    FIXME("not implemented\n");
-}
-
-
-/***********************************************************************
- *           restore_fpu
- *
- * Restore the FPU context to a sigcontext.
- */
-static inline void restore_fpu( CONTEXT *context, const ucontext_t *sigcontext )
-{
-    FIXME("not implemented\n");
+    restore_fpu( context, sigcontext );
 }
 
 
@@ -661,7 +686,6 @@ static void fpe_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     CONTEXT context;
     NTSTATUS status;
 
-    save_fpu( &context, sigcontext );
     save_context( &context, sigcontext );
 
     switch (siginfo->si_code & 0xffff )
@@ -716,7 +740,6 @@ static void fpe_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     if (status) RtlRaiseStatus( status );
 
     restore_context( &context, sigcontext );
-    restore_fpu( &context, sigcontext );
 }
 
 
