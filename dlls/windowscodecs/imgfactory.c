@@ -134,76 +134,74 @@ static HRESULT WINAPI ImagingFactory_CreateDecoderFromFilename(
 static HRESULT find_decoder(IStream *pIStream, const GUID *pguidVendor,
                             WICDecodeOptions metadataOptions, IWICBitmapDecoder **decoder)
 {
-    IEnumUnknown *enumdecoders;
-    IUnknown *unkdecoderinfo;
-    IWICBitmapDecoderInfo *decoderinfo;
+    IEnumUnknown *enumdecoders = NULL;
+    IUnknown *unkdecoderinfo = NULL;
     GUID vendor;
-    HRESULT res;
+    HRESULT res, res_wine;
     ULONG num_fetched;
-    BOOL matches;
+    BOOL matches, found;
 
     *decoder = NULL;
 
     res = CreateComponentEnumerator(WICDecoder, WICComponentEnumerateDefault, &enumdecoders);
     if (FAILED(res)) return res;
 
-    while (!*decoder)
+    found = FALSE;
+    while (IEnumUnknown_Next(enumdecoders, 1, &unkdecoderinfo, &num_fetched) == S_OK)
     {
-        res = IEnumUnknown_Next(enumdecoders, 1, &unkdecoderinfo, &num_fetched);
+        IWICBitmapDecoderInfo *decoderinfo = NULL;
+        IWICWineDecoder *wine_decoder = NULL;
 
-        if (res == S_OK)
+        res = IUnknown_QueryInterface(unkdecoderinfo, &IID_IWICBitmapDecoderInfo, (void**)&decoderinfo);
+        if (FAILED(res)) goto next;
+
+        if (pguidVendor)
         {
-            res = IUnknown_QueryInterface(unkdecoderinfo, &IID_IWICBitmapDecoderInfo, (void**)&decoderinfo);
+            res = IWICBitmapDecoderInfo_GetVendorGUID(decoderinfo, &vendor);
+            if (FAILED(res) || !IsEqualIID(&vendor, pguidVendor)) goto next;
+        }
 
-            if (SUCCEEDED(res))
+        res = IWICBitmapDecoderInfo_MatchesPattern(decoderinfo, pIStream, &matches);
+        if (FAILED(res) || !matches) goto next;
+
+        res = IWICBitmapDecoderInfo_CreateInstance(decoderinfo, decoder);
+        if (FAILED(res)) goto next;
+
+        /* FIXME: should use QueryCapability to choose a decoder */
+
+        found = TRUE;
+        res = IWICBitmapDecoder_Initialize(*decoder, pIStream, metadataOptions);
+        if (FAILED(res))
+        {
+            res_wine = IWICBitmapDecoder_QueryInterface(*decoder, &IID_IWICWineDecoder, (void **)&wine_decoder);
+            if (FAILED(res_wine))
             {
-                if (pguidVendor)
-                {
-                    res = IWICBitmapDecoderInfo_GetVendorGUID(decoderinfo, &vendor);
-                    if (FAILED(res) || !IsEqualIID(&vendor, pguidVendor))
-                    {
-                        IWICBitmapDecoderInfo_Release(decoderinfo);
-                        IUnknown_Release(unkdecoderinfo);
-                        continue;
-                    }
-                }
-
-                res = IWICBitmapDecoderInfo_MatchesPattern(decoderinfo, pIStream, &matches);
-
-                if (SUCCEEDED(res) && matches)
-                {
-                    res = IWICBitmapDecoderInfo_CreateInstance(decoderinfo, decoder);
-
-                    /* FIXME: should use QueryCapability to choose a decoder */
-
-                    if (SUCCEEDED(res))
-                    {
-                        res = IWICBitmapDecoder_Initialize(*decoder, pIStream, metadataOptions);
-
-                        if (FAILED(res))
-                        {
-                            IWICBitmapDecoder_Release(*decoder);
-                            IWICBitmapDecoderInfo_Release(decoderinfo);
-                            IUnknown_Release(unkdecoderinfo);
-                            IEnumUnknown_Release(enumdecoders);
-                            *decoder = NULL;
-                            return res;
-                        }
-                    }
-                }
-
-                IWICBitmapDecoderInfo_Release(decoderinfo);
+                IWICBitmapDecoder_Release(*decoder);
+                *decoder = NULL;
+                goto next;
             }
 
-            IUnknown_Release(unkdecoderinfo);
+            res_wine = IWICWineDecoder_Initialize(wine_decoder, pIStream, metadataOptions);
+            if (FAILED(res_wine))
+            {
+                IWICBitmapDecoder_Release(*decoder);
+                *decoder = NULL;
+                goto next;
+            }
+
+            res = res_wine;
         }
-        else
-            break;
+
+    next:
+        if (wine_decoder) IWICWineDecoder_Release(wine_decoder);
+        if (decoderinfo) IWICBitmapDecoderInfo_Release(decoderinfo);
+        IUnknown_Release(unkdecoderinfo);
+        if (found) break;
     }
 
     IEnumUnknown_Release(enumdecoders);
-
-    return WINCODEC_ERR_COMPONENTNOTFOUND;
+    if (!found) res = WINCODEC_ERR_COMPONENTNOTFOUND;
+    return res;
 }
 
 static HRESULT WINAPI ImagingFactory_CreateDecoderFromStream(
