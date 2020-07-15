@@ -4743,8 +4743,8 @@ static NTSTATUS server_ioctl_file( HANDLE handle, HANDLE event,
     SERVER_END_REQ;
 
     if (status == STATUS_NOT_SUPPORTED)
-        FIXME("Unsupported ioctl %x (device=%x access=%x func=%x method=%x)\n",
-              code, code >> 16, (code >> 14) & 3, (code >> 2) & 0xfff, code & 3);
+        WARN("Unsupported ioctl %x (device=%x access=%x func=%x method=%x)\n",
+             code, code >> 16, (code >> 14) & 3, (code >> 2) & 0xfff, code & 3);
 
     if (status != STATUS_PENDING) free( async );
 
