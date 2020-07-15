@@ -1936,38 +1936,50 @@ static ULONG WINAPI topology_loader_Release(IMFTopoLoader *iface)
 static HRESULT WINAPI topology_loader_Load(IMFTopoLoader *iface, IMFTopology *input_topology,
         IMFTopology **output_topology, IMFTopology *current_topology)
 {
-    struct topology *topology = unsafe_impl_from_IMFTopology(input_topology);
+    MF_TOPOLOGY_TYPE node_type;
+    IMFTopologyNode *node;
+    unsigned short i = 0;
     IMFStreamSink *sink;
-    HRESULT hr;
-    size_t i;
+    IUnknown *object;
+    HRESULT hr = E_FAIL;
 
     FIXME("%p, %p, %p, %p.\n", iface, input_topology, output_topology, current_topology);
 
     if (current_topology)
         FIXME("Current topology instance is ignored.\n");
 
-    for (i = 0; i < topology->nodes.count; ++i)
-    {
-        struct topology_node *node = topology->nodes.nodes[i];
+    /* Basic sanity checks for input topology:
 
-        switch (node->node_type)
+       - source nodes must have stream descriptor set;
+       - sink nodes must be resolved to stream sink objects;
+    */
+    while (SUCCEEDED(IMFTopology_GetNode(input_topology, i++, &node)))
+    {
+        IMFTopologyNode_GetNodeType(node, &node_type);
+
+        switch (node_type)
         {
             case MF_TOPOLOGY_OUTPUT_NODE:
-                if (node->object)
+                if (SUCCEEDED(hr = IMFTopologyNode_GetObject(node, &object)))
                 {
                     /* Sinks must be bound beforehand. */
-                    if (FAILED(IUnknown_QueryInterface(node->object, &IID_IMFStreamSink, (void **)&sink)))
-                        return MF_E_TOPO_SINK_ACTIVATES_UNSUPPORTED;
-                    IMFStreamSink_Release(sink);
+                    if (FAILED(IUnknown_QueryInterface(object, &IID_IMFStreamSink, (void **)&sink)))
+                        hr = MF_E_TOPO_SINK_ACTIVATES_UNSUPPORTED;
+                    else if (sink)
+                        IMFStreamSink_Release(sink);
+                    IUnknown_Release(object);
                 }
                 break;
             case MF_TOPOLOGY_SOURCESTREAM_NODE:
-                if (FAILED(hr = IMFAttributes_GetItem(node->attributes, &MF_TOPONODE_STREAM_DESCRIPTOR, NULL)))
-                    return hr;
+                hr = IMFTopologyNode_GetItem(node, &MF_TOPONODE_STREAM_DESCRIPTOR, NULL);
                 break;
             default:
                 ;
         }
+
+        IMFTopologyNode_Release(node);
+        if (FAILED(hr))
+            return hr;
     }
 
     if (FAILED(hr = MFCreateTopology(output_topology)))
