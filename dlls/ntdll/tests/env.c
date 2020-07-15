@@ -386,7 +386,7 @@ static void test_process_params(void)
     else
     {
         size = HeapSize( GetProcessHeap(), 0, params );
-        ok( size != ~0UL, "not a heap block %p\n", params );
+        ok( size != ~(SIZE_T)0, "not a heap block %p\n", params );
         ok( params->AllocationSize == params->Size,
             "wrong AllocationSize %x/%x\n", params->AllocationSize, params->Size );
     }
@@ -456,7 +456,7 @@ static void test_process_params(void)
     else
     {
         size = HeapSize( GetProcessHeap(), 0, params );
-        ok( size != ~0UL, "not a heap block %p\n", params );
+        ok( size != ~(SIZE_T)0, "not a heap block %p\n", params );
         ok( params->AllocationSize == params->Size,
             "wrong AllocationSize %x/%x\n", params->AllocationSize, params->Size );
     }
@@ -509,7 +509,7 @@ static void test_process_params(void)
     else
     {
         size = HeapSize( GetProcessHeap(), 0, cur_params );
-        ok( size != ~0UL, "not a heap block %p\n", cur_params );
+        ok( size != ~(SIZE_T)0, "not a heap block %p\n", cur_params );
         ok( cur_params->AllocationSize == cur_params->Size,
             "wrong AllocationSize %x/%x\n", cur_params->AllocationSize, cur_params->Size );
         ok( cur_params->Size == size, "wrong Size %x/%lx\n", cur_params->Size, size );
@@ -548,7 +548,7 @@ static void test_process_params(void)
     else
     {
         size = HeapSize( GetProcessHeap(), 0, initial_env );
-        ok( size != ~0UL, "env is not a heap block %p / %p\n", cur_params, initial_env );
+        ok( size != ~(SIZE_T)0, "env is not a heap block %p / %p\n", cur_params, initial_env );
     }
 }
 
