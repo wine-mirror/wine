@@ -105,6 +105,7 @@ struct object
     struct list               wait_queue;
     struct object_name       *name;
     struct security_descriptor *sd;
+    unsigned int              is_permanent:1;
 #ifdef DEBUG_OBJECTS
     struct list               obj_list;
 #endif
