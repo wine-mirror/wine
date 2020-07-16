@@ -473,12 +473,12 @@ DWORD file_name_WtoA( LPCWSTR src, INT srclen, LPSTR dest, INT destlen )
  */
 static BOOL is_same_file( HANDLE h1, HANDLE h2 )
 {
-    FILE_ID_INFORMATION id1, id2;
+    FILE_OBJECTID_BUFFER id1, id2;
     IO_STATUS_BLOCK io;
 
-    return !NtQueryInformationFile( h1, &io, &id1, sizeof(id1), FileIdInformation ) &&
-           !NtQueryInformationFile( h2, &io, &id2, sizeof(id2), FileIdInformation ) &&
-           !memcmp( &id1, &id2, sizeof(FILE_ID_INFORMATION) );
+    return (!NtFsControlFile( h1, 0, NULL, NULL, &io, FSCTL_GET_OBJECT_ID, NULL, 0, &id1, sizeof(id1) ) &&
+            !NtFsControlFile( h2, 0, NULL, NULL, &io, FSCTL_GET_OBJECT_ID, NULL, 0, &id2, sizeof(id2) ) &&
+            !memcmp( &id1.ObjectId, &id2.ObjectId, sizeof(id1.ObjectId) ));
 }
 
 
