@@ -564,7 +564,7 @@
 @ stub KeI386ReleaseLid
 @ stub KeI386SetGdtSelector
 @ stub KeIcacheFlushCount
-@ stub KeInitializeApc
+@ stdcall KeInitializeApc(ptr ptr long ptr ptr ptr long ptr)
 @ stub KeInitializeDeviceQueue
 @ stdcall KeInitializeDpc(ptr ptr ptr)
 @ stdcall KeInitializeEvent(ptr long long)
