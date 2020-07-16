@@ -1166,14 +1166,15 @@ struct testfilter
     IFilterGraph *graph;
     WCHAR *name;
     IReferenceClock *clock;
-    FILTER_STATE state;
-    REFERENCE_TIME start_time;
 
     IEnumPins IEnumPins_iface;
     struct testpin *pins;
     unsigned int pin_count, enum_idx;
 
+    FILTER_STATE state;
+    REFERENCE_TIME start_time;
     HRESULT state_hr, GetState_hr, seek_hr;
+    FILTER_STATE expect_stop_prev, expect_run_prev;
 
     IAMFilterMiscFlags IAMFilterMiscFlags_iface;
     ULONG misc_flags;
@@ -1358,6 +1359,10 @@ static HRESULT WINAPI testfilter_Stop(IBaseFilter *iface)
     struct testfilter *filter = impl_from_IBaseFilter(iface);
     if (winetest_debug > 1) trace("%p->Stop()\n", filter);
 
+    todo_wine_if (filter->expect_stop_prev == State_Running)
+        ok(filter->state == filter->expect_stop_prev, "Expected previous state %#x, got %#x.\n",
+                filter->expect_stop_prev, filter->state);
+
     check_state_transition(filter, State_Stopped);
 
     filter->state = State_Stopped;
@@ -1379,6 +1384,9 @@ static HRESULT WINAPI testfilter_Run(IBaseFilter *iface, REFERENCE_TIME start)
 {
     struct testfilter *filter = impl_from_IBaseFilter(iface);
     if (winetest_debug > 1) trace("%p->Run(%s)\n", filter, wine_dbgstr_longlong(start));
+
+    ok(filter->state == filter->expect_run_prev, "Expected previous state %#x, got %#x.\n",
+            filter->expect_run_prev, filter->state);
 
     check_state_transition(filter, State_Running);
 
@@ -1831,7 +1839,9 @@ static void testfilter_init(struct testfilter *filter, struct testpin *pins, int
     filter->pin_count = pin_count;
     for (i = 0; i < pin_count; i++)
         pins[i].filter = &filter->IBaseFilter_iface;
+
     filter->state = State_Stopped;
+    filter->expect_stop_prev = filter->expect_run_prev = State_Paused;
 }
 
 static HRESULT WINAPI testfilter_cf_QueryInterface(IClassFactory *iface, REFIID iid, void **out)
@@ -3383,6 +3393,7 @@ static void test_filter_state(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Stopped);
 
+    source.expect_run_prev = sink.expect_run_prev = State_Stopped;
     hr = IReferenceClock_GetTime(clock, &start_time);
     ok(SUCCEEDED(hr), "Got hr %#x.\n", hr);
     hr = IMediaFilter_Run(filter, 0);
@@ -3400,6 +3411,7 @@ static void test_filter_state(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Paused);
 
+    source.expect_run_prev = sink.expect_run_prev = State_Paused;
     hr = IMediaFilter_Run(filter, 0);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Running);
@@ -3587,6 +3599,7 @@ todo_wine
 
     /* This logic doesn't apply when using IMediaFilter methods directly. */
 
+    source.expect_run_prev = sink.expect_run_prev = State_Stopped;
     sink.state_hr = S_FALSE;
     sink.GetState_hr = VFW_S_STATE_INTERMEDIATE;
     hr = IMediaFilter_Run(filter, 0);
@@ -3609,6 +3622,8 @@ todo_wine
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(sink.state == State_Stopped, "Got state %u.\n", sink.state);
     ok(source.state == State_Stopped, "Got state %u.\n", source.state);
+
+    source.expect_run_prev = sink.expect_run_prev = State_Paused;
 
     /* Test VFW_S_CANT_CUE. */
 
@@ -3658,7 +3673,7 @@ todo_wine
 
     /* Destroying the graph while it's running stops all filters. */
 
-    hr = IMediaFilter_Run(filter, 0);
+    hr = IMediaControl_Run(control);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Running);
 todo_wine
@@ -3667,6 +3682,7 @@ todo_wine
     ok(sink.start_time == source.start_time, "Expected time %s, got %s.\n",
         wine_dbgstr_longlong(source.start_time), wine_dbgstr_longlong(sink.start_time));
 
+    source.expect_stop_prev = sink.expect_stop_prev = State_Running;
     IMediaFilter_Release(filter);
     IMediaControl_Release(control);
     ref = IFilterGraph2_Release(graph);
