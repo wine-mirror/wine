@@ -423,7 +423,7 @@ static double make_double(int sign, int exp, ULONGLONG m, enum round round, int 
         }
     }
 
-    if (exp >= 1<<EXP_BITS)
+    if (exp >= (1<<EXP_BITS)-1)
     {
         if (err) *err = MSVCRT_ERANGE;
         return sign * INFINITY;
