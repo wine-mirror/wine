@@ -1938,6 +1938,7 @@ static void test__strtod(void)
         const char *str;
         int len;
         double ret;
+        int err;
     } tests[] = {
         { "12.1", 4, 12.1 },
         { "-13.721", 7, -13.721 },
@@ -1953,7 +1954,7 @@ static void test__strtod(void)
         { "0.82181281288121", 16, 0.82181281288121 },
         { "21921922352523587651128218821", 29, 21921922352523587651128218821.0 },
         { "0.1d238", 7, 0.1e238 },
-        { "0.1D-4736", 9, 0 },
+        { "0.1D-4736", 9, 0, ERANGE },
         { "3.4028234663852887e38", 21, FLT_MAX },
         { "1.7976931348623158e+308", 23, DBL_MAX },
         { "00", 2, 0 },
@@ -1975,7 +1976,8 @@ static void test__strtod(void)
         ok(d == tests[i].ret, "%d) d = %.16e\n", i, d);
         ok(end == tests[i].str + tests[i].len, "%d) len = %d\n",
                 i, (int)(end - tests[i].str));
-        ok(errno = 0xdeadbeef, "%d) errno = %d\n", i, errno);
+        todo_wine_if(!tests[i].err)
+        ok(errno == tests[i].err, "%d) errno = %d\n", i, errno);
     }
 
     if (!p__strtod_l)
