@@ -1976,7 +1976,6 @@ static void test__strtod(void)
         ok(d == tests[i].ret, "%d) d = %.16e\n", i, d);
         ok(end == tests[i].str + tests[i].len, "%d) len = %d\n",
                 i, (int)(end - tests[i].str));
-        todo_wine_if(!tests[i].err)
         ok(errno == tests[i].err, "%d) errno = %d\n", i, errno);
     }
 

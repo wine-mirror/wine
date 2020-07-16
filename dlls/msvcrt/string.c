@@ -696,6 +696,11 @@ double parse_double(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *ctx),
         nch = get(ctx);
     }
 
+    if(!err) err = MSVCRT__errno();
+#if _MSVCR_VER == 0
+    *err = 0;
+#endif
+
     if(!found_digit) {
         if(nch != MSVCRT_WEOF) unget(ctx);
         if(found_dp) unget(ctx);
@@ -759,7 +764,6 @@ double parse_double(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *ctx),
     if(off < 0) off += LIMB_DIGITS;
     if(off) bnum_mult(&b, p10s[off]);
 
-    if(!err) err = MSVCRT__errno();
     if(dp-1 > MSVCRT_DBL_MAX_10_EXP)
         return make_double(sign, INT_MAX, 1, ROUND_ZERO, err);
     /* Count part of exponent stored in denormalized mantissa. */
