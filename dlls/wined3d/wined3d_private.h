@@ -2814,6 +2814,7 @@ enum wined3d_pci_device
     CARD_AMD_RADEON_RX_480          = 0x67df,
     CARD_AMD_RADEON_RX_VEGA_10      = 0x687f,
     CARD_AMD_RADEON_RX_VEGA_12      = 0x69af,
+    CARD_AMD_RADEON_RAVEN           = 0x15dd,
     CARD_AMD_RADEON_RX_VEGA_20      = 0x66af,
     CARD_AMD_RADEON_RX_NAVI_10      = 0x731f,
 
