@@ -619,7 +619,7 @@
 @ cdecl _ismbcpunct(long)
 # stub _ismbcpunct_l(long ptr)
 @ cdecl _ismbcspace(long)
-# stub _ismbcspace_l(long ptr)
+@ cdecl _ismbcspace_l(long ptr)
 @ cdecl _ismbcsymbol(long)
 # stub _ismbcsymbol_l(long ptr)
 @ cdecl _ismbcupper(long)

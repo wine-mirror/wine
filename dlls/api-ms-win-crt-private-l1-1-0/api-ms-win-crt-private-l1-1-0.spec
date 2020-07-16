@@ -426,7 +426,7 @@
 @ cdecl _o__ismbcpunct(long) ucrtbase._o__ismbcpunct
 @ stub _o__ismbcpunct_l
 @ cdecl _o__ismbcspace(long) ucrtbase._o__ismbcspace
-@ stub _o__ismbcspace_l
+@ cdecl _o__ismbcspace_l(long ptr) ucrtbase._o__ismbcspace_l
 @ cdecl _o__ismbcsymbol(long) ucrtbase._o__ismbcsymbol
 @ stub _o__ismbcsymbol_l
 @ cdecl _o__ismbcupper(long) ucrtbase._o__ismbcupper

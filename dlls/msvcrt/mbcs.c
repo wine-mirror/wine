@@ -1539,12 +1539,19 @@ int CDECL _ismbcalnum(unsigned int ch)
 }
 
 /*********************************************************************
+ *              _ismbcspace_l (MSVCRT.@)
+ */
+int CDECL _ismbcspace_l(unsigned int ch, MSVCRT__locale_t locale)
+{
+    return MSVCRT__iswspace_l( msvcrt_mbc_to_wc_l(ch, locale), locale );
+}
+
+/*********************************************************************
  *              _ismbcspace (MSVCRT.@)
  */
 int CDECL _ismbcspace(unsigned int ch)
 {
-    MSVCRT_wchar_t wch = msvcrt_mbc_to_wc( ch );
-    return (get_char_typeW( wch ) & C1_SPACE);
+    return _ismbcspace_l( ch, NULL );
 }
 
 /*********************************************************************

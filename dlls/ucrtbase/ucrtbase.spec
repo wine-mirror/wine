@@ -491,7 +491,7 @@
 @ cdecl _ismbcpunct(long)
 @ stub _ismbcpunct_l
 @ cdecl _ismbcspace(long)
-@ stub _ismbcspace_l
+@ cdecl _ismbcspace_l(long ptr)
 @ cdecl _ismbcsymbol(long)
 @ stub _ismbcsymbol_l
 @ cdecl _ismbcupper(long)
@@ -1090,7 +1090,7 @@
 @ cdecl _o__ismbcpunct(long) _ismbcpunct
 @ stub _o__ismbcpunct_l
 @ cdecl _o__ismbcspace(long) _ismbcspace
-@ stub _o__ismbcspace_l
+@ cdecl _o__ismbcspace_l(long ptr) _ismbcspace_l
 @ cdecl _o__ismbcsymbol(long) _ismbcsymbol
 @ stub _o__ismbcsymbol_l
 @ cdecl _o__ismbcupper(long) _ismbcupper

@@ -53,7 +53,7 @@
 @ cdecl _ismbcpunct(long) ucrtbase._ismbcpunct
 @ stub _ismbcpunct_l
 @ cdecl _ismbcspace(long) ucrtbase._ismbcspace
-@ stub _ismbcspace_l
+@ cdecl _ismbcspace_l(long ptr) ucrtbase._ismbcspace_l
 @ cdecl _ismbcsymbol(long) ucrtbase._ismbcsymbol
 @ stub _ismbcsymbol_l
 @ cdecl _ismbcupper(long) ucrtbase._ismbcupper
