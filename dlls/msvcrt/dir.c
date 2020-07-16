@@ -828,7 +828,7 @@ int CDECL MSVCRT__getdrive(void)
     WCHAR buffer[MAX_PATH];
     if (GetCurrentDirectoryW( MAX_PATH, buffer ) &&
         buffer[0] >= 'A' && buffer[0] <= 'z' && buffer[1] == ':')
-        return toupperW(buffer[0]) - 'A' + 1;
+        return MSVCRT_towupper(buffer[0]) - 'A' + 1;
     return 0;
 }
 

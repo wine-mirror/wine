@@ -356,8 +356,7 @@ int CDECL MSVCRT__wcsupr_s_l( MSVCRT_wchar_t* str, MSVCRT_size_t n,
   while (n--)
   {
     if (!*ptr) return 0;
-    /* FIXME: add locale support */
-    *ptr = toupperW(*ptr);
+    *ptr = MSVCRT__towupper_l(*ptr, locale);
     ptr++;
   }
 
