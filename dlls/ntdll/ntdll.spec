@@ -147,7 +147,7 @@
 # @ stub NtCancelDeviceWakeupRequest
 @ stdcall NtCancelIoFile(long ptr)
 @ stdcall NtCancelIoFileEx(long ptr ptr)
-@ stdcall NtCancelTimer(long ptr)
+@ stdcall -syscall NtCancelTimer(long ptr)
 @ stdcall -syscall NtClearEvent(long)
 @ stdcall NtClearPowerRequest(long long)
 @ stdcall NtClose(long)
@@ -184,7 +184,7 @@
 @ stdcall NtCreateSymbolicLinkObject(ptr long ptr ptr)
 @ stub NtCreateThread
 @ stdcall NtCreateThreadEx(ptr long ptr long ptr ptr long long long long ptr)
-@ stdcall NtCreateTimer(ptr long ptr long)
+@ stdcall -syscall NtCreateTimer(ptr long ptr long)
 @ stub NtCreateToken
 @ stdcall NtCreateUserProcess(ptr ptr long long ptr ptr long long ptr ptr ptr)
 # @ stub NtCreateWaitablePort
@@ -272,7 +272,7 @@
 @ stdcall NtOpenThread(ptr long ptr ptr)
 @ stdcall NtOpenThreadToken(long long long ptr)
 @ stdcall NtOpenThreadTokenEx(long long long long ptr)
-@ stdcall NtOpenTimer(ptr long ptr)
+@ stdcall -syscall NtOpenTimer(ptr long ptr)
 @ stub NtPlugPlayControl
 @ stdcall NtPowerInformation(long ptr long ptr long)
 @ stdcall NtPrivilegeCheck(ptr ptr ptr)
@@ -319,7 +319,7 @@
 @ stdcall NtQuerySystemInformation(long ptr long ptr)
 @ stdcall NtQuerySystemInformationEx(long ptr long ptr long ptr)
 @ stdcall NtQuerySystemTime(ptr)
-@ stdcall NtQueryTimer(ptr long ptr long ptr)
+@ stdcall -syscall NtQueryTimer(ptr long ptr long ptr)
 @ stdcall NtQueryTimerResolution(ptr ptr ptr)
 @ stdcall NtQueryValueKey(long ptr long ptr long ptr)
 @ stdcall NtQueryVirtualMemory(long ptr long ptr long ptr)
@@ -395,7 +395,7 @@
 @ stub NtSetSystemPowerState
 @ stdcall NtSetSystemTime(ptr ptr)
 @ stdcall NtSetThreadExecutionState(long ptr)
-@ stdcall NtSetTimer(long ptr ptr ptr long long ptr)
+@ stdcall -syscall NtSetTimer(long ptr ptr ptr long long ptr)
 @ stdcall NtSetTimerResolution(long long ptr)
 # @ stub NtSetUuidSeed
 @ stdcall NtSetValueKey(long ptr long long ptr long)
@@ -1136,7 +1136,7 @@
 # @ stub ZwCancelDeviceWakeupRequest
 @ stdcall -private ZwCancelIoFile(long ptr) NtCancelIoFile
 @ stdcall -private ZwCancelIoFileEx(long ptr ptr) NtCancelIoFileEx
-@ stdcall -private ZwCancelTimer(long ptr) NtCancelTimer
+@ stdcall -private -syscall ZwCancelTimer(long ptr) NtCancelTimer
 @ stdcall -private -syscall ZwClearEvent(long) NtClearEvent
 @ stdcall -private ZwClearPowerRequest(long long) NtClearPowerRequest
 @ stdcall -private ZwClose(long) NtClose
@@ -1171,7 +1171,7 @@
 @ stdcall -private -syscall ZwCreateSemaphore(ptr long ptr long long) NtCreateSemaphore
 @ stdcall -private ZwCreateSymbolicLinkObject(ptr long ptr ptr) NtCreateSymbolicLinkObject
 @ stub ZwCreateThread
-@ stdcall -private ZwCreateTimer(ptr long ptr long) NtCreateTimer
+@ stdcall -private -syscall ZwCreateTimer(ptr long ptr long) NtCreateTimer
 @ stub ZwCreateToken
 # @ stub ZwCreateWaitablePort
 # @ stub ZwDebugActiveProcess
@@ -1256,7 +1256,7 @@
 @ stdcall -private ZwOpenThread(ptr long ptr ptr) NtOpenThread
 @ stdcall -private ZwOpenThreadToken(long long long ptr) NtOpenThreadToken
 @ stdcall -private ZwOpenThreadTokenEx(long long long long ptr) NtOpenThreadTokenEx
-@ stdcall -private ZwOpenTimer(ptr long ptr) NtOpenTimer
+@ stdcall -private -syscall ZwOpenTimer(ptr long ptr) NtOpenTimer
 @ stub ZwPlugPlayControl
 @ stdcall -private ZwPowerInformation(long ptr long ptr long) NtPowerInformation
 @ stdcall -private ZwPrivilegeCheck(ptr ptr ptr) NtPrivilegeCheck
@@ -1303,7 +1303,7 @@
 @ stdcall -private ZwQuerySystemInformation(long ptr long ptr) NtQuerySystemInformation
 @ stdcall -private ZwQuerySystemInformationEx(long ptr long ptr long ptr) NtQuerySystemInformationEx
 @ stdcall -private ZwQuerySystemTime(ptr) NtQuerySystemTime
-@ stdcall -private ZwQueryTimer(ptr long ptr long ptr) NtQueryTimer
+@ stdcall -private -syscall ZwQueryTimer(ptr long ptr long ptr) NtQueryTimer
 @ stdcall -private ZwQueryTimerResolution(ptr ptr ptr) NtQueryTimerResolution
 @ stdcall -private ZwQueryValueKey(long ptr long ptr long ptr) NtQueryValueKey
 @ stdcall -private ZwQueryVirtualMemory(long ptr long ptr long ptr) NtQueryVirtualMemory
@@ -1379,7 +1379,7 @@
 @ stub ZwSetSystemPowerState
 @ stdcall -private ZwSetSystemTime(ptr ptr) NtSetSystemTime
 @ stdcall ZwSetThreadExecutionState(long ptr) NtSetThreadExecutionState
-@ stdcall -private ZwSetTimer(long ptr ptr ptr long long ptr) NtSetTimer
+@ stdcall -private -syscall ZwSetTimer(long ptr ptr ptr long long ptr) NtSetTimer
 @ stdcall -private ZwSetTimerResolution(long long ptr) NtSetTimerResolution
 # @ stub ZwSetUuidSeed
 @ stdcall -private ZwSetValueKey(long ptr long long ptr long) NtSetValueKey

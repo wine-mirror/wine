@@ -139,54 +139,6 @@ NTSTATUS validate_open_object_attributes( const OBJECT_ATTRIBUTES *attr )
  *	Timers
  */
 
-/**************************************************************************
- *		NtCreateTimer				[NTDLL.@]
- *		ZwCreateTimer				[NTDLL.@]
- */
-NTSTATUS WINAPI NtCreateTimer( HANDLE *handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr,
-                               TIMER_TYPE type )
-{
-    return unix_funcs->NtCreateTimer( handle, access, attr, type );
-}
-
-/**************************************************************************
- *		NtOpenTimer				[NTDLL.@]
- *		ZwOpenTimer				[NTDLL.@]
- */
-NTSTATUS WINAPI NtOpenTimer( HANDLE *handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr )
-{
-    return unix_funcs->NtOpenTimer( handle, access, attr );
-}
-
-/**************************************************************************
- *		NtSetTimer				[NTDLL.@]
- *		ZwSetTimer				[NTDLL.@]
- */
-NTSTATUS WINAPI NtSetTimer( HANDLE handle, const LARGE_INTEGER *when, PTIMER_APC_ROUTINE callback,
-                            void *arg, BOOLEAN resume, ULONG period, BOOLEAN *state )
-{
-    return unix_funcs->NtSetTimer( handle, when, callback, arg, resume, period, state );
-}
-
-/**************************************************************************
- *		NtCancelTimer				[NTDLL.@]
- *		ZwCancelTimer				[NTDLL.@]
- */
-NTSTATUS WINAPI NtCancelTimer( HANDLE handle, BOOLEAN *state )
-{
-    return unix_funcs->NtCancelTimer( handle, state );
-}
-
-/******************************************************************************
- *  NtQueryTimer (NTDLL.@)
- */
-NTSTATUS WINAPI NtQueryTimer( HANDLE handle, TIMER_INFORMATION_CLASS class,
-                              void *info, ULONG len, ULONG *ret_len )
-{
-    return unix_funcs->NtQueryTimer( handle, class, info, len, ret_len );
-}
-
-
 /******************************************************************************
  * NtQueryTimerResolution [NTDLL.@]
  */
