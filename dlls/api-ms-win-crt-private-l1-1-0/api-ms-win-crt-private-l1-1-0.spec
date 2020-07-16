@@ -400,7 +400,7 @@
 @ cdecl _o__ismbcalnum(long) ucrtbase._o__ismbcalnum
 @ cdecl _o__ismbcalnum_l(long ptr) ucrtbase._o__ismbcalnum_l
 @ cdecl _o__ismbcalpha(long) ucrtbase._o__ismbcalpha
-@ stub _o__ismbcalpha_l
+@ cdecl _o__ismbcalpha_l(long ptr) ucrtbase._o__ismbcalpha_l
 @ stub _o__ismbcblank
 @ stub _o__ismbcblank_l
 @ cdecl _o__ismbcdigit(long) ucrtbase._o__ismbcdigit

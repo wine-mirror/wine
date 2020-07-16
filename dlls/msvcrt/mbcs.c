@@ -1460,12 +1460,19 @@ int CDECL _ismbcgraph(unsigned int ch)
 }
 
 /*********************************************************************
+ *              _ismbcalpha_l (MSVCRT.@)
+ */
+int CDECL _ismbcalpha_l(unsigned int ch, MSVCRT__locale_t locale)
+{
+    return MSVCRT__iswalpha_l( msvcrt_mbc_to_wc_l(ch, locale), locale );
+}
+
+/*********************************************************************
  *              _ismbcalpha (MSVCRT.@)
  */
 int CDECL _ismbcalpha(unsigned int ch)
 {
-    MSVCRT_wchar_t wch = msvcrt_mbc_to_wc( ch );
-    return (get_char_typeW( wch ) & C1_ALPHA);
+    return _ismbcalpha_l( ch, NULL );
 }
 
 /*********************************************************************

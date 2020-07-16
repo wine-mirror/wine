@@ -27,7 +27,7 @@
 @ cdecl _ismbcalnum(long) ucrtbase._ismbcalnum
 @ cdecl _ismbcalnum_l(long ptr) ucrtbase._ismbcalnum_l
 @ cdecl _ismbcalpha(long) ucrtbase._ismbcalpha
-@ stub _ismbcalpha_l
+@ cdecl _ismbcalpha_l(long ptr) ucrtbase._ismbcalpha_l
 @ stub _ismbcblank
 @ stub _ismbcblank_l
 @ cdecl _ismbcdigit(long) ucrtbase._ismbcdigit

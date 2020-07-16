@@ -649,7 +649,7 @@
 @ cdecl _ismbcalnum(long)
 @ cdecl _ismbcalnum_l(long ptr)
 @ cdecl _ismbcalpha(long)
-@ stub _ismbcalpha_l
+@ cdecl _ismbcalpha_l(long ptr)
 @ cdecl _ismbcdigit(long)
 @ cdecl _ismbcdigit_l(long ptr)
 @ cdecl _ismbcgraph(long)
