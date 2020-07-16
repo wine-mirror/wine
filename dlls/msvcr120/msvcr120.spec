@@ -1324,7 +1324,7 @@
 @ cdecl _ismbbtrail(long)
 @ cdecl _ismbbtrail_l(long ptr)
 @ cdecl _ismbcalnum(long)
-@ stub _ismbcalnum_l
+@ cdecl _ismbcalnum_l(long ptr)
 @ cdecl _ismbcalpha(long)
 @ stub _ismbcalpha_l
 @ stub _ismbcblank

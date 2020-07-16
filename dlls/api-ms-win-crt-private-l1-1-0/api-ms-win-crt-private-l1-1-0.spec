@@ -398,7 +398,7 @@
 @ cdecl _o__ismbbtrail(long) ucrtbase._o__ismbbtrail
 @ cdecl _o__ismbbtrail_l(long ptr) ucrtbase._o__ismbbtrail_l
 @ cdecl _o__ismbcalnum(long) ucrtbase._o__ismbcalnum
-@ stub _o__ismbcalnum_l
+@ cdecl _o__ismbcalnum_l(long ptr) ucrtbase._o__ismbcalnum_l
 @ cdecl _o__ismbcalpha(long) ucrtbase._o__ismbcalpha
 @ stub _o__ismbcalpha_l
 @ stub _o__ismbcblank

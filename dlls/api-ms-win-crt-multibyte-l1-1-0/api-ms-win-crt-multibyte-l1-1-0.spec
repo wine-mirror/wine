@@ -25,7 +25,7 @@
 @ cdecl _ismbbtrail(long) ucrtbase._ismbbtrail
 @ cdecl _ismbbtrail_l(long ptr) ucrtbase._ismbbtrail_l
 @ cdecl _ismbcalnum(long) ucrtbase._ismbcalnum
-@ stub _ismbcalnum_l
+@ cdecl _ismbcalnum_l(long ptr) ucrtbase._ismbcalnum_l
 @ cdecl _ismbcalpha(long) ucrtbase._ismbcalpha
 @ stub _ismbcalpha_l
 @ stub _ismbcblank

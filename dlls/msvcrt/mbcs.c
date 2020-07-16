@@ -84,26 +84,37 @@ static const unsigned char mbctombb_932_kana[] = {
   0xd2,0xd3,0xac,0xd4,0xad,0xd5,0xae,0xd6,0xd7,0xd8,0xd9,0xda,0xdb,0xdc,0xdc,0xb2,
   0xb4,0xa6,0xdd,0xb3,0xb6,0xb9};
 
+static MSVCRT_wchar_t msvcrt_mbc_to_wc_l(unsigned int ch, MSVCRT__locale_t locale)
+{
+    MSVCRT_pthreadmbcinfo mbcinfo;
+    MSVCRT_wchar_t chW;
+    char mbch[2];
+    int n_chars;
+
+    if(locale)
+        mbcinfo = locale->mbcinfo;
+    else
+        mbcinfo = get_mbcinfo();
+
+    if (ch <= 0xff) {
+        mbch[0] = ch;
+        n_chars = 1;
+    } else {
+        mbch[0] = (ch >> 8) & 0xff;
+        mbch[1] = ch & 0xff;
+        n_chars = 2;
+    }
+    if (!MultiByteToWideChar(mbcinfo->mbcodepage, 0, mbch, n_chars, &chW, 1))
+    {
+        WARN("MultiByteToWideChar failed on %x\n", ch);
+        return 0;
+    }
+    return chW;
+}
+
 static MSVCRT_wchar_t msvcrt_mbc_to_wc(unsigned int ch)
 {
-  MSVCRT_wchar_t chW;
-  char mbch[2];
-  int n_chars;
-
-  if (ch <= 0xff) {
-    mbch[0] = ch;
-    n_chars = 1;
-  } else {
-    mbch[0] = (ch >> 8) & 0xff;
-    mbch[1] = ch & 0xff;
-    n_chars = 2;
-  }
-  if (!MultiByteToWideChar(get_mbcinfo()->mbcodepage, 0, mbch, n_chars, &chW, 1))
-  {
-    WARN("MultiByteToWideChar failed on %x\n", ch);
-    return 0;
-  }
-  return chW;
+    return msvcrt_mbc_to_wc_l(ch, NULL);
 }
 
 static inline MSVCRT_size_t u_strlen( const unsigned char *str )
@@ -1477,12 +1488,19 @@ int CDECL _ismbcsymbol(unsigned int ch)
 }
 
 /*********************************************************************
+ *              _ismbcalnum_l (MSVCRT.@)
+ */
+int CDECL _ismbcalnum_l(unsigned int ch, MSVCRT__locale_t locale)
+{
+    return MSVCRT__iswalnum_l( msvcrt_mbc_to_wc_l(ch, locale), locale );
+}
+
+/*********************************************************************
  *              _ismbcalnum (MSVCRT.@)
  */
 int CDECL _ismbcalnum(unsigned int ch)
 {
-    MSVCRT_wchar_t wch = msvcrt_mbc_to_wc( ch );
-    return (get_char_typeW( wch ) & (C1_ALPHA | C1_DIGIT));
+    return _ismbcalnum_l( ch, NULL );
 }
 
 /*********************************************************************

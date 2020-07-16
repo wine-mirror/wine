@@ -463,7 +463,7 @@
 @ cdecl _ismbbtrail(long)
 @ cdecl _ismbbtrail_l(long ptr)
 @ cdecl _ismbcalnum(long)
-@ stub _ismbcalnum_l
+@ cdecl _ismbcalnum_l(long ptr)
 @ cdecl _ismbcalpha(long)
 @ stub _ismbcalpha_l
 @ stub _ismbcblank
@@ -1062,7 +1062,7 @@
 @ cdecl _o__ismbbtrail(long) _ismbbtrail
 @ cdecl _o__ismbbtrail_l(long ptr) _ismbbtrail_l
 @ cdecl _o__ismbcalnum(long) _ismbcalnum
-@ stub _o__ismbcalnum_l
+@ cdecl _o__ismbcalnum_l(long ptr) _ismbcalnum_l
 @ cdecl _o__ismbcalpha(long) _ismbcalpha
 @ stub _o__ismbcalpha_l
 @ stub _o__ismbcblank
