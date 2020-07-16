@@ -430,7 +430,7 @@ static struct object *create_console_input_events(void)
     return &evt->obj;
 }
 
-static struct object *create_console_input( struct thread* renderer, int fd )
+static struct object *create_console_input( int fd )
 {
     struct console_input *console_input;
 
@@ -439,7 +439,7 @@ static struct object *create_console_input( struct thread* renderer, int fd )
         if (fd != -1) close( fd );
         return NULL;
     }
-    console_input->renderer      = renderer;
+    console_input->renderer      = NULL;
     console_input->mode          = ENABLE_PROCESSED_INPUT | ENABLE_LINE_INPUT |
                                    ENABLE_ECHO_INPUT | ENABLE_MOUSE_INPUT | ENABLE_INSERT_MODE |
                                    ENABLE_EXTENDED_FLAGS;
@@ -447,7 +447,7 @@ static struct object *create_console_input( struct thread* renderer, int fd )
     console_input->active        = NULL;
     console_input->recnum        = 0;
     console_input->records       = NULL;
-    console_input->evt           = renderer ? (struct console_input_events *)create_console_input_events() : NULL;
+    console_input->evt           = NULL;
     console_input->title         = NULL;
     console_input->title_len     = 0;
     console_input->history_size  = 50;
@@ -462,7 +462,7 @@ static struct object *create_console_input( struct thread* renderer, int fd )
     console_input->fd            = NULL;
     init_async_queue( &console_input->read_q );
 
-    if (!console_input->history || (renderer && !console_input->evt) || !console_input->event)
+    if (!console_input->history || !console_input->event)
     {
         if (fd != -1) close( fd );
         console_input->history_size = 0;
@@ -1844,8 +1844,6 @@ struct object *create_console_device( struct object *root, const struct unicode_
 /* allocate a console for the renderer */
 DECL_HANDLER(alloc_console)
 {
-    obj_handle_t in = 0;
-    obj_handle_t evt = 0;
     struct process *process;
     struct console_input *console;
     int fd;
@@ -1892,31 +1890,17 @@ DECL_HANDLER(alloc_console)
     {
         if (fd != -1) close( fd );
         set_error( STATUS_ACCESS_DENIED );
-        goto the_end;
     }
-
-    if ((console = (struct console_input*)create_console_input( NULL, fd )))
+    else if ((console = (struct console_input*)create_console_input( fd )))
     {
-        if ((in = alloc_handle( current->process, console, req->access, req->attributes )))
+        if ((reply->handle_in = alloc_handle( current->process, console, req->access,
+                                              req->attributes )) && attach)
         {
-            if (!console->evt ||
-                (evt = alloc_handle( current->process, console->evt, SYNCHRONIZE|GENERIC_READ|GENERIC_WRITE, 0 )))
-            {
-                if (attach)
-                {
-                    process->console = (struct console_input*)grab_object( console );
-                    console->num_proc++;
-                }
-                reply->handle_in = in;
-                reply->event = evt;
-                release_object( console );
-                goto the_end;
-            }
-            close_handle( current->process, in );
+            process->console = (struct console_input*)grab_object( console );
+            console->num_proc++;
         }
         release_object( console );
     }
- the_end:
     release_object( process );
 }
 
