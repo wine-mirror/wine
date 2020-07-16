@@ -430,7 +430,7 @@
 @ cdecl _o__ismbcsymbol(long) ucrtbase._o__ismbcsymbol
 @ stub _o__ismbcsymbol_l
 @ cdecl _o__ismbcupper(long) ucrtbase._o__ismbcupper
-@ stub _o__ismbcupper_l
+@ cdecl _o__ismbcupper_l(long ptr) ucrtbase._o__ismbcupper_l
 @ cdecl _o__ismbslead(ptr ptr) ucrtbase._o__ismbslead
 @ stub _o__ismbslead_l
 @ cdecl _o__ismbstrail(ptr ptr) ucrtbase._o__ismbstrail

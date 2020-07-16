@@ -1492,12 +1492,19 @@ int CDECL _ismbclower(unsigned int ch)
 }
 
 /*********************************************************************
+ *              _ismbcupper_l (MSVCRT.@)
+ */
+int CDECL _ismbcupper_l(unsigned int ch, MSVCRT__locale_t locale)
+{
+    return MSVCRT__iswupper_l( msvcrt_mbc_to_wc_l(ch, locale), locale );
+}
+
+/*********************************************************************
  *              _ismbcupper (MSVCRT.@)
  */
 int CDECL _ismbcupper(unsigned int ch)
 {
-    MSVCRT_wchar_t wch = msvcrt_mbc_to_wc( ch );
-    return (get_char_typeW( wch ) & C1_LOWER);
+    return _ismbcupper_l( ch, NULL );
 }
 
 /*********************************************************************

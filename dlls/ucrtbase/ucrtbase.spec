@@ -495,7 +495,7 @@
 @ cdecl _ismbcsymbol(long)
 @ stub _ismbcsymbol_l
 @ cdecl _ismbcupper(long)
-@ stub _ismbcupper_l
+@ cdecl _ismbcupper_l(long ptr)
 @ cdecl _ismbslead(ptr ptr)
 @ stub _ismbslead_l
 @ cdecl _ismbstrail(ptr ptr)
@@ -1094,7 +1094,7 @@
 @ cdecl _o__ismbcsymbol(long) _ismbcsymbol
 @ stub _o__ismbcsymbol_l
 @ cdecl _o__ismbcupper(long) _ismbcupper
-@ stub _o__ismbcupper_l
+@ cdecl _o__ismbcupper_l(long ptr) _ismbcupper_l
 @ cdecl _o__ismbslead(ptr ptr) _ismbslead
 @ stub _o__ismbslead_l
 @ cdecl _o__ismbstrail(ptr ptr) _ismbstrail

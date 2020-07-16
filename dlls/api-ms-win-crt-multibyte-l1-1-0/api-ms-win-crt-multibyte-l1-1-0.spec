@@ -57,7 +57,7 @@
 @ cdecl _ismbcsymbol(long) ucrtbase._ismbcsymbol
 @ stub _ismbcsymbol_l
 @ cdecl _ismbcupper(long) ucrtbase._ismbcupper
-@ stub _ismbcupper_l
+@ cdecl _ismbcupper_l(long ptr) ucrtbase._ismbcupper_l
 @ cdecl _ismbslead(ptr ptr) ucrtbase._ismbslead
 @ stub _ismbslead_l
 @ cdecl _ismbstrail(ptr ptr) ucrtbase._ismbstrail

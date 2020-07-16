@@ -623,7 +623,7 @@
 @ cdecl _ismbcsymbol(long)
 # stub _ismbcsymbol_l(long ptr)
 @ cdecl _ismbcupper(long)
-# stub _ismbcupper_l(long ptr)
+@ cdecl _ismbcupper_l(long ptr)
 @ cdecl _ismbslead(ptr ptr)
 # stub _ismbslead_l(long ptr)
 @ cdecl _ismbstrail(ptr ptr)
