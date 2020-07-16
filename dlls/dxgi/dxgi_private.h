@@ -144,7 +144,7 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
 /* IDXGIOutput */
 struct dxgi_output
 {
-    IDXGIOutput4 IDXGIOutput4_iface;
+    IDXGIOutput6 IDXGIOutput6_iface;
     LONG refcount;
     struct wined3d_output *wined3d_output;
     struct wined3d_private_store private_store;

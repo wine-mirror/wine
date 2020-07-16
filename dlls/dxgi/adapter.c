@@ -145,7 +145,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_EnumOutputs(IWineDXGIAdapter *ifac
         return hr;
     }
 
-    *output = (IDXGIOutput *)&output_object->IDXGIOutput4_iface;
+    *output = (IDXGIOutput *)&output_object->IDXGIOutput6_iface;
 
     TRACE("Returning output %p.\n", *output);
 
