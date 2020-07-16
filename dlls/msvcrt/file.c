@@ -3179,8 +3179,8 @@ int CDECL MSVCRT__wstat64(const MSVCRT_wchar_t* path, struct MSVCRT__stat64 * bu
     /* executable? */
     if (plen > 6 && path[plen-4] == '.')  /* shortest exe: "\x.exe" */
     {
-      ULONGLONG ext = tolowerW(path[plen-1]) | (tolowerW(path[plen-2]) << 16) |
-                               ((ULONGLONG)tolowerW(path[plen-3]) << 32);
+      ULONGLONG ext = MSVCRT_towlower(path[plen-1]) | (MSVCRT_towlower(path[plen-2]) << 16) |
+                               ((ULONGLONG)MSVCRT_towlower(path[plen-3]) << 32);
       if (ext == WCEXE || ext == WCBAT || ext == WCCMD || ext == WCCOM)
         mode |= ALL_S_IEXEC;
     }

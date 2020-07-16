@@ -411,7 +411,7 @@ int CDECL MSVCRT__wcslwr_s_l( MSVCRT_wchar_t* str, MSVCRT_size_t n, MSVCRT__loca
   while (n--)
   {
     if (!*ptr) return 0;
-    *ptr = tolowerW(*ptr);
+    *ptr = MSVCRT__towlower_l(*ptr, locale);
     ptr++;
   }
 
@@ -2345,7 +2345,7 @@ __int64 CDECL MSVCRT__wcstoi64_l(const MSVCRT_wchar_t *nptr,
     } else if(*nptr == '+')
         nptr++;
 
-    if((base==0 || base==16) && wctoint(*nptr, 1)==0 && tolowerW(*(nptr+1))=='x') {
+    if((base==0 || base==16) && wctoint(*nptr, 1)==0 && (nptr[1]=='x' || nptr[1]=='X')) {
         base = 16;
         nptr += 2;
     }
@@ -2518,7 +2518,7 @@ unsigned __int64 CDECL MSVCRT__wcstoui64_l(const MSVCRT_wchar_t *nptr,
     } else if(*nptr == '+')
         nptr++;
 
-    if((base==0 || base==16) && wctoint(*nptr, 1)==0 && tolowerW(*(nptr+1))=='x') {
+    if((base==0 || base==16) && wctoint(*nptr, 1)==0 && (nptr[1]=='x' || nptr[1]=='X')) {
         base = 16;
         nptr += 2;
     }
