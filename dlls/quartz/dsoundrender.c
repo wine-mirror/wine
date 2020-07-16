@@ -384,9 +384,6 @@ static HRESULT WINAPI DSoundRender_CheckMediaType(struct strmbase_renderer *ifac
     if (!IsEqualIID(&pmt->majortype, &MEDIATYPE_Audio))
         return S_FALSE;
 
-    if (!IsEqualIID(&pmt->subtype, &MEDIASUBTYPE_PCM))
-        return S_FALSE;
-
     return S_OK;
 }
 

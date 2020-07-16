@@ -789,10 +789,9 @@ static void test_media_types(void)
                 expect_hr = does_dsound_support_format(&wfx);
 
                 hr = IPin_QueryAccept(pin, &req_mt);
-                todo_wine_if (expect_hr == S_OK)
-                    ok(hr == expect_hr, "Expected hr %#x, got %#x, for %d channels, %d-bit %s, %d Hz.\n",
-                            expect_hr, hr, channels, formats[i].depth,
-                            formats[i].tag == WAVE_FORMAT_PCM ? "integer" : "float", sample_rates[j]);
+                ok(hr == expect_hr, "Expected hr %#x, got %#x, for %d channels, %d-bit %s, %d Hz.\n",
+                        expect_hr, hr, channels, formats[i].depth,
+                        formats[i].tag == WAVE_FORMAT_PCM ? "integer" : "float", sample_rates[j]);
             }
         }
     }
