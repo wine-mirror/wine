@@ -124,6 +124,8 @@ static const struct fd_ops console_input_fd_ops =
 static void console_input_events_dump( struct object *obj, int verbose );
 static void console_input_events_destroy( struct object *obj );
 static struct fd *console_input_events_get_fd( struct object *obj );
+static struct object *console_input_events_open_file( struct object *obj, unsigned int access,
+                                                      unsigned int sharing, unsigned int options );
 
 struct console_input_events
 {
@@ -152,7 +154,7 @@ static const struct object_ops console_input_events_ops =
     no_lookup_name,                   /* lookup_name */
     no_link_name,                     /* link_name */
     NULL,                             /* unlink_name */
-    no_open_file,                     /* open_file */
+    console_input_events_open_file,   /* open_file */
     no_kernel_obj_list,               /* get_kernel_obj_list */
     no_close_handle,                  /* close_handle */
     console_input_events_destroy      /* destroy */
@@ -331,6 +333,12 @@ static struct fd *console_input_events_get_fd( struct object* obj )
     return (struct fd*)grab_object( evts->fd );
 }
 
+static struct object *console_input_events_open_file( struct object *obj, unsigned int access,
+                                                      unsigned int sharing, unsigned int options )
+{
+    return grab_object( obj );
+}
+
 /* retrieves events from the console's renderer events list */
 static int get_renderer_events( struct console_input_events* evts, struct async *async )
 {
@@ -406,7 +414,7 @@ static void console_input_events_append( struct console_input* console,
     }
 }
 
-static struct console_input_events *create_console_input_events(void)
+static struct object *create_console_input_events(void)
 {
     struct console_input_events*	evt;
 
@@ -419,7 +427,7 @@ static struct console_input_events *create_console_input_events(void)
         release_object( evt );
         return NULL;
     }
-    return evt;
+    return &evt->obj;
 }
 
 static struct object *create_console_input( struct thread* renderer, int fd )
@@ -439,7 +447,7 @@ static struct object *create_console_input( struct thread* renderer, int fd )
     console_input->active        = NULL;
     console_input->recnum        = 0;
     console_input->records       = NULL;
-    console_input->evt           = renderer ? create_console_input_events() : NULL;
+    console_input->evt           = renderer ? (struct console_input_events *)create_console_input_events() : NULL;
     console_input->title         = NULL;
     console_input->title_len     = 0;
     console_input->history_size  = 50;
@@ -1747,6 +1755,7 @@ static struct object *console_device_lookup_name( struct object *obj, struct uni
     static const WCHAR consoleW[]     = {'C','o','n','s','o','l','e'};
     static const WCHAR current_inW[]  = {'C','u','r','r','e','n','t','I','n'};
     static const WCHAR current_outW[] = {'C','u','r','r','e','n','t','O','u','t'};
+    static const WCHAR rendererW[]    = {'R','e','n','d','e','r','e','r'};
 
     if (name->len == sizeof(current_inW) && !memcmp( name->str, current_inW, name->len ))
     {
@@ -1774,6 +1783,12 @@ static struct object *console_device_lookup_name( struct object *obj, struct uni
     {
         name->len = 0;
         return grab_object( obj );
+    }
+
+    if (name->len == sizeof(rendererW) && !memcmp( name->str, rendererW, name->len ))
+    {
+        name->len = 0;
+        return create_console_input_events();
     }
 
     return NULL;
