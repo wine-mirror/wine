@@ -168,7 +168,7 @@
 # @ stub NtCreateJobSet
 @ stdcall NtCreateKey(ptr long ptr long ptr long ptr)
 @ stdcall NtCreateKeyTransacted(ptr long ptr long ptr long long ptr)
-@ stdcall NtCreateKeyedEvent(ptr long ptr long)
+@ stdcall -syscall NtCreateKeyedEvent(ptr long ptr long)
 @ stdcall NtCreateLowBoxToken(ptr long long ptr ptr long ptr long ptr)
 @ stdcall NtCreateMailslotFile(ptr long ptr ptr long long long ptr)
 @ stdcall -syscall NtCreateMutant(ptr long ptr long)
@@ -260,7 +260,7 @@
 @ stdcall NtOpenKeyEx(ptr long ptr long)
 @ stdcall NtOpenKeyTransacted(ptr long ptr long)
 @ stdcall NtOpenKeyTransactedEx(ptr long ptr long long)
-@ stdcall NtOpenKeyedEvent(ptr long ptr)
+@ stdcall -syscall NtOpenKeyedEvent(ptr long ptr)
 @ stdcall -syscall NtOpenMutant(ptr long ptr)
 @ stub NtOpenObjectAuditAlarm
 @ stdcall NtOpenProcess(ptr long ptr ptr)
@@ -333,7 +333,7 @@
 @ stdcall NtReadVirtualMemory(long ptr ptr long ptr)
 @ stub NtRegisterNewDevice
 @ stdcall NtRegisterThreadTerminatePort(ptr)
-@ stdcall NtReleaseKeyedEvent(long ptr long ptr)
+@ stdcall -syscall NtReleaseKeyedEvent(long ptr long ptr)
 @ stdcall -syscall NtReleaseMutant(long ptr)
 @ stub NtReleaseProcessMutant
 @ stdcall -syscall NtReleaseSemaphore(long long ptr)
@@ -422,7 +422,7 @@
 @ stub NtVdmControl
 @ stub NtW32Call
 # @ stub NtWaitForDebugEvent
-@ stdcall NtWaitForKeyedEvent(long ptr long ptr)
+@ stdcall -syscall NtWaitForKeyedEvent(long ptr long ptr)
 @ stdcall -syscall NtWaitForMultipleObjects(long ptr long long ptr)
 @ stub NtWaitForProcessMutant
 @ stdcall -syscall NtWaitForSingleObject(long long ptr)
@@ -1157,7 +1157,7 @@
 # @ stub ZwCreateJobSet
 @ stdcall -private ZwCreateKey(ptr long ptr long ptr long ptr) NtCreateKey
 @ stdcall -private ZwCreateKeyTransacted(ptr long ptr long ptr long long ptr) NtCreateKeyTransacted
-@ stdcall -private ZwCreateKeyedEvent(ptr long ptr long) NtCreateKeyedEvent
+@ stdcall -private -syscall ZwCreateKeyedEvent(ptr long ptr long) NtCreateKeyedEvent
 @ stdcall -private ZwCreateMailslotFile(ptr long ptr ptr long long long ptr) NtCreateMailslotFile
 @ stdcall -private -syscall ZwCreateMutant(ptr long ptr long) NtCreateMutant
 @ stdcall -private ZwCreateNamedPipeFile(ptr long ptr ptr long long long long long long long long long ptr) NtCreateNamedPipeFile
@@ -1244,7 +1244,7 @@
 @ stdcall -private ZwOpenKeyEx(ptr long ptr long) NtOpenKeyEx
 @ stdcall -private ZwOpenKeyTransacted(ptr long ptr long) NtOpenKeyTransacted
 @ stdcall -private ZwOpenKeyTransactedEx(ptr long ptr long long) NtOpenKeyTransactedEx
-@ stdcall -private ZwOpenKeyedEvent(ptr long ptr) NtOpenKeyedEvent
+@ stdcall -private -syscall ZwOpenKeyedEvent(ptr long ptr) NtOpenKeyedEvent
 @ stdcall -private -syscall ZwOpenMutant(ptr long ptr) NtOpenMutant
 @ stub ZwOpenObjectAuditAlarm
 @ stdcall -private ZwOpenProcess(ptr long ptr ptr) NtOpenProcess
@@ -1317,7 +1317,7 @@
 @ stdcall -private ZwReadVirtualMemory(long ptr ptr long ptr) NtReadVirtualMemory
 @ stub ZwRegisterNewDevice
 @ stdcall -private ZwRegisterThreadTerminatePort(ptr) NtRegisterThreadTerminatePort
-@ stdcall -private ZwReleaseKeyedEvent(long ptr long ptr) NtReleaseKeyedEvent
+@ stdcall -private -syscall ZwReleaseKeyedEvent(long ptr long ptr) NtReleaseKeyedEvent
 @ stdcall -private -syscall ZwReleaseMutant(long ptr) NtReleaseMutant
 @ stub ZwReleaseProcessMutant
 @ stdcall -private -syscall ZwReleaseSemaphore(long long ptr) NtReleaseSemaphore
@@ -1406,7 +1406,7 @@
 @ stub ZwVdmControl
 @ stub ZwW32Call
 # @ stub ZwWaitForDebugEvent
-@ stdcall -private ZwWaitForKeyedEvent(long ptr long ptr) NtWaitForKeyedEvent
+@ stdcall -private -syscall ZwWaitForKeyedEvent(long ptr long ptr) NtWaitForKeyedEvent
 @ stdcall -private -syscall ZwWaitForMultipleObjects(long ptr long long ptr) NtWaitForMultipleObjects
 @ stub ZwWaitForProcessMutant
 @ stdcall -private -syscall ZwWaitForSingleObject(long long ptr) NtWaitForSingleObject

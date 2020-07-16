@@ -167,41 +167,6 @@ NTSTATUS WINAPI NtSetTimerResolution(IN ULONG resolution,
 
 
 
-/******************************************************************************
- *              NtCreateKeyedEvent (NTDLL.@)
- */
-NTSTATUS WINAPI NtCreateKeyedEvent( HANDLE *handle, ACCESS_MASK access,
-                                    const OBJECT_ATTRIBUTES *attr, ULONG flags )
-{
-    return unix_funcs->NtCreateKeyedEvent( handle, access, attr, flags );
-}
-
-/******************************************************************************
- *              NtOpenKeyedEvent (NTDLL.@)
- */
-NTSTATUS WINAPI NtOpenKeyedEvent( HANDLE *handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr )
-{
-    return unix_funcs->NtOpenKeyedEvent( handle, access, attr );
-}
-
-/******************************************************************************
- *              NtWaitForKeyedEvent (NTDLL.@)
- */
-NTSTATUS WINAPI NtWaitForKeyedEvent( HANDLE handle, const void *key,
-                                     BOOLEAN alertable, const LARGE_INTEGER *timeout )
-{
-    return unix_funcs->NtWaitForKeyedEvent( handle, key, alertable, timeout );
-}
-
-/******************************************************************************
- *              NtReleaseKeyedEvent (NTDLL.@)
- */
-NTSTATUS WINAPI NtReleaseKeyedEvent( HANDLE handle, const void *key,
-                                     BOOLEAN alertable, const LARGE_INTEGER *timeout )
-{
-    return unix_funcs->NtReleaseKeyedEvent( handle, key, alertable, timeout );
-}
-
 /******************************************************************
  *              NtCreateIoCompletion (NTDLL.@)
  *              ZwCreateIoCompletion (NTDLL.@)

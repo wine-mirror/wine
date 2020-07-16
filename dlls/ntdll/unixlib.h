@@ -28,7 +28,7 @@ struct msghdr;
 struct _DISPATCHER_CONTEXT;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 80
+#define NTDLL_UNIXLIB_VERSION 81
 
 struct unix_funcs
 {
@@ -42,8 +42,6 @@ struct unix_funcs
     NTSTATUS      (WINAPI *NtContinue)( CONTEXT *context, BOOLEAN alertable );
     NTSTATUS      (WINAPI *NtCreateIoCompletion)( HANDLE *handle, ACCESS_MASK access,
                                                   OBJECT_ATTRIBUTES *attr, ULONG threads );
-    NTSTATUS      (WINAPI *NtCreateKeyedEvent)( HANDLE *handle, ACCESS_MASK access,
-                                                const OBJECT_ATTRIBUTES *attr, ULONG flags );
     NTSTATUS      (WINAPI *NtCreateMailslotFile)( HANDLE *handle, ULONG access, OBJECT_ATTRIBUTES *attr,
                                                   IO_STATUS_BLOCK *io, ULONG options, ULONG quota,
                                                   ULONG msg_size, LARGE_INTEGER *timeout );
@@ -101,8 +99,6 @@ struct unix_funcs
                                                          ULONG filter, BOOLEAN subtree );
     NTSTATUS      (WINAPI *NtOpenIoCompletion)( HANDLE *handle, ACCESS_MASK access,
                                                 const OBJECT_ATTRIBUTES *attr );
-    NTSTATUS      (WINAPI *NtOpenKeyedEvent)( HANDLE *handle, ACCESS_MASK access,
-                                              const OBJECT_ATTRIBUTES *attr );
     NTSTATUS      (WINAPI *NtOpenProcess)( HANDLE *handle, ACCESS_MASK access,
                                            const OBJECT_ATTRIBUTES *attr, const CLIENT_ID *id );
     NTSTATUS      (WINAPI *NtOpenSection)( HANDLE *handle, ACCESS_MASK access,
@@ -158,8 +154,6 @@ struct unix_funcs
                                                LARGE_INTEGER *offset, ULONG *key );
     NTSTATUS      (WINAPI *NtReadVirtualMemory)( HANDLE process, const void *addr, void *buffer,
                                                  SIZE_T size, SIZE_T *bytes_read );
-    NTSTATUS      (WINAPI *NtReleaseKeyedEvent)( HANDLE handle, const void *key,
-                                                 BOOLEAN alertable, const LARGE_INTEGER *timeout );
     NTSTATUS      (WINAPI *NtRemoveIoCompletion)( HANDLE handle, ULONG_PTR *key, ULONG_PTR *value,
                                                   IO_STATUS_BLOCK *io, LARGE_INTEGER *timeout );
     NTSTATUS      (WINAPI *NtRemoveIoCompletionEx)( HANDLE handle, FILE_IO_COMPLETION_INFORMATION *info,
@@ -190,8 +184,6 @@ struct unix_funcs
     NTSTATUS      (WINAPI *NtUnlockVirtualMemory)( HANDLE process, PVOID *addr,
                                                    SIZE_T *size, ULONG unknown );
     NTSTATUS      (WINAPI *NtUnmapViewOfSection)( HANDLE process, PVOID addr );
-    NTSTATUS      (WINAPI *NtWaitForKeyedEvent)( HANDLE handle, const void *key, BOOLEAN alertable,
-                                                 const LARGE_INTEGER *timeout );
     NTSTATUS      (WINAPI *NtWriteFile)( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user,
                                          IO_STATUS_BLOCK *io, const void *buffer, ULONG length,
                                          LARGE_INTEGER *offset, ULONG *key );
