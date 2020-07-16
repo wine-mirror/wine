@@ -2604,6 +2604,7 @@ MSVCRT_size_t CDECL MSVCRT_wcsnlen(const MSVCRT_wchar_t *s, MSVCRT_size_t maxlen
 int CDECL MSVCRT__towupper_l(MSVCRT_wint_t c, MSVCRT__locale_t locale)
 {
     MSVCRT_pthreadlocinfo locinfo;
+    MSVCRT_wchar_t ret;
 
     if(!locale)
         locinfo = get_locinfo();
@@ -2616,7 +2617,9 @@ int CDECL MSVCRT__towupper_l(MSVCRT_wint_t c, MSVCRT__locale_t locale)
         return c;
     }
 
-    return toupperW(c);
+    if(!LCMapStringW(locinfo->lc_handle[MSVCRT_LC_CTYPE], LCMAP_UPPERCASE, &c, 1, &ret, 1))
+        return c;
+    return ret;
 }
 
 /*********************************************************************
