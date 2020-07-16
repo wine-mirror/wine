@@ -730,7 +730,7 @@ HRESULT WINAPI RegisterTypeLib(ITypeLib *ptlib, const WCHAR *szFullPath, const W
             if ((disposition == REG_CREATED_NEW_KEY) && (szHelpDir == NULL)) {
                 szHelpDir = freeHelpDir = SysAllocString(szFullPath);
                 file_name = wcsrchr(szHelpDir, '\\');
-                if (file_name && file_name[0]) {
+                if (file_name && file_name[1]) {
                     /* possible remove a numeric \index (resource-id) */
                     WCHAR *end_ptr = file_name + 1;
                     while ('0' <= *end_ptr && *end_ptr <= '9') end_ptr++;
