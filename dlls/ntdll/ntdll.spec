@@ -142,7 +142,7 @@
 @ stdcall NtAllocateUuids(ptr ptr ptr ptr)
 @ stdcall NtAllocateVirtualMemory(long ptr long ptr long long)
 @ stdcall NtAreMappedFilesTheSame(ptr ptr)
-@ stdcall NtAssignProcessToJobObject(long long)
+@ stdcall -syscall NtAssignProcessToJobObject(long long)
 @ stub NtCallbackReturn
 # @ stub NtCancelDeviceWakeupRequest
 @ stdcall NtCancelIoFile(long ptr)
@@ -164,7 +164,7 @@
 @ stub NtCreateEventPair
 @ stdcall -syscall NtCreateFile(ptr long ptr ptr ptr long long long long ptr long)
 @ stdcall NtCreateIoCompletion(ptr long ptr long)
-@ stdcall NtCreateJobObject(ptr long ptr)
+@ stdcall -syscall NtCreateJobObject(ptr long ptr)
 # @ stub NtCreateJobSet
 @ stdcall NtCreateKey(ptr long ptr long ptr long ptr)
 @ stdcall NtCreateKeyTransacted(ptr long ptr long ptr long long ptr)
@@ -231,7 +231,7 @@
 @ stub NtImpersonateThread
 @ stub NtInitializeRegistry
 @ stdcall NtInitiatePowerAction (long long long long)
-@ stdcall NtIsProcessInJob(long long)
+@ stdcall -syscall NtIsProcessInJob(long long)
 # @ stub NtIsSystemResumeAutomatic
 @ stdcall NtListenPort(ptr ptr)
 @ stdcall NtLoadDriver(ptr)
@@ -255,7 +255,7 @@
 @ stub NtOpenEventPair
 @ stdcall -syscall NtOpenFile(ptr long ptr ptr long long)
 @ stdcall NtOpenIoCompletion(ptr long ptr)
-@ stdcall NtOpenJobObject(ptr long ptr)
+@ stdcall -syscall NtOpenJobObject(ptr long ptr)
 @ stdcall NtOpenKey(ptr long ptr)
 @ stdcall NtOpenKeyEx(ptr long ptr long)
 @ stdcall NtOpenKeyTransacted(ptr long ptr long)
@@ -293,7 +293,7 @@
 @ stdcall NtQueryFullAttributesFile(ptr ptr)
 @ stdcall NtQueryInformationAtom(long long ptr long ptr)
 @ stdcall NtQueryInformationFile(long ptr ptr long long)
-@ stdcall NtQueryInformationJobObject(long long ptr long ptr)
+@ stdcall -syscall NtQueryInformationJobObject(long long ptr long ptr)
 @ stub NtQueryInformationPort
 @ stdcall NtQueryInformationProcess(long long ptr long ptr)
 @ stdcall NtQueryInformationThread(long long ptr long ptr)
@@ -374,7 +374,7 @@
 @ stub NtSetHighWaitLowThread
 # @ stub NtSetInformationDebugObject
 @ stdcall NtSetInformationFile(long ptr ptr long long)
-@ stdcall NtSetInformationJobObject(long long ptr long)
+@ stdcall -syscall NtSetInformationJobObject(long long ptr long)
 @ stdcall NtSetInformationKey(long long ptr long)
 @ stdcall NtSetInformationObject(long long ptr long)
 @ stdcall NtSetInformationProcess(long long ptr long)
@@ -407,7 +407,7 @@
 @ stdcall NtSuspendProcess(long)
 @ stdcall NtSuspendThread(long ptr)
 @ stdcall NtSystemDebugControl(long ptr long ptr long ptr)
-@ stdcall NtTerminateJobObject(long long)
+@ stdcall -syscall NtTerminateJobObject(long long)
 @ stdcall NtTerminateProcess(long long)
 @ stdcall NtTerminateThread(long long)
 @ stub NtTestAlert
@@ -1131,7 +1131,7 @@
 @ stdcall -private ZwAllocateUuids(ptr ptr ptr ptr) NtAllocateUuids
 @ stdcall -private ZwAllocateVirtualMemory(long ptr long ptr long long) NtAllocateVirtualMemory
 @ stdcall -private ZwAreMappedFilesTheSame(ptr ptr) NtAreMappedFilesTheSame
-@ stdcall -private ZwAssignProcessToJobObject(long long) NtAssignProcessToJobObject
+@ stdcall -private -syscall ZwAssignProcessToJobObject(long long) NtAssignProcessToJobObject
 @ stub ZwCallbackReturn
 # @ stub ZwCancelDeviceWakeupRequest
 @ stdcall -private ZwCancelIoFile(long ptr) NtCancelIoFile
@@ -1153,7 +1153,7 @@
 @ stub ZwCreateEventPair
 @ stdcall -private -syscall ZwCreateFile(ptr long ptr ptr ptr long long long long ptr long) NtCreateFile
 @ stdcall -private ZwCreateIoCompletion(ptr long ptr long) NtCreateIoCompletion
-@ stdcall -private ZwCreateJobObject(ptr long ptr) NtCreateJobObject
+@ stdcall -private -syscall ZwCreateJobObject(ptr long ptr) NtCreateJobObject
 # @ stub ZwCreateJobSet
 @ stdcall -private ZwCreateKey(ptr long ptr long ptr long ptr) NtCreateKey
 @ stdcall -private ZwCreateKeyTransacted(ptr long ptr long ptr long long ptr) NtCreateKeyTransacted
@@ -1215,7 +1215,7 @@
 @ stub ZwImpersonateThread
 @ stub ZwInitializeRegistry
 @ stdcall -private ZwInitiatePowerAction(long long long long) NtInitiatePowerAction
-@ stdcall -private ZwIsProcessInJob(long long) NtIsProcessInJob
+@ stdcall -private -syscall ZwIsProcessInJob(long long) NtIsProcessInJob
 # @ stub ZwIsSystemResumeAutomatic
 @ stdcall -private ZwListenPort(ptr ptr) NtListenPort
 @ stdcall -private ZwLoadDriver(ptr) NtLoadDriver
@@ -1239,7 +1239,7 @@
 @ stub ZwOpenEventPair
 @ stdcall -private -syscall ZwOpenFile(ptr long ptr ptr long long) NtOpenFile
 @ stdcall -private ZwOpenIoCompletion(ptr long ptr) NtOpenIoCompletion
-@ stdcall -private ZwOpenJobObject(ptr long ptr) NtOpenJobObject
+@ stdcall -private -syscall ZwOpenJobObject(ptr long ptr) NtOpenJobObject
 @ stdcall -private ZwOpenKey(ptr long ptr) NtOpenKey
 @ stdcall -private ZwOpenKeyEx(ptr long ptr long) NtOpenKeyEx
 @ stdcall -private ZwOpenKeyTransacted(ptr long ptr long) NtOpenKeyTransacted
@@ -1277,7 +1277,7 @@
 @ stdcall -private ZwQueryFullAttributesFile(ptr ptr) NtQueryFullAttributesFile
 @ stdcall -private ZwQueryInformationAtom(long long ptr long ptr) NtQueryInformationAtom
 @ stdcall -private ZwQueryInformationFile(long ptr ptr long long) NtQueryInformationFile
-@ stdcall -private ZwQueryInformationJobObject(long long ptr long ptr) NtQueryInformationJobObject
+@ stdcall -private -syscall ZwQueryInformationJobObject(long long ptr long ptr) NtQueryInformationJobObject
 @ stub ZwQueryInformationPort
 @ stdcall -private ZwQueryInformationProcess(long long ptr long ptr) NtQueryInformationProcess
 @ stdcall -private ZwQueryInformationThread(long long ptr long ptr) NtQueryInformationThread
@@ -1358,7 +1358,7 @@
 @ stub ZwSetHighWaitLowThread
 # @ stub ZwSetInformationDebugObject
 @ stdcall -private ZwSetInformationFile(long ptr ptr long long) NtSetInformationFile
-@ stdcall -private ZwSetInformationJobObject(long long ptr long) NtSetInformationJobObject
+@ stdcall -private -syscall ZwSetInformationJobObject(long long ptr long) NtSetInformationJobObject
 @ stdcall -private ZwSetInformationKey(long long ptr long) NtSetInformationKey
 @ stdcall -private ZwSetInformationObject(long long ptr long) NtSetInformationObject
 @ stdcall -private ZwSetInformationProcess(long long ptr long) NtSetInformationProcess
@@ -1391,7 +1391,7 @@
 @ stdcall -private ZwSuspendProcess(long) NtSuspendProcess
 @ stdcall -private ZwSuspendThread(long ptr) NtSuspendThread
 @ stdcall -private ZwSystemDebugControl(long ptr long ptr long ptr) NtSystemDebugControl
-@ stdcall -private ZwTerminateJobObject(long long) NtTerminateJobObject
+@ stdcall -private -syscall ZwTerminateJobObject(long long) NtTerminateJobObject
 @ stdcall -private ZwTerminateProcess(long long) NtTerminateProcess
 @ stdcall -private ZwTerminateThread(long long) NtTerminateThread
 @ stub ZwTestAlert
