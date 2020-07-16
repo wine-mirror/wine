@@ -167,56 +167,6 @@ NTSTATUS WINAPI NtSetTimerResolution(IN ULONG resolution,
 
 
 
-/* wait operations */
-
-/******************************************************************
- *		NtWaitForMultipleObjects (NTDLL.@)
- */
-NTSTATUS WINAPI NtWaitForMultipleObjects( DWORD count, const HANDLE *handles,
-                                          BOOLEAN wait_any, BOOLEAN alertable,
-                                          const LARGE_INTEGER *timeout )
-{
-    return unix_funcs->NtWaitForMultipleObjects( count, handles, wait_any, alertable, timeout );
-}
-
-
-/******************************************************************
- *		NtWaitForSingleObject (NTDLL.@)
- */
-NTSTATUS WINAPI NtWaitForSingleObject(HANDLE handle, BOOLEAN alertable, const LARGE_INTEGER *timeout )
-{
-    return unix_funcs->NtWaitForSingleObject( handle, alertable, timeout );
-}
-
-
-/******************************************************************
- *		NtSignalAndWaitForSingleObject (NTDLL.@)
- */
-NTSTATUS WINAPI NtSignalAndWaitForSingleObject( HANDLE signal, HANDLE wait,
-                                                BOOLEAN alertable, const LARGE_INTEGER *timeout )
-{
-    return unix_funcs->NtSignalAndWaitForSingleObject( signal, wait, alertable, timeout );
-}
-
-
-/******************************************************************
- *		NtYieldExecution (NTDLL.@)
- */
-NTSTATUS WINAPI NtYieldExecution(void)
-{
-    return unix_funcs->NtYieldExecution();
-}
-
-
-/******************************************************************
- *		NtDelayExecution (NTDLL.@)
- */
-NTSTATUS WINAPI NtDelayExecution( BOOLEAN alertable, const LARGE_INTEGER *timeout )
-{
-    return unix_funcs->NtDelayExecution( alertable, timeout );
-}
-
-
 /******************************************************************************
  *              NtCreateKeyedEvent (NTDLL.@)
  */

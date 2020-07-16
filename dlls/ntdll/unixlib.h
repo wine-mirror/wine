@@ -28,7 +28,7 @@ struct msghdr;
 struct _DISPATCHER_CONTEXT;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 79
+#define NTDLL_UNIXLIB_VERSION 80
 
 struct unix_funcs
 {
@@ -67,7 +67,6 @@ struct unix_funcs
                                                  RTL_USER_PROCESS_PARAMETERS *params, PS_CREATE_INFO *info,
                                                  PS_ATTRIBUTE_LIST *attr );
     TEB *         (WINAPI *NtCurrentTeb)(void);
-    NTSTATUS      (WINAPI *NtDelayExecution)( BOOLEAN alertable, const LARGE_INTEGER *timeout );
     NTSTATUS      (WINAPI *NtDeleteFile)( OBJECT_ATTRIBUTES *attr );
     NTSTATUS      (WINAPI *NtDeviceIoControlFile)( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc,
                                                    void *apc_context, IO_STATUS_BLOCK *io, ULONG code,
@@ -184,8 +183,6 @@ struct unix_funcs
     NTSTATUS      (WINAPI *NtSetSystemTime)( const LARGE_INTEGER *new, LARGE_INTEGER *old );
     NTSTATUS      (WINAPI *NtSetVolumeInformationFile)( HANDLE handle, IO_STATUS_BLOCK *io, void *info,
                                                         ULONG length, FS_INFORMATION_CLASS class );
-    NTSTATUS      (WINAPI *NtSignalAndWaitForSingleObject)( HANDLE signal, HANDLE wait,
-                                                            BOOLEAN alertable, const LARGE_INTEGER *timeout );
     NTSTATUS      (WINAPI *NtSuspendProcess)( HANDLE handle );
     NTSTATUS      (WINAPI *NtSuspendThread)( HANDLE handle, ULONG *count );
     NTSTATUS      (WINAPI *NtTerminateProcess)( HANDLE handle, LONG exit_code );
@@ -195,11 +192,6 @@ struct unix_funcs
     NTSTATUS      (WINAPI *NtUnmapViewOfSection)( HANDLE process, PVOID addr );
     NTSTATUS      (WINAPI *NtWaitForKeyedEvent)( HANDLE handle, const void *key, BOOLEAN alertable,
                                                  const LARGE_INTEGER *timeout );
-    NTSTATUS      (WINAPI *NtWaitForMultipleObjects)( DWORD count, const HANDLE *handles,
-                                                      BOOLEAN wait_any, BOOLEAN alertable,
-                                                      const LARGE_INTEGER *timeout );
-    NTSTATUS      (WINAPI *NtWaitForSingleObject)( HANDLE handle, BOOLEAN alertable,
-                                                   const LARGE_INTEGER *timeout );
     NTSTATUS      (WINAPI *NtWriteFile)( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user,
                                          IO_STATUS_BLOCK *io, const void *buffer, ULONG length,
                                          LARGE_INTEGER *offset, ULONG *key );
@@ -209,7 +201,6 @@ struct unix_funcs
                                                LARGE_INTEGER *offset, ULONG *key );
     NTSTATUS      (WINAPI *NtWriteVirtualMemory)( HANDLE process, void *addr, const void *buffer,
                                                   SIZE_T size, SIZE_T *bytes_written );
-    NTSTATUS      (WINAPI *NtYieldExecution)(void);
 
     /* other Win32 API functions */
     NTSTATUS      (WINAPI *DbgUiIssueRemoteBreakin)( HANDLE process );

@@ -191,7 +191,7 @@
 @ stdcall -arch=win32,arm64 NtCurrentTeb()
 # @ stub NtDebugActiveProcess
 # @ stub NtDebugContinue
-@ stdcall NtDelayExecution(long ptr)
+@ stdcall -syscall NtDelayExecution(long ptr)
 @ stdcall NtDeleteAtom(long)
 # @ stub NtDeleteBootEntry
 @ stdcall NtDeleteFile(ptr)
@@ -401,7 +401,7 @@
 @ stdcall NtSetValueKey(long ptr long long ptr long)
 @ stdcall NtSetVolumeInformationFile(long ptr ptr long long)
 @ stdcall NtShutdownSystem(long)
-@ stdcall NtSignalAndWaitForSingleObject(long long long ptr)
+@ stdcall -syscall NtSignalAndWaitForSingleObject(long long long ptr)
 @ stub NtStartProfile
 @ stub NtStopProfile
 @ stdcall NtSuspendProcess(long)
@@ -423,16 +423,16 @@
 @ stub NtW32Call
 # @ stub NtWaitForDebugEvent
 @ stdcall NtWaitForKeyedEvent(long ptr long ptr)
-@ stdcall NtWaitForMultipleObjects(long ptr long long ptr)
+@ stdcall -syscall NtWaitForMultipleObjects(long ptr long long ptr)
 @ stub NtWaitForProcessMutant
-@ stdcall NtWaitForSingleObject(long long ptr)
+@ stdcall -syscall NtWaitForSingleObject(long long ptr)
 @ stub NtWaitHighEventPair
 @ stub NtWaitLowEventPair
 @ stdcall NtWriteFile(long long ptr ptr ptr ptr long ptr ptr)
 @ stdcall NtWriteFileGather(long long ptr ptr ptr ptr long ptr ptr)
 @ stub NtWriteRequestData
 @ stdcall NtWriteVirtualMemory(long ptr ptr long ptr)
-@ stdcall NtYieldExecution()
+@ stdcall -syscall NtYieldExecution()
 @ stub PfxFindPrefix
 @ stub PfxInitialize
 @ stub PfxInsertPrefix
@@ -1176,7 +1176,7 @@
 # @ stub ZwCreateWaitablePort
 # @ stub ZwDebugActiveProcess
 # @ stub ZwDebugContinue
-@ stdcall -private ZwDelayExecution(long ptr) NtDelayExecution
+@ stdcall -private -syscall ZwDelayExecution(long ptr) NtDelayExecution
 @ stdcall -private ZwDeleteAtom(long) NtDeleteAtom
 # @ stub ZwDeleteBootEntry
 @ stdcall -private ZwDeleteFile(ptr) NtDeleteFile
@@ -1385,7 +1385,7 @@
 @ stdcall -private ZwSetValueKey(long ptr long long ptr long) NtSetValueKey
 @ stdcall -private ZwSetVolumeInformationFile(long ptr ptr long long) NtSetVolumeInformationFile
 @ stdcall -private ZwShutdownSystem(long) NtShutdownSystem
-@ stdcall -private ZwSignalAndWaitForSingleObject(long long long ptr) NtSignalAndWaitForSingleObject
+@ stdcall -private -syscall ZwSignalAndWaitForSingleObject(long long long ptr) NtSignalAndWaitForSingleObject
 @ stub ZwStartProfile
 @ stub ZwStopProfile
 @ stdcall -private ZwSuspendProcess(long) NtSuspendProcess
@@ -1407,16 +1407,16 @@
 @ stub ZwW32Call
 # @ stub ZwWaitForDebugEvent
 @ stdcall -private ZwWaitForKeyedEvent(long ptr long ptr) NtWaitForKeyedEvent
-@ stdcall -private ZwWaitForMultipleObjects(long ptr long long ptr) NtWaitForMultipleObjects
+@ stdcall -private -syscall ZwWaitForMultipleObjects(long ptr long long ptr) NtWaitForMultipleObjects
 @ stub ZwWaitForProcessMutant
-@ stdcall -private ZwWaitForSingleObject(long long ptr) NtWaitForSingleObject
+@ stdcall -private -syscall ZwWaitForSingleObject(long long ptr) NtWaitForSingleObject
 @ stub ZwWaitHighEventPair
 @ stub ZwWaitLowEventPair
 @ stdcall -private ZwWriteFile(long long ptr ptr ptr ptr long ptr ptr) NtWriteFile
 @ stdcall -private ZwWriteFileGather(long long ptr ptr ptr ptr long ptr ptr) NtWriteFileGather
 @ stub ZwWriteRequestData
 @ stdcall -private ZwWriteVirtualMemory(long ptr ptr long ptr) NtWriteVirtualMemory
-@ stdcall -private ZwYieldExecution() NtYieldExecution
+@ stdcall -private -syscall ZwYieldExecution() NtYieldExecution
 @ cdecl -private -arch=i386 _CIcos()
 @ cdecl -private -arch=i386 _CIlog()
 @ cdecl -private -arch=i386 _CIpow()
