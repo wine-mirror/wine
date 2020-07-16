@@ -163,7 +163,7 @@
 @ stdcall -syscall NtCreateEvent(ptr long ptr long long)
 @ stub NtCreateEventPair
 @ stdcall -syscall NtCreateFile(ptr long ptr ptr ptr long long long long ptr long)
-@ stdcall NtCreateIoCompletion(ptr long ptr long)
+@ stdcall -syscall NtCreateIoCompletion(ptr long ptr long)
 @ stdcall -syscall NtCreateJobObject(ptr long ptr)
 # @ stub NtCreateJobSet
 @ stdcall NtCreateKey(ptr long ptr long ptr long ptr)
@@ -254,7 +254,7 @@
 @ stdcall -syscall NtOpenEvent(ptr long ptr)
 @ stub NtOpenEventPair
 @ stdcall -syscall NtOpenFile(ptr long ptr ptr long long)
-@ stdcall NtOpenIoCompletion(ptr long ptr)
+@ stdcall -syscall NtOpenIoCompletion(ptr long ptr)
 @ stdcall -syscall NtOpenJobObject(ptr long ptr)
 @ stdcall NtOpenKey(ptr long ptr)
 @ stdcall NtOpenKeyEx(ptr long ptr long)
@@ -300,7 +300,7 @@
 @ stdcall NtQueryInformationToken(long long ptr long ptr)
 @ stdcall NtQueryInstallUILanguage(ptr)
 @ stub NtQueryIntervalProfile
-@ stdcall NtQueryIoCompletion(long long ptr long ptr)
+@ stdcall -syscall NtQueryIoCompletion(long long ptr long ptr)
 @ stdcall NtQueryKey (long long ptr long ptr)
 @ stdcall NtQueryLicenseValue(ptr ptr ptr long ptr)
 @ stdcall NtQueryMultipleValueKey(long ptr long ptr long ptr)
@@ -337,8 +337,8 @@
 @ stdcall -syscall NtReleaseMutant(long ptr)
 @ stub NtReleaseProcessMutant
 @ stdcall -syscall NtReleaseSemaphore(long long ptr)
-@ stdcall NtRemoveIoCompletion(ptr ptr ptr ptr ptr)
-@ stdcall NtRemoveIoCompletionEx(ptr ptr long ptr ptr long)
+@ stdcall -syscall NtRemoveIoCompletion(ptr ptr ptr ptr ptr)
+@ stdcall -syscall NtRemoveIoCompletionEx(ptr ptr long ptr ptr long)
 # @ stub NtRemoveProcessDebug
 @ stdcall NtRenameKey(long ptr)
 @ stdcall NtReplaceKey(ptr long ptr)
@@ -381,7 +381,7 @@
 @ stdcall NtSetInformationThread(long long ptr long)
 @ stdcall NtSetInformationToken(long long ptr long)
 @ stdcall NtSetIntervalProfile(long long)
-@ stdcall NtSetIoCompletion(ptr long long long long)
+@ stdcall -syscall NtSetIoCompletion(ptr long long long long)
 @ stdcall NtSetLdtEntries(long int64 long int64)
 @ stub NtSetLowEventPair
 @ stub NtSetLowWaitHighEventPair
@@ -1152,7 +1152,7 @@
 @ stdcall -private -syscall ZwCreateEvent(ptr long ptr long long) NtCreateEvent
 @ stub ZwCreateEventPair
 @ stdcall -private -syscall ZwCreateFile(ptr long ptr ptr ptr long long long long ptr long) NtCreateFile
-@ stdcall -private ZwCreateIoCompletion(ptr long ptr long) NtCreateIoCompletion
+@ stdcall -private -syscall ZwCreateIoCompletion(ptr long ptr long) NtCreateIoCompletion
 @ stdcall -private -syscall ZwCreateJobObject(ptr long ptr) NtCreateJobObject
 # @ stub ZwCreateJobSet
 @ stdcall -private ZwCreateKey(ptr long ptr long ptr long ptr) NtCreateKey
@@ -1238,7 +1238,7 @@
 @ stdcall -private -syscall ZwOpenEvent(ptr long ptr) NtOpenEvent
 @ stub ZwOpenEventPair
 @ stdcall -private -syscall ZwOpenFile(ptr long ptr ptr long long) NtOpenFile
-@ stdcall -private ZwOpenIoCompletion(ptr long ptr) NtOpenIoCompletion
+@ stdcall -private -syscall ZwOpenIoCompletion(ptr long ptr) NtOpenIoCompletion
 @ stdcall -private -syscall ZwOpenJobObject(ptr long ptr) NtOpenJobObject
 @ stdcall -private ZwOpenKey(ptr long ptr) NtOpenKey
 @ stdcall -private ZwOpenKeyEx(ptr long ptr long) NtOpenKeyEx
@@ -1284,7 +1284,7 @@
 @ stdcall -private ZwQueryInformationToken(long long ptr long ptr) NtQueryInformationToken
 @ stdcall -private ZwQueryInstallUILanguage(ptr) NtQueryInstallUILanguage
 @ stub ZwQueryIntervalProfile
-@ stdcall -private ZwQueryIoCompletion(long long ptr long ptr) NtQueryIoCompletion
+@ stdcall -private -syscall ZwQueryIoCompletion(long long ptr long ptr) NtQueryIoCompletion
 @ stdcall -private ZwQueryKey(long long ptr long ptr) NtQueryKey
 @ stdcall -private ZwQueryLicenseValue(ptr ptr ptr long ptr) NtQueryLicenseValue
 @ stdcall -private ZwQueryMultipleValueKey(long ptr long ptr long ptr) NtQueryMultipleValueKey
@@ -1321,8 +1321,8 @@
 @ stdcall -private -syscall ZwReleaseMutant(long ptr) NtReleaseMutant
 @ stub ZwReleaseProcessMutant
 @ stdcall -private -syscall ZwReleaseSemaphore(long long ptr) NtReleaseSemaphore
-@ stdcall -private ZwRemoveIoCompletion(ptr ptr ptr ptr ptr) NtRemoveIoCompletion
-@ stdcall -private ZwRemoveIoCompletionEx(ptr ptr long ptr ptr long) NtRemoveIoCompletionEx
+@ stdcall -private -syscall ZwRemoveIoCompletion(ptr ptr ptr ptr ptr) NtRemoveIoCompletion
+@ stdcall -private -syscall ZwRemoveIoCompletionEx(ptr ptr long ptr ptr long) NtRemoveIoCompletionEx
 # @ stub ZwRemoveProcessDebug
 @ stdcall -private ZwRenameKey(long ptr) NtRenameKey
 @ stdcall -private ZwReplaceKey(ptr long ptr) NtReplaceKey
@@ -1365,7 +1365,7 @@
 @ stdcall -private ZwSetInformationThread(long long ptr long) NtSetInformationThread
 @ stdcall -private ZwSetInformationToken(long long ptr long) NtSetInformationToken
 @ stdcall -private ZwSetIntervalProfile(long long) NtSetIntervalProfile
-@ stdcall -private ZwSetIoCompletion(ptr long long long long) NtSetIoCompletion
+@ stdcall -private -syscall ZwSetIoCompletion(ptr long long long long) NtSetIoCompletion
 @ stdcall -private ZwSetLdtEntries(long int64 long int64) NtSetLdtEntries
 @ stub ZwSetLowEventPair
 @ stub ZwSetLowWaitHighEventPair

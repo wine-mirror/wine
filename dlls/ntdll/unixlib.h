@@ -28,7 +28,7 @@ struct msghdr;
 struct _DISPATCHER_CONTEXT;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 81
+#define NTDLL_UNIXLIB_VERSION 82
 
 struct unix_funcs
 {
@@ -40,8 +40,6 @@ struct unix_funcs
     NTSTATUS      (WINAPI *NtAreMappedFilesTheSame)(PVOID addr1, PVOID addr2);
     NTSTATUS      (WINAPI *NtClose)( HANDLE handle );
     NTSTATUS      (WINAPI *NtContinue)( CONTEXT *context, BOOLEAN alertable );
-    NTSTATUS      (WINAPI *NtCreateIoCompletion)( HANDLE *handle, ACCESS_MASK access,
-                                                  OBJECT_ATTRIBUTES *attr, ULONG threads );
     NTSTATUS      (WINAPI *NtCreateMailslotFile)( HANDLE *handle, ULONG access, OBJECT_ATTRIBUTES *attr,
                                                   IO_STATUS_BLOCK *io, ULONG options, ULONG quota,
                                                   ULONG msg_size, LARGE_INTEGER *timeout );
@@ -97,8 +95,6 @@ struct unix_funcs
                                                          void *apc_context, IO_STATUS_BLOCK *iosb,
                                                          void *buffer, ULONG buffer_size,
                                                          ULONG filter, BOOLEAN subtree );
-    NTSTATUS      (WINAPI *NtOpenIoCompletion)( HANDLE *handle, ACCESS_MASK access,
-                                                const OBJECT_ATTRIBUTES *attr );
     NTSTATUS      (WINAPI *NtOpenProcess)( HANDLE *handle, ACCESS_MASK access,
                                            const OBJECT_ATTRIBUTES *attr, const CLIENT_ID *id );
     NTSTATUS      (WINAPI *NtOpenSection)( HANDLE *handle, ACCESS_MASK access,
@@ -123,8 +119,6 @@ struct unix_funcs
                                                        ULONG size, ULONG *ret_len );
     NTSTATUS      (WINAPI *NtQueryInformationThread)( HANDLE handle, THREADINFOCLASS class,
                                                       void *data, ULONG length, ULONG *ret_len );
-    NTSTATUS      (WINAPI *NtQueryIoCompletion)( HANDLE handle, IO_COMPLETION_INFORMATION_CLASS class,
-                                                 void *buffer, ULONG len, ULONG *ret_len );
     NTSTATUS      (WINAPI *NtQueryObject)( HANDLE handle, OBJECT_INFORMATION_CLASS info_class,
                                            void *ptr, ULONG len, ULONG *used_len );
     NTSTATUS      (WINAPI *NtQueryPerformanceCounter)( LARGE_INTEGER *counter, LARGE_INTEGER *frequency );
@@ -154,11 +148,6 @@ struct unix_funcs
                                                LARGE_INTEGER *offset, ULONG *key );
     NTSTATUS      (WINAPI *NtReadVirtualMemory)( HANDLE process, const void *addr, void *buffer,
                                                  SIZE_T size, SIZE_T *bytes_read );
-    NTSTATUS      (WINAPI *NtRemoveIoCompletion)( HANDLE handle, ULONG_PTR *key, ULONG_PTR *value,
-                                                  IO_STATUS_BLOCK *io, LARGE_INTEGER *timeout );
-    NTSTATUS      (WINAPI *NtRemoveIoCompletionEx)( HANDLE handle, FILE_IO_COMPLETION_INFORMATION *info,
-                                                    ULONG count, ULONG *written,
-                                                    LARGE_INTEGER *timeout, BOOLEAN alertable );
     NTSTATUS      (WINAPI *NtResetWriteWatch)( HANDLE process, PVOID base, SIZE_T size );
     NTSTATUS      (WINAPI *NtResumeProcess)( HANDLE handle );
     NTSTATUS      (WINAPI *NtResumeThread)( HANDLE handle, ULONG *count );
@@ -171,8 +160,6 @@ struct unix_funcs
                                                      void *info, ULONG size );
     NTSTATUS      (WINAPI *NtSetInformationThread)( HANDLE handle, THREADINFOCLASS class,
                                                     const void *data, ULONG length );
-    NTSTATUS      (WINAPI *NtSetIoCompletion)( HANDLE handle, ULONG_PTR key, ULONG_PTR value,
-                                               NTSTATUS status, SIZE_T count );
     NTSTATUS      (WINAPI *NtSetLdtEntries)( ULONG sel1, LDT_ENTRY entry1, ULONG sel2, LDT_ENTRY entry2 );
     NTSTATUS      (WINAPI *NtSetSystemTime)( const LARGE_INTEGER *new, LARGE_INTEGER *old );
     NTSTATUS      (WINAPI *NtSetVolumeInformationFile)( HANDLE handle, IO_STATUS_BLOCK *io, void *info,

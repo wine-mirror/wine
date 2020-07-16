@@ -168,65 +168,6 @@ NTSTATUS WINAPI NtSetTimerResolution(IN ULONG resolution,
 
 
 /******************************************************************
- *              NtCreateIoCompletion (NTDLL.@)
- *              ZwCreateIoCompletion (NTDLL.@)
- */
-NTSTATUS WINAPI NtCreateIoCompletion( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr,
-                                      ULONG threads )
-{
-    return unix_funcs->NtCreateIoCompletion( handle, access, attr, threads );
-}
-
-/******************************************************************
- *              NtSetIoCompletion (NTDLL.@)
- *              ZwSetIoCompletion (NTDLL.@)
- */
-NTSTATUS WINAPI NtSetIoCompletion( HANDLE handle, ULONG_PTR key, ULONG_PTR value,
-                                   NTSTATUS status, SIZE_T count )
-{
-    return unix_funcs->NtSetIoCompletion( handle, key, value, status, count );
-}
-
-/******************************************************************
- *              NtRemoveIoCompletion (NTDLL.@)
- *              ZwRemoveIoCompletion (NTDLL.@)
- */
-NTSTATUS WINAPI NtRemoveIoCompletion( HANDLE handle, ULONG_PTR *key, ULONG_PTR *value,
-                                      IO_STATUS_BLOCK *io, LARGE_INTEGER *timeout )
-{
-    return unix_funcs->NtRemoveIoCompletion( handle, key, value, io, timeout );
-}
-
-/******************************************************************
- *              NtRemoveIoCompletionEx (NTDLL.@)
- *              ZwRemoveIoCompletionEx (NTDLL.@)
- */
-NTSTATUS WINAPI NtRemoveIoCompletionEx( HANDLE port, FILE_IO_COMPLETION_INFORMATION *info, ULONG count,
-                                        ULONG *written, LARGE_INTEGER *timeout, BOOLEAN alertable )
-{
-    return unix_funcs->NtRemoveIoCompletionEx( port, info, count, written, timeout, alertable );
-}
-
-/******************************************************************
- *              NtOpenIoCompletion (NTDLL.@)
- *              ZwOpenIoCompletion (NTDLL.@)
- */
-NTSTATUS WINAPI NtOpenIoCompletion( HANDLE *handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr )
-{
-    return unix_funcs->NtOpenIoCompletion( handle, access, attr );
-}
-
-/******************************************************************
- *              NtQueryIoCompletion (NTDLL.@)
- *              ZwQueryIoCompletion (NTDLL.@)
- */
-NTSTATUS WINAPI NtQueryIoCompletion( HANDLE handle, IO_COMPLETION_INFORMATION_CLASS class,
-                                     void *buffer, ULONG len, ULONG *ret_len )
-{
-    return unix_funcs->NtQueryIoCompletion( handle, class, buffer, len, ret_len );
-}
-
-/******************************************************************
  *              RtlRunOnceInitialize (NTDLL.@)
  */
 void WINAPI RtlRunOnceInitialize( RTL_RUN_ONCE *once )
