@@ -972,18 +972,13 @@ BOOL WINAPI DECLSPEC_HOTPATCH DefineDosDeviceW( DWORD flags, const WCHAR *device
 
     lstrcatW( link_name, device );
     RtlInitUnicodeString( &nt_name, link_name );
-    InitializeObjectAttributes( &attr, &nt_name, OBJ_CASE_INSENSITIVE, 0, NULL );
+    InitializeObjectAttributes( &attr, &nt_name, OBJ_CASE_INSENSITIVE | OBJ_PERMANENT, 0, NULL );
     if (flags & DDD_REMOVE_DEFINITION)
     {
         if (!set_ntstatus( NtOpenSymbolicLinkObject( &handle, 0, &attr ) ))
             return FALSE;
 
-        SERVER_START_REQ( unlink_object )
-        {
-            req->handle = wine_server_obj_handle( handle );
-            status = wine_server_call( req );
-        }
-        SERVER_END_REQ;
+        status = NtMakeTemporaryObject( handle );
         NtClose( handle );
 
         return set_ntstatus( status );
@@ -1000,7 +995,9 @@ BOOL WINAPI DECLSPEC_HOTPATCH DefineDosDeviceW( DWORD flags, const WCHAR *device
     else
         RtlInitUnicodeString( &nt_target, target );
 
-    return set_ntstatus( NtCreateSymbolicLinkObject( &handle, SYMBOLIC_LINK_ALL_ACCESS, &attr, &nt_target ) );
+    if (!(status = NtCreateSymbolicLinkObject( &handle, SYMBOLIC_LINK_ALL_ACCESS, &attr, &nt_target )))
+        NtClose( handle );
+    return set_ntstatus( status );
 }
 
 
