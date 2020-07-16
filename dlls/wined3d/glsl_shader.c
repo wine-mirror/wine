@@ -6053,10 +6053,9 @@ static void shader_glsl_sample(const struct wined3d_shader_instruction *ins)
     shader_glsl_release_sample_function(ins->ctx, &sample_function);
 }
 
-/* GLSL doesn't provide a function to sample from level zero with depth
- * comparison for array textures and cube textures. We use textureGrad*()
- * to implement sample_c_lz.
- */
+/* Unless EXT_texture_shadow_lod is available, GLSL doesn't provide a function
+ * to sample from level zero with depth comparison for array textures and cube
+ * textures. We use textureGrad*() to implement sample_c_lz in that case. */
 static void shader_glsl_gen_sample_c_lz_emulation(const struct wined3d_shader_instruction *ins,
         unsigned int sampler_bind_idx, const struct glsl_sample_function *sample_function,
         unsigned int coord_size, const char *coord_param, const char *ref_param)
