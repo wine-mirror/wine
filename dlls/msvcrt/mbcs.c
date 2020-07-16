@@ -1428,12 +1428,19 @@ int CDECL _ismbbkana(unsigned int c)
 }
 
 /*********************************************************************
+ *              _ismbcdigit_l(MSVCRT.@)
+ */
+int CDECL _ismbcdigit_l(unsigned int ch, MSVCRT__locale_t locale)
+{
+    return MSVCRT__iswdigit_l( msvcrt_mbc_to_wc_l(ch, locale), locale );
+}
+
+/*********************************************************************
  *              _ismbcdigit(MSVCRT.@)
  */
 int CDECL _ismbcdigit(unsigned int ch)
 {
-    MSVCRT_wchar_t wch = msvcrt_mbc_to_wc( ch );
-    return (get_char_typeW( wch ) & C1_DIGIT);
+    return _ismbcdigit_l( ch, NULL );
 }
 
 /*********************************************************************

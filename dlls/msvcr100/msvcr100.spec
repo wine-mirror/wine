@@ -979,7 +979,7 @@
 @ cdecl _ismbcalpha(long)
 @ stub _ismbcalpha_l
 @ cdecl _ismbcdigit(long)
-@ stub _ismbcdigit_l
+@ cdecl _ismbcdigit_l(long ptr)
 @ cdecl _ismbcgraph(long)
 @ stub _ismbcgraph_l
 @ cdecl _ismbchira(long)

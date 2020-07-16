@@ -31,7 +31,7 @@
 @ stub _ismbcblank
 @ stub _ismbcblank_l
 @ cdecl _ismbcdigit(long) ucrtbase._ismbcdigit
-@ stub _ismbcdigit_l
+@ cdecl _ismbcdigit_l(long ptr) ucrtbase._ismbcdigit_l
 @ cdecl _ismbcgraph(long) ucrtbase._ismbcgraph
 @ stub _ismbcgraph_l
 @ cdecl _ismbchira(long) ucrtbase._ismbchira

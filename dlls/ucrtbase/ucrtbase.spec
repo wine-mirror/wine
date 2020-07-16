@@ -469,7 +469,7 @@
 @ stub _ismbcblank
 @ stub _ismbcblank_l
 @ cdecl _ismbcdigit(long)
-@ stub _ismbcdigit_l
+@ cdecl _ismbcdigit_l(long ptr)
 @ cdecl _ismbcgraph(long)
 @ stub _ismbcgraph_l
 @ cdecl _ismbchira(long)
@@ -1068,7 +1068,7 @@
 @ stub _o__ismbcblank
 @ stub _o__ismbcblank_l
 @ cdecl _o__ismbcdigit(long) _ismbcdigit
-@ stub _o__ismbcdigit_l
+@ cdecl _o__ismbcdigit_l(long ptr) _ismbcdigit_l
 @ cdecl _o__ismbcgraph(long) _ismbcgraph
 @ stub _o__ismbcgraph_l
 @ cdecl _o__ismbchira(long) _ismbchira

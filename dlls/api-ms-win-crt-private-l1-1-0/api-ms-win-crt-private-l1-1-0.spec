@@ -404,7 +404,7 @@
 @ stub _o__ismbcblank
 @ stub _o__ismbcblank_l
 @ cdecl _o__ismbcdigit(long) ucrtbase._o__ismbcdigit
-@ stub _o__ismbcdigit_l
+@ cdecl _o__ismbcdigit_l(long ptr) ucrtbase._o__ismbcdigit_l
 @ cdecl _o__ismbcgraph(long) ucrtbase._o__ismbcgraph
 @ stub _o__ismbcgraph_l
 @ cdecl _o__ismbchira(long) ucrtbase._o__ismbchira
