@@ -1667,6 +1667,23 @@ static void *hook_KiUserExceptionDispatcher_eip;
 static void *dbg_except_continue_handler_eip;
 static void *hook_exception_address;
 
+static struct
+{
+    DWORD old_eax;
+    DWORD old_edx;
+    DWORD old_esi;
+    DWORD old_edi;
+    DWORD old_ebp;
+    DWORD old_esp;
+    DWORD new_eax;
+    DWORD new_edx;
+    DWORD new_esi;
+    DWORD new_edi;
+    DWORD new_ebp;
+    DWORD new_esp;
+}
+test_kiuserexceptiondispatcher_regs;
+
 static DWORD dbg_except_continue_handler(EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
         CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher)
 {
@@ -1677,6 +1694,11 @@ static DWORD dbg_except_continue_handler(EXCEPTION_RECORD *rec, EXCEPTION_REGIST
     got_exception = 1;
     dbg_except_continue_handler_eip = (void *)context->Eip;
     ++context->Eip;
+
+    context->Eip = (DWORD)code_mem + 0x1c;
+    context->Eax = 0xdeadbeef;
+    context->Esi = 0xdeadbeef;
+    pRtlUnwind(NtCurrentTeb()->Tib.ExceptionList, (void *)context->Eip, rec, (void *)0xdeadbeef);
     return ExceptionContinueExecution;
 }
 
@@ -1701,6 +1723,7 @@ static LONG WINAPI dbg_except_continue_vectored_handler(struct _EXCEPTION_POINTE
          * software raised exception. */
         context->Eip = (ULONG_PTR)rec->ExceptionAddress;
     }
+
     return EXCEPTION_CONTINUE_EXECUTION;
 }
 
@@ -1725,9 +1748,39 @@ void CDECL hook_KiUserExceptionDispatcher(EXCEPTION_RECORD *rec, CONTEXT *contex
 static void test_kiuserexceptiondispatcher(void)
 {
     HMODULE hntdll = GetModuleHandleA("ntdll.dll");
-    static const BYTE except_code[] =
+    static BYTE except_code[] =
     {
+        0xb9, /* mov imm32, %ecx */
+        /* offset: 0x1 */
+        0x00, 0x00, 0x00, 0x00,
+
+        0x89, 0x01,       /* mov %eax, (%ecx) */
+        0x89, 0x51, 0x04, /* mov %edx, 0x4(%ecx) */
+        0x89, 0x71, 0x08, /* mov %esi, 0x8(%ecx) */
+        0x89, 0x79, 0x0c, /* mov %edi, 0xc(%ecx) */
+        0x89, 0x69, 0x10, /* mov %ebp, 0x10(%ecx) */
+        0x89, 0x61, 0x14, /* mov %esp, 0x14(%ecx) */
+        0x83, 0xc1, 0x18, /* add $0x18, %ecx */
+
+        /* offset: 0x19 */
         0xcc,  /* int3 */
+
+        0x0f, 0x0b, /* ud2, illegal instruction */
+
+        /* offset: 0x1c */
+        0xb9, /* mov imm32, %ecx */
+        /* offset: 0x1d */
+        0x00, 0x00, 0x00, 0x00,
+
+        0x89, 0x01,       /* mov %eax, (%ecx) */
+        0x89, 0x51, 0x04, /* mov %edx, 0x4(%ecx) */
+        0x89, 0x71, 0x08, /* mov %esi, 0x8(%ecx) */
+        0x89, 0x79, 0x0c, /* mov %edi, 0xc(%ecx) */
+        0x89, 0x69, 0x10, /* mov %ebp, 0x10(%ecx) */
+        0x89, 0x61, 0x14, /* mov %esp, 0x14(%ecx) */
+
+        0x67, 0x48, 0x8b, 0x71, 0xf0, /* mov -0x10(%ecx),%esi */
+
         0xc3,  /* ret  */
     };
     static BYTE hook_trampoline[] =
@@ -1745,6 +1798,7 @@ static void test_kiuserexceptiondispatcher(void)
     void *phook_trampoline = hook_trampoline;
     DWORD old_protect1, old_protect2;
     EXCEPTION_RECORD record;
+    void *bpt_address;
     BYTE *ptr;
     BOOL ret;
 
@@ -1754,6 +1808,15 @@ static void test_kiuserexceptiondispatcher(void)
         win_skip("KiUserExceptionDispatcher is not available.\n");
         return;
     }
+
+    if (!pRtlUnwind)
+    {
+        win_skip("RtlUnwind is not available.\n");
+        return;
+    }
+
+    *(DWORD *)(except_code + 1) = (DWORD)&test_kiuserexceptiondispatcher_regs;
+    *(DWORD *)(except_code + 0x1d) = (DWORD)&test_kiuserexceptiondispatcher_regs.new_eax;
 
     *(unsigned int *)(hook_trampoline + 2) = (ULONG_PTR)&phook_KiUserExceptionDispatcher;
     *(unsigned int *)(hook_trampoline + 8) = (ULONG_PTR)&pKiUserExceptionDispatcher;
@@ -1786,13 +1849,24 @@ static void test_kiuserexceptiondispatcher(void)
     ok(got_exception, "Handler was not called.\n");
     ok(hook_called, "Hook was not called.\n");
 
-    ok(hook_exception_address == code_mem || broken(!hook_exception_address) /* Win2008 */,
+    ok(test_kiuserexceptiondispatcher_regs.new_eax == 0xdeadbeef, "Got unexpected eax %#x.\n",
+            test_kiuserexceptiondispatcher_regs.new_eax);
+    ok(test_kiuserexceptiondispatcher_regs.new_esi == 0xdeadbeef, "Got unexpected esi %#x.\n",
+            test_kiuserexceptiondispatcher_regs.new_esi);
+    ok(test_kiuserexceptiondispatcher_regs.old_edi
+            == test_kiuserexceptiondispatcher_regs.new_edi, "edi does not match.\n");
+    ok(test_kiuserexceptiondispatcher_regs.old_ebp
+            == test_kiuserexceptiondispatcher_regs.new_ebp, "ebp does not match.\n");
+
+    bpt_address = (BYTE *)code_mem + 0x19;
+
+    ok(hook_exception_address == bpt_address || broken(!hook_exception_address) /* Win2008 */,
             "Got unexpected exception address %p, expected %p.\n",
-            hook_exception_address, code_mem);
-    ok(hook_KiUserExceptionDispatcher_eip == code_mem, "Got unexpected exception address %p, expected %p.\n",
-            hook_KiUserExceptionDispatcher_eip, code_mem);
-    ok(dbg_except_continue_handler_eip == code_mem, "Got unexpected exception address %p, expected %p.\n",
-            dbg_except_continue_handler_eip, code_mem);
+            hook_exception_address, bpt_address);
+    ok(hook_KiUserExceptionDispatcher_eip == bpt_address, "Got unexpected exception address %p, expected %p.\n",
+            hook_KiUserExceptionDispatcher_eip, bpt_address);
+    ok(dbg_except_continue_handler_eip == bpt_address, "Got unexpected exception address %p, expected %p.\n",
+            dbg_except_continue_handler_eip, bpt_address);
 
     record.ExceptionCode = 0x80000003;
     record.ExceptionFlags = 0;
