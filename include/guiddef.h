@@ -156,18 +156,18 @@ typedef GUID FMTID,*LPFMTID;
 #define IsEqualGUID(rguid1, rguid2) (!memcmp(&(rguid1), &(rguid2), sizeof(GUID)))
 inline int InlineIsEqualGUID(REFGUID rguid1, REFGUID rguid2)
 {
-   return (((ULONG *)&rguid1)[0] == ((ULONG *)&rguid2)[0] &&
-           ((ULONG *)&rguid1)[1] == ((ULONG *)&rguid2)[1] &&
-           ((ULONG *)&rguid1)[2] == ((ULONG *)&rguid2)[2] &&
-           ((ULONG *)&rguid1)[3] == ((ULONG *)&rguid2)[3]);
+   return (((unsigned int *)&rguid1)[0] == ((unsigned int *)&rguid2)[0] &&
+           ((unsigned int *)&rguid1)[1] == ((unsigned int *)&rguid2)[1] &&
+           ((unsigned int *)&rguid1)[2] == ((unsigned int *)&rguid2)[2] &&
+           ((unsigned int *)&rguid1)[3] == ((unsigned int *)&rguid2)[3]);
 }
 #else
 #define IsEqualGUID(rguid1, rguid2) (!memcmp(rguid1, rguid2, sizeof(GUID)))
 #define InlineIsEqualGUID(rguid1, rguid2)  \
-        (((ULONG *)rguid1)[0] == ((ULONG *)rguid2)[0] && \
-         ((ULONG *)rguid1)[1] == ((ULONG *)rguid2)[1] && \
-         ((ULONG *)rguid1)[2] == ((ULONG *)rguid2)[2] && \
-         ((ULONG *)rguid1)[3] == ((ULONG *)rguid2)[3])
+        (((unsigned int *)rguid1)[0] == ((unsigned int *)rguid2)[0] && \
+         ((unsigned int *)rguid1)[1] == ((unsigned int *)rguid2)[1] && \
+         ((unsigned int *)rguid1)[2] == ((unsigned int *)rguid2)[2] && \
+         ((unsigned int *)rguid1)[3] == ((unsigned int *)rguid2)[3])
 #endif
 
 #ifdef __cplusplus
