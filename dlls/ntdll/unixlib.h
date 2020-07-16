@@ -28,7 +28,7 @@ struct msghdr;
 struct _DISPATCHER_CONTEXT;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 86
+#define NTDLL_UNIXLIB_VERSION 87
 
 struct unix_funcs
 {
@@ -39,20 +39,11 @@ struct unix_funcs
                                                HANDLE dest_process, HANDLE *dest,
                                                ACCESS_MASK access, ULONG attributes, ULONG options );
     NTSTATUS      (WINAPI *NtGetContextThread)( HANDLE handle, CONTEXT *context );
-    NTSTATUS      (WINAPI *NtPowerInformation)( POWER_INFORMATION_LEVEL level, void *input, ULONG in_size,
-                                                void *output, ULONG out_size );
     NTSTATUS      (WINAPI *NtQueryObject)( HANDLE handle, OBJECT_INFORMATION_CLASS info_class,
                                            void *ptr, ULONG len, ULONG *used_len );
     NTSTATUS      (WINAPI *NtQueryPerformanceCounter)( LARGE_INTEGER *counter, LARGE_INTEGER *frequency );
-    NTSTATUS      (WINAPI *NtQuerySystemInformation)( SYSTEM_INFORMATION_CLASS class,
-                                                      void *info, ULONG size, ULONG *ret_size );
-    NTSTATUS      (WINAPI *NtQuerySystemInformationEx)( SYSTEM_INFORMATION_CLASS class,
-                                                        void *query, ULONG query_len,
-                                                        void *info, ULONG size, ULONG *ret_size );
-    NTSTATUS      (WINAPI *NtQuerySystemTime)( LARGE_INTEGER *time );
     NTSTATUS      (WINAPI *NtSetInformationObject)( HANDLE handle, OBJECT_INFORMATION_CLASS info_class,
                                                     void *ptr, ULONG len );
-    NTSTATUS      (WINAPI *NtSetSystemTime)( const LARGE_INTEGER *new, LARGE_INTEGER *old );
 
     /* other Win32 API functions */
     NTSTATUS      (WINAPI *DbgUiIssueRemoteBreakin)( HANDLE process );

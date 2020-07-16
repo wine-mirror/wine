@@ -847,16 +847,6 @@ BOOLEAN WINAPI RtlIsProcessorFeaturePresent( UINT feature )
 }
 
 /******************************************************************************
- * NtQuerySystemInformation [NTDLL.@]
- * ZwQuerySystemInformation [NTDLL.@]
- */
-NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
-                                          void *info, ULONG size, ULONG *ret_size )
-{
-    return unix_funcs->NtQuerySystemInformation( class, info, size, ret_size );
-}
-
-/******************************************************************************
  * RtlGetNativeSystemInformation [NTDLL.@]
  */
 NTSTATUS WINAPI /* DECLSPEC_HOTPATCH */ RtlGetNativeSystemInformation(
@@ -873,17 +863,6 @@ NTSTATUS WINAPI /* DECLSPEC_HOTPATCH */ RtlGetNativeSystemInformation(
      *     - HighestUserAddress field for SystemBasicInformation;
      *     - Some information classes are not supported by RtlGetNativeSystemInformation. */
     return NtQuerySystemInformation( SystemInformationClass, SystemInformation, Length, ResultLength );
-}
-
-/******************************************************************************
- * NtQuerySystemInformationEx [NTDLL.@]
- * ZwQuerySystemInformationEx [NTDLL.@]
- */
-NTSTATUS WINAPI NtQuerySystemInformationEx( SYSTEM_INFORMATION_CLASS class,
-                                            void *query, ULONG query_len,
-                                            void *info, ULONG size, ULONG *ret_size )
-{
-    return unix_funcs->NtQuerySystemInformationEx( class, query, query_len, info, size, ret_size );
 }
 
 /******************************************************************************
@@ -991,16 +970,6 @@ NTSTATUS WINAPI NtClearPowerRequest( HANDLE handle, POWER_REQUEST_TYPE type )
     FIXME( "(%p, %u): stub\n", handle, type );
 
     return STATUS_NOT_IMPLEMENTED;
-}
-
-/******************************************************************************
- *  NtPowerInformation				[NTDLL.@]
- *
- */
-NTSTATUS WINAPI NtPowerInformation( POWER_INFORMATION_LEVEL level, void *input, ULONG in_size,
-                                    void *output, ULONG out_size )
-{
-    return unix_funcs->NtPowerInformation( level, input, in_size, output, out_size );
 }
 
 /******************************************************************************

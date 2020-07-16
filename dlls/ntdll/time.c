@@ -363,24 +363,6 @@ void WINAPI RtlTimeToElapsedTimeFields( const LARGE_INTEGER *Time, PTIME_FIELDS 
 }
 
 /***********************************************************************
- *       NtQuerySystemTime [NTDLL.@]
- *       ZwQuerySystemTime [NTDLL.@]
- *
- * Get the current system time.
- *
- * PARAMS
- *   time [O] Destination for the current system time.
- *
- * RETURNS
- *   Success: STATUS_SUCCESS.
- *   Failure: An NTSTATUS error code indicating the problem.
- */
-NTSTATUS WINAPI NtQuerySystemTime( LARGE_INTEGER *time )
-{
-    return unix_funcs->NtQuerySystemTime( time );
-}
-
-/***********************************************************************
  *       RtlGetSystemTimePrecise [NTDLL.@]
  *
  * Get a more accurate current system time.
@@ -490,15 +472,6 @@ NTSTATUS WINAPI RtlQueryDynamicTimeZoneInformation(RTL_DYNAMIC_TIME_ZONE_INFORMA
 NTSTATUS WINAPI RtlSetTimeZoneInformation( const RTL_TIME_ZONE_INFORMATION *tzinfo )
 {
     return STATUS_PRIVILEGE_NOT_HELD;
-}
-
-/***********************************************************************
- *        NtSetSystemTime [NTDLL.@]
- *        ZwSetSystemTime [NTDLL.@]
- */
-NTSTATUS WINAPI NtSetSystemTime(const LARGE_INTEGER *new, LARGE_INTEGER *old )
-{
-    return unix_funcs->NtSetSystemTime( new, old );
 }
 
 /***********************************************************************

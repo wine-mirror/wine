@@ -274,7 +274,7 @@
 @ stdcall NtOpenThreadTokenEx(long long long long ptr)
 @ stdcall -syscall NtOpenTimer(ptr long ptr)
 @ stub NtPlugPlayControl
-@ stdcall NtPowerInformation(long ptr long ptr long)
+@ stdcall -syscall NtPowerInformation(long ptr long ptr long)
 @ stdcall NtPrivilegeCheck(ptr ptr ptr)
 @ stub NtPrivilegeObjectAuditAlarm
 @ stub NtPrivilegedServiceAuditAlarm
@@ -316,9 +316,9 @@
 @ stdcall NtQuerySymbolicLinkObject(long ptr ptr)
 @ stdcall NtQuerySystemEnvironmentValue(ptr ptr long ptr)
 @ stdcall NtQuerySystemEnvironmentValueEx(ptr ptr ptr ptr ptr)
-@ stdcall NtQuerySystemInformation(long ptr long ptr)
-@ stdcall NtQuerySystemInformationEx(long ptr long ptr long ptr)
-@ stdcall NtQuerySystemTime(ptr)
+@ stdcall -syscall NtQuerySystemInformation(long ptr long ptr)
+@ stdcall -syscall NtQuerySystemInformationEx(long ptr long ptr long ptr)
+@ stdcall -syscall NtQuerySystemTime(ptr)
 @ stdcall -syscall NtQueryTimer(ptr long ptr long ptr)
 @ stdcall NtQueryTimerResolution(ptr ptr ptr)
 @ stdcall NtQueryValueKey(long ptr long ptr long ptr)
@@ -393,7 +393,7 @@
 # @ stub NtSetSystemEnvironmentValueEx
 @ stdcall NtSetSystemInformation(long ptr long)
 @ stub NtSetSystemPowerState
-@ stdcall NtSetSystemTime(ptr ptr)
+@ stdcall -syscall NtSetSystemTime(ptr ptr)
 @ stdcall NtSetThreadExecutionState(long ptr)
 @ stdcall -syscall NtSetTimer(long ptr ptr ptr long long ptr)
 @ stdcall NtSetTimerResolution(long long ptr)
@@ -1261,7 +1261,7 @@
 @ stdcall -private ZwOpenThreadTokenEx(long long long long ptr) NtOpenThreadTokenEx
 @ stdcall -private -syscall ZwOpenTimer(ptr long ptr) NtOpenTimer
 @ stub ZwPlugPlayControl
-@ stdcall -private ZwPowerInformation(long ptr long ptr long) NtPowerInformation
+@ stdcall -private -syscall ZwPowerInformation(long ptr long ptr long) NtPowerInformation
 @ stdcall -private ZwPrivilegeCheck(ptr ptr ptr) NtPrivilegeCheck
 @ stub ZwPrivilegeObjectAuditAlarm
 @ stub ZwPrivilegedServiceAuditAlarm
@@ -1303,9 +1303,9 @@
 @ stdcall -private ZwQuerySymbolicLinkObject(long ptr ptr) NtQuerySymbolicLinkObject
 @ stdcall -private ZwQuerySystemEnvironmentValue(ptr ptr long ptr) NtQuerySystemEnvironmentValue
 @ stdcall -private ZwQuerySystemEnvironmentValueEx(ptr ptr ptr ptr ptr) NtQuerySystemEnvironmentValueEx
-@ stdcall -private ZwQuerySystemInformation(long ptr long ptr) NtQuerySystemInformation
-@ stdcall -private ZwQuerySystemInformationEx(long ptr long ptr long ptr) NtQuerySystemInformationEx
-@ stdcall -private ZwQuerySystemTime(ptr) NtQuerySystemTime
+@ stdcall -private -syscall ZwQuerySystemInformation(long ptr long ptr) NtQuerySystemInformation
+@ stdcall -private -syscall ZwQuerySystemInformationEx(long ptr long ptr long ptr) NtQuerySystemInformationEx
+@ stdcall -private -syscall ZwQuerySystemTime(ptr) NtQuerySystemTime
 @ stdcall -private -syscall ZwQueryTimer(ptr long ptr long ptr) NtQueryTimer
 @ stdcall -private ZwQueryTimerResolution(ptr ptr ptr) NtQueryTimerResolution
 @ stdcall -private ZwQueryValueKey(long ptr long ptr long ptr) NtQueryValueKey
@@ -1380,7 +1380,7 @@
 # @ stub ZwSetSystemEnvironmentValueEx
 @ stdcall -private ZwSetSystemInformation(long ptr long) NtSetSystemInformation
 @ stub ZwSetSystemPowerState
-@ stdcall -private ZwSetSystemTime(ptr ptr) NtSetSystemTime
+@ stdcall -private -syscall ZwSetSystemTime(ptr ptr) NtSetSystemTime
 @ stdcall ZwSetThreadExecutionState(long ptr) NtSetThreadExecutionState
 @ stdcall -private -syscall ZwSetTimer(long ptr ptr ptr long long ptr) NtSetTimer
 @ stdcall -private ZwSetTimerResolution(long long ptr) NtSetTimerResolution
