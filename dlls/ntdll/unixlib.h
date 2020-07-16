@@ -28,7 +28,7 @@ struct msghdr;
 struct _DISPATCHER_CONTEXT;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 76
+#define NTDLL_UNIXLIB_VERSION 77
 
 struct unix_funcs
 {
@@ -51,8 +51,6 @@ struct unix_funcs
     NTSTATUS      (WINAPI *NtCreateMailslotFile)( HANDLE *handle, ULONG access, OBJECT_ATTRIBUTES *attr,
                                                   IO_STATUS_BLOCK *io, ULONG options, ULONG quota,
                                                   ULONG msg_size, LARGE_INTEGER *timeout );
-    NTSTATUS      (WINAPI *NtCreateMutant)( HANDLE *handle, ACCESS_MASK access,
-                                            const OBJECT_ATTRIBUTES *attr, BOOLEAN owned );
     NTSTATUS      (WINAPI *NtCreateNamedPipeFile)( HANDLE *handle, ULONG access, OBJECT_ATTRIBUTES *attr,
                                                    IO_STATUS_BLOCK *io, ULONG sharing, ULONG dispo,
                                                    ULONG options, ULONG pipe_type, ULONG read_mode,
@@ -115,8 +113,6 @@ struct unix_funcs
                                              const OBJECT_ATTRIBUTES *attr );
     NTSTATUS      (WINAPI *NtOpenKeyedEvent)( HANDLE *handle, ACCESS_MASK access,
                                               const OBJECT_ATTRIBUTES *attr );
-    NTSTATUS      (WINAPI *NtOpenMutant)( HANDLE *handle, ACCESS_MASK access,
-                                          const OBJECT_ATTRIBUTES *attr );
     NTSTATUS      (WINAPI *NtOpenProcess)( HANDLE *handle, ACCESS_MASK access,
                                            const OBJECT_ATTRIBUTES *attr, const CLIENT_ID *id );
     NTSTATUS      (WINAPI *NtOpenSection)( HANDLE *handle, ACCESS_MASK access,
@@ -147,8 +143,6 @@ struct unix_funcs
                                                       void *data, ULONG length, ULONG *ret_len );
     NTSTATUS      (WINAPI *NtQueryIoCompletion)( HANDLE handle, IO_COMPLETION_INFORMATION_CLASS class,
                                                  void *buffer, ULONG len, ULONG *ret_len );
-    NTSTATUS      (WINAPI *NtQueryMutant)( HANDLE handle, MUTANT_INFORMATION_CLASS class,
-                                           void *info, ULONG len, ULONG *ret_len );
     NTSTATUS      (WINAPI *NtQueryObject)( HANDLE handle, OBJECT_INFORMATION_CLASS info_class,
                                            void *ptr, ULONG len, ULONG *used_len );
     NTSTATUS      (WINAPI *NtQueryPerformanceCounter)( LARGE_INTEGER *counter, LARGE_INTEGER *frequency );
@@ -182,7 +176,6 @@ struct unix_funcs
                                                  SIZE_T size, SIZE_T *bytes_read );
     NTSTATUS      (WINAPI *NtReleaseKeyedEvent)( HANDLE handle, const void *key,
                                                  BOOLEAN alertable, const LARGE_INTEGER *timeout );
-    NTSTATUS      (WINAPI *NtReleaseMutant)( HANDLE handle, LONG *prev_count );
     NTSTATUS      (WINAPI *NtRemoveIoCompletion)( HANDLE handle, ULONG_PTR *key, ULONG_PTR *value,
                                                   IO_STATUS_BLOCK *io, LARGE_INTEGER *timeout );
     NTSTATUS      (WINAPI *NtRemoveIoCompletionEx)( HANDLE handle, FILE_IO_COMPLETION_INFORMATION *info,

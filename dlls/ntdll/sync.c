@@ -136,48 +136,6 @@ NTSTATUS validate_open_object_attributes( const OBJECT_ATTRIBUTES *attr )
 }
 
 /*
- *	Mutants (known as Mutexes in Kernel32)
- */
-
-/******************************************************************************
- *              NtCreateMutant                          [NTDLL.@]
- *              ZwCreateMutant                          [NTDLL.@]
- */
-NTSTATUS WINAPI NtCreateMutant( HANDLE *handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr,
-                                BOOLEAN owned )
-{
-    return unix_funcs->NtCreateMutant( handle, access, attr, owned );
-}
-
-/**************************************************************************
- *		NtOpenMutant				[NTDLL.@]
- *		ZwOpenMutant				[NTDLL.@]
- */
-NTSTATUS WINAPI NtOpenMutant( HANDLE *handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr )
-{
-    return unix_funcs->NtOpenMutant( handle, access, attr );
-}
-
-/**************************************************************************
- *		NtReleaseMutant				[NTDLL.@]
- *		ZwReleaseMutant				[NTDLL.@]
- */
-NTSTATUS WINAPI NtReleaseMutant( HANDLE handle, LONG *prev_count )
-{
-    return unix_funcs->NtReleaseMutant( handle, prev_count );
-}
-
-/******************************************************************
- *		NtQueryMutant                   [NTDLL.@]
- *		ZwQueryMutant                   [NTDLL.@]
- */
-NTSTATUS WINAPI NtQueryMutant( HANDLE handle, MUTANT_INFORMATION_CLASS class,
-                               void *info, ULONG len, ULONG *ret_len )
-{
-    return unix_funcs->NtQueryMutant( handle, class, info, len, ret_len );
-}
-
-/*
  *	Jobs
  */
 

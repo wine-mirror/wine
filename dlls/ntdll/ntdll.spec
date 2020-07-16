@@ -171,7 +171,7 @@
 @ stdcall NtCreateKeyedEvent(ptr long ptr long)
 @ stdcall NtCreateLowBoxToken(ptr long long ptr ptr long ptr long ptr)
 @ stdcall NtCreateMailslotFile(ptr long ptr ptr long long long ptr)
-@ stdcall NtCreateMutant(ptr long ptr long)
+@ stdcall -syscall NtCreateMutant(ptr long ptr long)
 @ stdcall NtCreateNamedPipeFile(ptr long ptr ptr long long long long long long long long long ptr)
 @ stdcall NtCreatePagingFile(ptr ptr ptr ptr)
 @ stdcall NtCreatePort(ptr ptr long long ptr)
@@ -261,7 +261,7 @@
 @ stdcall NtOpenKeyTransacted(ptr long ptr long)
 @ stdcall NtOpenKeyTransactedEx(ptr long ptr long long)
 @ stdcall NtOpenKeyedEvent(ptr long ptr)
-@ stdcall NtOpenMutant(ptr long ptr)
+@ stdcall -syscall NtOpenMutant(ptr long ptr)
 @ stub NtOpenObjectAuditAlarm
 @ stdcall NtOpenProcess(ptr long ptr ptr)
 @ stdcall NtOpenProcessToken(long long ptr)
@@ -304,7 +304,7 @@
 @ stdcall NtQueryKey (long long ptr long ptr)
 @ stdcall NtQueryLicenseValue(ptr ptr ptr long ptr)
 @ stdcall NtQueryMultipleValueKey(long ptr long ptr long ptr)
-@ stdcall NtQueryMutant(long long ptr long ptr)
+@ stdcall -syscall NtQueryMutant(long long ptr long ptr)
 @ stdcall NtQueryObject(long long ptr long ptr)
 @ stub NtQueryOpenSubKeys
 @ stdcall NtQueryPerformanceCounter(ptr ptr)
@@ -334,7 +334,7 @@
 @ stub NtRegisterNewDevice
 @ stdcall NtRegisterThreadTerminatePort(ptr)
 @ stdcall NtReleaseKeyedEvent(long ptr long ptr)
-@ stdcall NtReleaseMutant(long ptr)
+@ stdcall -syscall NtReleaseMutant(long ptr)
 @ stub NtReleaseProcessMutant
 @ stdcall -syscall NtReleaseSemaphore(long long ptr)
 @ stdcall NtRemoveIoCompletion(ptr ptr ptr ptr ptr)
@@ -1159,7 +1159,7 @@
 @ stdcall -private ZwCreateKeyTransacted(ptr long ptr long ptr long long ptr) NtCreateKeyTransacted
 @ stdcall -private ZwCreateKeyedEvent(ptr long ptr long) NtCreateKeyedEvent
 @ stdcall -private ZwCreateMailslotFile(ptr long ptr ptr long long long ptr) NtCreateMailslotFile
-@ stdcall -private ZwCreateMutant(ptr long ptr long) NtCreateMutant
+@ stdcall -private -syscall ZwCreateMutant(ptr long ptr long) NtCreateMutant
 @ stdcall -private ZwCreateNamedPipeFile(ptr long ptr ptr long long long long long long long long long ptr) NtCreateNamedPipeFile
 @ stdcall -private ZwCreatePagingFile(ptr ptr ptr ptr) NtCreatePagingFile
 @ stdcall -private ZwCreatePort(ptr ptr long long ptr) NtCreatePort
@@ -1245,7 +1245,7 @@
 @ stdcall -private ZwOpenKeyTransacted(ptr long ptr long) NtOpenKeyTransacted
 @ stdcall -private ZwOpenKeyTransactedEx(ptr long ptr long long) NtOpenKeyTransactedEx
 @ stdcall -private ZwOpenKeyedEvent(ptr long ptr) NtOpenKeyedEvent
-@ stdcall -private ZwOpenMutant(ptr long ptr) NtOpenMutant
+@ stdcall -private -syscall ZwOpenMutant(ptr long ptr) NtOpenMutant
 @ stub ZwOpenObjectAuditAlarm
 @ stdcall -private ZwOpenProcess(ptr long ptr ptr) NtOpenProcess
 @ stdcall -private ZwOpenProcessToken(long long ptr) NtOpenProcessToken
@@ -1288,7 +1288,7 @@
 @ stdcall -private ZwQueryKey(long long ptr long ptr) NtQueryKey
 @ stdcall -private ZwQueryLicenseValue(ptr ptr ptr long ptr) NtQueryLicenseValue
 @ stdcall -private ZwQueryMultipleValueKey(long ptr long ptr long ptr) NtQueryMultipleValueKey
-@ stdcall -private ZwQueryMutant(long long ptr long ptr) NtQueryMutant
+@ stdcall -private -syscall ZwQueryMutant(long long ptr long ptr) NtQueryMutant
 @ stdcall -private ZwQueryObject(long long ptr long ptr) NtQueryObject
 @ stub ZwQueryOpenSubKeys
 @ stdcall -private ZwQueryPerformanceCounter(ptr ptr) NtQueryPerformanceCounter
@@ -1318,7 +1318,7 @@
 @ stub ZwRegisterNewDevice
 @ stdcall -private ZwRegisterThreadTerminatePort(ptr) NtRegisterThreadTerminatePort
 @ stdcall -private ZwReleaseKeyedEvent(long ptr long ptr) NtReleaseKeyedEvent
-@ stdcall -private ZwReleaseMutant(long ptr) NtReleaseMutant
+@ stdcall -private -syscall ZwReleaseMutant(long ptr) NtReleaseMutant
 @ stub ZwReleaseProcessMutant
 @ stdcall -private -syscall ZwReleaseSemaphore(long long ptr) NtReleaseSemaphore
 @ stdcall -private ZwRemoveIoCompletion(ptr ptr ptr ptr ptr) NtRemoveIoCompletion
