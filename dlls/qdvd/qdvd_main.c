@@ -28,7 +28,7 @@ static HINSTANCE qdvd_instance;
 struct class_factory
 {
     IClassFactory IClassFactory_iface;
-    HRESULT (*create_instance)(IUnknown **out);
+    HRESULT (*create_instance)(IUnknown *outer, IUnknown **out);
 };
 
 static struct class_factory *impl_from_IClassFactory(IClassFactory *iface)
@@ -73,10 +73,10 @@ static HRESULT WINAPI class_factory_CreateInstance(IClassFactory *iface,
 
     *out = NULL;
 
-    if (outer)
-        return CLASS_E_NOAGGREGATION;
+    if (outer && !IsEqualGUID(iid, &IID_IUnknown))
+        return E_NOINTERFACE;
 
-    if (SUCCEEDED(hr = factory->create_instance(&unk)))
+    if (SUCCEEDED(hr = factory->create_instance(outer, &unk)))
     {
         hr = IUnknown_QueryInterface(unk, iid, out);
         IUnknown_Release(unk);
