@@ -2024,6 +2024,54 @@ static void test_process_memory(const struct test_input *test_input)
     ObDereferenceObject(process);
 }
 
+static void test_permanence(void)
+{
+    OBJECT_ATTRIBUTES attr;
+    HANDLE handle, handle2;
+    UNICODE_STRING str;
+    NTSTATUS status;
+
+    RtlInitUnicodeString(&str, L"\\BaseNamedObjects\\wine_test_dir");
+    InitializeObjectAttributes(&attr, &str, 0, 0, NULL);
+    status = ZwCreateDirectoryObject( &handle, GENERIC_ALL, &attr );
+    ok(!status, "got %#x\n", status);
+    status = ZwClose( handle );
+    ok(!status, "got %#x\n", status);
+    status = ZwOpenDirectoryObject( &handle, 0, &attr );
+    ok(status == STATUS_OBJECT_NAME_NOT_FOUND, "got %#x\n", status);
+
+    attr.Attributes = OBJ_PERMANENT;
+    status = ZwCreateDirectoryObject( &handle, GENERIC_ALL, &attr );
+    ok(!status, "got %#x\n", status);
+    status = ZwClose( handle );
+    ok(!status, "got %#x\n", status);
+
+    attr.Attributes = 0;
+    status = ZwOpenDirectoryObject( &handle, 0, &attr );
+    todo_wine ok(!status, "got %#x\n", status);
+    status = ZwMakeTemporaryObject( handle );
+    ok(!status, "got %#x\n", status);
+    status = ZwMakeTemporaryObject( handle );
+    ok(!status, "got %#x\n", status);
+    status = ZwClose( handle );
+    todo_wine ok(!status, "got %#x\n", status);
+    status = ZwOpenDirectoryObject( &handle, 0, &attr );
+    ok(status == STATUS_OBJECT_NAME_NOT_FOUND, "got %#x\n", status);
+
+    status = ZwCreateDirectoryObject( &handle, GENERIC_ALL, &attr );
+    ok(!status, "got %#x\n", status);
+    attr.Attributes = OBJ_PERMANENT;
+    status = ZwOpenDirectoryObject( &handle2, 0, &attr );
+    ok(status == STATUS_SUCCESS, "got %#x\n", status);
+    status = ZwClose( handle2 );
+    ok(!status, "got %#x\n", status);
+    status = ZwClose( handle );
+    ok(!status, "got %#x\n", status);
+    attr.Attributes = 0;
+    status = ZwOpenDirectoryObject( &handle, 0, &attr );
+    ok(status == STATUS_OBJECT_NAME_NOT_FOUND, "got %#x\n", status);
+}
+
 static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *stack)
 {
     ULONG length = stack->Parameters.DeviceIoControl.OutputBufferLength;
@@ -2080,6 +2128,7 @@ static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *st
     test_affinity();
     test_dpc();
     test_process_memory(test_input);
+    test_permanence();
 
     if (main_test_work_item) return STATUS_UNEXPECTED_IO_ERROR;
 
