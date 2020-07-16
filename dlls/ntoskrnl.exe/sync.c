@@ -696,6 +696,24 @@ void WINAPI KeInitializeApc(PRKAPC apc, PRKTHREAD thread, KAPC_ENVIRONMENT env, 
     }
 }
 
+/***********************************************************************
+ *           KeTestAlertThread  (NTOSKRNL.EXE.@)
+ */
+BOOLEAN WINAPI KeTestAlertThread(KPROCESSOR_MODE mode)
+{
+    FIXME("stub! %u\n", mode);
+    return TRUE;
+}
+
+/***********************************************************************
+ *           KeAlertThread  (NTOSKRNL.EXE.@)
+ */
+BOOLEAN WINAPI KeAlertThread(PKTHREAD thread, KPROCESSOR_MODE mode)
+{
+    FIXME("stub! %p mode %u\n", thread, mode);
+    return TRUE;
+}
+
 static KSPIN_LOCK cancel_lock;
 
 /***********************************************************************
