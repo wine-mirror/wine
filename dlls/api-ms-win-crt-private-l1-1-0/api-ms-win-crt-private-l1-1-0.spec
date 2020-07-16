@@ -384,7 +384,7 @@
 @ stub _o__ismbbkalnum
 @ stub _o__ismbbkalnum_l
 @ cdecl _o__ismbbkana(long) ucrtbase._o__ismbbkana
-@ stub _o__ismbbkana_l
+@ cdecl _o__ismbbkana_l(long ptr) ucrtbase._o__ismbbkana_l
 @ stub _o__ismbbkprint
 @ stub _o__ismbbkprint_l
 @ stub _o__ismbbkpunct

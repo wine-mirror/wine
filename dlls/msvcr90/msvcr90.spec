@@ -611,7 +611,7 @@
 @ stub _ismbbkalnum(long)
 @ stub _ismbbkalnum_l
 @ cdecl _ismbbkana(long)
-@ stub _ismbbkana_l
+@ cdecl _ismbbkana_l(long ptr)
 @ stub _ismbbkprint(long)
 @ stub _ismbbkprint_l
 @ stub _ismbbkpunct(long)

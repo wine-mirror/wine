@@ -11,7 +11,7 @@
 @ cdecl _ismbbkalnum(long) ucrtbase._ismbbkalnum
 @ stub _ismbbkalnum_l
 @ cdecl _ismbbkana(long) ucrtbase._ismbbkana
-@ stub _ismbbkana_l
+@ cdecl _ismbbkana_l(long ptr) ucrtbase._ismbbkana_l
 @ cdecl _ismbbkprint(long) ucrtbase._ismbbkprint
 @ stub _ismbbkprint_l
 @ cdecl _ismbbkpunct(long) ucrtbase._ismbbkpunct

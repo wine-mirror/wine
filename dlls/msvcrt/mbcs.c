@@ -1389,17 +1389,31 @@ int CDECL _mbbtype(unsigned char c, int type)
 }
 
 /*********************************************************************
- *		_ismbbkana(MSVCRT.@)
+ *		_ismbbkana_l(MSVCRT.@)
+ */
+int CDECL _ismbbkana_l(unsigned int c, MSVCRT__locale_t locale)
+{
+    MSVCRT_pthreadmbcinfo mbcinfo;
+
+    if(locale)
+        mbcinfo = locale->mbcinfo;
+    else
+        mbcinfo = get_mbcinfo();
+
+    if(mbcinfo->mbcodepage == 932)
+    {
+        /* Japanese/Katakana, CP 932 */
+        return (c >= 0xa1 && c <= 0xdf);
+    }
+    return 0;
+}
+
+/*********************************************************************
+ *              _ismbbkana(MSVCRT.@)
  */
 int CDECL _ismbbkana(unsigned int c)
 {
-  /* FIXME: use lc_ctype when supported, not lc_all */
-  if(get_mbcinfo()->mbcodepage == 932)
-  {
-    /* Japanese/Katakana, CP 932 */
-    return (c >= 0xa1 && c <= 0xdf);
-  }
-  return 0;
+    return _ismbbkana_l( c, NULL );
 }
 
 /*********************************************************************

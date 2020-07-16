@@ -449,7 +449,7 @@
 @ stub _ismbbkalnum(long)
 @ stub _ismbbkalnum_l
 @ cdecl _ismbbkana(long)
-@ stub _ismbbkana_l
+@ cdecl _ismbbkana_l(long ptr)
 @ stub _ismbbkprint(long)
 @ stub _ismbbkprint_l
 @ stub _ismbbkpunct(long)
@@ -1048,7 +1048,7 @@
 @ stub _o__ismbbkalnum
 @ stub _o__ismbbkalnum_l
 @ cdecl _o__ismbbkana(long) _ismbbkana
-@ stub _o__ismbbkana_l
+@ cdecl _o__ismbbkana_l(long ptr) _ismbbkana_l
 @ stub _o__ismbbkprint
 @ stub _o__ismbbkprint_l
 @ stub _o__ismbbkpunct
