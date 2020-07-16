@@ -833,3 +833,17 @@ DECL_HANDLER(get_system_handles)
         enum_processes( enum_handles, &info );
     }
 }
+
+DECL_HANDLER(make_temporary)
+{
+    struct object *obj;
+
+    if (!(obj = get_handle_obj( current->process, req->handle, 0, NULL ))) return;
+
+    if (obj->is_permanent)
+    {
+        make_object_temporary( obj );
+        release_object( obj );
+    }
+    release_object( obj );
+}

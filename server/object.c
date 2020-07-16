@@ -414,6 +414,16 @@ void make_object_static( struct object *obj )
 #endif
 }
 
+/* mark an object as no longer static */
+void make_object_temporary( struct object *obj )
+{
+    obj->is_permanent = 0;
+#ifdef DEBUG_OBJECTS
+    list_remove( &obj->obj_list );
+    list_add_head( &object_list, &obj->obj_list );
+#endif
+}
+
 /* grab an object (i.e. increment its refcount) and return the object */
 struct object *grab_object( void *ptr )
 {

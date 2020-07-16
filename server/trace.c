@@ -1590,6 +1590,11 @@ static void dump_dup_handle_reply( const struct dup_handle_reply *req )
     fprintf( stderr, ", closed=%d", req->closed );
 }
 
+static void dump_make_temporary_request( const struct make_temporary_request *req )
+{
+    fprintf( stderr, " handle=%04x", req->handle );
+}
+
 static void dump_open_process_request( const struct open_process_request *req )
 {
     fprintf( stderr, " pid=%04x", req->pid );
@@ -4522,6 +4527,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_close_handle_request,
     (dump_func)dump_set_handle_info_request,
     (dump_func)dump_dup_handle_request,
+    (dump_func)dump_make_temporary_request,
     (dump_func)dump_open_process_request,
     (dump_func)dump_open_thread_request,
     (dump_func)dump_select_request,
@@ -4812,6 +4818,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     NULL,
     (dump_func)dump_set_handle_info_reply,
     (dump_func)dump_dup_handle_reply,
+    NULL,
     (dump_func)dump_open_process_reply,
     (dump_func)dump_open_thread_reply,
     (dump_func)dump_select_reply,
@@ -5102,6 +5109,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "close_handle",
     "set_handle_info",
     "dup_handle",
+    "make_temporary",
     "open_process",
     "open_thread",
     "select",

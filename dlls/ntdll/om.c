@@ -476,8 +476,18 @@ NTSTATUS WINAPI NtAllocateUuids( ULARGE_INTEGER *time, ULONG *delta, ULONG *sequ
  *  Success: STATUS_SUCCESS.
  *  Failure: An NTSTATUS error code.
  */
-NTSTATUS WINAPI NtMakeTemporaryObject( HANDLE Handle )
+NTSTATUS WINAPI NtMakeTemporaryObject( HANDLE handle )
 {
-    FIXME("(%p), stub.\n", Handle);
-    return STATUS_SUCCESS;
+    NTSTATUS ret;
+
+    TRACE("%p\n", handle);
+
+    SERVER_START_REQ( make_temporary )
+    {
+        req->handle = wine_server_obj_handle( handle );
+        ret = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+
+    return ret;
 }

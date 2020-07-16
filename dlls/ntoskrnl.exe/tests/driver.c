@@ -2056,20 +2056,20 @@ static void test_permanence(void)
     status = ZwClose( handle );
     ok(!status, "got %#x\n", status);
     status = ZwOpenDirectoryObject( &handle, 0, &attr );
-    todo_wine ok(status == STATUS_OBJECT_NAME_NOT_FOUND, "got %#x\n", status);
+    ok(status == STATUS_OBJECT_NAME_NOT_FOUND, "got %#x\n", status);
 
     status = ZwCreateDirectoryObject( &handle, GENERIC_ALL, &attr );
-    todo_wine ok(!status, "got %#x\n", status);
+    ok(!status, "got %#x\n", status);
     attr.Attributes = OBJ_PERMANENT;
     status = ZwOpenDirectoryObject( &handle2, 0, &attr );
     ok(status == STATUS_SUCCESS, "got %#x\n", status);
     status = ZwClose( handle2 );
     ok(!status, "got %#x\n", status);
     status = ZwClose( handle );
-    todo_wine ok(!status, "got %#x\n", status);
+    ok(!status, "got %#x\n", status);
     attr.Attributes = 0;
     status = ZwOpenDirectoryObject( &handle, 0, &attr );
-    todo_wine ok(status == STATUS_OBJECT_NAME_NOT_FOUND, "got %#x\n", status);
+    ok(status == STATUS_OBJECT_NAME_NOT_FOUND, "got %#x\n", status);
 }
 
 static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *stack)

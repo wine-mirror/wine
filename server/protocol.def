@@ -1080,6 +1080,12 @@ struct rawinput_device
 #define DUP_HANDLE_MAKE_GLOBAL   0x80000000  /* Not a Windows flag */
 
 
+/* Make an object temporary */
+@REQ(make_temporary)
+    obj_handle_t handle;       /* handle to the object */
+@END
+
+
 /* Open a handle to a process */
 @REQ(open_process)
     process_id_t pid;          /* process id to open */
