@@ -209,7 +209,7 @@ int _setmbcp_l(int cp, LCID lcid, MSVCRT_pthreadmbcinfo mbcinfo)
   BYTE *bytes;
   WORD chartypes[256];
   char bufA[256];
-  WCHAR bufW[256];
+  WCHAR bufW[256], lowW[256], upW[256];
   int charcount;
   int ret;
   int i;
@@ -310,6 +310,8 @@ int _setmbcp_l(int cp, LCID lcid, MSVCRT_pthreadmbcinfo mbcinfo)
     ERR("MultiByteToWideChar of chars failed for cp %d, ret=%d (exp %d), error=%d\n", newcp, ret, charcount, GetLastError());
 
   GetStringTypeW(CT_CTYPE1, bufW, charcount, chartypes);
+  LCMapStringW(lcid, LCMAP_LOWERCASE, bufW, charcount, lowW, charcount);
+  LCMapStringW(lcid, LCMAP_UPPERCASE, bufW, charcount, upW, charcount);
 
   charcount = 0;
   for (i = 0; i < 256; i++)
@@ -318,12 +320,12 @@ int _setmbcp_l(int cp, LCID lcid, MSVCRT_pthreadmbcinfo mbcinfo)
       if (chartypes[charcount] & C1_UPPER)
       {
         mbcinfo->mbctype[i + 1] |= _SBUP;
-        bufW[charcount] = tolowerW(bufW[charcount]);
+        bufW[charcount] = lowW[charcount];
       }
       else if (chartypes[charcount] & C1_LOWER)
       {
 	mbcinfo->mbctype[i + 1] |= _SBLOW;
-        bufW[charcount] = toupperW(bufW[charcount]);
+        bufW[charcount] = upW[charcount];
       }
       charcount++;
     }
