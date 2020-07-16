@@ -599,7 +599,7 @@
 @ stdcall KeQueryTickCount(ptr)
 @ stdcall KeQueryTimeIncrement()
 @ stub KeRaiseUserException
-@ stub KeReadStateEvent
+@ stdcall KeReadStateEvent(ptr)
 @ stub KeReadStateMutant
 @ stub KeReadStateMutex
 @ stub KeReadStateQueue
