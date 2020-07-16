@@ -1732,6 +1732,29 @@ static int console_input_events_ioctl( struct fd *fd, ioctl_code_t code, struct 
         queue_async( &evts->read_q, async );
         return 1;
 
+    case IOCTL_CONDRV_ATTACH_RENDERER:
+        {
+            struct console_input *console_input;
+            if (get_req_data_size() != sizeof(condrv_handle_t))
+            {
+                set_error( STATUS_INVALID_PARAMETER );
+                return 0;
+            }
+            console_input = (struct console_input *)get_handle_obj( current->process, *(condrv_handle_t *)get_req_data(),
+                                                                    0, &console_input_ops );
+            if (!console_input) return 0;
+
+            if (!console_input->evt)
+            {
+                console_input->evt = (struct console_input_events *)grab_object( evts );
+                console_input->renderer = current;
+            }
+            else set_error( STATUS_INVALID_HANDLE );
+
+            release_object( console_input );
+            return !get_error();
+        }
+
     default:
         set_error( STATUS_INVALID_HANDLE );
         return 0;

@@ -41,6 +41,10 @@
 
 /* console renderer ioctls */
 #define IOCTL_CONDRV_GET_RENDERER_EVENTS   CTL_CODE(FILE_DEVICE_CONSOLE, 70, METHOD_BUFFERED, FILE_READ_PROPERTIES)
+#define IOCTL_CONDRV_ATTACH_RENDERER       CTL_CODE(FILE_DEVICE_CONSOLE, 71, METHOD_BUFFERED, FILE_READ_PROPERTIES)
+
+/* console handle type */
+typedef unsigned int condrv_handle_t;
 
 /* structure for console char/attribute info */
 typedef struct
