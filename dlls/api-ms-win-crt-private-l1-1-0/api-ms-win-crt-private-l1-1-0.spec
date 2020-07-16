@@ -406,7 +406,7 @@
 @ cdecl _o__ismbcdigit(long) ucrtbase._o__ismbcdigit
 @ cdecl _o__ismbcdigit_l(long ptr) ucrtbase._o__ismbcdigit_l
 @ cdecl _o__ismbcgraph(long) ucrtbase._o__ismbcgraph
-@ stub _o__ismbcgraph_l
+@ cdecl _o__ismbcgraph_l(long ptr) ucrtbase._o__ismbcgraph_l
 @ cdecl _o__ismbchira(long) ucrtbase._o__ismbchira
 @ stub _o__ismbchira_l
 @ cdecl _o__ismbckata(long) ucrtbase._o__ismbckata

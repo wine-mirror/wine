@@ -33,7 +33,7 @@
 @ cdecl _ismbcdigit(long) ucrtbase._ismbcdigit
 @ cdecl _ismbcdigit_l(long ptr) ucrtbase._ismbcdigit_l
 @ cdecl _ismbcgraph(long) ucrtbase._ismbcgraph
-@ stub _ismbcgraph_l
+@ cdecl _ismbcgraph_l(long ptr) ucrtbase._ismbcgraph_l
 @ cdecl _ismbchira(long) ucrtbase._ismbchira
 @ stub _ismbchira_l
 @ cdecl _ismbckata(long) ucrtbase._ismbckata
