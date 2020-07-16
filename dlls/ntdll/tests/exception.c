@@ -2825,6 +2825,22 @@ static BOOL hook_called;
 static void *hook_KiUserExceptionDispatcher_rip;
 static void *dbg_except_continue_handler_rip;
 static void *hook_exception_address;
+static struct
+{
+    ULONG64 old_rax;
+    ULONG64 old_rdx;
+    ULONG64 old_rsi;
+    ULONG64 old_rdi;
+    ULONG64 old_rbp;
+    ULONG64 old_rsp;
+    ULONG64 new_rax;
+    ULONG64 new_rdx;
+    ULONG64 new_rsi;
+    ULONG64 new_rdi;
+    ULONG64 new_rbp;
+    ULONG64 new_rsp;
+}
+test_kiuserexceptiondispatcher_regs;
 
 static DWORD dbg_except_continue_handler(EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
         CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher)
@@ -2836,6 +2852,8 @@ static DWORD dbg_except_continue_handler(EXCEPTION_RECORD *rec, EXCEPTION_REGIST
     memcpy(pKiUserExceptionDispatcher, saved_KiUserExceptionDispatcher_bytes,
             sizeof(saved_KiUserExceptionDispatcher_bytes));
 
+    RtlUnwind((void *)test_kiuserexceptiondispatcher_regs.old_rsp,
+            (BYTE *)code_mem + 0x28, rec, (void *)0xdeadbeef);
     return ExceptionContinueExecution;
 }
 
@@ -2853,6 +2871,10 @@ static LONG WINAPI dbg_except_continue_vectored_handler(struct _EXCEPTION_POINTE
     if (NtCurrentTeb()->Peb->BeingDebugged)
         ++context->Rip;
 
+    if (context->Rip >= (ULONG64)code_mem && context->Rip < (ULONG64)code_mem + 0x100)
+        RtlUnwind((void *)test_kiuserexceptiondispatcher_regs.old_rsp,
+                (BYTE *)code_mem + 0x28, rec, (void *)0xdeadbeef);
+
     return EXCEPTION_CONTINUE_EXECUTION;
 }
 
@@ -2869,15 +2891,43 @@ void WINAPI hook_KiUserExceptionDispatcher(EXCEPTION_RECORD *rec, CONTEXT *conte
 
     hook_KiUserExceptionDispatcher_rip = (void *)context->Rip;
     hook_exception_address = rec->ExceptionAddress;
-    memcpy(pKiUserExceptionDispatcher, saved_KiUserExceptionDispatcher_bytes, sizeof(saved_KiUserExceptionDispatcher_bytes));
+    memcpy(pKiUserExceptionDispatcher, saved_KiUserExceptionDispatcher_bytes,
+            sizeof(saved_KiUserExceptionDispatcher_bytes));
 }
 
 static void test_kiuserexceptiondispatcher(void)
 {
     HMODULE hntdll = GetModuleHandleA("ntdll.dll");
-    static const BYTE except_code[] =
+    static BYTE except_code[] =
     {
+        0x48, 0xb9, /* mov imm64, %rcx */
+        /* offset: 0x2 */
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+
+        0x48, 0x89, 0x01,       /* mov %rax, (%rcx) */
+        0x48, 0x89, 0x51, 0x08, /* mov %rdx, 0x8(%rcx) */
+        0x48, 0x89, 0x71, 0x10, /* mov %rsi, 0x10(%rcx) */
+        0x48, 0x89, 0x79, 0x18, /* mov %rdi, 0x18(%rcx) */
+        0x48, 0x89, 0x69, 0x20, /* mov %rbp, 0x20(%rcx) */
+        0x48, 0x89, 0x61, 0x28, /* mov %rsp, 0x28(%rcx) */
+        0x48, 0x83, 0xc1, 0x30, /* add $0x30, %rcx */
+
+        /* offset: 0x25 */
         0xcc,  /* int3 */
+
+        0x0f, 0x0b, /* ud2, illegal instruction */
+
+        /* offset: 0x28 */
+        0x48, 0xb9, /* mov imm64, %rcx */
+        /* offset: 0x2a */
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+
+        0x48, 0x89, 0x01,       /* mov %rax, (%rcx) */
+        0x48, 0x89, 0x51, 0x08, /* mov %rdx, 0x8(%rcx) */
+        0x48, 0x89, 0x71, 0x10, /* mov %rsi, 0x10(%rcx) */
+        0x48, 0x89, 0x79, 0x18, /* mov %rdi, 0x18(%rcx) */
+        0x48, 0x89, 0x69, 0x20, /* mov %rbp, 0x20(%rcx) */
+        0x48, 0x89, 0x61, 0x28, /* mov %rsp, 0x28(%rcx) */
         0xc3,  /* ret  */
     };
     static BYTE hook_trampoline[] =
@@ -2901,6 +2951,7 @@ static void test_kiuserexceptiondispatcher(void)
     BYTE patched_KiUserExceptionDispatcher_bytes[12];
     DWORD old_protect1, old_protect2;
     EXCEPTION_RECORD record;
+    void *bpt_address;
     BYTE *ptr;
     BOOL ret;
 
@@ -2910,6 +2961,9 @@ static void test_kiuserexceptiondispatcher(void)
         win_skip("KiUserExceptionDispatcher is not available.\n");
         return;
     }
+
+    *(ULONG64 *)(except_code + 2) = (ULONG64)&test_kiuserexceptiondispatcher_regs;
+    *(ULONG64 *)(except_code + 0x2a) = (ULONG64)&test_kiuserexceptiondispatcher_regs.new_rax;
 
     ok(((ULONG64)&phook_KiUserExceptionDispatcher & 0xffffffff) == ((ULONG64)&phook_KiUserExceptionDispatcher),
             "Address is too long.\n");
@@ -2945,13 +2999,24 @@ static void test_kiuserexceptiondispatcher(void)
     ok(got_exception, "Handler was not called.\n");
     ok(hook_called, "Hook was not called.\n");
 
-    ok(hook_exception_address == code_mem || broken(!hook_exception_address) /* Win2008 */,
+    ok(test_kiuserexceptiondispatcher_regs.new_rax == 0xdeadbeef, "Got unexpected rax %#lx.\n",
+            test_kiuserexceptiondispatcher_regs.new_rax);
+    ok(test_kiuserexceptiondispatcher_regs.old_rsi
+            == test_kiuserexceptiondispatcher_regs.new_rsi, "rsi does not match.\n");
+    ok(test_kiuserexceptiondispatcher_regs.old_rdi
+            == test_kiuserexceptiondispatcher_regs.new_rdi, "rdi does not match.\n");
+    ok(test_kiuserexceptiondispatcher_regs.old_rbp
+            == test_kiuserexceptiondispatcher_regs.new_rbp, "rbp does not match.\n");
+
+    bpt_address = (BYTE *)code_mem + 0x25;
+
+    ok(hook_exception_address == bpt_address || broken(!hook_exception_address) /* Win2008 */,
             "Got unexpected exception address %p, expected %p.\n",
-            hook_exception_address, code_mem);
-    ok(hook_KiUserExceptionDispatcher_rip == code_mem, "Got unexpected exception address %p, expected %p.\n",
-            hook_KiUserExceptionDispatcher_rip, code_mem);
-    ok(dbg_except_continue_handler_rip == code_mem, "Got unexpected exception address %p, expected %p.\n",
-            dbg_except_continue_handler_rip, code_mem);
+            hook_exception_address, bpt_address);
+    ok(hook_KiUserExceptionDispatcher_rip == bpt_address, "Got unexpected exception address %p, expected %p.\n",
+            hook_KiUserExceptionDispatcher_rip, bpt_address);
+    ok(dbg_except_continue_handler_rip == bpt_address, "Got unexpected exception address %p, expected %p.\n",
+            dbg_except_continue_handler_rip, bpt_address);
 
     memset(&record, 0, sizeof(record));
     record.ExceptionCode = 0x80000003;
@@ -2993,14 +3058,24 @@ static void test_kiuserexceptiondispatcher(void)
             sizeof(patched_KiUserExceptionDispatcher_bytes));
     got_exception = 0;
     hook_called = FALSE;
+
     run_exception_test(dbg_except_continue_handler, NULL, except_code, ARRAY_SIZE(except_code), PAGE_EXECUTE_READ);
 
     ok(got_exception, "Handler was not called.\n");
     ok(hook_called, "Hook was not called.\n");
-    ok(hook_KiUserExceptionDispatcher_rip == code_mem, "Got unexpected exception address %p, expected %p.\n",
-            hook_KiUserExceptionDispatcher_rip, code_mem);
-    ok(dbg_except_continue_handler_rip == code_mem, "Got unexpected exception address %p, expected %p.\n",
-            dbg_except_continue_handler_rip, code_mem);
+    ok(hook_KiUserExceptionDispatcher_rip == bpt_address, "Got unexpected exception address %p, expected %p.\n",
+            hook_KiUserExceptionDispatcher_rip, bpt_address);
+    ok(dbg_except_continue_handler_rip == bpt_address, "Got unexpected exception address %p, expected %p.\n",
+            dbg_except_continue_handler_rip, bpt_address);
+
+    ok(test_kiuserexceptiondispatcher_regs.new_rax == 0xdeadbeef, "Got unexpected rax %#lx.\n",
+            test_kiuserexceptiondispatcher_regs.new_rax);
+    ok(test_kiuserexceptiondispatcher_regs.old_rsi
+            == test_kiuserexceptiondispatcher_regs.new_rsi, "rsi does not match.\n");
+    ok(test_kiuserexceptiondispatcher_regs.old_rdi
+            == test_kiuserexceptiondispatcher_regs.new_rdi, "rdi does not match.\n");
+    ok(test_kiuserexceptiondispatcher_regs.old_rbp
+            == test_kiuserexceptiondispatcher_regs.new_rbp, "rbp does not match.\n");
 
     NtCurrentTeb()->Peb->BeingDebugged = 0;
 
@@ -3997,7 +4072,6 @@ START_TEST(exception)
     NtCurrentTeb()->Peb->BeingDebugged = 0x98;
     test_closehandle(0, (HANDLE)0xdeadbeef);
     NtCurrentTeb()->Peb->BeingDebugged = 0;
-
 #endif
 
     test_suspend_thread();
