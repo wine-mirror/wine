@@ -28,22 +28,15 @@ struct msghdr;
 struct _DISPATCHER_CONTEXT;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 87
+#define NTDLL_UNIXLIB_VERSION 88
 
 struct unix_funcs
 {
     /* Nt* functions */
     NTSTATUS      (WINAPI *NtClose)( HANDLE handle );
     TEB *         (WINAPI *NtCurrentTeb)(void);
-    NTSTATUS      (WINAPI *NtDuplicateObject)( HANDLE source_process, HANDLE source,
-                                               HANDLE dest_process, HANDLE *dest,
-                                               ACCESS_MASK access, ULONG attributes, ULONG options );
     NTSTATUS      (WINAPI *NtGetContextThread)( HANDLE handle, CONTEXT *context );
-    NTSTATUS      (WINAPI *NtQueryObject)( HANDLE handle, OBJECT_INFORMATION_CLASS info_class,
-                                           void *ptr, ULONG len, ULONG *used_len );
     NTSTATUS      (WINAPI *NtQueryPerformanceCounter)( LARGE_INTEGER *counter, LARGE_INTEGER *frequency );
-    NTSTATUS      (WINAPI *NtSetInformationObject)( HANDLE handle, OBJECT_INFORMATION_CLASS info_class,
-                                                    void *ptr, ULONG len );
 
     /* other Win32 API functions */
     NTSTATUS      (WINAPI *DbgUiIssueRemoteBreakin)( HANDLE process );

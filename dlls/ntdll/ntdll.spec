@@ -200,7 +200,7 @@
 @ stdcall NtDeleteValueKey(long ptr)
 @ stdcall -syscall NtDeviceIoControlFile(long long ptr ptr ptr long ptr long ptr long)
 @ stdcall NtDisplayString(ptr)
-@ stdcall NtDuplicateObject(long long long ptr long long long)
+@ stdcall -syscall NtDuplicateObject(long long long ptr long long long)
 @ stdcall NtDuplicateToken(long long ptr long long ptr)
 # @ stub NtEnumerateBootEntries
 @ stub NtEnumerateBus
@@ -305,7 +305,7 @@
 @ stdcall NtQueryLicenseValue(ptr ptr ptr long ptr)
 @ stdcall NtQueryMultipleValueKey(long ptr long ptr long ptr)
 @ stdcall -syscall NtQueryMutant(long long ptr long ptr)
-@ stdcall NtQueryObject(long long ptr long ptr)
+@ stdcall -syscall NtQueryObject(long long ptr long ptr)
 @ stub NtQueryOpenSubKeys
 @ stdcall NtQueryPerformanceCounter(ptr ptr)
 # @ stub NtQueryPortInformationProcess
@@ -376,7 +376,7 @@
 @ stdcall -syscall NtSetInformationFile(long ptr ptr long long)
 @ stdcall -syscall NtSetInformationJobObject(long long ptr long)
 @ stdcall NtSetInformationKey(long long ptr long)
-@ stdcall NtSetInformationObject(long long ptr long)
+@ stdcall -syscall NtSetInformationObject(long long ptr long)
 @ stdcall -syscall NtSetInformationProcess(long long ptr long)
 @ stdcall -syscall NtSetInformationThread(long long ptr long)
 @ stdcall NtSetInformationToken(long long ptr long)
@@ -1187,7 +1187,7 @@
 @ stdcall -private ZwDeleteValueKey(long ptr) NtDeleteValueKey
 @ stdcall -private -syscall ZwDeviceIoControlFile(long long ptr ptr ptr long ptr long ptr long) NtDeviceIoControlFile
 @ stdcall -private ZwDisplayString(ptr) NtDisplayString
-@ stdcall -private ZwDuplicateObject(long long long ptr long long long) NtDuplicateObject
+@ stdcall -private -syscall ZwDuplicateObject(long long long ptr long long long) NtDuplicateObject
 @ stdcall -private ZwDuplicateToken(long long ptr long long ptr) NtDuplicateToken
 # @ stub ZwEnumerateBootEntries
 @ stub ZwEnumerateBus
@@ -1292,7 +1292,7 @@
 @ stdcall -private ZwQueryLicenseValue(ptr ptr ptr long ptr) NtQueryLicenseValue
 @ stdcall -private ZwQueryMultipleValueKey(long ptr long ptr long ptr) NtQueryMultipleValueKey
 @ stdcall -private -syscall ZwQueryMutant(long long ptr long ptr) NtQueryMutant
-@ stdcall -private ZwQueryObject(long long ptr long ptr) NtQueryObject
+@ stdcall -private -syscall ZwQueryObject(long long ptr long ptr) NtQueryObject
 @ stub ZwQueryOpenSubKeys
 @ stdcall -private ZwQueryPerformanceCounter(ptr ptr) NtQueryPerformanceCounter
 # @ stub ZwQueryPortInformationProcess
@@ -1363,7 +1363,7 @@
 @ stdcall -private -syscall ZwSetInformationFile(long ptr ptr long long) NtSetInformationFile
 @ stdcall -private -syscall ZwSetInformationJobObject(long long ptr long) NtSetInformationJobObject
 @ stdcall -private ZwSetInformationKey(long long ptr long) NtSetInformationKey
-@ stdcall -private ZwSetInformationObject(long long ptr long) NtSetInformationObject
+@ stdcall -private -syscall ZwSetInformationObject(long long ptr long) NtSetInformationObject
 @ stdcall -private -syscall ZwSetInformationProcess(long long ptr long) NtSetInformationProcess
 @ stdcall -private -syscall ZwSetInformationThread(long long ptr long) NtSetInformationThread
 @ stdcall -private ZwSetInformationToken(long long ptr long) NtSetInformationToken
