@@ -363,8 +363,7 @@ int CDECL MSVCRT___iscsymf(int c)
 int CDECL MSVCRT__toupper_l(int c, MSVCRT__locale_t locale)
 {
     MSVCRT_pthreadlocinfo locinfo;
-    unsigned char str[2], *p = str;
-    WCHAR wide, upper;
+    unsigned char str[2], *p = str, ret[2];
 
     if(!locale)
         locinfo = get_locinfo();
@@ -382,22 +381,15 @@ int CDECL MSVCRT__toupper_l(int c, MSVCRT__locale_t locale)
     }
     *p++ = c & 255;
 
-    if(!MultiByteToWideChar(locinfo->lc_codepage,
-                MB_ERR_INVALID_CHARS, (char*)str, p-str, &wide, 1))
-        return c;
-
-    upper = toupperW(wide);
-    if(upper == wide)
-        return str[0] + (str[1]<<8);
-
-    switch(WideCharToMultiByte(locinfo->lc_codepage, 0,
-                &upper, 1, (char*)str, 2, NULL, NULL)) {
+    switch(__crtLCMapStringA(locinfo->lc_handle[MSVCRT_LC_CTYPE], LCMAP_UPPERCASE,
+                (char*)str, p-str, (char*)ret, 2, locinfo->lc_codepage, 0))
+    {
     case 0:
         return c;
     case 1:
-        return str[0];
+        return ret[0];
     default:
-        return str[0] + (str[1]<<8);
+        return ret[0] + (ret[1]<<8);
     }
 }
 
