@@ -47,16 +47,6 @@ static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
  */
 
 /******************************************************************************
- *  NtTerminateProcess			[NTDLL.@]
- *
- *  Native applications must kill themselves when done
- */
-NTSTATUS WINAPI NtTerminateProcess( HANDLE handle, LONG exit_code )
-{
-    return unix_funcs->NtTerminateProcess( handle, exit_code );
-}
-
-/******************************************************************************
  *  RtlGetCurrentPeb  [NTDLL.@]
  *
  */
@@ -81,118 +71,6 @@ HANDLE CDECL __wine_make_process_system(void)
     SERVER_END_REQ;
     return ret;
 }
-
-/******************************************************************************
-*  NtQueryInformationProcess		[NTDLL.@]
-*  ZwQueryInformationProcess		[NTDLL.@]
-*
-*/
-NTSTATUS WINAPI NtQueryInformationProcess( HANDLE handle, PROCESSINFOCLASS class, void *info,
-                                           ULONG size, ULONG *ret_len )
-{
-    return unix_funcs->NtQueryInformationProcess( handle, class, info, size, ret_len );
-}
-
-/******************************************************************************
- * NtSetInformationProcess [NTDLL.@]
- * ZwSetInformationProcess [NTDLL.@]
- */
-NTSTATUS WINAPI NtSetInformationProcess( HANDLE handle, PROCESSINFOCLASS class, void *info, ULONG size )
-{
-    return unix_funcs->NtSetInformationProcess( handle, class, info, size );
-}
-
-/******************************************************************************
- * NtFlushInstructionCache [NTDLL.@]
- * ZwFlushInstructionCache [NTDLL.@]
- */
-NTSTATUS WINAPI NtFlushInstructionCache( HANDLE handle, const void *addr, SIZE_T size )
-{
-#if defined(__x86_64__) || defined(__i386__)
-    /* no-op */
-#elif defined(HAVE___CLEAR_CACHE)
-    if (handle == GetCurrentProcess())
-    {
-        __clear_cache( (char *)addr, (char *)addr + size );
-    }
-    else
-    {
-        static int once;
-        if (!once++) FIXME( "%p %p %ld other process not supported\n", handle, addr, size );
-    }
-#else
-    static int once;
-    if (!once++) FIXME( "%p %p %ld\n", handle, addr, size );
-#endif
-    return STATUS_SUCCESS;
-}
-
-/**********************************************************************
- * NtFlushProcessWriteBuffers [NTDLL.@]
- */
-void WINAPI NtFlushProcessWriteBuffers(void)
-{
-    static int once = 0;
-    if (!once++) FIXME( "stub\n" );
-}
-
-/******************************************************************
- *		NtOpenProcess [NTDLL.@]
- *		ZwOpenProcess [NTDLL.@]
- */
-NTSTATUS  WINAPI NtOpenProcess(PHANDLE handle, ACCESS_MASK access,
-                               const OBJECT_ATTRIBUTES* attr, const CLIENT_ID* cid)
-{
-    NTSTATUS    status;
-
-    SERVER_START_REQ( open_process )
-    {
-        req->pid        = HandleToULong(cid->UniqueProcess);
-        req->access     = access;
-        req->attributes = attr ? attr->Attributes : 0;
-        status = wine_server_call( req );
-        if (!status) *handle = wine_server_ptr_handle( reply->handle );
-    }
-    SERVER_END_REQ;
-    return status;
-}
-
-/******************************************************************************
- * NtResumeProcess
- * ZwResumeProcess
- */
-NTSTATUS WINAPI NtResumeProcess( HANDLE handle )
-{
-    NTSTATUS ret;
-
-    SERVER_START_REQ( resume_process )
-    {
-        req->handle = wine_server_obj_handle( handle );
-        ret = wine_server_call( req );
-    }
-    SERVER_END_REQ;
-
-    return ret;
-}
-
-/******************************************************************************
- * NtSuspendProcess
- * ZwSuspendProcess
- */
-NTSTATUS WINAPI NtSuspendProcess( HANDLE handle )
-{
-    NTSTATUS ret;
-
-    SERVER_START_REQ( suspend_process )
-    {
-        req->handle = wine_server_obj_handle( handle );
-        ret = wine_server_call( req );
-    }
-    SERVER_END_REQ;
-
-    return ret;
-}
-
 
 /***********************************************************************
  *           restart_process
@@ -239,24 +117,6 @@ NTSTATUS restart_process( RTL_USER_PROCESS_PARAMETERS *params, NTSTATUS status )
         break;
     }
     return status;
-}
-
-
-/**********************************************************************
- *           NtCreateUserProcess  (NTDLL.@)
- */
-NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_handle_ptr,
-                                     ACCESS_MASK process_access, ACCESS_MASK thread_access,
-                                     OBJECT_ATTRIBUTES *process_attr, OBJECT_ATTRIBUTES *thread_attr,
-                                     ULONG process_flags, ULONG thread_flags,
-                                     RTL_USER_PROCESS_PARAMETERS *params, PS_CREATE_INFO *info,
-                                     PS_ATTRIBUTE_LIST *attr )
-{
-    return unix_funcs->NtCreateUserProcess( process_handle_ptr, thread_handle_ptr,
-                                            process_access, thread_access,
-                                            process_attr, thread_attr,
-                                            process_flags, thread_flags,
-                                            params, info, attr );
 }
 
 
