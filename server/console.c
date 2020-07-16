@@ -1847,7 +1847,6 @@ DECL_HANDLER(alloc_console)
     obj_handle_t in = 0;
     obj_handle_t evt = 0;
     struct process *process;
-    struct thread *renderer;
     struct console_input *console;
     int fd;
     int attach = 0;
@@ -1865,8 +1864,7 @@ DECL_HANDLER(alloc_console)
     switch (req->pid)
     {
     case 0:
-        /* renderer is current, console to be attached to parent process */
-        renderer = current;
+        /* console to be attached to parent process */
         if (!(process = get_process_from_id( current->process->parent_id )))
         {
             if (fd != -1) close( fd );
@@ -1876,15 +1874,13 @@ DECL_HANDLER(alloc_console)
         attach = 1;
         break;
     case 0xffffffff:
-        /* no renderer, console to be attached to current process */
-        renderer = NULL;
+        /* console to be attached to current process */
         process = current->process;
         grab_object( process );
         attach = 1;
         break;
     default:
-        /* renderer is current, console to be attached to req->pid */
-        renderer = current;
+        /* console to be attached to req->pid */
         if (!(process = get_process_from_id( req->pid )))
         {
             if (fd != -1) close( fd );
@@ -1899,7 +1895,7 @@ DECL_HANDLER(alloc_console)
         goto the_end;
     }
 
-    if ((console = (struct console_input*)create_console_input( renderer, fd )))
+    if ((console = (struct console_input*)create_console_input( NULL, fd )))
     {
         if ((in = alloc_handle( current->process, console, req->access, req->attributes )))
         {

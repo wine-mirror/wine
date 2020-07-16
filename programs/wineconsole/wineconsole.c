@@ -637,10 +637,18 @@ static struct inner_data* WINECON_Init(HINSTANCE hInst, DWORD pid, LPCWSTR appna
                                        enum init_return (*backend)(struct inner_data*),
                                        INT nCmdShow)
 {
+    OBJECT_ATTRIBUTES attr = {sizeof(attr)};
     struct inner_data*	data = NULL;
     DWORD		ret;
     struct config_data  cfg;
     STARTUPINFOW        si;
+    UNICODE_STRING string;
+    IO_STATUS_BLOCK io;
+    condrv_handle_t h;
+    NTSTATUS status;
+
+    static const WCHAR renderer_pathW[] = {'\\','D','e','v','i','c','e','\\','C','o','n','D','r','v',
+        '\\','R','e','n','d','e','r','e','r',0};
 
     data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*data));
     if (!data) return 0;
@@ -682,11 +690,21 @@ static struct inner_data* WINECON_Init(HINSTANCE hInst, DWORD pid, LPCWSTR appna
 
         ret = !wine_server_call_err( req );
         data->hConIn = wine_server_ptr_handle( reply->handle_in );
-        data->hSynchro = wine_server_ptr_handle( reply->event );
     }
     SERVER_END_REQ;
     if (!ret) goto error;
     WINE_TRACE("using hConIn %p, hSynchro event %p\n", data->hConIn, data->hSynchro);
+
+    RtlInitUnicodeString(&string, renderer_pathW);
+    attr.ObjectName = &string;
+    status = NtCreateFile(&data->hSynchro, FILE_READ_DATA | FILE_WRITE_DATA | FILE_WRITE_PROPERTIES
+                          | FILE_READ_PROPERTIES | SYNCHRONIZE, &attr, &io, NULL, FILE_ATTRIBUTE_NORMAL,
+                          0, FILE_OPEN, FILE_NON_DIRECTORY_FILE,  NULL, 0);
+    if (status) goto error;
+
+    h = condrv_handle(data->hConIn);
+    if (!DeviceIoControl(data->hSynchro, IOCTL_CONDRV_ATTACH_RENDERER, &h, sizeof(h), NULL, 0, NULL, NULL))
+        goto error;
 
     SERVER_START_REQ(create_console_output)
     {

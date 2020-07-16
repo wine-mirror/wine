@@ -46,6 +46,13 @@
 /* console handle type */
 typedef unsigned int condrv_handle_t;
 
+/* convert an object handle to a server handle */
+static inline condrv_handle_t condrv_handle( HANDLE handle )
+{
+    if ((int)(INT_PTR)handle != (INT_PTR)handle) return 0xfffffff0;  /* some invalid handle */
+    return (INT_PTR)handle;
+}
+
 /* structure for console char/attribute info */
 typedef struct
 {
