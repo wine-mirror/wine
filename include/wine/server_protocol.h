@@ -4957,18 +4957,6 @@ struct get_object_type_reply
 
 
 
-struct unlink_object_request
-{
-    struct request_header __header;
-    obj_handle_t   handle;
-};
-struct unlink_object_reply
-{
-    struct reply_header __header;
-};
-
-
-
 struct get_token_impersonation_level_request
 {
     struct request_header __header;
@@ -5834,7 +5822,6 @@ enum request
     REQ_query_symlink,
     REQ_get_object_info,
     REQ_get_object_type,
-    REQ_unlink_object,
     REQ_get_token_impersonation_level,
     REQ_allocate_locally_unique_id,
     REQ_create_device_manager,
@@ -6129,7 +6116,6 @@ union generic_request
     struct query_symlink_request query_symlink_request;
     struct get_object_info_request get_object_info_request;
     struct get_object_type_request get_object_type_request;
-    struct unlink_object_request unlink_object_request;
     struct get_token_impersonation_level_request get_token_impersonation_level_request;
     struct allocate_locally_unique_id_request allocate_locally_unique_id_request;
     struct create_device_manager_request create_device_manager_request;
@@ -6422,7 +6408,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
     struct get_object_info_reply get_object_info_reply;
     struct get_object_type_reply get_object_type_reply;
-    struct unlink_object_reply unlink_object_reply;
     struct get_token_impersonation_level_reply get_token_impersonation_level_reply;
     struct allocate_locally_unique_id_reply allocate_locally_unique_id_reply;
     struct create_device_manager_reply create_device_manager_reply;
@@ -6467,7 +6452,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 627
+#define SERVER_PROTOCOL_VERSION 628
 
 /* ### protocol_version end ### */
 

@@ -366,7 +366,6 @@ DECL_HANDLER(open_symlink);
 DECL_HANDLER(query_symlink);
 DECL_HANDLER(get_object_info);
 DECL_HANDLER(get_object_type);
-DECL_HANDLER(unlink_object);
 DECL_HANDLER(get_token_impersonation_level);
 DECL_HANDLER(allocate_locally_unique_id);
 DECL_HANDLER(create_device_manager);
@@ -660,7 +659,6 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_query_symlink,
     (req_handler)req_get_object_info,
     (req_handler)req_get_object_type,
-    (req_handler)req_unlink_object,
     (req_handler)req_get_token_impersonation_level,
     (req_handler)req_allocate_locally_unique_id,
     (req_handler)req_create_device_manager,
@@ -2162,8 +2160,6 @@ C_ASSERT( FIELD_OFFSET(struct get_object_type_request, handle) == 12 );
 C_ASSERT( sizeof(struct get_object_type_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct get_object_type_reply, total) == 8 );
 C_ASSERT( sizeof(struct get_object_type_reply) == 16 );
-C_ASSERT( FIELD_OFFSET(struct unlink_object_request, handle) == 12 );
-C_ASSERT( sizeof(struct unlink_object_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct get_token_impersonation_level_request, handle) == 12 );
 C_ASSERT( sizeof(struct get_token_impersonation_level_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct get_token_impersonation_level_reply, impersonation_level) == 8 );

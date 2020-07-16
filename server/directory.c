@@ -534,18 +534,6 @@ DECL_HANDLER(get_directory_entry)
     }
 }
 
-/* unlink a named object */
-DECL_HANDLER(unlink_object)
-{
-    struct object *obj = get_handle_obj( current->process, req->handle, 0, NULL );
-
-    if (obj)
-    {
-        unlink_named_object( obj );
-        release_object( obj );
-    }
-}
-
 /* query object type name information */
 DECL_HANDLER(get_object_type)
 {

@@ -3442,12 +3442,6 @@ struct handle_info
 @END
 
 
-/* Unlink a named object */
-@REQ(unlink_object)
-    obj_handle_t   handle;        /* handle to the object */
-@END
-
-
 /* Query the impersonation level of an impersonation token */
 @REQ(get_token_impersonation_level)
     obj_handle_t   handle;        /* handle to the object */
