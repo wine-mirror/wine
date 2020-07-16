@@ -148,7 +148,7 @@
 @ stdcall NtCancelIoFile(long ptr)
 @ stdcall NtCancelIoFileEx(long ptr ptr)
 @ stdcall NtCancelTimer(long ptr)
-@ stdcall NtClearEvent(long)
+@ stdcall -syscall NtClearEvent(long)
 @ stdcall NtClearPowerRequest(long long)
 @ stdcall NtClose(long)
 @ stub NtCloseObjectAuditAlarm
@@ -160,7 +160,7 @@
 @ stdcall NtContinue(ptr long)
 # @ stub NtCreateDebugObject
 @ stdcall NtCreateDirectoryObject(ptr long ptr)
-@ stdcall NtCreateEvent(ptr long ptr long long)
+@ stdcall -syscall NtCreateEvent(ptr long ptr long long)
 @ stub NtCreateEventPair
 @ stdcall -syscall NtCreateFile(ptr long ptr ptr ptr long long long long ptr long)
 @ stdcall NtCreateIoCompletion(ptr long ptr long)
@@ -251,7 +251,7 @@
 @ stdcall NtNotifyChangeKey(long long ptr ptr ptr long long ptr long long)
 @ stdcall NtNotifyChangeMultipleKeys(long long ptr long ptr ptr ptr long long ptr long long)
 @ stdcall NtOpenDirectoryObject(ptr long ptr)
-@ stdcall NtOpenEvent(ptr long ptr)
+@ stdcall -syscall NtOpenEvent(ptr long ptr)
 @ stub NtOpenEventPair
 @ stdcall -syscall NtOpenFile(ptr long ptr ptr long long)
 @ stdcall NtOpenIoCompletion(ptr long ptr)
@@ -279,7 +279,7 @@
 @ stub NtPrivilegeObjectAuditAlarm
 @ stub NtPrivilegedServiceAuditAlarm
 @ stdcall NtProtectVirtualMemory(long ptr ptr long ptr)
-@ stdcall NtPulseEvent(long ptr)
+@ stdcall -syscall NtPulseEvent(long ptr)
 @ stdcall NtQueryAttributesFile(ptr ptr)
 # @ stub NtQueryBootEntryOrder
 # @ stub NtQueryBootOptions
@@ -289,7 +289,7 @@
 @ stdcall NtQueryDirectoryFile(long long ptr ptr ptr ptr long long long ptr long)
 @ stdcall NtQueryDirectoryObject(long ptr long long long ptr ptr)
 @ stdcall NtQueryEaFile(long ptr ptr long long ptr long ptr long)
-@ stdcall NtQueryEvent(long long ptr long ptr)
+@ stdcall -syscall NtQueryEvent(long long ptr long ptr)
 @ stdcall NtQueryFullAttributesFile(ptr ptr)
 @ stdcall NtQueryInformationAtom(long long ptr long ptr)
 @ stdcall NtQueryInformationFile(long ptr ptr long long)
@@ -350,7 +350,7 @@
 @ stub NtRequestPort
 @ stdcall NtRequestWaitReplyPort(ptr ptr ptr)
 # @ stub NtRequestWakeupLatency
-@ stdcall NtResetEvent(long ptr)
+@ stdcall -syscall NtResetEvent(long ptr)
 @ stdcall NtResetWriteWatch(long ptr long)
 @ stdcall NtRestoreKey(long long long)
 @ stdcall NtResumeProcess(long)
@@ -367,7 +367,7 @@
 @ stdcall NtSetDefaultLocale(long long)
 @ stdcall NtSetDefaultUILanguage(long)
 @ stdcall NtSetEaFile(long ptr ptr long)
-@ stdcall NtSetEvent(long ptr)
+@ stdcall -syscall NtSetEvent(long ptr)
 # @ stub NtSetEventBoostPriority
 @ stub NtSetHighEventPair
 @ stub NtSetHighWaitLowEventPair
@@ -1137,7 +1137,7 @@
 @ stdcall -private ZwCancelIoFile(long ptr) NtCancelIoFile
 @ stdcall -private ZwCancelIoFileEx(long ptr ptr) NtCancelIoFileEx
 @ stdcall -private ZwCancelTimer(long ptr) NtCancelTimer
-@ stdcall -private ZwClearEvent(long) NtClearEvent
+@ stdcall -private -syscall ZwClearEvent(long) NtClearEvent
 @ stdcall -private ZwClearPowerRequest(long long) NtClearPowerRequest
 @ stdcall -private ZwClose(long) NtClose
 @ stub ZwCloseObjectAuditAlarm
@@ -1149,7 +1149,7 @@
 @ stdcall -private ZwContinue(ptr long) NtContinue
 # @ stub ZwCreateDebugObject
 @ stdcall -private ZwCreateDirectoryObject(ptr long ptr) NtCreateDirectoryObject
-@ stdcall -private ZwCreateEvent(ptr long ptr long long) NtCreateEvent
+@ stdcall -private -syscall ZwCreateEvent(ptr long ptr long long) NtCreateEvent
 @ stub ZwCreateEventPair
 @ stdcall -private -syscall ZwCreateFile(ptr long ptr ptr ptr long long long long ptr long) NtCreateFile
 @ stdcall -private ZwCreateIoCompletion(ptr long ptr long) NtCreateIoCompletion
@@ -1235,7 +1235,7 @@
 @ stdcall -private ZwNotifyChangeKey(long long ptr ptr ptr long long ptr long long) NtNotifyChangeKey
 @ stdcall -private ZwNotifyChangeMultipleKeys(long long ptr long ptr ptr ptr long long ptr long long) NtNotifyChangeMultipleKeys
 @ stdcall -private ZwOpenDirectoryObject(ptr long ptr) NtOpenDirectoryObject
-@ stdcall -private ZwOpenEvent(ptr long ptr) NtOpenEvent
+@ stdcall -private -syscall ZwOpenEvent(ptr long ptr) NtOpenEvent
 @ stub ZwOpenEventPair
 @ stdcall -private -syscall ZwOpenFile(ptr long ptr ptr long long) NtOpenFile
 @ stdcall -private ZwOpenIoCompletion(ptr long ptr) NtOpenIoCompletion
@@ -1263,7 +1263,7 @@
 @ stub ZwPrivilegeObjectAuditAlarm
 @ stub ZwPrivilegedServiceAuditAlarm
 @ stdcall -private ZwProtectVirtualMemory(long ptr ptr long ptr) NtProtectVirtualMemory
-@ stdcall -private ZwPulseEvent(long ptr) NtPulseEvent
+@ stdcall -private -syscall ZwPulseEvent(long ptr) NtPulseEvent
 @ stdcall -private ZwQueryAttributesFile(ptr ptr) NtQueryAttributesFile
 # @ stub ZwQueryBootEntryOrder
 # @ stub ZwQueryBootOptions
@@ -1273,7 +1273,7 @@
 @ stdcall -private ZwQueryDirectoryFile(long long ptr ptr ptr ptr long long long ptr long) NtQueryDirectoryFile
 @ stdcall -private ZwQueryDirectoryObject(long ptr long long long ptr ptr) NtQueryDirectoryObject
 @ stdcall -private ZwQueryEaFile(long ptr ptr long long ptr long ptr long) NtQueryEaFile
-@ stdcall -private ZwQueryEvent(long long ptr long ptr) NtQueryEvent
+@ stdcall -private -syscall ZwQueryEvent(long long ptr long ptr) NtQueryEvent
 @ stdcall -private ZwQueryFullAttributesFile(ptr ptr) NtQueryFullAttributesFile
 @ stdcall -private ZwQueryInformationAtom(long long ptr long ptr) NtQueryInformationAtom
 @ stdcall -private ZwQueryInformationFile(long ptr ptr long long) NtQueryInformationFile
@@ -1334,7 +1334,7 @@
 @ stub ZwRequestPort
 @ stdcall -private ZwRequestWaitReplyPort(ptr ptr ptr) NtRequestWaitReplyPort
 # @ stub ZwRequestWakeupLatency
-@ stdcall -private ZwResetEvent(long ptr) NtResetEvent
+@ stdcall -private -syscall ZwResetEvent(long ptr) NtResetEvent
 @ stdcall -private ZwResetWriteWatch(long ptr long) NtResetWriteWatch
 @ stdcall -private ZwRestoreKey(long long long) NtRestoreKey
 @ stdcall -private ZwResumeProcess(long) NtResumeProcess
@@ -1351,7 +1351,7 @@
 @ stdcall -private ZwSetDefaultLocale(long long) NtSetDefaultLocale
 @ stdcall -private ZwSetDefaultUILanguage(long) NtSetDefaultUILanguage
 @ stdcall -private ZwSetEaFile(long ptr ptr long) NtSetEaFile
-@ stdcall -private ZwSetEvent(long ptr) NtSetEvent
+@ stdcall -private -syscall ZwSetEvent(long ptr) NtSetEvent
 # @ stub ZwSetEventBoostPriority
 @ stub ZwSetHighEventPair
 @ stub ZwSetHighWaitLowEventPair
