@@ -8740,7 +8740,7 @@ static DWORD LISTVIEW_SetIconSpacing(LISTVIEW_INFO *infoPtr, INT cx, INT cy)
     return oldspacing;
 }
 
-static inline void set_icon_size(SIZE *size, HIMAGELIST himl, BOOL small)
+static inline void set_icon_size(SIZE *size, HIMAGELIST himl, BOOL is_small)
 {
     INT cx, cy;
     
@@ -8751,8 +8751,8 @@ static inline void set_icon_size(SIZE *size, HIMAGELIST himl, BOOL small)
     }
     else
     {
-	size->cx = GetSystemMetrics(small ? SM_CXSMICON : SM_CXICON);
-	size->cy = GetSystemMetrics(small ? SM_CYSMICON : SM_CYICON);
+        size->cx = GetSystemMetrics(is_small ? SM_CXSMICON : SM_CXICON);
+        size->cy = GetSystemMetrics(is_small ? SM_CYSMICON : SM_CYICON);
     }
 }
 
