@@ -3034,15 +3034,17 @@ static void query_internal_format(struct wined3d_adapter *adapter,
 
         if ((format->f.flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_SRGB_WRITE) && !srgb_write_supported)
             format_clear_flag(&format->f, WINED3DFMT_FLAG_SRGB_WRITE);
+    }
 
-        if (!gl_info->supported[ARB_DEPTH_TEXTURE] && (format->f.depth_size || format->f.stencil_size))
-        {
-            format->f.flags[WINED3D_GL_RES_TYPE_TEX_1D] &= ~WINED3DFMT_FLAG_TEXTURE;
-            format->f.flags[WINED3D_GL_RES_TYPE_TEX_2D] &= ~WINED3DFMT_FLAG_TEXTURE;
-            format->f.flags[WINED3D_GL_RES_TYPE_TEX_3D] &= ~WINED3DFMT_FLAG_TEXTURE;
-            format->f.flags[WINED3D_GL_RES_TYPE_TEX_CUBE] &= ~WINED3DFMT_FLAG_TEXTURE;
-            format->f.flags[WINED3D_GL_RES_TYPE_TEX_RECT] &= ~WINED3DFMT_FLAG_TEXTURE;
-        }
+    if ((!gl_info->supported[ARB_DEPTH_TEXTURE] || wined3d_settings.offscreen_rendering_mode != ORM_FBO)
+            && (format->f.depth_size || format->f.stencil_size))
+    {
+        TRACE("Disabling texturing support for depth / stencil format %s.\n", debug_d3dformat(format->f.id));
+        format->f.flags[WINED3D_GL_RES_TYPE_TEX_1D] &= ~WINED3DFMT_FLAG_TEXTURE;
+        format->f.flags[WINED3D_GL_RES_TYPE_TEX_2D] &= ~WINED3DFMT_FLAG_TEXTURE;
+        format->f.flags[WINED3D_GL_RES_TYPE_TEX_3D] &= ~WINED3DFMT_FLAG_TEXTURE;
+        format->f.flags[WINED3D_GL_RES_TYPE_TEX_CUBE] &= ~WINED3DFMT_FLAG_TEXTURE;
+        format->f.flags[WINED3D_GL_RES_TYPE_TEX_RECT] &= ~WINED3DFMT_FLAG_TEXTURE;
     }
 
     query_view_class(format);
