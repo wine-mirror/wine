@@ -28,7 +28,7 @@ struct msghdr;
 struct _DISPATCHER_CONTEXT;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 74
+#define NTDLL_UNIXLIB_VERSION 75
 
 struct unix_funcs
 {
@@ -65,8 +65,6 @@ struct unix_funcs
     NTSTATUS      (WINAPI *NtCreateSection)( HANDLE *handle, ACCESS_MASK access,
                                              const OBJECT_ATTRIBUTES *attr, const LARGE_INTEGER *size,
                                              ULONG protect, ULONG sec_flags, HANDLE file );
-    NTSTATUS      (WINAPI *NtCreateSemaphore)( HANDLE *handle, ACCESS_MASK access,
-                                               const OBJECT_ATTRIBUTES *attr, LONG initial, LONG max );
     NTSTATUS      (WINAPI *NtCreateThreadEx)( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr,
                                               HANDLE process, PRTL_THREAD_START_ROUTINE start, void *param,
                                               ULONG flags, SIZE_T zero_bits, SIZE_T stack_commit,
@@ -128,8 +126,6 @@ struct unix_funcs
                                            const OBJECT_ATTRIBUTES *attr, const CLIENT_ID *id );
     NTSTATUS      (WINAPI *NtOpenSection)( HANDLE *handle, ACCESS_MASK access,
                                            const OBJECT_ATTRIBUTES *attr );
-    NTSTATUS      (WINAPI *NtOpenSemaphore)( HANDLE *handle, ACCESS_MASK access,
-                                             const OBJECT_ATTRIBUTES *attr );
     NTSTATUS      (WINAPI *NtOpenThread)( HANDLE *handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr, const CLIENT_ID *id );
     NTSTATUS      (WINAPI *NtOpenTimer)( HANDLE *handle, ACCESS_MASK access,
                                          const OBJECT_ATTRIBUTES *attr );
@@ -166,8 +162,6 @@ struct unix_funcs
     NTSTATUS      (WINAPI *NtQueryPerformanceCounter)( LARGE_INTEGER *counter, LARGE_INTEGER *frequency );
     NTSTATUS      (WINAPI *NtQuerySection)( HANDLE handle, SECTION_INFORMATION_CLASS class,
                                             void *ptr, SIZE_T size, SIZE_T *ret_size );
-    NTSTATUS      (WINAPI *NtQuerySemaphore)( HANDLE handle, SEMAPHORE_INFORMATION_CLASS class,
-                                              void *info, ULONG len, ULONG *ret_len );
     NTSTATUS      (WINAPI *NtQuerySystemInformation)( SYSTEM_INFORMATION_CLASS class,
                                                       void *info, ULONG size, ULONG *ret_size );
     NTSTATUS      (WINAPI *NtQuerySystemInformationEx)( SYSTEM_INFORMATION_CLASS class,
@@ -197,7 +191,6 @@ struct unix_funcs
     NTSTATUS      (WINAPI *NtReleaseKeyedEvent)( HANDLE handle, const void *key,
                                                  BOOLEAN alertable, const LARGE_INTEGER *timeout );
     NTSTATUS      (WINAPI *NtReleaseMutant)( HANDLE handle, LONG *prev_count );
-    NTSTATUS      (WINAPI *NtReleaseSemaphore)( HANDLE handle, ULONG count, ULONG *previous );
     NTSTATUS      (WINAPI *NtRemoveIoCompletion)( HANDLE handle, ULONG_PTR *key, ULONG_PTR *value,
                                                   IO_STATUS_BLOCK *io, LARGE_INTEGER *timeout );
     NTSTATUS      (WINAPI *NtRemoveIoCompletionEx)( HANDLE handle, FILE_IO_COMPLETION_INFORMATION *info,

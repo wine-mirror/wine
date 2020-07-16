@@ -180,7 +180,7 @@
 # @ stub NtCreateProcessEx
 @ stub NtCreateProfile
 @ stdcall NtCreateSection(ptr long ptr ptr long long long)
-@ stdcall NtCreateSemaphore(ptr long ptr long long)
+@ stdcall -syscall NtCreateSemaphore(ptr long ptr long long)
 @ stdcall NtCreateSymbolicLinkObject(ptr long ptr ptr)
 @ stub NtCreateThread
 @ stdcall NtCreateThreadEx(ptr long ptr long ptr ptr long long long long ptr)
@@ -267,7 +267,7 @@
 @ stdcall NtOpenProcessToken(long long ptr)
 @ stdcall NtOpenProcessTokenEx(long long long ptr)
 @ stdcall NtOpenSection(ptr long ptr)
-@ stdcall NtOpenSemaphore(ptr long ptr)
+@ stdcall -syscall NtOpenSemaphore(ptr long ptr)
 @ stdcall NtOpenSymbolicLinkObject (ptr long ptr)
 @ stdcall NtOpenThread(ptr long ptr ptr)
 @ stdcall NtOpenThreadToken(long long long ptr)
@@ -312,7 +312,7 @@
 # @ stub NtQueryQuotaInformationFile
 @ stdcall NtQuerySection(long long ptr long ptr)
 @ stdcall NtQuerySecurityObject(long long ptr long ptr)
-@ stdcall NtQuerySemaphore (long long ptr long ptr)
+@ stdcall -syscall NtQuerySemaphore (long long ptr long ptr)
 @ stdcall NtQuerySymbolicLinkObject(long ptr ptr)
 @ stdcall NtQuerySystemEnvironmentValue(ptr ptr long ptr)
 @ stdcall NtQuerySystemEnvironmentValueEx(ptr ptr ptr ptr ptr)
@@ -336,7 +336,7 @@
 @ stdcall NtReleaseKeyedEvent(long ptr long ptr)
 @ stdcall NtReleaseMutant(long ptr)
 @ stub NtReleaseProcessMutant
-@ stdcall NtReleaseSemaphore(long long ptr)
+@ stdcall -syscall NtReleaseSemaphore(long long ptr)
 @ stdcall NtRemoveIoCompletion(ptr ptr ptr ptr ptr)
 @ stdcall NtRemoveIoCompletionEx(ptr ptr long ptr ptr long)
 # @ stub NtRemoveProcessDebug
@@ -1168,7 +1168,7 @@
 # @ stub ZwCreateProcessEx
 @ stub ZwCreateProfile
 @ stdcall -private ZwCreateSection(ptr long ptr ptr long long long) NtCreateSection
-@ stdcall -private ZwCreateSemaphore(ptr long ptr long long) NtCreateSemaphore
+@ stdcall -private -syscall ZwCreateSemaphore(ptr long ptr long long) NtCreateSemaphore
 @ stdcall -private ZwCreateSymbolicLinkObject(ptr long ptr ptr) NtCreateSymbolicLinkObject
 @ stub ZwCreateThread
 @ stdcall -private ZwCreateTimer(ptr long ptr long) NtCreateTimer
@@ -1251,7 +1251,7 @@
 @ stdcall -private ZwOpenProcessToken(long long ptr) NtOpenProcessToken
 @ stdcall -private ZwOpenProcessTokenEx(long long long ptr) NtOpenProcessTokenEx
 @ stdcall -private ZwOpenSection(ptr long ptr) NtOpenSection
-@ stdcall -private ZwOpenSemaphore(ptr long ptr) NtOpenSemaphore
+@ stdcall -private -syscall ZwOpenSemaphore(ptr long ptr) NtOpenSemaphore
 @ stdcall -private ZwOpenSymbolicLinkObject (ptr long ptr) NtOpenSymbolicLinkObject
 @ stdcall -private ZwOpenThread(ptr long ptr ptr) NtOpenThread
 @ stdcall -private ZwOpenThreadToken(long long long ptr) NtOpenThreadToken
@@ -1296,7 +1296,7 @@
 # @ stub ZwQueryQuotaInformationFile
 @ stdcall -private ZwQuerySection(long long ptr long ptr) NtQuerySection
 @ stdcall -private ZwQuerySecurityObject(long long ptr long ptr) NtQuerySecurityObject
-@ stdcall -private ZwQuerySemaphore(long long ptr long ptr) NtQuerySemaphore
+@ stdcall -private -syscall ZwQuerySemaphore(long long ptr long ptr) NtQuerySemaphore
 @ stdcall -private ZwQuerySymbolicLinkObject(long ptr ptr) NtQuerySymbolicLinkObject
 @ stdcall -private ZwQuerySystemEnvironmentValue(ptr ptr long ptr) NtQuerySystemEnvironmentValue
 @ stdcall -private ZwQuerySystemEnvironmentValueEx(ptr ptr ptr ptr ptr) NtQuerySystemEnvironmentValueEx
@@ -1320,7 +1320,7 @@
 @ stdcall -private ZwReleaseKeyedEvent(long ptr long ptr) NtReleaseKeyedEvent
 @ stdcall -private ZwReleaseMutant(long ptr) NtReleaseMutant
 @ stub ZwReleaseProcessMutant
-@ stdcall -private ZwReleaseSemaphore(long long ptr) NtReleaseSemaphore
+@ stdcall -private -syscall ZwReleaseSemaphore(long long ptr) NtReleaseSemaphore
 @ stdcall -private ZwRemoveIoCompletion(ptr ptr ptr ptr ptr) NtRemoveIoCompletion
 @ stdcall -private ZwRemoveIoCompletionEx(ptr ptr long ptr ptr long) NtRemoveIoCompletionEx
 # @ stub ZwRemoveProcessDebug

@@ -136,44 +136,6 @@ NTSTATUS validate_open_object_attributes( const OBJECT_ATTRIBUTES *attr )
 }
 
 /*
- *	Semaphores
- */
-
-/******************************************************************************
- *  NtCreateSemaphore (NTDLL.@)
- */
-NTSTATUS WINAPI NtCreateSemaphore( HANDLE *handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr,
-                                   LONG initial, LONG max )
-{
-    return unix_funcs->NtCreateSemaphore( handle, access, attr, initial, max );
-}
-
-/******************************************************************************
- *  NtOpenSemaphore (NTDLL.@)
- */
-NTSTATUS WINAPI NtOpenSemaphore( HANDLE *handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr )
-{
-    return unix_funcs->NtOpenSemaphore( handle, access, attr );
-}
-
-/******************************************************************************
- *  NtQuerySemaphore (NTDLL.@)
- */
-NTSTATUS WINAPI NtQuerySemaphore( HANDLE handle, SEMAPHORE_INFORMATION_CLASS class,
-                                  void *info, ULONG len, ULONG *ret_len )
-{
-    return unix_funcs->NtQuerySemaphore( handle, class, info, len, ret_len );
-}
-
-/******************************************************************************
- *  NtReleaseSemaphore (NTDLL.@)
- */
-NTSTATUS WINAPI NtReleaseSemaphore( HANDLE handle, ULONG count, PULONG previous )
-{
-    return unix_funcs->NtReleaseSemaphore( handle, count, previous );
-}
-
-/*
  *	Events
  */
 
