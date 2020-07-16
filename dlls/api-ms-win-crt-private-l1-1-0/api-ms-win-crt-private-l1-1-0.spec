@@ -420,7 +420,7 @@
 @ cdecl _o__ismbclegal(long) ucrtbase._o__ismbclegal
 @ cdecl _o__ismbclegal_l(long ptr) ucrtbase._o__ismbclegal_l
 @ stub _o__ismbclower
-@ stub _o__ismbclower_l
+@ cdecl _o__ismbclower_l(long ptr) ucrtbase._o__ismbclower_l
 @ cdecl _o__ismbcprint(long) ucrtbase._o__ismbcprint
 @ stub _o__ismbcprint_l
 @ cdecl _o__ismbcpunct(long) ucrtbase._o__ismbcpunct

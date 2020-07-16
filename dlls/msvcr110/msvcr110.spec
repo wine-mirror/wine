@@ -1341,7 +1341,7 @@
 @ cdecl _ismbclegal(long)
 @ cdecl _ismbclegal_l(long ptr)
 @ stub _ismbclower(long)
-@ stub _ismbclower_l
+@ cdecl _ismbclower_l(long ptr)
 @ stub _ismbcprint(long)
 @ stub _ismbcprint_l
 @ cdecl _ismbcpunct(long)
