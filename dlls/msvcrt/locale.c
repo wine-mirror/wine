@@ -713,12 +713,52 @@ int CDECL __crtLCMapStringA(
   LCID lcid, DWORD mapflags, const char* src, int srclen, char* dst,
   int dstlen, unsigned int codepage, int xflag
 ) {
-  FIXME("(lcid %x, flags %x, %s(%d), %p(%d), %x, %d), partial stub!\n",
-        lcid,mapflags,src,srclen,dst,dstlen,codepage,xflag);
-  /* FIXME: A bit incorrect. But msvcrt itself just converts its
-   * arguments to wide strings and then calls LCMapStringW
-   */
-  return LCMapStringA(lcid,mapflags,src,srclen,dst,dstlen);
+    WCHAR buf_in[32], *in = buf_in;
+    WCHAR buf_out[32], *out = buf_out;
+    int in_len, out_len, r;
+
+    TRACE("(lcid %x, flags %x, %s(%d), %p(%d), %x, %d), partial stub!\n",
+            lcid, mapflags, src, srclen, dst, dstlen, codepage, xflag);
+
+    in_len = MultiByteToWideChar(codepage, MB_ERR_INVALID_CHARS, src, srclen, NULL, 0);
+    if (!in_len) return 0;
+    if (in_len > ARRAY_SIZE(buf_in))
+    {
+        in = malloc(in_len * sizeof(WCHAR));
+        if (!in) return 0;
+    }
+
+    r = MultiByteToWideChar(codepage, MB_ERR_INVALID_CHARS, src, srclen, in, in_len);
+    if (!r) goto done;
+
+    if (mapflags & LCMAP_SORTKEY)
+    {
+        r = LCMapStringW(lcid, mapflags, in, in_len, (WCHAR*)dst, dstlen);
+        goto done;
+    }
+
+    r = LCMapStringW(lcid, mapflags, in, in_len, NULL, 0);
+    if (!r) goto done;
+    out_len = r;
+    if (r > ARRAY_SIZE(buf_out))
+    {
+        out = malloc(r * sizeof(WCHAR));
+        if (!out)
+        {
+            r = 0;
+            goto done;
+        }
+    }
+
+    r = LCMapStringW(lcid, mapflags, in, in_len, out, out_len);
+    if (!r) goto done;
+
+    r = WideCharToMultiByte(codepage, 0, out, out_len, dst, dstlen, NULL, NULL);
+
+done:
+    if (in != buf_in) free(in);
+    if (out != buf_out) free(out);
+    return r;
 }
 
 /*********************************************************************
