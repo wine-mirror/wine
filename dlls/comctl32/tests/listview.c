@@ -5366,6 +5366,19 @@ static void test_finditem(void)
     r = SendMessageA(hwnd, LVM_FINDITEMA, -1, (LPARAM)&fi);
     expect(0, r);
 
+    /* Case sensitivity. */
+    strcpy(f, "Foo");
+    fi.flags = LVFI_STRING;
+    fi.psz = f;
+    r = SendMessageA(hwnd, LVM_FINDITEMA, -1, (LPARAM)&fi);
+    ok(!r, "Unexpected item index %d.\n", r);
+
+    strcpy(f, "F");
+    fi.flags = LVFI_SUBSTRING;
+    fi.psz = f;
+    r = SendMessageA(hwnd, LVM_FINDITEMA, -1, (LPARAM)&fi);
+    ok(!r, "Unexpected item index %d.\n", r);
+
     DestroyWindow(hwnd);
 }
 
