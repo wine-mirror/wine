@@ -489,7 +489,7 @@
 @ cdecl _ismbcprint(long)
 @ cdecl _ismbcprint_l(long ptr)
 @ cdecl _ismbcpunct(long)
-@ stub _ismbcpunct_l
+@ cdecl _ismbcpunct_l(long ptr)
 @ cdecl _ismbcspace(long)
 @ cdecl _ismbcspace_l(long ptr)
 @ cdecl _ismbcsymbol(long)
@@ -1088,7 +1088,7 @@
 @ cdecl _o__ismbcprint(long) _ismbcprint
 @ cdecl _o__ismbcprint_l(long ptr) _ismbcprint_l
 @ cdecl _o__ismbcpunct(long) _ismbcpunct
-@ stub _o__ismbcpunct_l
+@ cdecl _o__ismbcpunct_l(long ptr) _ismbcpunct_l
 @ cdecl _o__ismbcspace(long) _ismbcspace
 @ cdecl _o__ismbcspace_l(long ptr) _ismbcspace_l
 @ cdecl _o__ismbcsymbol(long) _ismbcsymbol

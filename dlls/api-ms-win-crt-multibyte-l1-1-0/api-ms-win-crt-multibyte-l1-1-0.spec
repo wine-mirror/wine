@@ -51,7 +51,7 @@
 @ cdecl _ismbcprint(long) ucrtbase._ismbcprint
 @ cdecl _ismbcprint_l(long ptr) ucrtbase._ismbcprint_l
 @ cdecl _ismbcpunct(long) ucrtbase._ismbcpunct
-@ stub _ismbcpunct_l
+@ cdecl _ismbcpunct_l(long ptr) ucrtbase._ismbcpunct_l
 @ cdecl _ismbcspace(long) ucrtbase._ismbcspace
 @ cdecl _ismbcspace_l(long ptr) ucrtbase._ismbcspace_l
 @ cdecl _ismbcsymbol(long) ucrtbase._ismbcsymbol

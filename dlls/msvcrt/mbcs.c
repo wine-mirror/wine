@@ -1571,12 +1571,19 @@ int CDECL _ismbcprint(unsigned int ch)
 }
 
 /*********************************************************************
+ *              _ismbcpunct_l (MSVCRT.@)
+ */
+int CDECL _ismbcpunct_l(unsigned int ch, MSVCRT__locale_t locale)
+{
+    return MSVCRT__iswpunct_l( msvcrt_mbc_to_wc_l(ch, locale), locale );
+}
+
+/*********************************************************************
  *              _ismbcpunct(MSVCRT.@)
  */
 int CDECL _ismbcpunct(unsigned int ch)
 {
-    MSVCRT_wchar_t wch = msvcrt_mbc_to_wc( ch );
-    return (get_char_typeW( wch ) & C1_PUNCT);
+    return _ismbcpunct_l( ch, NULL );
 }
 
 /*********************************************************************
