@@ -140,6 +140,7 @@
 #include "commctrl.h"
 #include "comctl32.h"
 #include "uxtheme.h"
+#include "shlwapi.h"
 
 #include "wine/debug.h"
 
@@ -6313,6 +6314,7 @@ static INT LISTVIEW_FindItemW(const LISTVIEW_INFO *infoPtr, INT nStart,
     INT nItem = nStart + 1, nLast = infoPtr->nItemCount, nNearestItem = -1;
     ULONG xdist, ydist, dist, mindist = 0x7fffffff;
     POINT Position, Destination;
+    int search_len = 0;
     LVITEMW lvItem;
 
     /* Search in virtual listviews should be done by application, not by
@@ -6378,6 +6380,9 @@ static INT LISTVIEW_FindItemW(const LISTVIEW_INFO *infoPtr, INT nStart,
 
     nItem = bNearest ? -1 : nStart + 1;
 
+    if (lpFindInfo->flags & (LVFI_PARTIAL | LVFI_SUBSTRING))
+        search_len = lstrlenW(lpFindInfo->psz);
+
 again:
     for (; nItem < nLast; nItem++)
     {
@@ -6398,12 +6403,11 @@ again:
 	{
             if (lpFindInfo->flags & (LVFI_PARTIAL | LVFI_SUBSTRING))
             {
-		WCHAR *p = wcsstr(lvItem.pszText, lpFindInfo->psz);
-		if (!p || p != lvItem.pszText) continue;
+                if (StrCmpNIW(lvItem.pszText, lpFindInfo->psz, search_len)) continue;
             }
             else
             {
-            	if (lstrcmpW(lvItem.pszText, lpFindInfo->psz) != 0) continue;
+                if (StrCmpIW(lvItem.pszText, lpFindInfo->psz)) continue;
             }
 	}
 
