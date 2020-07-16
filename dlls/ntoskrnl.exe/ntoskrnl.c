@@ -2806,6 +2806,38 @@ NTSTATUS WINAPI ObReferenceObjectByName( UNICODE_STRING *ObjectName,
 }
 
 
+/********************************************************************
+ *           ObOpenObjectByName   (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI ObOpenObjectByName(POBJECT_ATTRIBUTES attr, POBJECT_TYPE type,
+                                   KPROCESSOR_MODE mode, ACCESS_STATE *access_state,
+                                   ACCESS_MASK access, PVOID ctx, HANDLE *handle)
+{
+    NTSTATUS status;
+    void *object;
+
+    TRACE( "attr(%p %s %x) %p %u %p %u %p %p\n", attr->RootDirectory, debugstr_us(attr->ObjectName),
+                                                 attr->Attributes, type, mode, access_state, access, ctx, handle );
+
+    if (mode != KernelMode)
+    {
+        FIXME( "UserMode access not implemented\n" );
+        return STATUS_NOT_IMPLEMENTED;
+    }
+
+    if (attr->RootDirectory) FIXME( "RootDirectory unhandled\n" );
+
+    status = ObReferenceObjectByName(attr->ObjectName, attr->Attributes, access_state, access, type, mode, ctx, &object );
+    if (status != STATUS_SUCCESS)
+        return status;
+
+    status = ObOpenObjectByPointer(object, attr->Attributes, access_state, access, type, mode, handle);
+
+    ObDereferenceObject(object);
+    return status;
+}
+
+
 /***********************************************************************
  *           ObReferenceObjectByPointer   (NTOSKRNL.EXE.@)
  */

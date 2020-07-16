@@ -835,7 +835,7 @@
 @ stub ObInsertObject
 @ stub ObLogSecurityDescriptor
 @ stub ObMakeTemporaryObject
-@ stub ObOpenObjectByName
+@ stdcall ObOpenObjectByName(ptr ptr long ptr long ptr ptr)
 @ stdcall ObOpenObjectByPointer(ptr long ptr long ptr long ptr)
 @ stdcall ObQueryNameString(ptr ptr long ptr)
 @ stub ObQueryObjectAuditingByHandle
