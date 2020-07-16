@@ -49,7 +49,7 @@
 @ cdecl _ismbclower(long) ucrtbase._ismbclower
 @ cdecl _ismbclower_l(long ptr) ucrtbase._ismbclower_l
 @ cdecl _ismbcprint(long) ucrtbase._ismbcprint
-@ stub _ismbcprint_l
+@ cdecl _ismbcprint_l(long ptr) ucrtbase._ismbcprint_l
 @ cdecl _ismbcpunct(long) ucrtbase._ismbcpunct
 @ stub _ismbcpunct_l
 @ cdecl _ismbcspace(long) ucrtbase._ismbcspace

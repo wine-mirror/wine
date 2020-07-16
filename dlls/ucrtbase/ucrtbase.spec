@@ -487,7 +487,7 @@
 @ stub _ismbclower(long)
 @ cdecl _ismbclower_l(long ptr)
 @ cdecl _ismbcprint(long)
-@ stub _ismbcprint_l
+@ cdecl _ismbcprint_l(long ptr)
 @ cdecl _ismbcpunct(long)
 @ stub _ismbcpunct_l
 @ cdecl _ismbcspace(long)
@@ -1086,7 +1086,7 @@
 @ stub _o__ismbclower
 @ cdecl _o__ismbclower_l(long ptr) _ismbclower_l
 @ cdecl _o__ismbcprint(long) _ismbcprint
-@ stub _o__ismbcprint_l
+@ cdecl _o__ismbcprint_l(long ptr) _ismbcprint_l
 @ cdecl _o__ismbcpunct(long) _ismbcpunct
 @ stub _o__ismbcpunct_l
 @ cdecl _o__ismbcspace(long) _ismbcspace

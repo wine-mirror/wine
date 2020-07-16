@@ -1555,12 +1555,19 @@ int CDECL _ismbcspace(unsigned int ch)
 }
 
 /*********************************************************************
+ *              _ismbcprint_l (MSVCRT.@)
+ */
+int CDECL _ismbcprint_l(unsigned int ch, MSVCRT__locale_t locale)
+{
+    return MSVCRT__iswprint_l( msvcrt_mbc_to_wc_l(ch, locale), locale );
+}
+
+/*********************************************************************
  *              _ismbcprint (MSVCRT.@)
  */
 int CDECL _ismbcprint(unsigned int ch)
 {
-    MSVCRT_wchar_t wch = msvcrt_mbc_to_wc( ch );
-    return (get_char_typeW( wch ) & (C1_UPPER | C1_LOWER | C1_DIGIT | C1_PUNCT | C1_ALPHA | C1_SPACE));
+    return _ismbcprint_l( ch, NULL );
 }
 
 /*********************************************************************
