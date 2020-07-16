@@ -24,6 +24,7 @@
 #include "initguid.h"
 #include "dsound.h"
 #include "amaudio.h"
+#include "mmreg.h"
 #include "wine/test.h"
 
 static const WCHAR sink_id[] = L"Audio Input pin (rendered)";
@@ -685,6 +686,122 @@ static void test_unconnected_filter_state(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+static HRESULT does_dsound_support_format(WAVEFORMATEX *format)
+{
+    const DSBUFFERDESC desc =
+    {
+        .dwSize = sizeof(DSBUFFERDESC),
+        .dwBufferBytes = format->nAvgBytesPerSec,
+        .lpwfxFormat = format,
+    };
+    IDirectSoundBuffer *buffer;
+    IDirectSound *dsound;
+    HRESULT hr;
+
+    hr = DirectSoundCreate(NULL, &dsound, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IDirectSound_CreateSoundBuffer(dsound, &desc, &buffer, NULL);
+    if (hr == S_OK)
+        IDirectSoundBuffer_Release(buffer);
+    IDirectSound_Release(dsound);
+
+    return hr == S_OK ? S_OK : S_FALSE;
+}
+
+static void test_media_types(void)
+{
+    IBaseFilter *filter = create_dsound_render();
+    AM_MEDIA_TYPE *mt, req_mt = {{0}};
+    IEnumMediaTypes *enummt;
+    WAVEFORMATEX wfx = {0};
+    HRESULT hr, expect_hr;
+    unsigned int i, j;
+    WORD channels;
+    ULONG ref;
+    IPin *pin;
+
+    static const DWORD sample_rates[] = {8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100, 48000, 96000};
+
+    static const struct
+    {
+        WORD tag;
+        WORD depth;
+    } formats[] =
+    {
+        {WAVE_FORMAT_PCM, 8},
+        {WAVE_FORMAT_PCM, 16},
+        {WAVE_FORMAT_PCM, 24},
+        {WAVE_FORMAT_PCM, 32},
+        {WAVE_FORMAT_IEEE_FLOAT, 32},
+        {WAVE_FORMAT_IEEE_FLOAT, 64},
+    };
+
+    IBaseFilter_FindPin(filter, sink_id, &pin);
+
+    hr = IPin_EnumMediaTypes(pin, &enummt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Next(enummt, 1, &mt, NULL);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    if (hr == S_OK)
+    {
+        ok(IsEqualGUID(&mt->majortype, &MEDIATYPE_Audio), "Got major type %s.\n", wine_dbgstr_guid(&mt->majortype));
+        ok(IsEqualGUID(&mt->subtype, &GUID_NULL), "Got subtype %s.\n", wine_dbgstr_guid(&mt->subtype));
+        ok(mt->bFixedSizeSamples == TRUE, "Got fixed size %d.\n", mt->bFixedSizeSamples);
+        ok(!mt->bTemporalCompression, "Got temporal compression %d.\n", mt->bTemporalCompression);
+        ok(mt->lSampleSize == 1, "Got sample size %u.\n", mt->lSampleSize);
+        ok(IsEqualGUID(&mt->formattype, &GUID_NULL), "Got format type %s.\n", wine_dbgstr_guid(&mt->formattype));
+        ok(!mt->pUnk, "Got pUnk %p.\n", mt->pUnk);
+        ok(!mt->cbFormat, "Got format size %u.\n", mt->cbFormat);
+        ok(!mt->pbFormat, "Got unexpected format block.\n");
+
+        hr = IPin_QueryAccept(pin, mt);
+        ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+        CoTaskMemFree(mt);
+    }
+
+    hr = IEnumMediaTypes_Next(enummt, 1, &mt, NULL);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    req_mt.majortype = MEDIATYPE_Audio;
+    req_mt.formattype = FORMAT_WaveFormatEx;
+    req_mt.cbFormat = sizeof(WAVEFORMATEX);
+    req_mt.pbFormat = (BYTE *)&wfx;
+
+    IEnumMediaTypes_Release(enummt);
+
+    for (channels = 1; channels <= 2; ++channels)
+    {
+        wfx.nChannels = channels;
+
+        for (i = 0; i < ARRAY_SIZE(formats); ++i)
+        {
+            wfx.wFormatTag = formats[i].tag;
+            wfx.wBitsPerSample = formats[i].depth;
+            wfx.nBlockAlign = wfx.nChannels * wfx.wBitsPerSample / 8;
+            for (j = 0; j < ARRAY_SIZE(sample_rates); ++j)
+            {
+                wfx.nSamplesPerSec = sample_rates[j];
+                wfx.nAvgBytesPerSec = wfx.nSamplesPerSec * wfx.nBlockAlign;
+
+                expect_hr = does_dsound_support_format(&wfx);
+
+                hr = IPin_QueryAccept(pin, &req_mt);
+                todo_wine_if (expect_hr == S_OK)
+                    ok(hr == expect_hr, "Expected hr %#x, got %#x, for %d channels, %d-bit %s, %d Hz.\n",
+                            expect_hr, hr, channels, formats[i].depth,
+                            formats[i].tag == WAVE_FORMAT_PCM ? "integer" : "float", sample_rates[j]);
+            }
+        }
+    }
+
+    IPin_Release(pin);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 START_TEST(dsoundrender)
 {
     IBaseFilter *filter;
@@ -712,6 +829,7 @@ START_TEST(dsoundrender)
     test_basic_audio();
     test_enum_media_types();
     test_unconnected_filter_state();
+    test_media_types();
     test_basefilter();
 
     CoUninitialize();
