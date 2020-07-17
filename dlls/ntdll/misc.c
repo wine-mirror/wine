@@ -158,7 +158,7 @@ double CDECL tan( double d )
     return unix_funcs->tan( d );
 }
 
-#if defined(__GNUC__) && defined(__i386__)
+#if (defined(__GNUC__) || defined(__clang__)) && defined(__i386__)
 
 #define FPU_DOUBLE(var) double var; \
     __asm__ __volatile__( "fstpl %0;fwait" : "=m" (var) : )
@@ -220,7 +220,7 @@ LONGLONG CDECL _ftol(void)
     return (LONGLONG)x;
 }
 
-#endif /* defined(__GNUC__) && defined(__i386__) */
+#endif /* (defined(__GNUC__) || defined(__clang__)) && defined(__i386__) */
 
 static void
 NTDLL_mergesort( void *arr, void *barr, size_t elemsize, int(__cdecl *compar)(const void *, const void *),
