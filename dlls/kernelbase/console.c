@@ -133,9 +133,8 @@ static void input_records_AtoW( INPUT_RECORD *buffer, int count )
 }
 
 /* map char infos to ASCII */
-static void char_info_WtoA( CHAR_INFO *buffer, int count )
+static void char_info_WtoA( UINT cp, CHAR_INFO *buffer, int count )
 {
-    UINT cp = GetConsoleOutputCP();
     char ch;
 
     while (count-- > 0)
@@ -889,8 +888,9 @@ BOOL WINAPI DECLSPEC_HOTPATCH ReadConsoleOutputA( HANDLE handle, CHAR_INFO *buff
     ret = ReadConsoleOutputW( handle, buffer, size, coord, region );
     if (ret && region->Right >= region->Left)
     {
+        UINT cp = GetConsoleOutputCP();
         for (y = 0; y <= region->Bottom - region->Top; y++)
-            char_info_WtoA( &buffer[(coord.Y + y) * size.X + coord.X], region->Right - region->Left + 1 );
+            char_info_WtoA( cp, &buffer[(coord.Y + y) * size.X + coord.X], region->Right - region->Left + 1 );
     }
     return ret;
 }
@@ -1583,19 +1583,20 @@ BOOL WINAPI DECLSPEC_HOTPATCH WriteConsoleOutputCharacterA( HANDLE handle, LPCST
 
     if (length > 0)
     {
+        UINT cp = GetConsoleOutputCP();
         if (!str)
         {
             SetLastError( ERROR_INVALID_ACCESS );
             return FALSE;
         }
-        lenW = MultiByteToWideChar( GetConsoleOutputCP(), 0, str, length, NULL, 0 );
+        lenW = MultiByteToWideChar( cp, 0, str, length, NULL, 0 );
 
         if (!(strW = HeapAlloc( GetProcessHeap(), 0, lenW * sizeof(WCHAR) )))
         {
             SetLastError( ERROR_NOT_ENOUGH_MEMORY );
             return FALSE;
         }
-        MultiByteToWideChar( GetConsoleOutputCP(), 0, str, length, strW, lenW );
+        MultiByteToWideChar( cp, 0, str, length, strW, lenW );
     }
     ret = WriteConsoleOutputCharacterW( handle, strW, lenW, coord, written );
     HeapFree( GetProcessHeap(), 0, strW );
