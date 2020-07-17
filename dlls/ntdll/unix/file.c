@@ -5747,6 +5747,130 @@ NTSTATUS WINAPI NtFlushBuffersFile( HANDLE handle, IO_STATUS_BLOCK *io )
 }
 
 
+/**************************************************************************
+ *           NtCancelIoFile   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtCancelIoFile( HANDLE handle, IO_STATUS_BLOCK *io_status )
+{
+    TRACE( "%p %p\n", handle, io_status );
+
+    SERVER_START_REQ( cancel_async )
+    {
+        req->handle      = wine_server_obj_handle( handle );
+        req->only_thread = TRUE;
+        io_status->u.Status = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+    return io_status->u.Status;
+}
+
+
+/**************************************************************************
+ *           NtCancelIoFileEx   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtCancelIoFileEx( HANDLE handle, IO_STATUS_BLOCK *io, IO_STATUS_BLOCK *io_status )
+{
+    TRACE( "%p %p %p\n", handle, io, io_status );
+
+    SERVER_START_REQ( cancel_async )
+    {
+        req->handle = wine_server_obj_handle( handle );
+        req->iosb   = wine_server_client_ptr( io );
+        io_status->u.Status = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+    return io_status->u.Status;
+}
+
+
+/******************************************************************
+ *           NtLockFile   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtLockFile( HANDLE file, HANDLE event, PIO_APC_ROUTINE apc, void* apc_user,
+                            IO_STATUS_BLOCK *io_status, LARGE_INTEGER *offset,
+                            LARGE_INTEGER *count, ULONG *key, BOOLEAN dont_wait, BOOLEAN exclusive )
+{
+    static int warn;
+    NTSTATUS ret;
+    HANDLE handle;
+    BOOLEAN async;
+
+    if (apc || io_status || key)
+    {
+        FIXME("Unimplemented yet parameter\n");
+        return STATUS_NOT_IMPLEMENTED;
+    }
+    if (apc_user && !warn++) FIXME("I/O completion on lock not implemented yet\n");
+
+    for (;;)
+    {
+        SERVER_START_REQ( lock_file )
+        {
+            req->handle      = wine_server_obj_handle( file );
+            req->offset      = offset->QuadPart;
+            req->count       = count->QuadPart;
+            req->shared      = !exclusive;
+            req->wait        = !dont_wait;
+            ret = wine_server_call( req );
+            handle = wine_server_ptr_handle( reply->handle );
+            async  = reply->overlapped;
+        }
+        SERVER_END_REQ;
+        if (ret != STATUS_PENDING)
+        {
+            if (!ret && event) NtSetEvent( event, NULL );
+            return ret;
+        }
+        if (async)
+        {
+            FIXME( "Async I/O lock wait not implemented, might deadlock\n" );
+            if (handle) NtClose( handle );
+            return STATUS_PENDING;
+        }
+        if (handle)
+        {
+            NtWaitForSingleObject( handle, FALSE, NULL );
+            NtClose( handle );
+        }
+        else  /* Unix lock conflict, sleep a bit and retry */
+        {
+            LARGE_INTEGER time;
+            time.QuadPart = -100 * (ULONGLONG)10000;
+            NtDelayExecution( FALSE, &time );
+        }
+    }
+}
+
+
+/******************************************************************
+ *           NtUnlockFile   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtUnlockFile( HANDLE handle, IO_STATUS_BLOCK *io_status, LARGE_INTEGER *offset,
+                              LARGE_INTEGER *count, ULONG *key )
+{
+    NTSTATUS status;
+
+    TRACE( "%p %x%08x %x%08x\n",
+           handle, offset->u.HighPart, offset->u.LowPart, count->u.HighPart, count->u.LowPart );
+
+    if (io_status || key)
+    {
+        FIXME("Unimplemented yet parameter\n");
+        return STATUS_NOT_IMPLEMENTED;
+    }
+
+    SERVER_START_REQ( unlock_file )
+    {
+        req->handle = wine_server_obj_handle( handle );
+        req->offset = offset->QuadPart;
+        req->count  = count->QuadPart;
+        status = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+    return status;
+}
+
+
 static NTSTATUS read_changes_apc( void *user, IO_STATUS_BLOCK *iosb, NTSTATUS status )
 {
     struct async_fileio_read_changes *fileio = user;
@@ -6309,8 +6433,31 @@ NTSTATUS WINAPI NtSetVolumeInformationFile( HANDLE handle, IO_STATUS_BLOCK *io, 
 }
 
 
+/******************************************************************
+ *           NtQueryEaFile   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtQueryEaFile( HANDLE handle, IO_STATUS_BLOCK *io, void *buffer, ULONG length,
+                               BOOLEAN single_entry, void *list, ULONG list_len,
+                               ULONG *index, BOOLEAN restart )
+{
+    FIXME( "(%p,%p,%p,%d,%d,%p,%d,%p,%d) stub\n",
+           handle, io, buffer, length, single_entry, list, list_len, index, restart );
+    return STATUS_ACCESS_DENIED;
+}
+
+
+/******************************************************************
+ *           NtSetEaFile   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtSetEaFile( HANDLE handle, IO_STATUS_BLOCK *io, void *buffer, ULONG length )
+{
+    FIXME( "(%p,%p,%p,%d) stub\n", handle, io, buffer, length );
+    return STATUS_ACCESS_DENIED;
+}
+
+
 /**************************************************************************
- *           NtQueryObject
+ *           NtQueryObject   (NTDLL.@)
  */
 NTSTATUS WINAPI NtQueryObject( HANDLE handle, OBJECT_INFORMATION_CLASS info_class,
                                void *ptr, ULONG len, ULONG *used_len )
@@ -6481,7 +6628,7 @@ NTSTATUS WINAPI NtQueryObject( HANDLE handle, OBJECT_INFORMATION_CLASS info_clas
 
 
 /**************************************************************************
- *           NtSetInformationObject
+ *           NtSetInformationObject   (NTDLL.@)
  */
 NTSTATUS WINAPI NtSetInformationObject( HANDLE handle, OBJECT_INFORMATION_CLASS info_class,
                                         void *ptr, ULONG len )

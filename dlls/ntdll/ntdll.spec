@@ -145,8 +145,8 @@
 @ stdcall -syscall NtAssignProcessToJobObject(long long)
 @ stub NtCallbackReturn
 # @ stub NtCancelDeviceWakeupRequest
-@ stdcall NtCancelIoFile(long ptr)
-@ stdcall NtCancelIoFileEx(long ptr ptr)
+@ stdcall -syscall NtCancelIoFile(long ptr)
+@ stdcall -syscall NtCancelIoFileEx(long ptr ptr)
 @ stdcall -syscall NtCancelTimer(long ptr)
 @ stdcall -syscall NtClearEvent(long)
 @ stdcall NtClearPowerRequest(long long)
@@ -237,7 +237,7 @@
 @ stdcall NtLoadDriver(ptr)
 @ stdcall -syscall NtLoadKey2(ptr ptr long)
 @ stdcall -syscall NtLoadKey(ptr ptr)
-@ stdcall NtLockFile(long long ptr ptr ptr ptr ptr ptr long long)
+@ stdcall -syscall NtLockFile(long long ptr ptr ptr ptr ptr ptr long long)
 # @ stub NtLockProductActivationKeys
 # @ stub NtLockRegistryKey
 @ stdcall -syscall NtLockVirtualMemory(long ptr ptr long)
@@ -288,7 +288,7 @@
 @ stdcall NtQueryDefaultUILanguage(ptr)
 @ stdcall -syscall NtQueryDirectoryFile(long long ptr ptr ptr ptr long long long ptr long)
 @ stdcall NtQueryDirectoryObject(long ptr long long long ptr ptr)
-@ stdcall NtQueryEaFile(long ptr ptr long long ptr long ptr long)
+@ stdcall -syscall NtQueryEaFile(long ptr ptr long long ptr long ptr long)
 @ stdcall -syscall NtQueryEvent(long long ptr long ptr)
 @ stdcall -syscall NtQueryFullAttributesFile(ptr ptr)
 @ stdcall NtQueryInformationAtom(long long ptr long ptr)
@@ -366,7 +366,7 @@
 @ stub NtSetDefaultHardErrorPort
 @ stdcall NtSetDefaultLocale(long long)
 @ stdcall NtSetDefaultUILanguage(long)
-@ stdcall NtSetEaFile(long ptr ptr long)
+@ stdcall -syscall NtSetEaFile(long ptr ptr long)
 @ stdcall -syscall NtSetEvent(long ptr)
 # @ stub NtSetEventBoostPriority
 @ stub NtSetHighEventPair
@@ -416,7 +416,7 @@
 @ stdcall NtUnloadDriver(ptr)
 @ stdcall -syscall NtUnloadKey(ptr)
 @ stub NtUnloadKeyEx
-@ stdcall NtUnlockFile(long ptr ptr ptr ptr)
+@ stdcall -syscall NtUnlockFile(long ptr ptr ptr ptr)
 @ stdcall -syscall NtUnlockVirtualMemory(long ptr ptr long)
 @ stdcall -syscall NtUnmapViewOfSection(long ptr)
 @ stub NtVdmControl
@@ -1134,8 +1134,8 @@
 @ stdcall -private -syscall ZwAssignProcessToJobObject(long long) NtAssignProcessToJobObject
 @ stub ZwCallbackReturn
 # @ stub ZwCancelDeviceWakeupRequest
-@ stdcall -private ZwCancelIoFile(long ptr) NtCancelIoFile
-@ stdcall -private ZwCancelIoFileEx(long ptr ptr) NtCancelIoFileEx
+@ stdcall -private -syscall ZwCancelIoFile(long ptr) NtCancelIoFile
+@ stdcall -private -syscall ZwCancelIoFileEx(long ptr ptr) NtCancelIoFileEx
 @ stdcall -private -syscall ZwCancelTimer(long ptr) NtCancelTimer
 @ stdcall -private -syscall ZwClearEvent(long) NtClearEvent
 @ stdcall -private ZwClearPowerRequest(long long) NtClearPowerRequest
@@ -1224,7 +1224,7 @@
 @ stdcall -private ZwLoadDriver(ptr) NtLoadDriver
 @ stdcall -private -syscall ZwLoadKey2(ptr ptr long) NtLoadKey2
 @ stdcall -private -syscall ZwLoadKey(ptr ptr) NtLoadKey
-@ stdcall -private ZwLockFile(long long ptr ptr ptr ptr ptr ptr long long) NtLockFile
+@ stdcall -private -syscall ZwLockFile(long long ptr ptr ptr ptr ptr ptr long long) NtLockFile
 # @ stub ZwLockProductActivationKeys
 # @ stub ZwLockRegistryKey
 @ stdcall -private -syscall ZwLockVirtualMemory(long ptr ptr long) NtLockVirtualMemory
@@ -1275,7 +1275,7 @@
 @ stdcall -private ZwQueryDefaultUILanguage(ptr) NtQueryDefaultUILanguage
 @ stdcall -private -syscall ZwQueryDirectoryFile(long long ptr ptr ptr ptr long long long ptr long) NtQueryDirectoryFile
 @ stdcall -private ZwQueryDirectoryObject(long ptr long long long ptr ptr) NtQueryDirectoryObject
-@ stdcall -private ZwQueryEaFile(long ptr ptr long long ptr long ptr long) NtQueryEaFile
+@ stdcall -private -syscall ZwQueryEaFile(long ptr ptr long long ptr long ptr long) NtQueryEaFile
 @ stdcall -private -syscall ZwQueryEvent(long long ptr long ptr) NtQueryEvent
 @ stdcall -private -syscall ZwQueryFullAttributesFile(ptr ptr) NtQueryFullAttributesFile
 @ stdcall -private ZwQueryInformationAtom(long long ptr long ptr) NtQueryInformationAtom
@@ -1353,7 +1353,7 @@
 @ stub ZwSetDefaultHardErrorPort
 @ stdcall -private ZwSetDefaultLocale(long long) NtSetDefaultLocale
 @ stdcall -private ZwSetDefaultUILanguage(long) NtSetDefaultUILanguage
-@ stdcall -private ZwSetEaFile(long ptr ptr long) NtSetEaFile
+@ stdcall -private -syscall ZwSetEaFile(long ptr ptr long) NtSetEaFile
 @ stdcall -private -syscall ZwSetEvent(long ptr) NtSetEvent
 # @ stub ZwSetEventBoostPriority
 @ stub ZwSetHighEventPair
@@ -1403,7 +1403,7 @@
 @ stdcall -private ZwUnloadDriver(ptr) NtUnloadDriver
 @ stdcall -private -syscall ZwUnloadKey(ptr) NtUnloadKey
 @ stub ZwUnloadKeyEx
-@ stdcall -private ZwUnlockFile(long ptr ptr ptr ptr) NtUnlockFile
+@ stdcall -private -syscall ZwUnlockFile(long ptr ptr ptr ptr) NtUnlockFile
 @ stdcall -private -syscall ZwUnlockVirtualMemory(long ptr ptr long) NtUnlockVirtualMemory
 @ stdcall -private -syscall ZwUnmapViewOfSection(long ptr) NtUnmapViewOfSection
 @ stub ZwVdmControl

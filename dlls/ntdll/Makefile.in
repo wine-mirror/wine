@@ -16,7 +16,6 @@ C_SRCS = \
 	env.c \
 	error.c \
 	exception.c \
-	file.c \
 	handletable.c \
 	heap.c \
 	large_int.c \
