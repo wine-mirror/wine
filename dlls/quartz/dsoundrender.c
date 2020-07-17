@@ -360,23 +360,7 @@ static HRESULT WINAPI DSoundRender_DoRenderSample(struct strmbase_renderer *ifac
     cbSrcStream = IMediaSample_GetActualDataLength(pSample);
     TRACE("Sample data ptr = %p, size = %d\n", pbSrcStream, cbSrcStream);
 
-    hr = DSoundRender_SendSampleData(This, tStart, tStop, pbSrcStream, cbSrcStream);
-    if (This->renderer.filter.state == State_Running && This->renderer.filter.clock && tStart >= 0) {
-        REFERENCE_TIME jitter, now = 0;
-        Quality q;
-        IReferenceClock_GetTime(This->renderer.filter.clock, &now);
-        jitter = now - This->renderer.stream_start - tStart;
-        if (jitter <= -DSoundRenderer_Max_Fill)
-            jitter += DSoundRenderer_Max_Fill;
-        else if (jitter < 0)
-            jitter = 0;
-        q.Type = (jitter > 0 ? Famine : Flood);
-        q.Proportion = 1000;
-        q.Late = jitter;
-        q.TimeStamp = tStart;
-        IQualityControl_Notify((IQualityControl *)This->renderer.qcimpl, &This->renderer.filter.IBaseFilter_iface, q);
-    }
-    return hr;
+    return DSoundRender_SendSampleData(This, tStart, tStop, pbSrcStream, cbSrcStream);
 }
 
 static HRESULT WINAPI DSoundRender_CheckMediaType(struct strmbase_renderer *iface, const AM_MEDIA_TYPE * pmt)
