@@ -111,6 +111,7 @@ VOID WINAPI A_SHAFinal(SHA_CTX *ctx, PULONG result);
 #define MAGIC_ALG  (('A' << 24) | ('L' << 16) | ('G' << 8) | '0')
 #define MAGIC_HASH (('H' << 24) | ('A' << 16) | ('S' << 8) | 'H')
 #define MAGIC_KEY  (('K' << 24) | ('E' << 16) | ('Y' << 8) | '0')
+#define MAGIC_SECRET (('S' << 24) | ('C' << 16) | ('R' << 8) | 'T')
 struct object
 {
     ULONG magic;
@@ -238,6 +239,11 @@ struct key
     } u;
 };
 #endif
+
+struct secret
+{
+    struct object hdr;
+};
 
 NTSTATUS get_alg_property( const struct algorithm *, const WCHAR *, UCHAR *, ULONG, ULONG * ) DECLSPEC_HIDDEN;
 

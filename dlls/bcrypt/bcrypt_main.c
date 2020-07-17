@@ -1833,26 +1833,47 @@ NTSTATUS WINAPI BCryptDeriveKeyPBKDF2( BCRYPT_ALG_HANDLE handle, UCHAR *pwd, ULO
     return STATUS_SUCCESS;
 }
 
-NTSTATUS WINAPI BCryptSecretAgreement(BCRYPT_KEY_HANDLE handle, BCRYPT_KEY_HANDLE key, BCRYPT_SECRET_HANDLE *secret, ULONG flags)
+NTSTATUS WINAPI BCryptSecretAgreement(BCRYPT_KEY_HANDLE privatekey, BCRYPT_KEY_HANDLE publickey, BCRYPT_SECRET_HANDLE *handle, ULONG flags)
 {
-    FIXME( "%p, %p, %p, %08x\n", handle, key, secret, flags );
+    struct key *privkey = privatekey;
+    struct key *pubkey = publickey;
+    struct secret *secret;
 
-    if(secret)
-        *secret = (BCRYPT_SECRET_HANDLE *)0xDEADFEED;
+    FIXME( "%p, %p, %p, %08x\n", privatekey, publickey, handle, flags );
 
+    if (!privkey || privkey->hdr.magic != MAGIC_KEY) return STATUS_INVALID_HANDLE;
+    if (!pubkey || pubkey->hdr.magic != MAGIC_KEY) return STATUS_INVALID_HANDLE;
+    if (!handle) return STATUS_INVALID_PARAMETER;
+
+    if (!(secret = heap_alloc_zero( sizeof(*secret) ))) return STATUS_NO_MEMORY;
+    secret->hdr.magic = MAGIC_SECRET;
+
+    *handle = secret;
     return STATUS_SUCCESS;
 }
 
-NTSTATUS WINAPI BCryptDestroySecret(BCRYPT_SECRET_HANDLE secret)
+NTSTATUS WINAPI BCryptDestroySecret(BCRYPT_SECRET_HANDLE handle)
 {
-    FIXME( "%p\n", secret );
+    struct secret *secret = handle;
+
+    FIXME( "%p\n", handle );
+
+    if (!secret || secret->hdr.magic != MAGIC_SECRET) return STATUS_INVALID_HANDLE;
+    secret->hdr.magic = 0;
+    heap_free( secret );
     return STATUS_SUCCESS;
 }
 
-NTSTATUS WINAPI BCryptDeriveKey(BCRYPT_SECRET_HANDLE secret, LPCWSTR kdf, BCryptBufferDesc *parameter,
+NTSTATUS WINAPI BCryptDeriveKey(BCRYPT_SECRET_HANDLE handle, LPCWSTR kdf, BCryptBufferDesc *parameter,
         PUCHAR derived, ULONG derived_size, ULONG *result, ULONG flags)
 {
+    struct secret *secret = handle;
+
     FIXME( "%p, %s, %p, %p, %d, %p, %08x\n", secret, debugstr_w(kdf), parameter, derived, derived_size, result, flags );
+
+    if (!secret || secret->hdr.magic != MAGIC_SECRET) return STATUS_INVALID_HANDLE;
+    if (!kdf) return STATUS_INVALID_PARAMETER;
+
     return STATUS_INTERNAL_ERROR;
 }
 
