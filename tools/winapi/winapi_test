@@ -871,8 +871,7 @@ foreach my $test_dir (@test_dirs) {
 
 foreach my $header (sort(keys(%{$file2types{$pointer_size}}))) {
     $output->prefix("$header: ");
-    $header =~ s%^include/%%;
-    my $type_name2type = $file2types{$pointer_size}{"include/$header"};
+    my $type_name2type = $file2types{$pointer_size}{$header};
     foreach my $_type_name (sort(keys(%$type_name2type))) {
 	my $type_name = $_type_name;
 
@@ -886,10 +885,10 @@ $output->prefix("$winapi_dir/tests.dat: ");
 foreach my $type_name (sort(keys(%type_names_used))) {
     my $found = 0;
     foreach my $header (sort(keys(%{$file2types{$pointer_size}}))) {
-	my $type_name2type = $file2types{$pointer_size}{"include/$header"};
-	if (exists($type_name2type{$type_name})) {
-	    $found = 1;
-	}
+        if (exists($file2types{$pointer_size}{$header}{$type_name})) {
+            $found = 1;
+            last;
+        }
     }
 
     if (!$found) {
