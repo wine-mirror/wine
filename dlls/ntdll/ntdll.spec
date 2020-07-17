@@ -131,7 +131,7 @@
 # @ stub NtAccessCheckByTypeResultList
 # @ stub NtAccessCheckByTypeResultListAndAuditAlarm
 # @ stub NtAccessCheckByTypeResultListAndAuditAlarmByHandle
-@ stdcall NtAddAtom(ptr long ptr)
+@ stdcall -syscall NtAddAtom(ptr long ptr)
 # @ stub NtAddBootEntry
 @ stdcall NtAdjustGroupsToken(long long ptr long ptr ptr)
 @ stdcall NtAdjustPrivilegesToken(long long ptr long ptr ptr)
@@ -192,7 +192,7 @@
 # @ stub NtDebugActiveProcess
 # @ stub NtDebugContinue
 @ stdcall -syscall NtDelayExecution(long ptr)
-@ stdcall NtDeleteAtom(long)
+@ stdcall -syscall NtDeleteAtom(long)
 # @ stub NtDeleteBootEntry
 @ stdcall -syscall NtDeleteFile(ptr)
 @ stdcall -syscall NtDeleteKey(long)
@@ -209,7 +209,7 @@
 @ stdcall -syscall NtEnumerateValueKey(long long long ptr long ptr)
 @ stub NtExtendSection
 # @ stub NtFilterToken
-@ stdcall NtFindAtom(ptr long ptr)
+@ stdcall -syscall NtFindAtom(ptr long ptr)
 @ stdcall -syscall NtFlushBuffersFile(long ptr)
 @ stdcall -syscall NtFlushInstructionCache(long ptr long)
 @ stdcall -syscall NtFlushKey(long)
@@ -291,7 +291,7 @@
 @ stdcall -syscall NtQueryEaFile(long ptr ptr long long ptr long ptr long)
 @ stdcall -syscall NtQueryEvent(long long ptr long ptr)
 @ stdcall -syscall NtQueryFullAttributesFile(ptr ptr)
-@ stdcall NtQueryInformationAtom(long long ptr long ptr)
+@ stdcall -syscall NtQueryInformationAtom(long long ptr long ptr)
 @ stdcall -syscall NtQueryInformationFile(long ptr ptr long long)
 @ stdcall -syscall NtQueryInformationJobObject(long long ptr long ptr)
 @ stub NtQueryInformationPort
@@ -1120,7 +1120,7 @@
 # @ stub ZwAccessCheckByTypeResultList
 # @ stub ZwAccessCheckByTypeResultListAndAuditAlarm
 # @ stub ZwAccessCheckByTypeResultListAndAuditAlarmByHandle
-@ stdcall -private ZwAddAtom(ptr long ptr) NtAddAtom
+@ stdcall -private -syscall ZwAddAtom(ptr long ptr) NtAddAtom
 # @ stub ZwAddBootEntry
 @ stdcall -private ZwAdjustGroupsToken(long long ptr long ptr ptr) NtAdjustGroupsToken
 @ stdcall -private ZwAdjustPrivilegesToken(long long ptr long ptr ptr) NtAdjustPrivilegesToken
@@ -1179,7 +1179,7 @@
 # @ stub ZwDebugActiveProcess
 # @ stub ZwDebugContinue
 @ stdcall -private -syscall ZwDelayExecution(long ptr) NtDelayExecution
-@ stdcall -private ZwDeleteAtom(long) NtDeleteAtom
+@ stdcall -private -syscall ZwDeleteAtom(long) NtDeleteAtom
 # @ stub ZwDeleteBootEntry
 @ stdcall -private -syscall ZwDeleteFile(ptr) NtDeleteFile
 @ stdcall -private -syscall ZwDeleteKey(long) NtDeleteKey
@@ -1196,7 +1196,7 @@
 @ stdcall -private -syscall ZwEnumerateValueKey(long long long ptr long ptr) NtEnumerateValueKey
 @ stub ZwExtendSection
 # @ stub ZwFilterToken
-@ stdcall -private ZwFindAtom(ptr long ptr) NtFindAtom
+@ stdcall -private -syscall ZwFindAtom(ptr long ptr) NtFindAtom
 @ stdcall -private -syscall ZwFlushBuffersFile(long ptr) NtFlushBuffersFile
 @ stdcall -private -syscall ZwFlushInstructionCache(long ptr long) NtFlushInstructionCache
 @ stdcall -private -syscall ZwFlushKey(long) NtFlushKey
@@ -1278,7 +1278,7 @@
 @ stdcall -private -syscall ZwQueryEaFile(long ptr ptr long long ptr long ptr long) NtQueryEaFile
 @ stdcall -private -syscall ZwQueryEvent(long long ptr long ptr) NtQueryEvent
 @ stdcall -private -syscall ZwQueryFullAttributesFile(ptr ptr) NtQueryFullAttributesFile
-@ stdcall -private ZwQueryInformationAtom(long long ptr long ptr) NtQueryInformationAtom
+@ stdcall -private -syscall ZwQueryInformationAtom(long long ptr long ptr) NtQueryInformationAtom
 @ stdcall -private -syscall ZwQueryInformationFile(long ptr ptr long long) NtQueryInformationFile
 @ stdcall -private -syscall ZwQueryInformationJobObject(long long ptr long ptr) NtQueryInformationJobObject
 @ stub ZwQueryInformationPort
