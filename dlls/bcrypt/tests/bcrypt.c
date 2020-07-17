@@ -2574,6 +2574,76 @@ static void test_DSA(void)
     ok(!ret, "got %08x\n", ret);
 }
 
+static void test_SecretAgreement(void)
+{
+    BCRYPT_SECRET_HANDLE secret;
+    BCRYPT_ALG_HANDLE alg;
+    BCRYPT_KEY_HANDLE key;
+    NTSTATUS status;
+    ULONG size;
+
+    status = pBCryptOpenAlgorithmProvider(&alg, BCRYPT_ECDH_P256_ALGORITHM, NULL, 0);
+    if (status)
+    {
+        skip("Failed to open BCRYPT_ECDH_P256_ALGORITHM provider %08x\n", status);
+        return;
+    }
+
+    key = NULL;
+    status = pBCryptGenerateKeyPair(alg, &key, 256, 0);
+    ok(status == STATUS_SUCCESS, "got %08x\n", status);
+    ok(key != NULL, "key not set\n");
+
+    status = pBCryptFinalizeKeyPair(key, 0);
+    ok(status == STATUS_SUCCESS, "got %08x\n", status);
+
+    status = pBCryptSecretAgreement(NULL, key, &secret, 0);
+    ok(status == STATUS_INVALID_HANDLE, "got %08x\n", status);
+
+    status = pBCryptSecretAgreement(key, NULL, &secret, 0);
+    ok(status == STATUS_INVALID_HANDLE, "got %08x\n", status);
+
+    status = pBCryptSecretAgreement(key, key, NULL, 0);
+    ok(status == STATUS_INVALID_PARAMETER, "got %08x\n", status);
+
+    status = pBCryptSecretAgreement(key, key, &secret, 0);
+    ok(status == STATUS_SUCCESS, "got %08x\n", status);
+
+    status = pBCryptDeriveKey(NULL, L"HASH", NULL, NULL, 0, &size, 0);
+    ok(status == STATUS_INVALID_HANDLE, "got %08x\n", status);
+
+    status = pBCryptDeriveKey(key, L"HASH", NULL, NULL, 0, &size, 0);
+    ok(status == STATUS_INVALID_HANDLE, "got %08x\n", status);
+
+    status = pBCryptDeriveKey(secret, NULL, NULL, NULL, 0, &size, 0);
+    ok(status == STATUS_INVALID_PARAMETER, "got %08x\n", status);
+
+    status = pBCryptDeriveKey(secret, L"HASH", NULL, NULL, 0, &size, 0);
+    todo_wine
+    ok(status == STATUS_SUCCESS, "got %08x\n", status);
+
+    status = pBCryptDestroyHash(secret);
+    ok(status == STATUS_INVALID_PARAMETER, "got %08x\n", status);
+
+    status = pBCryptDestroyKey(secret);
+    ok(status == STATUS_INVALID_HANDLE, "got %08x\n", status);
+
+    status = pBCryptDestroySecret(NULL);
+    ok(status == STATUS_INVALID_HANDLE, "got %08x\n", status);
+
+    status = pBCryptDestroySecret(alg);
+    ok(status == STATUS_INVALID_HANDLE, "got %08x\n", status);
+
+    status = pBCryptDestroySecret(secret);
+    ok(status == STATUS_SUCCESS, "got %08x\n", status);
+
+    status = pBCryptDestroyKey(key);
+    ok(status == STATUS_SUCCESS, "got %08x\n", status);
+
+    status = pBCryptCloseAlgorithmProvider(alg, 0);
+    ok(status == STATUS_SUCCESS, "got %08x\n", status);
+}
+
 START_TEST(bcrypt)
 {
     HMODULE module;
@@ -2639,6 +2709,7 @@ START_TEST(bcrypt)
     test_aes_vector();
     test_BcryptDeriveKeyCapi();
     test_DSA();
+    test_SecretAgreement();
 
     FreeLibrary(module);
 }
