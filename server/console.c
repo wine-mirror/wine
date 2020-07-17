@@ -830,37 +830,13 @@ static int set_console_input_info( const struct set_console_input_info_request *
     struct condrv_renderer_event evt;
 
     if (!(console = console_input_get( req->handle, FILE_WRITE_PROPERTIES ))) goto error;
-    if (console_input_is_bare(console) &&
-        (req->mask & (SET_CONSOLE_INPUT_INFO_ACTIVE_SB|
-                      SET_CONSOLE_INPUT_INFO_WIN)))
+    if (console_input_is_bare(console) && (req->mask & SET_CONSOLE_INPUT_INFO_WIN))
     {
         set_error( STATUS_UNSUCCESSFUL );
         goto error;
     }
 
     memset(&evt.u, 0, sizeof(evt.u));
-    if (req->mask & SET_CONSOLE_INPUT_INFO_ACTIVE_SB)
-    {
-	struct screen_buffer *screen_buffer;
-
-	screen_buffer = (struct screen_buffer *)get_handle_obj( current->process, req->active_sb,
-								FILE_WRITE_PROPERTIES, &screen_buffer_ops );
-	if (!screen_buffer || screen_buffer->input != console)
-	{
-	    set_error( STATUS_INVALID_HANDLE );
-	    if (screen_buffer) release_object( screen_buffer );
-	    goto error;
-	}
-
-	if (screen_buffer != console->active)
-	{
-	    if (console->active) release_object( console->active );
-	    console->active = screen_buffer;
-	    generate_sb_initial_events( console );
-	}
-	else
-	    release_object( screen_buffer );
-    }
     if (req->mask & SET_CONSOLE_INPUT_INFO_TITLE)
     {
         WCHAR *new_title = NULL;

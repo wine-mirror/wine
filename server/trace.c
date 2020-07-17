@@ -2033,7 +2033,6 @@ static void dump_alloc_console_request( const struct alloc_console_request *req 
 static void dump_alloc_console_reply( const struct alloc_console_reply *req )
 {
     fprintf( stderr, " handle_in=%04x", req->handle_in );
-    fprintf( stderr, ", event=%04x", req->event );
 }
 
 static void dump_free_console_request( const struct free_console_request *req )

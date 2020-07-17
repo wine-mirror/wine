@@ -1833,7 +1833,7 @@ struct alloc_console_reply
 {
     struct reply_header __header;
     obj_handle_t handle_in;
-    obj_handle_t event;
+    char __pad_12[4];
 };
 
 
@@ -1916,7 +1916,6 @@ struct set_console_input_info_reply
 {
     struct reply_header __header;
 };
-#define SET_CONSOLE_INPUT_INFO_ACTIVE_SB        0x01
 #define SET_CONSOLE_INPUT_INFO_TITLE            0x02
 #define SET_CONSOLE_INPUT_INFO_HISTORY_MODE     0x04
 #define SET_CONSOLE_INPUT_INFO_HISTORY_SIZE     0x08
@@ -6452,7 +6451,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 628
+#define SERVER_PROTOCOL_VERSION 629
 
 /* ### protocol_version end ### */
 

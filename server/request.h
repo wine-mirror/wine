@@ -1116,7 +1116,6 @@ C_ASSERT( FIELD_OFFSET(struct alloc_console_request, pid) == 20 );
 C_ASSERT( FIELD_OFFSET(struct alloc_console_request, input_fd) == 24 );
 C_ASSERT( sizeof(struct alloc_console_request) == 32 );
 C_ASSERT( FIELD_OFFSET(struct alloc_console_reply, handle_in) == 8 );
-C_ASSERT( FIELD_OFFSET(struct alloc_console_reply, event) == 12 );
 C_ASSERT( sizeof(struct alloc_console_reply) == 16 );
 C_ASSERT( sizeof(struct free_console_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct open_console_request, from) == 12 );

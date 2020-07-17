@@ -1464,7 +1464,6 @@ enum server_fd_type
     int          input_fd;      /* if pid=-1 (bare console to current process), fd for input */
 @REPLY
     obj_handle_t handle_in;     /* handle to console input */
-    obj_handle_t event;         /* handle to renderer events change notification */
 @END
 
 
@@ -1515,7 +1514,6 @@ enum server_fd_type
     user_handle_t win;           /* console window if backend supports it */
     VARARG(title,unicode_str);   /* console title */
 @END
-#define SET_CONSOLE_INPUT_INFO_ACTIVE_SB        0x01
 #define SET_CONSOLE_INPUT_INFO_TITLE            0x02
 #define SET_CONSOLE_INPUT_INFO_HISTORY_MODE     0x04
 #define SET_CONSOLE_INPUT_INFO_HISTORY_SIZE     0x08
