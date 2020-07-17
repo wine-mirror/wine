@@ -37,8 +37,6 @@
 #include "wine/debug.h"
 #include "ntdll_misc.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(sync);
-
 /* creates a struct security_descriptor and contained information in one contiguous piece of memory */
 NTSTATUS alloc_object_attributes( const OBJECT_ATTRIBUTES *attr, struct object_attributes **ret,
                                   data_size_t *ret_len )
@@ -121,37 +119,6 @@ NTSTATUS alloc_object_attributes( const OBJECT_ATTRIBUTES *attr, struct object_a
     *ret_len = len;
     return STATUS_SUCCESS;
 }
-
-/*
- *	Timers
- */
-
-/******************************************************************************
- * NtQueryTimerResolution [NTDLL.@]
- */
-NTSTATUS WINAPI NtQueryTimerResolution(OUT ULONG* min_resolution,
-                                       OUT ULONG* max_resolution,
-                                       OUT ULONG* current_resolution)
-{
-    FIXME("(%p,%p,%p), stub!\n",
-          min_resolution, max_resolution, current_resolution);
-
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-/******************************************************************************
- * NtSetTimerResolution [NTDLL.@]
- */
-NTSTATUS WINAPI NtSetTimerResolution(IN ULONG resolution,
-                                     IN BOOLEAN set_resolution,
-                                     OUT ULONG* current_resolution )
-{
-    FIXME("(%u,%u,%p), stub!\n",
-          resolution, set_resolution, current_resolution);
-
-    return STATUS_NOT_IMPLEMENTED;
-}
-
 
 
 /******************************************************************

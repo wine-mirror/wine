@@ -320,7 +320,7 @@
 @ stdcall -syscall NtQuerySystemInformationEx(long ptr long ptr long ptr)
 @ stdcall -syscall NtQuerySystemTime(ptr)
 @ stdcall -syscall NtQueryTimer(ptr long ptr long ptr)
-@ stdcall NtQueryTimerResolution(ptr ptr ptr)
+@ stdcall -syscall NtQueryTimerResolution(ptr ptr ptr)
 @ stdcall -syscall NtQueryValueKey(long ptr long ptr long ptr)
 @ stdcall -syscall NtQueryVirtualMemory(long ptr long ptr long ptr)
 @ stdcall -syscall NtQueryVolumeInformationFile(long ptr ptr long long)
@@ -380,7 +380,7 @@
 @ stdcall -syscall NtSetInformationProcess(long long ptr long)
 @ stdcall -syscall NtSetInformationThread(long long ptr long)
 @ stdcall NtSetInformationToken(long long ptr long)
-@ stdcall NtSetIntervalProfile(long long)
+@ stdcall -syscall NtSetIntervalProfile(long long)
 @ stdcall -syscall NtSetIoCompletion(ptr long long long long)
 @ stdcall -syscall NtSetLdtEntries(long int64 long int64)
 @ stub NtSetLowEventPair
@@ -396,7 +396,7 @@
 @ stdcall -syscall NtSetSystemTime(ptr ptr)
 @ stdcall NtSetThreadExecutionState(long ptr)
 @ stdcall -syscall NtSetTimer(long ptr ptr ptr long long ptr)
-@ stdcall NtSetTimerResolution(long long ptr)
+@ stdcall -syscall NtSetTimerResolution(long long ptr)
 # @ stub NtSetUuidSeed
 @ stdcall -syscall NtSetValueKey(long ptr long long ptr long)
 @ stdcall -syscall NtSetVolumeInformationFile(long ptr ptr long long)
@@ -1307,7 +1307,7 @@
 @ stdcall -private -syscall ZwQuerySystemInformationEx(long ptr long ptr long ptr) NtQuerySystemInformationEx
 @ stdcall -private -syscall ZwQuerySystemTime(ptr) NtQuerySystemTime
 @ stdcall -private -syscall ZwQueryTimer(ptr long ptr long ptr) NtQueryTimer
-@ stdcall -private ZwQueryTimerResolution(ptr ptr ptr) NtQueryTimerResolution
+@ stdcall -private -syscall ZwQueryTimerResolution(ptr ptr ptr) NtQueryTimerResolution
 @ stdcall -private -syscall ZwQueryValueKey(long ptr long ptr long ptr) NtQueryValueKey
 @ stdcall -private -syscall ZwQueryVirtualMemory(long ptr long ptr long ptr) NtQueryVirtualMemory
 @ stdcall -private -syscall ZwQueryVolumeInformationFile(long ptr ptr long long) NtQueryVolumeInformationFile
@@ -1367,7 +1367,7 @@
 @ stdcall -private -syscall ZwSetInformationProcess(long long ptr long) NtSetInformationProcess
 @ stdcall -private -syscall ZwSetInformationThread(long long ptr long) NtSetInformationThread
 @ stdcall -private ZwSetInformationToken(long long ptr long) NtSetInformationToken
-@ stdcall -private ZwSetIntervalProfile(long long) NtSetIntervalProfile
+@ stdcall -private -syscall ZwSetIntervalProfile(long long) NtSetIntervalProfile
 @ stdcall -private -syscall ZwSetIoCompletion(ptr long long long long) NtSetIoCompletion
 @ stdcall -private -syscall ZwSetLdtEntries(long int64 long int64) NtSetLdtEntries
 @ stub ZwSetLowEventPair
@@ -1383,7 +1383,7 @@
 @ stdcall -private -syscall ZwSetSystemTime(ptr ptr) NtSetSystemTime
 @ stdcall ZwSetThreadExecutionState(long ptr) NtSetThreadExecutionState
 @ stdcall -private -syscall ZwSetTimer(long ptr ptr ptr long long ptr) NtSetTimer
-@ stdcall -private ZwSetTimerResolution(long long ptr) NtSetTimerResolution
+@ stdcall -private -syscall ZwSetTimerResolution(long long ptr) NtSetTimerResolution
 # @ stub ZwSetUuidSeed
 @ stdcall -private -syscall ZwSetValueKey(long ptr long long ptr long) NtSetValueKey
 @ stdcall -private -syscall ZwSetVolumeInformationFile(long ptr ptr long long) NtSetVolumeInformationFile

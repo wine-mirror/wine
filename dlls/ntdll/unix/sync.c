@@ -1424,6 +1424,36 @@ NTSTATUS WINAPI NtSetSystemTime( const LARGE_INTEGER *new, LARGE_INTEGER *old )
 }
 
 
+/***********************************************************************
+ *              NtQueryTimerResolution (NTDLL.@)
+ */
+NTSTATUS WINAPI NtQueryTimerResolution( ULONG *min_res, ULONG *max_res, ULONG *current_res )
+{
+    FIXME( "(%p,%p,%p), stub!\n", min_res, max_res, current_res );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
+/***********************************************************************
+ *              NtSetTimerResolution (NTDLL.@)
+ */
+NTSTATUS WINAPI NtSetTimerResolution( ULONG res, BOOLEAN set, ULONG *current_res )
+{
+    FIXME( "(%u,%u,%p), stub!\n", res, set, current_res );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
+/******************************************************************************
+ *              NtSetIntervalProfile (NTDLL.@)
+ */
+NTSTATUS WINAPI NtSetIntervalProfile( ULONG interval, KPROFILE_SOURCE source )
+{
+    FIXME( "%u,%d\n", interval, source );
+    return STATUS_SUCCESS;
+}
+
+
 /******************************************************************************
  *              NtGetTickCount (NTDLL.@)
  */
