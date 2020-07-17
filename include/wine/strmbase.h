@@ -271,10 +271,27 @@ struct strmbase_passthrough
 void strmbase_passthrough_init(struct strmbase_passthrough *passthrough, IUnknown *outer);
 void strmbase_passthrough_cleanup(struct strmbase_passthrough *passthrough);
 
+struct strmbase_qc
+{
+    IQualityControl IQualityControl_iface;
+    struct strmbase_pin *pin;
+    IQualityControl *tonotify;
+
+    /* Render stuff */
+    REFERENCE_TIME last_in_time, last_left, avg_duration, avg_pt, avg_render, start, stop;
+    REFERENCE_TIME current_jitter, current_rstart, current_rstop, clockstart;
+    double avg_rate;
+    LONG64 rendered, dropped;
+    BOOL qos_handled, is_dropped;
+};
+
+void strmbase_qc_init(struct strmbase_qc *qc, struct strmbase_pin *pin);
+
 struct strmbase_renderer
 {
     struct strmbase_filter filter;
     struct strmbase_passthrough passthrough;
+    struct strmbase_qc qc;
 
     struct strmbase_sink sink;
 
@@ -289,9 +306,6 @@ struct strmbase_renderer
      * to immediately unblock the streaming thread. */
     HANDLE flush_event;
     REFERENCE_TIME stream_start;
-
-    IQualityControl *pQSink;
-    struct strmbase_qc *qcimpl;
 
     const struct strmbase_renderer_ops *pFuncsTable;
 

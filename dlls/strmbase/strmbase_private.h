@@ -53,24 +53,6 @@ static inline const char *debugstr_time(REFERENCE_TIME time)
     return wine_dbg_sprintf("%s", rev);
 }
 
-/* Quality Control */
-struct strmbase_qc
-{
-    IQualityControl IQualityControl_iface;
-    struct strmbase_pin *pin;
-    IQualityControl *tonotify;
-
-    /* Render stuff */
-    REFERENCE_TIME last_in_time, last_left, avg_duration, avg_pt, avg_render, start, stop;
-    REFERENCE_TIME current_jitter, current_rstart, current_rstop, clockstart;
-    double avg_rate;
-    LONG64 rendered, dropped;
-    BOOL qos_handled, is_dropped;
-};
-
-HRESULT QualityControlImpl_Create(struct strmbase_pin *pin, struct strmbase_qc **out);
-void QualityControlImpl_Destroy(struct strmbase_qc *qc);
-
 void QualityControlRender_Start(struct strmbase_qc *This, REFERENCE_TIME tStart);
 void QualityControlRender_DoQOS(struct strmbase_qc *priv);
 void QualityControlRender_BeginRender(struct strmbase_qc *This, REFERENCE_TIME start, REFERENCE_TIME stop);

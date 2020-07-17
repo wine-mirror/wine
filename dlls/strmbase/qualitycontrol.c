@@ -27,11 +27,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(strmbase_qc);
 
-void QualityControlImpl_Destroy(struct strmbase_qc *This)
-{
-    HeapFree(GetProcessHeap(),0,This);
-}
-
 static inline struct strmbase_qc *impl_from_IQualityControl(IQualityControl *iface)
 {
     return CONTAINING_RECORD(iface, struct strmbase_qc, IQualityControl_iface);
@@ -313,17 +308,10 @@ void QualityControlRender_EndRender(struct strmbase_qc *This)
         This->avg_render = UPDATE_RUNNING_AVG (This->avg_render, elapsed);
 }
 
-HRESULT QualityControlImpl_Create(struct strmbase_pin *pin, struct strmbase_qc **ppv)
+void strmbase_qc_init(struct strmbase_qc *qc, struct strmbase_pin *pin)
 {
-    struct strmbase_qc *This;
-    *ppv = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(struct strmbase_qc));
-    if (!*ppv)
-        return E_OUTOFMEMORY;
-    This = *ppv;
-    This->pin = pin;
-    This->tonotify = NULL;
-    This->current_rstart = This->current_rstop = -1;
-    This->IQualityControl_iface.lpVtbl = &quality_control_vtbl;
-    TRACE("-> %p\n", This);
-    return S_OK;
+    memset(qc, 0, sizeof(*qc));
+    qc->pin = pin;
+    qc->current_rstart = qc->current_rstop = -1;
+    qc->IQualityControl_iface.lpVtbl = &quality_control_vtbl;
 }
