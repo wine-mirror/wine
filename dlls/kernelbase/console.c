@@ -1063,19 +1063,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH ScrollConsoleScreenBufferW( HANDLE handle, SMALL_R
  */
 BOOL WINAPI DECLSPEC_HOTPATCH SetConsoleActiveScreenBuffer( HANDLE handle )
 {
-    BOOL ret;
-
     TRACE( "(%p)\n", handle );
-
-    SERVER_START_REQ( set_console_input_info )
-    {
-        req->handle    = 0;
-        req->mask      = SET_CONSOLE_INPUT_INFO_ACTIVE_SB;
-        req->active_sb = wine_server_obj_handle( handle );
-        ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-    return ret;
+    return console_ioctl( handle, IOCTL_CONDRV_ACTIVATE, NULL, 0, NULL, 0, NULL );
 }
 
 
