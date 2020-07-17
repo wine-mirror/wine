@@ -199,18 +199,25 @@ static void test_namespace_pipe(void)
 #define DIRECTORY_QUERY (0x0001)
 #define SYMBOLIC_LINK_QUERY 0x0001
 
-#define DIR_TEST_CREATE_OPEN(n,e) \
-    do { \
-        HANDLE h; \
-        pRtlCreateUnicodeStringFromAsciiz(&str, n); \
-        status = pNtCreateDirectoryObject( &h, DIRECTORY_QUERY, &attr ); \
-        ok( status == e, "NtCreateDirectoryObject(%s) got %08x\n", n, status ); \
-        if (!status) pNtClose( h ); \
-        status = pNtOpenDirectoryObject( &h, DIRECTORY_QUERY, &attr ); \
-        ok( status == e, "NtOpenDirectoryObject(%s) got %08x\n", n, status ); \
-        if (!status) pNtClose( h ); \
-        pRtlFreeUnicodeString(&str); \
-    } while(0)
+#define check_create_open_dir(parent, name, status) check_create_open_dir_(__LINE__, parent, name, status)
+static void check_create_open_dir_( int line, HANDLE parent, const char *name, NTSTATUS expect )
+{
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING str;
+    NTSTATUS status;
+    HANDLE h;
+
+    pRtlCreateUnicodeStringFromAsciiz( &str, name );
+    InitializeObjectAttributes( &attr, &str, 0, parent, NULL );
+    status = pNtCreateDirectoryObject( &h, DIRECTORY_QUERY, &attr );
+    ok_(__FILE__, line)( status == expect, "NtCreateDirectoryObject(%s) got %08x\n", debugstr_a(name), status );
+    if (!status) pNtClose( h );
+
+    status = pNtOpenDirectoryObject( &h, DIRECTORY_QUERY, &attr );
+    ok_(__FILE__, line)( status == expect, "NtOpenDirectoryObject(%s) got %08x\n", debugstr_a(name), status );
+    if (!status) pNtClose( h );
+    pRtlFreeUnicodeString( &str );
+}
 
 static BOOL is_correct_dir( HANDLE dir, const char *name )
 {
@@ -906,11 +913,11 @@ static void test_directory(void)
     pRtlFreeUnicodeString(&str);
     pNtClose(dir);
 
-    DIR_TEST_CREATE_OPEN( "BaseNamedObjects", STATUS_OBJECT_PATH_SYNTAX_BAD );
-    DIR_TEST_CREATE_OPEN( "\\BaseNamedObjects\\", STATUS_OBJECT_NAME_INVALID );
-    DIR_TEST_CREATE_OPEN( "\\\\BaseNamedObjects", STATUS_OBJECT_NAME_INVALID );
-    DIR_TEST_CREATE_OPEN( "\\BaseNamedObjects\\\\om.c-test", STATUS_OBJECT_NAME_INVALID );
-    DIR_TEST_CREATE_OPEN( "\\BaseNamedObjects\\om.c-test\\", STATUS_OBJECT_PATH_NOT_FOUND );
+    check_create_open_dir( NULL, "BaseNamedObjects", STATUS_OBJECT_PATH_SYNTAX_BAD );
+    check_create_open_dir( NULL, "\\BaseNamedObjects\\", STATUS_OBJECT_NAME_INVALID );
+    check_create_open_dir( NULL, "\\\\BaseNamedObjects", STATUS_OBJECT_NAME_INVALID );
+    check_create_open_dir( NULL, "\\BaseNamedObjects\\\\om.c-test", STATUS_OBJECT_NAME_INVALID );
+    check_create_open_dir( NULL, "\\BaseNamedObjects\\om.c-test\\", STATUS_OBJECT_PATH_NOT_FOUND );
 
     pRtlCreateUnicodeStringFromAsciiz(&str, "\\BaseNamedObjects\\om.c-test");
     status = pNtCreateDirectoryObject( &h, DIRECTORY_QUERY, &attr );
@@ -1009,13 +1016,13 @@ static void test_directory(void)
     status = pNtOpenDirectoryObject( &h, DIRECTORY_QUERY, &attr );
     ok( status == STATUS_OBJECT_NAME_INVALID, "NtOpenDirectoryObject got %08x\n", status );
 
-    InitializeObjectAttributes(&attr, &str, 0, dir, NULL);
-    DIR_TEST_CREATE_OPEN( "", STATUS_SUCCESS );
-    DIR_TEST_CREATE_OPEN( "\\", STATUS_OBJECT_PATH_SYNTAX_BAD );
-    DIR_TEST_CREATE_OPEN( "\\om.c-test", STATUS_OBJECT_PATH_SYNTAX_BAD );
-    DIR_TEST_CREATE_OPEN( "\\om.c-test\\", STATUS_OBJECT_PATH_SYNTAX_BAD );
-    DIR_TEST_CREATE_OPEN( "om.c-test\\", STATUS_OBJECT_PATH_NOT_FOUND );
+    check_create_open_dir( dir, "", STATUS_SUCCESS );
+    check_create_open_dir( dir, "\\", STATUS_OBJECT_PATH_SYNTAX_BAD );
+    check_create_open_dir( dir, "\\om.c-test", STATUS_OBJECT_PATH_SYNTAX_BAD );
+    check_create_open_dir( dir, "\\om.c-test\\", STATUS_OBJECT_PATH_SYNTAX_BAD );
+    check_create_open_dir( dir, "om.c-test\\", STATUS_OBJECT_PATH_NOT_FOUND );
 
+    InitializeObjectAttributes(&attr, &str, 0, dir, NULL);
     pRtlCreateUnicodeStringFromAsciiz(&str, "om.c-test");
     status = pNtCreateDirectoryObject( &dir1, DIRECTORY_QUERY, &attr );
     ok( status == STATUS_SUCCESS, "Failed to create directory %08x\n", status );
