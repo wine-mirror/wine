@@ -2343,10 +2343,10 @@ static HRESULT WINAPI MarkupPointer2_MoveToMarkupPosition(IMarkupPointer2 *iface
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI MarkupPointer2_MoveUnitBounded(IMarkupPointer2 *iface, MOVEUNIT_ACTION action, IMarkupPointer *boundry)
+static HRESULT WINAPI MarkupPointer2_MoveUnitBounded(IMarkupPointer2 *iface, MOVEUNIT_ACTION action, IMarkupPointer *boundary)
 {
     MarkupPointer *This = impl_from_IMarkupPointer2(iface);
-    FIXME("(%p)->(%u %p)\n", This, action, boundry);
+    FIXME("(%p)->(%u %p)\n", This, action, boundary);
     return E_NOTIMPL;
 }
 
