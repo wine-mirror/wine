@@ -24,3 +24,10 @@
     uuid(fcc152b7-f372-11d0-8e00-00c04fd7c08b),
 ]
 coclass DvdGraphBuilder {}
+
+[
+    helpstring("DVD Navigator Filter"),
+    threading(both),
+    uuid(9b8c4620-2c1a-11d0-8493-00a02438ad48),
+]
+coclass DVDNavigator {}

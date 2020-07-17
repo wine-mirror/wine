@@ -26,5 +26,6 @@
 #include "wine/debug.h"
 
 HRESULT graph_builder_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
+HRESULT navigator_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
 
 #endif /* QDVD_PRIVATE_H */
