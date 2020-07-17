@@ -291,7 +291,7 @@ struct strmbase_renderer
     REFERENCE_TIME stream_start;
 
     IQualityControl *pQSink;
-    struct QualityControlImpl *qcimpl;
+    struct strmbase_qc *qcimpl;
 
     const struct strmbase_renderer_ops *pFuncsTable;
 

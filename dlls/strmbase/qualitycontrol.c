@@ -27,10 +27,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(strmbase_qc);
 
-HRESULT QualityControlImpl_Create(struct strmbase_pin *pin, QualityControlImpl **ppv)
+HRESULT QualityControlImpl_Create(struct strmbase_pin *pin, struct strmbase_qc **ppv)
 {
-    QualityControlImpl *This;
-    *ppv = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(QualityControlImpl));
+    struct strmbase_qc *This;
+    *ppv = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(struct strmbase_qc));
     if (!*ppv)
         return E_OUTOFMEMORY;
     This = *ppv;
@@ -41,37 +41,37 @@ HRESULT QualityControlImpl_Create(struct strmbase_pin *pin, QualityControlImpl *
     return S_OK;
 }
 
-void QualityControlImpl_Destroy(QualityControlImpl *This)
+void QualityControlImpl_Destroy(struct strmbase_qc *This)
 {
     HeapFree(GetProcessHeap(),0,This);
 }
 
-static inline QualityControlImpl *impl_from_IQualityControl(IQualityControl *iface)
+static inline struct strmbase_qc *impl_from_IQualityControl(IQualityControl *iface)
 {
-    return CONTAINING_RECORD(iface, QualityControlImpl, IQualityControl_iface);
+    return CONTAINING_RECORD(iface, struct strmbase_qc, IQualityControl_iface);
 }
 
 HRESULT WINAPI QualityControlImpl_QueryInterface(IQualityControl *iface, REFIID riid, void **ppv)
 {
-    QualityControlImpl *This = impl_from_IQualityControl(iface);
+    struct strmbase_qc *This = impl_from_IQualityControl(iface);
     return IBaseFilter_QueryInterface(&This->pin->filter->IBaseFilter_iface, riid, ppv);
 }
 
 ULONG WINAPI QualityControlImpl_AddRef(IQualityControl *iface)
 {
-    QualityControlImpl *This = impl_from_IQualityControl(iface);
+    struct strmbase_qc *This = impl_from_IQualityControl(iface);
     return IBaseFilter_AddRef(&This->pin->filter->IBaseFilter_iface);
 }
 
 ULONG WINAPI QualityControlImpl_Release(IQualityControl *iface)
 {
-    QualityControlImpl *This = impl_from_IQualityControl(iface);
+    struct strmbase_qc *This = impl_from_IQualityControl(iface);
     return IBaseFilter_Release(&This->pin->filter->IBaseFilter_iface);
 }
 
 HRESULT WINAPI QualityControlImpl_Notify(IQualityControl *iface, IBaseFilter *sender, Quality qm)
 {
-    QualityControlImpl *This = impl_from_IQualityControl(iface);
+    struct strmbase_qc *This = impl_from_IQualityControl(iface);
     HRESULT hr = S_FALSE;
 
     TRACE("iface %p, sender %p, type %#x, proportion %u, late %s, timestamp %s.\n",
@@ -96,7 +96,7 @@ HRESULT WINAPI QualityControlImpl_Notify(IQualityControl *iface, IBaseFilter *se
 
 HRESULT WINAPI QualityControlImpl_SetSink(IQualityControl *iface, IQualityControl *tonotify)
 {
-    QualityControlImpl *This = impl_from_IQualityControl(iface);
+    struct strmbase_qc *This = impl_from_IQualityControl(iface);
     TRACE("%p %p\n", This, tonotify);
     This->tonotify = tonotify;
     return S_OK;
@@ -114,7 +114,7 @@ HRESULT WINAPI QualityControlImpl_SetSink(IQualityControl *iface, IQualityContro
 #define UPDATE_RUNNING_AVG_P(avg,val) DO_RUNNING_AVG(avg,val,16)
 #define UPDATE_RUNNING_AVG_N(avg,val) DO_RUNNING_AVG(avg,val,4)
 
-void QualityControlRender_Start(QualityControlImpl *This, REFERENCE_TIME tStart)
+void QualityControlRender_Start(struct strmbase_qc *This, REFERENCE_TIME tStart)
 {
     This->avg_render = This->last_in_time = This->last_left = This->avg_duration = This->avg_pt = -1;
     This->clockstart = tStart;
@@ -124,7 +124,7 @@ void QualityControlRender_Start(QualityControlImpl *This, REFERENCE_TIME tStart)
     This->qos_handled = TRUE; /* Lie that will be corrected on first adjustment */
 }
 
-static BOOL QualityControlRender_IsLate(QualityControlImpl *This, REFERENCE_TIME jitter,
+static BOOL QualityControlRender_IsLate(struct strmbase_qc *This, REFERENCE_TIME jitter,
                                         REFERENCE_TIME start, REFERENCE_TIME stop)
 {
     REFERENCE_TIME max_lateness = 200000;
@@ -153,7 +153,7 @@ static BOOL QualityControlRender_IsLate(QualityControlImpl *This, REFERENCE_TIME
     return FALSE;
 }
 
-void QualityControlRender_DoQOS(QualityControlImpl *priv)
+void QualityControlRender_DoQOS(struct strmbase_qc *priv)
 {
     REFERENCE_TIME start, stop, jitter, pt, entered, left, duration;
     double rate;
@@ -266,7 +266,7 @@ void QualityControlRender_DoQOS(QualityControlImpl *priv)
 }
 
 
-void QualityControlRender_BeginRender(QualityControlImpl *This, REFERENCE_TIME start, REFERENCE_TIME stop)
+void QualityControlRender_BeginRender(struct strmbase_qc *This, REFERENCE_TIME start, REFERENCE_TIME stop)
 {
     This->start = -1;
 
@@ -299,7 +299,7 @@ void QualityControlRender_BeginRender(QualityControlImpl *This, REFERENCE_TIME s
     TRACE("Starting at %s.\n", debugstr_time(This->start));
 }
 
-void QualityControlRender_EndRender(QualityControlImpl *This)
+void QualityControlRender_EndRender(struct strmbase_qc *This)
 {
     REFERENCE_TIME elapsed;
 
