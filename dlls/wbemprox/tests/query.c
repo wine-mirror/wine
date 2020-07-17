@@ -1144,8 +1144,10 @@ static void test_Win32_PhysicalMemory( IWbemServices *services )
     BSTR wql = SysAllocString( L"wql" ), query = SysAllocString( L"SELECT * FROM Win32_PhysicalMemory" );
     IEnumWbemClassObject *result;
     IWbemClassObject *obj;
-    HRESULT hr;
+    CIMTYPE type;
+    VARIANT val;
     DWORD count;
+    HRESULT hr;
 
     hr = IWbemServices_ExecQuery( services, wql, query, 0, NULL, &result );
     if (hr != S_OK)
@@ -1154,21 +1156,39 @@ static void test_Win32_PhysicalMemory( IWbemServices *services )
         return;
     }
 
-    hr = IEnumWbemClassObject_Next( result, 10000, 1, &obj, &count );
-    ok( hr == S_OK, "got %08x\n", hr );
-
-    if (count > 0)
+    for (;;)
     {
+        hr = IEnumWbemClassObject_Next( result, 10000, 1, &obj, &count );
+        if (hr != S_OK) break;
+
         check_property( obj, L"BankLabel", VT_BSTR, CIM_STRING );
         check_property( obj, L"Capacity", VT_BSTR, CIM_UINT64 );
         check_property( obj, L"Caption", VT_BSTR, CIM_STRING );
         check_property( obj, L"DeviceLocator", VT_BSTR, CIM_STRING );
         check_property( obj, L"FormFactor", VT_I4, CIM_UINT16 );
         check_property( obj, L"MemoryType", VT_I4, CIM_UINT16 );
-        check_property( obj, L"PartNumber", VT_NULL, CIM_STRING );
-        check_property( obj, L"SerialNumber", VT_NULL, CIM_STRING );
+
+        type = 0xdeadbeef;
+        VariantInit( &val );
+        hr = IWbemClassObject_Get( obj, L"PartNumber", 0, &val, &type, NULL );
+        ok( hr == S_OK, "got %08x\n", hr );
+        ok( V_VT( &val ) == VT_BSTR || V_VT( &val ) == VT_NULL, "unexpected variant type 0x%x\n", V_VT( &val ) );
+        ok( type == CIM_STRING, "unexpected type 0x%x\n", type );
+        trace( "PartNumber %s\n", wine_dbgstr_w(V_BSTR( &val )) );
+        VariantClear( &val );
+
+        type = 0xdeadbeef;
+        VariantInit( &val );
+        hr = IWbemClassObject_Get( obj, L"SerialNumber", 0, &val, &type, NULL );
+        ok( hr == S_OK, "got %08x\n", hr );
+        ok( V_VT( &val ) == VT_BSTR || V_VT( &val ) == VT_NULL, "unexpected variant type 0x%x\n", V_VT( &val ) );
+        ok( type == CIM_STRING, "unexpected type 0x%x\n", type );
+        trace( "SerialNumber %s\n", wine_dbgstr_w(V_BSTR( &val )) );
+        VariantClear( &val );
+
         IWbemClassObject_Release( obj );
     }
+
     IEnumWbemClassObject_Release( result );
     SysFreeString( query );
     SysFreeString( wql );
