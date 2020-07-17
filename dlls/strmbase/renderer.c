@@ -27,14 +27,6 @@ static inline struct strmbase_renderer *impl_from_strmbase_filter(struct strmbas
     return CONTAINING_RECORD(iface, struct strmbase_renderer, filter);
 }
 
-static const IQualityControlVtbl Renderer_QualityControl_Vtbl = {
-    QualityControlImpl_QueryInterface,
-    QualityControlImpl_AddRef,
-    QualityControlImpl_Release,
-    QualityControlImpl_Notify,
-    QualityControlImpl_SetSink
-};
-
 static inline struct strmbase_renderer *impl_from_IPin(IPin *iface)
 {
     return CONTAINING_RECORD(iface, struct strmbase_renderer, sink.pin.IPin_iface);
@@ -406,5 +398,4 @@ void strmbase_renderer_init(struct strmbase_renderer *filter, IUnknown *outer,
     filter->flush_event = CreateEventW(NULL, TRUE, TRUE, NULL);
 
     QualityControlImpl_Create(&filter->sink.pin, &filter->qcimpl);
-    filter->qcimpl->IQualityControl_iface.lpVtbl = &Renderer_QualityControl_Vtbl;
 }

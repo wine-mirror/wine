@@ -27,20 +27,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(strmbase_qc);
 
-HRESULT QualityControlImpl_Create(struct strmbase_pin *pin, struct strmbase_qc **ppv)
-{
-    struct strmbase_qc *This;
-    *ppv = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(struct strmbase_qc));
-    if (!*ppv)
-        return E_OUTOFMEMORY;
-    This = *ppv;
-    This->pin = pin;
-    This->tonotify = NULL;
-    This->current_rstart = This->current_rstop = -1;
-    TRACE("-> %p\n", This);
-    return S_OK;
-}
-
 void QualityControlImpl_Destroy(struct strmbase_qc *This)
 {
     HeapFree(GetProcessHeap(),0,This);
@@ -51,25 +37,25 @@ static inline struct strmbase_qc *impl_from_IQualityControl(IQualityControl *ifa
     return CONTAINING_RECORD(iface, struct strmbase_qc, IQualityControl_iface);
 }
 
-HRESULT WINAPI QualityControlImpl_QueryInterface(IQualityControl *iface, REFIID riid, void **ppv)
+static HRESULT WINAPI quality_control_QueryInterface(IQualityControl *iface, REFIID riid, void **ppv)
 {
     struct strmbase_qc *This = impl_from_IQualityControl(iface);
     return IBaseFilter_QueryInterface(&This->pin->filter->IBaseFilter_iface, riid, ppv);
 }
 
-ULONG WINAPI QualityControlImpl_AddRef(IQualityControl *iface)
+static ULONG WINAPI quality_control_AddRef(IQualityControl *iface)
 {
     struct strmbase_qc *This = impl_from_IQualityControl(iface);
     return IBaseFilter_AddRef(&This->pin->filter->IBaseFilter_iface);
 }
 
-ULONG WINAPI QualityControlImpl_Release(IQualityControl *iface)
+static ULONG WINAPI quality_control_Release(IQualityControl *iface)
 {
     struct strmbase_qc *This = impl_from_IQualityControl(iface);
     return IBaseFilter_Release(&This->pin->filter->IBaseFilter_iface);
 }
 
-HRESULT WINAPI QualityControlImpl_Notify(IQualityControl *iface, IBaseFilter *sender, Quality qm)
+static HRESULT WINAPI quality_control_Notify(IQualityControl *iface, IBaseFilter *sender, Quality qm)
 {
     struct strmbase_qc *This = impl_from_IQualityControl(iface);
     HRESULT hr = S_FALSE;
@@ -94,13 +80,22 @@ HRESULT WINAPI QualityControlImpl_Notify(IQualityControl *iface, IBaseFilter *se
     return hr;
 }
 
-HRESULT WINAPI QualityControlImpl_SetSink(IQualityControl *iface, IQualityControl *tonotify)
+static HRESULT WINAPI quality_control_SetSink(IQualityControl *iface, IQualityControl *tonotify)
 {
     struct strmbase_qc *This = impl_from_IQualityControl(iface);
     TRACE("%p %p\n", This, tonotify);
     This->tonotify = tonotify;
     return S_OK;
 }
+
+static const IQualityControlVtbl quality_control_vtbl =
+{
+    quality_control_QueryInterface,
+    quality_control_AddRef,
+    quality_control_Release,
+    quality_control_Notify,
+    quality_control_SetSink,
+};
 
 /* Macros copied from gstreamer, weighted average between old average and new ones */
 #define DO_RUNNING_AVG(avg,val,size) (((val) + ((size)-1) * (avg)) / (size))
@@ -316,4 +311,19 @@ void QualityControlRender_EndRender(struct strmbase_qc *This)
         This->avg_render = elapsed;
     else
         This->avg_render = UPDATE_RUNNING_AVG (This->avg_render, elapsed);
+}
+
+HRESULT QualityControlImpl_Create(struct strmbase_pin *pin, struct strmbase_qc **ppv)
+{
+    struct strmbase_qc *This;
+    *ppv = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(struct strmbase_qc));
+    if (!*ppv)
+        return E_OUTOFMEMORY;
+    This = *ppv;
+    This->pin = pin;
+    This->tonotify = NULL;
+    This->current_rstart = This->current_rstop = -1;
+    This->IQualityControl_iface.lpVtbl = &quality_control_vtbl;
+    TRACE("-> %p\n", This);
+    return S_OK;
 }

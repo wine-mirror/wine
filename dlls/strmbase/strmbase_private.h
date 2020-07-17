@@ -70,11 +70,6 @@ struct strmbase_qc
 
 HRESULT QualityControlImpl_Create(struct strmbase_pin *pin, struct strmbase_qc **out);
 void QualityControlImpl_Destroy(struct strmbase_qc *qc);
-HRESULT WINAPI QualityControlImpl_QueryInterface(IQualityControl *iface, REFIID riid, void **ppv);
-ULONG WINAPI QualityControlImpl_AddRef(IQualityControl *iface);
-ULONG WINAPI QualityControlImpl_Release(IQualityControl *iface);
-HRESULT WINAPI QualityControlImpl_Notify(IQualityControl *iface, IBaseFilter *sender, Quality qm);
-HRESULT WINAPI QualityControlImpl_SetSink(IQualityControl *iface, IQualityControl *tonotify);
 
 void QualityControlRender_Start(struct strmbase_qc *This, REFERENCE_TIME tStart);
 void QualityControlRender_DoQOS(struct strmbase_qc *priv);
