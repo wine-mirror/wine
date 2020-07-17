@@ -459,6 +459,9 @@ static GpStatus alpha_blend_hdc_pixels(GpGraphics *graphics, INT dst_x, INT dst_
     hbitmap = CreateDIBSection(hdc, (BITMAPINFO*)&bih, DIB_RGB_COLORS,
         (void**)&temp_bits, NULL, 0);
 
+    if(!hbitmap || !temp_bits)
+        goto done;
+
     if ((GetDeviceCaps(graphics->hdc, TECHNOLOGY) == DT_RASPRINTER &&
          GetDeviceCaps(graphics->hdc, SHADEBLENDCAPS) == SB_NONE) ||
             fmt & PixelFormatPAlpha)
@@ -470,8 +473,11 @@ static GpStatus alpha_blend_hdc_pixels(GpGraphics *graphics, INT dst_x, INT dst_
     SelectObject(hdc, hbitmap);
     gdi_alpha_blend(graphics, dst_x, dst_y, src_width, src_height,
                     hdc, 0, 0, src_width, src_height);
-    DeleteDC(hdc);
+
     DeleteObject(hbitmap);
+
+done:
+    DeleteDC(hdc);
 
     return Ok;
 }
