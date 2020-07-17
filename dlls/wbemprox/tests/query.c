@@ -1170,6 +1170,17 @@ static void test_Win32_PhysicalMemory( IWbemServices *services )
 
         type = 0xdeadbeef;
         VariantInit( &val );
+        hr = IWbemClassObject_Get( obj, L"ConfiguredClockSpeed", 0, &val, &type, NULL );
+        ok( hr == S_OK || broken(hr == WBEM_E_NOT_FOUND) /* < win10 */, "got %08x\n", hr );
+        if (hr == S_OK)
+        {
+            ok( V_VT( &val ) == VT_I4, "unexpected variant type 0x%x\n", V_VT( &val ) );
+            ok( type == CIM_UINT32, "unexpected type 0x%x\n", type );
+            trace( "ConfiguredClockSpeed %u\n", V_I4( &val ) );
+        }
+
+        type = 0xdeadbeef;
+        VariantInit( &val );
         hr = IWbemClassObject_Get( obj, L"PartNumber", 0, &val, &type, NULL );
         ok( hr == S_OK, "got %08x\n", hr );
         ok( V_VT( &val ) == VT_BSTR || V_VT( &val ) == VT_NULL, "unexpected variant type 0x%x\n", V_VT( &val ) );
