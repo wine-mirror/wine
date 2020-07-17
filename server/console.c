@@ -1694,6 +1694,21 @@ static int screen_buffer_ioctl( struct fd *fd, ioctl_code_t code, struct async *
             return set_output_info( screen_buffer, params, get_req_data_size() - sizeof(*params) );
         }
 
+    case IOCTL_CONDRV_ACTIVATE:
+        if (!screen_buffer->input)
+        {
+            set_error( STATUS_INVALID_HANDLE );
+            return 0;
+        }
+
+        if (screen_buffer != screen_buffer->input->active)
+        {
+            if (screen_buffer->input->active) release_object( screen_buffer->input->active );
+            screen_buffer->input->active = (struct screen_buffer *)grab_object( screen_buffer );
+            generate_sb_initial_events( screen_buffer->input );
+        }
+        return 1;
+
     case IOCTL_CONDRV_FILL_OUTPUT:
         {
             const struct condrv_fill_output_params *params = get_req_data();
