@@ -3104,9 +3104,9 @@ TOOLBAR_AutoSize (TOOLBAR_INFO *infoPtr)
 
         if (infoPtr->dwStyle & CCS_NOPARENTALIGN)
             uPosFlags |= SWP_NOMOVE;
-    
-        if (!(infoPtr->dwStyle & CCS_NODIVIDER))
-            cy += GetSystemMetrics(SM_CYEDGE);
+
+        if (!(infoPtr->dwStyle & CCS_NOMOVEY) && !(infoPtr->dwStyle & CCS_NODIVIDER))
+            y += GetSystemMetrics(SM_CYEDGE);
 
         x += border.left;
         y += border.top;

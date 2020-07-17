@@ -1649,6 +1649,11 @@ static void test_sizes(void)
     ok(rect.top == 0, "rect.top = %d\n", rect.top);
     ok(rect.bottom == 26, "rect.bottom = %d\n", rect.bottom);
 
+    rebuild_toolbar_ex(&hToolbar, WS_EX_DLGMODALFRAME);
+    GetClientRect(hToolbar, &rect);
+    ok(rect.top == 0, "rect.top = %d\n", rect.top);
+    ok(rect.bottom == 26, "rect.bottom = %d\n", rect.bottom);
+
     free_tbsize_results();
     DestroyWindow(hToolbar);
 }
