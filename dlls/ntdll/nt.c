@@ -866,16 +866,6 @@ NTSTATUS WINAPI /* DECLSPEC_HOTPATCH */ RtlGetNativeSystemInformation(
 }
 
 /******************************************************************************
- * NtSetSystemInformation [NTDLL.@]
- * ZwSetSystemInformation [NTDLL.@]
- */
-NTSTATUS WINAPI NtSetSystemInformation(SYSTEM_INFORMATION_CLASS SystemInformationClass, PVOID SystemInformation, ULONG Length)
-{
-    FIXME("(0x%08x,%p,0x%08x) stub\n",SystemInformationClass,SystemInformation,Length);
-    return STATUS_SUCCESS;
-}
-
-/******************************************************************************
  *  NtCreatePagingFile		[NTDLL.@]
  *  ZwCreatePagingFile		[NTDLL.@]
  */
@@ -973,16 +963,6 @@ NTSTATUS WINAPI NtClearPowerRequest( HANDLE handle, POWER_REQUEST_TYPE type )
 }
 
 /******************************************************************************
- *  NtShutdownSystem				[NTDLL.@]
- *
- */
-NTSTATUS WINAPI NtShutdownSystem(SHUTDOWN_ACTION Action)
-{
-    FIXME("%d\n",Action);
-    return STATUS_SUCCESS;
-}
-
-/******************************************************************************
  *  NtAllocateLocallyUniqueId (NTDLL.@)
  */
 NTSTATUS WINAPI NtAllocateLocallyUniqueId(PLUID Luid)
@@ -1051,18 +1031,6 @@ NTSTATUS WINAPI NtAccessCheckAndAuditAlarm(PUNICODE_STRING SubsystemName, HANDLE
     FIXME("(%s, %p, %s, %p, 0x%08x, %p, %d, %p, %p, %p), stub\n", debugstr_us(SubsystemName), HandleId,
           debugstr_us(ObjectTypeName), SecurityDescriptor, DesiredAccess, GenericMapping, ObjectCreation,
           GrantedAccess, AccessStatus, GenerateOnClose);
-
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-/******************************************************************************
- *  NtSystemDebugControl   (NTDLL.@)
- *  ZwSystemDebugControl   (NTDLL.@)
- */
-NTSTATUS WINAPI NtSystemDebugControl(SYSDBG_COMMAND command, PVOID inbuffer, ULONG inbuflength, PVOID outbuffer,
-                                     ULONG outbuflength, PULONG retlength)
-{
-    FIXME("(%d, %p, %d, %p, %d, %p), stub\n", command, inbuffer, inbuflength, outbuffer, outbuflength, retlength);
 
     return STATUS_NOT_IMPLEMENTED;
 }

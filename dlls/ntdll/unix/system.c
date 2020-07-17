@@ -2612,6 +2612,60 @@ NTSTATUS WINAPI NtQuerySystemInformationEx( SYSTEM_INFORMATION_CLASS class,
 }
 
 
+/******************************************************************************
+ *              NtSetSystemInformation  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtSetSystemInformation( SYSTEM_INFORMATION_CLASS class, void *info, ULONG length )
+{
+    FIXME( "(0x%08x,%p,0x%08x) stub\n", class, info, length );
+    return STATUS_SUCCESS;
+}
+
+
+/******************************************************************************
+ *              NtQuerySystemEnvironmentValue  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtQuerySystemEnvironmentValue( UNICODE_STRING *name, WCHAR *buffer, ULONG length,
+                                               ULONG *retlen )
+{
+    FIXME( "(%s, %p, %u, %p), stub\n", debugstr_us(name), buffer, length, retlen );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
+/******************************************************************************
+ *              NtQuerySystemEnvironmentValueEx  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtQuerySystemEnvironmentValueEx( UNICODE_STRING *name, GUID *vendor, void *buffer,
+                                                 ULONG *retlen, ULONG *attrib )
+{
+    FIXME( "(%s, %s, %p, %p, %p), stub\n", debugstr_us(name),
+           debugstr_guid(vendor), buffer, retlen, attrib );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
+/******************************************************************************
+ *              NtSystemDebugControl  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtSystemDebugControl( SYSDBG_COMMAND command, void *in_buff, ULONG in_len,
+                                      void *out_buff, ULONG out_len, ULONG *retlen )
+{
+    FIXME( "(%d, %p, %d, %p, %d, %p), stub\n", command, in_buff, in_len, out_buff, out_len, retlen );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
+/******************************************************************************
+ *              NtShutdownSystem  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtShutdownSystem( SHUTDOWN_ACTION action )
+{
+    FIXME( "%d\n", action );
+    return STATUS_SUCCESS;
+}
+
+
 #ifdef linux
 
 /* Fallback using /proc/cpuinfo for Linux systems without cpufreq. For

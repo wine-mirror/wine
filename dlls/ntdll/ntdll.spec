@@ -314,8 +314,8 @@
 @ stdcall NtQuerySecurityObject(long long ptr long ptr)
 @ stdcall -syscall NtQuerySemaphore (long long ptr long ptr)
 @ stdcall -syscall NtQuerySymbolicLinkObject(long ptr ptr)
-@ stdcall NtQuerySystemEnvironmentValue(ptr ptr long ptr)
-@ stdcall NtQuerySystemEnvironmentValueEx(ptr ptr ptr ptr ptr)
+@ stdcall -syscall NtQuerySystemEnvironmentValue(ptr ptr long ptr)
+@ stdcall -syscall NtQuerySystemEnvironmentValueEx(ptr ptr ptr ptr ptr)
 @ stdcall -syscall NtQuerySystemInformation(long ptr long ptr)
 @ stdcall -syscall NtQuerySystemInformationEx(long ptr long ptr long ptr)
 @ stdcall -syscall NtQuerySystemTime(ptr)
@@ -391,7 +391,7 @@
 @ stdcall NtSetSecurityObject(long long ptr)
 @ stub NtSetSystemEnvironmentValue
 # @ stub NtSetSystemEnvironmentValueEx
-@ stdcall NtSetSystemInformation(long ptr long)
+@ stdcall -syscall NtSetSystemInformation(long ptr long)
 @ stub NtSetSystemPowerState
 @ stdcall -syscall NtSetSystemTime(ptr ptr)
 @ stdcall NtSetThreadExecutionState(long ptr)
@@ -400,13 +400,13 @@
 # @ stub NtSetUuidSeed
 @ stdcall -syscall NtSetValueKey(long ptr long long ptr long)
 @ stdcall -syscall NtSetVolumeInformationFile(long ptr ptr long long)
-@ stdcall NtShutdownSystem(long)
+@ stdcall -syscall NtShutdownSystem(long)
 @ stdcall -syscall NtSignalAndWaitForSingleObject(long long long ptr)
 @ stub NtStartProfile
 @ stub NtStopProfile
 @ stdcall -syscall NtSuspendProcess(long)
 @ stdcall -syscall NtSuspendThread(long ptr)
-@ stdcall NtSystemDebugControl(long ptr long ptr long ptr)
+@ stdcall -syscall NtSystemDebugControl(long ptr long ptr long ptr)
 @ stdcall -syscall NtTerminateJobObject(long long)
 @ stdcall -syscall NtTerminateProcess(long long)
 @ stdcall -syscall NtTerminateThread(long long)
@@ -1301,8 +1301,8 @@
 @ stdcall -private ZwQuerySecurityObject(long long ptr long ptr) NtQuerySecurityObject
 @ stdcall -private -syscall ZwQuerySemaphore(long long ptr long ptr) NtQuerySemaphore
 @ stdcall -private -syscall ZwQuerySymbolicLinkObject(long ptr ptr) NtQuerySymbolicLinkObject
-@ stdcall -private ZwQuerySystemEnvironmentValue(ptr ptr long ptr) NtQuerySystemEnvironmentValue
-@ stdcall -private ZwQuerySystemEnvironmentValueEx(ptr ptr ptr ptr ptr) NtQuerySystemEnvironmentValueEx
+@ stdcall -private -syscall ZwQuerySystemEnvironmentValue(ptr ptr long ptr) NtQuerySystemEnvironmentValue
+@ stdcall -private -syscall ZwQuerySystemEnvironmentValueEx(ptr ptr ptr ptr ptr) NtQuerySystemEnvironmentValueEx
 @ stdcall -private -syscall ZwQuerySystemInformation(long ptr long ptr) NtQuerySystemInformation
 @ stdcall -private -syscall ZwQuerySystemInformationEx(long ptr long ptr long ptr) NtQuerySystemInformationEx
 @ stdcall -private -syscall ZwQuerySystemTime(ptr) NtQuerySystemTime
@@ -1378,7 +1378,7 @@
 @ stdcall -private ZwSetSecurityObject(long long ptr) NtSetSecurityObject
 @ stub ZwSetSystemEnvironmentValue
 # @ stub ZwSetSystemEnvironmentValueEx
-@ stdcall -private ZwSetSystemInformation(long ptr long) NtSetSystemInformation
+@ stdcall -private -syscall ZwSetSystemInformation(long ptr long) NtSetSystemInformation
 @ stub ZwSetSystemPowerState
 @ stdcall -private -syscall ZwSetSystemTime(ptr ptr) NtSetSystemTime
 @ stdcall ZwSetThreadExecutionState(long ptr) NtSetThreadExecutionState
@@ -1387,13 +1387,13 @@
 # @ stub ZwSetUuidSeed
 @ stdcall -private -syscall ZwSetValueKey(long ptr long long ptr long) NtSetValueKey
 @ stdcall -private -syscall ZwSetVolumeInformationFile(long ptr ptr long long) NtSetVolumeInformationFile
-@ stdcall -private ZwShutdownSystem(long) NtShutdownSystem
+@ stdcall -private -syscall ZwShutdownSystem(long) NtShutdownSystem
 @ stdcall -private -syscall ZwSignalAndWaitForSingleObject(long long long ptr) NtSignalAndWaitForSingleObject
 @ stub ZwStartProfile
 @ stub ZwStopProfile
 @ stdcall -private -syscall ZwSuspendProcess(long) NtSuspendProcess
 @ stdcall -private -syscall ZwSuspendThread(long ptr) NtSuspendThread
-@ stdcall -private ZwSystemDebugControl(long ptr long ptr long ptr) NtSystemDebugControl
+@ stdcall -private -syscall ZwSystemDebugControl(long ptr long ptr long ptr) NtSystemDebugControl
 @ stdcall -private -syscall ZwTerminateJobObject(long long) NtTerminateJobObject
 @ stdcall -private -syscall ZwTerminateProcess(long long) NtTerminateProcess
 @ stdcall -private -syscall ZwTerminateThread(long long) NtTerminateThread
