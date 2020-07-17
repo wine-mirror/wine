@@ -60,7 +60,7 @@ static void test_interfaces(void)
 
     check_interface(filter, &IID_IBaseFilter, TRUE);
     todo_wine check_interface(filter, &IID_IDvdControl, TRUE);
-    todo_wine check_interface(filter, &IID_IDvdControl2, TRUE);
+    check_interface(filter, &IID_IDvdControl2, TRUE);
     todo_wine check_interface(filter, &IID_IDvdInfo, TRUE);
     todo_wine check_interface(filter, &IID_IDvdInfo2, TRUE);
     check_interface(filter, &IID_IMediaFilter, TRUE);
