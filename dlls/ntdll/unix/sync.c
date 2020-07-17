@@ -905,6 +905,207 @@ NTSTATUS WINAPI NtAssignProcessToJobObject( HANDLE job, HANDLE process )
 
 
 /**************************************************************************
+ *           NtCreateDirectoryObject   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtCreateDirectoryObject( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr )
+{
+    NTSTATUS ret;
+    data_size_t len;
+    struct object_attributes *objattr;
+
+    if (!handle) return STATUS_ACCESS_VIOLATION;
+
+    if ((ret = alloc_object_attributes( attr, &objattr, &len ))) return ret;
+
+    SERVER_START_REQ( create_directory )
+    {
+        req->access = access;
+        wine_server_add_data( req, objattr, len );
+        ret = wine_server_call( req );
+        *handle = wine_server_ptr_handle( reply->handle );
+    }
+    SERVER_END_REQ;
+    free( objattr );
+    return ret;
+}
+
+
+/**************************************************************************
+ *           NtOpenDirectoryObject   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtOpenDirectoryObject( HANDLE *handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr )
+{
+    NTSTATUS ret;
+
+    if (!handle) return STATUS_ACCESS_VIOLATION;
+    if ((ret = validate_open_object_attributes( attr ))) return ret;
+
+    SERVER_START_REQ( open_directory )
+    {
+        req->access     = access;
+        req->attributes = attr->Attributes;
+        req->rootdir    = wine_server_obj_handle( attr->RootDirectory );
+        if (attr->ObjectName)
+            wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
+        ret = wine_server_call( req );
+        *handle = wine_server_ptr_handle( reply->handle );
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+
+/**************************************************************************
+ *           NtQueryDirectoryObject   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtQueryDirectoryObject( HANDLE handle, DIRECTORY_BASIC_INFORMATION *buffer,
+                                        ULONG size, BOOLEAN single_entry, BOOLEAN restart,
+                                        ULONG *context, ULONG *ret_size )
+{
+    NTSTATUS ret;
+
+    if (restart) *context = 0;
+
+    if (single_entry)
+    {
+        if (size <= sizeof(*buffer) + 2 * sizeof(WCHAR)) return STATUS_BUFFER_OVERFLOW;
+
+        SERVER_START_REQ( get_directory_entry )
+        {
+            req->handle = wine_server_obj_handle( handle );
+            req->index = *context;
+            wine_server_set_reply( req, buffer + 1, size - sizeof(*buffer) - 2*sizeof(WCHAR) );
+            if (!(ret = wine_server_call( req )))
+            {
+                buffer->ObjectName.Buffer = (WCHAR *)(buffer + 1);
+                buffer->ObjectName.Length = reply->name_len;
+                buffer->ObjectName.MaximumLength = reply->name_len + sizeof(WCHAR);
+                buffer->ObjectTypeName.Buffer = (WCHAR *)(buffer + 1) + reply->name_len/sizeof(WCHAR) + 1;
+                buffer->ObjectTypeName.Length = wine_server_reply_size( reply ) - reply->name_len;
+                buffer->ObjectTypeName.MaximumLength = buffer->ObjectTypeName.Length + sizeof(WCHAR);
+                /* make room for the terminating null */
+                memmove( buffer->ObjectTypeName.Buffer, buffer->ObjectTypeName.Buffer - 1,
+                         buffer->ObjectTypeName.Length );
+                buffer->ObjectName.Buffer[buffer->ObjectName.Length/sizeof(WCHAR)] = 0;
+                buffer->ObjectTypeName.Buffer[buffer->ObjectTypeName.Length/sizeof(WCHAR)] = 0;
+                (*context)++;
+            }
+        }
+        SERVER_END_REQ;
+        if (ret_size)
+            *ret_size = buffer->ObjectName.MaximumLength + buffer->ObjectTypeName.MaximumLength + sizeof(*buffer);
+    }
+    else
+    {
+        FIXME("multiple entries not implemented\n");
+        ret = STATUS_NOT_IMPLEMENTED;
+    }
+    return ret;
+}
+
+
+/**************************************************************************
+ *           NtCreateSymbolicLinkObject   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtCreateSymbolicLinkObject( HANDLE *handle, ACCESS_MASK access,
+                                            OBJECT_ATTRIBUTES *attr, UNICODE_STRING *target )
+{
+    NTSTATUS ret;
+    data_size_t len;
+    struct object_attributes *objattr;
+
+    if (!handle || !attr || !target) return STATUS_ACCESS_VIOLATION;
+    if (!target->Buffer) return STATUS_INVALID_PARAMETER;
+
+    if ((ret = alloc_object_attributes( attr, &objattr, &len ))) return ret;
+
+    SERVER_START_REQ( create_symlink )
+    {
+        req->access = access;
+        wine_server_add_data( req, objattr, len );
+        wine_server_add_data( req, target->Buffer, target->Length );
+        ret = wine_server_call( req );
+        *handle = wine_server_ptr_handle( reply->handle );
+    }
+    SERVER_END_REQ;
+    free( objattr );
+    return ret;
+}
+
+
+/**************************************************************************
+ *           NtOpenSymbolicLinkObject   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtOpenSymbolicLinkObject( HANDLE *handle, ACCESS_MASK access,
+                                          const OBJECT_ATTRIBUTES *attr )
+{
+    NTSTATUS ret;
+
+    if (!handle) return STATUS_ACCESS_VIOLATION;
+    if ((ret = validate_open_object_attributes( attr ))) return ret;
+
+    SERVER_START_REQ( open_symlink )
+    {
+        req->access     = access;
+        req->attributes = attr->Attributes;
+        req->rootdir    = wine_server_obj_handle( attr->RootDirectory );
+        if (attr->ObjectName)
+            wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
+        ret = wine_server_call( req );
+        *handle = wine_server_ptr_handle( reply->handle );
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+
+/**************************************************************************
+ *           NtQuerySymbolicLinkObject   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtQuerySymbolicLinkObject( HANDLE handle, UNICODE_STRING *target, ULONG *length )
+{
+    NTSTATUS ret;
+
+    if (!target) return STATUS_ACCESS_VIOLATION;
+
+    SERVER_START_REQ( query_symlink )
+    {
+        req->handle = wine_server_obj_handle( handle );
+        if (target->MaximumLength >= sizeof(WCHAR))
+            wine_server_set_reply( req, target->Buffer, target->MaximumLength - sizeof(WCHAR) );
+        if (!(ret = wine_server_call( req )))
+        {
+            target->Length = wine_server_reply_size(reply);
+            target->Buffer[target->Length / sizeof(WCHAR)] = 0;
+            if (length) *length = reply->total + sizeof(WCHAR);
+        }
+        else if (length && ret == STATUS_BUFFER_TOO_SMALL) *length = reply->total + sizeof(WCHAR);
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+
+/**************************************************************************
+ *		NtMakeTemporaryObject (NTDLL.@)
+ */
+NTSTATUS WINAPI NtMakeTemporaryObject( HANDLE handle )
+{
+    NTSTATUS ret;
+
+    TRACE("%p\n", handle);
+
+    SERVER_START_REQ( make_temporary )
+    {
+        req->handle = wine_server_obj_handle( handle );
+        ret = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+
+/**************************************************************************
  *		NtCreateTimer (NTDLL.@)
  */
 NTSTATUS WINAPI NtCreateTimer( HANDLE *handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr,

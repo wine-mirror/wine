@@ -159,7 +159,7 @@
 @ stdcall NtConnectPort(ptr ptr ptr ptr ptr ptr ptr ptr)
 @ stdcall -syscall NtContinue(ptr long)
 # @ stub NtCreateDebugObject
-@ stdcall NtCreateDirectoryObject(ptr long ptr)
+@ stdcall -syscall NtCreateDirectoryObject(ptr long ptr)
 @ stdcall -syscall NtCreateEvent(ptr long ptr long long)
 @ stub NtCreateEventPair
 @ stdcall -syscall NtCreateFile(ptr long ptr ptr ptr long long long long ptr long)
@@ -181,7 +181,7 @@
 @ stub NtCreateProfile
 @ stdcall -syscall NtCreateSection(ptr long ptr ptr long long long)
 @ stdcall -syscall NtCreateSemaphore(ptr long ptr long long)
-@ stdcall NtCreateSymbolicLinkObject(ptr long ptr ptr)
+@ stdcall -syscall NtCreateSymbolicLinkObject(ptr long ptr ptr)
 @ stub NtCreateThread
 @ stdcall -syscall NtCreateThreadEx(ptr long ptr long ptr ptr long long long long ptr)
 @ stdcall -syscall NtCreateTimer(ptr long ptr long)
@@ -242,7 +242,7 @@
 # @ stub NtLockRegistryKey
 @ stdcall -syscall NtLockVirtualMemory(long ptr ptr long)
 # @ stub NtMakePermanentObject
-@ stdcall NtMakeTemporaryObject(long)
+@ stdcall -syscall NtMakeTemporaryObject(long)
 # @ stub NtMapUserPhysicalPages
 # @ stub NtMapUserPhysicalPagesScatter
 @ stdcall -syscall NtMapViewOfSection(long long ptr long long ptr ptr long long long)
@@ -250,7 +250,7 @@
 @ stdcall -syscall NtNotifyChangeDirectoryFile(long long ptr ptr ptr ptr long long long)
 @ stdcall -syscall NtNotifyChangeKey(long long ptr ptr ptr long long ptr long long)
 @ stdcall -syscall NtNotifyChangeMultipleKeys(long long ptr long ptr ptr ptr long long ptr long long)
-@ stdcall NtOpenDirectoryObject(ptr long ptr)
+@ stdcall -syscall NtOpenDirectoryObject(ptr long ptr)
 @ stdcall -syscall NtOpenEvent(ptr long ptr)
 @ stub NtOpenEventPair
 @ stdcall -syscall NtOpenFile(ptr long ptr ptr long long)
@@ -268,7 +268,7 @@
 @ stdcall NtOpenProcessTokenEx(long long long ptr)
 @ stdcall -syscall NtOpenSection(ptr long ptr)
 @ stdcall -syscall NtOpenSemaphore(ptr long ptr)
-@ stdcall NtOpenSymbolicLinkObject (ptr long ptr)
+@ stdcall -syscall NtOpenSymbolicLinkObject (ptr long ptr)
 @ stdcall -syscall NtOpenThread(ptr long ptr ptr)
 @ stdcall NtOpenThreadToken(long long long ptr)
 @ stdcall NtOpenThreadTokenEx(long long long long ptr)
@@ -287,7 +287,7 @@
 @ stdcall NtQueryDefaultLocale(long ptr)
 @ stdcall NtQueryDefaultUILanguage(ptr)
 @ stdcall -syscall NtQueryDirectoryFile(long long ptr ptr ptr ptr long long long ptr long)
-@ stdcall NtQueryDirectoryObject(long ptr long long long ptr ptr)
+@ stdcall -syscall NtQueryDirectoryObject(long ptr long long long ptr ptr)
 @ stdcall -syscall NtQueryEaFile(long ptr ptr long long ptr long ptr long)
 @ stdcall -syscall NtQueryEvent(long long ptr long ptr)
 @ stdcall -syscall NtQueryFullAttributesFile(ptr ptr)
@@ -313,7 +313,7 @@
 @ stdcall -syscall NtQuerySection(long long ptr long ptr)
 @ stdcall NtQuerySecurityObject(long long ptr long ptr)
 @ stdcall -syscall NtQuerySemaphore (long long ptr long ptr)
-@ stdcall NtQuerySymbolicLinkObject(long ptr ptr)
+@ stdcall -syscall NtQuerySymbolicLinkObject(long ptr ptr)
 @ stdcall NtQuerySystemEnvironmentValue(ptr ptr long ptr)
 @ stdcall NtQuerySystemEnvironmentValueEx(ptr ptr ptr ptr ptr)
 @ stdcall -syscall NtQuerySystemInformation(long ptr long ptr)
@@ -1148,7 +1148,7 @@
 @ stdcall -private ZwConnectPort(ptr ptr ptr ptr ptr ptr ptr ptr) NtConnectPort
 @ stdcall -private -syscall ZwContinue(ptr long) NtContinue
 # @ stub ZwCreateDebugObject
-@ stdcall -private ZwCreateDirectoryObject(ptr long ptr) NtCreateDirectoryObject
+@ stdcall -private -syscall ZwCreateDirectoryObject(ptr long ptr) NtCreateDirectoryObject
 @ stdcall -private -syscall ZwCreateEvent(ptr long ptr long long) NtCreateEvent
 @ stub ZwCreateEventPair
 @ stdcall -private -syscall ZwCreateFile(ptr long ptr ptr ptr long long long long ptr long) NtCreateFile
@@ -1169,7 +1169,7 @@
 @ stub ZwCreateProfile
 @ stdcall -private -syscall ZwCreateSection(ptr long ptr ptr long long long) NtCreateSection
 @ stdcall -private -syscall ZwCreateSemaphore(ptr long ptr long long) NtCreateSemaphore
-@ stdcall -private ZwCreateSymbolicLinkObject(ptr long ptr ptr) NtCreateSymbolicLinkObject
+@ stdcall -private -syscall ZwCreateSymbolicLinkObject(ptr long ptr ptr) NtCreateSymbolicLinkObject
 @ stub ZwCreateThread
 @ stdcall -private -syscall ZwCreateThreadEx(ptr long ptr long ptr ptr long long long long ptr) NtCreateThreadEx
 @ stdcall -private -syscall ZwCreateTimer(ptr long ptr long) NtCreateTimer
@@ -1229,7 +1229,7 @@
 # @ stub ZwLockRegistryKey
 @ stdcall -private -syscall ZwLockVirtualMemory(long ptr ptr long) NtLockVirtualMemory
 # @ stub ZwMakePermanentObject
-@ stdcall -private ZwMakeTemporaryObject(long) NtMakeTemporaryObject
+@ stdcall -private -syscall ZwMakeTemporaryObject(long) NtMakeTemporaryObject
 # @ stub ZwMapUserPhysicalPages
 # @ stub ZwMapUserPhysicalPagesScatter
 @ stdcall -private -syscall ZwMapViewOfSection(long long ptr long long ptr ptr long long long) NtMapViewOfSection
@@ -1237,7 +1237,7 @@
 @ stdcall -private -syscall ZwNotifyChangeDirectoryFile(long long ptr ptr ptr ptr long long long) NtNotifyChangeDirectoryFile
 @ stdcall -private -syscall ZwNotifyChangeKey(long long ptr ptr ptr long long ptr long long) NtNotifyChangeKey
 @ stdcall -private -syscall ZwNotifyChangeMultipleKeys(long long ptr long ptr ptr ptr long long ptr long long) NtNotifyChangeMultipleKeys
-@ stdcall -private ZwOpenDirectoryObject(ptr long ptr) NtOpenDirectoryObject
+@ stdcall -private -syscall ZwOpenDirectoryObject(ptr long ptr) NtOpenDirectoryObject
 @ stdcall -private -syscall ZwOpenEvent(ptr long ptr) NtOpenEvent
 @ stub ZwOpenEventPair
 @ stdcall -private -syscall ZwOpenFile(ptr long ptr ptr long long) NtOpenFile
@@ -1255,7 +1255,7 @@
 @ stdcall -private ZwOpenProcessTokenEx(long long long ptr) NtOpenProcessTokenEx
 @ stdcall -private -syscall ZwOpenSection(ptr long ptr) NtOpenSection
 @ stdcall -private -syscall ZwOpenSemaphore(ptr long ptr) NtOpenSemaphore
-@ stdcall -private ZwOpenSymbolicLinkObject (ptr long ptr) NtOpenSymbolicLinkObject
+@ stdcall -private -syscall ZwOpenSymbolicLinkObject (ptr long ptr) NtOpenSymbolicLinkObject
 @ stdcall -private -syscall ZwOpenThread(ptr long ptr ptr) NtOpenThread
 @ stdcall -private ZwOpenThreadToken(long long long ptr) NtOpenThreadToken
 @ stdcall -private ZwOpenThreadTokenEx(long long long long ptr) NtOpenThreadTokenEx
@@ -1274,7 +1274,7 @@
 @ stdcall -private ZwQueryDefaultLocale(long ptr) NtQueryDefaultLocale
 @ stdcall -private ZwQueryDefaultUILanguage(ptr) NtQueryDefaultUILanguage
 @ stdcall -private -syscall ZwQueryDirectoryFile(long long ptr ptr ptr ptr long long long ptr long) NtQueryDirectoryFile
-@ stdcall -private ZwQueryDirectoryObject(long ptr long long long ptr ptr) NtQueryDirectoryObject
+@ stdcall -private -syscall ZwQueryDirectoryObject(long ptr long long long ptr ptr) NtQueryDirectoryObject
 @ stdcall -private -syscall ZwQueryEaFile(long ptr ptr long long ptr long ptr long) NtQueryEaFile
 @ stdcall -private -syscall ZwQueryEvent(long long ptr long ptr) NtQueryEvent
 @ stdcall -private -syscall ZwQueryFullAttributesFile(ptr ptr) NtQueryFullAttributesFile
@@ -1300,7 +1300,7 @@
 @ stdcall -private -syscall ZwQuerySection(long long ptr long ptr) NtQuerySection
 @ stdcall -private ZwQuerySecurityObject(long long ptr long ptr) NtQuerySecurityObject
 @ stdcall -private -syscall ZwQuerySemaphore(long long ptr long ptr) NtQuerySemaphore
-@ stdcall -private ZwQuerySymbolicLinkObject(long ptr ptr) NtQuerySymbolicLinkObject
+@ stdcall -private -syscall ZwQuerySymbolicLinkObject(long ptr ptr) NtQuerySymbolicLinkObject
 @ stdcall -private ZwQuerySystemEnvironmentValue(ptr ptr long ptr) NtQuerySystemEnvironmentValue
 @ stdcall -private ZwQuerySystemEnvironmentValueEx(ptr ptr ptr ptr ptr) NtQuerySystemEnvironmentValueEx
 @ stdcall -private -syscall ZwQuerySystemInformation(long ptr long ptr) NtQuerySystemInformation

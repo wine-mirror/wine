@@ -73,7 +73,6 @@ extern NTSTATUS restart_process( RTL_USER_PROCESS_PARAMETERS *params, NTSTATUS s
 extern BOOL is_wow64 DECLSPEC_HIDDEN;
 extern NTSTATUS alloc_object_attributes( const OBJECT_ATTRIBUTES *attr, struct object_attributes **ret,
                                          data_size_t *ret_len ) DECLSPEC_HIDDEN;
-extern NTSTATUS validate_open_object_attributes( const OBJECT_ATTRIBUTES *attr ) DECLSPEC_HIDDEN;
 
 /* module handling */
 extern LIST_ENTRY tls_links DECLSPEC_HIDDEN;
