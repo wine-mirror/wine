@@ -434,16 +434,21 @@ static void basic_test(void)
     DestroyWindow(hToolbar);
 }
 
-static void rebuild_toolbar(HWND *hToolbar)
+static void rebuild_toolbar_ex(HWND *hToolbar, DWORD exstyle)
 {
     if (*hToolbar)
         DestroyWindow(*hToolbar);
-    *hToolbar = CreateWindowExA(0, TOOLBARCLASSNAMEA, NULL, WS_CHILD | WS_VISIBLE, 0, 0, 0, 0,
-        hMainWnd, (HMENU)5, GetModuleHandleA(NULL), NULL);
+    *hToolbar = CreateWindowExA(exstyle, TOOLBARCLASSNAMEA, NULL, WS_CHILD | WS_VISIBLE,
+        0, 0, 0, 0, hMainWnd, (HMENU)5, GetModuleHandleA(NULL), NULL);
     ok(*hToolbar != NULL, "Toolbar creation problem\n");
     ok(SendMessageA(*hToolbar, TB_BUTTONSTRUCTSIZE, sizeof(TBBUTTON), 0) == 0, "TB_BUTTONSTRUCTSIZE failed\n");
     ok(SendMessageA(*hToolbar, TB_AUTOSIZE, 0, 0) == 0, "TB_AUTOSIZE failed\n");
     ok(SendMessageA(*hToolbar, WM_SETFONT, (WPARAM)GetStockObject(SYSTEM_FONT), 0)==1, "WM_SETFONT\n");
+}
+
+static void rebuild_toolbar(HWND *hToolbar)
+{
+    rebuild_toolbar_ex(hToolbar, 0);
 }
 
 static void rebuild_toolbar_with_buttons(HWND *hToolbar)
@@ -1022,7 +1027,7 @@ static void tbsize_addbutton(tbsize_result_t *tbsr, int left, int top, int right
 
 static tbsize_result_t *tbsize_results;
 
-#define tbsize_results_num 28
+#define tbsize_results_num 29
 
 static void init_tbsize_results(void) {
     int fontheight = system_font_height();
@@ -1277,6 +1282,9 @@ static void init_tbsize_results(void) {
 
     tbsize_results[27] = init_tbsize_result(1, 0, 0, 672, 42, 67, 40);
     tbsize_addbutton(&tbsize_results[27],   0,   2,  40,  24);
+
+    tbsize_results[28] = init_tbsize_result(1, 0, 0, 672, 42, 67, 40);
+    tbsize_addbutton(&tbsize_results[28],   0,   2,  23,  24);
 }
 
 static void free_tbsize_results(void) {
@@ -1360,6 +1368,7 @@ static void test_sizes(void)
     int style;
     int i;
     int fontheight = system_font_height();
+    RECT rect;
 
     init_tbsize_results();
 
@@ -1630,6 +1639,15 @@ static void test_sizes(void)
     ok(SendMessageA(hToolbar, TB_SETBUTTONSIZE, 0, MAKELPARAM(40, 20)) == 1, "TB_SETBUTTONSIZE failed\n");
     SendMessageA(hToolbar, TB_AUTOSIZE, 0, 0 );
     check_sizes();
+
+    /* Toolbar with borders around client area */
+    rebuild_toolbar_ex(&hToolbar, WS_EX_DLGMODALFRAME);
+    SetWindowLongA(hToolbar, GWL_STYLE, CCS_NODIVIDER | GetWindowLongA(hToolbar, GWL_STYLE));
+    SendMessageA(hToolbar, TB_ADDBUTTONSA, 1, (LPARAM)buttons1);
+    check_sizes();
+    GetClientRect(hToolbar, &rect);
+    ok(rect.top == 0, "rect.top = %d\n", rect.top);
+    ok(rect.bottom == 26, "rect.bottom = %d\n", rect.bottom);
 
     free_tbsize_results();
     DestroyWindow(hToolbar);
