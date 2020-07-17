@@ -585,7 +585,7 @@ static inline int FUNC_NAME(pf_output_fp)(FUNC_NAME(puts_clbk) pf_puts, void *pu
     ULONGLONG m;
     DWORD l;
 
-    TRACE("floting point argument: %.16le\n", v);
+    TRACE("floating point argument: %.16le\n", v);
 
     if(flags->Precision == -1)
         flags->Precision = 6;
