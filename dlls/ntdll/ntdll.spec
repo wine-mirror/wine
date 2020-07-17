@@ -149,7 +149,7 @@
 @ stdcall -syscall NtCancelIoFileEx(long ptr ptr)
 @ stdcall -syscall NtCancelTimer(long ptr)
 @ stdcall -syscall NtClearEvent(long)
-@ stdcall NtClearPowerRequest(long long)
+@ stdcall -syscall NtClearPowerRequest(long long)
 @ stdcall NtClose(long)
 @ stub NtCloseObjectAuditAlarm
 # @ stub NtCompactKeys
@@ -175,7 +175,7 @@
 @ stdcall -syscall NtCreateNamedPipeFile(ptr long ptr ptr long long long long long long long long long ptr)
 @ stdcall NtCreatePagingFile(ptr ptr ptr ptr)
 @ stdcall NtCreatePort(ptr ptr long long ptr)
-@ stdcall NtCreatePowerRequest(ptr ptr)
+@ stdcall -syscall NtCreatePowerRequest(ptr ptr)
 @ stub NtCreateProcess
 # @ stub NtCreateProcessEx
 @ stub NtCreateProfile
@@ -230,7 +230,7 @@
 @ stub NtImpersonateClientOfPort
 @ stub NtImpersonateThread
 @ stub NtInitializeRegistry
-@ stdcall NtInitiatePowerAction (long long long long)
+@ stdcall -syscall NtInitiatePowerAction (long long long long)
 @ stdcall -syscall NtIsProcessInJob(long long)
 # @ stub NtIsSystemResumeAutomatic
 @ stdcall NtListenPort(ptr ptr)
@@ -386,7 +386,7 @@
 @ stub NtSetLowEventPair
 @ stub NtSetLowWaitHighEventPair
 @ stub NtSetLowWaitHighThread
-@ stdcall NtSetPowerRequest(long long)
+@ stdcall -syscall NtSetPowerRequest(long long)
 # @ stub NtSetQuotaInformationFile
 @ stdcall NtSetSecurityObject(long long ptr)
 @ stub NtSetSystemEnvironmentValue
@@ -394,7 +394,7 @@
 @ stdcall -syscall NtSetSystemInformation(long ptr long)
 @ stub NtSetSystemPowerState
 @ stdcall -syscall NtSetSystemTime(ptr ptr)
-@ stdcall NtSetThreadExecutionState(long ptr)
+@ stdcall -syscall NtSetThreadExecutionState(long ptr)
 @ stdcall -syscall NtSetTimer(long ptr ptr ptr long long ptr)
 @ stdcall -syscall NtSetTimerResolution(long long ptr)
 # @ stub NtSetUuidSeed
@@ -1138,7 +1138,7 @@
 @ stdcall -private -syscall ZwCancelIoFileEx(long ptr ptr) NtCancelIoFileEx
 @ stdcall -private -syscall ZwCancelTimer(long ptr) NtCancelTimer
 @ stdcall -private -syscall ZwClearEvent(long) NtClearEvent
-@ stdcall -private ZwClearPowerRequest(long long) NtClearPowerRequest
+@ stdcall -private -syscall ZwClearPowerRequest(long long) NtClearPowerRequest
 @ stdcall -private ZwClose(long) NtClose
 @ stub ZwCloseObjectAuditAlarm
 # @ stub ZwCompactKeys
@@ -1163,7 +1163,7 @@
 @ stdcall -private -syscall ZwCreateNamedPipeFile(ptr long ptr ptr long long long long long long long long long ptr) NtCreateNamedPipeFile
 @ stdcall -private ZwCreatePagingFile(ptr ptr ptr ptr) NtCreatePagingFile
 @ stdcall -private ZwCreatePort(ptr ptr long long ptr) NtCreatePort
-@ stdcall -private ZwCreatePowerRequest(ptr ptr) NtCreatePowerRequest
+@ stdcall -private -syscall ZwCreatePowerRequest(ptr ptr) NtCreatePowerRequest
 @ stub ZwCreateProcess
 # @ stub ZwCreateProcessEx
 @ stub ZwCreateProfile
@@ -1217,7 +1217,7 @@
 @ stub ZwImpersonateClientOfPort
 @ stub ZwImpersonateThread
 @ stub ZwInitializeRegistry
-@ stdcall -private ZwInitiatePowerAction(long long long long) NtInitiatePowerAction
+@ stdcall -private -syscall ZwInitiatePowerAction(long long long long) NtInitiatePowerAction
 @ stdcall -private -syscall ZwIsProcessInJob(long long) NtIsProcessInJob
 # @ stub ZwIsSystemResumeAutomatic
 @ stdcall -private ZwListenPort(ptr ptr) NtListenPort
@@ -1373,7 +1373,7 @@
 @ stub ZwSetLowEventPair
 @ stub ZwSetLowWaitHighEventPair
 @ stub ZwSetLowWaitHighThread
-@ stdcall -private ZwSetPowerRequest(long long) NtSetPowerRequest
+@ stdcall -private -syscall ZwSetPowerRequest(long long) NtSetPowerRequest
 # @ stub ZwSetQuotaInformationFile
 @ stdcall -private ZwSetSecurityObject(long long ptr) NtSetSecurityObject
 @ stub ZwSetSystemEnvironmentValue
@@ -1381,7 +1381,7 @@
 @ stdcall -private -syscall ZwSetSystemInformation(long ptr long) NtSetSystemInformation
 @ stub ZwSetSystemPowerState
 @ stdcall -private -syscall ZwSetSystemTime(ptr ptr) NtSetSystemTime
-@ stdcall ZwSetThreadExecutionState(long ptr) NtSetThreadExecutionState
+@ stdcall -private -syscall ZwSetThreadExecutionState(long ptr) NtSetThreadExecutionState
 @ stdcall -private -syscall ZwSetTimer(long ptr ptr ptr long long ptr) NtSetTimer
 @ stdcall -private -syscall ZwSetTimerResolution(long long ptr) NtSetTimerResolution
 # @ stub ZwSetUuidSeed
