@@ -1040,7 +1040,7 @@ static void test_directory(void)
     pNtClose(h);
     InitializeObjectAttributes(&attr, &str, 0, dir, NULL);
     RtlInitUnicodeString(&str, L"one more level");
-    status = pNtCreateDirectoryObject( &dir, DIRECTORY_QUERY, &attr );
+    status = pNtCreateDirectoryObject( &h, DIRECTORY_QUERY, &attr );
     ok( status == STATUS_SUCCESS, "Failed to create directory %08x\n", status );
     pNtClose(h);
     pNtClose(dir);
@@ -1157,9 +1157,9 @@ static void test_symboliclink(void)
 
     RtlInitUnicodeString( &str, L"\\BaseNamedObjects\\om.c-test\\" );
     status = pNtCreateSymbolicLinkObject( &h, SYMBOLIC_LINK_QUERY, &attr, &target );
-    ok( status == STATUS_OBJECT_NAME_INVALID, "got %#x\n", status );
+    ok( status == STATUS_OBJECT_PATH_NOT_FOUND, "got %#x\n", status );
     status = pNtOpenSymbolicLinkObject( &h, SYMBOLIC_LINK_QUERY, &attr );
-    ok( status == STATUS_OBJECT_NAME_INVALID, "got %#x\n", status );
+    ok( status == STATUS_OBJECT_PATH_NOT_FOUND, "got %#x\n", status );
 
     /* Compound test */
     dir = get_base_dir();
