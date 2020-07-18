@@ -34,6 +34,112 @@ WINE_DEFAULT_DEBUG_CHANNEL(xact3);
 
 static HINSTANCE instance;
 
+typedef struct _XACT3SoundBankImpl {
+    IXACT3SoundBank IXACT3SoundBank_iface;
+
+    FACTSoundBank *fact_soundbank;
+} XACT3SoundBankImpl;
+
+static inline XACT3SoundBankImpl *impl_from_IXACT3SoundBank(IXACT3SoundBank *iface)
+{
+    return CONTAINING_RECORD(iface, XACT3SoundBankImpl, IXACT3SoundBank_iface);
+}
+
+static XACTINDEX WINAPI IXACT3SoundBankImpl_GetCueIndex(IXACT3SoundBank *iface,
+        PCSTR szFriendlyName)
+{
+    XACT3SoundBankImpl *This = impl_from_IXACT3SoundBank(iface);
+
+    TRACE("(%p)->(%s)\n", This, szFriendlyName);
+
+    return FACTSoundBank_GetCueIndex(This->fact_soundbank, szFriendlyName);
+}
+
+static HRESULT WINAPI IXACT3SoundBankImpl_GetNumCues(IXACT3SoundBank *iface,
+        XACTINDEX *pnNumCues)
+{
+    XACT3SoundBankImpl *This = impl_from_IXACT3SoundBank(iface);
+
+    TRACE("(%p)->(%p)\n", This, pnNumCues);
+
+    return FACTSoundBank_GetNumCues(This->fact_soundbank, pnNumCues);
+}
+
+static HRESULT WINAPI IXACT3SoundBankImpl_GetCueProperties(IXACT3SoundBank *iface,
+        XACTINDEX nCueIndex, XACT_CUE_PROPERTIES *pProperties)
+{
+    XACT3SoundBankImpl *This = impl_from_IXACT3SoundBank(iface);
+
+    TRACE("(%p)->(%u, %p)\n", This, nCueIndex, pProperties);
+
+    return FACTSoundBank_GetCueProperties(This->fact_soundbank, nCueIndex,
+            (FACTCueProperties*) pProperties);
+}
+
+static HRESULT WINAPI IXACT3SoundBankImpl_Prepare(IXACT3SoundBank *iface,
+        XACTINDEX nCueIndex, DWORD dwFlags, XACTTIME timeOffset,
+        IXACT3Cue** ppCue)
+{
+    XACT3SoundBankImpl *This = impl_from_IXACT3SoundBank(iface);
+    FIXME("(%p)->(%u, 0x%x, %u, %p): stub!\n", This, nCueIndex, dwFlags, timeOffset,
+            ppCue);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IXACT3SoundBankImpl_Play(IXACT3SoundBank *iface,
+        XACTINDEX nCueIndex, DWORD dwFlags, XACTTIME timeOffset,
+        IXACT3Cue** ppCue)
+{
+    XACT3SoundBankImpl *This = impl_from_IXACT3SoundBank(iface);
+    FIXME("(%p)->(%u, 0x%x, %u, %p): stub!\n", This, nCueIndex, dwFlags, timeOffset,
+            ppCue);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IXACT3SoundBankImpl_Stop(IXACT3SoundBank *iface,
+        XACTINDEX nCueIndex, DWORD dwFlags)
+{
+    XACT3SoundBankImpl *This = impl_from_IXACT3SoundBank(iface);
+
+    TRACE("(%p)->(%u)\n", This, dwFlags);
+
+    return FACTSoundBank_Stop(This->fact_soundbank, nCueIndex, dwFlags);
+}
+
+static HRESULT WINAPI IXACT3SoundBankImpl_Destroy(IXACT3SoundBank *iface)
+{
+    XACT3SoundBankImpl *This = impl_from_IXACT3SoundBank(iface);
+    HRESULT hr;
+
+    TRACE("(%p)\n", This);
+
+    hr = FACTSoundBank_Destroy(This->fact_soundbank);
+    HeapFree(GetProcessHeap(), 0, This);
+    return hr;
+}
+
+static HRESULT WINAPI IXACT3SoundBankImpl_GetState(IXACT3SoundBank *iface,
+        DWORD *pdwState)
+{
+    XACT3SoundBankImpl *This = impl_from_IXACT3SoundBank(iface);
+
+    TRACE("(%p)->(%p)\n", This, pdwState);
+
+    return FACTSoundBank_GetState(This->fact_soundbank, pdwState);
+}
+
+static const IXACT3SoundBankVtbl XACT3SoundBank_Vtbl =
+{
+    IXACT3SoundBankImpl_GetCueIndex,
+    IXACT3SoundBankImpl_GetNumCues,
+    IXACT3SoundBankImpl_GetCueProperties,
+    IXACT3SoundBankImpl_Prepare,
+    IXACT3SoundBankImpl_Play,
+    IXACT3SoundBankImpl_Stop,
+    IXACT3SoundBankImpl_Destroy,
+    IXACT3SoundBankImpl_GetState
+};
+
 typedef struct _XACT3EngineImpl {
     IXACT3Engine IXACT3Engine_iface;
 
@@ -226,9 +332,36 @@ static HRESULT WINAPI IXACT3EngineImpl_CreateSoundBank(IXACT3Engine *iface,
         DWORD dwAllocAttributes, IXACT3SoundBank **ppSoundBank)
 {
     XACT3EngineImpl *This = impl_from_IXACT3Engine(iface);
-    FIXME("(%p)->(%p, %u, 0x%x, 0x%x, %p): stub!\n", This, pvBuffer, dwSize, dwFlags,
+    XACT3SoundBankImpl *sb;
+    FACTSoundBank *fsb;
+    UINT ret;
+
+    TRACE("(%p)->(%p, %u, 0x%x, 0x%x, %p): stub!\n", This, pvBuffer, dwSize, dwFlags,
             dwAllocAttributes, ppSoundBank);
-    return E_NOTIMPL;
+
+    ret = FACTAudioEngine_CreateSoundBank(This->fact_engine, pvBuffer, dwSize,
+            dwFlags, dwAllocAttributes, &fsb);
+    if(ret != 0)
+    {
+        ERR("Failed to CreateSoundBank: %d\n", ret);
+        return E_FAIL;
+    }
+
+    sb = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*sb));
+    if (!sb)
+    {
+        FACTSoundBank_Destroy(fsb);
+        ERR("Failed to allocate XACT3SoundBankImpl!");
+        return E_OUTOFMEMORY;
+    }
+
+    sb->IXACT3SoundBank_iface.lpVtbl = &XACT3SoundBank_Vtbl;
+    sb->fact_soundbank = fsb;
+    *ppSoundBank = (IXACT3SoundBank*)sb;
+
+    TRACE("Created SoundBank: %p\n", sb);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IXACT3EngineImpl_CreateInMemoryWaveBank(IXACT3Engine *iface,
