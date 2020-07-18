@@ -1229,10 +1229,8 @@ Unit tests for data structure packing
 
 %header
 
-basetsd.h
 winnt.h
-windef.h
-wtypes.h
+
 shlwapi.h
 
 %include
