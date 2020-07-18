@@ -1595,7 +1595,7 @@ Unit tests for data structure packing
 basetsd.h
 winnt.h
 windef.h
-winbase.h
+
 wininet.h
 
 %include
