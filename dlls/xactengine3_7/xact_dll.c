@@ -967,22 +967,114 @@ static HRESULT WINAPI IXACT3EngineImpl_PrepareWave(IXACT3Engine *iface,
     return E_NOTIMPL;
 }
 
+enum {
+    NOTIFY_SoundBank = 0x01,
+    NOTIFY_WaveBank  = 0x02,
+    NOTIFY_Cue       = 0x04,
+    NOTIFY_Wave      = 0x08,
+    NOTIFY_cueIndex  = 0x10,
+    NOTIFY_waveIndex = 0x20
+};
+
+static inline void unwrap_notificationdesc(FACTNotificationDescription *fd,
+        const XACT_NOTIFICATION_DESCRIPTION *xd)
+{
+    DWORD flags = 0;
+
+    TRACE("Type %d\n", xd->type);
+
+    memset(fd, 0, sizeof(*fd));
+
+    /* Supports SoundBank, Cue index, Cue instance */
+    if (xd->type == XACTNOTIFICATIONTYPE_CUEPREPARED || xd->type == XACTNOTIFICATIONTYPE_CUEPLAY ||
+        xd->type == XACTNOTIFICATIONTYPE_CUESTOP || xd->type == XACTNOTIFICATIONTYPE_CUEDESTROYED ||
+        xd->type == XACTNOTIFICATIONTYPE_MARKER || xd->type == XACTNOTIFICATIONTYPE_LOCALVARIABLECHANGED)
+    {
+        flags = NOTIFY_SoundBank | NOTIFY_cueIndex | NOTIFY_Cue;
+    }
+    /* Supports WaveBank */
+    else if (xd->type == XACTNOTIFICATIONTYPE_WAVEBANKDESTROYED || xd->type == XACTNOTIFICATIONTYPE_WAVEBANKPREPARED ||
+             xd->type == XACTNOTIFICATIONTYPE_WAVEBANKSTREAMING_INVALIDCONTENT)
+    {
+        flags = NOTIFY_WaveBank;
+    }
+    /* Supports NOTIFY_SoundBank */
+    else if (xd->type == XACTNOTIFICATIONTYPE_SOUNDBANKDESTROYED)
+    {
+        flags = NOTIFY_SoundBank;
+    }
+    /* Supports WaveBank, Wave index, Wave instance */
+    else if (xd->type == XACTNOTIFICATIONTYPE_WAVEPREPARED || xd->type == XACTNOTIFICATIONTYPE_WAVEDESTROYED)
+    {
+        flags = NOTIFY_WaveBank | NOTIFY_waveIndex | NOTIFY_Wave;
+    }
+    /* Supports SoundBank, SoundBank, Cue index, Cue instance, WaveBank, Wave instance */
+    else if (xd->type == XACTNOTIFICATIONTYPE_WAVEPLAY || xd->type == XACTNOTIFICATIONTYPE_WAVESTOP ||
+             xd->type == XACTNOTIFICATIONTYPE_WAVELOOPED)
+    {
+        flags = NOTIFY_SoundBank | NOTIFY_cueIndex | NOTIFY_Cue | NOTIFY_WaveBank | NOTIFY_Wave;
+    }
+
+    /* We have to unwrap the FACT object first! */
+    fd->type = xd->type;
+    fd->flags = xd->flags;
+    fd->pvContext = xd->pvContext;
+    if (flags & NOTIFY_cueIndex)
+        fd->cueIndex = xd->cueIndex;
+    if (flags & NOTIFY_waveIndex)
+        fd->waveIndex = xd->waveIndex;
+
+    if (flags & NOTIFY_Cue && xd->pCue != NULL)
+    {
+        XACT3CueImpl *cue = impl_from_IXACT3Cue(xd->pCue);
+        if (cue)
+            fd->pCue = cue->fact_cue;
+    }
+
+    if (flags & NOTIFY_SoundBank && xd->pSoundBank != NULL)
+    {
+        XACT3SoundBankImpl *sound = impl_from_IXACT3SoundBank(xd->pSoundBank);
+        if (sound)
+            fd->pSoundBank = sound->fact_soundbank;
+    }
+
+    if (flags & NOTIFY_WaveBank && xd->pWaveBank != NULL)
+    {
+        XACT3WaveBankImpl *bank = impl_from_IXACT3WaveBank(xd->pWaveBank);
+        if (bank)
+            fd->pWaveBank = bank->fact_wavebank;
+    }
+
+    if (flags & NOTIFY_Wave && xd->pWave != NULL)
+    {
+        XACT3WaveImpl *wave = impl_from_IXACT3Wave(xd->pWave);
+        if (wave)
+            fd->pWave = wave->fact_wave;
+    }
+}
+
 static HRESULT WINAPI IXACT3EngineImpl_RegisterNotification(IXACT3Engine *iface,
         const XACT_NOTIFICATION_DESCRIPTION *pNotificationDesc)
 {
     XACT3EngineImpl *This = impl_from_IXACT3Engine(iface);
+    FACTNotificationDescription fdesc;
 
-    FIXME("(%p)->(%p): stub!\n", This, pNotificationDesc);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, pNotificationDesc);
+
+    unwrap_notificationdesc(&fdesc, pNotificationDesc);
+    return FACTAudioEngine_RegisterNotification(This->fact_engine, &fdesc);
 }
 
 static HRESULT WINAPI IXACT3EngineImpl_UnRegisterNotification(IXACT3Engine *iface,
         const XACT_NOTIFICATION_DESCRIPTION *pNotificationDesc)
 {
     XACT3EngineImpl *This = impl_from_IXACT3Engine(iface);
+    FACTNotificationDescription fdesc;
 
-    FIXME("(%p)->(%p): stub!\n", This, pNotificationDesc);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, pNotificationDesc);
+
+    unwrap_notificationdesc(&fdesc, pNotificationDesc);
+    return FACTAudioEngine_UnRegisterNotification(This->fact_engine, &fdesc);
 }
 
 static XACTCATEGORY WINAPI IXACT3EngineImpl_GetCategory(IXACT3Engine *iface,
