@@ -34,6 +34,158 @@ WINE_DEFAULT_DEBUG_CHANNEL(xact3);
 
 static HINSTANCE instance;
 
+typedef struct _XACT3CueImpl {
+    IXACT3Cue IXACT3Cue_iface;
+    FACTCue *fact_cue;
+} XACT3CueImpl;
+
+static inline XACT3CueImpl *impl_from_IXACT3Cue(IXACT3Cue *iface)
+{
+    return CONTAINING_RECORD(iface, XACT3CueImpl, IXACT3Cue_iface);
+}
+
+static HRESULT WINAPI IXACT3CueImpl_Play(IXACT3Cue *iface)
+{
+    XACT3CueImpl *This = impl_from_IXACT3Cue(iface);
+
+    TRACE("(%p)\n", iface);
+
+    return FACTCue_Play(This->fact_cue);
+}
+
+static HRESULT WINAPI IXACT3CueImpl_Stop(IXACT3Cue *iface, DWORD dwFlags)
+{
+    XACT3CueImpl *This = impl_from_IXACT3Cue(iface);
+
+    TRACE("(%p)->(%u)\n", iface, dwFlags);
+
+    return FACTCue_Stop(This->fact_cue, dwFlags);
+}
+
+static HRESULT WINAPI IXACT3CueImpl_GetState(IXACT3Cue *iface, DWORD *pdwState)
+{
+    XACT3CueImpl *This = impl_from_IXACT3Cue(iface);
+
+    TRACE("(%p)->(%p)\n", iface, pdwState);
+
+    return FACTCue_GetState(This->fact_cue, pdwState);
+}
+
+static HRESULT WINAPI IXACT3CueImpl_Destroy(IXACT3Cue *iface)
+{
+    XACT3CueImpl *This = impl_from_IXACT3Cue(iface);
+    HRESULT hr;
+
+    TRACE("(%p)\n", iface);
+
+    hr = FACTCue_Destroy(This->fact_cue);
+    HeapFree(GetProcessHeap(), 0, This);
+    return hr;
+}
+
+static HRESULT WINAPI IXACT3CueImpl_SetMatrixCoefficients(IXACT3Cue *iface,
+        UINT32 uSrcChannelCount, UINT32 uDstChannelCount,
+        float *pMatrixCoefficients)
+{
+    XACT3CueImpl *This = impl_from_IXACT3Cue(iface);
+
+    TRACE("(%p)->(%u, %u, %p)\n", iface, uSrcChannelCount, uDstChannelCount,
+            pMatrixCoefficients);
+
+    return FACTCue_SetMatrixCoefficients(This->fact_cue, uSrcChannelCount,
+        uDstChannelCount, pMatrixCoefficients);
+}
+
+static XACTVARIABLEINDEX WINAPI IXACT3CueImpl_GetVariableIndex(IXACT3Cue *iface,
+        PCSTR szFriendlyName)
+{
+    XACT3CueImpl *This = impl_from_IXACT3Cue(iface);
+
+    TRACE("(%p)->(%s)\n", iface, szFriendlyName);
+
+    return FACTCue_GetVariableIndex(This->fact_cue, szFriendlyName);
+}
+
+static HRESULT WINAPI IXACT3CueImpl_SetVariable(IXACT3Cue *iface,
+        XACTVARIABLEINDEX nIndex, XACTVARIABLEVALUE nValue)
+{
+    XACT3CueImpl *This = impl_from_IXACT3Cue(iface);
+
+    TRACE("(%p)->(%u, %f)\n", iface, nIndex, nValue);
+
+    return FACTCue_SetVariable(This->fact_cue, nIndex, nValue);
+}
+
+static HRESULT WINAPI IXACT3CueImpl_GetVariable(IXACT3Cue *iface,
+        XACTVARIABLEINDEX nIndex, XACTVARIABLEVALUE *nValue)
+{
+    XACT3CueImpl *This = impl_from_IXACT3Cue(iface);
+
+    TRACE("(%p)->(%u, %p)\n", iface, nIndex, nValue);
+
+    return FACTCue_GetVariable(This->fact_cue, nIndex, nValue);
+}
+
+static HRESULT WINAPI IXACT3CueImpl_Pause(IXACT3Cue *iface, BOOL fPause)
+{
+    XACT3CueImpl *This = impl_from_IXACT3Cue(iface);
+
+    TRACE("(%p)->(%u)\n", iface, fPause);
+
+    return FACTCue_Pause(This->fact_cue, fPause);
+}
+
+static HRESULT WINAPI IXACT3CueImpl_GetProperties(IXACT3Cue *iface,
+        XACT_CUE_INSTANCE_PROPERTIES **ppProperties)
+{
+    XACT3CueImpl *This = impl_from_IXACT3Cue(iface);
+    FACTCueInstanceProperties *fProps;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p)\n", iface, ppProperties);
+
+    hr = FACTCue_GetProperties(This->fact_cue, &fProps);
+    if(FAILED(hr))
+        return hr;
+
+    *ppProperties = (XACT_CUE_INSTANCE_PROPERTIES*) fProps;
+    return hr;
+}
+
+static HRESULT WINAPI IXACT3CueImpl_SetOutputVoices(IXACT3Cue *iface,
+        const XAUDIO2_VOICE_SENDS *pSendList)
+{
+    XACT3CueImpl *This = impl_from_IXACT3Cue(iface);
+    FIXME("(%p)->(%p): stub!\n", This, pSendList);
+    return S_OK;
+}
+
+static HRESULT WINAPI IXACT3CueImpl_SetOutputVoiceMatrix(IXACT3Cue *iface,
+        IXAudio2Voice *pDestinationVoice, UINT32 SourceChannels,
+        UINT32 DestinationChannels, const float *pLevelMatrix)
+{
+    XACT3CueImpl *This = impl_from_IXACT3Cue(iface);
+    FIXME("(%p)->(%p %u %u %p): stub!\n", This, pDestinationVoice, SourceChannels,
+            DestinationChannels, pLevelMatrix);
+    return S_OK;
+}
+
+static const IXACT3CueVtbl XACT3Cue_Vtbl =
+{
+    IXACT3CueImpl_Play,
+    IXACT3CueImpl_Stop,
+    IXACT3CueImpl_GetState,
+    IXACT3CueImpl_Destroy,
+    IXACT3CueImpl_SetMatrixCoefficients,
+    IXACT3CueImpl_GetVariableIndex,
+    IXACT3CueImpl_SetVariable,
+    IXACT3CueImpl_GetVariable,
+    IXACT3CueImpl_Pause,
+    IXACT3CueImpl_GetProperties,
+    IXACT3CueImpl_SetOutputVoices,
+    IXACT3CueImpl_SetOutputVoiceMatrix
+};
+
 typedef struct _XACT3SoundBankImpl {
     IXACT3SoundBank IXACT3SoundBank_iface;
 
@@ -81,9 +233,36 @@ static HRESULT WINAPI IXACT3SoundBankImpl_Prepare(IXACT3SoundBank *iface,
         IXACT3Cue** ppCue)
 {
     XACT3SoundBankImpl *This = impl_from_IXACT3SoundBank(iface);
-    FIXME("(%p)->(%u, 0x%x, %u, %p): stub!\n", This, nCueIndex, dwFlags, timeOffset,
+    XACT3CueImpl *cue;
+    FACTCue *fcue;
+    UINT ret;
+
+    TRACE("(%p)->(%u, 0x%x, %u, %p)\n", This, nCueIndex, dwFlags, timeOffset,
             ppCue);
-    return E_NOTIMPL;
+
+    ret = FACTSoundBank_Prepare(This->fact_soundbank, nCueIndex, dwFlags,
+            timeOffset, &fcue);
+    if(ret != 0)
+    {
+        ERR("Failed to CreateCue: %d\n", ret);
+        return E_FAIL;
+    }
+
+    cue = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*cue));
+    if (!cue)
+    {
+        FACTCue_Destroy(fcue);
+        ERR("Failed to allocate XACT3CueImpl!");
+        return E_OUTOFMEMORY;
+    }
+
+    cue->IXACT3Cue_iface.lpVtbl = &XACT3Cue_Vtbl;
+    cue->fact_cue = fcue;
+    *ppCue = (IXACT3Cue*)&cue->IXACT3Cue_iface;
+
+    TRACE("Created Cue: %p\n", cue);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IXACT3SoundBankImpl_Play(IXACT3SoundBank *iface,
