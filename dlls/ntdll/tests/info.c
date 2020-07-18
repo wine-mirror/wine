@@ -70,12 +70,6 @@ static BOOL InitFunctionPtrs(void)
     HMODULE hntdll = GetModuleHandleA("ntdll");
     HMODULE hkernel32 = GetModuleHandleA("kernel32");
 
-    if (!hntdll)
-    {
-        win_skip("Not running on NT\n");
-        return FALSE;
-    }
-
     NTDLL_GET_PROC(NtQuerySystemInformation);
     NTDLL_GET_PROC(NtSetSystemInformation);
     NTDLL_GET_PROC(RtlGetNativeSystemInformation);
@@ -228,7 +222,7 @@ static void test_query_performance(void)
 
     status = pNtQuerySystemInformation(SystemPerformanceInformation, buffer, size + 2, &ReturnLength);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
-    ok( ReturnLength == size || ReturnLength == size + 2,
+    ok( ReturnLength == size || ReturnLength == size + 2 /* win8+ */,
         "Inconsistent length %d\n", ReturnLength);
 
     /* Not return values yet, as struct members are unknown */
@@ -250,64 +244,30 @@ static void test_query_timeofday(void)
 
     SYSTEM_TIMEOFDAY_INFORMATION_PRIVATE sti;
   
-    /*  The struct size for NT (32 bytes) and Win2K/XP (48 bytes) differ.
-     *
-     *  Windows 2000 and XP return STATUS_INFO_LENGTH_MISMATCH if the given buffer size is greater
-     *  then 48 and 0 otherwise
-     *  Windows NT returns STATUS_INFO_LENGTH_MISMATCH when the given buffer size is not correct
-     *  and 0 otherwise
-     *
-     *  Windows 2000 and XP copy the given buffer size into the provided buffer, if the return code is STATUS_SUCCESS
-     *  NT only fills the buffer if the return code is STATUS_SUCCESS
-     *
-    */
+    status = pNtQuerySystemInformation( SystemTimeOfDayInformation, &sti, 0, &ReturnLength );
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    ok( 0 == ReturnLength, "ReturnLength should be 0, it is (%d)\n", ReturnLength);
 
-    status = pNtQuerySystemInformation(SystemTimeOfDayInformation, &sti, sizeof(sti), &ReturnLength);
+    sti.uCurrentTimeZoneId = 0xdeadbeef;
+    status = pNtQuerySystemInformation( SystemTimeOfDayInformation, &sti, 24, &ReturnLength );
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    ok( 24 == ReturnLength, "ReturnLength should be 24, it is (%d)\n", ReturnLength);
+    ok( 0xdeadbeef == sti.uCurrentTimeZoneId, "This part of the buffer should not have been filled\n");
 
-    if (status == STATUS_INFO_LENGTH_MISMATCH)
-    {
-        trace("Windows version is NT, we have to cater for differences with W2K/WinXP\n");
- 
-        status = pNtQuerySystemInformation(SystemTimeOfDayInformation, &sti, 0, &ReturnLength);
-        ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
-        ok( 0 == ReturnLength, "ReturnLength should be 0, it is (%d)\n", ReturnLength);
+    sti.uCurrentTimeZoneId = 0xdeadbeef;
+    status = pNtQuerySystemInformation( SystemTimeOfDayInformation, &sti, 32, &ReturnLength );
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    ok( 32 == ReturnLength, "ReturnLength should be 32, it is (%d)\n", ReturnLength);
+    ok( 0xdeadbeef != sti.uCurrentTimeZoneId, "Buffer should have been partially filled\n");
 
-        sti.uCurrentTimeZoneId = 0xdeadbeef;
-        status = pNtQuerySystemInformation(SystemTimeOfDayInformation, &sti, 28, &ReturnLength);
-        ok(status == STATUS_SUCCESS || broken(status == STATUS_INFO_LENGTH_MISMATCH /* NT4 */), "Expected STATUS_SUCCESS, got %08x\n", status);
-        ok( 0xdeadbeef == sti.uCurrentTimeZoneId, "This part of the buffer should not have been filled\n");
+    status = pNtQuerySystemInformation( SystemTimeOfDayInformation, &sti, 49, &ReturnLength );
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
+    ok( ReturnLength == 0 || ReturnLength == sizeof(sti) /* vista */,
+        "ReturnLength should be 0, it is (%d)\n", ReturnLength);
 
-        status = pNtQuerySystemInformation(SystemTimeOfDayInformation, &sti, 32, &ReturnLength);
-        ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
-        ok( 32 == ReturnLength, "ReturnLength should be 0, it is (%d)\n", ReturnLength);
-    }
-    else
-    {
-        status = pNtQuerySystemInformation(SystemTimeOfDayInformation, &sti, 0, &ReturnLength);
-        ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
-        ok( 0 == ReturnLength, "ReturnLength should be 0, it is (%d)\n", ReturnLength);
-
-        sti.uCurrentTimeZoneId = 0xdeadbeef;
-        status = pNtQuerySystemInformation(SystemTimeOfDayInformation, &sti, 24, &ReturnLength);
-        ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
-        ok( 24 == ReturnLength, "ReturnLength should be 24, it is (%d)\n", ReturnLength);
-        ok( 0xdeadbeef == sti.uCurrentTimeZoneId, "This part of the buffer should not have been filled\n");
-    
-        sti.uCurrentTimeZoneId = 0xdeadbeef;
-        status = pNtQuerySystemInformation(SystemTimeOfDayInformation, &sti, 32, &ReturnLength);
-        ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
-        ok( 32 == ReturnLength, "ReturnLength should be 32, it is (%d)\n", ReturnLength);
-        ok( 0xdeadbeef != sti.uCurrentTimeZoneId, "Buffer should have been partially filled\n");
-    
-        status = pNtQuerySystemInformation(SystemTimeOfDayInformation, &sti, 49, &ReturnLength);
-        ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
-        ok( ReturnLength == 0 || ReturnLength == sizeof(sti) /* vista */,
-            "ReturnLength should be 0, it is (%d)\n", ReturnLength);
-    
-        status = pNtQuerySystemInformation(SystemTimeOfDayInformation, &sti, sizeof(sti), &ReturnLength);
-        ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
-        ok( sizeof(sti) == ReturnLength, "Inconsistent length %d\n", ReturnLength);
-    }
+    status = pNtQuerySystemInformation( SystemTimeOfDayInformation, &sti, sizeof(sti), &ReturnLength );
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    ok( sizeof(sti) == ReturnLength, "Inconsistent length %d\n", ReturnLength);
 
     /* Check if we have some return values */
     trace("uCurrentTimeZoneId : (%d)\n", sti.uCurrentTimeZoneId);
@@ -319,7 +279,6 @@ static void test_query_process(void)
     DWORD last_pid;
     ULONG ReturnLength;
     int i = 0, k = 0;
-    BOOL is_nt = FALSE;
     SYSTEM_BASIC_INFORMATION sbi;
     PROCESS_BASIC_INFORMATION pbi;
     THREAD_BASIC_INFORMATION tbi;
@@ -354,8 +313,7 @@ static void test_query_process(void)
     ReturnLength = 0;
     status = pNtQuerySystemInformation(SystemProcessInformation, NULL, 0, &ReturnLength);
     ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH got %08x\n", status);
-    ok( ReturnLength > 0 || broken(ReturnLength == 0) /* NT4, Win2K */,
-        "Expected a ReturnLength to show the needed length\n");
+    ok( ReturnLength > 0, "got 0 length\n");
 
     /* W2K3 and later returns the needed length, the rest returns 0, so we have to loop */
     for (;;)
@@ -369,59 +327,26 @@ static void test_query_process(void)
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
     spi = spi_buf;
 
-    /* Get the first NextEntryOffset, from this we can deduce the OS version we're running
-     *
-     * W2K/WinXP/W2K3:
-     *   NextEntryOffset for a process is 184 + (no. of threads) * sizeof(SYSTEM_THREAD_INFORMATION)
-     * NT:
-     *   NextEntryOffset for a process is 136 + (no. of threads) * sizeof(SYSTEM_THREAD_INFORMATION)
-     * Wine (with every windows version):
-     *   NextEntryOffset for a process is 0 if just this test is running
-     *   NextEntryOffset for a process is 184 + (no. of threads) * sizeof(SYSTEM_THREAD_INFORMATION) +
-     *                             ProcessName.MaximumLength
-     *     if more wine processes are running
-     *
-     * Note : On windows the first process is in fact the Idle 'process' with a thread for every processor
-    */
-
     pNtQuerySystemInformation(SystemBasicInformation, &sbi, sizeof(sbi), &ReturnLength);
-
-    is_nt = ( spi->NextEntryOffset - (sbi.NumberOfProcessors * sizeof(SYSTEM_THREAD_INFORMATION)) == 136);
-
-    if (is_nt) win_skip("Windows version is NT, we will skip thread tests\n");
-
-    /* Check if we have some return values
-     * 
-     * On windows there will be several processes running (Including the always present Idle and System)
-     * On wine we only have one (if this test is the only wine process running)
-    */
-    
-    /* Loop through the processes */
 
     for (;;)
     {
+        DWORD_PTR tid;
+        DWORD j;
+
         i++;
 
         last_pid = (DWORD_PTR)spi->UniqueProcessId;
-
-        /* Loop through the threads, skip NT4 for now */
-        
-        if (!is_nt)
+        ok(!(last_pid & 3), "Unexpected PID low bits: %p\n", spi->UniqueProcessId);
+        for (j = 0; j < spi->dwThreadCount; j++)
         {
-            DWORD_PTR tid;
-            DWORD j;
+            k++;
+            ok ( spi->ti[j].ClientId.UniqueProcess == spi->UniqueProcessId,
+                 "The owning pid of the thread (%p) doesn't equal the pid (%p) of the process\n",
+                 spi->ti[j].ClientId.UniqueProcess, spi->UniqueProcessId);
 
-            ok(!(last_pid & 3), "Unexpected PID low bits: %p\n", spi->UniqueProcessId);
-            for ( j = 0; j < spi->dwThreadCount; j++) 
-            {
-                k++;
-                ok ( spi->ti[j].ClientId.UniqueProcess == spi->UniqueProcessId,
-                     "The owning pid of the thread (%p) doesn't equal the pid (%p) of the process\n",
-                     spi->ti[j].ClientId.UniqueProcess, spi->UniqueProcessId);
-
-                tid = (DWORD_PTR)spi->ti[j].ClientId.UniqueThread;
-                ok(!(tid & 3), "Unexpected TID low bits: %p\n", spi->ti[j].ClientId.UniqueThread);
-            }
+            tid = (DWORD_PTR)spi->ti[j].ClientId.UniqueThread;
+            ok(!(tid & 3), "Unexpected TID low bits: %p\n", spi->ti[j].ClientId.UniqueThread);
         }
 
         if (!spi->NextEntryOffset) break;
@@ -431,17 +356,11 @@ static void test_query_process(void)
         spi = (SYSTEM_PROCESS_INFORMATION_PRIVATE*)((char*)spi + spi->NextEntryOffset);
     }
     trace("Total number of running processes : %d\n", i);
-    if (!is_nt) trace("Total number of running threads   : %d\n", k);
+    trace("Total number of running threads   : %d\n", k);
 
     if (one_before_last_pid == 0) one_before_last_pid = last_pid;
 
     HeapFree( GetProcessHeap(), 0, spi_buf);
-
-    if (is_nt)
-    {
-        win_skip("skipping ptids low bits tests\n");
-        return;
-    }
 
     for (i = 1; i < 4; ++i)
     {
@@ -635,10 +554,6 @@ static void test_query_handle(void)
                 ((HANDLE)(ULONG_PTR)shi->Handle[i].HandleValue == EventHandle);
     ok( found, "Expected to find event handle %p (pid %x) in handle list\n", EventHandle, GetCurrentProcessId() );
 
-    if (!found)
-        for (i = 0; i < shi->Count; i++)
-            trace( "%d: handle %x pid %x\n", i, shi->Handle[i].HandleValue, shi->Handle[i].OwnerPid );
-
     CloseHandle(EventHandle);
 
     ReturnLength = 0xdeadbeef;
@@ -822,7 +737,7 @@ static void test_query_logicalproc(void)
     GetSystemInfo(&si);
 
     status = pNtQuerySystemInformation(SystemLogicalProcessorInformation, NULL, 0, &len);
-    if(status == STATUS_INVALID_INFO_CLASS)
+    if (status == STATUS_INVALID_INFO_CLASS) /* wow64 win8+ */
     {
         win_skip("SystemLogicalProcessorInformation is not supported\n");
         return;
@@ -1441,7 +1356,7 @@ static void test_query_process_vm(void)
 
     status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessVmCounters, &pvi, 46, &ReturnLength);
     ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
-    ok( ReturnLength == sizeof(VM_COUNTERS) || ReturnLength == sizeof(pvi), "Inconsistent length %d\n", ReturnLength);
+    todo_wine ok( ReturnLength == sizeof(VM_COUNTERS), "wrong size %d\n", ReturnLength);
 
     /* Check if we have some return values */
     dump_vm_counters("VM counters for GetCurrentProcess", &pvi);
@@ -1524,14 +1439,6 @@ static void test_query_process_io(void)
     ULONG ReturnLength;
     IO_COUNTERS pii;
 
-    /* NT4 doesn't support this information class, so check for it */
-    status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessIoCounters, &pii, sizeof(pii), &ReturnLength);
-    if (status == STATUS_NOT_SUPPORTED)
-    {
-        win_skip("ProcessIoCounters information class is not supported\n");
-        return;
-    }
- 
     status = pNtQueryInformationProcess(NULL, ProcessIoCounters, NULL, sizeof(pii), NULL);
     ok( status == STATUS_ACCESS_VIOLATION || status == STATUS_INVALID_HANDLE,
         "Expected STATUS_ACCESS_VIOLATION or STATUS_INVALID_HANDLE(W2K3), got %08x\n", status);
@@ -1637,8 +1544,7 @@ static void test_query_process_debug_port(int argc, char **argv)
 
     status = pNtQueryInformationProcess(NULL, ProcessDebugPort,
             NULL, sizeof(debug_port), NULL);
-    ok(status == STATUS_INVALID_HANDLE || status == STATUS_ACCESS_VIOLATION,
-            "Expected STATUS_INVALID_HANDLE, got %#x.\n", status);
+    ok(status == STATUS_INVALID_HANDLE || status == STATUS_ACCESS_VIOLATION /* XP */, "got %#x\n", status);
 
     status = pNtQueryInformationProcess(GetCurrentProcess(), ProcessDebugPort,
             NULL, sizeof(debug_port), NULL);
@@ -1776,11 +1682,6 @@ static void test_query_process_image_file_name(void)
     UNICODE_STRING *buffer = NULL;
 
     status = pNtQueryInformationProcess(NULL, ProcessImageFileName, &image_file_name, sizeof(image_file_name), NULL);
-    if (status == STATUS_INVALID_INFO_CLASS)
-    {
-        win_skip("ProcessImageFileName is not supported\n");
-        return;
-    }
     ok( status == STATUS_INVALID_HANDLE, "Expected STATUS_INVALID_HANDLE, got %08x\n", status);
 
     status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessImageFileName, &image_file_name, 2, &ReturnLength);
@@ -1868,11 +1769,6 @@ static void test_query_process_debug_object_handle(int argc, char **argv)
 
     status = pNtQueryInformationProcess(NULL, ProcessDebugObjectHandle, NULL,
             0, NULL);
-    if (status == STATUS_INVALID_INFO_CLASS || status == STATUS_NOT_IMPLEMENTED)
-    {
-        win_skip("ProcessDebugObjectHandle is not supported\n");
-        return;
-    }
     ok(status == STATUS_INFO_LENGTH_MISMATCH,
        "Expected NtQueryInformationProcess to return STATUS_INFO_LENGTH_MISMATCH, got 0x%08x\n",
        status);
@@ -2122,7 +2018,7 @@ static void test_readvirtualmemory(void)
     /* illegal remote address */
     todo_wine{
     status = pNtReadVirtualMemory(process, (void *) 0x1234, buffer, 12, &readcount);
-    ok( status == STATUS_PARTIAL_COPY || broken(status == STATUS_ACCESS_VIOLATION), "Expected STATUS_PARTIAL_COPY, got %08x\n", status);
+    ok( status == STATUS_PARTIAL_COPY, "Expected STATUS_PARTIAL_COPY, got %08x\n", status);
     if (status == STATUS_PARTIAL_COPY)
         ok( readcount == 0, "Expected to read 0 bytes, got %ld\n",readcount);
     }
@@ -2419,8 +2315,7 @@ static void test_affinity(void)
     {
         status = pNtQueryInformationThread( GetCurrentThread(), ThreadBasicInformation, &tbi, sizeof(tbi), NULL );
         ok(status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
-        ok( broken(tbi.AffinityMask == 1) || tbi.AffinityMask == (1 << si.dwNumberOfProcessors) - 1,
-            "Unexpected thread affinity\n" );
+        ok( tbi.AffinityMask == (1 << si.dwNumberOfProcessors) - 1, "unexpected affinity %#lx\n", tbi.AffinityMask );
     }
     else
         skip("Cannot test thread affinity mask for 'all processors' flag\n");
