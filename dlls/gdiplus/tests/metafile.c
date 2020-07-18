@@ -3057,6 +3057,123 @@ static void test_drawdriverstring(void)
     GdipDisposeImage((GpImage*)metafile);
 }
 
+static const emfplus_record unknownfontdecode_records[] = {
+    { EMR_HEADER },
+    { EmfPlusRecordTypeHeader },
+    { EmfPlusRecordTypeObject, ObjectTypeFont << 8, 0, 1 },
+    { EmfPlusRecordTypeDrawDriverString, 0x8000, 0, 1 },
+    { EmfPlusRecordTypeEndOfFile },
+    { EMR_EOF },
+    { 0 }
+};
+
+static void test_unknownfontdecode(void)
+{
+    static const GpPointF dst_points[3] = {{0.0,0.0},{100.0,0.0},{0.0,100.0}};
+    static const GpRectF frame = {0.0, 0.0, 100.0, 100.0};
+    static const PointF pos = {10.0,30.0};
+    static const INT testfont0_resnum = 2;
+
+    BOOL rval;
+    DWORD written, ressize;
+    GpBitmap *bitmap;
+    GpBrush *brush;
+    GpFont *font;
+    GpFontCollection *fonts;
+    GpFontFamily *family;
+    GpGraphics *graphics;
+    GpMetafile *metafile;
+    GpStatus stat;
+    HANDLE file;
+    HDC hdc;
+    HRSRC res;
+    INT fontscount;
+    WCHAR path[MAX_PATH];
+    void *buf;
+
+    /* Create a custom font from a resource. */
+    GetTempPathW(MAX_PATH, path);
+    lstrcatW(path, L"wine_testfont0.ttf");
+
+    file = CreateFileW(path, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    ok(file != INVALID_HANDLE_VALUE, "file creation failed, at %s, error %d\n",
+        wine_dbgstr_w(path), GetLastError());
+
+    res = FindResourceA(GetModuleHandleA(NULL), MAKEINTRESOURCEA(testfont0_resnum),
+        (LPCSTR)RT_RCDATA);
+    ok(res != 0, "couldn't find resource\n");
+
+    buf = LockResource(LoadResource(GetModuleHandleA(NULL), res));
+    ressize = SizeofResource(GetModuleHandleA(NULL), res);
+
+    WriteFile(file, buf, ressize, &written, NULL);
+    expect(ressize, written);
+
+    CloseHandle(file);
+
+    stat = GdipNewPrivateFontCollection(&fonts);
+    expect(Ok, stat);
+
+    stat = GdipPrivateAddFontFile(fonts, path);
+    expect(Ok, stat);
+
+    stat = GdipGetFontCollectionFamilyCount(fonts, &fontscount);
+    expect(Ok, stat);
+    expect(1, fontscount);
+
+    stat = GdipGetFontCollectionFamilyList(fonts, fontscount, &family, &fontscount);
+    expect(Ok, stat);
+
+    stat = GdipCreateFont(family, 16.0, FontStyleRegular, UnitPixel, &font);
+    expect(Ok, stat);
+
+    /* Start metafile recording. */
+    hdc = CreateCompatibleDC(0);
+    stat = GdipRecordMetafile(hdc, EmfTypeEmfPlusOnly, &frame, MetafileFrameUnitPixel,
+        L"winetest", &metafile);
+    expect(Ok, stat);
+    DeleteDC(hdc);
+    hdc = NULL;
+
+    stat = GdipGetImageGraphicsContext((GpImage*)metafile, &graphics);
+    expect(Ok, stat);
+
+    stat = GdipCreateSolidFill((ARGB)0xff0000ff, (GpSolidFill**)&brush);
+    expect(Ok, stat);
+
+    /* Write something with the custom font so that it is encoded. */
+    stat = GdipDrawDriverString(graphics, L"Test", 4, font, brush, &pos,
+        DriverStringOptionsCmapLookup|DriverStringOptionsRealizedAdvance, NULL);
+    expect(Ok, stat);
+
+    /* Delete the custom font so that it is not present during playback. */
+    GdipDeleteFont(font);
+    GdipDeletePrivateFontCollection(&fonts);
+    rval = DeleteFileW(path);
+    expect(TRUE, rval);
+
+    GdipDeleteGraphics(graphics);
+    graphics = NULL;
+
+    check_metafile(metafile, unknownfontdecode_records, "unknownfontdecode metafile", dst_points,
+        &frame, UnitPixel);
+    sync_metafile(&metafile, "unknownfontdecode.emf");
+
+    stat = GdipCreateBitmapFromScan0(100, 100, 0, PixelFormat32bppARGB, NULL, &bitmap);
+    expect(Ok, stat);
+
+    stat = GdipGetImageGraphicsContext((GpImage*)bitmap, &graphics);
+    expect(Ok, stat);
+
+    play_metafile(metafile, graphics, unknownfontdecode_records, "unknownfontdecode playback",
+        dst_points, &frame, UnitPixel);
+
+    GdipDeleteGraphics(graphics);
+    GdipDeleteBrush(brush);
+    GdipDisposeImage((GpImage*)bitmap);
+    GdipDisposeImage((GpImage*)metafile);
+}
+
 START_TEST(metafile)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -3107,6 +3224,7 @@ START_TEST(metafile)
     test_fillpath();
     test_restoredc();
     test_drawdriverstring();
+    test_unknownfontdecode();
 
     GdiplusShutdown(gdiplusToken);
 }
