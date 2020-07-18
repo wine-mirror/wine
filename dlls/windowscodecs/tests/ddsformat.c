@@ -77,6 +77,46 @@ static BYTE test_dds_32bpp_argb[] = {
     0x70, 0x81, 0x83, 0xFF
 };
 
+/* 1x1 uncompressed(64bpp ABGR) DDS image */
+static BYTE test_dds_64bpp[] = {
+    'D',  'D',  'S',  ' ',  0x7C, 0x00, 0x00, 0x00, 0x0F, 0x10, 0x02, 0x00, 0x01, 0x00, 0x00, 0x00,
+    0x01, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00,
+    0x04, 0x00, 0x00, 0x00, 0x24, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x83, 0x83, 0x81, 0x81, 0x70, 0x70, 0xFF, 0xFF
+};
+
+/* 1x1 uncompressed(96bpp ABGR float) DDS image */
+static BYTE test_dds_96bpp[] = {
+    'D',  'D',  'S',  ' ',  0x7C, 0x00, 0x00, 0x00, 0x0F, 0x10, 0x02, 0x00, 0x01, 0x00, 0x00, 0x00,
+    0x01, 0x00, 0x00, 0x00, 0x0C, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00,
+    0x04, 0x00, 0x00, 0x00, 'D',  'X',  '1',  '0',  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x06, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x84, 0x83, 0x03, 0x3F, 0x82, 0x81, 0x01, 0x3F, 0xE2, 0xE0, 0xE0, 0x3E
+};
+
+/* 1x1 uncompressed(128bpp ABGR float) DDS image */
+static BYTE test_dds_128bpp[] = {
+    'D',  'D',  'S',  ' ',  0x7C, 0x00, 0x00, 0x00, 0x0F, 0x10, 0x02, 0x00, 0x01, 0x00, 0x00, 0x00,
+    0x01, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00,
+    0x04, 0x00, 0x00, 0x00, 0x74, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x84, 0x83, 0x03, 0x3F, 0x82, 0x81, 0x01, 0x3F, 0xE2, 0xE0, 0xE0, 0x3E, 0x00, 0x00, 0x80, 0x3F
+};
+
 /* 4x4 compressed(DXT1) DDS image */
 static BYTE test_dds_dxt1[] = {
     'D',  'D',  'S',  ' ',  0x7C, 0x00, 0x00, 0x00, 0x07, 0x10, 0x08, 0x00, 0x04, 0x00, 0x00, 0x00,
@@ -213,23 +253,29 @@ static struct test_data {
     BOOL wine_init;
 } test_data[] = {
     { test_dds_bgr565,     sizeof(test_dds_bgr565),     1, 2,  &GUID_WICPixelFormat32bppBGRA,
-      { 4,  4,  1, 1, 1, DXGI_FORMAT_B5G6R5_UNORM,   WICDdsTexture2D, WICDdsAlphaModeUnknown }, TRUE },
+      { 4,  4,  1, 1, 1, DXGI_FORMAT_B5G6R5_UNORM,       WICDdsTexture2D, WICDdsAlphaModeUnknown }, TRUE },
     { test_dds_24bpp,      sizeof(test_dds_24bpp),      1, 3,  &GUID_WICPixelFormat32bppBGRA,
-      { 1,  1,  1, 1, 1, DXGI_FORMAT_UNKNOWN,        WICDdsTexture2D, WICDdsAlphaModeUnknown }, TRUE },
+      { 1,  1,  1, 1, 1, DXGI_FORMAT_UNKNOWN,            WICDdsTexture2D, WICDdsAlphaModeUnknown }, TRUE },
     { test_dds_32bpp_xrgb, sizeof(test_dds_32bpp_xrgb), 1, 4,  &GUID_WICPixelFormat32bppBGRA,
-      { 1,  1,  1, 1, 1, DXGI_FORMAT_B8G8R8X8_UNORM, WICDdsTexture2D, WICDdsAlphaModeUnknown }, TRUE },
+      { 1,  1,  1, 1, 1, DXGI_FORMAT_B8G8R8X8_UNORM,     WICDdsTexture2D, WICDdsAlphaModeUnknown }, TRUE },
     { test_dds_32bpp_argb, sizeof(test_dds_32bpp_argb), 1, 4,  &GUID_WICPixelFormat32bppBGRA,
-      { 1,  1,  1, 1, 1, DXGI_FORMAT_B8G8R8A8_UNORM, WICDdsTexture2D, WICDdsAlphaModeUnknown }, TRUE },
+      { 1,  1,  1, 1, 1, DXGI_FORMAT_B8G8R8A8_UNORM,     WICDdsTexture2D, WICDdsAlphaModeUnknown }, TRUE },
+    { test_dds_64bpp,      sizeof(test_dds_64bpp),      1, 8,  &GUID_WICPixelFormat32bppBGRA,
+      { 1,  1,  1, 1, 1, DXGI_FORMAT_R16G16B16A16_UNORM, WICDdsTexture2D, WICDdsAlphaModeUnknown }, TRUE },
+    { test_dds_96bpp,      sizeof(test_dds_96bpp),      1, 12, &GUID_WICPixelFormat32bppBGRA,
+      { 1,  1,  1, 1, 1, DXGI_FORMAT_R32G32B32_FLOAT,    WICDdsTexture2D, WICDdsAlphaModeUnknown }, TRUE },
+    { test_dds_128bpp,     sizeof(test_dds_128bpp),     1, 16, &GUID_WICPixelFormat32bppBGRA,
+      { 1,  1,  1, 1, 1, DXGI_FORMAT_R32G32B32A32_FLOAT, WICDdsTexture2D, WICDdsAlphaModeUnknown }, TRUE },
     { test_dds_dxt1,       sizeof(test_dds_dxt1),       1, 8,  &GUID_WICPixelFormat32bppPBGRA,
-      { 4,  4,  1, 1, 1, DXGI_FORMAT_BC1_UNORM,      WICDdsTexture2D, WICDdsAlphaModePremultiplied } },
+      { 4,  4,  1, 1, 1, DXGI_FORMAT_BC1_UNORM,          WICDdsTexture2D, WICDdsAlphaModePremultiplied } },
     { test_dds_mipmaps,    sizeof(test_dds_mipmaps),    3, 8,  &GUID_WICPixelFormat32bppPBGRA,
-      { 4,  4,  1, 3, 1, DXGI_FORMAT_BC1_UNORM,      WICDdsTexture2D, WICDdsAlphaModePremultiplied } },
+      { 4,  4,  1, 3, 1, DXGI_FORMAT_BC1_UNORM,          WICDdsTexture2D, WICDdsAlphaModePremultiplied } },
     { test_dds_volume,     sizeof(test_dds_volume),     7, 8,  &GUID_WICPixelFormat32bppPBGRA,
-      { 4,  4,  4, 3, 1, DXGI_FORMAT_BC1_UNORM,      WICDdsTexture3D, WICDdsAlphaModePremultiplied } },
+      { 4,  4,  4, 3, 1, DXGI_FORMAT_BC1_UNORM,          WICDdsTexture3D, WICDdsAlphaModePremultiplied } },
     { test_dds_array,      sizeof(test_dds_array),      9, 8,  &GUID_WICPixelFormat32bppBGRA,
-      { 4,  4,  1, 3, 3, DXGI_FORMAT_BC1_UNORM,      WICDdsTexture2D, WICDdsAlphaModeUnknown } },
+      { 4,  4,  1, 3, 3, DXGI_FORMAT_BC1_UNORM,          WICDdsTexture2D, WICDdsAlphaModeUnknown } },
     { test_dds_dxt3,       sizeof(test_dds_dxt3),       8, 16, &GUID_WICPixelFormat32bppBGRA,
-      { 12, 12, 1, 4, 2, DXGI_FORMAT_BC2_UNORM,      WICDdsTexture2D, WICDdsAlphaModeUnknown } }
+      { 12, 12, 1, 4, 2, DXGI_FORMAT_BC2_UNORM,          WICDdsTexture2D, WICDdsAlphaModeUnknown } }
 };
 
 static IWICImagingFactory *factory = NULL;
@@ -285,6 +331,7 @@ static HRESULT init_decoder(IWICBitmapDecoder *decoder, IWICStream *stream, HRES
     if (index == -1) {
         ok(hr == S_OK || wine_init, "Decoder initialize failed, hr %#x\n", hr);
     } else {
+        todo_wine_if(index == 9 || index == 10 || index == 11)
         ok(hr == expected, "Test %u: Expected hr %#x, got %#x\n", index, expected, hr);
     }
 
@@ -338,6 +385,9 @@ static void test_dds_decoder_initialize(void)
         { test_dds_24bpp,      sizeof(test_dds_24bpp),      WINCODEC_ERR_BADHEADER, TRUE },
         { test_dds_32bpp_xrgb, sizeof(test_dds_32bpp_xrgb), WINCODEC_ERR_BADHEADER, TRUE },
         { test_dds_32bpp_argb, sizeof(test_dds_32bpp_argb), WINCODEC_ERR_BADHEADER, TRUE },
+        { test_dds_64bpp,      sizeof(test_dds_64bpp),      WINCODEC_ERR_BADHEADER, TRUE },
+        { test_dds_96bpp,      sizeof(test_dds_96bpp),      WINCODEC_ERR_BADHEADER, TRUE },
+        { test_dds_128bpp,     sizeof(test_dds_128bpp),     WINCODEC_ERR_BADHEADER, TRUE },
         { test_dds_cube,       sizeof(test_dds_cube),       WINCODEC_ERR_BADHEADER, TRUE },
         { test_dds_bad_magic,  sizeof(test_dds_bad_magic),  WINCODEC_ERR_UNKNOWNIMAGEFORMAT },
         { test_dds_bad_header, sizeof(test_dds_bad_header), WINCODEC_ERR_BADHEADER },
@@ -558,6 +608,7 @@ static void test_dds_decoder_frame_properties(IWICBitmapFrameDecode *frame_decod
     ok(format_info.DxgiFormat == test_data[i].expected_parameters.DxgiFormat,
        "Test %u, frame %u: Expected DXGI format %#x, got %#x\n",
        i, frame_index, test_data[i].expected_parameters.DxgiFormat, format_info.DxgiFormat);
+    todo_wine_if(i == 4 || i == 5 || i == 6) {
     ok(format_info.BytesPerBlock == test_data[i].expected_bytes_per_block,
        "Test %u, frame %u: Expected bytes per block %u, got %u\n",
        i, frame_index, test_data[i].expected_bytes_per_block, format_info.BytesPerBlock);
@@ -567,6 +618,7 @@ static void test_dds_decoder_frame_properties(IWICBitmapFrameDecode *frame_decod
     ok(format_info.BlockHeight == expected_block_height,
        "Test %u, frame %u: Expected block height %u, got %u\n",
        i, frame_index, expected_block_height, format_info.BlockHeight);
+    }
 
     /* size in blocks tests */
 
@@ -635,29 +687,34 @@ static void test_dds_decoder_frame_data(IWICDdsFrameDecode *dds_frame, UINT fram
     ok(hr == E_INVALIDARG, "Test %u, frame %u: CopyBlocks got unexpected hr %#x\n", i, frame_index, hr);
 
     hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, NULL, frame_stride - 1, sizeof(buffer), buffer);
+    todo_wine_if(i == 4 || i == 5 || i == 6)
     ok(hr == E_INVALIDARG, "Test %u, frame %u: CopyBlocks got unexpected hr %#x\n", i, frame_index, hr);
     hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, NULL, frame_stride * 2, sizeof(buffer), buffer);
     ok(hr == S_OK, "Test %u, frame %u: CopyBlocks got unexpected hr %#x\n", i, frame_index, hr);
     hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, NULL, frame_stride, sizeof(buffer), buffer);
     ok(hr == S_OK, "Test %u, frame %u: CopyBlocks got unexpected hr %#x\n", i, frame_index, hr);
     hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, NULL, frame_stride, frame_stride * height_in_blocks - 1, buffer);
+    todo_wine_if(i == 4 || i == 5 || i == 6)
     ok(hr == E_INVALIDARG, "Test %u, frame %u: CopyBlocks got unexpected hr %#x\n", i, frame_index, hr);
     hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, NULL, frame_stride, frame_stride * height_in_blocks, buffer);
     ok(hr == S_OK, "Test %u, frame %u: CopyBlocks got unexpected hr %#x\n", i, frame_index, hr);
 
     hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, &rect, 0, sizeof(buffer), buffer);
+    todo_wine_if(i == 4 || i == 5 || i == 6)
     ok(hr == E_INVALIDARG, "Test %u, frame %u: CopyBlocks got unexpected hr %#x\n", i, frame_index, hr);
     hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, &rect, stride - 1, sizeof(buffer), buffer);
     ok(hr == E_INVALIDARG, "Test %u, frame %u: CopyBlocks got unexpected hr %#x\n", i, frame_index, hr);
     hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, &rect, stride * 2, sizeof(buffer), buffer);
     ok(hr == S_OK, "Test %u, frame %u: CopyBlocks got unexpected hr %#x\n", i, frame_index, hr);
 
+    todo_wine_if(i == 4 || i == 5 || i == 6) {
     hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, &rect, stride, 0, buffer);
     ok(hr == E_INVALIDARG, "Test %u, frame %u: CopyBlocks got unexpected hr %#x\n", i, frame_index, hr);
     hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, &rect, stride, 1, buffer);
     ok(hr == E_INVALIDARG, "Test %u, frame %u: CopyBlocks got unexpected hr %#x\n", i, frame_index, hr);
     hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, &rect, stride, stride * rect.Height - 1, buffer);
     ok(hr == E_INVALIDARG, "Test %u, frame %u: CopyBlocks got unexpected hr %#x\n", i, frame_index, hr);
+    }
     hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, &rect, stride, stride * rect.Height, buffer);
     ok(hr == S_OK, "Test %u, frame %u: CopyBlocks got unexpected hr %#x\n", i, frame_index, hr);
 
