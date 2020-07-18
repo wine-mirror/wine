@@ -742,11 +742,6 @@ static void test_query_logicalproc(void)
         win_skip("SystemLogicalProcessorInformation is not supported\n");
         return;
     }
-    if(status == STATUS_NOT_IMPLEMENTED)
-    {
-        todo_wine ok(0, "SystemLogicalProcessorInformation is not implemented\n");
-        return;
-    }
     ok(status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
     ok(len%sizeof(*slpi) == 0, "Incorrect length %d\n", len);
 
@@ -2190,8 +2185,7 @@ static void test_queryvirtualmemory(void)
     ok (mbi.AllocationBase == module, "mbi.AllocationBase is 0x%p, expected 0x%p\n", mbi.AllocationBase, module);
     ok (mbi.AllocationProtect == PAGE_EXECUTE_WRITECOPY, "mbi.AllocationProtect is 0x%x, expected 0x%x\n", mbi.AllocationProtect, PAGE_EXECUTE_WRITECOPY);
     ok (mbi.State == MEM_COMMIT, "mbi.State is 0x%x, expected 0x%X\n", mbi.State, MEM_COMMIT);
-    if (mbi.Protect != PAGE_READONLY)
-        todo_wine ok( mbi.Protect == PAGE_READONLY, "mbi.Protect is 0x%x, expected 0x%X\n", mbi.Protect, PAGE_READONLY);
+    ok (mbi.Protect == PAGE_READONLY, "mbi.Protect is 0x%x, expected 0x%X\n", mbi.Protect, PAGE_READONLY);
 
     trace("Check flags of read-write data at %p\n", datatestbuf);
     status = pNtQueryVirtualMemory(NtCurrentProcess(), datatestbuf, MemoryBasicInformation, &mbi, sizeof(MEMORY_BASIC_INFORMATION), &readcount);
