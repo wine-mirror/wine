@@ -928,6 +928,10 @@ Unit tests for data structure packing
 
 %header
 
+basetsd.h
+winnt.h
+windef.h
+
 rpc.h
 rpcdce.h
 rpcdcep.h
