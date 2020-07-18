@@ -774,6 +774,7 @@ static void test_query_logicalprocex(void)
     SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *infoex, *infoex_public, *infoex_core, *infoex_numa,
                                             *infoex_cache, *infoex_package, *infoex_group, *ex;
     DWORD relationship, len, len_public, len_core, len_numa, len_cache, len_package, len_group, len_union;
+    unsigned int i, j;
     NTSTATUS status;
     BOOL ret;
 
@@ -821,180 +822,150 @@ static void test_query_logicalprocex(void)
     ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %d, error %d\n", ret, GetLastError());
     ok(len == len_public, "got %u, expected %u\n", len_public, len);
 
-    if (len && len == len_public) {
-        int j, i;
+    infoex = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
+    infoex_public = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len_public);
+    infoex_core = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len_core);
+    infoex_numa = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len_numa);
+    infoex_cache = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len_cache);
+    infoex_package = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len_package);
+    infoex_group = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len_group);
 
-        infoex = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
-        infoex_public = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len_public);
-        infoex_core = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len_core);
-        infoex_numa = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len_numa);
-        infoex_cache = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len_cache);
-        infoex_package = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len_package);
-        infoex_group = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len_group);
+    relationship = RelationAll;
+    status = pNtQuerySystemInformationEx(SystemLogicalProcessorInformationEx, &relationship, sizeof(relationship), infoex, len, &len);
+    ok(status == STATUS_SUCCESS, "got 0x%08x\n", status);
 
-        relationship = RelationAll;
-        status = pNtQuerySystemInformationEx(SystemLogicalProcessorInformationEx, &relationship, sizeof(relationship), infoex, len, &len);
-        ok(status == STATUS_SUCCESS, "got 0x%08x\n", status);
+    ret = pGetLogicalProcessorInformationEx(RelationAll, infoex_public, &len_public);
+    ok(ret, "got %d, error %d\n", ret, GetLastError());
+    ok(!memcmp(infoex, infoex_public, len), "returned info data mismatch\n");
 
-        ret = pGetLogicalProcessorInformationEx(RelationAll, infoex_public, &len_public);
-        ok(ret, "got %d, error %d\n", ret, GetLastError());
-        ok(!memcmp(infoex, infoex_public, len), "returned info data mismatch\n");
+    /* Test for RelationAll. */
+    for (i = 0; status == STATUS_SUCCESS && i < len; )
+    {
+        ex = (void *)(((char *)infoex) + i);
+        ok(ex->Size, "%u: got size 0\n", i);
 
-        /* Test for RelationAll. */
-        for(i = 0; status == STATUS_SUCCESS && i < len; ){
-            ex = (void*)(((char *)infoex) + i);
-
-            if (!ex->Size)
+        trace("infoex[%u].Size: %u\n", i, ex->Size);
+        switch (ex->Relationship)
+        {
+        case RelationProcessorCore:
+        case RelationProcessorPackage:
+            trace("infoex[%u].Relationship: 0x%x (%s)\n", i, ex->Relationship, ex->Relationship == RelationProcessorCore ? "Core" : "Package");
+            trace("infoex[%u].Processor.Flags: 0x%x\n", i, ex->Processor.Flags);
+            trace("infoex[%u].Processor.EfficiencyClass: 0x%x\n", i, ex->Processor.EfficiencyClass);
+            trace("infoex[%u].Processor.GroupCount: 0x%x\n", i, ex->Processor.GroupCount);
+            for (j = 0; j < ex->Processor.GroupCount; ++j)
             {
-                ok(0, "got infoex[%u].Size=0\n", i);
-                break;
+                trace("infoex[%u].Processor.GroupMask[%u].Mask: 0x%lx\n", i, j, ex->Processor.GroupMask[j].Mask);
+                trace("infoex[%u].Processor.GroupMask[%u].Group: 0x%x\n", i, j, ex->Processor.GroupMask[j].Group);
             }
-
-            trace("infoex[%u].Size: %u\n", i, ex->Size);
-            switch(ex->Relationship){
-            case RelationProcessorCore:
-            case RelationProcessorPackage:
-                trace("infoex[%u].Relationship: 0x%x (%s)\n", i, ex->Relationship, ex->Relationship == RelationProcessorCore ? "Core" : "Package");
-                trace("infoex[%u].Processor.Flags: 0x%x\n", i, ex->Processor.Flags);
-                trace("infoex[%u].Processor.EfficiencyClass: 0x%x\n", i, ex->Processor.EfficiencyClass);
-                trace("infoex[%u].Processor.GroupCount: 0x%x\n", i, ex->Processor.GroupCount);
-                for(j = 0; j < ex->Processor.GroupCount; ++j){
-                    trace("infoex[%u].Processor.GroupMask[%u].Mask: 0x%lx\n", i, j, ex->Processor.GroupMask[j].Mask);
-                    trace("infoex[%u].Processor.GroupMask[%u].Group: 0x%x\n", i, j, ex->Processor.GroupMask[j].Group);
-                }
-                break;
-            case RelationNumaNode:
-                trace("infoex[%u].Relationship: 0x%x (NumaNode)\n", i, ex->Relationship);
-                trace("infoex[%u].NumaNode.NodeNumber: 0x%x\n", i, ex->NumaNode.NodeNumber);
-                trace("infoex[%u].NumaNode.GroupMask.Mask: 0x%lx\n", i, ex->NumaNode.GroupMask.Mask);
-                trace("infoex[%u].NumaNode.GroupMask.Group: 0x%x\n", i, ex->NumaNode.GroupMask.Group);
-                break;
-            case RelationCache:
-                trace("infoex[%u].Relationship: 0x%x (Cache)\n", i, ex->Relationship);
-                trace("infoex[%u].Cache.Level: 0x%x\n", i, ex->Cache.Level);
-                trace("infoex[%u].Cache.Associativity: 0x%x\n", i, ex->Cache.Associativity);
-                trace("infoex[%u].Cache.LineSize: 0x%x\n", i, ex->Cache.LineSize);
-                trace("infoex[%u].Cache.CacheSize: 0x%x\n", i, ex->Cache.CacheSize);
-                trace("infoex[%u].Cache.Type: 0x%x\n", i, ex->Cache.Type);
-                trace("infoex[%u].Cache.GroupMask.Mask: 0x%lx\n", i, ex->Cache.GroupMask.Mask);
-                trace("infoex[%u].Cache.GroupMask.Group: 0x%x\n", i, ex->Cache.GroupMask.Group);
-                break;
-            case RelationGroup:
-                trace("infoex[%u].Relationship: 0x%x (Group)\n", i, ex->Relationship);
-                trace("infoex[%u].Group.MaximumGroupCount: 0x%x\n", i, ex->Group.MaximumGroupCount);
-                trace("infoex[%u].Group.ActiveGroupCount: 0x%x\n", i, ex->Group.ActiveGroupCount);
-                for(j = 0; j < ex->Group.ActiveGroupCount; ++j){
-                    trace("infoex[%u].Group.GroupInfo[%u].MaximumProcessorCount: 0x%x\n", i, j, ex->Group.GroupInfo[j].MaximumProcessorCount);
-                    trace("infoex[%u].Group.GroupInfo[%u].ActiveProcessorCount: 0x%x\n", i, j, ex->Group.GroupInfo[j].ActiveProcessorCount);
-                    trace("infoex[%u].Group.GroupInfo[%u].ActiveProcessorMask: 0x%lx\n", i, j, ex->Group.GroupInfo[j].ActiveProcessorMask);
-                }
-                break;
-            default:
-                ok(0, "Got invalid relationship value: 0x%x\n", ex->Relationship);
-                break;
+            break;
+        case RelationNumaNode:
+            trace("infoex[%u].Relationship: 0x%x (NumaNode)\n", i, ex->Relationship);
+            trace("infoex[%u].NumaNode.NodeNumber: 0x%x\n", i, ex->NumaNode.NodeNumber);
+            trace("infoex[%u].NumaNode.GroupMask.Mask: 0x%lx\n", i, ex->NumaNode.GroupMask.Mask);
+            trace("infoex[%u].NumaNode.GroupMask.Group: 0x%x\n", i, ex->NumaNode.GroupMask.Group);
+            break;
+        case RelationCache:
+            trace("infoex[%u].Relationship: 0x%x (Cache)\n", i, ex->Relationship);
+            trace("infoex[%u].Cache.Level: 0x%x\n", i, ex->Cache.Level);
+            trace("infoex[%u].Cache.Associativity: 0x%x\n", i, ex->Cache.Associativity);
+            trace("infoex[%u].Cache.LineSize: 0x%x\n", i, ex->Cache.LineSize);
+            trace("infoex[%u].Cache.CacheSize: 0x%x\n", i, ex->Cache.CacheSize);
+            trace("infoex[%u].Cache.Type: 0x%x\n", i, ex->Cache.Type);
+            trace("infoex[%u].Cache.GroupMask.Mask: 0x%lx\n", i, ex->Cache.GroupMask.Mask);
+            trace("infoex[%u].Cache.GroupMask.Group: 0x%x\n", i, ex->Cache.GroupMask.Group);
+            break;
+        case RelationGroup:
+            trace("infoex[%u].Relationship: 0x%x (Group)\n", i, ex->Relationship);
+            trace("infoex[%u].Group.MaximumGroupCount: 0x%x\n", i, ex->Group.MaximumGroupCount);
+            trace("infoex[%u].Group.ActiveGroupCount: 0x%x\n", i, ex->Group.ActiveGroupCount);
+            for (j = 0; j < ex->Group.ActiveGroupCount; ++j)
+            {
+                trace("infoex[%u].Group.GroupInfo[%u].MaximumProcessorCount: 0x%x\n", i, j, ex->Group.GroupInfo[j].MaximumProcessorCount);
+                trace("infoex[%u].Group.GroupInfo[%u].ActiveProcessorCount: 0x%x\n", i, j, ex->Group.GroupInfo[j].ActiveProcessorCount);
+                trace("infoex[%u].Group.GroupInfo[%u].ActiveProcessorMask: 0x%lx\n", i, j, ex->Group.GroupInfo[j].ActiveProcessorMask);
             }
-
-            i += ex->Size;
+            break;
+        default:
+            ok(0, "Got invalid relationship value: 0x%x\n", ex->Relationship);
+            break;
         }
 
-        /* Test Relationship filtering. */
-
-        relationship = RelationProcessorCore;
-        status = pNtQuerySystemInformationEx(SystemLogicalProcessorInformationEx, &relationship, sizeof(relationship), infoex_core, len_core, &len_core);
-        ok(status == STATUS_SUCCESS, "got 0x%08x\n", status);
-
-        for(i = 0; status == STATUS_SUCCESS && i < len_core;) {
-            ex = (void*)(((char*)infoex_core) + i);
-            if (ex->Size == 0) {
-                ok(0, "Got infoex_core[%u].Size=0\n", i);
-                break;
-            }
-            if (ex->Relationship != RelationProcessorCore) {
-                ok(0, "Expected 0x%x, got 0x%x\n", RelationProcessorCore, ex->Relationship);
-                break;
-            }
-            i += ex->Size;
-        }
-
-        relationship = RelationNumaNode;
-        status = pNtQuerySystemInformationEx(SystemLogicalProcessorInformationEx, &relationship, sizeof(relationship), infoex_numa, len_numa, &len_numa);
-        ok(status == STATUS_SUCCESS, "got 0x%08x\n", status);
-
-        for(i = 0; status == STATUS_SUCCESS && i < len_numa;) {
-            ex = (void*)(((char*)infoex_numa) + i);
-            if (ex->Size == 0) {
-                ok(0, "Got infoex_numa[%u].Size=0\n", i);
-                break;
-            }
-            if (ex->Relationship != RelationNumaNode) {
-                ok(0, "Expected 0x%x, got 0x%x\n", RelationNumaNode, ex->Relationship);
-                break;
-            }
-            i += ex->Size;
-        }
-
-        relationship = RelationCache;
-        status = pNtQuerySystemInformationEx(SystemLogicalProcessorInformationEx, &relationship, sizeof(relationship), infoex_cache, len_cache, &len_cache);
-        ok(status == STATUS_SUCCESS, "got 0x%08x\n", status);
-
-        for(i = 0; status == STATUS_SUCCESS && i < len_cache;) {
-            ex = (void*)(((char*)infoex_cache) + i);
-            if (ex->Size == 0) {
-                ok(0, "Got infoex_cache[%u].Size=0\n", i);
-                break;
-            }
-            if (ex->Relationship != RelationCache) {
-                ok(0, "Expected 0x%x, got 0x%x\n", RelationCache, ex->Relationship);
-                break;
-            }
-            i += ex->Size;
-        }
-
-        relationship = RelationProcessorPackage;
-        status = pNtQuerySystemInformationEx(SystemLogicalProcessorInformationEx, &relationship, sizeof(relationship), infoex_package, len_package, &len_package);
-        ok(status == STATUS_SUCCESS, "got 0x%08x\n", status);
-
-        for(i = 0; status == STATUS_SUCCESS && i < len_package;) {
-            ex = (void*)(((char*)infoex_package) + i);
-            if (ex->Size == 0) {
-                ok(0, "Got infoex_package[%u].Size=0\n", i);
-                break;
-            }
-            if (ex->Relationship != RelationProcessorPackage) {
-                ok(0, "Expected 0x%x, got 0x%x\n", RelationProcessorPackage, ex->Relationship);
-                break;
-            }
-            i += ex->Size;
-        }
-
-        relationship = RelationGroup;
-        status = pNtQuerySystemInformationEx(SystemLogicalProcessorInformationEx, &relationship, sizeof(relationship), infoex_group, len_group, &len_group);
-        ok(status == STATUS_SUCCESS, "got 0x%08x\n", status);
-
-        for(i = 0; status == STATUS_SUCCESS && i < len_group;) {
-            ex = (void*)(((char *)infoex_group) + i);
-            if (ex->Size == 0) {
-                ok(0, "Got infoex_group[%u].Size=0\n", i);
-                break;
-            }
-            if (ex->Relationship != RelationGroup) {
-                ok(0, "Expected 0x%x, got 0x%x\n", RelationGroup, ex->Relationship);
-                break;
-            }
-            i += ex->Size;
-        }
-
-        len_union = len_core + len_numa + len_cache + len_package + len_group;
-        ok(len == len_union, "Expected 0x%x, got 0x%0x\n", len, len_union);
-
-        HeapFree(GetProcessHeap(), 0, infoex);
-        HeapFree(GetProcessHeap(), 0, infoex_public);
-        HeapFree(GetProcessHeap(), 0, infoex_core);
-        HeapFree(GetProcessHeap(), 0, infoex_numa);
-        HeapFree(GetProcessHeap(), 0, infoex_cache);
-        HeapFree(GetProcessHeap(), 0, infoex_package);
-        HeapFree(GetProcessHeap(), 0, infoex_group);
+        i += ex->Size;
     }
+
+    /* Test Relationship filtering. */
+
+    relationship = RelationProcessorCore;
+    status = pNtQuerySystemInformationEx(SystemLogicalProcessorInformationEx, &relationship, sizeof(relationship), infoex_core, len_core, &len_core);
+    ok(status == STATUS_SUCCESS, "got 0x%08x\n", status);
+
+    for (i = 0; status == STATUS_SUCCESS && i < len_core;)
+    {
+        ex = (void *)(((char*)infoex_core) + i);
+        ok(ex->Size, "%u: got size 0\n", i);
+        ok(ex->Relationship == RelationProcessorCore, "%u: got relationship %#x\n", i, ex->Relationship);
+        i += ex->Size;
+    }
+
+    relationship = RelationNumaNode;
+    status = pNtQuerySystemInformationEx(SystemLogicalProcessorInformationEx, &relationship, sizeof(relationship), infoex_numa, len_numa, &len_numa);
+    ok(status == STATUS_SUCCESS, "got 0x%08x\n", status);
+
+    for (i = 0; status == STATUS_SUCCESS && i < len_numa;)
+    {
+        ex = (void *)(((char*)infoex_numa) + i);
+        ok(ex->Size, "%u: got size 0\n", i);
+        ok(ex->Relationship == RelationNumaNode, "%u: got relationship %#x\n", i, ex->Relationship);
+        i += ex->Size;
+    }
+
+    relationship = RelationCache;
+    status = pNtQuerySystemInformationEx(SystemLogicalProcessorInformationEx, &relationship, sizeof(relationship), infoex_cache, len_cache, &len_cache);
+    ok(status == STATUS_SUCCESS, "got 0x%08x\n", status);
+
+    for (i = 0; status == STATUS_SUCCESS && i < len_cache;)
+    {
+        ex = (void *)(((char*)infoex_cache) + i);
+        ok(ex->Size, "%u: got size 0\n", i);
+        ok(ex->Relationship == RelationCache, "%u: got relationship %#x\n", i, ex->Relationship);
+        i += ex->Size;
+    }
+
+    relationship = RelationProcessorPackage;
+    status = pNtQuerySystemInformationEx(SystemLogicalProcessorInformationEx, &relationship, sizeof(relationship), infoex_package, len_package, &len_package);
+    ok(status == STATUS_SUCCESS, "got 0x%08x\n", status);
+
+    for (i = 0; status == STATUS_SUCCESS && i < len_package;)
+    {
+        ex = (void *)(((char*)infoex_package) + i);
+        ok(ex->Size, "%u: got size 0\n", i);
+        ok(ex->Relationship == RelationProcessorPackage, "%u: got relationship %#x\n", i, ex->Relationship);
+        i += ex->Size;
+    }
+
+    relationship = RelationGroup;
+    status = pNtQuerySystemInformationEx(SystemLogicalProcessorInformationEx, &relationship, sizeof(relationship), infoex_group, len_group, &len_group);
+    ok(status == STATUS_SUCCESS, "got 0x%08x\n", status);
+
+    for (i = 0; status == STATUS_SUCCESS && i < len_group;)
+    {
+        ex = (void *)(((char *)infoex_group) + i);
+        ok(ex->Size, "%u: got size 0\n", i);
+        ok(ex->Relationship == RelationGroup, "%u: got relationship %#x\n", i, ex->Relationship);
+        i += ex->Size;
+    }
+
+    len_union = len_core + len_numa + len_cache + len_package + len_group;
+    ok(len == len_union, "Expected 0x%x, got 0x%0x\n", len, len_union);
+
+    HeapFree(GetProcessHeap(), 0, infoex);
+    HeapFree(GetProcessHeap(), 0, infoex_public);
+    HeapFree(GetProcessHeap(), 0, infoex_core);
+    HeapFree(GetProcessHeap(), 0, infoex_numa);
+    HeapFree(GetProcessHeap(), 0, infoex_cache);
+    HeapFree(GetProcessHeap(), 0, infoex_package);
+    HeapFree(GetProcessHeap(), 0, infoex_group);
 }
 
 static void test_query_firmware(void)
