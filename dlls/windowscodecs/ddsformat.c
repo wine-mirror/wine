@@ -143,6 +143,50 @@ typedef struct DdsFrameDecode {
     dds_frame_info info;
 } DdsFrameDecode;
 
+static struct dds_format {
+    DDS_PIXELFORMAT pixel_format;
+    DXGI_FORMAT dxgi_format;
+} dds_formats[] = {
+    { { sizeof(DDS_PIXELFORMAT), DDPF_FOURCC, MAKEFOURCC('D', 'X', 'T', '1'), 0, 0, 0, 0, 0 }, DXGI_FORMAT_BC1_UNORM },
+    { { sizeof(DDS_PIXELFORMAT), DDPF_FOURCC, MAKEFOURCC('D', 'X', 'T', '2'), 0, 0, 0, 0, 0 }, DXGI_FORMAT_BC2_UNORM },
+    { { sizeof(DDS_PIXELFORMAT), DDPF_FOURCC, MAKEFOURCC('D', 'X', 'T', '3'), 0, 0, 0, 0, 0 }, DXGI_FORMAT_BC2_UNORM },
+    { { sizeof(DDS_PIXELFORMAT), DDPF_FOURCC, MAKEFOURCC('D', 'X', 'T', '4'), 0, 0, 0, 0, 0 }, DXGI_FORMAT_BC3_UNORM },
+    { { sizeof(DDS_PIXELFORMAT), DDPF_FOURCC, MAKEFOURCC('D', 'X', 'T', '5'), 0, 0, 0, 0, 0 }, DXGI_FORMAT_BC3_UNORM },
+    { { sizeof(DDS_PIXELFORMAT), DDPF_FOURCC, MAKEFOURCC('B', 'C', '4', 'U'), 0, 0, 0, 0, 0 }, DXGI_FORMAT_BC4_UNORM },
+    { { sizeof(DDS_PIXELFORMAT), DDPF_FOURCC, MAKEFOURCC('B', 'C', '4', 'S'), 0, 0, 0, 0, 0 }, DXGI_FORMAT_BC4_SNORM },
+    { { sizeof(DDS_PIXELFORMAT), DDPF_FOURCC, MAKEFOURCC('B', 'C', '5', 'U'), 0, 0, 0, 0, 0 }, DXGI_FORMAT_BC5_UNORM },
+    { { sizeof(DDS_PIXELFORMAT), DDPF_FOURCC, MAKEFOURCC('B', 'C', '5', 'S'), 0, 0, 0, 0, 0 }, DXGI_FORMAT_BC5_SNORM },
+    { { sizeof(DDS_PIXELFORMAT), DDPF_FOURCC, MAKEFOURCC('A', 'T', 'I', '1'), 0, 0, 0, 0, 0 }, DXGI_FORMAT_BC4_UNORM },
+    { { sizeof(DDS_PIXELFORMAT), DDPF_FOURCC, MAKEFOURCC('A', 'T', 'I', '2'), 0, 0, 0, 0, 0 }, DXGI_FORMAT_BC5_UNORM },
+    { { sizeof(DDS_PIXELFORMAT), DDPF_FOURCC, MAKEFOURCC('R', 'G', 'B', 'G'), 0, 0, 0, 0, 0 }, DXGI_FORMAT_R8G8_B8G8_UNORM },
+    { { sizeof(DDS_PIXELFORMAT), DDPF_FOURCC, MAKEFOURCC('G', 'R', 'G', 'B'), 0, 0, 0, 0, 0 }, DXGI_FORMAT_G8R8_G8B8_UNORM },
+    { { sizeof(DDS_PIXELFORMAT), DDPF_FOURCC, MAKEFOURCC('D', 'X', '1', '0'), 0, 0, 0, 0, 0 }, DXGI_FORMAT_UNKNOWN },
+    { { sizeof(DDS_PIXELFORMAT), DDPF_FOURCC, 0x24, 0, 0, 0, 0, 0 }, DXGI_FORMAT_R16G16B16A16_UNORM },
+    { { sizeof(DDS_PIXELFORMAT), DDPF_FOURCC, 0x6E, 0, 0, 0, 0, 0 }, DXGI_FORMAT_R16G16B16A16_SNORM },
+    { { sizeof(DDS_PIXELFORMAT), DDPF_FOURCC, 0x6F, 0, 0, 0, 0, 0 }, DXGI_FORMAT_R16_FLOAT },
+    { { sizeof(DDS_PIXELFORMAT), DDPF_FOURCC, 0x70, 0, 0, 0, 0, 0 }, DXGI_FORMAT_R16G16_FLOAT },
+    { { sizeof(DDS_PIXELFORMAT), DDPF_FOURCC, 0x71, 0, 0, 0, 0, 0 }, DXGI_FORMAT_R16G16B16A16_FLOAT },
+    { { sizeof(DDS_PIXELFORMAT), DDPF_FOURCC, 0x72, 0, 0, 0, 0, 0 }, DXGI_FORMAT_R32_FLOAT },
+    { { sizeof(DDS_PIXELFORMAT), DDPF_FOURCC, 0x73, 0, 0, 0, 0, 0 }, DXGI_FORMAT_R32G32_FLOAT },
+    { { sizeof(DDS_PIXELFORMAT), DDPF_FOURCC, 0x74, 0, 0, 0, 0, 0 }, DXGI_FORMAT_R32G32B32A32_FLOAT },
+    { { sizeof(DDS_PIXELFORMAT), DDPF_RGB,       0, 32, 0xFF,0xFF00,0xFF0000,0xFF000000 },     DXGI_FORMAT_R8G8B8A8_UNORM },
+    { { sizeof(DDS_PIXELFORMAT), DDPF_RGB,       0, 32, 0xFF0000,0xFF00,0xFF,0xFF000000 },     DXGI_FORMAT_B8G8R8A8_UNORM },
+    { { sizeof(DDS_PIXELFORMAT), DDPF_RGB,       0, 32, 0xFF0000,0xFF00,0xFF,0 },              DXGI_FORMAT_B8G8R8X8_UNORM },
+    /* The red and blue masks are swapped for DXGI_FORMAT_R10G10B10A2_UNORM.
+     * For "correct" one, the RGB masks should be 0x3FF00000,0xFFC00,0x3FF.
+     * see: https://walbourn.github.io/dds-update-and-1010102-problems */
+    { { sizeof(DDS_PIXELFORMAT), DDPF_RGB,       0, 32, 0x3FF,0xFFC00,0x3FF00000,0xC0000000 }, DXGI_FORMAT_R10G10B10A2_UNORM },
+    { { sizeof(DDS_PIXELFORMAT), DDPF_RGB ,      0, 32, 0xFFFF,0xFFFF0000,0,0 },               DXGI_FORMAT_R16G16_UNORM },
+    { { sizeof(DDS_PIXELFORMAT), DDPF_RGB ,      0, 32, 0xFFFFFFFF,0,0,0 },                    DXGI_FORMAT_R32_FLOAT },
+    { { sizeof(DDS_PIXELFORMAT), DDPF_RGB,       0, 16, 0xF800,0x7E0,0x1F,0 },                 DXGI_FORMAT_B5G6R5_UNORM },
+    { { sizeof(DDS_PIXELFORMAT), DDPF_RGB,       0, 16, 0x7C00,0x3E0,0x1F,0x8000 },            DXGI_FORMAT_B5G5R5A1_UNORM },
+    { { sizeof(DDS_PIXELFORMAT), DDPF_RGB,       0, 16, 0xF00,0xF0,0xF,0xF000 },               DXGI_FORMAT_B4G4R4A4_UNORM },
+    { { sizeof(DDS_PIXELFORMAT), DDPF_ALPHA,     0, 8,  0,0,0,0xFF },                          DXGI_FORMAT_A8_UNORM },
+    { { sizeof(DDS_PIXELFORMAT), DDPF_LUMINANCE, 0, 16, 0xFFFF,0,0,0 },                        DXGI_FORMAT_R16_UNORM  },
+    { { sizeof(DDS_PIXELFORMAT), DDPF_LUMINANCE, 0, 16, 0xFF,0,0,0xFF00 },                     DXGI_FORMAT_R8G8_UNORM },
+    { { sizeof(DDS_PIXELFORMAT), DDPF_LUMINANCE, 0, 8,  0xFF,0,0,0 },                          DXGI_FORMAT_R8_UNORM }
+};
+
 static HRESULT WINAPI DdsDecoder_Dds_GetFrame(IWICDdsDecoder *, UINT, UINT, UINT, IWICBitmapFrameDecode **);
 
 static inline BOOL has_extended_header(DDS_HEADER *header)
@@ -173,25 +217,23 @@ static WICDdsDimension get_dimension(DDS_HEADER *header, DDS_HEADER_DXT10 *heade
     }
 }
 
-static DXGI_FORMAT get_format_from_fourcc(DWORD fourcc)
+static DXGI_FORMAT get_dxgi_format(DDS_PIXELFORMAT *pixel_format)
 {
-    switch (fourcc)
+    UINT i;
+
+    for (i = 0; i < ARRAY_SIZE(dds_formats); i++)
     {
-    case MAKEFOURCC('D', 'X', 'T', '1'):
-        return DXGI_FORMAT_BC1_UNORM;
-    case MAKEFOURCC('D', 'X', 'T', '2'):
-    case MAKEFOURCC('D', 'X', 'T', '3'):
-        return DXGI_FORMAT_BC2_UNORM;
-    case MAKEFOURCC('D', 'X', 'T', '4'):
-    case MAKEFOURCC('D', 'X', 'T', '5'):
-        return DXGI_FORMAT_BC3_UNORM;
-    case MAKEFOURCC('D', 'X', '1', '0'):
-        /* format is indicated in extended header */
-        return DXGI_FORMAT_UNKNOWN;
-    default:
-        /* there are DDS files where fourCC is set directly to DXGI_FORMAT enumeration value */
-        return fourcc;
+        if ((pixel_format->flags & dds_formats[i].pixel_format.flags) &&
+            (pixel_format->fourCC == dds_formats[i].pixel_format.fourCC) &&
+            (pixel_format->rgbBitCount == dds_formats[i].pixel_format.rgbBitCount) &&
+            (pixel_format->rBitMask == dds_formats[i].pixel_format.rBitMask) &&
+            (pixel_format->gBitMask == dds_formats[i].pixel_format.gBitMask) &&
+            (pixel_format->bBitMask == dds_formats[i].pixel_format.bBitMask) &&
+            (pixel_format->aBitMask == dds_formats[i].pixel_format.aBitMask))
+            return dds_formats[i].dxgi_format;
     }
+
+    return DXGI_FORMAT_UNKNOWN;
 }
 
 static WICDdsAlphaMode get_alpha_mode_from_fourcc(DWORD fourcc)
@@ -253,11 +295,7 @@ static void get_dds_info(dds_info* info, DDS_HEADER *header, DDS_HEADER_DXT10 *h
         info->alpha_mode = header_dxt10->miscFlags2 & 0x00000008;
         info->data_offset = sizeof(DWORD) + sizeof(*header) + sizeof(*header_dxt10);
     } else {
-        if (info->compressed) {
-            info->format = get_format_from_fourcc(header->ddspf.fourCC);
-        } else {
-            info->format = DXGI_FORMAT_R8G8B8A8_UNORM;
-        }
+        info->format = get_dxgi_format(&header->ddspf);
         info->dimension = get_dimension(header, NULL);
         info->alpha_mode = get_alpha_mode_from_fourcc(header->ddspf.fourCC);
         info->data_offset = sizeof(DWORD) + sizeof(*header);

@@ -213,13 +213,13 @@ static struct test_data {
     BOOL wine_init;
 } test_data[] = {
     { test_dds_bgr565,     sizeof(test_dds_bgr565),     1, 2,  &GUID_WICPixelFormat32bppBGRA,
-      { 4,  4,  1, 1, 1, DXGI_FORMAT_R8G8B8A8_UNORM, WICDdsTexture2D, WICDdsAlphaModeUnknown }, TRUE },
+      { 4,  4,  1, 1, 1, DXGI_FORMAT_B5G6R5_UNORM,   WICDdsTexture2D, WICDdsAlphaModeUnknown }, TRUE },
     { test_dds_24bpp,      sizeof(test_dds_24bpp),      1, 3,  &GUID_WICPixelFormat32bppBGRA,
-      { 1,  1,  1, 1, 1, DXGI_FORMAT_R8G8B8A8_UNORM, WICDdsTexture2D, WICDdsAlphaModeUnknown }, TRUE },
+      { 1,  1,  1, 1, 1, DXGI_FORMAT_UNKNOWN,        WICDdsTexture2D, WICDdsAlphaModeUnknown }, TRUE },
     { test_dds_32bpp_xrgb, sizeof(test_dds_32bpp_xrgb), 1, 4,  &GUID_WICPixelFormat32bppBGRA,
-      { 1,  1,  1, 1, 1, DXGI_FORMAT_R8G8B8A8_UNORM, WICDdsTexture2D, WICDdsAlphaModeUnknown }, TRUE },
+      { 1,  1,  1, 1, 1, DXGI_FORMAT_B8G8R8X8_UNORM, WICDdsTexture2D, WICDdsAlphaModeUnknown }, TRUE },
     { test_dds_32bpp_argb, sizeof(test_dds_32bpp_argb), 1, 4,  &GUID_WICPixelFormat32bppBGRA,
-      { 1,  1,  1, 1, 1, DXGI_FORMAT_R8G8B8A8_UNORM, WICDdsTexture2D, WICDdsAlphaModeUnknown }, TRUE },
+      { 1,  1,  1, 1, 1, DXGI_FORMAT_B8G8R8A8_UNORM, WICDdsTexture2D, WICDdsAlphaModeUnknown }, TRUE },
     { test_dds_dxt1,       sizeof(test_dds_dxt1),       1, 8,  &GUID_WICPixelFormat32bppPBGRA,
       { 4,  4,  1, 1, 1, DXGI_FORMAT_BC1_UNORM,      WICDdsTexture2D, WICDdsAlphaModePremultiplied } },
     { test_dds_mipmaps,    sizeof(test_dds_mipmaps),    3, 8,  &GUID_WICPixelFormat32bppPBGRA,
@@ -535,7 +535,13 @@ static void test_dds_decoder_frame_properties(IWICBitmapFrameDecode *frame_decod
 
     /* frame format information tests */
 
-    if (test_data[i].expected_parameters.DxgiFormat == DXGI_FORMAT_R8G8B8A8_UNORM) {
+    if (test_data[i].expected_parameters.DxgiFormat != DXGI_FORMAT_BC1_UNORM &&
+        test_data[i].expected_parameters.DxgiFormat != DXGI_FORMAT_BC2_UNORM &&
+        test_data[i].expected_parameters.DxgiFormat != DXGI_FORMAT_BC3_UNORM &&
+        test_data[i].expected_parameters.DxgiFormat != DXGI_FORMAT_BC4_UNORM &&
+        test_data[i].expected_parameters.DxgiFormat != DXGI_FORMAT_BC4_SNORM &&
+        test_data[i].expected_parameters.DxgiFormat != DXGI_FORMAT_BC5_UNORM &&
+        test_data[i].expected_parameters.DxgiFormat != DXGI_FORMAT_BC5_SNORM) {
         expected_block_width = 1;
         expected_block_height = 1;
     } else {
