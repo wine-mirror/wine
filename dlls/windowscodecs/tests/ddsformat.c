@@ -130,7 +130,7 @@ static BYTE test_dds_dxt1[] = {
     0xF5, 0xA7, 0x08, 0x69, 0x74, 0xC0, 0xBF, 0xD7
 };
 
-/* 4x4 compressed(DXT1) cube map */
+/* 4x4 compressed(DXT1) cube map, mipMapCount = 3 */
 static BYTE test_dds_cube[] = {
     'D',  'D',  'S',  ' ',  0x7C, 0x00, 0x00, 0x00, 0x07, 0x10, 0x0A, 0x00, 0x04, 0x00, 0x00, 0x00,
     0x04, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00,
@@ -149,6 +149,29 @@ static BYTE test_dds_cube[] = {
     0xF5, 0xA7, 0x08, 0x69, 0x74, 0xC0, 0xBF, 0xD7, 0x32, 0x96, 0x0B, 0x7B, 0xCC, 0x55, 0xCC, 0x55,
     0x0E, 0x84, 0x0E, 0x84, 0x00, 0x00, 0x00, 0x00, 0xF5, 0xA7, 0x08, 0x69, 0x74, 0xC0, 0xBF, 0xD7,
     0x32, 0x96, 0x0B, 0x7B, 0xCC, 0x55, 0xCC, 0x55, 0x0E, 0x84, 0x0E, 0x84, 0x00, 0x00, 0x00, 0x00
+};
+
+/* 4x4 compressed(DXT1) cube map with extended header, mipMapCount=3 */
+static BYTE test_dds_cube_dx10[] = {
+    'D',  'D',  'S',  ' ',  0x7C, 0x00, 0x00, 0x00, 0x07, 0x10, 0x0A, 0x00, 0x04, 0x00, 0x00, 0x00,
+    0x04, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00,
+    0x04, 0x00, 0x00, 0x00, 'D',  'X',  '1',  '0',  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08, 0x10, 0x40, 0x00,
+    0x00, 0xFE, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x47, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
+    0x03, 0x00, 0x00, 0x00, 0xF5, 0xA7, 0x08, 0x69, 0x74, 0xC0, 0xBF, 0xD7, 0x32, 0x96, 0x0B, 0x7B,
+    0xCC, 0x55, 0xCC, 0x55, 0x0E, 0x84, 0x0E, 0x84, 0x00, 0x00, 0x00, 0x00, 0xF5, 0xA7, 0x08, 0x69,
+    0x74, 0xC0, 0xBF, 0xD7, 0x32, 0x96, 0x0B, 0x7B, 0xCC, 0x55, 0xCC, 0x55, 0x0E, 0x84, 0x0E, 0x84,
+    0x00, 0x00, 0x00, 0x00, 0xF5, 0xA7, 0x08, 0x69, 0x74, 0xC0, 0xBF, 0xD7, 0x32, 0x96, 0x0B, 0x7B,
+    0xCC, 0x55, 0xCC, 0x55, 0x0E, 0x84, 0x0E, 0x84, 0x00, 0x00, 0x00, 0x00, 0xF5, 0xA7, 0x08, 0x69,
+    0x74, 0xC0, 0xBF, 0xD7, 0x32, 0x96, 0x0B, 0x7B, 0xCC, 0x55, 0xCC, 0x55, 0x0E, 0x84, 0x0E, 0x84,
+    0x00, 0x00, 0x00, 0x00, 0xF5, 0xA7, 0x08, 0x69, 0x74, 0xC0, 0xBF, 0xD7, 0x32, 0x96, 0x0B, 0x7B,
+    0xCC, 0x55, 0xCC, 0x55, 0x0E, 0x84, 0x0E, 0x84, 0x00, 0x00, 0x00, 0x00, 0xF5, 0xA7, 0x08, 0x69,
+    0x74, 0xC0, 0xBF, 0xD7, 0x32, 0x96, 0x0B, 0x7B, 0xCC, 0x55, 0xCC, 0x55, 0x0E, 0x84, 0x0E, 0x84,
+    0x00, 0x00, 0x00, 0x00
 };
 
 /* 4x4 compressed(DXT1) DDS image with mip maps, mipMapCount=3 */
@@ -252,30 +275,34 @@ static struct test_data {
     WICDdsParameters expected_parameters;
     BOOL wine_init;
 } test_data[] = {
-    { test_dds_bgr565,     sizeof(test_dds_bgr565),     1, 2,  &GUID_WICPixelFormat32bppBGRA,
-      { 4,  4,  1, 1, 1, DXGI_FORMAT_B5G6R5_UNORM,       WICDdsTexture2D, WICDdsAlphaModeUnknown }, TRUE },
-    { test_dds_24bpp,      sizeof(test_dds_24bpp),      1, 3,  &GUID_WICPixelFormat32bppBGRA,
-      { 1,  1,  1, 1, 1, DXGI_FORMAT_UNKNOWN,            WICDdsTexture2D, WICDdsAlphaModeUnknown }, TRUE },
-    { test_dds_32bpp_xrgb, sizeof(test_dds_32bpp_xrgb), 1, 4,  &GUID_WICPixelFormat32bppBGRA,
-      { 1,  1,  1, 1, 1, DXGI_FORMAT_B8G8R8X8_UNORM,     WICDdsTexture2D, WICDdsAlphaModeUnknown }, TRUE },
-    { test_dds_32bpp_argb, sizeof(test_dds_32bpp_argb), 1, 4,  &GUID_WICPixelFormat32bppBGRA,
-      { 1,  1,  1, 1, 1, DXGI_FORMAT_B8G8R8A8_UNORM,     WICDdsTexture2D, WICDdsAlphaModeUnknown }, TRUE },
-    { test_dds_64bpp,      sizeof(test_dds_64bpp),      1, 8,  &GUID_WICPixelFormat32bppBGRA,
-      { 1,  1,  1, 1, 1, DXGI_FORMAT_R16G16B16A16_UNORM, WICDdsTexture2D, WICDdsAlphaModeUnknown }, TRUE },
-    { test_dds_96bpp,      sizeof(test_dds_96bpp),      1, 12, &GUID_WICPixelFormat32bppBGRA,
-      { 1,  1,  1, 1, 1, DXGI_FORMAT_R32G32B32_FLOAT,    WICDdsTexture2D, WICDdsAlphaModeUnknown }, TRUE },
-    { test_dds_128bpp,     sizeof(test_dds_128bpp),     1, 16, &GUID_WICPixelFormat32bppBGRA,
-      { 1,  1,  1, 1, 1, DXGI_FORMAT_R32G32B32A32_FLOAT, WICDdsTexture2D, WICDdsAlphaModeUnknown }, TRUE },
-    { test_dds_dxt1,       sizeof(test_dds_dxt1),       1, 8,  &GUID_WICPixelFormat32bppPBGRA,
-      { 4,  4,  1, 1, 1, DXGI_FORMAT_BC1_UNORM,          WICDdsTexture2D, WICDdsAlphaModePremultiplied } },
-    { test_dds_mipmaps,    sizeof(test_dds_mipmaps),    3, 8,  &GUID_WICPixelFormat32bppPBGRA,
-      { 4,  4,  1, 3, 1, DXGI_FORMAT_BC1_UNORM,          WICDdsTexture2D, WICDdsAlphaModePremultiplied } },
-    { test_dds_volume,     sizeof(test_dds_volume),     7, 8,  &GUID_WICPixelFormat32bppPBGRA,
-      { 4,  4,  4, 3, 1, DXGI_FORMAT_BC1_UNORM,          WICDdsTexture3D, WICDdsAlphaModePremultiplied } },
-    { test_dds_array,      sizeof(test_dds_array),      9, 8,  &GUID_WICPixelFormat32bppBGRA,
-      { 4,  4,  1, 3, 3, DXGI_FORMAT_BC1_UNORM,          WICDdsTexture2D, WICDdsAlphaModeUnknown } },
-    { test_dds_dxt3,       sizeof(test_dds_dxt3),       8, 16, &GUID_WICPixelFormat32bppBGRA,
-      { 12, 12, 1, 4, 2, DXGI_FORMAT_BC2_UNORM,          WICDdsTexture2D, WICDdsAlphaModeUnknown } }
+    { test_dds_bgr565,     sizeof(test_dds_bgr565),        1,  2,  &GUID_WICPixelFormat32bppBGRA,
+      { 4,  4,  1, 1, 1,   DXGI_FORMAT_B5G6R5_UNORM,       WICDdsTexture2D,   WICDdsAlphaModeUnknown },       TRUE },
+    { test_dds_24bpp,      sizeof(test_dds_24bpp),         1,  3,  &GUID_WICPixelFormat32bppBGRA,
+      { 1,  1,  1, 1, 1,   DXGI_FORMAT_UNKNOWN,            WICDdsTexture2D,   WICDdsAlphaModeUnknown },       TRUE },
+    { test_dds_32bpp_xrgb, sizeof(test_dds_32bpp_xrgb),    1,  4,  &GUID_WICPixelFormat32bppBGRA,
+      { 1,  1,  1, 1, 1,   DXGI_FORMAT_B8G8R8X8_UNORM,     WICDdsTexture2D,   WICDdsAlphaModeUnknown },       TRUE },
+    { test_dds_32bpp_argb, sizeof(test_dds_32bpp_argb),    1,  4,  &GUID_WICPixelFormat32bppBGRA,
+      { 1,  1,  1, 1, 1,   DXGI_FORMAT_B8G8R8A8_UNORM,     WICDdsTexture2D,   WICDdsAlphaModeUnknown },       TRUE },
+    { test_dds_64bpp,      sizeof(test_dds_64bpp),         1,  8,  &GUID_WICPixelFormat32bppBGRA,
+      { 1,  1,  1, 1, 1,   DXGI_FORMAT_R16G16B16A16_UNORM, WICDdsTexture2D,   WICDdsAlphaModeUnknown },       TRUE },
+    { test_dds_96bpp,      sizeof(test_dds_96bpp),         1,  12, &GUID_WICPixelFormat32bppBGRA,
+      { 1,  1,  1, 1, 1,   DXGI_FORMAT_R32G32B32_FLOAT,    WICDdsTexture2D,   WICDdsAlphaModeUnknown },       TRUE },
+    { test_dds_128bpp,     sizeof(test_dds_128bpp),        1,  16, &GUID_WICPixelFormat32bppBGRA,
+      { 1,  1,  1, 1, 1,   DXGI_FORMAT_R32G32B32A32_FLOAT, WICDdsTexture2D,   WICDdsAlphaModeUnknown },       TRUE },
+    { test_dds_cube,       sizeof(test_dds_cube),          18, 8,  &GUID_WICPixelFormat32bppPBGRA,
+      { 4,  4,  1, 3, 1,   DXGI_FORMAT_BC1_UNORM,          WICDdsTextureCube, WICDdsAlphaModePremultiplied }, TRUE },
+    { test_dds_cube_dx10,  sizeof(test_dds_cube_dx10),     18, 8,  &GUID_WICPixelFormat32bppBGRA,
+      { 4,  4,  1, 3, 1,   DXGI_FORMAT_BC1_UNORM,          WICDdsTextureCube, WICDdsAlphaModeUnknown },       TRUE },
+    { test_dds_dxt1,       sizeof(test_dds_dxt1),          1,  8,  &GUID_WICPixelFormat32bppPBGRA,
+      { 4,  4,  1, 1, 1,   DXGI_FORMAT_BC1_UNORM,          WICDdsTexture2D,   WICDdsAlphaModePremultiplied } },
+    { test_dds_mipmaps,    sizeof(test_dds_mipmaps),       3,  8,  &GUID_WICPixelFormat32bppPBGRA,
+      { 4,  4,  1, 3, 1,   DXGI_FORMAT_BC1_UNORM,          WICDdsTexture2D,   WICDdsAlphaModePremultiplied } },
+    { test_dds_volume,     sizeof(test_dds_volume),        7,  8,  &GUID_WICPixelFormat32bppPBGRA,
+      { 4,  4,  4, 3, 1,   DXGI_FORMAT_BC1_UNORM,          WICDdsTexture3D,   WICDdsAlphaModePremultiplied } },
+    { test_dds_array,      sizeof(test_dds_array),         9,  8,  &GUID_WICPixelFormat32bppBGRA,
+      { 4,  4,  1, 3, 3,   DXGI_FORMAT_BC1_UNORM,          WICDdsTexture2D,   WICDdsAlphaModeUnknown } },
+    { test_dds_dxt3,       sizeof(test_dds_dxt3),          8,  16, &GUID_WICPixelFormat32bppBGRA,
+      { 12, 12, 1, 4, 2,   DXGI_FORMAT_BC2_UNORM,          WICDdsTexture2D,   WICDdsAlphaModeUnknown } }
 };
 
 static IWICImagingFactory *factory = NULL;
@@ -388,6 +415,7 @@ static void test_dds_decoder_initialize(void)
         { test_dds_96bpp,      sizeof(test_dds_96bpp),      WINCODEC_ERR_BADHEADER, TRUE },
         { test_dds_128bpp,     sizeof(test_dds_128bpp),     WINCODEC_ERR_BADHEADER, TRUE },
         { test_dds_cube,       sizeof(test_dds_cube),       WINCODEC_ERR_BADHEADER, TRUE },
+        { test_dds_cube_dx10,  sizeof(test_dds_cube_dx10),  WINCODEC_ERR_BADHEADER, TRUE },
         { test_dds_bad_magic,  sizeof(test_dds_bad_magic),  WINCODEC_ERR_UNKNOWNIMAGEFORMAT },
         { test_dds_bad_header, sizeof(test_dds_bad_header), WINCODEC_ERR_BADHEADER },
         { &byte,   sizeof(byte),   WINCODEC_ERR_STREAMREAD },
@@ -502,13 +530,18 @@ static void test_dds_decoder_image_parameters(void)
 
         hr = init_decoder(decoder, stream, S_OK, -1, test_data[i].wine_init);
         if (hr != S_OK) {
-            win_skip("uncompressed DDS image is not supported\n");
+            if (test_data[i].expected_parameters.Dimension == WICDdsTextureCube) {
+                win_skip("Cube map is not supported\n");
+            } else {
+                win_skip("Uncompressed DDS image is not supported\n");
+            }
             goto next;
         }
 
         hr = IWICBitmapDecoder_GetFrameCount(decoder, &frame_count);
         ok(hr == S_OK, "Test %u: GetFrameCount failed, hr %#x\n", i, hr);
         if (hr == S_OK) {
+            todo_wine_if(test_data[i].expected_parameters.Dimension == WICDdsTextureCube)
             ok(frame_count == test_data[i].expected_frame_count, "Test %u: Expected frame count %u, got %u\n",
                i, test_data[i].expected_frame_count, frame_count);
         }
@@ -761,6 +794,11 @@ static void test_dds_decoder_frame(IWICBitmapDecoder *decoder, int i)
     UINT frame_count, j;
     WICDdsParameters params;
 
+    if (test_data[i].expected_parameters.Dimension == WICDdsTextureCube) {
+        skip("Frame tests for cube maps will crash\n");
+        return;
+    }
+
     hr = IWICBitmapDecoder_GetFrameCount(decoder, &frame_count);
     ok(hr == S_OK, "Test %u: GetFrameCount failed, hr %#x\n", i, hr);
     if (hr != S_OK) return;
@@ -770,6 +808,8 @@ static void test_dds_decoder_frame(IWICBitmapDecoder *decoder, int i)
     hr = IWICDdsDecoder_GetParameters(dds_decoder, &params);
     ok(hr == S_OK, "Test %u: GetParameters failed, hr %#x\n", i, hr);
     if (hr != S_OK) goto end;
+
+    if (test_data[i].expected_parameters.Dimension == WICDdsTextureCube) params.ArraySize *= 6;
 
     for (j = 0; j < frame_count; j++)
     {
@@ -814,7 +854,11 @@ static void test_dds_decoder(void)
         if (!decoder) goto next;
         hr = init_decoder(decoder, stream, S_OK, -1, test_data[i].wine_init);
         if (hr != S_OK) {
-            win_skip("uncompressed DDS image is not supported\n");
+            if (test_data[i].expected_parameters.Dimension == WICDdsTextureCube) {
+                win_skip("Cube map is not supported\n");
+            } else {
+                win_skip("Uncompressed DDS image is not supported\n");
+            }
             goto next;
         }
 
