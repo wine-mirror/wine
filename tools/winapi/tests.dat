@@ -11,6 +11,7 @@ Unit tests for data structure packing
 basetsd.h
 winnt.h
 windef.h
+
 wingdi.h
 
 %include
@@ -472,6 +473,7 @@ basetsd.h
 winnt.h
 windef.h
 winbase.h
+
 timezoneapi.h
 
 %include
@@ -1053,6 +1055,7 @@ winnt.h
 windef.h
 wtypes.h
 guiddef.h
+
 shellapi.h
 shtypes.h
 shlobj.h
@@ -1265,6 +1268,7 @@ Unit tests for data structure packing
 winnt.h
 windef.h
 guiddef.h
+
 urlmon.h
 
 %include
@@ -1322,6 +1326,7 @@ basetsd.h
 winnt.h
 windef.h
 winbase.h
+
 wingdi.h
 winuser.h
 
@@ -1737,6 +1742,7 @@ Unit tests for data structure packing
 basetsd.h
 winnt.h
 windef.h
+
 mmsystem.h
 digitalv.h
 
