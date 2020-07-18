@@ -2440,8 +2440,13 @@ static GpStatus METAFILE_PlaybackObject(GpMetafile *metafile, UINT flags, UINT d
 
         status = GdipCreateFontFamilyFromName(familyname, NULL, &family);
         GdipFree(familyname);
+
+        /* If a font family cannot be created from family name, native
+           falls back to a sans serif font. */
         if (status != Ok)
-            return InvalidParameter;
+            status = GdipGetGenericFontFamilySansSerif(&family);
+        if (status != Ok)
+            return status;
 
         status = GdipCreateFont(family, data->EmSize, data->FontStyleFlags, data->SizeUnit, (GpFont **)&object);
         GdipDeleteFontFamily(family);

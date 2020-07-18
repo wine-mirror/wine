@@ -3060,8 +3060,8 @@ static void test_drawdriverstring(void)
 static const emfplus_record unknownfontdecode_records[] = {
     { EMR_HEADER },
     { EmfPlusRecordTypeHeader },
-    { EmfPlusRecordTypeObject, ObjectTypeFont << 8, 0, 1 },
-    { EmfPlusRecordTypeDrawDriverString, 0x8000, 0, 1 },
+    { EmfPlusRecordTypeObject, ObjectTypeFont << 8 },
+    { EmfPlusRecordTypeDrawDriverString, 0x8000 },
     { EmfPlusRecordTypeEndOfFile },
     { EMR_EOF },
     { 0 }
