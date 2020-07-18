@@ -690,8 +690,47 @@ static HRESULT WINAPI IXACT3EngineImpl_CreateStreamingWaveBank(IXACT3Engine *ifa
         IXACT3WaveBank **ppWaveBank)
 {
     XACT3EngineImpl *This = impl_from_IXACT3Engine(iface);
-    FIXME("(%p)->(%p, %p): stub!\n", This, pParms, ppWaveBank);
-    return E_NOTIMPL;
+    FACTStreamingParameters fakeParms;
+    wrap_readfile_struct *fake;
+    XACT3WaveBankImpl *wb;
+    FACTWaveBank *fwb;
+    UINT ret;
+
+    TRACE("(%p)->(%p, %p)\n", This, pParms, ppWaveBank);
+
+    /* We have to wrap the file to fix up the callbacks! */
+    fake = (wrap_readfile_struct*) CoTaskMemAlloc(
+            sizeof(wrap_readfile_struct));
+    fake->engine = This;
+    fake->file = pParms->file;
+    fakeParms.file = fake;
+    fakeParms.flags = pParms->flags;
+    fakeParms.offset = pParms->offset;
+    fakeParms.packetSize = pParms->packetSize;
+
+    ret = FACTAudioEngine_CreateStreamingWaveBank(This->fact_engine, &fakeParms,
+            &fwb);
+    if(ret != 0)
+    {
+        ERR("Failed to CreateWaveBank: %d\n", ret);
+        return E_FAIL;
+    }
+
+    wb = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*wb));
+    if (!wb)
+    {
+        FACTWaveBank_Destroy(fwb);
+        ERR("Failed to allocate XACT3WaveBankImpl!");
+        return E_OUTOFMEMORY;
+    }
+
+    wb->IXACT3WaveBank_iface.lpVtbl = &XACT3WaveBank_Vtbl;
+    wb->fact_wavebank = fwb;
+    *ppWaveBank = (IXACT3WaveBank*)wb;
+
+    TRACE("Created streaming WaveBank: %p\n", wb);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IXACT3EngineImpl_PrepareInMemoryWave(IXACT3Engine *iface,
