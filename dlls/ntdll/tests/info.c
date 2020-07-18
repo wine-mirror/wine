@@ -2367,18 +2367,19 @@ static void test_HideFromDebugger(void)
     dummy = 0;
     status = NtQueryInformationThread( GetCurrentThread(), ThreadHideFromDebugger, &dummy, sizeof(ULONG), NULL );
     if (status == STATUS_INVALID_INFO_CLASS)
-        win_skip("ThreadHideFromDebugger not available\n");
-    else
     {
-        ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status );
-        dummy = 0;
-        status = NtQueryInformationThread( (HANDLE)0xdeadbeef, ThreadHideFromDebugger, &dummy, sizeof(ULONG), NULL );
-        ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status );
-        dummy = 0;
-        status = NtQueryInformationThread( GetCurrentThread(), ThreadHideFromDebugger, &dummy, 1, NULL );
-        ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status );
-        if (status == STATUS_SUCCESS) ok( dummy == 1, "Expected dummy == 1, got %08x\n", dummy );
+        win_skip("ThreadHideFromDebugger not available\n");
+        return;
     }
+
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status );
+    dummy = 0;
+    status = NtQueryInformationThread( (HANDLE)0xdeadbeef, ThreadHideFromDebugger, &dummy, sizeof(ULONG), NULL );
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status );
+    dummy = 0;
+    status = NtQueryInformationThread( GetCurrentThread(), ThreadHideFromDebugger, &dummy, 1, NULL );
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status );
+    ok( dummy == 1, "Expected dummy == 1, got %08x\n", dummy );
 
     stop_event = CreateEventA( NULL, FALSE, FALSE, NULL );
     ok( stop_event != NULL, "CreateEvent failed\n" );
@@ -2387,18 +2388,16 @@ static void test_HideFromDebugger(void)
 
     dummy = 0;
     status = NtQueryInformationThread( thread, ThreadHideFromDebugger, &dummy, 1, NULL );
-    ok( status == STATUS_SUCCESS || status == STATUS_INVALID_INFO_CLASS,
-        "Expected STATUS_SUCCESS, got %08x\n", status );
-    if (status == STATUS_SUCCESS) ok( dummy == 0, "Expected dummy == 0, got %08x\n", dummy );
+    ok( status == STATUS_SUCCESS, "got %#x\n", status );
+    ok( dummy == 0, "Expected dummy == 0, got %08x\n", dummy );
 
     status = pNtSetInformationThread( thread, ThreadHideFromDebugger, NULL, 0 );
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status );
 
     dummy = 0;
     status = NtQueryInformationThread( thread, ThreadHideFromDebugger, &dummy, 1, NULL );
-    ok( status == STATUS_SUCCESS || status == STATUS_INVALID_INFO_CLASS,
-        "Expected STATUS_SUCCESS, got %08x\n", status );
-    if (status == STATUS_SUCCESS) ok( dummy == 1, "Expected dummy == 1, got %08x\n", dummy );
+    ok( status == STATUS_SUCCESS, "got %#x\n", status );
+    ok( dummy == 1, "Expected dummy == 1, got %08x\n", dummy );
 
     SetEvent( stop_event );
     WaitForSingleObject( thread, INFINITE );
