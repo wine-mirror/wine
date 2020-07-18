@@ -318,6 +318,112 @@ static const IXACT3SoundBankVtbl XACT3SoundBank_Vtbl =
     IXACT3SoundBankImpl_GetState
 };
 
+typedef struct _XACT3WaveBankImpl {
+    IXACT3WaveBank IXACT3WaveBank_iface;
+
+    FACTWaveBank *fact_wavebank;
+} XACT3WaveBankImpl;
+
+static inline XACT3WaveBankImpl *impl_from_IXACT3WaveBank(IXACT3WaveBank *iface)
+{
+    return CONTAINING_RECORD(iface, XACT3WaveBankImpl, IXACT3WaveBank_iface);
+}
+
+static HRESULT WINAPI IXACT3WaveBankImpl_Destroy(IXACT3WaveBank *iface)
+{
+    XACT3WaveBankImpl *This = impl_from_IXACT3WaveBank(iface);
+    HRESULT hr;
+
+    TRACE("(%p)\n", This);
+
+    hr = FACTWaveBank_Destroy(This->fact_wavebank);
+    HeapFree(GetProcessHeap(), 0, This);
+    return hr;
+}
+
+static HRESULT WINAPI IXACT3WaveBankImpl_GetNumWaves(IXACT3WaveBank *iface,
+        XACTINDEX *pnNumWaves)
+{
+    XACT3WaveBankImpl *This = impl_from_IXACT3WaveBank(iface);
+
+    TRACE("(%p)->(%p)\n", This, pnNumWaves);
+
+    return FACTWaveBank_GetNumWaves(This->fact_wavebank, pnNumWaves);
+}
+
+static XACTINDEX WINAPI IXACT3WaveBankImpl_GetWaveIndex(IXACT3WaveBank *iface,
+        PCSTR szFriendlyName)
+{
+    XACT3WaveBankImpl *This = impl_from_IXACT3WaveBank(iface);
+
+    TRACE("(%p)->(%s)\n", This, szFriendlyName);
+
+    return FACTWaveBank_GetWaveIndex(This->fact_wavebank, szFriendlyName);
+}
+
+static HRESULT WINAPI IXACT3WaveBankImpl_GetWaveProperties(IXACT3WaveBank *iface,
+        XACTINDEX nWaveIndex, XACT_WAVE_PROPERTIES *pWaveProperties)
+{
+    XACT3WaveBankImpl *This = impl_from_IXACT3WaveBank(iface);
+
+    TRACE("(%p)->(%u, %p)\n", This, nWaveIndex, pWaveProperties);
+
+    return FACTWaveBank_GetWaveProperties(This->fact_wavebank, nWaveIndex,
+            (FACTWaveProperties*) pWaveProperties);
+}
+
+static HRESULT WINAPI IXACT3WaveBankImpl_Prepare(IXACT3WaveBank *iface,
+        XACTINDEX nWaveIndex, DWORD dwFlags, DWORD dwPlayOffset,
+        XACTLOOPCOUNT nLoopCount, IXACT3Wave** ppWave)
+{
+    XACT3WaveBankImpl *This = impl_from_IXACT3WaveBank(iface);
+    FIXME("(%p)->(0x%x, %u, 0x%x, %u, %p): stub!\n", This, nWaveIndex, dwFlags,
+            dwPlayOffset, nLoopCount, ppWave);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IXACT3WaveBankImpl_Play(IXACT3WaveBank *iface,
+        XACTINDEX nWaveIndex, DWORD dwFlags, DWORD dwPlayOffset,
+        XACTLOOPCOUNT nLoopCount, IXACT3Wave** ppWave)
+{
+    XACT3WaveBankImpl *This = impl_from_IXACT3WaveBank(iface);
+    FIXME("(%p)->(0x%x, %u, 0x%x, %u, %p): stub!\n", This, nWaveIndex, dwFlags, dwPlayOffset,
+            nLoopCount, ppWave);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IXACT3WaveBankImpl_Stop(IXACT3WaveBank *iface,
+        XACTINDEX nWaveIndex, DWORD dwFlags)
+{
+    XACT3WaveBankImpl *This = impl_from_IXACT3WaveBank(iface);
+
+    TRACE("(%p)->(%u, %u)\n", This, nWaveIndex, dwFlags);
+
+    return FACTWaveBank_Stop(This->fact_wavebank, nWaveIndex, dwFlags);
+}
+
+static HRESULT WINAPI IXACT3WaveBankImpl_GetState(IXACT3WaveBank *iface,
+        DWORD *pdwState)
+{
+    XACT3WaveBankImpl *This = impl_from_IXACT3WaveBank(iface);
+
+    TRACE("(%p)->(%p)\n", This, pdwState);
+
+    return FACTWaveBank_GetState(This->fact_wavebank, pdwState);
+}
+
+static const IXACT3WaveBankVtbl XACT3WaveBank_Vtbl =
+{
+    IXACT3WaveBankImpl_Destroy,
+    IXACT3WaveBankImpl_GetNumWaves,
+    IXACT3WaveBankImpl_GetWaveIndex,
+    IXACT3WaveBankImpl_GetWaveProperties,
+    IXACT3WaveBankImpl_Prepare,
+    IXACT3WaveBankImpl_Play,
+    IXACT3WaveBankImpl_Stop,
+    IXACT3WaveBankImpl_GetState
+};
+
 typedef struct _XACT3EngineImpl {
     IXACT3Engine IXACT3Engine_iface;
 
@@ -547,9 +653,36 @@ static HRESULT WINAPI IXACT3EngineImpl_CreateInMemoryWaveBank(IXACT3Engine *ifac
         DWORD dwAllocAttributes, IXACT3WaveBank **ppWaveBank)
 {
     XACT3EngineImpl *This = impl_from_IXACT3Engine(iface);
-    FIXME("(%p)->(%p, %u, 0x%x, 0x%x, %p): stub!\n", This, pvBuffer, dwSize, dwFlags,
+    XACT3WaveBankImpl *wb;
+    FACTWaveBank *fwb;
+    UINT ret;
+
+    TRACE("(%p)->(%p, %u, 0x%x, 0x%x, %p)\n", This, pvBuffer, dwSize, dwFlags,
             dwAllocAttributes, ppWaveBank);
-    return E_NOTIMPL;
+
+    ret = FACTAudioEngine_CreateInMemoryWaveBank(This->fact_engine, pvBuffer,
+            dwSize, dwFlags, dwAllocAttributes, &fwb);
+    if(ret != 0)
+    {
+        ERR("Failed to CreateWaveBank: %d\n", ret);
+        return E_FAIL;
+    }
+
+    wb = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*wb));
+    if (!wb)
+    {
+        FACTWaveBank_Destroy(fwb);
+        ERR("Failed to allocate XACT3WaveBankImpl!");
+        return E_OUTOFMEMORY;
+    }
+
+    wb->IXACT3WaveBank_iface.lpVtbl = &XACT3WaveBank_Vtbl;
+    wb->fact_wavebank = fwb;
+    *ppWaveBank = (IXACT3WaveBank*)wb;
+
+    TRACE("Created in-memory WaveBank: %p\n", wb);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IXACT3EngineImpl_CreateStreamingWaveBank(IXACT3Engine *iface,
