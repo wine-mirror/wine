@@ -331,7 +331,6 @@ static HRESULT init_decoder(IWICBitmapDecoder *decoder, IWICStream *stream, HRES
     if (index == -1) {
         ok(hr == S_OK || wine_init, "Decoder initialize failed, hr %#x\n", hr);
     } else {
-        todo_wine_if(index == 9 || index == 10 || index == 11)
         ok(hr == expected, "Test %u: Expected hr %#x, got %#x\n", index, expected, hr);
     }
 
@@ -608,7 +607,7 @@ static void test_dds_decoder_frame_properties(IWICBitmapFrameDecode *frame_decod
     ok(format_info.DxgiFormat == test_data[i].expected_parameters.DxgiFormat,
        "Test %u, frame %u: Expected DXGI format %#x, got %#x\n",
        i, frame_index, test_data[i].expected_parameters.DxgiFormat, format_info.DxgiFormat);
-    todo_wine_if(i == 4 || i == 5 || i == 6) {
+    todo_wine_if(i == 4 || i == 5 || i == 6)
     ok(format_info.BytesPerBlock == test_data[i].expected_bytes_per_block,
        "Test %u, frame %u: Expected bytes per block %u, got %u\n",
        i, frame_index, test_data[i].expected_bytes_per_block, format_info.BytesPerBlock);
@@ -618,7 +617,7 @@ static void test_dds_decoder_frame_properties(IWICBitmapFrameDecode *frame_decod
     ok(format_info.BlockHeight == expected_block_height,
        "Test %u, frame %u: Expected block height %u, got %u\n",
        i, frame_index, expected_block_height, format_info.BlockHeight);
-    }
+
 
     /* size in blocks tests */
 

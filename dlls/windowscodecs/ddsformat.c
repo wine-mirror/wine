@@ -105,7 +105,6 @@ typedef struct dds_info {
     UINT frame_count;
     UINT data_offset;
     UINT bytes_per_block;
-    BOOL compressed;
     DXGI_FORMAT format;
     WICDdsDimension dimension;
     WICDdsAlphaMode alpha_mode;
@@ -185,6 +184,16 @@ static struct dds_format {
     { { sizeof(DDS_PIXELFORMAT), DDPF_LUMINANCE, 0, 16, 0xFFFF,0,0,0 },                        DXGI_FORMAT_R16_UNORM  },
     { { sizeof(DDS_PIXELFORMAT), DDPF_LUMINANCE, 0, 16, 0xFF,0,0,0xFF00 },                     DXGI_FORMAT_R8G8_UNORM },
     { { sizeof(DDS_PIXELFORMAT), DDPF_LUMINANCE, 0, 8,  0xFF,0,0,0 },                          DXGI_FORMAT_R8_UNORM }
+};
+
+static DXGI_FORMAT compressed_formats[] = {
+    DXGI_FORMAT_BC1_TYPELESS,  DXGI_FORMAT_BC1_UNORM, DXGI_FORMAT_BC1_UNORM_SRGB,
+    DXGI_FORMAT_BC2_TYPELESS,  DXGI_FORMAT_BC2_UNORM, DXGI_FORMAT_BC2_UNORM_SRGB,
+    DXGI_FORMAT_BC3_TYPELESS,  DXGI_FORMAT_BC3_UNORM, DXGI_FORMAT_BC3_UNORM_SRGB,
+    DXGI_FORMAT_BC4_TYPELESS,  DXGI_FORMAT_BC4_UNORM, DXGI_FORMAT_BC4_SNORM,
+    DXGI_FORMAT_BC5_TYPELESS,  DXGI_FORMAT_BC5_UNORM, DXGI_FORMAT_BC5_SNORM,
+    DXGI_FORMAT_BC6H_TYPELESS, DXGI_FORMAT_BC6H_UF16, DXGI_FORMAT_BC6H_SF16,
+    DXGI_FORMAT_BC7_TYPELESS,  DXGI_FORMAT_BC7_UNORM, DXGI_FORMAT_BC7_UNORM_SRGB
 };
 
 static HRESULT WINAPI DdsDecoder_Dds_GetFrame(IWICDdsDecoder *, UINT, UINT, UINT, IWICBitmapFrameDecode **);
@@ -273,12 +282,21 @@ static UINT get_bytes_per_block_from_format(DXGI_FORMAT format)
     }
 }
 
+static BOOL is_compressed(DXGI_FORMAT format)
+{
+    UINT i;
+
+    for (i = 0; i < ARRAY_SIZE(compressed_formats); i++)
+    {
+        if (format == compressed_formats[i]) return TRUE;
+    }
+    return FALSE;
+}
+
 static void get_dds_info(dds_info* info, DDS_HEADER *header, DDS_HEADER_DXT10 *header_dxt10)
 {
     int i;
     UINT depth;
-
-    info->compressed = !(header->ddspf.flags & (DDPF_RGB | DDPF_LUMINANCE));
 
     info->width = header->width;
     info->height = header->height;
@@ -303,10 +321,10 @@ static void get_dds_info(dds_info* info, DDS_HEADER *header, DDS_HEADER_DXT10 *h
     info->pixel_format = (info->alpha_mode == WICDdsAlphaModePremultiplied) ?
                          &GUID_WICPixelFormat32bppPBGRA : &GUID_WICPixelFormat32bppBGRA;
 
-    if (info->compressed) {
-        info->bytes_per_block = get_bytes_per_block_from_format(info->format);
-    } else {
+    if (header->ddspf.flags & (DDPF_RGB | DDPF_ALPHA | DDPF_LUMINANCE)) {
         info->bytes_per_block = header->ddspf.rgbBitCount / 8;
+    } else {
+        info->bytes_per_block = get_bytes_per_block_from_format(info->format);
     }
 
     /* get frame count */
@@ -685,7 +703,10 @@ static HRESULT WINAPI DdsDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
     hr = IWICWineDecoder_Initialize(&This->IWICWineDecoder_iface, pIStream, cacheOptions);
     if (FAILED(hr)) goto end;
 
-    if (!This->info.compressed || This->info.dimension == WICDdsTextureCube) {
+    if (This->info.dimension == WICDdsTextureCube ||
+        (This->info.format != DXGI_FORMAT_BC1_UNORM &&
+         This->info.format != DXGI_FORMAT_BC2_UNORM &&
+         This->info.format != DXGI_FORMAT_BC3_UNORM)) {
         IStream_Release(pIStream);
         This->stream = NULL;
         This->initialized = FALSE;
@@ -911,7 +932,7 @@ static HRESULT WINAPI DdsDecoder_Dds_GetFrame(IWICDdsDecoder *iface,
     }
 
     bytes_per_block = This->info.bytes_per_block;
-    if (This->info.compressed) {
+    if (is_compressed(This->info.format)) {
         block_width = DDS_BLOCK_WIDTH;
         block_height = DDS_BLOCK_HEIGHT;
     } else {
