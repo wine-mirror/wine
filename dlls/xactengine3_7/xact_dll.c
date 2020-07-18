@@ -559,9 +559,40 @@ static HRESULT WINAPI IXACT3WaveBankImpl_Play(IXACT3WaveBank *iface,
         XACTLOOPCOUNT nLoopCount, IXACT3Wave** ppWave)
 {
     XACT3WaveBankImpl *This = impl_from_IXACT3WaveBank(iface);
-    FIXME("(%p)->(0x%x, %u, 0x%x, %u, %p): stub!\n", This, nWaveIndex, dwFlags, dwPlayOffset,
+    XACT3WaveImpl *wave;
+    FACTWave *fwave;
+    HRESULT hr;
+
+    TRACE("(%p)->(0x%x, %u, 0x%x, %u, %p)\n", This, nWaveIndex, dwFlags, dwPlayOffset,
             nLoopCount, ppWave);
-    return E_NOTIMPL;
+
+    /* If the application doesn't want a handle, don't generate one at all.
+     * Let the engine handle that memory instead.
+     * -flibit
+     */
+    if (ppWave == NULL){
+        hr = FACTWaveBank_Play(This->fact_wavebank, nWaveIndex, dwFlags,
+                dwPlayOffset, nLoopCount, NULL);
+    }else{
+        hr = FACTWaveBank_Play(This->fact_wavebank, nWaveIndex, dwFlags,
+                dwPlayOffset, nLoopCount, &fwave);
+        if(FAILED(hr))
+            return hr;
+
+        wave = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*wave));
+        if (!wave)
+        {
+            FACTWave_Destroy(fwave);
+            ERR("Failed to allocate XACT3WaveImpl!");
+            return E_OUTOFMEMORY;
+        }
+
+        wave->IXACT3Wave_iface.lpVtbl = &XACT3Wave_Vtbl;
+        wave->fact_wave = fwave;
+        *ppWave = (IXACT3Wave*)wave;
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI IXACT3WaveBankImpl_Stop(IXACT3WaveBank *iface,
