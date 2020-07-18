@@ -269,9 +269,40 @@ static HRESULT WINAPI IXACT3SoundBankImpl_Play(IXACT3SoundBank *iface,
         IXACT3Cue** ppCue)
 {
     XACT3SoundBankImpl *This = impl_from_IXACT3SoundBank(iface);
-    FIXME("(%p)->(%u, 0x%x, %u, %p): stub!\n", This, nCueIndex, dwFlags, timeOffset,
+    XACT3CueImpl *cue;
+    FACTCue *fcue;
+    HRESULT hr;
+
+    TRACE("(%p)->(%u, 0x%x, %u, %p)\n", This, nCueIndex, dwFlags, timeOffset,
             ppCue);
-    return E_NOTIMPL;
+
+    /* If the application doesn't want a handle, don't generate one at all.
+     * Let the engine handle that memory instead.
+     * -flibit
+     */
+    if (ppCue == NULL){
+        hr = FACTSoundBank_Play(This->fact_soundbank, nCueIndex, dwFlags,
+                timeOffset, NULL);
+    }else{
+        hr = FACTSoundBank_Play(This->fact_soundbank, nCueIndex, dwFlags,
+                timeOffset, &fcue);
+        if(FAILED(hr))
+            return hr;
+
+        cue = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*cue));
+        if (!cue)
+        {
+            FACTCue_Destroy(fcue);
+            ERR("Failed to allocate XACT3CueImpl!");
+            return E_OUTOFMEMORY;
+        }
+
+        cue->IXACT3Cue_iface.lpVtbl = &XACT3Cue_Vtbl;
+        cue->fact_cue = fcue;
+        *ppCue = (IXACT3Cue*)&cue->IXACT3Cue_iface;
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI IXACT3SoundBankImpl_Stop(IXACT3SoundBank *iface,
