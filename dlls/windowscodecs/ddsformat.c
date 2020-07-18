@@ -14,6 +14,16 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ *
+ *
+ * Note:
+ *
+ * Uncompressed image:
+ *     For uncompressed formats, a block is equivalent to a pixel.
+ *
+ * Cube map:
+ *     A cube map is equivalent to a 2D texture array which has 6 textures.
+ *     A cube map array is equivalent to a 2D texture array which has cubeCount*6 textures.
  */
 
 #include "config.h"
@@ -436,6 +446,7 @@ static void get_dds_info(dds_info* info, DDS_HEADER *header, DDS_HEADER_DXT10 *h
         }
         info->frame_count *= info->array_size;
     }
+    if (info->dimension == WICDdsTextureCube) info->frame_count *= 6;
 }
 
 static inline DdsDecoder *impl_from_IWICBitmapDecoder(IWICBitmapDecoder *iface)
@@ -910,7 +921,11 @@ static HRESULT WINAPI DdsDecoder_GetFrame(IWICBitmapDecoder *iface,
         return WINCODEC_ERR_WRONGSTATE;
     }
 
-    frame_per_texture = This->info.frame_count / This->info.array_size;
+    if (This->info.dimension == WICDdsTextureCube) {
+        frame_per_texture = This->info.mip_levels;
+    } else {
+        frame_per_texture = This->info.frame_count / This->info.array_size;
+    }
     array_index = index / frame_per_texture;
     slice_index = index % frame_per_texture;
     depth = This->info.depth;
@@ -1021,7 +1036,11 @@ static HRESULT WINAPI DdsDecoder_Dds_GetFrame(IWICDdsDecoder *iface,
         hr = WINCODEC_ERR_WRONGSTATE;
         goto end;
     }
-    if (arrayIndex >= This->info.array_size || mipLevel >= This->info.mip_levels || sliceIndex >= This->info.depth) {
+
+    if ((arrayIndex >= This->info.array_size && This->info.dimension != WICDdsTextureCube) ||
+        (arrayIndex >= This->info.array_size * 6) ||
+        (mipLevel   >= This->info.mip_levels) ||
+        (sliceIndex >= This->info.depth)) {
         hr = E_INVALIDARG;
         goto end;
     }

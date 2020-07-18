@@ -541,7 +541,6 @@ static void test_dds_decoder_image_parameters(void)
         hr = IWICBitmapDecoder_GetFrameCount(decoder, &frame_count);
         ok(hr == S_OK, "Test %u: GetFrameCount failed, hr %#x\n", i, hr);
         if (hr == S_OK) {
-            todo_wine_if(test_data[i].expected_parameters.Dimension == WICDdsTextureCube)
             ok(frame_count == test_data[i].expected_frame_count, "Test %u: Expected frame count %u, got %u\n",
                i, test_data[i].expected_frame_count, frame_count);
         }
@@ -793,11 +792,6 @@ static void test_dds_decoder_frame(IWICBitmapDecoder *decoder, int i)
     IWICDdsDecoder *dds_decoder = NULL;
     UINT frame_count, j;
     WICDdsParameters params;
-
-    if (test_data[i].expected_parameters.Dimension == WICDdsTextureCube) {
-        skip("Frame tests for cube maps will crash\n");
-        return;
-    }
 
     hr = IWICBitmapDecoder_GetFrameCount(decoder, &frame_count);
     ok(hr == S_OK, "Test %u: GetFrameCount failed, hr %#x\n", i, hr);
