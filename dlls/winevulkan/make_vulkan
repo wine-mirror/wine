@@ -100,7 +100,6 @@ UNSUPPORTED_EXTENSIONS = [
 
     # Device extensions
     "VK_AMD_display_native_hdr",
-    "VK_EXT_calibrated_timestamps",
     "VK_EXT_display_control", # Requires VK_EXT_display_surface_counter
     "VK_EXT_full_screen_exclusive",
     "VK_EXT_hdr_metadata", # Needs WSI work.
@@ -222,6 +221,10 @@ FUNCTION_OVERRIDES = {
     # VK_EXT_private_data
     "vkGetPrivateDataEXT" : {"dispatch": True, "driver" : False, "thunk" : False},
     "vkSetPrivateDataEXT" : {"dispatch": True, "driver" : False, "thunk" : False},
+
+    # VK_EXT_calibrated_timestamps
+    "vkGetPhysicalDeviceCalibrateableTimeDomainsEXT" : {"dispatch" : True, "driver" : False, "thunk" : False},
+    "vkGetCalibratedTimestampsEXT" : {"dispatch" : True, "driver" : False, "thunk" : False},
 }
 
 STRUCT_CHAIN_CONVERSIONS = [
