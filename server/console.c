@@ -849,42 +849,6 @@ static int set_console_input_info( const struct set_console_input_info_request *
         evt.event = CONSOLE_RENDERER_TITLE_EVENT;
         console_input_events_append( console, &evt );
     }
-    if (req->mask & SET_CONSOLE_INPUT_INFO_HISTORY_MODE)
-    {
-	console->history_mode = req->history_mode;
-    }
-    if ((req->mask & SET_CONSOLE_INPUT_INFO_HISTORY_SIZE) &&
-	console->history_size != req->history_size)
-    {
-	struct history_line **mem = NULL;
-	int i, delta;
-
-	if (req->history_size)
-	{
-	    if (!(mem = mem_alloc( req->history_size * sizeof(*mem) ))) goto error;
-	    memset( mem, 0, req->history_size * sizeof(*mem) );
-	}
-
-	delta = (console->history_index > req->history_size) ?
-	    (console->history_index - req->history_size) : 0;
-
-	for (i = delta; i < console->history_index; i++)
-	{
-	    mem[i - delta] = console->history[i];
-	    console->history[i] = NULL;
-	}
-	console->history_index -= delta;
-
-	for (i = 0; i < console->history_size; i++)
-	    free( console->history[i] );
-	free( console->history );
-	console->history = mem;
-	console->history_size = req->history_size;
-    }
-    if (req->mask & SET_CONSOLE_INPUT_INFO_EDITION_MODE)
-    {
-        console->edition_mode = req->edition_mode;
-    }
     if (req->mask & SET_CONSOLE_INPUT_INFO_INPUT_CODEPAGE)
     {
         console->input_cp = req->input_cp;
@@ -892,10 +856,6 @@ static int set_console_input_info( const struct set_console_input_info_request *
     if (req->mask & SET_CONSOLE_INPUT_INFO_OUTPUT_CODEPAGE)
     {
         console->output_cp = req->output_cp;
-    }
-    if (req->mask & SET_CONSOLE_INPUT_INFO_WIN)
-    {
-        console->win = req->win;
     }
     release_object( console );
     return 1;
