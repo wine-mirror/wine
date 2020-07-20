@@ -173,17 +173,9 @@ BOOL WINECON_GetConsoleTitle(HANDLE hConIn, WCHAR* buffer, size_t len)
  */
 static BOOL WINECON_SetEditionMode(HANDLE hConIn, int edition_mode)
 {
-    BOOL ret;
-
-    SERVER_START_REQ( set_console_input_info )
-    {
-        req->handle = wine_server_obj_handle( hConIn );
-        req->mask = SET_CONSOLE_INPUT_INFO_EDITION_MODE;
-        req->edition_mode = edition_mode;
-        ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-    return ret;
+    struct condrv_input_info_params params = { SET_CONSOLE_INPUT_INFO_EDITION_MODE };
+    params.info.edition_mode = edition_mode;
+    return DeviceIoControl(hConIn, IOCTL_CONDRV_SET_INPUT_INFO, &params, sizeof(params), NULL, 0, NULL, NULL);
 }
 
 /******************************************************************
