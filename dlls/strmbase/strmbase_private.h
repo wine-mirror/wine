@@ -58,8 +58,4 @@ void QualityControlRender_DoQOS(struct strmbase_qc *priv);
 void QualityControlRender_BeginRender(struct strmbase_qc *This, REFERENCE_TIME start, REFERENCE_TIME stop);
 void QualityControlRender_EndRender(struct strmbase_qc *This);
 
-void strmbase_passthrough_update_time(struct strmbase_passthrough *passthrough, REFERENCE_TIME time);
-void strmbase_passthrough_invalidate_time(struct strmbase_passthrough *passthrough);
-void strmbase_passthrough_eos(struct strmbase_passthrough *passthrough);
-
 #endif /* __WINE_STRMBASE_PRIVATE_H */

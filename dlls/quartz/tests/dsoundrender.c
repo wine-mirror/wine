@@ -615,8 +615,7 @@ static const struct strmbase_filter_ops testfilter_ops =
 
 static HRESULT testsource_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)
 {
-    todo_wine_if (IsEqualGUID(iid, &IID_IQualityControl))
-        ok(!IsEqualGUID(iid, &IID_IQualityControl), "Unexpected query for IQualityControl.\n");
+    ok(!IsEqualGUID(iid, &IID_IQualityControl), "Unexpected query for IQualityControl.\n");
     return E_NOINTERFACE;
 }
 

@@ -271,6 +271,10 @@ struct strmbase_passthrough
 void strmbase_passthrough_init(struct strmbase_passthrough *passthrough, IUnknown *outer);
 void strmbase_passthrough_cleanup(struct strmbase_passthrough *passthrough);
 
+void strmbase_passthrough_eos(struct strmbase_passthrough *passthrough);
+void strmbase_passthrough_invalidate_time(struct strmbase_passthrough *passthrough);
+void strmbase_passthrough_update_time(struct strmbase_passthrough *passthrough, REFERENCE_TIME time);
+
 struct strmbase_qc
 {
     IQualityControl IQualityControl_iface;
