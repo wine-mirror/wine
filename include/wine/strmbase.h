@@ -334,8 +334,6 @@ struct strmbase_renderer_ops
     HRESULT (*renderer_pin_query_interface)(struct strmbase_renderer *iface, REFIID iid, void **out);
 };
 
-HRESULT WINAPI BaseRendererImpl_Receive(struct strmbase_renderer *filter, IMediaSample *sample);
-
 void strmbase_renderer_init(struct strmbase_renderer *filter, IUnknown *outer,
         const CLSID *clsid, const WCHAR *sink_name, const struct strmbase_renderer_ops *ops);
 void strmbase_renderer_cleanup(struct strmbase_renderer *filter);
