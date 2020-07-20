@@ -1577,11 +1577,73 @@ static int console_input_ioctl( struct fd *fd, ioctl_code_t code, struct async *
                 set_error( STATUS_INVALID_PARAMETER );
                 return 0;
             }
+            info.input_cp      = console->input_cp;
+            info.output_cp     = console->output_cp;
             info.history_mode  = console->history_mode;
             info.history_size  = console->history_size;
             info.edition_mode  = console->edition_mode;
             info.input_count   = console->recnum;
+            info.win           = console->win;
             return set_reply_data( &info, sizeof(info) ) != NULL;
+        }
+
+    case IOCTL_CONDRV_SET_INPUT_INFO:
+        {
+            const struct condrv_input_info_params *params = get_req_data();
+            if (get_req_data_size() != sizeof(*params))
+            {
+                set_error( STATUS_INVALID_PARAMETER );
+                return 0;
+            }
+            if (params->mask & SET_CONSOLE_INPUT_INFO_HISTORY_MODE)
+            {
+                console->history_mode = params->info.history_mode;
+            }
+            if ((params->mask & SET_CONSOLE_INPUT_INFO_HISTORY_SIZE) &&
+                console->history_size != params->info.history_size)
+            {
+                struct history_line **mem = NULL;
+                int i, delta;
+
+                if (params->info.history_size)
+                {
+                    if (!(mem = mem_alloc( params->info.history_size * sizeof(*mem) ))) return 0;
+                    memset( mem, 0, params->info.history_size * sizeof(*mem) );
+                }
+
+                delta = (console->history_index > params->info.history_size) ?
+                    (console->history_index - params->info.history_size) : 0;
+
+                for (i = delta; i < console->history_index; i++)
+                {
+                    mem[i - delta] = console->history[i];
+                    console->history[i] = NULL;
+                }
+                console->history_index -= delta;
+
+                for (i = 0; i < console->history_size; i++)
+                    free( console->history[i] );
+                free( console->history );
+                console->history = mem;
+                console->history_size = params->info.history_size;
+            }
+            if (params->mask & SET_CONSOLE_INPUT_INFO_EDITION_MODE)
+            {
+                console->edition_mode = params->info.edition_mode;
+            }
+            if (params->mask & SET_CONSOLE_INPUT_INFO_INPUT_CODEPAGE)
+            {
+                console->input_cp = params->info.input_cp;
+            }
+            if (params->mask & SET_CONSOLE_INPUT_INFO_OUTPUT_CODEPAGE)
+            {
+                console->output_cp = params->info.output_cp;
+            }
+            if (params->mask & SET_CONSOLE_INPUT_INFO_WIN)
+            {
+                console->win = params->info.win;
+            }
+            return 1;
         }
 
     case IOCTL_CONDRV_GET_TITLE:

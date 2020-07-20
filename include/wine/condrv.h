@@ -32,6 +32,7 @@
 #define IOCTL_CONDRV_WRITE_INPUT           CTL_CODE(FILE_DEVICE_CONSOLE, 11, METHOD_BUFFERED, FILE_WRITE_PROPERTIES)
 #define IOCTL_CONDRV_PEEK                  CTL_CODE(FILE_DEVICE_CONSOLE, 12, METHOD_BUFFERED, FILE_READ_ACCESS)
 #define IOCTL_CONDRV_GET_INPUT_INFO        CTL_CODE(FILE_DEVICE_CONSOLE, 13, METHOD_BUFFERED, FILE_READ_PROPERTIES)
+#define IOCTL_CONDRV_SET_INPUT_INFO        CTL_CODE(FILE_DEVICE_CONSOLE, 14, METHOD_BUFFERED, FILE_WRITE_PROPERTIES)
 #define IOCTL_CONDRV_GET_TITLE             CTL_CODE(FILE_DEVICE_CONSOLE, 15, METHOD_BUFFERED, FILE_READ_PROPERTIES)
 
 /* console output ioctls */
@@ -64,10 +65,20 @@ typedef struct
 /* IOCTL_CONDRV_GET_INPUT_INFO result */
 struct condrv_input_info
 {
+    unsigned int  input_cp;       /* console input codepage */
+    unsigned int  output_cp;      /* console output codepage */
     unsigned int  history_mode;   /* whether we duplicate lines in history */
     unsigned int  history_size;   /* number of lines in history */
     unsigned int  edition_mode;   /* index to the edition mode flavors */
     unsigned int  input_count;    /* number of available input records */
+    condrv_handle_t win;          /* renderer window handle */
+};
+
+/* IOCTL_CONDRV_SET_INPUT_INFO params */
+struct condrv_input_info_params
+{
+    unsigned int  mask;               /* setting mask */
+    struct condrv_input_info info;    /* input_info */
 };
 
 /* IOCTL_CONDRV_GET_OUTPUT_INFO result */
