@@ -116,17 +116,9 @@ void WINECON_ResizeWithContainer(struct inner_data* data, int width, int height)
  */
 static BOOL WINECON_SetHistorySize(HANDLE hConIn, int size)
 {
-    BOOL	ret;
-
-    SERVER_START_REQ(set_console_input_info)
-    {
-	req->handle = wine_server_obj_handle( hConIn );
-	req->mask = SET_CONSOLE_INPUT_INFO_HISTORY_SIZE;
-	req->history_size = size;
-	ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-    return ret;
+    struct condrv_input_info_params params = { SET_CONSOLE_INPUT_INFO_HISTORY_SIZE };
+    params.info.history_size = size;
+    return DeviceIoControl(hConIn, IOCTL_CONDRV_SET_INPUT_INFO, &params, sizeof(params), NULL, 0, NULL, NULL);
 }
 
 /******************************************************************
