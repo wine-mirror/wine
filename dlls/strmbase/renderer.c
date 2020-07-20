@@ -170,13 +170,16 @@ static HRESULT WINAPI BaseRenderer_Receive(struct strmbase_sink *pin, IMediaSamp
 {
     struct strmbase_renderer *filter = impl_from_IPin(&pin->pin.IPin_iface);
     REFERENCE_TIME start, stop;
+    BOOL need_wait = FALSE;
+    FILTER_STATE state;
+    HRESULT hr = S_OK;
     AM_MEDIA_TYPE *mt;
-    HRESULT hr;
 
     if (filter->eos || filter->sink.flushing)
         return S_FALSE;
 
-    if (filter->filter.state == State_Stopped)
+    state = filter->filter.state;
+    if (state == State_Stopped)
         return VFW_E_WRONG_STATE;
 
     if (IMediaSample_GetMediaType(sample, &mt) == S_OK)
@@ -195,10 +198,23 @@ static HRESULT WINAPI BaseRenderer_Receive(struct strmbase_sink *pin, IMediaSamp
 
     if (filter->filter.clock && SUCCEEDED(IMediaSample_GetTime(sample, &start, &stop)))
     {
+        strmbase_passthrough_update_time(&filter->passthrough, start);
+        need_wait = TRUE;
+    }
+    else
+        start = stop = -1;
+
+    if (state == State_Paused)
+    {
+        QualityControlRender_BeginRender(&filter->qc, start, stop);
+        hr = filter->pFuncsTable->pfnDoRenderSample(filter, sample);
+        QualityControlRender_EndRender(&filter->qc);
+    }
+
+    if (need_wait)
+    {
         REFERENCE_TIME now;
         DWORD_PTR cookie;
-
-        strmbase_passthrough_update_time(&filter->passthrough, start);
 
         IReferenceClock_GetTime(filter->filter.clock, &now);
 
@@ -224,12 +240,14 @@ static HRESULT WINAPI BaseRenderer_Receive(struct strmbase_sink *pin, IMediaSamp
             EnterCriticalSection(&filter->csRenderLock);
         }
     }
-    else
-        start = stop = -1;
 
-    QualityControlRender_BeginRender(&filter->qc, start, stop);
-    hr = filter->pFuncsTable->pfnDoRenderSample(filter, sample);
-    QualityControlRender_EndRender(&filter->qc);
+    if (state == State_Running)
+    {
+        QualityControlRender_BeginRender(&filter->qc, start, stop);
+        hr = filter->pFuncsTable->pfnDoRenderSample(filter, sample);
+        QualityControlRender_EndRender(&filter->qc);
+    }
+
     QualityControlRender_DoQOS(&filter->qc);
 
     LeaveCriticalSection(&filter->csRenderLock);
