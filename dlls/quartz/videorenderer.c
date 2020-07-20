@@ -82,15 +82,6 @@ static void VideoRenderer_AutoShowWindow(struct video_renderer *This)
         ShowWindow(This->window.hwnd, SW_SHOW);
 }
 
-static HRESULT WINAPI VideoRenderer_ShouldDrawSampleNow(struct strmbase_renderer *filter,
-        IMediaSample *pSample, REFERENCE_TIME *start, REFERENCE_TIME *end)
-{
-    /* Preroll means the sample isn't shown, this is used for key frames and things like that */
-    if (IMediaSample_IsPreroll(pSample) == S_OK)
-        return E_FAIL;
-    return S_FALSE;
-}
-
 static HRESULT WINAPI VideoRenderer_DoRenderSample(struct strmbase_renderer *iface, IMediaSample *pSample)
 {
     struct video_renderer *filter = impl_from_strmbase_renderer(iface);
@@ -253,7 +244,6 @@ static const struct strmbase_renderer_ops renderer_ops =
     .renderer_init_stream = video_renderer_init_stream,
     .renderer_start_stream = video_renderer_start_stream,
     .renderer_stop_stream = video_renderer_stop_stream,
-    .pfnShouldDrawSampleNow = VideoRenderer_ShouldDrawSampleNow,
     .renderer_destroy = video_renderer_destroy,
     .renderer_query_interface = video_renderer_query_interface,
     .renderer_pin_query_interface = video_renderer_pin_query_interface,
