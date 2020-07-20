@@ -318,12 +318,6 @@ struct strmbase_renderer
 
 typedef HRESULT (WINAPI *BaseRenderer_CheckMediaType)(struct strmbase_renderer *iface, const AM_MEDIA_TYPE *mt);
 typedef HRESULT (WINAPI *BaseRenderer_DoRenderSample)(struct strmbase_renderer *iface, IMediaSample *sample);
-typedef HRESULT (WINAPI *BaseRenderer_ShouldDrawSampleNow)(struct strmbase_renderer *iface,
-        IMediaSample *sample, REFERENCE_TIME *start, REFERENCE_TIME *end);
-typedef HRESULT (WINAPI *BaseRenderer_PrepareReceive)(struct strmbase_renderer *iface, IMediaSample *sample);
-typedef HRESULT (WINAPI *BaseRenderer_EndOfStream)(struct strmbase_renderer *iface);
-typedef HRESULT (WINAPI *BaseRenderer_BeginFlush) (struct strmbase_renderer *iface);
-typedef HRESULT (WINAPI *BaseRenderer_EndFlush) (struct strmbase_renderer *iface);
 typedef HRESULT (WINAPI *BaseRenderer_BreakConnect) (struct strmbase_renderer *iface);
 
 struct strmbase_renderer_ops
@@ -333,12 +327,8 @@ struct strmbase_renderer_ops
     void (*renderer_init_stream)(struct strmbase_renderer *iface);
     void (*renderer_start_stream)(struct strmbase_renderer *iface);
     void (*renderer_stop_stream)(struct strmbase_renderer *iface);
-    BaseRenderer_ShouldDrawSampleNow  pfnShouldDrawSampleNow;
-    BaseRenderer_PrepareReceive pfnPrepareReceive;
     HRESULT (*renderer_connect)(struct strmbase_renderer *iface, const AM_MEDIA_TYPE *mt);
     BaseRenderer_BreakConnect pfnBreakConnect;
-    BaseRenderer_EndOfStream pfnEndOfStream;
-    BaseRenderer_EndFlush pfnEndFlush;
     void (*renderer_destroy)(struct strmbase_renderer *iface);
     HRESULT (*renderer_query_interface)(struct strmbase_renderer *iface, REFIID iid, void **out);
     HRESULT (*renderer_pin_query_interface)(struct strmbase_renderer *iface, REFIID iid, void **out);

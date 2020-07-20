@@ -194,7 +194,6 @@ static HRESULT sink_eos(struct strmbase_sink *iface)
     struct strmbase_renderer *filter = impl_from_IPin(&iface->pin.IPin_iface);
     IFilterGraph *graph = filter->filter.graph;
     IMediaEventSink *event_sink;
-    HRESULT hr = S_OK;
 
     EnterCriticalSection(&filter->csRenderLock);
 
@@ -210,11 +209,8 @@ static HRESULT sink_eos(struct strmbase_sink *iface)
     strmbase_passthrough_eos(&filter->passthrough);
     SetEvent(filter->state_event);
 
-    if (filter->pFuncsTable->pfnEndOfStream)
-        hr = filter->pFuncsTable->pfnEndOfStream(filter);
-
     LeaveCriticalSection(&filter->csRenderLock);
-    return hr;
+    return S_OK;
 }
 
 static HRESULT sink_begin_flush(struct strmbase_sink *iface)
@@ -229,7 +225,6 @@ static HRESULT sink_begin_flush(struct strmbase_sink *iface)
 static HRESULT sink_end_flush(struct strmbase_sink *iface)
 {
     struct strmbase_renderer *filter = impl_from_IPin(&iface->pin.IPin_iface);
-    HRESULT hr = S_OK;
 
     EnterCriticalSection(&filter->csRenderLock);
 
@@ -238,11 +233,8 @@ static HRESULT sink_end_flush(struct strmbase_sink *iface)
     strmbase_passthrough_invalidate_time(&filter->passthrough);
     ResetEvent(filter->flush_event);
 
-    if (filter->pFuncsTable->pfnEndFlush)
-        hr = filter->pFuncsTable->pfnEndFlush(filter);
-
     LeaveCriticalSection(&filter->csRenderLock);
-    return hr;
+    return S_OK;
 }
 
 static const struct strmbase_sink_ops sink_ops =
@@ -277,9 +269,9 @@ void strmbase_renderer_cleanup(struct strmbase_renderer *filter)
 
 HRESULT WINAPI BaseRendererImpl_Receive(struct strmbase_renderer *This, IMediaSample *pSample)
 {
-    HRESULT hr = S_OK;
     REFERENCE_TIME start, stop;
     AM_MEDIA_TYPE *pmt;
+    HRESULT hr;
 
     TRACE("(%p)->%p\n", This, pSample);
 
@@ -301,16 +293,6 @@ HRESULT WINAPI BaseRendererImpl_Receive(struct strmbase_renderer *This, IMediaSa
         DeleteMediaType(pmt);
     }
 
-    if (This->pFuncsTable->pfnPrepareReceive)
-        hr = This->pFuncsTable->pfnPrepareReceive(This, pSample);
-    if (FAILED(hr))
-    {
-        if (hr == VFW_E_SAMPLE_REJECTED)
-            return S_OK;
-        else
-            return hr;
-    }
-
     EnterCriticalSection(&This->csRenderLock);
     if (This->filter.state == State_Paused)
         SetEvent(This->state_event);
@@ -318,59 +300,41 @@ HRESULT WINAPI BaseRendererImpl_Receive(struct strmbase_renderer *This, IMediaSa
     /* Wait for render Time */
     if (This->filter.clock && SUCCEEDED(IMediaSample_GetTime(pSample, &start, &stop)))
     {
-        hr = S_FALSE;
+        REFERENCE_TIME now;
+        DWORD_PTR cookie;
+
         strmbase_passthrough_update_time(&This->passthrough, start);
-        if (This->pFuncsTable->pfnShouldDrawSampleNow)
-            hr = This->pFuncsTable->pfnShouldDrawSampleNow(This, pSample, &start, &stop);
 
-        if (hr == S_OK)
-            ;/* Do not wait: drop through */
-        else if (hr == S_FALSE)
+        IReferenceClock_GetTime(This->filter.clock, &now);
+
+        if (now - This->stream_start - start <= -10000)
         {
-            REFERENCE_TIME now;
-            DWORD_PTR cookie;
+            HANDLE handles[2] = {This->advise_event, This->flush_event};
+            DWORD ret;
 
-            IReferenceClock_GetTime(This->filter.clock, &now);
+            IReferenceClock_AdviseTime(This->filter.clock, This->stream_start,
+                    start, (HEVENT)This->advise_event, &cookie);
 
-            if (now - This->stream_start - start <= -10000)
-            {
-                HANDLE handles[2] = {This->advise_event, This->flush_event};
-                DWORD ret;
-
-                IReferenceClock_AdviseTime(This->filter.clock, This->stream_start,
-                        start, (HEVENT)This->advise_event, &cookie);
-
-                LeaveCriticalSection(&This->csRenderLock);
-
-                ret = WaitForMultipleObjects(2, handles, FALSE, INFINITE);
-                IReferenceClock_Unadvise(This->filter.clock, cookie);
-
-                if (ret == 1)
-                {
-                    TRACE("Flush signaled, discarding current sample.\n");
-                    return S_OK;
-                }
-
-                EnterCriticalSection(&This->csRenderLock);
-            }
-        }
-        else
-        {
             LeaveCriticalSection(&This->csRenderLock);
-            /* Drop Sample */
-            return S_OK;
+
+            ret = WaitForMultipleObjects(2, handles, FALSE, INFINITE);
+            IReferenceClock_Unadvise(This->filter.clock, cookie);
+
+            if (ret == 1)
+            {
+                TRACE("Flush signaled, discarding current sample.\n");
+                return S_OK;
+            }
+
+            EnterCriticalSection(&This->csRenderLock);
         }
     }
     else
         start = stop = -1;
 
-    if (SUCCEEDED(hr))
-    {
-        QualityControlRender_BeginRender(&This->qc, start, stop);
-        hr = This->pFuncsTable->pfnDoRenderSample(This, pSample);
-        QualityControlRender_EndRender(&This->qc);
-    }
-
+    QualityControlRender_BeginRender(&This->qc, start, stop);
+    hr = This->pFuncsTable->pfnDoRenderSample(This, pSample);
+    QualityControlRender_EndRender(&This->qc);
     QualityControlRender_DoQOS(&This->qc);
 
     LeaveCriticalSection(&This->csRenderLock);
