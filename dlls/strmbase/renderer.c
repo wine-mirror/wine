@@ -193,8 +193,6 @@ static HRESULT WINAPI BaseRenderer_Receive(struct strmbase_sink *pin, IMediaSamp
     }
 
     EnterCriticalSection(&filter->csRenderLock);
-    if (filter->filter.state == State_Paused)
-        SetEvent(filter->state_event);
 
     if (filter->filter.clock && SUCCEEDED(IMediaSample_GetTime(sample, &start, &stop)))
     {

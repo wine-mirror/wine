@@ -38,6 +38,11 @@ static struct null_renderer *impl_from_strmbase_renderer(struct strmbase_rendere
 
 static HRESULT WINAPI NullRenderer_DoRenderSample(struct strmbase_renderer *iface, IMediaSample *sample)
 {
+    struct null_renderer *filter = impl_from_strmbase_renderer(iface);
+
+    if (filter->renderer.filter.state == State_Paused)
+        SetEvent(filter->renderer.state_event);
+
     return S_OK;
 }
 

@@ -111,6 +111,7 @@ static HRESULT WINAPI VideoRenderer_DoRenderSample(struct strmbase_renderer *ifa
 
         filter->current_sample = pSample;
 
+        SetEvent(filter->renderer.state_event);
         LeaveCriticalSection(&filter->renderer.csRenderLock);
         WaitForMultipleObjects(2, events, FALSE, INFINITE);
         EnterCriticalSection(&filter->renderer.csRenderLock);

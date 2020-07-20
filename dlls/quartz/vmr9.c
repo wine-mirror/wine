@@ -315,6 +315,7 @@ static HRESULT WINAPI VMR9_DoRenderSample(struct strmbase_renderer *iface, IMedi
 
     if (filter->renderer.filter.state == State_Paused)
     {
+        SetEvent(filter->renderer.state_event);
         LeaveCriticalSection(&filter->renderer.csRenderLock);
         WaitForMultipleObjects(2, events, FALSE, INFINITE);
         EnterCriticalSection(&filter->renderer.csRenderLock);

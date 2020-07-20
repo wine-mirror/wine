@@ -2943,6 +2943,11 @@ static void test_renderless_present(IFilterGraph2 *graph, IMemInputPin *input)
     thread = send_frame(input);
     hr = IMediaControl_GetState(control, 1000, &state);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
+    /* Atelier Sophie uses the VMR in renderless mode, calls
+     * IMediaControl::Run() from a stopped state and expects that
+     * IMediaControl::GetState() returns S_OK only after PresentImage() has
+     * been called. */
+    ok(allocator_got_PresentImage == 1, "Got %u calls to PresentImage().\n", allocator_got_PresentImage);
 
     hr = IMediaControl_Run(control);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
