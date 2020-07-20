@@ -106,32 +106,6 @@ NTSTATUS WINAPI NtDisplayString ( PUNICODE_STRING string )
 }
 
 /******************************************************************************
- *  NtAllocateLocallyUniqueId (NTDLL.@)
- */
-NTSTATUS WINAPI NtAllocateLocallyUniqueId(PLUID Luid)
-{
-    NTSTATUS status;
-
-    TRACE("%p\n", Luid);
-
-    if (!Luid)
-        return STATUS_ACCESS_VIOLATION;
-
-    SERVER_START_REQ( allocate_locally_unique_id )
-    {
-        status = wine_server_call( req );
-        if (!status)
-        {
-            Luid->LowPart = reply->luid.low_part;
-            Luid->HighPart = reply->luid.high_part;
-        }
-    }
-    SERVER_END_REQ;
-
-    return status;
-}
-
-/******************************************************************************
  *        VerSetConditionMask   (NTDLL.@)
  */
 ULONGLONG WINAPI VerSetConditionMask( ULONGLONG dwlConditionMask, DWORD dwTypeBitMask,
@@ -160,20 +134,4 @@ ULONGLONG WINAPI VerSetConditionMask( ULONGLONG dwlConditionMask, DWORD dwTypeBi
     else if (dwTypeBitMask & VER_MINORVERSION)
 	dwlConditionMask |= dwConditionMask << 0*3;
     return dwlConditionMask;
-}
-
-/******************************************************************************
- *  NtAccessCheckAndAuditAlarm   (NTDLL.@)
- *  ZwAccessCheckAndAuditAlarm   (NTDLL.@)
- */
-NTSTATUS WINAPI NtAccessCheckAndAuditAlarm(PUNICODE_STRING SubsystemName, HANDLE HandleId, PUNICODE_STRING ObjectTypeName,
-                                           PUNICODE_STRING ObjectName, PSECURITY_DESCRIPTOR SecurityDescriptor,
-                                           ACCESS_MASK DesiredAccess, PGENERIC_MAPPING GenericMapping, BOOLEAN ObjectCreation,
-                                           PACCESS_MASK GrantedAccess, PBOOLEAN AccessStatus, PBOOLEAN GenerateOnClose)
-{
-    FIXME("(%s, %p, %s, %p, 0x%08x, %p, %d, %p, %p, %p), stub\n", debugstr_us(SubsystemName), HandleId,
-          debugstr_us(ObjectTypeName), SecurityDescriptor, DesiredAccess, GenericMapping, ObjectCreation,
-          GrantedAccess, AccessStatus, GenerateOnClose);
-
-    return STATUS_NOT_IMPLEMENTED;
 }

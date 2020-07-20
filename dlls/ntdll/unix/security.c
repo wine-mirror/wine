@@ -633,3 +633,200 @@ NTSTATUS WINAPI NtImpersonateAnonymousToken( HANDLE thread )
     FIXME( "(%p): stub\n", thread );
     return STATUS_NOT_IMPLEMENTED;
 }
+
+
+/***********************************************************************
+ *             NtAccessCheck  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtAccessCheck( PSECURITY_DESCRIPTOR descr, HANDLE token, ACCESS_MASK access,
+                               GENERIC_MAPPING *mapping, PRIVILEGE_SET *privs, ULONG *retlen,
+                               ULONG *access_granted, NTSTATUS *access_status)
+{
+    struct object_attributes *objattr;
+    data_size_t len;
+    OBJECT_ATTRIBUTES attr;
+    NTSTATUS status;
+
+    TRACE( "(%p, %p, %08x, %p, %p, %p, %p, %p)\n",
+           descr, token, access, mapping, privs, retlen, access_granted, access_status );
+
+    if (!privs || !retlen) return STATUS_ACCESS_VIOLATION;
+
+    /* reuse the object attribute SD marshalling */
+    InitializeObjectAttributes( &attr, NULL, 0, 0, descr );
+    if ((status = alloc_object_attributes( &attr, &objattr, &len ))) return status;
+
+    SERVER_START_REQ( access_check )
+    {
+        req->handle = wine_server_obj_handle( token );
+        req->desired_access = access;
+        req->mapping_read = mapping->GenericRead;
+        req->mapping_write = mapping->GenericWrite;
+        req->mapping_execute = mapping->GenericExecute;
+        req->mapping_all = mapping->GenericAll;
+        wine_server_add_data( req, objattr + 1, objattr->sd_len );
+        wine_server_set_reply( req, privs->Privilege, *retlen - offsetof( PRIVILEGE_SET, Privilege ) );
+
+        status = wine_server_call( req );
+
+        *retlen = offsetof( PRIVILEGE_SET, Privilege ) + reply->privileges_len;
+        privs->PrivilegeCount = reply->privileges_len / sizeof(LUID_AND_ATTRIBUTES);
+        if (status == STATUS_SUCCESS)
+        {
+            *access_status = reply->access_status;
+            *access_granted = reply->access_granted;
+        }
+    }
+    SERVER_END_REQ;
+    free( objattr );
+    return status;
+}
+
+
+/***********************************************************************
+ *             NtAccessCheckAndAuditAlarm  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtAccessCheckAndAuditAlarm( UNICODE_STRING *subsystem, HANDLE handle,
+                                            UNICODE_STRING *typename, UNICODE_STRING *objectname,
+                                            PSECURITY_DESCRIPTOR descr, ACCESS_MASK access,
+                                            GENERIC_MAPPING *mapping, BOOLEAN creation,
+                                            ACCESS_MASK *access_granted, BOOLEAN *access_status,
+                                            BOOLEAN *onclose )
+{
+    FIXME( "(%s, %p, %s, %p, 0x%08x, %p, %d, %p, %p, %p), stub\n",
+           debugstr_us(subsystem), handle, debugstr_us(typename), descr, access,
+           mapping, creation, access_granted, access_status, onclose );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
+/***********************************************************************
+ *             NtQuerySecurityObject  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtQuerySecurityObject( HANDLE handle, SECURITY_INFORMATION info,
+                                       PSECURITY_DESCRIPTOR descr, ULONG length, ULONG *retlen )
+{
+    SECURITY_DESCRIPTOR_RELATIVE *psd = descr;
+    NTSTATUS status;
+    void *buffer;
+    unsigned int buffer_size = 512;
+
+    TRACE( "(%p,0x%08x,%p,0x%08x,%p)\n", handle, info, descr, length, retlen );
+
+    for (;;)
+    {
+        if (!(buffer = malloc( buffer_size ))) return STATUS_NO_MEMORY;
+
+        SERVER_START_REQ( get_security_object )
+        {
+            req->handle = wine_server_obj_handle( handle );
+            req->security_info = info;
+            wine_server_set_reply( req, buffer, buffer_size );
+            status = wine_server_call( req );
+            buffer_size = reply->sd_len;
+        }
+        SERVER_END_REQ;
+
+        if (status == STATUS_BUFFER_TOO_SMALL)
+        {
+            free( buffer );
+            continue;
+        }
+        if (status == STATUS_SUCCESS)
+        {
+            struct security_descriptor *sd = buffer;
+
+            if (!buffer_size) memset( sd, 0, sizeof(*sd) );
+            *retlen = sizeof(*psd) + sd->owner_len + sd->group_len + sd->sacl_len + sd->dacl_len;
+            if (length >= *retlen)
+            {
+                DWORD len = sizeof(*psd);
+                memset( psd, 0, len );
+                psd->Revision = SECURITY_DESCRIPTOR_REVISION;
+                psd->Control = sd->control | SE_SELF_RELATIVE;
+                if (sd->owner_len) { psd->Owner = len; len += sd->owner_len; }
+                if (sd->group_len) { psd->Group = len; len += sd->group_len; }
+                if (sd->sacl_len) { psd->Sacl = len; len += sd->sacl_len; }
+                if (sd->dacl_len) { psd->Dacl = len; len += sd->dacl_len; }
+                /* owner, group, sacl and dacl are the same type as in the server
+                 * and in the same order so we copy the memory in one block */
+                memcpy( psd + 1, sd + 1, len - sizeof(*psd) );
+            }
+            else status = STATUS_BUFFER_TOO_SMALL;
+        }
+        free( buffer );
+        return status;
+    }
+}
+
+
+/***********************************************************************
+ *             NtSetSecurityObject  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtSetSecurityObject( HANDLE handle, SECURITY_INFORMATION info, PSECURITY_DESCRIPTOR descr )
+{
+    struct object_attributes *objattr;
+    struct security_descriptor *sd;
+    data_size_t len;
+    OBJECT_ATTRIBUTES attr;
+    NTSTATUS status;
+
+    TRACE( "%p 0x%08x %p\n", handle, info, descr );
+
+    if (!descr) return STATUS_ACCESS_VIOLATION;
+
+    /* reuse the object attribute SD marshalling */
+    InitializeObjectAttributes( &attr, NULL, 0, 0, descr );
+    if ((status = alloc_object_attributes( &attr, &objattr, &len ))) return status;
+    sd = (struct security_descriptor *)(objattr + 1);
+    if (info & OWNER_SECURITY_INFORMATION && !sd->owner_len) return STATUS_INVALID_SECURITY_DESCR;
+    if (info & GROUP_SECURITY_INFORMATION && !sd->group_len) return STATUS_INVALID_SECURITY_DESCR;
+    if (info & (SACL_SECURITY_INFORMATION | LABEL_SECURITY_INFORMATION)) sd->control |= SE_SACL_PRESENT;
+    if (info & DACL_SECURITY_INFORMATION) sd->control |= SE_DACL_PRESENT;
+
+    SERVER_START_REQ( set_security_object )
+    {
+        req->handle = wine_server_obj_handle( handle );
+        req->security_info = info;
+        wine_server_add_data( req, sd, objattr->sd_len );
+        status = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+    free( objattr );
+    return status;
+}
+
+
+/***********************************************************************
+ *             NtAllocateLocallyUniqueId  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtAllocateLocallyUniqueId( LUID *luid )
+{
+    NTSTATUS status;
+
+    TRACE( "%p\n", luid );
+
+    if (!luid) return STATUS_ACCESS_VIOLATION;
+
+    SERVER_START_REQ( allocate_locally_unique_id )
+    {
+        status = wine_server_call( req );
+        if (!status)
+        {
+            luid->LowPart = reply->luid.low_part;
+            luid->HighPart = reply->luid.high_part;
+        }
+    }
+    SERVER_END_REQ;
+    return status;
+}
+
+
+/***********************************************************************
+ *             NtAllocateUuids  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtAllocateUuids( ULARGE_INTEGER *time, ULONG *delta, ULONG *sequence, UCHAR *seed )
+{
+    FIXME( "(%p,%p,%p,%p), stub.\n", time, delta, sequence, seed );
+    return STATUS_SUCCESS;
+}

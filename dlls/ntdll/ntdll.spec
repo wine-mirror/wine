@@ -124,8 +124,8 @@
 @ extern NlsMbCodePageTag
 @ extern NlsMbOemCodePageTag
 @ stdcall -syscall NtAcceptConnectPort(ptr long ptr long ptr ptr)
-@ stdcall NtAccessCheck(ptr long long ptr ptr ptr ptr ptr)
-@ stdcall NtAccessCheckAndAuditAlarm(ptr long ptr ptr ptr long ptr long ptr ptr ptr)
+@ stdcall -syscall NtAccessCheck(ptr long long ptr ptr ptr ptr ptr)
+@ stdcall -syscall NtAccessCheckAndAuditAlarm(ptr long ptr ptr ptr long ptr long ptr ptr ptr)
 # @ stub NtAccessCheckByType
 # @ stub NtAccessCheckByTypeAndAuditAlarm
 # @ stub NtAccessCheckByTypeResultList
@@ -137,9 +137,9 @@
 @ stdcall -syscall NtAdjustPrivilegesToken(long long ptr long ptr ptr)
 @ stdcall -syscall NtAlertResumeThread(long ptr)
 @ stdcall -syscall NtAlertThread(long)
-@ stdcall NtAllocateLocallyUniqueId(ptr)
+@ stdcall -syscall NtAllocateLocallyUniqueId(ptr)
 # @ stub NtAllocateUserPhysicalPages
-@ stdcall NtAllocateUuids(ptr ptr ptr ptr)
+@ stdcall -syscall NtAllocateUuids(ptr ptr ptr ptr)
 @ stdcall -syscall NtAllocateVirtualMemory(long ptr long ptr long long)
 @ stdcall -syscall NtAreMappedFilesTheSame(ptr ptr)
 @ stdcall -syscall NtAssignProcessToJobObject(long long)
@@ -311,7 +311,7 @@
 # @ stub NtQueryPortInformationProcess
 # @ stub NtQueryQuotaInformationFile
 @ stdcall -syscall NtQuerySection(long long ptr long ptr)
-@ stdcall NtQuerySecurityObject(long long ptr long ptr)
+@ stdcall -syscall NtQuerySecurityObject(long long ptr long ptr)
 @ stdcall -syscall NtQuerySemaphore (long long ptr long ptr)
 @ stdcall -syscall NtQuerySymbolicLinkObject(long ptr ptr)
 @ stdcall -syscall NtQuerySystemEnvironmentValue(ptr ptr long ptr)
@@ -388,7 +388,7 @@
 @ stub NtSetLowWaitHighThread
 @ stdcall -syscall NtSetPowerRequest(long long)
 # @ stub NtSetQuotaInformationFile
-@ stdcall NtSetSecurityObject(long long ptr)
+@ stdcall -syscall NtSetSecurityObject(long long ptr)
 @ stub NtSetSystemEnvironmentValue
 # @ stub NtSetSystemEnvironmentValueEx
 @ stdcall -syscall NtSetSystemInformation(long ptr long)
@@ -1113,8 +1113,8 @@
 @ stdcall WinSqmSetDWORD(ptr long long)
 @ stdcall WinSqmStartSession(ptr long long)
 @ stdcall -private -syscall ZwAcceptConnectPort(ptr long ptr long ptr ptr) NtAcceptConnectPort
-@ stdcall -private ZwAccessCheck(ptr long long ptr ptr ptr ptr ptr) NtAccessCheck
-@ stdcall -private ZwAccessCheckAndAuditAlarm(ptr long ptr ptr ptr long ptr long ptr ptr ptr) NtAccessCheckAndAuditAlarm
+@ stdcall -private -syscall ZwAccessCheck(ptr long long ptr ptr ptr ptr ptr) NtAccessCheck
+@ stdcall -private -syscall ZwAccessCheckAndAuditAlarm(ptr long ptr ptr ptr long ptr long ptr ptr ptr) NtAccessCheckAndAuditAlarm
 # @ stub ZwAccessCheckByType
 # @ stub ZwAccessCheckByTypeAndAuditAlarm
 # @ stub ZwAccessCheckByTypeResultList
@@ -1126,9 +1126,9 @@
 @ stdcall -private -syscall ZwAdjustPrivilegesToken(long long ptr long ptr ptr) NtAdjustPrivilegesToken
 @ stdcall -private -syscall ZwAlertResumeThread(long ptr) NtAlertResumeThread
 @ stdcall -private -syscall ZwAlertThread(long) NtAlertThread
-@ stdcall -private ZwAllocateLocallyUniqueId(ptr) NtAllocateLocallyUniqueId
+@ stdcall -private -syscall ZwAllocateLocallyUniqueId(ptr) NtAllocateLocallyUniqueId
 # @ stub ZwAllocateUserPhysicalPages
-@ stdcall -private ZwAllocateUuids(ptr ptr ptr ptr) NtAllocateUuids
+@ stdcall -private -syscall ZwAllocateUuids(ptr ptr ptr ptr) NtAllocateUuids
 @ stdcall -private -syscall ZwAllocateVirtualMemory(long ptr long ptr long long) NtAllocateVirtualMemory
 @ stdcall -private -syscall ZwAreMappedFilesTheSame(ptr ptr) NtAreMappedFilesTheSame
 @ stdcall -private -syscall ZwAssignProcessToJobObject(long long) NtAssignProcessToJobObject
@@ -1299,7 +1299,7 @@
 # @ stub ZwQueryPortInformationProcess
 # @ stub ZwQueryQuotaInformationFile
 @ stdcall -private -syscall ZwQuerySection(long long ptr long ptr) NtQuerySection
-@ stdcall -private ZwQuerySecurityObject(long long ptr long ptr) NtQuerySecurityObject
+@ stdcall -private -syscall ZwQuerySecurityObject(long long ptr long ptr) NtQuerySecurityObject
 @ stdcall -private -syscall ZwQuerySemaphore(long long ptr long ptr) NtQuerySemaphore
 @ stdcall -private -syscall ZwQuerySymbolicLinkObject(long ptr ptr) NtQuerySymbolicLinkObject
 @ stdcall -private -syscall ZwQuerySystemEnvironmentValue(ptr ptr long ptr) NtQuerySystemEnvironmentValue
@@ -1376,7 +1376,7 @@
 @ stub ZwSetLowWaitHighThread
 @ stdcall -private -syscall ZwSetPowerRequest(long long) NtSetPowerRequest
 # @ stub ZwSetQuotaInformationFile
-@ stdcall -private ZwSetSecurityObject(long long ptr) NtSetSecurityObject
+@ stdcall -private -syscall ZwSetSecurityObject(long long ptr) NtSetSecurityObject
 @ stub ZwSetSystemEnvironmentValue
 # @ stub ZwSetSystemEnvironmentValueEx
 @ stdcall -private -syscall ZwSetSystemInformation(long ptr long) NtSetSystemInformation
