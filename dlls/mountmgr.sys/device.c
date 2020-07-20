@@ -1771,12 +1771,11 @@ static void query_property( struct disk_device *device, IRP *irp )
 
         if (device->serial) len += strlen( device->serial ) + 1;
 
-        if (!irp->UserBuffer
-            || irpsp->Parameters.DeviceIoControl.OutputBufferLength < sizeof(STORAGE_DESCRIPTOR_HEADER))
+        if (irpsp->Parameters.DeviceIoControl.OutputBufferLength < sizeof(STORAGE_DESCRIPTOR_HEADER))
             irp->IoStatus.u.Status = STATUS_INVALID_PARAMETER;
         else if (irpsp->Parameters.DeviceIoControl.OutputBufferLength < len)
         {
-            descriptor = irp->UserBuffer;
+            descriptor = irp->AssociatedIrp.SystemBuffer;
             descriptor->Version = sizeof(STORAGE_DEVICE_DESCRIPTOR);
             descriptor->Size = len;
             irp->IoStatus.Information = sizeof(STORAGE_DESCRIPTOR_HEADER);
@@ -1786,8 +1785,8 @@ static void query_property( struct disk_device *device, IRP *irp )
         {
             FIXME( "Faking StorageDeviceProperty data\n" );
 
-            memset( irp->UserBuffer, 0, irpsp->Parameters.DeviceIoControl.OutputBufferLength );
-            descriptor = irp->UserBuffer;
+            memset( irp->AssociatedIrp.SystemBuffer, 0, irpsp->Parameters.DeviceIoControl.OutputBufferLength );
+            descriptor = irp->AssociatedIrp.SystemBuffer;
             descriptor->Version = sizeof(STORAGE_DEVICE_DESCRIPTOR);
             descriptor->Size = len;
             descriptor->DeviceType = FILE_DEVICE_DISK;
