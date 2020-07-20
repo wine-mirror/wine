@@ -123,7 +123,7 @@
 @ extern NlsAnsiCodePage
 @ extern NlsMbCodePageTag
 @ extern NlsMbOemCodePageTag
-@ stdcall NtAcceptConnectPort(ptr long ptr long ptr ptr)
+@ stdcall -syscall NtAcceptConnectPort(ptr long ptr long ptr ptr)
 @ stdcall NtAccessCheck(ptr long long ptr ptr ptr ptr ptr)
 @ stdcall NtAccessCheckAndAuditAlarm(ptr long ptr ptr ptr long ptr long ptr ptr ptr)
 # @ stub NtAccessCheckByType
@@ -154,9 +154,9 @@
 @ stub NtCloseObjectAuditAlarm
 # @ stub NtCompactKeys
 # @ stub NtCompareTokens
-@ stdcall NtCompleteConnectPort(ptr)
+@ stdcall -syscall NtCompleteConnectPort(ptr)
 # @ stub NtCompressKey
-@ stdcall NtConnectPort(ptr ptr ptr ptr ptr ptr ptr ptr)
+@ stdcall -syscall NtConnectPort(ptr ptr ptr ptr ptr ptr ptr ptr)
 @ stdcall -syscall NtContinue(ptr long)
 # @ stub NtCreateDebugObject
 @ stdcall -syscall NtCreateDirectoryObject(ptr long ptr)
@@ -174,7 +174,7 @@
 @ stdcall -syscall NtCreateMutant(ptr long ptr long)
 @ stdcall -syscall NtCreateNamedPipeFile(ptr long ptr ptr long long long long long long long long long ptr)
 @ stdcall NtCreatePagingFile(ptr ptr ptr ptr)
-@ stdcall NtCreatePort(ptr ptr long long ptr)
+@ stdcall -syscall NtCreatePort(ptr ptr long long ptr)
 @ stdcall -syscall NtCreatePowerRequest(ptr ptr)
 @ stub NtCreateProcess
 # @ stub NtCreateProcessEx
@@ -233,7 +233,7 @@
 @ stdcall -syscall NtInitiatePowerAction (long long long long)
 @ stdcall -syscall NtIsProcessInJob(long long)
 # @ stub NtIsSystemResumeAutomatic
-@ stdcall NtListenPort(ptr ptr)
+@ stdcall -syscall NtListenPort(ptr ptr)
 @ stdcall NtLoadDriver(ptr)
 @ stdcall -syscall NtLoadKey2(ptr ptr long)
 @ stdcall -syscall NtLoadKey(ptr ptr)
@@ -332,7 +332,7 @@
 @ stub NtReadRequestData
 @ stdcall -syscall NtReadVirtualMemory(long ptr ptr long ptr)
 @ stub NtRegisterNewDevice
-@ stdcall NtRegisterThreadTerminatePort(ptr)
+@ stdcall -syscall NtRegisterThreadTerminatePort(ptr)
 @ stdcall -syscall NtReleaseKeyedEvent(long ptr long ptr)
 @ stdcall -syscall NtReleaseMutant(long ptr)
 @ stub NtReleaseProcessMutant
@@ -343,12 +343,12 @@
 @ stdcall -syscall NtRenameKey(long ptr)
 @ stdcall -syscall NtReplaceKey(ptr long ptr)
 @ stub NtReplyPort
-@ stdcall NtReplyWaitReceivePort(ptr ptr ptr ptr)
+@ stdcall -syscall NtReplyWaitReceivePort(ptr ptr ptr ptr)
 @ stub NtReplyWaitReceivePortEx
 @ stub NtReplyWaitReplyPort
 # @ stub NtRequestDeviceWakeup
 @ stub NtRequestPort
-@ stdcall NtRequestWaitReplyPort(ptr ptr ptr)
+@ stdcall -syscall NtRequestWaitReplyPort(ptr ptr ptr)
 # @ stub NtRequestWakeupLatency
 @ stdcall -syscall NtResetEvent(long ptr)
 @ stdcall -syscall NtResetWriteWatch(long ptr long)
@@ -358,7 +358,7 @@
 @ stdcall -syscall NtSaveKey(long long)
 # @ stub NtSaveKeyEx
 # @ stub NtSaveMergedKeys
-@ stdcall NtSecureConnectPort(ptr ptr ptr ptr ptr ptr ptr ptr ptr)
+@ stdcall -syscall NtSecureConnectPort(ptr ptr ptr ptr ptr ptr ptr ptr ptr)
 # @ stub NtSetBootEntryOrder
 # @ stub NtSetBootOptions
 @ stdcall -syscall NtSetContextThread(long ptr)
@@ -1112,7 +1112,7 @@
 @ stdcall WinSqmIsOptedIn()
 @ stdcall WinSqmSetDWORD(ptr long long)
 @ stdcall WinSqmStartSession(ptr long long)
-@ stdcall -private ZwAcceptConnectPort(ptr long ptr long ptr ptr) NtAcceptConnectPort
+@ stdcall -private -syscall ZwAcceptConnectPort(ptr long ptr long ptr ptr) NtAcceptConnectPort
 @ stdcall -private ZwAccessCheck(ptr long long ptr ptr ptr ptr ptr) NtAccessCheck
 @ stdcall -private ZwAccessCheckAndAuditAlarm(ptr long ptr ptr ptr long ptr long ptr ptr ptr) NtAccessCheckAndAuditAlarm
 # @ stub ZwAccessCheckByType
@@ -1143,9 +1143,9 @@
 @ stub ZwCloseObjectAuditAlarm
 # @ stub ZwCompactKeys
 # @ stub ZwCompareTokens
-@ stdcall -private ZwCompleteConnectPort(ptr) NtCompleteConnectPort
+@ stdcall -private -syscall ZwCompleteConnectPort(ptr) NtCompleteConnectPort
 # @ stub ZwCompressKey
-@ stdcall -private ZwConnectPort(ptr ptr ptr ptr ptr ptr ptr ptr) NtConnectPort
+@ stdcall -private -syscall ZwConnectPort(ptr ptr ptr ptr ptr ptr ptr ptr) NtConnectPort
 @ stdcall -private -syscall ZwContinue(ptr long) NtContinue
 # @ stub ZwCreateDebugObject
 @ stdcall -private -syscall ZwCreateDirectoryObject(ptr long ptr) NtCreateDirectoryObject
@@ -1162,7 +1162,7 @@
 @ stdcall -private -syscall ZwCreateMutant(ptr long ptr long) NtCreateMutant
 @ stdcall -private -syscall ZwCreateNamedPipeFile(ptr long ptr ptr long long long long long long long long long ptr) NtCreateNamedPipeFile
 @ stdcall -private ZwCreatePagingFile(ptr ptr ptr ptr) NtCreatePagingFile
-@ stdcall -private ZwCreatePort(ptr ptr long long ptr) NtCreatePort
+@ stdcall -private -syscall ZwCreatePort(ptr ptr long long ptr) NtCreatePort
 @ stdcall -private -syscall ZwCreatePowerRequest(ptr ptr) NtCreatePowerRequest
 @ stub ZwCreateProcess
 # @ stub ZwCreateProcessEx
@@ -1220,7 +1220,7 @@
 @ stdcall -private -syscall ZwInitiatePowerAction(long long long long) NtInitiatePowerAction
 @ stdcall -private -syscall ZwIsProcessInJob(long long) NtIsProcessInJob
 # @ stub ZwIsSystemResumeAutomatic
-@ stdcall -private ZwListenPort(ptr ptr) NtListenPort
+@ stdcall -private -syscall ZwListenPort(ptr ptr) NtListenPort
 @ stdcall -private ZwLoadDriver(ptr) NtLoadDriver
 @ stdcall -private -syscall ZwLoadKey2(ptr ptr long) NtLoadKey2
 @ stdcall -private -syscall ZwLoadKey(ptr ptr) NtLoadKey
@@ -1319,7 +1319,7 @@
 @ stub ZwReadRequestData
 @ stdcall -private -syscall ZwReadVirtualMemory(long ptr ptr long ptr) NtReadVirtualMemory
 @ stub ZwRegisterNewDevice
-@ stdcall -private ZwRegisterThreadTerminatePort(ptr) NtRegisterThreadTerminatePort
+@ stdcall -private -syscall ZwRegisterThreadTerminatePort(ptr) NtRegisterThreadTerminatePort
 @ stdcall -private -syscall ZwReleaseKeyedEvent(long ptr long ptr) NtReleaseKeyedEvent
 @ stdcall -private -syscall ZwReleaseMutant(long ptr) NtReleaseMutant
 @ stub ZwReleaseProcessMutant
@@ -1330,12 +1330,12 @@
 @ stdcall -private -syscall ZwRenameKey(long ptr) NtRenameKey
 @ stdcall -private -syscall ZwReplaceKey(ptr long ptr) NtReplaceKey
 @ stub ZwReplyPort
-@ stdcall -private ZwReplyWaitReceivePort(ptr ptr ptr ptr) NtReplyWaitReceivePort
+@ stdcall -private -syscall ZwReplyWaitReceivePort(ptr ptr ptr ptr) NtReplyWaitReceivePort
 @ stub ZwReplyWaitReceivePortEx
 @ stub ZwReplyWaitReplyPort
 # @ stub ZwRequestDeviceWakeup
 @ stub ZwRequestPort
-@ stdcall -private ZwRequestWaitReplyPort(ptr ptr ptr) NtRequestWaitReplyPort
+@ stdcall -private -syscall ZwRequestWaitReplyPort(ptr ptr ptr) NtRequestWaitReplyPort
 # @ stub ZwRequestWakeupLatency
 @ stdcall -private -syscall ZwResetEvent(long ptr) NtResetEvent
 @ stdcall -private -syscall ZwResetWriteWatch(long ptr long) NtResetWriteWatch
@@ -1345,7 +1345,7 @@
 @ stdcall -private -syscall ZwSaveKey(long long) NtSaveKey
 # @ stub ZwSaveKeyEx
 # @ stub ZwSaveMergedKeys
-@ stdcall -private ZwSecureConnectPort(ptr ptr ptr ptr ptr ptr ptr ptr ptr) NtSecureConnectPort
+@ stdcall -private -syscall ZwSecureConnectPort(ptr ptr ptr ptr ptr ptr ptr ptr ptr) NtSecureConnectPort
 # @ stub ZwSetBootEntryOrder
 # @ stub ZwSetBootOptions
 @ stdcall -private -syscall ZwSetContextThread(long ptr) NtSetContextThread

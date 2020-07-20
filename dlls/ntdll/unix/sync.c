@@ -1834,6 +1834,110 @@ NTSTATUS WINAPI NtOpenSection( HANDLE *handle, ACCESS_MASK access, const OBJECT_
 }
 
 
+/***********************************************************************
+ *             NtCreatePort (NTDLL.@)
+ */
+NTSTATUS WINAPI NtCreatePort( HANDLE *handle, OBJECT_ATTRIBUTES *attr, ULONG info_len,
+                              ULONG data_len, ULONG *reserved )
+{
+    FIXME( "(%p,%p,%u,%u,%p),stub!\n", handle, attr, info_len, data_len, reserved );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
+/***********************************************************************
+ *             NtConnectPort (NTDLL.@)
+ */
+NTSTATUS WINAPI NtConnectPort( HANDLE *handle, UNICODE_STRING *name, SECURITY_QUALITY_OF_SERVICE *qos,
+                               LPC_SECTION_WRITE *write, LPC_SECTION_READ *read, ULONG *max_len,
+                               void *info, ULONG *info_len )
+{
+    FIXME( "(%p,%s,%p,%p,%p,%p,%p,%p),stub!\n", handle, debugstr_us(name), qos,
+           write, read, max_len, info, info_len );
+    if (info && info_len) TRACE("msg = %s\n", debugstr_an( info, *info_len ));
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
+/***********************************************************************
+ *             NtSecureConnectPort (NTDLL.@)
+ */
+NTSTATUS WINAPI NtSecureConnectPort( HANDLE *handle, UNICODE_STRING *name, SECURITY_QUALITY_OF_SERVICE *qos,
+                                     LPC_SECTION_WRITE *write, PSID sid, LPC_SECTION_READ *read,
+                                     ULONG *max_len, void *info, ULONG *info_len )
+{
+    FIXME( "(%p,%s,%p,%p,%p,%p,%p,%p,%p),stub!\n", handle, debugstr_us(name), qos,
+           write, sid, read, max_len, info, info_len );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
+/***********************************************************************
+ *             NtListenPort (NTDLL.@)
+ */
+NTSTATUS WINAPI NtListenPort( HANDLE handle, LPC_MESSAGE *msg )
+{
+    FIXME("(%p,%p),stub!\n", handle, msg );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
+/***********************************************************************
+ *             NtAcceptConnectPort (NTDLL.@)
+ */
+NTSTATUS WINAPI NtAcceptConnectPort( HANDLE *handle, ULONG id, LPC_MESSAGE *msg, BOOLEAN accept,
+                                     LPC_SECTION_WRITE *write, LPC_SECTION_READ *read )
+{
+    FIXME("(%p,%u,%p,%d,%p,%p),stub!\n", handle, id, msg, accept, write, read );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
+/***********************************************************************
+ *             NtCompleteConnectPort (NTDLL.@)
+ */
+NTSTATUS WINAPI NtCompleteConnectPort( HANDLE handle )
+{
+    FIXME( "(%p),stub!\n", handle );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
+/***********************************************************************
+ *             NtRegisterThreadTerminatePort (NTDLL.@)
+ */
+NTSTATUS WINAPI NtRegisterThreadTerminatePort( HANDLE handle )
+{
+    FIXME( "(%p),stub!\n", handle );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
+/***********************************************************************
+ *             NtRequestWaitReplyPort (NTDLL.@)
+ */
+NTSTATUS WINAPI NtRequestWaitReplyPort( HANDLE handle, LPC_MESSAGE *msg_in, LPC_MESSAGE *msg_out )
+{
+    FIXME( "(%p,%p,%p),stub!\n", handle, msg_in, msg_out );
+    if (msg_in)
+        TRACE("datasize %u msgsize %u type %u ranges %u client %p/%p msgid %lu size %lu data %s\n",
+              msg_in->DataSize, msg_in->MessageSize, msg_in->MessageType, msg_in->VirtualRangesOffset,
+              msg_in->ClientId.UniqueProcess, msg_in->ClientId.UniqueThread, msg_in->MessageId,
+              msg_in->SectionSize, debugstr_an( (const char *)msg_in->Data, msg_in->DataSize ));
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
+/***********************************************************************
+ *             NtReplyWaitReceivePort (NTDLL.@)
+ */
+NTSTATUS WINAPI NtReplyWaitReceivePort( HANDLE handle, ULONG *id, LPC_MESSAGE *reply, LPC_MESSAGE *msg )
+{
+    FIXME("(%p,%p,%p,%p),stub!\n", handle, id, reply, msg );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
 #define MAX_ATOM_LEN  255
 #define IS_INTATOM(x) (((ULONG_PTR)(x) >> 16) == 0)
 
