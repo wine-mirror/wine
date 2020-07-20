@@ -73,6 +73,9 @@ char **main_argv = NULL;
 char **main_envp = NULL;
 static WCHAR **main_wargv;
 
+static LCID user_lcid, system_lcid;
+static LANGID user_ui_language, system_ui_language;
+
 static char system_locale[LOCALE_NAME_MAX_LENGTH];
 static char user_locale[LOCALE_NAME_MAX_LENGTH];
 
@@ -1250,4 +1253,59 @@ void CDECL get_locales( WCHAR *sys, WCHAR *user )
 {
     ntdll_umbstowcs( system_locale, strlen(system_locale) + 1, sys, LOCALE_NAME_MAX_LENGTH );
     ntdll_umbstowcs( user_locale, strlen(user_locale) + 1, user, LOCALE_NAME_MAX_LENGTH );
+}
+
+
+/**********************************************************************
+ *      NtQueryDefaultLocale  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtQueryDefaultLocale( BOOLEAN user, LCID *lcid )
+{
+    *lcid = user ? user_lcid : system_lcid;
+    return STATUS_SUCCESS;
+}
+
+
+/**********************************************************************
+ *      NtSetDefaultLocale  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtSetDefaultLocale( BOOLEAN user, LCID lcid )
+{
+    if (user) user_lcid = lcid;
+    else
+    {
+        system_lcid = lcid;
+        system_ui_language = LANGIDFROMLCID(lcid); /* there is no separate call to set it */
+    }
+    return STATUS_SUCCESS;
+}
+
+
+/**********************************************************************
+ *      NtQueryDefaultUILanguage  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtQueryDefaultUILanguage( LANGID *lang )
+{
+    *lang = user_ui_language;
+    return STATUS_SUCCESS;
+}
+
+
+/**********************************************************************
+ *      NtSetDefaultUILanguage  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtSetDefaultUILanguage( LANGID lang )
+{
+    user_ui_language = lang;
+    return STATUS_SUCCESS;
+}
+
+
+/**********************************************************************
+ *      NtQueryInstallUILanguage  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtQueryInstallUILanguage( LANGID *lang )
+{
+    *lang = system_ui_language;
+    return STATUS_SUCCESS;
 }

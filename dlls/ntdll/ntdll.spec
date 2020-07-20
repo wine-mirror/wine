@@ -284,8 +284,8 @@
 # @ stub NtQueryBootEntryOrder
 # @ stub NtQueryBootOptions
 # @ stub NtQueryDebugFilterState
-@ stdcall NtQueryDefaultLocale(long ptr)
-@ stdcall NtQueryDefaultUILanguage(ptr)
+@ stdcall -syscall NtQueryDefaultLocale(long ptr)
+@ stdcall -syscall NtQueryDefaultUILanguage(ptr)
 @ stdcall -syscall NtQueryDirectoryFile(long long ptr ptr ptr ptr long long long ptr long)
 @ stdcall -syscall NtQueryDirectoryObject(long ptr long long long ptr ptr)
 @ stdcall -syscall NtQueryEaFile(long ptr ptr long long ptr long ptr long)
@@ -298,7 +298,7 @@
 @ stdcall -syscall NtQueryInformationProcess(long long ptr long ptr)
 @ stdcall -syscall NtQueryInformationThread(long long ptr long ptr)
 @ stdcall -syscall NtQueryInformationToken(long long ptr long ptr)
-@ stdcall NtQueryInstallUILanguage(ptr)
+@ stdcall -syscall NtQueryInstallUILanguage(ptr)
 @ stub NtQueryIntervalProfile
 @ stdcall -syscall NtQueryIoCompletion(long long ptr long ptr)
 @ stdcall -syscall NtQueryKey(long long ptr long ptr)
@@ -364,8 +364,8 @@
 @ stdcall -syscall NtSetContextThread(long ptr)
 @ stub NtSetDebugFilterState
 @ stub NtSetDefaultHardErrorPort
-@ stdcall NtSetDefaultLocale(long long)
-@ stdcall NtSetDefaultUILanguage(long)
+@ stdcall -syscall NtSetDefaultLocale(long long)
+@ stdcall -syscall NtSetDefaultUILanguage(long)
 @ stdcall -syscall NtSetEaFile(long ptr ptr long)
 @ stdcall -syscall NtSetEvent(long ptr)
 # @ stub NtSetEventBoostPriority
@@ -1272,8 +1272,8 @@
 # @ stub ZwQueryBootEntryOrder
 # @ stub ZwQueryBootOptions
 # @ stub ZwQueryDebugFilterState
-@ stdcall -private ZwQueryDefaultLocale(long ptr) NtQueryDefaultLocale
-@ stdcall -private ZwQueryDefaultUILanguage(ptr) NtQueryDefaultUILanguage
+@ stdcall -private -syscall ZwQueryDefaultLocale(long ptr) NtQueryDefaultLocale
+@ stdcall -private -syscall ZwQueryDefaultUILanguage(ptr) NtQueryDefaultUILanguage
 @ stdcall -private -syscall ZwQueryDirectoryFile(long long ptr ptr ptr ptr long long long ptr long) NtQueryDirectoryFile
 @ stdcall -private -syscall ZwQueryDirectoryObject(long ptr long long long ptr ptr) NtQueryDirectoryObject
 @ stdcall -private -syscall ZwQueryEaFile(long ptr ptr long long ptr long ptr long) NtQueryEaFile
@@ -1286,7 +1286,7 @@
 @ stdcall -private -syscall ZwQueryInformationProcess(long long ptr long ptr) NtQueryInformationProcess
 @ stdcall -private -syscall ZwQueryInformationThread(long long ptr long ptr) NtQueryInformationThread
 @ stdcall -private -syscall ZwQueryInformationToken(long long ptr long ptr) NtQueryInformationToken
-@ stdcall -private ZwQueryInstallUILanguage(ptr) NtQueryInstallUILanguage
+@ stdcall -private -syscall ZwQueryInstallUILanguage(ptr) NtQueryInstallUILanguage
 @ stub ZwQueryIntervalProfile
 @ stdcall -private -syscall ZwQueryIoCompletion(long long ptr long ptr) NtQueryIoCompletion
 @ stdcall -private -syscall ZwQueryKey(long long ptr long ptr) NtQueryKey
@@ -1352,8 +1352,8 @@
 @ stdcall -private -syscall ZwSetContextThread(long ptr) NtSetContextThread
 @ stub ZwSetDebugFilterState
 @ stub ZwSetDefaultHardErrorPort
-@ stdcall -private ZwSetDefaultLocale(long long) NtSetDefaultLocale
-@ stdcall -private ZwSetDefaultUILanguage(long) NtSetDefaultUILanguage
+@ stdcall -private -syscall ZwSetDefaultLocale(long long) NtSetDefaultLocale
+@ stdcall -private -syscall ZwSetDefaultUILanguage(long) NtSetDefaultUILanguage
 @ stdcall -private -syscall ZwSetEaFile(long ptr ptr long) NtSetEaFile
 @ stdcall -private -syscall ZwSetEvent(long ptr) NtSetEvent
 # @ stub ZwSetEventBoostPriority

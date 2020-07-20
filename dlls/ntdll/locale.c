@@ -102,7 +102,6 @@ struct norm_table
 
 LCID user_lcid = 0, system_lcid = 0;
 
-static LANGID user_ui_language, system_ui_language;
 static NLSTABLEINFO nls_info;
 static HMODULE kernel32_handle;
 static CPTABLEINFO unix_table;
@@ -721,7 +720,6 @@ void init_locale( HMODULE module )
 {
     WCHAR system_locale[LOCALE_NAME_MAX_LENGTH];
     WCHAR user_locale[LOCALE_NAME_MAX_LENGTH];
-    LCID system_lcid, user_lcid;
 
     kernel32_handle = module;
 
@@ -814,61 +812,6 @@ UINT CDECL __wine_get_unix_codepage(void)
 }
 
 
-/**********************************************************************
- *      NtQueryDefaultLocale  (NTDLL.@)
- */
-NTSTATUS WINAPI NtQueryDefaultLocale( BOOLEAN user, LCID *lcid )
-{
-    *lcid = user ? user_lcid : system_lcid;
-    return STATUS_SUCCESS;
-}
-
-
-/**********************************************************************
- *      NtSetDefaultLocale  (NTDLL.@)
- */
-NTSTATUS WINAPI NtSetDefaultLocale( BOOLEAN user, LCID lcid )
-{
-    if (user) user_lcid = lcid;
-    else
-    {
-        system_lcid = lcid;
-        system_ui_language = LANGIDFROMLCID(lcid); /* there is no separate call to set it */
-    }
-    return STATUS_SUCCESS;
-}
-
-
-/**********************************************************************
- *      NtQueryDefaultUILanguage  (NTDLL.@)
- */
-NTSTATUS WINAPI NtQueryDefaultUILanguage( LANGID *lang )
-{
-    *lang = user_ui_language;
-    return STATUS_SUCCESS;
-}
-
-
-/**********************************************************************
- *      NtSetDefaultUILanguage  (NTDLL.@)
- */
-NTSTATUS WINAPI NtSetDefaultUILanguage( LANGID lang )
-{
-    user_ui_language = lang;
-    return STATUS_SUCCESS;
-}
-
-
-/**********************************************************************
- *      NtQueryInstallUILanguage  (NTDLL.@)
- */
-NTSTATUS WINAPI NtQueryInstallUILanguage( LANGID *lang )
-{
-    *lang = system_ui_language;
-    return STATUS_SUCCESS;
-}
-
-
 static NTSTATUS get_dummy_preferred_ui_language( DWORD flags, LANGID lang, ULONG *count,
                                                  WCHAR *buffer, ULONG *size )
 {
@@ -905,8 +848,12 @@ static NTSTATUS get_dummy_preferred_ui_language( DWORD flags, LANGID lang, ULONG
  */
 NTSTATUS WINAPI RtlGetProcessPreferredUILanguages( DWORD flags, ULONG *count, WCHAR *buffer, ULONG *size )
 {
+    LANGID ui_language;
+
     FIXME( "%08x, %p, %p %p\n", flags, count, buffer, size );
-    return get_dummy_preferred_ui_language( flags, user_ui_language, count, buffer, size );
+
+    NtQueryDefaultUILanguage( &ui_language );
+    return get_dummy_preferred_ui_language( flags, ui_language, count, buffer, size );
 }
 
 
@@ -916,11 +863,14 @@ NTSTATUS WINAPI RtlGetProcessPreferredUILanguages( DWORD flags, ULONG *count, WC
 NTSTATUS WINAPI RtlGetSystemPreferredUILanguages( DWORD flags, ULONG unknown, ULONG *count,
                                                   WCHAR *buffer, ULONG *size )
 {
+    LANGID ui_language;
+
     if (flags & ~(MUI_LANGUAGE_NAME | MUI_LANGUAGE_ID | MUI_MACHINE_LANGUAGE_SETTINGS)) return STATUS_INVALID_PARAMETER;
     if ((flags & MUI_LANGUAGE_NAME) && (flags & MUI_LANGUAGE_ID)) return STATUS_INVALID_PARAMETER;
     if (*size && !buffer) return STATUS_INVALID_PARAMETER;
 
-    return get_dummy_preferred_ui_language( flags, system_ui_language, count, buffer, size );
+    NtQueryInstallUILanguage( &ui_language );
+    return get_dummy_preferred_ui_language( flags, ui_language, count, buffer, size );
 }
 
 
@@ -929,8 +879,12 @@ NTSTATUS WINAPI RtlGetSystemPreferredUILanguages( DWORD flags, ULONG unknown, UL
  */
 NTSTATUS WINAPI RtlGetThreadPreferredUILanguages( DWORD flags, ULONG *count, WCHAR *buffer, ULONG *size )
 {
+    LANGID ui_language;
+
     FIXME( "%08x, %p, %p %p\n", flags, count, buffer, size );
-    return get_dummy_preferred_ui_language( flags, user_ui_language, count, buffer, size );
+
+    NtQueryDefaultUILanguage( &ui_language );
+    return get_dummy_preferred_ui_language( flags, ui_language, count, buffer, size );
 }
 
 
@@ -940,11 +894,14 @@ NTSTATUS WINAPI RtlGetThreadPreferredUILanguages( DWORD flags, ULONG *count, WCH
 NTSTATUS WINAPI RtlGetUserPreferredUILanguages( DWORD flags, ULONG unknown, ULONG *count,
                                                 WCHAR *buffer, ULONG *size )
 {
+    LANGID ui_language;
+
     if (flags & ~(MUI_LANGUAGE_NAME | MUI_LANGUAGE_ID)) return STATUS_INVALID_PARAMETER;
     if ((flags & MUI_LANGUAGE_NAME) && (flags & MUI_LANGUAGE_ID)) return STATUS_INVALID_PARAMETER;
     if (*size && !buffer) return STATUS_INVALID_PARAMETER;
 
-    return get_dummy_preferred_ui_language( flags, user_ui_language, count, buffer, size );
+    NtQueryDefaultUILanguage( &ui_language );
+    return get_dummy_preferred_ui_language( flags, ui_language, count, buffer, size );
 }
 
 
