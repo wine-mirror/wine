@@ -1142,6 +1142,7 @@ NTSTATUS CDECL get_dynamic_environment( WCHAR *env, SIZE_T *size )
     }
     else status = STATUS_BUFFER_TOO_SMALL;
     *size = pos + 1;
+    free( buffer );
     return status;
 }
 
