@@ -3022,6 +3022,48 @@ NTSTATUS WINAPI NtPowerInformation( POWER_INFORMATION_LEVEL level, void *input, 
 
 
 /******************************************************************************
+ *              NtLoadDriver  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtLoadDriver( const UNICODE_STRING *name )
+{
+    FIXME( "(%s), stub!\n", debugstr_us(name) );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
+/******************************************************************************
+ *              NtUnloadDriver  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtUnloadDriver( const UNICODE_STRING *name )
+{
+    FIXME( "(%s), stub!\n", debugstr_us(name) );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
+/******************************************************************************
+ *              NtDisplayString  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtDisplayString( UNICODE_STRING *string )
+{
+    ERR( "%s\n", debugstr_us(string) );
+    return STATUS_SUCCESS;
+}
+
+
+/******************************************************************************
+ *              NtRaiseHardError  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtRaiseHardError( NTSTATUS status, ULONG count,
+                                  UNICODE_STRING *params_mask, void **params,
+                                  HARDERROR_RESPONSE_OPTION option, HARDERROR_RESPONSE *response )
+{
+    FIXME( "%08x stub\n", status );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
+/******************************************************************************
  *              NtInitiatePowerAction  (NTDLL.@)
  */
 NTSTATUS WINAPI NtInitiatePowerAction( POWER_ACTION action, SYSTEM_POWER_STATE state,

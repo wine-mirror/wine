@@ -4486,3 +4486,14 @@ void WINAPI NtFlushProcessWriteBuffers(void)
     static int once = 0;
     if (!once++) FIXME( "stub\n" );
 }
+
+
+/**********************************************************************
+ *           NtCreatePagingFile  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtCreatePagingFile( UNICODE_STRING *name, LARGE_INTEGER *min_size,
+                                    LARGE_INTEGER *max_size, LARGE_INTEGER *actual_size )
+{
+    FIXME( "(%s %p %p %p) stub\n", debugstr_us(name), min_size, max_size, actual_size );
+    return STATUS_SUCCESS;
+}

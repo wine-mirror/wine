@@ -74,38 +74,6 @@ NTSTATUS WINAPI /* DECLSPEC_HOTPATCH */ RtlGetNativeSystemInformation(
 }
 
 /******************************************************************************
- *  NtCreatePagingFile		[NTDLL.@]
- *  ZwCreatePagingFile		[NTDLL.@]
- */
-NTSTATUS WINAPI NtCreatePagingFile(
-	PUNICODE_STRING PageFileName,
-	PLARGE_INTEGER MinimumSize,
-	PLARGE_INTEGER MaximumSize,
-	PLARGE_INTEGER ActualSize)
-{
-    FIXME("(%p %p %p %p) stub\n", PageFileName, MinimumSize, MaximumSize, ActualSize);
-    return STATUS_SUCCESS;
-}
-
-/******************************************************************************
- *  NtDisplayString				[NTDLL.@]
- *
- * writes a string to the nt-textmode screen eg. during startup
- */
-NTSTATUS WINAPI NtDisplayString ( PUNICODE_STRING string )
-{
-    STRING stringA;
-    NTSTATUS ret;
-
-    if (!(ret = RtlUnicodeStringToAnsiString( &stringA, string, TRUE )))
-    {
-        MESSAGE( "%.*s", stringA.Length, stringA.Buffer );
-        RtlFreeAnsiString( &stringA );
-    }
-    return ret;
-}
-
-/******************************************************************************
  *        VerSetConditionMask   (NTDLL.@)
  */
 ULONGLONG WINAPI VerSetConditionMask( ULONGLONG dwlConditionMask, DWORD dwTypeBitMask,

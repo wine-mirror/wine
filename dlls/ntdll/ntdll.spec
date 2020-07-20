@@ -173,7 +173,7 @@
 @ stdcall -syscall NtCreateMailslotFile(ptr long ptr ptr long long long ptr)
 @ stdcall -syscall NtCreateMutant(ptr long ptr long)
 @ stdcall -syscall NtCreateNamedPipeFile(ptr long ptr ptr long long long long long long long long long ptr)
-@ stdcall NtCreatePagingFile(ptr ptr ptr ptr)
+@ stdcall -syscall NtCreatePagingFile(ptr ptr ptr ptr)
 @ stdcall -syscall NtCreatePort(ptr ptr long long ptr)
 @ stdcall -syscall NtCreatePowerRequest(ptr ptr)
 @ stub NtCreateProcess
@@ -199,7 +199,7 @@
 # @ stub NtDeleteObjectAuditAlarm
 @ stdcall -syscall NtDeleteValueKey(long ptr)
 @ stdcall -syscall NtDeviceIoControlFile(long long ptr ptr ptr long ptr long ptr long)
-@ stdcall NtDisplayString(ptr)
+@ stdcall -syscall NtDisplayString(ptr)
 @ stdcall -syscall NtDuplicateObject(long long long ptr long long long)
 @ stdcall -syscall NtDuplicateToken(long long ptr long long ptr)
 # @ stub NtEnumerateBootEntries
@@ -234,7 +234,7 @@
 @ stdcall -syscall NtIsProcessInJob(long long)
 # @ stub NtIsSystemResumeAutomatic
 @ stdcall -syscall NtListenPort(ptr ptr)
-@ stdcall NtLoadDriver(ptr)
+@ stdcall -syscall NtLoadDriver(ptr)
 @ stdcall -syscall NtLoadKey2(ptr ptr long)
 @ stdcall -syscall NtLoadKey(ptr ptr)
 @ stdcall -syscall NtLockFile(long long ptr ptr ptr ptr ptr ptr long long)
@@ -326,7 +326,7 @@
 @ stdcall -syscall NtQueryVolumeInformationFile(long ptr ptr long long)
 @ stdcall -syscall NtQueueApcThread(long ptr long long long)
 @ stdcall -syscall NtRaiseException(ptr ptr long)
-@ stdcall NtRaiseHardError(long long ptr ptr long ptr)
+@ stdcall -syscall NtRaiseHardError(long long ptr ptr long ptr)
 @ stdcall -syscall NtReadFile(long long ptr ptr ptr ptr long ptr ptr)
 @ stdcall -syscall NtReadFileScatter(long long ptr ptr ptr ptr long ptr ptr)
 @ stub NtReadRequestData
@@ -413,7 +413,7 @@
 @ stub NtTestAlert
 # @ stub NtTraceEvent
 # @ stub NtTranslateFilePath
-@ stdcall NtUnloadDriver(ptr)
+@ stdcall -syscall NtUnloadDriver(ptr)
 @ stdcall -syscall NtUnloadKey(ptr)
 @ stub NtUnloadKeyEx
 @ stdcall -syscall NtUnlockFile(long ptr ptr ptr ptr)
@@ -1162,7 +1162,7 @@
 @ stdcall -private -syscall ZwCreateMailslotFile(ptr long ptr ptr long long long ptr) NtCreateMailslotFile
 @ stdcall -private -syscall ZwCreateMutant(ptr long ptr long) NtCreateMutant
 @ stdcall -private -syscall ZwCreateNamedPipeFile(ptr long ptr ptr long long long long long long long long long ptr) NtCreateNamedPipeFile
-@ stdcall -private ZwCreatePagingFile(ptr ptr ptr ptr) NtCreatePagingFile
+@ stdcall -private -syscall ZwCreatePagingFile(ptr ptr ptr ptr) NtCreatePagingFile
 @ stdcall -private -syscall ZwCreatePort(ptr ptr long long ptr) NtCreatePort
 @ stdcall -private -syscall ZwCreatePowerRequest(ptr ptr) NtCreatePowerRequest
 @ stub ZwCreateProcess
@@ -1187,7 +1187,7 @@
 # @ stub ZwDeleteObjectAuditAlarm
 @ stdcall -private -syscall ZwDeleteValueKey(long ptr) NtDeleteValueKey
 @ stdcall -private -syscall ZwDeviceIoControlFile(long long ptr ptr ptr long ptr long ptr long) NtDeviceIoControlFile
-@ stdcall -private ZwDisplayString(ptr) NtDisplayString
+@ stdcall -private -syscall ZwDisplayString(ptr) NtDisplayString
 @ stdcall -private -syscall ZwDuplicateObject(long long long ptr long long long) NtDuplicateObject
 @ stdcall -private -syscall ZwDuplicateToken(long long ptr long long ptr) NtDuplicateToken
 # @ stub ZwEnumerateBootEntries
@@ -1222,7 +1222,7 @@
 @ stdcall -private -syscall ZwIsProcessInJob(long long) NtIsProcessInJob
 # @ stub ZwIsSystemResumeAutomatic
 @ stdcall -private -syscall ZwListenPort(ptr ptr) NtListenPort
-@ stdcall -private ZwLoadDriver(ptr) NtLoadDriver
+@ stdcall -private -syscall ZwLoadDriver(ptr) NtLoadDriver
 @ stdcall -private -syscall ZwLoadKey2(ptr ptr long) NtLoadKey2
 @ stdcall -private -syscall ZwLoadKey(ptr ptr) NtLoadKey
 @ stdcall -private -syscall ZwLockFile(long long ptr ptr ptr ptr ptr ptr long long) NtLockFile
@@ -1314,7 +1314,7 @@
 @ stdcall -private -syscall ZwQueryVolumeInformationFile(long ptr ptr long long) NtQueryVolumeInformationFile
 @ stdcall -private -syscall ZwQueueApcThread(long ptr long long long) NtQueueApcThread
 @ stdcall -private -syscall ZwRaiseException(ptr ptr long) NtRaiseException
-@ stdcall -private ZwRaiseHardError(long long ptr ptr long ptr) NtRaiseHardError
+@ stdcall -private -syscall ZwRaiseHardError(long long ptr ptr long ptr) NtRaiseHardError
 @ stdcall -private -syscall ZwReadFile(long long ptr ptr ptr ptr long ptr ptr) NtReadFile
 @ stdcall -private -syscall ZwReadFileScatter(long long ptr ptr ptr ptr long ptr ptr) NtReadFileScatter
 @ stub ZwReadRequestData
@@ -1401,7 +1401,7 @@
 @ stub ZwTestAlert
 # @ stub ZwTraceEvent
 # @ stub ZwTranslateFilePath
-@ stdcall -private ZwUnloadDriver(ptr) NtUnloadDriver
+@ stdcall -private -syscall ZwUnloadDriver(ptr) NtUnloadDriver
 @ stdcall -private -syscall ZwUnloadKey(ptr) NtUnloadKey
 @ stub ZwUnloadKeyEx
 @ stdcall -private -syscall ZwUnlockFile(long ptr ptr ptr ptr) NtUnlockFile

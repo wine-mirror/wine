@@ -3877,28 +3877,6 @@ void WINAPI RtlReleasePath( PWSTR path )
 }
 
 
-/***********************************************************************
- *           NtLoadDriver   (NTDLL.@)
- *           ZwLoadDriver   (NTDLL.@)
- */
-NTSTATUS WINAPI NtLoadDriver( const UNICODE_STRING *DriverServiceName )
-{
-    FIXME("(%p), stub!\n",DriverServiceName);
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-
-/***********************************************************************
- *           NtUnloadDriver   (NTDLL.@)
- *           ZwUnloadDriver   (NTDLL.@)
- */
-NTSTATUS WINAPI NtUnloadDriver( const UNICODE_STRING *DriverServiceName )
-{
-    FIXME("(%p), stub!\n",DriverServiceName);
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-
 /******************************************************************
  *		DllMain   (NTDLL.@)
  */
