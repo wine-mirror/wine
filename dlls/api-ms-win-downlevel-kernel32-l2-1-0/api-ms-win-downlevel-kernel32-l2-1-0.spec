@@ -94,7 +94,7 @@
 @ stdcall RegisterWaitForSingleObject(ptr long ptr ptr long long) kernel32.RegisterWaitForSingleObject
 @ stdcall SetConsoleTitleA(str) kernel32.SetConsoleTitleA
 @ stdcall SetFileCompletionNotificationModes(long long) kernel32.SetFileCompletionNotificationModes
-@ stub SetFirmwareEnvironmentVariableW
+@ stdcall SetFirmwareEnvironmentVariableW(wstr wstr ptr long) kernel32.SetFirmwareEnvironmentVariableW
 @ stdcall SetHandleCount(long) kernel32.SetHandleCount
 @ stdcall SetMailslotInfo(long long) kernel32.SetMailslotInfo
 @ stdcall SetProcessAffinityMask(long long) kernel32.SetProcessAffinityMask

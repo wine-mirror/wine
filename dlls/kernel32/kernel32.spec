@@ -1414,7 +1414,7 @@
 @ stdcall -import SetFileTime(long ptr ptr ptr)
 @ stdcall -import SetFileValidData(ptr int64)
 # @ stub SetFirmwareEnvironmentVariableA
-# @ stub SetFirmwareEnvironmentVariableW
+@ stdcall SetFirmwareEnvironmentVariableW(wstr wstr ptr long)
 @ stdcall SetHandleContext(long long)
 @ stdcall SetHandleCount(long)
 @ stdcall -import SetHandleInformation(long long long)

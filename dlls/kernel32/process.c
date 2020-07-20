@@ -770,6 +770,16 @@ DWORD WINAPI GetFirmwareEnvironmentVariableW(LPCWSTR name, LPCWSTR guid, PVOID b
     return 0;
 }
 
+/***********************************************************************
+ *           SetFirmwareEnvironmentVariableW     (KERNEL32.@)
+ */
+BOOL WINAPI SetFirmwareEnvironmentVariableW(const WCHAR *name, const WCHAR *guid, void *buffer, DWORD size)
+{
+    FIXME("stub: %s %s %p %u\n", debugstr_w(name), debugstr_w(guid), buffer, size);
+    SetLastError(ERROR_INVALID_FUNCTION);
+    return FALSE;
+}
+
 /**********************************************************************
  *           GetNumaNodeProcessorMask     (KERNEL32.@)
  */
