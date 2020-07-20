@@ -613,6 +613,7 @@ static struct inner_data* WINECON_Init(HINSTANCE hInst, DWORD pid, LPCWSTR appna
                                        enum init_return (*backend)(struct inner_data*),
                                        INT nCmdShow)
 {
+    struct condrv_input_info_params input_params;
     OBJECT_ATTRIBUTES attr = {sizeof(attr)};
     struct inner_data*	data = NULL;
     DWORD		ret;
@@ -719,12 +720,18 @@ static struct inner_data* WINECON_Init(HINSTANCE hInst, DWORD pid, LPCWSTR appna
         WINECON_SetConfig(data, &cfg);
         data->curcfg.registry = cfg.registry;
         WINECON_DumpConfig("fint", &data->curcfg);
+
+        memset(&input_params, 0, sizeof(input_params));
+        input_params.mask = SET_CONSOLE_INPUT_INFO_WIN;
+        input_params.info.win = condrv_handle(data->hWnd);
+        ret = DeviceIoControl(data->hConIn, IOCTL_CONDRV_SET_INPUT_INFO, &input_params, sizeof(input_params),
+                              NULL, 0, NULL, NULL);
+        if (!ret) goto error;
+
         SERVER_START_REQ( set_console_input_info )
         {
             req->handle = wine_server_obj_handle( data->hConIn );
-            req->win = wine_server_user_handle( data->hWnd );
-            req->mask = SET_CONSOLE_INPUT_INFO_TITLE |
-                        SET_CONSOLE_INPUT_INFO_WIN;
+            req->mask = SET_CONSOLE_INPUT_INFO_TITLE;
             wine_server_add_data( req, appname, lstrlenW(appname) * sizeof(WCHAR) );
             ret = !wine_server_call_err( req );
         }
