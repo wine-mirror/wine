@@ -32,14 +32,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 
-LPCSTR debugstr_ObjectAttributes(const OBJECT_ATTRIBUTES *oa)
-{
-    if (!oa) return "<null>";
-    return wine_dbg_sprintf( "{name=%s, attr=0x%08x, hRoot=%p, sd=%p}",
-                             debugstr_us(oa->ObjectName), oa->Attributes,
-                             oa->RootDirectory, oa->SecurityDescriptor );
-}
-
 LPCSTR debugstr_us( const UNICODE_STRING *us )
 {
     if (!us) return "<null>";
@@ -565,18 +557,6 @@ ULONG WINAPIV EtwTraceMessage( TRACEHANDLE handle, ULONG flags, LPGUID guid, /*U
     ret = EtwTraceMessageVa( handle, flags, guid, number, valist );
     __ms_va_end( valist );
     return ret;
-}
-
-NTSTATUS WINAPI NtCreateLowBoxToken(HANDLE *token_handle, HANDLE existing_token_handle, ACCESS_MASK desired_access,
-                                    OBJECT_ATTRIBUTES *object_attributes, SID *package_sid, ULONG capability_count,
-                                    SID_AND_ATTRIBUTES *capabilities, ULONG handle_count, HANDLE *handle)
-{
-    FIXME("(%p, %p, %x, %p, %p, %u, %p, %u, %p): stub\n", token_handle, existing_token_handle, desired_access,
-            object_attributes, package_sid, capability_count, capabilities, handle_count, handle);
-
-    /* We need to return a NULL handle since later it will be passed to CloseHandle and that must not fail */
-    *token_handle = NULL;
-    return STATUS_SUCCESS;
 }
 
 /*********************************************************************

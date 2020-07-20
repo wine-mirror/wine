@@ -57,7 +57,6 @@ extern RUNTIME_FUNCTION *lookup_function_info( ULONG_PTR pc, ULONG_PTR *base, LD
 
 /* debug helpers */
 extern LPCSTR debugstr_us( const UNICODE_STRING *str ) DECLSPEC_HIDDEN;
-extern LPCSTR debugstr_ObjectAttributes(const OBJECT_ATTRIBUTES *oa) DECLSPEC_HIDDEN;
 
 /* init routines */
 extern void version_init(void) DECLSPEC_HIDDEN;
@@ -71,8 +70,6 @@ extern NTSTATUS restart_process( RTL_USER_PROCESS_PARAMETERS *params, NTSTATUS s
 
 /* server support */
 extern BOOL is_wow64 DECLSPEC_HIDDEN;
-extern NTSTATUS alloc_object_attributes( const OBJECT_ATTRIBUTES *attr, struct object_attributes **ret,
-                                         data_size_t *ret_len ) DECLSPEC_HIDDEN;
 
 /* module handling */
 extern LIST_ENTRY tls_links DECLSPEC_HIDDEN;

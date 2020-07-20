@@ -52,6 +52,7 @@ C_SRCS = \
 	unix/loader.c \
 	unix/process.c \
 	unix/registry.c \
+	unix/security.c \
 	unix/serial.c \
 	unix/server.c \
 	unix/signal_arm.c \
