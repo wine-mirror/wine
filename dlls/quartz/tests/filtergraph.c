@@ -3939,6 +3939,7 @@ static void test_graph_seeking(void)
 
     LONGLONG time, current, stop, earliest, latest;
     IFilterGraph2 *graph = create_graph();
+    IMediaEventSink *eventsink;
     IMediaControl *control;
     IMediaSeeking *seeking;
     IMediaFilter *filter;
@@ -3976,6 +3977,7 @@ static void test_graph_seeking(void)
     IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
     IFilterGraph2_QueryInterface(graph, &IID_IMediaSeeking, (void **)&seeking);
     IFilterGraph2_QueryInterface(graph, &IID_IMediaFilter, (void **)&filter);
+    IFilterGraph2_QueryInterface(graph, &IID_IMediaEventSink, (void **)&eventsink);
 
     hr = IMediaSeeking_GetCapabilities(seeking, &caps);
     todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -4482,9 +4484,66 @@ static void test_graph_seeking(void)
     hr = IMediaControl_Stop(control);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
+    /* GetCurrentPositions() will return the stop position once all renderers
+     * report EC_COMPLETE. Atelier Sophie depends on this behaviour. */
+
+    hr = IFilterGraph2_SetDefaultSyncSource(graph);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    filter1.seek_stop = 5000 * 10000;
+    filter2.seek_stop = 6000 * 10000;
+
+    hr = IMediaControl_Run(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaSeeking_GetCurrentPosition(seeking, &time);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(time < 5000 * 10000, "Got time %s.\n", wine_dbgstr_longlong(time));
+
+    hr = IMediaEventSink_Notify(eventsink, EC_COMPLETE, S_OK, (LONG_PTR)&filter1.IBaseFilter_iface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaSeeking_GetCurrentPosition(seeking, &time);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(time < 5000 * 10000, "Got time %s.\n", wine_dbgstr_longlong(time));
+
+    hr = IMediaEventSink_Notify(eventsink, EC_COMPLETE, S_OK, (LONG_PTR)&filter2.IBaseFilter_iface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaSeeking_GetCurrentPosition(seeking, &time);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(time == 6000 * 10000, "Got time %s.\n", wine_dbgstr_longlong(time));
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    filter1.seek_hr = filter2.seek_hr = E_NOTIMPL;
+    filter1.seek_stop = filter2.seek_stop = 0xdeadbeef;
+
+    hr = IMediaControl_Run(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaSeeking_GetCurrentPosition(seeking, &time);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(time < 5000 * 10000, "Got time %s.\n", wine_dbgstr_longlong(time));
+
+    hr = IMediaEventSink_Notify(eventsink, EC_COMPLETE, S_OK, (LONG_PTR)&filter1.IBaseFilter_iface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaEventSink_Notify(eventsink, EC_COMPLETE, S_OK, (LONG_PTR)&filter2.IBaseFilter_iface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaSeeking_GetCurrentPosition(seeking, &time);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(time == 6000 * 10000, "Got time %s.\n", wine_dbgstr_longlong(time));
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
     IMediaFilter_Release(filter);
     IMediaControl_Release(control);
     IMediaSeeking_Release(seeking);
+    IMediaEventSink_Release(eventsink);
 
     ok(filter1.seeking_ref > 0, "Unexpected seeking refcount %d.\n", filter1.seeking_ref);
     ok(filter2.seeking_ref > 0, "Unexpected seeking refcount %d.\n", filter2.seeking_ref);
