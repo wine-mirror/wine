@@ -530,7 +530,6 @@ static void test_media_event(IFilterGraph2 *graph)
 
     hr = IMediaSeeking_GetCurrentPosition(seeking, &current);
     ok(hr == S_OK, "GetCurrentPosition() failed: %#x\n", hr);
-todo_wine
     ok(current == stop, "expected %s, got %s\n", wine_dbgstr_longlong(stop), wine_dbgstr_longlong(current));
 
     hr = IMediaControl_Stop(control);
@@ -4512,7 +4511,7 @@ static void test_graph_seeking(void)
 
     hr = IMediaSeeking_GetCurrentPosition(seeking, &time);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(time == 6000 * 10000, "Got time %s.\n", wine_dbgstr_longlong(time));
+    ok(time == 6000 * 10000, "Got time %s.\n", wine_dbgstr_longlong(time));
 
     hr = IMediaControl_Stop(control);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -4535,7 +4534,7 @@ static void test_graph_seeking(void)
 
     hr = IMediaSeeking_GetCurrentPosition(seeking, &time);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(time == 6000 * 10000, "Got time %s.\n", wine_dbgstr_longlong(time));
+    ok(time == 6000 * 10000, "Got time %s.\n", wine_dbgstr_longlong(time));
 
     hr = IMediaControl_Stop(control);
     ok(hr == S_OK, "Got hr %#x.\n", hr);

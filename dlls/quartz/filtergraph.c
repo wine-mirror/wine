@@ -219,10 +219,11 @@ struct filter_graph
     /* Respectively: the last timestamp at which we started streaming, and the
      * current offset within the stream. */
     REFERENCE_TIME stream_start, stream_elapsed;
-
+    REFERENCE_TIME stream_stop;
     LONGLONG current_pos;
 
     unsigned int needs_async_run : 1;
+    unsigned int got_ec_complete : 1;
 };
 
 struct enum_filters
@@ -1739,6 +1740,7 @@ static void update_render_count(struct filter_graph *graph)
 /* Perform the paused -> running transition. The caller must hold graph->cs. */
 static HRESULT graph_start(struct filter_graph *graph, REFERENCE_TIME stream_start)
 {
+    REFERENCE_TIME stream_stop;
     struct filter *filter;
     HRESULT hr = S_OK;
 
@@ -1756,6 +1758,9 @@ static HRESULT graph_start(struct filter_graph *graph, REFERENCE_TIME stream_sta
          * initialize. */
         stream_start += 200 * 10000;
     }
+
+    if (SUCCEEDED(IMediaSeeking_GetStopPosition(&graph->IMediaSeeking_iface, &stream_stop)))
+        graph->stream_stop = stream_stop;
 
     LIST_FOR_EACH_ENTRY(filter, &graph->filters, struct filter, entry)
     {
@@ -2322,7 +2327,11 @@ static HRESULT WINAPI MediaSeeking_GetCurrentPosition(IMediaSeeking *iface, LONG
 
     EnterCriticalSection(&graph->cs);
 
-    if (graph->state == State_Running && graph->refClock)
+    if (graph->got_ec_complete)
+    {
+        ret = graph->stream_stop;
+    }
+    else if (graph->state == State_Running && graph->refClock)
     {
         REFERENCE_TIME time;
         IReferenceClock_GetTime(graph->refClock, &time);
@@ -4982,6 +4991,7 @@ static HRESULT WINAPI MediaFilter_Stop(IMediaFilter *iface)
     graph->state = State_Stopped;
     graph->needs_async_run = 0;
     work = graph->async_run_work;
+    graph->got_ec_complete = 0;
 
     /* Update the current position, probably to synchronize multiple streams. */
     IMediaSeeking_SetPositions(&graph->IMediaSeeking_iface, &graph->current_pos,
@@ -5281,6 +5291,7 @@ static HRESULT WINAPI MediaEventSink_Notify(IMediaEventSink *iface, LONG EventCo
                 PostMessageW(This->notif.hWnd, This->notif.msg, 0, This->notif.instance);
             }
             This->CompletionStatus = EC_COMPLETE;
+            This->got_ec_complete = 1;
             SetEvent(This->hEventCompletion);
         }
     }
