@@ -153,7 +153,11 @@ static HRESULT WINAPI multimedia_stream_SetState(IAMMultiMediaStream *iface, STR
     TRACE("(%p/%p)->(%u)\n", This, iface, new_state);
 
     if (new_state == STREAMSTATE_RUN)
+    {
         hr = IMediaControl_Run(This->media_control);
+        if (SUCCEEDED(hr))
+            hr = S_OK;
+    }
     else if (new_state == STREAMSTATE_STOP)
         hr = IMediaControl_Stop(This->media_control);
 
