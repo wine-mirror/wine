@@ -296,7 +296,7 @@ static void test_renderfile(void)
     ok(hr==S_OK, "IAMMultiMediaStream_AddMediaStream returned: %x\n", hr);
 
     hr = IAMMultiMediaStream_AddMediaStream(pams, NULL, &MSPID_PrimaryAudio, AMMSF_ADDDEFAULTRENDERER, NULL);
-    ok(hr==S_OK, "IAMMultiMediaStream_AddMediaStream returned: %x\n", hr);
+    ok(hr == S_OK || hr == VFW_E_NO_AUDIO_HARDWARE, "Got hr %#x.\n", hr);
 
     hr = IAMMultiMediaStream_OpenFile(pams, L"test.avi", 0);
     ok(hr==S_OK, "IAMMultiMediaStream_OpenFile returned: %x\n", hr);
@@ -315,14 +315,15 @@ static void test_renderfile(void)
     surface = NULL;
     hr = IDirectDrawStreamSample_GetSurface(pddsample, &surface, &rect);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(surface == NULL, "got %p\n", surface);
+    ok(surface != NULL, "Expected non-NULL surface.\n");
+    IDirectDrawSurface_Release(surface);
     IDirectDrawStreamSample_Release(pddsample);
 
     hr = IDirectDrawSurface7_QueryInterface(pdds7, &IID_IDirectDrawSurface, (void**)&surface);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     EXPECT_REF(surface, 1);
-    hr = IDirectDrawMediaStream_CreateSample(pddstream, surface, NULL, 0, &pddsample);
+    hr = IDirectDrawMediaStream_CreateSample(pddstream, surface, &rect, 0, &pddsample);
     ok(hr == S_OK, "IDirectDrawMediaStream_CreateSample returned: %x\n", hr);
     EXPECT_REF(surface, 2);
     IDirectDrawStreamSample_Release(pddsample);
