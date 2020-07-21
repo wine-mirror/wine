@@ -371,27 +371,15 @@ static HRESULT init_decoder(IWICBitmapDecoder *decoder, IWICStream *stream, HRES
     IWICWineDecoder *wine_decoder;
 
     hr = IWICBitmapDecoder_Initialize(decoder, (IStream*)stream, WICDecodeMetadataCacheOnDemand);
-    if (index == -1) {
-        ok(hr == S_OK || wine_init, "Decoder initialize failed, hr %#x\n", hr);
-    } else {
-        ok(hr == expected, "Test %u: Expected hr %#x, got %#x\n", index, expected, hr);
-    }
+    ok(hr == expected, "Test %u: Expected hr %#x, got %#x\n", index, expected, hr);
 
     if (hr != S_OK && wine_init) {
         hr = IWICBitmapDecoder_QueryInterface(decoder, &IID_IWICWineDecoder, (void **)&wine_decoder);
-        if (index == -1) {
-            ok(hr == S_OK || broken(hr != S_OK), "QueryInterface failed, hr %#x\n", hr);
-        } else {
-            ok(hr == S_OK || broken(hr != S_OK), "Test %u: QueryInterface failed, hr %#x\n", index, hr);
-        }
+        ok(hr == S_OK || broken(hr != S_OK), "Test %u: QueryInterface failed, hr %#x\n", index, hr);
+
         if (hr == S_OK) {
             hr = IWICWineDecoder_Initialize(wine_decoder, (IStream*)stream, WICDecodeMetadataCacheOnDemand);
-            if (index == -1)  {
-                ok(hr == S_OK, "Initialize failed, hr %#x\n", hr);
-            } else {
-                ok(hr == S_OK, "Test %u: Initialize failed, hr %#x\n", index, hr);
-            }
-
+            ok(hr == S_OK, "Test %u: Initialize failed, hr %#x\n", index, hr);
         }
     }
 
@@ -511,7 +499,7 @@ static void test_dds_decoder_image_parameters(void)
 
         if (test_data[i].init_hr != S_OK && !test_data[i].wine_init) continue;
 
-        hr = init_decoder(decoder, stream, S_OK, -1, test_data[i].wine_init);
+        hr = init_decoder(decoder, stream, test_data[i].init_hr, i, test_data[i].wine_init);
         if (hr != S_OK) {
             if (test_data[i].expected_parameters.Dimension == WICDdsTextureCube) {
                 win_skip("Cube map is not supported\n");
@@ -831,7 +819,7 @@ static void test_dds_decoder(void)
         if (!stream) goto next;
         decoder = create_decoder();
         if (!decoder) goto next;
-        hr = init_decoder(decoder, stream, S_OK, -1, test_data[i].wine_init);
+        hr = init_decoder(decoder, stream, test_data[i].init_hr, i, test_data[i].wine_init);
         if (hr != S_OK) {
             if (test_data[i].expected_parameters.Dimension == WICDdsTextureCube) {
                 win_skip("Cube map is not supported\n");
