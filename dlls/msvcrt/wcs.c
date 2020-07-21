@@ -2663,7 +2663,8 @@ int CDECL MSVCRT_towupper(MSVCRT_wint_t c)
  */
 MSVCRT_wchar_t* CDECL MSVCRT_wcschr(const MSVCRT_wchar_t *str, MSVCRT_wchar_t ch)
 {
-    return strchrW(str, ch);
+    do { if (*str == ch) return (WCHAR *)(ULONG_PTR)str; } while (*str++);
+    return NULL;
 }
 
 /*********************************************************************
