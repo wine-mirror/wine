@@ -261,6 +261,7 @@ static void test_status_control(void)
     char ch;
     char chstr[10] = "Inval id";
     COLORREF crColor = RGB(0,0,0);
+    WCHAR wbuf[20];
 
     hWndStatus = create_status_control(WS_VISIBLE | SBT_TOOLTIPS, 0);
 
@@ -316,28 +317,33 @@ static void test_status_control(void)
     expect(2,borders[2]);
 
     /* Test resetting text with different characters */
+    r = SendMessageA(hWndStatus, SB_SETPARTS, 4, (LPARAM)nParts);
+    expect(TRUE,r);
     r = SendMessageA(hWndStatus, SB_SETTEXTA, 0, (LPARAM)"First@Again");
     expect(TRUE,r);
     r = SendMessageA(hWndStatus, SB_SETTEXTA, 1, (LPARAM)"Invalid\tChars\\7\7");
-        expect(TRUE,r);
+    expect(TRUE,r);
     r = SendMessageA(hWndStatus, SB_SETTEXTA, 2, (LPARAM)"InvalidChars\\n\n");
-        expect(TRUE,r);
+    expect(TRUE,r);
+    r = SendMessageW(hWndStatus, SB_SETTEXTW, 3, (LPARAM)L"Non printable\x80");
+    expect(TRUE,r);
 
     /* Get text again */
     r = SendMessageA(hWndStatus, SB_GETTEXTA, 0, (LPARAM) charArray);
     ok(strcmp(charArray,"First@Again") == 0, "Expected First@Again, got %s\n", charArray);
-    expect(11,LOWORD(r));
-    expect(0,HIWORD(r));
+    ok(r == 11, "r = %d\n", r);
+
     r = SendMessageA(hWndStatus, SB_GETTEXTA, 1, (LPARAM) charArray);
     ok(strcmp(charArray,"Invalid\tChars\\7 ") == 0, "Expected Invalid\tChars\\7 , got %s\n", charArray);
+    ok(r == 16, "r = %d\n", r);
 
-    expect(16,LOWORD(r));
-    expect(0,HIWORD(r));
     r = SendMessageA(hWndStatus, SB_GETTEXTA, 2, (LPARAM) charArray);
     ok(strcmp(charArray,"InvalidChars\\n ") == 0, "Expected InvalidChars\\n , got %s\n", charArray);
+    ok(r == 15, "r = %d\n", r);
 
-    expect(15,LOWORD(r));
-    expect(0,HIWORD(r));
+    r = SendMessageW(hWndStatus, SB_GETTEXTW, 3, (LPARAM) wbuf);
+    ok(wcscmp(wbuf, L"Non printable\x80") == 0, "got %s\n", wine_dbgstr_w(wbuf));
+    ok(r == 14, "r = %d\n", r);
 
     /* test more nonprintable chars */
     for(ch = 0x00; ch < 0x7F; ch++) {

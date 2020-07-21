@@ -744,7 +744,7 @@ STATUSBAR_SetTextT (STATUS_INFO *infoPtr, INT nPart, WORD style,
 	if (ntext) {
 	    idx = ntext;
 	    while (*idx) {
-	        if(!iswprint(*idx))
+	        if(*idx < ' ' && *idx != '\t')
 	            *idx = ' ';
 	        idx++;
 	    }
