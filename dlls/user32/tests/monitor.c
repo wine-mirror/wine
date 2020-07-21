@@ -1199,6 +1199,7 @@ static BOOL CALLBACK test_EnumDisplayMonitors_invalid_handle_cb(HMONITOR monitor
 {
     MONITORINFOEXA mi, mi2;
     DEVMODEA old_dm, dm;
+    DWORD error;
     INT count;
     LONG ret;
 
@@ -1235,13 +1236,18 @@ static BOOL CALLBACK test_EnumDisplayMonitors_invalid_handle_cb(HMONITOR monitor
         if (GetSystemMetrics(SM_CMONITORS) != count - 1)
         {
             skip("Failed to detach %s.\n", mi.szDevice);
+            SetLastError(0xdeadbeef);
             return TRUE;
         }
 
         /* The monitor handle should be invalid now */
         mi2.cbSize = sizeof(mi2);
+        SetLastError(0xdeadbeef);
         ret = GetMonitorInfoA(monitor, (MONITORINFO *)&mi2);
         ok(!ret, "GetMonitorInfoA succeeded.\n");
+        error = GetLastError();
+        ok(error == ERROR_INVALID_MONITOR_HANDLE || error == ERROR_INVALID_HANDLE,
+               "Expected error %#x, got %#x.\n", ERROR_INVALID_MONITOR_HANDLE, error);
 
         /* Restore the original display settings */
         ret = ChangeDisplaySettingsExA(mi.szDevice, &old_dm, NULL, CDS_UPDATEREGISTRY | CDS_NORESET,
@@ -1253,6 +1259,7 @@ static BOOL CALLBACK test_EnumDisplayMonitors_invalid_handle_cb(HMONITOR monitor
                 mi.szDevice, ret);
     }
 
+    SetLastError(0xdeadbeef);
     return TRUE;
 }
 
@@ -1276,16 +1283,10 @@ static void test_EnumDisplayMonitors(void)
     ret = EnumDisplayMonitors(NULL, NULL, test_EnumDisplayMonitors_invalid_handle_cb, 0);
     error = GetLastError();
     if (count >= 2)
-    {
         todo_wine ok(!ret, "EnumDisplayMonitors succeeded.\n");
-        todo_wine ok(error == ERROR_INVALID_MONITOR_HANDLE || error == ERROR_INVALID_HANDLE,
-                "Expected error %#x, got %#x.\n", ERROR_INVALID_MONITOR_HANDLE, error);
-    }
     else
-    {
         ok(ret, "EnumDisplayMonitors failed.\n");
-        ok(error == 0xdeadbeef, "Expected error %#x, got %#x.\n", 0xdeadbeef, error);
-    }
+    ok(error == 0xdeadbeef, "Expected error %#x, got %#x.\n", 0xdeadbeef, error);
 }
 
 static void test_QueryDisplayConfig_result(UINT32 flags,
