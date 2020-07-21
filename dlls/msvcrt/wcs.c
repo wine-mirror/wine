@@ -2255,6 +2255,15 @@ INT CDECL MSVCRT_wcscat_s(MSVCRT_wchar_t* dst, MSVCRT_size_t elem, const MSVCRT_
     return MSVCRT_ERANGE;
 }
 
+/***********************************************************************
+ *           wcscat (MSVCRT.@)
+ */
+MSVCRT_wchar_t* __cdecl MSVCRT_wcscat( MSVCRT_wchar_t *dst, const MSVCRT_wchar_t *src )
+{
+    MSVCRT_wcscpy( dst + MSVCRT_wcslen(dst), src );
+    return dst;
+}
+
 /*********************************************************************
  *  wcsncat_s (MSVCRT.@)
  *
