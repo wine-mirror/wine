@@ -19,6 +19,7 @@
 package c_type;
 
 use strict;
+use warnings 'all';
 
 use output qw($output);
 

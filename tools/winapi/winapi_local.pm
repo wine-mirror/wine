@@ -19,6 +19,7 @@
 package winapi_local;
 
 use strict;
+use warnings 'all';
 
 use nativeapi qw($nativeapi);
 use options qw($options);

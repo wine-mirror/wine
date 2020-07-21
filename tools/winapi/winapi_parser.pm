@@ -19,6 +19,7 @@
 package winapi_parser;
 
 use strict;
+use warnings 'all';
 
 use output qw($output);
 use options qw($options);

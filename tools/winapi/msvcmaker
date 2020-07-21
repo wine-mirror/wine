@@ -1,8 +1,9 @@
-#! /usr/bin/perl -w
+#!/usr/bin/perl
 
 # Copyright 2002 Patrik Stridvall
 
 use strict;
+use warnings 'all';
 
 BEGIN {
     $0 =~ m%^(.*?/?tools)/winapi/msvcmaker$%;

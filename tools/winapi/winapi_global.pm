@@ -19,6 +19,7 @@
 package winapi_global;
 
 use strict;
+use warnings 'all';
 
 use modules qw($modules);
 use nativeapi qw($nativeapi);

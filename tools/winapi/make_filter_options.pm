@@ -17,9 +17,11 @@
 #
 
 package make_filter_options;
-use base qw(options);
 
 use strict;
+use warnings 'all';
+
+use base qw(options);
 
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 require Exporter;

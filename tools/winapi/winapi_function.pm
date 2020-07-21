@@ -17,9 +17,11 @@
 #
 
 package winapi_function;
-use base qw(function);
 
 use strict;
+use warnings 'all';
+
+use base qw(function);
 
 use config qw($current_dir $wine_dir);
 use util qw(normalize_set);

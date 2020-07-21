@@ -19,6 +19,7 @@
 package setup;
 
 use strict;
+use warnings 'all';
 
 BEGIN {
     use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);

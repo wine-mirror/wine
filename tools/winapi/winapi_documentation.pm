@@ -19,6 +19,7 @@
 package winapi_documentation;
 
 use strict;
+use warnings 'all';
 
 use config qw($current_dir $wine_dir);
 use modules qw($modules);
