@@ -307,7 +307,7 @@
 @ stdcall -syscall NtQueryMutant(long long ptr long ptr)
 @ stdcall -syscall NtQueryObject(long long ptr long ptr)
 @ stub NtQueryOpenSubKeys
-@ stdcall NtQueryPerformanceCounter(ptr ptr)
+@ stdcall -syscall NtQueryPerformanceCounter(ptr ptr)
 # @ stub NtQueryPortInformationProcess
 # @ stub NtQueryQuotaInformationFile
 @ stdcall -syscall NtQuerySection(long long ptr long ptr)
@@ -1295,7 +1295,7 @@
 @ stdcall -private -syscall ZwQueryMutant(long long ptr long ptr) NtQueryMutant
 @ stdcall -private -syscall ZwQueryObject(long long ptr long ptr) NtQueryObject
 @ stub ZwQueryOpenSubKeys
-@ stdcall -private ZwQueryPerformanceCounter(ptr ptr) NtQueryPerformanceCounter
+@ stdcall -private -syscall ZwQueryPerformanceCounter(ptr ptr) NtQueryPerformanceCounter
 # @ stub ZwQueryPortInformationProcess
 # @ stub ZwQueryQuotaInformationFile
 @ stdcall -private -syscall ZwQuerySection(long long ptr long ptr) NtQuerySection

@@ -1362,7 +1362,6 @@ static struct unix_funcs unix_funcs =
 {
     NtCurrentTeb,
     NtGetContextThread,
-    NtQueryPerformanceCounter,
     DbgUiIssueRemoteBreakin,
     RtlGetSystemTimePrecise,
     RtlWaitOnAddress,

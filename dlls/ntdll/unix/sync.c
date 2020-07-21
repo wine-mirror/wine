@@ -69,6 +69,7 @@
 #include "winternl.h"
 #include "ddk/wdm.h"
 #include "wine/server.h"
+#include "wine/exception.h"
 #include "wine/debug.h"
 #include "unix_private.h"
 
@@ -1361,8 +1362,16 @@ NTSTATUS WINAPI NtDelayExecution( BOOLEAN alertable, const LARGE_INTEGER *timeou
  */
 NTSTATUS WINAPI NtQueryPerformanceCounter( LARGE_INTEGER *counter, LARGE_INTEGER *frequency )
 {
-    counter->QuadPart = monotonic_counter();
-    if (frequency) frequency->QuadPart = TICKSPERSEC;
+    __TRY
+    {
+        counter->QuadPart = monotonic_counter();
+        if (frequency) frequency->QuadPart = TICKSPERSEC;
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        return STATUS_ACCESS_VIOLATION;
+    }
+    __ENDTRY
     return STATUS_SUCCESS;
 }
 
