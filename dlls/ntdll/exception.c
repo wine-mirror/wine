@@ -177,6 +177,16 @@ void WINAPI RtlRaiseStatus( NTSTATUS status )
 
 
 /*******************************************************************
+ *		KiRaiseUserExceptionDispatcher  (NTDLL.@)
+ */
+void WINAPI KiRaiseUserExceptionDispatcher(void)
+{
+    EXCEPTION_RECORD rec = { NtCurrentTeb()->ExceptionCode };
+    RtlRaiseException( &rec );
+}
+
+
+/*******************************************************************
  *         RtlAddVectoredContinueHandler   (NTDLL.@)
  */
 PVOID WINAPI RtlAddVectoredContinueHandler( ULONG first, PVECTORED_EXCEPTION_HANDLER func )

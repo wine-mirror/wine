@@ -66,7 +66,7 @@
 # @ stub KiFastSystemCall
 # @ stub KiFastSystemCallRet
 # @ stub KiIntSystemCall
-@ stub KiRaiseUserExceptionDispatcher
+@ stdcall -norelay KiRaiseUserExceptionDispatcher()
 @ stub KiUserApcDispatcher
 @ stub KiUserCallbackDispatcher
 @ stdcall -norelay KiUserExceptionDispatcher(ptr ptr)
