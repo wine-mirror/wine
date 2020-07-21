@@ -96,7 +96,7 @@
 @ cdecl _wcsupr_s(wstr long) ucrtbase._wcsupr_s
 @ cdecl _wcsupr_s_l(wstr long ptr) ucrtbase._wcsupr_s_l
 @ cdecl _wcsxfrm_l(ptr wstr long ptr) ucrtbase._wcsxfrm_l
-@ stub _wctype
+@ extern _wctype ucrtbase._wctype
 @ cdecl is_wctype(long long) ucrtbase.is_wctype
 @ cdecl isalnum(long) ucrtbase.isalnum
 @ cdecl isalpha(long) ucrtbase.isalpha

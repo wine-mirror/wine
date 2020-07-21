@@ -2062,7 +2062,7 @@
 @ cdecl _wctime64_s(ptr long ptr) MSVCRT__wctime64_s
 @ cdecl _wctomb_l(ptr long ptr) MSVCRT__wctomb_l
 @ cdecl _wctomb_s_l(ptr ptr long long ptr) MSVCRT__wctomb_s_l
-@ stub _wctype
+@ extern _wctype MSVCRT__wctype
 @ cdecl _wdupenv_s(ptr ptr wstr)
 @ varargs _wexecl(wstr wstr)
 @ varargs _wexecle(wstr wstr)

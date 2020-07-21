@@ -1606,7 +1606,7 @@
 @ cdecl _wctime64_s(ptr long ptr) msvcr120._wctime64_s
 @ cdecl _wctomb_l(ptr long ptr) msvcr120._wctomb_l
 @ cdecl _wctomb_s_l(ptr ptr long long ptr) msvcr120._wctomb_s_l
-# extern _wctype
+@ extern _wctype msvcr120._wctype
 @ extern _wenviron msvcr120._wenviron
 @ cdecl _wfdopen(long wstr) msvcr120._wfdopen
 @ cdecl _wfindfirst32(wstr ptr) msvcr120._wfindfirst32
