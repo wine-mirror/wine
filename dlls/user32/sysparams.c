@@ -3310,12 +3310,18 @@ LONG WINAPI ChangeDisplaySettingsExW( LPCWSTR devname, LPDEVMODEW devmode, HWND 
     WCHAR primary_adapter[CCHDEVICENAME];
     BOOL def_mode = TRUE;
     DEVMODEW dm;
+    LONG ret;
 
     TRACE("%s %p %p %#x %p\n", debugstr_w(devname), devmode, hwnd, flags, lparam);
     TRACE("flags=%s\n", _CDS_flags(flags));
 
     if (!devname && !devmode)
-        return USER_Driver->pChangeDisplaySettingsEx(NULL, NULL, hwnd, flags, lparam);
+    {
+        ret = USER_Driver->pChangeDisplaySettingsEx(NULL, NULL, hwnd, flags, lparam);
+        if (ret != DISP_CHANGE_SUCCESSFUL)
+            ERR("Restoring all displays to their registry settings returned %d.\n", ret);
+        return ret;
+    }
 
     if (!devname && devmode)
     {
@@ -3359,7 +3365,10 @@ LONG WINAPI ChangeDisplaySettingsExW( LPCWSTR devname, LPDEVMODEW devmode, HWND 
         return DISP_CHANGE_BADMODE;
     }
 
-    return USER_Driver->pChangeDisplaySettingsEx(devname, devmode, hwnd, flags, lparam);
+    ret = USER_Driver->pChangeDisplaySettingsEx(devname, devmode, hwnd, flags, lparam);
+    if (ret != DISP_CHANGE_SUCCESSFUL)
+        ERR("Changing %s display settings returned %d.\n", wine_dbgstr_w(devname), ret);
+    return ret;
 }
 
 
