@@ -266,43 +266,59 @@ static BYTE test_dds_dxt3[] = {
     0x00, 0x00, 0x00, 0x00
 };
 
+static BYTE  test_dds_bad_magic[sizeof(test_dds_dxt1)];
+static BYTE  test_dds_bad_header[sizeof(test_dds_dxt1)];
+static BYTE  test_byte[1]    = { 0 };
+static BYTE  test_word[2]    = { 0 };
+static BYTE  test_dword[4]   = { 0 };
+static BYTE  test_qword_a[8] = { 0 };
+static BYTE  test_qword_b[8] = "DDS ";
+
 static struct test_data {
     BYTE *data;
     UINT size;
+    HRESULT init_hr;
     UINT expected_frame_count;
     UINT expected_bytes_per_block;
     const GUID *expected_pixel_format;
     WICDdsParameters expected_parameters;
     BOOL wine_init;
 } test_data[] = {
-    { test_dds_bgr565,     sizeof(test_dds_bgr565),        1,  2,  &GUID_WICPixelFormat32bppBGRA,
+    { test_dds_bgr565,     sizeof(test_dds_bgr565),        WINCODEC_ERR_BADHEADER, 1,  2,  &GUID_WICPixelFormat32bppBGRA,
       { 4,  4,  1, 1, 1,   DXGI_FORMAT_B5G6R5_UNORM,       WICDdsTexture2D,   WICDdsAlphaModeUnknown },       TRUE },
-    { test_dds_24bpp,      sizeof(test_dds_24bpp),         1,  3,  &GUID_WICPixelFormat32bppBGRA,
+    { test_dds_24bpp,      sizeof(test_dds_24bpp),         WINCODEC_ERR_BADHEADER, 1,  3,  &GUID_WICPixelFormat32bppBGRA,
       { 1,  1,  1, 1, 1,   DXGI_FORMAT_UNKNOWN,            WICDdsTexture2D,   WICDdsAlphaModeUnknown },       TRUE },
-    { test_dds_32bpp_xrgb, sizeof(test_dds_32bpp_xrgb),    1,  4,  &GUID_WICPixelFormat32bppBGRA,
+    { test_dds_32bpp_xrgb, sizeof(test_dds_32bpp_xrgb),    WINCODEC_ERR_BADHEADER, 1,  4,  &GUID_WICPixelFormat32bppBGRA,
       { 1,  1,  1, 1, 1,   DXGI_FORMAT_B8G8R8X8_UNORM,     WICDdsTexture2D,   WICDdsAlphaModeUnknown },       TRUE },
-    { test_dds_32bpp_argb, sizeof(test_dds_32bpp_argb),    1,  4,  &GUID_WICPixelFormat32bppBGRA,
+    { test_dds_32bpp_argb, sizeof(test_dds_32bpp_argb),    WINCODEC_ERR_BADHEADER, 1,  4,  &GUID_WICPixelFormat32bppBGRA,
       { 1,  1,  1, 1, 1,   DXGI_FORMAT_B8G8R8A8_UNORM,     WICDdsTexture2D,   WICDdsAlphaModeUnknown },       TRUE },
-    { test_dds_64bpp,      sizeof(test_dds_64bpp),         1,  8,  &GUID_WICPixelFormat32bppBGRA,
+    { test_dds_64bpp,      sizeof(test_dds_64bpp),         WINCODEC_ERR_BADHEADER, 1,  8,  &GUID_WICPixelFormat32bppBGRA,
       { 1,  1,  1, 1, 1,   DXGI_FORMAT_R16G16B16A16_UNORM, WICDdsTexture2D,   WICDdsAlphaModeUnknown },       TRUE },
-    { test_dds_96bpp,      sizeof(test_dds_96bpp),         1,  12, &GUID_WICPixelFormat32bppBGRA,
+    { test_dds_96bpp,      sizeof(test_dds_96bpp),         WINCODEC_ERR_BADHEADER, 1,  12, &GUID_WICPixelFormat32bppBGRA,
       { 1,  1,  1, 1, 1,   DXGI_FORMAT_R32G32B32_FLOAT,    WICDdsTexture2D,   WICDdsAlphaModeUnknown },       TRUE },
-    { test_dds_128bpp,     sizeof(test_dds_128bpp),        1,  16, &GUID_WICPixelFormat32bppBGRA,
+    { test_dds_128bpp,     sizeof(test_dds_128bpp),        WINCODEC_ERR_BADHEADER, 1,  16, &GUID_WICPixelFormat32bppBGRA,
       { 1,  1,  1, 1, 1,   DXGI_FORMAT_R32G32B32A32_FLOAT, WICDdsTexture2D,   WICDdsAlphaModeUnknown },       TRUE },
-    { test_dds_cube,       sizeof(test_dds_cube),          18, 8,  &GUID_WICPixelFormat32bppPBGRA,
+    { test_dds_cube,       sizeof(test_dds_cube),          WINCODEC_ERR_BADHEADER, 18, 8,  &GUID_WICPixelFormat32bppPBGRA,
       { 4,  4,  1, 3, 1,   DXGI_FORMAT_BC1_UNORM,          WICDdsTextureCube, WICDdsAlphaModePremultiplied }, TRUE },
-    { test_dds_cube_dx10,  sizeof(test_dds_cube_dx10),     18, 8,  &GUID_WICPixelFormat32bppBGRA,
+    { test_dds_cube_dx10,  sizeof(test_dds_cube_dx10),     WINCODEC_ERR_BADHEADER, 18, 8,  &GUID_WICPixelFormat32bppBGRA,
       { 4,  4,  1, 3, 1,   DXGI_FORMAT_BC1_UNORM,          WICDdsTextureCube, WICDdsAlphaModeUnknown },       TRUE },
-    { test_dds_dxt1,       sizeof(test_dds_dxt1),          1,  8,  &GUID_WICPixelFormat32bppPBGRA,
+    { test_dds_dxt1,       sizeof(test_dds_dxt1),          S_OK,                   1,  8,  &GUID_WICPixelFormat32bppPBGRA,
       { 4,  4,  1, 1, 1,   DXGI_FORMAT_BC1_UNORM,          WICDdsTexture2D,   WICDdsAlphaModePremultiplied } },
-    { test_dds_mipmaps,    sizeof(test_dds_mipmaps),       3,  8,  &GUID_WICPixelFormat32bppPBGRA,
+    { test_dds_mipmaps,    sizeof(test_dds_mipmaps),       S_OK,                   3,  8,  &GUID_WICPixelFormat32bppPBGRA,
       { 4,  4,  1, 3, 1,   DXGI_FORMAT_BC1_UNORM,          WICDdsTexture2D,   WICDdsAlphaModePremultiplied } },
-    { test_dds_volume,     sizeof(test_dds_volume),        7,  8,  &GUID_WICPixelFormat32bppPBGRA,
+    { test_dds_volume,     sizeof(test_dds_volume),        S_OK,                   7,  8,  &GUID_WICPixelFormat32bppPBGRA,
       { 4,  4,  4, 3, 1,   DXGI_FORMAT_BC1_UNORM,          WICDdsTexture3D,   WICDdsAlphaModePremultiplied } },
-    { test_dds_array,      sizeof(test_dds_array),         9,  8,  &GUID_WICPixelFormat32bppBGRA,
+    { test_dds_array,      sizeof(test_dds_array),         S_OK,                   9,  8,  &GUID_WICPixelFormat32bppBGRA,
       { 4,  4,  1, 3, 3,   DXGI_FORMAT_BC1_UNORM,          WICDdsTexture2D,   WICDdsAlphaModeUnknown } },
-    { test_dds_dxt3,       sizeof(test_dds_dxt3),          8,  16, &GUID_WICPixelFormat32bppBGRA,
-      { 12, 12, 1, 4, 2,   DXGI_FORMAT_BC2_UNORM,          WICDdsTexture2D,   WICDdsAlphaModeUnknown } }
+    { test_dds_dxt3,       sizeof(test_dds_dxt3),          S_OK,                   8,  16, &GUID_WICPixelFormat32bppBGRA,
+      { 12, 12, 1, 4, 2,   DXGI_FORMAT_BC2_UNORM,          WICDdsTexture2D,   WICDdsAlphaModeUnknown } },
+    { test_dds_bad_magic,  sizeof(test_dds_bad_magic),     WINCODEC_ERR_UNKNOWNIMAGEFORMAT },
+    { test_dds_bad_header, sizeof(test_dds_bad_header),    WINCODEC_ERR_BADHEADER },
+    { test_byte,           sizeof(test_byte),              WINCODEC_ERR_STREAMREAD },
+    { test_word,           sizeof(test_word),              WINCODEC_ERR_STREAMREAD },
+    { test_dword,          sizeof(test_dword),             WINCODEC_ERR_UNKNOWNIMAGEFORMAT },
+    { test_qword_a,        sizeof(test_qword_a),           WINCODEC_ERR_UNKNOWNIMAGEFORMAT },
+    { test_qword_b,        sizeof(test_qword_b),           WINCODEC_ERR_STREAMREAD },
 };
 
 static IWICImagingFactory *factory = NULL;
@@ -389,41 +405,6 @@ static BOOL has_extended_header(const BYTE *data)
 
 static void test_dds_decoder_initialize(void)
 {
-    static BYTE test_dds_bad_magic[sizeof(test_dds_dxt1)];
-    static BYTE test_dds_bad_header[sizeof(test_dds_dxt1)];
-    static BYTE byte = 0;
-    static DWORD dword = 0;
-    static BYTE qword1[8] = { 0 };
-    static BYTE qword2[8] = "DDS ";
-
-    static struct test_data {
-        void *data;
-        UINT size;
-        HRESULT expected;
-        BOOL wine_init;
-    } test_data[] = {
-        { test_dds_dxt1 ,      sizeof(test_dds_dxt1),       S_OK },
-        { test_dds_mipmaps,    sizeof(test_dds_mipmaps),    S_OK },
-        { test_dds_volume,     sizeof(test_dds_volume),     S_OK },
-        { test_dds_array,      sizeof(test_dds_array),      S_OK },
-        { test_dds_dxt3,       sizeof(test_dds_dxt3),       S_OK },
-        { test_dds_bgr565,     sizeof(test_dds_bgr565),     WINCODEC_ERR_BADHEADER, TRUE },
-        { test_dds_24bpp,      sizeof(test_dds_24bpp),      WINCODEC_ERR_BADHEADER, TRUE },
-        { test_dds_32bpp_xrgb, sizeof(test_dds_32bpp_xrgb), WINCODEC_ERR_BADHEADER, TRUE },
-        { test_dds_32bpp_argb, sizeof(test_dds_32bpp_argb), WINCODEC_ERR_BADHEADER, TRUE },
-        { test_dds_64bpp,      sizeof(test_dds_64bpp),      WINCODEC_ERR_BADHEADER, TRUE },
-        { test_dds_96bpp,      sizeof(test_dds_96bpp),      WINCODEC_ERR_BADHEADER, TRUE },
-        { test_dds_128bpp,     sizeof(test_dds_128bpp),     WINCODEC_ERR_BADHEADER, TRUE },
-        { test_dds_cube,       sizeof(test_dds_cube),       WINCODEC_ERR_BADHEADER, TRUE },
-        { test_dds_cube_dx10,  sizeof(test_dds_cube_dx10),  WINCODEC_ERR_BADHEADER, TRUE },
-        { test_dds_bad_magic,  sizeof(test_dds_bad_magic),  WINCODEC_ERR_UNKNOWNIMAGEFORMAT },
-        { test_dds_bad_header, sizeof(test_dds_bad_header), WINCODEC_ERR_BADHEADER },
-        { &byte,   sizeof(byte),   WINCODEC_ERR_STREAMREAD },
-        { &dword,  sizeof(dword),  WINCODEC_ERR_UNKNOWNIMAGEFORMAT },
-        { &qword1, sizeof(qword1), WINCODEC_ERR_UNKNOWNIMAGEFORMAT },
-        { &qword2, sizeof(qword2), WINCODEC_ERR_STREAMREAD },
-    };
-
     int i;
 
     memcpy(test_dds_bad_magic, test_dds_dxt1, sizeof(test_dds_dxt1));
@@ -442,7 +423,7 @@ static void test_dds_decoder_initialize(void)
         decoder = create_decoder();
         if (!decoder) goto next;
 
-        init_decoder(decoder, stream, test_data[i].expected, i, test_data[i].wine_init);
+        init_decoder(decoder, stream, test_data[i].init_hr, i, test_data[i].wine_init);
 
     next:
         if (decoder) IWICBitmapDecoder_Release(decoder);
@@ -527,6 +508,8 @@ static void test_dds_decoder_image_parameters(void)
         ok(hr == WINCODEC_ERR_WRONGSTATE, "Test %u: GetParameters got unexpected hr %#x\n", i, hr);
         hr = IWICDdsDecoder_GetParameters(dds_decoder, NULL);
         ok(hr == E_INVALIDARG, "Test %u: GetParameters got unexpected hr %#x\n", i, hr);
+
+        if (test_data[i].init_hr != S_OK && !test_data[i].wine_init) continue;
 
         hr = init_decoder(decoder, stream, S_OK, -1, test_data[i].wine_init);
         if (hr != S_OK) {
@@ -841,6 +824,8 @@ static void test_dds_decoder(void)
     {
         IWICStream *stream = NULL;
         IWICBitmapDecoder *decoder = NULL;
+
+        if (test_data[i].init_hr != S_OK && !test_data[i].wine_init) continue;
 
         stream = create_stream(test_data[i].data, test_data[i].size);
         if (!stream) goto next;
