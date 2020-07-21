@@ -24,7 +24,6 @@ C_SRCS = \
 	locale.c \
 	misc.c \
 	nt.c \
-	om.c \
 	path.c \
 	printf.c \
 	process.c \

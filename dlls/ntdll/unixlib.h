@@ -28,12 +28,11 @@ struct msghdr;
 struct _DISPATCHER_CONTEXT;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 88
+#define NTDLL_UNIXLIB_VERSION 89
 
 struct unix_funcs
 {
     /* Nt* functions */
-    NTSTATUS      (WINAPI *NtClose)( HANDLE handle );
     TEB *         (WINAPI *NtCurrentTeb)(void);
     NTSTATUS      (WINAPI *NtGetContextThread)( HANDLE handle, CONTEXT *context );
     NTSTATUS      (WINAPI *NtQueryPerformanceCounter)( LARGE_INTEGER *counter, LARGE_INTEGER *frequency );

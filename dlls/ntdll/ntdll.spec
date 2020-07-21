@@ -150,7 +150,7 @@
 @ stdcall -syscall NtCancelTimer(long ptr)
 @ stdcall -syscall NtClearEvent(long)
 @ stdcall -syscall NtClearPowerRequest(long long)
-@ stdcall NtClose(long)
+@ stdcall -syscall NtClose(long)
 @ stub NtCloseObjectAuditAlarm
 # @ stub NtCompactKeys
 # @ stub NtCompareTokens
@@ -1139,7 +1139,7 @@
 @ stdcall -private -syscall ZwCancelTimer(long ptr) NtCancelTimer
 @ stdcall -private -syscall ZwClearEvent(long) NtClearEvent
 @ stdcall -private -syscall ZwClearPowerRequest(long long) NtClearPowerRequest
-@ stdcall -private ZwClose(long) NtClose
+@ stdcall -private -syscall ZwClose(long) NtClose
 @ stub ZwCloseObjectAuditAlarm
 # @ stub ZwCompactKeys
 # @ stub ZwCompareTokens
