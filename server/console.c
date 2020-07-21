@@ -525,7 +525,7 @@ static void generate_sb_initial_events( struct console_input *console_input )
     console_input_events_append( console_input, &evt );
 }
 
-static struct screen_buffer *create_console_output( struct console_input *console_input, int fd )
+static struct object *create_console_output( struct console_input *console_input, int fd )
 {
     struct screen_buffer *screen_buffer;
     int	i;
@@ -592,7 +592,7 @@ static struct screen_buffer *create_console_output( struct console_input *consol
 	console_input->active = (struct screen_buffer*)grab_object( screen_buffer );
         generate_sb_initial_events( console_input );
     }
-    return screen_buffer;
+    return &screen_buffer->obj;
 }
 
 /* free the console for this process */
@@ -1809,10 +1809,11 @@ static void console_device_dump( struct object *obj, int verbose )
 
 static struct object *console_device_lookup_name( struct object *obj, struct unicode_str *name, unsigned int attr )
 {
-    static const WCHAR consoleW[]     = {'C','o','n','s','o','l','e'};
-    static const WCHAR current_inW[]  = {'C','u','r','r','e','n','t','I','n'};
-    static const WCHAR current_outW[] = {'C','u','r','r','e','n','t','O','u','t'};
-    static const WCHAR rendererW[]    = {'R','e','n','d','e','r','e','r'};
+    static const WCHAR consoleW[]       = {'C','o','n','s','o','l','e'};
+    static const WCHAR current_inW[]    = {'C','u','r','r','e','n','t','I','n'};
+    static const WCHAR current_outW[]   = {'C','u','r','r','e','n','t','O','u','t'};
+    static const WCHAR rendererW[]      = {'R','e','n','d','e','r','e','r'};
+    static const WCHAR screen_bufferW[] = {'S','c','r','e','e','n','B','u','f','f','e','r'};
 
     if (name->len == sizeof(current_inW) && !memcmp( name->str, current_inW, name->len ))
     {
@@ -1846,6 +1847,17 @@ static struct object *console_device_lookup_name( struct object *obj, struct uni
     {
         name->len = 0;
         return create_console_input_events();
+    }
+
+    if (name->len == sizeof(screen_bufferW) && !memcmp( name->str, screen_bufferW, name->len ))
+    {
+        if (!current->process->console)
+        {
+            set_error( STATUS_INVALID_HANDLE );
+            return NULL;
+        }
+        name->len = 0;
+        return create_console_output( current->process->console, -1 );
     }
 
     return NULL;
@@ -2056,9 +2068,9 @@ DECL_HANDLER(get_console_input_history)
 /* creates a screen buffer */
 DECL_HANDLER(create_console_output)
 {
-    struct console_input*	console;
-    struct screen_buffer*	screen_buffer;
-    int                         fd;
+    struct console_input *console;
+    struct object        *screen_buffer;
+    int                   fd;
 
     if (req->fd != -1)
     {
