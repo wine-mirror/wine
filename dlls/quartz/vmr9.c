@@ -2042,6 +2042,13 @@ static HRESULT WINAPI VMR9SurfaceAllocatorNotify_AllocateSurfaceHelper(IVMRSurfa
             allocinfo->dwFlags, allocinfo->dwWidth, allocinfo->dwHeight,
             allocinfo->Format, allocinfo->Format, allocinfo->Pool, allocinfo->MinBuffers);
 
+    if ((allocinfo->dwFlags & VMR9AllocFlag_TextureSurface)
+            && (allocinfo->dwFlags & VMR9AllocFlag_OffscreenSurface))
+    {
+        WARN("Invalid flags specified; returning E_INVALIDARG.\n");
+        return E_INVALIDARG;
+    }
+
     if (!allocinfo->Format)
     {
         IDirect3DSurface9 *backbuffer;

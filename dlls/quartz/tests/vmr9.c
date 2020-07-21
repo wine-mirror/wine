@@ -2760,6 +2760,13 @@ static void test_allocate_surface_helper(void)
 
     IDirect3DSurface9_Release(surfaces[0]);
 
+    info.Format = D3DFMT_A8R8G8B8;
+    info.dwFlags = VMR9AllocFlag_OffscreenSurface | VMR9AllocFlag_TextureSurface;
+    count = 1;
+    hr = IVMRSurfaceAllocatorNotify9_AllocateSurfaceHelper(notify, &info, &count, surfaces);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(count == 1, "Got count %u.\n", count);
+
 out:
     IVMRSurfaceAllocatorNotify9_Release(notify);
     ref = IBaseFilter_Release(filter);
