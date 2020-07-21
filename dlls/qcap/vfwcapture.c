@@ -124,7 +124,7 @@ static HRESULT vfw_capture_init_stream(struct strmbase_filter *iface)
     VfwCapture *filter = impl_from_strmbase_filter(iface);
 
     filter->device->ops->init_stream(filter->device);
-    return VFW_S_CANT_CUE;
+    return S_OK;
 }
 
 static HRESULT vfw_capture_start_stream(struct strmbase_filter *iface, REFERENCE_TIME time)
@@ -140,7 +140,7 @@ static HRESULT vfw_capture_stop_stream(struct strmbase_filter *iface)
     VfwCapture *filter = impl_from_strmbase_filter(iface);
 
     filter->device->ops->stop_stream(filter->device);
-    return VFW_S_CANT_CUE;
+    return S_OK;
 }
 
 static HRESULT vfw_capture_cleanup_stream(struct strmbase_filter *iface)
@@ -149,6 +149,11 @@ static HRESULT vfw_capture_cleanup_stream(struct strmbase_filter *iface)
 
     filter->device->ops->cleanup_stream(filter->device);
     return S_OK;
+}
+
+static HRESULT vfw_capture_wait_state(struct strmbase_filter *iface, DWORD timeout)
+{
+    return iface->state == State_Paused ? VFW_S_CANT_CUE : S_OK;
 }
 
 static const struct strmbase_filter_ops filter_ops =
@@ -160,6 +165,7 @@ static const struct strmbase_filter_ops filter_ops =
     .filter_start_stream = vfw_capture_start_stream,
     .filter_stop_stream = vfw_capture_stop_stream,
     .filter_cleanup_stream = vfw_capture_cleanup_stream,
+    .filter_wait_state = vfw_capture_wait_state,
 };
 
 static HRESULT WINAPI AMStreamConfig_QueryInterface(IAMStreamConfig *iface, REFIID iid, void **out)
