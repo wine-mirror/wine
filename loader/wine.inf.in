@@ -565,6 +565,7 @@ HKLM,%CurrentVersionNT%\FontSubstitutes,,16
 HKLM,%CurrentVersionNT%\Gre_Initialize,,16
 HKLM,%CurrentVersionNT%\Hotfix\Q246009,"Installed",,"1"
 HKLM,%CurrentVersionNT%\Image File Execution Options,,16
+HKLM,%CurrentVersionNT%\IniFileMapping\win.ini,"devices",,"USR:Software\Microsoft\Windows NT\CurrentVersion\Devices"
 HKLM,%CurrentVersionNT%\IniFileMapping\win.ini\windows,,,"USR:Software\Microsoft\Windows NT\CurrentVersion\Windows"
 HKLM,%CurrentVersionNT%\IniFileMapping\win.ini\windows,"CursorBlinkRate",,"USR:Control Panel\Desktop"
 HKLM,%CurrentVersionNT%\LanguagePack,,16
