@@ -270,7 +270,6 @@ static const WCHAR txTimeoutW[] = {'t','x','T','i','m','e','o','u','t',0};
 static const WCHAR UntilTimeW[] = {'U','n','t','i','l','T','i','m','e',0};
 static       WCHAR WinPrintW[] = {'W','i','n','P','r','i','n','t',0};
 static const WCHAR deviceW[]  = {'d','e','v','i','c','e',0};
-static const WCHAR devicesW[] = {'d','e','v','i','c','e','s',0};
 static const WCHAR windowsW[] = {'w','i','n','d','o','w','s',0};
 static       WCHAR rawW[] = {'R','A','W',0};
 static       WCHAR driver_9x[] = {'w','i','n','e','p','s','1','6','.','d','r','v',0};
@@ -3165,7 +3164,6 @@ static void set_devices_and_printerports(PRINTER_INFO_2W *pi)
         lstrcatW(devline, pi->pPortName);
 
         TRACE("using %s\n", debugstr_w(devline));
-        WriteProfileStringW(devicesW, pi->pPrinterName, devline);
         if (!RegCreateKeyW(HKEY_CURRENT_USER, user_printers_reg_key, &hkey)) {
             RegSetValueExW(hkey, pi->pPrinterName, 0, REG_SZ, (LPBYTE)devline,
                             (lstrlenW(devline) + 1) * sizeof(WCHAR));
@@ -3429,7 +3427,6 @@ BOOL WINAPI DeletePrinter(HANDLE hPrinter)
         RegDeleteTreeW(hkeyPrinters, lpNameW);
         RegCloseKey(hkeyPrinters);
     }
-    WriteProfileStringW(devicesW, lpNameW, NULL);
     WriteProfileStringW(PrinterPortsW, lpNameW, NULL);
 
     if(RegCreateKeyW(HKEY_CURRENT_USER, user_printers_reg_key, &hkey) == ERROR_SUCCESS) {
