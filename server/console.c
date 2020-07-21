@@ -1610,6 +1610,27 @@ static int console_input_ioctl( struct fd *fd, ioctl_code_t code, struct async *
         if (!console->title_len) return 1;
         return set_reply_data( console->title, min( console->title_len, get_reply_max_size() )) != NULL;
 
+    case IOCTL_CONDRV_SET_TITLE:
+        {
+            data_size_t len = get_req_data_size();
+            struct condrv_renderer_event evt;
+            WCHAR *title = NULL;
+
+            if (len % sizeof(WCHAR))
+            {
+                set_error( STATUS_INVALID_PARAMETER );
+                return 0;
+            }
+
+            if (len && !(title = memdup( get_req_data(), len ))) return 0;
+            free( console->title );
+            console->title = title;
+            console->title_len = len;
+            evt.event = CONSOLE_RENDERER_TITLE_EVENT;
+            console_input_events_append( console, &evt );
+            return 1;
+        }
+
     default:
         set_error( STATUS_INVALID_HANDLE );
         return 0;
