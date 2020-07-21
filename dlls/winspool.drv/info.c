@@ -555,30 +555,19 @@ static DWORD WINSPOOL_GetOpenedPrinterRegKey(HANDLE hPrinter, HKEY *phkey)
     return open_printer_reg_key( name, phkey );
 }
 
-static void
-WINSPOOL_SetDefaultPrinter(const char *devname, const char *name, BOOL force) {
-    char qbuf[200];
+static void set_default_printer(const char *devname, const char *name)
+{
+    char *buf = HeapAlloc(GetProcessHeap(), 0, strlen(name)+strlen(devname)+strlen(",WINEPS.DRV,LPR:")+1);
+    HKEY hkey;
 
-    /* If forcing, or no profile string entry for device yet, set the entry
-     *
-     * The always change entry if not WINEPS yet is discussable.
-     */
-    if (force								||
-	!GetProfileStringA("windows","device","*",qbuf,sizeof(qbuf))	||
-	!strcmp(qbuf,"*")						||
-	!strstr(qbuf,"WINEPS.DRV")
-    ) {
-    	char *buf = HeapAlloc(GetProcessHeap(),0,strlen(name)+strlen(devname)+strlen(",WINEPS.DRV,LPR:")+1);
-        HKEY hkey;
-
-	sprintf(buf,"%s,WINEPS.DRV,LPR:%s",devname,name);
-	WriteProfileStringA("windows","device",buf);
-        if(RegCreateKeyW(HKEY_CURRENT_USER, user_default_reg_key, &hkey) == ERROR_SUCCESS) {
-            RegSetValueExA(hkey, "Device", 0, REG_SZ, (LPBYTE)buf, strlen(buf) + 1);
-            RegCloseKey(hkey);
-        }
-	HeapFree(GetProcessHeap(),0,buf);
+    sprintf(buf, "%s,WINEPS.DRV,LPR:%s", devname, name);
+    WriteProfileStringA("windows","device", buf);
+    if (!RegCreateKeyW(HKEY_CURRENT_USER, user_default_reg_key, &hkey))
+    {
+        RegSetValueExA(hkey, "Device", 0, REG_SZ, (BYTE *)buf, strlen(buf) + 1);
+        RegCloseKey(hkey);
     }
+    HeapFree(GetProcessHeap(), 0, buf);
 }
 
 static BOOL add_printer_driver(const WCHAR *name, WCHAR *ppd)
@@ -1273,7 +1262,7 @@ static BOOL PRINTCAP_ParseEntry( const char *pent, BOOL isfirst )
     }
 
     if (isfirst || set_default)
-        WINSPOOL_SetDefaultPrinter(devname,name,TRUE);
+        set_default_printer(devname, name);
 
  end:
     if (hkeyPrinters) RegCloseKey( hkeyPrinters );
