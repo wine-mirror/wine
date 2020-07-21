@@ -231,35 +231,44 @@ static void test_interfaces(void)
 
 static void test_openfile(void)
 {
-    IAMMultiMediaStream *pams;
+    IAMMultiMediaStream *mmstream = create_ammultimediastream();
+    IMediaStreamFilter *filter;
+    IGraphBuilder *graph;
     HRESULT hr;
-    IGraphBuilder* pgraph;
+    ULONG ref;
 
-    if (!(pams = create_ammultimediastream()))
-        return;
+    hr = IAMMultiMediaStream_GetFilterGraph(mmstream, &graph);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!graph, "Expected NULL graph.\n");
 
-    hr = IAMMultiMediaStream_GetFilterGraph(pams, &pgraph);
-    ok(hr==S_OK, "IAMMultiMediaStream_GetFilterGraph returned: %x\n", hr);
-    ok(pgraph==NULL, "Filtergraph should not be created yet\n");
+    hr = IAMMultiMediaStream_OpenFile(mmstream, L"test.avi", AMMSF_NORENDER);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-    if (pgraph)
-        IGraphBuilder_Release(pgraph);
+    hr = IAMMultiMediaStream_GetFilterGraph(mmstream, &graph);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!!graph, "Expected non-NULL graph.\n");
+    IGraphBuilder_Release(graph);
 
-    check_interface(pams, &IID_IMediaSeeking, FALSE);
+    ref = IAMMultiMediaStream_Release(mmstream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
 
-    hr = IAMMultiMediaStream_OpenFile(pams, L"test.avi", 0);
-    ok(hr==S_OK, "IAMMultiMediaStream_OpenFile returned: %x\n", hr);
+    mmstream = create_ammultimediastream();
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryAudio, 0, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IAMMultiMediaStream_GetFilter(mmstream, &filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-    check_interface(pams, &IID_IMediaSeeking, TRUE);
+    check_interface(filter, &IID_IMediaSeeking, FALSE);
 
-    hr = IAMMultiMediaStream_GetFilterGraph(pams, &pgraph);
-    ok(hr==S_OK, "IAMMultiMediaStream_GetFilterGraph returned: %x\n", hr);
-    ok(pgraph!=NULL, "Filtergraph should be created\n");
+    hr = IAMMultiMediaStream_OpenFile(mmstream, L"test.avi", 0);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-    if (pgraph)
-        IGraphBuilder_Release(pgraph);
+    check_interface(filter, &IID_IMediaSeeking, TRUE);
 
-    IAMMultiMediaStream_Release(pams);
+    ref = IAMMultiMediaStream_Release(mmstream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IMediaStreamFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
 static void test_renderfile(void)
