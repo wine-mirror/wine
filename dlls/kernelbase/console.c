@@ -326,7 +326,11 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateConsoleScreenBuffer( DWORD access, DWORD s
                                                            SECURITY_ATTRIBUTES *sa, DWORD flags,
                                                            void *data )
 {
-    HANDLE ret = INVALID_HANDLE_VALUE;
+    OBJECT_ATTRIBUTES attr = {sizeof(attr)};
+    IO_STATUS_BLOCK iosb;
+    UNICODE_STRING name;
+    HANDLE handle;
+    NTSTATUS status;
 
     TRACE( "(%x,%x,%p,%x,%p)\n", access, share, sa, flags, data );
 
@@ -336,18 +340,13 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateConsoleScreenBuffer( DWORD access, DWORD s
 	return INVALID_HANDLE_VALUE;
     }
 
-    SERVER_START_REQ( create_console_output )
-    {
-        req->handle_in  = 0;
-        req->access     = access;
-        req->attributes = (sa && sa->bInheritHandle) ? OBJ_INHERIT : 0;
-        req->share      = share;
-        req->fd         = -1;
-        if (!wine_server_call_err( req ))
-            ret = console_handle_map( wine_server_ptr_handle( reply->handle_out ));
-    }
-    SERVER_END_REQ;
-    return ret;
+    RtlInitUnicodeString( &name, L"\\Device\\ConDrv\\ScreenBuffer" );
+    attr.ObjectName = &name;
+    attr.SecurityDescriptor = sa ? sa->lpSecurityDescriptor : NULL;
+    if (sa && sa->bInheritHandle) attr.Attributes |= OBJ_INHERIT;
+    status = NtCreateFile( &handle, access, &attr, &iosb, NULL, FILE_ATTRIBUTE_NORMAL, 0, FILE_OPEN,
+                           FILE_NON_DIRECTORY_FILE, NULL, 0 );
+    return set_ntstatus( status ) ? handle : INVALID_HANDLE_VALUE;
 }
 
 

@@ -3290,6 +3290,12 @@ static void test_FreeConsole(void)
        (GetLastError() == ERROR_INVALID_HANDLE || broken(GetLastError() == ERROR_FILE_NOT_FOUND /* winxp */)),
        "CreateFileA failed: %u\n", GetLastError());
 
+    handle = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE,
+                                       FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+                                       CONSOLE_TEXTMODE_BUFFER, NULL);
+    ok(handle == INVALID_HANDLE_VALUE && GetLastError() == ERROR_INVALID_HANDLE,
+       "CreateConsoleScreenBuffer returned: %p (%u)\n", handle, GetLastError());
+
     if (!skip_nt)
     {
         SetStdHandle( STD_INPUT_HANDLE, (HANDLE)0xdeadbeef );
