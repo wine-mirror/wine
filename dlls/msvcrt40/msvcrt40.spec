@@ -1183,7 +1183,7 @@
 @ cdecl _putenv(str) msvcrt._putenv
 @ cdecl _putw(long ptr) msvcrt._putw
 @ cdecl _putws(wstr) msvcrt._putws
-# extern _pwctype
+@ extern _pwctype msvcrt._pwctype
 @ cdecl _read(long ptr long) msvcrt._read
 @ cdecl _rmdir(str) msvcrt._rmdir
 @ cdecl _rmtmp() msvcrt._rmtmp

@@ -862,7 +862,7 @@
 @ cdecl _putw(long ptr) MSVCRT__putw
 @ cdecl _putwch(long)
 @ cdecl _putws(wstr) MSVCRT__putws
-# extern _pwctype
+@ extern _pwctype MSVCRT__pwctype
 @ cdecl _read(long ptr long) MSVCRT__read
 # stub _realloc_dbg(ptr long long str long)
 @ cdecl _resetstkoflw() MSVCRT__resetstkoflw

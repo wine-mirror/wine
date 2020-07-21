@@ -472,7 +472,7 @@
 @ cdecl _putenv(str)
 @ cdecl _putw(long ptr) MSVCRT__putw
 @ cdecl _putws(wstr) MSVCRT__putws
-# extern _pwctype
+@ extern _pwctype MSVCRT__pwctype
 @ cdecl _read(long ptr long) MSVCRT__read
 @ cdecl _realloc_dbg(ptr long) MSVCRT_realloc
 @ cdecl _rmdir(str) MSVCRT__rmdir

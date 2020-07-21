@@ -893,7 +893,7 @@
 @ cdecl _putwch(long)
 @ cdecl _putwch_nolock(long)
 @ cdecl _putws(wstr) MSVCRT__putws
-# extern _pwctype
+@ extern _pwctype MSVCRT__pwctype
 @ cdecl _read(long ptr long) MSVCRT__read
 @ cdecl _realloc_crt(ptr long) MSVCRT_realloc
 @ cdecl _recalloc(ptr long long)

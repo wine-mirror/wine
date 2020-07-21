@@ -1336,7 +1336,7 @@
 @ cdecl _putw(long ptr) msvcr120._putw
 @ cdecl _putwc_nolock(long ptr) msvcr120._putwc_nolock
 @ cdecl _putws(wstr) msvcr120._putws
-# extern _pwctype
+@ extern _pwctype msvcr120._pwctype
 @ cdecl _read(long ptr long) msvcr120._read
 @ cdecl _realloc_crt(ptr long) msvcr120._realloc_crt
 @ cdecl _recalloc(ptr long long) msvcr120._recalloc
