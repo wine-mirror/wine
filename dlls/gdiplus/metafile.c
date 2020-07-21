@@ -563,6 +563,16 @@ typedef struct EmfPlusDrawDriverString
     BYTE VariableData[1];
 } EmfPlusDrawDriverString;
 
+typedef struct EmfPlusFillRegion
+{
+    EmfPlusRecordHeader Header;
+    union
+    {
+        DWORD BrushId;
+        EmfPlusARGB Color;
+    } data;
+} EmfPlusFillRegion;
+
 static void metafile_free_object_table_entry(GpMetafile *metafile, BYTE id)
 {
     struct emfplus_object *object = &metafile->objtable[id];
@@ -3435,6 +3445,42 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
 
             GdipDeleteBrush((GpBrush*)solidfill);
             heap_free(alignedmem);
+
+            return stat;
+        }
+        case EmfPlusRecordTypeFillRegion:
+        {
+            EmfPlusFillRegion * const fill = (EmfPlusFillRegion*)header;
+            GpSolidFill *solidfill = NULL;
+            GpBrush *brush;
+            BYTE region = flags & 0xff;
+
+            if (dataSize != sizeof(EmfPlusFillRegion) - sizeof(EmfPlusRecordHeader))
+                return InvalidParameter;
+
+            if (region >= EmfPlusObjectTableSize ||
+                    real_metafile->objtable[region].type != ObjectTypeRegion)
+                return InvalidParameter;
+
+            if (flags & 0x8000)
+            {
+                stat = GdipCreateSolidFill(fill->data.Color, &solidfill);
+                if (stat != Ok)
+                    return stat;
+                brush = (GpBrush*)solidfill;
+            }
+            else
+            {
+                if (fill->data.BrushId >= EmfPlusObjectTableSize ||
+                        real_metafile->objtable[fill->data.BrushId].type != ObjectTypeBrush)
+                    return InvalidParameter;
+
+                brush = real_metafile->objtable[fill->data.BrushId].u.brush;
+            }
+
+            stat = GdipFillRegion(real_metafile->playback_graphics, brush,
+                real_metafile->objtable[region].u.region);
+            GdipDeleteBrush((GpBrush*)solidfill);
 
             return stat;
         }
