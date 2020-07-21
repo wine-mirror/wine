@@ -351,7 +351,7 @@ static void _expect_dm(INT line, DEVMODEA expected, const CHAR *device, DWORD te
 static void test_ChangeDisplaySettingsEx(void)
 {
     DPI_AWARENESS_CONTEXT context = NULL;
-    UINT primary, device, side, mode;
+    UINT primary, device, test, mode;
     UINT device_size, device_count;
     struct device_info *devices;
     INT count, old_count;
@@ -361,6 +361,21 @@ static void test_ChangeDisplaySettingsEx(void)
     DEVMODEW dmW;
     LONG res;
     int i;
+
+    /* Test invalid device names */
+    memset(&dm, 0, sizeof(dm));
+    dm.dmSize = sizeof(dm);
+    res = EnumDisplaySettingsA(NULL, ENUM_CURRENT_SETTINGS, &dm);
+    ok(res, "EnumDisplaySettingsA failed, error %#x\n", GetLastError());
+
+    res = ChangeDisplaySettingsExA("invalid", &dm, NULL, CDS_TEST, NULL);
+    todo_wine ok(res == DISP_CHANGE_BADPARAM, "ChangeDisplaySettingsA returned unexpected %d\n", res);
+
+    res = ChangeDisplaySettingsExA("\\\\.\\DISPLAY0", &dm, NULL, CDS_TEST, NULL);
+    todo_wine ok(res == DISP_CHANGE_BADPARAM, "ChangeDisplaySettingsA returned unexpected %d\n", res);
+
+    res = ChangeDisplaySettingsExA("\\\\.\\DISPLAY1\\Monitor0", &dm, NULL, CDS_TEST, NULL);
+    todo_wine ok(res == DISP_CHANGE_BADPARAM, "ChangeDisplaySettingsA returned unexpected %d\n", res);
 
     /* Test dmDriverExtra */
     memset(&dm, 0, sizeof(dm));
@@ -795,43 +810,63 @@ static void test_ChangeDisplaySettingsEx(void)
             expect_dm(dm2, devices[1].name, 0);
 
             /* Test placing the secondary adapter to all sides of the primary adapter */
-            for (side = 0; side < 4; ++side)
+            for (test = 0; test < 8; ++test)
             {
-                switch (side)
+                switch (test)
                 {
-                /* Bottom */
+                /* Bottom side with x offset */
                 case 0:
+                    dm2.dmPosition.x = dm.dmPosition.x + dm.dmPelsWidth / 2;
+                    dm2.dmPosition.y = dm.dmPosition.y + dm.dmPelsHeight;
+                    break;
+                /* Left side with y offset */
+                case 1:
+                    dm2.dmPosition.x = dm.dmPosition.x - dm2.dmPelsWidth;
+                    dm2.dmPosition.y = dm.dmPosition.y + dm.dmPelsHeight / 2;
+                    break;
+                /* Top side with x offset */
+                case 2:
+                    dm2.dmPosition.x = dm.dmPosition.x + dm.dmPelsWidth / 2;
+                    dm2.dmPosition.y = dm.dmPosition.y - dm2.dmPelsHeight;
+                    break;
+                /* Right side with y offset */
+                case 3:
+                    dm2.dmPosition.x = dm.dmPosition.x + dm.dmPelsWidth;
+                    dm2.dmPosition.y = dm.dmPosition.y + dm.dmPelsHeight / 2;
+                    break;
+                /* Bottom side with the same x */
+                case 4:
                     dm2.dmPosition.x = dm.dmPosition.x;
                     dm2.dmPosition.y = dm.dmPosition.y + dm.dmPelsHeight;
                     break;
-                /* Left */
-                case 1:
+                /* Left side with the same y */
+                case 5:
                     dm2.dmPosition.x = dm.dmPosition.x - dm2.dmPelsWidth;
                     dm2.dmPosition.y = dm.dmPosition.y;
                     break;
-                /* Top */
-                case 2:
+                /* Top side with the same x */
+                case 6:
                     dm2.dmPosition.x = dm.dmPosition.x;
                     dm2.dmPosition.y = dm.dmPosition.y - dm2.dmPelsHeight;
                     break;
-                /* Right */
-                case 3:
+                /* Right side with the same y */
+                case 7:
                     dm2.dmPosition.x = dm.dmPosition.x + dm.dmPelsWidth;
                     dm2.dmPosition.y = dm.dmPosition.y;
                     break;
                 }
 
                 res = ChangeDisplaySettingsExA(devices[1].name, &dm2, NULL, CDS_RESET, NULL);
-                ok(res == DISP_CHANGE_SUCCESSFUL, "ChangeDisplaySettingsExA %s side %d returned unexpected %d\n",
-                        devices[1].name, side, res);
+                ok(res == DISP_CHANGE_SUCCESSFUL, "ChangeDisplaySettingsExA %s test %d returned unexpected %d\n",
+                        devices[1].name, test, res);
                 if (res != DISP_CHANGE_SUCCESSFUL)
                 {
-                    win_skip("ChangeDisplaySettingsExA %s side %d returned unexpected %d.\n", devices[1].name, side, res);
+                    win_skip("ChangeDisplaySettingsExA %s test %d returned unexpected %d.\n", devices[1].name, test, res);
                     continue;
                 }
 
                 flush_events();
-                expect_dm(dm2, devices[1].name, side);
+                expect_dm(dm2, devices[1].name, test);
             }
 
             /* Test automatic position update when other adapters change resolution */
