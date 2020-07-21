@@ -3174,6 +3174,102 @@ static void test_unknownfontdecode(void)
     GdipDisposeImage((GpImage*)metafile);
 }
 
+static const emfplus_record fillregion_records[] = {
+    { EMR_HEADER },
+    { EmfPlusRecordTypeHeader },
+    { EmfPlusRecordTypeObject, ObjectTypeRegion << 8, 1 },
+    { EmfPlusRecordTypeFillRegion, 0x8000, 1 },
+    { EmfPlusRecordTypeObject, (ObjectTypeBrush << 8) | 1, 1 },
+    { EmfPlusRecordTypeObject, (ObjectTypeRegion << 8) | 2, 1 },
+    { EmfPlusRecordTypeFillRegion, 2, 1 },
+    { EmfPlusRecordTypeEndOfFile },
+    { EMR_EOF },
+    { 0 }
+};
+
+static void test_fillregion(void)
+{
+    static const GpPointF dst_points[3] = {{0.0, 0.0}, {100.0, 0.0}, {0.0, 100.0}};
+    static const GpRectF frame = {0.0, 0.0, 100.0, 100.0};
+    static const GpRectF solidrect = {20.0, 20.0, 20.0, 20.0};
+    static const GpRectF hatchrect = {50.0, 50.0, 20.0, 20.0};
+
+    GpStatus stat;
+    GpMetafile *metafile;
+    GpGraphics *graphics;
+    GpBitmap *bitmap;
+    GpBrush *solidbrush, *hatchbrush;
+    GpRegion *solidregion, *hatchregion;
+    ARGB color;
+    HDC hdc;
+
+    hdc = CreateCompatibleDC(0);
+    stat = GdipRecordMetafile(hdc, EmfTypeEmfPlusOnly, &frame, MetafileFrameUnitPixel,
+        L"winetest", &metafile);
+    expect(Ok, stat);
+    DeleteDC(hdc);
+    hdc = NULL;
+
+    stat = GdipGetImageGraphicsContext((GpImage*)metafile, &graphics);
+    expect(Ok, stat);
+
+    stat = GdipCreateRegionRect(&solidrect, &solidregion);
+    expect(Ok, stat);
+
+    stat = GdipCreateSolidFill(0xffaabbcc, (GpSolidFill**)&solidbrush);
+    expect(Ok, stat);
+
+    stat = GdipFillRegion(graphics, solidbrush, solidregion);
+    expect(Ok, stat);
+
+    stat = GdipCreateRegionRect(&hatchrect, &hatchregion);
+    expect(Ok, stat);
+
+    stat = GdipCreateHatchBrush(HatchStyleHorizontal, 0xffff0000, 0xff0000ff,
+        (GpHatch**)&hatchbrush);
+    expect(Ok, stat);
+
+    stat = GdipFillRegion(graphics, hatchbrush, hatchregion);
+    expect(Ok, stat);
+
+    stat = GdipDeleteGraphics(graphics);
+    graphics = NULL;
+    expect(Ok, stat);
+
+    check_metafile(metafile, fillregion_records, "regionfill metafile", dst_points,
+        &frame, UnitPixel);
+    sync_metafile(&metafile, "regionfill.emf");
+
+    stat = GdipCreateBitmapFromScan0(100, 100, 0, PixelFormat32bppARGB, NULL, &bitmap);
+    expect(Ok, stat);
+
+    stat = GdipGetImageGraphicsContext((GpImage*)bitmap, &graphics);
+    expect(Ok, stat);
+
+    play_metafile(metafile, graphics, fillregion_records, "regionfill playback",
+        dst_points, &frame, UnitPixel);
+
+    stat = GdipBitmapGetPixel(bitmap, 25, 25, &color);
+    expect(Ok, stat);
+    todo_wine expect(0xffaabbcc, color);
+
+    stat = GdipBitmapGetPixel(bitmap, 56, 56, &color);
+    expect(Ok, stat);
+    todo_wine expect(0xffff0000, color);
+
+    stat = GdipBitmapGetPixel(bitmap, 57, 57, &color);
+    expect(Ok, stat);
+    todo_wine expect(0xff0000ff, color);
+
+    GdipDeleteRegion(solidregion);
+    GdipDeleteRegion(hatchregion);
+    GdipDeleteBrush(solidbrush);
+    GdipDeleteBrush(hatchbrush);
+    GdipDeleteGraphics(graphics);
+    GdipDisposeImage((GpImage*)bitmap);
+    GdipDisposeImage((GpImage*)metafile);
+}
+
 START_TEST(metafile)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -3225,6 +3321,7 @@ START_TEST(metafile)
     test_restoredc();
     test_drawdriverstring();
     test_unknownfontdecode();
+    test_fillregion();
 
     GdiplusShutdown(gdiplusToken);
 }
