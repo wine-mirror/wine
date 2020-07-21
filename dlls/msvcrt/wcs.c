@@ -2162,6 +2162,16 @@ INT CDECL MSVCRT_wcscpy_s( MSVCRT_wchar_t* wcDest, MSVCRT_size_t numElement, con
     return 0;
 }
 
+/***********************************************************************
+ *             wcscpy (MSVCRT.@)
+ */
+MSVCRT_wchar_t* __cdecl MSVCRT_wcscpy( MSVCRT_wchar_t *dst, const MSVCRT_wchar_t *src )
+{
+    WCHAR *p = dst;
+    while ((*p++ = *src++));
+    return dst;
+}
+
 /******************************************************************
  *		wcsncpy (MSVCRT.@)
  */
