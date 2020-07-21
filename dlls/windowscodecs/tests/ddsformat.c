@@ -24,8 +24,8 @@
 #include "wincodec.h"
 #include "wine/test.h"
 
-/* 4x4 uncompressed(16bpp BGR565) DDS image */
-static BYTE test_dds_bgr565[] = {
+/* 4x4 uncompressed(16bpp RGB565) DDS image */
+static BYTE test_dds_rgb565[] = {
     'D',  'D',  'S',  ' ',  0x7C, 0x00, 0x00, 0x00, 0x07, 0x10, 0x08, 0x00, 0x04, 0x00, 0x00, 0x00,
     0x04, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -284,7 +284,7 @@ static struct test_data {
     WICDdsParameters expected_parameters;
     BOOL wine_init;
 } test_data[] = {
-    { test_dds_bgr565,     sizeof(test_dds_bgr565),        WINCODEC_ERR_BADHEADER, 1,  2,  &GUID_WICPixelFormat32bppBGRA,
+    { test_dds_rgb565,     sizeof(test_dds_rgb565),        WINCODEC_ERR_BADHEADER, 1,  2,  &GUID_WICPixelFormat32bppBGRA,
       { 4,  4,  1, 1, 1,   DXGI_FORMAT_B5G6R5_UNORM,       WICDdsTexture2D,   WICDdsAlphaModeUnknown },       TRUE },
     { test_dds_24bpp,      sizeof(test_dds_24bpp),         WINCODEC_ERR_BADHEADER, 1,  3,  &GUID_WICPixelFormat32bppBGRA,
       { 1,  1,  1, 1, 1,   DXGI_FORMAT_UNKNOWN,            WICDdsTexture2D,   WICDdsAlphaModeUnknown },       TRUE },
