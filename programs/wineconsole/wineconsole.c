@@ -728,14 +728,8 @@ static struct inner_data* WINECON_Init(HINSTANCE hInst, DWORD pid, LPCWSTR appna
                               NULL, 0, NULL, NULL);
         if (!ret) goto error;
 
-        SERVER_START_REQ( set_console_input_info )
-        {
-            req->handle = wine_server_obj_handle( data->hConIn );
-            req->mask = SET_CONSOLE_INPUT_INFO_TITLE;
-            wine_server_add_data( req, appname, lstrlenW(appname) * sizeof(WCHAR) );
-            ret = !wine_server_call_err( req );
-        }
-        SERVER_END_REQ;
+        ret = DeviceIoControl(data->hConIn, IOCTL_CONDRV_SET_TITLE, (void *)appname,
+                              lstrlenW(appname) * sizeof(WCHAR), NULL, 0, NULL, NULL);
         if (!ret) goto error;
 
         return data;
