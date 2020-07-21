@@ -60,6 +60,7 @@ typedef struct _SXS_GUID_INFORMATION_CLR
 #define SXS_LOOKUP_CLR_GUID_USE_ACTCTX     0x00000001
 #define SXS_LOOKUP_CLR_GUID_FIND_SURROGATE 0x00010000
 #define SXS_LOOKUP_CLR_GUID_FIND_CLR_CLASS 0x00020000
+#define SXS_LOOKUP_CLR_GUID_FIND_ANY       (SXS_LOOKUP_CLR_GUID_FIND_SURROGATE | SXS_LOOKUP_CLR_GUID_FIND_CLR_CLASS)
 
 struct comclassredirect_data
 {
@@ -96,27 +97,54 @@ struct clrclass_data
     DWORD res2[2];
 };
 
+struct clrsurrogate_data
+{
+    ULONG size;
+    DWORD res;
+    GUID  clsid;
+    ULONG version_offset;
+    ULONG version_len;
+    ULONG name_offset;
+    ULONG name_len;
+};
+
 BOOL WINAPI SxsLookupClrGuid(DWORD flags, GUID *clsid, HANDLE actctx, void *buffer, SIZE_T buffer_len,
                              SIZE_T *buffer_len_required)
 {
     ACTCTX_SECTION_KEYED_DATA guid_info = { sizeof(ACTCTX_SECTION_KEYED_DATA) };
     ACTIVATION_CONTEXT_ASSEMBLY_DETAILED_INFORMATION *assembly_info;
     SIZE_T bytes_assembly_info;
-    struct comclassredirect_data *redirect_data;
-    struct clrclass_data *class_data;
-    int len_version = 0, len_name, len_identity;
+    unsigned int len_version = 0, len_name, len_identity;
     const void *ptr_name, *ptr_version, *ptr_identity;
     SXS_GUID_INFORMATION_CLR *ret = buffer;
+    BOOL retval = FALSE;
     char *ret_strings;
 
-    TRACE("(%x, %s, %p, %p, %08lx, %p): stub\n", flags, wine_dbgstr_guid(clsid), actctx,
+    TRACE("%#x, %s, %p, %p, %lx, %p.\n", flags, wine_dbgstr_guid(clsid), actctx,
           buffer, buffer_len, buffer_len_required);
 
-    if (flags & ~SXS_LOOKUP_CLR_GUID_FIND_CLR_CLASS)
-        FIXME("Ignored flags: %x\n", flags & ~SXS_LOOKUP_CLR_GUID_FIND_CLR_CLASS);
+    if (flags & ~SXS_LOOKUP_CLR_GUID_FIND_ANY)
+        FIXME("Ignored flags: %x\n", flags & ~SXS_LOOKUP_CLR_GUID_FIND_ANY);
 
-    if (!FindActCtxSectionGuid(FIND_ACTCTX_SECTION_KEY_RETURN_HACTCTX, 0,
-                               ACTIVATION_CONTEXT_SECTION_COM_SERVER_REDIRECTION, clsid, &guid_info))
+    if (flags & SXS_LOOKUP_CLR_GUID_FIND_SURROGATE)
+    {
+        if ((retval = FindActCtxSectionGuid(FIND_ACTCTX_SECTION_KEY_RETURN_HACTCTX, 0,
+                ACTIVATION_CONTEXT_SECTION_CLR_SURROGATES, clsid, &guid_info)))
+        {
+            flags &= ~SXS_LOOKUP_CLR_GUID_FIND_CLR_CLASS;
+        }
+    }
+
+    if (!retval && (flags & SXS_LOOKUP_CLR_GUID_FIND_CLR_CLASS))
+    {
+        if ((retval = FindActCtxSectionGuid(FIND_ACTCTX_SECTION_KEY_RETURN_HACTCTX, 0,
+                ACTIVATION_CONTEXT_SECTION_COM_SERVER_REDIRECTION, clsid, &guid_info)))
+        {
+            flags &= ~SXS_LOOKUP_CLR_GUID_FIND_SURROGATE;
+        }
+    }
+
+    if (!retval)
     {
         SetLastError(ERROR_NOT_FOUND);
         return FALSE;
@@ -139,17 +167,30 @@ BOOL WINAPI SxsLookupClrGuid(DWORD flags, GUID *clsid, HANDLE actctx, void *buff
         return FALSE;
     }
 
-    redirect_data = guid_info.lpData;
-    class_data = (void *)((char*)redirect_data + redirect_data->clrdata_offset);
+    if (flags & SXS_LOOKUP_CLR_GUID_FIND_CLR_CLASS)
+    {
+        const struct comclassredirect_data *redirect_data = guid_info.lpData;
+        const struct clrclass_data *class_data;
+
+        class_data = (void *)((char *)redirect_data + redirect_data->clrdata_offset);
+        ptr_name = (char *)class_data + class_data->name_offset;
+        ptr_version = (char *)class_data + class_data->version_offset;
+        len_name = class_data->name_len + sizeof(WCHAR);
+        if (class_data->version_len)
+            len_version = class_data->version_len + sizeof(WCHAR);
+    }
+    else
+    {
+        const struct clrsurrogate_data *surrogate = guid_info.lpData;
+        ptr_name = (char *)surrogate + surrogate->name_offset;
+        ptr_version = (char *)surrogate + surrogate->version_offset;
+        len_name = surrogate->name_len + sizeof(WCHAR);
+        if (surrogate->version_len)
+            len_version = surrogate->version_len + sizeof(WCHAR);
+    }
 
     ptr_identity = assembly_info->lpAssemblyEncodedAssemblyIdentity;
-    ptr_name = (char *)class_data + class_data->name_offset;
-    ptr_version = (char *)class_data + class_data->version_offset;
-
     len_identity = assembly_info->ulEncodedAssemblyIdentityLength + sizeof(WCHAR);
-    len_name = class_data->name_len + sizeof(WCHAR);
-    if (class_data->version_len > 0)
-        len_version = class_data->version_len + sizeof(WCHAR);
 
     *buffer_len_required = sizeof(SXS_GUID_INFORMATION_CLR) + len_identity + len_version + len_name;
     if (!buffer || buffer_len < *buffer_len_required)
@@ -160,11 +201,12 @@ BOOL WINAPI SxsLookupClrGuid(DWORD flags, GUID *clsid, HANDLE actctx, void *buff
         return FALSE;
     }
 
-    ret->cbSize = sizeof(SXS_GUID_INFORMATION_CLR);
-    ret->dwFlags = SXS_GUID_INFORMATION_CLR_FLAG_IS_CLASS;
+    ret->cbSize = sizeof(*ret);
+    ret->dwFlags = flags & SXS_LOOKUP_CLR_GUID_FIND_CLR_CLASS ? SXS_GUID_INFORMATION_CLR_FLAG_IS_CLASS :
+            SXS_GUID_INFORMATION_CLR_FLAG_IS_SURROGATE;
 
     /* Copy strings into buffer */
-    ret_strings = (char *)ret + sizeof(SXS_GUID_INFORMATION_CLR);
+    ret_strings = (char *)ret + sizeof(*ret);
 
     memcpy(ret_strings, ptr_identity, len_identity);
     ret->pcwszAssemblyIdentity = (WCHAR *)ret_strings;
