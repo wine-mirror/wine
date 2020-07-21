@@ -86,15 +86,30 @@ static void run_test(void)
     BOOL ret;
     SXS_GUID_INFORMATION_CLR *info;
 
+    SetLastError(0xdeadbeef);
+    ret = SxsLookupClrGuid(SXS_LOOKUP_CLR_GUID_FIND_ANY | SXS_LOOKUP_CLR_GUID_USE_ACTCTX, (GUID *)&CLSID_Test,
+            NULL, NULL, 0, &buffer_size);
+    ok(!ret, "Unexpected return value %d.\n", ret);
+    ok(GetLastError() == ERROR_NOT_FOUND, "Unexpected error %d.\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = SxsLookupClrGuid(SXS_LOOKUP_CLR_GUID_FIND_ANY | SXS_LOOKUP_CLR_GUID_USE_ACTCTX, (GUID *)&CLSID_Test,
+            NULL, NULL, 0, &buffer_size);
+    ok(!ret, "Unexpected return value %d.\n", ret);
+    ok(GetLastError() == ERROR_NOT_FOUND, "Unexpected error %d.\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
     ret = SxsLookupClrGuid(SXS_LOOKUP_CLR_GUID_FIND_ANY, (GUID*)&CLSID_Test, NULL, NULL, 0, &buffer_size);
     ok(!ret, "Unexpected return value %d.\n", ret);
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Got %d\n", GetLastError());
 
+    SetLastError(0xdeadbeef);
     ret = SxsLookupClrGuid(SXS_LOOKUP_CLR_GUID_FIND_CLR_CLASS, (GUID*)&CLSID_Test, NULL, NULL, 0, &buffer_size);
     ok(ret == FALSE, "Got %d\n", ret);
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Got %d\n", GetLastError());
 
     info = heap_alloc(buffer_size);
+    SetLastError(0xdeadbeef);
     ret = SxsLookupClrGuid(SXS_LOOKUP_CLR_GUID_FIND_CLR_CLASS, (GUID*)&CLSID_Test, NULL, info, buffer_size, &buffer_size);
     ok(ret == TRUE, "Got %d\n", ret);
     ok(GetLastError() == 0, "Got %d\n", GetLastError());
@@ -108,11 +123,13 @@ static void run_test(void)
 
     heap_free(info);
 
+    SetLastError(0xdeadbeef);
     ret = SxsLookupClrGuid(SXS_LOOKUP_CLR_GUID_FIND_SURROGATE, (GUID *)&CLSID_SurrogateTest, NULL, NULL, 0, &buffer_size);
     ok(!ret, "Unexpected return value %d.\n", ret);
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Got %d\n", GetLastError());
 
     info = heap_alloc(buffer_size);
+    SetLastError(0xdeadbeef);
     ret = SxsLookupClrGuid(SXS_LOOKUP_CLR_GUID_FIND_SURROGATE, (GUID *)&CLSID_SurrogateTest, NULL, info,
             buffer_size, &buffer_size);
     ok(ret, "Unexpected return value %d.\n", ret);
@@ -127,6 +144,7 @@ static void run_test(void)
 
     heap_free(info);
 
+    SetLastError(0xdeadbeef);
     ret = SxsLookupClrGuid(SXS_LOOKUP_CLR_GUID_FIND_ANY, (GUID *)&CLSID_SurrogateTest, NULL, NULL, 0, &buffer_size);
     ok(!ret, "Unexpected return value %d.\n", ret);
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Got %d\n", GetLastError());
@@ -229,6 +247,12 @@ static void test_SxsLookupClrGuid(void)
     SetLastError(0xdeadbeef);
     ret = SxsLookupClrGuid(SXS_LOOKUP_CLR_GUID_FIND_CLR_CLASS, (GUID*)&CLSID_Test, NULL, NULL, 0, &buffer_size);
     ok(ret == FALSE, "Expected FALSE, got %d\n", ret);
+    ok(GetLastError() == ERROR_NOT_FOUND, "Expected ERROR_NOT_FOUND, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = SxsLookupClrGuid(SXS_LOOKUP_CLR_GUID_FIND_CLR_CLASS | SXS_LOOKUP_CLR_GUID_USE_ACTCTX, (GUID *)&CLSID_Test,
+            NULL, NULL, 0, &buffer_size);
+    ok(!ret, "Unexpected return value %d.\n", ret);
     ok(GetLastError() == ERROR_NOT_FOUND, "Expected ERROR_NOT_FOUND, got %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);

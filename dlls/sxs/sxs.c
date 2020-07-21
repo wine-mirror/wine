@@ -112,59 +112,58 @@ BOOL WINAPI SxsLookupClrGuid(DWORD flags, GUID *clsid, HANDLE actctx, void *buff
                              SIZE_T *buffer_len_required)
 {
     ACTCTX_SECTION_KEYED_DATA guid_info = { sizeof(ACTCTX_SECTION_KEYED_DATA) };
-    ACTIVATION_CONTEXT_ASSEMBLY_DETAILED_INFORMATION *assembly_info;
+    ACTIVATION_CONTEXT_ASSEMBLY_DETAILED_INFORMATION *assembly_info = NULL;
     SIZE_T bytes_assembly_info;
     unsigned int len_version = 0, len_name, len_identity;
     const void *ptr_name, *ptr_version, *ptr_identity;
     SXS_GUID_INFORMATION_CLR *ret = buffer;
     BOOL retval = FALSE;
     char *ret_strings;
+    ULONG_PTR cookie;
 
     TRACE("%#x, %s, %p, %p, %lx, %p.\n", flags, wine_dbgstr_guid(clsid), actctx,
           buffer, buffer_len, buffer_len_required);
 
-    if (flags & ~SXS_LOOKUP_CLR_GUID_FIND_ANY)
-        FIXME("Ignored flags: %x\n", flags & ~SXS_LOOKUP_CLR_GUID_FIND_ANY);
+    if (flags & SXS_LOOKUP_CLR_GUID_USE_ACTCTX)
+    {
+        if (!ActivateActCtx(actctx, &cookie))
+        {
+            WARN("Failed to activate context.\n");
+            return FALSE;
+        }
+    }
 
     if (flags & SXS_LOOKUP_CLR_GUID_FIND_SURROGATE)
     {
-        if ((retval = FindActCtxSectionGuid(FIND_ACTCTX_SECTION_KEY_RETURN_HACTCTX, 0,
-                ACTIVATION_CONTEXT_SECTION_CLR_SURROGATES, clsid, &guid_info)))
-        {
+        if ((retval = FindActCtxSectionGuid(0, NULL, ACTIVATION_CONTEXT_SECTION_CLR_SURROGATES, clsid, &guid_info)))
             flags &= ~SXS_LOOKUP_CLR_GUID_FIND_CLR_CLASS;
-        }
     }
 
     if (!retval && (flags & SXS_LOOKUP_CLR_GUID_FIND_CLR_CLASS))
     {
-        if ((retval = FindActCtxSectionGuid(FIND_ACTCTX_SECTION_KEY_RETURN_HACTCTX, 0,
-                ACTIVATION_CONTEXT_SECTION_COM_SERVER_REDIRECTION, clsid, &guid_info)))
-        {
+        if ((retval = FindActCtxSectionGuid(0, NULL, ACTIVATION_CONTEXT_SECTION_COM_SERVER_REDIRECTION, clsid, &guid_info)))
             flags &= ~SXS_LOOKUP_CLR_GUID_FIND_SURROGATE;
-        }
     }
 
     if (!retval)
     {
         SetLastError(ERROR_NOT_FOUND);
-        return FALSE;
+        goto out;
     }
 
-    QueryActCtxW(0, guid_info.hActCtx, &guid_info.ulAssemblyRosterIndex,
+    retval = QueryActCtxW(QUERY_ACTCTX_FLAG_USE_ACTIVE_ACTCTX, NULL, &guid_info.ulAssemblyRosterIndex,
             AssemblyDetailedInformationInActivationContext, NULL, 0, &bytes_assembly_info);
-    if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+    if (!retval && GetLastError() != ERROR_INSUFFICIENT_BUFFER)
     {
-        ReleaseActCtx(guid_info.hActCtx);
-        return FALSE;
+        goto out;
     }
+
     assembly_info = heap_alloc(bytes_assembly_info);
-    if(!QueryActCtxW(0, guid_info.hActCtx, &guid_info.ulAssemblyRosterIndex,
+    if (!(retval = QueryActCtxW(QUERY_ACTCTX_FLAG_USE_ACTIVE_ACTCTX, NULL, &guid_info.ulAssemblyRosterIndex,
             AssemblyDetailedInformationInActivationContext, assembly_info,
-            bytes_assembly_info, &bytes_assembly_info))
+            bytes_assembly_info, &bytes_assembly_info)))
     {
-        heap_free(assembly_info);
-        ReleaseActCtx(guid_info.hActCtx);
-        return FALSE;
+        goto out;
     }
 
     if (flags & SXS_LOOKUP_CLR_GUID_FIND_CLR_CLASS)
@@ -192,13 +191,12 @@ BOOL WINAPI SxsLookupClrGuid(DWORD flags, GUID *clsid, HANDLE actctx, void *buff
     ptr_identity = assembly_info->lpAssemblyEncodedAssemblyIdentity;
     len_identity = assembly_info->ulEncodedAssemblyIdentityLength + sizeof(WCHAR);
 
-    *buffer_len_required = sizeof(SXS_GUID_INFORMATION_CLR) + len_identity + len_version + len_name;
+    *buffer_len_required = sizeof(*ret) + len_identity + len_version + len_name;
     if (!buffer || buffer_len < *buffer_len_required)
     {
         SetLastError(ERROR_INSUFFICIENT_BUFFER);
-        heap_free(assembly_info);
-        ReleaseActCtx(guid_info.hActCtx);
-        return FALSE;
+        retval = FALSE;
+        goto out;
     }
 
     ret->cbSize = sizeof(*ret);
@@ -226,7 +224,11 @@ BOOL WINAPI SxsLookupClrGuid(DWORD flags, GUID *clsid, HANDLE actctx, void *buff
 
     SetLastError(0);
 
-    ReleaseActCtx(guid_info.hActCtx);
+out:
+
+    if (flags & SXS_LOOKUP_CLR_GUID_USE_ACTCTX)
+        DeactivateActCtx(0, cookie);
+
     heap_free(assembly_info);
-    return TRUE;
+    return retval;
 }
