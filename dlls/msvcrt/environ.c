@@ -20,7 +20,6 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
-#include "wine/unicode.h"
 #include "msvcrt.h"
 #include "wine/debug.h"
 
@@ -53,7 +52,7 @@ char * CDECL MSVCRT_getenv(const char *name)
 MSVCRT_wchar_t * CDECL MSVCRT__wgetenv(const MSVCRT_wchar_t *name)
 {
     MSVCRT_wchar_t **environ;
-    unsigned int length=strlenW(name);
+    unsigned int length=MSVCRT_wcslen(name);
 
     /* Initialize the _wenviron array if it's not already created. */
     if (!MSVCRT__wenviron)
@@ -62,7 +61,7 @@ MSVCRT_wchar_t * CDECL MSVCRT__wgetenv(const MSVCRT_wchar_t *name)
     for (environ = MSVCRT__wenviron; *environ; environ++)
     {
         MSVCRT_wchar_t *str = *environ;
-        MSVCRT_wchar_t *pos = strchrW(str,'=');
+        MSVCRT_wchar_t *pos = MSVCRT_wcschr(str,'=');
         if (pos && ((pos - str) == length) && !MSVCRT__wcsnicmp(str,name,length))
         {
             TRACE("(%s): got %s\n", debugstr_w(name), debugstr_w(pos + 1));
@@ -131,7 +130,7 @@ int CDECL _wputenv(const MSVCRT_wchar_t *str)
 
  if (!str)
    return -1;
- name = HeapAlloc(GetProcessHeap(), 0, (strlenW(str) + 1) * sizeof(MSVCRT_wchar_t));
+ name = HeapAlloc(GetProcessHeap(), 0, (MSVCRT_wcslen(str) + 1) * sizeof(MSVCRT_wchar_t));
  if (!name)
    return -1;
  dst = name;
@@ -247,13 +246,13 @@ int CDECL _wdupenv_s(MSVCRT_wchar_t **buffer, MSVCRT_size_t *numberOfElements,
 
     if (!(e = MSVCRT__wgetenv(varname))) return *MSVCRT__errno() = MSVCRT_EINVAL;
 
-    sz = strlenW(e) + 1;
+    sz = MSVCRT_wcslen(e) + 1;
     if (!(*buffer = MSVCRT_malloc(sz * sizeof(MSVCRT_wchar_t))))
     {
         if (numberOfElements) *numberOfElements = 0;
         return *MSVCRT__errno() = MSVCRT_ENOMEM;
     }
-    strcpyW(*buffer, e);
+    MSVCRT_wcscpy(*buffer, e);
     if (numberOfElements) *numberOfElements = sz;
     return 0;
 }
@@ -302,12 +301,12 @@ int CDECL _wgetenv_s(MSVCRT_size_t *pReturnValue, MSVCRT_wchar_t *buffer, MSVCRT
         *pReturnValue = 0;
         return *MSVCRT__errno() = MSVCRT_EINVAL;
     }
-    *pReturnValue = strlenW(e) + 1;
+    *pReturnValue = MSVCRT_wcslen(e) + 1;
     if (numberOfElements < *pReturnValue)
     {
         return *MSVCRT__errno() = MSVCRT_ERANGE;
     }
-    strcpyW(buffer, e);
+    MSVCRT_wcscpy(buffer, e);
     return 0;
 }
 

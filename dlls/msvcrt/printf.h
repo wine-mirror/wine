@@ -195,7 +195,7 @@ static inline int FUNC_NAME(pf_output_format_wstr)(FUNC_NAME(puts_clbk) pf_puts,
         if(flags->Precision>=0)
             len = MSVCRT_wcsnlen(str, flags->Precision);
         else
-            len = strlenW(str);
+            len = MSVCRT_wcslen(str);
     }
 
     if(flags->Precision>=0 && flags->Precision<len)

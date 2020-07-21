@@ -27,7 +27,7 @@
 #include <limits.h>
 
 #include "msvcrt.h"
-#include "wine/unicode.h"
+#include "winnls.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);

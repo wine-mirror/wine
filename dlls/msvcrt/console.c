@@ -92,7 +92,7 @@ int CDECL _cputws(const MSVCRT_wchar_t* str)
   int len, retval = -1;
 
   if (!MSVCRT_CHECK_PMT(str != NULL)) return -1;
-  len = lstrlenW(str);
+  len = MSVCRT_wcslen(str);
 
   LOCK_CONSOLE;
   if (WriteConsoleW(MSVCRT_console_out, str, len, &count, NULL)

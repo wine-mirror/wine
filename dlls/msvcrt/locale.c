@@ -35,7 +35,6 @@
 #include "mtdll.h"
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
@@ -568,8 +567,8 @@ MSVCRT_wchar_t* CDECL _W_Getdays(void)
     TRACE("\n");
 
     for(i=0; i<7; i++) {
-        size += strlenW(cur->wstr.names.short_wday[i]) + 1;
-        size += strlenW(cur->wstr.names.wday[i]) + 1;
+        size += MSVCRT_wcslen(cur->wstr.names.short_wday[i]) + 1;
+        size += MSVCRT_wcslen(cur->wstr.names.wday[i]) + 1;
     }
     out = MSVCRT_malloc((size+1)*sizeof(*out));
     if(!out)
@@ -578,12 +577,12 @@ MSVCRT_wchar_t* CDECL _W_Getdays(void)
     size = 0;
     for(i=0; i<7; i++) {
         out[size++] = ':';
-        len = strlenW(cur->wstr.names.short_wday[i]);
+        len = MSVCRT_wcslen(cur->wstr.names.short_wday[i]);
         memcpy(&out[size], cur->wstr.names.short_wday[i], len*sizeof(*out));
         size += len;
 
         out[size++] = ':';
-        len = strlenW(cur->wstr.names.wday[i]);
+        len = MSVCRT_wcslen(cur->wstr.names.wday[i]);
         memcpy(&out[size], cur->wstr.names.wday[i], len*sizeof(*out));
         size += len;
     }
@@ -642,8 +641,8 @@ MSVCRT_wchar_t* CDECL _W_Getmonths(void)
     TRACE("\n");
 
     for(i=0; i<12; i++) {
-        size += strlenW(cur->wstr.names.short_mon[i]) + 1;
-        size += strlenW(cur->wstr.names.mon[i]) + 1;
+        size += MSVCRT_wcslen(cur->wstr.names.short_mon[i]) + 1;
+        size += MSVCRT_wcslen(cur->wstr.names.mon[i]) + 1;
     }
     out = MSVCRT_malloc((size+1)*sizeof(*out));
     if(!out)
@@ -652,12 +651,12 @@ MSVCRT_wchar_t* CDECL _W_Getmonths(void)
     size = 0;
     for(i=0; i<12; i++) {
         out[size++] = ':';
-        len = strlenW(cur->wstr.names.short_mon[i]);
+        len = MSVCRT_wcslen(cur->wstr.names.short_mon[i]);
         memcpy(&out[size], cur->wstr.names.short_mon[i], len*sizeof(*out));
         size += len;
 
         out[size++] = ':';
-        len = strlenW(cur->wstr.names.mon[i]);
+        len = MSVCRT_wcslen(cur->wstr.names.mon[i]);
         memcpy(&out[size], cur->wstr.names.mon[i], len*sizeof(*out));
         size += len;
     }

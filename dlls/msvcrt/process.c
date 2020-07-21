@@ -31,9 +31,9 @@
 #include <stdarg.h>
 
 #include "msvcrt.h"
+#include <winnls.h>
 #include "mtdll.h"
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
@@ -44,15 +44,16 @@ static void msvcrt_search_executable(const MSVCRT_wchar_t *name, MSVCRT_wchar_t 
     {{'.','c','o','m',0}, {'.','e','x','e',0}, {'.','b','a','t',0}, {'.','c','m','d',0}};
 
   MSVCRT_wchar_t buffer[MAX_PATH];
-  const MSVCRT_wchar_t *env, *p;
+  const MSVCRT_wchar_t *env, *p, *end;
   unsigned int i, name_len, path_len;
   int extension = 1;
 
   *fullname = '\0';
   msvcrt_set_errno(ERROR_FILE_NOT_FOUND);
 
-  p = memchrW(name, '\0', MAX_PATH);
-  if (!p) p = name + MAX_PATH - 1;
+  end = name + MAX_PATH - 1;
+  for(p = name; p < end; p++)
+      if(!*p) break;
   name_len = p - name;
 
   /* FIXME extra-long names are silently truncated */
@@ -62,7 +63,7 @@ static void msvcrt_search_executable(const MSVCRT_wchar_t *name, MSVCRT_wchar_t 
   /* try current dir first */
   if (GetFileAttributesW(buffer) != INVALID_FILE_ATTRIBUTES)
   {
-    strcpyW(fullname, buffer);
+    MSVCRT_wcscpy(fullname, buffer);
     return;
   }
 
@@ -77,7 +78,7 @@ static void msvcrt_search_executable(const MSVCRT_wchar_t *name, MSVCRT_wchar_t 
       memcpy(buffer + name_len, suffix[i], 5 * sizeof(MSVCRT_wchar_t));
       if (GetFileAttributesW(buffer) != INVALID_FILE_ATTRIBUTES)
       {
-        strcpyW(fullname, buffer);
+        MSVCRT_wcscpy(fullname, buffer);
         return;
       }
     }
@@ -104,10 +105,10 @@ static void msvcrt_search_executable(const MSVCRT_wchar_t *name, MSVCRT_wchar_t 
       }
       else buffer[path_len] = '\0';
 
-      strcatW(buffer, name);
+      MSVCRT_wcscat(buffer, name);
       if (GetFileAttributesW(buffer) != INVALID_FILE_ATTRIBUTES)
       {
-        strcpyW(fullname, buffer);
+        MSVCRT_wcscpy(fullname, buffer);
         return;
       }
     }
@@ -119,7 +120,7 @@ static void msvcrt_search_executable(const MSVCRT_wchar_t *name, MSVCRT_wchar_t 
         memcpy(buffer + path_len + name_len, suffix[i], 5 * sizeof(MSVCRT_wchar_t));
         if (GetFileAttributesW(buffer) != INVALID_FILE_ATTRIBUTES)
         {
-          strcpyW(fullname, buffer);
+          MSVCRT_wcscpy(fullname, buffer);
           return;
         }
       }
@@ -202,7 +203,7 @@ static MSVCRT_wchar_t* msvcrt_argvtos(const MSVCRT_wchar_t* const* arg, MSVCRT_w
   size = 0;
   while (*a)
   {
-    size += strlenW(*a) + 1;
+    size += MSVCRT_wcslen(*a) + 1;
     a++;
   }
 
@@ -215,7 +216,7 @@ static MSVCRT_wchar_t* msvcrt_argvtos(const MSVCRT_wchar_t* const* arg, MSVCRT_w
   p = ret;
   while (*a)
   {
-    int len = strlenW(*a);
+    int len = MSVCRT_wcslen(*a);
     memcpy(p,*a,len * sizeof(MSVCRT_wchar_t));
     p += len;
     *p++ = delim;
@@ -279,7 +280,7 @@ static MSVCRT_wchar_t *msvcrt_valisttos(const MSVCRT_wchar_t *arg0, __ms_va_list
 
     for (arg = arg0; arg; arg = va_arg( alist, MSVCRT_wchar_t * ))
     {
-        unsigned int len = strlenW( arg ) + 1;
+        unsigned int len = MSVCRT_wcslen( arg ) + 1;
         if (pos + len >= size)
         {
             size = max( 256, size * 2 );
@@ -291,7 +292,7 @@ static MSVCRT_wchar_t *msvcrt_valisttos(const MSVCRT_wchar_t *arg0, __ms_va_list
             }
             ret = new;
         }
-        strcpyW( ret + pos, arg );
+        MSVCRT_wcscpy( ret + pos, arg );
         pos += len;
         ret[pos - 1] = delim;
     }
@@ -348,7 +349,7 @@ static MSVCRT_wchar_t *msvcrt_get_comspec(void)
   if (!(len = GetEnvironmentVariableW(comspec, NULL, 0))) len = ARRAY_SIZE(cmd);
   if ((ret = HeapAlloc(GetProcessHeap(), 0, len * sizeof(MSVCRT_wchar_t))))
   {
-    if (!GetEnvironmentVariableW(comspec, ret, len)) strcpyW(ret, cmd);
+    if (!GetEnvironmentVariableW(comspec, ret, len)) MSVCRT_wcscpy(ret, cmd);
   }
   return ret;
 }
@@ -1109,7 +1110,7 @@ MSVCRT_FILE* CDECL MSVCRT__wpopen(const MSVCRT_wchar_t* command, const MSVCRT_wc
   MSVCRT__close(fds[fdToDup]);
 
   if (!(comspec = msvcrt_get_comspec())) goto error;
-  len = strlenW(comspec) + strlenW(flag) + strlenW(command) + 1;
+  len = MSVCRT_wcslen(comspec) + MSVCRT_wcslen(flag) + MSVCRT_wcslen(command) + 1;
 
   if (!(fullcmd = HeapAlloc(GetProcessHeap(), 0, len * sizeof(MSVCRT_wchar_t))))
   {
@@ -1117,9 +1118,9 @@ MSVCRT_FILE* CDECL MSVCRT__wpopen(const MSVCRT_wchar_t* command, const MSVCRT_wc
     goto error;
   }
 
-  strcpyW(fullcmd, comspec);
-  strcatW(fullcmd, flag);
-  strcatW(fullcmd, command);
+  MSVCRT_wcscpy(fullcmd, comspec);
+  MSVCRT_wcscat(fullcmd, flag);
+  MSVCRT_wcscat(fullcmd, command);
 
   if ((container->proc = (HANDLE)msvcrt_spawn(MSVCRT__P_NOWAIT, comspec, fullcmd, NULL, 1))
           == INVALID_HANDLE_VALUE)
@@ -1243,16 +1244,16 @@ int CDECL _wsystem(const MSVCRT_wchar_t* cmd)
   if ( comspec == NULL)
     return -1;
 
-  len = strlenW(comspec) + strlenW(flag) + strlenW(cmd) + 1;
+  len = MSVCRT_wcslen(comspec) + MSVCRT_wcslen(flag) + MSVCRT_wcslen(cmd) + 1;
 
   if (!(fullcmd = HeapAlloc(GetProcessHeap(), 0, len * sizeof(MSVCRT_wchar_t))))
   {
     HeapFree(GetProcessHeap(), 0, comspec);
     return -1;
   }
-  strcpyW(fullcmd, comspec);
-  strcatW(fullcmd, flag);
-  strcatW(fullcmd, cmd);
+  MSVCRT_wcscpy(fullcmd, comspec);
+  MSVCRT_wcscat(fullcmd, flag);
+  MSVCRT_wcscat(fullcmd, cmd);
 
   res = msvcrt_spawn(MSVCRT__P_WAIT, comspec, fullcmd, NULL, 1);
 

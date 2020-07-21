@@ -20,7 +20,6 @@
 
 #include "msvcrt.h"
 #include "winnls.h"
-#include "wine/unicode.h"
 
 /* Some abbreviations to make the following table readable */
 #define _C_ MSVCRT__CONTROL

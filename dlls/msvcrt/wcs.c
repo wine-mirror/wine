@@ -28,7 +28,6 @@
 #include "msvcrt.h"
 #include "winnls.h"
 #include "wtypes.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
@@ -79,7 +78,7 @@ MSVCRT_wchar_t* CDECL MSVCRT__wcsdup( const MSVCRT_wchar_t* str )
   MSVCRT_wchar_t* ret = NULL;
   if (str)
   {
-    int size = (strlenW(str) + 1) * sizeof(MSVCRT_wchar_t);
+    int size = (MSVCRT_wcslen(str) + 1) * sizeof(MSVCRT_wchar_t);
     ret = MSVCRT_malloc( size );
     if (ret) memcpy( ret, str, size );
   }
@@ -298,7 +297,7 @@ int CDECL MSVCRT__wcsnset_s( MSVCRT_wchar_t *str, MSVCRT_size_t size, MSVCRT_wch
 MSVCRT_wchar_t* CDECL MSVCRT__wcsrev( MSVCRT_wchar_t* str )
 {
   MSVCRT_wchar_t* ret = str;
-  MSVCRT_wchar_t* end = str + strlenW(str) - 1;
+  MSVCRT_wchar_t* end = str + MSVCRT_wcslen(str) - 1;
   while (end > str)
   {
     MSVCRT_wchar_t t = *end;
@@ -552,7 +551,7 @@ static MSVCRT_size_t MSVCRT_wcsrtombs_l(char *mbstr, const MSVCRT_wchar_t **wcst
         MSVCRT_size_t i;
 
         if(!mbstr)
-            return strlenW(*wcstr);
+            return MSVCRT_wcslen(*wcstr);
 
         for(i=0; i<count; i++) {
             if((*wcstr)[i] > 255) {
@@ -1755,10 +1754,10 @@ MSVCRT_wchar_t * CDECL MSVCRT_wcstok_s( MSVCRT_wchar_t *str, const MSVCRT_wchar_
 
     if (!str) str = *next_token;
 
-    while (*str && strchrW( delim, *str )) str++;
+    while (*str && MSVCRT_wcschr( delim, *str )) str++;
     if (!*str) return NULL;
     ret = str++;
-    while (*str && !strchrW( delim, *str )) str++;
+    while (*str && !MSVCRT_wcschr( delim, *str )) str++;
     if (*str) *str++ = 0;
     *next_token = str;
     return ret;
@@ -2149,7 +2148,7 @@ INT CDECL MSVCRT_wcscpy_s( MSVCRT_wchar_t* wcDest, MSVCRT_size_t numElement, con
         return MSVCRT_EINVAL;
     }
 
-    size = strlenW(wcSrc) + 1;
+    size = MSVCRT_wcslen(wcSrc) + 1;
 
     if(!MSVCRT_CHECK_PMT_ERR(size <= numElement, MSVCRT_ERANGE))
     {
@@ -2295,7 +2294,7 @@ INT CDECL MSVCRT_wcsncat_s(MSVCRT_wchar_t *dst, MSVCRT_size_t elem,
 
     if (count == MSVCRT__TRUNCATE)
     {
-        srclen = strlenW(src);
+        srclen = MSVCRT_wcslen(src);
         if (srclen >= (elem - dststart))
         {
             srclen = elem - dststart - 1;
@@ -2303,7 +2302,7 @@ INT CDECL MSVCRT_wcsncat_s(MSVCRT_wchar_t *dst, MSVCRT_size_t elem,
         }
     }
     else
-        srclen = min(strlenW(src), count);
+        srclen = min(MSVCRT_wcslen(src), count);
     if (srclen < (elem - dststart))
     {
         memcpy(&dst[dststart], src, srclen*sizeof(MSVCRT_wchar_t));
@@ -2766,7 +2765,7 @@ MSVCRT_size_t CDECL MSVCRT__wcsxfrm_l(MSVCRT_wchar_t *dest, const MSVCRT_wchar_t
 
     if(!locinfo->lc_handle[MSVCRT_LC_COLLATE]) {
         MSVCRT_wcsncpy(dest, src, len);
-        return strlenW(src);
+        return MSVCRT_wcslen(src);
     }
 
     ret = LCMapStringW(locinfo->lc_handle[MSVCRT_LC_COLLATE],

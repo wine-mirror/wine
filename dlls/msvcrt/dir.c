@@ -29,7 +29,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
-#include "wine/unicode.h"
 #include "msvcrt.h"
 #include "wine/debug.h"
 
@@ -92,7 +91,7 @@ static void msvcrt_wfttofd( const WIN32_FIND_DATAW *fd, struct MSVCRT__wfinddata
   RtlTimeToSecondsSince1970( (const LARGE_INTEGER *)&fd->ftLastWriteTime, &dw );
   ft->time_write = dw;
   ft->size = fd->nFileSizeLow;
-  strcpyW(ft->name, fd->cFileName);
+  MSVCRT_wcscpy(ft->name, fd->cFileName);
 }
 
 /* INTERNAL: Translate WIN32_FIND_DATAW to wfinddata32_t  */
@@ -112,7 +111,7 @@ static void msvcrt_wfttofd32(const WIN32_FIND_DATAW *fd, struct MSVCRT__wfinddat
   RtlTimeToSecondsSince1970( (const LARGE_INTEGER *)&fd->ftLastWriteTime, &dw );
   ft->time_write = dw;
   ft->size = fd->nFileSizeLow;
-  strcpyW(ft->name, fd->cFileName);
+  MSVCRT_wcscpy(ft->name, fd->cFileName);
 }
 
 /* INTERNAL: Translate WIN32_FIND_DATAA to finddatai64_t  */
@@ -172,7 +171,7 @@ static void msvcrt_wfttofd64( const WIN32_FIND_DATAW *fd, struct MSVCRT__wfindda
   RtlTimeToSecondsSince1970( (const LARGE_INTEGER *)&fd->ftLastWriteTime, &dw );
   ft->time_write = dw;
   ft->size = ((__int64)fd->nFileSizeHigh) << 32 | fd->nFileSizeLow;
-  strcpyW(ft->name, fd->cFileName);
+  MSVCRT_wcscpy(ft->name, fd->cFileName);
 }
 
 /* INTERNAL: Translate WIN32_FIND_DATAA to finddata64i32_t  */
@@ -212,7 +211,7 @@ static void msvcrt_wfttofdi64( const WIN32_FIND_DATAW *fd, struct MSVCRT__wfindd
   RtlTimeToSecondsSince1970( (const LARGE_INTEGER *)&fd->ftLastWriteTime, &dw );
   ft->time_write = dw;
   ft->size = ((__int64)fd->nFileSizeHigh) << 32 | fd->nFileSizeLow;
-  strcpyW(ft->name, fd->cFileName);
+  MSVCRT_wcscpy(ft->name, fd->cFileName);
 }
 
 /* INTERNAL: Translate WIN32_FIND_DATAW to wfinddata64i32_t  */
@@ -232,7 +231,7 @@ static void msvcrt_wfttofd64i32( const WIN32_FIND_DATAW *fd, struct MSVCRT__wfin
   RtlTimeToSecondsSince1970( (const LARGE_INTEGER *)&fd->ftLastWriteTime, &dw );
   ft->time_write = dw;
   ft->size = fd->nFileSizeLow;
-  strcpyW(ft->name, fd->cFileName);
+  MSVCRT_wcscpy(ft->name, fd->cFileName);
 }
 
 /*********************************************************************
@@ -807,7 +806,7 @@ MSVCRT_wchar_t* CDECL MSVCRT__wgetcwd(MSVCRT_wchar_t * buf, int size)
     *MSVCRT__errno() = MSVCRT_ERANGE;
     return NULL; /* buf too small */
   }
-  strcpyW(buf,dir);
+  MSVCRT_wcscpy(buf,dir);
   return buf;
 }
 
@@ -920,7 +919,7 @@ MSVCRT_wchar_t* CDECL MSVCRT__wgetdcwd(int drive, MSVCRT_wchar_t * buf, int size
     TRACE(":returning %s\n", debugstr_w(dir));
     if (!buf)
       return MSVCRT__wcsdup(dir); /* allocate */
-    strcpyW(buf,dir);
+    MSVCRT_wcscpy(buf,dir);
   }
   return buf;
 }
@@ -1204,8 +1203,8 @@ int CDECL MSVCRT__wsplitpath_s(const MSVCRT_wchar_t* inpath,
     }
     if (ext)
     {
-        if (sz_ext <= strlenW(end)) goto do_error;
-        strcpyW( ext, end );
+        if (sz_ext <= MSVCRT_wcslen(end)) goto do_error;
+        MSVCRT_wcscpy( ext, end );
     }
     return 0;
 do_error:
@@ -1408,7 +1407,7 @@ VOID CDECL MSVCRT__wmakepath(MSVCRT_wchar_t *path, const MSVCRT_wchar_t *drive, 
     }
     if (directory && directory[0])
     {
-        unsigned int len = strlenW(directory);
+        unsigned int len = MSVCRT_wcslen(directory);
         memmove(p, directory, len * sizeof(MSVCRT_wchar_t));
         p += len;
         if (p[-1] != '/' && p[-1] != '\\')
@@ -1416,7 +1415,7 @@ VOID CDECL MSVCRT__wmakepath(MSVCRT_wchar_t *path, const MSVCRT_wchar_t *drive, 
     }
     if (filename && filename[0])
     {
-        unsigned int len = strlenW(filename);
+        unsigned int len = MSVCRT_wcslen(filename);
         memmove(p, filename, len * sizeof(MSVCRT_wchar_t));
         p += len;
     }
@@ -1424,7 +1423,7 @@ VOID CDECL MSVCRT__wmakepath(MSVCRT_wchar_t *path, const MSVCRT_wchar_t *drive, 
     {
         if (extension[0] != '.')
             *p++ = '.';
-        strcpyW(p, extension);
+        MSVCRT_wcscpy(p, extension);
     }
     else
         *p = '\0';
@@ -1565,7 +1564,7 @@ int CDECL MSVCRT__wmakepath_s(MSVCRT_wchar_t *path, MSVCRT_size_t size, const MS
 
     if (directory && directory[0])
     {
-        unsigned int len = strlenW(directory);
+        unsigned int len = MSVCRT_wcslen(directory);
         unsigned int needs_separator = directory[len - 1] != '/' && directory[len - 1] != '\\';
         unsigned int copylen = min(size - 1, len);
 
@@ -1592,7 +1591,7 @@ int CDECL MSVCRT__wmakepath_s(MSVCRT_wchar_t *path, MSVCRT_size_t size, const MS
 
     if (filename && filename[0])
     {
-        unsigned int len = strlenW(filename);
+        unsigned int len = MSVCRT_wcslen(filename);
         unsigned int copylen = min(size - 1, len);
 
         if (size < 2)
@@ -1609,7 +1608,7 @@ int CDECL MSVCRT__wmakepath_s(MSVCRT_wchar_t *path, MSVCRT_size_t size, const MS
 
     if (extension && extension[0])
     {
-        unsigned int len = strlenW(extension);
+        unsigned int len = MSVCRT_wcslen(extension);
         unsigned int needs_period = extension[0] != '.';
         unsigned int copylen;
 
@@ -1750,7 +1749,7 @@ int CDECL MSVCRT__wsearchenv_s(const MSVCRT_wchar_t* file, const MSVCRT_wchar_t*
   if (count > MAX_PATH)
       FIXME("count > MAX_PATH not supported\n");
 
-  fname_len = strlenW(file);
+  fname_len = MSVCRT_wcslen(file);
   *buf = '\0';
 
   /* Try CWD first */

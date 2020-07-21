@@ -23,7 +23,7 @@
 
 #include <math.h>
 #include "msvcrt.h"
-#include "wine/unicode.h"
+#include <winnls.h>
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
@@ -111,11 +111,11 @@ MSVCRT_wchar_t ** msvcrt_SnapshotOfEnvironmentW(MSVCRT_wchar_t **wblk)
   int count = 1, len = 1, i = 0; /* keep space for the trailing NULLS */
   MSVCRT_wchar_t *wptr;
 
-  for (wptr = wenviron_strings; *wptr; wptr += strlenW(wptr) + 1)
+  for (wptr = wenviron_strings; *wptr; wptr += MSVCRT_wcslen(wptr) + 1)
   {
     /* Don't count environment variables starting with '=' which are command shell specific */
     if (*wptr != '=') count++;
-    len += strlenW(wptr) + 1;
+    len += MSVCRT_wcslen(wptr) + 1;
   }
   if (wblk)
       wblk = HeapReAlloc( GetProcessHeap(), 0, wblk, count* sizeof(MSVCRT_wchar_t*) + len * sizeof(MSVCRT_wchar_t));
@@ -126,7 +126,7 @@ MSVCRT_wchar_t ** msvcrt_SnapshotOfEnvironmentW(MSVCRT_wchar_t **wblk)
       if (count)
 	{
 	  memcpy(&wblk[count],wenviron_strings,len * sizeof(MSVCRT_wchar_t));
-	  for (wptr = (MSVCRT_wchar_t*)&wblk[count]; *wptr; wptr += strlenW(wptr) + 1)
+	  for (wptr = (MSVCRT_wchar_t*)&wblk[count]; *wptr; wptr += MSVCRT_wcslen(wptr) + 1)
 	    {
 	      /* Skip special environment strings set by the command shell */
 	      if (*wptr != '=') wblk[i++] = wptr;
@@ -163,7 +163,7 @@ static char **build_argv( WCHAR **wargv )
 static WCHAR **cmdline_to_argv( const WCHAR *src, int *ret_argc )
 {
     WCHAR **argv, *arg, *dst;
-    int argc, in_quotes = 0, bcount = 0, len = lstrlenW(src) + 1;
+    int argc, in_quotes = 0, bcount = 0, len = MSVCRT_wcslen(src) + 1;
 
     argc = 2 + len / 2;
     argv = HeapAlloc( GetProcessHeap(), 0, argc * sizeof(*argv) + len * sizeof(WCHAR) );
@@ -489,7 +489,7 @@ static int build_expanded_wargv(int *argc, MSVCRT_wchar_t **argv)
         int len = 0;
 
         is_expandable = FALSE;
-        for(path_len = strlenW(initial_wargv[i])-1; path_len>=0; path_len--) {
+        for(path_len = MSVCRT_wcslen(initial_wargv[i])-1; path_len>=0; path_len--) {
             if(initial_wargv[i][path_len]=='*' || initial_wargv[i][path_len]=='?')
                 is_expandable = TRUE;
             else if(initial_wargv[i][path_len]=='\\' || initial_wargv[i][path_len]=='/')
@@ -508,7 +508,7 @@ static int build_expanded_wargv(int *argc, MSVCRT_wchar_t **argv)
                             (data.cFileName[1]=='.' && data.cFileName[2]=='\0')))
                     continue;
 
-                len = strlenW(data.cFileName)+1;
+                len = MSVCRT_wcslen(data.cFileName)+1;
                 if(argv) {
                     argv[args_no] = (MSVCRT_wchar_t*)(argv+*argc+1)+size;
                     memcpy(argv[args_no], initial_wargv[i], path_len*sizeof(MSVCRT_wchar_t));
@@ -521,7 +521,7 @@ static int build_expanded_wargv(int *argc, MSVCRT_wchar_t **argv)
         }
 
         if(!len) {
-            len = strlenW(initial_wargv[i])+1;
+            len = MSVCRT_wcslen(initial_wargv[i])+1;
             if(argv) {
                 argv[args_no] = (MSVCRT_wchar_t*)(argv+*argc+1)+size;
                 memcpy(argv[args_no], initial_wargv[i], len*sizeof(MSVCRT_wchar_t));

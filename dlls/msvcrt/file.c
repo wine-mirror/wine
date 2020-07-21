@@ -41,10 +41,9 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
+#include "winnls.h"
 #include "msvcrt.h"
 #include "mtdll.h"
-
-#include "wine/unicode.h"
 
 #include "wine/debug.h"
 
@@ -1535,7 +1534,7 @@ void CDECL MSVCRT_rewind(MSVCRT_FILE* file)
 
 static int msvcrt_get_flags(const MSVCRT_wchar_t* mode, int *open_flags, int* stream_flags)
 {
-  int plus = strchrW(mode, '+') != NULL;
+  int plus = MSVCRT_wcschr(mode, '+') != NULL;
 
   TRACE("%s\n", debugstr_w(mode));
 
@@ -3137,7 +3136,7 @@ int CDECL MSVCRT__wstat64(const MSVCRT_wchar_t* path, struct MSVCRT__stat64 * bu
 
   TRACE(":file (%s) buf(%p)\n",debugstr_w(path),buf);
 
-  plen = strlenW(path);
+  plen = MSVCRT_wcslen(path);
   while (plen && path[plen-1]==' ')
     plen--;
 
@@ -4683,7 +4682,7 @@ int CDECL MSVCRT_fputs(const char *s, MSVCRT_FILE* file)
  */
 int CDECL MSVCRT_fputws(const MSVCRT_wchar_t *s, MSVCRT_FILE* file)
 {
-    MSVCRT_size_t i, len = strlenW(s);
+    MSVCRT_size_t i, len = MSVCRT_wcslen(s);
     BOOL tmp_buf;
     int ret;
 

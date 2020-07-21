@@ -412,7 +412,7 @@ int CDECL MSVCRT___wcserror_s(MSVCRT_wchar_t* buffer, MSVCRT_size_t nc, const MS
     if (err < 0 || err > MSVCRT__sys_nerr) err = MSVCRT__sys_nerr;
 
     len = MultiByteToWideChar(CP_ACP, 0, MSVCRT__sys_errlist[err], -1, NULL, 0) + 1 /* \n */;
-    if (str && *str) len += lstrlenW(str) + 2 /* ': ' */;
+    if (str && *str) len += MSVCRT_wcslen(str) + 2 /* ': ' */;
     if (len > nc)
     {
         MSVCRT_INVALID_PMT("buffer[nc] is too small", MSVCRT_ERANGE);
@@ -424,7 +424,7 @@ int CDECL MSVCRT___wcserror_s(MSVCRT_wchar_t* buffer, MSVCRT_size_t nc, const MS
         lstrcatW(buffer, colonW);
     }
     else buffer[0] = '\0';
-    len = lstrlenW(buffer);
+    len = MSVCRT_wcslen(buffer);
     MultiByteToWideChar(CP_ACP, 0, MSVCRT__sys_errlist[err], -1, buffer + len, 256 - len);
     lstrcatW(buffer, nlW);
 
