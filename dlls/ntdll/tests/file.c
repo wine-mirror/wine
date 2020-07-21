@@ -401,6 +401,31 @@ static void open_file_test(void)
     CloseHandle( handle );
     CloseHandle( dir );
 
+    attr.RootDirectory = 0;
+    wcscat( path, L"\\cmd.exe" );
+    pRtlDosPathNameToNtPathName_U( path, &nameW, NULL, NULL );
+    status = pNtOpenFile( &handle, GENERIC_READ, &attr, &io,
+                          FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_DIRECTORY_FILE );
+    ok( status == STATUS_NOT_A_DIRECTORY, "open %s failed %x\n", wine_dbgstr_w(nameW.Buffer), status );
+    CloseHandle( handle );
+    status = pNtOpenFile( &handle, GENERIC_READ, &attr, &io,
+                          FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_NON_DIRECTORY_FILE );
+    ok( !status, "open %s failed %x\n", wine_dbgstr_w(nameW.Buffer), status );
+    CloseHandle( handle );
+    pRtlFreeUnicodeString( &nameW );
+
+    wcscat( path, L"\\cmd.exe" );
+    pRtlDosPathNameToNtPathName_U( path, &nameW, NULL, NULL );
+    status = pNtOpenFile( &handle, GENERIC_READ, &attr, &io,
+                          FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_DIRECTORY_FILE );
+    todo_wine
+    ok( status == STATUS_OBJECT_PATH_NOT_FOUND, "open %s failed %x\n", wine_dbgstr_w(nameW.Buffer), status );
+    status = pNtOpenFile( &handle, GENERIC_READ, &attr, &io,
+                          FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_NON_DIRECTORY_FILE );
+    todo_wine
+    ok( status == STATUS_OBJECT_PATH_NOT_FOUND, "open %s failed %x\n", wine_dbgstr_w(nameW.Buffer), status );
+    pRtlFreeUnicodeString( &nameW );
+
     GetTempPathW( MAX_PATH, path );
     lstrcatW( path, testdirW );
     CreateDirectoryW( path, NULL );

@@ -2454,7 +2454,7 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event, PIO_APC_ROUTI
         }
         if (cwd == -1 || fchdir( cwd ) == -1) chdir( "/" );
     }
-    else status = STATUS_ACCESS_DENIED;
+    else status = errno_to_status( errno );
 
     pthread_mutex_unlock( &dir_mutex );
 
@@ -2557,11 +2557,8 @@ static NTSTATUS find_file_in_dir( char *unix_name, int pos, const WCHAR *name, i
     }
 #endif /* VFAT_IOCTL_READDIR_BOTH */
 
-    if (!(dir = opendir( unix_name )))
-    {
-        if (errno == ENOENT) return STATUS_OBJECT_PATH_NOT_FOUND;
-        else return STATUS_ACCESS_DENIED;
-    }
+    if (!(dir = opendir( unix_name ))) return errno_to_status( errno );
+
     unix_name[pos - 1] = '/';
     while ((de = readdir( dir )))
     {
@@ -3038,7 +3035,7 @@ static NTSTATUS file_id_to_unix_file_name( const OBJECT_ATTRIBUTES *attr, char *
         }
         if (fchdir( old_cwd ) == -1) chdir( "/" );
     }
-    else status = STATUS_ACCESS_DENIED;
+    else status = errno_to_status( errno );
     pthread_mutex_unlock( &dir_mutex );
     if (old_cwd != -1) close( old_cwd );
 
@@ -3217,7 +3214,7 @@ static NTSTATUS nt_to_unix_file_name_attr( const OBJECT_ATTRIBUTES *attr, char *
                                            disposition, FALSE );
                 if (fchdir( old_cwd ) == -1) chdir( "/" );
             }
-            else status = STATUS_ACCESS_DENIED;
+            else status = errno_to_status( errno );
             pthread_mutex_unlock( &dir_mutex );
             if (old_cwd != -1) close( old_cwd );
             if (needs_close) close( root_fd );
