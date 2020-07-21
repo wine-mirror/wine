@@ -85,9 +85,6 @@ static void run_test(void)
     SIZE_T buffer_size;
     BOOL ret;
     SXS_GUID_INFORMATION_CLR *info;
-    WCHAR expected_type_name[] = {'D','L','L','.','T','e','s','t',0};
-    WCHAR expected_runtime_version[] = {'v','4','.','0','.','0','.','0',0};
-    WCHAR expected_assembly_identity[] = {'c','o','m','t','e','s','t',',','t','y','p','e','=','"','w','i','n','3','2','"',',','v','e','r','s','i','o','n','=','"','1','.','0','.','0','.','0','"',0};
 
     ret = SxsLookupClrGuid(SXS_LOOKUP_CLR_GUID_FIND_CLR_CLASS, (GUID*)&CLSID_Test, NULL, NULL, 0, &buffer_size);
     ok(ret == FALSE, "Got %d\n", ret);
@@ -99,12 +96,11 @@ static void run_test(void)
     ok(GetLastError() == 0, "Got %d\n", GetLastError());
 
     ok(info->dwFlags == SXS_GUID_INFORMATION_CLR_FLAG_IS_CLASS, "Got %d\n", info->dwFlags);
-    ok(lstrcmpW(info->pcwszTypeName, expected_type_name) == 0, "Got %s\n",
-       wine_dbgstr_w(info->pcwszTypeName));
-    ok(lstrcmpW(info->pcwszAssemblyIdentity, expected_assembly_identity) == 0, "Got %s\n",
-       wine_dbgstr_w(info->pcwszAssemblyIdentity));
-    ok(lstrcmpW(info->pcwszRuntimeVersion, expected_runtime_version) == 0, "Got %s\n",
-       wine_dbgstr_w(info->pcwszRuntimeVersion));
+    ok(!lstrcmpW(info->pcwszTypeName, L"DLL.Test"), "Unexpected typename %s.\n", wine_dbgstr_w(info->pcwszTypeName));
+    ok(!lstrcmpW(info->pcwszAssemblyIdentity, L"comtest,type=\"win32\",version=\"1.0.0.0\""),
+           "Unexpected assembly identity %s.\n", wine_dbgstr_w(info->pcwszAssemblyIdentity));
+    ok(!lstrcmpW(info->pcwszRuntimeVersion, L"v4.0.0.0"), "Unexpected runtime version %s.\n",
+           wine_dbgstr_w(info->pcwszRuntimeVersion));
 
     heap_free(info);
 }
