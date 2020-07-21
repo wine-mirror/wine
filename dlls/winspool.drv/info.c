@@ -561,7 +561,6 @@ static void set_default_printer(const char *devname, const char *name)
     HKEY hkey;
 
     sprintf(buf, "%s,WINEPS.DRV,LPR:%s", devname, name);
-    WriteProfileStringA("windows","device", buf);
     if (!RegCreateKeyW(HKEY_CURRENT_USER, user_default_reg_key, &hkey))
     {
         RegSetValueExA(hkey, "Device", 0, REG_SZ, (BYTE *)buf, strlen(buf) + 1);
@@ -3445,7 +3444,6 @@ BOOL WINAPI DeletePrinter(HANDLE hPrinter)
 
     if (GetDefaultPrinterW( def, &size ) && !strcmpW( def, lpNameW ))
     {
-        WriteProfileStringW( windowsW, deviceW, NULL );
         if (!RegCreateKeyW( HKEY_CURRENT_USER, user_default_reg_key, &hkey ))
         {
             RegDeleteValueW( hkey, deviceW );
@@ -6078,20 +6076,12 @@ BOOL WINAPI SetDefaultPrinterW(LPCWSTR pszPrinter)
     size = ((MAX_PATH * 2) + 2) * sizeof(WCHAR); /* driver,port and a 0 */
     lres = RegQueryValueExW(hreg, pszPrinter, NULL, NULL, (LPBYTE) (&buffer[namelen]), &size);
     if (!lres) {
-        TRACE("set device to %s\n", debugstr_w(buffer));
+        HKEY hdev;
 
-        if (!WriteProfileStringW(windowsW, deviceW, buffer)) {
-            TRACE("failed to set the device entry: %d\n", GetLastError());
-            lres = ERROR_INVALID_PRINTER_NAME;
-        }
-
-        /* remove the next section, when INIFileMapping is implemented */
+        if (!RegCreateKeyW(HKEY_CURRENT_USER, user_default_reg_key, &hdev))
         {
-            HKEY hdev;
-            if (!RegCreateKeyW(HKEY_CURRENT_USER, user_default_reg_key, &hdev)) {
-                RegSetValueExW(hdev, deviceW, 0, REG_SZ, (LPBYTE)buffer, (lstrlenW(buffer) + 1) * sizeof(WCHAR));
-                RegCloseKey(hdev);
-            }
+            RegSetValueExW(hdev, deviceW, 0, REG_SZ, (BYTE *)buffer, (lstrlenW(buffer) + 1) * sizeof(WCHAR));
+            RegCloseKey(hdev);
         }
     }
     else
