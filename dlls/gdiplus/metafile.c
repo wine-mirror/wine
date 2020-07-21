@@ -4854,3 +4854,51 @@ GpStatus METAFILE_DrawDriverString(GpMetafile *metafile, GDIPCONST UINT16 *text,
 
     return Ok;
 }
+
+GpStatus METAFILE_FillRegion(GpMetafile* metafile, GpBrush* brush, GpRegion* region)
+{
+    GpStatus stat;
+    DWORD brush_id;
+    DWORD region_id;
+    EmfPlusFillRegion *fill_region_record;
+    BOOL inline_color;
+
+    if (metafile->metafile_type != MetafileTypeEmfPlusOnly &&
+            metafile->metafile_type != MetafileTypeEmfPlusDual)
+    {
+        FIXME("metafile type not supported: %i\n", metafile->metafile_type);
+        return NotImplemented;
+    }
+
+    inline_color = (brush->bt == BrushTypeSolidColor);
+    if (!inline_color)
+    {
+        stat = METAFILE_AddBrushObject(metafile, brush, &brush_id);
+        if (stat != Ok)
+            return stat;
+    }
+
+    stat = METAFILE_AddRegionObject(metafile, region, &region_id);
+    if (stat != Ok)
+        return stat;
+
+    stat = METAFILE_AllocateRecord(metafile, sizeof(EmfPlusFillRegion),
+        (void**)&fill_region_record);
+    if (stat != Ok)
+        return stat;
+
+    fill_region_record->Header.Type = EmfPlusRecordTypeFillRegion;
+    fill_region_record->Header.Flags = region_id;
+
+    if (inline_color)
+    {
+        fill_region_record->Header.Flags |= 0x8000;
+        fill_region_record->data.Color = ((GpSolidFill*)brush)->color;
+    }
+    else
+        fill_region_record->data.BrushId = brush_id;
+
+    METAFILE_WriteRecords(metafile);
+
+    return Ok;
+}

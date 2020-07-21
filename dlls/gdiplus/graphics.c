@@ -4700,11 +4700,16 @@ GpStatus WINGDIPAPI GdipFillRegion(GpGraphics* graphics, GpBrush* brush,
     if(graphics->busy)
         return ObjectBusy;
 
-    if (!graphics->image && !graphics->alpha_hdc)
-        stat = GDI32_GdipFillRegion(graphics, brush, region);
+    if (graphics->image && graphics->image->type == ImageTypeMetafile)
+        stat = METAFILE_FillRegion((GpMetafile*)graphics->image, brush, region);
+    else
+    {
+        if (!graphics->image && !graphics->alpha_hdc)
+            stat = GDI32_GdipFillRegion(graphics, brush, region);
 
-    if (stat == NotImplemented)
-        stat = SOFTWARE_GdipFillRegion(graphics, brush, region);
+        if (stat == NotImplemented)
+            stat = SOFTWARE_GdipFillRegion(graphics, brush, region);
+    }
 
     if (stat == NotImplemented)
     {

@@ -3177,11 +3177,11 @@ static void test_unknownfontdecode(void)
 static const emfplus_record fillregion_records[] = {
     { EMR_HEADER },
     { EmfPlusRecordTypeHeader },
-    { EmfPlusRecordTypeObject, ObjectTypeRegion << 8, 1 },
-    { EmfPlusRecordTypeFillRegion, 0x8000, 1 },
-    { EmfPlusRecordTypeObject, (ObjectTypeBrush << 8) | 1, 1 },
-    { EmfPlusRecordTypeObject, (ObjectTypeRegion << 8) | 2, 1 },
-    { EmfPlusRecordTypeFillRegion, 2, 1 },
+    { EmfPlusRecordTypeObject, ObjectTypeRegion << 8 },
+    { EmfPlusRecordTypeFillRegion, 0x8000 },
+    { EmfPlusRecordTypeObject, (ObjectTypeBrush << 8) | 1 },
+    { EmfPlusRecordTypeObject, (ObjectTypeRegion << 8) | 2 },
+    { EmfPlusRecordTypeFillRegion, 2 },
     { EmfPlusRecordTypeEndOfFile },
     { EMR_EOF },
     { 0 }
@@ -3251,15 +3251,15 @@ static void test_fillregion(void)
 
     stat = GdipBitmapGetPixel(bitmap, 25, 25, &color);
     expect(Ok, stat);
-    todo_wine expect(0xffaabbcc, color);
+    expect(0xffaabbcc, color);
 
     stat = GdipBitmapGetPixel(bitmap, 56, 56, &color);
     expect(Ok, stat);
-    todo_wine expect(0xffff0000, color);
+    expect(0xffff0000, color);
 
     stat = GdipBitmapGetPixel(bitmap, 57, 57, &color);
     expect(Ok, stat);
-    todo_wine expect(0xff0000ff, color);
+    expect(0xff0000ff, color);
 
     GdipDeleteRegion(solidregion);
     GdipDeleteRegion(hatchregion);
