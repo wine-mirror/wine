@@ -557,17 +557,15 @@ static void test_isblank(void)
     for(c = 0; c <= 0xffff; c++) {
         if(c == '\t' || c == ' ' || c == 0x3000 || c == 0xfeff) {
             if(c == '\t')
-                todo_wine ok(!_iswctype_l(c, _BLANK, NULL), "tab shouldn't be blank\n");
+                ok(!_iswctype_l(c, _BLANK, NULL), "tab shouldn't be blank\n");
             else
                 ok(_iswctype_l(c, _BLANK, NULL), "%d should be blank\n", c);
             ok(iswblank(c), "%d should be blank\n", c);
             ok(_iswblank_l(c, NULL), "%d should be blank\n", c);
         } else {
-            todo_wine_if(c == 0xa0) {
-                ok(!_iswctype_l(c, _BLANK, NULL), "%d shouldn't be blank\n", c);
-                ok(!iswblank(c), "%d shouldn't be blank\n", c);
-                ok(!_iswblank_l(c, NULL), "%d shouldn't be blank\n", c);
-            }
+            ok(!_iswctype_l(c, _BLANK, NULL), "%d shouldn't be blank\n", c);
+            ok(!iswblank(c), "%d shouldn't be blank\n", c);
+            ok(!_iswblank_l(c, NULL), "%d shouldn't be blank\n", c);
         }
     }
 }
