@@ -369,13 +369,13 @@ static void test_ChangeDisplaySettingsEx(void)
     ok(res, "EnumDisplaySettingsA failed, error %#x\n", GetLastError());
 
     res = ChangeDisplaySettingsExA("invalid", &dm, NULL, CDS_TEST, NULL);
-    todo_wine ok(res == DISP_CHANGE_BADPARAM, "ChangeDisplaySettingsA returned unexpected %d\n", res);
+    ok(res == DISP_CHANGE_BADPARAM, "ChangeDisplaySettingsA returned unexpected %d\n", res);
 
     res = ChangeDisplaySettingsExA("\\\\.\\DISPLAY0", &dm, NULL, CDS_TEST, NULL);
-    todo_wine ok(res == DISP_CHANGE_BADPARAM, "ChangeDisplaySettingsA returned unexpected %d\n", res);
+    ok(res == DISP_CHANGE_BADPARAM, "ChangeDisplaySettingsA returned unexpected %d\n", res);
 
     res = ChangeDisplaySettingsExA("\\\\.\\DISPLAY1\\Monitor0", &dm, NULL, CDS_TEST, NULL);
-    todo_wine ok(res == DISP_CHANGE_BADPARAM, "ChangeDisplaySettingsA returned unexpected %d\n", res);
+    ok(res == DISP_CHANGE_BADPARAM, "ChangeDisplaySettingsA returned unexpected %d\n", res);
 
     /* Test dmDriverExtra */
     memset(&dm, 0, sizeof(dm));
