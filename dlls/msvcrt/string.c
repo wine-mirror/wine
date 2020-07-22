@@ -2302,7 +2302,9 @@ char* __cdecl MSVCRT_strchr(const char *str, int c)
  */
 char* __cdecl MSVCRT_strrchr(const char *str, int c)
 {
-    return strrchr(str, c);
+    char *ret = NULL;
+    do { if (*str == (char)c) ret = (char*)str; } while (*str++);
+    return ret;
 }
 
 /*********************************************************************
