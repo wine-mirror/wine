@@ -2441,16 +2441,18 @@ static HRESULT WINAPI MediaSeeking_SetPositions(IMediaSeeking *iface, LONGLONG *
     return hr;
 }
 
-static HRESULT WINAPI MediaSeeking_GetPositions(IMediaSeeking *iface, LONGLONG *pCurrent,
-        LONGLONG *pStop)
+static HRESULT WINAPI MediaSeeking_GetPositions(IMediaSeeking *iface,
+        LONGLONG *current, LONGLONG *stop)
 {
-    struct filter_graph *This = impl_from_IMediaSeeking(iface);
-    HRESULT hr;
+    struct filter_graph *graph = impl_from_IMediaSeeking(iface);
+    HRESULT hr = S_OK;
 
-    TRACE("(%p/%p)->(%p, %p)\n", This, iface, pCurrent, pStop);
-    hr = IMediaSeeking_GetCurrentPosition(iface, pCurrent);
-    if (SUCCEEDED(hr))
-        hr = IMediaSeeking_GetStopPosition(iface, pStop);
+    TRACE("graph %p, current %p, stop %p.\n", graph, current, stop);
+
+    if (current)
+        hr = IMediaSeeking_GetCurrentPosition(iface, current);
+    if (SUCCEEDED(hr) && stop)
+        hr = IMediaSeeking_GetStopPosition(iface, stop);
 
     return hr;
 }

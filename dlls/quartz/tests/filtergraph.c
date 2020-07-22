@@ -4098,14 +4098,14 @@ static void test_graph_seeking(void)
     ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
 
     hr = IMediaSeeking_GetPositions(seeking, NULL, NULL);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IMediaSeeking_GetPositions(seeking, NULL, &stop);
-    todo_wine ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
+    ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
     hr = IMediaSeeking_GetPositions(seeking, &current, &stop);
     ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
     current = 0xdeadbeef;
     hr = IMediaSeeking_GetPositions(seeking, &current, NULL);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(!current, "Got time %s.\n", wine_dbgstr_longlong(time));
 
     hr = IMediaSeeking_GetCurrentPosition(seeking, NULL);
