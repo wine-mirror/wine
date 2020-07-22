@@ -2991,6 +2991,7 @@ static struct wined3d_adapter *wined3d_adapter_no3d_create(unsigned int ordinal,
 
     if (!wined3d_adapter_no3d_init_format_info(adapter))
     {
+        wined3d_adapter_cleanup(adapter);
         heap_free(adapter);
         return NULL;
     }
