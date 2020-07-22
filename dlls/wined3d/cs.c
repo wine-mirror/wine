@@ -510,9 +510,8 @@ static const char *debug_cs_op(enum wined3d_cs_op op)
         WINED3D_TO_STR(WINED3D_CS_OP_GENERATE_MIPMAPS);
         WINED3D_TO_STR(WINED3D_CS_OP_STOP);
 #undef WINED3D_TO_STR
-        default:
-            return wine_dbg_sprintf("UNKNOWN_OP(%#x)", op);
     }
+    return wine_dbg_sprintf("UNKNOWN_OP(%#x)", op);
 }
 
 static void wined3d_cs_exec_nop(struct wined3d_cs *cs, const void *data)
