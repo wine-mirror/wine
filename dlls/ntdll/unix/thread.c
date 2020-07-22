@@ -298,7 +298,7 @@ void abort_process( int status )
 /***********************************************************************
  *           exit_thread
  */
-void CDECL exit_thread( int status )
+static void exit_thread( int status )
 {
     static void *prev_teb;
     TEB *teb;
@@ -322,7 +322,7 @@ void CDECL exit_thread( int status )
 /***********************************************************************
  *           exit_process
  */
-void CDECL exit_process( int status )
+void exit_process( int status )
 {
     pthread_sigmask( SIG_BLOCK, &server_block_set, NULL );
     signal_exit_thread( get_unix_exit_code( status ), exit );
@@ -525,7 +525,7 @@ NTSTATUS WINAPI NtTerminateThread( HANDLE handle, LONG exit_code )
         }
         SERVER_END_REQ;
     }
-    if (self) abort_thread( exit_code );
+    if (self) exit_thread( exit_code );
     return ret;
 }
 

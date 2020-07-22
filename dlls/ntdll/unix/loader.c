@@ -1404,8 +1404,6 @@ static struct unix_funcs unix_funcs =
     virtual_locked_recvmsg,
     virtual_release_address_space,
     virtual_set_large_address_space,
-    exit_thread,
-    exit_process,
     exec_process,
     wine_server_call,
     server_send_fd,

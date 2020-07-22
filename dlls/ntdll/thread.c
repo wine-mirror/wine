@@ -81,26 +81,11 @@ void WINAPI RtlExitUserThread( ULONG status )
 {
     ULONG last;
 
-    if (status)  /* send the exit code to the server (0 is already the default) */
-    {
-        SERVER_START_REQ( terminate_thread )
-        {
-            req->handle    = wine_server_obj_handle( GetCurrentThread() );
-            req->exit_code = status;
-            wine_server_call( req );
-        }
-        SERVER_END_REQ;
-    }
-
     NtQueryInformationThread( GetCurrentThread(), ThreadAmILastThread, &last, sizeof(last), NULL );
-    if (last)
-    {
-        LdrShutdownProcess();
-        unix_funcs->exit_process( status );
-    }
+    if (last) RtlExitUserProcess( status );
     LdrShutdownThread();
     RtlFreeThreadActivationContextStack();
-    for (;;) unix_funcs->exit_thread( status );
+    for (;;) NtTerminateThread( GetCurrentThread(), status );
 }
 
 
