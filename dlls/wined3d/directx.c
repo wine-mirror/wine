@@ -2088,10 +2088,10 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d_adapter *adapter,
     caps->MaxTextureAspectRatio = d3d_info->limits.texture_size;
     caps->MaxVertexW = 1e10f;
 
-    caps->GuardBandLeft = 0.0f;
-    caps->GuardBandTop = 0.0f;
-    caps->GuardBandRight = 0.0f;
-    caps->GuardBandBottom = 0.0f;
+    caps->GuardBandLeft = -32768.0f;
+    caps->GuardBandTop = -32768.0f;
+    caps->GuardBandRight = 32768.0f;
+    caps->GuardBandBottom = 32768.0f;
 
     caps->ExtentsAdjust = 0.0f;
 
