@@ -1037,7 +1037,7 @@ static void shader_glsl_init_transform_feedback(const struct wined3d_context_gl 
 }
 
 /* Context activation is done by the caller. */
-static inline void walk_constant_heap(const struct wined3d_gl_info *gl_info, const struct wined3d_vec4 *constants,
+static void walk_constant_heap(const struct wined3d_gl_info *gl_info, const struct wined3d_vec4 *constants,
         const GLint *constant_locations, const struct constant_heap *heap, unsigned char *stack, DWORD version)
 {
     unsigned int start = ~0U, end = 0;
@@ -1111,7 +1111,7 @@ static inline void walk_constant_heap(const struct wined3d_gl_info *gl_info, con
 }
 
 /* Context activation is done by the caller. */
-static inline void apply_clamped_constant(const struct wined3d_gl_info *gl_info,
+static void apply_clamped_constant(const struct wined3d_gl_info *gl_info,
         GLint location, const struct wined3d_vec4 *data)
 {
     GLfloat clamped_constant[4];
@@ -1127,7 +1127,7 @@ static inline void apply_clamped_constant(const struct wined3d_gl_info *gl_info,
 }
 
 /* Context activation is done by the caller. */
-static inline void walk_constant_heap_clamped(const struct wined3d_gl_info *gl_info,
+static void walk_constant_heap_clamped(const struct wined3d_gl_info *gl_info,
         const struct wined3d_vec4 *constants, const GLint *constant_locations,
         const struct constant_heap *heap, unsigned char *stack, DWORD version)
 {
@@ -8536,7 +8536,7 @@ static GLuint find_glsl_fragment_shader(const struct wined3d_context_gl *context
     return ret;
 }
 
-static inline BOOL vs_args_equal(const struct vs_compile_args *stored, const struct vs_compile_args *new,
+static BOOL vs_args_equal(const struct vs_compile_args *stored, const struct vs_compile_args *new,
         const DWORD use_map)
 {
     if ((stored->swizzle_map & use_map) != new->swizzle_map)
