@@ -2284,7 +2284,11 @@ void* __cdecl MSVCRT_memset(void *dst, int c, MSVCRT_size_t n)
  */
 char* __cdecl MSVCRT_strchr(const char *str, int c)
 {
-    return strchr(str, c);
+    do
+    {
+        if (*str == (char)c) return (char*)str;
+    } while (*str++);
+    return NULL;
 }
 
 /*********************************************************************
