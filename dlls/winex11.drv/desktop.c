@@ -108,7 +108,7 @@ static void make_modes(void)
             }
         }
     }
-    if ((max_width != screen_width) && (max_height != screen_height))
+    if ((max_width != screen_width) || (max_height != screen_height))
     {
         /* root window size (if different from desktop window) */
         X11DRV_Settings_AddOneMode(max_width, max_height, 0, 60);
