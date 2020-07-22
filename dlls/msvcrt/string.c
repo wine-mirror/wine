@@ -1117,6 +1117,17 @@ int CDECL MSVCRT_strcat_s( char* dst, MSVCRT_size_t elem, const char* src )
 }
 
 /*********************************************************************
+ *      strcat (MSVCRT.@)
+ */
+char* __cdecl MSVCRT_strcat( char *dst, const char *src )
+{
+    char *d = dst;
+    while (*d) d++;
+    while ((*d++ = *src++));
+    return dst;
+}
+
+/*********************************************************************
  *      strncat_s (MSVCRT.@)
  */
 int CDECL MSVCRT_strncat_s( char* dst, MSVCRT_size_t elem, const char* src, MSVCRT_size_t count )
