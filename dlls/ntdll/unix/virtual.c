@@ -3383,11 +3383,8 @@ void CDECL virtual_release_address_space(void)
  *
  * Enable use of a large address space when allowed by the application.
  */
-void CDECL virtual_set_large_address_space(void)
+void virtual_set_large_address_space(void)
 {
-    IMAGE_NT_HEADERS *nt = get_exe_nt_header();
-
-    if (!(nt->FileHeader.Characteristics & IMAGE_FILE_LARGE_ADDRESS_AWARE)) return;
     /* no large address space on win9x */
     if (NtCurrentTeb()->Peb->OSPlatformId != VER_PLATFORM_WIN32_NT) return;
 

@@ -4008,8 +4008,6 @@ void __wine_process_init(void)
         NtTerminateProcess( GetCurrentProcess(), status );
     }
 
-    unix_funcs->virtual_set_large_address_space();
-
     /* the main exe needs to be the first in the load order list */
     RemoveEntryList( &wm->ldr.InLoadOrderLinks );
     InsertHeadList( &peb->LdrData->InLoadOrderModuleList, &wm->ldr.InLoadOrderLinks );

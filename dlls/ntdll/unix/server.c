@@ -1471,6 +1471,7 @@ void CDECL server_init_process_done( void *relay )
 #ifdef __APPLE__
     send_server_task_port();
 #endif
+    if (nt->FileHeader.Characteristics & IMAGE_FILE_LARGE_ADDRESS_AWARE) virtual_set_large_address_space();
 
     /* Install signal handlers; this cannot be done earlier, since we cannot
      * send exceptions to the debugger before the create process event that

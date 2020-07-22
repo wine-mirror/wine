@@ -28,7 +28,7 @@ struct msghdr;
 struct _DISPATCHER_CONTEXT;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 92
+#define NTDLL_UNIXLIB_VERSION 93
 
 struct unix_funcs
 {
@@ -93,7 +93,6 @@ struct unix_funcs
                                                 ULONG protect, pe_image_info_t *image_info );
     ssize_t       (CDECL *virtual_locked_recvmsg)( int fd, struct msghdr *hdr, int flags );
     void          (CDECL *virtual_release_address_space)(void);
-    void          (CDECL *virtual_set_large_address_space)(void);
 
     /* thread/process functions */
     NTSTATUS      (CDECL *exec_process)( UNICODE_STRING *path, UNICODE_STRING *cmdline, NTSTATUS status );
