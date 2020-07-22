@@ -108,9 +108,9 @@ static BOOL fetch_module( DWORD process, DWORD flags, LDR_DATA_TABLE_ENTRY **ldr
             while (curr != head)
             {
                 if (!*num)
-                    *ldr_mod = HeapAlloc( GetProcessHeap(), 0, sizeof(LDR_DATA_TABLE_ENTRY) );
+                    *ldr_mod = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(LDR_DATA_TABLE_ENTRY) );
                 else
-                    *ldr_mod = HeapReAlloc( GetProcessHeap(), 0, *ldr_mod,
+                    *ldr_mod = HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, *ldr_mod,
                                             (*num + 1) * sizeof(LDR_DATA_TABLE_ENTRY) );
                 if (!*ldr_mod) break;
                 if (!ReadProcessMemory( hProcess,
