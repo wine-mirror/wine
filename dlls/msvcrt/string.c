@@ -1266,7 +1266,9 @@ int CDECL __STRINGTOLD( MSVCRT__LDOUBLE *value, char **endptr, const char *str, 
  */
 MSVCRT_size_t __cdecl MSVCRT_strlen(const char *str)
 {
-    return strlen(str);
+    const char *s = str;
+    while (*s) s++;
+    return s - str;
 }
 
 /******************************************************************
