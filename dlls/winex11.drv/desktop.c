@@ -2,6 +2,7 @@
  * X11DRV desktop window handling
  *
  * Copyright 2001 Alexandre Julliard
+ * Copyright 2020 Zhiyi Zhang for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,6 +22,9 @@
 #include "config.h"
 #include <X11/cursorfont.h>
 #include <X11/Xlib.h>
+
+#define NONAMELESSSTRUCT
+#define NONAMELESSUNION
 
 #include "x11drv.h"
 
@@ -152,6 +156,35 @@ static LONG X11DRV_desktop_SetCurrentMode(int mode)
     return DISP_CHANGE_SUCCESSFUL;
 }
 
+/* Virtual desktop display settings handler */
+static BOOL X11DRV_desktop_get_id( const WCHAR *device_name, ULONG_PTR *id )
+{
+    WCHAR primary_adapter[CCHDEVICENAME];
+
+    if (!get_primary_adapter( primary_adapter ) || lstrcmpiW( primary_adapter, device_name ))
+        return FALSE;
+
+    *id = 0;
+    return TRUE;
+}
+
+static BOOL X11DRV_desktop_get_current_mode( ULONG_PTR id, DEVMODEW *mode )
+{
+    RECT primary_rect = get_primary_monitor_rect();
+
+    mode->dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT |
+                     DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY | DM_POSITION;
+    mode->u1.s2.dmDisplayOrientation = DMDO_DEFAULT;
+    mode->dmBitsPerPel = screen_bpp;
+    mode->dmPelsWidth = primary_rect.right - primary_rect.left;
+    mode->dmPelsHeight = primary_rect.bottom - primary_rect.top;
+    mode->u2.dmDisplayFlags = 0;
+    mode->dmDisplayFrequency = 60;
+    mode->u1.s2.dmPosition.x = 0;
+    mode->u1.s2.dmPosition.y = 0;
+    return TRUE;
+}
+
 static void query_desktop_work_area( RECT *rc_work )
 {
     static const WCHAR trayW[] = {'S','h','e','l','l','_','T','r','a','y','W','n','d',0};
@@ -242,6 +275,7 @@ static void X11DRV_desktop_free_monitors( struct x11drv_monitor *monitors )
 void X11DRV_init_desktop( Window win, unsigned int width, unsigned int height )
 {
     RECT primary_rect = get_host_primary_monitor_rect();
+    struct x11drv_settings_handler settings_handler;
 
     root_window = win;
     managed_mode = FALSE;  /* no managed windows in desktop mode */
@@ -270,6 +304,13 @@ void X11DRV_init_desktop( Window win, unsigned int width, unsigned int height )
     make_modes();
     X11DRV_Settings_AddDepthModes();
     dd_mode_count = X11DRV_Settings_GetModeCount();
+
+    /* TODO: Remove the old display settings handler once the migration to the new interface is done */
+    settings_handler.name = "Virtual Desktop";
+    settings_handler.priority = 1000;
+    settings_handler.get_id = X11DRV_desktop_get_id;
+    settings_handler.get_current_mode = X11DRV_desktop_get_current_mode;
+    X11DRV_Settings_SetHandler( &settings_handler );
 }
 
 

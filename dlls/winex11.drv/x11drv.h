@@ -657,6 +657,33 @@ struct x11drv_mode_info
     unsigned int refresh_rate;
 };
 
+/* Required functions for changing and enumerating display settings */
+struct x11drv_settings_handler
+{
+    /* A name to tell what host driver is used */
+    const char *name;
+
+    /* Higher priority can override handlers with a lower priority */
+    UINT priority;
+
+    /* get_id() will be called to map a device name, e.g., \\.\DISPLAY1 to a driver specific id.
+     * Following functions use this id to identify the device.
+     *
+     * Return FALSE if the device can not be found and TRUE on success */
+    BOOL (*get_id)(const WCHAR *device_name, ULONG_PTR *id);
+
+    /* get_current_mode() will be called to get the current display mode of the device of id
+     *
+     * Following fields in DEVMODE must be valid:
+     * dmFields, dmDisplayOrientation, dmBitsPerPel, dmPelsWidth, dmPelsHeight, dmDisplayFlags,
+     * dmDisplayFrequency and dmPosition
+     *
+     * Return FALSE on failure with parameters unchanged and error code set. Return TRUE on success */
+    BOOL (*get_current_mode)(ULONG_PTR id, DEVMODEW *mode);
+};
+
+extern void X11DRV_Settings_SetHandler(const struct x11drv_settings_handler *handler) DECLSPEC_HIDDEN;
+
 extern void X11DRV_init_desktop( Window win, unsigned int width, unsigned int height ) DECLSPEC_HIDDEN;
 extern void X11DRV_resize_desktop(BOOL) DECLSPEC_HIDDEN;
 extern BOOL is_virtual_desktop(void) DECLSPEC_HIDDEN;

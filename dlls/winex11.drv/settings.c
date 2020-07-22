@@ -2,6 +2,7 @@
  * Wine X11drv display settings functions
  *
  * Copyright 2003 Alexander James Pasadyn
+ * Copyright 2020 Zhiyi Zhang for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -123,6 +124,18 @@ void X11DRV_Settings_AddDepthModes(void)
 unsigned int X11DRV_Settings_GetModeCount(void)
 {
     return dd_mode_count;
+}
+
+/* TODO: Remove the old display settings handler interface once all backends are migrated to the new interface */
+static struct x11drv_settings_handler handler;
+
+void X11DRV_Settings_SetHandler(const struct x11drv_settings_handler *new_handler)
+{
+    if (new_handler->priority > handler.priority)
+    {
+        handler = *new_handler;
+        TRACE("Display settings are now handled by: %s.\n", handler.name);
+    }
 }
 
 /***********************************************************************
@@ -308,7 +321,42 @@ BOOL CDECL X11DRV_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmo
 {
     static const WCHAR dev_name[CCHDEVICENAME] =
         { 'W','i','n','e',' ','X','1','1',' ','d','r','i','v','e','r',0 };
+    ULONG_PTR id;
 
+    /* Use the new interface if it is available */
+    if (!handler.name || (n != ENUM_REGISTRY_SETTINGS && n != ENUM_CURRENT_SETTINGS))
+        goto old_interface;
+
+    if (n == ENUM_REGISTRY_SETTINGS)
+    {
+        if (!read_registry_settings(name, devmode))
+        {
+            ERR("Failed to get %s registry display settings.\n", wine_dbgstr_w(name));
+            return FALSE;
+        }
+        goto done;
+    }
+
+    if (n == ENUM_CURRENT_SETTINGS)
+    {
+        if (!handler.get_id(name, &id) || !handler.get_current_mode(id, devmode))
+        {
+            ERR("Failed to get %s current display settings.\n", wine_dbgstr_w(name));
+            return FALSE;
+        }
+        goto done;
+    }
+
+done:
+    /* Set generic fields */
+    devmode->dmSize = FIELD_OFFSET(DEVMODEW, dmICMMethod);
+    devmode->dmDriverExtra = 0;
+    devmode->dmSpecVersion = DM_SPECVERSION;
+    devmode->dmDriverVersion = DM_SPECVERSION;
+    lstrcpyW(devmode->dmDeviceName, dev_name);
+    return TRUE;
+
+old_interface:
     devmode->dmSize = FIELD_OFFSET(DEVMODEW, dmICMMethod);
     devmode->dmSpecVersion = DM_SPECVERSION;
     devmode->dmDriverVersion = DM_SPECVERSION;
