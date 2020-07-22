@@ -697,6 +697,12 @@ struct x11drv_settings_handler
      *
      * Return FALSE on failure with parameters unchanged and error code set. Return TRUE on success */
     BOOL (*get_current_mode)(ULONG_PTR id, DEVMODEW *mode);
+
+    /* set_current_mode() will be called to change the display mode of the display device of id.
+     * mode must be a valid mode from get_modes() with optional fields, such as dmPosition set.
+     *
+     * Return DISP_CHANGE_*, same as ChangeDisplaySettingsExW() return values */
+    LONG (*set_current_mode)(ULONG_PTR id, DEVMODEW *mode);
 };
 
 extern void X11DRV_Settings_SetHandler(const struct x11drv_settings_handler *handler) DECLSPEC_HIDDEN;

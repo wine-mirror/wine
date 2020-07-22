@@ -251,6 +251,16 @@ static BOOL X11DRV_desktop_get_current_mode( ULONG_PTR id, DEVMODEW *mode )
     return TRUE;
 }
 
+static LONG X11DRV_desktop_set_current_mode( ULONG_PTR id, DEVMODEW *mode )
+{
+    if (mode->dmFields & DM_BITSPERPEL && mode->dmBitsPerPel != screen_bpp)
+        WARN("Cannot change screen color depth from %dbits to %dbits!\n", screen_bpp, mode->dmBitsPerPel);
+
+    desktop_width = mode->dmPelsWidth;
+    desktop_height = mode->dmPelsHeight;
+    return DISP_CHANGE_SUCCESSFUL;
+}
+
 static void query_desktop_work_area( RECT *rc_work )
 {
     static const WCHAR trayW[] = {'S','h','e','l','l','_','T','r','a','y','W','n','d',0};
@@ -378,6 +388,7 @@ void X11DRV_init_desktop( Window win, unsigned int width, unsigned int height )
     settings_handler.get_modes = X11DRV_desktop_get_modes;
     settings_handler.free_modes = X11DRV_desktop_free_modes;
     settings_handler.get_current_mode = X11DRV_desktop_get_current_mode;
+    settings_handler.set_current_mode = X11DRV_desktop_set_current_mode;
     X11DRV_Settings_SetHandler( &settings_handler );
 }
 

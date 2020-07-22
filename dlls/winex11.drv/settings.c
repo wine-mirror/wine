@@ -30,6 +30,7 @@
 #include "winreg.h"
 #include "wingdi.h"
 #include "wine/debug.h"
+#include "wine/heap.h"
 #include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(x11settings);
@@ -466,6 +467,53 @@ BOOL is_detached_mode(const DEVMODEW *mode)
            mode->dmPelsHeight == 0;
 }
 
+/* Get the full display mode with all the necessary fields set.
+ * Return NULL on failure. Caller should free the returned mode. */
+static DEVMODEW *get_full_mode(ULONG_PTR id, const DEVMODEW *dev_mode)
+{
+    DEVMODEW *modes, *full_mode, *found_mode = NULL;
+    UINT mode_count, mode_idx;
+
+    if (!handler.get_modes(id, 0, &modes, &mode_count))
+        return NULL;
+
+    for (mode_idx = 0; mode_idx < mode_count; ++mode_idx)
+    {
+        found_mode = (DEVMODEW *)((BYTE *)modes + (sizeof(*modes) + modes[0].dmDriverExtra) * mode_idx);
+
+        if (dev_mode->dmFields & DM_BITSPERPEL && found_mode->dmBitsPerPel != dev_mode->dmBitsPerPel)
+            continue;
+        if (dev_mode->dmFields & DM_PELSWIDTH && found_mode->dmPelsWidth != dev_mode->dmPelsWidth)
+            continue;
+        if (dev_mode->dmFields & DM_PELSHEIGHT && found_mode->dmPelsHeight != dev_mode->dmPelsHeight)
+            continue;
+        if (dev_mode->dmFields & DM_DISPLAYFREQUENCY &&
+            dev_mode->dmDisplayFrequency &&
+            found_mode->dmDisplayFrequency &&
+            dev_mode->dmDisplayFrequency != 1 &&
+            dev_mode->dmDisplayFrequency != found_mode->dmDisplayFrequency)
+            continue;
+
+        break;
+    }
+
+    if (!found_mode || mode_idx == mode_count)
+    {
+        handler.free_modes(modes);
+        return NULL;
+    }
+
+    if (!(full_mode = heap_alloc(sizeof(*found_mode) + found_mode->dmDriverExtra)))
+    {
+        handler.free_modes(modes);
+        return NULL;
+    }
+
+    memcpy(full_mode, found_mode, sizeof(*found_mode) + found_mode->dmDriverExtra);
+    handler.free_modes(modes);
+    return full_mode;
+}
+
 /***********************************************************************
  *		ChangeDisplaySettingsEx  (X11DRV.@)
  *
@@ -475,9 +523,82 @@ LONG CDECL X11DRV_ChangeDisplaySettingsEx( LPCWSTR devname, LPDEVMODEW devmode,
 {
     WCHAR primary_adapter[CCHDEVICENAME];
     char bpp_buffer[16], freq_buffer[18];
-    DEVMODEW default_mode;
+    DEVMODEW default_mode, *full_mode;
+    ULONG_PTR id;
+    LONG ret;
     DWORD i;
 
+    /* Use the new interface if it is available */
+    if (!handler.name)
+        goto old_interface;
+
+    if (!get_primary_adapter(primary_adapter))
+        return DISP_CHANGE_FAILED;
+
+    if (!devname && !devmode)
+    {
+        default_mode.dmSize = sizeof(default_mode);
+        if (!EnumDisplaySettingsExW(primary_adapter, ENUM_REGISTRY_SETTINGS, &default_mode, 0))
+        {
+            ERR("Default mode not found for %s!\n", wine_dbgstr_w(primary_adapter));
+            return DISP_CHANGE_BADMODE;
+        }
+
+        devname = primary_adapter;
+        devmode = &default_mode;
+    }
+
+    if (!handler.get_id(devname, &id))
+    {
+        ERR("Failed to get %s device id.\n", wine_dbgstr_w(devname));
+        return DISP_CHANGE_BADPARAM;
+    }
+
+    if (is_detached_mode(devmode))
+    {
+        FIXME("Detaching adapters is currently unsupported.\n");
+        return DISP_CHANGE_SUCCESSFUL;
+    }
+
+    if (!(full_mode = get_full_mode(id, devmode)))
+    {
+        ERR("Failed to find a valid mode.\n");
+        return DISP_CHANGE_BADMODE;
+    }
+
+    if (flags & CDS_UPDATEREGISTRY && !write_registry_settings(devname, full_mode))
+    {
+        ERR("Failed to write %s display settings to registry.\n", wine_dbgstr_w(devname));
+        heap_free(full_mode);
+        return DISP_CHANGE_NOTUPDATED;
+    }
+
+    if (lstrcmpiW(primary_adapter, devname))
+    {
+        FIXME("Changing non-primary adapter %s settings is currently unsupported.\n",
+              wine_dbgstr_w(devname));
+        heap_free(full_mode);
+        return DISP_CHANGE_SUCCESSFUL;
+    }
+
+    if (flags & (CDS_TEST | CDS_NORESET))
+    {
+        heap_free(full_mode);
+        return DISP_CHANGE_SUCCESSFUL;
+    }
+
+    TRACE("handler:%s device:%s position:(%d,%d) resolution:%ux%u frequency:%uHz depth:%ubits "
+          "orientation:%#x.\n", handler.name, wine_dbgstr_w(devname), full_mode->u1.s2.dmPosition.x,
+          full_mode->u1.s2.dmPosition.y, full_mode->dmPelsWidth, full_mode->dmPelsHeight,
+          full_mode->dmDisplayFrequency, full_mode->dmBitsPerPel, full_mode->u1.s2.dmDisplayOrientation);
+
+    ret = handler.set_current_mode(id, full_mode);
+    if (ret == DISP_CHANGE_SUCCESSFUL)
+        X11DRV_DisplayDevices_Update(TRUE);
+    heap_free(full_mode);
+    return ret;
+
+old_interface:
     if (!get_primary_adapter(primary_adapter))
         return DISP_CHANGE_FAILED;
 
