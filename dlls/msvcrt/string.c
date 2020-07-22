@@ -2230,19 +2230,32 @@ int __cdecl MSVCRT_memcmp(const void *ptr1, const void *ptr2, MSVCRT_size_t n)
 }
 
 /*********************************************************************
- *                  memcpy   (MSVCRT.@)
- */
-void * __cdecl MSVCRT_memcpy(void *dst, const void *src, MSVCRT_size_t n)
-{
-    return memmove(dst, src, n);
-}
-
-/*********************************************************************
  *                  memmove (MSVCRT.@)
  */
 void * __cdecl MSVCRT_memmove(void *dst, const void *src, MSVCRT_size_t n)
 {
-    return memmove(dst, src, n);
+    volatile unsigned char *d = dst;  /* avoid gcc optimizations */
+    const unsigned char *s = src;
+
+    if ((MSVCRT_size_t)dst - (MSVCRT_size_t)src >= n)
+    {
+        while (n--) *d++ = *s++;
+    }
+    else
+    {
+        d += n - 1;
+        s += n - 1;
+        while (n--) *d-- = *s--;
+    }
+    return dst;
+}
+
+/*********************************************************************
+ *                  memcpy   (MSVCRT.@)
+ */
+void * __cdecl MSVCRT_memcpy(void *dst, const void *src, MSVCRT_size_t n)
+{
+    return MSVCRT_memmove(dst, src, n);
 }
 
 /*********************************************************************
