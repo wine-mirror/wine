@@ -2263,7 +2263,9 @@ void * __cdecl MSVCRT_memcpy(void *dst, const void *src, MSVCRT_size_t n)
  */
 void* __cdecl MSVCRT_memset(void *dst, int c, MSVCRT_size_t n)
 {
-    return memset(dst, c, n);
+    volatile unsigned char *d = dst;  /* avoid gcc optimizations */
+    while (n--) *d++ = c;
+    return dst;
 }
 
 /*********************************************************************
