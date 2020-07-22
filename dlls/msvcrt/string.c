@@ -1171,7 +1171,11 @@ int CDECL MSVCRT_strncat_s( char* dst, MSVCRT_size_t elem, const char* src, MSVC
  */
 char* __cdecl MSVCRT_strncat(char *dst, const char *src, MSVCRT_size_t len)
 {
-    return strncat(dst, src, len);
+    char *d = dst;
+    while (*d) d++;
+    for ( ; len && *src; d++, src++, len--) *d = *src;
+    *d = 0;
+    return dst;
 }
 
 /*********************************************************************
