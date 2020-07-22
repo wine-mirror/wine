@@ -2505,7 +2505,8 @@ MSVCRT_size_t __cdecl MSVCRT_strcspn(const char *str, const char *reject)
  */
 char* __cdecl MSVCRT_strpbrk(const char *str, const char *accept)
 {
-    return strpbrk(str, accept);
+    for (; *str; str++) if (strchr( accept, *str )) return (char*)str;
+    return NULL;
 }
 
 /*********************************************************************
