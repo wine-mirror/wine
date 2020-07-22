@@ -2702,7 +2702,7 @@ static void test_basic_video(void)
     reftime = 0.0;
     hr = IBasicVideo_get_AvgTimePerFrame(video, &reftime);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(reftime == 0.02, "Got frame rate %.16e.\n", reftime);
+    ok(reftime == 0.02, "Got frame rate %.16e.\n", reftime);
 
     l = 0xdeadbeef;
     hr = IBasicVideo_get_BitRate(video, &l);

@@ -755,7 +755,7 @@ static HRESULT WINAPI basic_video_get_AvgTimePerFrame(IBasicVideo *iface, REFTIM
 
     TRACE("window %p, reftime %p.\n", window, reftime);
 
-    *reftime = get_video_format(window)->AvgTimePerFrame;
+    *reftime = (double)get_video_format(window)->AvgTimePerFrame / 1e7;
     return S_OK;
 }
 
