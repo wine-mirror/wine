@@ -2081,6 +2081,69 @@ static void test_mapprotection(void)
         pNtSetInformationProcess( GetCurrentProcess(), ProcessExecuteFlags, &oldflags, sizeof(oldflags) );
 }
 
+static void test_threadstack(void)
+{
+    PROCESS_STACK_ALLOCATION_INFORMATION info = { 0x100000, 0, (void *)0xdeadbeef };
+    PROCESS_STACK_ALLOCATION_INFORMATION_EX info_ex = { 0 };
+    MEMORY_BASIC_INFORMATION meminfo;
+    SIZE_T retlen;
+    NTSTATUS status;
+
+    info.ReserveSize = 0x100000;
+    info.StackBase = (void *)0xdeadbeef;
+    status = pNtSetInformationProcess( GetCurrentProcess(), ProcessThreadStackAllocation, &info, sizeof(info) );
+    ok( !status, "NtSetInformationProcess failed %08x\n", status );
+    ok( info.StackBase != (void *)0xdeadbeef, "stackbase not set\n" );
+
+    status = pNtQueryVirtualMemory( GetCurrentProcess(), info.StackBase, MemoryBasicInformation,
+                                    &meminfo, sizeof(meminfo), &retlen );
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    ok( retlen == sizeof(meminfo), "Expected STATUS_SUCCESS, got %08x\n", status);
+    ok( meminfo.AllocationBase == info.StackBase, "wrong base %p/%p\n",
+        meminfo.AllocationBase, info.StackBase );
+    ok( meminfo.RegionSize == info.ReserveSize, "wrong size %lx/%lx\n",
+        meminfo.RegionSize, info.ReserveSize );
+    ok( meminfo.State == MEM_RESERVE, "wrong state %x\n", meminfo.State );
+    ok( meminfo.Protect == 0, "wrong protect %x\n", meminfo.Protect );
+    ok( meminfo.Type == MEM_PRIVATE, "wrong type %x\n", meminfo.Type );
+
+    info_ex.AllocInfo = info;
+    status = pNtSetInformationProcess( GetCurrentProcess(), ProcessThreadStackAllocation,
+                                       &info_ex, sizeof(info_ex) );
+    if (status != STATUS_INVALID_PARAMETER)
+    {
+        ok( !status, "NtSetInformationProcess failed %08x\n", status );
+        ok( info_ex.AllocInfo.StackBase != info.StackBase, "stackbase not set\n" );
+        status = pNtQueryVirtualMemory( GetCurrentProcess(), info_ex.AllocInfo.StackBase,
+                                        MemoryBasicInformation, &meminfo, sizeof(meminfo), &retlen );
+        ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+        ok( retlen == sizeof(meminfo), "Expected STATUS_SUCCESS, got %08x\n", status);
+        ok( meminfo.AllocationBase == info_ex.AllocInfo.StackBase, "wrong base %p/%p\n",
+            meminfo.AllocationBase, info_ex.AllocInfo.StackBase );
+        ok( meminfo.RegionSize == info_ex.AllocInfo.ReserveSize, "wrong size %lx/%lx\n",
+            meminfo.RegionSize, info_ex.AllocInfo.ReserveSize );
+        ok( meminfo.State == MEM_RESERVE, "wrong state %x\n", meminfo.State );
+        ok( meminfo.Protect == 0, "wrong protect %x\n", meminfo.Protect );
+        ok( meminfo.Type == MEM_PRIVATE, "wrong type %x\n", meminfo.Type );
+        VirtualFree( info_ex.AllocInfo.StackBase, 0, MEM_FREE );
+        status = pNtSetInformationProcess( GetCurrentProcess(), ProcessThreadStackAllocation,
+                                           &info, sizeof(info) - 1 );
+        ok( status == STATUS_INFO_LENGTH_MISMATCH, "NtSetInformationProcess failed %08x\n", status );
+        status = pNtSetInformationProcess( GetCurrentProcess(), ProcessThreadStackAllocation,
+                                           &info, sizeof(info) + 1 );
+        ok( status == STATUS_INFO_LENGTH_MISMATCH, "NtSetInformationProcess failed %08x\n", status );
+        status = pNtSetInformationProcess( GetCurrentProcess(), ProcessThreadStackAllocation,
+                                           &info_ex, sizeof(info_ex) - 1 );
+        ok( status == STATUS_INFO_LENGTH_MISMATCH, "NtSetInformationProcess failed %08x\n", status );
+        status = pNtSetInformationProcess( GetCurrentProcess(), ProcessThreadStackAllocation,
+                                           &info_ex, sizeof(info_ex) + 1 );
+        ok( status == STATUS_INFO_LENGTH_MISMATCH, "NtSetInformationProcess failed %08x\n", status );
+    }
+    else win_skip( "ProcessThreadStackAllocation ex not supported\n" );
+
+    VirtualFree( info.StackBase, 0, MEM_FREE );
+}
+
 static void test_queryvirtualmemory(void)
 {
     NTSTATUS status;
@@ -2621,6 +2684,7 @@ START_TEST(info)
     test_query_process_debug_flags(argc, argv);
     test_query_process_image_info();
     test_mapprotection();
+    test_threadstack();
 
     /* NtQueryInformationThread */
     test_thread_info();

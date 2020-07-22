@@ -1580,6 +1580,28 @@ NTSTATUS WINAPI NtSetInformationProcess( HANDLE handle, PROCESSINFOCLASS class, 
         }
         break;
 
+    case ProcessThreadStackAllocation:
+    {
+        void *addr = NULL;
+        SIZE_T reserve;
+        PROCESS_STACK_ALLOCATION_INFORMATION *stack = info;
+        if (size == sizeof(PROCESS_STACK_ALLOCATION_INFORMATION_EX))
+            stack = &((PROCESS_STACK_ALLOCATION_INFORMATION_EX *)info)->AllocInfo;
+        else if (size != sizeof(*stack)) return STATUS_INFO_LENGTH_MISMATCH;
+
+        reserve = stack->ReserveSize;
+        ret = NtAllocateVirtualMemory( GetCurrentProcess(), &addr, stack->ZeroBits, &reserve,
+                                       MEM_RESERVE, PAGE_READWRITE );
+        if (!ret)
+        {
+#ifdef VALGRIND_STACK_REGISTER
+            VALGRIND_STACK_REGISTER( addr, (char *)addr + reserve );
+#endif
+            stack->StackBase = addr;
+        }
+        break;
+    }
+
     default:
         FIXME( "(%p,0x%08x,%p,0x%08x) stub\n", handle, class, info, size );
         ret = STATUS_NOT_IMPLEMENTED;
