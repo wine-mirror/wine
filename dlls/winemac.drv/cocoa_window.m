@@ -20,6 +20,7 @@
 
 #include "config.h"
 
+#define GL_SILENCE_DEPRECATION
 #import <Carbon/Carbon.h>
 #import <CoreVideo/CoreVideo.h>
 #ifdef HAVE_METAL_METAL_H
