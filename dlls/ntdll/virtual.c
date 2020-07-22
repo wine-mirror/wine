@@ -44,6 +44,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(virtual);
 NTSTATUS WINAPI RtlCreateUserStack( SIZE_T commit, SIZE_T reserve, ULONG zero_bits,
                                     SIZE_T commit_align, SIZE_T reserve_align, INITIAL_TEB *stack )
 {
+    PROCESS_STACK_ALLOCATION_INFORMATION alloc;
+    NTSTATUS status;
+
     TRACE("commit %#lx, reserve %#lx, zero_bits %u, commit_align %#lx, reserve_align %#lx, stack %p\n",
             commit, reserve, zero_bits, commit_align, reserve_align, stack);
 
@@ -60,7 +63,34 @@ NTSTATUS WINAPI RtlCreateUserStack( SIZE_T commit, SIZE_T reserve, ULONG zero_bi
     reserve = (reserve + reserve_align - 1) & ~(reserve_align - 1);
     commit = (commit + commit_align - 1) & ~(commit_align - 1);
 
-    return unix_funcs->virtual_alloc_thread_stack( stack, reserve, commit, NULL );
+    if (reserve < commit) reserve = commit;
+    if (reserve < 0x100000) reserve = 0x100000;
+    reserve = (reserve + 0xffff) & ~0xffff;  /* round to 64K boundary */
+
+    alloc.ReserveSize = reserve;
+    alloc.ZeroBits = zero_bits;
+    status = NtSetInformationProcess( GetCurrentProcess(), ProcessThreadStackAllocation,
+                                      &alloc, sizeof(alloc) );
+    if (!status)
+    {
+        void *addr = alloc.StackBase;
+        SIZE_T size = page_size;
+
+        NtAllocateVirtualMemory( GetCurrentProcess(), &addr, 0, &size, MEM_COMMIT, PAGE_NOACCESS );
+        addr = (char *)alloc.StackBase + page_size;
+        NtAllocateVirtualMemory( GetCurrentProcess(), &addr, 0, &size, MEM_COMMIT, PAGE_READWRITE | PAGE_GUARD );
+        addr = (char *)alloc.StackBase + 2 * page_size;
+        size = reserve - 2 * page_size;
+        NtAllocateVirtualMemory( GetCurrentProcess(), &addr, 0, &size, MEM_COMMIT, PAGE_READWRITE );
+
+        /* note: limit is lower than base since the stack grows down */
+        stack->OldStackBase = 0;
+        stack->OldStackLimit = 0;
+        stack->DeallocationStack = alloc.StackBase;
+        stack->StackBase = (char *)alloc.StackBase + reserve;
+        stack->StackLimit = (char *)alloc.StackBase + 2 * page_size;
+    }
+    return status;
 }
 
 

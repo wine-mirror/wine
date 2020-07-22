@@ -1400,7 +1400,6 @@ static struct unix_funcs unix_funcs =
     get_build_id,
     get_host_version,
     virtual_map_section,
-    virtual_alloc_thread_stack,
     virtual_locked_recvmsg,
     virtual_release_address_space,
     virtual_set_large_address_space,

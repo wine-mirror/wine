@@ -4016,7 +4016,7 @@ void __wine_process_init(void)
     RemoveEntryList( &wm->ldr.InMemoryOrderLinks );
     InsertHeadList( &peb->LdrData->InMemoryOrderModuleList, &wm->ldr.InMemoryOrderLinks );
 
-    unix_funcs->virtual_alloc_thread_stack( &stack, 0, 0, NULL );
+    RtlCreateUserStack( 0, 0, 0, 0x10000, 0x10000, &stack );
     teb->Tib.StackBase = stack.StackBase;
     teb->Tib.StackLimit = stack.StackLimit;
     teb->DeallocationStack = stack.DeallocationStack;
