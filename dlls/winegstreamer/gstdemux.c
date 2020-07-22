@@ -413,7 +413,11 @@ static GstCaps *amt_to_gst_caps_video(const AM_MEDIA_TYPE *mt)
         return NULL;
     }
 
-    gst_video_info_set_format(&info, format, vih->bmiHeader.biWidth, vih->bmiHeader.biHeight);
+    if (!gst_video_info_set_format(&info, format, vih->bmiHeader.biWidth, vih->bmiHeader.biHeight))
+    {
+        ERR("Failed to set format.\n");
+        return NULL;
+    }
     if ((caps = gst_video_info_to_caps(&info)))
     {
         /* Clear some fields that shouldn't prevent us from connecting. */
