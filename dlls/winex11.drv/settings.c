@@ -130,6 +130,21 @@ unsigned int X11DRV_Settings_GetModeCount(void)
 /* TODO: Remove the old display settings handler interface once all backends are migrated to the new interface */
 static struct x11drv_settings_handler handler;
 
+/* Cached display modes for a device, protected by modes_section */
+static WCHAR cached_device_name[CCHDEVICENAME];
+static DWORD cached_flags;
+static DEVMODEW *cached_modes;
+static UINT cached_mode_count;
+
+static CRITICAL_SECTION modes_section;
+static CRITICAL_SECTION_DEBUG modes_critsect_debug =
+{
+    0, 0, &modes_section,
+    {&modes_critsect_debug.ProcessLocksList, &modes_critsect_debug.ProcessLocksList},
+     0, 0, {(DWORD_PTR)(__FILE__ ": modes_section")}
+};
+static CRITICAL_SECTION modes_section = {&modes_critsect_debug, -1, 0, 0, 0, 0};
+
 void X11DRV_Settings_SetHandler(const struct x11drv_settings_handler *new_handler)
 {
     if (new_handler->priority > handler.priority)
@@ -353,22 +368,34 @@ BOOL CDECL X11DRV_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmo
         goto done;
     }
 
-    if (!handler.get_id(name, &id) || !handler.get_modes(id, flags, &modes, &mode_count))
+    EnterCriticalSection(&modes_section);
+    if (n == 0 || lstrcmpiW(cached_device_name, name) || cached_flags != flags)
     {
-        ERR("Failed to get %s supported display modes.\n", wine_dbgstr_w(name));
-        return FALSE;
+        if (!handler.get_id(name, &id) || !handler.get_modes(id, flags, &modes, &mode_count))
+        {
+            ERR("Failed to get %s supported display modes.\n", wine_dbgstr_w(name));
+            LeaveCriticalSection(&modes_section);
+            return FALSE;
+        }
+
+        if (cached_modes)
+            handler.free_modes(cached_modes);
+        lstrcpyW(cached_device_name, name);
+        cached_flags = flags;
+        cached_modes = modes;
+        cached_mode_count = mode_count;
     }
 
-    if (n >= mode_count)
+    if (n >= cached_mode_count)
     {
+        LeaveCriticalSection(&modes_section);
         WARN("handler:%s device:%s mode index:%#x not found.\n", handler.name, wine_dbgstr_w(name), n);
-        handler.free_modes(modes);
         SetLastError(ERROR_NO_MORE_FILES);
         return FALSE;
     }
 
-    memcpy(devmode, (BYTE *)modes + (sizeof(*modes) + modes[0].dmDriverExtra) * n, sizeof(*devmode));
-    handler.free_modes(modes);
+    memcpy(devmode, (BYTE *)cached_modes + (sizeof(*cached_modes) + cached_modes[0].dmDriverExtra) * n, sizeof(*devmode));
+    LeaveCriticalSection(&modes_section);
 
 done:
     /* Set generic fields */
