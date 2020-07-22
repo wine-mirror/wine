@@ -3199,7 +3199,7 @@ struct wined3d_driver_info
     DWORD version_low;
 };
 
-void wined3d_driver_info_init(struct wined3d_driver_info *driver_info,
+bool wined3d_driver_info_init(struct wined3d_driver_info *driver_info,
         const struct wined3d_gpu_description *gpu_description, enum wined3d_feature_level feature_level,
         UINT64 vram_bytes, UINT64 sysmem_bytes) DECLSPEC_HIDDEN;
 

@@ -672,7 +672,7 @@ static void wined3d_copy_name(char *dst, const char *src, unsigned int dst_size)
     }
 }
 
-void wined3d_driver_info_init(struct wined3d_driver_info *driver_info,
+bool wined3d_driver_info_init(struct wined3d_driver_info *driver_info,
         const struct wined3d_gpu_description *gpu_desc, enum wined3d_feature_level feature_level,
         UINT64 vram_bytes, UINT64 sysmem_bytes)
 {
@@ -849,15 +849,13 @@ void wined3d_driver_info_init(struct wined3d_driver_info *driver_info,
         driver_info->name = version_info->driver_name;
         driver_info->version_high = MAKEDWORD_VERSION(driver_os_version, driver_feature_level);
         driver_info->version_low = MAKEDWORD_VERSION(version_info->subversion, version_info->build);
+
+        return true;
     }
-    else
-    {
-        ERR("No driver version info found for device %04x:%04x, driver model %#x.\n",
-                driver_info->vendor, driver_info->device, driver_model);
-        driver_info->name = "Display";
-        driver_info->version_high = MAKEDWORD_VERSION(driver_os_version, driver_feature_level);
-        driver_info->version_low = MAKEDWORD_VERSION(8, 6); /* NVIDIA RIVA TNT, arbitrary */
-    }
+
+    ERR("No driver version info found for device %04x:%04x, driver model %#x.\n",
+            driver_info->vendor, driver_info->device, driver_model);
+    return false;
 }
 
 enum wined3d_pci_device wined3d_gpu_from_feature_level(enum wined3d_pci_vendor *vendor,
@@ -2996,7 +2994,12 @@ static struct wined3d_adapter *wined3d_adapter_no3d_create(unsigned int ordinal,
         return NULL;
     }
 
-    wined3d_driver_info_init(&adapter->driver_info, &gpu_description, WINED3D_FEATURE_LEVEL_NONE, 0, 0);
+    if (!wined3d_driver_info_init(&adapter->driver_info, &gpu_description, WINED3D_FEATURE_LEVEL_NONE, 0, 0))
+    {
+        wined3d_adapter_cleanup(adapter);
+        heap_free(adapter);
+        return NULL;
+    }
     adapter->vram_bytes_used = 0;
     TRACE("Emulating 0x%s bytes of video ram.\n", wine_dbgstr_longlong(adapter->driver_info.vram_bytes));
 

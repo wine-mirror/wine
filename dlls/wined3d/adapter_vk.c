@@ -2037,7 +2037,7 @@ static enum wined3d_display_driver guess_display_driver(enum wined3d_pci_vendor 
     }
 }
 
-static void adapter_vk_init_driver_info(struct wined3d_adapter_vk *adapter_vk,
+static bool adapter_vk_init_driver_info(struct wined3d_adapter_vk *adapter_vk,
         const VkPhysicalDeviceProperties *properties)
 {
     const VkPhysicalDeviceMemoryProperties *memory_properties = &adapter_vk->memory_properties;
@@ -2082,10 +2082,8 @@ static void adapter_vk_init_driver_info(struct wined3d_adapter_vk *adapter_vk,
         gpu_description = &description;
     }
 
-    wined3d_driver_info_init(&adapter_vk->a.driver_info, gpu_description, adapter_vk->a.d3d_info.feature_level,
-            vram_bytes, sysmem_bytes);
-    TRACE("Reporting (fake) driver version 0x%08x-0x%08x.\n",
-            adapter_vk->a.driver_info.version_high, adapter_vk->a.driver_info.version_low);
+    return wined3d_driver_info_init(&adapter_vk->a.driver_info, gpu_description,
+            adapter_vk->a.d3d_info.feature_level, vram_bytes, sysmem_bytes);
 }
 
 static enum wined3d_feature_level feature_level_from_caps(const struct shader_caps *shader_caps)
@@ -2209,7 +2207,10 @@ static BOOL wined3d_adapter_vk_init(struct wined3d_adapter_vk *adapter_vk,
 
     wined3d_adapter_vk_init_d3d_info(adapter_vk, wined3d_creation_flags);
 
-    adapter_vk_init_driver_info(adapter_vk, &properties2.properties);
+    if (!adapter_vk_init_driver_info(adapter_vk, &properties2.properties))
+        goto fail;
+    TRACE("Reporting (fake) driver version 0x%08x-0x%08x.\n",
+            adapter_vk->a.driver_info.version_high, adapter_vk->a.driver_info.version_low);
     adapter->vram_bytes_used = 0;
     TRACE("Emulating 0x%s bytes of video ram.\n", wine_dbgstr_longlong(adapter->driver_info.vram_bytes));
 
