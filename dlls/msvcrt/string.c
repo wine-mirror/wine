@@ -2267,7 +2267,10 @@ char* __cdecl MSVCRT_strrchr(const char *str, int c)
  */
 void* __cdecl MSVCRT_memchr(const void *ptr, int c, MSVCRT_size_t n)
 {
-    return memchr(ptr, c, n);
+    const unsigned char *p = ptr;
+
+    for (p = ptr; n; n--, p++) if (*p == c) return (void *)(ULONG_PTR)p;
+    return NULL;
 }
 
 /*********************************************************************
