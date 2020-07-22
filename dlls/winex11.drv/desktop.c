@@ -168,6 +168,72 @@ static BOOL X11DRV_desktop_get_id( const WCHAR *device_name, ULONG_PTR *id )
     return TRUE;
 }
 
+static void add_desktop_mode( DEVMODEW *mode, DWORD depth, DWORD width, DWORD height )
+{
+    mode->dmSize = sizeof(*mode);
+    mode->dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT |
+                     DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY;
+    mode->u1.s2.dmDisplayOrientation = DMDO_DEFAULT;
+    mode->dmBitsPerPel = depth;
+    mode->dmPelsWidth = width;
+    mode->dmPelsHeight = height;
+    mode->u2.dmDisplayFlags = 0;
+    mode->dmDisplayFrequency = 60;
+}
+
+static BOOL X11DRV_desktop_get_modes( ULONG_PTR id, DWORD flags, DEVMODEW **new_modes, UINT *mode_count )
+{
+    UINT depth_idx, size_idx, mode_idx = 0;
+    UINT screen_width, screen_height;
+    RECT primary_rect;
+    DEVMODEW *modes;
+
+    primary_rect = get_primary_monitor_rect();
+    screen_width = primary_rect.right - primary_rect.left;
+    screen_height = primary_rect.bottom - primary_rect.top;
+
+    /* Allocate memory for modes in different color depths */
+    if (!(modes = heap_calloc( (ARRAY_SIZE(screen_sizes) + 2) * DEPTH_COUNT, sizeof(*modes))) )
+    {
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        return FALSE;
+    }
+
+    for (depth_idx = 0; depth_idx < DEPTH_COUNT; ++depth_idx)
+    {
+        for (size_idx = 0; size_idx < ARRAY_SIZE(screen_sizes); ++size_idx)
+        {
+            if (screen_sizes[size_idx].width > max_width ||
+                screen_sizes[size_idx].height > max_height)
+                continue;
+
+            if (screen_sizes[size_idx].width == max_width &&
+                screen_sizes[size_idx].height == max_height)
+                continue;
+
+            if (screen_sizes[size_idx].width == screen_width &&
+                screen_sizes[size_idx].height == screen_height)
+                continue;
+
+            add_desktop_mode( &modes[mode_idx++], depths[depth_idx], screen_sizes[size_idx].width,
+                              screen_sizes[size_idx].height );
+        }
+
+        add_desktop_mode( &modes[mode_idx++], depths[depth_idx], screen_width, screen_height );
+        if (max_width != screen_width || max_height != screen_height)
+            add_desktop_mode( &modes[mode_idx++], depths[depth_idx], max_width, max_height );
+    }
+
+    *new_modes = modes;
+    *mode_count = mode_idx;
+    return TRUE;
+}
+
+static void X11DRV_desktop_free_modes( DEVMODEW *modes )
+{
+    heap_free( modes );
+}
+
 static BOOL X11DRV_desktop_get_current_mode( ULONG_PTR id, DEVMODEW *mode )
 {
     RECT primary_rect = get_primary_monitor_rect();
@@ -309,6 +375,8 @@ void X11DRV_init_desktop( Window win, unsigned int width, unsigned int height )
     settings_handler.name = "Virtual Desktop";
     settings_handler.priority = 1000;
     settings_handler.get_id = X11DRV_desktop_get_id;
+    settings_handler.get_modes = X11DRV_desktop_get_modes;
+    settings_handler.free_modes = X11DRV_desktop_free_modes;
     settings_handler.get_current_mode = X11DRV_desktop_get_current_mode;
     X11DRV_Settings_SetHandler( &settings_handler );
 }

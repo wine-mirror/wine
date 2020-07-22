@@ -657,6 +657,9 @@ struct x11drv_mode_info
     unsigned int refresh_rate;
 };
 
+#define DEPTH_COUNT 3
+extern const unsigned int *depths DECLSPEC_HIDDEN;
+
 /* Required functions for changing and enumerating display settings */
 struct x11drv_settings_handler
 {
@@ -671,6 +674,20 @@ struct x11drv_settings_handler
      *
      * Return FALSE if the device can not be found and TRUE on success */
     BOOL (*get_id)(const WCHAR *device_name, ULONG_PTR *id);
+
+    /* get_modes() will be called to get a list of supported modes of the device of id in modes
+     * with respect to flags, which could be 0, EDS_RAWMODE or EDS_ROTATEDMODE. If the implementation
+     * uses dmDriverExtra then every DEVMODEW in the list must have the same dmDriverExtra value
+     *
+     * Following fields in DEVMODE must be valid:
+     * dmSize, dmDriverExtra, dmFields, dmDisplayOrientation, dmBitsPerPel, dmPelsWidth, dmPelsHeight,
+     * dmDisplayFlags and dmDisplayFrequency
+     *
+     * Return FALSE on failure with parameters unchanged and error code set. Return TRUE on success */
+    BOOL (*get_modes)(ULONG_PTR id, DWORD flags, DEVMODEW **modes, UINT *mode_count);
+
+    /* free_modes() will be called to free the mode list returned from get_modes() */
+    void (*free_modes)(DEVMODEW *modes);
 
     /* get_current_mode() will be called to get the current display mode of the device of id
      *

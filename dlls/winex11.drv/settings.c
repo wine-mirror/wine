@@ -42,6 +42,7 @@ static unsigned int dd_max_modes = 0;
  */
 static const unsigned int depths_24[]  = {8, 16, 24};
 static const unsigned int depths_32[]  = {8, 16, 32};
+const unsigned int *depths;
 
 /* pointers to functions that actually do the hard stuff */
 static int (*pGetCurrentMode)(void);
@@ -158,6 +159,9 @@ static LONG X11DRV_nores_SetCurrentMode(int mode)
 void X11DRV_Settings_Init(void)
 {
     RECT primary = get_host_primary_monitor_rect();
+
+    depths = screen_bpp == 32 ? depths_32 : depths_24;
+
     X11DRV_Settings_SetHandlers("NoRes", 
                                 X11DRV_nores_GetCurrentMode, 
                                 X11DRV_nores_SetCurrentMode, 
@@ -321,10 +325,12 @@ BOOL CDECL X11DRV_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmo
 {
     static const WCHAR dev_name[CCHDEVICENAME] =
         { 'W','i','n','e',' ','X','1','1',' ','d','r','i','v','e','r',0 };
+    DEVMODEW *modes;
+    UINT mode_count;
     ULONG_PTR id;
 
     /* Use the new interface if it is available */
-    if (!handler.name || (n != ENUM_REGISTRY_SETTINGS && n != ENUM_CURRENT_SETTINGS))
+    if (!handler.name)
         goto old_interface;
 
     if (n == ENUM_REGISTRY_SETTINGS)
@@ -346,6 +352,23 @@ BOOL CDECL X11DRV_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmo
         }
         goto done;
     }
+
+    if (!handler.get_id(name, &id) || !handler.get_modes(id, flags, &modes, &mode_count))
+    {
+        ERR("Failed to get %s supported display modes.\n", wine_dbgstr_w(name));
+        return FALSE;
+    }
+
+    if (n >= mode_count)
+    {
+        WARN("handler:%s device:%s mode index:%#x not found.\n", handler.name, wine_dbgstr_w(name), n);
+        handler.free_modes(modes);
+        SetLastError(ERROR_NO_MORE_FILES);
+        return FALSE;
+    }
+
+    memcpy(devmode, (BYTE *)modes + (sizeof(*modes) + modes[0].dmDriverExtra) * n, sizeof(*devmode));
+    handler.free_modes(modes);
 
 done:
     /* Set generic fields */
