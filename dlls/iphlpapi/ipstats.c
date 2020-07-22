@@ -1912,6 +1912,7 @@ static struct pid_map *get_pid_map( unsigned int *num_entries )
             HeapFree( GetProcessHeap(), 0, buffer );
             return NULL;
         }
+        buffer = new_buffer;
     }
 
     if (!(map = HeapAlloc( GetProcessHeap(), 0, map_count * sizeof(*map) )))
