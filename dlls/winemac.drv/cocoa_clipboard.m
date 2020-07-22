@@ -23,6 +23,14 @@
 #import "cocoa_event.h"
 #import "cocoa_window.h"
 
+#if !defined(MAC_OS_X_VERSION_10_14) || MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_14
+/* For older SDKs, #define the new names of constants deprecated/renamed in macOS 10.14. */
+#define NSBitmapImageFileTypeBMP        NSBMPFileType
+#define NSBitmapImageFileTypeGIF        NSGIFFileType
+#define NSBitmapImageFileTypeJPEG       NSJPEGFileType
+#define NSBitmapImageFileTypePNG        NSPNGFileType
+#define NSBitmapImageFileTypeTIFF       NSTIFFFileType
+#endif
 
 static int owned_change_count = -1;
 static int change_count = -1;
@@ -86,11 +94,11 @@ CFArrayRef macdrv_copy_pasteboard_types(CFTypeRef pasteboard)
 
     dispatch_once(&BitmapOutputTypesInitOnce, ^{
         NSArray* bitmapFileTypes = [NSArray arrayWithObjects:
-                                    [NSNumber numberWithUnsignedInteger:NSTIFFFileType],
-                                    [NSNumber numberWithUnsignedInteger:NSPNGFileType],
-                                    [NSNumber numberWithUnsignedInteger:NSBMPFileType],
-                                    [NSNumber numberWithUnsignedInteger:NSGIFFileType],
-                                    [NSNumber numberWithUnsignedInteger:NSJPEGFileType],
+                                    [NSNumber numberWithUnsignedInteger:NSBitmapImageFileTypeTIFF],
+                                    [NSNumber numberWithUnsignedInteger:NSBitmapImageFileTypePNG],
+                                    [NSNumber numberWithUnsignedInteger:NSBitmapImageFileTypeBMP],
+                                    [NSNumber numberWithUnsignedInteger:NSBitmapImageFileTypeGIF],
+                                    [NSNumber numberWithUnsignedInteger:NSBitmapImageFileTypeJPEG],
                                     nil];
 
         BitmapOutputTypes = [[NSArray alloc] initWithObjects:@"public.tiff", @"public.png",
