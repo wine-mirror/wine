@@ -3270,6 +3270,151 @@ static void test_fillregion(void)
     GdipDisposeImage((GpImage*)metafile);
 }
 
+static const emfplus_record lineargradient_records[] = {
+    { EMR_HEADER },
+    { EmfPlusRecordTypeHeader },
+    { EmfPlusRecordTypeObject, ObjectTypeBrush << 8, 1 },
+    { EmfPlusRecordTypeFillRects, 0x4000, 1 },
+    { EmfPlusRecordTypeObject, (ObjectTypeBrush << 8) | 1, 1 },
+    { EmfPlusRecordTypeFillRects, 0x4000, 1 },
+    { EmfPlusRecordTypeObject, (ObjectTypeBrush << 8) | 2, 1 },
+    { EmfPlusRecordTypeFillRects, 0x4000, 1 },
+    { EmfPlusRecordTypeObject, (ObjectTypeBrush << 8) | 3, 1 },
+    { EmfPlusRecordTypeFillRects, 0x4000, 1 },
+    { EmfPlusRecordTypeEndOfFile },
+    { EMR_EOF },
+    { 0 }
+};
+
+static void test_lineargradient(void)
+{
+    static const GpPointF dst_points[3] = {{0.0, 0.0}, {100.0, 0.0}, {0.0, 100.0}};
+    static const GpRectF frame = {0.0, 0.0, 100.0, 100.0};
+    static const GpRectF horizrect = {10.0, 10.0, 20.0, 20.0};
+    static const GpRectF vertrect = {50.0, 10.0, 20.0, 20.0};
+    static const GpRectF blendrect = {10.0, 50.0, 20.0, 20.0};
+    static const GpRectF presetrect = {50.0, 50.0, 20.0, 20.0};
+    static const REAL blendfac[3] = {0.0, 0.9, 1.0};
+    static const REAL blendpos[3] = {0.0, 0.5, 1.0};
+    static const ARGB pblendcolor[3] = {0xffff0000, 0xff00ff00, 0xff0000ff};
+    static const REAL pblendpos[3] = {0.0, 0.5, 1.0};
+
+    ARGB color;
+    GpBitmap *bitmap;
+    GpBrush *horizbrush, *vertbrush, *blendbrush, *presetbrush;
+    GpGraphics *graphics;
+    GpMetafile *metafile;
+    GpStatus stat;
+    HDC hdc;
+
+    hdc = CreateCompatibleDC(0);
+    stat = GdipRecordMetafile(hdc, EmfTypeEmfPlusOnly, &frame, MetafileFrameUnitPixel,
+        L"winetest", &metafile);
+    expect(Ok, stat);
+    DeleteDC(hdc);
+    hdc = NULL;
+
+    stat = GdipGetImageGraphicsContext((GpImage*)metafile, &graphics);
+    expect(Ok, stat);
+
+    /* Test various brush types to cover all valid combinations
+       of optional serialized data. */
+    stat = GdipCreateLineBrushFromRect(&horizrect, 0xffff0000, 0xff0000ff,
+        LinearGradientModeHorizontal, WrapModeTile, (GpLineGradient**)&horizbrush);
+    expect(Ok, stat);
+
+    stat = GdipCreateLineBrushFromRect(&vertrect, 0xffff0000, 0xff0000ff,
+        LinearGradientModeVertical, WrapModeTile, (GpLineGradient**)&vertbrush);
+    expect(Ok, stat);
+
+    stat = GdipCreateLineBrushFromRect(&blendrect, 0xffff0000, 0xff0000ff,
+        LinearGradientModeHorizontal, WrapModeTile, (GpLineGradient**)&blendbrush);
+    expect(Ok, stat);
+
+    stat = GdipSetLineBlend((GpLineGradient*)blendbrush, blendfac, blendpos, 3);
+    expect(Ok, stat);
+
+    stat = GdipCreateLineBrushFromRect(&presetrect, 0xffff0000, 0xff0000ff,
+        LinearGradientModeVertical, WrapModeTile, (GpLineGradient**)&presetbrush);
+    expect(Ok, stat);
+
+    stat = GdipSetLinePresetBlend((GpLineGradient*)presetbrush, pblendcolor, pblendpos, 3);
+    expect(Ok, stat);
+
+    stat = GdipFillRectangles(graphics, vertbrush, &vertrect, 1);
+    todo_wine expect(Ok, stat);
+
+    stat = GdipFillRectangles(graphics, horizbrush, &horizrect, 1);
+    todo_wine expect(Ok, stat);
+
+    stat = GdipFillRectangles(graphics, blendbrush, &blendrect, 1);
+    todo_wine expect(Ok, stat);
+
+    stat = GdipFillRectangles(graphics, presetbrush, &presetrect, 1);
+    todo_wine expect(Ok, stat);
+
+    stat = GdipDeleteGraphics(graphics);
+    graphics = NULL;
+    expect(Ok, stat);
+
+    check_metafile(metafile, lineargradient_records, "lineargradient metafile", dst_points,
+        &frame, UnitPixel);
+    sync_metafile(&metafile, "lineargradient.emf");
+
+    stat = GdipCreateBitmapFromScan0(100, 100, 0, PixelFormat32bppARGB, NULL, &bitmap);
+    expect(Ok, stat);
+
+    stat = GdipGetImageGraphicsContext((GpImage*)bitmap, &graphics);
+    expect(Ok, stat);
+
+    play_metafile(metafile, graphics, lineargradient_records, "lineargradient playback",
+        dst_points, &frame, UnitPixel);
+
+    /* Verify horizontal gradient fill. */
+    stat = GdipBitmapGetPixel(bitmap, 10, 10, &color);
+    expect(Ok, stat);
+    todo_wine expect(0xffff0000, color);
+
+    stat = GdipBitmapGetPixel(bitmap, 18, 10, &color);
+    expect(Ok, stat);
+    todo_wine expect(0xff990066, color);
+
+    /* Verify vertical gradient fill. */
+    stat = GdipBitmapGetPixel(bitmap, 50, 10, &color);
+    expect(Ok, stat);
+    todo_wine expect(0xffff0000, color);
+
+    stat = GdipBitmapGetPixel(bitmap, 50, 18, &color);
+    expect(Ok, stat);
+    todo_wine expect(0xff990066, color);
+
+    /* Verify custom blend gradient fill. */
+    stat = GdipBitmapGetPixel(bitmap, 10, 50, &color);
+    expect(Ok, stat);
+    todo_wine expect(0xffff0000, color);
+
+    stat = GdipBitmapGetPixel(bitmap, 18, 50, &color);
+    expect(Ok, stat);
+    todo_wine expect(0xff4700b8, color);
+
+    /* Verify preset color gradient fill. */
+    stat = GdipBitmapGetPixel(bitmap, 50, 50, &color);
+    expect(Ok, stat);
+    todo_wine expect(0xffff0000, color);
+
+    stat = GdipBitmapGetPixel(bitmap, 50, 60, &color);
+    expect(Ok, stat);
+    todo_wine expect(0xff00ff00, color);
+
+    GdipDeleteBrush(vertbrush);
+    GdipDeleteBrush(horizbrush);
+    GdipDeleteBrush(blendbrush);
+    GdipDeleteBrush(presetbrush);
+    GdipDeleteGraphics(graphics);
+    GdipDisposeImage((GpImage*)bitmap);
+    GdipDisposeImage((GpImage*)metafile);
+}
+
 START_TEST(metafile)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -3322,6 +3467,7 @@ START_TEST(metafile)
     test_drawdriverstring();
     test_unknownfontdecode();
     test_fillregion();
+    test_lineargradient();
 
     GdiplusShutdown(gdiplusToken);
 }
