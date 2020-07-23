@@ -187,7 +187,7 @@
 @ cdecl _o__atoi_l(str ptr) ucrtbase._o__atoi_l
 @ cdecl _o__atol_l(str ptr) ucrtbase._o__atol_l
 @ cdecl _o__atoldbl(ptr str) ucrtbase._o__atoldbl
-@ stub _o__atoldbl_l
+@ cdecl _o__atoldbl_l(ptr str ptr) ucrtbase._o__atoldbl_l
 @ cdecl -ret64 _o__atoll_l(str ptr) ucrtbase._o__atoll_l
 @ cdecl _o__beep(long long) ucrtbase._o__beep
 @ cdecl _o__beginthread(ptr long ptr) ucrtbase._o__beginthread

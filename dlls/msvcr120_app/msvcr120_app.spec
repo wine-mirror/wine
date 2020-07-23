@@ -868,7 +868,7 @@
 @ cdecl __RTDynamicCast(ptr long ptr ptr long) msvcr120.__RTDynamicCast
 @ cdecl __RTtypeid(ptr) msvcr120.__RTtypeid
 @ cdecl __STRINGTOLD(ptr ptr str long) msvcr120.__STRINGTOLD
-@ stub __STRINGTOLD_L
+@ cdecl __STRINGTOLD_L(ptr ptr str long ptr) msvcr120.__STRINGTOLD_L
 @ stub __TypeMatch
 @ cdecl ___lc_codepage_func() msvcr120.___lc_codepage_func
 @ cdecl ___lc_collate_cp_func() msvcr120.___lc_collate_cp_func
@@ -1010,7 +1010,7 @@
 @ cdecl _atoi_l(str ptr) msvcr120._atoi_l
 @ cdecl _atol_l(str ptr) msvcr120._atol_l
 @ cdecl _atoldbl(ptr str) msvcr120._atoldbl
-@ stub _atoldbl_l
+@ cdecl _atoldbl_l(ptr str ptr) msvcr120._atoldbl_l
 @ cdecl -ret64 _atoll_l(str ptr) msvcr120._atoll_l
 @ cdecl _byteswap_uint64(int64) msvcr120._byteswap_uint64
 @ cdecl _byteswap_ulong(long) msvcr120._byteswap_ulong

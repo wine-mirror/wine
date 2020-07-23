@@ -1233,36 +1233,50 @@ MSVCRT_size_t CDECL MSVCRT_strxfrm( char *dest, const char *src, MSVCRT_size_t l
 }
 
 /********************************************************************
- *		_atoldbl (MSVCRT.@)
+ *		__STRINGTOLD_L (MSVCR80.@)
  */
-int CDECL MSVCRT__atoldbl(MSVCRT__LDOUBLE *value, const char *str)
-{
-  /* FIXME needs error checking for huge/small values */
-#ifdef HAVE_STRTOLD
-  long double ld;
-  TRACE("str %s value %p\n",str,value);
-  ld = strtold(str,0);
-  memcpy(value, &ld, 10);
-#else
-  FIXME("stub, str %s value %p\n",str,value);
-#endif
-  return 0;
-}
-
-/********************************************************************
- *		__STRINGTOLD (MSVCRT.@)
- */
-int CDECL __STRINGTOLD( MSVCRT__LDOUBLE *value, char **endptr, const char *str, int flags )
+int CDECL __STRINGTOLD_L( MSVCRT__LDOUBLE *value, char **endptr,
+        const char *str, int flags, MSVCRT__locale_t locale )
 {
 #ifdef HAVE_STRTOLD
     long double ld;
-    FIXME("%p %p %s %x partial stub\n", value, endptr, str, flags );
+    FIXME("%p %p %s %x %p partial stub\n", value, endptr, str, flags, locale );
     ld = strtold(str,0);
     memcpy(value, &ld, 10);
 #else
     FIXME("%p %p %s %x stub\n", value, endptr, str, flags );
 #endif
     return 0;
+}
+
+/********************************************************************
+ *              __STRINGTOLD (MSVCRT.@)
+ */
+int CDECL __STRINGTOLD( MSVCRT__LDOUBLE *value, char **endptr, const char *str, int flags )
+{
+    return __STRINGTOLD_L( value, endptr, str, flags, NULL );
+}
+
+/********************************************************************
+ *              _atoldbl_l (MSVCRT.@)
+ */
+int CDECL MSVCRT__atoldbl_l( MSVCRT__LDOUBLE *value, const char *str, MSVCRT__locale_t locale )
+{
+    char *endptr;
+    switch(__STRINGTOLD_L( value, &endptr, str, 0, locale ))
+    {
+    case 1: return MSVCRT__UNDERFLOW;
+    case 2: return MSVCRT__OVERFLOW;
+    default: return 0;
+    }
+}
+
+/********************************************************************
+ *		_atoldbl (MSVCRT.@)
+ */
+int CDECL MSVCRT__atoldbl(MSVCRT__LDOUBLE *value, const char *str)
+{
+    return MSVCRT__atoldbl_l( value, str, NULL );
 }
 
 /*********************************************************************

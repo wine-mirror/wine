@@ -9,7 +9,7 @@
 @ cdecl _atoi_l(str ptr) ucrtbase._atoi_l
 @ cdecl _atol_l(str ptr) ucrtbase._atol_l
 @ cdecl _atoldbl(ptr str) ucrtbase._atoldbl
-@ stub _atoldbl_l
+@ cdecl _atoldbl_l(ptr str ptr) ucrtbase._atoldbl_l
 @ cdecl -ret64 _atoll_l(str ptr) ucrtbase._atoll_l
 @ cdecl _ecvt(double long ptr ptr) ucrtbase._ecvt
 @ cdecl _ecvt_s(str long double long ptr ptr) ucrtbase._ecvt_s

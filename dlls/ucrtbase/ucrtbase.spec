@@ -200,7 +200,7 @@
 @ cdecl _atoi_l(str ptr) MSVCRT__atoi_l
 @ cdecl _atol_l(str ptr) MSVCRT__atol_l
 @ cdecl _atoldbl(ptr str) MSVCRT__atoldbl
-@ stub _atoldbl_l
+@ cdecl _atoldbl_l(ptr str ptr) MSVCRT__atoldbl_l
 @ cdecl -ret64 _atoll_l(str ptr) MSVCRT__atoll_l
 @ cdecl _beep(long long) MSVCRT__beep
 @ cdecl _beginthread(ptr long ptr)
@@ -851,7 +851,7 @@
 @ cdecl _o__atoi_l(str ptr) MSVCRT__atoi_l
 @ cdecl _o__atol_l(str ptr) MSVCRT__atol_l
 @ cdecl _o__atoldbl(ptr str) MSVCRT__atoldbl
-@ stub _o__atoldbl_l
+@ cdecl _o__atoldbl_l(ptr str ptr) MSVCRT__atoldbl_l
 @ cdecl -ret64 _o__atoll_l(str ptr) MSVCRT__atoll_l
 @ cdecl _o__beep(long long) MSVCRT__beep
 @ cdecl _o__beginthread(ptr long ptr) _beginthread
