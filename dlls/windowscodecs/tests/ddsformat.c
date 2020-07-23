@@ -650,7 +650,6 @@ static void test_dds_decoder_image_parameters(void)
                "Test %u: Expected DxgiFormat %#x, got %#x\n", i, test_data[i].expected_parameters.DxgiFormat, parameters.DxgiFormat);
             ok(parameters.Dimension == test_data[i].expected_parameters.Dimension,
                "Test %u: Expected Dimension %#x, got %#x\n", i, test_data[i].expected_parameters.Dimension, parameters.Dimension);
-            todo_wine_if(test_data[i].data == test_dds_dxt5 || test_data[i].data == test_dds_dxt3)
             ok(parameters.AlphaMode == test_data[i].expected_parameters.AlphaMode,
                "Test %u: Expected AlphaMode %#x, got %#x\n", i, test_data[i].expected_parameters.AlphaMode, parameters.AlphaMode);
         }

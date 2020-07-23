@@ -259,15 +259,12 @@ static WICDdsAlphaMode get_alpha_mode_from_fourcc(DWORD fourcc)
 {
     switch (fourcc)
     {
-    case MAKEFOURCC('D', 'X', 'T', '1'):
-    case MAKEFOURCC('D', 'X', 'T', '2'):
-    case MAKEFOURCC('D', 'X', 'T', '4'):
-        return WICDdsAlphaModePremultiplied;
-    case MAKEFOURCC('D', 'X', 'T', '3'):
-    case MAKEFOURCC('D', 'X', 'T', '5'):
-        return WICDdsAlphaModeStraight;
-    default:
-        return WICDdsAlphaModeUnknown;
+        case MAKEFOURCC('D', 'X', 'T', '1'):
+        case MAKEFOURCC('D', 'X', 'T', '2'):
+        case MAKEFOURCC('D', 'X', 'T', '4'):
+            return WICDdsAlphaModePremultiplied;
+        default:
+            return WICDdsAlphaModeUnknown;
     }
 }
 
