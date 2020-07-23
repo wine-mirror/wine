@@ -1600,6 +1600,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH WriteConsoleOutputCharacterA( HANDLE handle, LPCST
 BOOL WINAPI DECLSPEC_HOTPATCH WriteConsoleOutputCharacterW( HANDLE handle, LPCWSTR str, DWORD length,
                                                             COORD coord, DWORD *written )
 {
+    struct condrv_write_output_params *params;
+    size_t size;
     BOOL ret;
 
     TRACE( "(%p,%s,%d,%dx%d,%p)\n", handle, debugstr_wn(str, length), length, coord.X, coord.Y, written );
@@ -1611,16 +1613,14 @@ BOOL WINAPI DECLSPEC_HOTPATCH WriteConsoleOutputCharacterW( HANDLE handle, LPCWS
     }
 
     *written = 0;
-    SERVER_START_REQ( write_console_output )
-    {
-        req->handle = console_handle_unmap( handle );
-        req->x      = coord.X;
-        req->y      = coord.Y;
-        req->mode   = CHAR_INFO_MODE_TEXT;
-        req->wrap   = TRUE;
-        wine_server_add_data( req, str, length * sizeof(WCHAR) );
-        if ((ret = !wine_server_call_err( req ))) *written = reply->written;
-    }
-    SERVER_END_REQ;
+    size = sizeof(*params) + length * sizeof(WCHAR);
+    if (!(params = HeapAlloc( GetProcessHeap(), 0, size ))) return FALSE;
+    params->mode   = CHAR_INFO_MODE_TEXT;
+    params->x      = coord.X;
+    params->y      = coord.Y;
+    params->width  = 0;
+    memcpy( params + 1, str, length * sizeof(*str) );
+    ret = console_ioctl( handle, IOCTL_CONDRV_WRITE_OUTPUT, params, size, written, sizeof(*written), NULL );
+    HeapFree( GetProcessHeap(), 0, params );
     return ret;
 }
