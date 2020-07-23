@@ -413,25 +413,21 @@ int fpnum_double(struct fpnum *fp, double *d)
         fp->m >>= 1;
         fp->exp++;
     }
-
-    /* handle subnormal that falls into regular range due to rounding */
     fp->exp += (1 << (EXP_BITS-1)) - 1;
-    if (!fp->exp && (fp->mod == FP_ROUND_UP || (fp->mod == FP_ROUND_EVEN && fp->m & 1)))
-    {
-        if (fp->m + 1 >= (ULONGLONG)1 << MANT_BITS)
-        {
-            fp->m++;
-            fp->m >>= 1;
-            fp->exp++;
-            fp->mod = FP_ROUND_DOWN;
-        }
-    }
 
     /* handle subnormals */
     if (fp->exp <= 0)
+    {
+        if (fp->m & 1 && fp->mod == FP_ROUND_ZERO) fp->mod = FP_ROUND_EVEN;
+        else if (fp->m & 1) fp->mod = FP_ROUND_UP;
+        else if (fp->mod != FP_ROUND_ZERO) fp->mod = FP_ROUND_DOWN;
         fp->m >>= 1;
+    }
     while(fp->m && fp->exp<0)
     {
+        if (fp->m & 1 && fp->mod == FP_ROUND_ZERO) fp->mod = FP_ROUND_EVEN;
+        else if (fp->m & 1) fp->mod = FP_ROUND_UP;
+        else if (fp->mod != FP_ROUND_ZERO) fp->mod = FP_ROUND_DOWN;
         fp->m >>= 1;
         fp->exp++;
     }
@@ -440,7 +436,13 @@ int fpnum_double(struct fpnum *fp, double *d)
     if (fp->mod == FP_ROUND_UP || (fp->mod == FP_ROUND_EVEN && fp->m & 1))
     {
         fp->m++;
-        if (fp->m >= (ULONGLONG)1 << MANT_BITS)
+
+        /* handle subnormal that falls into regular range due to rounding */
+        if (fp->m == (ULONGLONG)1 << (MANT_BITS - 1))
+        {
+            fp->exp++;
+        }
+        else if (fp->m >= (ULONGLONG)1 << MANT_BITS)
         {
             fp->exp++;
             fp->m >>= 1;

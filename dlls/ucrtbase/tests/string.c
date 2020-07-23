@@ -148,6 +148,8 @@ static void test_strtod(void)
     test_strtod_str("1.7976931348623158e+308", 1.7976931348623158e+308, 23);
     test_strtod_str("2.2250738585072014e-308", 2.2250738585072014e-308, 23);
     test_strtod_str("4.9406564584124654e-324", 4.9406564584124654e-324, 23);
+    test_strtod_str("2.48e-324", 4.9406564584124654e-324, 9);
+    test_strtod_str_errno("2.47e-324", 0, 9, ERANGE);
 }
 
 static void test__memicmp(void)
