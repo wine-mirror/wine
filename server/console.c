@@ -1326,68 +1326,6 @@ static void write_console_output( struct screen_buffer *screen_buffer, const str
     else set_reply_data( &i, sizeof(i) );
 }
 
-/* write data into a screen buffer */
-static int write_console_output_req( struct screen_buffer *screen_buffer, data_size_t size,
-                                 const void* data, enum char_info_mode mode,
-                                 int x, int y, int wrap )
-{
-    unsigned int i;
-    char_info_t *end, *dest = screen_buffer->data + y * screen_buffer->width + x;
-
-    if (y >= screen_buffer->height) return 0;
-
-    if (wrap)
-        end = screen_buffer->data + screen_buffer->height * screen_buffer->width;
-    else
-        end = screen_buffer->data + (y+1) * screen_buffer->width;
-
-    switch(mode)
-    {
-    case CHAR_INFO_MODE_TEXT:
-        {
-            const WCHAR *ptr = data;
-            for (i = 0; i < size/sizeof(*ptr) && dest < end; dest++, i++) dest->ch = ptr[i];
-        }
-        break;
-    case CHAR_INFO_MODE_ATTR:
-        {
-            const unsigned short *ptr = data;
-            for (i = 0; i < size/sizeof(*ptr) && dest < end; dest++, i++) dest->attr = ptr[i];
-        }
-        break;
-    case CHAR_INFO_MODE_TEXTATTR:
-        {
-            const char_info_t *ptr = data;
-            for (i = 0; i < size/sizeof(*ptr) && dest < end; dest++, i++) *dest = ptr[i];
-        }
-        break;
-    case CHAR_INFO_MODE_TEXTSTDATTR:
-        {
-            const WCHAR *ptr = data;
-            for (i = 0; i < size/sizeof(*ptr) && dest < end; dest++, i++)
-            {
-                dest->ch   = ptr[i];
-                dest->attr = screen_buffer->attr;
-            }
-        }
-        break;
-    default:
-        set_error( STATUS_INVALID_PARAMETER );
-        return 0;
-    }
-
-    if (i && screen_buffer == screen_buffer->input->active)
-    {
-        struct condrv_renderer_event evt;
-        evt.event = CONSOLE_RENDERER_UPDATE_EVENT;
-        memset(&evt.u, 0, sizeof(evt.u));
-        evt.u.update.top    = y + x / screen_buffer->width;
-        evt.u.update.bottom = y + (x + i - 1) / screen_buffer->width;
-        console_input_events_append( screen_buffer->input, &evt );
-    }
-    return i;
-}
-
 /* fill a screen buffer with uniform data */
 static int fill_console_output( struct screen_buffer *screen_buffer, char_info_t data,
                                 enum char_info_mode mode, int x, int y, int count, int wrap )
@@ -2213,28 +2151,6 @@ DECL_HANDLER(read_console_output)
             return;
         }
         read_console_output( screen_buffer, req->x, req->y, req->mode, req->wrap );
-        reply->width  = screen_buffer->width;
-        reply->height = screen_buffer->height;
-        release_object( screen_buffer );
-    }
-}
-
-/* write data (char and/or attrs) to a screen buffer */
-DECL_HANDLER(write_console_output)
-{
-    struct screen_buffer *screen_buffer;
-
-    if ((screen_buffer = (struct screen_buffer*)get_handle_obj( current->process, req->handle,
-                                                                FILE_WRITE_DATA, &screen_buffer_ops)))
-    {
-        if (console_input_is_bare( screen_buffer->input ))
-        {
-            set_error( STATUS_OBJECT_TYPE_MISMATCH );
-            release_object( screen_buffer );
-            return;
-        }
-        reply->written = write_console_output_req( screen_buffer, get_req_data_size(), get_req_data(),
-                                                   req->mode, req->x, req->y, req->wrap );
         reply->width  = screen_buffer->width;
         reply->height = screen_buffer->height;
         release_object( screen_buffer );

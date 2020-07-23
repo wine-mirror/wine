@@ -1567,28 +1567,6 @@ enum server_fd_type
 @END
 
 
-/* write data (chars and/or attributes) in a screen buffer */
-@REQ(write_console_output)
-    obj_handle_t handle;        /* handle to the console output */
-    int          x;             /* position where to start writing */
-    int          y;
-    int          mode;          /* char info (see below) */
-    int          wrap;          /* wrap around at end of line? */
-    VARARG(data,bytes);         /* info to write */
-@REPLY
-    int          written;       /* number of char infos actually written */
-    int          width;         /* width of screen buffer */
-    int          height;        /* height of screen buffer */
-@END
-enum char_info_mode
-{
-    CHAR_INFO_MODE_TEXT,        /* characters only */
-    CHAR_INFO_MODE_ATTR,        /* attributes only */
-    CHAR_INFO_MODE_TEXTATTR,    /* both characters and attributes */
-    CHAR_INFO_MODE_TEXTSTDATTR  /* characters but use standard attributes */
-};
-
-
 /* read data (chars and/or attributes) from a screen buffer */
 @REQ(read_console_output)
     obj_handle_t handle;        /* handle to the console output */
