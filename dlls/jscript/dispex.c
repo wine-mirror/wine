@@ -419,8 +419,8 @@ static HRESULT invoke_prop_func(jsdisp_t *This, IDispatch *jsthis, dispex_prop_t
         return hres;
     }
     case PROP_PROTREF:
-        return invoke_prop_func(This->prototype, jsthis, This->prototype->props+prop->u.ref,
-                flags, argc, argv, r, caller);
+        return invoke_prop_func(This->prototype, jsthis ? jsthis : (IDispatch *)&This->IDispatchEx_iface,
+                                This->prototype->props+prop->u.ref, flags, argc, argv, r, caller);
     case PROP_JSVAL: {
         if(!is_object_instance(prop->u.val)) {
             FIXME("invoke %s\n", debugstr_jsval(prop->u.val));
@@ -429,7 +429,9 @@ static HRESULT invoke_prop_func(jsdisp_t *This, IDispatch *jsthis, dispex_prop_t
 
         TRACE("call %s %p\n", debugstr_w(prop->name), get_object(prop->u.val));
 
-        return disp_call_value(This->ctx, get_object(prop->u.val), jsthis, flags, argc, argv, r);
+        return disp_call_value(This->ctx, get_object(prop->u.val),
+                               jsthis ? jsthis : (IDispatch*)&This->IDispatchEx_iface,
+                               flags, argc, argv, r);
     }
     case PROP_ACCESSOR:
         FIXME("accessor\n");

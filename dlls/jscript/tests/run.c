@@ -2784,7 +2784,7 @@ static void test_invokeex(void)
     DISPPARAMS dp = {NULL};
     IActiveScript *script;
     IDispatchEx *dispex;
-    VARIANT v;
+    VARIANT v, arg;
     BSTR str;
     HRESULT hres;
 
@@ -2831,6 +2831,93 @@ static void test_invokeex(void)
     ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
     ok(V_VT(&v) == VT_I4, "V_VT(v) = %d\n", V_VT(&v));
     ok(V_I4(&v) == 6, "V_I4(v) = %d\n", V_I4(&v));
+
+    IDispatchEx_Release(dispex);
+    IActiveScript_Release(script);
+
+    /* test InvokeEx following prototype chain of builtin object (PROP_PROTREF) */
+    hres = parse_script_expr(L"o = new Array(); o.push(\"foo\"); o", &v, &script);
+    ok(hres == S_OK, "parse_script_expr failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_DISPATCH, "V_VT(v) = %d\n", V_VT(&v));
+
+    hres = IDispatch_QueryInterface(V_DISPATCH(&v), &IID_IDispatchEx, (void**)&dispex);
+    ok(hres == S_OK, "Could not get IDispatchEx iface: %08x\n", hres);
+    VariantClear(&v);
+
+    str = SysAllocString(L"push");
+    hres = IDispatchEx_GetDispID(dispex, str, 0, &func_id);
+    SysFreeString(str);
+    ok(hres == S_OK, "GetDispID failed: %08x\n", hres);
+
+    dp.rgvarg = &arg;
+    dp.cArgs = 1;
+    V_VT(&arg) = VT_BSTR;
+    V_BSTR(&arg) = SysAllocString(L"bar");
+
+    hres = IDispatchEx_InvokeEx(dispex, func_id, 0, DISPATCH_METHOD, &dp, &v, NULL, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    SysFreeString(V_BSTR(&arg));
+
+    str = SysAllocString(L"join");
+    hres = IDispatchEx_GetDispID(dispex, str, 0, &func_id);
+    SysFreeString(str);
+    ok(hres == S_OK, "GetDispID failed: %08x\n", hres);
+
+    V_BSTR(&arg) = SysAllocString(L";");
+    hres = IDispatchEx_InvokeEx(dispex, func_id, 0, DISPATCH_METHOD, &dp, &v, NULL, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    SysFreeString(V_BSTR(&arg));
+    ok(V_VT(&v) == VT_BSTR, "V_VT(v) = %d\n", V_VT(&v));
+    ok(!lstrcmpW(V_BSTR(&v), L"foo;bar"), "V_BSTR(v) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+
+    VariantClear(&v);
+
+    dp.rgvarg = NULL;
+    dp.cArgs = 0;
+
+    IDispatchEx_Release(dispex);
+    IActiveScript_Release(script);
+
+    /* test InvokeEx following prototype chain of JScript objects (PROP_JSVAL) */
+    hres = parse_script_expr(L"function c() { this.func = function() { return this.prop1 * this.prop2 };"
+                             L"this.prop1 = 6; this.prop2 = 9; }; var o = new c(); o.prop2 = 7; o",
+                             &v, &script);
+    ok(hres == S_OK, "parse_script_expr failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_DISPATCH, "V_VT(v) = %d\n", V_VT(&v));
+
+    hres = IDispatch_QueryInterface(V_DISPATCH(&v), &IID_IDispatchEx, (void**)&dispex);
+    ok(hres == S_OK, "Could not get IDispatchEx iface: %08x\n", hres);
+    VariantClear(&v);
+
+    str = SysAllocString(L"prop1");
+    hres = IDispatchEx_GetDispID(dispex, str, 0, &prop_id);
+    SysFreeString(str);
+    ok(hres == S_OK, "GetDispID failed: %08x\n", hres);
+
+    hres = IDispatchEx_InvokeEx(dispex, prop_id, 0, DISPATCH_PROPERTYGET, &dp, &v, NULL, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_I4, "V_VT(v) = %d\n", V_VT(&v));
+    ok(V_I4(&v) == 6, "V_I4(v) = %d\n", V_I4(&v));
+
+    str = SysAllocString(L"prop2");
+    hres = IDispatchEx_GetDispID(dispex, str, 0, &prop_id);
+    SysFreeString(str);
+    ok(hres == S_OK, "GetDispID failed: %08x\n", hres);
+
+    hres = IDispatchEx_InvokeEx(dispex, prop_id, 0, DISPATCH_PROPERTYGET, &dp, &v, NULL, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_I4, "V_VT(v) = %d\n", V_VT(&v));
+    ok(V_I4(&v) == 7, "V_I4(v) = %d\n", V_I4(&v));
+
+    str = SysAllocString(L"func");
+    hres = IDispatchEx_GetDispID(dispex, str, 0, &func_id);
+    SysFreeString(str);
+    ok(hres == S_OK, "GetDispID failed: %08x\n", hres);
+
+    hres = IDispatchEx_InvokeEx(dispex, func_id, 0, DISPATCH_METHOD, &dp, &v, NULL, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_I4, "V_VT(v) = %d\n", V_VT(&v));
+    ok(V_I4(&v) == 42, "V_I4(v) = %s\n", wine_dbgstr_variant(&v));
 
     IDispatchEx_Release(dispex);
     IActiveScript_Release(script);
