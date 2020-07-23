@@ -115,6 +115,8 @@ static int (__cdecl *p__memicmp)(const char*, const char*, size_t);
 static int (__cdecl *p__memicmp_l)(const char*, const char*, size_t, _locale_t);
 static size_t (__cdecl *p___strncnt)(const char*, size_t);
 
+int CDECL __STRINGTOLD(_LDOUBLE*, char**, const char*, int);
+
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(hMsvcrt,y)
 #define SET(x,y) SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y)
 
@@ -4230,6 +4232,63 @@ static void test_wcscmp(void)
     ok(!r, "wcscmp returned %d\n", r);
 }
 
+static const char* debugstr_ldouble(_LDOUBLE *v)
+{
+    static char buf[2 * ARRAY_SIZE(v->ld) + 1];
+    int i;
+
+    for(i=0; i<ARRAY_SIZE(v->ld); i++)
+    {
+        buf[2*i] = v->ld[i] / 16 + '0';
+        if(buf[2*i] > '9') buf[2*i] -= 10 + '0' - 'a';
+        buf[2*i+1] = v->ld[i] % 16 + '0';
+        if(buf[2*i+1] > '9') buf[2*i+1] -= 10 + '0' - 'a';
+    }
+    buf[2 * ARRAY_SIZE(v->ld)] = 0;
+    return buf;
+}
+
+static void test___STRINGTOLD(void)
+{
+    static const struct {
+        const char *str;
+        int endptr;
+        int r;
+        _LDOUBLE v;
+        BOOL todo;
+    } tests[] = {
+        { "0", 1 },
+        { "nan", 0, 4 },
+        { "inf", 0, 4 },
+        { "-0.0", 4, 0, {{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80 }} },
+        { "1e0", 3, 0, {{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0xff, 0x3f }} },
+        { "1.7976931348623158e+308", 23, 0, {{ 0xaf, 0xfb, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfe, 0x43 }} },
+        { "1.7976931348623159e+308", 23, 0, {{ 0xb1, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfe, 0x43 }} },
+        { "3.65e-4951", 10, 0, {{ 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }} },
+        { "1.82e-4951", 10, 0, {{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }}, TRUE },
+        { "1e-99999", 8, 1, {{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }} },
+        { "1.18e+4932", 10, 0, {{ 0x25, 0x75, 0x06, 0x68, 0x8a, 0xf1, 0xe7, 0xfd, 0xfe, 0x7f }} },
+        { "1.19e+4932", 10, 2, {{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0xff, 0x7f }} },
+        { "1e+99999", 8, 2, {{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0xff, 0x7f }} },
+    };
+
+    char *endptr;
+    _LDOUBLE v;
+    int i, r;
+
+    for(i=0; i<ARRAY_SIZE(tests); i++)
+    {
+        errno = 0xdeadbeef;
+        r = __STRINGTOLD(&v, &endptr, tests[i].str, 0);
+        todo_wine_if(tests[i].todo)
+            ok(r == tests[i].r, "%d) r = %d\n", i, r);
+        ok(endptr == tests[i].str + tests[i].endptr, "%d) endptr = %p, expected %p\n",
+                i, endptr, tests[i].str+tests[i].endptr);
+        ok(!memcmp(&v, &tests[i].v, sizeof(v)), "%d) v = %s\n", i, debugstr_ldouble(&v));
+        ok(errno == 0xdeadbeef, "%d) errno = %x\n", i, errno);
+    }
+}
+
 START_TEST(string)
 {
     char mem[100];
@@ -4380,4 +4439,5 @@ START_TEST(string)
     test_strstr();
     test_iswdigit();
     test_wcscmp();
+    test___STRINGTOLD();
 }
