@@ -41,12 +41,6 @@
 
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
-static HRESULT (WINAPI *pDirectSoundEnumerateA)(LPDSENUMCALLBACKA,LPVOID)=NULL;
-static HRESULT (WINAPI *pDirectSoundCreate)(LPCGUID,LPDIRECTSOUND*,
-    LPUNKNOWN)=NULL;
-
-static BOOL gotdx8;
-
 static void IDirectSound_test(LPDIRECTSOUND dso, BOOL initialized,
                               LPCGUID lpGuid)
 {
@@ -235,28 +229,28 @@ static void IDirectSound_tests(void)
        "should have failed: %08x\n",rc);
 
     /* try with no device specified */
-    rc=pDirectSoundCreate(NULL,&dso,NULL);
+    rc = DirectSoundCreate(NULL, &dso, NULL);
     ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED||rc==E_FAIL,
        "DirectSoundCreate(NULL) failed: %08x\n",rc);
     if (rc==S_OK && dso)
         IDirectSound_test(dso, TRUE, NULL);
 
     /* try with default playback device specified */
-    rc=pDirectSoundCreate(&DSDEVID_DefaultPlayback,&dso,NULL);
+    rc = DirectSoundCreate(&DSDEVID_DefaultPlayback, &dso, NULL);
     ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED||rc==E_FAIL,
        "DirectSoundCreate(DSDEVID_DefaultPlayback) failed: %08x\n", rc);
     if (rc==DS_OK && dso)
         IDirectSound_test(dso, TRUE, NULL);
 
     /* try with default voice playback device specified */
-    rc=pDirectSoundCreate(&DSDEVID_DefaultVoicePlayback,&dso,NULL);
+    rc = DirectSoundCreate(&DSDEVID_DefaultVoicePlayback, &dso, NULL);
     ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED||rc==E_FAIL,
        "DirectSoundCreate(DSDEVID_DefaultVoicePlayback) failed: %08x\n", rc);
     if (rc==DS_OK && dso)
         IDirectSound_test(dso, TRUE, NULL);
 
     /* try with a bad device specified */
-    rc=pDirectSoundCreate(&DSDEVID_DefaultVoiceCapture,&dso,NULL);
+    rc = DirectSoundCreate(&DSDEVID_DefaultVoiceCapture, &dso, NULL);
     ok(rc==DSERR_NODRIVER,"DirectSoundCreate(DSDEVID_DefaultVoiceCapture) "
        "should have failed: %08x\n",rc);
     if (rc==DS_OK && dso)
@@ -270,12 +264,12 @@ static HRESULT test_dsound(LPGUID lpGuid)
     int ref;
 
     /* DSOUND: Error: Invalid interface buffer */
-    rc=pDirectSoundCreate(lpGuid,0,NULL);
+    rc = DirectSoundCreate(lpGuid, 0, NULL);
     ok(rc==DSERR_INVALIDPARAM,"DirectSoundCreate() should have returned "
        "DSERR_INVALIDPARAM, returned: %08x\n",rc);
 
     /* Create the DirectSound object */
-    rc=pDirectSoundCreate(lpGuid,&dso,NULL);
+    rc = DirectSoundCreate(lpGuid, &dso, NULL);
     ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED||rc==E_FAIL,
        "DirectSoundCreate() failed: %08x\n",rc);
     if (rc!=DS_OK)
@@ -292,13 +286,13 @@ static HRESULT test_dsound(LPGUID lpGuid)
         IDirectSound_test(dso, FALSE, lpGuid);
 
     /* Create a DirectSound object */
-    rc=pDirectSoundCreate(lpGuid,&dso,NULL);
+    rc = DirectSoundCreate(lpGuid, &dso, NULL);
     ok(rc==DS_OK,"DirectSoundCreate() failed: %08x\n",rc);
     if (rc==DS_OK) {
         LPDIRECTSOUND dso1=NULL;
 
         /* Create a second DirectSound object */
-        rc=pDirectSoundCreate(lpGuid,&dso1,NULL);
+        rc = DirectSoundCreate(lpGuid, &dso1, NULL);
         ok(rc==DS_OK,"DirectSoundCreate() failed: %08x\n",rc);
         if (rc==DS_OK) {
             /* Release the second DirectSound object */
@@ -318,7 +312,7 @@ static HRESULT test_dsound(LPGUID lpGuid)
         return rc;
 
     /* Create a DirectSound object */
-    rc=pDirectSoundCreate(lpGuid,&dso,NULL);
+    rc = DirectSoundCreate(lpGuid, &dso, NULL);
     ok(rc==DS_OK,"DirectSoundCreate() failed: %08x\n",rc);
     if (rc==DS_OK) {
         LPDIRECTSOUNDBUFFER secondary;
@@ -374,7 +368,7 @@ static HRESULT test_primary(LPGUID lpGuid)
     int ref;
 
     /* Create the DirectSound object */
-    rc=pDirectSoundCreate(lpGuid,&dso,NULL);
+    rc = DirectSoundCreate(lpGuid, &dso, NULL);
     ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED,
        "DirectSoundCreate() failed: %08x\n",rc);
     if (rc!=DS_OK)
@@ -545,7 +539,7 @@ static HRESULT test_primary_secondary(LPGUID lpGuid)
     int f,ref,tag;
 
     /* Create the DirectSound object */
-    rc=pDirectSoundCreate(lpGuid,&dso,NULL);
+    rc = DirectSoundCreate(lpGuid, &dso, NULL);
     ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED,
        "DirectSoundCreate() failed: %08x\n",rc);
     if (rc!=DS_OK)
@@ -687,7 +681,7 @@ static HRESULT test_secondary(LPGUID lpGuid)
     int ref;
 
     /* Create the DirectSound object */
-    rc=pDirectSoundCreate(lpGuid,&dso,NULL);
+    rc = DirectSoundCreate(lpGuid, &dso, NULL);
     ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED,
        "DirectSoundCreate() failed: %08x\n",rc);
     if (rc!=DS_OK)
@@ -751,30 +745,16 @@ static HRESULT test_secondary(LPGUID lpGuid)
                                         wfx.nBlockAlign);
             bufdesc.lpwfxFormat=&wfx;
             rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
-            if (gotdx8 || wfx.wBitsPerSample <= 16 || wfx.wFormatTag == WAVE_FORMAT_IEEE_FLOAT)
-            {
-                if (wfx.wBitsPerSample > 16)
-                    ok(broken((rc == DSERR_CONTROLUNAVAIL || rc == DSERR_INVALIDCALL || rc == DSERR_INVALIDPARAM /* 2003 */) && !secondary)
-                        || rc == DS_OK, /* driver dependent? */
-                        "IDirectSound_CreateSoundBuffer() "
-                        "should have returned (DSERR_CONTROLUNAVAIL or DSERR_INVALIDCALL) "
-                        "and NULL, returned: %08x %p\n", rc, secondary);
-                else
-                    ok((rc==DS_OK && secondary!=NULL) || broken(rc == DSERR_CONTROLUNAVAIL), /* vmware drivers on w2k */
-                        "IDirectSound_CreateSoundBuffer() failed to create a secondary buffer %08x\n",rc);
-            }
-            else
-                ok(rc==E_INVALIDARG, "Creating %d bpp buffer on dx < 8 returned: %p %08x\n",
-                   wfx.wBitsPerSample, secondary, rc);
 
-            if (!gotdx8)
-            {
-                win_skip("Not doing the WAVE_FORMAT_EXTENSIBLE tests\n");
-                /* Apparently they succeed with bogus values,
-                 * which means that older dsound doesn't look at them
-                 */
-                goto no_wfe;
-            }
+            if (wfx.wBitsPerSample > 16)
+                ok(broken((rc == DSERR_CONTROLUNAVAIL || rc == DSERR_INVALIDCALL || rc == DSERR_INVALIDPARAM /* 2003 */) && !secondary)
+                    || rc == DS_OK, /* driver dependent? */
+                    "IDirectSound_CreateSoundBuffer() "
+                    "should have returned (DSERR_CONTROLUNAVAIL or DSERR_INVALIDCALL) "
+                    "and NULL, returned: %08x %p\n", rc, secondary);
+            else
+                ok((rc==DS_OK && secondary!=NULL) || broken(rc == DSERR_CONTROLUNAVAIL), /* vmware drivers on w2k */
+                    "IDirectSound_CreateSoundBuffer() failed to create a secondary buffer %08x\n",rc);
 
             if (secondary)
                 IDirectSoundBuffer_Release(secondary);
@@ -853,7 +833,6 @@ static HRESULT test_secondary(LPGUID lpGuid)
             ok(rc==DS_OK && secondary!=NULL,
                 "IDirectSound_CreateSoundBuffer() failed to create a secondary buffer %08x\n",rc);
 
-no_wfe:
             if (rc==DS_OK && secondary!=NULL) {
                 if (winetest_interactive) {
                     trace("  Testing a secondary buffer at %dx%dx%d (fmt=%d) "
@@ -902,7 +881,7 @@ static HRESULT test_block_align(LPGUID lpGuid)
     int ref;
 
     /* Create the DirectSound object */
-    rc=pDirectSoundCreate(lpGuid,&dso,NULL);
+    rc = DirectSoundCreate(lpGuid, &dso, NULL);
     ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED,
        "DirectSoundCreate() failed: %08x\n",rc);
     if (rc!=DS_OK)
@@ -973,7 +952,7 @@ static HRESULT test_frequency(LPGUID lpGuid)
                     48000, 96000 };
 
     /* Create the DirectSound object */
-    rc=pDirectSoundCreate(lpGuid,&dso,NULL);
+    rc = DirectSoundCreate(lpGuid, &dso, NULL);
     ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED,
        "DirectSoundCreate() failed: %08x\n",rc);
     if (rc!=DS_OK)
@@ -1104,7 +1083,7 @@ static HRESULT test_duplicate(LPGUID lpGuid)
     int ref;
 
     /* Create the DirectSound object */
-    rc=pDirectSoundCreate(lpGuid,&dso,NULL);
+    rc = DirectSoundCreate(lpGuid, &dso, NULL);
     ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED,
        "DirectSoundCreate() failed: %08x\n",rc);
     if (rc!=DS_OK)
@@ -1431,11 +1410,6 @@ static void perform_invalid_fmt_tests(const char *testname, IDirectSound *dso, I
         }
     }
 
-    if(!gotdx8){
-        win_skip("Not doing the WAVE_FORMAT_EXTENSIBLE tests\n");
-        return;
-    }
-
     fmtex.Format.cbSize = sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX);
     fmtex.Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
     fmtex.Format.nChannels = 2;
@@ -1510,7 +1484,7 @@ static HRESULT test_invalid_fmts(LPGUID lpGuid)
     DSBUFFERDESC bufdesc;
 
     /* Create the DirectSound object */
-    rc=pDirectSoundCreate(lpGuid,&dso,NULL);
+    rc = DirectSoundCreate(lpGuid, &dso, NULL);
     ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED,
        "DirectSoundCreate() failed: %08x\n",rc);
     if (rc!=DS_OK)
@@ -1556,7 +1530,7 @@ static void test_notifications(LPGUID lpGuid)
     DWORD expect, status;
     int cycles;
 
-    rc = pDirectSoundCreate(lpGuid, &dso, NULL);
+    rc = DirectSoundCreate(lpGuid, &dso, NULL);
     ok(rc == DS_OK || rc == DSERR_NODRIVER || rc == DSERR_ALLOCATED,
            "DirectSoundCreate() failed: %08x\n", rc);
     if(rc != DS_OK)
@@ -1683,7 +1657,7 @@ static BOOL WINAPI dsenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
 static void dsound_tests(void)
 {
     HRESULT rc;
-    rc=pDirectSoundEnumerateA(&dsenum_callback,NULL);
+    rc = DirectSoundEnumerateA(&dsenum_callback, NULL);
     ok(rc==DS_OK,"DirectSoundEnumerateA() failed: %08x\n",rc);
 }
 
@@ -1699,7 +1673,7 @@ static void test_hw_buffers(void)
     UINT i;
     HRESULT hr;
 
-    hr = pDirectSoundCreate(NULL, &ds, NULL);
+    hr = DirectSoundCreate(NULL, &ds, NULL);
     ok(hr == S_OK || hr == DSERR_NODRIVER || hr == DSERR_ALLOCATED || hr == E_FAIL,
             "DirectSoundCreate failed: %08x\n", hr);
     if(hr != S_OK)
@@ -1801,38 +1775,11 @@ static void test_hw_buffers(void)
 
 START_TEST(dsound)
 {
-    HMODULE hDsound;
-
     CoInitialize(NULL);
 
-    hDsound = LoadLibraryA("dsound.dll");
-    if (hDsound)
-    {
-        BOOL ret;
-
-        ret = FreeLibrary(hDsound);
-        ok( ret, "FreeLibrary(1) returned %d\n", GetLastError());
-    }
-
-    hDsound = LoadLibraryA("dsound.dll");
-    if (hDsound)
-    {
-
-        pDirectSoundEnumerateA = (void*)GetProcAddress(hDsound,
-            "DirectSoundEnumerateA");
-        pDirectSoundCreate = (void*)GetProcAddress(hDsound,
-            "DirectSoundCreate");
-
-        gotdx8 = !!GetProcAddress(hDsound, "DirectSoundCreate8");
-
-        IDirectSound_tests();
-        dsound_tests();
-        test_hw_buffers();
-
-        FreeLibrary(hDsound);
-    }
-    else
-        win_skip("dsound.dll not found - skipping all tests\n");
+    IDirectSound_tests();
+    dsound_tests();
+    test_hw_buffers();
 
     CoUninitialize();
 }

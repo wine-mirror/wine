@@ -32,9 +32,6 @@
 
 #define NOTIFICATIONS    5
 
-static HRESULT (WINAPI *pDirectSoundCaptureCreate)(LPCGUID,LPDIRECTSOUNDCAPTURE*,LPUNKNOWN)=NULL;
-static HRESULT (WINAPI *pDirectSoundCaptureEnumerateA)(LPDSENUMCALLBACKA,LPVOID)=NULL;
-
 static const char * get_format_str(WORD format)
 {
     static char msg[32];
@@ -232,28 +229,28 @@ static void test_capture(void)
        "should have failed: %08x\n",rc);
 
     /* try with no device specified */
-    rc=pDirectSoundCaptureCreate(NULL,&dsco,NULL);
+    rc = DirectSoundCaptureCreate(NULL, &dsco, NULL);
     ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED||rc==E_FAIL,
        "DirectSoundCaptureCreate(NULL) failed: %08x\n",rc);
     if (rc==S_OK && dsco)
         IDirectSoundCapture_test(dsco, TRUE, NULL);
 
     /* try with default capture device specified */
-    rc=pDirectSoundCaptureCreate(&DSDEVID_DefaultCapture,&dsco,NULL);
+    rc = DirectSoundCaptureCreate(&DSDEVID_DefaultCapture, &dsco, NULL);
     ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED||rc==E_FAIL,
        "DirectSoundCaptureCreate(DSDEVID_DefaultCapture) failed: %08x\n", rc);
     if (rc==DS_OK && dsco)
         IDirectSoundCapture_test(dsco, TRUE, NULL);
 
     /* try with default voice capture device specified */
-    rc=pDirectSoundCaptureCreate(&DSDEVID_DefaultVoiceCapture,&dsco,NULL);
+    rc = DirectSoundCaptureCreate(&DSDEVID_DefaultVoiceCapture, &dsco, NULL);
     ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED||rc==E_FAIL,
        "DirectSoundCaptureCreate(DSDEVID_DefaultVoiceCapture) failed: %08x\n", rc);
     if (rc==DS_OK && dsco)
         IDirectSoundCapture_test(dsco, TRUE, NULL);
 
     /* try with a bad device specified */
-    rc=pDirectSoundCaptureCreate(&DSDEVID_DefaultVoicePlayback,&dsco,NULL);
+    rc = DirectSoundCaptureCreate(&DSDEVID_DefaultVoicePlayback, &dsco, NULL);
     ok(rc==DSERR_NODRIVER,
        "DirectSoundCaptureCreate(DSDEVID_DefaultVoicePlatback) "
        "should have failed: %08x\n",rc);
@@ -442,11 +439,11 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
 
     /* Private dsound.dll: Error: Invalid interface buffer */
     trace("*** Testing %s - %s ***\n",lpcstrDescription,lpcstrModule);
-    rc=pDirectSoundCaptureCreate(lpGuid,NULL,NULL);
+    rc = DirectSoundCaptureCreate(lpGuid, NULL, NULL);
     ok(rc==DSERR_INVALIDPARAM,"DirectSoundCaptureCreate() should have "
        "returned DSERR_INVALIDPARAM, returned: %08x\n",rc);
 
-    rc=pDirectSoundCaptureCreate(lpGuid,&dsco,NULL);
+    rc = DirectSoundCaptureCreate(lpGuid, &dsco, NULL);
     ok((rc==DS_OK)||(rc==DSERR_NODRIVER)||(rc==E_FAIL)||(rc==DSERR_ALLOCATED),
        "DirectSoundCaptureCreate() failed: %08x\n",rc);
     if (rc!=DS_OK) {
@@ -669,7 +666,7 @@ EXIT:
 static void test_enumerate(void)
 {
     HRESULT rc;
-    rc=pDirectSoundCaptureEnumerateA(&dscenum_callback,NULL);
+    rc = DirectSoundCaptureEnumerateA(dscenum_callback, NULL);
     ok(rc==DS_OK,"DirectSoundCaptureEnumerateA() failed: %08x\n", rc);
 }
 
@@ -684,12 +681,12 @@ static void test_COM(void)
     HRESULT hr;
     ULONG refcount;
 
-    hr = pDirectSoundCaptureCreate(NULL, &dsc, (IUnknown*)0xdeadbeef);
+    hr = DirectSoundCaptureCreate(NULL, &dsc, (IUnknown *)0xdeadbeef);
     ok(hr == DSERR_NOAGGREGATION,
        "DirectSoundCaptureCreate failed: %08x, expected DSERR_NOAGGREGATION\n", hr);
     ok(dsc == (IDirectSoundCapture*)0xdeadbeef, "dsc = %p\n", dsc);
 
-    hr = pDirectSoundCaptureCreate(NULL, &dsc, NULL);
+    hr = DirectSoundCaptureCreate(NULL, &dsc, NULL);
     if (hr == DSERR_NODRIVER) {
         skip("No driver\n");
         return;
@@ -755,27 +752,11 @@ static void test_COM(void)
 
 START_TEST(capture)
 {
-    HMODULE hDsound;
-
     CoInitialize(NULL);
-
-    hDsound = LoadLibraryA("dsound.dll");
-    if (!hDsound) {
-        skip("dsound.dll not found - skipping all tests\n");
-        return;
-    }
-
-    pDirectSoundCaptureCreate = (void*)GetProcAddress(hDsound, "DirectSoundCaptureCreate");
-    pDirectSoundCaptureEnumerateA = (void*)GetProcAddress(hDsound, "DirectSoundCaptureEnumerateA");
-    if (!pDirectSoundCaptureCreate || !pDirectSoundCaptureEnumerateA) {
-        skip("DirectSoundCapture{Create,Enumerate} missing - skipping all tests\n");
-        return;
-    }
 
     test_COM();
     test_capture();
     test_enumerate();
 
-    FreeLibrary(hDsound);
     CoUninitialize();
 }

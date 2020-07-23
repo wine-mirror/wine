@@ -29,10 +29,6 @@
 
 #include "dsound_test.h"
 
-static HRESULT (WINAPI *pDirectSoundFullDuplexCreate)(LPCGUID, LPCGUID,
-    LPCDSCBUFFERDESC, LPCDSBUFFERDESC, HWND, DWORD, LPDIRECTSOUNDFULLDUPLEX *,
-    LPDIRECTSOUNDCAPTUREBUFFER8*, LPDIRECTSOUNDBUFFER8*, LPUNKNOWN)=NULL;
-
 static void IDirectSoundFullDuplex_test(LPDIRECTSOUNDFULLDUPLEX dsfdo,
                                         BOOL initialized, LPCGUID lpGuidCapture,
                                         LPCGUID lpGuidRender)
@@ -181,19 +177,17 @@ static void IDirectSoundFullDuplex_tests(void)
     DSBufferDesc.lpwfxFormat = &wfex;
 
     /* try with no device specified */
-    rc=pDirectSoundFullDuplexCreate(NULL,NULL,&DSCBufferDesc,&DSBufferDesc,
-                                    get_hwnd(),DSSCL_EXCLUSIVE ,&dsfdo,&pDSCBuffer8,
-                                    &pDSBuffer8,NULL);
+    rc = DirectSoundFullDuplexCreate(NULL, NULL, &DSCBufferDesc, &DSBufferDesc,
+            get_hwnd(), DSSCL_EXCLUSIVE, &dsfdo, &pDSCBuffer8, &pDSBuffer8, NULL);
     ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED||rc==E_FAIL||rc==DSERR_INVALIDCALL,
        "DirectSoundFullDuplexCreate(NULL,NULL) failed: %08x\n",rc);
     if (rc==S_OK && dsfdo)
         IDirectSoundFullDuplex_test(dsfdo, TRUE, NULL, NULL);
 
     /* try with default devices specified */
-    rc=pDirectSoundFullDuplexCreate(&DSDEVID_DefaultCapture,
-                                    &DSDEVID_DefaultPlayback,&DSCBufferDesc,
-                                    &DSBufferDesc,get_hwnd(),DSSCL_EXCLUSIVE,&dsfdo,
-                                    &pDSCBuffer8,&pDSBuffer8,NULL);
+    rc = DirectSoundFullDuplexCreate(&DSDEVID_DefaultCapture,
+            &DSDEVID_DefaultPlayback, &DSCBufferDesc, &DSBufferDesc, get_hwnd(),
+            DSSCL_EXCLUSIVE, &dsfdo, &pDSCBuffer8,&pDSBuffer8, NULL);
     ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED||rc==E_FAIL||rc==DSERR_INVALIDCALL,
        "DirectSoundFullDuplexCreate(DSDEVID_DefaultCapture,"
        "DSDEVID_DefaultPlayback) failed: %08x\n", rc);
@@ -201,10 +195,9 @@ static void IDirectSoundFullDuplex_tests(void)
         IDirectSoundFullDuplex_test(dsfdo, TRUE, NULL, NULL);
 
     /* try with default voice devices specified */
-    rc=pDirectSoundFullDuplexCreate(&DSDEVID_DefaultVoiceCapture,
-                                    &DSDEVID_DefaultVoicePlayback,
-                                    &DSCBufferDesc,&DSBufferDesc,get_hwnd(),DSSCL_EXCLUSIVE,
-                                    &dsfdo,&pDSCBuffer8,&pDSBuffer8,NULL);
+    rc = DirectSoundFullDuplexCreate(&DSDEVID_DefaultVoiceCapture,
+            &DSDEVID_DefaultVoicePlayback, &DSCBufferDesc, &DSBufferDesc,
+            get_hwnd(), DSSCL_EXCLUSIVE, &dsfdo, &pDSCBuffer8, &pDSBuffer8, NULL);
     ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED||rc==E_FAIL||rc==DSERR_INVALIDCALL,
        "DirectSoundFullDuplexCreate(DSDEVID_DefaultVoiceCapture,"
        "DSDEVID_DefaultVoicePlayback) failed: %08x\n", rc);
@@ -212,10 +205,9 @@ static void IDirectSoundFullDuplex_tests(void)
         IDirectSoundFullDuplex_test(dsfdo, TRUE, NULL, NULL);
 
     /* try with bad devices specified */
-    rc=pDirectSoundFullDuplexCreate(&DSDEVID_DefaultVoicePlayback,
-                                    &DSDEVID_DefaultVoiceCapture,
-                                    &DSCBufferDesc,&DSBufferDesc,get_hwnd(),DSSCL_EXCLUSIVE,
-                                    &dsfdo,&pDSCBuffer8,&pDSBuffer8,NULL);
+    rc = DirectSoundFullDuplexCreate(&DSDEVID_DefaultVoicePlayback,
+            &DSDEVID_DefaultVoiceCapture, &DSCBufferDesc, &DSBufferDesc,
+            get_hwnd(), DSSCL_EXCLUSIVE, &dsfdo, &pDSCBuffer8, &pDSBuffer8, NULL);
     ok(rc==DSERR_NODRIVER||rc==DSERR_INVALIDCALL,
        "DirectSoundFullDuplexCreate(DSDEVID_DefaultVoicePlayback,"
        "DSDEVID_DefaultVoiceCapture) should have failed: %08x\n", rc);
@@ -336,26 +328,10 @@ static void test_COM(void)
 
 START_TEST(duplex)
 {
-    HMODULE hDsound;
-
     CoInitialize(NULL);
 
-    hDsound = LoadLibraryA("dsound.dll");
-    if (hDsound)
-    {
-
-        pDirectSoundFullDuplexCreate=(void*)GetProcAddress(hDsound,
-            "DirectSoundFullDuplexCreate");
-        if (pDirectSoundFullDuplexCreate) {
-            test_COM();
-            IDirectSoundFullDuplex_tests();
-        } else
-            skip("DirectSoundFullDuplexCreate missing - skipping all tests\n");
-
-        FreeLibrary(hDsound);
-    }
-    else
-        skip("dsound.dll not found - skipping all tests\n");
+    test_COM();
+    IDirectSoundFullDuplex_tests();
 
     CoUninitialize();
 }

@@ -34,9 +34,6 @@
 #include "ksmedia.h"
 #include "dsound_test.h"
 
-static HRESULT (WINAPI *pDirectSoundEnumerateA)(LPDSENUMCALLBACKA,LPVOID)=NULL;
-static HRESULT (WINAPI *pDirectSoundCreate8)(LPCGUID,LPDIRECTSOUND8*,LPUNKNOWN)=NULL;
-
 typedef struct {
     char* wave;
     DWORD wave_len;
@@ -544,7 +541,7 @@ static HRESULT test_secondary8(LPGUID lpGuid, BOOL play,
     int ref;
 
     /* Create the DirectSound object */
-    rc=pDirectSoundCreate8(lpGuid,&dso,NULL);
+    rc = DirectSoundCreate8(lpGuid, &dso, NULL);
     ok(rc==DS_OK||rc==DSERR_NODRIVER,"DirectSoundCreate8() failed: %08x\n", rc);
     if (rc!=DS_OK)
         return rc;
@@ -822,7 +819,7 @@ static HRESULT test_for_driver8(LPGUID lpGuid)
     int ref;
 
     /* Create the DirectSound object */
-    rc=pDirectSoundCreate8(lpGuid,&dso,NULL);
+    rc = DirectSoundCreate8(lpGuid, &dso, NULL);
     ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED||rc==E_FAIL,
        "DirectSoundCreate8() failed: %08x\n",rc);
     if (rc!=DS_OK)
@@ -846,7 +843,7 @@ static HRESULT test_primary8(LPGUID lpGuid)
     int ref, i;
 
     /* Create the DirectSound object */
-    rc=pDirectSoundCreate8(lpGuid,&dso,NULL);
+    rc = DirectSoundCreate8(lpGuid, &dso, NULL);
     ok(rc==DS_OK||rc==DSERR_NODRIVER,"DirectSoundCreate8() failed: %08x\n", rc);
     if (rc!=DS_OK)
         return rc;
@@ -928,7 +925,7 @@ static HRESULT test_primary_3d8(LPGUID lpGuid)
     int ref;
 
     /* Create the DirectSound object */
-    rc=pDirectSoundCreate8(lpGuid,&dso,NULL);
+    rc = DirectSoundCreate8(lpGuid, &dso, NULL);
     ok(rc==DS_OK||rc==DSERR_NODRIVER,"DirectSoundCreate8() failed: %08x\n", rc);
     if (rc!=DS_OK)
         return rc;
@@ -999,7 +996,7 @@ static HRESULT test_primary_3d_with_listener8(LPGUID lpGuid)
     int ref;
 
     /* Create the DirectSound object */
-    rc=pDirectSoundCreate8(lpGuid,&dso,NULL);
+    rc = DirectSoundCreate8(lpGuid, &dso, NULL);
     ok(rc==DS_OK||rc==DSERR_NODRIVER,"DirectSoundCreate8() failed: %08x\n", rc);
     if (rc!=DS_OK)
         return rc;
@@ -1136,34 +1133,16 @@ static BOOL WINAPI dsenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
 static void ds3d8_tests(void)
 {
     HRESULT rc;
-    rc=pDirectSoundEnumerateA(&dsenum_callback,NULL);
+    rc = DirectSoundEnumerateA(dsenum_callback, NULL);
     ok(rc==DS_OK,"DirectSoundEnumerateA() failed: %08x\n",rc);
     trace("tested %u DirectSound drivers\n", driver_count);
 }
 
 START_TEST(ds3d8)
 {
-    HMODULE hDsound;
-
     CoInitialize(NULL);
 
-    hDsound = LoadLibraryA("dsound.dll");
-    if (hDsound)
-    {
-
-        pDirectSoundEnumerateA = (void*)GetProcAddress(hDsound,
-            "DirectSoundEnumerateA");
-        pDirectSoundCreate8 = (void*)GetProcAddress(hDsound,
-            "DirectSoundCreate8");
-        if (pDirectSoundCreate8)
-            ds3d8_tests();
-        else
-            skip("DirectSoundCreate8 missing - skipping all tests\n");
-
-        FreeLibrary(hDsound);
-    }
-    else
-        skip("dsound.dll not found - skipping all tests\n");
+    ds3d8_tests();
 
     CoUninitialize();
 }
