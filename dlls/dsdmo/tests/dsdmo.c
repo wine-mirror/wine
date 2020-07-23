@@ -162,6 +162,141 @@ static void test_interfaces(const GUID *clsid, const GUID *iid)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+static void build_pcm_format(WAVEFORMATEX *format, WORD tag, WORD depth, DWORD sample_rate, WORD channels)
+{
+    format->wFormatTag = tag;
+    format->wBitsPerSample = depth;
+    format->nChannels = channels;
+    format->nSamplesPerSec = sample_rate;
+    format->nBlockAlign = channels * depth / 8;
+    format->nAvgBytesPerSec = sample_rate * channels * depth / 8;
+    format->cbSize = 0;
+}
+
+static void test_media_types(const GUID *clsid)
+{
+    WAVEFORMATEX wfx;
+    DMO_MEDIA_TYPE mt =
+    {
+        .majortype = MEDIATYPE_Audio,
+        .subtype = MEDIASUBTYPE_PCM,
+        .formattype = FORMAT_WaveFormatEx,
+        .cbFormat = sizeof(wfx),
+        .pbFormat = (BYTE *)&wfx,
+    };
+    IMediaObject *dmo;
+    unsigned int i, j;
+    WORD channels;
+    HRESULT hr;
+    ULONG ref;
+
+    static const DWORD sample_rates[] = {8000, 11025, 22050, 44100, 48000, 96000};
+    static const struct
+    {
+        WORD format;
+        WORD depth;
+    }
+    depths[] =
+    {
+        {WAVE_FORMAT_PCM, 8},
+        {WAVE_FORMAT_PCM, 16},
+        {WAVE_FORMAT_IEEE_FLOAT, 32},
+    };
+
+    hr = CoCreateInstance(clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IMediaObject, (void **)&dmo);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    if (hr != S_OK)
+        return;
+
+    build_pcm_format(&wfx, WAVE_FORMAT_PCM, 16, 44100, 2);
+
+    mt.majortype = MEDIATYPE_Video;
+    hr = IMediaObject_SetInputType(dmo, 0, &mt, 0);
+    todo_wine ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+    mt.majortype = GUID_NULL;
+    hr = IMediaObject_SetInputType(dmo, 0, &mt, 0);
+    todo_wine ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+    mt.majortype = MEDIATYPE_Audio;
+
+    mt.subtype = MEDIASUBTYPE_RGB8;
+    hr = IMediaObject_SetInputType(dmo, 0, &mt, 0);
+    todo_wine ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+    mt.subtype = GUID_NULL;
+    hr = IMediaObject_SetInputType(dmo, 0, &mt, 0);
+    todo_wine ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+    mt.subtype = MEDIASUBTYPE_IEEE_FLOAT;
+    hr = IMediaObject_SetInputType(dmo, 0, &mt, 0);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    mt.subtype = MEDIASUBTYPE_PCM;
+
+    mt.formattype = FORMAT_VideoInfo;
+    hr = IMediaObject_SetInputType(dmo, 0, &mt, 0);
+    todo_wine ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+    mt.formattype = FORMAT_None;
+    hr = IMediaObject_SetInputType(dmo, 0, &mt, 0);
+    todo_wine ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+    mt.formattype = GUID_NULL;
+    hr = IMediaObject_SetInputType(dmo, 0, &mt, 0);
+    todo_wine ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+    mt.formattype = FORMAT_WaveFormatEx;
+
+    for (i = 0; i < ARRAY_SIZE(sample_rates); ++i)
+    {
+        for (j = 0; j < ARRAY_SIZE(depths); ++j)
+        {
+            /* Waves reverberation is documented as not supporting 8-bit PCM. */
+            if (IsEqualGUID(clsid, &GUID_DSFX_WAVES_REVERB) && depths[j].depth == 8)
+                continue;
+
+            for (channels = 1; channels <= 2; ++channels)
+            {
+                build_pcm_format(&wfx, depths[j].format, depths[j].depth, sample_rates[i], channels);
+
+                hr = IMediaObject_SetInputType(dmo, 0, &mt, 0);
+                todo_wine ok(hr == S_OK, "Got hr %#x for %u Hz, %u channels, format %#x, depth %u.\n",
+                        hr, sample_rates[i], channels, depths[j].format, depths[j].depth);
+
+                /* The output type must match the input type. */
+
+                build_pcm_format(&wfx, depths[j].format, depths[j].depth, sample_rates[i], 3 - channels);
+                hr = IMediaObject_SetOutputType(dmo, 0, &mt, 0);
+                todo_wine ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#x for %u Hz, %u channels, format %#x, depth %u.\n",
+                        hr, sample_rates[i], channels, depths[j].format, depths[j].depth);
+
+                build_pcm_format(&wfx, depths[j].format, depths[j].depth, 2 * sample_rates[i], channels);
+                hr = IMediaObject_SetOutputType(dmo, 0, &mt, 0);
+                todo_wine ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#x for %u Hz, %u channels, format %#x, depth %u.\n",
+                        hr, sample_rates[i], channels, depths[j].format, depths[j].depth);
+
+                build_pcm_format(&wfx, depths[j].format, 24 - depths[j].depth, sample_rates[i], channels);
+                hr = IMediaObject_SetOutputType(dmo, 0, &mt, 0);
+                todo_wine ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#x for %u Hz, %u channels, format %#x, depth %u.\n",
+                        hr, sample_rates[i], channels, depths[j].format, depths[j].depth);
+
+                build_pcm_format(&wfx, depths[j].format, depths[j].depth, sample_rates[i], channels);
+                hr = IMediaObject_SetOutputType(dmo, 0, &mt, 0);
+                todo_wine ok(hr == S_OK, "Got hr %#x for %u Hz, %u channels, format %#x, depth %u.\n",
+                        hr, sample_rates[i], channels, depths[j].format, depths[j].depth);
+
+                hr = IMediaObject_SetInputType(dmo, 0, NULL, DMO_SET_TYPEF_CLEAR);
+                todo_wine ok(hr == S_OK, "Got hr %#x for %u Hz, %u channels, format %#x, depth %u.\n",
+                        hr, sample_rates[i], channels, depths[j].format, depths[j].depth);
+
+                hr = IMediaObject_SetOutputType(dmo, 0, NULL, DMO_SET_TYPEF_CLEAR);
+                todo_wine ok(hr == S_OK, "Got hr %#x for %u Hz, %u channels, format %#x, depth %u.\n",
+                        hr, sample_rates[i], channels, depths[j].format, depths[j].depth);
+
+                hr = IMediaObject_SetInputType(dmo, 0, NULL, DMO_SET_TYPEF_CLEAR);
+                todo_wine ok(hr == S_OK, "Got hr %#x for %u Hz, %u channels, format %#x, depth %u.\n",
+                        hr, sample_rates[i], channels, depths[j].format, depths[j].depth);
+            }
+        }
+    }
+
+    ref = IMediaObject_Release(dmo);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 static void test_chorus_parameters(void)
 {
     IDirectSoundFXChorus *chorus;
@@ -394,6 +529,7 @@ START_TEST(dsdmo)
     {
         test_aggregation(tests[i].clsid);
         test_interfaces(tests[i].clsid, tests[i].iid);
+        test_media_types(tests[i].clsid);
     }
 
     test_chorus_parameters();
