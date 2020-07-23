@@ -28,7 +28,8 @@ static const int p10s[] = { 1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 
 #define LIMB_MAX 1000000000     /* 10^9 */
 
 #define BNUM_PREC64 128         /* data size needed to store 64-bit double */
-/* bnum represents real number with fixed decimal point (after 2 limbs) */
+
+/* bnum represents real number with fixed decimal point */
 struct bnum {
     int b; /* least significant digit position */
     int e; /* most significant digit position + 1 */
@@ -39,14 +40,6 @@ struct bnum {
 static inline int bnum_idx(struct bnum *b, int idx)
 {
     return idx & (b->size - 1);
-}
-
-/* Returns integral part of bnum */
-static inline ULONGLONG bnum_to_mant(struct bnum *b)
-{
-    ULONGLONG ret = (ULONGLONG)b->data[bnum_idx(b, b->e-1)] * LIMB_MAX;
-    if(b->b != b->e-1) ret += b->data[bnum_idx(b, b->e-2)];
-    return ret;
 }
 
 /* Returns TRUE if new most significant limb was added */

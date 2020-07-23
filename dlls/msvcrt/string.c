@@ -597,6 +597,21 @@ static struct fpnum fpnum_parse16(MSVCRT_wchar_t get(void *ctx), void unget(void
 }
 #endif
 
+/* Converts first 3 limbs to ULONGLONG */
+/* Return FALSE on overflow */
+static inline BOOL bnum_to_mant(struct bnum *b, ULONGLONG *m)
+{
+    if(MSVCRT_UI64_MAX / LIMB_MAX / LIMB_MAX < b->data[bnum_idx(b, b->e-1)]) return FALSE;
+    *m = (ULONGLONG)b->data[bnum_idx(b, b->e-1)] * LIMB_MAX * LIMB_MAX;
+    if(b->b == b->e-1) return TRUE;
+    if(MSVCRT_UI64_MAX - *m < (ULONGLONG)b->data[bnum_idx(b, b->e-2)] * LIMB_MAX) return FALSE;
+    *m += (ULONGLONG)b->data[bnum_idx(b, b->e-2)] * LIMB_MAX;
+    if(b->b == b->e-2) return TRUE;
+    if(MSVCRT_UI64_MAX - *m < b->data[bnum_idx(b, b->e-3)]) return FALSE;
+    *m += b->data[bnum_idx(b, b->e-3)];
+    return TRUE;
+}
+
 struct fpnum fpnum_parse(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *ctx),
         void *ctx, MSVCRT_pthreadlocinfo locinfo)
 {
@@ -612,6 +627,7 @@ struct fpnum fpnum_parse(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *c
     struct bnum *b = (struct bnum*)bnum_data;
     enum fpmod round = FP_ROUND_ZERO;
     MSVCRT_wchar_t nch;
+    ULONGLONG m;
 
     nch = get(ctx);
     if(nch == '-') {
@@ -797,28 +813,33 @@ struct fpnum fpnum_parse(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *c
     if(dp-1 < MSVCRT_DBL_MIN_10_EXP-MSVCRT_DBL_DIG-18)
         return fpnum(sign, INT_MIN, 1, FP_ROUND_ZERO);
 
-    while(dp > 2*LIMB_DIGITS) {
+    while(dp > 3*LIMB_DIGITS) {
         if(bnum_rshift(b, 9)) dp -= LIMB_DIGITS;
         e2 += 9;
     }
-    while(dp <= LIMB_DIGITS) {
+    while(dp <= 2*LIMB_DIGITS) {
         if(bnum_lshift(b, 29)) dp += LIMB_DIGITS;
         e2 -= 29;
     }
-    while(b->data[bnum_idx(b, b->e-1)] < LIMB_MAX/10) {
+    /* Make sure most significant mantissa bit will be set */
+    while(b->data[bnum_idx(b, b->e-1)] <= 9) {
         bnum_lshift(b, 1);
         e2--;
+    }
+    while(!bnum_to_mant(b, &m)) {
+        bnum_rshift(b, 1);
+        e2++;
     }
 
     /* Check if fractional part is non-zero */
     /* Caution: it's only correct because bnum_to_mant returns more than 53 bits */
-    for(i=b->e-3; i>=b->b; i--) {
+    for(i=b->e-4; i>=b->b; i--) {
         if (!b->data[bnum_idx(b, b->b)]) continue;
         round = FP_ROUND_DOWN;
         break;
     }
 
-    return fpnum(sign, e2, bnum_to_mant(b), round);
+    return fpnum(sign, e2, m, round);
 }
 
 static MSVCRT_wchar_t strtod_str_get(void *ctx)
