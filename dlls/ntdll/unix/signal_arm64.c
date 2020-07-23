@@ -118,16 +118,16 @@ static pthread_key_t teb_key;
 
 struct arm64_thread_data
 {
-    void     *exit_frame;    /* exit frame pointer */
-    CONTEXT  *context;       /* context to set with SIGUSR2 */
+    void     *exit_frame;    /* 02f0 exit frame pointer */
+    CONTEXT  *context;       /* 02f8 context to set with SIGUSR2 */
 };
 
-C_ASSERT( sizeof(struct arm64_thread_data) <= sizeof(((TEB *)0)->SystemReserved2) );
-C_ASSERT( offsetof( TEB, SystemReserved2 ) + offsetof( struct arm64_thread_data, exit_frame ) == 0x300 );
+C_ASSERT( sizeof(struct arm64_thread_data) <= sizeof(((struct ntdll_thread_data *)0)->cpu_data) );
+C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct arm64_thread_data, exit_frame ) == 0x2f0 );
 
 static inline struct arm64_thread_data *arm64_thread_data(void)
 {
-    return (struct arm64_thread_data *)NtCurrentTeb()->SystemReserved2;
+    return (struct x86_thread_data *)ntdll_get_thread_data()->cpu_data;
 }
 
 
@@ -932,7 +932,7 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    "mov x18, x4\n\t"             /* teb */
                    /* store exit frame */
                    "mov x29, sp\n\t"
-                   "str x29, [x4, #0x300]\n\t"  /* arm64_thread_data()->exit_frame */
+                   "str x29, [x4, #0x2f0]\n\t"  /* arm64_thread_data()->exit_frame */
                    /* switch to thread stack */
                    "ldr x5, [x4, #8]\n\t"       /* teb->Tib.StackBase */
                    "sub sp, x5, #0x1000\n\t"
@@ -971,8 +971,8 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
 extern void DECLSPEC_NORETURN call_thread_exit_func( int status, void (*func)(int), TEB *teb );
 __ASM_GLOBAL_FUNC( call_thread_exit_func,
                    "stp x29, x30, [sp,#-16]!\n\t"
-                   "ldr x3, [x2, #0x300]\n\t"  /* arm64_thread_data()->exit_frame */
-                   "str xzr, [x2, #0x300]\n\t"
+                   "ldr x3, [x2, #0x2f0]\n\t"  /* arm64_thread_data()->exit_frame */
+                   "str xzr, [x2, #0x2f0]\n\t"
                    "cbz x3, 1f\n\t"
                    "mov sp, x3\n"
                    "1:\tldp x29, x30, [sp], #16\n\t"

@@ -2570,6 +2570,8 @@ static void init_teb( TEB *teb, PEB *peb )
     teb->Tib.Self = &teb->Tib;
     teb->Tib.ExceptionList = (void *)~0ul;
     teb->Tib.StackBase = (void *)~0ul;
+    teb->ActivationContextStackPointer = &teb->ActivationContextStack;
+    InitializeListHead( &teb->ActivationContextStack.FrameListCache );
     teb->StaticUnicodeString.Buffer = teb->StaticUnicodeBuffer;
     teb->StaticUnicodeString.MaximumLength = sizeof(teb->StaticUnicodeBuffer);
     thread_data->request_fd = -1;

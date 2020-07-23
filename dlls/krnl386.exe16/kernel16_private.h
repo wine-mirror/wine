@@ -304,8 +304,9 @@ struct kernel_thread_data
     WORD                htask16;        /* Win16 task handle */
     DWORD               sys_count[4];   /* syslevel mutex entry counters */
     struct tagSYSLEVEL *sys_mutex[4];   /* syslevel mutex pointers */
-    void               *pad[45];        /* change this if you add fields! */
 };
+
+C_ASSERT( sizeof(struct kernel_thread_data) <= sizeof(((TEB *)0)->SystemReserved1) );
 
 static inline struct kernel_thread_data *kernel_get_thread_data(void)
 {

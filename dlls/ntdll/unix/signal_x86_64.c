@@ -242,21 +242,21 @@ C_ASSERT( sizeof(struct stack_layout) == 0x630 ); /* Should match the size in ca
 
 struct amd64_thread_data
 {
-    DWORD_PTR dr0;           /* debug registers */
+    DWORD_PTR dr0;           /* 02f0 debug registers */
     DWORD_PTR dr1;
     DWORD_PTR dr2;
     DWORD_PTR dr3;
     DWORD_PTR dr6;
     DWORD_PTR dr7;
-    void     *exit_frame;    /* exit frame pointer */
+    void     *exit_frame;    /* 0320 exit frame pointer */
 };
 
-C_ASSERT( sizeof(struct amd64_thread_data) <= sizeof(((TEB *)0)->SystemReserved2) );
-C_ASSERT( offsetof( TEB, SystemReserved2 ) + offsetof( struct amd64_thread_data, exit_frame ) == 0x330 );
+C_ASSERT( sizeof(struct amd64_thread_data) <= sizeof(((struct ntdll_thread_data *)0)->cpu_data) );
+C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct amd64_thread_data, exit_frame ) == 0x320 );
 
 static inline struct amd64_thread_data *amd64_thread_data(void)
 {
-    return (struct amd64_thread_data *)NtCurrentTeb()->SystemReserved2;
+    return (struct amd64_thread_data *)ntdll_get_thread_data()->cpu_data;
 }
 
 
@@ -2479,7 +2479,7 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    __ASM_CFI(".cfi_rel_offset %r15,8\n\t")
                    /* store exit frame */
                    "movq %gs:0x30,%rax\n\t"
-                   "movq %rsp,0x330(%rax)\n\t"      /* amd64_thread_data()->exit_frame */
+                   "movq %rsp,0x320(%rax)\n\t"      /* amd64_thread_data()->exit_frame */
                    /* switch to thread stack */
                    "movq 8(%rax),%rax\n\t"          /* NtCurrentTeb()->Tib.StackBase */
                    "leaq -0x1000(%rax),%rsp\n\t"
@@ -2503,7 +2503,7 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
 __ASM_GLOBAL_FUNC( signal_exit_thread,
                    /* fetch exit frame */
                    "movq %gs:0x30,%rax\n\t"
-                   "movq 0x330(%rax),%rdx\n\t"      /* amd64_thread_data()->exit_frame */
+                   "movq 0x320(%rax),%rdx\n\t"      /* amd64_thread_data()->exit_frame */
                    "testq %rdx,%rdx\n\t"
                    "jnz 1f\n\t"
                    "jmp *%rsi\n"
