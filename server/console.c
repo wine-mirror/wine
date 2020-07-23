@@ -1249,7 +1249,85 @@ static struct fd *screen_buffer_get_fd( struct object *obj )
 }
 
 /* write data into a screen buffer */
-static int write_console_output( struct screen_buffer *screen_buffer, data_size_t size,
+static void write_console_output( struct screen_buffer *screen_buffer, const struct condrv_write_output_params *params,
+                                  data_size_t size )
+{
+    unsigned int i, entry_size, entry_cnt, x, y;
+    char_info_t *dest;
+    char *src;
+
+    entry_size = params->mode == CHAR_INFO_MODE_TEXTATTR ? sizeof(char_info_t) : sizeof(WCHAR);
+    if (size % entry_size)
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
+    if (params->x >= screen_buffer->width) return;
+    entry_cnt = size / entry_size;
+
+    for (i = 0, src = (char *)(params + 1); i < entry_cnt; i++, src += entry_size)
+    {
+        if (params->width)
+        {
+            x = params->x + i % params->width;
+            y = params->y + i / params->width;
+            if (x >= screen_buffer->width) continue;
+        }
+        else
+        {
+            x = (params->x + i) % screen_buffer->width;
+            y = params->y + (params->x + i) / screen_buffer->width;
+        }
+        if (y >= screen_buffer->height) break;
+
+        dest = &screen_buffer->data[y * screen_buffer->width + x];
+        switch(params->mode)
+        {
+        case CHAR_INFO_MODE_TEXT:
+            dest->ch = *(const WCHAR *)src;
+            break;
+        case CHAR_INFO_MODE_ATTR:
+            dest->attr = *(const unsigned short *)src;
+            break;
+        case CHAR_INFO_MODE_TEXTATTR:
+            *dest = *(const char_info_t *)src;
+            break;
+        case CHAR_INFO_MODE_TEXTSTDATTR:
+            dest->ch   = *(const WCHAR *)src;
+            dest->attr = screen_buffer->attr;
+            break;
+        default:
+            set_error( STATUS_INVALID_PARAMETER );
+            return;
+        }
+    }
+
+    if (i && screen_buffer == screen_buffer->input->active)
+    {
+        struct condrv_renderer_event evt;
+        evt.event = CONSOLE_RENDERER_UPDATE_EVENT;
+        memset(&evt.u, 0, sizeof(evt.u));
+        evt.u.update.top    = params->y;
+        evt.u.update.bottom = params->width
+            ? min( params->y + entry_cnt / params->width, screen_buffer->height ) - 1
+            : params->y + (params->x + i - 1) / screen_buffer->width;
+        console_input_events_append( screen_buffer->input, &evt );
+    }
+
+    if (get_reply_max_size() == sizeof(SMALL_RECT))
+    {
+        SMALL_RECT region;
+        region.Left   = params->x;
+        region.Top    = params->y;
+        region.Right  = min( params->x + params->width, screen_buffer->width ) - 1;
+        region.Bottom = min( params->y + entry_cnt / params->width, screen_buffer->height ) - 1;
+        set_reply_data( &region, sizeof(region) );
+    }
+    else set_reply_data( &i, sizeof(i) );
+}
+
+/* write data into a screen buffer */
+static int write_console_output_req( struct screen_buffer *screen_buffer, data_size_t size,
                                  const void* data, enum char_info_mode mode,
                                  int x, int y, int wrap )
 {
@@ -1659,6 +1737,21 @@ static int screen_buffer_ioctl( struct fd *fd, ioctl_code_t code, struct async *
         }
         screen_buffer->mode = *(unsigned int *)get_req_data();
         return 1;
+
+    case IOCTL_CONDRV_WRITE_OUTPUT:
+        if (get_req_data_size() < sizeof(struct condrv_write_output_params) ||
+            (get_reply_max_size() != sizeof(SMALL_RECT) && get_reply_max_size() != sizeof(unsigned int)))
+        {
+            set_error( STATUS_INVALID_PARAMETER );
+            return 0;
+        }
+        if (console_input_is_bare( screen_buffer->input ))
+        {
+            set_error( STATUS_OBJECT_TYPE_MISMATCH );
+            return 0;
+        }
+        write_console_output( screen_buffer, get_req_data(), get_req_data_size() - sizeof(struct condrv_write_output_params) );
+        return !get_error();
 
     case IOCTL_CONDRV_GET_OUTPUT_INFO:
         {
@@ -2140,8 +2233,8 @@ DECL_HANDLER(write_console_output)
             release_object( screen_buffer );
             return;
         }
-        reply->written = write_console_output( screen_buffer, get_req_data_size(), get_req_data(),
-                                               req->mode, req->x, req->y, req->wrap );
+        reply->written = write_console_output_req( screen_buffer, get_req_data_size(), get_req_data(),
+                                                   req->mode, req->x, req->y, req->wrap );
         reply->width  = screen_buffer->width;
         reply->height = screen_buffer->height;
         release_object( screen_buffer );
