@@ -3273,14 +3273,14 @@ static void test_fillregion(void)
 static const emfplus_record lineargradient_records[] = {
     { EMR_HEADER },
     { EmfPlusRecordTypeHeader },
-    { EmfPlusRecordTypeObject, ObjectTypeBrush << 8, 1 },
-    { EmfPlusRecordTypeFillRects, 0x4000, 1 },
-    { EmfPlusRecordTypeObject, (ObjectTypeBrush << 8) | 1, 1 },
-    { EmfPlusRecordTypeFillRects, 0x4000, 1 },
-    { EmfPlusRecordTypeObject, (ObjectTypeBrush << 8) | 2, 1 },
-    { EmfPlusRecordTypeFillRects, 0x4000, 1 },
-    { EmfPlusRecordTypeObject, (ObjectTypeBrush << 8) | 3, 1 },
-    { EmfPlusRecordTypeFillRects, 0x4000, 1 },
+    { EmfPlusRecordTypeObject, ObjectTypeBrush << 8, 0, 1 },
+    { EmfPlusRecordTypeFillRects, 0x4000, 0, 1 },
+    { EmfPlusRecordTypeObject, (ObjectTypeBrush << 8) | 1, 0, 1 },
+    { EmfPlusRecordTypeFillRects, 0x4000, 0, 1 },
+    { EmfPlusRecordTypeObject, (ObjectTypeBrush << 8) | 2 },
+    { EmfPlusRecordTypeFillRects, 0x4000 },
+    { EmfPlusRecordTypeObject, (ObjectTypeBrush << 8) | 3 },
+    { EmfPlusRecordTypeFillRects, 0x4000 },
     { EmfPlusRecordTypeEndOfFile },
     { EMR_EOF },
     { 0 }
@@ -3342,16 +3342,16 @@ static void test_lineargradient(void)
     expect(Ok, stat);
 
     stat = GdipFillRectangles(graphics, vertbrush, &vertrect, 1);
-    todo_wine expect(Ok, stat);
+    expect(Ok, stat);
 
     stat = GdipFillRectangles(graphics, horizbrush, &horizrect, 1);
-    todo_wine expect(Ok, stat);
+    expect(Ok, stat);
 
     stat = GdipFillRectangles(graphics, blendbrush, &blendrect, 1);
-    todo_wine expect(Ok, stat);
+    expect(Ok, stat);
 
     stat = GdipFillRectangles(graphics, presetbrush, &presetrect, 1);
-    todo_wine expect(Ok, stat);
+    expect(Ok, stat);
 
     stat = GdipDeleteGraphics(graphics);
     graphics = NULL;
@@ -3391,7 +3391,7 @@ static void test_lineargradient(void)
     /* Verify custom blend gradient fill. */
     stat = GdipBitmapGetPixel(bitmap, 10, 50, &color);
     expect(Ok, stat);
-    todo_wine expect(0xffff0000, color);
+    expect(0xffff0000, color);
 
     stat = GdipBitmapGetPixel(bitmap, 18, 50, &color);
     expect(Ok, stat);
@@ -3400,11 +3400,11 @@ static void test_lineargradient(void)
     /* Verify preset color gradient fill. */
     stat = GdipBitmapGetPixel(bitmap, 50, 50, &color);
     expect(Ok, stat);
-    todo_wine expect(0xffff0000, color);
+    expect(0xffff0000, color);
 
     stat = GdipBitmapGetPixel(bitmap, 50, 60, &color);
     expect(Ok, stat);
-    todo_wine expect(0xff00ff00, color);
+    expect(0xff00ff00, color);
 
     GdipDeleteBrush(vertbrush);
     GdipDeleteBrush(horizbrush);

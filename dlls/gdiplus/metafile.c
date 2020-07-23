@@ -1036,6 +1036,26 @@ static GpStatus METAFILE_PrepareBrushData(GDIPCONST GpBrush *brush, DWORD *size)
     case BrushTypeHatchFill:
         *size = FIELD_OFFSET(EmfPlusBrush, BrushData) + sizeof(EmfPlusHatchBrushData);
         break;
+    case BrushTypeLinearGradient:
+    {
+        BOOL ignore_xform;
+        GpLineGradient *gradient = (GpLineGradient*)brush;
+
+        *size = FIELD_OFFSET(EmfPlusBrush, BrushData.lineargradient.OptionalData);
+
+        GdipIsMatrixIdentity(&gradient->transform, &ignore_xform);
+        if (!ignore_xform)
+            *size += sizeof(gradient->transform);
+
+        if (gradient->pblendcount > 1 && gradient->pblendcolor && gradient->pblendpos)
+            *size += sizeof(DWORD) + gradient->pblendcount *
+                (sizeof(*gradient->pblendcolor) + sizeof(*gradient->pblendpos));
+        else if (gradient->blendcount > 1 && gradient->blendfac && gradient->blendpos)
+            *size += sizeof(DWORD) + gradient->blendcount *
+                (sizeof(*gradient->blendfac) + sizeof(*gradient->blendpos));
+
+        break;
+    }
     default:
         FIXME("unsupported brush type: %d\n", brush->bt);
         return NotImplemented;
@@ -1063,6 +1083,67 @@ static void METAFILE_FillBrushData(GDIPCONST GpBrush *brush, EmfPlusBrush *data)
         data->BrushData.hatch.HatchStyle = hatch->hatchstyle;
         data->BrushData.hatch.ForeColor = hatch->forecol;
         data->BrushData.hatch.BackColor = hatch->backcol;
+        break;
+    }
+    case BrushTypeLinearGradient:
+    {
+        BYTE *cursor;
+        BOOL ignore_xform;
+        GpLineGradient *gradient = (GpLineGradient*)brush;
+
+        data->BrushData.lineargradient.BrushDataFlags = 0;
+        data->BrushData.lineargradient.WrapMode = gradient->wrap;
+        data->BrushData.lineargradient.RectF.X = gradient->rect.X;
+        data->BrushData.lineargradient.RectF.Y = gradient->rect.Y;
+        data->BrushData.lineargradient.RectF.Width = gradient->rect.Width;
+        data->BrushData.lineargradient.RectF.Height = gradient->rect.Height;
+        data->BrushData.lineargradient.StartColor = gradient->startcolor;
+        data->BrushData.lineargradient.EndColor = gradient->endcolor;
+        data->BrushData.lineargradient.Reserved1 = gradient->startcolor;
+        data->BrushData.lineargradient.Reserved2 = gradient->endcolor;
+
+        if (gradient->gamma)
+            data->BrushData.lineargradient.BrushDataFlags |= BrushDataIsGammaCorrected;
+
+        cursor = &data->BrushData.lineargradient.OptionalData[0];
+
+        GdipIsMatrixIdentity(&gradient->transform, &ignore_xform);
+        if (!ignore_xform)
+        {
+            data->BrushData.lineargradient.BrushDataFlags |= BrushDataTransform;
+            memcpy(cursor, &gradient->transform, sizeof(gradient->transform));
+            cursor += sizeof(gradient->transform);
+        }
+
+        if (gradient->pblendcount > 1 && gradient->pblendcolor && gradient->pblendpos)
+        {
+            const DWORD count = gradient->pblendcount;
+
+            data->BrushData.lineargradient.BrushDataFlags |= BrushDataPresetColors;
+
+            memcpy(cursor, &count, sizeof(count));
+            cursor += sizeof(count);
+
+            memcpy(cursor, gradient->pblendpos, count * sizeof(*gradient->pblendpos));
+            cursor += count * sizeof(*gradient->pblendpos);
+
+            memcpy(cursor, gradient->pblendcolor, count * sizeof(*gradient->pblendcolor));
+        }
+        else if (gradient->blendcount > 1 && gradient->blendfac && gradient->blendpos)
+        {
+            const DWORD count = gradient->blendcount;
+
+            data->BrushData.lineargradient.BrushDataFlags |= BrushDataBlendFactorsH;
+
+            memcpy(cursor, &count, sizeof(count));
+            cursor += sizeof(count);
+
+            memcpy(cursor, gradient->blendpos, count * sizeof(*gradient->blendpos));
+            cursor += count * sizeof(*gradient->blendpos);
+
+            memcpy(cursor, gradient->blendfac, count * sizeof(*gradient->blendfac));
+        }
+
         break;
     }
     default:
