@@ -20648,6 +20648,7 @@ wine_fn_config_makefile dlls/dpvoice/tests enable_tests
 wine_fn_config_makefile dlls/dpwsockx enable_dpwsockx
 wine_fn_config_makefile dlls/drmclien enable_drmclien
 wine_fn_config_makefile dlls/dsdmo enable_dsdmo
+wine_fn_config_makefile dlls/dsdmo/tests enable_tests
 wine_fn_config_makefile dlls/dsound enable_dsound
 wine_fn_config_makefile dlls/dsound/tests enable_tests
 wine_fn_config_makefile dlls/dsquery enable_dsquery
