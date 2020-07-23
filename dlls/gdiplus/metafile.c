@@ -2202,7 +2202,7 @@ static GpStatus metafile_deserialize_brush(const BYTE *record_data, UINT data_si
     case BrushTypeLinearGradient:
     {
         GpLineGradient *gradient = NULL;
-        GpPointF startpoint, endpoint;
+        GpRectF rect;
         UINT position_count = 0;
 
         offset = header_size + FIELD_OFFSET(EmfPlusLinearGradientBrushData, OptionalData);
@@ -2240,13 +2240,14 @@ static GpStatus metafile_deserialize_brush(const BYTE *record_data, UINT data_si
                 return InvalidParameter;
         }
 
-        startpoint.X = data->BrushData.lineargradient.RectF.X;
-        startpoint.Y = data->BrushData.lineargradient.RectF.Y;
-        endpoint.X = startpoint.X + data->BrushData.lineargradient.RectF.Width;
-        endpoint.Y = startpoint.Y + data->BrushData.lineargradient.RectF.Height;
+        rect.X = data->BrushData.lineargradient.RectF.X;
+        rect.Y = data->BrushData.lineargradient.RectF.Y;
+        rect.Width = data->BrushData.lineargradient.RectF.Width;
+        rect.Height = data->BrushData.lineargradient.RectF.Height;
 
-        status = GdipCreateLineBrush(&startpoint, &endpoint, data->BrushData.lineargradient.StartColor,
-            data->BrushData.lineargradient.EndColor, data->BrushData.lineargradient.WrapMode, &gradient);
+        status = GdipCreateLineBrushFromRect(&rect, data->BrushData.lineargradient.StartColor,
+            data->BrushData.lineargradient.EndColor, LinearGradientModeHorizontal,
+            data->BrushData.lineargradient.WrapMode, &gradient);
         if (status == Ok)
         {
             if (transform)

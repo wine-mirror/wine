@@ -3377,7 +3377,7 @@ static void test_lineargradient(void)
 
     stat = GdipBitmapGetPixel(bitmap, 18, 10, &color);
     expect(Ok, stat);
-    todo_wine expect(0xff990066, color);
+    expect(0xff990066, color);
 
     /* Verify vertical gradient fill. */
     stat = GdipBitmapGetPixel(bitmap, 50, 10, &color);
@@ -3395,7 +3395,7 @@ static void test_lineargradient(void)
 
     stat = GdipBitmapGetPixel(bitmap, 18, 50, &color);
     expect(Ok, stat);
-    todo_wine expect(0xff4700b8, color);
+    expect(0xff4700b8, color);
 
     /* Verify preset color gradient fill. */
     stat = GdipBitmapGetPixel(bitmap, 50, 50, &color);
