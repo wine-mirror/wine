@@ -510,7 +510,9 @@ double CDECL MSVCRT__wcstod_l(const MSVCRT_wchar_t* str, MSVCRT_wchar_t** end,
 {
     MSVCRT_pthreadlocinfo locinfo;
     const MSVCRT_wchar_t *beg, *p;
+    struct fpnum fp;
     double ret;
+    int err;
 
     if (!MSVCRT_CHECK_PMT(str != NULL)) {
         if (end) *end = NULL;
@@ -527,8 +529,11 @@ double CDECL MSVCRT__wcstod_l(const MSVCRT_wchar_t* str, MSVCRT_wchar_t** end,
         p++;
     beg = p;
 
-    ret = parse_double(strtod_wstr_get, strtod_wstr_unget, &p, locinfo, NULL);
+    fp = fpnum_parse(strtod_wstr_get, strtod_wstr_unget, &p, locinfo);
     if (end) *end = (p == beg ? (MSVCRT_wchar_t*)str : (MSVCRT_wchar_t*)p);
+
+    err = fpnum_double(&fp, &ret);
+    if(err) *MSVCRT__errno() = err;
     return ret;
 }
 

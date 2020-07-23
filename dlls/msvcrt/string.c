@@ -345,101 +345,127 @@ void CDECL MSVCRT__swab(char* src, char* dst, int len)
   }
 }
 
-enum round {
-    ROUND_ZERO, /* only used when dropped part contains only zeros */
-    ROUND_DOWN,
-    ROUND_EVEN,
-    ROUND_UP
-};
+static struct fpnum fpnum(int sign, int exp, ULONGLONG m, enum fpmod mod)
+{
+    struct fpnum ret;
 
-static double make_double(int sign, int exp, ULONGLONG m, enum round round, int *err)
+    ret.sign = sign;
+    ret.exp = exp;
+    ret.m = m;
+    ret.mod = mod;
+    return ret;
+}
+
+int fpnum_double(struct fpnum *fp, double *d)
 {
     ULONGLONG bits = 0;
 
-    TRACE("%c %s *2^%d (round %d)\n", sign == -1 ? '-' : '+', wine_dbgstr_longlong(m), exp, round);
-    if (!m) return sign * 0.0;
+    if (fp->mod == FP_VAL_INFINITY)
+    {
+        *d = fp->sign * INFINITY;
+        return 0;
+    }
+
+    if (fp->mod == FP_VAL_NAN)
+    {
+        bits = ~0;
+        if (fp->sign == 1)
+            bits &= ~((ULONGLONG)1 << (MANT_BITS + EXP_BITS - 1));
+        *d = *(double*)&bits;
+        return 0;
+    }
+
+    TRACE("%c %s *2^%d (round %d)\n", fp->sign == -1 ? '-' : '+',
+            wine_dbgstr_longlong(fp->m), fp->exp, fp->mod);
+    if (!fp->m)
+    {
+        *d = fp->sign * 0.0;
+        return 0;
+    }
 
     /* make sure that we don't overflow modifying exponent */
-    if (exp > 1<<EXP_BITS)
+    if (fp->exp > 1<<EXP_BITS)
     {
-        if (err) *err = MSVCRT_ERANGE;
-        return sign * INFINITY;
+        *d = fp->sign * INFINITY;
+        return MSVCRT_ERANGE;
     }
-    if (exp < -(1<<EXP_BITS))
+    if (fp->exp < -(1<<EXP_BITS))
     {
-        if (err) *err = MSVCRT_ERANGE;
-        return sign * 0.0;
+        *d = fp->sign * 0.0;
+        return MSVCRT_ERANGE;
     }
-    exp += MANT_BITS - 1;
+    fp->exp += MANT_BITS - 1;
 
     /* normalize mantissa */
-    while(m < (ULONGLONG)1 << (MANT_BITS-1))
+    while(fp->m < (ULONGLONG)1 << (MANT_BITS-1))
     {
-        m <<= 1;
-        exp--;
+        fp->m <<= 1;
+        fp->exp--;
     }
-    while(m >= (ULONGLONG)1 << MANT_BITS)
+    while(fp->m >= (ULONGLONG)1 << MANT_BITS)
     {
-        if (m & 1 || round != ROUND_ZERO)
+        if (fp->m & 1 || fp->mod != FP_ROUND_ZERO)
         {
-            if (!(m & 1)) round = ROUND_DOWN;
-            else if(round == ROUND_ZERO) round = ROUND_EVEN;
-            else round = ROUND_UP;
+            if (!(fp->m & 1)) fp->mod = FP_ROUND_DOWN;
+            else if(fp->mod == FP_ROUND_ZERO) fp->mod = FP_ROUND_EVEN;
+            else fp->mod = FP_ROUND_UP;
         }
-        m >>= 1;
-        exp++;
+        fp->m >>= 1;
+        fp->exp++;
     }
 
     /* handle subnormal that falls into regular range due to rounding */
-    exp += (1 << (EXP_BITS-1)) - 1;
-    if (!exp && (round == ROUND_UP || (round == ROUND_EVEN && m & 1)))
+    fp->exp += (1 << (EXP_BITS-1)) - 1;
+    if (!fp->exp && (fp->mod == FP_ROUND_UP || (fp->mod == FP_ROUND_EVEN && fp->m & 1)))
     {
-        if (m + 1 >= (ULONGLONG)1 << MANT_BITS)
+        if (fp->m + 1 >= (ULONGLONG)1 << MANT_BITS)
         {
-            m++;
-            m >>= 1;
-            exp++;
-            round = ROUND_DOWN;
+            fp->m++;
+            fp->m >>= 1;
+            fp->exp++;
+            fp->mod = FP_ROUND_DOWN;
         }
     }
 
     /* handle subnormals */
-    if (exp <= 0)
-        m >>= 1;
-    while(m && exp<0)
+    if (fp->exp <= 0)
+        fp->m >>= 1;
+    while(fp->m && fp->exp<0)
     {
-        m >>= 1;
-        exp++;
+        fp->m >>= 1;
+        fp->exp++;
     }
 
     /* round mantissa */
-    if (round == ROUND_UP || (round == ROUND_EVEN && m & 1))
+    if (fp->mod == FP_ROUND_UP || (fp->mod == FP_ROUND_EVEN && fp->m & 1))
     {
-        m++;
-        if (m >= (ULONGLONG)1 << MANT_BITS)
+        fp->m++;
+        if (fp->m >= (ULONGLONG)1 << MANT_BITS)
         {
-            exp++;
-            m >>= 1;
+            fp->exp++;
+            fp->m >>= 1;
         }
     }
 
-    if (exp >= (1<<EXP_BITS)-1)
+    if (fp->exp >= (1<<EXP_BITS)-1)
     {
-        if (err) *err = MSVCRT_ERANGE;
-        return sign * INFINITY;
+        *d = fp->sign * INFINITY;
+        return MSVCRT_ERANGE;
     }
-    if (!m || exp < 0)
+    if (!fp->m || fp->exp < 0)
     {
-        if (err) *err = MSVCRT_ERANGE;
-        return sign * 0.0;
+        *d = fp->sign * 0.0;
+        return MSVCRT_ERANGE;
     }
 
-    if (sign == -1) bits |= (ULONGLONG)1 << (MANT_BITS + EXP_BITS - 1);
-    bits |= (ULONGLONG)exp << (MANT_BITS - 1);
-    bits |= m & (((ULONGLONG)1 << (MANT_BITS - 1)) - 1);
+    if (fp->sign == -1)
+        bits |= (ULONGLONG)1 << (MANT_BITS + EXP_BITS - 1);
+    bits |= (ULONGLONG)fp->exp << (MANT_BITS - 1);
+    bits |= fp->m & (((ULONGLONG)1 << (MANT_BITS - 1)) - 1);
 
     TRACE("returning %s\n", wine_dbgstr_longlong(bits));
-    return *((double*)&bits);
+    *d = *(double*)&bits;
+    return 0;
 }
 
 #if _MSVCR_VER >= 140
@@ -455,11 +481,11 @@ static inline int hex2int(char c)
     return -1;
 }
 
-static double strtod16(MSVCRT_wchar_t get(void *ctx), void unget(void *ctx),
-        void *ctx, int sign, MSVCRT_pthreadlocinfo locinfo, int *err)
+static struct fpnum fpnum_parse16(MSVCRT_wchar_t get(void *ctx), void unget(void *ctx),
+        void *ctx, int sign, MSVCRT_pthreadlocinfo locinfo)
 {
     BOOL found_digit = FALSE, found_dp = FALSE;
-    enum round round = ROUND_ZERO;
+    enum fpmod round = FP_ROUND_ZERO;
     MSVCRT_wchar_t nch;
     ULONGLONG m = 0;
     int val, exp = 0;
@@ -481,11 +507,11 @@ static double strtod16(MSVCRT_wchar_t get(void *ctx), void unget(void *ctx),
         nch = get(ctx);
         exp += 4;
 
-        if (val || round != ROUND_ZERO)
+        if (val || round != FP_ROUND_ZERO)
         {
-            if (val < 8) round = ROUND_DOWN;
-            else if (val == 8 && round == ROUND_ZERO) round = ROUND_EVEN;
-            else round = ROUND_UP;
+            if (val < 8) round = FP_ROUND_DOWN;
+            else if (val == 8 && round == FP_ROUND_ZERO) round = FP_ROUND_EVEN;
+            else round = FP_ROUND_UP;
         }
     }
 
@@ -498,7 +524,7 @@ static double strtod16(MSVCRT_wchar_t get(void *ctx), void unget(void *ctx),
     {
         if(nch!=MSVCRT_WEOF) unget(ctx);
         unget(ctx);
-        return 0.0;
+        return fpnum(0, 0, 0, 0);
     }
 
     while(m <= MSVCRT_UI64_MAX/16)
@@ -517,11 +543,11 @@ static double strtod16(MSVCRT_wchar_t get(void *ctx), void unget(void *ctx),
         if (val == -1) break;
         nch = get(ctx);
 
-        if (val || round != ROUND_ZERO)
+        if (val || round != FP_ROUND_ZERO)
         {
-            if (val < 8) round = ROUND_DOWN;
-            else if (val == 8 && round == ROUND_ZERO) round = ROUND_EVEN;
-            else round = ROUND_UP;
+            if (val < 8) round = FP_ROUND_DOWN;
+            else if (val == 8 && round == FP_ROUND_ZERO) round = FP_ROUND_EVEN;
+            else round = FP_ROUND_UP;
         }
     }
 
@@ -530,7 +556,7 @@ static double strtod16(MSVCRT_wchar_t get(void *ctx), void unget(void *ctx),
         if (nch != MSVCRT_WEOF) unget(ctx);
         if (found_dp) unget(ctx);
         unget(ctx);
-        return 0.0;
+        return fpnum(0, 0, 0, 0);
     }
 
     if(nch=='p' || nch=='P') {
@@ -567,12 +593,12 @@ static double strtod16(MSVCRT_wchar_t get(void *ctx), void unget(void *ctx),
         }
     }
 
-    return make_double(sign, exp, m, round, err);
+    return fpnum(sign, exp, m, round);
 }
 #endif
 
-double parse_double(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *ctx),
-        void *ctx, MSVCRT_pthreadlocinfo locinfo, int *err)
+struct fpnum fpnum_parse(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *ctx),
+        void *ctx, MSVCRT_pthreadlocinfo locinfo)
 {
 #if _MSVCR_VER >= 140
     MSVCRT_wchar_t _infinity[] = { 'i', 'n', 'f', 'i', 'n', 'i', 't', 'y', 0 };
@@ -584,7 +610,7 @@ double parse_double(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *ctx),
     BYTE bnum_data[FIELD_OFFSET(struct bnum, data[BNUM_PREC64])];
     int e2 = 0, dp=0, sign=1, off, limb_digits = 0, i;
     struct bnum *b = (struct bnum*)bnum_data;
-    enum round round = ROUND_ZERO;
+    enum fpmod round = FP_ROUND_ZERO;
     MSVCRT_wchar_t nch;
 
     nch = get(ctx);
@@ -616,20 +642,22 @@ double parse_double(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *ctx),
             unget(ctx);
         }
         if(keep) {
-            if (str_match == _infinity) return sign*INFINITY;
-            if (str_match == _nan) return sign*NAN;
+            if (str_match == _infinity)
+                return fpnum(sign, 0, 0, FP_VAL_INFINITY);
+            if (str_match == _nan)
+                return fpnum(sign, 0, 0, FP_VAL_NAN);
         } else if(found_sign) {
             unget(ctx);
         }
 
-        return 0.0;
+        return fpnum(0, 0, 0, 0);
     }
 
     if(nch == '0') {
         found_digit = TRUE;
         nch = get(ctx);
         if(nch == 'x' || nch == 'X')
-            return strtod16(get, unget, ctx, sign, locinfo, err);
+            return fpnum_parse16(get, unget, ctx, sign, locinfo);
     }
 #endif
 
@@ -698,16 +726,11 @@ double parse_double(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *ctx),
         nch = get(ctx);
     }
 
-    if(!err) err = MSVCRT__errno();
-#if _MSVCR_VER == 0
-    *err = 0;
-#endif
-
     if(!found_digit) {
         if(nch != MSVCRT_WEOF) unget(ctx);
         if(found_dp) unget(ctx);
         if(found_sign) unget(ctx);
-        return 0.0;
+        return fpnum(0, 0, 0, 0);
     }
 
     if(nch=='e' || nch=='E' || nch=='d' || nch=='D') {
@@ -748,7 +771,8 @@ double parse_double(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *ctx),
         unget(ctx);
     }
 
-    if(!b->data[bnum_idx(b, b->e-1)]) return make_double(sign, 0, 0, ROUND_ZERO, err);
+    if(!b->data[bnum_idx(b, b->e-1)])
+        return fpnum(sign, 0, 0, 0);
 
     /* Fill last limb with 0 if needed */
     if(b->b+1 != b->e) {
@@ -761,17 +785,17 @@ double parse_double(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *ctx),
 
     /* move decimal point to limb boundary */
     if(limb_digits==dp && b->b==b->e-1)
-        return make_double(sign, 0, b->data[bnum_idx(b, b->e-1)], ROUND_ZERO, err);
+        return fpnum(sign, 0, b->data[bnum_idx(b, b->e-1)], FP_ROUND_ZERO);
     off = (dp - limb_digits) % LIMB_DIGITS;
     if(off < 0) off += LIMB_DIGITS;
     if(off) bnum_mult(b, p10s[off]);
 
     if(dp-1 > MSVCRT_DBL_MAX_10_EXP)
-        return make_double(sign, INT_MAX, 1, ROUND_ZERO, err);
+        return fpnum(sign, INT_MAX, 1, FP_ROUND_ZERO);
     /* Count part of exponent stored in denormalized mantissa. */
     /* Increase exponent range to handle subnormals. */
     if(dp-1 < MSVCRT_DBL_MIN_10_EXP-MSVCRT_DBL_DIG-18)
-        return make_double(sign, INT_MIN, 1, ROUND_ZERO, err);
+        return fpnum(sign, INT_MIN, 1, FP_ROUND_ZERO);
 
     while(dp > 2*LIMB_DIGITS) {
         if(bnum_rshift(b, 9)) dp -= LIMB_DIGITS;
@@ -790,11 +814,11 @@ double parse_double(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *ctx),
     /* Caution: it's only correct because bnum_to_mant returns more than 53 bits */
     for(i=b->e-3; i>=b->b; i--) {
         if (!b->data[bnum_idx(b, b->b)]) continue;
-        round = ROUND_DOWN;
+        round = FP_ROUND_DOWN;
         break;
     }
 
-    return make_double(sign, e2, bnum_to_mant(b), round, err);
+    return fpnum(sign, e2, bnum_to_mant(b), round);
 }
 
 static MSVCRT_wchar_t strtod_str_get(void *ctx)
@@ -810,13 +834,19 @@ static void strtod_str_unget(void *ctx)
     (*p)--;
 }
 
-static inline double strtod_helper(const char *str, char **end, MSVCRT__locale_t locale, int *err)
+static inline double strtod_helper(const char *str, char **end, MSVCRT__locale_t locale, int *perr)
 {
     MSVCRT_pthreadlocinfo locinfo;
     const char *beg, *p;
+    struct fpnum fp;
     double ret;
+    int err;
 
-    if (err) *err = 0;
+    if (perr) *perr = 0;
+#if _MSVCR_VER == 0
+    else *MSVCRT__errno() = 0;
+#endif
+
     if (!MSVCRT_CHECK_PMT(str != NULL)) {
         if (end) *end = NULL;
         return 0;
@@ -832,8 +862,12 @@ static inline double strtod_helper(const char *str, char **end, MSVCRT__locale_t
         p++;
     beg = p;
 
-    ret = parse_double(strtod_str_get, strtod_str_unget, &p, locinfo, err);
+    fp = fpnum_parse(strtod_str_get, strtod_str_unget, &p, locinfo);
     if (end) *end = (p == beg ? (char*)str : (char*)p);
+
+    err = fpnum_double(&fp, &ret);
+    if (perr) *perr = err;
+    else if(err) *MSVCRT__errno() = err;
     return ret;
 }
 

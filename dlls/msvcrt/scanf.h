@@ -388,6 +388,7 @@ _FUNCTION_ {
                     struct _STRTOD_NAME_(strtod_scanf_ctx) ctx = {locinfo, file, width};
 #endif
                     int negative = 0;
+                    struct fpnum fp;
                     double cur;
 
                     /* skip initial whitespace */
@@ -403,8 +404,9 @@ _FUNCTION_ {
                     if(ctx.length > length-consumed+1) ctx.length = length-consumed+1;
 #endif
 
-                    cur = parse_double(_STRTOD_NAME_(strtod_scanf_get),
-                            _STRTOD_NAME_(strtod_scanf_unget), &ctx, locinfo, NULL);
+                    fp = fpnum_parse(_STRTOD_NAME_(strtod_scanf_get),
+                            _STRTOD_NAME_(strtod_scanf_unget), &ctx, locinfo);
+                    fpnum_double(&fp, &cur);
                     if(!rd && ctx.err) {
                         _UNLOCK_FILE_(file);
                         return _EOF_RET;
