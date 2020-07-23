@@ -258,7 +258,7 @@ static NSString* WineLocalizedString(unsigned int stringID)
             item = [submenu addItemWithTitle:WineLocalizedString(STRING_MENU_ITEM_HIDE_OTHERS)
                                       action:@selector(hideOtherApplications:)
                                keyEquivalent:@"h"];
-            [item setKeyEquivalentModifierMask:NSCommandKeyMask | NSAlternateKeyMask];
+            [item setKeyEquivalentModifierMask:NSEventModifierFlagCommand | NSEventModifierFlagOption];
 
             item = [submenu addItemWithTitle:WineLocalizedString(STRING_MENU_ITEM_SHOW_ALL)
                                       action:@selector(unhideAllApplications:)
@@ -271,7 +271,7 @@ static NSString* WineLocalizedString(unsigned int stringID)
             else
                 title = WineLocalizedString(STRING_MENU_ITEM_QUIT);
             item = [submenu addItemWithTitle:title action:@selector(terminate:) keyEquivalent:@"q"];
-            [item setKeyEquivalentModifierMask:NSCommandKeyMask | NSAlternateKeyMask];
+            [item setKeyEquivalentModifierMask:NSEventModifierFlagCommand | NSEventModifierFlagOption];
             item = [[[NSMenuItem alloc] init] autorelease];
             [item setTitle:WineLocalizedString(STRING_MENU_WINE)];
             [item setSubmenu:submenu];
@@ -290,7 +290,9 @@ static NSString* WineLocalizedString(unsigned int stringID)
                 item = [submenu addItemWithTitle:WineLocalizedString(STRING_MENU_ITEM_ENTER_FULL_SCREEN)
                                           action:@selector(toggleFullScreen:)
                                    keyEquivalent:@"f"];
-                [item setKeyEquivalentModifierMask:NSCommandKeyMask | NSAlternateKeyMask | NSControlKeyMask];
+                [item setKeyEquivalentModifierMask:NSEventModifierFlagCommand |
+                                                   NSEventModifierFlagOption |
+                                                   NSEventModifierFlagControl];
             }
             [submenu addItem:[NSMenuItem separatorItem]];
             [submenu addItemWithTitle:WineLocalizedString(STRING_MENU_ITEM_BRING_ALL_TO_FRONT)
@@ -317,7 +319,7 @@ static NSString* WineLocalizedString(unsigned int stringID)
             if (processEvents)
             {
                 NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
-                NSEvent* event = [NSApp nextEventMatchingMask:NSAnyEventMask
+                NSEvent* event = [NSApp nextEventMatchingMask:NSEventMaskAny
                                                     untilDate:timeout
                                                        inMode:NSDefaultRunLoopMode
                                                       dequeue:YES];
@@ -1607,7 +1609,7 @@ static NSString* WineLocalizedString(unsigned int stringID)
     - (void) handleMouseMove:(NSEvent*)anEvent
     {
         WineWindow* targetWindow;
-        BOOL drag = [anEvent type] != NSMouseMoved;
+        BOOL drag = [anEvent type] != NSEventTypeMouseMoved;
 
         if ([windowsBeingDragged count])
             targetWindow = nil;
@@ -1758,11 +1760,11 @@ static NSString* WineLocalizedString(unsigned int stringID)
         WineWindow* windowBroughtForward = nil;
         BOOL process = FALSE;
 
-        if (type == NSLeftMouseUp && [windowsBeingDragged count])
+        if (type == NSEventTypeLeftMouseUp && [windowsBeingDragged count])
             [self handleWindowDrag:theEvent begin:NO];
 
         if ([window isKindOfClass:[WineWindow class]] &&
-            type == NSLeftMouseDown &&
+            type == NSEventTypeLeftMouseDown &&
             ![theEvent wine_commandKeyDown])
         {
             NSWindowButton windowButton;
@@ -1795,7 +1797,9 @@ static NSString* WineLocalizedString(unsigned int stringID)
 
         if ([window isKindOfClass:[WineWindow class]])
         {
-            BOOL pressed = (type == NSLeftMouseDown || type == NSRightMouseDown || type == NSOtherMouseDown);
+            BOOL pressed = (type == NSEventTypeLeftMouseDown ||
+                            type == NSEventTypeRightMouseDown ||
+                            type == NSEventTypeOtherMouseDown);
             CGPoint pt = CGEventGetLocation([theEvent CGEvent]);
 
             if (clippingCursor)
@@ -1811,7 +1815,7 @@ static NSString* WineLocalizedString(unsigned int stringID)
                     NSPoint nspoint = [self flippedMouseLocation:NSPointFromCGPoint(pt)];
                     NSRect contentRect = [window contentRectForFrameRect:[window frame]];
                     process = NSMouseInRect(nspoint, contentRect, NO);
-                    if (process && [window styleMask] & NSResizableWindowMask)
+                    if (process && [window styleMask] & NSWindowStyleMaskResizable)
                     {
                         // Ignore clicks in the grow box (resize widget).
                         HIPoint origin = { 0, 0 };
@@ -1821,7 +1825,7 @@ static NSString* WineLocalizedString(unsigned int stringID)
 
                         info.kind = kHIThemeGrowBoxKindNormal;
                         info.direction = kThemeGrowRight | kThemeGrowDown;
-                        if ([window styleMask] & NSUtilityWindowMask)
+                        if ([window styleMask] & NSWindowStyleMaskUtilityWindow)
                             info.size = kHIThemeGrowBoxSizeSmall;
                         else
                             info.size = kHIThemeGrowBoxSizeNormal;
@@ -2063,27 +2067,27 @@ static NSString* WineLocalizedString(unsigned int stringID)
         BOOL ret = FALSE;
         NSEventType type = [anEvent type];
 
-        if (type == NSFlagsChanged)
+        if (type == NSEventTypeFlagsChanged)
             self.lastFlagsChanged = anEvent;
-        else if (type == NSMouseMoved || type == NSLeftMouseDragged ||
-                 type == NSRightMouseDragged || type == NSOtherMouseDragged)
+        else if (type == NSEventTypeMouseMoved || type == NSEventTypeLeftMouseDragged ||
+                 type == NSEventTypeRightMouseDragged || type == NSEventTypeOtherMouseDragged)
         {
             [self handleMouseMove:anEvent];
             ret = mouseCaptureWindow && ![windowsBeingDragged count];
         }
-        else if (type == NSLeftMouseDown || type == NSLeftMouseUp ||
-                 type == NSRightMouseDown || type == NSRightMouseUp ||
-                 type == NSOtherMouseDown || type == NSOtherMouseUp)
+        else if (type == NSEventTypeLeftMouseDown || type == NSEventTypeLeftMouseUp ||
+                 type == NSEventTypeRightMouseDown || type == NSEventTypeRightMouseUp ||
+                 type == NSEventTypeOtherMouseDown || type == NSEventTypeOtherMouseUp)
         {
             [self handleMouseButton:anEvent];
             ret = mouseCaptureWindow && ![windowsBeingDragged count];
         }
-        else if (type == NSScrollWheel)
+        else if (type == NSEventTypeScrollWheel)
         {
             [self handleScrollWheel:anEvent];
             ret = mouseCaptureWindow != nil;
         }
-        else if (type == NSKeyDown)
+        else if (type == NSEventTypeKeyDown)
         {
             // -[NSApplication sendEvent:] seems to consume presses of the Help
             // key (Insert key on PC keyboards), so we have to bypass it and
@@ -2094,7 +2098,7 @@ static NSString* WineLocalizedString(unsigned int stringID)
                 ret = TRUE;
             }
         }
-        else if (type == NSKeyUp)
+        else if (type == NSEventTypeKeyUp)
         {
             uint16_t keyCode = [anEvent keyCode];
             if ([self isKeyPressed:keyCode])
@@ -2105,7 +2109,7 @@ static NSString* WineLocalizedString(unsigned int stringID)
                     [window postKeyEvent:anEvent];
             }
         }
-        else if (type == NSAppKitDefined)
+        else if (type == NSEventTypeAppKitDefined)
         {
             short subtype = [anEvent subtype];
 
@@ -2123,11 +2127,11 @@ static NSString* WineLocalizedString(unsigned int stringID)
     {
         NSEventType type = [anEvent type];
 
-        if (type == NSKeyDown && ![anEvent isARepeat] && [anEvent keyCode] == kVK_Tab)
+        if (type == NSEventTypeKeyDown && ![anEvent isARepeat] && [anEvent keyCode] == kVK_Tab)
         {
             NSUInteger modifiers = [anEvent modifierFlags];
-            if ((modifiers & NSCommandKeyMask) &&
-                !(modifiers & (NSControlKeyMask | NSAlternateKeyMask)))
+            if ((modifiers & NSEventModifierFlagCommand) &&
+                !(modifiers & (NSEventModifierFlagControl | NSEventModifierFlagOption)))
             {
                 // Command-Tab and Command-Shift-Tab would normally be intercepted
                 // by the system to switch applications.  If we're seeing it, it's

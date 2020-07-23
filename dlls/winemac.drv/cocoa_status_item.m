@@ -117,7 +117,9 @@
         event = macdrv_create_event(STATUS_ITEM_MOUSE_BUTTON, nil);
         event->status_item_mouse_button.item = (macdrv_status_item)self;
         event->status_item_mouse_button.button = [nsevent buttonNumber];
-        event->status_item_mouse_button.down = (typeMask & (NSLeftMouseDownMask | NSRightMouseDownMask | NSOtherMouseDownMask)) != 0;
+        event->status_item_mouse_button.down = (typeMask & (NSEventMaskLeftMouseDown |
+                                                            NSEventMaskRightMouseDown |
+                                                            NSEventMaskOtherMouseDown)) != 0;
         event->status_item_mouse_button.count = [nsevent clickCount];
         event->status_item_mouse_button.x = floor(point.x);
         event->status_item_mouse_button.y = floor(point.y);
@@ -147,7 +149,7 @@
 
             [image drawAtPoint:imageOrigin
                       fromRect:NSZeroRect
-                     operation:NSCompositeSourceOver
+                     operation:NSCompositingOperationSourceOver
                       fraction:1];
         }
     }

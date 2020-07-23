@@ -23,6 +23,7 @@
 #import "cocoa_opengl.h"
 
 #include "macdrv_cocoa.h"
+#include "cocoa_app.h"
 #include "cocoa_event.h"
 
 
@@ -53,7 +54,7 @@
         dispatch_once(&once, ^{
             OnMainThread(^{
                 dummyWindow = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 100, 100)
-                                                          styleMask:NSBorderlessWindowMask
+                                                          styleMask:NSWindowStyleMaskBorderless
                                                             backing:NSBackingStoreBuffered
                                                               defer:NO];
             });

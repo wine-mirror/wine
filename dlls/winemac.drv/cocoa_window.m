@@ -41,7 +41,7 @@ enum {
     NSWindowCollectionBehaviorFullScreenPrimary = 1 << 7,
     NSWindowCollectionBehaviorFullScreenAuxiliary = 1 << 8,
     NSWindowFullScreenButton = 7,
-    NSFullScreenWindowMask = 1 << 14,
+    NSWindowStyleMaskFullScreen = 1 << 14,
 };
 
 @interface NSWindow (WineFullScreenExtensions)
@@ -64,13 +64,13 @@ static NSUInteger style_mask_for_features(const struct macdrv_window_features* w
 
     if (wf->title_bar)
     {
-        style_mask = NSTitledWindowMask;
-        if (wf->close_button) style_mask |= NSClosableWindowMask;
-        if (wf->minimize_button) style_mask |= NSMiniaturizableWindowMask;
-        if (wf->resizable || wf->maximize_button) style_mask |= NSResizableWindowMask;
-        if (wf->utility) style_mask |= NSUtilityWindowMask;
+        style_mask = NSWindowStyleMaskTitled;
+        if (wf->close_button) style_mask |= NSWindowStyleMaskClosable;
+        if (wf->minimize_button) style_mask |= NSWindowStyleMaskMiniaturizable;
+        if (wf->resizable || wf->maximize_button) style_mask |= NSWindowStyleMaskResizable;
+        if (wf->utility) style_mask |= NSWindowStyleMaskUtilityWindow;
     }
-    else style_mask = NSBorderlessWindowMask;
+    else style_mask = NSWindowStyleMaskBorderless;
 
     return style_mask;
 }
@@ -1058,7 +1058,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
     - (BOOL) preventResizing
     {
         BOOL preventForClipping = cursor_clipping_locks_windows && [[WineApplicationController sharedController] clippingCursor];
-        return ([self styleMask] & NSResizableWindowMask) && (disabled || !resizable || preventForClipping);
+        return ([self styleMask] & NSWindowStyleMaskResizable) && (disabled || !resizable || preventForClipping);
     }
 
     - (BOOL) allowsMovingWithMaximized:(BOOL)inMaximized
@@ -1075,11 +1075,11 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
     {
         NSUInteger style = [self styleMask];
 
-        if (style & NSClosableWindowMask)
+        if (style & NSWindowStyleMaskClosable)
             [[self standardWindowButton:NSWindowCloseButton] setEnabled:!self.disabled];
-        if (style & NSMiniaturizableWindowMask)
+        if (style & NSWindowStyleMaskMiniaturizable)
             [[self standardWindowButton:NSWindowMiniaturizeButton] setEnabled:!self.disabled];
-        if (style & NSResizableWindowMask)
+        if (style & NSWindowStyleMaskResizable)
             [[self standardWindowButton:NSWindowZoomButton] setEnabled:!self.disabled];
         if ([self respondsToSelector:@selector(toggleFullScreen:)])
         {
@@ -1110,7 +1110,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
             NSUInteger style = [self styleMask];
 
             if (behavior & NSWindowCollectionBehaviorParticipatesInCycle &&
-                style & NSResizableWindowMask && !(style & NSUtilityWindowMask) && !maximized &&
+                style & NSWindowStyleMaskResizable && !(style & NSWindowStyleMaskUtilityWindow) && !maximized &&
                 !(self.parentWindow || self.latentParentWindow))
             {
                 behavior |= NSWindowCollectionBehaviorFullScreenPrimary;
@@ -1120,7 +1120,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
             {
                 behavior &= ~NSWindowCollectionBehaviorFullScreenPrimary;
                 behavior |= NSWindowCollectionBehaviorFullScreenAuxiliary;
-                if (style & NSFullScreenWindowMask)
+                if (style & NSWindowStyleMaskFullScreen)
                     [super toggleFullScreen:nil];
             }
         }
@@ -1134,24 +1134,24 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
 
     - (void) setWindowFeatures:(const struct macdrv_window_features*)wf
     {
-        static const NSUInteger usedStyles = NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask |
-                                             NSResizableWindowMask | NSUtilityWindowMask | NSBorderlessWindowMask;
+        static const NSUInteger usedStyles = NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable |
+                                             NSWindowStyleMaskResizable | NSWindowStyleMaskUtilityWindow | NSWindowStyleMaskBorderless;
         NSUInteger currentStyle = [self styleMask];
         NSUInteger newStyle = style_mask_for_features(wf) | (currentStyle & ~usedStyles);
 
         if (newStyle != currentStyle)
         {
             NSString* title = [[[self title] copy] autorelease];
-            BOOL showingButtons = (currentStyle & (NSClosableWindowMask | NSMiniaturizableWindowMask | NSResizableWindowMask)) != 0;
-            BOOL shouldShowButtons = (newStyle & (NSClosableWindowMask | NSMiniaturizableWindowMask | NSResizableWindowMask)) != 0;
-            if (shouldShowButtons != showingButtons && !((newStyle ^ currentStyle) & NSClosableWindowMask))
+            BOOL showingButtons = (currentStyle & (NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable)) != 0;
+            BOOL shouldShowButtons = (newStyle & (NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable)) != 0;
+            if (shouldShowButtons != showingButtons && !((newStyle ^ currentStyle) & NSWindowStyleMaskClosable))
             {
-                // -setStyleMask: is buggy on 10.7+ with respect to NSResizableWindowMask.
-                // If transitioning from NSTitledWindowMask | NSResizableWindowMask to
-                // just NSTitledWindowMask, the window buttons should disappear rather
+                // -setStyleMask: is buggy on 10.7+ with respect to NSWindowStyleMaskResizable.
+                // If transitioning from NSWindowStyleMaskTitled | NSWindowStyleMaskResizable to
+                // just NSWindowStyleMaskTitled, the window buttons should disappear rather
                 // than just being disabled.  But they don't.  Similarly in reverse.
-                // The workaround is to also toggle NSClosableWindowMask at the same time.
-                [self setStyleMask:newStyle ^ NSClosableWindowMask];
+                // The workaround is to also toggle NSWindowStyleMaskClosable at the same time.
+                [self setStyleMask:newStyle ^ NSWindowStyleMaskClosable];
             }
             [self setStyleMask:newStyle];
 
@@ -1283,14 +1283,14 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
             {
                 if ([self wouldBeVisible])
                 {
-                    if ([self styleMask] & NSFullScreenWindowMask)
+                    if ([self styleMask] & NSWindowStyleMaskFullScreen)
                     {
                         [self postDidUnminimizeEvent];
                         discard &= ~event_mask_for_type(WINDOW_DID_UNMINIMIZE);
                     }
                     else
                     {
-                        [self setStyleMask:([self styleMask] | NSMiniaturizableWindowMask)];
+                        [self setStyleMask:([self styleMask] | NSWindowStyleMaskMiniaturizable)];
                         [super miniaturize:nil];
                         discard |= event_mask_for_type(WINDOW_BROUGHT_FORWARD) |
                                    event_mask_for_type(WINDOW_GOT_FOCUS) |
@@ -1765,7 +1765,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
 
             if (pendingMinimize)
             {
-                [self setStyleMask:([self styleMask] | NSMiniaturizableWindowMask)];
+                [self setStyleMask:([self styleMask] | NSWindowStyleMaskMiniaturizable)];
                 [super miniaturize:nil];
                 pendingMinimize = FALSE;
             }
@@ -1814,7 +1814,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
             [parent grabDockIconSnapshotFromWindow:self force:NO];
 
         [self becameIneligibleParentOrChild];
-        if ([self isMiniaturized] || [self styleMask] & NSFullScreenWindowMask)
+        if ([self isMiniaturized] || [self styleMask] & NSWindowStyleMaskFullScreen)
         {
             fakingClose = TRUE;
             [self close];
@@ -1844,7 +1844,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
     - (void) updateFullscreen
     {
         NSRect contentRect = [self contentRectForFrameRect:self.wine_fractionalFrame];
-        BOOL nowFullscreen = !([self styleMask] & NSFullScreenWindowMask) && screen_covered_by_rect(contentRect, [NSScreen screens]);
+        BOOL nowFullscreen = !([self styleMask] & NSWindowStyleMaskFullScreen) && screen_covered_by_rect(contentRect, [NSScreen screens]);
 
         if (nowFullscreen != fullscreen)
         {
@@ -2077,7 +2077,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
     {
         [self flagsChanged:theEvent];
         [self postKey:[theEvent keyCode]
-              pressed:[theEvent type] == NSKeyDown
+              pressed:[theEvent type] == NSEventTypeKeyDown
             modifiers:adjusted_modifiers_for_settings([theEvent modifierFlags])
                 event:theEvent];
     }
@@ -2120,9 +2120,9 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         NSUInteger style = self.styleMask;
 
         if (isFullscreen)
-            style |= NSFullScreenWindowMask;
+            style |= NSWindowStyleMaskFullScreen;
         else
-            style &= ~NSFullScreenWindowMask;
+            style &= ~NSWindowStyleMaskFullScreen;
         frame = [[self class] contentRectForFrameRect:frame styleMask:style];
         [[WineApplicationController sharedController] flipRect:&frame];
 
@@ -2302,7 +2302,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         CGContextDrawImage(cgcontext, rect, windowImage);
         [appImage drawInRect:NSMakeRect(156, 4, 96, 96)
                     fromRect:NSZeroRect
-                   operation:NSCompositeSourceOver
+                   operation:NSCompositingOperationSourceOver
                     fraction:1
               respectFlipped:YES
                        hints:nil];
@@ -2431,13 +2431,13 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
            interface control.  For example, Control-Tab switches focus among
            views.  We want to bypass that feature, so directly route key-down
            events to -keyDown:. */
-        if (type == NSKeyDown)
+        if (type == NSEventTypeKeyDown)
             [[self firstResponder] keyDown:event];
         else
         {
             if (!draggingPhase && maximized && ![self isMovable] &&
                 ![self allowsMovingWithMaximized:YES] && [self allowsMovingWithMaximized:NO] &&
-                type == NSLeftMouseDown && (self.styleMask & NSTitledWindowMask))
+                type == NSEventTypeLeftMouseDown && (self.styleMask & NSWindowStyleMaskTitled))
             {
                 NSRect titleBar = self.frame;
                 NSRect contentRect = [self contentRectForFrameRect:titleBar];
@@ -2480,7 +2480,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
                     }
                 }
             }
-            else if (draggingPhase && (type == NSLeftMouseDragged || type == NSLeftMouseUp))
+            else if (draggingPhase && (type == NSEventTypeLeftMouseDragged || type == NSEventTypeLeftMouseUp))
             {
                 if ([self isMovable])
                 {
@@ -2502,7 +2502,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
 
                     [self setFrameTopLeftPoint:newTopLeft];
                 }
-                else if (draggingPhase == 1 && type == NSLeftMouseDragged)
+                else if (draggingPhase == 1 && type == NSEventTypeLeftMouseDragged)
                 {
                     macdrv_event* event;
                     NSRect frame = [self contentRectForFrameRect:self.frame];
@@ -2518,7 +2518,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
                     draggingPhase = 2;
                 }
 
-                if (type == NSLeftMouseUp)
+                if (type == NSEventTypeLeftMouseUp)
                     [self endWindowDragging];
             }
 
@@ -2919,7 +2919,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         }
 
         [self postWindowFrameChanged:frame
-                          fullscreen:([self styleMask] & NSFullScreenWindowMask) != 0
+                          fullscreen:([self styleMask] & NSWindowStyleMaskFullScreen) != 0
                             resizing:[self inLiveResize]];
 
         [[[self contentView] inputContext] invalidateCharacterCoordinates];
