@@ -2206,7 +2206,7 @@ static GpStatus metafile_deserialize_brush(const BYTE *record_data, UINT data_si
         UINT position_count = 0;
 
         offset = header_size + FIELD_OFFSET(EmfPlusLinearGradientBrushData, OptionalData);
-        if (data_size <= offset)
+        if (data_size < offset)
             return InvalidParameter;
 
         brushflags = data->BrushData.lineargradient.BrushDataFlags;
@@ -2215,7 +2215,7 @@ static GpStatus metafile_deserialize_brush(const BYTE *record_data, UINT data_si
 
         if (brushflags & BrushDataTransform)
         {
-            if (data_size <= offset + sizeof(EmfPlusTransformMatrix))
+            if (data_size < offset + sizeof(EmfPlusTransformMatrix))
                 return InvalidParameter;
             transform = (EmfPlusTransformMatrix *)(record_data + offset);
             offset += sizeof(EmfPlusTransformMatrix);

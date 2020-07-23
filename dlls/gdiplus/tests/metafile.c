@@ -3273,10 +3273,10 @@ static void test_fillregion(void)
 static const emfplus_record lineargradient_records[] = {
     { EMR_HEADER },
     { EmfPlusRecordTypeHeader },
-    { EmfPlusRecordTypeObject, ObjectTypeBrush << 8, 0, 1 },
-    { EmfPlusRecordTypeFillRects, 0x4000, 0, 1 },
-    { EmfPlusRecordTypeObject, (ObjectTypeBrush << 8) | 1, 0, 1 },
-    { EmfPlusRecordTypeFillRects, 0x4000, 0, 1 },
+    { EmfPlusRecordTypeObject, ObjectTypeBrush << 8 },
+    { EmfPlusRecordTypeFillRects, 0x4000 },
+    { EmfPlusRecordTypeObject, (ObjectTypeBrush << 8) | 1 },
+    { EmfPlusRecordTypeFillRects, 0x4000 },
     { EmfPlusRecordTypeObject, (ObjectTypeBrush << 8) | 2 },
     { EmfPlusRecordTypeFillRects, 0x4000 },
     { EmfPlusRecordTypeObject, (ObjectTypeBrush << 8) | 3 },
@@ -3373,7 +3373,7 @@ static void test_lineargradient(void)
     /* Verify horizontal gradient fill. */
     stat = GdipBitmapGetPixel(bitmap, 10, 10, &color);
     expect(Ok, stat);
-    todo_wine expect(0xffff0000, color);
+    expect(0xffff0000, color);
 
     stat = GdipBitmapGetPixel(bitmap, 18, 10, &color);
     expect(Ok, stat);
@@ -3382,11 +3382,11 @@ static void test_lineargradient(void)
     /* Verify vertical gradient fill. */
     stat = GdipBitmapGetPixel(bitmap, 50, 10, &color);
     expect(Ok, stat);
-    todo_wine expect(0xffff0000, color);
+    expect(0xffff0000, color);
 
     stat = GdipBitmapGetPixel(bitmap, 50, 18, &color);
     expect(Ok, stat);
-    todo_wine expect(0xff990066, color);
+    expect(0xff990066, color);
 
     /* Verify custom blend gradient fill. */
     stat = GdipBitmapGetPixel(bitmap, 10, 50, &color);
