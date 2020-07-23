@@ -831,12 +831,17 @@ struct fpnum fpnum_parse(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *c
         e2++;
     }
 
-    /* Check if fractional part is non-zero */
-    /* Caution: it's only correct because bnum_to_mant returns more than 53 bits */
-    for(i=b->e-4; i>=b->b; i--) {
-        if (!b->data[bnum_idx(b, b->b)]) continue;
-        round = FP_ROUND_DOWN;
-        break;
+    if(b->e-4 >= b->b && b->data[bnum_idx(b, b->e-4)]) {
+        if(b->data[bnum_idx(b, b->e-4)] > LIMB_MAX/2) round = FP_ROUND_UP;
+        else if(b->data[bnum_idx(b, b->e-4)] == LIMB_MAX/2) round = FP_ROUND_EVEN;
+        else round = FP_ROUND_DOWN;
+    }
+    if(round == FP_ROUND_ZERO || round == FP_ROUND_EVEN) {
+        for(i=b->e-5; i>=b->b; i--) {
+            if(!b->data[bnum_idx(b, b->b)]) continue;
+            if(round == FP_ROUND_EVEN) round = FP_ROUND_UP;
+            else round = FP_ROUND_DOWN;
+        }
     }
 
     return fpnum(sign, e2, m, round);
