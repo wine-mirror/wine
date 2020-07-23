@@ -3115,7 +3115,7 @@ def set_working_directory():
     os.chdir(path)
 
 def download_vk_xml(filename):
-    url = "https://raw.github.com/KhronosGroup/Vulkan-Docs/v{0}/xml/vk.xml".format(VK_XML_VERSION)
+    url = "https://raw.githubusercontent.com/KhronosGroup/Vulkan-Docs/v{0}/xml/vk.xml".format(VK_XML_VERSION)
     if not os.path.isfile(filename):
         urllib.request.urlretrieve(url, filename)
 
