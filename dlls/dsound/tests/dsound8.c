@@ -36,10 +36,11 @@
 #include "dsconf.h"
 #include "ks.h"
 #include "ksmedia.h"
+#include "dmo.h"
 
 #include "initguid.h"
 
-#include "mediaobj.h"
+#include "uuids.h"
 #include "wingdi.h"
 #include "mmdeviceapi.h"
 #include "audioclient.h"
@@ -47,6 +48,8 @@
 #include "devpkey.h"
 
 #include "dsound_test.h"
+
+static const GUID testdmo_clsid = {0x1234};
 
 int align(int length, int align)
 {
@@ -1219,206 +1222,610 @@ static void test_primary_flags(void)
     IDirectSound8_Release(dso);
 }
 
+static IMediaObject testdmo;
+static IMediaObjectInPlace testdmo_inplace;
+static LONG testdmo_refcount;
+static WAVEFORMATEX testdmo_input_type;
+static BOOL testdmo_input_type_set, testdmo_output_type_set;
+
+static unsigned int got_Discontinuity;
+static HANDLE got_Process;
+
+static HRESULT WINAPI dmo_QueryInterface(IMediaObject *iface, REFIID iid, void **out)
+{
+    if (winetest_debug > 1) trace("QueryInterface(%s)\n", wine_dbgstr_guid(iid));
+
+    if (IsEqualGUID(iid, &IID_IMediaObject))
+        *out = iface;
+    else if (IsEqualGUID(iid, &IID_IMediaObjectInPlace))
+        *out = &testdmo_inplace;
+    else
+        return E_NOINTERFACE;
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
+}
+
+static ULONG WINAPI dmo_AddRef(IMediaObject *iface)
+{
+    return InterlockedIncrement(&testdmo_refcount);
+}
+
+static ULONG WINAPI dmo_Release(IMediaObject *iface)
+{
+    return InterlockedDecrement(&testdmo_refcount);
+}
+
+static HRESULT WINAPI dmo_GetStreamCount(IMediaObject *iface, DWORD *input, DWORD *output)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dmo_GetInputStreamInfo(IMediaObject *iface, DWORD index, DWORD *flags)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dmo_GetOutputStreamInfo(IMediaObject *iface, DWORD index, DWORD *flags)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dmo_GetInputType(IMediaObject *iface, DWORD index, DWORD type_index, DMO_MEDIA_TYPE *type)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dmo_GetOutputType(IMediaObject *iface, DWORD index, DWORD type_index, DMO_MEDIA_TYPE *type)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dmo_SetInputType(IMediaObject *iface, DWORD index, const DMO_MEDIA_TYPE *type, DWORD flags)
+{
+    const WAVEFORMATEX *wfx;
+
+    if (winetest_debug > 1) trace("SetInputType()\n");
+
+    ok(!index, "Got unexpected index %u.\n", index);
+    ok(!flags, "Got unexpected flags %#x.\n", flags);
+
+    ok(IsEqualGUID(&type->majortype, &MEDIATYPE_Audio), "Got major type %s.\n", debugstr_guid(&type->majortype));
+    todo_wine ok(IsEqualGUID(&type->subtype, &MEDIASUBTYPE_PCM), "Got subtype %s.\n", debugstr_guid(&type->subtype));
+    ok(type->bFixedSizeSamples == TRUE, "Got fixed size %d.\n", type->bFixedSizeSamples);
+    ok(!type->bTemporalCompression, "Got temporal compression %d.\n", type->bTemporalCompression);
+    ok(IsEqualGUID(&type->formattype, &FORMAT_WaveFormatEx), "Got format type %s.\n", debugstr_guid(&type->formattype));
+    ok(!type->pUnk, "Got pUnk %p.\n", type->pUnk);
+    ok(type->cbFormat == sizeof(WAVEFORMATEX), "Got format size %u.\n", type->cbFormat);
+
+    wfx = (WAVEFORMATEX *)type->pbFormat;
+    todo_wine ok(type->lSampleSize == wfx->nBlockAlign, "Got sample size %u.\n", type->lSampleSize);
+
+    if (wfx->wBitsPerSample != 8)
+        return DMO_E_TYPE_NOT_ACCEPTED;
+
+    testdmo_input_type = *wfx;
+    testdmo_input_type_set = TRUE;
+    return S_OK;
+}
+
+static HRESULT WINAPI dmo_SetOutputType(IMediaObject *iface, DWORD index, const DMO_MEDIA_TYPE *type, DWORD flags)
+{
+    if (winetest_debug > 1) trace("SetOutputType()\n");
+
+    ok(!index, "Got unexpected index %u.\n", index);
+    ok(!flags, "Got unexpected flags %#x.\n", flags);
+
+    ok(testdmo_input_type_set, "Expected the input type to be set.\n");
+
+    ok(IsEqualGUID(&type->majortype, &MEDIATYPE_Audio), "Got major type %s.\n", debugstr_guid(&type->majortype));
+    ok(IsEqualGUID(&type->subtype, &MEDIASUBTYPE_PCM), "Got subtype %s.\n", debugstr_guid(&type->subtype));
+    ok(type->bFixedSizeSamples == TRUE, "Got fixed size %d.\n", type->bFixedSizeSamples);
+    ok(!type->bTemporalCompression, "Got temporal compression %d.\n", type->bTemporalCompression);
+    ok(type->lSampleSize == 1, "Got sample size %u.\n", type->lSampleSize);
+    ok(IsEqualGUID(&type->formattype, &FORMAT_WaveFormatEx), "Got format type %s.\n", debugstr_guid(&type->formattype));
+    ok(!type->pUnk, "Got pUnk %p.\n", type->pUnk);
+    ok(type->cbFormat == sizeof(WAVEFORMATEX), "Got format size %u.\n", type->cbFormat);
+
+    ok(!memcmp(type->pbFormat, &testdmo_input_type, sizeof(WAVEFORMATEX)), "Format blocks didn't match.\n");
+
+    testdmo_output_type_set = TRUE;
+    return S_OK;
+}
+
+static HRESULT WINAPI dmo_GetInputCurrentType(IMediaObject *iface, DWORD index, DMO_MEDIA_TYPE *type)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dmo_GetOutputCurrentType(IMediaObject *iface, DWORD index, DMO_MEDIA_TYPE *type)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dmo_GetInputSizeInfo(IMediaObject *iface, DWORD index,
+        DWORD *size, DWORD *lookahead, DWORD *alignment)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dmo_GetOutputSizeInfo(IMediaObject *iface, DWORD index, DWORD *size, DWORD *alignment)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dmo_GetInputMaxLatency(IMediaObject *iface, DWORD index, REFERENCE_TIME *latency)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dmo_SetInputMaxLatency(IMediaObject *iface, DWORD index, REFERENCE_TIME latency)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dmo_Flush(IMediaObject *iface)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dmo_Discontinuity(IMediaObject *iface, DWORD index)
+{
+    if (winetest_debug > 1) trace("Discontinuity()\n");
+    ++got_Discontinuity;
+    return S_OK;
+}
+
+static HRESULT WINAPI dmo_AllocateStreamingResources(IMediaObject *iface)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dmo_FreeStreamingResources(IMediaObject *iface)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dmo_GetInputStatus(IMediaObject *iface, DWORD index, DWORD *flags)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dmo_ProcessInput(IMediaObject *iface, DWORD index,
+    IMediaBuffer *buffer, DWORD flags, REFERENCE_TIME timestamp, REFERENCE_TIME timelength)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dmo_ProcessOutput(IMediaObject *iface, DWORD flags,
+        DWORD count, DMO_OUTPUT_DATA_BUFFER *buffers, DWORD *status)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dmo_Lock(IMediaObject *iface, LONG lock)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static const IMediaObjectVtbl dmo_vtbl =
+{
+    dmo_QueryInterface,
+    dmo_AddRef,
+    dmo_Release,
+    dmo_GetStreamCount,
+    dmo_GetInputStreamInfo,
+    dmo_GetOutputStreamInfo,
+    dmo_GetInputType,
+    dmo_GetOutputType,
+    dmo_SetInputType,
+    dmo_SetOutputType,
+    dmo_GetInputCurrentType,
+    dmo_GetOutputCurrentType,
+    dmo_GetInputSizeInfo,
+    dmo_GetOutputSizeInfo,
+    dmo_GetInputMaxLatency,
+    dmo_SetInputMaxLatency,
+    dmo_Flush,
+    dmo_Discontinuity,
+    dmo_AllocateStreamingResources,
+    dmo_FreeStreamingResources,
+    dmo_GetInputStatus,
+    dmo_ProcessInput,
+    dmo_ProcessOutput,
+    dmo_Lock,
+};
+
+static HRESULT WINAPI dmo_inplace_QueryInterface(IMediaObjectInPlace *iface, REFIID iid, void **out)
+{
+    return IMediaObject_QueryInterface(&testdmo, iid, out);
+}
+
+static ULONG WINAPI dmo_inplace_AddRef(IMediaObjectInPlace *iface)
+{
+    return IMediaObject_AddRef(&testdmo);
+}
+
+static ULONG WINAPI dmo_inplace_Release(IMediaObjectInPlace *iface)
+{
+    return IMediaObject_Release(&testdmo);
+}
+
+static HRESULT WINAPI dmo_inplace_Process(IMediaObjectInPlace *iface, ULONG size,
+        BYTE *data, REFERENCE_TIME start, DWORD flags)
+{
+    if (winetest_debug > 1) trace("Process(size %u)\n", size);
+
+    ok(!start, "Got start time %s.\n", wine_dbgstr_longlong(start));
+    ok(!flags, "Got flags %#x.\n", flags);
+
+    SetEvent(got_Process);
+
+    return S_FALSE;
+}
+
+static HRESULT WINAPI dmo_inplace_Clone(IMediaObjectInPlace *iface, IMediaObjectInPlace **ret_dmo)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dmo_inplace_GetLatency(IMediaObjectInPlace *iface, REFERENCE_TIME *latency)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static const IMediaObjectInPlaceVtbl dmo_inplace_vtbl =
+{
+    dmo_inplace_QueryInterface,
+    dmo_inplace_AddRef,
+    dmo_inplace_Release,
+    dmo_inplace_Process,
+    dmo_inplace_Clone,
+    dmo_inplace_GetLatency,
+};
+
+static IMediaObject testdmo = {&dmo_vtbl};
+static IMediaObjectInPlace testdmo_inplace = {&dmo_inplace_vtbl};
+
+static HRESULT WINAPI dmo_cf_QueryInterface(IClassFactory *iface, REFIID iid, void **out)
+{
+    if (IsEqualGUID(iid, &IID_IUnknown) || IsEqualGUID(iid, &IID_IClassFactory))
+    {
+        *out = iface;
+        return S_OK;
+    }
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI dmo_cf_AddRef(IClassFactory *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI dmo_cf_Release(IClassFactory *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI dmo_cf_CreateInstance(IClassFactory *iface, IUnknown *outer, REFIID iid, void **out)
+{
+    ok(!outer, "Unexpected outer parameter.\n");
+    ok(IsEqualGUID(iid, &IID_IMediaObject), "Got unexpected iid %s.\n", wine_dbgstr_guid(iid));
+
+    *out = &testdmo;
+    IMediaObject_AddRef(&testdmo);
+    return S_OK;
+}
+
+static HRESULT WINAPI dmo_cf_LockServer(IClassFactory *iface, BOOL lock)
+{
+    ok(0, "Unexpected call.\n");
+    return S_OK;
+}
+
+static const IClassFactoryVtbl dmo_cf_vtbl =
+{
+    dmo_cf_QueryInterface,
+    dmo_cf_AddRef,
+    dmo_cf_Release,
+    dmo_cf_CreateInstance,
+    dmo_cf_LockServer,
+};
+
+static IClassFactory testdmo_cf = {&dmo_cf_vtbl};
+
 static void test_effects(void)
 {
-    HRESULT rc;
-    LPDIRECTSOUND8 dso;
-    LPDIRECTSOUNDBUFFER primary, secondary;
-    LPDIRECTSOUNDBUFFER8 secondary8;
-    DSBUFFERDESC bufdesc;
+    DSBPOSITIONNOTIFY notify_params = {DSBPN_OFFSETSTOP, CreateEventA(NULL, TRUE, FALSE, NULL)};
+    DSBUFFERDESC buffer_desc = {.dwSize = sizeof(buffer_desc)};
+    IMediaObject *echo = NULL, *reverb = NULL;
+    IDirectSoundBuffer8 *buffer8;
+    DSEFFECTDESC effects[2] = {};
+    IDirectSoundBuffer *buffer;
+    IDirectSoundNotify *notify;
+    IDirectSound8 *dsound;
+    DWORD size1, size2;
+    IMediaObject *dmo;
+    void *ptr1, *ptr2;
     WAVEFORMATEX wfx;
-    DSEFFECTDESC effects[2];
-    DWORD resultcodes[2];
+    DWORD results[2];
+    IUnknown *unk;
+    HRESULT hr;
+    ULONG ref;
 
-    /* Create a DirectSound8 object */
-    rc = DirectSoundCreate8(NULL, &dso, NULL);
-    ok(rc==DS_OK||rc==DSERR_NODRIVER,"DirectSoundCreate8() failed: %08x\n",rc);
-
-    if (rc!=DS_OK)
+    hr = DirectSoundCreate8(NULL, &dsound, NULL);
+    ok(hr == DS_OK || hr == DSERR_NODRIVER, "Got hr %#x.\n", hr);
+    if (FAILED(hr))
         return;
 
-    rc=IDirectSound8_SetCooperativeLevel(dso,get_hwnd(),DSSCL_PRIORITY);
-    ok(rc==DS_OK,"IDirectSound8_SetCooperativeLevel() failed: %08x\n", rc);
-    if (rc!=DS_OK) {
-        IDirectSound8_Release(dso);
-        return;
+    hr = IDirectSound8_SetCooperativeLevel(dsound, get_hwnd(), DSSCL_PRIORITY);
+    ok(hr == DS_OK, "Got hr %#x.\n", hr);
+
+    effects[0].dwSize = effects[1].dwSize = sizeof(effects[0]);
+    effects[0].guidDSFXClass = GUID_DSFX_STANDARD_PARAMEQ;
+
+    init_format(&wfx, WAVE_FORMAT_PCM, 11025, 8, 1);
+    buffer_desc.dwBufferBytes = align(wfx.nAvgBytesPerSec * BUFFER_LEN / 1000, wfx.nBlockAlign);
+    buffer_desc.lpwfxFormat = &wfx;
+    hr = IDirectSound8_CreateSoundBuffer(dsound, &buffer_desc, &buffer, NULL);
+    ok(hr == DS_OK, "Got hr %#x.\n", hr);
+    hr = IDirectSoundBuffer_QueryInterface(buffer, &IID_IDirectSoundBuffer8, (void **)&buffer8);
+    ok(hr == DS_OK, "Got hr %#x.\n", hr);
+    hr = IDirectSoundBuffer8_SetFX(buffer8, 1, effects, results);
+    ok(hr == DSERR_CONTROLUNAVAIL, "Got hr %#x.\n", hr);
+
+    IDirectSoundBuffer8_Release(buffer8);
+    IDirectSoundBuffer_Release(buffer);
+
+    buffer_desc.dwFlags = DSBCAPS_CTRLFX | DSBCAPS_CTRLPOSITIONNOTIFY;
+    hr = IDirectSound8_CreateSoundBuffer(dsound, &buffer_desc, &buffer, NULL);
+    ok(hr == DS_OK, "Got hr %#x.\n", hr);
+    hr = IDirectSoundBuffer_QueryInterface(buffer, &IID_IDirectSoundBuffer8, (void **)&buffer8);
+    ok(hr == DS_OK, "Got hr %#x.\n", hr);
+    hr = IDirectSoundBuffer8_QueryInterface(buffer, &IID_IDirectSoundNotify, (void **)&notify);
+    ok(hr == DS_OK, "Got hr %#x.\n", hr);
+
+    hr = IDirectSoundNotify_SetNotificationPositions(notify, 1, &notify_params);
+    ok(hr == DS_OK, "Got hr %#x.\n", hr);
+
+    hr = IDirectSoundBuffer8_SetFX(buffer8, 1, NULL, NULL);
+    ok(hr == DSERR_INVALIDPARAM, "Got hr %#x.\n", hr);
+    hr = IDirectSoundBuffer8_SetFX(buffer8, 0, effects, NULL);
+    ok(hr == DSERR_INVALIDPARAM, "Got hr %#x.\n", hr);
+    hr = IDirectSoundBuffer8_SetFX(buffer8, 0, NULL, results);
+    ok(hr == DSERR_INVALIDPARAM, "Got hr %#x.\n", hr);
+
+    results[0] = 0xdeadbeef;
+    hr = IDirectSoundBuffer8_SetFX(buffer8, 1, effects, results);
+    todo_wine ok(hr == DS_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(results[0] == DSFXR_LOCSOFTWARE, "Got result %#x.\n", results[0]);
+
+    hr = IDirectSoundBuffer8_Lock(buffer8, 0, 0, &ptr1, &size1, &ptr2, &size2, DSBLOCK_ENTIREBUFFER);
+    ok(hr == DS_OK, "Got hr %#x.\n", hr);
+    results[0] = 0xdeadbeef;
+    hr = IDirectSoundBuffer8_SetFX(buffer8, 1, effects, results);
+    ok(hr == DSERR_INVALIDCALL, "Got hr %#x.\n", hr);
+    todo_wine ok(results[0] == 0xdeadbeef, "Got result %#x.\n", results[0]);
+    hr = IDirectSoundBuffer8_Unlock(buffer8, ptr1, size1, ptr2, size2);
+    ok(hr == DS_OK, "Got hr %#x.\n", hr);
+
+    hr = IDirectSoundBuffer8_Play(buffer8, 0, 0, DSBPLAY_LOOPING);
+    ok(hr == DS_OK, "Got hr %#x.\n", hr);
+    results[0] = 0xdeadbeef;
+    hr = IDirectSoundBuffer8_SetFX(buffer8, 1, effects, results);
+    ok(hr == DSERR_INVALIDCALL, "Got hr %#x.\n", hr);
+    todo_wine ok(results[0] == 0xdeadbeef, "Got result %#x.\n", results[0]);
+    hr = IDirectSoundBuffer8_Stop(buffer8);
+    ok(hr == DS_OK, "Got hr %#x.\n", hr);
+    ok(!WaitForSingleObject(notify_params.hEventNotify, 1000), "Wait timed out.\n");
+
+    effects[0].guidDSFXClass = GUID_NULL;
+    results[0] = 0xdeadbeef;
+    hr = IDirectSoundBuffer8_SetFX(buffer8, 1, effects, results);
+    ok(hr == REGDB_E_CLASSNOTREG, "Got hr %#x.\n", hr);
+    ok(results[0] == DSFXR_UNKNOWN, "Got result %#x.\n", results[0]);
+
+    effects[0].guidDSFXClass = GUID_DSFX_STANDARD_PARAMEQ;
+    results[0] = 0xdeadbeef;
+    hr = IDirectSoundBuffer8_SetFX(buffer8, 1, effects, results);
+    todo_wine ok(hr == DS_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(results[0] == DSFXR_LOCSOFTWARE, "Got result %#x.\n", results[0]);
+
+    hr = IDirectSoundBuffer8_GetObjectInPath(buffer8, &GUID_All_Objects, 0, &IID_IMediaObject, NULL);
+    todo_wine ok(hr == DSERR_INVALIDPARAM, "Got hr %#x.\n", hr);
+
+    dmo = (IMediaObject *)0xdeadbeef;
+    hr = IDirectSoundBuffer8_GetObjectInPath(buffer8, &GUID_All_Objects, 0, &GUID_NULL, (void **)&dmo);
+    todo_wine ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
+    todo_wine ok(!dmo, "Got object %p.\n", dmo);
+
+    dmo = (IMediaObject *)0xdeadbeef;
+    hr = IDirectSoundBuffer8_GetObjectInPath(buffer8, &GUID_NULL, 0, &IID_IMediaObject, (void **)&dmo);
+    todo_wine ok(hr == DSERR_OBJECTNOTFOUND, "Got hr %#x.\n", hr);
+    ok(dmo == (IMediaObject *)0xdeadbeef, "Got object %p.\n", dmo);
+
+    dmo = NULL;
+    hr = IDirectSoundBuffer8_GetObjectInPath(buffer8, &GUID_All_Objects, 0, &IID_IMediaObject, (void **)&dmo);
+    todo_wine ok(hr == DS_OK, "Got hr %#x.\n", hr);
+    if (hr == DS_OK)
+    {
+        ok(!!dmo, "Expected a non-NULL object.\n");
+        IMediaObject_Release(dmo);
     }
 
-    primary=NULL;
-    ZeroMemory(&bufdesc, sizeof(bufdesc));
-    bufdesc.dwSize=sizeof(bufdesc);
-    bufdesc.dwFlags=DSBCAPS_PRIMARYBUFFER;
-    rc=IDirectSound8_CreateSoundBuffer(dso,&bufdesc,&primary,NULL);
-    ok((rc==DS_OK && primary!=NULL),
-       "IDirectSound8_CreateSoundBuffer() failed to create a primary buffer: "
-       "%08x\n",rc);
-    if (rc==DS_OK) {
-        init_format(&wfx,WAVE_FORMAT_PCM,11025,8,1);
-        ZeroMemory(&bufdesc, sizeof(bufdesc));
-        bufdesc.dwSize=sizeof(bufdesc);
-        bufdesc.dwFlags=0;
-        bufdesc.dwBufferBytes=align(wfx.nAvgBytesPerSec*BUFFER_LEN/1000,
-                                    wfx.nBlockAlign);
-        bufdesc.lpwfxFormat=&wfx;
-
-        ZeroMemory(effects, sizeof(effects));
-        effects[0].dwSize=sizeof(effects[0]);
-        effects[0].guidDSFXClass=GUID_DSFX_STANDARD_ECHO;
-        effects[1].dwSize=sizeof(effects[1]);
-        effects[1].guidDSFXClass=GUID_NULL;
-
-        secondary=NULL;
-        rc=IDirectSound8_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
-        ok(rc==DS_OK && secondary!=NULL,
-           "IDirectSound8_CreateSoundBuffer() failed to create a secondary "
-           "buffer: %08x\n",rc);
-
-        /* Call SetFX on buffer without DSBCAPS_CTRLFX */
-        if (rc==DS_OK && secondary!=NULL) {
-            secondary8=NULL;
-            rc=IDirectSoundBuffer_QueryInterface(secondary,&IID_IDirectSoundBuffer8,(LPVOID*)&secondary8);
-            ok(rc==DS_OK,"IDirectSoundBuffer_QueryInterface(IID_IDirectSoundBuffer8) failed: %08x\n", rc);
-
-            if (rc==DS_OK && secondary8) {
-                rc=IDirectSoundBuffer8_SetFX(secondary8,1,effects,resultcodes);
-                ok(rc==DSERR_CONTROLUNAVAIL,"IDirectSoundBuffer8_SetFX() "
-                "should have returned DSERR_CONTROLUNAVAIL, returned: %08x\n", rc);
-
-                IDirectSoundBuffer8_Release(secondary8);
-            }
-            IDirectSoundBuffer_Release(secondary);
-        }
-
-        secondary=NULL;
-        bufdesc.dwFlags=DSBCAPS_CTRLFX;
-        rc=IDirectSound8_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
-        ok(rc==DS_OK && secondary!=NULL,
-           "IDirectSound8_CreateSoundBuffer() failed to create a secondary "
-           "buffer: %08x\n",rc);
-
-        if (rc==DS_OK) {
-            secondary8=NULL;
-            rc=IDirectSoundBuffer_QueryInterface(secondary,&IID_IDirectSoundBuffer8,(LPVOID*)&secondary8);
-            ok(rc==DS_OK,"IDirectSoundBuffer_QueryInterface(IID_IDirectSoundBuffer8) failed: %08x\n", rc);
-
-            if (rc==DS_OK && secondary8) {
-                LPVOID ptr1,ptr2;
-                DWORD bytes1,bytes2;
-                IUnknown* obj = NULL;
-                HRESULT rc2;
-
-                /* Call SetFX with dwEffectsCount > 0 and pDSFXDesc == NULL */
-                rc=IDirectSoundBuffer8_SetFX(secondary8,1,NULL,NULL);
-                ok(rc==E_INVALIDARG||rc==DSERR_CONTROLUNAVAIL,"IDirectSoundBuffer8_SetFX() "
-                "should have returned E_INVALIDARG, returned: %08x\n", rc);
-
-                /* Call SetFX with dwEffectsCount == 0 and pDSFXDesc != NULL */
-                rc=IDirectSoundBuffer8_SetFX(secondary8,0,effects,NULL);
-                ok(rc==E_INVALIDARG||rc==DSERR_CONTROLUNAVAIL,"IDirectSoundBuffer8_SetFX() "
-                "should have returned E_INVALIDARG, returned: %08x\n", rc);
-
-                /* Call SetFX with dwEffectsCount == 0 and pdwResultCodes != NULL */
-                rc=IDirectSoundBuffer8_SetFX(secondary8,0,NULL,resultcodes);
-                ok(rc==E_INVALIDARG||rc==DSERR_CONTROLUNAVAIL,"IDirectSoundBuffer8_SetFX() "
-                "should have returned E_INVALIDARG, returned: %08x\n", rc);
-
-                rc=IDirectSoundBuffer8_Lock(secondary8,0,0,&ptr1,&bytes1,&ptr2,&bytes2,DSBLOCK_ENTIREBUFFER);
-                ok(rc==DS_OK,"IDirectSoundBuffer8_Lock() failed: %08x\n",rc);
-
-                if (rc==DS_OK) {
-                    /* Call SetFX when buffer is locked */
-                    rc=IDirectSoundBuffer8_SetFX(secondary8,1,effects,resultcodes);
-                    ok(rc==DSERR_INVALIDCALL||rc==DSERR_CONTROLUNAVAIL,"IDirectSoundBuffer8_SetFX() "
-                    "should have returned DSERR_INVALIDCALL, returned: %08x\n", rc);
-
-                    rc=IDirectSoundBuffer8_Unlock(secondary8,ptr1,bytes1,ptr2,bytes2);
-                    ok(rc==DS_OK,"IDirectSoundBuffer8_Unlock() failed: %08x\n",rc);
-                }
-
-                rc=IDirectSoundBuffer8_Play(secondary8,0,0,DSBPLAY_LOOPING);
-                ok(rc==DS_OK,"IDirectSoundBuffer8_Play() failed: %08x\n",rc);
-
-                if (rc==DS_OK) {
-                    /* Call SetFX when buffer is playing */
-                    rc=IDirectSoundBuffer8_SetFX(secondary8,1,effects,resultcodes);
-                    ok(rc==DSERR_INVALIDCALL||rc==DSERR_CONTROLUNAVAIL,"IDirectSoundBuffer8_SetFX() "
-                    "should have returned DSERR_INVALIDCALL, returned: %08x\n", rc);
-
-                    rc=IDirectSoundBuffer8_Stop(secondary8);
-                    ok(rc==DS_OK,"IDirectSoundBuffer8_Stop() failed: %08x\n",rc);
-                }
-
-                /* Call SetFX with non-existent filter */
-                rc=IDirectSoundBuffer8_SetFX(secondary8,1,&effects[1],resultcodes);
-                ok(rc==REGDB_E_CLASSNOTREG||rc==DSERR_CONTROLUNAVAIL,"IDirectSoundBuffer8_SetFX(GUID_NULL) "
-                    "should have returned REGDB_E_CLASSNOTREG, returned: %08x\n",rc);
-                if (rc!=DSERR_CONTROLUNAVAIL) {
-                    ok(resultcodes[0]==DSFXR_UNKNOWN,"result code == %08x, expected DSFXR_UNKNOWN\n",resultcodes[0]);
-                }
-
-                /* Call SetFX with standard echo */
-                rc2=IDirectSoundBuffer8_SetFX(secondary8,1,&effects[0],resultcodes);
-                ok(rc2==DS_OK||rc2==REGDB_E_CLASSNOTREG||rc2==DSERR_CONTROLUNAVAIL,
-                   "IDirectSoundBuffer8_SetFX(GUID_DSFX_STANDARD_ECHO) failed: %08x\n",rc);
-                if (rc2!=DSERR_CONTROLUNAVAIL) {
-                    ok(resultcodes[0]==DSFXR_UNKNOWN||resultcodes[0]==DSFXR_LOCHARDWARE||resultcodes[0]==DSFXR_LOCSOFTWARE,
-                        "resultcode == %08x, expected DSFXR_UNKNOWN, DSFXR_LOCHARDWARE, or DSFXR_LOCSOFTWARE\n",resultcodes[0]);
-                }
-
-                /* Call GetObjectInPath for out-of-bounds DMO */
-                rc=IDirectSoundBuffer8_GetObjectInPath(secondary8,&GUID_All_Objects,2,&IID_IMediaObject,(void**)&obj);
-                ok(rc==DSERR_OBJECTNOTFOUND||rc==DSERR_CONTROLUNAVAIL,"IDirectSoundBuffer8_GetObjectInPath() "
-                "should have returned DSERR_OBJECTNOTFOUND, returned: %08x\n",rc);
-
-                /* Call GetObjectInPath with NULL ppObject */
-                rc=IDirectSoundBuffer8_GetObjectInPath(secondary8,&GUID_All_Objects,0,&IID_IMediaObject,NULL);
-                ok(rc==E_INVALIDARG||rc==DSERR_CONTROLUNAVAIL,"IDirectSoundBuffer8_GetObjectInPath() "
-                "should have returned E_INVALIDARG, returned: %08x\n",rc);
-
-                /* Call GetObjectInPath for unsupported interface */
-                rc=IDirectSoundBuffer8_GetObjectInPath(secondary8,&GUID_All_Objects,0,&GUID_NULL,(void**)&obj);
-                ok(rc==E_NOINTERFACE||rc==DSERR_CONTROLUNAVAIL,"IDirectSoundBuffer8_GetObjectInPath() "
-                "should have returned E_NOINTERFACE, returned: %08x\n",rc);
-
-                /* Call GetObjectInPath for unloaded DMO */
-                rc=IDirectSoundBuffer8_GetObjectInPath(secondary8,&GUID_NULL,0,&IID_IMediaObject,(void**)&obj);
-                ok(rc==DSERR_OBJECTNOTFOUND||rc==DSERR_CONTROLUNAVAIL,"IDirectSoundBuffer8_GetObjectInPath() "
-                "should have returned DSERR_OBJECTNOTFOUND, returned: %08x\n",rc);
-
-                /* Call GetObjectInPath for first DMO */
-                obj=NULL;
-                rc=IDirectSoundBuffer8_GetObjectInPath(secondary8,&GUID_All_Objects,0,&IID_IMediaObject,(void**)&obj);
-                if (rc2==DS_OK) {
-                    ok(rc==DS_OK||rc==DSERR_CONTROLUNAVAIL,"IDirectSoundBuffer8_GetObjectInPath() "
-                    "should have returned DS_OK, returned: %08x\n",rc);
-                    if (obj) IUnknown_Release(obj);
-                } else {
-                    ok(rc==DSERR_OBJECTNOTFOUND||rc==DSERR_CONTROLUNAVAIL,"IDirectSoundBuffer8_GetObjectInPath() "
-                    "should have returned DSERR_OBJECTNOTFOUND, returned: %08x\n",rc);
-                }
-
-                /* Call SetFX with one real filter and one fake one */
-                rc=IDirectSoundBuffer8_SetFX(secondary8,2,effects,resultcodes);
-                ok(rc==REGDB_E_CLASSNOTREG||rc==DSERR_CONTROLUNAVAIL,
-                   "IDirectSoundBuffer8_SetFX(GUID_DSFX_STANDARD_ECHO, GUID_NULL) "
-                    "should have returned REGDB_E_CLASSNOTREG, returned: %08x\n",rc);
-                if (rc!=DSERR_CONTROLUNAVAIL) {
-                    ok(resultcodes[0]==DSFXR_PRESENT||resultcodes[0]==DSFXR_UNKNOWN,
-                        "resultcodes[0] == %08x, expected DSFXR_PRESENT or DSFXR_UNKNOWN\n",resultcodes[0]);
-                    ok(resultcodes[1]==DSFXR_UNKNOWN,
-                        "resultcodes[1] == %08x, expected DSFXR_UNKNOWN\n",resultcodes[1]);
-                }
-
-                IDirectSoundBuffer8_Release(secondary8);
-            }
-
-            IDirectSoundBuffer_Release(secondary);
-        }
-
-        IDirectSoundBuffer_Release(primary);
+    dmo = NULL;
+    hr = IDirectSoundBuffer8_GetObjectInPath(buffer8, &GUID_DSFX_STANDARD_PARAMEQ, 0, &IID_IMediaObject, (void **)&dmo);
+    if (hr == DS_OK)
+    {
+        ok(!!dmo, "Expected a non-NULL object.\n");
+        IMediaObject_Release(dmo);
     }
 
-    while (IDirectSound8_Release(dso));
+    dmo = (IMediaObject *)0xdeadbeef;
+    hr = IDirectSoundBuffer8_GetObjectInPath(buffer8, &GUID_All_Objects, 1, &IID_IMediaObject, (void **)&dmo);
+    todo_wine ok(hr == DSERR_OBJECTNOTFOUND, "Got hr %#x.\n", hr);
+    ok(dmo == (IMediaObject *)0xdeadbeef, "Got object %p.\n", dmo);
+
+    effects[0].guidDSFXClass = GUID_DSFX_STANDARD_PARAMEQ;
+    effects[1].guidDSFXClass = GUID_NULL;
+    results[0] = results[1] = 0xdeadbeef;
+    hr = IDirectSoundBuffer8_SetFX(buffer8, 2, effects, results);
+    ok(hr == REGDB_E_CLASSNOTREG, "Got hr %#x.\n", hr);
+    todo_wine ok(results[0] == DSFXR_PRESENT, "Got result %#x.\n", results[0]);
+    ok(results[1] == DSFXR_UNKNOWN, "Got result %#x.\n", results[1]);
+
+    hr = IDirectSoundBuffer8_GetObjectInPath(buffer8, &GUID_All_Objects, 0, &IID_IMediaObject, (void **)&dmo);
+    todo_wine ok(hr == DSERR_OBJECTNOTFOUND, "Got hr %#x.\n", hr);
+
+    effects[0].guidDSFXClass = GUID_DSFX_STANDARD_PARAMEQ;
+    effects[1].guidDSFXClass = GUID_DSFX_STANDARD_I3DL2REVERB;
+    results[0] = results[1] = 0xdeadbeef;
+    hr = IDirectSoundBuffer8_SetFX(buffer8, 2, effects, results);
+    todo_wine ok(hr == DS_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(results[0] == DSFXR_LOCSOFTWARE, "Got result %#x.\n", results[0]);
+    todo_wine ok(results[1] == DSFXR_LOCSOFTWARE, "Got result %#x.\n", results[1]);
+
+    hr = IDirectSoundBuffer8_GetObjectInPath(buffer8, &GUID_DSFX_STANDARD_PARAMEQ, 0, &IID_IMediaObject, (void **)&dmo);
+    todo_wine ok(hr == DS_OK, "Got hr %#x.\n", hr);
+    if (hr == DS_OK)
+        echo = dmo;
+    hr = IDirectSoundBuffer8_GetObjectInPath(buffer8,
+            &GUID_DSFX_STANDARD_I3DL2REVERB, 0, &IID_IMediaObject, (void **)&dmo);
+    todo_wine ok(hr == DS_OK, "Got hr %#x.\n", hr);
+    if (hr == DS_OK)
+        reverb = dmo;
+
+    hr = IDirectSoundBuffer8_GetObjectInPath(buffer8, &GUID_All_Objects, 0, &IID_IMediaObject, (void **)&dmo);
+    todo_wine ok(hr == DS_OK, "Got hr %#x.\n", hr);
+    if (hr == DS_OK)
+    {
+        ok(dmo == echo, "Expected %p, got %p.\n", echo, dmo);
+        IMediaObject_Release(dmo);
+    }
+
+    hr = IDirectSoundBuffer8_GetObjectInPath(buffer8, &GUID_All_Objects, 1, &IID_IMediaObject, (void **)&dmo);
+    todo_wine ok(hr == DS_OK, "Got hr %#x.\n", hr);
+    if (hr == DS_OK)
+    {
+        ok(dmo == reverb, "Expected %p, got %p.\n", reverb, dmo);
+        IMediaObject_Release(dmo);
+    }
+
+    hr = IDirectSoundBuffer8_GetObjectInPath(buffer8,
+            &GUID_DSFX_STANDARD_I3DL2REVERB, 1, &IID_IMediaObject, (void **)&dmo);
+    todo_wine ok(hr == DSERR_OBJECTNOTFOUND, "Got hr %#x.\n", hr);
+
+    hr = IDirectSoundBuffer8_GetObjectInPath(buffer8, &GUID_All_Objects, 0, &IID_IDirectSoundFXParamEq, (void **)&unk);
+    todo_wine ok(hr == DS_OK, "Got hr %#x.\n", hr);
+    if (hr == DS_OK)
+        IUnknown_Release(unk);
+
+    hr = IDirectSoundBuffer8_GetObjectInPath(buffer8, &GUID_All_Objects, 0,
+            &IID_IDirectSoundFXParamEq, (void **)&unk);
+    todo_wine ok(hr == DS_OK, "Got hr %#x.\n", hr);
+    if (hr == DS_OK)
+        IUnknown_Release(unk);
+
+    hr = IDirectSoundBuffer8_GetObjectInPath(buffer8, &GUID_All_Objects, 0,
+            &IID_IDirectSoundFXI3DL2Reverb, (void **)&unk);
+    todo_wine ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
+
+    hr = IDirectSoundBuffer8_GetObjectInPath(buffer8, &GUID_All_Objects, 1,
+            &IID_IDirectSoundFXI3DL2Reverb, (void **)&unk);
+    todo_wine ok(hr == DS_OK, "Got hr %#x.\n", hr);
+    if (hr == DS_OK)
+        IUnknown_Release(unk);
+
+    hr = IDirectSoundBuffer8_GetObjectInPath(buffer8,
+            &GUID_DSFX_STANDARD_I3DL2REVERB, 0, &IID_IDirectSoundFXI3DL2Reverb, (void **)&unk);
+    todo_wine ok(hr == DS_OK, "Got hr %#x.\n", hr);
+    if (hr == DS_OK)
+        IUnknown_Release(unk);
+
+    if (echo)
+        IMediaObject_Release(echo);
+    if (reverb)
+        IMediaObject_Release(reverb);
+
+    got_Process = CreateEventA(NULL, TRUE, FALSE, NULL);
+
+    effects[0].guidDSFXClass = testdmo_clsid;
+    results[0] = 0xdeadbeef;
+    hr = IDirectSoundBuffer8_SetFX(buffer8, 1, effects, results);
+    todo_wine ok(hr == DS_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(results[0] == DSFXR_LOCSOFTWARE, "Got result %#x.\n", results[0]);
+    todo_wine ok(!memcmp(&testdmo_input_type, &wfx, sizeof(WAVEFORMATEX)), "Format blocks didn't match.\n");
+
+    ResetEvent(notify_params.hEventNotify);
+    hr = IDirectSoundBuffer8_Play(buffer8, 0, 0, 0);
+    ok(hr == DS_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(got_Discontinuity == 1, "Got %u calls to IMediaObject::Discontinuity().\n", got_Discontinuity);
+
+    todo_wine ok(!WaitForSingleObject(got_Process, 100), "Wait timed out.\n");
+
+    hr = IDirectSoundBuffer8_Stop(buffer8);
+    ok(hr == DS_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(got_Discontinuity == 1, "Got %u calls to IMediaObject::Discontinuity().\n", got_Discontinuity);
+    ok(!WaitForSingleObject(notify_params.hEventNotify, 1000), "Wait timed out.\n");
+
+    ResetEvent(notify_params.hEventNotify);
+    hr = IDirectSoundBuffer8_Play(buffer8, 0, 0, 0);
+    ok(hr == DS_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(got_Discontinuity == 2, "Got %u calls to IMediaObject::Discontinuity().\n", got_Discontinuity);
+
+    hr = IDirectSoundBuffer8_Stop(buffer8);
+    ok(hr == DS_OK, "Got hr %#x.\n", hr);
+    ok(!WaitForSingleObject(notify_params.hEventNotify, 1000), "Wait timed out.\n");
+
+    hr = IDirectSoundBuffer8_SetFX(buffer8, 0, NULL, NULL);
+    ok(hr == DS_OK, "Got hr %#x.\n", hr);
+
+    hr = IDirectSoundBuffer8_GetObjectInPath(buffer8, &GUID_All_Objects, 0, &IID_IMediaObject, (void **)&dmo);
+    todo_wine ok(hr == DSERR_OBJECTNOTFOUND, "Got hr %#x.\n", hr);
+
+    CloseHandle(got_Process);
+    IDirectSoundBuffer8_Release(buffer8);
+    ref = IDirectSoundBuffer_Release(buffer);
+    ok(!ref, "Got outstanding refcount %u.\n", ref);
+
+    init_format(&wfx, WAVE_FORMAT_PCM, 11025, 16, 1);
+    hr = IDirectSound8_CreateSoundBuffer(dsound, &buffer_desc, &buffer, NULL);
+    ok(hr == DS_OK, "Got hr %#x.\n", hr);
+    hr = IDirectSoundBuffer_QueryInterface(buffer, &IID_IDirectSoundBuffer8, (void **)&buffer8);
+    ok(hr == DS_OK, "Got hr %#x.\n", hr);
+
+    results[0] = 0xdeadbeef;
+    hr = IDirectSoundBuffer8_SetFX(buffer8, 1, effects, results);
+    ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+    todo_wine ok(results[0] == DSFXR_UNKNOWN, "Got result %#x.\n", results[0]);
+
+    IDirectSoundNotify_Release(notify);
+    IDirectSoundBuffer8_Release(buffer8);
+    ref = IDirectSoundBuffer_Release(buffer);
+    ok(!ref, "Got outstanding refcount %u.\n", ref);
+
+    ref = IDirectSound8_Release(dsound);
+    ok(!ref, "Got outstanding refcount %u.\n", ref);
 }
 
 static void test_dsfx_interfaces(const char *test_prefix, IUnknown *dmo, REFGUID refguid)
@@ -1786,6 +2193,9 @@ cleanup:
 
 START_TEST(dsound8)
 {
+    DWORD cookie;
+    HRESULT hr;
+
     CoInitialize(NULL);
 
     test_COM();
@@ -1794,8 +2204,15 @@ START_TEST(dsound8)
     test_hw_buffers();
     test_first_device();
     test_primary_flags();
-    test_effects();
     test_effects_parameters();
+
+    hr = CoRegisterClassObject(&testdmo_clsid, (IUnknown *)&testdmo_cf,
+            CLSCTX_INPROC_SERVER, REGCLS_MULTIPLEUSE, &cookie);
+    ok(hr == S_OK, "Failed to register class, hr %#x.\n", hr);
+
+    test_effects();
+
+    CoRevokeClassObject(cookie);
 
     CoUninitialize();
 }
