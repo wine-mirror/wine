@@ -581,10 +581,11 @@ double parse_double(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *ctx),
     int matched=0;
 #endif
     BOOL found_digit = FALSE, found_dp = FALSE, found_sign = FALSE;
+    BYTE bnum_data[FIELD_OFFSET(struct bnum, data[BNUM_PREC64])];
     int e2 = 0, dp=0, sign=1, off, limb_digits = 0, i;
+    struct bnum *b = (struct bnum*)bnum_data;
     enum round round = ROUND_ZERO;
     MSVCRT_wchar_t nch;
-    struct bnum b;
 
     nch = get(ctx);
     if(nch == '-') {
@@ -637,27 +638,28 @@ double parse_double(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *ctx),
         nch = get(ctx);
     }
 
-    b.data[0] = 0;
-    b.b = 0;
-    b.e = 1;
+    b->b = 0;
+    b->e = 1;
+    b->size = BNUM_PREC64;
+    b->data[0] = 0;
     while(nch>='0' && nch<='9') {
         found_digit = TRUE;
         if(limb_digits == LIMB_DIGITS) {
-            if(BNUM_IDX(b.b-1) == BNUM_IDX(b.e)) break;
+            if(bnum_idx(b, b->b-1) == bnum_idx(b, b->e)) break;
             else {
-                b.b--;
-                b.data[BNUM_IDX(b.b)] = 0;
+                b->b--;
+                b->data[bnum_idx(b, b->b)] = 0;
                 limb_digits = 0;
             }
         }
 
-        b.data[BNUM_IDX(b.b)] = b.data[BNUM_IDX(b.b)] * 10 + nch - '0';
+        b->data[bnum_idx(b, b->b)] = b->data[bnum_idx(b, b->b)] * 10 + nch - '0';
         limb_digits++;
         nch = get(ctx);
         dp++;
     }
     while(nch>='0' && nch<='9') {
-        if(nch != '0') b.data[BNUM_IDX(b.b)] |= 1;
+        if(nch != '0') b->data[bnum_idx(b, b->b)] |= 1;
         nch = get(ctx);
         dp++;
     }
@@ -668,7 +670,7 @@ double parse_double(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *ctx),
     }
 
     /* skip leading '0' */
-    if(nch=='0' && !limb_digits && !b.b) {
+    if(nch=='0' && !limb_digits && !b->b) {
         found_digit = TRUE;
         while(nch == '0') {
             nch = get(ctx);
@@ -679,20 +681,20 @@ double parse_double(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *ctx),
     while(nch>='0' && nch<='9') {
         found_digit = TRUE;
         if(limb_digits == LIMB_DIGITS) {
-            if(BNUM_IDX(b.b-1) == BNUM_IDX(b.e)) break;
+            if(bnum_idx(b, b->b-1) == bnum_idx(b, b->e)) break;
             else {
-                b.b--;
-                b.data[BNUM_IDX(b.b)] = 0;
+                b->b--;
+                b->data[bnum_idx(b, b->b)] = 0;
                 limb_digits = 0;
             }
         }
 
-        b.data[BNUM_IDX(b.b)] = b.data[BNUM_IDX(b.b)] * 10 + nch - '0';
+        b->data[bnum_idx(b, b->b)] = b->data[bnum_idx(b, b->b)] * 10 + nch - '0';
         limb_digits++;
         nch = get(ctx);
     }
     while(nch>='0' && nch<='9') {
-        if(nch != '0') b.data[BNUM_IDX(b.b)] |= 1;
+        if(nch != '0') b->data[bnum_idx(b, b->b)] |= 1;
         nch = get(ctx);
     }
 
@@ -746,23 +748,23 @@ double parse_double(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *ctx),
         unget(ctx);
     }
 
-    if(!b.data[BNUM_IDX(b.e-1)]) return make_double(sign, 0, 0, ROUND_ZERO, err);
+    if(!b->data[bnum_idx(b, b->e-1)]) return make_double(sign, 0, 0, ROUND_ZERO, err);
 
     /* Fill last limb with 0 if needed */
-    if(b.b+1 != b.e) {
+    if(b->b+1 != b->e) {
         for(; limb_digits != LIMB_DIGITS; limb_digits++)
-            b.data[BNUM_IDX(b.b)] *= 10;
+            b->data[bnum_idx(b, b->b)] *= 10;
     }
-    for(; BNUM_IDX(b.b) < BNUM_IDX(b.e); b.b++) {
-        if(b.data[BNUM_IDX(b.b)]) break;
+    for(; bnum_idx(b, b->b) < bnum_idx(b, b->e); b->b++) {
+        if(b->data[bnum_idx(b, b->b)]) break;
     }
 
     /* move decimal point to limb boundary */
-    if(limb_digits==dp && b.b==b.e-1)
-        return make_double(sign, 0, b.data[BNUM_IDX(b.e-1)], ROUND_ZERO, err);
+    if(limb_digits==dp && b->b==b->e-1)
+        return make_double(sign, 0, b->data[bnum_idx(b, b->e-1)], ROUND_ZERO, err);
     off = (dp - limb_digits) % LIMB_DIGITS;
     if(off < 0) off += LIMB_DIGITS;
-    if(off) bnum_mult(&b, p10s[off]);
+    if(off) bnum_mult(b, p10s[off]);
 
     if(dp-1 > MSVCRT_DBL_MAX_10_EXP)
         return make_double(sign, INT_MAX, 1, ROUND_ZERO, err);
@@ -772,27 +774,27 @@ double parse_double(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *ctx),
         return make_double(sign, INT_MIN, 1, ROUND_ZERO, err);
 
     while(dp > 2*LIMB_DIGITS) {
-        if(bnum_rshift(&b, 9)) dp -= LIMB_DIGITS;
+        if(bnum_rshift(b, 9)) dp -= LIMB_DIGITS;
         e2 += 9;
     }
     while(dp <= LIMB_DIGITS) {
-        if(bnum_lshift(&b, 29)) dp += LIMB_DIGITS;
+        if(bnum_lshift(b, 29)) dp += LIMB_DIGITS;
         e2 -= 29;
     }
-    while(b.data[BNUM_IDX(b.e-1)] < LIMB_MAX/10) {
-        bnum_lshift(&b, 1);
+    while(b->data[bnum_idx(b, b->e-1)] < LIMB_MAX/10) {
+        bnum_lshift(b, 1);
         e2--;
     }
 
     /* Check if fractional part is non-zero */
     /* Caution: it's only correct because bnum_to_mant returns more than 53 bits */
-    for(i=b.e-3; i>=b.b; i--) {
-        if (!b.data[BNUM_IDX(b.b)]) continue;
+    for(i=b->e-3; i>=b->b; i--) {
+        if (!b->data[bnum_idx(b, b->b)]) continue;
         round = ROUND_DOWN;
         break;
     }
 
-    return make_double(sign, e2, bnum_to_mant(&b), round, err);
+    return make_double(sign, e2, bnum_to_mant(b), round, err);
 }
 
 static MSVCRT_wchar_t strtod_str_get(void *ctx)

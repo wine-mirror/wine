@@ -26,19 +26,26 @@ static const int p10s[] = { 1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 
 
 #define LIMB_DIGITS 9           /* each DWORD stores up to 9 digits */
 #define LIMB_MAX 1000000000     /* 10^9 */
-#define BNUM_IDX(i) ((i) & 127)
+
+#define BNUM_PREC64 128         /* data size needed to store 64-bit double */
 /* bnum represents real number with fixed decimal point (after 2 limbs) */
 struct bnum {
-    DWORD data[128]; /* circular buffer, base 10 number */
     int b; /* least significant digit position */
     int e; /* most significant digit position + 1 */
+    int size; /* data buffer size in DWORDS (power of 2) */
+    DWORD data[1]; /* circular buffer, base 10 number */
 };
+
+static inline int bnum_idx(struct bnum *b, int idx)
+{
+    return idx & (b->size - 1);
+}
 
 /* Returns integral part of bnum */
 static inline ULONGLONG bnum_to_mant(struct bnum *b)
 {
-    ULONGLONG ret = (ULONGLONG)b->data[BNUM_IDX(b->e-1)] * LIMB_MAX;
-    if(b->b != b->e-1) ret += b->data[BNUM_IDX(b->e-2)];
+    ULONGLONG ret = (ULONGLONG)b->data[bnum_idx(b, b->e-1)] * LIMB_MAX;
+    if(b->b != b->e-1) ret += b->data[bnum_idx(b, b->e-2)];
     return ret;
 }
 
@@ -53,20 +60,20 @@ static inline BOOL bnum_lshift(struct bnum *b, int shift)
     assert(shift <= 29);
 
     for(i=b->b; i<b->e; i++) {
-        tmp = ((ULONGLONG)b->data[BNUM_IDX(i)] << shift) + rest;
+        tmp = ((ULONGLONG)b->data[bnum_idx(b, i)] << shift) + rest;
         rest = tmp / LIMB_MAX;
-        b->data[BNUM_IDX(i)] = tmp % LIMB_MAX;
+        b->data[bnum_idx(b, i)] = tmp % LIMB_MAX;
 
-        if(i == b->b && !b->data[BNUM_IDX(i)])
+        if(i == b->b && !b->data[bnum_idx(b, i)])
             b->b++;
     }
 
     if(rest) {
-        b->data[BNUM_IDX(b->e)] = rest;
+        b->data[bnum_idx(b, b->e)] = rest;
         b->e++;
 
-        if(BNUM_IDX(b->b) == BNUM_IDX(b->e)) {
-            if(b->data[BNUM_IDX(b->b)]) b->data[BNUM_IDX(b->b+1)] |= 1;
+        if(bnum_idx(b, b->b) == bnum_idx(b, b->e)) {
+            if(b->data[bnum_idx(b, b->b)]) b->data[bnum_idx(b, b->b+1)] |= 1;
             b->b++;
         }
         return TRUE;
@@ -85,21 +92,21 @@ static inline BOOL bnum_rshift(struct bnum *b, int shift)
     assert(shift <= 9);
 
     for(i=b->e-1; i>=b->b; i--) {
-        tmp = b->data[BNUM_IDX(i)] & ((1<<shift)-1);
-        b->data[BNUM_IDX(i)] = (b->data[BNUM_IDX(i)] >> shift) + rest;
+        tmp = b->data[bnum_idx(b, i)] & ((1<<shift)-1);
+        b->data[bnum_idx(b, i)] = (b->data[bnum_idx(b, i)] >> shift) + rest;
         rest = (LIMB_MAX >> shift) * tmp;
-        if(i==b->e-1 && !b->data[BNUM_IDX(i)]) {
+        if(i==b->e-1 && !b->data[bnum_idx(b, i)]) {
             b->e--;
             ret = TRUE;
         }
     }
 
     if(rest) {
-        if(BNUM_IDX(b->b-1) == BNUM_IDX(b->e)) {
-            if(rest) b->data[BNUM_IDX(b->b)] |= 1;
+        if(bnum_idx(b, b->b-1) == bnum_idx(b, b->e)) {
+            if(rest) b->data[bnum_idx(b, b->b)] |= 1;
         } else {
             b->b--;
-            b->data[BNUM_IDX(b->b)] = rest;
+            b->data[bnum_idx(b, b->b)] = rest;
         }
     }
     return ret;
@@ -114,20 +121,20 @@ static inline void bnum_mult(struct bnum *b, int mult)
     assert(mult <= LIMB_MAX);
 
     for(i=b->b; i<b->e; i++) {
-        tmp = ((ULONGLONG)b->data[BNUM_IDX(i)] * mult) + rest;
+        tmp = ((ULONGLONG)b->data[bnum_idx(b, i)] * mult) + rest;
         rest = tmp / LIMB_MAX;
-        b->data[BNUM_IDX(i)] = tmp % LIMB_MAX;
+        b->data[bnum_idx(b, i)] = tmp % LIMB_MAX;
 
-        if(i == b->b && !b->data[BNUM_IDX(i)])
+        if(i == b->b && !b->data[bnum_idx(b, i)])
             b->b++;
     }
 
     if(rest) {
-        b->data[BNUM_IDX(b->e)] = rest;
+        b->data[bnum_idx(b, b->e)] = rest;
         b->e++;
 
-        if(BNUM_IDX(b->b) == BNUM_IDX(b->e)) {
-            if(b->data[BNUM_IDX(b->b)]) b->data[BNUM_IDX(b->b+1)] |= 1;
+        if(bnum_idx(b, b->b) == bnum_idx(b, b->e)) {
+            if(b->data[bnum_idx(b, b->b)]) b->data[bnum_idx(b, b->b+1)] |= 1;
             b->b++;
         }
     }

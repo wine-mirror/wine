@@ -577,11 +577,12 @@ static inline int FUNC_NAME(pf_output_fp)(FUNC_NAME(puts_clbk) pf_puts, void *pu
         double v, pf_flags *flags, MSVCRT__locale_t locale, BOOL three_digit_exp)
 {
     int e2, e10 = 0, round_pos, round_limb, radix_pos, first_limb_len, i, len, r, ret;
+    BYTE bnum_data[FIELD_OFFSET(struct bnum, data[BNUM_PREC64])];
+    struct bnum *b = (struct bnum*)bnum_data;
     APICHAR buf[LIMB_DIGITS + 1];
     BOOL trim_tail = FALSE;
     pf_flags f;
     int limb_len, prec;
-    struct bnum b;
     ULONGLONG m;
     DWORD l;
 
@@ -594,33 +595,35 @@ static inline int FUNC_NAME(pf_output_fp)(FUNC_NAME(puts_clbk) pf_puts, void *pu
     if(v) {
         m = (ULONGLONG)1 << (MANT_BITS - 1);
         m |= (*(ULONGLONG*)&v & (((ULONGLONG)1 << (MANT_BITS - 1)) - 1));
-        b.data[0] = m % LIMB_MAX;
-        b.data[1] = m / LIMB_MAX;
-        b.b = 0;
-        b.e = 2;
+        b->b = 0;
+        b->e = 2;
+        b->size = BNUM_PREC64;
+        b->data[0] = m % LIMB_MAX;
+        b->data[1] = m / LIMB_MAX;
         e2 -= MANT_BITS;
 
         while(e2 > 0) {
             int shift = e2 > 29 ? 29 : e2;
-            if(bnum_lshift(&b, shift)) e10 += LIMB_DIGITS;
+            if(bnum_lshift(b, shift)) e10 += LIMB_DIGITS;
             e2 -= shift;
         }
         while(e2 < 0) {
             int shift = -e2 > 9 ? 9 : -e2;
-            if(bnum_rshift(&b, shift)) e10 -= LIMB_DIGITS;
+            if(bnum_rshift(b, shift)) e10 -= LIMB_DIGITS;
             e2 += shift;
         }
     } else {
-        b.b = 0;
-        b.e = 1;
-        b.data[0] = 0;
+        b->b = 0;
+        b->e = 1;
+        b->size = BNUM_PREC64;
+        b->data[0] = 0;
         e10 = -LIMB_DIGITS;
     }
 
-    if(!b.data[BNUM_IDX(b.e-1)])
+    if(!b->data[bnum_idx(b, b->e-1)])
         first_limb_len = 1;
     else
-        first_limb_len = floor(log10(b.data[BNUM_IDX(b.e - 1)])) + 1;
+        first_limb_len = floor(log10(b->data[bnum_idx(b, b->e - 1)])) + 1;
     radix_pos = first_limb_len + LIMB_DIGITS + e10;
 
     round_pos = flags->Precision;
@@ -629,11 +632,11 @@ static inline int FUNC_NAME(pf_output_fp)(FUNC_NAME(puts_clbk) pf_puts, void *pu
     else if(!flags->Precision || flags->Format=='e' || flags->Format=='E')
         round_pos++;
     if (round_pos <= first_limb_len)
-        round_limb = b.e + (first_limb_len - round_pos) / LIMB_DIGITS - 1;
+        round_limb = b->e + (first_limb_len - round_pos) / LIMB_DIGITS - 1;
     else
-        round_limb = b.e - (round_pos - first_limb_len - 1) / LIMB_DIGITS - 2;
+        round_limb = b->e - (round_pos - first_limb_len - 1) / LIMB_DIGITS - 2;
 
-    if (b.b<=round_limb && round_limb<b.e) {
+    if (b->b<=round_limb && round_limb<b->e) {
         BOOL round_up = FALSE;
 
         if (round_pos <= first_limb_len) {
@@ -644,43 +647,43 @@ static inline int FUNC_NAME(pf_output_fp)(FUNC_NAME(puts_clbk) pf_puts, void *pu
         }
 
         if (round_pos) {
-            l = b.data[BNUM_IDX(round_limb)] % p10s[round_pos];
-            b.data[BNUM_IDX(round_limb)] -= l;
+            l = b->data[bnum_idx(b, round_limb)] % p10s[round_pos];
+            b->data[bnum_idx(b, round_limb)] -= l;
             if(2*l >= p10s[round_pos]) round_up = TRUE;
-        } else if(round_limb - 1 >= b.b) {
-            if(2*b.data[BNUM_IDX(round_limb-1)] >= LIMB_MAX) round_up = TRUE;
+        } else if(round_limb - 1 >= b->b) {
+            if(2*b->data[bnum_idx(b, round_limb-1)] >= LIMB_MAX) round_up = TRUE;
         }
-        b.b = round_limb;
+        b->b = round_limb;
 
         if(round_up) {
-            b.data[BNUM_IDX(b.b)] += p10s[round_pos];
-            for(i = b.b; i < b.e; i++) {
-                if(b.data[BNUM_IDX(i)] < LIMB_MAX) break;
+            b->data[bnum_idx(b, b->b)] += p10s[round_pos];
+            for(i = b->b; i < b->e; i++) {
+                if(b->data[bnum_idx(b, i)] < LIMB_MAX) break;
 
-                b.data[BNUM_IDX(i)] -= LIMB_MAX;
-                if(i+1 < b.e) b.data[BNUM_IDX(i+1)]++;
-                else b.data[BNUM_IDX(i+1)] = 1;
+                b->data[bnum_idx(b, i)] -= LIMB_MAX;
+                if(i+1 < b->e) b->data[bnum_idx(b, i+1)]++;
+                else b->data[bnum_idx(b, i+1)] = 1;
             }
-            if(i == b.e-1) {
-                if(!b.data[BNUM_IDX(b.e-1)])
+            if(i == b->e-1) {
+                if(!b->data[bnum_idx(b, b->e-1)])
                     i = 1;
                 else
-                    i = floor(log10(b.data[BNUM_IDX(b.e-1)])) + 1;
+                    i = floor(log10(b->data[bnum_idx(b, b->e-1)])) + 1;
                 if(i != first_limb_len) {
                     first_limb_len = i;
                     radix_pos++;
                 }
-            } else if(i == b.e) {
+            } else if(i == b->e) {
                 first_limb_len = 1;
                 radix_pos++;
-                b.e++;
+                b->e++;
             }
         }
     }
-    else if(b.e <= round_limb) { /* got 0 or 1 after rounding */
-        b.data[BNUM_IDX(round_limb)] = b.e==round_limb && b.data[BNUM_IDX(b.e-1)]>=LIMB_MAX/2;
-        b.b = round_limb;
-        b.e = b.b + 1;
+    else if(b->e <= round_limb) { /* got 0 or 1 after rounding */
+        b->data[bnum_idx(b, round_limb)] = b->e==round_limb && b->data[bnum_idx(b, b->e-1)]>=LIMB_MAX/2;
+        b->b = round_limb;
+        b->e = b->b + 1;
         first_limb_len = 1;
         radix_pos++;
     }
@@ -702,9 +705,9 @@ static inline int FUNC_NAME(pf_output_fp)(FUNC_NAME(puts_clbk) pf_puts, void *pu
     }
 
     if(trim_tail && !flags->Alternate) {
-        for(i=round_limb; flags->Precision>0 && i<b.e; i++) {
-            if(i>=b.b)
-                l = b.data[BNUM_IDX(i)];
+        for(i=round_limb; flags->Precision>0 && i<b->e; i++) {
+            if(i>=b->b)
+                l = b->data[bnum_idx(b, i)];
             else
                 l = 0;
 
@@ -713,7 +716,7 @@ static inline int FUNC_NAME(pf_output_fp)(FUNC_NAME(puts_clbk) pf_puts, void *pu
                     r = radix_pos + flags->Precision;
                 else
                     r = flags->Precision + 1;
-                r = first_limb_len + LIMB_DIGITS * (b.e-1 - b.b) - r;
+                r = first_limb_len + LIMB_DIGITS * (b->e-1 - b->b) - r;
                 r %= LIMB_DIGITS;
                 if(r < 0) r += LIMB_DIGITS;
                 l /= p10s[r];
@@ -770,9 +773,9 @@ static inline int FUNC_NAME(pf_output_fp)(FUNC_NAME(puts_clbk) pf_puts, void *pu
         }
 
         limb_len = LIMB_DIGITS;
-        for(i=b.e-1; radix_pos>0 && i>=b.b; i--) {
-            limb_len = (i == b.e-1 ? first_limb_len : LIMB_DIGITS);
-            l = b.data[BNUM_IDX(i)];
+        for(i=b->e-1; radix_pos>0 && i>=b->b; i--) {
+            limb_len = (i == b->e-1 ? first_limb_len : LIMB_DIGITS);
+            l = b->data[bnum_idx(b, i)];
             if(limb_len > radix_pos) {
                 f.Precision = radix_pos;
                 l /= p10s[limb_len - radix_pos];
@@ -811,8 +814,8 @@ static inline int FUNC_NAME(pf_output_fp)(FUNC_NAME(puts_clbk) pf_puts, void *pu
             ret += r;
         }
 
-        for(; prec>0 && i>=b.b; i--) {
-            l = b.data[BNUM_IDX(i)];
+        for(; prec>0 && i>=b->b; i--) {
+            l = b->data[bnum_idx(b, i)];
             if(limb_len != LIMB_DIGITS)
                 l %= p10s[limb_len];
             if(limb_len > prec) {
@@ -837,7 +840,7 @@ static inline int FUNC_NAME(pf_output_fp)(FUNC_NAME(puts_clbk) pf_puts, void *pu
             ret += r;
         }
     } else {
-        l = b.data[BNUM_IDX(b.e - 1)];
+        l = b->data[bnum_idx(b, b->e - 1)];
         l /= p10s[first_limb_len - 1];
 
         buf[0] = '0' + l;
@@ -854,9 +857,9 @@ static inline int FUNC_NAME(pf_output_fp)(FUNC_NAME(puts_clbk) pf_puts, void *pu
 
         prec = flags->Precision;
         limb_len = LIMB_DIGITS;
-        for(i=b.e-1; prec>0 && i>=b.b; i--) {
-            l = b.data[BNUM_IDX(i)];
-            if(i == b.e-1) {
+        for(i=b->e-1; prec>0 && i>=b->b; i--) {
+            l = b->data[bnum_idx(b, i)];
+            if(i == b->e-1) {
                 limb_len = first_limb_len - 1;
                 l %= p10s[limb_len];
             }
