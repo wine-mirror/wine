@@ -1486,41 +1486,43 @@ BOOL WINAPI DECLSPEC_HOTPATCH WriteConsoleOutputA( HANDLE handle, const CHAR_INF
 BOOL WINAPI DECLSPEC_HOTPATCH WriteConsoleOutputW( HANDLE handle, const CHAR_INFO *buffer,
                                                    COORD size, COORD coord, SMALL_RECT *region )
 {
-    int width, height, y;
-    BOOL ret = TRUE;
+    struct condrv_write_output_params *params;
+    unsigned int width, height, y;
+    size_t params_size;
+    BOOL ret;
 
     TRACE( "(%p,%p,(%d,%d),(%d,%d),(%d,%dx%d,%d)\n",
            handle, buffer, size.X, size.Y, coord.X, coord.Y,
            region->Left, region->Top, region->Right, region->Bottom );
 
-    width = min( region->Right - region->Left + 1, size.X - coord.X );
-    height = min( region->Bottom - region->Top + 1, size.Y - coord.Y );
-
-    if (width > 0 && height > 0)
+    if (region->Left > region->Right || region->Top > region->Bottom || size.X <= coord.X || size.Y <= coord.Y)
     {
-        for (y = 0; y < height; y++)
-        {
-            SERVER_START_REQ( write_console_output )
-            {
-                req->handle = console_handle_unmap( handle );
-                req->x      = region->Left;
-                req->y      = region->Top + y;
-                req->mode   = CHAR_INFO_MODE_TEXTATTR;
-                req->wrap   = FALSE;
-                wine_server_add_data( req, &buffer[(y + coord.Y) * size.X + coord.X],
-                                      width * sizeof(CHAR_INFO));
-                if ((ret = !wine_server_call_err( req )))
-                {
-                    width  = min( width, reply->width - region->Left );
-                    height = min( height, reply->height - region->Top );
-                }
-            }
-            SERVER_END_REQ;
-            if (!ret) break;
-        }
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
     }
-    region->Bottom = region->Top + height - 1;
+
+    width  = min( region->Right - region->Left + 1, size.X - coord.X );
+    height = min( region->Bottom - region->Top + 1, size.Y - coord.Y );
     region->Right = region->Left + width - 1;
+    region->Bottom = region->Top + height - 1;
+
+    params_size = sizeof(*params) + width * height * sizeof(*buffer);
+    if (!(params = HeapAlloc( GetProcessHeap(), 0, params_size )))
+    {
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        return FALSE;
+    }
+
+    params->mode  = CHAR_INFO_MODE_TEXTATTR;
+    params->x     = region->Left;
+    params->y     = region->Top;
+    params->width = width;
+
+    for (y = 0; y < height; y++)
+        memcpy( &((CHAR_INFO *)(params + 1))[y * width], &buffer[(y + coord.Y) * size.X + coord.X], width * sizeof(CHAR_INFO) );
+
+    ret = console_ioctl( handle, IOCTL_CONDRV_WRITE_OUTPUT, params, params_size, region, sizeof(*region), NULL );
+    HeapFree( GetProcessHeap(), 0, params );
     return ret;
 }
 
