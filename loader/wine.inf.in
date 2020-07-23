@@ -568,6 +568,7 @@ HKLM,%CurrentVersionNT%\Image File Execution Options,,16
 HKLM,%CurrentVersionNT%\IniFileMapping\win.ini,"desktop",,"USR:Control Panel\Desktop"
 HKLM,%CurrentVersionNT%\IniFileMapping\win.ini,"devices",,"USR:Software\Microsoft\Windows NT\CurrentVersion\Devices"
 HKLM,%CurrentVersionNT%\IniFileMapping\win.ini,"extensions",,"USR:Software\Microsoft\Windows NT\CurrentVersion\Extensions"
+HKLM,%CurrentVersionNT%\IniFileMapping\win.ini,"printerports",,"USR:Software\Microsoft\Windows NT\CurrentVersion\PrinterPorts"
 HKLM,%CurrentVersionNT%\IniFileMapping\win.ini\windows,,,"USR:Software\Microsoft\Windows NT\CurrentVersion\Windows"
 HKLM,%CurrentVersionNT%\IniFileMapping\win.ini\windows,"CursorBlinkRate",,"USR:Control Panel\Desktop"
 HKLM,%CurrentVersionNT%\LanguagePack,,16
