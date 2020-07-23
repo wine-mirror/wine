@@ -2095,12 +2095,14 @@ HRESULT disp_call_value(script_ctx_t *ctx, IDispatch *disp, IDispatch *jsthis, W
         dp.rgdispidNamedArgs = NULL;
     }
 
-    if(argc > ARRAY_SIZE(buf) && !(args = heap_alloc(argc * sizeof(VARIANT))))
+    if(dp.cArgs > ARRAY_SIZE(buf) && !(args = heap_alloc(dp.cArgs * sizeof(VARIANT))))
         return E_OUTOFMEMORY;
     dp.rgvarg = args;
 
-    V_VT(dp.rgvarg) = VT_DISPATCH;
-    V_DISPATCH(dp.rgvarg) = jsthis;
+    if(jsthis) {
+        V_VT(dp.rgvarg) = VT_DISPATCH;
+        V_DISPATCH(dp.rgvarg) = jsthis;
+    }
 
     for(i=0; SUCCEEDED(hres) && i < argc; i++)
         hres = jsval_to_variant(argv[i], dp.rgvarg+dp.cArgs-i-1);
@@ -2110,7 +2112,7 @@ HRESULT disp_call_value(script_ctx_t *ctx, IDispatch *disp, IDispatch *jsthis, W
         hres = disp_invoke(ctx, disp, DISPID_VALUE, flags, &dp, r ? &retv : NULL);
     }
 
-    for(i = 0; i < argc&&0; i++)
+    for(i = 0; i < argc; i++)
         VariantClear(dp.rgvarg + dp.cArgs - i - 1);
     if(args != buf)
         heap_free(args);
