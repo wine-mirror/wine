@@ -468,6 +468,132 @@ int fpnum_double(struct fpnum *fp, double *d)
     return 0;
 }
 
+#define LDBL_EXP_BITS 15
+#define LDBL_MANT_BITS 64
+int fpnum_ldouble(struct fpnum *fp, MSVCRT__LDOUBLE *d)
+{
+    if (fp->mod == FP_VAL_INFINITY)
+    {
+        d->x80[0] = 0;
+        d->x80[1] = 0x80000000;
+        d->x80[2] = (1 << LDBL_EXP_BITS) - 1;
+        if (fp->sign == -1)
+            d->x80[2] |= 1 << LDBL_EXP_BITS;
+        return 0;
+    }
+
+    if (fp->mod == FP_VAL_NAN)
+    {
+        d->x80[0] = ~0;
+        d->x80[1] = ~0;
+        d->x80[2] = (1 << LDBL_EXP_BITS) - 1;
+        if (fp->sign == -1)
+            d->x80[2] |= 1 << LDBL_EXP_BITS;
+        return 0;
+    }
+
+    TRACE("%c %s *2^%d (round %d)\n", fp->sign == -1 ? '-' : '+',
+            wine_dbgstr_longlong(fp->m), fp->exp, fp->mod);
+    if (!fp->m)
+    {
+        d->x80[0] = 0;
+        d->x80[1] = 0;
+        d->x80[2] = 0;
+        if (fp->sign == -1)
+            d->x80[2] |= 1 << LDBL_EXP_BITS;
+        return 0;
+    }
+
+    /* make sure that we don't overflow modifying exponent */
+    if (fp->exp > 1<<LDBL_EXP_BITS)
+    {
+        d->x80[0] = 0;
+        d->x80[1] = 0x80000000;
+        d->x80[2] = (1 << LDBL_EXP_BITS) - 1;
+        if (fp->sign == -1)
+            d->x80[2] |= 1 << LDBL_EXP_BITS;
+        return MSVCRT_ERANGE;
+    }
+    if (fp->exp < -(1<<LDBL_EXP_BITS))
+    {
+        d->x80[0] = 0;
+        d->x80[1] = 0;
+        d->x80[2] = 0;
+        if (fp->sign == -1)
+            d->x80[2] |= 1 << LDBL_EXP_BITS;
+        return MSVCRT_ERANGE;
+    }
+    fp->exp += LDBL_MANT_BITS - 1;
+
+    /* normalize mantissa */
+    while(fp->m < (ULONGLONG)1 << (LDBL_MANT_BITS-1))
+    {
+        fp->m <<= 1;
+        fp->exp--;
+    }
+    fp->exp += (1 << (LDBL_EXP_BITS-1)) - 1;
+
+    /* handle subnormals */
+    if (fp->exp <= 0)
+    {
+        if (fp->m & 1 && fp->mod == FP_ROUND_ZERO) fp->mod = FP_ROUND_EVEN;
+        else if (fp->m & 1) fp->mod = FP_ROUND_UP;
+        else if (fp->mod != FP_ROUND_ZERO) fp->mod = FP_ROUND_DOWN;
+        fp->m >>= 1;
+    }
+    while(fp->m && fp->exp<0)
+    {
+        if (fp->m & 1 && fp->mod == FP_ROUND_ZERO) fp->mod = FP_ROUND_EVEN;
+        else if (fp->m & 1) fp->mod = FP_ROUND_UP;
+        else if (fp->mod != FP_ROUND_ZERO) fp->mod = FP_ROUND_DOWN;
+        fp->m >>= 1;
+        fp->exp++;
+    }
+
+    /* round mantissa */
+    if (fp->mod == FP_ROUND_UP || (fp->mod == FP_ROUND_EVEN && fp->m & 1))
+    {
+        if (fp->m == MSVCRT_UI64_MAX)
+        {
+            fp->m = (ULONGLONG)1 << (LDBL_MANT_BITS - 1);
+            fp->exp++;
+        }
+        else
+        {
+            fp->m++;
+
+            /* handle subnormal that falls into regular range due to rounding */
+            if ((fp->m ^ (fp->m - 1)) & ((ULONGLONG)1 << (LDBL_MANT_BITS - 1))) fp->exp++;
+        }
+    }
+
+    if (fp->exp >= (1<<LDBL_EXP_BITS)-1)
+    {
+        d->x80[0] = 0;
+        d->x80[1] = 0x80000000;
+        d->x80[2] = (1 << LDBL_EXP_BITS) - 1;
+        if (fp->sign == -1)
+            d->x80[2] |= 1 << LDBL_EXP_BITS;
+        return MSVCRT_ERANGE;
+    }
+    if (!fp->m || fp->exp < 0)
+    {
+        d->x80[0] = 0;
+        d->x80[1] = 0;
+        d->x80[2] = 0;
+        if (fp->sign == -1)
+            d->x80[2] |= 1 << LDBL_EXP_BITS;
+        return MSVCRT_ERANGE;
+    }
+
+    d->x80[0] = fp->m;
+    d->x80[1] = fp->m >> 32;
+    d->x80[2] = fp->exp;
+    if (fp->sign == -1)
+        d->x80[2] |= 1 << LDBL_EXP_BITS;
+    return 0;
+}
+
 #if _MSVCR_VER >= 140
 
 static inline int hex2int(char c)
@@ -612,8 +738,8 @@ static inline BOOL bnum_to_mant(struct bnum *b, ULONGLONG *m)
     return TRUE;
 }
 
-struct fpnum fpnum_parse(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *ctx),
-        void *ctx, MSVCRT_pthreadlocinfo locinfo)
+static struct fpnum fpnum_parse_bnum(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *ctx),
+        void *ctx, MSVCRT_pthreadlocinfo locinfo, BOOL ldouble, struct bnum *b)
 {
 #if _MSVCR_VER >= 140
     MSVCRT_wchar_t _infinity[] = { 'i', 'n', 'f', 'i', 'n', 'i', 't', 'y', 0 };
@@ -622,9 +748,7 @@ struct fpnum fpnum_parse(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *c
     int matched=0;
 #endif
     BOOL found_digit = FALSE, found_dp = FALSE, found_sign = FALSE;
-    BYTE bnum_data[FIELD_OFFSET(struct bnum, data[BNUM_PREC64])];
     int e2 = 0, dp=0, sign=1, off, limb_digits = 0, i;
-    struct bnum *b = (struct bnum*)bnum_data;
     enum fpmod round = FP_ROUND_ZERO;
     MSVCRT_wchar_t nch;
     ULONGLONG m;
@@ -684,7 +808,6 @@ struct fpnum fpnum_parse(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *c
 
     b->b = 0;
     b->e = 1;
-    b->size = BNUM_PREC64;
     b->data[0] = 0;
     while(nch>='0' && nch<='9') {
         found_digit = TRUE;
@@ -806,11 +929,11 @@ struct fpnum fpnum_parse(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *c
     if(off < 0) off += LIMB_DIGITS;
     if(off) bnum_mult(b, p10s[off]);
 
-    if(dp-1 > MSVCRT_DBL_MAX_10_EXP)
+    if(dp-1 > (ldouble ? DBL80_MAX_10_EXP : MSVCRT_DBL_MAX_10_EXP))
         return fpnum(sign, INT_MAX, 1, FP_ROUND_ZERO);
     /* Count part of exponent stored in denormalized mantissa. */
     /* Increase exponent range to handle subnormals. */
-    if(dp-1 < MSVCRT_DBL_MIN_10_EXP-MSVCRT_DBL_DIG-18)
+    if(dp-1 < (ldouble ? DBL80_MIN_10_EXP : MSVCRT_DBL_MIN_10_EXP-MSVCRT_DBL_DIG-18))
         return fpnum(sign, INT_MIN, 1, FP_ROUND_ZERO);
 
     while(dp > 3*LIMB_DIGITS) {
@@ -845,6 +968,24 @@ struct fpnum fpnum_parse(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *c
     }
 
     return fpnum(sign, e2, m, round);
+}
+
+struct fpnum fpnum_parse(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *ctx),
+       void *ctx, MSVCRT_pthreadlocinfo locinfo, BOOL ldouble)
+{
+    if(!ldouble) {
+        BYTE bnum_data[FIELD_OFFSET(struct bnum, data[BNUM_PREC64])];
+        struct bnum *b = (struct bnum*)bnum_data;
+
+        b->size = BNUM_PREC64;
+        return fpnum_parse_bnum(get, unget, ctx, locinfo, ldouble, b);
+    } else {
+        BYTE bnum_data[FIELD_OFFSET(struct bnum, data[BNUM_PREC80])];
+        struct bnum *b = (struct bnum*)bnum_data;
+
+        b->size = BNUM_PREC80;
+        return fpnum_parse_bnum(get, unget, ctx, locinfo, ldouble, b);
+    }
 }
 
 static MSVCRT_wchar_t strtod_str_get(void *ctx)
@@ -888,7 +1029,7 @@ static inline double strtod_helper(const char *str, char **end, MSVCRT__locale_t
         p++;
     beg = p;
 
-    fp = fpnum_parse(strtod_str_get, strtod_str_unget, &p, locinfo);
+    fp = fpnum_parse(strtod_str_get, strtod_str_unget, &p, locinfo, FALSE);
     if (end) *end = (p == beg ? (char*)str : (char*)p);
 
     err = fpnum_double(&fp, &ret);
@@ -1300,15 +1441,30 @@ MSVCRT_size_t CDECL MSVCRT_strxfrm( char *dest, const char *src, MSVCRT_size_t l
 int CDECL __STRINGTOLD_L( MSVCRT__LDOUBLE *value, char **endptr,
         const char *str, int flags, MSVCRT__locale_t locale )
 {
-#ifdef HAVE_STRTOLD
-    long double ld;
-    FIXME("%p %p %s %x %p partial stub\n", value, endptr, str, flags, locale );
-    ld = strtold(str,0);
-    memcpy(value, &ld, 10);
-#else
-    FIXME("%p %p %s %x stub\n", value, endptr, str, flags );
-#endif
-    return 0;
+    MSVCRT_pthreadlocinfo locinfo;
+    const char *beg, *p;
+    int err, ret = 0;
+    struct fpnum fp;
+
+    if (flags) FIXME("flags not supported: %x\n", flags);
+
+    if (!locale)
+        locinfo = get_locinfo();
+    else
+        locinfo = locale->locinfo;
+
+    p = str;
+    while (MSVCRT__isspace_l((unsigned char)*p, locale))
+        p++;
+    beg = p;
+
+    fp = fpnum_parse(strtod_str_get, strtod_str_unget, &p, locinfo, TRUE);
+    if (endptr) *endptr = (p == beg ? (char*)str : (char*)p);
+    if (p == beg) ret = 4;
+
+    err = fpnum_ldouble(&fp, value);
+    if (err) ret = (value->x80[2] & 0x7fff ? 2 : 1);
+    return ret;
 }
 
 /********************************************************************

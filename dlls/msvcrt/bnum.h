@@ -28,6 +28,7 @@ static const int p10s[] = { 1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 
 #define LIMB_MAX 1000000000     /* 10^9 */
 
 #define BNUM_PREC64 128         /* data size needed to store 64-bit double */
+#define BNUM_PREC80 2048        /* data size needed to store 80-bit double */
 
 /* bnum represents real number with fixed decimal point */
 struct bnum {

@@ -405,7 +405,7 @@ _FUNCTION_ {
 #endif
 
                     fp = fpnum_parse(_STRTOD_NAME_(strtod_scanf_get),
-                            _STRTOD_NAME_(strtod_scanf_unget), &ctx, locinfo);
+                            _STRTOD_NAME_(strtod_scanf_unget), &ctx, locinfo, FALSE);
                     fpnum_double(&fp, &cur);
                     if(!rd && ctx.err) {
                         _UNLOCK_FILE_(file);

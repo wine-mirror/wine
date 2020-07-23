@@ -529,7 +529,7 @@ double CDECL MSVCRT__wcstod_l(const MSVCRT_wchar_t* str, MSVCRT_wchar_t** end,
         p++;
     beg = p;
 
-    fp = fpnum_parse(strtod_wstr_get, strtod_wstr_unget, &p, locinfo);
+    fp = fpnum_parse(strtod_wstr_get, strtod_wstr_unget, &p, locinfo, FALSE);
     if (end) *end = (p == beg ? (MSVCRT_wchar_t*)str : (MSVCRT_wchar_t*)p);
 
     err = fpnum_double(&fp, &ret);
