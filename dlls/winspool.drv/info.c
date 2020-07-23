@@ -259,7 +259,6 @@ static const WCHAR Previous_NamesW[] = {'P','r','e','v','i','o','u','s',' ','N',
 static const WCHAR Print_ProcessorW[] = {'P','r','i','n','t',' ','P','r','o','c','e','s','s','o','r',0};
 static const WCHAR Printer_DriverW[] = {'P','r','i','n','t','e','r',' ','D','r','i','v','e','r',0};
 static const WCHAR PrinterDriverDataW[] = {'P','r','i','n','t','e','r','D','r','i','v','e','r','D','a','t','a',0};
-static const WCHAR PrinterPortsW[] = {'P','r','i','n','t','e','r','P','o','r','t','s',0};
 static const WCHAR PriorityW[] = {'P','r','i','o','r','i','t','y',0};
 static const WCHAR ProviderW[] = {'P','r','o','v','i','d','e','r',0};
 static const WCHAR Separator_FileW[] = {'S','e','p','a','r','a','t','o','r',' ','F','i','l','e',0};
@@ -3171,7 +3170,6 @@ static void set_devices_and_printerports(PRINTER_INFO_2W *pi)
         }
 
         lstrcatW(devline, timeout_15_45);
-        WriteProfileStringW(PrinterPortsW, pi->pPrinterName, devline);
         if (!RegCreateKeyW(HKEY_CURRENT_USER, WinNT_CV_PrinterPortsW, &hkey)) {
             RegSetValueExW(hkey, pi->pPrinterName, 0, REG_SZ, (LPBYTE)devline,
                             (lstrlenW(devline) + 1) * sizeof(WCHAR));
@@ -3427,7 +3425,6 @@ BOOL WINAPI DeletePrinter(HANDLE hPrinter)
         RegDeleteTreeW(hkeyPrinters, lpNameW);
         RegCloseKey(hkeyPrinters);
     }
-    WriteProfileStringW(PrinterPortsW, lpNameW, NULL);
 
     if(RegCreateKeyW(HKEY_CURRENT_USER, user_printers_reg_key, &hkey) == ERROR_SUCCESS) {
         RegDeleteValueW(hkey, lpNameW);
