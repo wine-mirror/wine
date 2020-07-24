@@ -22,6 +22,10 @@
 
 #include "config.h"
 #include "wine/port.h"
+
+#define NONAMELESSSTRUCT
+#define NONAMELESSUNION
+
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(xrandr);
@@ -31,6 +35,7 @@ WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 #ifdef SONAME_LIBXRANDR
 
+#include <assert.h>
 #include <X11/Xlib.h>
 #include <X11/extensions/Xrandr.h>
 #include "x11drv.h"
@@ -845,7 +850,9 @@ done:
     return ret;
 }
 
-static BOOL xrandr14_get_gpus( struct x11drv_gpu **new_gpus, int *count )
+/* Get a list of GPUs reported by XRandR 1.4. Set get_properties to FALSE if GPU properties are
+ * not needed to avoid unnecessary querying */
+static BOOL xrandr14_get_gpus2( struct x11drv_gpu **new_gpus, int *count, BOOL get_properties )
 {
     static const WCHAR wine_adapterW[] = {'W','i','n','e',' ','A','d','a','p','t','e','r',0};
     struct x11drv_gpu *gpus = NULL;
@@ -907,9 +914,12 @@ static BOOL xrandr14_get_gpus( struct x11drv_gpu **new_gpus, int *count )
         }
 
         gpus[i].id = provider_resources->providers[i];
-        if (!get_gpu_properties_from_vulkan( &gpus[i], provider_info ))
-            MultiByteToWideChar( CP_UTF8, 0, provider_info->name, -1, gpus[i].name, ARRAY_SIZE(gpus[i].name) );
-        /* FIXME: Add an alternate method of getting PCI IDs, for systems that don't support Vulkan */
+        if (get_properties)
+        {
+            if (!get_gpu_properties_from_vulkan( &gpus[i], provider_info ))
+                MultiByteToWideChar( CP_UTF8, 0, provider_info->name, -1, gpus[i].name, ARRAY_SIZE(gpus[i].name) );
+            /* FIXME: Add an alternate method of getting PCI IDs, for systems that don't support Vulkan */
+        }
         pXRRFreeProviderInfo( provider_info );
     }
 
@@ -935,6 +945,11 @@ done:
         ERR("Failed to get gpus\n");
     }
     return ret;
+}
+
+static BOOL xrandr14_get_gpus( struct x11drv_gpu **new_gpus, int *count )
+{
+    return xrandr14_get_gpus2( new_gpus, count, TRUE );
 }
 
 static void xrandr14_free_gpus( struct x11drv_gpu *gpus )
@@ -1284,11 +1299,330 @@ static void xrandr14_register_event_handlers(void)
                                    "XRandR ProviderChange" );
 }
 
+/* XRandR 1.4 display settings handler */
+static BOOL xrandr14_get_id( const WCHAR *device_name, ULONG_PTR *id )
+{
+    INT gpu_count, adapter_count, display_count = 0;
+    INT gpu_idx, adapter_idx, display_idx;
+    struct x11drv_adapter *adapters;
+    struct x11drv_gpu *gpus;
+    WCHAR *end;
+
+    /* Parse \\.\DISPLAY%d */
+    display_idx = strtolW( device_name + 11, &end, 10 ) - 1;
+    if (*end)
+        return FALSE;
+
+    if (!xrandr14_get_gpus2( &gpus, &gpu_count, FALSE ))
+        return FALSE;
+
+    for (gpu_idx = 0; gpu_idx < gpu_count; ++gpu_idx)
+    {
+        if (!xrandr14_get_adapters( gpus[gpu_idx].id, &adapters, &adapter_count ))
+        {
+            xrandr14_free_gpus( gpus );
+            return FALSE;
+        }
+
+        adapter_idx = display_idx - display_count;
+        if (adapter_idx < adapter_count)
+        {
+            *id = adapters[adapter_idx].id;
+            xrandr14_free_adapters( adapters );
+            xrandr14_free_gpus( gpus );
+            return TRUE;
+        }
+
+        display_count += adapter_count;
+        xrandr14_free_adapters( adapters );
+    }
+    xrandr14_free_gpus( gpus );
+    return FALSE;
+}
+
+static void add_xrandr14_mode( DEVMODEW *mode, XRRModeInfo *info, DWORD depth, DWORD frequency )
+{
+    mode->dmSize = sizeof(*mode);
+    mode->dmDriverExtra = sizeof(RRMode);
+    mode->dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH |
+                     DM_PELSHEIGHT | DM_DISPLAYFLAGS;
+    if (frequency)
+    {
+        mode->dmFields |= DM_DISPLAYFREQUENCY;
+        mode->dmDisplayFrequency = frequency;
+    }
+    mode->u1.s2.dmDisplayOrientation = DMDO_DEFAULT;
+    mode->dmBitsPerPel = depth;
+    mode->dmPelsWidth = info->width;
+    mode->dmPelsHeight = info->height;
+    mode->u2.dmDisplayFlags = 0;
+    memcpy( (BYTE *)mode + sizeof(*mode), &info->id, sizeof(info->id) );
+}
+
+static BOOL xrandr14_get_modes( ULONG_PTR id, DWORD flags, DEVMODEW **new_modes, UINT *mode_count )
+{
+    XRRScreenResources *screen_resources;
+    XRROutputInfo *output_info = NULL;
+    RROutput output = (RROutput)id;
+    UINT depth_idx, mode_idx = 0;
+    XRRModeInfo *mode_info;
+    DEVMODEW *mode, *modes;
+    BOOL ret = FALSE;
+    DWORD frequency;
+    INT i, j;
+
+    screen_resources = xrandr_get_screen_resources();
+    if (!screen_resources)
+        goto done;
+
+    output_info = pXRRGetOutputInfo( gdi_display, screen_resources, output );
+    if (!output_info)
+        goto done;
+
+    if (output_info->connection != RR_Connected)
+    {
+        ret = TRUE;
+        *new_modes = NULL;
+        *mode_count = 0;
+        goto done;
+    }
+
+    /* Allocate space for display modes in different color depths.
+     * Store a RRMode at the end of each DEVMODEW as private driver data */
+    modes = heap_calloc( output_info->nmode * DEPTH_COUNT, sizeof(*modes) + sizeof(RRMode) );
+    if (!modes)
+        goto done;
+
+    for (i = 0; i < output_info->nmode; ++i)
+    {
+        for (j = 0; j < screen_resources->nmode; ++j)
+        {
+            if (output_info->modes[i] != screen_resources->modes[j].id)
+                continue;
+
+            mode_info = &screen_resources->modes[j];
+            frequency = get_frequency( mode_info );
+
+            for (depth_idx = 0; depth_idx < DEPTH_COUNT; ++depth_idx)
+            {
+                mode = (DEVMODEW *)((BYTE *)modes + (sizeof(*modes) + sizeof(RRMode)) * mode_idx);
+                add_xrandr14_mode( mode, mode_info, depths[depth_idx], frequency );
+                ++mode_idx;
+            }
+
+            break;
+        }
+    }
+
+    ret = TRUE;
+    *new_modes = modes;
+    *mode_count = mode_idx;
+done:
+    if (output_info)
+        pXRRFreeOutputInfo( output_info );
+    if (screen_resources)
+        pXRRFreeScreenResources( screen_resources );
+    return ret;
+}
+
+static void xrandr14_free_modes( DEVMODEW *modes )
+{
+    heap_free( modes );
+}
+
+static BOOL xrandr14_get_current_mode( ULONG_PTR id, DEVMODEW *mode )
+{
+    XRRScreenResources *screen_resources;
+    XRROutputInfo *output_info = NULL;
+    RROutput output = (RROutput)id;
+    XRRModeInfo *mode_info = NULL;
+    XRRCrtcInfo *crtc_info = NULL;
+    BOOL ret = FALSE;
+    RECT primary;
+    INT mode_idx;
+
+    screen_resources = xrandr_get_screen_resources();
+    if (!screen_resources)
+        goto done;
+
+    output_info = pXRRGetOutputInfo( gdi_display, screen_resources, output );
+    if (!output_info)
+        goto done;
+
+    if (output_info->crtc)
+    {
+        crtc_info = pXRRGetCrtcInfo( gdi_display, screen_resources, output_info->crtc );
+        if (!crtc_info)
+            goto done;
+    }
+
+    /* Detached */
+    if (output_info->connection != RR_Connected || !output_info->crtc || !crtc_info->mode)
+    {
+        mode->dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT |
+                         DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY | DM_POSITION;
+        mode->u1.s2.dmDisplayOrientation = DMDO_DEFAULT;
+        mode->dmBitsPerPel = 0;
+        mode->dmPelsWidth = 0;
+        mode->dmPelsHeight = 0;
+        mode->u2.dmDisplayFlags = 0;
+        mode->dmDisplayFrequency = 0;
+        mode->u1.s2.dmPosition.x = 0;
+        mode->u1.s2.dmPosition.y = 0;
+        ret = TRUE;
+        goto done;
+    }
+
+    /* Attached */
+    for (mode_idx = 0; mode_idx < screen_resources->nmode; ++mode_idx)
+    {
+        if (crtc_info->mode == screen_resources->modes[mode_idx].id)
+        {
+            mode_info = &screen_resources->modes[mode_idx];
+            break;
+        }
+    }
+
+    if (!mode_info)
+        goto done;
+
+    mode->dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT |
+                     DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY | DM_POSITION;
+    mode->u1.s2.dmDisplayOrientation = DMDO_DEFAULT;
+    mode->dmBitsPerPel = screen_bpp;
+    mode->dmPelsWidth = mode_info->width;
+    mode->dmPelsHeight = mode_info->height;
+    mode->u2.dmDisplayFlags = 0;
+    mode->dmDisplayFrequency = get_frequency( mode_info );
+    /* Convert RandR coordinates to virtual screen coordinates */
+    primary = get_primary_rect( screen_resources );
+    mode->u1.s2.dmPosition.x = crtc_info->x - primary.left;
+    mode->u1.s2.dmPosition.y = crtc_info->y - primary.top;
+    ret = TRUE;
+done:
+    if (crtc_info)
+        pXRRFreeCrtcInfo( crtc_info );
+    if (output_info)
+        pXRRFreeOutputInfo( output_info );
+    if (screen_resources)
+        pXRRFreeScreenResources( screen_resources );
+    return ret;
+}
+
+static LONG xrandr14_set_current_mode( ULONG_PTR id, DEVMODEW *mode )
+{
+    unsigned int screen_width, screen_height;
+    RROutput output = (RROutput)id, *outputs;
+    XRRScreenResources *screen_resources;
+    XRROutputInfo *output_info = NULL;
+    XRRCrtcInfo *crtc_info = NULL;
+    LONG ret = DISP_CHANGE_FAILED;
+    INT crtc_idx, output_count;
+    Rotation rotation;
+    RRCrtc crtc = 0;
+    Status status;
+    RRMode rrmode;
+
+    if (mode->dmFields & DM_BITSPERPEL && mode->dmBitsPerPel != screen_bpp)
+        WARN("Cannot change screen color depth from %ubits to %ubits!\n", screen_bpp, mode->dmBitsPerPel);
+
+    screen_resources = xrandr_get_screen_resources();
+    if (!screen_resources)
+        return ret;
+
+    XGrabServer( gdi_display );
+
+    output_info = pXRRGetOutputInfo( gdi_display, screen_resources, output );
+    if (!output_info || output_info->connection != RR_Connected)
+        goto done;
+
+    /* Attached */
+    if (output_info->crtc)
+    {
+        crtc = output_info->crtc;
+    }
+    /* Detached, need to find a free CRTC */
+    else
+    {
+        for (crtc_idx = 0; crtc_idx < output_info->ncrtc; ++crtc_idx)
+        {
+            crtc_info = pXRRGetCrtcInfo( gdi_display, screen_resources, output_info->crtcs[crtc_idx] );
+            if (!crtc_info)
+                goto done;
+
+            if (!crtc_info->noutput)
+            {
+                crtc = output_info->crtcs[crtc_idx];
+                pXRRFreeCrtcInfo( crtc_info );
+                crtc_info = NULL;
+                break;
+            }
+
+            pXRRFreeCrtcInfo( crtc_info );
+            crtc_info = NULL;
+        }
+
+        /* Failed to find a free CRTC */
+        if (crtc_idx == output_info->ncrtc)
+            goto done;
+    }
+
+    crtc_info = pXRRGetCrtcInfo( gdi_display, screen_resources, crtc );
+    if (!crtc_info)
+        goto done;
+
+    assert( mode->dmDriverExtra == sizeof(RRMode) );
+    memcpy( &rrmode, (BYTE *)mode + sizeof(*mode), sizeof(rrmode) );
+
+    if (crtc_info->noutput)
+    {
+        outputs = crtc_info->outputs;
+        output_count = crtc_info->noutput;
+        rotation = crtc_info->rotation;
+    }
+    else
+    {
+        outputs = &output;
+        output_count = 1;
+        rotation = RR_Rotate_0;
+    }
+
+    /* According to the RandR spec, the entire CRTC must fit inside the screen.
+     * Since we use the union of all enabled CRTCs to determine the necessary
+     * screen size, this might involve shrinking the screen, so we must disable
+     * the CRTC in question first. */
+    status = pXRRSetCrtcConfig( gdi_display, screen_resources, crtc, CurrentTime, 0, 0, None,
+                                RR_Rotate_0, NULL, 0 );
+    if (status != RRSetConfigSuccess)
+        goto done;
+
+    get_screen_size( screen_resources, &screen_width, &screen_height );
+    screen_width = max( screen_width, crtc_info->x + mode->dmPelsWidth );
+    screen_height = max( screen_height, crtc_info->y + mode->dmPelsHeight );
+    set_screen_size( screen_width, screen_height );
+
+    status = pXRRSetCrtcConfig( gdi_display, screen_resources, crtc, CurrentTime,
+                                crtc_info->x, crtc_info->y, rrmode, rotation, outputs, output_count );
+    if (status == RRSetConfigSuccess)
+        ret = DISP_CHANGE_SUCCESSFUL;
+
+done:
+    XUngrabServer( gdi_display );
+    XFlush( gdi_display );
+    if (crtc_info)
+        pXRRFreeCrtcInfo( crtc_info );
+    if (output_info)
+        pXRRFreeOutputInfo( output_info );
+    pXRRFreeScreenResources( screen_resources );
+    return ret;
+}
+
 #endif
 
 void X11DRV_XRandR_Init(void)
 {
-    struct x11drv_display_device_handler handler;
+    struct x11drv_display_device_handler display_handler;
+    struct x11drv_settings_handler settings_handler;
     int event_base, error_base, minor, ret;
     static int major;
     Bool ok;
@@ -1322,16 +1656,28 @@ void X11DRV_XRandR_Init(void)
 #ifdef HAVE_XRRGETPROVIDERRESOURCES
     if (ret >= 4 && (major > 1 || (major == 1 && minor >= 4)))
     {
-        handler.name = "XRandR 1.4";
-        handler.priority = 200;
-        handler.get_gpus = xrandr14_get_gpus;
-        handler.get_adapters = xrandr14_get_adapters;
-        handler.get_monitors = xrandr14_get_monitors;
-        handler.free_gpus = xrandr14_free_gpus;
-        handler.free_adapters = xrandr14_free_adapters;
-        handler.free_monitors = xrandr14_free_monitors;
-        handler.register_event_handlers = xrandr14_register_event_handlers;
-        X11DRV_DisplayDevices_SetHandler( &handler );
+        display_handler.name = "XRandR 1.4";
+        display_handler.priority = 200;
+        display_handler.get_gpus = xrandr14_get_gpus;
+        display_handler.get_adapters = xrandr14_get_adapters;
+        display_handler.get_monitors = xrandr14_get_monitors;
+        display_handler.free_gpus = xrandr14_free_gpus;
+        display_handler.free_adapters = xrandr14_free_adapters;
+        display_handler.free_monitors = xrandr14_free_monitors;
+        display_handler.register_event_handlers = xrandr14_register_event_handlers;
+        X11DRV_DisplayDevices_SetHandler( &display_handler );
+
+        if (is_broken_driver())
+            return;
+
+        settings_handler.name = "XRandR 1.4";
+        settings_handler.priority = 300;
+        settings_handler.get_id = xrandr14_get_id;
+        settings_handler.get_modes = xrandr14_get_modes;
+        settings_handler.free_modes = xrandr14_free_modes;
+        settings_handler.get_current_mode = xrandr14_get_current_mode;
+        settings_handler.set_current_mode = xrandr14_set_current_mode;
+        X11DRV_Settings_SetHandler( &settings_handler );
     }
 #endif
 }

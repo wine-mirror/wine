@@ -318,7 +318,6 @@ static void _expect_dm(INT line, DEVMODEA expected, const CHAR *device, DWORD te
     ok(get_primary_adapter(primary_adapter), "Failed to get primary adapter name.\n");
     is_primary = !lstrcmpA(primary_adapter, device);
 
-    todo_wine_if(expected.dmFields & DM_POSITION)
     ok_(__FILE__, line)((dm.dmFields & expected.dmFields) == expected.dmFields,
             "Device %s test %d expect dmFields to contain %#x, got %#x\n", device, test, expected.dmFields, dm.dmFields);
     /* Wine doesn't support changing color depth yet */
