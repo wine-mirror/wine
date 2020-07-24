@@ -672,7 +672,7 @@ struct x11drv_settings_handler
     /* get_id() will be called to map a device name, e.g., \\.\DISPLAY1 to a driver specific id.
      * Following functions use this id to identify the device.
      *
-     * Return FALSE if the device can not be found and TRUE on success */
+     * Return FALSE if the device cannot be found and TRUE on success */
     BOOL (*get_id)(const WCHAR *device_name, ULONG_PTR *id);
 
     /* get_modes() will be called to get a list of supported modes of the device of id in modes
