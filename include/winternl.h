@@ -686,6 +686,9 @@ typedef struct _TEB64
     GUID                         EffectiveContainerId;              /* 1828 */
 } TEB64;
 
+/* reserved TEB64 TLS slots for Wow64 */
+#define WOW64_TLS_FILESYSREDIR 8
+
 #endif  /* _WIN64 */
 
 /***********************************************************************

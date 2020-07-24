@@ -1564,8 +1564,6 @@ size_t server_init_thread( void *entry_point, BOOL *suspend )
     }
 #endif
 
-    ntdll_get_thread_data()->wow64_redir = is_wow64;
-
     switch (ret)
     {
     case STATUS_SUCCESS:

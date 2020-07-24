@@ -75,16 +75,15 @@ struct x86_thread_data
     DWORD              dr6;           /* 1ec */
     DWORD              dr7;           /* 1f0 */
     void              *exit_frame;    /* 1f4 exit frame pointer */
-    /* the ntdll_thread_data structure follows here */
 };
 
-C_ASSERT( sizeof(struct x86_thread_data) <= sizeof( ((struct ntdll_thread_data *)0)->cpu_data ));
+C_ASSERT( sizeof(struct x86_thread_data) <= 16 * sizeof(void *) );
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct x86_thread_data, gs ) == 0x1d8 );
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct x86_thread_data, exit_frame ) == 0x1f4 );
 
 static inline struct x86_thread_data *x86_thread_data(void)
 {
-    return (struct x86_thread_data *)ntdll_get_thread_data()->cpu_data;
+    return (struct x86_thread_data *)&NtCurrentTeb()->GdiTebBatch;
 }
 
 struct ldt_copy *__wine_ldt_copy = NULL;

@@ -845,6 +845,7 @@ static void test_redirection(void)
 {
     ULONG old, cur;
     NTSTATUS status;
+    ULONGLONG *tls64 = NULL;
 
     if (!pRtlWow64EnableFsRedirection || !pRtlWow64EnableFsRedirectionEx)
     {
@@ -859,21 +860,39 @@ static void test_redirection(void)
     }
     ok( !status, "RtlWow64EnableFsRedirectionEx failed status %x\n", status );
 
+#ifndef _WIN64
+    if (NtCurrentTeb()->GdiBatchCount)
+        tls64 = ((TEB64 *)NtCurrentTeb()->GdiBatchCount)->TlsSlots + WOW64_TLS_FILESYSREDIR;
+#endif
+
     status = pRtlWow64EnableFsRedirectionEx( FALSE, &cur );
     ok( !status, "RtlWow64EnableFsRedirectionEx failed status %x\n", status );
     ok( !cur, "RtlWow64EnableFsRedirectionEx got %u\n", cur );
+    if (tls64) ok( *tls64 == FALSE, "wrong tls %s\n", wine_dbgstr_longlong(*tls64) );
 
     status = pRtlWow64EnableFsRedirectionEx( TRUE, &cur );
     ok( !status, "RtlWow64EnableFsRedirectionEx failed status %x\n", status );
     status = pRtlWow64EnableFsRedirectionEx( TRUE, &cur );
     ok( !status, "RtlWow64EnableFsRedirectionEx failed status %x\n", status );
     ok( cur == 1, "RtlWow64EnableFsRedirectionEx got %u\n", cur );
+    if (tls64) ok( *tls64 == TRUE, "wrong tls %s\n", wine_dbgstr_longlong(*tls64) );
 
     status = pRtlWow64EnableFsRedirection( TRUE );
     ok( !status, "RtlWow64EnableFsRedirectionEx failed status %x\n", status );
     status = pRtlWow64EnableFsRedirectionEx( TRUE, &cur );
     ok( !status, "RtlWow64EnableFsRedirectionEx failed status %x\n", status );
     ok( !cur, "RtlWow64EnableFsRedirectionEx got %u\n", cur );
+    if (tls64) ok( *tls64 == TRUE, "wrong tls %s\n", wine_dbgstr_longlong(*tls64) );
+
+    status = pRtlWow64EnableFsRedirectionEx( 123, &cur );
+    ok( !status, "RtlWow64EnableFsRedirectionEx failed status %x\n", status );
+    ok( cur == TRUE, "RtlWow64EnableFsRedirectionEx got %u\n", cur );
+    if (tls64) ok( *tls64 == 123, "wrong tls %s\n", wine_dbgstr_longlong(*tls64) );
+
+    status = pRtlWow64EnableFsRedirectionEx( 0xdeadbeef, &cur );
+    ok( !status, "RtlWow64EnableFsRedirectionEx failed status %x\n", status );
+    ok( cur == 123, "RtlWow64EnableFsRedirectionEx got %u\n", cur );
+    if (tls64) ok( *tls64 == 0xdeadbeef, "wrong tls %s\n", wine_dbgstr_longlong(*tls64) );
 
     status = pRtlWow64EnableFsRedirectionEx( TRUE, NULL );
     ok( status == STATUS_ACCESS_VIOLATION, "RtlWow64EnableFsRedirectionEx failed with status %x\n", status );
@@ -887,6 +906,7 @@ static void test_redirection(void)
     status = pRtlWow64EnableFsRedirectionEx( FALSE, &cur );
     ok( !status, "RtlWow64EnableFsRedirectionEx failed status %x\n", status );
     ok( cur == 1, "RtlWow64EnableFsRedirectionEx got %u\n", cur );
+    if (tls64) ok( *tls64 == FALSE, "wrong tls %s\n", wine_dbgstr_longlong(*tls64) );
 
     pRtlWow64EnableFsRedirectionEx( old, &cur );
 }

@@ -2708,9 +2708,6 @@ static int get_redirect_path( char *unix_name, int pos, const WCHAR *name, int l
 #else  /* _WIN64 */
 
 /* there are no redirects on 64-bit */
-
-static const unsigned int nb_redirects = 0;
-
 static int get_redirect_path( char *unix_name, int pos, const WCHAR *name, int length, BOOLEAN check_case )
 {
     return 0;
@@ -3067,7 +3064,11 @@ static NTSTATUS lookup_unix_name( const WCHAR *name, int name_len, char **buffer
     int ret, len;
     struct stat st;
     char *unix_name = *buffer;
-    const BOOL redirect = nb_redirects && ntdll_get_thread_data()->wow64_redir;
+#ifdef _WIN64
+    const BOOL redirect = FALSE;
+#else
+    const BOOL redirect = NtCurrentTeb64() && !NtCurrentTeb64()->TlsSlots[WOW64_TLS_FILESYSREDIR];
+#endif
 
     /* try a shortcut first */
 

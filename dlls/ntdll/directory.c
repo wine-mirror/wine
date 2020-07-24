@@ -104,9 +104,13 @@ NTSTATUS CDECL wine_nt_to_unix_file_name( const UNICODE_STRING *nameW, char *nam
  */
 NTSTATUS WINAPI RtlWow64EnableFsRedirection( BOOLEAN enable )
 {
-    if (!is_wow64) return STATUS_NOT_IMPLEMENTED;
-    ntdll_get_thread_data()->wow64_redir = enable;
+#ifdef _WIN64
+     return STATUS_NOT_IMPLEMENTED;
+#else
+    if (!NtCurrentTeb64()) return STATUS_NOT_IMPLEMENTED;
+    NtCurrentTeb64()->TlsSlots[WOW64_TLS_FILESYSREDIR] = !enable;
     return STATUS_SUCCESS;
+#endif
 }
 
 
@@ -115,11 +119,14 @@ NTSTATUS WINAPI RtlWow64EnableFsRedirection( BOOLEAN enable )
  */
 NTSTATUS WINAPI RtlWow64EnableFsRedirectionEx( ULONG disable, ULONG *old_value )
 {
-    if (!is_wow64) return STATUS_NOT_IMPLEMENTED;
+#ifdef _WIN64
+     return STATUS_NOT_IMPLEMENTED;
+#else
+    if (!NtCurrentTeb64()) return STATUS_NOT_IMPLEMENTED;
 
     __TRY
     {
-        *old_value = !ntdll_get_thread_data()->wow64_redir;
+        *old_value = NtCurrentTeb64()->TlsSlots[WOW64_TLS_FILESYSREDIR];
     }
     __EXCEPT_PAGE_FAULT
     {
@@ -127,8 +134,9 @@ NTSTATUS WINAPI RtlWow64EnableFsRedirectionEx( ULONG disable, ULONG *old_value )
     }
     __ENDTRY
 
-    ntdll_get_thread_data()->wow64_redir = !disable;
+    NtCurrentTeb64()->TlsSlots[WOW64_TLS_FILESYSREDIR] = disable;
     return STATUS_SUCCESS;
+#endif
 }
 
 

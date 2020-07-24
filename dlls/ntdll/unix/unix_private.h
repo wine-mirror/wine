@@ -57,7 +57,6 @@ struct ntdll_thread_data
     int                request_fd;    /* fd for sending server requests */
     int                reply_fd;      /* fd for receiving server replies */
     int                wait_fd[2];    /* fd for sleeping server requests */
-    BOOL               wow64_redir;   /* Wow64 filesystem redirection flag */
     pthread_t          pthread_id;    /* pthread thread id */
     struct list        entry;         /* entry in TEB list */
     PRTL_THREAD_START_ROUTINE start;  /* thread entry point */
@@ -287,6 +286,10 @@ static inline void *get_signal_stack(void)
 {
     return (char *)NtCurrentTeb() + teb_size - teb_offset;
 }
+
+#ifndef _WIN64
+static inline TEB64 *NtCurrentTeb64(void) { return (TEB64 *)NtCurrentTeb()->GdiBatchCount; }
+#endif
 
 static inline size_t ntdll_wcslen( const WCHAR *str )
 {

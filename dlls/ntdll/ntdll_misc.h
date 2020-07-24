@@ -110,25 +110,6 @@ enum loadorder
 
 extern enum loadorder get_load_order( const WCHAR *app_name, const UNICODE_STRING *nt_name ) DECLSPEC_HIDDEN;
 
-/* thread private data, stored in NtCurrentTeb()->GdiTebBatch */
-struct ntdll_thread_data
-{
-    void              *cpu_data[16];  /* reserved for CPU-specific data */
-    struct debug_info *debug_info;    /* info for debugstr functions */
-    void              *start_stack;   /* stack for thread startup */
-    int                request_fd;    /* fd for sending server requests */
-    int                reply_fd;      /* fd for receiving server replies */
-    int                wait_fd[2];    /* fd for sleeping server requests */
-    BOOL               wow64_redir;   /* Wow64 filesystem redirection flag */
-};
-
-C_ASSERT( sizeof(struct ntdll_thread_data) <= sizeof(((TEB *)0)->GdiTebBatch) );
-
-static inline struct ntdll_thread_data *ntdll_get_thread_data(void)
-{
-    return (struct ntdll_thread_data *)&NtCurrentTeb()->GdiTebBatch;
-}
-
 #ifndef _WIN64
 static inline TEB64 *NtCurrentTeb64(void) { return (TEB64 *)NtCurrentTeb()->GdiBatchCount; }
 #endif
