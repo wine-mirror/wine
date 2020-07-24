@@ -20,7 +20,6 @@
 
 #include "initguid.h"
 #include "d3dcompiler_private.h"
-#include "winternl.h"
 #include "d3d10.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dcompiler);
