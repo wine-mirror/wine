@@ -464,6 +464,230 @@ typedef struct _TEB
     GUID                         EffectiveContainerId;              /* ff0/1828 */
 } TEB, *PTEB;
 
+
+/***********************************************************************
+ * The 64-bit version of the PEB and TEB for WoW64
+ */
+#ifndef _WIN64
+
+typedef struct _NT_TIB64
+{
+    ULONG64 ExceptionList;        /* 0000 */
+    ULONG64 StackBase;            /* 0008 */
+    ULONG64 StackLimit;           /* 0010 */
+    ULONG64 SubSystemTib;         /* 0018 */
+    ULONG64 FiberData;            /* 0020 */
+    ULONG64 ArbitraryUserPointer; /* 0028 */
+    ULONG64 Self;                 /* 0030 */
+} NT_TIB64;
+
+typedef struct _CLIENT_ID64
+{
+   ULONG64 UniqueProcess;
+   ULONG64 UniqueThread;
+} CLIENT_ID64;
+
+typedef struct _LIST_ENTRY64
+{
+  ULONG64 Flink;
+  ULONG64 Blink;
+} LIST_ENTRY64;
+
+typedef struct _UNICODE_STRING64
+{
+  USHORT  Length;
+  USHORT  MaximumLength;
+  ULONG64 Buffer;
+} UNICODE_STRING64;
+
+typedef struct _ACTIVATION_CONTEXT_STACK64
+{
+    ULONG64      ActiveFrame;
+    LIST_ENTRY64 FrameListCache;
+    ULONG        Flags;
+    ULONG        NextCookieSequenceNumber;
+    ULONG64      StackId;
+} ACTIVATION_CONTEXT_STACK64;
+
+typedef struct _PEB64
+{
+    BOOLEAN                      InheritedAddressSpace;             /* 0000 */
+    BOOLEAN                      ReadImageFileExecOptions;          /* 0001 */
+    BOOLEAN                      BeingDebugged;                     /* 0002 */
+    BOOLEAN                      SpareBool;                         /* 0003 */
+    ULONG64                      Mutant;                            /* 0008 */
+    ULONG64                      ImageBaseAddress;                  /* 0010 */
+    ULONG64                      LdrData;                           /* 0018 */
+    ULONG64                      ProcessParameters;                 /* 0020 */
+    ULONG64                      SubSystemData;                     /* 0028 */
+    ULONG64                      ProcessHeap;                       /* 0030 */
+    ULONG64                      FastPebLock;                       /* 0038 */
+    ULONG64                      FastPebLockRoutine;                /* 0040 */
+    ULONG64                      FastPebUnlockRoutine;              /* 0048 */
+    ULONG                        EnvironmentUpdateCount;            /* 0050 */
+    ULONG64                      KernelCallbackTable;               /* 0058 */
+    ULONG                        Reserved[2];                       /* 0060 */
+    ULONG64                      FreeList;                          /* 0068 */
+    ULONG                        TlsExpansionCounter;               /* 0070 */
+    ULONG64                      TlsBitmap;                         /* 0078 */
+    ULONG                        TlsBitmapBits[2];                  /* 0080 */
+    ULONG64                      ReadOnlySharedMemoryBase;          /* 0088 */
+    ULONG64                      ReadOnlySharedMemoryHeap;          /* 0090 */
+    ULONG64                      ReadOnlyStaticServerData;          /* 0098 */
+    ULONG64                      AnsiCodePageData;                  /* 00a0 */
+    ULONG64                      OemCodePageData;                   /* 00a8 */
+    ULONG64                      UnicodeCaseTableData;              /* 00b0 */
+    ULONG                        NumberOfProcessors;                /* 00b8 */
+    ULONG                        NtGlobalFlag;                      /* 00bc */
+    LARGE_INTEGER                CriticalSectionTimeout;            /* 00c0 */
+    ULONG64                      HeapSegmentReserve;                /* 00c8 */
+    ULONG64                      HeapSegmentCommit;                 /* 00d0 */
+    ULONG64                      HeapDeCommitTotalFreeThreshold;    /* 00d8 */
+    ULONG64                      HeapDeCommitFreeBlockThreshold;    /* 00e0 */
+    ULONG                        NumberOfHeaps;                     /* 00e8 */
+    ULONG                        MaximumNumberOfHeaps;              /* 00ec */
+    ULONG64                      ProcessHeaps;                      /* 00f0 */
+    ULONG64                      GdiSharedHandleTable;              /* 00f8 */
+    ULONG64                      ProcessStarterHelper;              /* 0100 */
+    ULONG64                      GdiDCAttributeList;                /* 0108 */
+    ULONG64                      LoaderLock;                        /* 0110 */
+    ULONG                        OSMajorVersion;                    /* 0118 */
+    ULONG                        OSMinorVersion;                    /* 011c */
+    ULONG                        OSBuildNumber;                     /* 0120 */
+    ULONG                        OSPlatformId;                      /* 0124 */
+    ULONG                        ImageSubSystem;                    /* 0128 */
+    ULONG                        ImageSubSystemMajorVersion;        /* 012c */
+    ULONG                        ImageSubSystemMinorVersion;        /* 0130 */
+    ULONG                        ImageProcessAffinityMask;          /* 0134 */
+    ULONG64                      GdiHandleBuffer[28];               /* 0138 */
+    ULONG                        unknown[6];                        /* 0218 */
+    ULONG64                      PostProcessInitRoutine;            /* 0230 */
+    ULONG64                      TlsExpansionBitmap;                /* 0238 */
+    ULONG                        TlsExpansionBitmapBits[32];        /* 0240 */
+    ULONG                        SessionId;                         /* 02c0 */
+    ULARGE_INTEGER               AppCompatFlags;                    /* 02c8 */
+    ULARGE_INTEGER               AppCompatFlagsUser;                /* 02d0 */
+    ULONG64                      ShimData;                          /* 02d8 */
+    ULONG64                      AppCompatInfo;                     /* 02e0 */
+    UNICODE_STRING64             CSDVersion;                        /* 02e8 */
+    ULONG64                      ActivationContextData;             /* 02f8 */
+    ULONG64                      ProcessAssemblyStorageMap;         /* 0300 */
+    ULONG64                      SystemDefaultActivationData;       /* 0308 */
+    ULONG64                      SystemAssemblyStorageMap;          /* 0310 */
+    ULONG64                      MinimumStackCommit;                /* 0318 */
+    ULONG64                      FlsCallback;                       /* 0320 */
+    LIST_ENTRY64                 FlsListHead;                       /* 0328 */
+    ULONG64                      FlsBitmap;                         /* 0338 */
+    ULONG                        FlsBitmapBits[4];                  /* 0340 */
+    ULONG                        FlsHighIndex;                      /* 0350 */
+    ULONG64                      WerRegistrationData;               /* 0358 */
+    ULONG64                      WerShipAssertPtr;                  /* 0360 */
+    ULONG64                      pUnused;                           /* 0368 */
+    ULONG64                      pImageHeaderHash;                  /* 0370 */
+    ULONG                        TracingFlags;                      /* 0378 */
+    ULONGLONG                    CsrServerReadOnlySharedMemoryBase; /* 0380 */
+    ULONG                        TppWorkerpListLock;                /* 0388 */
+    LIST_ENTRY64                 TppWorkerpList;                    /* 0390 */
+    ULONG64                      WaitOnAddressHashTable [0x80];     /* 03a0 */
+    ULONG64                      TelemetryCoverageHeader;           /* 07a0 */
+    ULONG                        CloudFileFlags;                    /* 07a8 */
+} PEB64;
+
+typedef struct _TEB64
+{
+    NT_TIB64                     Tib;                               /* 0000 */
+    ULONG64                      EnvironmentPointer;                /* 0038 */
+    CLIENT_ID64                  ClientId;                          /* 0040 */
+    ULONG64                      ActiveRpcHandle;                   /* 0050 */
+    ULONG64                      ThreadLocalStoragePointer;         /* 0058 */
+    ULONG64                      Peb;                               /* 0060 */
+    ULONG                        LastErrorValue;                    /* 0068 */
+    ULONG                        CountOfOwnedCriticalSections;      /* 006c */
+    ULONG64                      CsrClientThread;                   /* 0070 */
+    ULONG64                      Win32ThreadInfo;                   /* 0078 */
+    ULONG                        User32Reserved[26];                /* 0080 */
+    ULONG                        UserReserved[5];                   /* 00e8 */
+    ULONG64                      WOW32Reserved;                     /* 0100 */
+    ULONG                        CurrentLocale;                     /* 0108 */
+    ULONG                        FpSoftwareStatusRegister;          /* 010c */
+    ULONG64                      ReservedForDebuggerInstrumentation[16]; /* 0110 */
+    ULONG64                      SystemReserved1[30];               /* 0190 */
+    char                         PlaceholderCompatibilityMode;      /* 0280 */
+    char                         PlaceholderReserved[11];           /* 0281 */
+    DWORD                        ProxiedProcessId;                  /* 028c */
+    ACTIVATION_CONTEXT_STACK64   ActivationContextStack;            /* 0290 */
+    UCHAR                        WorkingOnBehalfOfTicket[8];        /* 02b8 */
+    LONG                         ExceptionCode;                     /* 02c0 */
+    ULONG64                      ActivationContextStackPointer;     /* 02c8 */
+    ULONG64                      InstrumentationCallbackSp;         /* 02d0 */
+    ULONG64                      InstrumentationCallbackPreviousPc; /* 02d8 */
+    ULONG64                      InstrumentationCallbackPreviousSp; /* 02e0 */
+    ULONG                        TxFsContext;                       /* 02e8 */
+    BOOLEAN                      InstrumentationCallbackDisabled;   /* 02ec */
+    ULONG64                      GdiTebBatch[0x9d];                 /* 02f0 */
+    CLIENT_ID64                  RealClientId;                      /* 07d8 */
+    ULONG64                      GdiCachedProcessHandle;            /* 07e8 */
+    ULONG                        GdiClientPID;                      /* 07f0 */
+    ULONG                        GdiClientTID;                      /* 07f4 */
+    ULONG64                      GdiThreadLocaleInfo;               /* 07f8 */
+    ULONG64                      Win32ClientInfo[62];               /* 0800 */
+    ULONG64                      glDispatchTable[233];              /* 09f0 */
+    ULONG64                      glReserved1[29];                   /* 1138 */
+    ULONG64                      glReserved2;                       /* 1220 */
+    ULONG64                      glSectionInfo;                     /* 1228 */
+    ULONG64                      glSection;                         /* 1230 */
+    ULONG64                      glTable;                           /* 1238 */
+    ULONG64                      glCurrentRC;                       /* 1240 */
+    ULONG64                      glContext;                         /* 1248 */
+    ULONG                        LastStatusValue;                   /* 1250 */
+    UNICODE_STRING64             StaticUnicodeString;               /* 1258 */
+    WCHAR                        StaticUnicodeBuffer[261];          /* 1268 */
+    ULONG64                      DeallocationStack;                 /* 1478 */
+    ULONG64                      TlsSlots[64];                      /* 1480 */
+    LIST_ENTRY64                 TlsLinks;                          /* 1680 */
+    ULONG64                      Vdm;                               /* 1690 */
+    ULONG64                      ReservedForNtRpc;                  /* 1698 */
+    ULONG64                      DbgSsReserved[2];                  /* 16a0 */
+    ULONG                        HardErrorDisabled;                 /* 16b0 */
+    ULONG64                      Instrumentation[16];               /* 16b8 */
+    ULONG64                      WinSockData;                       /* 1738 */
+    ULONG                        GdiBatchCount;                     /* 1740 */
+    ULONG                        Spare2;                            /* 1744 */
+    ULONG                        GuaranteedStackBytes;              /* 1748 */
+    ULONG64                      ReservedForPerf;                   /* 1750 */
+    ULONG64                      ReservedForOle;                    /* 1758 */
+    ULONG                        WaitingOnLoaderLock;               /* 1760 */
+    ULONG64                      Reserved5[3];                      /* 1768 */
+    ULONG64                      TlsExpansionSlots;                 /* 1780 */
+    ULONG64                      DeallocationBStore;                /* 1788 */
+    ULONG64                      BStoreLimit;                       /* 1790 */
+    ULONG                        ImpersonationLocale;               /* 1798 */
+    ULONG                        IsImpersonating;                   /* 179c */
+    ULONG64                      NlsCache;                          /* 17a0 */
+    ULONG64                      ShimData;                          /* 17a8 */
+    ULONG                        HeapVirtualAffinity;               /* 17b0 */
+    ULONG64                      CurrentTransactionHandle;          /* 17b8 */
+    ULONG64                      ActiveFrame;                       /* 17c0 */
+    ULONG64                      FlsSlots;                          /* 17c8 */
+    ULONG64                      PreferredLanguages;                /* 17d0 */
+    ULONG64                      UserPrefLanguages;                 /* 17d8 */
+    ULONG64                      MergedPrefLanguages;               /* 17e0 */
+    ULONG                        MuiImpersonation;                  /* 17e8 */
+    USHORT                       CrossTebFlags;                     /* 17ec */
+    USHORT                       SameTebFlags;                      /* 17ee */
+    ULONG64                      TxnScopeEnterCallback;             /* 17f0 */
+    ULONG64                      TxnScopeExitCallback;              /* 17f8 */
+    ULONG64                      TxnScopeContext;                   /* 1800 */
+    ULONG                        LockCount;                         /* 1808 */
+    LONG                         WowTebOffset;                      /* 180c */
+    ULONG64                      ResourceRetValue;                  /* 1810 */
+    ULONG64                      ReservedForWdf;                    /* 1818 */
+    ULONGLONG                    ReservedForCrt;                    /* 1820 */
+    GUID                         EffectiveContainerId;              /* 1828 */
+} TEB64;
+
+#endif  /* _WIN64 */
+
 /***********************************************************************
  * Enums
  */
