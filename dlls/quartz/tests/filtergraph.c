@@ -3205,9 +3205,10 @@ static void test_filter_state(void)
     struct testpin source_pin, sink_pin;
 
     IFilterGraph2 *graph = create_graph();
-    REFERENCE_TIME start_time;
+    REFERENCE_TIME start_time, time;
     IReferenceClock *clock;
     IMediaControl *control;
+    IMediaSeeking *seeking;
     FILTER_STATE mf_state;
     IMediaFilter *filter;
     OAFilterState state;
@@ -3219,6 +3220,7 @@ static void test_filter_state(void)
     testfilter_init(&source, &source_pin, 1);
     testfilter_init(&sink, &sink_pin, 1);
     testfilter_init(&dummy, NULL, 0);
+    sink.IMediaSeeking_iface.lpVtbl = &testseek_vtbl;
 
     IFilterGraph2_QueryInterface(graph, &IID_IMediaFilter, (void **)&filter);
     IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
@@ -3350,6 +3352,7 @@ static void test_filter_state(void)
     graph = create_graph();
     IFilterGraph2_QueryInterface(graph, &IID_IMediaFilter, (void **)&filter);
     IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
+    IFilterGraph2_QueryInterface(graph, &IID_IMediaSeeking, (void **)&seeking);
 
     /* Add the filters in reverse order this time. */
     IFilterGraph2_AddFilter(graph, &sink.IBaseFilter_iface, NULL);
@@ -3510,6 +3513,13 @@ todo_wine
     ok(state == State_Running, "Got state %u.\n", state);
     ok(sink.state == State_Paused, "Got state %u.\n", sink.state);
     ok(source.state == State_Paused, "Got state %u.\n", source.state);
+
+    /* SetPositions() does not pause the graph in this case, since it is
+     * already in a paused state. */
+    time = 0;
+    hr = IMediaSeeking_SetPositions(seeking, &time, AM_SEEKING_AbsolutePositioning,
+            NULL, AM_SEEKING_NoPositioning);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_Run(control);
     todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
@@ -3684,6 +3694,7 @@ todo_wine
     source.expect_stop_prev = sink.expect_stop_prev = State_Running;
     IMediaFilter_Release(filter);
     IMediaControl_Release(control);
+    IMediaSeeking_Release(seeking);
     ref = IFilterGraph2_Release(graph);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
     ok(source.ref == 1, "Got outstanding refcount %d.\n", source.ref);

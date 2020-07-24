@@ -2398,7 +2398,7 @@ static HRESULT WINAPI MediaSeeking_SetPositions(IMediaSeeking *iface, LONGLONG *
     EnterCriticalSection(&graph->cs);
 
     state = graph->state;
-    if (state == State_Running)
+    if (state == State_Running && !graph->needs_async_run)
         IMediaControl_Pause(&graph->IMediaControl_iface);
 
     LIST_FOR_EACH_ENTRY(filter, &graph->filters, struct filter, entry)
@@ -2434,7 +2434,7 @@ static HRESULT WINAPI MediaSeeking_SetPositions(IMediaSeeking *iface, LONGLONG *
         graph->stream_elapsed = 0;
     }
 
-    if (state == State_Running)
+    if (state == State_Running && !graph->needs_async_run)
         IMediaControl_Run(&graph->IMediaControl_iface);
 
     LeaveCriticalSection(&graph->cs);
