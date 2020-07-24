@@ -466,6 +466,16 @@ static void get_screen_size( XRRScreenResources *resources, unsigned int *width,
     }
 }
 
+static void set_screen_size( int width, int height )
+{
+    int screen = default_visual.screen;
+    int mm_width, mm_height;
+
+    mm_width = width * DisplayWidthMM( gdi_display, screen ) / DisplayWidth( gdi_display, screen );
+    mm_height = height * DisplayHeightMM( gdi_display, screen ) / DisplayHeight( gdi_display, screen );
+    pXRRSetScreenSize( gdi_display, root_window, width, height, mm_width, mm_height );
+}
+
 static LONG xrandr12_set_current_mode( int mode )
 {
     unsigned int screen_width, screen_height;
@@ -515,12 +525,7 @@ static LONG xrandr12_set_current_mode( int mode )
     get_screen_size( resources, &screen_width, &screen_height );
     screen_width = max( screen_width, crtc_info->x + dd_modes[mode].width );
     screen_height = max( screen_height, crtc_info->y + dd_modes[mode].height );
-
-    pXRRSetScreenSize( gdi_display, root_window, screen_width, screen_height,
-            screen_width * DisplayWidthMM( gdi_display, default_visual.screen )
-                         / DisplayWidth( gdi_display, default_visual.screen ),
-            screen_height * DisplayHeightMM( gdi_display, default_visual.screen )
-                         / DisplayHeight( gdi_display, default_visual.screen ));
+    set_screen_size( screen_width, screen_height );
 
     status = pXRRSetCrtcConfig( gdi_display, resources, resources->crtcs[primary_crtc],
                                 CurrentTime, crtc_info->x, crtc_info->y, xrandr12_modes[mode],
