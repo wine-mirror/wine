@@ -1982,20 +1982,37 @@ static HRESULT WINAPI VMR9SurfaceAllocatorNotify_AdviseSurfaceAllocator(
         IVMRSurfaceAllocatorNotify9 *iface, DWORD_PTR cookie, IVMRSurfaceAllocator9 *allocator)
 {
     struct quartz_vmr *filter = impl_from_IVMRSurfaceAllocatorNotify9(iface);
+    IVMRImagePresenter9 *presenter;
 
     TRACE("filter %p, cookie %#Ix, allocator %p.\n", filter, cookie, allocator);
 
+    EnterCriticalSection(&filter->renderer.filter.csFilter);
+
     filter->cookie = cookie;
 
-    if (filter->presenter)
+    if (filter->renderer.sink.pin.peer)
+    {
+        LeaveCriticalSection(&filter->renderer.filter.csFilter);
+        WARN("Attempt to set allocator while connected; returning VFW_E_WRONG_STATE.\n");
         return VFW_E_WRONG_STATE;
+    }
 
-    if (FAILED(IVMRSurfaceAllocator9_QueryInterface(allocator, &IID_IVMRImagePresenter9, (void **)&filter->presenter)))
+    if (FAILED(IVMRSurfaceAllocator9_QueryInterface(allocator, &IID_IVMRImagePresenter9, (void **)&presenter)))
+    {
+        LeaveCriticalSection(&filter->renderer.filter.csFilter);
         return E_NOINTERFACE;
+    }
 
+    if (filter->allocator)
+    {
+        IVMRImagePresenter9_Release(filter->presenter);
+        IVMRSurfaceAllocator9_Release(filter->allocator);
+    }
     filter->allocator = allocator;
+    filter->presenter = presenter;
     IVMRSurfaceAllocator9_AddRef(allocator);
 
+    LeaveCriticalSection(&filter->renderer.filter.csFilter);
     return S_OK;
 }
 
