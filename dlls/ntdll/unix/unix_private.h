@@ -60,6 +60,8 @@ struct ntdll_thread_data
     BOOL               wow64_redir;   /* Wow64 filesystem redirection flag */
     pthread_t          pthread_id;    /* pthread thread id */
     struct list        entry;         /* entry in TEB list */
+    PRTL_THREAD_START_ROUTINE start;  /* thread entry point */
+    void              *param;         /* thread entry point parameter */
 };
 
 C_ASSERT( sizeof(struct ntdll_thread_data) <= sizeof(((TEB *)0)->GdiTebBatch) );
