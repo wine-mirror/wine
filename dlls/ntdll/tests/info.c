@@ -2636,6 +2636,47 @@ static void test_thread_info(void)
     ok( len == 0xdeadbeef, "wrong len %u\n", len );
 }
 
+static void test_wow64(void)
+{
+#ifndef _WIN64
+    if (is_wow64)
+    {
+        PEB64 *peb64;
+        TEB64 *teb64 = (TEB64 *)NtCurrentTeb()->GdiBatchCount;
+
+        ok( !!teb64, "GdiBatchCount not set\n" );
+        ok( (char *)NtCurrentTeb() + NtCurrentTeb()->WowTebOffset == (char *)teb64 ||
+            broken(!NtCurrentTeb()->WowTebOffset),  /* pre-win10 */
+            "wrong WowTebOffset %x (%p/%p)\n", NtCurrentTeb()->WowTebOffset, teb64, NtCurrentTeb() );
+        ok( (char *)teb64 + 0x2000 == (char *)NtCurrentTeb(), "unexpected diff %p / %p\n",
+            teb64, NtCurrentTeb() );
+        ok( teb64->Tib.ExceptionList == PtrToUlong( NtCurrentTeb() ), "wrong Tib.ExceptionList %s / %p\n",
+            wine_dbgstr_longlong(teb64->Tib.ExceptionList), NtCurrentTeb() );
+        ok( teb64->Tib.Self == PtrToUlong( teb64 ), "wrong Tib.Self %s / %p\n",
+            wine_dbgstr_longlong(teb64->Tib.Self), teb64 );
+        ok( teb64->StaticUnicodeString.Buffer == PtrToUlong( teb64->StaticUnicodeBuffer ),
+            "wrong StaticUnicodeString %s / %p\n",
+            wine_dbgstr_longlong(teb64->StaticUnicodeString.Buffer), teb64->StaticUnicodeBuffer );
+        ok( teb64->ClientId.UniqueProcess == GetCurrentProcessId(), "wrong pid %s / %x\n",
+            wine_dbgstr_longlong(teb64->ClientId.UniqueProcess), GetCurrentProcessId() );
+        ok( teb64->ClientId.UniqueThread == GetCurrentThreadId(), "wrong tid %s / %x\n",
+            wine_dbgstr_longlong(teb64->ClientId.UniqueThread), GetCurrentThreadId() );
+        peb64 = ULongToPtr( teb64->Peb );
+        ok( peb64->ImageBaseAddress == PtrToUlong( NtCurrentTeb()->Peb->ImageBaseAddress ),
+            "wrong ImageBaseAddress %s / %p\n",
+            wine_dbgstr_longlong(peb64->ImageBaseAddress), NtCurrentTeb()->Peb->ImageBaseAddress);
+        ok( peb64->OSBuildNumber == NtCurrentTeb()->Peb->OSBuildNumber, "wrong OSBuildNumber %x / %x\n",
+            peb64->OSBuildNumber, NtCurrentTeb()->Peb->OSBuildNumber );
+        ok( peb64->OSPlatformId == NtCurrentTeb()->Peb->OSPlatformId, "wrong OSPlatformId %x / %x\n",
+            peb64->OSPlatformId, NtCurrentTeb()->Peb->OSPlatformId );
+        return;
+    }
+#endif
+    ok( !NtCurrentTeb()->GdiBatchCount, "GdiBatchCount set to %x\n", NtCurrentTeb()->GdiBatchCount );
+    ok( !NtCurrentTeb()->WowTebOffset, "WowTebOffset set to %x\n", NtCurrentTeb()->WowTebOffset );
+}
+
+
 START_TEST(info)
 {
     char **argv;
@@ -2693,6 +2734,7 @@ START_TEST(info)
     test_thread_lookup();
 
     test_affinity();
+    test_wow64();
 
     /* belongs to its own file */
     test_readvirtualmemory();

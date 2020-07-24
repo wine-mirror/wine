@@ -129,6 +129,10 @@ static inline struct ntdll_thread_data *ntdll_get_thread_data(void)
     return (struct ntdll_thread_data *)&NtCurrentTeb()->GdiTebBatch;
 }
 
+#ifndef _WIN64
+static inline TEB64 *NtCurrentTeb64(void) { return (TEB64 *)NtCurrentTeb()->GdiBatchCount; }
+#endif
+
 #define HASH_STRING_ALGORITHM_DEFAULT  0
 #define HASH_STRING_ALGORITHM_X65599   1
 #define HASH_STRING_ALGORITHM_INVALID  0xffffffff

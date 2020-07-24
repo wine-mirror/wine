@@ -71,7 +71,17 @@ static inline struct ntdll_thread_data *ntdll_get_thread_data(void)
     return (struct ntdll_thread_data *)&NtCurrentTeb()->GdiTebBatch;
 }
 
-static const UINT_PTR page_size = 0x1000;
+static const SIZE_T page_size = 0x1000;
+static const SIZE_T signal_stack_mask = 0xffff;
+#ifdef _WIN64
+static const SIZE_T teb_size = 0x2000;
+static const SIZE_T teb_offset = 0;
+static const SIZE_T signal_stack_size = 0x10000 - 0x2000;
+#else
+static const SIZE_T teb_size = 0x3000;  /* TEB64 + TEB */
+static const SIZE_T teb_offset = 0x2000;
+static const SIZE_T signal_stack_size = 0x10000 - 0x3000;
+#endif
 
 /* callbacks to PE ntdll from the Unix side */
 extern void     (WINAPI *pDbgUiRemoteBreakin)( void *arg ) DECLSPEC_HIDDEN;
@@ -144,9 +154,6 @@ extern BOOL is_wow64 DECLSPEC_HIDDEN;
 extern HANDLE keyed_event DECLSPEC_HIDDEN;
 extern timeout_t server_start_time DECLSPEC_HIDDEN;
 extern sigset_t server_block_set DECLSPEC_HIDDEN;
-extern SIZE_T signal_stack_size DECLSPEC_HIDDEN;
-extern SIZE_T signal_stack_mask DECLSPEC_HIDDEN;
-static const SIZE_T teb_size = 0x1000 * sizeof(void *) / 4;
 extern struct _KUSER_SHARED_DATA *user_shared_data DECLSPEC_HIDDEN;
 #ifdef __i386__
 extern struct ldt_copy __wine_ldt_copy DECLSPEC_HIDDEN;
@@ -278,7 +285,7 @@ static inline IMAGE_NT_HEADERS *get_exe_nt_header(void)
 
 static inline void *get_signal_stack(void)
 {
-    return (char *)NtCurrentTeb() + teb_size;
+    return (char *)NtCurrentTeb() + teb_size - teb_offset;
 }
 
 static inline size_t ntdll_wcslen( const WCHAR *str )

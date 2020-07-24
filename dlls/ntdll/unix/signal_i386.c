@@ -540,7 +540,7 @@ static inline TEB *get_current_teb(void)
 {
     unsigned long esp;
     __asm__("movl %%esp,%0" : "=g" (esp) );
-    return (TEB *)(esp & ~signal_stack_mask);
+    return (TEB *)((esp & ~signal_stack_mask) + teb_offset);
 }
 
 
@@ -1937,7 +1937,7 @@ static void ldt_set_fs( WORD sel, TEB *teb )
         struct modify_ldt_s ldt_info = { sel >> 3 };
 
         ldt_info.base_addr = teb;
-        ldt_info.limit     = teb_size - 1;
+        ldt_info.limit     = page_size - 1;
         ldt_info.seg_32bit = 1;
         if (set_thread_area( &ldt_info ) < 0) perror( "set_thread_area" );
 #elif defined(__FreeBSD__) || defined (__FreeBSD_kernel__) || defined(__DragonFly__)
@@ -2052,7 +2052,7 @@ NTSTATUS signal_alloc_thread( TEB *teb )
         static int first_thread = 1;
         sigset_t sigset;
         int idx;
-        LDT_ENTRY entry = ldt_make_entry( teb, teb_size - 1, LDT_FLAGS_DATA | LDT_FLAGS_32BIT );
+        LDT_ENTRY entry = ldt_make_entry( teb, page_size - 1, LDT_FLAGS_DATA | LDT_FLAGS_32BIT );
 
         if (first_thread)  /* no locking for first thread */
         {

@@ -1551,7 +1551,19 @@ size_t server_init_thread( void *entry_point, BOOL *suspend )
     }
     SERVER_END_REQ;
 
-    is_wow64 = !is_win64 && (server_cpus & ((1 << CPU_x86_64) | (1 << CPU_ARM64))) != 0;
+#ifndef _WIN64
+    is_wow64 = (server_cpus & ((1 << CPU_x86_64) | (1 << CPU_ARM64))) != 0;
+    if (is_wow64)
+    {
+        TEB64 *teb64 = (TEB64 *)((char *)NtCurrentTeb() - teb_offset);
+
+        NtCurrentTeb()->GdiBatchCount = PtrToUlong( teb64 );
+        NtCurrentTeb()->WowTebOffset  = -teb_offset;
+        teb64->ClientId.UniqueProcess = PtrToUlong( NtCurrentTeb()->ClientId.UniqueProcess );
+        teb64->ClientId.UniqueThread  = PtrToUlong( NtCurrentTeb()->ClientId.UniqueThread );
+    }
+#endif
+
     ntdll_get_thread_data()->wow64_redir = is_wow64;
 
     switch (ret)

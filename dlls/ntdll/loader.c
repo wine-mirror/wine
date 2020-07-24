@@ -3906,7 +3906,6 @@ void __wine_process_init(void)
     UNICODE_STRING nt_name;
     MEMORY_BASIC_INFORMATION meminfo;
     INITIAL_TEB stack;
-    ULONG_PTR val;
     TEB *teb = NtCurrentTeb();
     PEB *peb = teb->Peb;
 
@@ -3935,8 +3934,9 @@ void __wine_process_init(void)
     InitializeListHead( &ldr.InMemoryOrderModuleList );
     InitializeListHead( &ldr.InInitializationOrderModuleList );
 
-    NtQueryInformationProcess( GetCurrentProcess(), ProcessWow64Information, &val, sizeof(val), NULL );
-    is_wow64 = !!val;
+#ifndef _WIN64
+    is_wow64 = !!NtCurrentTeb64();
+#endif
 
     init_unix_codepage();
     init_directories();
@@ -4007,6 +4007,19 @@ void __wine_process_init(void)
         }
         NtTerminateProcess( GetCurrentProcess(), status );
     }
+
+#ifndef _WIN64
+    if (NtCurrentTeb64())
+    {
+        PEB64 *peb64 = UlongToPtr( NtCurrentTeb64()->Peb );
+        peb64->ImageBaseAddress = PtrToUlong( peb->ImageBaseAddress );
+        peb64->OSMajorVersion   = peb->OSMajorVersion;
+        peb64->OSMinorVersion   = peb->OSMinorVersion;
+        peb64->OSBuildNumber    = peb->OSBuildNumber;
+        peb64->OSPlatformId     = peb->OSPlatformId;
+        peb64->SessionId        = peb->SessionId;
+    }
+#endif
 
     /* the main exe needs to be the first in the load order list */
     RemoveEntryList( &wm->ldr.InLoadOrderLinks );
