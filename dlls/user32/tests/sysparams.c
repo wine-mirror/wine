@@ -3154,18 +3154,18 @@ static void test_EnumDisplaySettings(void)
     dm.dmSize = sizeof(dm);
     SetLastError(0xdeadbeef);
     ret = EnumDisplaySettingsA("invalid", ENUM_CURRENT_SETTINGS, &dm);
-    todo_wine ok(!ret, "EnumDisplaySettingsA succeeded\n");
+    ok(!ret, "EnumDisplaySettingsA succeeded\n");
     ok(GetLastError() == 0xdeadbeef, "Expect error 0xdeadbeef, got %#x\n", GetLastError());
-    todo_wine ok(dm.dmFields == 0, "Expect dmFields unchanged, got %#x\n", dm.dmFields);
+    ok(dm.dmFields == 0, "Expect dmFields unchanged, got %#x\n", dm.dmFields);
 
     /* Monitor device names are invalid */
     memset(&dm, 0, sizeof(dm));
     dm.dmSize = sizeof(dm);
     SetLastError(0xdeadbeef);
     ret = EnumDisplaySettingsA("\\\\.\\DISPLAY1\\Monitor0", ENUM_CURRENT_SETTINGS, &dm);
-    todo_wine ok(!ret, "EnumDisplaySettingsA succeeded\n");
+    ok(!ret, "EnumDisplaySettingsA succeeded\n");
     ok(GetLastError() == 0xdeadbeef, "Expect error 0xdeadbeef, got %#x\n", GetLastError());
-    todo_wine ok(dm.dmFields == 0, "Expect dmFields unchanged, got %#x\n", dm.dmFields);
+    ok(dm.dmFields == 0, "Expect dmFields unchanged, got %#x\n", dm.dmFields);
 
     /* Test that passing NULL to device name parameter means to use the primary adapter */
     memset(&dm, 0, sizeof(dm));

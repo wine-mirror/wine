@@ -590,6 +590,21 @@ static BOOL get_primary_adapter(WCHAR *name)
     return FALSE;
 }
 
+static BOOL is_valid_adapter_name(const WCHAR *name)
+{
+    long int adapter_idx;
+    WCHAR *end;
+
+    if (strncmpiW(name, ADAPTER_PREFIX, ARRAY_SIZE(ADAPTER_PREFIX)))
+        return FALSE;
+
+    adapter_idx = strtolW(name + ARRAY_SIZE(ADAPTER_PREFIX), &end, 10);
+    if (*end || adapter_idx < 1)
+        return FALSE;
+
+    return TRUE;
+}
+
 /* get text metrics and/or "average" char width of the specified logfont 
  * for the specified dc */
 static void get_text_metr_size( HDC hdc, LOGFONTW *plf, TEXTMETRICW * ptm, UINT *psz)
@@ -3307,8 +3322,7 @@ static BOOL is_detached_mode(const DEVMODEW *mode)
 LONG WINAPI ChangeDisplaySettingsExW( LPCWSTR devname, LPDEVMODEW devmode, HWND hwnd,
                                       DWORD flags, LPVOID lparam )
 {
-    WCHAR primary_adapter[CCHDEVICENAME], *end;
-    long int display_idx;
+    WCHAR primary_adapter[CCHDEVICENAME];
     BOOL def_mode = TRUE;
     DEVMODEW dm;
     LONG ret;
@@ -3332,14 +3346,7 @@ LONG WINAPI ChangeDisplaySettingsExW( LPCWSTR devname, LPDEVMODEW devmode, HWND 
         devname = primary_adapter;
     }
 
-    if (strncmpiW(devname, ADAPTER_PREFIX, ARRAY_SIZE(ADAPTER_PREFIX)))
-    {
-        ERR("Invalid device name %s.\n", wine_dbgstr_w(devname));
-        return DISP_CHANGE_BADPARAM;
-    }
-
-    display_idx = strtolW(devname + ARRAY_SIZE(ADAPTER_PREFIX), &end, 10);
-    if (*end || display_idx < 1)
+    if (!is_valid_adapter_name(devname))
     {
         ERR("Invalid device name %s.\n", wine_dbgstr_w(devname));
         return DISP_CHANGE_BADPARAM;
@@ -3464,6 +3471,12 @@ BOOL WINAPI EnumDisplaySettingsExW(LPCWSTR lpszDeviceName, DWORD iModeNum,
             return FALSE;
 
         lpszDeviceName = primary_adapter;
+    }
+
+    if (!is_valid_adapter_name(lpszDeviceName))
+    {
+        ERR("Invalid device name %s.\n", wine_dbgstr_w(lpszDeviceName));
+        return FALSE;
     }
 
     ret = USER_Driver->pEnumDisplaySettingsEx(lpszDeviceName, iModeNum, lpDevMode, dwFlags);
