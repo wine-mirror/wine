@@ -212,6 +212,7 @@ void	WINECON_GrabChanges(struct inner_data* data)
 
     if (!GetOverlappedResult(data->hSynchro, &data->overlapped, &num, FALSE))
     {
+        if (GetLastError() == ERROR_IO_INCOMPLETE) return;
         ERR( "failed to get renderer events: %u\n", GetLastError() );
         data->dying = TRUE;
         return;
