@@ -1147,9 +1147,9 @@ START_TEST(mediadet)
     test_COM_sg_enumpins();
 
     ret = DeleteFileW(test_avi_filename);
-    todo_wine ok(ret, "Failed to delete file, error %u.\n", GetLastError());
+    ok(ret, "Failed to delete file, error %u.\n", GetLastError());
     ret = DeleteFileW(test_sound_avi_filename);
-    todo_wine ok(ret, "Failed to delete file, error %u.\n", GetLastError());
+    ok(ret, "Failed to delete file, error %u.\n", GetLastError());
 
     CoUninitialize();
 }

@@ -1598,6 +1598,9 @@ static void gstdemux_sink_disconnect(struct strmbase_sink *iface)
     mark_wine_thread();
 
     GST_RemoveOutputPins(filter);
+
+    IAsyncReader_Release(filter->reader);
+    filter->reader = NULL;
 }
 
 static const struct strmbase_sink_ops sink_ops =
