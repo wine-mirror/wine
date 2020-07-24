@@ -32,10 +32,65 @@ typedef enum _D3DX_CPU_OPTIMIZATION
     D3DX_SSE_OPTIMIZED
 } D3DX_CPU_OPTIMIZATION;
 
+typedef struct D3DXFLOAT16
+{
+#ifdef __cplusplus
+    D3DXFLOAT16();
+    D3DXFLOAT16(float f);
+    D3DXFLOAT16(const D3DXFLOAT16 &f);
+
+    operator float();
+
+    BOOL operator==(const D3DXFLOAT16 &f) const;
+    BOOL operator!=(const D3DXFLOAT16 &f) const;
+#endif
+    WORD value;
+} D3DXFLOAT16, *LPD3DXFLOAT16;
+
+typedef struct D3DXCOLOR
+{
+#ifdef __cplusplus
+public:
+    D3DXCOLOR(){};
+    D3DXCOLOR(UINT color);
+    D3DXCOLOR(const float *color);
+    D3DXCOLOR(const D3DXFLOAT16 *color);
+    D3DXCOLOR(float r, float g, float b, float a);
+
+    operator UINT() const;
+    operator float *();
+    operator const float *() const;
+
+    D3DXCOLOR & operator+=(const D3DXCOLOR &color);
+    D3DXCOLOR & operator-=(const D3DXCOLOR &color);
+    D3DXCOLOR & operator*=(float n);
+    D3DXCOLOR & operator/=(float n);
+
+    D3DXCOLOR operator+() const;
+    D3DXCOLOR operator-() const;
+
+    D3DXCOLOR operator+(const D3DXCOLOR &color) const;
+    D3DXCOLOR operator-(const D3DXCOLOR &color) const;
+    D3DXCOLOR operator*(float n) const;
+    D3DXCOLOR operator/(float n) const;
+
+    friend D3DXCOLOR operator*(float n, const D3DXCOLOR &color);
+
+    BOOL operator==(const D3DXCOLOR &color) const;
+    BOOL operator!=(const D3DXCOLOR &color) const;
+#endif
+    float r, g, b, a;
+} D3DXCOLOR, *LPD3DXCOLOR;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+D3DXCOLOR *D3DXColorAdd(D3DXCOLOR *out, D3DXCOLOR c1, D3DXCOLOR c2);
+D3DXCOLOR *D3DXColorLerp(D3DXCOLOR *out, D3DXCOLOR c1, D3DXCOLOR c2, float s);
+D3DXCOLOR *D3DXColorModulate(D3DXCOLOR *out, D3DXCOLOR c1, D3DXCOLOR c2);
+D3DXCOLOR *D3DXColorScale(D3DXCOLOR *out, D3DXCOLOR c, float s);
+D3DXCOLOR *D3DXColorSubtract(D3DXCOLOR *out, D3DXCOLOR c1, D3DXCOLOR c2);
 D3DX_CPU_OPTIMIZATION WINAPI D3DXCpuOptimizations(BOOL enable);
 
 #ifdef __cplusplus
