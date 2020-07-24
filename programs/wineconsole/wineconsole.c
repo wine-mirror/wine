@@ -66,19 +66,12 @@ static void WINECON_Usage(void)
  */
 static void WINECON_FetchCells(struct inner_data* data, int upd_tp, int upd_bm)
 {
-    SERVER_START_REQ( read_console_output )
-    {
-        req->handle = wine_server_obj_handle( data->hConOut );
-        req->x      = 0;
-        req->y      = upd_tp;
-        req->mode   = CHAR_INFO_MODE_TEXTATTR;
-        req->wrap   = TRUE;
-        wine_server_set_reply( req, &data->cells[upd_tp * data->curcfg.sb_width],
-                               (upd_bm-upd_tp+1) * data->curcfg.sb_width * sizeof(CHAR_INFO) );
-        wine_server_call( req );
-    }
-    SERVER_END_REQ;
-    data->fnRefresh(data, upd_tp, upd_bm);
+    SMALL_RECT region = { 0, upd_tp, data->curcfg.sb_width - 1, upd_bm };
+    COORD size = { data->curcfg.sb_width, data->curcfg.sb_height };
+    COORD coord = { 0, upd_tp };
+
+    if (ReadConsoleOutputW(data->hConOut, data->cells, size, coord, &region))
+        data->fnRefresh(data, upd_tp, upd_bm);
 }
 
 /******************************************************************
