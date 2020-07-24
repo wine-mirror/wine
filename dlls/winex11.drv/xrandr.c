@@ -316,6 +316,83 @@ static XRRScreenResources *xrandr_get_screen_resources(void)
     return resources;
 }
 
+/* Some (304.64, possibly earlier) versions of the NVIDIA driver only
+ * report a DFP's native mode through RandR 1.2 / 1.3. Standard DMT modes
+ * are only listed through RandR 1.0 / 1.1. This is completely useless,
+ * but NVIDIA considers this a feature, so it's unlikely to change. The
+ * best we can do is to fall back to RandR 1.0 and encourage users to
+ * consider more cooperative driver vendors when we detect such a
+ * configuration. */
+static BOOL is_broken_driver(void)
+{
+    XRRScreenResources *screen_resources;
+    XRROutputInfo *output_info;
+    XRRModeInfo *first_mode;
+    INT major, event, error;
+    INT output_idx, i, j;
+    BOOL only_one_mode;
+
+    screen_resources = xrandr_get_screen_resources();
+    if (!screen_resources)
+        return TRUE;
+
+    /* Check if any output only has one native mode */
+    for (output_idx = 0; output_idx < screen_resources->noutput; ++output_idx)
+    {
+        output_info = pXRRGetOutputInfo( gdi_display, screen_resources,
+                                         screen_resources->outputs[output_idx] );
+        if (!output_info)
+            continue;
+
+        if (output_info->connection != RR_Connected)
+        {
+            pXRRFreeOutputInfo( output_info );
+            continue;
+        }
+
+        first_mode = NULL;
+        only_one_mode = TRUE;
+        for (i = 0; i < output_info->nmode; ++i)
+        {
+            for (j = 0; j < screen_resources->nmode; ++j)
+            {
+                if (output_info->modes[i] != screen_resources->modes[j].id)
+                    continue;
+
+                if (!first_mode)
+                {
+                    first_mode = &screen_resources->modes[j];
+                    break;
+                }
+
+                if (first_mode->width != screen_resources->modes[j].width ||
+                    first_mode->height != screen_resources->modes[j].height)
+                    only_one_mode = FALSE;
+
+                break;
+            }
+
+            if (!only_one_mode)
+                break;
+        }
+        pXRRFreeOutputInfo( output_info );
+
+        if (!only_one_mode)
+            continue;
+
+        /* Check if it is NVIDIA proprietary driver */
+        if (XQueryExtension( gdi_display, "NV-CONTROL", &major, &event, &error ))
+        {
+            ERR_(winediag)("Broken NVIDIA RandR detected, falling back to RandR 1.0. "
+                           "Please consider using the Nouveau driver instead.\n");
+            pXRRFreeScreenResources( screen_resources );
+            return TRUE;
+        }
+    }
+    pXRRFreeScreenResources( screen_resources );
+    return FALSE;
+}
+
 static int xrandr12_get_current_mode(void)
 {
     XRRScreenResources *resources;
@@ -504,7 +581,6 @@ static unsigned int get_frequency( const XRRModeInfo *mode )
 
 static int xrandr12_init_modes(void)
 {
-    unsigned int only_one_resolution = 1, mode_count;
     XRRScreenResources *resources;
     XRROutputInfo *output_info;
     XRRCrtcInfo *crtc_info;
@@ -568,32 +644,6 @@ static int xrandr12_init_modes(void)
                 break;
             }
         }
-    }
-
-    mode_count = X11DRV_Settings_GetModeCount();
-    for (i = 1; i < mode_count; ++i)
-    {
-        if (dd_modes[i].width != dd_modes[0].width || dd_modes[i].height != dd_modes[0].height)
-        {
-            only_one_resolution = 0;
-            break;
-        }
-    }
-
-    /* Recent (304.64, possibly earlier) versions of the nvidia driver only
-     * report a DFP's native mode through RandR 1.2 / 1.3. Standard DMT modes
-     * are only listed through RandR 1.0 / 1.1. This is completely useless,
-     * but NVIDIA considers this a feature, so it's unlikely to change. The
-     * best we can do is to fall back to RandR 1.0 and encourage users to
-     * consider more cooperative driver vendors when we detect such a
-     * configuration. */
-    if (only_one_resolution && XQueryExtension( gdi_display, "NV-CONTROL", &i, &j, &ret ))
-    {
-        ERR_(winediag)("Broken NVIDIA RandR detected, falling back to RandR 1.0. "
-                       "Please consider using the Nouveau driver instead.\n");
-        ret = -1;
-        HeapFree( GetProcessHeap(), 0, xrandr12_modes );
-        goto done;
     }
 
     X11DRV_Settings_AddDepthModes();
@@ -1260,7 +1310,7 @@ void X11DRV_XRandR_Init(void)
             pXRRGetScreenResourcesCurrent = pXRRGetScreenResources;
     }
 
-    if (!pXRRGetScreenResourcesCurrent || xrandr12_init_modes() < 0)
+    if (!pXRRGetScreenResourcesCurrent || is_broken_driver() || xrandr12_init_modes() < 0)
 #endif
         xrandr10_init_modes();
 
