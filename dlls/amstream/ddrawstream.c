@@ -632,16 +632,6 @@ static HRESULT WINAPI ddraw_sink_Connect(IPin *iface, IPin *peer, const AM_MEDIA
     return E_UNEXPECTED;
 }
 
-static BOOL check_media_type(const AM_MEDIA_TYPE *mt)
-{
-    if (IsEqualGUID(&mt->majortype, &MEDIATYPE_Video)
-            && IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_RGB8)
-            && IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo))
-        return TRUE;
-
-    return FALSE;
-}
-
 static HRESULT WINAPI ddraw_sink_ReceiveConnection(IPin *iface, IPin *peer, const AM_MEDIA_TYPE *mt)
 {
     struct ddraw_stream *stream = impl_from_IPin(iface);
@@ -657,7 +647,13 @@ static HRESULT WINAPI ddraw_sink_ReceiveConnection(IPin *iface, IPin *peer, cons
         return VFW_E_ALREADY_CONNECTED;
     }
 
-    if (!check_media_type(mt))
+    if (!IsEqualGUID(&mt->majortype, &MEDIATYPE_Video)
+            || (!IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_RGB8)
+                && !IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_RGB24)
+                && !IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_RGB32)
+                && !IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_RGB555)
+                && !IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_RGB565))
+            || !IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo))
     {
         LeaveCriticalSection(&stream->cs);
         return VFW_E_TYPE_NOT_ACCEPTED;
@@ -788,7 +784,13 @@ static HRESULT WINAPI ddraw_sink_QueryId(IPin *iface, WCHAR **id)
 static HRESULT WINAPI ddraw_sink_QueryAccept(IPin *iface, const AM_MEDIA_TYPE *mt)
 {
     TRACE("iface %p, mt %p.\n", iface, mt);
-    return check_media_type(mt) ? S_OK : VFW_E_TYPE_NOT_ACCEPTED;
+
+    if (IsEqualGUID(&mt->majortype, &MEDIATYPE_Video)
+            && IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_RGB8)
+            && IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo))
+        return S_OK;
+
+    return VFW_E_TYPE_NOT_ACCEPTED;
 }
 
 static HRESULT WINAPI ddraw_sink_EnumMediaTypes(IPin *iface, IEnumMediaTypes **enum_media_types)

@@ -28,6 +28,7 @@
 #include "initguid.h"
 #include "ksmedia.h"
 #include "dvdmedia.h"
+#include "wmcodecdsp.h"
 #include "wine/strmbase.h"
 
 static const WAVEFORMATEX audio_format =
@@ -2330,6 +2331,14 @@ static void test_media_types(void)
         &MEDIASUBTYPE_ARGB32,
         &MEDIASUBTYPE_ARGB1555,
         &MEDIASUBTYPE_ARGB4444,
+        &MEDIASUBTYPE_Avi,
+        &MEDIASUBTYPE_I420,
+        &MEDIASUBTYPE_AYUV,
+        &MEDIASUBTYPE_YV12,
+        &MEDIASUBTYPE_YUY2,
+        &MEDIASUBTYPE_UYVY,
+        &MEDIASUBTYPE_YVYU,
+        &MEDIASUBTYPE_NV12,
         &GUID_NULL,
     };
 
@@ -2364,7 +2373,7 @@ static void test_media_types(void)
         pmt->cbFormat = tests[i].size;
         pmt->pbFormat = tests[i].format;
         hr = IPin_QueryAccept(pin, pmt);
-        ok(hr == (i == 6) ? S_OK : VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+        ok(hr == (i == 6 ? S_OK : VFW_E_TYPE_NOT_ACCEPTED), "Got hr %#x.\n", hr);
     }
 
     pmt->bFixedSizeSamples = FALSE;
@@ -3237,6 +3246,89 @@ static void test_audiostream_receive_connection(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
     IPin_Release(pin);
     IAudioMediaStream_Release(audio_stream);
+    ref = IMediaStream_Release(stream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IBaseFilter_Release(&source.filter.IBaseFilter_iface);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
+static void test_ddrawstream_receive_connection(void)
+{
+    static const VIDEOINFOHEADER req_vih;
+    IDirectDrawMediaStream *ddraw_stream;
+    IAMMultiMediaStream *mmstream;
+    struct testfilter source;
+    IMediaStream *stream;
+    AM_MEDIA_TYPE mt;
+    HRESULT hr;
+    ULONG ref;
+    IPin *pin;
+    int i;
+
+    const AM_MEDIA_TYPE video_mt =
+    {
+        .majortype = MEDIATYPE_Video,
+        .subtype = MEDIASUBTYPE_RGB8,
+        .formattype = FORMAT_VideoInfo,
+        .cbFormat = sizeof(VIDEOINFOHEADER),
+        .pbFormat = (BYTE *)&req_vih,
+    };
+
+    static const GUID *subtypes[] =
+    {
+        &MEDIASUBTYPE_RGB24,
+        &MEDIASUBTYPE_RGB32,
+        &MEDIASUBTYPE_RGB555,
+        &MEDIASUBTYPE_RGB565,
+        &MEDIASUBTYPE_RGB1,
+        &MEDIASUBTYPE_RGB4,
+        &MEDIASUBTYPE_ARGB32,
+        &MEDIASUBTYPE_ARGB1555,
+        &MEDIASUBTYPE_ARGB4444,
+        &MEDIASUBTYPE_Avi,
+        &MEDIASUBTYPE_I420,
+        &MEDIASUBTYPE_AYUV,
+        &MEDIASUBTYPE_YV12,
+        &MEDIASUBTYPE_YUY2,
+        &MEDIASUBTYPE_UYVY,
+        &MEDIASUBTYPE_YVYU,
+        &MEDIASUBTYPE_NV12,
+        &GUID_NULL,
+    };
+
+    mmstream = create_ammultimediastream();
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryVideo, 0, &stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMediaStream_QueryInterface(stream, &IID_IDirectDrawMediaStream, (void **)&ddraw_stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMediaStream_QueryInterface(stream, &IID_IPin, (void **)&pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    testfilter_init(&source);
+
+    mt = video_mt;
+    hr = IPin_ReceiveConnection(pin, &source.source.pin.IPin_iface, &mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IPin_Disconnect(pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(subtypes); ++i)
+    {
+        mt = video_mt;
+        mt.subtype = *subtypes[i];
+        hr = IPin_ReceiveConnection(pin, &source.source.pin.IPin_iface, &mt);
+        ok(hr == (i < 4 ? S_OK : VFW_E_TYPE_NOT_ACCEPTED), "Got hr %#x.\n", hr);
+        if (hr == S_OK)
+        {
+            hr = IPin_Disconnect(pin);
+            ok(hr == S_OK, "Got hr %#x.\n", hr);
+        }
+    }
+
+    ref = IAMMultiMediaStream_Release(mmstream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    IPin_Release(pin);
+    IDirectDrawMediaStream_Release(ddraw_stream);
     ref = IMediaStream_Release(stream);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
     ref = IBaseFilter_Release(&source.filter.IBaseFilter_iface);
@@ -5238,6 +5330,7 @@ START_TEST(amstream)
 
     test_ddrawstream_initialize();
     test_ddrawstream_getsetdirectdraw();
+    test_ddrawstream_receive_connection();
 
     test_ammediastream_join_am_multi_media_stream();
     test_ammediastream_join_filter();
