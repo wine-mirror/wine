@@ -1255,9 +1255,6 @@
 /* Define if Xrandr has the XRRGetProviderResources function */
 #undef HAVE_XRRGETPROVIDERRESOURCES
 
-/* Define if Xrandr has the XRRGetScreenResources function */
-#undef HAVE_XRRGETSCREENRESOURCES
-
 /* Define to 1 if you have the `y0' function. */
 #undef HAVE_Y0
 
