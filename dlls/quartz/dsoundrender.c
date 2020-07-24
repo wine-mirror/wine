@@ -477,6 +477,8 @@ static HRESULT dsound_render_sink_eos(struct strmbase_sink *iface)
     struct dsound_render *filter = impl_from_strmbase_pin(&iface->pin);
     IFilterGraph *graph = filter->filter.graph;
     IMediaEventSink *event_sink;
+    void *buffer;
+    DWORD size;
 
     EnterCriticalSection(&filter->stream_cs);
 
@@ -493,6 +495,10 @@ static HRESULT dsound_render_sink_eos(struct strmbase_sink *iface)
     SetEvent(filter->state_event);
 
     DSoundRender_HandleEndOfStream(filter);
+
+    IDirectSoundBuffer_Lock(filter->dsbuffer, 0, 0, &buffer, &size, NULL, NULL, DSBLOCK_ENTIREBUFFER);
+    memset(buffer, 0, size);
+    IDirectSoundBuffer_Unlock(filter->dsbuffer, buffer, size, NULL, 0);
 
     LeaveCriticalSection(&filter->stream_cs);
     return S_OK;
