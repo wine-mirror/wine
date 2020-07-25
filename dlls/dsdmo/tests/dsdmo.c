@@ -80,9 +80,7 @@ static void test_aggregation(const GUID *clsid)
     dmo = (IMediaObject *)0xdeadbeef;
     hr = CoCreateInstance(clsid, &test_outer, CLSCTX_INPROC_SERVER,
             &IID_IMediaObject, (void **)&dmo);
-    todo_wine ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
-    if (hr != E_NOINTERFACE)
-        return;
+    ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
     ok(!dmo, "Got interface %p.\n", dmo);
 
     hr = CoCreateInstance(clsid, &test_outer, CLSCTX_INPROC_SERVER,
@@ -138,9 +136,7 @@ static void test_interfaces(const GUID *clsid, const GUID *iid)
     ULONG ref;
 
     hr = CoCreateInstance(clsid, NULL, CLSCTX_INPROC_SERVER, iid, (void **)&unk);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
-    if (hr != S_OK)
-        return;
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IUnknown_QueryInterface(unk, &IID_IMediaObject, (void **)&unk2);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -204,9 +200,7 @@ static void test_media_types(const GUID *clsid)
     };
 
     hr = CoCreateInstance(clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IMediaObject, (void **)&dmo);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
-    if (hr != S_OK)
-        return;
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     build_pcm_format(&wfx, WAVE_FORMAT_PCM, 16, 44100, 2);
 
@@ -508,18 +502,19 @@ START_TEST(dsdmo)
     {
         const GUID *clsid;
         const GUID *iid;
+        BOOL todo;
     }
     tests[] =
     {
-        {&GUID_DSFX_STANDARD_CHORUS,        &IID_IDirectSoundFXChorus},
-        {&GUID_DSFX_STANDARD_COMPRESSOR,    &IID_IDirectSoundFXCompressor},
-        {&GUID_DSFX_STANDARD_DISTORTION,    &IID_IDirectSoundFXDistortion},
-        {&GUID_DSFX_STANDARD_ECHO,          &IID_IDirectSoundFXEcho},
-        {&GUID_DSFX_STANDARD_FLANGER,       &IID_IDirectSoundFXFlanger},
-        {&GUID_DSFX_STANDARD_GARGLE,        &IID_IDirectSoundFXGargle},
-        {&GUID_DSFX_STANDARD_I3DL2REVERB,   &IID_IDirectSoundFXI3DL2Reverb},
-        {&GUID_DSFX_STANDARD_PARAMEQ,       &IID_IDirectSoundFXParamEq},
-        {&GUID_DSFX_WAVES_REVERB,           &IID_IDirectSoundFXWavesReverb},
+        {&GUID_DSFX_STANDARD_CHORUS,        &IID_IDirectSoundFXChorus, TRUE},
+        {&GUID_DSFX_STANDARD_COMPRESSOR,    &IID_IDirectSoundFXCompressor, TRUE},
+        {&GUID_DSFX_STANDARD_DISTORTION,    &IID_IDirectSoundFXDistortion, TRUE},
+        {&GUID_DSFX_STANDARD_ECHO,          &IID_IDirectSoundFXEcho, TRUE},
+        {&GUID_DSFX_STANDARD_FLANGER,       &IID_IDirectSoundFXFlanger, TRUE},
+        {&GUID_DSFX_STANDARD_GARGLE,        &IID_IDirectSoundFXGargle, TRUE},
+        {&GUID_DSFX_STANDARD_I3DL2REVERB,   &IID_IDirectSoundFXI3DL2Reverb, TRUE},
+        {&GUID_DSFX_STANDARD_PARAMEQ,       &IID_IDirectSoundFXParamEq, TRUE},
+        {&GUID_DSFX_WAVES_REVERB,           &IID_IDirectSoundFXWavesReverb, TRUE},
     };
     unsigned int i;
 
@@ -527,6 +522,17 @@ START_TEST(dsdmo)
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
+        IUnknown *unk;
+        HRESULT hr;
+
+        hr = CoCreateInstance(tests[i].clsid, NULL, CLSCTX_INPROC_SERVER, tests[i].iid, (void **)&unk);
+        todo_wine_if(tests[i].todo) ok(hr == S_OK, "Failed to create %s, hr %#x.\n",
+                debugstr_guid(tests[i].clsid), hr);
+        if (hr == S_OK)
+            IUnknown_Release(unk);
+        else
+            continue;
+
         test_aggregation(tests[i].clsid);
         test_interfaces(tests[i].clsid, tests[i].iid);
         test_media_types(tests[i].clsid);
