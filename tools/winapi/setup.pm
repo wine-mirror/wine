@@ -54,7 +54,7 @@ BEGIN {
 
 	if($wine_dir =~ /^\./) {
 	    $current_dir = ".";
-	    my $pwd; chomp($pwd = `pwd`);
+	    my $pwd; chomp($pwd = $cwd);
 	    foreach my $n (1..((length($wine_dir) + 1) / 3)) {
 		$pwd =~ s/\/([^\/]*)$//;
 		$current_dir = "$1/$current_dir";
