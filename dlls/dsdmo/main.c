@@ -226,8 +226,29 @@ static HRESULT WINAPI effect_SetInputType(IMediaObject *iface, DWORD index, cons
 
 static HRESULT WINAPI effect_SetOutputType(IMediaObject *iface, DWORD index, const DMO_MEDIA_TYPE *type, DWORD flags)
 {
-    FIXME("iface %p, index %u, type %p, flags %#x, stub!\n", iface, index, type, flags);
-    return E_NOTIMPL;
+    struct effect *effect = impl_from_IMediaObject(iface);
+    HRESULT hr;
+
+    TRACE("iface %p, index %u, type %p, flags %#x.\n", iface, index, type, flags);
+
+    if (flags & DMO_SET_TYPEF_CLEAR)
+        return S_OK;
+
+    if (!IsEqualGUID(&type->majortype, &MEDIATYPE_Audio))
+        return DMO_E_TYPE_NOT_ACCEPTED;
+
+    if (!IsEqualGUID(&type->subtype, &MEDIASUBTYPE_PCM)
+            && !IsEqualGUID(&type->subtype, &MEDIASUBTYPE_IEEE_FLOAT))
+        return DMO_E_TYPE_NOT_ACCEPTED;
+
+    if (!IsEqualGUID(&type->formattype, &FORMAT_WaveFormatEx))
+        return DMO_E_TYPE_NOT_ACCEPTED;
+
+    EnterCriticalSection(&effect->cs);
+    hr = memcmp(type->pbFormat, &effect->format, sizeof(WAVEFORMATEX)) ? DMO_E_TYPE_NOT_ACCEPTED : S_OK;
+    LeaveCriticalSection(&effect->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI effect_GetInputCurrentType(IMediaObject *iface, DWORD index, DMO_MEDIA_TYPE *type)

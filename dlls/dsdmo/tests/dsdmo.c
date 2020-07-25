@@ -254,22 +254,22 @@ static void test_media_types(const GUID *clsid)
 
                 build_pcm_format(&wfx, depths[j].format, depths[j].depth, sample_rates[i], 3 - channels);
                 hr = IMediaObject_SetOutputType(dmo, 0, &mt, 0);
-                todo_wine ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#x for %u Hz, %u channels, format %#x, depth %u.\n",
+                ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#x for %u Hz, %u channels, format %#x, depth %u.\n",
                         hr, sample_rates[i], channels, depths[j].format, depths[j].depth);
 
                 build_pcm_format(&wfx, depths[j].format, depths[j].depth, 2 * sample_rates[i], channels);
                 hr = IMediaObject_SetOutputType(dmo, 0, &mt, 0);
-                todo_wine ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#x for %u Hz, %u channels, format %#x, depth %u.\n",
+                ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#x for %u Hz, %u channels, format %#x, depth %u.\n",
                         hr, sample_rates[i], channels, depths[j].format, depths[j].depth);
 
                 build_pcm_format(&wfx, depths[j].format, 24 - depths[j].depth, sample_rates[i], channels);
                 hr = IMediaObject_SetOutputType(dmo, 0, &mt, 0);
-                todo_wine ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#x for %u Hz, %u channels, format %#x, depth %u.\n",
+                ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#x for %u Hz, %u channels, format %#x, depth %u.\n",
                         hr, sample_rates[i], channels, depths[j].format, depths[j].depth);
 
                 build_pcm_format(&wfx, depths[j].format, depths[j].depth, sample_rates[i], channels);
                 hr = IMediaObject_SetOutputType(dmo, 0, &mt, 0);
-                todo_wine ok(hr == S_OK, "Got hr %#x for %u Hz, %u channels, format %#x, depth %u.\n",
+                ok(hr == S_OK, "Got hr %#x for %u Hz, %u channels, format %#x, depth %u.\n",
                         hr, sample_rates[i], channels, depths[j].format, depths[j].depth);
 
                 hr = IMediaObject_SetInputType(dmo, 0, NULL, DMO_SET_TYPEF_CLEAR);
@@ -277,7 +277,7 @@ static void test_media_types(const GUID *clsid)
                         hr, sample_rates[i], channels, depths[j].format, depths[j].depth);
 
                 hr = IMediaObject_SetOutputType(dmo, 0, NULL, DMO_SET_TYPEF_CLEAR);
-                todo_wine ok(hr == S_OK, "Got hr %#x for %u Hz, %u channels, format %#x, depth %u.\n",
+                ok(hr == S_OK, "Got hr %#x for %u Hz, %u channels, format %#x, depth %u.\n",
                         hr, sample_rates[i], channels, depths[j].format, depths[j].depth);
 
                 hr = IMediaObject_SetInputType(dmo, 0, NULL, DMO_SET_TYPEF_CLEAR);
