@@ -514,7 +514,7 @@ START_TEST(dsdmo)
         {&GUID_DSFX_STANDARD_GARGLE,        &IID_IDirectSoundFXGargle, TRUE},
         {&GUID_DSFX_STANDARD_I3DL2REVERB,   &IID_IDirectSoundFXI3DL2Reverb, TRUE},
         {&GUID_DSFX_STANDARD_PARAMEQ,       &IID_IDirectSoundFXParamEq, TRUE},
-        {&GUID_DSFX_WAVES_REVERB,           &IID_IDirectSoundFXWavesReverb, TRUE},
+        {&GUID_DSFX_WAVES_REVERB,           &IID_IDirectSoundFXWavesReverb},
     };
     unsigned int i;
 

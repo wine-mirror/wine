@@ -352,6 +352,57 @@ static void effect_init(struct effect *effect, IUnknown *outer, const struct eff
 struct waves_reverb
 {
     struct effect effect;
+    IDirectSoundFXWavesReverb IDirectSoundFXWavesReverb_iface;
+};
+
+static struct waves_reverb *impl_from_IDirectSoundFXWavesReverb(IDirectSoundFXWavesReverb *iface)
+{
+    return CONTAINING_RECORD(iface, struct waves_reverb, IDirectSoundFXWavesReverb_iface);
+}
+
+static HRESULT WINAPI waves_reverb_params_QueryInterface(IDirectSoundFXWavesReverb *iface, REFIID iid, void **out)
+{
+    struct waves_reverb *effect = impl_from_IDirectSoundFXWavesReverb(iface);
+    return IUnknown_QueryInterface(effect->effect.outer_unk, iid, out);
+}
+
+static ULONG WINAPI waves_reverb_params_AddRef(IDirectSoundFXWavesReverb *iface)
+{
+    struct waves_reverb *effect = impl_from_IDirectSoundFXWavesReverb(iface);
+    return IUnknown_AddRef(effect->effect.outer_unk);
+}
+
+static ULONG WINAPI waves_reverb_params_Release(IDirectSoundFXWavesReverb *iface)
+{
+    struct waves_reverb *effect = impl_from_IDirectSoundFXWavesReverb(iface);
+    return IUnknown_Release(effect->effect.outer_unk);
+}
+
+static HRESULT WINAPI waves_reverb_params_SetAllParameters(IDirectSoundFXWavesReverb *iface, const DSFXWavesReverb *params)
+{
+    struct waves_reverb *effect = impl_from_IDirectSoundFXWavesReverb(iface);
+
+    FIXME("effect %p, params %p, stub!\n", effect, params);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI waves_reverb_params_GetAllParameters(IDirectSoundFXWavesReverb *iface, DSFXWavesReverb *params)
+{
+    struct waves_reverb *effect = impl_from_IDirectSoundFXWavesReverb(iface);
+
+    FIXME("effect %p, params %p, stub!\n", effect, params);
+
+    return E_NOTIMPL;
+}
+
+static const IDirectSoundFXWavesReverbVtbl waves_reverb_params_vtbl =
+{
+    waves_reverb_params_QueryInterface,
+    waves_reverb_params_AddRef,
+    waves_reverb_params_Release,
+    waves_reverb_params_SetAllParameters,
+    waves_reverb_params_GetAllParameters,
 };
 
 static struct waves_reverb *impl_waves_reverb_from_effect(struct effect *iface)
@@ -361,6 +412,10 @@ static struct waves_reverb *impl_waves_reverb_from_effect(struct effect *iface)
 
 static void *waves_reverb_query_interface(struct effect *iface, REFIID iid)
 {
+    struct waves_reverb *effect = impl_waves_reverb_from_effect(iface);
+
+    if (IsEqualGUID(iid, &IID_IDirectSoundFXWavesReverb))
+        return &effect->IDirectSoundFXWavesReverb_iface;
     return NULL;
 }
 
@@ -385,6 +440,7 @@ static HRESULT waves_reverb_create(IUnknown *outer, IUnknown **out)
         return E_OUTOFMEMORY;
 
     effect_init(&object->effect, outer, &waves_reverb_ops);
+    object->IDirectSoundFXWavesReverb_iface.lpVtbl = &waves_reverb_params_vtbl;
 
     TRACE("Created waves reverb effect %p.\n", object);
     *out = &object->effect.IUnknown_inner;
