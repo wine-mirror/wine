@@ -692,7 +692,7 @@ sub output_test_pack_type($$$$$$) {
 	    }
 	}
     } elsif ($type_kind eq "signed") {
-	print OUT "    TEST_TYPE_SIGNED($type_name)\n";
+        print OUT "    TEST_TYPE_SIGNED ($type_name)\n";
     } elsif ($type_kind eq "unsigned") {
 	print OUT "    TEST_TYPE_UNSIGNED($type_name)\n";
     }

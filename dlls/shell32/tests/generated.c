@@ -485,7 +485,7 @@ static void test_pack_VARIANT_BOOL(void)
     /* VARIANT_BOOL */
     TEST_TYPE_SIZE   (VARIANT_BOOL, 2)
     TEST_TYPE_ALIGN  (VARIANT_BOOL, 2)
-    TEST_TYPE_SIGNED(VARIANT_BOOL)
+    TEST_TYPE_SIGNED (VARIANT_BOOL)
 }
 
 static void test_pack_VARTYPE(void)
@@ -2303,7 +2303,7 @@ static void test_pack_VARIANT_BOOL(void)
     /* VARIANT_BOOL */
     TEST_TYPE_SIZE   (VARIANT_BOOL, 2)
     TEST_TYPE_ALIGN  (VARIANT_BOOL, 2)
-    TEST_TYPE_SIGNED(VARIANT_BOOL)
+    TEST_TYPE_SIGNED (VARIANT_BOOL)
 }
 
 static void test_pack_VARTYPE(void)

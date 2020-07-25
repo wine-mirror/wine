@@ -101,7 +101,7 @@ static void test_pack_HALF_PTR(void)
     /* HALF_PTR */
     TEST_TYPE_SIZE   (HALF_PTR, 4)
     TEST_TYPE_ALIGN  (HALF_PTR, 4)
-    TEST_TYPE_SIGNED(HALF_PTR)
+    TEST_TYPE_SIGNED (HALF_PTR)
 }
 
 static void test_pack_INT16(void)
@@ -109,7 +109,7 @@ static void test_pack_INT16(void)
     /* INT16 */
     TEST_TYPE_SIZE   (INT16, 2)
     TEST_TYPE_ALIGN  (INT16, 2)
-    TEST_TYPE_SIGNED(INT16)
+    TEST_TYPE_SIGNED (INT16)
 }
 
 static void test_pack_INT32(void)
@@ -117,7 +117,7 @@ static void test_pack_INT32(void)
     /* INT32 */
     TEST_TYPE_SIZE   (INT32, 4)
     TEST_TYPE_ALIGN  (INT32, 4)
-    TEST_TYPE_SIGNED(INT32)
+    TEST_TYPE_SIGNED (INT32)
 }
 
 static void test_pack_INT64(void)
@@ -125,7 +125,7 @@ static void test_pack_INT64(void)
     /* INT64 */
     TEST_TYPE_SIZE   (INT64, 8)
     TEST_TYPE_ALIGN  (INT64, 8)
-    TEST_TYPE_SIGNED(INT64)
+    TEST_TYPE_SIGNED (INT64)
 }
 
 static void test_pack_INT8(void)
@@ -133,7 +133,7 @@ static void test_pack_INT8(void)
     /* INT8 */
     TEST_TYPE_SIZE   (INT8, 1)
     TEST_TYPE_ALIGN  (INT8, 1)
-    TEST_TYPE_SIGNED(INT8)
+    TEST_TYPE_SIGNED (INT8)
 }
 
 static void test_pack_INT_PTR(void)
@@ -141,7 +141,7 @@ static void test_pack_INT_PTR(void)
     /* INT_PTR */
     TEST_TYPE_SIZE   (INT_PTR, 8)
     TEST_TYPE_ALIGN  (INT_PTR, 8)
-    TEST_TYPE_SIGNED(INT_PTR)
+    TEST_TYPE_SIGNED (INT_PTR)
 }
 
 static void test_pack_LONG32(void)
@@ -149,7 +149,7 @@ static void test_pack_LONG32(void)
     /* LONG32 */
     TEST_TYPE_SIZE   (LONG32, 4)
     TEST_TYPE_ALIGN  (LONG32, 4)
-    TEST_TYPE_SIGNED(LONG32)
+    TEST_TYPE_SIGNED (LONG32)
 }
 
 static void test_pack_LONG64(void)
@@ -157,7 +157,7 @@ static void test_pack_LONG64(void)
     /* LONG64 */
     TEST_TYPE_SIZE   (LONG64, 8)
     TEST_TYPE_ALIGN  (LONG64, 8)
-    TEST_TYPE_SIGNED(LONG64)
+    TEST_TYPE_SIGNED (LONG64)
 }
 
 static void test_pack_LONG_PTR(void)
@@ -165,7 +165,7 @@ static void test_pack_LONG_PTR(void)
     /* LONG_PTR */
     TEST_TYPE_SIZE   (LONG_PTR, 8)
     TEST_TYPE_ALIGN  (LONG_PTR, 8)
-    TEST_TYPE_SIGNED(LONG_PTR)
+    TEST_TYPE_SIGNED (LONG_PTR)
 }
 
 static void test_pack_SIZE_T(void)
@@ -1738,7 +1738,7 @@ static void test_pack_LONG(void)
     /* LONG */
     TEST_TYPE_SIZE   (LONG, 4)
     TEST_TYPE_ALIGN  (LONG, 4)
-    TEST_TYPE_SIGNED(LONG)
+    TEST_TYPE_SIGNED (LONG)
 }
 
 static void test_pack_LONGLONG(void)
@@ -1746,7 +1746,7 @@ static void test_pack_LONGLONG(void)
     /* LONGLONG */
     TEST_TYPE_SIZE   (LONGLONG, 8)
     TEST_TYPE_ALIGN  (LONGLONG, 8)
-    TEST_TYPE_SIGNED(LONGLONG)
+    TEST_TYPE_SIGNED (LONGLONG)
 }
 
 static void test_pack_LUID(void)
@@ -2896,7 +2896,7 @@ static void test_pack_SHORT(void)
     /* SHORT */
     TEST_TYPE_SIZE   (SHORT, 2)
     TEST_TYPE_ALIGN  (SHORT, 2)
-    TEST_TYPE_SIGNED(SHORT)
+    TEST_TYPE_SIGNED (SHORT)
 }
 
 static void test_pack_SID(void)
@@ -3117,7 +3117,7 @@ static void test_pack_BOOL(void)
     /* BOOL */
     TEST_TYPE_SIZE   (BOOL, 4)
     TEST_TYPE_ALIGN  (BOOL, 4)
-    TEST_TYPE_SIGNED(BOOL)
+    TEST_TYPE_SIGNED (BOOL)
 }
 
 static void test_pack_BYTE(void)
@@ -3177,7 +3177,7 @@ static void test_pack_HFILE(void)
     /* HFILE */
     TEST_TYPE_SIZE   (HFILE, 4)
     TEST_TYPE_ALIGN  (HFILE, 4)
-    TEST_TYPE_SIGNED(HFILE)
+    TEST_TYPE_SIGNED (HFILE)
 }
 
 static void test_pack_HGDIOBJ(void)
@@ -3213,7 +3213,7 @@ static void test_pack_INT(void)
     /* INT */
     TEST_TYPE_SIZE   (INT, 4)
     TEST_TYPE_ALIGN  (INT, 4)
-    TEST_TYPE_SIGNED(INT)
+    TEST_TYPE_SIGNED (INT)
 }
 
 static void test_pack_LOCALHANDLE(void)
@@ -3518,7 +3518,7 @@ static void test_pack_HALF_PTR(void)
     /* HALF_PTR */
     TEST_TYPE_SIZE   (HALF_PTR, 2)
     TEST_TYPE_ALIGN  (HALF_PTR, 2)
-    TEST_TYPE_SIGNED(HALF_PTR)
+    TEST_TYPE_SIGNED (HALF_PTR)
 }
 
 static void test_pack_INT16(void)
@@ -3526,7 +3526,7 @@ static void test_pack_INT16(void)
     /* INT16 */
     TEST_TYPE_SIZE   (INT16, 2)
     TEST_TYPE_ALIGN  (INT16, 2)
-    TEST_TYPE_SIGNED(INT16)
+    TEST_TYPE_SIGNED (INT16)
 }
 
 static void test_pack_INT32(void)
@@ -3534,7 +3534,7 @@ static void test_pack_INT32(void)
     /* INT32 */
     TEST_TYPE_SIZE   (INT32, 4)
     TEST_TYPE_ALIGN  (INT32, 4)
-    TEST_TYPE_SIGNED(INT32)
+    TEST_TYPE_SIGNED (INT32)
 }
 
 static void test_pack_INT64(void)
@@ -3542,7 +3542,7 @@ static void test_pack_INT64(void)
     /* INT64 */
     TEST_TYPE_SIZE   (INT64, 8)
     TEST_TYPE_ALIGN  (INT64, 8)
-    TEST_TYPE_SIGNED(INT64)
+    TEST_TYPE_SIGNED (INT64)
 }
 
 static void test_pack_INT8(void)
@@ -3550,7 +3550,7 @@ static void test_pack_INT8(void)
     /* INT8 */
     TEST_TYPE_SIZE   (INT8, 1)
     TEST_TYPE_ALIGN  (INT8, 1)
-    TEST_TYPE_SIGNED(INT8)
+    TEST_TYPE_SIGNED (INT8)
 }
 
 static void test_pack_INT_PTR(void)
@@ -3558,7 +3558,7 @@ static void test_pack_INT_PTR(void)
     /* INT_PTR */
     TEST_TYPE_SIZE   (INT_PTR, 4)
     TEST_TYPE_ALIGN  (INT_PTR, 4)
-    TEST_TYPE_SIGNED(INT_PTR)
+    TEST_TYPE_SIGNED (INT_PTR)
 }
 
 static void test_pack_LONG32(void)
@@ -3566,7 +3566,7 @@ static void test_pack_LONG32(void)
     /* LONG32 */
     TEST_TYPE_SIZE   (LONG32, 4)
     TEST_TYPE_ALIGN  (LONG32, 4)
-    TEST_TYPE_SIGNED(LONG32)
+    TEST_TYPE_SIGNED (LONG32)
 }
 
 static void test_pack_LONG64(void)
@@ -3574,7 +3574,7 @@ static void test_pack_LONG64(void)
     /* LONG64 */
     TEST_TYPE_SIZE   (LONG64, 8)
     TEST_TYPE_ALIGN  (LONG64, 8)
-    TEST_TYPE_SIGNED(LONG64)
+    TEST_TYPE_SIGNED (LONG64)
 }
 
 static void test_pack_LONG_PTR(void)
@@ -3582,7 +3582,7 @@ static void test_pack_LONG_PTR(void)
     /* LONG_PTR */
     TEST_TYPE_SIZE   (LONG_PTR, 4)
     TEST_TYPE_ALIGN  (LONG_PTR, 4)
-    TEST_TYPE_SIGNED(LONG_PTR)
+    TEST_TYPE_SIGNED (LONG_PTR)
 }
 
 static void test_pack_SIZE_T(void)
@@ -5155,7 +5155,7 @@ static void test_pack_LONG(void)
     /* LONG */
     TEST_TYPE_SIZE   (LONG, 4)
     TEST_TYPE_ALIGN  (LONG, 4)
-    TEST_TYPE_SIGNED(LONG)
+    TEST_TYPE_SIGNED (LONG)
 }
 
 static void test_pack_LONGLONG(void)
@@ -5163,7 +5163,7 @@ static void test_pack_LONGLONG(void)
     /* LONGLONG */
     TEST_TYPE_SIZE   (LONGLONG, 8)
     TEST_TYPE_ALIGN  (LONGLONG, 8)
-    TEST_TYPE_SIGNED(LONGLONG)
+    TEST_TYPE_SIGNED (LONGLONG)
 }
 
 static void test_pack_LUID(void)
@@ -6313,7 +6313,7 @@ static void test_pack_SHORT(void)
     /* SHORT */
     TEST_TYPE_SIZE   (SHORT, 2)
     TEST_TYPE_ALIGN  (SHORT, 2)
-    TEST_TYPE_SIGNED(SHORT)
+    TEST_TYPE_SIGNED (SHORT)
 }
 
 static void test_pack_SID(void)
@@ -6534,7 +6534,7 @@ static void test_pack_BOOL(void)
     /* BOOL */
     TEST_TYPE_SIZE   (BOOL, 4)
     TEST_TYPE_ALIGN  (BOOL, 4)
-    TEST_TYPE_SIGNED(BOOL)
+    TEST_TYPE_SIGNED (BOOL)
 }
 
 static void test_pack_BYTE(void)
@@ -6594,7 +6594,7 @@ static void test_pack_HFILE(void)
     /* HFILE */
     TEST_TYPE_SIZE   (HFILE, 4)
     TEST_TYPE_ALIGN  (HFILE, 4)
-    TEST_TYPE_SIGNED(HFILE)
+    TEST_TYPE_SIGNED (HFILE)
 }
 
 static void test_pack_HGDIOBJ(void)
@@ -6630,7 +6630,7 @@ static void test_pack_INT(void)
     /* INT */
     TEST_TYPE_SIZE   (INT, 4)
     TEST_TYPE_ALIGN  (INT, 4)
-    TEST_TYPE_SIGNED(INT)
+    TEST_TYPE_SIGNED (INT)
 }
 
 static void test_pack_LOCALHANDLE(void)
