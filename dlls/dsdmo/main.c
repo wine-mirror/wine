@@ -33,6 +33,7 @@ static HINSTANCE dsdmo_instance;
 struct effect
 {
     IMediaObject IMediaObject_iface;
+    IMediaObjectInPlace IMediaObjectInPlace_iface;
     IUnknown IUnknown_inner;
     IUnknown *outer_unk;
     LONG refcount;
@@ -61,6 +62,8 @@ static HRESULT WINAPI effect_inner_QueryInterface(IUnknown *iface, REFIID iid, v
         *out = iface;
     else if (IsEqualGUID(iid, &IID_IMediaObject))
         *out = &effect->IMediaObject_iface;
+    else if (IsEqualGUID(iid, &IID_IMediaObjectInPlace))
+        *out = &effect->IMediaObjectInPlace_iface;
     else if (!(*out = effect->ops->query_interface(effect, iid)))
     {
         WARN("%s not implemented; returning E_NOINTERFACE.\n", debugstr_guid(iid));
@@ -282,12 +285,66 @@ static const IMediaObjectVtbl effect_vtbl =
     effect_Lock,
 };
 
+static struct effect *impl_from_IMediaObjectInPlace(IMediaObjectInPlace *iface)
+{
+    return CONTAINING_RECORD(iface, struct effect, IMediaObjectInPlace_iface);
+}
+
+static HRESULT WINAPI effect_inplace_QueryInterface(IMediaObjectInPlace *iface, REFIID iid, void **out)
+{
+    struct effect *effect = impl_from_IMediaObjectInPlace(iface);
+    return IUnknown_QueryInterface(effect->outer_unk, iid, out);
+}
+
+static ULONG WINAPI effect_inplace_AddRef(IMediaObjectInPlace *iface)
+{
+    struct effect *effect = impl_from_IMediaObjectInPlace(iface);
+    return IUnknown_AddRef(effect->outer_unk);
+}
+
+static ULONG WINAPI effect_inplace_Release(IMediaObjectInPlace *iface)
+{
+    struct effect *effect = impl_from_IMediaObjectInPlace(iface);
+    return IUnknown_Release(effect->outer_unk);
+}
+
+static HRESULT WINAPI effect_inplace_Process(IMediaObjectInPlace *iface, ULONG size,
+        BYTE *data, REFERENCE_TIME start, DWORD flags)
+{
+    FIXME("iface %p, size %u, data %p, start %s, flags %#x, stub!\n",
+            iface, size, data, wine_dbgstr_longlong(start), flags);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI effect_inplace_Clone(IMediaObjectInPlace *iface, IMediaObjectInPlace **out)
+{
+    FIXME("iface %p, out %p, stub!\n", iface, out);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI effect_inplace_GetLatency(IMediaObjectInPlace *iface, REFERENCE_TIME *latency)
+{
+    FIXME("iface %p, latency %p, stub!\n", iface, latency);
+    return E_NOTIMPL;
+}
+
+static const IMediaObjectInPlaceVtbl effect_inplace_vtbl =
+{
+    effect_inplace_QueryInterface,
+    effect_inplace_AddRef,
+    effect_inplace_Release,
+    effect_inplace_Process,
+    effect_inplace_Clone,
+    effect_inplace_GetLatency,
+};
+
 static void effect_init(struct effect *effect, IUnknown *outer, const struct effect_ops *ops)
 {
     effect->outer_unk = outer ? outer : &effect->IUnknown_inner;
     effect->refcount = 1;
     effect->IUnknown_inner.lpVtbl = &effect_inner_vtbl;
     effect->IMediaObject_iface.lpVtbl = &effect_vtbl;
+    effect->IMediaObjectInPlace_iface.lpVtbl = &effect_inplace_vtbl;
 
     effect->ops = ops;
 }
