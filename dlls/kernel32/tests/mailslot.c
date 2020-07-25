@@ -324,7 +324,7 @@ todo_wine
     ok( !ReadFile( hSlot, buffer, sizeof buffer, &count, NULL), "slot read\n");
     ok( GetLastError() == ERROR_SEM_TIMEOUT, "wrong error %u\n", GetLastError() );
     dwTimeout = GetTickCount() - dwTimeout;
-    ok( dwTimeout >= 990, "timeout too short %u\n", dwTimeout );
+    ok( dwTimeout >= 900, "timeout too short %u\n", dwTimeout );
     ok( CloseHandle( hSlot ), "closing the mailslot\n");
 
     return 0;
