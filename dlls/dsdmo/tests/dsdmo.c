@@ -206,32 +206,32 @@ static void test_media_types(const GUID *clsid)
 
     mt.majortype = MEDIATYPE_Video;
     hr = IMediaObject_SetInputType(dmo, 0, &mt, 0);
-    todo_wine ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+    ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
     mt.majortype = GUID_NULL;
     hr = IMediaObject_SetInputType(dmo, 0, &mt, 0);
-    todo_wine ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+    ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
     mt.majortype = MEDIATYPE_Audio;
 
     mt.subtype = MEDIASUBTYPE_RGB8;
     hr = IMediaObject_SetInputType(dmo, 0, &mt, 0);
-    todo_wine ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+    ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
     mt.subtype = GUID_NULL;
     hr = IMediaObject_SetInputType(dmo, 0, &mt, 0);
-    todo_wine ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+    ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
     mt.subtype = MEDIASUBTYPE_IEEE_FLOAT;
     hr = IMediaObject_SetInputType(dmo, 0, &mt, 0);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     mt.subtype = MEDIASUBTYPE_PCM;
 
     mt.formattype = FORMAT_VideoInfo;
     hr = IMediaObject_SetInputType(dmo, 0, &mt, 0);
-    todo_wine ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+    ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
     mt.formattype = FORMAT_None;
     hr = IMediaObject_SetInputType(dmo, 0, &mt, 0);
-    todo_wine ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+    ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
     mt.formattype = GUID_NULL;
     hr = IMediaObject_SetInputType(dmo, 0, &mt, 0);
-    todo_wine ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+    ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
     mt.formattype = FORMAT_WaveFormatEx;
 
     for (i = 0; i < ARRAY_SIZE(sample_rates); ++i)
@@ -247,7 +247,7 @@ static void test_media_types(const GUID *clsid)
                 build_pcm_format(&wfx, depths[j].format, depths[j].depth, sample_rates[i], channels);
 
                 hr = IMediaObject_SetInputType(dmo, 0, &mt, 0);
-                todo_wine ok(hr == S_OK, "Got hr %#x for %u Hz, %u channels, format %#x, depth %u.\n",
+                ok(hr == S_OK, "Got hr %#x for %u Hz, %u channels, format %#x, depth %u.\n",
                         hr, sample_rates[i], channels, depths[j].format, depths[j].depth);
 
                 /* The output type must match the input type. */
@@ -273,7 +273,7 @@ static void test_media_types(const GUID *clsid)
                         hr, sample_rates[i], channels, depths[j].format, depths[j].depth);
 
                 hr = IMediaObject_SetInputType(dmo, 0, NULL, DMO_SET_TYPEF_CLEAR);
-                todo_wine ok(hr == S_OK, "Got hr %#x for %u Hz, %u channels, format %#x, depth %u.\n",
+                ok(hr == S_OK, "Got hr %#x for %u Hz, %u channels, format %#x, depth %u.\n",
                         hr, sample_rates[i], channels, depths[j].format, depths[j].depth);
 
                 hr = IMediaObject_SetOutputType(dmo, 0, NULL, DMO_SET_TYPEF_CLEAR);
@@ -281,7 +281,7 @@ static void test_media_types(const GUID *clsid)
                         hr, sample_rates[i], channels, depths[j].format, depths[j].depth);
 
                 hr = IMediaObject_SetInputType(dmo, 0, NULL, DMO_SET_TYPEF_CLEAR);
-                todo_wine ok(hr == S_OK, "Got hr %#x for %u Hz, %u channels, format %#x, depth %u.\n",
+                ok(hr == S_OK, "Got hr %#x for %u Hz, %u channels, format %#x, depth %u.\n",
                         hr, sample_rates[i], channels, depths[j].format, depths[j].depth);
             }
         }

@@ -20,6 +20,7 @@
 #include "dmo.h"
 #include "mmreg.h"
 #include "mmsystem.h"
+#include "uuids.h"
 #include "initguid.h"
 #include "dsound.h"
 #include "rpcproxy.h"
@@ -37,6 +38,9 @@ struct effect
     IUnknown IUnknown_inner;
     IUnknown *outer_unk;
     LONG refcount;
+
+    CRITICAL_SECTION cs;
+    WAVEFORMATEX format;
 
     const struct effect_ops *ops;
 };
@@ -92,6 +96,8 @@ static ULONG WINAPI effect_inner_Release(IUnknown *iface)
 
     if (!refcount)
     {
+        effect->cs.DebugInfo->Spare[0] = 0;
+        DeleteCriticalSection(&effect->cs);
         effect->ops->destroy(effect);
     }
     return refcount;
@@ -159,8 +165,63 @@ static HRESULT WINAPI effect_GetOutputType(IMediaObject *iface, DWORD index, DWO
 
 static HRESULT WINAPI effect_SetInputType(IMediaObject *iface, DWORD index, const DMO_MEDIA_TYPE *type, DWORD flags)
 {
-    FIXME("iface %p, index %u, type %p, flags %#x, stub!\n", iface, index, type, flags);
-    return E_NOTIMPL;
+    struct effect *effect = impl_from_IMediaObject(iface);
+    const WAVEFORMATEX *format;
+
+    TRACE("iface %p, index %u, type %p, flags %#x.\n", iface, index, type, flags);
+
+    if (flags & DMO_SET_TYPEF_CLEAR)
+    {
+        EnterCriticalSection(&effect->cs);
+        memset(&effect->format, 0, sizeof(effect->format));
+        LeaveCriticalSection(&effect->cs);
+        return S_OK;
+    }
+
+    if (!IsEqualGUID(&type->majortype, &MEDIATYPE_Audio))
+        return DMO_E_TYPE_NOT_ACCEPTED;
+
+    if (!IsEqualGUID(&type->subtype, &MEDIASUBTYPE_PCM)
+            && !IsEqualGUID(&type->subtype, &MEDIASUBTYPE_IEEE_FLOAT))
+        return DMO_E_TYPE_NOT_ACCEPTED;
+
+    if (!IsEqualGUID(&type->formattype, &FORMAT_WaveFormatEx))
+        return DMO_E_TYPE_NOT_ACCEPTED;
+
+    format = (const WAVEFORMATEX *)type->pbFormat;
+    if (format->wFormatTag == WAVE_FORMAT_PCM)
+    {
+        if (format->wBitsPerSample != 8 && format->wBitsPerSample != 16)
+        {
+            WARN("Rejecting %u-bit integer PCM.\n", format->wBitsPerSample);
+            return DMO_E_TYPE_NOT_ACCEPTED;
+        }
+    }
+    else if (format->wFormatTag == WAVE_FORMAT_IEEE_FLOAT)
+    {
+        if (format->wBitsPerSample != 32)
+        {
+            WARN("Rejecting %u-bit float PCM.\n", format->wBitsPerSample);
+            return DMO_E_TYPE_NOT_ACCEPTED;
+        }
+    }
+    else
+    {
+        WARN("Rejecting tag %#x.\n", format->wFormatTag);
+        return DMO_E_TYPE_NOT_ACCEPTED;
+    }
+
+    if (format->nChannels != 1 && format->nChannels != 2)
+    {
+        WARN("Rejecting %u channels.\n", format->nChannels);
+        return DMO_E_TYPE_NOT_ACCEPTED;
+    }
+
+    EnterCriticalSection(&effect->cs);
+    effect->format = *format;
+    LeaveCriticalSection(&effect->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI effect_SetOutputType(IMediaObject *iface, DWORD index, const DMO_MEDIA_TYPE *type, DWORD flags)
@@ -345,6 +406,9 @@ static void effect_init(struct effect *effect, IUnknown *outer, const struct eff
     effect->IUnknown_inner.lpVtbl = &effect_inner_vtbl;
     effect->IMediaObject_iface.lpVtbl = &effect_vtbl;
     effect->IMediaObjectInPlace_iface.lpVtbl = &effect_inplace_vtbl;
+
+    InitializeCriticalSection(&effect->cs);
+    effect->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": effect.cs");
 
     effect->ops = ops;
 }
