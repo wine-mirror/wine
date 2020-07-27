@@ -169,30 +169,99 @@ void X11DRV_Settings_SetHandler(const struct x11drv_settings_handler *new_handle
  * Default handlers if resolution switching is not enabled
  *
  */
-static int X11DRV_nores_GetCurrentMode(void)
+static BOOL nores_get_id(const WCHAR *device_name, ULONG_PTR *id)
 {
-    return 0;
+    WCHAR primary_adapter[CCHDEVICENAME];
+
+    if (!get_primary_adapter( primary_adapter ))
+        return FALSE;
+
+    *id = !lstrcmpiW( device_name, primary_adapter ) ? 1 : 0;
+    return TRUE;
 }
 
-static LONG X11DRV_nores_SetCurrentMode(int mode)
+static BOOL nores_get_modes(ULONG_PTR id, DWORD flags, DEVMODEW **new_modes, UINT *mode_count)
 {
-    if (mode == 0) return DISP_CHANGE_SUCCESSFUL;
-    TRACE("Ignoring mode change request mode=%d\n", mode);
-    return DISP_CHANGE_FAILED;
+    RECT primary = get_host_primary_monitor_rect();
+    DEVMODEW *modes;
+
+    modes = heap_calloc(1, sizeof(*modes));
+    if (!modes)
+    {
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+        return FALSE;
+    }
+
+    modes[0].dmSize = sizeof(*modes);
+    modes[0].dmDriverExtra = 0;
+    modes[0].dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT |
+                        DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY;
+    modes[0].u1.s2.dmDisplayOrientation = DMDO_DEFAULT;
+    modes[0].dmBitsPerPel = screen_bpp;
+    modes[0].dmPelsWidth = primary.right;
+    modes[0].dmPelsHeight = primary.bottom;
+    modes[0].u2.dmDisplayFlags = 0;
+    modes[0].dmDisplayFrequency = 60;
+
+    *new_modes = modes;
+    *mode_count = 1;
+    return TRUE;
+}
+
+static void nores_free_modes(DEVMODEW *modes)
+{
+    heap_free(modes);
+}
+
+static BOOL nores_get_current_mode(ULONG_PTR id, DEVMODEW *mode)
+{
+    RECT primary = get_host_primary_monitor_rect();
+
+    mode->dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT |
+                     DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY | DM_POSITION;
+    mode->u1.s2.dmDisplayOrientation = DMDO_DEFAULT;
+    mode->u2.dmDisplayFlags = 0;
+    mode->u1.s2.dmPosition.x = 0;
+    mode->u1.s2.dmPosition.y = 0;
+
+    if (id != 1)
+    {
+        FIXME("Non-primary adapters are unsupported.\n");
+        mode->dmBitsPerPel = 0;
+        mode->dmPelsWidth = 0;
+        mode->dmPelsHeight = 0;
+        mode->dmDisplayFrequency = 0;
+        return TRUE;
+    }
+
+    mode->dmBitsPerPel = screen_bpp;
+    mode->dmPelsWidth = primary.right;
+    mode->dmPelsHeight = primary.bottom;
+    mode->dmDisplayFrequency = 60;
+    return TRUE;
+}
+
+static LONG nores_set_current_mode(ULONG_PTR id, DEVMODEW *mode)
+{
+    WARN("NoRes settings handler, ignoring mode change request.\n");
+    return DISP_CHANGE_SUCCESSFUL;
 }
 
 /* default handler only gets the current X desktop resolution */
 void X11DRV_Settings_Init(void)
 {
-    RECT primary = get_host_primary_monitor_rect();
+    struct x11drv_settings_handler nores_handler;
 
     depths = screen_bpp == 32 ? depths_32 : depths_24;
 
-    X11DRV_Settings_SetHandlers("NoRes", 
-                                X11DRV_nores_GetCurrentMode, 
-                                X11DRV_nores_SetCurrentMode, 
-                                1, 0);
-    X11DRV_Settings_AddOneMode( primary.right - primary.left, primary.bottom - primary.top, 0, 60);
+    nores_handler.name = "NoRes";
+    nores_handler.priority = 0;
+    nores_handler.get_id = nores_get_id;
+    nores_handler.get_modes = nores_get_modes;
+    nores_handler.free_modes = nores_free_modes;
+    nores_handler.get_current_mode = nores_get_current_mode;
+    nores_handler.set_current_mode = nores_set_current_mode;
+    X11DRV_Settings_SetHandler(&nores_handler);
 }
 
 static BOOL get_display_device_reg_key(const WCHAR *device_name, WCHAR *key, unsigned len)
