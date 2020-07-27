@@ -220,6 +220,7 @@ int __cdecl wmain( int argc, const WCHAR *argv[] )
     static const WCHAR deleteW[] = {'d','e','l','e','t','e',0};
     static const WCHAR startW[] = {'s','t','a','r','t',0};
     static const WCHAR stopW[] = {'s','t','o','p',0};
+    static const WCHAR sdsetW[] = {'s','d','s','e','t',0};
     SC_HANDLE manager, service;
     SERVICE_STATUS status;
     BOOL ret = FALSE;
@@ -327,6 +328,11 @@ int __cdecl wmain( int argc, const WCHAR *argv[] )
             CloseServiceHandle( service );
         }
         else WINE_TRACE("failed to open service %u\n", GetLastError());
+    }
+    else if (!wcsicmp( argv[1], sdsetW ))
+    {
+        WINE_FIXME("SdSet command not supported, faking success\n");
+        ret = TRUE;
     }
     else
         WINE_FIXME("command not supported\n");
