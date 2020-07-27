@@ -1367,12 +1367,13 @@ static LONG xrandr14_set_current_mode( ULONG_PTR id, DEVMODEW *mode )
         goto done;
 
     get_screen_size( screen_resources, &screen_width, &screen_height );
-    screen_width = max( screen_width, crtc_info->x + mode->dmPelsWidth );
-    screen_height = max( screen_height, crtc_info->y + mode->dmPelsHeight );
+    screen_width = max( screen_width, mode->u1.s2.dmPosition.x + mode->dmPelsWidth );
+    screen_height = max( screen_height, mode->u1.s2.dmPosition.y + mode->dmPelsHeight );
     set_screen_size( screen_width, screen_height );
 
     status = pXRRSetCrtcConfig( gdi_display, screen_resources, crtc, CurrentTime,
-                                crtc_info->x, crtc_info->y, rrmode, rotation, outputs, output_count );
+                                mode->u1.s2.dmPosition.x, mode->u1.s2.dmPosition.y, rrmode,
+                                rotation, outputs, output_count );
     if (status == RRSetConfigSuccess)
         ret = DISP_CHANGE_SUCCESSFUL;
 

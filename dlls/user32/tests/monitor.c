@@ -283,29 +283,9 @@ struct device_info
     DEVMODEA original_mode;
 };
 
-static BOOL get_primary_adapter(CHAR *name)
-{
-    DISPLAY_DEVICEA dd;
-    DWORD i;
-
-    dd.cb = sizeof(dd);
-    for (i = 0; EnumDisplayDevicesA(NULL, i, &dd, 0); ++i)
-    {
-        if (dd.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE)
-        {
-            lstrcpyA(name, dd.DeviceName);
-            return TRUE;
-        }
-    }
-
-    return FALSE;
-}
-
 #define expect_dm(a, b, c) _expect_dm(__LINE__, a, b, c)
 static void _expect_dm(INT line, DEVMODEA expected, const CHAR *device, DWORD test)
 {
-    CHAR primary_adapter[CCHDEVICENAME];
-    BOOL is_primary;
     DEVMODEA dm;
     BOOL ret;
 
@@ -315,33 +295,23 @@ static void _expect_dm(INT line, DEVMODEA expected, const CHAR *device, DWORD te
     ret = EnumDisplaySettingsA(device, ENUM_CURRENT_SETTINGS, &dm);
     ok_(__FILE__, line)(ret, "Device %s test %d EnumDisplaySettingsA failed, error %#x\n", device, test, GetLastError());
 
-    ok(get_primary_adapter(primary_adapter), "Failed to get primary adapter name.\n");
-    is_primary = !lstrcmpA(primary_adapter, device);
-
     ok_(__FILE__, line)((dm.dmFields & expected.dmFields) == expected.dmFields,
             "Device %s test %d expect dmFields to contain %#x, got %#x\n", device, test, expected.dmFields, dm.dmFields);
     /* Wine doesn't support changing color depth yet */
     todo_wine_if(expected.dmBitsPerPel != 32 && expected.dmBitsPerPel != 24)
     ok_(__FILE__, line)(dm.dmBitsPerPel == expected.dmBitsPerPel, "Device %s test %d expect dmBitsPerPel %d, got %d\n",
             device, test, expected.dmBitsPerPel, dm.dmBitsPerPel);
-    /* Wine currently reports primary monitor settings for non-primary monitors */
-    todo_wine_if(!is_primary && dm.dmPelsWidth != expected.dmPelsWidth)
     ok_(__FILE__, line)(dm.dmPelsWidth == expected.dmPelsWidth, "Device %s test %d expect dmPelsWidth %d, got %d\n",
             device, test, expected.dmPelsWidth, dm.dmPelsWidth);
-    todo_wine_if(!is_primary && dm.dmPelsHeight != expected.dmPelsHeight)
     ok_(__FILE__, line)(dm.dmPelsHeight == expected.dmPelsHeight, "Device %s test %d expect dmPelsHeight %d, got %d\n",
             device, test, expected.dmPelsHeight, dm.dmPelsHeight);
-    todo_wine_if(!is_primary && dm.dmPosition.x != expected.dmPosition.x)
     ok_(__FILE__, line)(dm.dmPosition.x == expected.dmPosition.x, "Device %s test %d expect dmPosition.x %d, got %d\n",
             device, test, expected.dmPosition.x, dm.dmPosition.x);
-    todo_wine_if(!is_primary && dm.dmPosition.y != expected.dmPosition.y)
     ok_(__FILE__, line)(dm.dmPosition.y == expected.dmPosition.y, "Device %s test %d expect dmPosition.y %d, got %d\n",
             device, test, expected.dmPosition.y, dm.dmPosition.y);
-    todo_wine_if(!is_primary && dm.dmDisplayFrequency != expected.dmDisplayFrequency)
     ok_(__FILE__, line)(dm.dmDisplayFrequency == expected.dmDisplayFrequency,
             "Device %s test %d expect dmDisplayFrequency %d, got %d\n", device, test, expected.dmDisplayFrequency,
             dm.dmDisplayFrequency);
-    todo_wine_if(!is_primary && dm.dmDisplayOrientation != expected.dmDisplayOrientation)
     ok_(__FILE__, line)(dm.dmDisplayOrientation == expected.dmDisplayOrientation,
             "Device %s test %d expect dmDisplayOrientation %d, got %d\n", device, test, expected.dmDisplayOrientation,
             dm.dmDisplayOrientation);
@@ -778,7 +748,7 @@ static void test_ChangeDisplaySettingsEx(void)
         if (res)
         {
             /* The secondary adapter should be to the right of the primary adapter */
-            todo_wine ok(dm2.dmPosition.x == dm.dmPosition.x + dm.dmPelsWidth,
+            ok(dm2.dmPosition.x == dm.dmPosition.x + dm.dmPelsWidth,
                "Expected dm2.dmPosition.x %d, got %d.\n", dm.dmPosition.x + dm.dmPelsWidth,
                dm2.dmPosition.x);
             ok(dm2.dmPosition.y == dm.dmPosition.y, "Expected dm2.dmPosition.y %d, got %d.\n",
@@ -795,7 +765,7 @@ static void test_ChangeDisplaySettingsEx(void)
             dm2.dmSize = sizeof(dm2);
             res = EnumDisplaySettingsA(devices[1].name, ENUM_CURRENT_SETTINGS, &dm2);
             ok(res, "EnumDisplaySettingsA %s failed, error %#x\n", devices[1].name, GetLastError());
-            todo_wine ok((dm2.dmPosition.x == dm.dmPosition.x - dm2.dmPelsWidth),
+            ok(dm2.dmPosition.x == dm.dmPosition.x - dm2.dmPelsWidth,
                "Expected dmPosition.x %d, got %d.\n", dm.dmPosition.x - dm2.dmPelsWidth,
                dm2.dmPosition.x);
 
@@ -889,7 +859,7 @@ static void test_ChangeDisplaySettingsEx(void)
             dm2.dmSize = sizeof(dm2);
             res = EnumDisplaySettingsA(devices[1].name, ENUM_CURRENT_SETTINGS, &dm2);
             ok(res, "EnumDisplaySettingsA %s failed, error %#x\n", devices[1].name, GetLastError());
-            todo_wine ok(dm2.dmPosition.x == dm.dmPelsWidth, "Expect dmPosition.x %d, got %d\n",
+            ok(dm2.dmPosition.x == dm.dmPelsWidth, "Expect dmPosition.x %d, got %d\n",
                     dm.dmPelsWidth, dm2.dmPosition.x);
         }
         else
