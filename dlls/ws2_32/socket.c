@@ -1119,8 +1119,8 @@ static DWORD NtStatusToWSAError( DWORD status )
     {
     case STATUS_SUCCESS:                    return 0;
     case STATUS_PENDING:                    return WSA_IO_PENDING;
+    case STATUS_INVALID_HANDLE:
     case STATUS_OBJECT_TYPE_MISMATCH:       return WSAENOTSOCK;
-    case STATUS_INVALID_HANDLE:             return WSAEBADF;
     case STATUS_INVALID_PARAMETER:          return WSAEINVAL;
     case STATUS_PIPE_DISCONNECTED:          return WSAESHUTDOWN;
     case STATUS_NETWORK_BUSY:               return WSAEALREADY;
@@ -2889,19 +2889,11 @@ static BOOL WINAPI WS2_AcceptEx(SOCKET listener, SOCKET acceptor, PVOID dest, DW
     }
 
     fd = get_sock_fd( listener, FILE_READ_DATA, NULL );
-    if (fd == -1)
-    {
-        SetLastError(WSAENOTSOCK);
-        return FALSE;
-    }
+    if (fd == -1) return FALSE;
     release_sock_fd( listener, fd );
 
     fd = get_sock_fd( acceptor, FILE_READ_DATA, NULL );
-    if (fd == -1)
-    {
-        SetLastError(WSAENOTSOCK);
-        return FALSE;
-    }
+    if (fd == -1) return FALSE;
     release_sock_fd( acceptor, fd );
 
     wsa = (struct ws2_accept_async *)alloc_async_io( sizeof(*wsa), WS2_async_accept );
@@ -3147,11 +3139,8 @@ static BOOL WINAPI WS2_TransmitFile( SOCKET s, HANDLE h, DWORD file_bytes, DWORD
             buffers, flags );
 
     fd = get_sock_fd( s, FILE_WRITE_DATA, NULL );
-    if (fd == -1)
-    {
-        WSASetLastError( WSAENOTSOCK );
-        return FALSE;
-    }
+    if (fd == -1) return FALSE;
+
     if (getpeername( fd, &uaddr.addr, &uaddrlen ) != 0)
     {
         release_sock_fd( s, fd );
@@ -3497,8 +3486,6 @@ int WINAPI WS_closesocket(SOCKET s)
             if (CloseHandle(SOCKET2HANDLE(s)))
                 res = 0;
         }
-        else
-            SetLastError(WSAENOTSOCK);
     }
     else
         SetLastError(WSANOTINITIALISED);
@@ -3609,11 +3596,7 @@ static BOOL WINAPI WS2_ConnectEx(SOCKET s, const struct WS_sockaddr* name, int n
     }
 
     fd = get_sock_fd( s, FILE_READ_DATA, NULL );
-    if (fd == -1)
-    {
-        SetLastError( WSAENOTSOCK );
-        return FALSE;
-    }
+    if (fd == -1) return FALSE;
 
     TRACE("socket %04lx, ptr %p %s, length %d, sendptr %p, len %d, ov %p\n",
           s, name, debugstr_sockaddr(name), namelen, sendBuf, sendBufLen, ov);
@@ -5207,8 +5190,7 @@ int WINAPI WS_listen(SOCKET s, int backlog)
             SetLastError(wsaErrno());
         release_sock_fd( s, fd );
     }
-    else
-        SetLastError(WSAENOTSOCK);
+
     return ret;
 }
 

@@ -1565,7 +1565,6 @@ todo_wine
     size = sizeof(i);
     i = 1234;
     err = getsockopt(s, SOL_SOCKET, SO_ERROR, (char *) &i, &size);
-todo_wine
     ok( (err == SOCKET_ERROR) && (WSAGetLastError() == WSAENOTSOCK),
         "got %d with %d (expected SOCKET_ERROR with WSAENOTSOCK)\n",
         err, WSAGetLastError());
@@ -3850,8 +3849,7 @@ static void test_select(void)
     SetLastError(0xdeadbeef);
     ret = select(0, &readfds, NULL, &exceptfds, &select_timeout);
     ok(ret == SOCKET_ERROR, "expected -1, got %d\n", ret);
-todo_wine
-    ok(GetLastError() == WSAENOTSOCK, "expected 10038, got %d\n", GetLastError());
+    ok(GetLastError() == WSAENOTSOCK, "got %d\n", GetLastError());
     /* descriptor sets are unchanged */
     ok(readfds.fd_count == 2, "expected 2, got %d\n", readfds.fd_count);
     ok(exceptfds.fd_count == 2, "expected 2, got %d\n", exceptfds.fd_count);
@@ -3878,8 +3876,7 @@ todo_wine
     ret = select(0, NULL, NULL, &exceptfds, &select_timeout);
 todo_wine
     ok(ret == SOCKET_ERROR, "expected -1, got %d\n", ret);
-todo_wine
-    ok(GetLastError() == WSAENOTSOCK, "expected 10038, got %d\n", GetLastError());
+    ok(GetLastError() == WSAENOTSOCK, "got %d\n", GetLastError());
     WaitForSingleObject (thread_handle, 1000);
     closesocket(fdRead);
 
