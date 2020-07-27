@@ -738,6 +738,82 @@ coclass ShellFolderView
     [default, source] dispinterface DShellFolderViewEvents;
 }
 
+/*****************************************************************************
+ * IShellLinkDual interface
+ */
+[
+    uuid (88a05c00-f000-11ce-8350-444553540000),
+    oleautomation,
+    dual,
+    hidden
+ ]
+interface IShellLinkDual : IDispatch {
+    [propget]
+    HRESULT Path ([out, retval] BSTR *pbs);
+
+    [propput]
+    HRESULT Path ([in] BSTR bs);
+
+    [propget]
+    HRESULT Description ([out, retval] BSTR *pbs);
+
+    [propput]
+    HRESULT Description ([in] BSTR bs);
+
+    [propget]
+    HRESULT WorkingDirectory ([out, retval] BSTR *pbs);
+
+    [propput]
+    HRESULT WorkingDirectory ([in] BSTR bs);
+
+    [propget]
+    HRESULT Arguments ([out, retval] BSTR *pbs);
+
+    [propput]
+    HRESULT Arguments ([in] BSTR bs);
+
+    [propget]
+    HRESULT Hotkey ([out, retval] int *piHK);
+
+    [propput]
+    HRESULT Hotkey ([in] int iHK);
+
+    [propget]
+    HRESULT ShowCommand ([out, retval] int *piShowCommand);
+
+    [propput]
+    HRESULT ShowCommand ([in] int iShowCommand);
+
+    HRESULT Resolve ([in] int fFlags);
+
+    HRESULT GetIconLocation ([out] BSTR *pbs,
+                             [out, retval] int *piIcon);
+
+    HRESULT SetIconLocation ([in] BSTR bs,
+                             [in] int iIcon);
+
+    HRESULT Save ([in, optional] VARIANT vWhere);
+}
+
+[
+    uuid (317ee249-f12e-11d2-b1e4-00c04f8eeb3e),
+    oleautomation,
+    dual,
+    hidden
+]
+interface IShellLinkDual2 : IShellLinkDual {
+    [propget]
+    HRESULT Target ([out, retval] FolderItem **ppfi);
+}
+
+[
+    uuid (11219420-1768-11d1-95be-00609797ea4f),
+    noncreatable
+]
+coclass ShellLinkObject {
+    [default] interface IShellLinkDual2;
+}
+
 } /* library Shell32 */
 
 /*****************************************************************************
