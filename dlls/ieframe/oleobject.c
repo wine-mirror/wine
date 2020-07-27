@@ -719,11 +719,14 @@ static HRESULT WINAPI OleObject_IsUpToDate(IOleObject *iface)
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI OleObject_GetUserClassID(IOleObject *iface, CLSID* pClsid)
+static HRESULT WINAPI OleObject_GetUserClassID(IOleObject *iface, CLSID *pClsid)
 {
     WebBrowser *This = impl_from_IOleObject(iface);
-    FIXME("(%p)->(%p)\n", This, pClsid);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, pClsid);
+
+    *pClsid = This->version == 1 ? CLSID_WebBrowser_V1 : CLSID_WebBrowser;
+    return S_OK;
 }
 
 static HRESULT WINAPI OleObject_GetUserType(IOleObject *iface, DWORD dwFormOfType,
