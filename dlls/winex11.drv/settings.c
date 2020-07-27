@@ -805,27 +805,33 @@ static void place_all_displays(struct x11drv_display_setting *displays, INT disp
     }
 }
 
-static LONG apply_display_settings(struct x11drv_display_setting *displays, INT display_count)
+static LONG apply_display_settings(struct x11drv_display_setting *displays, INT display_count, BOOL do_attach)
 {
     DEVMODEW *full_mode;
+    BOOL attached_mode;
     INT display_idx;
     LONG ret;
 
     for (display_idx = 0; display_idx < display_count; ++display_idx)
     {
-        if (is_detached_mode(&displays[display_idx].desired_mode))
-        {
-            FIXME("Detaching %s is currently unsupported.\n",
-                  wine_dbgstr_w(displays[display_idx].desired_mode.dmDeviceName));
+        attached_mode = !is_detached_mode(&displays[display_idx].desired_mode);
+        if ((attached_mode && !do_attach) || (!attached_mode && do_attach))
             continue;
+
+        if (attached_mode)
+        {
+            full_mode = get_full_mode(displays[display_idx].id, &displays[display_idx].desired_mode);
+            if (!full_mode)
+                return DISP_CHANGE_BADMODE;
+
+            full_mode->dmFields |= DM_POSITION;
+            full_mode->u1.s2.dmPosition = displays[display_idx].desired_mode.u1.s2.dmPosition;
+        }
+        else
+        {
+            full_mode = &displays[display_idx].desired_mode;
         }
 
-        full_mode = get_full_mode(displays[display_idx].id, &displays[display_idx].desired_mode);
-        if (!full_mode)
-            return DISP_CHANGE_BADMODE;
-
-        full_mode->dmFields |= DM_POSITION;
-        full_mode->u1.s2.dmPosition = displays[display_idx].desired_mode.u1.s2.dmPosition;
         TRACE("handler:%s changing %s to position:(%d,%d) resolution:%ux%u frequency:%uHz "
               "depth:%ubits orientation:%#x.\n", handler.name,
               wine_dbgstr_w(displays[display_idx].desired_mode.dmDeviceName),
@@ -834,12 +840,26 @@ static LONG apply_display_settings(struct x11drv_display_setting *displays, INT 
               full_mode->u1.s2.dmDisplayOrientation);
 
         ret = handler.set_current_mode(displays[display_idx].id, full_mode);
-        heap_free(full_mode);
+        if (attached_mode)
+            heap_free(full_mode);
         if (ret != DISP_CHANGE_SUCCESSFUL)
             return ret;
     }
 
     return DISP_CHANGE_SUCCESSFUL;
+}
+
+static BOOL all_detached_settings(const struct x11drv_display_setting *displays, INT display_count)
+{
+    INT display_idx;
+
+    for (display_idx = 0; display_idx < display_count; ++display_idx)
+    {
+        if (!is_detached_mode(&displays[display_idx].desired_mode))
+            return FALSE;
+    }
+
+    return TRUE;
 }
 
 /***********************************************************************
@@ -888,9 +908,19 @@ LONG CDECL X11DRV_ChangeDisplaySettingsEx( LPCWSTR devname, LPDEVMODEW devmode,
         return DISP_CHANGE_SUCCESSFUL;
     }
 
+    if (all_detached_settings(displays, display_count))
+    {
+        WARN("Detaching all displays is not permitted.\n");
+        heap_free(displays);
+        return DISP_CHANGE_SUCCESSFUL;
+    }
+
     place_all_displays(displays, display_count);
 
-    ret = apply_display_settings(displays, display_count);
+    /* Detach displays first to free up CRTCs */
+    ret = apply_display_settings(displays, display_count, FALSE);
+    if (ret == DISP_CHANGE_SUCCESSFUL)
+        ret = apply_display_settings(displays, display_count, TRUE);
     if (ret == DISP_CHANGE_SUCCESSFUL)
         X11DRV_DisplayDevices_Update(TRUE);
     heap_free(displays);

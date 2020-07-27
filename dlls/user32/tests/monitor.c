@@ -612,10 +612,10 @@ static void test_ChangeDisplaySettingsEx(void)
         dd.cb = sizeof(dd);
         res = EnumDisplayDevicesA(NULL, devices[device].index, &dd, 0);
         ok(res, "EnumDisplayDevicesA %s failed, error %#x\n", devices[device].name, GetLastError());
-        todo_wine ok(!(dd.StateFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP), "Expect device %s detached.\n", devices[device].name);
+        ok(!(dd.StateFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP), "Expect device %s detached.\n", devices[device].name);
 
         count = GetSystemMetrics(SM_CMONITORS);
-        todo_wine ok(count == old_count - 1, "Expect monitor count %d, got %d\n", old_count - 1, count);
+        ok(count == old_count - 1, "Expect monitor count %d, got %d\n", old_count - 1, count);
     }
 
     /* Test changing each adapter to every available mode */
