@@ -281,11 +281,13 @@
 @ stdcall StringFromGUID2(ptr ptr long) ole32.StringFromGUID2
 @ stdcall StringFromIID(ptr ptr) ole32.StringFromIID
 @ stub UpdateDCOMSettings
-@ stdcall WdtpInterfacePointer_UserMarshal(ptr long ptr ptr ptr) ole32.WdtpInterfacePointer_UserMarshal
+@ stdcall WdtpInterfacePointer_UserFree(ptr)
+@ stub WdtpInterfacePointer_UserFree64
+@ stdcall WdtpInterfacePointer_UserMarshal(ptr long ptr ptr ptr)
 @ stub WdtpInterfacePointer_UserMarshal64
-@ stdcall WdtpInterfacePointer_UserSize(ptr long long ptr ptr) ole32.WdtpInterfacePointer_UserSize
+@ stdcall WdtpInterfacePointer_UserSize(ptr long long ptr ptr)
 @ stub WdtpInterfacePointer_UserSize64
-@ stdcall WdtpInterfacePointer_UserUnmarshal(ptr ptr ptr ptr) ole32.WdtpInterfacePointer_UserUnmarshal
+@ stdcall WdtpInterfacePointer_UserUnmarshal(ptr ptr ptr ptr)
 @ stub WdtpInterfacePointer_UserUnmarshal64
 @ stdcall WindowsCompareStringOrdinal(ptr ptr ptr)
 @ stdcall WindowsConcatString(ptr ptr ptr)
