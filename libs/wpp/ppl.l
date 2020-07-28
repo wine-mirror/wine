@@ -522,7 +522,7 @@ void pp_writestring(const char *format, ...)
 <pp_macro>{ws}+			;
 <pp_macro>{cident}		ppy_lval.cptr = pp_xstrdup(ppy_text); return tIDENT;
 <pp_macro>,			return ',';
-<pp_macro>"..."			return tELIPSIS;
+<pp_macro>"..."			return tELLIPSIS;
 <pp_macro>(\\\r?)|(\n)|(.)|(\.\.?)	ppy_error("Argument identifier expected");
 <pp_macro>\\\r?\n		newline(0);
 

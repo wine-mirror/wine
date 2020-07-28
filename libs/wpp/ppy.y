@@ -140,7 +140,7 @@ static int	nmacro_args;
 %token tRCINCLUDE
 %token tIF tIFDEF tIFNDEF tELSE tELIF tENDIF tDEFINED tNL
 %token tINCLUDE tLINE tGCCLINE tERROR tWARNING tPRAGMA tPPIDENT
-%token tUNDEF tMACROEND tCONCAT tELIPSIS tSTRINGIZE
+%token tUNDEF tMACROEND tCONCAT tELLIPSIS tSTRINGIZE
 %token <cptr> tIDENT tLITERAL tMACRO tDEFINE
 %token <cptr> tDQSTRING tSQSTRING tIQSTRING
 %token <uint> tUINT
@@ -333,7 +333,7 @@ allmargs: /* Empty */		{ $$ = 0; macro_args = NULL; nmacro_args = 0; }
 	;
 
 emargs	: margs			{ $$ = $1; }
-	| margs ',' tELIPSIS	{ $$ = add_new_marg(NULL, arg_list); nmacro_args *= -1; }
+	| margs ',' tELLIPSIS	{ $$ = add_new_marg(NULL, arg_list); nmacro_args *= -1; }
 	;
 
 margs	: margs ',' tIDENT	{ $$ = add_new_marg($3, arg_single); }
