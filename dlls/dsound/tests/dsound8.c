@@ -1617,8 +1617,8 @@ static void test_effects(void)
 
     results[0] = 0xdeadbeef;
     hr = IDirectSoundBuffer8_SetFX(buffer8, 1, effects, results);
-    todo_wine ok(hr == DS_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(results[0] == DSFXR_LOCSOFTWARE, "Got result %#x.\n", results[0]);
+    ok(hr == DS_OK, "Got hr %#x.\n", hr);
+    ok(results[0] == DSFXR_LOCSOFTWARE, "Got result %#x.\n", results[0]);
 
     hr = IDirectSoundBuffer8_Lock(buffer8, 0, 0, &ptr1, &size1, &ptr2, &size2, DSBLOCK_ENTIREBUFFER);
     ok(hr == DS_OK, "Got hr %#x.\n", hr);
@@ -1648,38 +1648,33 @@ static void test_effects(void)
     effects[0].guidDSFXClass = GUID_DSFX_STANDARD_PARAMEQ;
     results[0] = 0xdeadbeef;
     hr = IDirectSoundBuffer8_SetFX(buffer8, 1, effects, results);
-    todo_wine ok(hr == DS_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(results[0] == DSFXR_LOCSOFTWARE, "Got result %#x.\n", results[0]);
+    ok(hr == DS_OK, "Got hr %#x.\n", hr);
+    ok(results[0] == DSFXR_LOCSOFTWARE, "Got result %#x.\n", results[0]);
 
     hr = IDirectSoundBuffer8_GetObjectInPath(buffer8, &GUID_All_Objects, 0, &IID_IMediaObject, NULL);
-    todo_wine ok(hr == DSERR_INVALIDPARAM, "Got hr %#x.\n", hr);
+    ok(hr == DSERR_INVALIDPARAM, "Got hr %#x.\n", hr);
 
     dmo = (IMediaObject *)0xdeadbeef;
     hr = IDirectSoundBuffer8_GetObjectInPath(buffer8, &GUID_All_Objects, 0, &GUID_NULL, (void **)&dmo);
-    todo_wine ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
-    todo_wine ok(!dmo, "Got object %p.\n", dmo);
+    ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
+    ok(!dmo, "Got object %p.\n", dmo);
 
     dmo = (IMediaObject *)0xdeadbeef;
     hr = IDirectSoundBuffer8_GetObjectInPath(buffer8, &GUID_NULL, 0, &IID_IMediaObject, (void **)&dmo);
-    todo_wine ok(hr == DSERR_OBJECTNOTFOUND, "Got hr %#x.\n", hr);
+    ok(hr == DSERR_OBJECTNOTFOUND, "Got hr %#x.\n", hr);
     ok(dmo == (IMediaObject *)0xdeadbeef, "Got object %p.\n", dmo);
 
     dmo = NULL;
     hr = IDirectSoundBuffer8_GetObjectInPath(buffer8, &GUID_All_Objects, 0, &IID_IMediaObject, (void **)&dmo);
-    todo_wine ok(hr == DS_OK, "Got hr %#x.\n", hr);
-    if (hr == DS_OK)
-    {
-        ok(!!dmo, "Expected a non-NULL object.\n");
-        IMediaObject_Release(dmo);
-    }
+    ok(hr == DS_OK, "Got hr %#x.\n", hr);
+    ok(!!dmo, "Expected a non-NULL object.\n");
+    IMediaObject_Release(dmo);
 
     dmo = NULL;
     hr = IDirectSoundBuffer8_GetObjectInPath(buffer8, &GUID_DSFX_STANDARD_PARAMEQ, 0, &IID_IMediaObject, (void **)&dmo);
-    if (hr == DS_OK)
-    {
-        ok(!!dmo, "Expected a non-NULL object.\n");
-        IMediaObject_Release(dmo);
-    }
+    ok(hr == DS_OK, "Got hr %#x.\n", hr);
+    ok(!!dmo, "Expected a non-NULL object.\n");
+    IMediaObject_Release(dmo);
 
     dmo = (IMediaObject *)0xdeadbeef;
     hr = IDirectSoundBuffer8_GetObjectInPath(buffer8, &GUID_All_Objects, 1, &IID_IMediaObject, (void **)&dmo);
@@ -1691,7 +1686,7 @@ static void test_effects(void)
     results[0] = results[1] = 0xdeadbeef;
     hr = IDirectSoundBuffer8_SetFX(buffer8, 2, effects, results);
     ok(hr == REGDB_E_CLASSNOTREG, "Got hr %#x.\n", hr);
-    todo_wine ok(results[0] == DSFXR_PRESENT, "Got result %#x.\n", results[0]);
+    ok(results[0] == DSFXR_PRESENT, "Got result %#x.\n", results[0]);
     ok(results[1] == DSFXR_UNKNOWN, "Got result %#x.\n", results[1]);
 
     hr = IDirectSoundBuffer8_GetObjectInPath(buffer8, &GUID_All_Objects, 0, &IID_IMediaObject, (void **)&dmo);
@@ -1701,14 +1696,13 @@ static void test_effects(void)
     effects[1].guidDSFXClass = GUID_DSFX_STANDARD_I3DL2REVERB;
     results[0] = results[1] = 0xdeadbeef;
     hr = IDirectSoundBuffer8_SetFX(buffer8, 2, effects, results);
-    todo_wine ok(hr == DS_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(results[0] == DSFXR_LOCSOFTWARE, "Got result %#x.\n", results[0]);
-    todo_wine ok(results[1] == DSFXR_LOCSOFTWARE, "Got result %#x.\n", results[1]);
+    ok(hr == DS_OK, "Got hr %#x.\n", hr);
+    ok(results[0] == DSFXR_LOCSOFTWARE, "Got result %#x.\n", results[0]);
+    ok(results[1] == DSFXR_LOCSOFTWARE, "Got result %#x.\n", results[1]);
 
     hr = IDirectSoundBuffer8_GetObjectInPath(buffer8, &GUID_DSFX_STANDARD_PARAMEQ, 0, &IID_IMediaObject, (void **)&dmo);
-    todo_wine ok(hr == DS_OK, "Got hr %#x.\n", hr);
-    if (hr == DS_OK)
-        echo = dmo;
+    ok(hr == DS_OK, "Got hr %#x.\n", hr);
+    echo = dmo;
     hr = IDirectSoundBuffer8_GetObjectInPath(buffer8,
             &GUID_DSFX_STANDARD_I3DL2REVERB, 0, &IID_IMediaObject, (void **)&dmo);
     todo_wine ok(hr == DS_OK, "Got hr %#x.\n", hr);
@@ -1716,20 +1710,14 @@ static void test_effects(void)
         reverb = dmo;
 
     hr = IDirectSoundBuffer8_GetObjectInPath(buffer8, &GUID_All_Objects, 0, &IID_IMediaObject, (void **)&dmo);
-    todo_wine ok(hr == DS_OK, "Got hr %#x.\n", hr);
-    if (hr == DS_OK)
-    {
-        ok(dmo == echo, "Expected %p, got %p.\n", echo, dmo);
-        IMediaObject_Release(dmo);
-    }
+    ok(hr == DS_OK, "Got hr %#x.\n", hr);
+    ok(dmo == echo, "Expected %p, got %p.\n", echo, dmo);
+    IMediaObject_Release(dmo);
 
     hr = IDirectSoundBuffer8_GetObjectInPath(buffer8, &GUID_All_Objects, 1, &IID_IMediaObject, (void **)&dmo);
-    todo_wine ok(hr == DS_OK, "Got hr %#x.\n", hr);
-    if (hr == DS_OK)
-    {
-        ok(dmo == reverb, "Expected %p, got %p.\n", reverb, dmo);
-        IMediaObject_Release(dmo);
-    }
+    ok(hr == DS_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(dmo == reverb, "Expected %p, got %p.\n", reverb, dmo);
+    IMediaObject_Release(dmo);
 
     hr = IDirectSoundBuffer8_GetObjectInPath(buffer8,
             &GUID_DSFX_STANDARD_I3DL2REVERB, 1, &IID_IMediaObject, (void **)&dmo);
@@ -1748,13 +1736,12 @@ static void test_effects(void)
 
     hr = IDirectSoundBuffer8_GetObjectInPath(buffer8, &GUID_All_Objects, 0,
             &IID_IDirectSoundFXI3DL2Reverb, (void **)&unk);
-    todo_wine ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
+    ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
 
     hr = IDirectSoundBuffer8_GetObjectInPath(buffer8, &GUID_All_Objects, 1,
             &IID_IDirectSoundFXI3DL2Reverb, (void **)&unk);
-    todo_wine ok(hr == DS_OK, "Got hr %#x.\n", hr);
-    if (hr == DS_OK)
-        IUnknown_Release(unk);
+    ok(hr == DS_OK, "Got hr %#x.\n", hr);
+    IUnknown_Release(unk);
 
     hr = IDirectSoundBuffer8_GetObjectInPath(buffer8,
             &GUID_DSFX_STANDARD_I3DL2REVERB, 0, &IID_IDirectSoundFXI3DL2Reverb, (void **)&unk);

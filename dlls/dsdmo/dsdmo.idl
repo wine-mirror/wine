@@ -28,6 +28,14 @@ coclass DirectSoundI3DL2ReverbDMO {}
 
 [
     threading(both),
+    progid("Microsoft.DirectSoundParamEqDMO.1"),
+    vi_progid("Microsoft.DirectSoundParamEqDMO"),
+    uuid(120ced89-3bf4-4173-a132-3cb406cf3231)
+]
+coclass DirectSoundParamEqDMO {}
+
+[
+    threading(both),
     progid("Microsoft.DirectSoundWavesReverbDMO.1"),
     vi_progid("Microsoft.DirectSoundWavesReverbDMO"),
     uuid(87fc0268-9a55-4360-95aa-004a1d9de26c)
