@@ -99,6 +99,7 @@ static BOOL console_ioctl( HANDLE handle, DWORD code, void *in_buff, DWORD in_co
         status = STATUS_INVALID_HANDLE;
         break;
     }
+    if (read) *read = 0;
     return set_ntstatus( status );
 }
 
@@ -849,6 +850,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH ReadConsoleOutputCharacterA( HANDLE handle, LPSTR 
 BOOL WINAPI DECLSPEC_HOTPATCH ReadConsoleOutputCharacterW( HANDLE handle, LPWSTR buffer, DWORD length,
                                                            COORD coord, DWORD *count )
 {
+    struct condrv_output_params params;
     BOOL ret;
 
     TRACE( "(%p,%p,%d,%dx%d,%p)\n", handle, buffer, length, coord.X, coord.Y, count );
@@ -859,18 +861,13 @@ BOOL WINAPI DECLSPEC_HOTPATCH ReadConsoleOutputCharacterW( HANDLE handle, LPWSTR
         return FALSE;
     }
 
-    *count = 0;
-    SERVER_START_REQ( read_console_output )
-    {
-        req->handle = console_handle_unmap( handle );
-        req->x      = coord.X;
-        req->y      = coord.Y;
-        req->mode   = CHAR_INFO_MODE_TEXT;
-        req->wrap   = TRUE;
-        wine_server_set_reply( req, buffer, length * sizeof(WCHAR) );
-        if ((ret = !wine_server_call_err( req ))) *count = wine_server_reply_size(reply) / sizeof(WCHAR);
-    }
-    SERVER_END_REQ;
+    params.mode  = CHAR_INFO_MODE_TEXT;
+    params.x     = coord.X;
+    params.y     = coord.Y;
+    params.width = 0;
+    ret = console_ioctl( handle, IOCTL_CONDRV_READ_OUTPUT, &params, sizeof(params), buffer,
+                         length * sizeof(*buffer), count );
+    *count /= sizeof(*buffer);
     return ret;
 }
 
