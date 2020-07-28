@@ -1248,6 +1248,73 @@ static struct fd *screen_buffer_get_fd( struct object *obj )
     return NULL;
 }
 
+/* read data from a screen buffer */
+static void read_console_output( struct screen_buffer *screen_buffer, unsigned int x, unsigned int y,
+                                 enum char_info_mode mode, unsigned int width )
+{
+    unsigned int i, count;
+    char_info_t *src;
+
+    if (x >= screen_buffer->width || y >= screen_buffer->height)
+    {
+        if (width) set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
+    src = screen_buffer->data + y * screen_buffer->width + x;
+
+    switch(mode)
+    {
+    case CHAR_INFO_MODE_TEXT:
+        {
+            WCHAR *data;
+            count = min( screen_buffer->data + screen_buffer->height * screen_buffer->width - src,
+                         get_reply_max_size() / sizeof(*data) );
+            if ((data = set_reply_data_size( count * sizeof(*data) )))
+            {
+                for (i = 0; i < count; i++) data[i] = src[i].ch;
+            }
+        }
+        break;
+    case CHAR_INFO_MODE_ATTR:
+        {
+            unsigned short *data;
+            count = min( screen_buffer->data + screen_buffer->height * screen_buffer->width - src,
+                         get_reply_max_size() / sizeof(*data) );
+            if ((data = set_reply_data_size( count * sizeof(*data) )))
+            {
+                for (i = 0; i < count; i++) data[i] = src[i].attr;
+            }
+        }
+        break;
+    case CHAR_INFO_MODE_TEXTATTR:
+        {
+            char_info_t *data;
+            SMALL_RECT *region;
+            if (!width || get_reply_max_size() < sizeof(*region))
+            {
+                set_error( STATUS_INVALID_PARAMETER );
+                return;
+            }
+            count  = min( (get_reply_max_size() - sizeof(*region)) / (width * sizeof(*data)), screen_buffer->height - y );
+            width  = min( width, screen_buffer->width - x );
+            if (!(region = set_reply_data_size( sizeof(*region) + width * count * sizeof(*data) ))) return;
+            region->Left   = x;
+            region->Top    = y;
+            region->Right  = x + width - 1;
+            region->Bottom = y + count - 1;
+            data = (char_info_t *)(region + 1);
+            for (i = 0; i < count; i++)
+            {
+                memcpy( &data[i * width], &src[i * screen_buffer->width], width * sizeof(*data) );
+            }
+        }
+        break;
+    default:
+        set_error( STATUS_INVALID_PARAMETER );
+        break;
+    }
+}
+
 /* write data into a screen buffer */
 static void write_console_output( struct screen_buffer *screen_buffer, const struct condrv_output_params *params,
                                   data_size_t size )
@@ -1378,8 +1445,8 @@ static int fill_console_output( struct screen_buffer *screen_buffer, char_info_t
 }
 
 /* read data from a screen buffer */
-static void read_console_output( struct screen_buffer *screen_buffer, int x, int y,
-                                 enum char_info_mode mode, int wrap )
+static void read_console_output_req( struct screen_buffer *screen_buffer, int x, int y,
+                                     enum char_info_mode mode, int wrap )
 {
     int i;
     char_info_t *end, *src = screen_buffer->data + y * screen_buffer->width + x;
@@ -1675,6 +1742,23 @@ static int screen_buffer_ioctl( struct fd *fd, ioctl_code_t code, struct async *
         }
         screen_buffer->mode = *(unsigned int *)get_req_data();
         return 1;
+
+    case IOCTL_CONDRV_READ_OUTPUT:
+        {
+            const struct condrv_output_params *params = get_req_data();
+            if (get_req_data_size() != sizeof(*params))
+            {
+                set_error( STATUS_INVALID_PARAMETER );
+                return 0;
+            }
+            if (console_input_is_bare( screen_buffer->input ))
+            {
+                set_error( STATUS_OBJECT_TYPE_MISMATCH );
+                return 0;
+            }
+            read_console_output( screen_buffer, params->x, params->y, params->mode, params->width );
+            return !get_error();
+        }
 
     case IOCTL_CONDRV_WRITE_OUTPUT:
         if (get_req_data_size() < sizeof(struct condrv_output_params) ||
@@ -2150,7 +2234,7 @@ DECL_HANDLER(read_console_output)
             release_object( screen_buffer );
             return;
         }
-        read_console_output( screen_buffer, req->x, req->y, req->mode, req->wrap );
+        read_console_output_req( screen_buffer, req->x, req->y, req->mode, req->wrap );
         reply->width  = screen_buffer->width;
         reply->height = screen_buffer->height;
         release_object( screen_buffer );

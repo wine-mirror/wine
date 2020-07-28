@@ -124,6 +124,7 @@ static void dump_ioctl_code( const char *prefix, const ioctl_code_t *code )
         CASE(IOCTL_CONDRV_GET_TITLE);
         CASE(IOCTL_CONDRV_PEEK);
         CASE(IOCTL_CONDRV_READ_INPUT);
+        CASE(IOCTL_CONDRV_READ_OUTPUT);
         CASE(IOCTL_CONDRV_SET_MODE);
         CASE(IOCTL_CONDRV_SET_OUTPUT_INFO);
         CASE(IOCTL_CONDRV_WRITE_INPUT);
