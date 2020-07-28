@@ -450,15 +450,16 @@ static void test_eq_parameters(void)
 
     hr = CoCreateInstance(&GUID_DSFX_STANDARD_PARAMEQ, NULL, CLSCTX_INPROC_SERVER,
             &IID_IDirectSoundFXParamEq, (void **)&eq);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
-    if (hr != S_OK)
-        return;
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IDirectSoundFXParamEq_GetAllParameters(eq, &params);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(params.fCenter == 8000.0f, "Got center frequency %.8e Hz.\n", params.fCenter);
-    ok(params.fBandwidth == 12.0f, "Got band width %.8e semitones.\n", params.fBandwidth);
-    ok(params.fGain == 0.0f, "Got gain %.8e.\n", params.fGain);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    if (hr == S_OK)
+    {
+        ok(params.fCenter == 8000.0f, "Got center frequency %.8e Hz.\n", params.fCenter);
+        ok(params.fBandwidth == 12.0f, "Got band width %.8e semitones.\n", params.fBandwidth);
+        ok(params.fGain == 0.0f, "Got gain %.8e.\n", params.fGain);
+    }
 
     ref = IDirectSoundFXParamEq_Release(eq);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
@@ -526,7 +527,7 @@ START_TEST(dsdmo)
         {&GUID_DSFX_STANDARD_FLANGER,       &IID_IDirectSoundFXFlanger, TRUE},
         {&GUID_DSFX_STANDARD_GARGLE,        &IID_IDirectSoundFXGargle, TRUE},
         {&GUID_DSFX_STANDARD_I3DL2REVERB,   &IID_IDirectSoundFXI3DL2Reverb},
-        {&GUID_DSFX_STANDARD_PARAMEQ,       &IID_IDirectSoundFXParamEq, TRUE},
+        {&GUID_DSFX_STANDARD_PARAMEQ,       &IID_IDirectSoundFXParamEq},
         {&GUID_DSFX_WAVES_REVERB,           &IID_IDirectSoundFXWavesReverb},
     };
     unsigned int i;

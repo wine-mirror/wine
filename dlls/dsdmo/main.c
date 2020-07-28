@@ -437,6 +437,57 @@ static void effect_init(struct effect *effect, IUnknown *outer, const struct eff
 struct eq
 {
     struct effect effect;
+    IDirectSoundFXParamEq IDirectSoundFXParamEq_iface;
+};
+
+static struct eq *impl_from_IDirectSoundFXParamEq(IDirectSoundFXParamEq *iface)
+{
+    return CONTAINING_RECORD(iface, struct eq, IDirectSoundFXParamEq_iface);
+}
+
+static HRESULT WINAPI eq_params_QueryInterface(IDirectSoundFXParamEq *iface, REFIID iid, void **out)
+{
+    struct eq *effect = impl_from_IDirectSoundFXParamEq(iface);
+    return IUnknown_QueryInterface(effect->effect.outer_unk, iid, out);
+}
+
+static ULONG WINAPI eq_params_AddRef(IDirectSoundFXParamEq *iface)
+{
+    struct eq *effect = impl_from_IDirectSoundFXParamEq(iface);
+    return IUnknown_AddRef(effect->effect.outer_unk);
+}
+
+static ULONG WINAPI eq_params_Release(IDirectSoundFXParamEq *iface)
+{
+    struct eq *effect = impl_from_IDirectSoundFXParamEq(iface);
+    return IUnknown_Release(effect->effect.outer_unk);
+}
+
+static HRESULT WINAPI eq_params_SetAllParameters(IDirectSoundFXParamEq *iface, const DSFXParamEq *params)
+{
+    struct eq *effect = impl_from_IDirectSoundFXParamEq(iface);
+
+    FIXME("effect %p, params %p, stub!\n", effect, params);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI eq_params_GetAllParameters(IDirectSoundFXParamEq *iface, DSFXParamEq *params)
+{
+    struct eq *effect = impl_from_IDirectSoundFXParamEq(iface);
+
+    FIXME("effect %p, params %p, stub!\n", effect, params);
+
+    return E_NOTIMPL;
+}
+
+static const IDirectSoundFXParamEqVtbl eq_params_vtbl =
+{
+    eq_params_QueryInterface,
+    eq_params_AddRef,
+    eq_params_Release,
+    eq_params_SetAllParameters,
+    eq_params_GetAllParameters,
 };
 
 static struct eq *impl_eq_from_effect(struct effect *iface)
@@ -446,6 +497,10 @@ static struct eq *impl_eq_from_effect(struct effect *iface)
 
 static void *eq_query_interface(struct effect *iface, REFIID iid)
 {
+    struct eq *effect = impl_eq_from_effect(iface);
+
+    if (IsEqualGUID(iid, &IID_IDirectSoundFXParamEq))
+        return &effect->IDirectSoundFXParamEq_iface;
     return NULL;
 }
 
@@ -470,6 +525,7 @@ static HRESULT eq_create(IUnknown *outer, IUnknown **out)
         return E_OUTOFMEMORY;
 
     effect_init(&object->effect, outer, &eq_ops);
+    object->IDirectSoundFXParamEq_iface.lpVtbl = &eq_params_vtbl;
 
     TRACE("Created equalizer effect %p.\n", object);
     *out = &object->effect.IUnknown_inner;

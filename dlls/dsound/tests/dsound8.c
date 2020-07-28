@@ -1724,15 +1724,13 @@ static void test_effects(void)
     todo_wine ok(hr == DSERR_OBJECTNOTFOUND, "Got hr %#x.\n", hr);
 
     hr = IDirectSoundBuffer8_GetObjectInPath(buffer8, &GUID_All_Objects, 0, &IID_IDirectSoundFXParamEq, (void **)&unk);
-    todo_wine ok(hr == DS_OK, "Got hr %#x.\n", hr);
-    if (hr == DS_OK)
-        IUnknown_Release(unk);
+    ok(hr == DS_OK, "Got hr %#x.\n", hr);
+    IUnknown_Release(unk);
 
     hr = IDirectSoundBuffer8_GetObjectInPath(buffer8, &GUID_All_Objects, 0,
             &IID_IDirectSoundFXParamEq, (void **)&unk);
-    todo_wine ok(hr == DS_OK, "Got hr %#x.\n", hr);
-    if (hr == DS_OK)
-        IUnknown_Release(unk);
+    ok(hr == DS_OK, "Got hr %#x.\n", hr);
+    IUnknown_Release(unk);
 
     hr = IDirectSoundBuffer8_GetObjectInPath(buffer8, &GUID_All_Objects, 0,
             &IID_IDirectSoundFXI3DL2Reverb, (void **)&unk);
