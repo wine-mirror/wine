@@ -473,6 +473,17 @@ enum i386_trap_code
 #endif
 };
 
+struct syscall_frame
+{
+    struct syscall_frame *prev_frame;
+    DWORD                 edi;
+    DWORD                 esi;
+    DWORD                 ebx;
+    DWORD                 ebp;
+    DWORD                 thunk_addr;
+    DWORD                 ret_addr;
+};
+
 struct x86_thread_data
 {
     DWORD              fs;            /* 1d4 TEB selector */
@@ -484,12 +495,13 @@ struct x86_thread_data
     DWORD              dr6;           /* 1ec */
     DWORD              dr7;           /* 1f0 */
     void              *exit_frame;    /* 1f4 exit frame pointer */
-    /* the ntdll_thread_data structure follows here */
+    struct syscall_frame *syscall_frame; /* 1f8 frame pointer on syscall entry */
 };
 
 C_ASSERT( sizeof(struct x86_thread_data) <= sizeof(((struct ntdll_thread_data *)0)->cpu_data) );
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct x86_thread_data, gs ) == 0x1d8 );
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct x86_thread_data, exit_frame ) == 0x1f4 );
+C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct x86_thread_data, syscall_frame ) == 0x1f8 );
 
 static inline struct x86_thread_data *x86_thread_data(void)
 {
