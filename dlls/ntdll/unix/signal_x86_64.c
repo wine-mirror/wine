@@ -240,19 +240,39 @@ struct stack_layout
 
 C_ASSERT( sizeof(struct stack_layout) == 0x630 ); /* Should match the size in call_user_exception_dispatcher(). */
 
+struct syscall_frame
+{
+    struct syscall_frame *prev_frame;
+    ULONG64               pad;
+    ULONG64               xmm[10 * 2];  /* xmm6-xmm15 */
+    ULONG64               mxcsr;
+    ULONG64               r12;
+    ULONG64               r13;
+    ULONG64               r14;
+    ULONG64               r15;
+    ULONG64               rdi;
+    ULONG64               rsi;
+    ULONG64               rbx;
+    ULONG64               rbp;
+    ULONG64               thunk_addr;
+    ULONG64               ret_addr;
+};
+
 struct amd64_thread_data
 {
-    DWORD_PTR dr0;           /* 02f0 debug registers */
-    DWORD_PTR dr1;
-    DWORD_PTR dr2;
-    DWORD_PTR dr3;
-    DWORD_PTR dr6;
-    DWORD_PTR dr7;
-    void     *exit_frame;    /* 0320 exit frame pointer */
+    DWORD_PTR             dr0;           /* 02f0 debug registers */
+    DWORD_PTR             dr1;           /* 02f8 */
+    DWORD_PTR             dr2;           /* 0300 */
+    DWORD_PTR             dr3;           /* 0308 */
+    DWORD_PTR             dr6;           /* 0310 */
+    DWORD_PTR             dr7;           /* 0318 */
+    void                 *exit_frame;    /* 0320 exit frame pointer */
+    struct syscall_frame *syscall_frame; /* 0328 syscall frame pointer */
 };
 
 C_ASSERT( sizeof(struct amd64_thread_data) <= sizeof(((struct ntdll_thread_data *)0)->cpu_data) );
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct amd64_thread_data, exit_frame ) == 0x320 );
+C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct amd64_thread_data, syscall_frame ) == 0x328 );
 
 static inline struct amd64_thread_data *amd64_thread_data(void)
 {
