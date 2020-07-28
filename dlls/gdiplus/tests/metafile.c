@@ -500,7 +500,7 @@ static void test_empty(void)
     expect(100, header.Height);
     expect(28, header.EmfPlusHeaderSize);
     expect(96, header.LogicalDpiX);
-    expect(96, header.LogicalDpiX);
+    expect(96, header.LogicalDpiY);
     expect(EMR_HEADER, U(header).EmfHeader.iType);
     expect(0, U(header).EmfHeader.rclBounds.left);
     expect(0, U(header).EmfHeader.rclBounds.top);
@@ -539,7 +539,7 @@ static void test_empty(void)
     expect(100, header.Height);
     expect(28, header.EmfPlusHeaderSize);
     expect(96, header.LogicalDpiX);
-    expect(96, header.LogicalDpiX);
+    expect(96, header.LogicalDpiY);
     expect(EMR_HEADER, U(header).EmfHeader.iType);
     expect(0, U(header).EmfHeader.rclBounds.left);
     expect(0, U(header).EmfHeader.rclBounds.top);
@@ -586,7 +586,7 @@ static void test_empty(void)
     expect(100, header.Height);
     expect(28, header.EmfPlusHeaderSize);
     expect(96, header.LogicalDpiX);
-    expect(96, header.LogicalDpiX);
+    expect(96, header.LogicalDpiY);
     expect(EMR_HEADER, U(header).EmfHeader.iType);
     expect(0, U(header).EmfHeader.rclBounds.left);
     expect(0, U(header).EmfHeader.rclBounds.top);
@@ -875,7 +875,7 @@ static void test_emfonly(void)
     expect(100, header.Height);
     expect(0, header.EmfPlusHeaderSize);
     expect(0, header.LogicalDpiX);
-    expect(0, header.LogicalDpiX);
+    expect(0, header.LogicalDpiY);
     expect(EMR_HEADER, U(header).EmfHeader.iType);
     expect(25, U(header).EmfHeader.rclBounds.left);
     expect(25, U(header).EmfHeader.rclBounds.top);
@@ -971,7 +971,7 @@ static void test_emfonly(void)
     expect(100, header.Height);
     expect(0, header.EmfPlusHeaderSize);
     expect(0, header.LogicalDpiX);
-    expect(0, header.LogicalDpiX);
+    expect(0, header.LogicalDpiY);
     expect(EMR_HEADER, U(header).EmfHeader.iType);
     expect(25, U(header).EmfHeader.rclBounds.left);
     expect(25, U(header).EmfHeader.rclBounds.top);
@@ -1018,7 +1018,7 @@ static void test_emfonly(void)
     expect(100, header.Height);
     expect(0, header.EmfPlusHeaderSize);
     expect(0, header.LogicalDpiX);
-    expect(0, header.LogicalDpiX);
+    expect(0, header.LogicalDpiY);
     expect(EMR_HEADER, U(header).EmfHeader.iType);
     expect(25, U(header).EmfHeader.rclBounds.left);
     expect(25, U(header).EmfHeader.rclBounds.top);
