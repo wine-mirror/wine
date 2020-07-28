@@ -181,8 +181,8 @@ static void test_IEnumWbemClassObject_Next( IWbemServices *services )
 
     count = 2;
     hr = IEnumWbemClassObject_Next( result, 10000, 0, &obj1, &count );
-    todo_wine ok( hr == S_OK, "got %08x\n", hr );
-    todo_wine ok( count == 0, "expected 0, got %u\n", count );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( count == 0, "expected 0, got %u\n", count );
 
     for (;;)
     {
@@ -199,8 +199,8 @@ static void test_IEnumWbemClassObject_Next( IWbemServices *services )
 
     count = 0;
     hr = IEnumWbemClassObject_Next( result, 10000, num_objects, obj, &count );
-    todo_wine ok( hr == S_OK, "got %08x\n", hr );
-    todo_wine ok( count == num_objects, "expected %u, got %u\n", num_objects, count );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( count == num_objects, "expected %u, got %u\n", num_objects, count );
 
     for (i = 0; i < count; i++)
         IWbemClassObject_Release( obj[i] );
@@ -210,8 +210,8 @@ static void test_IEnumWbemClassObject_Next( IWbemServices *services )
 
     count = 0;
     hr = IEnumWbemClassObject_Next( result, 10000, num_objects + 1, obj, &count );
-    todo_wine ok( hr == S_FALSE, "got %08x\n", hr );
-    todo_wine ok( count == num_objects, "expected %u, got %u\n", num_objects, count );
+    ok( hr == S_FALSE, "got %08x\n", hr );
+    ok( count == num_objects, "expected %u, got %u\n", num_objects, count );
 
     for (i = 0; i < count; i++)
         IWbemClassObject_Release( obj[i] );

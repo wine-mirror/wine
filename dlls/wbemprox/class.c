@@ -116,24 +116,29 @@ static HRESULT WINAPI enum_class_object_Next(
     struct table *table;
     static int once = 0;
     HRESULT hr;
+    ULONG i, j;
 
     TRACE("%p, %d, %u, %p, %p\n", iface, lTimeout, uCount, apObjects, puReturned);
 
-    if (!uCount) return WBEM_S_FALSE;
     if (!apObjects || !puReturned) return WBEM_E_INVALID_PARAMETER;
     if (lTimeout != WBEM_INFINITE && !once++) FIXME("timeout not supported\n");
 
     *puReturned = 0;
-    if (ec->index >= view->result_count) return WBEM_S_FALSE;
 
-    table = get_view_table( view, ec->index );
-    hr = create_class_object( table->name, iface, ec->index, NULL, apObjects );
-    if (hr != S_OK) return hr;
+    for (i = 0; i < uCount; i++)
+    {
+        if (ec->index >= view->result_count) return WBEM_S_FALSE;
+        table = get_view_table( view, ec->index );
+        hr = create_class_object( table->name, iface, ec->index, NULL, &apObjects[i] );
+        if (hr != S_OK)
+        {
+            for (j = 0; j < i; j++) IWbemClassObject_Release( apObjects[j] );
+            return hr;
+        }
+        ec->index++;
+        (*puReturned)++;
+    }
 
-    ec->index++;
-    *puReturned = 1;
-    if (ec->index == view->result_count && uCount > 1) return WBEM_S_FALSE;
-    if (uCount > 1) return WBEM_S_TIMEDOUT;
     return WBEM_S_NO_ERROR;
 }
 
