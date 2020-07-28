@@ -914,6 +914,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH ReadConsoleOutputW( HANDLE handle, CHAR_INFO *buff
     }
     width = min( region->Right - region->Left + 1, size.X - coord.X );
     height = min( region->Bottom - region->Top + 1, size.Y - coord.Y );
+    region->Right = region->Left + width - 1;
+    region->Bottom = region->Top + height - 1;
 
     count = sizeof(*result) + width * height * sizeof(*buffer);
     if (!(result = HeapAlloc( GetProcessHeap(), 0, count )))
