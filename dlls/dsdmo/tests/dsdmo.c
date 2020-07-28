@@ -473,24 +473,25 @@ static void test_reverb_parameters(void)
 
     hr = CoCreateInstance(&GUID_DSFX_STANDARD_I3DL2REVERB, NULL, CLSCTX_INPROC_SERVER,
             &IID_IDirectSoundFXI3DL2Reverb, (void **)&reverb);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
-    if (hr != S_OK)
-        return;
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IDirectSoundFXI3DL2Reverb_GetAllParameters(reverb, &params);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(params.lRoom == -1000, "Got room attenuation %d mB.\n", params.lRoom);
-    ok(params.lRoomHF == -100, "Got room high-frequency attenuation %d mB.\n", params.lRoomHF);
-    ok(params.flRoomRolloffFactor == 0.0f, "Got room rolloff factor %.8e.\n", params.flRoomRolloffFactor);
-    ok(params.flDecayTime == 1.49f, "Got decay time %.8e s.\n", params.flDecayTime);
-    ok(params.flDecayHFRatio == 0.83f, "Got decay time ratio %.8e.\n", params.flDecayHFRatio);
-    ok(params.lReflections == -2602, "Got early reflection attenuation %d mB.\n", params.lReflections);
-    ok(params.flReflectionsDelay == 0.007f, "Got first reflection delay %.8e s.\n", params.flReflectionsDelay);
-    ok(params.lReverb == 200, "Got reverb attenuation %d mB.\n", params.lReverb);
-    ok(params.flReverbDelay == 0.011f, "Got reverb delay %.8e s.\n", params.flReverbDelay);
-    ok(params.flDiffusion == 100.0f, "Got diffusion %.8e%%.\n", params.flDiffusion);
-    ok(params.flDensity == 100.0f, "Got density %.8e%%.\n", params.flDensity);
-    ok(params.flHFReference == 5000.0f, "Got reference high frequency %.8e Hz.\n", params.flHFReference);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    if (hr == S_OK)
+    {
+        ok(params.lRoom == -1000, "Got room attenuation %d mB.\n", params.lRoom);
+        ok(params.lRoomHF == -100, "Got room high-frequency attenuation %d mB.\n", params.lRoomHF);
+        ok(params.flRoomRolloffFactor == 0.0f, "Got room rolloff factor %.8e.\n", params.flRoomRolloffFactor);
+        ok(params.flDecayTime == 1.49f, "Got decay time %.8e s.\n", params.flDecayTime);
+        ok(params.flDecayHFRatio == 0.83f, "Got decay time ratio %.8e.\n", params.flDecayHFRatio);
+        ok(params.lReflections == -2602, "Got early reflection attenuation %d mB.\n", params.lReflections);
+        ok(params.flReflectionsDelay == 0.007f, "Got first reflection delay %.8e s.\n", params.flReflectionsDelay);
+        ok(params.lReverb == 200, "Got reverb attenuation %d mB.\n", params.lReverb);
+        ok(params.flReverbDelay == 0.011f, "Got reverb delay %.8e s.\n", params.flReverbDelay);
+        ok(params.flDiffusion == 100.0f, "Got diffusion %.8e%%.\n", params.flDiffusion);
+        ok(params.flDensity == 100.0f, "Got density %.8e%%.\n", params.flDensity);
+        ok(params.flHFReference == 5000.0f, "Got reference high frequency %.8e Hz.\n", params.flHFReference);
+    }
 
     ref = IDirectSoundFXI3DL2Reverb_Release(reverb);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
@@ -512,7 +513,7 @@ START_TEST(dsdmo)
         {&GUID_DSFX_STANDARD_ECHO,          &IID_IDirectSoundFXEcho, TRUE},
         {&GUID_DSFX_STANDARD_FLANGER,       &IID_IDirectSoundFXFlanger, TRUE},
         {&GUID_DSFX_STANDARD_GARGLE,        &IID_IDirectSoundFXGargle, TRUE},
-        {&GUID_DSFX_STANDARD_I3DL2REVERB,   &IID_IDirectSoundFXI3DL2Reverb, TRUE},
+        {&GUID_DSFX_STANDARD_I3DL2REVERB,   &IID_IDirectSoundFXI3DL2Reverb},
         {&GUID_DSFX_STANDARD_PARAMEQ,       &IID_IDirectSoundFXParamEq, TRUE},
         {&GUID_DSFX_WAVES_REVERB,           &IID_IDirectSoundFXWavesReverb},
     };

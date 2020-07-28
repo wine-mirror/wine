@@ -437,6 +437,97 @@ static void effect_init(struct effect *effect, IUnknown *outer, const struct eff
 struct reverb
 {
     struct effect effect;
+    IDirectSoundFXI3DL2Reverb IDirectSoundFXI3DL2Reverb_iface;
+};
+
+static struct reverb *impl_from_IDirectSoundFXI3DL2Reverb(IDirectSoundFXI3DL2Reverb *iface)
+{
+    return CONTAINING_RECORD(iface, struct reverb, IDirectSoundFXI3DL2Reverb_iface);
+}
+
+static HRESULT WINAPI reverb_params_QueryInterface(IDirectSoundFXI3DL2Reverb *iface, REFIID iid, void **out)
+{
+    struct reverb *effect = impl_from_IDirectSoundFXI3DL2Reverb(iface);
+    return IUnknown_QueryInterface(effect->effect.outer_unk, iid, out);
+}
+
+static ULONG WINAPI reverb_params_AddRef(IDirectSoundFXI3DL2Reverb *iface)
+{
+    struct reverb *effect = impl_from_IDirectSoundFXI3DL2Reverb(iface);
+    return IUnknown_AddRef(effect->effect.outer_unk);
+}
+
+static ULONG WINAPI reverb_params_Release(IDirectSoundFXI3DL2Reverb *iface)
+{
+    struct reverb *effect = impl_from_IDirectSoundFXI3DL2Reverb(iface);
+    return IUnknown_Release(effect->effect.outer_unk);
+}
+
+static HRESULT WINAPI reverb_params_SetAllParameters(IDirectSoundFXI3DL2Reverb *iface, const DSFXI3DL2Reverb *params)
+{
+    struct reverb *effect = impl_from_IDirectSoundFXI3DL2Reverb(iface);
+
+    FIXME("effect %p, params %p, stub!\n", effect, params);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI reverb_params_GetAllParameters(IDirectSoundFXI3DL2Reverb *iface, DSFXI3DL2Reverb *params)
+{
+    struct reverb *effect = impl_from_IDirectSoundFXI3DL2Reverb(iface);
+
+    FIXME("effect %p, params %p, stub!\n", effect, params);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI reverb_params_SetPreset(IDirectSoundFXI3DL2Reverb *iface, DWORD preset)
+{
+    struct reverb *effect = impl_from_IDirectSoundFXI3DL2Reverb(iface);
+
+    FIXME("effect %p, preset %u, stub!\n", effect, preset);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI reverb_params_GetPreset(IDirectSoundFXI3DL2Reverb *iface, DWORD *preset)
+{
+    struct reverb *effect = impl_from_IDirectSoundFXI3DL2Reverb(iface);
+
+    FIXME("effect %p, preset %p, stub!\n", effect, preset);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI reverb_params_SetQuality(IDirectSoundFXI3DL2Reverb *iface, LONG quality)
+{
+    struct reverb *effect = impl_from_IDirectSoundFXI3DL2Reverb(iface);
+
+    FIXME("effect %p, quality %u, stub!\n", effect, quality);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI reverb_params_GetQuality(IDirectSoundFXI3DL2Reverb *iface, LONG *quality)
+{
+    struct reverb *effect = impl_from_IDirectSoundFXI3DL2Reverb(iface);
+
+    FIXME("effect %p, quality %p, stub!\n", effect, quality);
+
+    return E_NOTIMPL;
+}
+
+static const IDirectSoundFXI3DL2ReverbVtbl reverb_params_vtbl =
+{
+    reverb_params_QueryInterface,
+    reverb_params_AddRef,
+    reverb_params_Release,
+    reverb_params_SetAllParameters,
+    reverb_params_GetAllParameters,
+    reverb_params_SetPreset,
+    reverb_params_GetPreset,
+    reverb_params_SetQuality,
+    reverb_params_GetQuality,
 };
 
 static struct reverb *impl_reverb_from_effect(struct effect *iface)
@@ -446,6 +537,10 @@ static struct reverb *impl_reverb_from_effect(struct effect *iface)
 
 static void *reverb_query_interface(struct effect *iface, REFIID iid)
 {
+    struct reverb *effect = impl_reverb_from_effect(iface);
+
+    if (IsEqualGUID(iid, &IID_IDirectSoundFXI3DL2Reverb))
+        return &effect->IDirectSoundFXI3DL2Reverb_iface;
     return NULL;
 }
 
@@ -470,6 +565,7 @@ static HRESULT reverb_create(IUnknown *outer, IUnknown **out)
         return E_OUTOFMEMORY;
 
     effect_init(&object->effect, outer, &reverb_ops);
+    object->IDirectSoundFXI3DL2Reverb_iface.lpVtbl = &reverb_params_vtbl;
 
     TRACE("Created I3DL2 reverb effect %p.\n", object);
     *out = &object->effect.IUnknown_inner;
