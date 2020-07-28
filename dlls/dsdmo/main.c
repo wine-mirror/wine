@@ -438,6 +438,7 @@ struct reverb
 {
     struct effect effect;
     IDirectSoundFXI3DL2Reverb IDirectSoundFXI3DL2Reverb_iface;
+    DSFXI3DL2Reverb params;
 };
 
 static struct reverb *impl_from_IDirectSoundFXI3DL2Reverb(IDirectSoundFXI3DL2Reverb *iface)
@@ -467,18 +468,24 @@ static HRESULT WINAPI reverb_params_SetAllParameters(IDirectSoundFXI3DL2Reverb *
 {
     struct reverb *effect = impl_from_IDirectSoundFXI3DL2Reverb(iface);
 
-    FIXME("effect %p, params %p, stub!\n", effect, params);
+    TRACE("effect %p, params %p.\n", effect, params);
 
-    return E_NOTIMPL;
+    EnterCriticalSection(&effect->effect.cs);
+    effect->params = *params;
+    LeaveCriticalSection(&effect->effect.cs);
+    return S_OK;
 }
 
 static HRESULT WINAPI reverb_params_GetAllParameters(IDirectSoundFXI3DL2Reverb *iface, DSFXI3DL2Reverb *params)
 {
     struct reverb *effect = impl_from_IDirectSoundFXI3DL2Reverb(iface);
 
-    FIXME("effect %p, params %p, stub!\n", effect, params);
+    TRACE("effect %p, params %p.\n", effect, params);
 
-    return E_NOTIMPL;
+    EnterCriticalSection(&effect->effect.cs);
+    *params = effect->params;
+    LeaveCriticalSection(&effect->effect.cs);
+    return S_OK;
 }
 
 static HRESULT WINAPI reverb_params_SetPreset(IDirectSoundFXI3DL2Reverb *iface, DWORD preset)
@@ -566,6 +573,19 @@ static HRESULT reverb_create(IUnknown *outer, IUnknown **out)
 
     effect_init(&object->effect, outer, &reverb_ops);
     object->IDirectSoundFXI3DL2Reverb_iface.lpVtbl = &reverb_params_vtbl;
+
+    object->params.lRoom                = DSFX_I3DL2REVERB_ROOM_DEFAULT;
+    object->params.lRoomHF              = DSFX_I3DL2REVERB_ROOMHF_DEFAULT;
+    object->params.flRoomRolloffFactor  = DSFX_I3DL2REVERB_ROOMROLLOFFFACTOR_DEFAULT;
+    object->params.flDecayTime          = DSFX_I3DL2REVERB_DECAYTIME_DEFAULT;
+    object->params.flDecayHFRatio       = DSFX_I3DL2REVERB_DECAYHFRATIO_DEFAULT;
+    object->params.lReflections         = DSFX_I3DL2REVERB_REFLECTIONS_DEFAULT;
+    object->params.flReflectionsDelay   = DSFX_I3DL2REVERB_REFLECTIONSDELAY_DEFAULT;
+    object->params.lReverb              = DSFX_I3DL2REVERB_REVERB_DEFAULT;
+    object->params.flReverbDelay        = DSFX_I3DL2REVERB_REVERBDELAY_DEFAULT;
+    object->params.flDiffusion          = DSFX_I3DL2REVERB_DIFFUSION_DEFAULT;
+    object->params.flDensity            = DSFX_I3DL2REVERB_DENSITY_DEFAULT;
+    object->params.flHFReference        = DSFX_I3DL2REVERB_HFREFERENCE_DEFAULT;
 
     TRACE("Created I3DL2 reverb effect %p.\n", object);
     *out = &object->effect.IUnknown_inner;
