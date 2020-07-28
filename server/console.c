@@ -1444,58 +1444,6 @@ static int fill_console_output( struct screen_buffer *screen_buffer, char_info_t
     return i;
 }
 
-/* read data from a screen buffer */
-static void read_console_output_req( struct screen_buffer *screen_buffer, int x, int y,
-                                     enum char_info_mode mode, int wrap )
-{
-    int i;
-    char_info_t *end, *src = screen_buffer->data + y * screen_buffer->width + x;
-
-    if (y >= screen_buffer->height) return;
-
-    if (wrap)
-        end = screen_buffer->data + screen_buffer->height * screen_buffer->width;
-    else
-        end = screen_buffer->data + (y+1) * screen_buffer->width;
-
-    switch(mode)
-    {
-    case CHAR_INFO_MODE_TEXT:
-        {
-            WCHAR *data;
-            int count = min( end - src, get_reply_max_size() / sizeof(*data) );
-            if ((data = set_reply_data_size( count * sizeof(*data) )))
-            {
-                for (i = 0; i < count; i++) data[i] = src[i].ch;
-            }
-        }
-        break;
-    case CHAR_INFO_MODE_ATTR:
-        {
-            unsigned short *data;
-            int count = min( end - src, get_reply_max_size() / sizeof(*data) );
-            if ((data = set_reply_data_size( count * sizeof(*data) )))
-            {
-                for (i = 0; i < count; i++) data[i] = src[i].attr;
-            }
-        }
-        break;
-    case CHAR_INFO_MODE_TEXTATTR:
-        {
-            char_info_t *data;
-            int count = min( end - src, get_reply_max_size() / sizeof(*data) );
-            if ((data = set_reply_data_size( count * sizeof(*data) )))
-            {
-                for (i = 0; i < count; i++) data[i] = src[i];
-            }
-        }
-        break;
-    default:
-        set_error( STATUS_INVALID_PARAMETER );
-        break;
-    }
-}
-
 /* scroll parts of a screen buffer */
 static void scroll_console_output( struct screen_buffer *screen_buffer, int xsrc, int ysrc, int xdst, int ydst,
                                    int w, int h )
@@ -2218,27 +2166,6 @@ DECL_HANDLER(create_console_output)
         release_object( screen_buffer );
     }
     release_object( console );
-}
-
-/* read data (chars & attrs) from a screen buffer */
-DECL_HANDLER(read_console_output)
-{
-    struct screen_buffer *screen_buffer;
-
-    if ((screen_buffer = (struct screen_buffer*)get_handle_obj( current->process, req->handle,
-                                                                FILE_READ_DATA, &screen_buffer_ops )))
-    {
-        if (console_input_is_bare( screen_buffer->input ))
-        {
-            set_error( STATUS_OBJECT_TYPE_MISMATCH );
-            release_object( screen_buffer );
-            return;
-        }
-        read_console_output_req( screen_buffer, req->x, req->y, req->mode, req->wrap );
-        reply->width  = screen_buffer->width;
-        reply->height = screen_buffer->height;
-        release_object( screen_buffer );
-    }
 }
 
 /* move a rect of data in a screen buffer */

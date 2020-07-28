@@ -1567,20 +1567,6 @@ enum server_fd_type
 @END
 
 
-/* read data (chars and/or attributes) from a screen buffer */
-@REQ(read_console_output)
-    obj_handle_t handle;        /* handle to the console output */
-    int          x;             /* position (x,y) where to start reading */
-    int          y;
-    int          mode;          /* char info mode */
-    int          wrap;          /* wrap around at end of line? */
-@REPLY
-    int          width;         /* width of screen buffer */
-    int          height;        /* height of screen buffer */
-    VARARG(data,bytes);
-@END
-
-
 /* move a rect (of data) in screen buffer content */
 @REQ(move_console_output)
     obj_handle_t handle;        /* handle to the console output */
