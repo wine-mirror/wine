@@ -189,6 +189,10 @@
 @ stub HSTRING_UserSize64
 @ stub HSTRING_UserUnmarshal
 @ stub HSTRING_UserUnmarshal64
+@ stdcall HWND_UserFree(ptr ptr)
+@ stdcall HWND_UserMarshal(ptr ptr ptr)
+@ stdcall HWND_UserSize(ptr long ptr)
+@ stdcall HWND_UserUnmarshal(ptr ptr ptr)
 @ stub HkOleRegisterObject
 @ stdcall IIDFromString(wstr ptr) ole32.IIDFromString
 @ stub InternalAppInvokeExceptionFilter

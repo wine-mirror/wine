@@ -62,6 +62,80 @@ static const char* debugstr_user_flags(ULONG *pFlags)
         return wine_dbg_sprintf("MAKELONG(%s, 0x%04x)", loword, HIWORD(*pFlags));
 }
 
+static ULONG handle_UserSize(ULONG *pFlags, ULONG StartingSize, HANDLE *handle)
+{
+    if (LOWORD(*pFlags) == MSHCTX_DIFFERENTMACHINE)
+    {
+        ERR("can't remote a local handle\n");
+        RaiseException(RPC_S_INVALID_TAG, 0, 0, NULL);
+        return StartingSize;
+    }
+
+    ALIGN_LENGTH(StartingSize, 3);
+    return StartingSize + sizeof(RemotableHandle);
+}
+
+static unsigned char * handle_UserMarshal(ULONG *pFlags, unsigned char *pBuffer, HANDLE *handle)
+{
+    RemotableHandle *remhandle;
+    if (LOWORD(*pFlags) == MSHCTX_DIFFERENTMACHINE)
+    {
+        ERR("can't remote a local handle\n");
+        RaiseException(RPC_S_INVALID_TAG, 0, 0, NULL);
+        return pBuffer;
+    }
+
+    ALIGN_POINTER(pBuffer, 3);
+    remhandle = (RemotableHandle *)pBuffer;
+    remhandle->fContext = WDT_INPROC_CALL;
+    remhandle->u.hInproc = (LONG_PTR)*handle;
+    return pBuffer + sizeof(RemotableHandle);
+}
+
+static unsigned char * handle_UserUnmarshal(ULONG *pFlags, unsigned char *pBuffer, HANDLE *handle)
+{
+    RemotableHandle *remhandle;
+
+    ALIGN_POINTER(pBuffer, 3);
+    remhandle = (RemotableHandle *)pBuffer;
+    if (remhandle->fContext != WDT_INPROC_CALL)
+        RaiseException(RPC_X_BAD_STUB_DATA, 0, 0, NULL);
+    *handle = (HANDLE)(LONG_PTR)remhandle->u.hInproc;
+    return pBuffer + sizeof(RemotableHandle);
+}
+
+static void handle_UserFree(ULONG *pFlags, HANDLE *handle)
+{
+    /* nothing to do */
+}
+
+#define IMPL_WIREM_HANDLE(type) \
+    ULONG __RPC_USER type##_UserSize(ULONG *pFlags, ULONG StartingSize, type *handle) \
+    { \
+        TRACE("(%s, %d, %p\n", debugstr_user_flags(pFlags), StartingSize, handle); \
+        return handle_UserSize(pFlags, StartingSize, (HANDLE *)handle); \
+    } \
+    \
+    unsigned char * __RPC_USER type##_UserMarshal(ULONG *pFlags, unsigned char *pBuffer, type *handle) \
+    { \
+        TRACE("(%s, %p, &%p\n", debugstr_user_flags(pFlags), pBuffer, *handle); \
+        return handle_UserMarshal(pFlags, pBuffer, (HANDLE *)handle); \
+    } \
+    \
+    unsigned char * __RPC_USER type##_UserUnmarshal(ULONG *pFlags, unsigned char *pBuffer, type *handle) \
+    { \
+        TRACE("(%s, %p, %p\n", debugstr_user_flags(pFlags), pBuffer, handle); \
+        return handle_UserUnmarshal(pFlags, pBuffer, (HANDLE *)handle); \
+    } \
+    \
+    void __RPC_USER type##_UserFree(ULONG *pFlags, type *handle) \
+    { \
+        TRACE("(%s, &%p\n", debugstr_user_flags(pFlags), *handle); \
+        handle_UserFree(pFlags, (HANDLE *)handle); \
+    }
+
+IMPL_WIREM_HANDLE(HWND)
+
 /******************************************************************************
  *           WdtpInterfacePointer_UserSize (combase.@)
  *
