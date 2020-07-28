@@ -172,6 +172,37 @@ enum arm_trap_code
     TRAP_ARM_ALIGNFLT   = 17,  /* Alignment check exception */
 };
 
+struct syscall_frame
+{
+    struct syscall_frame *prev_frame;
+    DWORD                 cpsr;
+    DWORD                 r5;
+    DWORD                 r6;
+    DWORD                 r7;
+    DWORD                 r8;
+    DWORD                 r9;
+    DWORD                 r10;
+    DWORD                 r11;
+    DWORD                 thunk_addr;
+    DWORD                 r4;
+    DWORD                 ret_addr;
+};
+
+struct arm_thread_data
+{
+    void                 *exit_frame;    /* 1d4 exit frame pointer */
+    struct syscall_frame *syscall_frame; /* 1d8 frame pointer on syscall entry */
+};
+
+C_ASSERT( sizeof(struct arm_thread_data) <= sizeof(((struct ntdll_thread_data *)0)->cpu_data) );
+C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct arm_thread_data, exit_frame ) == 0x1d4 );
+C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct arm_thread_data, syscall_frame ) == 0x1d8 );
+
+static inline struct arm_thread_data *arm_thread_data(void)
+{
+    return (struct arm_thread_data *)ntdll_get_thread_data()->cpu_data;
+}
+
 
 /***********************************************************************
  *           unwind_builtin_dll

@@ -1561,20 +1561,45 @@ void output_syscalls( DLLSPEC *spec )
             output( "\tjmp 3b\n" );
             break;
         case CPU_ARM:
-            output( "\tldr r1, 4f\n" );
-            output( "\tcmp r0, r1\n" );
-            output( "\tbcs 2f\n" );
-            output( "\tldr r1, 3f\n");
-            output( "\tadd r1, pc\n");
-            output( "\tldr ip, [r1, r0, lsl #2]\n");
-            output( "1:\tpop {r0-r1}\n" );
-            output( "\tbx ip\n");
-            output( "2:\tpop {r0-r1}\n" );
-            output( "\tldr r0,5f\n" );
-            output( "bx lr\n" );
-            output( "3:\t.long .Lsyscall_table-1b\n" );
-            output( "4:\t.long %u\n", count );
-            output( "5:\t.long 0x%x\n", invalid_param );
+            output( "\tpush {r5-r11,lr}\n" );
+            output( "\tadd r6, sp, #40\n" );  /* stack parameters */
+            output( "\tldr r5, 8f\n" );
+            output( "\tcmp r4, r5\n" );
+            output( "\tbcs 5f\n" );
+            output( "\tsub sp, sp, #8\n" );
+            output( "\tpush {r0-r3}\n" );
+            output( "\tbl %s\n", asm_name("NtCurrentTeb") );
+            output( "\tadd r7, r0, #0x1d8\n" );  /* arm_thread_data()->syscall_frame */
+            output( "\tpop {r0-r3}\n" );
+            output( "\tldr r8, [r7]\n" );
+            output( "\tstr r8, [sp]\n" );  /* prev frame */
+            output( "\tstr sp, [r7]\n" );  /* syscall frame */
+            output( "\tmrs ip, CPSR\n" );
+            output( "\tstr ip, [sp, #4]\n" );
+            output( "\tldr r5, 7f\n");
+            output( "\tadd r5, pc\n");
+            output( "\tldrb r5, [r5, r4]\n" );  /* syscall args */
+            output( "1:\tsubs r5, #16\n" );   /* first 4 args are in registers */
+            output( "\tble 3f\n" );
+            output( "\tsub sp, r5\n" );
+            output( "\tand sp, #~7\n" );
+            output( "2:\tsubs r5, r5, #4\n" );
+            output( "\tldr ip, [r6, r5]\n" );
+            output( "\tstr ip, [sp, r5]\n" );
+            output( "\tbgt 2b\n" );
+            output( "3:\tldr r5, 6f\n");
+            output( "\tadd r5, pc\n");
+            output( "\tldr ip, [r5, r4, lsl #2]\n");  /* syscall table */
+            output( "4:\tblx ip\n");
+            output( "\tstr r8, [r7]\n" );  /* prev frame */
+            output( "\tsub sp, r6, #40\n" );
+            output( "\tpop {r5-r11,pc}\n" );
+            output( "5:\tldr r0,9f\n" );
+            output( "\tpop {r5-r11,pc}\n" );
+            output( "6:\t.long .Lsyscall_table-4b\n" );
+            output( "7:\t.long .Lsyscall_args-1b\n" );
+            output( "8:\t.long %u\n", count );
+            output( "9:\t.long 0x%x\n", invalid_param );
             break;
         case CPU_ARM64:
             output( "\tcmp x8, %u\n", count );
@@ -1658,12 +1683,13 @@ void output_syscalls( DLLSPEC *spec )
             output( "\tret\n" );
             break;
         case CPU_ARM:
-            output( "\tpush {r0-r1}\n" );
-            output( "\tldr r0, 3f\n");
-            output( "\tldr r1, 2f\n");
-            output( "\tadd r1, pc\n");
-            output( "\tldr ip, [r1]\n");
-            output( "1:\tbx ip\n");
+            output( "\tpush {r4,lr}\n" );
+            output( "\tldr r4, 3f\n");
+            output( "\tldr ip, 2f\n");
+            output( "\tadd ip, pc\n");
+            output( "\tldr ip, [ip]\n");
+            output( "1:\tblx ip\n");
+            output( "\tpop {r4,pc}\n" );
             output( "2:\t.long %s-1b\n", asm_name("__wine_syscall_dispatcher") );
             output( "3:\t.long %u\n", i );
             break;
