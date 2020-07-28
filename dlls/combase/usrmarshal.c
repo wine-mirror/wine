@@ -134,6 +134,7 @@ static void handle_UserFree(ULONG *pFlags, HANDLE *handle)
         handle_UserFree(pFlags, (HANDLE *)handle); \
     }
 
+IMPL_WIREM_HANDLE(HDC)
 IMPL_WIREM_HANDLE(HWND)
 
 /******************************************************************************
