@@ -434,6 +434,48 @@ static void effect_init(struct effect *effect, IUnknown *outer, const struct eff
     effect->ops = ops;
 }
 
+struct reverb
+{
+    struct effect effect;
+};
+
+static struct reverb *impl_reverb_from_effect(struct effect *iface)
+{
+    return CONTAINING_RECORD(iface, struct reverb, effect);
+}
+
+static void *reverb_query_interface(struct effect *iface, REFIID iid)
+{
+    return NULL;
+}
+
+static void reverb_destroy(struct effect *iface)
+{
+    struct reverb *effect = impl_reverb_from_effect(iface);
+
+    free(effect);
+}
+
+static const struct effect_ops reverb_ops =
+{
+    .destroy = reverb_destroy,
+    .query_interface = reverb_query_interface,
+};
+
+static HRESULT reverb_create(IUnknown *outer, IUnknown **out)
+{
+    struct reverb *object;
+
+    if (!(object = calloc(1, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    effect_init(&object->effect, outer, &reverb_ops);
+
+    TRACE("Created I3DL2 reverb effect %p.\n", object);
+    *out = &object->effect.IUnknown_inner;
+    return S_OK;
+}
+
 struct waves_reverb
 {
     struct effect effect;
@@ -628,6 +670,7 @@ static struct
 }
 class_factories[] =
 {
+    {&GUID_DSFX_STANDARD_I3DL2REVERB,   {{&class_factory_vtbl}, reverb_create}},
     {&GUID_DSFX_WAVES_REVERB,           {{&class_factory_vtbl}, waves_reverb_create}},
 };
 
