@@ -311,7 +311,7 @@ __ASM_GLOBAL_FUNC( __chkstk, "ret" );
 __ASM_GLOBAL_FUNC( RtlCaptureContext,
                    "pushfq\n\t"
                    __ASM_CFI(".cfi_adjust_cfa_offset 8\n\t")
-                   "movl $0x001000f,0x30(%rcx)\n\t" /* context->ContextFlags */
+                   "movl $0x10000f,0x30(%rcx)\n\t"  /* context->ContextFlags */
                    "stmxcsr 0x34(%rcx)\n\t"         /* context->MxCsr */
                    "movw %cs,0x38(%rcx)\n\t"        /* context->SegCs */
                    "movw %ds,0x3a(%rcx)\n\t"        /* context->SegDs */

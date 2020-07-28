@@ -23,7 +23,6 @@
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
-#define NONAMELESSUNION
 #include "windef.h"
 #include "winbase.h"
 #include "winnt.h"
@@ -2018,7 +2017,7 @@ static void call_virtual_unwind( int testnum, const struct unwind_test *test )
 
             if (j == rsp)  /* rsp is special */
             {
-                ok( !ctx_ptr.u2.IntegerContext[j],
+                ok( !ctx_ptr.IntegerContext[j],
                     "%u/%u: rsp should not be set in ctx_ptr\n", testnum, i );
                 ok( context.Rsp == (ULONG64)fake_stack + test->results[i].regs[k][1],
                     "%u/%u: register rsp wrong %p/%p\n",
@@ -2026,7 +2025,7 @@ static void call_virtual_unwind( int testnum, const struct unwind_test *test )
                 continue;
             }
 
-            if (ctx_ptr.u2.IntegerContext[j])
+            if (ctx_ptr.IntegerContext[j])
             {
                 ok( k < nb_regs, "%u/%u: register %s should not be set to %lx\n",
                     testnum, i, reg_names[j], *(&context.Rax + j) );
@@ -2236,13 +2235,13 @@ static void test_restore_context(void)
         fltsave = &buf.Xmm6;
         for (i = 0; i < 10; i++)
         {
-            ok(fltsave[i].Part[0] == ctx.u.FltSave.XmmRegisters[i + 6].Low,
+            ok(fltsave[i].Part[0] == ctx.FltSave.XmmRegisters[i + 6].Low,
                 "longjmp failed for Xmm%d, expected %lx, got %lx\n", i + 6,
-                fltsave[i].Part[0], ctx.u.FltSave.XmmRegisters[i + 6].Low);
+                fltsave[i].Part[0], ctx.FltSave.XmmRegisters[i + 6].Low);
 
-            ok(fltsave[i].Part[1] == ctx.u.FltSave.XmmRegisters[i + 6].High,
+            ok(fltsave[i].Part[1] == ctx.FltSave.XmmRegisters[i + 6].High,
                 "longjmp failed for Xmm%d, expected %lx, got %lx\n", i + 6,
-                fltsave[i].Part[1], ctx.u.FltSave.XmmRegisters[i + 6].High);
+                fltsave[i].Part[1], ctx.FltSave.XmmRegisters[i + 6].High);
         }
     }
     else
@@ -2854,6 +2853,194 @@ static void test_dpe_exceptions(void)
     VirtualProtect(code_mem, 1, old_prot, &old_prot);
 
     pRtlRemoveVectoredExceptionHandler(handler);
+}
+
+static void test_thread_context(void)
+{
+    CONTEXT context;
+    NTSTATUS status;
+    int i;
+    struct expected
+    {
+        ULONG64 Rax, Rbx, Rcx, Rdx, Rsi, Rdi, R8, R9, R10, R11,
+            R12, R13, R14, R15, Rbp, Rsp, Rip, prev_frame, EFlags;
+        ULONG MxCsr;
+        XMM_SAVE_AREA32 FltSave;
+        WORD SegCs, SegDs, SegEs, SegFs, SegGs, SegSs;
+    } expect;
+    NTSTATUS (*func_ptr)( void *arg1, void *arg2, struct expected *res, void *func ) = (void *)code_mem;
+
+    static const BYTE call_func[] =
+    {
+        0x55,                                                 /* push   %rbp */
+        0x48, 0x89, 0xe5,                                     /* mov    %rsp,%rbp */
+        0x48, 0x8d, 0x64, 0x24, 0xd0,                         /* lea    -0x30(%rsp),%rsp */
+        0x49, 0x89, 0x00,                                     /* mov    %rax,(%r8) */
+        0x49, 0x89, 0x58, 0x08,                               /* mov    %rbx,0x8(%r8) */
+        0x49, 0x89, 0x48, 0x10,                               /* mov    %rcx,0x10(%r8) */
+        0x49, 0x89, 0x50, 0x18,                               /* mov    %rdx,0x18(%r8) */
+        0x49, 0x89, 0x70, 0x20,                               /* mov    %rsi,0x20(%r8) */
+        0x49, 0x89, 0x78, 0x28,                               /* mov    %rdi,0x28(%r8) */
+        0x4d, 0x89, 0x40, 0x30,                               /* mov    %r8,0x30(%r8) */
+        0x4d, 0x89, 0x48, 0x38,                               /* mov    %r9,0x38(%r8) */
+        0x4d, 0x89, 0x50, 0x40,                               /* mov    %r10,0x40(%r8) */
+        0x4d, 0x89, 0x58, 0x48,                               /* mov    %r11,0x48(%r8) */
+        0x4d, 0x89, 0x60, 0x50,                               /* mov    %r12,0x50(%r8) */
+        0x4d, 0x89, 0x68, 0x58,                               /* mov    %r13,0x58(%r8) */
+        0x4d, 0x89, 0x70, 0x60,                               /* mov    %r14,0x60(%r8) */
+        0x4d, 0x89, 0x78, 0x68,                               /* mov    %r15,0x68(%r8) */
+        0x49, 0x89, 0x68, 0x70,                               /* mov    %rbp,0x70(%r8) */
+        0x49, 0x89, 0x60, 0x78,                               /* mov    %rsp,0x78(%r8) */
+        0xff, 0x75, 0x08,                                     /* pushq  0x8(%rbp) */
+        0x41, 0x8f, 0x80, 0x80, 0x00, 0x00, 0x00,             /* popq   0x80(%r8) */
+        0xff, 0x75, 0x00,                                     /* pushq  0x0(%rbp) */
+        0x41, 0x8f, 0x80, 0x88, 0x00, 0x00, 0x00,             /* popq   0x88(%r8) */
+        0x9c,                                                 /* pushfq */
+        0x41, 0x8f, 0x80, 0x90, 0x00, 0x00, 0x00,             /* popq   0x90(%r8) */
+        0x41, 0x0f, 0xae, 0x98, 0x98, 0x00, 0x00, 0x00,       /* stmxcsr 0x98(%r8) */
+        0x41, 0x0f, 0xae, 0x80, 0xa0, 0x00, 0x00, 0x00,       /* fxsave 0xa0(%r8) */
+        0x66, 0x41, 0x0f, 0x7f, 0x80, 0x40, 0x01, 0x00, 0x00, /* movdqa %xmm0,0x140(%r8) */
+        0x66, 0x41, 0x0f, 0x7f, 0x88, 0x50, 0x01, 0x00, 0x00, /* movdqa %xmm1,0x150(%r8) */
+        0x66, 0x41, 0x0f, 0x7f, 0x90, 0x60, 0x01, 0x00, 0x00, /* movdqa %xmm2,0x160(%r8) */
+        0x66, 0x41, 0x0f, 0x7f, 0x98, 0x70, 0x01, 0x00, 0x00, /* movdqa %xmm3,0x170(%r8) */
+        0x66, 0x41, 0x0f, 0x7f, 0xa0, 0x80, 0x01, 0x00, 0x00, /* movdqa %xmm4,0x180(%r8) */
+        0x66, 0x41, 0x0f, 0x7f, 0xa8, 0x90, 0x01, 0x00, 0x00, /* movdqa %xmm5,0x190(%r8) */
+        0x66, 0x41, 0x0f, 0x7f, 0xb0, 0xa0, 0x01, 0x00, 0x00, /* movdqa %xmm6,0x1a0(%r8) */
+        0x66, 0x41, 0x0f, 0x7f, 0xb8, 0xb0, 0x01, 0x00, 0x00, /* movdqa %xmm7,0x1b0(%r8) */
+        0x66, 0x45, 0x0f, 0x7f, 0x80, 0xc0, 0x01, 0x00, 0x00, /* movdqa %xmm8,0x1c0(%r8) */
+        0x66, 0x45, 0x0f, 0x7f, 0x88, 0xd0, 0x01, 0x00, 0x00, /* movdqa %xmm9,0x1d0(%r8) */
+        0x66, 0x45, 0x0f, 0x7f, 0x90, 0xe0, 0x01, 0x00, 0x00, /* movdqa %xmm10,0x1e0(%r8) */
+        0x66, 0x45, 0x0f, 0x7f, 0x98, 0xf0, 0x01, 0x00, 0x00, /* movdqa %xmm11,0x1f0(%r8) */
+        0x66, 0x45, 0x0f, 0x7f, 0xa0, 0x00, 0x02, 0x00, 0x00, /* movdqa %xmm12,0x200(%r8) */
+        0x66, 0x45, 0x0f, 0x7f, 0xa8, 0x10, 0x02, 0x00, 0x00, /* movdqa %xmm13,0x210(%r8) */
+        0x66, 0x45, 0x0f, 0x7f, 0xb0, 0x20, 0x02, 0x00, 0x00, /* movdqa %xmm14,0x220(%r8) */
+        0x66, 0x45, 0x0f, 0x7f, 0xb8, 0x30, 0x02, 0x00, 0x00, /* movdqa %xmm15,0x230(%r8) */
+        0x41, 0x8c, 0x88, 0xa0, 0x02, 0x00, 0x00,             /* mov    %cs,0x2a0(%r8) */
+        0x41, 0x8c, 0x98, 0xa2, 0x02, 0x00, 0x00,             /* mov    %ds,0x2a2(%r8) */
+        0x41, 0x8c, 0x80, 0xa4, 0x02, 0x00, 0x00,             /* mov    %es,0x2a4(%r8) */
+        0x41, 0x8c, 0xa0, 0xa6, 0x02, 0x00, 0x00,             /* mov    %fs,0x2a6(%r8) */
+        0x41, 0x8c, 0xa8, 0xa8, 0x02, 0x00, 0x00,             /* mov    %gs,0x2a8(%r8) */
+        0x41, 0x8c, 0x90, 0xaa, 0x02, 0x00, 0x00,             /* mov    %ss,0x2aa(%r8) */
+        0x41, 0xff, 0xd1,                                     /* callq  *%r9 */
+        0xc9,                                                 /* leaveq */
+        0xc3,                                                 /* retq */
+    };
+
+    memcpy( func_ptr, call_func, sizeof(call_func) );
+
+#define COMPARE(reg) \
+    ok( context.reg == expect.reg, "wrong " #reg " %p/%p\n", (void *)(ULONG64)context.reg, (void *)(ULONG64)expect.reg )
+
+    memset( &context, 0xcc, sizeof(context) );
+    memset( &expect, 0xcc, sizeof(expect) );
+    func_ptr( &context, 0, &expect, pRtlCaptureContext );
+    trace( "expect: rax=%p rbx=%p rcx=%p rdx=%p rsi=%p rdi=%p "
+           "r8=%p r9=%p r10=%p r11=%p r12=%p r13=%p r14=%p r15=%p "
+           "rbp=%p rsp=%p rip=%p cs=%04x ds=%04x es=%04x fs=%04x gs=%04x ss=%04x flags=%08x prev=%08x\n",
+           (void *)expect.Rax, (void *)expect.Rbx, (void *)expect.Rcx, (void *)expect.Rdx,
+           (void *)expect.Rsi, (void *)expect.Rdi, (void *)expect.R8, (void *)expect.R9,
+           (void *)expect.R10, (void *)expect.R11, (void *)expect.R12, (void *)expect.R13,
+           (void *)expect.R14, (void *)expect.R15, (void *)expect.Rbp, (void *)expect.Rsp,
+           (void *)expect.Rip, expect.SegCs, expect.SegDs, expect.SegEs,
+           expect.SegFs, expect.SegGs, expect.SegSs, expect.EFlags, expect.prev_frame );
+    trace( "actual: rax=%p rbx=%p rcx=%p rdx=%p rsi=%p rdi=%p "
+           "r8=%p r9=%p r10=%p r11=%p r12=%p r13=%p r14=%p r15=%p "
+           "rbp=%p rsp=%p rip=%p cs=%04x ds=%04x es=%04x fs=%04x gs=%04x ss=%04x flags=%08x prev=%08x\n",
+           (void *)context.Rax, (void *)context.Rbx, (void *)context.Rcx, (void *)context.Rdx,
+           (void *)context.Rsi, (void *)context.Rdi, (void *)context.R8, (void *)context.R9,
+           (void *)context.R10, (void *)context.R11, (void *)context.R12, (void *)context.R13,
+           (void *)context.R14, (void *)context.R15, (void *)context.Rbp, (void *)context.Rsp,
+           (void *)context.Rip, context.SegCs, context.SegDs, context.SegEs,
+           context.SegFs, context.SegGs, context.SegSs, context.EFlags );
+
+    ok( context.ContextFlags == (CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_SEGMENTS | CONTEXT_FLOATING_POINT),
+        "wrong flags %08x\n", context.ContextFlags );
+    COMPARE( Rax );
+    COMPARE( Rbx );
+    COMPARE( Rcx );
+    COMPARE( Rdx );
+    COMPARE( Rsi );
+    COMPARE( Rdi );
+    COMPARE( R8 );
+    COMPARE( R9 );
+    COMPARE( R10 );
+    COMPARE( R11 );
+    COMPARE( R12 );
+    COMPARE( R13 );
+    COMPARE( R14 );
+    COMPARE( R15 );
+    COMPARE( Rbp );
+    COMPARE( Rsp );
+    COMPARE( EFlags );
+    COMPARE( MxCsr );
+    COMPARE( SegCs );
+    COMPARE( SegDs );
+    COMPARE( SegEs );
+    COMPARE( SegFs );
+    COMPARE( SegGs );
+    COMPARE( SegSs );
+    ok( !memcmp( &context.FltSave, &expect.FltSave, offsetof( XMM_SAVE_AREA32, XmmRegisters )),
+        "wrong FltSave\n" );
+    for (i = 0; i < 16; i++)
+        ok( !memcmp( &context.Xmm0 + i, &expect.FltSave.XmmRegisters[i], sizeof(context.Xmm0) ),
+            "wrong xmm%u\n", i );
+    /* Rip is return address from RtlCaptureContext */
+    ok( context.Rip == (ULONG64)func_ptr + sizeof(call_func) - 2,
+        "wrong Rip %p/%p\n", (void *)context.Rip, (char *)func_ptr + sizeof(call_func) - 2 );
+
+    memset( &context, 0xcc, sizeof(context) );
+    memset( &expect, 0xcc, sizeof(expect) );
+    context.ContextFlags = CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_SEGMENTS | CONTEXT_FLOATING_POINT;
+
+    status = func_ptr( GetCurrentThread(), &context, &expect, pNtGetContextThread );
+    ok( status == STATUS_SUCCESS, "NtGetContextThread failed %08x\n", status );
+    trace( "expect: rax=%p rbx=%p rcx=%p rdx=%p rsi=%p rdi=%p "
+           "r8=%p r9=%p r10=%p r11=%p r12=%p r13=%p r14=%p r15=%p "
+           "rbp=%p rsp=%p rip=%p cs=%04x ds=%04x es=%04x fs=%04x gs=%04x ss=%04x flags=%08x prev=%08x\n",
+           (void *)expect.Rax, (void *)expect.Rbx, (void *)expect.Rcx, (void *)expect.Rdx,
+           (void *)expect.Rsi, (void *)expect.Rdi, (void *)expect.R8, (void *)expect.R9,
+           (void *)expect.R10, (void *)expect.R11, (void *)expect.R12, (void *)expect.R13,
+           (void *)expect.R14, (void *)expect.R15, (void *)expect.Rbp, (void *)expect.Rsp,
+           (void *)expect.Rip, expect.SegCs, expect.SegDs, expect.SegEs,
+           expect.SegFs, expect.SegGs, expect.SegSs, expect.EFlags, expect.prev_frame );
+    trace( "actual: rax=%p rbx=%p rcx=%p rdx=%p rsi=%p rdi=%p "
+           "r8=%p r9=%p r10=%p r11=%p r12=%p r13=%p r14=%p r15=%p "
+           "rbp=%p rsp=%p rip=%p cs=%04x ds=%04x es=%04x fs=%04x gs=%04x ss=%04x flags=%08x prev=%08x\n",
+           (void *)context.Rax, (void *)context.Rbx, (void *)context.Rcx, (void *)context.Rdx,
+           (void *)context.Rsi, (void *)context.Rdi, (void *)context.R8, (void *)context.R9,
+           (void *)context.R10, (void *)context.R11, (void *)context.R12, (void *)context.R13,
+           (void *)context.R14, (void *)context.R15, (void *)context.Rbp, (void *)context.Rsp,
+           (void *)context.Rip, context.SegCs, context.SegDs, context.SegEs,
+           context.SegFs, context.SegGs, context.SegSs, context.EFlags );
+    /* other registers are not preserved */
+    COMPARE( Rbx );
+    COMPARE( Rsi );
+    COMPARE( Rdi );
+    COMPARE( R12 );
+    COMPARE( R13 );
+    COMPARE( R14 );
+    COMPARE( R15 );
+    COMPARE( Rbp );
+    COMPARE( MxCsr );
+    COMPARE( SegCs );
+    COMPARE( SegDs );
+    COMPARE( SegEs );
+    COMPARE( SegFs );
+    COMPARE( SegGs );
+    COMPARE( SegSs );
+    ok( !memcmp( &context.FltSave, &expect.FltSave, offsetof( XMM_SAVE_AREA32, XmmRegisters )),
+        "wrong FltSave\n" );
+    for (i = 6; i < 16; i++)
+        ok( !memcmp( &context.Xmm0 + i, &expect.FltSave.XmmRegisters[i], sizeof(context.Xmm0) ),
+            "wrong xmm%u\n", i );
+    /* Rsp is the stack upon entry to NtGetContextThread */
+    ok( context.Rsp == expect.Rsp - 8,
+        "wrong Rsp %p/%p\n", (void *)context.Rsp, (void *)expect.Rsp );
+    /* Rip is somewhere close to the NtGetContextThread implementation */
+    ok( (char *)context.Rip >= (char *)pNtGetContextThread - 0x40000 &&
+        (char *)context.Rip <= (char *)pNtGetContextThread + 0x40000,
+        "wrong Rip %p/%p\n", (void *)context.Rip, (void *)pNtGetContextThread );
+#undef COMPARE
 }
 
 static void test_wow64_context(void)
@@ -4135,6 +4322,7 @@ START_TEST(exception)
     test_restore_context();
     test_prot_fault();
     test_dpe_exceptions();
+    test_thread_context();
     test_wow64_context();
     test_kiuserexceptiondispatcher();
 
