@@ -84,7 +84,7 @@ struct condrv_input_info_params
 };
 
 /* IOCTL_CONDRV_WRITE_OUTPUT */
-struct condrv_write_output_params
+struct condrv_output_params
 {
     unsigned int  x;                  /* destination position */
     unsigned int  y;

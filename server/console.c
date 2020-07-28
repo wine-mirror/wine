@@ -1249,7 +1249,7 @@ static struct fd *screen_buffer_get_fd( struct object *obj )
 }
 
 /* write data into a screen buffer */
-static void write_console_output( struct screen_buffer *screen_buffer, const struct condrv_write_output_params *params,
+static void write_console_output( struct screen_buffer *screen_buffer, const struct condrv_output_params *params,
                                   data_size_t size )
 {
     unsigned int i, entry_size, entry_cnt, x, y;
@@ -1677,7 +1677,7 @@ static int screen_buffer_ioctl( struct fd *fd, ioctl_code_t code, struct async *
         return 1;
 
     case IOCTL_CONDRV_WRITE_OUTPUT:
-        if (get_req_data_size() < sizeof(struct condrv_write_output_params) ||
+        if (get_req_data_size() < sizeof(struct condrv_output_params) ||
             (get_reply_max_size() != sizeof(SMALL_RECT) && get_reply_max_size() != sizeof(unsigned int)))
         {
             set_error( STATUS_INVALID_PARAMETER );
@@ -1688,7 +1688,7 @@ static int screen_buffer_ioctl( struct fd *fd, ioctl_code_t code, struct async *
             set_error( STATUS_OBJECT_TYPE_MISMATCH );
             return 0;
         }
-        write_console_output( screen_buffer, get_req_data(), get_req_data_size() - sizeof(struct condrv_write_output_params) );
+        write_console_output( screen_buffer, get_req_data(), get_req_data_size() - sizeof(struct condrv_output_params) );
         return !get_error();
 
     case IOCTL_CONDRV_GET_OUTPUT_INFO:

@@ -691,7 +691,7 @@ LONG CALLBACK CONSOLE_HandleCtrlC( EXCEPTION_POINTERS *eptr )
  */
 static int CONSOLE_WriteChars(HANDLE handle, const WCHAR *str, size_t length, COORD *coord)
 {
-    struct condrv_write_output_params *params;
+    struct condrv_output_params *params;
     DWORD written = 0, size;
 
     if (!length) return 0;
