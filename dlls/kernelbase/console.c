@@ -894,37 +894,48 @@ BOOL WINAPI DECLSPEC_HOTPATCH ReadConsoleOutputA( HANDLE handle, CHAR_INFO *buff
 BOOL WINAPI DECLSPEC_HOTPATCH ReadConsoleOutputW( HANDLE handle, CHAR_INFO *buffer, COORD size,
                                                   COORD coord, SMALL_RECT *region )
 {
-    int width, height, y;
-    BOOL ret = TRUE;
+    struct condrv_output_params params;
+    unsigned int width, height, y;
+    SMALL_RECT *result;
+    DWORD count;
+    BOOL ret;
 
+    if (region->Left > region->Right || region->Top > region->Bottom)
+    {
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        return FALSE;
+    }
+    if (size.X <= coord.X || size.Y <= coord.Y)
+    {
+        region->Right  = region->Left - 1;
+        region->Bottom = region->Top - 1;
+        SetLastError( ERROR_INVALID_FUNCTION );
+        return FALSE;
+    }
     width = min( region->Right - region->Left + 1, size.X - coord.X );
     height = min( region->Bottom - region->Top + 1, size.Y - coord.Y );
 
-    if (width > 0 && height > 0)
+    count = sizeof(*result) + width * height * sizeof(*buffer);
+    if (!(result = HeapAlloc( GetProcessHeap(), 0, count )))
     {
-        for (y = 0; y < height; y++)
-        {
-            SERVER_START_REQ( read_console_output )
-            {
-                req->handle = console_handle_unmap( handle );
-                req->x      = region->Left;
-                req->y      = region->Top + y;
-                req->mode   = CHAR_INFO_MODE_TEXTATTR;
-                req->wrap   = FALSE;
-                wine_server_set_reply( req, &buffer[(y+coord.Y) * size.X + coord.X],
-                                       width * sizeof(CHAR_INFO) );
-                if ((ret = !wine_server_call_err( req )))
-                {
-                    width  = min( width, reply->width - region->Left );
-                    height = min( height, reply->height - region->Top );
-                }
-            }
-            SERVER_END_REQ;
-            if (!ret) break;
-        }
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        return FALSE;
     }
-    region->Bottom = region->Top + height - 1;
-    region->Right = region->Left + width - 1;
+
+    params.mode  = CHAR_INFO_MODE_TEXTATTR;
+    params.x     = region->Left;
+    params.y     = region->Top;
+    params.width = width;
+    if ((ret = console_ioctl( handle, IOCTL_CONDRV_READ_OUTPUT, &params, sizeof(params), result, count, &count )) && count)
+    {
+        CHAR_INFO *char_info = (CHAR_INFO *)(result + 1);
+        *region = *result;
+        width  = region->Right - region->Left + 1;
+        height = region->Bottom - region->Top + 1;
+        for (y = 0; y < height; y++)
+            memcpy( &buffer[(y + coord.Y) * size.X + coord.X], &char_info[y * width], width * sizeof(*buffer) );
+    }
+    HeapFree( GetProcessHeap(), 0, result );
     return ret;
 }
 
