@@ -239,14 +239,21 @@ void WINAPI RtlUnwind( void *endframe, void *target_ip, EXCEPTION_RECORD *rec, v
 /***********************************************************************
  *		RtlRaiseException (NTDLL.@)
  */
-void WINAPI RtlRaiseException( EXCEPTION_RECORD *rec )
-{
-    CONTEXT context;
-
-    RtlCaptureContext( &context );
-    rec->ExceptionAddress = (LPVOID)context.Pc;
-    RtlRaiseStatus( NtRaiseException( rec, &context, TRUE ));
-}
+__ASM_STDCALL_FUNC( RtlRaiseException, 4,
+                    "push {r0, lr}\n\t"
+                    "sub sp, sp, #0x1a0\n\t"  /* sizeof(CONTEXT) */
+                    "mov r0, sp\n\t"  /* context */
+                    "bl " __ASM_NAME("RtlCaptureContext") "\n\t"
+                    "ldr r0, [sp, #0x1a0]\n\t" /* rec */
+                    "ldr r1, [sp, #0x1a4]\n\t"
+                    "str r1, [sp, #0x40]\n\t"  /* context->Pc */
+                    "str r1, [r0, #12]\n\t"    /* rec->ExceptionAddress */
+                    "add r1, sp, #0x1a8\n\t"
+                    "str r1, [sp, #0x38]\n\t"  /* context->Sp */
+                    "mov r1, sp\n\t"
+                    "mov r2, #1\n\t"
+                    "bl " __ASM_NAME("NtRaiseException") "\n\t"
+                    "bl " __ASM_NAME("RtlRaiseStatus") )
 
 /*************************************************************************
  *             RtlCaptureStackBackTrace (NTDLL.@)
