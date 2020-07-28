@@ -69,9 +69,7 @@
 #include "unix_private.h"
 #include "wine/debug.h"
 
-#ifdef HAVE_LIBUNWIND
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
-#endif
 
 /***********************************************************************
  * signal context platform-specific definitions
@@ -348,42 +346,6 @@ static unsigned int get_server_context_flags( DWORD flags )
 
 
 /***********************************************************************
- *           copy_context
- *
- * Copy a register context according to the flags.
- */
-static void copy_context( CONTEXT *to, const CONTEXT *from, DWORD flags )
-{
-    flags &= ~CONTEXT_ARM64;  /* get rid of CPU id */
-    if (flags & CONTEXT_CONTROL)
-    {
-        to->u.s.Fp  = from->u.s.Fp;
-        to->u.s.Lr  = from->u.s.Lr;
-        to->Sp      = from->Sp;
-        to->Pc      = from->Pc;
-        to->Cpsr    = from->Cpsr;
-    }
-    if (flags & CONTEXT_INTEGER)
-    {
-        memcpy( to->u.X, from->u.X, sizeof(to->u.X) );
-    }
-    if (flags & CONTEXT_FLOATING_POINT)
-    {
-        memcpy( to->V, from->V, sizeof(to->V) );
-        to->Fpcr = from->Fpcr;
-        to->Fpsr = from->Fpsr;
-    }
-    if (flags & CONTEXT_DEBUG_REGISTERS)
-    {
-        memcpy( to->Bcr, from->Bcr, sizeof(to->Bcr) );
-        memcpy( to->Bvr, from->Bvr, sizeof(to->Bvr) );
-        memcpy( to->Wcr, from->Wcr, sizeof(to->Wcr) );
-        memcpy( to->Wvr, from->Wvr, sizeof(to->Wvr) );
-    }
-}
-
-
-/***********************************************************************
  *           context_to_server
  *
  * Convert a register context to the server format.
@@ -514,7 +476,8 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
 NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
 {
     NTSTATUS ret;
-    DWORD needed_flags = context->ContextFlags;
+    struct syscall_frame *frame = arm64_thread_data()->syscall_frame;
+    DWORD needed_flags = context->ContextFlags & ~CONTEXT_ARM64;
     BOOL self = (handle == GetCurrentThread());
 
     if (!self)
@@ -527,12 +490,26 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
         needed_flags &= ~context->ContextFlags;
     }
 
-    if (self && needed_flags)
+    if (self)
     {
-        CONTEXT ctx;
-        RtlCaptureContext( &ctx );
-        copy_context( context, &ctx, ctx.ContextFlags & needed_flags );
-        context->ContextFlags |= ctx.ContextFlags & needed_flags;
+        if (needed_flags & CONTEXT_INTEGER)
+        {
+            memset( context->u.X, 0, sizeof(context->u.X[0]) * 18 );
+            context->u.X[18] = (DWORD64)NtCurrentTeb();
+            memcpy( context->u.X + 19, &frame->x19, sizeof(context->u.X[0]) * 10 );
+            context->ContextFlags |= CONTEXT_INTEGER;
+        }
+        if (needed_flags & CONTEXT_CONTROL)
+        {
+            context->u.s.Fp  = frame->x29;
+            context->u.s.Lr  = frame->ret_addr;
+            context->Sp      = (ULONG64)&frame->thunk_x29;
+            context->Pc      = frame->thunk_addr;
+            context->Cpsr    = 0;
+            context->ContextFlags |= CONTEXT_CONTROL;
+        }
+        if (needed_flags & CONTEXT_FLOATING_POINT) FIXME( "floating point not supported\n" );
+        if (needed_flags & CONTEXT_DEBUG_REGISTERS) FIXME( "debug registers not supported\n" );
     }
     return STATUS_SUCCESS;
 }

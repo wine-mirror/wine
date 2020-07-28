@@ -240,15 +240,3 @@ TEB_ACTIVE_FRAME * WINAPI RtlGetFrame(void)
 {
     return NtCurrentTeb()->ActiveFrame;
 }
-
-
-/***********************************************************************
- *              NtGetContextThread  (NTDLL.@)
- *              ZwGetContextThread  (NTDLL.@)
- */
-#ifndef __i386__
-NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
-{
-    return unix_funcs->NtGetContextThread( handle, context );
-}
-#endif

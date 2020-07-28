@@ -1150,6 +1150,7 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
 NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
 {
     NTSTATUS ret;
+    struct syscall_frame *frame = x86_thread_data()->syscall_frame;
     DWORD needed_flags = context->ContextFlags & ~CONTEXT_i386;
     BOOL self = (handle == GetCurrentThread());
 
@@ -1171,16 +1172,21 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
         if (needed_flags & CONTEXT_INTEGER)
         {
             context->Eax = 0;
+            context->Ebx = frame->ebx;
             context->Ecx = 0;
             context->Edx = 0;
-            /* other registers already set from asm wrapper */
+            context->Esi = frame->esi;
+            context->Edi = frame->edi;
             context->ContextFlags |= CONTEXT_INTEGER;
         }
         if (needed_flags & CONTEXT_CONTROL)
         {
+            context->Esp    = (DWORD)&frame->thunk_addr;
+            context->Ebp    = frame->ebp;
+            context->Eip    = frame->thunk_addr;
+            context->EFlags = 0x202;
             context->SegCs  = get_cs();
             context->SegSs  = get_ds();
-            /* other registers already set from asm wrapper */
             context->ContextFlags |= CONTEXT_CONTROL;
         }
         if (needed_flags & CONTEXT_SEGMENTS)

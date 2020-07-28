@@ -34,7 +34,6 @@ struct unix_funcs
 {
     /* Nt* functions */
     TEB *         (WINAPI *NtCurrentTeb)(void);
-    NTSTATUS      (WINAPI *NtGetContextThread)( HANDLE handle, CONTEXT *context );
 
     /* other Win32 API functions */
     NTSTATUS      (WINAPI *DbgUiIssueRemoteBreakin)( HANDLE process );

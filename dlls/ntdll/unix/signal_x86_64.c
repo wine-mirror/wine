@@ -1549,64 +1549,6 @@ static unsigned int get_server_context_flags( DWORD flags )
 
 
 /***********************************************************************
- *           copy_context
- *
- * Copy a register context according to the flags.
- */
-static void copy_context( CONTEXT *to, const CONTEXT *from, DWORD flags )
-{
-    flags &= ~CONTEXT_AMD64;  /* get rid of CPU id */
-    if (flags & CONTEXT_CONTROL)
-    {
-        to->Rbp    = from->Rbp;
-        to->Rip    = from->Rip;
-        to->Rsp    = from->Rsp;
-        to->SegCs  = from->SegCs;
-        to->SegSs  = from->SegSs;
-        to->EFlags = from->EFlags;
-    }
-    if (flags & CONTEXT_INTEGER)
-    {
-        to->Rax = from->Rax;
-        to->Rcx = from->Rcx;
-        to->Rdx = from->Rdx;
-        to->Rbx = from->Rbx;
-        to->Rsi = from->Rsi;
-        to->Rdi = from->Rdi;
-        to->R8  = from->R8;
-        to->R9  = from->R9;
-        to->R10 = from->R10;
-        to->R11 = from->R11;
-        to->R12 = from->R12;
-        to->R13 = from->R13;
-        to->R14 = from->R14;
-        to->R15 = from->R15;
-    }
-    if (flags & CONTEXT_SEGMENTS)
-    {
-        to->SegDs = from->SegDs;
-        to->SegEs = from->SegEs;
-        to->SegFs = from->SegFs;
-        to->SegGs = from->SegGs;
-    }
-    if (flags & CONTEXT_FLOATING_POINT)
-    {
-        to->MxCsr = from->MxCsr;
-        to->u.FltSave = from->u.FltSave;
-    }
-    if (flags & CONTEXT_DEBUG_REGISTERS)
-    {
-        to->Dr0 = from->Dr0;
-        to->Dr1 = from->Dr1;
-        to->Dr2 = from->Dr2;
-        to->Dr3 = from->Dr3;
-        to->Dr6 = from->Dr6;
-        to->Dr7 = from->Dr7;
-    }
-}
-
-
-/***********************************************************************
  *           context_to_server
  *
  * Convert a register context to the server format.
@@ -1796,11 +1738,12 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
 {
     NTSTATUS ret;
     DWORD needed_flags;
+    struct syscall_frame *frame = amd64_thread_data()->syscall_frame;
     BOOL self = (handle == GetCurrentThread());
 
     if (!context) return STATUS_INVALID_PARAMETER;
 
-    needed_flags = context->ContextFlags;
+    needed_flags = context->ContextFlags & ~CONTEXT_AMD64;
 
     /* debug registers require a server call */
     if (context->ContextFlags & (CONTEXT_DEBUG_REGISTERS & ~CONTEXT_AMD64)) self = FALSE;
@@ -1817,12 +1760,49 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
 
     if (self)
     {
-        if (needed_flags)
+        if (needed_flags & CONTEXT_INTEGER)
         {
-            CONTEXT ctx;
-            RtlCaptureContext( &ctx );
-            copy_context( context, &ctx, ctx.ContextFlags & needed_flags );
-            context->ContextFlags |= ctx.ContextFlags & needed_flags;
+            context->Rax = 0;
+            context->Rbx = frame->rbx;
+            context->Rcx = 0;
+            context->Rdx = 0;
+            context->Rsi = frame->rsi;
+            context->Rdi = frame->rdi;
+            context->R8  = 0;
+            context->R9  = 0;
+            context->R10 = 0;
+            context->R11 = 0;
+            context->R12 = frame->r12;
+            context->R13 = frame->r13;
+            context->R14 = frame->r14;
+            context->R15 = frame->r15;
+            context->ContextFlags |= CONTEXT_INTEGER;
+        }
+        if (needed_flags & CONTEXT_CONTROL)
+        {
+            context->Rsp    = (ULONG64)&frame->ret_addr;
+            context->Rbp    = frame->rbp;
+            context->Rip    = frame->thunk_addr;
+            context->EFlags = 0x202;
+            __asm__( "movw %%cs,%0" : "=g" (context->SegCs) );
+            __asm__( "movw %%ss,%0" : "=g" (context->SegSs) );
+            context->ContextFlags |= CONTEXT_CONTROL;
+        }
+        if (needed_flags & CONTEXT_SEGMENTS)
+        {
+            __asm__( "movw %%ds,%0" : "=g" (context->SegDs) );
+            __asm__( "movw %%es,%0" : "=g" (context->SegEs) );
+            __asm__( "movw %%fs,%0" : "=g" (context->SegFs) );
+            __asm__( "movw %%gs,%0" : "=g" (context->SegGs) );
+            context->ContextFlags |= CONTEXT_SEGMENTS;
+        }
+        if (needed_flags & CONTEXT_FLOATING_POINT)
+        {
+            __asm__( "fxsave %0" : "=m" (context->u.FltSave) );
+            context->MxCsr = frame->mxcsr;
+            memset( &context->u.s.Xmm0, 0, 6 * sizeof(context->u.s.Xmm0) );
+            memcpy( &context->u.s.Xmm6, frame->xmm, 10 * sizeof(context->u.s.Xmm0) );
+            context->ContextFlags |= CONTEXT_FLOATING_POINT;
         }
         /* update the cached version of the debug registers */
         if (context->ContextFlags & (CONTEXT_DEBUG_REGISTERS & ~CONTEXT_AMD64))
