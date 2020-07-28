@@ -773,9 +773,24 @@ static HRESULT WINAPI filter_seeking_SetTimeFormat(IMediaSeeking *iface, const G
 
 static HRESULT WINAPI filter_seeking_GetDuration(IMediaSeeking *iface, LONGLONG *duration)
 {
-    FIXME("iface %p, duration %p, stub!\n", iface, duration);
+    struct filter *filter = impl_from_IMediaSeeking(iface);
+    IMediaSeeking *seeking;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("filter %p, duration %p.\n", filter, duration);
+
+    EnterCriticalSection(&filter->cs);
+
+    if (!(seeking = get_seeking(filter->seekable_stream)))
+    {
+        LeaveCriticalSection(&filter->cs);
+        return E_NOTIMPL;
+    }
+    hr = IMediaSeeking_GetDuration(seeking, duration);
+    IMediaSeeking_Release(seeking);
+
+    LeaveCriticalSection(&filter->cs);
+    return hr;
 }
 
 static HRESULT WINAPI filter_seeking_GetStopPosition(IMediaSeeking *iface, LONGLONG *stop)
