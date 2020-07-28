@@ -160,6 +160,7 @@ static int       (CDECL *p_setjmp)(_JUMP_BUFFER*);
 
 static int      my_argc;
 static char**   my_argv;
+static BOOL     is_wow64;
 
 #ifdef __i386__
 
@@ -172,8 +173,6 @@ static char**   my_argv;
 #endif
 
 static int      test_stage;
-
-static BOOL is_wow64;
 
 /* Test various instruction combinations that cause a protection fault on the i386,
  * and check what the resulting exception looks like.
@@ -1897,8 +1896,6 @@ static void test_kiuserexceptiondispatcher(void)
 
 #elif defined(__x86_64__)
 
-#define is_wow64 0
-
 #define UNW_FLAG_NHANDLER  0
 #define UNW_FLAG_EHANDLER  1
 #define UNW_FLAG_UHANDLER  2
@@ -3258,96 +3255,6 @@ static void test_debug_registers(void)
     CloseHandle(thread);
 }
 
-static DWORD outputdebugstring_exceptions;
-
-static LONG CALLBACK outputdebugstring_vectored_handler(EXCEPTION_POINTERS *ExceptionInfo)
-{
-    PEXCEPTION_RECORD rec = ExceptionInfo->ExceptionRecord;
-    trace("vect. handler %08x addr:%p\n", rec->ExceptionCode, rec->ExceptionAddress);
-
-    ok(rec->ExceptionCode == DBG_PRINTEXCEPTION_C, "ExceptionCode is %08x instead of %08x\n",
-        rec->ExceptionCode, DBG_PRINTEXCEPTION_C);
-    ok(rec->NumberParameters == 2, "ExceptionParameters is %d instead of 2\n", rec->NumberParameters);
-    ok(rec->ExceptionInformation[0] == 12, "ExceptionInformation[0] = %d instead of 12\n", (DWORD)rec->ExceptionInformation[0]);
-    ok(!strcmp((char *)rec->ExceptionInformation[1], "Hello World"),
-        "ExceptionInformation[1] = '%s' instead of 'Hello World'\n", (char *)rec->ExceptionInformation[1]);
-
-    outputdebugstring_exceptions++;
-    return EXCEPTION_CONTINUE_SEARCH;
-}
-
-static void test_outputdebugstring(DWORD numexc, BOOL todo)
-{
-    PVOID vectored_handler;
-
-    if (!pRtlAddVectoredExceptionHandler || !pRtlRemoveVectoredExceptionHandler)
-    {
-        skip("RtlAddVectoredExceptionHandler or RtlRemoveVectoredExceptionHandler not found\n");
-        return;
-    }
-
-    vectored_handler = pRtlAddVectoredExceptionHandler(TRUE, &outputdebugstring_vectored_handler);
-    ok(vectored_handler != 0, "RtlAddVectoredExceptionHandler failed\n");
-
-    outputdebugstring_exceptions = 0;
-    OutputDebugStringA("Hello World");
-
-    todo_wine_if(todo)
-    ok(outputdebugstring_exceptions == numexc, "OutputDebugStringA generated %d exceptions, expected %d\n",
-       outputdebugstring_exceptions, numexc);
-
-    pRtlRemoveVectoredExceptionHandler(vectored_handler);
-}
-
-static DWORD ripevent_exceptions;
-
-static LONG CALLBACK ripevent_vectored_handler(EXCEPTION_POINTERS *ExceptionInfo)
-{
-    PEXCEPTION_RECORD rec = ExceptionInfo->ExceptionRecord;
-    trace("vect. handler %08x addr:%p\n", rec->ExceptionCode, rec->ExceptionAddress);
-
-    ok(rec->ExceptionCode == DBG_RIPEXCEPTION, "ExceptionCode is %08x instead of %08x\n",
-       rec->ExceptionCode, DBG_RIPEXCEPTION);
-    ok(rec->NumberParameters == 2, "ExceptionParameters is %d instead of 2\n", rec->NumberParameters);
-    ok(rec->ExceptionInformation[0] == 0x11223344, "ExceptionInformation[0] = %08x instead of %08x\n",
-       (NTSTATUS)rec->ExceptionInformation[0], 0x11223344);
-    ok(rec->ExceptionInformation[1] == 0x55667788, "ExceptionInformation[1] = %08x instead of %08x\n",
-       (NTSTATUS)rec->ExceptionInformation[1], 0x55667788);
-
-    ripevent_exceptions++;
-    return (rec->ExceptionCode == DBG_RIPEXCEPTION) ? EXCEPTION_CONTINUE_EXECUTION : EXCEPTION_CONTINUE_SEARCH;
-}
-
-static void test_ripevent(DWORD numexc)
-{
-    EXCEPTION_RECORD record;
-    PVOID vectored_handler;
-
-    if (!pRtlAddVectoredExceptionHandler || !pRtlRemoveVectoredExceptionHandler || !pRtlRaiseException)
-    {
-        skip("RtlAddVectoredExceptionHandler or RtlRemoveVectoredExceptionHandler or RtlRaiseException not found\n");
-        return;
-    }
-
-    vectored_handler = pRtlAddVectoredExceptionHandler(TRUE, &ripevent_vectored_handler);
-    ok(vectored_handler != 0, "RtlAddVectoredExceptionHandler failed\n");
-
-    record.ExceptionCode = DBG_RIPEXCEPTION;
-    record.ExceptionFlags = 0;
-    record.ExceptionRecord = NULL;
-    record.ExceptionAddress = NULL;
-    record.NumberParameters = 2;
-    record.ExceptionInformation[0] = 0x11223344;
-    record.ExceptionInformation[1] = 0x55667788;
-
-    ripevent_exceptions = 0;
-    pRtlRaiseException(&record);
-    ok(ripevent_exceptions == numexc, "RtlRaiseException generated %d exceptions, expected %d\n",
-       ripevent_exceptions, numexc);
-
-    pRtlRemoveVectoredExceptionHandler(vectored_handler);
-}
-
 static DWORD debug_service_exceptions;
 
 static LONG CALLBACK debug_service_handler(EXCEPTION_POINTERS *ExceptionInfo)
@@ -3522,6 +3429,97 @@ static void test_debug_service(DWORD numexc)
 
     pRtlRemoveVectoredExceptionHandler(vectored_handler);
 }
+#endif /* defined(__i386__) || defined(__x86_64__) */
+
+static DWORD outputdebugstring_exceptions;
+
+static LONG CALLBACK outputdebugstring_vectored_handler(EXCEPTION_POINTERS *ExceptionInfo)
+{
+    PEXCEPTION_RECORD rec = ExceptionInfo->ExceptionRecord;
+    trace("vect. handler %08x addr:%p\n", rec->ExceptionCode, rec->ExceptionAddress);
+
+    ok(rec->ExceptionCode == DBG_PRINTEXCEPTION_C, "ExceptionCode is %08x instead of %08x\n",
+        rec->ExceptionCode, DBG_PRINTEXCEPTION_C);
+    ok(rec->NumberParameters == 2, "ExceptionParameters is %d instead of 2\n", rec->NumberParameters);
+    ok(rec->ExceptionInformation[0] == 12, "ExceptionInformation[0] = %d instead of 12\n", (DWORD)rec->ExceptionInformation[0]);
+    ok(!strcmp((char *)rec->ExceptionInformation[1], "Hello World"),
+        "ExceptionInformation[1] = '%s' instead of 'Hello World'\n", (char *)rec->ExceptionInformation[1]);
+
+    outputdebugstring_exceptions++;
+    return EXCEPTION_CONTINUE_SEARCH;
+}
+
+static void test_outputdebugstring(DWORD numexc, BOOL todo)
+{
+    PVOID vectored_handler;
+
+    if (!pRtlAddVectoredExceptionHandler || !pRtlRemoveVectoredExceptionHandler)
+    {
+        skip("RtlAddVectoredExceptionHandler or RtlRemoveVectoredExceptionHandler not found\n");
+        return;
+    }
+
+    vectored_handler = pRtlAddVectoredExceptionHandler(TRUE, &outputdebugstring_vectored_handler);
+    ok(vectored_handler != 0, "RtlAddVectoredExceptionHandler failed\n");
+
+    outputdebugstring_exceptions = 0;
+    OutputDebugStringA("Hello World");
+
+    todo_wine_if(todo)
+    ok(outputdebugstring_exceptions == numexc, "OutputDebugStringA generated %d exceptions, expected %d\n",
+       outputdebugstring_exceptions, numexc);
+
+    pRtlRemoveVectoredExceptionHandler(vectored_handler);
+}
+
+static DWORD ripevent_exceptions;
+
+static LONG CALLBACK ripevent_vectored_handler(EXCEPTION_POINTERS *ExceptionInfo)
+{
+    PEXCEPTION_RECORD rec = ExceptionInfo->ExceptionRecord;
+    trace("vect. handler %08x addr:%p\n", rec->ExceptionCode, rec->ExceptionAddress);
+
+    ok(rec->ExceptionCode == DBG_RIPEXCEPTION, "ExceptionCode is %08x instead of %08x\n",
+       rec->ExceptionCode, DBG_RIPEXCEPTION);
+    ok(rec->NumberParameters == 2, "ExceptionParameters is %d instead of 2\n", rec->NumberParameters);
+    ok(rec->ExceptionInformation[0] == 0x11223344, "ExceptionInformation[0] = %08x instead of %08x\n",
+       (NTSTATUS)rec->ExceptionInformation[0], 0x11223344);
+    ok(rec->ExceptionInformation[1] == 0x55667788, "ExceptionInformation[1] = %08x instead of %08x\n",
+       (NTSTATUS)rec->ExceptionInformation[1], 0x55667788);
+
+    ripevent_exceptions++;
+    return (rec->ExceptionCode == DBG_RIPEXCEPTION) ? EXCEPTION_CONTINUE_EXECUTION : EXCEPTION_CONTINUE_SEARCH;
+}
+
+static void test_ripevent(DWORD numexc)
+{
+    EXCEPTION_RECORD record;
+    PVOID vectored_handler;
+
+    if (!pRtlAddVectoredExceptionHandler || !pRtlRemoveVectoredExceptionHandler || !pRtlRaiseException)
+    {
+        skip("RtlAddVectoredExceptionHandler or RtlRemoveVectoredExceptionHandler or RtlRaiseException not found\n");
+        return;
+    }
+
+    vectored_handler = pRtlAddVectoredExceptionHandler(TRUE, &ripevent_vectored_handler);
+    ok(vectored_handler != 0, "RtlAddVectoredExceptionHandler failed\n");
+
+    record.ExceptionCode = DBG_RIPEXCEPTION;
+    record.ExceptionFlags = 0;
+    record.ExceptionRecord = NULL;
+    record.ExceptionAddress = NULL;
+    record.NumberParameters = 2;
+    record.ExceptionInformation[0] = 0x11223344;
+    record.ExceptionInformation[1] = 0x55667788;
+
+    ripevent_exceptions = 0;
+    pRtlRaiseException(&record);
+    ok(ripevent_exceptions == numexc, "RtlRaiseException generated %d exceptions, expected %d\n",
+       ripevent_exceptions, numexc);
+
+    pRtlRemoveVectoredExceptionHandler(vectored_handler);
+}
 
 static DWORD breakpoint_exceptions;
 
@@ -3541,7 +3539,7 @@ static LONG CALLBACK breakpoint_handler(EXCEPTION_POINTERS *ExceptionInfo)
     ok(rec->ExceptionInformation[0] == 0,
        "got ExceptionInformation[0] = %lx\n", rec->ExceptionInformation[0]);
     ExceptionInfo->ContextRecord->Eip = (DWORD)code_mem + 2;
-#else
+#elif defined(__x86_64__)
     ok(ExceptionInfo->ContextRecord->Rip == (DWORD_PTR)code_mem + 1,
        "expected Rip = %lx, got %lx\n", (DWORD_PTR)code_mem + 1, ExceptionInfo->ContextRecord->Rip);
     ok(rec->NumberParameters == 1,
@@ -3549,16 +3547,35 @@ static LONG CALLBACK breakpoint_handler(EXCEPTION_POINTERS *ExceptionInfo)
     ok(rec->ExceptionInformation[0] == 0,
        "got ExceptionInformation[0] = %lx\n", rec->ExceptionInformation[0]);
     ExceptionInfo->ContextRecord->Rip = (DWORD_PTR)code_mem + 2;
+#elif defined(__arm__)
+    ok(ExceptionInfo->ContextRecord->Pc == (DWORD)code_mem,
+       "expected pc = %lx, got %lx\n", (DWORD)code_mem, ExceptionInfo->ContextRecord->Pc);
+    ok(rec->NumberParameters == 1,
+       "ExceptionParameters is %d instead of 1\n", rec->NumberParameters);
+    ok(rec->ExceptionInformation[0] == 0,
+       "got ExceptionInformation[0] = %lx\n", rec->ExceptionInformation[0]);
+    ExceptionInfo->ContextRecord->Pc = (DWORD)code_mem + 4;
+#elif defined(__aarch64__)
+    ok(ExceptionInfo->ContextRecord->Pc == (DWORD_PTR)code_mem,
+       "expected pc = %lx, got %lx\n", (DWORD_PTR)code_mem, ExceptionInfo->ContextRecord->Pc);
+    ok(rec->NumberParameters == 1,
+       "ExceptionParameters is %d instead of 1\n", rec->NumberParameters);
+    ok(rec->ExceptionInformation[0] == 0,
+       "got ExceptionInformation[0] = %lx\n", rec->ExceptionInformation[0]);
+    ExceptionInfo->ContextRecord->Pc = (DWORD_PTR)code_mem + 4;
 #endif
 
     breakpoint_exceptions++;
     return (rec->ExceptionCode == EXCEPTION_BREAKPOINT) ? EXCEPTION_CONTINUE_EXECUTION : EXCEPTION_CONTINUE_SEARCH;
 }
 
-static const BYTE breakpoint_code[] = {
-    0xcd, 0x03,                   /* int $0x3 */
-    0xc3,                         /* ret */
-};
+#if defined(__i386__) || defined(__x86_64__)
+static const BYTE breakpoint_code[] = { 0xcd, 0x03, 0xc3 };   /* int $0x3; ret */
+#elif defined(__arm__)
+static const DWORD breakpoint_code[] = { 0xe1200070, 0xe12fff1e };  /* bkpt #0; bx lr */
+#elif defined(__aarch64__)
+static const DWORD breakpoint_code[] = { 0xd4200000, 0xd65f03c0 };  /* brk #0; ret */
+#endif
 
 static void test_breakpoint(DWORD numexc)
 {
@@ -3662,7 +3679,6 @@ static void test_vectored_continue_handler(void)
     ret = pRtlRemoveVectoredContinueHandler((void *)0x11223344);
     ok(!ret, "RtlRemoveVectoredContinueHandler succeeded\n");
 }
-#endif /* defined(__i386__) || defined(__x86_64__) */
 
 static DWORD WINAPI suspend_thread_test( void *arg )
 {
@@ -4082,12 +4098,7 @@ START_TEST(exception)
     test_exceptions();
     test_rtlraiseexception();
     test_debug_registers();
-    test_outputdebugstring(1, FALSE);
-    test_ripevent(1);
     test_debug_service(1);
-    test_breakpoint(1);
-    test_closehandle(0, (HANDLE)0xdeadbeef);
-    test_vectored_continue_handler();
     test_debugger();
     test_simd_exceptions();
     test_fpu_exceptions();
@@ -4095,12 +4106,6 @@ START_TEST(exception)
     test_prot_fault();
     test_thread_context();
     test_kiuserexceptiondispatcher();
-
-    /* Call of Duty WWII writes to BeingDebugged then closes an invalid handle,
-     * crashing the game if an exception is raised. */
-    NtCurrentTeb()->Peb->BeingDebugged = 0x98;
-    test_closehandle(0, (HANDLE)0xdeadbeef);
-    NtCurrentTeb()->Peb->BeingDebugged = 0;
 
 #elif defined(__x86_64__)
 
@@ -4124,12 +4129,7 @@ START_TEST(exception)
                                                                  "_setjmp" );
 
     test_debug_registers();
-    test_outputdebugstring(1, FALSE);
-    test_ripevent(1);
     test_debug_service(1);
-    test_breakpoint(1);
-    test_closehandle(0, (HANDLE)0xdeadbeef);
-    test_vectored_continue_handler();
     test_virtual_unwind();
     test___C_specific_handler();
     test_restore_context();
@@ -4142,14 +4142,19 @@ START_TEST(exception)
       test_dynamic_unwind();
     else
       skip( "Dynamic unwind functions not found\n" );
+#endif
 
+    test_outputdebugstring(1, FALSE);
+    test_ripevent(1);
+    test_breakpoint(1);
+    test_closehandle(0, (HANDLE)0xdeadbeef);
     /* Call of Duty WWII writes to BeingDebugged then closes an invalid handle,
      * crashing the game if an exception is raised. */
     NtCurrentTeb()->Peb->BeingDebugged = 0x98;
     test_closehandle(0, (HANDLE)0xdeadbeef);
     NtCurrentTeb()->Peb->BeingDebugged = 0;
-#endif
 
+    test_vectored_continue_handler();
     test_suspend_thread();
     test_suspend_process();
     test_unload_trace();

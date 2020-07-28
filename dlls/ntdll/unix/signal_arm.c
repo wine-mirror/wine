@@ -639,6 +639,7 @@ static void trap_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     case TRAP_BRKPT:
     default:
         rec.ExceptionCode = EXCEPTION_BREAKPOINT;
+        rec.NumberParameters = 1;
         break;
     }
     setup_exception( sigcontext, &rec );
