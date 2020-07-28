@@ -116,18 +116,31 @@ static DWORD64 get_fault_esr( ucontext_t *sigcontext )
 
 static pthread_key_t teb_key;
 
+struct syscall_frame
+{
+    ULONG64 x29;
+    ULONG64 thunk_addr;
+    ULONG64 x0, x1, x2, x3, x4, x5, x6, x7, x8;
+    struct syscall_frame *prev_frame;
+    ULONG64 x19, x20, x21, x22, x23, x24, x25, x26, x27, x28;
+    ULONG64 thunk_x29;
+    ULONG64 ret_addr;
+};
+
 struct arm64_thread_data
 {
-    void     *exit_frame;    /* 02f0 exit frame pointer */
-    CONTEXT  *context;       /* 02f8 context to set with SIGUSR2 */
+    void                 *exit_frame;    /* 02f0 exit frame pointer */
+    struct syscall_frame *syscall_frame; /* 02f8 frame pointer on syscall entry */
+    CONTEXT              *context;       /* 0300 context to set with SIGUSR2 */
 };
 
 C_ASSERT( sizeof(struct arm64_thread_data) <= sizeof(((struct ntdll_thread_data *)0)->cpu_data) );
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct arm64_thread_data, exit_frame ) == 0x2f0 );
+C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct arm64_thread_data, syscall_frame ) == 0x2f8 );
 
 static inline struct arm64_thread_data *arm64_thread_data(void)
 {
-    return (struct x86_thread_data *)ntdll_get_thread_data()->cpu_data;
+    return (struct arm64_thread_data *)ntdll_get_thread_data()->cpu_data;
 }
 
 

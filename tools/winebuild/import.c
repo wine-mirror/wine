@@ -1594,7 +1594,7 @@ void output_syscalls( DLLSPEC *spec )
             output( "\tstr r8, [r7]\n" );  /* prev frame */
             output( "\tsub sp, r6, #40\n" );
             output( "\tpop {r5-r11,pc}\n" );
-            output( "5:\tldr r0,9f\n" );
+            output( "5:\tldr r0, 9f\n" );
             output( "\tpop {r5-r11,pc}\n" );
             output( "6:\t.long .Lsyscall_table-4b\n" );
             output( "7:\t.long .Lsyscall_args-1b\n" );
@@ -1603,12 +1603,56 @@ void output_syscalls( DLLSPEC *spec )
             break;
         case CPU_ARM64:
             output( "\tcmp x8, %u\n", count );
-            output( "\tbcs 1f\n" );
-            output( "\tadrp x16, .Lsyscall_table\n" );
+            output( "\tbcs 3f\n" );
+            output( "\tstp x29, x30, [sp,#-176]!\n" );
+            output( "\tmov x29, sp\n" );
+            output( "\tstp x27, x28, [sp, #160]\n" );
+            output( "\tstp x25, x26, [sp, #144]\n" );
+            output( "\tstp x23, x24, [sp, #128]\n" );
+            output( "\tstp x21, x22, [sp, #112]\n" );
+            output( "\tstp x19, x20, [sp, #96]\n" );
+            output( "\tstr x8, [sp, #80]\n" );
+            output( "\tstp x6, x7, [sp, #64]\n" );
+            output( "\tstp x4, x5, [sp, #48]\n" );
+            output( "\tstp x2, x3, [sp, #32]\n" );
+            output( "\tstp x0, x1, [sp, #16]\n" );
+            output( "\tbl %s\n", asm_name("NtCurrentTeb") );
+            output( "\tadd x19, x0, #0x2f8\n" );  /* arm64_thread_data()->syscall_frame */
+            output( "\tldp x0, x1, [sp, #16]\n" );
+            output( "\tldp x2, x3, [sp, #32]\n" );
+            output( "\tldp x4, x5, [sp, #48]\n" );
+            output( "\tldp x6, x7, [sp, #64]\n" );
+            output( "\tldr x8, [sp, #80]\n" );
+            output( "\tldr x20, [x19]\n" );  /* prev frame */
+            output( "\tstr x20, [sp, #88]\n" );
+            output( "\tstr x29, [x19]\n" );  /* syscall frame */
+            output( "\tadrp x16, .Lsyscall_args\n" );
+            output( "\tadd x16, x16, #:lo12:.Lsyscall_args\n" );
+            output( "\tldrb w9, [x16, x8]\n" );
+            output( "\tsubs x9, x9, #64\n" );
+            output( "\tbls 2f\n" );
+            output( "\tadd x11, x29, #192\n" );
+            output( "\tsub sp, sp, x9\n" );
+            output( "\ttbz x9, #3, 1f\n" );
+            output( "\tsub SP, SP, #8\n" );
+            output( "1:\tsub x9, x9, #8\n" );
+            output( "\tldr x10, [x11, x9]\n" );
+            output( "\tstr x10, [sp, x9]\n" );
+            output( "\tcbnz x9, 1b\n" );
+            output( "2:\tadrp x16, .Lsyscall_table\n" );
             output( "\tadd x16, x16, #:lo12:.Lsyscall_table\n" );
             output( "\tldr x16, [x16, x8, lsl 3]\n" );
-            output( "\tbr x16\n" );
-            output( "1:\tmov x0, #0x%x\n", invalid_param & 0xffff0000 );
+            output( "\tblr x16\n" );
+            output( "\tmov sp, x29\n" );
+            output( "\tstr x20, [x19]\n" );  /* prev frame */
+            output( "\tldp x19, x20, [sp, #96]\n" );
+            output( "\tldp x21, x22, [sp, #112]\n" );
+            output( "\tldp x23, x24, [sp, #128]\n" );
+            output( "\tldp x25, x26, [sp, #144]\n" );
+            output( "\tldp x27, x28, [sp, #160]\n" );
+            output( "\tldp x29, x30, [sp], #176\n" );
+            output( "\tret\n" );
+            output( "3:\tmov x0, #0x%x\n", invalid_param & 0xffff0000 );
             output( "\tmovk x0, #0x%x\n", invalid_param & 0x0000ffff );
             output( "\tret\n" );
             break;
@@ -1694,10 +1738,13 @@ void output_syscalls( DLLSPEC *spec )
             output( "3:\t.long %u\n", i );
             break;
         case CPU_ARM64:
+            output( "\tstp x29, x30, [sp,#-16]!\n" );
             output( "\tmov x8, #%u\n", i );
             output( "\tadrp x16, %s\n", asm_name("__wine_syscall_dispatcher") );
             output( "\tldr x16, [x16, #:lo12:%s]\n", asm_name("__wine_syscall_dispatcher") );
-            output( "\tbr x16\n");
+            output( "\tblr x16\n");
+            output( "\tldp x29, x30, [sp], #16\n" );
+            output( "\tret\n" );
             break;
         default:
             assert(0);
