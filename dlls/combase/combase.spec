@@ -185,6 +185,10 @@
 @ stdcall HDC_UserMarshal(ptr ptr ptr)
 @ stdcall HDC_UserSize(ptr long ptr)
 @ stdcall HDC_UserUnmarshal(ptr ptr ptr)
+@ stdcall HMENU_UserFree(ptr ptr)
+@ stdcall HMENU_UserMarshal(ptr ptr ptr)
+@ stdcall HMENU_UserSize(ptr long ptr)
+@ stdcall HMENU_UserUnmarshal(ptr ptr ptr)
 @ stub HSTRING_UserFree
 @ stub HSTRING_UserFree64
 @ stub HSTRING_UserMarshal

@@ -135,6 +135,7 @@ static void handle_UserFree(ULONG *pFlags, HANDLE *handle)
     }
 
 IMPL_WIREM_HANDLE(HDC)
+IMPL_WIREM_HANDLE(HMENU)
 IMPL_WIREM_HANDLE(HWND)
 
 /******************************************************************************
