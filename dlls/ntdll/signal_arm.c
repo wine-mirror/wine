@@ -60,7 +60,6 @@ __ASM_GLOBAL_FUNC( __chkstk, "lsl r4, r4, #2\n\t"
 /***********************************************************************
  *		RtlCaptureContext (NTDLL.@)
  */
-/* FIXME: Use the Stack instead of the actual register values */
 __ASM_STDCALL_FUNC( RtlCaptureContext, 4,
                     ".arm\n\t"
                     "stmib r0, {r0-r12}\n\t"   /* context->R0..R12 */
@@ -69,7 +68,7 @@ __ASM_STDCALL_FUNC( RtlCaptureContext, 4,
                     "str r1, [r0]\n\t"         /* context->ContextFlags */
                     "str SP, [r0, #0x38]\n\t"  /* context->Sp */
                     "str LR, [r0, #0x3c]\n\t"  /* context->Lr */
-                    "str PC, [r0, #0x40]\n\t"  /* context->Pc */
+                    "str LR, [r0, #0x40]\n\t"  /* context->Pc */
                     "mrs r1, CPSR\n\t"
                     "str r1, [r0, #0x44]\n\t"  /* context->Cpsr */
                     "bx lr"

@@ -3346,7 +3346,264 @@ static void test_kiuserexceptiondispatcher(void)
     ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
 }
 
-#endif  /* __x86_64__ */
+#elif defined(__arm__)
+
+static void test_thread_context(void)
+{
+    CONTEXT context;
+    NTSTATUS status;
+    struct expected
+    {
+        DWORD R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, Sp, Lr, Pc, Cpsr;
+    } expect;
+    NTSTATUS (*func_ptr)( void *arg1, void *arg2, struct expected *res, void *func ) = (void *)code_mem;
+
+    static const DWORD call_func[] =
+    {
+        0xe92d4002,  /* push    {r1, lr} */
+        0xe8821fff,  /* stm     r2, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, sl, fp, ip} */
+        0xe582d034,  /* str     sp, [r2, #52] */
+        0xe582e038,  /* str     lr, [r2, #56] */
+        0xe10f1000,  /* mrs     r1, CPSR */
+        0xe5821040,  /* str     r1, [r2, #64] */
+        0xe59d1000,  /* ldr     r1, [sp] */
+        0xe582f03c,  /* str     pc, [r2, #60] */
+        0xe12fff33,  /* blx     r3 */
+        0xe8bd8002,  /* pop     {r1, pc} */
+    };
+
+    memcpy( func_ptr, call_func, sizeof(call_func) );
+
+#define COMPARE(reg) \
+    ok( context.reg == expect.reg, "wrong " #reg " %08x/%08x\n", context.reg, expect.reg )
+
+    memset( &context, 0xcc, sizeof(context) );
+    memset( &expect, 0xcc, sizeof(expect) );
+    func_ptr( &context, 0, &expect, pRtlCaptureContext );
+    trace( "expect: r0=%08x r1=%08x r2=%08x r3=%08x r4=%08x r5=%08x r6=%08x r7=%08x r8=%08x r9=%08x "
+           "r10=%08x r11=%08x r12=%08x sp=%08x lr=%08x pc=%08x cpsr=%08x\n",
+           expect.R0, expect.R1, expect.R2, expect.R3, expect.R4, expect.R5, expect.R6, expect.R7,
+           expect.R8, expect.R9, expect.R10, expect.R11, expect.R12, expect.Sp, expect.Lr, expect.Pc, expect.Cpsr );
+    trace( "actual: r0=%08x r1=%08x r2=%08x r3=%08x r4=%08x r5=%08x r6=%08x r7=%08x r8=%08x r9=%08x "
+           "r10=%08x r11=%08x r12=%08x sp=%08x lr=%08x pc=%08x cpsr=%08x\n",
+           context.R0, context.R1, context.R2, context.R3, context.R4, context.R5, context.R6, context.R7,
+           context.R8, context.R9, context.R10, context.R11, context.R12, context.Sp, context.Lr, context.Pc, context.Cpsr );
+
+    ok( context.ContextFlags == CONTEXT_FULL,
+        "wrong flags %08x\n", context.ContextFlags );
+    COMPARE( R0 );
+    COMPARE( R1 );
+    COMPARE( R2 );
+    COMPARE( R3 );
+    COMPARE( R4 );
+    COMPARE( R5 );
+    COMPARE( R6 );
+    COMPARE( R7 );
+    COMPARE( R8 );
+    COMPARE( R9 );
+    COMPARE( R10 );
+    COMPARE( R11 );
+    COMPARE( R12 );
+    COMPARE( Sp );
+    COMPARE( Pc );
+    COMPARE( Cpsr );
+    ok( context.Lr == expect.Pc, "wrong Lr %08x/%08x\n", context.Lr, expect.Pc );
+
+    memset( &context, 0xcc, sizeof(context) );
+    memset( &expect, 0xcc, sizeof(expect) );
+    context.ContextFlags = CONTEXT_FULL;
+
+    status = func_ptr( GetCurrentThread(), &context, &expect, pNtGetContextThread );
+    ok( status == STATUS_SUCCESS, "NtGetContextThread failed %08x\n", status );
+    trace( "expect: r0=%08x r1=%08x r2=%08x r3=%08x r4=%08x r5=%08x r6=%08x r7=%08x r8=%08x r9=%08x "
+           "r10=%08x r11=%08x r12=%08x sp=%08x lr=%08x pc=%08x cpsr=%08x\n",
+           expect.R0, expect.R1, expect.R2, expect.R3, expect.R4, expect.R5, expect.R6, expect.R7,
+           expect.R8, expect.R9, expect.R10, expect.R11, expect.R12, expect.Sp, expect.Lr, expect.Pc, expect.Cpsr );
+    trace( "actual: r0=%08x r1=%08x r2=%08x r3=%08x r4=%08x r5=%08x r6=%08x r7=%08x r8=%08x r9=%08x "
+           "r10=%08x r11=%08x r12=%08x sp=%08x lr=%08x pc=%08x cpsr=%08x\n",
+           context.R0, context.R1, context.R2, context.R3, context.R4, context.R5, context.R6, context.R7,
+           context.R8, context.R9, context.R10, context.R11, context.R12, context.Sp, context.Lr, context.Pc, context.Cpsr );
+    /* other registers are not preserved */
+    COMPARE( R4 );
+    COMPARE( R5 );
+    COMPARE( R6 );
+    COMPARE( R7 );
+    COMPARE( R8 );
+    COMPARE( R9 );
+    COMPARE( R10 );
+    COMPARE( R11 );
+    COMPARE( Cpsr );
+    ok( context.Sp == expect.Sp - 8,
+        "wrong Sp %08x/%08x\n", context.Sp, expect.Sp - 8 );
+    /* Pc is somewhere close to the NtGetContextThread implementation */
+    ok( (char *)context.Pc >= (char *)pNtGetContextThread - 0x40000 &&
+        (char *)context.Pc <= (char *)pNtGetContextThread + 0x40000,
+        "wrong Pc %08x/%08x\n", context.Pc, (DWORD)pNtGetContextThread );
+#undef COMPARE
+}
+
+#elif defined(__aarch64__)
+
+static void test_thread_context(void)
+{
+    CONTEXT context;
+    NTSTATUS status;
+    struct expected
+    {
+        ULONG64 X0, X1, X2, X3, X4, X5, X6, X7, X8, X9, X10, X11, X12, X13, X14, X15, X16,
+            X17, X18, X19, X20, X21, X22, X23, X24, X25, X26, X27, X28, Fp, Lr, Sp, Pc;
+        ULONG Cpsr;
+    } expect;
+    NTSTATUS (*func_ptr)( void *arg1, void *arg2, struct expected *res, void *func ) = (void *)code_mem;
+
+    static const DWORD call_func[] =
+    {
+        0xa9bf7bfd,  /* stp     x29, x30, [sp, #-16]! */
+        0xa9000440,  /* stp     x0, x1, [x2] */
+        0xa9010c42,  /* stp     x2, x3, [x2, #16] */
+        0xa9021444,  /* stp     x4, x5, [x2, #32] */
+        0xa9031c46,  /* stp     x6, x7, [x2, #48] */
+        0xa9042448,  /* stp     x8, x9, [x2, #64] */
+        0xa9052c4a,  /* stp     x10, x11, [x2, #80] */
+        0xa906344c,  /* stp     x12, x13, [x2, #96] */
+        0xa9073c4e,  /* stp     x14, x15, [x2, #112] */
+        0xa9084450,  /* stp     x16, x17, [x2, #128] */
+        0xa9094c52,  /* stp     x18, x19, [x2, #144] */
+        0xa90a5454,  /* stp     x20, x21, [x2, #160] */
+        0xa90b5c56,  /* stp     x22, x23, [x2, #176] */
+        0xa90c6458,  /* stp     x24, x25, [x2, #192] */
+        0xa90d6c5a,  /* stp     x26, x27, [x2, #208] */
+        0xa90e745c,  /* stp     x28, x29, [x2, #224] */
+        0xf900785e,  /* str     x30, [x2, #240] */
+        0x910003e1,  /* mov     x1, sp */
+        0xf9007c41,  /* str     x1, [x2, #248] */
+        0x90000001,  /* adrp    x1, 1f */
+        0x9101a021,  /* add     x1, x1, #:lo12:1f */
+        0xf9008041,  /* str     x1, [x2, #256] */
+        0xd53b4201,  /* mrs     x1, nzcv */
+        0xb9010841,  /* str     w1, [x2, #264] */
+        0xf9400441,  /* ldr     x1, [x2, #8] */
+        0xd63f0060,  /* blr     x3 */
+        0xa8c17bfd,  /* 1: ldp     x29, x30, [sp], #16 */
+        0xd65f03c0,  /* ret */
+     };
+
+    memcpy( func_ptr, call_func, sizeof(call_func) );
+
+#define COMPARE(reg) \
+    ok( context.reg == expect.reg, "wrong " #reg " %p/%p\n", (void *)(ULONG64)context.reg, (void *)(ULONG64)expect.reg )
+
+    memset( &context, 0xcc, sizeof(context) );
+    memset( &expect, 0xcc, sizeof(expect) );
+    func_ptr( &context, 0, &expect, pRtlCaptureContext );
+    trace( "expect: x0=%p x1=%p x2=%p x3=%p x4=%p x5=%p x6=%p x7=%p x8=%p x9=%p x10=%p x11=%p x12=%p x13=%p x14=%p x15=%p x16=%p x17=%p x18=%p x19=%p x20=%p x21=%p x22=%p x23=%p x24=%p x25=%p x26=%p x27=%p x28=%p fp=%p lr=%p sp=%p pc=%p cpsr=%08x\n",
+           (void *)expect.X0, (void *)expect.X1, (void *)expect.X2, (void *)expect.X3,
+           (void *)expect.X4, (void *)expect.X5, (void *)expect.X6, (void *)expect.X7,
+           (void *)expect.X8, (void *)expect.X9, (void *)expect.X10, (void *)expect.X11,
+           (void *)expect.X12, (void *)expect.X13, (void *)expect.X14, (void *)expect.X15,
+           (void *)expect.X16, (void *)expect.X17, (void *)expect.X18, (void *)expect.X19,
+           (void *)expect.X20, (void *)expect.X21, (void *)expect.X22, (void *)expect.X23,
+           (void *)expect.X24, (void *)expect.X25, (void *)expect.X26, (void *)expect.X27,
+           (void *)expect.X28, (void *)expect.Fp, (void *)expect.Lr, (void *)expect.Sp,
+           (void *)expect.Pc, expect.Cpsr );
+    trace( "actual: x0=%p x1=%p x2=%p x3=%p x4=%p x5=%p x6=%p x7=%p x8=%p x9=%p x10=%p x11=%p x12=%p x13=%p x14=%p x15=%p x16=%p x17=%p x18=%p x19=%p x20=%p x21=%p x22=%p x23=%p x24=%p x25=%p x26=%p x27=%p x28=%p fp=%p lr=%p sp=%p pc=%p cpsr=%08x\n",
+           (void *)context.X0, (void *)context.X1, (void *)context.X2, (void *)context.X3,
+           (void *)context.X4, (void *)context.X5, (void *)context.X6, (void *)context.X7,
+           (void *)context.X8, (void *)context.X9, (void *)context.X10, (void *)context.X11,
+           (void *)context.X12, (void *)context.X13, (void *)context.X14, (void *)context.X15,
+           (void *)context.X16, (void *)context.X17, (void *)context.X18, (void *)context.X19,
+           (void *)context.X20, (void *)context.X21, (void *)context.X22, (void *)context.X23,
+           (void *)context.X24, (void *)context.X25, (void *)context.X26, (void *)context.X27,
+           (void *)context.X28, (void *)context.Fp, (void *)context.Lr, (void *)context.Sp,
+           (void *)context.Pc, context.Cpsr );
+
+    ok( context.ContextFlags == CONTEXT_FULL,
+        "wrong flags %08x\n", context.ContextFlags );
+    COMPARE( X0 );
+    COMPARE( X1 );
+    COMPARE( X2 );
+    COMPARE( X3 );
+    COMPARE( X4 );
+    COMPARE( X5 );
+    COMPARE( X6 );
+    COMPARE( X7 );
+    COMPARE( X8 );
+    COMPARE( X9 );
+    COMPARE( X10 );
+    COMPARE( X11 );
+    COMPARE( X12 );
+    COMPARE( X13 );
+    COMPARE( X14 );
+    COMPARE( X15 );
+    COMPARE( X16 );
+    COMPARE( X17 );
+    COMPARE( X18 );
+    COMPARE( X19 );
+    COMPARE( X20 );
+    COMPARE( X21 );
+    COMPARE( X22 );
+    COMPARE( X23 );
+    COMPARE( X24 );
+    COMPARE( X25 );
+    COMPARE( X26 );
+    COMPARE( X27 );
+    COMPARE( X28 );
+    COMPARE( Fp );
+    COMPARE( Sp );
+    COMPARE( Pc );
+    COMPARE( Cpsr );
+    ok( context.Lr == expect.Pc, "wrong Lr %p/%p\n", (void *)context.Lr, (void *)expect.Pc );
+
+    memset( &context, 0xcc, sizeof(context) );
+    memset( &expect, 0xcc, sizeof(expect) );
+    context.ContextFlags = CONTEXT_FULL;
+
+    status = func_ptr( GetCurrentThread(), &context, &expect, pNtGetContextThread );
+    ok( status == STATUS_SUCCESS, "NtGetContextThread failed %08x\n", status );
+    trace( "expect: x0=%p x1=%p x2=%p x3=%p x4=%p x5=%p x6=%p x7=%p x8=%p x9=%p x10=%p x11=%p x12=%p x13=%p x14=%p x15=%p x16=%p x17=%p x18=%p x19=%p x20=%p x21=%p x22=%p x23=%p x24=%p x25=%p x26=%p x27=%p x28=%p fp=%p lr=%p sp=%p pc=%p cpsr=%08x\n",
+           (void *)expect.X0, (void *)expect.X1, (void *)expect.X2, (void *)expect.X3,
+           (void *)expect.X4, (void *)expect.X5, (void *)expect.X6, (void *)expect.X7,
+           (void *)expect.X8, (void *)expect.X9, (void *)expect.X10, (void *)expect.X11,
+           (void *)expect.X12, (void *)expect.X13, (void *)expect.X14, (void *)expect.X15,
+           (void *)expect.X16, (void *)expect.X17, (void *)expect.X18, (void *)expect.X19,
+           (void *)expect.X20, (void *)expect.X21, (void *)expect.X22, (void *)expect.X23,
+           (void *)expect.X24, (void *)expect.X25, (void *)expect.X26, (void *)expect.X27,
+           (void *)expect.X28, (void *)expect.Fp, (void *)expect.Lr, (void *)expect.Sp,
+           (void *)expect.Pc, expect.Cpsr );
+    trace( "actual: x0=%p x1=%p x2=%p x3=%p x4=%p x5=%p x6=%p x7=%p x8=%p x9=%p x10=%p x11=%p x12=%p x13=%p x14=%p x15=%p x16=%p x17=%p x18=%p x19=%p x20=%p x21=%p x22=%p x23=%p x24=%p x25=%p x26=%p x27=%p x28=%p fp=%p lr=%p sp=%p pc=%p cpsr=%08x\n",
+           (void *)context.X0, (void *)context.X1, (void *)context.X2, (void *)context.X3,
+           (void *)context.X4, (void *)context.X5, (void *)context.X6, (void *)context.X7,
+           (void *)context.X8, (void *)context.X9, (void *)context.X10, (void *)context.X11,
+           (void *)context.X12, (void *)context.X13, (void *)context.X14, (void *)context.X15,
+           (void *)context.X16, (void *)context.X17, (void *)context.X18, (void *)context.X19,
+           (void *)context.X20, (void *)context.X21, (void *)context.X22, (void *)context.X23,
+           (void *)context.X24, (void *)context.X25, (void *)context.X26, (void *)context.X27,
+           (void *)context.X28, (void *)context.Fp, (void *)context.Lr, (void *)context.Sp,
+           (void *)context.Pc, context.Cpsr );
+    /* other registers are not preserved */
+    todo_wine COMPARE( X18 );
+    COMPARE( X19 );
+    COMPARE( X20 );
+    COMPARE( X21 );
+    COMPARE( X22 );
+    COMPARE( X23 );
+    COMPARE( X24 );
+    COMPARE( X25 );
+    COMPARE( X26 );
+    COMPARE( X27 );
+    COMPARE( X28 );
+    COMPARE( Fp );
+    ok( context.Lr == expect.Pc, "wrong Lr %p/%p\n", (void *)context.Lr, (void *)expect.Pc );
+    ok( context.Sp == expect.Sp - 16,
+        "wrong Sp %p/%p\n", (void *)context.Sp, (void *)(expect.Sp - 16) );
+    /* Pc is somewhere close to the NtGetContextThread implementation */
+    ok( (char *)context.Pc >= (char *)pNtGetContextThread - 0x40000 &&
+        (char *)context.Pc <= (char *)pNtGetContextThread + 0x40000,
+        "wrong Pc %08x/%08x\n", context.Pc, (DWORD)pNtGetContextThread );
+#undef COMPARE
+}
+
+#endif  /* __aarch64__ */
 
 #if defined(__i386__) || defined(__x86_64__)
 
@@ -4291,7 +4548,6 @@ START_TEST(exception)
     test_fpu_exceptions();
     test_dpe_exceptions();
     test_prot_fault();
-    test_thread_context();
     test_kiuserexceptiondispatcher();
 
 #elif defined(__x86_64__)
@@ -4322,7 +4578,6 @@ START_TEST(exception)
     test_restore_context();
     test_prot_fault();
     test_dpe_exceptions();
-    test_thread_context();
     test_wow64_context();
     test_kiuserexceptiondispatcher();
 
@@ -4332,6 +4587,7 @@ START_TEST(exception)
       skip( "Dynamic unwind functions not found\n" );
 #endif
 
+    test_thread_context();
     test_outputdebugstring(1, FALSE);
     test_ripevent(1);
     test_breakpoint(1);

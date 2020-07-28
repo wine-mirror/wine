@@ -78,6 +78,7 @@ static inline BOOL is_valid_frame( ULONG_PTR frame )
  *		RtlCaptureContext (NTDLL.@)
  */
 __ASM_STDCALL_FUNC( RtlCaptureContext, 8,
+                    "str x0, [x0, #0x8]\n\t"         /* context->X0 */
                     "stp x1, x2, [x0, #0x10]\n\t"    /* context->X1,X2 */
                     "stp x3, x4, [x0, #0x20]\n\t"    /* context->X3,X4 */
                     "stp x5, x6, [x0, #0x30]\n\t"    /* context->X5,X6 */
