@@ -438,6 +438,7 @@ struct eq
 {
     struct effect effect;
     IDirectSoundFXParamEq IDirectSoundFXParamEq_iface;
+    DSFXParamEq params;
 };
 
 static struct eq *impl_from_IDirectSoundFXParamEq(IDirectSoundFXParamEq *iface)
@@ -467,18 +468,24 @@ static HRESULT WINAPI eq_params_SetAllParameters(IDirectSoundFXParamEq *iface, c
 {
     struct eq *effect = impl_from_IDirectSoundFXParamEq(iface);
 
-    FIXME("effect %p, params %p, stub!\n", effect, params);
+    TRACE("effect %p, params %p.\n", effect, params);
 
-    return E_NOTIMPL;
+    EnterCriticalSection(&effect->effect.cs);
+    effect->params = *params;
+    LeaveCriticalSection(&effect->effect.cs);
+    return S_OK;
 }
 
 static HRESULT WINAPI eq_params_GetAllParameters(IDirectSoundFXParamEq *iface, DSFXParamEq *params)
 {
     struct eq *effect = impl_from_IDirectSoundFXParamEq(iface);
 
-    FIXME("effect %p, params %p, stub!\n", effect, params);
+    TRACE("effect %p, params %p.\n", effect, params);
 
-    return E_NOTIMPL;
+    EnterCriticalSection(&effect->effect.cs);
+    *params = effect->params;
+    LeaveCriticalSection(&effect->effect.cs);
+    return S_OK;
 }
 
 static const IDirectSoundFXParamEqVtbl eq_params_vtbl =
@@ -526,6 +533,10 @@ static HRESULT eq_create(IUnknown *outer, IUnknown **out)
 
     effect_init(&object->effect, outer, &eq_ops);
     object->IDirectSoundFXParamEq_iface.lpVtbl = &eq_params_vtbl;
+
+    object->params.fCenter = 8000.0f;
+    object->params.fBandwidth = 12.0f;
+    object->params.fGain = 0.0f;
 
     TRACE("Created equalizer effect %p.\n", object);
     *out = &object->effect.IUnknown_inner;

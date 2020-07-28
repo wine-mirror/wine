@@ -453,13 +453,27 @@ static void test_eq_parameters(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IDirectSoundFXParamEq_GetAllParameters(eq, &params);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
-    if (hr == S_OK)
-    {
-        ok(params.fCenter == 8000.0f, "Got center frequency %.8e Hz.\n", params.fCenter);
-        ok(params.fBandwidth == 12.0f, "Got band width %.8e semitones.\n", params.fBandwidth);
-        ok(params.fGain == 0.0f, "Got gain %.8e.\n", params.fGain);
-    }
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(params.fCenter == 8000.0f, "Got center frequency %.8e Hz.\n", params.fCenter);
+    ok(params.fBandwidth == 12.0f, "Got band width %.8e semitones.\n", params.fBandwidth);
+    ok(params.fGain == 0.0f, "Got gain %.8e.\n", params.fGain);
+
+    params.fCenter = 79.0f;
+    hr = IDirectSoundFXParamEq_SetAllParameters(eq, &params);
+    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    params.fCenter = 16001.0f;
+    hr = IDirectSoundFXParamEq_SetAllParameters(eq, &params);
+    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    params.fCenter = 738.0f;
+    hr = IDirectSoundFXParamEq_SetAllParameters(eq, &params);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    memset(&params, 0xcc, sizeof(params));
+    hr = IDirectSoundFXParamEq_GetAllParameters(eq, &params);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(params.fCenter == 738.0f, "Got center frequency %.8e Hz.\n", params.fCenter);
+    ok(params.fBandwidth == 12.0f, "Got band width %.8e semitones.\n", params.fBandwidth);
+    ok(params.fGain == 0.0f, "Got gain %.8e.\n", params.fGain);
 
     ref = IDirectSoundFXParamEq_Release(eq);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
