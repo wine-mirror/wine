@@ -336,6 +336,85 @@ static void test_openfile(const WCHAR *test_avi_path)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+static void test_mmstream_get_duration(const WCHAR *test_avi_path)
+{
+    IAMMultiMediaStream *mmstream = create_ammultimediastream();
+    HRESULT hr, audio_hr;
+    LONGLONG duration;
+    ULONG ref;
+
+    duration = 0xdeadbeefdeadbeefULL;
+    hr = IAMMultiMediaStream_GetDuration(mmstream, &duration);
+    ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
+    ok(duration == 0xdeadbeefdeadbeefULL, "Got duration %s.\n", wine_dbgstr_longlong(duration));
+
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryVideo, 0, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryAudio, AMMSF_ADDDEFAULTRENDERER, NULL);
+    ok(hr == S_OK || hr == VFW_E_NO_AUDIO_HARDWARE, "Got hr %#x.\n", hr);
+    audio_hr = hr;
+
+    hr = IAMMultiMediaStream_OpenFile(mmstream, test_avi_path, 0);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    duration = 0xdeadbeefdeadbeefULL;
+    hr = IAMMultiMediaStream_GetDuration(mmstream, &duration);
+    if (audio_hr == S_OK)
+    {
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(duration == 1000000LL, "Got duration %s.\n", wine_dbgstr_longlong(duration));
+    }
+    else
+    {
+        ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+        ok(!duration, "Got duration %s.\n", wine_dbgstr_longlong(duration));
+    }
+
+    ref = IAMMultiMediaStream_Release(mmstream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+    mmstream = create_ammultimediastream();
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryAudio, 0, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    duration = 0xdeadbeefdeadbeefULL;
+    hr = IAMMultiMediaStream_GetDuration(mmstream, &duration);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(duration == 0, "Got duration %s.\n", wine_dbgstr_longlong(duration));
+
+    ref = IAMMultiMediaStream_Release(mmstream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+    mmstream = create_ammultimediastream();
+
+    hr = IAMMultiMediaStream_OpenFile(mmstream, test_avi_path, 0);
+    todo_wine ok(hr == VFW_E_CANNOT_CONNECT, "Got hr %#x.\n", hr);
+
+    duration = 0xdeadbeefdeadbeefULL;
+    hr = IAMMultiMediaStream_GetDuration(mmstream, &duration);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    todo_wine ok(duration == 0, "Got duration %s.\n", wine_dbgstr_longlong(duration));
+
+    ref = IAMMultiMediaStream_Release(mmstream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+    mmstream = create_ammultimediastream();
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryAudio, 0, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAMMultiMediaStream_OpenFile(mmstream, test_avi_path, AMMSF_NORENDER);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    duration = 0xdeadbeefdeadbeefULL;
+    hr = IAMMultiMediaStream_GetDuration(mmstream, &duration);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(duration == 0, "Got duration %s.\n", wine_dbgstr_longlong(duration));
+
+    ref = IAMMultiMediaStream_Release(mmstream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 static void test_renderfile(const WCHAR *test_avi_path)
 {
     IAMMultiMediaStream *pams;
@@ -5432,6 +5511,7 @@ START_TEST(amstream)
     test_avi_path = load_resource(L"test.avi");
 
     test_openfile(test_avi_path);
+    test_mmstream_get_duration(test_avi_path);
     test_renderfile(test_avi_path);
 
     unload_resource(test_avi_path);
