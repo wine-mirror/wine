@@ -47,6 +47,7 @@
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 DEFINE_GUID(outer_test_iid,0x06d4cd6c,0x18dd,0x11ea,0x8e,0x76,0xfc,0xaa,0x14,0x72,0x2d,0xac);
 DEFINE_OLEGUID(CGID_DocHostCmdPriv, 0x000214D4L, 0, 0);
+DEFINE_GUID(IID_IProxyManager,0x00000008,0x0000,0x0000,0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46);
 
 #define DEFINE_EXPECT(func) \
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
@@ -157,6 +158,7 @@ DEFINE_EXPECT(OnFocus_TRUE);
 DEFINE_EXPECT(OnFocus_FALSE);
 DEFINE_EXPECT(GetExternal);
 DEFINE_EXPECT(outer_QI_test);
+DEFINE_EXPECT(Advise_OnClose);
 
 static const WCHAR wszItem[] = {'i','t','e','m',0};
 
@@ -184,6 +186,7 @@ static BOOL nav_back_todo, nav_forward_todo; /* FIXME */
 
 static DWORD dwl_flags;
 
+static IAdviseSink test_sink;
 
 /* Returns true if the user interface is in English. Note that this does not
  * presume of the formatting of dates, numbers, etc.
@@ -1834,11 +1837,15 @@ static void test_DoVerb(IWebBrowser2 *unk)
     IOleObject *oleobj;
     RECT rect = {0,0,1000,1000};
     HRESULT hres;
+    DWORD connection;
 
     hres = IWebBrowser2_QueryInterface(unk, &IID_IOleObject, (void**)&oleobj);
     ok(hres == S_OK, "QueryInterface(IID_OleObject) failed: %08x\n", hres);
     if(FAILED(hres))
         return;
+
+    hres = IOleObject_Advise(oleobj, &test_sink, &connection);
+    ok(hres == S_OK, "Advise failed: %08x\n", hres);
 
     SET_EXPECT(CanInPlaceActivate);
     SET_EXPECT(Site_GetWindow);
@@ -1873,6 +1880,9 @@ static void test_DoVerb(IWebBrowser2 *unk)
     hres = IOleObject_DoVerb(oleobj, OLEIVERB_SHOW, NULL, &ClientSite,
                            0, (HWND)0xdeadbeef, &rect);
     ok(hres == S_OK, "DoVerb failed: %08x\n", hres);
+
+    hres = IOleObject_Unadvise(oleobj, connection);
+    ok(hres == S_OK, "Unadvise failed: %08x\n", hres);
 
     IOleObject_Release(oleobj);
 }
@@ -3681,6 +3691,7 @@ static void test_Close(IWebBrowser2 *wb, BOOL do_download)
     }else {
         nav_back_todo = nav_forward_todo = TRUE;
     }
+    SET_EXPECT(Advise_OnClose);
     hres = IOleObject_Close(oo, OLECLOSE_NOSAVE);
     ok(hres == S_OK, "OleObject_Close failed: %x\n", hres);
     CHECK_CALLED(Frame_SetActiveObject);
@@ -3702,6 +3713,7 @@ static void test_Close(IWebBrowser2 *wb, BOOL do_download)
     }else {
         nav_back_todo = nav_forward_todo = FALSE;
     }
+    CHECK_CALLED(Advise_OnClose);
 
     hres = IOleObject_GetClientSite(oo, &ocs);
     ok(hres == S_OK, "hres = %x\n", hres);
@@ -3728,14 +3740,64 @@ static void test_Close(IWebBrowser2 *wb, BOOL do_download)
     SET_EXPECT(OnFocus_FALSE);
     SET_EXPECT(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK_FALSE);
     SET_EXPECT(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD_FALSE);
+    SET_EXPECT(Advise_OnClose);
     hres = IOleObject_Close(oo, OLECLOSE_NOSAVE);
     ok(hres == S_OK, "OleObject_Close failed: %x\n", hres);
     todo_wine CHECK_NOT_CALLED(OnFocus_FALSE);
     todo_wine CHECK_NOT_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK_FALSE);
     todo_wine CHECK_NOT_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD_FALSE);
+    CHECK_CALLED(Advise_OnClose);
 
     test_close = FALSE;
     IOleObject_Release(oo);
+}
+
+static void test_Advise(IWebBrowser2 *wb)
+{
+    IOleObject *oleobj;
+    IEnumSTATDATA *data;
+    DWORD connection[2];
+    HRESULT hres;
+
+    hres = IWebBrowser2_QueryInterface(wb, &IID_IOleObject, (void **)&oleobj);
+    ok(hres == S_OK, "QueryInterface(IID_IOleObject) failed: %08x\n", hres);
+
+    hres = IOleObject_Unadvise(oleobj, 0);
+    ok(hres == OLE_E_NOCONNECTION, "Unadvise returned: %08x\n", hres);
+
+    data = (void *)0xdeadbeef;
+    hres = IOleObject_EnumAdvise(oleobj, &data);
+    ok(hres == E_NOTIMPL, "EnumAdvise returned: %08x\n", hres);
+    ok(data == NULL, "got data %p\n", data);
+
+    connection[0] = 0xdeadbeef;
+    hres = IOleObject_Advise(oleobj, NULL, &connection[0]);
+    ok(hres == E_INVALIDARG, "Advise returned: %08x\n", hres);
+    ok(connection[0] == 0, "got connection %u\n", connection[0]);
+
+    hres = IOleObject_Advise(oleobj, &test_sink, NULL);
+    ok(hres == E_INVALIDARG, "Advise returned: %08x\n", hres);
+
+    connection[0] = 0xdeadbeef;
+    hres = IOleObject_Advise(oleobj, &test_sink, &connection[0]);
+    ok(hres == S_OK, "Advise returned: %08x\n", hres);
+    ok(connection[0] != 0xdeadbeef, "got connection %u\n", connection[0]);
+
+    connection[1] = 0xdeadbeef;
+    hres = IOleObject_Advise(oleobj, &test_sink, &connection[1]);
+    ok(hres == S_OK, "Advise returned: %08x\n", hres);
+    ok(connection[1] == connection[0] + 1, "got connection %u\n", connection[1]);
+
+    hres = IOleObject_Unadvise(oleobj, connection[1]);
+    ok(hres == S_OK, "Unadvise returned: %08x\n", hres);
+
+    hres = IOleObject_Unadvise(oleobj, connection[1]);
+    ok(hres == OLE_E_NOCONNECTION, "Unadvise returned: %08x\n", hres);
+
+    hres = IOleObject_Unadvise(oleobj, connection[0]);
+    ok(hres == S_OK, "Unadvise returned: %08x\n", hres);
+
+    IOleObject_Release(oleobj);
 }
 
 #define TEST_DOWNLOAD    0x0001
@@ -3756,13 +3818,21 @@ static void init_test(IWebBrowser2 *webbrowser, DWORD flags)
 static void test_WebBrowser(DWORD flags, BOOL do_close)
 {
     IWebBrowser2 *webbrowser;
-    ULONG ref;
+    IOleObject *oleobj;
+    HRESULT hres;
+    ULONG ref, connection;
 
     webbrowser = create_webbrowser();
     if(!webbrowser)
         return;
 
     init_test(webbrowser, flags);
+
+    hres = IWebBrowser2_QueryInterface(webbrowser, &IID_IOleObject, (void **)&oleobj);
+    ok(hres == S_OK, "QueryInterface(IID_OleObject) failed: %08x\n", hres);
+
+    hres = IOleObject_Advise(oleobj, &test_sink, &connection);
+    ok(hres == S_OK, "Advise failed: %08x\n", hres);
 
     test_QueryStatusWB(webbrowser, FALSE);
     test_ExecWB(webbrowser, FALSE);
@@ -3781,6 +3851,7 @@ static void test_WebBrowser(DWORD flags, BOOL do_close)
     test_QueryStatusWB(webbrowser, TRUE);
     test_Persist(webbrowser, 2);
     test_OleObject(webbrowser, 2);
+    test_Advise(webbrowser);
 
     if(do_download) {
         IHTMLDocument2 *doc, *doc2;
@@ -3866,6 +3937,11 @@ static void test_WebBrowser(DWORD flags, BOOL do_close)
     test_ConnectionPoint(webbrowser, FALSE);
     test_IServiceProvider(webbrowser);
 
+    hres = IOleObject_Unadvise(oleobj, connection);
+    ok(hres == S_OK, "Unadvise failed: %08x\n", hres);
+
+    IOleObject_Release(oleobj);
+
     ref = IWebBrowser2_Release(webbrowser);
     ok(ref == 0 || broken(do_download && !do_close), "ref=%d, expected 0\n", ref);
 }
@@ -3873,7 +3949,8 @@ static void test_WebBrowser(DWORD flags, BOOL do_close)
 static void test_WebBrowserV1(void)
 {
     IWebBrowser2 *wb;
-    ULONG ref;
+    IOleObject *oleobj;
+    ULONG ref, connection;
     HRESULT hres;
 
     hres = CoCreateInstance(&CLSID_WebBrowser_V1, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
@@ -3883,6 +3960,12 @@ static void test_WebBrowserV1(void)
     init_test(wb, 0);
     wb_version = 1;
 
+    hres = IWebBrowser2_QueryInterface(wb, &IID_IOleObject, (void **)&oleobj);
+    ok(hres == S_OK, "QueryInterface(IID_OleObject) failed: %08x\n", hres);
+
+    hres = IOleObject_Advise(oleobj, &test_sink, &connection);
+    ok(hres == S_OK, "Advise failed: %08x\n", hres);
+
     test_QueryStatusWB(wb, FALSE);
     test_ExecWB(wb, FALSE);
     test_QueryInterface(wb);
@@ -3891,6 +3974,12 @@ static void test_WebBrowserV1(void)
     test_EnumVerbs(wb);
     test_Persist(wb, 1);
     test_OleObject(wb, 1);
+    test_Advise(wb);
+
+    hres = IOleObject_Unadvise(oleobj, connection);
+    ok(hres == S_OK, "Unadvise failed: %08x\n", hres);
+
+    IOleObject_Release(oleobj);
 
     ref = IWebBrowser2_Release(wb);
     ok(ref == 0, "ref=%d, expected 0\n", ref);
@@ -4038,6 +4127,9 @@ static HRESULT WINAPI sink_QueryInterface( IAdviseSink *iface, REFIID riid, void
         return S_OK;
     }
 
+    if (IsEqualGUID(riid, &IID_IProxyManager))
+        return E_NOINTERFACE;
+
     ok(0, "unexpected call QI(%s)\n", wine_dbgstr_guid(riid));
     return E_NOINTERFACE;
 }
@@ -4054,27 +4146,28 @@ static ULONG WINAPI sink_Release(IAdviseSink *iface)
 
 static void WINAPI sink_OnDataChange(IAdviseSink *iface, FORMATETC *format, STGMEDIUM *medium)
 {
-    trace("%p, %p, %p\n", iface, format, medium);
+    trace("OnDataChange(%p, %p, %p)\n", iface, format, medium);
 }
 
 static void WINAPI sink_OnViewChange(IAdviseSink *iface, DWORD aspect, LONG index)
 {
-    trace("%p, %08x, %d\n", iface, aspect, index);
+    trace("OnViewChange(%p, %08x, %d)\n", iface, aspect, index);
 }
 
 static void WINAPI sink_OnRename(IAdviseSink *iface, IMoniker *moniker)
 {
-    trace("%p, %p\n", iface, moniker);
+    trace("OnRename(%p, %p) \n", iface, moniker);
 }
 
 static void WINAPI sink_OnSave(IAdviseSink *iface)
 {
-    trace("%p\n", iface);
+    trace("OnSave(%p)\n", iface);
 }
 
 static void WINAPI sink_OnClose(IAdviseSink *iface)
 {
-    trace("%p\n", iface);
+    trace("OnClose(%p)\n", iface);
+    CHECK_EXPECT(Advise_OnClose);
 }
 
 static const IAdviseSinkVtbl sink_vtbl =
