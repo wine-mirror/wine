@@ -1910,9 +1910,27 @@ static int console_input_events_ioctl( struct fd *fd, ioctl_code_t code, struct 
             return !get_error();
         }
 
+    case IOCTL_CONDRV_SCROLL:
+    case IOCTL_CONDRV_SET_MODE:
+    case IOCTL_CONDRV_WRITE_OUTPUT:
+    case IOCTL_CONDRV_READ_OUTPUT:
+    case IOCTL_CONDRV_FILL_OUTPUT:
+    case IOCTL_CONDRV_GET_OUTPUT_INFO:
+    case IOCTL_CONDRV_SET_OUTPUT_INFO:
+        if (!evts->console || !evts->console->active)
+        {
+            set_error( STATUS_INVALID_HANDLE );
+            return 0;
+        }
+        return screen_buffer_ioctl( evts->console->active->fd, code, async );
+
     default:
-        set_error( STATUS_INVALID_HANDLE );
-        return 0;
+        if (!evts->console)
+        {
+            set_error( STATUS_INVALID_HANDLE );
+            return 0;
+        }
+        return console_input_ioctl( evts->console->fd, code, async );
     }
 }
 
