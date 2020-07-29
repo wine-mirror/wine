@@ -2727,17 +2727,17 @@ static void test_class_installer(void)
 
     ret = SetupDiCallClassInstaller(DIF_ALLOW_INSTALL, set, &device);
     ok(!ret, "Expected failure.\n");
-    ok(GetLastError() == 0xdeadbeef, "Got unexpected error %#x.\n", GetLastError());
+    ok(GetLastError() == 0xdeadc0de, "Got unexpected error %#x.\n", GetLastError());
 
     ok(!device_is_registered(set, &device), "Expected device not to be registered.\n");
     ret = SetupDiCallClassInstaller(DIF_REGISTERDEVICE, set, &device);
     ok(!ret, "Expected failure.\n");
-    ok(GetLastError() == 0xdeadbeef, "Got unexpected error %#x.\n", GetLastError());
+    ok(GetLastError() == 0xdeadc0de, "Got unexpected error %#x.\n", GetLastError());
     ok(!device_is_registered(set, &device), "Expected device not to be registered.\n");
 
     ret = SetupDiCallClassInstaller(DIF_REMOVE, set, &device);
     ok(!ret, "Expected failure.\n");
-    ok(GetLastError() == 0xdeadbeef, "Got unexpected error %#x.\n", GetLastError());
+    ok(GetLastError() == 0xdeadc0de, "Got unexpected error %#x.\n", GetLastError());
     ok(!device_is_registered(set, &device), "Expected device not to be registered.\n");
 
     SetupDiDestroyDeviceInfoList(set);
@@ -2875,12 +2875,12 @@ static void test_class_coinstaller(void)
 
     ret = SetupDiCallClassInstaller(DIF_ALLOW_INSTALL, set, &device);
     ok(!ret, "Expected failure.\n");
-    ok(GetLastError() == 0xdeadbeef, "Got unexpected error %#x.\n", GetLastError());
+    ok(GetLastError() == 0xdeadc0de, "Got unexpected error %#x.\n", GetLastError());
 
     ok(!device_is_registered(set, &device), "Expected device not to be registered.\n");
     ret = SetupDiCallClassInstaller(DIF_REGISTERDEVICE, set, &device);
     ok(!ret, "Expected failure.\n");
-    ok(GetLastError() == 0xdeadbeef, "Got unexpected error %#x.\n", GetLastError());
+    ok(GetLastError() == 0xdeadc0de, "Got unexpected error %#x.\n", GetLastError());
     ok(!device_is_registered(set, &device), "Expected device not to be registered.\n");
 
     SetupDiDestroyDeviceInfoList(set);
