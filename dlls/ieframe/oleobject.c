@@ -610,6 +610,10 @@ static HRESULT WINAPI OleObject_Close(IOleObject *iface, DWORD dwSaveOption)
         IOleClientSite_AddRef(This->client);
     hres = IOleObject_SetClientSite(iface, NULL);
     This->client_closed = client;
+
+    if(This->advise_holder)
+        IOleAdviseHolder_SendOnClose(This->advise_holder);
+
     return hres;
 }
 
