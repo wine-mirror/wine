@@ -1464,6 +1464,7 @@ enable_msvcp110
 enable_msvcp120
 enable_msvcp120_app
 enable_msvcp140
+enable_msvcp140_1
 enable_msvcp60
 enable_msvcp70
 enable_msvcp71
@@ -20915,6 +20916,7 @@ wine_fn_config_makefile dlls/msvcp120/tests enable_tests
 wine_fn_config_makefile dlls/msvcp120_app enable_msvcp120_app
 wine_fn_config_makefile dlls/msvcp140 enable_msvcp140
 wine_fn_config_makefile dlls/msvcp140/tests enable_tests
+wine_fn_config_makefile dlls/msvcp140_1 enable_msvcp140_1
 wine_fn_config_makefile dlls/msvcp60 enable_msvcp60
 wine_fn_config_makefile dlls/msvcp60/tests enable_tests
 wine_fn_config_makefile dlls/msvcp70 enable_msvcp70
