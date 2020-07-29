@@ -199,6 +199,8 @@ struct WebBrowser {
     DWORD sink_aspects;
     DWORD sink_flags;
 
+    IOleAdviseHolder *advise_holder;
+
     /* window context */
 
     HWND frame_hwnd;
