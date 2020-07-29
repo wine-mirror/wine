@@ -1850,24 +1850,6 @@ struct free_console_reply
 
 
 
-struct open_console_request
-{
-    struct request_header __header;
-    obj_handle_t from;
-    unsigned int access;
-    unsigned int attributes;
-    int          share;
-    char __pad_28[4];
-};
-struct open_console_reply
-{
-    struct reply_header __header;
-    obj_handle_t handle;
-    char __pad_12[4];
-};
-
-
-
 struct attach_console_request
 {
     struct request_header __header;
@@ -5572,7 +5554,6 @@ enum request
     REQ_set_socket_deferred,
     REQ_alloc_console,
     REQ_free_console,
-    REQ_open_console,
     REQ_attach_console,
     REQ_get_console_wait_event,
     REQ_set_console_input_info,
@@ -5863,7 +5844,6 @@ union generic_request
     struct set_socket_deferred_request set_socket_deferred_request;
     struct alloc_console_request alloc_console_request;
     struct free_console_request free_console_request;
-    struct open_console_request open_console_request;
     struct attach_console_request attach_console_request;
     struct get_console_wait_event_request get_console_wait_event_request;
     struct set_console_input_info_request set_console_input_info_request;
@@ -6152,7 +6132,6 @@ union generic_reply
     struct set_socket_deferred_reply set_socket_deferred_reply;
     struct alloc_console_reply alloc_console_reply;
     struct free_console_reply free_console_reply;
-    struct open_console_reply open_console_reply;
     struct attach_console_reply attach_console_reply;
     struct get_console_wait_event_reply get_console_wait_event_reply;
     struct set_console_input_info_reply set_console_input_info_reply;
@@ -6376,7 +6355,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 632
+#define SERVER_PROTOCOL_VERSION 633
 
 /* ### protocol_version end ### */
 

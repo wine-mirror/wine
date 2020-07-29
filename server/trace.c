@@ -2041,19 +2041,6 @@ static void dump_free_console_request( const struct free_console_request *req )
 {
 }
 
-static void dump_open_console_request( const struct open_console_request *req )
-{
-    fprintf( stderr, " from=%04x", req->from );
-    fprintf( stderr, ", access=%08x", req->access );
-    fprintf( stderr, ", attributes=%08x", req->attributes );
-    fprintf( stderr, ", share=%d", req->share );
-}
-
-static void dump_open_console_reply( const struct open_console_reply *req )
-{
-    fprintf( stderr, " handle=%04x", req->handle );
-}
-
 static void dump_attach_console_request( const struct attach_console_request *req )
 {
     fprintf( stderr, " pid=%04x", req->pid );
@@ -4520,7 +4507,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_set_socket_deferred_request,
     (dump_func)dump_alloc_console_request,
     (dump_func)dump_free_console_request,
-    (dump_func)dump_open_console_request,
     (dump_func)dump_attach_console_request,
     (dump_func)dump_get_console_wait_event_request,
     (dump_func)dump_set_console_input_info_request,
@@ -4807,7 +4793,6 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     NULL,
     (dump_func)dump_alloc_console_reply,
     NULL,
-    (dump_func)dump_open_console_reply,
     (dump_func)dump_attach_console_reply,
     (dump_func)dump_get_console_wait_event_reply,
     NULL,
@@ -5094,7 +5079,6 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "set_socket_deferred",
     "alloc_console",
     "free_console",
-    "open_console",
     "attach_console",
     "get_console_wait_event",
     "set_console_input_info",

@@ -2091,28 +2091,6 @@ DECL_HANDLER(free_console)
     free_console( current->process );
 }
 
-/* open a handle to the process console */
-DECL_HANDLER(open_console)
-{
-    struct object      *obj = NULL;
-
-    if ((obj = get_handle_obj( current->process, req->from,
-                               FILE_READ_PROPERTIES|FILE_WRITE_PROPERTIES, &console_input_ops )))
-    {
-        struct console_input *console = (struct console_input *)obj;
-        obj = (console->active) ? grab_object( console->active ) : NULL;
-        release_object( console );
-    }
-
-    /* FIXME: req->share is not used (as in screen buffer creation)  */
-    if (obj)
-    {
-        reply->handle = alloc_handle( current->process, obj, req->access, req->attributes );
-        release_object( obj );
-    }
-    else if (!get_error()) set_error( STATUS_ACCESS_DENIED );
-}
-
 /* attach to a other process's console */
 DECL_HANDLER(attach_console)
 {
