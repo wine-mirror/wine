@@ -5680,6 +5680,53 @@ static void test_audiostreamsample_get_media_stream(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+static void test_audiostreamsample_get_audio_data(void)
+{
+    IAMMultiMediaStream *mmstream = create_ammultimediastream();
+    IAudioData *audio_data, *audio_data2;
+    IAudioStreamSample *audio_sample;
+    IAudioMediaStream *audio_stream;
+    IMediaStream *stream;
+    HRESULT hr;
+    ULONG ref;
+
+    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_READ, 0, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryAudio, 0, &stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaStream_QueryInterface(stream, &IID_IAudioMediaStream, (void **)&audio_stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = CoCreateInstance(&CLSID_AMAudioData, NULL, CLSCTX_INPROC_SERVER, &IID_IAudioData, (void **)&audio_data);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAudioMediaStream_CreateSample(audio_stream, audio_data, 0, &audio_sample);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAudioStreamSample_GetAudioData(audio_sample, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+    EXPECT_REF(audio_data, 2);
+    hr = IAudioStreamSample_GetAudioData(audio_sample, &audio_data2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(audio_data2 == audio_data, "Expected audio data %p, got %p.\n", audio_data, audio_data2);
+    EXPECT_REF(audio_data, 3);
+
+    IAudioData_Release(audio_data2);
+
+    IAudioMediaStream_Release(audio_stream);
+    ref = IAudioStreamSample_Release(audio_sample);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IAudioData_Release(audio_data);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IAMMultiMediaStream_Release(mmstream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IMediaStream_Release(stream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 START_TEST(amstream)
 {
     const WCHAR *test_avi_path;
@@ -5727,6 +5774,7 @@ START_TEST(amstream)
     test_audiostreamsample_completion_status();
     test_audiostreamsample_get_sample_times();
     test_audiostreamsample_get_media_stream();
+    test_audiostreamsample_get_audio_data();
 
     test_ddrawstream_initialize();
     test_ddrawstream_getsetdirectdraw();
