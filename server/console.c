@@ -1446,7 +1446,85 @@ static int fill_console_output( struct screen_buffer *screen_buffer, char_info_t
 
 /* scroll parts of a screen buffer */
 static void scroll_console_output( struct screen_buffer *screen_buffer, int xsrc, int ysrc, int xdst, int ydst,
-                                   int w, int h )
+                                   int w, int h, const rectangle_t *clip, char_info_t fill )
+{
+    struct condrv_renderer_event evt;
+    rectangle_t src, dst;
+    int x, y;
+
+    src.left   = max( xsrc, clip->left );
+    src.top    = max( ysrc, clip->top );
+    src.right  = min( xsrc + w - 1, clip->right );
+    src.bottom = min( ysrc + h - 1, clip->bottom );
+
+    dst.left   = xdst;
+    dst.top    = ydst;
+    dst.right  = xdst + w - 1;
+    dst.bottom = ydst + h - 1;
+
+    if (dst.left < clip->left)
+    {
+        xsrc += clip->left - dst.left;
+        w -= clip->left - dst.left;
+        dst.left = clip->left;
+    }
+    if (dst.top < clip->top)
+    {
+        ysrc += clip->top - dst.top;
+        h -= clip->top - dst.top;
+        dst.top = clip->top;
+    }
+    if (dst.right  > clip->right)  w -= dst.right  - clip->right;
+    if (dst.bottom > clip->bottom) h -= dst.bottom - clip->bottom;
+
+    if (w > 0 && h > 0)
+    {
+        if (ysrc < ydst)
+        {
+            for (y = h; y > 0; y--)
+            {
+                memcpy( &screen_buffer->data[(dst.top + y - 1) * screen_buffer->width + dst.left],
+                        &screen_buffer->data[(ysrc + y - 1) * screen_buffer->width + xsrc],
+                        w * sizeof(screen_buffer->data[0]) );
+            }
+        }
+        else
+        {
+            for (y = 0; y < h; y++)
+            {
+                /* we use memmove here because when psrc and pdst are the same,
+                 * copies are done on the same row, so the dst and src blocks
+                 * can overlap */
+                memmove( &screen_buffer->data[(dst.top + y) * screen_buffer->width + dst.left],
+                         &screen_buffer->data[(ysrc + y) * screen_buffer->width + xsrc],
+                         w * sizeof(screen_buffer->data[0]) );
+            }
+        }
+    }
+
+    for (y = src.top; y <= src.bottom; y++)
+    {
+        int left  = src.left;
+        int right = src.right;
+        if (dst.top <= y && y <= dst.bottom)
+        {
+            if (dst.left <= src.left) left  = max( left, dst.right + 1 );
+            if (dst.left >= src.left) right = min( right, dst.left - 1 );
+        }
+        for (x = left; x <= right; x++) screen_buffer->data[y * screen_buffer->width + x] = fill;
+    }
+
+    /* FIXME: this could be enhanced, by signalling scroll */
+    evt.event = CONSOLE_RENDERER_UPDATE_EVENT;
+    memset(&evt.u, 0, sizeof(evt.u));
+    evt.u.update.top    = min( src.top, dst.top );
+    evt.u.update.bottom = max( src.bottom, dst.bottom );
+    console_input_events_append( screen_buffer->input, &evt );
+}
+
+/* scroll parts of a screen buffer */
+static void scroll_console_output_req( struct screen_buffer *screen_buffer, int xsrc, int ysrc, int xdst, int ydst,
+                                       int w, int h )
 {
     int				j;
     char_info_t *psrc, *pdst;
@@ -1808,6 +1886,40 @@ static int screen_buffer_ioctl( struct fd *fd, ioctl_code_t code, struct async *
                                            params->x, params->y, params->count, params->wrap );
             if (written && get_reply_max_size() == sizeof(written))
                 set_reply_data( &written, sizeof(written) );
+            return !get_error();
+        }
+
+    case IOCTL_CONDRV_SCROLL:
+        {
+            const struct condrv_scroll_params *params = get_req_data();
+            rectangle_t clip;
+            if (get_req_data_size() != sizeof(*params))
+            {
+                set_error( STATUS_INVALID_PARAMETER );
+                return 0;
+            }
+            if (console_input_is_bare( screen_buffer->input ) || !screen_buffer->input)
+            {
+                set_error( STATUS_OBJECT_TYPE_MISMATCH );
+                return 0;
+            }
+            clip.left   = max( params->clip.Left, 0 );
+            clip.top    = max( params->clip.Top,  0 );
+            clip.right  = min( params->clip.Right,  screen_buffer->width - 1 );
+            clip.bottom = min( params->clip.Bottom, screen_buffer->height - 1 );
+            if (clip.left > clip.right || clip.top > clip.bottom || params->scroll.Left < 0 || params->scroll.Top < 0 ||
+                params->scroll.Right >= screen_buffer->width || params->scroll.Bottom >= screen_buffer->height ||
+                params->scroll.Right < params->scroll.Left || params->scroll.Top > params->scroll.Bottom ||
+                params->origin.X < 0 || params->origin.X >= screen_buffer->width || params->origin.Y < 0 ||
+                params->origin.Y >= screen_buffer->height)
+            {
+                set_error( STATUS_INVALID_PARAMETER );
+                return 0;
+            }
+
+            scroll_console_output( screen_buffer, params->scroll.Left, params->scroll.Top, params->origin.X, params->origin.Y,
+                                   params->scroll.Right - params->scroll.Left + 1, params->scroll.Bottom - params->scroll.Top + 1,
+                                   &clip, params->fill );
             return !get_error();
         }
 
@@ -2182,8 +2294,8 @@ DECL_HANDLER(move_console_output)
             release_object( screen_buffer );
             return;
         }
-        scroll_console_output( screen_buffer, req->x_src, req->y_src, req->x_dst, req->y_dst,
-                               req->w, req->h );
+        scroll_console_output_req( screen_buffer, req->x_src, req->y_src, req->x_dst, req->y_dst,
+                                   req->w, req->h );
         release_object( screen_buffer );
     }
 }

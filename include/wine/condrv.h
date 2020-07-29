@@ -22,6 +22,7 @@
 #define _INC_CONDRV
 
 #include "winioctl.h"
+#include "wincon.h"
 
 /* common console input and output ioctls */
 #define IOCTL_CONDRV_GET_MODE              CTL_CODE(FILE_DEVICE_CONSOLE,  0, METHOD_BUFFERED, FILE_READ_PROPERTIES)
@@ -43,6 +44,7 @@
 #define IOCTL_CONDRV_SET_OUTPUT_INFO       CTL_CODE(FILE_DEVICE_CONSOLE, 33, METHOD_BUFFERED, FILE_WRITE_PROPERTIES)
 #define IOCTL_CONDRV_ACTIVATE              CTL_CODE(FILE_DEVICE_CONSOLE, 34, METHOD_BUFFERED, FILE_WRITE_DATA)
 #define IOCTL_CONDRV_FILL_OUTPUT           CTL_CODE(FILE_DEVICE_CONSOLE, 35, METHOD_BUFFERED, FILE_WRITE_DATA)
+#define IOCTL_CONDRV_SCROLL                CTL_CODE(FILE_DEVICE_CONSOLE, 36, METHOD_BUFFERED, FILE_WRITE_DATA)
 
 /* console renderer ioctls */
 #define IOCTL_CONDRV_GET_RENDERER_EVENTS   CTL_CODE(FILE_DEVICE_CONSOLE, 70, METHOD_BUFFERED, FILE_READ_PROPERTIES)
@@ -133,6 +135,16 @@ struct condrv_output_info_params
     struct condrv_output_info info;   /* output info */
 };
 
+#define SET_CONSOLE_OUTPUT_INFO_CURSOR_GEOM     0x0001
+#define SET_CONSOLE_OUTPUT_INFO_CURSOR_POS      0x0002
+#define SET_CONSOLE_OUTPUT_INFO_SIZE            0x0004
+#define SET_CONSOLE_OUTPUT_INFO_ATTR            0x0008
+#define SET_CONSOLE_OUTPUT_INFO_DISPLAY_WINDOW  0x0010
+#define SET_CONSOLE_OUTPUT_INFO_MAX_SIZE        0x0020
+#define SET_CONSOLE_OUTPUT_INFO_FONT            0x0040
+#define SET_CONSOLE_OUTPUT_INFO_COLORTABLE      0x0080
+#define SET_CONSOLE_OUTPUT_INFO_POPUP_ATTR      0x0100
+
 /* IOCTL_CONDRV_FILL_OUTPUT params */
 struct condrv_fill_output_params
 {
@@ -145,15 +157,14 @@ struct condrv_fill_output_params
     unsigned short attr;              /* attribute to write */
 };
 
-#define SET_CONSOLE_OUTPUT_INFO_CURSOR_GEOM     0x0001
-#define SET_CONSOLE_OUTPUT_INFO_CURSOR_POS      0x0002
-#define SET_CONSOLE_OUTPUT_INFO_SIZE            0x0004
-#define SET_CONSOLE_OUTPUT_INFO_ATTR            0x0008
-#define SET_CONSOLE_OUTPUT_INFO_DISPLAY_WINDOW  0x0010
-#define SET_CONSOLE_OUTPUT_INFO_MAX_SIZE        0x0020
-#define SET_CONSOLE_OUTPUT_INFO_FONT            0x0040
-#define SET_CONSOLE_OUTPUT_INFO_COLORTABLE      0x0080
-#define SET_CONSOLE_OUTPUT_INFO_POPUP_ATTR      0x0100
+/* IOCTL_CONDRV_SCROLL params */
+struct condrv_scroll_params
+{
+    SMALL_RECT   scroll;              /* source rectangle */
+    COORD        origin;              /* destination coordinates */
+    SMALL_RECT   clip;                /* clipping rectangle */
+    char_info_t  fill;                /* empty character info */
+};
 
 /* IOCTL_CONDRV_GET_RENDERER_EVENTS result */
 struct condrv_renderer_event
