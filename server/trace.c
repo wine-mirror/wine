@@ -2139,17 +2139,6 @@ static void dump_create_console_output_reply( const struct create_console_output
     fprintf( stderr, " handle_out=%04x", req->handle_out );
 }
 
-static void dump_move_console_output_request( const struct move_console_output_request *req )
-{
-    fprintf( stderr, " handle=%04x", req->handle );
-    fprintf( stderr, ", x_src=%d", req->x_src );
-    fprintf( stderr, ", y_src=%d", req->y_src );
-    fprintf( stderr, ", x_dst=%d", req->x_dst );
-    fprintf( stderr, ", y_dst=%d", req->y_dst );
-    fprintf( stderr, ", w=%d", req->w );
-    fprintf( stderr, ", h=%d", req->h );
-}
-
 static void dump_send_console_signal_request( const struct send_console_signal_request *req )
 {
     fprintf( stderr, " signal=%d", req->signal );
@@ -4539,7 +4528,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_append_console_input_history_request,
     (dump_func)dump_get_console_input_history_request,
     (dump_func)dump_create_console_output_request,
-    (dump_func)dump_move_console_output_request,
     (dump_func)dump_send_console_signal_request,
     (dump_func)dump_read_directory_changes_request,
     (dump_func)dump_read_change_request,
@@ -4829,7 +4817,6 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_create_console_output_reply,
     NULL,
     NULL,
-    NULL,
     (dump_func)dump_read_change_reply,
     (dump_func)dump_create_mapping_reply,
     (dump_func)dump_open_mapping_reply,
@@ -5115,7 +5102,6 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "append_console_input_history",
     "get_console_input_history",
     "create_console_output",
-    "move_console_output",
     "send_console_signal",
     "read_directory_changes",
     "read_change",

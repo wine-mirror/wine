@@ -1995,25 +1995,6 @@ struct create_console_output_reply
 
 
 
-struct move_console_output_request
-{
-    struct request_header __header;
-    obj_handle_t handle;
-    short int    x_src;
-    short int    y_src;
-    short int    x_dst;
-    short int    y_dst;
-    short int    w;
-    short int    h;
-    char __pad_28[4];
-};
-struct move_console_output_reply
-{
-    struct reply_header __header;
-};
-
-
-
 struct send_console_signal_request
 {
     struct request_header __header;
@@ -5599,7 +5580,6 @@ enum request
     REQ_append_console_input_history,
     REQ_get_console_input_history,
     REQ_create_console_output,
-    REQ_move_console_output,
     REQ_send_console_signal,
     REQ_read_directory_changes,
     REQ_read_change,
@@ -5891,7 +5871,6 @@ union generic_request
     struct append_console_input_history_request append_console_input_history_request;
     struct get_console_input_history_request get_console_input_history_request;
     struct create_console_output_request create_console_output_request;
-    struct move_console_output_request move_console_output_request;
     struct send_console_signal_request send_console_signal_request;
     struct read_directory_changes_request read_directory_changes_request;
     struct read_change_request read_change_request;
@@ -6181,7 +6160,6 @@ union generic_reply
     struct append_console_input_history_reply append_console_input_history_reply;
     struct get_console_input_history_reply get_console_input_history_reply;
     struct create_console_output_reply create_console_output_reply;
-    struct move_console_output_reply move_console_output_reply;
     struct send_console_signal_reply send_console_signal_reply;
     struct read_directory_changes_reply read_directory_changes_reply;
     struct read_change_reply read_change_reply;
@@ -6398,7 +6376,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 631
+#define SERVER_PROTOCOL_VERSION 632
 
 /* ### protocol_version end ### */
 

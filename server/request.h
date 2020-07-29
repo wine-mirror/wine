@@ -191,7 +191,6 @@ DECL_HANDLER(get_console_input_info);
 DECL_HANDLER(append_console_input_history);
 DECL_HANDLER(get_console_input_history);
 DECL_HANDLER(create_console_output);
-DECL_HANDLER(move_console_output);
 DECL_HANDLER(send_console_signal);
 DECL_HANDLER(read_directory_changes);
 DECL_HANDLER(read_change);
@@ -482,7 +481,6 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_append_console_input_history,
     (req_handler)req_get_console_input_history,
     (req_handler)req_create_console_output,
-    (req_handler)req_move_console_output,
     (req_handler)req_send_console_signal,
     (req_handler)req_read_directory_changes,
     (req_handler)req_read_change,
@@ -1166,14 +1164,6 @@ C_ASSERT( FIELD_OFFSET(struct create_console_output_request, fd) == 28 );
 C_ASSERT( sizeof(struct create_console_output_request) == 32 );
 C_ASSERT( FIELD_OFFSET(struct create_console_output_reply, handle_out) == 8 );
 C_ASSERT( sizeof(struct create_console_output_reply) == 16 );
-C_ASSERT( FIELD_OFFSET(struct move_console_output_request, handle) == 12 );
-C_ASSERT( FIELD_OFFSET(struct move_console_output_request, x_src) == 16 );
-C_ASSERT( FIELD_OFFSET(struct move_console_output_request, y_src) == 18 );
-C_ASSERT( FIELD_OFFSET(struct move_console_output_request, x_dst) == 20 );
-C_ASSERT( FIELD_OFFSET(struct move_console_output_request, y_dst) == 22 );
-C_ASSERT( FIELD_OFFSET(struct move_console_output_request, w) == 24 );
-C_ASSERT( FIELD_OFFSET(struct move_console_output_request, h) == 26 );
-C_ASSERT( sizeof(struct move_console_output_request) == 32 );
 C_ASSERT( FIELD_OFFSET(struct send_console_signal_request, signal) == 12 );
 C_ASSERT( FIELD_OFFSET(struct send_console_signal_request, group_id) == 16 );
 C_ASSERT( sizeof(struct send_console_signal_request) == 24 );

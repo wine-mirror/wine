@@ -1522,61 +1522,6 @@ static void scroll_console_output( struct screen_buffer *screen_buffer, int xsrc
     console_input_events_append( screen_buffer->input, &evt );
 }
 
-/* scroll parts of a screen buffer */
-static void scroll_console_output_req( struct screen_buffer *screen_buffer, int xsrc, int ysrc, int xdst, int ydst,
-                                       int w, int h )
-{
-    int				j;
-    char_info_t *psrc, *pdst;
-    struct condrv_renderer_event evt;
-
-    if (xsrc < 0 || ysrc < 0 || xdst < 0 || ydst < 0 ||
-	xsrc + w > screen_buffer->width  ||
-	xdst + w > screen_buffer->width  ||
-	ysrc + h > screen_buffer->height ||
-	ydst + h > screen_buffer->height ||
-	w == 0 || h == 0)
-    {
-	set_error( STATUS_INVALID_PARAMETER );
-	return;
-    }
-
-    if (ysrc < ydst)
-    {
-	psrc = &screen_buffer->data[(ysrc + h - 1) * screen_buffer->width + xsrc];
-	pdst = &screen_buffer->data[(ydst + h - 1) * screen_buffer->width + xdst];
-
-	for (j = h; j > 0; j--)
-	{
-	    memcpy(pdst, psrc, w * sizeof(*pdst) );
-	    pdst -= screen_buffer->width;
-	    psrc -= screen_buffer->width;
-	}
-    }
-    else
-    {
-	psrc = &screen_buffer->data[ysrc * screen_buffer->width + xsrc];
-	pdst = &screen_buffer->data[ydst * screen_buffer->width + xdst];
-
-	for (j = 0; j < h; j++)
-	{
-	    /* we use memmove here because when psrc and pdst are the same,
-	     * copies are done on the same row, so the dst and src blocks
-	     * can overlap */
-	    memmove( pdst, psrc, w * sizeof(*pdst) );
-	    pdst += screen_buffer->width;
-	    psrc += screen_buffer->width;
-	}
-    }
-
-    /* FIXME: this could be enhanced, by signalling scroll */
-    evt.event = CONSOLE_RENDERER_UPDATE_EVENT;
-    memset(&evt.u, 0, sizeof(evt.u));
-    evt.u.update.top    = min(ysrc, ydst);
-    evt.u.update.bottom = max(ysrc, ydst) + h - 1;
-    console_input_events_append( screen_buffer->input, &evt );
-}
-
 static int console_input_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 {
     struct console_input *console = get_fd_user( fd );
@@ -2278,26 +2223,6 @@ DECL_HANDLER(create_console_output)
         release_object( screen_buffer );
     }
     release_object( console );
-}
-
-/* move a rect of data in a screen buffer */
-DECL_HANDLER(move_console_output)
-{
-    struct screen_buffer *screen_buffer;
-
-    if ((screen_buffer = (struct screen_buffer*)get_handle_obj( current->process, req->handle,
-                                                                FILE_WRITE_DATA, &screen_buffer_ops)))
-    {
-        if (console_input_is_bare( screen_buffer->input ))
-        {
-            set_error( STATUS_OBJECT_TYPE_MISMATCH );
-            release_object( screen_buffer );
-            return;
-        }
-        scroll_console_output_req( screen_buffer, req->x_src, req->y_src, req->x_dst, req->y_dst,
-                                   req->w, req->h );
-        release_object( screen_buffer );
-    }
 }
 
 /* sends a signal to a console (process, group...) */

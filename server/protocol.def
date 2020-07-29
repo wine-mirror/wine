@@ -1567,18 +1567,6 @@ enum server_fd_type
 @END
 
 
-/* move a rect (of data) in screen buffer content */
-@REQ(move_console_output)
-    obj_handle_t handle;        /* handle to the console output */
-    short int    x_src;         /* position (x, y) of rect to start moving from */
-    short int    y_src;
-    short int    x_dst;         /* position (x, y) of rect to move to */
-    short int    y_dst;
-    short int    w;             /* size of the rect (width, height) to move */
-    short int    h;
-@END
-
-
 /* Sends a signal to a process group */
 @REQ(send_console_signal)
     int          signal;        /* the signal to send */
