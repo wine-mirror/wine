@@ -74,12 +74,6 @@ static BOOL WINAPI default_ctrl_handler( DWORD type )
 static struct ctrl_handler default_handler = { default_ctrl_handler, NULL };
 static struct ctrl_handler *ctrl_handlers = &default_handler;
 
-/* map a kernel32 console handle onto a real wineserver handle */
-static inline obj_handle_t console_handle_unmap( HANDLE h )
-{
-    return wine_server_obj_handle( console_handle_map( h ) );
-}
-
 static BOOL console_ioctl( HANDLE handle, DWORD code, void *in_buff, DWORD in_count,
                            void *out_buff, DWORD out_count, DWORD *read )
 {
@@ -158,21 +152,6 @@ static void char_info_AtoW( CHAR_INFO *buffer, int count )
         buffer->Char.UnicodeChar = ch;
         buffer++;
     }
-}
-
-/* helper function for ScrollConsoleScreenBufferW */
-static void fill_console_output( HANDLE handle, int i, int j, int len, CHAR_INFO *fill )
-{
-    struct condrv_fill_output_params params;
-
-    params.mode  = CHAR_INFO_MODE_TEXTATTR;
-    params.x     = i;
-    params.y     = j;
-    params.count = len;
-    params.wrap  = FALSE;
-    params.ch    = fill->Char.UnicodeChar;
-    params.attr  = fill->Attributes;
-    console_ioctl( handle, IOCTL_CONDRV_FILL_OUTPUT, &params, sizeof(params), NULL, 0, NULL );
 }
 
 /* helper function for GetLargestConsoleWindowSize */
@@ -964,12 +943,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH ScrollConsoleScreenBufferW( HANDLE handle, SMALL_R
                                                           SMALL_RECT *clip_rect, COORD origin,
                                                           CHAR_INFO *fill )
 {
-    CONSOLE_SCREEN_BUFFER_INFO info;
-    SMALL_RECT dst, clip;
-    int i, j, start = -1;
-    DWORD ret;
-    BOOL inside;
-    COORD src;
+    struct condrv_scroll_params params;
 
     if (clip_rect)
 	TRACE( "(%p,(%d,%d-%d,%d),(%d,%d-%d,%d),%d-%d,%p)\n", handle,
@@ -981,85 +955,17 @@ BOOL WINAPI DECLSPEC_HOTPATCH ScrollConsoleScreenBufferW( HANDLE handle, SMALL_R
 	      scroll->Left, scroll->Top, scroll->Right, scroll->Bottom,
 	      origin.X, origin.Y, fill );
 
-    if (!GetConsoleScreenBufferInfo( handle, &info )) return FALSE;
-
-    src.X = scroll->Left;
-    src.Y = scroll->Top;
-
-    /* step 1: get dst rect */
-    dst.Left = origin.X;
-    dst.Top = origin.Y;
-    dst.Right = dst.Left + (scroll->Right - scroll->Left);
-    dst.Bottom = dst.Top + (scroll->Bottom - scroll->Top);
-
-    /* step 2a: compute the final clip rect (optional passed clip and screen buffer limits */
-    if (clip_rect)
+    params.scroll    = *scroll;
+    params.origin    = origin;
+    params.fill.ch   = fill->Char.UnicodeChar;
+    params.fill.attr = fill->Attributes;
+    if (!clip_rect)
     {
-	clip.Left   = max(0, clip_rect->Left);
-	clip.Right  = min(info.dwSize.X - 1, clip_rect->Right);
-	clip.Top    = max(0, clip_rect->Top);
-	clip.Bottom = min(info.dwSize.Y - 1, clip_rect->Bottom);
+        params.clip.Left = params.clip.Top = 0;
+        params.clip.Right = params.clip.Bottom = SHRT_MAX;
     }
-    else
-    {
-	clip.Left   = 0;
-	clip.Right  = info.dwSize.X - 1;
-	clip.Top    = 0;
-	clip.Bottom = info.dwSize.Y - 1;
-    }
-    if (clip.Left > clip.Right || clip.Top > clip.Bottom) return FALSE;
-
-    /* step 2b: clip dst rect */
-    if (dst.Left   < clip.Left  ) {src.X += clip.Left - dst.Left; dst.Left   = clip.Left;}
-    if (dst.Top    < clip.Top   ) {src.Y += clip.Top  - dst.Top;  dst.Top    = clip.Top;}
-    if (dst.Right  > clip.Right ) dst.Right  = clip.Right;
-    if (dst.Bottom > clip.Bottom) dst.Bottom = clip.Bottom;
-
-    /* step 3: transfer the bits */
-    SERVER_START_REQ( move_console_output )
-    {
-        req->handle = console_handle_unmap( handle );
-	req->x_src = src.X;
-	req->y_src = src.Y;
-	req->x_dst = dst.Left;
-	req->y_dst = dst.Top;
-	req->w = dst.Right - dst.Left + 1;
-	req->h = dst.Bottom - dst.Top + 1;
-	ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-
-    if (!ret) return FALSE;
-
-    /* step 4: clean out the exposed part */
-
-    /* have to write cell [i,j] if it is not in dst rect (because it has already
-     * been written to by the scroll) and is in clip (we shall not write
-     * outside of clip)
-     */
-    for (j = max(scroll->Top, clip.Top); j <= min(scroll->Bottom, clip.Bottom); j++)
-    {
-	inside = dst.Top <= j && j <= dst.Bottom;
-	start = -1;
-	for (i = max(scroll->Left, clip.Left); i <= min(scroll->Right, clip.Right); i++)
-	{
-	    if (inside && dst.Left <= i && i <= dst.Right)
-	    {
-		if (start != -1)
-		{
-		    fill_console_output( handle, start, j, i - start, fill );
-		    start = -1;
-		}
-	    }
-	    else
-	    {
-		if (start == -1) start = i;
-	    }
-	}
-	if (start != -1) fill_console_output( handle, start, j, i - start, fill );
-    }
-
-    return TRUE;
+    else params.clip = *clip_rect;
+    return console_ioctl( handle, IOCTL_CONDRV_SCROLL, (void *)&params, sizeof(params), NULL, 0, NULL );
 }
 
 
