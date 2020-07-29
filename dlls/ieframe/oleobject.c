@@ -787,8 +787,13 @@ static HRESULT WINAPI OleObject_Advise(IOleObject *iface, IAdviseSink *pAdvSink,
 static HRESULT WINAPI OleObject_Unadvise(IOleObject *iface, DWORD dwConnection)
 {
     WebBrowser *This = impl_from_IOleObject(iface);
-    FIXME("(%p)->(%d)\n", This, dwConnection);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%d)\n", This, dwConnection);
+
+    if(!This->advise_holder)
+        return OLE_E_NOCONNECTION;
+
+    return IOleAdviseHolder_Unadvise(This->advise_holder, dwConnection);
 }
 
 static HRESULT WINAPI OleObject_EnumAdvise(IOleObject *iface, IEnumSTATDATA **ppenumAdvise)
