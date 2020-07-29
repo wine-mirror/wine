@@ -11800,6 +11800,45 @@ static void other_process_proc(HWND hwnd)
     CloseHandle(test_done_event);
 }
 
+static void test_SC_SIZE(void)
+{
+    HWND hwnd;
+    RECT rect;
+    MSG msg;
+
+    hwnd = CreateWindowExA(0, "static", NULL, WS_POPUP | WS_VISIBLE,
+                100, 100, 100, 100, 0, 0, NULL, NULL);
+    ok(!!hwnd, "CreateWindowEx failed.\n");
+
+    GetWindowRect(hwnd, &rect);
+    ok(rect.left == 100, "rect.left = %d\n", rect.left);
+    ok(rect.top == 100, "rect.top = %d\n", rect.top);
+    ok(rect.right == 200, "rect.right = %d\n", rect.right);
+    ok(rect.bottom == 200, "rect.bottom = %d\n", rect.bottom);
+
+    SetCursorPos(100, 100);
+    PostMessageA(hwnd, WM_SYSCOMMAND, SC_SIZE | 9, MAKELONG(100, 100));
+    SetCursorPos(110, 100);
+    PostMessageA(hwnd, WM_MOUSEMOVE, 0, MAKELONG(110, 100));
+    PostMessageA(hwnd, WM_KEYDOWN, VK_RETURN, 0);
+
+    while (GetMessageA(&msg, 0, 0, 0))
+    {
+        TranslateMessage(&msg);
+        DispatchMessageA(&msg);
+
+        if (msg.message == WM_SYSCOMMAND) break;
+    }
+
+    GetWindowRect(hwnd, &rect);
+    ok(rect.left == 110, "rect.left = %d\n", rect.left);
+    ok(rect.top == 100, "rect.top = %d\n", rect.top);
+    ok(rect.right == 210, "rect.right = %d\n", rect.right);
+    ok(rect.bottom == 200, "rect.bottom = %d\n", rect.bottom);
+
+    DestroyWindow(hwnd);
+}
+
 static void test_other_process_window(const char *argv0)
 {
     HANDLE window_ready_event, test_done_event;
@@ -12022,6 +12061,7 @@ START_TEST(win)
     test_window_placement();
     test_arrange_iconic_windows();
     test_other_process_window(argv[0]);
+    test_SC_SIZE();
 
     /* add the tests above this line */
     if (hhook) UnhookWindowsHookEx(hhook);

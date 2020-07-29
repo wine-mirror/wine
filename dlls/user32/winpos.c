@@ -2894,7 +2894,7 @@ void WINPOS_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
             else
             {
                 if (!DragFullWindows) draw_moving_frame( parent, hdc, &sizingRect, thickframe );
-                if (hittest == HTCAPTION) OffsetRect( &sizingRect, dx, dy );
+                if (hittest == HTCAPTION || hittest == HTBORDER) OffsetRect( &sizingRect, dx, dy );
                 if (ON_LEFT_BORDER(hittest)) sizingRect.left += dx;
                 else if (ON_RIGHT_BORDER(hittest)) sizingRect.right += dx;
                 if (ON_TOP_BORDER(hittest)) sizingRect.top += dy;
@@ -2902,7 +2902,7 @@ void WINPOS_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
                 capturePoint = pt;
 
                 /* determine the hit location */
-                if (syscommand == SC_SIZE)
+                if (syscommand == SC_SIZE && hittest != HTBORDER)
                 {
                     WPARAM wpSizingHit = 0;
 
