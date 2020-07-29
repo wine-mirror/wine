@@ -202,6 +202,7 @@ static ULONG WINAPI IAudioStreamSampleImpl_Release(IAudioStreamSample *iface)
     if (!ref)
     {
         IAMMediaStream_Release(&This->parent->IAMMediaStream_iface);
+        IAudioData_Release(This->audio_data);
         CloseHandle(This->update_event);
         HeapFree(GetProcessHeap(), 0, This);
     }
@@ -378,6 +379,7 @@ static HRESULT audiostreamsample_create(struct audio_stream *parent, IAudioData 
     object->parent = parent;
     IAMMediaStream_AddRef(&parent->IAMMediaStream_iface);
     object->audio_data = audio_data;
+    IAudioData_AddRef(audio_data);
     object->update_event = CreateEventW(NULL, FALSE, FALSE, NULL);
 
     *audio_stream_sample = &object->IAudioStreamSample_iface;

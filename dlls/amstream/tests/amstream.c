@@ -1507,9 +1507,11 @@ static void test_media_streams(void)
             ok(hr == E_POINTER, "IAudioMediaStream_CreateSample returned: %x\n", hr);
 
             EXPECT_REF(audio_stream, 3);
+            EXPECT_REF(audio_data, 1);
             hr = IAudioMediaStream_CreateSample(audio_media_stream, audio_data, 0, &audio_sample);
             ok(hr == S_OK, "IAudioMediaStream_CreateSample returned: %x\n", hr);
             EXPECT_REF(audio_stream, 4);
+            EXPECT_REF(audio_data, 2);
 
             hr = IAudioMediaStream_GetMultiMediaStream(audio_media_stream, NULL);
             ok(hr == E_POINTER, "Expected E_POINTER, got %x\n", hr);
