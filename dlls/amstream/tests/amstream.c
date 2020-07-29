@@ -5629,6 +5629,57 @@ static void test_ddrawstream_getsetdirectdraw(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+static void test_audiostreamsample_get_media_stream(void)
+{
+    IAMMultiMediaStream *mmstream = create_ammultimediastream();
+    IAudioStreamSample *audio_sample;
+    IAudioMediaStream *audio_stream;
+    IMediaStream *stream, *stream2;
+    IAudioData *audio_data;
+    HRESULT hr;
+    ULONG ref;
+
+    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_READ, 0, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryAudio, 0, &stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaStream_QueryInterface(stream, &IID_IAudioMediaStream, (void **)&audio_stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = CoCreateInstance(&CLSID_AMAudioData, NULL, CLSCTX_INPROC_SERVER, &IID_IAudioData, (void **)&audio_data);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAudioMediaStream_CreateSample(audio_stream, audio_data, 0, &audio_sample);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    /* Crashes on native. */
+    if (0)
+    {
+        hr = IAudioStreamSample_GetMediaStream(audio_sample, NULL);
+        ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    }
+
+    EXPECT_REF(stream, 4);
+    hr = IAudioStreamSample_GetMediaStream(audio_sample, &stream2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(stream2 == stream, "Expected stream %p, got %p.\n", stream, stream2);
+    EXPECT_REF(stream, 5);
+
+    IMediaStream_Release(stream2);
+
+    IAudioMediaStream_Release(audio_stream);
+    ref = IAudioStreamSample_Release(audio_sample);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IAudioData_Release(audio_data);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IAMMultiMediaStream_Release(mmstream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IMediaStream_Release(stream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 START_TEST(amstream)
 {
     const WCHAR *test_avi_path;
@@ -5675,6 +5726,7 @@ START_TEST(amstream)
     test_audiostreamsample_update();
     test_audiostreamsample_completion_status();
     test_audiostreamsample_get_sample_times();
+    test_audiostreamsample_get_media_stream();
 
     test_ddrawstream_initialize();
     test_ddrawstream_getsetdirectdraw();
