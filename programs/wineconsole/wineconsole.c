@@ -203,7 +203,7 @@ void	WINECON_GrabChanges(struct inner_data* data)
 
     if (data->in_grab_changes) return;
 
-    if (!GetOverlappedResult(data->hSynchro, &data->overlapped, &num, FALSE))
+    if (!GetOverlappedResult(data->console, &data->overlapped, &num, FALSE))
     {
         if (GetLastError() == ERROR_IO_INCOMPLETE) return;
         ERR( "failed to get renderer events: %u\n", GetLastError() );
@@ -355,7 +355,7 @@ void	WINECON_GrabChanges(struct inner_data* data)
     }
     data->in_grab_changes = FALSE;
 
-    if (!DeviceIoControl(data->hSynchro, IOCTL_CONDRV_GET_RENDERER_EVENTS, NULL, 0, data->events,
+    if (!DeviceIoControl(data->console, IOCTL_CONDRV_GET_RENDERER_EVENTS, NULL, 0, data->events,
                          sizeof(data->events), NULL, &data->overlapped) && GetLastError() != ERROR_IO_PENDING)
     {
         ERR("failed to get renderer events: %u\n", GetLastError());
@@ -550,7 +550,7 @@ static void WINECON_Delete(struct inner_data* data)
     if (data->fnDeleteBackend)  data->fnDeleteBackend(data);
     if (data->hConIn)		CloseHandle(data->hConIn);
     if (data->hConOut)		CloseHandle(data->hConOut);
-    if (data->hSynchro)		CloseHandle(data->hSynchro);
+    if (data->console)		CloseHandle(data->console);
     if (data->hProcess)         CloseHandle(data->hProcess);
     if (data->overlapped.hEvent) CloseHandle(data->overlapped.hEvent);
     HeapFree(GetProcessHeap(), 0, data->curcfg.registry);
@@ -664,17 +664,17 @@ static struct inner_data* WINECON_Init(HINSTANCE hInst, DWORD pid, LPCWSTR appna
     }
     SERVER_END_REQ;
     if (!ret) goto error;
-    WINE_TRACE("using hConIn %p, hSynchro event %p\n", data->hConIn, data->hSynchro);
+    WINE_TRACE("using hConIn %p, hSynchro event %p\n", data->hConIn, data->console);
 
     RtlInitUnicodeString(&string, renderer_pathW);
     attr.ObjectName = &string;
-    status = NtCreateFile(&data->hSynchro, FILE_READ_DATA | FILE_WRITE_DATA | FILE_WRITE_PROPERTIES
+    status = NtCreateFile(&data->console, FILE_READ_DATA | FILE_WRITE_DATA | FILE_WRITE_PROPERTIES
                           | FILE_READ_PROPERTIES | SYNCHRONIZE, &attr, &io, NULL, FILE_ATTRIBUTE_NORMAL,
                           0, FILE_OPEN, FILE_NON_DIRECTORY_FILE,  NULL, 0);
     if (status) goto error;
 
     h = condrv_handle(data->hConIn);
-    if (!DeviceIoControl(data->hSynchro, IOCTL_CONDRV_ATTACH_RENDERER, &h, sizeof(h), NULL, 0, NULL, NULL))
+    if (!DeviceIoControl(data->console, IOCTL_CONDRV_ATTACH_RENDERER, &h, sizeof(h), NULL, 0, NULL, NULL))
         goto error;
 
     SERVER_START_REQ(create_console_output)
