@@ -1624,10 +1624,10 @@ static HRESULT Global_InStr(BuiltinDisp *This, VARIANT *args, unsigned args_cnt,
 {
     VARIANT *startv, *str1v, *str2v;
     BSTR str1, str2;
-    int start, ret;
+    int ret, start = 0, mode = 0;
     HRESULT hres;
 
-    TRACE("\n");
+    TRACE("args_cnt=%u\n", args_cnt);
 
     assert(2 <= args_cnt && args_cnt <= 4);
 
@@ -1643,8 +1643,21 @@ static HRESULT Global_InStr(BuiltinDisp *This, VARIANT *args, unsigned args_cnt,
         str2v = args+2;
         break;
     case 4:
-        FIXME("unsupported compare argument %s\n", debugstr_variant(args));
-        return E_NOTIMPL;
+        startv = args;
+        str1v = args+1;
+        str2v = args+2;
+
+        if(V_VT(args+3) == VT_NULL)
+            return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
+
+        hres = to_int(args+3, &mode);
+        if(FAILED(hres))
+            return hres;
+
+        if (mode != 0 && mode != 1)
+            return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
+
+        break;
     DEFAULT_UNREACHABLE;
     }
 
@@ -1652,12 +1665,8 @@ static HRESULT Global_InStr(BuiltinDisp *This, VARIANT *args, unsigned args_cnt,
         hres = to_int(startv, &start);
         if(FAILED(hres))
             return hres;
-        if(--start < 0) {
-            FIXME("start %d\n", start);
-            return E_FAIL;
-        }
-    }else {
-        start = 0;
+        if(--start < 0)
+            return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
     }
 
     if(V_VT(str1v) == VT_NULL || V_VT(str2v) == VT_NULL)
@@ -1675,16 +1684,13 @@ static HRESULT Global_InStr(BuiltinDisp *This, VARIANT *args, unsigned args_cnt,
     }
     str2 = V_BSTR(str2v);
 
-    if(start < SysStringLen(str1)) {
-        WCHAR *ptr;
+    if(start >= SysStringLen(str1))
+        return return_int(res, 0);
 
-        ptr = wcsstr(str1+start, str2);
-        ret = ptr ? ptr-str1+1 : 0;
-    }else {
-        ret = 0;
-    }
+    ret = FindStringOrdinal(FIND_FROMSTART, str1 + start, SysStringLen(str1)-start,
+                            str2, SysStringLen(str2), mode);
 
-    return return_int(res, ret);
+    return return_int(res, ++ret ? ret+start : 0);
 }
 
 static HRESULT Global_InStrB(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)

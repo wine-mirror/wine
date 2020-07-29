@@ -390,6 +390,45 @@ Call ok(x = 2, "InStr returned " & x)
 x = InStr(2.6, "abcd", "bc")
 Call ok(x = 0, "InStr returned " & x)
 
+x = InStr(3, "abcdefgh", "fg", 0)
+Call ok(x = 6, "InStr returned " & x)
+
+x = InStr(3, "abcdefgh", "FG", 0)
+Call ok(x = 0, "InStr returned " & x)
+
+x = InStr(3, "abcdefgh", "FG", 1)
+Call ok(x = 6, "InStr returned " & x)
+
+x = InStr(3, "abcdefgh", "FG", 1.4)
+Call ok(x = 6, "InStr returned " & x)
+
+x = InStr(3, "abcdefgh", "FG", -0.3)
+Call ok(x = 0, "InStr returned " & x)
+
+x = InStr(1, "abcABC", "aB", 0)
+Call ok(x = 0, "InStr returned " & x)
+
+x = InStr(1, "abcABC", "aB", 1)
+Call ok(x = 1, "InStr returned " & x)
+
+x = InStr(2, "abcABC", "aB", 1)
+Call ok(x = 4, "InStr returned " & x)
+
+x = InStr(5, "abcABC", "aB", 1)
+Call ok(x = 0, "InStr returned " & x)
+
+x = InStr(2, "abcABC", "ab", 1)
+Call ok(x = 4, "InStr returned " & x)
+
+x = InStr(6, "abcABC", "c", 1)
+Call ok(x = 6, "InStr returned " & x)
+
+x = InStr(2, "abc" & Chr(0) & "A" & Chr(0) & "BC", "C", 0)
+Call ok(x = 8, "InStr returned " & x)
+
+x = InStr(1, "abc" & Chr(0) & "ABC", Chr(0) & "a", 1)
+Call ok(x = 4, "InStr returned " & x)
+
 
 x = InStrRev("bcabcd", "bc")
 Call ok(x = 4, "InStrRev returned " & x)
