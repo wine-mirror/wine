@@ -131,6 +131,7 @@ struct console_input_events
 {
     struct object                  obj;         /* object header */
     struct fd                     *fd;          /* pseudo-fd for ioctls */
+    struct console_input          *console;     /* attached console */
     int                            num_alloc;   /* number of allocated events */
     int                            num_used;    /* number of actually used events */
     struct condrv_renderer_event  *events;
@@ -321,6 +322,7 @@ static void console_input_events_destroy( struct object *obj )
 {
     struct console_input_events *evts = (struct console_input_events *)obj;
     assert( obj->ops == &console_input_events_ops );
+    if (evts->console) evts->console->evt = NULL;
     free_async_queue( &evts->read_q );
     if (evts->fd) release_object( evts->fd );
     free( evts->events );
@@ -419,6 +421,7 @@ static struct object *create_console_input_events(void)
     struct console_input_events*	evt;
 
     if (!(evt = alloc_object( &console_input_events_ops ))) return NULL;
+    evt->console = NULL;
     evt->num_alloc = evt->num_used = 0;
     evt->events = NULL;
     init_async_queue( &evt->read_q );
@@ -1177,10 +1180,7 @@ static void console_input_destroy( struct object *obj )
 
     free_async_queue( &console_in->read_q );
     if (console_in->evt)
-    {
-        release_object( console_in->evt );
-        console_in->evt = NULL;
-    }
+        console_in->evt->console = NULL;
     if (console_in->event)
         release_object( console_in->event );
     if (console_in->fd)
@@ -1898,10 +1898,11 @@ static int console_input_events_ioctl( struct fd *fd, ioctl_code_t code, struct 
                                                                     0, &console_input_ops );
             if (!console_input) return 0;
 
-            if (!console_input->evt)
+            if (!console_input->evt && !evts->console)
             {
-                console_input->evt = (struct console_input_events *)grab_object( evts );
+                console_input->evt = evts;
                 console_input->renderer = current;
+                evts->console = console_input;
             }
             else set_error( STATUS_INVALID_HANDLE );
 
