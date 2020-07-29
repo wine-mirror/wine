@@ -952,6 +952,7 @@ NTSTATUS key_import_ecc( struct key *key, UCHAR *buf, ULONG len )
     switch (key->alg_id)
     {
     case ALG_ID_ECDH_P256:
+    case ALG_ID_ECDSA_P256:
         curve = GNUTLS_ECC_CURVE_SECP256R1;
         break;
 

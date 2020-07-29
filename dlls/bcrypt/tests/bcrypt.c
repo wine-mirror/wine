@@ -1670,6 +1670,18 @@ static void test_key_import_export(void)
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
 }
 
+static BYTE eccPrivkey[] =
+{
+    /* X */
+    0x26, 0xff, 0x0e, 0xf9, 0x71, 0x93, 0xf8, 0xed, 0x59, 0xfa, 0x24, 0xec, 0x18, 0x13, 0xfe, 0xf5,
+    0x0b, 0x4a, 0xb1, 0x27, 0xb7, 0xab, 0x3e, 0x4f, 0xc5, 0x5a, 0x91, 0xa3, 0x6e, 0x21, 0x61, 0x65,
+    /* Y */
+    0x62, 0x7b, 0x8b, 0x30, 0x7a, 0x63, 0x4c, 0x1a, 0xf4, 0x54, 0x54, 0xbb, 0x75, 0x59, 0x68, 0x36,
+    0xfe, 0x49, 0x95, 0x75, 0x9e, 0x20, 0x3e, 0x69, 0x58, 0xb9, 0x7a, 0x84, 0x03, 0x45, 0x5c, 0x10,
+    /* d */
+    0xb9, 0xcd, 0xbe, 0xd4, 0x75, 0x5d, 0x05, 0xe5, 0x83, 0x0c, 0xd3, 0x37, 0x34, 0x15, 0xe3, 0x2c,
+    0xe5, 0x85, 0x15, 0xa9, 0xee, 0xba, 0x94, 0x03, 0x03, 0x0b, 0x86, 0xea, 0x85, 0x40, 0xbd, 0x35,
+};
 static BYTE eccPubkey[] =
 {
     /* X */
@@ -1696,11 +1708,12 @@ static BYTE certSignature[] =
 
 static void test_ECDSA(void)
 {
-    BYTE buffer[sizeof(BCRYPT_ECCKEY_BLOB) + sizeof(eccPubkey)];
+    BYTE buffer[sizeof(BCRYPT_ECCKEY_BLOB) + sizeof(eccPrivkey)];
     BCRYPT_ECCKEY_BLOB *ecckey = (void *)buffer;
-    BCRYPT_ALG_HANDLE alg = NULL;
-    BCRYPT_KEY_HANDLE key = NULL;
+    BCRYPT_ALG_HANDLE alg;
+    BCRYPT_KEY_HANDLE key;
     NTSTATUS status;
+    ULONG size;
 
     status = pBCryptOpenAlgorithmProvider(&alg, BCRYPT_ECDSA_P256_ALGORITHM, NULL, 0);
     if (status)
@@ -1713,11 +1726,12 @@ static void test_ECDSA(void)
     memcpy(ecckey + 1, eccPubkey, sizeof(eccPubkey));
 
     ecckey->cbKey = 2;
-    status = pBCryptImportKeyPair(alg, NULL, BCRYPT_ECCPUBLIC_BLOB, &key, buffer, sizeof(buffer), 0);
+    size = sizeof(BCRYPT_ECCKEY_BLOB) + sizeof(eccPubkey);
+    status = pBCryptImportKeyPair(alg, NULL, BCRYPT_ECCPUBLIC_BLOB, &key, buffer, size, 0);
     ok(status == STATUS_INVALID_PARAMETER, "Expected STATUS_INVALID_PARAMETER, got %08x\n", status);
 
-    ecckey->cbKey = sizeof(eccPubkey) / 2;
-    status = pBCryptImportKeyPair(alg, NULL, BCRYPT_ECCPUBLIC_BLOB, &key, buffer, sizeof(buffer), 0);
+    ecckey->cbKey = 32;
+    status = pBCryptImportKeyPair(alg, NULL, BCRYPT_ECCPUBLIC_BLOB, &key, buffer, size, 0);
     ok(!status, "BCryptImportKeyPair failed: %08x\n", status);
 
     status = pBCryptVerifySignature(key, NULL, certHash, sizeof(certHash) - 1, certSignature, sizeof(certSignature), 0);
@@ -1725,6 +1739,19 @@ static void test_ECDSA(void)
 
     status = pBCryptVerifySignature(key, NULL, certHash, sizeof(certHash), certSignature, sizeof(certSignature), 0);
     ok(!status, "BCryptVerifySignature failed: %08x\n", status);
+    pBCryptDestroyKey(key);
+
+    ecckey->dwMagic = BCRYPT_ECDSA_PRIVATE_P256_MAGIC;
+    memcpy(ecckey + 1, eccPrivkey, sizeof(eccPrivkey));
+
+    ecckey->cbKey = 2;
+    size = sizeof(BCRYPT_ECCKEY_BLOB) + sizeof(eccPrivkey);
+    status = pBCryptImportKeyPair(alg, NULL, BCRYPT_ECCPRIVATE_BLOB, &key, buffer, size, 0);
+    ok(status == STATUS_INVALID_PARAMETER, "Expected STATUS_INVALID_PARAMETER, got %08x\n", status);
+
+    ecckey->cbKey = 32;
+    status = pBCryptImportKeyPair(alg, NULL, BCRYPT_ECCPRIVATE_BLOB, &key, buffer, size, 0);
+    ok(!status, "BCryptImportKeyPair failed: %08x\n", status);
 
     pBCryptDestroyKey(key);
     pBCryptCloseAlgorithmProvider(alg, 0);
