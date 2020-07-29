@@ -199,7 +199,6 @@ void	WINECON_GrabChanges(struct inner_data* data)
     struct condrv_renderer_event *evts = data->events;
     int i, ev_found;
     DWORD num;
-    HANDLE h;
 
     if (data->in_grab_changes) return;
 
@@ -266,23 +265,6 @@ void	WINECON_GrabChanges(struct inner_data* data)
 	case CONSOLE_RENDERER_TITLE_EVENT:
 	    WINE_TRACE("%u/%u: title()\n", i+1, num);
 	    data->fnSetTitle(data);
-	    break;
-	case CONSOLE_RENDERER_ACTIVE_SB_EVENT:
-	    SERVER_START_REQ( open_console )
-	    {
-                req->from       = wine_server_obj_handle( data->hConIn );
-                req->access     = GENERIC_READ | GENERIC_WRITE;
-                req->attributes = 0;
-                req->share      = FILE_SHARE_READ | FILE_SHARE_WRITE;
-                h = wine_server_call_err( req ) ? 0 : wine_server_ptr_handle(reply->handle);
-	    }
-	    SERVER_END_REQ;
-	    WINE_TRACE("%u/%u: active(%p)\n", i+1, num, h);
-	    if (h)
-	    {
-		CloseHandle(data->hConOut);
-		data->hConOut = h;
-	    }
 	    break;
 	case CONSOLE_RENDERER_SB_RESIZE_EVENT:
 	    if (data->curcfg.sb_width != evts[i].u.resize.width ||

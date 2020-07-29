@@ -496,10 +496,6 @@ static void generate_sb_initial_events( struct console_input *console_input )
     struct screen_buffer *screen_buffer = console_input->active;
     struct condrv_renderer_event evt;
 
-    evt.event = CONSOLE_RENDERER_ACTIVE_SB_EVENT;
-    memset(&evt.u, 0, sizeof(evt.u));
-    console_input_events_append( console_input, &evt );
-
     evt.event = CONSOLE_RENDERER_SB_RESIZE_EVENT;
     evt.u.resize.width  = screen_buffer->width;
     evt.u.resize.height = screen_buffer->height;
