@@ -2854,6 +2854,7 @@ BOOL WINAPI SetupDiDestroyDeviceInfoList(HDEVINFO devinfo)
     }
     heap_free(set);
 
+    SetLastError(ERROR_SUCCESS);
     return TRUE;
 }
 
