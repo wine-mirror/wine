@@ -169,7 +169,7 @@ script_ranges[] =
     /* Control Pictures : U+2400 –U+243f */
     /* Optical Character Recognition : U+2440 –U+245f */
     /* Enclosed Alphanumerics : U+2460 –U+24ff */
-    /* Box Drawing : U+2500 –U+25ff */
+    /* Box Drawing : U+2500 –U+257f */
     /* Block Elements : U+2580 –U+259f */
     /* Geometric Shapes : U+25a0 –U+25ff */
     /* Miscellaneous Symbols : U+2600 –U+26ff */
