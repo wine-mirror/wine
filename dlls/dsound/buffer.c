@@ -845,27 +845,25 @@ static HRESULT WINAPI IDirectSoundBufferImpl_AcquireResources(IDirectSoundBuffer
 }
 
 static HRESULT WINAPI IDirectSoundBufferImpl_GetObjectInPath(IDirectSoundBuffer8 *iface,
-        REFGUID rguidObject, DWORD dwIndex, REFGUID rguidInterface, void **ppObject)
+        REFGUID clsid, DWORD index, REFGUID iid, void **out)
 {
-        IDirectSoundBufferImpl *This = impl_from_IDirectSoundBuffer8(iface);
+    IDirectSoundBufferImpl *This = impl_from_IDirectSoundBuffer8(iface);
+    DWORD i, count = 0;
 
-	TRACE("(%p,%s,%u,%s,%p)\n",This,debugstr_guid(rguidObject),dwIndex,debugstr_guid(rguidInterface),ppObject);
+    TRACE("(%p,%s,%u,%s,%p)\n", This, debugstr_guid(clsid), index, debugstr_guid(iid), out);
 
-	if (dwIndex >= This->num_filters)
-		return DSERR_CONTROLUNAVAIL;
+    if (!out)
+        return E_INVALIDARG;
 
-	if (!ppObject)
-		return E_INVALIDARG;
-
-	if (IsEqualGUID(rguidObject, &This->filters[dwIndex].guid) || IsEqualGUID(rguidObject, &GUID_All_Objects)) {
-		if (SUCCEEDED(IMediaObject_QueryInterface(This->filters[dwIndex].obj, rguidInterface, ppObject)))
-			return DS_OK;
-		else
-			return E_NOINTERFACE;
-	} else {
-		WARN("control unavailable\n");
-		return DSERR_OBJECTNOTFOUND;
-	}
+    for (i = 0; i < This->num_filters; i++)
+    {
+        if (IsEqualGUID(clsid, &This->filters[i].guid) || IsEqualGUID(clsid, &GUID_All_Objects))
+        {
+            if (count++ == index)
+                return IMediaObject_QueryInterface(This->filters[i].obj, iid, out);
+        }
+    }
+    return DSERR_OBJECTNOTFOUND;
 }
 
 static HRESULT WINAPI IDirectSoundBufferImpl_Initialize(IDirectSoundBuffer8 *iface,
