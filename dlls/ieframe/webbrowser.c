@@ -170,6 +170,9 @@ static ULONG WINAPI WebBrowser_Release(IUnknown *iface)
         if(This->sink)
             IAdviseSink_Release(This->sink);
 
+        if(This->advise_holder)
+            IOleAdviseHolder_Release(This->advise_holder);
+
         if(This->doc_host.document)
             IUnknown_Release(This->doc_host.document);
 
