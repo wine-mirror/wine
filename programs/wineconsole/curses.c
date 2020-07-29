@@ -324,7 +324,7 @@ static void	WCCURSES_ComputePositions(struct inner_data* data)
                   data->curcfg.win_width, data->curcfg.win_height, x, y);
         pos.Left = pos.Top = 0;
         pos.Right = x - 1; pos.Bottom = y - 1;
-        SetConsoleWindowInfo(data->hConOut, FALSE, &pos);
+        SetConsoleWindowInfo(data->console, FALSE, &pos);
         return; /* we'll get called again upon event for new window size */
     }
     if (PRIVATE(data)->pad) WCCURSES_PosCursor(data);

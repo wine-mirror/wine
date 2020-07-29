@@ -70,7 +70,7 @@ static void WINECON_FetchCells(struct inner_data* data, int upd_tp, int upd_bm)
     COORD size = { data->curcfg.sb_width, data->curcfg.sb_height };
     COORD coord = { 0, upd_tp };
 
-    if (ReadConsoleOutputW(data->hConOut, data->cells, size, coord, &region))
+    if (ReadConsoleOutputW(data->console, data->cells, size, coord, &region))
         data->fnRefresh(data, upd_tp, upd_bm);
 }
 
@@ -186,7 +186,7 @@ static void WINECON_SetColors(struct inner_data *data, const struct config_data*
 
     params.info.popup_attr = cfg->popup_attr;
     memcpy(params.info.color_map, cfg->color_map, sizeof(cfg->color_map));
-    DeviceIoControl(data->hConOut, IOCTL_CONDRV_SET_OUTPUT_INFO, &params, sizeof(params), NULL, 0, NULL, NULL);
+    DeviceIoControl(data->console, IOCTL_CONDRV_SET_OUTPUT_INFO, &params, sizeof(params), NULL, 0, NULL, NULL);
 }
 
 /******************************************************************
@@ -383,11 +383,11 @@ void     WINECON_SetConfig(struct inner_data* data, const struct config_data* cf
          * (no notification is sent when invariant operation is requested)
          */
         cinfo.bVisible = !cfg->cursor_visible;
-        SetConsoleCursorInfo(data->hConOut, &cinfo);
+        SetConsoleCursorInfo(data->console, &cinfo);
         /* </FIXME> */
         cinfo.bVisible = cfg->cursor_visible;
         /* this shall update (through notif) curcfg */
-        SetConsoleCursorInfo(data->hConOut, &cinfo);
+        SetConsoleCursorInfo(data->console, &cinfo);
     }
     if (data->curcfg.history_size != cfg->history_size)
     {
@@ -425,7 +425,7 @@ void     WINECON_SetConfig(struct inner_data* data, const struct config_data* cf
             params->info.font_weight = cfg->font_weight;
             params->info.font_pitch_family = cfg->font_pitch_family;
             memcpy(params + 1, cfg->face_name, len * sizeof(WCHAR));
-            DeviceIoControl(data->hConOut, IOCTL_CONDRV_SET_OUTPUT_INFO, params, sizeof(*params) + len * sizeof(WCHAR),
+            DeviceIoControl(data->console, IOCTL_CONDRV_SET_OUTPUT_INFO, params, sizeof(*params) + len * sizeof(WCHAR),
                             NULL, 0, NULL, NULL);
         }
     }
@@ -436,8 +436,8 @@ void     WINECON_SetConfig(struct inner_data* data, const struct config_data* cf
 
         data->curcfg.def_attr = cfg->def_attr;
         screen_size = cfg->win_width * (cfg->win_height + 1);
-        FillConsoleOutputAttribute(data->hConOut, cfg->def_attr, screen_size, top_left, &written);
-        SetConsoleTextAttribute(data->hConOut, cfg->def_attr);
+        FillConsoleOutputAttribute(data->console, cfg->def_attr, screen_size, top_left, &written);
+        SetConsoleTextAttribute(data->console, cfg->def_attr);
     }
     WINECON_SetColors(data, cfg);
     /* now let's look at the window / sb size changes...
@@ -454,13 +454,13 @@ void     WINECON_SetConfig(struct inner_data* data, const struct config_data* cf
 
 #define ChgSBfWidth()   do {c.X = cfg->sb_width; \
                             c.Y = data->curcfg.sb_height;\
-                            SetConsoleScreenBufferSize(data->hConOut, c);\
+                            SetConsoleScreenBufferSize(data->console, c);\
                         } while (0)
 #define ChgWinHPos()    do {pos.Left = cfg->win_pos.X - data->curcfg.win_pos.X; \
                             pos.Top = 0; \
                             pos.Right = pos.Left + cfg->win_width - data->curcfg.win_width; \
                             pos.Bottom = 0; \
-                            SetConsoleWindowInfo(data->hConOut, FALSE, &pos);\
+                            SetConsoleWindowInfo(data->console, FALSE, &pos);\
                         } while (0)
 #define TstSBfHeight()  (data->curcfg.sb_height != cfg->sb_height)
 #define TstWinVPos()    (data->curcfg.win_height != cfg->win_height || data->curcfg.win_pos.Y != cfg->win_pos.Y)
@@ -468,13 +468,13 @@ void     WINECON_SetConfig(struct inner_data* data, const struct config_data* cf
 /* since we're going to apply height after width is done, we use width as defined 
  * in cfg, and not in data->curcfg because if won't be updated yet */
 #define ChgSBfHeight()  do {c.X = cfg->sb_width; c.Y = cfg->sb_height; \
-                            SetConsoleScreenBufferSize(data->hConOut, c); \
+                            SetConsoleScreenBufferSize(data->console, c); \
                         } while (0)
 #define ChgWinVPos()    do {pos.Left = 0; \
                             pos.Top = cfg->win_pos.Y - data->curcfg.win_pos.Y; \
                             pos.Right = 0; \
                             pos.Bottom = pos.Top + cfg->win_height - data->curcfg.win_height; \
-                            SetConsoleWindowInfo(data->hConOut, FALSE, &pos);\
+                            SetConsoleWindowInfo(data->console, FALSE, &pos);\
                         } while (0)
 
     do
@@ -582,7 +582,7 @@ static BOOL WINECON_GetServerConfig(struct inner_data* data)
     data->curcfg.insert_mode = (mode & (ENABLE_INSERT_MODE|ENABLE_EXTENDED_FLAGS)) ==
                                        (ENABLE_INSERT_MODE|ENABLE_EXTENDED_FLAGS);
 
-    if (!DeviceIoControl(data->hConOut, IOCTL_CONDRV_GET_OUTPUT_INFO, NULL, 0,
+    if (!DeviceIoControl(data->console, IOCTL_CONDRV_GET_OUTPUT_INFO, NULL, 0,
                          &output_info, sizeof(output_info), NULL, NULL))
         return FALSE;
     data->curcfg.cursor_size = output_info.cursor_size;
