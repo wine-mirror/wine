@@ -530,8 +530,6 @@ static void WINECON_Delete(struct inner_data* data)
     if (!data) return;
 
     if (data->fnDeleteBackend)  data->fnDeleteBackend(data);
-    if (data->hConIn)		CloseHandle(data->hConIn);
-    if (data->hConOut)		CloseHandle(data->hConOut);
     if (data->console)		CloseHandle(data->console);
     if (data->hProcess)         CloseHandle(data->hProcess);
     if (data->overlapped.hEvent) CloseHandle(data->overlapped.hEvent);
@@ -584,7 +582,7 @@ static BOOL WINECON_GetServerConfig(struct inner_data* data)
  *
  * Spawn the child process when invoked with wineconsole foo bar
  */
-static BOOL WINECON_Spawn(struct inner_data* data, LPWSTR cmdLine)
+static BOOL WINECON_Spawn(struct inner_data* data, LPWSTR cmdLine, HANDLE con_in, HANDLE con_out)
 {
     PROCESS_INFORMATION info;
     STARTUPINFOW        startup;
@@ -598,11 +596,11 @@ static BOOL WINECON_Spawn(struct inner_data* data, LPWSTR cmdLine)
     /* the attributes of wineconsole's handles are not adequate for inheritance, so
      * get them with the correct attributes before process creation
      */
-    if (!DuplicateHandle(GetCurrentProcess(), data->hConIn,  GetCurrentProcess(),
+    if (!DuplicateHandle(GetCurrentProcess(), con_in,  GetCurrentProcess(),
 			 &startup.hStdInput, GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE, TRUE, 0) ||
-	!DuplicateHandle(GetCurrentProcess(), data->hConOut, GetCurrentProcess(),
+	!DuplicateHandle(GetCurrentProcess(), con_out, GetCurrentProcess(),
 			 &startup.hStdOutput, GENERIC_READ|GENERIC_WRITE, TRUE, 0) ||
-	!DuplicateHandle(GetCurrentProcess(), data->hConOut, GetCurrentProcess(),
+	!DuplicateHandle(GetCurrentProcess(), con_out, GetCurrentProcess(),
                          &startup.hStdError, GENERIC_READ|GENERIC_WRITE, TRUE, 0))
     {
 	WINE_ERR("Can't dup handles\n");
@@ -645,6 +643,8 @@ static struct inner_data* WINECON_Init(HINSTANCE hInst, DWORD pid, LPCWSTR appna
     UNICODE_STRING string;
     IO_STATUS_BLOCK io;
     condrv_handle_t h;
+    HANDLE con_in;
+    HANDLE con_out;
     NTSTATUS status;
 
     static const WCHAR renderer_pathW[] = {'\\','D','e','v','i','c','e','\\','C','o','n','D','r','v',
@@ -689,11 +689,11 @@ static struct inner_data* WINECON_Init(HINSTANCE hInst, DWORD pid, LPCWSTR appna
         req->input_fd   = -1;
 
         ret = !wine_server_call_err( req );
-        data->hConIn = wine_server_ptr_handle( reply->handle_in );
+        con_in = wine_server_ptr_handle( reply->handle_in );
     }
     SERVER_END_REQ;
     if (!ret) goto error;
-    WINE_TRACE("using hConIn %p, hSynchro event %p\n", data->hConIn, data->console);
+    WINE_TRACE("using con_in %p, renderer %p\n", con_in, data->console);
 
     RtlInitUnicodeString(&string, renderer_pathW);
     attr.ObjectName = &string;
@@ -702,23 +702,23 @@ static struct inner_data* WINECON_Init(HINSTANCE hInst, DWORD pid, LPCWSTR appna
                           0, FILE_OPEN, FILE_NON_DIRECTORY_FILE,  NULL, 0);
     if (status) goto error;
 
-    h = condrv_handle(data->hConIn);
+    h = condrv_handle(con_in);
     if (!DeviceIoControl(data->console, IOCTL_CONDRV_ATTACH_RENDERER, &h, sizeof(h), NULL, 0, NULL, NULL))
         goto error;
 
     SERVER_START_REQ(create_console_output)
     {
-        req->handle_in  = wine_server_obj_handle( data->hConIn );
+        req->handle_in  = wine_server_obj_handle( con_in );
         req->access     = GENERIC_WRITE|GENERIC_READ;
         req->attributes = 0;
         req->share      = FILE_SHARE_READ|FILE_SHARE_WRITE;
         req->fd         = -1;
         ret = !wine_server_call_err( req );
-        data->hConOut   = wine_server_ptr_handle( reply->handle_out );
+        con_out         = wine_server_ptr_handle( reply->handle_out );
     }
     SERVER_END_REQ;
     if (!ret) goto error;
-    WINE_TRACE("using hConOut %p\n", data->hConOut);
+    WINE_TRACE("using con_out %p\n", con_out);
 
     /* filling data->curcfg from cfg */
     switch ((*backend)(data))
@@ -755,7 +755,10 @@ static struct inner_data* WINECON_Init(HINSTANCE hInst, DWORD pid, LPCWSTR appna
                               lstrlenW(appname) * sizeof(WCHAR), NULL, 0, NULL, NULL);
         if (!ret) goto error;
 
-        if (cmdline && !WINECON_Spawn(data, cmdline)) goto error;
+        if (cmdline && !WINECON_Spawn(data, cmdline, con_in, con_out)) goto error;
+
+        CloseHandle(con_in);
+        CloseHandle(con_out);
         return data;
 
     case init_failed:

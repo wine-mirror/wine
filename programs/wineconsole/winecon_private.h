@@ -60,8 +60,6 @@ struct inner_data {
 
     COORD		cursor;		/* position in cells of cursor */
 
-    HANDLE		hConIn;		/* console input handle */
-    HANDLE		hConOut;	/* screen buffer handle: has to be changed when active sb changes */
     HANDLE		console;	/* console renderer handle */
     HANDLE              hProcess;       /* handle to the child process or NULL */
     HWND		hWnd;           /* handle of 'user' window or NULL for 'curses' */
