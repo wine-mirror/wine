@@ -374,17 +374,17 @@ void     WINECON_SetConfig(struct inner_data* data, const struct config_data* cf
     if (data->curcfg.history_size != cfg->history_size)
     {
         data->curcfg.history_size = cfg->history_size;
-        WINECON_SetHistorySize(data->hConIn, cfg->history_size);
+        WINECON_SetHistorySize(data->console, cfg->history_size);
     }
     if (data->curcfg.history_nodup != cfg->history_nodup)
     {
         data->curcfg.history_nodup = cfg->history_nodup;
-        WINECON_SetHistoryMode(data->hConIn, cfg->history_nodup);
+        WINECON_SetHistoryMode(data->console, cfg->history_nodup);
     }
     if (data->curcfg.insert_mode != cfg->insert_mode)
     {
         data->curcfg.insert_mode = cfg->insert_mode;
-        WINECON_SetInsertMode(data->hConIn, cfg->insert_mode);
+        WINECON_SetInsertMode(data->console, cfg->insert_mode);
     }
     data->curcfg.menu_mask = cfg->menu_mask;
     data->curcfg.quick_edit = cfg->quick_edit;
@@ -511,7 +511,7 @@ void     WINECON_SetConfig(struct inner_data* data, const struct config_data* cf
     if (data->curcfg.edition_mode != cfg->edition_mode)
     {
         data->curcfg.edition_mode = cfg->edition_mode;
-        WINECON_SetEditionMode(data->hConIn, cfg->edition_mode);
+        WINECON_SetEditionMode(data->console, cfg->edition_mode);
     }
     /* we now need to gather all events we got from the operations above,
      * in order to get data correctly updated
@@ -553,14 +553,14 @@ static BOOL WINECON_GetServerConfig(struct inner_data* data)
     struct condrv_output_info output_info;
     DWORD mode;
 
-    if (!DeviceIoControl(data->hConIn, IOCTL_CONDRV_GET_INPUT_INFO, NULL, 0,
+    if (!DeviceIoControl(data->console, IOCTL_CONDRV_GET_INPUT_INFO, NULL, 0,
                          &input_info, sizeof(input_info), NULL, NULL))
         return FALSE;
     data->curcfg.history_size  = input_info.history_size;
     data->curcfg.history_nodup = input_info.history_mode;
     data->curcfg.edition_mode  = input_info.edition_mode;
 
-    GetConsoleMode(data->hConIn, &mode);
+    GetConsoleMode(data->console, &mode);
     data->curcfg.insert_mode = (mode & (ENABLE_INSERT_MODE|ENABLE_EXTENDED_FLAGS)) ==
                                        (ENABLE_INSERT_MODE|ENABLE_EXTENDED_FLAGS);
 
@@ -700,11 +700,11 @@ static struct inner_data* WINECON_Init(HINSTANCE hInst, DWORD pid, LPCWSTR appna
         memset(&input_params, 0, sizeof(input_params));
         input_params.mask = SET_CONSOLE_INPUT_INFO_WIN;
         input_params.info.win = condrv_handle(data->hWnd);
-        ret = DeviceIoControl(data->hConIn, IOCTL_CONDRV_SET_INPUT_INFO, &input_params, sizeof(input_params),
+        ret = DeviceIoControl(data->console, IOCTL_CONDRV_SET_INPUT_INFO, &input_params, sizeof(input_params),
                               NULL, 0, NULL, NULL);
         if (!ret) goto error;
 
-        ret = DeviceIoControl(data->hConIn, IOCTL_CONDRV_SET_TITLE, (void *)appname,
+        ret = DeviceIoControl(data->console, IOCTL_CONDRV_SET_TITLE, (void *)appname,
                               lstrlenW(appname) * sizeof(WCHAR), NULL, 0, NULL, NULL);
         if (!ret) goto error;
 
