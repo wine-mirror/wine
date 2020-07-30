@@ -1221,8 +1221,15 @@ static void _test_no_file_info(unsigned line, HANDLE handle)
                        "FileIoCompletionNotificationInformation returned %x\n", status);
 }
 
-#define test_object_type(a,b) _test_object_type(__LINE__,a,b)
-static void _test_object_type( unsigned line, HANDLE handle, const WCHAR *expected_name )
+static BOOL compare_unicode_string( const UNICODE_STRING *string, const WCHAR *expect )
+{
+    return string->Length == wcslen( expect ) * sizeof(WCHAR)
+            && !wcsnicmp( string->Buffer, expect, string->Length / sizeof(WCHAR) );
+}
+
+#define test_object_type(a,b) _test_object_type(__LINE__,a,b,FALSE)
+#define test_object_type_todo(a,b) _test_object_type(__LINE__,a,b,TRUE)
+static void _test_object_type( unsigned line, HANDLE handle, const WCHAR *expected_name, BOOL todo )
 {
     char buffer[1024];
     UNICODE_STRING *str = (UNICODE_STRING *)buffer, expect;
@@ -1235,9 +1242,27 @@ static void _test_object_type( unsigned line, HANDLE handle, const WCHAR *expect
     status = pNtQueryObject( handle, ObjectTypeInformation, buffer, sizeof(buffer), &len );
     ok_(__FILE__,line)( status == STATUS_SUCCESS, "NtQueryObject failed %x\n", status );
     ok_(__FILE__,line)( len > sizeof(UNICODE_STRING), "unexpected len %u\n", len );
-    ok_(__FILE__,line)( len >= sizeof(OBJECT_TYPE_INFORMATION) + str->Length + sizeof(WCHAR), "unexpected len %u\n", len );
-    ok_(__FILE__,line)( str->Length == expect.Length && !memcmp( str->Buffer, expect.Buffer, expect.Length ),
-                        "wrong/bad type name %s (%p)\n", wine_dbgstr_w(str->Buffer), str->Buffer );
+    ok_(__FILE__,line)( len >= sizeof(OBJECT_TYPE_INFORMATION) + str->Length, "unexpected len %u\n", len );
+    todo_wine_if (todo)
+        ok_(__FILE__,line)(compare_unicode_string( str, expected_name ), "wrong name %s\n", debugstr_w( str->Buffer ));
+}
+
+#define test_object_name(a,b,c) _test_object_name(__LINE__,a,b,c)
+static void _test_object_name( unsigned line, HANDLE handle, const WCHAR *expected_name, BOOL todo )
+{
+    char buffer[1024];
+    UNICODE_STRING *str = (UNICODE_STRING *)buffer, expect;
+    ULONG len = 0;
+    NTSTATUS status;
+
+    RtlInitUnicodeString( &expect, expected_name );
+
+    memset( buffer, 0, sizeof(buffer) );
+    status = pNtQueryObject( handle, ObjectNameInformation, buffer, sizeof(buffer), &len );
+    ok_(__FILE__,line)( status == STATUS_SUCCESS, "NtQueryObject failed %x\n", status );
+    ok_(__FILE__,line)( len >= sizeof(OBJECT_NAME_INFORMATION) + str->Length, "unexpected len %u\n", len );
+    todo_wine_if (todo)
+        ok_(__FILE__,line)(compare_unicode_string( str, expected_name ), "wrong name %s\n", debugstr_w( str->Buffer ));
 }
 
 static void test_query_object(void)
@@ -1383,19 +1408,35 @@ static void test_query_object(void)
 
     handle = CreateMailslotA( "\\\\.\\mailslot\\test_mailslot", 100, 1000, NULL );
     ok( handle != INVALID_HANDLE_VALUE, "CreateMailslot failed err %u\n", GetLastError() );
-    len = 0;
-    status = pNtQueryObject( handle, ObjectNameInformation, buffer, sizeof(buffer), &len );
-    ok( status == STATUS_SUCCESS , "NtQueryObject returned %x\n", status );
-    str = (UNICODE_STRING *)buffer;
-    ok( len > sizeof(UNICODE_STRING), "unexpected len %u\n", len );
-    str = (UNICODE_STRING *)buffer;
-    expected_len = sizeof(UNICODE_STRING) + str->Length + sizeof(WCHAR);
-    ok( len == expected_len, "unexpected len %u\n", len );
-    ok( len > sizeof(UNICODE_STRING) + sizeof("\\test_mailslot") * sizeof(WCHAR),
-        "name too short %s\n", wine_dbgstr_w(str->Buffer) );
-    trace( "got %s len %u\n", wine_dbgstr_w(str->Buffer), len );
 
+    test_object_name( handle, L"\\Device\\Mailslot\\test_mailslot", FALSE );
     test_object_type( handle, L"File" );
+    test_file_info( handle );
+
+    client = CreateFileA( "\\\\.\\mailslot\\test_mailslot", 0, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
+    ok( client != INVALID_HANDLE_VALUE, "CreateFile failed (%d)\n", GetLastError() );
+
+    len = 0;
+    status = pNtQueryObject( client, ObjectNameInformation, buffer, sizeof(buffer), &len );
+    ok( status == STATUS_SUCCESS, "NtQueryObject failed %x\n", status );
+    str = (UNICODE_STRING *)buffer;
+    ok( len == sizeof(UNICODE_STRING) + str->MaximumLength, "unexpected len %u\n", len );
+    todo_wine
+        ok( compare_unicode_string( str, L"\\Device\\Mailslot" ) ||
+            compare_unicode_string( str, L"\\Device\\Mailslot\\test_mailslot" ) /* win8+ */,
+            "wrong name %s\n", debugstr_w( str->Buffer ));
+
+    test_object_type( client, L"File" );
+    test_file_info( client );
+
+    pNtClose( client );
+    pNtClose( handle );
+
+    handle = CreateFileA( "\\\\.\\mailslot", 0, 0, NULL, OPEN_EXISTING, 0, 0 );
+    ok( handle != INVALID_HANDLE_VALUE, "CreateFile failed (%d)\n", GetLastError() );
+
+    test_object_name( handle, L"\\Device\\Mailslot", FALSE );
+    test_object_type_todo( handle, L"File" );
     test_file_info( handle );
 
     pNtClose( handle );
@@ -1403,21 +1444,8 @@ static void test_query_object(void)
     handle = CreateNamedPipeA( "\\\\.\\pipe\\test_pipe", PIPE_ACCESS_DUPLEX, PIPE_READMODE_BYTE,
                                1, 1000, 1000, 1000, NULL );
     ok( handle != INVALID_HANDLE_VALUE, "CreateNamedPipe failed err %u\n", GetLastError() );
-    len = 0;
-    status = pNtQueryObject( handle, ObjectNameInformation, buffer, sizeof(buffer), &len );
-    ok( status == STATUS_SUCCESS , "NtQueryObject returned %x\n", status );
-    str = (UNICODE_STRING *)buffer;
-    todo_wine
-    ok( len > sizeof(UNICODE_STRING), "unexpected len %u\n", len );
-    str = (UNICODE_STRING *)buffer;
-    expected_len = sizeof(UNICODE_STRING) + str->Length + sizeof(WCHAR);
-    todo_wine
-    ok( len == expected_len, "unexpected len %u\n", len );
-    todo_wine
-    ok( len > sizeof(UNICODE_STRING) + sizeof("\\test_pipe") * sizeof(WCHAR),
-        "name too short %s\n", wine_dbgstr_w(str->Buffer) );
-    trace( "got %s len %u\n", wine_dbgstr_w(str->Buffer), len );
 
+    test_object_name( handle, L"\\Device\\NamedPipe\\test_pipe", TRUE );
     test_object_type( handle, L"File" );
     test_file_info( handle );
 
@@ -1431,39 +1459,40 @@ static void test_query_object(void)
     pNtClose( client );
     pNtClose( handle );
 
-    RtlInitUnicodeString( &path, L"\\REGISTRY\\Machine\\Software\\Classes" );
+    handle = CreateFileA( "\\\\.\\pipe", 0, 0, NULL, OPEN_EXISTING, 0, 0 );
+    ok( handle != INVALID_HANDLE_VALUE, "CreateFile failed (%d)\n", GetLastError() );
+
+    test_object_name( handle, L"\\Device\\NamedPipe", TRUE );
+    test_object_type_todo( handle, L"File" );
+    test_file_info( handle );
+
+    pNtClose( handle );
+
+    RtlInitUnicodeString( &path, L"\\REGISTRY\\Machine" );
     status = pNtCreateKey( &handle, KEY_READ, &attr, 0, 0, 0, 0 );
     ok( status == STATUS_SUCCESS, "NtCreateKey failed status %x\n", status );
 
-    len = 0;
-    status = pNtQueryObject( handle, ObjectNameInformation, buffer, sizeof(buffer), &len );
-    ok( status == STATUS_SUCCESS , "NtQueryObject returned %x\n", status );
-    str = (UNICODE_STRING *)buffer;
-    todo_wine
-    ok( len > sizeof(UNICODE_STRING), "unexpected len %u\n", len );
-    str = (UNICODE_STRING *)buffer;
-    expected_len = sizeof(UNICODE_STRING) + str->Length + sizeof(WCHAR);
-    ok( len == expected_len || len == expected_len - sizeof(WCHAR) /* wow64 */, "unexpected len %u\n", len );
-    todo_wine
-    ok( len > sizeof(UNICODE_STRING) + sizeof("\\Classes") * sizeof(WCHAR),
-        "name too short %s\n", wine_dbgstr_w(str->Buffer) );
-    trace( "got %s len %u\n", wine_dbgstr_w(str->Buffer), len );
+    test_object_name( handle, L"\\REGISTRY\\MACHINE", TRUE );
+    test_object_type( handle, L"Key" );
+
     pNtClose( handle );
 
+    test_object_name( GetCurrentProcess(), L"", FALSE );
     test_object_type( GetCurrentProcess(), L"Process" );
     test_no_file_info( GetCurrentProcess() );
 
+    test_object_name( GetCurrentThread(), L"", FALSE );
     test_object_type( GetCurrentThread(), L"Thread" );
     test_no_file_info( GetCurrentThread() );
 
     ret = OpenProcessToken(GetCurrentProcess(), TOKEN_ALL_ACCESS, &handle);
     ok(ret, "OpenProcessToken failed: %u\n", GetLastError());
 
+    test_object_name( handle, L"", FALSE );
     test_object_type( handle, L"Token" );
     test_no_file_info( handle );
 
     pNtClose(handle);
-
 }
 
 static void test_type_mismatch(void)

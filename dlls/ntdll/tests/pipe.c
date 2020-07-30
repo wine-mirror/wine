@@ -1679,16 +1679,20 @@ static void test_volume_info(void)
     CloseHandle( write );
 }
 
-#define test_file_name_fail(a,b) _test_file_name_fail(__LINE__,a,b)
-static void _test_file_name_fail(unsigned line, HANDLE pipe, NTSTATUS expected_status)
+#define test_file_name_fail(a,b,c) _test_file_name_fail(__LINE__,a,b,c)
+static void _test_file_name_fail(unsigned line, HANDLE pipe, NTSTATUS expected_status, BOOL todo)
 {
     char buffer[512];
     IO_STATUS_BLOCK iosb;
     NTSTATUS status;
 
+    status = NtQueryInformationFile( pipe, &iosb, buffer, 0, FileNameInformation );
+    ok_(__FILE__,line)( status == STATUS_INFO_LENGTH_MISMATCH,
+            "expected STATUS_INFO_LENGTH_MISMATCH, got %#x\n", status );
+
     status = NtQueryInformationFile( pipe, &iosb, buffer, sizeof(buffer), FileNameInformation );
-    ok_(__FILE__,line)( status == expected_status, "NtQueryInformationFile failed: %x, expected %x\n",
-                        status, expected_status );
+    todo_wine_if (todo)
+        ok_(__FILE__,line)( status == expected_status, "expected %#x, got %#x\n", expected_status, status );
 }
 
 #define test_file_name(a) _test_file_name(__LINE__,a)
@@ -2163,7 +2167,7 @@ static void test_pipe_local_info(HANDLE pipe, BOOL is_server, DWORD state)
 
 static void test_file_info(void)
 {
-    HANDLE server, client;
+    HANDLE server, client, device;
 
     if (!create_pipe_pair( &server, &client, FILE_FLAG_OVERLAPPED | PIPE_ACCESS_INBOUND,
                            PIPE_TYPE_MESSAGE, 4096 )) return;
@@ -2172,10 +2176,17 @@ static void test_file_info(void)
     test_file_name( server );
 
     DisconnectNamedPipe( server );
-    test_file_name_fail( client, STATUS_PIPE_DISCONNECTED );
+    test_file_name_fail( client, STATUS_PIPE_DISCONNECTED, FALSE );
 
     CloseHandle( server );
     CloseHandle( client );
+
+    device = CreateFileA("\\\\.\\pipe", 0, 0, NULL, OPEN_EXISTING, 0, NULL);
+    ok(device != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError());
+
+    test_file_name_fail( device, STATUS_INVALID_PARAMETER, TRUE );
+
+    CloseHandle( device );
 }
 
 static PSECURITY_DESCRIPTOR get_security_descriptor(HANDLE handle, BOOL todo)

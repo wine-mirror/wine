@@ -4997,6 +4997,71 @@ static void test_file_readonly_access(void)
     DeleteFileW(path);
 }
 
+static void test_mailslot_name(void)
+{
+    char buffer[1024] = {0};
+    const FILE_NAME_INFORMATION *name = (const FILE_NAME_INFORMATION *)buffer;
+    HANDLE server, client, device;
+    IO_STATUS_BLOCK io;
+    NTSTATUS ret;
+
+    server = CreateMailslotA( "\\\\.\\mailslot\\winetest", 100, 1000, NULL );
+    ok(server != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError());
+
+    ret = NtQueryInformationFile( server, &io, buffer, 0, FileNameInformation );
+    ok(ret == STATUS_INFO_LENGTH_MISMATCH, "got %#x\n", ret);
+
+    memset(buffer, 0xcc, sizeof(buffer));
+    ret = NtQueryInformationFile( server, &io, buffer,
+            offsetof(FILE_NAME_INFORMATION, FileName[5]), FileNameInformation );
+    todo_wine ok(ret == STATUS_BUFFER_OVERFLOW, "got %#x\n", ret);
+    if (ret == STATUS_BUFFER_OVERFLOW)
+    {
+        ok(name->FileNameLength == 18, "got length %u\n", name->FileNameLength);
+        ok(!memcmp(name->FileName, L"\\wine", 10), "got %s\n",
+                debugstr_wn(name->FileName, name->FileNameLength / sizeof(WCHAR)));
+    }
+
+    memset(buffer, 0xcc, sizeof(buffer));
+    ret = NtQueryInformationFile( server, &io, buffer, sizeof(buffer), FileNameInformation );
+    todo_wine ok(!ret, "got %#x\n", ret);
+    if (!ret)
+    {
+        ok(name->FileNameLength == 18, "got length %u\n", name->FileNameLength);
+        ok(!memcmp(name->FileName, L"\\winetest", 18), "got %s\n",
+                debugstr_wn(name->FileName, name->FileNameLength / sizeof(WCHAR)));
+    }
+
+    client = CreateFileA( "\\\\.\\mailslot\\winetest", 0, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL );
+    ok(client != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError());
+
+    ret = NtQueryInformationFile( client, &io, buffer, 0, FileNameInformation );
+    ok(ret == STATUS_INFO_LENGTH_MISMATCH, "got %#x\n", ret);
+
+    ret = NtQueryInformationFile( client, &io, buffer, sizeof(buffer), FileNameInformation );
+    todo_wine ok(ret == STATUS_INVALID_PARAMETER || !ret /* win8+ */, "got %#x\n", ret);
+    if (!ret)
+    {
+        ok(name->FileNameLength == 18, "got length %u\n", name->FileNameLength);
+        ok(!memcmp(name->FileName, L"\\winetest", 18), "got %s\n",
+                debugstr_wn(name->FileName, name->FileNameLength / sizeof(WCHAR)));
+    }
+
+    CloseHandle( server );
+    CloseHandle( client );
+
+    device = CreateFileA("\\\\.\\mailslot", 0, 0, NULL, OPEN_EXISTING, 0, NULL);
+    ok(device != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError());
+
+    ret = NtQueryInformationFile( device, &io, buffer, 0, FileNameInformation );
+    ok(ret == STATUS_INFO_LENGTH_MISMATCH, "got %#x\n", ret);
+
+    ret = NtQueryInformationFile( device, &io, buffer, sizeof(buffer), FileNameInformation );
+    todo_wine ok(ret == STATUS_INVALID_PARAMETER, "got %#x\n", ret);
+
+    CloseHandle( device );
+}
+
 START_TEST(file)
 {
     HMODULE hkernel32 = GetModuleHandleA("kernel32.dll");
@@ -5067,4 +5132,5 @@ START_TEST(file)
     test_query_attribute_information_file();
     test_ioctl();
     test_flush_buffers_file();
+    test_mailslot_name();
 }
