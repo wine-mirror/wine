@@ -178,6 +178,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH AttachConsole( DWORD pid )
 
     TRACE( "(%x)\n", pid );
 
+    RtlEnterCriticalSection( &console_section );
+
     SERVER_START_REQ( attach_console )
     {
         req->pid = pid;
@@ -189,6 +191,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH AttachConsole( DWORD pid )
         }
     }
     SERVER_END_REQ;
+
+    RtlLeaveCriticalSection( &console_section );
     return ret;
 }
 
@@ -211,11 +215,14 @@ BOOL WINAPI AllocConsole(void)
 
     TRACE("()\n");
 
+    RtlEnterCriticalSection( &console_section );
+
     std_in = CreateFileW( L"CONIN$", GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE, 0, NULL, OPEN_EXISTING, 0, 0 );
     if (GetConsoleMode( std_in, &mode ))
     {
         /* we already have a console opened on this process, don't create a new one */
         CloseHandle( std_in );
+        RtlLeaveCriticalSection( &console_section );
         return FALSE;
     }
 
@@ -248,7 +255,7 @@ BOOL WINAPI AllocConsole(void)
         console_si.lpTitle = buffer;
     }
 
-    if (!(event = CreateEventW( &inheritable_attr, TRUE, FALSE, NULL ))) return FALSE;
+    if (!(event = CreateEventW( &inheritable_attr, TRUE, FALSE, NULL ))) goto error;
 
     swprintf( cmd, ARRAY_SIZE(cmd),  L"wineconsole --use-event=%ld", (DWORD_PTR)event );
     if ((ret = CreateProcessW( NULL, cmd, NULL, NULL, TRUE, DETACHED_PROCESS, NULL, NULL, &console_si, &pi )))
@@ -286,6 +293,7 @@ BOOL WINAPI AllocConsole(void)
     SetStdHandle( STD_INPUT_HANDLE,  std_in );
     SetStdHandle( STD_OUTPUT_HANDLE, std_out );
     SetStdHandle( STD_ERROR_HANDLE,  std_err );
+    RtlLeaveCriticalSection( &console_section );
     SetLastError( ERROR_SUCCESS );
     return TRUE;
 
@@ -295,6 +303,7 @@ error:
     if (std_out != INVALID_HANDLE_VALUE) CloseHandle(std_out);
     if (std_err != INVALID_HANDLE_VALUE) CloseHandle(std_err);
     FreeConsole();
+    RtlLeaveCriticalSection( &console_section );
     return FALSE;
 }
 
@@ -468,12 +477,16 @@ BOOL WINAPI DECLSPEC_HOTPATCH FreeConsole(void)
     HANDLE event;
     BOOL ret;
 
+    RtlEnterCriticalSection( &console_section );
+
     SERVER_START_REQ( free_console )
     {
         ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
     if ((event = InterlockedExchangePointer( &console_wait_event, NULL ))) NtClose( event );
+
+    RtlLeaveCriticalSection( &console_section );
     return ret;
 }
 
