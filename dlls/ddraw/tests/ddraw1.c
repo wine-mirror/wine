@@ -7309,8 +7309,8 @@ static void test_palette_alpha(void)
 
 static void test_lost_device(void)
 {
+    IDirectDrawSurface *sysmem_surface, *vidmem_surface;
     IDirectDrawSurface *surface, *back_buffer;
-    IDirectDrawSurface *sysmem_surface;
     DDSURFACEDESC surface_desc;
     HWND window1, window2;
     IDirectDraw *ddraw;
@@ -7345,12 +7345,35 @@ static void test_lost_device(void)
     hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &sysmem_surface, NULL);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_VIDEOMEMORY;
+    surface_desc.dwWidth = 64;
+    surface_desc.dwHeight = 64;
+    surface_desc.ddpfPixelFormat.dwSize = sizeof(surface_desc.ddpfPixelFormat);
+    surface_desc.ddpfPixelFormat.dwFlags = DDPF_RGB;
+    U1(surface_desc.ddpfPixelFormat).dwRGBBitCount = 32;
+    U2(surface_desc.ddpfPixelFormat).dwRBitMask = 0x00ff0000;
+    U3(surface_desc.ddpfPixelFormat).dwGBitMask = 0x0000ff00;
+    U4(surface_desc.ddpfPixelFormat).dwBBitMask = 0x000000ff;
+    if (FAILED(IDirectDraw_CreateSurface(ddraw, &surface_desc, &vidmem_surface, NULL)))
+    {
+        skip("Failed to create video memory surface, skipping related tests.\n");
+        vidmem_surface = NULL;
+    }
+
     hr = IDirectDrawSurface_IsLost(surface);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface_Flip(surface, NULL, DDFLIP_WAIT);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface_IsLost(sysmem_surface);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    if (vidmem_surface)
+    {
+        hr = IDirectDrawSurface_IsLost(vidmem_surface);
+        ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    }
 
     ret = SetForegroundWindow(GetDesktopWindow());
     ok(ret, "Failed to set foreground window.\n");
@@ -7360,6 +7383,11 @@ static void test_lost_device(void)
     ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface_IsLost(sysmem_surface);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    if (vidmem_surface)
+    {
+        hr = IDirectDrawSurface_IsLost(vidmem_surface);
+        ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#x.\n", hr);
+    }
 
     ret = SetForegroundWindow(window1);
     ok(ret, "Failed to set foreground window.\n");
@@ -7369,6 +7397,11 @@ static void test_lost_device(void)
     ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface_IsLost(sysmem_surface);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    if (vidmem_surface)
+    {
+        hr = IDirectDrawSurface_IsLost(vidmem_surface);
+        ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#x.\n", hr);
+    }
 
     hr = restore_surfaces(ddraw);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
@@ -7378,6 +7411,11 @@ static void test_lost_device(void)
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface_IsLost(sysmem_surface);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    if (vidmem_surface)
+    {
+        hr = IDirectDrawSurface_IsLost(vidmem_surface);
+        ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    }
 
     hr = IDirectDraw_SetCooperativeLevel(ddraw, window1, DDSCL_NORMAL);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
@@ -7388,6 +7426,11 @@ static void test_lost_device(void)
             "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface_IsLost(sysmem_surface);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    if (vidmem_surface)
+    {
+        hr = IDirectDrawSurface_IsLost(vidmem_surface);
+        ok(hr == DD_OK || broken(ddraw_is_warp(ddraw) && hr == DDERR_SURFACELOST), "Got unexpected hr %#x.\n", hr);
+    }
 
     /* Trying to restore the primary will crash, probably because flippable
      * surfaces can't exist in DDSCL_NORMAL. */
@@ -7397,6 +7440,8 @@ static void test_lost_device(void)
     surface_desc.dwFlags = DDSD_CAPS;
     surface_desc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
     hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &surface, NULL);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    hr = restore_surfaces(ddraw);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirectDrawSurface_IsLost(surface);
@@ -7408,6 +7453,11 @@ static void test_lost_device(void)
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface_IsLost(sysmem_surface);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    if (vidmem_surface)
+    {
+        hr = IDirectDrawSurface_IsLost(vidmem_surface);
+        ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    }
 
     ret = SetForegroundWindow(window1);
     ok(ret, "Failed to set foreground window.\n");
@@ -7415,6 +7465,11 @@ static void test_lost_device(void)
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface_IsLost(sysmem_surface);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    if (vidmem_surface)
+    {
+        hr = IDirectDrawSurface_IsLost(vidmem_surface);
+        ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    }
 
     hr = IDirectDraw_SetCooperativeLevel(ddraw, window1, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
@@ -7422,6 +7477,11 @@ static void test_lost_device(void)
     ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface_IsLost(sysmem_surface);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    if (vidmem_surface)
+    {
+        hr = IDirectDrawSurface_IsLost(vidmem_surface);
+        ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#x.\n", hr);
+    }
 
     hr = restore_surfaces(ddraw);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
@@ -7429,6 +7489,11 @@ static void test_lost_device(void)
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface_IsLost(sysmem_surface);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    if (vidmem_surface)
+    {
+        hr = IDirectDrawSurface_IsLost(vidmem_surface);
+        ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    }
 
     IDirectDrawSurface_Release(surface);
     memset(&surface_desc, 0, sizeof(surface_desc));
@@ -7447,6 +7512,11 @@ static void test_lost_device(void)
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface_IsLost(sysmem_surface);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    if (vidmem_surface)
+    {
+        hr = IDirectDrawSurface_IsLost(vidmem_surface);
+        ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    }
 
     hr = IDirectDraw_SetCooperativeLevel(ddraw, window1, DDSCL_NORMAL | DDSCL_FULLSCREEN);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
@@ -7456,6 +7526,11 @@ static void test_lost_device(void)
     ok(hr == DDERR_NOEXCLUSIVEMODE, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface_IsLost(sysmem_surface);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    if (vidmem_surface)
+    {
+        hr = IDirectDrawSurface_IsLost(vidmem_surface);
+        ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    }
 
     hr = IDirectDraw_SetCooperativeLevel(ddraw, window1, DDSCL_NORMAL);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
@@ -7465,6 +7540,11 @@ static void test_lost_device(void)
     ok(hr == DDERR_NOEXCLUSIVEMODE, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface_IsLost(sysmem_surface);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    if (vidmem_surface)
+    {
+        hr = IDirectDrawSurface_IsLost(vidmem_surface);
+        ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    }
 
     hr = IDirectDraw_SetCooperativeLevel(ddraw, window2, DDSCL_NORMAL);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
@@ -7474,6 +7554,11 @@ static void test_lost_device(void)
     ok(hr == DDERR_NOEXCLUSIVEMODE, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface_IsLost(sysmem_surface);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    if (vidmem_surface)
+    {
+        hr = IDirectDrawSurface_IsLost(vidmem_surface);
+        ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    }
 
     hr = IDirectDraw_SetCooperativeLevel(ddraw, window2, DDSCL_NORMAL | DDSCL_FULLSCREEN);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
@@ -7483,6 +7568,11 @@ static void test_lost_device(void)
     ok(hr == DDERR_NOEXCLUSIVEMODE, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface_IsLost(sysmem_surface);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    if (vidmem_surface)
+    {
+        hr = IDirectDrawSurface_IsLost(vidmem_surface);
+        ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    }
 
     hr = IDirectDraw_SetCooperativeLevel(ddraw, window2, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
@@ -7492,6 +7582,11 @@ static void test_lost_device(void)
     ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface_IsLost(sysmem_surface);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    if (vidmem_surface)
+    {
+        hr = IDirectDrawSurface_IsLost(vidmem_surface);
+        ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#x.\n", hr);
+    }
 
     memset(&caps, 0, sizeof(caps));
     caps.dwCaps = DDSCAPS_FLIP;
@@ -7506,6 +7601,8 @@ static void test_lost_device(void)
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     IDirectDrawSurface_Release(back_buffer);
 
+    if (vidmem_surface)
+        IDirectDrawSurface_Release(vidmem_surface);
     IDirectDrawSurface_Release(sysmem_surface);
     IDirectDrawSurface_Release(surface);
     refcount = IDirectDraw_Release(ddraw);
