@@ -169,6 +169,61 @@ static COORD get_largest_console_window_size( HANDLE handle )
     return c;
 }
 
+static BOOL init_console_std_handles(void)
+{
+    HANDLE std_out = NULL, std_err = NULL, handle;
+    OBJECT_ATTRIBUTES attr = {sizeof(attr)};
+    IO_STATUS_BLOCK iosb;
+    UNICODE_STRING name;
+    STARTUPINFOW si;
+    NTSTATUS status;
+
+    GetStartupInfoW( &si );
+    attr.ObjectName = &name;
+    attr.Attributes = OBJ_INHERIT;
+
+    if (!(si.dwFlags & STARTF_USESTDHANDLES) || !GetStdHandle( STD_INPUT_HANDLE ))
+    {
+        /* FIXME: Use unbound console handle */
+        RtlInitUnicodeString( &name, L"\\Device\\ConDrv\\CurrentIn" );
+        status = NtCreateFile( &handle, FILE_READ_DATA | FILE_WRITE_DATA | SYNCHRONIZE | FILE_READ_ATTRIBUTES |
+                               FILE_WRITE_ATTRIBUTES, &attr, &iosb, NULL, FILE_ATTRIBUTE_NORMAL,
+                               FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, FILE_CREATE,
+                               FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0 );
+        if (!set_ntstatus( status )) return FALSE;
+        SetStdHandle( STD_INPUT_HANDLE, console_handle_map( handle ));
+    }
+
+    if (si.dwFlags & STARTF_USESTDHANDLES)
+    {
+        std_out = GetStdHandle( STD_OUTPUT_HANDLE );
+        std_err = GetStdHandle( STD_ERROR_HANDLE );
+        if (std_out && std_err) return TRUE;
+    }
+
+    /* FIXME: Use unbound console handle */
+    RtlInitUnicodeString( &name, L"\\Device\\ConDrv\\CurrentOut" );
+    status = NtCreateFile( &handle, FILE_READ_DATA | FILE_WRITE_DATA | SYNCHRONIZE | FILE_READ_ATTRIBUTES |
+                           FILE_WRITE_ATTRIBUTES, &attr, &iosb, NULL, FILE_ATTRIBUTE_NORMAL,
+                           FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, FILE_CREATE,
+                           FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0 );
+    if (!set_ntstatus( status )) return FALSE;
+    if (!std_out)
+    {
+        SetStdHandle( STD_OUTPUT_HANDLE, console_handle_map( handle ));
+    }
+
+    if (!std_err)
+    {
+        if (!std_out && !DuplicateHandle( GetCurrentProcess(), handle, GetCurrentProcess(),
+                                          &handle, 0, TRUE, DUPLICATE_SAME_ACCESS ))
+            return FALSE;
+        SetStdHandle( STD_ERROR_HANDLE, console_handle_map( handle ));
+    }
+
+    return TRUE;
+}
+
 /******************************************************************
  *	AttachConsole   (kernelbase.@)
  */
@@ -203,13 +258,10 @@ BOOL WINAPI DECLSPEC_HOTPATCH AttachConsole( DWORD pid )
 BOOL WINAPI AllocConsole(void)
 {
     SECURITY_ATTRIBUTES inheritable_attr = { sizeof(inheritable_attr), NULL, TRUE };
-    HANDLE std_in  = INVALID_HANDLE_VALUE;
-    HANDLE std_out = INVALID_HANDLE_VALUE;
-    HANDLE std_err = INVALID_HANDLE_VALUE;
     STARTUPINFOW app_si, console_si;
     WCHAR buffer[1024], cmd[256];
     PROCESS_INFORMATION pi;
-    HANDLE event;
+    HANDLE event, std_in;
     DWORD mode;
     BOOL ret;
 
@@ -266,42 +318,15 @@ BOOL WINAPI AllocConsole(void)
         CloseHandle( pi.hProcess );
     }
     CloseHandle( event );
-    if (!ret) goto error;
+    if (!ret || !init_console_std_handles()) goto error;
     TRACE( "Started wineconsole pid=%08x tid=%08x\n", pi.dwProcessId, pi.dwThreadId );
 
-    if (!(app_si.dwFlags & STARTF_USESTDHANDLES))
-    {
-
-        std_in = CreateFileW( L"CONIN$", GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE, 0, &inheritable_attr,
-                              OPEN_EXISTING, 0, 0);
-        if (std_in == INVALID_HANDLE_VALUE) goto error;
-
-        std_out = CreateFileW( L"CONOUT$", GENERIC_READ | GENERIC_WRITE, 0, &inheritable_attr, OPEN_EXISTING, 0, 0);
-        if (std_out == INVALID_HANDLE_VALUE) goto error;
-
-        if (!DuplicateHandle( GetCurrentProcess(), std_out, GetCurrentProcess(),
-                              &std_err, 0, TRUE, DUPLICATE_SAME_ACCESS) )
-            goto error;
-    }
-    else
-    {
-        std_in  = app_si.hStdInput;
-        std_out = app_si.hStdOutput;
-        std_err = app_si.hStdError;
-    }
-
-    SetStdHandle( STD_INPUT_HANDLE,  std_in );
-    SetStdHandle( STD_OUTPUT_HANDLE, std_out );
-    SetStdHandle( STD_ERROR_HANDLE,  std_err );
     RtlLeaveCriticalSection( &console_section );
     SetLastError( ERROR_SUCCESS );
     return TRUE;
 
 error:
     ERR("Can't allocate console\n");
-    if (std_in != INVALID_HANDLE_VALUE)  CloseHandle(std_in);
-    if (std_out != INVALID_HANDLE_VALUE) CloseHandle(std_out);
-    if (std_err != INVALID_HANDLE_VALUE) CloseHandle(std_err);
     FreeConsole();
     RtlLeaveCriticalSection( &console_section );
     return FALSE;
