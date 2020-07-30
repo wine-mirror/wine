@@ -9489,10 +9489,22 @@ static void test_lost_device(void)
     ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface7_Flip(surface, NULL, DDFLIP_WAIT);
     ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface7_Restore(surface);
+    ok(hr == DDERR_WRONGMODE, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface7_IsLost(surface);
+    ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface7_IsLost(sysmem_surface);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface7_Restore(sysmem_surface);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface7_IsLost(sysmem_surface);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     if (vidmem_surface)
     {
+        hr = IDirectDrawSurface7_IsLost(vidmem_surface);
+        ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#x.\n", hr);
+        hr = IDirectDrawSurface7_Restore(vidmem_surface);
+        ok(hr == DDERR_WRONGMODE, "Got unexpected hr %#x.\n", hr);
         hr = IDirectDrawSurface7_IsLost(vidmem_surface);
         ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#x.\n", hr);
     }

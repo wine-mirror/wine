@@ -3785,9 +3785,13 @@ static HRESULT WINAPI ddraw_surface7_Restore(IDirectDrawSurface7 *iface)
         }
     }
 
+    if (!ddraw_surface_can_be_lost(surface))
+        return DD_OK;
     ddraw_update_lost_surfaces(surface->ddraw);
-    surface->is_lost = FALSE;
+    if (surface->ddraw->device_state == DDRAW_DEVICE_STATE_LOST)
+        return DDERR_WRONGMODE;
 
+    surface->is_lost = FALSE;
     for(i = 0; i < MAX_COMPLEX_ATTACHED; i++)
     {
         if (surface->complex_array[i])
