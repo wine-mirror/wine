@@ -37,6 +37,19 @@
 
 #include "utils.h"
 
+/* memcmp() isn't exported from ntoskrnl on i386 */
+static int kmemcmp( const void *ptr1, const void *ptr2, size_t n )
+{
+    const unsigned char *p1, *p2;
+
+    for (p1 = ptr1, p2 = ptr2; n; n--, p1++, p2++)
+    {
+        if (*p1 < *p2) return -1;
+        if (*p1 > *p2) return 1;
+    }
+    return 0;
+}
+
 static const WCHAR device_name[] = {'\\','D','e','v','i','c','e',
                                     '\\','W','i','n','e','T','e','s','t','D','r','i','v','e','r',0};
 static const WCHAR upper_name[] = {'\\','D','e','v','i','c','e',
@@ -54,6 +67,13 @@ static void *create_caller_thread;
 static PETHREAD create_irp_thread;
 
 NTSTATUS WINAPI ZwQueryInformationProcess(HANDLE,PROCESSINFOCLASS,void*,ULONG,ULONG*);
+
+struct file_context
+{
+    DWORD id;
+    ULONG namelen;
+    WCHAR name[10];
+};
 
 static void *get_proc_address(const char *name)
 {
@@ -2175,15 +2195,15 @@ static NTSTATUS get_fscontext(IRP *irp, IO_STACK_LOCATION *stack, ULONG_PTR *inf
 {
     ULONG length = stack->Parameters.DeviceIoControl.OutputBufferLength;
     char *buffer = irp->AssociatedIrp.SystemBuffer;
-    DWORD *context = stack->FileObject->FsContext;
+    struct file_context *context = stack->FileObject->FsContext;
 
-    if (!buffer || !context)
+    if (!buffer)
         return STATUS_ACCESS_VIOLATION;
 
     if (length < sizeof(DWORD))
         return STATUS_BUFFER_TOO_SMALL;
 
-    *(DWORD*)buffer = *context;
+    *(DWORD*)buffer = context->id;
     *info = sizeof(DWORD);
     return STATUS_SUCCESS;
 }
@@ -2271,13 +2291,21 @@ static NTSTATUS test_completion_ioctl(DEVICE_OBJECT *device, IRP *irp)
 static NTSTATUS WINAPI driver_Create(DEVICE_OBJECT *device, IRP *irp)
 {
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
-    DWORD *context = ExAllocatePool(PagedPool, sizeof(*context));
+    struct file_context *context = ExAllocatePool(PagedPool, sizeof(*context));
+
+    if (!context)
+    {
+        irp->IoStatus.Status = STATUS_NO_MEMORY;
+        IoCompleteRequest(irp, IO_NO_INCREMENT);
+        return STATUS_NO_MEMORY;
+    }
+
+    context->id = ++create_count;
+    context->namelen = min(irpsp->FileObject->FileName.Length, sizeof(context->name));
+    memcpy(context->name, irpsp->FileObject->FileName.Buffer, context->namelen);
+    irpsp->FileObject->FsContext = context;
 
     last_created_file = irpsp->FileObject;
-    ++create_count;
-    if (context)
-        *context = create_count;
-    irpsp->FileObject->FsContext = context;
     create_caller_thread = KeGetCurrentThread();
     create_irp_thread = irp->Tail.Overlay.Thread;
 
@@ -2356,6 +2384,81 @@ static NTSTATUS WINAPI driver_FlushBuffers(DEVICE_OBJECT *device, IRP *irp)
     return STATUS_PENDING;
 }
 
+static BOOL compare_file_name(const struct file_context *context, const WCHAR *expect)
+{
+    return context->namelen == wcslen(expect) * sizeof(WCHAR)
+            && !kmemcmp(context->name, expect, context->namelen);
+}
+
+static NTSTATUS WINAPI driver_QueryInformation(DEVICE_OBJECT *device, IRP *irp)
+{
+    IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation(irp);
+    NTSTATUS ret;
+
+    switch (stack->Parameters.QueryFile.FileInformationClass)
+    {
+    case FileNameInformation:
+    {
+        const struct file_context *context = stack->FileObject->FsContext;
+        FILE_NAME_INFORMATION *info = irp->AssociatedIrp.SystemBuffer;
+        ULONG len;
+
+        if (stack->Parameters.QueryFile.Length < sizeof(*info))
+        {
+            ret = STATUS_INFO_LENGTH_MISMATCH;
+            break;
+        }
+
+        if (compare_file_name(context, L"\\notimpl"))
+        {
+            ret = STATUS_NOT_IMPLEMENTED;
+            break;
+        }
+        else if (compare_file_name(context, L""))
+        {
+            ret = STATUS_INVALID_DEVICE_REQUEST;
+            break;
+        }
+        else if (compare_file_name(context, L"\\badparam"))
+        {
+            ret = STATUS_INVALID_PARAMETER;
+            break;
+        }
+        else if (compare_file_name(context, L"\\genfail"))
+        {
+            ret = STATUS_UNSUCCESSFUL;
+            break;
+        }
+        else if (compare_file_name(context, L"\\badtype"))
+        {
+            ret = STATUS_OBJECT_TYPE_MISMATCH;
+            break;
+        }
+
+        len = stack->Parameters.QueryFile.Length - FIELD_OFFSET(FILE_NAME_INFORMATION, FileName);
+        if (len < context->namelen)
+            ret = STATUS_BUFFER_OVERFLOW;
+        else
+        {
+            len = context->namelen;
+            ret = STATUS_SUCCESS;
+        }
+        irp->IoStatus.Information = FIELD_OFFSET(FILE_NAME_INFORMATION, FileName) + len;
+        info->FileNameLength = context->namelen;
+        memcpy(info->FileName, context->name, len);
+        break;
+    }
+
+    default:
+        ret = STATUS_NOT_IMPLEMENTED;
+        break;
+    }
+
+    irp->IoStatus.Status = ret;
+    IoCompleteRequest(irp, IO_NO_INCREMENT);
+    return ret;
+}
+
 static NTSTATUS WINAPI driver_Close(DEVICE_OBJECT *device, IRP *irp)
 {
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation(irp);
@@ -2400,6 +2503,7 @@ NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, PUNICODE_STRING registry)
     driver->MajorFunction[IRP_MJ_CREATE]            = driver_Create;
     driver->MajorFunction[IRP_MJ_DEVICE_CONTROL]    = driver_IoControl;
     driver->MajorFunction[IRP_MJ_FLUSH_BUFFERS]     = driver_FlushBuffers;
+    driver->MajorFunction[IRP_MJ_QUERY_INFORMATION] = driver_QueryInformation;
     driver->MajorFunction[IRP_MJ_CLOSE]             = driver_Close;
 
     RtlInitUnicodeString(&nameW, IoDriverObjectTypeW);

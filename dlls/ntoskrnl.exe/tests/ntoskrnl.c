@@ -493,6 +493,119 @@ static void test_return_status(void)
     ok(ret_size == 3, "got size %u\n", ret_size);
 }
 
+static BOOL compare_unicode_string(const WCHAR *buffer, ULONG len, const WCHAR *expect)
+{
+    return len == wcslen(expect) * sizeof(WCHAR) && !memcmp(buffer, expect, len);
+}
+
+static void test_object_info(void)
+{
+    char buffer[200];
+    OBJECT_NAME_INFORMATION *name_info = (OBJECT_NAME_INFORMATION *)buffer;
+    OBJECT_TYPE_INFORMATION *type_info = (OBJECT_TYPE_INFORMATION *)buffer;
+    FILE_NAME_INFORMATION *file_info = (FILE_NAME_INFORMATION *)buffer;
+    HANDLE file;
+    NTSTATUS status;
+    IO_STATUS_BLOCK io;
+    ULONG size;
+
+    status = NtQueryObject(device, ObjectNameInformation, buffer, sizeof(buffer), NULL);
+    ok(!status, "got %#x\n", status);
+    todo_wine ok(compare_unicode_string(name_info->Name.Buffer, name_info->Name.Length, L"\\Device\\WineTestDriver"),
+            "wrong name %s\n", debugstr_w(name_info->Name.Buffer));
+
+    status = NtQueryObject(device, ObjectTypeInformation, buffer, sizeof(buffer), NULL);
+    ok(!status, "got %#x\n", status);
+    ok(compare_unicode_string(type_info->TypeName.Buffer, type_info->TypeName.Length, L"File"),
+            "wrong name %s\n", debugstr_wn(type_info->TypeName.Buffer, type_info->TypeName.Length / sizeof(WCHAR)));
+
+    status = NtQueryInformationFile(device, &io, buffer, sizeof(buffer), FileNameInformation);
+    todo_wine ok(status == STATUS_INVALID_DEVICE_REQUEST, "got %#x\n", status);
+
+    file = CreateFileA("\\\\.\\WineTestDriver\\subfile", 0, 0, NULL, OPEN_EXISTING, 0, NULL);
+    todo_wine ok(file != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError());
+    if (file == INVALID_HANDLE_VALUE) return;
+
+    memset(buffer, 0xcc, sizeof(buffer));
+    status = NtQueryObject(file, ObjectNameInformation, buffer, sizeof(buffer), &size);
+    ok(!status, "got %#x\n", status);
+    ok(size == sizeof(*name_info) + sizeof(L"\\Device\\WineTestDriver\\subfile"), "wrong size %u\n", size);
+    ok(compare_unicode_string(name_info->Name.Buffer, name_info->Name.Length, L"\\Device\\WineTestDriver\\subfile"),
+            "wrong name %s\n", debugstr_w(name_info->Name.Buffer));
+
+    memset(buffer, 0xcc, sizeof(buffer));
+    status = NtQueryObject(file, ObjectNameInformation, buffer, size - 2, &size);
+    ok(status == STATUS_BUFFER_OVERFLOW, "got %#x\n", status);
+    ok(size == sizeof(*name_info) + sizeof(L"\\Device\\WineTestDriver\\subfile"), "wrong size %u\n", size);
+    ok(compare_unicode_string(name_info->Name.Buffer, name_info->Name.Length, L"\\Device\\WineTestDriver\\subfil"),
+            "wrong name %s\n", debugstr_w(name_info->Name.Buffer));
+
+    memset(buffer, 0xcc, sizeof(buffer));
+    status = NtQueryObject(file, ObjectNameInformation, buffer, sizeof(*name_info), &size);
+    ok(status == STATUS_BUFFER_OVERFLOW, "got %#x\n", status);
+    ok(size == sizeof(*name_info) + sizeof(L"\\Device\\WineTestDriver\\subfile"), "wrong size %u\n", size);
+
+    status = NtQueryObject(file, ObjectTypeInformation, buffer, sizeof(buffer), NULL);
+    ok(!status, "got %#x\n", status);
+    ok(compare_unicode_string(type_info->TypeName.Buffer, type_info->TypeName.Length, L"File"),
+            "wrong name %s\n", debugstr_wn(type_info->TypeName.Buffer, type_info->TypeName.Length / sizeof(WCHAR)));
+
+    status = NtQueryInformationFile(file, &io, buffer, sizeof(buffer), FileNameInformation);
+    ok(!status, "got %#x\n", status);
+    ok(compare_unicode_string(file_info->FileName, file_info->FileNameLength, L"\\subfile"),
+            "wrong name %s\n", debugstr_wn(file_info->FileName, file_info->FileNameLength / sizeof(WCHAR)));
+
+    CloseHandle(file);
+
+    file = CreateFileA("\\\\.\\WineTestDriver\\notimpl", 0, 0, NULL, OPEN_EXISTING, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError());
+
+    status = NtQueryObject(file, ObjectNameInformation, buffer, sizeof(buffer), NULL);
+    ok(!status, "got %#x\n", status);
+    ok(compare_unicode_string(name_info->Name.Buffer, name_info->Name.Length, L"\\Device\\WineTestDriver"),
+            "wrong name %s\n", debugstr_w(name_info->Name.Buffer));
+
+    status = NtQueryInformationFile(file, &io, buffer, sizeof(buffer), FileNameInformation);
+    ok(status == STATUS_NOT_IMPLEMENTED, "got %#x\n", status);
+
+    CloseHandle(file);
+
+    file = CreateFileA("\\\\.\\WineTestDriver\\badparam", 0, 0, NULL, OPEN_EXISTING, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError());
+
+    status = NtQueryObject(file, ObjectNameInformation, buffer, sizeof(buffer), NULL);
+    ok(!status, "got %#x\n", status);
+    ok(compare_unicode_string(name_info->Name.Buffer, name_info->Name.Length, L"\\Device\\WineTestDriver"),
+            "wrong name %s\n", debugstr_w(name_info->Name.Buffer));
+
+    status = NtQueryInformationFile(file, &io, buffer, sizeof(buffer), FileNameInformation);
+    ok(status == STATUS_INVALID_PARAMETER, "got %#x\n", status);
+
+    CloseHandle(file);
+
+    file = CreateFileA("\\\\.\\WineTestDriver\\genfail", 0, 0, NULL, OPEN_EXISTING, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError());
+
+    status = NtQueryObject(file, ObjectNameInformation, buffer, sizeof(buffer), NULL);
+    ok(status == STATUS_UNSUCCESSFUL, "got %#x\n", status);
+
+    status = NtQueryInformationFile(file, &io, buffer, sizeof(buffer), FileNameInformation);
+    ok(status == STATUS_UNSUCCESSFUL, "got %#x\n", status);
+
+    CloseHandle(file);
+
+    file = CreateFileA("\\\\.\\WineTestDriver\\badtype", 0, 0, NULL, OPEN_EXISTING, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError());
+
+    status = NtQueryObject(file, ObjectNameInformation, buffer, sizeof(buffer), NULL);
+    ok(status == STATUS_OBJECT_TYPE_MISMATCH, "got %#x\n", status);
+
+    status = NtQueryInformationFile(file, &io, buffer, sizeof(buffer), FileNameInformation);
+    ok(status == STATUS_OBJECT_TYPE_MISMATCH, "got %#x\n", status);
+
+    CloseHandle(file);
+}
+
 static void test_driver3(void)
 {
     char filename[MAX_PATH];
@@ -644,6 +757,7 @@ START_TEST(ntoskrnl)
     test_load_driver(service2);
     test_file_handles();
     test_return_status();
+    test_object_info();
 
     /* We need a separate ioctl to call IoDetachDevice(); calling it in the
      * driver unload routine causes a live-lock. */
