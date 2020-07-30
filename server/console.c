@@ -2108,15 +2108,6 @@ DECL_HANDLER(attach_console)
 
     if (process->console && process->console->active)
     {
-        reply->std_in = alloc_handle( current->process, process->console, GENERIC_READ, 0 );
-        if (!reply->std_in) goto error;
-
-        reply->std_out = alloc_handle( current->process, process->console->active, GENERIC_WRITE, 0 );
-        if (!reply->std_out) goto error;
-
-        reply->std_err = alloc_handle( current->process, process->console->active, GENERIC_WRITE, 0 );
-        if (!reply->std_err) goto error;
-
         current->process->console = (struct console_input *)grab_object( process->console );
         current->process->console->num_proc++;
     }
@@ -2127,11 +2118,6 @@ DECL_HANDLER(attach_console)
 
     release_object( process );
     return;
-
-error:
-    if (reply->std_in) close_handle( current->process, reply->std_in );
-    if (reply->std_out) close_handle( current->process, reply->std_out );
-    release_object( process );
 }
 
 /* set info about a console input */

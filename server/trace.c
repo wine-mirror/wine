@@ -2046,13 +2046,6 @@ static void dump_attach_console_request( const struct attach_console_request *re
     fprintf( stderr, " pid=%04x", req->pid );
 }
 
-static void dump_attach_console_reply( const struct attach_console_reply *req )
-{
-    fprintf( stderr, " std_in=%04x", req->std_in );
-    fprintf( stderr, ", std_out=%04x", req->std_out );
-    fprintf( stderr, ", std_err=%04x", req->std_err );
-}
-
 static void dump_get_console_wait_event_request( const struct get_console_wait_event_request *req )
 {
     fprintf( stderr, " handle=%04x", req->handle );
@@ -4793,7 +4786,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     NULL,
     (dump_func)dump_alloc_console_reply,
     NULL,
-    (dump_func)dump_attach_console_reply,
+    NULL,
     (dump_func)dump_get_console_wait_event_reply,
     NULL,
     (dump_func)dump_get_console_input_info_reply,

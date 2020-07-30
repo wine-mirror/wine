@@ -1858,10 +1858,6 @@ struct attach_console_request
 struct attach_console_reply
 {
     struct reply_header __header;
-    obj_handle_t std_in;
-    obj_handle_t std_out;
-    obj_handle_t std_err;
-    char __pad_20[4];
 };
 
 
@@ -6355,7 +6351,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 633
+#define SERVER_PROTOCOL_VERSION 634
 
 /* ### protocol_version end ### */
 

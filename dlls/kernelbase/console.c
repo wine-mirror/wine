@@ -246,14 +246,11 @@ BOOL WINAPI DECLSPEC_HOTPATCH AttachConsole( DWORD pid )
     SERVER_START_REQ( attach_console )
     {
         req->pid = pid;
-        if ((ret = !wine_server_call_err( req )))
-        {
-            SetStdHandle( STD_INPUT_HANDLE,  wine_server_ptr_handle( reply->std_in ));
-            SetStdHandle( STD_OUTPUT_HANDLE, wine_server_ptr_handle( reply->std_out ));
-            SetStdHandle( STD_ERROR_HANDLE,  wine_server_ptr_handle( reply->std_err ));
-        }
+        ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
+
+    if (ret && !(ret = init_console_std_handles())) FreeConsole();
 
     RtlLeaveCriticalSection( &console_section );
     return ret;
