@@ -55,6 +55,11 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 static CRITICAL_SECTION console_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 static HANDLE console_wait_event;
+static unsigned int console_flags;
+
+#define CONSOLE_INPUT_HANDLE    0x01
+#define CONSOLE_OUTPUT_HANDLE   0x02
+#define CONSOLE_ERROR_HANDLE    0x04
 
 static WCHAR input_exe[MAX_PATH + 1];
 
@@ -191,6 +196,7 @@ static BOOL init_console_std_handles(void)
                                FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, FILE_CREATE,
                                FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0 );
         if (!set_ntstatus( status )) return FALSE;
+        console_flags |= CONSOLE_INPUT_HANDLE;
         SetStdHandle( STD_INPUT_HANDLE, console_handle_map( handle ));
     }
 
@@ -210,6 +216,7 @@ static BOOL init_console_std_handles(void)
     if (!set_ntstatus( status )) return FALSE;
     if (!std_out)
     {
+        console_flags |= CONSOLE_OUTPUT_HANDLE;
         SetStdHandle( STD_OUTPUT_HANDLE, console_handle_map( handle ));
     }
 
@@ -218,6 +225,7 @@ static BOOL init_console_std_handles(void)
         if (!std_out && !DuplicateHandle( GetCurrentProcess(), handle, GetCurrentProcess(),
                                           &handle, 0, TRUE, DUPLICATE_SAME_ACCESS ))
             return FALSE;
+        console_flags |= CONSOLE_ERROR_HANDLE;
         SetStdHandle( STD_ERROR_HANDLE, console_handle_map( handle ));
     }
 
@@ -503,6 +511,11 @@ BOOL WINAPI DECLSPEC_HOTPATCH FreeConsole(void)
     BOOL ret;
 
     RtlEnterCriticalSection( &console_section );
+
+    if (console_flags & CONSOLE_INPUT_HANDLE)  NtClose( GetStdHandle( STD_INPUT_HANDLE ));
+    if (console_flags & CONSOLE_OUTPUT_HANDLE) NtClose( GetStdHandle( STD_OUTPUT_HANDLE ));
+    if (console_flags & CONSOLE_ERROR_HANDLE)  NtClose( GetStdHandle( STD_ERROR_HANDLE ));
+    console_flags = 0;
 
     SERVER_START_REQ( free_console )
     {
