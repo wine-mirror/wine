@@ -4975,6 +4975,19 @@ void ddraw_update_lost_surfaces(struct ddraw *ddraw)
 {
     struct ddraw_surface *surface;
 
+    /* Railroad Tycoon 2 tries to restore surfaces from within a
+     * WM_QUERYNEWPALETTE message handler and expects it to succeed. We
+     * haven't received the WM_ACTIVATEAPP message by that point, so the
+     * device state is still DDRAW_DEVICE_STATE_LOST, even though we are in
+     * the foreground. */
+    if (ddraw->device_state == DDRAW_DEVICE_STATE_LOST)
+    {
+        HWND window = ddraw->focuswindow ? ddraw->focuswindow : ddraw->dest_window;
+
+        if (window && GetForegroundWindow() == window)
+            ddraw->device_state = DDRAW_DEVICE_STATE_NOT_RESTORED;
+    }
+
     if (ddraw->device_state != DDRAW_DEVICE_STATE_NOT_RESTORED)
         return;
 
