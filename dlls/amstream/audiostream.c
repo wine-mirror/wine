@@ -837,6 +837,17 @@ static HRESULT WINAPI enum_media_types_Next(IEnumMediaTypes *iface, ULONG count,
 {
     struct enum_media_types *enum_media_types = impl_from_IEnumMediaTypes(iface);
 
+    static const WAVEFORMATEX wfx =
+    {
+        .wFormatTag = WAVE_FORMAT_PCM,
+        .nChannels = 1,
+        .nSamplesPerSec = 11025,
+        .nAvgBytesPerSec = 11025 * 2,
+        .nBlockAlign = 2,
+        .wBitsPerSample = 16,
+        .cbSize = 0,
+    };
+
     TRACE("iface %p, count %u, mts %p, ret_count %p.\n", iface, count, mts, ret_count);
 
     if (!ret_count)
@@ -847,7 +858,15 @@ static HRESULT WINAPI enum_media_types_Next(IEnumMediaTypes *iface, ULONG count,
         mts[0] = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE));
         memset(mts[0], 0, sizeof(AM_MEDIA_TYPE));
         mts[0]->majortype = MEDIATYPE_Audio;
-        mts[0]->subtype = MEDIASUBTYPE_PCM;
+        mts[0]->subtype = GUID_NULL;
+        mts[0]->bFixedSizeSamples = TRUE;
+        mts[0]->bTemporalCompression = FALSE;
+        mts[0]->lSampleSize = 2;
+        mts[0]->formattype = FORMAT_WaveFormatEx;
+        mts[0]->cbFormat = sizeof(WAVEFORMATEX);
+        mts[0]->pbFormat = CoTaskMemAlloc(sizeof(WAVEFORMATEX));
+        memcpy(mts[0]->pbFormat, &wfx, sizeof(WAVEFORMATEX));
+
         ++enum_media_types->index;
         *ret_count = 1;
         return count == 1 ? S_OK : S_FALSE;

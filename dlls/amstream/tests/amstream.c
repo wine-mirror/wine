@@ -2515,20 +2515,21 @@ static void test_media_types(void)
     ok(count == 1, "Got count %u.\n", count);
     ok(IsEqualGUID(&pmt->majortype, &MEDIATYPE_Audio), "Got major type %s\n",
             wine_dbgstr_guid(&pmt->majortype));
-    todo_wine ok(IsEqualGUID(&pmt->subtype, &GUID_NULL), "Got subtype %s\n",
+    ok(IsEqualGUID(&pmt->subtype, &GUID_NULL), "Got subtype %s\n",
             wine_dbgstr_guid(&pmt->subtype));
-    todo_wine ok(pmt->bFixedSizeSamples == TRUE, "Got fixed size %d.\n", pmt->bFixedSizeSamples);
+    ok(pmt->bFixedSizeSamples == TRUE, "Got fixed size %d.\n", pmt->bFixedSizeSamples);
     ok(!pmt->bTemporalCompression, "Got temporal compression %d.\n", pmt->bTemporalCompression);
-    todo_wine ok(pmt->lSampleSize == 2, "Got sample size %u.\n", pmt->lSampleSize);
-    todo_wine ok(IsEqualGUID(&pmt->formattype, &FORMAT_WaveFormatEx), "Got format type %s.\n",
+    ok(pmt->lSampleSize == 2, "Got sample size %u.\n", pmt->lSampleSize);
+    ok(IsEqualGUID(&pmt->formattype, &FORMAT_WaveFormatEx), "Got format type %s.\n",
             wine_dbgstr_guid(&pmt->formattype));
     ok(!pmt->pUnk, "Got pUnk %p.\n", pmt->pUnk);
-    todo_wine ok(pmt->cbFormat == sizeof(WAVEFORMATEX), "Got format size %u.\n", pmt->cbFormat);
+    ok(pmt->cbFormat == sizeof(WAVEFORMATEX), "Got format size %u.\n", pmt->cbFormat);
     ok(!memcmp(pmt->pbFormat, &expect_wfx, pmt->cbFormat), "Format blocks didn't match.\n");
 
     hr = IPin_QueryAccept(pin, pmt);
     ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
 
+    CoTaskMemFree(pmt->pbFormat);
     CoTaskMemFree(pmt);
 
     hr = IEnumMediaTypes_Next(enummt, 1, &pmt, &count);
