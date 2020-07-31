@@ -723,6 +723,8 @@ VkResult WINAPI wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
             object->quirks |= WINEVULKAN_QUIRK_GET_DEVICE_PROC_ADDR;
     }
 
+    object->quirks |= WINEVULKAN_QUIRK_ADJUST_MAX_IMAGE_COUNT;
+
     *instance = object;
     TRACE("Created instance %p (native instance %p).\n", object, object->instance);
     return VK_SUCCESS;
@@ -1553,6 +1555,51 @@ void WINAPI wine_vkGetPrivateDataEXT(VkDevice device, VkObjectType object_type, 
 
     object_handle = unwrap_object_handle(object_type, object_handle);
     device->funcs.p_vkGetPrivateDataEXT(device->device, object_type, object_handle, private_data_slot, data);
+}
+
+static inline void adjust_max_image_count(VkPhysicalDevice phys_dev, VkSurfaceCapabilitiesKHR* capabilities)
+{
+    /* Many Windows games, for example Strange Brigade, No Man's Sky, Path of Exile
+     * and World War Z, do not expect that maxImageCount can be set to 0.
+     * A value of 0 means that there is no limit on the number of images.
+     * Nvidia reports 8 on Windows, AMD 16.
+     * https://vulkan.gpuinfo.org/displayreport.php?id=9122#surface
+     * https://vulkan.gpuinfo.org/displayreport.php?id=9121#surface
+     */
+    if ((phys_dev->instance->quirks & WINEVULKAN_QUIRK_ADJUST_MAX_IMAGE_COUNT) && !capabilities->maxImageCount)
+    {
+        capabilities->maxImageCount = max(capabilities->minImageCount, 16);
+    }
+}
+
+VkResult WINAPI wine_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VkPhysicalDevice phys_dev,
+        VkSurfaceKHR surface, VkSurfaceCapabilitiesKHR *capabilities)
+{
+    VkResult res;
+
+    TRACE("%p, 0x%s, %p\n", phys_dev, wine_dbgstr_longlong(surface), capabilities);
+
+    res = thunk_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(phys_dev, surface, capabilities);
+
+    if (res == VK_SUCCESS)
+        adjust_max_image_count(phys_dev, capabilities);
+
+    return res;
+}
+
+VkResult WINAPI wine_vkGetPhysicalDeviceSurfaceCapabilities2KHR(VkPhysicalDevice phys_dev,
+        const VkPhysicalDeviceSurfaceInfo2KHR *surface_info, VkSurfaceCapabilities2KHR *capabilities)
+{
+    VkResult res;
+
+    TRACE("%p, %p, %p\n", phys_dev, surface_info, capabilities);
+
+    res = thunk_vkGetPhysicalDeviceSurfaceCapabilities2KHR(phys_dev, surface_info, capabilities);
+
+    if (res == VK_SUCCESS)
+        adjust_max_image_count(phys_dev, &capabilities->surfaceCapabilities);
+
+    return res;
 }
 
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, void *reserved)
