@@ -525,6 +525,11 @@ static strarray *get_link_args( struct options *opts, const char *output_name )
         if (!try_link( opts->prefix, link_args, "-Wl,--file-alignment,0x1000" ))
             strarray_add( link_args, strmake( "-Wl,--file-alignment,%s",
                                               opts->file_align ? opts->file_align : "0x1000" ));
+        else if (!try_link( opts->prefix, link_args, "-Wl,-Xlink=-filealign:0x1000" ))
+            /* lld from llvm 10 does not support mingw style --file-alignment,
+             * but it's possible to use msvc syntax */
+            strarray_add( link_args, strmake( "-Wl,-Xlink=-filealign:%s",
+                                              opts->file_align ? opts->file_align : "0x1000" ));
 
         strarray_addall( link_args, flags );
         return link_args;
