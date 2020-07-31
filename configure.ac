@@ -1096,7 +1096,8 @@ then
           *i[[3456789]]86*) WINE_TRY_CROSSCFLAGS([-fno-omit-frame-pointer]) ;;
           x86_64) WINE_TRY_CROSSCFLAGS([-Wno-format])
                   WINE_TRY_CROSSCFLAGS([-Wformat-overflow])
-                  WINE_TRY_CROSSCFLAGS([-Wnonnull]) ;;
+                  WINE_TRY_CROSSCFLAGS([-Wnonnull])
+                  WINE_TRY_CROSSCFLAGS([-mcx16]) ;;
         esac
 
         dnl Determine debug info format
