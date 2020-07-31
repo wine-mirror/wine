@@ -1060,8 +1060,8 @@ then
             if test -z "$llvm_target"
             then
                 case $host_cpu in
-                *i[[3456789]]86*) llvm_target=i686-windows-gnu ;;
-                *) llvm_target=$host_cpu-windows-gnu ;;
+                *i[[3456789]]86*) llvm_target=i686-windows ;;
+                *) llvm_target=$host_cpu-windows ;;
                 esac
             fi
             case $llvm_target in
