@@ -6769,6 +6769,38 @@ static inline BOOLEAN BitScanReverse(DWORD *index, DWORD mask)
 
 #endif
 
+#ifdef _WIN64
+
+#if defined(_MSC_VER)
+
+#define InterlockedCompareExchange128 _InterlockedCompareExchange128
+static inline unsigned char _InterlockedCompareExchange128(__int64 *dest, __int64 xchg_high, __int64 xchg_low, __int64 *compare);
+#pragma intrinsic(_InterlockedCompareExchange128)
+
+#elif defined(__x86_64__)
+
+static inline unsigned char InterlockedCompareExchange128(__int64 *dest, __int64 xchg_high, __int64 xchg_low, __int64 *compare)
+{
+    unsigned char ret;
+    __asm__ __volatile__( "lock cmpxchg16b %0; setz %b2"
+                          : "=m" (dest[0]), "=m" (dest[1]), "=r" (ret),
+                            "=a" (compare[0]), "=d" (compare[1])
+                          : "m" (dest[0]), "m" (dest[1]), "3" (compare[0]), "4" (compare[1]),
+                            "c" (xchg_high), "b" (xchg_low) );
+    return ret;
+}
+
+#elif defined(__GNUC__)
+
+static inline unsigned char InterlockedCompareExchange128(__int64 *dest, __int64 xchg_high, __int64 xchg_low, __int64 *compare)
+{
+    return __sync_bool_compare_and_swap( (__int128 *)dest, *(__int128 *)compare, ((__int128)xchg_high << 64) | xchg_low );
+}
+
+#endif
+
+#endif /* _WIN64 */
+
 #ifdef __cplusplus
 }
 #endif
