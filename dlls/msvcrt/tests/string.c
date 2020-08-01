@@ -1983,7 +1983,8 @@ static void test__strtod(void)
         ok(d == tests[i].ret, "%d) d = %.16e\n", i, d);
         ok(end == tests[i].str + tests[i].len, "%d) len = %d\n",
                 i, (int)(end - tests[i].str));
-        ok(errno == tests[i].err, "%d) errno = %d\n", i, errno);
+        ok(errno == tests[i].err || (!tests[i].err && errno == 0xdeadbeef) /* <= 2003 */,
+                "%d) errno = %d\n", i, errno);
     }
 
     if (!p__strtod_l)
