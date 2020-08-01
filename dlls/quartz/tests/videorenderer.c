@@ -2733,6 +2733,7 @@ static void test_basic_video(void)
 
     vih.bmiHeader.biWidth = 16;
     vih.bmiHeader.biHeight = 16;
+    vih.bmiHeader.biSizeImage = 0;
     hr = IFilterGraph2_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &req_mt);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
