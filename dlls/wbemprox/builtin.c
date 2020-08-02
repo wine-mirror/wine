@@ -2116,9 +2116,9 @@ static WCHAR *get_diskdrive_serialnumber( WCHAR letter )
             heap_free( desc );
             break;
         }
+        size = desc->Size;
         heap_free( desc );
-        if (GetLastError() == ERROR_MORE_DATA) size = desc->Size;
-        else break;
+        if (GetLastError() != ERROR_MORE_DATA) break;
     }
 
 done:
