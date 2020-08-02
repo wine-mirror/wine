@@ -413,8 +413,8 @@ static INT wvsnprintfA( LPSTR buffer, UINT maxlen, LPCSTR spec, __ms_va_list arg
                 {
                     CHAR mb[5]; /* 5 is MB_LEN_MAX */
                     int ret = WideCharToMultiByte( CP_ACP, 0, ptr, 1, mb, sizeof(mb), NULL, NULL );
+                    if (ret > len - i) ret = len - i;
                     i += ret;
-                    if (i > len) ret = len - (p - buffer);
                     memcpy( p, mb, ret );
                     p += ret;
                 }
