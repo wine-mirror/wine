@@ -1031,7 +1031,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH StartServiceA( SC_HANDLE service, DWORD argc, cons
 
     for (i = 0; i < argc; i++)
         heap_free( argvW[i] );
-    heap_free( argv );
+    heap_free( argvW );
     return r;
 }
 
