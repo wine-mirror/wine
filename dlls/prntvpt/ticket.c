@@ -740,7 +740,7 @@ HRESULT WINAPI PTConvertPrintTicketToDevMode(HPTPROVIDER provider, IStream *stre
     if (hr != S_OK) return hr;
 
     *dm = heap_alloc(sizeof(**dm));
-    if (!dm) return E_OUTOFMEMORY;
+    if (!*dm) return E_OUTOFMEMORY;
 
     ticket_to_devmode(&ticket, *dm);
     *size = sizeof(**dm);
