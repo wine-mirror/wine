@@ -1614,7 +1614,7 @@ static void test_completion(void)
     IoSetCompletionRoutine(irp, completion_cb, NULL, TRUE, TRUE, TRUE);
     ret = IoCallDriver(upper_device, irp);
     ok(ret == STATUS_SUCCESS, "IoCallDriver returned %#x\n", ret);
-    ok(got_completion == 2, "got %u calls to completion routine\n");
+    ok(got_completion == 2, "got %u calls to completion routine\n", got_completion);
 }
 
 static void test_IoAttachDeviceToDeviceStack(void)
