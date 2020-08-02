@@ -3813,7 +3813,6 @@ static void test_file_mode(void)
         UNICODE_STRING *file_name;
         ULONG options;
         ULONG mode;
-        BOOL todo;
     } option_tests[] = {
         { &file_name, 0, 0 },
         { &file_name, FILE_NON_DIRECTORY_FILE, 0 },
@@ -3827,7 +3826,7 @@ static void test_file_mode(void)
         { &pipe_dev_name, 0, 0 },
         { &pipe_dev_name, FILE_SYNCHRONOUS_IO_ALERT, FILE_SYNCHRONOUS_IO_ALERT },
         { &mailslot_dev_name, 0, 0 },
-        { &mailslot_dev_name, FILE_SYNCHRONOUS_IO_ALERT, FILE_SYNCHRONOUS_IO_ALERT, TRUE },
+        { &mailslot_dev_name, FILE_SYNCHRONOUS_IO_ALERT, FILE_SYNCHRONOUS_IO_ALERT },
         { &mountmgr_dev_name, 0, 0 },
         { &mountmgr_dev_name, FILE_SYNCHRONOUS_IO_ALERT, FILE_SYNCHRONOUS_IO_ALERT }
     };
@@ -3879,7 +3878,6 @@ static void test_file_mode(void)
         memset(&mode, 0xcc, sizeof(mode));
         status = pNtQueryInformationFile(file, &io, &mode, sizeof(mode), FileModeInformation);
         ok(status == STATUS_SUCCESS, "[%u] can't get FileModeInformation: %x\n", i, status);
-        todo_wine_if(option_tests[i].todo)
         ok(mode.Mode == option_tests[i].mode, "[%u] Mode = %x, expected %x\n",
            i, mode.Mode, option_tests[i].mode);
 

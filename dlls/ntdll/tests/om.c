@@ -1435,8 +1435,8 @@ static void test_query_object(void)
     handle = CreateFileA( "\\\\.\\mailslot", 0, 0, NULL, OPEN_EXISTING, 0, 0 );
     ok( handle != INVALID_HANDLE_VALUE, "CreateFile failed (%d)\n", GetLastError() );
 
-    test_object_name( handle, L"\\Device\\Mailslot", FALSE );
-    test_object_type_todo( handle, L"File" );
+    test_object_name( handle, L"\\Device\\Mailslot", TRUE );
+    test_object_type( handle, L"File" );
     test_file_info( handle );
 
     pNtClose( handle );
