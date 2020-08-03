@@ -475,6 +475,7 @@ static int has_stubs( const DLLSPEC *spec )
 static void add_extra_undef_symbols( DLLSPEC *spec )
 {
     add_extra_ld_symbol( spec->init_func );
+    if (spec->type == SPEC_WIN16) add_extra_ld_symbol( "DllMain" );
     if (has_stubs( spec )) add_extra_ld_symbol( "__wine_spec_unimplemented_stub" );
     if (delayed_imports.count) add_extra_ld_symbol( "__wine_spec_delay_load" );
 }

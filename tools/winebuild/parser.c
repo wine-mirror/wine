@@ -836,6 +836,7 @@ void add_16bit_exports( DLLSPEC *spec32, DLLSPEC *spec16 )
 
     spec32->file_name = xstrdup( spec16->file_name );
     spec32->characteristics = IMAGE_FILE_DLL;
+    spec32->init_func = xstrdup( "DllMain" );
 
     /* add an export for the NE module */
 
