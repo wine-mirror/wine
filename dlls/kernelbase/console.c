@@ -972,8 +972,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH ReadConsoleOutputW( HANDLE handle, CHAR_INFO *buff
 /******************************************************************************
  *	ScrollConsoleScreenBufferA   (kernelbase.@)
  */
-BOOL WINAPI DECLSPEC_HOTPATCH ScrollConsoleScreenBufferA( HANDLE handle, SMALL_RECT *scroll,
-                                                          SMALL_RECT *clip, COORD origin, CHAR_INFO *fill )
+BOOL WINAPI DECLSPEC_HOTPATCH ScrollConsoleScreenBufferA( HANDLE handle, const SMALL_RECT *scroll,
+                                                          const SMALL_RECT *clip, COORD origin, const CHAR_INFO *fill )
 {
     CHAR_INFO ciW;
 
@@ -987,9 +987,9 @@ BOOL WINAPI DECLSPEC_HOTPATCH ScrollConsoleScreenBufferA( HANDLE handle, SMALL_R
 /******************************************************************************
  *	ScrollConsoleScreenBufferW   (kernelbase.@)
  */
-BOOL WINAPI DECLSPEC_HOTPATCH ScrollConsoleScreenBufferW( HANDLE handle, SMALL_RECT *scroll,
-                                                          SMALL_RECT *clip_rect, COORD origin,
-                                                          CHAR_INFO *fill )
+BOOL WINAPI DECLSPEC_HOTPATCH ScrollConsoleScreenBufferW( HANDLE handle, const SMALL_RECT *scroll,
+                                                          const SMALL_RECT *clip_rect, COORD origin,
+                                                          const CHAR_INFO *fill )
 {
     struct condrv_scroll_params params;
 
