@@ -185,6 +185,10 @@
 @ stdcall GetHGlobalFromStream(ptr ptr) ole32.GetHGlobalFromStream
 @ stub GetHookInterface
 @ stdcall GetRestrictedErrorInfo(ptr)
+@ stdcall HBITMAP_UserFree(ptr ptr)
+@ stdcall HBITMAP_UserMarshal(ptr ptr ptr)
+@ stdcall HBITMAP_UserSize(ptr long ptr)
+@ stdcall HBITMAP_UserUnmarshal(ptr ptr ptr)
 @ stdcall HBRUSH_UserFree(ptr ptr)
 @ stdcall HBRUSH_UserMarshal(ptr ptr ptr)
 @ stdcall HBRUSH_UserSize(ptr long ptr)
