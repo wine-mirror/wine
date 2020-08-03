@@ -1,8 +1,8 @@
 @ stdcall BindMoniker(ptr long ptr ptr)
-@ stdcall CLIPFORMAT_UserFree(ptr ptr)
-@ stdcall CLIPFORMAT_UserMarshal(ptr ptr ptr)
-@ stdcall CLIPFORMAT_UserSize(ptr long ptr)
-@ stdcall CLIPFORMAT_UserUnmarshal(ptr ptr ptr)
+@ stdcall CLIPFORMAT_UserFree(ptr ptr) combase.CLIPFORMAT_UserFree
+@ stdcall CLIPFORMAT_UserMarshal(ptr ptr ptr) combase.CLIPFORMAT_UserMarshal
+@ stdcall CLIPFORMAT_UserSize(ptr long ptr) combase.CLIPFORMAT_UserSize
+@ stdcall CLIPFORMAT_UserUnmarshal(ptr ptr ptr) combase.CLIPFORMAT_UserUnmarshal
 @ stdcall CLSIDFromProgID(wstr ptr)
 @ stdcall CLSIDFromProgIDEx(wstr ptr)
 @ stdcall CLSIDFromString(wstr ptr)

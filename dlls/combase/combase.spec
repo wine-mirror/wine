@@ -62,6 +62,10 @@
 @ stub RoFailFastWithErrorContextInternal2
 @ stub RoFailFastWithErrorContextInternal
 @ stub UpdateProcessTracing
+@ stdcall CLIPFORMAT_UserFree(ptr ptr)
+@ stdcall CLIPFORMAT_UserMarshal(ptr ptr ptr)
+@ stdcall CLIPFORMAT_UserSize(ptr long ptr)
+@ stdcall CLIPFORMAT_UserUnmarshal(ptr ptr ptr)
 @ stub CLSIDFromOle1Class
 @ stdcall CLSIDFromProgID(wstr ptr) ole32.CLSIDFromProgID
 @ stdcall CLSIDFromString(wstr ptr) ole32.CLSIDFromString
