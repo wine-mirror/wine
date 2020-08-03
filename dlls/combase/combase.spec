@@ -205,6 +205,10 @@
 @ stdcall HMENU_UserMarshal(ptr ptr ptr)
 @ stdcall HMENU_UserSize(ptr long ptr)
 @ stdcall HMENU_UserUnmarshal(ptr ptr ptr)
+@ stdcall HPALETTE_UserFree(ptr ptr)
+@ stdcall HPALETTE_UserMarshal(ptr ptr ptr)
+@ stdcall HPALETTE_UserSize(ptr long ptr)
+@ stdcall HPALETTE_UserUnmarshal(ptr ptr ptr)
 @ stub HSTRING_UserFree
 @ stub -arch=win64 HSTRING_UserFree64
 @ stub HSTRING_UserMarshal

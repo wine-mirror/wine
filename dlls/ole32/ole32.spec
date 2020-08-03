@@ -163,10 +163,10 @@
 @ stdcall HMETAFILE_UserMarshal(ptr ptr ptr)
 @ stdcall HMETAFILE_UserSize(ptr long ptr)
 @ stdcall HMETAFILE_UserUnmarshal(ptr ptr ptr)
-@ stdcall HPALETTE_UserFree(ptr ptr)
-@ stdcall HPALETTE_UserMarshal(ptr ptr ptr)
-@ stdcall HPALETTE_UserSize(ptr long ptr)
-@ stdcall HPALETTE_UserUnmarshal(ptr ptr ptr)
+@ stdcall HPALETTE_UserFree(ptr ptr) combase.HPALETTE_UserFree
+@ stdcall HPALETTE_UserMarshal(ptr ptr ptr) combase.HPALETTE_UserMarshal
+@ stdcall HPALETTE_UserSize(ptr long ptr) combase.HPALETTE_UserSize
+@ stdcall HPALETTE_UserUnmarshal(ptr ptr ptr) combase.HPALETTE_UserUnmarshal
 @ stdcall HWND_UserFree(ptr ptr) combase.HWND_UserFree
 @ stdcall HWND_UserMarshal(ptr ptr ptr) combase.HWND_UserMarshal
 @ stdcall HWND_UserSize(ptr long ptr) combase.HWND_UserSize
