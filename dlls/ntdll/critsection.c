@@ -51,6 +51,44 @@ static BOOL crit_section_has_debuginfo(const RTL_CRITICAL_SECTION *crit)
 }
 
 /***********************************************************************
+ *           get_semaphore
+ */
+static inline HANDLE get_semaphore( RTL_CRITICAL_SECTION *crit )
+{
+    HANDLE ret = crit->LockSemaphore;
+    if (!ret)
+    {
+        HANDLE sem;
+        if (NtCreateSemaphore( &sem, SEMAPHORE_ALL_ACCESS, NULL, 0, 1 )) return 0;
+        if (!(ret = InterlockedCompareExchangePointer( &crit->LockSemaphore, sem, 0 )))
+            ret = sem;
+        else
+            NtClose(sem);  /* somebody beat us to it */
+    }
+    return ret;
+}
+
+/***********************************************************************
+ *           wait_semaphore
+ */
+static inline NTSTATUS wait_semaphore( RTL_CRITICAL_SECTION *crit, int timeout )
+{
+    NTSTATUS ret;
+
+    /* debug info is cleared by MakeCriticalSectionGlobal */
+    if (!crit_section_has_debuginfo( crit ) ||
+        ((ret = unix_funcs->fast_RtlpWaitForCriticalSection( crit, timeout )) == STATUS_NOT_IMPLEMENTED))
+    {
+        HANDLE sem = get_semaphore( crit );
+        LARGE_INTEGER time;
+
+        time.QuadPart = timeout * (LONGLONG)-10000000;
+        ret = NtWaitForSingleObject( sem, FALSE, &time );
+    }
+    return ret;
+}
+
+/***********************************************************************
  *           RtlInitializeCriticalSection   (NTDLL.@)
  *
  * Initialises a new critical section.
@@ -260,7 +298,7 @@ NTSTATUS WINAPI RtlpWaitForCriticalSection( RTL_CRITICAL_SECTION *crit )
     for (;;)
     {
         EXCEPTION_RECORD rec;
-        NTSTATUS status = unix_funcs->fast_RtlpWaitForCriticalSection( crit, 5 );
+        NTSTATUS status = wait_semaphore( crit, 5 );
         timeout -= 5;
 
         if ( status == STATUS_TIMEOUT )
@@ -270,14 +308,14 @@ NTSTATUS WINAPI RtlpWaitForCriticalSection( RTL_CRITICAL_SECTION *crit )
             if (!name) name = "?";
             ERR( "section %p %s wait timed out in thread %04x, blocked by %04x, retrying (60 sec)\n",
                  crit, debugstr_a(name), GetCurrentThreadId(), HandleToULong(crit->OwningThread) );
-            status = unix_funcs->fast_RtlpWaitForCriticalSection( crit, 60 );
+            status = wait_semaphore( crit, 60 );
             timeout -= 60;
 
             if ( status == STATUS_TIMEOUT && TRACE_ON(relay) )
             {
                 ERR( "section %p %s wait timed out in thread %04x, blocked by %04x, retrying (5 min)\n",
                      crit, debugstr_a(name), GetCurrentThreadId(), HandleToULong(crit->OwningThread) );
-                status = unix_funcs->fast_RtlpWaitForCriticalSection( crit, 300 );
+                status = wait_semaphore( crit, 300 );
                 timeout -= 300;
             }
         }
@@ -327,8 +365,15 @@ NTSTATUS WINAPI RtlpWaitForCriticalSection( RTL_CRITICAL_SECTION *crit )
  */
 NTSTATUS WINAPI RtlpUnWaitCriticalSection( RTL_CRITICAL_SECTION *crit )
 {
-    NTSTATUS ret = unix_funcs->fast_RtlpUnWaitCriticalSection( crit );
+    NTSTATUS ret;
 
+    /* debug info is cleared by MakeCriticalSectionGlobal */
+    if (!crit_section_has_debuginfo( crit ) ||
+        ((ret = unix_funcs->fast_RtlpUnWaitCriticalSection( crit )) == STATUS_NOT_IMPLEMENTED))
+    {
+        HANDLE sem = get_semaphore( crit );
+        ret = NtReleaseSemaphore( sem, 1, NULL );
+    }
     if (ret) RtlRaiseStatus( ret );
     return ret;
 }

@@ -2129,16 +2129,9 @@ NTSTATUS WINAPI NtQueryInformationAtom( RTL_ATOM atom, ATOM_INFORMATION_CLASS cl
 }
 
 
-static void *no_debug_info_marker = (void *)(ULONG_PTR)-1;
-
-static BOOL crit_section_has_debuginfo(const RTL_CRITICAL_SECTION *crit)
-{
-    return crit->DebugInfo != NULL && crit->DebugInfo != no_debug_info_marker;
-}
-
 #ifdef __linux__
 
-static inline NTSTATUS fast_critsection_wait( RTL_CRITICAL_SECTION *crit, int timeout )
+NTSTATUS CDECL fast_RtlpWaitForCriticalSection( RTL_CRITICAL_SECTION *crit, int timeout )
 {
     int val;
     struct timespec timespec;
@@ -2157,7 +2150,7 @@ static inline NTSTATUS fast_critsection_wait( RTL_CRITICAL_SECTION *crit, int ti
     return STATUS_WAIT_0;
 }
 
-static inline NTSTATUS fast_critsection_wake( RTL_CRITICAL_SECTION *crit )
+NTSTATUS CDECL fast_RtlpUnWaitCriticalSection( RTL_CRITICAL_SECTION *crit )
 {
     if (!use_futexes()) return STATUS_NOT_IMPLEMENTED;
 
@@ -2189,7 +2182,7 @@ static inline semaphore_t get_mach_semaphore( RTL_CRITICAL_SECTION *crit )
     return ret;
 }
 
-static inline NTSTATUS fast_critsection_wait( RTL_CRITICAL_SECTION *crit, int timeout )
+NTSTATUS CDECL fast_RtlpWaitForCriticalSection( RTL_CRITICAL_SECTION *crit, int timeout )
 {
     mach_timespec_t timespec;
     semaphore_t sem = get_mach_semaphore( crit );
@@ -2212,7 +2205,7 @@ static inline NTSTATUS fast_critsection_wait( RTL_CRITICAL_SECTION *crit, int ti
     }
 }
 
-static inline NTSTATUS fast_critsection_wake( RTL_CRITICAL_SECTION *crit )
+NTSTATUS CDECL fast_RtlpUnWaitCriticalSection( RTL_CRITICAL_SECTION *crit )
 {
     semaphore_t sem = get_mach_semaphore( crit );
     semaphore_signal( sem );
@@ -2227,12 +2220,12 @@ NTSTATUS CDECL fast_RtlDeleteCriticalSection( RTL_CRITICAL_SECTION *crit )
 
 #else  /* __APPLE__ */
 
-static inline NTSTATUS fast_critsection_wait( RTL_CRITICAL_SECTION *crit, int timeout )
+NTSTATUS CDECL fast_RtlpWaitForCriticalSection( RTL_CRITICAL_SECTION *crit, int timeout )
 {
     return STATUS_NOT_IMPLEMENTED;
 }
 
-static inline NTSTATUS fast_critsection_wake( RTL_CRITICAL_SECTION *crit )
+NTSTATUS CDECL fast_RtlpUnWaitCriticalSection( RTL_CRITICAL_SECTION *crit )
 {
     return STATUS_NOT_IMPLEMENTED;
 }
@@ -2243,56 +2236,6 @@ NTSTATUS CDECL fast_RtlDeleteCriticalSection( RTL_CRITICAL_SECTION *crit )
 }
 
 #endif
-
-static inline HANDLE get_critsection_semaphore( RTL_CRITICAL_SECTION *crit )
-{
-    HANDLE ret = crit->LockSemaphore;
-    if (!ret)
-    {
-        HANDLE sem;
-        if (NtCreateSemaphore( &sem, SEMAPHORE_ALL_ACCESS, NULL, 0, 1 )) return 0;
-        if (!(ret = InterlockedCompareExchangePointer( &crit->LockSemaphore, sem, 0 )))
-            ret = sem;
-        else
-            NtClose( sem );  /* somebody beat us to it */
-    }
-    return ret;
-}
-
-NTSTATUS CDECL fast_RtlpWaitForCriticalSection( RTL_CRITICAL_SECTION *crit, int timeout )
-{
-    NTSTATUS ret;
-
-    /* debug info is cleared by MakeCriticalSectionGlobal */
-    if (!crit_section_has_debuginfo( crit ) ||
-        ((ret = fast_critsection_wait( crit, timeout )) == STATUS_NOT_IMPLEMENTED))
-    {
-        HANDLE sem = get_critsection_semaphore( crit );
-        LARGE_INTEGER time;
-        select_op_t select_op;
-
-        time.QuadPart = timeout * (LONGLONG)-10000000;
-        select_op.wait.op = SELECT_WAIT;
-        select_op.wait.handles[0] = wine_server_obj_handle( sem );
-        ret = server_wait( &select_op, offsetof( select_op_t, wait.handles[1] ), 0, &time );
-    }
-    return ret;
-}
-
-NTSTATUS CDECL fast_RtlpUnWaitCriticalSection( RTL_CRITICAL_SECTION *crit )
-{
-    NTSTATUS ret;
-
-    /* debug info is cleared by MakeCriticalSectionGlobal */
-    if (!crit_section_has_debuginfo( crit ) ||
-        ((ret = fast_critsection_wake( crit )) == STATUS_NOT_IMPLEMENTED))
-    {
-        HANDLE sem = get_critsection_semaphore( crit );
-        ret = NtReleaseSemaphore( sem, 1, NULL );
-    }
-    return ret;
-}
-
 
 
 #ifdef __linux__
