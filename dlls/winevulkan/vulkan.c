@@ -1335,6 +1335,8 @@ VkResult WINAPI wine_vkGetCalibratedTimestampsEXT(VkDevice device,
     }
 
     res = device->funcs.p_vkGetCalibratedTimestampsEXT(device->device, timestamp_count, host_timestamp_infos, timestamps, max_deviation);
+    if (res != VK_SUCCESS)
+        return res;
 
     for (i = 0; i < timestamp_count; i++)
         timestamps[i] = convert_timestamp(host_timestamp_infos[i].timeDomain, timestamp_infos[i].timeDomain, timestamps[i]);
@@ -1368,7 +1370,10 @@ VkResult WINAPI wine_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT(VkPhysicalDe
 
     res = phys_dev->instance->funcs.p_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT(phys_dev->phys_dev, &host_time_domain_count, host_time_domains);
     if (res != VK_SUCCESS)
+    {
+        heap_free(host_time_domains);
         return res;
+    }
 
     for (i = 0; i < host_time_domain_count; i++)
     {
