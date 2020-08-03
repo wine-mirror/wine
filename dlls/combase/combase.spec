@@ -194,13 +194,13 @@
 @ stdcall HMENU_UserSize(ptr long ptr)
 @ stdcall HMENU_UserUnmarshal(ptr ptr ptr)
 @ stub HSTRING_UserFree
-@ stub HSTRING_UserFree64
+@ stub -arch=win64 HSTRING_UserFree64
 @ stub HSTRING_UserMarshal
-@ stub HSTRING_UserMarshal64
+@ stub -arch=win64 HSTRING_UserMarshal64
 @ stub HSTRING_UserSize
-@ stub HSTRING_UserSize64
+@ stub -arch=win64 HSTRING_UserSize64
 @ stub HSTRING_UserUnmarshal
-@ stub HSTRING_UserUnmarshal64
+@ stub -arch=win64 HSTRING_UserUnmarshal64
 @ stdcall HWND_UserFree(ptr ptr)
 @ stdcall HWND_UserMarshal(ptr ptr ptr)
 @ stdcall HWND_UserSize(ptr long ptr)
@@ -298,13 +298,13 @@
 @ stdcall StringFromIID(ptr ptr) ole32.StringFromIID
 @ stub UpdateDCOMSettings
 @ stdcall WdtpInterfacePointer_UserFree(ptr)
-@ stub WdtpInterfacePointer_UserFree64
+@ stub -arch=win64 WdtpInterfacePointer_UserFree64
 @ stdcall WdtpInterfacePointer_UserMarshal(ptr long ptr ptr ptr)
-@ stub WdtpInterfacePointer_UserMarshal64
+@ stub -arch=win64 WdtpInterfacePointer_UserMarshal64
 @ stdcall WdtpInterfacePointer_UserSize(ptr long long ptr ptr)
-@ stub WdtpInterfacePointer_UserSize64
+@ stub -arch=win64 WdtpInterfacePointer_UserSize64
 @ stdcall WdtpInterfacePointer_UserUnmarshal(ptr ptr ptr ptr)
-@ stub WdtpInterfacePointer_UserUnmarshal64
+@ stub -arch=win64 WdtpInterfacePointer_UserUnmarshal64
 @ stdcall WindowsCompareStringOrdinal(ptr ptr ptr)
 @ stdcall WindowsConcatString(ptr ptr ptr)
 @ stdcall WindowsCreateString(wstr long ptr)
