@@ -2307,11 +2307,18 @@ static void test_IScriptControl_Run(void)
 
 static void test_IScriptControl_get_Modules(void)
 {
+    SAFEARRAYBOUND bnd[] = { { 2, 0 }, { 2, 0 } };
+    LONG idx0_0[] = { 0, 0 };
+    LONG idx0_1[] = { 1, 0 };
+    LONG idx1_0[] = { 0, 1 };
+    LONG idx1_1[] = { 1, 1 };
+
     IEnumVARIANT *enumvar, *enumvar2;
     IScriptModuleCollection *mods;
     VARIANT var, vars[3];
     IScriptModule *mod;
     IScriptControl *sc;
+    SAFEARRAY *params;
     IUnknown *unknown;
     ULONG fetched;
     LONG count;
@@ -2492,6 +2499,69 @@ static void test_IScriptControl_get_Modules(void)
     ok(FAILED(hr), "IScriptControl_Eval succeeded: 0x%08x.\n", hr);
     SysFreeString(str);
 
+    V_VT(&var) = VT_R4;
+    V_R4(&var) = 2.0f;
+    hr = IScriptModuleCollection_get_Item(mods, var, &mod);
+    ok(hr == S_OK, "IScriptModuleCollection_get_Item failed: 0x%08x.\n", hr);
+
+    params = SafeArrayCreate(VT_VARIANT, 1, bnd);
+    ok(params != NULL, "Failed to create SafeArray.\n");
+
+    V_VT(&var) = VT_I4;
+    V_I4(&var) = 10;
+    SafeArrayPutElement(params, idx0_0, &var);
+    V_I4(&var) = 3;
+    SafeArrayPutElement(params, idx0_1, &var);
+
+    str = SysAllocString(L"sub");
+    hr = IScriptModule_Run(mod, str, NULL, &var);
+    ok(hr == E_POINTER, "IScriptModule_Run returned: 0x%08x.\n", hr);
+    hr = IScriptModule_Run(mod, str, &params, NULL);
+    ok(hr == E_POINTER, "IScriptModule_Run returned: 0x%08x.\n", hr);
+
+    hr = IScriptControl_Run(sc, str, &params, &var);
+    ok(hr == DISP_E_UNKNOWNNAME, "IScriptControl_Run failed: 0x%08x.\n", hr);
+    hr = IScriptModule_Run(mod, str, &params, &var);
+    ok(hr == S_OK, "IScriptModule_Run failed: 0x%08x.\n", hr);
+    ok((V_VT(&var) == VT_I4) && (V_I4(&var) == 7), "V_VT(var) = %d, V_I4(var) = %d.\n", V_VT(&var), V_I4(&var));
+    SysFreeString(str);
+
+    str = SysAllocString(L"add");
+    hr = IScriptControl_Run(sc, str, &params, &var);
+    ok(hr == S_OK, "IScriptControl_Run failed: 0x%08x.\n", hr);
+    ok((V_VT(&var) == VT_I4) && (V_I4(&var) == 13), "V_VT(var) = %d, V_I4(var) = %d.\n", V_VT(&var), V_I4(&var));
+    hr = IScriptModule_Run(mod, str, &params, &var);
+    ok(hr == DISP_E_UNKNOWNNAME, "IScriptModule_Run failed: 0x%08x.\n", hr);
+    SysFreeString(str);
+
+    SafeArrayDestroy(params);
+    params = SafeArrayCreate(VT_VARIANT, 2, bnd);
+    ok(params != NULL, "Failed to create SafeArray.\n");
+
+    V_VT(&var) = VT_I4;
+    V_I4(&var) = 49;
+    SafeArrayPutElement(params, idx0_0, &var);
+    V_I4(&var) = 7;
+    SafeArrayPutElement(params, idx0_1, &var);
+    V_I4(&var) = 30;
+    SafeArrayPutElement(params, idx1_0, &var);
+    V_I4(&var) = 25;
+    SafeArrayPutElement(params, idx1_1, &var);
+
+    str = SysAllocString(L"sub");
+    hr = IScriptModule_Run(mod, str, &params, &var);
+    ok(hr == S_OK, "IScriptModule_Run failed: 0x%08x.\n", hr);
+    ok((V_VT(&var) == VT_I4) && (V_I4(&var) == 42), "V_VT(var) = %d, V_I4(var) = %d.\n", V_VT(&var), V_I4(&var));
+
+    params->cDims = 0;
+    hr = IScriptModule_Run(mod, str, &params, &var);
+    ok(hr == DISP_E_BADINDEX, "IScriptModule_Run returned: 0x%08x.\n", hr);
+    ok(V_VT(&var) == VT_EMPTY, "V_VT(var) = %d.\n", V_VT(&var));
+    params->cDims = 2;
+    SysFreeString(str);
+
+    IScriptModule_Release(mod);
+
     /* Grab a module ref and change the language to something valid */
     V_VT(&var) = VT_I2;
     V_I2(&var) = 3;
@@ -2515,7 +2585,12 @@ static void test_IScriptControl_get_Modules(void)
     str = SysAllocString(L"sub closed\nend sub");
     hr = IScriptModule_AddCode(mod, str);
     ok(hr == E_FAIL, "IScriptModule_AddCode failed: 0x%08x.\n", hr);
+    SysFreeString(str);
+    str = SysAllocString(L"identifier");
+    hr = IScriptModule_Run(mod, str, &params, &var);
+    ok(hr == E_FAIL, "IScriptModule_Run returned: 0x%08x.\n", hr);
     IScriptModule_Release(mod);
+    SafeArrayDestroy(params);
     SysFreeString(str);
 
     /* The enumerator is also invalid */

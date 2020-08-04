@@ -885,10 +885,19 @@ static HRESULT WINAPI ScriptModule_ExecuteStatement(IScriptModule *iface, BSTR s
 static HRESULT WINAPI ScriptModule_Run(IScriptModule *iface, BSTR procedure_name, SAFEARRAY **parameters, VARIANT *res)
 {
     ScriptModule *This = impl_from_IScriptModule(iface);
+    SAFEARRAY *sa;
 
-    FIXME("(%p)->(%s %p %p)\n", This, debugstr_w(procedure_name), parameters, res);
+    TRACE("(%p)->(%s %p %p)\n", This, debugstr_w(procedure_name), parameters, res);
 
-    return E_NOTIMPL;
+    if (!parameters || !res) return E_POINTER;
+    if (!(sa = *parameters)) return E_POINTER;
+
+    V_VT(res) = VT_EMPTY;
+    if (sa->cDims == 0) return DISP_E_BADINDEX;
+    if (!(sa->fFeatures & FADF_VARIANT)) return DISP_E_BADVARTYPE;
+    if (!This->host) return E_FAIL;
+
+    return run_procedure(This, procedure_name, sa, res);
 }
 
 static const IScriptModuleVtbl ScriptModuleVtbl = {
