@@ -28,6 +28,7 @@
 #include "dmusics.h"
 #include "dmobject.h"
 #include "wine/debug.h"
+#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmobj);
 WINE_DECLARE_DEBUG_CHANNEL(dmfile);
@@ -369,6 +370,50 @@ HRESULT stream_next_chunk(IStream *stream, struct chunk_entry *chunk)
     }
 
     return stream_get_chunk(stream, chunk);
+}
+
+/* Reads chunk data of the form:
+   DWORD     - size of array element
+   element[] - Array of elements
+   The caller needs to heap_free() the array.
+*/
+HRESULT stream_chunk_get_array(IStream *stream, const struct chunk_entry *chunk, void **array,
+        unsigned int *count, DWORD elem_size)
+{
+    DWORD size;
+    HRESULT hr;
+
+    *array = NULL;
+    *count = 0;
+
+    if (chunk->size < sizeof(DWORD)) {
+        WARN_(dmfile)("%s: Too short to read element size\n", debugstr_chunk(chunk));
+        return E_FAIL;
+    }
+    if (FAILED(hr = stream_read(stream, &size, sizeof(DWORD))))
+        return hr;
+    if (size != elem_size) {
+        WARN_(dmfile)("%s: Array element size mismatch: got %u, expected %u\n",
+                debugstr_chunk(chunk), size, elem_size);
+        return DMUS_E_UNSUPPORTED_STREAM;
+    }
+
+    *count = (chunk->size - sizeof(DWORD)) / elem_size;
+    size = *count * elem_size;
+    if (!(*array = heap_alloc(size)))
+        return E_OUTOFMEMORY;
+    if (FAILED(hr = stream_read(stream, *array, size))) {
+        heap_free(*array);
+        *array = NULL;
+        return hr;
+    }
+
+    if (chunk->size > size + sizeof(DWORD)) {
+        WARN_(dmfile)("%s: Extraneous data at end of array\n", debugstr_chunk(chunk));
+        stream_skip_chunk(stream, chunk);
+        return S_FALSE;
+    }
+    return S_OK;
 }
 
 HRESULT stream_chunk_get_data(IStream *stream, const struct chunk_entry *chunk, void *data,

@@ -29,11 +29,13 @@ WINE_DECLARE_DEBUG_CHANNEL(dmfile);
 /*****************************************************************************
  * IDirectMusicTempoTrack implementation
  */
+
 typedef struct IDirectMusicTempoTrack {
     IDirectMusicTrack8 IDirectMusicTrack8_iface;
     struct dmobject dmobj;  /* IPersistStream only */
     LONG ref;
-    struct list Items;
+    DMUS_IO_TEMPO_ITEM *items;
+    unsigned int count;
 } IDirectMusicTempoTrack;
 
 /* IDirectMusicTempoTrack IDirectMusicTrack8 part: */
@@ -83,16 +85,7 @@ static ULONG WINAPI tempo_track_Release(IDirectMusicTrack8 *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if (!ref) {
-        struct list *cursor, *cursor2;
-        DMUS_PRIVATE_TEMPO_ITEM *item;
-
-        LIST_FOR_EACH_SAFE(cursor, cursor2, &This->Items) {
-            item = LIST_ENTRY(cursor, DMUS_PRIVATE_TEMPO_ITEM, entry);
-            list_remove(cursor);
-
-            heap_free(item);
-        }
-
+        heap_free(This->items);
         heap_free(This);
         DMIME_UnlockModule();
     }
@@ -157,8 +150,8 @@ static HRESULT WINAPI tempo_track_GetParam(IDirectMusicTrack8 *iface, REFGUID ty
         MUSIC_TIME *next, void *param)
 {
     IDirectMusicTempoTrack *This = impl_from_IDirectMusicTrack8(iface);
-    DMUS_PRIVATE_TEMPO_ITEM *item = NULL;
     DMUS_TEMPO_PARAM *prm = param;
+    unsigned int i;
 
     TRACE("(%p, %s, %d, %p, %p)\n", This, debugstr_dmguid(type), time, next, param);
 
@@ -174,15 +167,15 @@ static HRESULT WINAPI tempo_track_GetParam(IDirectMusicTrack8 *iface, REFGUID ty
     prm->mtTime = 0;
     prm->dblTempo = 0.123456;
 
-    LIST_FOR_EACH_ENTRY(item, &This->Items, DMUS_PRIVATE_TEMPO_ITEM, entry) {
-        if (item->item.lTime <= time) {
-            MUSIC_TIME ofs = item->item.lTime - time;
+    for (i = 0; i < This->count; i++) {
+        if (This->items[i].lTime <= time) {
+            MUSIC_TIME ofs = This->items[i].lTime - time;
             if (ofs > prm->mtTime) {
                 prm->mtTime = ofs;
-                prm->dblTempo = item->item.dblTempo;
+                prm->dblTempo = This->items[i].dblTempo;
             }
-            if (next && item->item.lTime > time && item->item.lTime < *next)
-                *next = item->item.lTime;
+            if (next && This->items[i].lTime > time && This->items[i].lTime < *next)
+                *next = This->items[i].lTime;
         }
     }
 
@@ -334,53 +327,35 @@ static inline IDirectMusicTempoTrack *impl_from_IPersistStream(IPersistStream *i
     return CONTAINING_RECORD(iface, IDirectMusicTempoTrack, dmobj.IPersistStream_iface);
 }
 
-static HRESULT WINAPI tempo_IPersistStream_Load(IPersistStream *iface, IStream *pStm)
+static HRESULT WINAPI tempo_IPersistStream_Load(IPersistStream *iface, IStream *stream)
 {
-  IDirectMusicTempoTrack *This = impl_from_IPersistStream(iface);
-  DMUS_PRIVATE_CHUNK Chunk;
-  DWORD StreamSize, StreamCount;
-  LARGE_INTEGER liMove;
-  DMUS_IO_TEMPO_ITEM item;
-  LPDMUS_PRIVATE_TEMPO_ITEM pNewItem = NULL;
-  DWORD nItem = 0;
-  FIXME("(%p, %p): Loading not fully implemented yet\n", This, pStm);
+    IDirectMusicTempoTrack *This = impl_from_IPersistStream(iface);
+    struct chunk_entry chunk = {0};
+    unsigned int i;
+    HRESULT hr;
 
-  IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
-  TRACE_(dmfile)(": %s chunk (size = %d)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
-  switch (Chunk.fccID) {	
-  case DMUS_FOURCC_TEMPO_TRACK: {
-    TRACE_(dmfile)(": Tempo track\n");
-    IStream_Read (pStm, &StreamSize, sizeof(DWORD), NULL);
-    StreamSize -= sizeof(DWORD);
-    StreamCount = 0;
-    TRACE_(dmfile)(" - sizeof(DMUS_IO_TEMPO_ITEM): %u (chunkSize = %u)\n", StreamSize, Chunk.dwSize);
-    do {
-      IStream_Read (pStm, &item, sizeof(item), NULL);
-      ++nItem;
-      TRACE_(dmfile)("DMUS_IO_TEMPO_ITEM #%d\n", nItem);
-      TRACE_(dmfile)(" - lTime = %u\n", item.lTime);
-      TRACE_(dmfile)(" - dblTempo = %g\n", item.dblTempo);
-      pNewItem = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(DMUS_PRIVATE_TEMPO_ITEM));
-      if (NULL == pNewItem)
-        return  E_OUTOFMEMORY;
+    TRACE("%p, %p\n", This, stream);
 
-      pNewItem->item = item;
-      list_add_tail (&This->Items, &pNewItem->entry);
-      pNewItem = NULL;
-      StreamCount += sizeof(item);
-      TRACE_(dmfile)(": StreamCount[0] = %d < StreamSize[0] = %d\n", StreamCount, StreamSize);
-    } while (StreamCount < StreamSize); 
-    break;
-  }
-  default: {
-    TRACE_(dmfile)(": unexpected chunk; loading failed)\n");
-    liMove.QuadPart = Chunk.dwSize;
-    IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
-    return E_FAIL;
-  }
-  }
+    if (!stream)
+        return E_POINTER;
 
-  return S_OK;
+    if ((hr = stream_get_chunk(stream, &chunk) != S_OK))
+        return hr;
+    if (chunk.id != DMUS_FOURCC_TEMPO_TRACK)
+        return DMUS_E_UNSUPPORTED_STREAM;
+
+    hr = stream_chunk_get_array(stream, &chunk, (void **)&This->items, &This->count,
+            sizeof(DMUS_IO_TEMPO_ITEM));
+    if (FAILED(hr))
+        return hr;
+
+    for (i = 0; i < This->count; i++) {
+        TRACE_(dmfile)("DMUS_IO_TEMPO_ITEM #%u\n", i);
+        TRACE_(dmfile)(" - lTime = %u\n", This->items[i].lTime);
+        TRACE_(dmfile)(" - dblTempo = %g\n", This->items[i].dblTempo);
+    }
+
+    return S_OK;
 }
 
 static const IPersistStreamVtbl persiststream_vtbl = {
@@ -410,7 +385,6 @@ HRESULT WINAPI create_dmtempotrack(REFIID lpcGUID, void **ppobj)
     dmobject_init(&track->dmobj, &CLSID_DirectMusicTempoTrack,
                   (IUnknown *)&track->IDirectMusicTrack8_iface);
     track->dmobj.IPersistStream_iface.lpVtbl = &persiststream_vtbl;
-    list_init(&track->Items);
 
     DMIME_LockModule();
     hr = IDirectMusicTrack8_QueryInterface(&track->IDirectMusicTrack8_iface, lpcGUID, ppobj);
