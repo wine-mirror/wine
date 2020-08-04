@@ -1257,6 +1257,7 @@ static NTSTATUS get_firmware_info( SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULON
         size_t chassis_vendor_len, chassis_version_len, chassis_serial_len, chassis_asset_tag_len;
         char *buffer = (char*)sfti->TableBuffer;
         BYTE string_count;
+        BYTE handle_count = 0;
         struct smbios_prologue *prologue;
         struct smbios_bios *bios;
         struct smbios_system *system;
@@ -1321,7 +1322,7 @@ static NTSTATUS get_firmware_info( SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULON
         bios = (struct smbios_bios*)buffer;
         bios->hdr.type = 0;
         bios->hdr.length = sizeof(struct smbios_bios);
-        bios->hdr.handle = 0;
+        bios->hdr.handle = handle_count++;
         bios->vendor = bios_vendor_len ? ++string_count : 0;
         bios->version = bios_version_len ? ++string_count : 0;
         bios->start = 0;
@@ -1346,7 +1347,7 @@ static NTSTATUS get_firmware_info( SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULON
         system = (struct smbios_system*)buffer;
         system->hdr.type = 1;
         system->hdr.length = sizeof(struct smbios_system);
-        system->hdr.handle = 0;
+        system->hdr.handle = handle_count++;
         system->vendor = system_vendor_len ? ++string_count : 0;
         system->product = system_product_len ? ++string_count : 0;
         system->version = system_version_len ? ++string_count : 0;
@@ -1370,7 +1371,7 @@ static NTSTATUS get_firmware_info( SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULON
         board = (struct smbios_board*)buffer;
         board->hdr.type = 2;
         board->hdr.length = sizeof(struct smbios_board);
-        board->hdr.handle = 0;
+        board->hdr.handle = handle_count++;
         board->vendor = board_vendor_len ? ++string_count : 0;
         board->product = board_product_len ? ++string_count : 0;
         board->version = board_version_len ? ++string_count : 0;
@@ -1388,7 +1389,7 @@ static NTSTATUS get_firmware_info( SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULON
         chassis = (struct smbios_chassis*)buffer;
         chassis->hdr.type = 3;
         chassis->hdr.length = sizeof(struct smbios_chassis);
-        chassis->hdr.handle = 0;
+        chassis->hdr.handle = handle_count++;
         chassis->vendor = chassis_vendor_len ? ++string_count : 0;
         chassis->type = atoi(chassis_type);
         chassis->version = chassis_version_len ? ++string_count : 0;
