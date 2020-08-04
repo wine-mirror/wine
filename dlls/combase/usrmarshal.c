@@ -618,6 +618,225 @@ unsigned char * __RPC_USER HPALETTE_UserUnmarshal(ULONG *pFlags, unsigned char *
 }
 
 /******************************************************************************
+ *           HGLOBAL_UserSize    (combase.@)
+ *
+ * Calculates the buffer size required to marshal an HGLOBAL.
+ *
+ * PARAMS
+ *  pFlags       [I] Flags. See notes.
+ *  StartingSize [I] Starting size of the buffer. This value is added on to
+ *                   the buffer size required for the clip format.
+ *  phGlobal     [I] HGLOBAL to size.
+ *
+ * RETURNS
+ *  The buffer size required to marshal an HGLOBAL plus the starting size.
+ *
+ * NOTES
+ *  Even though the function is documented to take a pointer to a ULONG in
+ *  pFlags, it actually takes a pointer to a USER_MARSHAL_CB structure, of which
+ *  the first parameter is a ULONG.
+ *  This function is only intended to be called by the RPC runtime.
+ */
+ULONG __RPC_USER HGLOBAL_UserSize(ULONG *pFlags, ULONG StartingSize, HGLOBAL *phGlobal)
+{
+    ULONG size = StartingSize;
+
+    TRACE("%s, %u, %p.\n", debugstr_user_flags(pFlags), StartingSize, phGlobal);
+
+    ALIGN_LENGTH(size, 3);
+
+    size += sizeof(ULONG);
+
+    if (LOWORD(*pFlags) == MSHCTX_INPROC)
+        size += sizeof(HGLOBAL);
+    else
+    {
+        size += sizeof(ULONG);
+        if (*phGlobal)
+        {
+            SIZE_T ret;
+            size += 3 * sizeof(ULONG);
+            ret = GlobalSize(*phGlobal);
+            size += (ULONG)ret;
+        }
+    }
+
+    return size;
+}
+
+/******************************************************************************
+ *           HGLOBAL_UserMarshal        (combase.@)
+ *
+ * Marshals an HGLOBAL into a buffer.
+ *
+ * PARAMS
+ *  pFlags   [I] Flags. See notes.
+ *  pBuffer  [I] Buffer to marshal the clip format into.
+ *  phGlobal [I] HGLOBAL to marshal.
+ *
+ * RETURNS
+ *  The end of the marshaled data in the buffer.
+ *
+ * NOTES
+ *  Even though the function is documented to take a pointer to a ULONG in
+ *  pFlags, it actually takes a pointer to a USER_MARSHAL_CB structure, of which
+ *  the first parameter is a ULONG.
+ *  This function is only intended to be called by the RPC runtime.
+ */
+unsigned char * __RPC_USER HGLOBAL_UserMarshal(ULONG *pFlags, unsigned char *pBuffer, HGLOBAL *phGlobal)
+{
+    TRACE("%s, %p, &%p.\n", debugstr_user_flags(pFlags), pBuffer, *phGlobal);
+
+    ALIGN_POINTER(pBuffer, 3);
+
+    if (LOWORD(*pFlags) == MSHCTX_INPROC)
+    {
+        if (sizeof(*phGlobal) == 8)
+            *(ULONG *)pBuffer = WDT_INPROC64_CALL;
+        else
+            *(ULONG *)pBuffer = WDT_INPROC_CALL;
+        pBuffer += sizeof(ULONG);
+        *(HGLOBAL *)pBuffer = *phGlobal;
+        pBuffer += sizeof(HGLOBAL);
+    }
+    else
+    {
+        *(ULONG *)pBuffer = WDT_REMOTE_CALL;
+        pBuffer += sizeof(ULONG);
+        *(ULONG *)pBuffer = HandleToULong(*phGlobal);
+        pBuffer += sizeof(ULONG);
+        if (*phGlobal)
+        {
+            const unsigned char *memory;
+            SIZE_T size = GlobalSize(*phGlobal);
+            *(ULONG *)pBuffer = (ULONG)size;
+            pBuffer += sizeof(ULONG);
+            *(ULONG *)pBuffer = HandleToULong(*phGlobal);
+            pBuffer += sizeof(ULONG);
+            *(ULONG *)pBuffer = (ULONG)size;
+            pBuffer += sizeof(ULONG);
+
+            memory = GlobalLock(*phGlobal);
+            memcpy(pBuffer, memory, size);
+            pBuffer += size;
+            GlobalUnlock(*phGlobal);
+        }
+    }
+
+    return pBuffer;
+}
+
+/******************************************************************************
+ *           HGLOBAL_UserUnmarshal        (combase.@)
+ *
+ * Unmarshals an HGLOBAL from a buffer.
+ *
+ * PARAMS
+ *  pFlags   [I] Flags. See notes.
+ *  pBuffer  [I] Buffer to marshal the clip format from.
+ *  phGlobal [O] Address that receive the unmarshaled HGLOBAL.
+ *
+ * RETURNS
+ *  The end of the marshaled data in the buffer.
+ *
+ * NOTES
+ *  Even though the function is documented to take a pointer to an ULONG in
+ *  pFlags, it actually takes a pointer to a USER_MARSHAL_CB structure, of which
+ *  the first parameter is an ULONG.
+ *  This function is only intended to be called by the RPC runtime.
+ */
+unsigned char * __RPC_USER HGLOBAL_UserUnmarshal(ULONG *pFlags, unsigned char *pBuffer, HGLOBAL *phGlobal)
+{
+    ULONG fContext;
+
+    TRACE("%s, %p, &%p.\n", debugstr_user_flags(pFlags), pBuffer, *phGlobal);
+
+    ALIGN_POINTER(pBuffer, 3);
+
+    fContext = *(ULONG *)pBuffer;
+    pBuffer += sizeof(ULONG);
+
+    if (((fContext == WDT_INPROC_CALL) && (sizeof(*phGlobal) < 8)) ||
+        ((fContext == WDT_INPROC64_CALL) && (sizeof(*phGlobal) == 8)))
+    {
+        *phGlobal = *(HGLOBAL *)pBuffer;
+        pBuffer += sizeof(*phGlobal);
+    }
+    else if (fContext == WDT_REMOTE_CALL)
+    {
+        ULONG handle;
+
+        handle = *(ULONG *)pBuffer;
+        pBuffer += sizeof(ULONG);
+
+        if (handle)
+        {
+            ULONG size;
+            void *memory;
+
+            size = *(ULONG *)pBuffer;
+            pBuffer += sizeof(ULONG);
+            /* redundancy is bad - it means you have to check consistency like
+             * this: */
+            if (*(ULONG *)pBuffer != handle)
+            {
+                RaiseException(RPC_X_BAD_STUB_DATA, 0, 0, NULL);
+                return pBuffer;
+            }
+            pBuffer += sizeof(ULONG);
+            /* redundancy is bad - it means you have to check consistency like
+             * this: */
+            if (*(ULONG *)pBuffer != size)
+            {
+                RaiseException(RPC_X_BAD_STUB_DATA, 0, 0, NULL);
+                return pBuffer;
+            }
+            pBuffer += sizeof(ULONG);
+
+            /* FIXME: check size is not too big */
+
+            *phGlobal = GlobalAlloc(GMEM_MOVEABLE, size);
+            memory = GlobalLock(*phGlobal);
+            memcpy(memory, pBuffer, size);
+            pBuffer += size;
+            GlobalUnlock(*phGlobal);
+        }
+        else
+            *phGlobal = NULL;
+    }
+    else
+        RaiseException(RPC_S_INVALID_TAG, 0, 0, NULL);
+
+    return pBuffer;
+}
+
+/******************************************************************************
+ *           HGLOBAL_UserFree        (combase.@)
+ *
+ * Frees an unmarshaled HGLOBAL.
+ *
+ * PARAMS
+ *  pFlags   [I] Flags. See notes.
+ *  phGlobal [I] HGLOBAL to free.
+ *
+ * RETURNS
+ *  The end of the marshaled data in the buffer.
+ *
+ * NOTES
+ *  Even though the function is documented to take a pointer to a ULONG in
+ *  pFlags, it actually takes a pointer to a USER_MARSHAL_CB structure, of
+ *  which the first parameter is a ULONG.
+ *  This function is only intended to be called by the RPC runtime.
+ */
+void __RPC_USER HGLOBAL_UserFree(ULONG *pFlags, HGLOBAL *phGlobal)
+{
+    TRACE("%s, &%p.\n", debugstr_user_flags(pFlags), *phGlobal);
+
+    if (LOWORD(*pFlags) != MSHCTX_INPROC && *phGlobal)
+        GlobalFree(*phGlobal);
+}
+
+/******************************************************************************
  *           HPALETTE_UserFree (combase.@)
  *
  * Frees an unmarshaled palette.

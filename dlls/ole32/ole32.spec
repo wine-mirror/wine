@@ -143,10 +143,10 @@
 @ stdcall HENHMETAFILE_UserMarshal(ptr ptr ptr)
 @ stdcall HENHMETAFILE_UserSize(ptr long ptr)
 @ stdcall HENHMETAFILE_UserUnmarshal(ptr ptr ptr)
-@ stdcall HGLOBAL_UserFree(ptr ptr)
-@ stdcall HGLOBAL_UserMarshal(ptr ptr ptr)
-@ stdcall HGLOBAL_UserSize(ptr long ptr)
-@ stdcall HGLOBAL_UserUnmarshal(ptr ptr ptr)
+@ stdcall HGLOBAL_UserFree(ptr ptr) combase.HGLOBAL_UserFree
+@ stdcall HGLOBAL_UserMarshal(ptr ptr ptr) combase.HGLOBAL_UserMarshal
+@ stdcall HGLOBAL_UserSize(ptr long ptr) combase.HGLOBAL_UserSize
+@ stdcall HGLOBAL_UserUnmarshal(ptr ptr ptr) combase.HGLOBAL_UserUnmarshal
 @ stdcall HICON_UserFree(ptr ptr) combase.HICON_UserFree
 @ stdcall HICON_UserMarshal(ptr ptr ptr) combase.HICON_UserMarshal
 @ stdcall HICON_UserSize(ptr long ptr) combase.HICON_UserSize
