@@ -167,7 +167,8 @@ static VARIANT_BOOL exvb;
 static IWebBrowser2 *wb;
 
 static HWND container_hwnd, shell_embedding_hwnd;
-static BOOL is_downloading, do_download, is_first_load, use_container_olecmd, test_close, is_http, use_container_dochostui;
+static BOOL is_downloading, do_download, is_first_load, use_container_olecmd;
+static BOOL test_close, test_hide, is_http, use_container_dochostui;
 static HRESULT hr_dochost_TranslateAccelerator = E_NOTIMPL;
 static HRESULT hr_site_TranslateAccelerator = E_NOTIMPL;
 static const WCHAR *current_url;
@@ -1265,7 +1266,7 @@ static HRESULT WINAPI InPlaceUIWindow_SetActiveObject(IOleInPlaceFrame *iface,
         IOleInPlaceActiveObject *pActiveObject, LPCOLESTR pszObjName)
 {
     CHECK_EXPECT(UIWindow_SetActiveObject);
-    if(!test_close) {
+    if(!test_close && !test_hide) {
         ok(pActiveObject != NULL, "pActiveObject = NULL\n");
         ok(!lstrcmpW(pszObjName, wszItem), "unexpected pszObjName\n");
     } else {
@@ -1279,7 +1280,7 @@ static HRESULT WINAPI InPlaceFrame_SetActiveObject(IOleInPlaceFrame *iface,
         IOleInPlaceActiveObject *pActiveObject, LPCOLESTR pszObjName)
 {
     CHECK_EXPECT(Frame_SetActiveObject);
-    if(!test_close) {
+    if(!test_close && !test_hide) {
         ok(pActiveObject != NULL, "pActiveObject = NULL\n");
         ok(!lstrcmpW(pszObjName, wszItem), "unexpected pszObjName\n");
     } else {
@@ -3743,7 +3744,7 @@ static void test_Close(IWebBrowser2 *wb, BOOL do_download)
     SET_EXPECT(Advise_OnClose);
     hres = IOleObject_Close(oo, OLECLOSE_NOSAVE);
     ok(hres == S_OK, "OleObject_Close failed: %x\n", hres);
-    todo_wine CHECK_NOT_CALLED(OnFocus_FALSE);
+    CHECK_NOT_CALLED(OnFocus_FALSE);
     todo_wine CHECK_NOT_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK_FALSE);
     todo_wine CHECK_NOT_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD_FALSE);
     CHECK_CALLED(Advise_OnClose);
@@ -4018,6 +4019,8 @@ static void test_WebBrowser_DoVerb(void)
     HWND hwnd;
     ULONG ref;
     BOOL res;
+    HRESULT hres;
+    VARIANT_BOOL b;
 
     webbrowser = create_webbrowser();
     init_test(webbrowser, 0);
@@ -4049,6 +4052,149 @@ static void test_WebBrowser_DoVerb(void)
     SET_EXPECT(OnInPlaceDeactivate);
     call_DoVerb(webbrowser, OLEIVERB_HIDE);
     CHECK_CALLED(OnInPlaceDeactivate);
+
+    b = 0x100;
+    hres = IWebBrowser2_get_Visible(webbrowser, &b);
+    ok(hres == S_OK, "get_Visible failed: %08x\n", hres);
+    ok(b == VARIANT_TRUE, "Visible = %x\n", b);
+
+    SET_EXPECT(CanInPlaceActivate);
+    SET_EXPECT(Site_GetWindow);
+    SET_EXPECT(OnInPlaceActivate);
+    SET_EXPECT(GetWindowContext);
+    SET_EXPECT(ShowObject);
+    SET_EXPECT(GetContainer);
+    SET_EXPECT(Frame_GetWindow);
+    SET_EXPECT(OnUIActivate);
+    SET_EXPECT(Frame_SetActiveObject);
+    SET_EXPECT(UIWindow_SetActiveObject);
+    SET_EXPECT(SetMenu);
+    SET_EXPECT(OnFocus_TRUE);
+    call_DoVerb(webbrowser, OLEIVERB_SHOW);
+    CHECK_CALLED(CanInPlaceActivate);
+    CHECK_CALLED(Site_GetWindow);
+    CHECK_CALLED(OnInPlaceActivate);
+    CHECK_CALLED(GetWindowContext);
+    CHECK_CALLED(ShowObject);
+    CHECK_CALLED(GetContainer);
+    CHECK_CALLED(Frame_GetWindow);
+    CHECK_CALLED(OnUIActivate);
+    CHECK_CALLED(Frame_SetActiveObject);
+    CHECK_CALLED(UIWindow_SetActiveObject);
+    CHECK_CALLED(SetMenu);
+    CHECK_CALLED(OnFocus_TRUE);
+
+    b = 0x100;
+    hres = IWebBrowser2_get_Visible(webbrowser, &b);
+    ok(hres == S_OK, "get_Visible failed: %08x\n", hres);
+    ok(b == VARIANT_TRUE, "Visible = %x\n", b);
+
+    call_DoVerb(webbrowser, OLEIVERB_SHOW);
+    call_DoVerb(webbrowser, OLEIVERB_UIACTIVATE);
+
+    SET_EXPECT(Frame_SetActiveObject);
+    SET_EXPECT(UIWindow_SetActiveObject);
+    SET_EXPECT(OnUIDeactivate);
+    SET_EXPECT(OnFocus_FALSE);
+    SET_EXPECT(OnInPlaceDeactivate);
+    test_hide = TRUE;
+    call_DoVerb(webbrowser, OLEIVERB_HIDE);
+    test_hide = FALSE;
+    CHECK_CALLED(Frame_SetActiveObject);
+    CHECK_CALLED(UIWindow_SetActiveObject);
+    CHECK_CALLED(OnUIDeactivate);
+    CHECK_CALLED(OnFocus_FALSE);
+    CHECK_CALLED(OnInPlaceDeactivate);
+
+    b = 0x100;
+    hres = IWebBrowser2_get_Visible(webbrowser, &b);
+    ok(hres == S_OK, "get_Visible failed: %08x\n", hres);
+    ok(b == VARIANT_TRUE, "Visible = %x\n", b);
+
+    SET_EXPECT(CanInPlaceActivate);
+    SET_EXPECT(Site_GetWindow);
+    SET_EXPECT(OnInPlaceActivate);
+    SET_EXPECT(GetWindowContext);
+    SET_EXPECT(ShowObject);
+    SET_EXPECT(GetContainer);
+    SET_EXPECT(Frame_GetWindow);
+    SET_EXPECT(OnUIActivate);
+    SET_EXPECT(Frame_SetActiveObject);
+    SET_EXPECT(UIWindow_SetActiveObject);
+    SET_EXPECT(SetMenu);
+    SET_EXPECT(OnFocus_TRUE);
+    call_DoVerb(webbrowser, OLEIVERB_SHOW);
+    CHECK_CALLED(CanInPlaceActivate);
+    CHECK_CALLED(Site_GetWindow);
+    CHECK_CALLED(OnInPlaceActivate);
+    CHECK_CALLED(GetWindowContext);
+    CHECK_CALLED(ShowObject);
+    CHECK_CALLED(GetContainer);
+    CHECK_CALLED(Frame_GetWindow);
+    CHECK_CALLED(OnUIActivate);
+    CHECK_CALLED(Frame_SetActiveObject);
+    CHECK_CALLED(UIWindow_SetActiveObject);
+    CHECK_CALLED(SetMenu);
+    CHECK_CALLED(OnFocus_TRUE);
+
+    b = 0x100;
+    hres = IWebBrowser2_get_Visible(webbrowser, &b);
+    ok(hres == S_OK, "get_Visible failed: %08x\n", hres);
+    ok(b == VARIANT_TRUE, "Visible = %x\n", b);
+
+    SET_EXPECT(Frame_SetActiveObject);
+    SET_EXPECT(UIWindow_SetActiveObject);
+    SET_EXPECT(OnUIDeactivate);
+    SET_EXPECT(OnFocus_FALSE);
+    SET_EXPECT(OnInPlaceDeactivate);
+    test_hide = TRUE;
+    call_DoVerb(webbrowser, OLEIVERB_HIDE);
+    CHECK_CALLED(Frame_SetActiveObject);
+    CHECK_CALLED(UIWindow_SetActiveObject);
+    CHECK_CALLED(OnUIDeactivate);
+    CHECK_CALLED(OnFocus_FALSE);
+    CHECK_CALLED(OnInPlaceDeactivate);
+
+    call_DoVerb(webbrowser, OLEIVERB_HIDE);
+    test_hide = FALSE;
+
+    b = 0x100;
+    hres = IWebBrowser2_get_Visible(webbrowser, &b);
+    ok(hres == S_OK, "get_Visible failed: %08x\n", hres);
+    ok(b == VARIANT_TRUE, "Visible = %x\n", b);
+
+    SET_EXPECT(CanInPlaceActivate);
+    SET_EXPECT(Site_GetWindow);
+    SET_EXPECT(OnInPlaceActivate);
+    SET_EXPECT(GetWindowContext);
+    SET_EXPECT(ShowObject);
+    SET_EXPECT(GetContainer);
+    SET_EXPECT(Frame_GetWindow);
+    SET_EXPECT(OnUIActivate);
+    SET_EXPECT(Frame_SetActiveObject);
+    SET_EXPECT(UIWindow_SetActiveObject);
+    SET_EXPECT(SetMenu);
+    SET_EXPECT(OnFocus_TRUE);
+    call_DoVerb(webbrowser, OLEIVERB_UIACTIVATE);
+    CHECK_CALLED(CanInPlaceActivate);
+    CHECK_CALLED(Site_GetWindow);
+    CHECK_CALLED(OnInPlaceActivate);
+    CHECK_CALLED(GetWindowContext);
+    CHECK_CALLED(ShowObject);
+    CHECK_CALLED(GetContainer);
+    CHECK_CALLED(Frame_GetWindow);
+    CHECK_CALLED(OnUIActivate);
+    CHECK_CALLED(Frame_SetActiveObject);
+    CHECK_CALLED(UIWindow_SetActiveObject);
+    CHECK_CALLED(SetMenu);
+    CHECK_CALLED(OnFocus_TRUE);
+
+    b = 0x100;
+    hres = IWebBrowser2_get_Visible(webbrowser, &b);
+    ok(hres == S_OK, "get_Visible failed: %08x\n", hres);
+    ok(b == VARIANT_TRUE, "Visible = %x\n", b);
+
+    call_DoVerb(webbrowser, OLEIVERB_SHOW);
 
     test_ClientSite(webbrowser, NULL, FALSE);
 

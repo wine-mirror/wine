@@ -210,6 +210,8 @@ struct WebBrowser {
     OLEINPLACEFRAMEINFO frameinfo;
     SIZEL extent;
 
+    BOOL ui_activated;
+
     HWND shell_embedding_hwnd;
 
     VARIANT_BOOL register_browser;

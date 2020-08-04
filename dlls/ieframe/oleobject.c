@@ -214,6 +214,9 @@ static HRESULT activate_ui(WebBrowser *This, IOleClientSite *active_site)
     if(FAILED(hres))
         return hres;
 
+    if(This->ui_activated)
+        return S_OK;
+
     IOleInPlaceSiteEx_OnUIActivate(This->inplace);
 
     if(This->doc_host.frame)
@@ -226,6 +229,8 @@ static HRESULT activate_ui(WebBrowser *This, IOleClientSite *active_site)
 
     SetFocus(This->shell_embedding_hwnd);
     notify_on_focus(This, TRUE);
+
+    This->ui_activated = TRUE;
 
     return S_OK;
 }
@@ -579,6 +584,26 @@ static HRESULT WINAPI OleObject_SetHostNames(IOleObject *iface, LPCOLESTR szCont
     return S_OK;
 }
 
+static void deactivate_ui(WebBrowser *This)
+{
+    if(This->ui_activated) {
+        if(This->doc_host.frame)
+            IOleInPlaceFrame_SetActiveObject(This->doc_host.frame, NULL, NULL);
+
+        if(This->uiwindow)
+            IOleInPlaceUIWindow_SetActiveObject(This->uiwindow, NULL, NULL);
+
+        if(This->inplace)
+            IOleInPlaceSiteEx_OnUIDeactivate(This->inplace, FALSE);
+        notify_on_focus(This, FALSE);
+
+        This->ui_activated = FALSE;
+    }
+
+    if(This->inplace)
+        IOleInPlaceSiteEx_OnInPlaceDeactivate(This->inplace);
+}
+
 static HRESULT WINAPI OleObject_Close(IOleObject *iface, DWORD dwSaveOption)
 {
     WebBrowser *This = impl_from_IOleObject(iface);
@@ -592,17 +617,7 @@ static HRESULT WINAPI OleObject_Close(IOleObject *iface, DWORD dwSaveOption)
         return E_NOTIMPL;
     }
 
-    if(This->doc_host.frame)
-        IOleInPlaceFrame_SetActiveObject(This->doc_host.frame, NULL, NULL);
-
-    if(This->uiwindow)
-        IOleInPlaceUIWindow_SetActiveObject(This->uiwindow, NULL, NULL);
-
-    if(This->inplace)
-        IOleInPlaceSiteEx_OnUIDeactivate(This->inplace, FALSE);
-    notify_on_focus(This, FALSE);
-    if(This->inplace)
-        IOleInPlaceSiteEx_OnInPlaceDeactivate(This->inplace);
+    deactivate_ui(This);
 
     /* store old client site - we need to restore it in DoVerb */
     client = This->client;
@@ -677,8 +692,11 @@ static HRESULT WINAPI OleObject_DoVerb(IOleObject *iface, LONG iVerb, struct tag
         return activate_inplace(This, pActiveSite);
     case OLEIVERB_HIDE:
         TRACE("OLEIVERB_HIDE\n");
-        if(This->inplace)
-            IOleInPlaceSiteEx_OnInPlaceDeactivate(This->inplace);
+        if(This->inplace) {
+            deactivate_ui(This);
+            IOleInPlaceSiteEx_Release(This->inplace);
+            This->inplace = NULL;
+        }
         if(This->shell_embedding_hwnd)
             ShowWindow(This->shell_embedding_hwnd, SW_HIDE);
         return S_OK;
