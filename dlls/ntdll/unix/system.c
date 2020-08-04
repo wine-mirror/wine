@@ -1263,6 +1263,7 @@ static NTSTATUS get_firmware_info( SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULON
         struct smbios_system *system;
         struct smbios_board *board;
         struct smbios_chassis *chassis;
+        struct smbios_header *end_of_table;
 
 #define S(s) s, sizeof(s)
         bios_vendor_len = get_smbios_string("/sys/class/dmi/id/bios_vendor", S(bios_vendor));
@@ -1301,6 +1302,9 @@ static NTSTATUS get_firmware_info( SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULON
         *required_len += sizeof(struct smbios_chassis);
         *required_len += max(L(chassis_vendor_len) + L(chassis_version_len) + L(chassis_serial_len) +
                              L(chassis_asset_tag_len) + 1, 2);
+
+        *required_len += sizeof(struct smbios_header);
+        *required_len += 2;
 #undef L
 
         sfti->TableBufferLength = *required_len;
@@ -1406,6 +1410,14 @@ static NTSTATUS get_firmware_info( SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULON
         copy_smbios_string(&buffer, chassis_serial, chassis_serial_len);
         copy_smbios_string(&buffer, chassis_asset_tag, chassis_asset_tag_len);
         if (!string_count) *buffer++ = 0;
+        *buffer++ = 0;
+
+        end_of_table = (struct smbios_header*)buffer;
+        end_of_table->type = 127;
+        end_of_table->length = sizeof(struct smbios_header);
+        end_of_table->handle = handle_count++;
+        buffer += sizeof(struct smbios_header);
+        *buffer++ = 0;
         *buffer++ = 0;
 
         return STATUS_SUCCESS;
