@@ -314,6 +314,56 @@ static HRESULT parse_script_text(ScriptModule *module, BSTR script_text, DWORD f
     return hr;
 }
 
+static HRESULT run_procedure(ScriptModule *module, BSTR procedure_name, SAFEARRAY *args, VARIANT *res)
+{
+    IDispatchEx *dispex;
+    IDispatch *disp;
+    DISPPARAMS dp;
+    DISPID dispid;
+    HRESULT hr;
+    UINT i;
+
+    hr = start_script(module->host);
+    if (FAILED(hr)) return hr;
+
+    hr = get_script_dispatch(module, &disp);
+    if (FAILED(hr)) return hr;
+
+    hr = IDispatch_GetIDsOfNames(disp, &IID_NULL, &procedure_name, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (FAILED(hr)) return hr;
+
+    dp.cArgs = args->rgsabound[0].cElements;
+    dp.rgdispidNamedArgs = NULL;
+    dp.cNamedArgs = 0;
+    dp.rgvarg = heap_alloc(dp.cArgs * sizeof(*dp.rgvarg));
+    if (!dp.rgvarg) return E_OUTOFMEMORY;
+
+    hr = SafeArrayLock(args);
+    if (SUCCEEDED(hr))
+    {
+        /* The DISPPARAMS are stored in reverse order */
+        for (i = 0; i < dp.cArgs; i++)
+            dp.rgvarg[i] = *(VARIANT*)((char*)(args->pvData) + (dp.cArgs - i - 1) * args->cbElements);
+        SafeArrayUnlock(args);
+
+        hr = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
+        if (FAILED(hr))
+        {
+            hr = IDispatch_Invoke(disp, dispid, &IID_NULL, LOCALE_USER_DEFAULT,
+                                  DISPATCH_METHOD, &dp, res, NULL, NULL);
+        }
+        else
+        {
+            hr = IDispatchEx_InvokeEx(dispex, dispid, LOCALE_USER_DEFAULT,
+                                      DISPATCH_METHOD, &dp, res, NULL, NULL);
+            IDispatchEx_Release(dispex);
+        }
+    }
+    heap_free(dp.rgvarg);
+
+    return hr;
+}
+
 static inline ScriptControl *impl_from_IScriptControl(IScriptControl *iface)
 {
     return CONTAINING_RECORD(iface, ScriptControl, IScriptControl_iface);
@@ -1782,13 +1832,7 @@ static HRESULT WINAPI ScriptControl_ExecuteStatement(IScriptControl *iface, BSTR
 static HRESULT WINAPI ScriptControl_Run(IScriptControl *iface, BSTR procedure_name, SAFEARRAY **parameters, VARIANT *res)
 {
     ScriptControl *This = impl_from_IScriptControl(iface);
-    IDispatchEx *dispex;
-    IDispatch *disp;
     SAFEARRAY *sa;
-    DISPPARAMS dp;
-    DISPID dispid;
-    HRESULT hr;
-    UINT i;
 
     TRACE("(%p)->(%s %p %p)\n", This, debugstr_w(procedure_name), parameters, res);
 
@@ -1798,48 +1842,9 @@ static HRESULT WINAPI ScriptControl_Run(IScriptControl *iface, BSTR procedure_na
     V_VT(res) = VT_EMPTY;
     if (sa->cDims == 0) return DISP_E_BADINDEX;
     if (!(sa->fFeatures & FADF_VARIANT)) return DISP_E_BADVARTYPE;
-
-
     if (!This->host) return E_FAIL;
-    hr = start_script(This->host);
-    if (FAILED(hr)) return hr;
 
-    hr = get_script_dispatch(This->modules[0], &disp);
-    if (FAILED(hr)) return hr;
-
-    hr = IDispatch_GetIDsOfNames(disp, &IID_NULL, &procedure_name, 1, LOCALE_USER_DEFAULT, &dispid);
-    if (FAILED(hr)) return hr;
-
-    dp.cArgs = sa->rgsabound[0].cElements;
-    dp.rgdispidNamedArgs = NULL;
-    dp.cNamedArgs = 0;
-    dp.rgvarg = heap_alloc(dp.cArgs * sizeof(*dp.rgvarg));
-    if (!dp.rgvarg) return E_OUTOFMEMORY;
-
-    hr = SafeArrayLock(sa);
-    if (SUCCEEDED(hr))
-    {
-        /* The DISPPARAMS are stored in reverse order */
-        for (i = 0; i < dp.cArgs; i++)
-            dp.rgvarg[i] = *(VARIANT*)((char*)(sa->pvData) + (dp.cArgs - i - 1) * sa->cbElements);
-        SafeArrayUnlock(sa);
-
-        hr = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
-        if (FAILED(hr))
-        {
-            hr = IDispatch_Invoke(disp, dispid, &IID_NULL, LOCALE_USER_DEFAULT,
-                                  DISPATCH_METHOD, &dp, res, NULL, NULL);
-        }
-        else
-        {
-            hr = IDispatchEx_InvokeEx(dispex, dispid, LOCALE_USER_DEFAULT,
-                                      DISPATCH_METHOD, &dp, res, NULL, NULL);
-            IDispatchEx_Release(dispex);
-        }
-    }
-    heap_free(dp.rgvarg);
-
-    return hr;
+    return run_procedure(This->modules[0], procedure_name, sa, res);
 }
 
 static const IScriptControlVtbl ScriptControlVtbl = {
