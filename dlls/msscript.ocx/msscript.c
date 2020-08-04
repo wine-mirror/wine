@@ -828,10 +828,20 @@ static HRESULT WINAPI ScriptModule_get_Name(IScriptModule *iface, BSTR *pbstrNam
 static HRESULT WINAPI ScriptModule_get_CodeObject(IScriptModule *iface, IDispatch **ppdispObject)
 {
     ScriptModule *This = impl_from_IScriptModule(iface);
+    HRESULT hr;
 
-    FIXME("(%p)->(%p)\n", This, ppdispObject);
+    TRACE("(%p)->(%p)\n", This, ppdispObject);
 
-    return E_NOTIMPL;
+    if (!This->host) return E_FAIL;
+
+    hr = start_script(This->host);
+    if (FAILED(hr)) return hr;
+
+    hr = get_script_dispatch(This, ppdispObject);
+    if (FAILED(hr)) return hr;
+
+    IDispatch_AddRef(*ppdispObject);
+    return hr;
 }
 
 static HRESULT WINAPI ScriptModule_get_Procedures(IScriptModule *iface, IScriptProcedureCollection **ppdispProcedures)

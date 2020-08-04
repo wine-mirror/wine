@@ -549,11 +549,13 @@ static HRESULT WINAPI ActiveScript_AddTypeLib(IActiveScript *iface, REFGUID rgui
     return E_NOTIMPL;
 }
 
+static const WCHAR *GetScriptDispatch_expected_name;
 static HRESULT WINAPI ActiveScript_GetScriptDispatch(IActiveScript *iface, LPCOLESTR pstrItemName,
                                                 IDispatch **ppdisp)
 {
     CHECK_EXPECT(GetScriptDispatch);
-    ok(!pstrItemName, "pstrItemName not NULL, got %s.\n", wine_dbgstr_w(pstrItemName));
+    ok(GetScriptDispatch_expected_name ? (pstrItemName && !lstrcmpW(pstrItemName, GetScriptDispatch_expected_name)) : !pstrItemName,
+        "pstrItemName not %s, got %s.\n", wine_dbgstr_w(GetScriptDispatch_expected_name), wine_dbgstr_w(pstrItemName));
 
     *ppdisp = (IDispatch*)&DispatchEx;
 
@@ -2234,6 +2236,7 @@ static void test_IScriptControl_Run(void)
         CHECK_CALLED(QI_IActiveScriptParse);
         CHECK_CALLED(InitNew);
 
+        GetScriptDispatch_expected_name = NULL;
         SET_EXPECT(SetScriptState_STARTED);
         SET_EXPECT(GetScriptDispatch);
         SET_EXPECT(QI_IDispatchEx);
@@ -2320,9 +2323,11 @@ static void test_IScriptControl_get_Modules(void)
     IScriptControl *sc;
     SAFEARRAY *params;
     IUnknown *unknown;
+    IDispatch *disp;
     ULONG fetched;
     LONG count;
     HRESULT hr;
+    DISPID id;
     BSTR str;
     UINT i;
 
@@ -2504,6 +2509,23 @@ static void test_IScriptControl_get_Modules(void)
     hr = IScriptModuleCollection_get_Item(mods, var, &mod);
     ok(hr == S_OK, "IScriptModuleCollection_get_Item failed: 0x%08x.\n", hr);
 
+    hr = IScriptModule_get_CodeObject(mod, &disp);
+    ok(hr == S_OK, "IScriptModule_get_CodeObject failed: 0x%08x.\n", hr);
+
+    str = SysAllocString(L"sub");
+    hr = IDispatch_GetIDsOfNames(disp, &IID_NULL, &str, 1, LOCALE_USER_DEFAULT, &id);
+    ok(hr == S_OK, "IDispatch_GetIDsOfNames failed: 0x%08x.\n", hr);
+    ok(id != -1, "Unexpected id %d.\n", id);
+    SysFreeString(str);
+
+    str = SysAllocString(L"add");
+    hr = IDispatch_GetIDsOfNames(disp, &IID_NULL, &str, 1, LOCALE_USER_DEFAULT, &id);
+    ok(hr == DISP_E_UNKNOWNNAME, "IDispatch_GetIDsOfNames returned: 0x%08x.\n", hr);
+    ok(id == -1, "Unexpected id %d.\n", id);
+    SysFreeString(str);
+
+    IDispatch_Release(disp);
+
     params = SafeArrayCreate(VT_VARIANT, 1, bnd);
     ok(params != NULL, "Failed to create SafeArray.\n");
 
@@ -2578,6 +2600,8 @@ static void test_IScriptControl_get_Modules(void)
     ok(count == 1, "count is not 1, got %d.\n", count);
     hr = IScriptModule_get_Name(mod, &str);
     ok(hr == E_FAIL, "IScriptModule_get_Name returned: 0x%08x.\n", hr);
+    hr = IScriptModule_get_CodeObject(mod, &disp);
+    ok(hr == E_FAIL, "IScriptModule_get_CodeObject returned: 0x%08x.\n", hr);
     str = SysAllocString(L"function closed() { }\n");
     hr = IScriptModule_AddCode(mod, str);
     ok(hr == E_FAIL, "IScriptModule_AddCode failed: 0x%08x.\n", hr);
@@ -2703,14 +2727,23 @@ static void test_IScriptControl_get_Modules(void)
         ok(unknown == (IUnknown*)&testdisp, "Unexpected IUnknown for the item: %p.\n", unknown);
         IUnknown_Release(unknown);
 
+        GetScriptDispatch_expected_name = str;
         SET_EXPECT(SetScriptState_STARTED);
+        SET_EXPECT(GetScriptDispatch);
+        hr = IScriptModule_get_CodeObject(mod, &disp);
+        ok(hr == S_OK, "IScriptModule_get_CodeObject failed: 0x%08x.\n", hr);
+        ok(disp == (IDispatch*)&DispatchEx, "Unexpected code object %p.\n", disp);
+        CHECK_CALLED(GetScriptDispatch);
+        CHECK_CALLED(SetScriptState_STARTED);
+        GetScriptDispatch_expected_name = NULL;
+        IDispatch_Release(disp);
+
         SET_EXPECT(ParseScriptText);
         parse_item_name = str;
         parse_flags = SCRIPTTEXT_ISVISIBLE;
         code_str = SysAllocString(L"some code");
         hr = IScriptModule_AddCode(mod, code_str);
         ok(hr == S_OK, "IScriptControl_AddCode failed: 0x%08x.\n", hr);
-        CHECK_CALLED(SetScriptState_STARTED);
         CHECK_CALLED(ParseScriptText);
         SysFreeString(code_str);
         SysFreeString(str);
