@@ -33,7 +33,7 @@ struct chunk_entry {
 
 HRESULT stream_get_chunk(IStream *stream, struct chunk_entry *chunk) DECLSPEC_HIDDEN;
 HRESULT stream_next_chunk(IStream *stream, struct chunk_entry *chunk) DECLSPEC_HIDDEN;
-HRESULT stream_skip_chunk(IStream *stream, struct chunk_entry *chunk) DECLSPEC_HIDDEN;
+HRESULT stream_skip_chunk(IStream *stream, const struct chunk_entry *chunk) DECLSPEC_HIDDEN;
 
 HRESULT stream_chunk_get_data(IStream *stream, const struct chunk_entry *chunk, void *data,
         ULONG size) DECLSPEC_HIDDEN;

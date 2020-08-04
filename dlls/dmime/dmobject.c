@@ -349,7 +349,7 @@ HRESULT stream_get_chunk(IStream *stream, struct chunk_entry *chunk)
     return S_OK;
 }
 
-HRESULT stream_skip_chunk(IStream *stream, struct chunk_entry *chunk)
+HRESULT stream_skip_chunk(IStream *stream, const struct chunk_entry *chunk)
 {
     LARGE_INTEGER end;
 
