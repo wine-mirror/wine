@@ -1624,7 +1624,7 @@ static HRESULT Global_InStr(BuiltinDisp *This, VARIANT *args, unsigned args_cnt,
 {
     VARIANT *startv, *str1v, *str2v;
     BSTR str1, str2;
-    int ret, start = 0, mode = 0;
+    int ret = -1, start = 0, mode = 0;
     HRESULT hres;
 
     TRACE("args_cnt=%u\n", args_cnt);
@@ -1673,23 +1673,33 @@ static HRESULT Global_InStr(BuiltinDisp *This, VARIANT *args, unsigned args_cnt,
         return return_null(res);
 
     if(V_VT(str1v) != VT_BSTR) {
-        FIXME("Unsupported str1 type %s\n", debugstr_variant(str1v));
-        return E_NOTIMPL;
+        hres = to_string(str1v, &str1);
+        if(FAILED(hres))
+            return hres;
     }
-    str1 = V_BSTR(str1v);
+    else
+        str1 = V_BSTR(str1v);
 
     if(V_VT(str2v) != VT_BSTR) {
-        FIXME("Unsupported str2 type %s\n", debugstr_variant(str2v));
-        return E_NOTIMPL;
+        hres = to_string(str2v, &str2);
+        if(FAILED(hres)){
+            if(V_VT(str1v) != VT_BSTR)
+                SysFreeString(str1);
+            return hres;
+        }
     }
-    str2 = V_BSTR(str2v);
+    else
+        str2 = V_BSTR(str2v);
 
-    if(start >= SysStringLen(str1))
-        return return_int(res, 0);
+    if(start < SysStringLen(str1)) {
+        ret = FindStringOrdinal(FIND_FROMSTART, str1 + start, SysStringLen(str1)-start,
+                                str2, SysStringLen(str2), mode);
+    }
 
-    ret = FindStringOrdinal(FIND_FROMSTART, str1 + start, SysStringLen(str1)-start,
-                            str2, SysStringLen(str2), mode);
-
+    if(V_VT(str1v) != VT_BSTR)
+        SysFreeString(str1);
+    if(V_VT(str2v) != VT_BSTR)
+        SysFreeString(str2);
     return return_int(res, ++ret ? ret+start : 0);
 }
 

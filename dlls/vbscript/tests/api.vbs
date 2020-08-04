@@ -429,6 +429,12 @@ Call ok(x = 8, "InStr returned " & x)
 x = InStr(1, "abc" & Chr(0) & "ABC", Chr(0) & "a", 1)
 Call ok(x = 4, "InStr returned " & x)
 
+x = InStr(1, 23456, 45, 0)
+Call ok(x = 3, "InStr returned " & x)
+
+x = InStr(1, "23456", 34, 1)
+Call ok(x = 2, "InStr returned " & x)
+
 
 x = InStrRev("bcabcd", "bc")
 Call ok(x = 4, "InStrRev returned " & x)
