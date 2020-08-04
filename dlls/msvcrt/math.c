@@ -645,12 +645,117 @@ double CDECL MSVCRT_sinh( double x )
 
 /*********************************************************************
  *		MSVCRT_sqrt (MSVCRT.@)
+ *
+ * Copied from musl: src/math/sqrt.c
  */
 double CDECL MSVCRT_sqrt( double x )
 {
-  double ret = sqrt(x);
-  if (x < 0.0) return math_error(_DOMAIN, "sqrt", x, 0, ret);
-  return ret;
+    static const double tiny = 1.0e-300;
+
+    double z;
+    int sign = 0x80000000;
+    int ix0,s0,q,m,t,i;
+    unsigned int r,t1,s1,ix1,q1;
+    ULONGLONG ix;
+
+    ix = *(ULONGLONG*)&x;
+    ix0 = ix >> 32;
+    ix1 = ix;
+
+    /* take care of Inf and NaN */
+    if (isnan(x) || (isinf(x) && x > 0))
+        return x;
+
+    /* take care of zero */
+    if (ix0 <= 0) {
+        if (((ix0 & ~sign) | ix1) == 0)
+            return x;  /* sqrt(+-0) = +-0 */
+        if (ix0 < 0)
+            return math_error(_DOMAIN, "sqrt", x, 0, (x - x) / (x - x));
+    }
+    /* normalize x */
+    m = ix0 >> 20;
+    if (m == 0) {  /* subnormal x */
+        while (ix0 == 0) {
+            m -= 21;
+            ix0 |= (ix1 >> 11);
+            ix1 <<= 21;
+        }
+        for (i=0; (ix0 & 0x00100000) == 0; i++)
+            ix0 <<= 1;
+        m -= i - 1;
+        ix0 |= ix1 >> (32 - i);
+        ix1 <<= i;
+    }
+    m -= 1023;    /* unbias exponent */
+    ix0 = (ix0 & 0x000fffff) | 0x00100000;
+    if (m & 1) {  /* odd m, double x to make it even */
+        ix0 += ix0 + ((ix1 & sign) >> 31);
+        ix1 += ix1;
+    }
+    m >>= 1;      /* m = [m/2] */
+
+    /* generate sqrt(x) bit by bit */
+    ix0 += ix0 + ((ix1 & sign) >> 31);
+    ix1 += ix1;
+    q = q1 = s0 = s1 = 0;  /* [q,q1] = sqrt(x) */
+    r = 0x00200000;        /* r = moving bit from right to left */
+
+    while (r != 0) {
+        t = s0 + r;
+        if (t <= ix0) {
+            s0   = t + r;
+            ix0 -= t;
+            q   += r;
+        }
+        ix0 += ix0 + ((ix1 & sign) >> 31);
+        ix1 += ix1;
+        r >>= 1;
+    }
+
+    r = sign;
+    while (r != 0) {
+        t1 = s1 + r;
+        t  = s0;
+        if (t < ix0 || (t == ix0 && t1 <= ix1)) {
+            s1 = t1 + r;
+            if ((t1&sign) == sign && (s1 & sign) == 0)
+                s0++;
+            ix0 -= t;
+            if (ix1 < t1)
+                ix0--;
+            ix1 -= t1;
+            q1 += r;
+        }
+        ix0 += ix0 + ((ix1 & sign) >> 31);
+        ix1 += ix1;
+        r >>= 1;
+    }
+
+    /* use floating add to find out rounding direction */
+    if ((ix0 | ix1) != 0) {
+        z = 1.0 - tiny; /* raise inexact flag */
+        if (z >= 1.0) {
+            z = 1.0 + tiny;
+            if (q1 == (unsigned int)0xffffffff) {
+                q1 = 0;
+                q++;
+            } else if (z > 1.0) {
+                if (q1 == (unsigned int)0xfffffffe)
+                    q++;
+                q1 += 2;
+            } else
+                q1 += q1 & 1;
+        }
+    }
+    ix0 = (q >> 1) + 0x3fe00000;
+    ix1 = q1 >> 1;
+    if (q & 1)
+        ix1 |= sign;
+    ix = ix0 + ((unsigned int)m << 20);
+    ix <<= 32;
+    ix |= ix1;
+    return *(double*)&ix;
 }
 
 /*********************************************************************
