@@ -170,7 +170,7 @@
 @ stub CoVrfReleaseThreadState
 @ stdcall CoWaitForMultipleHandles(long long long ptr ptr) ole32.CoWaitForMultipleHandles
 @ stub CoWaitForMultipleObjects
-@ stdcall CreateErrorInfo(ptr) ole32.CreateErrorInfo
+@ stdcall CreateErrorInfo(ptr)
 @ stdcall CreateStreamOnHGlobal(ptr long ptr) ole32.CreateStreamOnHGlobal
 @ stub DcomChannelSetHResult
 @ stdcall DllDebugObjectRPCHook(long ptr) ole32.DllDebugObjectRPCHook
