@@ -71,16 +71,14 @@ int CDECL MSVCRT__matherr(struct MSVCRT__exception *e)
 }
 
 
-static void math_error(int type, const char *name, double arg1, double arg2, double retval)
+static double math_error(int type, const char *name, double arg1, double arg2, double retval)
 {
+    struct MSVCRT__exception exception = {type, (char *)name, arg1, arg2, retval};
+
     TRACE("(%d, %s, %g, %g, %g)\n", type, debugstr_a(name), arg1, arg2, retval);
 
-    if (MSVCRT_default_matherr_func)
-    {
-        struct MSVCRT__exception exception = {type, (char *)name, arg1, arg2, retval};
-
-        if (MSVCRT_default_matherr_func(&exception)) return;
-    }
+    if (MSVCRT_default_matherr_func && MSVCRT_default_matherr_func(&exception))
+        return exception.retval;
 
     switch (type)
     {
@@ -97,6 +95,8 @@ static void math_error(int type, const char *name, double arg1, double arg2, dou
     default:
         ERR("Unhandled math error!\n");
     }
+
+    return exception.retval;
 }
 
 /*********************************************************************
@@ -177,8 +177,8 @@ float CDECL MSVCRT__nextafterf( float num, float next )
 float CDECL MSVCRT__logbf( float num )
 {
     float ret = logbf(num);
-    if (isnan(num)) math_error(_DOMAIN, "_logbf", num, 0, ret);
-    else if (!num) math_error(_SING, "_logbf", num, 0, ret);
+    if (isnan(num)) return math_error(_DOMAIN, "_logbf", num, 0, ret);
+    if (!num) return math_error(_SING, "_logbf", num, 0, ret);
     return ret;
 }
 
@@ -216,7 +216,8 @@ float CDECL MSVCRT_acosf( float x )
    * cancellation. The sqrt() makes things worse. A safer way to calculate
    * acos() is to use atan2(sqrt((1 - x) * (1 + x)), x). */
   float ret = atan2f(sqrtf((1 - x) * (1 + x)), x);
-  if (x < -1.0 || x > 1.0 || !finitef(x)) math_error(_DOMAIN, "acosf", x, 0, ret);
+  if (x < -1.0 || x > 1.0 || !finitef(x))
+    return math_error(_DOMAIN, "acosf", x, 0, ret);
   return ret;
 }
 
@@ -226,7 +227,8 @@ float CDECL MSVCRT_acosf( float x )
 float CDECL MSVCRT_asinf( float x )
 {
   float ret = atan2f(x, sqrtf((1 - x) * (1 + x)));
-  if (x < -1.0 || x > 1.0 || !finitef(x)) math_error(_DOMAIN, "asinf", x, 0, ret);
+  if (x < -1.0 || x > 1.0 || !finitef(x))
+    return math_error(_DOMAIN, "asinf", x, 0, ret);
   return ret;
 }
 
@@ -236,7 +238,7 @@ float CDECL MSVCRT_asinf( float x )
 float CDECL MSVCRT_atanf( float x )
 {
   float ret = atanf(x);
-  if (!finitef(x)) math_error(_DOMAIN, "atanf", x, 0, ret);
+  if (!finitef(x)) return math_error(_DOMAIN, "atanf", x, 0, ret);
   return ret;
 }
 
@@ -246,7 +248,7 @@ float CDECL MSVCRT_atanf( float x )
 float CDECL MSVCRT_atan2f( float x, float y )
 {
   float ret = atan2f(x, y);
-  if (isnan(x)) math_error(_DOMAIN, "atan2f", x, y, ret);
+  if (isnan(x)) return math_error(_DOMAIN, "atan2f", x, y, ret);
   return ret;
 }
 
@@ -256,7 +258,7 @@ float CDECL MSVCRT_atan2f( float x, float y )
 float CDECL MSVCRT_cosf( float x )
 {
   float ret = cosf(x);
-  if (!finitef(x)) math_error(_DOMAIN, "cosf", x, 0, ret);
+  if (!finitef(x)) return math_error(_DOMAIN, "cosf", x, 0, ret);
   return ret;
 }
 
@@ -266,7 +268,7 @@ float CDECL MSVCRT_cosf( float x )
 float CDECL MSVCRT_coshf( float x )
 {
   float ret = coshf(x);
-  if (isnan(x)) math_error(_DOMAIN, "coshf", x, 0, ret);
+  if (isnan(x)) return math_error(_DOMAIN, "coshf", x, 0, ret);
   return ret;
 }
 
@@ -276,9 +278,9 @@ float CDECL MSVCRT_coshf( float x )
 float CDECL MSVCRT_expf( float x )
 {
   float ret = expf(x);
-  if (isnan(x)) math_error(_DOMAIN, "expf", x, 0, ret);
-  else if (finitef(x) && !ret) math_error(_UNDERFLOW, "expf", x, 0, ret);
-  else if (finitef(x) && !finitef(ret)) math_error(_OVERFLOW, "expf", x, 0, ret);
+  if (isnan(x)) return math_error(_DOMAIN, "expf", x, 0, ret);
+  if (finitef(x) && !ret) return math_error(_UNDERFLOW, "expf", x, 0, ret);
+  if (finitef(x) && !finitef(ret)) return math_error(_OVERFLOW, "expf", x, 0, ret);
   return ret;
 }
 
@@ -288,7 +290,7 @@ float CDECL MSVCRT_expf( float x )
 float CDECL MSVCRT_fmodf( float x, float y )
 {
   float ret = fmodf(x, y);
-  if (!finitef(x) || !finitef(y)) math_error(_DOMAIN, "fmodf", x, 0, ret);
+  if (!finitef(x) || !finitef(y)) return math_error(_DOMAIN, "fmodf", x, 0, ret);
   return ret;
 }
 
@@ -298,8 +300,8 @@ float CDECL MSVCRT_fmodf( float x, float y )
 float CDECL MSVCRT_logf( float x )
 {
   float ret = logf(x);
-  if (x < 0.0) math_error(_DOMAIN, "logf", x, 0, ret);
-  else if (x == 0.0) math_error(_SING, "logf", x, 0, ret);
+  if (x < 0.0) return math_error(_DOMAIN, "logf", x, 0, ret);
+  if (x == 0.0) return math_error(_SING, "logf", x, 0, ret);
   return ret;
 }
 
@@ -309,8 +311,8 @@ float CDECL MSVCRT_logf( float x )
 float CDECL MSVCRT_log10f( float x )
 {
   float ret = log10f(x);
-  if (x < 0.0) math_error(_DOMAIN, "log10f", x, 0, ret);
-  else if (x == 0.0) math_error(_SING, "log10f", x, 0, ret);
+  if (x < 0.0) return math_error(_DOMAIN, "log10f", x, 0, ret);
+  if (x == 0.0) return math_error(_SING, "log10f", x, 0, ret);
   return ret;
 }
 
@@ -320,10 +322,10 @@ float CDECL MSVCRT_log10f( float x )
 float CDECL MSVCRT_powf( float x, float y )
 {
   float z = powf(x,y);
-  if (x < 0 && y != floorf(y)) math_error(_DOMAIN, "powf", x, y, z);
-  else if (!x && finitef(y) && y < 0) math_error(_SING, "powf", x, y, z);
-  else if (finitef(x) && finitef(y) && !finitef(z)) math_error(_OVERFLOW, "powf", x, y, z);
-  else if (x && finitef(x) && finitef(y) && !z) math_error(_UNDERFLOW, "powf", x, y, z);
+  if (x < 0 && y != floorf(y)) return math_error(_DOMAIN, "powf", x, y, z);
+  if (!x && finitef(y) && y < 0) return math_error(_SING, "powf", x, y, z);
+  if (finitef(x) && finitef(y) && !finitef(z)) return math_error(_OVERFLOW, "powf", x, y, z);
+  if (x && finitef(x) && finitef(y) && !z) return math_error(_UNDERFLOW, "powf", x, y, z);
   return z;
 }
 
@@ -333,7 +335,7 @@ float CDECL MSVCRT_powf( float x, float y )
 float CDECL MSVCRT_sinf( float x )
 {
   float ret = sinf(x);
-  if (!finitef(x)) math_error(_DOMAIN, "sinf", x, 0, ret);
+  if (!finitef(x)) return math_error(_DOMAIN, "sinf", x, 0, ret);
   return ret;
 }
 
@@ -343,7 +345,7 @@ float CDECL MSVCRT_sinf( float x )
 float CDECL MSVCRT_sinhf( float x )
 {
   float ret = sinhf(x);
-  if (isnan(x)) math_error(_DOMAIN, "sinhf", x, 0, ret);
+  if (isnan(x)) return math_error(_DOMAIN, "sinhf", x, 0, ret);
   return ret;
 }
 
@@ -353,7 +355,7 @@ float CDECL MSVCRT_sinhf( float x )
 float CDECL MSVCRT_sqrtf( float x )
 {
   float ret = sqrtf(x);
-  if (x < 0.0) math_error(_DOMAIN, "sqrtf", x, 0, ret);
+  if (x < 0.0) return math_error(_DOMAIN, "sqrtf", x, 0, ret);
   return ret;
 }
 
@@ -363,7 +365,7 @@ float CDECL MSVCRT_sqrtf( float x )
 float CDECL MSVCRT_tanf( float x )
 {
   float ret = tanf(x);
-  if (!finitef(x)) math_error(_DOMAIN, "tanf", x, 0, ret);
+  if (!finitef(x)) return math_error(_DOMAIN, "tanf", x, 0, ret);
   return ret;
 }
 
@@ -373,7 +375,7 @@ float CDECL MSVCRT_tanf( float x )
 float CDECL MSVCRT_tanhf( float x )
 {
   float ret = tanhf(x);
-  if (!finitef(x)) math_error(_DOMAIN, "tanhf", x, 0, ret);
+  if (!finitef(x)) return math_error(_DOMAIN, "tanhf", x, 0, ret);
   return ret;
 }
 
@@ -430,7 +432,8 @@ double CDECL MSVCRT_acos( double x )
    * cancellation. The sqrt() makes things worse. A safer way to calculate
    * acos() is to use atan2(sqrt((1 - x) * (1 + x)), x). */
   double ret = atan2(sqrt((1 - x) * (1 + x)), x);
-  if (x < -1.0 || x > 1.0 || !isfinite(x)) math_error(_DOMAIN, "acos", x, 0, ret);
+  if (x < -1.0 || x > 1.0 || !isfinite(x))
+    return math_error(_DOMAIN, "acos", x, 0, ret);
   return ret;
 }
 
@@ -440,7 +443,8 @@ double CDECL MSVCRT_acos( double x )
 double CDECL MSVCRT_asin( double x )
 {
   double ret = atan2(x, sqrt((1 - x) * (1 + x)));
-  if (x < -1.0 || x > 1.0 || !isfinite(x)) math_error(_DOMAIN, "asin", x, 0, ret);
+  if (x < -1.0 || x > 1.0 || !isfinite(x))
+    return math_error(_DOMAIN, "asin", x, 0, ret);
   return ret;
 }
 
@@ -450,7 +454,7 @@ double CDECL MSVCRT_asin( double x )
 double CDECL MSVCRT_atan( double x )
 {
   double ret = atan(x);
-  if (isnan(x)) math_error(_DOMAIN, "atan", x, 0, ret);
+  if (isnan(x)) return math_error(_DOMAIN, "atan", x, 0, ret);
   return ret;
 }
 
@@ -460,7 +464,7 @@ double CDECL MSVCRT_atan( double x )
 double CDECL MSVCRT_atan2( double x, double y )
 {
   double ret = atan2(x, y);
-  if (isnan(x)) math_error(_DOMAIN, "atan2", x, y, ret);
+  if (isnan(x)) return math_error(_DOMAIN, "atan2", x, y, ret);
   return ret;
 }
 
@@ -470,7 +474,7 @@ double CDECL MSVCRT_atan2( double x, double y )
 double CDECL MSVCRT_cos( double x )
 {
   double ret = cos(x);
-  if (!isfinite(x)) math_error(_DOMAIN, "cos", x, 0, ret);
+  if (!isfinite(x)) return math_error(_DOMAIN, "cos", x, 0, ret);
   return ret;
 }
 
@@ -480,7 +484,7 @@ double CDECL MSVCRT_cos( double x )
 double CDECL MSVCRT_cosh( double x )
 {
   double ret = cosh(x);
-  if (isnan(x)) math_error(_DOMAIN, "cosh", x, 0, ret);
+  if (isnan(x)) return math_error(_DOMAIN, "cosh", x, 0, ret);
   return ret;
 }
 
@@ -490,9 +494,9 @@ double CDECL MSVCRT_cosh( double x )
 double CDECL MSVCRT_exp( double x )
 {
   double ret = exp(x);
-  if (isnan(x)) math_error(_DOMAIN, "exp", x, 0, ret);
-  else if (isfinite(x) && !ret) math_error(_UNDERFLOW, "exp", x, 0, ret);
-  else if (isfinite(x) && !isfinite(ret)) math_error(_OVERFLOW, "exp", x, 0, ret);
+  if (isnan(x)) return math_error(_DOMAIN, "exp", x, 0, ret);
+  if (isfinite(x) && !ret) return math_error(_UNDERFLOW, "exp", x, 0, ret);
+  if (isfinite(x) && !isfinite(ret)) return math_error(_OVERFLOW, "exp", x, 0, ret);
   return ret;
 }
 
@@ -502,7 +506,7 @@ double CDECL MSVCRT_exp( double x )
 double CDECL MSVCRT_fmod( double x, double y )
 {
   double ret = fmod(x, y);
-  if (!isfinite(x) || !isfinite(y)) math_error(_DOMAIN, "fmod", x, y, ret);
+  if (!isfinite(x) || !isfinite(y)) return math_error(_DOMAIN, "fmod", x, y, ret);
   return ret;
 }
 
@@ -512,8 +516,8 @@ double CDECL MSVCRT_fmod( double x, double y )
 double CDECL MSVCRT_log( double x )
 {
   double ret = log(x);
-  if (x < 0.0) math_error(_DOMAIN, "log", x, 0, ret);
-  else if (x == 0.0) math_error(_SING, "log", x, 0, ret);
+  if (x < 0.0) return math_error(_DOMAIN, "log", x, 0, ret);
+  if (x == 0.0) return math_error(_SING, "log", x, 0, ret);
   return ret;
 }
 
@@ -523,8 +527,8 @@ double CDECL MSVCRT_log( double x )
 double CDECL MSVCRT_log10( double x )
 {
   double ret = log10(x);
-  if (x < 0.0) math_error(_DOMAIN, "log10", x, 0, ret);
-  else if (x == 0.0) math_error(_SING, "log10", x, 0, ret);
+  if (x < 0.0) return math_error(_DOMAIN, "log10", x, 0, ret);
+  if (x == 0.0) return math_error(_SING, "log10", x, 0, ret);
   return ret;
 }
 
@@ -534,10 +538,14 @@ double CDECL MSVCRT_log10( double x )
 double CDECL MSVCRT_pow( double x, double y )
 {
   double z = pow(x,y);
-  if (x < 0 && y != floor(y)) math_error(_DOMAIN, "pow", x, y, z);
-  else if (!x && isfinite(y) && y < 0) math_error(_SING, "pow", x, y, z);
-  else if (isfinite(x) && isfinite(y) && !isfinite(z)) math_error(_OVERFLOW, "pow", x, y, z);
-  else if (x && isfinite(x) && isfinite(y) && !z) math_error(_UNDERFLOW, "pow", x, y, z);
+  if (x < 0 && y != floor(y))
+    return math_error(_DOMAIN, "pow", x, y, z);
+  if (!x && isfinite(y) && y < 0)
+    return math_error(_SING, "pow", x, y, z);
+  if (isfinite(x) && isfinite(y) && !isfinite(z))
+    return math_error(_OVERFLOW, "pow", x, y, z);
+  if (x && isfinite(x) && isfinite(y) && !z)
+    return math_error(_UNDERFLOW, "pow", x, y, z);
   return z;
 }
 
@@ -547,7 +555,7 @@ double CDECL MSVCRT_pow( double x, double y )
 double CDECL MSVCRT_sin( double x )
 {
   double ret = sin(x);
-  if (!isfinite(x)) math_error(_DOMAIN, "sin", x, 0, ret);
+  if (!isfinite(x)) return math_error(_DOMAIN, "sin", x, 0, ret);
   return ret;
 }
 
@@ -557,7 +565,7 @@ double CDECL MSVCRT_sin( double x )
 double CDECL MSVCRT_sinh( double x )
 {
   double ret = sinh(x);
-  if (isnan(x)) math_error(_DOMAIN, "sinh", x, 0, ret);
+  if (isnan(x)) return math_error(_DOMAIN, "sinh", x, 0, ret);
   return ret;
 }
 
@@ -567,7 +575,7 @@ double CDECL MSVCRT_sinh( double x )
 double CDECL MSVCRT_sqrt( double x )
 {
   double ret = sqrt(x);
-  if (x < 0.0) math_error(_DOMAIN, "sqrt", x, 0, ret);
+  if (x < 0.0) return math_error(_DOMAIN, "sqrt", x, 0, ret);
   return ret;
 }
 
@@ -577,7 +585,7 @@ double CDECL MSVCRT_sqrt( double x )
 double CDECL MSVCRT_tan( double x )
 {
   double ret = tan(x);
-  if (!isfinite(x)) math_error(_DOMAIN, "tan", x, 0, ret);
+  if (!isfinite(x)) return math_error(_DOMAIN, "tan", x, 0, ret);
   return ret;
 }
 
@@ -587,7 +595,7 @@ double CDECL MSVCRT_tan( double x )
 double CDECL MSVCRT_tanh( double x )
 {
   double ret = tanh(x);
-  if (isnan(x)) math_error(_DOMAIN, "tanh", x, 0, ret);
+  if (isnan(x)) return math_error(_DOMAIN, "tanh", x, 0, ret);
   return ret;
 }
 
@@ -838,8 +846,8 @@ __int64 CDECL _abs64( __int64 n )
 double CDECL MSVCRT__logb(double num)
 {
   double ret = logb(num);
-  if (isnan(num)) math_error(_DOMAIN, "_logb", num, 0, ret);
-  else if (!num) math_error(_SING, "_logb", num, 0, ret);
+  if (isnan(num)) return math_error(_DOMAIN, "_logb", num, 0, ret);
+  if (!num) return math_error(_SING, "_logb", num, 0, ret);
   return ret;
 }
 
@@ -1070,10 +1078,10 @@ double CDECL MSVCRT_ldexp(double num, MSVCRT_long exp)
   double z = ldexp(num,exp);
 
   if (isfinite(num) && !isfinite(z))
-    math_error(_OVERFLOW, "ldexp", num, exp, z);
-  else if (num && isfinite(num) && !z)
-    math_error(_UNDERFLOW, "ldexp", num, exp, z);
-  else if (z == 0 && signbit(z))
+    return math_error(_OVERFLOW, "ldexp", num, exp, z);
+  if (num && isfinite(num) && !z)
+    return math_error(_UNDERFLOW, "ldexp", num, exp, z);
+  if (z == 0 && signbit(z))
     z = 0.0; /* Convert -0 -> +0 */
   return z;
 }
