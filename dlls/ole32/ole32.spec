@@ -123,10 +123,10 @@
 @ stdcall GetHGlobalFromStream(ptr ptr)
 @ stub GetHookInterface
 @ stdcall GetRunningObjectTable(long ptr)
-@ stdcall HACCEL_UserFree(ptr ptr)
-@ stdcall HACCEL_UserMarshal(ptr ptr ptr)
-@ stdcall HACCEL_UserSize(ptr long ptr)
-@ stdcall HACCEL_UserUnmarshal(ptr ptr ptr)
+@ stdcall HACCEL_UserFree(ptr ptr) combase.HACCEL_UserFree
+@ stdcall HACCEL_UserMarshal(ptr ptr ptr) combase.HACCEL_UserMarshal
+@ stdcall HACCEL_UserSize(ptr long ptr) combase.HACCEL_UserSize
+@ stdcall HACCEL_UserUnmarshal(ptr ptr ptr) combase.HACCEL_UserUnmarshal
 @ stdcall HBITMAP_UserFree(ptr ptr) combase.HBITMAP_UserFree
 @ stdcall HBITMAP_UserMarshal(ptr ptr ptr) combase.HBITMAP_UserMarshal
 @ stdcall HBITMAP_UserSize(ptr long ptr) combase.HBITMAP_UserSize
