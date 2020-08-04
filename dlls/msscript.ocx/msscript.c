@@ -1760,8 +1760,12 @@ static HRESULT WINAPI ScriptControl_get_Error(IScriptControl *iface, IScriptErro
 static HRESULT WINAPI ScriptControl_get_CodeObject(IScriptControl *iface, IDispatch **p)
 {
     ScriptControl *This = impl_from_IScriptControl(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if (!This->host) return E_FAIL;
+
+    return IScriptModule_get_CodeObject(&This->modules[0]->IScriptModule_iface, p);
 }
 
 static HRESULT WINAPI ScriptControl_get_Procedures(IScriptControl *iface, IScriptProcedureCollection **p)

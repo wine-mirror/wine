@@ -2883,6 +2883,72 @@ static void test_IScriptControl_get_Modules(void)
     }
 }
 
+static void test_IScriptControl_get_CodeObject(void)
+{
+    IScriptControl *sc;
+    IDispatch *disp;
+    HRESULT hr;
+    BSTR str;
+
+    hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
+                          &IID_IScriptControl, (void**)&sc);
+    ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08x.\n", hr);
+
+    hr = IScriptControl_get_CodeObject(sc, &disp);
+    ok(hr == E_FAIL, "IScriptControl_get_CodeObject returned: 0x%08x.\n", hr);
+
+    str = SysAllocString(L"jscript");
+    hr = IScriptControl_put_Language(sc, str);
+    ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
+    SysFreeString(str);
+
+    hr = IScriptControl_get_CodeObject(sc, &disp);
+    ok(hr == S_OK, "IScriptControl_get_CodeObject failed: 0x%08x.\n", hr);
+
+    IDispatch_Release(disp);
+    IScriptControl_Release(sc);
+
+    if (have_custom_engine)
+    {
+        hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
+                              &IID_IScriptControl, (void**)&sc);
+        ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08x.\n", hr);
+
+        SET_EXPECT(CreateInstance);
+        SET_EXPECT(SetInterfaceSafetyOptions);
+        SET_EXPECT(SetScriptSite);
+        SET_EXPECT(QI_IActiveScriptParse);
+        SET_EXPECT(InitNew);
+
+        str = SysAllocString(L"testscript");
+        hr = IScriptControl_put_Language(sc, str);
+        ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
+        SysFreeString(str);
+
+        CHECK_CALLED(CreateInstance);
+        CHECK_CALLED(SetInterfaceSafetyOptions);
+        CHECK_CALLED(SetScriptSite);
+        CHECK_CALLED(QI_IActiveScriptParse);
+        CHECK_CALLED(InitNew);
+
+        GetScriptDispatch_expected_name = NULL;
+        SET_EXPECT(SetScriptState_STARTED);
+        SET_EXPECT(GetScriptDispatch);
+        hr = IScriptControl_get_CodeObject(sc, &disp);
+        ok(hr == S_OK, "IScriptControl_get_CodeObject failed: 0x%08x.\n", hr);
+        ok(disp == (IDispatch*)&DispatchEx, "unexpected code object %p\n", disp);
+        CHECK_CALLED(GetScriptDispatch);
+        CHECK_CALLED(SetScriptState_STARTED);
+
+        IDispatch_Release(disp);
+        IActiveScriptSite_Release(site);
+
+        SET_EXPECT(Close);
+        IScriptControl_Release(sc);
+        CHECK_CALLED(Close);
+    }
+}
+
 START_TEST(msscript)
 {
     IUnknown *unk;
@@ -2921,6 +2987,7 @@ START_TEST(msscript)
     test_IScriptControl_ExecuteStatement();
     test_IScriptControl_Run();
     test_IScriptControl_get_Modules();
+    test_IScriptControl_get_CodeObject();
 
     init_registry(FALSE);
 
