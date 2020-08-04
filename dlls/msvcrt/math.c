@@ -16,7 +16,19 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ *
+ *
+ * For functions copied from musl (http://www.musl-libc.org/):
+ * ====================================================
+ * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
+ *
+ * Developed at SunPro, a Sun Microsystems, Inc. business.
+ * Permission to use, copy, modify, and distribute this
+ * software is freely granted, provided that this notice
+ * is preserved.
+ * ====================================================
  */
+
 #include "config.h"
 #include "wine/port.h"
 
@@ -351,12 +363,74 @@ float CDECL MSVCRT_sinhf( float x )
 
 /*********************************************************************
  *      MSVCRT_sqrtf (MSVCRT.@)
+ *
+ * Copied from musl: src/math/sqrtf.c
  */
 float CDECL MSVCRT_sqrtf( float x )
 {
-  float ret = sqrtf(x);
-  if (x < 0.0) return math_error(_DOMAIN, "sqrtf", x, 0, ret);
-  return ret;
+    static const float tiny = 1.0e-30;
+
+    float z;
+    int sign = 0x80000000;
+    int ix,s,q,m,t,i;
+    unsigned int r;
+
+    ix = *(int*)&x;
+
+    /* take care of Inf and NaN */
+    if ((ix & 0x7f800000) == 0x7f800000 && (ix == 0x7f800000 || ix & 0x7fffff))
+        return x;
+
+    /* take care of zero */
+    if (ix <= 0) {
+        if ((ix & ~sign) == 0)
+            return x;  /* sqrt(+-0) = +-0 */
+        return math_error(_DOMAIN, "sqrtf", x, 0, (x - x) / (x - x)); /* sqrt(-ve) = sNaN */
+    }
+    /* normalize x */
+    m = ix >> 23;
+    if (m == 0) {  /* subnormal x */
+        for (i = 0; (ix & 0x00800000) == 0; i++)
+            ix <<= 1;
+        m -= i - 1;
+    }
+    m -= 127;  /* unbias exponent */
+    ix = (ix & 0x007fffff) | 0x00800000;
+    if (m & 1)  /* odd m, double x to make it even */
+        ix += ix;
+    m >>= 1;  /* m = [m/2] */
+
+    /* generate sqrt(x) bit by bit */
+    ix += ix;
+    q = s = 0;       /* q = sqrt(x) */
+    r = 0x01000000;  /* r = moving bit from right to left */
+
+    while (r != 0) {
+        t = s + r;
+        if (t <= ix) {
+            s = t + r;
+            ix -= t;
+            q += r;
+        }
+        ix += ix;
+        r >>= 1;
+    }
+
+    /* use floating add to find out rounding direction */
+    if (ix != 0) {
+        z = 1.0f - tiny; /* raise inexact flag */
+        if (z >= 1.0f) {
+            z = 1.0f + tiny;
+            if (z > 1.0f)
+                q += 2;
+            else
+                q += q & 1;
+        }
+    }
+    ix = (q >> 1) + 0x3f000000;
+    r = ix + ((unsigned int)m << 23);
+    z = *(float*)&r;
+    return z;
 }
 
 /*********************************************************************
