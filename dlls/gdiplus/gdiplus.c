@@ -202,54 +202,54 @@ static void add_arc_part(GpPointF * pt, REAL x1, REAL y1, REAL x2, REAL y2,
  * adjusts the angles so that when we stretch the points they will end in the
  * right place. This is only complicated because atan and atan2 do not behave
  * conveniently. */
-static void unstretch_angle(REAL * angle, REAL rad_x, REAL rad_y)
+static REAL unstretch_angle(REAL angle, REAL dia_x, REAL dia_y)
 {
     REAL stretched;
     INT revs_off;
 
-    *angle = deg2rad(*angle);
+    if(fabs(cos(angle)) < 0.00001 || fabs(sin(angle)) < 0.00001)
+        return angle;
 
-    if(fabs(cos(*angle)) < 0.00001 || fabs(sin(*angle)) < 0.00001)
-        return;
-
-    stretched = gdiplus_atan2(sin(*angle) / fabs(rad_y), cos(*angle) / fabs(rad_x));
-    revs_off = gdip_round(*angle / (2.0 * M_PI)) - gdip_round(stretched / (2.0 * M_PI));
+    stretched = gdiplus_atan2(sin(angle) / fabs(dia_y), cos(angle) / fabs(dia_x));
+    revs_off = gdip_round(angle / (2.0 * M_PI)) - gdip_round(stretched / (2.0 * M_PI));
     stretched += ((REAL)revs_off) * M_PI * 2.0;
-    *angle = stretched;
+    return stretched;
 }
 
 /* Stores the bezier points that correspond to the arc in points.  If points is
  * null, just return the number of points needed to represent the arc. */
-INT arc2polybezier(GpPointF * points, REAL x1, REAL y1, REAL x2, REAL y2,
-    REAL startAngle, REAL sweepAngle)
+INT arc2polybezier(GpPointF * points, REAL left, REAL top, REAL width, REAL height,
+    REAL start_angle, REAL sweep_angle)
 {
     INT i;
-    REAL end_angle, start_angle, endAngle;
+    REAL partial_end_angle, end_angle;
 
-    endAngle = startAngle + sweepAngle;
-    unstretch_angle(&startAngle, x2 / 2.0, y2 / 2.0);
-    unstretch_angle(&endAngle, x2 / 2.0, y2 / 2.0);
+    end_angle = deg2rad(start_angle + sweep_angle);
+    start_angle = deg2rad(start_angle);
 
-    /* start_angle and end_angle are the iterative variables */
-    start_angle = startAngle;
+    if (width != height)
+    {
+        start_angle = unstretch_angle(start_angle, width, height);
+        end_angle = unstretch_angle(end_angle, width, height);
+    }
 
     for(i = 0; i < MAX_ARC_PTS - 1; i += 3){
         /* check if we've overshot the end angle */
-        if( sweepAngle > 0.0 )
+        if( sweep_angle > 0.0 )
         {
-            if (start_angle >= endAngle) break;
-            end_angle = min(start_angle + M_PI_2, endAngle);
+            if (start_angle >= end_angle) break;
+            partial_end_angle = min(start_angle + M_PI_2, end_angle);
         }
         else
         {
-            if (start_angle <= endAngle) break;
-            end_angle = max(start_angle - M_PI_2, endAngle);
+            if (start_angle <= end_angle) break;
+            partial_end_angle = max(start_angle - M_PI_2, end_angle);
         }
 
         if (points)
-            add_arc_part(&points[i], x1, y1, x2, y2, start_angle, end_angle, i == 0);
+            add_arc_part(&points[i], left, top, width, height, start_angle, partial_end_angle, i == 0);
 
-        start_angle += M_PI_2 * (sweepAngle < 0.0 ? -1.0 : 1.0);
+        start_angle = partial_end_angle;
     }
 
     if (i == 0) return 0;
