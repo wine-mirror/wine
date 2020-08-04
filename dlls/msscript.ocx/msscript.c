@@ -66,6 +66,15 @@ struct named_item {
     IDispatch *disp;
 };
 
+struct module_enum {
+    IEnumVARIANT IEnumVARIANT_iface;
+    LONG ref;
+
+    UINT pos;
+    ScriptHost *host;
+    ScriptControl *control;
+};
+
 typedef struct {
     IScriptModule IScriptModule_iface;
     LONG ref;
@@ -373,6 +382,11 @@ static inline ScriptHost *impl_from_IActiveScriptSiteWindow(IActiveScriptSiteWin
 static inline ScriptHost *impl_from_IServiceProvider(IServiceProvider *iface)
 {
     return CONTAINING_RECORD(iface, ScriptHost, IServiceProvider_iface);
+}
+
+static inline struct module_enum *module_enum_from_IEnumVARIANT(IEnumVARIANT *iface)
+{
+    return CONTAINING_RECORD(iface, struct module_enum, IEnumVARIANT_iface);
 }
 
 /* IActiveScriptSite */
@@ -844,6 +858,135 @@ static const IScriptModuleVtbl ScriptModuleVtbl = {
     ScriptModule_Run
 };
 
+static HRESULT WINAPI module_enum_QueryInterface(IEnumVARIANT *iface, REFIID riid, void **ppv)
+{
+    struct module_enum *This = module_enum_from_IEnumVARIANT(iface);
+
+    if (IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IEnumVARIANT, riid))
+    {
+        *ppv = &This->IEnumVARIANT_iface;
+    }
+    else
+    {
+        WARN("unsupported interface: (%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI module_enum_AddRef(IEnumVARIANT *iface)
+{
+    struct module_enum *This = module_enum_from_IEnumVARIANT(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI module_enum_Release(IEnumVARIANT *iface)
+{
+    struct module_enum *This = module_enum_from_IEnumVARIANT(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if (!ref)
+    {
+        IActiveScriptSite_Release(&This->host->IActiveScriptSite_iface);
+        IScriptControl_Release(&This->control->IScriptControl_iface);
+        heap_free(This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI module_enum_Next(IEnumVARIANT *iface, ULONG celt, VARIANT *rgVar, ULONG *pCeltFetched)
+{
+    struct module_enum *This = module_enum_from_IEnumVARIANT(iface);
+    unsigned int i, num;
+
+    TRACE("(%p)->(%u %p %p)\n", This, celt, rgVar, pCeltFetched);
+
+    if (!rgVar) return E_POINTER;
+    if (This->host != This->control->host) return E_FAIL;
+
+    num = min(celt, This->host->module_count - This->pos);
+    for (i = 0; i < num; i++)
+    {
+        V_VT(rgVar + i) = VT_DISPATCH;
+        V_DISPATCH(rgVar + i) = (IDispatch*)(&This->control->modules[This->pos++]->IScriptModule_iface);
+        IDispatch_AddRef(V_DISPATCH(rgVar + i));
+    }
+
+    if (pCeltFetched) *pCeltFetched = i;
+    return i == celt ? S_OK : S_FALSE;
+}
+
+static HRESULT WINAPI module_enum_Skip(IEnumVARIANT *iface, ULONG celt)
+{
+    struct module_enum *This = module_enum_from_IEnumVARIANT(iface);
+
+    TRACE("(%p)->(%u)\n", This, celt);
+
+    if (This->host != This->control->host) return E_FAIL;
+
+    if (This->host->module_count - This->pos < celt)
+    {
+        This->pos = This->host->module_count;
+        return S_FALSE;
+    }
+    This->pos += celt;
+    return S_OK;
+}
+
+static HRESULT WINAPI module_enum_Reset(IEnumVARIANT *iface)
+{
+    struct module_enum *This = module_enum_from_IEnumVARIANT(iface);
+
+    TRACE("(%p)\n", This);
+
+    if (This->host != This->control->host) return E_FAIL;
+
+    This->pos = 0;
+    return S_OK;
+}
+
+static HRESULT WINAPI module_enum_Clone(IEnumVARIANT *iface, IEnumVARIANT **ppEnum)
+{
+    struct module_enum *This = module_enum_from_IEnumVARIANT(iface);
+    struct module_enum *clone;
+
+    TRACE("(%p)->(%p)\n", This, ppEnum);
+
+    if (!ppEnum) return E_POINTER;
+    if (This->host != This->control->host) return E_FAIL;
+
+    if (!(clone = heap_alloc(sizeof(*clone))))
+        return E_OUTOFMEMORY;
+
+    *clone = *This;
+    clone->ref = 1;
+    IActiveScriptSite_AddRef(&This->host->IActiveScriptSite_iface);
+    IScriptControl_AddRef(&This->control->IScriptControl_iface);
+
+    *ppEnum = &clone->IEnumVARIANT_iface;
+    return S_OK;
+}
+
+static const IEnumVARIANTVtbl module_enum_vtbl = {
+    module_enum_QueryInterface,
+    module_enum_AddRef,
+    module_enum_Release,
+    module_enum_Next,
+    module_enum_Skip,
+    module_enum_Reset,
+    module_enum_Clone
+};
+
 static ScriptModule *create_module(ScriptHost *host, BSTR name)
 {
     ScriptModule *module;
@@ -987,10 +1130,26 @@ static HRESULT WINAPI ScriptModuleCollection_Invoke(IScriptModuleCollection *ifa
 static HRESULT WINAPI ScriptModuleCollection_get__NewEnum(IScriptModuleCollection *iface, IUnknown **ppenumContexts)
 {
     ScriptControl *This = impl_from_IScriptModuleCollection(iface);
+    struct module_enum *module_enum;
 
-    FIXME("(%p)->(%p)\n", This, ppenumContexts);
+    TRACE("(%p)->(%p)\n", This, ppenumContexts);
 
-    return E_NOTIMPL;
+    if (!ppenumContexts) return E_POINTER;
+    if (!This->host) return E_FAIL;
+
+    if (!(module_enum = heap_alloc(sizeof(*module_enum))))
+        return E_OUTOFMEMORY;
+
+    module_enum->IEnumVARIANT_iface.lpVtbl = &module_enum_vtbl;
+    module_enum->ref = 1;
+    module_enum->pos = 0;
+    module_enum->host = This->host;
+    module_enum->control = This;
+    IActiveScriptSite_AddRef(&This->host->IActiveScriptSite_iface);
+    IScriptControl_AddRef(&This->IScriptControl_iface);
+
+    *ppenumContexts = (IUnknown*)&module_enum->IEnumVARIANT_iface;
+    return S_OK;
 }
 
 static HRESULT WINAPI ScriptModuleCollection_get_Item(IScriptModuleCollection *iface, VARIANT index,
