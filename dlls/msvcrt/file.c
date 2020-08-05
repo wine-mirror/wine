@@ -3443,15 +3443,10 @@ int CDECL _wutime(const MSVCRT_wchar_t* path, struct MSVCRT___utimbuf32 *t)
  */
 int CDECL MSVCRT__write(int fd, const void* buf, unsigned int count)
 {
-    DWORD num_written;
     ioinfo *info = get_ioinfo(fd);
     HANDLE hand = info->handle;
+    DWORD num_written, i;
 
-    /* Don't trace small writes, it gets *very* annoying */
-#if 0
-    if (count > 32)
-        TRACE(":fd (%d) handle (%d) buf (%p) len (%d)\n",fd,hand,buf,count);
-#endif
     if (hand == INVALID_HANDLE_VALUE || fd == MSVCRT_NO_CONSOLE_FD)
     {
         *MSVCRT__errno() = MSVCRT_EBADF;
@@ -3472,148 +3467,83 @@ int CDECL MSVCRT__write(int fd, const void* buf, unsigned int count)
 
     if (!(info->wxflag & WX_TEXT))
     {
-        if (WriteFile(hand, buf, count, &num_written, NULL)
-                &&  (num_written == count))
+        if (!WriteFile(hand, buf, count, &num_written, NULL)
+                ||  num_written != count)
         {
-            release_ioinfo(info);
-            return num_written;
+            TRACE("WriteFile (fd %d, hand %p) failed-last error (%d)\n", fd,
+                    hand, GetLastError());
+            msvcrt_set_errno(GetLastError());
+            num_written = -1;
         }
-        TRACE("WriteFile (fd %d, hand %p) failed-last error (%d)\n", fd,
-                hand, GetLastError());
-        msvcrt_set_errno(GetLastError());
+
+        release_ioinfo(info);
+        return num_written;
     }
-    else
+
+    for (i = 0; i < count;)
     {
-        unsigned int i, j, nr_lf, size;
-        char *p = NULL;
-        const char *q;
         const char *s = buf;
+        char lfbuf[2048];
+        DWORD j;
 
         if (!(info->exflag & (EF_UTF8|EF_UTF16)))
         {
-            /* find number of \n */
-            for (nr_lf=0, i=0; i<count; i++)
+            for (j = 0; i < count && j < sizeof(lfbuf)-1; i++, j++)
+            {
                 if (s[i] == '\n')
-                    nr_lf++;
-            if (nr_lf)
-            {
-                size = count+nr_lf;
-                if ((q = p = MSVCRT_malloc(size)))
-                {
-                    for (s = buf, i = 0, j = 0; i < count; i++)
-                    {
-                        if (s[i] == '\n')
-                            p[j++] = '\r';
-                        p[j++] = s[i];
-                    }
-                }
-                else
-                {
-                    FIXME("Malloc failed\n");
-                    nr_lf = 0;
-                    size = count;
-                    q = buf;
-                }
-            }
-            else
-            {
-                size = count;
-                q = buf;
+                    lfbuf[j++] = '\r';
+                lfbuf[j] = s[i];
             }
         }
         else if (info->exflag & EF_UTF16)
         {
-            for (nr_lf=0, i=0; i<count; i+=2)
-                if (s[i]=='\n' && s[i+1]==0)
-                    nr_lf += 2;
-            if (nr_lf)
+            for (j = 0; i < count && j < sizeof(lfbuf)-3; i++, j++)
             {
-                size = count+nr_lf;
-                if ((q = p = MSVCRT_malloc(size)))
+                if (s[i] == '\n' && !s[i+1])
                 {
-                    for (s=buf, i=0, j=0; i<count; i++)
-                    {
-                        if (s[i]=='\n' && s[i+1]==0)
-                        {
-                            p[j++] = '\r';
-                            p[j++] = 0;
-                        }
-                        p[j++] = s[i++];
-                        p[j++] = s[i];
-                    }
+                    lfbuf[j++] = '\r';
+                    lfbuf[j++] = 0;
                 }
-                else
-                {
-                    FIXME("Malloc failed\n");
-                    nr_lf = 0;
-                    size = count;
-                    q = buf;
-                }
-            }
-            else
-            {
-                size = count;
-                q = buf;
+                lfbuf[j++] = s[i++];
+                lfbuf[j] = s[i];
             }
         }
         else
         {
-            DWORD conv_len;
+            char conv[sizeof(lfbuf)/4];
 
-            for(nr_lf=0, i=0; i<count; i+=2)
-                if (s[i]=='\n' && s[i+1]==0)
-                    nr_lf++;
+            for (j = 0; i < count && j < sizeof(conv)-3; i++, j++)
+            {
+                if (s[i] == '\n' && !s[i+1])
+                {
+                    conv[j++] = '\r';
+                    conv[j++] = 0;
+                }
+                conv[j++] = s[i++];
+                conv[j] = s[i];
+            }
 
-            conv_len = WideCharToMultiByte(CP_UTF8, 0, (WCHAR*)buf, count/2, NULL, 0, NULL, NULL);
-            if(!conv_len) {
+            j = WideCharToMultiByte(CP_UTF8, 0, (WCHAR*)conv, j/2, lfbuf, sizeof(lfbuf), NULL, NULL);
+            if (!j)
+            {
                 msvcrt_set_errno(GetLastError());
-                MSVCRT_free(p);
                 release_ioinfo(info);
                 return -1;
             }
-
-            size = conv_len+nr_lf;
-            if((p = MSVCRT_malloc(count+nr_lf*2+size)))
-            {
-                for (s=buf, i=0, j=0; i<count; i++)
-                {
-                    if (s[i]=='\n' && s[i+1]==0)
-                    {
-                        p[j++] = '\r';
-                        p[j++] = 0;
-                    }
-                    p[j++] = s[i++];
-                    p[j++] = s[i];
-                }
-                q = p+count+nr_lf*2;
-                WideCharToMultiByte(CP_UTF8, 0, (WCHAR*)p, count/2+nr_lf,
-                        p+count+nr_lf*2, conv_len+nr_lf, NULL, NULL);
-            }
-            else
-            {
-                FIXME("Malloc failed\n");
-                nr_lf = 0;
-                size = count;
-                q = buf;
-            }
         }
 
-        if (!WriteFile(hand, q, size, &num_written, NULL))
-            num_written = -1;
-        release_ioinfo(info);
-        MSVCRT_free(p);
-        if (num_written != size)
+        if (!WriteFile(hand, lfbuf, j, &num_written, NULL) || num_written != j)
         {
-            TRACE("WriteFile (fd %d, hand %p) failed-last error (%d), num_written %d\n",
-                    fd, hand, GetLastError(), num_written);
+            TRACE("WriteFile (fd %d, hand %p) failed-last error (%d)\n", fd,
+                    hand, GetLastError());
             msvcrt_set_errno(GetLastError());
+            release_ioinfo(info);
             return -1;
         }
-        return count;
     }
 
     release_ioinfo(info);
-    return -1;
+    return count;
 }
 
 /*********************************************************************
