@@ -27,7 +27,6 @@
 #include "initguid.h"
 #include "xact3.h"
 #include "rpcproxy.h"
-#include "xact_classes.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(xact3);
@@ -823,7 +822,7 @@ HRESULT WINAPI DllCanUnloadNow(void)
 
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
 {
-    if (IsEqualGUID(rclsid, &CLSID_XACTEngine37))
+    if (IsEqualGUID(rclsid, &CLSID_XACTEngine))
     {
         TRACE("(%s, %s, %p)\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
         return IClassFactory_QueryInterface(&XACTFactory, riid, ppv);
