@@ -542,18 +542,75 @@ float CDECL MSVCRT_modff( float x, float *iptr )
 
 /*********************************************************************
  *		MSVCRT_acos (MSVCRT.@)
+ *
+ * Copied from musl: src/math/acos.c
  */
+static double acos_R(double z)
+{
+    static const double pS0 =  1.66666666666666657415e-01,
+                 pS1 = -3.25565818622400915405e-01,
+                 pS2 =  2.01212532134862925881e-01,
+                 pS3 = -4.00555345006794114027e-02,
+                 pS4 =  7.91534994289814532176e-04,
+                 pS5 =  3.47933107596021167570e-05,
+                 qS1 = -2.40339491173441421878e+00,
+                 qS2 =  2.02094576023350569471e+00,
+                 qS3 = -6.88283971605453293030e-01,
+                 qS4 =  7.70381505559019352791e-02;
+
+    double p, q;
+    p = z * (pS0 + z * (pS1 + z * (pS2 + z * (pS3 + z * (pS4 + z * pS5)))));
+    q = 1.0 + z * (qS1 + z * (qS2 + z * (qS3 + z * qS4)));
+    return p/q;
+}
+
 double CDECL MSVCRT_acos( double x )
 {
-  /* glibc implements acos() as the FPU equivalent of atan2(sqrt(1 - x ^ 2), x).
-   * asin() uses a similar construction. This is bad because as x gets nearer to
-   * 1 the error in the expression "1 - x^2" can get relatively large due to
-   * cancellation. The sqrt() makes things worse. A safer way to calculate
-   * acos() is to use atan2(sqrt((1 - x) * (1 + x)), x). */
-  double ret = atan2(sqrt((1 - x) * (1 + x)), x);
-  if (x < -1.0 || x > 1.0 || !isfinite(x))
-    return math_error(_DOMAIN, "acos", x, 0, ret);
-  return ret;
+    static const double pio2_hi = 1.57079632679489655800e+00,
+                 pio2_lo = 6.12323399573676603587e-17;
+
+    double z, w, s, c, df;
+    unsigned int hx, ix;
+    ULONGLONG llx;
+
+    hx = *(ULONGLONG*)&x >> 32;
+    ix = hx & 0x7fffffff;
+    /* |x| >= 1 or nan */
+    if (ix >= 0x3ff00000) {
+        unsigned int lx;
+
+        lx = *(ULONGLONG*)&x;
+        if (((ix - 0x3ff00000) | lx) == 0) {
+            /* acos(1)=0, acos(-1)=pi */
+            if (hx >> 31)
+                return 2 * pio2_hi + 7.5231638452626401e-37;
+            return 0;
+        }
+        if (isnan(x)) return x;
+        return math_error(_DOMAIN, "acos", x, 0, 0 / (x - x));
+    }
+    /* |x| < 0.5 */
+    if (ix < 0x3fe00000) {
+        if (ix <= 0x3c600000)  /* |x| < 2**-57 */
+            return pio2_hi + 7.5231638452626401e-37;
+        return pio2_hi - (x - (pio2_lo - x * acos_R(x * x)));
+    }
+    /* x < -0.5 */
+    if (hx >> 31) {
+        z = (1.0 + x) * 0.5;
+        s = sqrt(z);
+        w = acos_R(z) * s - pio2_lo;
+        return 2 * (pio2_hi - (s + w));
+    }
+    /* x > 0.5 */
+    z = (1.0 - x) * 0.5;
+    s = sqrt(z);
+    df = s;
+    llx = (*(ULONGLONG*)&df >> 32) << 32;
+    df = *(double*)&llx;
+    c = (z - df * df) / (s + df);
+    w = acos_R(z) * s + c;
+    return 2 * (df + w);
 }
 
 /*********************************************************************
