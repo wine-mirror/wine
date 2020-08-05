@@ -123,6 +123,12 @@ struct smbios_board
     BYTE product;
     BYTE version;
     BYTE serial;
+    BYTE asset_tag;
+    BYTE feature_flags;
+    BYTE location;
+    WORD chassis_handle;
+    BYTE board_type;
+    BYTE num_contained_handles;
 };
 
 struct smbios_chassis
@@ -1250,8 +1256,8 @@ static NTSTATUS get_firmware_info( SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULON
         size_t system_vendor_len, system_product_len, system_version_len, system_serial_len;
         char system_sku[128], system_family[128];
         size_t system_sku_len, system_family_len;
-        char board_vendor[128], board_product[128], board_version[128], board_serial[128];
-        size_t board_vendor_len, board_product_len, board_version_len, board_serial_len;
+        char board_vendor[128], board_product[128], board_version[128], board_serial[128], board_asset_tag[128];
+        size_t board_vendor_len, board_product_len, board_version_len, board_serial_len, board_asset_tag_len;
         char chassis_vendor[128], chassis_version[128], chassis_serial[128], chassis_asset_tag[128];
         char chassis_type[11] = "2"; /* unknown */
         size_t chassis_vendor_len, chassis_version_len, chassis_serial_len, chassis_asset_tag_len;
@@ -1279,6 +1285,7 @@ static NTSTATUS get_firmware_info( SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULON
         board_product_len = get_smbios_string("/sys/class/dmi/id/board_name", S(board_product));
         board_version_len = get_smbios_string("/sys/class/dmi/id/board_version", S(board_version));
         board_serial_len = get_smbios_string("/sys/class/dmi/id/board_serial", S(board_serial));
+        board_asset_tag_len = get_smbios_string("/sys/class/dmi/id/board_asset_tag", S(board_asset_tag));
         chassis_vendor_len = get_smbios_string("/sys/class/dmi/id/chassis_vendor", S(chassis_vendor));
         chassis_version_len = get_smbios_string("/sys/class/dmi/id/chassis_version", S(chassis_version));
         chassis_serial_len = get_smbios_string("/sys/class/dmi/id/chassis_serial", S(chassis_serial));
@@ -1297,7 +1304,8 @@ static NTSTATUS get_firmware_info( SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULON
                              L(system_serial_len) + L(system_sku_len) + L(system_family_len) + 1, 2);
 
         *required_len += sizeof(struct smbios_board);
-        *required_len += max(L(board_vendor_len) + L(board_product_len) + L(board_version_len) + L(board_serial_len) + 1, 2);
+        *required_len += max(L(board_vendor_len) + L(board_product_len) + L(board_version_len) +
+                             L(board_serial_len) + L(board_asset_tag_len) + 1, 2);
 
         *required_len += sizeof(struct smbios_chassis);
         *required_len += max(L(chassis_vendor_len) + L(chassis_version_len) + L(chassis_serial_len) +
@@ -1372,24 +1380,6 @@ static NTSTATUS get_firmware_info( SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULON
         *buffer++ = 0;
 
         string_count = 0;
-        board = (struct smbios_board*)buffer;
-        board->hdr.type = 2;
-        board->hdr.length = sizeof(struct smbios_board);
-        board->hdr.handle = handle_count++;
-        board->vendor = board_vendor_len ? ++string_count : 0;
-        board->product = board_product_len ? ++string_count : 0;
-        board->version = board_version_len ? ++string_count : 0;
-        board->serial = board_serial_len ? ++string_count : 0;
-        buffer += sizeof(struct smbios_board);
-
-        copy_smbios_string(&buffer, board_vendor, board_vendor_len);
-        copy_smbios_string(&buffer, board_product, board_product_len);
-        copy_smbios_string(&buffer, board_version, board_version_len);
-        copy_smbios_string(&buffer, board_serial, board_serial_len);
-        if (!string_count) *buffer++ = 0;
-        *buffer++ = 0;
-
-        string_count = 0;
         chassis = (struct smbios_chassis*)buffer;
         chassis->hdr.type = 3;
         chassis->hdr.length = sizeof(struct smbios_chassis);
@@ -1409,6 +1399,31 @@ static NTSTATUS get_firmware_info( SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULON
         copy_smbios_string(&buffer, chassis_version, chassis_version_len);
         copy_smbios_string(&buffer, chassis_serial, chassis_serial_len);
         copy_smbios_string(&buffer, chassis_asset_tag, chassis_asset_tag_len);
+        if (!string_count) *buffer++ = 0;
+        *buffer++ = 0;
+
+        string_count = 0;
+        board = (struct smbios_board*)buffer;
+        board->hdr.type = 2;
+        board->hdr.length = sizeof(struct smbios_board);
+        board->hdr.handle = handle_count++;
+        board->vendor = board_vendor_len ? ++string_count : 0;
+        board->product = board_product_len ? ++string_count : 0;
+        board->version = board_version_len ? ++string_count : 0;
+        board->serial = board_serial_len ? ++string_count : 0;
+        board->asset_tag = board_asset_tag_len ? ++string_count : 0;
+        board->feature_flags = 0x5; /* hosting board, removable */
+        board->location = 0;
+        board->chassis_handle = chassis->hdr.handle;
+        board->board_type = 0xa; /* motherboard */
+        board->num_contained_handles = 0;
+        buffer += sizeof(struct smbios_board);
+
+        copy_smbios_string(&buffer, board_vendor, board_vendor_len);
+        copy_smbios_string(&buffer, board_product, board_product_len);
+        copy_smbios_string(&buffer, board_version, board_version_len);
+        copy_smbios_string(&buffer, board_serial, board_serial_len);
+        copy_smbios_string(&buffer, board_asset_tag, board_asset_tag_len);
         if (!string_count) *buffer++ = 0;
         *buffer++ = 0;
 
