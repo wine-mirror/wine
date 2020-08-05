@@ -150,6 +150,13 @@ struct smbios_chassis
     BYTE contained_element_rec_length;
 };
 
+struct smbios_boot_info
+{
+    struct smbios_header hdr;
+    BYTE reserved[6];
+    BYTE boot_status[10];
+};
+
 #include "poppack.h"
 
 /* Firmware table providers */
@@ -1274,6 +1281,7 @@ static NTSTATUS get_firmware_info( SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULON
         struct smbios_system *system;
         struct smbios_board *board;
         struct smbios_chassis *chassis;
+        struct smbios_boot_info *boot_info;
         struct smbios_header *end_of_table;
 
 #define S(s) s, sizeof(s)
@@ -1315,6 +1323,9 @@ static NTSTATUS get_firmware_info( SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULON
         *required_len += sizeof(struct smbios_chassis);
         *required_len += max(L(chassis_vendor_len) + L(chassis_version_len) + L(chassis_serial_len) +
                              L(chassis_asset_tag_len) + 1, 2);
+
+        *required_len += sizeof(struct smbios_boot_info);
+        *required_len += 2;
 
         *required_len += sizeof(struct smbios_header);
         *required_len += 2;
@@ -1435,6 +1446,16 @@ static NTSTATUS get_firmware_info( SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULON
         copy_smbios_string(&buffer, board_serial, board_serial_len);
         copy_smbios_string(&buffer, board_asset_tag, board_asset_tag_len);
         if (!string_count) *buffer++ = 0;
+        *buffer++ = 0;
+
+        boot_info = (struct smbios_boot_info*)buffer;
+        boot_info->hdr.type = 32;
+        boot_info->hdr.length = sizeof(struct smbios_boot_info);
+        boot_info->hdr.handle = handle_count++;
+        memset(boot_info->reserved, 0, sizeof(boot_info->reserved));
+        memset(boot_info->boot_status, 0, sizeof(boot_info->boot_status)); /* no errors detected */
+        buffer += sizeof(struct smbios_boot_info);
+        *buffer++ = 0;
         *buffer++ = 0;
 
         end_of_table = (struct smbios_header*)buffer;
