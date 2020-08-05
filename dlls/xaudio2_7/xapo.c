@@ -313,6 +313,16 @@ static inline HRESULT get_fapo_from_clsid(REFCLSID clsid, FAPO **fapo)
             XAudio_Internal_Free,
             XAudio_Internal_Realloc
         );
+#if XAUDIO2_VER >= 9 && HAVE_FAUDIOCREATEREVERB9WITHCUSTOMALLOCATOREXT
+    if(IsEqualGUID(clsid, &CLSID_AudioReverb27))
+        return FAudioCreateReverb9WithCustomAllocatorEXT(
+            fapo,
+            0,
+            XAudio_Internal_Malloc,
+            XAudio_Internal_Free,
+            XAudio_Internal_Realloc
+        );
+#else
     if(IsEqualGUID(clsid, &CLSID_AudioReverb27))
         return FAudioCreateReverbWithCustomAllocatorEXT(
             fapo,
@@ -321,6 +331,7 @@ static inline HRESULT get_fapo_from_clsid(REFCLSID clsid, FAPO **fapo)
             XAudio_Internal_Free,
             XAudio_Internal_Realloc
         );
+#endif
 #endif
 #if XAUDIO2_VER >= 8 || defined XAPOFX1_VER
     if(IsEqualGUID(clsid, &CLSID_FXReverb) ||
