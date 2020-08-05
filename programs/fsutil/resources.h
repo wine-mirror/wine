@@ -19,3 +19,5 @@
 #include <windef.h>
 
 #define STRING_USAGE                    101
+#define STRING_HARDLINK_USAGE           102
+#define STRING_HARDLINK_CREATE_USAGE    103
