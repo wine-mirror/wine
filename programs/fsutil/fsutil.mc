@@ -23,5 +23,17 @@ SymbolicName=STRING_USAGE
 Language=ENU
 - Supported Commands -
 
-[NONE]
+hardlink      hardlink management
+.
+MessageId=102
+SymbolicName=STRING_HARDLINK_USAGE
+Language=ENU
+- Hardlink - Supported Commands -
+
+create        create a hardlink
+.
+MessageId=103
+SymbolicName=STRING_HARDLINK_CREATE_USAGE
+Language=ENU
+Syntax: fsutil hardlink create <new> <existing>
 .

@@ -66,6 +66,54 @@ static int WINAPIV output_string(int msg, ...)
     return 0;
 }
 
+static BOOL output_error_string(DWORD error)
+{
+    LPWSTR pBuffer;
+    if (FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM |
+            FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_ALLOCATE_BUFFER,
+            NULL, error, 0, (LPWSTR)&pBuffer, 0, NULL))
+    {
+        output_write(pBuffer, lstrlenW(pBuffer));
+        LocalFree(pBuffer);
+        return TRUE;
+    }
+    return FALSE;
+}
+
+static int create_hardlink(int argc, WCHAR *argv[])
+{
+    if (argc != 5)
+    {
+        output_string(STRING_HARDLINK_CREATE_USAGE);
+        return 1;
+    }
+
+    if (CreateHardLinkW(argv[3], argv[4], NULL))
+        return 0;
+
+    output_error_string(GetLastError());
+    return 1;
+}
+
+static int hardlink(int argc, WCHAR *argv[])
+{
+    int ret;
+
+    if (argc > 2)
+    {
+        if (!wcsicmp(argv[2], L"create"))
+            return create_hardlink(argc, argv);
+        else
+        {
+            FIXME("unsupported parameter %s\n", debugstr_w(argv[2]));
+            ret = 1;
+        }
+    }
+
+    output_string(STRING_HARDLINK_USAGE);
+    return ret;
+}
+
 int __cdecl wmain(int argc, WCHAR *argv[])
 {
     int i, ret = 0;
@@ -77,8 +125,13 @@ int __cdecl wmain(int argc, WCHAR *argv[])
 
     if (argc > 1)
     {
-        FIXME("unsupported command %s\n", debugstr_w(argv[1]));
-        ret = 1;
+        if (!wcsicmp(argv[1], L"hardlink"))
+            return hardlink(argc, argv);
+        else
+        {
+            FIXME("unsupported command %s\n", debugstr_w(argv[1]));
+            ret = 1;
+        }
     }
 
     output_string(STRING_USAGE);

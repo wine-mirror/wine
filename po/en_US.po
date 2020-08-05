@@ -12505,11 +12505,25 @@ msgstr "&Run..."
 msgid ""
 "- Supported Commands -\n"
 "\n"
-"[NONE]\n"
+"hardlink      hardlink management\n"
 msgstr ""
 "- Supported Commands -\n"
 "\n"
-"[NONE]\n"
+"hardlink      hardlink management\n"
+
+#: fsutil.mc:35
+msgid ""
+"- Hardlink - Supported Commands -\n"
+"\n"
+"create        create a hardlink\n"
+msgstr ""
+"- Hardlink - Supported Commands -\n"
+"\n"
+"create        create a hardlink\n"
+
+#: fsutil.mc:40
+msgid "Syntax: fsutil hardlink create <new> <existing>\n"
+msgstr "Syntax: fsutil hardlink create <new> <existing>\n"
 
 #: hostname.rc:30
 msgid "Usage: hostname\n"

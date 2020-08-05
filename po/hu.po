@@ -13061,7 +13061,18 @@ msgstr "&Futtatás..."
 msgid ""
 "- Supported Commands -\n"
 "\n"
-"[NONE]\n"
+"hardlink      hardlink management\n"
+msgstr ""
+
+#: fsutil.mc:35
+msgid ""
+"- Hardlink - Supported Commands -\n"
+"\n"
+"create        create a hardlink\n"
+msgstr ""
+
+#: fsutil.mc:40
+msgid "Syntax: fsutil hardlink create <new> <existing>\n"
 msgstr ""
 
 #: hostname.rc:30
