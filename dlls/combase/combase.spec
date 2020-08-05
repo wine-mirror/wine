@@ -280,7 +280,7 @@
 @ stub NdrpFindInterface
 @ stdcall ProgIDFromCLSID(ptr ptr) ole32.ProgIDFromCLSID
 @ stdcall PropVariantClear(ptr)
-@ stdcall PropVariantCopy(ptr ptr) ole32.PropVariantCopy
+@ stdcall PropVariantCopy(ptr ptr)
 @ stub ReleaseFuncDescs
 @ stdcall RoActivateInstance(ptr ptr)
 @ stub RoCaptureErrorContext

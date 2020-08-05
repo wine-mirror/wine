@@ -242,7 +242,7 @@
 @ stdcall PropSysAllocString(wstr)
 @ stdcall PropSysFreeString(wstr)
 @ stdcall PropVariantClear(ptr) combase.PropVariantClear
-@ stdcall PropVariantCopy(ptr ptr)
+@ stdcall PropVariantCopy(ptr ptr) combase.PropVariantCopy
 @ stdcall ReadClassStg(ptr ptr)
 @ stdcall ReadClassStm(ptr ptr)
 @ stdcall ReadFmtUserTypeStg(ptr ptr ptr)

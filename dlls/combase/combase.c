@@ -251,3 +251,183 @@ HRESULT WINAPI PropVariantClear(PROPVARIANT *pvar)
     memset(pvar, 0, sizeof(*pvar));
     return hr;
 }
+
+/***********************************************************************
+ *           PropVariantCopy        (combase.@)
+ */
+HRESULT WINAPI PropVariantCopy(PROPVARIANT *pvarDest, const PROPVARIANT *pvarSrc)
+{
+    ULONG len;
+    HRESULT hr;
+
+    TRACE("%p, %p vt %04x.\n", pvarDest, pvarSrc, pvarSrc->vt);
+
+    hr = propvar_validatetype(pvarSrc->vt);
+    if (FAILED(hr))
+        return DISP_E_BADVARTYPE;
+
+    /* this will deal with most cases */
+    *pvarDest = *pvarSrc;
+
+    switch (pvarSrc->vt)
+    {
+    case VT_EMPTY:
+    case VT_NULL:
+    case VT_I1:
+    case VT_UI1:
+    case VT_I2:
+    case VT_UI2:
+    case VT_BOOL:
+    case VT_DECIMAL:
+    case VT_I4:
+    case VT_UI4:
+    case VT_R4:
+    case VT_ERROR:
+    case VT_I8:
+    case VT_UI8:
+    case VT_INT:
+    case VT_UINT:
+    case VT_R8:
+    case VT_CY:
+    case VT_DATE:
+    case VT_FILETIME:
+        break;
+    case VT_DISPATCH:
+    case VT_UNKNOWN:
+    case VT_STREAM:
+    case VT_STREAMED_OBJECT:
+    case VT_STORAGE:
+    case VT_STORED_OBJECT:
+        if (pvarDest->u.pStream)
+            IStream_AddRef(pvarDest->u.pStream);
+        break;
+    case VT_CLSID:
+        pvarDest->u.puuid = CoTaskMemAlloc(sizeof(CLSID));
+        *pvarDest->u.puuid = *pvarSrc->u.puuid;
+        break;
+    case VT_LPSTR:
+        if (pvarSrc->u.pszVal)
+        {
+            len = strlen(pvarSrc->u.pszVal);
+            pvarDest->u.pszVal = CoTaskMemAlloc((len+1)*sizeof(CHAR));
+            CopyMemory(pvarDest->u.pszVal, pvarSrc->u.pszVal, (len+1)*sizeof(CHAR));
+        }
+        break;
+    case VT_LPWSTR:
+        if (pvarSrc->u.pwszVal)
+        {
+            len = lstrlenW(pvarSrc->u.pwszVal);
+            pvarDest->u.pwszVal = CoTaskMemAlloc((len+1)*sizeof(WCHAR));
+            CopyMemory(pvarDest->u.pwszVal, pvarSrc->u.pwszVal, (len+1)*sizeof(WCHAR));
+        }
+        break;
+    case VT_BLOB:
+    case VT_BLOB_OBJECT:
+        if (pvarSrc->u.blob.pBlobData)
+        {
+            len = pvarSrc->u.blob.cbSize;
+            pvarDest->u.blob.pBlobData = CoTaskMemAlloc(len);
+            CopyMemory(pvarDest->u.blob.pBlobData, pvarSrc->u.blob.pBlobData, len);
+        }
+        break;
+    case VT_BSTR:
+        pvarDest->u.bstrVal = SysAllocString(pvarSrc->u.bstrVal);
+        break;
+    case VT_CF:
+        if (pvarSrc->u.pclipdata)
+        {
+            len = pvarSrc->u.pclipdata->cbSize - sizeof(pvarSrc->u.pclipdata->ulClipFmt);
+            pvarDest->u.pclipdata = CoTaskMemAlloc(sizeof (CLIPDATA));
+            pvarDest->u.pclipdata->cbSize = pvarSrc->u.pclipdata->cbSize;
+            pvarDest->u.pclipdata->ulClipFmt = pvarSrc->u.pclipdata->ulClipFmt;
+            pvarDest->u.pclipdata->pClipData = CoTaskMemAlloc(len);
+            CopyMemory(pvarDest->u.pclipdata->pClipData, pvarSrc->u.pclipdata->pClipData, len);
+        }
+        break;
+    default:
+        if (pvarSrc->vt & VT_VECTOR)
+        {
+            int elemSize;
+            ULONG i;
+
+            switch (pvarSrc->vt & ~VT_VECTOR)
+            {
+            case VT_I1:       elemSize = sizeof(pvarSrc->u.cVal); break;
+            case VT_UI1:      elemSize = sizeof(pvarSrc->u.bVal); break;
+            case VT_I2:       elemSize = sizeof(pvarSrc->u.iVal); break;
+            case VT_UI2:      elemSize = sizeof(pvarSrc->u.uiVal); break;
+            case VT_BOOL:     elemSize = sizeof(pvarSrc->u.boolVal); break;
+            case VT_I4:       elemSize = sizeof(pvarSrc->u.lVal); break;
+            case VT_UI4:      elemSize = sizeof(pvarSrc->u.ulVal); break;
+            case VT_R4:       elemSize = sizeof(pvarSrc->u.fltVal); break;
+            case VT_R8:       elemSize = sizeof(pvarSrc->u.dblVal); break;
+            case VT_ERROR:    elemSize = sizeof(pvarSrc->u.scode); break;
+            case VT_I8:       elemSize = sizeof(pvarSrc->u.hVal); break;
+            case VT_UI8:      elemSize = sizeof(pvarSrc->u.uhVal); break;
+            case VT_CY:       elemSize = sizeof(pvarSrc->u.cyVal); break;
+            case VT_DATE:     elemSize = sizeof(pvarSrc->u.date); break;
+            case VT_FILETIME: elemSize = sizeof(pvarSrc->u.filetime); break;
+            case VT_CLSID:    elemSize = sizeof(*pvarSrc->u.puuid); break;
+            case VT_CF:       elemSize = sizeof(*pvarSrc->u.pclipdata); break;
+            case VT_BSTR:     elemSize = sizeof(pvarSrc->u.bstrVal); break;
+            case VT_LPSTR:    elemSize = sizeof(pvarSrc->u.pszVal); break;
+            case VT_LPWSTR:   elemSize = sizeof(pvarSrc->u.pwszVal); break;
+            case VT_VARIANT:  elemSize = sizeof(*pvarSrc->u.pvarVal); break;
+
+            default:
+                FIXME("Invalid element type: %ul\n", pvarSrc->vt & ~VT_VECTOR);
+                return E_INVALIDARG;
+            }
+            len = pvarSrc->u.capropvar.cElems;
+            pvarDest->u.capropvar.pElems = len ? CoTaskMemAlloc(len * elemSize) : NULL;
+            if (pvarSrc->vt == (VT_VECTOR | VT_VARIANT))
+            {
+                for (i = 0; i < len; i++)
+                    PropVariantCopy(&pvarDest->u.capropvar.pElems[i], &pvarSrc->u.capropvar.pElems[i]);
+            }
+            else if (pvarSrc->vt == (VT_VECTOR | VT_CF))
+            {
+                FIXME("Copy clipformats\n");
+            }
+            else if (pvarSrc->vt == (VT_VECTOR | VT_BSTR))
+            {
+                for (i = 0; i < len; i++)
+                    pvarDest->u.cabstr.pElems[i] = SysAllocString(pvarSrc->u.cabstr.pElems[i]);
+            }
+            else if (pvarSrc->vt == (VT_VECTOR | VT_LPSTR))
+            {
+                size_t strLen;
+                for (i = 0; i < len; i++)
+                {
+                    strLen = lstrlenA(pvarSrc->u.calpstr.pElems[i]) + 1;
+                    pvarDest->u.calpstr.pElems[i] = CoTaskMemAlloc(strLen);
+                    memcpy(pvarDest->u.calpstr.pElems[i],
+                     pvarSrc->u.calpstr.pElems[i], strLen);
+                }
+            }
+            else if (pvarSrc->vt == (VT_VECTOR | VT_LPWSTR))
+            {
+                size_t strLen;
+                for (i = 0; i < len; i++)
+                {
+                    strLen = (lstrlenW(pvarSrc->u.calpwstr.pElems[i]) + 1) *
+                     sizeof(WCHAR);
+                    pvarDest->u.calpstr.pElems[i] = CoTaskMemAlloc(strLen);
+                    memcpy(pvarDest->u.calpstr.pElems[i],
+                     pvarSrc->u.calpstr.pElems[i], strLen);
+                }
+            }
+            else
+                CopyMemory(pvarDest->u.capropvar.pElems, pvarSrc->u.capropvar.pElems, len * elemSize);
+        }
+        else if (pvarSrc->vt & VT_ARRAY)
+        {
+            pvarDest->u.uhVal.QuadPart = 0;
+            return SafeArrayCopy(pvarSrc->u.parray, &pvarDest->u.parray);
+        }
+        else
+            WARN("Invalid/unsupported type %d\n", pvarSrc->vt);
+    }
+
+    return S_OK;
+}
