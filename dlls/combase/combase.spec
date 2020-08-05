@@ -177,7 +177,7 @@
 @ stdcall DllGetActivationFactory(ptr ptr)
 @ stdcall -private DllGetClassObject(ptr ptr ptr) ole32.DllGetClassObject
 @ stub EnableHookObject
-@ stdcall FreePropVariantArray(long ptr) ole32.FreePropVariantArray
+@ stdcall FreePropVariantArray(long ptr)
 @ stub FreePropVariantArrayWorker
 @ stub GetCatalogHelper
 @ stdcall GetErrorInfo(long ptr) ole32.GetErrorInfo
@@ -279,7 +279,7 @@
 @ stub NdrOleDllGetClassObject
 @ stub NdrpFindInterface
 @ stdcall ProgIDFromCLSID(ptr ptr) ole32.ProgIDFromCLSID
-@ stdcall PropVariantClear(ptr) ole32.PropVariantClear
+@ stdcall PropVariantClear(ptr)
 @ stdcall PropVariantCopy(ptr ptr) ole32.PropVariantCopy
 @ stub ReleaseFuncDescs
 @ stdcall RoActivateInstance(ptr ptr)

@@ -6,6 +6,7 @@ DELAYIMPORTS = oleaut32
 EXTRADLLFLAGS = -mno-cygwin
 
 C_SRCS = \
+	combase.c \
 	errorinfo.c \
 	malloc.c \
 	roapi.c \
