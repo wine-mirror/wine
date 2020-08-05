@@ -13088,6 +13088,13 @@ msgstr "Zagon"
 msgid "&Run..."
 msgstr "&Zaženi ..."
 
+#: fsutil.mc:28
+msgid ""
+"- Supported Commands -\n"
+"\n"
+"[NONE]\n"
+msgstr ""
+
 #: hostname.rc:30
 msgid "Usage: hostname\n"
 msgstr "Uporaba: hostname\n"

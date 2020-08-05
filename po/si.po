@@ -12257,6 +12257,13 @@ msgstr "ඇරඹුම"
 msgid "&Run..."
 msgstr "ධාවනය කරන්න... (&R)"
 
+#: fsutil.mc:28
+msgid ""
+"- Supported Commands -\n"
+"\n"
+"[NONE]\n"
+msgstr ""
+
 #: hostname.rc:30
 msgid "Usage: hostname\n"
 msgstr "භාවිතය: hostname\n"

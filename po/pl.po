@@ -12845,6 +12845,13 @@ msgstr "Start"
 msgid "&Run..."
 msgstr "Urucho&m..."
 
+#: fsutil.mc:28
+msgid ""
+"- Supported Commands -\n"
+"\n"
+"[NONE]\n"
+msgstr ""
+
 #: hostname.rc:30
 msgid "Usage: hostname\n"
 msgstr "Użycie: hostname\n"

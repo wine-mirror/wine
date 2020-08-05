@@ -12896,6 +12896,13 @@ msgstr "Meniu Start"
 msgid "&Run..."
 msgstr "E&xecutare..."
 
+#: fsutil.mc:28
+msgid ""
+"- Supported Commands -\n"
+"\n"
+"[NONE]\n"
+msgstr ""
+
 #: hostname.rc:30
 msgid "Usage: hostname\n"
 msgstr "Sintaxă: hostname\n"

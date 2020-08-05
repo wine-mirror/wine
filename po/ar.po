@@ -13153,6 +13153,13 @@ msgstr "بدء التشغيل"
 msgid "&Run..."
 msgstr "ش&غل..."
 
+#: fsutil.mc:28
+msgid ""
+"- Supported Commands -\n"
+"\n"
+"[NONE]\n"
+msgstr ""
+
 #: hostname.rc:30
 msgid "Usage: hostname\n"
 msgstr "الاستخدام: hostname\n"
