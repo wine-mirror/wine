@@ -5670,7 +5670,7 @@ static void test_ddrawstream_create_sample(void)
     EXPECT_REF(stream, 3);
     hr = IDirectDrawMediaStream_CreateSample(ddraw_stream, NULL, NULL, 0, &sample);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine EXPECT_REF(stream, 4);
+    EXPECT_REF(stream, 4);
 
     hr = IDirectDrawStreamSample_GetSurface(sample, NULL, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -5773,13 +5773,13 @@ static void test_ddrawstreamsample_get_media_stream(void)
         ok(hr == E_POINTER, "Got hr %#x.\n", hr);
     }
 
-    todo_wine EXPECT_REF(stream, 4);
+    EXPECT_REF(stream, 4);
     hr = IDirectDrawStreamSample_GetMediaStream(sample, &stream2);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(stream2 == stream, "Expected stream %p, got %p.\n", stream, stream2);
-    todo_wine EXPECT_REF(stream, 5);
+    EXPECT_REF(stream, 5);
     IMediaStream_Release(stream2);
-    todo_wine EXPECT_REF(stream, 4);
+    EXPECT_REF(stream, 4);
 
     IDirectDrawMediaStream_Release(ddraw_stream);
     ref = IDirectDrawStreamSample_Release(sample);

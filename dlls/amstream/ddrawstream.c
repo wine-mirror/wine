@@ -1048,6 +1048,8 @@ static ULONG WINAPI ddraw_sample_Release(IDirectDrawStreamSample *iface)
         --sample->parent->sample_refs;
         LeaveCriticalSection(&sample->parent->cs);
 
+        IAMMediaStream_Release(&sample->parent->IAMMediaStream_iface);
+
         if (sample->surface)
             IDirectDrawSurface_Release(sample->surface);
         HeapFree(GetProcessHeap(), 0, sample);
@@ -1163,6 +1165,7 @@ static HRESULT ddrawstreamsample_create(struct ddraw_stream *parent, IDirectDraw
     object->IDirectDrawStreamSample_iface.lpVtbl = &DirectDrawStreamSample_Vtbl;
     object->ref = 1;
     object->parent = parent;
+    IAMMediaStream_AddRef(&parent->IAMMediaStream_iface);
     ++parent->sample_refs;
 
     if (surface)
