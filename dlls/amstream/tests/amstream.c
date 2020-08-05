@@ -5665,7 +5665,7 @@ static void test_ddrawstream_create_sample(void)
 
     SetRectEmpty(&rect);
     hr = IDirectDrawMediaStream_CreateSample(ddraw_stream, NULL, &rect, 0, &sample);
-    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
 
     EXPECT_REF(stream, 3);
     hr = IDirectDrawMediaStream_CreateSample(ddraw_stream, NULL, NULL, 0, &sample);

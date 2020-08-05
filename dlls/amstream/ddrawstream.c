@@ -442,6 +442,9 @@ static HRESULT WINAPI ddraw_IDirectDrawMediaStream_CreateSample(IDirectDrawMedia
     TRACE("stream %p, surface %p, rect %s, flags %#x, sample %p.\n",
             stream, surface, wine_dbgstr_rect(rect), flags, sample);
 
+    if (!surface && rect)
+        return E_INVALIDARG;
+
     EnterCriticalSection(&stream->cs);
     hr = ddrawstreamsample_create(stream, surface, rect, sample);
     LeaveCriticalSection(&stream->cs);
