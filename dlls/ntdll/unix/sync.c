@@ -2522,9 +2522,20 @@ NTSTATUS CDECL fast_RtlSleepConditionVariableCS( RTL_CONDITION_VARIABLE *variabl
 
     val = *futex;
 
-    RtlLeaveCriticalSection( cs );
-    status = wait_cv( futex, val, timeout );
-    RtlEnterCriticalSection( cs );
+    if (cs->RecursionCount == 1)
+    {
+        /* FIXME: simplified version of RtlLeaveCriticalSection/RtlEnterCriticalSection to avoid imports */
+        cs->RecursionCount = 0;
+        cs->OwningThread   = 0;
+        if (InterlockedDecrement( &cs->LockCount ) >= 0) fast_RtlpUnWaitCriticalSection( cs );
+
+        status = wait_cv( futex, val, timeout );
+
+        if (InterlockedIncrement( &cs->LockCount )) fast_RtlpWaitForCriticalSection( cs, INT_MAX );
+        cs->OwningThread   = ULongToHandle( GetCurrentThreadId() );
+        cs->RecursionCount = 1;
+    }
+    else status = wait_cv( futex, val, timeout );
     return status;
 }
 
