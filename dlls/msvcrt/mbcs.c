@@ -2472,8 +2472,15 @@ MSVCRT_size_t CDECL MSVCRT__mbstowcs_l(MSVCRT_wchar_t *wcstr, const char *mbstr,
     }
 
     /* Ignore count parameter */
-    if(!wcstr)
-        return MultiByteToWideChar(locinfo->lc_codepage, 0, mbstr, -1, NULL, 0)-1;
+    if(!wcstr) {
+        size = MultiByteToWideChar(locinfo->lc_codepage,
+                MB_ERR_INVALID_CHARS, mbstr, -1, NULL, 0);
+        if(!size) {
+            *MSVCRT__errno() = MSVCRT_EILSEQ;
+            return -1;
+        }
+        return size - 1;
+    }
 
     for(i=0, size=0; i<count; i++) {
         if(mbstr[size] == '\0')
@@ -2483,8 +2490,8 @@ MSVCRT_size_t CDECL MSVCRT__mbstowcs_l(MSVCRT_wchar_t *wcstr, const char *mbstr,
     }
 
     if(size) {
-        size = MultiByteToWideChar(locinfo->lc_codepage, 0,
-                                   mbstr, size, wcstr, count);
+        size = MultiByteToWideChar(locinfo->lc_codepage,
+                MB_ERR_INVALID_CHARS, mbstr, size, wcstr, count);
         if(!size) {
             if(count) wcstr[0] = '\0';
             *MSVCRT__errno() = MSVCRT_EILSEQ;

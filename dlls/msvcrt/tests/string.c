@@ -2107,6 +2107,11 @@ static void test_mbstowcs(void)
     ok(ret == 0, "mbstowcs did not return 0, got %d\n", (int)ret);
     ok(!memcmp(wOut, wEmpty, sizeof(wEmpty)), "wOut = %s\n", wine_dbgstr_w(wOut));
 
+    errno = 0xdeadbeef;
+    ret = mbstowcs(wOut, mHiragana+1, 5);
+    ok(ret == -1, "mbstowcs did not return -1\n");
+    ok(errno == EILSEQ, "errno = %d\n", errno);
+
     ret = wcstombs(mOut, wHiragana, 6);
     ok(ret == 4, "wcstombs did not return 4\n");
     ok(!memcmp(mOut, mHiragana, sizeof(mHiragana)), "mOut = %s\n", mOut);
