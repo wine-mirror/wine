@@ -2543,106 +2543,6 @@ static void test_media_types(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
-static void test_IDirectDrawStreamSample(void)
-{
-    IDirectDrawMediaStream *ddraw_stream = NULL;
-    IDirectDrawStreamSample *sample = NULL;
-    IDirectDrawSurface *surface, *surface2;
-    IMediaStream *stream2, *stream = NULL;
-    DDSURFACEDESC desc = { sizeof(desc) };
-    IAMMultiMediaStream *mmstream;
-    IDirectDrawSurface7 *surface7;
-    HRESULT hr;
-    RECT rect;
-
-    if (!(mmstream = create_ammultimediastream()))
-        return;
-    if (!create_directdraw())
-    {
-        IAMMultiMediaStream_Release(mmstream);
-        return;
-    }
-
-    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_READ, 0, NULL);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
-    hr = IAMMultiMediaStream_AddMediaStream(mmstream, (IUnknown*)pdd7, &MSPID_PrimaryVideo, 0, NULL);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
-    hr = IAMMultiMediaStream_GetMediaStream(mmstream, &MSPID_PrimaryVideo, &stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    if (FAILED(hr)) goto error;
-
-    hr = IMediaStream_QueryInterface(stream, &IID_IDirectDrawMediaStream, (LPVOID*)&ddraw_stream);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    if (FAILED(hr)) goto error;
-
-    hr = IDirectDrawMediaStream_CreateSample(ddraw_stream, NULL, NULL, 0, &sample);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
-    surface = NULL;
-    hr = IDirectDrawStreamSample_GetSurface(sample, &surface, &rect);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(surface != NULL, "got %p\n", surface);
-
-    /* Crashes on native. */
-    if (0)
-    {
-        hr = IDirectDrawStreamSample_GetMediaStream(sample, NULL);
-        ok(hr == E_POINTER, "Got hr %#x.\n", hr);
-    }
-
-    hr = IDirectDrawStreamSample_GetMediaStream(sample, &stream2);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(stream2 == stream, "Expected stream %p, got %p.\n", stream, stream2);
-    IMediaStream_Release(stream2);
-
-    hr = IDirectDrawSurface_QueryInterface(surface, &IID_IDirectDrawSurface7, (void **)&surface7);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    IDirectDrawSurface7_Release(surface7);
-
-    hr = IDirectDrawSurface_GetSurfaceDesc(surface, &desc);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(desc.dwWidth == 100, "width %d\n", desc.dwWidth);
-    ok(desc.dwHeight == 100, "height %d\n", desc.dwHeight);
-    ok(desc.ddpfPixelFormat.dwFlags == DDPF_RGB, "format flags %08x\n", desc.ddpfPixelFormat.dwFlags);
-    ok(desc.ddpfPixelFormat.dwRGBBitCount, "dwRGBBitCount %d\n", desc.ddpfPixelFormat.dwRGBBitCount);
-    IDirectDrawSurface_Release(surface);
-    IDirectDrawStreamSample_Release(sample);
-
-    hr = IDirectDrawSurface7_QueryInterface(pdds7, &IID_IDirectDrawSurface, (void **)&surface);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
-    EXPECT_REF(surface, 1);
-    hr = IDirectDrawMediaStream_CreateSample(ddraw_stream, surface, NULL, 0, &sample);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    EXPECT_REF(surface, 2);
-
-    surface2 = NULL;
-    SetRectEmpty(&rect);
-    hr = IDirectDrawStreamSample_GetSurface(sample, &surface2, &rect);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(surface == surface2, "got %p\n", surface2);
-    ok(rect.right > 0 && rect.bottom > 0, "got %d, %d\n", rect.right, rect.bottom);
-    EXPECT_REF(surface, 3);
-    IDirectDrawSurface_Release(surface2);
-
-    hr = IDirectDrawStreamSample_GetSurface(sample, NULL, NULL);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
-    IDirectDrawStreamSample_Release(sample);
-    IDirectDrawSurface_Release(surface);
-
-error:
-    if (ddraw_stream)
-        IDirectDrawMediaStream_Release(ddraw_stream);
-    if (stream)
-        IMediaStream_Release(stream);
-
-    release_directdraw();
-    IAMMultiMediaStream_Release(mmstream);
-}
-
 static IUnknown *create_audio_data(void)
 {
     IUnknown *audio_data = NULL;
@@ -5728,6 +5628,170 @@ static void test_audiostreamsample_get_audio_data(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+static void test_ddrawstream_create_sample(void)
+{
+    IAMMultiMediaStream *mmstream = create_ammultimediastream();
+    IDirectDrawSurface *surface, *surface2;
+    DDSURFACEDESC desc = { sizeof(desc) };
+    IDirectDrawMediaStream *ddraw_stream;
+    IDirectDrawStreamSample *sample;
+    IMediaStream *stream;
+    IDirectDraw *ddraw;
+    HRESULT hr;
+    RECT rect;
+    ULONG ref;
+
+    hr = DirectDrawCreate(NULL, &ddraw, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IDirectDraw_SetCooperativeLevel(ddraw, NULL, DDSCL_NORMAL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_READ, 0, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, (IUnknown *)ddraw, &MSPID_PrimaryVideo, 0, &stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaStream_QueryInterface(stream, &IID_IDirectDrawMediaStream, (void **)&ddraw_stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    /* Crashes on native. */
+    if (0)
+    {
+        hr = IDirectDrawMediaStream_CreateSample(ddraw_stream, NULL, NULL, 0, NULL);
+        ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    }
+
+    SetRectEmpty(&rect);
+    hr = IDirectDrawMediaStream_CreateSample(ddraw_stream, NULL, &rect, 0, &sample);
+    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
+    EXPECT_REF(stream, 3);
+    hr = IDirectDrawMediaStream_CreateSample(ddraw_stream, NULL, NULL, 0, &sample);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine EXPECT_REF(stream, 4);
+
+    hr = IDirectDrawStreamSample_GetSurface(sample, NULL, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IDirectDrawStreamSample_GetSurface(sample, NULL, &rect);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IDirectDrawStreamSample_GetSurface(sample, &surface, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(surface != NULL, "Expected non-NULL surface.\n");
+    IDirectDrawSurface_Release(surface);
+
+    surface = NULL;
+    hr = IDirectDrawStreamSample_GetSurface(sample, &surface, &rect);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(surface != NULL, "Expected non-NULL surface.\n");
+
+    hr = IDirectDrawSurface_GetSurfaceDesc(surface, &desc);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(desc.dwWidth == 100, "Expected width 100, got %d.\n", desc.dwWidth);
+    ok(desc.dwHeight == 100, "Expected height 100, got %d.\n", desc.dwHeight);
+    ok(desc.ddpfPixelFormat.dwFlags == DDPF_RGB, "Expected format flags DDPF_RGB, got %#x.\n", desc.ddpfPixelFormat.dwFlags);
+    ok(desc.ddpfPixelFormat.dwRGBBitCount, "Expected non-zero RGB bit count.\n");
+    IDirectDrawSurface_Release(surface);
+    IDirectDrawStreamSample_Release(sample);
+    EXPECT_REF(stream, 3);
+
+    memset(&desc, 0, sizeof(desc));
+    desc.dwSize = sizeof(desc);
+    desc.dwFlags = DDSD_CAPS;
+    desc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
+    hr = IDirectDraw_CreateSurface(ddraw, &desc, &surface, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    EXPECT_REF(surface, 1);
+    hr = IDirectDrawMediaStream_CreateSample(ddraw_stream, surface, NULL, 0, &sample);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    EXPECT_REF(surface, 2);
+
+    surface2 = NULL;
+    SetRectEmpty(&rect);
+    hr = IDirectDrawStreamSample_GetSurface(sample, &surface2, &rect);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(surface2 == surface, "Expected surface %p, got %p.\n", surface, surface2);
+    ok(rect.right > 0 && rect.bottom > 0, "Got rect %d, %d.\n", rect.right, rect.bottom);
+    EXPECT_REF(surface, 3);
+    IDirectDrawSurface_Release(surface2);
+    EXPECT_REF(surface, 2);
+    IDirectDrawStreamSample_Release(sample);
+    EXPECT_REF(surface, 1);
+
+    hr = IDirectDrawMediaStream_CreateSample(ddraw_stream, surface, &rect, 0, &sample);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    IDirectDrawMediaStream_Release(ddraw_stream);
+    ref = IDirectDrawStreamSample_Release(sample);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IDirectDrawSurface_Release(surface);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IAMMultiMediaStream_Release(mmstream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IMediaStream_Release(stream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IDirectDraw_Release(ddraw);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
+static void test_ddrawstreamsample_get_media_stream(void)
+{
+    IAMMultiMediaStream *mmstream = create_ammultimediastream();
+    IDirectDrawMediaStream *ddraw_stream;
+    IDirectDrawStreamSample *sample;
+    IMediaStream *stream, *stream2;
+    IDirectDraw *ddraw;
+    HRESULT hr;
+    ULONG ref;
+
+    hr = DirectDrawCreate(NULL, &ddraw, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IDirectDraw_SetCooperativeLevel(ddraw, NULL, DDSCL_NORMAL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_READ, 0, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, (IUnknown *)ddraw, &MSPID_PrimaryVideo, 0, &stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaStream_QueryInterface(stream, &IID_IDirectDrawMediaStream, (void **)&ddraw_stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IDirectDrawMediaStream_CreateSample(ddraw_stream, NULL, NULL, 0, &sample);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    /* Crashes on native. */
+    if (0)
+    {
+        hr = IDirectDrawStreamSample_GetMediaStream(sample, NULL);
+        ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    }
+
+    todo_wine EXPECT_REF(stream, 4);
+    hr = IDirectDrawStreamSample_GetMediaStream(sample, &stream2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(stream2 == stream, "Expected stream %p, got %p.\n", stream, stream2);
+    todo_wine EXPECT_REF(stream, 5);
+    IMediaStream_Release(stream2);
+    todo_wine EXPECT_REF(stream, 4);
+
+    IDirectDrawMediaStream_Release(ddraw_stream);
+    ref = IDirectDrawStreamSample_Release(sample);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IAMMultiMediaStream_Release(mmstream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IMediaStream_Release(stream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IDirectDraw_Release(ddraw);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 START_TEST(amstream)
 {
     const WCHAR *test_avi_path;
@@ -5744,7 +5808,6 @@ START_TEST(amstream)
     test_set_state();
     test_enum_media_types();
     test_media_types();
-    test_IDirectDrawStreamSample();
 
     test_avi_path = load_resource(L"test.avi");
 
@@ -5780,6 +5843,9 @@ START_TEST(amstream)
     test_ddrawstream_initialize();
     test_ddrawstream_getsetdirectdraw();
     test_ddrawstream_receive_connection();
+    test_ddrawstream_create_sample();
+
+    test_ddrawstreamsample_get_media_stream();
 
     test_ammediastream_join_am_multi_media_stream();
     test_ammediastream_join_filter();
