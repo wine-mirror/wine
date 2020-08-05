@@ -143,6 +143,11 @@ struct smbios_chassis
     BYTE power_supply_state;
     BYTE thermal_state;
     BYTE security_status;
+    DWORD oem_defined;
+    BYTE height;
+    BYTE num_power_cords;
+    BYTE num_contained_elements;
+    BYTE contained_element_rec_length;
 };
 
 #include "poppack.h"
@@ -1393,6 +1398,11 @@ static NTSTATUS get_firmware_info( SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULON
         chassis->power_supply_state = 0x02; /* unknown */
         chassis->thermal_state = 0x02; /* unknown */
         chassis->security_status = 0x02; /* unknown */
+        chassis->oem_defined = 0;
+        chassis->height = 0; /* undefined */
+        chassis->num_power_cords = 0; /* unspecified */
+        chassis->num_contained_elements = 0;
+        chassis->contained_element_rec_length = 3;
         buffer += sizeof(struct smbios_chassis);
 
         copy_smbios_string(&buffer, chassis_vendor, chassis_vendor_len);
