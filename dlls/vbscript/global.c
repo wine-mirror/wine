@@ -1662,6 +1662,9 @@ static HRESULT Global_InStr(BuiltinDisp *This, VARIANT *args, unsigned args_cnt,
     }
 
     if(startv) {
+       if(V_VT(startv) == VT_NULL)
+            return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
+
         hres = to_int(startv, &start);
         if(FAILED(hres))
             return hres;

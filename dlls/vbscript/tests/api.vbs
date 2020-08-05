@@ -435,6 +435,34 @@ Call ok(x = 3, "InStr returned " & x)
 x = InStr(1, "23456", 34, 1)
 Call ok(x = 2, "InStr returned " & x)
 
+x = InStr(2, "", "abcd", 0)
+Call ok(x = 0, "InStr returned " & x)
+
+x = InStr(4, "abcdef", "", 0)
+Call ok(x = 4, "InStr returned " & x)
+
+x = InStr(20, "abcdef", "", 0)
+Call ok(x = 0, "InStr returned " & x)
+
+x = InStr(4, "", "", 0)
+Call ok(x = 0, "InStr returned " & x)
+
+Sub testInStrError(arg1, arg2, arg3, arg4, error_num)
+    on error resume next
+    Dim x
+
+    Call Err.clear()
+    x = InStr(arg1, arg2, arg3, arg4)
+    Call ok(Err.number = error_num, "Err.number = " & Err.number)
+End Sub
+
+call testInStrError(2, "abcd", null, 0, 0)
+call testInStrError(2, Null, "abcd", 0, 0)
+call testInStrError(Null, "abcd", "abcd", 0, 94)
+call testInStrError(2, "abcd", "abcd", null, 94)
+call testInStrError(-20, "abcd", "abcd", 1, 5)
+Call testInStrError(2, "abcd", "abcd", 10, 5)
+
 
 x = InStrRev("bcabcd", "bc")
 Call ok(x = 4, "InStrRev returned " & x)
