@@ -23,7 +23,6 @@ C_SRCS = \
 	ftmarshal.c \
 	git.c \
 	hglobalstream.c \
-	ifs.c \
 	itemmoniker.c \
 	marshal.c \
 	memlockbytes.c \
