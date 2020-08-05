@@ -1261,6 +1261,8 @@ static BOOL wined3d_context_gl_set_gl_context(struct wined3d_context_gl *context
     struct wined3d_device_gl *device_gl = wined3d_device_gl(context_gl->c.device);
     BOOL backup = FALSE;
 
+    TRACE("context_gl %p.\n", context_gl);
+
     if (!wined3d_context_gl_set_pixel_format(context_gl))
     {
         WARN("Failed to set pixel format %d on device context %p.\n",
@@ -1365,6 +1367,8 @@ static void wined3d_context_gl_cleanup(struct wined3d_context_gl *context_gl)
     HGLRC restore_ctx;
     HDC restore_dc;
     unsigned int i;
+
+    TRACE("context_gl %p.\n", context_gl);
 
     restore_ctx = wglGetCurrentContext();
     restore_dc = wglGetCurrentDC();
@@ -4481,6 +4485,12 @@ static void wined3d_context_gl_activate(struct wined3d_context_gl *context_gl,
         struct wined3d_texture *texture, unsigned int sub_resource_idx)
 {
     wined3d_context_gl_enter(context_gl);
+    if (texture && texture->swapchain && texture->swapchain != context_gl->c.swapchain)
+    {
+        TRACE("Switching context_gl %p from swapchain %p to swapchain %p.\n",
+                context_gl, context_gl->c.swapchain, texture->swapchain);
+        context_gl->c.swapchain = texture->swapchain;
+    }
     wined3d_context_gl_update_window(context_gl);
     wined3d_context_gl_setup_target(context_gl, texture, sub_resource_idx);
     if (!context_gl->valid)

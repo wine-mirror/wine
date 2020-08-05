@@ -23,6 +23,7 @@
 #include "wined3d_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
+WINE_DECLARE_DEBUG_CHANNEL(d3d_perf);
 
 void wined3d_swapchain_cleanup(struct wined3d_swapchain *swapchain)
 {
@@ -85,19 +86,9 @@ void wined3d_swapchain_cleanup(struct wined3d_swapchain *swapchain)
     }
 }
 
-static void wined3d_swapchain_gl_destroy_object(void *object)
-{
-    wined3d_swapchain_gl_destroy_contexts(object);
-}
-
 void wined3d_swapchain_gl_cleanup(struct wined3d_swapchain_gl *swapchain_gl)
 {
-    struct wined3d_cs *cs = swapchain_gl->s.device->cs;
-
     wined3d_swapchain_cleanup(&swapchain_gl->s);
-
-    wined3d_cs_destroy_object(cs, wined3d_swapchain_gl_destroy_object, swapchain_gl);
-    wined3d_cs_finish(cs, WINED3D_CS_QUEUE_DEFAULT);
 }
 
 static void wined3d_swapchain_vk_destroy_vulkan_swapchain(struct wined3d_swapchain_vk *swapchain_vk)
@@ -583,7 +574,6 @@ static bool swapchain_present_is_partial_copy(struct wined3d_swapchain *swapchai
 static void swapchain_gl_present(struct wined3d_swapchain *swapchain,
         const RECT *src_rect, const RECT *dst_rect, unsigned int swap_interval, uint32_t flags)
 {
-    struct wined3d_swapchain_gl *swapchain_gl = wined3d_swapchain_gl(swapchain);
     struct wined3d_texture *back_buffer = swapchain->back_buffers[0];
     const struct wined3d_pixel_format *pixel_format;
     const struct wined3d_gl_info *gl_info;
@@ -619,8 +609,11 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain,
         if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
             swapchain_blit(swapchain, context, src_rect, dst_rect);
 
-        if (swapchain_gl->context_count > 1)
+        if (swapchain->device->context_count > 1)
+        {
+            WARN_(d3d_perf)("Multiple contexts, calling glFinish() to enforce ordering.\n");
             gl_info->gl_ops.gl.p_glFinish();
+        }
 
         /* call wglSwapBuffers through the gl table to avoid confusing the Steam overlay */
         gl_info->gl_ops.wgl.p_wglSwapBuffers(context_gl->dc);
@@ -1688,20 +1681,11 @@ HRESULT wined3d_swapchain_gl_init(struct wined3d_swapchain_gl *swapchain_gl, str
         struct wined3d_swapchain_desc *desc, struct wined3d_swapchain_state_parent *state_parent,
         void *parent, const struct wined3d_parent_ops *parent_ops)
 {
-    HRESULT hr;
-
     TRACE("swapchain_gl %p, device %p, desc %p, state_parent %p, parent %p, parent_ops %p.\n",
             swapchain_gl, device, desc, state_parent, parent, parent_ops);
 
-    if (FAILED(hr = wined3d_swapchain_init(&swapchain_gl->s, device, desc, state_parent, parent,
-            parent_ops, &swapchain_gl_ops)))
-    {
-        /* Cleanup any context that may have been created for the swapchain. */
-        wined3d_cs_destroy_object(device->cs, wined3d_swapchain_gl_destroy_object, swapchain_gl);
-        wined3d_cs_finish(device->cs, WINED3D_CS_QUEUE_DEFAULT);
-    }
-
-    return hr;
+    return wined3d_swapchain_init(&swapchain_gl->s, device, desc, state_parent, parent,
+            parent_ops, &swapchain_gl_ops);
 }
 
 HRESULT wined3d_swapchain_vk_init(struct wined3d_swapchain_vk *swapchain_vk, struct wined3d_device *device,
@@ -1792,62 +1776,19 @@ static struct wined3d_context_gl *wined3d_swapchain_gl_create_context(struct win
 
     context_release(&context_gl->c);
 
-    if (!wined3d_array_reserve((void **)&swapchain_gl->contexts, &swapchain_gl->contexts_size,
-            swapchain_gl->context_count + 1, sizeof(*swapchain_gl->contexts)))
-    {
-        ERR("Failed to allocate new context array memory.\n");
-        wined3d_context_gl_destroy(context_gl);
-        return NULL;
-    }
-    swapchain_gl->contexts[swapchain_gl->context_count++] = context_gl;
-
     return context_gl;
-}
-
-void wined3d_swapchain_gl_context_destroy(struct wined3d_swapchain_gl *swapchain_gl, struct wined3d_context_gl *context_gl)
-{
-    unsigned int i, j;
-
-    TRACE("swapchain_gl %p, context_gl %p.\n", swapchain_gl, context_gl);
-
-    for (i = 0; i < swapchain_gl->context_count; ++i)
-    {
-        if (swapchain_gl->contexts[i] == context_gl)
-        {
-            wined3d_context_gl_destroy(swapchain_gl->contexts[i]);
-            for (j = i; j < --swapchain_gl->context_count; ++j)
-                swapchain_gl->contexts[j] = swapchain_gl->contexts[j + 1];
-            return;
-        }
-    }
-    ERR("context_gl %p not found in the swapchain list.\n", context_gl);
-}
-
-void wined3d_swapchain_gl_destroy_contexts(struct wined3d_swapchain_gl *swapchain_gl)
-{
-    unsigned int i;
-
-    TRACE("swapchain_gl %p.\n", swapchain_gl);
-
-    for (i = 0; i < swapchain_gl->context_count; ++i)
-    {
-        wined3d_context_gl_destroy(swapchain_gl->contexts[i]);
-    }
-    heap_free(swapchain_gl->contexts);
-    swapchain_gl->contexts_size = 0;
-    swapchain_gl->context_count = 0;
-    swapchain_gl->contexts = NULL;
 }
 
 struct wined3d_context_gl *wined3d_swapchain_gl_get_context(struct wined3d_swapchain_gl *swapchain_gl)
 {
+    struct wined3d_device *device = swapchain_gl->s.device;
     DWORD tid = GetCurrentThreadId();
     unsigned int i;
 
-    for (i = 0; i < swapchain_gl->context_count; ++i)
+    for (i = 0; i < device->context_count; ++i)
     {
-        if (swapchain_gl->contexts[i]->tid == tid)
-            return swapchain_gl->contexts[i];
+        if (wined3d_context_gl(device->contexts[i])->tid == tid)
+            return wined3d_context_gl(device->contexts[i]);
     }
 
     /* Create a new context for the thread. */

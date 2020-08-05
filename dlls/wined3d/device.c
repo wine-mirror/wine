@@ -1187,7 +1187,6 @@ bool wined3d_device_gl_create_bo(struct wined3d_device_gl *device_gl, struct win
 void wined3d_device_gl_delete_opengl_contexts_cs(void *object)
 {
     struct wined3d_device_gl *device_gl = object;
-    struct wined3d_swapchain_gl *swapchain_gl;
     struct wined3d_context_gl *context_gl;
     struct wined3d_context *context;
     struct wined3d_device *device;
@@ -1219,12 +1218,7 @@ void wined3d_device_gl_delete_opengl_contexts_cs(void *object)
     context_release(context);
 
     while (device->context_count)
-    {
-        if ((swapchain_gl = wined3d_swapchain_gl(device->contexts[0]->swapchain)))
-            wined3d_swapchain_gl_destroy_contexts(swapchain_gl);
-        else
-            wined3d_context_gl_destroy(wined3d_context_gl(device->contexts[0]));
-    }
+        wined3d_context_gl_destroy(wined3d_context_gl(device->contexts[0]));
 
     if (device_gl->backup_dc)
     {
@@ -1262,7 +1256,7 @@ void wined3d_device_gl_create_primary_opengl_context_cs(void *object)
     {
         WARN("Failed to initialise allocator.\n");
         context_release(context);
-        wined3d_swapchain_gl_context_destroy(wined3d_swapchain_gl(swapchain), context_gl);
+        wined3d_context_gl_destroy(wined3d_context_gl(device->contexts[0]));
         return;
     }
 
@@ -1272,7 +1266,7 @@ void wined3d_device_gl_create_primary_opengl_context_cs(void *object)
         ERR("Failed to allocate shader private data, hr %#x.\n", hr);
         wined3d_allocator_cleanup(&device_gl->allocator);
         context_release(context);
-        wined3d_swapchain_gl_context_destroy(wined3d_swapchain_gl(swapchain), context_gl);
+        wined3d_context_gl_destroy(wined3d_context_gl(device->contexts[0]));
         return;
     }
 
@@ -1282,7 +1276,7 @@ void wined3d_device_gl_create_primary_opengl_context_cs(void *object)
         device->shader_backend->shader_free_private(device, NULL);
         wined3d_allocator_cleanup(&device_gl->allocator);
         context_release(context);
-        wined3d_swapchain_gl_context_destroy(wined3d_swapchain_gl(swapchain), context_gl);
+        wined3d_context_gl_destroy(wined3d_context_gl(device->contexts[0]));
         return;
     }
 
