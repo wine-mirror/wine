@@ -431,3 +431,12 @@ HRESULT WINAPI PropVariantCopy(PROPVARIANT *pvarDest, const PROPVARIANT *pvarSrc
 
     return S_OK;
 }
+
+/***********************************************************************
+ *           CoFileTimeNow        (combase.@)
+ */
+HRESULT WINAPI CoFileTimeNow(FILETIME *filetime)
+{
+    GetSystemTimeAsFileTime(filetime);
+    return S_OK;
+}
