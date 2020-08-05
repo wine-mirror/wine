@@ -109,7 +109,7 @@
 @ stdcall CoGetInstanceFromFile(ptr ptr ptr long long wstr long ptr) ole32.CoGetInstanceFromFile
 @ stdcall CoGetInstanceFromIStorage(ptr ptr ptr long ptr long ptr) ole32.CoGetInstanceFromIStorage
 @ stdcall CoGetInterfaceAndReleaseStream(ptr ptr ptr) ole32.CoGetInterfaceAndReleaseStream
-@ stdcall CoGetMalloc(long ptr) ole32.CoGetMalloc
+@ stdcall CoGetMalloc(long ptr)
 @ stdcall CoGetMarshalSizeMax(ptr ptr ptr long ptr long) ole32.CoGetMarshalSizeMax
 @ stub CoGetModuleType
 @ stdcall CoGetObjectContext(ptr ptr) ole32.CoGetObjectContext
@@ -139,7 +139,7 @@
 @ stub CoRegisterActivationFilter
 @ stdcall CoRegisterClassObject(ptr ptr long long ptr) ole32.CoRegisterClassObject
 @ stdcall CoRegisterInitializeSpy(ptr ptr) ole32.CoRegisterInitializeSpy
-@ stdcall CoRegisterMallocSpy(ptr) ole32.CoRegisterMallocSpy
+@ stdcall CoRegisterMallocSpy(ptr)
 @ stdcall CoRegisterMessageFilter(ptr ptr) ole32.CoRegisterMessageFilter
 @ stdcall CoRegisterPSClsid(ptr ptr) ole32.CoRegisterPSClsid
 @ stdcall CoRegisterSurrogate(ptr) ole32.CoRegisterSurrogate
@@ -151,15 +151,15 @@
 @ stdcall CoRevertToSelf() ole32.CoRevertToSelf
 @ stdcall CoRevokeClassObject(long) ole32.CoRevokeClassObject
 @ stdcall CoRevokeInitializeSpy(int64) ole32.CoRevokeInitializeSpy
-@ stdcall CoRevokeMallocSpy() ole32.CoRevokeMallocSpy
+@ stdcall CoRevokeMallocSpy()
 @ stub CoSetCancelObject
 @ stub CoSetErrorInfo
 @ stdcall CoSetProxyBlanket(ptr long long ptr long long ptr long) ole32.CoSetProxyBlanket
 @ stdcall CoSuspendClassObjects() ole32.CoSuspendClassObjects
 @ stdcall CoSwitchCallContext(ptr ptr) ole32.CoSwitchCallContext
-@ stdcall CoTaskMemAlloc(long) ole32.CoTaskMemAlloc
-@ stdcall CoTaskMemFree(ptr) ole32.CoTaskMemFree
-@ stdcall CoTaskMemRealloc(ptr long) ole32.CoTaskMemRealloc
+@ stdcall CoTaskMemAlloc(long)
+@ stdcall CoTaskMemFree(ptr)
+@ stdcall CoTaskMemRealloc(ptr long)
 @ stub CoTestCancel
 @ stdcall CoUninitialize() ole32.CoUninitialize
 @ stub CoUnloadingWOW

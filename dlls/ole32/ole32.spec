@@ -38,7 +38,7 @@
 @ stdcall CoGetInstanceFromFile(ptr ptr ptr long long wstr long ptr)
 @ stdcall CoGetInstanceFromIStorage(ptr ptr ptr long ptr long ptr)
 @ stdcall CoGetInterfaceAndReleaseStream(ptr ptr ptr)
-@ stdcall CoGetMalloc(long ptr)
+@ stdcall CoGetMalloc(long ptr) combase.CoGetMalloc
 @ stdcall CoGetMarshalSizeMax(ptr ptr ptr long ptr long)
 @ stdcall CoGetObject(wstr ptr ptr ptr)
 @ stdcall CoGetObjectContext(ptr ptr)
@@ -67,7 +67,7 @@
 @ stdcall CoRegisterChannelHook(ptr ptr)
 @ stdcall CoRegisterClassObject(ptr ptr long long ptr)
 @ stdcall CoRegisterInitializeSpy(ptr ptr)
-@ stdcall CoRegisterMallocSpy (ptr)
+@ stdcall CoRegisterMallocSpy(ptr) combase.CoRegisterMallocSpy
 @ stdcall CoRegisterMessageFilter(ptr ptr)
 @ stdcall CoRegisterPSClsid(ptr ptr)
 @ stdcall CoRegisterSurrogate(ptr)
@@ -78,14 +78,14 @@
 @ stdcall CoRevertToSelf()
 @ stdcall CoRevokeClassObject(long)
 @ stdcall CoRevokeInitializeSpy(int64)
-@ stdcall CoRevokeMallocSpy()
+@ stdcall CoRevokeMallocSpy() combase.CoRevokeMallocSpy
 @ stdcall CoSetProxyBlanket(ptr long long ptr long long ptr long)
 @ stdcall CoSetState(ptr)
 @ stdcall CoSuspendClassObjects()
 @ stdcall CoSwitchCallContext(ptr ptr)
-@ stdcall CoTaskMemAlloc(long)
-@ stdcall CoTaskMemFree(ptr)
-@ stdcall CoTaskMemRealloc(ptr long)
+@ stdcall CoTaskMemAlloc(long) combase.CoTaskMemAlloc
+@ stdcall CoTaskMemFree(ptr) combase.CoTaskMemFree
+@ stdcall CoTaskMemRealloc(ptr long) combase.CoTaskMemRealloc
 @ stdcall CoTreatAsClass(ptr ptr)
 @ stdcall CoUninitialize()
 @ stub CoUnloadingWOW
