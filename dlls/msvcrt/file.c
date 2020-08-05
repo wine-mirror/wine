@@ -40,6 +40,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "wincon.h"
 #include "winternl.h"
 #include "winnls.h"
 #include "msvcrt.h"
@@ -3446,6 +3447,7 @@ int CDECL MSVCRT__write(int fd, const void* buf, unsigned int count)
     ioinfo *info = get_ioinfo(fd);
     HANDLE hand = info->handle;
     DWORD num_written, i;
+    BOOL console;
 
     if (hand == INVALID_HANDLE_VALUE || fd == MSVCRT_NO_CONSOLE_FD)
     {
@@ -3480,13 +3482,65 @@ int CDECL MSVCRT__write(int fd, const void* buf, unsigned int count)
         return num_written;
     }
 
+    console = MSVCRT__isatty(fd);
     for (i = 0; i < count;)
     {
         const char *s = buf;
         char lfbuf[2048];
-        DWORD j;
+        DWORD j = 0;
 
-        if (!(info->exflag & (EF_UTF8|EF_UTF16)))
+        if (!(info->exflag & (EF_UTF8|EF_UTF16)) && console)
+        {
+            char conv[sizeof(lfbuf)];
+            MSVCRT_size_t len = 0;
+
+#if _MSVCR_VER >= 90
+            if (info->dbcsBufferUsed)
+            {
+                conv[j++] = info->dbcsBuffer;
+                info->dbcsBufferUsed = FALSE;
+                conv[j++] = s[i++];
+                len++;
+            }
+#endif
+
+            for (;  i < count && j < sizeof(conv)-1; i++, j++, len++)
+            {
+                if (MSVCRT_isleadbyte((unsigned char)s[i]))
+                {
+                    conv[j++] = s[i++];
+
+                    if (i == count)
+                    {
+#if _MSVCR_VER >= 90
+                        info->dbcsBuffer = conv[j-1];
+                        info->dbcsBufferUsed = TRUE;
+                        break;
+#else
+                        *MSVCRT__errno() = MSVCRT_EINVAL;
+                        release_ioinfo(info);
+                        return -1;
+#endif
+                    }
+                }
+                else if (s[i] == '\n')
+                {
+                    conv[j++] = '\r';
+                    len++;
+                }
+                conv[j] = s[i];
+            }
+
+            len = MSVCRT_mbstowcs((WCHAR*)lfbuf, conv, len);
+            if (len == -1)
+            {
+                msvcrt_set_errno(GetLastError());
+                release_ioinfo(info);
+                return -1;
+            }
+            j = len * 2;
+        }
+        else if (!(info->exflag & (EF_UTF8|EF_UTF16)))
         {
             for (j = 0; i < count && j < sizeof(lfbuf)-1; i++, j++)
             {
@@ -3495,7 +3549,7 @@ int CDECL MSVCRT__write(int fd, const void* buf, unsigned int count)
                 lfbuf[j] = s[i];
             }
         }
-        else if (info->exflag & EF_UTF16)
+        else if (info->exflag & EF_UTF16 || console)
         {
             for (j = 0; i < count && j < sizeof(lfbuf)-3; i++, j++)
             {
@@ -3532,9 +3586,20 @@ int CDECL MSVCRT__write(int fd, const void* buf, unsigned int count)
             }
         }
 
-        if (!WriteFile(hand, lfbuf, j, &num_written, NULL) || num_written != j)
+        if (console)
         {
-            TRACE("WriteFile (fd %d, hand %p) failed-last error (%d)\n", fd,
+            j = j/2;
+            if (!WriteConsoleW(hand, lfbuf, j, &num_written, NULL))
+                num_written = -1;
+        }
+        else if (!WriteFile(hand, lfbuf, j, &num_written, NULL))
+        {
+            num_written = -1;
+        }
+
+        if (num_written != j)
+        {
+            TRACE("WriteFile/WriteConsoleW (fd %d, hand %p) failed-last error (%d)\n", fd,
                     hand, GetLastError());
             msvcrt_set_errno(GetLastError());
             release_ioinfo(info);
