@@ -181,7 +181,11 @@ static HRESULT WINAPI multimedia_stream_GetDuration(IAMMultiMediaStream *iface, 
 
     if (!mmstream->media_seeking)
         return E_NOINTERFACE;
-    return IMediaSeeking_GetDuration(mmstream->media_seeking, duration);
+
+    if (IMediaSeeking_GetDuration(mmstream->media_seeking, duration) != S_OK)
+        return S_FALSE;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI multimedia_stream_Seek(IAMMultiMediaStream *iface, STREAM_TIME seek_time)

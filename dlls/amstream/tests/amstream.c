@@ -414,7 +414,7 @@ static void test_mmstream_get_duration(const WCHAR *test_avi_path)
 
     duration = 0xdeadbeefdeadbeefULL;
     hr = IAMMultiMediaStream_GetDuration(mmstream, &duration);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     ok(duration == 0, "Got duration %s.\n", wine_dbgstr_longlong(duration));
 
     ref = IAMMultiMediaStream_Release(mmstream);
@@ -427,7 +427,7 @@ static void test_mmstream_get_duration(const WCHAR *test_avi_path)
 
     duration = 0xdeadbeefdeadbeefULL;
     hr = IAMMultiMediaStream_GetDuration(mmstream, &duration);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     ok(duration == 0, "Got duration %s.\n", wine_dbgstr_longlong(duration));
 
     ref = IAMMultiMediaStream_Release(mmstream);
@@ -442,7 +442,7 @@ static void test_mmstream_get_duration(const WCHAR *test_avi_path)
 
     duration = 0xdeadbeefdeadbeefULL;
     hr = IAMMultiMediaStream_GetDuration(mmstream, &duration);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     ok(duration == 0, "Got duration %s.\n", wine_dbgstr_longlong(duration));
 
     ref = IAMMultiMediaStream_Release(mmstream);
