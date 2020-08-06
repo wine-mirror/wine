@@ -47,7 +47,7 @@
 @ stdcall CoGetState(ptr)
 @ stub CoGetTIDFromIPID
 @ stdcall CoGetTreatAsClass(ptr ptr)
-@ stdcall CoImpersonateClient()
+@ stdcall CoImpersonateClient() combase.CoImpersonateClient
 @ stdcall CoIncrementMTAUsage(ptr)
 @ stdcall CoInitialize(ptr)
 @ stdcall CoInitializeEx(ptr long)

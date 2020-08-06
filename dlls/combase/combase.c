@@ -547,3 +547,23 @@ HRESULT WINAPI CoQueryClientBlanket(DWORD *authn_service, DWORD *authz_service, 
 
     return hr;
 }
+
+/***********************************************************************
+ *           CoImpersonateClient        (combase.@)
+ */
+HRESULT WINAPI CoImpersonateClient(void)
+{
+    IServerSecurity *server_security;
+    HRESULT hr;
+
+    TRACE("\n");
+
+    hr = CoGetCallContext(&IID_IServerSecurity, (void **)&server_security);
+    if (SUCCEEDED(hr))
+    {
+        hr = IServerSecurity_ImpersonateClient(server_security);
+        IServerSecurity_Release(server_security);
+    }
+
+    return hr;
+}
