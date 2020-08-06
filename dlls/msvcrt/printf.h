@@ -401,7 +401,7 @@ static inline int FUNC_NAME(pf_output_special_fp)(FUNC_NAME(puts_clbk) pf_puts, 
 }
 
 static inline int FUNC_NAME(pf_output_hex_fp)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx,
-        double v, pf_flags *flags, MSVCRT__locale_t locale)
+        double v, pf_flags *flags, MSVCRT__locale_t locale, BOOL standard_rounding)
 {
     const APICHAR digits[2][16] = {
         { '0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f' },
@@ -449,7 +449,25 @@ static inline int FUNC_NAME(pf_output_hex_fp)(FUNC_NAME(puts_clbk) pf_puts, void
         if(p[0] >= '8') p[-2]++;
         if(!flags->Alternate) p--;
     }else if(flags->Precision>0 && flags->Precision<MANT_BITS/4) {
-        BOOL round_up = (p[flags->Precision] >= '8');
+        BOOL round_up = FALSE;
+
+        if(!standard_rounding) round_up = (p[flags->Precision] >= '8');
+        else if(p[flags->Precision] > '8') round_up = TRUE;
+        else if(p[flags->Precision] == '8') {
+            for(r = flags->Precision+1; r<MANT_BITS/4; r++) {
+                if(p[r] != '0') {
+                    round_up = TRUE;
+                    break;
+                }
+            }
+
+            if(!round_up) {
+                if(p[flags->Precision-1] <= '9') round_up = (p[flags->Precision-1] - '0') & 1;
+                else if(p[flags->Precision-1] <= 'F') round_up = (p[flags->Precision-1] - 'A') & 1;
+                else round_up = (p[flags->Precision-1] - 'a') & 1;
+            }
+        }
+
         for(r=flags->Precision-1; r>=0 && round_up; r--) {
             round_up = FALSE;
             if(p[r]=='f' || p[r]=='F') {
@@ -574,13 +592,14 @@ static inline void FUNC_NAME(pf_integer_conv)(APICHAR *buf, pf_flags *flags, LON
 }
 
 static inline int FUNC_NAME(pf_output_fp)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx,
-        double v, pf_flags *flags, MSVCRT__locale_t locale, BOOL three_digit_exp)
+        double v, pf_flags *flags, MSVCRT__locale_t locale, BOOL three_digit_exp,
+        BOOL standard_rounding)
 {
     int e2, e10 = 0, round_pos, round_limb, radix_pos, first_limb_len, i, len, r, ret;
     BYTE bnum_data[FIELD_OFFSET(struct bnum, data[BNUM_PREC64])];
     struct bnum *b = (struct bnum*)bnum_data;
     APICHAR buf[LIMB_DIGITS + 1];
-    BOOL trim_tail = FALSE;
+    BOOL trim_tail = FALSE, round_up = FALSE;
     pf_flags f;
     int limb_len, prec;
     ULONGLONG m;
@@ -637,8 +656,6 @@ static inline int FUNC_NAME(pf_output_fp)(FUNC_NAME(puts_clbk) pf_puts, void *pu
         round_limb = b->e - (round_pos - first_limb_len - 1) / LIMB_DIGITS - 2;
 
     if (b->b<=round_limb && round_limb<b->e) {
-        BOOL round_up = FALSE;
-
         if (round_pos <= first_limb_len) {
             round_pos = first_limb_len - round_pos;
         } else {
@@ -649,9 +666,31 @@ static inline int FUNC_NAME(pf_output_fp)(FUNC_NAME(puts_clbk) pf_puts, void *pu
         if (round_pos) {
             l = b->data[bnum_idx(b, round_limb)] % p10s[round_pos];
             b->data[bnum_idx(b, round_limb)] -= l;
-            if(2*l >= p10s[round_pos]) round_up = TRUE;
+            if(!standard_rounding) round_up = (2*l >= p10s[round_pos]);
+            else if(2*l > p10s[round_pos]) round_up = TRUE;
+            else if(2*l == p10s[round_pos]) {
+                for(r = round_limb-1; r >= b->b; r--) {
+                    if(b->data[bnum_idx(b, r)]) {
+                        round_up = TRUE;
+                        break;
+                    }
+                }
+
+                if(!round_up) round_up = b->data[bnum_idx(b, round_limb)] / p10s[round_pos] & 1;
+            }
         } else if(round_limb - 1 >= b->b) {
-            if(2*b->data[bnum_idx(b, round_limb-1)] >= LIMB_MAX) round_up = TRUE;
+            if(!standard_rounding) round_up = (2*b->data[bnum_idx(b, round_limb-1)] >= LIMB_MAX);
+            else if(2*b->data[bnum_idx(b, round_limb-1)] > LIMB_MAX) round_up = TRUE;
+            else if(2*b->data[bnum_idx(b, round_limb-1)] == LIMB_MAX) {
+                for(r = round_limb-2; r >= b->b; r--) {
+                    if(b->data[bnum_idx(b, r)]) {
+                        round_up = TRUE;
+                        break;
+                    }
+                }
+
+                if(!round_up) round_up = b->data[bnum_idx(b, round_limb)] & 1;
+            }
         }
         b->b = round_limb;
 
@@ -681,7 +720,20 @@ static inline int FUNC_NAME(pf_output_fp)(FUNC_NAME(puts_clbk) pf_puts, void *pu
         }
     }
     else if(b->e <= round_limb) { /* got 0 or 1 after rounding */
-        b->data[bnum_idx(b, round_limb)] = b->e==round_limb && b->data[bnum_idx(b, b->e-1)]>=LIMB_MAX/2;
+        if(b->e == round_limb) {
+            if(!standard_rounding) round_up = b->data[bnum_idx(b, b->e-1)] >= LIMB_MAX/2;
+            else if(b->data[bnum_idx(b, b->e-1)] > LIMB_MAX/2) round_up = TRUE;
+            else if(b->data[bnum_idx(b, b->e-1)] == LIMB_MAX/2) {
+                for(r = b->e-2; r >= b->b; r--) {
+                    if(b->data[bnum_idx(b, r)]) {
+                        round_up = TRUE;
+                        break;
+                    }
+                }
+            }
+        }
+
+        b->data[bnum_idx(b, round_limb)] = round_up;
         b->b = round_limb;
         b->e = b->b + 1;
         first_limb_len = 1;
@@ -918,9 +970,11 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
     BOOL legacy_wide = options & UCRTBASE_PRINTF_LEGACY_WIDE_SPECIFIERS;
     BOOL legacy_msvcrt_compat = options & UCRTBASE_PRINTF_LEGACY_MSVCRT_COMPATIBILITY;
     BOOL three_digit_exp = options & UCRTBASE_PRINTF_LEGACY_THREE_DIGIT_EXPONENTS;
+    BOOL standard_rounding = options & UCRTBASE_PRINTF_STANDARD_ROUNDING;
 #else
     BOOL legacy_wide = TRUE, legacy_msvcrt_compat = TRUE;
     BOOL three_digit_exp = MSVCRT__get_output_format() != MSVCRT__TWO_DIGIT_EXPONENT;
+    BOOL standard_rounding = FALSE;
 #endif
 
     TRACE("Format is: %s\n", FUNC_NAME(debugstr)(fmt));
@@ -1136,9 +1190,11 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
                 i = FUNC_NAME(pf_output_special_fp)(pf_puts, puts_ctx, val, &flags,
                         locale, legacy_msvcrt_compat, three_digit_exp);
             else if(flags.Format=='a' || flags.Format=='A')
-                i = FUNC_NAME(pf_output_hex_fp)(pf_puts, puts_ctx, val, &flags, locale);
+                i = FUNC_NAME(pf_output_hex_fp)(pf_puts, puts_ctx, val, &flags,
+                        locale, standard_rounding);
             else
-                i = FUNC_NAME(pf_output_fp)(pf_puts, puts_ctx, val, &flags, locale, three_digit_exp);
+                i = FUNC_NAME(pf_output_fp)(pf_puts, puts_ctx, val, &flags,
+                        locale, three_digit_exp, standard_rounding);
         } else {
             if(invoke_invalid_param_handler) {
                 MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);

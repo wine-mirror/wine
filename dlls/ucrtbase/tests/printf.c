@@ -655,7 +655,10 @@ static void test_printf_fp(void)
         _CRT_INTERNAL_PRINTF_LEGACY_MSVCRT_COMPATIBILITY,
         _CRT_INTERNAL_PRINTF_LEGACY_THREE_DIGIT_EXPONENTS,
         _CRT_INTERNAL_PRINTF_LEGACY_MSVCRT_COMPATIBILITY
+            | _CRT_INTERNAL_PRINTF_LEGACY_THREE_DIGIT_EXPONENTS,
+        _CRT_INTERNAL_PRINTF_LEGACY_MSVCRT_COMPATIBILITY
             | _CRT_INTERNAL_PRINTF_LEGACY_THREE_DIGIT_EXPONENTS
+            | _CRT_INTERNAL_PRINTF_STANDARD_ROUNDING
     };
     const struct {
         const char *fmt;
@@ -759,9 +762,9 @@ static void test_printf_fp(void)
         { "%#.0a", -0.5, { "-0x1.p-1" }},
         { "%#.0a", 0.5, { "0x1.p-1" }},
         { "%#.0a", 1.5, { "0x2.p+0" }, { "0x1.p+0" }},
-        { "%#.1a", 1.03125, { "0x1.1p+0" }, { "0x1.0p+0" }},
+        { "%#.1a", 1.03125, { "0x1.1p+0", NULL, NULL, NULL, "0x1.0p+0" }, { "0x1.0p+0" }},
         { "%#.1a", 1.09375, { "0x1.2p+0" }, { "0x1.1p+0" }},
-        { "%#.1a", 1.15625, { "0x1.3p+0" }, { "0x1.2p+0" }},
+        { "%#.1a", 1.15625, { "0x1.3p+0", NULL, NULL, NULL, "0x1.2p+0" }, { "0x1.2p+0" }},
 
         { "%f", 0, { "0.000000" }},
         { "%e", 0, { "0.000000e+00", NULL, "0.000000e+000" }},
@@ -813,6 +816,9 @@ static void test_printf_fp(void)
         { "%.30f", 1.0/3.0, { "0.333333333333333314829616256247" }},
         { "%.30lf", sqrt(2), { "1.414213562373095145474621858739" }},
         { "%.0g", 9.8949714229143402e-05, { "0.0001" }},
+        { "%.0f", 0.5, { "1", NULL, NULL, NULL, "0" }, {NULL, NULL, NULL, NULL, "1" }},
+        { "%.0f", 1.5, { "2" }},
+        { "%.0f", 2.5, { "3", NULL, NULL, NULL, "2" }, {NULL, NULL, NULL, NULL, "3" }},
     };
 
     const char *res = NULL;
