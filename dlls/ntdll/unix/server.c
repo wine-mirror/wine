@@ -349,23 +349,19 @@ static int wait_select_reply( void *cookie )
 }
 
 
-static void invoke_apc( const user_apc_t *apc )
+static void invoke_apc( CONTEXT *context, const user_apc_t *apc )
 {
     switch( apc->type )
     {
     case APC_USER:
-    {
-        void (WINAPI *func)(ULONG_PTR,ULONG_PTR,ULONG_PTR) = wine_server_get_ptr( apc->user.func );
-        func( apc->user.args[0], apc->user.args[1], apc->user.args[2] );
+        call_user_apc( context, apc->user.args[0], apc->user.args[1], apc->user.args[2],
+                       wine_server_get_ptr( apc->user.func ));
         break;
-    }
     case APC_TIMER:
-    {
-        void (WINAPI *func)(void*, unsigned int, unsigned int) = wine_server_get_ptr( apc->user.func );
-        func( wine_server_get_ptr( apc->user.args[1] ),
-              (DWORD)apc->timer.time, (DWORD)(apc->timer.time >> 32) );
+        call_user_apc( context, (ULONG_PTR)wine_server_get_ptr( apc->user.args[1] ),
+                       (DWORD)apc->timer.time, (DWORD)(apc->timer.time >> 32),
+                       wine_server_get_ptr( apc->user.func ));
         break;
-    }
     default:
         server_protocol_error( "get_apc_request: bad type %d\n", apc->type );
         break;
@@ -672,7 +668,6 @@ unsigned int server_wait( const select_op_t *select_op, data_size_t size, UINT f
                           const LARGE_INTEGER *timeout )
 {
     timeout_t abs_timeout = timeout ? timeout->QuadPart : TIMEOUT_INFINITE;
-    BOOL user_apc = FALSE;
     unsigned int ret;
     user_apc_t apc;
 
@@ -684,30 +679,28 @@ unsigned int server_wait( const select_op_t *select_op, data_size_t size, UINT f
         abs_timeout -= now.QuadPart;
     }
 
-    for (;;)
-    {
-        ret = server_select( select_op, size, flags, abs_timeout, NULL, NULL, &apc );
-        if (ret != STATUS_USER_APC) break;
-        invoke_apc( &apc );
-
-        /* if we ran a user apc we have to check once more if additional apcs are queued,
-         * but we don't want to wait */
-        abs_timeout = 0;
-        user_apc = TRUE;
-        size = 0;
-        /* don't signal multiple times */
-        if (size >= sizeof(select_op->signal_and_wait) && select_op->op == SELECT_SIGNAL_AND_WAIT)
-            size = offsetof( select_op_t, signal_and_wait.signal );
-    }
-
-    if (ret == STATUS_TIMEOUT && user_apc) ret = STATUS_USER_APC;
+    ret = server_select( select_op, size, flags, abs_timeout, NULL, NULL, &apc );
+    if (ret == STATUS_USER_APC) invoke_apc( NULL, &apc );
 
     /* A test on Windows 2000 shows that Windows always yields during
        a wait, but a wait that is hit by an event gets a priority
        boost as well.  This seems to model that behavior the closest.  */
     if (ret == STATUS_TIMEOUT) NtYieldExecution();
-
     return ret;
+}
+
+
+/***********************************************************************
+ *              NtContinue  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtContinue( CONTEXT *context, BOOLEAN alertable )
+{
+    user_apc_t apc;
+    NTSTATUS status;
+
+    status = server_select( NULL, 0, SELECT_INTERRUPTIBLE | SELECT_ALERTABLE, 0, NULL, NULL, &apc );
+    if (status == STATUS_USER_APC) invoke_apc( context, &apc );
+    return NtSetContextThread( GetCurrentThread(), context );
 }
 
 

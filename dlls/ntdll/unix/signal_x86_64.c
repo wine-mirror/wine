@@ -1887,6 +1887,30 @@ static void setup_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec )
     setup_raise_exception( sigcontext, rec, &context );
 }
 
+
+/***********************************************************************
+ *           call_user_apc
+ */
+void WINAPI call_user_apc( CONTEXT *context_ptr, ULONG_PTR ctx, ULONG_PTR arg1,
+                           ULONG_PTR arg2, PNTAPCFUNC func )
+{
+    CONTEXT context;
+
+    if (!context_ptr)
+    {
+        context.ContextFlags = CONTEXT_FULL;
+        NtGetContextThread( GetCurrentThread(), &context );
+        context.Rax = STATUS_USER_APC;
+        context_ptr = &context;
+    }
+    pKiUserApcDispatcher( context_ptr, ctx, arg1, arg2, func );
+}
+
+
+/***********************************************************************
+ *           call_user_exception_dispatcher
+ */
+
 extern void WINAPI user_exception_dispatcher_trampoline( struct stack_layout *stack,
         void *pKiUserExceptionDispatcher );
 

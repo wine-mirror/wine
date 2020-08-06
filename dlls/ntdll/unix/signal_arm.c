@@ -575,6 +575,29 @@ static void setup_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec )
     REGn_sig(2, sigcontext) = (DWORD)pKiUserExceptionDispatcher;
 }
 
+
+/***********************************************************************
+ *           call_user_apc
+ */
+void WINAPI call_user_apc( CONTEXT *context_ptr, ULONG_PTR ctx, ULONG_PTR arg1,
+                           ULONG_PTR arg2, PNTAPCFUNC func )
+{
+    CONTEXT context;
+
+    if (!context_ptr)
+    {
+        context.ContextFlags = CONTEXT_FULL;
+        NtGetContextThread( GetCurrentThread(), &context );
+        context.R0 = STATUS_USER_APC;
+        context_ptr = &context;
+    }
+    pKiUserApcDispatcher( context_ptr, ctx, arg1, arg2, func );
+}
+
+
+/***********************************************************************
+ *           call_user_exception_dispatcher
+ */
 void WINAPI call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context,
                                             NTSTATUS (WINAPI *dispatcher)(EXCEPTION_RECORD*,CONTEXT*) )
 {

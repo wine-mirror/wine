@@ -1181,7 +1181,7 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
         }
         if (needed_flags & CONTEXT_CONTROL)
         {
-            context->Esp    = (DWORD)&frame->thunk_addr;
+            context->Esp    = (DWORD)&frame->ret_addr;
             context->Ebp    = frame->ebp;
             context->Eip    = frame->thunk_addr;
             context->EFlags = 0x202;
@@ -1535,6 +1535,29 @@ static void setup_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec )
     setup_raise_exception( sigcontext, stack, rec, &context );
 }
 
+
+/***********************************************************************
+ *           call_user_apc
+ */
+void WINAPI call_user_apc( CONTEXT *context_ptr, ULONG_PTR ctx, ULONG_PTR arg1,
+                           ULONG_PTR arg2, PNTAPCFUNC func )
+{
+    CONTEXT context;
+
+    if (!context_ptr)
+    {
+        context.ContextFlags = CONTEXT_FULL;
+        NtGetContextThread( GetCurrentThread(), &context );
+        context.Eax = STATUS_USER_APC;
+        context_ptr = &context;
+    }
+    pKiUserApcDispatcher( context_ptr, ctx, arg1, arg2, func );
+}
+
+
+/***********************************************************************
+ *           call_user_exception_dispatcher
+ */
 __ASM_GLOBAL_FUNC( call_user_exception_dispatcher,
                    "add $4,%esp\n\t"
                    "movl (%esp),%eax\n\t" /* rec */

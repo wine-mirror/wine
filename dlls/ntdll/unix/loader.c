@@ -96,6 +96,7 @@ extern IMAGE_NT_HEADERS __wine_spec_nt_header;
 
 void     (WINAPI *pDbgUiRemoteBreakin)( void *arg ) = NULL;
 void     (WINAPI *pKiRaiseUserExceptionDispatcher)(void) = NULL;
+void     (WINAPI *pKiUserApcDispatcher)(CONTEXT*,ULONG_PTR,ULONG_PTR,ULONG_PTR,PNTAPCFUNC) = NULL;
 NTSTATUS (WINAPI *pKiUserExceptionDispatcher)(EXCEPTION_RECORD*,CONTEXT*) = NULL;
 void     (WINAPI *pLdrInitializeThunk)(CONTEXT*,void**,ULONG_PTR,ULONG_PTR) = NULL;
 void     (WINAPI *pRtlUserThreadStart)( PRTL_THREAD_START_ROUTINE entry, void *arg ) = NULL;
@@ -841,6 +842,7 @@ static void fixup_ntdll_imports( const IMAGE_NT_HEADERS *nt )
     GET_FUNC( DbgUiRemoteBreakin );
     GET_FUNC( KiRaiseUserExceptionDispatcher );
     GET_FUNC( KiUserExceptionDispatcher );
+    GET_FUNC( KiUserApcDispatcher );
     GET_FUNC( LdrInitializeThunk );
     GET_FUNC( RtlUserThreadStart );
     GET_FUNC( __wine_set_unix_funcs );
