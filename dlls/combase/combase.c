@@ -454,3 +454,28 @@ HRESULT WINAPI CoCreateGuid(GUID *guid)
     if (status == RPC_S_OK || status == RPC_S_UUID_LOCAL_ONLY) return S_OK;
     return HRESULT_FROM_WIN32(status);
 }
+
+/******************************************************************************
+ *            CoQueryProxyBlanket        (combase.@)
+ */
+HRESULT WINAPI CoQueryProxyBlanket(IUnknown *proxy, DWORD *authn_service,
+        DWORD *authz_service, OLECHAR **servername, DWORD *authn_level,
+        DWORD *imp_level, void **auth_info, DWORD *capabilities)
+{
+    IClientSecurity *client_security;
+    HRESULT hr;
+
+    TRACE("%p, %p, %p, %p, %p, %p, %p, %p.\n", proxy, authn_service, authz_service, servername, authn_level, imp_level,
+            auth_info, capabilities);
+
+    hr = IUnknown_QueryInterface(proxy, &IID_IClientSecurity, (void **)&client_security);
+    if (SUCCEEDED(hr))
+    {
+        hr = IClientSecurity_QueryBlanket(client_security, proxy, authn_service, authz_service, servername,
+                authn_level, imp_level, auth_info, capabilities);
+        IClientSecurity_Release(client_security);
+    }
+
+    if (FAILED(hr)) ERR("-- failed with %#x.\n", hr);
+    return hr;
+}
