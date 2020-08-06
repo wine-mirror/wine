@@ -134,7 +134,7 @@
 @ stub CoPopServiceDomain
 @ stub CoPushServiceDomain
 @ stub CoQueryAuthenticationServices
-@ stdcall CoQueryClientBlanket(ptr ptr ptr ptr ptr ptr ptr) ole32.CoQueryClientBlanket
+@ stdcall CoQueryClientBlanket(ptr ptr ptr ptr ptr ptr ptr)
 @ stdcall CoQueryProxyBlanket(ptr ptr ptr ptr ptr ptr ptr ptr)
 @ stub CoReactivateObject
 @ stub CoRegisterActivationFilter

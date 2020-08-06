@@ -61,7 +61,7 @@
 @ stdcall CoMarshalInterThreadInterfaceInStream(ptr ptr ptr)
 @ stdcall CoMarshalInterface(ptr ptr ptr long ptr long)
 @ stub CoQueryAuthenticationServices
-@ stdcall CoQueryClientBlanket(ptr ptr ptr ptr ptr ptr ptr)
+@ stdcall CoQueryClientBlanket(ptr ptr ptr ptr ptr ptr ptr) combase.CoQueryClientBlanket
 @ stdcall CoQueryProxyBlanket(ptr ptr ptr ptr ptr ptr ptr ptr) combase.CoQueryProxyBlanket
 @ stub CoQueryReleaseObject
 @ stdcall CoRegisterChannelHook(ptr ptr)

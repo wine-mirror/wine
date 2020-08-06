@@ -524,3 +524,26 @@ HRESULT WINAPI CoCopyProxy(IUnknown *proxy, IUnknown **proxy_copy)
     if (FAILED(hr)) ERR("-- failed with %#x.\n", hr);
     return hr;
 }
+
+/***********************************************************************
+ *           CoQueryClientBlanket        (combase.@)
+ */
+HRESULT WINAPI CoQueryClientBlanket(DWORD *authn_service, DWORD *authz_service, OLECHAR **servername,
+        DWORD *authn_level, DWORD *imp_level, RPC_AUTHZ_HANDLE *privs, DWORD *capabilities)
+{
+    IServerSecurity *server_security;
+    HRESULT hr;
+
+    TRACE("%p, %p, %p, %p, %p, %p, %p.\n", authn_service, authz_service, servername, authn_level, imp_level,
+            privs, capabilities);
+
+    hr = CoGetCallContext(&IID_IServerSecurity, (void **)&server_security);
+    if (SUCCEEDED(hr))
+    {
+        hr = IServerSecurity_QueryBlanket(server_security, authn_service, authz_service, servername, authn_level,
+                imp_level, privs, capabilities);
+        IServerSecurity_Release(server_security);
+    }
+
+    return hr;
+}
