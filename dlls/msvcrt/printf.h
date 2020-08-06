@@ -446,10 +446,10 @@ static inline int FUNC_NAME(pf_output_hex_fp)(FUNC_NAME(puts_clbk) pf_puts, void
         mant >>= 4;
     }
     if(!flags->Precision) {
-        if(p[0] > '8') p[-2]++;
+        if(p[0] >= '8') p[-2]++;
         if(!flags->Alternate) p--;
     }else if(flags->Precision>0 && flags->Precision<MANT_BITS/4) {
-        BOOL round_up = (p[flags->Precision] > '8');
+        BOOL round_up = (p[flags->Precision] >= '8');
         for(r=flags->Precision-1; r>=0 && round_up; r--) {
             round_up = FALSE;
             if(p[r]=='f' || p[r]=='F') {
