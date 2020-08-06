@@ -280,13 +280,52 @@ float CDECL MSVCRT_acosf( float x )
 
 /*********************************************************************
  *      MSVCRT_asinf (MSVCRT.@)
+ *
+ * Copied from musl: src/math/asinf.c
  */
+static float asinf_R(float z)
+{
+    /* coefficients for R(x^2) */
+    static const float pS0 =  1.6666586697e-01,
+                 pS1 = -4.2743422091e-02,
+                 pS2 = -8.6563630030e-03,
+                 qS1 = -7.0662963390e-01;
+
+    float_t p, q;
+    p = z * (pS0 + z * (pS1 + z * pS2));
+    q = 1.0f + z * qS1;
+    return p / q;
+}
+
 float CDECL MSVCRT_asinf( float x )
 {
-  float ret = atan2f(x, sqrtf((1 - x) * (1 + x)));
-  if (x < -1.0 || x > 1.0 || !finitef(x))
-    return math_error(_DOMAIN, "asinf", x, 0, ret);
-  return ret;
+    static const double pio2 = 1.570796326794896558e+00;
+
+    double s;
+    float z;
+    unsigned int hx, ix;
+
+    hx = *(unsigned int*)&x;
+    ix = hx & 0x7fffffff;
+    if (ix >= 0x3f800000) {  /* |x| >= 1 */
+        if (ix == 0x3f800000)  /* |x| == 1 */
+            return x * pio2 + 7.5231638453e-37;  /* asin(+-1) = +-pi/2 with inexact */
+        if (MSVCRT__isnanf(x)) return x;
+        return math_error(_DOMAIN, "asinf", x, 0, 0 / (x - x));
+    }
+    if (ix < 0x3f000000) {  /* |x| < 0.5 */
+        /* if 0x1p-126 <= |x| < 0x1p-12, avoid raising underflow */
+        if (ix < 0x39800000 && ix >= 0x00800000)
+            return x;
+        return x + x * asinf_R(x * x);
+    }
+    /* 1 > |x| >= 0.5 */
+    z = (1 - fabsf(x)) * 0.5f;
+    s = sqrt(z);
+    x = pio2 - 2 * (s + s * asinf_R(z));
+    if (hx >> 31)
+        return -x;
+    return x;
 }
 
 /*********************************************************************
