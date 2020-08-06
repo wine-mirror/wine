@@ -155,7 +155,7 @@
 @ stdcall CoRevokeMallocSpy()
 @ stub CoSetCancelObject
 @ stub CoSetErrorInfo
-@ stdcall CoSetProxyBlanket(ptr long long ptr long long ptr long) ole32.CoSetProxyBlanket
+@ stdcall CoSetProxyBlanket(ptr long long ptr long long ptr long)
 @ stdcall CoSuspendClassObjects() ole32.CoSuspendClassObjects
 @ stdcall CoSwitchCallContext(ptr ptr) ole32.CoSwitchCallContext
 @ stdcall CoTaskMemAlloc(long)

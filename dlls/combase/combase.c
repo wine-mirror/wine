@@ -479,3 +479,27 @@ HRESULT WINAPI CoQueryProxyBlanket(IUnknown *proxy, DWORD *authn_service,
     if (FAILED(hr)) ERR("-- failed with %#x.\n", hr);
     return hr;
 }
+
+/******************************************************************************
+ *            CoSetProxyBlanket        (combase.@)
+ */
+HRESULT WINAPI CoSetProxyBlanket(IUnknown *proxy, DWORD authn_service, DWORD authz_service,
+        OLECHAR *servername, DWORD authn_level, DWORD imp_level, void *auth_info, DWORD capabilities)
+{
+    IClientSecurity *client_security;
+    HRESULT hr;
+
+    TRACE("%p, %u, %u, %p, %u, %u, %p, %#x.\n", proxy, authn_service, authz_service, servername,
+            authn_level, imp_level, auth_info, capabilities);
+
+    hr = IUnknown_QueryInterface(proxy, &IID_IClientSecurity, (void **)&client_security);
+    if (SUCCEEDED(hr))
+    {
+        hr = IClientSecurity_SetBlanket(client_security, proxy, authn_service, authz_service, servername, authn_level,
+                imp_level, auth_info, capabilities);
+        IClientSecurity_Release(client_security);
+    }
+
+    if (FAILED(hr)) ERR("-- failed with %#x.\n", hr);
+    return hr;
+}
