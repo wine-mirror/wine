@@ -9,7 +9,7 @@
 @ stdcall CoAddRefServerProcess()
 @ stdcall CoAllowSetForegroundWindow(ptr ptr)
 @ stdcall CoBuildVersion()
-@ stdcall CoCopyProxy(ptr ptr)
+@ stdcall CoCopyProxy(ptr ptr) combase.CoCopyProxy
 @ stdcall CoCreateFreeThreadedMarshaler(ptr ptr)
 @ stdcall CoCreateGuid(ptr) combase.CoCreateGuid
 @ stdcall CoCreateInstance(ptr ptr long ptr ptr)

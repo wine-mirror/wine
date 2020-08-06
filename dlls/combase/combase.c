@@ -503,3 +503,24 @@ HRESULT WINAPI CoSetProxyBlanket(IUnknown *proxy, DWORD authn_service, DWORD aut
     if (FAILED(hr)) ERR("-- failed with %#x.\n", hr);
     return hr;
 }
+
+/***********************************************************************
+ *           CoCopyProxy        (combase.@)
+ */
+HRESULT WINAPI CoCopyProxy(IUnknown *proxy, IUnknown **proxy_copy)
+{
+    IClientSecurity *client_security;
+    HRESULT hr;
+
+    TRACE("%p, %p.\n", proxy, proxy_copy);
+
+    hr = IUnknown_QueryInterface(proxy, &IID_IClientSecurity, (void **)&client_security);
+    if (SUCCEEDED(hr))
+    {
+        hr = IClientSecurity_CopyProxy(client_security, proxy, proxy_copy);
+        IClientSecurity_Release(client_security);
+    }
+
+    if (FAILED(hr)) ERR("-- failed with %#x.\n", hr);
+    return hr;
+}

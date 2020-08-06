@@ -75,7 +75,7 @@
 @ stdcall CoAddRefServerProcess() ole32.CoAddRefServerProcess
 @ stub CoAllowUnmarshalerCLSID
 @ stub CoCancelCall
-@ stdcall CoCopyProxy(ptr ptr) ole32.CoCopyProxy
+@ stdcall CoCopyProxy(ptr ptr)
 @ stub CoCreateErrorInfo
 @ stdcall CoCreateFreeThreadedMarshaler(ptr ptr) ole32.CoCreateFreeThreadedMarshaler
 @ stdcall CoCreateGuid(ptr)
