@@ -20,7 +20,14 @@
 
 #pragma makedep register
 
-#if XACT3_VER == 0x0302
+#if XACT3_VER == 0x0301
+[
+    helpstring("XACT3.1 Class"),
+    threading(both),
+    uuid(962f5027-99be-4692-a468-85802cf8de61)
+]
+coclass XACTEngine31 { interface IXACT32Engine; }
+#elif XACT3_VER == 0x0302
 [
     helpstring("XACT3.2 Class"),
     threading(both),
