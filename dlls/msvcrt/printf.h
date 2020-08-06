@@ -691,10 +691,7 @@ static inline int FUNC_NAME(pf_output_fp)(FUNC_NAME(puts_clbk) pf_puts, void *pu
     if(flags->Format=='g' || flags->Format=='G') {
         trim_tail = TRUE;
 
-        if(!v) {
-            flags->Format -= 1;
-            if(!flags->Precision) flags->Precision++;
-        } else if(radix_pos>=-3 && radix_pos<=flags->Precision) {
+        if(radix_pos>=-3 && radix_pos<=flags->Precision) {
             flags->Format -= 1;
             if(!flags->Precision) flags->Precision++;
             flags->Precision -= radix_pos;

@@ -661,6 +661,7 @@ static void test_printf_fp(void)
         const char *fmt;
         double d;
         const char *res[ARRAY_SIZE(flags)];
+        const char *broken[ARRAY_SIZE(flags)];
     } tests[] = {
         { "%a", NAN, { "nan", "0x1.#QNAN00000000p+0", "nan", "0x1.#QNAN00000000p+0" }},
         { "%A", NAN, { "NAN", "0X1.#QNAN00000000P+0", "NAN", "0X1.#QNAN00000000P+0" }},
@@ -773,7 +774,7 @@ static void test_printf_fp(void)
         { "%.020g", 0, { "0" }},
         { "%#.21f", 0, { "0.000000000000000000000" }},
         { "%#.20e", 0, { "0.00000000000000000000e+00", NULL, "0.00000000000000000000e+000" }},
-        { "%#.20g", 0, { "0.00000000000000000000" }},
+        { "%#.20g", 0, { "0.0000000000000000000" }, { "0.00000000000000000000" }},
 
         { "%f", 123, { "123.000000" }},
         { "%e", 123, { "1.230000e+02", NULL, "1.230000e+002" }},
@@ -812,20 +813,24 @@ static void test_printf_fp(void)
     };
 
     const char *res = NULL;
+    const char *broken_res;
     char buf[100];
     int i, j, r;
 
     for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
+        broken_res = NULL;
+
         for (j = 0; j < ARRAY_SIZE(flags); j++)
         {
             if (tests[i].res[j]) res = tests[i].res[j];
+            if (tests[i].broken[j]) broken_res = tests[i].broken[j];
 
             r = vsprintf_wrapper(flags[j], buf, sizeof(buf), tests[i].fmt, tests[i].d);
-            ok(r == strlen(res), "%d,%d) r = %d, expected %d\n",
-                    i, j, r, strlen(res));
-            ok(!strcmp(buf, res), "%d,%d) buf = %s, expected %s\n",
-                    i, j, buf, res);
+            ok(r == strlen(res) || broken(broken_res && r == strlen(broken_res)),
+                    "%d,%d) r = %d, expected %d\n", i, j, r, strlen(res));
+            ok(!strcmp(buf, res) || broken(broken_res && !strcmp(buf, broken_res)),
+                    "%d,%d) buf = %s, expected %s\n", i, j, buf, res);
         }
     }
 }
