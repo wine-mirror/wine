@@ -283,13 +283,47 @@ static void test_openfile(const WCHAR *test_avi_path)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(!graph, "Expected NULL graph.\n");
 
+    hr = IAMMultiMediaStream_GetFilter(mmstream, &filter);
+    ok(!!filter, "Expected non-NULL filter.\n");
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    check_interface(filter, &IID_IMediaSeeking, FALSE);
+
     hr = IAMMultiMediaStream_OpenFile(mmstream, test_avi_path, AMMSF_NORENDER);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    check_interface(filter, &IID_IMediaSeeking, FALSE);
 
     hr = IAMMultiMediaStream_GetFilterGraph(mmstream, &graph);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(!!graph, "Expected non-NULL graph.\n");
     IGraphBuilder_Release(graph);
+    IMediaStreamFilter_Release(filter);
+
+    ref = IAMMultiMediaStream_Release(mmstream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+    mmstream = create_ammultimediastream();
+    hr = IAMMultiMediaStream_GetFilterGraph(mmstream, &graph);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!graph, "Expected NULL graph.\n");
+
+    hr = IAMMultiMediaStream_GetFilter(mmstream, &filter);
+    ok(!!filter, "Expected non-NULL filter.\n");
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    check_interface(filter, &IID_IMediaSeeking, FALSE);
+
+    hr = IAMMultiMediaStream_OpenFile(mmstream, test_avi_path, 0);
+    ok(hr == VFW_E_CANNOT_CONNECT, "Got hr %#x.\n", hr);
+
+    check_interface(filter, &IID_IMediaSeeking, FALSE);
+
+    hr = IAMMultiMediaStream_GetFilterGraph(mmstream, &graph);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!!graph, "Expected non-NULL graph.\n");
+    IGraphBuilder_Release(graph);
+    IMediaStreamFilter_Release(filter);
 
     ref = IAMMultiMediaStream_Release(mmstream);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
@@ -389,12 +423,12 @@ static void test_mmstream_get_duration(const WCHAR *test_avi_path)
     mmstream = create_ammultimediastream();
 
     hr = IAMMultiMediaStream_OpenFile(mmstream, test_avi_path, 0);
-    todo_wine ok(hr == VFW_E_CANNOT_CONNECT, "Got hr %#x.\n", hr);
+    ok(hr == VFW_E_CANNOT_CONNECT, "Got hr %#x.\n", hr);
 
     duration = 0xdeadbeefdeadbeefULL;
     hr = IAMMultiMediaStream_GetDuration(mmstream, &duration);
     todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
-    todo_wine ok(duration == 0, "Got duration %s.\n", wine_dbgstr_longlong(duration));
+    ok(duration == 0, "Got duration %s.\n", wine_dbgstr_longlong(duration));
 
     ref = IAMMultiMediaStream_Release(mmstream);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
