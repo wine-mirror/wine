@@ -1,6 +1,6 @@
 MODULE    = combase.dll
 IMPORTLIB = combase
-IMPORTS   = advapi32 ole32 user32 gdi32 uuid
+IMPORTS   = advapi32 ole32 user32 gdi32 uuid rpcrt4
 DELAYIMPORTS = oleaut32
 
 EXTRADLLFLAGS = -mno-cygwin

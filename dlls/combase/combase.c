@@ -440,3 +440,17 @@ HRESULT WINAPI CoFileTimeNow(FILETIME *filetime)
     GetSystemTimeAsFileTime(filetime);
     return S_OK;
 }
+
+/******************************************************************************
+ *            CoCreateGuid        (combase.@)
+ */
+HRESULT WINAPI CoCreateGuid(GUID *guid)
+{
+    RPC_STATUS status;
+
+    if (!guid) return E_INVALIDARG;
+
+    status = UuidCreate(guid);
+    if (status == RPC_S_OK || status == RPC_S_UUID_LOCAL_ONLY) return S_OK;
+    return HRESULT_FROM_WIN32(status);
+}

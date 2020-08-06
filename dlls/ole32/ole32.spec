@@ -11,7 +11,7 @@
 @ stdcall CoBuildVersion()
 @ stdcall CoCopyProxy(ptr ptr)
 @ stdcall CoCreateFreeThreadedMarshaler(ptr ptr)
-@ stdcall CoCreateGuid(ptr)
+@ stdcall CoCreateGuid(ptr) combase.CoCreateGuid
 @ stdcall CoCreateInstance(ptr ptr long ptr ptr)
 @ stdcall CoCreateInstanceEx(ptr ptr long ptr long ptr)
 @ stdcall CoDecrementMTAUsage(ptr)
