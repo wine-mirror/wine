@@ -74,6 +74,17 @@ int __cdecl __wine_dbg_output( const char *str )
 }
 
 
+/*******************************************************************
+ *		KiUserApcDispatcher (NTDLL.@)
+ */
+void WINAPI KiUserApcDispatcher( CONTEXT *context, ULONG_PTR ctx, ULONG_PTR arg1, ULONG_PTR arg2,
+                                 PNTAPCFUNC func )
+{
+    func( ctx, arg1, arg2 );
+    NtContinue( context, TRUE );
+}
+
+
 /***********************************************************************
  *           RtlExitUserThread  (NTDLL.@)
  */

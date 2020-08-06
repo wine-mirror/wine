@@ -67,7 +67,7 @@
 # @ stub KiFastSystemCallRet
 # @ stub KiIntSystemCall
 @ stdcall -norelay KiRaiseUserExceptionDispatcher()
-@ stub KiUserApcDispatcher
+@ stdcall -norelay KiUserApcDispatcher(ptr long long long ptr)
 @ stub KiUserCallbackDispatcher
 @ stdcall -norelay KiUserExceptionDispatcher(ptr ptr)
 # @ stub LdrAccessOutOfProcessResource
