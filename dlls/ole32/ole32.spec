@@ -75,7 +75,7 @@
 @ stdcall CoReleaseMarshalData(ptr)
 @ stdcall CoReleaseServerProcess()
 @ stdcall CoResumeClassObjects()
-@ stdcall CoRevertToSelf()
+@ stdcall CoRevertToSelf() combase.CoRevertToSelf
 @ stdcall CoRevokeClassObject(long)
 @ stdcall CoRevokeInitializeSpy(int64)
 @ stdcall CoRevokeMallocSpy() combase.CoRevokeMallocSpy

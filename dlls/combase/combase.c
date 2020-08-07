@@ -567,3 +567,23 @@ HRESULT WINAPI CoImpersonateClient(void)
 
     return hr;
 }
+
+/***********************************************************************
+ *           CoRevertToSelf        (combase.@)
+ */
+HRESULT WINAPI CoRevertToSelf(void)
+{
+    IServerSecurity *server_security;
+    HRESULT hr;
+
+    TRACE("\n");
+
+    hr = CoGetCallContext(&IID_IServerSecurity, (void **)&server_security);
+    if (SUCCEEDED(hr))
+    {
+        hr = IServerSecurity_RevertToSelf(server_security);
+        IServerSecurity_Release(server_security);
+    }
+
+    return hr;
+}

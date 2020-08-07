@@ -149,7 +149,7 @@
 @ stdcall CoReleaseServerProcess() ole32.CoReleaseServerProcess
 @ stdcall CoResumeClassObjects() ole32.CoResumeClassObjects
 @ stub CoRetireServer
-@ stdcall CoRevertToSelf() ole32.CoRevertToSelf
+@ stdcall CoRevertToSelf()
 @ stdcall CoRevokeClassObject(long) ole32.CoRevokeClassObject
 @ stdcall CoRevokeInitializeSpy(int64) ole32.CoRevokeInitializeSpy
 @ stdcall CoRevokeMallocSpy()
