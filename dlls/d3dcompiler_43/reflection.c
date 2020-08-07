@@ -1441,6 +1441,14 @@ static HRESULT d3dcompiler_parse_rdef(struct d3dcompiler_shader_reflection *r, c
 
     target_version = r->target & D3DCOMPILER_SHADER_TARGET_VERSION_MASK;
 
+#if D3D_COMPILER_VERSION < 47
+    if (target_version >= 0x501)
+    {
+        WARN("Target version %#x is not supported in d3dcompiler %u.\n", target_version, D3D_COMPILER_VERSION);
+        return E_INVALIDARG;
+    }
+#endif
+
     read_dword(&ptr, &r->flags);
     TRACE("Flags: %u\n", r->flags);
 
