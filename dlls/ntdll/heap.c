@@ -145,7 +145,13 @@ typedef struct tagSUBHEAP
 typedef struct tagHEAP
 {
     DWORD_PTR        unknown1[2];
-    DWORD            unknown2;
+    DWORD            unknown2[2];
+    DWORD_PTR        unknown3[4];
+    DWORD            unknown4;
+    DWORD_PTR        unknown5[2];
+    DWORD            unknown6[3];
+    DWORD_PTR        unknown7[2];
+    /* For Vista through 10, 'flags' is at offset 0x40 (x86) / 0x70 (x64) */
     DWORD            flags;         /* Heap flags */
     DWORD            force_flags;   /* Forced heap flags for debugging */
     SUBHEAP          subheap;       /* First sub-heap */
