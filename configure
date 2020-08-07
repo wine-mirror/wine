@@ -878,6 +878,7 @@ with_pcap
 with_png
 with_pthread
 with_pulse
+with_quicktime
 with_sane
 with_sdl
 with_tiff
@@ -2608,6 +2609,7 @@ Optional Packages:
   --without-png           do not use PNG
   --without-pthread       do not use the pthread library
   --without-pulse         do not use PulseAudio sound support
+  --without-quicktime     do not use QuickTime support
   --without-sane          do not use SANE (scanner support)
   --without-sdl           do not use SDL
   --without-tiff          do not use TIFF
@@ -4111,6 +4113,12 @@ fi
 # Check whether --with-pulse was given.
 if test "${with_pulse+set}" = set; then :
   withval=$with_pulse;
+fi
+
+
+# Check whether --with-quicktime was given.
+if test "${with_quicktime+set}" = set; then :
+  withval=$with_quicktime;
 fi
 
 
@@ -8977,13 +8985,16 @@ done
 
         LIBS="$ac_save_LIBS"
     fi
-    if test "$ac_cv_header_QuickTime_ImageCompression_h" = "yes"
+
+        if test "x$with_quicktime" != "xno"
     then
-                ac_save_LIBS="$LIBS"
-        LIBS="-framework QuickTime -framework ApplicationServices -framework CoreVideo $LIBS"
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for the QuickTime framework" >&5
+        if test "$ac_cv_header_QuickTime_ImageCompression_h" = "yes"
+        then
+                        ac_save_LIBS="$LIBS"
+            LIBS="-framework QuickTime -framework ApplicationServices -framework CoreVideo $LIBS"
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for the QuickTime framework" >&5
 $as_echo_n "checking for the QuickTime framework... " >&6; }
-        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+            cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <QuickTime/ImageCompression.h>
 int
@@ -8997,22 +9008,29 @@ _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-                        QUICKTIME_LIBS="-framework QuickTime -framework ApplicationServices -framework CoreVideo"
+                            QUICKTIME_LIBS="-framework QuickTime -framework ApplicationServices -framework CoreVideo"
 
-                        enable_wineqtdecoder=${enable_wineqtdecoder:-yes}
+                            enable_wineqtdecoder=${enable_wineqtdecoder:-yes}
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-                        ac_cv_header_QuickTime_ImageCompression_h=no
+                            ac_cv_header_QuickTime_ImageCompression_h=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
-        LIBS="$ac_save_LIBS"
+            LIBS="$ac_save_LIBS"
+        fi
     fi
-    if test "$ac_cv_header_QuickTime_ImageCompression_h" != "yes"
-    then
-        as_fn_append wine_notices "|QuickTime ${notice_platform}development files not found, video decoding won't be supported."
-    fi
+    if test "$ac_cv_header_QuickTime_ImageCompression_h" != "yes"; then :
+  case "x$with_quicktime" in
+  x)   as_fn_append wine_notices "|QuickTime ${notice_platform}development files not found, video decoding won't be supported." ;;
+  xno) ;;
+  *)   as_fn_error $? "QuickTime ${notice_platform}development files not found, video decoding won't be supported.
+This is an error since --with-quicktime was requested." "$LINENO" 5 ;;
+esac
+
+fi
+
     if test "$ac_cv_header_Carbon_Carbon_h" = "yes"
     then
         CARBON_LIBS="-framework Carbon"

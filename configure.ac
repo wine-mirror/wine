@@ -79,6 +79,7 @@ AC_ARG_WITH(png,       AS_HELP_STRING([--without-png],[do not use PNG]))
 AC_ARG_WITH(pthread,   AS_HELP_STRING([--without-pthread],[do not use the pthread library]),
             [if test "x$withval" = "xno"; then ac_cv_header_pthread_h=no; fi])
 AC_ARG_WITH(pulse,     AS_HELP_STRING([--without-pulse],[do not use PulseAudio sound support]))
+AC_ARG_WITH(quicktime, AS_HELP_STRING([--without-quicktime],[do not use QuickTime support]))
 AC_ARG_WITH(sane,      AS_HELP_STRING([--without-sane],[do not use SANE (scanner support)]))
 AC_ARG_WITH(sdl,       AS_HELP_STRING([--without-sdl],[do not use SDL]))
 AC_ARG_WITH(tiff,      AS_HELP_STRING([--without-tiff],[do not use TIFF]))
@@ -830,24 +831,28 @@ case $host_os in
         AC_CHECK_FUNCS(IOHIDManagerCreate)
         LIBS="$ac_save_LIBS"
     fi
-    if test "$ac_cv_header_QuickTime_ImageCompression_h" = "yes"
+
+    dnl *** Check for QuickTime ***
+    if test "x$with_quicktime" != "xno"
     then
-        dnl Make sure we can actually use the QuickTime framework
-        ac_save_LIBS="$LIBS"
-        LIBS="-framework QuickTime -framework ApplicationServices -framework CoreVideo $LIBS"
-        AC_MSG_CHECKING([for the QuickTime framework])
-        AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <QuickTime/ImageCompression.h>]],[[CodecManagerVersion(NULL);]])],
-                       [AC_MSG_RESULT([yes])
-                        AC_SUBST(QUICKTIME_LIBS,"-framework QuickTime -framework ApplicationServices -framework CoreVideo")
-                        enable_wineqtdecoder=${enable_wineqtdecoder:-yes}],
-                       [AC_MSG_RESULT([no])
-                        ac_cv_header_QuickTime_ImageCompression_h=no])
-        LIBS="$ac_save_LIBS"
+        if test "$ac_cv_header_QuickTime_ImageCompression_h" = "yes"
+        then
+            dnl Make sure we can actually use the QuickTime framework
+            ac_save_LIBS="$LIBS"
+            LIBS="-framework QuickTime -framework ApplicationServices -framework CoreVideo $LIBS"
+            AC_MSG_CHECKING([for the QuickTime framework])
+            AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <QuickTime/ImageCompression.h>]],[[CodecManagerVersion(NULL);]])],
+                           [AC_MSG_RESULT([yes])
+                            AC_SUBST(QUICKTIME_LIBS,"-framework QuickTime -framework ApplicationServices -framework CoreVideo")
+                            enable_wineqtdecoder=${enable_wineqtdecoder:-yes}],
+                           [AC_MSG_RESULT([no])
+                            ac_cv_header_QuickTime_ImageCompression_h=no])
+            LIBS="$ac_save_LIBS"
+        fi
     fi
-    if test "$ac_cv_header_QuickTime_ImageCompression_h" != "yes"
-    then
-        WINE_NOTICE([QuickTime ${notice_platform}development files not found, video decoding won't be supported.])
-    fi
+    WINE_NOTICE_WITH(quicktime,[test "$ac_cv_header_QuickTime_ImageCompression_h" != "yes"],
+                     [QuickTime ${notice_platform}development files not found, video decoding won't be supported.])
+
     if test "$ac_cv_header_Carbon_Carbon_h" = "yes"
     then
         AC_SUBST(CARBON_LIBS,"-framework Carbon")
