@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2020-06-05 00:17+0300\n"
+"PO-Revision-Date: 2020-08-07 18:55+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -12511,6 +12511,9 @@ msgid ""
 "\n"
 "hardlink      hardlink management\n"
 msgstr ""
+"- Palaikomos komandos -\n"
+"\n"
+"hardlink      tvirtųjų nuorodų valdymas\n"
 
 #: fsutil.mc:35
 msgid ""
@@ -12518,10 +12521,13 @@ msgid ""
 "\n"
 "create        create a hardlink\n"
 msgstr ""
+"- Hardlink - palaikomos komandos -\n"
+"\n"
+"create        sukurti tvirtąją nuorodą\n"
 
 #: fsutil.mc:40
 msgid "Syntax: fsutil hardlink create <new> <existing>\n"
-msgstr ""
+msgstr "Sintaksė: fsutil hardlink create <nauja> <egzistuojanti>\n"
 
 #: hostname.rc:30
 msgid "Usage: hostname\n"
