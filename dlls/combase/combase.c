@@ -607,3 +607,13 @@ HRESULT WINAPI CoGetObjectContext(REFIID riid, void **ppv)
 
     return IObjContext_QueryInterface(context, riid, ppv);
 }
+
+/***********************************************************************
+ *          CoGetCallState        (combase.@)
+ */
+HRESULT WINAPI CoGetCallState(int arg1, ULONG *arg2)
+{
+    FIXME("%d, %p.\n", arg1, arg2);
+
+    return E_NOTIMPL;
+}

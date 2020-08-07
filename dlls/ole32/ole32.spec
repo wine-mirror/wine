@@ -28,7 +28,7 @@
 @ stdcall CoGetActivationState(int128 long ptr)
 @ stdcall CoGetApartmentType(ptr ptr)
 @ stdcall CoGetCallContext(ptr ptr)
-@ stdcall CoGetCallState(long ptr)
+@ stdcall CoGetCallState(long ptr) combase.CoGetCallState
 @ stdcall CoGetCallerTID(ptr)
 @ stdcall CoGetClassObject(ptr long ptr ptr ptr)
 @ stdcall CoGetContextToken(ptr)
