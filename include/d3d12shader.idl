@@ -182,3 +182,115 @@ typedef struct _D3D12_LIBRARY_DESC
     UINT Flags;
     UINT FunctionCount;
 } D3D12_LIBRARY_DESC;
+
+interface ID3D12ShaderReflectionConstantBuffer;
+
+[
+    uuid(e913c351-783d-48ca-a1d1-4f306284ad56),
+    object,
+    local,
+]
+interface ID3D12ShaderReflectionType
+{
+    HRESULT GetDesc(D3D12_SHADER_TYPE_DESC *desc);
+    ID3D12ShaderReflectionType *GetMemberTypeByIndex(UINT index);
+    ID3D12ShaderReflectionType *GetMemberTypeByName(const char *name);
+    const char *GetMemberTypeName(UINT index);
+    HRESULT IsEqual(ID3D12ShaderReflectionType *type);
+    ID3D12ShaderReflectionType *GetSubType();
+    ID3D12ShaderReflectionType *GetBaseClass();
+    UINT GetNumInterfaces();
+    ID3D12ShaderReflectionType *GetInterfaceByIndex(UINT index);
+    HRESULT IsOfType(ID3D12ShaderReflectionType *type);
+    HRESULT ImplementsInterface(ID3D12ShaderReflectionType *base);
+}
+
+[
+    uuid(8337a8a6-a216-444a-b2f4-314733a73aea),
+    object,
+    local,
+]
+interface ID3D12ShaderReflectionVariable
+{
+    HRESULT GetDesc(D3D12_SHADER_VARIABLE_DESC *desc);
+    ID3D12ShaderReflectionType *GetType();
+    ID3D12ShaderReflectionConstantBuffer *GetBuffer();
+    UINT GetInterfaceSlot(UINT index);
+}
+
+[
+    uuid(c59598b4-48b3-4869-b9b1-b1618b14a8b7),
+    object,
+    local,
+]
+interface ID3D12ShaderReflectionConstantBuffer
+{
+    HRESULT GetDesc(D3D12_SHADER_BUFFER_DESC *desc);
+    ID3D12ShaderReflectionVariable *GetVariableByIndex(UINT index);
+    ID3D12ShaderReflectionVariable *GetVariableByName(const char *name);
+}
+
+[
+    uuid(5a58797d-a72c-478d-8ba2-efc6b0efe88e),
+    object,
+    local,
+]
+interface ID3D12ShaderReflection : IUnknown
+{
+    HRESULT GetDesc(D3D12_SHADER_DESC *desc);
+    ID3D12ShaderReflectionConstantBuffer *GetConstantBufferByIndex(UINT index);
+    ID3D12ShaderReflectionConstantBuffer *GetConstantBufferByName(const char *name);
+    HRESULT GetResourceBindingDesc(UINT index, D3D12_SHADER_INPUT_BIND_DESC *desc);
+    HRESULT GetInputParameterDesc(UINT index, D3D12_SIGNATURE_PARAMETER_DESC *desc);
+    HRESULT GetOutputParameterDesc(UINT index, D3D12_SIGNATURE_PARAMETER_DESC *desc);
+    HRESULT GetPatchConstantParameterDesc(UINT index, D3D12_SIGNATURE_PARAMETER_DESC *desc);
+    ID3D12ShaderReflectionVariable *GetVariableByName(const char *name);
+    HRESULT GetResourceBindingDescByName(const char *name, D3D12_SHADER_INPUT_BIND_DESC *desc);
+    UINT GetMovInstructionCount();
+    UINT GetMovcInstructionCount();
+    UINT GetConversionInstructionCount();
+    UINT GetBitwiseInstructionCount();
+    D3D_PRIMITIVE GetGSInputPrimitive();
+    BOOL IsSampleFrequencyShader();
+    UINT GetNumInterfaceSlots();
+    HRESULT GetMinFeatureLevel(D3D_FEATURE_LEVEL *level);
+    UINT GetThreadGroupSize(UINT *sizex, UINT *sizey, UINT *sizez);
+    UINT64 GetRequiresFlags();
+}
+
+[
+    uuid(ec25f42d-7006-4f2b-b33e-02cc3375733f),
+    object,
+    local,
+]
+interface ID3D12FunctionParameterReflection
+{
+    HRESULT GetDesc(D3D12_PARAMETER_DESC *desc);
+}
+
+[
+    uuid(1108795c-2772-4ba9-b2a8-d464dc7e2799),
+    object,
+    local,
+]
+interface ID3D12FunctionReflection
+{
+    HRESULT GetDesc(D3D12_FUNCTION_DESC *desc);
+    ID3D12ShaderReflectionConstantBuffer *GetConstantBufferByIndex(UINT index);
+    ID3D12ShaderReflectionConstantBuffer *GetConstantBufferByName(const char *name);
+    HRESULT GetResourceBindingDesc(UINT index, D3D12_SHADER_INPUT_BIND_DESC *desc);
+    ID3D12ShaderReflectionVariable *GetVariableByName(const char *name);
+    HRESULT GetResourceBindingDescByName(const char *name, D3D12_SHADER_INPUT_BIND_DESC *desc);
+    ID3D12FunctionParameterReflection *GetFunctionParameter(INT index);
+}
+
+[
+    uuid(8e349d19-54db-4a56-9dc9-119d87bdb804),
+    object,
+    local,
+]
+interface ID3D12LibraryReflection : IUnknown
+{
+    HRESULT GetDesc(D3D12_LIBRARY_DESC *desc);
+    ID3D12FunctionReflection *GetFunctionByIndex(INT index);
+}
