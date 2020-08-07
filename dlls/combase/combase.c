@@ -617,3 +617,13 @@ HRESULT WINAPI CoGetCallState(int arg1, ULONG *arg2)
 
     return E_NOTIMPL;
 }
+
+/***********************************************************************
+ *          CoGetActivationState    (combase.@)
+ */
+HRESULT WINAPI CoGetActivationState(GUID guid, DWORD arg2, DWORD *arg3)
+{
+    FIXME("%s, %x, %p.\n", debugstr_guid(&guid), arg2, arg3);
+
+    return E_NOTIMPL;
+}
