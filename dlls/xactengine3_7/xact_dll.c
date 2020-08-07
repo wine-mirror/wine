@@ -547,7 +547,7 @@ static HRESULT WINAPI IXACT3WaveBankImpl_Prepare(IXACT3WaveBank *iface,
 
     wave->IXACT3Wave_iface.lpVtbl = &XACT3Wave_Vtbl;
     wave->fact_wave = fwave;
-    *ppWave = (IXACT3Wave*)wave;
+    *ppWave = &wave->IXACT3Wave_iface;
 
     TRACE("Created Wave: %p\n", wave);
 
@@ -589,7 +589,7 @@ static HRESULT WINAPI IXACT3WaveBankImpl_Play(IXACT3WaveBank *iface,
 
         wave->IXACT3Wave_iface.lpVtbl = &XACT3Wave_Vtbl;
         wave->fact_wave = fwave;
-        *ppWave = (IXACT3Wave*)wave;
+        *ppWave = &wave->IXACT3Wave_iface;
     }
 
     return hr;
@@ -844,7 +844,7 @@ static HRESULT WINAPI IXACT3EngineImpl_CreateSoundBank(IXACT3Engine *iface,
 
     sb->IXACT3SoundBank_iface.lpVtbl = &XACT3SoundBank_Vtbl;
     sb->fact_soundbank = fsb;
-    *ppSoundBank = (IXACT3SoundBank*)sb;
+    *ppSoundBank = &sb->IXACT3SoundBank_iface;
 
     TRACE("Created SoundBank: %p\n", sb);
 
@@ -881,7 +881,7 @@ static HRESULT WINAPI IXACT3EngineImpl_CreateInMemoryWaveBank(IXACT3Engine *ifac
 
     wb->IXACT3WaveBank_iface.lpVtbl = &XACT3WaveBank_Vtbl;
     wb->fact_wavebank = fwb;
-    *ppWaveBank = (IXACT3WaveBank*)wb;
+    *ppWaveBank = &wb->IXACT3WaveBank_iface;
 
     TRACE("Created in-memory WaveBank: %p\n", wb);
 
@@ -929,7 +929,7 @@ static HRESULT WINAPI IXACT3EngineImpl_CreateStreamingWaveBank(IXACT3Engine *ifa
 
     wb->IXACT3WaveBank_iface.lpVtbl = &XACT3WaveBank_Vtbl;
     wb->fact_wavebank = fwb;
-    *ppWaveBank = (IXACT3WaveBank*)wb;
+    *ppWaveBank = &wb->IXACT3WaveBank_iface;
 
     TRACE("Created streaming WaveBank: %p\n", wb);
 
