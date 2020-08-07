@@ -138,7 +138,7 @@ struct d3dcompiler_shader_reflection
     struct d3dcompiler_shader_signature *osgn;
     struct d3dcompiler_shader_signature *pcsg;
     char *resource_string;
-    D3D11_SHADER_INPUT_BIND_DESC *bound_resources;
+    D3D12_SHADER_INPUT_BIND_DESC *bound_resources;
     struct d3dcompiler_shader_reflection_constant_buffer *constant_buffers;
     struct wine_rb_tree types;
 };
@@ -476,17 +476,17 @@ static struct ID3D11ShaderReflectionConstantBuffer * STDMETHODCALLTYPE d3dcompil
 static HRESULT STDMETHODCALLTYPE d3dcompiler_shader_reflection_GetResourceBindingDesc(
         ID3D11ShaderReflection *iface, UINT index, D3D11_SHADER_INPUT_BIND_DESC *desc)
 {
-    struct d3dcompiler_shader_reflection *This = impl_from_ID3D11ShaderReflection(iface);
+    struct d3dcompiler_shader_reflection *reflection = impl_from_ID3D11ShaderReflection(iface);
 
     TRACE("iface %p, index %u, desc %p\n", iface, index, desc);
 
-    if (!desc || index >= This->bound_resource_count)
+    if (!desc || index >= reflection->bound_resource_count)
     {
         WARN("Invalid argument specified\n");
         return E_INVALIDARG;
     }
 
-    *desc = This->bound_resources[index];
+    memcpy(desc, &reflection->bound_resources[index], sizeof(*desc));
 
     return S_OK;
 }
@@ -596,12 +596,12 @@ static HRESULT STDMETHODCALLTYPE d3dcompiler_shader_reflection_GetResourceBindin
 
     for (i = 0; i < This->bound_resource_count; ++i)
     {
-        D3D11_SHADER_INPUT_BIND_DESC *d = &This->bound_resources[i];
+        D3D12_SHADER_INPUT_BIND_DESC *d = &This->bound_resources[i];
 
         if (!strcmp(d->Name, name))
         {
             TRACE("Returning D3D11_SHADER_INPUT_BIND_DESC %p.\n", d);
-            *desc = *d;
+            memcpy(desc, d, sizeof(*desc));
             return S_OK;
         }
     }
@@ -1412,13 +1412,14 @@ err_out:
 
 static HRESULT d3dcompiler_parse_rdef(struct d3dcompiler_shader_reflection *r, const char *data, DWORD data_size)
 {
-    const char *ptr = data;
-    DWORD size = data_size >> 2;
+    struct d3dcompiler_shader_reflection_constant_buffer *constant_buffers = NULL;
     DWORD offset, cbuffer_offset, resource_offset, creator_offset;
     unsigned int i, string_data_offset, string_data_size;
+    D3D12_SHADER_INPUT_BIND_DESC *bound_resources = NULL;
     char *string_data = NULL, *creator = NULL;
-    D3D11_SHADER_INPUT_BIND_DESC *bound_resources = NULL;
-    struct d3dcompiler_shader_reflection_constant_buffer *constant_buffers = NULL;
+    DWORD size = data_size >> 2;
+    const char *ptr = data;
+    DWORD target_version;
     HRESULT hr;
 
     TRACE("Size %u\n", size);
@@ -1438,6 +1439,8 @@ static HRESULT d3dcompiler_parse_rdef(struct d3dcompiler_shader_reflection *r, c
     read_dword(&ptr, &r->target);
     TRACE("Target: %#x\n", r->target);
 
+    target_version = r->target & D3DCOMPILER_SHADER_TARGET_VERSION_MASK;
+
     read_dword(&ptr, &r->flags);
     TRACE("Flags: %u\n", r->flags);
 
@@ -1452,7 +1455,7 @@ static HRESULT d3dcompiler_parse_rdef(struct d3dcompiler_shader_reflection *r, c
     TRACE("Creator: %s.\n", debugstr_a(creator));
 
     /* todo: Parse RD11 */
-    if ((r->target & D3DCOMPILER_SHADER_TARGET_VERSION_MASK) >= 0x500)
+    if (target_version >= 0x500)
     {
         skip_dword_unknown(&ptr, 8);
     }
@@ -1483,7 +1486,7 @@ static HRESULT d3dcompiler_parse_rdef(struct d3dcompiler_shader_reflection *r, c
         ptr = data + resource_offset;
         for (i = 0; i < r->bound_resource_count; i++)
         {
-            D3D11_SHADER_INPUT_BIND_DESC *desc = &bound_resources[i];
+            D3D12_SHADER_INPUT_BIND_DESC *desc = &bound_resources[i];
 
             read_dword(&ptr, &offset);
             desc->Name = string_data + (offset - string_data_offset);
@@ -1509,6 +1512,19 @@ static HRESULT d3dcompiler_parse_rdef(struct d3dcompiler_shader_reflection *r, c
 
             read_dword(&ptr, &desc->uFlags);
             TRACE("Input bind uFlags: %u\n", desc->uFlags);
+
+            if (target_version >= 0x501)
+            {
+                read_dword(&ptr, &desc->Space);
+                TRACE("Input bind Space %u.\n", desc->Space);
+                read_dword(&ptr, &desc->uID);
+                TRACE("Input bind uID %u.\n", desc->uID);
+            }
+            else
+            {
+                desc->Space = 0;
+                desc->uID = 0;
+            }
         }
     }
 
