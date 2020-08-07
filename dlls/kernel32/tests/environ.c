@@ -320,6 +320,68 @@ static void test_GetSetEnvironmentVariableW(void)
     }
 }
 
+static void test_GetSetEnvironmentVariableAW(void)
+{
+    static const WCHAR nameW[] = {0x540D, 0x524D, 0};
+    static const char name[] = "\x96\xBC\x91\x4F";
+    static const WCHAR valueW[] = {0x5024, 0};
+    static const char value[] = "\x92\x6C";
+    WCHAR bufW[256];
+    char buf[256];
+    DWORD ret_size;
+    BOOL ret;
+
+    if (GetACP() != 932)
+    {
+        skip("GetACP() == %d, need 932 for A/W tests\n", GetACP());
+        return;
+    }
+
+    /* Write W, read A */
+    ret = SetEnvironmentVariableW(nameW, valueW);
+    ok(ret == TRUE, "SetEnvironmentVariableW failed, last error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret_size = GetEnvironmentVariableA(name, NULL, 0);
+    todo_wine ok(ret_size == lstrlenA(value) + 1, "expected ret_size %d, got %d\n", lstrlenA(value) + 1, ret_size);
+    ok(GetLastError() == 0xdeadbeef, "expected last error 0xdeadbeef, got %d\n", GetLastError());
+
+    lstrcpyA(buf, "foo");
+    SetLastError(0xdeadbeef);
+    ret_size = GetEnvironmentVariableA(name, buf, lstrlenA(value) + 1);
+    todo_wine ok(lstrcmpA(buf, value) == 0, "expected %s, got %s\n", debugstr_a(value), debugstr_a(buf));
+    todo_wine ok(ret_size == lstrlenA(value), "expected ret_size %d, got %d\n", lstrlenA(value), ret_size);
+    ok(GetLastError() == 0xdeadbeef, "expected last error 0xdeadbeef, got %d\n", GetLastError());
+
+    /* Write A, read A/W */
+    ret = SetEnvironmentVariableA(name, value);
+    ok(ret == TRUE, "SetEnvironmentVariableW failed, last error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret_size = GetEnvironmentVariableA(name, NULL, 0);
+    todo_wine ok(ret_size == lstrlenA(value) + 1, "expected ret_size %d, got %d\n", lstrlenA(value) + 1, ret_size);
+    ok(GetLastError() == 0xdeadbeef, "expected last error 0xdeadbeef, got %d\n", GetLastError());
+
+    lstrcpyA(buf, "foo");
+    SetLastError(0xdeadbeef);
+    ret_size = GetEnvironmentVariableA(name, buf, lstrlenA(value) + 1);
+    todo_wine ok(lstrcmpA(buf, value) == 0, "expected %s, got %s\n", debugstr_a(value), debugstr_a(buf));
+    todo_wine ok(ret_size == lstrlenA(value), "expected ret_size %d, got %d\n", lstrlenA(value), ret_size);
+    ok(GetLastError() == 0xdeadbeef, "expected last error 0xdeadbeef, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret_size = GetEnvironmentVariableW(nameW, NULL, 0);
+    ok(ret_size == lstrlenW(valueW) + 1, "expected ret_size %d, got %d\n", lstrlenW(valueW) + 1, ret_size);
+    ok(GetLastError() == 0xdeadbeef, "expected last error 0xdeadbeef, got %d\n", GetLastError());
+
+    lstrcpyW(bufW, L"foo");
+    SetLastError(0xdeadbeef);
+    ret_size = GetEnvironmentVariableW(nameW, bufW, lstrlenW(valueW) + 1);
+    ok(ret_size == lstrlenW(valueW), "expected ret_size %d, got %d\n", lstrlenW(valueW), ret_size);
+    ok(GetLastError() == 0xdeadbeef, "expected last error 0xdeadbeef, got %d\n", GetLastError());
+    ok(lstrcmpW(bufW, valueW) == 0, "expected %s, got %s\n", debugstr_w(valueW), debugstr_w(bufW));
+}
+
 static void test_ExpandEnvironmentStringsA(void)
 {
     const char* value="Long long value";
@@ -720,6 +782,7 @@ START_TEST(environ)
     test_Predefined();
     test_GetSetEnvironmentVariableA();
     test_GetSetEnvironmentVariableW();
+    test_GetSetEnvironmentVariableAW();
     test_ExpandEnvironmentStringsA();
     test_GetComputerName();
     test_GetComputerNameExA();
