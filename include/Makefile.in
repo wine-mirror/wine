@@ -474,6 +474,7 @@ SOURCES = \
 	msvcrt/setjmp.h \
 	msvcrt/share.h \
 	msvcrt/signal.h \
+	msvcrt/stdbool.h \
 	msvcrt/stddef.h \
 	msvcrt/stdint.h \
 	msvcrt/stdio.h \
