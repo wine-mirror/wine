@@ -60,6 +60,9 @@ HRESULT WINAPI DwmIsCompositionEnabled(BOOL *enabled)
     else
         TRACE("%p\n", enabled);
 
+    if (!enabled)
+        return E_INVALIDARG;
+
     *enabled = FALSE;
     return S_OK;
 }

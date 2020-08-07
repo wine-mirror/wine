@@ -20756,6 +20756,7 @@ wine_fn_config_makefile dlls/dsuiext enable_dsuiext
 wine_fn_config_makefile dlls/dswave enable_dswave
 wine_fn_config_makefile dlls/dswave/tests enable_tests
 wine_fn_config_makefile dlls/dwmapi enable_dwmapi
+wine_fn_config_makefile dlls/dwmapi/tests enable_tests
 wine_fn_config_makefile dlls/dwrite enable_dwrite
 wine_fn_config_makefile dlls/dwrite/tests enable_tests
 wine_fn_config_makefile dlls/dx8vb enable_dx8vb
