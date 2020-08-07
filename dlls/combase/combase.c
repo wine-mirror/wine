@@ -20,6 +20,8 @@
 #define COBJMACROS
 #define NONAMELESSUNION
 
+#define USE_COM_CONTEXT_DEF
+#include "objbase.h"
 #include "oleauto.h"
 
 #include "wine/debug.h"
@@ -586,4 +588,22 @@ HRESULT WINAPI CoRevertToSelf(void)
     }
 
     return hr;
+}
+
+/***********************************************************************
+ *           CoGetObjectContext    (combase.@)
+ */
+HRESULT WINAPI CoGetObjectContext(REFIID riid, void **ppv)
+{
+    IObjContext *context;
+    HRESULT hr;
+
+    TRACE("%s, %p.\n", debugstr_guid(riid), ppv);
+
+    *ppv = NULL;
+    hr = CoGetContextToken((ULONG_PTR *)&context);
+    if (FAILED(hr))
+        return hr;
+
+    return IObjContext_QueryInterface(context, riid, ppv);
 }

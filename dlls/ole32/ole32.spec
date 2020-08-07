@@ -41,7 +41,7 @@
 @ stdcall CoGetMalloc(long ptr) combase.CoGetMalloc
 @ stdcall CoGetMarshalSizeMax(ptr ptr ptr long ptr long)
 @ stdcall CoGetObject(wstr ptr ptr ptr)
-@ stdcall CoGetObjectContext(ptr ptr)
+@ stdcall CoGetObjectContext(ptr ptr) combase.CoGetObjectContext
 @ stdcall CoGetPSClsid(ptr ptr)
 @ stdcall CoGetStandardMarshal(ptr ptr long ptr long ptr)
 @ stdcall CoGetState(ptr)

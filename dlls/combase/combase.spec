@@ -113,7 +113,7 @@
 @ stdcall CoGetMalloc(long ptr)
 @ stdcall CoGetMarshalSizeMax(ptr ptr ptr long ptr long) ole32.CoGetMarshalSizeMax
 @ stub CoGetModuleType
-@ stdcall CoGetObjectContext(ptr ptr) ole32.CoGetObjectContext
+@ stdcall CoGetObjectContext(ptr ptr)
 @ stdcall CoGetPSClsid(ptr ptr) ole32.CoGetPSClsid
 @ stub CoGetProcessIdentifier
 @ stdcall CoGetStandardMarshal(ptr ptr long ptr long ptr) ole32.CoGetStandardMarshal
