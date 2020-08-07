@@ -634,6 +634,7 @@ typedef struct _XACT3EngineImpl {
 
     XACT_READFILE_CALLBACK pReadFile;
     XACT_GETOVERLAPPEDRESULT_CALLBACK pGetOverlappedResult;
+    XACT_NOTIFICATION_CALLBACK notification_callback;
 } XACT3EngineImpl;
 
 typedef struct wrap_readfile_struct {
@@ -745,6 +746,25 @@ static HRESULT WINAPI IXACT3EngineImpl_GetFinalMixFormat(IXACT3Engine *iface,
             (FAudioWaveFormatExtensible*) pFinalMixFormat);
 }
 
+static void FACTCALL fact_notification_cb(const FACTNotification *notification)
+{
+    XACT3EngineImpl *engine = (XACT3EngineImpl *)notification->pvContext;
+
+    /* Older versions of FAudio don't pass through the context */
+    if (!engine)
+    {
+        WARN("Notification context is NULL\n");
+        return;
+    }
+
+    if (notification->type == XACTNOTIFICATIONTYPE_SOUNDBANKDESTROYED)
+    {
+        FIXME("Callback XACTNOTIFICATIONTYPE_SOUNDBANKDESTROYED\n");
+    }
+    else
+        FIXME("Unsupported callback type %d\n", notification->type);
+}
+
 static HRESULT WINAPI IXACT3EngineImpl_Initialize(IXACT3Engine *iface,
         const XACT_RUNTIME_PARAMETERS *pParams)
 {
@@ -788,6 +808,9 @@ static HRESULT WINAPI IXACT3EngineImpl_Initialize(IXACT3Engine *iface,
                 GetOverlappedResult;
     params.fileIOCallbacks.readFileCallback = wrap_readfile;
     params.fileIOCallbacks.getOverlappedResultCallback = wrap_getoverlappedresult;
+    params.fnNotificationCallback = fact_notification_cb;
+
+    This->notification_callback = (XACT_NOTIFICATION_CALLBACK)pParams->fnNotificationCallback;
 
     ret = FACTAudioEngine_Initialize(This->fact_engine, &params);
     if (ret != 0)
@@ -1062,6 +1085,7 @@ static HRESULT WINAPI IXACT3EngineImpl_RegisterNotification(IXACT3Engine *iface,
     TRACE("(%p)->(%p)\n", This, pNotificationDesc);
 
     unwrap_notificationdesc(&fdesc, pNotificationDesc);
+    fdesc.pvContext = This;
     return FACTAudioEngine_RegisterNotification(This->fact_engine, &fdesc);
 }
 
@@ -1074,6 +1098,7 @@ static HRESULT WINAPI IXACT3EngineImpl_UnRegisterNotification(IXACT3Engine *ifac
     TRACE("(%p)->(%p)\n", This, pNotificationDesc);
 
     unwrap_notificationdesc(&fdesc, pNotificationDesc);
+    fdesc.pvContext = This;
     return FACTAudioEngine_UnRegisterNotification(This->fact_engine, &fdesc);
 }
 
