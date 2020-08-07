@@ -109,6 +109,7 @@ SOURCES = \
 	d3d11sdklayers.idl \
 	d3d11shader.h \
 	d3d12.idl \
+	d3d12shader.idl \
 	d3d8.h \
 	d3d8caps.h \
 	d3d8types.h \

@@ -20,6 +20,7 @@
 #define __D3DCOMPILER_H__
 
 #include "d3d11shader.h"
+#include "d3d12shader.h"
 
 #ifdef __cplusplus
 extern "C" {
