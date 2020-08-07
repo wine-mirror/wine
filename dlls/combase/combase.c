@@ -627,3 +627,101 @@ HRESULT WINAPI CoGetActivationState(GUID guid, DWORD arg2, DWORD *arg3)
 
     return E_NOTIMPL;
 }
+
+static void init_multi_qi(DWORD count, MULTI_QI *mqi, HRESULT hr)
+{
+    ULONG i;
+
+    for (i = 0; i < count; i++)
+    {
+        mqi[i].pItf = NULL;
+        mqi[i].hr = hr;
+    }
+}
+
+static HRESULT return_multi_qi(IUnknown *unk, DWORD count, MULTI_QI *mqi, BOOL include_unk)
+{
+    ULONG index = 0, fetched = 0;
+
+    if (include_unk)
+    {
+        mqi[0].hr = S_OK;
+        mqi[0].pItf = unk;
+        index = fetched = 1;
+    }
+
+    for (; index < count; index++)
+    {
+        mqi[index].hr = IUnknown_QueryInterface(unk, mqi[index].pIID, (void **)&mqi[index].pItf);
+        if (mqi[index].hr == S_OK)
+            fetched++;
+    }
+
+    if (!include_unk)
+        IUnknown_Release(unk);
+
+    if (fetched == 0)
+        return E_NOINTERFACE;
+
+    return fetched == count ? S_OK : CO_S_NOTALLINTERFACES;
+}
+
+/***********************************************************************
+ *          CoGetInstanceFromFile    (combase.@)
+ */
+HRESULT WINAPI DECLSPEC_HOTPATCH CoGetInstanceFromFile(COSERVERINFO *server_info, CLSID *rclsid,
+        IUnknown *outer, DWORD cls_context, DWORD grfmode, OLECHAR *filename, DWORD count,
+        MULTI_QI *results)
+{
+    IPersistFile *pf = NULL;
+    IUnknown *obj = NULL;
+    CLSID clsid;
+    HRESULT hr;
+
+    if (!count || !results)
+        return E_INVALIDARG;
+
+    if (server_info)
+        FIXME("() non-NULL server_info not supported\n");
+
+    init_multi_qi(count, results, E_NOINTERFACE);
+
+    if (!rclsid)
+    {
+        hr = GetClassFile(filename, &clsid);
+        if (FAILED(hr))
+        {
+            ERR("Failed to get CLSID from a file.\n");
+            return hr;
+        }
+
+        rclsid = &clsid;
+    }
+
+    hr = CoCreateInstance(rclsid, outer, cls_context, &IID_IUnknown, (void **)&obj);
+    if (hr != S_OK)
+    {
+        init_multi_qi(count, results, hr);
+        return hr;
+    }
+
+    /* Init from file */
+    hr = IUnknown_QueryInterface(obj, &IID_IPersistFile, (void **)&pf);
+    if (FAILED(hr))
+    {
+        init_multi_qi(count, results, hr);
+        IUnknown_Release(obj);
+        return hr;
+    }
+
+    hr = IPersistFile_Load(pf, filename, grfmode);
+    IPersistFile_Release(pf);
+    if (SUCCEEDED(hr))
+        return return_multi_qi(obj, count, results, FALSE);
+    else
+    {
+        init_multi_qi(count, results, hr);
+        IUnknown_Release(obj);
+        return hr;
+    }
+}

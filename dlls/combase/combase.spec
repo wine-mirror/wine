@@ -107,7 +107,7 @@
 @ stdcall CoGetCurrentProcess() ole32.CoGetCurrentProcess
 @ stdcall CoGetDefaultContext(long ptr ptr) ole32.CoGetDefaultContext
 @ stub CoGetErrorInfo
-@ stdcall CoGetInstanceFromFile(ptr ptr ptr long long wstr long ptr) ole32.CoGetInstanceFromFile
+@ stdcall CoGetInstanceFromFile(ptr ptr ptr long long wstr long ptr)
 @ stdcall CoGetInstanceFromIStorage(ptr ptr ptr long ptr long ptr) ole32.CoGetInstanceFromIStorage
 @ stdcall CoGetInterfaceAndReleaseStream(ptr ptr ptr) ole32.CoGetInterfaceAndReleaseStream
 @ stdcall CoGetMalloc(long ptr)
