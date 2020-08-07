@@ -76,7 +76,7 @@
 @ stub CoAllowUnmarshalerCLSID
 @ stub CoCancelCall
 @ stdcall CoCopyProxy(ptr ptr)
-@ stub CoCreateErrorInfo
+@ stdcall CoCreateErrorInfo(ptr) CreateErrorInfo
 @ stdcall CoCreateFreeThreadedMarshaler(ptr ptr) ole32.CoCreateFreeThreadedMarshaler
 @ stdcall CoCreateGuid(ptr)
 @ stdcall CoCreateInstance(ptr ptr long ptr ptr) ole32.CoCreateInstance
