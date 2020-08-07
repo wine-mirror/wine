@@ -1277,6 +1277,11 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, void *pReserved)
     case DLL_PROCESS_ATTACH:
         instance = hinstDLL;
         DisableThreadLibraryCalls( hinstDLL );
+
+#ifdef HAVE_FAUDIOLINKEDVERSION
+        TRACE("Using FAudio version %d\n", FAudioLinkedVersion() );
+#endif
+
         break;
     }
     return TRUE;
