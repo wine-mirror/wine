@@ -202,7 +202,7 @@ static HRESULT process_hook_section(install_ctx_t *ctx, const WCHAR *sect_name)
 
             cmd = heap_alloc(size*sizeof(WCHAR));
             if(!cmd)
-                heap_free(cmd);
+                return E_OUTOFMEMORY;
 
             expand_command(ctx, val, cmd, &size);
             hres = RunSetupCommandW(ctx->hwnd, cmd, NULL, ctx->tmp_dir, NULL, NULL, 0, NULL);
