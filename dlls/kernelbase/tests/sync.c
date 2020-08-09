@@ -172,6 +172,31 @@ static void test_WaitOnAddress(void)
     ok(!address, "got unexpected value %s\n", wine_dbgstr_longlong(address));
 }
 
+static void test_Sleep(void)
+{
+    LARGE_INTEGER frequency;
+    LARGE_INTEGER t1, t2;
+    double elapsed_time;
+    BOOL ret;
+    int i;
+
+    ret = QueryPerformanceFrequency(&frequency);
+    ok(ret, "QueryPerformanceFrequency failed\n");
+
+    ret = QueryPerformanceCounter(&t1);
+    ok(ret, "QueryPerformanceCounter failed\n");
+
+    for (i = 0; i < 100; i++) {
+        Sleep(1);
+    }
+
+    ret = QueryPerformanceCounter(&t2);
+    ok(ret, "QueryPerformanceCounter failed\n");
+
+    elapsed_time = (t2.QuadPart - t1.QuadPart) / (double)frequency.QuadPart;
+    todo_wine ok(elapsed_time >= 1.5 && elapsed_time <= 4.0, "got %f\n", elapsed_time);
+}
+
 START_TEST(sync)
 {
     HMODULE hmod;
@@ -186,4 +211,5 @@ START_TEST(sync)
     pWakeByAddressSingle = (void *)GetProcAddress(hmod, "WakeByAddressSingle");
 
     test_WaitOnAddress();
+    test_Sleep();
 }
