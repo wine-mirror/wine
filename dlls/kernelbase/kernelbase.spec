@@ -138,6 +138,7 @@
 @ stdcall CloseHandle(long)
 # @ stub ClosePackageInfo
 # @ stub ClosePrivateNamespace
+@ stdcall ClosePseudoConsole(ptr)
 # @ stub CloseState
 # @ stub CloseStateAtom
 # @ stub CloseStateChangeNotification
@@ -211,6 +212,7 @@
 @ stdcall CreateProcessInternalA(long str str ptr ptr long long ptr str ptr ptr ptr)
 @ stdcall CreateProcessInternalW(long wstr wstr ptr ptr long long ptr wstr ptr ptr ptr)
 @ stdcall CreateProcessW(wstr wstr ptr ptr long long ptr wstr ptr ptr)
+@ stdcall CreatePseudoConsole(long long long long ptr)
 @ stdcall CreateRemoteThread(long ptr long ptr long long ptr)
 @ stdcall CreateRemoteThreadEx(long ptr long ptr ptr long ptr ptr)
 @ stdcall CreateRestrictedToken(long long long ptr long ptr long ptr ptr)
@@ -1343,6 +1345,7 @@
 @ stdcall ResetEvent(long)
 # @ stub ResetState
 @ stdcall ResetWriteWatch(ptr long)
+@ stdcall ResizePseudoConsole(ptr long)
 @ stdcall -import ResolveDelayLoadedAPI(ptr ptr ptr ptr ptr long) LdrResolveDelayLoadedAPI
 # @ stub ResolveDelayLoadsFromDll
 @ stdcall ResolveLocaleName(wstr ptr long)

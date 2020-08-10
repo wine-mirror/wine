@@ -1584,3 +1584,29 @@ BOOL WINAPI DECLSPEC_HOTPATCH WriteConsoleOutputCharacterW( HANDLE handle, LPCWS
     HeapFree( GetProcessHeap(), 0, params );
     return ret;
 }
+
+/******************************************************************************
+ *	CreatePseudoConsole   (kernelbase.@)
+ */
+HRESULT WINAPI CreatePseudoConsole( COORD size, HANDLE input, HANDLE output, DWORD flags, HPCON *ret )
+{
+    FIXME( "(%u,%u) %p %p %x %p\n", size.X, size.Y, input, output, flags, ret );
+    return E_NOTIMPL;
+}
+
+/******************************************************************************
+ *	ClosePseudoConsole   (kernelbase.@)
+ */
+void WINAPI ClosePseudoConsole( HPCON handle )
+{
+    FIXME( "%p\n", handle );
+}
+
+/******************************************************************************
+ *	ResizePseudoConsole   (kernelbase.@)
+ */
+HRESULT WINAPI ResizePseudoConsole( HPCON handle, COORD size )
+{
+    FIXME( "%p (%u,%u)\n", handle, size.X, size.Y );
+    return E_NOTIMPL;
+}
