@@ -130,4 +130,6 @@ typedef struct _CONSOLE_FONT_INFO
     COORD       dwFontSize;
 } CONSOLE_FONT_INFO,*LPCONSOLE_FONT_INFO;
 
+typedef void *HPCON;
+
 #endif /* _WINCONTYPES_ */
