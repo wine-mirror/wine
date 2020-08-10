@@ -726,6 +726,7 @@ SOURCES = \
 	wincodec.idl \
 	wincodecsdk.idl \
 	wincon.h \
+	wincontypes.h \
 	wincred.h \
 	wincrypt.h \
 	windef.h \
