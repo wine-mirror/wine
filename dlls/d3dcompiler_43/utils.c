@@ -2113,7 +2113,9 @@ void free_instr_list(struct list *list)
 
     if (!list)
         return;
-    LIST_FOR_EACH_ENTRY_SAFE(node, next_node, list, struct hlsl_ir_node, entry)
+    /* Iterate in reverse, to avoid use-after-free when unlinking sources from
+     * the "uses" list. */
+    LIST_FOR_EACH_ENTRY_SAFE_REV(node, next_node, list, struct hlsl_ir_node, entry)
         free_instr(node);
     d3dcompiler_free(list);
 }
