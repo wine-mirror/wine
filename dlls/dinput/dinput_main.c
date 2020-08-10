@@ -104,6 +104,7 @@ static BOOL check_hook_thread(void);
 static CRITICAL_SECTION dinput_hook_crit;
 static struct list direct_input_list = LIST_INIT( direct_input_list );
 static struct list acquired_mouse_list = LIST_INIT( acquired_mouse_list );
+static struct list acquired_rawmouse_list = LIST_INIT( acquired_rawmouse_list );
 static struct list acquired_keyboard_list = LIST_INIT( acquired_keyboard_list );
 static struct list acquired_device_list = LIST_INIT( acquired_device_list );
 
@@ -116,7 +117,7 @@ void dinput_hooks_acquire_device(LPDIRECTINPUTDEVICE8W iface)
 
     EnterCriticalSection( &dinput_hook_crit );
     if (IsEqualGUID( &dev->guid, &GUID_SysMouse ))
-        list_add_tail( &acquired_mouse_list, &dev->entry );
+        list_add_tail( dev->use_raw_input ? &acquired_rawmouse_list : &acquired_mouse_list, &dev->entry );
     else if (IsEqualGUID( &dev->guid, &GUID_SysKeyboard ))
         list_add_tail( &acquired_keyboard_list, &dev->entry );
     else
@@ -657,11 +658,8 @@ static LRESULT WINAPI di_em_win_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPAR
         else if (ri.header.dwType == RIM_TYPEMOUSE)
         {
             EnterCriticalSection( &dinput_hook_crit );
-            LIST_FOR_EACH_ENTRY( dev, &acquired_mouse_list, IDirectInputDeviceImpl, entry )
-            {
-                if (!dev->use_raw_input) continue;
+            LIST_FOR_EACH_ENTRY( dev, &acquired_rawmouse_list, IDirectInputDeviceImpl, entry )
                 dinput_mouse_rawinput_hook( &dev->IDirectInputDevice8A_iface, wparam, lparam, &ri );
-            }
             LeaveCriticalSection( &dinput_hook_crit );
         }
     }
@@ -1720,7 +1718,6 @@ static LRESULT CALLBACK LL_hook_proc( int code, WPARAM wparam, LPARAM lparam )
     EnterCriticalSection( &dinput_hook_crit );
     LIST_FOR_EACH_ENTRY( dev, &acquired_mouse_list, IDirectInputDeviceImpl, entry )
     {
-        if (dev->use_raw_input) continue;
         TRACE("calling dinput_mouse_hook (%p %lx %lx)\n", dev, wparam, lparam);
         skip |= dinput_mouse_hook( &dev->IDirectInputDevice8A_iface, wparam, lparam );
     }
@@ -1757,6 +1754,14 @@ static LRESULT CALLBACK callwndproc_proc( int code, WPARAM wparam, LPARAM lparam
         }
     }
     LIST_FOR_EACH_ENTRY_SAFE( dev, next, &acquired_mouse_list, IDirectInputDeviceImpl, entry )
+    {
+        if (msg->hwnd == dev->win && msg->hwnd != foreground)
+        {
+            TRACE( "%p window is not foreground - unacquiring %p\n", dev->win, dev );
+            IDirectInputDevice_Unacquire( &dev->IDirectInputDevice8A_iface );
+        }
+    }
+    LIST_FOR_EACH_ENTRY_SAFE( dev, next, &acquired_rawmouse_list, IDirectInputDeviceImpl, entry )
     {
         if (msg->hwnd == dev->win && msg->hwnd != foreground)
         {
