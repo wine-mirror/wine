@@ -3277,3 +3277,24 @@ DECL_HANDLER(update_rawinput_devices)
     e = find_rawinput_device( 1, 6 );
     current->process->rawinput_kbd   = e ? &e->device : NULL;
 }
+
+DECL_HANDLER(get_rawinput_devices)
+{
+    struct rawinput_device_entry *e;
+    struct rawinput_device *devices;
+    unsigned int i = 0, device_count = list_count( &current->process->rawinput_devices );
+    unsigned int size = device_count * sizeof(*devices);
+
+    reply->device_count = device_count;
+
+    /* no buffer provided, nothing else to do */
+    if (!get_reply_max_size()) return;
+
+    if (size > get_reply_max_size())
+        set_error( STATUS_BUFFER_TOO_SMALL );
+    else if ((devices = set_reply_data_size( size )))
+    {
+        LIST_FOR_EACH_ENTRY( e, &current->process->rawinput_devices, struct rawinput_device_entry, entry )
+            devices[i++] = e->device;
+    }
+}

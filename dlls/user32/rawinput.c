@@ -745,14 +745,60 @@ UINT WINAPI GetRawInputDeviceInfoW(HANDLE handle, UINT command, void *data, UINT
     return *data_size;
 }
 
+static int compare_raw_input_devices(const void *ap, const void *bp)
+{
+    const RAWINPUTDEVICE a = *(const RAWINPUTDEVICE *)ap;
+    const RAWINPUTDEVICE b = *(const RAWINPUTDEVICE *)bp;
+
+    if (a.usUsagePage != b.usUsagePage) return a.usUsagePage - b.usUsagePage;
+    if (a.usUsage != b.usUsage) return a.usUsage - b.usUsage;
+    return 0;
+}
+
 /***********************************************************************
  *              GetRegisteredRawInputDevices   (USER32.@)
  */
 UINT WINAPI DECLSPEC_HOTPATCH GetRegisteredRawInputDevices(RAWINPUTDEVICE *devices, UINT *device_count, UINT size)
 {
-    FIXME("devices %p, device_count %p, size %u stub!\n", devices, device_count, size);
+    struct rawinput_device *buffer = NULL;
+    unsigned int i, status, count = ~0U, buffer_size;
 
-    return 0;
+    TRACE("devices %p, device_count %p, size %u\n", devices, device_count, size);
+
+    if (size != sizeof(RAWINPUTDEVICE) || !device_count || (devices && !*device_count))
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return ~0U;
+    }
+
+    buffer_size = *device_count * sizeof(*buffer);
+    if (devices && !(buffer = HeapAlloc(GetProcessHeap(), 0, buffer_size)))
+        return ~0U;
+
+    SERVER_START_REQ(get_rawinput_devices)
+    {
+        if (buffer) wine_server_set_reply(req, buffer, buffer_size);
+        status = wine_server_call_err(req);
+        *device_count = reply->device_count;
+    }
+    SERVER_END_REQ;
+
+    if (buffer && !status)
+    {
+        for (i = 0, count = *device_count; i < count; ++i)
+        {
+            devices[i].usUsagePage = buffer[i].usage_page;
+            devices[i].usUsage = buffer[i].usage;
+            devices[i].dwFlags = buffer[i].flags;
+            devices[i].hwndTarget = wine_server_ptr_handle(buffer[i].target);
+        }
+
+        qsort(devices, count, sizeof(*devices), compare_raw_input_devices);
+    }
+
+    if (buffer) HeapFree(GetProcessHeap(), 0, buffer);
+    else count = 0;
+    return count;
 }
 
 

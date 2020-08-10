@@ -3658,6 +3658,12 @@ struct handle_info
     VARARG(devices,rawinput_devices);
 @END
 
+/* Retrieve the list of registered rawinput devices */
+@REQ(get_rawinput_devices)
+@REPLY
+    unsigned int device_count;
+    VARARG(devices,rawinput_devices);
+@END
 
 /* Create a new job object */
 @REQ(create_job)
