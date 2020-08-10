@@ -484,13 +484,21 @@ static HRESULT WINAPI class_object_GetNames(
     TRACE("%p, %s, %08x, %s, %p\n", iface, debugstr_w(wszQualifierName), lFlags,
           debugstr_variant(pQualifierVal), pNames);
 
-    if (lFlags != WBEM_FLAG_ALWAYS &&
+    if (!pNames)
+        return WBEM_E_INVALID_PARAMETER;
+
+    /* Combination used in a handful of broken apps */
+    if (lFlags == (WBEM_FLAG_ALWAYS | WBEM_MASK_CONDITION_ORIGIN))
+        lFlags = WBEM_FLAG_ALWAYS;
+
+    if (lFlags && (lFlags != WBEM_FLAG_ALWAYS &&
         lFlags != WBEM_FLAG_NONSYSTEM_ONLY &&
-        lFlags != WBEM_FLAG_SYSTEM_ONLY)
+        lFlags != WBEM_FLAG_SYSTEM_ONLY))
     {
         FIXME("flags %08x not supported\n", lFlags);
         return E_NOTIMPL;
     }
+
     if (wszQualifierName || pQualifierVal)
         FIXME("qualifier not supported\n");
 

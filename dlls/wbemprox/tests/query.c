@@ -1015,6 +1015,21 @@ static void test_GetNames( IWbemServices *services )
         IEnumWbemClassObject_Next( result, 10000, 1, &obj, &count );
         if (!count) break;
 
+        hr = IWbemClassObject_GetNames( obj, NULL, 0, NULL, NULL );
+        ok( hr == WBEM_E_INVALID_PARAMETER, "got %08x\n", hr );
+
+        hr = IWbemClassObject_GetNames( obj, NULL, 0, NULL, &names );
+        ok( hr == S_OK, "got %08x\n", hr );
+        SafeArrayDestroy( names );
+
+        hr = IWbemClassObject_GetNames( obj, NULL, WBEM_FLAG_ALWAYS, NULL, &names );
+        ok( hr == S_OK, "got %08x\n", hr );
+        SafeArrayDestroy( names );
+
+        hr = IWbemClassObject_GetNames( obj, NULL, WBEM_FLAG_ALWAYS | WBEM_MASK_CONDITION_ORIGIN, NULL, &names );
+        ok( hr == S_OK, "got %08x\n", hr );
+        SafeArrayDestroy( names );
+
         VariantInit( &val );
         hr = IWbemClassObject_GetNames( obj, NULL, WBEM_FLAG_NONSYSTEM_ONLY, &val, &names );
         ok( hr == S_OK, "got %08x\n", hr );
