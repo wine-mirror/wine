@@ -18,6 +18,7 @@
  */
 #define COBJMACROS
 #include "wine/test.h"
+#include "wine/heap.h"
 #include "d3dx9.h"
 #include "d3dcompiler.h"
 
@@ -25,6 +26,9 @@
 
 static pD3DCompile ppD3DCompile;
 
+static HRESULT (WINAPI *pD3DCompile2)(const void *data, SIZE_T data_size, const char *filename, const D3D_SHADER_MACRO *defines,
+        ID3DInclude *include, const char *entrypoint, const char *target, UINT sflags, UINT eflags, UINT secondary_flags,
+        const void *secondary_data, SIZE_T secondary_data_size, ID3DBlob **shader, ID3DBlob **error_messages);
 static HRESULT (WINAPI *pD3DXGetShaderConstantTable)(const DWORD *byte_code, ID3DXConstantTable **constant_table);
 
 struct vec2
@@ -36,6 +40,63 @@ struct vec4
 {
     float x, y, z, w;
 };
+
+static WCHAR temp_dir[MAX_PATH];
+
+static BOOL create_file(const WCHAR *filename, const char *data, unsigned int size, WCHAR *out_path)
+{
+    WCHAR path[MAX_PATH];
+    DWORD written;
+    HANDLE file;
+
+    if (!temp_dir[0])
+        GetTempPathW(ARRAY_SIZE(temp_dir), temp_dir);
+    lstrcpyW(path, temp_dir);
+    lstrcatW(path, filename);
+
+    file = CreateFileW(path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
+    if (file == INVALID_HANDLE_VALUE)
+        return FALSE;
+
+    if (WriteFile(file, data, size, &written, NULL))
+    {
+        CloseHandle(file);
+
+        if (out_path)
+            lstrcpyW(out_path, path);
+        return TRUE;
+    }
+
+    CloseHandle(file);
+    return FALSE;
+}
+
+static void delete_file(const WCHAR *filename)
+{
+    WCHAR path[MAX_PATH];
+
+    lstrcpyW(path, temp_dir);
+    lstrcatW(path, filename);
+    DeleteFileW(path);
+}
+
+static BOOL create_directory(const WCHAR *dir)
+{
+    WCHAR path[MAX_PATH];
+
+    lstrcpyW(path, temp_dir);
+    lstrcatW(path, dir);
+    return CreateDirectoryW(path, NULL);
+}
+
+static void delete_directory(const WCHAR *dir)
+{
+    WCHAR path[MAX_PATH];
+
+    lstrcpyW(path, temp_dir);
+    lstrcatW(path, dir);
+    RemoveDirectoryW(path);
+}
 
 #define compile_shader(a, b) compile_shader_(__LINE__, a, b)
 static ID3D10Blob *compile_shader_(unsigned int line, const char *source, const char *target)
@@ -1269,12 +1330,199 @@ static BOOL load_d3dcompiler(void)
 
 #if D3D_COMPILER_VERSION == 47
     if (!(module = LoadLibraryA("d3dcompiler_47.dll"))) return FALSE;
+    pD3DCompile2 = (void*)GetProcAddress(module, "D3DCompile2");
 #else
     if (!(module = LoadLibraryA("d3dcompiler_43.dll"))) return FALSE;
 #endif
 
     ppD3DCompile = (void*)GetProcAddress(module, "D3DCompile");
     return TRUE;
+}
+
+static HRESULT WINAPI test_d3dinclude_open(ID3DInclude *iface, D3D_INCLUDE_TYPE include_type,
+        const char *filename, const void *parent_data, const void **data, UINT *bytes)
+{
+    static const char include1[] =
+        "#define LIGHT float4(0.0f, 0.2f, 0.5f, 1.0f)\n";
+    static const char include2[] =
+        "#include \"include1.h\"\n"
+        "float4 light_color = LIGHT;\n";
+    char *buffer;
+
+    trace("filename %s.\n", filename);
+    trace("parent_data %p: %s.\n", parent_data, parent_data ? (char *)parent_data : "(null)");
+
+    if (!strcmp(filename, "include1.h"))
+    {
+        buffer = heap_alloc(strlen(include1));
+        CopyMemory(buffer, include1, strlen(include1));
+        *bytes = strlen(include1);
+        ok(include_type == D3D_INCLUDE_LOCAL, "Unexpected include type %d.\n", include_type);
+        ok(!strncmp(include2, parent_data, strlen(include2)),
+                "Unexpected parent_data value.\n");
+    }
+    else if (!strcmp(filename, "include\\include2.h"))
+    {
+        buffer = heap_alloc(strlen(include2));
+        CopyMemory(buffer, include2, strlen(include2));
+        *bytes = strlen(include2);
+        ok(!parent_data, "Unexpected parent_data value.\n");
+        ok(include_type == D3D_INCLUDE_LOCAL, "Unexpected include type %d.\n", include_type);
+    }
+    else
+    {
+        ok(0, "Unexpected #include for file %s.\n", filename);
+        return D3DERR_INVALIDCALL;
+    }
+
+    *data = buffer;
+    return S_OK;
+}
+
+static HRESULT WINAPI test_d3dinclude_close(ID3DInclude *iface, const void *data)
+{
+    heap_free((void *)data);
+    return S_OK;
+}
+
+static const struct ID3DIncludeVtbl test_d3dinclude_vtbl =
+{
+    test_d3dinclude_open,
+    test_d3dinclude_close
+};
+
+struct test_d3dinclude
+{
+    ID3DInclude ID3DInclude_iface;
+};
+
+static void test_d3dcompile(void)
+{
+    struct test_d3dinclude include = {{&test_d3dinclude_vtbl}};
+    WCHAR filename[MAX_PATH], directory[MAX_PATH];
+    ID3D10Blob *blob = NULL, *errors = NULL;
+    CHAR filename_a[MAX_PATH];
+    HRESULT hr;
+    DWORD len;
+    static const char ps_code[] =
+        "#include \"include\\include2.h\"\n"
+        "\n"
+        "float4 main() : COLOR\n"
+        "{\n"
+        "    return light_color;\n"
+        "}";
+    static const char include1[] =
+        "#define LIGHT float4(0.0f, 0.2f, 0.5f, 1.0f)\n";
+    static const char include1_wrong[] =
+        "#define LIGHT nope\n";
+    static const char include2[] =
+        "#include \"include1.h\"\n"
+        "float4 light_color = LIGHT;\n";
+
+    create_file(L"source.ps", ps_code, strlen(ps_code), filename);
+    create_directory(L"include");
+    create_file(L"include\\include1.h", include1_wrong, strlen(include1_wrong), NULL);
+    create_file(L"include1.h", include1, strlen(include1), NULL);
+    create_file(L"include\\include2.h", include2, strlen(include2), NULL);
+
+    len = WideCharToMultiByte(CP_ACP, 0, filename, -1, NULL, 0, NULL, NULL);
+    WideCharToMultiByte(CP_ACP, 0, filename, -1, filename_a, len, NULL, NULL);
+
+    hr = ppD3DCompile(ps_code, sizeof(ps_code), filename_a, NULL, &include.ID3DInclude_iface, "main", "ps_2_0", 0, 0, &blob, &errors);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(!!blob, "Got unexpected blob.\n");
+    ok(!errors, "Got unexpected errors.\n");
+    if (blob)
+    {
+        ID3D10Blob_Release(blob);
+        blob = NULL;
+    }
+
+    /* Also skip D3DCompile() D3D_COMPILE_STANDARD_FILE_INCLUDE tests from
+     * d3dcompiler_43 or earlier since they crash on Windows. */
+    if (!pD3DCompile2)
+    {
+        skip("D3DCompile2() isn't supported.\n");
+        goto cleanup;
+    }
+
+    hr = ppD3DCompile(ps_code, sizeof(ps_code), NULL, NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE,
+            "main", "ps_2_0", 0, 0, &blob, &errors);
+    ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+    ok(!blob, "Got unexpected blob.\n");
+    ok(!!errors, "Got unexpected errors.\n");
+    ID3D10Blob_Release(errors);
+    errors = NULL;
+
+    /* Windows always seems to resolve includes from the initial file location
+     * instead of using the immediate parent, as it would be the case for
+     * standard C preprocessor includes. */
+    hr = ppD3DCompile(ps_code, sizeof(ps_code), filename_a, NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE,
+            "main", "ps_2_0", 0, 0, &blob, &errors);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(!!blob, "Got unexpected blob.\n");
+    ok(!errors, "Got unexpected errors.\n");
+    if (blob)
+    {
+        ID3D10Blob_Release(blob);
+        blob = NULL;
+    }
+
+    hr = pD3DCompile2(ps_code, sizeof(ps_code), filename_a, NULL, &include.ID3DInclude_iface,
+            "main", "ps_2_0", 0, 0, 0, NULL, 0, &blob, &errors);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(!!blob, "Got unexpected blob.\n");
+    ok(!errors, "Got unexpected errors.\n");
+    if (blob)
+    {
+        ID3D10Blob_Release(blob);
+        blob = NULL;
+    }
+
+    hr = pD3DCompile2(ps_code, sizeof(ps_code), filename_a, NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE,
+            "main", "ps_2_0", 0, 0, 0, NULL, 0, &blob, &errors);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(!!blob, "Got unexpected blob.\n");
+    ok(!errors, "Got unexpected errors.\n");
+    if (blob)
+    {
+        ID3D10Blob_Release(blob);
+        blob = NULL;
+    }
+
+    GetCurrentDirectoryW(MAX_PATH, directory);
+    SetCurrentDirectoryW(temp_dir);
+
+    hr = ppD3DCompile(ps_code, sizeof(ps_code), "source.ps", NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE,
+            "main", "ps_2_0", 0, 0, &blob, &errors);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(!!blob, "Got unexpected blob.\n");
+    ok(!errors, "Got unexpected errors.\n");
+    if (blob)
+    {
+        ID3D10Blob_Release(blob);
+        blob = NULL;
+    }
+
+    hr = pD3DCompile2(ps_code, sizeof(ps_code), "source.ps", NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE,
+            "main", "ps_2_0", 0, 0, 0, NULL, 0, &blob, &errors);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(!!blob, "Got unexpected blob.\n");
+    ok(!errors, "Got unexpected errors.\n");
+    if (blob)
+    {
+        ID3D10Blob_Release(blob);
+        blob = NULL;
+    }
+
+    SetCurrentDirectoryW(directory);
+
+cleanup:
+    delete_file(L"source.ps");
+    delete_file(L"include\\include1.h");
+    delete_file(L"include1.h");
+    delete_file(L"include\\include2.h");
+    delete_directory(L"include");
 }
 
 START_TEST(hlsl_d3d9)
@@ -1309,4 +1557,5 @@ START_TEST(hlsl_d3d9)
 
     test_constant_table();
     test_fail();
+    test_d3dcompile();
 }
