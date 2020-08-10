@@ -1003,13 +1003,51 @@ HRESULT WINAPI D3DDisassemble(const void *data, SIZE_T size, UINT flags, const c
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI D3DCompileFromFile(const WCHAR *filename, const D3D_SHADER_MACRO *defines, ID3DInclude *includes,
+HRESULT WINAPI D3DCompileFromFile(const WCHAR *filename, const D3D_SHADER_MACRO *defines, ID3DInclude *include,
         const char *entrypoint, const char *target, UINT flags1, UINT flags2, ID3DBlob **code, ID3DBlob **errors)
 {
-    FIXME("filename %s, defines %p, includes %p, entrypoint %s, target %s, flags1 %x, flags2 %x, code %p, errors %p\n",
-            debugstr_w(filename), defines, includes, debugstr_a(entrypoint), debugstr_a(target), flags1, flags2, code, errors);
+    char filename_a[MAX_PATH], *source = NULL;
+    DWORD source_size, read_size;
+    HANDLE file;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("filename %s, defines %p, include %p, entrypoint %s, target %s, flags1 %#x, flags2 %#x, "
+            "code %p, errors %p.\n", debugstr_w(filename), defines, include, debugstr_a(entrypoint),
+            debugstr_a(target), flags1, flags2, code, errors);
+
+    file = CreateFileW(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (file == INVALID_HANDLE_VALUE)
+        return HRESULT_FROM_WIN32(GetLastError());
+
+    source_size = GetFileSize(file, NULL);
+    if (source_size == INVALID_FILE_SIZE)
+    {
+        hr = HRESULT_FROM_WIN32(GetLastError());
+        goto end;
+    }
+
+    if (!(source = heap_alloc(source_size)))
+    {
+        hr = E_OUTOFMEMORY;
+        goto end;
+    }
+
+    if (!ReadFile(file, source, source_size, &read_size, NULL) || read_size != source_size)
+    {
+        WARN("Failed to read file contents.\n");
+        hr = E_FAIL;
+        goto end;
+    }
+
+    WideCharToMultiByte(CP_ACP, 0, filename, -1, filename_a, sizeof(filename_a), NULL, NULL);
+
+    hr = D3DCompile(source, source_size, filename_a, defines, include, entrypoint, target,
+            flags1, flags2, code, errors);
+
+end:
+    heap_free(source);
+    CloseHandle(file);
+    return hr;
 }
 
 HRESULT WINAPI D3DLoadModule(const void *data, SIZE_T size, ID3D11Module **module)

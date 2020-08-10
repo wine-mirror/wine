@@ -29,6 +29,9 @@ static pD3DCompile ppD3DCompile;
 static HRESULT (WINAPI *pD3DCompile2)(const void *data, SIZE_T data_size, const char *filename, const D3D_SHADER_MACRO *defines,
         ID3DInclude *include, const char *entrypoint, const char *target, UINT sflags, UINT eflags, UINT secondary_flags,
         const void *secondary_data, SIZE_T secondary_data_size, ID3DBlob **shader, ID3DBlob **error_messages);
+static HRESULT (WINAPI *pD3DCompileFromFile)(const WCHAR *filename, const D3D_SHADER_MACRO *defines,
+        ID3DInclude *include, const char *entrypoint, const char *target, UINT flags1, UINT flags2,
+        ID3DBlob **code, ID3DBlob **errors);
 static HRESULT (WINAPI *pD3DXGetShaderConstantTable)(const DWORD *byte_code, ID3DXConstantTable **constant_table);
 
 struct vec2
@@ -1331,6 +1334,7 @@ static BOOL load_d3dcompiler(void)
 #if D3D_COMPILER_VERSION == 47
     if (!(module = LoadLibraryA("d3dcompiler_47.dll"))) return FALSE;
     pD3DCompile2 = (void*)GetProcAddress(module, "D3DCompile2");
+    pD3DCompileFromFile = (void*)GetProcAddress(module, "D3DCompileFromFile");
 #else
     if (!(module = LoadLibraryA("d3dcompiler_43.dll"))) return FALSE;
 #endif
@@ -1490,6 +1494,42 @@ static void test_d3dcompile(void)
         blob = NULL;
     }
 
+    hr = pD3DCompileFromFile(L"nonexistent", NULL, NULL, "main", "vs_2_0", 0, 0, &blob, &errors);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "Got hr %#x.\n", hr);
+    ok(!blob, "Got unexpected blob.\n");
+    ok(!errors, "Got unexpected errors.\n");
+
+    hr = pD3DCompileFromFile(filename, NULL, NULL, "main", "ps_2_0", 0, 0, &blob, &errors);
+    ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+    ok(!blob, "Got unexpected blob.\n");
+    ok(!!errors, "Got unexpected errors.\n");
+    trace("%s.\n", (char *)ID3D10Blob_GetBufferPointer(errors));
+    ID3D10Blob_Release(errors);
+    errors = NULL;
+
+    hr = pD3DCompileFromFile(filename, NULL, &include.ID3DInclude_iface, "main", "ps_2_0", 0, 0, &blob, &errors);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(!!blob, "Got unexpected blob.\n");
+    ok(!errors, "Got unexpected errors.\n");
+    if (blob)
+    {
+        ID3D10Blob_Release(blob);
+        blob = NULL;
+    }
+
+    /* Windows always seems to resolve includes from the initial file location
+     * instead of using the immediate parent, as it would be the case for
+     * standard C preprocessor includes. */
+    hr = pD3DCompileFromFile(filename, NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_2_0", 0, 0, &blob, &errors);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(!!blob, "Got unexpected blob.\n");
+    ok(!errors, "Got unexpected errors.\n");
+    if (blob)
+    {
+        ID3D10Blob_Release(blob);
+        blob = NULL;
+    }
+
     GetCurrentDirectoryW(MAX_PATH, directory);
     SetCurrentDirectoryW(temp_dir);
 
@@ -1506,6 +1546,16 @@ static void test_d3dcompile(void)
 
     hr = pD3DCompile2(ps_code, sizeof(ps_code), "source.ps", NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE,
             "main", "ps_2_0", 0, 0, 0, NULL, 0, &blob, &errors);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(!!blob, "Got unexpected blob.\n");
+    ok(!errors, "Got unexpected errors.\n");
+    if (blob)
+    {
+        ID3D10Blob_Release(blob);
+        blob = NULL;
+    }
+
+    hr = pD3DCompileFromFile(L"source.ps", NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_2_0", 0, 0, &blob, &errors);
     todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
     todo_wine ok(!!blob, "Got unexpected blob.\n");
     ok(!errors, "Got unexpected errors.\n");
