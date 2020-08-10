@@ -74,6 +74,7 @@ SOURCES = \
 	commoncontrols.idl \
 	compobj.h \
 	comsvcs.idl \
+	consoleapi.h \
 	control.idl \
 	cor.idl \
 	cordebug.idl \
