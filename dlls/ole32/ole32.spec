@@ -12,7 +12,7 @@
 @ stdcall CoCopyProxy(ptr ptr) combase.CoCopyProxy
 @ stdcall CoCreateFreeThreadedMarshaler(ptr ptr)
 @ stdcall CoCreateGuid(ptr) combase.CoCreateGuid
-@ stdcall CoCreateInstance(ptr ptr long ptr ptr)
+@ stdcall CoCreateInstance(ptr ptr long ptr ptr) combase.CoCreateInstance
 @ stdcall CoCreateInstanceEx(ptr ptr long ptr long ptr)
 @ stdcall CoDecrementMTAUsage(ptr)
 @ stdcall CoDisableCallCancellation(ptr)

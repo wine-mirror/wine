@@ -775,3 +775,22 @@ HRESULT WINAPI CoGetInstanceFromIStorage(COSERVERINFO *server_info, CLSID *rclsi
 
     return return_multi_qi(obj, count, results, FALSE);
 }
+
+/***********************************************************************
+ *           CoCreateInstance        (combase.@)
+ */
+HRESULT WINAPI DECLSPEC_HOTPATCH CoCreateInstance(REFCLSID rclsid, IUnknown *outer, DWORD cls_context,
+        REFIID riid, void **obj)
+{
+    MULTI_QI multi_qi = { .pIID = riid };
+    HRESULT hr;
+
+    TRACE("%s, %p, %#x, %s, %p.\n", debugstr_guid(rclsid), outer, cls_context, debugstr_guid(riid), obj);
+
+    if (!obj)
+        return E_POINTER;
+
+    hr = CoCreateInstanceEx(rclsid, outer, cls_context, NULL, 1, &multi_qi);
+    *obj = multi_qi.pItf;
+    return hr;
+}

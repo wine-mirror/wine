@@ -79,7 +79,7 @@
 @ stdcall CoCreateErrorInfo(ptr) CreateErrorInfo
 @ stdcall CoCreateFreeThreadedMarshaler(ptr ptr) ole32.CoCreateFreeThreadedMarshaler
 @ stdcall CoCreateGuid(ptr)
-@ stdcall CoCreateInstance(ptr ptr long ptr ptr) ole32.CoCreateInstance
+@ stdcall CoCreateInstance(ptr ptr long ptr ptr)
 @ stdcall CoCreateInstanceEx(ptr ptr long ptr long ptr) ole32.CoCreateInstanceEx
 @ stub CoCreateInstanceFromApp
 @ stub CoCreateObjectInContext
