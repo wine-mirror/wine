@@ -5,7 +5,7 @@
 @ stdcall CLIPFORMAT_UserUnmarshal(ptr ptr ptr) combase.CLIPFORMAT_UserUnmarshal
 @ stdcall CLSIDFromProgID(wstr ptr) combase.CLSIDFromProgID
 @ stdcall CLSIDFromProgIDEx(wstr ptr)
-@ stdcall CLSIDFromString(wstr ptr)
+@ stdcall CLSIDFromString(wstr ptr) combase.CLSIDFromString
 @ stdcall CoAddRefServerProcess()
 @ stdcall CoAllowSetForegroundWindow(ptr ptr)
 @ stdcall CoBuildVersion()

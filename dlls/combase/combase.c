@@ -1053,6 +1053,28 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CLSIDFromProgID(LPCOLESTR progid, CLSID *clsid)
     return clsid_from_string_reg(progid, clsid);
 }
 
+/******************************************************************************
+ *                CLSIDFromString        (combase.@)
+ */
+HRESULT WINAPI CLSIDFromString(LPCOLESTR str, LPCLSID clsid)
+{
+    CLSID tmp_id;
+    HRESULT hr;
+
+    if (!clsid)
+        return E_INVALIDARG;
+
+    if (guid_from_string(str, clsid))
+        return S_OK;
+
+    /* It appears a ProgID is also valid */
+    hr = clsid_from_string_reg(str, &tmp_id);
+    if (SUCCEEDED(hr))
+        *clsid = tmp_id;
+
+    return hr;
+}
+
 static void init_multi_qi(DWORD count, MULTI_QI *mqi, HRESULT hr)
 {
     ULONG i;

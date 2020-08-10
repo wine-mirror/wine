@@ -68,7 +68,7 @@
 @ stdcall CLIPFORMAT_UserUnmarshal(ptr ptr ptr)
 @ stub CLSIDFromOle1Class
 @ stdcall CLSIDFromProgID(wstr ptr)
-@ stdcall CLSIDFromString(wstr ptr) ole32.CLSIDFromString
+@ stdcall CLSIDFromString(wstr ptr)
 @ stub CleanupOleStateInAllTls
 @ stdcall CleanupTlsOleState(ptr)
 @ stub ClearCleanupFlag
