@@ -267,7 +267,9 @@ static void test_Win32_Service( IWbemServices *services )
     if (hr != S_OK)
     {
         win_skip( "Win32_Service not available\n" );
-        goto out;
+        SysFreeString( empty );
+        SysFreeString( class );
+        return;
     }
 
     check_property( service, L"ProcessID", VT_I4, CIM_UINT32 );
@@ -343,8 +345,12 @@ static void test_Win32_Service( IWbemServices *services )
     ok( hr == S_OK, "got %08x\n", hr );
     if (service) IWbemClassObject_Release( service );
 
-out:
     SysFreeString( empty );
+    SysFreeString( class );
+
+    class = SysAllocString( L"Win32_Service.Name=\"nonexistent\"" );
+    hr = IWbemServices_GetObject( services, class, 0, NULL, &service, NULL );
+    ok( hr == WBEM_E_NOT_FOUND, "got %#08x\n", hr );
     SysFreeString( class );
 }
 

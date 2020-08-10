@@ -450,6 +450,7 @@ HRESULT get_object( const WCHAR *object_path, IWbemClassObject **obj )
 {
     IEnumWbemClassObject *iter;
     struct path *path;
+    ULONG count;
     HRESULT hr;
 
     hr = parse_path( object_path, &path );
@@ -461,7 +462,8 @@ HRESULT get_object( const WCHAR *object_path, IWbemClassObject **obj )
         free_path( path );
         return hr;
     }
-    hr = create_class_object( path->class, iter, 0, NULL, obj );
+    hr = IEnumWbemClassObject_Next( iter, WBEM_INFINITE, 1, obj, &count );
+    if (hr == WBEM_S_FALSE) hr = WBEM_E_NOT_FOUND;
     IEnumWbemClassObject_Release( iter );
     free_path( path );
     return hr;
