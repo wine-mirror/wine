@@ -46,7 +46,7 @@
 @ stdcall CoGetStandardMarshal(ptr ptr long ptr long ptr)
 @ stdcall CoGetState(ptr)
 @ stub CoGetTIDFromIPID
-@ stdcall CoGetTreatAsClass(ptr ptr)
+@ stdcall CoGetTreatAsClass(ptr ptr) combase.CoGetTreatAsClass
 @ stdcall CoImpersonateClient() combase.CoImpersonateClient
 @ stdcall CoIncrementMTAUsage(ptr)
 @ stdcall CoInitialize(ptr)

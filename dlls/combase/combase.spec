@@ -119,7 +119,7 @@
 @ stdcall CoGetStandardMarshal(ptr ptr long ptr long ptr) ole32.CoGetStandardMarshal
 @ stub CoGetStdMarshalEx
 @ stub CoGetSystemSecurityPermissions
-@ stdcall CoGetTreatAsClass(ptr ptr) ole32.CoGetTreatAsClass
+@ stdcall CoGetTreatAsClass(ptr ptr)
 @ stdcall CoImpersonateClient()
 @ stdcall CoIncrementMTAUsage(ptr) ole32.CoIncrementMTAUsage
 @ stdcall CoInitializeEx(ptr long) ole32.CoInitializeEx
