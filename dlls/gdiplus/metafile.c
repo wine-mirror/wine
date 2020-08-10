@@ -1652,19 +1652,23 @@ GpStatus METAFILE_GraphicsDeleted(GpMetafile* metafile)
             BYTE* buffer;
             UINT buffer_size;
 
+            gdi_bounds_rc = header.u.EmfHeader.rclBounds;
+            if (gdi_bounds_rc.right > gdi_bounds_rc.left &&
+                gdi_bounds_rc.bottom > gdi_bounds_rc.top)
+            {
+                GpPointF *af_min = &metafile->auto_frame_min;
+                GpPointF *af_max = &metafile->auto_frame_max;
+
+                af_min->X = fmin(af_min->X, gdi_bounds_rc.left);
+                af_min->Y = fmin(af_min->Y, gdi_bounds_rc.top);
+                af_max->X = fmax(af_max->X, gdi_bounds_rc.right);
+                af_max->Y = fmax(af_max->Y, gdi_bounds_rc.bottom);
+            }
+
             bounds_rc.left = floorf(metafile->auto_frame_min.X * x_scale);
             bounds_rc.top = floorf(metafile->auto_frame_min.Y * y_scale);
             bounds_rc.right = ceilf(metafile->auto_frame_max.X * x_scale);
             bounds_rc.bottom = ceilf(metafile->auto_frame_max.Y * y_scale);
-
-            gdi_bounds_rc = header.u.EmfHeader.rclBounds;
-            if (gdi_bounds_rc.right > gdi_bounds_rc.left && gdi_bounds_rc.bottom > gdi_bounds_rc.top)
-            {
-                bounds_rc.left = min(bounds_rc.left, gdi_bounds_rc.left);
-                bounds_rc.top = min(bounds_rc.top, gdi_bounds_rc.top);
-                bounds_rc.right = max(bounds_rc.right, gdi_bounds_rc.right);
-                bounds_rc.bottom = max(bounds_rc.bottom, gdi_bounds_rc.bottom);
-            }
 
             buffer_size = GetEnhMetaFileBits(metafile->hemf, 0, NULL);
             buffer = heap_alloc(buffer_size);
