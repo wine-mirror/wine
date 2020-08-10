@@ -239,6 +239,13 @@ static SysMouseImpl *alloc_device(REFGUID rguid, IDirectInputImpl *dinput)
     newDevice->base.data_format.wine_df = df;
     IDirectInput_AddRef(&newDevice->base.dinput->IDirectInput7A_iface);
 
+    if (dinput->dwVersion >= 0x0800)
+    {
+        newDevice->base.use_raw_input = TRUE;
+        newDevice->base.raw_device.usUsagePage = 1; /* HID generic device page */
+        newDevice->base.raw_device.usUsage = 2; /* HID generic mouse */
+    }
+
     return newDevice;
 
 failed:
@@ -305,6 +312,89 @@ const struct dinput_device mouse_device = {
 /******************************************************************************
  *	SysMouseA (DInput Mouse support)
  */
+
+void dinput_mouse_rawinput_hook( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARAM lparam, RAWINPUT *ri )
+{
+    SysMouseImpl* This = impl_from_IDirectInputDevice8A( iface );
+    POINT rel, pt;
+    DWORD seq;
+    int i, wdata = 0;
+
+    static const USHORT mouse_button_flags[] =
+    {
+        RI_MOUSE_BUTTON_1_DOWN, RI_MOUSE_BUTTON_1_UP,
+        RI_MOUSE_BUTTON_2_DOWN, RI_MOUSE_BUTTON_2_UP,
+        RI_MOUSE_BUTTON_3_DOWN, RI_MOUSE_BUTTON_3_UP,
+        RI_MOUSE_BUTTON_4_DOWN, RI_MOUSE_BUTTON_4_UP,
+        RI_MOUSE_BUTTON_5_DOWN, RI_MOUSE_BUTTON_5_UP
+    };
+
+    TRACE( "(%p) wp %08lx, lp %08lx\n", iface, wparam, lparam );
+
+    if (ri->data.mouse.usFlags & MOUSE_VIRTUAL_DESKTOP)
+        FIXME( "Unimplemented MOUSE_VIRTUAL_DESKTOP flag\n" );
+    if (ri->data.mouse.usFlags & MOUSE_ATTRIBUTES_CHANGED)
+        FIXME( "Unimplemented MOUSE_ATTRIBUTES_CHANGED flag\n" );
+
+    EnterCriticalSection( &This->base.crit );
+    seq = This->base.dinput->evsequence++;
+
+    rel.x = ri->data.mouse.lLastX;
+    rel.y = ri->data.mouse.lLastY;
+    if (ri->data.mouse.usFlags & MOUSE_MOVE_ABSOLUTE)
+    {
+        GetCursorPos( &pt );
+        rel.x -= pt.x;
+        rel.y -= pt.y;
+    }
+
+    This->m_state.lX += rel.x;
+    This->m_state.lY += rel.y;
+
+    if (This->base.data_format.user_df->dwFlags & DIDF_ABSAXIS)
+    {
+        pt.x = This->m_state.lX;
+        pt.y = This->m_state.lY;
+    }
+    else
+    {
+        pt = rel;
+    }
+
+    if (rel.x)
+        queue_event( iface, DIDFT_MAKEINSTANCE(WINE_MOUSE_X_AXIS_INSTANCE) | DIDFT_RELAXIS,
+                     pt.x, GetCurrentTime(), seq );
+
+    if (rel.y)
+        queue_event( iface, DIDFT_MAKEINSTANCE(WINE_MOUSE_Y_AXIS_INSTANCE) | DIDFT_RELAXIS,
+                     pt.y, GetCurrentTime(), seq );
+
+    if (rel.x || rel.y)
+    {
+        if ((This->warp_override == WARP_FORCE_ON) ||
+            (This->warp_override != WARP_DISABLE && (This->base.dwCoopLevel & DISCL_EXCLUSIVE)))
+            This->need_warp = TRUE;
+    }
+
+    if (ri->data.mouse.usButtonFlags & RI_MOUSE_WHEEL)
+    {
+        This->m_state.lZ += (wdata = (SHORT)ri->data.mouse.usButtonData);
+        queue_event( iface, DIDFT_MAKEINSTANCE(WINE_MOUSE_Z_AXIS_INSTANCE) | DIDFT_RELAXIS,
+                     wdata, GetCurrentTime(), seq );
+    }
+
+    for (i = 0; i < ARRAY_SIZE(mouse_button_flags); ++i)
+    {
+        if (ri->data.mouse.usButtonFlags & mouse_button_flags[i])
+        {
+            This->m_state.rgbButtons[i / 2] = 0x80 - (i % 2) * 0x80;
+            queue_event( iface, DIDFT_MAKEINSTANCE(WINE_MOUSE_BUTTONS_INSTANCE +(i / 2) ) | DIDFT_PSHBUTTON,
+                         This->m_state.rgbButtons[i / 2], GetCurrentTime(), seq );
+        }
+    }
+
+    LeaveCriticalSection( &This->base.crit );
+}
 
 /* low-level mouse hook */
 int dinput_mouse_hook( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARAM lparam )

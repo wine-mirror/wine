@@ -654,6 +654,16 @@ static LRESULT WINAPI di_em_win_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPAR
         size = GetRawInputData( (HRAWINPUT)lparam, RID_INPUT, &ri, &size, sizeof(RAWINPUTHEADER) );
         if (size == (UINT)-1 || size < sizeof(RAWINPUTHEADER))
             WARN( "Unable to read raw input data\n" );
+        else if (ri.header.dwType == RIM_TYPEMOUSE)
+        {
+            EnterCriticalSection( &dinput_hook_crit );
+            LIST_FOR_EACH_ENTRY( dev, &acquired_mouse_list, IDirectInputDeviceImpl, entry )
+            {
+                if (!dev->use_raw_input) continue;
+                dinput_mouse_rawinput_hook( &dev->IDirectInputDevice8A_iface, wparam, lparam, &ri );
+            }
+            LeaveCriticalSection( &dinput_hook_crit );
+        }
     }
 
     return DefWindowProcW( hwnd, msg, wparam, lparam );
