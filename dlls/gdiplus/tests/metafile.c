@@ -1374,6 +1374,64 @@ static void test_nullframerect(void) {
 
     stat = GdipDisposeImage((GpImage*)metafile);
     expect(Ok, stat);
+
+    hdc = CreateCompatibleDC(0);
+
+    stat = GdipRecordMetafile(hdc, EmfTypeEmfPlusOnly, NULL, MetafileFrameUnitMillimeter,
+        description, &metafile);
+    expect(Ok, stat);
+
+    DeleteDC(hdc);
+
+    stat = GdipGetImageGraphicsContext((GpImage*)metafile, &graphics);
+    expect(Ok, stat);
+
+    stat = GdipGetDC(graphics, &metafile_dc);
+    expect(Ok, stat);
+
+    if (stat != Ok)
+    {
+        GdipDeleteGraphics(graphics);
+        GdipDisposeImage((GpImage*)metafile);
+        return;
+    }
+
+    hbrush = CreateSolidBrush(0xff0000);
+
+    holdbrush = SelectObject(metafile_dc, hbrush);
+
+    Rectangle(metafile_dc, 25, 25, 75, 75);
+
+    SelectObject(metafile_dc, holdbrush);
+
+    DeleteObject(hbrush);
+
+    stat = GdipReleaseDC(graphics, metafile_dc);
+    expect(Ok, stat);
+
+    stat = GdipCreateSolidFill((ARGB)0xff0000ff, (GpSolidFill**)&brush);
+    expect(Ok, stat);
+
+    stat = GdipFillRectangleI(graphics, brush, 20, 40, 10, 70);
+    expect(Ok, stat);
+
+    stat = GdipDeleteBrush(brush);
+    expect(Ok, stat);
+
+    stat = GdipDeleteGraphics(graphics);
+    expect(Ok, stat);
+
+    stat = GdipGetImageBounds((GpImage*)metafile, &bounds, &unit);
+    expect(Ok, stat);
+    expect(UnitPixel, unit);
+    todo_wine expectf_(20.0, bounds.X, 0.05);
+    todo_wine expectf_(25.0, bounds.Y, 0.05);
+    todo_wine expectf_(55.0, bounds.Width, 1.00);
+    todo_wine expectf_(55.0, bounds.Width, 0.05);
+    todo_wine expectf_(85.0, bounds.Height, 0.05);
+
+    stat = GdipDisposeImage((GpImage*)metafile);
+    expect(Ok, stat);
 }
 
 static const emfplus_record pagetransform_records[] = {
