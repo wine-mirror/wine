@@ -21,6 +21,64 @@
 #include "d3d11.h"
 #include "d3dx11.h"
 #include "wine/test.h"
+#include "wine/heap.h"
+
+static WCHAR temp_dir[MAX_PATH];
+
+static BOOL create_file(const WCHAR *filename, const char *data, unsigned int size, WCHAR *out_path)
+{
+    WCHAR path[MAX_PATH];
+    DWORD written;
+    HANDLE file;
+
+    if (!temp_dir[0])
+        GetTempPathW(ARRAY_SIZE(temp_dir), temp_dir);
+    lstrcpyW(path, temp_dir);
+    lstrcatW(path, filename);
+
+    file = CreateFileW(path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
+    if (file == INVALID_HANDLE_VALUE)
+        return FALSE;
+
+    if (WriteFile(file, data, size, &written, NULL))
+    {
+        CloseHandle(file);
+
+        if (out_path)
+            lstrcpyW(out_path, path);
+        return TRUE;
+    }
+
+    CloseHandle(file);
+    return FALSE;
+}
+
+static void delete_file(const WCHAR *filename)
+{
+    WCHAR path[MAX_PATH];
+
+    lstrcpyW(path, temp_dir);
+    lstrcatW(path, filename);
+    DeleteFileW(path);
+}
+
+static BOOL create_directory(const WCHAR *dir)
+{
+    WCHAR path[MAX_PATH];
+
+    lstrcpyW(path, temp_dir);
+    lstrcatW(path, dir);
+    return CreateDirectoryW(path, NULL);
+}
+
+static void delete_directory(const WCHAR *dir)
+{
+    WCHAR path[MAX_PATH];
+
+    lstrcpyW(path, temp_dir);
+    lstrcatW(path, dir);
+    RemoveDirectoryW(path);
+}
 
 static void test_D3DX11CreateAsyncMemoryLoader(void)
 {
@@ -205,9 +263,153 @@ static void test_D3DX11CreateAsyncResourceLoader(void)
     ok(hr == D3DX11_ERR_INVALID_DATA, "Got unexpected hr %#x.\n", hr);
 }
 
+static HRESULT WINAPI test_d3dinclude_open(ID3DInclude *iface, D3D_INCLUDE_TYPE include_type,
+        const char *filename, const void *parent_data, const void **data, UINT *bytes)
+{
+    static const char include1[] =
+        "#define LIGHT float4(0.0f, 0.2f, 0.5f, 1.0f)\n";
+    static const char include2[] =
+        "#include \"include1.h\"\n"
+        "float4 light_color = LIGHT;\n";
+    char *buffer;
+
+    trace("filename %s.\n", filename);
+    trace("parent_data %p: %s.\n", parent_data, parent_data ? (char *)parent_data : "(null)");
+
+    if (!strcmp(filename, "include1.h"))
+    {
+        buffer = heap_alloc(strlen(include1));
+        CopyMemory(buffer, include1, strlen(include1));
+        *bytes = strlen(include1);
+        ok(include_type == D3D_INCLUDE_LOCAL, "Unexpected include type %d.\n", include_type);
+        ok(!strncmp(include2, parent_data, strlen(include2)),
+                "Unexpected parent_data value.\n");
+    }
+    else if (!strcmp(filename, "include\\include2.h"))
+    {
+        buffer = heap_alloc(strlen(include2));
+        CopyMemory(buffer, include2, strlen(include2));
+        *bytes = strlen(include2);
+        ok(!parent_data, "Unexpected parent_data value.\n");
+        ok(include_type == D3D_INCLUDE_LOCAL, "Unexpected include type %d.\n", include_type);
+    }
+    else
+    {
+        ok(0, "Unexpected #include for file %s.\n", filename);
+        return E_INVALIDARG;
+    }
+
+    *data = buffer;
+    return S_OK;
+}
+
+static HRESULT WINAPI test_d3dinclude_close(ID3DInclude *iface, const void *data)
+{
+    heap_free((void *)data);
+    return S_OK;
+}
+
+static const struct ID3DIncludeVtbl test_d3dinclude_vtbl =
+{
+    test_d3dinclude_open,
+    test_d3dinclude_close
+};
+
+struct test_d3dinclude
+{
+    ID3DInclude ID3DInclude_iface;
+};
+
+static void test_D3DX11CompileFromFile(void)
+{
+    struct test_d3dinclude include = {{&test_d3dinclude_vtbl}};
+    WCHAR filename[MAX_PATH], directory[MAX_PATH];
+    ID3D10Blob *blob = NULL, *errors = NULL;
+    CHAR filename_a[MAX_PATH];
+    HRESULT hr, result;
+    DWORD len;
+    static const char ps_code[] =
+        "#include \"include\\include2.h\"\n"
+        "\n"
+        "float4 main() : COLOR\n"
+        "{\n"
+        "    return light_color;\n"
+        "}";
+    static const char include1[] =
+        "#define LIGHT float4(0.0f, 0.2f, 0.5f, 1.0f)\n";
+    static const char include1_wrong[] =
+        "#define LIGHT nope\n";
+    static const char include2[] =
+        "#include \"include1.h\"\n"
+        "float4 light_color = LIGHT;\n";
+
+    create_file(L"source.ps", ps_code, strlen(ps_code), filename);
+    create_directory(L"include");
+    create_file(L"include\\include1.h", include1_wrong, strlen(include1_wrong), NULL);
+    create_file(L"include1.h", include1, strlen(include1), NULL);
+    create_file(L"include\\include2.h", include2, strlen(include2), NULL);
+
+    hr = D3DX11CompileFromFileW(filename, NULL, &include.ID3DInclude_iface, "main", "ps_2_0", 0, 0, NULL, &blob, &errors, &result);
+    todo_wine ok(hr == S_OK && hr == result, "Got hr %#x, result %#x.\n", hr, result);
+    todo_wine ok(!!blob, "Got unexpected blob.\n");
+    ok(!errors, "Got unexpected errors.\n");
+    if (blob)
+    {
+        ID3D10Blob_Release(blob);
+        blob = NULL;
+    }
+
+    /* Windows always seems to resolve includes from the initial file location
+     * instead of using the immediate parent, as it would be the case for
+     * standard C preprocessor includes. */
+    hr = D3DX11CompileFromFileW(filename, NULL, NULL, "main", "ps_2_0", 0, 0, NULL, &blob, &errors, &result);
+    todo_wine ok(hr == S_OK && hr == result, "Got hr %#x, result %#x.\n", hr, result);
+    todo_wine ok(!!blob, "Got unexpected blob.\n");
+    ok(!errors, "Got unexpected errors.\n");
+    if (blob)
+    {
+        ID3D10Blob_Release(blob);
+        blob = NULL;
+    }
+
+    len = WideCharToMultiByte(CP_ACP, 0, filename, -1, NULL, 0, NULL, NULL);
+    WideCharToMultiByte(CP_ACP, 0, filename, -1, filename_a, len, NULL, NULL);
+    hr = D3DX11CompileFromFileA(filename_a, NULL, NULL, "main", "ps_2_0", 0, 0, NULL, &blob, &errors, &result);
+    todo_wine ok(hr == S_OK && hr == result, "Got hr %#x, result %#x.\n", hr, result);
+    todo_wine ok(!!blob, "Got unexpected blob.\n");
+    ok(!errors, "Got unexpected errors.\n");
+    if (blob)
+    {
+        ID3D10Blob_Release(blob);
+        blob = NULL;
+    }
+
+    GetCurrentDirectoryW(MAX_PATH, directory);
+    SetCurrentDirectoryW(temp_dir);
+
+    hr = D3DX11CompileFromFileW(L"source.ps", NULL, NULL, "main", "ps_2_0", 0, 0, NULL, &blob, &errors, &result);
+    todo_wine ok(hr == S_OK && hr == result, "Got hr %#x, result %#x.\n", hr, result);
+    todo_wine ok(!!blob, "Got unexpected blob.\n");
+    ok(!errors, "Got unexpected errors.\n");
+    if (blob)
+    {
+        ID3D10Blob_Release(blob);
+        blob = NULL;
+    }
+
+    SetCurrentDirectoryW(directory);
+
+    delete_file(L"source.ps");
+    delete_file(L"include\\include1.h");
+    delete_file(L"include1.h");
+    delete_file(L"include\\include2.h");
+    delete_directory(L"include");
+}
+
 START_TEST(d3dx11)
 {
     test_D3DX11CreateAsyncMemoryLoader();
     test_D3DX11CreateAsyncFileLoader();
     test_D3DX11CreateAsyncResourceLoader();
+    test_D3DX11CompileFromFile();
 }

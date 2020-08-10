@@ -236,24 +236,41 @@ HRESULT WINAPI D3DX11CompileFromFileA(const char *filename, const D3D10_SHADER_M
         ID3D10Include *include, const char *entry_point, const char *target, UINT sflags, UINT eflags,
         ID3DX11ThreadPump *pump, ID3D10Blob **shader, ID3D10Blob **error_messages, HRESULT *hresult)
 {
-    FIXME("filename %s, defines %p, include %p, entry_point %s, target %s, sflags %#x, "
-            "eflags %#x, pump %p, shader %p, error_messages %p, hresult %p stub.\n",
+    WCHAR filename_w[MAX_PATH];
+
+    TRACE("filename %s, defines %p, include %p, entry_point %s, target %s, sflags %#x, "
+            "eflags %#x, pump %p, shader %p, error_messages %p, hresult %p.\n",
             debugstr_a(filename), defines, include, debugstr_a(entry_point), debugstr_a(target),
             sflags, eflags, pump, shader, error_messages, hresult);
 
-    return E_NOTIMPL;
+    MultiByteToWideChar(CP_ACP, 0, filename, -1, filename_w, ARRAY_SIZE(filename_w));
+
+    return D3DX11CompileFromFileW(filename_w, defines, include, entry_point, target,
+            sflags, eflags, pump, shader, error_messages, hresult);
 }
 
 HRESULT WINAPI D3DX11CompileFromFileW(const WCHAR *filename, const D3D10_SHADER_MACRO *defines,
         ID3D10Include *include, const char *entry_point, const char *target, UINT sflags, UINT eflags,
         ID3DX11ThreadPump *pump, ID3D10Blob **shader, ID3D10Blob **error_messages, HRESULT *hresult)
 {
-    FIXME("filename %s, defines %p, include %p, entry_point %s, target %s, sflags %#x, "
-            "eflags %#x, pump %p, shader %p, error_messages %p, hresult %p stub.\n",
+    HRESULT hr;
+
+    TRACE("filename %s, defines %p, include %p, entry_point %s, target %s, sflags %#x, "
+            "eflags %#x, pump %p, shader %p, error_messages %p, hresult %p.\n",
             debugstr_w(filename), defines, include, debugstr_a(entry_point), debugstr_a(target),
             sflags, eflags, pump, shader, error_messages, hresult);
 
-    return E_NOTIMPL;
+    if (pump)
+        FIXME("Unimplemented ID3DX11ThreadPump handling.\n");
+
+    if (!include)
+        include = D3D_COMPILE_STANDARD_FILE_INCLUDE;
+
+    hr = D3DCompileFromFile(filename, defines, include, entry_point, target, sflags, eflags, shader, error_messages);
+    if (hresult)
+        *hresult = hr;
+
+    return hr;
 }
 
 HRESULT WINAPI D3DX11CreateAsyncMemoryLoader(const void *data, SIZE_T data_size, ID3DX11DataLoader **loader)
