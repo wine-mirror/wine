@@ -725,3 +725,53 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoGetInstanceFromFile(COSERVERINFO *server_info
         return hr;
     }
 }
+
+/***********************************************************************
+ *           CoGetInstanceFromIStorage        (combase.@)
+ */
+HRESULT WINAPI CoGetInstanceFromIStorage(COSERVERINFO *server_info, CLSID *rclsid,
+        IUnknown *outer, DWORD cls_context, IStorage *storage, DWORD count, MULTI_QI *results)
+{
+    IPersistStorage *ps = NULL;
+    IUnknown *obj = NULL;
+    STATSTG stat;
+    HRESULT hr;
+
+    if (!count || !results || !storage)
+        return E_INVALIDARG;
+
+    if (server_info)
+        FIXME("() non-NULL server_info not supported\n");
+
+    init_multi_qi(count, results, E_NOINTERFACE);
+
+    if (!rclsid)
+    {
+        memset(&stat.clsid, 0, sizeof(stat.clsid));
+        hr = IStorage_Stat(storage, &stat, STATFLAG_NONAME);
+        if (FAILED(hr))
+        {
+            ERR("Failed to get CLSID from a storage.\n");
+            return hr;
+        }
+
+        rclsid = &stat.clsid;
+    }
+
+    hr = CoCreateInstance(rclsid, outer, cls_context, &IID_IUnknown, (void **)&obj);
+    if (hr != S_OK)
+        return hr;
+
+    /* Init from IStorage */
+    hr = IUnknown_QueryInterface(obj, &IID_IPersistStorage, (void **)&ps);
+    if (FAILED(hr))
+        ERR("failed to get IPersistStorage\n");
+
+    if (ps)
+    {
+        IPersistStorage_Load(ps, storage);
+        IPersistStorage_Release(ps);
+    }
+
+    return return_multi_qi(obj, count, results, FALSE);
+}

@@ -108,7 +108,7 @@
 @ stdcall CoGetDefaultContext(long ptr ptr) ole32.CoGetDefaultContext
 @ stub CoGetErrorInfo
 @ stdcall CoGetInstanceFromFile(ptr ptr ptr long long wstr long ptr)
-@ stdcall CoGetInstanceFromIStorage(ptr ptr ptr long ptr long ptr) ole32.CoGetInstanceFromIStorage
+@ stdcall CoGetInstanceFromIStorage(ptr ptr ptr long ptr long ptr)
 @ stdcall CoGetInterfaceAndReleaseStream(ptr ptr ptr) ole32.CoGetInterfaceAndReleaseStream
 @ stdcall CoGetMalloc(long ptr)
 @ stdcall CoGetMarshalSizeMax(ptr ptr ptr long ptr long) ole32.CoGetMarshalSizeMax
