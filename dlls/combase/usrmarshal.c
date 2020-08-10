@@ -163,7 +163,7 @@ IMPL_WIREM_HANDLE(HWND)
  */
 ULONG __RPC_USER CLIPFORMAT_UserSize(ULONG *pFlags, ULONG size, CLIPFORMAT *pCF)
 {
-    TRACE("%s, %u, %p.n", debugstr_user_flags(pFlags), size, pCF);
+    TRACE("%s, %u, %p\n", debugstr_user_flags(pFlags), size, pCF);
 
     ALIGN_LENGTH(size, 3);
 
