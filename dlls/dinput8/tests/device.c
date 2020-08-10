@@ -712,6 +712,26 @@ static void test_mouse_keyboard(void)
     todo_wine
     ok(raw_devices_count == 1, "Unexpected raw devices registered: %d\n", raw_devices_count);
 
+    IDirectInputDevice8_SetCooperativeLevel(di_mouse, hwnd, DISCL_FOREGROUND|DISCL_EXCLUSIVE);
+    IDirectInputDevice8_SetCooperativeLevel(di_keyboard, hwnd, DISCL_FOREGROUND|DISCL_EXCLUSIVE);
+
+    hr = IDirectInputDevice8_Acquire(di_keyboard);
+    ok(SUCCEEDED(hr), "IDirectInputDevice8_Acquire failed: %08x\n", hr);
+    hr = IDirectInputDevice8_Acquire(di_mouse);
+    ok(SUCCEEDED(hr), "IDirectInputDevice8_Acquire failed: %08x\n", hr);
+    raw_devices_count = ARRAY_SIZE(raw_devices);
+    memset(raw_devices, 0, sizeof(raw_devices));
+    hr = GetRegisteredRawInputDevices(raw_devices, &raw_devices_count, sizeof(RAWINPUTDEVICE));
+    ok(hr == 3, "GetRegisteredRawInputDevices returned %d, raw_devices_count: %d\n", hr, raw_devices_count);
+    todo_wine
+    ok(raw_devices[0].dwFlags == (RIDEV_CAPTUREMOUSE|RIDEV_NOLEGACY), "Unexpected raw device flags: %x\n", raw_devices[0].dwFlags);
+    todo_wine
+    ok(raw_devices[2].dwFlags == (RIDEV_NOHOTKEYS|RIDEV_NOLEGACY), "Unexpected raw device flags: %x\n", raw_devices[1].dwFlags);
+    hr = IDirectInputDevice8_Unacquire(di_keyboard);
+    ok(SUCCEEDED(hr), "IDirectInputDevice8_Acquire failed: %08x\n", hr);
+    hr = IDirectInputDevice8_Unacquire(di_mouse);
+    ok(SUCCEEDED(hr), "IDirectInputDevice8_Acquire failed: %08x\n", hr);
+
     raw_devices_count = ARRAY_SIZE(raw_devices);
     hr = GetRegisteredRawInputDevices(raw_devices, &raw_devices_count, sizeof(RAWINPUTDEVICE));
     todo_wine
