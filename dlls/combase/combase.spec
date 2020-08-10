@@ -67,7 +67,7 @@
 @ stdcall CLIPFORMAT_UserSize(ptr long ptr)
 @ stdcall CLIPFORMAT_UserUnmarshal(ptr ptr ptr)
 @ stub CLSIDFromOle1Class
-@ stdcall CLSIDFromProgID(wstr ptr) ole32.CLSIDFromProgID
+@ stdcall CLSIDFromProgID(wstr ptr)
 @ stdcall CLSIDFromString(wstr ptr) ole32.CLSIDFromString
 @ stub CleanupOleStateInAllTls
 @ stdcall CleanupTlsOleState(ptr)

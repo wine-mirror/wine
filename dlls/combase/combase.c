@@ -28,6 +28,7 @@
 #include "winternl.h"
 
 #include "wine/debug.h"
+#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
@@ -53,6 +54,13 @@ struct comclassredirect_data
     DWORD miscstatusthumbnail;
     DWORD miscstatusicon;
     DWORD miscstatusdocprint;
+};
+
+struct progidredirect_data
+{
+    ULONG size;
+    DWORD reserved;
+    ULONG clsid_offset;
 };
 
 static NTSTATUS create_key(HKEY *retkey, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr)
@@ -913,6 +921,136 @@ HRESULT WINAPI DECLSPEC_HOTPATCH ProgIDFromCLSID(REFCLSID clsid, LPOLESTR *progi
 
     RegCloseKey(hkey);
     return hr;
+}
+
+static inline BOOL is_valid_hex(WCHAR c)
+{
+    if (!(((c >= '0') && (c <= '9'))  ||
+          ((c >= 'a') && (c <= 'f'))  ||
+          ((c >= 'A') && (c <= 'F'))))
+        return FALSE;
+    return TRUE;
+}
+
+static const BYTE guid_conv_table[256] =
+{
+    0,   0,   0,   0,   0,   0,   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 0x00 */
+    0,   0,   0,   0,   0,   0,   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 0x10 */
+    0,   0,   0,   0,   0,   0,   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 0x20 */
+    0,   1,   2,   3,   4,   5,   6, 7, 8, 9, 0, 0, 0, 0, 0, 0, /* 0x30 */
+    0, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 0x40 */
+    0,   0,   0,   0,   0,   0,   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 0x50 */
+    0, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf                             /* 0x60 */
+};
+
+static BOOL guid_from_string(LPCWSTR s, GUID *id)
+{
+    int i;
+
+    if (!s || s[0] != '{')
+    {
+        memset(id, 0, sizeof(*id));
+        if (!s) return TRUE;
+        return FALSE;
+    }
+
+    TRACE("%s -> %p\n", debugstr_w(s), id);
+
+    /* In form {XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX} */
+
+    id->Data1 = 0;
+    for (i = 1; i < 9; ++i)
+    {
+        if (!is_valid_hex(s[i])) return FALSE;
+        id->Data1 = (id->Data1 << 4) | guid_conv_table[s[i]];
+    }
+    if (s[9] != '-') return FALSE;
+
+    id->Data2 = 0;
+    for (i = 10; i < 14; ++i)
+    {
+        if (!is_valid_hex(s[i])) return FALSE;
+        id->Data2 = (id->Data2 << 4) | guid_conv_table[s[i]];
+    }
+    if (s[14] != '-') return FALSE;
+
+    id->Data3 = 0;
+    for (i = 15; i < 19; ++i)
+    {
+        if (!is_valid_hex(s[i])) return FALSE;
+        id->Data3 = (id->Data3 << 4) | guid_conv_table[s[i]];
+    }
+    if (s[19] != '-') return FALSE;
+
+    for (i = 20; i < 37; i += 2)
+    {
+        if (i == 24)
+        {
+            if (s[i] != '-') return FALSE;
+            i++;
+        }
+        if (!is_valid_hex(s[i]) || !is_valid_hex(s[i + 1])) return FALSE;
+        id->Data4[(i - 20) / 2] = guid_conv_table[s[i]] << 4 | guid_conv_table[s[i + 1]];
+    }
+
+    if (s[37] == '}' && s[38] == '\0')
+        return TRUE;
+
+    return FALSE;
+}
+
+static HRESULT clsid_from_string_reg(LPCOLESTR progid, CLSID *clsid)
+{
+    WCHAR buf2[CHARS_IN_GUID];
+    LONG buf2len = sizeof(buf2);
+    HKEY xhkey;
+    WCHAR *buf;
+
+    memset(clsid, 0, sizeof(*clsid));
+    buf = heap_alloc((lstrlenW(progid) + 8) * sizeof(WCHAR));
+    if (!buf) return E_OUTOFMEMORY;
+
+    lstrcpyW(buf, progid);
+    lstrcatW(buf, L"\\CLSID");
+    if (open_classes_key(HKEY_CLASSES_ROOT, buf, MAXIMUM_ALLOWED, &xhkey))
+    {
+        heap_free(buf);
+        WARN("couldn't open key for ProgID %s\n", debugstr_w(progid));
+        return CO_E_CLASSSTRING;
+    }
+    heap_free(buf);
+
+    if (RegQueryValueW(xhkey, NULL, buf2, &buf2len))
+    {
+        RegCloseKey(xhkey);
+        WARN("couldn't query clsid value for ProgID %s\n", debugstr_w(progid));
+        return CO_E_CLASSSTRING;
+    }
+    RegCloseKey(xhkey);
+    return guid_from_string(buf2, clsid) ? S_OK : CO_E_CLASSSTRING;
+}
+
+/******************************************************************************
+ *                CLSIDFromProgID        (combase.@)
+ */
+HRESULT WINAPI DECLSPEC_HOTPATCH CLSIDFromProgID(LPCOLESTR progid, CLSID *clsid)
+{
+    ACTCTX_SECTION_KEYED_DATA data;
+
+    if (!progid || !clsid)
+        return E_INVALIDARG;
+
+    data.cbSize = sizeof(data);
+    if (FindActCtxSectionStringW(0, NULL, ACTIVATION_CONTEXT_SECTION_COM_PROGID_REDIRECTION,
+            progid, &data))
+    {
+        struct progidredirect_data *progiddata = (struct progidredirect_data *)data.lpData;
+        CLSID *alias = (CLSID *)((BYTE *)data.lpSectionBase + progiddata->clsid_offset);
+        *clsid = *alias;
+        return S_OK;
+    }
+
+    return clsid_from_string_reg(progid, clsid);
 }
 
 static void init_multi_qi(DWORD count, MULTI_QI *mqi, HRESULT hr)
