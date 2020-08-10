@@ -279,7 +279,7 @@
 @ stub NdrExtStubInitialize
 @ stub NdrOleDllGetClassObject
 @ stub NdrpFindInterface
-@ stdcall ProgIDFromCLSID(ptr ptr) ole32.ProgIDFromCLSID
+@ stdcall ProgIDFromCLSID(ptr ptr)
 @ stdcall PropVariantClear(ptr)
 @ stdcall PropVariantCopy(ptr ptr)
 @ stub ReleaseFuncDescs

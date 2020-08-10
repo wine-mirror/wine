@@ -33,6 +33,28 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
 #define CHARS_IN_GUID 39
 
+struct comclassredirect_data
+{
+    ULONG size;
+    ULONG flags;
+    DWORD model;
+    GUID  clsid;
+    GUID  alias;
+    GUID  clsid2;
+    GUID  tlbid;
+    ULONG name_len;
+    ULONG name_offset;
+    ULONG progid_len;
+    ULONG progid_offset;
+    ULONG clrdata_len;
+    ULONG clrdata_offset;
+    DWORD miscstatus;
+    DWORD miscstatuscontent;
+    DWORD miscstatusthumbnail;
+    DWORD miscstatusicon;
+    DWORD miscstatusdocprint;
+};
+
 static NTSTATUS create_key(HKEY *retkey, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr)
 {
     NTSTATUS status = NtCreateKey((HANDLE *)retkey, access, attr, 0, NULL, 0, NULL);
@@ -828,6 +850,68 @@ HRESULT WINAPI CoGetTreatAsClass(REFCLSID clsidOld, CLSID *clsidNew)
         ERR("Failed to get CLSID from string %s, hr %#x.\n", debugstr_w(buffW), hr);
 done:
     if (hkey) RegCloseKey(hkey);
+    return hr;
+}
+
+/******************************************************************************
+ *               ProgIDFromCLSID        (combase.@)
+ */
+HRESULT WINAPI DECLSPEC_HOTPATCH ProgIDFromCLSID(REFCLSID clsid, LPOLESTR *progid)
+{
+    ACTCTX_SECTION_KEYED_DATA data;
+    LONG progidlen = 0;
+    HKEY hkey;
+    HRESULT hr;
+
+    if (!progid)
+        return E_INVALIDARG;
+
+    *progid = NULL;
+
+    data.cbSize = sizeof(data);
+    if (FindActCtxSectionGuid(0, NULL, ACTIVATION_CONTEXT_SECTION_COM_SERVER_REDIRECTION,
+            clsid, &data))
+    {
+        struct comclassredirect_data *comclass = (struct comclassredirect_data *)data.lpData;
+        if (comclass->progid_len)
+        {
+            WCHAR *ptrW;
+
+            *progid = CoTaskMemAlloc(comclass->progid_len + sizeof(WCHAR));
+            if (!*progid) return E_OUTOFMEMORY;
+
+            ptrW = (WCHAR *)((BYTE *)comclass + comclass->progid_offset);
+            memcpy(*progid, ptrW, comclass->progid_len + sizeof(WCHAR));
+            return S_OK;
+        }
+        else
+            return REGDB_E_CLASSNOTREG;
+    }
+
+    hr = open_key_for_clsid(clsid, L"ProgID", KEY_READ, &hkey);
+    if (FAILED(hr))
+        return hr;
+
+    if (RegQueryValueW(hkey, NULL, NULL, &progidlen))
+        hr = REGDB_E_CLASSNOTREG;
+
+    if (hr == S_OK)
+    {
+        *progid = CoTaskMemAlloc(progidlen * sizeof(WCHAR));
+        if (*progid)
+        {
+            if (RegQueryValueW(hkey, NULL, *progid, &progidlen))
+            {
+                hr = REGDB_E_CLASSNOTREG;
+                CoTaskMemFree(*progid);
+                *progid = NULL;
+            }
+        }
+        else
+            hr = E_OUTOFMEMORY;
+    }
+
+    RegCloseKey(hkey);
     return hr;
 }
 
