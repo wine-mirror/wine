@@ -1556,6 +1556,22 @@ void WINAPI call_user_apc( CONTEXT *context_ptr, ULONG_PTR ctx, ULONG_PTR arg1,
 
 
 /***********************************************************************
+ *           call_raise_user_exception_dispatcher
+ */
+__ASM_GLOBAL_FUNC( call_raise_user_exception_dispatcher,
+                   "movl %fs:0x1f8,%eax\n\t"  /* x86_thread_data()->syscall_frame */
+                   "pushl (%eax)\n\t"         /* frame->prev_frame */
+                   "popl %fs:0x1f8\n\t"
+                   "movl 4(%eax),%edi\n\t"    /* frame->edi */
+                   "movl 8(%eax),%esi\n\t"    /* frame->esi */
+                   "movl 12(%eax),%ebx\n\t"   /* frame->ebx */
+                   "movl 16(%eax),%ebp\n\t"   /* frame->ebp */
+                   "movl 4(%esp),%edx\n\t"    /* dispatcher */
+                   "leal 24(%eax),%esp\n\t"
+                   "jmp *%edx" )
+
+
+/***********************************************************************
  *           call_user_exception_dispatcher
  */
 __ASM_GLOBAL_FUNC( call_user_exception_dispatcher,

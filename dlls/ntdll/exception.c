@@ -179,10 +179,12 @@ void WINAPI RtlRaiseStatus( NTSTATUS status )
 /*******************************************************************
  *		KiRaiseUserExceptionDispatcher  (NTDLL.@)
  */
-void WINAPI KiRaiseUserExceptionDispatcher(void)
+NTSTATUS WINAPI KiRaiseUserExceptionDispatcher(void)
 {
-    EXCEPTION_RECORD rec = { NtCurrentTeb()->ExceptionCode };
+    DWORD code = NtCurrentTeb()->ExceptionCode;
+    EXCEPTION_RECORD rec = { code };
     RtlRaiseException( &rec );
+    return code;
 }
 
 

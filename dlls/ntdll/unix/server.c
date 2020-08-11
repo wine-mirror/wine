@@ -1650,7 +1650,7 @@ NTSTATUS WINAPI NtClose( HANDLE handle )
     if (!NtQueryInformationProcess( NtCurrentProcess(), ProcessDebugPort, &port, sizeof(port), NULL) && port)
     {
         NtCurrentTeb()->ExceptionCode = ret;
-        pKiRaiseUserExceptionDispatcher();
+        call_raise_user_exception_dispatcher( pKiRaiseUserExceptionDispatcher );
     }
     return ret;
 }
