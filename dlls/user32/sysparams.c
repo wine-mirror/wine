@@ -3369,6 +3369,7 @@ LONG WINAPI ChangeDisplaySettingsExW( LPCWSTR devname, LPDEVMODEW devmode, HWND 
 
     if (def_mode)
     {
+        memset(&dm, 0, sizeof(dm));
         dm.dmSize = sizeof(dm);
         if (!EnumDisplaySettingsExW(devname, ENUM_REGISTRY_SETTINGS, &dm, 0))
         {
@@ -3428,6 +3429,8 @@ BOOL WINAPI EnumDisplaySettingsExA(LPCSTR lpszDeviceName, DWORD iModeNum,
     if (lpszDeviceName) RtlCreateUnicodeStringFromAsciiz(&nameW, lpszDeviceName);
     else nameW.Buffer = NULL;
 
+    memset(&devmodeW, 0, sizeof(devmodeW));
+    devmodeW.dmSize = sizeof(devmodeW);
     ret = EnumDisplaySettingsExW(nameW.Buffer,iModeNum,&devmodeW,dwFlags);
     if (ret)
     {
@@ -4808,6 +4811,7 @@ LONG WINAPI QueryDisplayConfig(UINT32 flags, UINT32 *numpathelements, DISPLAYCON
                                        &type, (BYTE *)device_name, sizeof(device_name), NULL, 0))
             goto done;
 
+        memset(&devmode, 0, sizeof(devmode));
         devmode.dmSize = sizeof(devmode);
         if (!EnumDisplaySettingsW(device_name, ENUM_CURRENT_SETTINGS, &devmode))
             goto done;
