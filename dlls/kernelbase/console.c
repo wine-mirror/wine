@@ -434,7 +434,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH FillConsoleOutputAttribute( HANDLE handle, WORD at
     params.ch    = 0;
     params.attr  = attr;
     return console_ioctl( handle, IOCTL_CONDRV_FILL_OUTPUT, &params, sizeof(params),
-                          written, sizeof(written), NULL );
+                          written, sizeof(*written), NULL );
 }
 
 
@@ -477,7 +477,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH FillConsoleOutputCharacterW( HANDLE handle, WCHAR 
     params.ch    = ch;
     params.attr  = 0;
     return console_ioctl( handle, IOCTL_CONDRV_FILL_OUTPUT, &params, sizeof(params),
-                          written, sizeof(written), NULL );
+                          written, sizeof(*written), NULL );
 }
 
 HANDLE get_console_wait_handle( HANDLE handle )
