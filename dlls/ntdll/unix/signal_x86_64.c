@@ -1926,15 +1926,15 @@ void WINAPI do_call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *c
                                                NTSTATUS (WINAPI *dispatcher)(EXCEPTION_RECORD*,CONTEXT*),
                                                struct stack_layout *stack )
 {
+    struct syscall_frame *frame = amd64_thread_data()->syscall_frame;
+
     memmove(&stack->context, context, sizeof(*context));
     memcpy(&stack->rec, rec, sizeof(*rec));
 
-    if (stack->rec.ExceptionCode == EXCEPTION_BREAKPOINT)
-    {
-        /* fix up instruction pointer in context for EXCEPTION_BREAKPOINT */
-        stack->context.Rip--;
-    }
+    /* fix up instruction pointer in context for EXCEPTION_BREAKPOINT */
+    if (stack->rec.ExceptionCode == EXCEPTION_BREAKPOINT) stack->context.Rip--;
 
+    amd64_thread_data()->syscall_frame = frame->prev_frame;
     user_exception_dispatcher_trampoline( stack, dispatcher );
 }
 
