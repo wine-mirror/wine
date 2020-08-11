@@ -263,7 +263,7 @@ static void test_Win32_Service( IWbemServices *services )
     static const WCHAR emptyW[] = {0};
     BSTR class = SysAllocString( serviceW ), empty = SysAllocString( emptyW ), method;
     IWbemClassObject *service, *out;
-    VARIANT state, retval;
+    VARIANT state, retval, classvar;
     CIMTYPE type;
     HRESULT hr;
 
@@ -343,6 +343,13 @@ static void test_Win32_Service( IWbemServices *services )
     hr = IWbemServices_GetObject( services, NULL, 0, NULL, &service, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( !!service, "expected non-NULL service\n" );
+
+    VariantInit(&classvar);
+    V_VT(&classvar) = VT_BSTR;
+    V_BSTR(&classvar) = SysAllocString(L"MyClass");
+    hr = IWbemClassObject_Put(service, L"__CLASS", 0, &classvar, 0);
+    ok( hr == S_OK, "got %08x\n", hr );
+    VariantClear(&classvar);
     IWbemClassObject_Release( service );
 
     service = NULL;
