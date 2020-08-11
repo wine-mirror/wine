@@ -7778,6 +7778,10 @@ static void test_getaddrinfo(void)
                 ok(0, "test %d: getaddrinfo failed with %d (err %d)\n", i, ret, err);
         }
     }
+
+    memset(&hint, 0, sizeof(hint));
+    ret = pgetaddrinfo(NULL, "nonexistentservice", &hint, &result);
+    ok(ret == WSATYPE_NOT_FOUND, "got %d\n", ret);
 }
 
 static void test_ConnectEx(void)
