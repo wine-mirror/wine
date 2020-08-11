@@ -242,6 +242,8 @@ static void test_GdiConvertToDevmodeW(void)
         return;
     }
 
+    memset(&dmA, 0, sizeof(dmA));
+    dmA.dmSize = sizeof(dmA);
     ret = EnumDisplaySettingsA(NULL, ENUM_CURRENT_SETTINGS, &dmA);
     ok(ret, "EnumDisplaySettingsExA error %u\n", GetLastError());
     ok(dmA.dmSize >= FIELD_OFFSET(DEVMODEA, dmICMMethod), "dmSize is too small: %04x\n", dmA.dmSize);
@@ -591,6 +593,8 @@ static void test_CreateCompatibleDC(void)
 
     bitmap = CreateBitmap( 10, 10, 1, 1, NULL );
 
+    memset(&dm, 0, sizeof(dm));
+    dm.dmSize = sizeof(dm);
     bRet = EnumDisplaySettingsA(NULL, ENUM_CURRENT_SETTINGS, &dm);
     ok(bRet, "EnumDisplaySettingsEx failed\n");
     dm.u1.s1.dmScale = 200;
