@@ -1198,24 +1198,14 @@ static HRESULT WINAPI ddraw_surface1_Lock(IDirectDrawSurface *iface, RECT *rect,
     return ddraw_surface_lock_ddsd(surface, rect, surface_desc, flags, h);
 }
 
-/*****************************************************************************
- * IDirectDrawSurface7::Unlock
- *
- * Unlocks an locked surface
- *
- * Params:
- *  Rect: Not used by this implementation
- *
- * Returns:
- *  D3D_OK on success, error code otherwise.
- *
- *****************************************************************************/
-static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface7_Unlock(IDirectDrawSurface7 *iface, RECT *pRect)
+/* FRAPS hooks IDirectDrawSurface::Unlock and expects the version 1 method to be called when the
+ * game uses later interfaces. */
+static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface1_Unlock(IDirectDrawSurface *iface, void *data)
 {
-    struct ddraw_surface *surface = impl_from_IDirectDrawSurface7(iface);
+    struct ddraw_surface *surface = impl_from_IDirectDrawSurface(iface);
     HRESULT hr;
 
-    TRACE("iface %p, rect %s.\n", iface, wine_dbgstr_rect(pRect));
+    TRACE("iface %p, data %p.\n", iface, data);
 
     wined3d_mutex_lock();
     hr = wined3d_resource_unmap(wined3d_texture_get_resource(surface->wined3d_texture), surface->sub_resource_idx);
@@ -1226,13 +1216,22 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface7_Unlock(IDirectDrawSurface
     return hr;
 }
 
-static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface4_Unlock(IDirectDrawSurface4 *iface, RECT *pRect)
+static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface7_Unlock(IDirectDrawSurface7 *iface, RECT *rect)
+{
+    struct ddraw_surface *surface = impl_from_IDirectDrawSurface7(iface);
+
+    TRACE("iface %p, rect %s.\n", iface, wine_dbgstr_rect(rect));
+
+    return ddraw_surface1_Unlock(&surface->IDirectDrawSurface_iface, NULL);
+}
+
+static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface4_Unlock(IDirectDrawSurface4 *iface, RECT *rect)
 {
     struct ddraw_surface *surface = impl_from_IDirectDrawSurface4(iface);
 
-    TRACE("iface %p, rect %p.\n", iface, pRect);
+    TRACE("iface %p, rect %s.\n", iface, wine_dbgstr_rect(rect));
 
-    return ddraw_surface7_Unlock(&surface->IDirectDrawSurface7_iface, pRect);
+    return ddraw_surface1_Unlock(&surface->IDirectDrawSurface_iface, NULL);
 }
 
 static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface3_Unlock(IDirectDrawSurface3 *iface, void *data)
@@ -1241,8 +1240,7 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface3_Unlock(IDirectDrawSurface
 
     TRACE("iface %p, data %p.\n", iface, data);
 
-    /* data might not be the LPRECT of later versions, so drop it. */
-    return ddraw_surface7_Unlock(&surface->IDirectDrawSurface7_iface, NULL);
+    return ddraw_surface1_Unlock(&surface->IDirectDrawSurface_iface, data);
 }
 
 static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface2_Unlock(IDirectDrawSurface2 *iface, void *data)
@@ -1251,18 +1249,7 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface2_Unlock(IDirectDrawSurface
 
     TRACE("iface %p, data %p.\n", iface, data);
 
-    /* data might not be the LPRECT of later versions, so drop it. */
-    return ddraw_surface7_Unlock(&surface->IDirectDrawSurface7_iface, NULL);
-}
-
-static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface1_Unlock(IDirectDrawSurface *iface, void *data)
-{
-    struct ddraw_surface *surface = impl_from_IDirectDrawSurface(iface);
-
-    TRACE("iface %p, data %p.\n", iface, data);
-
-    /* data might not be the LPRECT of later versions, so drop it. */
-    return ddraw_surface7_Unlock(&surface->IDirectDrawSurface7_iface, NULL);
+    return ddraw_surface1_Unlock(&surface->IDirectDrawSurface_iface, data);
 }
 
 static unsigned int ddraw_swap_interval_from_flags(DWORD flags)
