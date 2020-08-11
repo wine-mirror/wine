@@ -554,6 +554,7 @@ static void setup_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec )
     rec->ExceptionAddress = (void *)PC_sig(sigcontext);
     save_context( &context, sigcontext );
     save_fpu( &context, sigcontext );
+    if (rec->ExceptionCode == EXCEPTION_BREAKPOINT) context.Pc += 4;
 
     status = send_debug_event( rec, &context, TRUE );
     if (status == DBG_CONTINUE || status == DBG_EXCEPTION_HANDLED)
@@ -561,9 +562,6 @@ static void setup_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec )
         restore_context( &context, sigcontext );
         return;
     }
-
-    /* fix up instruction pointer in context for EXCEPTION_BREAKPOINT */
-    if (rec->ExceptionCode == EXCEPTION_BREAKPOINT) context.Pc += 4;
 
     stack = virtual_setup_exception( stack_ptr, (sizeof(*stack) + 15) & ~15, rec );
     stack->rec = *rec;
