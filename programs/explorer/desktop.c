@@ -889,6 +889,7 @@ static void initialize_display_settings(void)
 
     /* Store current display mode in the registry */
     ddW.cb = sizeof(ddW);
+    memset(&dmW, 0, sizeof(dmW));
     dmW.dmSize = sizeof(dmW);
     while (EnumDisplayDevicesW( NULL, i++, &ddW, 0 ))
     {
