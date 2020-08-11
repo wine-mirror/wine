@@ -501,6 +501,7 @@ static LONG get_display_settings(struct x11drv_display_setting **new_displays,
 
         if (!dev_mode)
         {
+            memset(&registry_mode, 0, sizeof(registry_mode));
             registry_mode.dmSize = sizeof(registry_mode);
             if (!EnumDisplaySettingsExW(display_device.DeviceName, ENUM_REGISTRY_SETTINGS, &registry_mode, 0))
                 goto done;
@@ -512,6 +513,7 @@ static LONG get_display_settings(struct x11drv_display_setting **new_displays,
             displays[display_idx].desired_mode = *dev_mode;
             if (!(dev_mode->dmFields & DM_POSITION))
             {
+                memset(&current_mode, 0, sizeof(current_mode));
                 current_mode.dmSize = sizeof(current_mode);
                 if (!EnumDisplaySettingsExW(display_device.DeviceName, ENUM_CURRENT_SETTINGS, &current_mode, 0))
                     goto done;
@@ -522,6 +524,7 @@ static LONG get_display_settings(struct x11drv_display_setting **new_displays,
         }
         else
         {
+            memset(&current_mode, 0, sizeof(current_mode));
             current_mode.dmSize = sizeof(current_mode);
             if (!EnumDisplaySettingsExW(display_device.DeviceName, ENUM_CURRENT_SETTINGS, &current_mode, 0))
                 goto done;
