@@ -912,7 +912,7 @@ static HRESULT WINAPI IXACT3EngineImpl_CreateInMemoryWaveBank(IXACT3Engine *ifac
 }
 
 static HRESULT WINAPI IXACT3EngineImpl_CreateStreamingWaveBank(IXACT3Engine *iface,
-        const XACT_STREAMING_PARAMETERS *pParms,
+        const XACT_WAVEBANK_STREAMING_PARAMETERS *pParms,
         IXACT3WaveBank **ppWaveBank)
 {
     XACT3EngineImpl *This = impl_from_IXACT3Engine(iface);
