@@ -1098,6 +1098,16 @@ HRESULT WINAPI IIDFromString(LPCOLESTR str, IID *iid)
     return guid_from_string(str, iid) ? S_OK : CO_E_IIDSTRING;
 }
 
+/******************************************************************************
+ *            StringFromCLSID        (combase.@)
+ */
+HRESULT WINAPI StringFromCLSID(REFCLSID clsid, LPOLESTR *str)
+{
+    if (!(*str = CoTaskMemAlloc(CHARS_IN_GUID * sizeof(WCHAR)))) return E_OUTOFMEMORY;
+    StringFromGUID2(clsid, *str, CHARS_IN_GUID);
+    return S_OK;
+}
+
 static void init_multi_qi(DWORD count, MULTI_QI *mqi, HRESULT hr)
 {
     ULONG i;

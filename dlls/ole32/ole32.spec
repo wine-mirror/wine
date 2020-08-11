@@ -279,9 +279,9 @@
 @ stdcall StgOpenStorageEx(wstr long long long ptr ptr ptr ptr)
 @ stdcall StgOpenStorageOnILockBytes(ptr ptr long ptr long ptr)
 @ stdcall StgSetTimes(wstr ptr ptr ptr )
-@ stdcall StringFromCLSID(ptr ptr)
+@ stdcall StringFromCLSID(ptr ptr) combase.StringFromCLSID
 @ stdcall StringFromGUID2(ptr ptr long)
-@ stdcall StringFromIID(ptr ptr) StringFromCLSID
+@ stdcall StringFromIID(ptr ptr) combase.StringFromIID
 @ stub UpdateDCOMSettings
 @ stub UtConvertDvtd16toDvtd32
 @ stub UtConvertDvtd32toDvtd16

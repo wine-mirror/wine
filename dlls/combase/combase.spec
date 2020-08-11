@@ -318,9 +318,9 @@
 @ stub SetCleanupFlag
 @ stdcall SetErrorInfo(long ptr) ole32.SetErrorInfo
 @ stub SetRestrictedErrorInfo
-@ stdcall StringFromCLSID(ptr ptr) ole32.StringFromCLSID
+@ stdcall StringFromCLSID(ptr ptr)
 @ stdcall StringFromGUID2(ptr ptr long) ole32.StringFromGUID2
-@ stdcall StringFromIID(ptr ptr) ole32.StringFromIID
+@ stdcall StringFromIID(ptr ptr) StringFromCLSID
 @ stub UpdateDCOMSettings
 @ stdcall WdtpInterfacePointer_UserFree(ptr)
 @ stub -arch=win64 WdtpInterfacePointer_UserFree64
