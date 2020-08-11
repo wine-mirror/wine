@@ -804,6 +804,16 @@ HRESULT WINAPI CoGetObjectContext(REFIID riid, void **ppv)
 }
 
 /***********************************************************************
+ *           CoGetDefaultContext    (combase.@)
+ */
+HRESULT WINAPI CoGetDefaultContext(APTTYPE type, REFIID riid, void **obj)
+{
+    FIXME("%d, %s, %p stub\n", type, debugstr_guid(riid), obj);
+
+    return E_NOINTERFACE;
+}
+
+/***********************************************************************
  *          CoGetCallState        (combase.@)
  */
 HRESULT WINAPI CoGetCallState(int arg1, ULONG *arg2)
