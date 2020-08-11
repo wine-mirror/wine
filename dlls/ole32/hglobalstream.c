@@ -51,6 +51,11 @@ struct handle_wrapper
     BOOL delete_on_release;
 };
 
+static void handle_addref(struct handle_wrapper *handle)
+{
+    InterlockedIncrement(&handle->ref);
+}
+
 static void handle_release(struct handle_wrapper *handle)
 {
     ULONG ref = InterlockedDecrement(&handle->ref);
@@ -586,15 +591,21 @@ static HRESULT WINAPI HGLOBALStreamImpl_Clone(
 		  IStream*     iface,
 		  IStream**    ppstm) /* [out] */
 {
-  HGLOBALStreamImpl* This = impl_from_IStream(iface);
+  HGLOBALStreamImpl* This = impl_from_IStream(iface), *clone;
   ULARGE_INTEGER dummy;
   LARGE_INTEGER offset;
-  HRESULT hr;
 
   TRACE(" Cloning %p (deleteOnRelease=%d seek position=%ld)\n",iface,This->handle->delete_on_release,(long)This->currentPosition.QuadPart);
-  hr = CreateStreamOnHGlobal(This->handle->hglobal, FALSE, ppstm);
-  if(FAILED(hr))
-    return hr;
+
+  *ppstm = NULL;
+
+  clone = hglobalstream_construct();
+  if (!clone) return E_OUTOFMEMORY;
+
+  *ppstm = &clone->IStream_iface;
+  handle_addref(This->handle);
+  clone->handle = This->handle;
+
   offset.QuadPart = (LONGLONG)This->currentPosition.QuadPart;
   IStream_Seek(*ppstm, offset, STREAM_SEEK_SET, &dummy);
   return S_OK;
