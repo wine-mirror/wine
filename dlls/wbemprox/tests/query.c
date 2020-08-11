@@ -338,19 +338,23 @@ static void test_Win32_Service( IWbemServices *services )
     service = NULL;
     hr = IWbemServices_GetObject( services, NULL, 0, NULL, &service, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
-    if (service) IWbemClassObject_Release( service );
+    ok( !!service, "expected non-NULL service\n" );
+    IWbemClassObject_Release( service );
 
     service = NULL;
     hr = IWbemServices_GetObject( services, empty, 0, NULL, &service, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
-    if (service) IWbemClassObject_Release( service );
+    ok( !!service, "expected non-NULL service\n" );
+    IWbemClassObject_Release( service );
 
     SysFreeString( empty );
     SysFreeString( class );
 
     class = SysAllocString( L"Win32_Service.Name=\"nonexistent\"" );
+    service = (IWbemClassObject *)0xdeadbeef;
     hr = IWbemServices_GetObject( services, class, 0, NULL, &service, NULL );
     ok( hr == WBEM_E_NOT_FOUND, "got %#08x\n", hr );
+    ok( service == NULL, "expected NULL service, got %p\n", service );
     SysFreeString( class );
 }
 

@@ -463,7 +463,11 @@ HRESULT get_object( const WCHAR *object_path, IWbemClassObject **obj )
         return hr;
     }
     hr = IEnumWbemClassObject_Next( iter, WBEM_INFINITE, 1, obj, &count );
-    if (hr == WBEM_S_FALSE) hr = WBEM_E_NOT_FOUND;
+    if (hr == WBEM_S_FALSE)
+    {
+        hr = WBEM_E_NOT_FOUND;
+        *obj = NULL;
+    }
     IEnumWbemClassObject_Release( iter );
     free_path( path );
     return hr;
