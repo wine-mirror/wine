@@ -171,7 +171,7 @@
 @ stdcall HWND_UserMarshal(ptr ptr ptr) combase.HWND_UserMarshal
 @ stdcall HWND_UserSize(ptr long ptr) combase.HWND_UserSize
 @ stdcall HWND_UserUnmarshal(ptr ptr ptr) combase.HWND_UserUnmarshal
-@ stdcall IIDFromString(wstr ptr)
+@ stdcall IIDFromString(wstr ptr) combase.IIDFromString
 @ stub I_RemoteMain
 @ stdcall IsAccelerator(long long ptr ptr)
 @ stdcall IsEqualGUID(ptr ptr)

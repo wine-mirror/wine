@@ -1075,6 +1075,29 @@ HRESULT WINAPI CLSIDFromString(LPCOLESTR str, LPCLSID clsid)
     return hr;
 }
 
+/******************************************************************************
+ *                IIDFromString        (combase.@)
+ */
+HRESULT WINAPI IIDFromString(LPCOLESTR str, IID *iid)
+{
+    TRACE("%s, %p\n", debugstr_w(str), iid);
+
+    if (!str)
+    {
+        memset(iid, 0, sizeof(*iid));
+        return S_OK;
+    }
+
+    /* length mismatch is a special case */
+    if (lstrlenW(str) + 1 != CHARS_IN_GUID)
+        return E_INVALIDARG;
+
+    if (str[0] != '{')
+        return CO_E_IIDSTRING;
+
+    return guid_from_string(str, iid) ? S_OK : CO_E_IIDSTRING;
+}
+
 static void init_multi_qi(DWORD count, MULTI_QI *mqi, HRESULT hr)
 {
     ULONG i;

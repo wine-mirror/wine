@@ -231,7 +231,7 @@
 @ stdcall HWND_UserSize(ptr long ptr)
 @ stdcall HWND_UserUnmarshal(ptr ptr ptr)
 @ stub HkOleRegisterObject
-@ stdcall IIDFromString(wstr ptr) ole32.IIDFromString
+@ stdcall IIDFromString(wstr ptr)
 @ stub InternalAppInvokeExceptionFilter
 @ stub InternalCCFreeUnused
 @ stub InternalCCGetClassInformationForDde
