@@ -514,6 +514,7 @@ static void test_ChangeDisplaySettingsEx(void)
 
         devices[device_count].index = device;
         lstrcpyA(devices[device_count].name, dd.DeviceName);
+        memset(&devices[device_count].original_mode, 0, sizeof(devices[device_count].original_mode));
         devices[device_count].original_mode.dmSize = sizeof(devices[device_count].original_mode);
         res = EnumDisplaySettingsA(dd.DeviceName, ENUM_CURRENT_SETTINGS, &devices[device_count].original_mode);
         ok(res, "EnumDisplaySettingsA %s failed, error %#x\n", dd.DeviceName, GetLastError());
