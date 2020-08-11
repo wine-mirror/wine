@@ -625,20 +625,16 @@ static void test_IStream_Clone(void)
 
     newsize.QuadPart = 0x8000;
     hr = IStream_SetSize(stream, newsize);
-todo_wine
     ok(hr == S_OK, "unexpected %#x\n", hr);
 
     stream_info(stream, &hmem, &size, &pos);
     ok(hmem != 0, "unexpected %p\n", hmem);
-todo_wine
     ok(hmem != orig_hmem, "unexpected %p\n", hmem);
-todo_wine
     ok(size == 0x8000, "unexpected %#x\n", size);
     ok(pos == 0, "unexpected %d\n", pos);
 
     stream_info(clone, &hmem_clone, &size, &pos);
     ok(hmem_clone == hmem, "handles should match\n");
-todo_wine
     ok(size == 0x8000, "unexpected %#x\n", size);
     ok(pos == 0, "unexpected %d\n", pos);
 

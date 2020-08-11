@@ -426,7 +426,7 @@ static HRESULT WINAPI HGLOBALStreamImpl_SetSize(
   /*
    * Re allocate the HGlobal to fit the new size of the stream.
    */
-  supportHandle = GlobalReAlloc(This->handle->hglobal, libNewSize.u.LowPart, 0);
+  supportHandle = GlobalReAlloc(This->handle->hglobal, libNewSize.u.LowPart, GMEM_MOVEABLE);
 
   if (supportHandle == 0)
     return E_OUTOFMEMORY;
