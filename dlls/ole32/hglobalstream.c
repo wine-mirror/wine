@@ -45,6 +45,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(storage);
 
 struct handle_wrapper
 {
+    LONG ref;
     HGLOBAL hglobal;
     ULONG size;
     BOOL delete_on_release;
@@ -52,8 +53,13 @@ struct handle_wrapper
 
 static void handle_release(struct handle_wrapper *handle)
 {
+    ULONG ref = InterlockedDecrement(&handle->ref);
+
+    if (!ref)
+    {
         if (handle->delete_on_release) GlobalFree(handle->hglobal);
         HeapFree(GetProcessHeap(), 0, handle);
+    }
 }
 
 static struct handle_wrapper *handle_create(HGLOBAL hglobal, BOOL delete_on_release)
@@ -70,6 +76,7 @@ static struct handle_wrapper *handle_create(HGLOBAL hglobal, BOOL delete_on_rele
         HeapFree(GetProcessHeap(), 0, handle);
         return NULL;
     }
+    handle->ref = 1;
     handle->hglobal = hglobal;
     handle->size = GlobalSize(hglobal);
     handle->delete_on_release = delete_on_release;
