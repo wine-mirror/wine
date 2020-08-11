@@ -164,7 +164,7 @@
 @ stub CoTestCancel
 @ stdcall CoUninitialize() ole32.CoUninitialize
 @ stub CoUnloadingWOW
-@ stdcall CoUnmarshalHresult(ptr ptr) ole32.CoUnmarshalHresult
+@ stdcall CoUnmarshalHresult(ptr ptr)
 @ stdcall CoUnmarshalInterface(ptr ptr ptr) ole32.CoUnmarshalInterface
 @ stub CoVrfCheckThreadState
 @ stub CoVrfGetThreadState

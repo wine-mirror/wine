@@ -28,3 +28,11 @@ HRESULT WINAPI CoMarshalHresult(IStream *stream, HRESULT hresult)
 {
     return IStream_Write(stream, &hresult, sizeof(hresult), NULL);
 }
+
+/***********************************************************************
+ *            CoUnmarshalHresult      (combase.@)
+ */
+HRESULT WINAPI CoUnmarshalHresult(IStream *stream, HRESULT *phresult)
+{
+    return IStream_Read(stream, phresult, sizeof(*phresult), NULL);
+}

@@ -89,7 +89,7 @@
 @ stdcall CoTreatAsClass(ptr ptr)
 @ stdcall CoUninitialize()
 @ stub CoUnloadingWOW
-@ stdcall CoUnmarshalHresult(ptr ptr)
+@ stdcall CoUnmarshalHresult(ptr ptr) combase.CoUnmarshalHresult
 @ stdcall CoUnmarshalInterface(ptr ptr ptr)
 @ stdcall CoWaitForMultipleHandles(long long long ptr ptr)
 @ stdcall CreateAntiMoniker(ptr)
