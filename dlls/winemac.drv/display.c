@@ -847,6 +847,7 @@ LONG CDECL macdrv_ChangeDisplaySettingsEx(LPCWSTR devname, LPDEVMODEW devmode,
 
     if (!devname && !devmode)
     {
+        memset(&default_mode, 0, sizeof(default_mode));
         default_mode.dmSize = sizeof(default_mode);
         if (!EnumDisplaySettingsExW(primary_adapter, ENUM_REGISTRY_SETTINGS, &default_mode, 0))
         {
