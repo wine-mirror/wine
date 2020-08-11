@@ -460,6 +460,9 @@ static HRESULT WINAPI class_object_Put(
         if ((hr = get_column_index( co->record->table, wszName, &index )) != S_OK) return hr;
         return record_set_value( co->record, index, pVal );
     }
+
+    if (!ec) return S_OK;
+
     return put_propval( ec->query->view, co->index, wszName, pVal, Type );
 }
 
