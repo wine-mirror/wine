@@ -5,6 +5,7 @@
  * for streams contained supported by an HGLOBAL pointer.
  *
  * Copyright 1999 Francis Beaudet
+ * Copyright 2016 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -42,6 +43,40 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(storage);
 
+struct handle_wrapper
+{
+    HGLOBAL hglobal;
+    ULONG size;
+    BOOL delete_on_release;
+};
+
+static void handle_release(struct handle_wrapper *handle)
+{
+        if (handle->delete_on_release) GlobalFree(handle->hglobal);
+        HeapFree(GetProcessHeap(), 0, handle);
+}
+
+static struct handle_wrapper *handle_create(HGLOBAL hglobal, BOOL delete_on_release)
+{
+    struct handle_wrapper *handle;
+
+    handle = HeapAlloc(GetProcessHeap(), 0, sizeof(*handle));
+    if (!handle) return NULL;
+
+    /* allocate a handle if one is not supplied */
+    if (!hglobal) hglobal = GlobalAlloc(GMEM_MOVEABLE | GMEM_NODISCARD | GMEM_SHARE, 0);
+    if (!hglobal)
+    {
+        HeapFree(GetProcessHeap(), 0, handle);
+        return NULL;
+    }
+    handle->hglobal = hglobal;
+    handle->size = GlobalSize(hglobal);
+    handle->delete_on_release = delete_on_release;
+
+    return handle;
+}
+
 /****************************************************************************
  * HGLOBALStreamImpl definition.
  *
@@ -53,14 +88,7 @@ typedef struct
   IStream IStream_iface;
   LONG ref;
 
-  /* support for the stream */
-  HGLOBAL supportHandle;
-
-  /* if TRUE the HGLOBAL is destroyed when the stream is finally released */
-  BOOL deleteOnRelease;
-
-  /* size of the stream */
-  ULARGE_INTEGER streamSize;
+  struct handle_wrapper *handle;
 
   /* current position of the cursor */
   ULARGE_INTEGER currentPosition;
@@ -112,12 +140,7 @@ static ULONG WINAPI HGLOBALStreamImpl_Release(
 
   if (!ref)
   {
-    if (This->deleteOnRelease)
-    {
-      GlobalFree(This->supportHandle);
-      This->supportHandle = NULL;
-    }
-
+    handle_release(This->handle);
     HeapFree(GetProcessHeap(), 0, This);
   }
 
@@ -159,15 +182,15 @@ static HRESULT WINAPI HGLOBALStreamImpl_Read(
    * Using the known size of the stream, calculate the number of bytes
    * to read from the block chain
    */
-  bytesToReadFromBuffer = min( This->streamSize.u.LowPart - This->currentPosition.u.LowPart, cb);
+  bytesToReadFromBuffer = min( This->handle->size - This->currentPosition.u.LowPart, cb);
 
   /*
    * Lock the buffer in position and copy the data.
    */
-  supportBuffer = GlobalLock(This->supportHandle);
+  supportBuffer = GlobalLock(This->handle->hglobal);
   if (!supportBuffer)
   {
-      WARN("read from invalid hglobal %p\n", This->supportHandle);
+      WARN("read from invalid hglobal %p\n", This->handle->hglobal);
       *pcbRead = 0;
       return S_OK;
   }
@@ -187,7 +210,7 @@ static HRESULT WINAPI HGLOBALStreamImpl_Read(
   /*
    * Cleanup
    */
-  GlobalUnlock(This->supportHandle);
+  GlobalUnlock(This->handle->hglobal);
 
   /*
    * Always returns S_OK even if the end of the stream is reached before the
@@ -239,7 +262,7 @@ static HRESULT WINAPI HGLOBALStreamImpl_Write(
   /*
    * Verify if we need to grow the stream
    */
-  if (newSize.u.LowPart > This->streamSize.u.LowPart)
+  if (newSize.u.LowPart > This->handle->size)
   {
     /* grow stream */
     HRESULT hr = IStream_SetSize(iface, newSize);
@@ -253,10 +276,10 @@ static HRESULT WINAPI HGLOBALStreamImpl_Write(
   /*
    * Lock the buffer in position and copy the data.
    */
-  supportBuffer = GlobalLock(This->supportHandle);
+  supportBuffer = GlobalLock(This->handle->hglobal);
   if (!supportBuffer)
   {
-      WARN("write to invalid hglobal %p\n", This->supportHandle);
+      WARN("write to invalid hglobal %p\n", This->handle->hglobal);
       return S_OK;
   }
 
@@ -270,7 +293,7 @@ static HRESULT WINAPI HGLOBALStreamImpl_Write(
   /*
    * Cleanup
    */
-  GlobalUnlock(This->supportHandle);
+  GlobalUnlock(This->handle->hglobal);
 
 out:
   /*
@@ -316,7 +339,7 @@ static HRESULT WINAPI HGLOBALStreamImpl_Seek(
     case STREAM_SEEK_CUR:
       break;
     case STREAM_SEEK_END:
-      newPosition = This->streamSize;
+      newPosition.QuadPart = This->handle->size;
       break;
     default:
       hr = STG_E_SEEKERROR;
@@ -369,19 +392,19 @@ static HRESULT WINAPI HGLOBALStreamImpl_SetSize(
    * HighPart is ignored as shown in tests
    */
 
-  if (This->streamSize.u.LowPart == libNewSize.u.LowPart)
+  if (This->handle->size == libNewSize.u.LowPart)
     return S_OK;
 
   /*
    * Re allocate the HGlobal to fit the new size of the stream.
    */
-  supportHandle = GlobalReAlloc(This->supportHandle, libNewSize.u.LowPart, 0);
+  supportHandle = GlobalReAlloc(This->handle->hglobal, libNewSize.u.LowPart, 0);
 
   if (supportHandle == 0)
     return E_OUTOFMEMORY;
 
-  This->supportHandle = supportHandle;
-  This->streamSize.u.LowPart = libNewSize.u.LowPart;
+  This->handle->hglobal = supportHandle;
+  This->handle->size = libNewSize.u.LowPart;
 
   return S_OK;
 }
@@ -531,7 +554,7 @@ static HRESULT WINAPI HGLOBALStreamImpl_Stat(
 
   pstatstg->pwcsName = NULL;
   pstatstg->type     = STGTY_STREAM;
-  pstatstg->cbSize   = This->streamSize;
+  pstatstg->cbSize.QuadPart = This->handle->size;
 
   return S_OK;
 }
@@ -545,8 +568,8 @@ static HRESULT WINAPI HGLOBALStreamImpl_Clone(
   LARGE_INTEGER offset;
   HRESULT hr;
 
-  TRACE(" Cloning %p (deleteOnRelease=%d seek position=%ld)\n",iface,This->deleteOnRelease,(long)This->currentPosition.QuadPart);
-  hr = CreateStreamOnHGlobal(This->supportHandle, FALSE, ppstm);
+  TRACE(" Cloning %p (deleteOnRelease=%d seek position=%ld)\n",iface,This->handle->delete_on_release,(long)This->currentPosition.QuadPart);
+  hr = CreateStreamOnHGlobal(This->handle->hglobal, FALSE, ppstm);
   if(FAILED(hr))
     return hr;
   offset.QuadPart = (LONGLONG)This->currentPosition.QuadPart;
@@ -591,21 +614,16 @@ HRESULT WINAPI CreateStreamOnHGlobal(
   This->IStream_iface.lpVtbl = &HGLOBALStreamImplVtbl;
   This->ref = 1;
 
-  /* initialize the support */
-  This->supportHandle = hGlobal;
-  This->deleteOnRelease = fDeleteOnRelease;
-
-  /* allocate a handle if one is not supplied */
-  if (!This->supportHandle)
-    This->supportHandle = GlobalAlloc(GMEM_MOVEABLE|GMEM_NODISCARD|GMEM_SHARE, 0);
+  This->handle = handle_create(hGlobal, fDeleteOnRelease);
+  if (!This->handle)
+  {
+      HeapFree(GetProcessHeap(), 0, This);
+      return E_OUTOFMEMORY;
+  }
 
   /* start at the beginning */
   This->currentPosition.u.HighPart = 0;
   This->currentPosition.u.LowPart = 0;
-
-  /* initialize the size of the stream to the size of the handle */
-  This->streamSize.u.HighPart = 0;
-  This->streamSize.u.LowPart = GlobalSize(This->supportHandle);
 
   *ppstm = &This->IStream_iface;
 
@@ -628,7 +646,7 @@ HRESULT WINAPI GetHGlobalFromStream(IStream* pstm, HGLOBAL* phglobal)
    * Verify that the stream object was created with CreateStreamOnHGlobal.
    */
   if (pStream->IStream_iface.lpVtbl == &HGLOBALStreamImplVtbl)
-    *phglobal = pStream->supportHandle;
+    *phglobal = pStream->handle->hglobal;
   else
   {
     *phglobal = 0;
