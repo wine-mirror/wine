@@ -9,6 +9,7 @@ C_SRCS = \
 	combase.c \
 	errorinfo.c \
 	malloc.c \
+	marshal.c \
 	roapi.c \
 	string.c \
 	usrmarshal.c

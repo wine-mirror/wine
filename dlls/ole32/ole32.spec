@@ -57,7 +57,7 @@
 @ stdcall CoIsOle1Class (ptr)
 @ stdcall CoLoadLibrary(wstr long)
 @ stdcall CoLockObjectExternal(ptr long long)
-@ stdcall CoMarshalHresult(ptr long)
+@ stdcall CoMarshalHresult(ptr long) combase.CoMarshalHresult
 @ stdcall CoMarshalInterThreadInterfaceInStream(ptr ptr ptr)
 @ stdcall CoMarshalInterface(ptr ptr ptr long ptr long)
 @ stub CoQueryAuthenticationServices
