@@ -1270,16 +1270,18 @@ static unsigned int ddraw_swap_interval_from_flags(DWORD flags)
     }
 }
 
-static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface7_Flip(IDirectDrawSurface7 *iface,
-        IDirectDrawSurface7 *src, DWORD flags)
+/* FRAPS hooks IDirectDrawSurface::Flip and expects the version 1 method to be called when the
+ * game uses later interfaces. */
+static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface1_Flip(IDirectDrawSurface *iface,
+        IDirectDrawSurface *src, DWORD flags)
 {
-    struct ddraw_surface *dst_impl = impl_from_IDirectDrawSurface7(iface);
-    struct ddraw_surface *src_impl = unsafe_impl_from_IDirectDrawSurface7(src);
+    struct ddraw_surface *dst_impl = impl_from_IDirectDrawSurface(iface);
+    struct ddraw_surface *src_impl = unsafe_impl_from_IDirectDrawSurface(src);
     struct ddraw_texture *dst_ddraw_texture, *src_ddraw_texture;
     struct wined3d_rendertarget_view *tmp_rtv, *src_rtv, *rtv;
-    DDSCAPS2 caps = {DDSCAPS_FLIP, 0, 0, {0}};
+    DDSCAPS caps = {DDSCAPS_FLIP};
     struct wined3d_texture *texture;
-    IDirectDrawSurface7 *current;
+    IDirectDrawSurface *current;
     void *texture_memory;
     HRESULT hr;
 
@@ -1313,13 +1315,13 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface7_Flip(IDirectDrawSurface7 
     {
         for (current = iface; current != src;)
         {
-            if (FAILED(hr = ddraw_surface7_GetAttachedSurface(current, &caps, &current)))
+            if (FAILED(hr = ddraw_surface1_GetAttachedSurface(current, &caps, &current)))
             {
                 WARN("Surface %p is not on the same flip chain as surface %p.\n", src, iface);
                 wined3d_mutex_unlock();
                 return DDERR_NOTFLIPPABLE;
             }
-            ddraw_surface7_Release(current);
+            ddraw_surface1_Release(current);
             if (current == iface)
             {
                 WARN("Surface %p is not on the same flip chain as surface %p.\n", src, iface);
@@ -1346,20 +1348,20 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface7_Flip(IDirectDrawSurface7 
     {
         for (current = iface;;)
         {
-            if (FAILED(hr = ddraw_surface7_GetAttachedSurface(current, &caps, &current)))
+            if (FAILED(hr = ddraw_surface1_GetAttachedSurface(current, &caps, &current)))
             {
                 ERR("Can't find a flip target\n");
                 wined3d_mutex_unlock();
                 return DDERR_NOTFLIPPABLE; /* Unchecked */
             }
-            ddraw_surface7_Release(current);
+            ddraw_surface1_Release(current);
             if (current == iface)
             {
-                dst_impl = impl_from_IDirectDrawSurface7(iface);
+                dst_impl = impl_from_IDirectDrawSurface(iface);
                 break;
             }
 
-            src_impl = impl_from_IDirectDrawSurface7(current);
+            src_impl = impl_from_IDirectDrawSurface(current);
             src_rtv = ddraw_surface_get_rendertarget_view(src_impl);
             if (rtv == dst_impl->wined3d_rtv)
                 wined3d_device_set_rendertarget_view(dst_impl->ddraw->wined3d_device, 0, src_rtv, FALSE);
@@ -1407,6 +1409,18 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface7_Flip(IDirectDrawSurface7 
     return hr;
 }
 
+static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface7_Flip(IDirectDrawSurface7 *iface,
+        IDirectDrawSurface7 *src, DWORD flags)
+{
+    struct ddraw_surface *surface = impl_from_IDirectDrawSurface7(iface);
+    struct ddraw_surface *src_impl = unsafe_impl_from_IDirectDrawSurface7(src);
+
+    TRACE("iface %p, src %p, flags %#x.\n", iface, src, flags);
+
+    return ddraw_surface1_Flip(&surface->IDirectDrawSurface_iface,
+            src_impl ? &src_impl->IDirectDrawSurface_iface : NULL, flags);
+}
+
 static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface4_Flip(IDirectDrawSurface4 *iface,
         IDirectDrawSurface4 *src, DWORD flags)
 {
@@ -1415,8 +1429,8 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface4_Flip(IDirectDrawSurface4 
 
     TRACE("iface %p, src %p, flags %#x.\n", iface, src, flags);
 
-    return ddraw_surface7_Flip(&surface->IDirectDrawSurface7_iface,
-            src_impl ? &src_impl->IDirectDrawSurface7_iface : NULL, flags);
+    return ddraw_surface1_Flip(&surface->IDirectDrawSurface_iface,
+            src_impl ? &src_impl->IDirectDrawSurface_iface : NULL, flags);
 }
 
 static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface3_Flip(IDirectDrawSurface3 *iface,
@@ -1427,8 +1441,8 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface3_Flip(IDirectDrawSurface3 
 
     TRACE("iface %p, src %p, flags %#x.\n", iface, src, flags);
 
-    return ddraw_surface7_Flip(&surface->IDirectDrawSurface7_iface,
-            src_impl ? &src_impl->IDirectDrawSurface7_iface : NULL, flags);
+    return ddraw_surface1_Flip(&surface->IDirectDrawSurface_iface,
+            src_impl ? &src_impl->IDirectDrawSurface_iface : NULL, flags);
 }
 
 static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface2_Flip(IDirectDrawSurface2 *iface,
@@ -1439,20 +1453,8 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface2_Flip(IDirectDrawSurface2 
 
     TRACE("iface %p, src %p, flags %#x.\n", iface, src, flags);
 
-    return ddraw_surface7_Flip(&surface->IDirectDrawSurface7_iface,
-            src_impl ? &src_impl->IDirectDrawSurface7_iface : NULL, flags);
-}
-
-static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface1_Flip(IDirectDrawSurface *iface,
-        IDirectDrawSurface *src, DWORD flags)
-{
-    struct ddraw_surface *surface = impl_from_IDirectDrawSurface(iface);
-    struct ddraw_surface *src_impl = unsafe_impl_from_IDirectDrawSurface(src);
-
-    TRACE("iface %p, src %p, flags %#x.\n", iface, src, flags);
-
-    return ddraw_surface7_Flip(&surface->IDirectDrawSurface7_iface,
-            src_impl ? &src_impl->IDirectDrawSurface7_iface : NULL, flags);
+    return ddraw_surface1_Flip(&surface->IDirectDrawSurface_iface,
+            src_impl ? &src_impl->IDirectDrawSurface_iface : NULL, flags);
 }
 
 static HRESULT ddraw_surface_blt(struct ddraw_surface *dst_surface, const RECT *dst_rect,
