@@ -319,7 +319,7 @@
 @ stdcall SetErrorInfo(long ptr) ole32.SetErrorInfo
 @ stub SetRestrictedErrorInfo
 @ stdcall StringFromCLSID(ptr ptr)
-@ stdcall StringFromGUID2(ptr ptr long) ole32.StringFromGUID2
+@ stdcall StringFromGUID2(ptr ptr long)
 @ stdcall StringFromIID(ptr ptr) StringFromCLSID
 @ stub UpdateDCOMSettings
 @ stdcall WdtpInterfacePointer_UserFree(ptr)

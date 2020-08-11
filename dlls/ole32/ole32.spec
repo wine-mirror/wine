@@ -280,7 +280,7 @@
 @ stdcall StgOpenStorageOnILockBytes(ptr ptr long ptr long ptr)
 @ stdcall StgSetTimes(wstr ptr ptr ptr )
 @ stdcall StringFromCLSID(ptr ptr) combase.StringFromCLSID
-@ stdcall StringFromGUID2(ptr ptr long)
+@ stdcall StringFromGUID2(ptr ptr long) combase.StringFromGUID2
 @ stdcall StringFromIID(ptr ptr) combase.StringFromIID
 @ stub UpdateDCOMSettings
 @ stub UtConvertDvtd16toDvtd32

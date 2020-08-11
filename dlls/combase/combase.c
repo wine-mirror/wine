@@ -1108,6 +1108,18 @@ HRESULT WINAPI StringFromCLSID(REFCLSID clsid, LPOLESTR *str)
     return S_OK;
 }
 
+/******************************************************************************
+ *            StringFromGUID2        (combase.@)
+ */
+INT WINAPI StringFromGUID2(REFGUID guid, LPOLESTR str, INT cmax)
+{
+    if (!guid || cmax < CHARS_IN_GUID) return 0;
+    swprintf(str, CHARS_IN_GUID, L"{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}", guid->Data1,
+            guid->Data2, guid->Data3, guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
+            guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7]);
+    return CHARS_IN_GUID;
+}
+
 static void init_multi_qi(DWORD count, MULTI_QI *mqi, HRESULT hr)
 {
     ULONG i;
