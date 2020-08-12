@@ -98,6 +98,7 @@ typedef struct {
 
     BSTR name;
     USHORT num_args;
+    VARTYPE ret_type;
 } ScriptProcedure;
 
 struct ScriptProcedureCollection {
@@ -901,9 +902,12 @@ static HRESULT WINAPI ScriptProcedure_get_HasReturnValue(IScriptProcedure *iface
 {
     ScriptProcedure *This = impl_from_IScriptProcedure(iface);
 
-    FIXME("(%p)->(%p)\n", This, pfHasReturnValue);
+    TRACE("(%p)->(%p)\n", This, pfHasReturnValue);
 
-    return E_NOTIMPL;
+    if (!pfHasReturnValue) return E_POINTER;
+
+    *pfHasReturnValue = (This->ret_type == VT_VOID) ? VARIANT_FALSE : VARIANT_TRUE;
+    return S_OK;
 }
 
 static const IScriptProcedureVtbl ScriptProcedureVtbl = {
@@ -962,6 +966,7 @@ static HRESULT get_script_procedure(ScriptProcedureCollection *procedures, IType
     proc->hash = hash;
     proc->name = str;
     proc->num_args = desc->cParams + desc->cParamsOpt;
+    proc->ret_type = desc->elemdescFunc.tdesc.vt;
     list_add_tail(proc_list, &proc->entry);
 
     *procedure = &proc->IScriptProcedure_iface;

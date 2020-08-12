@@ -3295,6 +3295,7 @@ static void test_IScriptControl_get_Procedures(void)
     IScriptProcedureCollection *procs, *procs2;
     IScriptProcedure *proc, *proc2;
     IScriptControl *sc;
+    VARIANT_BOOL vbool;
     VARIANT var;
     LONG count;
     HRESULT hr;
@@ -3363,6 +3364,11 @@ static void test_IScriptControl_get_Procedures(void)
     hr = IScriptProcedure_get_NumArgs(proc, &count);
     ok(hr == S_OK, "IScriptProcedure_get_NumArgs failed: 0x%08x.\n", hr);
     ok(count == 2, "Wrong NumArgs, got %d.\n", count);
+    hr = IScriptProcedure_get_HasReturnValue(proc, NULL);
+    ok(hr == E_POINTER, "IScriptProcedure_get_HasReturnValue returned: 0x%08x.\n", hr);
+    hr = IScriptProcedure_get_HasReturnValue(proc, &vbool);
+    ok(hr == S_OK, "IScriptProcedure_get_HasReturnValue failed: 0x%08x.\n", hr);
+    ok(vbool == VARIANT_TRUE, "HasReturnValue did not return True, got %x.\n", vbool);
     IScriptProcedure_Release(proc);
 
     V_VT(&var) = VT_BSTR;
@@ -3378,6 +3384,9 @@ static void test_IScriptControl_get_Procedures(void)
     hr = IScriptProcedure_get_NumArgs(proc, &count);
     ok(hr == S_OK, "IScriptProcedure_get_NumArgs failed: 0x%08x.\n", hr);
     ok(count == 1, "Wrong NumArgs, got %d.\n", count);
+    hr = IScriptProcedure_get_HasReturnValue(proc, &vbool);
+    ok(hr == S_OK, "IScriptProcedure_get_HasReturnValue failed: 0x%08x.\n", hr);
+    ok(vbool == VARIANT_TRUE, "HasReturnValue did not return True, got %x.\n", vbool);
     IScriptProcedure_Release(proc);
 
     V_VT(&var) = VT_R8;
@@ -3584,6 +3593,10 @@ static void test_IScriptControl_get_Procedures(void)
             ok(hr == S_OK, "get_NumArgs for %s failed: 0x%08x.\n", wine_dbgstr_w(custom_engine_funcs[i].name), hr);
             ok(count == custom_engine_funcs[i].num_args + custom_engine_funcs[i].num_opt_args,
                 "NumArgs is not %d, got %d.\n", custom_engine_funcs[i].num_args + custom_engine_funcs[i].num_opt_args, count);
+            hr = IScriptProcedure_get_HasReturnValue(proc, &vbool);
+            ok(hr == S_OK, "get_HasReturnValue for %s failed: 0x%08x.\n", wine_dbgstr_w(custom_engine_funcs[i].name), hr);
+            ok(vbool == ((custom_engine_funcs[i].ret_type == VT_VOID) ? VARIANT_FALSE : VARIANT_TRUE),
+                "get_HasReturnValue for %s returned %x.\n", wine_dbgstr_w(custom_engine_funcs[i].name), vbool);
 
             IScriptProcedure_Release(proc);
         }
