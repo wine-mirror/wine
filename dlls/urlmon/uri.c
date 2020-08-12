@@ -3387,7 +3387,7 @@ static HRESULT canonicalize_uri(const parse_data *data, Uri *uri, DWORD flags) {
     uri->scheme_type = data->scheme_type;
 
     if(!canonicalize_hierpart(data, uri, flags, FALSE)) {
-        ERR("(%p %p %x): Unable to canonicalize the heirpart of the URI\n", data, uri, flags);
+        ERR("(%p %p %x): Unable to canonicalize the hierpart of the URI\n", data, uri, flags);
         return E_INVALIDARG;
     }
 
@@ -6512,9 +6512,8 @@ static HRESULT combine_uri(Uri *base, Uri *relative, DWORD flags, IUri **result,
             }
 
             if(proc_uri->host_start > -1) {
-                data.host = proc_uri->canon_uri+proc_uri->host_start;
-                data.host_len = proc_uri->host_len;
-                data.host_type = proc_uri->host_type;
+                const WCHAR *host = proc_uri->canon_uri+proc_uri->host_start;
+                parse_host(&host, &data, 0);
             }
 
             if(proc_uri->has_port) {
