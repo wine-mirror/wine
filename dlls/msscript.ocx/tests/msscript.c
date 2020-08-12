@@ -3341,7 +3341,7 @@ static void test_IScriptControl_get_Procedures(void)
 
     hr = IScriptProcedureCollection_get_Count(procs, &count);
     ok(hr == S_OK, "IScriptProcedureCollection_get_Count failed: 0x%08x.\n", hr);
-    todo_wine ok(count == 3, "count is not 3, got %d.\n", count);
+    ok(count == 3, "count is not 3, got %d.\n", count);
 
     V_VT(&var) = VT_I4;
     V_I4(&var) = 1;
@@ -3454,10 +3454,10 @@ static void test_IScriptControl_get_Procedures(void)
         hr = IScriptProcedureCollection_get_Count(procs, &count);
         ok(hr == S_OK, "IScriptProcedureCollection_get_Count failed: 0x%08x.\n", hr);
         ok(count == ARRAY_SIZE(custom_engine_funcs), "count is not %u, got %d.\n", TypeInfo_GetTypeAttr_cFuncs, count);
-        todo_wine CHECK_CALLED(GetScriptDispatch);
-        todo_wine CHECK_CALLED(GetTypeInfo);
-        todo_wine CHECK_CALLED(GetTypeAttr);
-        todo_wine CHECK_CALLED(ReleaseTypeAttr);
+        CHECK_CALLED(GetScriptDispatch);
+        CHECK_CALLED(GetTypeInfo);
+        CHECK_CALLED(GetTypeAttr);
+        CHECK_CALLED(ReleaseTypeAttr);
 
         /* Try without ITypeComp interface */
         SET_EXPECT(QI_ITypeComp);

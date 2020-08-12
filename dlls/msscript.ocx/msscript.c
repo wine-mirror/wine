@@ -277,6 +277,22 @@ static HRESULT get_script_typeinfo(ScriptModule *module, ITypeInfo **typeinfo)
     return S_OK;
 }
 
+static void uncache_module_objects(ScriptModule *module)
+{
+    if (module->script_dispatch)
+    {
+        IDispatch_Release(module->script_dispatch);
+        module->script_dispatch = NULL;
+    }
+    if (module->script_typeinfo)
+    {
+        ITypeInfo_Release(module->script_typeinfo);
+        module->script_typeinfo = NULL;
+    }
+    if (module->procedures)
+        module->procedures->count = -1;
+}
+
 static HRESULT set_script_state(ScriptHost *host, SCRIPTSTATE state)
 {
     HRESULT hr;
@@ -338,6 +354,8 @@ static HRESULT parse_script_text(ScriptModule *module, BSTR script_text, DWORD f
 
     hr = start_script(module->host);
     if (FAILED(hr)) return hr;
+
+    uncache_module_objects(module);
 
     hr = IActiveScriptParse_ParseScriptText(module->host->parse, script_text, module->name,
                                             NULL, NULL, 0, 1, flag, res, &excepinfo);
@@ -949,10 +967,7 @@ static ULONG WINAPI ScriptModule_Release(IScriptModule *iface)
     {
         detach_module(This);
         SysFreeString(This->name);
-        if (This->script_dispatch)
-            IDispatch_Release(This->script_dispatch);
-        if (This->script_typeinfo)
-            ITypeInfo_Release(This->script_typeinfo);
+        uncache_module_objects(This);
         heap_free(This);
     }
 
