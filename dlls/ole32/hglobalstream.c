@@ -664,10 +664,10 @@ HRESULT WINAPI GetHGlobalFromStream(IStream* pstm, HGLOBAL* phglobal)
 {
   HGLOBALStreamImpl* pStream;
 
-  if (pstm == NULL)
+  if (!pstm || !phglobal)
     return E_INVALIDARG;
 
-  pStream = (HGLOBALStreamImpl*) pstm;
+  pStream = impl_from_IStream(pstm);
 
   /*
    * Verify that the stream object was created with CreateStreamOnHGlobal.

@@ -561,6 +561,12 @@ static void test_IStream_Clone(void)
     hr = CreateStreamOnHGlobal(orig_hmem, TRUE, &stream);
     ok(hr == S_OK, "unexpected %#x\n", hr);
 
+    hr = GetHGlobalFromStream(stream, NULL);
+    ok(hr == E_INVALIDARG, "unexpected %#x\n", hr);
+
+    hr = GetHGlobalFromStream(NULL, &hmem);
+    ok(hr == E_INVALIDARG, "unexpected %#x\n", hr);
+
     stream_info(stream, &hmem, &size, &pos);
     ok(hmem == orig_hmem, "handles should match\n");
     ok(size == 0, "unexpected %d\n", size);
