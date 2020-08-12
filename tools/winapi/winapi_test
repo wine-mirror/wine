@@ -231,9 +231,10 @@ sub _find_align_kind_size($) {
 	$kind = "float";
 	$size = 4;
     } elsif (/^(?:(signed|unsigned)\s+)?(?:long(?:\s+int)?)$/) {
-	$align = $pointer_size;
+        # 'long' is always 4 bytes on Windows.
+	$align = 4;
 	$kind = defined($1) ? $1 : "signed";
-	$size = $pointer_size;
+	$size = 4;
     } elsif (/^(?:(signed|unsigned)\s+)?__int64$/) {
 	$align = 8;
 	$kind = defined($1) ? $1 : "signed";
