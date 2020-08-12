@@ -876,9 +876,12 @@ static HRESULT WINAPI ScriptProcedure_get_Name(IScriptProcedure *iface, BSTR *pb
 {
     ScriptProcedure *This = impl_from_IScriptProcedure(iface);
 
-    FIXME("(%p)->(%p)\n", This, pbstrName);
+    TRACE("(%p)->(%p)\n", This, pbstrName);
 
-    return E_NOTIMPL;
+    if (!pbstrName) return E_POINTER;
+
+    *pbstrName = SysAllocString(This->name);
+    return *pbstrName ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI ScriptProcedure_get_NumArgs(IScriptProcedure *iface, LONG *pcArgs)

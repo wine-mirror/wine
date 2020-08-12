@@ -3352,6 +3352,12 @@ static void test_IScriptControl_get_Procedures(void)
     IScriptProcedureCollection_AddRef(procs);
     ok(i == IScriptProcedureCollection_Release(procs),
         "IScriptProcedureCollection_get_Item should not have added a ref to the collection.\n");
+    hr = IScriptProcedure_get_Name(proc, NULL);
+    ok(hr == E_POINTER, "IScriptProcedure_get_Name returned: 0x%08x.\n", hr);
+    hr = IScriptProcedure_get_Name(proc, &str);
+    ok(hr == S_OK, "IScriptProcedure_get_Name failed: 0x%08x.\n", hr);
+    ok(!lstrcmpW(str, L"add"), "Wrong name, got %s.\n", wine_dbgstr_w(str));
+    SysFreeString(str);
     IScriptProcedure_Release(proc);
 
     V_VT(&var) = VT_BSTR;
@@ -3360,12 +3366,20 @@ static void test_IScriptControl_get_Procedures(void)
     ok(hr == S_OK, "IScriptProcedureCollection_get_Item failed: 0x%08x.\n", hr);
     ok(V_VT(&var) == VT_BSTR, "var type not BSTR, got %d.\n", V_VT(&var));
     VariantClear(&var);
+    hr = IScriptProcedure_get_Name(proc, &str);
+    ok(hr == S_OK, "IScriptProcedure_get_Name failed: 0x%08x.\n", hr);
+    ok(!lstrcmpW(str, L"nop"), "Wrong name, got %s.\n", wine_dbgstr_w(str));
+    SysFreeString(str);
     IScriptProcedure_Release(proc);
 
     V_VT(&var) = VT_R8;
     V_R8(&var) = 3.0;
     hr = IScriptProcedureCollection_get_Item(procs, var, &proc);
     ok(hr == S_OK, "IScriptProcedureCollection_get_Item failed: 0x%08x.\n", hr);
+    hr = IScriptProcedure_get_Name(proc, &str);
+    ok(hr == S_OK, "IScriptProcedure_get_Name failed: 0x%08x.\n", hr);
+    ok(!lstrcmpW(str, L"muladd"), "Wrong name, got %s.\n", wine_dbgstr_w(str));
+    SysFreeString(str);
     IScriptProcedure_Release(proc);
 
     IScriptProcedureCollection_Release(procs);
@@ -3548,6 +3562,14 @@ static void test_IScriptControl_get_Procedures(void)
             CHECK_CALLED(Bind);
             CHECK_CALLED(GetNames);
             CHECK_CALLED(ReleaseFuncDesc);
+
+            /* Verify the properties */
+            hr = IScriptProcedure_get_Name(proc, &str);
+            ok(hr == S_OK, "get_Name for %s failed: 0x%08x.\n", wine_dbgstr_w(custom_engine_funcs[i].name), hr);
+            ok(!lstrcmpW(str, custom_engine_funcs[i].name), "Name is not %s, got %s.\n",
+                wine_dbgstr_w(custom_engine_funcs[i].name), wine_dbgstr_w(str));
+            SysFreeString(str);
+
             IScriptProcedure_Release(proc);
         }
 
