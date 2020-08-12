@@ -1502,6 +1502,10 @@ static DWORD get_basename_search_flags(const char *basename, MonoAssemblyName *a
         return reg_entry.flags;
     }
 
+    if (strcmp(basename, "Microsoft.Xna.Framework.*") == 0)
+        /* XNA redist is broken in Wine Mono, use FNA instead. */
+        return 0;
+
     return ASSEMBLY_SEARCH_UNDEFINED;
 }
 
