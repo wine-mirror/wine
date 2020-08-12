@@ -129,7 +129,7 @@
 @ stdcall CoIsHandlerConnected(ptr) ole32.CoIsHandlerConnected
 @ stdcall CoLockObjectExternal(ptr long long) ole32.CoLockObjectExternal
 @ stdcall CoMarshalHresult(ptr long)
-@ stdcall CoMarshalInterThreadInterfaceInStream(ptr ptr ptr) ole32.CoMarshalInterThreadInterfaceInStream
+@ stdcall CoMarshalInterThreadInterfaceInStream(ptr ptr ptr)
 @ stdcall CoMarshalInterface(ptr ptr ptr long ptr long) ole32.CoMarshalInterface
 @ stub CoPopServiceDomain
 @ stub CoPushServiceDomain

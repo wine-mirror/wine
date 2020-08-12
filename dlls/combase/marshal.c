@@ -55,3 +55,32 @@ HRESULT WINAPI CoGetInterfaceAndReleaseStream(IStream *stream, REFIID riid, void
     IStream_Release(stream);
     return hr;
 }
+
+/***********************************************************************
+ *            CoMarshalInterThreadInterfaceInStream    (combase.@)
+ */
+HRESULT WINAPI CoMarshalInterThreadInterfaceInStream(REFIID riid, IUnknown *unk, IStream **stream)
+{
+    ULARGE_INTEGER xpos;
+    LARGE_INTEGER seekto;
+    HRESULT hr;
+
+    TRACE("%s, %p, %p\n", debugstr_guid(riid), unk, stream);
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, stream);
+    if (FAILED(hr)) return hr;
+    hr = CoMarshalInterface(*stream, riid, unk, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+
+    if (SUCCEEDED(hr))
+    {
+        memset(&seekto, 0, sizeof(seekto));
+        IStream_Seek(*stream, seekto, STREAM_SEEK_SET, &xpos);
+    }
+    else
+    {
+        IStream_Release(*stream);
+        *stream = NULL;
+    }
+
+    return hr;
+}
