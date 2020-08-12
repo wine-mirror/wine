@@ -3679,6 +3679,30 @@ static void test_SetConsoleScreenBufferInfoEx(HANDLE std_output)
     CloseHandle(std_input);
 }
 
+static void test_console_title(void)
+{
+    WCHAR buf[64];
+    BOOL ret;
+
+    ret = SetConsoleTitleW(L"test");
+    ok(ret, "SetConsoleTitleW failed: %u\n", GetLastError());
+
+    ret = GetConsoleTitleW(buf, ARRAY_SIZE(buf));
+    ok(ret, "GetConsoleTitleW failed: %u\n", GetLastError());
+    ok(!wcscmp(buf, L"test"), "title = %s\n", wine_dbgstr_w(buf));
+
+    if (!skip_nt)
+    {
+        ret = GetConsoleTitleW(buf, 2);
+        ok(ret, "GetConsoleTitleW failed: %u\n", GetLastError());
+        ok(!wcscmp(buf, L"t"), "title = %s\n", wine_dbgstr_w(buf));
+
+        ret = GetConsoleTitleW(buf, 4);
+        ok(ret, "GetConsoleTitleW failed: %u\n", GetLastError());
+        ok(!wcscmp(buf, L"tes"), "title = %s\n", wine_dbgstr_w(buf));
+    }
+}
+
 static void test_AttachConsole_child(DWORD console_pid)
 {
     HANDLE pipe_in, pipe_out;
@@ -4046,6 +4070,7 @@ START_TEST(console)
     test_SetConsoleFont(hConOut);
     test_GetConsoleScreenBufferInfoEx(hConOut);
     test_SetConsoleScreenBufferInfoEx(hConOut);
+    test_console_title();
     if (!test_current)
     {
         test_AttachConsole(hConOut);
