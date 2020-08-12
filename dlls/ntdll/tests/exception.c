@@ -3080,6 +3080,7 @@ static void test_thread_context(void)
         XMM_SAVE_AREA32 FltSave;
         WORD SegCs, SegDs, SegEs, SegFs, SegGs, SegSs;
     } expect;
+    XMM_SAVE_AREA32 broken_fltsave;
     NTSTATUS (*func_ptr)( void *arg1, void *arg2, struct expected *res, void *func ) = (void *)code_mem;
 
     static const BYTE call_func[] =
@@ -3240,7 +3241,12 @@ static void test_thread_context(void)
     COMPARE( SegFs );
     COMPARE( SegGs );
     COMPARE( SegSs );
-    ok( !memcmp( &context.FltSave, &expect.FltSave, offsetof( XMM_SAVE_AREA32, XmmRegisters )),
+
+    broken_fltsave = context.FltSave;
+    memset( &broken_fltsave.ErrorOpcode, 0xcc, 0x12 );
+
+    ok( !memcmp( &context.FltSave, &expect.FltSave, offsetof( XMM_SAVE_AREA32, XmmRegisters )) ||
+        broken( !memcmp( &broken_fltsave, &expect.FltSave, offsetof( XMM_SAVE_AREA32, XmmRegisters )) ) /* w2008, w8 */,
         "wrong FltSave\n" );
     for (i = 6; i < 16; i++)
         ok( !memcmp( &context.Xmm0 + i, &expect.FltSave.XmmRegisters[i], sizeof(context.Xmm0) ),
