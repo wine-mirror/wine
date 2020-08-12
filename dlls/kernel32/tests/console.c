@@ -301,7 +301,8 @@ static void testWriteNotWrappedProcessed(HANDLE hCon, COORD sbSize)
     int			p;
     WORD                attr;
 
-    ok(GetConsoleMode(hCon, &mode) && SetConsoleMode(hCon, (mode | ENABLE_PROCESSED_OUTPUT) & ~ENABLE_WRAP_AT_EOL_OUTPUT),
+    ok(GetConsoleMode(hCon, &mode) && SetConsoleMode(hCon, (mode | ENABLE_PROCESSED_OUTPUT) &
+                                                     ~(ENABLE_WRAP_AT_EOL_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING)),
        "clearing wrap at EOL & setting processed output\n");
 
     /* write line, wrapping disabled, buffer exceeds sb width */
