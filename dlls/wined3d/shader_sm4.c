@@ -98,8 +98,8 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d_bytecode);
 #define WINED3D_SM4_SWIZZLE_TYPE_SHIFT          2
 #define WINED3D_SM4_SWIZZLE_TYPE_MASK           (0x3u << WINED3D_SM4_SWIZZLE_TYPE_SHIFT)
 
-#define WINED3D_SM4_IMMCONST_TYPE_SHIFT         0
-#define WINED3D_SM4_IMMCONST_TYPE_MASK          (0x3u << WINED3D_SM4_IMMCONST_TYPE_SHIFT)
+#define WINED3D_SM4_DIMENSION_SHIFT             0
+#define WINED3D_SM4_DIMENSION_MASK              (0x3u << WINED3D_SM4_DIMENSION_SHIFT)
 
 #define WINED3D_SM4_WRITEMASK_SHIFT             4
 #define WINED3D_SM4_WRITEMASK_MASK              (0xfu << WINED3D_SM4_WRITEMASK_SHIFT)
@@ -397,10 +397,10 @@ enum wined3d_sm4_swizzle_type
     WINED3D_SM4_SWIZZLE_SCALAR          = 0x2,
 };
 
-enum wined3d_sm4_immconst_type
+enum wined3d_sm4_dimension
 {
-    WINED3D_SM4_IMMCONST_SCALAR = 0x1,
-    WINED3D_SM4_IMMCONST_VEC4   = 0x2,
+    WINED3D_SM4_DIMENSION_SCALAR    = 0x1,
+    WINED3D_SM4_DIMENSION_VEC4      = 0x2,
 };
 
 enum wined3d_sm4_resource_type
@@ -1487,12 +1487,11 @@ static BOOL shader_sm4_read_param(struct wined3d_sm4_data *priv, const DWORD **p
 
     if (register_type == WINED3D_SM4_RT_IMMCONST)
     {
-        enum wined3d_sm4_immconst_type immconst_type =
-                (token & WINED3D_SM4_IMMCONST_TYPE_MASK) >> WINED3D_SM4_IMMCONST_TYPE_SHIFT;
+        enum wined3d_sm4_dimension dimension = (token & WINED3D_SM4_DIMENSION_MASK) >> WINED3D_SM4_DIMENSION_SHIFT;
 
-        switch (immconst_type)
+        switch (dimension)
         {
-            case WINED3D_SM4_IMMCONST_SCALAR:
+            case WINED3D_SM4_DIMENSION_SCALAR:
                 param->immconst_type = WINED3D_IMMCONST_SCALAR;
                 if (end - *ptr < 1)
                 {
@@ -1503,7 +1502,7 @@ static BOOL shader_sm4_read_param(struct wined3d_sm4_data *priv, const DWORD **p
                 *ptr += 1;
                 break;
 
-            case WINED3D_SM4_IMMCONST_VEC4:
+            case WINED3D_SM4_DIMENSION_VEC4:
                 param->immconst_type = WINED3D_IMMCONST_VEC4;
                 if (end - *ptr < 4)
                 {
@@ -1515,7 +1514,7 @@ static BOOL shader_sm4_read_param(struct wined3d_sm4_data *priv, const DWORD **p
                 break;
 
             default:
-                FIXME("Unhandled immediate constant type %#x.\n", immconst_type);
+                FIXME("Unhandled dimension %#x.\n", dimension);
                 break;
         }
     }
