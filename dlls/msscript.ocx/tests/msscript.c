@@ -3325,9 +3325,9 @@ static void test_IScriptControl_get_Procedures(void)
     V_VT(&var) = VT_I4;
     V_I4(&var) = -1;
     hr = IScriptProcedureCollection_get_Item(procs, var, NULL);
-    todo_wine ok(hr == E_POINTER, "IScriptProcedureCollection_get_Item returned: 0x%08x.\n", hr);
+    ok(hr == E_POINTER, "IScriptProcedureCollection_get_Item returned: 0x%08x.\n", hr);
     hr = IScriptProcedureCollection_get_Item(procs, var, &proc);
-    todo_wine ok(hr == 0x800a0009, "IScriptProcedureCollection_get_Item returned: 0x%08x.\n", hr);
+    ok(hr == 0x800a0009, "IScriptProcedureCollection_get_Item returned: 0x%08x.\n", hr);
 
     str = SysAllocString(L""
         "function add(a, b) { return a + b; }\n"
@@ -3348,25 +3348,25 @@ static void test_IScriptControl_get_Procedures(void)
     IScriptProcedureCollection_AddRef(procs);
     i = IScriptProcedureCollection_Release(procs);
     hr = IScriptProcedureCollection_get_Item(procs, var, &proc);
-    todo_wine ok(hr == S_OK, "IScriptProcedureCollection_get_Item failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptProcedureCollection_get_Item failed: 0x%08x.\n", hr);
     IScriptProcedureCollection_AddRef(procs);
     ok(i == IScriptProcedureCollection_Release(procs),
         "IScriptProcedureCollection_get_Item should not have added a ref to the collection.\n");
-    if (hr == S_OK) IScriptProcedure_Release(proc);
+    IScriptProcedure_Release(proc);
 
     V_VT(&var) = VT_BSTR;
     V_BSTR(&var) = SysAllocString(L"Nop");
     hr = IScriptProcedureCollection_get_Item(procs, var, &proc);
-    todo_wine ok(hr == S_OK, "IScriptProcedureCollection_get_Item failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptProcedureCollection_get_Item failed: 0x%08x.\n", hr);
     ok(V_VT(&var) == VT_BSTR, "var type not BSTR, got %d.\n", V_VT(&var));
     VariantClear(&var);
-    if (hr == S_OK) IScriptProcedure_Release(proc);
+    IScriptProcedure_Release(proc);
 
     V_VT(&var) = VT_R8;
     V_R8(&var) = 3.0;
     hr = IScriptProcedureCollection_get_Item(procs, var, &proc);
-    todo_wine ok(hr == S_OK, "IScriptProcedureCollection_get_Item failed: 0x%08x.\n", hr);
-    if (hr == S_OK) IScriptProcedure_Release(proc);
+    ok(hr == S_OK, "IScriptProcedureCollection_get_Item failed: 0x%08x.\n", hr);
+    IScriptProcedure_Release(proc);
 
     IScriptProcedureCollection_Release(procs);
     IScriptControl_Release(sc);
@@ -3464,10 +3464,10 @@ static void test_IScriptControl_get_Procedures(void)
         V_VT(&var) = VT_BSTR;
         V_BSTR(&var) = SysAllocString(L"foobar");
         hr = IScriptProcedureCollection_get_Item(procs, var, &proc);
-        todo_wine ok(hr == E_NOINTERFACE, "IScriptProcedureCollection_get_Item returned: 0x%08x.\n", hr);
+        ok(hr == E_NOINTERFACE, "IScriptProcedureCollection_get_Item returned: 0x%08x.\n", hr);
         ok(V_VT(&var) == VT_BSTR, "var type not BSTR, got %d.\n", V_VT(&var));
         VariantClear(&var);
-        todo_wine CHECK_CALLED(QI_ITypeComp);
+        CHECK_CALLED(QI_ITypeComp);
 
         /* Make ITypeComp available */
         TypeComp_available = TRUE;
@@ -3476,43 +3476,43 @@ static void test_IScriptControl_get_Procedures(void)
         V_VT(&var) = VT_BSTR;
         V_BSTR(&var) = SysAllocString(L"type_mismatch");
         hr = IScriptProcedureCollection_get_Item(procs, var, &proc);
-        todo_wine ok(hr == TYPE_E_TYPEMISMATCH, "IScriptProcedureCollection_get_Item returned: 0x%08x.\n", hr);
+        ok(hr == TYPE_E_TYPEMISMATCH, "IScriptProcedureCollection_get_Item returned: 0x%08x.\n", hr);
         VariantClear(&var);
-        todo_wine CHECK_CALLED(QI_ITypeComp);
-        todo_wine CHECK_CALLED(Bind);
+        CHECK_CALLED(QI_ITypeComp);
+        CHECK_CALLED(Bind);
         TypeComp_available = FALSE;
 
         SET_EXPECT(Bind);
         V_VT(&var) = VT_BSTR;
         V_BSTR(&var) = SysAllocString(L"not_found");
         hr = IScriptProcedureCollection_get_Item(procs, var, &proc);
-        todo_wine ok(hr == CTL_E_ILLEGALFUNCTIONCALL, "IScriptProcedureCollection_get_Item failed: 0x%08x.\n", hr);
+        ok(hr == CTL_E_ILLEGALFUNCTIONCALL, "IScriptProcedureCollection_get_Item failed: 0x%08x.\n", hr);
         VariantClear(&var);
-        todo_wine CHECK_CALLED(Bind);
+        CHECK_CALLED(Bind);
 
         SET_EXPECT(Bind);
         SET_EXPECT(ReleaseVarDesc);
         V_VT(&var) = VT_BSTR;
         V_BSTR(&var) = SysAllocString(L"variable");
         hr = IScriptProcedureCollection_get_Item(procs, var, &proc);
-        todo_wine ok(hr == CTL_E_ILLEGALFUNCTIONCALL, "IScriptProcedureCollection_get_Item failed: 0x%08x.\n", hr);
+        ok(hr == CTL_E_ILLEGALFUNCTIONCALL, "IScriptProcedureCollection_get_Item failed: 0x%08x.\n", hr);
         VariantClear(&var);
-        todo_wine CHECK_CALLED(Bind);
-        todo_wine CHECK_CALLED(ReleaseVarDesc);
+        CHECK_CALLED(Bind);
+        CHECK_CALLED(ReleaseVarDesc);
 
         /* Index 0 and below are invalid (doesn't even call GetFuncDesc) */
         V_VT(&var) = VT_I4;
         V_I4(&var) = 0;
         hr = IScriptProcedureCollection_get_Item(procs, var, &proc);
-        todo_wine ok(hr == 0x800a0009, "IScriptProcedureCollection_get_Item returned: 0x%08x.\n", hr);
+        ok(hr == 0x800a0009, "IScriptProcedureCollection_get_Item returned: 0x%08x.\n", hr);
         V_I4(&var) = -1;
         hr = IScriptProcedureCollection_get_Item(procs, var, &proc);
-        todo_wine ok(hr == 0x800a0009, "IScriptProcedureCollection_get_Item returned: 0x%08x.\n", hr);
+        ok(hr == 0x800a0009, "IScriptProcedureCollection_get_Item returned: 0x%08x.\n", hr);
         SET_EXPECT(GetFuncDesc);
         V_I4(&var) = 1337;
         hr = IScriptProcedureCollection_get_Item(procs, var, &proc);
-        todo_wine ok(hr == E_INVALIDARG, "IScriptProcedureCollection_get_Item returned: 0x%08x.\n", hr);
-        todo_wine CHECK_CALLED(GetFuncDesc);
+        ok(hr == E_INVALIDARG, "IScriptProcedureCollection_get_Item returned: 0x%08x.\n", hr);
+        CHECK_CALLED(GetFuncDesc);
 
         for (i = 0; i < ARRAY_SIZE(custom_engine_funcs); i++)
         {
@@ -3523,11 +3523,11 @@ static void test_IScriptControl_get_Procedures(void)
             V_VT(&var) = VT_R4;
             V_R4(&var) = i + 1;
             hr = IScriptProcedureCollection_get_Item(procs, var, &proc);
-            todo_wine ok(hr == S_OK, "get_Item for index %u failed: 0x%08x.\n", i, hr);
-            todo_wine CHECK_CALLED(GetFuncDesc);
-            todo_wine CHECK_CALLED(GetNames);
-            todo_wine CHECK_CALLED(ReleaseFuncDesc);
-            if (hr == S_OK) IScriptProcedure_Release(proc);
+            ok(hr == S_OK, "get_Item for index %u failed: 0x%08x.\n", i, hr);
+            CHECK_CALLED(GetFuncDesc);
+            CHECK_CALLED(GetNames);
+            CHECK_CALLED(ReleaseFuncDesc);
+            IScriptProcedure_Release(proc);
 
             V_VT(&var) = VT_BSTR;
             V_BSTR(&var) = SysAllocString(custom_engine_funcs[i].name);
@@ -3535,12 +3535,12 @@ static void test_IScriptControl_get_Procedures(void)
             SET_EXPECT(GetNames);
             SET_EXPECT(ReleaseFuncDesc);
             hr = IScriptProcedureCollection_get_Item(procs, var, &proc);
-            todo_wine ok(hr == S_OK, "get_Item for %s failed: 0x%08x.\n", wine_dbgstr_w(custom_engine_funcs[i].name), hr);
+            ok(hr == S_OK, "get_Item for %s failed: 0x%08x.\n", wine_dbgstr_w(custom_engine_funcs[i].name), hr);
             VariantClear(&var);
-            todo_wine CHECK_CALLED(Bind);
-            todo_wine CHECK_CALLED(GetNames);
-            todo_wine CHECK_CALLED(ReleaseFuncDesc);
-            if (hr == S_OK) IScriptProcedure_Release(proc);
+            CHECK_CALLED(Bind);
+            CHECK_CALLED(GetNames);
+            CHECK_CALLED(ReleaseFuncDesc);
+            IScriptProcedure_Release(proc);
         }
 
         IScriptProcedureCollection_Release(procs);

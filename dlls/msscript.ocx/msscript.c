@@ -84,9 +84,17 @@ typedef struct {
     ScriptHost *host;
     IDispatch *script_dispatch;
     ITypeInfo *script_typeinfo;
+    ITypeComp *script_typecomp;
 
     ScriptProcedureCollection *procedures;
 } ScriptModule;
+
+typedef struct {
+    IScriptProcedure IScriptProcedure_iface;
+    LONG ref;
+
+    BSTR name;
+} ScriptProcedure;
 
 struct ScriptProcedureCollection {
     IScriptProcedureCollection IScriptProcedureCollection_iface;
@@ -150,6 +158,7 @@ typedef enum tid_t {
     IScriptModuleCollection_tid,
     IScriptModule_tid,
     IScriptProcedureCollection_tid,
+    IScriptProcedure_tid,
     LAST_tid
 } tid_t;
 
@@ -161,6 +170,7 @@ static REFIID tid_ids[] = {
     &IID_IScriptModuleCollection,
     &IID_IScriptModule,
     &IID_IScriptProcedureCollection,
+    &IID_IScriptProcedure
 };
 
 static HRESULT load_typelib(void)
@@ -277,6 +287,19 @@ static HRESULT get_script_typeinfo(ScriptModule *module, ITypeInfo **typeinfo)
     return S_OK;
 }
 
+static HRESULT get_script_typecomp(ScriptModule *module, ITypeInfo *typeinfo, ITypeComp **typecomp)
+{
+    HRESULT hr;
+
+    if (!module->script_typecomp)
+    {
+        hr = ITypeInfo_QueryInterface(typeinfo, &IID_ITypeComp, (void**)&module->script_typecomp);
+        if (FAILED(hr)) return hr;
+    }
+    *typecomp = module->script_typecomp;
+    return S_OK;
+}
+
 static void uncache_module_objects(ScriptModule *module)
 {
     if (module->script_dispatch)
@@ -288,6 +311,11 @@ static void uncache_module_objects(ScriptModule *module)
     {
         ITypeInfo_Release(module->script_typeinfo);
         module->script_typeinfo = NULL;
+    }
+    if (module->script_typecomp)
+    {
+        ITypeComp_Release(module->script_typecomp);
+        module->script_typecomp = NULL;
     }
     if (module->procedures)
         module->procedures->count = -1;
@@ -451,6 +479,11 @@ static inline ScriptControl *impl_from_IPointerInactive(IPointerInactive *iface)
 static inline ScriptControl *impl_from_IConnectionPointContainer(IConnectionPointContainer *iface)
 {
     return CONTAINING_RECORD(iface, ScriptControl, IConnectionPointContainer_iface);
+}
+
+static inline ScriptProcedure *impl_from_IScriptProcedure(IScriptProcedure *iface)
+{
+    return CONTAINING_RECORD(iface, ScriptProcedure, IScriptProcedure_iface);
 }
 
 static inline ScriptProcedureCollection *impl_from_IScriptProcedureCollection(IScriptProcedureCollection *iface)
@@ -728,6 +761,181 @@ static const IServiceProviderVtbl ServiceProviderVtbl = {
     ServiceProvider_QueryService
 };
 
+static HRESULT WINAPI ScriptProcedure_QueryInterface(IScriptProcedure *iface, REFIID riid, void **ppv)
+{
+    ScriptProcedure *This = impl_from_IScriptProcedure(iface);
+
+    if (IsEqualGUID(&IID_IDispatch, riid) || IsEqualGUID(&IID_IUnknown, riid) ||
+        IsEqualGUID(&IID_IScriptProcedure, riid))
+    {
+        *ppv = &This->IScriptProcedure_iface;
+    }
+    else
+    {
+        WARN("unsupported interface: (%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI ScriptProcedure_AddRef(IScriptProcedure *iface)
+{
+    ScriptProcedure *This = impl_from_IScriptProcedure(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI ScriptProcedure_Release(IScriptProcedure *iface)
+{
+    ScriptProcedure *This = impl_from_IScriptProcedure(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if (!ref)
+    {
+        SysFreeString(This->name);
+        heap_free(This);
+    }
+    return ref;
+}
+
+static HRESULT WINAPI ScriptProcedure_GetTypeInfoCount(IScriptProcedure *iface, UINT *pctinfo)
+{
+    ScriptProcedure *This = impl_from_IScriptProcedure(iface);
+
+    TRACE("(%p)->(%p)\n", This, pctinfo);
+
+    *pctinfo = 1;
+    return S_OK;
+}
+
+static HRESULT WINAPI ScriptProcedure_GetTypeInfo(IScriptProcedure *iface, UINT iTInfo,
+        LCID lcid, ITypeInfo **ppTInfo)
+{
+    ScriptProcedure *This = impl_from_IScriptProcedure(iface);
+
+    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+
+    return get_typeinfo(IScriptProcedure_tid, ppTInfo);
+}
+
+static HRESULT WINAPI ScriptProcedure_GetIDsOfNames(IScriptProcedure *iface, REFIID riid,
+        LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    ScriptProcedure *This = impl_from_IScriptProcedure(iface);
+    ITypeInfo *typeinfo;
+    HRESULT hr;
+
+    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+
+    hr = get_typeinfo(IScriptProcedure_tid, &typeinfo);
+    if (SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_GetIDsOfNames(typeinfo, rgszNames, cNames, rgDispId);
+        ITypeInfo_Release(typeinfo);
+    }
+
+    return hr;
+}
+
+static HRESULT WINAPI ScriptProcedure_Invoke(IScriptProcedure *iface, DISPID dispIdMember,
+        REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult,
+        EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    ScriptProcedure *This = impl_from_IScriptProcedure(iface);
+    ITypeInfo *typeinfo;
+    HRESULT hr;
+
+    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+           lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+
+    hr = get_typeinfo(IScriptProcedure_tid, &typeinfo);
+    if(SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_Invoke(typeinfo, iface, dispIdMember, wFlags,
+                              pDispParams, pVarResult, pExcepInfo, puArgErr);
+        ITypeInfo_Release(typeinfo);
+    }
+
+    return hr;
+}
+
+static HRESULT WINAPI ScriptProcedure_get_Name(IScriptProcedure *iface, BSTR *pbstrName)
+{
+    ScriptProcedure *This = impl_from_IScriptProcedure(iface);
+
+    FIXME("(%p)->(%p)\n", This, pbstrName);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ScriptProcedure_get_NumArgs(IScriptProcedure *iface, LONG *pcArgs)
+{
+    ScriptProcedure *This = impl_from_IScriptProcedure(iface);
+
+    FIXME("(%p)->(%p)\n", This, pcArgs);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ScriptProcedure_get_HasReturnValue(IScriptProcedure *iface, VARIANT_BOOL *pfHasReturnValue)
+{
+    ScriptProcedure *This = impl_from_IScriptProcedure(iface);
+
+    FIXME("(%p)->(%p)\n", This, pfHasReturnValue);
+
+    return E_NOTIMPL;
+}
+
+static const IScriptProcedureVtbl ScriptProcedureVtbl = {
+    ScriptProcedure_QueryInterface,
+    ScriptProcedure_AddRef,
+    ScriptProcedure_Release,
+    ScriptProcedure_GetTypeInfoCount,
+    ScriptProcedure_GetTypeInfo,
+    ScriptProcedure_GetIDsOfNames,
+    ScriptProcedure_Invoke,
+    ScriptProcedure_get_Name,
+    ScriptProcedure_get_NumArgs,
+    ScriptProcedure_get_HasReturnValue
+};
+
+/* This function always releases the FUNCDESC passed in */
+static HRESULT get_script_procedure(ITypeInfo *typeinfo, FUNCDESC *desc, IScriptProcedure **procedure)
+{
+    ScriptProcedure *proc;
+    HRESULT hr;
+    BSTR str;
+    UINT len;
+
+    hr = ITypeInfo_GetNames(typeinfo, desc->memid, &str, 1, &len);
+    if (FAILED(hr)) goto done;
+
+    if (!(proc = heap_alloc(sizeof(*proc))))
+    {
+        hr = E_OUTOFMEMORY;
+        SysFreeString(str);
+        goto done;
+    }
+
+    proc->IScriptProcedure_iface.lpVtbl = &ScriptProcedureVtbl;
+    proc->ref = 1;
+    proc->name = str;
+
+    *procedure = &proc->IScriptProcedure_iface;
+
+done:
+    ITypeInfo_ReleaseFuncDesc(typeinfo, desc);
+    return hr;
+}
+
 static HRESULT WINAPI ScriptProcedureCollection_QueryInterface(IScriptProcedureCollection *iface, REFIID riid, void **ppv)
 {
     ScriptProcedureCollection *This = impl_from_IScriptProcedureCollection(iface);
@@ -848,10 +1056,64 @@ static HRESULT WINAPI ScriptProcedureCollection_get_Item(IScriptProcedureCollect
         IScriptProcedure **ppdispProcedure)
 {
     ScriptProcedureCollection *This = impl_from_IScriptProcedureCollection(iface);
+    ITypeInfo *typeinfo;
+    FUNCDESC *desc;
+    HRESULT hr;
 
-    FIXME("(%p)->(%s %p)\n", This, wine_dbgstr_variant(&index), ppdispProcedure);
+    TRACE("(%p)->(%s %p)\n", This, wine_dbgstr_variant(&index), ppdispProcedure);
 
-    return E_NOTIMPL;
+    if (!ppdispProcedure) return E_POINTER;
+    if (!This->module->host) return E_FAIL;
+
+    hr = start_script(This->module->host);
+    if (FAILED(hr)) return hr;
+
+    hr = get_script_typeinfo(This->module, &typeinfo);
+    if (FAILED(hr)) return hr;
+
+    if (V_VT(&index) == VT_BSTR)
+    {
+        ITypeComp *comp;
+        BINDPTR bindptr;
+        DESCKIND kind;
+        ULONG hash;
+
+        hash = LHashValOfNameSys(sizeof(void*) == 8 ? SYS_WIN64 : SYS_WIN32, LOCALE_USER_DEFAULT, V_BSTR(&index));
+
+        hr = get_script_typecomp(This->module, typeinfo, &comp);
+        if (FAILED(hr)) return hr;
+
+        hr = ITypeComp_Bind(comp, V_BSTR(&index), hash, INVOKE_FUNC, &typeinfo, &kind, &bindptr);
+        if (FAILED(hr)) return hr;
+
+        switch (kind)
+        {
+        case DESCKIND_FUNCDESC:
+            hr = get_script_procedure(typeinfo, bindptr.lpfuncdesc, ppdispProcedure);
+            ITypeInfo_Release(typeinfo);
+            return hr;
+        case DESCKIND_IMPLICITAPPOBJ:
+        case DESCKIND_VARDESC:
+            ITypeInfo_ReleaseVarDesc(typeinfo, bindptr.lpvardesc);
+            ITypeInfo_Release(typeinfo);
+            break;
+        case DESCKIND_TYPECOMP:
+            ITypeComp_Release(bindptr.lptcomp);
+            break;
+        default:
+            break;
+        }
+        return CTL_E_ILLEGALFUNCTIONCALL;
+    }
+
+    hr = VariantChangeType(&index, &index, 0, VT_INT);
+    if (FAILED(hr)) return hr;
+    if (V_INT(&index) <= 0) return 0x800a0009;
+
+    hr = ITypeInfo_GetFuncDesc(typeinfo, V_INT(&index) - 1, &desc);
+    if (FAILED(hr)) return hr;
+
+    return get_script_procedure(typeinfo, desc, ppdispProcedure);
 }
 
 static HRESULT WINAPI ScriptProcedureCollection_get_Count(IScriptProcedureCollection *iface, LONG *plCount)
