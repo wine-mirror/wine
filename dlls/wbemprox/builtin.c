@@ -2920,8 +2920,8 @@ static enum fill_status fill_physicalmemory( struct table *table, const struct e
     rec->devicelocator        = L"DIMM 0";
     rec->formfactor           = 8; /* DIMM */
     rec->memorytype           = 9; /* RAM */
-    rec->partnumber           = NULL;
-    rec->serial               = NULL;
+    rec->partnumber           = L"";
+    rec->serial               = L"";
     if (!match_row( table, row, cond, &status )) free_row_values( table, row );
     else row++;
 
