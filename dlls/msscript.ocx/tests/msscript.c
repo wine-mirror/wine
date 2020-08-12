@@ -3317,9 +3317,10 @@ static void test_IScriptControl_get_Procedures(void)
     ok(hr == S_OK, "IScriptControl_get_Procedures failed: 0x%08x.\n", hr);
 
     hr = IScriptProcedureCollection_get_Count(procs, NULL);
-    todo_wine ok(hr == E_POINTER, "IScriptProcedureCollection_get_Count returned: 0x%08x.\n", hr);
+    ok(hr == E_POINTER, "IScriptProcedureCollection_get_Count returned: 0x%08x.\n", hr);
     hr = IScriptProcedureCollection_get_Count(procs, &count);
-    todo_wine ok(hr == S_OK, "IScriptProcedureCollection_get_Count failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptProcedureCollection_get_Count failed: 0x%08x.\n", hr);
+    ok(count == 0, "count is not 0, got %d.\n", count);
 
     V_VT(&var) = VT_I4;
     V_I4(&var) = -1;
@@ -3339,7 +3340,8 @@ static void test_IScriptControl_get_Procedures(void)
     SysFreeString(str);
 
     hr = IScriptProcedureCollection_get_Count(procs, &count);
-    todo_wine ok(hr == S_OK, "IScriptProcedureCollection_get_Count failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptProcedureCollection_get_Count failed: 0x%08x.\n", hr);
+    todo_wine ok(count == 3, "count is not 3, got %d.\n", count);
 
     V_VT(&var) = VT_I4;
     V_I4(&var) = 1;
@@ -3407,17 +3409,18 @@ static void test_IScriptControl_get_Procedures(void)
         SET_EXPECT(ReleaseTypeAttr);
         TypeInfo_GetTypeAttr_cFuncs = 1337;
         hr = IScriptProcedureCollection_get_Count(procs, &count);
-        todo_wine ok(hr == S_OK, "IScriptProcedureCollection_get_Count failed: 0x%08x.\n", hr);
-        todo_wine CHECK_CALLED(SetScriptState_STARTED);
-        todo_wine CHECK_CALLED(GetScriptDispatch);
-        todo_wine CHECK_CALLED(GetTypeInfo);
-        todo_wine CHECK_CALLED(GetTypeAttr);
-        todo_wine CHECK_CALLED(ReleaseTypeAttr);
+        ok(hr == S_OK, "IScriptProcedureCollection_get_Count failed: 0x%08x.\n", hr);
+        ok(count == 1337, "count is not 1337, got %d.\n", count);
+        CHECK_CALLED(SetScriptState_STARTED);
+        CHECK_CALLED(GetScriptDispatch);
+        CHECK_CALLED(GetTypeInfo);
+        CHECK_CALLED(GetTypeAttr);
+        CHECK_CALLED(ReleaseTypeAttr);
         TypeInfo_GetTypeAttr_cFuncs = ARRAY_SIZE(custom_engine_funcs);
         count = 0;
         hr = IScriptProcedureCollection_get_Count(procs, &count);
-        todo_wine ok(hr == S_OK, "IScriptProcedureCollection_get_Count failed: 0x%08x.\n", hr);
-        todo_wine ok(count == 1337, "count is not 1337, got %d.\n", count);
+        ok(hr == S_OK, "IScriptProcedureCollection_get_Count failed: 0x%08x.\n", hr);
+        ok(count == 1337, "count is not 1337, got %d.\n", count);
 
         /* Reload the collection to update the cached function count */
         IScriptProcedureCollection_Release(procs);
@@ -3427,13 +3430,12 @@ static void test_IScriptControl_get_Procedures(void)
         SET_EXPECT(GetTypeAttr);
         SET_EXPECT(ReleaseTypeAttr);
         hr = IScriptProcedureCollection_get_Count(procs, &count);
-        todo_wine ok(hr == S_OK, "IScriptProcedureCollection_get_Count failed: 0x%08x.\n", hr);
-        todo_wine ok(count == ARRAY_SIZE(custom_engine_funcs), "count is not %u, got %d.\n", TypeInfo_GetTypeAttr_cFuncs, count);
-        todo_wine CHECK_CALLED(GetTypeAttr);
-        todo_wine CHECK_CALLED(ReleaseTypeAttr);
+        ok(hr == S_OK, "IScriptProcedureCollection_get_Count failed: 0x%08x.\n", hr);
+        ok(count == ARRAY_SIZE(custom_engine_funcs), "count is not %u, got %d.\n", TypeInfo_GetTypeAttr_cFuncs, count);
+        CHECK_CALLED(GetTypeAttr);
+        CHECK_CALLED(ReleaseTypeAttr);
 
         /* Adding code reloads the typeinfo the next time */
-        SET_EXPECT(SetScriptState_STARTED);
         SET_EXPECT(ParseScriptText);
         parse_item_name = NULL;
         parse_flags = SCRIPTTEXT_ISVISIBLE;
@@ -3442,7 +3444,6 @@ static void test_IScriptControl_get_Procedures(void)
         ok(hr == S_OK, "IScriptControl_AddCode failed: 0x%08x.\n", hr);
         SysFreeString(str);
         todo_wine CHECK_ERROR(sc, 0);
-        todo_wine CHECK_NOT_CALLED(SetScriptState_STARTED);
         CHECK_CALLED(ParseScriptText);
 
         GetScriptDispatch_expected_name = NULL;
@@ -3451,8 +3452,8 @@ static void test_IScriptControl_get_Procedures(void)
         SET_EXPECT(GetTypeAttr);
         SET_EXPECT(ReleaseTypeAttr);
         hr = IScriptProcedureCollection_get_Count(procs, &count);
-        todo_wine ok(hr == S_OK, "IScriptProcedureCollection_get_Count failed: 0x%08x.\n", hr);
-        todo_wine ok(count == ARRAY_SIZE(custom_engine_funcs), "count is not %u, got %d.\n", TypeInfo_GetTypeAttr_cFuncs, count);
+        ok(hr == S_OK, "IScriptProcedureCollection_get_Count failed: 0x%08x.\n", hr);
+        ok(count == ARRAY_SIZE(custom_engine_funcs), "count is not %u, got %d.\n", TypeInfo_GetTypeAttr_cFuncs, count);
         todo_wine CHECK_CALLED(GetScriptDispatch);
         todo_wine CHECK_CALLED(GetTypeInfo);
         todo_wine CHECK_CALLED(GetTypeAttr);

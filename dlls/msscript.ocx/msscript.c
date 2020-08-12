@@ -83,6 +83,7 @@ typedef struct {
     BSTR name;
     ScriptHost *host;
     IDispatch *script_dispatch;
+    ITypeInfo *script_typeinfo;
 
     ScriptProcedureCollection *procedures;
 } ScriptModule;
@@ -91,6 +92,7 @@ struct ScriptProcedureCollection {
     IScriptProcedureCollection IScriptProcedureCollection_iface;
     LONG ref;
 
+    LONG count;
     ScriptModule *module;
 };
 
@@ -255,6 +257,23 @@ static HRESULT get_script_dispatch(ScriptModule *module, IDispatch **disp)
         if (FAILED(hr)) return hr;
     }
     *disp = module->script_dispatch;
+    return S_OK;
+}
+
+static HRESULT get_script_typeinfo(ScriptModule *module, ITypeInfo **typeinfo)
+{
+    IDispatch *disp;
+    HRESULT hr;
+
+    if (!module->script_typeinfo)
+    {
+        hr = get_script_dispatch(module, &disp);
+        if (FAILED(hr)) return hr;
+
+        hr = IDispatch_GetTypeInfo(disp, 0, LOCALE_USER_DEFAULT, &module->script_typeinfo);
+        if (FAILED(hr)) return hr;
+    }
+    *typeinfo = module->script_typeinfo;
     return S_OK;
 }
 
@@ -820,10 +839,32 @@ static HRESULT WINAPI ScriptProcedureCollection_get_Item(IScriptProcedureCollect
 static HRESULT WINAPI ScriptProcedureCollection_get_Count(IScriptProcedureCollection *iface, LONG *plCount)
 {
     ScriptProcedureCollection *This = impl_from_IScriptProcedureCollection(iface);
+    TYPEATTR *attr;
+    ITypeInfo *ti;
+    HRESULT hr;
 
-    FIXME("(%p)->(%p)\n", This, plCount);
+    TRACE("(%p)->(%p)\n", This, plCount);
 
-    return E_NOTIMPL;
+    if (!plCount) return E_POINTER;
+    if (!This->module->host) return E_FAIL;
+
+    hr = start_script(This->module->host);
+    if (FAILED(hr)) return hr;
+
+    if (This->count == -1)
+    {
+        hr = get_script_typeinfo(This->module, &ti);
+        if (FAILED(hr)) return hr;
+
+        hr = ITypeInfo_GetTypeAttr(ti, &attr);
+        if (FAILED(hr)) return hr;
+
+        This->count = attr->cFuncs;
+        ITypeInfo_ReleaseTypeAttr(ti, attr);
+    }
+
+    *plCount = This->count;
+    return S_OK;
 }
 
 static const IScriptProcedureCollectionVtbl ScriptProcedureCollectionVtbl = {
@@ -910,6 +951,8 @@ static ULONG WINAPI ScriptModule_Release(IScriptModule *iface)
         SysFreeString(This->name);
         if (This->script_dispatch)
             IDispatch_Release(This->script_dispatch);
+        if (This->script_typeinfo)
+            ITypeInfo_Release(This->script_typeinfo);
         heap_free(This);
     }
 
@@ -1029,6 +1072,7 @@ static HRESULT WINAPI ScriptModule_get_Procedures(IScriptModule *iface, IScriptP
 
         procs->IScriptProcedureCollection_iface.lpVtbl = &ScriptProcedureCollectionVtbl;
         procs->ref = 1;
+        procs->count = -1;
         procs->module = This;
         This->procedures = procs;
         IScriptModule_AddRef(&This->IScriptModule_iface);
