@@ -419,7 +419,7 @@ foreach my $file (@files) {
             push @ifdefs, ($pointer_size == 8);
 	} elsif ($preprocessor =~ /^\#\s*ifndef\s+_WIN64/) {
             push @ifdefs, ($pointer_size == 4);
-	} elsif ($preprocessor =~ /^\#\s*elif\s+defined(_WIN64)/) {
+	} elsif ($preprocessor =~ /^\#\s*elif\s+defined\s*\(\s*_WIN64\s*\)/) {
             $ifdefs[$#ifdefs] = ($pointer_size == 8);
 	} elsif ($preprocessor =~ /^\#\s*ifdef\s/) {
             push @ifdefs, 2;
