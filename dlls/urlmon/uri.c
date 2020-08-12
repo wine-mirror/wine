@@ -1342,7 +1342,7 @@ static void parse_userinfo(const WCHAR **ptr, parse_data *data, DWORD flags) {
  *
  * port = *DIGIT
  */
-static BOOL parse_port(const WCHAR **ptr, parse_data *data, DWORD flags) {
+static BOOL parse_port(const WCHAR **ptr, parse_data *data) {
     UINT port = 0;
     data->port = *ptr;
 
@@ -1368,7 +1368,7 @@ static BOOL parse_port(const WCHAR **ptr, parse_data *data, DWORD flags) {
     data->port_value = port;
     data->port_len = *ptr - data->port;
 
-    TRACE("(%p %p %x): Found port %s len=%d value=%u\n", ptr, data, flags,
+    TRACE("(%p %p): Found port %s len=%d value=%u\n", ptr, data,
         debugstr_wn(data->port, data->port_len), data->port_len, data->port_value);
     return TRUE;
 }
@@ -1387,14 +1387,13 @@ static BOOL parse_port(const WCHAR **ptr, parse_data *data, DWORD flags) {
  *          is UINT_MAX, if the value in the URI exceeds this then
  *          it is not considered an IPv4 address.
  */
-static BOOL parse_ipv4address(const WCHAR **ptr, parse_data *data, DWORD flags) {
+static BOOL parse_ipv4address(const WCHAR **ptr, parse_data *data) {
     const BOOL is_unknown = data->scheme_type == URL_SCHEME_UNKNOWN;
     data->host = *ptr;
 
     if(!check_ipv4address(ptr, FALSE)) {
         if(!check_implicit_ipv4(ptr, &data->implicit_ipv4)) {
-            TRACE("(%p %p %x): URI didn't contain anything looking like an IPv4 address.\n",
-                ptr, data, flags);
+            TRACE("(%p %p): URI didn't contain anything looking like an IPv4 address.\n", ptr, data);
             *ptr = data->host;
             data->host = NULL;
             return FALSE;
@@ -1410,7 +1409,7 @@ static BOOL parse_ipv4address(const WCHAR **ptr, parse_data *data, DWORD flags) 
      */
     if(**ptr == ':') {
         ++(*ptr);
-        if(!parse_port(ptr, data, flags)) {
+        if(!parse_port(ptr, data)) {
             *ptr = data->host;
             data->host = NULL;
             return FALSE;
@@ -1423,8 +1422,8 @@ static BOOL parse_ipv4address(const WCHAR **ptr, parse_data *data, DWORD flags) 
         return FALSE;
     }
 
-    TRACE("(%p %p %x): IPv4 address found. host=%s host_len=%d host_type=%d\n",
-        ptr, data, flags, debugstr_wn(data->host, data->host_len),
+    TRACE("(%p %p): IPv4 address found. host=%s host_len=%d host_type=%d\n",
+        ptr, data, debugstr_wn(data->host, data->host_len),
         data->host_len, data->host_type);
     return TRUE;
 }
@@ -1449,7 +1448,7 @@ static BOOL parse_ipv4address(const WCHAR **ptr, parse_data *data, DWORD flags) 
  *
  *  A reg-name CAN be empty.
  */
-static BOOL parse_reg_name(const WCHAR **ptr, parse_data *data, DWORD flags, DWORD extras) {
+static BOOL parse_reg_name(const WCHAR **ptr, parse_data *data, DWORD extras) {
     const BOOL has_start_bracket = **ptr == '[';
     const BOOL known_scheme = data->scheme_type != URL_SCHEME_UNKNOWN;
     const BOOL is_res = data->scheme_type == URL_SCHEME_RES;
@@ -1489,12 +1488,12 @@ static BOOL parse_reg_name(const WCHAR **ptr, parse_data *data, DWORD flags, DWO
                 const WCHAR *tmp = (*ptr)++;
 
                 /* Attempt to parse the port. */
-                if(!parse_port(ptr, data, flags)) {
+                if(!parse_port(ptr, data)) {
                     /* Windows expects there to be a valid port for known scheme types. */
                     if(data->scheme_type != URL_SCHEME_UNKNOWN) {
                         *ptr = data->host;
                         data->host = NULL;
-                        TRACE("(%p %p %x %x): Expected valid port\n", ptr, data, flags, extras);
+                        TRACE("(%p %p %x): Expected valid port\n", ptr, data, extras);
                         return FALSE;
                     } else
                         /* Windows gives up on trying to parse a port when it
@@ -1529,8 +1528,7 @@ static BOOL parse_reg_name(const WCHAR **ptr, parse_data *data, DWORD flags, DWO
     if(has_start_bracket) {
         /* Make sure the last character of the host wasn't a ']'. */
         if(*(*ptr-1) == ']') {
-            TRACE("(%p %p %x %x): Expected an IP literal inside of the host\n",
-                ptr, data, flags, extras);
+            TRACE("(%p %p %x): Expected an IP literal inside of the host\n", ptr, data, extras);
             *ptr = data->host;
             data->host = NULL;
             return FALSE;
@@ -1547,7 +1545,7 @@ static BOOL parse_reg_name(const WCHAR **ptr, parse_data *data, DWORD flags, DWO
     else
         data->host_type = Uri_HOST_DNS;
 
-    TRACE("(%p %p %x %x): Parsed reg-name. host=%s len=%d\n", ptr, data, flags, extras,
+    TRACE("(%p %p %x): Parsed reg-name. host=%s len=%d\n", ptr, data, extras,
         debugstr_wn(data->host, data->host_len), data->host_len);
     return TRUE;
 }
@@ -1572,7 +1570,7 @@ static BOOL parse_reg_name(const WCHAR **ptr, parse_data *data, DWORD flags, DWO
  *
  * Modeled after google-url's 'DoParseIPv6' function.
  */
-static BOOL parse_ipv6address(const WCHAR **ptr, parse_data *data, DWORD flags) {
+static BOOL parse_ipv6address(const WCHAR **ptr, parse_data *data) {
     const WCHAR *start, *cur_start;
     ipv6_address ip;
 
@@ -1599,8 +1597,7 @@ static BOOL parse_ipv6address(const WCHAR **ptr, parse_data *data, DWORD flags) 
             if(cur_len > 4) {
                 *ptr = start;
 
-                TRACE("(%p %p %x): h16 component to long.\n",
-                    ptr, data, flags);
+                TRACE("(%p %p): h16 component to long.\n", ptr, data);
                 return FALSE;
             }
 
@@ -1612,8 +1609,7 @@ static BOOL parse_ipv6address(const WCHAR **ptr, parse_data *data, DWORD flags) 
                 if(!((*ptr == start && is_elision) ||
                     (is_end && (*ptr-2) == ip.elision))) {
                     *ptr = start;
-                    TRACE("(%p %p %x): IPv6 component cannot have a length of 0.\n",
-                        ptr, data, flags);
+                    TRACE("(%p %p): IPv6 component cannot have a length of 0.\n", ptr, data);
                     return FALSE;
                 }
             }
@@ -1622,16 +1618,15 @@ static BOOL parse_ipv6address(const WCHAR **ptr, parse_data *data, DWORD flags) 
                 /* An IPv6 address can have no more than 8 h16 components. */
                 if(ip.h16_count >= 8) {
                     *ptr = start;
-                    TRACE("(%p %p %x): Not a IPv6 address, too many h16 components.\n",
-                        ptr, data, flags);
+                    TRACE("(%p %p): Not a IPv6 address, too many h16 components.\n", ptr, data);
                     return FALSE;
                 }
 
                 ip.components[ip.h16_count].str = cur_start;
                 ip.components[ip.h16_count].len = cur_len;
 
-                TRACE("(%p %p %x): Found h16 component %s, len=%d, h16_count=%d\n",
-                    ptr, data, flags, debugstr_wn(cur_start, cur_len), cur_len,
+                TRACE("(%p %p): Found h16 component %s, len=%d, h16_count=%d\n",
+                    ptr, data, debugstr_wn(cur_start, cur_len), cur_len,
                     ip.h16_count);
                 ++ip.h16_count;
             }
@@ -1645,8 +1640,7 @@ static BOOL parse_ipv6address(const WCHAR **ptr, parse_data *data, DWORD flags) 
             if(ip.elision) {
                 *ptr = start;
 
-                TRACE("(%p %p %x): IPv6 address cannot have 2 elisions.\n",
-                    ptr, data, flags);
+                TRACE("(%p %p): IPv6 address cannot have 2 elisions.\n", ptr, data);
                 return FALSE;
             }
 
@@ -1668,9 +1662,8 @@ static BOOL parse_ipv6address(const WCHAR **ptr, parse_data *data, DWORD flags) 
                 ip.ipv4 = cur_start;
                 ip.ipv4_len = *ptr - cur_start;
 
-                TRACE("(%p %p %x): Found an attached IPv4 address %s len=%d.\n",
-                    ptr, data, flags, debugstr_wn(ip.ipv4, ip.ipv4_len),
-                    ip.ipv4_len);
+                TRACE("(%p %p): Found an attached IPv4 address %s len=%d.\n",
+                    ptr, data, debugstr_wn(ip.ipv4, ip.ipv4_len), ip.ipv4_len);
 
                 /* IPv4 addresses can only appear at the end of a IPv6. */
                 break;
@@ -1683,8 +1676,7 @@ static BOOL parse_ipv6address(const WCHAR **ptr, parse_data *data, DWORD flags) 
     /* Make sure the IPv6 address adds up to 16 bytes. */
     if(ip.components_size + ip.elision_size != 16) {
         *ptr = start;
-        TRACE("(%p %p %x): Invalid IPv6 address, did not add up to 16 bytes.\n",
-            ptr, data, flags);
+        TRACE("(%p %p): Invalid IPv6 address, did not add up to 16 bytes.\n", ptr, data);
         return FALSE;
     }
 
@@ -1700,8 +1692,8 @@ static BOOL parse_ipv6address(const WCHAR **ptr, parse_data *data, DWORD flags) 
          if(ip.elision < ip.components[0].str ||
             ip.elision > ip.components[ip.h16_count-1].str) {
             *ptr = start;
-            TRACE("(%p %p %x): Invalid IPv6 address. Detected elision of 2 bytes at the beginning or end of the address.\n",
-                ptr, data, flags);
+            TRACE("(%p %p): Invalid IPv6 address. Detected elision of 2 bytes at the beginning or end of the address.\n",
+                ptr, data);
             return FALSE;
         }
     }
@@ -1710,14 +1702,12 @@ static BOOL parse_ipv6address(const WCHAR **ptr, parse_data *data, DWORD flags) 
     data->has_ipv6 = TRUE;
     data->ipv6_address = ip;
 
-    TRACE("(%p %p %x): Found valid IPv6 literal %s len=%d\n",
-        ptr, data, flags, debugstr_wn(start, *ptr-start),
-        (int)(*ptr-start));
+    TRACE("(%p %p): Found valid IPv6 literal %s len=%d\n", ptr, data, debugstr_wn(start, *ptr-start), (int)(*ptr-start));
     return TRUE;
 }
 
 /*  IPvFuture  = "v" 1*HEXDIG "." 1*( unreserved / sub-delims / ":" ) */
-static BOOL parse_ipvfuture(const WCHAR **ptr, parse_data *data, DWORD flags) {
+static BOOL parse_ipvfuture(const WCHAR **ptr, parse_data *data) {
     const WCHAR *start = *ptr;
 
     /* IPvFuture has to start with a 'v' or 'V'. */
@@ -1753,14 +1743,14 @@ static BOOL parse_ipvfuture(const WCHAR **ptr, parse_data *data, DWORD flags) {
 
     data->host_type = Uri_HOST_UNKNOWN;
 
-    TRACE("(%p %p %x): Parsed IPvFuture address %s len=%d\n", ptr, data, flags,
+    TRACE("(%p %p): Parsed IPvFuture address %s len=%d\n", ptr, data,
           debugstr_wn(start, *ptr-start), (int)(*ptr-start));
 
     return TRUE;
 }
 
 /* IP-literal = "[" ( IPv6address / IPvFuture  ) "]" */
-static BOOL parse_ip_literal(const WCHAR **ptr, parse_data *data, DWORD flags, DWORD extras) {
+static BOOL parse_ip_literal(const WCHAR **ptr, parse_data *data, DWORD extras) {
     data->host = *ptr;
 
     if(**ptr != '[' && !(extras & ALLOW_BRACKETLESS_IP_LITERAL)) {
@@ -1769,8 +1759,8 @@ static BOOL parse_ip_literal(const WCHAR **ptr, parse_data *data, DWORD flags, D
     } else if(**ptr == '[')
         ++(*ptr);
 
-    if(!parse_ipv6address(ptr, data, flags)) {
-        if(extras & SKIP_IP_FUTURE_CHECK || !parse_ipvfuture(ptr, data, flags)) {
+    if(!parse_ipv6address(ptr, data)) {
+        if(extras & SKIP_IP_FUTURE_CHECK || !parse_ipvfuture(ptr, data)) {
             *ptr = data->host;
             data->host = NULL;
             return FALSE;
@@ -1795,7 +1785,7 @@ static BOOL parse_ip_literal(const WCHAR **ptr, parse_data *data, DWORD flags, D
         /* If a valid port is not found, then let it trickle down to
          * parse_reg_name.
          */
-        if(!parse_port(ptr, data, flags)) {
+        if(!parse_port(ptr, data)) {
             *ptr = data->host;
             data->host = NULL;
             return FALSE;
@@ -1810,12 +1800,11 @@ static BOOL parse_ip_literal(const WCHAR **ptr, parse_data *data, DWORD flags, D
  *
  * host = IP-literal / IPv4address / reg-name
  */
-static BOOL parse_host(const WCHAR **ptr, parse_data *data, DWORD flags, DWORD extras) {
-    if(!parse_ip_literal(ptr, data, flags, extras)) {
-        if(!parse_ipv4address(ptr, data, flags)) {
-            if(!parse_reg_name(ptr, data, flags, extras)) {
-                TRACE("(%p %p %x %x): Malformed URI, Unknown host type.\n",
-                    ptr, data, flags, extras);
+static BOOL parse_host(const WCHAR **ptr, parse_data *data, DWORD extras) {
+    if(!parse_ip_literal(ptr, data, extras)) {
+        if(!parse_ipv4address(ptr, data)) {
+            if(!parse_reg_name(ptr, data, extras)) {
+                TRACE("(%p %p %x): Malformed URI, Unknown host type.\n",  ptr, data, extras);
                 return FALSE;
             }
         }
@@ -1834,7 +1823,7 @@ static BOOL parse_authority(const WCHAR **ptr, parse_data *data, DWORD flags) {
     /* Parsing the port will happen during one of the host parsing
      * routines (if the URI has a port).
      */
-    if(!parse_host(ptr, data, flags, 0))
+    if(!parse_host(ptr, data, 0))
         return FALSE;
 
     return TRUE;
@@ -3665,7 +3654,7 @@ static HRESULT validate_userinfo(const UriBuilder *builder, parse_data *data, DW
     return S_OK;
 }
 
-static HRESULT validate_host(const UriBuilder *builder, parse_data *data, DWORD flags) {
+static HRESULT validate_host(const UriBuilder *builder, parse_data *data) {
     const WCHAR *ptr;
     const WCHAR **pptr;
     DWORD expected_len;
@@ -3684,11 +3673,11 @@ static HRESULT validate_host(const UriBuilder *builder, parse_data *data, DWORD 
         DWORD extras = ALLOW_BRACKETLESS_IP_LITERAL|IGNORE_PORT_DELIMITER|SKIP_IP_FUTURE_CHECK;
         pptr = &ptr;
 
-        if(parse_host(pptr, data, flags, extras) && data->host_len == expected_len)
-            TRACE("(%p %p %x): Found valid host name %s len=%d type=%d.\n", builder, data, flags,
+        if(parse_host(pptr, data, extras) && data->host_len == expected_len)
+            TRACE("(%p %p): Found valid host name %s len=%d type=%d.\n", builder, data,
                 debugstr_wn(data->host, data->host_len), data->host_len, data->host_type);
         else {
-            TRACE("(%p %p %x): Invalid host name found %s.\n", builder, data, flags,
+            TRACE("(%p %p): Invalid host name found %s.\n", builder, data,
                 debugstr_wn(component, expected_len));
             return INET_E_INVALID_URL;
         }
@@ -3842,7 +3831,7 @@ static HRESULT validate_components(const UriBuilder *builder, parse_data *data, 
     if(FAILED(hr))
         return hr;
 
-    hr = validate_host(builder, data, flags);
+    hr = validate_host(builder, data);
     if(FAILED(hr))
         return hr;
 
