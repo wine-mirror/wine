@@ -37,7 +37,7 @@
 @ stdcall CoGetDefaultContext(long ptr ptr) combase.CoGetDefaultContext
 @ stdcall CoGetInstanceFromFile(ptr ptr ptr long long wstr long ptr) combase.CoGetInstanceFromFile
 @ stdcall CoGetInstanceFromIStorage(ptr ptr ptr long ptr long ptr) combase.CoGetInstanceFromIStorage
-@ stdcall CoGetInterfaceAndReleaseStream(ptr ptr ptr)
+@ stdcall CoGetInterfaceAndReleaseStream(ptr ptr ptr) combase.CoGetInterfaceAndReleaseStream
 @ stdcall CoGetMalloc(long ptr) combase.CoGetMalloc
 @ stdcall CoGetMarshalSizeMax(ptr ptr ptr long ptr long)
 @ stdcall CoGetObject(wstr ptr ptr ptr)

@@ -21,6 +21,10 @@
 #define COBJMACROS
 #include "objbase.h"
 
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(ole);
+
 /***********************************************************************
  *            CoMarshalHresult        (combase.@)
  */
@@ -35,4 +39,19 @@ HRESULT WINAPI CoMarshalHresult(IStream *stream, HRESULT hresult)
 HRESULT WINAPI CoUnmarshalHresult(IStream *stream, HRESULT *phresult)
 {
     return IStream_Read(stream, phresult, sizeof(*phresult), NULL);
+}
+
+/***********************************************************************
+ *            CoGetInterfaceAndReleaseStream    (combase.@)
+ */
+HRESULT WINAPI CoGetInterfaceAndReleaseStream(IStream *stream, REFIID riid, void **obj)
+{
+    HRESULT hr;
+
+    TRACE("%p, %s, %p\n", stream, debugstr_guid(riid), obj);
+
+    if (!stream) return E_INVALIDARG;
+    hr = CoUnmarshalInterface(stream, riid, obj);
+    IStream_Release(stream);
+    return hr;
 }
