@@ -2860,8 +2860,8 @@ static void test_ReadConsoleOutput(HANDLE console)
     coord.Y = 3;
     set_region(&region, 200, 7, 15, 211);
     ret = ReadConsoleOutputW(console, char_info_buf, size, coord, &region);
-    ok(!ret && GetLastError() == ERROR_NOT_ENOUGH_MEMORY, "ReadConsoleOutputW returned: %x(%u)\n", ret, GetLastError());
-    check_region(&region, 200, 7, 15, 211);
+    ok(!ret, "ReadConsoleOutputW returned: %x(%u)\n", ret, GetLastError());
+    check_region(&region, 200, 7, -15, -211);
 
     size.X = 23;
     size.Y = 17;
