@@ -42,6 +42,7 @@ static PVOID     (WINAPI *pRtlAddVectoredExceptionHandler)(ULONG first, PVECTORE
 static ULONG     (WINAPI *pRtlRemoveVectoredExceptionHandler)(PVOID handler);
 static PVOID     (WINAPI *pRtlAddVectoredContinueHandler)(ULONG first, PVECTORED_EXCEPTION_HANDLER func);
 static ULONG     (WINAPI *pRtlRemoveVectoredContinueHandler)(PVOID handler);
+static void      (WINAPI *pRtlSetUnhandledExceptionFilter)(PRTL_EXCEPTION_FILTER filter);
 static NTSTATUS  (WINAPI *pNtReadVirtualMemory)(HANDLE, const void*, void*, SIZE_T, SIZE_T*);
 static NTSTATUS  (WINAPI *pNtTerminateProcess)(HANDLE handle, LONG exit_code);
 static NTSTATUS  (WINAPI *pNtQueryInformationProcess)(HANDLE, PROCESSINFOCLASS, PVOID, ULONG, PULONG);
@@ -2855,6 +2856,170 @@ static void test_dpe_exceptions(void)
     pRtlRemoveVectoredExceptionHandler(handler);
 }
 
+static const BYTE call_one_arg_code[] = {
+    0x55, /* push %rbp */
+    0x48, 0x89, 0xe5, /* mov %rsp,%rbp */
+    0x48, 0x83, 0xec, 0x20, /* sub $0x20,%rsp */
+    0x48, 0x89, 0xc8, /* mov %rcx,%rax */
+    0x48, 0x89, 0xd1, /* mov %rdx,%rcx */
+    0xff, 0xd0, /* callq *%rax */
+    0x90, /* nop */
+    0x90, /* nop */
+    0x90, /* nop */
+    0x90, /* nop */
+    0x48, 0x83, 0xc4, 0x20, /* add $0x20,%rsp */
+    0x5d, /* pop %rbp */
+    0xc3, /* retq  */
+};
+
+static int rtlraiseexception_unhandled_handler_called;
+static int rtlraiseexception_handler_called;
+
+static void rtlraiseexception_handler_( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
+                                        CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher,
+                                        BOOL unhandled_handler )
+{
+    if (unhandled_handler) rtlraiseexception_unhandled_handler_called = 1;
+    else rtlraiseexception_handler_called = 1;
+
+    trace( "exception: %08x flags:%x addr:%p context: Rip:%p\n",
+           rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress, (void *)context->Rip );
+
+    ok( rec->ExceptionAddress == (char *)code_mem + 0x10
+        || broken( rec->ExceptionAddress == code_mem || !rec->ExceptionAddress ) /* 2008 */,
+        "ExceptionAddress at %p instead of %p\n", rec->ExceptionAddress, (char *)code_mem + 0x10 );
+
+    ok( context->ContextFlags == CONTEXT_ALL || context->ContextFlags == (CONTEXT_ALL | CONTEXT_XSTATE)
+        || context->ContextFlags == (CONTEXT_FULL | CONTEXT_SEGMENTS)
+        || context->ContextFlags == (CONTEXT_FULL | CONTEXT_SEGMENTS | CONTEXT_XSTATE),
+        "wrong context flags %x\n", context->ContextFlags );
+
+    /* check that pc is fixed up only for EXCEPTION_BREAKPOINT
+     * even if raised by RtlRaiseException
+     */
+    if (rec->ExceptionCode == EXCEPTION_BREAKPOINT && test_stage)
+        ok( context->Rip == (UINT_PTR)code_mem + 0xf,
+            "%d: Rip at %Ix instead of %Ix\n", test_stage, context->Rip, (UINT_PTR)code_mem + 0xf );
+    else
+        ok( context->Rip == (UINT_PTR)code_mem + 0x10,
+            "%d: Rip at %Ix instead of %Ix\n", test_stage, context->Rip, (UINT_PTR)code_mem + 0x10 );
+
+    if (have_vectored_api) ok( context->Rax == 0xf00f00f0, "context->Rax is %Ix, should have been set to 0xf00f00f0 in vectored handler\n", context->Rax );
+
+    /* give the debugger a chance to examine the state a second time */
+    /* without the exception handler changing pc */
+    if (test_stage == 2)
+        return;
+
+    /* pc in context is decreased by 1
+     * Increase it again, else execution will continue in the middle of an instruction */
+    if (rec->ExceptionCode == EXCEPTION_BREAKPOINT && (context->Rip == (UINT_PTR)code_mem + 0xf))
+        context->Rip++;
+}
+
+static LONG CALLBACK rtlraiseexception_unhandled_handler(EXCEPTION_POINTERS *ExceptionInfo)
+{
+    PCONTEXT context = ExceptionInfo->ContextRecord;
+    PEXCEPTION_RECORD rec = ExceptionInfo->ExceptionRecord;
+    rtlraiseexception_handler_(rec, NULL, context, NULL, TRUE);
+    if (test_stage == 2) return EXCEPTION_CONTINUE_SEARCH;
+    return EXCEPTION_CONTINUE_EXECUTION;
+}
+
+static DWORD rtlraiseexception_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
+                                        CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher )
+{
+    rtlraiseexception_handler_(rec, frame, context, dispatcher, FALSE);
+    if (test_stage == 2) return ExceptionContinueSearch;
+    return ExceptionContinueExecution;
+}
+
+static LONG CALLBACK rtlraiseexception_vectored_handler(EXCEPTION_POINTERS *ExceptionInfo)
+{
+    PCONTEXT context = ExceptionInfo->ContextRecord;
+    PEXCEPTION_RECORD rec = ExceptionInfo->ExceptionRecord;
+
+    trace( "vect. handler %08x addr:%p Rip:%p\n", rec->ExceptionCode, rec->ExceptionAddress, (void *)context->Rip );
+
+    ok( rec->ExceptionAddress == (char *)code_mem + 0x10
+        || broken(rec->ExceptionAddress == code_mem || !rec->ExceptionAddress ) /* 2008 */,
+        "ExceptionAddress at %p instead of %p\n", rec->ExceptionAddress, (char *)code_mem + 0x10 );
+
+    /* check that Rip is fixed up only for EXCEPTION_BREAKPOINT
+     * even if raised by RtlRaiseException
+     */
+    if (rec->ExceptionCode == EXCEPTION_BREAKPOINT && test_stage)
+        ok( context->Rip == (UINT_PTR)code_mem + 0xf,
+            "%d: Rip at %Ix instead of %Ix\n", test_stage, context->Rip, (UINT_PTR)code_mem + 0xf );
+    else
+        ok( context->Rip == (UINT_PTR)code_mem + 0x10,
+            "%d: Rip at %Ix instead of %Ix\n", test_stage, context->Rip, (UINT_PTR)code_mem + 0x10 );
+
+    /* test if context change is preserved from vectored handler to stack handlers */
+    context->Rax = 0xf00f00f0;
+
+    return EXCEPTION_CONTINUE_SEARCH;
+}
+
+static void run_rtlraiseexception_test(DWORD exceptioncode)
+{
+    EXCEPTION_REGISTRATION_RECORD frame;
+    EXCEPTION_RECORD record;
+    PVOID vectored_handler = NULL;
+
+    void (CDECL *func)(void* function, EXCEPTION_RECORD* record) = code_mem;
+
+    record.ExceptionCode = exceptioncode;
+    record.ExceptionFlags = 0;
+    record.ExceptionRecord = NULL;
+    record.ExceptionAddress = NULL; /* does not matter, copied return address */
+    record.NumberParameters = 0;
+
+    frame.Handler = rtlraiseexception_handler;
+    frame.Prev = NtCurrentTeb()->Tib.ExceptionList;
+
+    memcpy(code_mem, call_one_arg_code, sizeof(call_one_arg_code));
+
+    NtCurrentTeb()->Tib.ExceptionList = &frame;
+    if (have_vectored_api)
+    {
+        vectored_handler = pRtlAddVectoredExceptionHandler(TRUE, &rtlraiseexception_vectored_handler);
+        ok(vectored_handler != 0, "RtlAddVectoredExceptionHandler failed\n");
+    }
+    if (pRtlSetUnhandledExceptionFilter) pRtlSetUnhandledExceptionFilter(&rtlraiseexception_unhandled_handler);
+
+    rtlraiseexception_handler_called = 0;
+    rtlraiseexception_unhandled_handler_called = 0;
+    func(pRtlRaiseException, &record);
+    ok( record.ExceptionAddress == (char *)code_mem + 0x10,
+        "address set to %p instead of %p\n", record.ExceptionAddress, (char *)code_mem + 0x10 );
+
+    todo_wine
+    ok( !rtlraiseexception_handler_called, "Frame handler called\n" );
+    todo_wine
+    ok( rtlraiseexception_unhandled_handler_called, "UnhandledExceptionFilter wasn't called\n" );
+
+    if (have_vectored_api)
+        pRtlRemoveVectoredExceptionHandler(vectored_handler);
+
+    if (pRtlSetUnhandledExceptionFilter) pRtlSetUnhandledExceptionFilter(NULL);
+    NtCurrentTeb()->Tib.ExceptionList = frame.Prev;
+}
+
+static void test_rtlraiseexception(void)
+{
+    if (!pRtlRaiseException)
+    {
+        skip("RtlRaiseException not found\n");
+        return;
+    }
+
+    /* test without debugger */
+    run_rtlraiseexception_test(0x12345);
+    run_rtlraiseexception_test(EXCEPTION_BREAKPOINT);
+    run_rtlraiseexception_test(EXCEPTION_INVALID_HANDLE);
+}
+
 static void test_debugger(void)
 {
     char cmdline[MAX_PATH];
@@ -2922,7 +3087,7 @@ static void test_debugger(void)
             status = pNtGetContextThread(pi.hThread, &ctx);
             ok(!status, "NtGetContextThread failed with 0x%x\n", status);
 
-            trace("exception 0x%x at %p firstchance=%d Eip=%p, Eax=%p\n",
+            trace("exception 0x%x at %p firstchance=%d Rip=%p, Rax=%p\n",
                   de.u.Exception.ExceptionRecord.ExceptionCode,
                   de.u.Exception.ExceptionRecord.ExceptionAddress,
                   de.u.Exception.dwFirstChance, (char *)ctx.Rip, (char *)ctx.Rax);
@@ -2934,14 +3099,13 @@ static void test_debugger(void)
             }
             else if (counter >= 2) /* skip startup breakpoint */
             {
-#if 0  /* RtlRaiseException test disabled for now */
                 if (stage == 1)
                 {
-                    ok((char *)ctx.Rip == (char *)code_mem_address + 0xb, "Rip at %p instead of %p\n",
-                       (char *)ctx.Rip, (char *)code_mem_address + 0xb);
+                    ok((char *)ctx.Rip == (char *)code_mem_address + 0x10, "Rip at %p instead of %p\n",
+                       (char *)ctx.Rip, (char *)code_mem_address + 0x10);
                     /* setting the context from debugger does not affect the context that the
                      * exception handler gets, except on w2008 */
-                    ctx.Rip = (UINT_PTR)code_mem_address + 0xd;
+                    ctx.Rip = (UINT_PTR)code_mem_address + 0x12;
                     ctx.Rax = 0xf00f00f1;
                     /* let the debuggee handle the exception */
                     continuestatus = DBG_EXCEPTION_NOT_HANDLED;
@@ -2950,11 +3114,11 @@ static void test_debugger(void)
                 {
                     if (de.u.Exception.dwFirstChance)
                     {
-                        ok((char *)ctx.Rip == (char *)code_mem_address + 0xb, "Rip at %p instead of %p\n",
-                           (char *)ctx.Rip, (char *)code_mem_address + 0xb);
+                        ok((char *)ctx.Rip == (char *)code_mem_address + 0x10, "Rip at %p instead of %p\n",
+                           (char *)ctx.Rip, (char *)code_mem_address + 0x10);
                         /* setting the context from debugger does not affect the context that the
                          * exception handler gets, except on w2008 */
-                        ctx.Rip = (UINT_PTR)code_mem_address + 0xd;
+                        ctx.Rip = (UINT_PTR)code_mem_address + 0x12;
                         ctx.Rax = 0xf00f00f1;
                         /* pass exception to debuggee
                          * exception will not be handled and a second chance exception will be raised */
@@ -2965,19 +3129,16 @@ static void test_debugger(void)
                         /* debugger gets context after exception handler has played with it */
                         if (de.u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_BREAKPOINT)
                         {
-                            ok((char *)ctx.Rip == (char *)code_mem_address + 0xa,
-                               "Rip at %p instead of %p\n",
-                               (char *)ctx.Rip, (char *)code_mem_address + 0xa);
+                            ok((char *)ctx.Rip == (char *)code_mem_address + 0xf, "Rip at %p instead of %p\n",
+                               (char *)ctx.Rip, (char *)code_mem_address + 0xf);
                             ctx.Rip += 1;
                         }
-                        else ok((char *)ctx.Rip == (char *)code_mem_address + 0xb, "Rip at 0x%x instead of %p\n",
-                                ctx.Rip, (char *)code_mem_address + 0xb);
+                        else ok((char *)ctx.Rip == (char *)code_mem_address + 0x10, "Rip at 0x%x instead of %p\n",
+                                ctx.Rip, (char *)code_mem_address + 0x10);
                         /* here we handle exception */
                     }
                 }
-                else
-#endif
-                if (stage == 7 || stage == 8)
+                else if (stage == 7 || stage == 8)
                 {
                     ok(de.u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_BREAKPOINT,
                        "expected EXCEPTION_BREAKPOINT, got %08x\n", de.u.Exception.ExceptionRecord.ExceptionCode);
@@ -5110,6 +5271,7 @@ START_TEST(exception)
     X(RtlRemoveVectoredExceptionHandler);
     X(RtlAddVectoredContinueHandler);
     X(RtlRemoveVectoredContinueHandler);
+    X(RtlSetUnhandledExceptionFilter);
     X(NtQueryInformationProcess);
     X(NtQueryInformationThread);
     X(NtSetInformationProcess);
@@ -5146,7 +5308,7 @@ START_TEST(exception)
             return;
         }
 
-#ifdef __i386__
+#if defined(__i386__) || defined(__x86_64__)
         if (pRtlRaiseException)
         {
             test_stage = 1;
@@ -5221,6 +5383,7 @@ START_TEST(exception)
     p_setjmp                           = (void *)GetProcAddress( hmsvcrt,
                                                                  "_setjmp" );
 
+    test_rtlraiseexception();
     test_debug_registers();
     test_debug_service(1);
     test_virtual_unwind();
