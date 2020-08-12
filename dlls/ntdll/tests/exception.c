@@ -2021,11 +2021,15 @@ static void call_virtual_unwind( int testnum, const struct unwind_test *test )
 
             if (j == rsp)  /* rsp is special */
             {
+                ULONG64 expected_rsp;
+
                 ok( !ctx_ptr.IntegerContext[j],
                     "%u/%u: rsp should not be set in ctx_ptr\n", testnum, i );
-                ok( context.Rsp == (ULONG64)fake_stack + test->results[i].regs[k][1],
+                expected_rsp = test->results[i].regs[k][1] < 0
+                        ? -test->results[i].regs[k][1] : (ULONG64)fake_stack + test->results[i].regs[k][1];
+                ok( context.Rsp == expected_rsp,
                     "%u/%u: register rsp wrong %p/%p\n",
-                    testnum, i, (void *)context.Rsp, (char *)fake_stack + test->results[i].regs[k][1] );
+                    testnum, i, (void *)context.Rsp, (void *)expected_rsp );
                 continue;
             }
 
@@ -2159,10 +2163,60 @@ static void test_virtual_unwind(void)
         { 0x16,  0x50,  FALSE, 0x000, 0x000, { {rsp,0x008}, {-1,-1} }},
     };
 
+    static const BYTE function_2[] =
+    {
+        0x55,                     /* 00: push %rbp */
+        0x90, 0x90,               /* 01: nop; nop */
+        0x5d,                     /* 03: pop %rbp */
+        0xc3                      /* 04: ret */
+     };
+
+    static const BYTE unwind_info_2[] =
+    {
+        1 | (UNW_FLAG_EHANDLER << 3),  /* version + flags */
+        0x0,                           /* prolog size */
+        2,                             /* opcode count */
+        0,                             /* frame reg */
+
+        0x01, UWOP(PUSH_NONVOL, rbp), /* 02: push %rbp */
+        0x00, UWOP(PUSH_MACHFRAME, 0), /* 00 */
+
+        0x00, 0x02, 0x00, 0x00,  /* handler */
+        0x05, 0x06, 0x07, 0x08,  /* data */
+    };
+
+    static const struct results results_2[] =
+    {
+      /* offset  rbp   handler  rip   frame   registers */
+        { 0x01,  0x50,  TRUE, 0x008, 0x000, { {rsp,-0x020}, {rbp,0x000}, {-1,-1} }},
+    };
+
+    static const BYTE unwind_info_3[] =
+    {
+        1 | (UNW_FLAG_EHANDLER << 3),  /* version + flags */
+        0x0,                           /* prolog size */
+        2,                             /* opcode count */
+        0,                             /* frame reg */
+
+        0x01, UWOP(PUSH_NONVOL, rbp), /* 02: push %rbp */
+        0x00, UWOP(PUSH_MACHFRAME, 1), /* 00 */
+
+        0x00, 0x02, 0x00, 0x00,  /* handler */
+        0x05, 0x06, 0x07, 0x08,  /* data */
+    };
+
+    static const struct results results_3[] =
+    {
+      /* offset  rbp   handler  rip   frame   registers */
+        { 0x01,  0x50,  TRUE, 0x010, 0x000, { {rsp,-0x028}, {rbp,0x000}, {-1,-1} }},
+    };
+
     static const struct unwind_test tests[] =
     {
         { function_0, sizeof(function_0), unwind_info_0, results_0, ARRAY_SIZE(results_0) },
-        { function_1, sizeof(function_1), unwind_info_1, results_1, ARRAY_SIZE(results_1) }
+        { function_1, sizeof(function_1), unwind_info_1, results_1, ARRAY_SIZE(results_1) },
+        { function_2, sizeof(function_2), unwind_info_2, results_2, ARRAY_SIZE(results_2) },
+        { function_2, sizeof(function_2), unwind_info_3, results_3, ARRAY_SIZE(results_3) },
     };
     unsigned int i;
 
