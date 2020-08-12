@@ -1064,6 +1064,16 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CLSIDFromProgID(LPCOLESTR progid, CLSID *clsid)
 }
 
 /******************************************************************************
+ *              CLSIDFromProgIDEx        (combase.@)
+ */
+HRESULT WINAPI CLSIDFromProgIDEx(LPCOLESTR progid, CLSID *clsid)
+{
+    FIXME("%s, %p: semi-stub\n", debugstr_w(progid), clsid);
+
+    return CLSIDFromProgID(progid, clsid);
+}
+
+/******************************************************************************
  *                CLSIDFromString        (combase.@)
  */
 HRESULT WINAPI CLSIDFromString(LPCOLESTR str, LPCLSID clsid)

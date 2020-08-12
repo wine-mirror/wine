@@ -2255,16 +2255,6 @@ HRESULT COM_OpenKeyForAppIdFromCLSID(REFCLSID clsid, REGSAM access, HKEY *subkey
     return S_OK;
 }
 
-/******************************************************************************
- *              CLSIDFromProgIDEx [OLE32.@]
- */
-HRESULT WINAPI CLSIDFromProgIDEx(LPCOLESTR progid, LPCLSID clsid)
-{
-    FIXME("%s,%p: semi-stub\n", debugstr_w(progid), clsid);
-
-    return CLSIDFromProgID(progid, clsid);
-}
-
 static HRESULT get_ps_clsid_from_registry(const WCHAR* path, REGSAM access, CLSID *pclsid)
 {
     HKEY hkey;
