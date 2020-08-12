@@ -3293,7 +3293,7 @@ static void test_IScriptControl_get_CodeObject(void)
 static void test_IScriptControl_get_Procedures(void)
 {
     IScriptProcedureCollection *procs, *procs2;
-    IScriptProcedure *proc;
+    IScriptProcedure *proc, *proc2;
     IScriptControl *sc;
     VARIANT var;
     LONG count;
@@ -3527,10 +3527,18 @@ static void test_IScriptControl_get_Procedures(void)
             CHECK_CALLED(GetFuncDesc);
             CHECK_CALLED(GetNames);
             CHECK_CALLED(ReleaseFuncDesc);
-            IScriptProcedure_Release(proc);
 
+            /* The name is cached and not looked up with Bind anymore */
             V_VT(&var) = VT_BSTR;
             V_BSTR(&var) = SysAllocString(custom_engine_funcs[i].name);
+            hr = IScriptProcedureCollection_get_Item(procs, var, &proc2);
+            ok(hr == S_OK, "get_Item for %s failed: 0x%08x.\n", wine_dbgstr_w(custom_engine_funcs[i].name), hr);
+            ok(proc == proc2, "proc and proc2 are not the same for %s and index %u.\n",
+                wine_dbgstr_w(custom_engine_funcs[i].name), i + 1);
+            IScriptProcedure_Release(proc);
+            IScriptProcedure_Release(proc2);
+
+            /* Since both were released, the cache entry is destroyed */
             SET_EXPECT(Bind);
             SET_EXPECT(GetNames);
             SET_EXPECT(ReleaseFuncDesc);

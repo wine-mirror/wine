@@ -93,6 +93,9 @@ typedef struct {
     IScriptProcedure IScriptProcedure_iface;
     LONG ref;
 
+    ULONG hash;
+    struct list entry;
+
     BSTR name;
 } ScriptProcedure;
 
@@ -102,6 +105,7 @@ struct ScriptProcedureCollection {
 
     LONG count;
     ScriptModule *module;
+    struct list hash_table[43];
 };
 
 struct ScriptHost {
@@ -800,6 +804,7 @@ static ULONG WINAPI ScriptProcedure_Release(IScriptProcedure *iface)
 
     if (!ref)
     {
+        list_remove(&This->entry);
         SysFreeString(This->name);
         heap_free(This);
     }
@@ -908,15 +913,35 @@ static const IScriptProcedureVtbl ScriptProcedureVtbl = {
 };
 
 /* This function always releases the FUNCDESC passed in */
-static HRESULT get_script_procedure(ITypeInfo *typeinfo, FUNCDESC *desc, IScriptProcedure **procedure)
+static HRESULT get_script_procedure(ScriptProcedureCollection *procedures, ITypeInfo *typeinfo,
+        FUNCDESC *desc, IScriptProcedure **procedure)
 {
+    struct list *proc_list;
     ScriptProcedure *proc;
+    ULONG hash;
     HRESULT hr;
     BSTR str;
     UINT len;
 
     hr = ITypeInfo_GetNames(typeinfo, desc->memid, &str, 1, &len);
     if (FAILED(hr)) goto done;
+
+    len = SysStringLen(str);
+    hash = LHashValOfNameSys(sizeof(void*) == 8 ? SYS_WIN64 : SYS_WIN32, LOCALE_USER_DEFAULT, str);
+    proc_list = &procedures->hash_table[hash % ARRAY_SIZE(procedures->hash_table)];
+
+    /* Try to find it in the hash table */
+    LIST_FOR_EACH_ENTRY(proc, proc_list, ScriptProcedure, entry)
+    {
+        if (proc->hash == hash && SysStringLen(proc->name) == len &&
+            !memcmp(proc->name, str, len * sizeof(*str)))
+        {
+            SysFreeString(str);
+            IScriptProcedure_AddRef(&proc->IScriptProcedure_iface);
+            *procedure = &proc->IScriptProcedure_iface;
+            goto done;
+        }
+    }
 
     if (!(proc = heap_alloc(sizeof(*proc))))
     {
@@ -927,7 +952,9 @@ static HRESULT get_script_procedure(ITypeInfo *typeinfo, FUNCDESC *desc, IScript
 
     proc->IScriptProcedure_iface.lpVtbl = &ScriptProcedureVtbl;
     proc->ref = 1;
+    proc->hash = hash;
     proc->name = str;
+    list_add_tail(proc_list, &proc->entry);
 
     *procedure = &proc->IScriptProcedure_iface;
 
@@ -970,11 +997,16 @@ static ULONG WINAPI ScriptProcedureCollection_Release(IScriptProcedureCollection
 {
     ScriptProcedureCollection *This = impl_from_IScriptProcedureCollection(iface);
     LONG ref = InterlockedDecrement(&This->ref);
+    UINT i;
 
     TRACE("(%p) ref=%d\n", This, ref);
 
     if (!ref)
     {
+        /* Unlink any dangling items from the hash table */
+        for (i = 0; i < ARRAY_SIZE(This->hash_table); i++)
+            list_remove(&This->hash_table[i]);
+
         This->module->procedures = NULL;
         IScriptModule_Release(&This->module->IScriptModule_iface);
         heap_free(This);
@@ -1073,12 +1105,29 @@ static HRESULT WINAPI ScriptProcedureCollection_get_Item(IScriptProcedureCollect
 
     if (V_VT(&index) == VT_BSTR)
     {
+        struct list *proc_list;
+        ScriptProcedure *proc;
         ITypeComp *comp;
         BINDPTR bindptr;
         DESCKIND kind;
         ULONG hash;
+        UINT len;
 
+        len = SysStringLen(V_BSTR(&index));
         hash = LHashValOfNameSys(sizeof(void*) == 8 ? SYS_WIN64 : SYS_WIN32, LOCALE_USER_DEFAULT, V_BSTR(&index));
+        proc_list = &This->hash_table[hash % ARRAY_SIZE(This->hash_table)];
+
+        /* Try to find it in the hash table */
+        LIST_FOR_EACH_ENTRY(proc, proc_list, ScriptProcedure, entry)
+        {
+            if (proc->hash == hash && SysStringLen(proc->name) == len &&
+                !memcmp(proc->name, V_BSTR(&index), len * sizeof(WCHAR)))
+            {
+                IScriptProcedure_AddRef(&proc->IScriptProcedure_iface);
+                *ppdispProcedure = &proc->IScriptProcedure_iface;
+                return S_OK;
+            }
+        }
 
         hr = get_script_typecomp(This->module, typeinfo, &comp);
         if (FAILED(hr)) return hr;
@@ -1089,7 +1138,7 @@ static HRESULT WINAPI ScriptProcedureCollection_get_Item(IScriptProcedureCollect
         switch (kind)
         {
         case DESCKIND_FUNCDESC:
-            hr = get_script_procedure(typeinfo, bindptr.lpfuncdesc, ppdispProcedure);
+            hr = get_script_procedure(This, typeinfo, bindptr.lpfuncdesc, ppdispProcedure);
             ITypeInfo_Release(typeinfo);
             return hr;
         case DESCKIND_IMPLICITAPPOBJ:
@@ -1113,7 +1162,7 @@ static HRESULT WINAPI ScriptProcedureCollection_get_Item(IScriptProcedureCollect
     hr = ITypeInfo_GetFuncDesc(typeinfo, V_INT(&index) - 1, &desc);
     if (FAILED(hr)) return hr;
 
-    return get_script_procedure(typeinfo, desc, ppdispProcedure);
+    return get_script_procedure(This, typeinfo, desc, ppdispProcedure);
 }
 
 static HRESULT WINAPI ScriptProcedureCollection_get_Count(IScriptProcedureCollection *iface, LONG *plCount)
@@ -1343,6 +1392,7 @@ static HRESULT WINAPI ScriptModule_get_Procedures(IScriptModule *iface, IScriptP
     else
     {
         ScriptProcedureCollection *procs;
+        UINT i;
 
         if (!(procs = heap_alloc(sizeof(*procs))))
             return E_OUTOFMEMORY;
@@ -1351,6 +1401,9 @@ static HRESULT WINAPI ScriptModule_get_Procedures(IScriptModule *iface, IScriptP
         procs->ref = 1;
         procs->count = -1;
         procs->module = This;
+        for (i = 0; i < ARRAY_SIZE(procs->hash_table); i++)
+            list_init(&procs->hash_table[i]);
+
         This->procedures = procs;
         IScriptModule_AddRef(&This->IScriptModule_iface);
     }
