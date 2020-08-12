@@ -4006,10 +4006,15 @@ static void test_manualresetevent(void)
 {
     ISynchronizeHandle *sync_handle;
     ISynchronize *psync1, *psync2;
+    IClassFactory *factory;
     IUnknown *punk;
     HANDLE handle;
     LONG ref;
     HRESULT hr;
+
+    hr = pDllGetClassObject(&CLSID_ManualResetEvent, &IID_IClassFactory, (void **)&factory);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IClassFactory_Release(factory);
 
     hr = CoCreateInstance(&CLSID_ManualResetEvent, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)&punk);
     ok(hr == S_OK, "Got 0x%08x\n", hr);
