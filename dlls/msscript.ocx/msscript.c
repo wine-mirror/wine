@@ -97,6 +97,7 @@ typedef struct {
     struct list entry;
 
     BSTR name;
+    USHORT num_args;
 } ScriptProcedure;
 
 struct ScriptProcedureCollection {
@@ -888,9 +889,12 @@ static HRESULT WINAPI ScriptProcedure_get_NumArgs(IScriptProcedure *iface, LONG 
 {
     ScriptProcedure *This = impl_from_IScriptProcedure(iface);
 
-    FIXME("(%p)->(%p)\n", This, pcArgs);
+    TRACE("(%p)->(%p)\n", This, pcArgs);
 
-    return E_NOTIMPL;
+    if (!pcArgs) return E_POINTER;
+
+    *pcArgs = This->num_args;
+    return S_OK;
 }
 
 static HRESULT WINAPI ScriptProcedure_get_HasReturnValue(IScriptProcedure *iface, VARIANT_BOOL *pfHasReturnValue)
@@ -957,6 +961,7 @@ static HRESULT get_script_procedure(ScriptProcedureCollection *procedures, IType
     proc->ref = 1;
     proc->hash = hash;
     proc->name = str;
+    proc->num_args = desc->cParams + desc->cParamsOpt;
     list_add_tail(proc_list, &proc->entry);
 
     *procedure = &proc->IScriptProcedure_iface;

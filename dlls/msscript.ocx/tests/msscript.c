@@ -3358,6 +3358,11 @@ static void test_IScriptControl_get_Procedures(void)
     ok(hr == S_OK, "IScriptProcedure_get_Name failed: 0x%08x.\n", hr);
     ok(!lstrcmpW(str, L"add"), "Wrong name, got %s.\n", wine_dbgstr_w(str));
     SysFreeString(str);
+    hr = IScriptProcedure_get_NumArgs(proc, NULL);
+    ok(hr == E_POINTER, "IScriptProcedure_get_NumArgs returned: 0x%08x.\n", hr);
+    hr = IScriptProcedure_get_NumArgs(proc, &count);
+    ok(hr == S_OK, "IScriptProcedure_get_NumArgs failed: 0x%08x.\n", hr);
+    ok(count == 2, "Wrong NumArgs, got %d.\n", count);
     IScriptProcedure_Release(proc);
 
     V_VT(&var) = VT_BSTR;
@@ -3370,6 +3375,9 @@ static void test_IScriptControl_get_Procedures(void)
     ok(hr == S_OK, "IScriptProcedure_get_Name failed: 0x%08x.\n", hr);
     ok(!lstrcmpW(str, L"nop"), "Wrong name, got %s.\n", wine_dbgstr_w(str));
     SysFreeString(str);
+    hr = IScriptProcedure_get_NumArgs(proc, &count);
+    ok(hr == S_OK, "IScriptProcedure_get_NumArgs failed: 0x%08x.\n", hr);
+    ok(count == 1, "Wrong NumArgs, got %d.\n", count);
     IScriptProcedure_Release(proc);
 
     V_VT(&var) = VT_R8;
@@ -3380,6 +3388,9 @@ static void test_IScriptControl_get_Procedures(void)
     ok(hr == S_OK, "IScriptProcedure_get_Name failed: 0x%08x.\n", hr);
     ok(!lstrcmpW(str, L"muladd"), "Wrong name, got %s.\n", wine_dbgstr_w(str));
     SysFreeString(str);
+    hr = IScriptProcedure_get_NumArgs(proc, &count);
+    ok(hr == S_OK, "IScriptProcedure_get_NumArgs failed: 0x%08x.\n", hr);
+    ok(count == 3, "Wrong NumArgs, got %d.\n", count);
     IScriptProcedure_Release(proc);
 
     IScriptProcedureCollection_Release(procs);
@@ -3569,6 +3580,10 @@ static void test_IScriptControl_get_Procedures(void)
             ok(!lstrcmpW(str, custom_engine_funcs[i].name), "Name is not %s, got %s.\n",
                 wine_dbgstr_w(custom_engine_funcs[i].name), wine_dbgstr_w(str));
             SysFreeString(str);
+            hr = IScriptProcedure_get_NumArgs(proc, &count);
+            ok(hr == S_OK, "get_NumArgs for %s failed: 0x%08x.\n", wine_dbgstr_w(custom_engine_funcs[i].name), hr);
+            ok(count == custom_engine_funcs[i].num_args + custom_engine_funcs[i].num_opt_args,
+                "NumArgs is not %d, got %d.\n", custom_engine_funcs[i].num_args + custom_engine_funcs[i].num_opt_args, count);
 
             IScriptProcedure_Release(proc);
         }
