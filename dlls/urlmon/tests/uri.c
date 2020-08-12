@@ -7595,7 +7595,34 @@ static const uri_combine_test uri_combine_tests[] = {
             {URL_SCHEME_MAILTO,S_OK},
             {URLZONE_INVALID,E_NOTIMPL}
         }
-    }
+    },
+    {   "http://[::1]",0,
+        "/",Uri_CREATE_ALLOW_RELATIVE,
+        0,S_OK,FALSE,
+        {
+            {"http://[::1]/",S_OK},
+            {"[::1]",S_OK},
+            {"http://[::1]/",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"::1",S_OK},
+            {"",S_FALSE},
+            {"/",S_OK},
+            {"/",S_OK},
+            {"",S_FALSE},
+            {"http://[::1]/",S_OK},
+            {"http",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_IPV6,S_OK},
+            {80,S_OK,FALSE,TRUE},
+            {URL_SCHEME_HTTP,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    },
 };
 
 typedef struct _uri_parse_test {
