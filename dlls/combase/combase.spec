@@ -77,7 +77,7 @@
 @ stub CoCancelCall
 @ stdcall CoCopyProxy(ptr ptr)
 @ stdcall CoCreateErrorInfo(ptr) CreateErrorInfo
-@ stdcall CoCreateFreeThreadedMarshaler(ptr ptr) ole32.CoCreateFreeThreadedMarshaler
+@ stdcall CoCreateFreeThreadedMarshaler(ptr ptr)
 @ stdcall CoCreateGuid(ptr)
 @ stdcall CoCreateInstance(ptr ptr long ptr ptr)
 @ stdcall CoCreateInstanceEx(ptr ptr long ptr long ptr) ole32.CoCreateInstanceEx

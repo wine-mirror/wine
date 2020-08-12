@@ -10,7 +10,7 @@
 @ stdcall CoAllowSetForegroundWindow(ptr ptr)
 @ stdcall CoBuildVersion()
 @ stdcall CoCopyProxy(ptr ptr) combase.CoCopyProxy
-@ stdcall CoCreateFreeThreadedMarshaler(ptr ptr)
+@ stdcall CoCreateFreeThreadedMarshaler(ptr ptr) combase.CoCreateFreeThreadedMarshaler
 @ stdcall CoCreateGuid(ptr) combase.CoCreateGuid
 @ stdcall CoCreateInstance(ptr ptr long ptr ptr) combase.CoCreateInstance
 @ stdcall CoCreateInstanceEx(ptr ptr long ptr long ptr)
