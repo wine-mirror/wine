@@ -376,14 +376,16 @@ static LONG CALLBACK rtlraiseexception_vectored_handler(EXCEPTION_POINTERS *Exce
     if(rec->ExceptionCode == EXCEPTION_BREAKPOINT)
     {
         ok(context->Eip == (DWORD)code_mem + 0xa ||
-           broken(context->Eip == (DWORD)code_mem + 0xb), /* win2k3 */
+           broken(context->Eip == (DWORD)code_mem + 0xb) /* win2k3 */ ||
+           broken(context->Eip == (DWORD)code_mem + 0xd) /* w2008 */,
            "Eip at %x instead of %x or %x\n", context->Eip,
            (DWORD)code_mem + 0xa, (DWORD)code_mem + 0xb);
     }
     else
     {
-        ok(context->Eip == (DWORD)code_mem + 0xb, "Eip at %x instead of %x\n",
-           context->Eip, (DWORD)code_mem + 0xb);
+        ok(context->Eip == (DWORD)code_mem + 0xb ||
+           broken(context->Eip == (DWORD)code_mem + 0xd) /* w2008 */,
+           "Eip at %x instead of %x\n", context->Eip, (DWORD)code_mem + 0xb);
     }
 
     /* test if context change is preserved from vectored handler to stack handlers */
@@ -411,14 +413,16 @@ static DWORD rtlraiseexception_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTR
     if(rec->ExceptionCode == EXCEPTION_BREAKPOINT)
     {
         ok(context->Eip == (DWORD)code_mem + 0xa ||
-           broken(context->Eip == (DWORD)code_mem + 0xb), /* win2k3 */
+           broken(context->Eip == (DWORD)code_mem + 0xb) /* win2k3 */ ||
+           broken(context->Eip == (DWORD)code_mem + 0xd) /* w2008 */,
            "Eip at %x instead of %x or %x\n", context->Eip,
            (DWORD)code_mem + 0xa, (DWORD)code_mem + 0xb);
     }
     else
     {
-        ok(context->Eip == (DWORD)code_mem + 0xb, "Eip at %x instead of %x\n",
-           context->Eip, (DWORD)code_mem + 0xb);
+        ok(context->Eip == (DWORD)code_mem + 0xb ||
+           broken(context->Eip == (DWORD)code_mem + 0xd) /* w2008 */,
+           "Eip at %x instead of %x\n", context->Eip, (DWORD)code_mem + 0xb);
     }
 
     if(have_vectored_api)
@@ -1045,8 +1049,8 @@ static void test_debugger(void)
                     ok((char *)ctx.Eip == (char *)code_mem_address + 0xb, "Eip at %x instead of %p\n",
                        ctx.Eip, (char *)code_mem_address + 0xb);
                     /* setting the context from debugger does not affect the context that the
-                     * exception handler gets */
-                    ctx.Eip = 0x12345;
+                     * exception handler gets, except on w2008 */
+                    ctx.Eip = (UINT_PTR)code_mem_address + 0xd;
                     ctx.Eax = 0xf00f00f1;
                     /* let the debuggee handle the exception */
                     continuestatus = DBG_EXCEPTION_NOT_HANDLED;
@@ -1058,7 +1062,7 @@ static void test_debugger(void)
                         /* debugger gets first chance exception with unmodified ctx.Eip */
                         ok((char *)ctx.Eip == (char *)code_mem_address + 0xb, "Eip at 0x%x instead of %p\n",
                            ctx.Eip, (char *)code_mem_address + 0xb);
-                        ctx.Eip = 0x12345;
+                        ctx.Eip = (UINT_PTR)code_mem_address + 0xd;
                         ctx.Eax = 0xf00f00f1;
                         /* pass exception to debuggee
                          * exception will not be handled and a second chance exception will be raised */
@@ -1071,7 +1075,8 @@ static void test_debugger(void)
                         if (de.u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_BREAKPOINT)
                         {
                             ok((char *)ctx.Eip == (char *)code_mem_address + 0xa ||
-                               broken(is_wow64 && (char *)ctx.Eip == (char *)code_mem_address + 0xb),
+                               broken(is_wow64 && (char *)ctx.Eip == (char *)code_mem_address + 0xb) ||
+                               broken((char *)ctx.Eip == (char *)code_mem_address + 0xd) /* w2008 */,
                                "Eip at 0x%x instead of %p\n",
                                 ctx.Eip, (char *)code_mem_address + 0xa);
                             /* need to fixup Eip for debuggee */
@@ -1079,8 +1084,10 @@ static void test_debugger(void)
                                 ctx.Eip += 1;
                         }
                         else
-                            ok((char *)ctx.Eip == (char *)code_mem_address + 0xb, "Eip at 0x%x instead of %p\n",
-                                ctx.Eip, (char *)code_mem_address + 0xb);
+                            ok((char *)ctx.Eip == (char *)code_mem_address + 0xb ||
+                               broken((char *)ctx.Eip == (char *)code_mem_address + 0xd) /* w2008 */,
+                               "Eip at 0x%x instead of %p\n",
+                               ctx.Eip, (char *)code_mem_address + 0xb);
                         /* here we handle exception */
                     }
                 }
@@ -2933,8 +2940,8 @@ static void test_debugger(void)
                     ok((char *)ctx.Rip == (char *)code_mem_address + 0xb, "Rip at %p instead of %p\n",
                        (char *)ctx.Rip, (char *)code_mem_address + 0xb);
                     /* setting the context from debugger does not affect the context that the
-                     * exception handler gets */
-                    ctx.Rip = 0x12345;
+                     * exception handler gets, except on w2008 */
+                    ctx.Rip = (UINT_PTR)code_mem_address + 0xd;
                     ctx.Rax = 0xf00f00f1;
                     /* let the debuggee handle the exception */
                     continuestatus = DBG_EXCEPTION_NOT_HANDLED;
@@ -2946,8 +2953,8 @@ static void test_debugger(void)
                         ok((char *)ctx.Rip == (char *)code_mem_address + 0xb, "Rip at %p instead of %p\n",
                            (char *)ctx.Rip, (char *)code_mem_address + 0xb);
                         /* setting the context from debugger does not affect the context that the
-                         * exception handler gets */
-                        ctx.Rip = 0x12345;
+                         * exception handler gets, except on w2008 */
+                        ctx.Rip = (UINT_PTR)code_mem_address + 0xd;
                         ctx.Rax = 0xf00f00f1;
                         /* pass exception to debuggee
                          * exception will not be handled and a second chance exception will be raised */
@@ -3732,8 +3739,8 @@ static void test_debugger(void)
                     ok((char *)ctx.Pc == (char *)code_mem_address + 0xb, "Pc at %x instead of %p\n",
                        ctx.Pc, (char *)code_mem_address + 0xb);
                     /* setting the context from debugger does not affect the context that the
-                     * exception handler gets */
-                    ctx.Pc = 0x12345;
+                     * exception handler gets, except on w2008 */
+                    ctx.Pc = (UINT_PTR)code_mem_address + 0xd;
                     ctx.R0 = 0xf00f00f1;
                     /* let the debuggee handle the exception */
                     continuestatus = DBG_EXCEPTION_NOT_HANDLED;
@@ -3745,7 +3752,7 @@ static void test_debugger(void)
                         /* debugger gets first chance exception with unmodified ctx.Pc */
                         ok((char *)ctx.Pc == (char *)code_mem_address + 0xb, "Pc at 0x%x instead of %p\n",
                            ctx.Pc, (char *)code_mem_address + 0xb);
-                        ctx.Pc = 0x12345;
+                        ctx.Pc = (UINT_PTR)code_mem_address + 0xd;
                         ctx.R0 = 0xf00f00f1;
                         /* pass exception to debuggee
                          * exception will not be handled and a second chance exception will be raised */
@@ -4110,8 +4117,8 @@ static void test_debugger(void)
                     ok((char *)ctx.Pc == (char *)code_mem_address + 0xb, "Pc at %p instead of %p\n",
                        (char *)ctx.Pc, (char *)code_mem_address + 0xb);
                     /* setting the context from debugger does not affect the context that the
-                     * exception handler gets */
-                    ctx.Pc = 0x12345;
+                     * exception handler gets, except on w2008 */
+                    ctx.Pc = (UINT_PTR)code_mem_address + 0xd;
                     ctx.X0 = 0xf00f00f1;
                     /* let the debuggee handle the exception */
                     continuestatus = DBG_EXCEPTION_NOT_HANDLED;
@@ -4123,7 +4130,7 @@ static void test_debugger(void)
                         /* debugger gets first chance exception with unmodified ctx.Pc */
                         ok((char *)ctx.Pc == (char *)code_mem_address + 0xb, "Pc at %p instead of %p\n",
                            (char *)ctx.Pc, (char *)code_mem_address + 0xb);
-                        ctx.Pc = 0x12345;
+                        ctx.Pc = (UINT_PTR)code_mem_address + 0xd;
                         ctx.X0 = 0xf00f00f1;
                         /* pass exception to debuggee
                          * exception will not be handled and a second chance exception will be raised */
