@@ -409,7 +409,7 @@ foreach my $file (@files) {
 	my $preprocessor = shift;
 
         #print "found_preprocessor: $begin_line: [$_]\n";
-	if ($preprocessor =~ /^\#\s*include\s+[\"<]pshpack(\d+)\.h[\">]$/) {
+	if ($preprocessor =~ /^\#\s*include\s+[\"<]pshpack(\d)\.h[\">]$/) {
 	    push @packs, $1 unless @ifdefs && !$ifdefs[$#ifdefs];
             #print "found pack $1 on line $begin_line\n";
 	} elsif($preprocessor =~ /^\#\s*include\s+[\"<]poppack\.h[\">]$/) {
