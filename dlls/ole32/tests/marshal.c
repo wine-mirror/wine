@@ -4000,6 +4000,10 @@ static void test_globalinterfacetable(void)
 	ok_no_locks();
 
 	IGlobalInterfaceTable_Release(git);
+
+    hr = CoGetClassObject(&CLSID_StdGlobalInterfaceTable, CLSCTX_INPROC_SERVER, NULL, &IID_IClassFactory, (void **)&cf);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IClassFactory_Release(cf);
 }
 
 static void test_manualresetevent(void)
@@ -4013,6 +4017,10 @@ static void test_manualresetevent(void)
     HRESULT hr;
 
     hr = pDllGetClassObject(&CLSID_ManualResetEvent, &IID_IClassFactory, (void **)&factory);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IClassFactory_Release(factory);
+
+    hr = CoGetClassObject(&CLSID_ManualResetEvent, CLSCTX_INPROC_SERVER, NULL, &IID_IClassFactory, (void **)&factory);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     IClassFactory_Release(factory);
 
