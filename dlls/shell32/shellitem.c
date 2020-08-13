@@ -1446,7 +1446,7 @@ static HRESULT WINAPI CustomDestinationList_QueryInterface(ICustomDestinationLis
         *obj = &This->ICustomDestinationList_iface;
     }
     else {
-        FIXME("not implemented for %s\n", shdebugstr_guid(riid));
+        WARN("Unsupported interface %s.\n", shdebugstr_guid(riid));
         *obj = NULL;
         return E_NOINTERFACE;
     }
