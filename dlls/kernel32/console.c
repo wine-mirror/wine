@@ -659,9 +659,7 @@ LONG CALLBACK CONSOLE_HandleCtrlC( EXCEPTION_POINTERS *eptr )
     HANDLE thread;
 
     if (eptr->ExceptionRecord->ExceptionCode != CONTROL_C_EXIT) return EXCEPTION_CONTINUE_SEARCH;
-
-    /* FIXME: better test whether a console is attached to this process ??? */
-    if (CONSOLE_GetNumHistoryEntries() == (unsigned)-1) return EXCEPTION_CONTINUE_SEARCH;
+    if (!RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle)  return EXCEPTION_CONTINUE_SEARCH;
 
     /* check if we have to ignore ctrl-C events */
     if (!(NtCurrentTeb()->Peb->ProcessParameters->ConsoleFlags & 1))
