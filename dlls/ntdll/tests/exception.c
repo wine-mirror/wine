@@ -1886,6 +1886,9 @@ static void test_kiuserexceptiondispatcher(void)
     ok(got_exception, "Handler was not called.\n");
     ok(hook_called || broken(!hook_called) /* 2003 */, "Hook was not called.\n");
 
+    memcpy(pKiUserExceptionDispatcher, saved_KiUserExceptionDispatcher_bytes,
+            sizeof(saved_KiUserExceptionDispatcher_bytes));
+
     RemoveVectoredExceptionHandler(vectored_handler);
     ret = VirtualProtect(pKiUserExceptionDispatcher, sizeof(saved_KiUserExceptionDispatcher_bytes),
             old_protect2, &old_protect2);
