@@ -552,6 +552,8 @@ static void test_reflection(void)
 
     static const char vs_source[] =
         "typedef uint uint_t;\n"
+        "float m;\n"
+        "\n"
         "cbuffer b1\n"
         "{\n"
         "    float a;\n"
@@ -579,11 +581,14 @@ static void test_reflection(void)
         "    column_major float3x1 t;\n"
         "};\n"
         "\n"
-        "float m;\n"
+        "cbuffer b5 : register(b5)\n"
+        "{\n"
+        "    float4 u;\n"
+        "}\n"
         "\n"
         "float4 main(uniform float4 n) : SV_POSITION\n"
         "{\n"
-        "    return o._31 + m + n;\n"
+        "    return o._31 + m + n + u;\n"
         "}";
 
     struct shader_variable
@@ -628,6 +633,8 @@ static void test_reflection(void)
         {{"r", 256, 4}, {D3D_SVC_STRUCT, D3D_SVT_VOID, 1, 1, 0, ARRAY_SIZE(r_field_types), 0, "r_name"}, r_field_types},
         {{"t", 260, 12}, {D3D_SVC_MATRIX_COLUMNS, D3D_SVT_FLOAT, 3, 1, 0, 0, 0, "float3x1"}},
     };
+    static const struct shader_variable b5_vars =
+        {{"u", 0, 16, D3D_SVF_USED}, {D3D_SVC_VECTOR, D3D_SVT_FLOAT, 1, 4, 0, 0, 0, "float4"}};
 
     static const struct
     {
@@ -639,6 +646,15 @@ static void test_reflection(void)
         {{"$Globals", D3D_CT_CBUFFER, 1, 16}, &globals_vars},
         {{"$Params", D3D_CT_CBUFFER, 1, 16}, &params_vars},
         {{"b1", D3D_CT_CBUFFER, ARRAY_SIZE(buffer_vars), 272}, buffer_vars},
+        {{"b5", D3D_CT_CBUFFER, 1, 16}, &b5_vars},
+    };
+
+    static const D3D11_SHADER_INPUT_BIND_DESC vs_bindings[] =
+    {
+        {"$Globals", D3D_SIT_CBUFFER, 0, 1},
+        {"$Params", D3D_SIT_CBUFFER, 1, 1},
+        {"b1", D3D_SIT_CBUFFER, 2, 1},
+        {"b5", D3D_SIT_CBUFFER, 5, 1, D3D_SIF_USERPACKED},
     };
 
     todo_wine vs_code = compile_shader(vs_source, "vs_5_0");
@@ -693,6 +709,24 @@ static void test_reflection(void)
                 check_type_desc(prefix, &type_desc, &vs_buffers[i].vars[j].field_types[k]);
             }
         }
+    }
+
+    for (i = 0; i < ARRAY_SIZE(vs_bindings); ++i)
+    {
+        D3D11_SHADER_INPUT_BIND_DESC desc;
+
+        hr = reflection->lpVtbl->GetResourceBindingDesc(reflection, i, &desc);
+        todo_wine ok(hr == S_OK, "Test %u: got hr %#x.\n", i, hr);
+        if (hr != S_OK)
+            break;
+        ok(!strcmp(desc.Name, vs_bindings[i].Name), "Test %u: got name %s.\n", i, debugstr_a(desc.Name));
+        ok(desc.Type == vs_bindings[i].Type, "Test %u: got type %#x.\n", i, desc.Type);
+        ok(desc.BindPoint == vs_bindings[i].BindPoint, "Test %u: got bind point %u.\n", i, desc.BindPoint);
+        ok(desc.BindCount == vs_bindings[i].BindCount, "Test %u: got bind count %u.\n", i, desc.BindCount);
+        ok(desc.uFlags == vs_bindings[i].uFlags, "Test %u: got flags %#x.\n", i, desc.uFlags);
+        ok(desc.ReturnType == vs_bindings[i].ReturnType, "Test %u: got return type %#x.\n", i, desc.ReturnType);
+        ok(desc.Dimension == vs_bindings[i].Dimension, "Test %u: got dimension %#x.\n", i, desc.Dimension);
+        ok(desc.NumSamples == vs_bindings[i].NumSamples, "Test %u: got multisample count %u.\n", i, desc.NumSamples);
     }
 
     ID3D10Blob_Release(vs_code);
