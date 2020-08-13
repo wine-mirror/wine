@@ -1350,3 +1350,11 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoCreateInstanceEx(REFCLSID rclsid, IUnknown *o
 
     return return_multi_qi(unk, count, results, TRUE);
 }
+
+/***********************************************************************
+ *           CoFreeUnusedLibraries    (combase.@)
+ */
+void WINAPI DECLSPEC_HOTPATCH CoFreeUnusedLibraries(void)
+{
+    CoFreeUnusedLibrariesEx(INFINITE, 0);
+}

@@ -23,7 +23,7 @@
 @ stdcall CoFileTimeToDosDateTime(ptr ptr ptr) kernel32.FileTimeToDosDateTime
 @ stdcall CoFreeAllLibraries()
 @ stdcall CoFreeLibrary(long)
-@ stdcall CoFreeUnusedLibraries()
+@ stdcall CoFreeUnusedLibraries() combase.CoFreeUnusedLibraries
 @ stdcall CoFreeUnusedLibrariesEx(long long)
 @ stdcall CoGetActivationState(int128 long ptr) combase.CoGetActivationState
 @ stdcall CoGetApartmentType(ptr ptr)
