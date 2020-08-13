@@ -3099,11 +3099,10 @@ static BOOL get_primary_adapter_name(CHAR *name)
 
 static BOOL CALLBACK test_enum_display_settings(HMONITOR hmonitor, HDC hdc, LPRECT rect, LPARAM lparam)
 {
-    CHAR primary_adapter[CCHDEVICENAME];
     INT width, height;
-    BOOL primary, ret;
     MONITORINFOEXA mi;
     DEVMODEA dm;
+    BOOL ret;
 
     memset(&mi, 0, sizeof(mi));
     mi.cbSize = sizeof(mi);
@@ -3117,19 +3116,11 @@ static BOOL CALLBACK test_enum_display_settings(HMONITOR hmonitor, HDC hdc, LPRE
 
     ok((dm.dmFields & (DM_POSITION | DM_PELSWIDTH | DM_PELSHEIGHT)) == (DM_POSITION | DM_PELSWIDTH | DM_PELSHEIGHT),
             "Unexpected dmFields %#x.\n", dm.dmFields);
-    /* Wine currently reports primary adapter positions for all adapters, same for other todo_wines in this function */
-    ret = get_primary_adapter_name(primary_adapter);
-    ok(ret, "get_primary_adapter_name failed\n");
-    primary = !lstrcmpA(primary_adapter, mi.szDevice);
-    todo_wine_if(!primary && dm.dmPosition.x != mi.rcMonitor.left)
     ok(dm.dmPosition.x == mi.rcMonitor.left, "Expect dmPosition.x %d, got %d\n", mi.rcMonitor.left, dm.dmPosition.x);
-    todo_wine_if(!primary && dm.dmPosition.y != mi.rcMonitor.top)
     ok(dm.dmPosition.y == mi.rcMonitor.top, "Expect dmPosition.y %d, got %d\n", mi.rcMonitor.top, dm.dmPosition.y);
     width = mi.rcMonitor.right - mi.rcMonitor.left;
-    todo_wine_if(!primary && dm.dmPelsWidth != width)
     ok(dm.dmPelsWidth == width, "Expect dmPelsWidth %d, got %d\n", width, dm.dmPelsWidth);
     height = mi.rcMonitor.bottom - mi.rcMonitor.top;
-    todo_wine_if(!primary && dm.dmPelsHeight != height)
     ok(dm.dmPelsHeight == height, "Expect dmPelsHeight %d, got %d\n", height, dm.dmPelsHeight);
 
     return TRUE;
