@@ -94,6 +94,7 @@ static void test_pack_DWORD_PTR(void)
     /* DWORD_PTR */
     TEST_TYPE_SIZE   (DWORD_PTR, 8)
     TEST_TYPE_ALIGN  (DWORD_PTR, 8)
+    TEST_TYPE_UNSIGNED(DWORD_PTR)
 }
 
 static void test_pack_HALF_PTR(void)
@@ -173,6 +174,7 @@ static void test_pack_SIZE_T(void)
     /* SIZE_T */
     TEST_TYPE_SIZE   (SIZE_T, 8)
     TEST_TYPE_ALIGN  (SIZE_T, 8)
+    TEST_TYPE_UNSIGNED(SIZE_T)
 }
 
 static void test_pack_SSIZE_T(void)
@@ -180,6 +182,7 @@ static void test_pack_SSIZE_T(void)
     /* SSIZE_T */
     TEST_TYPE_SIZE   (SSIZE_T, 8)
     TEST_TYPE_ALIGN  (SSIZE_T, 8)
+    TEST_TYPE_SIGNED (SSIZE_T)
 }
 
 static void test_pack_UHALF_PTR(void)
@@ -484,6 +487,7 @@ static void test_pack_HRESULT(void)
     /* HRESULT */
     TEST_TYPE_SIZE   (HRESULT, 4)
     TEST_TYPE_ALIGN  (HRESULT, 4)
+    TEST_TYPE_SIGNED (HRESULT)
 }
 
 static void test_pack_IMAGE_ARCHIVE_MEMBER_HEADER(void)
@@ -2809,6 +2813,7 @@ static void test_pack_SECURITY_CONTEXT_TRACKING_MODE(void)
     /* SECURITY_CONTEXT_TRACKING_MODE */
     TEST_TYPE_SIZE   (SECURITY_CONTEXT_TRACKING_MODE, 1)
     TEST_TYPE_ALIGN  (SECURITY_CONTEXT_TRACKING_MODE, 1)
+    TEST_TYPE_UNSIGNED(SECURITY_CONTEXT_TRACKING_MODE)
 }
 
 static void test_pack_SECURITY_DESCRIPTOR(void)
@@ -3228,6 +3233,7 @@ static void test_pack_LPARAM(void)
     /* LPARAM */
     TEST_TYPE_SIZE   (LPARAM, 8)
     TEST_TYPE_ALIGN  (LPARAM, 8)
+    TEST_TYPE_SIGNED (LPARAM)
 }
 
 static void test_pack_LPCRECT(void)
@@ -3296,6 +3302,7 @@ static void test_pack_LRESULT(void)
     /* LRESULT */
     TEST_TYPE_SIZE   (LRESULT, 8)
     TEST_TYPE_ALIGN  (LRESULT, 8)
+    TEST_TYPE_SIGNED (LRESULT)
 }
 
 static void test_pack_POINT(void)
@@ -3486,6 +3493,7 @@ static void test_pack_WPARAM(void)
     /* WPARAM */
     TEST_TYPE_SIZE   (WPARAM, 8)
     TEST_TYPE_ALIGN  (WPARAM, 8)
+    TEST_TYPE_UNSIGNED(WPARAM)
 }
 
 #else /* _WIN64 */
@@ -3511,6 +3519,7 @@ static void test_pack_DWORD_PTR(void)
     /* DWORD_PTR */
     TEST_TYPE_SIZE   (DWORD_PTR, 4)
     TEST_TYPE_ALIGN  (DWORD_PTR, 4)
+    TEST_TYPE_UNSIGNED(DWORD_PTR)
 }
 
 static void test_pack_HALF_PTR(void)
@@ -3590,6 +3599,7 @@ static void test_pack_SIZE_T(void)
     /* SIZE_T */
     TEST_TYPE_SIZE   (SIZE_T, 4)
     TEST_TYPE_ALIGN  (SIZE_T, 4)
+    TEST_TYPE_UNSIGNED(SIZE_T)
 }
 
 static void test_pack_SSIZE_T(void)
@@ -3597,6 +3607,7 @@ static void test_pack_SSIZE_T(void)
     /* SSIZE_T */
     TEST_TYPE_SIZE   (SSIZE_T, 4)
     TEST_TYPE_ALIGN  (SSIZE_T, 4)
+    TEST_TYPE_SIGNED (SSIZE_T)
 }
 
 static void test_pack_UHALF_PTR(void)
@@ -3901,6 +3912,7 @@ static void test_pack_HRESULT(void)
     /* HRESULT */
     TEST_TYPE_SIZE   (HRESULT, 4)
     TEST_TYPE_ALIGN  (HRESULT, 4)
+    TEST_TYPE_SIGNED (HRESULT)
 }
 
 static void test_pack_IMAGE_ARCHIVE_MEMBER_HEADER(void)
@@ -6226,6 +6238,7 @@ static void test_pack_SECURITY_CONTEXT_TRACKING_MODE(void)
     /* SECURITY_CONTEXT_TRACKING_MODE */
     TEST_TYPE_SIZE   (SECURITY_CONTEXT_TRACKING_MODE, 1)
     TEST_TYPE_ALIGN  (SECURITY_CONTEXT_TRACKING_MODE, 1)
+    TEST_TYPE_UNSIGNED(SECURITY_CONTEXT_TRACKING_MODE)
 }
 
 static void test_pack_SECURITY_DESCRIPTOR(void)
@@ -6645,6 +6658,7 @@ static void test_pack_LPARAM(void)
     /* LPARAM */
     TEST_TYPE_SIZE   (LPARAM, 4)
     TEST_TYPE_ALIGN  (LPARAM, 4)
+    TEST_TYPE_SIGNED (LPARAM)
 }
 
 static void test_pack_LPCRECT(void)
@@ -6713,6 +6727,7 @@ static void test_pack_LRESULT(void)
     /* LRESULT */
     TEST_TYPE_SIZE   (LRESULT, 4)
     TEST_TYPE_ALIGN  (LRESULT, 4)
+    TEST_TYPE_SIGNED (LRESULT)
 }
 
 static void test_pack_POINT(void)
@@ -6903,6 +6918,7 @@ static void test_pack_WPARAM(void)
     /* WPARAM */
     TEST_TYPE_SIZE   (WPARAM, 4)
     TEST_TYPE_ALIGN  (WPARAM, 4)
+    TEST_TYPE_UNSIGNED(WPARAM)
 }
 
 #endif /* _WIN64 */

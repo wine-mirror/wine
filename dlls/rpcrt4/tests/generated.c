@@ -91,6 +91,7 @@ static void test_pack_RPC_STATUS(void)
     /* RPC_STATUS */
     TEST_TYPE_SIZE   (RPC_STATUS, 4)
     TEST_TYPE_ALIGN  (RPC_STATUS, 4)
+    TEST_TYPE_SIGNED (RPC_STATUS)
 }
 
 static void test_pack_PRPC_POLICY(void)
@@ -952,6 +953,7 @@ static void test_pack_RPC_STATUS(void)
     /* RPC_STATUS */
     TEST_TYPE_SIZE   (RPC_STATUS, 4)
     TEST_TYPE_ALIGN  (RPC_STATUS, 4)
+    TEST_TYPE_SIGNED (RPC_STATUS)
 }
 
 static void test_pack_PRPC_POLICY(void)

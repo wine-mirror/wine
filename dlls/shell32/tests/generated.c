@@ -360,6 +360,7 @@ static void test_pack_OLECHAR(void)
     /* OLECHAR */
     TEST_TYPE_SIZE   (OLECHAR, 2)
     TEST_TYPE_ALIGN  (OLECHAR, 2)
+    TEST_TYPE_UNSIGNED(OLECHAR)
 }
 
 static void test_pack_PROPID(void)
@@ -367,6 +368,7 @@ static void test_pack_PROPID(void)
     /* PROPID */
     TEST_TYPE_SIZE   (PROPID, 4)
     TEST_TYPE_ALIGN  (PROPID, 4)
+    TEST_TYPE_UNSIGNED(PROPID)
 }
 
 static void test_pack_RemHBITMAP(void)
@@ -451,6 +453,7 @@ static void test_pack_SCODE(void)
     /* SCODE */
     TEST_TYPE_SIZE   (SCODE, 4)
     TEST_TYPE_ALIGN  (SCODE, 4)
+    TEST_TYPE_SIGNED (SCODE)
 }
 
 static void test_pack_UP_BYTE_BLOB(void)
@@ -2178,6 +2181,7 @@ static void test_pack_OLECHAR(void)
     /* OLECHAR */
     TEST_TYPE_SIZE   (OLECHAR, 2)
     TEST_TYPE_ALIGN  (OLECHAR, 2)
+    TEST_TYPE_UNSIGNED(OLECHAR)
 }
 
 static void test_pack_PROPID(void)
@@ -2185,6 +2189,7 @@ static void test_pack_PROPID(void)
     /* PROPID */
     TEST_TYPE_SIZE   (PROPID, 4)
     TEST_TYPE_ALIGN  (PROPID, 4)
+    TEST_TYPE_UNSIGNED(PROPID)
 }
 
 static void test_pack_RemHBITMAP(void)
@@ -2269,6 +2274,7 @@ static void test_pack_SCODE(void)
     /* SCODE */
     TEST_TYPE_SIZE   (SCODE, 4)
     TEST_TYPE_ALIGN  (SCODE, 4)
+    TEST_TYPE_SIGNED (SCODE)
 }
 
 static void test_pack_UP_BYTE_BLOB(void)
