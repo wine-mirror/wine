@@ -421,6 +421,20 @@ DWORD WINAPI CtrlRoutine( void *arg )
 }
 
 
+static LONG WINAPI handle_ctrl_c( EXCEPTION_POINTERS *eptr )
+{
+    if (eptr->ExceptionRecord->ExceptionCode != CONTROL_C_EXIT) return EXCEPTION_CONTINUE_SEARCH;
+    if (!RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle)  return EXCEPTION_CONTINUE_SEARCH;
+
+    if (!(NtCurrentTeb()->Peb->ProcessParameters->ConsoleFlags & 1))
+    {
+        HANDLE thread = CreateThread( NULL, 0, CtrlRoutine, (void*)CTRL_C_EVENT, 0, NULL );
+        if (thread) CloseHandle( thread );
+    }
+    return EXCEPTION_CONTINUE_EXECUTION;
+}
+
+
 /******************************************************************************
  *	FillConsoleOutputAttribute   (kernelbase.@)
  */
@@ -1625,4 +1639,9 @@ HRESULT WINAPI ResizePseudoConsole( HPCON handle, COORD size )
 {
     FIXME( "%p (%u,%u)\n", handle, size.X, size.Y );
     return E_NOTIMPL;
+}
+
+void init_console( void )
+{
+    RtlAddVectoredExceptionHandler( FALSE, handle_ctrl_c );
 }

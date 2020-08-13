@@ -649,37 +649,6 @@ BOOL WINAPI GetNumberOfConsoleMouseButtons(LPDWORD nrofbuttons)
 }
 
 /******************************************************************
- *		CONSOLE_HandleCtrlC
- *
- * Check whether the shall manipulate CtrlC events
- */
-LONG CALLBACK CONSOLE_HandleCtrlC( EXCEPTION_POINTERS *eptr )
-{
-    extern DWORD WINAPI CtrlRoutine( void *arg );
-    HANDLE thread;
-
-    if (eptr->ExceptionRecord->ExceptionCode != CONTROL_C_EXIT) return EXCEPTION_CONTINUE_SEARCH;
-    if (!RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle)  return EXCEPTION_CONTINUE_SEARCH;
-
-    /* check if we have to ignore ctrl-C events */
-    if (!(NtCurrentTeb()->Peb->ProcessParameters->ConsoleFlags & 1))
-    {
-        /* Create a separate thread to signal all the events. 
-         * This is needed because:
-         *  - this function can be called in an Unix signal handler (hence on an
-         *    different stack than the thread that's running). This breaks the 
-         *    Win32 exception mechanisms (where the thread's stack is checked).
-         *  - since the current thread, while processing the signal, can hold the
-         *    console critical section, we need another execution environment where
-         *    we can wait on this critical section 
-         */
-        thread = CreateThread(NULL, 0, CtrlRoutine, (void*)CTRL_C_EVENT, 0, NULL);
-        if (thread) CloseHandle(thread);
-    }
-    return EXCEPTION_CONTINUE_EXECUTION;
-}
-
-/******************************************************************
  *		CONSOLE_WriteChars
  *
  * WriteConsoleOutput helper: hides server call semantics

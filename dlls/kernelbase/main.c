@@ -47,6 +47,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
         IsWow64Process( GetCurrentProcess(), &is_wow64 );
         init_locale();
         init_startup_info( NtCurrentTeb()->Peb->ProcessParameters );
+        init_console();
     }
     return TRUE;
 }
