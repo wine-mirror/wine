@@ -524,6 +524,126 @@ static void test_trig(void)
     release_test_context(&test_context);
 }
 
+static void test_sampling(void)
+{
+    struct test_context test_context;
+    ID3D11ShaderResourceView *srv;
+    ID3D11SamplerState *sampler;
+    ID3D10Blob *ps_code = NULL;
+    ID3D11Texture2D *texture;
+    unsigned int i;
+    struct vec4 v;
+    HRESULT hr;
+
+    static const char *tests[] =
+    {
+        "sampler s;\n"
+        "float4 main() : COLOR\n"
+        "{\n"
+        "    return tex2D(s, float2(0.5, 0.5));\n"
+        "}",
+
+        "SamplerState s;\n"
+        "float4 main() : COLOR\n"
+        "{\n"
+        "    return tex2D(s, float2(0.5, 0.5));\n"
+        "}",
+
+        "sampler2D s;\n"
+        "float4 main() : COLOR\n"
+        "{\n"
+        "    return tex2D(s, float2(0.5, 0.5));\n"
+        "}",
+
+        "sampler s;\n"
+        "Texture2D t;\n"
+        "float4 main() : COLOR\n"
+        "{\n"
+        "    return t.Sample(s, float2(0.5, 0.5));\n"
+        "}",
+
+        "SamplerState s;\n"
+        "Texture2D t;\n"
+        "float4 main() : COLOR\n"
+        "{\n"
+        "    return t.Sample(s, float2(0.5, 0.5));\n"
+        "}",
+    };
+
+    static const D3D11_TEXTURE2D_DESC texture_desc =
+    {
+        .Width = 2,
+        .Height = 2,
+        .MipLevels = 1,
+        .ArraySize = 1,
+        .Format = DXGI_FORMAT_R32G32B32A32_FLOAT,
+        .SampleDesc.Count = 1,
+        .Usage = D3D11_USAGE_DEFAULT,
+        .BindFlags = D3D11_BIND_SHADER_RESOURCE,
+    };
+
+    static const float texture_data[] =
+    {
+        0.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 0.0f,
+        1.0f, 0.0f, 1.0f, 0.0f,
+    };
+
+    static const D3D11_SUBRESOURCE_DATA resource_data = {&texture_data, sizeof(texture_data) / 2};
+
+    static const D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc =
+    {
+        .Format = DXGI_FORMAT_R32G32B32A32_FLOAT,
+        .ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D,
+        .Texture2D.MipLevels = 1,
+    };
+
+    static const D3D11_SAMPLER_DESC sampler_desc =
+    {
+        .Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR,
+        .AddressU = D3D11_TEXTURE_ADDRESS_WRAP,
+        .AddressV = D3D11_TEXTURE_ADDRESS_WRAP,
+        .AddressW = D3D11_TEXTURE_ADDRESS_WRAP,
+    };
+
+    static const float red[] = {1.0f, 0.0f, 0.0f, 1.0f};
+
+    if (!init_test_context(&test_context))
+        return;
+
+    hr = ID3D11Device_CreateTexture2D(test_context.device, &texture_desc, &resource_data, &texture);
+    ok(hr == S_OK, "Failed to create texture, hr %#x.\n", hr);
+    hr = ID3D11Device_CreateShaderResourceView(test_context.device, (ID3D11Resource *)texture, &srv_desc, &srv);
+    ok(hr == S_OK, "Failed to create SRV, hr %#x.\n", hr);
+    ID3D11DeviceContext_PSSetShaderResources(test_context.immediate_context, 0, 1, &srv);
+
+    hr = ID3D11Device_CreateSamplerState(test_context.device, &sampler_desc, &sampler);
+    ok(hr == S_OK, "Failed to create sampler, hr %#x.\n", hr);
+    ID3D11DeviceContext_PSSetSamplers(test_context.immediate_context, 0, 1, &sampler);
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        ID3D11DeviceContext_ClearRenderTargetView(test_context.immediate_context, test_context.rtv, red);
+        todo_wine ps_code = compile_shader_flags(tests[i], "ps_4_0", D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY);
+        if (ps_code)
+        {
+            draw_quad(&test_context, ps_code);
+
+            v = get_color_vec4(&test_context, 0, 0);
+            todo_wine ok(compare_vec4(&v, 0.25f, 0.0f, 0.25f, 0.0f, 0),
+                    "Test %u: Got unexpected value {%.8e, %.8e, %.8e, %.8e}.\n", i, v.x, v.y, v.z, v.w);
+
+            ID3D10Blob_Release(ps_code);
+        }
+    }
+
+    ID3D11Texture2D_Release(texture);
+    ID3D11SamplerState_Release(sampler);
+    ID3D11ShaderResourceView_Release(srv);
+    release_test_context(&test_context);
+}
+
 static void check_type_desc(const char *prefix, const D3D11_SHADER_TYPE_DESC *type,
         const D3D11_SHADER_TYPE_DESC *expect)
 {
@@ -537,6 +657,19 @@ static void check_type_desc(const char *prefix, const D3D11_SHADER_TYPE_DESC *ty
     ok(!strcmp(type->Name, expect->Name), "%s: got name %s.\n", prefix, debugstr_a(type->Name));
 }
 
+static void check_resource_binding(const char *prefix, const D3D11_SHADER_INPUT_BIND_DESC *desc,
+        const D3D11_SHADER_INPUT_BIND_DESC *expect)
+{
+    ok(!strcmp(desc->Name, expect->Name), "%s: got name %s.\n", prefix, debugstr_a(desc->Name));
+    ok(desc->Type == expect->Type, "%s: got type %#x.\n", prefix, desc->Type);
+    ok(desc->BindPoint == expect->BindPoint, "%s: got bind point %u.\n", prefix, desc->BindPoint);
+    ok(desc->BindCount == expect->BindCount, "%s: got bind count %u.\n", prefix, desc->BindCount);
+    ok(desc->uFlags == expect->uFlags, "%s: got flags %#x.\n", prefix, desc->uFlags);
+    ok(desc->ReturnType == expect->ReturnType, "%s: got return type %#x.\n", prefix, desc->ReturnType);
+    ok(desc->Dimension == expect->Dimension, "%s: got dimension %#x.\n", prefix, desc->Dimension);
+    ok(desc->NumSamples == expect->NumSamples, "%s: got multisample count %u.\n", prefix, desc->NumSamples);
+}
+
 static void test_reflection(void)
 {
     ID3D11ShaderReflectionConstantBuffer *cbuffer;
@@ -546,8 +679,10 @@ static void test_reflection(void)
     D3D11_SHADER_VARIABLE_DESC var_desc;
     ID3D11ShaderReflection *reflection;
     D3D11_SHADER_TYPE_DESC type_desc;
-    ID3D10Blob *vs_code = NULL;
+    D3D11_SHADER_DESC shader_desc;
+    ID3D10Blob *code = NULL;
     unsigned int i, j, k;
+    char prefix[40];
     ULONG refcount;
     HRESULT hr;
 
@@ -658,13 +793,54 @@ static void test_reflection(void)
         {"b5", D3D_SIT_CBUFFER, 5, 1, D3D_SIF_USERPACKED},
     };
 
-    todo_wine vs_code = compile_shader(vs_source, "vs_5_0");
-    if (!vs_code)
+    static const char ps_source[] =
+        "texture2D a;\n"
+        "sampler c {};\n"
+        "SamplerState d {};\n"
+        "sampler e\n"
+        "{\n"
+        "    Texture = a;\n"
+        "    foo = bar + 2;\n"
+        "};\n"
+        "SamplerState f\n"
+        "{\n"
+        "    Texture = a;\n"
+        "    foo = bar + 2;\n"
+        "};\n"
+        "sampler2D g;\n"
+        "sampler b : register(s5);\n"
+        "float4 main(float2 pos : texcoord) : SV_TARGET\n"
+        "{\n"
+        "    return a.Sample(b, pos) + a.Sample(c, pos) + a.Sample(d, pos) + tex2D(f, pos) + tex2D(e, pos)"
+        "            + tex2D(g, pos);\n"
+        "}";
+
+    static const D3D11_SHADER_INPUT_BIND_DESC ps_bindings[] =
+    {
+        {"c", D3D_SIT_SAMPLER, 0, 1},
+        {"d", D3D_SIT_SAMPLER, 1, 1},
+        {"e", D3D_SIT_SAMPLER, 2, 1},
+        {"f", D3D_SIT_SAMPLER, 3, 1},
+        {"g", D3D_SIT_SAMPLER, 4, 1},
+        {"b", D3D_SIT_SAMPLER, 5, 1, D3D_SIF_USERPACKED},
+        {"f", D3D_SIT_TEXTURE, 0, 1, D3D_SIF_TEXTURE_COMPONENTS, D3D_RETURN_TYPE_FLOAT, D3D_SRV_DIMENSION_TEXTURE2D, ~0u},
+        {"e", D3D_SIT_TEXTURE, 1, 1, D3D_SIF_TEXTURE_COMPONENTS, D3D_RETURN_TYPE_FLOAT, D3D_SRV_DIMENSION_TEXTURE2D, ~0u},
+        {"g", D3D_SIT_TEXTURE, 2, 1, D3D_SIF_TEXTURE_COMPONENTS, D3D_RETURN_TYPE_FLOAT, D3D_SRV_DIMENSION_TEXTURE2D, ~0u},
+        {"a", D3D_SIT_TEXTURE, 3, 1, D3D_SIF_TEXTURE_COMPONENTS, D3D_RETURN_TYPE_FLOAT, D3D_SRV_DIMENSION_TEXTURE2D, ~0u},
+    };
+
+    todo_wine code = compile_shader(vs_source, "vs_5_0");
+    if (!code)
         return;
 
-    hr = pD3DReflect(ID3D10Blob_GetBufferPointer(vs_code), ID3D10Blob_GetBufferSize(vs_code),
+    hr = pD3DReflect(ID3D10Blob_GetBufferPointer(code), ID3D10Blob_GetBufferSize(code),
             &IID_ID3D11ShaderReflection, (void **)&reflection);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = reflection->lpVtbl->GetDesc(reflection, &shader_desc);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(shader_desc.ConstantBuffers == ARRAY_SIZE(vs_buffers), "Got %u buffers.\n", shader_desc.ConstantBuffers);
+    ok(shader_desc.BoundResources == ARRAY_SIZE(vs_bindings), "Got %u resources.\n", shader_desc.BoundResources);
 
     for (i = 0; i < ARRAY_SIZE(vs_buffers); ++i)
     {
@@ -682,7 +858,6 @@ static void test_reflection(void)
         for (j = 0; j < buffer_desc.Variables; ++j)
         {
             const struct shader_variable *expect = &vs_buffers[i].vars[j];
-            char prefix[40];
 
             var = cbuffer->lpVtbl->GetVariableByIndex(cbuffer, j);
             hr = var->lpVtbl->GetDesc(var, &var_desc);
@@ -717,20 +892,36 @@ static void test_reflection(void)
         D3D11_SHADER_INPUT_BIND_DESC desc;
 
         hr = reflection->lpVtbl->GetResourceBindingDesc(reflection, i, &desc);
-        todo_wine ok(hr == S_OK, "Test %u: got hr %#x.\n", i, hr);
-        if (hr != S_OK)
-            break;
-        ok(!strcmp(desc.Name, vs_bindings[i].Name), "Test %u: got name %s.\n", i, debugstr_a(desc.Name));
-        ok(desc.Type == vs_bindings[i].Type, "Test %u: got type %#x.\n", i, desc.Type);
-        ok(desc.BindPoint == vs_bindings[i].BindPoint, "Test %u: got bind point %u.\n", i, desc.BindPoint);
-        ok(desc.BindCount == vs_bindings[i].BindCount, "Test %u: got bind count %u.\n", i, desc.BindCount);
-        ok(desc.uFlags == vs_bindings[i].uFlags, "Test %u: got flags %#x.\n", i, desc.uFlags);
-        ok(desc.ReturnType == vs_bindings[i].ReturnType, "Test %u: got return type %#x.\n", i, desc.ReturnType);
-        ok(desc.Dimension == vs_bindings[i].Dimension, "Test %u: got dimension %#x.\n", i, desc.Dimension);
-        ok(desc.NumSamples == vs_bindings[i].NumSamples, "Test %u: got multisample count %u.\n", i, desc.NumSamples);
+        ok(hr == S_OK, "Test %u: got hr %#x.\n", i, hr);
+        sprintf(prefix, "Test %u", i);
+        check_resource_binding(prefix, &desc, &vs_bindings[i]);
     }
 
-    ID3D10Blob_Release(vs_code);
+    ID3D10Blob_Release(code);
+    refcount = reflection->lpVtbl->Release(reflection);
+    ok(!refcount, "Got unexpected refcount %u.\n", refcount);
+
+    code = compile_shader_flags(ps_source, "ps_4_0", D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY);
+    hr = pD3DReflect(ID3D10Blob_GetBufferPointer(code), ID3D10Blob_GetBufferSize(code),
+            &IID_ID3D11ShaderReflection, (void **)&reflection);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = reflection->lpVtbl->GetDesc(reflection, &shader_desc);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!shader_desc.ConstantBuffers, "Got %u buffers.\n", shader_desc.ConstantBuffers);
+    ok(shader_desc.BoundResources == ARRAY_SIZE(ps_bindings), "Got %u resources.\n", shader_desc.BoundResources);
+
+    for (i = 0; i < shader_desc.BoundResources; ++i)
+    {
+        D3D11_SHADER_INPUT_BIND_DESC desc;
+
+        hr = reflection->lpVtbl->GetResourceBindingDesc(reflection, i, &desc);
+        ok(hr == S_OK, "Test %u: got hr %#x.\n", i, hr);
+        sprintf(prefix, "Test %u", i);
+        check_resource_binding(prefix, &desc, &ps_bindings[i]);
+    }
+
+    ID3D10Blob_Release(code);
     refcount = reflection->lpVtbl->Release(reflection);
     ok(!refcount, "Got unexpected refcount %u.\n", refcount);
 }
@@ -1006,4 +1197,5 @@ START_TEST(hlsl_d3d11)
     test_math();
     test_conditionals();
     test_trig();
+    test_sampling();
 }

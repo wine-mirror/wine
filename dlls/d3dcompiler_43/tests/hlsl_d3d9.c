@@ -1054,11 +1054,98 @@ static void test_global_initializer(void)
     release_test_context(&test_context);
 }
 
+static void test_samplers(void)
+{
+    struct test_context test_context;
+    IDirect3DTexture9 *texture;
+    ID3D10Blob *ps_code = NULL;
+    D3DLOCKED_RECT map_desc;
+    unsigned int i;
+    struct vec4 v;
+    HRESULT hr;
+
+    static const char *tests[] =
+    {
+        "sampler s;\n"
+        "float4 main() : COLOR\n"
+        "{\n"
+        "    return tex2D(s, float2(0.5, 0.5));\n"
+        "}",
+
+        "SamplerState s;\n"
+        "float4 main() : COLOR\n"
+        "{\n"
+        "    return tex2D(s, float2(0.5, 0.5));\n"
+        "}",
+
+        "sampler2D s;\n"
+        "float4 main() : COLOR\n"
+        "{\n"
+        "    return tex2D(s, float2(0.5, 0.5));\n"
+        "}",
+
+        "sampler s;\n"
+        "Texture2D t;\n"
+        "float4 main() : COLOR\n"
+        "{\n"
+        "    return t.Sample(s, float2(0.5, 0.5));\n"
+        "}",
+
+        "SamplerState s;\n"
+        "Texture2D t;\n"
+        "float4 main() : COLOR\n"
+        "{\n"
+        "    return t.Sample(s, float2(0.5, 0.5));\n"
+        "}",
+    };
+
+    if (!init_test_context(&test_context))
+        return;
+
+    hr = IDirect3DDevice9_CreateTexture(test_context.device, 2, 2, 1, D3DUSAGE_DYNAMIC,
+            D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &texture, NULL);
+    ok(hr == D3D_OK, "Failed to create texture, hr %#x.\n", hr);
+
+    hr = IDirect3DTexture9_LockRect(texture, 0, &map_desc, NULL, D3DLOCK_DISCARD);
+    ok(hr == D3D_OK, "Failed to map texture, hr %#x.\n", hr);
+    memset(map_desc.pBits, 0, 2 * map_desc.Pitch);
+    ((DWORD *)map_desc.pBits)[1] = 0x00ff00ff;
+    hr = IDirect3DTexture9_UnlockRect(texture, 0);
+    ok(hr == D3D_OK, "Failed to unmap texture, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetTexture(test_context.device, 0, (IDirect3DBaseTexture9 *)texture);
+    ok(hr == D3D_OK, "Failed to set texture, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetSamplerState(test_context.device, 0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
+    ok(hr == D3D_OK, "Failed to set sampler state, hr %#x.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        hr = IDirect3DDevice9_Clear(test_context.device, 0, NULL, D3DCLEAR_TARGET, D3DCOLOR_XRGB(255, 0, 0), 1.0f, 0);
+        ok(hr == D3D_OK, "Test %u: Failed to clear, hr %#x.\n", i, hr);
+        todo_wine ps_code = compile_shader(tests[i], "ps_2_0");
+        if (ps_code)
+        {
+            draw_quad(test_context.device, ps_code);
+
+            v = get_color_vec4(test_context.device, 0, 0);
+            todo_wine ok(compare_vec4(&v, 0.25f, 0.0f, 0.25f, 0.0f, 128),
+                    "Test %u: Got unexpected value {%.8e, %.8e, %.8e, %.8e}.\n", i, v.x, v.y, v.z, v.w);
+
+            ID3D10Blob_Release(ps_code);
+        }
+    }
+
+    IDirect3DTexture9_Release(texture);
+    release_test_context(&test_context);
+}
+
 static void check_constant_desc(const char *prefix, const D3DXCONSTANT_DESC *desc,
         const D3DXCONSTANT_DESC *expect, BOOL nonzero_defaultvalue)
 {
     ok(!strcmp(desc->Name, expect->Name), "%s: got Name %s.\n", prefix, debugstr_a(desc->Name));
     ok(desc->RegisterSet == expect->RegisterSet, "%s: got RegisterSet %#x.\n", prefix, desc->RegisterSet);
+    if (desc->RegisterSet == D3DXRS_SAMPLER)
+        ok(desc->RegisterIndex == expect->RegisterIndex, "%s: got RegisterIndex %u.\n", prefix, desc->RegisterIndex);
     ok(desc->RegisterCount == expect->RegisterCount, "%s: got RegisterCount %u.\n", prefix, desc->RegisterCount);
     ok(desc->Class == expect->Class, "%s: got Class %#x.\n", prefix, desc->Class);
     ok(desc->Type == expect->Type, "%s: got Type %#x.\n", prefix, desc->Type);
@@ -1093,9 +1180,28 @@ static void test_constant_table(void)
         "uniform matrix_t i;\n"
         "uniform struct matrix_record j;\n"
         "uniform matrix<float,3,1> k;\n"
-        "float4 main(uniform float4 h) : COLOR\n"
+        "sampler l : register(s5);\n"
+        "sampler m {};\n"
+        "texture dummy_texture;\n"
+        "sampler n\n"
         "{\n"
-        "    return a + b + c._31 + d._31 + f.d._22 + g[e].x + h + i._33 + j.a._33 + k._31;\n"
+        "    Texture = dummy_texture;\n"
+        "    foo = bar + 2;\n"
+        "};\n"
+        "SamplerState o\n"
+        "{\n"
+        "    Texture = dummy_texture;\n"
+        "    foo = bar + 2;\n"
+        "};\n"
+        "texture2D p;\n"
+        "sampler q : register(s7);\n"
+        "SamplerState r : register(s8);\n"
+        "sampler2D s;\n"
+        "float4 main(uniform float4 h, sampler t, uniform sampler u) : COLOR\n"
+        "{\n"
+        "    return b + c._31 + d._31 + f.d._22 + tex2D(l, g[e]) + tex3D(m, h.xyz) + i._33 + j.a._33 + k._31\n"
+        "            + tex2D(n, a.xy) + tex2D(o, a.xy) + p.Sample(r, a.xy) + p.Sample(q, a.xy) + tex2D(s, a.xy)\n"
+        "            + tex2D(t, a.xy) + tex2D(u, a.xy);\n"
         "}";
 
     D3DXCONSTANTTABLE_DESC table_desc;
@@ -1110,6 +1216,7 @@ static void test_constant_table(void)
     static const D3DXCONSTANT_DESC expect_constants[] =
     {
         {"$h", D3DXRS_FLOAT4, 0, 1, D3DXPC_VECTOR, D3DXPT_FLOAT, 1, 4, 1, 0, 16},
+        {"$u", D3DXRS_SAMPLER, 10, 1, D3DXPC_OBJECT, D3DXPT_SAMPLER2D, 1, 1, 1, 0, 4},
         {"a", D3DXRS_FLOAT4, 0, 1, D3DXPC_VECTOR, D3DXPT_FLOAT, 1, 4, 1, 0, 16},
         {"b", D3DXRS_FLOAT4, 0, 1, D3DXPC_SCALAR, D3DXPT_FLOAT, 1, 1, 1, 0, 4},
         {"c", D3DXRS_FLOAT4, 0, 1, D3DXPC_MATRIX_COLUMNS, D3DXPT_FLOAT, 3, 1, 1, 0, 12},
@@ -1120,6 +1227,14 @@ static void test_constant_table(void)
         {"i", D3DXRS_FLOAT4, 0, 3, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 3, 3, 1, 0, 36},
         {"j", D3DXRS_FLOAT4, 0, 3, D3DXPC_STRUCT, D3DXPT_VOID, 1, 9, 1, 1, 36},
         {"k", D3DXRS_FLOAT4, 0, 3, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 3, 1, 1, 0, 12},
+        {"l", D3DXRS_SAMPLER, 5, 1, D3DXPC_OBJECT, D3DXPT_SAMPLER2D, 1, 1, 1, 0, 4},
+        {"m", D3DXRS_SAMPLER, 2, 1, D3DXPC_OBJECT, D3DXPT_SAMPLER3D, 1, 1, 1, 0, 4},
+        {"n", D3DXRS_SAMPLER, 3, 1, D3DXPC_OBJECT, D3DXPT_SAMPLER2D, 1, 1, 1, 0, 4},
+        {"o", D3DXRS_SAMPLER, 4, 1, D3DXPC_OBJECT, D3DXPT_SAMPLER2D, 1, 1, 1, 0, 4},
+        {"q+p", D3DXRS_SAMPLER, 0, 1, D3DXPC_OBJECT, D3DXPT_TEXTURE2D, 1, 4, 1, 0, 16},
+        {"r+p", D3DXRS_SAMPLER, 1, 1, D3DXPC_OBJECT, D3DXPT_TEXTURE2D, 1, 4, 1, 0, 16},
+        {"s", D3DXRS_SAMPLER, 6, 1, D3DXPC_OBJECT, D3DXPT_SAMPLER2D, 1, 1, 1, 0, 4},
+        {"t", D3DXRS_SAMPLER, 9, 1, D3DXPC_OBJECT, D3DXPT_SAMPLER2D, 1, 1, 1, 0, 4},
     };
 
     static const D3DXCONSTANT_DESC expect_fields_f[] =
@@ -1604,6 +1719,7 @@ START_TEST(hlsl_d3d9)
     test_struct_assignment();
     test_struct_semantics();
     test_global_initializer();
+    test_samplers();
 
     test_constant_table();
     test_fail();
