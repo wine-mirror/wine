@@ -81,7 +81,7 @@
 @ stdcall CoCreateFreeThreadedMarshaler(ptr ptr)
 @ stdcall CoCreateGuid(ptr)
 @ stdcall CoCreateInstance(ptr ptr long ptr ptr)
-@ stdcall CoCreateInstanceEx(ptr ptr long ptr long ptr) ole32.CoCreateInstanceEx
+@ stdcall CoCreateInstanceEx(ptr ptr long ptr long ptr)
 @ stub CoCreateInstanceFromApp
 @ stub CoCreateObjectInContext
 @ stub CoDeactivateObject
