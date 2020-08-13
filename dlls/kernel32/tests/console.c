@@ -3737,7 +3737,6 @@ static void test_AttachConsole_child(DWORD console_pid)
     ok(res, "AttachConsole failed: %u\n", GetLastError());
 
     ok(pipe_out != GetStdHandle(STD_ERROR_HANDLE), "std handle not set to console\n");
-    todo_wine
     ok(RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle != NULL, "ConsoleHandle is NULL\n");
 
     console = CreateFileA("CONOUT$", GENERIC_READ|GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);

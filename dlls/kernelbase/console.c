@@ -250,7 +250,16 @@ BOOL WINAPI DECLSPEC_HOTPATCH AttachConsole( DWORD pid )
     }
     SERVER_END_REQ;
 
-    if (ret && !(ret = init_console_std_handles())) FreeConsole();
+    if (ret)
+    {
+        if ((ret = init_console_std_handles()))
+        {
+            HANDLE console = CreateFileW( L"CONIN$", GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE, 0, NULL, OPEN_EXISTING, 0, 0 );
+            if (console != INVALID_HANDLE_VALUE) RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle = console;
+            else ret = FALSE;
+        }
+        if (!ret) FreeConsole();
+    }
 
     RtlLeaveCriticalSection( &console_section );
     return ret;
