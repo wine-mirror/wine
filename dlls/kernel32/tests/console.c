@@ -3724,7 +3724,6 @@ static void test_AttachConsole_child(DWORD console_pid)
     ok(!res && GetLastError() == ERROR_ACCESS_DENIED,
        "AttachConsole returned: %x(%u)\n", res, GetLastError());
 
-    todo_wine
     ok(RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle != NULL, "ConsoleHandle is NULL\n");
     res = FreeConsole();
     ok(res, "FreeConsole failed: %u\n", GetLastError());
