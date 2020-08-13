@@ -1,8 +1,6 @@
 MODULE    = scsiport.sys
 IMPORTS   = ntoskrnl
-EXTRADLLFLAGS = -Wl,--subsystem,native
-
-EXTRADLLFLAGS = -mno-cygwin
+EXTRADLLFLAGS = -Wl,--subsystem,native -mno-cygwin
 
 C_SRCS = \
 	scsiport.c
