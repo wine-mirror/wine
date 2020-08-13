@@ -564,6 +564,7 @@ static void test_reflection(void)
         "        float b;\n"
         "        float c;\n"
         "    } s;\n"
+        /* In direct contradiction to the documentation, this does not align. */
         "    bool g;\n"
         "    float h[2];\n"
         "    int i;\n"
@@ -572,6 +573,10 @@ static void test_reflection(void)
         "    row_major float3x1 l;\n"
         "#pragma pack_matrix(row_major)\n"
         "    float3x1 o;\n"
+        "    float4 p;\n"
+        "    float q;\n"
+        "    struct r_name {float a;} r;\n"
+        "    column_major float3x1 t;\n"
         "};\n"
         "\n"
         "float m;\n"
@@ -585,13 +590,19 @@ static void test_reflection(void)
     {
         D3D11_SHADER_VARIABLE_DESC var_desc;
         D3D11_SHADER_TYPE_DESC type_desc;
+        const D3D11_SHADER_TYPE_DESC *field_types;
     };
 
-    static const D3D11_SHADER_TYPE_DESC field_types[] =
+    static const D3D11_SHADER_TYPE_DESC s_field_types[] =
     {
         {D3D_SVC_VECTOR, D3D_SVT_FLOAT, 1, 4, 0, 0, 0, "float4"},
         {D3D_SVC_SCALAR, D3D_SVT_FLOAT, 1, 1, 0, 0, 16, "float"},
         {D3D_SVC_SCALAR, D3D_SVT_FLOAT, 1, 1, 0, 0, 20, "float"},
+    };
+
+    static const D3D11_SHADER_TYPE_DESC r_field_types[] =
+    {
+        {D3D_SVC_SCALAR, D3D_SVT_FLOAT, 1, 1, 0, 0, 0, "float"},
     };
 
     static const struct shader_variable globals_vars =
@@ -604,7 +615,7 @@ static void test_reflection(void)
         {{"b", 4, 8}, {D3D_SVC_VECTOR, D3D_SVT_FLOAT, 1, 2, 0, 0, 0, "float2"}},
         {{"c", 16, 16}, {D3D_SVC_VECTOR, D3D_SVT_FLOAT, 1, 4, 0, 0, 0, "float4"}},
         {{"d", 32, 4}, {D3D_SVC_SCALAR, D3D_SVT_FLOAT, 1, 1, 0, 0, 0, "float"}},
-        {{"s", 48, 24}, {D3D_SVC_STRUCT, D3D_SVT_VOID, 1, 6, 0, 3, 0, "<unnamed>"}},
+        {{"s", 48, 24}, {D3D_SVC_STRUCT, D3D_SVT_VOID, 1, 6, 0, ARRAY_SIZE(s_field_types), 0, "<unnamed>"}, s_field_types},
         {{"g", 72, 4}, {D3D_SVC_SCALAR, D3D_SVT_BOOL, 1, 1, 0, 0, 0, "bool"}},
         {{"h", 80, 20}, {D3D_SVC_SCALAR, D3D_SVT_FLOAT, 1, 1, 2, 0, 0, "float"}},
         {{"i", 100, 4}, {D3D_SVC_SCALAR, D3D_SVT_INT, 1, 1, 0, 0, 0, "int"}},
@@ -612,6 +623,10 @@ static void test_reflection(void)
         {{"k", 112, 12}, {D3D_SVC_MATRIX_COLUMNS, D3D_SVT_FLOAT, 3, 1, 0, 0, 0, "float3x1"}},
         {{"l", 128, 36}, {D3D_SVC_MATRIX_ROWS, D3D_SVT_FLOAT, 3, 1, 0, 0, 0, "float3x1"}},
         {{"o", 176, 36, D3D_SVF_USED}, {D3D_SVC_MATRIX_ROWS, D3D_SVT_FLOAT, 3, 1, 0, 0, 0, "float3x1"}},
+        {{"p", 224, 16}, {D3D_SVC_VECTOR, D3D_SVT_FLOAT, 1, 4, 0, 0, 0, "float4"}},
+        {{"q", 240, 4}, {D3D_SVC_SCALAR, D3D_SVT_FLOAT, 1, 1, 0, 0, 0, "float"}},
+        {{"r", 256, 4}, {D3D_SVC_STRUCT, D3D_SVT_VOID, 1, 1, 0, ARRAY_SIZE(r_field_types), 0, "r_name"}, r_field_types},
+        {{"t", 260, 12}, {D3D_SVC_MATRIX_COLUMNS, D3D_SVT_FLOAT, 3, 1, 0, 0, 0, "float3x1"}},
     };
 
     static const struct
@@ -623,7 +638,7 @@ static void test_reflection(void)
     {
         {{"$Globals", D3D_CT_CBUFFER, 1, 16}, &globals_vars},
         {{"$Params", D3D_CT_CBUFFER, 1, 16}, &params_vars},
-        {{"b1", D3D_CT_CBUFFER, ARRAY_SIZE(buffer_vars), 224}, buffer_vars},
+        {{"b1", D3D_CT_CBUFFER, ARRAY_SIZE(buffer_vars), 272}, buffer_vars},
     };
 
     todo_wine vs_code = compile_shader(vs_source, "vs_5_0");
@@ -669,16 +684,13 @@ static void test_reflection(void)
             sprintf(prefix, "Test %u, %u", i, j);
             check_type_desc(prefix, &type_desc, &expect->type_desc);
 
-            if (!strcmp(type_desc.Name, "<unnamed>"))
+            for (k = 0; k < type_desc.Members; ++k)
             {
-                for (k = 0; k < ARRAY_SIZE(field_types); ++k)
-                {
-                    field = type->lpVtbl->GetMemberTypeByIndex(type, k);
-                    hr = field->lpVtbl->GetDesc(field, &type_desc);
-                    ok(hr == S_OK, "Test %u, %u, %u: got hr %#x.\n", i, j, k, hr);
-                    sprintf(prefix, "Test %u, %u, %u", i, j, k);
-                    check_type_desc(prefix, &type_desc, &field_types[k]);
-                }
+                field = type->lpVtbl->GetMemberTypeByIndex(type, k);
+                hr = field->lpVtbl->GetDesc(field, &type_desc);
+                ok(hr == S_OK, "Test %u, %u, %u: got hr %#x.\n", i, j, k, hr);
+                sprintf(prefix, "Test %u, %u, %u", i, j, k);
+                check_type_desc(prefix, &type_desc, &vs_buffers[i].vars[j].field_types[k]);
             }
         }
     }
