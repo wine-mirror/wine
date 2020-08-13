@@ -3592,7 +3592,6 @@ static void test_FreeConsole(void)
     HANDLE handle;
     BOOL ret;
 
-    todo_wine
     ok(RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle != NULL, "ConsoleHandle is NULL\n");
 
     ret = FreeConsole();

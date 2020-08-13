@@ -266,7 +266,7 @@ BOOL WINAPI AllocConsole(void)
     STARTUPINFOW app_si, console_si;
     WCHAR buffer[1024], cmd[256];
     PROCESS_INFORMATION pi;
-    HANDLE event, std_in;
+    HANDLE event, std_in, console;
     DWORD mode;
     BOOL ret;
 
@@ -324,6 +324,10 @@ BOOL WINAPI AllocConsole(void)
     }
     CloseHandle( event );
     if (!ret || !init_console_std_handles()) goto error;
+    console = CreateFileW( L"CONIN$", GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE, 0, NULL, OPEN_EXISTING, 0, 0 );
+    if (console == INVALID_HANDLE_VALUE) goto error;
+    RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle = console;
+
     TRACE( "Started wineconsole pid=%08x tid=%08x\n", pi.dwProcessId, pi.dwThreadId );
 
     RtlLeaveCriticalSection( &console_section );
