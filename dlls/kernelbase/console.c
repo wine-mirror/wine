@@ -509,6 +509,9 @@ BOOL WINAPI DECLSPEC_HOTPATCH FreeConsole(void)
 
     RtlEnterCriticalSection( &console_section );
 
+    NtClose( RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle );
+    RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle = NULL;
+
     if (console_flags & CONSOLE_INPUT_HANDLE)  NtClose( GetStdHandle( STD_INPUT_HANDLE ));
     if (console_flags & CONSOLE_OUTPUT_HANDLE) NtClose( GetStdHandle( STD_OUTPUT_HANDLE ));
     if (console_flags & CONSOLE_ERROR_HANDLE)  NtClose( GetStdHandle( STD_ERROR_HANDLE ));

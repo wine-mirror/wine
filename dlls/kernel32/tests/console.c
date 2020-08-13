@@ -3592,8 +3592,14 @@ static void test_FreeConsole(void)
     HANDLE handle;
     BOOL ret;
 
+    todo_wine
+    ok(RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle != NULL, "ConsoleHandle is NULL\n");
+
     ret = FreeConsole();
     ok(ret, "FreeConsole failed: %u\n", GetLastError());
+
+    ok(RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle == NULL, "ConsoleHandle = %p\n",
+       RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle);
 
     handle = CreateFileA("CONOUT$", GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
     ok(handle == INVALID_HANDLE_VALUE &&
@@ -3719,8 +3725,12 @@ static void test_AttachConsole_child(DWORD console_pid)
     ok(!res && GetLastError() == ERROR_ACCESS_DENIED,
        "AttachConsole returned: %x(%u)\n", res, GetLastError());
 
+    todo_wine
+    ok(RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle != NULL, "ConsoleHandle is NULL\n");
     res = FreeConsole();
     ok(res, "FreeConsole failed: %u\n", GetLastError());
+    ok(RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle == NULL, "ConsoleHandle = %p\n",
+       RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle);
 
     SetStdHandle(STD_ERROR_HANDLE, pipe_out);
 
@@ -3728,6 +3738,8 @@ static void test_AttachConsole_child(DWORD console_pid)
     ok(res, "AttachConsole failed: %u\n", GetLastError());
 
     ok(pipe_out != GetStdHandle(STD_ERROR_HANDLE), "std handle not set to console\n");
+    todo_wine
+    ok(RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle != NULL, "ConsoleHandle is NULL\n");
 
     console = CreateFileA("CONOUT$", GENERIC_READ|GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
     ok(console != INVALID_HANDLE_VALUE, "Could not open console\n");
