@@ -176,9 +176,7 @@ static BOOL restore_console_mode(HANDLE hin)
         close(fd);
     }
 
-    if (RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle == KERNEL32_CONSOLE_SHELL)
-        TERM_Exit();
-
+    TERM_Exit();
     return ret;
 }
 
@@ -1109,7 +1107,7 @@ BOOL CONSOLE_Init(RTL_USER_PROCESS_PARAMETERS *params)
     memset(&S_termios, 0, sizeof(S_termios));
     if (params->ConsoleHandle == KERNEL32_CONSOLE_SHELL)
     {
-        HANDLE  conin;
+        HANDLE  conin, console;
 
         /* FIXME: to be done even if program is a GUI ? */
         /* This is wine specific: we have no parent (we're started from unix)
@@ -1162,6 +1160,8 @@ BOOL CONSOLE_Init(RTL_USER_PROCESS_PARAMETERS *params)
             }
             SERVER_END_REQ;
         }
+        console = CreateFileW( coninW, GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE, 0, NULL, OPEN_EXISTING, 0, 0 );
+        if (console != INVALID_HANDLE_VALUE) params->ConsoleHandle = console;
     }
 
     /* convert value from server:
