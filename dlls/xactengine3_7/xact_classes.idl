@@ -20,60 +20,24 @@
 
 #pragma makedep register
 
+[
+    threading(both),
 #if XACT3_VER == 0x0300
-[
-    helpstring("XACT3.0 Class"),
-    threading(both),
     uuid(3b80ee2a-b0f5-4780-9e30-90cb39685b03)
-]
-coclass XACTEngine30 { interface IXACT30Engine; }
 #elif XACT3_VER == 0x0301
-[
-    helpstring("XACT3.1 Class"),
-    threading(both),
     uuid(962f5027-99be-4692-a468-85802cf8de61)
-]
-coclass XACTEngine31 { interface IXACT32Engine; }
 #elif XACT3_VER == 0x0302
-[
-    helpstring("XACT3.2 Class"),
-    threading(both),
     uuid(d3332f02-3dd0-4de9-9aec-20d85c4111b6)
-]
-coclass XACTEngine32 { interface IXACT32Engine; }
 #elif XACT3_VER == 0x0303
-[
-    helpstring("XACT3.3 Class"),
-    threading(both),
     uuid(94c1affa-66e7-4961-9521-cfdef3128d4f)
-]
-coclass XACTEngine33 { interface IXACT37Engine; }
 #elif XACT3_VER == 0x0304
-[
-    helpstring("XACT3.4 Class"),
-    threading(both),
     uuid(0977d092-2d95-4e43-8d42-9ddcc2545ed5)
-]
-coclass XACTEngine34 { interface IXACT37Engine; }
 #elif XACT3_VER == 0x0305
-[
-    helpstring("XACT3.5 Class"),
-    threading(both),
     uuid(074b110f-7f58-4743-aea5-12f15b5074ed)
-]
-coclass XACTEngine35 { interface IXACT37Engine; }
 #elif XACT3_VER == 0x0306
-[
-    helpstring("XACT3.6 Class"),
-    threading(both),
     uuid(248d8a3b-6256-44d3-a018-2ac96c459f47)
-]
-coclass XACTEngine36 { interface IXACT37Engine; }
 #else /* XACT3_VER == 0x0307 or not defined */
-[
-    helpstring("XACT3.7 Class"),
-    threading(both),
     uuid(bcc782bc-6492-4c22-8c35-f5d72fe73c6e)
-]
-coclass XACTEngine37 { interface IXACT37Engine; }
 #endif
+]
+coclass XACTEngine {}
