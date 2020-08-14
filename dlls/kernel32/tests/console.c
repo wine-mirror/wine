@@ -3589,7 +3589,9 @@ static void test_GetConsoleScreenBufferInfoEx(HANDLE std_output)
 
 static void test_FreeConsole(void)
 {
+    WCHAR title[16];
     HANDLE handle;
+    DWORD size;
     UINT cp;
     BOOL ret;
 
@@ -3635,6 +3637,13 @@ static void test_FreeConsole(void)
     SetLastError(0xdeadbeef);
     cp = GetConsoleOutputCP();
     ok(!cp, "cp = %x\n", cp);
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "last error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    memset( title, 0xc0, sizeof(title) );
+    size = GetConsoleTitleW( title, ARRAY_SIZE(title) );
+    ok(!size, "GetConsoleTitleW returned %u\n", size);
+    ok(title[0] == 0xc0c0, "title byffer changed\n");
     ok(GetLastError() == ERROR_INVALID_HANDLE, "last error %u\n", GetLastError());
 
     if (!skip_nt)

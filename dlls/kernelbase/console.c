@@ -739,20 +739,15 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetConsoleScreenBufferInfoEx( HANDLE handle,
  */
 DWORD WINAPI DECLSPEC_HOTPATCH GetConsoleTitleW( LPWSTR title, DWORD size )
 {
-    DWORD ret = 0;
+    if (!size) return 0;
 
-    SERVER_START_REQ( get_console_input_info )
-    {
-        req->handle = 0;
-        wine_server_set_reply( req, title, (size - 1) * sizeof(WCHAR) );
-        if (!wine_server_call_err( req ))
-        {
-            ret = wine_server_reply_size(reply) / sizeof(WCHAR);
-            title[ret] = 0;
-        }
-    }
-    SERVER_END_REQ;
-    return ret;
+    if (!console_ioctl( RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle, IOCTL_CONDRV_GET_TITLE,
+                        NULL, 0, title, (size - 1) * sizeof(WCHAR), &size ))
+        return 0;
+
+    size /= sizeof(WCHAR);
+    title[size] = 0;
+    return size + 1;
 }
 
 
