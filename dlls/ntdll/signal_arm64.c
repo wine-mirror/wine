@@ -1174,7 +1174,6 @@ __ASM_STDCALL_FUNC( RtlRaiseException, 4,
                    "ldp x4, x5, [sp]\n\t"        /* frame pointer, return address */
                    "stp x4, x5, [x1, #0xf0]\n\t" /* context->Fp, Lr */
                    "str  x5, [x1, #0x108]\n\t"   /* context->Pc */
-                   "str  x5, [x1, #0x108]\n\t"   /* context->Pc */
                    "str  x5, [x0, #0x10]\n\t"    /* rec->ExceptionAddress */
                    "mov  x2, #1\n\t"
                    "bl " __ASM_NAME("NtRaiseException") "\n\t"
