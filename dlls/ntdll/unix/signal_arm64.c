@@ -110,6 +110,24 @@ static DWORD64 get_fault_esr( ucontext_t *sigcontext )
     return 0;
 }
 
+#elif defined(__APPLE__)
+
+/* All Registers access - only for local access */
+# define REG_sig(reg_name, context) ((context)->uc_mcontext->__ss.__ ## reg_name)
+# define REGn_sig(reg_num, context) ((context)->uc_mcontext->__ss.__x[reg_num])
+
+/* Special Registers access  */
+# define SP_sig(context)            REG_sig(sp, context)    /* Stack pointer */
+# define PC_sig(context)            REG_sig(pc, context)    /* Program counter */
+# define PSTATE_sig(context)        REG_sig(cpsr, context)  /* Current State Register */
+# define FP_sig(context)            REG_sig(fp, context)    /* Frame pointer */
+# define LR_sig(context)            REG_sig(lr, context)    /* Link Register */
+
+static DWORD64 get_fault_esr( ucontext_t *sigcontext )
+{
+    return sigcontext->uc_mcontext->__es.__esr;
+}
+
 #endif /* linux */
 
 static pthread_key_t teb_key;
@@ -328,6 +346,7 @@ static void restore_context( const CONTEXT *context, ucontext_t *sigcontext )
  */
 static void save_fpu( CONTEXT *context, ucontext_t *sigcontext )
 {
+#ifdef linux
     struct fpsimd_context *fp = get_fpsimd_context( sigcontext );
 
     if (!fp) return;
@@ -335,6 +354,12 @@ static void save_fpu( CONTEXT *context, ucontext_t *sigcontext )
     context->Fpcr = fp->fpcr;
     context->Fpsr = fp->fpsr;
     memcpy( context->V, fp->vregs, sizeof(context->V) );
+#elif defined(__APPLE__)
+    context->ContextFlags |= CONTEXT_FLOATING_POINT;
+    context->Fpcr = sigcontext->uc_mcontext->__ns.__fpcr;
+    context->Fpsr = sigcontext->uc_mcontext->__ns.__fpsr;
+    memcpy( context->V, sigcontext->uc_mcontext->__ns.__v, sizeof(context->V) );
+#endif
 }
 
 
@@ -345,12 +370,18 @@ static void save_fpu( CONTEXT *context, ucontext_t *sigcontext )
  */
 static void restore_fpu( CONTEXT *context, ucontext_t *sigcontext )
 {
+#ifdef linux
     struct fpsimd_context *fp = get_fpsimd_context( sigcontext );
 
     if (!fp) return;
     fp->fpcr = context->Fpcr;
     fp->fpsr = context->Fpsr;
     memcpy( fp->vregs, context->V, sizeof(fp->vregs) );
+#elif defined(__APPLE__)
+    sigcontext->uc_mcontext->__ns.__fpcr = context->Fpcr;
+    sigcontext->uc_mcontext->__ns.__fpsr = context->Fpsr;
+    memcpy( sigcontext->uc_mcontext->__ns.__v, context->V, sizeof(context->V) );
+#endif
 }
 
 
