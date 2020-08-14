@@ -1935,6 +1935,7 @@ struct unwind_test
     const BYTE *unwind_info;
     const struct results *results;
     unsigned int nb_results;
+    const struct results *broken_results;
 };
 
 enum regs
@@ -1959,10 +1960,11 @@ static void call_virtual_unwind( int testnum, const struct unwind_test *test )
     CONTEXT context;
     RUNTIME_FUNCTION runtime_func;
     KNONVOLATILE_CONTEXT_POINTERS ctx_ptr;
-    UINT i, j, k;
+    UINT i, j, k, broken_k;
     ULONG64 fake_stack[256];
     ULONG64 frame, orig_rip, orig_rbp, unset_reg;
     UINT unwind_size = 4 + 2 * test->unwind_info[2] + 8;
+    void *expected_handler, *broken_handler;
 
     memcpy( (char *)code_mem + code_offset, test->function, test->function_size );
     memcpy( (char *)code_mem + unwind_offset, test->unwind_info, unwind_size );
@@ -1991,23 +1993,24 @@ static void call_virtual_unwind( int testnum, const struct unwind_test *test )
         data = (void *)0xdeadbeef;
         handler = RtlVirtualUnwind( UNW_FLAG_EHANDLER, (ULONG64)code_mem, orig_rip,
                                     &runtime_func, &context, &data, &frame, &ctx_ptr );
-        if (test->results[i].handler)
-        {
-            ok( (char *)handler == (char *)code_mem + 0x200,
-                "%u/%u: wrong handler %p/%p\n", testnum, i, handler, (char *)code_mem + 0x200 );
-            if (handler) ok( *(DWORD *)data == 0x08070605,
-                             "%u/%u: wrong handler data %p\n", testnum, i, data );
-        }
-        else
-        {
-            ok( handler == NULL, "%u/%u: handler %p instead of NULL\n", testnum, i, handler );
-            ok( data == (void *)0xdeadbeef, "%u/%u: handler data set to %p\n", testnum, i, data );
-        }
 
-        ok( context.Rip == test->results[i].rip, "%u/%u: wrong rip %p/%x\n",
-            testnum, i, (void *)context.Rip, test->results[i].rip );
-        ok( frame == (ULONG64)fake_stack + test->results[i].frame, "%u/%u: wrong frame %p/%p\n",
-            testnum, i, (void *)frame, (char *)fake_stack + test->results[i].frame );
+        expected_handler = test->results[i].handler ? (char *)code_mem + 0x200 : NULL;
+        broken_handler = test->broken_results && test->broken_results[i].handler ? (char *)code_mem + 0x200 : NULL;
+
+        ok( handler == expected_handler || broken( test->broken_results && handler == broken_handler ),
+                "%u/%u: wrong handler %p/%p\n", testnum, i, handler, expected_handler );
+        if (handler)
+            ok( *(DWORD *)data == 0x08070605, "%u/%u: wrong handler data %p\n", testnum, i, data );
+        else
+            ok( data == (void *)0xdeadbeef, "%u/%u: handler data set to %p\n", testnum, i, data );
+
+        ok( context.Rip == test->results[i].rip
+                || broken( test->broken_results && context.Rip == test->broken_results[i].rip ),
+                "%u/%u: wrong rip %p/%x\n", testnum, i, (void *)context.Rip, test->results[i].rip );
+        ok( frame == (ULONG64)fake_stack + test->results[i].frame
+                || broken( test->broken_results && frame == (ULONG64)fake_stack + test->broken_results[i].frame ),
+                "%u/%u: wrong frame %p/%p\n",
+                testnum, i, (void *)frame, (char *)fake_stack + test->results[i].frame );
 
         for (j = 0; j < 16; j++)
         {
@@ -2023,15 +2026,40 @@ static void call_virtual_unwind( int testnum, const struct unwind_test *test )
                 if (test->results[i].regs[k][0] == j) break;
             }
 
+            if (test->broken_results)
+            {
+                for (broken_k = 0; broken_k < nb_regs; broken_k++)
+                {
+                    if (test->broken_results[i].regs[broken_k][0] == -1)
+                    {
+                        broken_k = nb_regs;
+                        break;
+                    }
+                    if (test->broken_results[i].regs[broken_k][0] == j)
+                        break;
+                }
+            }
+            else
+            {
+                broken_k = k;
+            }
+
             if (j == rsp)  /* rsp is special */
             {
-                ULONG64 expected_rsp;
+                ULONG64 expected_rsp, broken_rsp;
 
                 ok( !ctx_ptr.IntegerContext[j],
                     "%u/%u: rsp should not be set in ctx_ptr\n", testnum, i );
                 expected_rsp = test->results[i].regs[k][1] < 0
                         ? -test->results[i].regs[k][1] : (ULONG64)fake_stack + test->results[i].regs[k][1];
-                ok( context.Rsp == expected_rsp,
+                if (test->broken_results)
+                    broken_rsp = test->broken_results[i].regs[k][1] < 0
+                            ? -test->broken_results[i].regs[k][1]
+                            : (ULONG64)fake_stack + test->broken_results[i].regs[k][1];
+                else
+                    broken_rsp = expected_rsp;
+
+                ok( context.Rsp == expected_rsp || broken( context.Rsp == broken_rsp ),
                     "%u/%u: register rsp wrong %p/%p\n",
                     testnum, i, (void *)context.Rsp, (void *)expected_rsp );
                 continue;
@@ -2039,16 +2067,18 @@ static void call_virtual_unwind( int testnum, const struct unwind_test *test )
 
             if (ctx_ptr.IntegerContext[j])
             {
-                ok( k < nb_regs, "%u/%u: register %s should not be set to %lx\n",
+                ok( k < nb_regs || broken( broken_k < nb_regs ), "%u/%u: register %s should not be set to %lx\n",
                     testnum, i, reg_names[j], *(&context.Rax + j) );
-                if (k < nb_regs)
-                    ok( *(&context.Rax + j) == test->results[i].regs[k][1],
+                ok( k == nb_regs || *(&context.Rax + j) == test->results[i].regs[k][1]
+                        || broken( broken_k == nb_regs || *(&context.Rax + j)
+                        == test->broken_results[i].regs[broken_k][1] ),
                         "%u/%u: register %s wrong %p/%x\n",
                         testnum, i, reg_names[j], (void *)*(&context.Rax + j), test->results[i].regs[k][1] );
             }
             else
             {
-                ok( k == nb_regs, "%u/%u: register %s should be set\n", testnum, i, reg_names[j] );
+                ok( k == nb_regs || broken( broken_k == nb_regs ), "%u/%u: register %s should be set\n",
+                        testnum, i, reg_names[j] );
                 if (j == rbp)
                     ok( context.Rbp == orig_rbp, "%u/%u: register rbp wrong %p/unset\n",
                         testnum, i, (void *)context.Rbp );
@@ -2215,12 +2245,45 @@ static void test_virtual_unwind(void)
         { 0x01,  0x50,  TRUE, 0x010, 0x000, { {rsp,-0x028}, {rbp,0x000}, {-1,-1} }},
     };
 
+    static const BYTE function_4[] =
+    {
+        0x55,                     /* 00: push %rbp */
+        0x5d,                     /* 01: pop %rbp */
+        0xc3                      /* 02: ret */
+     };
+
+    static const BYTE unwind_info_4[] =
+    {
+        1 | (UNW_FLAG_EHANDLER << 3),  /* version + flags */
+        0x0,                           /* prolog size */
+        0,                             /* opcode count */
+        0,                             /* frame reg */
+
+        0x00, 0x02, 0x00, 0x00,  /* handler */
+        0x05, 0x06, 0x07, 0x08,  /* data */
+    };
+
+    static const struct results results_4[] =
+    {
+      /* offset  rbp   handler  rip   frame   registers */
+        { 0x01,  0x50,  TRUE, 0x000, 0x000, { {rsp,0x008}, {-1,-1} }},
+    };
+
+    static const struct results broken_results_4[] =
+    {
+      /* offset  rbp   handler  rip   frame   registers */
+        { 0x01,  0x50,  FALSE, 0x008, 0x000, { {rsp,0x010}, {rbp,0x000}, {-1,-1} }},
+    };
+
     static const struct unwind_test tests[] =
     {
         { function_0, sizeof(function_0), unwind_info_0, results_0, ARRAY_SIZE(results_0) },
         { function_1, sizeof(function_1), unwind_info_1, results_1, ARRAY_SIZE(results_1) },
         { function_2, sizeof(function_2), unwind_info_2, results_2, ARRAY_SIZE(results_2) },
         { function_2, sizeof(function_2), unwind_info_3, results_3, ARRAY_SIZE(results_3) },
+
+        /* Broken before Win10 1809. */
+        { function_4, sizeof(function_4), unwind_info_4, results_4, ARRAY_SIZE(results_4), broken_results_4 },
     };
     unsigned int i;
 

@@ -815,13 +815,16 @@ PVOID WINAPI RtlVirtualUnwind( ULONG type, ULONG64 base, ULONG64 pc,
         /* check if in prolog */
         if (pc >= base + function->BeginAddress && pc < base + function->BeginAddress + info->prolog)
         {
+            TRACE("inside prolog.\n");
             prolog_offset = pc - base - function->BeginAddress;
         }
         else
         {
             prolog_offset = ~0;
-            if (is_inside_epilog( (BYTE *)pc, base, function ))
+            /* Since Win10 1809 epilogue does not have a special treatment in case of zero opcode count. */
+            if (info->count && is_inside_epilog( (BYTE *)pc, base, function ))
             {
+                TRACE("inside epilog.\n");
                 interpret_epilog( (BYTE *)pc, context, ctx_ptr );
                 *frame_ret = frame;
                 return NULL;
