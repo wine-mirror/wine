@@ -917,6 +917,8 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
 {
     HTMLDocument *This = impl_from_IOleCommandTarget(iface);
 
+    TRACE("(%p)->(%s %d %d %s %p)\n", This, debugstr_guid(pguidCmdGroup), nCmdID, nCmdexecopt, wine_dbgstr_variant(pvaIn), pvaOut);
+
     if(!This->doc_node->browser)
         return E_UNEXPECTED;
 
