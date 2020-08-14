@@ -3592,6 +3592,7 @@ static void test_FreeConsole(void)
     WCHAR title[16];
     HANDLE handle;
     DWORD size;
+    HWND hwnd;
     UINT cp;
     BOOL ret;
 
@@ -3644,6 +3645,11 @@ static void test_FreeConsole(void)
     size = GetConsoleTitleW( title, ARRAY_SIZE(title) );
     ok(!size, "GetConsoleTitleW returned %u\n", size);
     ok(title[0] == 0xc0c0, "title byffer changed\n");
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "last error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    hwnd = GetConsoleWindow();
+    ok(!hwnd, "hwnd = %p\n", hwnd);
     ok(GetLastError() == ERROR_INVALID_HANDLE, "last error %u\n", GetLastError());
 
     if (!skip_nt)
