@@ -51,7 +51,7 @@
 @ stdcall CoIncrementMTAUsage(ptr)
 @ stdcall CoInitialize(ptr)
 @ stdcall CoInitializeEx(ptr long)
-@ stdcall CoInitializeSecurity(ptr long ptr ptr long long ptr long ptr)
+@ stdcall CoInitializeSecurity(ptr long ptr ptr long long ptr long ptr) combase.CoInitializeSecurity
 @ stdcall CoInitializeWOW(long long)
 @ stdcall CoIsHandlerConnected(ptr)
 @ stdcall CoIsOle1Class (ptr)

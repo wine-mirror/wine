@@ -124,7 +124,7 @@
 @ stdcall CoImpersonateClient()
 @ stdcall CoIncrementMTAUsage(ptr) ole32.CoIncrementMTAUsage
 @ stdcall CoInitializeEx(ptr long) ole32.CoInitializeEx
-@ stdcall CoInitializeSecurity(ptr long ptr ptr long long ptr long ptr) ole32.CoInitializeSecurity
+@ stdcall CoInitializeSecurity(ptr long ptr ptr long long ptr long ptr)
 @ stdcall CoInitializeWOW(long long) ole32.CoInitializeWOW
 @ stub CoInvalidateRemoteMachineBindings
 @ stdcall CoIsHandlerConnected(ptr) ole32.CoIsHandlerConnected

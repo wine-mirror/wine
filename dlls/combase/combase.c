@@ -786,6 +786,19 @@ HRESULT WINAPI CoRevertToSelf(void)
 }
 
 /***********************************************************************
+ *           CoInitializeSecurity    (combase.@)
+ */
+HRESULT WINAPI CoInitializeSecurity(PSECURITY_DESCRIPTOR sd, LONG cAuthSvc,
+        SOLE_AUTHENTICATION_SERVICE *asAuthSvc, void *reserved1, DWORD authn_level,
+        DWORD imp_level, void *reserved2, DWORD capabilities, void *reserved3)
+{
+    FIXME("%p, %d, %p, %p, %d, %d, %p, %d, %p stub\n", sd, cAuthSvc, asAuthSvc, reserved1, authn_level,
+            imp_level, reserved2, capabilities, reserved3);
+
+    return S_OK;
+}
+
+/***********************************************************************
  *           CoGetObjectContext    (combase.@)
  */
 HRESULT WINAPI CoGetObjectContext(REFIID riid, void **ppv)
