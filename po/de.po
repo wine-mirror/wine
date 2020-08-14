@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2020-02-10 17:39+0100\n"
+"PO-Revision-Date: 2020-08-14 13:26+0200\n"
 "Last-Translator: Julian Rüger <jr98@gmx.net>\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -3622,7 +3622,7 @@ msgstr "Gamecontroller"
 
 #: joy.rc:32
 msgid "Test and configure game controllers."
-msgstr ""
+msgstr "Gamecontroller testen und konfigurieren."
 
 #: jscript.rc:28
 msgid "Error converting object to primitive type"
@@ -3637,10 +3637,8 @@ msgid "Subscript out of range"
 msgstr "Index außerhalb des Bereichs"
 
 #: jscript.rc:31
-#, fuzzy
-#| msgid "Out of paper; "
 msgid "Out of stack space"
-msgstr "Papierfach leer; "
+msgstr "Stackspeicher voll"
 
 #: jscript.rc:32
 msgid "Object required"
@@ -3779,16 +3777,12 @@ msgid "JScript object expected"
 msgstr "JScript-Objekt erwartet"
 
 #: jscript.rc:63
-#, fuzzy
-#| msgid "Array object expected"
 msgid "Enumerator object expected"
-msgstr "Array-Objekt erwartet"
+msgstr "Enumerator-Objekt erwartet"
 
 #: jscript.rc:64
-#, fuzzy
-#| msgid "Boolean object expected"
 msgid "Regular Expression object expected"
-msgstr "Boolesches Objekt erwartet"
+msgstr "Regulärer-Ausdruck-Objekt erwartet"
 
 #: jscript.rc:65
 msgid "Syntax error in regular expression"
@@ -6877,10 +6871,8 @@ msgid "Sink has not been finalized.\n"
 msgstr "Ausgang wurde nicht finalisiert.\n"
 
 #: mferror.mc:732
-#, fuzzy
-#| msgid "Sink was already stopped.\n"
 msgid "Clock was stopped\n"
-msgstr "Ausgang wurde bereits gestoppt.\n"
+msgstr "Zeitgeber wurde gestoppt\n"
 
 #: mferror.mc:32
 msgid "Media Foundation platform is not initialized.\n"
@@ -7260,10 +7252,8 @@ msgid "Clock state was already set.\n"
 msgstr "Zeitgeberstatus wurde bereits gesetzt.\n"
 
 #: mferror.mc:725
-#, fuzzy
-#| msgid "Clock is not available.\n"
 msgid "Clock is not simple\n"
-msgstr "Zeitgeber nicht verfügbar.\n"
+msgstr "Zeitgeber ist nicht einfach\n"
 
 #: mpr.rc:35 wininet.rc:37
 msgid "Enter Network Password"
@@ -8363,7 +8353,8 @@ msgstr "Anbieter"
 
 #: version.rc:59
 msgid "Select the data you want to connect to:"
-msgstr "Wählen Sie die zu verbindenden Daten aus:"
+msgstr ""
+"Wählen Sie aus, zu welchen Daten Sie eine Verbindung herstellen möchten:"
 
 #: version.rc:66
 msgid "Connection"
@@ -8411,7 +8402,7 @@ msgstr "Kennwort &speichern"
 
 #: version.rc:85
 msgid "3. Enter the &initial catalog to use:"
-msgstr "3. Folgenden Initialkatalog verwenden:"
+msgstr "3. Folgenden &Initialkatalog verwenden:"
 
 #: version.rc:87
 msgid "&Test Connection"
@@ -8422,116 +8413,97 @@ msgid "Advanced"
 msgstr "Fortgeschrittene"
 
 #: version.rc:95
-#, fuzzy
-#| msgid "Network share"
 msgid "Network settings"
-msgstr "Netzwerkfreigabe"
+msgstr "Netzwerkeinstellungen"
 
 #: version.rc:96
-#, fuzzy
-#| msgid "Bad impersonation level.\n"
 msgid "&Impersonation level:"
-msgstr "Fehlerhafte Imitationsstufe.\n"
+msgstr "&Imitationsstufe:"
 
 #: version.rc:98
 msgid "P&rotection level:"
-msgstr ""
+msgstr "&Schutzlevel:"
 
 #: version.rc:101
-#, fuzzy
-#| msgid "Connected"
 msgid "Connect:"
-msgstr "Verbunden"
+msgstr "Verbinden:"
 
 #: version.rc:103
-#, fuzzy
-#| msgid "seconds"
 msgid "seconds."
-msgstr "Sekunden"
+msgstr "Sekunden."
 
 #: version.rc:104
-#, fuzzy
-#| msgid "Success"
 msgid "A&ccess:"
-msgstr "Erfolgreich"
+msgstr "Zugriff:"
 
 #: version.rc:110
-#, fuzzy
-#| msgid "&All"
 msgid "All"
-msgstr "&Alles"
+msgstr "Alle"
 
 #: version.rc:114
 msgid ""
 "These are the initialization properties for this type of data. To edit a "
 "value, select a property, then choose Edit Value below."
 msgstr ""
+"Dies sind die Initialisierungs-Eigenschaften für diese Art von Daten. Um "
+"einen Wert zu bearbeiten, markieren Sie die entsprechende Eigenschaft und "
+"klicken Sie auf \"Wert bearbeiten\"."
 
 #: version.rc:115
-#, fuzzy
-#| msgid "&Edit..."
 msgid "&Edit Value..."
-msgstr "&Bearbeiten..."
+msgstr "&Wert bearbeiten..."
 
 #: version.rc:49
-#, fuzzy
-#| msgid "Data Link Properties"
 msgid "Data Link Error"
-msgstr "Eigenschaften der Datenverbindung"
+msgstr "Datenverbindungsfehler"
 
 #: version.rc:50
-#, fuzzy
-#| msgid "Please select a file."
 msgid "Please select a provider."
-msgstr "Bitte wählen Sie eine Datei."
+msgstr "Bitte wählen Sie einen Anbieter."
 
 #: version.rc:51
 msgid ""
 "Provider is no longer available. Ensure that the provider is installed "
 "properly."
 msgstr ""
+"Der Anbieter ist nicht länger verfügbar. Bitte stellen Sie sicher, dass der "
+"Anbieter korrekt installiert wurde."
 
 #: version.rc:36
 msgid "Data Link Properties"
-msgstr "Eigenschaften der Datenverbindung"
+msgstr "Datenverbindungseigenschaften"
 
 #: version.rc:37
 msgid "OLE DB Provider(s)"
 msgstr "OLE DB-Anbieter"
 
 #: version.rc:41
-#, fuzzy
-#| msgid "Ready"
 msgid "Read"
-msgstr "Bereit"
+msgstr "Read"
 
 #: version.rc:42
-#, fuzzy
-#| msgid "Readme:"
 msgid "ReadWrite"
-msgstr "Liesmich:"
+msgstr "ReadWrite"
 
 #: version.rc:43
 msgid "Share Deny None"
-msgstr ""
+msgstr "Share Deny None"
 
 #: version.rc:44
 msgid "Share Deny Read"
-msgstr ""
+msgstr "Share Deny Read"
 
 #: version.rc:45
 msgid "Share Deny Write"
-msgstr ""
+msgstr "Share Deny Write"
 
 #: version.rc:46
 msgid "Share Exclusive"
-msgstr ""
+msgstr "Share Exclusive"
 
 #: version.rc:47
-#, fuzzy
-#| msgid "I/O Writes"
 msgid "Write"
-msgstr "E/A (Schreiben)"
+msgstr "Write"
 
 #: oledlg.rc:55
 msgid "Insert Object"
@@ -9736,16 +9708,12 @@ msgid "Cape Verde Daylight Time"
 msgstr "Kap Verde Sommerzeit"
 
 #: tzres.rc:120
-#, fuzzy
-#| msgid "Hawaiian Standard Time"
 msgid "Haiti Standard Time"
-msgstr "Hawaii Normalzeit"
+msgstr "Haiti Normalzeit"
 
 #: tzres.rc:121
-#, fuzzy
-#| msgid "Hawaiian Daylight Time"
 msgid "Haiti Daylight Time"
-msgstr "Hawaii Sommerzeit"
+msgstr "Haiti Sommerzeit"
 
 #: tzres.rc:78
 msgid "Central European Standard Time"
@@ -9956,16 +9924,12 @@ msgid "Argentina Daylight Time"
 msgstr "Argentinien Sommerzeit"
 
 #: tzres.rc:142
-#, fuzzy
-#| msgid "Mauritius Standard Time"
 msgid "Marquesas Standard Time"
-msgstr "Mauritius Normalzeit"
+msgstr "Marquesas Normalzeit"
 
 #: tzres.rc:143
-#, fuzzy
-#| msgid "Mauritius Daylight Time"
 msgid "Marquesas Daylight Time"
-msgstr "Mauritius Sommerzeit"
+msgstr "Marquesas Sommerzeit"
 
 #: tzres.rc:156
 msgid "Myanmar Standard Time"
@@ -10340,16 +10304,12 @@ msgid "Venezuela Daylight Time"
 msgstr "Venezuela Sommerzeit"
 
 #: tzres.rc:60
-#, fuzzy
-#| msgid "Mountain Standard Time"
 msgid "Bougainville Standard Time"
-msgstr "Mountain Normalzeit"
+msgstr "Bougainville Normalzeit"
 
 #: tzres.rc:61
-#, fuzzy
-#| msgid "Mountain Daylight Time"
 msgid "Bougainville Daylight Time"
-msgstr "Mountain Sommerzeit"
+msgstr "Bougainville Sommerzeit"
 
 #: tzres.rc:122
 msgid "Hawaiian Standard Time"
@@ -10376,16 +10336,12 @@ msgid "New Zealand Daylight Time"
 msgstr "Neuseeland Sommerzeit"
 
 #: tzres.rc:34
-#, fuzzy
-#| msgid "Argentina Standard Time"
 msgid "Aleutian Standard Time"
-msgstr "Argentinien Normalzeit"
+msgstr "Aleutische Normalzeit"
 
 #: tzres.rc:35
-#, fuzzy
-#| msgid "Argentina Daylight Time"
 msgid "Aleutian Daylight Time"
-msgstr "Argentinien Sommerzeit"
+msgstr "Aleutische Sommerzeit"
 
 #: tzres.rc:74
 msgid "Central Brazilian Standard Time"
@@ -10468,16 +10424,12 @@ msgid "Korea Daylight Time"
 msgstr "Koreanische Sommerzeit"
 
 #: tzres.rc:86
-#, fuzzy
-#| msgid "Easter Island Standard Time"
 msgid "Chatham Islands Standard Time"
-msgstr "Osterinsel Normalzeit"
+msgstr "Chathaminseln Normalzeit"
 
 #: tzres.rc:87
-#, fuzzy
-#| msgid "Easter Island Daylight Time"
 msgid "Chatham Islands Daylight Time"
-msgstr "Osterinsel Sommerzeit"
+msgstr "Chathaminseln Sommerzeit"
 
 #: tzres.rc:92
 msgid "E. Africa Standard Time"
@@ -12633,6 +12585,9 @@ msgid ""
 "\n"
 "hardlink      hardlink management\n"
 msgstr ""
+"- Unterstützte Befehle -\n"
+"\n"
+"hardlink      Verwaltung von Hardlinks\n"
 
 #: fsutil.mc:35
 msgid ""
@@ -12640,10 +12595,13 @@ msgid ""
 "\n"
 "create        create a hardlink\n"
 msgstr ""
+"- Hardlink - Unterstützte Befehle -\n"
+"\n"
+"create        Einen Hardlink anlegen\n"
 
 #: fsutil.mc:40
 msgid "Syntax: fsutil hardlink create <new> <existing>\n"
-msgstr ""
+msgstr "Syntax: fsutil hardlink create <neu> <bestehend>\n"
 
 #: hostname.rc:30
 msgid "Usage: hostname\n"
