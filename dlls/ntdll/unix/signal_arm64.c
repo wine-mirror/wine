@@ -156,11 +156,27 @@ NTSTATUS CDECL unwind_builtin_dll( ULONG type, DISPATCHER_CONTEXT *dispatch, CON
     unw_proc_info_t info;
     int rc;
 
+#ifdef __APPLE__
+    rc = unw_getcontext( &unw_context );
+    if (rc == UNW_ESUCCESS)
+        rc = unw_init_local( &cursor, &unw_context );
+    if (rc == UNW_ESUCCESS)
+    {
+        int i;
+        for (i = 0; i <= 28; i++)
+            unw_set_reg( &cursor, UNW_ARM64_X0 + i, context->u.X[i] );
+        unw_set_reg( &cursor, UNW_ARM64_FP, context->u.s.Fp );
+        unw_set_reg( &cursor, UNW_ARM64_LR, context->u.s.Lr );
+        unw_set_reg( &cursor, UNW_ARM64_SP, context->Sp );
+        unw_set_reg( &cursor, UNW_REG_IP,   context->Pc );
+    }
+#else
     memcpy( unw_context.uc_mcontext.regs, context->u.X, sizeof(context->u.X) );
     unw_context.uc_mcontext.sp = context->Sp;
     unw_context.uc_mcontext.pc = context->Pc;
 
     rc = unw_init_local( &cursor, &unw_context );
+#endif
     if (rc != UNW_ESUCCESS)
     {
         WARN( "setup failed: %d\n", rc );
@@ -198,6 +214,16 @@ NTSTATUS CDECL unwind_builtin_dll( ULONG type, DISPATCHER_CONTEXT *dispatch, CON
     dispatch->LanguageHandler  = (void *)info.handler;
     dispatch->HandlerData      = (void *)info.lsda;
     dispatch->EstablisherFrame = context->Sp;
+#ifdef __APPLE__
+    {
+        int i;
+        for (i = 0; i <= 28; i++)
+            unw_get_reg( &cursor, UNW_ARM64_X0 + i, (unw_word_t *)&context->u.X[i] );
+    }
+    unw_get_reg( &cursor, UNW_ARM64_FP,    (unw_word_t *)&context->u.s.Fp );
+    unw_get_reg( &cursor, UNW_ARM64_X30,   (unw_word_t *)&context->u.s.Lr );
+    unw_get_reg( &cursor, UNW_ARM64_SP,    (unw_word_t *)&context->Sp );
+#else
     unw_get_reg( &cursor, UNW_AARCH64_X0,  (unw_word_t *)&context->u.s.X0 );
     unw_get_reg( &cursor, UNW_AARCH64_X1,  (unw_word_t *)&context->u.s.X1 );
     unw_get_reg( &cursor, UNW_AARCH64_X2,  (unw_word_t *)&context->u.s.X2 );
@@ -230,6 +256,7 @@ NTSTATUS CDECL unwind_builtin_dll( ULONG type, DISPATCHER_CONTEXT *dispatch, CON
     unw_get_reg( &cursor, UNW_AARCH64_X29, (unw_word_t *)&context->u.s.Fp );
     unw_get_reg( &cursor, UNW_AARCH64_X30, (unw_word_t *)&context->u.s.Lr );
     unw_get_reg( &cursor, UNW_AARCH64_SP,  (unw_word_t *)&context->Sp );
+#endif
     unw_get_reg( &cursor, UNW_REG_IP,      (unw_word_t *)&context->Pc );
     context->ContextFlags |= CONTEXT_UNWOUND_TO_CALL;
 
