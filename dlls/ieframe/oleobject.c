@@ -230,6 +230,8 @@ static HRESULT activate_ui(WebBrowser *This, IOleClientSite *active_site)
     SetFocus(This->shell_embedding_hwnd);
     notify_on_focus(This, TRUE);
 
+    activate_document(&This->doc_host);
+
     This->ui_activated = TRUE;
 
     return S_OK;
