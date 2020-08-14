@@ -291,6 +291,8 @@ extern const char *get_asm_export_section(void);
 extern const char *get_asm_rodata_section(void);
 extern const char *get_asm_rsrc_section(void);
 extern const char *get_asm_string_section(void);
+extern const char *arm64_page( const char *sym );
+extern const char *arm64_pageoff( const char *sym );
 extern void output_function_size( const char *name );
 extern void output_gnu_stack_note(void);
 

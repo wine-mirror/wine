@@ -339,8 +339,8 @@ static void output_relay_debug( DLLSPEC *spec )
             output( "\tstp x8, x9, [SP,#-16]!\n" );
             output( "\tmov w1, #%u\n", odp->u.func.args_str_offset << 16 );
             if (i - spec->base) output( "\tadd w1, w1, #%u\n", i - spec->base );
-            output( "\tadrp x0, .L__wine_spec_relay_descr\n");
-            output( "\tadd x0, x0, #:lo12:.L__wine_spec_relay_descr\n");
+            output( "\tadrp x0, %s\n", arm64_page(".L__wine_spec_relay_descr") );
+            output( "\tadd x0, x0, #%s\n", arm64_pageoff(".L__wine_spec_relay_descr") );
             output( "\tldr x3, [x0, #8]\n");
             output( "\tblr x3\n");
             output( "\tadd SP, SP, #16\n" );

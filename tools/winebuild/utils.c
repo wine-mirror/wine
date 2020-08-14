@@ -1291,3 +1291,35 @@ const char *get_asm_string_section(void)
     default:             return ".section .rodata";
     }
 }
+
+const char *arm64_page( const char *sym )
+{
+    static char *buffer;
+
+    switch (target_platform)
+    {
+    case PLATFORM_APPLE:
+        free( buffer );
+        buffer = strmake( "%s@PAGE", sym );
+        return buffer;
+    default:
+        return sym;
+    }
+}
+
+const char *arm64_pageoff( const char *sym )
+{
+    static char *buffer;
+
+    free( buffer );
+    switch (target_platform)
+    {
+    case PLATFORM_APPLE:
+        buffer = strmake( "%s@PAGEOFF", sym );
+        break;
+    default:
+        buffer = strmake( ":lo12:%s", sym );
+        break;
+    }
+    return buffer;
+}

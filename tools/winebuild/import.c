@@ -761,8 +761,8 @@ static void output_import_thunk( const char *name, const char *table, int pos )
         output( "1:\t.long %s+%u-(1b+4)\n", table, pos );
         break;
     case CPU_ARM64:
-        output( "\tadrp x9, %s\n", table );
-        output( "\tadd x9, x9, #:lo12:%s\n", table );
+        output( "\tadrp x9, %s\n", arm64_page( table ) );
+        output( "\tadd x9, x9, #%s\n", arm64_pageoff( table ) );
         if (pos & 0xf000) output( "\tadd x9, x9, #%u\n", pos & 0xf000 );
         if (pos & 0x0f00) output( "\tadd x9, x9, #%u\n", pos & 0x0f00 );
         if (pos & 0x00f0) output( "\tadd x9, x9, #%u\n", pos & 0x00f0 );
@@ -1080,8 +1080,8 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
     case CPU_ARM64:
         output( "\tstp x29, x30, [sp,#-16]!\n" );
         output( "\tmov x29, sp\n" );
-        output( "\tadrp x9, %s\n", asm_name("__wine_spec_delay_load") );
-        output( "\tadd x9, x9, #:lo12:%s\n", asm_name("__wine_spec_delay_load") );
+        output( "\tadrp x9, %s\n", arm64_page( asm_name("__wine_spec_delay_load") ) );
+        output( "\tadd x9, x9, #%s\n", arm64_pageoff( asm_name("__wine_spec_delay_load") ) );
         output( "\tblr x9\n" );
         output( "\tmov x9, x0\n" );
         output( "\tldp x29, x30, [sp],#16\n" );
@@ -1367,17 +1367,19 @@ void output_stubs( DLLSPEC *spec )
             else output( "\t.long %u\n", odp->ordinal );
             break;
         case CPU_ARM64:
-            output( "\tadrp x0, .L__wine_spec_file_name\n" );
-            output( "\tadd x0, x0, #:lo12:.L__wine_spec_file_name\n" );
+            output( "\tadrp x0, %s\n", arm64_page(".L__wine_spec_file_name") );
+            output( "\tadd x0, x0, #%s\n", arm64_pageoff(".L__wine_spec_file_name") );
             if (exp_name)
             {
-                output( "\tadrp x1, .L%s_string\n", name );
-                output( "\tadd x1, x1, #:lo12:.L%s_string\n", name );
+                char *sym = strmake( ".L%s_string", name );
+                output( "\tadrp x1, %s\n", arm64_page( sym ) );
+                output( "\tadd x1, x1, #%s\n", arm64_pageoff( sym ) );
+                free( sym );
             }
             else
                 output( "\tmov x1, %u\n", odp->ordinal );
-            output( "\tadrp x2, %s\n", asm_name("__wine_spec_unimplemented_stub") );
-            output( "\tadd x2, x2, #:lo12:%s\n", asm_name("__wine_spec_unimplemented_stub") );
+            output( "\tadrp x2, %s\n", arm64_page( asm_name("__wine_spec_unimplemented_stub") ) );
+            output( "\tadd x2, x2, #%s\n", arm64_pageoff( asm_name("__wine_spec_unimplemented_stub") ) );
             output( "\tblr x2\n" );
             break;
         default:
@@ -1627,8 +1629,8 @@ void output_syscalls( DLLSPEC *spec )
             output( "\tldr x20, [x19]\n" );  /* prev frame */
             output( "\tstr x20, [sp, #88]\n" );
             output( "\tstr x29, [x19]\n" );  /* syscall frame */
-            output( "\tadrp x16, .Lsyscall_args\n" );
-            output( "\tadd x16, x16, #:lo12:.Lsyscall_args\n" );
+            output( "\tadrp x16, %s\n", arm64_page(".Lsyscall_args") );
+            output( "\tadd x16, x16, #%s\n", arm64_pageoff(".Lsyscall_args") );
             output( "\tldrb w9, [x16, x8]\n" );
             output( "\tsubs x9, x9, #64\n" );
             output( "\tbls 2f\n" );
@@ -1640,8 +1642,8 @@ void output_syscalls( DLLSPEC *spec )
             output( "\tldr x10, [x11, x9]\n" );
             output( "\tstr x10, [sp, x9]\n" );
             output( "\tcbnz x9, 1b\n" );
-            output( "2:\tadrp x16, .Lsyscall_table\n" );
-            output( "\tadd x16, x16, #:lo12:.Lsyscall_table\n" );
+            output( "2:\tadrp x16, %s\n", arm64_page(".Lsyscall_table") );
+            output( "\tadd x16, x16, #%s\n", arm64_pageoff(".Lsyscall_table") );
             output( "\tldr x16, [x16, x8, lsl 3]\n" );
             output( "\tblr x16\n" );
             output( "\tmov sp, x29\n" );
@@ -1741,8 +1743,8 @@ void output_syscalls( DLLSPEC *spec )
         case CPU_ARM64:
             output( "\tstp x29, x30, [sp,#-16]!\n" );
             output( "\tmov x8, #%u\n", i );
-            output( "\tadrp x16, %s\n", asm_name("__wine_syscall_dispatcher") );
-            output( "\tldr x16, [x16, #:lo12:%s]\n", asm_name("__wine_syscall_dispatcher") );
+            output( "\tadrp x16, %s\n", arm64_page( asm_name("__wine_syscall_dispatcher") ) );
+            output( "\tldr x16, [x16, #%s]\n", arm64_pageoff( asm_name("__wine_syscall_dispatcher") ) );
             output( "\tblr x16\n");
             output( "\tldp x29, x30, [sp], #16\n" );
             output( "\tret\n" );
