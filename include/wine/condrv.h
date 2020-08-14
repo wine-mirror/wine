@@ -74,6 +74,7 @@ struct condrv_input_info
     unsigned int  output_cp;      /* console output codepage */
     unsigned int  history_mode;   /* whether we duplicate lines in history */
     unsigned int  history_size;   /* number of lines in history */
+    unsigned int  history_index;  /* number of used lines in history */
     unsigned int  edition_mode;   /* index to the edition mode flavors */
     unsigned int  input_count;    /* number of available input records */
     condrv_handle_t win;          /* renderer window handle */

@@ -1595,6 +1595,7 @@ static int console_input_ioctl( struct fd *fd, ioctl_code_t code, struct async *
             info.output_cp     = console->output_cp;
             info.history_mode  = console->history_mode;
             info.history_size  = console->history_size;
+            info.history_index = console->history_index;
             info.edition_mode  = console->edition_mode;
             info.input_count   = console->recnum;
             info.win           = console->win;

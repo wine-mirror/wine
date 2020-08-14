@@ -408,7 +408,7 @@ static WCHAR* WCEL_GetHistory(WCEL_Context* ctx, int idx)
 
 static void	WCEL_HistoryInit(WCEL_Context* ctx)
 {
-    ctx->histPos  = CONSOLE_GetNumHistoryEntries();
+    ctx->histPos  = CONSOLE_GetNumHistoryEntries(ctx->hConIn);
     ctx->histSize = ctx->histPos + 1;
     ctx->histCurr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WCHAR));
 }

@@ -1009,16 +1009,11 @@ BOOL	CONSOLE_AppendHistory(const WCHAR* ptr)
  *
  *
  */
-unsigned CONSOLE_GetNumHistoryEntries(void)
+unsigned CONSOLE_GetNumHistoryEntries(HANDLE console)
 {
-    unsigned ret = -1;
-    SERVER_START_REQ(get_console_input_info)
-    {
-        req->handle = 0;
-        if (!wine_server_call_err( req )) ret = reply->history_index;
-    }
-    SERVER_END_REQ;
-    return ret;
+    struct condrv_input_info info;
+    BOOL ret = DeviceIoControl( console, IOCTL_CONDRV_GET_INPUT_INFO, NULL, 0, &info, sizeof(info), NULL, NULL );
+    return ret ? info.history_index : ~0;
 }
 
 /******************************************************************

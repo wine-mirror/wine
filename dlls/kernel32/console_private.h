@@ -24,7 +24,7 @@
 /* console.c */
 extern int      CONSOLE_GetHistory(int idx, WCHAR* buf, int buf_len) DECLSPEC_HIDDEN;
 extern BOOL     CONSOLE_AppendHistory(const WCHAR *p) DECLSPEC_HIDDEN;
-extern unsigned CONSOLE_GetNumHistoryEntries(void) DECLSPEC_HIDDEN;
+extern unsigned CONSOLE_GetNumHistoryEntries(HANDLE) DECLSPEC_HIDDEN;
 extern void     CONSOLE_FillLineUniform(HANDLE hConsoleOutput, int i, int j, int len, LPCHAR_INFO lpFill) DECLSPEC_HIDDEN;
 extern BOOL     CONSOLE_GetEditionMode(HANDLE, int*) DECLSPEC_HIDDEN;
 
