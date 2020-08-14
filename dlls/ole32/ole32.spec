@@ -59,7 +59,7 @@
 @ stdcall CoLockObjectExternal(ptr long long)
 @ stdcall CoMarshalHresult(ptr long) combase.CoMarshalHresult
 @ stdcall CoMarshalInterThreadInterfaceInStream(ptr ptr ptr) combase.CoMarshalInterThreadInterfaceInStream
-@ stdcall CoMarshalInterface(ptr ptr ptr long ptr long)
+@ stdcall CoMarshalInterface(ptr ptr ptr long ptr long) combase.CoMarshalInterface
 @ stub CoQueryAuthenticationServices
 @ stdcall CoQueryClientBlanket(ptr ptr ptr ptr ptr ptr ptr) combase.CoQueryClientBlanket
 @ stdcall CoQueryProxyBlanket(ptr ptr ptr ptr ptr ptr ptr ptr) combase.CoQueryProxyBlanket

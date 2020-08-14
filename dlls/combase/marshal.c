@@ -411,3 +411,98 @@ HRESULT WINAPI CoGetMarshalSizeMax(ULONG *size, REFIID riid, IUnknown *unk,
     IMarshal_Release(marshal);
     return hr;
 }
+
+static void dump_mshflags(MSHLFLAGS flags)
+{
+    if (flags & MSHLFLAGS_TABLESTRONG)
+        TRACE(" MSHLFLAGS_TABLESTRONG");
+    if (flags & MSHLFLAGS_TABLEWEAK)
+        TRACE(" MSHLFLAGS_TABLEWEAK");
+    if (!(flags & (MSHLFLAGS_TABLESTRONG|MSHLFLAGS_TABLEWEAK)))
+        TRACE(" MSHLFLAGS_NORMAL");
+    if (flags & MSHLFLAGS_NOPING)
+        TRACE(" MSHLFLAGS_NOPING");
+}
+
+/***********************************************************************
+ *        CoMarshalInterface    (combase.@)
+ */
+HRESULT WINAPI CoMarshalInterface(IStream *stream, REFIID riid, IUnknown *unk,
+        DWORD dest_context, void *pvDestContext, DWORD mshlFlags)
+{
+    CLSID marshaler_clsid;
+    IMarshal *marshal;
+    HRESULT hr;
+
+    TRACE("%p, %s, %p, %x, %p, ", stream, debugstr_guid(riid), unk, dest_context, pvDestContext);
+    dump_mshflags(mshlFlags);
+    TRACE("\n");
+
+    if (!unk || !stream)
+        return E_INVALIDARG;
+
+    hr = IUnknown_QueryInterface(unk, &IID_IMarshal, (void **)&marshal);
+    if (hr != S_OK)
+        hr = CoGetStandardMarshal(riid, unk, dest_context, pvDestContext, mshlFlags, &marshal);
+    if (hr != S_OK)
+    {
+        ERR("Failed to get marshaller, %#x\n", hr);
+        return hr;
+    }
+
+    hr = IMarshal_GetUnmarshalClass(marshal, riid, unk, dest_context, pvDestContext, mshlFlags,
+            &marshaler_clsid);
+    if (hr != S_OK)
+    {
+        ERR("IMarshal::GetUnmarshalClass failed, %#x\n", hr);
+        goto cleanup;
+    }
+
+    /* FIXME: implement handler marshaling too */
+    if (IsEqualCLSID(&marshaler_clsid, &CLSID_StdMarshal))
+    {
+        TRACE("Using standard marshaling\n");
+    }
+    else
+    {
+        OBJREF objref;
+
+        TRACE("Using custom marshaling\n");
+        objref.signature = OBJREF_SIGNATURE;
+        objref.iid = *riid;
+        objref.flags = OBJREF_CUSTOM;
+        objref.u_objref.u_custom.clsid = marshaler_clsid;
+        objref.u_objref.u_custom.cbExtension = 0;
+        objref.u_objref.u_custom.size = 0;
+        hr = IMarshal_GetMarshalSizeMax(marshal, riid, unk, dest_context, pvDestContext, mshlFlags,
+                &objref.u_objref.u_custom.size);
+        if (hr != S_OK)
+        {
+            ERR("Failed to get max size of marshal data, error %#x\n", hr);
+            goto cleanup;
+        }
+        /* write constant sized common header and OR_CUSTOM data into stream */
+        hr = IStream_Write(stream, &objref, FIELD_OFFSET(OBJREF, u_objref.u_custom.pData), NULL);
+        if (hr != S_OK)
+        {
+            ERR("Failed to write OR_CUSTOM header to stream with %#x\n", hr);
+            goto cleanup;
+        }
+    }
+
+    TRACE("Calling IMarshal::MarshalInterface\n");
+
+    hr = IMarshal_MarshalInterface(marshal, stream, riid, unk, dest_context, pvDestContext, mshlFlags);
+    if (hr != S_OK)
+    {
+        ERR("Failed to marshal the interface %s, hr %#x\n", debugstr_guid(riid), hr);
+        goto cleanup;
+    }
+
+cleanup:
+    IMarshal_Release(marshal);
+
+    TRACE("completed with hr %#x\n", hr);
+
+    return hr;
+}

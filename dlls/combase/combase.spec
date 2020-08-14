@@ -131,7 +131,7 @@
 @ stdcall CoLockObjectExternal(ptr long long) ole32.CoLockObjectExternal
 @ stdcall CoMarshalHresult(ptr long)
 @ stdcall CoMarshalInterThreadInterfaceInStream(ptr ptr ptr)
-@ stdcall CoMarshalInterface(ptr ptr ptr long ptr long) ole32.CoMarshalInterface
+@ stdcall CoMarshalInterface(ptr ptr ptr long ptr long)
 @ stub CoPopServiceDomain
 @ stub CoPushServiceDomain
 @ stub CoQueryAuthenticationServices
