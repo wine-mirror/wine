@@ -24,6 +24,7 @@
 
 #include "wine/debug.h"
 #include "wine/heap.h"
+#include "wine/orpc.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
@@ -378,4 +379,35 @@ HRESULT WINAPI CoCreateFreeThreadedMarshaler(IUnknown *outer, IUnknown **marshal
     *marshaler = &object->IUnknown_inner;
 
     return S_OK;
+}
+
+/***********************************************************************
+ *            CoGetMarshalSizeMax        (combase.@)
+ */
+HRESULT WINAPI CoGetMarshalSizeMax(ULONG *size, REFIID riid, IUnknown *unk,
+         DWORD dest_context, void *pvDestContext, DWORD mshlFlags)
+{
+    BOOL std_marshal = FALSE;
+    IMarshal *marshal;
+    HRESULT hr;
+
+    if (!unk)
+        return E_POINTER;
+
+    hr = IUnknown_QueryInterface(unk, &IID_IMarshal, (void **)&marshal);
+    if (hr != S_OK)
+    {
+        std_marshal = TRUE;
+        hr = CoGetStandardMarshal(riid, unk, dest_context, pvDestContext, mshlFlags, &marshal);
+    }
+    if (hr != S_OK)
+        return hr;
+
+    hr = IMarshal_GetMarshalSizeMax(marshal, riid, unk, dest_context, pvDestContext, mshlFlags, size);
+    if (!std_marshal)
+        /* add on the size of the whole OBJREF structure like native does */
+        *size += sizeof(OBJREF);
+
+    IMarshal_Release(marshal);
+    return hr;
 }

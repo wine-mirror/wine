@@ -39,7 +39,7 @@
 @ stdcall CoGetInstanceFromIStorage(ptr ptr ptr long ptr long ptr) combase.CoGetInstanceFromIStorage
 @ stdcall CoGetInterfaceAndReleaseStream(ptr ptr ptr) combase.CoGetInterfaceAndReleaseStream
 @ stdcall CoGetMalloc(long ptr) combase.CoGetMalloc
-@ stdcall CoGetMarshalSizeMax(ptr ptr ptr long ptr long)
+@ stdcall CoGetMarshalSizeMax(ptr ptr ptr long ptr long) combase.CoGetMarshalSizeMax
 @ stdcall CoGetObject(wstr ptr ptr ptr)
 @ stdcall CoGetObjectContext(ptr ptr) combase.CoGetObjectContext
 @ stdcall CoGetPSClsid(ptr ptr)

@@ -112,7 +112,7 @@
 @ stdcall CoGetInstanceFromIStorage(ptr ptr ptr long ptr long ptr)
 @ stdcall CoGetInterfaceAndReleaseStream(ptr ptr ptr)
 @ stdcall CoGetMalloc(long ptr)
-@ stdcall CoGetMarshalSizeMax(ptr ptr ptr long ptr long) ole32.CoGetMarshalSizeMax
+@ stdcall CoGetMarshalSizeMax(ptr ptr ptr long ptr long)
 @ stub CoGetModuleType
 @ stdcall CoGetObjectContext(ptr ptr)
 @ stdcall CoGetPSClsid(ptr ptr) ole32.CoGetPSClsid
