@@ -3590,6 +3590,7 @@ static void test_GetConsoleScreenBufferInfoEx(HANDLE std_output)
 static void test_FreeConsole(void)
 {
     HANDLE handle;
+    UINT cp;
     BOOL ret;
 
     ok(RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle != NULL, "ConsoleHandle is NULL\n");
@@ -3625,6 +3626,11 @@ static void test_FreeConsole(void)
                                        CONSOLE_TEXTMODE_BUFFER, NULL);
     ok(handle == INVALID_HANDLE_VALUE && GetLastError() == ERROR_INVALID_HANDLE,
        "CreateConsoleScreenBuffer returned: %p (%u)\n", handle, GetLastError());
+
+    SetLastError(0xdeadbeef);
+    cp = GetConsoleCP();
+    ok(!cp, "cp = %x\n", cp);
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "last error %u\n", GetLastError());
 
     if (!skip_nt)
     {

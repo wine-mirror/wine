@@ -585,18 +585,12 @@ BOOL WINAPI DECLSPEC_HOTPATCH GenerateConsoleCtrlEvent( DWORD event, DWORD group
  */
 UINT WINAPI DECLSPEC_HOTPATCH GetConsoleCP(void)
 {
-    UINT codepage = GetOEMCP(); /* default value */
+    struct condrv_input_info info;
 
-    SERVER_START_REQ( get_console_input_info )
-    {
-        req->handle = 0;
-        if (!wine_server_call_err( req ))
-        {
-            if (reply->input_cp) codepage = reply->input_cp;
-        }
-    }
-    SERVER_END_REQ;
-    return codepage;
+    if (!console_ioctl( RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle,
+                         IOCTL_CONDRV_GET_INPUT_INFO, NULL, 0, &info, sizeof(info), NULL ))
+        return 0;
+    return info.input_cp ? info.input_cp : GetOEMCP();
 }
 
 
