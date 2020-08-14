@@ -68,6 +68,10 @@ typedef struct _RTL_UNLOAD_EVENT_TRACE
 static RTL_UNLOAD_EVENT_TRACE *(WINAPI *pRtlGetUnloadEventTrace)(void);
 static void (WINAPI *pRtlGetUnloadEventTraceEx)(ULONG **element_size, ULONG **element_count, void **event_trace);
 
+#ifndef EH_NESTED_CALL
+#define EH_NESTED_CALL 0x10
+#endif
+
 #if defined(__x86_64__)
 typedef struct
 {
@@ -3782,6 +3786,65 @@ static void test_kiuserexceptiondispatcher(void)
     ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
 }
 
+static BOOL got_nested_exception, got_prev_frame_exception;
+static void *nested_exception_initial_frame;
+
+static DWORD nested_exception_handler(EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
+        CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher)
+{
+    trace("nested_exception_handler Rip %p, Rsp %p, code %#x, flags %#x, ExceptionAddress %p.\n",
+            (void *)context->Rip, (void *)context->Rsp, rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress);
+
+    if (rec->ExceptionCode == 0x80000003
+            && !(rec->ExceptionFlags & EH_NESTED_CALL))
+    {
+        ok(rec->NumberParameters == 1, "Got unexpected rec->NumberParameters %u.\n", rec->NumberParameters);
+        ok((void *)context->Rsp == frame, "Got unexpected frame %p.\n", frame);
+        ok(*(void **)frame == (char *)code_mem + 5, "Got unexpected *frame %p.\n", *(void **)frame);
+        ok(context->Rip == (ULONG_PTR)((char *)code_mem + 7), "Got unexpected Rip %#lx.\n", context->Rip);
+
+        nested_exception_initial_frame = frame;
+        RaiseException(0xdeadbeef, 0, 0, 0);
+        ++context->Rip;
+        return ExceptionContinueExecution;
+    }
+
+    if (rec->ExceptionCode == 0xdeadbeef && rec->ExceptionFlags == EH_NESTED_CALL)
+    {
+        ok(!rec->NumberParameters, "Got unexpected rec->NumberParameters %u.\n", rec->NumberParameters);
+        got_nested_exception = TRUE;
+        ok(frame == nested_exception_initial_frame, "Got unexpected frame %p.\n", frame);
+        return ExceptionContinueSearch;
+    }
+
+    ok(rec->ExceptionCode == 0xdeadbeef && !rec->ExceptionFlags,
+            "Got unexpected exception code %#x, flags %#x.\n", rec->ExceptionCode, rec->ExceptionFlags);
+    ok(!rec->NumberParameters, "Got unexpected rec->NumberParameters %u.\n", rec->NumberParameters);
+    ok(frame == (void *)((BYTE *)nested_exception_initial_frame + 8),
+            "Got unexpected frame %p.\n", frame);
+    got_prev_frame_exception = TRUE;
+    return ExceptionContinueExecution;
+}
+
+static void test_nested_exception(void)
+{
+    static const BYTE except_code[] =
+    {
+        0xe8, 0x02, 0x00, 0x00, 0x00, /* call nest */
+        0x90,                         /* nop */
+        0xc3,                         /* ret */
+        /* nest: */
+        0xcc,                         /* int3 */
+        0x90,                         /* nop */
+        0xc3,                         /* ret  */
+    };
+
+    got_nested_exception = got_prev_frame_exception = FALSE;
+    run_exception_test(nested_exception_handler, NULL, except_code, ARRAY_SIZE(except_code), PAGE_EXECUTE_READ);
+    ok(got_nested_exception, "Did not get nested exception.\n");
+    ok(got_prev_frame_exception, "Did not get nested exception in the previous frame.\n");
+}
+
 #elif defined(__arm__)
 
 static void test_thread_context(void)
@@ -5450,6 +5513,7 @@ START_TEST(exception)
     test_dpe_exceptions();
     test_wow64_context();
     test_kiuserexceptiondispatcher();
+    test_nested_exception();
 
     if (pRtlAddFunctionTable && pRtlDeleteFunctionTable && pRtlInstallFunctionTableCallback && pRtlLookupFunctionEntry)
       test_dynamic_unwind();
