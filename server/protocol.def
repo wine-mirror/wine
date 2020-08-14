@@ -1508,21 +1508,6 @@ enum server_fd_type
 #define SET_CONSOLE_INPUT_INFO_WIN              0x80
 
 
-/* Get info about a console (input only) */
-@REQ(get_console_input_info)
-    obj_handle_t  handle;         /* handle to console input, or 0 for process' console */
-@REPLY
-    int           history_mode;   /* whether we duplicate lines in history */
-    int           history_size;   /* number of lines in history */
-    int           history_index;  /* number of used lines in history */
-    int           edition_mode;   /* index to the edition mode flavors */
-    int           input_cp;       /* console input codepage */
-    int           output_cp;      /* console output codepage */
-    user_handle_t win;            /* console window if backend supports it */
-    VARARG(title,unicode_str);    /* console title */
-@END
-
-
 /* appends a string to console's history */
 @REQ(append_console_input_history)
     obj_handle_t handle;        /* handle to console input, or 0 for process' console */

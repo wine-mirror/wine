@@ -2131,24 +2131,6 @@ DECL_HANDLER(set_console_input_info)
     set_console_input_info( req, get_req_data(), get_req_data_size() );
 }
 
-/* get info about a console (output only) */
-DECL_HANDLER(get_console_input_info)
-{
-    struct console_input *console;
-
-    if (!(console = console_input_get( req->handle, FILE_READ_PROPERTIES ))) return;
-    if (console->title) set_reply_data( console->title, min( console->title_len, get_reply_max_size() ));
-    reply->history_mode  = console->history_mode;
-    reply->history_size  = console->history_size;
-    reply->history_index = console->history_index;
-    reply->edition_mode  = console->edition_mode;
-    reply->input_cp      = console->input_cp;
-    reply->output_cp     = console->output_cp;
-    reply->win           = console->win;
-
-    release_object( console );
-}
-
 /* appends a string to console's history */
 DECL_HANDLER(append_console_input_history)
 {
