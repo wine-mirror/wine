@@ -47,6 +47,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
+#ifndef HAVE_FINITE
+#define finite(x) isfinite(x)
+#endif
 #ifndef HAVE_FINITEF
 #define finitef(x) isfinite(x)
 #endif

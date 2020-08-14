@@ -18037,6 +18037,7 @@ for ac_func in \
 	_spawnvp \
 	epoll_create \
 	ffs \
+	finite \
 	finitef \
 	fnmatch \
 	fork \

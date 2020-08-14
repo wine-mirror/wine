@@ -168,6 +168,9 @@
 /* Define to 1 if you have the `ffs' function. */
 #undef HAVE_FFS
 
+/* Define to 1 if you have the `finite' function. */
+#undef HAVE_FINITE
+
 /* Define to 1 if you have the `finitef' function. */
 #undef HAVE_FINITEF
 

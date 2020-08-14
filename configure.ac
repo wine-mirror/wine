@@ -2189,6 +2189,7 @@ AC_CHECK_FUNCS(\
 	_spawnvp \
 	epoll_create \
 	ffs \
+	finite \
 	finitef \
 	fnmatch \
 	fork \
