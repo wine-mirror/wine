@@ -3632,6 +3632,11 @@ static void test_FreeConsole(void)
     ok(!cp, "cp = %x\n", cp);
     ok(GetLastError() == ERROR_INVALID_HANDLE, "last error %u\n", GetLastError());
 
+    SetLastError(0xdeadbeef);
+    cp = GetConsoleOutputCP();
+    ok(!cp, "cp = %x\n", cp);
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "last error %u\n", GetLastError());
+
     if (!skip_nt)
     {
         SetStdHandle( STD_INPUT_HANDLE, (HANDLE)0xdeadbeef );
