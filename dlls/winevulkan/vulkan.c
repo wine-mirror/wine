@@ -793,7 +793,10 @@ VkResult WINAPI wine_vkEnumerateInstanceExtensionProperties(const char *layer_na
 
     wine_vk_init_once();
     if (!vk_funcs)
-        return VK_ERROR_INITIALIZATION_FAILED;
+    {
+        *count = 0;
+        return VK_SUCCESS;
+    }
 
     res = vk_funcs->p_vkEnumerateInstanceExtensionProperties(NULL, &num_host_properties, NULL);
     if (res != VK_SUCCESS)
