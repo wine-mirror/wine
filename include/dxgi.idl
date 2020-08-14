@@ -462,6 +462,11 @@ typedef struct DXGI_ADAPTER_DESC1 {
     UINT   Flags;
 } DXGI_ADAPTER_DESC1;
 
+typedef struct DXGI_DISPLAY_COLOR_SPACE {
+    FLOAT PrimaryCoordinates[8][2];
+    FLOAT WhitePoints[16][2];
+} DXGI_DISPLAY_COLOR_SPACE;
+
 [
     object,
     uuid(29038f61-3839-4626-91fd-086879011a05),
