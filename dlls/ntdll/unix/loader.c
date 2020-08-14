@@ -1685,14 +1685,14 @@ void __wine_main( int argc, char *argv[], char *envp[] )
 
     if (!getenv( "WINELOADERNOEXEC" ))  /* first time around */
     {
-        static char noexec[] = "WINELOADERNOEXEC=1";
-
-        putenv( noexec );
         check_command_line( argc, argv );
         if (pre_exec())
         {
+            static char noexec[] = "WINELOADERNOEXEC=1";
             char **new_argv = malloc( (argc + 2) * sizeof(*argv) );
+
             memcpy( new_argv + 1, argv, (argc + 1) * sizeof(*argv) );
+            putenv( noexec );
             loader_exec( argv0, new_argv, client_cpu );
             fatal_error( "could not exec the wine loader\n" );
         }
