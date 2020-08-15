@@ -1130,7 +1130,7 @@ static HRESULT autoplug(struct filter_graph *graph, IPin *source, IPin *sink,
 
 static HRESULT autoplug_through_sink(struct filter_graph *graph, IPin *source,
         IBaseFilter *filter, IPin *middle_sink, IPin *sink,
-        BOOL render_to_existing, BOOL allow_renderers, unsigned int recursion_depth)
+        BOOL render_to_existing, unsigned int recursion_depth)
 {
     BOOL any = FALSE, all = TRUE;
     IPin *middle_source, *peer;
@@ -1195,7 +1195,7 @@ static HRESULT autoplug_through_sink(struct filter_graph *graph, IPin *source,
 
     if (!sink)
     {
-        if (all && (any || allow_renderers))
+        if (all)
             return S_OK;
         if (any)
             return VFW_S_PARTIAL_RENDER;
@@ -1209,7 +1209,7 @@ err:
 
 static HRESULT autoplug_through_filter(struct filter_graph *graph, IPin *source,
         IBaseFilter *filter, IPin *sink, BOOL render_to_existing,
-        BOOL allow_renderers, unsigned int recursion_depth)
+        unsigned int recursion_depth)
 {
     IEnumPins *sink_enum;
     IPin *filter_sink;
@@ -1223,7 +1223,7 @@ static HRESULT autoplug_through_filter(struct filter_graph *graph, IPin *source,
     while (IEnumPins_Next(sink_enum, 1, &filter_sink, NULL) == S_OK)
     {
         hr = autoplug_through_sink(graph, source, filter, filter_sink, sink,
-                render_to_existing, allow_renderers, recursion_depth);
+                render_to_existing, recursion_depth);
         IPin_Release(filter_sink);
         if (SUCCEEDED(hr))
         {
@@ -1271,7 +1271,7 @@ static HRESULT autoplug(struct filter_graph *graph, IPin *source, IPin *sink,
     LIST_FOR_EACH_ENTRY(filter, &graph->filters, struct filter, entry)
     {
         if (SUCCEEDED(hr = autoplug_through_filter(graph, source, filter->filter,
-                sink, render_to_existing, TRUE, recursion_depth)))
+                sink, render_to_existing, recursion_depth)))
             return hr;
     }
 
@@ -1295,8 +1295,9 @@ static HRESULT autoplug(struct filter_graph *graph, IPin *source, IPin *sink,
 
         DeleteMediaType(mt);
 
-        if (FAILED(hr = IFilterMapper2_EnumMatchingFilters(mapper, &enummoniker, 0, FALSE,
-                MERIT_UNLIKELY, TRUE, 1, types, NULL, NULL, FALSE, FALSE, 0, NULL, NULL, NULL)))
+        if (FAILED(hr = IFilterMapper2_EnumMatchingFilters(mapper, &enummoniker,
+                0, FALSE, MERIT_UNLIKELY, TRUE, 1, types, NULL, NULL, FALSE,
+                render_to_existing, 0, NULL, NULL, NULL)))
             goto out;
 
         while (IEnumMoniker_Next(enummoniker, 1, &moniker, NULL) == S_OK)
@@ -1346,8 +1347,7 @@ static HRESULT autoplug(struct filter_graph *graph, IPin *source, IPin *sink,
                 continue;
             }
 
-            hr = autoplug_through_filter(graph, source, filter, sink,
-                    render_to_existing, !render_to_existing, recursion_depth);
+            hr = autoplug_through_filter(graph, source, filter, sink, render_to_existing, recursion_depth);
             if (SUCCEEDED(hr))
             {
                 IBaseFilter_Release(filter);
