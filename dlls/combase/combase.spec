@@ -182,7 +182,7 @@
 @ stdcall FreePropVariantArray(long ptr)
 @ stub FreePropVariantArrayWorker
 @ stub GetCatalogHelper
-@ stdcall GetErrorInfo(long ptr) ole32.GetErrorInfo
+@ stdcall GetErrorInfo(long ptr)
 @ stub GetFuncDescs
 @ stdcall GetHGlobalFromStream(ptr ptr) ole32.GetHGlobalFromStream
 @ stub GetHookInterface

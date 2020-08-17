@@ -14,6 +14,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "winternl.h"
+
 #include "wine/list.h"
 
 struct apartment;
@@ -40,3 +42,11 @@ struct tlsdata
     struct list       spies;         /* Spies installed with CoRegisterInitializeSpy */
     DWORD             spies_lock;
 };
+
+extern HRESULT WINAPI InternalTlsAllocData(struct tlsdata **data);
+
+static inline HRESULT com_get_tlsdata(struct tlsdata **data)
+{
+    *data = NtCurrentTeb()->ReservedForOle;
+    return *data ? S_OK : InternalTlsAllocData(data);
+}

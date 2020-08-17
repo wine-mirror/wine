@@ -22,6 +22,8 @@
 
 #include "oleauto.h"
 
+#include "combase_private.h"
+
 #include "wine/debug.h"
 #include "wine/heap.h"
 
@@ -351,6 +353,34 @@ HRESULT WINAPI CreateErrorInfo(ICreateErrorInfo **ret)
     error_info->help_context = 0;
 
     *ret = &error_info->ICreateErrorInfo_iface;
+
+    return S_OK;
+}
+
+/***********************************************************************
+ *                GetErrorInfo    (combase.@)
+ */
+HRESULT WINAPI GetErrorInfo(ULONG reserved, IErrorInfo **error_info)
+{
+    struct tlsdata *tlsdata;
+    HRESULT hr;
+
+    TRACE("%u, %p\n", reserved, error_info);
+
+    if (reserved || !error_info)
+        return E_INVALIDARG;
+
+    if (FAILED(hr = com_get_tlsdata(&tlsdata)))
+        return hr;
+
+    if (!tlsdata->errorinfo)
+    {
+        *error_info = NULL;
+        return S_FALSE;
+    }
+
+    *error_info = tlsdata->errorinfo;
+    tlsdata->errorinfo = NULL;
 
     return S_OK;
 }
