@@ -259,6 +259,21 @@ RECT get_host_primary_monitor_rect(void)
     return rect;
 }
 
+BOOL get_host_primary_gpu(struct x11drv_gpu *gpu)
+{
+    struct x11drv_gpu *gpus;
+    INT gpu_count;
+
+    if (host_handler.get_gpus(&gpus, &gpu_count) && gpu_count)
+    {
+        *gpu = gpus[0];
+        host_handler.free_gpus(gpus);
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
 RECT get_work_area(const RECT *monitor_rect)
 {
     Atom type;
