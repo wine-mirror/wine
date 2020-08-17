@@ -853,6 +853,9 @@ int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR lpCmdLine, INT nCmdSh
     int			ret = 1;
     struct wc_init      wci;
 
+    /* make sure we're not connected to inherited console */
+    FreeConsole();
+
     if ((ret = WINECON_ParseOptions(lpCmdLine, &wci)) != 0)
     {
         printf_res(ret & 0xffff);
