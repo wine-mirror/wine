@@ -193,6 +193,7 @@ static RTL_USER_PROCESS_PARAMETERS *create_process_params( const WCHAR *filename
 
     if (flags & CREATE_NEW_PROCESS_GROUP) params->ConsoleFlags = 1;
     if (flags & CREATE_NEW_CONSOLE) params->ConsoleHandle = (HANDLE)1; /* KERNEL32_CONSOLE_ALLOC */
+    else if (!(flags & DETACHED_PROCESS)) params->ConsoleHandle = NtCurrentTeb()->Peb->ProcessParameters->ConsoleHandle;
 
     if (startup->dwFlags & STARTF_USESTDHANDLES)
     {

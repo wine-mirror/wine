@@ -1224,7 +1224,7 @@ DECL_HANDLER(new_process)
          * like if hConOut and hConIn are console handles, then they should be on the same
          * physical console
          */
-        info->data->console = inherit_console( parent_thread, parent,
+        info->data->console = inherit_console( parent_thread, info->data->console,
                                                process, req->inherit_all ? info->data->hstdin : 0 );
     }
 

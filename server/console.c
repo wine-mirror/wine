@@ -620,40 +620,29 @@ int free_console( struct process *process )
  *	2/ parent is a renderer which launches process, and process should attach to the console
  *	   rendered by parent
  */
-obj_handle_t inherit_console( struct thread *parent_thread, struct process *parent, struct process *process,
+obj_handle_t inherit_console( struct thread *parent_thread, obj_handle_t handle, struct process *process,
                               obj_handle_t hconin )
 {
-    int done = 0;
+    struct console_input *console = NULL;
+
+    if (handle && !(console = (struct console_input *)get_handle_obj( current->process, handle, 0,
+                                                                      &console_input_ops )))
+        return 0;
 
     /* if parent is a renderer, then attach current process to its console
      * a bit hacky....
      */
-    if (hconin && parent_thread)
+    if (!console && hconin && parent_thread)
     {
-        struct console_input *console;
-
         /* FIXME: should we check some access rights ? */
-        if ((console = (struct console_input *)get_handle_obj( parent, hconin,
-                                                               0, &console_input_ops )))
-        {
-            if (console->renderer == parent_thread)
-            {
-                process->console = (struct console_input *)grab_object( console );
-                process->console->num_proc++;
-                done = 1;
-            }
-            release_object( console );
-        }
-        else clear_error();  /* ignore error */
+        if (!(console = (struct console_input *)get_handle_obj( parent_thread->process, hconin,
+                                                                0, &console_input_ops )))
+            clear_error();  /* ignore error */
     }
-    /* otherwise, if parent has a console, attach child to this console */
-    if (!done && parent->console)
-    {
-        process->console = (struct console_input *)grab_object( parent->console );
-        process->console->num_proc++;
-    }
+    if (!console) return 0;
 
-    if (!process->console) return 0;
+    process->console = console;
+    console->num_proc++;
     return alloc_handle( process, process->console,
                          SYNCHRONIZE | FILE_READ_ATTRIBUTES | FILE_WRITE_ATTRIBUTES, 0 );
 }
