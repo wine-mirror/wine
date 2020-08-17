@@ -3656,6 +3656,10 @@ static void test_FreeConsole(void)
     ok(GetLastError() == ERROR_INVALID_HANDLE, "last error %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
+    ret = SetConsoleTitleW( L"test" );
+    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "SetConsoleTitleW returned %x(%u)\n", ret, GetLastError());
+
+    SetLastError(0xdeadbeef);
     hwnd = GetConsoleWindow();
     ok(!hwnd, "hwnd = %p\n", hwnd);
     ok(GetLastError() == ERROR_INVALID_HANDLE, "last error %u\n", GetLastError());

@@ -1305,18 +1305,10 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetConsoleTextAttribute( HANDLE handle, WORD attr 
  */
 BOOL WINAPI DECLSPEC_HOTPATCH SetConsoleTitleW( LPCWSTR title )
 {
-    BOOL ret;
-
     TRACE( "%s\n", debugstr_w( title ));
-    SERVER_START_REQ( set_console_input_info )
-    {
-        req->handle = 0;
-        req->mask = SET_CONSOLE_INPUT_INFO_TITLE;
-        wine_server_add_data( req, title, lstrlenW(title) * sizeof(WCHAR) );
-        ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-    return ret;
+
+    return console_ioctl( RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle, IOCTL_CONDRV_SET_TITLE,
+                          (void *)title, lstrlenW(title) * sizeof(WCHAR), NULL, 0, NULL );
 }
 
 
