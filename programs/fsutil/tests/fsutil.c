@@ -63,6 +63,12 @@ static void test_hardlink(void)
     ok(hfile != INVALID_HANDLE_VALUE, "failed to create a file\n");
     CloseHandle(hfile);
 
+    rc = runcmd("fsutil");
+    ok(rc == 0, "failed to run fsutil\n");
+
+    rc = runcmd("fsutil hardlink");
+    ok(rc == 0, "failed to run fsutil hardlink\n");
+
     rc = runcmd("fsutil hardlink create link file");
     ok(rc == 0, "failed to create a hardlink\n");
 

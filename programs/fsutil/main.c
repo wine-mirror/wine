@@ -97,7 +97,7 @@ static int create_hardlink(int argc, WCHAR *argv[])
 
 static int hardlink(int argc, WCHAR *argv[])
 {
-    int ret;
+    int ret = 0;
 
     if (argc > 2)
     {
