@@ -155,7 +155,7 @@
 @ stdcall CoRevokeInitializeSpy(int64) ole32.CoRevokeInitializeSpy
 @ stdcall CoRevokeMallocSpy()
 @ stub CoSetCancelObject
-@ stub CoSetErrorInfo
+@ stdcall CoSetErrorInfo(long ptr) SetErrorInfo
 @ stdcall CoSetProxyBlanket(ptr long long ptr long long ptr long)
 @ stdcall CoSuspendClassObjects() ole32.CoSuspendClassObjects
 @ stdcall CoSwitchCallContext(ptr ptr) ole32.CoSwitchCallContext
