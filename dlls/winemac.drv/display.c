@@ -1362,6 +1362,41 @@ done:
     return (err == kCGErrorSuccess);
 }
 
+/***********************************************************************
+ *              init_registry_display_settings
+ *
+ * Initialize registry display settings when new display devices are added.
+ */
+static void init_registry_display_settings(void)
+{
+    DEVMODEW dm = {.dmSize = sizeof(dm)};
+    DISPLAY_DEVICEW dd = {sizeof(dd)};
+    DWORD i = 0;
+    LONG ret;
+
+    while (EnumDisplayDevicesW(NULL, i++, &dd, 0))
+    {
+        /* Skip if the device already has registry display settings */
+        if (EnumDisplaySettingsExW(dd.DeviceName, ENUM_REGISTRY_SETTINGS, &dm, 0))
+            continue;
+
+        if (!EnumDisplaySettingsExW(dd.DeviceName, ENUM_CURRENT_SETTINGS, &dm, 0))
+        {
+            ERR("Failed to query current display settings for %s.\n", wine_dbgstr_w(dd.DeviceName));
+            continue;
+        }
+
+        TRACE("Device %s current display mode %ux%u %ubits %uHz at %d,%d.\n",
+              wine_dbgstr_w(dd.DeviceName), dm.dmPelsWidth, dm.dmPelsHeight, dm.dmBitsPerPel,
+              dm.dmDisplayFrequency, dm.dmPosition.x, dm.dmPosition.y);
+
+        ret = ChangeDisplaySettingsExW(dd.DeviceName, &dm, NULL,
+                                       CDS_GLOBAL | CDS_NORESET | CDS_UPDATEREGISTRY, NULL);
+        if (ret != DISP_CHANGE_SUCCESSFUL)
+            ERR("Failed to save registry display settings for %s, returned %d.\n",
+                wine_dbgstr_w(dd.DeviceName), ret);
+    }
+}
 
 /***********************************************************************
  *              macdrv_displays_changed
@@ -1392,6 +1427,7 @@ void macdrv_displays_changed(const macdrv_event *event)
         CGDisplayModeRelease(mode);
 
         macdrv_init_display_devices(TRUE);
+        init_registry_display_settings();
 
         if (is_original && retina_enabled)
         {
