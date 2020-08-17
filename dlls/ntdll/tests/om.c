@@ -1227,9 +1227,8 @@ static BOOL compare_unicode_string( const UNICODE_STRING *string, const WCHAR *e
             && !wcsnicmp( string->Buffer, expect, string->Length / sizeof(WCHAR) );
 }
 
-#define test_object_type(a,b) _test_object_type(__LINE__,a,b,FALSE)
-#define test_object_type_todo(a,b) _test_object_type(__LINE__,a,b,TRUE)
-static void _test_object_type( unsigned line, HANDLE handle, const WCHAR *expected_name, BOOL todo )
+#define test_object_type(a,b) _test_object_type(__LINE__,a,b)
+static void _test_object_type( unsigned line, HANDLE handle, const WCHAR *expected_name )
 {
     char buffer[1024];
     UNICODE_STRING *str = (UNICODE_STRING *)buffer, expect;
@@ -1243,8 +1242,7 @@ static void _test_object_type( unsigned line, HANDLE handle, const WCHAR *expect
     ok_(__FILE__,line)( status == STATUS_SUCCESS, "NtQueryObject failed %x\n", status );
     ok_(__FILE__,line)( len > sizeof(UNICODE_STRING), "unexpected len %u\n", len );
     ok_(__FILE__,line)( len >= sizeof(OBJECT_TYPE_INFORMATION) + str->Length, "unexpected len %u\n", len );
-    todo_wine_if (todo)
-        ok_(__FILE__,line)(compare_unicode_string( str, expected_name ), "wrong name %s\n", debugstr_w( str->Buffer ));
+    ok_(__FILE__,line)(compare_unicode_string( str, expected_name ), "wrong name %s\n", debugstr_w( str->Buffer ));
 }
 
 #define test_object_name(a,b,c) _test_object_name(__LINE__,a,b,c)
@@ -1463,7 +1461,7 @@ static void test_query_object(void)
     ok( handle != INVALID_HANDLE_VALUE, "CreateFile failed (%d)\n", GetLastError() );
 
     test_object_name( handle, L"\\Device\\NamedPipe", TRUE );
-    test_object_type_todo( handle, L"File" );
+    test_object_type( handle, L"File" );
     test_file_info( handle );
 
     pNtClose( handle );
