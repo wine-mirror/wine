@@ -317,7 +317,7 @@
 @ stdcall RoUninitialize()
 @ stub RoUnregisterForApartmentShutdown
 @ stub SetCleanupFlag
-@ stdcall SetErrorInfo(long ptr) ole32.SetErrorInfo
+@ stdcall SetErrorInfo(long ptr)
 @ stub SetRestrictedErrorInfo
 @ stdcall StringFromCLSID(ptr ptr)
 @ stdcall StringFromGUID2(ptr ptr long)

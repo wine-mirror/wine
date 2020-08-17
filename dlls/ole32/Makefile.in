@@ -17,7 +17,6 @@ C_SRCS = \
 	datacache.c \
 	defaulthandler.c \
 	dictionary.c \
-	errorinfo.c \
 	filelockbytes.c \
 	filemoniker.c \
 	ftmarshal.c \

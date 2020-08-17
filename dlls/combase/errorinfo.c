@@ -384,3 +384,29 @@ HRESULT WINAPI GetErrorInfo(ULONG reserved, IErrorInfo **error_info)
 
     return S_OK;
 }
+
+/***********************************************************************
+ *               SetErrorInfo    (combase.@)
+ */
+HRESULT WINAPI SetErrorInfo(ULONG reserved, IErrorInfo *error_info)
+{
+    struct tlsdata *tlsdata;
+    HRESULT hr;
+
+    TRACE("%u, %p\n", reserved, error_info);
+
+    if (reserved)
+        return E_INVALIDARG;
+
+    if (FAILED(hr = com_get_tlsdata(&tlsdata)))
+        return hr;
+
+    if (tlsdata->errorinfo)
+        IErrorInfo_Release(tlsdata->errorinfo);
+
+    tlsdata->errorinfo = error_info;
+    if (error_info)
+        IErrorInfo_AddRef(error_info);
+
+    return S_OK;
+}
