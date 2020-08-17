@@ -24,6 +24,12 @@
 #include "wincodec.h"
 #include "wine/test.h"
 
+#define GET_RGB565_R(color)   ((BYTE)(((color) >> 11) & 0x1F))
+#define GET_RGB565_G(color)   ((BYTE)(((color) >> 5)  & 0x3F))
+#define GET_RGB565_B(color)   ((BYTE)(((color) >> 0)  & 0x1F))
+#define MAKE_RGB565(r, g, b)  ((WORD)(((BYTE)(r) << 11) | ((BYTE)(g) << 5) | (BYTE)(b)))
+#define MAKE_ARGB(a, r, g, b) (((DWORD)(a) << 24) | ((DWORD)(r) << 16) | ((DWORD)(g) << 8) | (DWORD)(b))
+
 /* 1x1 uncompressed(Alpha) DDS image */
 static BYTE test_dds_alpha[] = {
     'D',  'D',  'S',  ' ',  0x7C, 0x00, 0x00, 0x00, 0x07, 0x10, 0x08, 0x00, 0x01, 0x00, 0x00, 0x00,
@@ -529,6 +535,81 @@ end:
     return bpp;
 }
 
+static DWORD rgb565_to_argb(WORD color, BOOL has_alpha)
+{
+    return (has_alpha && !color) ? 0: MAKE_ARGB(0xFF, (GET_RGB565_R(color) * 0xFF + 0x0F) / 0x1F,
+                                                      (GET_RGB565_G(color) * 0xFF + 0x1F) / 0x3F,
+                                                      (GET_RGB565_B(color) * 0xFF + 0x0F) / 0x1F);
+}
+
+static void decode_bc1(const BYTE *blocks, UINT block_count, UINT width, UINT height, DWORD *buffer)
+{
+    static const UINT BLOCK_SIZE = 8;
+
+    UINT stride = (width + 3) / 4 * 4;
+    int i, j, color_index, pixel_index = 0;
+    const BYTE *block, *color_indices;
+    DWORD *pixel = buffer;
+    BOOL has_alpha;
+    WORD color[4];
+
+    for (i = 0; i < block_count; i++)
+    {
+        block = blocks + i * BLOCK_SIZE;
+        color[0] = *((WORD *)block);
+        color[1] = *((WORD *)block + 1);
+        has_alpha = color[0] <= color[1];
+        if (has_alpha) {
+            color[2] = MAKE_RGB565(((GET_RGB565_R(color[0]) + GET_RGB565_R(color[1]) + 1) / 2),
+                                   ((GET_RGB565_G(color[0]) + GET_RGB565_G(color[1]) + 1) / 2),
+                                   ((GET_RGB565_B(color[0]) + GET_RGB565_B(color[1]) + 1) / 2));
+            color[3] = 0;
+        } else {
+            color[2] = MAKE_RGB565(((GET_RGB565_R(color[0]) * 2 + GET_RGB565_R(color[1]) + 1) / 3),
+                                   ((GET_RGB565_G(color[0]) * 2 + GET_RGB565_G(color[1]) + 1) / 3),
+                                   ((GET_RGB565_B(color[0]) * 2 + GET_RGB565_B(color[1]) + 1) / 3));
+            color[3] = MAKE_RGB565(((GET_RGB565_R(color[0]) + GET_RGB565_R(color[1]) * 2 + 1) / 3),
+                                   ((GET_RGB565_G(color[0]) + GET_RGB565_G(color[1]) * 2 + 1) / 3),
+                                   ((GET_RGB565_B(color[0]) + GET_RGB565_B(color[1]) * 2 + 1) / 3));
+        }
+
+        color_indices = blocks + 4;
+        for (j = 0; j < 16; j++, pixel_index++)
+        {
+            if ((pixel_index % stride >= width) ||
+                (pixel_index / stride >= height)) continue;
+
+            color_index = (color_indices[j / 4] >> ((j % 4) * 2)) & 0x3;
+            *pixel = rgb565_to_argb(color[color_index], has_alpha);
+            pixel++;
+        }
+    }
+}
+
+static BOOL color_match(DWORD color_a, DWORD color_b)
+{
+    static const int tolerance = 8;
+
+    const int da = abs((int)((color_a & 0xFF000000) >> 24) - (int)((color_b & 0xFF000000) >> 24));
+    const int dr = abs((int)((color_a & 0x00FF0000) >> 16) - (int)((color_b & 0x00FF0000) >> 16));
+    const int dg = abs((int)((color_a & 0x0000FF00) >> 8)  - (int)((color_b & 0x0000FF00) >> 8));
+    const int db = abs((int)((color_a & 0x000000FF) >> 0)  - (int)((color_b & 0x000000FF) >> 0));
+
+    return (da <= tolerance && dr <= tolerance && dg <= tolerance && db <= tolerance);
+}
+
+static BOOL color_buffer_match(DWORD *color_buffer_a, DWORD *color_buffer_b, UINT color_count)
+{
+    UINT i;
+
+    for (i = 0; i < color_count; i++)
+    {
+        if (!color_match(color_buffer_a[i], color_buffer_b[i])) return FALSE;
+    }
+
+    return TRUE;
+}
+
 static void test_dds_decoder_initialize(void)
 {
     int i;
@@ -799,6 +880,7 @@ static void test_dds_decoder_frame_data(IWICBitmapFrameDecode* frame, IWICDdsFra
     WICRect rect = { 0, 0, 1, 1 }, rect_test_a = { 0, 0, 0, 0 }, rect_test_b = { 0, 0, 0xdeadbeaf, 0xdeadbeaf };
     WICRect rect_test_c = { -0xdeadbeaf, -0xdeadbeaf, 1, 1 }, rect_test_d = { 0xdeadbeaf, 0xdeadbeaf, 1, 1 };
     BYTE buffer[2048];
+    DWORD pixels[2048];
     UINT stride, frame_stride, frame_size, frame_width, frame_height, width_in_blocks, height_in_blocks, bpp;
     UINT width, height, depth, array_index;
     UINT block_offset;
@@ -909,6 +991,7 @@ static void test_dds_decoder_frame_data(IWICBitmapFrameDecode* frame, IWICDdsFra
     bpp = get_pixel_format_bpp(&pixel_format);
     stride = rect.Width * bpp / 8;
     frame_stride = frame_width * bpp / 8;
+    frame_size = frame_stride * frame_height;
 
     hr = IWICBitmapFrameDecode_CopyPixels(frame, NULL, 0, 0, NULL);
     ok(hr == E_INVALIDARG, "Test %u, frame %u: CopyPixels got unexpected hr %#x\n", i, frame_index, hr);
@@ -952,6 +1035,27 @@ static void test_dds_decoder_frame_data(IWICBitmapFrameDecode* frame, IWICDdsFra
 
     hr = IWICBitmapFrameDecode_CopyPixels(frame, &rect, stride, sizeof(buffer), NULL);
     ok(hr == E_INVALIDARG, "Test %u, frame %u: CopyBlocks got unexpected hr %#x\n", i, frame_index, hr);
+
+    if (format_info.DxgiFormat == DXGI_FORMAT_BC1_UNORM) {
+        decode_bc1(test_data[i].data + block_offset, width_in_blocks * height_in_blocks, frame_width, frame_height, pixels);
+
+        hr = IWICBitmapFrameDecode_CopyPixels(frame, &rect, stride, sizeof(buffer), buffer);
+        ok(hr == S_OK, "Test %u, frame %u: CopyPixels failed, hr %#x\n", i, frame_index, hr);
+        if (hr == S_OK) {
+            todo_wine
+            ok(color_buffer_match((DWORD *)pixels, (DWORD *)buffer, 1),
+               "Test %u, frame %u: Pixels mismatch\n", i, frame_index);
+        }
+
+
+        hr = IWICBitmapFrameDecode_CopyPixels(frame, NULL, frame_stride, sizeof(buffer), buffer);
+        ok(hr == S_OK, "Test %u, frame %u: CopyPixels failed, hr %#x\n", i, frame_index, hr);
+        if (hr == S_OK) {
+            todo_wine
+            ok(color_buffer_match((DWORD *)pixels, (DWORD *)buffer, frame_size / (bpp / 8)),
+              "Test %u, frame %u: Pixels mismatch\n", i, frame_index);
+        }
+    }
 }
 
 static void test_dds_decoder_frame(IWICBitmapDecoder *decoder, int i)
