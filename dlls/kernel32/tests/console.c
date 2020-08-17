@@ -3645,6 +3645,10 @@ static void test_FreeConsole(void)
     ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "SetConsoleCP returned %x(%u)\n", ret, GetLastError());
 
     SetLastError(0xdeadbeef);
+    ret = SetConsoleOutputCP(GetOEMCP());
+    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "SetConsoleCP returned %x(%u)\n", ret, GetLastError());
+
+    SetLastError(0xdeadbeef);
     memset( title, 0xc0, sizeof(title) );
     size = GetConsoleTitleW( title, ARRAY_SIZE(title) );
     ok(!size, "GetConsoleTitleW returned %u\n", size);

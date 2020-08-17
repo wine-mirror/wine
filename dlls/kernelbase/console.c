@@ -1222,22 +1222,17 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetConsoleMode( HANDLE handle, DWORD mode )
  */
 BOOL WINAPI DECLSPEC_HOTPATCH SetConsoleOutputCP( UINT cp )
 {
-    BOOL ret;
+    struct condrv_input_info_params params = { SET_CONSOLE_INPUT_INFO_OUTPUT_CODEPAGE };
 
     if (!IsValidCodePage( cp ))
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
-    SERVER_START_REQ( set_console_input_info )
-    {
-        req->handle    = 0;
-        req->mask      = SET_CONSOLE_INPUT_INFO_OUTPUT_CODEPAGE;
-        req->output_cp = cp;
-        ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-    return ret;
+
+    params.info.output_cp = cp;
+    return console_ioctl( RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle,
+                          IOCTL_CONDRV_SET_INPUT_INFO, &params, sizeof(params), NULL, 0, NULL );
 }
 
 
