@@ -190,6 +190,7 @@ __ASM_GLOBAL_FUNC( do_cpuid,
                    "pushl %ebx\n\t"
                    "movl 12(%esp),%eax\n\t"
                    "movl 16(%esp),%esi\n\t"
+                   "xorl %ecx,%ecx\n\t"
                    "cpuid\n\t"
                    "movl %eax,(%esi)\n\t"
                    "movl %ebx,4(%esi)\n\t"
@@ -202,6 +203,7 @@ __ASM_GLOBAL_FUNC( do_cpuid,
 __ASM_GLOBAL_FUNC( do_cpuid,
                    "pushq %rbx\n\t"
                    "movl %edi,%eax\n\t"
+                   "xorl %ecx,%ecx\n\t"
                    "cpuid\n\t"
                    "movl %eax,(%rsi)\n\t"
                    "movl %ebx,4(%rsi)\n\t"
@@ -277,7 +279,7 @@ static inline BOOL have_sse_daz_mode(void)
 
 static void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
 {
-    unsigned int regs[4], regs2[4];
+    unsigned int regs[4], regs2[4], regs3[4];
 
 #if defined(__i386__)
     info->Architecture = PROCESSOR_ARCHITECTURE_INTEL;
@@ -308,10 +310,20 @@ static void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
         if (regs2[3] & (1 << 25)) info->FeatureSet |= CPU_FEATURE_SSE;
         if (regs2[3] & (1 << 26)) info->FeatureSet |= CPU_FEATURE_SSE2;
         if (regs2[2] & (1 << 0 )) info->FeatureSet |= CPU_FEATURE_SSE3;
+        if (regs2[2] & (1 << 9 )) info->FeatureSet |= CPU_FEATURE_SSSE3;
         if (regs2[2] & (1 << 13)) info->FeatureSet |= CPU_FEATURE_CX128;
+        if (regs2[2] & (1 << 19)) info->FeatureSet |= CPU_FEATURE_SSE41;
+        if (regs2[2] & (1 << 20)) info->FeatureSet |= CPU_FEATURE_SSE42;
         if (regs2[2] & (1 << 27)) info->FeatureSet |= CPU_FEATURE_XSAVE;
+        if (regs2[2] & (1 << 28)) info->FeatureSet |= CPU_FEATURE_AVX;
         if((regs2[3] & (1 << 26)) && (regs2[3] & (1 << 24)) && have_sse_daz_mode()) /* has SSE2 and FXSAVE/FXRSTOR */
             info->FeatureSet |= CPU_FEATURE_DAZ;
+
+        if (regs[0] >= 0x00000007)
+        {
+            do_cpuid( 0x00000007, regs3 ); /* get extended features */
+            if (regs3[1] & (1 << 5)) info->FeatureSet |= CPU_FEATURE_AVX2;
+        }
 
         if (regs[1] == AUTH && regs[3] == ENTI && regs[2] == CAMD)
         {
