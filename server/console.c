@@ -825,48 +825,6 @@ static int write_console_input( struct console_input* console, int count,
     return 1;
 }
 
-/* set misc console input information */
-static int set_console_input_info( const struct set_console_input_info_request *req,
-				   const WCHAR *title, data_size_t len )
-{
-    struct console_input *console;
-    struct condrv_renderer_event evt;
-
-    if (!(console = console_input_get( req->handle, FILE_WRITE_PROPERTIES ))) goto error;
-    if (console_input_is_bare(console) && (req->mask & SET_CONSOLE_INPUT_INFO_WIN))
-    {
-        set_error( STATUS_UNSUCCESSFUL );
-        goto error;
-    }
-
-    memset(&evt.u, 0, sizeof(evt.u));
-    if (req->mask & SET_CONSOLE_INPUT_INFO_TITLE)
-    {
-        WCHAR *new_title = NULL;
-
-        len = (len / sizeof(WCHAR)) * sizeof(WCHAR);
-        if (len && !(new_title = memdup( title, len ))) goto error;
-        free( console->title );
-        console->title = new_title;
-        console->title_len = len;
-        evt.event = CONSOLE_RENDERER_TITLE_EVENT;
-        console_input_events_append( console, &evt );
-    }
-    if (req->mask & SET_CONSOLE_INPUT_INFO_INPUT_CODEPAGE)
-    {
-        console->input_cp = req->input_cp;
-    }
-    if (req->mask & SET_CONSOLE_INPUT_INFO_OUTPUT_CODEPAGE)
-    {
-        console->output_cp = req->output_cp;
-    }
-    release_object( console );
-    return 1;
- error:
-    if (console) release_object( console );
-    return 0;
-}
-
 /* resize a screen buffer */
 static int change_screen_buffer_size( struct screen_buffer *screen_buffer,
                                       int new_width, int new_height )
@@ -2123,12 +2081,6 @@ DECL_HANDLER(attach_console)
 
     release_object( process );
     return;
-}
-
-/* set info about a console input */
-DECL_HANDLER(set_console_input_info)
-{
-    set_console_input_info( req, get_req_data(), get_req_data_size() );
 }
 
 /* appends a string to console's history */

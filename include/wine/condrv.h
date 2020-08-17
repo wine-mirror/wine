@@ -87,6 +87,13 @@ struct condrv_input_info_params
     struct condrv_input_info info;    /* input_info */
 };
 
+#define SET_CONSOLE_INPUT_INFO_EDITION_MODE     0x01
+#define SET_CONSOLE_INPUT_INFO_INPUT_CODEPAGE   0x02
+#define SET_CONSOLE_INPUT_INFO_OUTPUT_CODEPAGE  0x04
+#define SET_CONSOLE_INPUT_INFO_WIN              0x08
+#define SET_CONSOLE_INPUT_INFO_HISTORY_MODE     0x10
+#define SET_CONSOLE_INPUT_INFO_HISTORY_SIZE     0x20
+
 /* IOCTL_CONDRV_WRITE_OUTPUT and IOCTL_CONDRV_READ_OUTPUT params */
 struct condrv_output_params
 {
