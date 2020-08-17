@@ -1507,23 +1507,7 @@ __ASM_GLOBAL_FUNC( set_full_cpu_context,
                    "movq 0xf0(%rdi),%r15\n\t"       /* context->R15 */
                    "movq 0xf8(%rdi),%rax\n\t"       /* context->Rip */
                    "movq %rax,(%rsp)\n\t"
-                   "fxrstor 0x100(%rdi)\n\t"        /* context->FtlSave */
-                   "movdqa 0x1a0(%rdi),%xmm0\n\t"   /* context->Xmm0 */
-                   "movdqa 0x1b0(%rdi),%xmm1\n\t"   /* context->Xmm1 */
-                   "movdqa 0x1c0(%rdi),%xmm2\n\t"   /* context->Xmm2 */
-                   "movdqa 0x1d0(%rdi),%xmm3\n\t"   /* context->Xmm3 */
-                   "movdqa 0x1e0(%rdi),%xmm4\n\t"   /* context->Xmm4 */
-                   "movdqa 0x1f0(%rdi),%xmm5\n\t"   /* context->Xmm5 */
-                   "movdqa 0x200(%rdi),%xmm6\n\t"   /* context->Xmm6 */
-                   "movdqa 0x210(%rdi),%xmm7\n\t"   /* context->Xmm7 */
-                   "movdqa 0x220(%rdi),%xmm8\n\t"   /* context->Xmm8 */
-                   "movdqa 0x230(%rdi),%xmm9\n\t"   /* context->Xmm9 */
-                   "movdqa 0x240(%rdi),%xmm10\n\t"  /* context->Xmm10 */
-                   "movdqa 0x250(%rdi),%xmm11\n\t"  /* context->Xmm11 */
-                   "movdqa 0x260(%rdi),%xmm12\n\t"  /* context->Xmm12 */
-                   "movdqa 0x270(%rdi),%xmm13\n\t"  /* context->Xmm13 */
-                   "movdqa 0x280(%rdi),%xmm14\n\t"  /* context->Xmm14 */
-                   "movdqa 0x290(%rdi),%xmm15\n\t"  /* context->Xmm15 */
+                   "fxrstor 0x100(%rdi)\n\t"        /* context->FltSave */
                    "movq 0x78(%rdi),%rax\n\t"       /* context->Rax */
                    "movq 0xb0(%rdi),%rdi\n\t"       /* context->Rdi */
                    "iretq" );

@@ -340,23 +340,7 @@ __ASM_GLOBAL_FUNC( RtlCaptureContext,
                    "movq %r15,0xf0(%rcx)\n\t"       /* context->R15 */
                    "movq (%rsp),%rax\n\t"
                    "movq %rax,0xf8(%rcx)\n\t"       /* context->Rip */
-                   "fxsave 0x100(%rcx)\n\t"         /* context->FtlSave */
-                   "movdqa %xmm0,0x1a0(%rcx)\n\t"   /* context->Xmm0 */
-                   "movdqa %xmm1,0x1b0(%rcx)\n\t"   /* context->Xmm1 */
-                   "movdqa %xmm2,0x1c0(%rcx)\n\t"   /* context->Xmm2 */
-                   "movdqa %xmm3,0x1d0(%rcx)\n\t"   /* context->Xmm3 */
-                   "movdqa %xmm4,0x1e0(%rcx)\n\t"   /* context->Xmm4 */
-                   "movdqa %xmm5,0x1f0(%rcx)\n\t"   /* context->Xmm5 */
-                   "movdqa %xmm6,0x200(%rcx)\n\t"   /* context->Xmm6 */
-                   "movdqa %xmm7,0x210(%rcx)\n\t"   /* context->Xmm7 */
-                   "movdqa %xmm8,0x220(%rcx)\n\t"   /* context->Xmm8 */
-                   "movdqa %xmm9,0x230(%rcx)\n\t"   /* context->Xmm9 */
-                   "movdqa %xmm10,0x240(%rcx)\n\t"  /* context->Xmm10 */
-                   "movdqa %xmm11,0x250(%rcx)\n\t"  /* context->Xmm11 */
-                   "movdqa %xmm12,0x260(%rcx)\n\t"  /* context->Xmm12 */
-                   "movdqa %xmm13,0x270(%rcx)\n\t"  /* context->Xmm13 */
-                   "movdqa %xmm14,0x280(%rcx)\n\t"  /* context->Xmm14 */
-                   "movdqa %xmm15,0x290(%rcx)\n\t"  /* context->Xmm15 */
+                   "fxsave 0x100(%rcx)\n\t"         /* context->FltSave */
                    "ret" );
 
 /******************************************************************************
