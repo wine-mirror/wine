@@ -1346,8 +1346,6 @@ static void test_get_image_info(void)
         ok(image_info.MiscFlags == test_image[i].expected.MiscFlags,
                 "Test %u: Got unexpected MiscFlags %#x, expected %#x.\n",
                 i, image_info.MiscFlags, test_image[i].expected.MiscFlags);
-        todo_wine_if(test_image[i].expected.ImageFileFormat == D3DX10_IFF_DDS
-                && test_image[i].expected.Format == DXGI_FORMAT_R8G8B8A8_UNORM)
         ok(image_info.Format == test_image[i].expected.Format,
                 "Test %u: Got unexpected Format %#x, expected %#x.\n",
                 i, image_info.Format, test_image[i].expected.Format);

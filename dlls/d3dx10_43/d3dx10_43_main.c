@@ -54,6 +54,18 @@ file_formats[] =
     { &GUID_ContainerFormatWmp,  D3DX10_IFF_WMP },
 };
 
+static const DXGI_FORMAT to_be_converted_format[] =
+{
+    DXGI_FORMAT_UNKNOWN,
+    DXGI_FORMAT_R8_UNORM,
+    DXGI_FORMAT_R8G8_UNORM,
+    DXGI_FORMAT_B5G6R5_UNORM,
+    DXGI_FORMAT_B4G4R4A4_UNORM,
+    DXGI_FORMAT_B5G5R5A1_UNORM,
+    DXGI_FORMAT_B8G8R8X8_UNORM,
+    DXGI_FORMAT_B8G8R8A8_UNORM
+};
+
 static D3DX10_IMAGE_FILE_FORMAT wic_container_guid_to_file_format(GUID *container_format)
 {
     unsigned int i;
@@ -80,6 +92,18 @@ static D3D10_RESOURCE_DIMENSION wic_dimension_to_d3dx10_dimension(WICDdsDimensio
         default:
             return D3D10_RESOURCE_DIMENSION_UNKNOWN;
     }
+}
+
+static DXGI_FORMAT get_d3dx10_dds_format(DXGI_FORMAT format)
+{
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(to_be_converted_format); ++i)
+    {
+        if (format == to_be_converted_format[i])
+            return DXGI_FORMAT_R8G8B8A8_UNORM;
+    }
+    return format;
 }
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
@@ -339,7 +363,7 @@ HRESULT WINAPI D3DX10GetImageInfoFromMemory(const void *src_data, SIZE_T src_dat
         img_info->Depth = dds_params.Depth;
         img_info->MipLevels = dds_params.MipLevels;
         img_info->ResourceDimension = wic_dimension_to_d3dx10_dimension(dds_params.Dimension);
-        img_info->Format = dds_params.DxgiFormat;
+        img_info->Format = get_d3dx10_dds_format(dds_params.DxgiFormat);
         img_info->MiscFlags = 0;
         if (dds_params.Dimension == WICDdsTextureCube)
         {
