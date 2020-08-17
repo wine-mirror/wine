@@ -3293,9 +3293,12 @@ static void test_IScriptControl_get_CodeObject(void)
 static void test_IScriptControl_get_Procedures(void)
 {
     IScriptProcedureCollection *procs, *procs2;
+    IEnumVARIANT *enumvar, *enumvar2;
     IScriptProcedure *proc, *proc2;
     IScriptControl *sc;
+    IUnknown *unknown;
     VARIANT_BOOL vbool;
+    ULONG fetched;
     VARIANT var;
     LONG count;
     HRESULT hr;
@@ -3548,6 +3551,44 @@ static void test_IScriptControl_get_Procedures(void)
         ok(hr == E_INVALIDARG, "IScriptProcedureCollection_get_Item returned: 0x%08x.\n", hr);
         CHECK_CALLED(GetFuncDesc);
 
+        /* _NewEnum never caches the function count */
+        hr = IScriptProcedureCollection_get__NewEnum(procs, NULL);
+        ok(hr == E_POINTER, "IScriptProcedureCollection_get__NewEnum returned: 0x%08x.\n", hr);
+        SET_EXPECT(GetTypeAttr);
+        SET_EXPECT(ReleaseTypeAttr);
+        hr = IScriptProcedureCollection_get__NewEnum(procs, &unknown);
+        ok(hr == S_OK, "IScriptProcedureCollection_get__NewEnum failed: 0x%08x.\n", hr);
+        CHECK_CALLED(GetTypeAttr);
+        CHECK_CALLED(ReleaseTypeAttr);
+        hr = IUnknown_QueryInterface(unknown, &IID_IEnumVARIANT, (void**)&enumvar);
+        ok(hr == S_OK, "Failed to query for IEnumVARIANT: 0x%08x.\n", hr);
+        ok((char*)unknown == (char*)enumvar, "unknown and enumvar are not the same (%p vs %p).\n", unknown, enumvar);
+        IEnumVARIANT_Release(enumvar);
+        IUnknown_Release(unknown);
+        SET_EXPECT(GetTypeAttr);
+        SET_EXPECT(ReleaseTypeAttr);
+        hr = IScriptProcedureCollection_get__NewEnum(procs, &unknown);
+        ok(hr == S_OK, "IScriptProcedureCollection_get__NewEnum failed: 0x%08x.\n", hr);
+        CHECK_CALLED(GetTypeAttr);
+        CHECK_CALLED(ReleaseTypeAttr);
+        hr = IUnknown_QueryInterface(unknown, &IID_IEnumVARIANT, (void**)&enumvar);
+        ok(hr == S_OK, "Failed to query for IEnumVARIANT: 0x%08x.\n", hr);
+        IUnknown_Release(unknown);
+
+        fetched = 0xdeadbeef;
+        hr = IEnumVARIANT_Next(enumvar, 0, NULL, NULL);
+        ok(hr == E_POINTER, "IEnumVARIANT_Next returned: 0x%08x.\n", hr);
+        hr = IEnumVARIANT_Next(enumvar, 0, NULL, &fetched);
+        ok(hr == E_POINTER, "IEnumVARIANT_Next failed: 0x%08x.\n", hr);
+        ok(fetched == 0xdeadbeef, "got %u.\n", fetched);
+        hr = IEnumVARIANT_Next(enumvar, 0, &var, &fetched);
+        ok(hr == S_OK, "IEnumVARIANT_Next returned: 0x%08x.\n", hr);
+        ok(fetched == 0, "got %u.\n", fetched);
+        hr = IEnumVARIANT_Next(enumvar, 0, &var, NULL);
+        ok(hr == S_OK, "IEnumVARIANT_Next returned: 0x%08x.\n", hr);
+        hr = IEnumVARIANT_Clone(enumvar, NULL);
+        ok(hr == E_POINTER, "IEnumVARIANT_Clone failed: 0x%08x.\n", hr);
+
         for (i = 0; i < ARRAY_SIZE(custom_engine_funcs); i++)
         {
             /* Querying by index still goes through the Bind process */
@@ -3583,6 +3624,25 @@ static void test_IScriptControl_get_Procedures(void)
             CHECK_CALLED(GetNames);
             CHECK_CALLED(ReleaseFuncDesc);
 
+            /* Compare with the enumerator */
+            SET_EXPECT(GetFuncDesc);
+            SET_EXPECT(GetNames);
+            SET_EXPECT(ReleaseFuncDesc);
+            hr = IEnumVARIANT_Next(enumvar, 1, &var, &fetched);
+            ok(hr == S_OK, "IEnumVARIANT_Next for index %u failed: 0x%08x.\n", i, hr);
+            ok(fetched == 1, "got %u.\n", fetched);
+            ok(V_VT(&var) == VT_DISPATCH, "V_VT(var) = %d.\n", V_VT(&var));
+            CHECK_CALLED(GetFuncDesc);
+            CHECK_CALLED(GetNames);
+            CHECK_CALLED(ReleaseFuncDesc);
+            hr = IDispatch_QueryInterface(V_DISPATCH(&var), &IID_IScriptProcedure, (void**)&proc2);
+            ok(hr == S_OK, "Failed to query IScriptProcedure for index %u: 0x%08x.\n", i, hr);
+            VariantClear(&var);
+
+            ok(proc == proc2, "proc and proc2 are not the same for %s and enum index %u.\n",
+                wine_dbgstr_w(custom_engine_funcs[i].name), i);
+            IScriptProcedure_Release(proc2);
+
             /* Verify the properties */
             hr = IScriptProcedure_get_Name(proc, &str);
             ok(hr == S_OK, "get_Name for %s failed: 0x%08x.\n", wine_dbgstr_w(custom_engine_funcs[i].name), hr);
@@ -3601,6 +3661,26 @@ static void test_IScriptControl_get_Procedures(void)
             IScriptProcedure_Release(proc);
         }
 
+        hr = IEnumVARIANT_Next(enumvar, 1, &var, &fetched);
+        ok(hr == S_FALSE, "IEnumVARIANT_Next failed: 0x%08x.\n", hr);
+        ok(fetched == 0, "got %u.\n", fetched);
+        hr = IEnumVARIANT_Skip(enumvar, 0);
+        ok(hr == S_OK, "IEnumVARIANT_Skip failed: 0x%08x.\n", hr);
+        hr = IEnumVARIANT_Skip(enumvar, 1);
+        ok(hr == S_FALSE, "IEnumVARIANT_Skip failed: 0x%08x.\n", hr);
+        hr = IEnumVARIANT_Reset(enumvar);
+        ok(hr == S_OK, "IEnumVARIANT_Reset failed: 0x%08x.\n", hr);
+        hr = IEnumVARIANT_Skip(enumvar, ARRAY_SIZE(custom_engine_funcs) - 1);
+        ok(hr == S_OK, "IEnumVARIANT_Skip failed: 0x%08x.\n", hr);
+        hr = IEnumVARIANT_Clone(enumvar, &enumvar2);
+        ok(hr == S_OK, "IEnumVARIANT_Clone failed: 0x%08x.\n", hr);
+        hr = IEnumVARIANT_Skip(enumvar2, 1);
+        ok(hr == S_OK, "IEnumVARIANT_Skip failed: 0x%08x.\n", hr);
+        hr = IEnumVARIANT_Skip(enumvar2, 1);
+        ok(hr == S_FALSE, "IEnumVARIANT_Skip failed: 0x%08x.\n", hr);
+
+        IEnumVARIANT_Release(enumvar2);
+        IEnumVARIANT_Release(enumvar);
         IScriptProcedureCollection_Release(procs);
         IActiveScriptSite_Release(site);
 

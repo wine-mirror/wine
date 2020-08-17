@@ -110,6 +110,15 @@ struct ScriptProcedureCollection {
     struct list hash_table[43];
 };
 
+struct procedure_enum {
+    IEnumVARIANT IEnumVARIANT_iface;
+    LONG ref;
+
+    WORD pos;
+    WORD count;
+    ScriptProcedureCollection *procedures;
+};
+
 struct ScriptHost {
     IActiveScriptSite IActiveScriptSite_iface;
     IActiveScriptSiteWindow IActiveScriptSiteWindow_iface;
@@ -530,6 +539,11 @@ static inline ScriptHost *impl_from_IServiceProvider(IServiceProvider *iface)
 static inline struct module_enum *module_enum_from_IEnumVARIANT(IEnumVARIANT *iface)
 {
     return CONTAINING_RECORD(iface, struct module_enum, IEnumVARIANT_iface);
+}
+
+static inline struct procedure_enum *procedure_enum_from_IEnumVARIANT(IEnumVARIANT *iface)
+{
+    return CONTAINING_RECORD(iface, struct procedure_enum, IEnumVARIANT_iface);
 }
 
 /* IActiveScriptSite */
@@ -976,6 +990,151 @@ done:
     return hr;
 }
 
+static HRESULT WINAPI procedure_enum_QueryInterface(IEnumVARIANT *iface, REFIID riid, void **ppv)
+{
+    struct procedure_enum *This = procedure_enum_from_IEnumVARIANT(iface);
+
+    if (IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IEnumVARIANT, riid))
+    {
+        *ppv = &This->IEnumVARIANT_iface;
+    }
+    else
+    {
+        WARN("unsupported interface: (%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI procedure_enum_AddRef(IEnumVARIANT *iface)
+{
+    struct procedure_enum *This = procedure_enum_from_IEnumVARIANT(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI procedure_enum_Release(IEnumVARIANT *iface)
+{
+    struct procedure_enum *This = procedure_enum_from_IEnumVARIANT(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if (!ref)
+    {
+        IScriptProcedureCollection_Release(&This->procedures->IScriptProcedureCollection_iface);
+        heap_free(This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI procedure_enum_Next(IEnumVARIANT *iface, ULONG celt, VARIANT *rgVar, ULONG *pCeltFetched)
+{
+    struct procedure_enum *This = procedure_enum_from_IEnumVARIANT(iface);
+    FUNCDESC *desc;
+    ITypeInfo *ti;
+    UINT i, num;
+    HRESULT hr;
+
+    TRACE("(%p)->(%u %p %p)\n", This, celt, rgVar, pCeltFetched);
+
+    if (!rgVar) return E_POINTER;
+    if (!This->procedures->module->host) return E_FAIL;
+
+    hr = start_script(This->procedures->module->host);
+    if (FAILED(hr)) return hr;
+
+    hr = get_script_typeinfo(This->procedures->module, &ti);
+    if (FAILED(hr)) return hr;
+
+    num = min(celt, This->count - This->pos);
+    for (i = 0; i < num; i++)
+    {
+        hr = ITypeInfo_GetFuncDesc(ti, This->pos + i, &desc);
+        if (FAILED(hr)) break;
+
+        hr = get_script_procedure(This->procedures, ti, desc, (IScriptProcedure**)&V_DISPATCH(rgVar + i));
+        if (FAILED(hr)) break;
+
+        V_VT(rgVar + i) = VT_DISPATCH;
+    }
+
+    if (FAILED(hr))
+    {
+        while (i--)
+            VariantClear(rgVar + i);
+        if (pCeltFetched) *pCeltFetched = 0;
+        return hr;
+    }
+
+    This->pos += i;
+
+    if (pCeltFetched) *pCeltFetched = i;
+    return i == celt ? S_OK : S_FALSE;
+}
+
+static HRESULT WINAPI procedure_enum_Skip(IEnumVARIANT *iface, ULONG celt)
+{
+    struct procedure_enum *This = procedure_enum_from_IEnumVARIANT(iface);
+
+    TRACE("(%p)->(%u)\n", This, celt);
+
+    if (This->count - This->pos < celt)
+    {
+        This->pos = This->count;
+        return S_FALSE;
+    }
+    This->pos += celt;
+    return S_OK;
+}
+
+static HRESULT WINAPI procedure_enum_Reset(IEnumVARIANT *iface)
+{
+    struct procedure_enum *This = procedure_enum_from_IEnumVARIANT(iface);
+
+    TRACE("(%p)\n", This);
+
+    This->pos = 0;
+    return S_OK;
+}
+
+static HRESULT WINAPI procedure_enum_Clone(IEnumVARIANT *iface, IEnumVARIANT **ppEnum)
+{
+    struct procedure_enum *This = procedure_enum_from_IEnumVARIANT(iface);
+    struct procedure_enum *clone;
+
+    TRACE("(%p)->(%p)\n", This, ppEnum);
+
+    if (!ppEnum) return E_POINTER;
+
+    if (!(clone = heap_alloc(sizeof(*clone))))
+        return E_OUTOFMEMORY;
+
+    *clone = *This;
+    clone->ref = 1;
+    IScriptProcedureCollection_AddRef(&This->procedures->IScriptProcedureCollection_iface);
+
+    *ppEnum = &clone->IEnumVARIANT_iface;
+    return S_OK;
+}
+
+static const IEnumVARIANTVtbl procedure_enum_vtbl = {
+    procedure_enum_QueryInterface,
+    procedure_enum_AddRef,
+    procedure_enum_Release,
+    procedure_enum_Next,
+    procedure_enum_Skip,
+    procedure_enum_Reset,
+    procedure_enum_Clone
+};
+
 static HRESULT WINAPI ScriptProcedureCollection_QueryInterface(IScriptProcedureCollection *iface, REFIID riid, void **ppv)
 {
     ScriptProcedureCollection *This = impl_from_IScriptProcedureCollection(iface);
@@ -1091,10 +1250,41 @@ static HRESULT WINAPI ScriptProcedureCollection_Invoke(IScriptProcedureCollectio
 static HRESULT WINAPI ScriptProcedureCollection_get__NewEnum(IScriptProcedureCollection *iface, IUnknown **ppenumProcedures)
 {
     ScriptProcedureCollection *This = impl_from_IScriptProcedureCollection(iface);
+    struct procedure_enum *proc_enum;
+    TYPEATTR *attr;
+    ITypeInfo *ti;
+    UINT count;
+    HRESULT hr;
 
-    FIXME("(%p)->(%p)\n", This, ppenumProcedures);
+    TRACE("(%p)->(%p)\n", This, ppenumProcedures);
 
-    return E_NOTIMPL;
+    if (!ppenumProcedures) return E_POINTER;
+    if (!This->module->host) return E_FAIL;
+
+    hr = start_script(This->module->host);
+    if (FAILED(hr)) return hr;
+
+    hr = get_script_typeinfo(This->module, &ti);
+    if (FAILED(hr)) return hr;
+
+    hr = ITypeInfo_GetTypeAttr(ti, &attr);
+    if (FAILED(hr)) return hr;
+
+    count = attr->cFuncs;
+    ITypeInfo_ReleaseTypeAttr(ti, attr);
+
+    if (!(proc_enum = heap_alloc(sizeof(*proc_enum))))
+        return E_OUTOFMEMORY;
+
+    proc_enum->IEnumVARIANT_iface.lpVtbl = &procedure_enum_vtbl;
+    proc_enum->ref = 1;
+    proc_enum->pos = 0;
+    proc_enum->count = count;
+    proc_enum->procedures = This;
+    IScriptProcedureCollection_AddRef(&This->IScriptProcedureCollection_iface);
+
+    *ppenumProcedures = (IUnknown*)&proc_enum->IEnumVARIANT_iface;
+    return S_OK;
 }
 
 static HRESULT WINAPI ScriptProcedureCollection_get_Item(IScriptProcedureCollection *iface, VARIANT index,
