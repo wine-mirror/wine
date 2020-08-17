@@ -131,6 +131,7 @@ typedef struct dds_frame_info {
     UINT width_in_blocks;
     UINT height_in_blocks;
     const GUID *pixel_format;
+    UINT pixel_format_bpp;
 } dds_frame_info;
 
 typedef struct DdsDecoder {
@@ -444,6 +445,27 @@ static void get_dds_info(dds_info* info, DDS_HEADER *header, DDS_HEADER_DXT10 *h
         info->frame_count *= info->array_size;
     }
     if (info->dimension == WICDdsTextureCube) info->frame_count *= 6;
+}
+
+static UINT get_pixel_format_bpp(const GUID *pixel_format)
+{
+    HRESULT hr;
+    UINT bpp = 0;
+    IWICComponentInfo *info = NULL;
+    IWICPixelFormatInfo* format_info = NULL;
+
+    hr = CreateComponentInfo(pixel_format, &info);
+    if (hr != S_OK) goto end;
+    hr = IWICComponentInfo_QueryInterface(info, &IID_IWICPixelFormatInfo, (void **)&format_info);
+    if (hr != S_OK) goto end;
+
+    IWICPixelFormatInfo_GetBitsPerPixel(format_info, &bpp);
+
+end:
+    if (format_info) IWICPixelFormatInfo_Release(format_info);
+    if (info) IWICComponentInfo_Release(info);
+
+    return bpp;
 }
 
 static inline DdsDecoder *impl_from_IWICBitmapDecoder(IWICBitmapDecoder *iface)
@@ -1090,6 +1112,7 @@ static HRESULT WINAPI DdsDecoder_Dds_GetFrame(IWICDdsDecoder *iface,
     frame_decode->info.width_in_blocks = frame_width_in_blocks;
     frame_decode->info.height_in_blocks = frame_height_in_blocks;
     frame_decode->info.pixel_format = This->info.pixel_format;
+    frame_decode->info.pixel_format_bpp = get_pixel_format_bpp(This->info.pixel_format);
     frame_decode->data = HeapAlloc(GetProcessHeap(), 0, frame_size);
     hr = IStream_Seek(This->stream, seek, SEEK_SET, NULL);
     if (hr != S_OK) goto end;
