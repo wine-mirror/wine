@@ -589,9 +589,36 @@ static HRESULT WINAPI DdsFrameDecode_CopyPalette(IWICBitmapFrameDecode *iface,
 static HRESULT WINAPI DdsFrameDecode_CopyPixels(IWICBitmapFrameDecode *iface,
                                                 const WICRect *prc, UINT cbStride, UINT cbBufferSize, BYTE *pbBuffer)
 {
-    FIXME("(%p,%s,%u,%u,%p): stub.\n", iface, debug_wic_rect(prc), cbStride, cbBufferSize, pbBuffer);
+    DdsFrameDecode *This = impl_from_IWICBitmapFrameDecode(iface);
+    UINT bpp, frame_stride, frame_size;
+    INT x, y, width, height;
 
-    return E_NOTIMPL;
+    TRACE("(%p,%s,%u,%u,%p)\n", iface, debug_wic_rect(prc), cbStride, cbBufferSize, pbBuffer);
+
+    if (!pbBuffer) return E_INVALIDARG;
+
+    bpp = This->info.pixel_format_bpp;
+    frame_stride = This->info.width * bpp / 8;
+    frame_size = frame_stride * This->info.height;
+    if (!prc) {
+        if (cbStride < frame_stride) return E_INVALIDARG;
+        if (cbBufferSize < frame_size) return WINCODEC_ERR_INSUFFICIENTBUFFER;
+        return S_OK;
+    }
+
+    x = prc->X;
+    y = prc->Y;
+    width = prc->Width;
+    height = prc->Height;
+    if (x < 0 || y < 0 || width <= 0 || height <= 0 ||
+        x + width > This->info.width ||
+        y + height > This->info.height) {
+        return E_INVALIDARG;
+    }
+    if (cbStride < width * bpp / 8) return E_INVALIDARG;
+    if (cbBufferSize < cbStride * height) return WINCODEC_ERR_INSUFFICIENTBUFFER;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI DdsFrameDecode_GetMetadataQueryReader(IWICBitmapFrameDecode *iface,
