@@ -27,6 +27,8 @@
 #include "oleauto.h"
 #include "winternl.h"
 
+#include "combase_private.h"
+
 #include "wine/debug.h"
 #include "wine/heap.h"
 
@@ -219,6 +221,20 @@ static HRESULT open_key_for_clsid(REFCLSID clsid, const WCHAR *keyname, REGSAM a
         return REGDB_E_KEYMISSING;
     else if (res != ERROR_SUCCESS)
         return REGDB_E_READREGDB;
+
+    return S_OK;
+}
+
+/***********************************************************************
+ *           InternalTlsAllocData    (combase.@)
+ */
+HRESULT WINAPI InternalTlsAllocData(struct tlsdata **data)
+{
+    if (!(*data = heap_alloc_zero(sizeof(**data))))
+        return E_OUTOFMEMORY;
+
+    list_init(&(*data)->spies);
+    NtCurrentTeb()->ReservedForOle = *data;
 
     return S_OK;
 }

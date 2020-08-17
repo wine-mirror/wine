@@ -274,7 +274,7 @@
 @ stub InternalSetAptCallCtrlOnTlsIfRequired
 @ stub InternalSetOleThunkWowPtr
 @ stub InternalStubInvoke
-@ stub InternalTlsAllocData
+@ stdcall InternalTlsAllocData(ptr)
 @ stub InternalUnmarshalObjRef
 @ stub IsErrorPropagationEnabled
 @ stub NdrExtStubInitialize
