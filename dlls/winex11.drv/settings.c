@@ -177,6 +177,38 @@ void X11DRV_Settings_Init(void)
     X11DRV_Settings_SetHandler(&nores_handler);
 }
 
+/* Initialize registry display settings when new display devices are added */
+void init_registry_display_settings(void)
+{
+    DEVMODEW dm = {.dmSize = sizeof(dm)};
+    DISPLAY_DEVICEW dd = {sizeof(dd)};
+    DWORD i = 0;
+    LONG ret;
+
+    while (EnumDisplayDevicesW(NULL, i++, &dd, 0))
+    {
+        /* Skip if the device already has registry display settings */
+        if (EnumDisplaySettingsExW(dd.DeviceName, ENUM_REGISTRY_SETTINGS, &dm, 0))
+            continue;
+
+        if (!EnumDisplaySettingsExW(dd.DeviceName, ENUM_CURRENT_SETTINGS, &dm, 0))
+        {
+            ERR("Failed to query current display settings for %s.\n", wine_dbgstr_w(dd.DeviceName));
+            continue;
+        }
+
+        TRACE("Device %s current display mode %ux%u %ubits %uHz at %d,%d.\n",
+              wine_dbgstr_w(dd.DeviceName), dm.dmPelsWidth, dm.dmPelsHeight, dm.dmBitsPerPel,
+              dm.dmDisplayFrequency, dm.u1.s2.dmPosition.x, dm.u1.s2.dmPosition.y);
+
+        ret = ChangeDisplaySettingsExW(dd.DeviceName, &dm, NULL,
+                                       CDS_GLOBAL | CDS_NORESET | CDS_UPDATEREGISTRY, NULL);
+        if (ret != DISP_CHANGE_SUCCESSFUL)
+            ERR("Failed to save registry display settings for %s, returned %d.\n",
+                wine_dbgstr_w(dd.DeviceName), ret);
+    }
+}
+
 static BOOL get_display_device_reg_key(const WCHAR *device_name, WCHAR *key, unsigned len)
 {
     static const WCHAR display[] = {'\\','\\','.','\\','D','I','S','P','L','A','Y'};

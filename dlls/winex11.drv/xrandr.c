@@ -1072,6 +1072,8 @@ static BOOL xrandr14_device_change_handler( HWND hwnd, XEvent *event )
          * ChangeDisplaySettings(). Otherwise, ChangeDisplaySettings() would send multiple
          * WM_DISPLAYCHANGE messages instead of just one */
         X11DRV_DisplayDevices_Update( FALSE );
+
+        init_registry_display_settings();
     }
     return FALSE;
 }
