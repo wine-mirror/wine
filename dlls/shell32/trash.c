@@ -662,7 +662,7 @@ static HRESULT TRASH_GetDetails(const TRASH_BUCKET *bucket, LPCSTR filename, WIN
     if (original_dos_name != NULL)
     {
         lstrcpynW(data->cFileName, original_dos_name, MAX_PATH);
-        SHFree(original_dos_name);
+        heap_free(original_dos_name);
     }
     else
     {
