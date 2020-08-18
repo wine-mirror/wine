@@ -924,48 +924,6 @@ LPCWSTR
 
 void
 
-%%d3dx8.dll
-
-%long
-
-DWORD
-HFONT
-HRESULT
-UINT
-
-%float
-
-FLOAT
-
-%ptr
-
-D3DXCOLOR *
-D3DXMATRIX *
-D3DXPLANE *
-D3DXQUATERNION *
-D3DXVECTOR2 *
-D3DXVECTOR3 *
-D3DXVECTOR4 *
-D3DVIEWPORT8 *
-FLOAT *
-LPCVOID
-LPD3DXBUFFER *
-LPD3DXFONT *
-LPD3DXMATRIXSTACK *
-LPDIRECT3DDEVICE8
-
-%str
-
-LPCSTR
-
-%wstr
-
-LPCWSTR
-
-%void
-
-void
-
 %%d3dxof.dll
 
 %long
@@ -1756,31 +1714,6 @@ void *
 %str
 
 char *
-
-%void
-
-void
-
-%%glut32.dll
-
-%double
-
-double
-
-%float
-
-float
-
-%long
-
-int
-unsigned int
-
-%ptr
-
-void (*)(int)
-void *
-void **
 
 %void
 
@@ -2670,16 +2603,6 @@ PHACMDRIVERID
 PHACMSTREAM
 PWAVEFILTER
 PWAVEFORMATEX
-
-%%msacmmap.dll
-
-%long
-
-DWORD
-HDRVR
-LONG
-UINT
-WORD
 
 %%mscms.dll
 
@@ -5692,61 +5615,6 @@ IUnknown *
 IWineD3D *
 IWineD3DClipper *
 
-%%winedos.dll
-
-%long
-
-BOOL
-BYTE
-DWORD
-UINT
-WORD
-int
-
-%ptr
-
-LPVOID
-UINT16 *
-void *
-
-%str
-
-LPCSTR
-
-%void
-
-void
-
-%%wineesd.drv
-
-%long
-
-DWORD
-HDRVR
-LPARAM
-LRESULT
-UINT
-WORD
-
-%long --pointer
-
-DWORD_PTR
-
-%%winejack.drv
-
-%long
-
-DWORD
-HDRVR
-LPARAM
-LRESULT
-UINT
-WORD
-
-%long --pointer
-
-DWORD_PTR
-
 %%winejoystick.drv
 
 %long
@@ -5768,21 +5636,6 @@ HDRVR
 LPARAM
 LRESULT
 UINT
-
-%long --pointer
-
-DWORD_PTR
-
-%%winenas.drv
-
-%long
-
-DWORD
-HDRVR
-LPARAM
-LRESULT
-UINT
-WORD
 
 %long --pointer
 
@@ -5852,48 +5705,6 @@ LPSTR
 %void
 
 void
-
-%wstr
-
-LPCWSTR
-
-%%winetty.drv
-
-%long
-
-BOOL
-COLORREF
-DWORD
-HANDLE
-HBITMAP
-HDC
-HFONT
-HRGN
-HWND
-INT
-LONG
-UINT
-
-%ptr
-
-BITMAPINFO *
-CREATESTRUCTA *
-DEVMODEW *
-DWORD *
-INT *
-LPCVOID
-LPINT
-LPPALETTEENTRY
-LPPOINT
-LPSIZE
-LPTEXTMETRICW
-LPVOID
-POINT *
-RECT *
-TTYDRV_PDEVICE *
-TTYDRV_PDEVICE **
-WINDOWPOS *
-void *
 
 %wstr
 
