@@ -899,8 +899,6 @@ BOOL WINAPI DECLSPEC_HOTPATCH IsWow64Process2( HANDLE process, USHORT *machine, 
 
     if (wow64)
     {
-        GetNativeSystemInfo( &si );
-
         if (process != GetCurrentProcess())
         {
 #if defined(__i386__) || defined(__x86_64__)
@@ -916,15 +914,22 @@ BOOL WINAPI DECLSPEC_HOTPATCH IsWow64Process2( HANDLE process, USHORT *machine, 
             nt = RtlImageNtHeader( NtCurrentTeb()->Peb->ImageBaseAddress );
             *machine = nt->FileHeader.Machine;
         }
+
+        if (!native_machine) return TRUE;
+
+        GetNativeSystemInfo( &si );
     }
     else
     {
+        *machine = IMAGE_FILE_MACHINE_UNKNOWN;
+
+        if (!native_machine) return TRUE;
+
 #ifdef _WIN64
         GetSystemInfo( &si );
 #else
         GetNativeSystemInfo( &si );
 #endif
-        *machine = IMAGE_FILE_MACHINE_UNKNOWN;
     }
 
     switch (si.u.s.wProcessorArchitecture)
