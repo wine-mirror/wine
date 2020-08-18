@@ -259,7 +259,7 @@ float CDECL MSVCRT_acosf( float x )
     if (ix >= 0x3f800000) {
         if (ix == 0x3f800000) {
             if (hx >> 31)
-                return 2 * pio2_hi + 7.5231638453e-37;
+                return 2 * pio2_lo + 2 * pio2_hi + 7.5231638453e-37;
             return 0;
         }
         if (MSVCRT__isnanf(x)) return x;
@@ -268,7 +268,7 @@ float CDECL MSVCRT_acosf( float x )
     /* |x| < 0.5 */
     if (ix < 0x3f000000) {
         if (ix <= 0x32800000) /* |x| < 2**-26 */
-            return pio2_hi + 7.5231638453e-37;
+            return pio2_lo + pio2_hi + 7.5231638453e-37;
         return pio2_hi - (x - (pio2_lo - x * acosf_R(x * x)));
     }
     /* x < -0.5 */
