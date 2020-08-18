@@ -199,7 +199,7 @@ static void test_user_shared_data_time(void)
 {
     KSHARED_USER_DATA *user_shared_data = (void *)0x7ffe0000;
     ULONGLONG t1, t2, t3;
-    int i = 0, changed = 0;
+    int i = 0;
 
     i = 0;
     do
@@ -253,15 +253,6 @@ static void test_user_shared_data_time(void)
            "USD InterruptTime / RtlQueryUnbiasedInterruptTime are out of order %s %s\n",
            wine_dbgstr_longlong(t2), wine_dbgstr_longlong(t3));
     }
-
-    for (i = 0; i < 100; i++)
-    {
-        t1 = GetTickCount();
-        Sleep(1);
-        t2 = GetTickCount();
-        if (t1 != t2) changed++;
-    }
-    todo_wine ok(changed >= 90, "tick count isn't updated after sleeping one millisecond (%d%% correct)\n", changed);
 }
 
 START_TEST(time)
