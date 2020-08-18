@@ -545,7 +545,7 @@ static HRESULT video_mixer_init_dxva_videodesc(IMFMediaType *media_type, DXVA2_V
 
     memset(video_desc, 0, sizeof(*video_desc));
     video_desc->SampleWidth = video_format->videoInfo.dwWidth;
-    video_desc->SampleWidth = video_format->videoInfo.dwHeight;
+    video_desc->SampleHeight = video_format->videoInfo.dwHeight;
     video_desc->Format = video_format->surfaceInfo.Format;
 
 done:
