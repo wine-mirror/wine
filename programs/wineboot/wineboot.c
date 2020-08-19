@@ -191,6 +191,63 @@ static DWORD set_reg_value_dword( HKEY hkey, const WCHAR *name, DWORD value )
     return RegSetValueExW( hkey, name, 0, REG_DWORD, (const BYTE *)&value, sizeof(value) );
 }
 
+#if defined(__i386__) || defined(__x86_64__)
+
+static void initialize_xstate_features(struct _KUSER_SHARED_DATA *data)
+{
+    XSTATE_CONFIGURATION *xstate = &data->XState;
+    unsigned int i;
+    int regs[4];
+
+    if (!data->ProcessorFeatures[PF_AVX_INSTRUCTIONS_AVAILABLE])
+        return;
+
+    __cpuidex(regs, 0, 0);
+
+    TRACE("Max cpuid level %#x.\n", regs[0]);
+    if (regs[0] < 0xd)
+        return;
+
+    __cpuidex(regs, 1, 0);
+    TRACE("CPU features %#x, %#x, %#x, %#x.\n", regs[0], regs[1], regs[2], regs[3]);
+    if (!(regs[2] & (0x1 << 27))) /* xsave OS enabled */
+        return;
+
+    __cpuidex(regs, 0xd, 0);
+    TRACE("XSAVE details %#x, %#x, %#x, %#x.\n", regs[0], regs[1], regs[2], regs[3]);
+    if (!(regs[0] & XSTATE_AVX))
+        return;
+
+    xstate->EnabledFeatures = (1 << XSTATE_LEGACY_FLOATING_POINT) | (1 << XSTATE_LEGACY_SSE) | (1 << XSTATE_AVX);
+    xstate->EnabledVolatileFeatures = xstate->EnabledFeatures;
+    xstate->Size = sizeof(XSAVE_FORMAT) + sizeof(XSTATE);
+    xstate->AllFeatureSize = regs[1];
+    xstate->AllFeatures[0] = offsetof(XSAVE_FORMAT, XmmRegisters);
+    xstate->AllFeatures[1] = sizeof(M128A) * 16;
+    xstate->AllFeatures[2] = sizeof(YMMCONTEXT);
+
+    for (i = 0; i < 3; ++i)
+        xstate->Features[i].Size = xstate->AllFeatures[i];
+
+    xstate->Features[1].Offset = xstate->Features[0].Size;
+    xstate->Features[2].Offset = sizeof(XSAVE_FORMAT) + offsetof(XSTATE, YmmContext);
+
+    __cpuidex(regs, 0xd, 1);
+    xstate->OptimizedSave = regs[0] & 1;
+    xstate->CompactionEnabled = !!(regs[0] & 2);
+
+    __cpuidex(regs, 0xd, 2);
+    TRACE("XSAVE feature 2 %#x, %#x, %#x, %#x.\n", regs[0], regs[1], regs[2], regs[3]);
+}
+
+#else
+
+static void initialize_xstate_features(struct _KUSER_SHARED_DATA *data)
+{
+}
+
+#endif
+
 static void create_user_shared_data(void)
 {
     struct _KUSER_SHARED_DATA *data;
@@ -275,6 +332,8 @@ static void create_user_shared_data(void)
     }
     data->ActiveProcessorCount = NtCurrentTeb()->Peb->NumberOfProcessors;
     data->ActiveGroupCount = 1;
+
+    initialize_xstate_features( data );
 
     UnmapViewOfFile( data );
 }
