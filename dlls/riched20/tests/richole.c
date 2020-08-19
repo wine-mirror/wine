@@ -3866,6 +3866,52 @@ static void test_character_moveend(ITextRange *range, int textlen, int i, int j,
     }
 }
 
+static void test_character_move(ITextRange *range, int textlen, int i, int j, LONG target)
+{
+    HRESULT hr;
+    LONG move_by;
+    LONG delta = 0;
+    LONG expected_delta;
+    LONG expected_location = target;
+
+    if (expected_location < 0)
+        expected_location = 0;
+    else if (expected_location > textlen)
+        expected_location = textlen;
+
+    if (target <= i) {
+        move_by = target - i;
+        expected_delta = expected_location - i;
+        if (i != j) {
+            --move_by;
+            --expected_delta;
+        }
+    } else if (j <= target) {
+        move_by = target - j;
+        expected_delta = expected_location - j;
+        if (i != j) {
+            ++move_by;
+            ++expected_delta;
+        }
+    } else {
+        /* There's no way to move to a point between start and end: */
+        return;
+    }
+
+    hr = ITextRange_SetRange(range, i, j);
+    ok(SUCCEEDED(hr), "got 0x%08x\n", hr);
+    hr = ITextRange_Move(range, tomCharacter, move_by, &delta);
+    if (expected_delta == 0) {
+        ok(hr == S_FALSE, "(%d,%d) move by %d got hr=0x%08x\n", i, j, move_by, hr);
+        ok(delta == 0, "(%d,%d) move by %d got delta %d\n", i, j, move_by, delta);
+        CHECK_RANGE(range, expected_location, expected_location);
+    } else {
+        ok(hr == S_OK, "(%d,%d) move by %d got hr=0x%08x\n", i, j, move_by, hr);
+        ok(delta == expected_delta, "(%d,%d) move by %d got delta %d\n", i, j, move_by, delta);
+        CHECK_RANGE(range, expected_location, expected_location);
+    }
+}
+
 static void test_character_movement(void)
 {
   static const char test_text1[] = "ab\n c";
@@ -3892,6 +3938,7 @@ static void test_character_movement(void)
           for (target = -2; target <= textlen + 3; target++) {
               test_character_moveend(range, textlen, i, j, target);
               test_character_movestart(range, textlen, i, j, target);
+              test_character_move(range, textlen, i, j, target);
           }
       }
   }
