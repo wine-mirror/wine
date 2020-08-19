@@ -573,7 +573,7 @@ static void decode_bc1(const BYTE *blocks, UINT block_count, UINT width, UINT he
                                    ((GET_RGB565_B(color[0]) + GET_RGB565_B(color[1]) * 2 + 1) / 3));
         }
 
-        color_indices = blocks + 4;
+        color_indices = block + 4;
         for (j = 0; j < 16; j++, pixel_index++)
         {
             if ((pixel_index % stride >= width) ||
