@@ -1207,16 +1207,24 @@ typedef enum _ALTERNATIVE_ARCHITECTURE_TYPE
 
 typedef struct _XSTATE_FEATURE
 {
-  ULONG Offset;
-  ULONG Size;
+    ULONG Offset;
+    ULONG Size;
 } XSTATE_FEATURE, *PXSTATE_FEATURE;
 
 typedef struct _XSTATE_CONFIGURATION
 {
-  ULONG64 EnabledFeatures;
-  ULONG Size;
-  ULONG OptimizedSave:1;
-  XSTATE_FEATURE Features[MAXIMUM_XSTATE_FEATURES];
+    ULONG64 EnabledFeatures;
+    ULONG64 EnabledVolatileFeatures;
+    ULONG Size;
+    ULONG OptimizedSave:1;
+    ULONG CompactionEnabled:1;
+    XSTATE_FEATURE Features[MAXIMUM_XSTATE_FEATURES];
+
+    ULONG64 EnabledSupervisorFeatures;
+    ULONG64 AlignedFeatures;
+    ULONG AllFeatureSize;
+    ULONG AllFeatures[MAXIMUM_XSTATE_FEATURES];
+    ULONG64 EnabledUserVisibleSupervisorFeatures;
 } XSTATE_CONFIGURATION, *PXSTATE_CONFIGURATION;
 
 typedef struct _KUSER_SHARED_DATA {
