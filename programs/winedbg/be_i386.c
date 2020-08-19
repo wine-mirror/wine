@@ -33,32 +33,6 @@ extern void             be_i386_disasm_one_insn(ADDRESS64* addr, int display);
 
 #define IS_VM86_MODE(ctx) (ctx->EFlags & V86_FLAG)
 
-#ifndef __x86_64__
-typedef struct DECLSPEC_ALIGN(16) _M128A {
-    ULONGLONG Low;
-    LONGLONG High;
-} M128A, *PM128A;
-
-typedef struct _XMM_SAVE_AREA32 {
-    WORD ControlWord;        /* 000 */
-    WORD StatusWord;         /* 002 */
-    BYTE TagWord;            /* 004 */
-    BYTE Reserved1;          /* 005 */
-    WORD ErrorOpcode;        /* 006 */
-    DWORD ErrorOffset;       /* 008 */
-    WORD ErrorSelector;      /* 00c */
-    WORD Reserved2;          /* 00e */
-    DWORD DataOffset;        /* 010 */
-    WORD DataSelector;       /* 014 */
-    WORD Reserved3;          /* 016 */
-    DWORD MxCsr;             /* 018 */
-    DWORD MxCsr_Mask;        /* 01c */
-    M128A FloatRegisters[8]; /* 020 */
-    M128A XmmRegisters[16];  /* 0a0 */
-    BYTE Reserved4[96];      /* 1a0 */
-} XMM_SAVE_AREA32, *PXMM_SAVE_AREA32;
-#endif
-
 static ADDRESS_MODE get_selector_type(HANDLE hThread, const WOW64_CONTEXT *ctx, WORD sel)
 {
     LDT_ENTRY	le;
@@ -158,7 +132,7 @@ static void be_i386_all_print_context(HANDLE hThread, const dbg_ctx_t *pctx)
     static const char mxcsr_flags[16][4] = { "IE", "DE", "ZE", "OE", "UE", "PE", "DAZ", "IM",
                                              "DM", "ZM", "OM", "UM", "PM", "R-", "R+", "FZ" };
     const WOW64_CONTEXT *ctx = &pctx->x86;
-    XMM_SAVE_AREA32 *xmm_area;
+    XSAVE_FORMAT *xmm_area;
     long double ST[8];                         /* These are for floating regs */
     int         cnt;
 
@@ -223,7 +197,7 @@ static void be_i386_all_print_context(HANDLE hThread, const dbg_ctx_t *pctx)
         dbg_printf(" ST%d:%Lf ", cnt, ST[cnt]);
     }
 
-    xmm_area = (XMM_SAVE_AREA32 *) &ctx->ExtendedRegisters;
+    xmm_area = (XSAVE_FORMAT *) &ctx->ExtendedRegisters;
 
     dbg_printf(" mxcsr: %04x (", xmm_area->MxCsr );
     for (cnt = 0; cnt < 16; cnt++)
@@ -350,14 +324,14 @@ static struct dbg_internal_var be_i386_ctx[] =
     {CV_REG_ST0+5,      "ST5",          (DWORD_PTR*)FIELD_OFFSET(WOW64_CONTEXT, FloatSave.RegisterArea[50]), dbg_itype_long_real},
     {CV_REG_ST0+6,      "ST6",          (DWORD_PTR*)FIELD_OFFSET(WOW64_CONTEXT, FloatSave.RegisterArea[60]), dbg_itype_long_real},
     {CV_REG_ST0+7,      "ST7",          (DWORD_PTR*)FIELD_OFFSET(WOW64_CONTEXT, FloatSave.RegisterArea[70]), dbg_itype_long_real},
-    {CV_AMD64_XMM0,     "XMM0",         (DWORD_PTR*)(FIELD_OFFSET(WOW64_CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, XmmRegisters[0])), dbg_itype_m128a},
-    {CV_AMD64_XMM0+1,   "XMM1",         (DWORD_PTR*)(FIELD_OFFSET(WOW64_CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, XmmRegisters[1])), dbg_itype_m128a},
-    {CV_AMD64_XMM0+2,   "XMM2",         (DWORD_PTR*)(FIELD_OFFSET(WOW64_CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, XmmRegisters[2])), dbg_itype_m128a},
-    {CV_AMD64_XMM0+3,   "XMM3",         (DWORD_PTR*)(FIELD_OFFSET(WOW64_CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, XmmRegisters[3])), dbg_itype_m128a},
-    {CV_AMD64_XMM0+4,   "XMM4",         (DWORD_PTR*)(FIELD_OFFSET(WOW64_CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, XmmRegisters[4])), dbg_itype_m128a},
-    {CV_AMD64_XMM0+5,   "XMM5",         (DWORD_PTR*)(FIELD_OFFSET(WOW64_CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, XmmRegisters[5])), dbg_itype_m128a},
-    {CV_AMD64_XMM0+6,   "XMM6",         (DWORD_PTR*)(FIELD_OFFSET(WOW64_CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, XmmRegisters[6])), dbg_itype_m128a},
-    {CV_AMD64_XMM0+7,   "XMM7",         (DWORD_PTR*)(FIELD_OFFSET(WOW64_CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, XmmRegisters[7])), dbg_itype_m128a},
+    {CV_AMD64_XMM0,     "XMM0",         (DWORD_PTR*)(FIELD_OFFSET(WOW64_CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XSAVE_FORMAT, XmmRegisters[0])), dbg_itype_m128a},
+    {CV_AMD64_XMM0+1,   "XMM1",         (DWORD_PTR*)(FIELD_OFFSET(WOW64_CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XSAVE_FORMAT, XmmRegisters[1])), dbg_itype_m128a},
+    {CV_AMD64_XMM0+2,   "XMM2",         (DWORD_PTR*)(FIELD_OFFSET(WOW64_CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XSAVE_FORMAT, XmmRegisters[2])), dbg_itype_m128a},
+    {CV_AMD64_XMM0+3,   "XMM3",         (DWORD_PTR*)(FIELD_OFFSET(WOW64_CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XSAVE_FORMAT, XmmRegisters[3])), dbg_itype_m128a},
+    {CV_AMD64_XMM0+4,   "XMM4",         (DWORD_PTR*)(FIELD_OFFSET(WOW64_CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XSAVE_FORMAT, XmmRegisters[4])), dbg_itype_m128a},
+    {CV_AMD64_XMM0+5,   "XMM5",         (DWORD_PTR*)(FIELD_OFFSET(WOW64_CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XSAVE_FORMAT, XmmRegisters[5])), dbg_itype_m128a},
+    {CV_AMD64_XMM0+6,   "XMM6",         (DWORD_PTR*)(FIELD_OFFSET(WOW64_CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XSAVE_FORMAT, XmmRegisters[6])), dbg_itype_m128a},
+    {CV_AMD64_XMM0+7,   "XMM7",         (DWORD_PTR*)(FIELD_OFFSET(WOW64_CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XSAVE_FORMAT, XmmRegisters[7])), dbg_itype_m128a},
     {0,                 NULL,           0,                                      dbg_itype_none}
 };
 
@@ -901,15 +875,15 @@ static struct gdb_register be_i386_gdb_register_map[] = {
     REG(NULL,   "fooff",  NULL,          FloatSave.DataOffset),
     { NULL,     "fop",    NULL,          FIELD_OFFSET(WOW64_CONTEXT, FloatSave.ErrorSelector)+2, 2},
 
-    { "sse", "xmm0",  "vec128",     FIELD_OFFSET(WOW64_CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, XmmRegisters[0]), 16},
-    { NULL,  "xmm1",  "vec128",     FIELD_OFFSET(WOW64_CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, XmmRegisters[1]), 16},
-    { NULL,  "xmm2",  "vec128",     FIELD_OFFSET(WOW64_CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, XmmRegisters[2]), 16},
-    { NULL,  "xmm3",  "vec128",     FIELD_OFFSET(WOW64_CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, XmmRegisters[3]), 16},
-    { NULL,  "xmm4",  "vec128",     FIELD_OFFSET(WOW64_CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, XmmRegisters[4]), 16},
-    { NULL,  "xmm5",  "vec128",     FIELD_OFFSET(WOW64_CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, XmmRegisters[5]), 16},
-    { NULL,  "xmm6",  "vec128",     FIELD_OFFSET(WOW64_CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, XmmRegisters[6]), 16},
-    { NULL,  "xmm7",  "vec128",     FIELD_OFFSET(WOW64_CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, XmmRegisters[7]), 16},
-    { NULL,  "mxcsr", "i386_mxcsr", FIELD_OFFSET(WOW64_CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XMM_SAVE_AREA32, MxCsr), 4},
+    { "sse", "xmm0",  "vec128",     FIELD_OFFSET(WOW64_CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XSAVE_FORMAT, XmmRegisters[0]), 16},
+    { NULL,  "xmm1",  "vec128",     FIELD_OFFSET(WOW64_CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XSAVE_FORMAT, XmmRegisters[1]), 16},
+    { NULL,  "xmm2",  "vec128",     FIELD_OFFSET(WOW64_CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XSAVE_FORMAT, XmmRegisters[2]), 16},
+    { NULL,  "xmm3",  "vec128",     FIELD_OFFSET(WOW64_CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XSAVE_FORMAT, XmmRegisters[3]), 16},
+    { NULL,  "xmm4",  "vec128",     FIELD_OFFSET(WOW64_CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XSAVE_FORMAT, XmmRegisters[4]), 16},
+    { NULL,  "xmm5",  "vec128",     FIELD_OFFSET(WOW64_CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XSAVE_FORMAT, XmmRegisters[5]), 16},
+    { NULL,  "xmm6",  "vec128",     FIELD_OFFSET(WOW64_CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XSAVE_FORMAT, XmmRegisters[6]), 16},
+    { NULL,  "xmm7",  "vec128",     FIELD_OFFSET(WOW64_CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XSAVE_FORMAT, XmmRegisters[7]), 16},
+    { NULL,  "mxcsr", "i386_mxcsr", FIELD_OFFSET(WOW64_CONTEXT, ExtendedRegisters) + FIELD_OFFSET(XSAVE_FORMAT, MxCsr), 4},
 };
 
 struct backend_cpu be_i386 =

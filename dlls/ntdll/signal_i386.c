@@ -36,34 +36,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 
-/* not defined for x86, so copy the x86_64 definition */
-typedef struct DECLSPEC_ALIGN(16) _M128A
-{
-    ULONGLONG Low;
-    LONGLONG High;
-} M128A;
-
-typedef struct
-{
-    WORD ControlWord;
-    WORD StatusWord;
-    BYTE TagWord;
-    BYTE Reserved1;
-    WORD ErrorOpcode;
-    DWORD ErrorOffset;
-    WORD ErrorSelector;
-    WORD Reserved2;
-    DWORD DataOffset;
-    WORD DataSelector;
-    WORD Reserved3;
-    DWORD MxCsr;
-    DWORD MxCsr_Mask;
-    M128A FloatRegisters[8];
-    M128A XmmRegisters[16];
-    BYTE Reserved4[96];
-} XMM_SAVE_AREA32;
-
-
 struct x86_thread_data
 {
     DWORD              fs;            /* 1d4 TEB selector */
@@ -287,8 +259,8 @@ static inline void save_fpux( CONTEXT *context )
 {
 #ifdef __GNUC__
     /* we have to enforce alignment by hand */
-    char buffer[sizeof(XMM_SAVE_AREA32) + 16];
-    XMM_SAVE_AREA32 *state = (XMM_SAVE_AREA32 *)(((ULONG_PTR)buffer + 15) & ~15);
+    char buffer[sizeof(XSAVE_FORMAT) + 16];
+    XSAVE_FORMAT *state = (XSAVE_FORMAT *)(((ULONG_PTR)buffer + 15) & ~15);
 
     context->ContextFlags |= CONTEXT_EXTENDED_REGISTERS;
     __asm__ __volatile__( "fxsave %0" : "=m" (*state) );

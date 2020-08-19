@@ -65,33 +65,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(seh);
 
 #undef ERR  /* Solaris needs to define this */
 
-/* not defined for x86, so copy the x86_64 definition */
-typedef struct DECLSPEC_ALIGN(16) _M128A
-{
-    ULONGLONG Low;
-    LONGLONG High;
-} M128A;
-
-typedef struct
-{
-    WORD ControlWord;
-    WORD StatusWord;
-    BYTE TagWord;
-    BYTE Reserved1;
-    WORD ErrorOpcode;
-    DWORD ErrorOffset;
-    WORD ErrorSelector;
-    WORD Reserved2;
-    DWORD DataOffset;
-    WORD DataSelector;
-    WORD Reserved3;
-    DWORD MxCsr;
-    DWORD MxCsr_Mask;
-    M128A FloatRegisters[8];
-    M128A XmmRegisters[16];
-    BYTE Reserved4[96];
-} XMM_SAVE_AREA32;
-
 /***********************************************************************
  * signal context platform-specific definitions
  */
@@ -171,7 +144,7 @@ typedef struct ucontext
 #define ERROR_sig(context)   ((context)->uc_mcontext.gregs[REG_ERR])
 
 #define FPU_sig(context)     ((FLOATING_SAVE_AREA*)((context)->uc_mcontext.fpregs))
-#define FPUX_sig(context)    (FPU_sig(context) && !((context)->uc_mcontext.fpregs->status >> 16) ? (XMM_SAVE_AREA32 *)(FPU_sig(context) + 1) : NULL)
+#define FPUX_sig(context)    (FPU_sig(context) && !((context)->uc_mcontext.fpregs->status >> 16) ? (XSAVE_FORMAT *)(FPU_sig(context) + 1) : NULL)
 
 #ifdef __ANDROID__
 /* custom signal restorer since we may have unmapped the one in vdso, and bionic doesn't check for that */
@@ -336,7 +309,7 @@ static inline int set_thread_area( struct modify_ldt_s *ptr )
 #define TRAP_sig(context)    ((context)->uc_mcontext->__es.__trapno)
 #define ERROR_sig(context)   ((context)->uc_mcontext->__es.__err)
 #define FPU_sig(context)     NULL
-#define FPUX_sig(context)    ((XMM_SAVE_AREA32 *)&(context)->uc_mcontext->__fs.__fpu_fcw)
+#define FPUX_sig(context)    ((XSAVE_FORMAT *)&(context)->uc_mcontext->__fs.__fpu_fcw)
 #else
 #define EAX_sig(context)     ((context)->uc_mcontext->ss.eax)
 #define EBX_sig(context)     ((context)->uc_mcontext->ss.ebx)
@@ -357,7 +330,7 @@ static inline int set_thread_area( struct modify_ldt_s *ptr )
 #define TRAP_sig(context)    ((context)->uc_mcontext->es.trapno)
 #define ERROR_sig(context)   ((context)->uc_mcontext->es.err)
 #define FPU_sig(context)     NULL
-#define FPUX_sig(context)    ((XMM_SAVE_AREA32 *)&(context)->uc_mcontext->fs.fpu_fcw)
+#define FPUX_sig(context)    ((XSAVE_FORMAT *)&(context)->uc_mcontext->fs.fpu_fcw)
 #endif
 
 #elif defined(__NetBSD__)
@@ -387,7 +360,7 @@ static inline int set_thread_area( struct modify_ldt_s *ptr )
 #define ERROR_sig(context)     ((context)->uc_mcontext.__gregs[_REG_ERR])
 
 #define FPU_sig(context)     NULL
-#define FPUX_sig(context)    ((XMM_SAVE_AREA32 *)&((context)->uc_mcontext.__fpregs))
+#define FPUX_sig(context)    ((XSAVE_FORMAT *)&((context)->uc_mcontext.__fpregs))
 
 #define T_MCHK T_MCA
 #define T_XMMFLT T_XMM
@@ -687,8 +660,8 @@ static inline void save_fpu( CONTEXT *context )
 static inline void save_fpux( CONTEXT *context )
 {
     /* we have to enforce alignment by hand */
-    char buffer[sizeof(XMM_SAVE_AREA32) + 16];
-    XMM_SAVE_AREA32 *state = (XMM_SAVE_AREA32 *)(((ULONG_PTR)buffer + 15) & ~15);
+    char buffer[sizeof(XSAVE_FORMAT) + 16];
+    XSAVE_FORMAT *state = (XSAVE_FORMAT *)(((ULONG_PTR)buffer + 15) & ~15);
 
     context->ContextFlags |= CONTEXT_EXTENDED_REGISTERS;
     __asm__ __volatile__( "fxsave %0" : "=m" (*state) );
@@ -718,8 +691,8 @@ static inline void restore_fpu( const CONTEXT *context )
 static inline void restore_fpux( const CONTEXT *context )
 {
     /* we have to enforce alignment by hand */
-    char buffer[sizeof(XMM_SAVE_AREA32) + 16];
-    XMM_SAVE_AREA32 *state = (XMM_SAVE_AREA32 *)(((ULONG_PTR)buffer + 15) & ~15);
+    char buffer[sizeof(XSAVE_FORMAT) + 16];
+    XSAVE_FORMAT *state = (XSAVE_FORMAT *)(((ULONG_PTR)buffer + 15) & ~15);
 
     memcpy( state, context->ExtendedRegisters, sizeof(*state) );
     /* reset the current interrupt status */
@@ -733,7 +706,7 @@ static inline void restore_fpux( const CONTEXT *context )
  *
  * Build a standard FPU context from an extended one.
  */
-static void fpux_to_fpu( FLOATING_SAVE_AREA *fpu, const XMM_SAVE_AREA32 *fpux )
+static void fpux_to_fpu( FLOATING_SAVE_AREA *fpu, const XSAVE_FORMAT *fpux )
 {
     unsigned int i, tag, stack_top;
 
@@ -782,7 +755,7 @@ static void fpux_to_fpu( FLOATING_SAVE_AREA *fpu, const XMM_SAVE_AREA32 *fpux )
 static inline void save_context( CONTEXT *context, const ucontext_t *sigcontext )
 {
     FLOATING_SAVE_AREA *fpu = FPU_sig(sigcontext);
-    XMM_SAVE_AREA32 *fpux = FPUX_sig(sigcontext);
+    XSAVE_FORMAT *fpux = FPUX_sig(sigcontext);
 
     memset(context, 0, sizeof(*context));
     context->ContextFlags = CONTEXT_FULL | CONTEXT_DEBUG_REGISTERS;
@@ -832,7 +805,7 @@ static inline void save_context( CONTEXT *context, const ucontext_t *sigcontext 
 static inline void restore_context( const CONTEXT *context, ucontext_t *sigcontext )
 {
     FLOATING_SAVE_AREA *fpu = FPU_sig(sigcontext);
-    XMM_SAVE_AREA32 *fpux = FPUX_sig(sigcontext);
+    XSAVE_FORMAT *fpux = FPUX_sig(sigcontext);
 
     x86_thread_data()->dr0 = context->Dr0;
     x86_thread_data()->dr1 = context->Dr1;
@@ -2260,8 +2233,8 @@ static void init_thread_context( CONTEXT *context, LPTHREAD_START_ROUTINE entry,
     context->Esp    = (DWORD)NtCurrentTeb()->Tib.StackBase - 16;
     context->Eip    = (DWORD)relay;
     context->FloatSave.ControlWord = 0x27f;
-    ((XMM_SAVE_AREA32 *)context->ExtendedRegisters)->ControlWord = 0x27f;
-    ((XMM_SAVE_AREA32 *)context->ExtendedRegisters)->MxCsr = 0x1f80;
+    ((XSAVE_FORMAT *)context->ExtendedRegisters)->ControlWord = 0x27f;
+    ((XSAVE_FORMAT *)context->ExtendedRegisters)->MxCsr = 0x1f80;
 }
 
 

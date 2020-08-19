@@ -240,33 +240,9 @@ static int have_cpuid(void)
 static inline BOOL have_sse_daz_mode(void)
 {
 #ifdef __i386__
-    typedef struct DECLSPEC_ALIGN(16) _M128A {
-        ULONGLONG Low;
-        LONGLONG High;
-    } M128A;
-
-    typedef struct _XMM_SAVE_AREA32 {
-        WORD ControlWord;
-        WORD StatusWord;
-        BYTE TagWord;
-        BYTE Reserved1;
-        WORD ErrorOpcode;
-        DWORD ErrorOffset;
-        WORD ErrorSelector;
-        WORD Reserved2;
-        DWORD DataOffset;
-        WORD DataSelector;
-        WORD Reserved3;
-        DWORD MxCsr;
-        DWORD MxCsr_Mask;
-        M128A FloatRegisters[8];
-        M128A XmmRegisters[16];
-        BYTE Reserved4[96];
-    } XMM_SAVE_AREA32;
-
     /* Intel says we need a zeroed 16-byte aligned buffer */
     char buffer[512 + 16];
-    XMM_SAVE_AREA32 *state = (XMM_SAVE_AREA32 *)(((ULONG_PTR)buffer + 15) & ~15);
+    XSAVE_FORMAT *state = (XSAVE_FORMAT *)(((ULONG_PTR)buffer + 15) & ~15);
     memset(buffer, 0, sizeof(buffer));
 
     __asm__ __volatile__( "fxsave %0" : "=m" (*state) : "m" (*state) );
