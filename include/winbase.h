@@ -2136,6 +2136,7 @@ WINBASEAPI DWORD       WINAPI GetDllDirectoryW(DWORD,LPWSTR);
 WINBASEAPI UINT        WINAPI GetDriveTypeA(LPCSTR);
 WINBASEAPI UINT        WINAPI GetDriveTypeW(LPCWSTR);
 #define                       GetDriveType WINELIB_NAME_AW(GetDriveType)
+WINBASEAPI DWORD64     WINAPI GetEnabledXStateFeatures(void);
 WINBASEAPI LPSTR       WINAPI GetEnvironmentStringsA(void);
 WINBASEAPI LPWSTR      WINAPI GetEnvironmentStringsW(void);
 #define                       GetEnvironmentStrings WINELIB_NAME_AW(GetEnvironmentStrings)

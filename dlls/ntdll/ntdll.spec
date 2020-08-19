@@ -693,6 +693,7 @@
 @ stdcall RtlGetDaclSecurityDescriptor(ptr ptr ptr ptr)
 @ stub RtlGetElementGenericTable
 # @ stub RtlGetElementGenericTableAvl
+@ stdcall RtlGetEnabledExtendedFeatures(int64)
 @ stdcall RtlGetExePath(wstr ptr)
 # @ stub RtlGetFirstRange
 @ stdcall RtlGetFrame()

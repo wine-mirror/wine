@@ -29,7 +29,9 @@
 
 static unsigned int page_size;
 
+static DWORD64 (WINAPI *pGetEnabledXStateFeatures)(void);
 static NTSTATUS (WINAPI *pRtlCreateUserStack)(SIZE_T, SIZE_T, ULONG, SIZE_T, SIZE_T, INITIAL_TEB *);
+static ULONG64 (WINAPI *pRtlGetEnabledExtendedFeatures)(ULONG64);
 static NTSTATUS (WINAPI *pRtlFreeUserStack)(void *);
 static BOOL (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
 static const BOOL is_win64 = sizeof(void*) != sizeof(int);
@@ -543,6 +545,7 @@ static void test_user_shared_data(void)
     };
     const KSHARED_USER_DATA *user_shared_data = (void *)0x7ffe0000;
     XSTATE_CONFIGURATION xstate = user_shared_data->XState;
+    ULONG64 feature_mask;
     unsigned int i;
 
     ok(user_shared_data->NumberOfPhysicalPages == sbi.MmNumberOfPhysicalPages,
@@ -560,16 +563,23 @@ static void test_user_shared_data(void)
             || broken(!user_shared_data->ActiveGroupCount) /* before Win7 */,
             "Got unexpected ActiveGroupCount %u.\n", user_shared_data->ActiveGroupCount);
 
+    if (!pRtlGetEnabledExtendedFeatures)
+    {
+        skip("RtlGetEnabledExtendedFeatures is not available.\n");
+        return;
+    }
+
+    feature_mask = pRtlGetEnabledExtendedFeatures(~(ULONG64)0);
+    if (!feature_mask)
+    {
+        skip("XState features are not available.\n");
+        return;
+    }
+
     if (!xstate.EnabledFeatures)
     {
         struct old_xstate_configuration *xs_old
                 = (struct old_xstate_configuration *)((char *)user_shared_data + 0x3e0);
-
-        if (!xs_old->EnabledFeatures)
-        {
-            skip("XState features are not supported.\n");
-            return;
-        }
 
         memset(&xstate, 0, sizeof(xstate));
         xstate.EnabledFeatures = xstate.EnabledVolatileFeatures = xs_old->EnabledFeatures;
@@ -580,6 +590,14 @@ static void test_user_shared_data(void)
     }
 
     trace("XState EnabledFeatures %s.\n", wine_dbgstr_longlong(xstate.EnabledFeatures));
+    feature_mask = pRtlGetEnabledExtendedFeatures(0);
+    ok(!feature_mask, "Got unexpected feature_mask %s.\n", wine_dbgstr_longlong(feature_mask));
+    feature_mask = pRtlGetEnabledExtendedFeatures(~(ULONG64)0);
+    ok(feature_mask == xstate.EnabledFeatures, "Got unexpected feature_mask %s.\n",
+            wine_dbgstr_longlong(feature_mask));
+    feature_mask = pGetEnabledXStateFeatures();
+    ok(feature_mask == xstate.EnabledFeatures, "Got unexpected feature_mask %s.\n",
+            wine_dbgstr_longlong(feature_mask));
     ok((xstate.EnabledFeatures & SUPPORTED_XSTATE_FEATURES) == SUPPORTED_XSTATE_FEATURES,
             "Got unexpected EnabledFeatures %s.\n", wine_dbgstr_longlong(xstate.EnabledFeatures));
     ok((xstate.EnabledVolatileFeatures & SUPPORTED_XSTATE_FEATURES) == xstate.EnabledFeatures,
@@ -623,10 +641,11 @@ START_TEST(virtual)
 
     mod = GetModuleHandleA("kernel32.dll");
     pIsWow64Process = (void *)GetProcAddress(mod, "IsWow64Process");
-
+    pGetEnabledXStateFeatures = (void *)GetProcAddress(mod, "GetEnabledXStateFeatures");
     mod = GetModuleHandleA("ntdll.dll");
     pRtlCreateUserStack = (void *)GetProcAddress(mod, "RtlCreateUserStack");
     pRtlFreeUserStack = (void *)GetProcAddress(mod, "RtlFreeUserStack");
+    pRtlGetEnabledExtendedFeatures = (void *)GetProcAddress(mod, "RtlGetEnabledExtendedFeatures");
 
     NtQuerySystemInformation(SystemBasicInformation, &sbi, sizeof(sbi), NULL);
     trace("system page size %#x\n", sbi.PageSize);

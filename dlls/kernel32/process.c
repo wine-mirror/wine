@@ -742,15 +742,6 @@ DWORD WINAPI GetMaximumProcessorCount(WORD group)
 }
 
 /***********************************************************************
- *           GetEnabledXStateFeatures (KERNEL32.@)
- */
-DWORD64 WINAPI GetEnabledXStateFeatures(void)
-{
-    FIXME("\n");
-    return 0;
-}
-
-/***********************************************************************
  *           GetFirmwareEnvironmentVariableA     (KERNEL32.@)
  */
 DWORD WINAPI GetFirmwareEnvironmentVariableA(LPCSTR name, LPCSTR guid, PVOID buffer, DWORD size)

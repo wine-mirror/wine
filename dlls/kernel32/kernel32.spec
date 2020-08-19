@@ -659,7 +659,7 @@
 # @ stub GetDurationFormatEx
 @ stdcall -import GetDynamicTimeZoneInformation(ptr)
 @ stdcall -import GetDynamicTimeZoneInformationEffectiveYears(ptr ptr ptr)
-@ stdcall -ret64 -arch=i386,x86_64 GetEnabledXStateFeatures()
+@ stdcall -import -ret64 -arch=i386,x86_64 GetEnabledXStateFeatures()
 @ stdcall -import GetEnvironmentStrings()
 @ stdcall -import GetEnvironmentStringsA()
 @ stdcall -import GetEnvironmentStringsW()

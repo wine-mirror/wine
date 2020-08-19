@@ -30,6 +30,7 @@
 #define WIN32_NO_STATUS
 #include "windef.h"
 #include "winternl.h"
+#include "ddk/wdm.h"
 #include "wine/exception.h"
 #include "wine/server.h"
 #include "wine/list.h"
@@ -654,4 +655,13 @@ BOOL WINAPI IsBadStringPtrW( LPCWSTR str, UINT_PTR max )
     }
     __ENDTRY
     return FALSE;
+}
+
+
+/**********************************************************************
+ *              RtlGetEnabledExtendedFeatures   (NTDLL.@)
+ */
+ULONG64 WINAPI RtlGetEnabledExtendedFeatures(ULONG64 feature_mask)
+{
+    return user_shared_data->XState.EnabledFeatures & feature_mask;
 }
