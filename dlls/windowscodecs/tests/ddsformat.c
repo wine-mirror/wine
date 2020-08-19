@@ -30,6 +30,9 @@
 #define MAKE_RGB565(r, g, b)  ((WORD)(((BYTE)(r) << 11) | ((BYTE)(g) << 5) | (BYTE)(b)))
 #define MAKE_ARGB(a, r, g, b) (((DWORD)(a) << 24) | ((DWORD)(r) << 16) | ((DWORD)(g) << 8) | (DWORD)(b))
 
+#define BLOCK_WIDTH  4
+#define BLOCK_HEIGHT 4
+
 /* 1x1 uncompressed(Alpha) DDS image */
 static BYTE test_dds_alpha[] = {
     'D',  'D',  'S',  ' ',  0x7C, 0x00, 0x00, 0x00, 0x07, 0x10, 0x08, 0x00, 0x01, 0x00, 0x00, 0x00,
@@ -645,10 +648,10 @@ static void decode_block(const BYTE *block_data, UINT block_count, DXGI_FORMAT f
             buffer[x + y * width] = rgb565_to_argb(color_value, alpha_value);
         }
 
-        block_x += 4;
+        block_x += BLOCK_WIDTH;
         if (block_x >= width) {
             block_x = 0;
-            block_y += 4;
+            block_y += BLOCK_HEIGHT;
         }
     }
 }
@@ -883,8 +886,8 @@ static void test_dds_decoder_frame_properties(IWICBitmapFrameDecode *frame_decod
         expected_block_width = 1;
         expected_block_height = 1;
     } else {
-        expected_block_width = 4;
-        expected_block_height = 4;
+        expected_block_width = BLOCK_WIDTH;
+        expected_block_height = BLOCK_HEIGHT;
     }
 
     hr = IWICDdsFrameDecode_GetFormatInfo(dds_frame, NULL);
