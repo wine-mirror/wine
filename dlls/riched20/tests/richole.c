@@ -3912,6 +3912,68 @@ static void test_character_move(ITextRange *range, int textlen, int i, int j, LO
     }
 }
 
+static void test_character_startof(ITextRange *range, int textlen, int i, int j)
+{
+    HRESULT hr;
+    LONG delta;
+
+    hr = ITextRange_SetRange(range, i, j);
+    ok(SUCCEEDED(hr), "got 0x%08x\n", hr);
+    hr = ITextRange_StartOf(range, tomCharacter, tomMove, &delta);
+    if (i == j) {
+        ok(hr == S_FALSE, "(%d,%d) tomMove got hr=0x%08x\n", i, j, hr);
+        ok(delta == 0, "(%d,%d) tomMove got delta %d\n", i, j, delta);
+    } else {
+        ok(hr == S_OK, "(%d,%d) tomMove got hr=0x%08x\n", i, j, hr);
+        ok(delta == -1, "(%d,%d) tomMove got delta %d\n", i, j, delta);
+    }
+    CHECK_RANGE(range, i, i);
+
+    hr = ITextRange_SetRange(range, i, j);
+    ok(SUCCEEDED(hr), "got 0x%08x\n", hr);
+    hr = ITextRange_StartOf(range, tomCharacter, tomExtend, &delta);
+    ok(hr == S_FALSE, "(%d,%d) tomExtend got hr=0x%08x\n", i, j, hr);
+    ok(delta == 0, "(%d,%d) tomExtend got delta %d\n", i, j, delta);
+    CHECK_RANGE(range, i, j);
+}
+
+static void test_character_endof(ITextRange *range, int textlen, int i, int j)
+{
+    HRESULT hr;
+    LONG end;
+    LONG delta;
+
+    hr = ITextRange_SetRange(range, i, j);
+    ok(SUCCEEDED(hr), "got 0x%08x\n", hr);
+    hr = ITextRange_EndOf(range, tomCharacter, tomMove, &delta);
+
+    /* A character "end", apparently cannot be before the very first character */
+    end = j;
+    if (j == 0)
+        ++end;
+
+    if (i == end) {
+        ok(hr == S_FALSE, "(%d,%d) tomMove got hr=0x%08x\n", i, j, hr);
+        ok(delta == 0, "(%d,%d) tomMove got delta %d\n", i, j, delta);
+    } else {
+        ok(hr == S_OK, "(%d,%d) tomMove got hr=0x%08x\n", i, j, hr);
+        ok(delta == 1, "(%d,%d) tomMove got delta %d\n", i, j, delta);
+    }
+    CHECK_RANGE(range, end, end);
+
+    hr = ITextRange_SetRange(range, i, j);
+    ok(SUCCEEDED(hr), "got 0x%08x\n", hr);
+    hr = ITextRange_EndOf(range, tomCharacter, tomExtend, &delta);
+    if (0 < j) {
+        ok(hr == S_FALSE, "(%d,%d) tomExtend got hr=0x%08x\n", i, j, hr);
+        ok(delta == 0, "(%d,%d) tomExtend got delta %d\n", i, j, delta);
+    } else {
+        ok(hr == S_OK, "(%d,%d) tomExtend got hr=0x%08x\n", i, j, hr);
+        ok(delta == 1, "(%d,%d) tomExtend got delta %d\n", i, j, delta);
+    }
+    CHECK_RANGE(range, i, end);
+}
+
 static void test_character_movement(void)
 {
   static const char test_text1[] = "ab\n c";
@@ -3940,6 +4002,8 @@ static void test_character_movement(void)
               test_character_movestart(range, textlen, i, j, target);
               test_character_move(range, textlen, i, j, target);
           }
+          test_character_startof(range, textlen, i, j);
+          test_character_endof(range, textlen, i, j);
       }
   }
 
