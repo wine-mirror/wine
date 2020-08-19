@@ -1483,7 +1483,6 @@ __ASM_GLOBAL_FUNC( set_full_cpu_context,
                    __ASM_SEH(".seh_stackalloc 0x40\n\t")
                    __ASM_SEH(".seh_endprologue\n\t")
                    __ASM_CFI(".cfi_adjust_cfa_offset 40\n\t")
-                   "ldmxcsr 0x34(%rdi)\n\t"         /* context->MxCsr */
                    "movw 0x38(%rdi),%ax\n\t"        /* context->SegCs */
                    "movq %rax,8(%rsp)\n\t"
                    "movw 0x42(%rdi),%ax\n\t"        /* context->SegSs */
