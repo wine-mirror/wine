@@ -68,7 +68,7 @@
 @ stdcall CoRegisterClassObject(ptr ptr long long ptr)
 @ stdcall CoRegisterInitializeSpy(ptr ptr) combase.CoRegisterInitializeSpy
 @ stdcall CoRegisterMallocSpy(ptr) combase.CoRegisterMallocSpy
-@ stdcall CoRegisterMessageFilter(ptr ptr)
+@ stdcall CoRegisterMessageFilter(ptr ptr) combase.CoRegisterMessageFilter
 @ stdcall CoRegisterPSClsid(ptr ptr)
 @ stdcall CoRegisterSurrogate(ptr)
 @ stdcall CoRegisterSurrogateEx(ptr ptr)

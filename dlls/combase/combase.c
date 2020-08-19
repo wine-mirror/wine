@@ -1684,3 +1684,40 @@ HRESULT WINAPI CoWaitForMultipleHandles(DWORD flags, DWORD timeout, ULONG handle
 
     return hr;
 }
+
+/******************************************************************************
+ *            CoRegisterMessageFilter        (combase.@)
+ */
+HRESULT WINAPI CoRegisterMessageFilter(IMessageFilter *filter, IMessageFilter **ret_filter)
+{
+    IMessageFilter *old_filter;
+    struct apartment *apt;
+
+    TRACE("%p, %p\n", filter, ret_filter);
+
+    apt = com_get_current_apt();
+
+    /* Can't set a message filter in a multi-threaded apartment */
+    if (!apt || apt->multi_threaded)
+    {
+        WARN("Can't set message filter in MTA or uninitialized apt\n");
+        return CO_E_NOT_SUPPORTED;
+    }
+
+    if (filter)
+        IMessageFilter_AddRef(filter);
+
+    EnterCriticalSection(&apt->cs);
+
+    old_filter = apt->filter;
+    apt->filter = filter;
+
+    LeaveCriticalSection(&apt->cs);
+
+    if (ret_filter)
+        *ret_filter = old_filter;
+    else if (old_filter)
+        IMessageFilter_Release(old_filter);
+
+    return S_OK;
+}

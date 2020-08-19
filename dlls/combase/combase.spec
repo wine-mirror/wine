@@ -142,7 +142,7 @@
 @ stdcall CoRegisterClassObject(ptr ptr long long ptr) ole32.CoRegisterClassObject
 @ stdcall CoRegisterInitializeSpy(ptr ptr)
 @ stdcall CoRegisterMallocSpy(ptr)
-@ stdcall CoRegisterMessageFilter(ptr ptr) ole32.CoRegisterMessageFilter
+@ stdcall CoRegisterMessageFilter(ptr ptr)
 @ stdcall CoRegisterPSClsid(ptr ptr) ole32.CoRegisterPSClsid
 @ stdcall CoRegisterSurrogate(ptr) ole32.CoRegisterSurrogate
 @ stdcall CoRegisterSurrogateEx(ptr ptr) ole32.CoRegisterSurrogateEx
