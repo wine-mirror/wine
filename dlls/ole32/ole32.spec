@@ -91,7 +91,7 @@
 @ stub CoUnloadingWOW
 @ stdcall CoUnmarshalHresult(ptr ptr) combase.CoUnmarshalHresult
 @ stdcall CoUnmarshalInterface(ptr ptr ptr)
-@ stdcall CoWaitForMultipleHandles(long long long ptr ptr)
+@ stdcall CoWaitForMultipleHandles(long long long ptr ptr) combase.CoWaitForMultipleHandles
 @ stdcall CreateAntiMoniker(ptr)
 @ stdcall CreateBindCtx(long ptr)
 @ stdcall CreateClassMoniker(ptr ptr)

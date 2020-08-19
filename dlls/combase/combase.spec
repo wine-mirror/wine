@@ -170,7 +170,7 @@
 @ stub CoVrfCheckThreadState
 @ stub CoVrfGetThreadState
 @ stub CoVrfReleaseThreadState
-@ stdcall CoWaitForMultipleHandles(long long long ptr ptr) ole32.CoWaitForMultipleHandles
+@ stdcall CoWaitForMultipleHandles(long long long ptr ptr)
 @ stub CoWaitForMultipleObjects
 @ stdcall CreateErrorInfo(ptr)
 @ stdcall CreateStreamOnHGlobal(ptr long ptr) ole32.CreateStreamOnHGlobal

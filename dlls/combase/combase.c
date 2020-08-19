@@ -25,6 +25,7 @@
 #define USE_COM_CONTEXT_DEF
 #include "objbase.h"
 #include "oleauto.h"
+#include "dde.h"
 #include "winternl.h"
 
 #include "combase_private.h"
@@ -1520,4 +1521,166 @@ HRESULT WINAPI CoRevokeInitializeSpy(ULARGE_INTEGER cookie)
         heap_free(spy);
     }
     return S_OK;
+}
+
+static BOOL com_peek_message(struct apartment *apt, MSG *msg)
+{
+    /* First try to retrieve messages for incoming COM calls to the apartment window */
+    return (apt->win && PeekMessageW(msg, apt->win, 0, 0, PM_REMOVE | PM_NOYIELD)) ||
+            /* Next retrieve other messages necessary for the app to remain responsive */
+            PeekMessageW(msg, NULL, WM_DDE_FIRST, WM_DDE_LAST, PM_REMOVE | PM_NOYIELD) ||
+            PeekMessageW(msg, NULL, 0, 0, PM_QS_PAINT | PM_QS_SENDMESSAGE | PM_REMOVE | PM_NOYIELD);
+}
+
+/***********************************************************************
+ *           CoWaitForMultipleHandles    (combase.@)
+ */
+HRESULT WINAPI CoWaitForMultipleHandles(DWORD flags, DWORD timeout, ULONG handle_count, HANDLE *handles,
+        DWORD *index)
+{
+    BOOL check_apc = !!(flags & COWAIT_ALERTABLE), post_quit = FALSE, message_loop;
+    DWORD start_time, wait_flags = 0;
+    struct tlsdata *tlsdata;
+    struct apartment *apt;
+    UINT exit_code;
+    HRESULT hr;
+
+    TRACE("%#x, %#x, %u, %p, %p\n", flags, timeout, handle_count, handles, index);
+
+    if (!index)
+        return E_INVALIDARG;
+
+    *index = 0;
+
+    if (!handles)
+        return E_INVALIDARG;
+
+    if (!handle_count)
+        return RPC_E_NO_SYNC;
+
+    if (FAILED(hr = com_get_tlsdata(&tlsdata)))
+        return hr;
+
+    apt = com_get_current_apt();
+    message_loop = apt && !apt->multi_threaded;
+
+    if (flags & COWAIT_WAITALL)
+        wait_flags |= MWMO_WAITALL;
+    if (flags & COWAIT_ALERTABLE)
+        wait_flags |= MWMO_ALERTABLE;
+
+    start_time = GetTickCount();
+
+    while (TRUE)
+    {
+        DWORD now = GetTickCount(), res;
+
+        if (now - start_time > timeout)
+        {
+            hr = RPC_S_CALLPENDING;
+            break;
+        }
+
+        if (message_loop)
+        {
+            TRACE("waiting for rpc completion or window message\n");
+
+            res = WAIT_TIMEOUT;
+
+            if (check_apc)
+            {
+                res = WaitForMultipleObjectsEx(handle_count, handles, !!(flags & COWAIT_WAITALL), 0, TRUE);
+                check_apc = FALSE;
+            }
+
+            if (res == WAIT_TIMEOUT)
+                res = MsgWaitForMultipleObjectsEx(handle_count, handles,
+                        timeout == INFINITE ? INFINITE : start_time + timeout - now,
+                        QS_SENDMESSAGE | QS_ALLPOSTMESSAGE | QS_PAINT, wait_flags);
+
+            if (res == WAIT_OBJECT_0 + handle_count)  /* messages available */
+            {
+                int msg_count = 0;
+                MSG msg;
+
+                /* call message filter */
+
+                if (apt->filter)
+                {
+                    PENDINGTYPE pendingtype = tlsdata->pending_call_count_server ? PENDINGTYPE_NESTED : PENDINGTYPE_TOPLEVEL;
+                    DWORD be_handled = IMessageFilter_MessagePending(apt->filter, 0 /* FIXME */, now - start_time, pendingtype);
+
+                    TRACE("IMessageFilter_MessagePending returned %d\n", be_handled);
+
+                    switch (be_handled)
+                    {
+                    case PENDINGMSG_CANCELCALL:
+                        WARN("call canceled\n");
+                        hr = RPC_E_CALL_CANCELED;
+                        break;
+                    case PENDINGMSG_WAITNOPROCESS:
+                    case PENDINGMSG_WAITDEFPROCESS:
+                    default:
+                        /* FIXME: MSDN is very vague about the difference
+                         * between WAITNOPROCESS and WAITDEFPROCESS - there
+                         * appears to be none, so it is possibly a left-over
+                         * from the 16-bit world. */
+                        break;
+                    }
+                }
+
+                if (!apt->win)
+                {
+                    /* If window is NULL on apartment, peek at messages so that it will not trigger
+                     * MsgWaitForMultipleObjects next time. */
+                    PeekMessageW(NULL, NULL, 0, 0, PM_QS_POSTMESSAGE | PM_NOREMOVE | PM_NOYIELD);
+                }
+
+                /* Some apps (e.g. Visio 2010) don't handle WM_PAINT properly and loop forever,
+                 * so after processing 100 messages we go back to checking the wait handles */
+                while (msg_count++ < 100 && com_peek_message(apt, &msg))
+                {
+                    if (msg.message == WM_QUIT)
+                    {
+                        TRACE("Received WM_QUIT message\n");
+                        post_quit = TRUE;
+                        exit_code = msg.wParam;
+                    }
+                    else
+                    {
+                        TRACE("Received message whilst waiting for RPC: 0x%04x\n", msg.message);
+                        TranslateMessage(&msg);
+                        DispatchMessageW(&msg);
+                    }
+                }
+                continue;
+            }
+        }
+        else
+        {
+            TRACE("Waiting for rpc completion\n");
+
+            res = WaitForMultipleObjectsEx(handle_count, handles, !!(flags & COWAIT_WAITALL),
+                    (timeout == INFINITE) ? INFINITE : start_time + timeout - now, !!(flags & COWAIT_ALERTABLE));
+        }
+
+        switch (res)
+        {
+        case WAIT_TIMEOUT:
+            hr = RPC_S_CALLPENDING;
+            break;
+        case WAIT_FAILED:
+            hr = HRESULT_FROM_WIN32(GetLastError());
+            break;
+        default:
+            *index = res;
+            break;
+        }
+        break;
+    }
+    if (post_quit) PostQuitMessage(exit_code);
+
+    TRACE("-- 0x%08x\n", hr);
+
+    return hr;
 }

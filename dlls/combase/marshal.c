@@ -22,9 +22,10 @@
 #define COBJMACROS
 #include "objbase.h"
 
+#include "combase_private.h"
+
 #include "wine/debug.h"
 #include "wine/heap.h"
-#include "wine/orpc.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
