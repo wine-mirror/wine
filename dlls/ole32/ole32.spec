@@ -27,7 +27,7 @@
 @ stdcall CoFreeUnusedLibrariesEx(long long)
 @ stdcall CoGetActivationState(int128 long ptr) combase.CoGetActivationState
 @ stdcall CoGetApartmentType(ptr ptr)
-@ stdcall CoGetCallContext(ptr ptr)
+@ stdcall CoGetCallContext(ptr ptr) combase.CoGetCallContext
 @ stdcall CoGetCallState(long ptr) combase.CoGetCallState
 @ stdcall CoGetCallerTID(ptr)
 @ stdcall CoGetClassObject(ptr long ptr ptr ptr)

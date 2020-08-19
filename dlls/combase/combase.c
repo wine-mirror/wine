@@ -1387,3 +1387,22 @@ void WINAPI DECLSPEC_HOTPATCH CoFreeUnusedLibraries(void)
 {
     CoFreeUnusedLibrariesEx(INFINITE, 0);
 }
+
+/***********************************************************************
+ *           CoGetCallContext        (combase.@)
+ */
+HRESULT WINAPI CoGetCallContext(REFIID riid, void **obj)
+{
+    struct tlsdata *tlsdata;
+    HRESULT hr;
+
+    TRACE("%s, %p\n", debugstr_guid(riid), obj);
+
+    if (FAILED(hr = com_get_tlsdata(&tlsdata)))
+        return hr;
+
+    if (!tlsdata->call_state)
+        return RPC_E_CALL_COMPLETE;
+
+    return IUnknown_QueryInterface(tlsdata->call_state, riid, obj);
+}

@@ -97,7 +97,7 @@
 @ stdcall CoGetActivationState(int128 long ptr)
 @ stub CoGetApartmentID
 @ stdcall CoGetApartmentType(ptr ptr) ole32.CoGetApartmentType
-@ stdcall CoGetCallContext(ptr ptr) ole32.CoGetCallContext
+@ stdcall CoGetCallContext(ptr ptr)
 @ stdcall CoGetCallState(long ptr)
 @ stdcall CoGetCallerTID(ptr) ole32.CoGetCallerTID
 @ stub CoGetCancelObject
