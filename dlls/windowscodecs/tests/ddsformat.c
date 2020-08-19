@@ -535,11 +535,11 @@ end:
     return bpp;
 }
 
-static DWORD rgb565_to_argb(WORD color, BOOL has_alpha)
+static DWORD rgb565_to_argb(WORD color, BYTE alpha)
 {
-    return (has_alpha && !color) ? 0: MAKE_ARGB(0xFF, (GET_RGB565_R(color) * 0xFF + 0x0F) / 0x1F,
-                                                      (GET_RGB565_G(color) * 0xFF + 0x1F) / 0x3F,
-                                                      (GET_RGB565_B(color) * 0xFF + 0x0F) / 0x1F);
+    return MAKE_ARGB(alpha, (GET_RGB565_R(color) * 0xFF + 0x0F) / 0x1F,
+                            (GET_RGB565_G(color) * 0xFF + 0x1F) / 0x3F,
+                            (GET_RGB565_B(color) * 0xFF + 0x0F) / 0x1F);
 }
 
 static void decode_bc1(const BYTE *blocks, UINT block_count, UINT width, UINT height, DWORD *buffer)
@@ -580,8 +580,51 @@ static void decode_bc1(const BYTE *blocks, UINT block_count, UINT width, UINT he
                 (pixel_index / stride >= height)) continue;
 
             color_index = (color_indices[j / 4] >> ((j % 4) * 2)) & 0x3;
-            *pixel = rgb565_to_argb(color[color_index], has_alpha);
+            *pixel = (has_alpha && !color[color_index])? 0: rgb565_to_argb(color[color_index], 0xFF);
             pixel++;
+        }
+    }
+}
+
+static void decode_bc2(const BYTE *blocks, UINT block_count, UINT width, UINT height, DWORD *buffer)
+{
+    static const UINT BLOCK_SIZE = 16;
+
+    int i, j, alpha, color_index, block_x, block_y, x, y;
+    const BYTE *block, *color_indices, *alpha_table;
+    WORD color[4];
+
+    block_x = 0;
+    block_y = 0;
+
+    for (i = 0; i < block_count; i++)
+    {
+        block = blocks + i * BLOCK_SIZE;
+
+        color[0] = *((WORD *)(block + 8));
+        color[1] = *((WORD *)(block + 10));
+        color[2] = MAKE_RGB565(((GET_RGB565_R(color[0]) * 2 + GET_RGB565_R(color[1]) + 1) / 3),
+                               ((GET_RGB565_G(color[0]) * 2 + GET_RGB565_G(color[1]) + 1) / 3),
+                               ((GET_RGB565_B(color[0]) * 2 + GET_RGB565_B(color[1]) + 1) / 3));
+        color[3] = MAKE_RGB565(((GET_RGB565_R(color[0]) + GET_RGB565_R(color[1]) * 2 + 1) / 3),
+                               ((GET_RGB565_G(color[0]) + GET_RGB565_G(color[1]) * 2 + 1) / 3),
+                               ((GET_RGB565_B(color[0]) + GET_RGB565_B(color[1]) * 2 + 1) / 3));
+
+        alpha_table = block;
+        color_indices = block + 12;
+        for (j = 0; j < 16; j++)
+        {
+            x = block_x + j % 4;
+            y = block_y + j / 4;
+            if (x >= width || y >= height) continue;
+            alpha = (alpha_table[j / 2] >> (j % 2) * 4) & 0xF;
+            color_index = (color_indices[j / 4] >> ((j % 4) * 2)) & 0x3;
+            buffer[x + y * width] = rgb565_to_argb(color[color_index], (BYTE)((alpha * 0xFF + 0x7)/ 0xF));
+        }
+        block_x += 4;
+        if (block_x >= width) {
+            block_x = 0;
+            block_y += 4;
         }
     }
 }
@@ -1036,8 +1079,19 @@ static void test_dds_decoder_frame_data(IWICBitmapFrameDecode* frame, IWICDdsFra
     hr = IWICBitmapFrameDecode_CopyPixels(frame, &rect, stride, sizeof(buffer), NULL);
     ok(hr == E_INVALIDARG, "Test %u, frame %u: CopyBlocks got unexpected hr %#x\n", i, frame_index, hr);
 
-    if (format_info.DxgiFormat == DXGI_FORMAT_BC1_UNORM) {
-        decode_bc1(test_data[i].data + block_offset, width_in_blocks * height_in_blocks, frame_width, frame_height, pixels);
+    if (format_info.DxgiFormat == DXGI_FORMAT_BC1_UNORM ||
+        format_info.DxgiFormat == DXGI_FORMAT_BC2_UNORM ) {
+        switch (format_info.DxgiFormat)
+        {
+            case DXGI_FORMAT_BC1_UNORM:
+                decode_bc1(test_data[i].data + block_offset, width_in_blocks * height_in_blocks, frame_width, frame_height, pixels);
+                break;
+            case DXGI_FORMAT_BC2_UNORM:
+                decode_bc2(test_data[i].data + block_offset, width_in_blocks * height_in_blocks, frame_width, frame_height, pixels);
+                break;
+            default:
+                break;
+        }
 
         hr = IWICBitmapFrameDecode_CopyPixels(frame, &rect, stride, sizeof(buffer), buffer);
         ok(hr == S_OK, "Test %u, frame %u: CopyPixels failed, hr %#x\n", i, frame_index, hr);
@@ -1046,7 +1100,6 @@ static void test_dds_decoder_frame_data(IWICBitmapFrameDecode* frame, IWICDdsFra
             ok(color_buffer_match((DWORD *)pixels, (DWORD *)buffer, 1),
                "Test %u, frame %u: Pixels mismatch\n", i, frame_index);
         }
-
 
         hr = IWICBitmapFrameDecode_CopyPixels(frame, NULL, frame_stride, sizeof(buffer), buffer);
         ok(hr == S_OK, "Test %u, frame %u: CopyPixels failed, hr %#x\n", i, frame_index, hr);
