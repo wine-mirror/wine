@@ -1406,3 +1406,23 @@ HRESULT WINAPI CoGetCallContext(REFIID riid, void **obj)
 
     return IUnknown_QueryInterface(tlsdata->call_state, riid, obj);
 }
+
+/***********************************************************************
+ *           CoSwitchCallContext    (combase.@)
+ */
+HRESULT WINAPI CoSwitchCallContext(IUnknown *context, IUnknown **old_context)
+{
+    struct tlsdata *tlsdata;
+    HRESULT hr;
+
+    TRACE("%p, %p\n", context, old_context);
+
+    if (FAILED(hr = com_get_tlsdata(&tlsdata)))
+        return hr;
+
+    /* Reference counts are not touched. */
+    *old_context = tlsdata->call_state;
+    tlsdata->call_state = context;
+
+    return S_OK;
+}

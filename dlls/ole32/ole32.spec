@@ -82,7 +82,7 @@
 @ stdcall CoSetProxyBlanket(ptr long long ptr long long ptr long) combase.CoSetProxyBlanket
 @ stdcall CoSetState(ptr)
 @ stdcall CoSuspendClassObjects()
-@ stdcall CoSwitchCallContext(ptr ptr)
+@ stdcall CoSwitchCallContext(ptr ptr) combase.CoSwitchCallContext
 @ stdcall CoTaskMemAlloc(long) combase.CoTaskMemAlloc
 @ stdcall CoTaskMemFree(ptr) combase.CoTaskMemFree
 @ stdcall CoTaskMemRealloc(ptr long) combase.CoTaskMemRealloc
