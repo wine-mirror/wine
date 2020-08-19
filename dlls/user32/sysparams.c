@@ -1432,7 +1432,7 @@ static DWORD_ENTRY( AUDIODESC_LOCALE, 0 );
 static PATH_ENTRY( DESKPATTERN );
 static PATH_ENTRY( DESKWALLPAPER );
 
-static BYTE user_prefs[8] = { 0x30, 0x00, 0x00, 0x80, 0x10, 0x00, 0x00, 0x00 };
+static BYTE user_prefs[8] = { 0x30, 0x00, 0x00, 0x80, 0x12, 0x00, 0x00, 0x00 };
 static BINARY_ENTRY( USERPREFERENCESMASK, user_prefs );
 
 static FONT_ENTRY( CAPTIONLOGFONT, FW_BOLD );
