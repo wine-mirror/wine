@@ -1297,6 +1297,64 @@ NTSYSAPI PVOID WINAPI RtlVirtualUnwind(ULONG,ULONG64,ULONG64,RUNTIME_FUNCTION*,C
 
 #endif /* __x86_64__ */
 
+#define XSTATE_LEGACY_FLOATING_POINT 0
+#define XSTATE_LEGACY_SSE            1
+#define XSTATE_GSSE                  2
+#define XSTATE_AVX                   XSTATE_GSSE
+#define XSTATE_MPX_BNDREGS           3
+#define XSTATE_MPX_BNDCSR            4
+#define XSTATE_AVX512_KMASK          5
+#define XSTATE_AVX512_ZMM_H          6
+#define XSTATE_AVX512_ZMM            7
+#define XSTATE_IPT                   8
+#define XSTATE_CET_U                 11
+#define XSTATE_LWP                   62
+
+typedef struct _YMMCONTEXT
+{
+    M128A Ymm0;
+    M128A Ymm1;
+    M128A Ymm2;
+    M128A Ymm3;
+    M128A Ymm4;
+    M128A Ymm5;
+    M128A Ymm6;
+    M128A Ymm7;
+    M128A Ymm8;
+    M128A Ymm9;
+    M128A Ymm10;
+    M128A Ymm11;
+    M128A Ymm12;
+    M128A Ymm13;
+    M128A Ymm14;
+    M128A Ymm15;
+}
+YMMCONTEXT, *PYMMCONTEXT;
+
+typedef struct _XSTATE
+{
+    ULONG64 Mask;
+    ULONG64 CompactionMask;
+    ULONG64 Reserved[6];
+    YMMCONTEXT YmmContext;
+} XSTATE, *PXSTATE;
+
+typedef struct _CONTEXT_CHUNK
+{
+    LONG Offset;
+    ULONG Length;
+} CONTEXT_CHUNK, *PCONTEXT_CHUNK;
+
+typedef struct _CONTEXT_EX
+{
+    CONTEXT_CHUNK All;
+    CONTEXT_CHUNK Legacy;
+    CONTEXT_CHUNK XState;
+#ifdef _WIN64
+    ULONG64 align;
+#endif
+} CONTEXT_EX, *PCONTEXT_EX;
+
 /* IA64 context definitions */
 #ifdef __ia64__
 
