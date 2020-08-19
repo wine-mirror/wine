@@ -140,7 +140,7 @@
 @ stub CoReactivateObject
 @ stub CoRegisterActivationFilter
 @ stdcall CoRegisterClassObject(ptr ptr long long ptr) ole32.CoRegisterClassObject
-@ stdcall CoRegisterInitializeSpy(ptr ptr) ole32.CoRegisterInitializeSpy
+@ stdcall CoRegisterInitializeSpy(ptr ptr)
 @ stdcall CoRegisterMallocSpy(ptr)
 @ stdcall CoRegisterMessageFilter(ptr ptr) ole32.CoRegisterMessageFilter
 @ stdcall CoRegisterPSClsid(ptr ptr) ole32.CoRegisterPSClsid
@@ -152,7 +152,7 @@
 @ stub CoRetireServer
 @ stdcall CoRevertToSelf()
 @ stdcall CoRevokeClassObject(long) ole32.CoRevokeClassObject
-@ stdcall CoRevokeInitializeSpy(int64) ole32.CoRevokeInitializeSpy
+@ stdcall CoRevokeInitializeSpy(int64)
 @ stdcall CoRevokeMallocSpy()
 @ stub CoSetCancelObject
 @ stdcall CoSetErrorInfo(long ptr) SetErrorInfo

@@ -65,6 +65,26 @@ struct progidredirect_data
     ULONG clsid_offset;
 };
 
+struct init_spy
+{
+    struct list entry;
+    IInitializeSpy *spy;
+    unsigned int id;
+};
+
+static struct init_spy *get_spy_entry(struct tlsdata *tlsdata, unsigned int id)
+{
+    struct init_spy *spy;
+
+    LIST_FOR_EACH_ENTRY(spy, &tlsdata->spies, struct init_spy, entry)
+    {
+        if (id == spy->id && spy->spy)
+            return spy;
+    }
+
+    return NULL;
+}
+
 static NTSTATUS create_key(HKEY *retkey, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr)
 {
     NTSTATUS status = NtCreateKey((HANDLE *)retkey, access, attr, 0, NULL, 0, NULL);
@@ -1424,5 +1444,80 @@ HRESULT WINAPI CoSwitchCallContext(IUnknown *context, IUnknown **old_context)
     *old_context = tlsdata->call_state;
     tlsdata->call_state = context;
 
+    return S_OK;
+}
+
+/******************************************************************************
+ *          CoRegisterInitializeSpy    (combase.@)
+ */
+HRESULT WINAPI CoRegisterInitializeSpy(IInitializeSpy *spy, ULARGE_INTEGER *cookie)
+{
+    struct tlsdata *tlsdata;
+    struct init_spy *entry;
+    unsigned int id;
+    HRESULT hr;
+
+    TRACE("%p, %p\n", spy, cookie);
+
+    if (!spy || !cookie)
+        return E_INVALIDARG;
+
+    if (FAILED(hr = com_get_tlsdata(&tlsdata)))
+        return hr;
+
+    hr = IInitializeSpy_QueryInterface(spy, &IID_IInitializeSpy, (void **)&spy);
+    if (FAILED(hr))
+        return hr;
+
+    entry = heap_alloc(sizeof(*entry));
+    if (!entry)
+    {
+        IInitializeSpy_Release(spy);
+        return E_OUTOFMEMORY;
+    }
+
+    entry->spy = spy;
+
+    id = 0;
+    while (get_spy_entry(tlsdata, id) != NULL)
+    {
+        id++;
+    }
+
+    entry->id = id;
+    list_add_head(&tlsdata->spies, &entry->entry);
+
+    cookie->u.HighPart = GetCurrentThreadId();
+    cookie->u.LowPart = entry->id;
+
+    return S_OK;
+}
+
+/******************************************************************************
+ *          CoRevokeInitializeSpy    (combase.@)
+ */
+HRESULT WINAPI CoRevokeInitializeSpy(ULARGE_INTEGER cookie)
+{
+    struct tlsdata *tlsdata;
+    struct init_spy *spy;
+    HRESULT hr;
+
+    TRACE("%s\n", wine_dbgstr_longlong(cookie.QuadPart));
+
+    if (cookie.u.HighPart != GetCurrentThreadId())
+        return E_INVALIDARG;
+
+    if (FAILED(hr = com_get_tlsdata(&tlsdata)))
+        return hr;
+
+    if (!(spy = get_spy_entry(tlsdata, cookie.u.LowPart))) return E_INVALIDARG;
+
+    IInitializeSpy_Release(spy->spy);
+    spy->spy = NULL;
+    if (!tlsdata->spies_lock)
+    {
+        list_remove(&spy->entry);
+        heap_free(spy);
+    }
     return S_OK;
 }

@@ -66,7 +66,7 @@
 @ stub CoQueryReleaseObject
 @ stdcall CoRegisterChannelHook(ptr ptr)
 @ stdcall CoRegisterClassObject(ptr ptr long long ptr)
-@ stdcall CoRegisterInitializeSpy(ptr ptr)
+@ stdcall CoRegisterInitializeSpy(ptr ptr) combase.CoRegisterInitializeSpy
 @ stdcall CoRegisterMallocSpy(ptr) combase.CoRegisterMallocSpy
 @ stdcall CoRegisterMessageFilter(ptr ptr)
 @ stdcall CoRegisterPSClsid(ptr ptr)
@@ -77,7 +77,7 @@
 @ stdcall CoResumeClassObjects()
 @ stdcall CoRevertToSelf() combase.CoRevertToSelf
 @ stdcall CoRevokeClassObject(long)
-@ stdcall CoRevokeInitializeSpy(int64)
+@ stdcall CoRevokeInitializeSpy(int64) combase.CoRevokeInitializeSpy
 @ stdcall CoRevokeMallocSpy() combase.CoRevokeMallocSpy
 @ stdcall CoSetProxyBlanket(ptr long long ptr long long ptr long) combase.CoSetProxyBlanket
 @ stdcall CoSetState(ptr)

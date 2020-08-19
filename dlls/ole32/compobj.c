@@ -1775,19 +1775,6 @@ DWORD WINAPI CoBuildVersion(void)
     return (rmm<<16)+rup;
 }
 
-static struct init_spy *get_spy_entry(struct oletls *info, unsigned int id)
-{
-    struct init_spy *spy;
-
-    LIST_FOR_EACH_ENTRY(spy, &info->spies, struct init_spy, entry)
-    {
-        if (id == spy->id && spy->spy)
-            return spy;
-    }
-
-    return NULL;
-}
-
 /*
  * When locked, don't modify list (unless we add a new head), so that it's
  * safe to iterate it. Freeing of list entries is delayed and done on unlock.
@@ -1809,103 +1796,6 @@ static void unlock_init_spies(struct oletls *info)
         list_remove(&spy->entry);
         heap_free(spy);
     }
-}
-
-/******************************************************************************
- *              CoRegisterInitializeSpy [OLE32.@]
- *
- * Add a Spy that watches CoInitializeEx calls
- *
- * PARAMS
- *  spy [I] Pointer to IUnknown interface that will be QueryInterface'd.
- *  cookie [II] cookie receiver
- *
- * RETURNS
- *  Success: S_OK if not already initialized, S_FALSE otherwise.
- *  Failure: HRESULT code.
- *
- * SEE ALSO
- *   CoInitializeEx
- */
-HRESULT WINAPI CoRegisterInitializeSpy(IInitializeSpy *spy, ULARGE_INTEGER *cookie)
-{
-    struct oletls *info = COM_CurrentInfo();
-    struct init_spy *entry;
-    unsigned int id;
-    HRESULT hr;
-
-    TRACE("(%p, %p)\n", spy, cookie);
-
-    if (!spy || !cookie || !info)
-    {
-        if (!info)
-            WARN("Could not allocate tls\n");
-        return E_INVALIDARG;
-    }
-
-    hr = IInitializeSpy_QueryInterface(spy, &IID_IInitializeSpy, (void **)&spy);
-    if (FAILED(hr))
-        return hr;
-
-    entry = heap_alloc(sizeof(*entry));
-    if (!entry)
-    {
-        IInitializeSpy_Release(spy);
-        return E_OUTOFMEMORY;
-    }
-
-    entry->spy = spy;
-
-    id = 0;
-    while (get_spy_entry(info, id) != NULL)
-    {
-        id++;
-    }
-
-    entry->id = id;
-    list_add_head(&info->spies, &entry->entry);
-
-    cookie->HighPart = GetCurrentThreadId();
-    cookie->LowPart = entry->id;
-
-    return S_OK;
-}
-
-/******************************************************************************
- *              CoRevokeInitializeSpy [OLE32.@]
- *
- * Remove a spy that previously watched CoInitializeEx calls
- *
- * PARAMS
- *  cookie [I] The cookie obtained from a previous CoRegisterInitializeSpy call
- *
- * RETURNS
- *  Success: S_OK if a spy is removed
- *  Failure: E_INVALIDARG
- *
- * SEE ALSO
- *   CoInitializeEx
- */
-HRESULT WINAPI CoRevokeInitializeSpy(ULARGE_INTEGER cookie)
-{
-    struct oletls *info = COM_CurrentInfo();
-    struct init_spy *spy;
-
-    TRACE("(%s)\n", wine_dbgstr_longlong(cookie.QuadPart));
-
-    if (!info || cookie.HighPart != GetCurrentThreadId())
-        return E_INVALIDARG;
-
-    if (!(spy = get_spy_entry(info, cookie.LowPart))) return E_INVALIDARG;
-
-    IInitializeSpy_Release(spy->spy);
-    spy->spy = NULL;
-    if (!info->spies_lock)
-    {
-        list_remove(&spy->entry);
-        heap_free(spy);
-    }
-    return S_OK;
 }
 
 HRESULT enter_apartment( struct oletls *info, DWORD model )
