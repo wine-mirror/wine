@@ -629,6 +629,67 @@ static void decode_bc2(const BYTE *blocks, UINT block_count, UINT width, UINT he
     }
 }
 
+static void decode_bc3(const BYTE *block_data, UINT block_count, UINT width, UINT height, DWORD *buffer)
+{
+    static const UINT BLOCK_SIZE = 16;
+
+    int i, j, color_index, alpha_index, block_x, block_y, x, y;
+    const BYTE *block, *color_indices, *alpha_indices;
+    WORD color[4];
+    BYTE alpha[8];
+
+    block_x = 0;
+    block_y = 0;
+
+    for (i = 0; i < block_count; i++)
+    {
+        block = block_data + i * BLOCK_SIZE;
+
+        color[0] = *((WORD *)(block + 8));
+        color[1] = *((WORD *)(block + 10));
+        color[2] = MAKE_RGB565(((GET_RGB565_R(color[0]) * 2 + GET_RGB565_R(color[1]) + 1) / 3),
+                               ((GET_RGB565_G(color[0]) * 2 + GET_RGB565_G(color[1]) + 1) / 3),
+                               ((GET_RGB565_B(color[0]) * 2 + GET_RGB565_B(color[1]) + 1) / 3));
+        color[3] = MAKE_RGB565(((GET_RGB565_R(color[0]) + GET_RGB565_R(color[1]) * 2 + 1) / 3),
+                               ((GET_RGB565_G(color[0]) + GET_RGB565_G(color[1]) * 2 + 1) / 3),
+                               ((GET_RGB565_B(color[0]) + GET_RGB565_B(color[1]) * 2 + 1) / 3));
+
+        alpha[0] = *block;
+        alpha[1] = *(block + 1);
+        if (alpha[0] > alpha[1]) {
+            for (j = 2; j < 8; j++)
+            {
+                alpha[j] = (BYTE)((alpha[0] * (8 - j) + alpha[1] * (j - 1) + 3) / 7);
+            }
+        } else {
+            for (j = 2; j < 6; j++)
+            {
+                alpha[j] = (BYTE)((alpha[0] * (6 - j) + alpha[1] * (j - 1) + 2) / 5);
+            }
+            alpha[6] = 0;
+            alpha[7] = 0xFF;
+        }
+
+        alpha_indices = block + 2;
+        color_indices = block + 12;
+        for (j = 0; j < 16; j++)
+        {
+            x = block_x + j % 4;
+            y = block_y + j / 4;
+            if (x >= width || y >= height) continue;
+            alpha_index = (*((DWORD *)(alpha_indices + (j / 8) * 3)) >> ((j % 8) * 3)) & 0x7;
+            color_index = (color_indices[j / 4] >> ((j % 4) * 2)) & 0x3;
+            buffer[x + y * width] = rgb565_to_argb(color[color_index], alpha[alpha_index]);
+        }
+
+        block_x += 4;
+        if (block_x >= width) {
+            block_x = 0;
+            block_y += 4;
+        }
+    }
+}
+
 static BOOL color_match(DWORD color_a, DWORD color_b)
 {
     static const int tolerance = 8;
@@ -1080,7 +1141,8 @@ static void test_dds_decoder_frame_data(IWICBitmapFrameDecode* frame, IWICDdsFra
     ok(hr == E_INVALIDARG, "Test %u, frame %u: CopyBlocks got unexpected hr %#x\n", i, frame_index, hr);
 
     if (format_info.DxgiFormat == DXGI_FORMAT_BC1_UNORM ||
-        format_info.DxgiFormat == DXGI_FORMAT_BC2_UNORM ) {
+        format_info.DxgiFormat == DXGI_FORMAT_BC2_UNORM ||
+        format_info.DxgiFormat == DXGI_FORMAT_BC3_UNORM ) {
         switch (format_info.DxgiFormat)
         {
             case DXGI_FORMAT_BC1_UNORM:
@@ -1088,6 +1150,9 @@ static void test_dds_decoder_frame_data(IWICBitmapFrameDecode* frame, IWICDdsFra
                 break;
             case DXGI_FORMAT_BC2_UNORM:
                 decode_bc2(test_data[i].data + block_offset, width_in_blocks * height_in_blocks, frame_width, frame_height, pixels);
+                break;
+            case DXGI_FORMAT_BC3_UNORM:
+                decode_bc3(test_data[i].data + block_offset, width_in_blocks * height_in_blocks, frame_width, frame_height, pixels);
                 break;
             default:
                 break;
