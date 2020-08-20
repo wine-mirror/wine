@@ -30,6 +30,7 @@
 #include "winternl.h"
 #include "excpt.h"
 #include "wine/test.h"
+#include "intrin.h"
 
 static void *code_mem;
 
@@ -43,6 +44,7 @@ static ULONG     (WINAPI *pRtlRemoveVectoredExceptionHandler)(PVOID handler);
 static PVOID     (WINAPI *pRtlAddVectoredContinueHandler)(ULONG first, PVECTORED_EXCEPTION_HANDLER func);
 static ULONG     (WINAPI *pRtlRemoveVectoredContinueHandler)(PVOID handler);
 static void      (WINAPI *pRtlSetUnhandledExceptionFilter)(PRTL_EXCEPTION_FILTER filter);
+static ULONG64   (WINAPI *pRtlGetEnabledExtendedFeatures)(ULONG64);
 static NTSTATUS  (WINAPI *pNtReadVirtualMemory)(HANDLE, const void*, void*, SIZE_T, SIZE_T*);
 static NTSTATUS  (WINAPI *pNtTerminateProcess)(HANDLE handle, LONG exit_code);
 static NTSTATUS  (WINAPI *pNtQueryInformationProcess)(HANDLE, PROCESSINFOCLASS, PVOID, ULONG, PULONG);
@@ -5420,6 +5422,161 @@ static void test_unload_trace(void)
     }
 }
 
+#if defined(__i386__) || defined(__x86_64__)
+
+static const unsigned int test_extended_context_data[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+static const unsigned test_extended_context_spoil_data1[8] = {0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70, 0x80};
+static const unsigned test_extended_context_spoil_data2[8] = {0x15, 0x25, 0x35, 0x45, 0x55, 0x65, 0x75, 0x85};
+
+static BOOL test_extended_context_modified_state;
+
+static DWORD test_extended_context_handler(EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
+        CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher)
+{
+    static const ULONG64 expected_compaction_mask = 0x8000000000000004;
+    CONTEXT_EX *xctx = (CONTEXT_EX *)(context + 1);
+    unsigned int *context_ymm_data;
+    DWORD expected_min_offset;
+    BOOL compaction;
+    int regs[4];
+    XSTATE *xs;
+
+    /* Since we got xstates enabled by OS this cpuid level should be supported. */
+    __cpuidex(regs, 0xd, 1);
+    compaction = regs[0] & 2;
+    todo_wine ok((context->ContextFlags & (CONTEXT_FULL | CONTEXT_XSTATE)) == (CONTEXT_FULL | CONTEXT_XSTATE),
+            "Got unexpected ContextFlags %#x.\n", context->ContextFlags);
+
+    if ((context->ContextFlags & (CONTEXT_FULL | CONTEXT_XSTATE)) != (CONTEXT_FULL | CONTEXT_XSTATE))
+        goto done;
+
+#ifdef __x86_64__
+    {
+        /* Unwind contexts do not inherit xstate information. */
+        DISPATCHER_CONTEXT *dispatch = (DISPATCHER_CONTEXT *)dispatcher;
+
+        ok(!(dispatch->ContextRecord->ContextFlags & 0x40), "Got unexpected ContextRecord->ContextFlags %#x.\n",
+                dispatch->ContextRecord->ContextFlags);
+    }
+#endif
+
+    ok(xctx->Legacy.Offset == -(int)(sizeof(CONTEXT)), "Got unexpected Legacy.Offset %d.\n", xctx->Legacy.Offset);
+    ok(xctx->Legacy.Length == sizeof(CONTEXT), "Got unexpected Legacy.Length %d.\n", xctx->Legacy.Length);
+    ok(xctx->All.Offset == -(int)sizeof(CONTEXT), "Got unexpected All.Offset %d.\n", xctx->All.Offset);
+    ok(xctx->All.Length == sizeof(CONTEXT) + xctx->XState.Offset + xctx->XState.Length,
+            "Got unexpected All.Offset %d.\n", xctx->All.Offset);
+    expected_min_offset = sizeof(void *) == 8 ? sizeof(CONTEXT_EX) + sizeof(EXCEPTION_RECORD) : sizeof(CONTEXT_EX);
+    ok(xctx->XState.Offset >= expected_min_offset,
+            "Got unexpected XState.Offset %d.\n", xctx->XState.Offset);
+    ok(xctx->XState.Length >= sizeof(XSTATE), "Got unexpected XState.Length %d.\n", xctx->XState.Length);
+
+    xs = (XSTATE *)((char *)xctx + xctx->XState.Offset);
+    context_ymm_data = (unsigned int *)&xs->YmmContext;
+    ok(!((ULONG_PTR)xs % 64), "Got unexpected xs %p.\n", xs);
+
+    ok((compaction && (xs->CompactionMask & (expected_compaction_mask | 3)) == expected_compaction_mask)
+            || (!compaction && !xs->CompactionMask), "Got unexpected CompactionMask %s, compaction %#x.\n",
+            wine_dbgstr_longlong(xs->CompactionMask), compaction);
+
+    if (test_extended_context_modified_state)
+    {
+        ok((xs->Mask & 7) == 4, "Got unexpected Mask %s.\n", wine_dbgstr_longlong(xs->Mask));
+        ok(!memcmp(context_ymm_data, test_extended_context_data + 4, sizeof(M128A)),
+                "Got unexpected context data.\n");
+    }
+    else
+    {
+        ok(!xs->Mask, "Got unexpected Mask %s.\n", wine_dbgstr_longlong(xs->Mask));
+        /* The save area has garbage in this case, the state should be restored to INIT_STATE
+         * without using these data. */
+        memcpy(context_ymm_data, test_extended_context_spoil_data1 + 4, sizeof(M128A));
+    }
+
+done:
+#ifdef __GNUC__
+    __asm__ volatile("vmovups %0,%%ymm0" : : "m"(test_extended_context_spoil_data2));
+#endif
+#ifdef __x86_64__
+    ++context->Rip;
+#else
+    if (*(BYTE *)context->Eip == 0xcc)
+        ++context->Eip;
+#endif
+    return ExceptionContinueExecution;
+}
+
+static void test_extended_context(void)
+{
+    static BYTE except_code_set_ymm0[] =
+    {
+#ifdef __x86_64__
+        0x48,
+#endif
+        0xb8,                         /* mov imm,%ax */
+        0x00, 0x00, 0x00, 0x00,
+#ifdef __x86_64__
+        0x00, 0x00, 0x00, 0x00,
+#endif
+
+        0xc5, 0xfc, 0x10, 0x00,       /* vmovups (%ax),%ymm0 */
+        0xcc,                         /* int3 */
+        0xc5, 0xfc, 0x11, 0x00,       /* vmovups %ymm0,(%ax) */
+        0xc3,                         /* ret  */
+    };
+    static BYTE except_code_reset_ymm_state[] =
+    {
+#ifdef __x86_64__
+        0x48,
+#endif
+        0xb8,                         /* mov imm,%ax */
+        0x00, 0x00, 0x00, 0x00,
+#ifdef __x86_64__
+        0x00, 0x00, 0x00, 0x00,
+#endif
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+
+        0xc5, 0xf8, 0x77,             /* vzeroupper */
+        0x0f, 0x57, 0xc0,             /* xorps  %xmm0,%xmm0 */
+        0xcc,                         /* int3 */
+        0xc5, 0xfc, 0x11, 0x00,       /* vmovups %ymm0,(%ax) */
+        0xc3,                         /* ret  */
+    };
+    unsigned int i, address_offset;
+    unsigned data[8];
+
+    address_offset = sizeof(void *) == 8 ? 2 : 1;
+    *(void **)(except_code_set_ymm0 + address_offset) = data;
+    *(void **)(except_code_reset_ymm_state + address_offset) = data;
+
+    if (!pRtlGetEnabledExtendedFeatures || !(pRtlGetEnabledExtendedFeatures(~(ULONG64)0) & (1 << XSTATE_AVX)))
+    {
+        skip("AVX is not supported.\n");
+        return;
+    }
+
+    memset(data, 0xff, sizeof(data));
+    test_extended_context_modified_state = FALSE;
+    run_exception_test(test_extended_context_handler, NULL, except_code_reset_ymm_state,
+            ARRAY_SIZE(except_code_reset_ymm_state), PAGE_EXECUTE_READ);
+    for (i = 0; i < 8; ++i)
+    {
+        /* Older Windows version do not reset AVX context to INIT_STATE on x86. */
+        todo_wine_if(i >= 4)
+        ok(!data[i] || broken(i >= 4 && sizeof(void *) == 4 && data[i] == test_extended_context_spoil_data2[i]),
+                "Got unexpected data %#x, i %u.\n", data[i], i);
+    }
+
+    memcpy(data, test_extended_context_data, sizeof(data));
+    test_extended_context_modified_state = TRUE;
+    run_exception_test(test_extended_context_handler, NULL, except_code_set_ymm0,
+            ARRAY_SIZE(except_code_set_ymm0), PAGE_EXECUTE_READ);
+
+    for (i = 0; i < 8; ++i)
+        todo_wine_if(i >= 4)
+        ok(data[i] == test_extended_context_data[i], "Got unexpected data %#x, i %u.\n", data[i], i);
+}
+#endif
+
 START_TEST(exception)
 {
     HMODULE hntdll = GetModuleHandleA("ntdll.dll");
@@ -5462,6 +5619,7 @@ START_TEST(exception)
     X(NtResumeProcess);
     X(RtlGetUnloadEventTrace);
     X(RtlGetUnloadEventTraceEx);
+    X(RtlGetEnabledExtendedFeatures);
 #undef X
 
     pIsWow64Process = (void *)GetProcAddress(GetModuleHandleA("kernel32.dll"), "IsWow64Process");
@@ -5544,6 +5702,7 @@ START_TEST(exception)
     test_dpe_exceptions();
     test_prot_fault();
     test_kiuserexceptiondispatcher();
+    test_extended_context();
 
 #elif defined(__x86_64__)
 
@@ -5582,6 +5741,7 @@ START_TEST(exception)
       test_dynamic_unwind();
     else
       skip( "Dynamic unwind functions not found\n" );
+    test_extended_context();
 #endif
 
     test_debugger();
