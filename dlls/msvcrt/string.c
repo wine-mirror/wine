@@ -2483,23 +2483,106 @@ int __cdecl MSVCRT_memcmp(const void *ptr1, const void *ptr2, MSVCRT_size_t n)
 /*********************************************************************
  *                  memmove (MSVCRT.@)
  */
+#ifdef WORDS_BIGENDIAN
+# define MERGE(w1, sh1, w2, sh2) ((w1 << sh1) | (w2 >> sh2))
+#else
+# define MERGE(w1, sh1, w2, sh2) ((w1 >> sh1) | (w2 << sh2))
+#endif
 void * __cdecl MSVCRT_memmove(void *dst, const void *src, MSVCRT_size_t n)
 {
-    volatile unsigned char *d = dst;  /* avoid gcc optimizations */
+    unsigned char *d = dst;
     const unsigned char *s = src;
+    int sh1;
+
+    if (!n) return dst;
 
     if ((MSVCRT_size_t)dst - (MSVCRT_size_t)src >= n)
     {
+        for (; (MSVCRT_size_t)d % sizeof(MSVCRT_size_t) && n; n--) *d++ = *s++;
+
+        sh1 = 8 * ((MSVCRT_size_t)s % sizeof(MSVCRT_size_t));
+        if (!sh1)
+        {
+            while (n >= sizeof(MSVCRT_size_t))
+            {
+                *(MSVCRT_size_t*)d = *(MSVCRT_size_t*)s;
+                s += sizeof(MSVCRT_size_t);
+                d += sizeof(MSVCRT_size_t);
+                n -= sizeof(MSVCRT_size_t);
+            }
+        }
+        else if (n >= 2 * sizeof(MSVCRT_size_t))
+        {
+            int sh2 = 8 * sizeof(MSVCRT_size_t) - sh1;
+            MSVCRT_size_t x, y;
+
+            s -= sh1 / 8;
+            x = *(MSVCRT_size_t*)s;
+            do
+            {
+                s += sizeof(MSVCRT_size_t);
+                y = *(MSVCRT_size_t*)s;
+                *(MSVCRT_size_t*)d = MERGE(x, sh1, y, sh2);
+                d += sizeof(MSVCRT_size_t);
+
+                s += sizeof(MSVCRT_size_t);
+                x = *(MSVCRT_size_t*)s;
+                *(MSVCRT_size_t*)d = MERGE(y, sh1, x, sh2);
+                d += sizeof(MSVCRT_size_t);
+
+                n -= 2 * sizeof(MSVCRT_size_t);
+            } while (n >= 2 * sizeof(MSVCRT_size_t));
+            s += sh1 / 8;
+        }
         while (n--) *d++ = *s++;
+        return dst;
     }
     else
     {
-        d += n - 1;
-        s += n - 1;
-        while (n--) *d-- = *s--;
+        d += n;
+        s += n;
+
+        for (; (MSVCRT_size_t)d % sizeof(MSVCRT_size_t) && n; n--) *--d = *--s;
+
+        sh1 = 8 * ((MSVCRT_size_t)s % sizeof(MSVCRT_size_t));
+        if (!sh1)
+        {
+            while (n >= sizeof(MSVCRT_size_t))
+            {
+                s -= sizeof(MSVCRT_size_t);
+                d -= sizeof(MSVCRT_size_t);
+                *(MSVCRT_size_t*)d = *(MSVCRT_size_t*)s;
+                n -= sizeof(MSVCRT_size_t);
+            }
+        }
+        else if (n >= 2 * sizeof(MSVCRT_size_t))
+        {
+            int sh2 = 8 * sizeof(MSVCRT_size_t) - sh1;
+            MSVCRT_size_t x, y;
+
+            s -= sh1 / 8;
+            x = *(MSVCRT_size_t*)s;
+            do
+            {
+                s -= sizeof(MSVCRT_size_t);
+                y = *(MSVCRT_size_t*)s;
+                d -= sizeof(MSVCRT_size_t);
+                *(MSVCRT_size_t*)d = MERGE(y, sh1, x, sh2);
+
+                s -= sizeof(MSVCRT_size_t);
+                x = *(MSVCRT_size_t*)s;
+                d -= sizeof(MSVCRT_size_t);
+                *(MSVCRT_size_t*)d = MERGE(x, sh1, y, sh2);
+
+                n -= 2 * sizeof(MSVCRT_size_t);
+            } while (n >= 2 * sizeof(MSVCRT_size_t));
+            s += sh1 / 8;
+        }
+        while (n--) *--d = *--s;
     }
     return dst;
 }
+#undef MERGE
 
 /*********************************************************************
  *                  memcpy   (MSVCRT.@)
