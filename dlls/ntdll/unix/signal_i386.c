@@ -687,7 +687,7 @@ static inline void save_fpux( CONTEXT *context )
 /***********************************************************************
  *           restore_fpu
  *
- * Restore the FPU context to a sigcontext.
+ * Restore the x87 FPU context
  */
 static inline void restore_fpu( const CONTEXT *context )
 {
@@ -701,7 +701,7 @@ static inline void restore_fpu( const CONTEXT *context )
 /***********************************************************************
  *           restore_fpux
  *
- * Restore the FPU extended context to a sigcontext.
+ * Restore the FPU extended context
  */
 static inline void restore_fpux( const CONTEXT *context )
 {
@@ -715,6 +715,38 @@ static inline void restore_fpux( const CONTEXT *context )
     __asm__ __volatile__( "fxrstor %0" : : "m" (*state) );
 }
 
+/***********************************************************************
+ *           restore_xstate
+ *
+ * Restore the XState context
+ */
+static inline void restore_xstate( const CONTEXT *context )
+{
+    XSAVE_FORMAT *xrstor_base;
+    XSTATE *xs;
+
+    if (!(xs = xstate_from_context( context )))
+        return;
+
+    xrstor_base = (XSAVE_FORMAT *)xs - 1;
+
+    if (!(xs->CompactionMask & ((ULONG64)1 << 63)))
+    {
+        /* Non-compacted xrstor will load Mxcsr regardless of the specified mask. Loading garbage there
+         * may lead to fault. FPUX state should be restored by now, so we can reuse some space in
+         * ExtendedRegisters. */
+        XSAVE_FORMAT *fpux = (XSAVE_FORMAT *)context->ExtendedRegisters;
+        DWORD mxcsr, mxcsr_mask;
+
+        mxcsr = fpux->MxCsr;
+        mxcsr_mask = fpux->MxCsr_Mask;
+
+        assert( (void *)&xrstor_base->MxCsr > (void *)context->ExtendedRegisters );
+        xrstor_base->MxCsr = mxcsr;
+        xrstor_base->MxCsr_Mask = mxcsr_mask;
+    }
+    __asm__ volatile( "xrstor %0" : : "m"(*xrstor_base), "a" (4), "d" (0) );
+}
 
 /***********************************************************************
  *           fpux_to_fpu
@@ -1128,6 +1160,8 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
 
     if (flags & CONTEXT_EXTENDED_REGISTERS) restore_fpux( context );
     else if (flags & CONTEXT_FLOATING_POINT) restore_fpu( context );
+
+    restore_xstate( context );
 
     if (flags & CONTEXT_FULL)
     {
