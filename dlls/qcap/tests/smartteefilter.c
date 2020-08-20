@@ -2142,7 +2142,6 @@ static void test_smart_tee_filter(void)
     FILTER_INFO filterInfo;
     int pinNumber = 0;
     IMemInputPin *memInputPin = NULL;
-    IEnumMediaTypes *enumMediaTypes = NULL;
 
     hr = CoCreateInstance(&CLSID_SmartTee, NULL, CLSCTX_INPROC_SERVER,
             &IID_IBaseFilter, (void**)&smartTeeFilter);
@@ -2213,8 +2212,6 @@ end:
         IEnumPins_Release(enumPins);
     if (memInputPin)
         IMemInputPin_Release(memInputPin);
-    if (enumMediaTypes)
-        IEnumMediaTypes_Release(enumMediaTypes);
 }
 
 static void test_unconnected_filter_state(void)
