@@ -1873,22 +1873,40 @@ static void setup_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec )
 
 
 /***********************************************************************
- *           call_user_apc
+ *           call_user_apc_dispatcher
  */
-void WINAPI call_user_apc( CONTEXT *context_ptr, ULONG_PTR ctx, ULONG_PTR arg1,
-                           ULONG_PTR arg2, PNTAPCFUNC func )
-{
-    CONTEXT context;
-
-    if (!context_ptr)
-    {
-        context.ContextFlags = CONTEXT_FULL;
-        NtGetContextThread( GetCurrentThread(), &context );
-        context.Rax = STATUS_USER_APC;
-        context_ptr = &context;
-    }
-    pKiUserApcDispatcher( context_ptr, ctx, arg1, arg2, func );
-}
+__ASM_GLOBAL_FUNC( call_user_apc_dispatcher,
+                   "movq 0x28(%rsp),%rsi\n\t"       /* func */
+                   "movq 0x30(%rsp),%rdi\n\t"       /* dispatcher */
+                   "movq %gs:0x30,%rbx\n\t"
+                   "jrcxz 1f\n\t"
+                   "movq 0x98(%rcx),%rax\n\t"       /* context_ptr->Rsp */
+                   "leaq -0x5d0(%rax),%rsp\n\t"     /* sizeof(CONTEXT) + offsetof(frame,ret_addr) */
+                   "jmp 2f\n"
+                   "1:\tmovq 0x328(%rbx),%rax\n\t"  /* amd64_thread_data()->syscall_frame */
+                   "leaq -0x4d0(%rax),%r10\n\t"
+                   "movq %rdx,%r12\n\t"             /* ctx */
+                   "movq %r8,%r13\n\t"              /* arg1 */
+                   "movq %r9,%r14\n\t"              /* arg2 */
+                   "cmpq %rsp,%r10\n\t"
+                   "cmovbq %r10,%rsp\n\t"
+                   "andq $~15,%rsp\n\t"
+                   "movq %rsp,%rdx\n\t"             /* context */
+                   "movl $0x10000b,0x30(%rdx)\n\t"  /* context.ContextFlags */
+                   "movq $~1,%rcx\n\t"
+                   "call " __ASM_NAME("NtGetContextThread") "\n\t"
+                   "movq %rsp,%rcx\n\t"             /* context */
+                   "movl $0xc0,%eax\n\t"
+                   "movq %rax,0x78(%rcx)\n\t"       /* context.Rax = STATUS_USER_APC */
+                   "movq %r12,%rdx\n\t"             /* ctx */
+                   "movq %r13,%r8\n\t"              /* arg1 */
+                   "movq %r14,%r9\n"                /* arg2 */
+                   "2:\tmovq 0x328(%rbx),%rax\n\t"  /* amd64_thread_data()->syscall_frame */
+                   "movq (%rax),%rax\n\t"           /* frame->prev_frame */
+                   "movq %rax,0x328(%rbx)\n\t"
+                   "movq %rsi,0x20(%rsp)\n\t"       /* func */
+                   "leaq -8(%rsp),%rsp\n\t"
+                   "jmp *%rdi" )
 
 
 /***********************************************************************
@@ -1899,7 +1917,7 @@ __ASM_GLOBAL_FUNC( call_raise_user_exception_dispatcher,
                    "movq 0x328(%rdx),%rax\n\t"    /* amd64_thread_data()->syscall_frame */
                    "pushq (%rax)\n\t"             /* frame->prev_frame */
                    "popq 0x328(%rdx)\n\t"
-                   "movdqu 0x10(%rax),%xmm6\n\t"  /* frame->xmm[0..19 */
+                   "movdqu 0x10(%rax),%xmm6\n\t"  /* frame->xmm[0..19] */
                    "movdqu 0x20(%rax),%xmm7\n\t"
                    "movdqu 0x30(%rax),%xmm8\n\t"
                    "movdqu 0x40(%rax),%xmm9\n\t"

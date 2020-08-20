@@ -354,13 +354,13 @@ static void invoke_apc( CONTEXT *context, const user_apc_t *apc )
     switch( apc->type )
     {
     case APC_USER:
-        call_user_apc( context, apc->user.args[0], apc->user.args[1], apc->user.args[2],
-                       wine_server_get_ptr( apc->user.func ));
+        call_user_apc_dispatcher( context, apc->user.args[0], apc->user.args[1], apc->user.args[2],
+                                  wine_server_get_ptr( apc->user.func ), pKiUserApcDispatcher );
         break;
     case APC_TIMER:
-        call_user_apc( context, (ULONG_PTR)wine_server_get_ptr( apc->user.args[1] ),
-                       (DWORD)apc->timer.time, (DWORD)(apc->timer.time >> 32),
-                       wine_server_get_ptr( apc->user.func ));
+        call_user_apc_dispatcher( context, (ULONG_PTR)wine_server_get_ptr( apc->user.args[1] ),
+                                  (DWORD)apc->timer.time, (DWORD)(apc->timer.time >> 32),
+                                  wine_server_get_ptr( apc->user.func ), pKiUserApcDispatcher );
         break;
     default:
         server_protocol_error( "get_apc_request: bad type %d\n", apc->type );

@@ -637,22 +637,47 @@ static void setup_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec )
 
 
 /***********************************************************************
- *           call_user_apc
+ *           call_user_apc_dispatcher
  */
-void WINAPI call_user_apc( CONTEXT *context_ptr, ULONG_PTR ctx, ULONG_PTR arg1,
-                           ULONG_PTR arg2, PNTAPCFUNC func )
-{
-    CONTEXT context;
-
-    if (!context_ptr)
-    {
-        context.ContextFlags = CONTEXT_FULL;
-        NtGetContextThread( GetCurrentThread(), &context );
-        context.u.s.X0 = STATUS_USER_APC;
-        context_ptr = &context;
-    }
-    pKiUserApcDispatcher( context_ptr, ctx, arg1, arg2, func );
-}
+__ASM_GLOBAL_FUNC( call_user_apc_dispatcher,
+                   "mov x19, x0\n\t"             /* context */
+                   "mov x20, x1\n\t"             /* ctx */
+                   "mov x21, x2\n\t"             /* arg1 */
+                   "mov x22, x3\n\t"             /* arg2 */
+                   "mov x23, x4\n\t"             /* func */
+                   "mov x24, x5\n\t"             /* dispatcher */
+                   "bl " __ASM_NAME("NtCurrentTeb") "\n\t"
+                   "add x25, x0, #0x2f8\n\t"     /* arm64_thread_data()->syscall_frame */
+                   "ldr x26, [x25]\n\t"
+                   "cbz x19, 1f\n\t"
+                   "ldr x0, [x19, #0x100]\n\t"   /* context.Sp */
+                   "sub x0, x0, #0x440\n\t"      /* sizeof(CONTEXT) + offsetof(frame,thunk_x29) */
+                   "ldr x6, [x26, #88]\n\t"      /* frame->prev_frame */
+                   "str x6, [x25]\n\t"
+                   "mov sp, x0\n\t"
+                   "b 2f\n"
+                   "1:\tsub x19, x26, #0x390\n\t"
+                   "mov x0, sp\n\t"
+                   "cmp x19, x0\n\t"
+                   "csel x0, x19, x0, lo\n\t"
+                   "mov sp, x0\n\t"
+                   "mov w2, #0x400000\n\t"       /* context.ContextFlags = CONTEXT_FULL */
+                   "movk w2, #3\n\t"
+                   "mov x1, x19\n\t"
+                   "str w2, [x19]\n\t"
+                   "mov x0, #~1\n\t"
+                   "bl " __ASM_NAME("NtGetContextThread") "\n\t"
+                   "mov w2, #0xc0\n\t"           /* context.X0 = STATUS_USER_APC */
+                   "str x2, [x19, #8]\n\t"
+                   "ldr x6, [x26, #88]\n\t"      /* frame->prev_frame */
+                   "str x6, [x25]\n\t"
+                   "mov x0, x19\n"               /* context */
+                   "2:\tldr lr, [x0, #0xf8]\n\t" /* context.Lr */
+                   "mov x1, x20\n\t"             /* ctx */
+                   "mov x2, x21\n\t"             /* arg1 */
+                   "mov x3, x22\n\t"             /* arg2 */
+                   "mov x4, x23\n\t"             /* func */
+                   "br x24" )
 
 
 /***********************************************************************

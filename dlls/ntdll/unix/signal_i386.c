@@ -1537,22 +1537,45 @@ static void setup_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec )
 
 
 /***********************************************************************
- *           call_user_apc
+ *           call_user_apc_dispatcher
  */
-void WINAPI call_user_apc( CONTEXT *context_ptr, ULONG_PTR ctx, ULONG_PTR arg1,
-                           ULONG_PTR arg2, PNTAPCFUNC func )
-{
-    CONTEXT context;
-
-    if (!context_ptr)
-    {
-        context.ContextFlags = CONTEXT_FULL;
-        NtGetContextThread( GetCurrentThread(), &context );
-        context.Eax = STATUS_USER_APC;
-        context_ptr = &context;
-    }
-    pKiUserApcDispatcher( context_ptr, ctx, arg1, arg2, func );
-}
+__ASM_GLOBAL_FUNC( call_user_apc_dispatcher,
+                   "movl 4(%esp),%esi\n\t"       /* context_ptr */
+                   "movl 24(%esp),%edi\n\t"      /* dispatcher */
+                   "movl %fs:0x1f8,%ebx\n\t"     /* x86_thread_data()->syscall_frame */
+                   "test %esi,%esi\n\t"
+                   "jz 1f\n\t"
+                   "movl 0xc4(%esi),%eax\n\t"    /* context_ptr->Rsp */
+                   "leal -0x2fc(%eax),%eax\n\t"  /* sizeof(CONTEXT) + offsetof(frame,ret_addr) + params */
+                   "movl %esi,4(%eax)\n\t"
+                   "movl 8(%esp),%ecx\n\t"       /* ctx */
+                   "movl %ecx,8(%eax)\n\t"
+                   "movl 12(%esp),%ecx\n\t"      /* arg1 */
+                   "movl %ecx,12(%eax)\n\t"
+                   "movl 16(%esp),%ecx\n\t"      /* arg2 */
+                   "movl %ecx,16(%eax)\n\t"
+                   "movl 20(%esp),%ecx\n\t"      /* func */
+                   "movl %ecx,20(%eax)\n\t"
+                   "leal 4(%eax),%esp\n\t"
+                   "jmp 2f\n\t"
+                   "1:\tleal -0x2cc(%ebx),%esi\n\t"
+                   "movl %esp,%ecx\n\t"
+                   "cmpl %esp,%esi\n\t"
+                   "cmovbl %esi,%esp\n\t"
+                   "pushl 20(%ecx)\n\t"          /* func */
+                   "pushl 16(%ecx)\n\t"          /* arg2 */
+                   "pushl 12(%ecx)\n\t"          /* arg1 */
+                   "pushl 8(%ecx)\n\t"           /* ctx */
+                   "pushl %esi\n\t"              /* context */
+                   "movl $0x00010007,(%esi)\n\t" /* context.ContextFlags = CONTEXT_FULL */
+                   "pushl %esi\n\t"              /* context */
+                   "pushl $0xfffffffe\n\t"
+                   "call " __ASM_STDCALL("NtGetContextThread",8) "\n\t"
+                   "movl $0xc0,0xb0(%esi)\n"     /* context.Eax = STATUS_USER_APC */
+                   "2:\tmovl (%ebx),%edx\n\t"    /* frame->prev_frame */
+                   "movl %edx,%fs:0x1f8\n\t"
+                   "pushl $0xdeaddead\n\t"
+                   "jmp *%edi\n" )
 
 
 /***********************************************************************
