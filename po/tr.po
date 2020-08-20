@@ -8430,7 +8430,7 @@ msgstr ""
 msgid "&Test Connection"
 msgstr "Bağlantıları Sıfırla"
 
-#: version.rc:92 winemine.rc:65
+#: version.rc:92
 msgid "Advanced"
 msgstr "Gelişmiş"
 
@@ -16612,8 +16612,10 @@ msgid "&Beginner"
 msgstr "&Acemi"
 
 #: winemine.rc:45
-msgid "&Advanced"
-msgstr "&Gelişmiş"
+#, fuzzy
+#| msgid "Interface"
+msgid "&Intermediate"
+msgstr "Arayüz"
 
 #: winemine.rc:46
 msgid "&Expert"
@@ -16642,6 +16644,12 @@ msgstr "En hızlı zamanlar"
 #: winemine.rc:64
 msgid "Beginner"
 msgstr "Acemi"
+
+#: winemine.rc:65
+#, fuzzy
+#| msgid "Interface"
+msgid "Intermediate"
+msgstr "Arayüz"
 
 #: winemine.rc:66
 msgid "Expert"

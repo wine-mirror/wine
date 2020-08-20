@@ -8605,7 +8605,7 @@ msgstr ""
 msgid "&Test Connection"
 msgstr "Aktivácia"
 
-#: version.rc:92 winemine.rc:65
+#: version.rc:92
 msgid "Advanced"
 msgstr "Pokročilý"
 
@@ -16491,8 +16491,10 @@ msgid "&Beginner"
 msgstr "&Začiatočník"
 
 #: winemine.rc:45
-msgid "&Advanced"
-msgstr "&Pokročilý"
+#, fuzzy
+#| msgid "Interface"
+msgid "&Intermediate"
+msgstr "Rozhranie"
 
 #: winemine.rc:46
 msgid "&Expert"
@@ -16521,6 +16523,12 @@ msgstr "Najrýchlejšie časy"
 #: winemine.rc:64
 msgid "Beginner"
 msgstr "Začiatočník"
+
+#: winemine.rc:65
+#, fuzzy
+#| msgid "Interface"
+msgid "Intermediate"
+msgstr "Rozhranie"
 
 #: winemine.rc:66
 msgid "Expert"

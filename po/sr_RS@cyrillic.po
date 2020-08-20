@@ -8855,7 +8855,7 @@ msgstr ""
 msgid "&Test Connection"
 msgstr "LAN веза"
 
-#: version.rc:92 winemine.rc:65
+#: version.rc:92
 msgid "Advanced"
 msgstr ""
 
@@ -16892,8 +16892,9 @@ msgid "&Beginner"
 msgstr ""
 
 #: winemine.rc:45
-msgid "&Advanced"
-msgstr ""
+#, fuzzy
+msgid "&Intermediate"
+msgstr "Датотека није пронађена"
 
 #: winemine.rc:46
 msgid "&Expert"
@@ -16925,6 +16926,11 @@ msgstr "Датум брисања"
 #: winemine.rc:64
 msgid "Beginner"
 msgstr ""
+
+#: winemine.rc:65
+#, fuzzy
+msgid "Intermediate"
+msgstr "Датотека није пронађена"
 
 #: winemine.rc:66
 msgid "Expert"

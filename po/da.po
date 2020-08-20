@@ -8799,7 +8799,7 @@ msgstr ""
 msgid "&Test Connection"
 msgstr "Lokal netværksforbindelse"
 
-#: version.rc:92 winemine.rc:65
+#: version.rc:92
 msgid "Advanced"
 msgstr "Avanceret"
 
@@ -17218,8 +17218,10 @@ msgid "&Beginner"
 msgstr "Ny&begynder"
 
 #: winemine.rc:45
-msgid "&Advanced"
-msgstr "&Avanceret"
+#, fuzzy
+#| msgid "Interface"
+msgid "&Intermediate"
+msgstr "Grænseflade"
 
 #: winemine.rc:46
 msgid "&Expert"
@@ -17248,6 +17250,12 @@ msgstr "Bedste tider"
 #: winemine.rc:64
 msgid "Beginner"
 msgstr "Nybegynder"
+
+#: winemine.rc:65
+#, fuzzy
+#| msgid "Interface"
+msgid "Intermediate"
+msgstr "Grænseflade"
 
 #: winemine.rc:66
 msgid "Expert"

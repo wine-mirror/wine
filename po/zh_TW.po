@@ -8693,7 +8693,7 @@ msgstr ""
 msgid "&Test Connection"
 msgstr "重置的連線"
 
-#: version.rc:92 winemine.rc:65
+#: version.rc:92
 msgid "Advanced"
 msgstr "進階"
 
@@ -17127,8 +17127,10 @@ msgid "&Beginner"
 msgstr "初學者(&B)"
 
 #: winemine.rc:45
-msgid "&Advanced"
-msgstr "進階(&A)"
+#, fuzzy
+#| msgid "Interface"
+msgid "&Intermediate"
+msgstr "介面"
 
 #: winemine.rc:46
 msgid "&Expert"
@@ -17157,6 +17159,12 @@ msgstr "最快時間"
 #: winemine.rc:64
 msgid "Beginner"
 msgstr "初學者"
+
+#: winemine.rc:65
+#, fuzzy
+#| msgid "Interface"
+msgid "Intermediate"
+msgstr "介面"
 
 #: winemine.rc:66
 msgid "Expert"

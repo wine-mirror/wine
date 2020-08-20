@@ -8589,7 +8589,7 @@ msgstr ""
 msgid "&Test Connection"
 msgstr "Resetovat připojení"
 
-#: version.rc:92 winemine.rc:65
+#: version.rc:92
 msgid "Advanced"
 msgstr "Pokročilý"
 
@@ -16695,8 +16695,10 @@ msgid "&Beginner"
 msgstr "&Začátečník"
 
 #: winemine.rc:45
-msgid "&Advanced"
-msgstr "&Pokročilý"
+#, fuzzy
+#| msgid "Interface"
+msgid "&Intermediate"
+msgstr "Rozhraní"
 
 #: winemine.rc:46
 msgid "&Expert"
@@ -16725,6 +16727,12 @@ msgstr "Nejlepší časy"
 #: winemine.rc:64
 msgid "Beginner"
 msgstr "Začátečník"
+
+#: winemine.rc:65
+#, fuzzy
+#| msgid "Interface"
+msgid "Intermediate"
+msgstr "Rozhraní"
 
 #: winemine.rc:66
 msgid "Expert"

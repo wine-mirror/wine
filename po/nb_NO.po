@@ -8517,7 +8517,7 @@ msgstr ""
 msgid "&Test Connection"
 msgstr "Tilbakestill tilkoblinger"
 
-#: version.rc:92 winemine.rc:65
+#: version.rc:92
 msgid "Advanced"
 msgstr "Avansert"
 
@@ -16700,8 +16700,10 @@ msgid "&Beginner"
 msgstr "Ny&begynner"
 
 #: winemine.rc:45
-msgid "&Advanced"
-msgstr "&Avansert"
+#, fuzzy
+#| msgid "Interface"
+msgid "&Intermediate"
+msgstr "Grensesnitt"
 
 #: winemine.rc:46
 msgid "&Expert"
@@ -16730,6 +16732,12 @@ msgstr "Beste tider"
 #: winemine.rc:64
 msgid "Beginner"
 msgstr "Nybegynner"
+
+#: winemine.rc:65
+#, fuzzy
+#| msgid "Interface"
+msgid "Intermediate"
+msgstr "Grensesnitt"
 
 #: winemine.rc:66
 msgid "Expert"

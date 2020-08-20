@@ -8433,7 +8433,7 @@ msgstr ""
 msgid "&Test Connection"
 msgstr "Сброшено подключений"
 
-#: version.rc:92 winemine.rc:65
+#: version.rc:92
 msgid "Advanced"
 msgstr "Мастер"
 
@@ -16571,8 +16571,10 @@ msgid "&Beginner"
 msgstr "Нови&чок"
 
 #: winemine.rc:45
-msgid "&Advanced"
-msgstr "&Мастер"
+#, fuzzy
+#| msgid "Interface"
+msgid "&Intermediate"
+msgstr "Интерфейс"
 
 #: winemine.rc:46
 msgid "&Expert"
@@ -16601,6 +16603,12 @@ msgstr "Лучшее время"
 #: winemine.rc:64
 msgid "Beginner"
 msgstr "Новичок"
+
+#: winemine.rc:65
+#, fuzzy
+#| msgid "Interface"
+msgid "Intermediate"
+msgstr "Интерфейс"
 
 #: winemine.rc:66
 msgid "Expert"

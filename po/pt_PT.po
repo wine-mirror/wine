@@ -8604,7 +8604,7 @@ msgstr ""
 msgid "&Test Connection"
 msgstr "Restabelecer ligações"
 
-#: version.rc:92 winemine.rc:65
+#: version.rc:92
 msgid "Advanced"
 msgstr "Intermediário"
 
@@ -16849,8 +16849,10 @@ msgid "&Beginner"
 msgstr "&Principiante"
 
 #: winemine.rc:45
-msgid "&Advanced"
-msgstr "&Intermediário"
+#, fuzzy
+#| msgid "Interface"
+msgid "&Intermediate"
+msgstr "Interface"
 
 #: winemine.rc:46
 msgid "&Expert"
@@ -16879,6 +16881,12 @@ msgstr "Melhores tempos"
 #: winemine.rc:64
 msgid "Beginner"
 msgstr "Principiante"
+
+#: winemine.rc:65
+#, fuzzy
+#| msgid "Interface"
+msgid "Intermediate"
+msgstr "Interface"
 
 #: winemine.rc:66
 msgid "Expert"

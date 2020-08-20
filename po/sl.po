@@ -8818,7 +8818,7 @@ msgstr ""
 msgid "&Test Connection"
 msgstr "Povezava LAN"
 
-#: version.rc:92 winemine.rc:65
+#: version.rc:92
 msgid "Advanced"
 msgstr "Srednje"
 
@@ -17243,8 +17243,10 @@ msgid "&Beginner"
 msgstr "&Začetnik"
 
 #: winemine.rc:45
-msgid "&Advanced"
-msgstr "&Srednje"
+#, fuzzy
+#| msgid "Interface"
+msgid "&Intermediate"
+msgstr "Vmesnik"
 
 #: winemine.rc:46
 msgid "&Expert"
@@ -17273,6 +17275,12 @@ msgstr "Najhitrejši časi"
 #: winemine.rc:64
 msgid "Beginner"
 msgstr "Začetnik"
+
+#: winemine.rc:65
+#, fuzzy
+#| msgid "Interface"
+msgid "Intermediate"
+msgstr "Vmesnik"
 
 #: winemine.rc:66
 msgid "Expert"

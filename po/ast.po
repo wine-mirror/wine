@@ -8383,7 +8383,7 @@ msgstr ""
 msgid "&Test Connection"
 msgstr "Conexones actuales"
 
-#: version.rc:92 winemine.rc:65
+#: version.rc:92
 msgid "Advanced"
 msgstr ""
 
@@ -16044,8 +16044,10 @@ msgid "&Beginner"
 msgstr ""
 
 #: winemine.rc:45
-msgid "&Advanced"
-msgstr ""
+#, fuzzy
+#| msgid "Interface"
+msgid "&Intermediate"
+msgstr "Interfaz"
 
 #: winemine.rc:46
 msgid "&Expert"
@@ -16074,6 +16076,12 @@ msgstr ""
 #: winemine.rc:64
 msgid "Beginner"
 msgstr ""
+
+#: winemine.rc:65
+#, fuzzy
+#| msgid "Interface"
+msgid "Intermediate"
+msgstr "Interfaz"
 
 #: winemine.rc:66
 msgid "Expert"

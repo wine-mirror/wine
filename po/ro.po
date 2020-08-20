@@ -8691,7 +8691,7 @@ msgstr ""
 msgid "&Test Connection"
 msgstr "Conexiuni întrerupte"
 
-#: version.rc:92 winemine.rc:65
+#: version.rc:92
 msgid "Advanced"
 msgstr "Avansat"
 
@@ -16945,8 +16945,10 @@ msgid "&Beginner"
 msgstr "&Începător"
 
 #: winemine.rc:45
-msgid "&Advanced"
-msgstr "&Avansat"
+#, fuzzy
+#| msgid "Interface"
+msgid "&Intermediate"
+msgstr "Interfață"
 
 #: winemine.rc:46
 msgid "&Expert"
@@ -16975,6 +16977,12 @@ msgstr "Scoruri maxime"
 #: winemine.rc:64
 msgid "Beginner"
 msgstr "&Începător"
+
+#: winemine.rc:65
+#, fuzzy
+#| msgid "Interface"
+msgid "Intermediate"
+msgstr "Interfață"
 
 #: winemine.rc:66
 msgid "Expert"

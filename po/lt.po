@@ -8398,7 +8398,7 @@ msgstr "3. Įveskite &pradinį katalogą naudojimui:"
 msgid "&Test Connection"
 msgstr "&Tikrinti ryšį"
 
-#: version.rc:92 winemine.rc:65
+#: version.rc:92
 msgid "Advanced"
 msgstr "Pažengęs"
 
@@ -16533,8 +16533,10 @@ msgid "&Beginner"
 msgstr "P&radedantis"
 
 #: winemine.rc:45
-msgid "&Advanced"
-msgstr "&Pažengęs"
+#, fuzzy
+#| msgid "Interface"
+msgid "&Intermediate"
+msgstr "Sąsaja"
 
 #: winemine.rc:46
 msgid "&Expert"
@@ -16563,6 +16565,12 @@ msgstr "Geriausi laikai"
 #: winemine.rc:64
 msgid "Beginner"
 msgstr "Pradedantis"
+
+#: winemine.rc:65
+#, fuzzy
+#| msgid "Interface"
+msgid "Intermediate"
+msgstr "Sąsaja"
 
 #: winemine.rc:66
 msgid "Expert"

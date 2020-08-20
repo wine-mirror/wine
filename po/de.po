@@ -8408,9 +8408,9 @@ msgstr "3. Folgenden &Initialkatalog verwenden:"
 msgid "&Test Connection"
 msgstr "Verbindung &testen"
 
-#: version.rc:92 winemine.rc:65
+#: version.rc:92
 msgid "Advanced"
-msgstr "Fortgeschrittene"
+msgstr "Erweitert"
 
 #: version.rc:95
 msgid "Network settings"
@@ -16633,7 +16633,7 @@ msgid "&Beginner"
 msgstr "&Anfänger"
 
 #: winemine.rc:45
-msgid "&Advanced"
+msgid "&Intermediate"
 msgstr "&Fortgeschrittene"
 
 #: winemine.rc:46
@@ -16663,6 +16663,10 @@ msgstr "Beste Zeiten"
 #: winemine.rc:64
 msgid "Beginner"
 msgstr "Anfänger"
+
+#: winemine.rc:65
+msgid "Intermediate"
+msgstr "Fortgeschrittene"
 
 #: winemine.rc:66
 msgid "Expert"

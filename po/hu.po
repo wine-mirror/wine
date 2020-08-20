@@ -8757,7 +8757,7 @@ msgstr ""
 msgid "&Test Connection"
 msgstr "LAN kapcsolat"
 
-#: version.rc:92 winemine.rc:65
+#: version.rc:92
 msgid "Advanced"
 msgstr "Középhaladó"
 
@@ -17216,8 +17216,10 @@ msgid "&Beginner"
 msgstr "Kez&dő"
 
 #: winemine.rc:45
-msgid "&Advanced"
-msgstr "Kö&zéphaladó"
+#, fuzzy
+#| msgid "Interface"
+msgid "&Intermediate"
+msgstr "Interfész"
 
 #: winemine.rc:46
 msgid "&Expert"
@@ -17246,6 +17248,12 @@ msgstr "Legjobb idők"
 #: winemine.rc:64
 msgid "Beginner"
 msgstr "Kezdő"
+
+#: winemine.rc:65
+#, fuzzy
+#| msgid "Interface"
+msgid "Intermediate"
+msgstr "Interfész"
 
 #: winemine.rc:66
 msgid "Expert"

@@ -8393,7 +8393,7 @@ msgstr "3. Enter the &initial catalog to use:"
 msgid "&Test Connection"
 msgstr "&Test Connection"
 
-#: version.rc:92 winemine.rc:65
+#: version.rc:92
 msgid "Advanced"
 msgstr "Advanced"
 
@@ -16529,8 +16529,8 @@ msgid "&Beginner"
 msgstr "&Beginner"
 
 #: winemine.rc:45
-msgid "&Advanced"
-msgstr "&Advanced"
+msgid "&Intermediate"
+msgstr "&Intermediate"
 
 #: winemine.rc:46
 msgid "&Expert"
@@ -16559,6 +16559,10 @@ msgstr "Fastest times"
 #: winemine.rc:64
 msgid "Beginner"
 msgstr "Beginner"
+
+#: winemine.rc:65
+msgid "Intermediate"
+msgstr "Intermediate"
 
 #: winemine.rc:66
 msgid "Expert"

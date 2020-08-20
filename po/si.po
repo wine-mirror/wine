@@ -8385,7 +8385,7 @@ msgstr ""
 msgid "&Test Connection"
 msgstr "සබැඳුම්"
 
-#: version.rc:92 winemine.rc:65
+#: version.rc:92
 msgid "Advanced"
 msgstr "උසස්"
 
@@ -16199,8 +16199,10 @@ msgid "&Beginner"
 msgstr "ආරම්භකයෙක් (&B)"
 
 #: winemine.rc:45
-msgid "&Advanced"
-msgstr "උසස් (&A)"
+#, fuzzy
+#| msgid "Interface"
+msgid "&Intermediate"
+msgstr "අතුරුමුහුණත"
 
 #: winemine.rc:46
 msgid "&Expert"
@@ -16229,6 +16231,12 @@ msgstr "වේගවත්ම කාල"
 #: winemine.rc:64
 msgid "Beginner"
 msgstr "ආරම්භකයෙක්"
+
+#: winemine.rc:65
+#, fuzzy
+#| msgid "Interface"
+msgid "Intermediate"
+msgstr "අතුරුමුහුණත"
 
 #: winemine.rc:66
 msgid "Expert"

@@ -8499,7 +8499,7 @@ msgstr ""
 msgid "&Test Connection"
 msgstr "รายละเอียด"
 
-#: version.rc:92 winemine.rc:65
+#: version.rc:92
 msgid "Advanced"
 msgstr ""
 
@@ -16230,8 +16230,9 @@ msgid "&Beginner"
 msgstr ""
 
 #: winemine.rc:45
-msgid "&Advanced"
-msgstr ""
+#, fuzzy
+msgid "&Intermediate"
+msgstr "ไม่พบแฟ้ม"
 
 #: winemine.rc:46
 msgid "&Expert"
@@ -16261,6 +16262,11 @@ msgstr "ลบ\tDel"
 #: winemine.rc:64
 msgid "Beginner"
 msgstr ""
+
+#: winemine.rc:65
+#, fuzzy
+msgid "Intermediate"
+msgstr "ไม่พบแฟ้ม"
 
 #: winemine.rc:66
 msgid "Expert"

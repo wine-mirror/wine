@@ -8723,7 +8723,7 @@ msgstr ""
 msgid "&Test Connection"
 msgstr "إعادة الاتصالات"
 
-#: version.rc:92 winemine.rc:65
+#: version.rc:92
 msgid "Advanced"
 msgstr "متقدم"
 
@@ -17240,8 +17240,10 @@ msgid "&Beginner"
 msgstr "مبت&دئ"
 
 #: winemine.rc:45
-msgid "&Advanced"
-msgstr "متق&دم"
+#, fuzzy
+#| msgid "Interface"
+msgid "&Intermediate"
+msgstr "الواجهة"
 
 #: winemine.rc:46
 msgid "&Expert"
@@ -17270,6 +17272,12 @@ msgstr "النتائج الأسرع"
 #: winemine.rc:64
 msgid "Beginner"
 msgstr "مبتدئ"
+
+#: winemine.rc:65
+#, fuzzy
+#| msgid "Interface"
+msgid "Intermediate"
+msgstr "الواجهة"
 
 #: winemine.rc:66
 msgid "Expert"

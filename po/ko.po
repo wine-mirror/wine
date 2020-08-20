@@ -8411,7 +8411,7 @@ msgstr ""
 msgid "&Test Connection"
 msgstr "연결 재설정"
 
-#: version.rc:92 winemine.rc:65
+#: version.rc:92
 msgid "Advanced"
 msgstr "중급자"
 
@@ -16542,8 +16542,10 @@ msgid "&Beginner"
 msgstr "초보자(&B)"
 
 #: winemine.rc:45
-msgid "&Advanced"
-msgstr "중급자(&A)"
+#, fuzzy
+#| msgid "Interface"
+msgid "&Intermediate"
+msgstr "인터페이스"
 
 #: winemine.rc:46
 msgid "&Expert"
@@ -16572,6 +16574,12 @@ msgstr "최단 시간"
 #: winemine.rc:64
 msgid "Beginner"
 msgstr "초보자"
+
+#: winemine.rc:65
+#, fuzzy
+#| msgid "Interface"
+msgid "Intermediate"
+msgstr "인터페이스"
 
 #: winemine.rc:66
 msgid "Expert"

@@ -41,7 +41,7 @@ IDM_WINEMINE MENU
         MENUITEM "Question &Marks",IDM_MARKQ
         MENUITEM SEPARATOR
         MENUITEM "&Beginner",      IDM_BEGINNER
-        MENUITEM "&Advanced",      IDM_ADVANCED
+        MENUITEM "&Intermediate",  IDM_ADVANCED
         MENUITEM "&Expert",        IDM_EXPERT
         MENUITEM "&Custom...",     IDM_CUSTOM
         MENUITEM SEPARATOR
@@ -61,7 +61,7 @@ CAPTION "Fastest Times"
 {
     GROUPBOX        "Fastest times",        -1,  10,  10, 150,  45
     LTEXT           "Beginner",             -1,  20,  20,  50,   8
-    LTEXT           "Advanced",             -1,  20,  30,  50,   8
+    LTEXT           "Intermediate",         -1,  20,  30,  50,   8
     LTEXT           "Expert",               -1,  20,  40,  50,   8
     LTEXT           "",              IDC_TIME1,  80,  20,  15,   8
     LTEXT           "",              IDC_TIME2,  80,  30,  15,   8

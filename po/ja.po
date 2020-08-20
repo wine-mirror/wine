@@ -8394,7 +8394,7 @@ msgstr "3. 最初に利用するカタログ(&I):"
 msgid "&Test Connection"
 msgstr "接続をテスト(&T)"
 
-#: version.rc:92 winemine.rc:65
+#: version.rc:92
 msgid "Advanced"
 msgstr "中級"
 
@@ -16513,8 +16513,10 @@ msgid "&Beginner"
 msgstr "初級(&B)"
 
 #: winemine.rc:45
-msgid "&Advanced"
-msgstr "中級(&A)"
+#, fuzzy
+#| msgid "Interface"
+msgid "&Intermediate"
+msgstr "インターフェイス"
 
 #: winemine.rc:46
 msgid "&Expert"
@@ -16543,6 +16545,12 @@ msgstr "ハイスコア"
 #: winemine.rc:64
 msgid "Beginner"
 msgstr "初級"
+
+#: winemine.rc:65
+#, fuzzy
+#| msgid "Interface"
+msgid "Intermediate"
+msgstr "インターフェイス"
 
 #: winemine.rc:66
 msgid "Expert"

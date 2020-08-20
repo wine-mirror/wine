@@ -8826,7 +8826,7 @@ msgstr ""
 msgid "&Test Connection"
 msgstr "Connessione LAN"
 
-#: version.rc:92 winemine.rc:65
+#: version.rc:92
 msgid "Advanced"
 msgstr "Avanzato"
 
@@ -17311,8 +17311,10 @@ msgid "&Beginner"
 msgstr "&Principiante"
 
 #: winemine.rc:45
-msgid "&Advanced"
-msgstr "&Avanzato"
+#, fuzzy
+#| msgid "Interface"
+msgid "&Intermediate"
+msgstr "Interfaccia"
 
 #: winemine.rc:46
 msgid "&Expert"
@@ -17341,6 +17343,12 @@ msgstr "Tempi migliori"
 #: winemine.rc:64
 msgid "Beginner"
 msgstr "Principiante"
+
+#: winemine.rc:65
+#, fuzzy
+#| msgid "Interface"
+msgid "Intermediate"
+msgstr "Interfaccia"
 
 #: winemine.rc:66
 msgid "Expert"

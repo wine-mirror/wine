@@ -8423,7 +8423,7 @@ msgstr ""
 msgid "&Test Connection"
 msgstr "اطلاعات"
 
-#: version.rc:92 winemine.rc:65
+#: version.rc:92
 msgid "Advanced"
 msgstr ""
 
@@ -16136,7 +16136,7 @@ msgid "&Beginner"
 msgstr ""
 
 #: winemine.rc:45
-msgid "&Advanced"
+msgid "&Intermediate"
 msgstr ""
 
 #: winemine.rc:46
@@ -16167,6 +16167,10 @@ msgstr "&حذف\tDel"
 
 #: winemine.rc:64
 msgid "Beginner"
+msgstr ""
+
+#: winemine.rc:65
+msgid "Intermediate"
 msgstr ""
 
 #: winemine.rc:66

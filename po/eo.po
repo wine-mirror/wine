@@ -8513,7 +8513,7 @@ msgstr ""
 msgid "&Test Connection"
 msgstr "LAN konektiĝo"
 
-#: version.rc:92 winemine.rc:65
+#: version.rc:92
 msgid "Advanced"
 msgstr "Altnivela"
 
@@ -16294,8 +16294,10 @@ msgid "&Beginner"
 msgstr "&Komencanta"
 
 #: winemine.rc:45
-msgid "&Advanced"
-msgstr "&Altnivela"
+#, fuzzy
+#| msgid "Interface"
+msgid "&Intermediate"
+msgstr "Interfaco"
 
 #: winemine.rc:46
 msgid "&Expert"
@@ -16324,6 +16326,12 @@ msgstr "Plej rapidaj tempoj"
 #: winemine.rc:64
 msgid "Beginner"
 msgstr "Komencanta"
+
+#: winemine.rc:65
+#, fuzzy
+#| msgid "Interface"
+msgid "Intermediate"
+msgstr "Interfaco"
 
 #: winemine.rc:66
 msgid "Expert"

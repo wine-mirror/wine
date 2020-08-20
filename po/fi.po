@@ -8388,7 +8388,7 @@ msgstr "3. Syötä ensiksi käytettävä &katalogi:"
 msgid "&Test Connection"
 msgstr "Testaa y&hteyttä"
 
-#: version.rc:92 winemine.rc:65
+#: version.rc:92
 msgid "Advanced"
 msgstr "Kehittynyt"
 
@@ -16484,8 +16484,10 @@ msgid "&Beginner"
 msgstr "&Aloittelija"
 
 #: winemine.rc:45
-msgid "&Advanced"
-msgstr "&Kehittynyt"
+#, fuzzy
+#| msgid "Interface"
+msgid "&Intermediate"
+msgstr "Rajapinta"
 
 #: winemine.rc:46
 msgid "&Expert"
@@ -16514,6 +16516,12 @@ msgstr "Nopeimmat ajat"
 #: winemine.rc:64
 msgid "Beginner"
 msgstr "Aloittelija"
+
+#: winemine.rc:65
+#, fuzzy
+#| msgid "Interface"
+msgid "Intermediate"
+msgstr "Rajapinta"
 
 #: winemine.rc:66
 msgid "Expert"
