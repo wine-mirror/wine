@@ -24,6 +24,7 @@
 #define WIN32_NO_STATUS
 #define USE_COM_CONTEXT_DEF
 #include "objbase.h"
+#include "ctxtcall.h"
 #include "oleauto.h"
 #include "dde.h"
 #include "winternl.h"
@@ -1895,6 +1896,318 @@ HRESULT WINAPI CoRegisterPSClsid(REFIID riid, REFCLSID rclsid)
     list_add_head(&registered_proxystubs, &cur->entry);
 
     LeaveCriticalSection(&cs_registered_ps);
+
+    return S_OK;
+}
+
+struct thread_context
+{
+    IComThreadingInfo IComThreadingInfo_iface;
+    IContextCallback IContextCallback_iface;
+    IObjContext IObjContext_iface;
+    LONG refcount;
+};
+
+static inline struct thread_context *impl_from_IComThreadingInfo(IComThreadingInfo *iface)
+{
+    return CONTAINING_RECORD(iface, struct thread_context, IComThreadingInfo_iface);
+}
+
+static inline struct thread_context *impl_from_IContextCallback(IContextCallback *iface)
+{
+    return CONTAINING_RECORD(iface, struct thread_context, IContextCallback_iface);
+}
+
+static inline struct thread_context *impl_from_IObjContext(IObjContext *iface)
+{
+    return CONTAINING_RECORD(iface, struct thread_context, IObjContext_iface);
+}
+
+static HRESULT WINAPI thread_context_info_QueryInterface(IComThreadingInfo *iface, REFIID riid, void **obj)
+{
+    struct thread_context *context = impl_from_IComThreadingInfo(iface);
+
+    *obj = NULL;
+
+    if (IsEqualIID(riid, &IID_IComThreadingInfo) ||
+        IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = &context->IComThreadingInfo_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IContextCallback))
+    {
+        *obj = &context->IContextCallback_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IObjContext))
+    {
+        *obj = &context->IObjContext_iface;
+    }
+
+    if (*obj)
+    {
+        IUnknown_AddRef((IUnknown *)*obj);
+        return S_OK;
+    }
+
+    FIXME("interface not implemented %s\n", debugstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI thread_context_info_AddRef(IComThreadingInfo *iface)
+{
+    struct thread_context *context = impl_from_IComThreadingInfo(iface);
+    return InterlockedIncrement(&context->refcount);
+}
+
+static ULONG WINAPI thread_context_info_Release(IComThreadingInfo *iface)
+{
+    struct thread_context *context = impl_from_IComThreadingInfo(iface);
+
+    /* Context instance is initially created with CoGetContextToken() with refcount set to 0,
+       releasing context while refcount is at 0 destroys it. */
+    if (!context->refcount)
+    {
+        heap_free(context);
+        return 0;
+    }
+
+    return InterlockedDecrement(&context->refcount);
+}
+
+static HRESULT WINAPI thread_context_info_GetCurrentApartmentType(IComThreadingInfo *iface, APTTYPE *apttype)
+{
+    APTTYPEQUALIFIER qualifier;
+
+    TRACE("%p\n", apttype);
+
+    return CoGetApartmentType(apttype, &qualifier);
+}
+
+static HRESULT WINAPI thread_context_info_GetCurrentThreadType(IComThreadingInfo *iface, THDTYPE *thdtype)
+{
+    APTTYPEQUALIFIER qualifier;
+    APTTYPE apttype;
+    HRESULT hr;
+
+    hr = CoGetApartmentType(&apttype, &qualifier);
+    if (FAILED(hr))
+        return hr;
+
+    TRACE("%p\n", thdtype);
+
+    switch (apttype)
+    {
+    case APTTYPE_STA:
+    case APTTYPE_MAINSTA:
+        *thdtype = THDTYPE_PROCESSMESSAGES;
+        break;
+    default:
+        *thdtype = THDTYPE_BLOCKMESSAGES;
+        break;
+    }
+    return S_OK;
+}
+
+static HRESULT WINAPI thread_context_info_GetCurrentLogicalThreadId(IComThreadingInfo *iface, GUID *logical_thread_id)
+{
+    TRACE("%p\n", logical_thread_id);
+
+    return CoGetCurrentLogicalThreadId(logical_thread_id);
+}
+
+static HRESULT WINAPI thread_context_info_SetCurrentLogicalThreadId(IComThreadingInfo *iface, REFGUID logical_thread_id)
+{
+    FIXME("%s stub\n", debugstr_guid(logical_thread_id));
+
+    return E_NOTIMPL;
+}
+
+static const IComThreadingInfoVtbl thread_context_info_vtbl =
+{
+    thread_context_info_QueryInterface,
+    thread_context_info_AddRef,
+    thread_context_info_Release,
+    thread_context_info_GetCurrentApartmentType,
+    thread_context_info_GetCurrentThreadType,
+    thread_context_info_GetCurrentLogicalThreadId,
+    thread_context_info_SetCurrentLogicalThreadId
+};
+
+static HRESULT WINAPI thread_context_callback_QueryInterface(IContextCallback *iface, REFIID riid, void **obj)
+{
+    struct thread_context *context = impl_from_IContextCallback(iface);
+    return IComThreadingInfo_QueryInterface(&context->IComThreadingInfo_iface, riid, obj);
+}
+
+static ULONG WINAPI thread_context_callback_AddRef(IContextCallback *iface)
+{
+    struct thread_context *context = impl_from_IContextCallback(iface);
+    return IComThreadingInfo_AddRef(&context->IComThreadingInfo_iface);
+}
+
+static ULONG WINAPI thread_context_callback_Release(IContextCallback *iface)
+{
+    struct thread_context *context = impl_from_IContextCallback(iface);
+    return IComThreadingInfo_Release(&context->IComThreadingInfo_iface);
+}
+
+static HRESULT WINAPI thread_context_callback_ContextCallback(IContextCallback *iface,
+        PFNCONTEXTCALL callback, ComCallData *param, REFIID riid, int method, IUnknown *punk)
+{
+    FIXME("%p, %p, %p, %s, %d, %p\n", iface, callback, param, debugstr_guid(riid), method, punk);
+
+    return E_NOTIMPL;
+}
+
+static const IContextCallbackVtbl thread_context_callback_vtbl =
+{
+    thread_context_callback_QueryInterface,
+    thread_context_callback_AddRef,
+    thread_context_callback_Release,
+    thread_context_callback_ContextCallback
+};
+
+static HRESULT WINAPI thread_object_context_QueryInterface(IObjContext *iface, REFIID riid, void **obj)
+{
+    struct thread_context *context = impl_from_IObjContext(iface);
+    return IComThreadingInfo_QueryInterface(&context->IComThreadingInfo_iface, riid, obj);
+}
+
+static ULONG WINAPI thread_object_context_AddRef(IObjContext *iface)
+{
+    struct thread_context *context = impl_from_IObjContext(iface);
+    return IComThreadingInfo_AddRef(&context->IComThreadingInfo_iface);
+}
+
+static ULONG WINAPI thread_object_context_Release(IObjContext *iface)
+{
+    struct thread_context *context = impl_from_IObjContext(iface);
+    return IComThreadingInfo_Release(&context->IComThreadingInfo_iface);
+}
+
+static HRESULT WINAPI thread_object_context_SetProperty(IObjContext *iface, REFGUID propid, CPFLAGS flags, IUnknown *punk)
+{
+    FIXME("%p, %s, %x, %p\n", iface, debugstr_guid(propid), flags, punk);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI thread_object_context_RemoveProperty(IObjContext *iface, REFGUID propid)
+{
+    FIXME("%p, %s\n", iface, debugstr_guid(propid));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI thread_object_context_GetProperty(IObjContext *iface, REFGUID propid, CPFLAGS *flags, IUnknown **punk)
+{
+    FIXME("%p, %s, %p, %p\n", iface, debugstr_guid(propid), flags, punk);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI thread_object_context_EnumContextProps(IObjContext *iface, IEnumContextProps **props)
+{
+    FIXME("%p, %p\n", iface, props);
+
+    return E_NOTIMPL;
+}
+
+static void WINAPI thread_object_context_Reserved1(IObjContext *iface)
+{
+    FIXME("%p\n", iface);
+}
+
+static void WINAPI thread_object_context_Reserved2(IObjContext *iface)
+{
+    FIXME("%p\n", iface);
+}
+
+static void WINAPI thread_object_context_Reserved3(IObjContext *iface)
+{
+    FIXME("%p\n", iface);
+}
+
+static void WINAPI thread_object_context_Reserved4(IObjContext *iface)
+{
+    FIXME("%p\n", iface);
+}
+
+static void WINAPI thread_object_context_Reserved5(IObjContext *iface)
+{
+    FIXME("%p\n", iface);
+}
+
+static void WINAPI thread_object_context_Reserved6(IObjContext *iface)
+{
+    FIXME("%p\n", iface);
+}
+
+static void WINAPI thread_object_context_Reserved7(IObjContext *iface)
+{
+    FIXME("%p\n", iface);
+}
+
+static const IObjContextVtbl thread_object_context_vtbl =
+{
+    thread_object_context_QueryInterface,
+    thread_object_context_AddRef,
+    thread_object_context_Release,
+    thread_object_context_SetProperty,
+    thread_object_context_RemoveProperty,
+    thread_object_context_GetProperty,
+    thread_object_context_EnumContextProps,
+    thread_object_context_Reserved1,
+    thread_object_context_Reserved2,
+    thread_object_context_Reserved3,
+    thread_object_context_Reserved4,
+    thread_object_context_Reserved5,
+    thread_object_context_Reserved6,
+    thread_object_context_Reserved7
+};
+
+/***********************************************************************
+ *           CoGetContextToken    (combase.@)
+ */
+HRESULT WINAPI CoGetContextToken(ULONG_PTR *token)
+{
+    struct tlsdata *tlsdata;
+    HRESULT hr;
+
+    TRACE("%p\n", token);
+
+    if (!InternalIsInitialized())
+    {
+        ERR("apartment not initialised\n");
+        return CO_E_NOTINITIALIZED;
+    }
+
+    if (FAILED(hr = com_get_tlsdata(&tlsdata)))
+        return hr;
+
+    if (!token)
+        return E_POINTER;
+
+    if (!tlsdata->context_token)
+    {
+        struct thread_context *context;
+
+        context = heap_alloc_zero(sizeof(*context));
+        if (!context)
+            return E_OUTOFMEMORY;
+
+        context->IComThreadingInfo_iface.lpVtbl = &thread_context_info_vtbl;
+        context->IContextCallback_iface.lpVtbl = &thread_context_callback_vtbl;
+        context->IObjContext_iface.lpVtbl = &thread_object_context_vtbl;
+        /* Context token does not take a reference, it's always zero until the
+           interface is explicitly requested with CoGetObjectContext(). */
+        context->refcount = 0;
+
+        tlsdata->context_token = &context->IObjContext_iface;
+    }
+
+    *token = (ULONG_PTR)tlsdata->context_token;
+    TRACE("context_token %p\n", tlsdata->context_token);
 
     return S_OK;
 }

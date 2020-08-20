@@ -103,7 +103,7 @@
 @ stub CoGetCancelObject
 @ stdcall CoGetClassObject(ptr long ptr ptr ptr) ole32.CoGetClassObject
 @ stub CoGetClassVersion
-@ stdcall CoGetContextToken(ptr) ole32.CoGetContextToken
+@ stdcall CoGetContextToken(ptr)
 @ stdcall CoGetCurrentLogicalThreadId(ptr) ole32.CoGetCurrentLogicalThreadId
 @ stdcall CoGetCurrentProcess() ole32.CoGetCurrentProcess
 @ stdcall CoGetDefaultContext(long ptr ptr)

@@ -31,7 +31,7 @@
 @ stdcall CoGetCallState(long ptr) combase.CoGetCallState
 @ stdcall CoGetCallerTID(ptr)
 @ stdcall CoGetClassObject(ptr long ptr ptr ptr)
-@ stdcall CoGetContextToken(ptr)
+@ stdcall CoGetContextToken(ptr) combase.CoGetContextToken
 @ stdcall CoGetCurrentLogicalThreadId(ptr)
 @ stdcall CoGetCurrentProcess()
 @ stdcall CoGetDefaultContext(long ptr ptr) combase.CoGetDefaultContext
