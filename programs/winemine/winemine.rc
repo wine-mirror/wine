@@ -60,9 +60,9 @@ FONT 8, "MS Shell Dlg"
 CAPTION "Fastest Times"
 {
     GROUPBOX        "Fastest times",        -1,  10,  10, 150,  45
-    LTEXT           "Beginner",             -1,  20,  20,  50,   8
-    LTEXT           "Intermediate",         -1,  20,  30,  50,   8
-    LTEXT           "Expert",               -1,  20,  40,  50,   8
+    LTEXT           "Beginner",             -1,  20,  20,  60,   8
+    LTEXT           "Intermediate",         -1,  20,  30,  60,   8
+    LTEXT           "Expert",               -1,  20,  40,  60,   8
     LTEXT           "",              IDC_TIME1,  80,  20,  15,   8
     LTEXT           "",              IDC_TIME2,  80,  30,  15,   8
     LTEXT           "",              IDC_TIME3,  80,  40,  15,   8
@@ -70,7 +70,7 @@ CAPTION "Fastest Times"
     LTEXT           "",              IDC_NAME2, 100,  30,  55,   8
     LTEXT           "",              IDC_NAME3, 100,  40,  55,   8
     DEFPUSHBUTTON   "OK",                 IDOK, 115,  60,  40,  15
-    PUSHBUTTON      "Reset Results", IDC_RESET,  15,  60,  80,  15
+    PUSHBUTTON      "Reset Results", IDC_RESET,  15,  60,  90,  15
 }
 
 DLG_CONGRATS DIALOG  0, 0, 160, 60
