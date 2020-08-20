@@ -10899,10 +10899,11 @@ static void test_CoInternetCombineUrlEx(void) {
             hr = pCoInternetCombineUrlEx(base, relativeW, uri_combine_tests[i].combine_flags,
                                          &result, 0);
             todo_wine_if(uri_combine_tests[i].todo)
-                ok(hr == uri_combine_tests[i].expected,
+                ok(hr == uri_combine_tests[i].expected ||
+                   broken(hr == S_OK && uri_combine_tests[i].expected == E_INVALIDARG) /* win10 1607 to 1709 */,
                     "Error: CoInternetCombineUrlEx returned 0x%08x, expected 0x%08x on uri_combine_tests[%d].\n",
                     hr, uri_combine_tests[i]. expected, i);
-            if(SUCCEEDED(hr)) {
+            if(SUCCEEDED(hr) && SUCCEEDED(uri_combine_tests[i].expected)) {
                 DWORD j;
 
                 for(j = 0; j < ARRAY_SIZE(uri_combine_tests[i].str_props); ++j) {
