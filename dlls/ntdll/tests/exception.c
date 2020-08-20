@@ -5444,7 +5444,8 @@ static DWORD test_extended_context_handler(EXCEPTION_RECORD *rec, EXCEPTION_REGI
     /* Since we got xstates enabled by OS this cpuid level should be supported. */
     __cpuidex(regs, 0xd, 1);
     compaction = regs[0] & 2;
-    todo_wine ok((context->ContextFlags & (CONTEXT_FULL | CONTEXT_XSTATE)) == (CONTEXT_FULL | CONTEXT_XSTATE),
+    todo_wine_if(sizeof(void *) == 4)
+    ok((context->ContextFlags & (CONTEXT_FULL | CONTEXT_XSTATE)) == (CONTEXT_FULL | CONTEXT_XSTATE),
             "Got unexpected ContextFlags %#x.\n", context->ContextFlags);
 
     if ((context->ContextFlags & (CONTEXT_FULL | CONTEXT_XSTATE)) != (CONTEXT_FULL | CONTEXT_XSTATE))

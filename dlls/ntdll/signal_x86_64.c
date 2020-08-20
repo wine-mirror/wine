@@ -428,6 +428,8 @@ static NTSTATUS call_stack_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_contex
     NTSTATUS status;
 
     context = *orig_context;
+    context.ContextFlags &= ~0x40; /* Clear xstate flag. */
+
     dispatch.TargetIp      = 0;
     dispatch.ContextRecord = &context;
     dispatch.HistoryTable  = &table;

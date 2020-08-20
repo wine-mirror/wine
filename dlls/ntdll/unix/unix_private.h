@@ -297,6 +297,44 @@ static inline void *get_signal_stack(void)
 static inline TEB64 *NtCurrentTeb64(void) { return (TEB64 *)NtCurrentTeb()->GdiBatchCount; }
 #endif
 
+#if defined(__i386__) || defined(__x86_64__)
+struct xcontext
+{
+    CONTEXT c;
+    XSTATE *xstate; /* points to xstate in sigcontext */
+};
+
+static inline XSTATE *xstate_from_context( const CONTEXT *context )
+{
+    CONTEXT_EX *xctx = (CONTEXT_EX *)(context + 1);
+
+    if ((context->ContextFlags & CONTEXT_XSTATE) != CONTEXT_XSTATE)
+        return NULL;
+
+    return (XSTATE *)((char *)(context + 1) + xctx->XState.Offset);
+}
+
+static inline void context_init_xstate( CONTEXT *context, void *xstate_buffer )
+{
+    CONTEXT_EX *xctx;
+    XSTATE *xs;
+
+    xctx = (CONTEXT_EX *)(context + 1);
+    xctx->Legacy.Length = sizeof(CONTEXT);
+    xctx->Legacy.Offset = -(LONG)sizeof(CONTEXT);
+
+    xctx->XState.Length = sizeof(XSTATE);
+    xctx->XState.Offset = xstate_buffer ? (((ULONG_PTR)xstate_buffer + 63) & ~63) - (ULONG_PTR)xctx
+            : (((ULONG_PTR)context + sizeof(CONTEXT) + sizeof(CONTEXT_EX) + 63) & ~63) - (ULONG_PTR)xctx;
+    xctx->All.Length = sizeof(CONTEXT) + xctx->XState.Offset + xctx->XState.Length;
+    xctx->All.Offset = -(LONG)sizeof(CONTEXT);
+    context->ContextFlags |= 0x40;
+
+    xs = xstate_from_context(context);
+    memset( xs, 0, offsetof(XSTATE, YmmContext) );
+}
+#endif
+
 static inline size_t ntdll_wcslen( const WCHAR *str )
 {
     const WCHAR *s = str;
