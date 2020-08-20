@@ -478,6 +478,7 @@ static HRESULT WINAPI FileSource_Load(IFileSourceFilter * iface, LPCOLESTR pszFi
     if (!GetFileSizeEx(hFile, &This->file_size))
     {
         WARN("Could not get file size.\n");
+        CloseHandle(hFile);
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
