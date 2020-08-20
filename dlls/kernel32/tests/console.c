@@ -2255,9 +2255,9 @@ static void check_region_(unsigned int line, const SMALL_RECT *region, unsigned 
     else
         ok_(__FILE__,line)(region->Right == -right || region->Right == region->Left - 1,
                            "Right = %u, expected %d\n", region->Right, right);
-    if (bottom >= 0)
+    if (bottom > 0)
         ok_(__FILE__,line)(region->Bottom == bottom, "Bottom = %u, expected %u\n", region->Bottom, bottom);
-    else
+    else if (bottom < 0)
         ok_(__FILE__,line)(region->Bottom == -bottom || region->Bottom == region->Top - 1,
                            "Bottom = %u, expected %d\n", region->Bottom, bottom);
 }
@@ -2862,7 +2862,7 @@ static void test_ReadConsoleOutput(HANDLE console)
     set_region(&region, 200, 7, 15, 211);
     ret = ReadConsoleOutputW(console, char_info_buf, size, coord, &region);
     ok(!ret, "ReadConsoleOutputW returned: %x(%u)\n", ret, GetLastError());
-    check_region(&region, 200, 7, -15, -211);
+    check_region(&region, 200, 7, -15, 0);
 
     size.X = 23;
     size.Y = 17;
