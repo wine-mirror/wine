@@ -990,10 +990,10 @@ static void init_thread_context( CONTEXT *context, LPTHREAD_START_ROUTINE entry,
 
 
 /***********************************************************************
- *           attach_thread
+ *           get_initial_context
  */
-PCONTEXT DECLSPEC_HIDDEN attach_thread( LPTHREAD_START_ROUTINE entry, void *arg,
-                                        BOOL suspend, void *relay )
+PCONTEXT DECLSPEC_HIDDEN get_initial_context( LPTHREAD_START_ROUTINE entry, void *arg,
+                                              BOOL suspend, void *relay )
 {
     CONTEXT *ctx;
 
@@ -1012,8 +1012,7 @@ PCONTEXT DECLSPEC_HIDDEN attach_thread( LPTHREAD_START_ROUTINE entry, void *arg,
         init_thread_context( ctx, entry, arg, relay );
     }
     pthread_sigmask( SIG_UNBLOCK, &server_block_set, NULL );
-    ctx->ContextFlags = CONTEXT_FULL;
-    pLdrInitializeThunk( ctx, (void **)&ctx->u.s.X0, 0, 0 );
+    ctx->ContextFlags = CONTEXT_FULL | CONTEXT_FLOATING_POINT;
     return ctx;
 }
 
@@ -1023,43 +1022,19 @@ PCONTEXT DECLSPEC_HIDDEN attach_thread( LPTHREAD_START_ROUTINE entry, void *arg,
  */
 __ASM_GLOBAL_FUNC( signal_start_thread,
                    "stp x29, x30, [sp,#-16]!\n\t"
-                   "mov x18, x4\n\t"             /* teb */
+                   "mov x19, x4\n\t"             /* thunk */
+                   "mov x18, x5\n\t"             /* teb */
                    /* store exit frame */
                    "mov x29, sp\n\t"
-                   "str x29, [x4, #0x2f0]\n\t"  /* arm64_thread_data()->exit_frame */
+                   "str x29, [x5, #0x2f0]\n\t"  /* arm64_thread_data()->exit_frame */
                    /* switch to thread stack */
-                   "ldr x5, [x4, #8]\n\t"       /* teb->Tib.StackBase */
+                   "ldr x5, [x5, #8]\n\t"       /* teb->Tib.StackBase */
                    "sub sp, x5, #0x1000\n\t"
                    /* attach dlls */
-                   "bl " __ASM_NAME("attach_thread") "\n\t"
-                   "mov sp, x0\n\t"
-                   /* clear the stack */
-                   "and x0, x0, #~0xfff\n\t"  /* round down to page size */
-                   "bl " __ASM_NAME("virtual_clear_thread_stack") "\n\t"
-                   /* switch to the initial context */
-                   "mov x0, sp\n\t"
-                   "ldp q0, q1, [x0, #0x110]\n\t"      /* context->V[0,1] */
-                   "ldp q2, q3, [x0, #0x130]\n\t"      /* context->V[2,3] */
-                   "ldp q4, q5, [x0, #0x150]\n\t"      /* context->V[4,5] */
-                   "ldp q6, q7, [x0, #0x170]\n\t"      /* context->V[6,7] */
-                   "ldp q8, q9, [x0, #0x190]\n\t"      /* context->V[8,9] */
-                   "ldp q10, q11, [x0, #0x1b0]\n\t"    /* context->V[10,11] */
-                   "ldp q12, q13, [x0, #0x1d0]\n\t"    /* context->V[12,13] */
-                   "ldp q14, q15, [x0, #0x1f0]\n\t"    /* context->V[14,15] */
-                   "ldp q16, q17, [x0, #0x210]\n\t"    /* context->V[16,17] */
-                   "ldp q18, q19, [x0, #0x230]\n\t"    /* context->V[18,19] */
-                   "ldp q20, q21, [x0, #0x250]\n\t"    /* context->V[20,21] */
-                   "ldp q22, q23, [x0, #0x270]\n\t"    /* context->V[22,23] */
-                   "ldp q24, q25, [x0, #0x290]\n\t"    /* context->V[24,25] */
-                   "ldp q26, q27, [x0, #0x2b0]\n\t"    /* context->V[26,27] */
-                   "ldp q28, q29, [x0, #0x2d0]\n\t"    /* context->V[28,29] */
-                   "ldp q30, q31, [x0, #0x2f0]\n\t"    /* context->V[30,31] */
-                   "ldr w1, [x0, #0x310]\n\t"          /* context->Fpcr */
-                   "msr fpcr, x1\n\t"
-                   "ldr w1, [x0, #0x314]\n\t"          /* context->Fpsr */
-                   "msr fpsr, x1\n\t"
-                   "mov x1, #1\n\t"
-                   "b " __ASM_NAME("NtContinue") )
+                   "bl " __ASM_NAME("get_initial_context") "\n\t"
+                   "add x1, x0, #4\n\t"        /* &context->X0 */
+                   "mov lr, #0\n\t"
+                   "br x19" )
 
 
 extern void DECLSPEC_NORETURN call_thread_exit_func( int status, void (*func)(int), TEB *teb );

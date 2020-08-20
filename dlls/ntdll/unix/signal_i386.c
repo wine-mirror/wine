@@ -2240,10 +2240,10 @@ static void init_thread_context( CONTEXT *context, LPTHREAD_START_ROUTINE entry,
 
 
 /***********************************************************************
- *           attach_thread
+ *           get_initial_context
  */
-PCONTEXT DECLSPEC_HIDDEN attach_thread( LPTHREAD_START_ROUTINE entry, void *arg,
-                                        BOOL suspend, void *relay )
+PCONTEXT DECLSPEC_HIDDEN get_initial_context( LPTHREAD_START_ROUTINE entry, void *arg,
+                                              BOOL suspend, void *relay )
 {
     CONTEXT *ctx;
 
@@ -2263,7 +2263,6 @@ PCONTEXT DECLSPEC_HIDDEN attach_thread( LPTHREAD_START_ROUTINE entry, void *arg,
     }
     pthread_sigmask( SIG_UNBLOCK, &server_block_set, NULL );
     ctx->ContextFlags = CONTEXT_FULL | CONTEXT_FLOATING_POINT | CONTEXT_EXTENDED_REGISTERS;
-    pLdrInitializeThunk( ctx, (void **)&ctx->Eax, 0, 0 );
     return ctx;
 }
 
@@ -2293,18 +2292,14 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    "pushl 16(%ebp)\n\t"         /* suspend */
                    "pushl 12(%ebp)\n\t"         /* arg */
                    "pushl 8(%ebp)\n\t"          /* entry */
+                   "call " __ASM_NAME("get_initial_context") "\n\t"
+                   "movl %eax,(%esp)\n\t"       /* context */
+                   "leal 0xb0(%eax),%eax\n\t"   /* &context->Eax */
+                   "movl %eax,4(%esp)\n\t"
+                   "movl 24(%ebp),%edx\n\t"     /* thunk */
                    "xorl %ebp,%ebp\n\t"
-                   "call " __ASM_NAME("attach_thread") "\n\t"
-                   "movl %eax,%esi\n\t"
-                   "leal -12(%eax),%esp\n\t"
-                   /* clear the stack */
-                   "andl $~0xfff,%eax\n\t"  /* round down to page size */
-                   "movl %eax,(%esp)\n\t"
-                   "call " __ASM_NAME("virtual_clear_thread_stack") "\n\t"
-                   /* switch to the initial context */
-                   "movl $1,4(%esp)\n\t"
-                   "movl %esi,(%esp)\n\t"
-                   "call " __ASM_NAME("NtContinue") )
+                   "pushl $0\n\t"
+                   "jmp *%edx" )
 
 
 /***********************************************************************

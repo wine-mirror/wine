@@ -2467,10 +2467,10 @@ static void init_thread_context( CONTEXT *context, LPTHREAD_START_ROUTINE entry,
 
 
 /***********************************************************************
- *           attach_thread
+ *           get_initial_context
  */
-PCONTEXT DECLSPEC_HIDDEN attach_thread( LPTHREAD_START_ROUTINE entry, void *arg,
-                                        BOOL suspend, void *relay )
+PCONTEXT DECLSPEC_HIDDEN get_initial_context( LPTHREAD_START_ROUTINE entry, void *arg,
+                                              BOOL suspend, void *relay )
 {
     CONTEXT *ctx;
 
@@ -2491,7 +2491,6 @@ PCONTEXT DECLSPEC_HIDDEN attach_thread( LPTHREAD_START_ROUTINE entry, void *arg,
     }
     pthread_sigmask( SIG_UNBLOCK, &server_block_set, NULL );
     ctx->ContextFlags = CONTEXT_FULL;
-    pLdrInitializeThunk( ctx, (void **)&ctx->Rcx, 0, 0 );
     return ctx;
 }
 
@@ -2521,19 +2520,15 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    "movq %rsp,0x320(%rax)\n\t"      /* amd64_thread_data()->exit_frame */
                    /* switch to thread stack */
                    "movq 8(%rax),%rax\n\t"          /* NtCurrentTeb()->Tib.StackBase */
+                   "movq %r8,%rbx\n\t"              /* thunk */
                    "leaq -0x1000(%rax),%rsp\n\t"
                    /* attach dlls */
-                   "call " __ASM_NAME("attach_thread") "\n\t"
-                   "movq %rax,%rbx\n\t"
-                   "leaq -32(%rax),%rsp\n\t"
-                   /* clear the stack */
-                   "andq $~0xfff,%rax\n\t"  /* round down to page size */
-                   "movq %rax,%rdi\n\t"
-                   "call " __ASM_NAME("virtual_clear_thread_stack") "\n\t"
-                   /* switch to the initial context */
-                   "movl $1,%edx\n\t"
-                   "movq %rbx,%rcx\n\t"
-                   "call " __ASM_NAME("NtContinue") )
+                   "call " __ASM_NAME("get_initial_context") "\n\t"
+                   "movq %rax,%rcx\n\t"             /* context */
+                   "leaq 0x80(%rcx),%rdx\n\t"       /* &context->Rcx */
+                   "xorq %rax,%rax\n\t"
+                   "pushq %rax\n\t"
+                   "jmp *%rbx" )
 
 
 /***********************************************************************

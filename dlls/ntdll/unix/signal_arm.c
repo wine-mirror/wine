@@ -906,10 +906,10 @@ static void init_thread_context( CONTEXT *context, LPTHREAD_START_ROUTINE entry,
 
 
 /***********************************************************************
- *           attach_thread
+ *           get_initial_context
  */
-PCONTEXT DECLSPEC_HIDDEN attach_thread( LPTHREAD_START_ROUTINE entry, void *arg,
-                                        BOOL suspend, void *relay )
+PCONTEXT DECLSPEC_HIDDEN get_initial_context( LPTHREAD_START_ROUTINE entry, void *arg,
+                                              BOOL suspend, void *relay )
 {
     CONTEXT *ctx;
 
@@ -929,7 +929,6 @@ PCONTEXT DECLSPEC_HIDDEN attach_thread( LPTHREAD_START_ROUTINE entry, void *arg,
     }
     pthread_sigmask( SIG_UNBLOCK, &server_block_set, NULL );
     ctx->ContextFlags = CONTEXT_FULL;
-    pLdrInitializeThunk( ctx, (void **)&ctx->R0, 0, 0 );
     return ctx;
 }
 
@@ -940,22 +939,18 @@ PCONTEXT DECLSPEC_HIDDEN attach_thread( LPTHREAD_START_ROUTINE entry, void *arg,
 __ASM_GLOBAL_FUNC( signal_start_thread,
                    ".arm\n\t"
                    "push {r4-r12,lr}\n\t"
+                   "ldr r5, [sp, #40]\n\t"    /* thunk */
                    /* store exit frame */
-                   "ldr r4, [sp, #40]\n\t"    /* teb */
+                   "ldr r4, [sp, #44]\n\t"    /* teb */
                    "str sp, [r4, #0x1d4]\n\t" /* teb->GdiTebBatch */
                    /* switch to thread stack */
                    "ldr r4, [r4, #4]\n\t"     /* teb->Tib.StackBase */
                    "sub sp, r4, #0x1000\n\t"
                    /* attach dlls */
-                   "bl " __ASM_NAME("attach_thread") "\n\t"
-                   "mov sp, r0\n\t"
-                   /* clear the stack */
-                   "and r0, #~0xff0\n\t"  /* round down to page size */
-                   "bl " __ASM_NAME("virtual_clear_thread_stack") "\n\t"
-                   /* switch to the initial context */
-                   "mov r1, #1\n\t"
-                   "mov r0, sp\n\t"
-                   "b " __ASM_NAME("NtContinue") )
+                   "bl " __ASM_NAME("get_initial_context") "\n\t"
+                   "add r1, r0, #4\n\t"       /* &context->R0 */
+                   "mov lr, #0\n\t"
+                   "bx r5" )
 
 
 extern void DECLSPEC_NORETURN call_thread_exit_func( int status, void (*func)(int), TEB *teb );

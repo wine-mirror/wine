@@ -1486,7 +1486,7 @@ void CDECL server_init_process_done( void *relay )
     SERVER_END_REQ;
 
     assert( !status );
-    signal_start_thread( entry, peb, suspend, relay, NtCurrentTeb() );
+    signal_start_thread( entry, peb, suspend, relay, pLdrInitializeThunk, NtCurrentTeb() );
 }
 
 
