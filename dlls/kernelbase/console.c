@@ -174,6 +174,40 @@ static COORD get_largest_console_window_size( HANDLE handle )
     return c;
 }
 
+static HANDLE create_console_server( void )
+{
+    OBJECT_ATTRIBUTES attr = {sizeof(attr)};
+    UNICODE_STRING string;
+    IO_STATUS_BLOCK iosb;
+    HANDLE handle;
+    NTSTATUS status;
+
+    RtlInitUnicodeString( &string, L"\\Device\\ConDrv\\Server" );
+    attr.ObjectName = &string;
+    attr.Attributes = OBJ_INHERIT;
+    status = NtCreateFile( &handle, FILE_WRITE_PROPERTIES | FILE_READ_PROPERTIES | SYNCHRONIZE,
+                           &attr, &iosb, NULL, FILE_ATTRIBUTE_NORMAL, 0, FILE_OPEN,
+                           FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0 );
+    return set_ntstatus( status ) ? handle : NULL;
+}
+
+static HANDLE create_console_reference( HANDLE root )
+{
+    OBJECT_ATTRIBUTES attr = {sizeof(attr)};
+    UNICODE_STRING string;
+    IO_STATUS_BLOCK iosb;
+    HANDLE handle;
+    NTSTATUS status;
+
+    RtlInitUnicodeString( &string, L"Reference" );
+    attr.RootDirectory = root;
+    attr.ObjectName = &string;
+    status = NtCreateFile( &handle, FILE_READ_DATA | FILE_WRITE_DATA | FILE_WRITE_PROPERTIES |
+                           FILE_READ_PROPERTIES | SYNCHRONIZE, &attr, &iosb, NULL, FILE_ATTRIBUTE_NORMAL,
+                           0, FILE_OPEN, FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0 );
+    return set_ntstatus( status ) ? handle : NULL;
+}
+
 static BOOL init_console_std_handles(void)
 {
     HANDLE std_out = NULL, std_err = NULL, handle;
@@ -1578,13 +1612,91 @@ BOOL WINAPI DECLSPEC_HOTPATCH WriteConsoleOutputCharacterW( HANDLE handle, LPCWS
     return ret;
 }
 
+static HANDLE create_pseudo_console( COORD size, HANDLE input, HANDLE output, HANDLE signal,
+                                     DWORD flags, HANDLE *process )
+{
+    WCHAR cmd[MAX_PATH], conhost_path[MAX_PATH];
+    PROCESS_INFORMATION pi;
+    HANDLE server, console;
+    STARTUPINFOEXW si;
+    void *redir;
+    BOOL res;
+
+    if (!(server = create_console_server())) return NULL;
+
+    console = create_console_reference( server );
+    if (!console)
+    {
+        NtClose( server );
+        return NULL;
+    }
+
+    memset( &si, 0, sizeof(si) );
+    si.StartupInfo.cb         = sizeof(STARTUPINFOEXW);
+    si.StartupInfo.hStdInput  = input;
+    si.StartupInfo.hStdOutput = output;
+    si.StartupInfo.hStdError  = output;
+    si.StartupInfo.dwFlags    = STARTF_USESTDHANDLES;
+    swprintf( conhost_path, ARRAY_SIZE(conhost_path), L"%s\\conhost.exe", system_dir );
+    swprintf( cmd, ARRAY_SIZE(cmd),
+              L"\"%s\" --headless %s--width %u --height %u --signal 0x%x --server 0x%x",
+              conhost_path, (flags & PSEUDOCONSOLE_INHERIT_CURSOR) ? L"--inheritcursor " : L"",
+              size.X, size.Y, signal, server );
+
+    Wow64DisableWow64FsRedirection( &redir );
+    res = CreateProcessW( conhost_path, cmd, NULL, NULL, TRUE, DETACHED_PROCESS, NULL, NULL,
+                          &si.StartupInfo, &pi );
+    Wow64RevertWow64FsRedirection( redir );
+    NtClose( server );
+    if (!res)
+    {
+        NtClose( console );
+        return NULL;
+    }
+
+    NtClose( pi.hThread );
+    *process = pi.hProcess;
+    return console;
+}
+
 /******************************************************************************
  *	CreatePseudoConsole   (kernelbase.@)
  */
 HRESULT WINAPI CreatePseudoConsole( COORD size, HANDLE input, HANDLE output, DWORD flags, HPCON *ret )
 {
-    FIXME( "(%u,%u) %p %p %x %p\n", size.X, size.Y, input, output, flags, ret );
-    return E_NOTIMPL;
+    SECURITY_ATTRIBUTES inherit_attr = { sizeof(inherit_attr), NULL, TRUE };
+    struct pseudo_console *pseudo_console;
+    HANDLE signal = NULL;
+    WCHAR pipe_name[64];
+
+    TRACE( "(%u,%u) %p %p %x %p\n", size.X, size.Y, input, output, flags, ret );
+
+    if (!size.X || !size.Y || !ret) return E_INVALIDARG;
+
+    if (!(pseudo_console = HeapAlloc( GetProcessHeap(), 0, HEAP_ZERO_MEMORY ))) return E_OUTOFMEMORY;
+
+    swprintf( pipe_name, ARRAY_SIZE(pipe_name),  L"\\\\.\\pipe\\wine_pty_signal_pipe%x",
+              GetCurrentThreadId() );
+    signal = CreateNamedPipeW( pipe_name, PIPE_ACCESS_INBOUND | FILE_FLAG_OVERLAPPED, PIPE_TYPE_BYTE,
+                               PIPE_UNLIMITED_INSTANCES, 4096, 4096, NMPWAIT_USE_DEFAULT_WAIT, &inherit_attr );
+    if (signal == INVALID_HANDLE_VALUE)
+    {
+        HeapFree( GetProcessHeap(), 0, pseudo_console );
+        return HRESULT_FROM_WIN32( GetLastError() );
+    }
+    pseudo_console->signal = CreateFileW( pipe_name, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL );
+    if (pseudo_console->signal != INVALID_HANDLE_VALUE)
+        pseudo_console->reference = create_pseudo_console( size, input, output, signal, flags,
+                                                           &pseudo_console->process );
+    NtClose( signal );
+    if (!pseudo_console->reference)
+    {
+        ClosePseudoConsole( pseudo_console );
+        return HRESULT_FROM_WIN32( GetLastError() );
+    }
+
+    *ret = pseudo_console;
+    return S_OK;
 }
 
 /******************************************************************************
