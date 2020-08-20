@@ -1704,7 +1704,18 @@ HRESULT WINAPI CreatePseudoConsole( COORD size, HANDLE input, HANDLE output, DWO
  */
 void WINAPI ClosePseudoConsole( HPCON handle )
 {
-    FIXME( "%p\n", handle );
+    struct pseudo_console *pseudo_console = handle;
+
+    TRACE( "%p\n", handle );
+
+    if (!pseudo_console) return;
+    if (pseudo_console->signal) CloseHandle( pseudo_console->signal );
+    if (pseudo_console->process)
+    {
+        WaitForSingleObject( pseudo_console->process, INFINITE );
+        CloseHandle( pseudo_console->process );
+    }
+    if (pseudo_console->reference) CloseHandle( pseudo_console->reference );
 }
 
 /******************************************************************************
