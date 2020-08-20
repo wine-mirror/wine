@@ -59,6 +59,7 @@ struct console_input
     int                          recnum;        /* number of input records */
     INPUT_RECORD                *records;       /* input records */
     struct console_input_events *evt;           /* synchronization event with renderer */
+    struct console_server       *server;        /* console server object */
     WCHAR                       *title;         /* console title */
     data_size_t                  title_len;     /* length of console title */
     struct history_line        **history;       /* lines history */
@@ -181,11 +182,13 @@ static const struct fd_ops console_input_events_fd_ops =
 struct console_server
 {
     struct object         obj;         /* object header */
+    struct console_input *console;     /* attached console */
 };
 
 static void console_server_dump( struct object *obj, int verbose );
 static void console_server_destroy( struct object *obj );
 static int console_server_signaled( struct object *obj, struct wait_queue_entry *entry );
+static struct object *console_server_lookup_name( struct object *obj, struct unicode_str *name, unsigned int attr );
 static struct object *console_server_open_file( struct object *obj, unsigned int access,
                                                 unsigned int sharing, unsigned int options );
 
@@ -203,7 +206,7 @@ static const struct object_ops console_server_ops =
     default_fd_map_access,            /* map_access */
     default_get_sd,                   /* get_sd */
     default_set_sd,                   /* set_sd */
-    no_lookup_name,                   /* lookup_name */
+    console_server_lookup_name,       /* lookup_name */
     no_link_name,                     /* link_name */
     NULL,                             /* unlink_name */
     console_server_open_file,         /* open_file */
@@ -485,6 +488,7 @@ static struct object *create_console_input( int fd )
     console_input->recnum        = 0;
     console_input->records       = NULL;
     console_input->evt           = NULL;
+    console_input->server        = NULL;
     console_input->title         = NULL;
     console_input->title_len     = 0;
     console_input->history_size  = 50;
@@ -1148,6 +1152,13 @@ static void console_input_destroy( struct object *obj )
     int				i;
 
     assert( obj->ops == &console_input_ops );
+
+    if (console_in->server)
+    {
+        assert( console_in->server->console == console_in );
+        console_in->server->console = NULL;
+    }
+
     free( console_in->title );
     free( console_in->records );
 
@@ -1511,13 +1522,51 @@ static void console_server_dump( struct object *obj, int verbose )
 
 static void console_server_destroy( struct object *obj )
 {
+    struct console_server *server = (struct console_server *)obj;
     assert( obj->ops == &console_server_ops );
+    if (server->console)
+    {
+        assert( server->console->server == server );
+        server->console->server = NULL;
+    }
+}
+
+static struct object *console_server_lookup_name( struct object *obj, struct unicode_str *name, unsigned int attr )
+{
+    struct console_server *server = (struct console_server*)obj;
+    static const WCHAR referenceW[] = {'R','e','f','e','r','e','n','c','e'};
+    assert( obj->ops == &console_server_ops );
+
+    if (name->len == sizeof(referenceW) && !memcmp( name->str, referenceW, name->len ))
+    {
+        struct screen_buffer *screen_buffer;
+        name->len = 0;
+        if (server->console)
+        {
+            set_error( STATUS_INVALID_HANDLE );
+            return 0;
+        }
+        if (!(server->console = (struct console_input *)create_console_input( -1 ))) return NULL;
+        if (!(screen_buffer = (struct screen_buffer *)create_console_output( server->console, -1 )))
+        {
+            release_object( server->console );
+            server->console = NULL;
+            return NULL;
+        }
+        release_object( screen_buffer );
+        server->console->server = server;
+
+        return &server->console->obj;
+    }
+
+    return NULL;
 }
 
 static int console_server_signaled( struct object *obj, struct wait_queue_entry *entry )
 {
+    struct console_server *server = (struct console_server*)obj;
     assert( obj->ops == &console_server_ops );
-    return 0;
+    return !server->console;
 }
 
 static struct object *console_server_open_file( struct object *obj, unsigned int access,
@@ -1531,6 +1580,7 @@ static struct object *create_console_server( void )
     struct console_server *server;
 
     if (!(server = alloc_object( &console_server_ops ))) return NULL;
+    server->console = NULL;
 
     return &server->obj;
 }
