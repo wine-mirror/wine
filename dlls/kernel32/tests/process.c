@@ -3887,6 +3887,18 @@ static void test_ProcThreadAttributeList(void)
         expect_list.count++;
     }
 
+    ret = pUpdateProcThreadAttribute(&list, 0, PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE, handles, sizeof(PROCESSOR_NUMBER), NULL, NULL);
+    ok(ret || broken(GetLastError() == ERROR_NOT_SUPPORTED), "got %d gle %d\n", ret, GetLastError());
+
+    if (ret)
+    {
+        unsigned int i = expect_list.count++;
+        expect_list.mask |= 1 << ProcThreadAttributePseudoConsole;
+        expect_list.attrs[i].attr = PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE;
+        expect_list.attrs[i].size = sizeof(HPCON);
+        expect_list.attrs[i].value = handles;
+    }
+
     ok(!memcmp(&list, &expect_list, size), "mismatch\n");
 
     pDeleteProcThreadAttributeList(&list);

@@ -28,6 +28,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
+#include "wincontypes.h"
 #include "winternl.h"
 
 #include "kernelbase.h"
@@ -568,6 +569,14 @@ BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessInternalW( HANDLE token, const WCHAR 
                         handle_list = &attrs->attrs[i];
                         TRACE("PROC_THREAD_ATTRIBUTE_HANDLE_LIST handle count %Iu.\n", attrs->attrs[i].size / sizeof(HANDLE));
                         break;
+                    case PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE:
+                        {
+                            struct pseudo_console *console = attrs->attrs[i].value;
+                            TRACE( "PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE %p reference %p\n",
+                                   console, console->reference );
+                            params->ConsoleHandle = console->reference;
+                            break;
+                        }
                     default:
                         FIXME("Unsupported attribute %#Ix.\n", attrs->attrs[i].attr);
                         break;
@@ -1729,6 +1738,14 @@ BOOL WINAPI DECLSPEC_HOTPATCH UpdateProcThreadAttribute( struct _PROC_THREAD_ATT
             return FALSE;
         }
         break;
+
+    case PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE:
+       if (size != sizeof(HPCON))
+       {
+           SetLastError( ERROR_BAD_LENGTH );
+           return FALSE;
+       }
+       break;
 
     default:
         SetLastError( ERROR_NOT_SUPPORTED );

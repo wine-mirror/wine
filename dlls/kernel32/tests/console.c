@@ -3957,9 +3957,14 @@ static DWORD WINAPI read_pipe_proc( void *handle )
 
 static void test_pseudo_console(void)
 {
+    STARTUPINFOEXA startup = {{ sizeof(startup) }};
     HANDLE console_pipe, console_pipe2, thread;
+    char **argv, cmdline[MAX_PATH];
+    PROCESS_INFORMATION info;
     HPCON pseudo_console;
+    SIZE_T attr_size;
     COORD size;
+    BOOL ret;
     HRESULT hres;
 
     if (!pCreatePseudoConsole)
@@ -3995,6 +4000,22 @@ static void test_pseudo_console(void)
     ok(hres == S_OK, "CreatePseudoConsole failed: %08x\n", hres);
     CloseHandle(console_pipe2);
 
+    InitializeProcThreadAttributeList(NULL, 1, 0, &attr_size);
+    startup.lpAttributeList = HeapAlloc(GetProcessHeap(), 0, attr_size);
+    InitializeProcThreadAttributeList(startup.lpAttributeList, 1, 0, &attr_size);
+    UpdateProcThreadAttribute(startup.lpAttributeList, 0, PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE, pseudo_console,
+                              sizeof(pseudo_console), NULL, NULL);
+
+    winetest_get_mainargs(&argv);
+    sprintf(cmdline, "\"%s\" %s --pseudo-console", argv[0], argv[1]);
+    ret = CreateProcessA(NULL, cmdline, NULL, NULL, FALSE, EXTENDED_STARTUPINFO_PRESENT, NULL, NULL, &startup.StartupInfo, &info);
+    ok(ret, "CreateProcessW failed: %u\n", GetLastError());
+
+    CloseHandle(info.hThread);
+    HeapFree(GetProcessHeap(), 0, startup.lpAttributeList);
+    wait_child_process(info.hProcess);
+    CloseHandle(info.hProcess);
+
     pClosePseudoConsole(pseudo_console);
 }
 
@@ -4003,6 +4024,7 @@ START_TEST(console)
     HANDLE hConIn, hConOut;
     BOOL ret, test_current;
     CONSOLE_SCREEN_BUFFER_INFO	sbi;
+    BOOL using_pseudo_console;
     DWORD size;
     char **argv;
     int argc;
@@ -4026,8 +4048,9 @@ START_TEST(console)
     }
 
     test_current = argc >= 3 && !strcmp(argv[2], "--current");
+    using_pseudo_console = argc >= 3 && !strcmp(argv[2], "--pseudo-console");
 
-    if (!test_current)
+    if (!test_current && !using_pseudo_console)
     {
         static const char font_name[] = "Lucida Console";
         HKEY console_key;
@@ -4092,6 +4115,19 @@ START_TEST(console)
     /* now verify everything's ok */
     ok(hConIn != INVALID_HANDLE_VALUE, "Opening ConIn\n");
     ok(hConOut != INVALID_HANDLE_VALUE, "Opening ConOut\n");
+
+    if (using_pseudo_console)
+    {
+        DWORD mode;
+
+        ret = GetConsoleMode(hConIn, &mode);
+        ok(ret, "GetConsoleMode failed: %u\n", GetLastError());
+        todo_wine
+        ok(mode == (ENABLE_PROCESSED_INPUT | ENABLE_LINE_INPUT | ENABLE_ECHO_INPUT | ENABLE_MOUSE_INPUT |
+                    ENABLE_INSERT_MODE | ENABLE_QUICK_EDIT_MODE | ENABLE_EXTENDED_FLAGS | ENABLE_AUTO_POSITION),
+           "mode = %x\n", mode);
+        return;
+    }
 
     ret = GetConsoleScreenBufferInfo(hConOut, &sbi);
     ok(ret, "Getting sb info\n");
