@@ -1708,7 +1708,11 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
         if (!(flags & CONTEXT_CONTROL))
             FIXME( "setting partial context (%x) not supported\n", flags );
         else
+        {
+            struct syscall_frame *frame = amd64_thread_data()->syscall_frame;
+            amd64_thread_data()->syscall_frame = frame->prev_frame;
             set_full_cpu_context( context );
+        }
     }
     return ret;
 }

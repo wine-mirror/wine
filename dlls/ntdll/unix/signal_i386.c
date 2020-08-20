@@ -870,6 +870,9 @@ static inline void restore_context( const CONTEXT *context, ucontext_t *sigconte
  */
 extern void set_full_cpu_context( const CONTEXT *context );
 __ASM_GLOBAL_FUNC( set_full_cpu_context,
+                   "movl %fs:0x1f8,%eax\n\t"     /* x86_thread_data()->syscall_frame */
+                   "movl (%eax),%eax\n\t"        /* frame->prev_frame */
+                   "movl %eax,%fs:0x1f8\n\t"
                    "movl 4(%esp),%ecx\n\t"
                    "movw 0x8c(%ecx),%gs\n\t"  /* SegGs */
                    "movw 0x90(%ecx),%fs\n\t"  /* SegFs */

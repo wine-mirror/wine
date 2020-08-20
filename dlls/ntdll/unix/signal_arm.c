@@ -461,7 +461,12 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
 
     context_to_server( &server_context, context );
     ret = set_thread_context( handle, &server_context, &self );
-    if (self && ret == STATUS_SUCCESS) set_cpu_context( context );
+    if (self && ret == STATUS_SUCCESS)
+    {
+        struct syscall_frame *frame = arm_thread_data()->syscall_frame;
+        arm_thread_data()->syscall_frame = frame->prev_frame;
+        set_cpu_context( context );
+    }
     return ret;
 }
 

@@ -520,6 +520,8 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
     }
     if (self && ret == STATUS_SUCCESS)
     {
+        struct syscall_frame *frame = arm64_thread_data()->syscall_frame;
+        arm64_thread_data()->syscall_frame = frame->prev_frame;
         InterlockedExchangePointer( (void **)&arm64_thread_data()->context, (void *)context );
         raise( SIGUSR2 );
     }
