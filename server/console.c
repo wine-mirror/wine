@@ -178,6 +178,40 @@ static const struct fd_ops console_input_events_fd_ops =
     default_fd_reselect_async     /* reselect_async */
 };
 
+struct console_server
+{
+    struct object         obj;         /* object header */
+};
+
+static void console_server_dump( struct object *obj, int verbose );
+static void console_server_destroy( struct object *obj );
+static int console_server_signaled( struct object *obj, struct wait_queue_entry *entry );
+static struct object *console_server_open_file( struct object *obj, unsigned int access,
+                                                unsigned int sharing, unsigned int options );
+
+static const struct object_ops console_server_ops =
+{
+    sizeof(struct console_server),    /* size */
+    console_server_dump,              /* dump */
+    no_get_type,                      /* get_type */
+    add_queue,                        /* add_queue */
+    remove_queue,                     /* remove_queue */
+    console_server_signaled,          /* signaled */
+    no_satisfied,                     /* satisfied */
+    no_signal,                        /* signal */
+    no_get_fd,                        /* get_fd */
+    default_fd_map_access,            /* map_access */
+    default_get_sd,                   /* get_sd */
+    default_set_sd,                   /* set_sd */
+    no_lookup_name,                   /* lookup_name */
+    no_link_name,                     /* link_name */
+    NULL,                             /* unlink_name */
+    console_server_open_file,         /* open_file */
+    no_kernel_obj_list,               /* get_kernel_obj_list */
+    fd_close_handle,                  /* close_handle */
+    console_server_destroy            /* destroy */
+};
+
 struct font_info
 {
     short int width;
@@ -1469,6 +1503,38 @@ static void scroll_console_output( struct screen_buffer *screen_buffer, int xsrc
     console_input_events_append( screen_buffer->input, &evt );
 }
 
+static void console_server_dump( struct object *obj, int verbose )
+{
+    assert( obj->ops == &console_server_ops );
+    fprintf( stderr, "Console server\n" );
+}
+
+static void console_server_destroy( struct object *obj )
+{
+    assert( obj->ops == &console_server_ops );
+}
+
+static int console_server_signaled( struct object *obj, struct wait_queue_entry *entry )
+{
+    assert( obj->ops == &console_server_ops );
+    return 0;
+}
+
+static struct object *console_server_open_file( struct object *obj, unsigned int access,
+                                                unsigned int sharing, unsigned int options )
+{
+    return grab_object( obj );
+}
+
+static struct object *create_console_server( void )
+{
+    struct console_server *server;
+
+    if (!(server = alloc_object( &console_server_ops ))) return NULL;
+
+    return &server->obj;
+}
+
 static int console_input_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 {
     struct console_input *console = get_fd_user( fd );
@@ -1901,6 +1967,7 @@ static struct object *console_device_lookup_name( struct object *obj, struct uni
     static const WCHAR current_outW[]   = {'C','u','r','r','e','n','t','O','u','t'};
     static const WCHAR rendererW[]      = {'R','e','n','d','e','r','e','r'};
     static const WCHAR screen_bufferW[] = {'S','c','r','e','e','n','B','u','f','f','e','r'};
+    static const WCHAR serverW[]        = {'S','e','r','v','e','r'};
 
     if (name->len == sizeof(current_inW) && !memcmp( name->str, current_inW, name->len ))
     {
@@ -1945,6 +2012,12 @@ static struct object *console_device_lookup_name( struct object *obj, struct uni
         }
         name->len = 0;
         return create_console_output( current->process->console, -1 );
+    }
+
+    if (name->len == sizeof(serverW) && !memcmp( name->str, serverW, name->len ))
+    {
+        name->len = 0;
+        return create_console_server();
     }
 
     return NULL;
