@@ -106,6 +106,22 @@ void WINAPI RtlFreeUserStack( void *stack )
     NtFreeVirtualMemory( NtCurrentProcess(), &stack, &size, MEM_RELEASE );
 }
 
+
+/***********************************************************************
+ *           virtual_clear_thread_stack
+ *
+ * Clear the stack contents before calling the main entry point, some broken apps need that.
+ */
+void CDECL virtual_clear_thread_stack( void *stack_end )
+{
+    void *stack = NtCurrentTeb()->Tib.StackLimit;
+    SIZE_T size = (char *)stack_end - (char *)stack;
+
+    NtFreeVirtualMemory( GetCurrentProcess(), &stack, &size, MEM_DECOMMIT );
+    NtAllocateVirtualMemory( GetCurrentProcess(), &stack, 0, &size, MEM_COMMIT, PAGE_READWRITE );
+}
+
+
 /***********************************************************************
  *           __wine_locked_recvmsg
  */

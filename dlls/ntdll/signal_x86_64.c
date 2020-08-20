@@ -1477,6 +1477,20 @@ USHORT WINAPI RtlCaptureStackBackTrace( ULONG skip, ULONG count, PVOID *buffer, 
 }
 
 
+/***********************************************************************
+ *           signal_start_thread
+ */
+__ASM_GLOBAL_FUNC( signal_start_thread,
+                   "movq %rcx,%rbx\n\t"     /* context */
+                   "leaq -32(%rcx),%rcx\n\t"
+                   "movq %rcx,%rsp\n\t"
+                   "andq $~0xfff,%rcx\n\t"  /* round down to page size */
+                   "call " __ASM_NAME("virtual_clear_thread_stack") "\n\t"
+                   "movl $1,%edx\n\t"
+                   "movq %rbx,%rcx\n\t"
+                   "call " __ASM_NAME("NtContinue") )
+
+
 /**********************************************************************
  *		DbgBreakPoint   (NTDLL.@)
  */

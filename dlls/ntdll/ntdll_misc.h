@@ -65,6 +65,7 @@ extern void init_unix_codepage(void) DECLSPEC_HIDDEN;
 extern void init_locale( HMODULE module ) DECLSPEC_HIDDEN;
 extern void init_user_process_params(void) DECLSPEC_HIDDEN;
 extern NTSTATUS restart_process( RTL_USER_PROCESS_PARAMETERS *params, NTSTATUS status ) DECLSPEC_HIDDEN;
+extern void CDECL DECLSPEC_NORETURN signal_start_thread( CONTEXT *ctx ) DECLSPEC_HIDDEN;
 
 /* server support */
 extern BOOL is_wow64 DECLSPEC_HIDDEN;
