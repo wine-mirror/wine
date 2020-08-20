@@ -25,6 +25,7 @@
 #include <winuser.h>
 #include <winternl.h>
 
+#include "wine/server.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(conhost);
@@ -33,6 +34,68 @@ struct console
 {
     HANDLE                server;        /* console server handle */
 };
+
+static void *ioctl_buffer;
+static size_t ioctl_buffer_size;
+
+static void *alloc_ioctl_buffer( size_t size )
+{
+    if (size > ioctl_buffer_size)
+    {
+        void *new_buffer;
+        if (!(new_buffer = realloc( ioctl_buffer, size ))) return NULL;
+        ioctl_buffer = new_buffer;
+        ioctl_buffer_size = size;
+    }
+    return ioctl_buffer;
+}
+
+static NTSTATUS console_input_ioctl( struct console *console, unsigned int code, const void *in_data,
+                                     size_t in_size, size_t *out_size )
+{
+    FIXME( "unsupported ioctl %x\n", code );
+    return STATUS_NOT_SUPPORTED;
+}
+
+static NTSTATUS process_console_ioctls( struct console *console )
+{
+    size_t out_size = 0, in_size;
+    unsigned int code;
+    NTSTATUS status = STATUS_SUCCESS;
+
+    for (;;)
+    {
+        if (status) out_size = 0;
+
+        SERVER_START_REQ( get_next_console_request )
+        {
+            req->handle = wine_server_obj_handle( console->server );
+            req->status = status;
+            wine_server_add_data( req, ioctl_buffer, out_size );
+            wine_server_set_reply( req, ioctl_buffer, ioctl_buffer_size );
+            status = wine_server_call( req );
+            code     = reply->code;
+            out_size = reply->out_size;
+            in_size  = wine_server_reply_size( reply );
+        }
+        SERVER_END_REQ;
+
+        if (status == STATUS_PENDING) return STATUS_SUCCESS;
+        if (status == STATUS_BUFFER_OVERFLOW)
+        {
+            if (!alloc_ioctl_buffer( out_size )) return STATUS_NO_MEMORY;
+            status = STATUS_SUCCESS;
+            continue;
+        }
+        if (status)
+        {
+            TRACE( "failed to get next request: %#x\n", status );
+            return status;
+        }
+
+        status = console_input_ioctl( console, code, ioctl_buffer, in_size, &out_size );
+    }
+}
 
 static int main_loop( struct console *console, HANDLE signal )
 {
@@ -52,6 +115,8 @@ static int main_loop( struct console *console, HANDLE signal )
         if (status && status != STATUS_PENDING) return 1;
     }
 
+    if (!alloc_ioctl_buffer( 4096 )) return 1;
+
     wait_handles[wait_cnt++] = console->server;
     if (signal) wait_handles[wait_cnt++] = signal_event;
 
@@ -62,8 +127,8 @@ static int main_loop( struct console *console, HANDLE signal )
         switch (res)
         {
         case WAIT_OBJECT_0:
-            FIXME( "console ioctls not yet implemented\n" );
-            return 1;
+            if (process_console_ioctls( console )) return 0;
+            break;
 
         case WAIT_OBJECT_0 + 1:
             if (signal_io.Status || signal_io.Information != sizeof(signal_id))
