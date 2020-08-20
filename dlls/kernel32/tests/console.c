@@ -24,6 +24,8 @@
 #include <winternl.h>
 #include <stdio.h>
 
+static void (WINAPI *pClosePseudoConsole)(HPCON);
+static HRESULT (WINAPI *pCreatePseudoConsole)(COORD,HANDLE,HANDLE,DWORD,HPCON*);
 static BOOL (WINAPI *pGetConsoleInputExeNameA)(DWORD, LPSTR);
 static DWORD (WINAPI *pGetConsoleProcessList)(LPDWORD, DWORD);
 static HANDLE (WINAPI *pOpenConsoleW)(LPCWSTR,DWORD,BOOL,DWORD);
@@ -68,6 +70,8 @@ static void init_function_pointers(void)
     if(!p##func) trace("GetProcAddress(hKernel32, '%s') failed\n", #func);
 
     hKernel32 = GetModuleHandleA("kernel32.dll");
+    KERNEL32_GET_PROC(ClosePseudoConsole);
+    KERNEL32_GET_PROC(CreatePseudoConsole);
     KERNEL32_GET_PROC(GetConsoleInputExeNameA);
     KERNEL32_GET_PROC(GetConsoleProcessList);
     KERNEL32_GET_PROC(OpenConsoleW);
@@ -3941,6 +3945,59 @@ static void test_AllocConsole(void)
     CloseHandle(pipe_write);
 }
 
+static DWORD WINAPI read_pipe_proc( void *handle )
+{
+    char buf[64];
+    DWORD size;
+    while (ReadFile(handle, buf, sizeof(buf), &size, NULL));
+    ok(GetLastError() == ERROR_BROKEN_PIPE, "ReadFile returned %u\n", GetLastError());
+    CloseHandle(handle);
+    return 0;
+}
+
+static void test_pseudo_console(void)
+{
+    HANDLE console_pipe, console_pipe2, thread;
+    HPCON pseudo_console;
+    COORD size;
+    HRESULT hres;
+
+    if (!pCreatePseudoConsole)
+    {
+        win_skip("CreatePseudoConsole not available\n");
+        return;
+    }
+
+    console_pipe = CreateNamedPipeW(L"\\\\.\\pipe\\pseudoconsoleconn", PIPE_ACCESS_DUPLEX,
+                                    PIPE_WAIT | PIPE_TYPE_BYTE, 1, 4096, 4096, NMPWAIT_USE_DEFAULT_WAIT, NULL);
+    ok(console_pipe != INVALID_HANDLE_VALUE, "CreateNamedPipeW failed: %u\n", GetLastError());
+
+    console_pipe2 = CreateFileW(L"\\\\.\\pipe\\pseudoconsoleconn", GENERIC_READ | GENERIC_WRITE, 0, NULL,
+                                OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
+    ok(console_pipe2 != INVALID_HANDLE_VALUE, "CreateFile failed: %u\n", GetLastError());
+
+    thread = CreateThread( NULL, 0, read_pipe_proc, console_pipe, 0, NULL );
+    CloseHandle(thread);
+
+    size.X = 0;
+    size.Y = 30;
+    hres = pCreatePseudoConsole(size, console_pipe2, console_pipe2, 0, &pseudo_console);
+    ok(hres == E_INVALIDARG, "CreatePseudoConsole failed: %08x\n", hres);
+
+    size.X = 40;
+    size.Y = 0;
+    hres = pCreatePseudoConsole(size, console_pipe2, console_pipe2, 0, &pseudo_console);
+    ok(hres == E_INVALIDARG, "CreatePseudoConsole failed: %08x\n", hres);
+
+    size.X = 40;
+    size.Y = 30;
+    hres = pCreatePseudoConsole(size, console_pipe2, console_pipe2, 0, &pseudo_console);
+    ok(hres == S_OK, "CreatePseudoConsole failed: %08x\n", hres);
+    CloseHandle(console_pipe2);
+
+    pClosePseudoConsole(pseudo_console);
+}
+
 START_TEST(console)
 {
     HANDLE hConIn, hConOut;
@@ -4123,5 +4180,6 @@ START_TEST(console)
         test_AttachConsole(hConOut);
         test_AllocConsole();
         test_FreeConsole();
+        test_pseudo_console();
     }
 }
