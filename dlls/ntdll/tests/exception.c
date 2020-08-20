@@ -5562,7 +5562,7 @@ static void test_extended_context(void)
     for (i = 0; i < 8; ++i)
     {
         /* Older Windows version do not reset AVX context to INIT_STATE on x86. */
-        todo_wine_if(i >= 4)
+        todo_wine_if(i >= 4 && sizeof(void *) == 4)
         ok(!data[i] || broken(i >= 4 && sizeof(void *) == 4 && data[i] == test_extended_context_spoil_data2[i]),
                 "Got unexpected data %#x, i %u.\n", data[i], i);
     }
@@ -5573,7 +5573,7 @@ static void test_extended_context(void)
             ARRAY_SIZE(except_code_set_ymm0), PAGE_EXECUTE_READ);
 
     for (i = 0; i < 8; ++i)
-        todo_wine_if(i >= 4)
+        todo_wine_if(i >= 4 && sizeof(void *) == 4)
         ok(data[i] == test_extended_context_data[i], "Got unexpected data %#x, i %u.\n", data[i], i);
 }
 #endif

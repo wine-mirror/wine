@@ -1536,6 +1536,34 @@ __ASM_GLOBAL_FUNC( set_full_cpu_context,
 
 
 /***********************************************************************
+ *           restore_xstate
+ *
+ * Restore the XState context.
+ */
+static void restore_xstate( const CONTEXT *context )
+{
+    XSAVE_FORMAT *xrstor_base;
+    XSTATE *xs;
+
+    if (!(xs = xstate_from_context( context )))
+        return;
+
+    xrstor_base = (XSAVE_FORMAT *)xs - 1;
+
+    if (!(xs->CompactionMask & ((ULONG64)1 << 63)))
+    {
+        /* Non-compacted xrstor will load Mxcsr regardless of the specified mask. Loading garbage there
+         * may lead to fault. We have only padding, no more used EXCEPTION_RECORD or unused context fields
+         * at the MxCsr restore location, so just put it there. */
+        assert( (void *)&xrstor_base->MxCsr > (void *)context->VectorRegister );
+        xrstor_base->MxCsr = context->u.FltSave.MxCsr;
+        xrstor_base->MxCsr_Mask = context->u.FltSave.MxCsr_Mask;
+    }
+
+    __asm__ volatile( "xrstor64 %0" : : "m"(*xrstor_base), "a" (4), "d" (0) );
+}
+
+/***********************************************************************
  *           get_server_context_flags
  *
  * Convert CPU-specific flags to generic server flags
@@ -1724,6 +1752,8 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
             amd64_thread_data()->dr7 = context->Dr7;
         }
     }
+
+    restore_xstate( context );
 
     if (flags & CONTEXT_FULL)
     {
