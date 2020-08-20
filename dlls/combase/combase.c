@@ -59,6 +59,18 @@ struct comclassredirect_data
     DWORD miscstatusdocprint;
 };
 
+struct ifacepsredirect_data
+{
+    ULONG size;
+    DWORD mask;
+    GUID  iid;
+    ULONG nummethods;
+    GUID  tlbid;
+    GUID  base;
+    ULONG name_len;
+    ULONG name_offset;
+};
+
 struct progidredirect_data
 {
     ULONG size;
@@ -72,6 +84,26 @@ struct init_spy
     IInitializeSpy *spy;
     unsigned int id;
 };
+
+struct registered_ps
+{
+    struct list entry;
+    IID iid;
+    CLSID clsid;
+};
+
+static struct list registered_proxystubs = LIST_INIT(registered_proxystubs);
+
+static CRITICAL_SECTION cs_registered_ps;
+static CRITICAL_SECTION_DEBUG psclsid_cs_debug =
+{
+    0, 0, &cs_registered_ps,
+    { &psclsid_cs_debug.ProcessLocksList, &psclsid_cs_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": cs_registered_psclsid_list") }
+};
+static CRITICAL_SECTION cs_registered_ps = { &psclsid_cs_debug, -1, 0, 0, 0, 0 };
+
+extern BOOL WINAPI InternalIsInitialized(void);
 
 static struct init_spy *get_spy_entry(struct tlsdata *tlsdata, unsigned int id)
 {
@@ -1718,6 +1750,151 @@ HRESULT WINAPI CoRegisterMessageFilter(IMessageFilter *filter, IMessageFilter **
         *ret_filter = old_filter;
     else if (old_filter)
         IMessageFilter_Release(old_filter);
+
+    return S_OK;
+}
+
+void WINAPI InternalRevokeAllPSClsids(void)
+{
+    struct registered_ps *cur, *cur2;
+
+    EnterCriticalSection(&cs_registered_ps);
+
+    LIST_FOR_EACH_ENTRY_SAFE(cur, cur2, &registered_proxystubs, struct registered_ps, entry)
+    {
+        list_remove(&cur->entry);
+        heap_free(cur);
+    }
+
+    LeaveCriticalSection(&cs_registered_ps);
+}
+
+static HRESULT get_ps_clsid_from_registry(const WCHAR* path, REGSAM access, CLSID *pclsid)
+{
+    WCHAR value[CHARS_IN_GUID];
+    HKEY hkey;
+    DWORD len;
+
+    access |= KEY_READ;
+
+    if (open_classes_key(HKEY_CLASSES_ROOT, path, access, &hkey))
+        return REGDB_E_IIDNOTREG;
+
+    len = sizeof(value);
+    if (ERROR_SUCCESS != RegQueryValueExW(hkey, NULL, NULL, NULL, (BYTE *)value, &len))
+        return REGDB_E_IIDNOTREG;
+    RegCloseKey(hkey);
+
+    if (CLSIDFromString(value, pclsid) != NOERROR)
+        return REGDB_E_IIDNOTREG;
+
+    return S_OK;
+}
+
+/*****************************************************************************
+ *             CoGetPSClsid        (combase.@)
+ */
+HRESULT WINAPI CoGetPSClsid(REFIID riid, CLSID *pclsid)
+{
+    static const WCHAR interfaceW[] = L"Interface\\";
+    static const WCHAR psW[] = L"\\ProxyStubClsid32";
+    WCHAR path[ARRAY_SIZE(interfaceW) - 1 + CHARS_IN_GUID - 1 + ARRAY_SIZE(psW)];
+    ACTCTX_SECTION_KEYED_DATA data;
+    struct registered_ps *cur;
+    REGSAM opposite = (sizeof(void*) > sizeof(int)) ? KEY_WOW64_32KEY : KEY_WOW64_64KEY;
+    BOOL is_wow64;
+    HRESULT hr;
+
+    TRACE("%s, %p\n", debugstr_guid(riid), pclsid);
+
+    if (!InternalIsInitialized())
+    {
+        ERR("apartment not initialised\n");
+        return CO_E_NOTINITIALIZED;
+    }
+
+    if (!pclsid)
+        return E_INVALIDARG;
+
+    EnterCriticalSection(&cs_registered_ps);
+
+    LIST_FOR_EACH_ENTRY(cur, &registered_proxystubs, struct registered_ps, entry)
+    {
+        if (IsEqualIID(&cur->iid, riid))
+        {
+            *pclsid = cur->clsid;
+            LeaveCriticalSection(&cs_registered_ps);
+            return S_OK;
+        }
+    }
+
+    LeaveCriticalSection(&cs_registered_ps);
+
+    data.cbSize = sizeof(data);
+    if (FindActCtxSectionGuid(0, NULL, ACTIVATION_CONTEXT_SECTION_COM_INTERFACE_REDIRECTION,
+            riid, &data))
+    {
+        struct ifacepsredirect_data *ifaceps = (struct ifacepsredirect_data *)data.lpData;
+        *pclsid = ifaceps->iid;
+        return S_OK;
+    }
+
+    /* Interface\\{string form of riid}\\ProxyStubClsid32 */
+    lstrcpyW(path, interfaceW);
+    StringFromGUID2(riid, path + ARRAY_SIZE(interfaceW) - 1, CHARS_IN_GUID);
+    lstrcpyW(path + ARRAY_SIZE(interfaceW) - 1 + CHARS_IN_GUID - 1, psW);
+
+    hr = get_ps_clsid_from_registry(path, 0, pclsid);
+    if (FAILED(hr) && (opposite == KEY_WOW64_32KEY || (IsWow64Process(GetCurrentProcess(), &is_wow64) && is_wow64)))
+        hr = get_ps_clsid_from_registry(path, opposite, pclsid);
+
+    if (hr == S_OK)
+        TRACE("() Returning CLSID %s\n", debugstr_guid(pclsid));
+    else
+        WARN("No PSFactoryBuffer object is registered for IID %s\n", debugstr_guid(riid));
+
+    return hr;
+}
+
+/*****************************************************************************
+ *             CoRegisterPSClsid    (combase.@)
+ */
+HRESULT WINAPI CoRegisterPSClsid(REFIID riid, REFCLSID rclsid)
+{
+    struct registered_ps *cur;
+
+    TRACE("%s, %s\n", debugstr_guid(riid), debugstr_guid(rclsid));
+
+    if (!InternalIsInitialized())
+    {
+        ERR("apartment not initialised\n");
+        return CO_E_NOTINITIALIZED;
+    }
+
+    EnterCriticalSection(&cs_registered_ps);
+
+    LIST_FOR_EACH_ENTRY(cur, &registered_proxystubs, struct registered_ps, entry)
+    {
+        if (IsEqualIID(&cur->iid, riid))
+        {
+            cur->clsid = *rclsid;
+            LeaveCriticalSection(&cs_registered_ps);
+            return S_OK;
+        }
+    }
+
+    cur = heap_alloc(sizeof(*cur));
+    if (!cur)
+    {
+        LeaveCriticalSection(&cs_registered_ps);
+        return E_OUTOFMEMORY;
+    }
+
+    cur->iid = *riid;
+    cur->clsid = *rclsid;
+    list_add_head(&registered_proxystubs, &cur->entry);
+
+    LeaveCriticalSection(&cs_registered_ps);
 
     return S_OK;
 }

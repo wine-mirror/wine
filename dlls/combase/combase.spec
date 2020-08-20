@@ -115,7 +115,7 @@
 @ stdcall CoGetMarshalSizeMax(ptr ptr ptr long ptr long)
 @ stub CoGetModuleType
 @ stdcall CoGetObjectContext(ptr ptr)
-@ stdcall CoGetPSClsid(ptr ptr) ole32.CoGetPSClsid
+@ stdcall CoGetPSClsid(ptr ptr)
 @ stub CoGetProcessIdentifier
 @ stdcall CoGetStandardMarshal(ptr ptr long ptr long ptr) ole32.CoGetStandardMarshal
 @ stub CoGetStdMarshalEx
@@ -143,7 +143,7 @@
 @ stdcall CoRegisterInitializeSpy(ptr ptr)
 @ stdcall CoRegisterMallocSpy(ptr)
 @ stdcall CoRegisterMessageFilter(ptr ptr)
-@ stdcall CoRegisterPSClsid(ptr ptr) ole32.CoRegisterPSClsid
+@ stdcall CoRegisterPSClsid(ptr ptr)
 @ stdcall CoRegisterSurrogate(ptr) ole32.CoRegisterSurrogate
 @ stdcall CoRegisterSurrogateEx(ptr ptr) ole32.CoRegisterSurrogateEx
 @ stdcall CoReleaseMarshalData(ptr) ole32.CoReleaseMarshalData
@@ -268,6 +268,7 @@
 @ stub InternalNotifyDDStartOrStop
 @ stub InternalOleModalLoopBlockFn
 @ stub InternalRegisterWindowPropInterface
+@ stdcall InternalRevokeAllPSClsids()
 @ stub InternalReleaseMarshalObjRef
 @ stub InternalSTAInvoke
 @ stub InternalServerExceptionFilter

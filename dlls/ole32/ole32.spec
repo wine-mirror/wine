@@ -42,7 +42,7 @@
 @ stdcall CoGetMarshalSizeMax(ptr ptr ptr long ptr long) combase.CoGetMarshalSizeMax
 @ stdcall CoGetObject(wstr ptr ptr ptr)
 @ stdcall CoGetObjectContext(ptr ptr) combase.CoGetObjectContext
-@ stdcall CoGetPSClsid(ptr ptr)
+@ stdcall CoGetPSClsid(ptr ptr) combase.CoGetPSClsid
 @ stdcall CoGetStandardMarshal(ptr ptr long ptr long ptr)
 @ stdcall CoGetState(ptr)
 @ stub CoGetTIDFromIPID
@@ -69,7 +69,7 @@
 @ stdcall CoRegisterInitializeSpy(ptr ptr) combase.CoRegisterInitializeSpy
 @ stdcall CoRegisterMallocSpy(ptr) combase.CoRegisterMallocSpy
 @ stdcall CoRegisterMessageFilter(ptr ptr) combase.CoRegisterMessageFilter
-@ stdcall CoRegisterPSClsid(ptr ptr)
+@ stdcall CoRegisterPSClsid(ptr ptr) combase.CoRegisterPSClsid
 @ stdcall CoRegisterSurrogate(ptr)
 @ stdcall CoRegisterSurrogateEx(ptr ptr)
 @ stdcall CoReleaseMarshalData(ptr)
@@ -297,3 +297,4 @@
 @ stdcall WriteFmtUserTypeStg(ptr long ptr)
 @ stub WriteOleStg
 @ stub WriteStringStream
+@ stdcall InternalIsInitialized()
