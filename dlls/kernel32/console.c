@@ -194,7 +194,7 @@ HWND WINAPI GetConsoleWindow(void)
 
     ret = DeviceIoControl( RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle,
                            IOCTL_CONDRV_GET_INPUT_INFO, NULL, 0, &info, sizeof(info), NULL, NULL );
-    return ret ? (HWND)info.win : NULL;
+    return ret ? wine_server_ptr_handle(info.win) : NULL;
 }
 
 
