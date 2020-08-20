@@ -32,7 +32,7 @@
 @ stdcall CoGetCallerTID(ptr)
 @ stdcall CoGetClassObject(ptr long ptr ptr ptr)
 @ stdcall CoGetContextToken(ptr) combase.CoGetContextToken
-@ stdcall CoGetCurrentLogicalThreadId(ptr)
+@ stdcall CoGetCurrentLogicalThreadId(ptr) combase.CoGetCurrentLogicalThreadId
 @ stdcall CoGetCurrentProcess()
 @ stdcall CoGetDefaultContext(long ptr ptr) combase.CoGetDefaultContext
 @ stdcall CoGetInstanceFromFile(ptr ptr ptr long long wstr long ptr) combase.CoGetInstanceFromFile

@@ -2211,3 +2211,25 @@ HRESULT WINAPI CoGetContextToken(ULONG_PTR *token)
 
     return S_OK;
 }
+
+/***********************************************************************
+ *              CoGetCurrentLogicalThreadId    (combase.@)
+ */
+HRESULT WINAPI CoGetCurrentLogicalThreadId(GUID *id)
+{
+    struct tlsdata *tlsdata;
+    HRESULT hr;
+
+    if (!id)
+        return E_INVALIDARG;
+
+    if (FAILED(hr = com_get_tlsdata(&tlsdata)))
+        return hr;
+
+    if (IsEqualGUID(&tlsdata->causality_id, &GUID_NULL))
+        CoCreateGuid(&tlsdata->causality_id);
+
+    *id = tlsdata->causality_id;
+
+    return S_OK;
+}
