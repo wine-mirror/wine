@@ -192,6 +192,7 @@ struct console_server
     struct object         obj;         /* object header */
     struct console_input *console;     /* attached console */
     struct list           queue;       /* ioctl queue */
+    int                   busy;        /* flag if server processing an ioctl */
 };
 
 static void console_server_dump( struct object *obj, int verbose );
@@ -1635,6 +1636,7 @@ static struct object *create_console_server( void )
 
     if (!(server = alloc_object( &console_server_ops ))) return NULL;
     server->console = NULL;
+    server->busy    = 0;
     list_init( &server->queue );
 
     return &server->obj;
@@ -2378,4 +2380,89 @@ DECL_HANDLER(get_console_wait_event)
         release_object( console );
     }
     else set_error( STATUS_INVALID_PARAMETER );
+}
+
+/* retrieve the next pending console ioctl request */
+DECL_HANDLER(get_next_console_request)
+{
+    struct console_host_ioctl *ioctl = NULL;
+    struct console_server *server;
+    struct iosb *iosb = NULL;
+
+
+    server = (struct console_server *)get_handle_obj( current->process, req->handle, 0, &console_server_ops );
+    if (!server) return;
+
+    if (!server->console)
+    {
+        set_error( STATUS_INVALID_HANDLE );
+        release_object( server );
+        return;
+    }
+
+    if (req->signal) set_event( server->console->event);
+    else reset_event( server->console->event );
+
+    /* set result of previous ioctl, if any */
+    if (server->busy)
+    {
+        unsigned int status = req->status;
+        ioctl = LIST_ENTRY( list_head( &server->queue ), struct console_host_ioctl, entry );
+        list_remove( &ioctl->entry );
+        if (ioctl->async)
+        {
+            iosb = async_get_iosb( ioctl->async );
+            iosb->status = req->status;
+            iosb->out_size = min( iosb->out_size, get_req_data_size() );
+            if (iosb->out_size)
+            {
+                if ((iosb->out_data = memdup( get_req_data(), iosb->out_size )))
+                {
+                    iosb->result = iosb->out_size;
+                    status = STATUS_ALERTED;
+                }
+                else if (!status)
+                {
+                    iosb->status = STATUS_NO_MEMORY;
+                    iosb->out_size = 0;
+                }
+            }
+        }
+        console_host_ioctl_terminate( ioctl, status );
+        if (iosb) release_object( iosb );
+        server->busy = 0;
+    }
+
+    /* return the next ioctl */
+    if (!list_empty( &server->queue ))
+    {
+        ioctl = LIST_ENTRY( list_head( &server->queue ), struct console_host_ioctl, entry );
+        iosb = ioctl->async ? async_get_iosb( ioctl->async ) : NULL;
+
+        if (!iosb || get_reply_max_size() >= iosb->in_size)
+        {
+            reply->code = ioctl->code;
+
+            if (iosb)
+            {
+                reply->out_size = iosb->out_size;
+                set_reply_data_ptr( iosb->in_data, iosb->in_size );
+                iosb->in_data = NULL;
+            }
+
+            server->busy = 1;
+        }
+        else
+        {
+            reply->out_size = iosb->in_size;
+            set_error( STATUS_BUFFER_OVERFLOW );
+        }
+        if (iosb) release_object( iosb );
+    }
+    else
+    {
+        set_error( STATUS_PENDING );
+    }
+
+    release_object( server );
 }

@@ -1522,6 +1522,19 @@ enum server_fd_type
 @END
 
 
+/* Retrieve the next pending console ioctl request */
+@REQ(get_next_console_request)
+    obj_handle_t handle;        /* console server handle */
+    int          signal;        /* server signal state */
+    unsigned int status;        /* status of previous ioctl */
+    VARARG(out_data,bytes);     /* out_data of previous ioctl */
+@REPLY
+    unsigned int code;          /* ioctl code */
+    data_size_t  out_size;      /* ioctl output size */
+    VARARG(in_data,bytes);      /* ioctl in_data */
+@END
+
+
 /* enable directory change notifications */
 @REQ(read_directory_changes)
     unsigned int filter;        /* notification filter */

@@ -1938,6 +1938,24 @@ struct send_console_signal_reply
 
 
 
+struct get_next_console_request_request
+{
+    struct request_header __header;
+    obj_handle_t handle;
+    int          signal;
+    unsigned int status;
+    /* VARARG(out_data,bytes); */
+};
+struct get_next_console_request_reply
+{
+    struct reply_header __header;
+    unsigned int code;
+    data_size_t  out_size;
+    /* VARARG(in_data,bytes); */
+};
+
+
+
 struct read_directory_changes_request
 {
     struct request_header __header;
@@ -5520,6 +5538,7 @@ enum request
     REQ_get_console_input_history,
     REQ_create_console_output,
     REQ_send_console_signal,
+    REQ_get_next_console_request,
     REQ_read_directory_changes,
     REQ_read_change,
     REQ_create_mapping,
@@ -5809,6 +5828,7 @@ union generic_request
     struct get_console_input_history_request get_console_input_history_request;
     struct create_console_output_request create_console_output_request;
     struct send_console_signal_request send_console_signal_request;
+    struct get_next_console_request_request get_next_console_request_request;
     struct read_directory_changes_request read_directory_changes_request;
     struct read_change_request read_change_request;
     struct create_mapping_request create_mapping_request;
@@ -6096,6 +6116,7 @@ union generic_reply
     struct get_console_input_history_reply get_console_input_history_reply;
     struct create_console_output_reply create_console_output_reply;
     struct send_console_signal_reply send_console_signal_reply;
+    struct get_next_console_request_reply get_next_console_request_reply;
     struct read_directory_changes_reply read_directory_changes_reply;
     struct read_change_reply read_change_reply;
     struct create_mapping_reply create_mapping_reply;
@@ -6312,7 +6333,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 637
+#define SERVER_PROTOCOL_VERSION 638
 
 /* ### protocol_version end ### */
 

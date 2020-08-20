@@ -2094,6 +2094,21 @@ static void dump_send_console_signal_request( const struct send_console_signal_r
     fprintf( stderr, ", group_id=%04x", req->group_id );
 }
 
+static void dump_get_next_console_request_request( const struct get_next_console_request_request *req )
+{
+    fprintf( stderr, " handle=%04x", req->handle );
+    fprintf( stderr, ", signal=%d", req->signal );
+    fprintf( stderr, ", status=%08x", req->status );
+    dump_varargs_bytes( ", out_data=", cur_size );
+}
+
+static void dump_get_next_console_request_reply( const struct get_next_console_request_reply *req )
+{
+    fprintf( stderr, " code=%08x", req->code );
+    fprintf( stderr, ", out_size=%u", req->out_size );
+    dump_varargs_bytes( ", in_data=", cur_size );
+}
+
 static void dump_read_directory_changes_request( const struct read_directory_changes_request *req )
 {
     fprintf( stderr, " filter=%08x", req->filter );
@@ -4485,6 +4500,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_console_input_history_request,
     (dump_func)dump_create_console_output_request,
     (dump_func)dump_send_console_signal_request,
+    (dump_func)dump_get_next_console_request_request,
     (dump_func)dump_read_directory_changes_request,
     (dump_func)dump_read_change_request,
     (dump_func)dump_create_mapping_request,
@@ -4770,6 +4786,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_console_input_history_reply,
     (dump_func)dump_create_console_output_reply,
     NULL,
+    (dump_func)dump_get_next_console_request_reply,
     NULL,
     (dump_func)dump_read_change_reply,
     (dump_func)dump_create_mapping_reply,
@@ -5055,6 +5072,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "get_console_input_history",
     "create_console_output",
     "send_console_signal",
+    "get_next_console_request",
     "read_directory_changes",
     "read_change",
     "create_mapping",
