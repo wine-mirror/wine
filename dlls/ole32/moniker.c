@@ -44,11 +44,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
-/* see MSDN docs for IROTData::GetComparisonData, which states what this
- * constant is
- */
-#define MAX_COMPARISON_DATA 2048
-
 static LONG WINAPI rpc_filter(EXCEPTION_POINTERS *eptr)
 {
     return I_RpcExceptionFilter(eptr->ExceptionRecord->ExceptionCode);
@@ -245,7 +240,7 @@ static HRESULT get_moniker_comparison_data(IMoniker *pMoniker, MonikerComparison
     hr = IMoniker_QueryInterface(pMoniker, &IID_IROTData, (void *)&pROTData);
     if (SUCCEEDED(hr))
     {
-        ULONG size = MAX_COMPARISON_DATA;
+        ULONG size = ROT_COMPARE_MAX;
         *moniker_data = HeapAlloc(GetProcessHeap(), 0, FIELD_OFFSET(MonikerComparisonData, abData[size]));
         if (!*moniker_data)
         {
