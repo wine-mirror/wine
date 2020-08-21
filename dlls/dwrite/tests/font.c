@@ -1779,13 +1779,14 @@ static void test_CreateFontFace(void)
     IDWriteFontCollection *collection;
     DWRITE_FONT_FILE_TYPE file_type;
     DWRITE_FONT_FACE_TYPE face_type;
+    IDWriteFontFace5 *fontface5;
     IDWriteGdiInterop *interop;
     IDWriteFont *font, *font2;
     IDWriteFontFamily *family;
     IDWriteFactory *factory;
     IDWriteFontFile *file;
+    BOOL supported, ret;
     LOGFONTW logfont;
-    BOOL supported;
     UINT32 count;
     WCHAR *path;
     HRESULT hr;
@@ -1869,6 +1870,14 @@ static void test_CreateFontFace(void)
     hr = IDWriteFont_CreateFontFace(font2, &fontface2);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(fontface == fontface2, "got %p, was %p\n", fontface2, fontface);
+
+    /* Trivial equality test */
+    if (SUCCEEDED(IDWriteFontFace_QueryInterface(fontface, &IID_IDWriteFontFace5, (void **)&fontface5)))
+    {
+        ret = IDWriteFontFace5_Equals(fontface5, fontface2);
+        ok(ret, "Unexpected result %d.\n", ret);
+        IDWriteFontFace5_Release(fontface5);
+    }
 
     IDWriteFontFace_Release(fontface);
     IDWriteFontFace_Release(fontface2);
