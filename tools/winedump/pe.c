@@ -1345,17 +1345,21 @@ static void dump_arm64_codes( const BYTE *ptr, unsigned int count )
             default:printf( "unknown op\n" ); break;
             }
         }
-        else if (ptr[i] == 0xe9)  /* MSFT_OP_TRAP_FRAME */
+        else if (ptr[i] == 0xe8)  /* MSFT_OP_TRAP_FRAME */
         {
             printf( "MSFT_OP_TRAP_FRAME\n" );
         }
-        else if (ptr[i] == 0xea)  /* MSFT_OP_MACHINE_FRAME */
+        else if (ptr[i] == 0xe9)  /* MSFT_OP_MACHINE_FRAME */
         {
             printf( "MSFT_OP_MACHINE_FRAME\n" );
         }
-        else if (ptr[i] == 0xeb)  /* MSFT_OP_CONTEXT */
+        else if (ptr[i] == 0xea)  /* MSFT_OP_CONTEXT */
         {
             printf( "MSFT_OP_CONTEXT\n" );
+        }
+        else if (ptr[i] == 0xec)  /* MSFT_OP_CLEAR_UNWOUND_TO_CALL */
+        {
+            printf( "MSFT_OP_CLEAR_UNWOUND_TO_CALL\n" );
         }
         else printf( "??\n");
     }
