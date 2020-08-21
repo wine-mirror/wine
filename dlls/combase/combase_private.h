@@ -88,3 +88,6 @@ static inline struct apartment* com_get_current_apt(void)
     com_get_tlsdata(&tlsdata);
     return tlsdata->apt;
 }
+
+/* RpcSs interface */
+DWORD rpcss_get_next_seqid(void) DECLSPEC_HIDDEN;

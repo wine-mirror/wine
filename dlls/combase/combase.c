@@ -2233,3 +2233,19 @@ HRESULT WINAPI CoGetCurrentLogicalThreadId(GUID *id)
 
     return S_OK;
 }
+
+/******************************************************************************
+ *              CoGetCurrentProcess        (combase.@)
+ */
+DWORD WINAPI CoGetCurrentProcess(void)
+{
+    struct tlsdata *tlsdata;
+
+    if (FAILED(com_get_tlsdata(&tlsdata)))
+        return 0;
+
+    if (!tlsdata->thread_seqid)
+        tlsdata->thread_seqid = rpcss_get_next_seqid();
+
+    return tlsdata->thread_seqid;
+}

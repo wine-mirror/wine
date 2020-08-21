@@ -105,7 +105,7 @@
 @ stub CoGetClassVersion
 @ stdcall CoGetContextToken(ptr)
 @ stdcall CoGetCurrentLogicalThreadId(ptr)
-@ stdcall CoGetCurrentProcess() ole32.CoGetCurrentProcess
+@ stdcall CoGetCurrentProcess()
 @ stdcall CoGetDefaultContext(long ptr ptr)
 @ stdcall CoGetErrorInfo(long ptr) GetErrorInfo
 @ stdcall CoGetInstanceFromFile(ptr ptr ptr long long wstr long ptr)

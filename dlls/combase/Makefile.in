@@ -11,5 +11,9 @@ C_SRCS = \
 	malloc.c \
 	marshal.c \
 	roapi.c \
+	rpc.c \
 	string.c \
 	usrmarshal.c
+
+IDL_SRCS = \
+	irpcss.idl
