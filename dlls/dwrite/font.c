@@ -1562,6 +1562,22 @@ static HRESULT WINAPI dwritefontface5_GetFontResource(IDWriteFontFace5 *iface, I
     return IDWriteFactory7_CreateFontResource(fontface->factory, fontface->files[0], fontface->index, resource);
 }
 
+static BOOL WINAPI dwritefontface5_Equals(IDWriteFontFace5 *iface, IDWriteFontFace *other)
+{
+    struct dwrite_fontface *fontface = impl_from_IDWriteFontFace5(iface), *other_face;
+
+    TRACE("%p, %p.\n", iface, other);
+
+    if (!(other_face = unsafe_impl_from_IDWriteFontFace(other)))
+        return FALSE;
+
+    /* TODO: add variations support */
+
+    return fontface->index == other_face->index &&
+            fontface->simulations == other_face->simulations &&
+            is_same_fontfile(fontface->files[0], other_face->files[0]);
+}
+
 static const IDWriteFontFace5Vtbl dwritefontfacevtbl =
 {
     dwritefontface_QueryInterface,
@@ -1621,6 +1637,7 @@ static const IDWriteFontFace5Vtbl dwritefontfacevtbl =
     dwritefontface5_GetFontAxisValues,
     dwritefontface5_HasVariations,
     dwritefontface5_GetFontResource,
+    dwritefontface5_Equals,
 };
 
 static HRESULT WINAPI dwritefontface_reference_QueryInterface(IDWriteFontFaceReference *iface, REFIID riid, void **obj)
