@@ -5,14 +5,14 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2020-08-07 18:55+0300\n"
+"PO-Revision-Date: 2020-08-21 11:13+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.3.1\n"
+"X-Generator: Poedit 2.4.1\n"
 "X-Project-Style: default\n"
 
 #: appwiz.rc:58
@@ -16533,10 +16533,8 @@ msgid "&Beginner"
 msgstr "P&radedantis"
 
 #: winemine.rc:45
-#, fuzzy
-#| msgid "Interface"
 msgid "&Intermediate"
-msgstr "Sąsaja"
+msgstr "&Vidutinis"
 
 #: winemine.rc:46
 msgid "&Expert"
@@ -16567,10 +16565,8 @@ msgid "Beginner"
 msgstr "Pradedantis"
 
 #: winemine.rc:65
-#, fuzzy
-#| msgid "Interface"
 msgid "Intermediate"
-msgstr "Sąsaja"
+msgstr "Vidutinis"
 
 #: winemine.rc:66
 msgid "Expert"
