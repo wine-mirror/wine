@@ -311,7 +311,8 @@ static void save_context( CONTEXT *context, const ucontext_t *sigcontext )
 {
     DWORD i;
 
-    context->ContextFlags = CONTEXT_FULL;
+    context->ContextFlags = (CONTEXT_FULL & ~CONTEXT_FLOATING_POINT) |
+                             CONTEXT_ARM64;
     context->u.s.Fp = FP_sig(sigcontext);     /* Frame pointer */
     context->u.s.Lr = LR_sig(sigcontext);     /* Link register */
     context->Sp     = SP_sig(sigcontext);     /* Stack pointer */
@@ -664,7 +665,7 @@ __ASM_GLOBAL_FUNC( call_user_apc_dispatcher,
                    "csel x0, x19, x0, lo\n\t"
                    "mov sp, x0\n\t"
                    "mov w2, #0x400000\n\t"       /* context.ContextFlags = CONTEXT_FULL */
-                   "movk w2, #3\n\t"
+                   "movk w2, #7\n\t"
                    "mov x1, x19\n\t"
                    "str w2, [x19]\n\t"
                    "mov x0, #~1\n\t"
@@ -1039,7 +1040,7 @@ PCONTEXT DECLSPEC_HIDDEN get_initial_context( LPTHREAD_START_ROUTINE entry, void
         init_thread_context( ctx, entry, arg, relay );
     }
     pthread_sigmask( SIG_UNBLOCK, &server_block_set, NULL );
-    ctx->ContextFlags = CONTEXT_FULL | CONTEXT_FLOATING_POINT;
+    ctx->ContextFlags = CONTEXT_FULL;
     return ctx;
 }
 

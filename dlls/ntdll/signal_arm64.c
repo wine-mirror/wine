@@ -97,7 +97,7 @@ __ASM_STDCALL_FUNC( RtlCaptureContext, 8,
                     "mov x1, sp\n\t"
                     "stp x1, x30, [x0, #0x100]\n\t"  /* context->Sp,Pc */
                     "mov w1, #0x400000\n\t"          /* CONTEXT_ARM64 */
-                    "add w1, w1, #0x3\n\t"           /* CONTEXT_FULL */
+                    "movk w1, #0x7\n\t"              /* CONTEXT_FULL */
                     "str w1, [x0]\n\t"               /* context->ContextFlags */
                     "mrs x1, NZCV\n\t"
                     "str w1, [x0, #0x4]\n\t"         /* context->Cpsr */
