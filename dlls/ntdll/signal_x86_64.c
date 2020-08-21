@@ -1029,9 +1029,9 @@ __ASM_GLOBAL_FUNC( call_consolidate_callback,
                    __ASM_SEH(".seh_pushframe\n\t")
                    __ASM_SEH(".seh_endprologue\n\t")
 
-                   "subq $0xf8,%rsp\n\t" /* 10*16 (float regs) + 7*8 (int regs) + 32 (shadow store). */
-                   __ASM_SEH(".seh_stackalloc 0xf8\n\t")
-                   __ASM_CFI(".cfi_adjust_cfa_offset 0xf8\n\t")
+                   "subq $0x108,%rsp\n\t" /* 10*16 (float regs) + 8*8 (int regs) + 32 (shadow store) + 8 (align). */
+                   __ASM_SEH(".seh_stackalloc 0x108\n\t")
+                   __ASM_CFI(".cfi_adjust_cfa_offset 0x108\n\t")
 
                    /* Setup CFI unwind to context. */
                    "movq %rcx,0x10(%rbp)\n\t"
@@ -1058,6 +1058,9 @@ __ASM_GLOBAL_FUNC( call_consolidate_callback,
                    __ASM_CFI(".cfi_escape 0x10,0x20,0x06,0x76,0x10,0x06,0x23,0x90,0x05\n\t") /* %xmm15 */
 
                    /* Setup SEH unwind registers restore. */
+                   "movq 0xa0(%rcx),%rax\n\t" /* context->Rbp */
+                   "movq %rax,0x100(%rsp)\n\t"
+                   __ASM_SEH(".seh_savereg %rbp, 0x100\n\t")
                    "movq 0x90(%rcx),%rax\n\t" /* context->Rbx */
                    "movq %rax,0x20(%rsp)\n\t"
                    __ASM_SEH(".seh_savereg %rbx, 0x20\n\t")
