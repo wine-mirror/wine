@@ -660,8 +660,14 @@ typedef enum D3D10_RTV_DIMENSION {
 } D3D10_RTV_DIMENSION;
 
 typedef struct D3D10_BUFFER_RTV {
-    UINT ElementOffset;
-    UINT ElementWidth;
+    union {
+        UINT FirstElement;
+        UINT ElementOffset;
+    };
+    union {
+        UINT NumElements;
+        UINT ElementWidth;
+    };
 } D3D10_BUFFER_RTV;
 
 typedef struct D3D10_TEX1D_RTV {
