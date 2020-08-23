@@ -1547,8 +1547,6 @@ UINT WINAPI GetPrivateProfileIntW( LPCWSTR section, LPCWSTR entry,
 
 /***********************************************************************
  *           GetPrivateProfileIntA   (KERNEL32.@)
- *
- * FIXME: rewrite using unicode
  */
 UINT WINAPI GetPrivateProfileIntA( LPCSTR section, LPCSTR entry,
 				   INT def_val, LPCSTR filename )
