@@ -1,5 +1,8 @@
 /*
+ * Copyright 1998 Alexandre Julliard
+ * Copyright 2001 Eric Pouech
  * Copyright 2012 Detlef Riekenberg
+ * Copyright 2020 Jacek Caban
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -23,6 +26,7 @@
 #include <windef.h>
 #include <winbase.h>
 #include <winuser.h>
+#include <winnls.h>
 #include <winternl.h>
 
 #include "wine/condrv.h"
@@ -35,6 +39,14 @@ struct console
 {
     HANDLE                server;        /* console server handle */
     unsigned int          mode;          /* input mode */
+    unsigned int          recnum;        /* number of input records */
+    unsigned int          history_size;  /* number of entries in history array */
+    unsigned int          history_index; /* number of used entries in history array */
+    unsigned int          history_mode;  /* mode of history (non zero means remove doubled strings */
+    unsigned int          edition_mode;  /* index to edition mode flavors */
+    unsigned int          input_cp;      /* console input codepage */
+    unsigned int          output_cp;     /* console output codepage */
+    unsigned int          win;           /* window handle if backend supports it */
 };
 
 static void *ioctl_buffer;
@@ -72,6 +84,23 @@ static NTSTATUS console_input_ioctl( struct console *console, unsigned int code,
         console->mode = *(unsigned int *)in_data;
         TRACE( "set %x mode\n", console->mode );
         return STATUS_SUCCESS;
+
+    case IOCTL_CONDRV_GET_INPUT_INFO:
+        {
+            struct condrv_input_info *info;
+            TRACE( "get info\n" );
+            if (in_size || *out_size != sizeof(*info)) return STATUS_INVALID_PARAMETER;
+            if (!(info = alloc_ioctl_buffer( sizeof(*info )))) return STATUS_NO_MEMORY;
+            info->history_mode  = console->history_mode;
+            info->history_size  = console->history_size;
+            info->history_index = console->history_index;
+            info->edition_mode  = console->edition_mode;
+            info->input_cp      = console->input_cp;
+            info->output_cp     = console->output_cp;
+            info->win           = console->win;
+            info->input_count   = console->recnum;
+            return STATUS_SUCCESS;
+        }
 
     default:
         FIXME( "unsupported ioctl %x\n", code );
@@ -187,6 +216,8 @@ int __cdecl wmain(int argc, WCHAR *argv[])
     console.mode = ENABLE_PROCESSED_INPUT | ENABLE_LINE_INPUT |
                    ENABLE_ECHO_INPUT | ENABLE_MOUSE_INPUT | ENABLE_INSERT_MODE |
                    ENABLE_QUICK_EDIT_MODE | ENABLE_EXTENDED_FLAGS | ENABLE_AUTO_POSITION;
+    console.input_cp = console.output_cp = GetOEMCP();
+    console.history_size = 50;
 
     for (i = 1; i < argc; i++)
     {
