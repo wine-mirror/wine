@@ -3345,6 +3345,9 @@ static void test_IScriptControl_get_Error(void)
     hr = IScriptError_get_HelpFile(error, &str);
     ok(hr == S_OK, "IScriptError_get_HelpFile failed: 0x%08x.\n", hr);
     ok(str == NULL, "Error HelpFile is not (null), got %s.\n", wine_dbgstr_w(str));
+    hr = IScriptError_get_HelpContext(error, &x);
+    ok(hr == S_OK, "IScriptError_get_HelpContext failed: 0x%08x.\n", hr);
+    ok(x == 0, "Error HelpContext is not 0, got %d.\n", x);
 
     str = SysAllocString(L"jscript");
     hr = IScriptControl_put_Language(sc, str);
@@ -3387,6 +3390,9 @@ static void test_IScriptControl_get_Error(void)
     hr = IScriptError_get_HelpFile(error, &str);
     ok(hr == S_OK, "IScriptError_get_HelpFile failed: 0x%08x.\n", hr);
     ok(str == NULL, "Error HelpFile is not (null), got %s.\n", wine_dbgstr_w(str));
+    hr = IScriptError_get_HelpContext(error, &x);
+    ok(hr == S_OK, "IScriptError_get_HelpContext failed: 0x%08x.\n", hr);
+    ok(x == 0, "Error HelpContext is not 0, got %d.\n", x);
 
     hr = IScriptControl_get_Error(sc, &error2);
     ok(hr == S_OK, "IScriptControl_get_Error failed: 0x%08x.\n", hr);
@@ -3446,6 +3452,9 @@ static void test_IScriptControl_get_Error(void)
         hr = IScriptError_get_HelpFile(error, &str);
         ok(hr == S_OK, "IScriptError_get_HelpFile failed: 0x%08x.\n", hr);
         ok(str == NULL, "Error HelpFile is not (null), got %s.\n", wine_dbgstr_w(str));
+        hr = IScriptError_get_HelpContext(error, &x);
+        ok(hr == S_OK, "IScriptError_get_HelpContext failed: 0x%08x.\n", hr);
+        ok(x == 0, "Error HelpContext is not 0, got %d.\n", x);
 
         SET_EXPECT(GetSourceLineText);
         hr = IScriptError_get_Text(error, &str);

@@ -128,6 +128,7 @@ typedef struct {
     BSTR source;
     BSTR desc;
     BSTR help_file;
+    DWORD help_context;
 
     BOOLEAN info_filled;
 } ScriptError;
@@ -2136,6 +2137,7 @@ static void fill_error_info(ScriptError *error)
     error->source = info.bstrSource;
     error->desc = info.bstrDescription;
     error->help_file = info.bstrHelpFile;
+    error->help_context = info.dwHelpContext;
 }
 
 static HRESULT WINAPI ScriptError_QueryInterface(IScriptError *iface, REFIID riid, void **ppv)
@@ -2293,9 +2295,11 @@ static HRESULT WINAPI ScriptError_get_HelpContext(IScriptError *iface, LONG *plH
 {
     ScriptError *This = impl_from_IScriptError(iface);
 
-    FIXME("(%p)->(%p)\n", This, plHelpContext);
+    TRACE("(%p)->(%p)\n", This, plHelpContext);
 
-    return E_NOTIMPL;
+    fill_error_info(This);
+    *plHelpContext = This->help_context;
+    return S_OK;
 }
 
 static HRESULT WINAPI ScriptError_get_Text(IScriptError *iface, BSTR *pbstrText)
@@ -2344,6 +2348,7 @@ static HRESULT WINAPI ScriptError_Clear(IScriptError *iface)
     This->source = NULL;
     This->desc = NULL;
     This->help_file = NULL;
+    This->help_context = 0;
 
     This->info_filled = FALSE;
     return S_OK;
