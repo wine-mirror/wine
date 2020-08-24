@@ -131,6 +131,7 @@ typedef struct {
     BSTR help_file;
     DWORD help_context;
     ULONG line;
+    LONG column;
 
     BOOLEAN info_filled;
     BOOLEAN text_filled;
@@ -2168,6 +2169,7 @@ static void fill_error_pos(ScriptError *error)
         return;
 
     error->line = line;
+    error->column = column;
 }
 
 static HRESULT WINAPI ScriptError_QueryInterface(IScriptError *iface, REFIID riid, void **ppv)
@@ -2358,9 +2360,11 @@ static HRESULT WINAPI ScriptError_get_Column(IScriptError *iface, LONG *plColumn
 {
     ScriptError *This = impl_from_IScriptError(iface);
 
-    FIXME("(%p)->(%p)\n", This, plColumn);
+    TRACE("(%p)->(%p)\n", This, plColumn);
 
-    return E_NOTIMPL;
+    fill_error_pos(This);
+    *plColumn = This->column;
+    return S_OK;
 }
 
 static HRESULT WINAPI ScriptError_Clear(IScriptError *iface)
@@ -2386,6 +2390,7 @@ static HRESULT WINAPI ScriptError_Clear(IScriptError *iface)
     This->help_file = NULL;
     This->help_context = 0;
     This->line = 0;
+    This->column = 0;
 
     This->info_filled = FALSE;
     This->text_filled = FALSE;
