@@ -46,6 +46,8 @@ struct console
     HANDLE                server;        /* console server handle */
     unsigned int          mode;          /* input mode */
     unsigned int          recnum;        /* number of input records */
+    WCHAR                *title;         /* console title */
+    size_t                title_len;     /* length of console title */
     struct history_line **history;       /* lines history */
     unsigned int          history_size;  /* number of entries in history array */
     unsigned int          history_index; /* number of used entries in history array */
@@ -163,6 +165,18 @@ static NTSTATUS console_input_ioctl( struct console *console, unsigned int code,
             {
                 console->win = params->info.win;
             }
+            return STATUS_SUCCESS;
+        }
+
+    case IOCTL_CONDRV_GET_TITLE:
+        {
+            WCHAR *result;
+            if (in_size) return STATUS_INVALID_PARAMETER;
+            TRACE( "returning title %s\n", debugstr_wn(console->title,
+                                                       console->title_len / sizeof(WCHAR)) );
+            if (!(result = alloc_ioctl_buffer( *out_size = min( *out_size, console->title_len ))))
+                return STATUS_NO_MEMORY;
+            if (*out_size) memcpy( result, console->title, *out_size );
             return STATUS_SUCCESS;
         }
 
