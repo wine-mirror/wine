@@ -2291,10 +2291,153 @@ static HRESULT Global_Join(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, V
     return E_NOTIMPL;
 }
 
-static HRESULT Global_Split(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Split(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    BSTR str, string, delimeter = NULL;
+    int count, max, mode, len, start, end, ret, delimeterlen = 1;
+    int i,*indices = NULL, indices_max = 8;
+    SAFEARRAYBOUND bounds;
+    SAFEARRAY *sa = NULL;
+    VARIANT *data, var;
+    HRESULT hres = S_OK;
+
+    TRACE("%s %u...\n", debugstr_variant(args), args_cnt);
+
+    assert(1 <= args_cnt && args_cnt <= 4);
+
+    if(V_VT(args) == VT_NULL || (args_cnt > 1 && V_VT(args+1) == VT_NULL) || (args_cnt > 2 && V_VT(args+2) == VT_NULL)
+       || (args_cnt == 4 && V_VT(args+3) == VT_NULL))
+        return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
+
+    if(V_VT(args) != VT_BSTR) {
+        hres = to_string(args, &string);
+        if(FAILED(hres))
+            return hres;
+    }else {
+        string = V_BSTR(args);
+    }
+
+    if(args_cnt > 1) {
+        if(V_VT(args+1) != VT_BSTR) {
+            hres = to_string(args+1, &delimeter);
+            if(FAILED(hres))
+                goto error;
+        }else {
+            delimeter = V_BSTR(args+1);
+        }
+        delimeterlen = SysStringLen(delimeter);
+    }
+
+    if(args_cnt > 2) {
+        hres = to_int(args+2, &max);
+        if(FAILED(hres))
+            goto error;
+        if (max < -1) {
+            hres = MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
+            goto error;
+       }
+    }else {
+        max = -1;
+    }
+
+    if(args_cnt == 4) {
+        hres = to_int(args+3, &mode);
+        if(FAILED(hres))
+            goto error;
+        if (mode != 0 && mode != 1) {
+            hres = MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
+            goto error;
+        }
+    }else {
+        mode = 0;
+    }
+
+    start = 0;
+
+    len = SysStringLen(string);
+    count = 0;
+
+    indices = heap_alloc( indices_max * sizeof(int));
+    if(!indices) {
+        hres = E_OUTOFMEMORY;
+        goto error;
+    }
+
+    while(1) {
+        ret = -1;
+        if (delimeterlen) {
+            ret = FindStringOrdinal(FIND_FROMSTART, string + start, len - start,
+                                    delimeter ? delimeter : L" ", delimeterlen, mode);
+        }
+
+        if (ret == -1) {
+            end = len;
+        }else {
+            end = start + ret;
+        }
+
+        if (count == indices_max) {
+            indices_max *= 2;
+            indices = heap_realloc( indices, indices_max * sizeof(int));
+            if(!indices) {
+                hres = E_OUTOFMEMORY;
+                goto error;
+            }
+        }
+        indices[count++] = end;
+
+        if (ret == -1 || count == max) break;
+        start = start + ret + delimeterlen;
+        if (start > len) break;
+    }
+
+    bounds.lLbound = 0;
+    bounds.cElements = count;
+    sa = SafeArrayCreate( VT_VARIANT, 1, &bounds);
+    if (!sa) {
+        hres = E_OUTOFMEMORY;
+        goto error;
+    }
+    hres = SafeArrayAccessData(sa, (void**)&data);
+    if(FAILED(hres)) {
+        SafeArrayDestroy(sa);
+        goto error;
+    }
+
+    start = 0;
+    for (i = 0; i < count; i++) {
+        str = SysAllocStringLen(string + start, indices[i] - start);
+        if (!str) {
+            hres = E_OUTOFMEMORY;
+            break;
+        }
+        V_VT(&var) = VT_BSTR;
+        V_BSTR(&var) = str;
+
+        hres = VariantCopyInd(data+i, &var);
+        if(FAILED(hres)) {
+            SafeArrayUnaccessData(sa);
+            SafeArrayDestroy(sa);
+            goto error;
+        }
+        start = indices[i]+delimeterlen;
+    }
+    SafeArrayUnaccessData(sa);
+
+error:
+    if(SUCCEEDED(hres) && res) {
+        V_VT(res) = VT_ARRAY|VT_VARIANT;
+        V_ARRAY(res) = sa;
+    }else {
+        if (sa) SafeArrayDestroy(sa);
+    }
+
+    heap_free(indices);
+    if(V_VT(args) != VT_BSTR)
+        SysFreeString(string);
+    if(V_VT(args+1) != VT_BSTR)
+        SysFreeString(delimeter);
+    return hres;
 }
 
 static HRESULT Global_Replace(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
