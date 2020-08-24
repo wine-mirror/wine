@@ -125,6 +125,7 @@ typedef struct {
     LONG ref;
 
     HRESULT number;
+    BSTR source;
 
     BOOLEAN info_filled;
 } ScriptError;
@@ -2130,6 +2131,7 @@ static void fill_error_info(ScriptError *error)
         info.pfnDeferredFillIn(&info);
 
     error->number = info.scode;
+    error->source = info.bstrSource;
 }
 
 static HRESULT WINAPI ScriptError_QueryInterface(IScriptError *iface, REFIID riid, void **ppv)
@@ -2254,9 +2256,11 @@ static HRESULT WINAPI ScriptError_get_Source(IScriptError *iface, BSTR *pbstrSou
 {
     ScriptError *This = impl_from_IScriptError(iface);
 
-    FIXME("(%p)->(%p)\n", This, pbstrSource);
+    TRACE("(%p)->(%p)\n", This, pbstrSource);
 
-    return E_NOTIMPL;
+    fill_error_info(This);
+    *pbstrSource = SysAllocString(This->source);
+    return S_OK;
 }
 
 static HRESULT WINAPI ScriptError_get_Description(IScriptError *iface, BSTR *pbstrDescription)
@@ -2324,8 +2328,10 @@ static HRESULT WINAPI ScriptError_Clear(IScriptError *iface)
         IActiveScriptError_Release(This->object);
         This->object = NULL;
     }
+    SysFreeString(This->source);
 
     This->number = 0;
+    This->source = NULL;
 
     This->info_filled = FALSE;
     return S_OK;

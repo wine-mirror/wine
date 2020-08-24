@@ -3336,6 +3336,9 @@ static void test_IScriptControl_get_Error(void)
     hr = IScriptError_get_Number(error, &x);
     ok(hr == S_OK, "IScriptError_get_Number failed: 0x%08x.\n", hr);
     ok(x == 0, "Error Number is not 0, got %d.\n", x);
+    hr = IScriptError_get_Source(error, &str);
+    ok(hr == S_OK, "IScriptError_get_Source failed: 0x%08x.\n", hr);
+    ok(str == NULL, "Error Source is not (null), got %s.\n", wine_dbgstr_w(str));
 
     str = SysAllocString(L"jscript");
     hr = IScriptControl_put_Language(sc, str);
@@ -3354,6 +3357,10 @@ static void test_IScriptControl_get_Error(void)
     hr = IScriptError_get_Number(error, &x);
     ok(hr == S_OK, "IScriptError_get_Number failed: 0x%08x.\n", hr);
     todo_wine ok(x > 1000, "Error Number is wrong, got %d.\n", x);
+    hr = IScriptError_get_Source(error, &str);
+    ok(hr == S_OK, "IScriptError_get_Source failed: 0x%08x.\n", hr);
+    ok(str != NULL, "Error Source is (null).\n");
+    SysFreeString(str);
 
     hr = IScriptError_Clear(error);
     ok(hr == S_OK, "IScriptError_Clear failed: 0x%08x.\n", hr);
@@ -3361,6 +3368,9 @@ static void test_IScriptControl_get_Error(void)
     hr = IScriptError_get_Number(error, &x);
     ok(hr == S_OK, "IScriptError_get_Number failed: 0x%08x.\n", hr);
     ok(x == 0, "Error Number is not 0, got %d.\n", x);
+    hr = IScriptError_get_Source(error, &str);
+    ok(hr == S_OK, "IScriptError_get_Source failed: 0x%08x.\n", hr);
+    ok(str == NULL, "Error Source is not (null), got %s.\n", wine_dbgstr_w(str));
 
     hr = IScriptControl_get_Error(sc, &error2);
     ok(hr == S_OK, "IScriptControl_get_Error failed: 0x%08x.\n", hr);
@@ -3411,6 +3421,9 @@ static void test_IScriptControl_get_Error(void)
         ok(hr == S_OK, "IScriptError_get_Number failed: 0x%08x.\n", hr);
         ok(x == 0, "Error Number is not 0, got %d.\n", x);
         CHECK_CALLED(GetExceptionInfo);
+        hr = IScriptError_get_Source(error, &str);
+        ok(hr == S_OK, "IScriptError_get_Source failed: 0x%08x.\n", hr);
+        ok(str == NULL, "Error Source is not (null), got %s.\n", wine_dbgstr_w(str));
 
         SET_EXPECT(GetSourceLineText);
         hr = IScriptError_get_Text(error, &str);
@@ -3439,8 +3452,9 @@ static void test_IScriptControl_get_Error(void)
         CHECK_CALLED(GetExceptionInfo);
         CHECK_CALLED(DeferredFillIn);
         hr = IScriptError_get_Source(error, &str);
-        todo_wine ok(hr == S_OK, "IScriptError_get_Source failed: 0x%08x.\n", hr);
-        if (SUCCEEDED(hr)) SysFreeString(str);
+        ok(hr == S_OK, "IScriptError_get_Source failed: 0x%08x.\n", hr);
+        ok(!lstrcmpW(str, L"foobar"), "Error Source is wrong, got %s.\n", wine_dbgstr_w(str));
+        SysFreeString(str);
         hr = IScriptError_get_Description(error, &str);
         todo_wine ok(hr == S_OK, "IScriptError_get_Description failed: 0x%08x.\n", hr);
         if (SUCCEEDED(hr)) SysFreeString(str);
@@ -3472,8 +3486,9 @@ static void test_IScriptControl_get_Error(void)
         ok(x == 0xbeef, "Error Number is not 0xbeef, got 0x%04x.\n", x);
         CHECK_CALLED(GetExceptionInfo);
         hr = IScriptError_get_Source(error, &str);
-        todo_wine ok(hr == S_OK, "IScriptError_get_Source failed: 0x%08x.\n", hr);
-        if (SUCCEEDED(hr)) SysFreeString(str);
+        ok(hr == S_OK, "IScriptError_get_Source failed: 0x%08x.\n", hr);
+        ok(!lstrcmpW(str, L"source"), "Error Source is wrong, got %s.\n", wine_dbgstr_w(str));
+        SysFreeString(str);
         hr = IScriptError_get_Description(error, &str);
         todo_wine ok(hr == S_OK, "IScriptError_get_Description failed: 0x%08x.\n", hr);
         if (SUCCEEDED(hr)) SysFreeString(str);
