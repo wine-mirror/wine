@@ -123,6 +123,10 @@ typedef struct {
     IScriptError IScriptError_iface;
     IActiveScriptError *object;
     LONG ref;
+
+    HRESULT number;
+
+    BOOLEAN info_filled;
 } ScriptError;
 
 struct ScriptHost {
@@ -2111,6 +2115,23 @@ static const IScriptModuleCollectionVtbl ScriptModuleCollectionVtbl = {
     ScriptModuleCollection_Add
 };
 
+static void fill_error_info(ScriptError *error)
+{
+    EXCEPINFO info;
+
+    if (error->info_filled) return;
+    error->info_filled = TRUE;
+
+    if (!error->object)
+        return;
+    if (FAILED(IActiveScriptError_GetExceptionInfo(error->object, &info)))
+        return;
+    if (info.pfnDeferredFillIn)
+        info.pfnDeferredFillIn(&info);
+
+    error->number = info.scode;
+}
+
 static HRESULT WINAPI ScriptError_QueryInterface(IScriptError *iface, REFIID riid, void **ppv)
 {
     ScriptError *This = impl_from_IScriptError(iface);
@@ -2222,9 +2243,11 @@ static HRESULT WINAPI ScriptError_get_Number(IScriptError *iface, LONG *plNumber
 {
     ScriptError *This = impl_from_IScriptError(iface);
 
-    FIXME("(%p)->(%p)\n", This, plNumber);
+    TRACE("(%p)->(%p)\n", This, plNumber);
 
-    return E_NOTIMPL;
+    fill_error_info(This);
+    *plNumber = This->number;
+    return S_OK;
 }
 
 static HRESULT WINAPI ScriptError_get_Source(IScriptError *iface, BSTR *pbstrSource)
@@ -2302,6 +2325,9 @@ static HRESULT WINAPI ScriptError_Clear(IScriptError *iface)
         This->object = NULL;
     }
 
+    This->number = 0;
+
+    This->info_filled = FALSE;
     return S_OK;
 }
 

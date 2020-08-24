@@ -2066,8 +2066,9 @@ static void test_State(void)
     }
 }
 
-#define CHECK_ERROR(sc,exp_num) _check_error(sc, exp_num, __LINE__)
-static void _check_error(IScriptControl *sc, LONG exp_num, int line)
+#define CHECK_ERROR(sc,exp_num) _check_error(sc, exp_num, FALSE, __LINE__)
+#define CHECK_ERROR_TODO(sc,exp_num) _check_error(sc, exp_num, TRUE, __LINE__)
+static void _check_error(IScriptControl *sc, LONG exp_num, BOOL todo, int line)
 {
     IScriptError *script_err;
     LONG error_num;
@@ -2077,8 +2078,9 @@ static void _check_error(IScriptControl *sc, LONG exp_num, int line)
     ok_(__FILE__,line)(hr == S_OK, "IScriptControl_get_Error failed: 0x%08x.\n", hr);
     error_num = 0xdeadbeef;
     hr = IScriptError_get_Number(script_err, &error_num);
-    todo_wine ok_(__FILE__,line)(hr == S_OK, "IScriptError_get_Number failed: 0x%08x.\n", hr);
-    todo_wine ok_(__FILE__,line)(error_num == exp_num, "got wrong error number: %d, expected %d.\n",
+    ok_(__FILE__,line)(hr == S_OK, "IScriptError_get_Number failed: 0x%08x.\n", hr);
+todo_wine_if(todo == TRUE)
+    ok_(__FILE__,line)(error_num == exp_num, "got wrong error number: %d, expected %d.\n",
                        error_num, exp_num);
     IScriptError_Release(script_err);
 }
@@ -2157,7 +2159,7 @@ static void test_IScriptControl_Eval(void)
     ok(V_I4(&var) == 0xdeadbeef || broken(V_I4(&var) == 0) /* after Win8 */,
        "V_I4(var) = %d.\n", V_I4(&var));
     SysFreeString(script_str);
-    CHECK_ERROR(sc, 1004);
+    CHECK_ERROR_TODO(sc, 1004);
 
     script_str = SysAllocString(L"var2 = var1 + var2");
     V_VT(&var) = VT_NULL;
@@ -2290,7 +2292,7 @@ static void test_IScriptControl_AddCode(void)
     hr = IScriptControl_AddCode(sc, code_str);
     todo_wine ok(hr == 0x800a03ec, "IScriptControl_AddCode returned: 0x%08x.\n", hr);
     SysFreeString(code_str);
-    CHECK_ERROR(sc, 1004);
+    CHECK_ERROR_TODO(sc, 1004);
 
     IScriptControl_Release(sc);
 
@@ -2391,7 +2393,7 @@ static void test_IScriptControl_ExecuteStatement(void)
     hr = IScriptControl_ExecuteStatement(sc, str);
     todo_wine ok(hr == 0x800a03ec, "IScriptControl_ExecuteStatement returned: 0x%08x.\n", hr);
     SysFreeString(str);
-    CHECK_ERROR(sc, 1004);
+    CHECK_ERROR_TODO(sc, 1004);
 
     IScriptControl_Release(sc);
 
