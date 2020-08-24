@@ -18,4 +18,5 @@
 
 #pragma makedep client
 
+#include "wine/irot.idl"
 #include "wine/irpcss.idl"

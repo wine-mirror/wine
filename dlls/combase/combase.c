@@ -2245,7 +2245,7 @@ DWORD WINAPI CoGetCurrentProcess(void)
         return 0;
 
     if (!tlsdata->thread_seqid)
-        tlsdata->thread_seqid = rpcss_get_next_seqid();
+        rpcss_get_next_seqid(&tlsdata->thread_seqid);
 
     return tlsdata->thread_seqid;
 }

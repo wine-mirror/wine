@@ -90,4 +90,4 @@ static inline struct apartment* com_get_current_apt(void)
 }
 
 /* RpcSs interface */
-DWORD rpcss_get_next_seqid(void) DECLSPEC_HIDDEN;
+HRESULT rpcss_get_next_seqid(DWORD *id) DECLSPEC_HIDDEN;

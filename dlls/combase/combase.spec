@@ -255,13 +255,13 @@
 @ stub InternalFillLocalOXIDInfo
 @ stub InternalFreeObjRef
 @ stub InternalGetWindowPropInterface
-@ stub InternalIrotEnumRunning
-@ stub InternalIrotGetObject
-@ stub InternalIrotGetTimeOfLastChange
-@ stub InternalIrotIsRunning
-@ stub InternalIrotNoteChangeTime
-@ stub InternalIrotRegister
-@ stub InternalIrotRevoke
+@ stdcall InternalIrotEnumRunning(ptr)
+@ stdcall InternalIrotGetObject(ptr ptr ptr)
+@ stdcall InternalIrotGetTimeOfLastChange(ptr ptr)
+@ stdcall InternalIrotIsRunning(ptr)
+@ stdcall InternalIrotNoteChangeTime(long ptr)
+@ stdcall InternalIrotRegister(ptr ptr ptr ptr long ptr ptr)
+@ stdcall InternalIrotRevoke(long ptr ptr ptr)
 @ stub InternalIsApartmentInitialized
 @ stub InternalIsProcessInitialized
 @ stub InternalMarshalObjRef

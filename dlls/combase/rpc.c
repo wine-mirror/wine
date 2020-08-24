@@ -127,29 +127,97 @@ static RPC_BINDING_HANDLE get_irpcss_handle(void)
     return irpcss_handle;
 }
 
-DWORD rpcss_get_next_seqid(void)
+static RPC_BINDING_HANDLE get_irot_handle(void)
 {
-    DWORD id = 0;
-    HRESULT hr;
+    static RPC_BINDING_HANDLE irot_handle;
 
-    for (;;)
+    if (!irot_handle)
     {
-        __TRY
-        {
-            hr = irpcss_get_thread_seq_id(get_irpcss_handle(), &id);
-        }
-        __EXCEPT(rpc_filter)
-        {
-            hr = HRESULT_FROM_WIN32(GetExceptionCode());
-        }
-        __ENDTRY
-        if (hr == HRESULT_FROM_WIN32(RPC_S_SERVER_UNAVAILABLE))
-        {
-            if (start_rpcss())
-                continue;
-        }
-        break;
-    }
+        unsigned short protseq[] = IROT_PROTSEQ;
+        unsigned short endpoint[] = IROT_ENDPOINT;
 
-    return id;
+        RPC_BINDING_HANDLE new_handle = get_rpc_handle(protseq, endpoint);
+        if (InterlockedCompareExchangePointer(&irot_handle, new_handle, NULL))
+            /* another thread beat us to it */
+            RpcBindingFree(&new_handle);
+    }
+    return irot_handle;
+}
+
+#define RPCSS_CALL_START \
+    HRESULT hr; \
+    for (;;) { \
+        __TRY {
+
+#define RPCSS_CALL_END \
+        } __EXCEPT(rpc_filter) { \
+            hr = HRESULT_FROM_WIN32(GetExceptionCode()); \
+        } \
+        __ENDTRY \
+        if (hr == HRESULT_FROM_WIN32(RPC_S_SERVER_UNAVAILABLE)) { \
+            if (start_rpcss()) \
+                continue; \
+        } \
+        break; \
+    } \
+    return hr;
+
+HRESULT rpcss_get_next_seqid(DWORD *id)
+{
+    RPCSS_CALL_START
+    hr = irpcss_get_thread_seq_id(get_irpcss_handle(), id);
+    RPCSS_CALL_END
+}
+
+HRESULT WINAPI InternalIrotRegister(const MonikerComparisonData *moniker_data,
+        const InterfaceData *object, const InterfaceData *moniker,
+        const FILETIME *time, DWORD flags, IrotCookie *cookie, IrotContextHandle *ctxt_handle)
+{
+    RPCSS_CALL_START
+    hr = IrotRegister(get_irot_handle(), moniker_data, object, moniker, time, flags, cookie, ctxt_handle);
+    RPCSS_CALL_END
+}
+
+HRESULT WINAPI InternalIrotIsRunning(const MonikerComparisonData *moniker_data)
+{
+    RPCSS_CALL_START
+    hr = IrotIsRunning(get_irot_handle(), moniker_data);
+    RPCSS_CALL_END
+}
+
+HRESULT WINAPI InternalIrotGetObject(const MonikerComparisonData *moniker_data, PInterfaceData *obj,
+        IrotCookie *cookie)
+{
+    RPCSS_CALL_START
+    hr = IrotGetObject(get_irot_handle(), moniker_data, obj, cookie);
+    RPCSS_CALL_END
+}
+
+HRESULT WINAPI InternalIrotNoteChangeTime(IrotCookie cookie, const FILETIME *time)
+{
+    RPCSS_CALL_START
+    hr = IrotNoteChangeTime(get_irot_handle(), cookie, time);
+    RPCSS_CALL_END
+}
+
+HRESULT WINAPI InternalIrotGetTimeOfLastChange(const MonikerComparisonData *moniker_data, FILETIME *time)
+{
+    RPCSS_CALL_START
+    hr = IrotGetTimeOfLastChange(get_irot_handle(), moniker_data, time);
+    RPCSS_CALL_END
+}
+
+HRESULT WINAPI InternalIrotEnumRunning(PInterfaceList *list)
+{
+    RPCSS_CALL_START
+    hr = IrotEnumRunning(get_irot_handle(), list);
+    RPCSS_CALL_END
+}
+
+HRESULT WINAPI InternalIrotRevoke(IrotCookie cookie, IrotContextHandle *ctxt_handle, PInterfaceData *object,
+        PInterfaceData *moniker)
+{
+    RPCSS_CALL_START
+    hr = IrotRevoke(get_irot_handle(), cookie, ctxt_handle, object, moniker);
+    RPCSS_CALL_END
 }
