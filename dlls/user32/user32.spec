@@ -717,7 +717,7 @@
 @ stdcall SetWindowCompositionAttribute(ptr ptr)
 @ stdcall SetWindowContextHelpId(long long)
 @ stdcall SetWindowDisplayAffinity(long long)
-@ stub SetWindowFullScreenState
+# @ stub SetWindowFullScreenState
 @ stdcall SetWindowLongA(long long long)
 @ stdcall -arch=win64 SetWindowLongPtrA(long long long)
 @ stdcall -arch=win64 SetWindowLongPtrW(long long long)
