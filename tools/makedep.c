@@ -2212,7 +2212,11 @@ static struct strarray add_import_libs( const struct makefile *make, struct stra
         const char *lib = NULL;
 
         /* skip module's own importlib, its object files will be linked directly */
-        if (make->importlib && !is_unix && !strcmp( make->importlib, imports.str[i] )) continue;
+        if (make->importlib && !strcmp( make->importlib, imports.str[i] ))
+        {
+            if (!is_unix) continue;
+            if (strarray_exists( &make->extradllflags, "-nodefaultlibs" )) continue;
+        }
 
         for (j = 0; j < top_makefile->subdirs.count; j++)
         {
