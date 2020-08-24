@@ -150,6 +150,7 @@ typedef struct DdsFrameDecode {
     IWICDdsFrameDecode IWICDdsFrameDecode_iface;
     LONG ref;
     BYTE *data;
+    CRITICAL_SECTION lock;
     dds_frame_info info;
 } DdsFrameDecode;
 
@@ -777,6 +778,8 @@ static HRESULT DdsFrameDecode_CreateInstance(DdsFrameDecode **frame_decode)
     result->IWICBitmapFrameDecode_iface.lpVtbl = &DdsFrameDecode_Vtbl;
     result->IWICDdsFrameDecode_iface.lpVtbl = &DdsFrameDecode_Dds_Vtbl;
     result->ref = 1;
+    InitializeCriticalSection(&result->lock);
+    result->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": DdsFrameDecode.lock");
 
     *frame_decode = result;
     return S_OK;
