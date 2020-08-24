@@ -2075,15 +2075,12 @@ static void _check_error(IScriptControl *sc, LONG exp_num, int line)
 
     hr = IScriptControl_get_Error(sc, &script_err);
     ok_(__FILE__,line)(hr == S_OK, "IScriptControl_get_Error failed: 0x%08x.\n", hr);
-    if (SUCCEEDED(hr))
-    {
-        error_num = 0xdeadbeef;
-        hr = IScriptError_get_Number(script_err, &error_num);
-        ok_(__FILE__,line)(hr == S_OK, "IScriptError_get_Number failed: 0x%08x.\n", hr);
-        ok_(__FILE__,line)(error_num == exp_num, "got wrong error number: %d, expected %d.\n",
-                           error_num, exp_num);
-        IScriptError_Release(script_err);
-    }
+    error_num = 0xdeadbeef;
+    hr = IScriptError_get_Number(script_err, &error_num);
+    todo_wine ok_(__FILE__,line)(hr == S_OK, "IScriptError_get_Number failed: 0x%08x.\n", hr);
+    todo_wine ok_(__FILE__,line)(error_num == exp_num, "got wrong error number: %d, expected %d.\n",
+                       error_num, exp_num);
+    IScriptError_Release(script_err);
 }
 
 static void test_IScriptControl_Eval(void)
@@ -2112,7 +2109,7 @@ static void test_IScriptControl_Eval(void)
     ok(hr == E_FAIL, "IScriptControl_Eval returned: 0x%08x.\n", hr);
     ok((V_VT(&var) == VT_EMPTY) && (V_I4(&var) == 0xdeadbeef), "V_VT(var) = %d, V_I4(var) = %d.\n",
        V_VT(&var), V_I4(&var));
-    todo_wine CHECK_ERROR(sc, 0);
+    CHECK_ERROR(sc, 0);
 
     script_str = SysAllocString(L"1 + 1");
     V_VT(&var) = VT_NULL;
@@ -2160,7 +2157,7 @@ static void test_IScriptControl_Eval(void)
     ok(V_I4(&var) == 0xdeadbeef || broken(V_I4(&var) == 0) /* after Win8 */,
        "V_I4(var) = %d.\n", V_I4(&var));
     SysFreeString(script_str);
-    todo_wine CHECK_ERROR(sc, 1004);
+    CHECK_ERROR(sc, 1004);
 
     script_str = SysAllocString(L"var2 = var1 + var2");
     V_VT(&var) = VT_NULL;
@@ -2287,13 +2284,13 @@ static void test_IScriptControl_AddCode(void)
     hr = IScriptControl_AddCode(sc, code_str);
     ok(hr == S_OK, "IScriptControl_AddCode failed: 0x%08x.\n", hr);
     SysFreeString(code_str);
-    todo_wine CHECK_ERROR(sc, 0);
+    CHECK_ERROR(sc, 0);
 
     code_str = SysAllocString(L"invalid syntax");
     hr = IScriptControl_AddCode(sc, code_str);
     todo_wine ok(hr == 0x800a03ec, "IScriptControl_AddCode returned: 0x%08x.\n", hr);
     SysFreeString(code_str);
-    todo_wine CHECK_ERROR(sc, 1004);
+    CHECK_ERROR(sc, 1004);
 
     IScriptControl_Release(sc);
 
@@ -2388,13 +2385,13 @@ static void test_IScriptControl_ExecuteStatement(void)
     hr = IScriptControl_ExecuteStatement(sc, str);
     ok(hr == S_OK, "IScriptControl_ExecuteStatement failed: 0x%08x.\n", hr);
     SysFreeString(str);
-    todo_wine CHECK_ERROR(sc, 0);
+    CHECK_ERROR(sc, 0);
 
     str = SysAllocString(L"invalid syntax");
     hr = IScriptControl_ExecuteStatement(sc, str);
     todo_wine ok(hr == 0x800a03ec, "IScriptControl_ExecuteStatement returned: 0x%08x.\n", hr);
     SysFreeString(str);
-    todo_wine CHECK_ERROR(sc, 1004);
+    CHECK_ERROR(sc, 1004);
 
     IScriptControl_Release(sc);
 
@@ -2500,13 +2497,13 @@ static void test_IScriptControl_Run(void)
     str = SysAllocString(L"foobar");
     hr = IScriptControl_Run(sc, str, &params, &var);
     ok(hr == DISP_E_UNKNOWNNAME, "IScriptControl_Run failed: 0x%08x.\n", hr);
-    todo_wine CHECK_ERROR(sc, 0);
+    CHECK_ERROR(sc, 0);
     SysFreeString(str);
 
     str = SysAllocString(L"function subtract(a, b) { return a - b; }\n");
     hr = IScriptControl_AddCode(sc, str);
     ok(hr == S_OK, "IScriptControl_AddCode failed: 0x%08x.\n", hr);
-    todo_wine CHECK_ERROR(sc, 0);
+    CHECK_ERROR(sc, 0);
     SysFreeString(str);
 
     str = SysAllocString(L"Subtract");
@@ -2517,12 +2514,12 @@ static void test_IScriptControl_Run(void)
     str = SysAllocString(L"subtract");
     hr = IScriptControl_Run(sc, str, &params, NULL);
     ok(hr == E_POINTER, "IScriptControl_Run failed: 0x%08x.\n", hr);
-    todo_wine CHECK_ERROR(sc, 0);
+    CHECK_ERROR(sc, 0);
 
     hr = IScriptControl_Run(sc, str, &params, &var);
     ok(hr == S_OK, "IScriptControl_Run failed: 0x%08x.\n", hr);
     ok((V_VT(&var) == VT_I4) && (V_I4(&var) == 7), "V_VT(var) = %d, V_I4(var) = %d.\n", V_VT(&var), V_I4(&var));
-    todo_wine CHECK_ERROR(sc, 0);
+    CHECK_ERROR(sc, 0);
     SafeArrayDestroy(params);
 
     /* The array's other dimensions are ignored */
@@ -3340,7 +3337,7 @@ static void test_IScriptControl_get_Procedures(void)
     );
     hr = IScriptControl_AddCode(sc, str);
     ok(hr == S_OK, "IScriptControl_AddCode failed: 0x%08x.\n", hr);
-    todo_wine CHECK_ERROR(sc, 0);
+    CHECK_ERROR(sc, 0);
     SysFreeString(str);
 
     hr = IScriptProcedureCollection_get_Count(procs, &count);
@@ -3480,7 +3477,7 @@ static void test_IScriptControl_get_Procedures(void)
         hr = IScriptControl_AddCode(sc, str);
         ok(hr == S_OK, "IScriptControl_AddCode failed: 0x%08x.\n", hr);
         SysFreeString(str);
-        todo_wine CHECK_ERROR(sc, 0);
+        CHECK_ERROR(sc, 0);
         CHECK_CALLED(ParseScriptText);
 
         GetScriptDispatch_expected_name = NULL;
