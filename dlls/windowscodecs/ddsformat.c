@@ -149,7 +149,8 @@ typedef struct DdsFrameDecode {
     IWICBitmapFrameDecode IWICBitmapFrameDecode_iface;
     IWICDdsFrameDecode IWICDdsFrameDecode_iface;
     LONG ref;
-    BYTE *data;
+    BYTE *block_data;
+    BYTE *pixel_data;
     CRITICAL_SECTION lock;
     dds_frame_info info;
 } DdsFrameDecode;
@@ -535,7 +536,8 @@ static ULONG WINAPI DdsFrameDecode_Release(IWICBitmapFrameDecode *iface)
     TRACE("(%p) refcount=%u\n", iface, ref);
 
     if (ref == 0) {
-        HeapFree(GetProcessHeap(), 0, This->data);
+        HeapFree(GetProcessHeap(), 0, This->pixel_data);
+        HeapFree(GetProcessHeap(), 0, This->block_data);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -593,6 +595,7 @@ static HRESULT WINAPI DdsFrameDecode_CopyPixels(IWICBitmapFrameDecode *iface,
     DdsFrameDecode *This = impl_from_IWICBitmapFrameDecode(iface);
     UINT bpp, frame_stride, frame_size;
     INT x, y, width, height;
+    HRESULT hr = S_OK;
 
     TRACE("(%p,%s,%u,%u,%p)\n", iface, debug_wic_rect(prc), cbStride, cbBufferSize, pbBuffer);
 
@@ -619,7 +622,20 @@ static HRESULT WINAPI DdsFrameDecode_CopyPixels(IWICBitmapFrameDecode *iface,
     if (cbStride < width * bpp / 8) return E_INVALIDARG;
     if (cbBufferSize < cbStride * height) return WINCODEC_ERR_INSUFFICIENTBUFFER;
 
-    return S_OK;
+    EnterCriticalSection(&This->lock);
+
+    if (!This->pixel_data) {
+        This->pixel_data = HeapAlloc(GetProcessHeap(), 0, frame_size);
+        if (!This->pixel_data) {
+            hr = E_OUTOFMEMORY;
+            goto end;
+        }
+    }
+
+end:
+    LeaveCriticalSection(&This->lock);
+
+    return hr;
 }
 
 static HRESULT WINAPI DdsFrameDecode_GetMetadataQueryReader(IWICBitmapFrameDecode *iface,
@@ -731,7 +747,7 @@ static HRESULT WINAPI DdsFrameDecode_Dds_CopyBlocks(IWICDdsFrameDecode *iface,
     if (!boundsInBlocks) {
         if (stride < frame_stride) return E_INVALIDARG;
         if (bufferSize < frame_size) return E_INVALIDARG;
-        memcpy(buffer, This->data, frame_size);
+        memcpy(buffer, This->block_data, frame_size);
         return S_OK;
     }
 
@@ -747,7 +763,7 @@ static HRESULT WINAPI DdsFrameDecode_Dds_CopyBlocks(IWICDdsFrameDecode *iface,
     if (stride < width * bytes_per_block) return E_INVALIDARG;
     if (bufferSize < stride * height) return E_INVALIDARG;
 
-    data = This->data + (x + y * This->info.width_in_blocks) * bytes_per_block;
+    data = This->block_data + (x + y * This->info.width_in_blocks) * bytes_per_block;
     dst_buffer = buffer;
     for (i = 0; i < height; i++)
     {
@@ -1143,10 +1159,11 @@ static HRESULT WINAPI DdsDecoder_Dds_GetFrame(IWICDdsDecoder *iface,
     frame_decode->info.height_in_blocks = frame_height_in_blocks;
     frame_decode->info.pixel_format = This->info.pixel_format;
     frame_decode->info.pixel_format_bpp = get_pixel_format_bpp(This->info.pixel_format);
-    frame_decode->data = HeapAlloc(GetProcessHeap(), 0, frame_size);
+    frame_decode->block_data = HeapAlloc(GetProcessHeap(), 0, frame_size);
+    frame_decode->pixel_data = NULL;
     hr = IStream_Seek(This->stream, seek, SEEK_SET, NULL);
     if (hr != S_OK) goto end;
-    hr = IStream_Read(This->stream, frame_decode->data, frame_size, &bytesread);
+    hr = IStream_Read(This->stream, frame_decode->block_data, frame_size, &bytesread);
     if (hr != S_OK || bytesread != frame_size) {
         hr = WINCODEC_ERR_STREAMREAD;
         goto end;
