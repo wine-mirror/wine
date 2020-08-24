@@ -92,8 +92,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(module);
 
-extern IMAGE_NT_HEADERS __wine_spec_nt_header;
-
 void     (WINAPI *pDbgUiRemoteBreakin)( void *arg ) = NULL;
 NTSTATUS (WINAPI *pKiRaiseUserExceptionDispatcher)(void) = NULL;
 void     (WINAPI *pKiUserApcDispatcher)(CONTEXT*,ULONG_PTR,ULONG_PTR,ULONG_PTR,PNTAPCFUNC) = NULL;
@@ -126,7 +124,6 @@ const char *build_dir = NULL;
 const char *config_dir = NULL;
 const char **dll_paths = NULL;
 const char *user_name = NULL;
-static HMODULE ntdll_module;
 
 struct file_id
 {
@@ -158,11 +155,6 @@ static NTSTATUS add_builtin_module( void *module, void *handle, const struct sta
     else memset( &builtin->id, 0, sizeof(builtin->id) );
     list_add_tail( &builtin_modules, &builtin->entry );
     return STATUS_SUCCESS;
-}
-
-static inline void *get_rva( const IMAGE_NT_HEADERS *nt, ULONG_PTR addr )
-{
-    return (BYTE *)nt + addr;
 }
 
 /* adjust an array of pointers to make them into RVAs */
@@ -780,63 +772,15 @@ static ULONG_PTR find_named_export( HMODULE module, const IMAGE_EXPORT_DIRECTORY
     return 0;
 }
 
-static ULONG_PTR find_pe_export( HMODULE module, const IMAGE_EXPORT_DIRECTORY *exports,
-                                 const IMAGE_IMPORT_BY_NAME *name )
+static void load_ntdll_functions( HMODULE module )
 {
-    const WORD *ordinals = (const WORD *)((BYTE *)module + exports->AddressOfNameOrdinals);
-    const DWORD *names = (const DWORD *)((BYTE *)module + exports->AddressOfNames);
-
-    if (name->Hint < exports->NumberOfNames)
-    {
-        char *ename = (char *)module + names[name->Hint];
-        if (!strcmp( ename, (char *)name->Name ))
-            return find_ordinal_export( module, exports, ordinals[name->Hint] );
-    }
-    return find_named_export( module, exports, (char *)name->Name );
-}
-
-static void fixup_ntdll_imports( const IMAGE_NT_HEADERS *nt )
-{
-    const IMAGE_EXPORT_DIRECTORY *ntdll_exports = get_export_dir( ntdll_module );
-    const IMAGE_IMPORT_DESCRIPTOR *descr;
-    const IMAGE_THUNK_DATA *import_list;
-    IMAGE_THUNK_DATA *thunk_list;
+    const IMAGE_EXPORT_DIRECTORY *ntdll_exports = get_export_dir( module );
     void **ptr;
 
     assert( ntdll_exports );
 
-    descr = get_rva( nt, nt->OptionalHeader.DataDirectory[IMAGE_FILE_IMPORT_DIRECTORY].VirtualAddress );
-
-    /* ntdll must be the only import */
-    assert( !strcmp( get_rva( nt, descr->Name ), "ntdll.dll" ));
-    assert( !descr[1].Name );
-
-    thunk_list = get_rva( nt, (DWORD)descr->FirstThunk );
-    if (descr->u.OriginalFirstThunk)
-        import_list = get_rva( nt, (DWORD)descr->u.OriginalFirstThunk );
-    else
-        import_list = thunk_list;
-
-    while (import_list->u1.Ordinal)
-    {
-        if (IMAGE_SNAP_BY_ORDINAL( import_list->u1.Ordinal ))
-        {
-            int ordinal = IMAGE_ORDINAL( import_list->u1.Ordinal ) - ntdll_exports->Base;
-            thunk_list->u1.Function = find_ordinal_export( ntdll_module, ntdll_exports, ordinal );
-            if (!thunk_list->u1.Function) ERR( "ordinal %u not found\n", ordinal );
-        }
-        else  /* import by name */
-        {
-            IMAGE_IMPORT_BY_NAME *pe_name = get_rva( nt, import_list->u1.AddressOfData );
-            thunk_list->u1.Function = find_pe_export( ntdll_module, ntdll_exports, pe_name );
-            if (!thunk_list->u1.Function) ERR( "%s not found\n", pe_name->Name );
-        }
-        import_list++;
-        thunk_list++;
-    }
-
 #define GET_FUNC(name) \
-    if (!(p##name = (void *)find_named_export( ntdll_module, ntdll_exports, #name ))) \
+    if (!(p##name = (void *)find_named_export( module, ntdll_exports, #name ))) \
         ERR( "%s not found\n", #name )
 
     GET_FUNC( DbgUiRemoteBreakin );
@@ -848,7 +792,7 @@ static void fixup_ntdll_imports( const IMAGE_NT_HEADERS *nt )
     GET_FUNC( __wine_set_unix_funcs );
 #undef GET_FUNC
 #define SET_PTR(name,val) \
-    if ((ptr = (void *)find_named_export( ntdll_module, ntdll_exports, #name ))) *ptr = val; \
+    if ((ptr = (void *)find_named_export( module, ntdll_exports, #name ))) *ptr = val; \
     else ERR( "%s not found\n", #name )
 
     SET_PTR( __wine_syscall_dispatcher, __wine_syscall_dispatcher );
@@ -1294,7 +1238,7 @@ found:
 /***********************************************************************
  *           load_ntdll
  */
-static HMODULE load_ntdll(void)
+static void load_ntdll(void)
 {
     NTSTATUS status;
     void *module;
@@ -1317,7 +1261,7 @@ static HMODULE load_ntdll(void)
     }
     if (status) fatal_error( "failed to load %s error %x\n", name, status );
     free( name );
-    return module;
+    load_ntdll_functions( module );
 }
 
 
@@ -1705,9 +1649,7 @@ void __wine_main( int argc, char *argv[], char *envp[] )
 #endif
 
     virtual_init();
-
-    ntdll_module = load_ntdll();
-    fixup_ntdll_imports( &__wine_spec_nt_header );
+    load_ntdll();
 
     init_environment( argc, argv, envp );
     wine_dll_set_callback( load_builtin_callback );
