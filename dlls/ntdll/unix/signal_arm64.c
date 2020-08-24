@@ -716,6 +716,81 @@ __ASM_GLOBAL_FUNC( call_user_exception_dispatcher,
                    "br x2" )
 
 
+/***********************************************************************
+ *           handle_syscall_fault
+ *
+ * Handle a page fault happening during a system call.
+ */
+static BOOL handle_syscall_fault( ucontext_t *context, EXCEPTION_RECORD *rec )
+{
+    struct syscall_frame *frame = arm64_thread_data()->syscall_frame;
+    __WINE_FRAME *wine_frame = (__WINE_FRAME *)NtCurrentTeb()->Tib.ExceptionList;
+    DWORD i;
+
+    if (!frame) return FALSE;
+
+    TRACE( "code=%x flags=%x addr=%p pc=%p tid=%04x\n",
+           rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress,
+           (void *)PC_sig(context), GetCurrentThreadId() );
+    for (i = 0; i < rec->NumberParameters; i++)
+        TRACE( " info[%d]=%016lx\n", i, rec->ExceptionInformation[i] );
+
+    TRACE("  x0=%016lx  x1=%016lx  x2=%016lx  x3=%016lx\n",
+          (DWORD64)REGn_sig(0, context), (DWORD64)REGn_sig(1, context),
+          (DWORD64)REGn_sig(2, context), (DWORD64)REGn_sig(3, context) );
+    TRACE("  x4=%016lx  x5=%016lx  x6=%016lx  x7=%016lx\n",
+          (DWORD64)REGn_sig(4, context), (DWORD64)REGn_sig(5, context),
+          (DWORD64)REGn_sig(6, context), (DWORD64)REGn_sig(7, context) );
+    TRACE("  x8=%016lx  x9=%016lx x10=%016lx x11=%016lx\n",
+          (DWORD64)REGn_sig(8, context), (DWORD64)REGn_sig(9, context),
+          (DWORD64)REGn_sig(10, context), (DWORD64)REGn_sig(11, context) );
+    TRACE(" x12=%016lx x13=%016lx x14=%016lx x15=%016lx\n",
+          (DWORD64)REGn_sig(12, context), (DWORD64)REGn_sig(13, context),
+          (DWORD64)REGn_sig(14, context), (DWORD64)REGn_sig(15, context) );
+    TRACE(" x16=%016lx x17=%016lx x18=%016lx x19=%016lx\n",
+          (DWORD64)REGn_sig(16, context), (DWORD64)REGn_sig(17, context),
+          (DWORD64)REGn_sig(18, context), (DWORD64)REGn_sig(19, context) );
+    TRACE(" x20=%016lx x21=%016lx x22=%016lx x23=%016lx\n",
+          (DWORD64)REGn_sig(20, context), (DWORD64)REGn_sig(21, context),
+          (DWORD64)REGn_sig(22, context), (DWORD64)REGn_sig(23, context) );
+    TRACE(" x24=%016lx x25=%016lx x26=%016lx x27=%016lx\n",
+          (DWORD64)REGn_sig(24, context), (DWORD64)REGn_sig(25, context),
+          (DWORD64)REGn_sig(26, context), (DWORD64)REGn_sig(27, context) );
+    TRACE(" x28=%016lx  fp=%016lx  lr=%016lx  sp=%016lx\n",
+          (DWORD64)REGn_sig(28, context), (DWORD64)FP_sig(context),
+          (DWORD64)LR_sig(context), (DWORD64)SP_sig(context) );
+
+    if ((char *)wine_frame < (char *)frame)
+    {
+        TRACE( "returning to handler\n" );
+        REGn_sig(0, context) = (ULONG_PTR)&wine_frame->jmp;
+        REGn_sig(1, context) = 1;
+        PC_sig(context)      = (ULONG_PTR)__wine_longjmp;
+    }
+    else
+    {
+        TRACE( "returning to user mode ip=%p ret=%08x\n", (void *)frame->ret_addr, rec->ExceptionCode );
+        REGn_sig(0, context)  = rec->ExceptionCode;
+        REGn_sig(19, context) = frame->x19;
+        REGn_sig(20, context) = frame->x20;
+        REGn_sig(21, context) = frame->x21;
+        REGn_sig(22, context) = frame->x22;
+        REGn_sig(23, context) = frame->x23;
+        REGn_sig(24, context) = frame->x24;
+        REGn_sig(25, context) = frame->x25;
+        REGn_sig(26, context) = frame->x26;
+        REGn_sig(27, context) = frame->x27;
+        REGn_sig(28, context) = frame->x28;
+        FP_sig(context)       = frame->x29;
+        LR_sig(context)       = frame->ret_addr;
+        SP_sig(context)       = (DWORD)&frame->thunk_x29;
+        PC_sig(context)       = frame->thunk_addr;
+        arm64_thread_data()->syscall_frame = frame->prev_frame;
+    }
+    return TRUE;
+}
+
+
 /**********************************************************************
  *		segv_handler
  *
@@ -732,6 +807,7 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     rec.ExceptionCode = virtual_handle_fault( siginfo->si_addr, rec.ExceptionInformation[0],
                                               (void *)SP_sig(context) );
     if (!rec.ExceptionCode) return;
+    if (handle_syscall_fault( context, &rec )) return;
     setup_exception( context, &rec );
 }
 

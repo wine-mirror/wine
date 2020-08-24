@@ -2204,6 +2204,68 @@ static inline BOOL handle_interrupt( ucontext_t *sigcontext, EXCEPTION_RECORD *r
     return TRUE;
 }
 
+
+/***********************************************************************
+ *           handle_syscall_fault
+ *
+ * Handle a page fault happening during a system call.
+ */
+static BOOL handle_syscall_fault( ucontext_t *sigcontext, EXCEPTION_RECORD *rec, CONTEXT *context )
+{
+    struct syscall_frame *frame = amd64_thread_data()->syscall_frame;
+    __WINE_FRAME *wine_frame = (__WINE_FRAME *)NtCurrentTeb()->Tib.ExceptionList;
+    DWORD i;
+
+    if (!frame) return FALSE;
+
+    TRACE( "code=%x flags=%x addr=%p ip=%lx tid=%04x\n",
+           rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress,
+           context->Rip, GetCurrentThreadId() );
+    for (i = 0; i < rec->NumberParameters; i++)
+        TRACE( " info[%d]=%016lx\n", i, rec->ExceptionInformation[i] );
+    TRACE(" rax=%016lx rbx=%016lx rcx=%016lx rdx=%016lx\n",
+          context->Rax, context->Rbx, context->Rcx, context->Rdx );
+    TRACE(" rsi=%016lx rdi=%016lx rbp=%016lx rsp=%016lx\n",
+          context->Rsi, context->Rdi, context->Rbp, context->Rsp );
+    TRACE("  r8=%016lx  r9=%016lx r10=%016lx r11=%016lx\n",
+          context->R8, context->R9, context->R10, context->R11 );
+    TRACE(" r12=%016lx r13=%016lx r14=%016lx r15=%016lx\n",
+          context->R12, context->R13, context->R14, context->R15 );
+
+    if ((char *)wine_frame < (char *)frame)
+    {
+        TRACE( "returning to handler\n" );
+        RCX_sig(sigcontext) = (ULONG_PTR)&wine_frame->jmp;
+        RDX_sig(sigcontext) = 1;
+        RIP_sig(sigcontext) = (ULONG_PTR)__wine_longjmp;
+    }
+    else
+    {
+        XMM_SAVE_AREA32 *fpu = FPU_sig(sigcontext);
+
+        TRACE( "returning to user mode ip=%016lx ret=%08x\n", frame->ret_addr, rec->ExceptionCode );
+        RAX_sig(sigcontext) = rec->ExceptionCode;
+        RBX_sig(sigcontext) = frame->rbx;
+        RSI_sig(sigcontext) = frame->rsi;
+        RDI_sig(sigcontext) = frame->rdi;
+        RBP_sig(sigcontext) = frame->rbp;
+        R12_sig(sigcontext) = frame->r12;
+        R13_sig(sigcontext) = frame->r13;
+        R14_sig(sigcontext) = frame->r14;
+        R15_sig(sigcontext) = frame->r15;
+        RSP_sig(sigcontext) = (ULONG_PTR)&frame->ret_addr;
+        RIP_sig(sigcontext) = frame->thunk_addr;
+        if (fpu)
+        {
+            fpu->MxCsr =frame->mxcsr;
+            memcpy( fpu->XmmRegisters + 6, frame->xmm, sizeof(frame->xmm) );
+        }
+        amd64_thread_data()->syscall_frame = frame->prev_frame;
+    }
+    return TRUE;
+}
+
+
 /**********************************************************************
  *		segv_handler
  *
@@ -2267,6 +2329,7 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         rec.ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
         break;
     }
+    if (handle_syscall_fault( sigcontext, &rec, &context.c )) return;
     setup_raise_exception( sigcontext, &rec, &context );
 }
 

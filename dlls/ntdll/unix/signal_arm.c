@@ -656,6 +656,64 @@ __ASM_GLOBAL_FUNC( call_user_exception_dispatcher,
                    "bx r2" )
 
 
+/***********************************************************************
+ *           handle_syscall_fault
+ *
+ * Handle a page fault happening during a system call.
+ */
+static BOOL handle_syscall_fault( ucontext_t *context, EXCEPTION_RECORD *rec )
+{
+    struct syscall_frame *frame = arm_thread_data()->syscall_frame;
+    __WINE_FRAME *wine_frame = (__WINE_FRAME *)NtCurrentTeb()->Tib.ExceptionList;
+    DWORD i;
+
+    if (!frame) return FALSE;
+
+    TRACE( "code=%x flags=%x addr=%p pc=%08x tid=%04x\n",
+           rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress,
+           (DWORD)PC_sig(context), GetCurrentThreadId() );
+    for (i = 0; i < rec->NumberParameters; i++)
+        TRACE( " info[%d]=%08lx\n", i, rec->ExceptionInformation[i] );
+
+    TRACE( " r0=%08x r1=%08x r2=%08x r3=%08x r4=%08x r5=%08x\n",
+           (DWORD)REGn_sig(0, context), (DWORD)REGn_sig(1, context), (DWORD)REGn_sig(2, context),
+           (DWORD)REGn_sig(3, context), (DWORD)REGn_sig(4, context), (DWORD)REGn_sig(5, context) );
+    TRACE( " r6=%08x r7=%08x r8=%08x r9=%08x r10=%08x r11=%08x\n",
+           (DWORD)REGn_sig(6, context), (DWORD)REGn_sig(7, context), (DWORD)REGn_sig(8, context),
+           (DWORD)REGn_sig(9, context), (DWORD)REGn_sig(10, context), (DWORD)FP_sig(context) );
+    TRACE( " r12=%08x sp=%08x lr=%08x pc=%08x cpsr=%08x\n",
+           (DWORD)IP_sig(context), (DWORD)SP_sig(context), (DWORD)LR_sig(context),
+           (DWORD)PC_sig(context), (DWORD)CPSR_sig(context) );
+
+    if ((char *)wine_frame < (char *)frame)
+    {
+        TRACE( "returning to handler\n" );
+        REGn_sig(0, context) = (DWORD)&wine_frame->jmp;
+        REGn_sig(1, context) = 1;
+        PC_sig(context)      = (DWORD)__wine_longjmp;
+    }
+    else
+    {
+        TRACE( "returning to user mode ip=%08x ret=%08x\n", frame->ret_addr, rec->ExceptionCode );
+        REGn_sig(0, context)  = rec->ExceptionCode;
+        REGn_sig(4, context)  = frame->r4;
+        REGn_sig(5, context)  = frame->r5;
+        REGn_sig(6, context)  = frame->r6;
+        REGn_sig(7, context)  = frame->r7;
+        REGn_sig(8, context)  = frame->r8;
+        REGn_sig(9, context)  = frame->r9;
+        REGn_sig(10, context) = frame->r10;
+        FP_sig(context)       = frame->r11;
+        LR_sig(context)       = frame->thunk_addr;
+        SP_sig(context)       = (DWORD)&frame->r4;
+        PC_sig(context)       = frame->thunk_addr;
+        CPSR_sig(context)     = frame->cpsr;
+        arm_thread_data()->syscall_frame = frame->prev_frame;
+    }
+    return TRUE;
+}
+
+
 /**********************************************************************
  *		segv_handler
  *
@@ -693,6 +751,7 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         rec.ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
         break;
     }
+    if (handle_syscall_fault( context, &rec )) return;
     setup_exception( context, &rec );
 }
 

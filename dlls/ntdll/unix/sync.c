@@ -1362,16 +1362,8 @@ NTSTATUS WINAPI NtDelayExecution( BOOLEAN alertable, const LARGE_INTEGER *timeou
  */
 NTSTATUS WINAPI NtQueryPerformanceCounter( LARGE_INTEGER *counter, LARGE_INTEGER *frequency )
 {
-    __TRY
-    {
-        counter->QuadPart = monotonic_counter();
-        if (frequency) frequency->QuadPart = TICKSPERSEC;
-    }
-    __EXCEPT_PAGE_FAULT
-    {
-        return STATUS_ACCESS_VIOLATION;
-    }
-    __ENDTRY
+    counter->QuadPart = monotonic_counter();
+    if (frequency) frequency->QuadPart = TICKSPERSEC;
     return STATUS_SUCCESS;
 }
 

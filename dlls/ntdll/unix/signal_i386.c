@@ -1755,6 +1755,66 @@ static BOOL handle_interrupt( unsigned int interrupt, ucontext_t *sigcontext, vo
 }
 
 
+/***********************************************************************
+ *           handle_syscall_fault
+ *
+ * Handle a page fault happening during a system call.
+ */
+static BOOL handle_syscall_fault( ucontext_t *sigcontext, void *stack_ptr,
+                                  EXCEPTION_RECORD *rec, CONTEXT *context )
+{
+    struct syscall_frame *frame = x86_thread_data()->syscall_frame;
+    __WINE_FRAME *wine_frame = (__WINE_FRAME *)NtCurrentTeb()->Tib.ExceptionList;
+    DWORD i;
+
+    if (!frame) return FALSE;
+
+    TRACE( "code=%x flags=%x addr=%p ip=%08x tid=%04x\n",
+           rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress,
+           context->Eip, GetCurrentThreadId() );
+    for (i = 0; i < rec->NumberParameters; i++)
+        TRACE( " info[%d]=%08lx\n", i, rec->ExceptionInformation[i] );
+    TRACE(" eax=%08x ebx=%08x ecx=%08x edx=%08x esi=%08x edi=%08x\n",
+          context->Eax, context->Ebx, context->Ecx,
+          context->Edx, context->Esi, context->Edi );
+    TRACE(" ebp=%08x esp=%08x cs=%04x ds=%04x es=%04x fs=%04x gs=%04x flags=%08x\n",
+          context->Ebp, context->Esp, context->SegCs, context->SegDs,
+          context->SegEs, context->SegFs, context->SegGs, context->EFlags );
+
+    if ((char *)wine_frame < (char *)frame)
+    {
+        /* stack frame for calling __wine_longjmp */
+        struct
+        {
+            int             retval;
+            __wine_jmp_buf *jmp;
+            void           *retaddr;
+        } *stack;
+
+        TRACE( "returning to handler\n" );
+        stack = virtual_setup_exception( stack_ptr, sizeof(*stack), rec );
+        stack->retval  = 1;
+        stack->jmp     = &wine_frame->jmp;
+        stack->retaddr = (void *)0xdeadbabe;
+        ESP_sig(sigcontext) = (DWORD)stack;
+        EIP_sig(sigcontext) = (DWORD)__wine_longjmp;
+    }
+    else
+    {
+        TRACE( "returning to user mode ip=%08x ret=%08x\n", frame->ret_addr, rec->ExceptionCode );
+        EAX_sig(sigcontext) = rec->ExceptionCode;
+        EBX_sig(sigcontext) = frame->ebx;
+        ESI_sig(sigcontext) = frame->esi;
+        EDI_sig(sigcontext) = frame->edi;
+        EBP_sig(sigcontext) = frame->ebp;
+        ESP_sig(sigcontext) = (DWORD)&frame->ret_addr;
+        EIP_sig(sigcontext) = frame->thunk_addr;
+        x86_thread_data()->syscall_frame = frame->prev_frame;
+    }
+    return TRUE;
+}
+
+
 /**********************************************************************
  *		segv_handler
  *
@@ -1840,6 +1900,7 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         rec.ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
         break;
     }
+    if (handle_syscall_fault( ucontext, stack, &rec, &xcontext.c )) return;
     setup_raise_exception( ucontext, stack, &rec, &xcontext );
 }
 
