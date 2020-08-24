@@ -67,6 +67,12 @@ static NTSTATUS console_input_ioctl( struct console *console, unsigned int code,
             return STATUS_SUCCESS;
         }
 
+    case IOCTL_CONDRV_SET_MODE:
+        if (in_size != sizeof(unsigned int) || *out_size) return STATUS_INVALID_PARAMETER;
+        console->mode = *(unsigned int *)in_data;
+        TRACE( "set %x mode\n", console->mode );
+        return STATUS_SUCCESS;
+
     default:
         FIXME( "unsupported ioctl %x\n", code );
         return STATUS_NOT_SUPPORTED;
