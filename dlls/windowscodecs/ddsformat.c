@@ -50,6 +50,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
     ((DWORD)(BYTE)(ch2) << 16) | ((DWORD)(BYTE)(ch3) << 24 ))
 #endif
 
+#define GET_RGB565_R(color)   ((BYTE)(((color) >> 11) & 0x1F))
+#define GET_RGB565_G(color)   ((BYTE)(((color) >> 5)  & 0x3F))
+#define GET_RGB565_B(color)   ((BYTE)(((color) >> 0)  & 0x1F))
+#define MAKE_RGB565(r, g, b)  ((WORD)(((BYTE)(r) << 11) | ((BYTE)(g) << 5) | (BYTE)(b)))
+#define MAKE_ARGB(a, r, g, b) (((DWORD)(a) << 24) | ((DWORD)(r) << 16) | ((DWORD)(g) << 8) | (DWORD)(b))
+
 #define DDPF_ALPHAPIXELS     0x00000001
 #define DDPF_ALPHA           0x00000002
 #define DDPF_FOURCC          0x00000004
@@ -210,6 +216,13 @@ static DXGI_FORMAT compressed_formats[] = {
 };
 
 static HRESULT WINAPI DdsDecoder_Dds_GetFrame(IWICDdsDecoder *, UINT, UINT, UINT, IWICBitmapFrameDecode **);
+
+static DWORD rgb565_to_argb(WORD color, BYTE alpha)
+{
+    return MAKE_ARGB(alpha, (GET_RGB565_R(color) * 0xFF + 0x0F) / 0x1F,
+                            (GET_RGB565_G(color) * 0xFF + 0x1F) / 0x3F,
+                            (GET_RGB565_B(color) * 0xFF + 0x0F) / 0x1F);
+}
 
 static inline BOOL has_extended_header(DDS_HEADER *header)
 {
@@ -470,6 +483,117 @@ end:
     return bpp;
 }
 
+static void decode_block(const BYTE *block_data, UINT block_count, DXGI_FORMAT format,
+                         UINT width, UINT height, DWORD *buffer)
+{
+    const BYTE *block, *color_indices, *alpha_indices, *alpha_table;
+    int i, j, x, y, block_x, block_y, color_index, alpha_index;
+    int block_size, color_offset, color_indices_offset;
+    WORD color[4], color_value = 0;
+    BYTE alpha[8], alpha_value = 0;
+
+    if (format == DXGI_FORMAT_BC1_UNORM) {
+        block_size = 8;
+        color_offset = 0;
+        color_indices_offset = 4;
+    } else {
+        block_size = 16;
+        color_offset = 8;
+        color_indices_offset = 12;
+    }
+    block_x = 0;
+    block_y = 0;
+
+    for (i = 0; i < block_count; i++)
+    {
+        block = block_data + i * block_size;
+
+        color[0] = *((WORD *)(block + color_offset));
+        color[1] = *((WORD *)(block + color_offset + 2));
+        color[2] = MAKE_RGB565(((GET_RGB565_R(color[0]) * 2 + GET_RGB565_R(color[1]) + 1) / 3),
+                               ((GET_RGB565_G(color[0]) * 2 + GET_RGB565_G(color[1]) + 1) / 3),
+                               ((GET_RGB565_B(color[0]) * 2 + GET_RGB565_B(color[1]) + 1) / 3));
+        color[3] = MAKE_RGB565(((GET_RGB565_R(color[0]) + GET_RGB565_R(color[1]) * 2 + 1) / 3),
+                               ((GET_RGB565_G(color[0]) + GET_RGB565_G(color[1]) * 2 + 1) / 3),
+                               ((GET_RGB565_B(color[0]) + GET_RGB565_B(color[1]) * 2 + 1) / 3));
+
+        switch (format)
+        {
+            case DXGI_FORMAT_BC1_UNORM:
+                if (color[0] <= color[1]) {
+                    color[2] = MAKE_RGB565(((GET_RGB565_R(color[0]) + GET_RGB565_R(color[1]) + 1) / 2),
+                                           ((GET_RGB565_G(color[0]) + GET_RGB565_G(color[1]) + 1) / 2),
+                                           ((GET_RGB565_B(color[0]) + GET_RGB565_B(color[1]) + 1) / 2));
+                    color[3] = 0;
+                }
+                break;
+            case DXGI_FORMAT_BC2_UNORM:
+                alpha_table = block;
+                break;
+            case DXGI_FORMAT_BC3_UNORM:
+                alpha[0] = *block;
+                alpha[1] = *(block + 1);
+                if (alpha[0] > alpha[1]) {
+                    for (j = 2; j < 8; j++)
+                    {
+                        alpha[j] = (BYTE)((alpha[0] * (8 - j) + alpha[1] * (j - 1) + 3) / 7);
+                    }
+                } else {
+                    for (j = 2; j < 6; j++)
+                    {
+                        alpha[j] = (BYTE)((alpha[0] * (6 - j) + alpha[1] * (j - 1) + 2) / 5);
+                    }
+                    alpha[6] = 0;
+                    alpha[7] = 0xFF;
+                }
+                alpha_indices = block + 2;
+                break;
+            default:
+                break;
+        }
+
+        color_indices = block + color_indices_offset;
+        for (j = 0; j < 16; j++)
+        {
+            x = block_x + j % 4;
+            y = block_y + j / 4;
+            if (x >= width || y >= height) continue;
+
+            color_index = (color_indices[j / 4] >> ((j % 4) * 2)) & 0x3;
+            color_value = color[color_index];
+
+            switch (format)
+            {
+                case DXGI_FORMAT_BC1_UNORM:
+                    if ((color[0] <= color[1]) && !color_value) {
+                        color_value = 0;
+                        alpha_value = 0;
+                    } else {
+                        alpha_value = 0xFF;
+                    }
+                    break;
+                case DXGI_FORMAT_BC2_UNORM:
+                    alpha_value = (alpha_table[j / 2] >> (j % 2) * 4) & 0xF;
+                    alpha_value = (BYTE)((alpha_value * 0xFF + 0x7)/ 0xF);
+                    break;
+                case DXGI_FORMAT_BC3_UNORM:
+                    alpha_index = (*((DWORD *)(alpha_indices + (j / 8) * 3)) >> ((j % 8) * 3)) & 0x7;
+                    alpha_value = alpha[alpha_index];
+                    break;
+                default:
+                    break;
+            }
+            buffer[x + y * width] = rgb565_to_argb(color_value, alpha_value);
+        }
+
+        block_x += DDS_BLOCK_WIDTH;
+        if (block_x >= width) {
+            block_x = 0;
+            block_y += DDS_BLOCK_HEIGHT;
+        }
+    }
+}
+
 static inline DdsDecoder *impl_from_IWICBitmapDecoder(IWICBitmapDecoder *iface)
 {
     return CONTAINING_RECORD(iface, DdsDecoder, IWICBitmapDecoder_iface);
@@ -629,6 +753,8 @@ static HRESULT WINAPI DdsFrameDecode_CopyPixels(IWICBitmapFrameDecode *iface,
             hr = E_OUTOFMEMORY;
             goto end;
         }
+        decode_block(This->block_data, This->info.width_in_blocks * This->info.height_in_blocks, This->info.format,
+                     This->info.width, This->info.height, (DWORD *)This->pixel_data);
     }
 
     hr = copy_pixels(bpp, This->pixel_data, This->info.width, This->info.height, frame_stride,

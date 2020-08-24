@@ -1116,7 +1116,6 @@ static void test_dds_decoder_frame_data(IWICBitmapFrameDecode* frame, IWICDdsFra
         hr = IWICBitmapFrameDecode_CopyPixels(frame, &rect, stride, sizeof(buffer), buffer);
         ok(hr == S_OK, "Test %u, frame %u: CopyPixels failed, hr %#x\n", i, frame_index, hr);
         if (hr == S_OK) {
-            todo_wine
             ok(color_buffer_match((DWORD *)pixels, (DWORD *)buffer, 1),
                "Test %u, frame %u: Pixels mismatch\n", i, frame_index);
         }
@@ -1124,7 +1123,6 @@ static void test_dds_decoder_frame_data(IWICBitmapFrameDecode* frame, IWICDdsFra
         hr = IWICBitmapFrameDecode_CopyPixels(frame, NULL, frame_stride, sizeof(buffer), buffer);
         ok(hr == S_OK, "Test %u, frame %u: CopyPixels failed, hr %#x\n", i, frame_index, hr);
         if (hr == S_OK) {
-            todo_wine
             ok(color_buffer_match((DWORD *)pixels, (DWORD *)buffer, frame_size / (bpp / 8)),
               "Test %u, frame %u: Pixels mismatch\n", i, frame_index);
         }
