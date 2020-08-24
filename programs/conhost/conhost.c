@@ -35,11 +35,18 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(conhost);
 
+struct history_line
+{
+    size_t len;
+    WCHAR  text[1];
+};
+
 struct console
 {
     HANDLE                server;        /* console server handle */
     unsigned int          mode;          /* input mode */
     unsigned int          recnum;        /* number of input records */
+    struct history_line **history;       /* lines history */
     unsigned int          history_size;  /* number of entries in history array */
     unsigned int          history_index; /* number of used entries in history array */
     unsigned int          history_mode;  /* mode of history (non zero means remove doubled strings */
@@ -99,6 +106,63 @@ static NTSTATUS console_input_ioctl( struct console *console, unsigned int code,
             info->output_cp     = console->output_cp;
             info->win           = console->win;
             info->input_count   = console->recnum;
+            return STATUS_SUCCESS;
+        }
+
+    case IOCTL_CONDRV_SET_INPUT_INFO:
+        {
+            const struct condrv_input_info_params *params = in_data;
+            TRACE( "set info\n" );
+            if (in_size != sizeof(*params) || *out_size) return STATUS_INVALID_PARAMETER;
+            if (params->mask & SET_CONSOLE_INPUT_INFO_HISTORY_MODE)
+            {
+                console->history_mode = params->info.history_mode;
+            }
+            if ((params->mask & SET_CONSOLE_INPUT_INFO_HISTORY_SIZE) &&
+                console->history_size != params->info.history_size)
+            {
+                struct history_line **mem = NULL;
+                int i, delta;
+
+                if (params->info.history_size)
+                {
+                    if (!(mem = malloc( params->info.history_size * sizeof(*mem) )))
+                        return STATUS_NO_MEMORY;
+                    memset( mem, 0, params->info.history_size * sizeof(*mem) );
+                }
+
+                delta = (console->history_index > params->info.history_size)
+                    ? (console->history_index - params->info.history_size) : 0;
+
+                for (i = delta; i < console->history_index; i++)
+                {
+                    mem[i - delta] = console->history[i];
+                    console->history[i] = NULL;
+                }
+                console->history_index -= delta;
+
+                for (i = 0; i < console->history_size; i++)
+                    free( console->history[i] );
+                free( console->history );
+                console->history = mem;
+                console->history_size = params->info.history_size;
+            }
+            if (params->mask & SET_CONSOLE_INPUT_INFO_EDITION_MODE)
+            {
+                console->edition_mode = params->info.edition_mode;
+            }
+            if (params->mask & SET_CONSOLE_INPUT_INFO_INPUT_CODEPAGE)
+            {
+                console->input_cp = params->info.input_cp;
+            }
+            if (params->mask & SET_CONSOLE_INPUT_INFO_OUTPUT_CODEPAGE)
+            {
+                console->output_cp = params->info.output_cp;
+            }
+            if (params->mask & SET_CONSOLE_INPUT_INFO_WIN)
+            {
+                console->win = params->info.win;
+            }
             return STATUS_SUCCESS;
         }
 
@@ -218,6 +282,7 @@ int __cdecl wmain(int argc, WCHAR *argv[])
                    ENABLE_QUICK_EDIT_MODE | ENABLE_EXTENDED_FLAGS | ENABLE_AUTO_POSITION;
     console.input_cp = console.output_cp = GetOEMCP();
     console.history_size = 50;
+    if (!(console.history = calloc( console.history_size, sizeof(*console.history) ))) return 1;
 
     for (i = 1; i < argc; i++)
     {
