@@ -126,6 +126,7 @@ typedef struct {
 
     HRESULT number;
     BSTR source;
+    BSTR desc;
 
     BOOLEAN info_filled;
 } ScriptError;
@@ -2132,6 +2133,7 @@ static void fill_error_info(ScriptError *error)
 
     error->number = info.scode;
     error->source = info.bstrSource;
+    error->desc = info.bstrDescription;
 }
 
 static HRESULT WINAPI ScriptError_QueryInterface(IScriptError *iface, REFIID riid, void **ppv)
@@ -2267,9 +2269,11 @@ static HRESULT WINAPI ScriptError_get_Description(IScriptError *iface, BSTR *pbs
 {
     ScriptError *This = impl_from_IScriptError(iface);
 
-    FIXME("(%p)->(%p)\n", This, pbstrDescription);
+    TRACE("(%p)->(%p)\n", This, pbstrDescription);
 
-    return E_NOTIMPL;
+    fill_error_info(This);
+    *pbstrDescription = SysAllocString(This->desc);
+    return S_OK;
 }
 
 static HRESULT WINAPI ScriptError_get_HelpFile(IScriptError *iface, BSTR *pbstrHelpFile)
@@ -2329,9 +2333,11 @@ static HRESULT WINAPI ScriptError_Clear(IScriptError *iface)
         This->object = NULL;
     }
     SysFreeString(This->source);
+    SysFreeString(This->desc);
 
     This->number = 0;
     This->source = NULL;
+    This->desc = NULL;
 
     This->info_filled = FALSE;
     return S_OK;
