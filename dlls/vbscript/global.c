@@ -961,8 +961,11 @@ static HRESULT Global_IsNumeric(BuiltinDisp *This, VARIANT *arg, unsigned args_c
 
 static HRESULT Global_IsArray(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("(%s)\n", debugstr_variant(arg));
+
+    assert(args_cnt == 1);
+
+    return return_bool(res, V_ISARRAY(arg));
 }
 
 static HRESULT Global_IsObject(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)

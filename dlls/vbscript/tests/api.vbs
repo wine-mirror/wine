@@ -223,6 +223,21 @@ arr(0) = 2
 arr(1) = 3
 Call ok(not isNumeric(arr), "isNumeric(arr) is not true?")
 
+Call ok(isArray(arr), "isArray(arr) is not true?")
+x = Array()
+Call ok(isArray(arr), "isArray(Array()) is not true?")
+Call ok(not isArray(Empty), "isArray(empty) is true?")
+Call ok(not isArray(Null), "isArray(Null) is true?")
+Call ok(not isArray(42), "isArray(42) is true?")
+Call ok(not isArray(CSng(3242.4)), "isArray(CSng(3242.4)) is true?")
+Call ok(not isArray(CCur(32768.4)), "isArray(CCur(32768.4)) is true?")
+Call ok(not isArray("44"), "isArray(""44"") is true?")
+Call ok(not isArray("rwrf"), "isArray(""rwrf"") is true?")
+Call ok(not isArray(Nothing), "isArray(Nothing) is true?")
+Call ok(not isArray(New EmptyClass), "isArray(New EmptyClass) is true?")
+Call ok(not isArray(true), "isArray(true) is true?")
+Call ok(not isArray(CByte(32)), "isArray(CByte(32)) is true?")
+
 Call ok(getVT(Array()) = "VT_ARRAY|VT_VARIANT", "getVT(Array()) = " & getVT(Array()))
 x = Array("a1", 2, "a3")
 Call ok(getVT(x) = "VT_ARRAY|VT_VARIANT*", "getVT(array) = " & getVT(x))
