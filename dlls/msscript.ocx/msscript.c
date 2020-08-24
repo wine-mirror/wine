@@ -125,12 +125,14 @@ typedef struct {
     LONG ref;
 
     HRESULT number;
+    BSTR text;
     BSTR source;
     BSTR desc;
     BSTR help_file;
     DWORD help_context;
 
     BOOLEAN info_filled;
+    BOOLEAN text_filled;
 } ScriptError;
 
 struct ScriptHost {
@@ -2140,6 +2142,15 @@ static void fill_error_info(ScriptError *error)
     error->help_context = info.dwHelpContext;
 }
 
+static void fill_error_text(ScriptError *error)
+{
+    if (error->text_filled) return;
+    error->text_filled = TRUE;
+
+    if (error->object)
+        IActiveScriptError_GetSourceLineText(error->object, &error->text);
+}
+
 static HRESULT WINAPI ScriptError_QueryInterface(IScriptError *iface, REFIID riid, void **ppv)
 {
     ScriptError *This = impl_from_IScriptError(iface);
@@ -2306,9 +2317,11 @@ static HRESULT WINAPI ScriptError_get_Text(IScriptError *iface, BSTR *pbstrText)
 {
     ScriptError *This = impl_from_IScriptError(iface);
 
-    FIXME("(%p)->(%p)\n", This, pbstrText);
+    TRACE("(%p)->(%p)\n", This, pbstrText);
 
-    return E_NOTIMPL;
+    fill_error_text(This);
+    *pbstrText = SysAllocString(This->text);
+    return S_OK;
 }
 
 static HRESULT WINAPI ScriptError_get_Line(IScriptError *iface, LONG *plLine)
@@ -2340,17 +2353,20 @@ static HRESULT WINAPI ScriptError_Clear(IScriptError *iface)
         IActiveScriptError_Release(This->object);
         This->object = NULL;
     }
+    SysFreeString(This->text);
     SysFreeString(This->source);
     SysFreeString(This->desc);
     SysFreeString(This->help_file);
 
     This->number = 0;
+    This->text = NULL;
     This->source = NULL;
     This->desc = NULL;
     This->help_file = NULL;
     This->help_context = 0;
 
     This->info_filled = FALSE;
+    This->text_filled = FALSE;
     return S_OK;
 }
 
