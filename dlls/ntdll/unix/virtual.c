@@ -92,6 +92,8 @@ struct file_view
     unsigned int  protect;       /* protection for all pages at allocation time and SEC_* flags */
 };
 
+#define __EXCEPT_SYSCALL __EXCEPT_HANDLER(0)
+
 /* per-page protection flags */
 #define VPROT_READ       0x01
 #define VPROT_WRITE      0x02
@@ -3142,7 +3144,7 @@ BOOL virtual_check_buffer_for_read( const void *ptr, SIZE_T size )
         dummy = p[0];
         dummy = p[count - 1];
     }
-    __EXCEPT_PAGE_FAULT
+    __EXCEPT_SYSCALL
     {
         return FALSE;
     }
@@ -3175,7 +3177,7 @@ BOOL virtual_check_buffer_for_write( void *ptr, SIZE_T size )
         p[0] |= 0;
         p[count - 1] |= 0;
     }
-    __EXCEPT_PAGE_FAULT
+    __EXCEPT_SYSCALL
     {
         return FALSE;
     }
@@ -3197,7 +3199,7 @@ BOOL WINAPI IsBadStringPtrA( LPCSTR str, UINT_PTR max )
         volatile const char *p = str;
         while (p != str + max) if (!*p++) break;
     }
-    __EXCEPT_PAGE_FAULT
+    __EXCEPT_SYSCALL
     {
         return TRUE;
     }
@@ -3219,7 +3221,7 @@ BOOL WINAPI IsBadStringPtrW( LPCWSTR str, UINT_PTR max )
         volatile const WCHAR *p = str;
         while (p != str + max) if (!*p++) break;
     }
-    __EXCEPT_PAGE_FAULT
+    __EXCEPT_SYSCALL
     {
         return TRUE;
     }
