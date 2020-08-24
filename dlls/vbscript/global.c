@@ -2203,6 +2203,9 @@ static HRESULT Global_TypeName(BuiltinDisp *This, VARIANT *arg, unsigned args_cn
 
     assert(args_cnt == 1);
 
+    if (V_ISARRAY(arg))
+        return return_string(res, L"Variant()");
+
     switch(V_VT(arg)) {
         case VT_UI1:
             return return_string(res, ByteW);
