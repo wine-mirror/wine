@@ -73,6 +73,23 @@ static void *alloc_ioctl_buffer( size_t size )
     return ioctl_buffer;
 }
 
+static NTSTATUS set_console_title( struct console *console, const WCHAR *in_title, size_t size )
+{
+    WCHAR *title = NULL;
+
+    TRACE( "%s\n", debugstr_wn(in_title, size) );
+
+    if (size)
+    {
+        if (!(title = malloc( size ))) return STATUS_NO_MEMORY;
+        memcpy( title, in_title, size );
+    }
+    free( console->title );
+    console->title     = title;
+    console->title_len = size;
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS console_input_ioctl( struct console *console, unsigned int code, const void *in_data,
                                      size_t in_size, size_t *out_size )
 {
@@ -179,6 +196,10 @@ static NTSTATUS console_input_ioctl( struct console *console, unsigned int code,
             if (*out_size) memcpy( result, console->title, *out_size );
             return STATUS_SUCCESS;
         }
+
+    case IOCTL_CONDRV_SET_TITLE:
+        if (in_size % sizeof(WCHAR) || *out_size) return STATUS_INVALID_PARAMETER;
+        return set_console_title( console, in_data, in_size );
 
     default:
         FIXME( "unsupported ioctl %x\n", code );

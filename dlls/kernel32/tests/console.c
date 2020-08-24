@@ -3966,6 +3966,8 @@ static void test_pseudo_console_child(HANDLE input)
 
     ret = SetConsoleMode(input, mode | ENABLE_AUTO_POSITION);
     ok(ret, "SetConsoleMode failed: %u\n", GetLastError());
+
+    test_console_title();
 }
 
 static DWORD WINAPI read_pipe_proc( void *handle )
