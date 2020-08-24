@@ -607,20 +607,19 @@ static HRESULT WINAPI DdsFrameDecode_CopyPixels(IWICBitmapFrameDecode *iface,
     if (!prc) {
         if (cbStride < frame_stride) return E_INVALIDARG;
         if (cbBufferSize < frame_size) return WINCODEC_ERR_INSUFFICIENTBUFFER;
-        return S_OK;
+    } else {
+        x = prc->X;
+        y = prc->Y;
+        width = prc->Width;
+        height = prc->Height;
+        if (x < 0 || y < 0 || width <= 0 || height <= 0 ||
+            x + width > This->info.width ||
+            y + height > This->info.height) {
+            return E_INVALIDARG;
+        }
+        if (cbStride < width * bpp / 8) return E_INVALIDARG;
+        if (cbBufferSize < cbStride * height) return WINCODEC_ERR_INSUFFICIENTBUFFER;
     }
-
-    x = prc->X;
-    y = prc->Y;
-    width = prc->Width;
-    height = prc->Height;
-    if (x < 0 || y < 0 || width <= 0 || height <= 0 ||
-        x + width > This->info.width ||
-        y + height > This->info.height) {
-        return E_INVALIDARG;
-    }
-    if (cbStride < width * bpp / 8) return E_INVALIDARG;
-    if (cbBufferSize < cbStride * height) return WINCODEC_ERR_INSUFFICIENTBUFFER;
 
     EnterCriticalSection(&This->lock);
 
@@ -631,6 +630,9 @@ static HRESULT WINAPI DdsFrameDecode_CopyPixels(IWICBitmapFrameDecode *iface,
             goto end;
         }
     }
+
+    hr = copy_pixels(bpp, This->pixel_data, This->info.width, This->info.height, frame_stride,
+                     prc, cbStride, cbBufferSize, pbBuffer);
 
 end:
     LeaveCriticalSection(&This->lock);
