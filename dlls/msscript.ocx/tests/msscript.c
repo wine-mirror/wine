@@ -106,6 +106,10 @@ DEFINE_EXPECT(GetTypeInfo);
 DEFINE_EXPECT(GetIDsOfNames);
 DEFINE_EXPECT(Invoke);
 DEFINE_EXPECT(InvokeEx);
+DEFINE_EXPECT(DeferredFillIn);
+DEFINE_EXPECT(GetExceptionInfo);
+DEFINE_EXPECT(GetSourcePosition);
+DEFINE_EXPECT(GetSourceLineText);
 DEFINE_EXPECT(SetScriptSite);
 DEFINE_EXPECT(QI_IActiveScriptParse);
 DEFINE_EXPECT(GetScriptState);
@@ -954,6 +958,94 @@ static const IActiveScriptVtbl ActiveScriptVtbl = {
 };
 
 static IActiveScript ActiveScript = { &ActiveScriptVtbl };
+
+static HRESULT WINAPI ActiveScriptError_QueryInterface(IActiveScriptError *iface, REFIID riid, void **ppv)
+{
+    *ppv = NULL;
+
+    if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IActiveScriptError, riid)) {
+        *ppv = iface;
+        return S_OK;
+    }
+
+    ok(0, "unexpected riid %s\n", wine_dbgstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ActiveScriptError_AddRef(IActiveScriptError *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI ActiveScriptError_Release(IActiveScriptError *iface)
+{
+    return 1;
+}
+
+static unsigned ActiveScriptError_stage = 0;
+
+static HRESULT WINAPI ActiveScriptError_DeferredFillIn(EXCEPINFO *pexcepinfo)
+{
+    CHECK_EXPECT(DeferredFillIn);
+
+    pexcepinfo->bstrSource = SysAllocString(L"foobar");
+    pexcepinfo->bstrDescription = SysAllocString(L"barfoo");
+
+    /* Failure is ignored */
+    return E_FAIL;
+}
+
+static HRESULT WINAPI ActiveScriptError_GetExceptionInfo(IActiveScriptError *iface, EXCEPINFO *pexcepinfo)
+{
+    CHECK_EXPECT(GetExceptionInfo);
+
+    memset(pexcepinfo, 0, sizeof(*pexcepinfo));
+    pexcepinfo->wCode = 0xdead;
+    pexcepinfo->pfnDeferredFillIn = ActiveScriptError_DeferredFillIn;
+
+    if (ActiveScriptError_stage == 0) return E_FAIL;
+    if (ActiveScriptError_stage == 2)
+    {
+        pexcepinfo->wCode = 0;
+        pexcepinfo->scode = 0xbeef;
+        pexcepinfo->bstrSource = SysAllocString(L"source");
+        pexcepinfo->pfnDeferredFillIn = NULL;
+    }
+    return S_OK;
+}
+
+static HRESULT WINAPI ActiveScriptError_GetSourcePosition(IActiveScriptError *iface, DWORD *pdwSourceContext,
+                                                          ULONG *pulLineNumber, LONG *pichCharPosition)
+{
+    CHECK_EXPECT(GetSourcePosition);
+
+    *pdwSourceContext = 0xdeadbeef;
+    *pulLineNumber = 42;
+    *pichCharPosition = 10;
+
+    return (ActiveScriptError_stage == 0) ? E_FAIL : S_OK;
+}
+
+static HRESULT WINAPI ActiveScriptError_GetSourceLineText(IActiveScriptError *iface, BSTR *pbstrSourceLine)
+{
+    CHECK_EXPECT(GetSourceLineText);
+
+    *pbstrSourceLine = SysAllocString(L"source line");
+
+    /* Failure is ignored */
+    return E_FAIL;
+}
+
+static const IActiveScriptErrorVtbl ActiveScriptErrorVtbl = {
+    ActiveScriptError_QueryInterface,
+    ActiveScriptError_AddRef,
+    ActiveScriptError_Release,
+    ActiveScriptError_GetExceptionInfo,
+    ActiveScriptError_GetSourcePosition,
+    ActiveScriptError_GetSourceLineText
+};
+
+static IActiveScriptError ActiveScriptError = { &ActiveScriptErrorVtbl };
 
 static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID riid, void **ppv)
 {
@@ -3223,6 +3315,194 @@ static void test_IScriptControl_get_Modules(void)
     }
 }
 
+static void test_IScriptControl_get_Error(void)
+{
+    IScriptError *error, *error2;
+    IScriptControl *sc;
+    HRESULT hr;
+    BSTR str;
+    LONG x;
+
+    hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
+                          &IID_IScriptControl, (void**)&sc);
+    ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08x.\n", hr);
+
+    hr = IScriptControl_get_Error(sc, NULL);
+    ok(hr == E_POINTER, "IScriptControl_get_Error returned: 0x%08x.\n", hr);
+    hr = IScriptControl_get_Error(sc, &error);
+    ok(hr == S_OK, "IScriptControl_get_Error failed: 0x%08x.\n", hr);
+
+    x = 0xdeadbeef;
+    hr = IScriptError_get_Number(error, &x);
+    ok(hr == S_OK, "IScriptError_get_Number failed: 0x%08x.\n", hr);
+    ok(x == 0, "Error Number is not 0, got %d.\n", x);
+
+    str = SysAllocString(L"jscript");
+    hr = IScriptControl_put_Language(sc, str);
+    ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
+    SysFreeString(str);
+
+    str = SysAllocString(L""
+        "var valid_var = 1;\n"
+        "// comment\n"
+        "this is an invalid line\n");
+    hr = IScriptControl_AddCode(sc, str);
+    ok(FAILED(hr), "IScriptControl_AddCode succeeded: 0x%08x.\n", hr);
+    SysFreeString(str);
+
+    x = 0xdeadbeef;
+    hr = IScriptError_get_Number(error, &x);
+    ok(hr == S_OK, "IScriptError_get_Number failed: 0x%08x.\n", hr);
+    todo_wine ok(x > 1000, "Error Number is wrong, got %d.\n", x);
+
+    hr = IScriptError_Clear(error);
+    ok(hr == S_OK, "IScriptError_Clear failed: 0x%08x.\n", hr);
+    x = 0xdeadbeef;
+    hr = IScriptError_get_Number(error, &x);
+    ok(hr == S_OK, "IScriptError_get_Number failed: 0x%08x.\n", hr);
+    ok(x == 0, "Error Number is not 0, got %d.\n", x);
+
+    hr = IScriptControl_get_Error(sc, &error2);
+    ok(hr == S_OK, "IScriptControl_get_Error failed: 0x%08x.\n", hr);
+    ok(error == error2, "Error objects are not the same (%p vs %p).\n", error, error2);
+    IScriptError_Release(error2);
+
+    IScriptError_Release(error);
+    IScriptControl_Release(sc);
+
+    /* custom script engine */
+    if (have_custom_engine)
+    {
+        hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
+                              &IID_IScriptControl, (void**)&sc);
+        ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08x.\n", hr);
+
+        SET_EXPECT(CreateInstance);
+        SET_EXPECT(SetInterfaceSafetyOptions);
+        SET_EXPECT(SetScriptSite);
+        SET_EXPECT(QI_IActiveScriptParse);
+        SET_EXPECT(InitNew);
+        str = SysAllocString(L"testscript");
+        hr = IScriptControl_put_Language(sc, str);
+        ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
+        SysFreeString(str);
+        CHECK_CALLED(CreateInstance);
+        CHECK_CALLED(SetInterfaceSafetyOptions);
+        CHECK_CALLED(SetScriptSite);
+        CHECK_CALLED(QI_IActiveScriptParse);
+        CHECK_CALLED(InitNew);
+
+        hr = IScriptControl_get_Error(sc, &error);
+        ok(hr == S_OK, "IScriptControl_get_Error failed: 0x%08x.\n", hr);
+
+        x = 0xdeadbeef;
+        hr = IScriptError_get_Number(error, &x);
+        ok(hr == S_OK, "IScriptError_get_Number failed: 0x%08x.\n", hr);
+        ok(x == 0, "Error Number is not 0, got %d.\n", x);
+
+        /* The calls are cached even if they fail */
+        ActiveScriptError_stage = 0;
+        hr = IActiveScriptSite_OnScriptError(site, &ActiveScriptError);
+        ok(hr == S_FALSE, "IActiveScriptSite_OnScriptError returned: 0x%08x.\n", hr);
+
+        SET_EXPECT(GetExceptionInfo);
+        x = 0xdeadbeef;
+        hr = IScriptError_get_Number(error, &x);
+        ok(hr == S_OK, "IScriptError_get_Number failed: 0x%08x.\n", hr);
+        ok(x == 0, "Error Number is not 0, got %d.\n", x);
+        CHECK_CALLED(GetExceptionInfo);
+
+        SET_EXPECT(GetSourceLineText);
+        hr = IScriptError_get_Text(error, &str);
+        todo_wine ok(hr == S_OK, "IScriptError_get_Text failed: 0x%08x.\n", hr);
+        if (SUCCEEDED(hr)) SysFreeString(str);
+        todo_wine CHECK_CALLED(GetSourceLineText);
+
+        SET_EXPECT(GetSourcePosition);
+        hr = IScriptError_get_Line(error, &x);
+        todo_wine ok(hr == S_OK, "IScriptError_get_Line failed: 0x%08x.\n", hr);
+        todo_wine CHECK_CALLED(GetSourcePosition);
+        hr = IScriptError_get_Column(error, &x);
+        todo_wine ok(hr == S_OK, "IScriptError_get_Column failed: 0x%08x.\n", hr);
+
+        /* Check with deferred fill-in */
+        ActiveScriptError_stage = 1;
+        hr = IActiveScriptSite_OnScriptError(site, &ActiveScriptError);
+        ok(hr == S_FALSE, "IActiveScriptSite_OnScriptError returned: 0x%08x.\n", hr);
+
+        SET_EXPECT(GetExceptionInfo);
+        SET_EXPECT(DeferredFillIn);
+        x = 0xdeadbeef;
+        hr = IScriptError_get_Number(error, &x);
+        ok(hr == S_OK, "IScriptError_get_Number failed: 0x%08x.\n", hr);
+        ok(x == 0, "Error Number is not 0, got %d.\n", x);
+        CHECK_CALLED(GetExceptionInfo);
+        CHECK_CALLED(DeferredFillIn);
+        hr = IScriptError_get_Source(error, &str);
+        todo_wine ok(hr == S_OK, "IScriptError_get_Source failed: 0x%08x.\n", hr);
+        if (SUCCEEDED(hr)) SysFreeString(str);
+        hr = IScriptError_get_Description(error, &str);
+        todo_wine ok(hr == S_OK, "IScriptError_get_Description failed: 0x%08x.\n", hr);
+        if (SUCCEEDED(hr)) SysFreeString(str);
+
+        SET_EXPECT(GetSourceLineText);
+        hr = IScriptError_get_Text(error, &str);
+        todo_wine ok(hr == S_OK, "IScriptError_get_Text failed: 0x%08x.\n", hr);
+        if (SUCCEEDED(hr)) SysFreeString(str);
+        todo_wine CHECK_CALLED(GetSourceLineText);
+
+        SET_EXPECT(GetSourcePosition);
+        hr = IScriptError_get_Line(error, &x);
+        todo_wine ok(hr == S_OK, "IScriptError_get_Line failed: 0x%08x.\n", hr);
+        todo_wine ok(x == 42, "Error Line is not 42, got %d.\n", x);
+        todo_wine CHECK_CALLED(GetSourcePosition);
+        hr = IScriptError_get_Column(error, &x);
+        todo_wine ok(hr == S_OK, "IScriptError_get_Column failed: 0x%08x.\n", hr);
+        todo_wine ok(x == 10, "Error Column is not 10, got %d.\n", x);
+
+        /* Check without deferred fill-in, but using scode */
+        ActiveScriptError_stage = 2;
+        hr = IActiveScriptSite_OnScriptError(site, &ActiveScriptError);
+        ok(hr == S_FALSE, "IActiveScriptSite_OnScriptError returned: 0x%08x.\n", hr);
+
+        SET_EXPECT(GetExceptionInfo);
+        x = 0xdeadbeef;
+        hr = IScriptError_get_Number(error, &x);
+        ok(hr == S_OK, "IScriptError_get_Number failed: 0x%08x.\n", hr);
+        ok(x == 0xbeef, "Error Number is not 0xbeef, got 0x%04x.\n", x);
+        CHECK_CALLED(GetExceptionInfo);
+        hr = IScriptError_get_Source(error, &str);
+        todo_wine ok(hr == S_OK, "IScriptError_get_Source failed: 0x%08x.\n", hr);
+        if (SUCCEEDED(hr)) SysFreeString(str);
+        hr = IScriptError_get_Description(error, &str);
+        todo_wine ok(hr == S_OK, "IScriptError_get_Description failed: 0x%08x.\n", hr);
+        if (SUCCEEDED(hr)) SysFreeString(str);
+
+        SET_EXPECT(GetSourceLineText);
+        hr = IScriptError_get_Text(error, &str);
+        todo_wine ok(hr == S_OK, "IScriptError_get_Text failed: 0x%08x.\n", hr);
+        if (SUCCEEDED(hr)) SysFreeString(str);
+        todo_wine CHECK_CALLED(GetSourceLineText);
+
+        SET_EXPECT(GetSourcePosition);
+        hr = IScriptError_get_Line(error, &x);
+        todo_wine ok(hr == S_OK, "IScriptError_get_Line failed: 0x%08x.\n", hr);
+        todo_wine ok(x == 42, "Error Line is not 42, got %d.\n", x);
+        todo_wine CHECK_CALLED(GetSourcePosition);
+        hr = IScriptError_get_Column(error, &x);
+        todo_wine ok(hr == S_OK, "IScriptError_get_Column failed: 0x%08x.\n", hr);
+        todo_wine ok(x == 10, "Error Column is not 10, got %d.\n", x);
+
+        IActiveScriptSite_Release(site);
+
+        SET_EXPECT(Close);
+        IScriptControl_Release(sc);
+        CHECK_CALLED(Close);
+
+        IScriptError_Release(error);
+    }
+}
+
 static void test_IScriptControl_get_CodeObject(void)
 {
     IScriptControl *sc;
@@ -3727,6 +4007,7 @@ START_TEST(msscript)
     test_IScriptControl_ExecuteStatement();
     test_IScriptControl_Run();
     test_IScriptControl_get_Modules();
+    test_IScriptControl_get_Error();
     test_IScriptControl_get_CodeObject();
     test_IScriptControl_get_Procedures();
 
