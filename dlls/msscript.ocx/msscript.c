@@ -121,6 +121,7 @@ struct procedure_enum {
 
 typedef struct {
     IScriptError IScriptError_iface;
+    IActiveScriptError *object;
     LONG ref;
 } ScriptError;
 
@@ -132,6 +133,7 @@ struct ScriptHost {
 
     IActiveScript *script;
     IActiveScriptParse *parse;
+    ScriptError *error;
     SCRIPTSTATE script_state;
     CLSID clsid;
 
@@ -676,9 +678,15 @@ static HRESULT WINAPI ActiveScriptSite_OnScriptError(IActiveScriptSite *iface, I
 {
     ScriptHost *This = impl_from_IActiveScriptSite(iface);
 
-    FIXME("(%p, %p)\n", This, script_error);
+    TRACE("(%p, %p)\n", This, script_error);
 
-    return E_NOTIMPL;
+    if (This->error)
+    {
+        IScriptError_Clear(&This->error->IScriptError_iface);
+        IActiveScriptError_AddRef(script_error);
+        This->error->object = script_error;
+    }
+    return S_FALSE;
 }
 
 static HRESULT WINAPI ActiveScriptSite_OnEnterScript(IActiveScriptSite *iface)
@@ -1438,7 +1446,11 @@ static void detach_script_host(ScriptHost *host)
     if (host->parse)
         IActiveScriptParse_Release(host->parse);
 
+    if (host->error)
+        IScriptError_Release(&host->error->IScriptError_iface);
+
     host->parse = NULL;
+    host->error = NULL;
     host->script = NULL;
 }
 
@@ -2138,6 +2150,7 @@ static ULONG WINAPI ScriptError_Release(IScriptError *iface)
 
     if (!ref)
     {
+        IScriptError_Clear(&This->IScriptError_iface);
         heap_free(This);
     }
 
@@ -2281,9 +2294,15 @@ static HRESULT WINAPI ScriptError_Clear(IScriptError *iface)
 {
     ScriptError *This = impl_from_IScriptError(iface);
 
-    FIXME("(%p)->()\n", This);
+    TRACE("(%p)->()\n", This);
 
-    return E_NOTIMPL;
+    if (This->object)
+    {
+        IActiveScriptError_Release(This->object);
+        This->object = NULL;
+    }
+
+    return S_OK;
 }
 
 static const IScriptErrorVtbl ScriptErrorVtbl = {
@@ -2305,7 +2324,7 @@ static const IScriptErrorVtbl ScriptErrorVtbl = {
     ScriptError_Clear
 };
 
-static HRESULT init_script_host(const CLSID *clsid, ScriptHost **ret)
+static HRESULT init_script_host(ScriptControl *control, const CLSID *clsid, ScriptHost **ret)
 {
     IObjectSafety *objsafety;
     ScriptHost *host;
@@ -2365,6 +2384,8 @@ static HRESULT init_script_host(const CLSID *clsid, ScriptHost **ret)
         goto failed;
     }
     host->script_state = SCRIPTSTATE_INITIALIZED;
+    host->error = control->error;
+    IScriptError_AddRef(&host->error->IScriptError_iface);
 
     *ret = host;
     return S_OK;
@@ -2559,7 +2580,7 @@ static HRESULT WINAPI ScriptControl_put_Language(IScriptControl *iface, BSTR lan
     if (!language)
         return S_OK;
 
-    hres = init_script_host(&clsid, &This->host);
+    hres = init_script_host(This, &clsid, &This->host);
     if (FAILED(hres))
         return hres;
 
