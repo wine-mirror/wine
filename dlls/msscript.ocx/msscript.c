@@ -130,9 +130,11 @@ typedef struct {
     BSTR desc;
     BSTR help_file;
     DWORD help_context;
+    ULONG line;
 
     BOOLEAN info_filled;
     BOOLEAN text_filled;
+    BOOLEAN pos_filled;
 } ScriptError;
 
 struct ScriptHost {
@@ -2151,6 +2153,23 @@ static void fill_error_text(ScriptError *error)
         IActiveScriptError_GetSourceLineText(error->object, &error->text);
 }
 
+static void fill_error_pos(ScriptError *error)
+{
+    DWORD context;
+    LONG column;
+    ULONG line;
+
+    if (error->pos_filled) return;
+    error->pos_filled = TRUE;
+
+    if (!error->object)
+        return;
+    if (FAILED(IActiveScriptError_GetSourcePosition(error->object, &context, &line, &column)))
+        return;
+
+    error->line = line;
+}
+
 static HRESULT WINAPI ScriptError_QueryInterface(IScriptError *iface, REFIID riid, void **ppv)
 {
     ScriptError *This = impl_from_IScriptError(iface);
@@ -2328,9 +2347,11 @@ static HRESULT WINAPI ScriptError_get_Line(IScriptError *iface, LONG *plLine)
 {
     ScriptError *This = impl_from_IScriptError(iface);
 
-    FIXME("(%p)->(%p)\n", This, plLine);
+    TRACE("(%p)->(%p)\n", This, plLine);
 
-    return E_NOTIMPL;
+    fill_error_pos(This);
+    *plLine = This->line;
+    return S_OK;
 }
 
 static HRESULT WINAPI ScriptError_get_Column(IScriptError *iface, LONG *plColumn)
@@ -2364,9 +2385,11 @@ static HRESULT WINAPI ScriptError_Clear(IScriptError *iface)
     This->desc = NULL;
     This->help_file = NULL;
     This->help_context = 0;
+    This->line = 0;
 
     This->info_filled = FALSE;
     This->text_filled = FALSE;
+    This->pos_filled = FALSE;
     return S_OK;
 }
 

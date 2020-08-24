@@ -3351,6 +3351,9 @@ static void test_IScriptControl_get_Error(void)
     hr = IScriptError_get_Text(error, &str);
     ok(hr == S_OK, "IScriptError_get_Text failed: 0x%08x.\n", hr);
     ok(str == NULL, "Error Text is not (null), got %s.\n", wine_dbgstr_w(str));
+    hr = IScriptError_get_Line(error, &x);
+    ok(hr == S_OK, "IScriptError_get_Line failed: 0x%08x.\n", hr);
+    ok(x == 0, "Error Line is not 0, got %d.\n", x);
 
     str = SysAllocString(L"jscript");
     hr = IScriptControl_put_Language(sc, str);
@@ -3381,6 +3384,9 @@ static void test_IScriptControl_get_Error(void)
     ok(hr == S_OK, "IScriptError_get_Text failed: 0x%08x.\n", hr);
     ok(!lstrcmpW(str, L"this is an invalid line"), "Error Text is wrong, got %s.\n", wine_dbgstr_w(str));
     SysFreeString(str);
+    hr = IScriptError_get_Line(error, &x);
+    ok(hr == S_OK, "IScriptError_get_Line failed: 0x%08x.\n", hr);
+    ok(x == 3, "Error Line is not 3, got %d.\n", x);
 
     hr = IScriptError_Clear(error);
     ok(hr == S_OK, "IScriptError_Clear failed: 0x%08x.\n", hr);
@@ -3403,6 +3409,9 @@ static void test_IScriptControl_get_Error(void)
     hr = IScriptError_get_Text(error, &str);
     ok(hr == S_OK, "IScriptError_get_Text failed: 0x%08x.\n", hr);
     ok(str == NULL, "Error Text is not (null), got %s.\n", wine_dbgstr_w(str));
+    hr = IScriptError_get_Line(error, &x);
+    ok(hr == S_OK, "IScriptError_get_Line failed: 0x%08x.\n", hr);
+    ok(x == 0, "Error Line is not 0, got %d.\n", x);
 
     hr = IScriptControl_get_Error(sc, &error2);
     ok(hr == S_OK, "IScriptControl_get_Error failed: 0x%08x.\n", hr);
@@ -3475,8 +3484,9 @@ static void test_IScriptControl_get_Error(void)
 
         SET_EXPECT(GetSourcePosition);
         hr = IScriptError_get_Line(error, &x);
-        todo_wine ok(hr == S_OK, "IScriptError_get_Line failed: 0x%08x.\n", hr);
-        todo_wine CHECK_CALLED(GetSourcePosition);
+        ok(hr == S_OK, "IScriptError_get_Line failed: 0x%08x.\n", hr);
+        ok(x == 0, "Error Line is not 0, got %d.\n", x);
+        CHECK_CALLED(GetSourcePosition);
         hr = IScriptError_get_Column(error, &x);
         todo_wine ok(hr == S_OK, "IScriptError_get_Column failed: 0x%08x.\n", hr);
 
@@ -3511,9 +3521,9 @@ static void test_IScriptControl_get_Error(void)
 
         SET_EXPECT(GetSourcePosition);
         hr = IScriptError_get_Line(error, &x);
-        todo_wine ok(hr == S_OK, "IScriptError_get_Line failed: 0x%08x.\n", hr);
-        todo_wine ok(x == 42, "Error Line is not 42, got %d.\n", x);
-        todo_wine CHECK_CALLED(GetSourcePosition);
+        ok(hr == S_OK, "IScriptError_get_Line failed: 0x%08x.\n", hr);
+        ok(x == 42, "Error Line is not 42, got %d.\n", x);
+        CHECK_CALLED(GetSourcePosition);
         hr = IScriptError_get_Column(error, &x);
         todo_wine ok(hr == S_OK, "IScriptError_get_Column failed: 0x%08x.\n", hr);
         todo_wine ok(x == 10, "Error Column is not 10, got %d.\n", x);
@@ -3546,9 +3556,9 @@ static void test_IScriptControl_get_Error(void)
 
         SET_EXPECT(GetSourcePosition);
         hr = IScriptError_get_Line(error, &x);
-        todo_wine ok(hr == S_OK, "IScriptError_get_Line failed: 0x%08x.\n", hr);
-        todo_wine ok(x == 42, "Error Line is not 42, got %d.\n", x);
-        todo_wine CHECK_CALLED(GetSourcePosition);
+        ok(hr == S_OK, "IScriptError_get_Line failed: 0x%08x.\n", hr);
+        ok(x == 42, "Error Line is not 42, got %d.\n", x);
+        CHECK_CALLED(GetSourcePosition);
         hr = IScriptError_get_Column(error, &x);
         todo_wine ok(hr == S_OK, "IScriptError_get_Column failed: 0x%08x.\n", hr);
         todo_wine ok(x == 10, "Error Column is not 10, got %d.\n", x);
