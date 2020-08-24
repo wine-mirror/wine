@@ -1775,11 +1775,13 @@ BOOL WINAPI WritePrivateProfileSectionW( LPCWSTR section,
                     RegCloseKey( section_key );
                     if (res)
                     {
+                        HeapFree( GetProcessHeap(), 0, entry_copy );
                         SetLastError( res );
                         RegCloseKey( key );
                         return FALSE;
                     }
                 }
+                HeapFree( GetProcessHeap(), 0, entry_copy );
             }
         }
         RegCloseKey( key );
@@ -1917,6 +1919,7 @@ DWORD WINAPI GetPrivateProfileSectionNamesW( LPWSTR buffer, DWORD size,
         {
             lstrcpynW( buffer + ret, section, size - ret - 1 );
             ret = min( ret + strlenW( section ) + 1, size - 1 );
+            HeapFree( GetProcessHeap(), 0, section );
         }
 
         RegCloseKey( key );
