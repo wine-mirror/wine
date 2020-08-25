@@ -192,6 +192,7 @@ struct console_server
     struct object         obj;         /* object header */
     struct console_input *console;     /* attached console */
     struct list           queue;       /* ioctl queue */
+    struct list           read_queue;  /* blocking read queue */
     int                   busy;        /* flag if server processing an ioctl */
 };
 
@@ -574,6 +575,12 @@ static void disconnect_console_server( struct console_server *server )
     while (!list_empty( &server->queue ))
     {
         struct console_host_ioctl *call = LIST_ENTRY( list_head( &server->queue ), struct console_host_ioctl, entry );
+        list_remove( &call->entry );
+        console_host_ioctl_terminate( call, STATUS_CANCELLED );
+    }
+    while (!list_empty( &server->read_queue ))
+    {
+        struct console_host_ioctl *call = LIST_ENTRY( list_head( &server->read_queue ), struct console_host_ioctl, entry );
         list_remove( &call->entry );
         console_host_ioctl_terminate( call, STATUS_CANCELLED );
     }
@@ -1638,8 +1645,14 @@ static struct object *create_console_server( void )
     server->console = NULL;
     server->busy    = 0;
     list_init( &server->queue );
+    list_init( &server->read_queue );
 
     return &server->obj;
+}
+
+static int is_blocking_read_ioctl( unsigned int code )
+{
+    return code == IOCTL_CONDRV_READ_INPUT;
 }
 
 static int console_input_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
@@ -2385,10 +2398,9 @@ DECL_HANDLER(get_console_wait_event)
 /* retrieve the next pending console ioctl request */
 DECL_HANDLER(get_next_console_request)
 {
-    struct console_host_ioctl *ioctl = NULL;
+    struct console_host_ioctl *ioctl = NULL, *next;
     struct console_server *server;
     struct iosb *iosb = NULL;
-
 
     server = (struct console_server *)get_handle_obj( current->process, req->handle, 0, &console_server_ops );
     if (!server) return;
@@ -2403,12 +2415,30 @@ DECL_HANDLER(get_next_console_request)
     if (req->signal) set_event( server->console->event);
     else reset_event( server->console->event );
 
-    /* set result of previous ioctl, if any */
-    if (server->busy)
+    if (req->read)
     {
-        unsigned int status = req->status;
+        /* set result of current pending ioctl */
+        if (list_empty( &server->read_queue ))
+        {
+            set_error( STATUS_INVALID_HANDLE );
+            release_object( server );
+            return;
+        }
+
+        ioctl = LIST_ENTRY( list_head( &server->read_queue ), struct console_host_ioctl, entry );
+        list_remove( &ioctl->entry );
+        list_move_tail( &server->queue, &server->read_queue );
+    }
+    else if (server->busy)
+    {
+        /* set result of previous ioctl */
         ioctl = LIST_ENTRY( list_head( &server->queue ), struct console_host_ioctl, entry );
         list_remove( &ioctl->entry );
+    }
+
+    if (ioctl)
+    {
+        unsigned int status = req->status;
         if (ioctl->async)
         {
             iosb = async_get_iosb( ioctl->async );
@@ -2430,7 +2460,30 @@ DECL_HANDLER(get_next_console_request)
         }
         console_host_ioctl_terminate( ioctl, status );
         if (iosb) release_object( iosb );
+
+        if (req->read)
+        {
+            release_object( server );
+            return;
+        }
         server->busy = 0;
+    }
+
+    /* if we have a blocking read ioctl in queue head and previous blocking read is still waiting,
+     * move it to read queue for execution after current read is complete. move all blocking
+     * ioctl at the same time to preserve their order. */
+    if (!list_empty( &server->queue ) && !list_empty( &server->read_queue ))
+    {
+        ioctl = LIST_ENTRY( list_head( &server->queue ), struct console_host_ioctl, entry );
+        if (is_blocking_read_ioctl( ioctl->code ))
+        {
+            LIST_FOR_EACH_ENTRY_SAFE( ioctl, next, &server->queue, struct console_host_ioctl, entry )
+            {
+                if (!is_blocking_read_ioctl( ioctl->code )) continue;
+                list_remove( &ioctl->entry );
+                list_add_tail( &server->read_queue, &ioctl->entry );
+            }
+        }
     }
 
     /* return the next ioctl */
@@ -2450,7 +2503,13 @@ DECL_HANDLER(get_next_console_request)
                 iosb->in_data = NULL;
             }
 
-            server->busy = 1;
+            if (is_blocking_read_ioctl( ioctl->code ))
+            {
+                list_remove( &ioctl->entry );
+                assert( list_empty( &server->read_queue ));
+                list_add_tail( &server->read_queue, &ioctl->entry );
+            }
+            else server->busy = 1;
         }
         else
         {

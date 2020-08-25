@@ -2098,6 +2098,7 @@ static void dump_get_next_console_request_request( const struct get_next_console
 {
     fprintf( stderr, " handle=%04x", req->handle );
     fprintf( stderr, ", signal=%d", req->signal );
+    fprintf( stderr, ", read=%d", req->read );
     fprintf( stderr, ", status=%08x", req->status );
     dump_varargs_bytes( ", out_data=", cur_size );
 }

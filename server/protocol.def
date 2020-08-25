@@ -1526,6 +1526,7 @@ enum server_fd_type
 @REQ(get_next_console_request)
     obj_handle_t handle;        /* console server handle */
     int          signal;        /* server signal state */
+    int          read;          /* 1 if reporting result of blocked read ioctl */
     unsigned int status;        /* status of previous ioctl */
     VARARG(out_data,bytes);     /* out_data of previous ioctl */
 @REPLY

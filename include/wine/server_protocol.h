@@ -1943,8 +1943,10 @@ struct get_next_console_request_request
     struct request_header __header;
     obj_handle_t handle;
     int          signal;
+    int          read;
     unsigned int status;
     /* VARARG(out_data,bytes); */
+    char __pad_28[4];
 };
 struct get_next_console_request_reply
 {
@@ -6333,7 +6335,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 638
+#define SERVER_PROTOCOL_VERSION 639
 
 /* ### protocol_version end ### */
 
