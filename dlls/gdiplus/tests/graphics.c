@@ -5157,7 +5157,7 @@ static void test_clipping(void)
 
     status = GdipGetClipBoundsI(graphics, &recti);
     expect(Ok, status);
-    todo_wine ok(recti.X == 45 && recti.Y == 20 && recti.Width == 50 && recti.Height == 25,
+    ok(recti.X == 45 && recti.Y == 20 && recti.Width == 50 && recti.Height == 25,
        "expected 45,20-50,25, got %i,%i-%i,%i\n", recti.X, recti.Y, recti.Width, recti.Height);
 
     status = GdipSetEmpty(region);

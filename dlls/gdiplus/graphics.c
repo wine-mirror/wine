@@ -4770,15 +4770,23 @@ GpStatus WINGDIPAPI GdipGetClipBounds(GpGraphics *graphics, GpRectF *rect)
  */
 GpStatus WINGDIPAPI GdipGetClipBoundsI(GpGraphics *graphics, GpRect *rect)
 {
+    GpRectF rectf;
+    GpStatus stat;
+
     TRACE("(%p, %p)\n", graphics, rect);
 
-    if(!graphics)
+    if (!rect)
         return InvalidParameter;
 
-    if(graphics->busy)
-        return ObjectBusy;
+    if ((stat = GdipGetClipBounds(graphics, &rectf)) == Ok)
+    {
+        rect->X = gdip_round(rectf.X);
+        rect->Y = gdip_round(rectf.Y);
+        rect->Width  = gdip_round(rectf.Width);
+        rect->Height = gdip_round(rectf.Height);
+    }
 
-    return GdipGetRegionBoundsI(graphics->clip, graphics, rect);
+    return stat;
 }
 
 GpStatus WINGDIPAPI GdipGetCompositingMode(GpGraphics *graphics,
