@@ -8,7 +8,6 @@ EXTRADLLFLAGS = -mno-cygwin
 
 C_SRCS = \
 	antimoniker.c \
-	apartment.c \
 	bindctx.c \
 	classmoniker.c \
 	clipboard.c \

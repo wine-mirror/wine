@@ -307,6 +307,11 @@ static ULONG stub_manager_int_addref(struct stub_manager *This)
     return refs;
 }
 
+ULONG WINAPI Internal_stub_manager_int_release(struct stub_manager *m)
+{
+    return stub_manager_int_release(m);
+}
+
 /* decrements the internal refcount */
 ULONG stub_manager_int_release(struct stub_manager *This)
 {

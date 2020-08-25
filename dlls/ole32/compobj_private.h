@@ -245,31 +245,30 @@ void OLEDD_UnInitialize(void) DECLSPEC_HIDDEN;
 
 /* Apartment Functions */
 
-struct apartment *apartment_findfromoxid(OXID oxid) DECLSPEC_HIDDEN;
-struct apartment *apartment_findfromtid(DWORD tid) DECLSPEC_HIDDEN;
-void apartment_release(struct apartment *apt) DECLSPEC_HIDDEN;
-HRESULT apartment_disconnectproxies(struct apartment *apt) DECLSPEC_HIDDEN;
+extern struct apartment * WINAPI apartment_findfromoxid(OXID oxid) DECLSPEC_HIDDEN;
+extern struct apartment * WINAPI apartment_findfromtid(DWORD tid) DECLSPEC_HIDDEN;
+extern void WINAPI apartment_release(struct apartment *apt) DECLSPEC_HIDDEN;
 static inline HRESULT apartment_getoxid(const struct apartment *apt, OXID *oxid)
 {
     *oxid = apt->oxid;
     return S_OK;
 }
-HRESULT apartment_createwindowifneeded(struct apartment *apt) DECLSPEC_HIDDEN;
-HWND apartment_getwindow(const struct apartment *apt) DECLSPEC_HIDDEN;
-HRESULT enter_apartment(struct oletls *info, DWORD model) DECLSPEC_HIDDEN;
-void leave_apartment(struct oletls *info) DECLSPEC_HIDDEN;
-struct apartment *apartment_get_current_or_mta(void) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI apartment_createwindowifneeded(struct apartment *apt) DECLSPEC_HIDDEN;
+extern HWND WINAPI apartment_getwindow(const struct apartment *apt) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI enter_apartment(struct oletls *info, DWORD model) DECLSPEC_HIDDEN;
+void WINAPI leave_apartment(struct oletls *info) DECLSPEC_HIDDEN;
+extern struct apartment * WINAPI apartment_get_current_or_mta(void) DECLSPEC_HIDDEN;
 
 struct class_reg_data;
-HRESULT apartment_get_inproc_class_object(struct apartment *apt, const struct class_reg_data *regdata,
+extern HRESULT WINAPI apartment_get_inproc_class_object(struct apartment *apt, const struct class_reg_data *regdata,
         REFCLSID rclsid, REFIID riid, BOOL hostifnecessary, void **ppv) DECLSPEC_HIDDEN;
 
-void apartment_decrement_mta_usage(CO_MTA_USAGE_COOKIE cookie) DECLSPEC_HIDDEN;
-HRESULT apartment_increment_mta_usage(CO_MTA_USAGE_COOKIE *cookie) DECLSPEC_HIDDEN;
-struct apartment *apartment_get_mta(void) DECLSPEC_HIDDEN;
-HRESULT apartment_get_local_server_stream(struct apartment *apt, IStream **ret) DECLSPEC_HIDDEN;
-void apartment_freeunusedlibraries(struct apartment *apt, DWORD delay) DECLSPEC_HIDDEN;
-void apartment_global_cleanup(void) DECLSPEC_HIDDEN;
+extern void WINAPI apartment_decrement_mta_usage(CO_MTA_USAGE_COOKIE cookie) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI apartment_increment_mta_usage(CO_MTA_USAGE_COOKIE *cookie) DECLSPEC_HIDDEN;
+extern struct apartment * WINAPI apartment_get_mta(void) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI apartment_get_local_server_stream(struct apartment *apt, IStream **ret) DECLSPEC_HIDDEN;
+extern void WINAPI apartment_freeunusedlibraries(struct apartment *apt, DWORD delay) DECLSPEC_HIDDEN;
+extern void WINAPI apartment_global_cleanup(void) DECLSPEC_HIDDEN;
 
 HRESULT COM_GetRegisteredClassObject(const struct apartment *apt, REFCLSID rclsid,
         DWORD dwClsContext, IUnknown **ppUnk) DECLSPEC_HIDDEN;

@@ -1324,7 +1324,7 @@ static HRESULT unmarshal_ORPCTHAT(RPC_MESSAGE *msg, ORPCTHAT *orpcthat,
     return S_OK;
 }
 
-void RPC_ExecuteCall(struct dispatch_params *params)
+void WINAPI Internal_RPC_ExecuteCall(struct dispatch_params *params)
 {
     struct message_state *message_state = NULL;
     RPC_MESSAGE *msg = (RPC_MESSAGE *)params->msg;
@@ -1504,7 +1504,7 @@ static void __RPC_STUB dispatch_rpc(RPC_MESSAGE *msg)
             enter_apartment(info, COINIT_MULTITHREADED);
             joined = TRUE;
         }
-        RPC_ExecuteCall(params);
+        Internal_RPC_ExecuteCall(params);
         if (joined)
         {
             leave_apartment(info);

@@ -33,7 +33,7 @@
 #include "winbase.h"
 #include "servprov.h"
 
-#include "compobj_private.h"
+#include "combase_private.h"
 
 #include "wine/debug.h"
 #include "wine/list.h"
@@ -306,10 +306,13 @@ static ULONG WINAPI local_server_Release(IServiceProvider *iface)
     return refcount;
 }
 
+extern HRESULT WINAPI InternalGetRegisteredClassObject(struct apartment *apt, REFGUID guid,
+        DWORD clscontext, IUnknown **obj);
+
 static HRESULT WINAPI local_server_QueryService(IServiceProvider *iface, REFGUID guid, REFIID riid, void **obj)
 {
     struct local_server *local_server = impl_from_IServiceProvider(iface);
-    struct apartment *apt = COM_CurrentApt();
+    struct apartment *apt = com_get_current_apt();
     HRESULT hr = E_FAIL;
     IUnknown *unk;
 
@@ -318,7 +321,7 @@ static HRESULT WINAPI local_server_QueryService(IServiceProvider *iface, REFGUID
     if (!local_server->apt)
         return E_UNEXPECTED;
 
-    if (SUCCEEDED(COM_GetRegisteredClassObject(apt, guid, CLSCTX_LOCAL_SERVER, &unk)))
+    if (SUCCEEDED(InternalGetRegisteredClassObject(apt, guid, CLSCTX_LOCAL_SERVER, &unk)))
     {
         hr = IUnknown_QueryInterface(unk, riid, obj);
         IUnknown_Release(unk);
@@ -335,7 +338,7 @@ static const IServiceProviderVtbl local_server_vtbl =
     local_server_QueryService
 };
 
-HRESULT apartment_get_local_server_stream(struct apartment *apt, IStream **ret)
+HRESULT WINAPI apartment_get_local_server_stream(struct apartment *apt, IStream **ret)
 {
     HRESULT hr = S_OK;
 
@@ -400,7 +403,7 @@ static struct apartment *apartment_construct(DWORD model)
     apt->remunk_exported = FALSE;
     apt->oidc = 1;
     InitializeCriticalSection(&apt->cs);
-    DEBUG_SET_CRITSEC_NAME(&apt->cs, "apartment");
+    apt->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": apartment");
 
     apt->multi_threaded = !(model & COINIT_APARTMENTTHREADED);
 
@@ -423,7 +426,7 @@ static struct apartment *apartment_construct(DWORD model)
 }
 
 /* Frees unused libraries loaded into apartment */
-void apartment_freeunusedlibraries(struct apartment *apt, DWORD delay)
+void WINAPI apartment_freeunusedlibraries(struct apartment *apt, DWORD delay)
 {
     struct apartment_loaded_dll *entry, *next;
 
@@ -464,7 +467,11 @@ void apartment_freeunusedlibraries(struct apartment *apt, DWORD delay)
     LeaveCriticalSection(&apt->cs);
 }
 
-void apartment_release(struct apartment *apt)
+extern void WINAPI InternalRevokeAllClasses(struct apartment *apt);
+extern HRESULT WINAPI Internal_apartment_disconnectproxies(struct apartment *apt);
+extern ULONG WINAPI Internal_stub_manager_int_release(struct stub_manager *stubmgr);
+
+void WINAPI apartment_release(struct apartment *apt)
 {
     DWORD refcount;
 
@@ -513,12 +520,12 @@ void apartment_release(struct apartment *apt)
         }
 
         /* Release the references to the registered class objects */
-        COM_RevokeAllClasses(apt);
+        InternalRevokeAllClasses(apt);
 
         /* no locking is needed for this apartment, because no other thread
          * can access it at this point */
 
-        apartment_disconnectproxies(apt);
+        Internal_apartment_disconnectproxies(apt);
 
         if (apt->win) DestroyWindow(apt->win);
         if (apt->host_apt_tid) PostThreadMessageW(apt->host_apt_tid, WM_QUIT, 0, 0);
@@ -531,7 +538,7 @@ void apartment_release(struct apartment *apt)
              * stub manager list in the apartment and all non-apartment users
              * must have a ref on the apartment and so it cannot be destroyed).
              */
-            stub_manager_int_release(stubmgr);
+            Internal_stub_manager_int_release(stubmgr);
         }
 
         /* if this assert fires, then another thread took a reference to a
@@ -555,7 +562,7 @@ void apartment_release(struct apartment *apt)
             heap_free(apartment_loaded_dll);
         }
 
-        DEBUG_CLEAR_CRITSEC_NAME(&apt->cs);
+        apt->cs.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&apt->cs);
 
         heap_free(apt);
@@ -572,7 +579,8 @@ static DWORD apartment_addref(struct apartment *apt)
 /* Gets existing apartment or creates a new one and enters it */
 static struct apartment *apartment_get_or_create(DWORD model)
 {
-    struct apartment *apt = COM_CurrentApt();
+    struct apartment *apt = com_get_current_apt();
+    struct tlsdata *data;
 
     if (!apt)
     {
@@ -612,13 +620,14 @@ static struct apartment *apartment_get_or_create(DWORD model)
 
             LeaveCriticalSection(&apt_cs);
         }
-        COM_CurrentInfo()->apt = apt;
+        com_get_tlsdata(&data);
+        data->apt = apt;
     }
 
     return apt;
 }
 
-struct apartment *apartment_get_mta(void)
+struct apartment * WINAPI apartment_get_mta(void)
 {
     struct apartment *apt;
 
@@ -634,9 +643,9 @@ struct apartment *apartment_get_mta(void)
 
 /* Return the current apartment if it exists, or, failing that, the MTA. Caller
  * must free the returned apartment in either case. */
-struct apartment *apartment_get_current_or_mta(void)
+struct apartment * WINAPI apartment_get_current_or_mta(void)
 {
-    struct apartment *apt = COM_CurrentApt();
+    struct apartment *apt = com_get_current_apt();
     if (apt)
     {
         apartment_addref(apt);
@@ -646,7 +655,7 @@ struct apartment *apartment_get_current_or_mta(void)
 }
 
 /* The given OXID must be local to this process */
-struct apartment *apartment_findfromoxid(OXID oxid)
+struct apartment * WINAPI apartment_findfromoxid(OXID oxid)
 {
     struct apartment *result = NULL;
     struct list *cursor;
@@ -670,7 +679,7 @@ struct apartment *apartment_findfromoxid(OXID oxid)
 /* gets the apartment which has a given creator thread ID. The caller must
  * release the reference from the apartment as soon as the apartment pointer
  * is no longer required. */
-struct apartment *apartment_findfromtid(DWORD tid)
+struct apartment * WINAPI apartment_findfromtid(DWORD tid)
 {
     struct apartment *result = NULL;
     struct list *cursor;
@@ -778,10 +787,14 @@ static HRESULT apartment_getclassobject(struct apartment *apt, LPCWSTR dllpath,
 
     if (!wcsicmp(dllpath, L"ole32.dll"))
     {
+        HRESULT (WINAPI *p_ole32_DllGetClassObject)(REFCLSID clsid, REFIID riid, void **obj);
+
+        p_ole32_DllGetClassObject = (void *)GetProcAddress(GetModuleHandleW(L"ole32.dll"), "DllGetClassObject");
+
         /* we don't need to control the lifetime of this dll, so use the local
          * implementation of DllGetClassObject directly */
         TRACE("calling ole32!DllGetClassObject\n");
-        hr = DllGetClassObject(rclsid, riid, ppv);
+        hr = p_ole32_DllGetClassObject(rclsid, riid, ppv);
 
         if (hr != S_OK)
             ERR("DllGetClassObject returned error 0x%08x for dll %s\n", hr, debugstr_w(dllpath));
@@ -863,7 +876,7 @@ static DWORD CALLBACK apartment_hostobject_thread(void *p)
     hr = CoInitializeEx(NULL, params->threading_model);
     if (FAILED(hr)) return hr;
 
-    apt = COM_CurrentApt();
+    apt = com_get_current_apt();
     if (params->threading_model == COINIT_APARTMENTTHREADED)
     {
         apartment_createwindowifneeded(apt);
@@ -1035,7 +1048,7 @@ static enum comclass_threadingmodel get_threading_model(const struct class_reg_d
         return data->u.actctx.threading_model;
 }
 
-HRESULT apartment_get_inproc_class_object(struct apartment *apt, const struct class_reg_data *regdata,
+HRESULT WINAPI apartment_get_inproc_class_object(struct apartment *apt, const struct class_reg_data *regdata,
         REFCLSID rclsid, REFIID riid, BOOL hostifnecessary, void **ppv)
 {
     WCHAR dllpath[MAX_PATH+1];
@@ -1112,15 +1125,18 @@ static HRESULT apartment_hostobject(struct apartment *apt, const struct host_obj
     return hr;
 }
 
+struct dispatch_params;
+extern void WINAPI Internal_RPC_ExecuteCall(struct dispatch_params *params);
+
 static LRESULT CALLBACK apartment_wndproc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch (msg)
     {
     case DM_EXECUTERPC:
-        RPC_ExecuteCall((struct dispatch_params *)lParam);
+        Internal_RPC_ExecuteCall((struct dispatch_params *)lParam);
         return 0;
     case DM_HOSTOBJECT:
-        return apartment_hostobject(COM_CurrentApt(), (const struct host_object_params *)lParam);
+        return apartment_hostobject(com_get_current_apt(), (const struct host_object_params *)lParam);
     default:
         return DefWindowProcW(hWnd, msg, wParam, lParam);
     }
@@ -1131,38 +1147,38 @@ static BOOL apartment_is_model(const struct apartment *apt, DWORD model)
     return (apt->multi_threaded == !(model & COINIT_APARTMENTTHREADED));
 }
 
-HRESULT enter_apartment(struct oletls *info, DWORD model)
+HRESULT WINAPI enter_apartment(struct tlsdata *data, DWORD model)
 {
     HRESULT hr = S_OK;
 
-    if (!info->apt)
+    if (!data->apt)
     {
         if (!apartment_get_or_create(model))
             return E_OUTOFMEMORY;
     }
-    else if (!apartment_is_model(info->apt, model))
+    else if (!apartment_is_model(data->apt, model))
     {
-        WARN( "Attempt to change threading model of this apartment from %s to %s\n",
-              info->apt->multi_threaded ? "multi-threaded" : "apartment threaded",
+        WARN("Attempt to change threading model of this apartment from %s to %s\n",
+              data->apt->multi_threaded ? "multi-threaded" : "apartment threaded",
               model & COINIT_APARTMENTTHREADED ? "apartment threaded" : "multi-threaded" );
         return RPC_E_CHANGED_MODE;
     }
     else
         hr = S_FALSE;
 
-    info->inits++;
+    data->inits++;
 
     return hr;
 }
 
-void leave_apartment(struct oletls *info)
+void WINAPI leave_apartment(struct tlsdata *data)
 {
-    if (!--info->inits)
+    if (!--data->inits)
     {
-        if (info->ole_inits)
+        if (data->ole_inits)
             WARN( "Uninitializing apartment while Ole is still initialized\n" );
-        apartment_release(info->apt);
-        info->apt = NULL;
+        apartment_release(data->apt);
+        data->apt = NULL;
     }
 }
 
@@ -1171,7 +1187,7 @@ struct mta_cookie
     struct list entry;
 };
 
-HRESULT apartment_increment_mta_usage(CO_MTA_USAGE_COOKIE *cookie)
+HRESULT WINAPI apartment_increment_mta_usage(CO_MTA_USAGE_COOKIE *cookie)
 {
     struct mta_cookie *mta_cookie;
 
@@ -1195,7 +1211,7 @@ HRESULT apartment_increment_mta_usage(CO_MTA_USAGE_COOKIE *cookie)
     return S_OK;
 }
 
-void apartment_decrement_mta_usage(CO_MTA_USAGE_COOKIE cookie)
+void WINAPI apartment_decrement_mta_usage(CO_MTA_USAGE_COOKIE cookie)
 {
     struct mta_cookie *mta_cookie = (struct mta_cookie *)cookie;
 
@@ -1246,7 +1262,7 @@ static BOOL WINAPI register_class( INIT_ONCE *once, void *param, void **context 
 
 /* create a window for the apartment or return the current one if one has
  * already been created */
-HRESULT apartment_createwindowifneeded(struct apartment *apt)
+HRESULT WINAPI apartment_createwindowifneeded(struct apartment *apt)
 {
     static INIT_ONCE class_init_once = INIT_ONCE_STATIC_INIT;
 
@@ -1274,13 +1290,13 @@ HRESULT apartment_createwindowifneeded(struct apartment *apt)
 }
 
 /* retrieves the window for the main- or apartment-threaded apartment */
-HWND apartment_getwindow(const struct apartment *apt)
+HWND WINAPI apartment_getwindow(const struct apartment *apt)
 {
     assert(!apt->multi_threaded);
     return apt->win;
 }
 
-void apartment_global_cleanup(void)
+void WINAPI apartment_global_cleanup(void)
 {
     if (apt_win_class)
         UnregisterClassW((const WCHAR *)MAKEINTATOM(apt_win_class), hProxyDll);

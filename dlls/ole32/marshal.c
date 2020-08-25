@@ -1223,7 +1223,7 @@ static BOOL find_proxy_manager(struct apartment * apt, OXID oxid, OID oid, struc
     return found;
 }
 
-HRESULT apartment_disconnectproxies(struct apartment *apt)
+HRESULT WINAPI Internal_apartment_disconnectproxies(struct apartment *apt)
 {
     struct list * cursor;
 

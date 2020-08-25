@@ -393,7 +393,7 @@ static void COM_RevokeRegisteredClassObject(RegisteredClass *curClass)
     HeapFree(GetProcessHeap(), 0, curClass);
 }
 
-void COM_RevokeAllClasses(const struct apartment *apt)
+void WINAPI InternalRevokeAllClasses(const struct apartment *apt)
 {
   RegisteredClass *curClass, *cursor;
 
@@ -997,8 +997,6 @@ HRESULT COM_OpenKeyForAppIdFromCLSID(REFCLSID clsid, REGSAM access, HKEY *subkey
 }
 
 /***
- * COM_GetRegisteredClassObject
- *
  * This internal method is used to scan the registered class list to
  * find a class object.
  *
@@ -1009,7 +1007,7 @@ HRESULT COM_OpenKeyForAppIdFromCLSID(REFCLSID clsid, REGSAM access, HKEY *subkey
  *                 to normal COM usage, this method will increase the
  *                 reference count on this object.
  */
-HRESULT COM_GetRegisteredClassObject(const struct apartment *apt, REFCLSID rclsid,
+HRESULT WINAPI InternalGetRegisteredClassObject(const struct apartment *apt, REFCLSID rclsid,
                                             DWORD dwClsContext, LPUNKNOWN* ppUnk)
 {
   HRESULT hr = S_FALSE;
@@ -1110,7 +1108,7 @@ HRESULT WINAPI CoRegisterClassObject(
    * First, check if the class is already registered.
    * If it is, this should cause an error.
    */
-  hr = COM_GetRegisteredClassObject(apt, rclsid, dwClsContext, &foundObject);
+  hr = InternalGetRegisteredClassObject(apt, rclsid, dwClsContext, &foundObject);
   if (hr == S_OK) {
     if (flags & REGCLS_MULTIPLEUSE) {
       if (dwClsContext & CLSCTX_LOCAL_SERVER)
@@ -1267,7 +1265,7 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoGetClassObject(
      * First, try and see if we can't match the class ID with one of the
      * registered classes.
      */
-    if (S_OK == COM_GetRegisteredClassObject(apt, rclsid, dwClsContext,
+    if (S_OK == InternalGetRegisteredClassObject(apt, rclsid, dwClsContext,
                                              &regClassObject))
     {
       /* Get the required interface from the retrieved pointer. */

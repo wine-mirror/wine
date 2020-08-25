@@ -36,6 +36,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
+HINSTANCE hProxyDll;
+
 #define CHARS_IN_GUID 39
 
 struct comclassredirect_data
@@ -2248,4 +2250,21 @@ DWORD WINAPI CoGetCurrentProcess(void)
         rpcss_get_next_seqid(&tlsdata->thread_seqid);
 
     return tlsdata->thread_seqid;
+}
+
+/***********************************************************************
+ *            DllMain     (combase.@)
+ */
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, LPVOID reserved)
+{
+    TRACE("%p 0x%x %p\n", hinstDLL, reason, reserved);
+
+    switch (reason)
+    {
+    case DLL_PROCESS_ATTACH:
+        hProxyDll = hinstDLL;
+        break;
+    }
+
+    return TRUE;
 }

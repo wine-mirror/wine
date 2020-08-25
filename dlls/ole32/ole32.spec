@@ -298,3 +298,8 @@
 @ stub WriteOleStg
 @ stub WriteStringStream
 @ stdcall InternalIsInitialized()
+@ stdcall InternalGetRegisteredClassObject(ptr ptr long ptr)
+@ stdcall InternalRevokeAllClasses(ptr)
+@ stdcall Internal_apartment_disconnectproxies(ptr)
+@ stdcall Internal_RPC_ExecuteCall(ptr)
+@ stdcall Internal_stub_manager_int_release(ptr)

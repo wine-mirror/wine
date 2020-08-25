@@ -17,7 +17,10 @@
 #include "winternl.h"
 #include "wine/orpc.h"
 
+#include "wine/heap.h"
 #include "wine/list.h"
+
+extern HINSTANCE hProxyDll;
 
 struct apartment
 {
@@ -50,6 +53,10 @@ struct apartment
     /* MTA-only */
     struct list usage_cookies; /* Used for refcount control with CoIncrementMTAUsage()/CoDecrementMTAUsage(). */
 };
+
+/* DCOM messages used by the apartment window (not compatible with native) */
+#define DM_EXECUTERPC   (WM_USER + 0) /* WPARAM = 0, LPARAM = (struct dispatch_params *) */
+#define DM_HOSTOBJECT   (WM_USER + 1) /* WPARAM = 0, LPARAM = (struct host_object_params *) */
 
 /* this is what is stored in TEB->ReservedForOle */
 struct tlsdata
@@ -89,5 +96,40 @@ static inline struct apartment* com_get_current_apt(void)
     return tlsdata->apt;
 }
 
+HWND WINAPI apartment_getwindow(const struct apartment *apt) DECLSPEC_HIDDEN;
+HRESULT WINAPI apartment_createwindowifneeded(struct apartment *apt) DECLSPEC_HIDDEN;
+
 /* RpcSs interface */
 HRESULT rpcss_get_next_seqid(DWORD *id) DECLSPEC_HIDDEN;
+
+/* stub managers hold refs on the object and each interface stub */
+struct stub_manager
+{
+    struct list       entry;      /* entry in apartment stubmgr list (CS apt->cs) */
+    struct list       ifstubs;    /* list of active ifstubs for the object (CS lock) */
+    CRITICAL_SECTION  lock;
+    struct apartment *apt;        /* owning apt (RO) */
+
+    ULONG             extrefs;    /* number of 'external' references (CS lock) */
+    ULONG             refs;       /* internal reference count (CS apt->cs) */
+    ULONG             weakrefs;   /* number of weak references (CS lock) */
+    OID               oid;        /* apartment-scoped unique identifier (RO) */
+    IUnknown         *object;     /* the object we are managing the stub for (RO) */
+    ULONG             next_ipid;  /* currently unused (LOCK) */
+    OXID_INFO         oxid_info;  /* string binding, ipid of rem unknown and other information (RO) */
+
+    IExternalConnection *extern_conn;
+
+    /* We need to keep a count of the outstanding marshals, so we can enforce the
+     * marshalling rules (ie, you can only unmarshal normal marshals once). Note
+     * that these counts do NOT include unmarshalled interfaces, once a stream is
+     * unmarshalled and a proxy set up, this count is decremented.
+     */
+
+    ULONG             norm_refs;  /* refcount of normal marshals (CS lock) */
+    BOOL              disconnected; /* CoDisconnectObject has been called (CS lock) */
+};
+
+/* Stub Manager */
+
+ULONG stub_manager_int_release(struct stub_manager *This) DECLSPEC_HIDDEN;
