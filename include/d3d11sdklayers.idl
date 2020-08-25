@@ -1241,6 +1241,19 @@ interface ID3D11Debug : IUnknown {
 
 [
     object,
+    uuid(1ef337e3-58e7-4f83-a692-db221f5ed47e),
+    local,
+    pointer_default(unique)
+]
+interface ID3D11SwitchToRef : IUnknown {
+    BOOL SetUseRef(
+        [in] BOOL useref
+    );
+    BOOL GetUseRef();
+}
+
+[
+    object,
     uuid(6543dbb6-1b48-42f5-ab82-e97ec74326f6),
     local,
     pointer_default(unique)
