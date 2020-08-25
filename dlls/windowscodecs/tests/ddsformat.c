@@ -943,8 +943,7 @@ static void test_dds_decoder_frame_data(IWICBitmapFrameDecode* frame, IWICDdsFra
     WICDdsFormatInfo format_info;
     WICRect rect = { 0, 0, 1, 1 }, rect_test_a = { 0, 0, 0, 0 }, rect_test_b = { 0, 0, 0xdeadbeaf, 0xdeadbeaf };
     WICRect rect_test_c = { -0xdeadbeaf, -0xdeadbeaf, 1, 1 }, rect_test_d = { 0xdeadbeaf, 0xdeadbeaf, 1, 1 };
-    BYTE buffer[2048];
-    DWORD pixels[2048];
+    BYTE buffer[2048], pixels[2048];
     UINT stride, frame_stride, frame_size, frame_width, frame_height, width_in_blocks, height_in_blocks, bpp;
     UINT width, height, depth, array_index;
     UINT block_offset;
@@ -1106,23 +1105,34 @@ static void test_dds_decoder_frame_data(IWICBitmapFrameDecode* frame, IWICDdsFra
     ok(hr == E_INVALIDARG, "Test %u, frame %u: CopyBlocks got unexpected hr %#x\n", i, frame_index, hr);
 
     if (is_compressed(format_info.DxgiFormat)) {
-
         decode_block(test_data[i].data + block_offset, width_in_blocks * height_in_blocks,
-                     format_info.DxgiFormat, frame_width, frame_height, pixels);
+                     format_info.DxgiFormat, frame_width, frame_height, (DWORD *)pixels);
+    } else {
+        memcpy(pixels, test_data[i].data + block_offset, frame_size);
+    }
 
-        hr = IWICBitmapFrameDecode_CopyPixels(frame, &rect, stride, sizeof(buffer), buffer);
-        ok(hr == S_OK, "Test %u, frame %u: CopyPixels failed, hr %#x\n", i, frame_index, hr);
-        if (hr == S_OK) {
+    hr = IWICBitmapFrameDecode_CopyPixels(frame, &rect, stride, sizeof(buffer), buffer);
+    ok(hr == S_OK, "Test %u, frame %u: CopyPixels failed, hr %#x\n", i, frame_index, hr);
+    if (hr == S_OK) {
+        if (is_compressed(format_info.DxgiFormat)) {
             ok(color_buffer_match((DWORD *)pixels, (DWORD *)buffer, 1),
                "Test %u, frame %u: Pixels mismatch\n", i, frame_index);
+        } else {
+            ok(!strncmp((const char *)pixels, (const char *)buffer, bpp / 8),
+               "Test %u, frame %u: Pixels mismatch\n", i, frame_index);
         }
+    }
 
-        hr = IWICBitmapFrameDecode_CopyPixels(frame, NULL, frame_stride, sizeof(buffer), buffer);
-        ok(hr == S_OK, "Test %u, frame %u: CopyPixels failed, hr %#x\n", i, frame_index, hr);
-        if (hr == S_OK) {
+    hr = IWICBitmapFrameDecode_CopyPixels(frame, NULL, frame_stride, sizeof(buffer), buffer);
+    ok(hr == S_OK, "Test %u, frame %u: CopyPixels failed, hr %#x\n", i, frame_index, hr);
+    if (hr == S_OK) {
+        if (is_compressed(format_info.DxgiFormat)) {
             ok(color_buffer_match((DWORD *)pixels, (DWORD *)buffer, frame_size / (bpp / 8)),
-              "Test %u, frame %u: Pixels mismatch\n", i, frame_index);
-        }
+               "Test %u, frame %u: Pixels mismatch\n", i, frame_index);
+        } else {
+            ok(!strncmp((const char *)pixels, (const char *)buffer, frame_size),
+               "Test %u, frame %u: Pixels mismatch\n", i, frame_index);
+        };
     }
 }
 
