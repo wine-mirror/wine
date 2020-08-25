@@ -390,51 +390,52 @@ static struct test_data {
     HRESULT init_hr;
     UINT expected_frame_count;
     UINT expected_bytes_per_block;
+    UINT pixel_format_bpp;
     const GUID *expected_pixel_format;
     WICDdsParameters expected_parameters;
     BOOL wine_init;
 } test_data[] = {
-    { test_dds_alpha,      sizeof(test_dds_alpha),         WINCODEC_ERR_BADHEADER, 1,  1,  &GUID_WICPixelFormat8bppAlpha,
+    { test_dds_alpha,      sizeof(test_dds_alpha),         WINCODEC_ERR_BADHEADER, 1,  1,  8,  &GUID_WICPixelFormat8bppAlpha,
       { 1,  1,  1, 1, 1,   DXGI_FORMAT_A8_UNORM,           WICDdsTexture2D,   WICDdsAlphaModeUnknown },       TRUE },
-    { test_dds_luminance,  sizeof(test_dds_luminance),     WINCODEC_ERR_BADHEADER, 1,  1,  &GUID_WICPixelFormat8bppGray,
+    { test_dds_luminance,  sizeof(test_dds_luminance),     WINCODEC_ERR_BADHEADER, 1,  1,  8,  &GUID_WICPixelFormat8bppGray,
       { 1,  1,  1, 1, 1,   DXGI_FORMAT_R8_UNORM,           WICDdsTexture2D,   WICDdsAlphaModeUnknown },       TRUE },
-    { test_dds_rgb565,     sizeof(test_dds_rgb565),        WINCODEC_ERR_BADHEADER, 1,  2,  &GUID_WICPixelFormat16bppBGR565,
+    { test_dds_rgb565,     sizeof(test_dds_rgb565),        WINCODEC_ERR_BADHEADER, 1,  2,  16,  &GUID_WICPixelFormat16bppBGR565,
       { 4,  4,  1, 1, 1,   DXGI_FORMAT_B5G6R5_UNORM,       WICDdsTexture2D,   WICDdsAlphaModeUnknown },       TRUE },
-    { test_dds_24bpp,      sizeof(test_dds_24bpp),         WINCODEC_ERR_BADHEADER, 1,  3,  &GUID_WICPixelFormat24bppBGR,
+    { test_dds_24bpp,      sizeof(test_dds_24bpp),         WINCODEC_ERR_BADHEADER, 1,  3,  24,  &GUID_WICPixelFormat24bppBGR,
       { 1,  1,  1, 1, 1,   DXGI_FORMAT_UNKNOWN,            WICDdsTexture2D,   WICDdsAlphaModeUnknown },       TRUE },
-    { test_dds_32bpp_xrgb, sizeof(test_dds_32bpp_xrgb),    WINCODEC_ERR_BADHEADER, 1,  4,  &GUID_WICPixelFormat32bppBGR,
+    { test_dds_32bpp_xrgb, sizeof(test_dds_32bpp_xrgb),    WINCODEC_ERR_BADHEADER, 1,  4,  32,  &GUID_WICPixelFormat32bppBGR,
       { 1,  1,  1, 1, 1,   DXGI_FORMAT_B8G8R8X8_UNORM,     WICDdsTexture2D,   WICDdsAlphaModeUnknown },       TRUE },
-    { test_dds_32bpp_argb, sizeof(test_dds_32bpp_argb),    WINCODEC_ERR_BADHEADER, 1,  4,  &GUID_WICPixelFormat32bppBGRA,
+    { test_dds_32bpp_argb, sizeof(test_dds_32bpp_argb),    WINCODEC_ERR_BADHEADER, 1,  4,  32,  &GUID_WICPixelFormat32bppBGRA,
       { 1,  1,  1, 1, 1,   DXGI_FORMAT_B8G8R8A8_UNORM,     WICDdsTexture2D,   WICDdsAlphaModeUnknown },       TRUE },
-    { test_dds_64bpp,      sizeof(test_dds_64bpp),         WINCODEC_ERR_BADHEADER, 1,  8,  &GUID_WICPixelFormat64bppBGRA,
+    { test_dds_64bpp,      sizeof(test_dds_64bpp),         WINCODEC_ERR_BADHEADER, 1,  8,  64,  &GUID_WICPixelFormat64bppBGRA,
       { 1,  1,  1, 1, 1,   DXGI_FORMAT_R16G16B16A16_UNORM, WICDdsTexture2D,   WICDdsAlphaModeUnknown },       TRUE },
-    { test_dds_96bpp,      sizeof(test_dds_96bpp),         WINCODEC_ERR_BADHEADER, 1,  12, &GUID_WICPixelFormat96bppRGBFloat,
+    { test_dds_96bpp,      sizeof(test_dds_96bpp),         WINCODEC_ERR_BADHEADER, 1,  12, 96,  &GUID_WICPixelFormat96bppRGBFloat,
       { 1,  1,  1, 1, 1,   DXGI_FORMAT_R32G32B32_FLOAT,    WICDdsTexture2D,   WICDdsAlphaModeUnknown },       TRUE },
-    { test_dds_128bpp,     sizeof(test_dds_128bpp),        WINCODEC_ERR_BADHEADER, 1,  16, &GUID_WICPixelFormat128bppRGBAFloat,
+    { test_dds_128bpp,     sizeof(test_dds_128bpp),        WINCODEC_ERR_BADHEADER, 1,  16, 128, &GUID_WICPixelFormat128bppRGBAFloat,
       { 1,  1,  1, 1, 1,   DXGI_FORMAT_R32G32B32A32_FLOAT, WICDdsTexture2D,   WICDdsAlphaModeUnknown },       TRUE },
-    { test_dds_cube,       sizeof(test_dds_cube),          WINCODEC_ERR_BADHEADER, 18, 8,  &GUID_WICPixelFormat32bppPBGRA,
+    { test_dds_cube,       sizeof(test_dds_cube),          WINCODEC_ERR_BADHEADER, 18, 8,  32,  &GUID_WICPixelFormat32bppPBGRA,
       { 4,  4,  1, 3, 1,   DXGI_FORMAT_BC1_UNORM,          WICDdsTextureCube, WICDdsAlphaModePremultiplied }, TRUE },
-    { test_dds_cube_dx10,  sizeof(test_dds_cube_dx10),     WINCODEC_ERR_BADHEADER, 18, 8,  &GUID_WICPixelFormat32bppBGRA,
+    { test_dds_cube_dx10,  sizeof(test_dds_cube_dx10),     WINCODEC_ERR_BADHEADER, 18, 8,  32,  &GUID_WICPixelFormat32bppBGRA,
       { 4,  4,  1, 3, 1,   DXGI_FORMAT_BC1_UNORM,          WICDdsTextureCube, WICDdsAlphaModeUnknown },       TRUE },
-    { test_dds_mipmaps,    sizeof(test_dds_mipmaps),       S_OK,                   3,  8,  &GUID_WICPixelFormat32bppPBGRA,
+    { test_dds_mipmaps,    sizeof(test_dds_mipmaps),       S_OK,                   3,  8,  32,  &GUID_WICPixelFormat32bppPBGRA,
       { 4,  4,  1, 3, 1,   DXGI_FORMAT_BC1_UNORM,          WICDdsTexture2D,   WICDdsAlphaModePremultiplied } },
-    { test_dds_volume,     sizeof(test_dds_volume),        S_OK,                   7,  8,  &GUID_WICPixelFormat32bppPBGRA,
+    { test_dds_volume,     sizeof(test_dds_volume),        S_OK,                   7,  8,  32,  &GUID_WICPixelFormat32bppPBGRA,
       { 4,  4,  4, 3, 1,   DXGI_FORMAT_BC1_UNORM,          WICDdsTexture3D,   WICDdsAlphaModePremultiplied } },
-    { test_dds_array,      sizeof(test_dds_array),         S_OK,                   9,  8,  &GUID_WICPixelFormat32bppBGRA,
+    { test_dds_array,      sizeof(test_dds_array),         S_OK,                   9,  8,  32,  &GUID_WICPixelFormat32bppBGRA,
       { 4,  4,  1, 3, 3,   DXGI_FORMAT_BC1_UNORM,          WICDdsTexture2D,   WICDdsAlphaModeUnknown } },
-    { test_dds_dxt1c,      sizeof(test_dds_dxt1c),         S_OK,                   1,  8,  &GUID_WICPixelFormat32bppPBGRA,
+    { test_dds_dxt1c,      sizeof(test_dds_dxt1c),         S_OK,                   1,  8,  32,  &GUID_WICPixelFormat32bppPBGRA,
       { 4,  4,  1, 1, 1,   DXGI_FORMAT_BC1_UNORM,          WICDdsTexture2D,   WICDdsAlphaModePremultiplied } },
-    { test_dds_dxt1a,      sizeof(test_dds_dxt1a),         S_OK,                   1,  8,  &GUID_WICPixelFormat32bppPBGRA,
+    { test_dds_dxt1a,      sizeof(test_dds_dxt1a),         S_OK,                   1,  8,  32,  &GUID_WICPixelFormat32bppPBGRA,
       { 4,  4,  1, 1, 1,   DXGI_FORMAT_BC1_UNORM,          WICDdsTexture2D,   WICDdsAlphaModePremultiplied } },
-    { test_dds_dxt2,       sizeof(test_dds_dxt2),          S_OK,                   3,  16, &GUID_WICPixelFormat32bppPBGRA,
+    { test_dds_dxt2,       sizeof(test_dds_dxt2),          S_OK,                   3,  16, 32,  &GUID_WICPixelFormat32bppPBGRA,
       { 4,  4,  1, 3, 1,   DXGI_FORMAT_BC2_UNORM,          WICDdsTexture2D,   WICDdsAlphaModePremultiplied } },
-    { test_dds_dxt3,       sizeof(test_dds_dxt3),          S_OK,                   2,  16, &GUID_WICPixelFormat32bppBGRA,
+    { test_dds_dxt3,       sizeof(test_dds_dxt3),          S_OK,                   2,  16, 32,  &GUID_WICPixelFormat32bppBGRA,
       { 1,  3,  1, 2, 1,   DXGI_FORMAT_BC2_UNORM,          WICDdsTexture2D,   WICDdsAlphaModeUnknown } },
-    { test_dds_dxt4,       sizeof(test_dds_dxt4),          S_OK,                   3,  16, &GUID_WICPixelFormat32bppPBGRA,
+    { test_dds_dxt4,       sizeof(test_dds_dxt4),          S_OK,                   3,  16, 32,  &GUID_WICPixelFormat32bppPBGRA,
       { 4,  4,  1, 3, 1,   DXGI_FORMAT_BC3_UNORM,          WICDdsTexture2D,   WICDdsAlphaModePremultiplied } },
-    { test_dds_dxt5,       sizeof(test_dds_dxt5),          S_OK,                   3,  16, &GUID_WICPixelFormat32bppBGRA,
+    { test_dds_dxt5,       sizeof(test_dds_dxt5),          S_OK,                   3,  16, 32,  &GUID_WICPixelFormat32bppBGRA,
       { 6,  6,  1, 3, 1,   DXGI_FORMAT_BC3_UNORM,          WICDdsTexture2D,   WICDdsAlphaModeUnknown } },
-    { test_dds_12x12,      sizeof(test_dds_12x12),         S_OK,                   8,  16, &GUID_WICPixelFormat32bppBGRA,
+    { test_dds_12x12,      sizeof(test_dds_12x12),         S_OK,                   8,  16, 32,  &GUID_WICPixelFormat32bppBGRA,
       { 12, 12, 1, 4, 2,   DXGI_FORMAT_BC2_UNORM,          WICDdsTexture2D,   WICDdsAlphaModeUnknown } },
     { test_dds_bad_magic,  sizeof(test_dds_bad_magic),     WINCODEC_ERR_UNKNOWNIMAGEFORMAT },
     { test_dds_bad_header, sizeof(test_dds_bad_header),    WINCODEC_ERR_BADHEADER },
@@ -533,29 +534,6 @@ static BOOL is_compressed(DXGI_FORMAT format)
 static BOOL has_extended_header(const BYTE *data)
 {
     return data[84] == 'D' && data[85] == 'X' && data[86] == '1' && data[87] == '0';
-}
-
-static UINT get_pixel_format_bpp(GUID *pixel_format)
-{
-    HRESULT hr;
-    UINT bpp = 0;
-    IWICComponentInfo *info = NULL;
-    IWICPixelFormatInfo* format_info = NULL;
-
-    hr = IWICImagingFactory_CreateComponentInfo(factory, pixel_format, &info);
-    ok(hr == S_OK, "CreateComponentInfo failed, hr %#x\n", hr);
-    if (hr != S_OK) goto end;
-    hr = IWICComponentInfo_QueryInterface(info, &IID_IWICPixelFormatInfo, (void **)&format_info);
-    ok(hr == S_OK, "QueryInterface failed, hr %#x\n", hr);
-    if (hr != S_OK) goto end;
-    hr = IWICPixelFormatInfo_GetBitsPerPixel(format_info, &bpp);
-    ok(hr == S_OK, "GetBitsPerPixel failed, hr %#x\n", hr);
-
-end:
-    if (format_info) IWICPixelFormatInfo_Release(format_info);
-    if (info) IWICComponentInfo_Release(info);
-
-    return bpp;
 }
 
 static DWORD rgb565_to_argb(WORD color, BYTE alpha)
@@ -1074,7 +1052,12 @@ static void test_dds_decoder_frame_data(IWICBitmapFrameDecode* frame, IWICDdsFra
 
     /* CopyPixels tests */
 
-    bpp = get_pixel_format_bpp(&pixel_format);
+    if (!is_compressed(format_info.DxgiFormat)) {
+        skip("Skip CopyPixels tests for uncompressed image\n");
+        return;
+    }
+
+    bpp = test_data[i].pixel_format_bpp;
     stride = rect.Width * bpp / 8;
     frame_stride = frame_width * bpp / 8;
     frame_size = frame_stride * frame_height;
