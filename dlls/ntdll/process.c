@@ -35,7 +35,6 @@
 #include "winternl.h"
 #include "ntdll_misc.h"
 #include "wine/exception.h"
-#include "wine/server.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(process);
 
@@ -53,23 +52,6 @@ static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
 PEB * WINAPI RtlGetCurrentPeb(void)
 {
     return NtCurrentTeb()->Peb;
-}
-
-/***********************************************************************
- *           __wine_make_process_system   (NTDLL.@)
- *
- * Mark the current process as a system process.
- * Returns the event that is signaled when all non-system processes have exited.
- */
-HANDLE CDECL __wine_make_process_system(void)
-{
-    HANDLE ret = 0;
-    SERVER_START_REQ( make_process_system )
-    {
-        if (!wine_server_call( req )) ret = wine_server_ptr_handle( reply->event );
-    }
-    SERVER_END_REQ;
-    return ret;
 }
 
 /***********************************************************************

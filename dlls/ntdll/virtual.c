@@ -120,12 +120,3 @@ void CDECL virtual_clear_thread_stack( void *stack_end )
     NtFreeVirtualMemory( GetCurrentProcess(), &stack, &size, MEM_DECOMMIT );
     NtAllocateVirtualMemory( GetCurrentProcess(), &stack, 0, &size, MEM_COMMIT, PAGE_READWRITE );
 }
-
-
-/***********************************************************************
- *           __wine_locked_recvmsg
- */
-ssize_t CDECL __wine_locked_recvmsg( int fd, struct msghdr *hdr, int flags )
-{
-    return unix_funcs->virtual_locked_recvmsg( fd, hdr, flags );
-}

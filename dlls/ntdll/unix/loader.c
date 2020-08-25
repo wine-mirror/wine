@@ -1347,7 +1347,6 @@ static struct unix_funcs unix_funcs =
     get_unix_codepage_data,
     get_locales,
     virtual_map_section,
-    virtual_locked_recvmsg,
     virtual_release_address_space,
     exec_process,
     server_init_process_done,

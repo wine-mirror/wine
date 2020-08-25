@@ -3072,9 +3072,9 @@ ssize_t virtual_locked_pread( int fd, void *addr, size_t size, off_t offset )
 
 
 /***********************************************************************
- *           virtual_locked_recvmsg
+ *           __wine_locked_recvmsg   (NTDLL.@)
  */
-ssize_t CDECL virtual_locked_recvmsg( int fd, struct msghdr *hdr, int flags )
+ssize_t CDECL __wine_locked_recvmsg( int fd, struct msghdr *hdr, int flags )
 {
     sigset_t sigset;
     size_t i;

@@ -24,11 +24,10 @@
 #include "wine/server.h"
 #include "wine/debug.h"
 
-struct msghdr;
 struct _DISPATCHER_CONTEXT;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 97
+#define NTDLL_UNIXLIB_VERSION 98
 
 struct unix_funcs
 {
@@ -83,7 +82,6 @@ struct unix_funcs
     NTSTATUS      (CDECL *virtual_map_section)( HANDLE handle, PVOID *addr_ptr, unsigned short zero_bits_64, SIZE_T commit_size,
                                                 const LARGE_INTEGER *offset_ptr, SIZE_T *size_ptr, ULONG alloc_type,
                                                 ULONG protect, pe_image_info_t *image_info );
-    ssize_t       (CDECL *virtual_locked_recvmsg)( int fd, struct msghdr *hdr, int flags );
     void          (CDECL *virtual_release_address_space)(void);
 
     /* thread/process functions */

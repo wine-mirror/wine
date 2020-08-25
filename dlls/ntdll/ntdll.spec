@@ -1586,7 +1586,7 @@
 @ cdecl -syscall wine_server_handle_to_fd(long long ptr ptr)
 @ cdecl -syscall wine_server_release_fd(long long)
 @ cdecl -syscall wine_server_send_fd(long)
-@ cdecl __wine_make_process_system()
+@ cdecl -syscall __wine_make_process_system()
 @ cdecl __wine_set_unix_funcs(long ptr)
 @ extern __wine_syscall_dispatcher
 @ extern -arch=i386 __wine_ldt_copy
@@ -1598,7 +1598,7 @@
 @ cdecl -norelay __wine_dbg_strdup(str)
 
 # Virtual memory
-@ cdecl __wine_locked_recvmsg(long ptr long)
+@ cdecl -syscall __wine_locked_recvmsg(long ptr long)
 
 # Version
 @ cdecl -syscall wine_get_version()
