@@ -166,7 +166,7 @@ static struct dds_format {
     const GUID *wic_format;
     UINT wic_format_bpp;
     DXGI_FORMAT dxgi_format;
-} dds_formats[] = {
+} dds_format_table[] = {
     { { sizeof(DDS_PIXELFORMAT), DDPF_FOURCC, MAKEFOURCC('D', 'X', 'T', '1'), 0, 0, 0, 0, 0 },
       &GUID_WICPixelFormat32bppPBGRA, 32,       DXGI_FORMAT_BC1_UNORM },
     { { sizeof(DDS_PIXELFORMAT), DDPF_FOURCC, MAKEFOURCC('D', 'X', 'T', '2'), 0, 0, 0, 0, 0 },
@@ -239,7 +239,8 @@ static struct dds_format {
     { { sizeof(DDS_PIXELFORMAT), DDPF_LUMINANCE, 0, 16, 0xFF,0,0,0xFF00 },
       &GUID_WICPixelFormatUndefined,        0,  DXGI_FORMAT_R8G8_UNORM },
     { { sizeof(DDS_PIXELFORMAT), DDPF_LUMINANCE, 0, 8,  0xFF,0,0,0 },
-      &GUID_WICPixelFormat8bppGray,         8,  DXGI_FORMAT_R8_UNORM }
+      &GUID_WICPixelFormat8bppGray,         8,  DXGI_FORMAT_R8_UNORM },
+    { { 0 }, &GUID_WICPixelFormatUndefined, 0,  DXGI_FORMAT_UNKNOWN }
 };
 
 static DXGI_FORMAT compressed_formats[] = {
@@ -289,23 +290,23 @@ static WICDdsDimension get_dimension(DDS_HEADER *header, DDS_HEADER_DXT10 *heade
     }
 }
 
-static DXGI_FORMAT get_dxgi_format(DDS_PIXELFORMAT *pixel_format)
+static struct dds_format *get_dds_format(DDS_PIXELFORMAT *pixel_format)
 {
     UINT i;
 
-    for (i = 0; i < ARRAY_SIZE(dds_formats); i++)
+    for (i = 0; i < ARRAY_SIZE(dds_format_table); i++)
     {
-        if ((pixel_format->flags & dds_formats[i].pixel_format.flags) &&
-            (pixel_format->fourCC == dds_formats[i].pixel_format.fourCC) &&
-            (pixel_format->rgbBitCount == dds_formats[i].pixel_format.rgbBitCount) &&
-            (pixel_format->rBitMask == dds_formats[i].pixel_format.rBitMask) &&
-            (pixel_format->gBitMask == dds_formats[i].pixel_format.gBitMask) &&
-            (pixel_format->bBitMask == dds_formats[i].pixel_format.bBitMask) &&
-            (pixel_format->aBitMask == dds_formats[i].pixel_format.aBitMask))
-            return dds_formats[i].dxgi_format;
+        if ((pixel_format->flags & dds_format_table[i].pixel_format.flags) &&
+            (pixel_format->fourCC == dds_format_table[i].pixel_format.fourCC) &&
+            (pixel_format->rgbBitCount == dds_format_table[i].pixel_format.rgbBitCount) &&
+            (pixel_format->rBitMask == dds_format_table[i].pixel_format.rBitMask) &&
+            (pixel_format->gBitMask == dds_format_table[i].pixel_format.gBitMask) &&
+            (pixel_format->bBitMask == dds_format_table[i].pixel_format.bBitMask) &&
+            (pixel_format->aBitMask == dds_format_table[i].pixel_format.aBitMask))
+            return dds_format_table + i;
     }
 
-    return DXGI_FORMAT_UNKNOWN;
+    return dds_format_table + ARRAY_SIZE(dds_format_table) - 1;
 }
 
 static WICDdsAlphaMode get_alpha_mode_from_fourcc(DWORD fourcc)
@@ -452,6 +453,7 @@ static void get_dds_info(dds_info* info, DDS_HEADER *header, DDS_HEADER_DXT10 *h
 {
     int i;
     UINT depth;
+    struct dds_format *format_info;
 
     info->width = header->width;
     info->height = header->height;
@@ -461,6 +463,7 @@ static void get_dds_info(dds_info* info, DDS_HEADER *header, DDS_HEADER_DXT10 *h
     if (header->depth) info->depth = header->depth;
     if (header->mipMapCount) info->mip_levels = header->mipMapCount;
 
+    format_info = get_dds_format(&header->ddspf);
     if (has_extended_header(header)) {
         if (header_dxt10->arraySize) info->array_size = header_dxt10->arraySize;
         info->format = header_dxt10->dxgiFormat;
@@ -468,7 +471,7 @@ static void get_dds_info(dds_info* info, DDS_HEADER *header, DDS_HEADER_DXT10 *h
         info->alpha_mode = header_dxt10->miscFlags2 & 0x00000008;
         info->data_offset = sizeof(DWORD) + sizeof(*header) + sizeof(*header_dxt10);
     } else {
-        info->format = get_dxgi_format(&header->ddspf);
+        info->format = format_info->dxgi_format;
         info->dimension = get_dimension(header, NULL);
         info->alpha_mode = get_alpha_mode_from_fourcc(header->ddspf.fourCC);
         info->data_offset = sizeof(DWORD) + sizeof(*header);
