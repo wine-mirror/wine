@@ -85,6 +85,7 @@ static const WCHAR ustr_language[]	= { 'L', 'a', 'n', 'g', 'u', 'a', 'g', 'e', 0
 static const WCHAR ustr_languagenames[]	= { 'L', 'a', 'n', 'g', 'u', 'a', 'g', 'e', 'N', 'a', 'm', 'e', 's', 0};
 static const WCHAR ustr_messageid[]	= { 'M', 'e', 's', 's', 'a', 'g', 'e', 'I', 'd', 0 };
 static const WCHAR ustr_messageidtypedef[] = { 'M', 'e', 's', 's', 'a', 'g', 'e', 'I', 'd', 'T', 'y', 'p', 'e', 'd', 'e', 'f', 0 };
+static const WCHAR ustr_null[]	= { 'N', 'u', 'l', 'l', 0 };
 static const WCHAR ustr_outputbase[]	= { 'O', 'u', 't', 'p', 'u', 't', 'B', 'a', 's', 'e', 0 };
 static const WCHAR ustr_severity[]	= { 'S', 'e', 'v', 'e', 'r', 'i', 't', 'y', 0 };
 static const WCHAR ustr_severitynames[]	= { 'S', 'e', 'v', 'e', 'r', 'i', 't', 'y', 'N', 'a', 'm', 'e', 's', 0 };
@@ -551,6 +552,7 @@ int mcy_lex(void)
 		add_token(tok_severity,	ustr_success,		0x00,		0, NULL, 0);
 		add_token(tok_facility,	ustr_application,	0xFFF,		0, NULL, 0);
 		add_token(tok_facility,	ustr_system,		0x0FF,		0, NULL, 0);
+		add_token(tok_facility,	ustr_null,   		0x000,		0, NULL, 0);
 		add_token(tok_language,	ustr_english,		0x409,		437, ustr_msg00001, 0);
 	}
 
