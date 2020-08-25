@@ -125,6 +125,7 @@ typedef struct dds_info {
     WICDdsDimension dimension;
     WICDdsAlphaMode alpha_mode;
     const GUID *pixel_format;
+    UINT pixel_format_bpp;
 } dds_info;
 
 typedef struct dds_frame_info {
@@ -470,11 +471,18 @@ static void get_dds_info(dds_info* info, DDS_HEADER *header, DDS_HEADER_DXT10 *h
         info->dimension = get_dimension(NULL, header_dxt10);
         info->alpha_mode = header_dxt10->miscFlags2 & 0x00000008;
         info->data_offset = sizeof(DWORD) + sizeof(*header) + sizeof(*header_dxt10);
+        if (is_compressed(info->format)) {
+            info->pixel_format_bpp = 32;
+        } else {
+            info->pixel_format_bpp = 0;
+            FIXME("Pixel format bpp is incorrect for uncompressed DDS image with extended header\n");
+        }
     } else {
         info->format = format_info->dxgi_format;
         info->dimension = get_dimension(header, NULL);
         info->alpha_mode = get_alpha_mode_from_fourcc(header->ddspf.fourCC);
         info->data_offset = sizeof(DWORD) + sizeof(*header);
+        info->pixel_format_bpp = format_info->wic_format_bpp;
     }
     info->pixel_format = (info->alpha_mode == WICDdsAlphaModePremultiplied) ?
                          &GUID_WICPixelFormat32bppPBGRA : &GUID_WICPixelFormat32bppBGRA;
@@ -500,27 +508,6 @@ static void get_dds_info(dds_info* info, DDS_HEADER *header, DDS_HEADER_DXT10 *h
         info->frame_count *= info->array_size;
     }
     if (info->dimension == WICDdsTextureCube) info->frame_count *= 6;
-}
-
-static UINT get_pixel_format_bpp(const GUID *pixel_format)
-{
-    HRESULT hr;
-    UINT bpp = 0;
-    IWICComponentInfo *info = NULL;
-    IWICPixelFormatInfo* format_info = NULL;
-
-    hr = CreateComponentInfo(pixel_format, &info);
-    if (hr != S_OK) goto end;
-    hr = IWICComponentInfo_QueryInterface(info, &IID_IWICPixelFormatInfo, (void **)&format_info);
-    if (hr != S_OK) goto end;
-
-    IWICPixelFormatInfo_GetBitsPerPixel(format_info, &bpp);
-
-end:
-    if (format_info) IWICPixelFormatInfo_Release(format_info);
-    if (info) IWICComponentInfo_Release(info);
-
-    return bpp;
 }
 
 static void decode_block(const BYTE *block_data, UINT block_count, DXGI_FORMAT format,
@@ -766,6 +753,8 @@ static HRESULT WINAPI DdsFrameDecode_CopyPixels(IWICBitmapFrameDecode *iface,
     if (!pbBuffer) return E_INVALIDARG;
 
     bpp = This->info.pixel_format_bpp;
+    if (!bpp) return WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT;
+
     frame_stride = This->info.width * bpp / 8;
     frame_size = frame_stride * This->info.height;
     if (!prc) {
@@ -1326,7 +1315,7 @@ static HRESULT WINAPI DdsDecoder_Dds_GetFrame(IWICDdsDecoder *iface,
     frame_decode->info.width_in_blocks = frame_width_in_blocks;
     frame_decode->info.height_in_blocks = frame_height_in_blocks;
     frame_decode->info.pixel_format = This->info.pixel_format;
-    frame_decode->info.pixel_format_bpp = get_pixel_format_bpp(This->info.pixel_format);
+    frame_decode->info.pixel_format_bpp = This->info.pixel_format_bpp;
     frame_decode->block_data = HeapAlloc(GetProcessHeap(), 0, frame_size);
     frame_decode->pixel_data = NULL;
     hr = IStream_Seek(This->stream, seek, SEEK_SET, NULL);
