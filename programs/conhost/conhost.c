@@ -213,6 +213,17 @@ static NTSTATUS console_input_ioctl( struct console *console, unsigned int code,
         if (in_size % sizeof(INPUT_RECORD) || *out_size) return STATUS_INVALID_PARAMETER;
         return write_console_input( console, in_data, in_size / sizeof(INPUT_RECORD) );
 
+    case IOCTL_CONDRV_PEEK:
+        {
+            void *result;
+            TRACE( "peek\n ");
+            if (in_size) return STATUS_INVALID_PARAMETER;
+            *out_size = min( *out_size, console->record_count * sizeof(INPUT_RECORD) );
+            if (!(result = alloc_ioctl_buffer( *out_size ))) return STATUS_NO_MEMORY;
+            if (*out_size) memcpy( result, console->records, *out_size );
+            return STATUS_SUCCESS;
+        }
+
     case IOCTL_CONDRV_GET_INPUT_INFO:
         {
             struct condrv_input_info *info;
