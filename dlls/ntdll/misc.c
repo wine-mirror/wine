@@ -39,30 +39,6 @@ LPCSTR debugstr_us( const UNICODE_STRING *us )
 }
 
 /*********************************************************************
- *                  wine_get_version   (NTDLL.@)
- */
-const char * CDECL wine_get_version(void)
-{
-    return unix_funcs->get_version();
-}
-
-/*********************************************************************
- *                  wine_get_build_id   (NTDLL.@)
- */
-const char * CDECL wine_get_build_id(void)
-{
-    return unix_funcs->get_build_id();
-}
-
-/*********************************************************************
- *                  wine_get_host_version   (NTDLL.@)
- */
-void CDECL wine_get_host_version( const char **sysname, const char **release )
-{
-    return unix_funcs->get_host_version( sysname, release );
-}
-
-/*********************************************************************
  *                  abs   (NTDLL.@)
  */
 int CDECL abs( int i )

@@ -42,6 +42,8 @@
 
 extern char **environ;
 
+extern const char *wine_get_build_id(void);
+
 /* the preloader will set this variable */
 const struct wine_preload_info *wine_main_preload_info = NULL;
 

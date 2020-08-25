@@ -354,18 +354,18 @@ static void init_paths( int argc, char *argv[], char *envp[] )
 
 
 /*********************************************************************
- *                  get_version
+ *                  wine_get_version
  */
-const char * CDECL get_version(void)
+const char * CDECL wine_get_version(void)
 {
     return PACKAGE_VERSION;
 }
 
 
 /*********************************************************************
- *                  get_build_id
+ *                  wine_get_build_id
  */
-const char * CDECL get_build_id(void)
+const char * CDECL wine_get_build_id(void)
 {
     extern const char wine_build[];
     return wine_build;
@@ -373,9 +373,9 @@ const char * CDECL get_build_id(void)
 
 
 /*********************************************************************
- *                  get_host_version
+ *                  wine_get_host_version
  */
-void CDECL get_host_version( const char **sysname, const char **release )
+void CDECL wine_get_host_version( const char **sysname, const char **release )
 {
 #ifdef HAVE_SYS_UTSNAME_H
     static struct utsname buf;
@@ -1346,9 +1346,6 @@ static struct unix_funcs unix_funcs =
     get_initial_directory,
     get_unix_codepage_data,
     get_locales,
-    get_version,
-    get_build_id,
-    get_host_version,
     virtual_map_section,
     virtual_locked_recvmsg,
     virtual_release_address_space,
@@ -1604,7 +1601,7 @@ static void check_command_line( int argc, char *argv[] )
     }
     if (!strcmp( argv[1], "--version" ))
     {
-        printf( "%s\n", get_build_id() );
+        printf( "%s\n", wine_get_build_id() );
         exit(0);
     }
 }

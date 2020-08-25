@@ -1601,9 +1601,9 @@
 @ cdecl __wine_locked_recvmsg(long ptr long)
 
 # Version
-@ cdecl wine_get_version()
-@ cdecl wine_get_build_id()
-@ cdecl wine_get_host_version(ptr ptr)
+@ cdecl -syscall wine_get_version()
+@ cdecl -syscall wine_get_build_id()
+@ cdecl -syscall wine_get_host_version(ptr ptr)
 
 # Codepages
 @ cdecl __wine_get_unix_codepage()
