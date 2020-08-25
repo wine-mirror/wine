@@ -24,6 +24,10 @@ cpp_quote("#ifdef WINE_NO_UNICODE_MACROS")
 cpp_quote("#undef GetMessage")
 cpp_quote("#endif")
 
+const UINT D3D10_DEBUG_FEATURE_FLUSH_PER_RENDER_OP = 0x1;
+const UINT D3D10_DEBUG_FEATURE_FINISH_PER_RENDER_OP = 0x2;
+const UINT D3D10_DEBUG_FEATURE_PRESENT_PER_RENDER_OP = 0x4;
+
 typedef enum D3D10_MESSAGE_CATEGORY
 {
     D3D10_MESSAGE_CATEGORY_APPLICATION_DEFINED,
@@ -584,6 +588,31 @@ typedef struct D3D10_INFO_QUEUE_FILTER
     D3D10_INFO_QUEUE_FILTER_DESC AllowList;
     D3D10_INFO_QUEUE_FILTER_DESC DenyList;
 } D3D10_INFO_QUEUE_FILTER;
+
+[
+    local,
+    object,
+    uuid(9b7e4e01-342c-4106-a19f-4f2704f689f0),
+    pointer_default(unique)
+]
+interface ID3D10Debug : IUnknown
+{
+    HRESULT SetFeatureMask(
+        [in] UINT mask
+    );
+    UINT GetFeatureMask();
+    HRESULT SetPresentPerRenderOpDelay(
+        [in] UINT milliseconds
+    );
+    UINT GetPresentPerRenderOpDelay();
+    HRESULT SetSwapChain(
+        [in] IDXGISwapChain *swapchain
+    );
+    HRESULT GetSwapChain(
+        [out] IDXGISwapChain **swapchain
+    );
+    HRESULT Validate();
+}
 
 [
     local,
