@@ -996,8 +996,6 @@ void update_net_wm_states( struct x11drv_win_data *data )
 
         for (i = 0; i < NB_NET_WM_STATES; i++)
         {
-            if (!((data->net_wm_state ^ new_state) & (1 << i))) continue;  /* unchanged */
-
             TRACE( "setting wm state %u for window %p/%lx to %u prev %u\n",
                    i, data->hwnd, data->whole_window,
                    (new_state & (1 << i)) != 0, (data->net_wm_state & (1 << i)) != 0 );
