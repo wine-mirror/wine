@@ -1237,12 +1237,8 @@ DWORD apartment_release(struct apartment *apt)
     return ret;
 }
 
-/* The given OXID must be local to this process: 
- *
- * The ref parameter is here mostly to ensure people remember that
- * they get one, you should normally take a ref for thread safety.
- */
-struct apartment *apartment_findfromoxid(OXID oxid, BOOL ref)
+/* The given OXID must be local to this process */
+struct apartment *apartment_findfromoxid(OXID oxid)
 {
     struct apartment *result = NULL;
     struct list *cursor;
@@ -1254,7 +1250,7 @@ struct apartment *apartment_findfromoxid(OXID oxid, BOOL ref)
         if (apt->oxid == oxid)
         {
             result = apt;
-            if (ref) apartment_addref(result);
+            apartment_addref(result);
             break;
         }
     }
