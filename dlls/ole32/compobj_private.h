@@ -40,7 +40,6 @@
 #include "winternl.h"
 
 struct apartment;
-typedef struct LocalServer LocalServer;
 
 DEFINE_OLEGUID( CLSID_DfMarshal, 0x0000030b, 0, 0 );
 
@@ -140,7 +139,7 @@ struct apartment
   struct list loaded_dlls; /* list of dlls loaded by this apartment (CS cs) */
   DWORD host_apt_tid;      /* thread ID of apartment hosting objects of differing threading model (CS cs) */
   HWND host_apt_hwnd;      /* handle to apartment window of host apartment (CS cs) */
-  LocalServer *local_server; /* A marshallable object exposing local servers (CS cs) */
+  struct local_server *local_server; /* A marshallable object exposing local servers (CS cs) */
   BOOL being_destroyed;    /* is currently being destroyed */
 
   /* FIXME: OIDs should be given out by RPCSS */
@@ -248,7 +247,7 @@ void OLEDD_UnInitialize(void) DECLSPEC_HIDDEN;
 
 struct apartment *apartment_findfromoxid(OXID oxid) DECLSPEC_HIDDEN;
 struct apartment *apartment_findfromtid(DWORD tid) DECLSPEC_HIDDEN;
-DWORD apartment_release(struct apartment *apt) DECLSPEC_HIDDEN;
+void apartment_release(struct apartment *apt) DECLSPEC_HIDDEN;
 HRESULT apartment_disconnectproxies(struct apartment *apt) DECLSPEC_HIDDEN;
 static inline HRESULT apartment_getoxid(const struct apartment *apt, OXID *oxid)
 {
@@ -260,6 +259,21 @@ HWND apartment_getwindow(const struct apartment *apt) DECLSPEC_HIDDEN;
 HRESULT enter_apartment(struct oletls *info, DWORD model) DECLSPEC_HIDDEN;
 void leave_apartment(struct oletls *info) DECLSPEC_HIDDEN;
 struct apartment *apartment_get_current_or_mta(void) DECLSPEC_HIDDEN;
+
+struct class_reg_data;
+HRESULT apartment_get_inproc_class_object(struct apartment *apt, const struct class_reg_data *regdata,
+        REFCLSID rclsid, REFIID riid, BOOL hostifnecessary, void **ppv) DECLSPEC_HIDDEN;
+
+void apartment_decrement_mta_usage(CO_MTA_USAGE_COOKIE cookie) DECLSPEC_HIDDEN;
+HRESULT apartment_increment_mta_usage(CO_MTA_USAGE_COOKIE *cookie) DECLSPEC_HIDDEN;
+struct apartment *apartment_get_mta(void) DECLSPEC_HIDDEN;
+HRESULT apartment_get_local_server_stream(struct apartment *apt, IStream **ret) DECLSPEC_HIDDEN;
+void apartment_freeunusedlibraries(struct apartment *apt, DWORD delay) DECLSPEC_HIDDEN;
+void apartment_global_cleanup(void) DECLSPEC_HIDDEN;
+
+HRESULT COM_GetRegisteredClassObject(const struct apartment *apt, REFCLSID rclsid,
+        DWORD dwClsContext, IUnknown **ppUnk) DECLSPEC_HIDDEN;
+void COM_RevokeAllClasses(const struct apartment *apt) DECLSPEC_HIDDEN;
 
 /* DCOM messages used by the apartment window (not compatible with native) */
 #define DM_EXECUTERPC   (WM_USER + 0) /* WPARAM = 0, LPARAM = (struct dispatch_params *) */
