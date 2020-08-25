@@ -34,7 +34,6 @@ C_SRCS = \
 	rtlbitmap.c \
 	rtlstr.c \
 	sec.c \
-	server.c \
 	signal_arm.c \
 	signal_arm64.c \
 	signal_i386.c \

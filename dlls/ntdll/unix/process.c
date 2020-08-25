@@ -511,7 +511,7 @@ static int get_unix_curdir( const RTL_USER_PROCESS_PARAMETERS *params )
                          FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT );
     free( nt_name.Buffer );
     if (status) return -1;
-    server_handle_to_fd( handle, FILE_TRAVERSE, &fd, NULL );
+    wine_server_handle_to_fd( handle, FILE_TRAVERSE, &fd, NULL );
     NtClose( handle );
     return fd;
 }
@@ -548,8 +548,8 @@ static NTSTATUS spawn_process( const RTL_USER_PROCESS_PARAMETERS *params, int so
     pid_t pid;
     char **argv;
 
-    server_handle_to_fd( params->hStdInput, FILE_READ_DATA, &stdin_fd, NULL );
-    server_handle_to_fd( params->hStdOutput, FILE_WRITE_DATA, &stdout_fd, NULL );
+    wine_server_handle_to_fd( params->hStdInput, FILE_READ_DATA, &stdin_fd, NULL );
+    wine_server_handle_to_fd( params->hStdOutput, FILE_WRITE_DATA, &stdout_fd, NULL );
 
     if (!(pid = fork()))  /* child */
     {
@@ -640,7 +640,7 @@ NTSTATUS CDECL exec_process( UNICODE_STRING *path, UNICODE_STRING *cmdline, NTST
         setsockopt( socketfd[0], SOL_SOCKET, SO_PASSCRED, &enable, sizeof(enable) );
     }
 #endif
-    server_send_fd( socketfd[1] );
+    wine_server_send_fd( socketfd[1] );
     close( socketfd[1] );
 
     SERVER_START_REQ( exec_process )
@@ -701,8 +701,8 @@ static NTSTATUS fork_and_exec( UNICODE_STRING *path, int unixdir,
         fcntl( fd[1], F_SETFD, FD_CLOEXEC );
     }
 
-    server_handle_to_fd( params->hStdInput, FILE_READ_DATA, &stdin_fd, NULL );
-    server_handle_to_fd( params->hStdOutput, FILE_WRITE_DATA, &stdout_fd, NULL );
+    wine_server_handle_to_fd( params->hStdInput, FILE_READ_DATA, &stdin_fd, NULL );
+    wine_server_handle_to_fd( params->hStdOutput, FILE_WRITE_DATA, &stdout_fd, NULL );
 
     if (!(pid = fork()))  /* child */
     {
@@ -861,7 +861,7 @@ NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_
     }
 #endif
 
-    server_send_fd( socketfd[1] );
+    wine_server_send_fd( socketfd[1] );
     close( socketfd[1] );
 
     /* create the process on the server side */

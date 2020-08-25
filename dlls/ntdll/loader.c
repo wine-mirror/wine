@@ -68,6 +68,8 @@ const WCHAR system_dir[] = {'C',':','\\','w','i','n','d','o','w','s','\\',
 const WCHAR syswow64_dir[] = {'C',':','\\','w','i','n','d','o','w','s','\\',
                               's','y','s','w','o','w','6','4','\\',0};
 
+BOOL is_wow64 = FALSE;
+
 /* system search path */
 static const WCHAR system_path[] =
     {'C',':','\\','w','i','n','d','o','w','s','\\','s','y','s','t','e','m','3','2',';',

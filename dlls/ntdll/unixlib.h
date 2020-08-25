@@ -28,7 +28,7 @@ struct msghdr;
 struct _DISPATCHER_CONTEXT;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 94
+#define NTDLL_UNIXLIB_VERSION 95
 
 struct unix_funcs
 {
@@ -93,13 +93,6 @@ struct unix_funcs
     NTSTATUS      (CDECL *exec_process)( UNICODE_STRING *path, UNICODE_STRING *cmdline, NTSTATUS status );
 
     /* server functions */
-    unsigned int  (CDECL *server_call)( void *req_ptr );
-    void          (CDECL *server_send_fd)( int fd );
-    NTSTATUS      (CDECL *server_fd_to_handle)( int fd, unsigned int access, unsigned int attributes,
-                                                HANDLE *handle );
-    NTSTATUS      (CDECL *server_handle_to_fd)( HANDLE handle, unsigned int access, int *unix_fd,
-                                                unsigned int *options );
-    void          (CDECL *server_release_fd)( HANDLE handle, int unix_fd );
     void          (CDECL *server_init_process_done)( void *relay );
 
     /* file functions */

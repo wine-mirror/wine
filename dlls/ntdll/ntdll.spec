@@ -1581,11 +1581,11 @@
 # or 'wine_' (for user-visible functions) to avoid namespace conflicts.
 
 # Server interface
-@ cdecl -norelay wine_server_call(ptr)
-@ cdecl wine_server_fd_to_handle(long long long ptr)
-@ cdecl wine_server_handle_to_fd(long long ptr ptr)
-@ cdecl wine_server_release_fd(long long)
-@ cdecl wine_server_send_fd(long)
+@ cdecl -syscall -norelay wine_server_call(ptr)
+@ cdecl -syscall wine_server_fd_to_handle(long long long ptr)
+@ cdecl -syscall wine_server_handle_to_fd(long long ptr ptr)
+@ cdecl -syscall wine_server_release_fd(long long)
+@ cdecl -syscall wine_server_send_fd(long)
 @ cdecl __wine_make_process_system()
 @ cdecl __wine_set_unix_funcs(long ptr)
 @ extern __wine_syscall_dispatcher

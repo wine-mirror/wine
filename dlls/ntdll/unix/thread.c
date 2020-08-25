@@ -187,7 +187,7 @@ NTSTATUS WINAPI NtCreateThreadEx( HANDLE *handle, ACCESS_MASK access, OBJECT_ATT
         free( objattr );
         return STATUS_TOO_MANY_OPENED_FILES;
     }
-    server_send_fd( request_pipe[0] );
+    wine_server_send_fd( request_pipe[0] );
 
     if (!access) access = THREAD_ALL_ACCESS;
 

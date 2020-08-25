@@ -1159,9 +1159,9 @@ void CDECL get_initial_console( HANDLE *handle, HANDLE *std_in, HANDLE *std_out,
 {
     *handle = *std_in = *std_out = *std_err = 0;
     if (isatty(0) || isatty(1) || isatty(2)) *handle = (HANDLE)2; /* see kernel32/kernel_private.h */
-    if (!isatty(0)) server_fd_to_handle( 0, GENERIC_READ|SYNCHRONIZE,  OBJ_INHERIT, std_in );
-    if (!isatty(1)) server_fd_to_handle( 1, GENERIC_WRITE|SYNCHRONIZE, OBJ_INHERIT, std_out );
-    if (!isatty(2)) server_fd_to_handle( 2, GENERIC_WRITE|SYNCHRONIZE, OBJ_INHERIT, std_err );
+    if (!isatty(0)) wine_server_fd_to_handle( 0, GENERIC_READ|SYNCHRONIZE,  OBJ_INHERIT, std_in );
+    if (!isatty(1)) wine_server_fd_to_handle( 1, GENERIC_WRITE|SYNCHRONIZE, OBJ_INHERIT, std_out );
+    if (!isatty(2)) wine_server_fd_to_handle( 2, GENERIC_WRITE|SYNCHRONIZE, OBJ_INHERIT, std_err );
 }
 
 

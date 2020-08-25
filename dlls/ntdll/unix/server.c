@@ -751,11 +751,11 @@ unsigned int server_queue_process_apc( HANDLE process, const apc_call_t *call, a
 
 
 /***********************************************************************
- *           server_send_fd
+ *           wine_server_send_fd
  *
  * Send a file descriptor to the server.
  */
-void CDECL server_send_fd( int fd )
+void CDECL wine_server_send_fd( int fd )
 {
     struct send_fd data;
     struct msghdr msghdr;
@@ -1038,14 +1038,14 @@ done:
 
 
 /***********************************************************************
- *           server_fd_to_handle
+ *           wine_server_fd_to_handle
  */
-NTSTATUS CDECL server_fd_to_handle( int fd, unsigned int access, unsigned int attributes, HANDLE *handle )
+NTSTATUS CDECL wine_server_fd_to_handle( int fd, unsigned int access, unsigned int attributes, HANDLE *handle )
 {
     NTSTATUS ret;
 
     *handle = 0;
-    server_send_fd( fd );
+    wine_server_send_fd( fd );
 
     SERVER_START_REQ( alloc_file_handle )
     {
@@ -1060,12 +1060,12 @@ NTSTATUS CDECL server_fd_to_handle( int fd, unsigned int access, unsigned int at
 
 
 /***********************************************************************
- *           server_handle_to_fd
+ *           wine_server_handle_to_fd
  *
  * Retrieve the file descriptor corresponding to a file handle.
  */
-NTSTATUS CDECL server_handle_to_fd( HANDLE handle, unsigned int access, int *unix_fd,
-                                    unsigned int *options )
+NTSTATUS CDECL wine_server_handle_to_fd( HANDLE handle, unsigned int access, int *unix_fd,
+                                         unsigned int *options )
 {
     int needs_close;
     NTSTATUS ret = server_get_unix_fd( handle, access, unix_fd, &needs_close, NULL, options );
@@ -1079,9 +1079,9 @@ NTSTATUS CDECL server_handle_to_fd( HANDLE handle, unsigned int access, int *uni
 
 
 /***********************************************************************
- *           server_release_fd
+ *           wine_server_release_fd
  */
-void CDECL server_release_fd( HANDLE handle, int unix_fd )
+void CDECL wine_server_release_fd( HANDLE handle, int unix_fd )
 {
     close( unix_fd );
 }
@@ -1519,8 +1519,8 @@ size_t server_init_thread( void *entry_point, BOOL *suspend )
     /* create the server->client communication pipes */
     if (server_pipe( reply_pipe ) == -1) server_protocol_perror( "pipe" );
     if (server_pipe( ntdll_get_thread_data()->wait_fd ) == -1) server_protocol_perror( "pipe" );
-    server_send_fd( reply_pipe[1] );
-    server_send_fd( ntdll_get_thread_data()->wait_fd[1] );
+    wine_server_send_fd( reply_pipe[1] );
+    wine_server_send_fd( ntdll_get_thread_data()->wait_fd[1] );
     ntdll_get_thread_data()->reply_fd = reply_pipe[0];
     close( reply_pipe[1] );
 
