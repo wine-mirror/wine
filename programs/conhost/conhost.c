@@ -45,7 +45,9 @@ struct console
 {
     HANDLE                server;        /* console server handle */
     unsigned int          mode;          /* input mode */
-    unsigned int          recnum;        /* number of input records */
+    INPUT_RECORD         *records;       /* input records */
+    unsigned int          record_count;  /* number of input records */
+    unsigned int          record_size;   /* size of input records buffer */
     WCHAR                *title;         /* console title */
     size_t                title_len;     /* length of console title */
     struct history_line **history;       /* lines history */
@@ -71,6 +73,49 @@ static void *alloc_ioctl_buffer( size_t size )
         ioctl_buffer_size = size;
     }
     return ioctl_buffer;
+}
+
+/* add input events to a console input queue */
+static NTSTATUS write_console_input( struct console *console, const INPUT_RECORD *records,
+                                     unsigned int count )
+{
+    TRACE( "%u\n", count );
+
+    if (!count) return STATUS_SUCCESS;
+    if (console->record_count + count > console->record_size)
+    {
+        INPUT_RECORD *new_rec;
+        if (!(new_rec = realloc( console->records, (console->record_size * 2 + count) * sizeof(INPUT_RECORD) )))
+            return STATUS_NO_MEMORY;
+        console->records = new_rec;
+        console->record_size = console->record_size * 2 + count;
+    }
+    memcpy( console->records + console->record_count, records, count * sizeof(INPUT_RECORD) );
+
+    if (console->mode & ENABLE_PROCESSED_INPUT)
+    {
+        unsigned int i = 0;
+        while (i < count)
+        {
+            if (records[i].EventType == KEY_EVENT &&
+		records[i].Event.KeyEvent.uChar.UnicodeChar == 'C' - 64 &&
+		!(records[i].Event.KeyEvent.dwControlKeyState & ENHANCED_KEY))
+            {
+                if (i != count - 1)
+                    memcpy( &console->records[console->record_count + i],
+                            &console->records[console->record_count + i + 1],
+                            (count - i - 1) * sizeof(INPUT_RECORD) );
+                count--;
+                if (records[i].Event.KeyEvent.bKeyDown)
+                {
+                    FIXME("CTRL C\n");
+                }
+            }
+            else i++;
+        }
+    }
+    console->record_count += count;
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS set_console_title( struct console *console, const WCHAR *in_title, size_t size )
@@ -111,6 +156,10 @@ static NTSTATUS console_input_ioctl( struct console *console, unsigned int code,
         TRACE( "set %x mode\n", console->mode );
         return STATUS_SUCCESS;
 
+    case IOCTL_CONDRV_WRITE_INPUT:
+        if (in_size % sizeof(INPUT_RECORD) || *out_size) return STATUS_INVALID_PARAMETER;
+        return write_console_input( console, in_data, in_size / sizeof(INPUT_RECORD) );
+
     case IOCTL_CONDRV_GET_INPUT_INFO:
         {
             struct condrv_input_info *info;
@@ -124,7 +173,7 @@ static NTSTATUS console_input_ioctl( struct console *console, unsigned int code,
             info->input_cp      = console->input_cp;
             info->output_cp     = console->output_cp;
             info->win           = console->win;
-            info->input_count   = console->recnum;
+            info->input_count   = console->record_count;
             return STATUS_SUCCESS;
         }
 
@@ -221,6 +270,7 @@ static NTSTATUS process_console_ioctls( struct console *console )
         {
             req->handle = wine_server_obj_handle( console->server );
             req->status = status;
+            req->signal = console->record_count != 0;
             wine_server_add_data( req, ioctl_buffer, out_size );
             wine_server_set_reply( req, ioctl_buffer, ioctl_buffer_size );
             status = wine_server_call( req );
