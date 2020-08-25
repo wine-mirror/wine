@@ -5436,6 +5436,64 @@ static void test_mediastreamfilter_get_current_stream_time(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+static void test_mediastreamfilter_reference_time_to_stream_time(void)
+{
+    IMediaStreamFilter *filter;
+    struct testclock clock;
+    REFERENCE_TIME time;
+    HRESULT hr;
+    ULONG ref;
+
+    hr = CoCreateInstance(&CLSID_MediaStreamFilter, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMediaStreamFilter, (void **)&filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    testclock_init(&clock);
+
+    hr = IMediaStreamFilter_ReferenceTimeToStreamTime(filter, NULL);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    time = 0xdeadbeefdeadbeef;
+    hr = IMediaStreamFilter_ReferenceTimeToStreamTime(filter, &time);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(time == 0xdeadbeefdeadbeef, "Got time %s.\n", wine_dbgstr_longlong(time));
+
+    hr = IMediaStreamFilter_SetSyncSource(filter, &clock.IReferenceClock_iface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    clock.get_time_hr = E_FAIL;
+
+    /* Crashes on native. */
+    if (0)
+    {
+        hr = IMediaStreamFilter_ReferenceTimeToStreamTime(filter, NULL);
+        ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    }
+
+    time = 0xdeadbeefdeadbeef;
+    hr = IMediaStreamFilter_ReferenceTimeToStreamTime(filter, &time);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(time == 0xdeadbeefdeadbeef, "Got time %s.\n", wine_dbgstr_longlong(time));
+
+    hr = IMediaStreamFilter_Run(filter, 23456789);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    time = 0xdeadbeefdeadbeef;
+    hr = IMediaStreamFilter_ReferenceTimeToStreamTime(filter, &time);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(time == 0xdeadbeefdd47d2da, "Got time %s.\n", wine_dbgstr_longlong(time));
+
+    clock.time = 34567890;
+    clock.get_time_hr = S_OK;
+
+    time = 0xdeadbeefdeadbeef;
+    hr = IMediaStreamFilter_ReferenceTimeToStreamTime(filter, &time);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(time == 0xdeadbeefdd47d2da, "Got time %s.\n", wine_dbgstr_longlong(time));
+
+    ref = IMediaStreamFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 static void test_ddrawstream_getsetdirectdraw(void)
 {
     IAMMultiMediaStream *mmstream = create_ammultimediastream();
@@ -5892,6 +5950,7 @@ START_TEST(amstream)
     test_mediastreamfilter_get_duration();
     test_mediastreamfilter_get_stop_position();
     test_mediastreamfilter_get_current_stream_time();
+    test_mediastreamfilter_reference_time_to_stream_time();
 
     CoUninitialize();
 }

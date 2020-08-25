@@ -616,11 +616,25 @@ static HRESULT WINAPI filter_SupportSeeking(IMediaStreamFilter *iface, BOOL rend
     return E_NOINTERFACE;
 }
 
-static HRESULT WINAPI filter_ReferenceTimeToStreamTime(IMediaStreamFilter *iface, REFERENCE_TIME *pTime)
+static HRESULT WINAPI filter_ReferenceTimeToStreamTime(IMediaStreamFilter *iface, REFERENCE_TIME *time)
 {
-    FIXME("(%p)->(%p): Stub!\n", iface, pTime);
+    struct filter *filter = impl_from_IMediaStreamFilter(iface);
 
-    return E_NOTIMPL;
+    TRACE("filter %p, time %p.\n", filter, time);
+
+    EnterCriticalSection(&filter->cs);
+
+    if (!filter->clock)
+    {
+        LeaveCriticalSection(&filter->cs);
+        return S_FALSE;
+    }
+
+    *time -= filter->start_time;
+
+    LeaveCriticalSection(&filter->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI filter_GetCurrentStreamTime(IMediaStreamFilter *iface, REFERENCE_TIME *time)
