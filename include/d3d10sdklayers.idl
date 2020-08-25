@@ -617,6 +617,20 @@ interface ID3D10Debug : IUnknown
 [
     local,
     object,
+    uuid(9b7e4e02-342c-4106-a19f-4f2704f689f0),
+    pointer_default(unique)
+]
+interface ID3D10SwitchToRef : IUnknown
+{
+    BOOL SetUseRef(
+        [in] BOOL useref
+    );
+    BOOL GetUseRef();
+}
+
+[
+    local,
+    object,
     uuid(1b940b17-2642-4d1f-ab1f-b99bad0c395f),
     pointer_default(unique)
 ]
