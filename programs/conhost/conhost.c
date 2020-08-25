@@ -48,6 +48,7 @@ struct console
     INPUT_RECORD         *records;       /* input records */
     unsigned int          record_count;  /* number of input records */
     unsigned int          record_size;   /* size of input records buffer */
+    size_t                pending_read;  /* size of pending read buffer */
     WCHAR                *title;         /* console title */
     size_t                title_len;     /* length of console title */
     struct history_line **history;       /* lines history */
@@ -73,6 +74,36 @@ static void *alloc_ioctl_buffer( size_t size )
         ioctl_buffer_size = size;
     }
     return ioctl_buffer;
+}
+
+static NTSTATUS read_console_input( struct console *console, size_t out_size )
+{
+    size_t count = min( out_size / sizeof(INPUT_RECORD), console->record_count );
+    NTSTATUS status;
+
+    TRACE("count %u\n", count);
+
+    SERVER_START_REQ( get_next_console_request )
+    {
+        req->handle = wine_server_obj_handle( console->server );
+        req->signal = count < console->record_count;
+        req->read   = 1;
+        req->status = STATUS_SUCCESS;
+        wine_server_add_data( req, console->records, count * sizeof(*console->records) );
+        status = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+    if (status)
+    {
+        ERR( "failed: %#x\n", status );
+        return status;
+    }
+
+    if (count < console->record_count)
+        memmove( console->records, console->records + count,
+                 (console->record_count - count) * sizeof(*console->records) );
+    console->record_count -= count;
+    return STATUS_SUCCESS;
 }
 
 /* add input events to a console input queue */
@@ -115,6 +146,11 @@ static NTSTATUS write_console_input( struct console *console, const INPUT_RECORD
         }
     }
     console->record_count += count;
+    if (count && console->pending_read)
+    {
+        read_console_input( console, console->pending_read );
+        console->pending_read = 0;
+    }
     return STATUS_SUCCESS;
 }
 
@@ -155,6 +191,23 @@ static NTSTATUS console_input_ioctl( struct console *console, unsigned int code,
         console->mode = *(unsigned int *)in_data;
         TRACE( "set %x mode\n", console->mode );
         return STATUS_SUCCESS;
+
+    case IOCTL_CONDRV_READ_INPUT:
+        {
+            unsigned int blocking;
+            NTSTATUS status;
+            if (in_size && in_size != sizeof(blocking)) return STATUS_INVALID_PARAMETER;
+            blocking = in_size && *(unsigned int *)in_data;
+            if (blocking && !console->record_count && *out_size)
+            {
+                TRACE( "pending read" );
+                console->pending_read = *out_size;
+                return STATUS_PENDING;
+            }
+            status = read_console_input( console, *out_size );
+            *out_size = 0;
+            return status;
+        }
 
     case IOCTL_CONDRV_WRITE_INPUT:
         if (in_size % sizeof(INPUT_RECORD) || *out_size) return STATUS_INVALID_PARAMETER;

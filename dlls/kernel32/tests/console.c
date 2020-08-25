@@ -3968,6 +3968,7 @@ static void test_pseudo_console_child(HANDLE input)
     ok(ret, "SetConsoleMode failed: %u\n", GetLastError());
 
     test_console_title();
+    test_WriteConsoleInputW(input);
 }
 
 static DWORD WINAPI read_pipe_proc( void *handle )
