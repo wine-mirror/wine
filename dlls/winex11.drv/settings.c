@@ -473,7 +473,9 @@ static DEVMODEW *get_full_mode(ULONG_PTR id, DEVMODEW *dev_mode)
     {
         found_mode = (DEVMODEW *)((BYTE *)modes + (sizeof(*modes) + modes[0].dmDriverExtra) * mode_idx);
 
-        if (dev_mode->dmFields & DM_BITSPERPEL && found_mode->dmBitsPerPel != dev_mode->dmBitsPerPel)
+        if (dev_mode->dmFields & DM_BITSPERPEL &&
+            dev_mode->dmBitsPerPel &&
+            found_mode->dmBitsPerPel != dev_mode->dmBitsPerPel)
             continue;
         if (dev_mode->dmFields & DM_PELSWIDTH && found_mode->dmPelsWidth != dev_mode->dmPelsWidth)
             continue;
