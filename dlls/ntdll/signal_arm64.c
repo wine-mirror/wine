@@ -635,6 +635,15 @@ static void process_unwind_codes( BYTE *ptr, BYTE *end, CONTEXT *context,
             ptr += len;
             continue;
         }
+        else if (*ptr == 0xe9)  /* MSFT_OP_MACHINE_FRAME */
+        {
+            context->Pc = ((DWORD64 *)context->Sp)[1];
+            context->Sp = ((DWORD64 *)context->Sp)[0];
+        }
+        else if (*ptr == 0xea)  /* MSFT_OP_CONTEXT */
+        {
+            memcpy( context, (DWORD64 *)context->Sp, sizeof(CONTEXT) );
+        }
         else
         {
             WARN( "unsupported code %02x\n", *ptr );
@@ -891,13 +900,15 @@ PVOID WINAPI RtlVirtualUnwind( ULONG type, ULONG_PTR base, ULONG_PTR pc,
 
     *handler_data = NULL;
 
+    context->Pc = 0;
     if (func->u.s.Flag)
         handler = unwind_packed_data( base, pc, func, context, ctx_ptr );
     else
         handler = unwind_full_data( base, pc, func, context, handler_data, ctx_ptr );
 
     TRACE( "ret: lr=%lx sp=%lx handler=%p\n", context->u.s.Lr, context->Sp, handler );
-    context->Pc = context->u.s.Lr;
+    if (!context->Pc)
+        context->Pc = context->u.s.Lr;
     context->ContextFlags |= CONTEXT_UNWOUND_TO_CALL;
     *frame_ret = context->Sp;
     return handler;

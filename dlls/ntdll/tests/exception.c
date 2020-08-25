@@ -4539,12 +4539,94 @@ static void test_virtual_unwind(void)
 #endif
     };
 
+    static const BYTE function_2[] =
+    {
+        0xff, 0x43, 0x00, 0xd1,   /* 00: sub sp, sp, #16 */
+        0x1f, 0x20, 0x03, 0xd5,   /* 04: nop */
+        0xff, 0x43, 0x00, 0xd1,   /* 08: sub sp, sp, #16 */
+        0x1f, 0x20, 0x03, 0xd5,   /* 0c: nop */
+        0xc0, 0x03, 0x5f, 0xd6,   /* 10: ret */
+    };
+
+    static const DWORD unwind_info_2_header =
+        (sizeof(function_2)/4) | /* function length */
+        (0 << 20) | /* X */
+        (0 << 21) | /* E */
+        (0 << 22) | /* epilog */
+        (1 << 27);  /* codes */
+
+    static const BYTE unwind_info_2[] =
+    {
+        DW(unwind_info_2_header),
+
+        UWOP_ALLOC_SMALL(16),   /* sub sp,  sp,  #16 */
+        UWOP_MACHINE_FRAME,
+        UWOP_ALLOC_SMALL(16),   /* sub sp,  sp,  #16 */
+        UWOP_END,
+    };
+
+    /* Partial prologues with the custom frame opcodes (machine frame,
+     * context) behave like there's an off-by-one bug; unwinding from
+     * offset 0, which normally does nothing, executes one opcode if
+     * there's a machine frame or context in the prologue, and for other
+     * offsets, it behaves like unwinding from one instruction further
+     * ahead. So only test the full prologue case. */
+    static const struct results results_2[] =
+    {
+      /* offset  fp    handler  pc      frame offset  registers */
+#if 0
+        { 0x00,  0x00,  0,     ORIG_LR, 0x010, TRUE,  { {-1,-1} }},
+        { 0x04,  0x00,  0,     0x0008,  0x010, FALSE, { {-1,-1} }},
+        { 0x08,  0x00,  0,     0x0018,  0x020, FALSE, { {-1,-1} }},
+#endif
+        { 0x0c,  0x00,  0,     0x0018,  0x020, FALSE, { {-1,-1} }},
+    };
+
+    static const BYTE function_3[] =
+    {
+        0xff, 0x43, 0x00, 0xd1,   /* 00: sub sp, sp, #16 */
+        0x1f, 0x20, 0x03, 0xd5,   /* 04: nop */
+        0xff, 0x43, 0x00, 0xd1,   /* 08: sub sp, sp, #16 */
+        0x1f, 0x20, 0x03, 0xd5,   /* 0c: nop */
+        0xc0, 0x03, 0x5f, 0xd6,   /* 10: ret */
+    };
+
+    static const DWORD unwind_info_3_header =
+        (sizeof(function_3)/4) | /* function length */
+        (0 << 20) | /* X */
+        (0 << 21) | /* E */
+        (0 << 22) | /* epilog */
+        (1 << 27);  /* codes */
+
+    static const BYTE unwind_info_3[] =
+    {
+        DW(unwind_info_3_header),
+
+        UWOP_ALLOC_SMALL(16),   /* sub sp,  sp,  #16 */
+        UWOP_CONTEXT,
+        UWOP_ALLOC_SMALL(16),   /* sub sp,  sp,  #16 */
+        UWOP_END,
+    };
+
+    static const struct results results_3[] =
+    {
+      /* offset  fp    handler  pc      frame offset  registers */
+#if 0
+        { 0x00,  0x00,  0,     ORIG_LR, 0x010, TRUE,  { {-1,-1} }},
+        { 0x04,  0x00,  0 ,    0x0108,  0x110, FALSE, { {x0, 0x08}, {x1, 0x10}, {x2, 0x18}, {x3, 0x20}, {x4, 0x28}, {x5, 0x30}, {x6, 0x38}, {x7, 0x40}, {x8, 0x48}, {x9, 0x50}, {x10, 0x58}, {x11, 0x60}, {x12, 0x68}, {x13, 0x70}, {x14, 0x78}, {x15, 0x80}, {x16, 0x88}, {x17, 0x90}, {x18, 0x98}, {x19, 0xA0}, {x20, 0xA8}, {x21, 0xB0}, {x22, 0xB8}, {x23, 0xC0}, {x24, 0xC8}, {x25, 0xD0}, {x26, 0xD8}, {x27, 0xE0}, {x28, 0xE8}, {x29, 0xF0}, {lr, 0xF8}, {d0, 0x110}, {d1, 0x120}, {d2, 0x130}, {d3, 0x140}, {d4, 0x150}, {d5, 0x160}, {d6, 0x170}, {d7, 0x180}, {d8, 0x190}, {d9, 0x1a0}, {d10, 0x1b0}, {d11, 0x1c0}, {d12, 0x1d0}, {d13, 0x1e0}, {d14, 0x1f0}, {d15, 0x200}, {-1,-1} }},
+        { 0x08,  0x00,  0 ,    0x0118,  0x120, FALSE, { {x0, 0x18}, {x1, 0x20}, {x2, 0x28}, {x3, 0x30}, {x4, 0x38}, {x5, 0x40}, {x6, 0x48}, {x7, 0x50}, {x8, 0x58}, {x9, 0x60}, {x10, 0x68}, {x11, 0x70}, {x12, 0x78}, {x13, 0x80}, {x14, 0x88}, {x15, 0x90}, {x16, 0x98}, {x17, 0xA0}, {x18, 0xA8}, {x19, 0xB0}, {x20, 0xB8}, {x21, 0xC0}, {x22, 0xC8}, {x23, 0xD0}, {x24, 0xD8}, {x25, 0xE0}, {x26, 0xE8}, {x27, 0xF0}, {x28, 0xF8}, {x29, 0x100}, {lr, 0x108}, {d0, 0x120}, {d1, 0x130}, {d2, 0x140}, {d3, 0x150}, {d4, 0x160}, {d5, 0x170}, {d6, 0x180}, {d7, 0x190}, {d8, 0x1a0}, {d9, 0x1b0}, {d10, 0x1c0}, {d11, 0x1d0}, {d12, 0x1e0}, {d13, 0x1f0}, {d14, 0x200}, {d15, 0x210}, {-1,-1} }},
+#endif
+        { 0x0c,  0x00,  0 ,    0x0118,  0x120, FALSE, { {x0, 0x18}, {x1, 0x20}, {x2, 0x28}, {x3, 0x30}, {x4, 0x38}, {x5, 0x40}, {x6, 0x48}, {x7, 0x50}, {x8, 0x58}, {x9, 0x60}, {x10, 0x68}, {x11, 0x70}, {x12, 0x78}, {x13, 0x80}, {x14, 0x88}, {x15, 0x90}, {x16, 0x98}, {x17, 0xA0}, {x18, 0xA8}, {x19, 0xB0}, {x20, 0xB8}, {x21, 0xC0}, {x22, 0xC8}, {x23, 0xD0}, {x24, 0xD8}, {x25, 0xE0}, {x26, 0xE8}, {x27, 0xF0}, {x28, 0xF8}, {x29, 0x100}, {lr, 0x108}, {d0, 0x120}, {d1, 0x130}, {d2, 0x140}, {d3, 0x150}, {d4, 0x160}, {d5, 0x170}, {d6, 0x180}, {d7, 0x190}, {d8, 0x1a0}, {d9, 0x1b0}, {d10, 0x1c0}, {d11, 0x1d0}, {d12, 0x1e0}, {d13, 0x1f0}, {d14, 0x200}, {d15, 0x210}, {-1,-1} }},
+    };
+
     static const struct unwind_test tests[] =
     {
 #define TEST(func, unwind, unwind_packed, results) \
         { func, sizeof(func), unwind, unwind_packed ? 0 : sizeof(unwind), results, ARRAY_SIZE(results) }
         TEST(function_0, unwind_info_0, 0, results_0),
         TEST(function_1, unwind_info_1, 1, results_1),
+        TEST(function_2, unwind_info_2, 0, results_2),
+        TEST(function_3, unwind_info_3, 0, results_3),
 #undef TEST
     };
     unsigned int i;
