@@ -548,7 +548,8 @@ BOOL clip_fullscreen_window( HWND hwnd, BOOL reset )
 {
     struct x11drv_win_data *data;
     struct x11drv_thread_data *thread_data;
-    RECT rect;
+    MONITORINFO monitor_info;
+    HMONITOR monitor;
     DWORD style;
     BOOL fullscreen;
 
@@ -559,21 +560,25 @@ BOOL clip_fullscreen_window( HWND hwnd, BOOL reset )
     /* maximized windows don't count as full screen */
     if ((style & WS_MAXIMIZE) && (style & WS_CAPTION) == WS_CAPTION) return FALSE;
     if (!(data = get_win_data( hwnd ))) return FALSE;
-    fullscreen = is_window_rect_fullscreen( &data->whole_rect );
+    fullscreen = is_window_rect_full_screen( &data->whole_rect );
     release_win_data( data );
     if (!fullscreen) return FALSE;
     if (!(thread_data = x11drv_thread_data())) return FALSE;
     if (GetTickCount() - thread_data->clip_reset < 1000) return FALSE;
     if (!reset && clipping_cursor && thread_data->clip_hwnd) return FALSE;  /* already clipping */
-    rect = get_primary_monitor_rect();
+
+    monitor = MonitorFromWindow( hwnd, MONITOR_DEFAULTTONEAREST );
+    if (!monitor) return FALSE;
+    monitor_info.cbSize = sizeof(monitor_info);
+    if (!GetMonitorInfoW( monitor, &monitor_info )) return FALSE;
     if (!grab_fullscreen)
     {
         RECT virtual_rect = get_virtual_screen_rect();
-        if (!EqualRect( &rect, &virtual_rect )) return FALSE;
+        if (!EqualRect( &monitor_info.rcMonitor, &virtual_rect )) return FALSE;
         if (is_virtual_desktop()) return FALSE;
     }
     TRACE( "win %p clipping fullscreen\n", hwnd );
-    return grab_clipping_window( &rect );
+    return grab_clipping_window( &monitor_info.rcMonitor );
 }
 
 

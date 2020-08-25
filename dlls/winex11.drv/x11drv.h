@@ -822,11 +822,4 @@ static inline BOOL is_window_rect_mapped( const RECT *rect )
             max( rect->bottom, rect->top + 1 ) > virtual_rect.top);
 }
 
-static inline BOOL is_window_rect_fullscreen( const RECT *rect )
-{
-    RECT primary_rect = get_primary_monitor_rect();
-    return (rect->left <= primary_rect.left && rect->right >= primary_rect.right &&
-            rect->top <= primary_rect.top && rect->bottom >= primary_rect.bottom);
-}
-
 #endif  /* __WINE_X11DRV_H */

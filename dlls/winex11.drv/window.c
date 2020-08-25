@@ -2460,7 +2460,7 @@ void CDECL X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags
         {
             release_win_data( data );
             unmap_window( hwnd );
-            if (is_window_rect_fullscreen( &old_window_rect )) reset_clipping_window();
+            if (is_window_rect_full_screen( &old_window_rect )) reset_clipping_window();
             if (!(data = get_win_data( hwnd ))) return;
         }
     }
