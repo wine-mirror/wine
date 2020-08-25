@@ -1700,7 +1700,7 @@ void output_syscalls( DLLSPEC *spec )
                 output( "\tmovl $%s,%%edx\n", asm_name("__wine_syscall") );
             }
             output( "\tcall *%%edx\n" );
-            output( "\tret $%u\n", get_args_size( odp ));
+            output( "\tret $%u\n", odp->type == TYPE_STDCALL ? get_args_size( odp ) : 0 );
             break;
         case CPU_x86_64:
             /* Chromium depends on syscall thunks having the same form as on
