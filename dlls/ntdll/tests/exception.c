@@ -4619,6 +4619,143 @@ static void test_virtual_unwind(void)
         { 0x0c,  0x00,  0 ,    0x0118,  0x120, FALSE, { {x0, 0x18}, {x1, 0x20}, {x2, 0x28}, {x3, 0x30}, {x4, 0x38}, {x5, 0x40}, {x6, 0x48}, {x7, 0x50}, {x8, 0x58}, {x9, 0x60}, {x10, 0x68}, {x11, 0x70}, {x12, 0x78}, {x13, 0x80}, {x14, 0x88}, {x15, 0x90}, {x16, 0x98}, {x17, 0xA0}, {x18, 0xA8}, {x19, 0xB0}, {x20, 0xB8}, {x21, 0xC0}, {x22, 0xC8}, {x23, 0xD0}, {x24, 0xD8}, {x25, 0xE0}, {x26, 0xE8}, {x27, 0xF0}, {x28, 0xF8}, {x29, 0x100}, {lr, 0x108}, {d0, 0x120}, {d1, 0x130}, {d2, 0x140}, {d3, 0x150}, {d4, 0x160}, {d5, 0x170}, {d6, 0x180}, {d7, 0x190}, {d8, 0x1a0}, {d9, 0x1b0}, {d10, 0x1c0}, {d11, 0x1d0}, {d12, 0x1e0}, {d13, 0x1f0}, {d14, 0x200}, {d15, 0x210}, {-1,-1} }},
     };
 
+    static const BYTE function_4[] =
+    {
+        0xff, 0x43, 0x00, 0xd1,   /* 00: sub sp,  sp,  #16 */
+        0xff, 0x03, 0x08, 0xd1,   /* 04: sub sp,  sp,  #512 */
+        0xff, 0x43, 0x40, 0xd1,   /* 08: sub sp,  sp,  #65536 */
+        0xfd, 0x03, 0x00, 0x91,   /* 0c: mov x29, sp */
+        0xf3, 0x53, 0xbe, 0xa9,   /* 10: stp x19, x20, [sp, #-32]! */
+        0xf5, 0x5b, 0x01, 0xa9,   /* 14: stp x21, x22, [sp, #16] */
+        0xf7, 0x0f, 0x1e, 0xf8,   /* 18: str x23,      [sp, #-32]! */
+        0xf8, 0x07, 0x00, 0xf9,   /* 1c: str x24,      [sp, #8] */
+        0xf9, 0x7b, 0x01, 0xa9,   /* 20: stp x25, x30, [sp, #16] */
+        0xfd, 0x7b, 0x03, 0xa9,   /* 24: stp x29, x30, [sp, #48] */
+        0xfd, 0x7b, 0xbe, 0xa9,   /* 28: stp x29, x30, [sp, #-32]! */
+        0xf3, 0x53, 0xbe, 0xa9,   /* 2c: stp x19, x20, [sp, #-32]! */
+        0xe8, 0x27, 0xbe, 0x6d,   /* 30: stp d8,  d9,  [sp, #-32]! */
+        0xea, 0x2f, 0x01, 0x6d,   /* 34: stp d10, d11, [sp, #16] */
+        0xec, 0x0f, 0x1e, 0xfc,   /* 38: str d12,      [sp, #-32]! */
+        0xed, 0x07, 0x00, 0xfd,   /* 3c: str d13,      [sp, #8] */
+        0xfd, 0x43, 0x00, 0x91,   /* 40: add x29, sp,  #16 */
+        0xc0, 0x03, 0x5f, 0xd6,   /* 44: ret */
+    };
+
+    static const DWORD unwind_info_4_header =
+        (sizeof(function_4)/4) | /* function length */
+        (0 << 20) | /* X */
+        (0 << 21) | /* E */
+        (0 << 22) | /* epilog */
+        (8 << 27);  /* codes */
+
+    static const BYTE unwind_info_4[] =
+    {
+        DW(unwind_info_4_header),
+
+        UWOP_ADD_FP(16),          /* 40: add x29, sp, #16 */
+        UWOP_SAVE_FREG(13, 8),    /* 3c: str d13,      [sp, #8] */
+        UWOP_SAVE_FREG_X(12, 32), /* 38: str d12,      [sp, #-32]! */
+        UWOP_SAVE_FREGP(10, 16),  /* 34: stp d10, d11, [sp, #16] */
+        UWOP_SAVE_FREGP_X(8, 32), /* 30: stp d8,  d9,  [sp, #-32]! */
+        UWOP_SAVE_R19R20_X(32),   /* 2c: stp x19, x20, [sp, #-32]! */
+        UWOP_SAVE_FPLR_X(32),     /* 28: stp x29, x30, [sp, #-32]! */
+        UWOP_SAVE_FPLR(16),       /* 24: stp x29, x30, [sp, #16] */
+        UWOP_SAVE_LRP(25, 16),    /* 20: stp x25, x30, [sp, #16] */
+        UWOP_SAVE_REG(24, 8),     /* 1c: str x24,      [sp, #8] */
+        UWOP_SAVE_REG_X(23, 32),  /* 18: str x23,      [sp, #-32]! */
+        UWOP_SAVE_REGP(21, 16),   /* 14: stp x21, x22, [sp, #16] */
+        UWOP_SAVE_REGP_X(19, 32), /* 10: stp x19, x20, [sp, #-32]! */
+        UWOP_SET_FP,              /* 0c: mov x29, sp */
+        UWOP_ALLOC_LARGE(65536),  /* 08: sub sp,  sp,  #65536 */
+        UWOP_ALLOC_MEDIUM(512),   /* 04: sub sp,  sp,  #512 */
+        UWOP_ALLOC_SMALL(16),     /* 00: sub sp,  sp,  #16 */
+        UWOP_END,
+    };
+
+    static const struct results results_4[] =
+    {
+      /* offset  fp    handler  pc      frame offset  registers */
+        { 0x00,  0x10,  0,     ORIG_LR, 0x00000, TRUE, { {-1,-1} }},
+        { 0x04,  0x10,  0,     ORIG_LR, 0x00010, TRUE, { {-1,-1} }},
+        { 0x08,  0x10,  0,     ORIG_LR, 0x00210, TRUE, { {-1,-1} }},
+        { 0x0c,  0x10,  0,     ORIG_LR, 0x10210, TRUE, { {-1,-1} }},
+        { 0x14,  0x00,  0,     ORIG_LR, 0x10210, TRUE, { {x19, 0x00}, {x20, 0x08}, {-1,-1} }},
+        { 0x18,  0x00,  0,     ORIG_LR, 0x10210, TRUE, { {x19, 0x00}, {x20, 0x08}, {x21, 0x10}, {x22, 0x18}, {-1,-1} }},
+        { 0x1c,  0x00,  0,     ORIG_LR, 0x10210, TRUE, { {x19, 0x20}, {x20, 0x28}, {x21, 0x30}, {x22, 0x38}, {x23, 0x00}, {-1,-1} }},
+        { 0x20,  0x00,  0,     ORIG_LR, 0x10210, TRUE, { {x19, 0x20}, {x20, 0x28}, {x21, 0x30}, {x22, 0x38}, {x23, 0x00}, {x24, 0x08}, {-1,-1} }},
+        { 0x24,  0x00,  0,     0x0018,  0x10210, TRUE, { {x19, 0x20}, {x20, 0x28}, {x21, 0x30}, {x22, 0x38}, {x23, 0x00}, {x24, 0x08}, {x25, 0x10}, {lr, 0x18}, {-1,-1} }},
+        { 0x28,  0x00,  0,     0x0018,  0x10220, FALSE, { {x19, 0x20}, {x20, 0x28}, {x21, 0x30}, {x22, 0x38}, {x23, 0x00}, {x24, 0x08}, {x25, 0x10}, {lr, 0x18}, {x29, 0x10}, {-1,-1} }},
+        { 0x2c,  0x00,  0,     0x0038,  0x10240, FALSE, { {x19, 0x40}, {x20, 0x48}, {x21, 0x50}, {x22, 0x58}, {x23, 0x20}, {x24, 0x28}, {x25, 0x30}, {lr, 0x38}, {x29, 0x30}, {-1,-1} }},
+        { 0x30,  0x00,  0,     0x0058,  0x10260, FALSE, { {x19, 0x60}, {x20, 0x68}, {x21, 0x70}, {x22, 0x78}, {x23, 0x40}, {x24, 0x48}, {x25, 0x50}, {lr, 0x58}, {x29, 0x50}, {-1,-1} }},
+        { 0x34,  0x00,  0,     0x0078,  0x10280, FALSE, { {x19, 0x80}, {x20, 0x88}, {x21, 0x90}, {x22, 0x98}, {x23, 0x60}, {x24, 0x68}, {x25, 0x70}, {lr, 0x78}, {x29, 0x70}, {d8, 0x00}, {d9, 0x08}, {-1,-1} }},
+        { 0x38,  0x00,  0,     0x0078,  0x10280, FALSE, { {x19, 0x80}, {x20, 0x88}, {x21, 0x90}, {x22, 0x98}, {x23, 0x60}, {x24, 0x68}, {x25, 0x70}, {lr, 0x78}, {x29, 0x70}, {d8, 0x00}, {d9, 0x08}, {d10, 0x10}, {d11, 0x18}, {-1,-1} }},
+        { 0x3c,  0x00,  0,     0x0098,  0x102a0, FALSE, { {x19, 0xa0}, {x20, 0xa8}, {x21, 0xb0}, {x22, 0xb8}, {x23, 0x80}, {x24, 0x88}, {x25, 0x90}, {lr, 0x98}, {x29, 0x90}, {d8, 0x20}, {d9, 0x28}, {d10, 0x30}, {d11, 0x38}, {d12, 0x00}, {-1,-1} }},
+        { 0x40,  0x00,  0,     0x0098,  0x102a0, FALSE, { {x19, 0xa0}, {x20, 0xa8}, {x21, 0xb0}, {x22, 0xb8}, {x23, 0x80}, {x24, 0x88}, {x25, 0x90}, {lr, 0x98}, {x29, 0x90}, {d8, 0x20}, {d9, 0x28}, {d10, 0x30}, {d11, 0x38}, {d12, 0x00}, {d13, 0x08}, {-1,-1} }},
+        { 0x44,  0x20,  0,     0x00a8,  0x102b0, FALSE, { {x19, 0xb0}, {x20, 0xb8}, {x21, 0xc0}, {x22, 0xc8}, {x23, 0x90}, {x24, 0x98}, {x25, 0xa0}, {lr, 0xa8}, {x29, 0xa0}, {d8, 0x30}, {d9, 0x38}, {d10, 0x40}, {d11, 0x48}, {d12, 0x10}, {d13, 0x18}, {-1,-1} }},
+    };
+
+    static const BYTE function_5[] =
+    {
+        0xf3, 0x53, 0xbe, 0xa9,   /* 00: stp x19, x20, [sp, #-32]! */
+        0xf5, 0x5b, 0x01, 0xa9,   /* 04: stp x21, x22, [sp, #16] */
+        0xf7, 0x63, 0xbc, 0xa9,   /* 08: stp x23, x24, [sp, #-64]! */
+        0xf9, 0x6b, 0x01, 0xa9,   /* 0c: stp x25, x26, [sp, #16] */
+        0xfb, 0x73, 0x02, 0xa9,   /* 10: stp x27, x28, [sp, #32] */
+        0xfd, 0x7b, 0x03, 0xa9,   /* 14: stp x29, x30, [sp, #48] */
+        0xe8, 0x27, 0xbc, 0x6d,   /* 18: stp d8,  d9,  [sp, #-64]! */
+        0xea, 0x2f, 0x01, 0x6d,   /* 1c: stp d10, d11, [sp, #16] */
+        0xec, 0x37, 0x02, 0x6d,   /* 20: stp d12, d13, [sp, #32] */
+        0xee, 0x3f, 0x03, 0x6d,   /* 24: stp d14, d15, [sp, #48] */
+        0xc0, 0x03, 0x5f, 0xd6,   /* 28: ret */
+    };
+
+    static const DWORD unwind_info_5_header =
+        (sizeof(function_5)/4) | /* function length */
+        (0 << 20) | /* X */
+        (0 << 21) | /* E */
+        (0 << 22) | /* epilog */
+        (4 << 27);  /* codes */
+
+    static const BYTE unwind_info_5[] =
+    {
+        DW(unwind_info_5_header),
+
+        UWOP_SAVE_NEXT,           /* 24: stp d14, d15, [sp, #48] */
+        UWOP_SAVE_FREGP(12, 32),  /* 20: stp d12, d13, [sp, #32] */
+        UWOP_SAVE_NEXT,           /* 1c: stp d10, d11, [sp, #16] */
+        UWOP_SAVE_FREGP_X(8, 64), /* 18: stp d8,  d9,  [sp, #-64]! */
+        UWOP_SAVE_NEXT,           /* 14: stp x29, x30, [sp, #48] */
+        UWOP_SAVE_REGP(27, 32),   /* 10: stp x27, x28, [sp, #32] */
+        UWOP_SAVE_NEXT,           /* 0c: stp x25, x26, [sp, #16] */
+        UWOP_SAVE_REGP_X(23, 64), /* 08: stp x23, x24, [sp, #-64]! */
+        UWOP_SAVE_NEXT,           /* 04: stp x21, x22, [sp, #16] */
+        UWOP_SAVE_R19R20_X(32),   /* 00: stp x19, x20, [sp, #-32]! */
+        UWOP_END,
+        UWOP_NOP                  /* padding */
+    };
+
+    /* Windows seems to only save one register for UWOP_SAVE_NEXT for
+     * float registers, contrary to what the documentation says. The tests
+     * for those cases are commented out; they succeed in wine but fail
+     * on native windows. */
+    static const struct results results_5[] =
+    {
+      /* offset  fp    handler  pc      frame offset  registers */
+        { 0x00,  0x00,  0,     ORIG_LR, 0x00000, TRUE, { {-1,-1} }},
+        { 0x04,  0x00,  0,     ORIG_LR, 0x00020, TRUE, { {x19, 0x00}, {x20, 0x08}, {-1,-1} }},
+        { 0x08,  0x00,  0,     ORIG_LR, 0x00020, TRUE, { {x19, 0x00}, {x20, 0x08}, {x21, 0x10}, {x22, 0x18}, {-1,-1} }},
+        { 0x0c,  0x00,  0,     ORIG_LR, 0x00060, TRUE, { {x19, 0x40}, {x20, 0x48}, {x21, 0x50}, {x22, 0x58}, {x23, 0x00}, {x24, 0x08}, {-1,-1} }},
+        { 0x10,  0x00,  0,     ORIG_LR, 0x00060, TRUE, { {x19, 0x40}, {x20, 0x48}, {x21, 0x50}, {x22, 0x58}, {x23, 0x00}, {x24, 0x08}, {x25, 0x10}, {x26, 0x18}, {-1,-1} }},
+        { 0x14,  0x00,  0,     ORIG_LR, 0x00060, TRUE, { {x19, 0x40}, {x20, 0x48}, {x21, 0x50}, {x22, 0x58}, {x23, 0x00}, {x24, 0x08}, {x25, 0x10}, {x26, 0x18}, {x27, 0x20}, {x28, 0x28}, {-1,-1} }},
+        { 0x18,  0x00,  0,     0x38,    0x00060, TRUE, { {x19, 0x40}, {x20, 0x48}, {x21, 0x50}, {x22, 0x58}, {x23, 0x00}, {x24, 0x08}, {x25, 0x10}, {x26, 0x18}, {x27, 0x20}, {x28, 0x28}, {x29, 0x30}, {lr, 0x38}, {-1,-1} }},
+        { 0x1c,  0x00,  0,     0x78,    0x000a0, TRUE, { {x19, 0x80}, {x20, 0x88}, {x21, 0x90}, {x22, 0x98}, {x23, 0x40}, {x24, 0x48}, {x25, 0x50}, {x26, 0x58}, {x27, 0x60}, {x28, 0x68}, {x29, 0x70}, {lr, 0x78}, {d8, 0x00}, {d9, 0x08}, {-1,-1} }},
+#if 0
+        { 0x20,  0x00,  0,     0x78,    0x000a0, TRUE, { {x19, 0x80}, {x20, 0x88}, {x21, 0x90}, {x22, 0x98}, {x23, 0x40}, {x24, 0x48}, {x25, 0x50}, {x26, 0x58}, {x27, 0x60}, {x28, 0x68}, {x29, 0x70}, {lr, 0x78}, {d8, 0x00}, {d9, 0x08}, {d10, 0x10}, {d11, 0x18}, {-1,-1} }},
+        { 0x24,  0x00,  0,     0x78,    0x000a0, TRUE, { {x19, 0x80}, {x20, 0x88}, {x21, 0x90}, {x22, 0x98}, {x23, 0x40}, {x24, 0x48}, {x25, 0x50}, {x26, 0x58}, {x27, 0x60}, {x28, 0x68}, {x29, 0x70}, {lr, 0x78}, {d8, 0x00}, {d9, 0x08}, {d10, 0x10}, {d11, 0x18}, {d12, 0x20}, {d13, 0x28}, {-1,-1} }},
+        { 0x28,  0x00,  0,     0x78,    0x000a0, TRUE, { {x19, 0x80}, {x20, 0x88}, {x21, 0x90}, {x22, 0x98}, {x23, 0x40}, {x24, 0x48}, {x25, 0x50}, {x26, 0x58}, {x27, 0x60}, {x28, 0x68}, {x29, 0x70}, {lr, 0x78}, {d8, 0x00}, {d9, 0x08}, {d10, 0x10}, {d11, 0x18}, {d12, 0x20}, {d13, 0x28}, {d14, 0x30}, {d15, 0x38}, {-1,-1} }},
+#endif
+    };
+
     static const struct unwind_test tests[] =
     {
 #define TEST(func, unwind, unwind_packed, results) \
@@ -4627,6 +4764,8 @@ static void test_virtual_unwind(void)
         TEST(function_1, unwind_info_1, 1, results_1),
         TEST(function_2, unwind_info_2, 0, results_2),
         TEST(function_3, unwind_info_3, 0, results_3),
+        TEST(function_4, unwind_info_4, 0, results_4),
+        TEST(function_5, unwind_info_5, 0, results_5),
 #undef TEST
     };
     unsigned int i;
