@@ -6813,6 +6813,10 @@ msgstr ""
 msgid "Connection reset by peer.\n"
 msgstr "اطلاعات.\n"
 
+#: winerror.mc:3767
+msgid "Not implemented.\n"
+msgstr ""
+
 #: winerror.mc:3760
 msgid "No Signature found in file.\n"
 msgstr ""

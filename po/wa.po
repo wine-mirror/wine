@@ -6796,6 +6796,12 @@ msgstr ""
 msgid "Connection reset by peer.\n"
 msgstr ""
 
+#: winerror.mc:3767
+#, fuzzy
+#| msgid "Not implemented"
+msgid "Not implemented.\n"
+msgstr "Nén co possibe"
+
 #: winerror.mc:3760
 msgid "No Signature found in file.\n"
 msgstr ""

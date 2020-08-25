@@ -6838,6 +6838,11 @@ msgstr "Το αρχείο δεν υπάρχει.\n"
 msgid "Connection reset by peer.\n"
 msgstr "ΜΗ διαθέσιμος; .\n"
 
+#: winerror.mc:3767
+#, fuzzy
+msgid "Not implemented.\n"
+msgstr "Το αρχείο δε βρέθηκε"
+
 #: winerror.mc:3760
 msgid "No Signature found in file.\n"
 msgstr ""

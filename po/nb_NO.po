@@ -6809,6 +6809,12 @@ msgstr "Denne nettverksforbindelsen finnes ikke.\n"
 msgid "Connection reset by peer.\n"
 msgstr "Tilkobling nullstilt av likemann.\n"
 
+#: winerror.mc:3767
+#, fuzzy
+#| msgid "Not implemented"
+msgid "Not implemented.\n"
+msgstr "Ikke implementert"
+
 #: winerror.mc:3760
 msgid "No Signature found in file.\n"
 msgstr "Fant ingen signatur i filen.\n"

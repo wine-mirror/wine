@@ -6957,6 +6957,12 @@ msgstr "Файлът не съществува.\n"
 msgid "Connection reset by peer.\n"
 msgstr "LAN връзка.\n"
 
+#: winerror.mc:3767
+#, fuzzy
+#| msgid "Not implemented"
+msgid "Not implemented.\n"
+msgstr "Не е реализирано"
+
 #: winerror.mc:3760
 msgid "No Signature found in file.\n"
 msgstr ""

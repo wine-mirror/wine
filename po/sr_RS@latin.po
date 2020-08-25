@@ -7204,6 +7204,12 @@ msgstr "Datoteka ne postoji.\n"
 msgid "Connection reset by peer.\n"
 msgstr "Povezivanje na %s.\n"
 
+#: winerror.mc:3767
+#, fuzzy
+#| msgid "Not implemented"
+msgid "Not implemented.\n"
+msgstr "Nije jos u programu"
+
 #: winerror.mc:3760
 msgid "No Signature found in file.\n"
 msgstr ""

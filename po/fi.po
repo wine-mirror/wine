@@ -6790,6 +6790,12 @@ msgstr "Tätä verkkoyhteyttä ei ole.\n"
 msgid "Connection reset by peer.\n"
 msgstr "Vastapuoli nollasi yhteyden.\n"
 
+#: winerror.mc:3767
+#, fuzzy
+#| msgid "Not implemented"
+msgid "Not implemented.\n"
+msgstr "Ei toteutettu"
+
 #: winerror.mc:3760
 msgid "No Signature found in file.\n"
 msgstr "Tiedostosta ei löytynyt allekirjoitusta.\n"

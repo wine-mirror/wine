@@ -6748,6 +6748,12 @@ msgstr "该网络链接不存在。\n"
 msgid "Connection reset by peer.\n"
 msgstr "连接被重置。\n"
 
+#: winerror.mc:3767
+#, fuzzy
+#| msgid "Not implemented"
+msgid "Not implemented.\n"
+msgstr "尚未实现"
+
 #: winerror.mc:3760
 msgid "No Signature found in file.\n"
 msgstr "未在文件内找到签名。\n"

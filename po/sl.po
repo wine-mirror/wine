@@ -6895,6 +6895,12 @@ msgstr "Stran ne obstaja.\n"
 msgid "Connection reset by peer.\n"
 msgstr "Povezava je bila zavrnjena.\n"
 
+#: winerror.mc:3767
+#, fuzzy
+#| msgid "Not implemented"
+msgid "Not implemented.\n"
+msgstr "Ni podprto"
+
 #: winerror.mc:3760
 #, fuzzy
 #| msgid "Message 0x%1 not found in file %2.\n"

@@ -6797,6 +6797,10 @@ msgstr "This network connection does not exist.\n"
 msgid "Connection reset by peer.\n"
 msgstr "Connection reset by peer.\n"
 
+#: winerror.mc:3767
+msgid "Not implemented.\n"
+msgstr "Not implemented.\n"
+
 #: winerror.mc:3760
 msgid "No Signature found in file.\n"
 msgstr "No Signature found in file.\n"

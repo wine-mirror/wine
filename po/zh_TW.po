@@ -6804,6 +6804,12 @@ msgstr "站臺不存在。\n"
 msgid "Connection reset by peer.\n"
 msgstr "連線被拒。\n"
 
+#: winerror.mc:3767
+#, fuzzy
+#| msgid "Not implemented"
+msgid "Not implemented.\n"
+msgstr "未實作"
+
 #: winerror.mc:3760
 #, fuzzy
 #| msgid "Message 0x%1 not found in file %2.\n"

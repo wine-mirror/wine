@@ -3757,3 +3757,10 @@ SymbolicName=TRUST_E_NOSIGNATURE
 Language=ENU
 No Signature found in file.
 .
+MessageId=0x4001
+Severity=CoError
+Facility=Null
+SymbolicName=E_NOTIMPL
+Language=ENU
+Not implemented.
+.

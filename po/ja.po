@@ -6796,6 +6796,12 @@ msgstr "このネットワーク接続は存在しません。\n"
 msgid "Connection reset by peer.\n"
 msgstr "相手側により接続がリセットされました。\n"
 
+#: winerror.mc:3767
+#, fuzzy
+#| msgid "Not implemented"
+msgid "Not implemented.\n"
+msgstr "未実装"
+
 #: winerror.mc:3760
 msgid "No Signature found in file.\n"
 msgstr "ファイルにデジタル署名がありません。\n"

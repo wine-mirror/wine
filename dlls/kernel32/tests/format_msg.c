@@ -1743,6 +1743,25 @@ static void test_message_from_64bit_number(void)
     }
 }
 
+static void test_message_system_errors(void)
+{
+    static const DWORD error_codes[] =
+    {
+        E_NOTIMPL,
+    };
+
+    char buffer[256];
+    unsigned int i;
+    DWORD len;
+
+    for (i = 0; i < ARRAY_SIZE(error_codes); ++i)
+    {
+        len = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, error_codes[i],
+                LANG_USER_DEFAULT, buffer, ARRAY_SIZE(buffer), NULL);
+        ok(len, "Got zero len, code %#x.\n", error_codes[i]);
+    }
+}
+
 START_TEST(format_msg)
 {
     DWORD ret;
@@ -1771,4 +1790,5 @@ START_TEST(format_msg)
     test_message_allocate_buffer_wide();
     test_message_invalid_flags_wide();
     test_message_from_64bit_number();
+    test_message_system_errors();
 }

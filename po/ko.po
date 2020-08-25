@@ -6788,6 +6788,12 @@ msgstr "네트워크 연결이 없습니다.\n"
 msgid "Connection reset by peer.\n"
 msgstr "피어가 연결을 초기화 했습니다.\n"
 
+#: winerror.mc:3767
+#, fuzzy
+#| msgid "Not implemented"
+msgid "Not implemented.\n"
+msgstr "구현되지 않음"
+
 #: winerror.mc:3760
 msgid "No Signature found in file.\n"
 msgstr "서명 또는 인증서를 찾을 수 없습니다.\n"

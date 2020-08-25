@@ -7108,6 +7108,11 @@ msgstr "Датотека не постоји.\n"
 msgid "Connection reset by peer.\n"
 msgstr "Повезивање на %s.\n"
 
+#: winerror.mc:3767
+#, fuzzy
+msgid "Not implemented.\n"
+msgstr "Датотека није пронађена"
+
 #: winerror.mc:3760
 msgid "No Signature found in file.\n"
 msgstr ""

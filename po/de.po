@@ -6808,6 +6808,12 @@ msgstr "Diese Netzwerkverbindung existiert nicht.\n"
 msgid "Connection reset by peer.\n"
 msgstr "Verbindung von Gegenstelle zurückgesetzt.\n"
 
+#: winerror.mc:3767
+#, fuzzy
+#| msgid "Not implemented"
+msgid "Not implemented.\n"
+msgstr "Nicht implementiert"
+
 #: winerror.mc:3760
 msgid "No Signature found in file.\n"
 msgstr "Keine Signatur in Datei gefunden.\n"

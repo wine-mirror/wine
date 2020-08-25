@@ -6814,6 +6814,12 @@ msgstr "Указанное сетевое соединение не сущест
 msgid "Connection reset by peer.\n"
 msgstr "Соединение закрыто удалённым узлом.\n"
 
+#: winerror.mc:3767
+#, fuzzy
+#| msgid "Not implemented"
+msgid "Not implemented.\n"
+msgstr "Не реализовано"
+
 #: winerror.mc:3760
 msgid "No Signature found in file.\n"
 msgstr "Подпись файла не обнаружена.\n"

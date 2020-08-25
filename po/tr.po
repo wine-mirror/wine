@@ -6806,6 +6806,12 @@ msgstr "Ağ bağlantısı mevcut değil.\n"
 msgid "Connection reset by peer.\n"
 msgstr "Bağlantı eş tarafından sıfırlandı.\n"
 
+#: winerror.mc:3767
+#, fuzzy
+#| msgid "Not implemented"
+msgid "Not implemented.\n"
+msgstr "Eklenmedi/Geliştirilmedi"
+
 #: winerror.mc:3760
 msgid "No Signature found in file.\n"
 msgstr "Dosyada imza bulunamadı.\n"

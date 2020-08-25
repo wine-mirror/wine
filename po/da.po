@@ -6876,6 +6876,12 @@ msgstr "Stedet eksisterer ikke.\n"
 msgid "Connection reset by peer.\n"
 msgstr "Forbindelse nægtet.\n"
 
+#: winerror.mc:3767
+#, fuzzy
+#| msgid "Not implemented"
+msgid "Not implemented.\n"
+msgstr "Ikke implementeret"
+
 #: winerror.mc:3760
 #, fuzzy
 #| msgid "Message 0x%1 not found in file %2.\n"

@@ -6821,6 +6821,12 @@ msgstr "Esta conexão de rede não existe.\n"
 msgid "Connection reset by peer.\n"
 msgstr "Conexão redefinida pelo cliente.\n"
 
+#: winerror.mc:3767
+#, fuzzy
+#| msgid "Not implemented"
+msgid "Not implemented.\n"
+msgstr "Não implementado"
+
 #: winerror.mc:3760
 msgid "No Signature found in file.\n"
 msgstr "Nenhuma Assinatura encontrada no arquivo.\n"

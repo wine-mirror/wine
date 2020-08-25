@@ -7089,6 +7089,12 @@ msgstr "הקובץ אינו קיים.\n"
 msgid "Connection reset by peer.\n"
 msgstr "בהליכי התחברות אל %s.\n"
 
+#: winerror.mc:3767
+#, fuzzy
+#| msgid "Not implemented"
+msgid "Not implemented.\n"
+msgstr "לא מוטמע"
+
 #: winerror.mc:3760
 msgid "No Signature found in file.\n"
 msgstr ""

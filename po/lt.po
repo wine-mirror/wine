@@ -6802,6 +6802,12 @@ msgstr "Šis tinklo ryšys neegzistuoja.\n"
 msgid "Connection reset by peer.\n"
 msgstr "Sujungimas nutrauktas kito serverio.\n"
 
+#: winerror.mc:3767
+#, fuzzy
+#| msgid "Not implemented"
+msgid "Not implemented.\n"
+msgstr "Nerealizuota"
+
 #: winerror.mc:3760
 msgid "No Signature found in file.\n"
 msgstr "Joks parašas nerastas faile.\n"
