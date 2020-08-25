@@ -4781,7 +4781,6 @@ GpStatus WINGDIPAPI GdipGetClipBoundsI(GpGraphics *graphics, GpRect *rect)
     return GdipGetRegionBoundsI(graphics->clip, graphics, rect);
 }
 
-/* FIXME: Compositing mode is not used anywhere except the getter/setter. */
 GpStatus WINGDIPAPI GdipGetCompositingMode(GpGraphics *graphics,
     CompositingMode *mode)
 {
