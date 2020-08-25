@@ -83,22 +83,6 @@ void init_directories(void)
 }
 
 
-/******************************************************************************
- *           wine_nt_to_unix_file_name  (NTDLL.@) Not a Windows API
- *
- * Convert a file name from NT namespace to Unix namespace.
- *
- * If disposition is not FILE_OPEN or FILE_OVERWRITE, the last path
- * element doesn't have to exist; in that case STATUS_NO_SUCH_FILE is
- * returned, but the unix name is still filled in properly.
- */
-NTSTATUS CDECL wine_nt_to_unix_file_name( const UNICODE_STRING *nameW, char *nameA, SIZE_T *size,
-                                          UINT disposition )
-{
-    return unix_funcs->nt_to_unix_file_name( nameW, nameA, size, disposition );
-}
-
-
 /******************************************************************
  *		RtlWow64EnableFsRedirection   (NTDLL.@)
  */

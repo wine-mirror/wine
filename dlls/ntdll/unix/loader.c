@@ -1354,8 +1354,6 @@ static struct unix_funcs unix_funcs =
     virtual_release_address_space,
     exec_process,
     server_init_process_done,
-    wine_nt_to_unix_file_name,
-    wine_unix_to_nt_file_name,
     set_show_dot_files,
     load_so_dll,
     load_builtin_dll,

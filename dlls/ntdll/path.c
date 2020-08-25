@@ -555,7 +555,7 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
             for (;;)
             {
                 if (!(nt_str = RtlAllocateHeap( GetProcessHeap(), 0, buflen * sizeof(WCHAR) ))) break;
-                status = unix_funcs->unix_to_nt_file_name( unix_name, nt_str, &buflen );
+                status = wine_unix_to_nt_file_name( unix_name, nt_str, &buflen );
                 if (status != STATUS_BUFFER_TOO_SMALL) break;
                 RtlFreeHeap( GetProcessHeap(), 0, nt_str );
             }
@@ -891,13 +891,4 @@ NTSTATUS WINAPI RtlSetCurrentDirectory_U(const UNICODE_STRING* dir)
     RtlFreeUnicodeString( &newdir );
     RtlReleasePebLock();
     return nts;
-}
-
-
-/******************************************************************
- *           wine_unix_to_nt_file_name  (NTDLL.@) Not a Windows API
- */
-NTSTATUS CDECL wine_unix_to_nt_file_name( const char *name, WCHAR *buffer, SIZE_T *size )
-{
-    return unix_funcs->unix_to_nt_file_name( name, buffer, size );
 }
