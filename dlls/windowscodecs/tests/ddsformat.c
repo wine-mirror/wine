@@ -394,23 +394,23 @@ static struct test_data {
     WICDdsParameters expected_parameters;
     BOOL wine_init;
 } test_data[] = {
-    { test_dds_alpha,      sizeof(test_dds_alpha),         WINCODEC_ERR_BADHEADER, 1,  1,  &GUID_WICPixelFormat32bppBGRA,
+    { test_dds_alpha,      sizeof(test_dds_alpha),         WINCODEC_ERR_BADHEADER, 1,  1,  &GUID_WICPixelFormat8bppAlpha,
       { 1,  1,  1, 1, 1,   DXGI_FORMAT_A8_UNORM,           WICDdsTexture2D,   WICDdsAlphaModeUnknown },       TRUE },
-    { test_dds_luminance,  sizeof(test_dds_luminance),     WINCODEC_ERR_BADHEADER, 1,  1,  &GUID_WICPixelFormat32bppBGRA,
+    { test_dds_luminance,  sizeof(test_dds_luminance),     WINCODEC_ERR_BADHEADER, 1,  1,  &GUID_WICPixelFormat8bppGray,
       { 1,  1,  1, 1, 1,   DXGI_FORMAT_R8_UNORM,           WICDdsTexture2D,   WICDdsAlphaModeUnknown },       TRUE },
-    { test_dds_rgb565,     sizeof(test_dds_rgb565),        WINCODEC_ERR_BADHEADER, 1,  2,  &GUID_WICPixelFormat32bppBGRA,
+    { test_dds_rgb565,     sizeof(test_dds_rgb565),        WINCODEC_ERR_BADHEADER, 1,  2,  &GUID_WICPixelFormat16bppBGR565,
       { 4,  4,  1, 1, 1,   DXGI_FORMAT_B5G6R5_UNORM,       WICDdsTexture2D,   WICDdsAlphaModeUnknown },       TRUE },
-    { test_dds_24bpp,      sizeof(test_dds_24bpp),         WINCODEC_ERR_BADHEADER, 1,  3,  &GUID_WICPixelFormat32bppBGRA,
+    { test_dds_24bpp,      sizeof(test_dds_24bpp),         WINCODEC_ERR_BADHEADER, 1,  3,  &GUID_WICPixelFormat24bppBGR,
       { 1,  1,  1, 1, 1,   DXGI_FORMAT_UNKNOWN,            WICDdsTexture2D,   WICDdsAlphaModeUnknown },       TRUE },
-    { test_dds_32bpp_xrgb, sizeof(test_dds_32bpp_xrgb),    WINCODEC_ERR_BADHEADER, 1,  4,  &GUID_WICPixelFormat32bppBGRA,
+    { test_dds_32bpp_xrgb, sizeof(test_dds_32bpp_xrgb),    WINCODEC_ERR_BADHEADER, 1,  4,  &GUID_WICPixelFormat32bppBGR,
       { 1,  1,  1, 1, 1,   DXGI_FORMAT_B8G8R8X8_UNORM,     WICDdsTexture2D,   WICDdsAlphaModeUnknown },       TRUE },
     { test_dds_32bpp_argb, sizeof(test_dds_32bpp_argb),    WINCODEC_ERR_BADHEADER, 1,  4,  &GUID_WICPixelFormat32bppBGRA,
       { 1,  1,  1, 1, 1,   DXGI_FORMAT_B8G8R8A8_UNORM,     WICDdsTexture2D,   WICDdsAlphaModeUnknown },       TRUE },
-    { test_dds_64bpp,      sizeof(test_dds_64bpp),         WINCODEC_ERR_BADHEADER, 1,  8,  &GUID_WICPixelFormat32bppBGRA,
+    { test_dds_64bpp,      sizeof(test_dds_64bpp),         WINCODEC_ERR_BADHEADER, 1,  8,  &GUID_WICPixelFormat64bppBGRA,
       { 1,  1,  1, 1, 1,   DXGI_FORMAT_R16G16B16A16_UNORM, WICDdsTexture2D,   WICDdsAlphaModeUnknown },       TRUE },
-    { test_dds_96bpp,      sizeof(test_dds_96bpp),         WINCODEC_ERR_BADHEADER, 1,  12, &GUID_WICPixelFormat32bppBGRA,
+    { test_dds_96bpp,      sizeof(test_dds_96bpp),         WINCODEC_ERR_BADHEADER, 1,  12, &GUID_WICPixelFormat96bppRGBFloat,
       { 1,  1,  1, 1, 1,   DXGI_FORMAT_R32G32B32_FLOAT,    WICDdsTexture2D,   WICDdsAlphaModeUnknown },       TRUE },
-    { test_dds_128bpp,     sizeof(test_dds_128bpp),        WINCODEC_ERR_BADHEADER, 1,  16, &GUID_WICPixelFormat32bppBGRA,
+    { test_dds_128bpp,     sizeof(test_dds_128bpp),        WINCODEC_ERR_BADHEADER, 1,  16, &GUID_WICPixelFormat128bppRGBAFloat,
       { 1,  1,  1, 1, 1,   DXGI_FORMAT_R32G32B32A32_FLOAT, WICDdsTexture2D,   WICDdsAlphaModeUnknown },       TRUE },
     { test_dds_cube,       sizeof(test_dds_cube),          WINCODEC_ERR_BADHEADER, 18, 8,  &GUID_WICPixelFormat32bppPBGRA,
       { 4,  4,  1, 3, 1,   DXGI_FORMAT_BC1_UNORM,          WICDdsTextureCube, WICDdsAlphaModePremultiplied }, TRUE },
@@ -936,6 +936,8 @@ static void test_dds_decoder_frame_properties(IWICBitmapFrameDecode *frame_decod
     hr = IWICBitmapFrameDecode_GetPixelFormat(frame_decode, &pixel_format);
     ok(hr == S_OK, "Test %u, frame %u: GetPixelFormat failed, hr %#x\n", i, frame_index, hr);
     if (hr != S_OK) return;
+    todo_wine_if(!IsEqualGUID(test_data[i].expected_pixel_format, &GUID_WICPixelFormat32bppBGRA) &&
+                 !IsEqualGUID(test_data[i].expected_pixel_format, &GUID_WICPixelFormat32bppPBGRA))
     ok(IsEqualGUID(&pixel_format, test_data[i].expected_pixel_format),
        "Test %u, frame %u: Expected pixel format %s, got %s\n",
        i, frame_index, debugstr_guid(test_data[i].expected_pixel_format), debugstr_guid(&pixel_format));
