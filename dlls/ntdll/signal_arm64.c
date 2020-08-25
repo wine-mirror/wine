@@ -96,6 +96,22 @@ __ASM_STDCALL_FUNC( RtlCaptureContext, 8,
                     "stp x29, x30, [x0, #0xf0]\n\t"  /* context->Fp,Lr */
                     "mov x1, sp\n\t"
                     "stp x1, x30, [x0, #0x100]\n\t"  /* context->Sp,Pc */
+                    "stp q0,  q1,  [x0, #0x110]\n\t" /* context->V[0-1] */
+                    "stp q2,  q3,  [x0, #0x130]\n\t" /* context->V[2-3] */
+                    "stp q4,  q5,  [x0, #0x150]\n\t" /* context->V[4-5] */
+                    "stp q6,  q7,  [x0, #0x170]\n\t" /* context->V[6-7] */
+                    "stp q8,  q9,  [x0, #0x190]\n\t" /* context->V[8-9] */
+                    "stp q10, q11, [x0, #0x1a0]\n\t" /* context->V[10-11] */
+                    "stp q12, q13, [x0, #0x1c0]\n\t" /* context->V[12-13] */
+                    "stp q14, q15, [x0, #0x1e0]\n\t" /* context->V[14-15] */
+                    "stp q16, q17, [x0, #0x210]\n\t" /* context->V[16-17] */
+                    "stp q18, q19, [x0, #0x230]\n\t" /* context->V[18-19] */
+                    "stp q20, q21, [x0, #0x250]\n\t" /* context->V[20-21] */
+                    "stp q22, q23, [x0, #0x270]\n\t" /* context->V[22-23] */
+                    "stp q24, q25, [x0, #0x290]\n\t" /* context->V[24-25] */
+                    "stp q26, q27, [x0, #0x2a0]\n\t" /* context->V[26-27] */
+                    "stp q28, q29, [x0, #0x2c0]\n\t" /* context->V[28-29] */
+                    "stp q30, q31, [x0, #0x2e0]\n\t" /* context->V[30-31] */
                     "mov w1, #0x400000\n\t"          /* CONTEXT_ARM64 */
                     "movk w1, #0x7\n\t"              /* CONTEXT_FULL */
                     "str w1, [x0]\n\t"               /* context->ContextFlags */
