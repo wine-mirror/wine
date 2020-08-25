@@ -5071,6 +5071,7 @@ static void test_clipping(void)
     GpRegion *region, *region100x100;
     GpMatrix *matrix;
     GpRectF rect;
+    GpRect recti;
     GpPointF ptf[4];
     GpUnit unit;
     HRGN hrgn;
@@ -5106,6 +5107,11 @@ static void test_clipping(void)
     expect(Ok, status);
     ok(rect.X == 100.0 && rect.Y == 100.0 && rect.Width == 100.0 && rect.Height == 100.0,
        "expected 100.0,100.0-100.0,100.0, got %.2f,%.2f-%.2f,%.2f\n", rect.X, rect.Y, rect.Width, rect.Height);
+
+    status = GdipGetClipBoundsI(graphics, &recti);
+    expect(Ok, status);
+    ok(recti.X == 100 && recti.Y == 100 && recti.Width == 100 && recti.Height == 100,
+       "expected 100,100-100,100, got %i,%i-%i,%i\n", recti.X, recti.Y, recti.Width, recti.Height);
 
     /* Clip region does not account for changes to gdi32 transform */
     SetViewportOrgEx(hdc, 10, 10, NULL);
@@ -5148,6 +5154,11 @@ static void test_clipping(void)
     expect(Ok, status);
     ok(rect.X == 45.0 && rect.Y == 20.0 && rect.Width == 50.0 && rect.Height == 25.0,
        "expected 45.0,20.0-50.0,25.0, got %.2f,%.2f-%.2f,%.2f\n", rect.X, rect.Y, rect.Width, rect.Height);
+
+    status = GdipGetClipBoundsI(graphics, &recti);
+    expect(Ok, status);
+    todo_wine ok(recti.X == 45 && recti.Y == 20 && recti.Width == 50 && recti.Height == 25,
+       "expected 45,20-50,25, got %i,%i-%i,%i\n", recti.X, recti.Y, recti.Width, recti.Height);
 
     status = GdipSetEmpty(region);
     expect(Ok, status);
