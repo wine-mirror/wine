@@ -272,9 +272,36 @@ static inline BOOL is_window_resizable( struct x11drv_win_data *data, DWORD styl
 {
     if (style & WS_THICKFRAME) return TRUE;
     /* Metacity needs the window to be resizable to make it fullscreen */
-    return is_window_rect_fullscreen( &data->whole_rect );
+    return is_window_rect_full_screen( &data->whole_rect );
 }
 
+struct monitor_info
+{
+    const RECT *rect;
+    BOOL full_screen;
+};
+
+static BOOL CALLBACK enum_monitor_proc( HMONITOR monitor, HDC hdc, RECT *monitor_rect, LPARAM lparam )
+{
+    struct monitor_info *info = (struct monitor_info *)lparam;
+
+    if (info->rect->left <= monitor_rect->left && info->rect->right >= monitor_rect->right &&
+        info->rect->top <= monitor_rect->top && info->rect->bottom >= monitor_rect->bottom)
+    {
+        info->full_screen = TRUE;
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+BOOL is_window_rect_full_screen( const RECT *rect )
+{
+    struct monitor_info info = {rect, FALSE};
+
+    EnumDisplayMonitors( NULL, NULL, enum_monitor_proc, (LPARAM)&info );
+    return info.full_screen;
+}
 
 /***********************************************************************
  *              get_mwm_decorations
@@ -945,7 +972,7 @@ void update_net_wm_states( struct x11drv_win_data *data )
     style = GetWindowLongW( data->hwnd, GWL_STYLE );
     if (style & WS_MINIMIZE)
         new_state |= data->net_wm_state & ((1 << NET_WM_STATE_FULLSCREEN)|(1 << NET_WM_STATE_MAXIMIZED));
-    if (is_window_rect_fullscreen( &data->whole_rect ))
+    if (is_window_rect_full_screen( &data->whole_rect ))
     {
         if ((style & WS_MAXIMIZE) && (style & WS_CAPTION) == WS_CAPTION)
             new_state |= (1 << NET_WM_STATE_MAXIMIZED);
