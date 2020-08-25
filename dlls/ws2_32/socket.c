@@ -8940,10 +8940,21 @@ INT WINAPI WSCGetProviderPath( LPGUID provider, LPWSTR path, LPINT len, LPINT er
 {
     FIXME( "(%s %p %p %p) Stub!\n", debugstr_guid(provider), path, len, errcode );
 
-    if (!errcode || !provider || !len) return WSAEFAULT;
+    if (!provider || !len)
+    {
+        if (errcode)
+            *errcode = WSAEFAULT;
+        return SOCKET_ERROR;
+    }
 
-    *errcode = WSAEINVAL;
-    return SOCKET_ERROR;
+    if (*len <= 0)
+    {
+        if (errcode)
+            *errcode = WSAEINVAL;
+        return SOCKET_ERROR;
+    }
+
+    return 0;
 }
 
 /***********************************************************************
