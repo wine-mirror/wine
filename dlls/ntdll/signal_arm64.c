@@ -57,8 +57,8 @@ struct MSVCRT_JUMP_BUFFER
     unsigned __int64 Fp;
     unsigned __int64 Lr;
     unsigned __int64 Sp;
-    unsigned long Fpcr;
-    unsigned long Fpsr;
+    ULONG Fpcr;
+    ULONG Fpsr;
     double D[8];
 };
 
@@ -1002,7 +1002,7 @@ void CDECL RtlRestoreContext( CONTEXT *context, EXCEPTION_RECORD *rec )
         context->Fpsr    = jmp->Fpsr;
 
         for (i = 0; i < 8; i++)
-            context->V[8+i].D[0] = jmp->D[0];
+            context->V[8+i].D[0] = jmp->D[i];
     }
     else if (rec && rec->ExceptionCode == STATUS_UNWIND_CONSOLIDATE && rec->NumberParameters >= 1)
     {
