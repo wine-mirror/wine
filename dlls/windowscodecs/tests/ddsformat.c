@@ -445,6 +445,16 @@ static struct test_data {
     { test_qword_b,        sizeof(test_qword_b),           WINCODEC_ERR_STREAMREAD },
 };
 
+static DXGI_FORMAT compressed_formats[] = {
+    DXGI_FORMAT_BC1_TYPELESS,  DXGI_FORMAT_BC1_UNORM, DXGI_FORMAT_BC1_UNORM_SRGB,
+    DXGI_FORMAT_BC2_TYPELESS,  DXGI_FORMAT_BC2_UNORM, DXGI_FORMAT_BC2_UNORM_SRGB,
+    DXGI_FORMAT_BC3_TYPELESS,  DXGI_FORMAT_BC3_UNORM, DXGI_FORMAT_BC3_UNORM_SRGB,
+    DXGI_FORMAT_BC4_TYPELESS,  DXGI_FORMAT_BC4_UNORM, DXGI_FORMAT_BC4_SNORM,
+    DXGI_FORMAT_BC5_TYPELESS,  DXGI_FORMAT_BC5_UNORM, DXGI_FORMAT_BC5_SNORM,
+    DXGI_FORMAT_BC6H_TYPELESS, DXGI_FORMAT_BC6H_UF16, DXGI_FORMAT_BC6H_SF16,
+    DXGI_FORMAT_BC7_TYPELESS,  DXGI_FORMAT_BC7_UNORM, DXGI_FORMAT_BC7_UNORM_SRGB
+};
+
 static IWICImagingFactory *factory = NULL;
 
 static IWICStream *create_stream(const void *image_data, UINT image_size)
@@ -508,6 +518,16 @@ static HRESULT init_decoder(IWICBitmapDecoder *decoder, IWICStream *stream, HRES
     }
 
     return hr;
+}
+
+static BOOL is_compressed(DXGI_FORMAT format)
+{
+    UINT i;
+    for (i = 0; i < ARRAY_SIZE(compressed_formats); i++)
+    {
+        if (format == compressed_formats[i]) return TRUE;
+    }
+    return FALSE;
 }
 
 static BOOL has_extended_header(const BYTE *data)
@@ -876,18 +896,12 @@ static void test_dds_decoder_frame_properties(IWICBitmapFrameDecode *frame_decod
 
     /* frame format information tests */
 
-    if (test_data[i].expected_parameters.DxgiFormat != DXGI_FORMAT_BC1_UNORM &&
-        test_data[i].expected_parameters.DxgiFormat != DXGI_FORMAT_BC2_UNORM &&
-        test_data[i].expected_parameters.DxgiFormat != DXGI_FORMAT_BC3_UNORM &&
-        test_data[i].expected_parameters.DxgiFormat != DXGI_FORMAT_BC4_UNORM &&
-        test_data[i].expected_parameters.DxgiFormat != DXGI_FORMAT_BC4_SNORM &&
-        test_data[i].expected_parameters.DxgiFormat != DXGI_FORMAT_BC5_UNORM &&
-        test_data[i].expected_parameters.DxgiFormat != DXGI_FORMAT_BC5_SNORM) {
-        expected_block_width = 1;
-        expected_block_height = 1;
-    } else {
+    if (is_compressed(test_data[i].expected_parameters.DxgiFormat)) {
         expected_block_width = BLOCK_WIDTH;
         expected_block_height = BLOCK_HEIGHT;
+    } else {
+        expected_block_width = 1;
+        expected_block_height = 1;
     }
 
     hr = IWICDdsFrameDecode_GetFormatInfo(dds_frame, NULL);
@@ -1108,9 +1122,7 @@ static void test_dds_decoder_frame_data(IWICBitmapFrameDecode* frame, IWICDdsFra
     hr = IWICBitmapFrameDecode_CopyPixels(frame, &rect, stride, sizeof(buffer), NULL);
     ok(hr == E_INVALIDARG, "Test %u, frame %u: CopyBlocks got unexpected hr %#x\n", i, frame_index, hr);
 
-    if (format_info.DxgiFormat == DXGI_FORMAT_BC1_UNORM ||
-        format_info.DxgiFormat == DXGI_FORMAT_BC2_UNORM ||
-        format_info.DxgiFormat == DXGI_FORMAT_BC3_UNORM ) {
+    if (is_compressed(format_info.DxgiFormat)) {
 
         decode_block(test_data[i].data + block_offset, width_in_blocks * height_in_blocks,
                      format_info.DxgiFormat, frame_width, frame_height, pixels);
