@@ -4231,10 +4231,31 @@ static void test_debug_service(DWORD numexc)
 
 #define UWOP_TWOBYTES(x) (((x) >> 8) & 0xff), ((x) & 0xff)
 
-#define UWOP_ALLOC_SMALL(size) (0x00 | (size / 16))
-#define UWOP_SAVE_REGP(reg, offset) UWOP_TWOBYTES((0xC8 << 8) | ((reg - 19) << 6) | (offset/8))
-#define UWOP_NOP 0xE5
-#define UWOP_END 0xE4
+#define UWOP_ALLOC_SMALL(size)         (0x00 | (size/16))
+#define UWOP_SAVE_R19R20_X(offset)     (0x20 | (offset/8))
+#define UWOP_SAVE_FPLR(offset)         (0x40 | (offset/8))
+#define UWOP_SAVE_FPLR_X(offset)       (0x80 | (offset/8 - 1))
+#define UWOP_ALLOC_MEDIUM(size)        UWOP_TWOBYTES((0xC0 << 8) | (size/16))
+#define UWOP_SAVE_REGP(reg, offset)    UWOP_TWOBYTES((0xC8 << 8) | ((reg - 19) << 6) | (offset/8))
+#define UWOP_SAVE_REGP_X(reg, offset)  UWOP_TWOBYTES((0xCC << 8) | ((reg - 19) << 6) | (offset/8 - 1))
+#define UWOP_SAVE_REG(reg, offset)     UWOP_TWOBYTES((0xD0 << 8) | ((reg - 19) << 6) | (offset/8))
+#define UWOP_SAVE_REG_X(reg, offset)   UWOP_TWOBYTES((0xD4 << 8) | ((reg - 19) << 5) | (offset/8 - 1))
+#define UWOP_SAVE_LRP(reg, offset)     UWOP_TWOBYTES((0xD6 << 8) | ((reg - 19)/2 << 6) | (offset/8))
+#define UWOP_SAVE_FREGP(reg, offset)   UWOP_TWOBYTES((0xD8 << 8) | ((reg - 8) << 6) | (offset/8))
+#define UWOP_SAVE_FREGP_X(reg, offset) UWOP_TWOBYTES((0xDA << 8) | ((reg - 8) << 6) | (offset/8 - 1))
+#define UWOP_SAVE_FREG(reg, offset)    UWOP_TWOBYTES((0xDC << 8) | ((reg - 8) << 6) | (offset/8))
+#define UWOP_SAVE_FREG_X(reg, offset)  UWOP_TWOBYTES((0xDE << 8) | ((reg - 8) << 5) | (offset/8 - 1))
+#define UWOP_ALLOC_LARGE(size)         UWOP_TWOBYTES((0xE0 << 8) | ((size/16) >> 16)), UWOP_TWOBYTES(size/16)
+#define UWOP_SET_FP                    0xE1
+#define UWOP_ADD_FP(offset)            UWOP_TWOBYTES((0xE2 << 8) | (offset/8))
+#define UWOP_NOP                       0xE3
+#define UWOP_END                       0xE4
+#define UWOP_END_C                     0xE5
+#define UWOP_SAVE_NEXT                 0xE6
+#define UWOP_TRAP_FRAME                0xE8
+#define UWOP_MACHINE_FRAME             0xE9
+#define UWOP_CONTEXT                   0xEA
+#define UWOP_CLEAR_UNWOUND_TO_CALL     0xEC
 
 struct results
 {
