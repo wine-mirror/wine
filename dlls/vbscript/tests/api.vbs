@@ -844,6 +844,7 @@ TestRTrim "", ""
 TestRTrim 123, "123"
 if isEnglishLang then TestRTrim true, "True"
 
+
 sub test_replace(str, find, rep, exp)
     dim r
     r = Replace(str, find, rep)
@@ -865,8 +866,17 @@ sub test_replace_cnt(str, find, rep, from, cnt, exp)
        r & """ expected """ & exp & """"
 end sub
 
+sub test_replace_mode(str, find, rep, from, cnt, mode, exp)
+    dim r
+    r = Replace(str, find, rep, from, cnt, mode)
+    ok r = exp, "Replace(""" & str & """, """ & find & """, """ & rep & """, " & from & ", " & cnt & ", " & mode _
+       & ") = """ & r & """ expected """ & exp & """"
+end sub
+
 test_replace "xx testxx(xx)", "xx", "!", "! test!(!)"
+test_replace "", "x", "y", ""
 test_replace "xxx", "", "y", "xxx"
+test_replace "yxxy", "x", "", "yy"
 test_replace "xxxxx", "xx", "y", "yyx"
 test_replace 123, 2, 6, "163"
 test_replace "xyz" & Chr(0) & "xyz", "y", "Y", "xYz" & Chr(0) & "xYz"
@@ -883,6 +893,12 @@ test_replace_cnt "xx testxx(xx)", "xx", "!", 1, 1, "! testxx(xx)"
 test_replace_cnt "xx testxx(xx)", "xx", "!", 2, 1, "x test!(xx)"
 test_replace_cnt "xx testxx(xx)", "xx", "!", 1, -1, "! test!(!)"
 test_replace_cnt "xx testxx(xx)", "xx", "!", 1, 0, "xx testxx(xx)"
+
+test_replace_mode "Aa testAAa(aa)", "aa", "!", 1, 2, 1, "! test!a(aa)"
+test_replace_mode "aA testaa(aa)", "AA", "!", 1, 1, 1, "! testaa(aa)"
+test_replace_mode "aa testAa(aa)", "aa", "!", 2, 2, 0, "a testAa(!)"
+test_replace_mode "aa testAA(aA)", "Aa", "!", 1, -1, 1, "! test!(!)"
+test_replace_mode "aa testaa(aa)", "A", "!", 1, -1, 1, "!! test!!(!!)"
 
 on error resume next
 Replace "xx", "x", "y", -1
@@ -901,6 +917,24 @@ Replace "xx", "x", "y", 1, -2
 x = err.number
 on error goto 0
 ok x = 5, "err = " & x
+
+Sub testReplaceError(arg1, arg2, arg3, arg4, arg5, arg6, error_num)
+    on error resume next
+    Dim x
+
+    Call Err.clear()
+    x = Replace(arg1, arg2, arg3, arg4, arg5, arg6)
+    Call ok(Err.number = error_num, "Err.number = " & Err.number)
+End Sub
+
+Call testReplaceError(Null, "x", "y", 1, 1, 0, 94)
+Call testReplaceError("xx", null, "y", 1, 1, 0, 94)
+Call testReplaceError("xx", "x", null, 1, 1, 0, 94)
+Call testReplaceError("xx", "x", "y", null, 1, 0, 94)
+Call testReplaceError("xx", "x", "y", 1, null, 0, 94)
+Call testReplaceError("xx", "x", "y", 1, 1, null, 94)
+Call testReplaceError("xx", "x", "y", 1, 1, 8, 5)
+
 
 Sub TestRound(val, exval, vt)
     Call ok(Round(val) = exval, "Round(" & val & ") = " & Round(val))

@@ -393,7 +393,7 @@ static inline BOOL is_digit(WCHAR c)
 }
 
 HRESULT create_regexp(IDispatch**) DECLSPEC_HIDDEN;
-BSTR string_replace(BSTR,BSTR,BSTR,int,int) DECLSPEC_HIDDEN;
+BSTR string_replace(BSTR,BSTR,BSTR,int,int,int) DECLSPEC_HIDDEN;
 
 HRESULT map_hres(HRESULT) DECLSPEC_HIDDEN;
 

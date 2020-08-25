@@ -1629,33 +1629,36 @@ static const IRegExp2Vtbl RegExp2Vtbl = {
     RegExp2_Replace
 };
 
-BSTR string_replace(BSTR string, BSTR find, BSTR replace, int from, int cnt)
+BSTR string_replace(BSTR string, BSTR find, BSTR replace, int from, int cnt, int mode)
 {
     const WCHAR *ptr, *string_end;
     strbuf_t buf = { NULL, 0, 0 };
     size_t replace_len, find_len;
     BSTR ret = NULL;
     HRESULT hres = S_OK;
+    int pos;
 
     string_end = string + SysStringLen(string);
     ptr = from > SysStringLen(string) ? string_end : string + from;
 
     find_len = SysStringLen(find);
     replace_len = SysStringLen(replace);
-    if(!replace_len)
-        cnt = 0;
 
     while(string_end - ptr >= find_len && cnt && find_len) {
-        if(memcmp(ptr, find, find_len * sizeof(WCHAR))) {
-            hres = strbuf_append(&buf, ptr, 1);
+        pos = FindStringOrdinal(FIND_FROMSTART, ptr, string_end - ptr,
+                                find, find_len, mode);
+
+        if(pos == -1)
+            break;
+        else {
+            hres = strbuf_append(&buf, ptr, pos);
             if(FAILED(hres))
                 break;
-            ptr++;
-        }else {
             hres = strbuf_append(&buf, replace, replace_len);
             if(FAILED(hres))
                 break;
-            ptr += find_len;
+
+            ptr = ptr + pos + find_len;
             if(cnt != -1)
                 cnt--;
         }

@@ -2449,12 +2449,19 @@ error:
 static HRESULT Global_Replace(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
     BSTR string, find = NULL, replace = NULL, ret;
-    int from = 1, cnt = -1;
+    int from = 1, cnt = -1, mode = 0;
     HRESULT hres = S_OK;
 
     TRACE("%s %s %s %u...\n", debugstr_variant(args), debugstr_variant(args+1), debugstr_variant(args+2), args_cnt);
 
     assert(3 <= args_cnt && args_cnt <= 6);
+
+   if(V_VT(args) == VT_NULL || V_VT(args+1) == VT_NULL || (V_VT(args+2) == VT_NULL)
+        || (args_cnt >= 4 && V_VT(args+3) == VT_NULL) || (args_cnt >= 5 && V_VT(args+4) == VT_NULL)
+        || (args_cnt == 6 && V_VT(args+5) == VT_NULL))
+        return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
+
+
     if(V_VT(args) != VT_BSTR) {
         hres = to_string(args, &string);
         if(FAILED(hres))
@@ -2499,10 +2506,17 @@ static HRESULT Global_Replace(BuiltinDisp *This, VARIANT *args, unsigned args_cn
         }
     }
 
-    if(args_cnt == 6)
-        FIXME("copare argument not supported\n");
+    if(args_cnt == 6) {
+        hres = to_int(args+5, &mode);
+        if(FAILED(hres))
+            goto error;
+        if (mode != 0 && mode != 1) {
+            hres = MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
+            goto error;
+        }
+    }
 
-    ret = string_replace(string, find, replace, from - 1, cnt);
+    ret = string_replace(string, find, replace, from - 1, cnt, mode);
     if(!ret) {
         hres = E_OUTOFMEMORY;
     }else if(res) {
