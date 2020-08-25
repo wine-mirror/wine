@@ -4331,6 +4331,10 @@ static void call_virtual_unwind( int testnum, const struct unwind_test *test )
         else
         {
             ok( handler == NULL, "%u/%u: handler %p instead of NULL\n", testnum, i, handler );
+            ok( data == (test->results[i].handler < 0 ?
+                        (void *)0xdeadbeef : NULL),
+                "%u/%u: handler data set to %p/%p\n", testnum, i, data,
+                (test->results[i].handler < 0 ? (void *)0xdeadbeef : NULL) );
         }
 
         ok( context.Pc == test->results[i].pc, "%u/%u: wrong pc %p/%p\n",
