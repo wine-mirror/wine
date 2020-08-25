@@ -2253,6 +2253,21 @@ DWORD WINAPI CoGetCurrentProcess(void)
 }
 
 /***********************************************************************
+ *           CoFreeUnusedLibrariesEx    (combase.@)
+ */
+void WINAPI DECLSPEC_HOTPATCH CoFreeUnusedLibrariesEx(DWORD unload_delay, DWORD reserved)
+{
+    struct apartment *apt = com_get_current_apt();
+    if (!apt)
+    {
+        ERR("apartment not initialised\n");
+        return;
+    }
+
+    apartment_freeunusedlibraries(apt, unload_delay);
+}
+
+/***********************************************************************
  *            DllMain     (combase.@)
  */
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, LPVOID reserved)

@@ -426,7 +426,7 @@ static struct apartment *apartment_construct(DWORD model)
 }
 
 /* Frees unused libraries loaded into apartment */
-void WINAPI apartment_freeunusedlibraries(struct apartment *apt, DWORD delay)
+void apartment_freeunusedlibraries(struct apartment *apt, DWORD delay)
 {
     struct apartment_loaded_dll *entry, *next;
 

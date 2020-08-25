@@ -1449,35 +1449,6 @@ void WINAPI CoFreeAllLibraries(void)
     /* NOP */
 }
 
-/***********************************************************************
- *           CoFreeUnusedLibrariesEx [OLE32.@]
- *
- * Frees any previously unused libraries whose delay has expired and marks
- * currently unused libraries for unloading. Unused are identified as those that
- * return S_OK from their DllCanUnloadNow function.
- *
- * PARAMS
- *  dwUnloadDelay [I] Unload delay in milliseconds.
- *  dwReserved    [I] Reserved. Set to 0.
- *
- * RETURNS
- *  Nothing.
- *
- * SEE ALSO
- *  CoLoadLibrary, CoFreeAllLibraries, CoFreeLibrary
- */
-void WINAPI DECLSPEC_HOTPATCH CoFreeUnusedLibrariesEx(DWORD dwUnloadDelay, DWORD dwReserved)
-{
-    struct apartment *apt = COM_CurrentApt();
-    if (!apt)
-    {
-        ERR("apartment not initialised\n");
-        return;
-    }
-
-    apartment_freeunusedlibraries(apt, dwUnloadDelay);
-}
-
 /******************************************************************************
  *		CoLockObjectExternal	[OLE32.@]
  *

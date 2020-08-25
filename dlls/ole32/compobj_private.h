@@ -267,7 +267,6 @@ extern void WINAPI apartment_decrement_mta_usage(CO_MTA_USAGE_COOKIE cookie) DEC
 extern HRESULT WINAPI apartment_increment_mta_usage(CO_MTA_USAGE_COOKIE *cookie) DECLSPEC_HIDDEN;
 extern struct apartment * WINAPI apartment_get_mta(void) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI apartment_get_local_server_stream(struct apartment *apt, IStream **ret) DECLSPEC_HIDDEN;
-extern void WINAPI apartment_freeunusedlibraries(struct apartment *apt, DWORD delay) DECLSPEC_HIDDEN;
 extern void WINAPI apartment_global_cleanup(void) DECLSPEC_HIDDEN;
 
 HRESULT COM_GetRegisteredClassObject(const struct apartment *apt, REFCLSID rclsid,

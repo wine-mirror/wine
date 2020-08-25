@@ -93,7 +93,7 @@
 @ stdcall CoEnableCallCancellation(ptr) ole32.CoEnableCallCancellation
 @ stdcall CoFileTimeNow(ptr)
 @ stdcall CoFreeUnusedLibraries()
-@ stdcall CoFreeUnusedLibrariesEx(long long) ole32.CoFreeUnusedLibrariesEx
+@ stdcall CoFreeUnusedLibrariesEx(long long)
 @ stdcall CoGetActivationState(int128 long ptr)
 @ stub CoGetApartmentID
 @ stdcall CoGetApartmentType(ptr ptr) ole32.CoGetApartmentType
@@ -357,7 +357,6 @@
 @ stdcall enter_apartment(ptr long)
 @ stdcall leave_apartment(ptr)
 @ stdcall apartment_get_inproc_class_object(ptr ptr ptr ptr long ptr)
-@ stdcall apartment_freeunusedlibraries(ptr long)
 @ stdcall apartment_get_mta()
 @ stdcall apartment_decrement_mta_usage(ptr)
 @ stdcall apartment_increment_mta_usage(ptr)

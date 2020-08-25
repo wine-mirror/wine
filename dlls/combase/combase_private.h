@@ -98,6 +98,7 @@ static inline struct apartment* com_get_current_apt(void)
 
 HWND WINAPI apartment_getwindow(const struct apartment *apt) DECLSPEC_HIDDEN;
 HRESULT WINAPI apartment_createwindowifneeded(struct apartment *apt) DECLSPEC_HIDDEN;
+void apartment_freeunusedlibraries(struct apartment *apt, DWORD unload_delay) DECLSPEC_HIDDEN;
 
 /* RpcSs interface */
 HRESULT rpcss_get_next_seqid(DWORD *id) DECLSPEC_HIDDEN;
