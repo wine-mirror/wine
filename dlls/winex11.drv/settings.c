@@ -456,11 +456,14 @@ BOOL is_detached_mode(const DEVMODEW *mode)
 }
 
 /* Get the full display mode with all the necessary fields set.
- * Return NULL on failure. Caller should free the returned mode. */
-static DEVMODEW *get_full_mode(ULONG_PTR id, const DEVMODEW *dev_mode)
+ * Return NULL on failure. Caller should call free_full_mode() to free the returned mode. */
+static DEVMODEW *get_full_mode(ULONG_PTR id, DEVMODEW *dev_mode)
 {
     DEVMODEW *modes, *full_mode, *found_mode = NULL;
     UINT mode_count, mode_idx;
+
+    if (is_detached_mode(dev_mode))
+        return dev_mode;
 
     if (!handler.get_modes(id, 0, &modes, &mode_count))
         return NULL;
@@ -500,7 +503,16 @@ static DEVMODEW *get_full_mode(ULONG_PTR id, const DEVMODEW *dev_mode)
 
     memcpy(full_mode, found_mode, sizeof(*found_mode) + found_mode->dmDriverExtra);
     handler.free_modes(modes);
+
+    full_mode->dmFields |= DM_POSITION;
+    full_mode->u1.s2.dmPosition = dev_mode->u1.s2.dmPosition;
     return full_mode;
+}
+
+static void free_full_mode(DEVMODEW *mode)
+{
+    if (!is_detached_mode(mode))
+        heap_free(mode);
 }
 
 static LONG get_display_settings(struct x11drv_display_setting **new_displays,
@@ -781,19 +793,9 @@ static LONG apply_display_settings(struct x11drv_display_setting *displays, INT 
         if ((attached_mode && !do_attach) || (!attached_mode && do_attach))
             continue;
 
-        if (attached_mode)
-        {
-            full_mode = get_full_mode(displays[display_idx].id, &displays[display_idx].desired_mode);
-            if (!full_mode)
-                return DISP_CHANGE_BADMODE;
-
-            full_mode->dmFields |= DM_POSITION;
-            full_mode->u1.s2.dmPosition = displays[display_idx].desired_mode.u1.s2.dmPosition;
-        }
-        else
-        {
-            full_mode = &displays[display_idx].desired_mode;
-        }
+        full_mode = get_full_mode(displays[display_idx].id, &displays[display_idx].desired_mode);
+        if (!full_mode)
+            return DISP_CHANGE_BADMODE;
 
         TRACE("handler:%s changing %s to position:(%d,%d) resolution:%ux%u frequency:%uHz "
               "depth:%ubits orientation:%#x.\n", handler.name,
@@ -803,8 +805,7 @@ static LONG apply_display_settings(struct x11drv_display_setting *displays, INT 
               full_mode->u1.s2.dmDisplayOrientation);
 
         ret = handler.set_current_mode(displays[display_idx].id, full_mode);
-        if (attached_mode)
-            heap_free(full_mode);
+        free_full_mode(full_mode);
         if (ret != DISP_CHANGE_SUCCESSFUL)
             return ret;
     }
@@ -834,6 +835,7 @@ LONG CDECL X11DRV_ChangeDisplaySettingsEx( LPCWSTR devname, LPDEVMODEW devmode,
 {
     struct x11drv_display_setting *displays;
     INT display_idx, display_count;
+    DEVMODEW *full_mode;
     LONG ret;
 
     ret = get_display_settings(&displays, &display_count, devname, devmode);
@@ -846,12 +848,22 @@ LONG CDECL X11DRV_ChangeDisplaySettingsEx( LPCWSTR devname, LPDEVMODEW devmode,
         {
             if (!lstrcmpiW(displays[display_idx].desired_mode.dmDeviceName, devname))
             {
-                if (!write_registry_settings(devname, &displays[display_idx].desired_mode))
+                full_mode = get_full_mode(displays[display_idx].id, &displays[display_idx].desired_mode);
+                if (!full_mode)
+                {
+                    heap_free(displays);
+                    return DISP_CHANGE_BADMODE;
+                }
+
+                if (!write_registry_settings(devname, full_mode))
                 {
                     ERR("Failed to write %s display settings to registry.\n", wine_dbgstr_w(devname));
+                    free_full_mode(full_mode);
                     heap_free(displays);
                     return DISP_CHANGE_NOTUPDATED;
                 }
+
+                free_full_mode(full_mode);
                 break;
             }
         }

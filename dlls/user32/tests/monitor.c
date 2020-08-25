@@ -749,8 +749,8 @@ static void test_ChangeDisplaySettingsEx(void)
                     "Expected dmPelsWidth %u, got %u.\n", dm3.dmPelsWidth, dm.dmPelsWidth);
             ok(dm.dmPelsHeight == dm3.dmPelsHeight || broken(dm.dmPelsHeight == dm2.dmPelsHeight), /* Win10 */
                     "Expected dmPelsHeight %u, got %u.\n", dm3.dmPelsHeight, dm.dmPelsHeight);
-            todo_wine ok(dm.dmBitsPerPel, "Expected dmBitsPerPel not zero.\n");
-            todo_wine ok(dm.dmDisplayFrequency, "Expected dmDisplayFrequency not zero.\n");
+            ok(dm.dmBitsPerPel, "Expected dmBitsPerPel not zero.\n");
+            ok(dm.dmDisplayFrequency, "Expected dmDisplayFrequency not zero.\n");
         }
         else
         {
@@ -758,12 +758,7 @@ static void test_ChangeDisplaySettingsEx(void)
         }
 
         res = ChangeDisplaySettingsExA(devices[device].name, NULL, NULL, 0, NULL);
-        todo_wine ok(res == DISP_CHANGE_SUCCESSFUL, "ChangeDisplaySettingsExA %s returned %d.\n", devices[device].name, res);
-        if (res != DISP_CHANGE_SUCCESSFUL)
-        {
-            skip("ChangeDisplaySettingsExA %s returned %d.\n", devices[device].name, res);
-            continue;
-        }
+        ok(res == DISP_CHANGE_SUCCESSFUL, "ChangeDisplaySettingsExA %s returned %d.\n", devices[device].name, res);
         flush_events();
 
         res = EnumDisplaySettingsA(devices[device].name, ENUM_REGISTRY_SETTINGS, &dm);
