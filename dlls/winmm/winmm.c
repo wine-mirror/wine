@@ -1030,7 +1030,7 @@ static DWORD midistream_get_playing_position(WINE_MIDIStream* lpMidiStrm)
     case MSM_STATUS_PAUSED:
         return lpMidiStrm->dwElapsedMS;
     case MSM_STATUS_PLAYING:
-        return GetTickCount() - lpMidiStrm->dwStartTicks;
+        return timeGetTime() - lpMidiStrm->dwStartTicks;
     default:
         FIXME("Unknown playing status %hu\n", lpMidiStrm->status);
         return 0;
@@ -1080,7 +1080,7 @@ static	BOOL	MMSYSTEM_MidiStream_MessageHandler(WINE_MIDIStream* lpMidiStrm, LPWI
             /* FIXME: send out cc64 0 (turn off sustain pedal) on every channel */
             if (lpMidiStrm->status != MSM_STATUS_PLAYING) {
                 EnterCriticalSection(&lpMidiStrm->lock);
-                lpMidiStrm->dwStartTicks = GetTickCount() - lpMidiStrm->dwElapsedMS;
+                lpMidiStrm->dwStartTicks = timeGetTime() - lpMidiStrm->dwElapsedMS;
                 lpMidiStrm->status = MSM_STATUS_PLAYING;
                 LeaveCriticalSection(&lpMidiStrm->lock);
             }
@@ -1090,7 +1090,7 @@ static	BOOL	MMSYSTEM_MidiStream_MessageHandler(WINE_MIDIStream* lpMidiStrm, LPWI
             /* FIXME: send out cc64 0 (turn off sustain pedal) on every channel */
             if (lpMidiStrm->status != MSM_STATUS_PAUSED) {
                 EnterCriticalSection(&lpMidiStrm->lock);
-                lpMidiStrm->dwElapsedMS = GetTickCount() - lpMidiStrm->dwStartTicks;
+                lpMidiStrm->dwElapsedMS = timeGetTime() - lpMidiStrm->dwStartTicks;
                 lpMidiStrm->status = MSM_STATUS_PAUSED;
                 LeaveCriticalSection(&lpMidiStrm->lock);
             }
@@ -1126,7 +1126,7 @@ static	BOOL	MMSYSTEM_MidiStream_MessageHandler(WINE_MIDIStream* lpMidiStrm, LPWI
         case WINE_MSM_HEADER:
             /* sets initial tick count for first MIDIHDR */
             if (!lpMidiStrm->dwStartTicks)
-                lpMidiStrm->dwStartTicks = GetTickCount();
+                lpMidiStrm->dwStartTicks = timeGetTime();
             lpMidiHdr = (LPMIDIHDR)msg->lParam;
             lpData = (LPBYTE)lpMidiHdr->lpData;
             TRACE("Adding %s lpMidiHdr=%p [lpData=0x%p dwBytesRecorded=%u/%u dwFlags=0x%08x size=%lu]\n",
@@ -1235,8 +1235,8 @@ start_header:
 
 	    dwToGo = lpMidiStrm->dwStartTicks + lpMidiStrm->position_usec / 1000;
 
-	    TRACE("%u/%u/%u\n", dwToGo, GetTickCount(), me->dwDeltaTime);
-	    while (dwToGo - (dwCurrTC = GetTickCount()) <= MAXLONG) {
+	    TRACE("%u/%u/%u\n", dwToGo, timeGetTime(), me->dwDeltaTime);
+	    while (dwToGo - (dwCurrTC = timeGetTime()) <= MAXLONG) {
 		if (MsgWaitForMultipleObjects(0, NULL, FALSE, dwToGo - dwCurrTC, QS_ALLINPUT) == WAIT_OBJECT_0) {
 		    /* got a message, handle it */
 		    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) {

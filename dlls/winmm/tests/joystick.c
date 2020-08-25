@@ -202,12 +202,12 @@ static void test_api(void)
     if (winetest_interactive)
     {
 #define MAX_TIME 15000
-        DWORD tick = GetTickCount(), spent;
+        DWORD tick = timeGetTime(), spent;
         infoex.ex.dwSize = sizeof(infoex.ex);
         infoex.ex.dwFlags = JOY_RETURNALL;
         do
         {
-            spent = GetTickCount() - tick;
+            spent = timeGetTime() - tick;
             ret = joyGetPosEx(joyid, &infoex.ex);
             if (ret == JOYERR_NOERROR)
             {

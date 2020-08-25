@@ -131,7 +131,7 @@ static int TIME_MMSysTimeCallback(void)
         }
 
         timer = LIST_ENTRY( ptr, WINE_TIMERENTRY, entry );
-        delta_time = timer->dwTriggerTime - GetTickCount();
+        delta_time = timer->dwTriggerTime - timeGetTime();
         if (delta_time > 0) break;
 
         list_remove( &timer->entry );
@@ -242,14 +242,20 @@ void	TIME_MMTimeStop(void)
  */
 MMRESULT WINAPI timeGetSystemTime(LPMMTIME lpTime, UINT wSize)
 {
-
     if (wSize >= sizeof(*lpTime)) {
-	lpTime->wType = TIME_MS;
-	lpTime->u.ms = GetTickCount();
-
+        lpTime->wType = TIME_MS;
+        lpTime->u.ms = timeGetTime();
     }
 
     return 0;
+}
+
+/**************************************************************************
+ * 				timeGetTime		[WINMM.@]
+ */
+DWORD WINAPI timeGetTime(void)
+{
+    return GetTickCount();
 }
 
 /**************************************************************************
@@ -272,7 +278,7 @@ MMRESULT WINAPI timeSetEvent(UINT wDelay, UINT wResol, LPTIMECALLBACK lpFunc,
 	return 0;
 
     lpNewTimer->wDelay = wDelay;
-    lpNewTimer->dwTriggerTime = GetTickCount() + wDelay;
+    lpNewTimer->dwTriggerTime = timeGetTime() + wDelay;
 
     /* FIXME - wResol is not respected, although it is not clear
                that we could change our precision meaningfully  */

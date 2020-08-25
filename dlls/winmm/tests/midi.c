@@ -555,7 +555,7 @@ static void CALLBACK time_stamp_callback(HMIDIOUT hmo, UINT msg, DWORD_PTR insta
     switch (msg) {
     case MM_MOM_POSITIONCB:
         if (records->count < ARRAY_SIZE(records->time_stamp))
-            records->time_stamp[records->count] = GetTickCount();
+            records->time_stamp[records->count] = timeGetTime();
         records->count++;
         break;
     case MM_MOM_DONE:
