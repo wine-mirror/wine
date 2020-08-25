@@ -74,17 +74,30 @@ static inline void link_timer( WINE_TIMERENTRY *timer )
 
 /*
  * Some observations on the behavior of winmm on Windows.
- * First, the call to timeBeginPeriod(xx) can never be used
- * to raise the timer resolution, only lower it.
+ *
+ * First, the call to timeBeginPeriod(xx) can never be used to
+ * lower the timer resolution (i.e. increase the update
+ * interval), only to increase the timer resolution (i.e. lower
+ * the update interval).
  *
  * Second, a brief survey of a variety of Win 2k and Win X
  * machines showed that a 'standard' (aka default) timer
  * resolution was 1 ms (Win9x is documented as being 1).  However, one 
  * machine had a standard timer resolution of 10 ms.
  *
- * Further, if we set our default resolution to 1,
- * the implementation of timeGetTime becomes GetTickCount(),
- * and we can optimize the code to reduce overhead.
+ * Further, timeBeginPeriod(xx) also affects the resolution of
+ * wait calls such as NtDelayExecution() and
+ * NtWaitForMultipleObjects() which by default round up their
+ * timeout to the nearest multiple of 15.625ms across all Windows
+ * versions. In Wine all of those currently work with sub-1ms
+ * accuracy.
+ *
+ * Effective time resolution is a global value that is the max
+ * of the resolutions (i.e. min of update intervals) requested by
+ * all the processes. A lot of programs seem to do
+ * timeBeginPeriod(1) forcing it onto everyone else.
+ *
+ * Defaulting to 1ms accuracy in winmm should be safe.
  *
  * Additionally, a survey of Event behaviors shows that
  * if we request a Periodic event every 50 ms, then Windows
@@ -97,6 +110,7 @@ static inline void link_timer( WINE_TIMERENTRY *timer )
  * no delays.
  *
  *   Jeremy White, October 2004
+ *   Arkadiusz Hiler, August 2020
  */
 #define MMSYSTIME_MININTERVAL (1)
 #define MMSYSTIME_MAXINTERVAL (65535)
@@ -255,7 +269,12 @@ MMRESULT WINAPI timeGetSystemTime(LPMMTIME lpTime, UINT wSize)
  */
 DWORD WINAPI timeGetTime(void)
 {
-    return GetTickCount();
+    LARGE_INTEGER now, freq;
+
+    QueryPerformanceCounter(&now);
+    QueryPerformanceFrequency(&freq);
+
+    return (now.QuadPart * 1000) / freq.QuadPart;
 }
 
 /**************************************************************************
