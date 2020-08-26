@@ -1622,9 +1622,12 @@ BOOL WINAPI PlayEnhMetaFileRecord(
     case EMR_POLYDRAW:
       {
         const EMRPOLYDRAW *lpPolyDraw = (const EMRPOLYDRAW *)mr;
+
+        /* NB abTypes array doesn't start at lpPolyDraw->abTypes. It's actually
+           lpPolyDraw->aptl + lpPolyDraw->cptl. */
         PolyDraw( hdc,
                   (const POINT*)lpPolyDraw->aptl,
-                  lpPolyDraw->abTypes,
+                  (BYTE*)(lpPolyDraw->aptl + lpPolyDraw->cptl),
                   (INT)lpPolyDraw->cptl );
 
         break;
