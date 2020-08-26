@@ -3855,7 +3855,19 @@ static void test_IScriptControl_get_Procedures(void)
         CHECK_CALLED(GetTypeAttr);
         CHECK_CALLED(ReleaseTypeAttr);
 
+        /* Reset uncaches the objects, but not the count */
+        SET_EXPECT(SetScriptState_INITIALIZED);
+        IScriptControl_Reset(sc);
+        CHECK_CALLED(SetScriptState_INITIALIZED);
+        count = 0;
+        hr = IScriptProcedureCollection_get_Count(procs, &count);
+        ok(hr == S_OK, "IScriptProcedureCollection_get_Count failed: 0x%08x.\n", hr);
+        ok(count == ARRAY_SIZE(custom_engine_funcs), "count is not %u, got %d.\n", TypeInfo_GetTypeAttr_cFuncs, count);
+
         /* Try without ITypeComp interface */
+        SET_EXPECT(SetScriptState_STARTED);
+        SET_EXPECT(GetScriptDispatch);
+        SET_EXPECT(GetTypeInfo);
         SET_EXPECT(QI_ITypeComp);
         V_VT(&var) = VT_BSTR;
         V_BSTR(&var) = SysAllocString(L"foobar");
@@ -3863,7 +3875,15 @@ static void test_IScriptControl_get_Procedures(void)
         ok(hr == E_NOINTERFACE, "IScriptProcedureCollection_get_Item returned: 0x%08x.\n", hr);
         ok(V_VT(&var) == VT_BSTR, "var type not BSTR, got %d.\n", V_VT(&var));
         VariantClear(&var);
+        CHECK_CALLED(SetScriptState_STARTED);
+        CHECK_CALLED(GetScriptDispatch);
+        CHECK_CALLED(GetTypeInfo);
         CHECK_CALLED(QI_ITypeComp);
+
+        count = 0;
+        hr = IScriptProcedureCollection_get_Count(procs, &count);
+        ok(hr == S_OK, "IScriptProcedureCollection_get_Count failed: 0x%08x.\n", hr);
+        ok(count == ARRAY_SIZE(custom_engine_funcs), "count is not %u, got %d.\n", TypeInfo_GetTypeAttr_cFuncs, count);
 
         /* Make ITypeComp available */
         TypeComp_available = TRUE;

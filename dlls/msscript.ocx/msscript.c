@@ -355,8 +355,6 @@ static void uncache_module_objects(ScriptModule *module)
         ITypeComp_Release(module->script_typecomp);
         module->script_typecomp = NULL;
     }
-    if (module->procedures)
-        module->procedures->count = -1;
 }
 
 static HRESULT set_script_state(ScriptHost *host, SCRIPTSTATE state)
@@ -369,12 +367,15 @@ static HRESULT set_script_state(ScriptHost *host, SCRIPTSTATE state)
     return hr;
 }
 
-static HRESULT start_script(ScriptHost *host)
+static HRESULT start_script(ScriptModule *module)
 {
     HRESULT hr = S_OK;
 
-    if (host->script_state != SCRIPTSTATE_STARTED)
-        hr = set_script_state(host, SCRIPTSTATE_STARTED);
+    if (module->host->script_state != SCRIPTSTATE_STARTED)
+    {
+        hr = set_script_state(module->host, SCRIPTSTATE_STARTED);
+        if (SUCCEEDED(hr)) uncache_module_objects(module);
+    }
 
     return hr;
 }
@@ -418,10 +419,12 @@ static HRESULT parse_script_text(ScriptModule *module, BSTR script_text, DWORD f
     EXCEPINFO excepinfo;
     HRESULT hr;
 
-    hr = start_script(module->host);
+    hr = start_script(module);
     if (FAILED(hr)) return hr;
 
     uncache_module_objects(module);
+    if (module->procedures)
+        module->procedures->count = -1;
 
     hr = IActiveScriptParse_ParseScriptText(module->host->parse, script_text, module->name,
                                             NULL, NULL, 0, 1, flag, res, &excepinfo);
@@ -438,7 +441,7 @@ static HRESULT run_procedure(ScriptModule *module, BSTR procedure_name, SAFEARRA
     HRESULT hr;
     UINT i;
 
-    hr = start_script(module->host);
+    hr = start_script(module);
     if (FAILED(hr)) return hr;
 
     hr = get_script_dispatch(module, &disp);
@@ -1082,7 +1085,7 @@ static HRESULT WINAPI procedure_enum_Next(IEnumVARIANT *iface, ULONG celt, VARIA
     if (!rgVar) return E_POINTER;
     if (!This->procedures->module->host) return E_FAIL;
 
-    hr = start_script(This->procedures->module->host);
+    hr = start_script(This->procedures->module);
     if (FAILED(hr)) return hr;
 
     hr = get_script_typeinfo(This->procedures->module, &ti);
@@ -1295,7 +1298,7 @@ static HRESULT WINAPI ScriptProcedureCollection_get__NewEnum(IScriptProcedureCol
     if (!ppenumProcedures) return E_POINTER;
     if (!This->module->host) return E_FAIL;
 
-    hr = start_script(This->module->host);
+    hr = start_script(This->module);
     if (FAILED(hr)) return hr;
 
     hr = get_script_typeinfo(This->module, &ti);
@@ -1334,7 +1337,7 @@ static HRESULT WINAPI ScriptProcedureCollection_get_Item(IScriptProcedureCollect
     if (!ppdispProcedure) return E_POINTER;
     if (!This->module->host) return E_FAIL;
 
-    hr = start_script(This->module->host);
+    hr = start_script(This->module);
     if (FAILED(hr)) return hr;
 
     hr = get_script_typeinfo(This->module, &typeinfo);
@@ -1414,11 +1417,11 @@ static HRESULT WINAPI ScriptProcedureCollection_get_Count(IScriptProcedureCollec
     if (!plCount) return E_POINTER;
     if (!This->module->host) return E_FAIL;
 
-    hr = start_script(This->module->host);
-    if (FAILED(hr)) return hr;
-
     if (This->count == -1)
     {
+        hr = start_script(This->module);
+        if (FAILED(hr)) return hr;
+
         hr = get_script_typeinfo(This->module, &ti);
         if (FAILED(hr)) return hr;
 
@@ -1609,7 +1612,7 @@ static HRESULT WINAPI ScriptModule_get_CodeObject(IScriptModule *iface, IDispatc
 
     if (!This->host) return E_FAIL;
 
-    hr = start_script(This->host);
+    hr = start_script(This);
     if (FAILED(hr)) return hr;
 
     hr = get_script_dispatch(This, ppdispObject);
