@@ -1143,6 +1143,31 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 	break;
       }
 
+    case EMR_POLYDRAW16:
+    {
+        const EMRPOLYDRAW16 *pPolyDraw16 = (const EMRPOLYDRAW16 *)mr;
+        const POINTS *ptl = pPolyDraw16->apts;
+        POINT *pts = HeapAlloc(GetProcessHeap(), 0, pPolyDraw16->cpts * sizeof(POINT));
+        DWORD i;
+
+        /* NB abTypes array doesn't start at pPolyDraw16->abTypes. It's actually
+           pPolyDraw16->apts + pPolyDraw16->cpts. */
+        const BYTE *types = (BYTE*)(pPolyDraw16->apts + pPolyDraw16->cpts);
+
+        if (!pts)
+            break;
+
+        for (i = 0; i < pPolyDraw16->cpts; ++i)
+        {
+            pts[i].x = ptl[i].x;
+            pts[i].y = ptl[i].y;
+        }
+
+        PolyDraw(hdc, pts, types, pPolyDraw16->cpts);
+        HeapFree(GetProcessHeap(), 0, pts);
+        break;
+    }
+
     case EMR_STRETCHDIBITS:
       {
 	const EMRSTRETCHDIBITS *pStretchDIBits = (const EMRSTRETCHDIBITS *)mr;
@@ -2243,7 +2268,6 @@ BOOL WINAPI PlayEnhMetaFileRecord(
         break;
     }
 
-    case EMR_POLYDRAW16:
     case EMR_GLSRECORD:
     case EMR_GLSBOUNDEDRECORD:
     case EMR_DRAWESCAPE:
