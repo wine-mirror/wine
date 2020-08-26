@@ -2181,9 +2181,9 @@ static NTSTATUS map_image_into_view( struct file_view *view, int fd, void *orig_
  *
  * Map a file section into memory.
  */
-NTSTATUS CDECL virtual_map_section( HANDLE handle, PVOID *addr_ptr, unsigned short zero_bits_64, SIZE_T commit_size,
-                              const LARGE_INTEGER *offset_ptr, SIZE_T *size_ptr, ULONG alloc_type,
-                              ULONG protect, pe_image_info_t *image_info )
+static NTSTATUS virtual_map_section( HANDLE handle, PVOID *addr_ptr, unsigned short zero_bits_64,
+                                     SIZE_T commit_size, const LARGE_INTEGER *offset_ptr, SIZE_T *size_ptr,
+                                     ULONG alloc_type, ULONG protect, pe_image_info_t *image_info )
 {
     NTSTATUS res;
     mem_size_t full_size;
@@ -4163,7 +4163,7 @@ void virtual_fill_image_information( const pe_image_info_t *pe_info, SECTION_IMA
     info->DllCharacteristics   = pe_info->dll_charact;
     info->Machine              = pe_info->machine;
     info->ImageContainsCode    = pe_info->contains_code;
-    info->ImageFlags           = pe_info->image_flags & ~(IMAGE_FLAGS_WineBuiltin|IMAGE_FLAGS_WineFakeDll);
+    info->ImageFlags           = pe_info->image_flags;
     info->LoaderFlags          = pe_info->loader_flags;
     info->ImageFileSize        = pe_info->file_size;
     info->CheckSum             = pe_info->checksum;

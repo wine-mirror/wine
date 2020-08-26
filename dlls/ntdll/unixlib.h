@@ -27,7 +27,7 @@
 struct _DISPATCHER_CONTEXT;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 99
+#define NTDLL_UNIXLIB_VERSION 100
 
 struct unix_funcs
 {
@@ -79,9 +79,6 @@ struct unix_funcs
     void          (CDECL *get_locales)( WCHAR *sys, WCHAR *user );
 
     /* virtual memory functions */
-    NTSTATUS      (CDECL *virtual_map_section)( HANDLE handle, PVOID *addr_ptr, unsigned short zero_bits_64, SIZE_T commit_size,
-                                                const LARGE_INTEGER *offset_ptr, SIZE_T *size_ptr, ULONG alloc_type,
-                                                ULONG protect, pe_image_info_t *image_info );
     void          (CDECL *virtual_release_address_space)(void);
 
     /* thread/process functions */
@@ -93,7 +90,7 @@ struct unix_funcs
     /* loader functions */
     NTSTATUS      (CDECL *load_so_dll)( UNICODE_STRING *nt_name, void **module );
     NTSTATUS      (CDECL *load_builtin_dll)( const WCHAR *name, void **module,
-                                             pe_image_info_t *image_info );
+                                             SECTION_IMAGE_INFORMATION *image_info );
     NTSTATUS      (CDECL *unload_builtin_dll)( void *module );
     void          (CDECL *init_builtin_dll)( void *module );
     NTSTATUS      (CDECL *unwind_builtin_dll)( ULONG type, struct _DISPATCHER_CONTEXT *dispatch,

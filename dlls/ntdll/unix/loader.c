@@ -896,6 +896,23 @@ static NTSTATUS CDECL load_so_dll( UNICODE_STRING *nt_name, void **module )
 }
 
 
+/* check a PE library architecture */
+static BOOL is_valid_binary( HMODULE module, const SECTION_IMAGE_INFORMATION *info )
+{
+#ifdef __i386__
+    return info->Machine == IMAGE_FILE_MACHINE_I386;
+#elif defined(__arm__)
+    return info->Machine == IMAGE_FILE_MACHINE_ARM ||
+           info->Machine == IMAGE_FILE_MACHINE_THUMB ||
+           info->Machine == IMAGE_FILE_MACHINE_ARMNT;
+#elif defined(__x86_64__)
+    /* we don't support 32-bit IL-only builtins yet */
+    return info->Machine == IMAGE_FILE_MACHINE_AMD64;
+#elif defined(__aarch64__)
+    return info->Machine == IMAGE_FILE_MACHINE_ARM64;
+#endif
+}
+
 /* check if the library is the correct architecture */
 /* only returns false for a valid library of the wrong arch */
 static int check_library_arch( int fd )
@@ -943,7 +960,7 @@ static inline char *prepend( char *buffer, const char *str, size_t len )
  *
  * Open a file for a new dll. Helper for find_dll_file.
  */
-static NTSTATUS open_dll_file( const char *name, void **module, pe_image_info_t *image_info )
+static NTSTATUS open_dll_file( const char *name, void **module, SECTION_IMAGE_INFORMATION *image_info )
 {
     struct builtin_module *builtin;
     OBJECT_ATTRIBUTES attr = { sizeof(attr) };
@@ -995,20 +1012,22 @@ static NTSTATUS open_dll_file( const char *name, void **module, pe_image_info_t 
         NtUnmapViewOfSection( NtCurrentProcess(), *module );
         *module = NULL;
     }
-    status = virtual_map_section( mapping, module, 0, 0, NULL, &len, 0, PAGE_EXECUTE_READ, image_info );
+    NtQuerySection( mapping, SectionImageInformation, image_info, sizeof(*image_info), NULL );
+    status = NtMapViewOfSection( mapping, NtCurrentProcess(), module, 0, 0, NULL, &len,
+                                 ViewShare, 0, PAGE_EXECUTE_READ );
     if (status == STATUS_IMAGE_NOT_AT_BASE) status = STATUS_SUCCESS;
     NtClose( mapping );
     if (status) return status;
 
     /* ignore non-builtins */
-    if (!(image_info->image_flags & IMAGE_FLAGS_WineBuiltin))
+    if (!(image_info->u.ImageFlags & IMAGE_FLAGS_WineBuiltin))
     {
         WARN( "%s found in WINEDLLPATH but not a builtin, ignoring\n", debugstr_a(name) );
         status = STATUS_DLL_NOT_FOUND;
     }
-    else if (image_info->cpu != client_cpu)
+    else if (!is_valid_binary( *module, image_info ))
     {
-        TRACE( "%s is for CPU %u, continuing search\n", debugstr_a(name), image_info->cpu );
+        TRACE( "%s is for arch %x, continuing search\n", debugstr_a(name), image_info->Machine );
         status = STATUS_IMAGE_MACHINE_TYPE_MISMATCH;
     }
 
@@ -1026,7 +1045,7 @@ static NTSTATUS open_dll_file( const char *name, void **module, pe_image_info_t 
 /***********************************************************************
  *           open_builtin_file
  */
-static NTSTATUS open_builtin_file( char *name, void **module, pe_image_info_t *image_info )
+static NTSTATUS open_builtin_file( char *name, void **module, SECTION_IMAGE_INFORMATION *image_info )
 {
     NTSTATUS status;
     int fd;
@@ -1046,7 +1065,7 @@ static NTSTATUS open_builtin_file( char *name, void **module, pe_image_info_t *i
             if (!dlopen_dll( name, module ))
             {
                 memset( image_info, 0, sizeof(*image_info) );
-                image_info->image_flags = IMAGE_FLAGS_WineBuiltin;
+                image_info->u.ImageFlags = IMAGE_FLAGS_WineBuiltin;
                 status = STATUS_SUCCESS;
             }
             else
@@ -1065,7 +1084,8 @@ static NTSTATUS open_builtin_file( char *name, void **module, pe_image_info_t *i
 /***********************************************************************
  *           load_builtin_dll
  */
-static NTSTATUS CDECL load_builtin_dll( const WCHAR *name, void **module, pe_image_info_t *image_info )
+static NTSTATUS CDECL load_builtin_dll( const WCHAR *name, void **module,
+                                        SECTION_IMAGE_INFORMATION *image_info )
 {
     unsigned int i, pos, len, namelen, maxlen = 0;
     char *ptr, *file;
@@ -1346,7 +1366,6 @@ static struct unix_funcs unix_funcs =
     get_initial_directory,
     get_unix_codepage_data,
     get_locales,
-    virtual_map_section,
     virtual_release_address_space,
     exec_process,
     set_show_dot_files,
