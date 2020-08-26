@@ -1136,7 +1136,6 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    "sub sp, x5, #0x1000\n\t"
                    /* attach dlls */
                    "bl " __ASM_NAME("get_initial_context") "\n\t"
-                   "add x1, x0, #4\n\t"        /* &context->X0 */
                    "mov lr, #0\n\t"
                    "br x19" )
 

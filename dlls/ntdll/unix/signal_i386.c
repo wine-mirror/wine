@@ -2452,8 +2452,6 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    "pushl 8(%ebp)\n\t"          /* entry */
                    "call " __ASM_NAME("get_initial_context") "\n\t"
                    "movl %eax,(%esp)\n\t"       /* context */
-                   "leal 0xb0(%eax),%eax\n\t"   /* &context->Eax */
-                   "movl %eax,4(%esp)\n\t"
                    "movl 24(%ebp),%edx\n\t"     /* thunk */
                    "xorl %ebp,%ebp\n\t"
                    "pushl $0\n\t"

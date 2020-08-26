@@ -2713,7 +2713,6 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    /* attach dlls */
                    "call " __ASM_NAME("get_initial_context") "\n\t"
                    "movq %rax,%rcx\n\t"             /* context */
-                   "leaq 0x80(%rcx),%rdx\n\t"       /* &context->Rcx */
                    "xorq %rax,%rax\n\t"
                    "pushq %rax\n\t"
                    "jmp *%rbx" )
