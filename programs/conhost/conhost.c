@@ -31,6 +31,7 @@
 
 #include "wine/condrv.h"
 #include "wine/server.h"
+#include "wine/rbtree.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(conhost);
@@ -45,6 +46,7 @@ struct console
 {
     HANDLE                server;        /* console server handle */
     unsigned int          mode;          /* input mode */
+    struct screen_buffer *active;        /* active screen buffer */
     INPUT_RECORD         *records;       /* input records */
     unsigned int          record_count;  /* number of input records */
     unsigned int          record_size;   /* size of input records buffer */
@@ -61,6 +63,15 @@ struct console
     unsigned int          win;           /* window handle if backend supports it */
 };
 
+struct screen_buffer
+{
+    struct console       *console;       /* console reference */
+    unsigned int          id;            /* screen buffer id */
+    unsigned int          width;         /* size (w-h) of the screen buffer */
+    unsigned int          height;
+    struct wine_rb_entry  entry;         /* map entry */
+};
+
 static void *ioctl_buffer;
 static size_t ioctl_buffer_size;
 
@@ -74,6 +85,41 @@ static void *alloc_ioctl_buffer( size_t size )
         ioctl_buffer_size = size;
     }
     return ioctl_buffer;
+}
+
+static int screen_buffer_compare_id( const void *key, const struct wine_rb_entry *entry )
+{
+    struct screen_buffer *screen_buffer = WINE_RB_ENTRY_VALUE( entry, struct screen_buffer, entry );
+    return (unsigned int)key - screen_buffer->id;
+}
+
+static struct wine_rb_tree screen_buffer_map = { screen_buffer_compare_id };
+
+static struct screen_buffer *create_screen_buffer( struct console *console, int id, int width, int height )
+{
+    struct screen_buffer *screen_buffer;
+
+    if (!(screen_buffer = malloc( sizeof(*screen_buffer) ))) return NULL;
+    screen_buffer->console        = console;
+    screen_buffer->id             = id;
+    screen_buffer->width          = width;
+    screen_buffer->height         = height;
+
+    if (wine_rb_put( &screen_buffer_map, (const void *)id, &screen_buffer->entry ))
+    {
+        ERR( "id %x already exists\n", id );
+        return NULL;
+    }
+
+    return screen_buffer;
+}
+
+static void destroy_screen_buffer( struct screen_buffer *screen_buffer )
+{
+    if (screen_buffer->console->active == screen_buffer)
+        screen_buffer->console->active = NULL;
+    wine_rb_remove( &screen_buffer_map, &screen_buffer->entry );
+    free( screen_buffer );
 }
 
 static NTSTATUS read_console_input( struct console *console, size_t out_size )
@@ -158,7 +204,7 @@ static NTSTATUS set_console_title( struct console *console, const WCHAR *in_titl
 {
     WCHAR *title = NULL;
 
-    TRACE( "%s\n", debugstr_wn(in_title, size) );
+    TRACE( "%s\n", debugstr_wn(in_title, size / sizeof(WCHAR)) );
 
     if (size)
     {
@@ -169,6 +215,27 @@ static NTSTATUS set_console_title( struct console *console, const WCHAR *in_titl
     console->title     = title;
     console->title_len = size;
     return STATUS_SUCCESS;
+}
+
+static NTSTATUS screen_buffer_ioctl( struct screen_buffer *screen_buffer, unsigned int code,
+                                     const void *in_data, size_t in_size, size_t *out_size )
+{
+    switch (code)
+    {
+    case IOCTL_CONDRV_CLOSE_OUTPUT:
+        if (in_size || *out_size) return STATUS_INVALID_PARAMETER;
+        destroy_screen_buffer( screen_buffer );
+        return STATUS_SUCCESS;
+
+    case IOCTL_CONDRV_ACTIVATE:
+        if (in_size || *out_size) return STATUS_INVALID_PARAMETER;
+        screen_buffer->console->active = screen_buffer;
+        return STATUS_SUCCESS;
+
+    default:
+        FIXME( "unsupported ioctl %x\n", code );
+        return STATUS_NOT_SUPPORTED;
+    }
 }
 
 static NTSTATUS console_input_ioctl( struct console *console, unsigned int code, const void *in_data,
@@ -324,6 +391,7 @@ static NTSTATUS process_console_ioctls( struct console *console )
 {
     size_t out_size = 0, in_size;
     unsigned int code;
+    int output;
     NTSTATUS status = STATUS_SUCCESS;
 
     for (;;)
@@ -339,6 +407,7 @@ static NTSTATUS process_console_ioctls( struct console *console )
             wine_server_set_reply( req, ioctl_buffer, ioctl_buffer_size );
             status = wine_server_call( req );
             code     = reply->code;
+            output   = reply->output;
             out_size = reply->out_size;
             in_size  = wine_server_reply_size( reply );
         }
@@ -357,7 +426,32 @@ static NTSTATUS process_console_ioctls( struct console *console )
             return status;
         }
 
-        status = console_input_ioctl( console, code, ioctl_buffer, in_size, &out_size );
+        if (code == IOCTL_CONDRV_INIT_OUTPUT)
+        {
+            TRACE( "initializing output %x\n", output );
+            if (console->active)
+                create_screen_buffer( console, output, console->active->width, console->active->height );
+            else
+                create_screen_buffer( console, output, 80, 150 );
+        }
+        else if (!output)
+        {
+            status = console_input_ioctl( console, code, ioctl_buffer, in_size, &out_size );
+        }
+        else
+        {
+            struct wine_rb_entry *entry;
+            if (!(entry = wine_rb_get( &screen_buffer_map, (const void *)output )))
+            {
+                ERR( "invalid screen buffer id %x\n", output );
+                status = STATUS_INVALID_HANDLE;
+            }
+            else
+            {
+                status = screen_buffer_ioctl( WINE_RB_ENTRY_VALUE( entry, struct screen_buffer, entry ), code,
+                                              ioctl_buffer, in_size, &out_size );
+            }
+        }
     }
 }
 
@@ -483,6 +577,8 @@ int __cdecl wmain(int argc, WCHAR *argv[])
         ERR( "no server handle\n" );
         return 1;
     }
+
+    if (!(console.active = create_screen_buffer( &console, 1, width, height ))) return 1;
 
     return main_loop( &console, signal );
 }
