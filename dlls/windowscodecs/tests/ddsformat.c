@@ -678,6 +678,19 @@ static BOOL color_buffer_match(DWORD *color_buffer_a, DWORD *color_buffer_b, UIN
     return TRUE;
 }
 
+static void copy_pixels(void *src_buffer, UINT src_stride, void *dst_buffer, UINT dst_stride, UINT size)
+{
+    char *src = src_buffer, *dst = dst_buffer;
+    UINT i;
+
+    for (i = 0; i < size; i++)
+    {
+        *dst = src[i];
+        if (i % src_stride == src_stride - 1) dst += dst_stride - src_stride;
+        dst ++;
+    }
+}
+
 static void test_dds_decoder_initialize(void)
 {
     int i;
@@ -1031,22 +1044,28 @@ static void test_dds_decoder_frame_data(IWICBitmapFrameDecode* frame, IWICDdsFra
         if (depth > 1) depth /= 2;
     }
 
+    memset(buffer, 0, sizeof(buffer));
     hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, &rect, stride, sizeof(buffer), buffer);
     ok(hr == S_OK, "Test %u, frame %u: CopyBlocks failed, hr %#x\n", i, frame_index, hr);
     if (hr != S_OK) return;
-    ok(!strncmp((const char *)test_data[i].data + block_offset, (const char *)buffer, format_info.BytesPerBlock),
+    ok(!memcmp(test_data[i].data + block_offset, buffer, format_info.BytesPerBlock),
        "Test %u, frame %u: Block data mismatch\n", i, frame_index);
 
+    memset(buffer, 0, sizeof(buffer));
     hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, NULL, frame_stride, sizeof(buffer), buffer);
     ok(hr == S_OK, "Test %u, frame %u: CopyBlocks failed, hr %#x\n", i, frame_index, hr);
     if (hr != S_OK) return;
-    ok(!strncmp((const char *)test_data[i].data + block_offset, (const char *)buffer, frame_size),
+    ok(!memcmp(test_data[i].data + block_offset, buffer, frame_size),
        "Test %u, frame %u: Block data mismatch\n", i, frame_index);
 
+    memset(buffer, 0, sizeof(buffer));
+    memset(pixels, 0, sizeof(pixels));
+    copy_pixels(test_data[i].data + block_offset, frame_stride, pixels, frame_stride * 2, frame_size);
     hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, NULL, frame_stride * 2, sizeof(buffer), buffer);
     ok(hr == S_OK, "Test %u, frame %u: CopyBlocks failed, hr %#x\n", i, frame_index, hr);
     if (hr != S_OK) return;
-    ok(!strncmp((const char *)test_data[i].data + block_offset, (const char *)buffer, frame_size),
+    todo_wine_if(width_in_blocks > 1)
+    ok(!memcmp(pixels, buffer, frame_size),
        "Test %u, frame %u: Block data mismatch\n", i, frame_index);
 
     /* CopyPixels tests */
@@ -1104,6 +1123,7 @@ static void test_dds_decoder_frame_data(IWICBitmapFrameDecode* frame, IWICDdsFra
     hr = IWICBitmapFrameDecode_CopyPixels(frame, &rect, stride, sizeof(buffer), NULL);
     ok(hr == E_INVALIDARG, "Test %u, frame %u: CopyBlocks got unexpected hr %#x\n", i, frame_index, hr);
 
+    memset(buffer, 0, sizeof(pixels));
     if (is_compressed(format_info.DxgiFormat)) {
         decode_block(test_data[i].data + block_offset, width_in_blocks * height_in_blocks,
                      format_info.DxgiFormat, frame_width, frame_height, (DWORD *)pixels);
@@ -1111,6 +1131,7 @@ static void test_dds_decoder_frame_data(IWICBitmapFrameDecode* frame, IWICDdsFra
         memcpy(pixels, test_data[i].data + block_offset, frame_size);
     }
 
+    memset(buffer, 0, sizeof(buffer));
     hr = IWICBitmapFrameDecode_CopyPixels(frame, &rect, stride, sizeof(buffer), buffer);
     ok(hr == S_OK, "Test %u, frame %u: CopyPixels failed, hr %#x\n", i, frame_index, hr);
     if (hr == S_OK) {
@@ -1118,11 +1139,12 @@ static void test_dds_decoder_frame_data(IWICBitmapFrameDecode* frame, IWICDdsFra
             ok(color_buffer_match((DWORD *)pixels, (DWORD *)buffer, 1),
                "Test %u, frame %u: Pixels mismatch\n", i, frame_index);
         } else {
-            ok(!strncmp((const char *)pixels, (const char *)buffer, bpp / 8),
+            ok(!memcmp(pixels, buffer, bpp / 8),
                "Test %u, frame %u: Pixels mismatch\n", i, frame_index);
         }
     }
 
+    memset(buffer, 0, sizeof(buffer));
     hr = IWICBitmapFrameDecode_CopyPixels(frame, NULL, frame_stride, sizeof(buffer), buffer);
     ok(hr == S_OK, "Test %u, frame %u: CopyPixels failed, hr %#x\n", i, frame_index, hr);
     if (hr == S_OK) {
@@ -1130,7 +1152,7 @@ static void test_dds_decoder_frame_data(IWICBitmapFrameDecode* frame, IWICDdsFra
             ok(color_buffer_match((DWORD *)pixels, (DWORD *)buffer, frame_size / (bpp / 8)),
                "Test %u, frame %u: Pixels mismatch\n", i, frame_index);
         } else {
-            ok(!strncmp((const char *)pixels, (const char *)buffer, frame_size),
+            ok(!memcmp(pixels, buffer, frame_size),
                "Test %u, frame %u: Pixels mismatch\n", i, frame_index);
         };
     }
