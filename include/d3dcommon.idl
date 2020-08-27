@@ -43,6 +43,26 @@ typedef ID3D10Blob ID3DBlob;
 typedef ID3DBlob* LPD3DBLOB;
 cpp_quote("#define IID_ID3DBlob IID_ID3D10Blob")
 
+typedef void(__stdcall *PFN_DESTRUCTION_CALLBACK)(void *data);
+
+[
+    object,
+    local,
+    uuid(a06eb39a-50da-425b-8c31-4eecd6c270f3),
+    pointer_default(unique)
+]
+interface ID3DDestructionNotifier : IUnknown
+{
+    HRESULT RegisterDestructionCallback(
+        [in] PFN_DESTRUCTION_CALLBACK callback_func,
+        [in] void *data,
+        [out] UINT *callback_id
+    );
+    HRESULT UnregisterDestructionCallback(
+        [in] UINT callback_id
+    );
+}
+
 typedef enum _D3D_INCLUDE_TYPE
 {
     D3D_INCLUDE_LOCAL = 0,
