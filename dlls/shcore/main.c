@@ -86,6 +86,13 @@ HRESULT WINAPI GetScaleFactorForMonitor(HMONITOR monitor, DEVICE_SCALE_FACTOR *s
     return S_OK;
 }
 
+DEVICE_SCALE_FACTOR WINAPI GetScaleFactorForDevice(DISPLAY_DEVICE_TYPE device_type)
+{
+    FIXME("%d\n", device_type);
+
+    return SCALE_100_PERCENT;
+}
+
 HRESULT WINAPI _IStream_Read(IStream *stream, void *dest, ULONG size)
 {
     ULONG read;
