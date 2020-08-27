@@ -234,12 +234,6 @@ HRESULT RPC_RegisterChannelHook(REFGUID rguid, IChannelHook *hook) DECLSPEC_HIDD
 void    RPC_UnregisterAllChannelHooks(void) DECLSPEC_HIDDEN;
 HRESULT RPC_ResolveOxid(OXID oxid, OXID_INFO *oxid_info) DECLSPEC_HIDDEN;
 
-/* This function initialize the Running Object Table */
-HRESULT WINAPI RunningObjectTableImpl_Initialize(void) DECLSPEC_HIDDEN;
-
-/* This function uninitialize the Running Object Table */
-HRESULT WINAPI RunningObjectTableImpl_UnInitialize(void) DECLSPEC_HIDDEN;
-
 /* Drag and drop */
 void OLEDD_UnInitialize(void) DECLSPEC_HIDDEN;
 
@@ -364,5 +358,8 @@ static inline HRESULT copy_formatetc(FORMATETC *dst, const FORMATETC *src)
 
 extern HRESULT EnumSTATDATA_Construct(IUnknown *holder, ULONG index, DWORD array_len, STATDATA *data,
                                       BOOL copy, IEnumSTATDATA **ppenum) DECLSPEC_HIDDEN;
+
+extern BOOL WINAPI InternalIsInitialized(void);
+extern void WINAPI DestroyRunningObjectTable(void);
 
 #endif /* __WINE_OLE_COMPOBJ_H */

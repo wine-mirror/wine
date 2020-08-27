@@ -758,15 +758,7 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoInitializeEx(LPVOID lpReserved, DWORD dwCoIni
    * And crank-up that lock count.
    */
   if (InterlockedExchangeAdd(&s_COMLockCount,1)==0)
-  {
-    /*
-     * Initialize the various COM libraries and data structures.
-     */
     TRACE("() - Initializing the COM libraries\n");
-
-    /* we may need to defer this until after apartment initialisation */
-    RunningObjectTableImpl_Initialize();
-  }
 
   lock_init_spies(info);
   LIST_FOR_EACH_ENTRY(cursor, &info->spies, struct init_spy, entry)
@@ -849,7 +841,7 @@ void WINAPI DECLSPEC_HOTPATCH CoUninitialize(void)
     TRACE("() - Releasing the COM libraries\n");
 
     InternalRevokeAllPSClsids();
-    RunningObjectTableImpl_UnInitialize();
+    DestroyRunningObjectTable();
   }
   else if (lCOMRefCnt<1) {
     ERR( "CoUninitialize() - not CoInitialized.\n" );

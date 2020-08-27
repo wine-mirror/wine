@@ -106,6 +106,7 @@
 @ stdcall CreateOleAdviseHolder(ptr)
 @ stdcall CreatePointerMoniker(ptr ptr)
 @ stdcall CreateStreamOnHGlobal(ptr long ptr)
+@ stdcall DestroyRunningObjectTable()
 @ stdcall DllDebugObjectRPCHook(long ptr)
 @ stdcall -private DllGetClassObject (ptr ptr ptr)
 @ stub DllGetClassObjectWOW

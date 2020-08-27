@@ -63,14 +63,9 @@ struct rot_entry
 typedef struct RunningObjectTableImpl
 {
     IRunningObjectTable IRunningObjectTable_iface;
-    LONG ref;
-
     struct list rot; /* list of ROT entries */
     CRITICAL_SECTION lock;
 } RunningObjectTableImpl;
-
-static RunningObjectTableImpl* runningObjectTableInstance = NULL;
-static IrotHandle irot_handle;
 
 /* define the EnumMonikerImpl structure */
 typedef struct EnumMonikerImpl
@@ -256,85 +251,18 @@ RunningObjectTableImpl_QueryInterface(IRunningObjectTable* iface,
     return S_OK;
 }
 
-/***********************************************************************
- *        RunningObjectTable_AddRef
- */
-static ULONG WINAPI
-RunningObjectTableImpl_AddRef(IRunningObjectTable* iface)
+static ULONG WINAPI RunningObjectTableImpl_AddRef(IRunningObjectTable *iface)
 {
-    RunningObjectTableImpl *This = impl_from_IRunningObjectTable(iface);
+    TRACE("%p\n", iface);
 
-    TRACE("(%p)\n",This);
-
-    return InterlockedIncrement(&This->ref);
+    return 2;
 }
 
-/***********************************************************************
- *        RunningObjectTable_Destroy
- */
-static HRESULT
-RunningObjectTableImpl_Destroy(void)
+static ULONG WINAPI RunningObjectTableImpl_Release(IRunningObjectTable *iface)
 {
-    struct list *cursor, *cursor2;
-    IrotHandle old_handle;
+    TRACE("%p\n", iface);
 
-    TRACE("()\n");
-
-    if (runningObjectTableInstance==NULL)
-        return E_INVALIDARG;
-
-    /* free the ROT table memory */
-    LIST_FOR_EACH_SAFE(cursor, cursor2, &runningObjectTableInstance->rot)
-    {
-        struct rot_entry *rot_entry = LIST_ENTRY(cursor, struct rot_entry, entry);
-        list_remove(&rot_entry->entry);
-        rot_entry_delete(rot_entry);
-    }
-
-    DEBUG_CLEAR_CRITSEC_NAME(&runningObjectTableInstance->lock);
-    DeleteCriticalSection(&runningObjectTableInstance->lock);
-
-    /* free the ROT structure memory */
-    HeapFree(GetProcessHeap(),0,runningObjectTableInstance);
-    runningObjectTableInstance = NULL;
-
-    old_handle = irot_handle;
-    irot_handle = NULL;
-    if (old_handle)
-        RpcBindingFree(&old_handle);
-
-    return S_OK;
-}
-
-/***********************************************************************
- *        RunningObjectTable_Release
- */
-static ULONG WINAPI
-RunningObjectTableImpl_Release(IRunningObjectTable* iface)
-{
-    RunningObjectTableImpl *This = impl_from_IRunningObjectTable(iface);
-    ULONG ref;
-
-    TRACE("(%p)\n",This);
-
-    ref = InterlockedDecrement(&This->ref);
-
-    /* uninitialize ROT structure if there are no more references to it */
-    if (ref == 0)
-    {
-        struct list *cursor, *cursor2;
-        LIST_FOR_EACH_SAFE(cursor, cursor2, &This->rot)
-        {
-            struct rot_entry *rot_entry = LIST_ENTRY(cursor, struct rot_entry, entry);
-            list_remove(&rot_entry->entry);
-            rot_entry_delete(rot_entry);
-        }
-        /*  RunningObjectTable data structure will be not destroyed here ! the destruction will be done only
-         *  when RunningObjectTableImpl_UnInitialize function is called
-         */
-    }
-
-    return ref;
+    return 1;
 }
 
 /***********************************************************************
@@ -775,82 +703,48 @@ static const IRunningObjectTableVtbl VT_RunningObjectTableImpl =
     RunningObjectTableImpl_EnumRunning
 };
 
-/***********************************************************************
- *        RunningObjectTable_Initialize
- */
-HRESULT WINAPI RunningObjectTableImpl_Initialize(void)
+static RunningObjectTableImpl rot =
 {
-    TRACE("\n");
-
-    /* create the unique instance of the RunningObjectTableImpl structure */
-    runningObjectTableInstance = HeapAlloc(GetProcessHeap(), 0, sizeof(RunningObjectTableImpl));
-
-    if (!runningObjectTableInstance)
-        return E_OUTOFMEMORY;
-
-    /* initialize the virtual table function */
-    runningObjectTableInstance->IRunningObjectTable_iface.lpVtbl = &VT_RunningObjectTableImpl;
-
-    /* the initial reference is set to "1" so that it isn't destroyed after its
-     * first use until the process is destroyed, as the running object table is
-     * a process-wide cache of a global table */
-    runningObjectTableInstance->ref = 1;
-
-    list_init(&runningObjectTableInstance->rot);
-    InitializeCriticalSection(&runningObjectTableInstance->lock);
-    DEBUG_SET_CRITSEC_NAME(&runningObjectTableInstance->lock, "RunningObjectTableImpl.lock");
-
-    return S_OK;
-}
-
-/***********************************************************************
- *        RunningObjectTable_UnInitialize
- */
-HRESULT WINAPI RunningObjectTableImpl_UnInitialize(void)
-{
-    TRACE("\n");
-
-    if (runningObjectTableInstance==NULL)
-        return E_POINTER;
-
-    RunningObjectTableImpl_Release(&runningObjectTableInstance->IRunningObjectTable_iface);
-
-    RunningObjectTableImpl_Destroy();
-
-    return S_OK;
-}
+    .IRunningObjectTable_iface.lpVtbl = &VT_RunningObjectTableImpl,
+    .lock.LockCount = -1,
+    .rot = LIST_INIT(rot.rot),
+};
 
 /***********************************************************************
  *           GetRunningObjectTable (OLE32.@)
- *
- * Retrieves the global running object table.
- *
- * PARAMS
- *  reserved [I] Reserved. Set to 0.
- *  pprot    [O] Address that receives the pointer to the running object table.
- *
- * RETURNS
- *  Success: S_OK.
- *  Failure: Any HRESULT code.
  */
-HRESULT WINAPI
-GetRunningObjectTable(DWORD reserved, LPRUNNINGOBJECTTABLE *pprot)
+HRESULT WINAPI GetRunningObjectTable(DWORD reserved, IRunningObjectTable **ret)
 {
-    IID riid=IID_IRunningObjectTable;
-    HRESULT res;
-
-    TRACE("()\n");
+    TRACE("%#x, %p\n", reserved, ret);
 
     if (reserved!=0)
         return E_UNEXPECTED;
 
-    if(runningObjectTableInstance==NULL)
+    if (!InternalIsInitialized())
         return CO_E_NOTINITIALIZED;
 
-    res = IRunningObjectTable_QueryInterface(&runningObjectTableInstance->IRunningObjectTable_iface,
-                                             &riid,(void**)pprot);
+    *ret = &rot.IRunningObjectTable_iface;
+    IRunningObjectTable_AddRef(*ret);
 
-    return res;
+    return S_OK;
+}
+
+/***********************************************************************
+ *        DestroyRunningObjectTable    (ole32.@)
+*/
+void WINAPI DestroyRunningObjectTable(void)
+{
+    struct rot_entry *rot_entry, *cursor2;
+
+    TRACE("\n");
+
+    EnterCriticalSection(&rot.lock);
+    LIST_FOR_EACH_ENTRY_SAFE(rot_entry, cursor2, &rot.rot, struct rot_entry, entry)
+    {
+        list_remove(&rot_entry->entry);
+        rot_entry_delete(rot_entry);
+    }
+    LeaveCriticalSection(&rot.lock);
 }
 
 static HRESULT get_moniker_for_progid_display_name(LPBC pbc,
