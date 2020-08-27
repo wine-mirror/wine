@@ -407,7 +407,7 @@ static struct test_data {
       { 1,  1,  1, 1, 1,   DXGI_FORMAT_B8G8R8X8_UNORM,     WICDdsTexture2D,   WICDdsAlphaModeUnknown },       TRUE },
     { test_dds_32bpp_argb, sizeof(test_dds_32bpp_argb),    WINCODEC_ERR_BADHEADER, 1,  4,  32,  &GUID_WICPixelFormat32bppBGRA,
       { 1,  1,  1, 1, 1,   DXGI_FORMAT_B8G8R8A8_UNORM,     WICDdsTexture2D,   WICDdsAlphaModeUnknown },       TRUE },
-    { test_dds_64bpp,      sizeof(test_dds_64bpp),         WINCODEC_ERR_BADHEADER, 1,  8,  64,  &GUID_WICPixelFormat64bppBGRA,
+    { test_dds_64bpp,      sizeof(test_dds_64bpp),         WINCODEC_ERR_BADHEADER, 1,  8,  64,  &GUID_WICPixelFormat64bppRGBA,
       { 1,  1,  1, 1, 1,   DXGI_FORMAT_R16G16B16A16_UNORM, WICDdsTexture2D,   WICDdsAlphaModeUnknown },       TRUE },
     { test_dds_96bpp,      sizeof(test_dds_96bpp),         WINCODEC_ERR_BADHEADER, 1,  12, 96,  &GUID_WICPixelFormat96bppRGBFloat,
       { 1,  1,  1, 1, 1,   DXGI_FORMAT_R32G32B32_FLOAT,    WICDdsTexture2D,   WICDdsAlphaModeUnknown },       TRUE },
@@ -941,8 +941,8 @@ static void test_dds_decoder_frame_properties(IWICBitmapFrameDecode *frame_decod
     hr = IWICBitmapFrameDecode_GetPixelFormat(frame_decode, &pixel_format);
     ok(hr == S_OK, "Test %u, frame %u: GetPixelFormat failed, hr %#x\n", i, frame_index, hr);
     if (hr != S_OK) return;
-    todo_wine_if(!IsEqualGUID(test_data[i].expected_pixel_format, &GUID_WICPixelFormat32bppBGRA) &&
-                 !IsEqualGUID(test_data[i].expected_pixel_format, &GUID_WICPixelFormat32bppPBGRA))
+    todo_wine_if(IsEqualGUID(test_data[i].expected_pixel_format, &GUID_WICPixelFormat24bppBGR) ||
+                 IsEqualGUID(test_data[i].expected_pixel_format, &GUID_WICPixelFormat96bppRGBFloat))
     ok(IsEqualGUID(&pixel_format, test_data[i].expected_pixel_format),
        "Test %u, frame %u: Expected pixel format %s, got %s\n",
        i, frame_index, debugstr_guid(test_data[i].expected_pixel_format), debugstr_guid(&pixel_format));

@@ -464,7 +464,6 @@ static void get_dds_info(dds_info* info, DDS_HEADER *header, DDS_HEADER_DXT10 *h
     if (header->depth) info->depth = header->depth;
     if (header->mipMapCount) info->mip_levels = header->mipMapCount;
 
-    format_info = get_dds_format(&header->ddspf);
     if (has_extended_header(header)) {
         if (header_dxt10->arraySize) info->array_size = header_dxt10->arraySize;
         info->format = header_dxt10->dxgiFormat;
@@ -472,20 +471,23 @@ static void get_dds_info(dds_info* info, DDS_HEADER *header, DDS_HEADER_DXT10 *h
         info->alpha_mode = header_dxt10->miscFlags2 & 0x00000008;
         info->data_offset = sizeof(DWORD) + sizeof(*header) + sizeof(*header_dxt10);
         if (is_compressed(info->format)) {
+            info->pixel_format = (info->alpha_mode == WICDdsAlphaModePremultiplied) ?
+                                 &GUID_WICPixelFormat32bppPBGRA : &GUID_WICPixelFormat32bppBGRA;
             info->pixel_format_bpp = 32;
         } else {
+            info->pixel_format = &GUID_WICPixelFormatUndefined;
             info->pixel_format_bpp = 0;
-            FIXME("Pixel format bpp is incorrect for uncompressed DDS image with extended header\n");
+            FIXME("Pixel format is incorrect for uncompressed DDS image with extended header\n");
         }
     } else {
+        format_info = get_dds_format(&header->ddspf);
         info->format = format_info->dxgi_format;
         info->dimension = get_dimension(header, NULL);
         info->alpha_mode = get_alpha_mode_from_fourcc(header->ddspf.fourCC);
         info->data_offset = sizeof(DWORD) + sizeof(*header);
+        info->pixel_format = format_info->wic_format;
         info->pixel_format_bpp = format_info->wic_format_bpp;
     }
-    info->pixel_format = (info->alpha_mode == WICDdsAlphaModePremultiplied) ?
-                         &GUID_WICPixelFormat32bppPBGRA : &GUID_WICPixelFormat32bppBGRA;
 
     if (header->ddspf.flags & (DDPF_RGB | DDPF_ALPHA | DDPF_LUMINANCE)) {
         info->bytes_per_block = header->ddspf.rgbBitCount / 8;
