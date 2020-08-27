@@ -263,7 +263,7 @@
 @ stdcall InternalIrotRegister(ptr ptr ptr ptr long ptr ptr)
 @ stdcall InternalIrotRevoke(long ptr ptr ptr)
 @ stub InternalIsApartmentInitialized
-@ stub InternalIsProcessInitialized
+@ stdcall InternalIsProcessInitialized()
 @ stub InternalMarshalObjRef
 @ stub InternalNotifyDDStartOrStop
 @ stub InternalOleModalLoopBlockFn

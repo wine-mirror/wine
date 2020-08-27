@@ -35,7 +35,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
-
+/* Combase exports */
+BOOL WINAPI InternalIsProcessInitialized(void);
 HRESULT WINAPI InternalIrotRegister(const MonikerComparisonData *moniker_data,
         const InterfaceData *object, const InterfaceData *moniker,
         const FILETIME *time, DWORD flags, IrotCookie *cookie, IrotContextHandle *ctxt_handle);
@@ -720,7 +721,7 @@ HRESULT WINAPI GetRunningObjectTable(DWORD reserved, IRunningObjectTable **ret)
     if (reserved!=0)
         return E_UNEXPECTED;
 
-    if (!InternalIsInitialized())
+    if (!InternalIsProcessInitialized())
         return CO_E_NOTINITIALIZED;
 
     *ret = &rot.IRunningObjectTable_iface;

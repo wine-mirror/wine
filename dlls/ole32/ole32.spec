@@ -298,7 +298,6 @@
 @ stdcall WriteFmtUserTypeStg(ptr long ptr)
 @ stub WriteOleStg
 @ stub WriteStringStream
-@ stdcall InternalIsInitialized()
 @ stdcall InternalGetRegisteredClassObject(ptr ptr long ptr)
 @ stdcall InternalRevokeAllClasses(ptr)
 @ stdcall Internal_apartment_disconnectproxies(ptr)

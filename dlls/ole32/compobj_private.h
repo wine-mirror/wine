@@ -351,7 +351,4 @@ static inline HRESULT copy_formatetc(FORMATETC *dst, const FORMATETC *src)
 extern HRESULT EnumSTATDATA_Construct(IUnknown *holder, ULONG index, DWORD array_len, STATDATA *data,
                                       BOOL copy, IEnumSTATDATA **ppenum) DECLSPEC_HIDDEN;
 
-extern BOOL WINAPI InternalIsInitialized(void);
-extern void WINAPI DestroyRunningObjectTable(void);
-
 #endif /* __WINE_OLE_COMPOBJ_H */

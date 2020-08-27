@@ -113,8 +113,6 @@ static CRITICAL_SECTION_DEBUG psclsid_cs_debug =
 };
 static CRITICAL_SECTION cs_registered_ps = { &psclsid_cs_debug, -1, 0, 0, 0, 0 };
 
-extern BOOL WINAPI InternalIsInitialized(void);
-
 static struct init_spy *get_spy_entry(struct tlsdata *tlsdata, unsigned int id)
 {
     struct init_spy *spy;
@@ -322,6 +320,20 @@ HRESULT open_appidkey_from_clsid(REFCLSID clsid, REGSAM access, HKEY *subkey)
         return REGDB_E_READREGDB;
 
     return S_OK;
+}
+
+/***********************************************************************
+ *           InternalIsProcessInitialized  (combase.@)
+ */
+BOOL WINAPI InternalIsProcessInitialized(void)
+{
+    struct apartment *apt;
+
+    if (!(apt = apartment_get_current_or_mta()))
+        return FALSE;
+    apartment_release(apt);
+
+    return TRUE;
 }
 
 /***********************************************************************
@@ -2020,7 +2032,7 @@ HRESULT WINAPI CoGetPSClsid(REFIID riid, CLSID *pclsid)
 
     TRACE("%s, %p\n", debugstr_guid(riid), pclsid);
 
-    if (!InternalIsInitialized())
+    if (!InternalIsProcessInitialized())
     {
         ERR("apartment not initialised\n");
         return CO_E_NOTINITIALIZED;
@@ -2078,7 +2090,7 @@ HRESULT WINAPI CoRegisterPSClsid(REFIID riid, REFCLSID rclsid)
 
     TRACE("%s, %s\n", debugstr_guid(riid), debugstr_guid(rclsid));
 
-    if (!InternalIsInitialized())
+    if (!InternalIsProcessInitialized())
     {
         ERR("apartment not initialised\n");
         return CO_E_NOTINITIALIZED;
@@ -2388,7 +2400,7 @@ HRESULT WINAPI CoGetContextToken(ULONG_PTR *token)
 
     TRACE("%p\n", token);
 
-    if (!InternalIsInitialized())
+    if (!InternalIsProcessInitialized())
     {
         ERR("apartment not initialised\n");
         return CO_E_NOTINITIALIZED;

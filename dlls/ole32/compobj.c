@@ -1608,17 +1608,6 @@ HRESULT WINAPI CoRegisterSurrogateEx(REFGUID guid, void *reserved)
     return E_NOTIMPL;
 }
 
-BOOL WINAPI InternalIsInitialized(void)
-{
-    struct apartment *apt;
-
-    if (!(apt = apartment_get_current_or_mta()))
-        return FALSE;
-    apartment_release(apt);
-
-    return TRUE;
-}
-
 typedef struct {
     IGlobalOptions IGlobalOptions_iface;
     LONG ref;
