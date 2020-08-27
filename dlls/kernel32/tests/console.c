@@ -3945,7 +3945,7 @@ static void test_AllocConsole(void)
     CloseHandle(pipe_write);
 }
 
-static void test_pseudo_console_child(HANDLE input)
+static void test_pseudo_console_child(HANDLE input, HANDLE output)
 {
     DWORD mode;
     BOOL ret;
@@ -3966,6 +3966,10 @@ static void test_pseudo_console_child(HANDLE input)
 
     ret = SetConsoleMode(input, mode | ENABLE_AUTO_POSITION);
     ok(ret, "SetConsoleMode failed: %u\n", GetLastError());
+
+    ret = GetConsoleMode(output, &mode);
+    ok(ret, "GetConsoleMode failed: %u\n", GetLastError());
+    ok(mode == (ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT), "mode = %x\n", mode);
 
     test_console_title();
     test_WriteConsoleInputW(input);
@@ -4144,7 +4148,7 @@ START_TEST(console)
 
     if (using_pseudo_console)
     {
-        test_pseudo_console_child(hConIn);
+        test_pseudo_console_child(hConIn, hConOut);
         return;
     }
 

@@ -67,6 +67,7 @@ struct screen_buffer
 {
     struct console       *console;       /* console reference */
     unsigned int          id;            /* screen buffer id */
+    unsigned int          mode;          /* output mode */
     unsigned int          width;         /* size (w-h) of the screen buffer */
     unsigned int          height;
     struct wine_rb_entry  entry;         /* map entry */
@@ -102,6 +103,7 @@ static struct screen_buffer *create_screen_buffer( struct console *console, int 
     if (!(screen_buffer = malloc( sizeof(*screen_buffer) ))) return NULL;
     screen_buffer->console        = console;
     screen_buffer->id             = id;
+    screen_buffer->mode           = ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT;
     screen_buffer->width          = width;
     screen_buffer->height         = height;
 
@@ -231,6 +233,16 @@ static NTSTATUS screen_buffer_ioctl( struct screen_buffer *screen_buffer, unsign
         if (in_size || *out_size) return STATUS_INVALID_PARAMETER;
         screen_buffer->console->active = screen_buffer;
         return STATUS_SUCCESS;
+
+    case IOCTL_CONDRV_GET_MODE:
+        {
+            DWORD *mode;
+            TRACE( "returning mode %x\n", screen_buffer->mode );
+            if (in_size || *out_size != sizeof(*mode)) return STATUS_INVALID_PARAMETER;
+            if (!(mode = alloc_ioctl_buffer( *out_size ))) return STATUS_NO_MEMORY;
+            *mode = screen_buffer->mode;
+            return STATUS_SUCCESS;
+        }
 
     default:
         FIXME( "unsupported ioctl %x\n", code );
