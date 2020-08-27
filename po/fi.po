@@ -6791,10 +6791,8 @@ msgid "Connection reset by peer.\n"
 msgstr "Vastapuoli nollasi yhteyden.\n"
 
 #: winerror.mc:3767
-#, fuzzy
-#| msgid "Not implemented"
 msgid "Not implemented.\n"
-msgstr "Ei toteutettu"
+msgstr "Ei toteutettu.\n"
 
 #: winerror.mc:3760
 msgid "No Signature found in file.\n"
@@ -12489,6 +12487,9 @@ msgid ""
 "\n"
 "hardlink      hardlink management\n"
 msgstr ""
+"- Tuetut komennot -\n"
+"\n"
+"hardlink      kovan linkin hallinta\n"
 
 #: fsutil.mc:35
 msgid ""
@@ -12496,10 +12497,13 @@ msgid ""
 "\n"
 "create        create a hardlink\n"
 msgstr ""
+"- Hardlink - Tuetut komennot -\n"
+"\n"
+"create        luo kova linkki\n"
 
 #: fsutil.mc:40
 msgid "Syntax: fsutil hardlink create <new> <existing>\n"
-msgstr ""
+msgstr "Syntaksi: fsutil hardlink create <uusi> <entinen>\n"
 
 #: hostname.rc:30
 msgid "Usage: hostname\n"
@@ -16490,10 +16494,8 @@ msgid "&Beginner"
 msgstr "&Aloittelija"
 
 #: winemine.rc:45
-#, fuzzy
-#| msgid "Interface"
 msgid "&Intermediate"
-msgstr "Rajapinta"
+msgstr "&Keskitaso"
 
 #: winemine.rc:46
 msgid "&Expert"
@@ -16524,10 +16526,8 @@ msgid "Beginner"
 msgstr "Aloittelija"
 
 #: winemine.rc:65
-#, fuzzy
-#| msgid "Interface"
 msgid "Intermediate"
-msgstr "Rajapinta"
+msgstr "Keskitaso"
 
 #: winemine.rc:66
 msgid "Expert"
