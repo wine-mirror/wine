@@ -174,7 +174,7 @@ enum arm_trap_code
 
 struct syscall_frame
 {
-    struct syscall_frame *prev_frame;
+    DWORD                 pad;
     DWORD                 cpsr;
     DWORD                 r5;
     DWORD                 r6;
@@ -463,8 +463,7 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
     ret = set_thread_context( handle, &server_context, &self );
     if (self && ret == STATUS_SUCCESS)
     {
-        struct syscall_frame *frame = arm_thread_data()->syscall_frame;
-        arm_thread_data()->syscall_frame = frame->prev_frame;
+        arm_thread_data()->syscall_frame = NULL;
         set_cpu_context( context );
     }
     return ret;
@@ -594,16 +593,16 @@ __ASM_GLOBAL_FUNC( call_user_apc_dispatcher,
                    "ldr r9, [sp, #4]\n\t"     /* dispatcher */
                    "bl " __ASM_NAME("NtCurrentTeb") "\n\t"
                    "add r10, r0, #0x1d8\n\t"  /* arm_thread_data()->syscall_frame */
-                   "ldr r12, [r10]\n\t"
                    "movs r0, r4\n\t"
                    "beq 1f\n\t"
                    "ldr r0, [r0, #0x38]\n\t"  /* context_ptr->Sp */
                    "sub r0, r0, #0x1c8\n\t"   /* sizeof(CONTEXT) + offsetof(frame,r4) */
-                   "ldr r12, [r12]\n\t"       /* frame->prev_frame */
-                   "str r12, [r10]\n\t"
+                   "mov ip, #0\n\t"
+                   "str ip, [r10]\n\t"
                    "mov sp, r0\n\t"
                    "b 2f\n"
-                   "1:\tsub r11, r12, #0x1a0\n\t"
+                   "1:\tldr r0, [r10]\n\t"
+                   "sub r11, r0, #0x1a0\n\t"
                    "cmp r11, sp\n\t"
                    "movlo sp, r11\n\t"
                    "mov r0, #3\n\t"
@@ -615,8 +614,8 @@ __ASM_GLOBAL_FUNC( call_user_apc_dispatcher,
                    "mov r0, #0xc0\n\t"
                    "str r0, [r11, #4]\n\t"    /* context.R0 = STATUS_USER_APC */
                    "mov r0, r11\n\t"
-                   "ldr r12, [r12]\n\t"       /* frame->prev_frame */
-                   "str r12, [r10]\n"
+                   "mov ip, #0\n\t"
+                   "str ip, [r10]\n\t"
                    "2:\tmov r1, r5\n\t"       /* ctx */
                    "mov r2, r6\n\t"           /* arg1 */
                    "mov r3, r7\n\t"           /* arg2 */
@@ -646,8 +645,8 @@ __ASM_GLOBAL_FUNC( call_user_exception_dispatcher,
                    "mov r1, r5\n\t"
                    "mov r2, r6\n\t"
                    "ldr r3, [r7]\n\t"
-                   "ldr r4, [r3]\n\t"        /* frame->prev_frame */
-                   "str r4, [r7]\n\t"
+                   "mov ip, #0\n\t"
+                   "str ip, [r7]\n\t"
                    "add r3, r3, #8\n\t"
                    "ldm r3, {r5-r11}\n\t"
                    "ldr r4, [r3, #32]\n\t"
@@ -708,7 +707,7 @@ static BOOL handle_syscall_fault( ucontext_t *context, EXCEPTION_RECORD *rec )
         SP_sig(context)       = (DWORD)&frame->r4;
         PC_sig(context)       = frame->thunk_addr;
         CPSR_sig(context)     = frame->cpsr;
-        arm_thread_data()->syscall_frame = frame->prev_frame;
+        arm_thread_data()->syscall_frame = NULL;
     }
     return TRUE;
 }

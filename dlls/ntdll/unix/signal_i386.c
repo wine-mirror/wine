@@ -463,7 +463,6 @@ enum i386_trap_code
 
 struct syscall_frame
 {
-    struct syscall_frame *prev_frame;
     DWORD                 edi;
     DWORD                 esi;
     DWORD                 ebx;
@@ -908,9 +907,7 @@ static inline void restore_context( const struct xcontext *xcontext, ucontext_t 
  */
 extern void set_full_cpu_context( const CONTEXT *context );
 __ASM_GLOBAL_FUNC( set_full_cpu_context,
-                   "movl %fs:0x1f8,%eax\n\t"     /* x86_thread_data()->syscall_frame */
-                   "movl (%eax),%eax\n\t"        /* frame->prev_frame */
-                   "movl %eax,%fs:0x1f8\n\t"
+                   "movl $0,%fs:0x1f8\n\t"     /* x86_thread_data()->syscall_frame = NULL */
                    "movl 4(%esp),%ecx\n\t"
                    "movw 0x8c(%ecx),%gs\n\t"  /* SegGs */
                    "movw 0x90(%ecx),%fs\n\t"  /* SegFs */
@@ -1614,11 +1611,10 @@ static void setup_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec )
 __ASM_GLOBAL_FUNC( call_user_apc_dispatcher,
                    "movl 4(%esp),%esi\n\t"       /* context_ptr */
                    "movl 24(%esp),%edi\n\t"      /* dispatcher */
-                   "movl %fs:0x1f8,%ebx\n\t"     /* x86_thread_data()->syscall_frame */
                    "test %esi,%esi\n\t"
                    "jz 1f\n\t"
                    "movl 0xc4(%esi),%eax\n\t"    /* context_ptr->Rsp */
-                   "leal -0x2fc(%eax),%eax\n\t"  /* sizeof(CONTEXT) + offsetof(frame,ret_addr) + params */
+                   "leal -0x2f8(%eax),%eax\n\t"  /* sizeof(CONTEXT) + offsetof(frame,ret_addr) + params */
                    "movl %esi,4(%eax)\n\t"
                    "movl 8(%esp),%ecx\n\t"       /* ctx */
                    "movl %ecx,8(%eax)\n\t"
@@ -1629,8 +1625,9 @@ __ASM_GLOBAL_FUNC( call_user_apc_dispatcher,
                    "movl 20(%esp),%ecx\n\t"      /* func */
                    "movl %ecx,20(%eax)\n\t"
                    "leal 4(%eax),%esp\n\t"
-                   "jmp 2f\n\t"
-                   "1:\tleal -0x2cc(%ebx),%esi\n\t"
+                   "jmp 2f\n"
+                   "1:\tmovl %fs:0x1f8,%eax\n\t" /* x86_thread_data()->syscall_frame */
+                   "leal -0x2cc(%eax),%esi\n\t"
                    "movl %esp,%ecx\n\t"
                    "cmpl %esp,%esi\n\t"
                    "cmovbl %esi,%esp\n\t"
@@ -1644,8 +1641,7 @@ __ASM_GLOBAL_FUNC( call_user_apc_dispatcher,
                    "pushl $0xfffffffe\n\t"
                    "call " __ASM_STDCALL("NtGetContextThread",8) "\n\t"
                    "movl $0xc0,0xb0(%esi)\n"     /* context.Eax = STATUS_USER_APC */
-                   "2:\tmovl (%ebx),%edx\n\t"    /* frame->prev_frame */
-                   "movl %edx,%fs:0x1f8\n\t"
+                   "2:\tmovl $0,%fs:0x1f8\n\t"   /* x86_thread_data()->syscall_frame = NULL */
                    "pushl $0xdeaddead\n\t"
                    "jmp *%edi\n" )
 
@@ -1655,14 +1651,13 @@ __ASM_GLOBAL_FUNC( call_user_apc_dispatcher,
  */
 __ASM_GLOBAL_FUNC( call_raise_user_exception_dispatcher,
                    "movl %fs:0x1f8,%eax\n\t"  /* x86_thread_data()->syscall_frame */
-                   "pushl (%eax)\n\t"         /* frame->prev_frame */
-                   "popl %fs:0x1f8\n\t"
-                   "movl 4(%eax),%edi\n\t"    /* frame->edi */
-                   "movl 8(%eax),%esi\n\t"    /* frame->esi */
-                   "movl 12(%eax),%ebx\n\t"   /* frame->ebx */
-                   "movl 16(%eax),%ebp\n\t"   /* frame->ebp */
+                   "movl 0(%eax),%edi\n\t"    /* frame->edi */
+                   "movl 4(%eax),%esi\n\t"    /* frame->esi */
+                   "movl 8(%eax),%ebx\n\t"    /* frame->ebx */
+                   "movl 12(%eax),%ebp\n\t"   /* frame->ebp */
                    "movl 4(%esp),%edx\n\t"    /* dispatcher */
-                   "leal 24(%eax),%esp\n\t"
+                   "movl $0,%fs:0x1f8\n\t"
+                   "leal 20(%eax),%esp\n\t"
                    "jmp *%edx" )
 
 
@@ -1676,16 +1671,15 @@ __ASM_GLOBAL_FUNC( call_user_exception_dispatcher,
                    "jne 1f\n\t"
                    "decl 0xb8(%ecx)\n"            /* context->Eip */
                    "1:\tmovl %fs:0x1f8,%eax\n\t"  /* x86_thread_data()->syscall_frame */
-                   "pushl (%eax)\n\t"             /* frame->prev_frame */
-                   "popl %fs:0x1f8\n\t"
-                   "movl 4(%eax),%edi\n\t"        /* frame->edi */
-                   "movl 8(%eax),%esi\n\t"        /* frame->esi */
-                   "movl 12(%eax),%ebx\n\t"       /* frame->ebx */
-                   "movl 16(%eax),%ebp\n\t"       /* frame->ebp */
-                   "movl %edx,16(%eax)\n\t"
-                   "movl %ecx,20(%eax)\n\t"
+                   "movl 0(%eax),%edi\n\t"        /* frame->edi */
+                   "movl 4(%eax),%esi\n\t"        /* frame->esi */
+                   "movl 8(%eax),%ebx\n\t"        /* frame->ebx */
+                   "movl 12(%eax),%ebp\n\t"       /* frame->ebp */
+                   "movl %edx,12(%eax)\n\t"
+                   "movl %ecx,16(%eax)\n\t"
                    "movl 12(%esp),%edx\n\t"       /* dispatcher */
-                   "leal 16(%eax),%esp\n\t"
+                   "movl $0,%fs:0x1f8\n\t"
+                   "leal 12(%eax),%esp\n\t"
                    "jmp *%edx" )
 
 /**********************************************************************
@@ -1809,7 +1803,7 @@ static BOOL handle_syscall_fault( ucontext_t *sigcontext, void *stack_ptr,
         EBP_sig(sigcontext) = frame->ebp;
         ESP_sig(sigcontext) = (DWORD)&frame->ret_addr;
         EIP_sig(sigcontext) = frame->thunk_addr;
-        x86_thread_data()->syscall_frame = frame->prev_frame;
+        x86_thread_data()->syscall_frame = NULL;
     }
     return TRUE;
 }

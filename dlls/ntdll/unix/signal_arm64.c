@@ -136,9 +136,7 @@ struct syscall_frame
 {
     ULONG64 x29;
     ULONG64 thunk_addr;
-    ULONG64 x0, x1, x2, x3, x4, x5, x6, x7, x8;
-    struct syscall_frame *prev_frame;
-    ULONG64 x19, x20, x21, x22, x23, x24, x25, x26, x27, x28;
+    ULONG64 x0, x1, x2, x3, x4, x5, x6, x7, x19, x20, x21, x22, x23, x24, x25, x26, x27, x28;
     ULONG64 thunk_x29;
     ULONG64 ret_addr;
 };
@@ -521,8 +519,7 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
     }
     if (self && ret == STATUS_SUCCESS)
     {
-        struct syscall_frame *frame = arm64_thread_data()->syscall_frame;
-        arm64_thread_data()->syscall_frame = frame->prev_frame;
+        arm64_thread_data()->syscall_frame = NULL;
         InterlockedExchangePointer( (void **)&arm64_thread_data()->context, (void *)context );
         raise( SIGUSR2 );
     }
@@ -651,15 +648,14 @@ __ASM_GLOBAL_FUNC( call_user_apc_dispatcher,
                    "mov x24, x5\n\t"             /* dispatcher */
                    "bl " __ASM_NAME("NtCurrentTeb") "\n\t"
                    "add x25, x0, #0x2f8\n\t"     /* arm64_thread_data()->syscall_frame */
-                   "ldr x26, [x25]\n\t"
                    "cbz x19, 1f\n\t"
                    "ldr x0, [x19, #0x100]\n\t"   /* context.Sp */
-                   "sub x0, x0, #0x440\n\t"      /* sizeof(CONTEXT) + offsetof(frame,thunk_x29) */
-                   "ldr x6, [x26, #88]\n\t"      /* frame->prev_frame */
-                   "str x6, [x25]\n\t"
+                   "sub x0, x0, #0x430\n\t"      /* sizeof(CONTEXT) + offsetof(frame,thunk_x29) */
+                   "str xzr, [x25]\n\t"
                    "mov sp, x0\n\t"
                    "b 2f\n"
-                   "1:\tsub x19, x26, #0x390\n\t"
+                   "1:\tldr x0, [x25]\n\t"
+                   "sub x19, x0, #0x390\n\t"
                    "mov x0, sp\n\t"
                    "cmp x19, x0\n\t"
                    "csel x0, x19, x0, lo\n\t"
@@ -672,8 +668,7 @@ __ASM_GLOBAL_FUNC( call_user_apc_dispatcher,
                    "bl " __ASM_NAME("NtGetContextThread") "\n\t"
                    "mov w2, #0xc0\n\t"           /* context.X0 = STATUS_USER_APC */
                    "str x2, [x19, #8]\n\t"
-                   "ldr x6, [x26, #88]\n\t"      /* frame->prev_frame */
-                   "str x6, [x25]\n\t"
+                   "str xzr, [x25]\n\t"
                    "mov x0, x19\n"               /* context */
                    "2:\tldr lr, [x0, #0xf8]\n\t" /* context.Lr */
                    "mov x1, x20\n\t"             /* ctx */
@@ -701,18 +696,17 @@ __ASM_GLOBAL_FUNC( call_user_exception_dispatcher,
                    "bl " __ASM_NAME("NtCurrentTeb") "\n\t"
                    "add x4, x0, #0x2f8\n\t"        /* arm64_thread_data()->syscall_frame */
                    "ldr x5, [x4]\n\t"
-                   "ldr x6, [x5, #88]\n\t"         /* frame->prev_frame */
-                   "str x6, [x4]\n\t"
+                   "str xzr, [x4]\n\t"
                    "mov x0, x19\n\t"
                    "mov x1, x20\n\t"
                    "mov x2, x21\n\t"
-                   "ldp x19, x20, [x5, #96]\n\t"   /* frame->x19,x20 */
-                   "ldp x21, x22, [x5, #112]\n\t"  /* frame->x21,x22 */
-                   "ldp x23, x24, [x5, #128]\n\t"  /* frame->x23,x24 */
-                   "ldp x25, x26, [x5, #144]\n\t"  /* frame->x25,x26 */
-                   "ldp x27, x28, [x5, #160]\n\t"  /* frame->x27,x28 */
-                   "ldp x29, x30, [x5, #176]\n\t"  /* frame->thunk_x29,ret_addr */
-                   "add sp, x5, #192\n\t"
+                   "ldp x19, x20, [x5, #64]\n\t"   /* frame->x19,x20 */
+                   "ldp x21, x22, [x5, #96]\n\t"   /* frame->x21,x22 */
+                   "ldp x23, x24, [x5, #112]\n\t"  /* frame->x23,x24 */
+                   "ldp x25, x26, [x5, #128]\n\t"  /* frame->x25,x26 */
+                   "ldp x27, x28, [x5, #144]\n\t"  /* frame->x27,x28 */
+                   "ldp x29, x30, [x5, #160]\n\t"  /* frame->thunk_x29,ret_addr */
+                   "add sp, x5, #176\n\t"
                    "br x2" )
 
 
@@ -785,7 +779,7 @@ static BOOL handle_syscall_fault( ucontext_t *context, EXCEPTION_RECORD *rec )
         LR_sig(context)       = frame->ret_addr;
         SP_sig(context)       = (DWORD)&frame->thunk_x29;
         PC_sig(context)       = frame->thunk_addr;
-        arm64_thread_data()->syscall_frame = frame->prev_frame;
+        arm64_thread_data()->syscall_frame = NULL;
     }
     return TRUE;
 }
