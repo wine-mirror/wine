@@ -3971,6 +3971,16 @@ static void test_pseudo_console_child(HANDLE input, HANDLE output)
     ok(ret, "GetConsoleMode failed: %u\n", GetLastError());
     ok(mode == (ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT), "mode = %x\n", mode);
 
+    ret = SetConsoleMode(output, mode & ~ENABLE_WRAP_AT_EOL_OUTPUT);
+    ok(ret, "SetConsoleMode failed: %u\n", GetLastError());
+
+    ret = GetConsoleMode(output, &mode);
+    ok(ret, "GetConsoleMode failed: %u\n", GetLastError());
+    ok(mode == ENABLE_PROCESSED_OUTPUT, "mode = %x\n", mode);
+
+    ret = SetConsoleMode(output, mode | ENABLE_WRAP_AT_EOL_OUTPUT);
+    ok(ret, "SetConsoleMode failed: %u\n", GetLastError());
+
     test_console_title();
     test_WriteConsoleInputW(input);
 }
