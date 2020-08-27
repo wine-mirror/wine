@@ -2106,6 +2106,7 @@ static void dump_get_next_console_request_request( const struct get_next_console
 static void dump_get_next_console_request_reply( const struct get_next_console_request_reply *req )
 {
     fprintf( stderr, " code=%08x", req->code );
+    fprintf( stderr, ", output=%08x", req->output );
     fprintf( stderr, ", out_size=%u", req->out_size );
     dump_varargs_bytes( ", in_data=", cur_size );
 }

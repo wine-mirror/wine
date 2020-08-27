@@ -1531,6 +1531,7 @@ enum server_fd_type
     VARARG(out_data,bytes);     /* out_data of previous ioctl */
 @REPLY
     unsigned int code;          /* ioctl code */
+    unsigned int output;        /* output id or 0 for input */
     data_size_t  out_size;      /* ioctl output size */
     VARARG(in_data,bytes);      /* ioctl in_data */
 @END
