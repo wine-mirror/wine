@@ -50,7 +50,7 @@
 @ stdcall CoImpersonateClient() combase.CoImpersonateClient
 @ stdcall CoIncrementMTAUsage(ptr)
 @ stdcall CoInitialize(ptr)
-@ stdcall CoInitializeEx(ptr long)
+@ stdcall CoInitializeEx(ptr long) combase.CoInitializeEx
 @ stdcall CoInitializeSecurity(ptr long ptr ptr long long ptr long ptr) combase.CoInitializeSecurity
 @ stdcall CoInitializeWOW(long long)
 @ stdcall CoIsHandlerConnected(ptr)
@@ -87,7 +87,7 @@
 @ stdcall CoTaskMemFree(ptr) combase.CoTaskMemFree
 @ stdcall CoTaskMemRealloc(ptr long) combase.CoTaskMemRealloc
 @ stdcall CoTreatAsClass(ptr ptr)
-@ stdcall CoUninitialize()
+@ stdcall CoUninitialize() combase.CoUninitialize
 @ stub CoUnloadingWOW
 @ stdcall CoUnmarshalHresult(ptr ptr) combase.CoUnmarshalHresult
 @ stdcall CoUnmarshalInterface(ptr ptr ptr)

@@ -123,7 +123,7 @@
 @ stdcall CoGetTreatAsClass(ptr ptr)
 @ stdcall CoImpersonateClient()
 @ stdcall CoIncrementMTAUsage(ptr) ole32.CoIncrementMTAUsage
-@ stdcall CoInitializeEx(ptr long) ole32.CoInitializeEx
+@ stdcall CoInitializeEx(ptr long)
 @ stdcall CoInitializeSecurity(ptr long ptr ptr long long ptr long ptr)
 @ stdcall CoInitializeWOW(long long) ole32.CoInitializeWOW
 @ stub CoInvalidateRemoteMachineBindings
@@ -163,7 +163,7 @@
 @ stdcall CoTaskMemFree(ptr)
 @ stdcall CoTaskMemRealloc(ptr long)
 @ stub CoTestCancel
-@ stdcall CoUninitialize() ole32.CoUninitialize
+@ stdcall CoUninitialize()
 @ stub CoUnloadingWOW
 @ stdcall CoUnmarshalHresult(ptr ptr)
 @ stdcall CoUnmarshalInterface(ptr ptr ptr) ole32.CoUnmarshalInterface
@@ -268,7 +268,6 @@
 @ stub InternalNotifyDDStartOrStop
 @ stub InternalOleModalLoopBlockFn
 @ stub InternalRegisterWindowPropInterface
-@ stdcall InternalRevokeAllPSClsids()
 @ stub InternalReleaseMarshalObjRef
 @ stub InternalSTAInvoke
 @ stub InternalServerExceptionFilter

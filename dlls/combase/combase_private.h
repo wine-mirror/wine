@@ -131,6 +131,9 @@ struct stub_manager
     BOOL              disconnected; /* CoDisconnectObject has been called (CS lock) */
 };
 
+HRESULT WINAPI enter_apartment(struct tlsdata *data, DWORD model);
+void WINAPI leave_apartment(struct tlsdata *data);
+
 /* Stub Manager */
 
 ULONG stub_manager_int_release(struct stub_manager *This) DECLSPEC_HIDDEN;

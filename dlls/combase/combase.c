@@ -40,6 +40,13 @@ HINSTANCE hProxyDll;
 
 #define CHARS_IN_GUID 39
 
+extern void WINAPI DestroyRunningObjectTable(void);
+
+/*
+ * Number of times CoInitialize is called. It is decreased every time CoUninitialize is called. When it hits 0, the COM libraries are freed
+ */
+static LONG com_lockcount;
+
 struct comclassredirect_data
 {
     ULONG size;
@@ -1757,7 +1764,7 @@ HRESULT WINAPI CoRegisterMessageFilter(IMessageFilter *filter, IMessageFilter **
     return S_OK;
 }
 
-void WINAPI InternalRevokeAllPSClsids(void)
+static void com_revoke_all_ps_clsids(void)
 {
     struct registered_ps *cur, *cur2;
 
@@ -2265,6 +2272,133 @@ void WINAPI DECLSPEC_HOTPATCH CoFreeUnusedLibrariesEx(DWORD unload_delay, DWORD 
     }
 
     apartment_freeunusedlibraries(apt, unload_delay);
+}
+
+/*
+ * When locked, don't modify list (unless we add a new head), so that it's
+ * safe to iterate it. Freeing of list entries is delayed and done on unlock.
+ */
+static inline void lock_init_spies(struct tlsdata *tlsdata)
+{
+    tlsdata->spies_lock++;
+}
+
+static void unlock_init_spies(struct tlsdata *tlsdata)
+{
+    struct init_spy *spy, *next;
+
+    if (--tlsdata->spies_lock) return;
+
+    LIST_FOR_EACH_ENTRY_SAFE(spy, next, &tlsdata->spies, struct init_spy, entry)
+    {
+        if (spy->spy) continue;
+        list_remove(&spy->entry);
+        heap_free(spy);
+    }
+}
+
+/******************************************************************************
+ *                    CoInitializeEx    (combase.@)
+ */
+HRESULT WINAPI DECLSPEC_HOTPATCH CoInitializeEx(void *reserved, DWORD model)
+{
+    struct tlsdata *tlsdata;
+    struct init_spy *cursor;
+    HRESULT hr;
+
+    TRACE("%p, %#x\n", reserved, model);
+
+    if (reserved)
+        WARN("Unexpected reserved argument %p\n", reserved);
+
+    if (FAILED(hr = com_get_tlsdata(&tlsdata)))
+        return hr;
+
+    if (InterlockedExchangeAdd(&com_lockcount, 1) == 0)
+        TRACE("Initializing the COM libraries\n");
+
+    lock_init_spies(tlsdata);
+    LIST_FOR_EACH_ENTRY(cursor, &tlsdata->spies, struct init_spy, entry)
+    {
+        if (cursor->spy) IInitializeSpy_PreInitialize(cursor->spy, model, tlsdata->inits);
+    }
+    unlock_init_spies(tlsdata);
+
+    hr = enter_apartment(tlsdata, model);
+
+    lock_init_spies(tlsdata);
+    LIST_FOR_EACH_ENTRY(cursor, &tlsdata->spies, struct init_spy, entry)
+    {
+        if (cursor->spy) hr = IInitializeSpy_PostInitialize(cursor->spy, hr, model, tlsdata->inits);
+    }
+    unlock_init_spies(tlsdata);
+
+    return hr;
+}
+
+/***********************************************************************
+ *           CoUninitialize    (combase.@)
+ */
+void WINAPI DECLSPEC_HOTPATCH CoUninitialize(void)
+{
+    struct tlsdata *tlsdata;
+    struct init_spy *cursor, *next;
+    LONG lockcount;
+
+    TRACE("\n");
+
+    if (FAILED(com_get_tlsdata(&tlsdata)))
+        return;
+
+    lock_init_spies(tlsdata);
+    LIST_FOR_EACH_ENTRY_SAFE(cursor, next, &tlsdata->spies, struct init_spy, entry)
+    {
+        if (cursor->spy) IInitializeSpy_PreUninitialize(cursor->spy, tlsdata->inits);
+    }
+    unlock_init_spies(tlsdata);
+
+    /* sanity check */
+    if (!tlsdata->inits)
+    {
+        ERR("Mismatched CoUninitialize\n");
+
+        lock_init_spies(tlsdata);
+        LIST_FOR_EACH_ENTRY_SAFE(cursor, next, &tlsdata->spies, struct init_spy, entry)
+        {
+            if (cursor->spy) IInitializeSpy_PostUninitialize(cursor->spy, tlsdata->inits);
+        }
+        unlock_init_spies(tlsdata);
+
+        return;
+    }
+
+    leave_apartment(tlsdata);
+
+    /*
+     * Decrease the reference count.
+     * If we are back to 0 locks on the COM library, make sure we free
+     * all the associated data structures.
+     */
+    lockcount = InterlockedExchangeAdd(&com_lockcount, -1);
+    if (lockcount == 1)
+    {
+        TRACE("Releasing the COM libraries\n");
+
+        com_revoke_all_ps_clsids();
+        DestroyRunningObjectTable();
+    }
+    else if (lockcount < 1)
+    {
+        ERR("Unbalanced lock count %d\n", lockcount);
+        InterlockedExchangeAdd(&com_lockcount, 1);
+    }
+
+    lock_init_spies(tlsdata);
+    LIST_FOR_EACH_ENTRY(cursor, &tlsdata->spies, struct init_spy, entry)
+    {
+        if (cursor->spy) IInitializeSpy_PostUninitialize(cursor->spy, tlsdata->inits);
+    }
+    unlock_init_spies(tlsdata);
 }
 
 /***********************************************************************

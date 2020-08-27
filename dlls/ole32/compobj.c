@@ -142,12 +142,6 @@ struct class_reg_data
     } u;
 };
 
-/*
- * This lock count counts the number of times CoInitialize is called. It is
- * decreased every time CoUninitialize is called. When it hits 0, the COM
- * libraries are freed
- */
-static LONG s_COMLockCount = 0;
 /* Reference count used by CoAddRefServerProcess/CoReleaseServerProcess */
 static LONG s_COMServerProcessReferences = 0;
 
@@ -181,8 +175,6 @@ static CRITICAL_SECTION_DEBUG class_cs_debug =
       0, 0, { (DWORD_PTR)(__FILE__ ": csRegisteredClassList") }
 };
 static CRITICAL_SECTION csRegisteredClassList = { &class_cs_debug, -1, 0, 0, 0, 0 };
-
-extern void WINAPI InternalRevokeAllPSClsids(void);
 
 static inline enum comclass_miscfields dvaspect_to_miscfields(DWORD aspect)
 {
@@ -661,29 +653,6 @@ DWORD WINAPI CoBuildVersion(void)
     return (rmm<<16)+rup;
 }
 
-/*
- * When locked, don't modify list (unless we add a new head), so that it's
- * safe to iterate it. Freeing of list entries is delayed and done on unlock.
- */
-static inline void lock_init_spies(struct oletls *info)
-{
-    info->spies_lock++;
-}
-
-static void unlock_init_spies(struct oletls *info)
-{
-    struct init_spy *spy, *next;
-
-    if (--info->spies_lock) return;
-
-    LIST_FOR_EACH_ENTRY_SAFE(spy, next, &info->spies, struct init_spy, entry)
-    {
-        if (spy->spy) continue;
-        list_remove(&spy->entry);
-        heap_free(spy);
-    }
-}
-
 /******************************************************************************
  *		CoInitialize	[OLE32.@]
  *
@@ -706,154 +675,6 @@ HRESULT WINAPI CoInitialize(LPVOID lpReserved)
    * Just delegate to the newer method.
    */
   return CoInitializeEx(lpReserved, COINIT_APARTMENTTHREADED);
-}
-
-/******************************************************************************
- *		CoInitializeEx	[OLE32.@]
- *
- * Initializes the COM libraries.
- *
- * PARAMS
- *  lpReserved [I] Pointer to IMalloc interface (obsolete, should be NULL).
- *  dwCoInit   [I] One or more flags from the COINIT enumeration. See notes.
- *
- * RETURNS
- *  S_OK               if successful,
- *  S_FALSE            if this function was called already.
- *  RPC_E_CHANGED_MODE if a previous call to CoInitializeEx specified another
- *                     threading model.
- *
- * NOTES
- *
- * The behavior used to set the IMalloc used for memory management is
- * obsolete.
- * The dwCoInit parameter must specify one of the following apartment
- * threading models:
- *| COINIT_APARTMENTTHREADED - A single-threaded apartment (STA).
- *| COINIT_MULTITHREADED - A multi-threaded apartment (MTA).
- * The parameter may also specify zero or more of the following flags:
- *| COINIT_DISABLE_OLE1DDE - Don't use DDE for OLE1 support.
- *| COINIT_SPEED_OVER_MEMORY - Trade memory for speed.
- *
- * SEE ALSO
- *   CoUninitialize
- */
-HRESULT WINAPI DECLSPEC_HOTPATCH CoInitializeEx(LPVOID lpReserved, DWORD dwCoInit)
-{
-  struct oletls *info = COM_CurrentInfo();
-  struct init_spy *cursor;
-  HRESULT hr;
-
-  TRACE("(%p, %x)\n", lpReserved, (int)dwCoInit);
-
-  if (lpReserved!=NULL)
-  {
-    ERR("(%p, %x) - Bad parameter passed-in %p, must be an old Windows Application\n", lpReserved, (int)dwCoInit, lpReserved);
-  }
-
-  /*
-   * Check the lock count. If this is the first time going through the initialize
-   * process, we have to initialize the libraries.
-   *
-   * And crank-up that lock count.
-   */
-  if (InterlockedExchangeAdd(&s_COMLockCount,1)==0)
-    TRACE("() - Initializing the COM libraries\n");
-
-  lock_init_spies(info);
-  LIST_FOR_EACH_ENTRY(cursor, &info->spies, struct init_spy, entry)
-  {
-      if (cursor->spy) IInitializeSpy_PreInitialize(cursor->spy, dwCoInit, info->inits);
-  }
-  unlock_init_spies(info);
-
-  hr = enter_apartment( info, dwCoInit );
-
-  lock_init_spies(info);
-  LIST_FOR_EACH_ENTRY(cursor, &info->spies, struct init_spy, entry)
-  {
-      if (cursor->spy) hr = IInitializeSpy_PostInitialize(cursor->spy, hr, dwCoInit, info->inits);
-  }
-  unlock_init_spies(info);
-
-  return hr;
-}
-
-/***********************************************************************
- *           CoUninitialize   [OLE32.@]
- *
- * This method will decrement the refcount on the current apartment, freeing
- * the resources associated with it if it is the last thread in the apartment.
- * If the last apartment is freed, the function will additionally release
- * any COM resources associated with the process.
- *
- * PARAMS
- *
- * RETURNS
- *  Nothing.
- *
- * SEE ALSO
- *   CoInitializeEx
- */
-void WINAPI DECLSPEC_HOTPATCH CoUninitialize(void)
-{
-  struct oletls * info = COM_CurrentInfo();
-  struct init_spy *cursor, *next;
-  LONG lCOMRefCnt;
-
-  TRACE("()\n");
-
-  /* will only happen on OOM */
-  if (!info) return;
-
-  lock_init_spies(info);
-  LIST_FOR_EACH_ENTRY_SAFE(cursor, next, &info->spies, struct init_spy, entry)
-  {
-      if (cursor->spy) IInitializeSpy_PreUninitialize(cursor->spy, info->inits);
-  }
-  unlock_init_spies(info);
-
-  /* sanity check */
-  if (!info->inits)
-  {
-      ERR("Mismatched CoUninitialize\n");
-
-      lock_init_spies(info);
-      LIST_FOR_EACH_ENTRY_SAFE(cursor, next, &info->spies, struct init_spy, entry)
-      {
-          if (cursor->spy) IInitializeSpy_PostUninitialize(cursor->spy, info->inits);
-      }
-      unlock_init_spies(info);
-
-      return;
-  }
-
-  leave_apartment( info );
-
-  /*
-   * Decrease the reference count.
-   * If we are back to 0 locks on the COM library, make sure we free
-   * all the associated data structures.
-   */
-  lCOMRefCnt = InterlockedExchangeAdd(&s_COMLockCount,-1);
-  if (lCOMRefCnt==1)
-  {
-    TRACE("() - Releasing the COM libraries\n");
-
-    InternalRevokeAllPSClsids();
-    DestroyRunningObjectTable();
-  }
-  else if (lCOMRefCnt<1) {
-    ERR( "CoUninitialize() - not CoInitialized.\n" );
-    InterlockedExchangeAdd(&s_COMLockCount,1); /* restore the lock count. */
-  }
-
-  lock_init_spies(info);
-  LIST_FOR_EACH_ENTRY(cursor, &info->spies, struct init_spy, entry)
-  {
-      if (cursor->spy) IInitializeSpy_PostUninitialize(cursor->spy, info->inits);
-  }
-  unlock_init_spies(info);
 }
 
 /******************************************************************************
