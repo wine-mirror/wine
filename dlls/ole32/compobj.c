@@ -1772,44 +1772,6 @@ HRESULT Handler_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 }
 
 /***********************************************************************
- *           CoGetApartmentType [OLE32.@]
- */
-HRESULT WINAPI CoGetApartmentType(APTTYPE *type, APTTYPEQUALIFIER *qualifier)
-{
-    struct oletls *info = COM_CurrentInfo();
-    struct apartment *apt;
-
-    TRACE("(%p, %p)\n", type, qualifier);
-
-    if (!type || !qualifier)
-        return E_INVALIDARG;
-
-    if (!info)
-        return E_OUTOFMEMORY;
-
-    if (!info->apt)
-        *type = APTTYPE_CURRENT;
-    else if (info->apt->multi_threaded)
-        *type = APTTYPE_MTA;
-    else if (info->apt->main)
-        *type = APTTYPE_MAINSTA;
-    else
-        *type = APTTYPE_STA;
-
-    *qualifier = APTTYPEQUALIFIER_NONE;
-
-    if (!info->apt && (apt = apartment_get_mta()))
-    {
-        apartment_release(apt);
-        *type = APTTYPE_MTA;
-        *qualifier = APTTYPEQUALIFIER_IMPLICIT_MTA;
-        return S_OK;
-    }
-
-    return info->apt ? S_OK : CO_E_NOTINITIALIZED;
-}
-
-/***********************************************************************
  *           CoDisableCallCancellation [OLE32.@]
  */
 HRESULT WINAPI CoDisableCallCancellation(void *reserved)

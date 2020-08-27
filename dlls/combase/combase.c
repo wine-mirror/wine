@@ -2423,6 +2423,45 @@ HRESULT WINAPI CoDecrementMTAUsage(CO_MTA_USAGE_COOKIE cookie)
 }
 
 /***********************************************************************
+ *           CoGetApartmentType    (combase.@)
+ */
+HRESULT WINAPI CoGetApartmentType(APTTYPE *type, APTTYPEQUALIFIER *qualifier)
+{
+    struct tlsdata *tlsdata;
+    struct apartment *apt;
+    HRESULT hr;
+
+    TRACE("%p, %p\n", type, qualifier);
+
+    if (!type || !qualifier)
+        return E_INVALIDARG;
+
+    if (FAILED(hr = com_get_tlsdata(&tlsdata)))
+        return hr;
+
+    if (!tlsdata->apt)
+        *type = APTTYPE_CURRENT;
+    else if (tlsdata->apt->multi_threaded)
+        *type = APTTYPE_MTA;
+    else if (tlsdata->apt->main)
+        *type = APTTYPE_MAINSTA;
+    else
+        *type = APTTYPE_STA;
+
+    *qualifier = APTTYPEQUALIFIER_NONE;
+
+    if (!tlsdata->apt && (apt = apartment_get_mta()))
+    {
+        apartment_release(apt);
+        *type = APTTYPE_MTA;
+        *qualifier = APTTYPEQUALIFIER_IMPLICIT_MTA;
+        return S_OK;
+    }
+
+    return tlsdata->apt ? S_OK : CO_E_NOTINITIALIZED;
+}
+
+/***********************************************************************
  *            DllMain     (combase.@)
  */
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, LPVOID reserved)

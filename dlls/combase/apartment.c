@@ -627,7 +627,7 @@ static struct apartment *apartment_get_or_create(DWORD model)
     return apt;
 }
 
-struct apartment * WINAPI apartment_get_mta(void)
+struct apartment * apartment_get_mta(void)
 {
     struct apartment *apt;
 

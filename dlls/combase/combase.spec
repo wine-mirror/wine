@@ -96,7 +96,7 @@
 @ stdcall CoFreeUnusedLibrariesEx(long long)
 @ stdcall CoGetActivationState(int128 long ptr)
 @ stub CoGetApartmentID
-@ stdcall CoGetApartmentType(ptr ptr) ole32.CoGetApartmentType
+@ stdcall CoGetApartmentType(ptr ptr)
 @ stdcall CoGetCallContext(ptr ptr)
 @ stdcall CoGetCallState(long ptr)
 @ stdcall CoGetCallerTID(ptr) ole32.CoGetCallerTID
@@ -356,7 +356,6 @@
 @ stdcall enter_apartment(ptr long)
 @ stdcall leave_apartment(ptr)
 @ stdcall apartment_get_inproc_class_object(ptr ptr ptr ptr long ptr)
-@ stdcall apartment_get_mta()
 @ stdcall apartment_findfromoxid(int64)
 @ stdcall apartment_getwindow(ptr)
 @ stdcall apartment_global_cleanup()
