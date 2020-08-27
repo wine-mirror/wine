@@ -49,27 +49,6 @@ enum comclass_threadingmodel
     ThreadingModel_Neutral   = 5
 };
 
-enum class_reg_data_origin
-{
-    CLASS_REG_ACTCTX,
-    CLASS_REG_REGISTRY,
-};
-
-struct class_reg_data
-{
-    enum class_reg_data_origin origin;
-    union
-    {
-        struct
-        {
-            const WCHAR *module_name;
-            DWORD threading_model;
-            HANDLE hactctx;
-        } actctx;
-        HKEY hkey;
-    } u;
-};
-
 static struct apartment *mta;
 static struct apartment *main_sta; /* the first STA */
 static struct list apts = LIST_INIT(apts);
@@ -1048,7 +1027,7 @@ static enum comclass_threadingmodel get_threading_model(const struct class_reg_d
         return data->u.actctx.threading_model;
 }
 
-HRESULT WINAPI apartment_get_inproc_class_object(struct apartment *apt, const struct class_reg_data *regdata,
+HRESULT apartment_get_inproc_class_object(struct apartment *apt, const struct class_reg_data *regdata,
         REFCLSID rclsid, REFIID riid, BOOL hostifnecessary, void **ppv)
 {
     WCHAR dllpath[MAX_PATH+1];

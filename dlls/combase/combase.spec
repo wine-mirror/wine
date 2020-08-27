@@ -101,7 +101,7 @@
 @ stdcall CoGetCallState(long ptr)
 @ stdcall CoGetCallerTID(ptr) ole32.CoGetCallerTID
 @ stub CoGetCancelObject
-@ stdcall CoGetClassObject(ptr long ptr ptr ptr) ole32.CoGetClassObject
+@ stdcall CoGetClassObject(ptr long ptr ptr ptr)
 @ stub CoGetClassVersion
 @ stdcall CoGetContextToken(ptr)
 @ stdcall CoGetCurrentLogicalThreadId(ptr)
@@ -355,7 +355,6 @@
 @ stdcall apartment_release(ptr)
 @ stdcall enter_apartment(ptr long)
 @ stdcall leave_apartment(ptr)
-@ stdcall apartment_get_inproc_class_object(ptr ptr ptr ptr long ptr)
 @ stdcall apartment_findfromoxid(int64)
 @ stdcall apartment_getwindow(ptr)
 @ stdcall apartment_global_cleanup()

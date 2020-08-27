@@ -16,13 +16,18 @@
 
 #include <stdarg.h>
 
+#define COBJMACROS
+
 #include "windef.h"
 #include "winbase.h"
 #include "winsvc.h"
+#include "servprov.h"
 
 #include "wine/debug.h"
 #include "wine/exception.h"
 #include "wine/heap.h"
+
+#include "combase_private.h"
 
 #include "irpcss.h"
 
@@ -220,4 +225,237 @@ HRESULT WINAPI InternalIrotRevoke(IrotCookie cookie, IrotContextHandle *ctxt_han
     RPCSS_CALL_START
     hr = IrotRevoke(get_irot_handle(), cookie, ctxt_handle, object, moniker);
     RPCSS_CALL_END
+}
+
+static void get_localserver_pipe_name(WCHAR *pipefn, REFCLSID rclsid)
+{
+    static const WCHAR wszPipeRef[] = {'\\','\\','.','\\','p','i','p','e','\\',0};
+    lstrcpyW(pipefn, wszPipeRef);
+    StringFromGUID2(rclsid, pipefn + ARRAY_SIZE(wszPipeRef) - 1, CHARS_IN_GUID);
+}
+
+static DWORD start_local_service(const WCHAR *name, DWORD num, LPCWSTR *params)
+{
+    SC_HANDLE handle, hsvc;
+    DWORD r = ERROR_FUNCTION_FAILED;
+
+    TRACE("Starting service %s %d params\n", debugstr_w(name), num);
+
+    handle = OpenSCManagerW(NULL, NULL, SC_MANAGER_CONNECT);
+    if (!handle)
+        return r;
+    hsvc = OpenServiceW(handle, name, SERVICE_START);
+    if (hsvc)
+    {
+        if(StartServiceW(hsvc, num, params))
+            r = ERROR_SUCCESS;
+        else
+            r = GetLastError();
+        if (r == ERROR_SERVICE_ALREADY_RUNNING)
+            r = ERROR_SUCCESS;
+        CloseServiceHandle(hsvc);
+    }
+    else
+        r = GetLastError();
+    CloseServiceHandle(handle);
+
+    TRACE("StartService returned error %u (%s)\n", r, (r == ERROR_SUCCESS) ? "ok":"failed");
+
+    return r;
+}
+
+/*
+ * create_local_service()  - start a COM server in a service
+ *
+ *   To start a Local Service, we read the AppID value under
+ * the class's CLSID key, then open the HKCR\\AppId key specified
+ * there and check for a LocalService value.
+ *
+ * Note:  Local Services are not supported under Windows 9x
+ */
+static HRESULT create_local_service(REFCLSID rclsid)
+{
+    HRESULT hr;
+    WCHAR buf[CHARS_IN_GUID];
+    HKEY hkey;
+    LONG r;
+    DWORD type, sz;
+
+    TRACE("Attempting to start Local service for %s\n", debugstr_guid(rclsid));
+
+    hr = open_appidkey_from_clsid(rclsid, KEY_READ, &hkey);
+    if (FAILED(hr))
+        return hr;
+
+    /* read the LocalService and ServiceParameters values from the AppID key */
+    sz = sizeof buf;
+    r = RegQueryValueExW(hkey, L"LocalService", NULL, &type, (LPBYTE)buf, &sz);
+    if (r == ERROR_SUCCESS && type == REG_SZ)
+    {
+        DWORD num_args = 0;
+        LPWSTR args[1] = { NULL };
+
+        /*
+         * FIXME: I'm not really sure how to deal with the service parameters.
+         *        I suspect that the string returned from RegQueryValueExW
+         *        should be split into a number of arguments by spaces.
+         *        It would make more sense if ServiceParams contained a
+         *        REG_MULTI_SZ here, but it's a REG_SZ for the services
+         *        that I'm interested in for the moment.
+         */
+        r = RegQueryValueExW(hkey, L"ServiceParams", NULL, &type, NULL, &sz);
+        if (r == ERROR_SUCCESS && type == REG_SZ && sz)
+        {
+            args[0] = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sz);
+            num_args++;
+            RegQueryValueExW(hkey, L"ServiceParams", NULL, &type, (LPBYTE)args[0], &sz);
+        }
+        r = start_local_service(buf, num_args, (LPCWSTR *)args);
+        if (r != ERROR_SUCCESS)
+            hr = REGDB_E_CLASSNOTREG; /* FIXME: check retval */
+        HeapFree(GetProcessHeap(),0,args[0]);
+    }
+    else
+    {
+        WARN("No LocalService value\n");
+        hr = REGDB_E_CLASSNOTREG; /* FIXME: check retval */
+    }
+    RegCloseKey(hkey);
+
+    return hr;
+}
+
+static HRESULT create_server(REFCLSID rclsid, HANDLE *process)
+{
+    static const WCHAR  embeddingW[] = L" -Embedding";
+    HKEY                key;
+    HRESULT             hr;
+    WCHAR               command[MAX_PATH + ARRAY_SIZE(embeddingW)];
+    DWORD               size = (MAX_PATH+1) * sizeof(WCHAR);
+    STARTUPINFOW        sinfo;
+    PROCESS_INFORMATION pinfo;
+    LONG ret;
+
+    hr = open_key_for_clsid(rclsid, L"LocalServer32", KEY_READ, &key);
+    if (FAILED(hr))
+    {
+        ERR("class %s not registered\n", debugstr_guid(rclsid));
+        return hr;
+    }
+
+    ret = RegQueryValueExW(key, NULL, NULL, NULL, (LPBYTE)command, &size);
+    RegCloseKey(key);
+    if (ret)
+    {
+        WARN("No default value for LocalServer32 key\n");
+        return REGDB_E_CLASSNOTREG; /* FIXME: check retval */
+    }
+
+    memset(&sinfo, 0, sizeof(sinfo));
+    sinfo.cb = sizeof(sinfo);
+
+    /* EXE servers are started with the -Embedding switch. */
+
+    lstrcatW(command, embeddingW);
+
+    TRACE("activating local server %s for %s\n", debugstr_w(command), debugstr_guid(rclsid));
+
+    /* FIXME: Win2003 supports a ServerExecutable value that is passed into
+     * CreateProcess */
+    if (!CreateProcessW(NULL, command, NULL, NULL, FALSE, DETACHED_PROCESS, NULL, NULL, &sinfo, &pinfo))
+    {
+        WARN("failed to run local server %s\n", debugstr_w(command));
+        return HRESULT_FROM_WIN32(GetLastError());
+    }
+    *process = pinfo.hProcess;
+    CloseHandle(pinfo.hThread);
+
+    return S_OK;
+}
+
+/* FIXME: should call to rpcss instead */
+HRESULT rpc_get_local_class_object(REFCLSID rclsid, REFIID riid, void **obj)
+{
+    HRESULT        hr;
+    HANDLE         hPipe;
+    WCHAR          pipefn[100];
+    DWORD          res, bufferlen;
+    char           marshalbuffer[200];
+    IStream       *pStm;
+    LARGE_INTEGER  seekto;
+    ULARGE_INTEGER newpos;
+    int            tries = 0;
+    IServiceProvider *local_server;
+
+    static const int MAXTRIES = 30; /* 30 seconds */
+
+    TRACE("rclsid %s, riid %s\n", debugstr_guid(rclsid), debugstr_guid(riid));
+
+    get_localserver_pipe_name(pipefn, rclsid);
+
+    while (tries++ < MAXTRIES)
+    {
+        TRACE("waiting for %s\n", debugstr_w(pipefn));
+
+        WaitNamedPipeW(pipefn, NMPWAIT_WAIT_FOREVER);
+        hPipe = CreateFileW(pipefn, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
+        if (hPipe == INVALID_HANDLE_VALUE)
+        {
+            DWORD index;
+            DWORD start_ticks;
+            HANDLE process = 0;
+            if (tries == 1)
+            {
+                if ((hr = create_local_service(rclsid)) && (hr = create_server(rclsid, &process)))
+                    return hr;
+            }
+            else
+            {
+                WARN("Connecting to %s, no response yet, retrying: le is %u\n", debugstr_w(pipefn), GetLastError());
+            }
+            /* wait for one second, even if messages arrive */
+            start_ticks = GetTickCount();
+            do
+            {
+                if (SUCCEEDED(CoWaitForMultipleHandles(0, 1000, (process != 0), &process, &index)) && process && !index)
+                {
+                    WARN("server for %s failed to start\n", debugstr_guid(rclsid));
+                    CloseHandle( hPipe );
+                    CloseHandle( process );
+                    return E_NOINTERFACE;
+                }
+            } while (GetTickCount() - start_ticks < 1000);
+            if (process) CloseHandle(process);
+            continue;
+        }
+        bufferlen = 0;
+        if (!ReadFile(hPipe, marshalbuffer, sizeof(marshalbuffer), &bufferlen, NULL))
+        {
+            FIXME("Failed to read marshal id from classfactory of %s.\n", debugstr_guid(rclsid));
+            CloseHandle(hPipe);
+            Sleep(1000);
+            continue;
+        }
+        TRACE("read marshal id from pipe\n");
+        CloseHandle(hPipe);
+        break;
+    }
+
+    if (tries >= MAXTRIES)
+        return E_NOINTERFACE;
+
+    hr = CreateStreamOnHGlobal(0, TRUE, &pStm);
+    if (hr != S_OK) return hr;
+    hr = IStream_Write(pStm, marshalbuffer, bufferlen, &res);
+    if (hr != S_OK) goto out;
+    seekto.u.LowPart = 0;seekto.u.HighPart = 0;
+    hr = IStream_Seek(pStm, seekto, STREAM_SEEK_SET, &newpos);
+    TRACE("unmarshalling local server\n");
+    hr = CoUnmarshalInterface(pStm, &IID_IServiceProvider, (void **)&local_server);
+    if(SUCCEEDED(hr))
+        hr = IServiceProvider_QueryService(local_server, rclsid, riid, obj);
+    IServiceProvider_Release(local_server);
+out:
+    IStream_Release(pStm);
+    return hr;
 }

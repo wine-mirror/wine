@@ -38,9 +38,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
 HINSTANCE hProxyDll;
 
-#define CHARS_IN_GUID 39
-
+/* Ole32 exports */
 extern void WINAPI DestroyRunningObjectTable(void);
+extern HRESULT WINAPI Ole32DllGetClassObject(REFCLSID rclsid, REFIID riid, void **obj);
 
 /*
  * Number of times CoInitialize is called. It is decreased every time CoUninitialize is called. When it hits 0, the COM libraries are freed
@@ -257,7 +257,7 @@ static LSTATUS open_classes_key(HKEY hkey, const WCHAR *name, REGSAM access, HKE
     return RtlNtStatusToDosError(NtOpenKey((HANDLE *)retkey, access, &attr));
 }
 
-static HRESULT open_key_for_clsid(REFCLSID clsid, const WCHAR *keyname, REGSAM access, HKEY *subkey)
+HRESULT open_key_for_clsid(REFCLSID clsid, const WCHAR *keyname, REGSAM access, HKEY *subkey)
 {
     static const WCHAR clsidW[] = L"CLSID\\";
     WCHAR path[CHARS_IN_GUID + ARRAY_SIZE(clsidW) - 1];
@@ -280,6 +280,42 @@ static HRESULT open_key_for_clsid(REFCLSID clsid, const WCHAR *keyname, REGSAM a
 
     res = open_classes_key(key, keyname, access, subkey);
     RegCloseKey(key);
+    if (res == ERROR_FILE_NOT_FOUND)
+        return REGDB_E_KEYMISSING;
+    else if (res != ERROR_SUCCESS)
+        return REGDB_E_READREGDB;
+
+    return S_OK;
+}
+
+/* open HKCR\\AppId\\{string form of appid clsid} key */
+HRESULT open_appidkey_from_clsid(REFCLSID clsid, REGSAM access, HKEY *subkey)
+{
+    static const WCHAR appidkeyW[] = L"AppId\\";
+    DWORD res;
+    WCHAR buf[CHARS_IN_GUID];
+    WCHAR keyname[ARRAY_SIZE(appidkeyW) + CHARS_IN_GUID];
+    DWORD size;
+    HKEY hkey;
+    DWORD type;
+    HRESULT hr;
+
+    /* read the AppID value under the class's key */
+    hr = open_key_for_clsid(clsid, NULL, KEY_READ, &hkey);
+    if (FAILED(hr))
+        return hr;
+
+    size = sizeof(buf);
+    res = RegQueryValueExW(hkey, L"AppId", NULL, &type, (LPBYTE)buf, &size);
+    RegCloseKey(hkey);
+    if (res == ERROR_FILE_NOT_FOUND)
+        return REGDB_E_KEYMISSING;
+    else if (res != ERROR_SUCCESS || type!=REG_SZ)
+        return REGDB_E_READREGDB;
+
+    lstrcpyW(keyname, appidkeyW);
+    lstrcatW(keyname, buf);
+    res = open_classes_key(HKEY_CLASSES_ROOT, keyname, access, subkey);
     if (res == ERROR_FILE_NOT_FOUND)
         return REGDB_E_KEYMISSING;
     else if (res != ERROR_SUCCESS)
@@ -1441,6 +1477,173 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoCreateInstanceEx(REFCLSID rclsid, IUnknown *o
     }
 
     return return_multi_qi(unk, count, results, TRUE);
+}
+
+/***********************************************************************
+ *           CoGetClassObject    (combase.@)
+ */
+HRESULT WINAPI DECLSPEC_HOTPATCH CoGetClassObject(REFCLSID rclsid, DWORD clscontext,
+        COSERVERINFO *server_info, REFIID riid, void **obj)
+{
+    struct class_reg_data clsreg = { 0 };
+    IUnknown *regClassObject;
+    HRESULT hr = E_UNEXPECTED;
+    struct apartment *apt;
+
+    TRACE("%s, %s\n", debugstr_guid(rclsid), debugstr_guid(riid));
+
+    if (!obj)
+        return E_INVALIDARG;
+
+    *obj = NULL;
+
+    if (!(apt = apartment_get_current_or_mta()))
+    {
+        ERR("apartment not initialised\n");
+        return CO_E_NOTINITIALIZED;
+    }
+
+    if (server_info)
+        FIXME("server_info name %s, authinfo %p\n", debugstr_w(server_info->pwszName), server_info->pAuthInfo);
+
+    if (clscontext & CLSCTX_INPROC_SERVER)
+    {
+        if (IsEqualCLSID(rclsid, &CLSID_InProcFreeMarshaler) ||
+                IsEqualCLSID(rclsid, &CLSID_GlobalOptions) ||
+                IsEqualCLSID(rclsid, &CLSID_ManualResetEvent) ||
+                IsEqualCLSID(rclsid, &CLSID_StdGlobalInterfaceTable))
+        {
+            apartment_release(apt);
+            return Ole32DllGetClassObject(rclsid, riid, obj);
+        }
+    }
+
+    if (clscontext & CLSCTX_INPROC)
+    {
+        ACTCTX_SECTION_KEYED_DATA data;
+
+        data.cbSize = sizeof(data);
+        /* search activation context first */
+        if (FindActCtxSectionGuid(FIND_ACTCTX_SECTION_KEY_RETURN_HACTCTX, NULL,
+                ACTIVATION_CONTEXT_SECTION_COM_SERVER_REDIRECTION, rclsid, &data))
+        {
+            struct comclassredirect_data *comclass = (struct comclassredirect_data *)data.lpData;
+
+            clsreg.u.actctx.module_name = (WCHAR *)((BYTE *)data.lpSectionBase + comclass->name_offset);
+            clsreg.u.actctx.hactctx = data.hActCtx;
+            clsreg.u.actctx.threading_model = comclass->model;
+            clsreg.origin = CLASS_REG_ACTCTX;
+
+            hr = apartment_get_inproc_class_object(apt, &clsreg, &comclass->clsid, riid,
+                    !(clscontext & WINE_CLSCTX_DONT_HOST), obj);
+            ReleaseActCtx(data.hActCtx);
+            apartment_release(apt);
+            return hr;
+        }
+    }
+
+    /*
+     * First, try and see if we can't match the class ID with one of the
+     * registered classes.
+     */
+    if (InternalGetRegisteredClassObject(apt, rclsid, clscontext, &regClassObject) == S_OK)
+    {
+        hr = IUnknown_QueryInterface(regClassObject, riid, obj);
+        IUnknown_Release(regClassObject);
+        apartment_release(apt);
+        return hr;
+    }
+
+    /* First try in-process server */
+    if (clscontext & CLSCTX_INPROC_SERVER)
+    {
+        HKEY hkey;
+
+        hr = open_key_for_clsid(rclsid, L"InprocServer32", KEY_READ, &hkey);
+        if (FAILED(hr))
+        {
+            if (hr == REGDB_E_CLASSNOTREG)
+                ERR("class %s not registered\n", debugstr_guid(rclsid));
+            else if (hr == REGDB_E_KEYMISSING)
+            {
+                WARN("class %s not registered as in-proc server\n", debugstr_guid(rclsid));
+                hr = REGDB_E_CLASSNOTREG;
+            }
+        }
+
+        if (SUCCEEDED(hr))
+        {
+            clsreg.u.hkey = hkey;
+            clsreg.origin = CLASS_REG_REGISTRY;
+
+            hr = apartment_get_inproc_class_object(apt, &clsreg, rclsid, riid, !(clscontext & WINE_CLSCTX_DONT_HOST), obj);
+            RegCloseKey(hkey);
+        }
+
+        /* return if we got a class, otherwise fall through to one of the
+         * other types */
+        if (SUCCEEDED(hr))
+        {
+            apartment_release(apt);
+            return hr;
+        }
+    }
+
+    /* Next try in-process handler */
+    if (clscontext & CLSCTX_INPROC_HANDLER)
+    {
+        HKEY hkey;
+
+        hr = open_key_for_clsid(rclsid, L"InprocHandler32", KEY_READ, &hkey);
+        if (FAILED(hr))
+        {
+            if (hr == REGDB_E_CLASSNOTREG)
+                ERR("class %s not registered\n", debugstr_guid(rclsid));
+            else if (hr == REGDB_E_KEYMISSING)
+            {
+                WARN("class %s not registered in-proc handler\n", debugstr_guid(rclsid));
+                hr = REGDB_E_CLASSNOTREG;
+            }
+        }
+
+        if (SUCCEEDED(hr))
+        {
+            clsreg.u.hkey = hkey;
+            clsreg.origin = CLASS_REG_REGISTRY;
+
+            hr = apartment_get_inproc_class_object(apt, &clsreg, rclsid, riid, !(clscontext & WINE_CLSCTX_DONT_HOST), obj);
+            RegCloseKey(hkey);
+        }
+
+        /* return if we got a class, otherwise fall through to one of the
+         * other types */
+        if (SUCCEEDED(hr))
+        {
+            apartment_release(apt);
+            return hr;
+        }
+    }
+    apartment_release(apt);
+
+    /* Next try out of process */
+    if (clscontext & CLSCTX_LOCAL_SERVER)
+    {
+        hr = rpc_get_local_class_object(rclsid, riid, obj);
+        if (SUCCEEDED(hr))
+            return hr;
+    }
+
+    /* Finally try remote: this requires networked DCOM (a lot of work) */
+    if (clscontext & CLSCTX_REMOTE_SERVER)
+    {
+        FIXME ("CLSCTX_REMOTE_SERVER not supported\n");
+        hr = REGDB_E_CLASSNOTREG;
+    }
+
+    if (FAILED(hr))
+        ERR("no class object %s could be created for context %#x\n", debugstr_guid(rclsid), clscontext);
+
+    return hr;
 }
 
 /***********************************************************************

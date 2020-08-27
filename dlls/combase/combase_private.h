@@ -54,9 +54,18 @@ struct apartment
     struct list usage_cookies; /* Used for refcount control with CoIncrementMTAUsage()/CoDecrementMTAUsage(). */
 };
 
+extern HRESULT WINAPI InternalGetRegisteredClassObject(struct apartment *apt, REFGUID guid,
+        DWORD clscontext, IUnknown **obj);
+
+HRESULT open_key_for_clsid(REFCLSID clsid, const WCHAR *keyname, REGSAM access, HKEY *subkey) DECLSPEC_HIDDEN;
+HRESULT open_appidkey_from_clsid(REFCLSID clsid, REGSAM access, HKEY *subkey) DECLSPEC_HIDDEN;
+
 /* DCOM messages used by the apartment window (not compatible with native) */
 #define DM_EXECUTERPC   (WM_USER + 0) /* WPARAM = 0, LPARAM = (struct dispatch_params *) */
 #define DM_HOSTOBJECT   (WM_USER + 1) /* WPARAM = 0, LPARAM = (struct host_object_params *) */
+
+#define WINE_CLSCTX_DONT_HOST   0x80000000
+#define CHARS_IN_GUID 39
 
 /* this is what is stored in TEB->ReservedForOle */
 struct tlsdata
@@ -102,6 +111,7 @@ void apartment_freeunusedlibraries(struct apartment *apt, DWORD unload_delay) DE
 
 /* RpcSs interface */
 HRESULT rpcss_get_next_seqid(DWORD *id) DECLSPEC_HIDDEN;
+HRESULT rpc_get_local_class_object(REFCLSID rclsid, REFIID riid, void **obj) DECLSPEC_HIDDEN;
 
 /* stub managers hold refs on the object and each interface stub */
 struct stub_manager
@@ -131,12 +141,36 @@ struct stub_manager
     BOOL              disconnected; /* CoDisconnectObject has been called (CS lock) */
 };
 
+enum class_reg_data_origin
+{
+    CLASS_REG_ACTCTX,
+    CLASS_REG_REGISTRY,
+};
+
+struct class_reg_data
+{
+    enum class_reg_data_origin origin;
+    union
+    {
+        struct
+        {
+            const WCHAR *module_name;
+            DWORD threading_model;
+            HANDLE hactctx;
+        } actctx;
+        HKEY hkey;
+    } u;
+};
+
 HRESULT WINAPI enter_apartment(struct tlsdata *data, DWORD model);
 void WINAPI leave_apartment(struct tlsdata *data);
 void WINAPI apartment_release(struct apartment *apt);
+struct apartment * WINAPI apartment_get_current_or_mta(void);
 HRESULT apartment_increment_mta_usage(CO_MTA_USAGE_COOKIE *cookie) DECLSPEC_HIDDEN;
 void apartment_decrement_mta_usage(CO_MTA_USAGE_COOKIE cookie) DECLSPEC_HIDDEN;
 struct apartment * apartment_get_mta(void) DECLSPEC_HIDDEN;
+HRESULT apartment_get_inproc_class_object(struct apartment *apt, const struct class_reg_data *regdata,
+        REFCLSID rclsid, REFIID riid, BOOL hostifnecessary, void **ppv) DECLSPEC_HIDDEN;
 
 /* Stub Manager */
 

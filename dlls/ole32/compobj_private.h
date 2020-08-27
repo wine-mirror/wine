@@ -252,11 +252,6 @@ extern HWND WINAPI apartment_getwindow(const struct apartment *apt) DECLSPEC_HID
 extern HRESULT WINAPI enter_apartment(struct oletls *info, DWORD model) DECLSPEC_HIDDEN;
 void WINAPI leave_apartment(struct oletls *info) DECLSPEC_HIDDEN;
 extern struct apartment * WINAPI apartment_get_current_or_mta(void) DECLSPEC_HIDDEN;
-
-struct class_reg_data;
-extern HRESULT WINAPI apartment_get_inproc_class_object(struct apartment *apt, const struct class_reg_data *regdata,
-        REFCLSID rclsid, REFIID riid, BOOL hostifnecessary, void **ppv) DECLSPEC_HIDDEN;
-
 extern HRESULT WINAPI apartment_get_local_server_stream(struct apartment *apt, IStream **ret) DECLSPEC_HIDDEN;
 extern void WINAPI apartment_global_cleanup(void) DECLSPEC_HIDDEN;
 
