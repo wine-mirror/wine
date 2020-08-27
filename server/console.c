@@ -261,6 +261,7 @@ struct screen_buffer
 					  * as seen in wineconsole */
     struct font_info      font;          /* console font information */
     struct fd            *fd;            /* for bare console, attached output fd */
+    struct async_queue    ioctl_q;       /* ioctl queue */
 };
 
 static void screen_buffer_dump( struct object *obj, int verbose );
@@ -679,6 +680,7 @@ static struct object *create_console_output( struct console_input *console_input
     screen_buffer->font.face_name = NULL;
     screen_buffer->font.face_len  = 0;
     memset( screen_buffer->color_map, 0, sizeof(screen_buffer->color_map) );
+    init_async_queue( &screen_buffer->ioctl_q );
     list_add_head( &screen_buffer_list, &screen_buffer->entry );
 
     if (fd != -1)
@@ -1290,6 +1292,7 @@ static void screen_buffer_destroy( struct object *obj )
         queue_host_ioctl( screen_buffer->input->server, IOCTL_CONDRV_CLOSE_OUTPUT,
                           screen_buffer->id, NULL, NULL );
     if (screen_buffer->fd) release_object( screen_buffer->fd );
+    free_async_queue( &screen_buffer->ioctl_q );
     free( screen_buffer->data );
     free( screen_buffer->font.face_name );
 }
@@ -1854,6 +1857,9 @@ static int screen_buffer_ioctl( struct fd *fd, ioctl_code_t code, struct async *
     switch (code)
     {
     case IOCTL_CONDRV_GET_MODE:
+        if (screen_buffer->input && screen_buffer->input->server)
+            return queue_host_ioctl( screen_buffer->input->server, code, screen_buffer->id,
+                                     async, &screen_buffer->ioctl_q );
         if (get_reply_max_size() != sizeof(screen_buffer->mode))
         {
             set_error( STATUS_INVALID_PARAMETER );
@@ -1862,6 +1868,9 @@ static int screen_buffer_ioctl( struct fd *fd, ioctl_code_t code, struct async *
         return set_reply_data( &screen_buffer->mode, sizeof(screen_buffer->mode) ) != NULL;
 
     case IOCTL_CONDRV_SET_MODE:
+        if (screen_buffer->input && screen_buffer->input->server)
+            return queue_host_ioctl( screen_buffer->input->server, code, screen_buffer->id,
+                                     async, &screen_buffer->ioctl_q );
         if (get_req_data_size() != sizeof(screen_buffer->mode))
         {
             set_error( STATUS_INVALID_PARAMETER );
@@ -1873,6 +1882,9 @@ static int screen_buffer_ioctl( struct fd *fd, ioctl_code_t code, struct async *
     case IOCTL_CONDRV_READ_OUTPUT:
         {
             const struct condrv_output_params *params = get_req_data();
+            if (screen_buffer->input && screen_buffer->input->server)
+                return queue_host_ioctl( screen_buffer->input->server, code, screen_buffer->id,
+                                         async, &screen_buffer->ioctl_q );
             if (get_req_data_size() != sizeof(*params))
             {
                 set_error( STATUS_INVALID_PARAMETER );
@@ -1888,6 +1900,9 @@ static int screen_buffer_ioctl( struct fd *fd, ioctl_code_t code, struct async *
         }
 
     case IOCTL_CONDRV_WRITE_OUTPUT:
+        if (screen_buffer->input && screen_buffer->input->server)
+            return queue_host_ioctl( screen_buffer->input->server, code, screen_buffer->id,
+                                     async, &screen_buffer->ioctl_q );
         if (get_req_data_size() < sizeof(struct condrv_output_params) ||
             (get_reply_max_size() != sizeof(SMALL_RECT) && get_reply_max_size() != sizeof(unsigned int)))
         {
@@ -1907,6 +1922,9 @@ static int screen_buffer_ioctl( struct fd *fd, ioctl_code_t code, struct async *
             struct condrv_output_info *info;
             data_size_t size;
 
+            if (screen_buffer->input && screen_buffer->input->server)
+                return queue_host_ioctl( screen_buffer->input->server, code, screen_buffer->id,
+                                         async, &screen_buffer->ioctl_q );
             size = min( sizeof(*info) + screen_buffer->font.face_len, get_reply_max_size() );
             if (size < sizeof(*info))
             {
@@ -1942,6 +1960,9 @@ static int screen_buffer_ioctl( struct fd *fd, ioctl_code_t code, struct async *
     case IOCTL_CONDRV_SET_OUTPUT_INFO:
         {
             const struct condrv_output_info_params *params = get_req_data();
+            if (screen_buffer->input && screen_buffer->input->server)
+                return queue_host_ioctl( screen_buffer->input->server, code, screen_buffer->id,
+                                         async, &screen_buffer->ioctl_q );
             if (get_req_data_size() < sizeof(*params))
             {
                 set_error( STATUS_INVALID_PARAMETER );
@@ -1956,6 +1977,10 @@ static int screen_buffer_ioctl( struct fd *fd, ioctl_code_t code, struct async *
         }
 
     case IOCTL_CONDRV_ACTIVATE:
+        if (screen_buffer->input && screen_buffer->input->server)
+            return queue_host_ioctl( screen_buffer->input->server, code, screen_buffer->id,
+                                     async, &screen_buffer->ioctl_q );
+
         if (!screen_buffer->input)
         {
             set_error( STATUS_INVALID_HANDLE );
@@ -1970,6 +1995,9 @@ static int screen_buffer_ioctl( struct fd *fd, ioctl_code_t code, struct async *
             const struct condrv_fill_output_params *params = get_req_data();
             char_info_t data;
             DWORD written;
+            if (screen_buffer->input && screen_buffer->input->server)
+                return queue_host_ioctl( screen_buffer->input->server, code, screen_buffer->id,
+                                         async, &screen_buffer->ioctl_q );
             if (get_req_data_size() != sizeof(*params) ||
                 (get_reply_max_size() && get_reply_max_size() != sizeof(written)))
             {
@@ -1989,6 +2017,11 @@ static int screen_buffer_ioctl( struct fd *fd, ioctl_code_t code, struct async *
         {
             const struct condrv_scroll_params *params = get_req_data();
             rectangle_t clip;
+
+            if (screen_buffer->input && screen_buffer->input->server)
+                return queue_host_ioctl( screen_buffer->input->server, code, screen_buffer->id,
+                                         async, &screen_buffer->ioctl_q );
+
             if (get_req_data_size() != sizeof(*params))
             {
                 set_error( STATUS_INVALID_PARAMETER );
