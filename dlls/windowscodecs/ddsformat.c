@@ -687,7 +687,7 @@ static ULONG WINAPI DdsFrameDecode_Release(IWICBitmapFrameDecode *iface)
     TRACE("(%p) refcount=%u\n", iface, ref);
 
     if (ref == 0) {
-        HeapFree(GetProcessHeap(), 0, This->pixel_data);
+        if (This->pixel_data != This->block_data) HeapFree(GetProcessHeap(), 0, This->pixel_data);
         HeapFree(GetProcessHeap(), 0, This->block_data);
         HeapFree(GetProcessHeap(), 0, This);
     }
@@ -746,7 +746,7 @@ static HRESULT WINAPI DdsFrameDecode_CopyPixels(IWICBitmapFrameDecode *iface,
     DdsFrameDecode *This = impl_from_IWICBitmapFrameDecode(iface);
     UINT bpp, frame_stride, frame_size;
     INT x, y, width, height;
-    HRESULT hr = S_OK;
+    HRESULT hr;
 
     TRACE("(%p,%s,%u,%u,%p)\n", iface, debug_wic_rect(prc), cbStride, cbBufferSize, pbBuffer);
 
@@ -777,13 +777,17 @@ static HRESULT WINAPI DdsFrameDecode_CopyPixels(IWICBitmapFrameDecode *iface,
     EnterCriticalSection(&This->lock);
 
     if (!This->pixel_data) {
-        This->pixel_data = HeapAlloc(GetProcessHeap(), 0, frame_size);
-        if (!This->pixel_data) {
-            hr = E_OUTOFMEMORY;
-            goto end;
+        if (is_compressed(This->info.format)) {
+            This->pixel_data = HeapAlloc(GetProcessHeap(), 0, frame_size);
+            if (!This->pixel_data) {
+                hr = E_OUTOFMEMORY;
+                goto end;
+            }
+            decode_block(This->block_data, This->info.width_in_blocks * This->info.height_in_blocks, This->info.format,
+                         This->info.width, This->info.height, (DWORD *)This->pixel_data);
+        } else {
+            This->pixel_data = This->block_data;
         }
-        decode_block(This->block_data, This->info.width_in_blocks * This->info.height_in_blocks, This->info.format,
-                     This->info.width, This->info.height, (DWORD *)This->pixel_data);
     }
 
     hr = copy_pixels(bpp, This->pixel_data, This->info.width, This->info.height, frame_stride,
