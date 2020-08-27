@@ -594,10 +594,13 @@ static void disconnect_console_server( struct console_server *server )
     }
 }
 
-static void generate_sb_initial_events( struct console_input *console_input )
+static void set_active_screen_buffer( struct console_input *console_input, struct screen_buffer *screen_buffer )
 {
-    struct screen_buffer *screen_buffer = console_input->active;
     struct condrv_renderer_event evt;
+
+    if (console_input->active == screen_buffer) return;
+    if (console_input->active) release_object( console_input->active );
+    console_input->active = (struct screen_buffer *)grab_object( screen_buffer );
 
     evt.event = CONSOLE_RENDERER_SB_RESIZE_EVENT;
     evt.u.resize.width  = screen_buffer->width;
@@ -689,11 +692,7 @@ static struct object *create_console_output( struct console_input *console_input
         memcpy( &screen_buffer->data[i * screen_buffer->width], screen_buffer->data,
                 screen_buffer->width * sizeof(char_info_t) );
 
-    if (!console_input->active)
-    {
-	console_input->active = (struct screen_buffer*)grab_object( screen_buffer );
-        generate_sb_initial_events( console_input );
-    }
+    if (!console_input->active) set_active_screen_buffer( console_input, screen_buffer );
     return &screen_buffer->obj;
 }
 
@@ -1270,21 +1269,6 @@ static void screen_buffer_destroy( struct object *obj )
     assert( obj->ops == &screen_buffer_ops );
 
     list_remove( &screen_buffer->entry );
-
-    if (screen_buffer->input && screen_buffer->input->active == screen_buffer)
-    {
-        struct screen_buffer *sb;
-
-        screen_buffer->input->active = NULL;
-        LIST_FOR_EACH_ENTRY( sb, &screen_buffer_list, struct screen_buffer, entry )
-        {
-            if (sb->input == screen_buffer->input)
-            {
-                sb->input->active = sb;
-                break;
-            }
-        }
-    }
     if (screen_buffer->fd) release_object( screen_buffer->fd );
     free( screen_buffer->data );
     free( screen_buffer->font.face_name );
@@ -1958,12 +1942,7 @@ static int screen_buffer_ioctl( struct fd *fd, ioctl_code_t code, struct async *
             return 0;
         }
 
-        if (screen_buffer != screen_buffer->input->active)
-        {
-            if (screen_buffer->input->active) release_object( screen_buffer->input->active );
-            screen_buffer->input->active = (struct screen_buffer *)grab_object( screen_buffer );
-            generate_sb_initial_events( screen_buffer->input );
-        }
+        set_active_screen_buffer( screen_buffer->input, screen_buffer );
         return 1;
 
     case IOCTL_CONDRV_FILL_OUTPUT:
