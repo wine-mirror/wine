@@ -1064,7 +1064,6 @@ static void test_dds_decoder_frame_data(IWICBitmapFrameDecode* frame, IWICDdsFra
     hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, NULL, frame_stride * 2, sizeof(buffer), buffer);
     ok(hr == S_OK, "Test %u, frame %u: CopyBlocks failed, hr %#x\n", i, frame_index, hr);
     if (hr != S_OK) return;
-    todo_wine_if(width_in_blocks > 1)
     ok(!memcmp(pixels, buffer, frame_size),
        "Test %u, frame %u: Block data mismatch\n", i, frame_index);
 

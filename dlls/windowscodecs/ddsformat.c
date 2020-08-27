@@ -891,8 +891,7 @@ static HRESULT WINAPI DdsFrameDecode_Dds_CopyBlocks(IWICDdsFrameDecode *iface,
 {
     DdsFrameDecode *This = impl_from_IWICDdsFrameDecode(iface);
     int x, y, width, height;
-    UINT bytes_per_block, frame_stride, frame_size, i;
-    BYTE *data, *dst_buffer;
+    UINT bytes_per_block, frame_stride, frame_size;
 
     TRACE("(%p,%p,%u,%u,%p)\n", iface, boundsInBlocks, stride, bufferSize, buffer);
 
@@ -901,35 +900,26 @@ static HRESULT WINAPI DdsFrameDecode_Dds_CopyBlocks(IWICDdsFrameDecode *iface,
     bytes_per_block = This->info.bytes_per_block;
     frame_stride = This->info.width_in_blocks * bytes_per_block;
     frame_size = frame_stride * This->info.height_in_blocks;
+
     if (!boundsInBlocks) {
         if (stride < frame_stride) return E_INVALIDARG;
         if (bufferSize < frame_size) return E_INVALIDARG;
-        memcpy(buffer, This->block_data, frame_size);
-        return S_OK;
+    } else {
+        x = boundsInBlocks->X;
+        y = boundsInBlocks->Y;
+        width = boundsInBlocks->Width;
+        height = boundsInBlocks->Height;
+        if (x < 0 || y < 0 || width <= 0 || height <= 0 ||
+            x + width > This->info.width_in_blocks ||
+            y + height > This->info.height_in_blocks) {
+            return E_INVALIDARG;
+        }
+        if (stride < width * bytes_per_block) return E_INVALIDARG;
+        if (bufferSize < stride * height) return E_INVALIDARG;
     }
 
-    x = boundsInBlocks->X;
-    y = boundsInBlocks->Y;
-    width = boundsInBlocks->Width;
-    height = boundsInBlocks->Height;
-    if (x < 0 || y < 0 || width <= 0 || height <= 0 ||
-        x + width > This->info.width_in_blocks ||
-        y + height > This->info.height_in_blocks) {
-        return E_INVALIDARG;
-    }
-    if (stride < width * bytes_per_block) return E_INVALIDARG;
-    if (bufferSize < stride * height) return E_INVALIDARG;
-
-    data = This->block_data + (x + y * This->info.width_in_blocks) * bytes_per_block;
-    dst_buffer = buffer;
-    for (i = 0; i < height; i++)
-    {
-        memcpy(dst_buffer, data, (size_t)width * bytes_per_block);
-        data += This->info.width_in_blocks * bytes_per_block;
-        dst_buffer += stride;
-    }
-
-    return S_OK;
+    return copy_pixels(This->info.bytes_per_block * 8, This->block_data, This->info.width_in_blocks,
+                       This->info.height_in_blocks, frame_stride, boundsInBlocks, stride, bufferSize, buffer);
 }
 
 static const IWICDdsFrameDecodeVtbl DdsFrameDecode_Dds_Vtbl = {
