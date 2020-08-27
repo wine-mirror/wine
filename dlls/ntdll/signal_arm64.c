@@ -1222,9 +1222,6 @@ USHORT WINAPI RtlCaptureStackBackTrace( ULONG skip, ULONG count, PVOID *buffer, 
  */
 __ASM_GLOBAL_FUNC( signal_start_thread,
                    "mov sp, x0\n\t"  /* context */
-                   "and x0, x0, #~0xfff\n\t"  /* round down to page size */
-                   "bl " __ASM_NAME("virtual_clear_thread_stack") "\n\t"
-                   "mov x0, sp\n\t"
                    "mov x1, #1\n\t"
                    "b " __ASM_NAME("NtContinue") )
 

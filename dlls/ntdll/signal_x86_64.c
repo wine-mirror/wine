@@ -1486,13 +1486,21 @@ USHORT WINAPI RtlCaptureStackBackTrace( ULONG skip, ULONG count, PVOID *buffer, 
  *           signal_start_thread
  */
 __ASM_GLOBAL_FUNC( signal_start_thread,
-                   "movq %rcx,%rbx\n\t"     /* context */
-                   "leaq -32(%rcx),%rcx\n\t"
-                   "movq %rcx,%rsp\n\t"
-                   "andq $~0xfff,%rcx\n\t"  /* round down to page size */
-                   "call " __ASM_NAME("virtual_clear_thread_stack") "\n\t"
-                   "movl $1,%edx\n\t"
+                   "movq %rcx,%rbx\n\t"        /* context */
+                   /* clear the thread stack */
+                   "andq $~0xfff,%rcx\n\t"     /* round down to page size */
+                   "movq %gs:0x30,%rax\n\t"
+                   "movq 0x10(%rax),%rdi\n\t"  /* NtCurrentTeb()->Tib.StackLimit */
+                   "addq $0x2000,%rdi\n\t"
+                   "movq %rdi,%rsp\n\t"
+                   "subq %rdi,%rcx\n\t"
+                   "xorl %eax,%eax\n\t"
+                   "shrq $3,%rcx\n\t"
+                   "rep; stosq\n\t"
+                   /* switch to the initial context */
+                   "leaq -32(%rbx),%rsp\n\t"
                    "movq %rbx,%rcx\n\t"
+                   "movl $1,%edx\n\t"
                    "call " __ASM_NAME("NtContinue") )
 
 
