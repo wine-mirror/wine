@@ -133,6 +133,8 @@ struct stub_manager
 
 HRESULT WINAPI enter_apartment(struct tlsdata *data, DWORD model);
 void WINAPI leave_apartment(struct tlsdata *data);
+HRESULT apartment_increment_mta_usage(CO_MTA_USAGE_COOKIE *cookie) DECLSPEC_HIDDEN;
+void apartment_decrement_mta_usage(CO_MTA_USAGE_COOKIE cookie) DECLSPEC_HIDDEN;
 
 /* Stub Manager */
 

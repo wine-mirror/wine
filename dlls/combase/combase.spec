@@ -86,7 +86,7 @@
 @ stub CoCreateObjectInContext
 @ stub CoDeactivateObject
 @ stub CoDecodeProxy
-@ stdcall CoDecrementMTAUsage(ptr) ole32.CoDecrementMTAUsage
+@ stdcall CoDecrementMTAUsage(ptr)
 @ stdcall CoDisableCallCancellation(ptr) ole32.CoDisableCallCancellation
 @ stub CoDisconnectContext
 @ stdcall CoDisconnectObject(ptr long) ole32.CoDisconnectObject
@@ -122,7 +122,7 @@
 @ stub CoGetSystemSecurityPermissions
 @ stdcall CoGetTreatAsClass(ptr ptr)
 @ stdcall CoImpersonateClient()
-@ stdcall CoIncrementMTAUsage(ptr) ole32.CoIncrementMTAUsage
+@ stdcall CoIncrementMTAUsage(ptr)
 @ stdcall CoInitializeEx(ptr long)
 @ stdcall CoInitializeSecurity(ptr long ptr ptr long long ptr long ptr)
 @ stdcall CoInitializeWOW(long long) ole32.CoInitializeWOW
@@ -357,8 +357,6 @@
 @ stdcall leave_apartment(ptr)
 @ stdcall apartment_get_inproc_class_object(ptr ptr ptr ptr long ptr)
 @ stdcall apartment_get_mta()
-@ stdcall apartment_decrement_mta_usage(ptr)
-@ stdcall apartment_increment_mta_usage(ptr)
 @ stdcall apartment_findfromoxid(int64)
 @ stdcall apartment_getwindow(ptr)
 @ stdcall apartment_global_cleanup()

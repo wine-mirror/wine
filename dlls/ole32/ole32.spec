@@ -14,7 +14,7 @@
 @ stdcall CoCreateGuid(ptr) combase.CoCreateGuid
 @ stdcall CoCreateInstance(ptr ptr long ptr ptr) combase.CoCreateInstance
 @ stdcall CoCreateInstanceEx(ptr ptr long ptr long ptr) combase.CoCreateInstanceEx
-@ stdcall CoDecrementMTAUsage(ptr)
+@ stdcall CoDecrementMTAUsage(ptr) combase.CoDecrementMTAUsage
 @ stdcall CoDisableCallCancellation(ptr)
 @ stdcall CoDisconnectObject(ptr long)
 @ stdcall CoDosDateTimeToFileTime(long long ptr) kernel32.DosDateTimeToFileTime
@@ -48,7 +48,7 @@
 @ stub CoGetTIDFromIPID
 @ stdcall CoGetTreatAsClass(ptr ptr) combase.CoGetTreatAsClass
 @ stdcall CoImpersonateClient() combase.CoImpersonateClient
-@ stdcall CoIncrementMTAUsage(ptr)
+@ stdcall CoIncrementMTAUsage(ptr) combase.CoIncrementMTAUsage
 @ stdcall CoInitialize(ptr)
 @ stdcall CoInitializeEx(ptr long) combase.CoInitializeEx
 @ stdcall CoInitializeSecurity(ptr long ptr ptr long long ptr long ptr) combase.CoInitializeSecurity

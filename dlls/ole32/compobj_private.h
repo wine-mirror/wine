@@ -257,8 +257,6 @@ struct class_reg_data;
 extern HRESULT WINAPI apartment_get_inproc_class_object(struct apartment *apt, const struct class_reg_data *regdata,
         REFCLSID rclsid, REFIID riid, BOOL hostifnecessary, void **ppv) DECLSPEC_HIDDEN;
 
-extern void WINAPI apartment_decrement_mta_usage(CO_MTA_USAGE_COOKIE cookie) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI apartment_increment_mta_usage(CO_MTA_USAGE_COOKIE *cookie) DECLSPEC_HIDDEN;
 extern struct apartment * WINAPI apartment_get_mta(void) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI apartment_get_local_server_stream(struct apartment *apt, IStream **ret) DECLSPEC_HIDDEN;
 extern void WINAPI apartment_global_cleanup(void) DECLSPEC_HIDDEN;

@@ -1810,27 +1810,6 @@ HRESULT WINAPI CoGetApartmentType(APTTYPE *type, APTTYPEQUALIFIER *qualifier)
 }
 
 /***********************************************************************
- *           CoIncrementMTAUsage [OLE32.@]
- */
-HRESULT WINAPI CoIncrementMTAUsage(CO_MTA_USAGE_COOKIE *cookie)
-{
-    TRACE("%p\n", cookie);
-
-    return apartment_increment_mta_usage(cookie);
-}
-
-/***********************************************************************
- *           CoDecrementMTAUsage [OLE32.@]
- */
-HRESULT WINAPI CoDecrementMTAUsage(CO_MTA_USAGE_COOKIE cookie)
-{
-    TRACE("%p\n", cookie);
-
-    apartment_decrement_mta_usage(cookie);
-    return S_OK;
-}
-
-/***********************************************************************
  *           CoDisableCallCancellation [OLE32.@]
  */
 HRESULT WINAPI CoDisableCallCancellation(void *reserved)

@@ -1187,7 +1187,7 @@ struct mta_cookie
     struct list entry;
 };
 
-HRESULT WINAPI apartment_increment_mta_usage(CO_MTA_USAGE_COOKIE *cookie)
+HRESULT apartment_increment_mta_usage(CO_MTA_USAGE_COOKIE *cookie)
 {
     struct mta_cookie *mta_cookie;
 
@@ -1211,7 +1211,7 @@ HRESULT WINAPI apartment_increment_mta_usage(CO_MTA_USAGE_COOKIE *cookie)
     return S_OK;
 }
 
-void WINAPI apartment_decrement_mta_usage(CO_MTA_USAGE_COOKIE cookie)
+void apartment_decrement_mta_usage(CO_MTA_USAGE_COOKIE cookie)
 {
     struct mta_cookie *mta_cookie = (struct mta_cookie *)cookie;
 

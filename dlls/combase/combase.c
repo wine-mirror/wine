@@ -2402,6 +2402,27 @@ void WINAPI DECLSPEC_HOTPATCH CoUninitialize(void)
 }
 
 /***********************************************************************
+ *           CoIncrementMTAUsage    (combase.@)
+ */
+HRESULT WINAPI CoIncrementMTAUsage(CO_MTA_USAGE_COOKIE *cookie)
+{
+    TRACE("%p\n", cookie);
+
+    return apartment_increment_mta_usage(cookie);
+}
+
+/***********************************************************************
+ *           CoDecrementMTAUsage    (combase.@)
+ */
+HRESULT WINAPI CoDecrementMTAUsage(CO_MTA_USAGE_COOKIE cookie)
+{
+    TRACE("%p\n", cookie);
+
+    apartment_decrement_mta_usage(cookie);
+    return S_OK;
+}
+
+/***********************************************************************
  *            DllMain     (combase.@)
  */
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, LPVOID reserved)
