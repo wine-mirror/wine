@@ -30,6 +30,14 @@ enum eAVEncH264VProfile
     eAVEncH264VProfile_High10 = 110,
     eAVEncH264VProfile_444 = 244,
     eAVEncH264VProfile_Extended = 88,
+    eAVEncH264VProfile_ScalableBase =  83,
+    eAVEncH264VProfile_ScalableHigh =  86,
+    eAVEncH264VProfile_MultiviewHigh = 118,
+    eAVEncH264VProfile_StereoHigh = 128,
+    eAVEncH264VProfile_ConstrainedBase = 256,
+    eAVEncH264VProfile_UCConstrainedHigh = 257,
+    eAVEncH264VProfile_UCScalableConstrainedBase = 258,
+    eAVEncH264VProfile_UCScalableConstrainedHigh = 259
 };
 
 enum eAVEncH264VLevel
