@@ -772,43 +772,6 @@ HRESULT COM_OpenKeyForCLSID(REFCLSID clsid, LPCWSTR keyname, REGSAM access, HKEY
     return S_OK;
 }
 
-/* open HKCR\\AppId\\{string form of appid clsid} key */
-HRESULT COM_OpenKeyForAppIdFromCLSID(REFCLSID clsid, REGSAM access, HKEY *subkey)
-{
-    static const WCHAR szAppId[] = { 'A','p','p','I','d',0 };
-    static const WCHAR szAppIdKey[] = { 'A','p','p','I','d','\\',0 };
-    DWORD res;
-    WCHAR buf[CHARS_IN_GUID];
-    WCHAR keyname[ARRAY_SIZE(szAppIdKey) + CHARS_IN_GUID];
-    DWORD size;
-    HKEY hkey;
-    DWORD type;
-    HRESULT hr;
-
-    /* read the AppID value under the class's key */
-    hr = COM_OpenKeyForCLSID(clsid, NULL, KEY_READ, &hkey);
-    if (FAILED(hr))
-        return hr;
-
-    size = sizeof(buf);
-    res = RegQueryValueExW(hkey, szAppId, NULL, &type, (LPBYTE)buf, &size);
-    RegCloseKey(hkey);
-    if (res == ERROR_FILE_NOT_FOUND)
-        return REGDB_E_KEYMISSING;
-    else if (res != ERROR_SUCCESS || type!=REG_SZ)
-        return REGDB_E_READREGDB;
-
-    lstrcpyW(keyname, szAppIdKey);
-    lstrcatW(keyname, buf);
-    res = open_classes_key(HKEY_CLASSES_ROOT, keyname, access, subkey);
-    if (res == ERROR_FILE_NOT_FOUND)
-        return REGDB_E_KEYMISSING;
-    else if (res != ERROR_SUCCESS)
-        return REGDB_E_READREGDB;
-
-    return S_OK;
-}
-
 /***
  * This internal method is used to scan the registered class list to
  * find a class object.
