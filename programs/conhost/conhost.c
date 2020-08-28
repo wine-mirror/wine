@@ -42,6 +42,16 @@ struct history_line
     WCHAR  text[1];
 };
 
+struct font_info
+{
+    short int width;
+    short int height;
+    short int weight;
+    short int pitch_family;
+    WCHAR    *face_name;
+    size_t    face_len;
+};
+
 struct console
 {
     HANDLE                server;        /* console server handle */
@@ -70,6 +80,17 @@ struct screen_buffer
     unsigned int          mode;          /* output mode */
     unsigned int          width;         /* size (w-h) of the screen buffer */
     unsigned int          height;
+    unsigned int          cursor_size;   /* size of cursor (percentage filled) */
+    unsigned int          cursor_visible;/* cursor visibility flag */
+    unsigned int          cursor_x;      /* position of cursor */
+    unsigned int          cursor_y;      /* position of cursor */
+    unsigned short        attr;          /* default fill attributes (screen colors) */
+    unsigned short        popup_attr;    /* pop-up color attributes */
+    unsigned int          max_width;     /* size (w-h) of the window given font size */
+    unsigned int          max_height;
+    unsigned int          color_map[16]; /* color table */
+    RECT                  win;           /* current visible window on the screen buffer */
+    struct font_info      font;          /* console font information */
     struct wine_rb_entry  entry;         /* map entry */
 };
 
@@ -104,8 +125,27 @@ static struct screen_buffer *create_screen_buffer( struct console *console, int 
     screen_buffer->console        = console;
     screen_buffer->id             = id;
     screen_buffer->mode           = ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT;
+    screen_buffer->cursor_size    = 100;
+    screen_buffer->cursor_visible = 1;
+    screen_buffer->cursor_x       = 0;
+    screen_buffer->cursor_y       = 0;
     screen_buffer->width          = width;
     screen_buffer->height         = height;
+    screen_buffer->attr           = 0x07;
+    screen_buffer->popup_attr     = 0xf5;
+    screen_buffer->max_width      = 80;
+    screen_buffer->max_height     = 25;
+    screen_buffer->win.left       = 0;
+    screen_buffer->win.right      = screen_buffer->max_width - 1;
+    screen_buffer->win.top        = 0;
+    screen_buffer->win.bottom     = screen_buffer->max_height - 1;
+    screen_buffer->font.width     = 0;
+    screen_buffer->font.height    = 0;
+    screen_buffer->font.weight    = FW_NORMAL;
+    screen_buffer->font.pitch_family = FIXED_PITCH | FF_DONTCARE;
+    screen_buffer->font.face_name = NULL;
+    screen_buffer->font.face_len  = 0;
+    memset( screen_buffer->color_map, 0, sizeof(screen_buffer->color_map) );
 
     if (wine_rb_put( &screen_buffer_map, (const void *)id, &screen_buffer->entry ))
     {
@@ -202,6 +242,38 @@ static NTSTATUS write_console_input( struct console *console, const INPUT_RECORD
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS get_output_info( struct screen_buffer *screen_buffer, size_t *out_size )
+{
+    struct condrv_output_info *info;
+
+    TRACE( "%p\n", screen_buffer );
+
+    *out_size = min( *out_size, sizeof(*info) + screen_buffer->font.face_len );
+    if (!(info = alloc_ioctl_buffer( *out_size ))) return STATUS_NO_MEMORY;
+
+    info->cursor_size    = screen_buffer->cursor_size;
+    info->cursor_visible = screen_buffer->cursor_visible;
+    info->cursor_x       = screen_buffer->cursor_x;
+    info->cursor_y       = screen_buffer->cursor_y;
+    info->width          = screen_buffer->width;
+    info->height         = screen_buffer->height;
+    info->attr           = screen_buffer->attr;
+    info->popup_attr     = screen_buffer->popup_attr;
+    info->win_left       = screen_buffer->win.left;
+    info->win_top        = screen_buffer->win.top;
+    info->win_right      = screen_buffer->win.right;
+    info->win_bottom     = screen_buffer->win.bottom;
+    info->max_width      = screen_buffer->max_width;
+    info->max_height     = screen_buffer->max_height;
+    info->font_width     = screen_buffer->font.width;
+    info->font_height    = screen_buffer->font.height;
+    info->font_weight    = screen_buffer->font.weight;
+    info->font_pitch_family = screen_buffer->font.pitch_family;
+    memcpy( info->color_map, screen_buffer->color_map, sizeof(info->color_map) );
+    if (*out_size > sizeof(*info)) memcpy( info + 1, screen_buffer->font.face_name, *out_size - sizeof(*info) );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS set_console_title( struct console *console, const WCHAR *in_title, size_t size )
 {
     WCHAR *title = NULL;
@@ -249,6 +321,10 @@ static NTSTATUS screen_buffer_ioctl( struct screen_buffer *screen_buffer, unsign
         screen_buffer->mode = *(unsigned int *)in_data;
         TRACE( "set %x mode\n", screen_buffer->mode );
         return STATUS_SUCCESS;
+
+    case IOCTL_CONDRV_GET_OUTPUT_INFO:
+        if (in_size || *out_size < sizeof(struct condrv_output_info)) return STATUS_INVALID_PARAMETER;
+        return get_output_info( screen_buffer, out_size );
 
     default:
         FIXME( "unsupported ioctl %x\n", code );
