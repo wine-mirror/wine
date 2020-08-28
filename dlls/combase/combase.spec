@@ -357,6 +357,5 @@
 @ stdcall leave_apartment(ptr)
 @ stdcall apartment_findfromoxid(int64)
 @ stdcall apartment_getwindow(ptr)
-@ stdcall apartment_global_cleanup()
 @ stdcall apartment_createwindowifneeded(ptr)
 @ stdcall apartment_findfromtid(long)

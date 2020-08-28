@@ -1271,7 +1271,7 @@ HWND WINAPI apartment_getwindow(const struct apartment *apt)
     return apt->win;
 }
 
-void WINAPI apartment_global_cleanup(void)
+void apartment_global_cleanup(void)
 {
     if (apt_win_class)
         UnregisterClassW((const WCHAR *)MAKEINTATOM(apt_win_class), hProxyDll);

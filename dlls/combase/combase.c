@@ -2952,6 +2952,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, LPVOID reserved)
         break;
     case DLL_PROCESS_DETACH:
         if (reserved) break;
+        apartment_global_cleanup();
         DeleteCriticalSection(&registered_classes_cs);
         break;
     }

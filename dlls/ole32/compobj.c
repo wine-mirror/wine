@@ -1323,7 +1323,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID reserved)
         if (reserved) break;
         release_std_git();
         RPC_UnregisterAllChannelHooks();
-        apartment_global_cleanup();
         break;
 
     case DLL_THREAD_DETACH:

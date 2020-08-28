@@ -248,7 +248,6 @@ extern HRESULT WINAPI enter_apartment(struct oletls *info, DWORD model) DECLSPEC
 void WINAPI leave_apartment(struct oletls *info) DECLSPEC_HIDDEN;
 extern struct apartment * WINAPI apartment_get_current_or_mta(void) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI apartment_get_local_server_stream(struct apartment *apt, IStream **ret) DECLSPEC_HIDDEN;
-extern void WINAPI apartment_global_cleanup(void) DECLSPEC_HIDDEN;
 
 /* DCOM messages used by the apartment window (not compatible with native) */
 #define DM_EXECUTERPC   (WM_USER + 0) /* WPARAM = 0, LPARAM = (struct dispatch_params *) */
