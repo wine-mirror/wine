@@ -3426,16 +3426,12 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unknown2, ULONG_PTR 
 
 #ifdef __i386__
     entry = (void **)&context->Eax;
-    if (!context->Eip) context->Eip = (DWORD_PTR)kernel32_start_process;
 #elif defined(__x86_64__)
     entry = (void **)&context->Rcx;
-    if (!context->Rip) context->Rip = (DWORD_PTR)kernel32_start_process;
 #elif defined(__arm__)
     entry = (void **)&context->R0;
-    if (!context->Pc) context->Pc = (DWORD_PTR)kernel32_start_process;
 #elif defined(__aarch64__)
     entry = (void **)&context->u.s.X0;
-    if (!context->Pc) context->Pc = (DWORD_PTR)kernel32_start_process;
 #endif
 
     if (process_detaching) NtTerminateThread( GetCurrentThread(), 0 );
@@ -4053,6 +4049,8 @@ static void process_init(void)
     teb->Tib.StackBase = stack.StackBase;
     teb->Tib.StackLimit = stack.StackLimit;
     teb->DeallocationStack = stack.DeallocationStack;
+
+    unix_funcs->server_init_process_done( kernel32_start_process );
 }
 
 /***********************************************************************

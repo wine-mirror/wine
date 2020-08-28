@@ -27,7 +27,7 @@
 struct _DISPATCHER_CONTEXT;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 100
+#define NTDLL_UNIXLIB_VERSION 101
 
 struct unix_funcs
 {
@@ -83,6 +83,9 @@ struct unix_funcs
 
     /* thread/process functions */
     NTSTATUS      (CDECL *exec_process)( UNICODE_STRING *path, UNICODE_STRING *cmdline, NTSTATUS status );
+
+    /* server functions */
+    void          (CDECL *server_init_process_done)( void *relay );
 
     /* file functions */
     void          (CDECL *set_show_dot_files)( BOOL enable );
