@@ -88,11 +88,14 @@ struct screen_buffer
     unsigned short        popup_attr;    /* pop-up color attributes */
     unsigned int          max_width;     /* size (w-h) of the window given font size */
     unsigned int          max_height;
+    char_info_t          *data;          /* the data for each cell - a width x height matrix */
     unsigned int          color_map[16]; /* color table */
     RECT                  win;           /* current visible window on the screen buffer */
     struct font_info      font;          /* console font information */
     struct wine_rb_entry  entry;         /* map entry */
 };
+
+static const char_info_t empty_char_info = { ' ', 0x0007 };  /* white on black space */
 
 static void *ioctl_buffer;
 static size_t ioctl_buffer_size;
@@ -120,6 +123,7 @@ static struct wine_rb_tree screen_buffer_map = { screen_buffer_compare_id };
 static struct screen_buffer *create_screen_buffer( struct console *console, int id, int width, int height )
 {
     struct screen_buffer *screen_buffer;
+    unsigned int i;
 
     if (!(screen_buffer = malloc( sizeof(*screen_buffer) ))) return NULL;
     screen_buffer->console        = console;
@@ -147,6 +151,20 @@ static struct screen_buffer *create_screen_buffer( struct console *console, int 
     screen_buffer->font.face_len  = 0;
     memset( screen_buffer->color_map, 0, sizeof(screen_buffer->color_map) );
 
+    if (!(screen_buffer->data = malloc( screen_buffer->width * screen_buffer->height *
+                                        sizeof(*screen_buffer->data) )))
+    {
+        free( screen_buffer );
+        return NULL;
+    }
+
+    /* clear the first row */
+    for (i = 0; i < screen_buffer->width; i++) screen_buffer->data[i] = empty_char_info;
+    /* and copy it to all other rows */
+    for (i = 1; i < screen_buffer->height; i++)
+        memcpy( &screen_buffer->data[i * screen_buffer->width], screen_buffer->data,
+                screen_buffer->width * sizeof(char_info_t) );
+
     if (wine_rb_put( &screen_buffer_map, (const void *)id, &screen_buffer->entry ))
     {
         ERR( "id %x already exists\n", id );
@@ -162,6 +180,11 @@ static void destroy_screen_buffer( struct screen_buffer *screen_buffer )
         screen_buffer->console->active = NULL;
     wine_rb_remove( &screen_buffer_map, &screen_buffer->entry );
     free( screen_buffer );
+}
+
+static BOOL is_active( struct screen_buffer *screen_buffer )
+{
+    return screen_buffer == screen_buffer->console->active;
 }
 
 static NTSTATUS read_console_input( struct console *console, size_t out_size )
@@ -274,6 +297,178 @@ static NTSTATUS get_output_info( struct screen_buffer *screen_buffer, size_t *ou
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS change_screen_buffer_size( struct screen_buffer *screen_buffer, int new_width, int new_height )
+{
+    int i, old_width, old_height, copy_width, copy_height;
+    char_info_t *new_data;
+
+    if (!(new_data = malloc( new_width * new_height * sizeof(*new_data) ))) return STATUS_NO_MEMORY;
+
+    old_width = screen_buffer->width;
+    old_height = screen_buffer->height;
+    copy_width = min( old_width, new_width );
+    copy_height = min( old_height, new_height );
+
+    /* copy all the rows */
+    for (i = 0; i < copy_height; i++)
+    {
+        memcpy( &new_data[i * new_width], &screen_buffer->data[i * old_width],
+                copy_width * sizeof(char_info_t) );
+    }
+
+    /* clear the end of each row */
+    if (new_width > old_width)
+    {
+        /* fill first row */
+        for (i = old_width; i < new_width; i++) new_data[i] = empty_char_info;
+        /* and blast it to the other rows */
+        for (i = 1; i < copy_height; i++)
+            memcpy( &new_data[i * new_width + old_width], &new_data[old_width],
+                    (new_width - old_width) * sizeof(char_info_t) );
+    }
+
+    /* clear remaining rows */
+    if (new_height > old_height)
+    {
+        /* fill first row */
+        for (i = 0; i < new_width; i++) new_data[old_height * new_width + i] = empty_char_info;
+        /* and blast it to the other rows */
+        for (i = old_height+1; i < new_height; i++)
+            memcpy( &new_data[i * new_width], &new_data[old_height * new_width],
+                    new_width * sizeof(char_info_t) );
+    }
+    free( screen_buffer->data );
+    screen_buffer->data   = new_data;
+    screen_buffer->width  = new_width;
+    screen_buffer->height = new_height;
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS set_output_info( struct screen_buffer *screen_buffer,
+                                 const struct condrv_output_info_params *params, size_t extra_size )
+{
+    const struct condrv_output_info *info = &params->info;
+    WCHAR *font_name;
+    NTSTATUS status;
+
+    TRACE( "%p\n", screen_buffer );
+
+    extra_size -= sizeof(*params);
+
+    if (params->mask & SET_CONSOLE_OUTPUT_INFO_CURSOR_GEOM)
+    {
+        if (info->cursor_size < 1 || info->cursor_size > 100) return STATUS_INVALID_PARAMETER;
+
+        screen_buffer->cursor_size    = info->cursor_size;
+        screen_buffer->cursor_visible = !!info->cursor_visible;
+    }
+    if (params->mask & SET_CONSOLE_OUTPUT_INFO_CURSOR_POS)
+    {
+        if (info->cursor_x < 0 || info->cursor_x >= screen_buffer->width ||
+            info->cursor_y < 0 || info->cursor_y >= screen_buffer->height)
+        {
+            return STATUS_INVALID_PARAMETER;
+        }
+
+        if (screen_buffer->cursor_x != info->cursor_x || screen_buffer->cursor_y != info->cursor_y)
+        {
+            screen_buffer->cursor_x = info->cursor_x;
+            screen_buffer->cursor_y = info->cursor_y;
+        }
+    }
+    if (params->mask & SET_CONSOLE_OUTPUT_INFO_SIZE)
+    {
+        /* new screen-buffer cannot be smaller than actual window */
+        if (info->width < screen_buffer->win.right - screen_buffer->win.left + 1 ||
+            info->height < screen_buffer->win.bottom - screen_buffer->win.top + 1)
+        {
+            return STATUS_INVALID_PARAMETER;
+        }
+        /* FIXME: there are also some basic minimum and max size to deal with */
+        if ((status = change_screen_buffer_size( screen_buffer, info->width, info->height ))) return status;
+
+        /* scroll window to display sb */
+        if (screen_buffer->win.right >= info->width)
+        {
+            screen_buffer->win.right -= screen_buffer->win.left;
+            screen_buffer->win.left = 0;
+        }
+        if (screen_buffer->win.bottom >= info->height)
+        {
+            screen_buffer->win.bottom -= screen_buffer->win.top;
+            screen_buffer->win.top = 0;
+        }
+        if (screen_buffer->cursor_x >= info->width)  screen_buffer->cursor_x = info->width - 1;
+        if (screen_buffer->cursor_y >= info->height) screen_buffer->cursor_y = info->height - 1;
+
+        if (is_active( screen_buffer ) && screen_buffer->console->mode & ENABLE_WINDOW_INPUT)
+        {
+            INPUT_RECORD ir;
+            ir.EventType = WINDOW_BUFFER_SIZE_EVENT;
+            ir.Event.WindowBufferSizeEvent.dwSize.X = info->width;
+            ir.Event.WindowBufferSizeEvent.dwSize.Y = info->height;
+            write_console_input( screen_buffer->console, &ir, 1 );
+        }
+    }
+    if (params->mask & SET_CONSOLE_OUTPUT_INFO_ATTR)
+    {
+        screen_buffer->attr = info->attr;
+    }
+    if (params->mask & SET_CONSOLE_OUTPUT_INFO_POPUP_ATTR)
+    {
+        screen_buffer->popup_attr = info->popup_attr;
+    }
+    if (params->mask & SET_CONSOLE_OUTPUT_INFO_DISPLAY_WINDOW)
+    {
+        if (info->win_left < 0 || info->win_left > info->win_right ||
+            info->win_right >= screen_buffer->width ||
+            info->win_top < 0  || info->win_top > info->win_bottom ||
+            info->win_bottom >= screen_buffer->height)
+        {
+            return STATUS_INVALID_PARAMETER;
+        }
+        if (screen_buffer->win.left != info->win_left || screen_buffer->win.top != info->win_top ||
+            screen_buffer->win.right != info->win_right || screen_buffer->win.bottom != info->win_bottom)
+        {
+            screen_buffer->win.left   = info->win_left;
+            screen_buffer->win.top    = info->win_top;
+            screen_buffer->win.right  = info->win_right;
+            screen_buffer->win.bottom = info->win_bottom;
+        }
+    }
+    if (params->mask & SET_CONSOLE_OUTPUT_INFO_MAX_SIZE)
+    {
+        screen_buffer->max_width  = info->max_width;
+        screen_buffer->max_height = info->max_height;
+    }
+    if (params->mask & SET_CONSOLE_OUTPUT_INFO_COLORTABLE)
+    {
+        memcpy( screen_buffer->color_map, info->color_map, sizeof(screen_buffer->color_map) );
+    }
+    if (params->mask & SET_CONSOLE_OUTPUT_INFO_FONT)
+    {
+        screen_buffer->font.width  = info->font_width;
+        screen_buffer->font.height = info->font_height;
+        screen_buffer->font.weight = info->font_weight;
+        screen_buffer->font.pitch_family = info->font_pitch_family;
+        if (extra_size)
+        {
+            const WCHAR *params_font = (const WCHAR *)(params + 1);
+            extra_size = extra_size / sizeof(WCHAR) * sizeof(WCHAR);
+            font_name = malloc( extra_size );
+            if (font_name)
+            {
+                memcpy( font_name, params_font, extra_size );
+                free( screen_buffer->font.face_name );
+                screen_buffer->font.face_name = font_name;
+                screen_buffer->font.face_len  = extra_size;
+            }
+        }
+    }
+
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS set_console_title( struct console *console, const WCHAR *in_title, size_t size )
 {
     WCHAR *title = NULL;
@@ -325,6 +520,10 @@ static NTSTATUS screen_buffer_ioctl( struct screen_buffer *screen_buffer, unsign
     case IOCTL_CONDRV_GET_OUTPUT_INFO:
         if (in_size || *out_size < sizeof(struct condrv_output_info)) return STATUS_INVALID_PARAMETER;
         return get_output_info( screen_buffer, out_size );
+
+    case IOCTL_CONDRV_SET_OUTPUT_INFO:
+        if (in_size < sizeof(struct condrv_output_info) || *out_size) return STATUS_INVALID_PARAMETER;
+        return set_output_info( screen_buffer, in_data, in_size );
 
     default:
         FIXME( "unsupported ioctl %x\n", code );
