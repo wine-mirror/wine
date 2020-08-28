@@ -223,12 +223,8 @@ HRESULT RPC_CreateClientChannel(const OXID *oxid, const IPID *ipid,
                                 DWORD dest_context, void *dest_context_data,
                                 IRpcChannelBuffer **chan, struct apartment *apt) DECLSPEC_HIDDEN;
 HRESULT RPC_CreateServerChannel(DWORD dest_context, void *dest_context_data, IRpcChannelBuffer **chan) DECLSPEC_HIDDEN;
-void    RPC_ExecuteCall(struct dispatch_params *params) DECLSPEC_HIDDEN;
 HRESULT RPC_RegisterInterface(REFIID riid) DECLSPEC_HIDDEN;
 void    RPC_UnregisterInterface(REFIID riid, BOOL wait) DECLSPEC_HIDDEN;
-HRESULT RPC_StartLocalServer(REFCLSID clsid, IStream *stream, BOOL multi_use, void **registration) DECLSPEC_HIDDEN;
-void    RPC_StopLocalServer(void *registration) DECLSPEC_HIDDEN;
-HRESULT RPC_GetLocalClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv) DECLSPEC_HIDDEN;
 HRESULT RPC_RegisterChannelHook(REFGUID rguid, IChannelHook *hook) DECLSPEC_HIDDEN;
 void    RPC_UnregisterAllChannelHooks(void) DECLSPEC_HIDDEN;
 HRESULT RPC_ResolveOxid(OXID oxid, OXID_INFO *oxid_info) DECLSPEC_HIDDEN;
@@ -253,10 +249,6 @@ void WINAPI leave_apartment(struct oletls *info) DECLSPEC_HIDDEN;
 extern struct apartment * WINAPI apartment_get_current_or_mta(void) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI apartment_get_local_server_stream(struct apartment *apt, IStream **ret) DECLSPEC_HIDDEN;
 extern void WINAPI apartment_global_cleanup(void) DECLSPEC_HIDDEN;
-
-HRESULT COM_GetRegisteredClassObject(const struct apartment *apt, REFCLSID rclsid,
-        DWORD dwClsContext, IUnknown **ppUnk) DECLSPEC_HIDDEN;
-void COM_RevokeAllClasses(const struct apartment *apt) DECLSPEC_HIDDEN;
 
 /* DCOM messages used by the apartment window (not compatible with native) */
 #define DM_EXECUTERPC   (WM_USER + 0) /* WPARAM = 0, LPARAM = (struct dispatch_params *) */

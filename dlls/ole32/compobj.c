@@ -142,40 +142,6 @@ struct class_reg_data
     } u;
 };
 
-/* Reference count used by CoAddRefServerProcess/CoReleaseServerProcess */
-static LONG s_COMServerProcessReferences = 0;
-
-/*
- * This linked list contains the list of registered class objects. These
- * are mostly used to register the factories for out-of-proc servers of OLE
- * objects.
- *
- * TODO: Make this data structure aware of inter-process communication. This
- *       means that parts of this will be exported to rpcss.
- */
-typedef struct tagRegisteredClass
-{
-  struct list entry;
-  CLSID     classIdentifier;
-  OXID      apartment_id;
-  LPUNKNOWN classObject;
-  DWORD     runContext;
-  DWORD     connectFlags;
-  DWORD     dwCookie;
-  void     *RpcRegistration;
-} RegisteredClass;
-
-static struct list RegisteredClassList = LIST_INIT(RegisteredClassList);
-
-static CRITICAL_SECTION csRegisteredClassList;
-static CRITICAL_SECTION_DEBUG class_cs_debug =
-{
-    0, 0, &csRegisteredClassList,
-    { &class_cs_debug.ProcessLocksList, &class_cs_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": csRegisteredClassList") }
-};
-static CRITICAL_SECTION csRegisteredClassList = { &class_cs_debug, -1, 0, 0, 0, 0 };
-
 static inline enum comclass_miscfields dvaspect_to_miscfields(DWORD aspect)
 {
     switch (aspect)
@@ -374,32 +340,6 @@ LSTATUS open_classes_key( HKEY hkey, const WCHAR *name, REGSAM access, HKEY *ret
     return RtlNtStatusToDosError( NtOpenKey( (HANDLE *)retkey, access, &attr ) );
 }
 
-static void COM_RevokeRegisteredClassObject(RegisteredClass *curClass)
-{
-    list_remove(&curClass->entry);
-
-    if (curClass->runContext & CLSCTX_LOCAL_SERVER)
-        RPC_StopLocalServer(curClass->RpcRegistration);
-
-    IUnknown_Release(curClass->classObject);
-    HeapFree(GetProcessHeap(), 0, curClass);
-}
-
-void WINAPI InternalRevokeAllClasses(const struct apartment *apt)
-{
-  RegisteredClass *curClass, *cursor;
-
-  EnterCriticalSection( &csRegisteredClassList );
-
-  LIST_FOR_EACH_ENTRY_SAFE(curClass, cursor, &RegisteredClassList, RegisteredClass, entry)
-  {
-    if (curClass->apartment_id == apt->oxid)
-      COM_RevokeRegisteredClassObject(curClass);
-  }
-
-  LeaveCriticalSection( &csRegisteredClassList );
-}
-
 /******************************************************************************
  * Implementation of the manual reset event object. (CLSID_ManualResetEvent)
  */
@@ -547,69 +487,6 @@ HRESULT WINAPI ManualResetEvent_CreateInstance(IClassFactory *iface, IUnknown *o
     hr = ISynchronize_QueryInterface(&This->ISynchronize_iface, iid, ppv);
     ISynchronize_Release(&This->ISynchronize_iface);
     return hr;
-}
-
-/***********************************************************************
- *           CoRevokeClassObject [OLE32.@]
- *
- * Removes a class object from the class registry.
- *
- * PARAMS
- *  dwRegister [I] Cookie returned from CoRegisterClassObject().
- *
- * RETURNS
- *  Success: S_OK.
- *  Failure: HRESULT code.
- *
- * NOTES
- *  Must be called from the same apartment that called CoRegisterClassObject(),
- *  otherwise it will fail with RPC_E_WRONG_THREAD.
- *
- * SEE ALSO
- *  CoRegisterClassObject
- */
-HRESULT WINAPI DECLSPEC_HOTPATCH CoRevokeClassObject(
-        DWORD dwRegister)
-{
-  HRESULT hr = E_INVALIDARG;
-  RegisteredClass *curClass;
-  struct apartment *apt;
-
-  TRACE("(%08x)\n",dwRegister);
-
-  if (!(apt = apartment_get_current_or_mta()))
-  {
-    ERR("COM was not initialized\n");
-    return CO_E_NOTINITIALIZED;
-  }
-
-  EnterCriticalSection( &csRegisteredClassList );
-
-  LIST_FOR_EACH_ENTRY(curClass, &RegisteredClassList, RegisteredClass, entry)
-  {
-    /*
-     * Check if we have a match on the cookie.
-     */
-    if (curClass->dwCookie == dwRegister)
-    {
-      if (curClass->apartment_id == apt->oxid)
-      {
-          COM_RevokeRegisteredClassObject(curClass);
-          hr = S_OK;
-      }
-      else
-      {
-          ERR("called from wrong apartment, should be called from %s\n",
-              wine_dbgstr_longlong(curClass->apartment_id));
-          hr = RPC_E_WRONG_THREAD;
-      }
-      break;
-    }
-  }
-
-  LeaveCriticalSection( &csRegisteredClassList );
-  apartment_release(apt);
-  return hr;
 }
 
 static void COM_TlsDestroy(void)
@@ -770,182 +647,6 @@ HRESULT COM_OpenKeyForCLSID(REFCLSID clsid, LPCWSTR keyname, REGSAM access, HKEY
         return REGDB_E_READREGDB;
 
     return S_OK;
-}
-
-/***
- * This internal method is used to scan the registered class list to
- * find a class object.
- *
- * Params:
- *   rclsid        Class ID of the class to find.
- *   dwClsContext  Class context to match.
- *   ppv           [out] returns a pointer to the class object. Complying
- *                 to normal COM usage, this method will increase the
- *                 reference count on this object.
- */
-HRESULT WINAPI InternalGetRegisteredClassObject(const struct apartment *apt, REFCLSID rclsid,
-                                            DWORD dwClsContext, LPUNKNOWN* ppUnk)
-{
-  HRESULT hr = S_FALSE;
-  RegisteredClass *curClass;
-
-  EnterCriticalSection( &csRegisteredClassList );
-
-  LIST_FOR_EACH_ENTRY(curClass, &RegisteredClassList, RegisteredClass, entry)
-  {
-    /*
-     * Check if we have a match on the class ID and context.
-     */
-    if ((apt->oxid == curClass->apartment_id) &&
-        (dwClsContext & curClass->runContext) &&
-        IsEqualGUID(&(curClass->classIdentifier), rclsid))
-    {
-      /*
-       * We have a match, return the pointer to the class object.
-       */
-      *ppUnk = curClass->classObject;
-
-      IUnknown_AddRef(curClass->classObject);
-
-      hr = S_OK;
-      break;
-    }
-  }
-
-  LeaveCriticalSection( &csRegisteredClassList );
-
-  return hr;
-}
-
-/******************************************************************************
- *		CoRegisterClassObject	[OLE32.@]
- *
- * Registers the class object for a given class ID. Servers housed in EXE
- * files use this method instead of exporting DllGetClassObject to allow
- * other code to connect to their objects.
- *
- * PARAMS
- *  rclsid       [I] CLSID of the object to register.
- *  pUnk         [I] IUnknown of the object.
- *  dwClsContext [I] CLSCTX flags indicating the context in which to run the executable.
- *  flags        [I] REGCLS flags indicating how connections are made.
- *  lpdwRegister [I] A unique cookie that can be passed to CoRevokeClassObject.
- *
- * RETURNS
- *   S_OK on success,
- *   E_INVALIDARG if lpdwRegister or pUnk are NULL,
- *   CO_E_OBJISREG if the object is already registered. We should not return this.
- *
- * SEE ALSO
- *   CoRevokeClassObject, CoGetClassObject
- *
- * NOTES
- *  In-process objects are only registered for the current apartment.
- *  CoGetClassObject() and CoCreateInstance() will not return objects registered
- *  in other apartments.
- *
- * BUGS
- *  MSDN claims that multiple interface registrations are legal, but we
- *  can't do that with our current implementation.
- */
-HRESULT WINAPI CoRegisterClassObject(
-    REFCLSID rclsid,
-    LPUNKNOWN pUnk,
-    DWORD dwClsContext,
-    DWORD flags,
-    LPDWORD lpdwRegister)
-{
-  static LONG next_cookie;
-  RegisteredClass* newClass;
-  LPUNKNOWN        foundObject;
-  HRESULT          hr;
-  struct apartment *apt;
-
-  TRACE("(%s,%p,0x%08x,0x%08x,%p)\n",
-	debugstr_guid(rclsid),pUnk,dwClsContext,flags,lpdwRegister);
-
-  if ( (lpdwRegister==0) || (pUnk==0) )
-    return E_INVALIDARG;
-
-  if (!(apt = apartment_get_current_or_mta()))
-  {
-      ERR("COM was not initialized\n");
-      return CO_E_NOTINITIALIZED;
-  }
-
-  *lpdwRegister = 0;
-
-  /* REGCLS_MULTIPLEUSE implies registering as inproc server. This is what
-   * differentiates the flag from REGCLS_MULTI_SEPARATE. */
-  if (flags & REGCLS_MULTIPLEUSE)
-    dwClsContext |= CLSCTX_INPROC_SERVER;
-
-  /*
-   * First, check if the class is already registered.
-   * If it is, this should cause an error.
-   */
-  hr = InternalGetRegisteredClassObject(apt, rclsid, dwClsContext, &foundObject);
-  if (hr == S_OK) {
-    if (flags & REGCLS_MULTIPLEUSE) {
-      if (dwClsContext & CLSCTX_LOCAL_SERVER)
-        hr = CoLockObjectExternal(foundObject, TRUE, FALSE);
-      IUnknown_Release(foundObject);
-      apartment_release(apt);
-      return hr;
-    }
-    IUnknown_Release(foundObject);
-    ERR("object already registered for class %s\n", debugstr_guid(rclsid));
-    apartment_release(apt);
-    return CO_E_OBJISREG;
-  }
-
-  newClass = HeapAlloc(GetProcessHeap(), 0, sizeof(RegisteredClass));
-  if ( newClass == NULL )
-  {
-    apartment_release(apt);
-    return E_OUTOFMEMORY;
-  }
-
-  newClass->classIdentifier = *rclsid;
-  newClass->apartment_id    = apt->oxid;
-  newClass->runContext      = dwClsContext;
-  newClass->connectFlags    = flags;
-  newClass->RpcRegistration = NULL;
-
-  if (!(newClass->dwCookie = InterlockedIncrement( &next_cookie )))
-      newClass->dwCookie = InterlockedIncrement( &next_cookie );
-
-  /*
-   * Since we're making a copy of the object pointer, we have to increase its
-   * reference count.
-   */
-  newClass->classObject     = pUnk;
-  IUnknown_AddRef(newClass->classObject);
-
-  EnterCriticalSection( &csRegisteredClassList );
-  list_add_tail(&RegisteredClassList, &newClass->entry);
-  LeaveCriticalSection( &csRegisteredClassList );
-
-  *lpdwRegister = newClass->dwCookie;
-
-  if (dwClsContext & CLSCTX_LOCAL_SERVER) {
-      IStream *marshal_stream;
-
-      hr = apartment_get_local_server_stream(apt, &marshal_stream);
-      if(FAILED(hr))
-      {
-          apartment_release(apt);
-          return hr;
-      }
-
-      hr = RPC_StartLocalServer(&newClass->classIdentifier,
-                                marshal_stream,
-                                flags & (REGCLS_MULTIPLEUSE|REGCLS_MULTI_SEPARATE),
-                                &newClass->RpcRegistration);
-      IStream_Release(marshal_stream);
-  }
-  apartment_release(apt);
-  return S_OK;
 }
 
 /***********************************************************************
@@ -1296,67 +997,6 @@ HRESULT WINAPI CoSuspendClassObjects(void)
 }
 
 /***********************************************************************
- *           CoAddRefServerProcess [OLE32.@]
- *
- * Helper function for incrementing the reference count of a local-server
- * process.
- *
- * RETURNS
- *  New reference count.
- *
- * SEE ALSO
- *  CoReleaseServerProcess().
- */
-ULONG WINAPI CoAddRefServerProcess(void)
-{
-    ULONG refs;
-
-    TRACE("\n");
-
-    EnterCriticalSection(&csRegisteredClassList);
-    refs = ++s_COMServerProcessReferences;
-    LeaveCriticalSection(&csRegisteredClassList);
-
-    TRACE("refs before: %d\n", refs - 1);
-
-    return refs;
-}
-
-/***********************************************************************
- *           CoReleaseServerProcess [OLE32.@]
- *
- * Helper function for decrementing the reference count of a local-server
- * process.
- *
- * RETURNS
- *  New reference count.
- *
- * NOTES
- *  When reference count reaches 0, this function suspends all registered
- *  classes so no new connections are accepted.
- *
- * SEE ALSO
- *  CoAddRefServerProcess(), CoSuspendClassObjects().
- */
-ULONG WINAPI CoReleaseServerProcess(void)
-{
-    ULONG refs;
-
-    TRACE("\n");
-
-    EnterCriticalSection(&csRegisteredClassList);
-
-    refs = --s_COMServerProcessReferences;
-    /* FIXME: if (!refs) COM_SuspendClassObjects(); */
-
-    LeaveCriticalSection(&csRegisteredClassList);
-
-    TRACE("refs after: %d\n", refs);
-
-    return refs;
-}
-
-/***********************************************************************
  *           CoIsHandlerConnected [OLE32.@]
  *
  * Determines whether a proxy is connected to a remote stub.
@@ -1683,7 +1323,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID reserved)
         if (reserved) break;
         release_std_git();
         RPC_UnregisterAllChannelHooks();
-        DeleteCriticalSection(&csRegisteredClassList);
         apartment_global_cleanup();
         break;
 

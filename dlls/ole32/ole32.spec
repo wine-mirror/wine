@@ -6,7 +6,7 @@
 @ stdcall CLSIDFromProgID(wstr ptr) combase.CLSIDFromProgID
 @ stdcall CLSIDFromProgIDEx(wstr ptr) combase.CLSIDFromProgIDEx
 @ stdcall CLSIDFromString(wstr ptr) combase.CLSIDFromString
-@ stdcall CoAddRefServerProcess()
+@ stdcall CoAddRefServerProcess() combase.CoAddRefServerProcess
 @ stdcall CoAllowSetForegroundWindow(ptr ptr)
 @ stdcall CoBuildVersion()
 @ stdcall CoCopyProxy(ptr ptr) combase.CoCopyProxy
@@ -65,7 +65,7 @@
 @ stdcall CoQueryProxyBlanket(ptr ptr ptr ptr ptr ptr ptr ptr) combase.CoQueryProxyBlanket
 @ stub CoQueryReleaseObject
 @ stdcall CoRegisterChannelHook(ptr ptr)
-@ stdcall CoRegisterClassObject(ptr ptr long long ptr)
+@ stdcall CoRegisterClassObject(ptr ptr long long ptr) combase.CoRegisterClassObject
 @ stdcall CoRegisterInitializeSpy(ptr ptr) combase.CoRegisterInitializeSpy
 @ stdcall CoRegisterMallocSpy(ptr) combase.CoRegisterMallocSpy
 @ stdcall CoRegisterMessageFilter(ptr ptr) combase.CoRegisterMessageFilter
@@ -73,10 +73,10 @@
 @ stdcall CoRegisterSurrogate(ptr)
 @ stdcall CoRegisterSurrogateEx(ptr ptr)
 @ stdcall CoReleaseMarshalData(ptr)
-@ stdcall CoReleaseServerProcess()
+@ stdcall CoReleaseServerProcess() combase.CoReleaseServerProcess
 @ stdcall CoResumeClassObjects()
 @ stdcall CoRevertToSelf() combase.CoRevertToSelf
-@ stdcall CoRevokeClassObject(long)
+@ stdcall CoRevokeClassObject(long) combase.CoRevokeClassObject
 @ stdcall CoRevokeInitializeSpy(int64) combase.CoRevokeInitializeSpy
 @ stdcall CoRevokeMallocSpy() combase.CoRevokeMallocSpy
 @ stdcall CoSetProxyBlanket(ptr long long ptr long long ptr long) combase.CoSetProxyBlanket
@@ -298,8 +298,6 @@
 @ stdcall WriteFmtUserTypeStg(ptr long ptr)
 @ stub WriteOleStg
 @ stub WriteStringStream
-@ stdcall InternalGetRegisteredClassObject(ptr ptr long ptr)
-@ stdcall InternalRevokeAllClasses(ptr)
 @ stdcall Internal_apartment_disconnectproxies(ptr)
 @ stdcall Internal_RPC_ExecuteCall(ptr)
 @ stdcall Internal_stub_manager_int_release(ptr)

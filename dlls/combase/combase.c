@@ -47,6 +47,8 @@ extern HRESULT WINAPI Ole32DllGetClassObject(REFCLSID rclsid, REFIID riid, void 
  */
 static LONG com_lockcount;
 
+static LONG com_server_process_refcount;
+
 struct comclassredirect_data
 {
     ULONG size;
@@ -112,6 +114,57 @@ static CRITICAL_SECTION_DEBUG psclsid_cs_debug =
       0, 0, { (DWORD_PTR)(__FILE__ ": cs_registered_psclsid_list") }
 };
 static CRITICAL_SECTION cs_registered_ps = { &psclsid_cs_debug, -1, 0, 0, 0, 0 };
+
+/*
+ * TODO: Make this data structure aware of inter-process communication. This
+ *       means that parts of this will be exported to rpcss.
+ */
+struct registered_class
+{
+    struct list entry;
+    CLSID clsid;
+    OXID apartment_id;
+    IUnknown *object;
+    DWORD clscontext;
+    DWORD flags;
+    DWORD cookie;
+    void *RpcRegistration;
+};
+
+static struct list registered_classes = LIST_INIT(registered_classes);
+
+static CRITICAL_SECTION registered_classes_cs;
+static CRITICAL_SECTION_DEBUG registered_classes_cs_debug =
+{
+    0, 0, &registered_classes_cs,
+    { &registered_classes_cs_debug.ProcessLocksList, &registered_classes_cs_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": registered_classes_cs") }
+};
+static CRITICAL_SECTION registered_classes_cs = { &registered_classes_cs_debug, -1, 0, 0, 0, 0 };
+
+IUnknown * com_get_registered_class_object(const struct apartment *apt, REFCLSID rclsid, DWORD clscontext)
+{
+    struct registered_class *cur;
+    IUnknown *object = NULL;
+
+    EnterCriticalSection(&registered_classes_cs);
+
+    LIST_FOR_EACH_ENTRY(cur, &registered_classes, struct registered_class, entry)
+    {
+        if ((apt->oxid == cur->apartment_id) &&
+            (clscontext & cur->clscontext) &&
+            IsEqualGUID(&cur->clsid, rclsid))
+        {
+            object = cur->object;
+            IUnknown_AddRef(cur->object);
+            break;
+        }
+    }
+
+    LeaveCriticalSection(&registered_classes_cs);
+
+    return object;
+}
 
 static struct init_spy *get_spy_entry(struct tlsdata *tlsdata, unsigned int id)
 {
@@ -1498,8 +1551,8 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoGetClassObject(REFCLSID rclsid, DWORD clscont
         COSERVERINFO *server_info, REFIID riid, void **obj)
 {
     struct class_reg_data clsreg = { 0 };
-    IUnknown *regClassObject;
     HRESULT hr = E_UNEXPECTED;
+    IUnknown *registered_obj;
     struct apartment *apt;
 
     TRACE("%s, %s\n", debugstr_guid(rclsid), debugstr_guid(riid));
@@ -1558,10 +1611,10 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoGetClassObject(REFCLSID rclsid, DWORD clscont
      * First, try and see if we can't match the class ID with one of the
      * registered classes.
      */
-    if (InternalGetRegisteredClassObject(apt, rclsid, clscontext, &regClassObject) == S_OK)
+    if ((registered_obj = com_get_registered_class_object(apt, rclsid, clscontext)))
     {
-        hr = IUnknown_QueryInterface(regClassObject, riid, obj);
-        IUnknown_Release(regClassObject);
+        hr = IUnknown_QueryInterface(registered_obj, riid, obj);
+        IUnknown_Release(registered_obj);
         apartment_release(apt);
         return hr;
     }
@@ -2676,6 +2729,215 @@ HRESULT WINAPI CoGetApartmentType(APTTYPE *type, APTTYPEQUALIFIER *qualifier)
     return tlsdata->apt ? S_OK : CO_E_NOTINITIALIZED;
 }
 
+/******************************************************************************
+ *        CoRegisterClassObject    (combase.@)
+ * BUGS
+ *  MSDN claims that multiple interface registrations are legal, but we
+ *  can't do that with our current implementation.
+ */
+HRESULT WINAPI CoRegisterClassObject(REFCLSID rclsid, IUnknown *object, DWORD clscontext,
+        DWORD flags, DWORD *cookie)
+{
+    static LONG next_cookie;
+
+    struct registered_class *newclass;
+    IUnknown *found_object;
+    struct apartment *apt;
+    HRESULT hr = S_OK;
+
+    TRACE("%s, %p, %#x, %#x, %p\n", debugstr_guid(rclsid), object, clscontext, flags, cookie);
+
+    if (!cookie || !object)
+        return E_INVALIDARG;
+
+    if (!(apt = apartment_get_current_or_mta()))
+    {
+        ERR("COM was not initialized\n");
+        return CO_E_NOTINITIALIZED;
+    }
+
+    *cookie = 0;
+
+    /* REGCLS_MULTIPLEUSE implies registering as inproc server. This is what
+     * differentiates the flag from REGCLS_MULTI_SEPARATE. */
+    if (flags & REGCLS_MULTIPLEUSE)
+        clscontext |= CLSCTX_INPROC_SERVER;
+
+    /*
+     * First, check if the class is already registered.
+     * If it is, this should cause an error.
+     */
+    if ((found_object = com_get_registered_class_object(apt, rclsid, clscontext)))
+    {
+        if (flags & REGCLS_MULTIPLEUSE)
+        {
+            if (clscontext & CLSCTX_LOCAL_SERVER)
+                hr = CoLockObjectExternal(found_object, TRUE, FALSE);
+            IUnknown_Release(found_object);
+            apartment_release(apt);
+            return hr;
+        }
+
+        IUnknown_Release(found_object);
+        ERR("object already registered for class %s\n", debugstr_guid(rclsid));
+        apartment_release(apt);
+        return CO_E_OBJISREG;
+    }
+
+    newclass = heap_alloc(sizeof(*newclass));
+    if (!newclass)
+    {
+        apartment_release(apt);
+        return E_OUTOFMEMORY;
+    }
+
+    newclass->clsid = *rclsid;
+    newclass->apartment_id = apt->oxid;
+    newclass->clscontext = clscontext;
+    newclass->flags = flags;
+    newclass->RpcRegistration = NULL;
+
+    if (!(newclass->cookie = InterlockedIncrement(&next_cookie)))
+        newclass->cookie = InterlockedIncrement(&next_cookie);
+
+    newclass->object = object;
+    IUnknown_AddRef(newclass->object);
+
+    EnterCriticalSection(&registered_classes_cs);
+    list_add_tail(&registered_classes, &newclass->entry);
+    LeaveCriticalSection(&registered_classes_cs);
+
+    *cookie = newclass->cookie;
+
+    if (clscontext & CLSCTX_LOCAL_SERVER)
+    {
+        IStream *marshal_stream;
+
+        hr = apartment_get_local_server_stream(apt, &marshal_stream);
+        if(FAILED(hr))
+        {
+            apartment_release(apt);
+            return hr;
+        }
+
+        hr = rpc_start_local_server(&newclass->clsid, marshal_stream, flags & (REGCLS_MULTIPLEUSE|REGCLS_MULTI_SEPARATE),
+                &newclass->RpcRegistration);
+        IStream_Release(marshal_stream);
+    }
+
+    apartment_release(apt);
+    return S_OK;
+}
+
+static void com_revoke_class_object(struct registered_class *entry)
+{
+    list_remove(&entry->entry);
+
+    if (entry->clscontext & CLSCTX_LOCAL_SERVER)
+        rpc_stop_local_server(entry->RpcRegistration);
+
+    IUnknown_Release(entry->object);
+    heap_free(entry);
+}
+
+void apartment_revoke_all_classes(const struct apartment *apt)
+{
+    struct registered_class *cur, *cur2;
+
+    EnterCriticalSection(&registered_classes_cs);
+
+    LIST_FOR_EACH_ENTRY_SAFE(cur, cur2, &registered_classes, struct registered_class, entry)
+    {
+        if (cur->apartment_id == apt->oxid)
+            com_revoke_class_object(cur);
+    }
+
+    LeaveCriticalSection(&registered_classes_cs);
+}
+
+/***********************************************************************
+ *           CoRevokeClassObject    (combase.@)
+ */
+HRESULT WINAPI DECLSPEC_HOTPATCH CoRevokeClassObject(DWORD cookie)
+{
+    HRESULT hr = E_INVALIDARG;
+    struct registered_class *cur;
+    struct apartment *apt;
+
+    TRACE("%#x\n", cookie);
+
+    if (!(apt = apartment_get_current_or_mta()))
+    {
+        ERR("COM was not initialized\n");
+        return CO_E_NOTINITIALIZED;
+    }
+
+    EnterCriticalSection(&registered_classes_cs);
+
+    LIST_FOR_EACH_ENTRY(cur, &registered_classes, struct registered_class, entry)
+    {
+        if (cur->cookie != cookie)
+            continue;
+
+        if (cur->apartment_id == apt->oxid)
+        {
+            com_revoke_class_object(cur);
+            hr = S_OK;
+        }
+        else
+        {
+            ERR("called from wrong apartment, should be called from %s\n", wine_dbgstr_longlong(cur->apartment_id));
+            hr = RPC_E_WRONG_THREAD;
+        }
+
+        break;
+    }
+
+    LeaveCriticalSection(&registered_classes_cs);
+    apartment_release(apt);
+
+    return hr;
+}
+
+/***********************************************************************
+ *           CoAddRefServerProcess    (combase.@)
+ */
+ULONG WINAPI CoAddRefServerProcess(void)
+{
+    ULONG refs;
+
+    TRACE("\n");
+
+    EnterCriticalSection(&registered_classes_cs);
+    refs = ++com_server_process_refcount;
+    LeaveCriticalSection(&registered_classes_cs);
+
+    TRACE("refs before: %d\n", refs - 1);
+
+    return refs;
+}
+
+/***********************************************************************
+ *           CoReleaseServerProcess [OLE32.@]
+ */
+ULONG WINAPI CoReleaseServerProcess(void)
+{
+    ULONG refs;
+
+    TRACE("\n");
+
+    EnterCriticalSection(&registered_classes_cs);
+
+    refs = --com_server_process_refcount;
+    /* FIXME: suspend objects */
+
+    LeaveCriticalSection(&registered_classes_cs);
+
+    TRACE("refs after: %d\n", refs);
+
+    return refs;
+}
+
 /***********************************************************************
  *            DllMain     (combase.@)
  */
@@ -2687,6 +2949,10 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, LPVOID reserved)
     {
     case DLL_PROCESS_ATTACH:
         hProxyDll = hinstDLL;
+        break;
+    case DLL_PROCESS_DETACH:
+        if (reserved) break;
+        DeleteCriticalSection(&registered_classes_cs);
         break;
     }
 

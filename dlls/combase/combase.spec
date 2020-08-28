@@ -73,7 +73,7 @@
 @ stub CleanupOleStateInAllTls
 @ stdcall CleanupTlsOleState(ptr)
 @ stub ClearCleanupFlag
-@ stdcall CoAddRefServerProcess() ole32.CoAddRefServerProcess
+@ stdcall CoAddRefServerProcess()
 @ stub CoAllowUnmarshalerCLSID
 @ stub CoCancelCall
 @ stdcall CoCopyProxy(ptr ptr)
@@ -139,7 +139,7 @@
 @ stdcall CoQueryProxyBlanket(ptr ptr ptr ptr ptr ptr ptr ptr)
 @ stub CoReactivateObject
 @ stub CoRegisterActivationFilter
-@ stdcall CoRegisterClassObject(ptr ptr long long ptr) ole32.CoRegisterClassObject
+@ stdcall CoRegisterClassObject(ptr ptr long long ptr)
 @ stdcall CoRegisterInitializeSpy(ptr ptr)
 @ stdcall CoRegisterMallocSpy(ptr)
 @ stdcall CoRegisterMessageFilter(ptr ptr)
@@ -147,11 +147,11 @@
 @ stdcall CoRegisterSurrogate(ptr) ole32.CoRegisterSurrogate
 @ stdcall CoRegisterSurrogateEx(ptr ptr) ole32.CoRegisterSurrogateEx
 @ stdcall CoReleaseMarshalData(ptr) ole32.CoReleaseMarshalData
-@ stdcall CoReleaseServerProcess() ole32.CoReleaseServerProcess
+@ stdcall CoReleaseServerProcess()
 @ stdcall CoResumeClassObjects() ole32.CoResumeClassObjects
 @ stub CoRetireServer
 @ stdcall CoRevertToSelf()
-@ stdcall CoRevokeClassObject(long) ole32.CoRevokeClassObject
+@ stdcall CoRevokeClassObject(long)
 @ stdcall CoRevokeInitializeSpy(int64)
 @ stdcall CoRevokeMallocSpy()
 @ stub CoSetCancelObject
@@ -359,5 +359,4 @@
 @ stdcall apartment_getwindow(ptr)
 @ stdcall apartment_global_cleanup()
 @ stdcall apartment_createwindowifneeded(ptr)
-@ stdcall apartment_get_local_server_stream(ptr ptr)
 @ stdcall apartment_findfromtid(long)

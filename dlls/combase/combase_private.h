@@ -54,9 +54,6 @@ struct apartment
     struct list usage_cookies; /* Used for refcount control with CoIncrementMTAUsage()/CoDecrementMTAUsage(). */
 };
 
-extern HRESULT WINAPI InternalGetRegisteredClassObject(struct apartment *apt, REFGUID guid,
-        DWORD clscontext, IUnknown **obj);
-
 HRESULT open_key_for_clsid(REFCLSID clsid, const WCHAR *keyname, REGSAM access, HKEY *subkey) DECLSPEC_HIDDEN;
 HRESULT open_appidkey_from_clsid(REFCLSID clsid, REGSAM access, HKEY *subkey) DECLSPEC_HIDDEN;
 
@@ -112,6 +109,8 @@ void apartment_freeunusedlibraries(struct apartment *apt, DWORD unload_delay) DE
 /* RpcSs interface */
 HRESULT rpcss_get_next_seqid(DWORD *id) DECLSPEC_HIDDEN;
 HRESULT rpc_get_local_class_object(REFCLSID rclsid, REFIID riid, void **obj) DECLSPEC_HIDDEN;
+HRESULT rpc_start_local_server(REFCLSID clsid, IStream *stream, BOOL multi_use, void **registration) DECLSPEC_HIDDEN;
+void rpc_stop_local_server(void *registration) DECLSPEC_HIDDEN;
 
 /* stub managers hold refs on the object and each interface stub */
 struct stub_manager
@@ -171,6 +170,10 @@ void apartment_decrement_mta_usage(CO_MTA_USAGE_COOKIE cookie) DECLSPEC_HIDDEN;
 struct apartment * apartment_get_mta(void) DECLSPEC_HIDDEN;
 HRESULT apartment_get_inproc_class_object(struct apartment *apt, const struct class_reg_data *regdata,
         REFCLSID rclsid, REFIID riid, BOOL hostifnecessary, void **ppv) DECLSPEC_HIDDEN;
+HRESULT apartment_get_local_server_stream(struct apartment *apt, IStream **ret) DECLSPEC_HIDDEN;
+IUnknown *com_get_registered_class_object(const struct apartment *apartment, REFCLSID rclsid,
+        DWORD clscontext) DECLSPEC_HIDDEN;
+void apartment_revoke_all_classes(const struct apartment *apt) DECLSPEC_HIDDEN;
 
 /* Stub Manager */
 

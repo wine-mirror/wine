@@ -285,9 +285,6 @@ static ULONG WINAPI local_server_Release(IServiceProvider *iface)
     return refcount;
 }
 
-extern HRESULT WINAPI InternalGetRegisteredClassObject(struct apartment *apt, REFGUID guid,
-        DWORD clscontext, IUnknown **obj);
-
 static HRESULT WINAPI local_server_QueryService(IServiceProvider *iface, REFGUID guid, REFIID riid, void **obj)
 {
     struct local_server *local_server = impl_from_IServiceProvider(iface);
@@ -300,7 +297,7 @@ static HRESULT WINAPI local_server_QueryService(IServiceProvider *iface, REFGUID
     if (!local_server->apt)
         return E_UNEXPECTED;
 
-    if (SUCCEEDED(InternalGetRegisteredClassObject(apt, guid, CLSCTX_LOCAL_SERVER, &unk)))
+    if ((unk = com_get_registered_class_object(apt, guid, CLSCTX_LOCAL_SERVER)))
     {
         hr = IUnknown_QueryInterface(unk, riid, obj);
         IUnknown_Release(unk);
@@ -317,7 +314,7 @@ static const IServiceProviderVtbl local_server_vtbl =
     local_server_QueryService
 };
 
-HRESULT WINAPI apartment_get_local_server_stream(struct apartment *apt, IStream **ret)
+HRESULT apartment_get_local_server_stream(struct apartment *apt, IStream **ret)
 {
     HRESULT hr = S_OK;
 
@@ -446,7 +443,6 @@ void apartment_freeunusedlibraries(struct apartment *apt, DWORD delay)
     LeaveCriticalSection(&apt->cs);
 }
 
-extern void WINAPI InternalRevokeAllClasses(struct apartment *apt);
 extern HRESULT WINAPI Internal_apartment_disconnectproxies(struct apartment *apt);
 extern ULONG WINAPI Internal_stub_manager_int_release(struct stub_manager *stubmgr);
 
@@ -499,7 +495,7 @@ void WINAPI apartment_release(struct apartment *apt)
         }
 
         /* Release the references to the registered class objects */
-        InternalRevokeAllClasses(apt);
+        apartment_revoke_all_classes(apt);
 
         /* no locking is needed for this apartment, because no other thread
          * can access it at this point */
