@@ -469,6 +469,82 @@ static NTSTATUS set_output_info( struct screen_buffer *screen_buffer,
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS write_output( struct screen_buffer *screen_buffer, const struct condrv_output_params *params,
+                              size_t in_size, size_t *out_size )
+{
+    unsigned int i, entry_size, entry_cnt, x, y;
+    char_info_t *dest;
+    char *src;
+
+    entry_size = params->mode == CHAR_INFO_MODE_TEXTATTR ? sizeof(char_info_t) : sizeof(WCHAR);
+    entry_cnt = (in_size - sizeof(*params)) / entry_size;
+
+    TRACE( "(%u,%u) cnt %u\n", params->x, params->y, entry_cnt );
+
+    if (params->x >= screen_buffer->width)
+    {
+        *out_size = 0;
+        return STATUS_SUCCESS;
+    }
+
+    for (i = 0, src = (char *)(params + 1); i < entry_cnt; i++, src += entry_size)
+    {
+        if (params->width)
+        {
+            x = params->x + i % params->width;
+            y = params->y + i / params->width;
+            if (x >= screen_buffer->width) continue;
+        }
+        else
+        {
+            x = (params->x + i) % screen_buffer->width;
+            y = params->y + (params->x + i) / screen_buffer->width;
+        }
+        if (y >= screen_buffer->height) break;
+
+        dest = &screen_buffer->data[y * screen_buffer->width + x];
+        switch(params->mode)
+        {
+        case CHAR_INFO_MODE_TEXT:
+            dest->ch = *(const WCHAR *)src;
+            break;
+        case CHAR_INFO_MODE_ATTR:
+            dest->attr = *(const unsigned short *)src;
+            break;
+        case CHAR_INFO_MODE_TEXTATTR:
+            *dest = *(const char_info_t *)src;
+            break;
+        case CHAR_INFO_MODE_TEXTSTDATTR:
+            dest->ch   = *(const WCHAR *)src;
+            dest->attr = screen_buffer->attr;
+            break;
+        default:
+            return STATUS_INVALID_PARAMETER;
+        }
+    }
+
+    if (*out_size == sizeof(SMALL_RECT))
+    {
+        SMALL_RECT *region;
+        unsigned int width = params->width;
+        x = params->x;
+        y = params->y;
+        if (!(region = alloc_ioctl_buffer( sizeof(*region )))) return STATUS_NO_MEMORY;
+        region->Left   = x;
+        region->Top    = y;
+        region->Right  = min( x + width, screen_buffer->width ) - 1;
+        region->Bottom = min( y + entry_cnt / width, screen_buffer->height ) - 1;
+    }
+    else
+    {
+        DWORD *result;
+        if (!(result = alloc_ioctl_buffer( sizeof(*result )))) return STATUS_NO_MEMORY;
+        *result = i;
+    }
+
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS set_console_title( struct console *console, const WCHAR *in_title, size_t size )
 {
     WCHAR *title = NULL;
@@ -516,6 +592,12 @@ static NTSTATUS screen_buffer_ioctl( struct screen_buffer *screen_buffer, unsign
         screen_buffer->mode = *(unsigned int *)in_data;
         TRACE( "set %x mode\n", screen_buffer->mode );
         return STATUS_SUCCESS;
+
+    case IOCTL_CONDRV_WRITE_OUTPUT:
+        if ((*out_size != sizeof(DWORD) && *out_size != sizeof(SMALL_RECT)) ||
+            in_size < sizeof(struct condrv_output_params))
+            return STATUS_INVALID_PARAMETER;
+        return write_output( screen_buffer, in_data, in_size, out_size );
 
     case IOCTL_CONDRV_GET_OUTPUT_INFO:
         if (in_size || *out_size < sizeof(struct condrv_output_info)) return STATUS_INVALID_PARAMETER;
