@@ -115,7 +115,7 @@ static void *alloc_ioctl_buffer( size_t size )
 static int screen_buffer_compare_id( const void *key, const struct wine_rb_entry *entry )
 {
     struct screen_buffer *screen_buffer = WINE_RB_ENTRY_VALUE( entry, struct screen_buffer, entry );
-    return (unsigned int)key - screen_buffer->id;
+    return PtrToLong(key) - screen_buffer->id;
 }
 
 static struct wine_rb_tree screen_buffer_map = { screen_buffer_compare_id };
@@ -165,7 +165,7 @@ static struct screen_buffer *create_screen_buffer( struct console *console, int 
         memcpy( &screen_buffer->data[i * screen_buffer->width], screen_buffer->data,
                 screen_buffer->width * sizeof(char_info_t) );
 
-    if (wine_rb_put( &screen_buffer_map, (const void *)id, &screen_buffer->entry ))
+    if (wine_rb_put( &screen_buffer_map, LongToPtr(id), &screen_buffer->entry ))
     {
         ERR( "id %x already exists\n", id );
         return NULL;
@@ -898,7 +898,7 @@ static NTSTATUS process_console_ioctls( struct console *console )
         else
         {
             struct wine_rb_entry *entry;
-            if (!(entry = wine_rb_get( &screen_buffer_map, (const void *)output )))
+            if (!(entry = wine_rb_get( &screen_buffer_map, LongToPtr(output) )))
             {
                 ERR( "invalid screen buffer id %x\n", output );
                 status = STATUS_INVALID_HANDLE;
