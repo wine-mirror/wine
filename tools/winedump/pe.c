@@ -1412,7 +1412,7 @@ static void dump_arm64_packed_info( const struct runtime_function_arm64 *func )
     {
         if (func->u.s.RegF % 2 == 0)
             printf( "    %04x:  str d%u,[sp,#%#x]\n", pos++, 8 + func->u.s.RegF, intsz + fpsz - 8 );
-        for (i = func->u.s.RegF / 2 - 1; i >= 0; i--)
+        for (i = (func->u.s.RegF - 1)/ 2; i >= 0; i--)
         {
             if (!i && !intsz)
                 printf( "    %04x:  stp d8,d9,[sp,-#%#x]!\n", pos++, savesz );
