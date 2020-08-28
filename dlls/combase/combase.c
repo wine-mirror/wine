@@ -403,6 +403,36 @@ HRESULT WINAPI InternalTlsAllocData(struct tlsdata **data)
     return S_OK;
 }
 
+static void com_cleanup_tlsdata(void)
+{
+    struct tlsdata *tlsdata = NtCurrentTeb()->ReservedForOle;
+    struct init_spy *cursor, *cursor2;
+
+    if (!tlsdata)
+        return;
+
+    if (tlsdata->apt)
+        apartment_release(tlsdata->apt);
+    if (tlsdata->errorinfo)
+        IErrorInfo_Release(tlsdata->errorinfo);
+    if (tlsdata->state)
+        IUnknown_Release(tlsdata->state);
+
+    LIST_FOR_EACH_ENTRY_SAFE(cursor, cursor2, &tlsdata->spies, struct init_spy, entry)
+    {
+        list_remove(&cursor->entry);
+        if (cursor->spy)
+            IInitializeSpy_Release(cursor->spy);
+        heap_free(cursor);
+    }
+
+    if (tlsdata->context_token)
+        IObjContext_Release(tlsdata->context_token);
+
+    heap_free(tlsdata);
+    NtCurrentTeb()->ReservedForOle = NULL;
+}
+
 /***********************************************************************
  *           FreePropVariantArray    (combase.@)
  */
@@ -2954,6 +2984,9 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, LPVOID reserved)
         if (reserved) break;
         apartment_global_cleanup();
         DeleteCriticalSection(&registered_classes_cs);
+        break;
+    case DLL_THREAD_DETACH:
+        com_cleanup_tlsdata();
         break;
     }
 

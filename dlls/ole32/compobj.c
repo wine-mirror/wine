@@ -489,31 +489,6 @@ HRESULT WINAPI ManualResetEvent_CreateInstance(IClassFactory *iface, IUnknown *o
     return hr;
 }
 
-static void COM_TlsDestroy(void)
-{
-    struct oletls *info = NtCurrentTeb()->ReservedForOle;
-    if (info)
-    {
-        struct init_spy *cursor, *cursor2;
-
-        if (info->apt) apartment_release(info->apt);
-        if (info->errorinfo) IErrorInfo_Release(info->errorinfo);
-        if (info->state) IUnknown_Release(info->state);
-
-        LIST_FOR_EACH_ENTRY_SAFE(cursor, cursor2, &info->spies, struct init_spy, entry)
-        {
-            list_remove(&cursor->entry);
-            if (cursor->spy) IInitializeSpy_Release(cursor->spy);
-            heap_free(cursor);
-        }
-
-        if (info->context_token) IObjContext_Release(info->context_token);
-
-        HeapFree(GetProcessHeap(), 0, info);
-        NtCurrentTeb()->ReservedForOle = NULL;
-    }
-}
-
 /******************************************************************************
  *           CoBuildVersion [OLE32.@]
  *
@@ -1323,10 +1298,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID reserved)
         if (reserved) break;
         release_std_git();
         RPC_UnregisterAllChannelHooks();
-        break;
-
-    case DLL_THREAD_DETACH:
-        COM_TlsDestroy();
         break;
     }
     return TRUE;
