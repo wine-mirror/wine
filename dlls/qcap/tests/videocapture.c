@@ -174,7 +174,30 @@ static void test_stream_config(IPin *pin)
     IAMStreamConfig_Release(stream_config);
 }
 
-static void test_capture(IBaseFilter *filter)
+static void test_pin_interfaces(IPin *pin)
+{
+    todo_wine check_interface(pin, &IID_IAMBufferNegotiation, TRUE);
+    check_interface(pin, &IID_IAMStreamConfig, TRUE);
+    todo_wine check_interface(pin, &IID_IAMStreamControl, TRUE);
+    todo_wine check_interface(pin, &IID_IKsPin, TRUE);
+    check_interface(pin, &IID_IKsPropertySet, TRUE);
+    todo_wine check_interface(pin, &IID_IMediaSeeking, TRUE);
+    check_interface(pin, &IID_IPin, TRUE);
+    todo_wine check_interface(pin, &IID_IQualityControl, TRUE);
+    todo_wine check_interface(pin, &IID_ISpecifyPropertyPages, TRUE);
+
+    check_interface(pin, &IID_IAMCrossbar, FALSE);
+    check_interface(pin, &IID_IAMDroppedFrames, FALSE);
+    check_interface(pin, &IID_IAMFilterMiscFlags, FALSE);
+    check_interface(pin, &IID_IAMPushSource, FALSE);
+    check_interface(pin, &IID_IAMTVTuner, FALSE);
+    check_interface(pin, &IID_IAMVideoCompression, FALSE);
+    check_interface(pin, &IID_IAMVideoProcAmp, FALSE);
+    check_interface(pin, &IID_IPersistPropertyBag, FALSE);
+    check_interface(pin, &IID_IStreamBuilder, FALSE);
+}
+
+static void test_pins(IBaseFilter *filter)
 {
     IEnumPins *enum_pins;
     IPin *pin;
@@ -189,32 +212,18 @@ static void test_capture(IBaseFilter *filter)
         IPin_QueryDirection(pin, &pin_direction);
         if (pin_direction == PINDIR_OUTPUT)
         {
+            test_pin_interfaces(pin);
             test_media_types(pin);
             test_stream_config(pin);
-
-            todo_wine check_interface(pin, &IID_IAMBufferNegotiation, TRUE);
-            check_interface(pin, &IID_IAMStreamConfig, TRUE);
-            todo_wine check_interface(pin, &IID_IAMStreamControl, TRUE);
-            check_interface(pin, &IID_IKsPropertySet, TRUE);
-            todo_wine check_interface(pin, &IID_IMediaSeeking, TRUE);
-            check_interface(pin, &IID_IPin, TRUE);
-            todo_wine check_interface(pin, &IID_IQualityControl, TRUE);
-            todo_wine check_interface(pin, &IID_ISpecifyPropertyPages, TRUE);
-
-            check_interface(pin, &IID_IAMCrossbar, FALSE);
-            check_interface(pin, &IID_IAMDroppedFrames, FALSE);
-            check_interface(pin, &IID_IAMFilterMiscFlags, FALSE);
-            check_interface(pin, &IID_IAMPushSource, FALSE);
-            check_interface(pin, &IID_IAMTVTuner, FALSE);
-            check_interface(pin, &IID_IAMVideoCompression, FALSE);
-            check_interface(pin, &IID_IAMVideoProcAmp, FALSE);
-            check_interface(pin, &IID_IPersistPropertyBag, FALSE);
         }
         IPin_Release(pin);
     }
 
     IEnumPins_Release(enum_pins);
+}
 
+static void test_filter_interfaces(IBaseFilter *filter)
+{
     check_interface(filter, &IID_IAMFilterMiscFlags, TRUE);
     check_interface(filter, &IID_IAMVideoControl, TRUE);
     check_interface(filter, &IID_IAMVideoProcAmp, TRUE);
@@ -287,7 +296,8 @@ START_TEST(videocapture)
         hr = IMoniker_BindToObject(moniker, NULL, NULL, &IID_IBaseFilter, (void**)&filter);
         if (hr == S_OK)
         {
-            test_capture(filter);
+            test_filter_interfaces(filter);
+            test_pins(filter);
             test_misc_flags(filter);
             ref = IBaseFilter_Release(filter);
             ok(!ref, "Got outstanding refcount %d.\n", ref);
