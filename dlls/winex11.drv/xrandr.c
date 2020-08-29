@@ -552,7 +552,7 @@ static BOOL get_gpu_properties_from_vulkan( struct x11drv_gpu *gpu, const XRRPro
     };
     const struct vulkan_funcs *vulkan_funcs = get_vulkan_driver( WINE_VULKAN_DRIVER_VERSION );
     VkResult (*pvkGetRandROutputDisplayEXT)( VkPhysicalDevice, Display *, RROutput, VkDisplayKHR * );
-    PFN_vkGetPhysicalDeviceProperties2 pvkGetPhysicalDeviceProperties2;
+    PFN_vkGetPhysicalDeviceProperties2KHR pvkGetPhysicalDeviceProperties2KHR;
     PFN_vkEnumeratePhysicalDevices pvkEnumeratePhysicalDevices;
     uint32_t device_count, device_idx, output_idx;
     VkPhysicalDevice *vk_physical_devices = NULL;
@@ -587,7 +587,7 @@ static BOOL get_gpu_properties_from_vulkan( struct x11drv_gpu *gpu, const XRRPro
     }
 
     LOAD_VK_FUNC(vkEnumeratePhysicalDevices)
-    LOAD_VK_FUNC(vkGetPhysicalDeviceProperties2)
+    LOAD_VK_FUNC(vkGetPhysicalDeviceProperties2KHR)
     LOAD_VK_FUNC(vkGetRandROutputDisplayEXT)
 #undef LOAD_VK_FUNC
 
@@ -624,7 +624,7 @@ static BOOL get_gpu_properties_from_vulkan( struct x11drv_gpu *gpu, const XRRPro
             properties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
             properties2.pNext = &id;
 
-            pvkGetPhysicalDeviceProperties2( vk_physical_devices[device_idx], &properties2 );
+            pvkGetPhysicalDeviceProperties2KHR( vk_physical_devices[device_idx], &properties2 );
             memcpy( &gpu->vulkan_uuid, id.deviceUUID, sizeof(id.deviceUUID) );
             /* Ignore Khronos vendor IDs */
             if (properties2.properties.vendorID < 0x10000)
