@@ -2622,6 +2622,8 @@ static ULONG WINAPI VMR9_ImagePresenter_Release(IVMRImagePresenter9 *iface)
                 IDirect3DSurface9_Release(surface);
         }
 
+        if (This->d3d9_dev)
+            IDirect3DDevice9_Release(This->d3d9_dev);
         free(This->d3d9_surfaces);
         This->d3d9_surfaces = NULL;
         This->num_surfaces = 0;
