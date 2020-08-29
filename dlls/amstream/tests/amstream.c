@@ -1766,6 +1766,7 @@ static void test_find_pin(void)
 
     IPin_Release(pin2);
     IPin_Release(pin);
+    IMediaStream_Release(stream);
     IMediaStreamFilter_Release(filter);
     ref = IAMMultiMediaStream_Release(mmstream);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
