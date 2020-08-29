@@ -1713,6 +1713,7 @@ static HRESULT gstdecoder_source_get_media_type(struct gstdemux_source *pin,
             gst_caps_unref(caps);
             return S_OK;
         }
+        FreeMediaType(mt);
     }
 
     if (!strcmp(type, "video/x-raw") && index < ARRAY_SIZE(video_formats))
