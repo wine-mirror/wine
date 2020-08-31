@@ -247,13 +247,13 @@ WinMain (HINSTANCE hInstance, HINSTANCE hPrev, LPSTR szCmdLine, int nShow)
         Wow64RevertWow64FsRedirection( redir );
     }
 
-    cmd_ret = ProcessCmdLine(szCmdLine);
-    if (cmd_ret >= 0) return cmd_ret;
-
     if (initialize(hInstance)) {
 	WINE_ERR("initialization failed, aborting\n");
 	ExitProcess(1);
     }
+
+    cmd_ret = ProcessCmdLine(szCmdLine);
+    if (cmd_ret >= 0) return cmd_ret;
 
     /*
      * The next 9 lines should be all that is needed
