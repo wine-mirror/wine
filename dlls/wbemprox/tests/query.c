@@ -1713,6 +1713,7 @@ START_TEST(query)
     BSTR path = SysAllocString( L"ROOT\\CIMV2" );
     IWbemLocator *locator;
     IWbemServices *services;
+    DWORD authn_svc;
     HRESULT hr;
 
     CoInitialize( NULL );
@@ -1727,6 +1728,12 @@ START_TEST(query)
     }
     hr = IWbemLocator_ConnectServer( locator, path, NULL, NULL, NULL, 0, NULL, NULL, &services );
     ok( hr == S_OK, "failed to get IWbemServices interface %08x\n", hr );
+
+    hr = CoQueryProxyBlanket( (IUnknown *)services, NULL, NULL, NULL, NULL, NULL, NULL, NULL );
+    ok( hr == S_OK, "failed to query proxy blanket %08x\n", hr );
+
+    hr = CoQueryProxyBlanket( (IUnknown *)services, &authn_svc, NULL, NULL, NULL, NULL, NULL, NULL );
+    ok( hr == S_OK, "failed to query proxy blanket %08x\n", hr );
 
     hr = CoSetProxyBlanket( (IUnknown *)services, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, NULL,
                             RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE, NULL, EOAC_NONE );

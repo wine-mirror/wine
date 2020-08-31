@@ -88,8 +88,24 @@ static HRESULT WINAPI client_security_QueryBlanket(
     void **pAuthInfo,
     DWORD *pCapabilities )
 {
-    FIXME("\n");
-    return WBEM_E_FAILED;
+    FIXME("semi-stub.\n");
+
+    if (pAuthnSvc)
+        *pAuthnSvc = RPC_C_AUTHN_NONE;
+    if (pAuthzSvc)
+        *pAuthzSvc = RPC_C_AUTHZ_NONE;
+    if (pServerPrincName)
+        *pServerPrincName = NULL;
+    if (pAuthnLevel)
+        *pAuthnLevel = RPC_C_AUTHN_LEVEL_NONE;
+    if (pImpLevel)
+        *pImpLevel = RPC_C_IMP_LEVEL_DEFAULT;
+    if (pAuthInfo)
+        *pAuthInfo = NULL;
+    if (pCapabilities)
+        *pCapabilities = 0;
+
+    return WBEM_NO_ERROR;
 }
 
 static HRESULT WINAPI client_security_SetBlanket(
