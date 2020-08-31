@@ -1567,6 +1567,8 @@ static void test_registry_mapping(void)
 
     ret = RegDeleteKeyA(HKEY_LOCAL_MACHINE, "Software\\winetest_name2");
     ok(!ret, "got error %u\n", ret);
+    ret = RegDeleteKeyA(HKEY_CURRENT_USER, "winetest_name1");
+    ok(!ret, "got error %u\n", ret);
     ret = RegDeleteKeyA(mapped_key, "");
     ok(!ret, "got error %u\n", ret);
     RegCloseKey(mapped_key);
