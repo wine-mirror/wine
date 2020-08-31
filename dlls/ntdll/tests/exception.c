@@ -52,6 +52,7 @@ static NTSTATUS  (WINAPI *pRtlInitializeExtendedContext)(void *context, ULONG co
 static NTSTATUS  (WINAPI *pRtlInitializeExtendedContext2)(void *context, ULONG context_flags, CONTEXT_EX **context_ex,
         ULONG64 compaction_mask);
 static void *    (WINAPI *pRtlLocateExtendedFeature)(CONTEXT_EX *context_ex, ULONG feature_id, ULONG *length);
+static void *    (WINAPI *pRtlLocateLegacyContext)(CONTEXT_EX *context_ex, ULONG *length);
 static NTSTATUS  (WINAPI *pNtReadVirtualMemory)(HANDLE, const void*, void*, SIZE_T, SIZE_T*);
 static NTSTATUS  (WINAPI *pNtTerminateProcess)(HANDLE handle, LONG exit_code);
 static NTSTATUS  (WINAPI *pNtQueryInformationProcess)(HANDLE, PROCESSINFOCLASS, PVOID, ULONG, PULONG);
@@ -6307,6 +6308,18 @@ static void test_extended_context(void)
             ok(!context_ex->XState.Length,
                     "Got unexpected Length %#x, flags %#x.\n", context_ex->XState.Length, flags);
 
+            if (0)
+            {
+                /* Crashes on Windows. */
+                pRtlLocateLegacyContext(NULL, NULL);
+            }
+            p = pRtlLocateLegacyContext(context_ex, NULL);
+            ok(p == context, "Got unexpected p %p, flags %#x.\n", p, flags);
+            length2 = 0xdeadbeef;
+            p = pRtlLocateLegacyContext(context_ex, &length2);
+            ok(p == context && length2 == context_ex->Legacy.Length,
+                    "Got unexpected p %p, length %#x, flags %#x.\n", p, length2, flags);
+            length2 = expected_length;
 
             for (j = 0; j < context_arch[test].flags_offset; ++j)
             {
@@ -6738,6 +6751,7 @@ START_TEST(exception)
     X(RtlInitializeExtendedContext);
     X(RtlInitializeExtendedContext2);
     X(RtlLocateExtendedFeature);
+    X(RtlLocateLegacyContext);
 #undef X
 
 #define X(f) p##f = (void*)GetProcAddress(hkernel32, #f)

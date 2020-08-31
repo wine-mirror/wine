@@ -850,3 +850,14 @@ void * WINAPI RtlLocateExtendedFeature( CONTEXT_EX *context_ex, ULONG feature_id
 {
     return RtlLocateExtendedFeature2( context_ex, feature_id, &user_shared_data->XState, length );
 }
+
+/**********************************************************************
+ *              RtlLocateLegacyContext      (NTDLL.@)
+ */
+void * WINAPI RtlLocateLegacyContext( CONTEXT_EX *context_ex, ULONG *length )
+{
+    if (length)
+        *length = context_ex->Legacy.Length;
+
+    return (BYTE *)context_ex + context_ex->Legacy.Offset;
+}

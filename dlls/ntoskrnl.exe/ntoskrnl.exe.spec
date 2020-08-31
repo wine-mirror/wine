@@ -1176,6 +1176,7 @@
 @ stdcall RtlLocalTimeToSystemTime(ptr ptr)
 @ stdcall RtlLocateExtendedFeature(ptr long ptr)
 @ stdcall RtlLocateExtendedFeature2(ptr long ptr ptr)
+@ stdcall RtlLocateLegacyContext(ptr ptr)
 @ stub RtlLockBootStatusData
 @ stdcall RtlLookupAtomInAtomTable(ptr wstr ptr)
 @ stub RtlLookupElementGenericTable
