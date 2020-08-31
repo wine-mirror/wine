@@ -673,6 +673,102 @@ static NTSTATUS fill_output( struct screen_buffer *screen_buffer, const struct c
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS scroll_output( struct screen_buffer *screen_buffer, const struct condrv_scroll_params *params )
+{
+    int x, y, xsrc, ysrc, w, h;
+    char_info_t *psrc, *pdst;
+    SMALL_RECT src, dst;
+    SMALL_RECT clip;
+
+    xsrc = params->scroll.Left;
+    ysrc = params->scroll.Top;
+    w = params->scroll.Right - params->scroll.Left + 1;
+    h = params->scroll.Bottom - params->scroll.Top + 1;
+
+    TRACE( "(%d %d) -> (%u %u) w %u h %u\n", xsrc, ysrc, params->origin.X, params->origin.Y, w, h );
+
+    clip.Left   = max( params->clip.Left, 0 );
+    clip.Top    = max( params->clip.Top,  0 );
+    clip.Right  = min( params->clip.Right,  screen_buffer->width - 1 );
+    clip.Bottom = min( params->clip.Bottom, screen_buffer->height - 1 );
+    if (clip.Left > clip.Right || clip.Top > clip.Bottom || params->scroll.Left < 0 || params->scroll.Top < 0 ||
+        params->scroll.Right >= screen_buffer->width || params->scroll.Bottom >= screen_buffer->height ||
+        params->scroll.Right < params->scroll.Left || params->scroll.Top > params->scroll.Bottom ||
+        params->origin.X < 0 || params->origin.X >= screen_buffer->width || params->origin.Y < 0 ||
+        params->origin.Y >= screen_buffer->height)
+        return STATUS_INVALID_PARAMETER;
+
+    src.Left   = max( xsrc, clip.Left );
+    src.Top    = max( ysrc, clip.Top );
+    src.Right  = min( xsrc + w - 1, clip.Right );
+    src.Bottom = min( ysrc + h - 1, clip.Bottom );
+
+    dst.Left   = params->origin.X;
+    dst.Top    = params->origin.Y;
+    dst.Right  = params->origin.X + w - 1;
+    dst.Bottom = params->origin.Y + h - 1;
+
+    if (dst.Left < clip.Left)
+    {
+        xsrc += clip.Left - dst.Left;
+        w -= clip.Left - dst.Left;
+        dst.Left = clip.Left;
+    }
+    if (dst.Top < clip.Top)
+    {
+        ysrc += clip.Top - dst.Top;
+        h -= clip.Top - dst.Top;
+        dst.Top = clip.Top;
+    }
+    if (dst.Right  > clip.Right)  w -= dst.Right  - clip.Right;
+    if (dst.Bottom > clip.Bottom) h -= dst.Bottom - clip.Bottom;
+
+    if (w > 0 && h > 0)
+    {
+        if (ysrc < dst.Top)
+        {
+            psrc = &screen_buffer->data[(ysrc + h - 1) * screen_buffer->width + xsrc];
+            pdst = &screen_buffer->data[(dst.Top + h - 1) * screen_buffer->width + dst.Left];
+
+            for (y = h; y > 0; y--)
+            {
+                memcpy( pdst, psrc, w * sizeof(*pdst) );
+                pdst -= screen_buffer->width;
+                psrc -= screen_buffer->width;
+            }
+        }
+        else
+        {
+            psrc = &screen_buffer->data[ysrc * screen_buffer->width + xsrc];
+            pdst = &screen_buffer->data[dst.Top * screen_buffer->width + dst.Left];
+
+            for (y = 0; y < h; y++)
+            {
+                /* we use memmove here because when psrc and pdst are the same,
+                 * copies are done on the same row, so the dst and src blocks
+                 * can overlap */
+                memmove( pdst, psrc, w * sizeof(*pdst) );
+                pdst += screen_buffer->width;
+                psrc += screen_buffer->width;
+            }
+        }
+    }
+
+    for (y = src.Top; y <= src.Bottom; y++)
+    {
+        int left  = src.Left;
+        int right = src.Right;
+        if (dst.Top <= y && y <= dst.Bottom)
+        {
+            if (dst.Left <= src.Left) left  = max( left, dst.Right + 1 );
+            if (dst.Left >= src.Left) right = min( right, dst.Left - 1 );
+        }
+        for (x = left; x <= right; x++) screen_buffer->data[y * screen_buffer->width + x] = params->fill;
+    }
+
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS set_console_title( struct console *console, const WCHAR *in_title, size_t size )
 {
     WCHAR *title = NULL;
@@ -743,6 +839,11 @@ static NTSTATUS screen_buffer_ioctl( struct screen_buffer *screen_buffer, unsign
         if (in_size != sizeof(struct condrv_fill_output_params) || *out_size != sizeof(DWORD))
             return STATUS_INVALID_PARAMETER;
         return fill_output( screen_buffer, in_data );
+
+    case IOCTL_CONDRV_SCROLL:
+        if (in_size != sizeof(struct condrv_scroll_params) || *out_size)
+            return STATUS_INVALID_PARAMETER;
+        return scroll_output( screen_buffer, in_data );
 
     default:
         FIXME( "unsupported ioctl %x\n", code );
