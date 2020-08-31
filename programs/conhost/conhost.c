@@ -623,6 +623,56 @@ static NTSTATUS read_output( struct screen_buffer *screen_buffer, const struct c
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS fill_output( struct screen_buffer *screen_buffer, const struct condrv_fill_output_params *params )
+{
+    char_info_t *end, *dest;
+    DWORD i, count, *result;
+
+    TRACE( "(%u %u) mode %u\n", params->x, params->y, params->mode );
+
+    dest = screen_buffer->data + params->y * screen_buffer->width + params->x;
+
+    if (params->y >= screen_buffer->height) return STATUS_SUCCESS;
+
+    if (params->wrap)
+        end = screen_buffer->data + screen_buffer->height * screen_buffer->width;
+    else
+        end = screen_buffer->data + (params->y + 1) * screen_buffer->width;
+
+    count = params->count;
+    if (count > end - dest) count = end - dest;
+
+    switch(params->mode)
+    {
+    case CHAR_INFO_MODE_TEXT:
+        for (i = 0; i < count; i++) dest[i].ch = params->ch;
+        break;
+    case CHAR_INFO_MODE_ATTR:
+        for (i = 0; i < count; i++) dest[i].attr = params->attr;
+        break;
+    case CHAR_INFO_MODE_TEXTATTR:
+        for (i = 0; i < count; i++)
+        {
+            dest[i].ch   = params->ch;
+            dest[i].attr = params->attr;
+        }
+        break;
+    case CHAR_INFO_MODE_TEXTSTDATTR:
+        for (i = 0; i < count; i++)
+        {
+            dest[i].ch   = params->ch;
+            dest[i].attr = screen_buffer->attr;
+        }
+        break;
+    default:
+        return STATUS_INVALID_PARAMETER;
+    }
+
+    if (!(result = alloc_ioctl_buffer( sizeof(*result) ))) return STATUS_NO_MEMORY;
+    *result = count;
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS set_console_title( struct console *console, const WCHAR *in_title, size_t size )
 {
     WCHAR *title = NULL;
@@ -688,6 +738,11 @@ static NTSTATUS screen_buffer_ioctl( struct screen_buffer *screen_buffer, unsign
     case IOCTL_CONDRV_SET_OUTPUT_INFO:
         if (in_size < sizeof(struct condrv_output_info) || *out_size) return STATUS_INVALID_PARAMETER;
         return set_output_info( screen_buffer, in_data, in_size );
+
+    case IOCTL_CONDRV_FILL_OUTPUT:
+        if (in_size != sizeof(struct condrv_fill_output_params) || *out_size != sizeof(DWORD))
+            return STATUS_INVALID_PARAMETER;
+        return fill_output( screen_buffer, in_data );
 
     default:
         FIXME( "unsupported ioctl %x\n", code );
