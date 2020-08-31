@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include "wine/heap.h"
 #include "wine/unicode.h"
 #include "winecfg.h"
 #include "resource.h"
@@ -73,6 +74,8 @@ static const struct win_version win_versions[] =
     { "win20",       "Windows 2.0",       2,  0,     0, VER_PLATFORM_WIN32s, "Win32s 1.3", 0, 0, ""}
 #endif
 };
+
+#define DEFAULT_WIN_VERSION   "win7"
 
 static const char szKey9x[] = "Software\\Microsoft\\Windows\\CurrentVersion";
 static const char szKeyNT[] = "Software\\Microsoft\\Windows NT\\CurrentVersion";
@@ -146,7 +149,7 @@ static void update_comboboxes(HWND dialog)
             return;
         }
         if (ver != -1) winver = strdupA( win_versions[ver].szVersion );
-        else winver = strdupA("win7");
+        else winver = strdupA(DEFAULT_WIN_VERSION);
     }
     WINE_TRACE("winver is %s\n", winver);
 
@@ -496,6 +499,25 @@ void print_windows_versions(void)
     {
         printf("  %10s  %s\n", win_versions[i].szVersion, win_versions[i].szDescription);
     }
+}
+
+void print_current_winver(void)
+{
+    char *winver = get_reg_key(config_key, keypath(""), "Version", "");
+
+    if (!winver || !winver[0])
+    {
+        int ver = get_registry_version();
+
+        if (ver == -1)
+            printf(DEFAULT_WIN_VERSION "\n");
+        else
+            printf("%s\n", win_versions[ver].szVersion);
+    }
+    else
+        printf("%s\n", winver);
+
+    heap_free(winver);
 }
 
 static void on_winver_change(HWND dialog)
