@@ -3887,7 +3887,7 @@ static void test_ProcThreadAttributeList(void)
         expect_list.count++;
     }
 
-    ret = pUpdateProcThreadAttribute(&list, 0, PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE, handles, sizeof(PROCESSOR_NUMBER), NULL, NULL);
+    ret = pUpdateProcThreadAttribute(&list, 0, PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE, handles, sizeof(handles[0]), NULL, NULL);
     ok(ret || broken(GetLastError() == ERROR_NOT_SUPPORTED), "got %d gle %d\n", ret, GetLastError());
 
     if (ret)
