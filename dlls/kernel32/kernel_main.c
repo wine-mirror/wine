@@ -147,19 +147,6 @@ static BOOL process_attach( HMODULE module )
             LoadLibraryA( "krnl386.exe16" );
     }
 
-    if (params->ConsoleHandle == KERNEL32_CONSOLE_ALLOC)
-    {
-        HMODULE mod = GetModuleHandleA(0);
-        params->ConsoleHandle = NULL;
-        if (RtlImageNtHeader(mod)->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
-            AllocConsole();
-    }
-    /* else TODO for DETACHED_PROCESS:
-     * 1/ inherit console + handles
-     * 2/ create std handles, if handles are not inherited
-     * TBD when not using wineserver handles for console handles
-     */
-
     return TRUE;
 }
 

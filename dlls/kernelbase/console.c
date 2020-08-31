@@ -1729,5 +1729,15 @@ HRESULT WINAPI ResizePseudoConsole( HPCON handle, COORD size )
 
 void init_console( void )
 {
+    RTL_USER_PROCESS_PARAMETERS *params = RtlGetCurrentPeb()->ProcessParameters;
+
+    if (params->ConsoleHandle == CONSOLE_HANDLE_ALLOC)
+    {
+        HMODULE mod = GetModuleHandleW( NULL );
+        params->ConsoleHandle = NULL;
+        if (RtlImageNtHeader( mod )->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
+            AllocConsole();
+    }
+
     RtlAddVectoredExceptionHandler( FALSE, handle_ctrl_c );
 }

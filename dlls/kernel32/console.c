@@ -1129,7 +1129,7 @@ BOOL CONSOLE_Init(RTL_USER_PROCESS_PARAMETERS *params)
      */
     if (!params->hStdInput || params->hStdInput == INVALID_HANDLE_VALUE)
         params->hStdInput = 0;
-    else if (VerifyConsoleIoHandle(params->hStdInput))
+    else if (!is_console_handle(params->hStdInput) && VerifyConsoleIoHandle(params->hStdInput))
     {
         params->hStdInput = console_handle_map(params->hStdInput);
         save_console_mode(params->hStdInput);
@@ -1137,12 +1137,12 @@ BOOL CONSOLE_Init(RTL_USER_PROCESS_PARAMETERS *params)
 
     if (!params->hStdOutput || params->hStdOutput == INVALID_HANDLE_VALUE)
         params->hStdOutput = 0;
-    else if (VerifyConsoleIoHandle(params->hStdOutput))
+    else if (!is_console_handle(params->hStdOutput) && VerifyConsoleIoHandle(params->hStdOutput))
         params->hStdOutput = console_handle_map(params->hStdOutput);
 
     if (!params->hStdError || params->hStdError == INVALID_HANDLE_VALUE)
         params->hStdError = 0;
-    else if (VerifyConsoleIoHandle(params->hStdError))
+    else if (!is_console_handle(params->hStdError) && VerifyConsoleIoHandle(params->hStdError))
         params->hStdError = console_handle_map(params->hStdError);
 
     return TRUE;

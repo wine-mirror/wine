@@ -226,4 +226,7 @@ enum condrv_renderer_event_type
     CONSOLE_RENDERER_EXIT_EVENT,
 };
 
+/* Wine specific values for console inheritance (params->ConsoleHandle) */
+#define CONSOLE_HANDLE_ALLOC  ((HANDLE)1)
+
 #endif /* _INC_CONDRV */
