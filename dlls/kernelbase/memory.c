@@ -1184,6 +1184,55 @@ DWORD64 WINAPI GetEnabledXStateFeatures(void)
     TRACE( "\n" );
     return RtlGetEnabledExtendedFeatures( ~(ULONG64)0 );
 }
+
+
+/***********************************************************************
+ *             InitializeContext2         (kernelbase.@)
+ */
+BOOL WINAPI InitializeContext2( void *buffer, DWORD context_flags, CONTEXT **context, DWORD *length,
+        ULONG64 compaction_mask )
+{
+    ULONG orig_length;
+    NTSTATUS status;
+
+    TRACE( "buffer %p, context_flags %#x, context %p, ret_length %p, compaction_mask %s.\n",
+            buffer, context_flags, context, length, wine_dbgstr_longlong(compaction_mask) );
+
+    orig_length = *length;
+
+    if ((status = RtlGetExtendedContextLength2( context_flags, length, compaction_mask )))
+    {
+        if (status == STATUS_NOT_SUPPORTED && context_flags & 0x40)
+        {
+            context_flags &= ~0x40;
+            status = RtlGetExtendedContextLength2( context_flags, length, compaction_mask );
+        }
+
+        if (status)
+            return set_ntstatus( status );
+    }
+
+    if (!buffer || orig_length < *length)
+    {
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        return FALSE;
+    }
+
+    if ((status = RtlInitializeExtendedContext2( buffer, context_flags, (CONTEXT_EX **)context, compaction_mask )))
+        return set_ntstatus( status );
+
+    *context = (CONTEXT *)((BYTE *)*context + (*(CONTEXT_EX **)context)->Legacy.Offset);
+
+    return TRUE;
+}
+
+/***********************************************************************
+ *             InitializeContext               (kernelbase.@)
+ */
+BOOL WINAPI InitializeContext( void *buffer, DWORD context_flags, CONTEXT **context, DWORD *length )
+{
+    return InitializeContext2( buffer, context_flags, context, length, ~(ULONG64)0 );
+}
 #endif
 
 

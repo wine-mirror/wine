@@ -47,6 +47,9 @@ static void      (WINAPI *pRtlSetUnhandledExceptionFilter)(PRTL_EXCEPTION_FILTER
 static ULONG64   (WINAPI *pRtlGetEnabledExtendedFeatures)(ULONG64);
 static NTSTATUS  (WINAPI *pRtlGetExtendedContextLength)(ULONG context_flags, ULONG *length);
 static NTSTATUS  (WINAPI *pRtlGetExtendedContextLength2)(ULONG context_flags, ULONG *length, ULONG64 compaction_mask);
+static NTSTATUS  (WINAPI *pRtlInitializeExtendedContext)(void *context, ULONG context_flags, CONTEXT_EX **context_ex);
+static NTSTATUS  (WINAPI *pRtlInitializeExtendedContext2)(void *context, ULONG context_flags, CONTEXT_EX **context_ex,
+        ULONG64 compaction_mask);
 static NTSTATUS  (WINAPI *pNtReadVirtualMemory)(HANDLE, const void*, void*, SIZE_T, SIZE_T*);
 static NTSTATUS  (WINAPI *pNtTerminateProcess)(HANDLE handle, LONG exit_code);
 static NTSTATUS  (WINAPI *pNtQueryInformationProcess)(HANDLE, PROCESSINFOCLASS, PVOID, ULONG, PULONG);
@@ -56,6 +59,10 @@ static BOOL      (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
 static NTSTATUS  (WINAPI *pNtClose)(HANDLE);
 static NTSTATUS  (WINAPI *pNtSuspendProcess)(HANDLE process);
 static NTSTATUS  (WINAPI *pNtResumeProcess)(HANDLE process);
+static BOOL      (WINAPI *pInitializeContext)(void *buffer, DWORD context_flags, CONTEXT **context,
+        DWORD *length);
+static BOOL      (WINAPI *pInitializeContext2)(void *buffer, DWORD context_flags, CONTEXT **context,
+        DWORD *length, ULONG64 compaction_mask);
 
 #define RTL_UNLOAD_EVENT_TRACE_NUMBER 64
 
@@ -6024,6 +6031,7 @@ static const unsigned test_extended_context_spoil_data1[8] = {0x10, 0x20, 0x30, 
 static const unsigned test_extended_context_spoil_data2[8] = {0x15, 0x25, 0x35, 0x45, 0x55, 0x65, 0x75, 0x85};
 
 static BOOL test_extended_context_modified_state;
+static BOOL compaction_enabled;
 
 static DWORD test_extended_context_handler(EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
         CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher)
@@ -6032,13 +6040,7 @@ static DWORD test_extended_context_handler(EXCEPTION_RECORD *rec, EXCEPTION_REGI
     CONTEXT_EX *xctx = (CONTEXT_EX *)(context + 1);
     unsigned int *context_ymm_data;
     DWORD expected_min_offset;
-    BOOL compaction;
-    int regs[4];
     XSTATE *xs;
-
-    /* Since we got xstates enabled by OS this cpuid level should be supported. */
-    __cpuidex(regs, 0xd, 1);
-    compaction = regs[0] & 2;
 
     ok((context->ContextFlags & (CONTEXT_FULL | CONTEXT_XSTATE)) == (CONTEXT_FULL | CONTEXT_XSTATE),
             "Got unexpected ContextFlags %#x.\n", context->ContextFlags);
@@ -6070,9 +6072,9 @@ static DWORD test_extended_context_handler(EXCEPTION_RECORD *rec, EXCEPTION_REGI
     context_ymm_data = (unsigned int *)&xs->YmmContext;
     ok(!((ULONG_PTR)xs % 64), "Got unexpected xs %p.\n", xs);
 
-    ok((compaction && (xs->CompactionMask & (expected_compaction_mask | 3)) == expected_compaction_mask)
-            || (!compaction && !xs->CompactionMask), "Got unexpected CompactionMask %s, compaction %#x.\n",
-            wine_dbgstr_longlong(xs->CompactionMask), compaction);
+    ok((compaction_enabled && (xs->CompactionMask & (expected_compaction_mask | 3)) == expected_compaction_mask)
+            || (!compaction_enabled && !xs->CompactionMask), "Got unexpected CompactionMask %s, compaction %#x.\n",
+            wine_dbgstr_longlong(xs->CompactionMask), compaction_enabled);
 
     if (test_extended_context_modified_state)
     {
@@ -6145,8 +6147,10 @@ static void test_extended_context(void)
         ULONG supported_flags;
         ULONG broken_flags;
         ULONG context_length;
+        ULONG legacy_length;
         ULONG context_ex_length;
         ULONG align;
+        ULONG flags_offset;
     }
     context_arch[] =
     {
@@ -6155,24 +6159,34 @@ static void test_extended_context(void)
             0xd800005f,
             0xd8000000,
             0x4d0,       /* sizeof(CONTEXT) */
+            0x4d0,       /* sizeof(CONTEXT) */
             0x20,        /* sizeof(CONTEXT_EX) */
             7,
+            0x30,
         },
         {
             0x00010000,  /* CONTEXT_X86  */
             0xd800007f,
             0xd8000000,
             0x2cc,       /* sizeof(CONTEXT) */
+            0xcc,        /* offsetof(CONTEXT, ExtendedRegisters) */
             0x18,        /* sizeof(CONTEXT_EX) */
             3,
+            0,
         },
     };
-    ULONG expected_length, expected_length_xstate;
-    unsigned int i, address_offset, test;
+    ULONG expected_length, expected_length_xstate, context_flags, expected_offset;
+    DECLSPEC_ALIGN(64) BYTE context_buffer2[2048];
+    DECLSPEC_ALIGN(64) BYTE context_buffer[2048];
+    unsigned int i, j, address_offset, test;
+    ULONG ret, ret2, length, length2, align;
     ULONG64 enabled_features;
-    ULONG ret, length;
+    CONTEXT_EX *context_ex;
+    CONTEXT *context;
     unsigned data[8];
     ULONG flags;
+    XSTATE *xs;
+    BOOL bret;
 
     address_offset = sizeof(void *) == 8 ? 2 : 1;
     *(void **)(except_code_set_ymm0 + address_offset) = data;
@@ -6185,6 +6199,14 @@ static void test_extended_context(void)
     }
 
     enabled_features = pRtlGetEnabledExtendedFeatures(~(ULONG64)0);
+
+    if (enabled_features)
+    {
+        int regs[4];
+
+        __cpuidex(regs, 0xd, 1);
+        compaction_enabled = regs[0] & 2;
+    }
 
     /* Test context manipulation functions. */
     length = 0xdeadbeef;
@@ -6211,7 +6233,7 @@ static void test_extended_context(void)
                 continue;
 
             flags = context_arch[test].flag | (1 << i);
-            length = 0xdeadbeef;
+            length = length2 = 0xdeadbeef;
             ret = pRtlGetExtendedContextLength(flags, &length);
 
             if ((context_arch[test].supported_flags & flags) || flags == context_arch[test].flag)
@@ -6227,6 +6249,133 @@ static void test_extended_context(void)
                 ok(ret == STATUS_INVALID_PARAMETER && length == 0xdeadbeef,
                         "Got unexpected result ret %#x, length %#x, flags 0x%08x.\n", ret, length, flags);
             }
+
+            SetLastError(0xdeadbeef);
+            bret = pInitializeContext(NULL, flags, NULL, &length2);
+            ok(!bret && length2 == length && GetLastError()
+                    == (!ret ? ERROR_INSUFFICIENT_BUFFER : ERROR_INVALID_PARAMETER),
+                    "Got unexpected bret %#x, length2 %#x, GetLastError() %u, flags %#x.\n",
+                    bret, length2, GetLastError(), flags);
+
+            if (GetLastError() == ERROR_INVALID_PARAMETER)
+                continue;
+
+            SetLastError(0xdeadbeef);
+            context = (void *)0xdeadbeef;
+            length2 = expected_length - 1;
+            bret = pInitializeContext(context_buffer, flags, &context, &length2);
+            ok(!bret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+                    "Got unexpected bret %#x, GetLastError() %u, flags %#x.\n", bret, GetLastError(), flags);
+            ok(context == (void *)0xdeadbeef, "Got unexpected context %p.\n", context);
+
+            SetLastError(0xdeadbeef);
+            memset(context_buffer, 0xcc, sizeof(context_buffer));
+            length2 = expected_length;
+            bret = pInitializeContext(context_buffer, flags, &context, &length2);
+            ok(bret && GetLastError() == 0xdeadbeef,
+                    "Got unexpected bret %#x, GetLastError() %u, flags %#x.\n", bret, GetLastError(), flags);
+            ok(length2 == expected_length, "Got unexpexted length %#x.\n", length);
+            ok((BYTE *)context == context_buffer, "Got unexpected context %p, flags %#x.\n", context, flags);
+
+            context_flags = *(DWORD *)(context_buffer + context_arch[test].flags_offset);
+            ok(context_flags == flags, "Got unexpected ContextFlags %#x, flags %#x.\n", context_flags, flags);
+
+            context_ex = (CONTEXT_EX *)(context_buffer + context_arch[test].context_length);
+            ok(context_ex->Legacy.Offset == -(int)context_arch[test].context_length,
+                    "Got unexpected Offset %d, flags %#x.\n", context_ex->Legacy.Offset, flags);
+            ok(context_ex->Legacy.Length == ((flags & 0x20) ? context_arch[test].context_length
+                    : context_arch[test].legacy_length),
+                    "Got unexpected Length %#x, flags %#x.\n", context_ex->Legacy.Length, flags);
+            ok(context_ex->All.Offset == -(int)context_arch[test].context_length,
+                    "Got unexpected Offset %d, flags %#x.\n", context_ex->All.Offset, flags);
+
+            /* No extra 8 bytes in x64 CONTEXT_EX here. */
+            ok(context_ex->All.Length == context_arch[test].context_length + context_arch[1].context_ex_length,
+                    "Got unexpected Length %#x, flags %#x.\n", context_ex->All.Length, flags);
+
+            ok(context_ex->XState.Offset == 25,
+                    "Got unexpected Offset %d, flags %#x.\n", context_ex->XState.Offset, flags);
+            ok(!context_ex->XState.Length,
+                    "Got unexpected Length %#x, flags %#x.\n", context_ex->XState.Length, flags);
+
+
+            for (j = 0; j < context_arch[test].flags_offset; ++j)
+            {
+                if (context_buffer[j] != 0xcc)
+                {
+                    ok(0, "Buffer data changed at offset %#x.\n", j);
+                    break;
+                }
+            }
+            for (j = context_arch[test].flags_offset + sizeof(context_flags);
+                    j < context_arch[test].context_length; ++j)
+            {
+                if (context_buffer[j] != 0xcc)
+                {
+                    ok(0, "Buffer data changed at offset %#x.\n", j);
+                    break;
+                }
+            }
+            for (j = context_arch[test].context_length + context_arch[test].context_ex_length;
+                    j < sizeof(context_buffer); ++j)
+            {
+                if (context_buffer[j] != 0xcc)
+                {
+                    ok(0, "Buffer data changed at offset %#x.\n", j);
+                    break;
+                }
+            }
+
+            memset(context_buffer2, 0xcc, sizeof(context_buffer2));
+            ret2 = pRtlInitializeExtendedContext(context_buffer2, flags, &context_ex);
+            ok(!ret2, "Got unexpected ret2 %#x, flags %#x.\n", ret2, flags);
+            ok(!memcmp(context_buffer2, context_buffer, sizeof(context_buffer2)),
+                    "Context data do not match, flags %#x.\n", flags);
+
+            memset(context_buffer2, 0xcc, sizeof(context_buffer2));
+            ret2 = pRtlInitializeExtendedContext(context_buffer2 + 2, flags, &context_ex);
+            ok(!ret2, "Got unexpected ret2 %#x, flags %#x.\n", ret2, flags);
+
+            /* Buffer gets aligned to 16 bytes on x64, while returned context length suggests it should be 8. */
+            align = test ? 4 : 16;
+            ok(!memcmp(context_buffer2 + align, context_buffer,
+                    sizeof(context_buffer2) - align),
+                    "Context data do not match, flags %#x.\n", flags);
+
+            SetLastError(0xdeadbeef);
+            memset(context_buffer2, 0xcc, sizeof(context_buffer2));
+            bret = pInitializeContext(context_buffer2 + 2, flags, &context, &length2);
+            ok(bret && GetLastError() == 0xdeadbeef,
+                    "Got unexpected bret %#x, GetLastError() %u, flags %#x.\n", bret, GetLastError(), flags);
+            ok(length2 == expected_length, "Got unexpexted length %#x.\n", length);
+            ok(!memcmp(context_buffer2 + align, context_buffer,
+                    sizeof(context_buffer2) - align),
+                    "Context data do not match, flags %#x.\n", flags);
+
+            if (!pRtlInitializeExtendedContext2 || !pInitializeContext2)
+            {
+                static int once;
+
+                if (!once++)
+                    win_skip("InitializeContext2 is not available.\n");
+                continue;
+            }
+
+            memset(context_buffer2, 0xcc, sizeof(context_buffer2));
+            ret2 = pRtlInitializeExtendedContext2(context_buffer2 + 2, flags, &context_ex, ~(ULONG64)0);
+            ok(!ret2, "Got unexpected ret2 %#x, flags %#x.\n", ret2, flags);
+            ok(!memcmp(context_buffer2 + align, context_buffer,
+                    sizeof(context_buffer2) - align),
+                    "Context data do not match, flags %#x.\n", flags);
+
+            memset(context_buffer2, 0xcc, sizeof(context_buffer2));
+            bret = pInitializeContext2(context_buffer2 + 2, flags, &context, &length2, ~(ULONG64)0);
+            ok(bret && GetLastError() == 0xdeadbeef,
+                    "Got unexpected bret %#x, GetLastError() %u, flags %#x.\n", bret, GetLastError(), flags);
+            ok(length2 == expected_length, "Got unexpexted length %#x.\n", length);
+            ok(!memcmp(context_buffer2 + align, context_buffer,
+                    sizeof(context_buffer2) - align),
+                    "Context data do not match, flags %#x.\n", flags);
         }
 
         flags = context_arch[test].flag | 0x40;
@@ -6238,6 +6387,31 @@ static void test_extended_context(void)
         {
             ok(ret == STATUS_NOT_SUPPORTED && length == 0xdeadbeef,
                     "Got unexpected result ret %#x, length %#x.\n", ret, length);
+
+            context_ex = (void *)0xdeadbeef;
+            ret2 = pRtlInitializeExtendedContext(context_buffer, flags, &context_ex);
+            ok(ret2 == STATUS_NOT_SUPPORTED, "Got unexpected result ret %#x, test %u.\n", ret2, test);
+
+            SetLastError(0xdeadbeef);
+            length2 = sizeof(context_buffer);
+            bret = pInitializeContext(context_buffer, flags, &context, &length2);
+            ok(bret && GetLastError() == 0xdeadbeef,
+                    "Got unexpected bret %#x, GetLastError() %u, flags %#x.\n", bret, GetLastError(), flags);
+            context_flags = *(DWORD *)(context_buffer + context_arch[test].flags_offset);
+            ok(context_flags == (flags & ~0x40), "Got unexpected ContextFlags %#x, flags %#x.\n",
+                    context_flags, flags);
+
+            if (pInitializeContext2)
+            {
+                SetLastError(0xdeadbeef);
+                length2 = sizeof(context_buffer);
+                bret = pInitializeContext2(context_buffer, flags, &context, &length2, ~(ULONG64)0);
+                ok(bret && GetLastError() == 0xdeadbeef,
+                        "Got unexpected bret %#x, GetLastError() %u, flags %#x.\n", bret, GetLastError(), flags);
+                context_flags = *(DWORD *)(context_buffer + context_arch[test].flags_offset);
+                ok(context_flags == (flags & ~0x40), "Got unexpected ContextFlags %#x, flags %#x.\n",
+                        context_flags, flags);
+            }
             continue;
         }
 
@@ -6247,39 +6421,148 @@ static void test_extended_context(void)
         if (!pRtlGetExtendedContextLength2)
         {
             win_skip("RtlGetExtendedContextLength2 is not available.\n");
-            continue;
+        }
+        else
+        {
+            length = 0xdeadbeef;
+            ret = pRtlGetExtendedContextLength2(flags, &length, 7);
+            ok(!ret && length == expected_length_xstate,
+                    "Got unexpected result ret %#x, length %#x, test %u.\n", ret, length, test);
+
+            length = 0xdeadbeef;
+            ret = pRtlGetExtendedContextLength2(flags, &length, ~0);
+            ok(!ret && length >= expected_length_xstate,
+                    "Got unexpected result ret %#x, length %#x, test %u.\n", ret, length, test);
+
+            length = 0xdeadbeef;
+            ret = pRtlGetExtendedContextLength2(flags, &length, 0);
+            ok(!ret && length == expected_length_xstate - sizeof(YMMCONTEXT),
+                    "Got unexpected result ret %#x, length %#x, test %u.\n", ret, length, test);
+
+            length = 0xdeadbeef;
+            ret = pRtlGetExtendedContextLength2(flags, &length, 3);
+            ok(!ret && length == expected_length_xstate - sizeof(YMMCONTEXT),
+                    "Got unexpected result ret %#x, length %#x, test %u.\n", ret, length, test);
+
+            length = 0xdeadbeef;
+            ret = pRtlGetExtendedContextLength2(flags, &length, 4);
+            ok(!ret && length == expected_length_xstate,
+                    "Got unexpected result ret %#x, length %#x, test %u.\n", ret, length, test);
         }
 
-        length = 0xdeadbeef;
-        ret = pRtlGetExtendedContextLength2(flags, &length, 7);
-        ok(!ret && length == expected_length_xstate,
-                "Got unexpected result ret %#x, length %#x, test %u.\n", ret, length, test);
+        pRtlGetExtendedContextLength(flags, &length);
+        SetLastError(0xdeadbeef);
+        bret = pInitializeContext(NULL, flags, NULL, &length2);
+        ok(!bret && length2 == length && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+                "Got unexpected bret %#x, length2 %#x, GetLastError() %u, flags %#x.\n",
+                bret, length2, GetLastError(), flags);
 
-        length = 0xdeadbeef;
-        ret = pRtlGetExtendedContextLength2(flags, &length, ~0);
-        ok(!ret && length >= expected_length_xstate,
-                "Got unexpected result ret %#x, length %#x, test %u.\n", ret, length, test);
+        SetLastError(0xdeadbeef);
+        context = (void *)0xdeadbeef;
+        length2 = length - 1;
+        bret = pInitializeContext(context_buffer, flags, &context, &length2);
+        ok(!bret && GetLastError() == ERROR_INSUFFICIENT_BUFFER && length2 == length && context == (void *)0xdeadbeef,
+                "Got unexpected bret %#x, GetLastError() %u, length2 %#x, flags %#x.\n",
+                bret, GetLastError(), length2, flags);
 
-        length = 0xdeadbeef;
-        ret = pRtlGetExtendedContextLength2(flags, &length, 0);
-        ok(!ret && length == expected_length_xstate - sizeof(YMMCONTEXT),
-                "Got unexpected result ret %#x, length %#x, test %u.\n", ret, length, test);
+        SetLastError(0xdeadbeef);
+        memset(context_buffer, 0xcc, sizeof(context_buffer));
+        length2 = length + 1;
+        bret = pInitializeContext(context_buffer, flags, &context, &length2);
+        ok(bret && GetLastError() == 0xdeadbeef,
+                "Got unexpected bret %#x, GetLastError() %u, flags %#x.\n", bret, GetLastError(), flags);
+        ok(length2 == length, "Got unexpexted length %#x.\n", length);
+        ok((BYTE *)context == context_buffer, "Got unexpected context %p.\n", context);
 
-        length = 0xdeadbeef;
-        ret = pRtlGetExtendedContextLength2(flags, &length, 3);
-        ok(!ret && length == expected_length_xstate - sizeof(YMMCONTEXT),
-                "Got unexpected result ret %#x, length %#x, test %u.\n", ret, length, test);
+        context_flags = *(DWORD *)(context_buffer + context_arch[test].flags_offset);
+        ok(context_flags == flags, "Got unexpected ContextFlags %#x, flags %#x.\n", context_flags, flags);
 
-        length = 0xdeadbeef;
-        ret = pRtlGetExtendedContextLength2(flags, &length, 4);
-        ok(!ret && length == expected_length_xstate,
-                "Got unexpected result ret %#x, length %#x, test %u.\n", ret, length, test);
+        context_ex = (CONTEXT_EX *)(context_buffer + context_arch[test].context_length);
+        ok(context_ex->Legacy.Offset == -(int)context_arch[test].context_length,
+                "Got unexpected Offset %d, flags %#x.\n", context_ex->Legacy.Offset, flags);
+        ok(context_ex->Legacy.Length == ((flags & 0x20) ? context_arch[test].context_length
+                : context_arch[test].legacy_length),
+                "Got unexpected Length %#x, flags %#x.\n", context_ex->Legacy.Length, flags);
+
+        expected_offset = (((ULONG_PTR)context + context_arch[test].context_length
+                + context_arch[test].context_ex_length + 63) & ~(ULONG64)63) - (ULONG_PTR)context
+                - context_arch[test].context_length;
+        ok(context_ex->XState.Offset == expected_offset,
+                "Got unexpected Offset %d, flags %#x.\n", context_ex->XState.Offset, flags);
+        ok(context_ex->XState.Length >= sizeof(XSTATE),
+                "Got unexpected Length %#x, flags %#x.\n", context_ex->XState.Length, flags);
+
+        ok(context_ex->All.Offset == -(int)context_arch[test].context_length,
+                "Got unexpected Offset %d, flags %#x.\n", context_ex->All.Offset, flags);
+        /* No extra 8 bytes in x64 CONTEXT_EX here. */
+        ok(context_ex->All.Length == context_arch[test].context_length
+                + context_ex->XState.Offset + context_ex->XState.Length,
+                "Got unexpected Length %#x, flags %#x.\n", context_ex->All.Length, flags);
+
+        xs = (XSTATE *)((BYTE *)context_ex + context_ex->XState.Offset);
+        ok(!xs->Mask, "Got unexpected Mask %s.\n", wine_dbgstr_longlong(xs->Mask));
+        ok(xs->CompactionMask == (compaction_enabled ? ((ULONG64)1 << 63) | enabled_features : 0),
+                "Got unexpected CompactionMask %s.\n", wine_dbgstr_longlong(xs->CompactionMask));
+        ok(!xs->Reserved[0], "Got unexpected Reserved[0]  %s.\n", wine_dbgstr_longlong(xs->Reserved[0]));
+
+        if (pRtlGetExtendedContextLength2)
+        {
+            memset(context_buffer, 0xcc, sizeof(context_buffer));
+            pRtlGetExtendedContextLength2(flags, &length, 0);
+            SetLastError(0xdeadbeef);
+            memset(context_buffer, 0xcc, sizeof(context_buffer));
+            length2 = length;
+            bret = pInitializeContext2(context_buffer, flags, &context, &length2, 0);
+            ok(bret && GetLastError() == 0xdeadbeef,
+                    "Got unexpected bret %#x, GetLastError() %u, flags %#x.\n", bret, GetLastError(), flags);
+            ok(length2 == length, "Got unexpexted length %#x.\n", length);
+            ok((BYTE *)context == context_buffer, "Got unexpected context %p.\n", context);
+
+            context_flags = *(DWORD *)(context_buffer + context_arch[test].flags_offset);
+            ok(context_flags == flags, "Got unexpected ContextFlags %#x, flags %#x.\n", context_flags, flags);
+
+            context_ex = (CONTEXT_EX *)(context_buffer + context_arch[test].context_length);
+            ok(context_ex->Legacy.Offset == -(int)context_arch[test].context_length,
+                    "Got unexpected Offset %d, flags %#x.\n", context_ex->Legacy.Offset, flags);
+            ok(context_ex->Legacy.Length == ((flags & 0x20) ? context_arch[test].context_length
+                    : context_arch[test].legacy_length),
+                    "Got unexpected Length %#x, flags %#x.\n", context_ex->Legacy.Length, flags);
+
+            expected_offset = (((ULONG_PTR)context + context_arch[test].context_length
+                    + context_arch[test].context_ex_length + 63) & ~(ULONG64)63) - (ULONG_PTR)context
+                    - context_arch[test].context_length;
+            ok(context_ex->XState.Offset == expected_offset,
+                    "Got unexpected Offset %d, flags %#x.\n", context_ex->XState.Offset, flags);
+            ok(context_ex->XState.Length == sizeof(XSTATE) - sizeof(YMMCONTEXT),
+                    "Got unexpected Length %#x, flags %#x.\n", context_ex->XState.Length, flags);
+
+            ok(context_ex->All.Offset == -(int)context_arch[test].context_length,
+                    "Got unexpected Offset %d, flags %#x.\n", context_ex->All.Offset, flags);
+            /* No extra 8 bytes in x64 CONTEXT_EX here. */
+            ok(context_ex->All.Length == context_arch[test].context_length
+                    + context_ex->XState.Offset + context_ex->XState.Length,
+                    "Got unexpected Length %#x, flags %#x.\n", context_ex->All.Length, flags);
+
+            xs = (XSTATE *)((BYTE *)context_ex + context_ex->XState.Offset);
+            ok(!xs->Mask, "Got unexpected Mask %s.\n", wine_dbgstr_longlong(xs->Mask));
+            ok(xs->CompactionMask == (compaction_enabled ? (ULONG64)1 << 63 : 0),
+                    "Got unexpected CompactionMask %s.\n", wine_dbgstr_longlong(xs->CompactionMask));
+            ok(!xs->Reserved[0], "Got unexpected Reserved[0]  %s.\n", wine_dbgstr_longlong(xs->Reserved[0]));
+        }
     }
+
+    length = 0xdeadbeef;
+    ret = pRtlGetExtendedContextLength(context_arch[0].flag | context_arch[1].flag, &length);
+    ok(ret == STATUS_INVALID_PARAMETER && length == 0xdeadbeef, "Got unexpected result ret %#x, length %#x.\n",
+            ret, length);
 
     if (0)
     {
         /* Crashes on Windows. */
         pRtlGetExtendedContextLength(CONTEXT_FULL, NULL);
+        length = sizeof(context_buffer);
+        pInitializeContext(context_buffer, CONTEXT_FULL, NULL, &length);
+        pInitializeContext(context_buffer, CONTEXT_FULL, &context, NULL);
     }
 
     if (!(enabled_features & (1 << XSTATE_AVX)))
@@ -6313,6 +6596,7 @@ static void test_extended_context(void)
 START_TEST(exception)
 {
     HMODULE hntdll = GetModuleHandleA("ntdll.dll");
+    HMODULE hkernel32 = GetModuleHandleA("kernel32.dll");
 #if defined(__x86_64__)
     HMODULE hmsvcrt = LoadLibraryA("msvcrt.dll");
 #endif
@@ -6355,10 +6639,17 @@ START_TEST(exception)
     X(RtlGetEnabledExtendedFeatures);
     X(RtlGetExtendedContextLength);
     X(RtlGetExtendedContextLength2);
+    X(RtlInitializeExtendedContext);
+    X(RtlInitializeExtendedContext2);
 #undef X
 
-    pIsWow64Process = (void *)GetProcAddress(GetModuleHandleA("kernel32.dll"), "IsWow64Process");
+#define X(f) p##f = (void*)GetProcAddress(hkernel32, #f)
+    X(IsWow64Process);
     if (!pIsWow64Process || !pIsWow64Process( GetCurrentProcess(), &is_wow64 )) is_wow64 = FALSE;
+
+    X(InitializeContext);
+    X(InitializeContext2);
+#undef X
 
     if (pRtlAddVectoredExceptionHandler && pRtlRemoveVectoredExceptionHandler)
         have_vectored_api = TRUE;

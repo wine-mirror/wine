@@ -671,13 +671,16 @@ static const struct context_parameters
     ULONG arch_flag;
     ULONG supported_flags;
     ULONG context_size;    /* sizeof(CONTEXT) */
+    ULONG legacy_size;     /* Legacy context size */
     ULONG context_ex_size; /* sizeof(CONTEXT_EX) */
-    ULONG alignment;
+    ULONG alignment;       /* Used when computing size of context. */
+    ULONG true_alignment;  /* Used for actual alignment. */
+    ULONG flags_offset;
 }
 arch_context_paramaters[] =
 {
-    {0x00100000, 0xd810005f, 0x4d0, 0x20, 7},
-    {0x00010000, 0xd801007f, 0x2cc, 0x18, 3},
+    {0x00100000, 0xd810005f, 0x4d0, 0x4d0, 0x20, 7, 0xf, 0x30},
+    {0x00010000, 0xd801007f, 0x2cc,  0xcc, 0x18, 3, 0x3,    0},
 };
 
 static const struct context_parameters *context_get_parameters( ULONG context_flags )
@@ -735,4 +738,71 @@ NTSTATUS WINAPI RtlGetExtendedContextLength2( ULONG context_flags, ULONG *length
 NTSTATUS WINAPI RtlGetExtendedContextLength( ULONG context_flags, ULONG *length )
 {
     return RtlGetExtendedContextLength2( context_flags, length, ~(ULONG64)0 );
+}
+
+
+/**********************************************************************
+ *              RtlInitializeExtendedContext2    (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlInitializeExtendedContext2( void *context, ULONG context_flags, CONTEXT_EX **context_ex,
+        ULONG64 compaction_mask )
+{
+    const struct context_parameters *p;
+    ULONG64 supported_mask = 0;
+    CONTEXT_EX *c_ex;
+
+    TRACE( "context %p, context_flags %#x, context_ex %p, compaction_mask %s.\n",
+            context, context_flags, context_ex, wine_dbgstr_longlong(compaction_mask));
+
+    if (!(p = context_get_parameters( context_flags )))
+        return STATUS_INVALID_PARAMETER;
+
+    if ((context_flags & 0x40) && !(supported_mask = RtlGetEnabledExtendedFeatures( ~(ULONG64)0 )))
+        return STATUS_NOT_SUPPORTED;
+
+    context = (void *)(((ULONG_PTR)context + p->true_alignment) & ~p->true_alignment);
+    *(ULONG *)((BYTE *)context + p->flags_offset) = context_flags;
+
+    *context_ex = c_ex = (CONTEXT_EX *)((BYTE *)context + p->context_size);
+    c_ex->Legacy.Offset = c_ex->All.Offset = -(LONG)p->context_size;
+    c_ex->Legacy.Length = context_flags & 0x20 ? p->context_size : p->legacy_size;
+
+    if (context_flags & 0x40)
+    {
+        XSTATE *xs;
+
+        compaction_mask &= supported_mask;
+
+        xs = (XSTATE *)(((ULONG_PTR)c_ex + p->context_ex_size + 63) & ~(ULONG_PTR)63);
+
+        c_ex->XState.Offset = (ULONG_PTR)xs - (ULONG_PTR)c_ex;
+        c_ex->XState.Length = offsetof(XSTATE, YmmContext);
+        compaction_mask &= supported_mask;
+
+        if (compaction_mask & (1 << XSTATE_AVX))
+            c_ex->XState.Length += sizeof(YMMCONTEXT);
+
+        memset( xs, 0, c_ex->XState.Length );
+        if (user_shared_data->XState.CompactionEnabled)
+            xs->CompactionMask = ((ULONG64)1 << 63) | compaction_mask;
+
+        c_ex->All.Length = p->context_size + c_ex->XState.Offset + c_ex->XState.Length;
+    }
+    else
+    {
+        c_ex->XState.Offset = 25; /* According to the tests, it is just 25 if CONTEXT_XSTATE is not specified. */
+        c_ex->XState.Length = 0;
+        c_ex->All.Length = p->context_size + 24; /* sizeof(CONTEXT_EX) minus 8 alignment bytes on x64. */
+    }
+
+    return STATUS_SUCCESS;
+}
+
+
+/**********************************************************************
+ *              RtlInitializeExtendedContext    (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlInitializeExtendedContext( void *context, ULONG context_flags, CONTEXT_EX **context_ex )
+{
+    return RtlInitializeExtendedContext2( context, context_flags, context_ex, ~(ULONG64)0 );
 }
