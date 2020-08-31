@@ -31,6 +31,10 @@ Run programs as "wine program".  For more information and problem
 resolution, read the rest of this file, the Wine man page, and
 especially the wealth of information found at https://www.winehq.org.
 
+Or install with Homebrew:
+
+brew cask install wine-stable
+
 
 3. REQUIREMENTS
 
