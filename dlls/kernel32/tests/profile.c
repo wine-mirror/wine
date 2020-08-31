@@ -591,8 +591,10 @@ static void test_GetPrivateProfileString(const char *content, const char *descri
                                    buf, MAX_PATH, filename);
     ok(ret == 18, "Expected 18, got %d\n", ret);
     len = lstrlenA("section1") + sizeof(CHAR) + lstrlenA("section2") + 2 * sizeof(CHAR);
-    ok(!memcmp(buf, "section1\0section2\0\0", len),
-       "Expected \"section1\\0section2\\0\\0\", got \"%s\"\n", buf);
+
+    ok(!memcmp(buf, "section1\0section2\0", len),
+       "Expected \"section1\\x00section2\\x00\\x00\", got %s\n",
+       debugstr_an(buf, (ret + 2 >= MAX_PATH ? MAX_PATH : ret + 1)));
 
     /* lpAppName is empty */
     memset(buf, 0xc, sizeof(buf));
@@ -667,7 +669,8 @@ static void test_GetPrivateProfileString(const char *content, const char *descri
                                    buf, MAX_PATH, filename);
     ok(ret == 18, "Expected 18, got %d\n", ret);
     ok(!memcmp(buf, "name1\0name2\0name4\0", ret + 1),
-       "Expected \"name1\\0name2\\0name4\\0\", got \"%s\"\n", buf);
+       "Expected \"name1\\x00name2\\x00name4\\x00\\x00\", got %s\n",
+       debugstr_an(buf, (ret + 2 >= MAX_PATH ? MAX_PATH : ret + 1)));
 
     /* lpKeyName is empty */
     memset(buf, 0xc,sizeof(buf));
@@ -794,8 +797,9 @@ static void test_GetPrivateProfileString(const char *content, const char *descri
     ok(ret == 14, "Expected 14, got %d\n", ret);
     len = lstrlenA("section1") + 2 * sizeof(CHAR);
     todo_wine
-    ok(!memcmp(buf, "section1\0secti\0\0", ret + 2),
-       "Expected \"section1\\0secti\\0\\0\", got \"%s\"\n", buf);
+    ok(!memcmp(buf, "section1\0secti\0", ret + 2),
+       "Expected \"section1\\x00secti\\x00\\x00\", got %s\n",
+       debugstr_an(buf, (ret + 2 >= 16 ? 16 : ret + 1)));
 
     /* lpKeyName is NULL, not enough room for final key name */
     memset(buf, 0xc,sizeof(buf));
@@ -804,8 +808,9 @@ static void test_GetPrivateProfileString(const char *content, const char *descri
                                    buf, 16, filename);
     ok(ret == 14, "Expected 14, got %d\n", ret);
     todo_wine
-    ok(!memcmp(buf, "name1\0name2\0na\0\0", ret + 2),
-       "Expected \"name1\\0name2\\0na\\0\\0\", got \"%s\"\n", buf);
+    ok(!memcmp(buf, "name1\0name2\0na\0", ret + 2),
+       "Expected \"name1\\x00name2\\x00na\\x00\\x00\", got %s\n",
+       debugstr_an(buf, (ret + 2 >= 16 ? 16 : ret + 1)));
 
     /* key value has quotation marks which are stripped */
     memset(buf, 0xc,sizeof(buf));
