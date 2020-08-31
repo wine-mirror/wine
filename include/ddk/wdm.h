@@ -1842,6 +1842,8 @@ NTSTATUS  WINAPI RtlInitializeExtendedContext2(void*,ULONG,CONTEXT_EX**,ULONG64)
 ULONG64   WINAPI RtlGetEnabledExtendedFeatures(ULONG64);
 NTSTATUS  WINAPI RtlGetExtendedContextLength(ULONG,ULONG*);
 NTSTATUS  WINAPI RtlGetExtendedContextLength2(ULONG,ULONG*,ULONG64);
+void *    WINAPI RtlLocateExtendedFeature(CONTEXT_EX*,ULONG,ULONG*);
+void *    WINAPI RtlLocateExtendedFeature2(CONTEXT_EX*,ULONG,XSTATE_CONFIGURATION*,ULONG*);
 #endif
 
 #ifdef __x86_64__

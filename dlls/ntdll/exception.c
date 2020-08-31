@@ -806,3 +806,47 @@ NTSTATUS WINAPI RtlInitializeExtendedContext( void *context, ULONG context_flags
 {
     return RtlInitializeExtendedContext2( context, context_flags, context_ex, ~(ULONG64)0 );
 }
+
+
+/**********************************************************************
+ *              RtlLocateExtendedFeature2    (NTDLL.@)
+ */
+void * WINAPI RtlLocateExtendedFeature2( CONTEXT_EX *context_ex, ULONG feature_id,
+        XSTATE_CONFIGURATION *xstate_config, ULONG *length )
+{
+    TRACE( "context_ex %p, feature_id %u, xstate_config %p, length %p.\n",
+            context_ex, feature_id, xstate_config, length );
+
+    if (!xstate_config)
+    {
+        FIXME( "NULL xstate_config.\n" );
+        return NULL;
+    }
+
+    if (xstate_config != &user_shared_data->XState)
+    {
+        FIXME( "Custom xstate configuration is not supported.\n" );
+        return NULL;
+    }
+
+    if (feature_id != XSTATE_AVX)
+        return NULL;
+
+    if (length)
+        *length = sizeof(YMMCONTEXT);
+
+    if (context_ex->XState.Length < sizeof(XSTATE))
+        return NULL;
+
+    return (BYTE *)context_ex + context_ex->XState.Offset + offsetof(XSTATE, YmmContext);
+}
+
+
+/**********************************************************************
+ *              RtlLocateExtendedFeature    (NTDLL.@)
+ */
+void * WINAPI RtlLocateExtendedFeature( CONTEXT_EX *context_ex, ULONG feature_id,
+        ULONG *length )
+{
+    return RtlLocateExtendedFeature2( context_ex, feature_id, &user_shared_data->XState, length );
+}

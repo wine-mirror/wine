@@ -28,6 +28,7 @@
 #include "winnt.h"
 #include "winreg.h"
 #include "winternl.h"
+#include "ddk/wdm.h"
 #include "excpt.h"
 #include "wine/test.h"
 #include "intrin.h"
@@ -50,6 +51,7 @@ static NTSTATUS  (WINAPI *pRtlGetExtendedContextLength2)(ULONG context_flags, UL
 static NTSTATUS  (WINAPI *pRtlInitializeExtendedContext)(void *context, ULONG context_flags, CONTEXT_EX **context_ex);
 static NTSTATUS  (WINAPI *pRtlInitializeExtendedContext2)(void *context, ULONG context_flags, CONTEXT_EX **context_ex,
         ULONG64 compaction_mask);
+static void *    (WINAPI *pRtlLocateExtendedFeature)(CONTEXT_EX *context_ex, ULONG feature_id, ULONG *length);
 static NTSTATUS  (WINAPI *pNtReadVirtualMemory)(HANDLE, const void*, void*, SIZE_T, SIZE_T*);
 static NTSTATUS  (WINAPI *pNtTerminateProcess)(HANDLE handle, LONG exit_code);
 static NTSTATUS  (WINAPI *pNtQueryInformationProcess)(HANDLE, PROCESSINFOCLASS, PVOID, ULONG, PULONG);
@@ -63,6 +65,7 @@ static BOOL      (WINAPI *pInitializeContext)(void *buffer, DWORD context_flags,
         DWORD *length);
 static BOOL      (WINAPI *pInitializeContext2)(void *buffer, DWORD context_flags, CONTEXT **context,
         DWORD *length, ULONG64 compaction_mask);
+static void *    (WINAPI *pLocateXStateFeature)(CONTEXT *context, DWORD feature_id, DWORD *length);
 
 #define RTL_UNLOAD_EVENT_TRACE_NUMBER 64
 
@@ -6151,6 +6154,8 @@ static void test_extended_context(void)
         ULONG context_ex_length;
         ULONG align;
         ULONG flags_offset;
+        ULONG xsavearea_offset;
+        ULONG vector_reg_count;
     }
     context_arch[] =
     {
@@ -6163,6 +6168,8 @@ static void test_extended_context(void)
             0x20,        /* sizeof(CONTEXT_EX) */
             7,
             0x30,
+            0x100,       /* offsetof(CONTEXT, FltSave) */
+            16,
         },
         {
             0x00010000,  /* CONTEXT_X86  */
@@ -6173,6 +6180,8 @@ static void test_extended_context(void)
             0x18,        /* sizeof(CONTEXT_EX) */
             3,
             0,
+            0xcc,        /* offsetof(CONTEXT, ExtendedRegisters) */
+            8,
         },
     };
     ULONG expected_length, expected_length_xstate, context_flags, expected_offset;
@@ -6187,6 +6196,7 @@ static void test_extended_context(void)
     ULONG flags;
     XSTATE *xs;
     BOOL bret;
+    void *p;
 
     address_offset = sizeof(void *) == 8 ? 2 : 1;
     *(void **)(except_code_set_ymm0 + address_offset) = data;
@@ -6220,7 +6230,6 @@ static void test_extended_context(void)
                 + context_arch[test].align;
         expected_length_xstate = context_arch[test].context_length + context_arch[test].context_ex_length
                 + sizeof(XSTATE) + 63;
-
 
         length = 0xdeadbeef;
         ret = pRtlGetExtendedContextLength(context_arch[test].flag, &length);
@@ -6352,6 +6361,26 @@ static void test_extended_context(void)
                     sizeof(context_buffer2) - align),
                     "Context data do not match, flags %#x.\n", flags);
 
+            length2 = 0xdeadbeef;
+            p = pLocateXStateFeature(context, 0, &length2);
+            if (flags & CONTEXT_NATIVE)
+                ok(p == (BYTE *)context + context_arch[test].xsavearea_offset
+                        && length2 == offsetof(XSAVE_FORMAT, XmmRegisters),
+                        "Got unexpected p %p, length %#x, flags %#x.\n", p, length2, flags);
+            else
+                ok(!p && length2 == 0xdeadbeef, "Got unexpected p %p, length %#x, flags %#x.\n", p, length2, flags);
+            length2 = 0xdeadbeef;
+            p = pLocateXStateFeature(context, 1, &length2);
+            if (flags & CONTEXT_NATIVE)
+                ok(p == (BYTE *)context + context_arch[test].xsavearea_offset + offsetof(XSAVE_FORMAT, XmmRegisters)
+                        && length2 == sizeof(M128A) * context_arch[test].vector_reg_count,
+                         "Got unexpected p %p, length %#x, flags %#x.\n", p, length2, flags);
+            else
+                ok(!p && length2 == 0xdeadbeef, "Got unexpected p %p, length %#x, flags %#x.\n", p, length2, flags);
+            length2 = 0xdeadbeef;
+            p = pLocateXStateFeature(context, 2, &length2);
+            ok(!p && length2 == 0xdeadbeef, "Got unexpected p %p, length %#x, flags %#x.\n", p, length2, flags);
+
             if (!pRtlInitializeExtendedContext2 || !pInitializeContext2)
             {
                 static int once;
@@ -6361,6 +6390,7 @@ static void test_extended_context(void)
                 continue;
             }
 
+            length2 = expected_length;
             memset(context_buffer2, 0xcc, sizeof(context_buffer2));
             ret2 = pRtlInitializeExtendedContext2(context_buffer2 + 2, flags, &context_ex, ~(ULONG64)0);
             ok(!ret2, "Got unexpected ret2 %#x, flags %#x.\n", ret2, flags);
@@ -6369,13 +6399,22 @@ static void test_extended_context(void)
                     "Context data do not match, flags %#x.\n", flags);
 
             memset(context_buffer2, 0xcc, sizeof(context_buffer2));
-            bret = pInitializeContext2(context_buffer2 + 2, flags, &context, &length2, ~(ULONG64)0);
+            bret = pInitializeContext2(context_buffer2 + 2, flags, &context, &length2, 0);
             ok(bret && GetLastError() == 0xdeadbeef,
                     "Got unexpected bret %#x, GetLastError() %u, flags %#x.\n", bret, GetLastError(), flags);
             ok(length2 == expected_length, "Got unexpexted length %#x.\n", length);
             ok(!memcmp(context_buffer2 + align, context_buffer,
                     sizeof(context_buffer2) - align),
                     "Context data do not match, flags %#x.\n", flags);
+
+            length2 = 0xdeadbeef;
+            p = pLocateXStateFeature(context, 0, &length2);
+            if (flags & CONTEXT_NATIVE)
+                ok(p == (BYTE *)context + context_arch[test].xsavearea_offset
+                        && length2 == offsetof(XSAVE_FORMAT, XmmRegisters),
+                        "Got unexpected p %p, length %#x, flags %#x.\n", p, length2, flags);
+            else
+                ok(!p && length2 == 0xdeadbeef, "Got unexpected p %p, length %#x, flags %#x.\n", p, length2, flags);
         }
 
         flags = context_arch[test].flag | 0x40;
@@ -6500,6 +6539,45 @@ static void test_extended_context(void)
                 "Got unexpected Length %#x, flags %#x.\n", context_ex->All.Length, flags);
 
         xs = (XSTATE *)((BYTE *)context_ex + context_ex->XState.Offset);
+        length2 = 0xdeadbeef;
+        for (i = 0; i < 2; ++i)
+        {
+            p = pRtlLocateExtendedFeature(context_ex, i, &length2);
+            ok(!p && length2 == 0xdeadbeef, "Got unexpected p %p, length %#x.\n", p, length2);
+        }
+
+        p = pRtlLocateExtendedFeature(context_ex, XSTATE_AVX, &length2);
+        ok(length2 == sizeof(YMMCONTEXT), "Got unexpected length %#x.\n", length2);
+        ok(p == &xs->YmmContext, "Got unexpected p %p.\n", p);
+        p = pRtlLocateExtendedFeature(context_ex, XSTATE_AVX, NULL);
+        ok(p == &xs->YmmContext, "Got unexpected p %p.\n", p);
+
+        length2 = 0xdeadbeef;
+        p = pLocateXStateFeature(context, 0, &length2);
+        if (flags & CONTEXT_NATIVE)
+            ok(p == (BYTE *)context + context_arch[test].xsavearea_offset
+                    && length2 == offsetof(XSAVE_FORMAT, XmmRegisters),
+                    "Got unexpected p %p, length %#x, flags %#x.\n", p, length2, flags);
+        else
+            ok(!p && length2 == 0xdeadbeef, "Got unexpected p %p, length %#x, flags %#x.\n", p, length2, flags);
+
+        length2 = 0xdeadbeef;
+        p = pLocateXStateFeature(context, 1, &length2);
+        if (flags & CONTEXT_NATIVE)
+            ok(p == (BYTE *)context + context_arch[test].xsavearea_offset + offsetof(XSAVE_FORMAT, XmmRegisters)
+                    && length2 == sizeof(M128A) * context_arch[test].vector_reg_count,
+                    "Got unexpected p %p, length %#x, flags %#x.\n", p, length2, flags);
+        else
+            ok(!p && length2 == 0xdeadbeef, "Got unexpected p %p, length %#x, flags %#x.\n", p, length2, flags);
+
+        length2 = 0xdeadbeef;
+        p = pLocateXStateFeature(context, 2, &length2);
+        if (flags & CONTEXT_NATIVE)
+            ok(p == &xs->YmmContext && length2 == sizeof(YMMCONTEXT),
+                    "Got unexpected p %p, length %#x, flags %#x.\n", p, length2, flags);
+        else
+            ok(!p && length2 == 0xdeadbeef, "Got unexpected p %p, length %#x, flags %#x.\n", p, length2, flags);
+
         ok(!xs->Mask, "Got unexpected Mask %s.\n", wine_dbgstr_longlong(xs->Mask));
         ok(xs->CompactionMask == (compaction_enabled ? ((ULONG64)1 << 63) | enabled_features : 0),
                 "Got unexpected CompactionMask %s.\n", wine_dbgstr_longlong(xs->CompactionMask));
@@ -6517,6 +6595,24 @@ static void test_extended_context(void)
                     "Got unexpected bret %#x, GetLastError() %u, flags %#x.\n", bret, GetLastError(), flags);
             ok(length2 == length, "Got unexpexted length %#x.\n", length);
             ok((BYTE *)context == context_buffer, "Got unexpected context %p.\n", context);
+
+            length2 = 0xdeadbeef;
+            p = pLocateXStateFeature(context, 0, &length2);
+            if (flags & CONTEXT_NATIVE)
+                ok(p == (BYTE *)context + context_arch[test].xsavearea_offset
+                    && length2 == offsetof(XSAVE_FORMAT, XmmRegisters),
+                    "Got unexpected p %p, length %#x, flags %#x.\n", p, length2, flags);
+            else
+                ok(!p && length2 == 0xdeadbeef, "Got unexpected p %p, length %#x, flags %#x.\n", p, length2, flags);
+
+            length2 = 0xdeadbeef;
+            p = pRtlLocateExtendedFeature(context_ex, 2, &length2);
+            ok(!p && length2 == sizeof(YMMCONTEXT), "Got unexpected p %p, length %#x, flags %#x.\n", p, length2, flags);
+
+            length2 = 0xdeadbeef;
+            p = pLocateXStateFeature(context, 2, &length2);
+            ok(!p && length2 == (flags & CONTEXT_NATIVE) ? sizeof(YMMCONTEXT) : 0xdeadbeef,
+                    "Got unexpected p %p, length %#x, flags %#x.\n", p, length2, flags);
 
             context_flags = *(DWORD *)(context_buffer + context_arch[test].flags_offset);
             ok(context_flags == flags, "Got unexpected ContextFlags %#x, flags %#x.\n", context_flags, flags);
@@ -6641,6 +6737,7 @@ START_TEST(exception)
     X(RtlGetExtendedContextLength2);
     X(RtlInitializeExtendedContext);
     X(RtlInitializeExtendedContext2);
+    X(RtlLocateExtendedFeature);
 #undef X
 
 #define X(f) p##f = (void*)GetProcAddress(hkernel32, #f)
@@ -6649,6 +6746,7 @@ START_TEST(exception)
 
     X(InitializeContext);
     X(InitializeContext2);
+    X(LocateXStateFeature);
 #undef X
 
     if (pRtlAddVectoredExceptionHandler && pRtlRemoveVectoredExceptionHandler)

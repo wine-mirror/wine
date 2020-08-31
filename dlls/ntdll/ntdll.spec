@@ -826,6 +826,8 @@
 @ stdcall RtlLengthSid(ptr)
 @ stdcall RtlLocalTimeToSystemTime(ptr ptr)
 @ stdcall RtlLocaleNameToLcid(wstr ptr long)
+@ stdcall RtlLocateExtendedFeature(ptr long ptr)
+@ stdcall RtlLocateExtendedFeature2(ptr long ptr ptr)
 # @ stub RtlLockBootStatusData
 @ stdcall RtlLockHeap(long)
 # @ stub RtlLockMemoryStreamRegion

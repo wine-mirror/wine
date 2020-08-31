@@ -3,6 +3,6 @@
 @ stdcall RtlGetExtendedContextLength(long ptr) ntdll.RtlGetExtendedContextLength
 @ stub RtlGetExtendedFeaturesMask
 @ stdcall RtlInitializeExtendedContext(ptr long ptr) ntdll.RtlInitializeExtendedContext
-@ stub RtlLocateExtendedFeature
+@ stdcall RtlLocateExtendedFeature(ptr long ptr) ntdll.RtlLocateExtendedFeature
 @ stub RtlLocateLegacyContext
 @ stub RtlSetExtendedFeaturesMask

@@ -1237,6 +1237,57 @@ BOOL WINAPI InitializeContext( void *buffer, DWORD context_flags, CONTEXT **cont
 
 
 /***********************************************************************
+ *           LocateXStateFeature   (kernelbase.@)
+ */
+#if defined(__x86_64__)
+void * WINAPI LocateXStateFeature( CONTEXT *context, DWORD feature_id, DWORD *length )
+{
+    if (!(context->ContextFlags & CONTEXT_AMD64))
+        return NULL;
+
+    if (feature_id >= 2)
+        return ((context->ContextFlags & CONTEXT_XSTATE) == CONTEXT_XSTATE)
+                ? RtlLocateExtendedFeature( (CONTEXT_EX *)(context + 1), feature_id, length ) : NULL;
+
+    if (feature_id == 1)
+    {
+        if (length)
+            *length = sizeof(M128A) * 16;
+
+        return &context->u.FltSave.XmmRegisters;
+    }
+
+    if (length)
+        *length = offsetof(XSAVE_FORMAT, XmmRegisters);
+
+    return &context->u.FltSave;
+}
+#elif defined(__i386__)
+void * WINAPI LocateXStateFeature( CONTEXT *context, DWORD feature_id, DWORD *length )
+{
+    if (!(context->ContextFlags & CONTEXT_X86))
+        return NULL;
+
+    if (feature_id >= 2)
+        return ((context->ContextFlags & CONTEXT_XSTATE) == CONTEXT_XSTATE)
+                ? RtlLocateExtendedFeature( (CONTEXT_EX *)(context + 1), feature_id, length ) : NULL;
+
+    if (feature_id == 1)
+    {
+        if (length)
+            *length = sizeof(M128A) * 8;
+
+        return (BYTE *)&context->ExtendedRegisters + offsetof(XSAVE_FORMAT, XmmRegisters);
+    }
+
+    if (length)
+        *length = offsetof(XSAVE_FORMAT, XmmRegisters);
+
+    return &context->ExtendedRegisters;
+}
+#endif
+
+/***********************************************************************
  * Firmware functions
  ***********************************************************************/
 

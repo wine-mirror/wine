@@ -1071,7 +1071,7 @@
 @ stdcall LocalSize(long)
 @ stdcall -import LocalUnlock(long)
 @ stdcall -import LocaleNameToLCID(wstr long)
-# @ stub LocateXStateFeature
+@ stdcall -import -arch=i386,x86_64 LocateXStateFeature(ptr long ptr)
 @ stdcall -import LockFile(long long long long long)
 @ stdcall -import LockFileEx(long long long long long ptr)
 @ stdcall -import LockResource(long)
