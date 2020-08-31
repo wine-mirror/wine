@@ -136,8 +136,6 @@ void CDECL start_process( LPTHREAD_START_ROUTINE entry, PEB *peb )
 void CDECL __wine_start_process( LPTHREAD_START_ROUTINE entry, PEB *peb )
 #endif
 {
-    BOOL being_debugged;
-
     if (!entry)
     {
         ERR( "%s doesn't have an entry point, it cannot be executed\n",
@@ -147,20 +145,6 @@ void CDECL __wine_start_process( LPTHREAD_START_ROUTINE entry, PEB *peb )
 
     TRACE_(relay)( "\1Starting process %s (entryproc=%p)\n",
                    debugstr_w(peb->ProcessParameters->ImagePathName.Buffer), entry );
-
-    __TRY
-    {
-        if (!CheckRemoteDebuggerPresent( GetCurrentProcess(), &being_debugged ))
-            being_debugged = FALSE;
-
-        SetLastError( 0 );  /* clear error code */
-        if (being_debugged) DbgBreakPoint();
-    }
-    __EXCEPT_ALL
-    {
-        /* do nothing */
-    }
-    __ENDTRY
 
     __TRY
     {

@@ -1049,7 +1049,18 @@ static void test_debugger(void)
                 ok(FALSE, "got way too many exceptions, probably caught in an infinite loop, terminating child\n");
                 pNtTerminateProcess(pi.hProcess, 1);
             }
-            else if (counter >= 2) /* skip startup breakpoint */
+            else if (counter < 2) /* startup breakpoint */
+            {
+                /* breakpoint is inside ntdll */
+                void *ntdll = GetModuleHandleA( "ntdll.dll" );
+                IMAGE_NT_HEADERS *nt = RtlImageNtHeader( ntdll );
+
+                ok( (char *)ctx.Eip >= (char *)ntdll &&
+                    (char *)ctx.Eip < (char *)ntdll + nt->OptionalHeader.SizeOfImage,
+                    "wrong eip %p ntdll %p-%p\n", (void *)ctx.Eip, ntdll,
+                    (char *)ntdll + nt->OptionalHeader.SizeOfImage );
+            }
+            else
             {
                 if (stage == 1)
                 {
@@ -3223,7 +3234,18 @@ static void test_debugger(void)
                 ok(FALSE, "got way too many exceptions, probably caught in an infinite loop, terminating child\n");
                 pNtTerminateProcess(pi.hProcess, 1);
             }
-            else if (counter >= 2) /* skip startup breakpoint */
+            else if (counter < 2) /* startup breakpoint */
+            {
+                /* breakpoint is inside ntdll */
+                void *ntdll = GetModuleHandleA( "ntdll.dll" );
+                IMAGE_NT_HEADERS *nt = RtlImageNtHeader( ntdll );
+
+                ok( (char *)ctx.Rip >= (char *)ntdll &&
+                    (char *)ctx.Rip < (char *)ntdll + nt->OptionalHeader.SizeOfImage,
+                    "wrong rip %p ntdll %p-%p\n", (void *)ctx.Rip, ntdll,
+                    (char *)ntdll + nt->OptionalHeader.SizeOfImage );
+            }
+            else
             {
                 if (stage == 1)
                 {
@@ -4083,7 +4105,18 @@ static void test_debugger(void)
                 ok(FALSE, "got way too many exceptions, probably caught in an infinite loop, terminating child\n");
                 pNtTerminateProcess(pi.hProcess, 1);
             }
-            else if (counter >= 2) /* skip startup breakpoint */
+            else if (counter < 2) /* startup breakpoint */
+            {
+                /* breakpoint is inside ntdll */
+                void *ntdll = GetModuleHandleA( "ntdll.dll" );
+                IMAGE_NT_HEADERS *nt = RtlImageNtHeader( ntdll );
+
+                ok( (char *)ctx.Pc >= (char *)ntdll &&
+                    (char *)ctx.Pc < (char *)ntdll + nt->OptionalHeader.SizeOfImage,
+                    "wrong pc %p ntdll %p-%p\n", (void *)ctx.Pc, ntdll,
+                    (char *)ntdll + nt->OptionalHeader.SizeOfImage );
+            }
+            else
             {
 #if 0  /* RtlRaiseException test disabled for now */
                 if (stage == 1)
@@ -5010,7 +5043,18 @@ static void test_debugger(void)
                 ok(FALSE, "got way too many exceptions, probably caught in an infinite loop, terminating child\n");
                 pNtTerminateProcess(pi.hProcess, 1);
             }
-            else if (counter >= 2) /* skip startup breakpoint */
+            else if (counter < 2) /* startup breakpoint */
+            {
+                /* breakpoint is inside ntdll */
+                void *ntdll = GetModuleHandleA( "ntdll.dll" );
+                IMAGE_NT_HEADERS *nt = RtlImageNtHeader( ntdll );
+
+                ok( (char *)ctx.Pc >= (char *)ntdll &&
+                    (char *)ctx.Pc < (char *)ntdll + nt->OptionalHeader.SizeOfImage,
+                    "wrong pc %p ntdll %p-%p\n", (void *)ctx.Pc, ntdll,
+                    (char *)ntdll + nt->OptionalHeader.SizeOfImage );
+            }
+            else
             {
 #if 0  /* RtlRaiseException test disabled for now */
                 if (stage == 1)
