@@ -1574,12 +1574,11 @@ static BOOL insert_face_in_family_list( Face *face, Family *family )
                 return TRUE;
             }
         }
-        else
-            TRACE("Adding new %s\n", debugstr_w(face->file));
 
         if (style_order( face ) < style_order( cursor )) break;
     }
 
+    TRACE("Adding new %s\n", debugstr_w(face->file));
     list_add_before( &cursor->entry, &face->entry );
     face->family = family;
     family->refcount++;
