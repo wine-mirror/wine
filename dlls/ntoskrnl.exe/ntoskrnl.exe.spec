@@ -1096,6 +1096,8 @@
 @ stub RtlGetDefaultCodePage
 @ stub RtlGetElementGenericTable
 @ stub RtlGetElementGenericTableAvl
+@ stdcall RtlGetExtendedContextLength(long ptr)
+@ stdcall RtlGetExtendedContextLength2(long ptr int64)
 @ stub RtlGetFirstRange
 @ stdcall RtlGetGroupSecurityDescriptor(ptr ptr ptr)
 @ stub RtlGetNextRange

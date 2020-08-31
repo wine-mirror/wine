@@ -45,6 +45,8 @@ static PVOID     (WINAPI *pRtlAddVectoredContinueHandler)(ULONG first, PVECTORED
 static ULONG     (WINAPI *pRtlRemoveVectoredContinueHandler)(PVOID handler);
 static void      (WINAPI *pRtlSetUnhandledExceptionFilter)(PRTL_EXCEPTION_FILTER filter);
 static ULONG64   (WINAPI *pRtlGetEnabledExtendedFeatures)(ULONG64);
+static NTSTATUS  (WINAPI *pRtlGetExtendedContextLength)(ULONG context_flags, ULONG *length);
+static NTSTATUS  (WINAPI *pRtlGetExtendedContextLength2)(ULONG context_flags, ULONG *length, ULONG64 compaction_mask);
 static NTSTATUS  (WINAPI *pNtReadVirtualMemory)(HANDLE, const void*, void*, SIZE_T, SIZE_T*);
 static NTSTATUS  (WINAPI *pNtTerminateProcess)(HANDLE handle, LONG exit_code);
 static NTSTATUS  (WINAPI *pNtQueryInformationProcess)(HANDLE, PROCESSINFOCLASS, PVOID, ULONG, PULONG);
@@ -6099,6 +6101,8 @@ done:
     return ExceptionContinueExecution;
 }
 
+#define CONTEXT_NATIVE (CONTEXT_XSTATE & CONTEXT_CONTROL)
+
 static void test_extended_context(void)
 {
     static BYTE except_code_set_ymm0[] =
@@ -6135,19 +6139,156 @@ static void test_extended_context(void)
         0xc5, 0xfc, 0x11, 0x00,       /* vmovups %ymm0,(%ax) */
         0xc3,                         /* ret  */
     };
-    unsigned int i, address_offset;
+    static const struct
+    {
+        ULONG flag;
+        ULONG supported_flags;
+        ULONG broken_flags;
+        ULONG context_length;
+        ULONG context_ex_length;
+        ULONG align;
+    }
+    context_arch[] =
+    {
+        {
+            0x00100000,  /* CONTEXT_AMD64 */
+            0xd800005f,
+            0xd8000000,
+            0x4d0,       /* sizeof(CONTEXT) */
+            0x20,        /* sizeof(CONTEXT_EX) */
+            7,
+        },
+        {
+            0x00010000,  /* CONTEXT_X86  */
+            0xd800007f,
+            0xd8000000,
+            0x2cc,       /* sizeof(CONTEXT) */
+            0x18,        /* sizeof(CONTEXT_EX) */
+            3,
+        },
+    };
+    ULONG expected_length, expected_length_xstate;
+    unsigned int i, address_offset, test;
+    ULONG64 enabled_features;
+    ULONG ret, length;
     unsigned data[8];
+    ULONG flags;
 
     address_offset = sizeof(void *) == 8 ? 2 : 1;
     *(void **)(except_code_set_ymm0 + address_offset) = data;
     *(void **)(except_code_reset_ymm_state + address_offset) = data;
 
-    if (!pRtlGetEnabledExtendedFeatures || !(pRtlGetEnabledExtendedFeatures(~(ULONG64)0) & (1 << XSTATE_AVX)))
+    if (!pRtlGetEnabledExtendedFeatures)
+    {
+        skip("RtlGetEnabledExtendedFeatures is not available.\n");
+        return;
+    }
+
+    enabled_features = pRtlGetEnabledExtendedFeatures(~(ULONG64)0);
+
+    /* Test context manipulation functions. */
+    length = 0xdeadbeef;
+    ret = pRtlGetExtendedContextLength(0, &length);
+    ok(ret == STATUS_INVALID_PARAMETER && length == 0xdeadbeef, "Got unexpected result ret %#x, length %#x.\n",
+            ret, length);
+
+    for (test = 0; test < ARRAY_SIZE(context_arch); ++test)
+    {
+        expected_length = context_arch[test].context_length + context_arch[test].context_ex_length
+                + context_arch[test].align;
+        expected_length_xstate = context_arch[test].context_length + context_arch[test].context_ex_length
+                + sizeof(XSTATE) + 63;
+
+
+        length = 0xdeadbeef;
+        ret = pRtlGetExtendedContextLength(context_arch[test].flag, &length);
+        ok(!ret && length == expected_length, "Got unexpected result ret %#x, length %#x.\n",
+                ret, length);
+
+        for (i = 0; i < 32; ++i)
+        {
+            if (i == 6) /* CONTEXT_XSTATE */
+                continue;
+
+            flags = context_arch[test].flag | (1 << i);
+            length = 0xdeadbeef;
+            ret = pRtlGetExtendedContextLength(flags, &length);
+
+            if ((context_arch[test].supported_flags & flags) || flags == context_arch[test].flag)
+            {
+                ok((!ret && length == expected_length)
+                        || broken((context_arch[test].broken_flags & (1 << i))
+                        && ret == STATUS_INVALID_PARAMETER && length == 0xdeadbeef),
+                        "Got unexpected result ret %#x, length %#x, flags 0x%08x.\n",
+                        ret, length, flags);
+            }
+            else
+            {
+                ok(ret == STATUS_INVALID_PARAMETER && length == 0xdeadbeef,
+                        "Got unexpected result ret %#x, length %#x, flags 0x%08x.\n", ret, length, flags);
+            }
+        }
+
+        flags = context_arch[test].flag | 0x40;
+
+        length = 0xdeadbeef;
+        ret = pRtlGetExtendedContextLength(flags, &length);
+
+        if (!enabled_features)
+        {
+            ok(ret == STATUS_NOT_SUPPORTED && length == 0xdeadbeef,
+                    "Got unexpected result ret %#x, length %#x.\n", ret, length);
+            continue;
+        }
+
+        ok(!ret && length >= expected_length_xstate,
+                "Got unexpected result ret %#x, length %#x, test %u.\n", ret, length, test);
+
+        if (!pRtlGetExtendedContextLength2)
+        {
+            win_skip("RtlGetExtendedContextLength2 is not available.\n");
+            continue;
+        }
+
+        length = 0xdeadbeef;
+        ret = pRtlGetExtendedContextLength2(flags, &length, 7);
+        ok(!ret && length == expected_length_xstate,
+                "Got unexpected result ret %#x, length %#x, test %u.\n", ret, length, test);
+
+        length = 0xdeadbeef;
+        ret = pRtlGetExtendedContextLength2(flags, &length, ~0);
+        ok(!ret && length >= expected_length_xstate,
+                "Got unexpected result ret %#x, length %#x, test %u.\n", ret, length, test);
+
+        length = 0xdeadbeef;
+        ret = pRtlGetExtendedContextLength2(flags, &length, 0);
+        ok(!ret && length == expected_length_xstate - sizeof(YMMCONTEXT),
+                "Got unexpected result ret %#x, length %#x, test %u.\n", ret, length, test);
+
+        length = 0xdeadbeef;
+        ret = pRtlGetExtendedContextLength2(flags, &length, 3);
+        ok(!ret && length == expected_length_xstate - sizeof(YMMCONTEXT),
+                "Got unexpected result ret %#x, length %#x, test %u.\n", ret, length, test);
+
+        length = 0xdeadbeef;
+        ret = pRtlGetExtendedContextLength2(flags, &length, 4);
+        ok(!ret && length == expected_length_xstate,
+                "Got unexpected result ret %#x, length %#x, test %u.\n", ret, length, test);
+    }
+
+    if (0)
+    {
+        /* Crashes on Windows. */
+        pRtlGetExtendedContextLength(CONTEXT_FULL, NULL);
+    }
+
+    if (!(enabled_features & (1 << XSTATE_AVX)))
     {
         skip("AVX is not supported.\n");
         return;
     }
 
+    /* Test fault exception context. */
     memset(data, 0xff, sizeof(data));
     test_extended_context_modified_state = FALSE;
     run_exception_test(test_extended_context_handler, NULL, except_code_reset_ymm_state,
@@ -6212,6 +6353,8 @@ START_TEST(exception)
     X(RtlGetUnloadEventTrace);
     X(RtlGetUnloadEventTraceEx);
     X(RtlGetEnabledExtendedFeatures);
+    X(RtlGetExtendedContextLength);
+    X(RtlGetExtendedContextLength2);
 #undef X
 
     pIsWow64Process = (void *)GetProcAddress(GetModuleHandleA("kernel32.dll"), "IsWow64Process");

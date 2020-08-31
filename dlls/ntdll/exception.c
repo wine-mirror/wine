@@ -665,3 +665,74 @@ ULONG64 WINAPI RtlGetEnabledExtendedFeatures(ULONG64 feature_mask)
 {
     return user_shared_data->XState.EnabledFeatures & feature_mask;
 }
+
+static const struct context_parameters
+{
+    ULONG arch_flag;
+    ULONG supported_flags;
+    ULONG context_size;    /* sizeof(CONTEXT) */
+    ULONG context_ex_size; /* sizeof(CONTEXT_EX) */
+    ULONG alignment;
+}
+arch_context_paramaters[] =
+{
+    {0x00100000, 0xd810005f, 0x4d0, 0x20, 7},
+    {0x00010000, 0xd801007f, 0x2cc, 0x18, 3},
+};
+
+static const struct context_parameters *context_get_parameters( ULONG context_flags )
+{
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(arch_context_paramaters); ++i)
+    {
+        if (context_flags & arch_context_paramaters[i].arch_flag)
+            return context_flags & ~arch_context_paramaters[i].supported_flags ? NULL : &arch_context_paramaters[i];
+    }
+    return NULL;
+}
+
+
+/**********************************************************************
+ *              RtlGetExtendedContextLength2    (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlGetExtendedContextLength2( ULONG context_flags, ULONG *length, ULONG64 compaction_mask )
+{
+    const struct context_parameters *p;
+    ULONG64 supported_mask;
+    ULONG64 size;
+
+    TRACE( "context_flags %#x, length %p, compaction_mask %s.\n", context_flags, length,
+            wine_dbgstr_longlong(compaction_mask) );
+
+    if (!(p = context_get_parameters( context_flags )))
+        return STATUS_INVALID_PARAMETER;
+
+    if (!(context_flags & 0x40))
+    {
+        *length = p->context_size + p->context_ex_size + p->alignment;
+        return STATUS_SUCCESS;
+    }
+
+    if (!(supported_mask = RtlGetEnabledExtendedFeatures( ~(ULONG64)0) ))
+        return STATUS_NOT_SUPPORTED;
+
+    compaction_mask &= supported_mask;
+
+    size = p->context_size + p->context_ex_size + offsetof(XSTATE, YmmContext) + 63;
+
+    if (compaction_mask & supported_mask & (1 << XSTATE_AVX))
+        size += sizeof(YMMCONTEXT);
+
+    *length = size;
+    return STATUS_SUCCESS;
+}
+
+
+/**********************************************************************
+ *              RtlGetExtendedContextLength    (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlGetExtendedContextLength( ULONG context_flags, ULONG *length )
+{
+    return RtlGetExtendedContextLength2( context_flags, length, ~(ULONG64)0 );
+}
