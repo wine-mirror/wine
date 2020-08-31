@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2019-06-08 18:19-0300\n"
+"PO-Revision-Date: 2020-08-31 09:45-0300\n"
 "Last-Translator: Roberto Augusto Pungartnik <rpungartnik@gmail.com>\n"
 "Language-Team: Portuguese (Brazil)\n"
 "Language: pt_BR\n"
@@ -629,7 +629,7 @@ msgstr "&Cores do Usuário:"
 
 #: comdlg32.rc:289
 msgid "|S&olid"
-msgstr ""
+msgstr "|S&olido"
 
 #: comdlg32.rc:290
 msgid "&Red:"
@@ -666,11 +666,9 @@ msgid "&Define Custom Colors >>"
 msgstr "&Definir Cores Personalizadas >>"
 
 #: comdlg32.rc:312
-#, fuzzy
-#| msgid "&No"
 msgctxt "Solid"
 msgid "&o"
-msgstr "&Não"
+msgstr "Sólid&o"
 
 #: comdlg32.rc:318 regedit.rc:275 regedit.rc:285
 msgid "Find"
@@ -3629,7 +3627,7 @@ msgstr "Controles de Jogos"
 
 #: joy.rc:32
 msgid "Test and configure game controllers."
-msgstr ""
+msgstr "Testar e configurar controle de jogos."
 
 #: jscript.rc:28
 msgid "Error converting object to primitive type"
@@ -3644,10 +3642,8 @@ msgid "Subscript out of range"
 msgstr "Índice fora do intervalo"
 
 #: jscript.rc:31
-#, fuzzy
-#| msgid "Out of paper; "
 msgid "Out of stack space"
-msgstr "Sem papel; "
+msgstr "Sem espaço na pilha"
 
 #: jscript.rc:32
 msgid "Object required"
@@ -3675,15 +3671,15 @@ msgstr "Erro de sintaxe"
 
 #: jscript.rc:38
 msgid "Expected ';'"
-msgstr "';' esperado"
+msgstr "Esperado ';'"
 
 #: jscript.rc:39
 msgid "Expected '('"
-msgstr "'(' esperado"
+msgstr "Esperado '('"
 
 #: jscript.rc:40
 msgid "Expected ')'"
-msgstr "')' esperado"
+msgstr "Esperado ')'"
 
 #: jscript.rc:41
 msgid "Expected identifier"
@@ -3691,7 +3687,7 @@ msgstr "Identificador esperado"
 
 #: jscript.rc:42
 msgid "Expected '='"
-msgstr "'=' esperado"
+msgstr "Esperado '='"
 
 #: jscript.rc:43
 msgid "Invalid character"
@@ -3723,7 +3719,7 @@ msgstr "Rótulo não encontrado"
 
 #: jscript.rc:50
 msgid "Expected '@end'"
-msgstr "'@end' esperado"
+msgstr "Esperado '@end'"
 
 #: jscript.rc:51
 msgid "Conditional compilation is turned off"
@@ -3731,21 +3727,19 @@ msgstr "Compilação condicional está desligada"
 
 #: jscript.rc:52
 msgid "Expected '@'"
-msgstr "'@' esperado"
+msgstr "Esperado '@'"
 
 #: jscript.rc:78
 msgid "Microsoft JScript compilation error"
-msgstr ""
+msgstr "Microsoft JScript erro de compilação"
 
 #: jscript.rc:79
 msgid "Microsoft JScript runtime error"
-msgstr ""
+msgstr "Microsoft JScript erro de execução"
 
 #: jscript.rc:80
-#, fuzzy
-#| msgid "Unknown error"
 msgid "Unknown runtime error"
-msgstr "Erro desconhecido"
+msgstr "Erro de execução desconhecido"
 
 #: jscript.rc:55
 msgid "Number expected"
@@ -3788,16 +3782,12 @@ msgid "JScript object expected"
 msgstr "Objeto JScript esperado"
 
 #: jscript.rc:63
-#, fuzzy
-#| msgid "Array object expected"
 msgid "Enumerator object expected"
-msgstr "Objeto tipo vetor esperado"
+msgstr "Objeto tipo enumerador esperado"
 
 #: jscript.rc:64
-#, fuzzy
-#| msgid "Boolean object expected"
 msgid "Regular Expression object expected"
-msgstr "Objeto booleano esperado"
+msgstr "Esperado objeto de expressão regular"
 
 #: jscript.rc:65
 msgid "Syntax error in regular expression"
@@ -3805,7 +3795,7 @@ msgstr "Erro de sintaxe na expressão regular"
 
 #: jscript.rc:66
 msgid "Exception thrown and not caught"
-msgstr ""
+msgstr "Exceção lancada e não capturada"
 
 #: jscript.rc:68
 msgid "URI to be encoded contains invalid characters"
@@ -6822,10 +6812,8 @@ msgid "Connection reset by peer.\n"
 msgstr "Conexão redefinida pelo cliente.\n"
 
 #: winerror.mc:3767
-#, fuzzy
-#| msgid "Not implemented"
 msgid "Not implemented.\n"
-msgstr "Não implementado"
+msgstr "Não implementado.\n"
 
 #: winerror.mc:3760
 msgid "No Signature found in file.\n"
@@ -6890,10 +6878,8 @@ msgid "Sink has not been finalized.\n"
 msgstr "Coletor não foi finalizado.\n"
 
 #: mferror.mc:732
-#, fuzzy
-#| msgid "Sink was already stopped.\n"
 msgid "Clock was stopped\n"
-msgstr "Coletor já esta parado.\n"
+msgstr "Coletor parado\n"
 
 #: mferror.mc:32
 msgid "Media Foundation platform is not initialized.\n"
@@ -7273,10 +7259,8 @@ msgid "Clock state was already set.\n"
 msgstr "Estado do relógio já foi configurado.\n"
 
 #: mferror.mc:725
-#, fuzzy
-#| msgid "Clock is not available.\n"
 msgid "Clock is not simple\n"
-msgstr "Relógio não disponível.\n"
+msgstr "Relógio não simples\n"
 
 #: mpr.rc:35 wininet.rc:37
 msgid "Enter Network Password"
@@ -8371,206 +8355,160 @@ msgid "Off"
 msgstr "Desligado"
 
 #: version.rc:56
-#, fuzzy
-#| msgid "video"
 msgid "Provider"
-msgstr "vídeo"
+msgstr "Provedor"
 
 #: version.rc:59
-#, fuzzy
-#| msgid "Select the format you want to use:"
 msgid "Select the data you want to connect to:"
-msgstr "Selecione o formato que deseja utilizar:"
+msgstr "Selecione os dados que você deseja conectar:"
 
 #: version.rc:66
-#, fuzzy
-#| msgid "Connections"
 msgid "Connection"
-msgstr "Conexões"
+msgstr "Conexão"
 
 #: version.rc:69
-#, fuzzy
-#| msgid "Select the format you want to use:"
 msgid "Specify the following to connect to ODBC data:"
-msgstr "Selecione o formato que deseja utilizar:"
+msgstr "Escolha o seguinte para conectar dados ODBC:"
 
 #: version.rc:70
 msgid "1. Specify the source of data:"
-msgstr ""
+msgstr "1. Especifique a origem dos dados:"
 
 #: version.rc:71
-#, fuzzy
-#| msgid "Please enter your name"
 msgid "Use &data source name"
-msgstr "Por favor, escreva seu nome"
+msgstr "Usar nome da origem de &dados"
 
 #: version.rc:74
-#, fuzzy
-#| msgid "Reset Connections"
 msgid "Use c&onnection string"
-msgstr "Reiniciar Conexões"
+msgstr "Usar string de conexão"
 
 #: version.rc:75
-#, fuzzy
-#| msgid "Connections"
 msgid "&Connection string:"
-msgstr "Conexões"
+msgstr "Dados de &Conexão:"
 
 #: version.rc:77
-#, fuzzy
-#| msgid "A&dd..."
 msgid "B&uild..."
-msgstr "&Adicionar..."
+msgstr "&Gerar..."
 
 #: version.rc:78
 msgid "2. Enter information to log on to the server"
-msgstr ""
+msgstr "2. Entre com as informações para logar no servidor"
 
 #: version.rc:79
-#, fuzzy
-#| msgid "&User name:"
 msgid "User &name:"
 msgstr "&Nome de usuário:"
 
 #: version.rc:83
-#, fuzzy
-#| msgid "&Blank page"
 msgid "&Blank password"
-msgstr "Página em &branco"
+msgstr "Senha em &branco"
 
 #: version.rc:84
-#, fuzzy
-#| msgid "Wrong password.\n"
 msgid "Allow &saving password"
-msgstr "Senha errada.\n"
+msgstr "Permitir &salvar senha"
 
 #: version.rc:85
 msgid "3. Enter the &initial catalog to use:"
-msgstr ""
+msgstr "3. Entre o catalogo &inicial para uso use:"
 
 #: version.rc:87
-#, fuzzy
-#| msgid "Reset Connections"
 msgid "&Test Connection"
-msgstr "Reiniciar Conexões"
+msgstr "&Testar Conexão"
 
 #: version.rc:92
 msgid "Advanced"
 msgstr "Avançado"
 
 #: version.rc:95
-#, fuzzy
-#| msgid "Network share"
 msgid "Network settings"
-msgstr "Compartilhamento de rede"
+msgstr "Configuração de rede"
 
 #: version.rc:96
-#, fuzzy
-#| msgid "Bad impersonation level.\n"
 msgid "&Impersonation level:"
-msgstr "Nível de personificação impróprio.\n"
+msgstr "N&ivel de representação:"
 
 #: version.rc:98
 msgid "P&rotection level:"
-msgstr ""
+msgstr "Nível de p&roteção:"
 
 #: version.rc:101
-#, fuzzy
-#| msgid "Connected"
 msgid "Connect:"
-msgstr "Conectado"
+msgstr "Conectar:"
 
 #: version.rc:103
-#, fuzzy
-#| msgid "seconds"
 msgid "seconds."
-msgstr "segundos"
+msgstr "segundos."
 
 #: version.rc:104
-#, fuzzy
-#| msgid "Success"
 msgid "A&ccess:"
-msgstr "Sucesso"
+msgstr "A&cesso:"
 
 #: version.rc:110
-#, fuzzy
-#| msgid "&All"
 msgid "All"
-msgstr "&Todos"
+msgstr "Todos"
 
 #: version.rc:114
 msgid ""
 "These are the initialization properties for this type of data. To edit a "
 "value, select a property, then choose Edit Value below."
 msgstr ""
+"Estas são as propriedades de inicialização para este tipo de dados. Para "
+"editar, selecione a propriedade, e escolha Editar Valor abaixo."
 
 #: version.rc:115
-#, fuzzy
-#| msgid "&Edit..."
 msgid "&Edit Value..."
-msgstr "&Editar..."
+msgstr "&Editar Valor..."
 
 #: version.rc:49
-#, fuzzy
-#| msgid "Properties"
 msgid "Data Link Error"
-msgstr "Propriedades"
+msgstr "Erro de conexão"
 
 #: version.rc:50
-#, fuzzy
-#| msgid "Please select a file."
 msgid "Please select a provider."
-msgstr "Por favor, selecione um arquivo."
+msgstr "Por favor, selecione um provedor."
 
 #: version.rc:51
 msgid ""
 "Provider is no longer available. Ensure that the provider is installed "
 "properly."
 msgstr ""
+"Provedor não esta mais disponível. Tenha certeza que o provedor está "
+"instalado adequadamente."
 
 #: version.rc:36
-#, fuzzy
-#| msgid "Properties"
 msgid "Data Link Properties"
-msgstr "Propriedades"
+msgstr "Propriedades da Conexão de Dados"
 
 #: version.rc:37
 msgid "OLE DB Provider(s)"
-msgstr ""
+msgstr "Provedor(es) OLE DB"
 
 #: version.rc:41
-#, fuzzy
-#| msgid "Ready"
 msgid "Read"
-msgstr "Pronto"
+msgstr "Ler"
 
 #: version.rc:42
-#, fuzzy
-#| msgid "Readme:"
 msgid "ReadWrite"
-msgstr "Leia-me:"
+msgstr "LeituraEscrita"
 
 #: version.rc:43
 msgid "Share Deny None"
-msgstr ""
+msgstr "Compartilhamento Nada Negado"
 
 #: version.rc:44
 msgid "Share Deny Read"
-msgstr ""
+msgstr "Compartilhamento Leitura Negada"
 
 #: version.rc:45
 msgid "Share Deny Write"
-msgstr ""
+msgstr "Compartilhamento Escrita Negada"
 
 #: version.rc:46
 msgid "Share Exclusive"
-msgstr ""
+msgstr "Compartilhamento Exclusivo"
 
 #: version.rc:47
-#, fuzzy
-#| msgid "I/O Writes"
 msgid "Write"
-msgstr "Gravações E/S"
+msgstr "Gravação"
 
 #: oledlg.rc:55
 msgid "Insert Object"
@@ -9770,16 +9708,12 @@ msgid "Cape Verde Daylight Time"
 msgstr "Horário de verão de Cabo Verde"
 
 #: tzres.rc:120
-#, fuzzy
-#| msgid "Hawaiian Standard Time"
 msgid "Haiti Standard Time"
-msgstr "Hora padrão do Avaí"
+msgstr "Hora padrão do Haiti"
 
 #: tzres.rc:121
-#, fuzzy
-#| msgid "Hawaiian Daylight Time"
 msgid "Haiti Daylight Time"
-msgstr "Horário de verão do Avaí"
+msgstr "Horário de verão do Haiti"
 
 #: tzres.rc:78
 msgid "Central European Standard Time"
@@ -9990,16 +9924,12 @@ msgid "Argentina Daylight Time"
 msgstr "Horário de verão da Argentina"
 
 #: tzres.rc:142
-#, fuzzy
-#| msgid "Mauritius Standard Time"
 msgid "Marquesas Standard Time"
-msgstr "Hora padrão da Mauritânia"
+msgstr "Hora padrão das Ilhas Marquesas"
 
 #: tzres.rc:143
-#, fuzzy
-#| msgid "Mauritius Daylight Time"
 msgid "Marquesas Daylight Time"
-msgstr "Horário de verão da Mauritânia"
+msgstr "Horário de verão das Ilhas Marquesas"
 
 #: tzres.rc:156
 msgid "Myanmar Standard Time"
@@ -10374,16 +10304,12 @@ msgid "Venezuela Daylight Time"
 msgstr "Horário de verão da Venezuela"
 
 #: tzres.rc:60
-#, fuzzy
-#| msgid "Mountain Standard Time"
 msgid "Bougainville Standard Time"
-msgstr "Hora padrão de Montanha"
+msgstr "Hora padrão de Bougainville"
 
 #: tzres.rc:61
-#, fuzzy
-#| msgid "Mountain Daylight Time"
 msgid "Bougainville Daylight Time"
-msgstr "Horário de verão de Montanha"
+msgstr "Horário de verão de Bougainville"
 
 #: tzres.rc:122
 msgid "Hawaiian Standard Time"
@@ -10410,16 +10336,12 @@ msgid "New Zealand Daylight Time"
 msgstr "Horário de verão da Nova Zelândia"
 
 #: tzres.rc:34
-#, fuzzy
-#| msgid "Argentina Standard Time"
 msgid "Aleutian Standard Time"
-msgstr "Hora padrão da Argentina"
+msgstr "Hora padrão da Aleutas"
 
 #: tzres.rc:35
-#, fuzzy
-#| msgid "Argentina Daylight Time"
 msgid "Aleutian Daylight Time"
-msgstr "Horário de verão da Argentina"
+msgstr "Horário de verão da Aleutas"
 
 #: tzres.rc:74
 msgid "Central Brazilian Standard Time"
@@ -10502,16 +10424,12 @@ msgid "Korea Daylight Time"
 msgstr "Horário de verão da Coreia"
 
 #: tzres.rc:86
-#, fuzzy
-#| msgid "Easter Island Standard Time"
 msgid "Chatham Islands Standard Time"
-msgstr "Hora padrão da Ilha da Páscoa"
+msgstr "Hora padrão da Ilhas Chatham"
 
 #: tzres.rc:87
-#, fuzzy
-#| msgid "Easter Island Daylight Time"
 msgid "Chatham Islands Daylight Time"
-msgstr "Horário de verão da Ilha da Páscoa"
+msgstr "Horário de verão da Ilhas Chatham"
 
 #: tzres.rc:92
 msgid "E. Africa Standard Time"
@@ -12649,6 +12567,9 @@ msgid ""
 "\n"
 "hardlink      hardlink management\n"
 msgstr ""
+"- Comandos Suportados -\n"
+"\n"
+"hardlink      gerenciamento do hardlink\n"
 
 #: fsutil.mc:35
 msgid ""
@@ -12656,10 +12577,13 @@ msgid ""
 "\n"
 "create        create a hardlink\n"
 msgstr ""
+"- Hardlink - Comandos Suportados -\n"
+"\n"
+"create        cria um hardlink\n"
 
 #: fsutil.mc:40
 msgid "Syntax: fsutil hardlink create <new> <existing>\n"
-msgstr ""
+msgstr "Sintaxe: fsutil hardlink create <novo> <existente>\n"
 
 #: hostname.rc:30
 msgid "Usage: hostname\n"
@@ -16642,7 +16566,7 @@ msgstr "Gerenciador de Arquivos do Wine"
 
 #: winefile.rc:98
 msgid "root fs"
-msgstr "Sistema de arquivos Raiz"
+msgstr "sistema de arquivos Raiz"
 
 #: winefile.rc:100
 msgid "Shell"
@@ -16685,10 +16609,8 @@ msgid "&Beginner"
 msgstr "&Principiante"
 
 #: winemine.rc:45
-#, fuzzy
-#| msgid "Interface"
 msgid "&Intermediate"
-msgstr "Interface"
+msgstr "&Intermediário"
 
 #: winemine.rc:46
 msgid "&Expert"
@@ -16719,10 +16641,8 @@ msgid "Beginner"
 msgstr "Principiante"
 
 #: winemine.rc:65
-#, fuzzy
-#| msgid "Interface"
 msgid "Intermediate"
-msgstr "Interface"
+msgstr "Intermediário"
 
 #: winemine.rc:66
 msgid "Expert"
