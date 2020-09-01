@@ -40,6 +40,86 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ndis);
 
+static void query_global_stats(IRP *irp, const MIB_IF_ROW2 *netdev)
+{
+    IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
+    void *response = MmGetSystemAddressForMdlSafe( irp->MdlAddress, NormalPagePriority );
+    DWORD len = irpsp->Parameters.DeviceIoControl.OutputBufferLength;
+    DWORD oid;
+
+    if (irpsp->Parameters.DeviceIoControl.InputBufferLength != sizeof(oid))
+    {
+        irp->IoStatus.u.Status = STATUS_INVALID_PARAMETER;
+        return;
+    }
+    oid = *(DWORD *)irp->AssociatedIrp.SystemBuffer;
+
+    switch (oid)
+    {
+    case OID_GEN_MEDIA_SUPPORTED:
+    case OID_GEN_MEDIA_IN_USE:
+    {
+        if (len < sizeof(NDIS_MEDIUM))
+        {
+            irp->IoStatus.u.Status = STATUS_INVALID_PARAMETER;
+            break;
+        }
+        *(NDIS_MEDIUM *)response = netdev->MediaType;
+        irp->IoStatus.Information = sizeof(netdev->MediaType);
+        irp->IoStatus.u.Status = STATUS_SUCCESS;
+        break;
+    }
+    case OID_802_3_PERMANENT_ADDRESS:
+    {
+        irp->IoStatus.Information = netdev->PhysicalAddressLength;
+        if (len < netdev->PhysicalAddressLength)
+            irp->IoStatus.u.Status = STATUS_INVALID_PARAMETER;
+        else
+            memcpy( response, netdev->PermanentPhysicalAddress, sizeof(netdev->PermanentPhysicalAddress) );
+        break;
+    }
+    case OID_802_3_CURRENT_ADDRESS:
+    {
+        irp->IoStatus.Information = netdev->PhysicalAddressLength;
+        if (len < netdev->PhysicalAddressLength)
+            irp->IoStatus.u.Status = STATUS_INVALID_PARAMETER;
+        else
+            memcpy( response, netdev->PhysicalAddress, sizeof(netdev->PhysicalAddress) );
+        break;
+
+    }
+    default:
+        FIXME( "Unsupported OID %x\n", oid );
+        irp->IoStatus.u.Status = STATUS_NOT_SUPPORTED;
+        break;
+    }
+}
+
+static NTSTATUS WINAPI ndis_ioctl(DEVICE_OBJECT *device, IRP *irp)
+{
+    IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
+    MIB_IF_ROW2 *netdev = device->DeviceExtension;
+
+    TRACE( "ioctl %x insize %u outsize %u\n",
+           irpsp->Parameters.DeviceIoControl.IoControlCode,
+           irpsp->Parameters.DeviceIoControl.InputBufferLength,
+           irpsp->Parameters.DeviceIoControl.OutputBufferLength );
+
+    switch (irpsp->Parameters.DeviceIoControl.IoControlCode)
+    {
+    case IOCTL_NDIS_QUERY_GLOBAL_STATS:
+        query_global_stats(irp, netdev);
+        break;
+    default:
+        FIXME( "ioctl %x not supported\n", irpsp->Parameters.DeviceIoControl.IoControlCode );
+        irp->IoStatus.u.Status = STATUS_NOT_SUPPORTED;
+        break;
+    }
+
+    IoCompleteRequest( irp, IO_NO_INCREMENT );
+    return STATUS_SUCCESS;
+}
+
 static void add_key(const WCHAR *guidstrW, const MIB_IF_ROW2 *netdev)
 {
     HKEY card_key;
@@ -109,6 +189,8 @@ static void create_network_devices(DRIVER_OBJECT *driver)
 NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, UNICODE_STRING *path)
 {
     TRACE("(%p, %s)\n", driver, debugstr_w(path->Buffer));
+
+    driver->MajorFunction[IRP_MJ_DEVICE_CONTROL] = ndis_ioctl;
 
     create_network_devices( driver );
 
