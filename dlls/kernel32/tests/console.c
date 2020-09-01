@@ -3670,6 +3670,10 @@ static void test_FreeConsole(void)
     ok(!hwnd, "hwnd = %p\n", hwnd);
     ok(GetLastError() == ERROR_INVALID_HANDLE, "last error %u\n", GetLastError());
 
+    ret = GenerateConsoleCtrlEvent(CTRL_C_EVENT, 0);
+    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "GenerateConsoleCtrlEvent returned %x(%u)\n",
+       ret, GetLastError());
+
     SetStdHandle( STD_INPUT_HANDLE, (HANDLE)0xdeadbeef );
     handle = GetConsoleInputWaitHandle();
     ok(handle == (HANDLE)0xdeadbeef, "GetConsoleInputWaitHandle returned %p\n", handle);

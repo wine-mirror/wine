@@ -2394,19 +2394,6 @@ DECL_HANDLER(create_console_output)
     release_object( console );
 }
 
-/* sends a signal to a console (process, group...) */
-DECL_HANDLER(send_console_signal)
-{
-    process_id_t group;
-
-    group = req->group_id ? req->group_id : current->process->group_id;
-
-    if (!group)
-        set_error( STATUS_INVALID_PARAMETER );
-    else
-        propagate_console_signal( current->process->console, req->signal, group );
-}
-
 /* get console which renderer is 'current' */
 static int cgwe_enum( struct process* process, void* user)
 {

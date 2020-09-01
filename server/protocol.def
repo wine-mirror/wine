@@ -1515,13 +1515,6 @@ enum server_fd_type
 @END
 
 
-/* Sends a signal to a process group */
-@REQ(send_console_signal)
-    int          signal;        /* the signal to send */
-    process_id_t group_id;      /* the group to send the signal to */
-@END
-
-
 /* Retrieve the next pending console ioctl request */
 @REQ(get_next_console_request)
     obj_handle_t handle;        /* console server handle */
