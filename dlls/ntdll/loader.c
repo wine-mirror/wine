@@ -59,7 +59,6 @@ typedef DWORD (CALLBACK *DLLENTRYPROC)(HMODULE,DWORD,LPVOID);
 typedef void  (CALLBACK *LDRENUMPROC)(LDR_DATA_TABLE_ENTRY *, void *, BOOLEAN *);
 
 void (FASTCALL *pBaseThreadInitThunk)(DWORD,LPTHREAD_START_ROUTINE,void *) = NULL;
-static void (WINAPI *kernel32_start_process)(LPTHREAD_START_ROUTINE,void *);
 
 const struct unix_funcs *unix_funcs = NULL;
 
@@ -4000,13 +3999,6 @@ static void process_init(void)
     if ((status = load_builtin_dll( params->DllPath.Buffer, &nt_name, NULL, 0, &wm )) != STATUS_SUCCESS)
     {
         MESSAGE( "wine: could not load kernel32.dll, status %x\n", status );
-        NtTerminateProcess( GetCurrentProcess(), status );
-    }
-    RtlInitAnsiString( &func_name, "__wine_start_process" );
-    if ((status = LdrGetProcedureAddress( wm->ldr.DllBase, &func_name,
-                                          0, (void **)&kernel32_start_process )) != STATUS_SUCCESS)
-    {
-        MESSAGE( "wine: could not find __wine_start_process in kernel32.dll, status %x\n", status );
         NtTerminateProcess( GetCurrentProcess(), status );
     }
     RtlInitAnsiString( &func_name, "BaseThreadInitThunk" );

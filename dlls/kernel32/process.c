@@ -59,7 +59,6 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(process);
-WINE_DECLARE_DEBUG_CHANNEL(relay);
 
 typedef struct
 {
@@ -83,80 +82,6 @@ const WCHAR DIR_System[] = {'C',':','\\','w','i','n','d','o','w','s',
 #define PDB32_CONSOLE_PROC  0x0020  /* Console process */
 #define PDB32_FILE_APIS_OEM 0x0040  /* File APIs are OEM */
 #define PDB32_WIN32S_PROC   0x8000  /* Win32s process */
-
-
-#ifdef __i386__
-extern DWORD call_process_entry( PEB *peb, LPTHREAD_START_ROUTINE entry );
-__ASM_GLOBAL_FUNC( call_process_entry,
-                    "pushl %ebp\n\t"
-                    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
-                    __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
-                    "movl %esp,%ebp\n\t"
-                    __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
-                    "pushl %ebx\n\t"
-                    __ASM_CFI(".cfi_rel_offset %ebx,-4\n\t")
-                    "movl 8(%ebp),%ebx\n\t"
-                    /* deliberately mis-align the stack by 8, Doom 3 needs this */
-                    "pushl 4(%ebp)\n\t"  /* Driller expects readable address at this offset */
-                    "pushl 4(%ebp)\n\t"
-                    "pushl %ebx\n\t"
-                    "call *12(%ebp)\n\t"
-                    "leal -4(%ebp),%esp\n\t"
-                    "popl %ebx\n\t"
-                    __ASM_CFI(".cfi_same_value %ebx\n\t")
-                    "popl %ebp\n\t"
-                    __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
-                    __ASM_CFI(".cfi_same_value %ebp\n\t")
-                    "ret" )
-
-__ASM_GLOBAL_FUNC( __wine_start_process,
-                   "pushl %ebp\n\t"
-                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
-                   __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
-                   "movl %esp,%ebp\n\t"
-                   __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
-                   "pushl %ebx\n\t"  /* arg */
-                   "pushl %eax\n\t"  /* entry */
-                   "call " __ASM_NAME("start_process") )
-#else
-static inline DWORD call_process_entry( PEB *peb, LPTHREAD_START_ROUTINE entry )
-{
-    return entry( peb );
-}
-#endif
-
-/***********************************************************************
- *           __wine_start_process
- *
- * Startup routine of a new process. Runs on the new process stack.
- */
-#ifdef __i386__
-void CDECL start_process( LPTHREAD_START_ROUTINE entry, PEB *peb )
-#else
-void CDECL __wine_start_process( LPTHREAD_START_ROUTINE entry, PEB *peb )
-#endif
-{
-    if (!entry)
-    {
-        ERR( "%s doesn't have an entry point, it cannot be executed\n",
-             debugstr_w(peb->ProcessParameters->ImagePathName.Buffer) );
-        ExitThread( 1 );
-    }
-
-    TRACE_(relay)( "\1Starting process %s (entryproc=%p)\n",
-                   debugstr_w(peb->ProcessParameters->ImagePathName.Buffer), entry );
-
-    __TRY
-    {
-        ExitThread( call_process_entry( peb, entry ));
-    }
-    __EXCEPT(UnhandledExceptionFilter)
-    {
-        TerminateProcess( GetCurrentProcess(), GetExceptionCode() );
-    }
-    __ENDTRY
-    abort();  /* should not be reached */
-}
 
 
 /***********************************************************************
