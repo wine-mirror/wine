@@ -1,4 +1,4 @@
-@ stub RtlCopyExtendedContext
+@ stdcall RtlCopyExtendedContext(ptr long ptr) ntdll.RtlCopyExtendedContext
 @ stdcall RtlGetEnabledExtendedFeatures(int64) ntdll.RtlGetEnabledExtendedFeatures
 @ stdcall RtlGetExtendedContextLength(long ptr) ntdll.RtlGetExtendedContextLength
 @ stdcall -ret64 RtlGetExtendedFeaturesMask(ptr) ntdll.RtlGetExtendedFeaturesMask

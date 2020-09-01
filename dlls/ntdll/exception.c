@@ -666,6 +666,24 @@ ULONG64 WINAPI RtlGetEnabledExtendedFeatures(ULONG64 feature_mask)
     return user_shared_data->XState.EnabledFeatures & feature_mask;
 }
 
+struct context_copy_range
+{
+    ULONG start;
+    ULONG flag;
+};
+
+static const struct context_copy_range copy_ranges_amd64[] =
+{
+    {0x38, 0x1}, {0x3a, 0x4}, { 0x42, 0x1}, { 0x48, 0x10}, { 0x78,  0x2}, { 0x98, 0x1},
+    {0xa0, 0x2}, {0xf8, 0x1}, {0x100, 0x8}, {0x2a0,    0}, {0x4b0, 0x10}, {0x4d0,   0}
+};
+
+static const struct context_copy_range copy_ranges_x86[] =
+{
+    {  0x4, 0x10}, {0x1c, 0x8}, {0x8c, 0x4}, {0x9c, 0x2}, {0xb4, 0x1}, {0xcc, 0x20}, {0x1ec, 0},
+    {0x2cc,    0},
+};
+
 static const struct context_parameters
 {
     ULONG arch_flag;
@@ -676,11 +694,12 @@ static const struct context_parameters
     ULONG alignment;       /* Used when computing size of context. */
     ULONG true_alignment;  /* Used for actual alignment. */
     ULONG flags_offset;
+    const struct context_copy_range *copy_ranges;
 }
 arch_context_paramaters[] =
 {
-    {0x00100000, 0xd810005f, 0x4d0, 0x4d0, 0x20, 7, 0xf, 0x30},
-    {0x00010000, 0xd801007f, 0x2cc,  0xcc, 0x18, 3, 0x3,    0},
+    {0x00100000, 0xd810005f, 0x4d0, 0x4d0, 0x20, 7, 0xf, 0x30, copy_ranges_amd64},
+    {0x00010000, 0xd801007f, 0x2cc,  0xcc, 0x18, 3, 0x3,    0,   copy_ranges_x86},
 };
 
 static const struct context_parameters *context_get_parameters( ULONG context_flags )
@@ -881,4 +900,66 @@ ULONG64 WINAPI RtlGetExtendedFeaturesMask( CONTEXT_EX *context_ex )
     XSTATE *xs = (XSTATE *)((BYTE *)context_ex + context_ex->XState.Offset);
 
     return xs->Mask & ~(ULONG64)3;
+}
+
+
+/**********************************************************************
+ *              RtlCopyExtendedContext      (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlCopyExtendedContext( CONTEXT_EX *dst, ULONG context_flags, CONTEXT_EX *src )
+{
+    const struct context_copy_range *range;
+    const struct context_parameters *p;
+    XSTATE *dst_xs, *src_xs;
+    ULONG64 feature_mask;
+    unsigned int start;
+    BYTE *d, *s;
+
+    TRACE( "dst %p, context_flags %#x, src %p.\n", dst, context_flags, src );
+
+    if (!(p = context_get_parameters( context_flags )))
+        return STATUS_INVALID_PARAMETER;
+
+    if (!(feature_mask = RtlGetEnabledExtendedFeatures( ~(ULONG64)0 )) && context_flags & 0x40)
+        return STATUS_NOT_SUPPORTED;
+
+    d = RtlLocateLegacyContext( dst, NULL );
+    s = RtlLocateLegacyContext( src, NULL );
+
+    *((ULONG *)(d + p->flags_offset)) |= context_flags;
+
+    start = 0;
+    range = p->copy_ranges;
+    do
+    {
+        if (range->flag & context_flags)
+        {
+            if (!start)
+                start = range->start;
+        }
+        else if (start)
+        {
+            memcpy( d + start, s + start, range->start - start );
+            start = 0;
+        }
+    }
+    while (range++->start != p->context_size);
+
+    if (!(context_flags & 0x40))
+        return STATUS_SUCCESS;
+
+    if (dst->XState.Length < offsetof(XSTATE, YmmContext))
+        return STATUS_BUFFER_OVERFLOW;
+
+    dst_xs = (XSTATE *)((BYTE *)dst + dst->XState.Offset);
+    src_xs = (XSTATE *)((BYTE *)src + src->XState.Offset);
+
+    memset(dst_xs, 0, offsetof(XSTATE, YmmContext));
+    dst_xs->Mask = (src_xs->Mask & ~(ULONG64)3) & feature_mask;
+    dst_xs->CompactionMask = user_shared_data->XState.CompactionEnabled
+            ? ((ULONG64)1 << 63) | (src_xs->CompactionMask & feature_mask) : 0;
+
+    if (dst_xs->Mask & 4 && src->XState.Length >= sizeof(XSTATE) && dst->XState.Length >= sizeof(XSTATE))
+        memcpy( &dst_xs->YmmContext, &src_xs->YmmContext, sizeof(dst_xs->YmmContext) );
+    return STATUS_SUCCESS;
 }

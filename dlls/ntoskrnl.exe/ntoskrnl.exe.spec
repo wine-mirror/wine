@@ -1010,6 +1010,7 @@
 @ stdcall -arch=win32 -ret64 RtlConvertLongToLargeInteger(long)
 @ stdcall RtlConvertSidToUnicodeString(ptr ptr long)
 @ stdcall -arch=win32 -ret64 RtlConvertUlongToLargeInteger(long)
+@ stdcall RtlCopyExtendedContext(ptr long ptr)
 @ stdcall RtlCopyLuid(ptr ptr)
 @ stdcall RtlCopyLuidAndAttributesArray(long ptr ptr)
 @ stdcall -arch=x86_64 RtlCopyMemory(ptr ptr long)
