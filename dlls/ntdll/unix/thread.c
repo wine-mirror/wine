@@ -99,8 +99,7 @@ static void start_thread( TEB *teb )
     thread_data->pthread_id = pthread_self();
     signal_init_thread( teb );
     server_init_thread( thread_data->start, &suspend );
-    signal_start_thread( thread_data->start, thread_data->param, suspend,
-                         pRtlUserThreadStart, pLdrInitializeThunk, teb );
+    signal_start_thread( thread_data->start, thread_data->param, suspend, pLdrInitializeThunk, teb );
 }
 
 

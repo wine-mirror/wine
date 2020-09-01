@@ -3304,7 +3304,7 @@ static void test_SuspendProcessState(void)
     BOOL pipe_connected;
     ULONG pipe_magic, numb;
     BOOL ret;
-    void *entry_ptr, *peb_ptr;
+    void *user_thread_start, *start_ptr, *entry_ptr, *peb_ptr;
     PEB child_peb;
 
     exit_process_ptr = GetProcAddress(hkernel32, "ExitProcess");
@@ -3365,6 +3365,7 @@ static void test_SuspendProcessState(void)
     ok( ctx.EFlags == 0x200, "wrong flags %08x\n", ctx.EFlags );
     ok( ctx.MxCsr == 0x1f80, "wrong mxcsr %08x\n", ctx.MxCsr );
     ok( ctx.FltSave.ControlWord == 0x27f, "wrong control %08x\n", ctx.FltSave.ControlWord );
+    start_ptr = (void *)ctx.Rip;
     entry_ptr = (void *)ctx.Rcx;
     peb_ptr = (void *)ctx.Rdx;
 
@@ -3395,6 +3396,7 @@ static void test_SuspendProcessState(void)
     ok( (ctx.EFlags & ~2) == 0x200, "wrong flags %08x\n", ctx.EFlags );
     ok( (WORD)ctx.FloatSave.ControlWord == 0x27f, "wrong control %08x\n", ctx.FloatSave.ControlWord );
     ok( *(WORD *)ctx.ExtendedRegisters == 0x27f, "wrong control %08x\n", *(WORD *)ctx.ExtendedRegisters );
+    start_ptr = (void *)ctx.Eip;
     entry_ptr = (void *)ctx.Eax;
     peb_ptr = (void *)ctx.Ebx;
 
@@ -3418,6 +3420,10 @@ static void test_SuspendProcessState(void)
     ok( ret, "Failed to read PEB (%u)\n", GetLastError() );
     ok( child_peb.ImageBaseAddress == exe_base, "wrong base %p/%p\n",
         child_peb.ImageBaseAddress, exe_base );
+    user_thread_start = GetProcAddress( GetModuleHandleA("ntdll.dll"), "RtlUserThreadStart" );
+    if (user_thread_start)
+        ok( start_ptr == user_thread_start,
+            "wrong start addr %p / %p\n", start_ptr, user_thread_start );
     ok( entry_ptr == (char *)exe_base + nt_header.OptionalHeader.AddressOfEntryPoint,
         "wrong entry point %p/%p\n", entry_ptr,
         (char *)exe_base + nt_header.OptionalHeader.AddressOfEntryPoint );
