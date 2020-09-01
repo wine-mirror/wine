@@ -3659,6 +3659,8 @@ static void test_FreeConsole(void)
     ok(title[0] == 0xc0c0, "title byffer changed\n");
     ok(GetLastError() == ERROR_INVALID_HANDLE, "last error %u\n", GetLastError());
 
+    if (skip_nt) return;
+
     SetLastError(0xdeadbeef);
     ret = SetConsoleTitleW( L"test" );
     ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "SetConsoleTitleW returned %x(%u)\n", ret, GetLastError());
@@ -3668,15 +3670,12 @@ static void test_FreeConsole(void)
     ok(!hwnd, "hwnd = %p\n", hwnd);
     ok(GetLastError() == ERROR_INVALID_HANDLE, "last error %u\n", GetLastError());
 
-    if (!skip_nt)
-    {
-        SetStdHandle( STD_INPUT_HANDLE, (HANDLE)0xdeadbeef );
-        handle = GetConsoleInputWaitHandle();
-        ok(handle == (HANDLE)0xdeadbeef, "GetConsoleInputWaitHandle returned %p\n", handle);
-        SetStdHandle( STD_INPUT_HANDLE, NULL );
-        handle = GetConsoleInputWaitHandle();
-        ok(!handle, "GetConsoleInputWaitHandle returned %p\n", handle);
-    }
+    SetStdHandle( STD_INPUT_HANDLE, (HANDLE)0xdeadbeef );
+    handle = GetConsoleInputWaitHandle();
+    ok(handle == (HANDLE)0xdeadbeef, "GetConsoleInputWaitHandle returned %p\n", handle);
+    SetStdHandle( STD_INPUT_HANDLE, NULL );
+    handle = GetConsoleInputWaitHandle();
+    ok(!handle, "GetConsoleInputWaitHandle returned %p\n", handle);
 }
 
 static void test_SetConsoleScreenBufferInfoEx(HANDLE std_output)
