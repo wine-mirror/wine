@@ -36,6 +36,7 @@
 #define IOCTL_CONDRV_SET_INPUT_INFO        CTL_CODE(FILE_DEVICE_CONSOLE, 14, METHOD_BUFFERED, FILE_WRITE_PROPERTIES)
 #define IOCTL_CONDRV_GET_TITLE             CTL_CODE(FILE_DEVICE_CONSOLE, 15, METHOD_BUFFERED, FILE_READ_PROPERTIES)
 #define IOCTL_CONDRV_SET_TITLE             CTL_CODE(FILE_DEVICE_CONSOLE, 16, METHOD_BUFFERED, FILE_WRITE_PROPERTIES)
+#define IOCTL_CONDRV_CTRL_EVENT            CTL_CODE(FILE_DEVICE_CONSOLE, 17, METHOD_BUFFERED, FILE_WRITE_PROPERTIES)
 
 /* console output ioctls */
 #define IOCTL_CONDRV_READ_OUTPUT           CTL_CODE(FILE_DEVICE_CONSOLE, 30, METHOD_BUFFERED, FILE_READ_DATA)
@@ -224,6 +225,13 @@ enum condrv_renderer_event_type
     CONSOLE_RENDERER_CURSOR_GEOM_EVENT,
     CONSOLE_RENDERER_DISPLAY_EVENT,
     CONSOLE_RENDERER_EXIT_EVENT,
+};
+
+/* IOCTL_CONDRV_CTRL_EVENT params */
+struct condrv_ctrl_event
+{
+    int          event;         /* the event to send */
+    unsigned int group_id;      /* the group to send the event to */
 };
 
 /* Wine specific values for console inheritance (params->ConsoleHandle) */

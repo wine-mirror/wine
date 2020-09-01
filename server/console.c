@@ -1844,6 +1844,25 @@ static int console_input_ioctl( struct fd *fd, ioctl_code_t code, struct async *
             return 1;
         }
 
+    case IOCTL_CONDRV_CTRL_EVENT:
+        {
+            const struct condrv_ctrl_event *event = get_req_data();
+            process_id_t group;
+            if (get_req_data_size() != sizeof(*event))
+            {
+                set_error( STATUS_INVALID_PARAMETER );
+                return 0;
+            }
+            group = event->group_id ? event->group_id : current->process->group_id;
+            if (!group)
+            {
+                set_error( STATUS_INVALID_PARAMETER );
+                return 0;
+            }
+            propagate_console_signal( console, event->event, group );
+            return !get_error();
+        }
+
     default:
         set_error( STATUS_INVALID_HANDLE );
         return 0;

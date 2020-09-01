@@ -116,6 +116,7 @@ static void dump_ioctl_code( const char *prefix, const ioctl_code_t *code )
 #define CASE(c) case c: fprintf( stderr, "%s%s", prefix, #c ); break
         CASE(IOCTL_CONDRV_ACTIVATE);
         CASE(IOCTL_CONDRV_ATTACH_RENDERER);
+        CASE(IOCTL_CONDRV_CTRL_EVENT);
         CASE(IOCTL_CONDRV_FILL_OUTPUT);
         CASE(IOCTL_CONDRV_GET_INPUT_INFO);
         CASE(IOCTL_CONDRV_GET_MODE);
