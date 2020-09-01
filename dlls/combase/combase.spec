@@ -117,7 +117,7 @@
 @ stdcall CoGetObjectContext(ptr ptr)
 @ stdcall CoGetPSClsid(ptr ptr)
 @ stub CoGetProcessIdentifier
-@ stdcall CoGetStandardMarshal(ptr ptr long ptr long ptr) ole32.CoGetStandardMarshal
+@ stdcall CoGetStandardMarshal(ptr ptr long ptr long ptr)
 @ stub CoGetStdMarshalEx
 @ stub CoGetSystemSecurityPermissions
 @ stdcall CoGetTreatAsClass(ptr ptr)
@@ -246,7 +246,7 @@
 @ stub InternalCoIsSurrogateProcess
 @ stub InternalCoRegisterDisconnectCallback
 @ stub InternalCoRegisterSurrogatedObject
-@ stub InternalCoStdMarshalObject
+@ stdcall InternalCoStdMarshalObject(ptr long ptr ptr)
 @ stub InternalCoUnregisterDisconnectCallback
 @ stub InternalCompleteObjRef
 @ stub InternalCreateCAggId
@@ -355,18 +355,7 @@
 @ stdcall apartment_release(ptr)
 @ stdcall enter_apartment(ptr long)
 @ stdcall leave_apartment(ptr)
-@ stdcall apartment_findfromoxid(int64)
 @ stdcall apartment_getwindow(ptr)
-@ stdcall apartment_createwindowifneeded(ptr)
 @ stdcall stub_manager_int_release(ptr)
-@ stdcall get_stub_manager(ptr int64)
-@ stdcall stub_manager_is_table_marshaled(ptr ptr)
-@ stdcall stub_manager_notify_unmarshal(ptr ptr)
-@ stdcall stub_manager_ext_release(ptr long long long)
-@ stdcall stub_manager_release_marshal_data(ptr long ptr long)
-@ stdcall get_stub_manager_from_object(ptr ptr long)
-@ stdcall stub_manager_find_ifstub(ptr ptr long)
-@ stdcall stub_manager_ext_addref(ptr long long)
-@ stdcall stub_manager_new_ifstub(ptr ptr ptr long ptr long)
 @ stdcall ipid_get_dispatch_params(ptr ptr ptr ptr ptr ptr ptr)
 @ stdcall start_apartment_remote_unknown(ptr)

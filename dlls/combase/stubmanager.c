@@ -73,7 +73,7 @@ static inline HRESULT generate_ipid(struct stub_manager *m, IPID *ipid)
 }
 
 /* registers a new interface stub COM object with the stub manager and returns registration record */
-struct ifstub * WINAPI stub_manager_new_ifstub(struct stub_manager *m, IRpcStubBuffer *sb, REFIID iid, DWORD dest_context,
+struct ifstub * stub_manager_new_ifstub(struct stub_manager *m, IRpcStubBuffer *sb, REFIID iid, DWORD dest_context,
     void *dest_context_data, MSHLFLAGS flags)
 {
     struct ifstub *stub;
@@ -161,7 +161,7 @@ static struct ifstub *stub_manager_ipid_to_ifstub(struct stub_manager *m, const 
     return result;
 }
 
-struct ifstub * WINAPI stub_manager_find_ifstub(struct stub_manager *m, REFIID iid, MSHLFLAGS flags)
+struct ifstub * stub_manager_find_ifstub(struct stub_manager *m, REFIID iid, MSHLFLAGS flags)
 {
     struct ifstub  *result = NULL;
     struct ifstub  *ifstub;
@@ -340,7 +340,7 @@ ULONG WINAPI stub_manager_int_release(struct stub_manager *m)
 /* gets the stub manager associated with an object - caller must have
  * a reference to the apartment while a reference to the stub manager is held.
  * it must also call release on the stub manager when it is no longer needed */
-struct stub_manager * WINAPI get_stub_manager_from_object(struct apartment *apt, IUnknown *obj, BOOL alloc)
+struct stub_manager * get_stub_manager_from_object(struct apartment *apt, IUnknown *obj, BOOL alloc)
 {
     struct stub_manager *result = NULL;
     struct list         *cursor;
@@ -389,7 +389,7 @@ struct stub_manager * WINAPI get_stub_manager_from_object(struct apartment *apt,
 /* gets the stub manager associated with an object id - caller must have
  * a reference to the apartment while a reference to the stub manager is held.
  * it must also call release on the stub manager when it is no longer needed */
-struct stub_manager * WINAPI get_stub_manager(struct apartment *apt, OID oid)
+struct stub_manager * get_stub_manager(struct apartment *apt, OID oid)
 {
     struct stub_manager *result = NULL;
     struct list         *cursor;
@@ -417,7 +417,7 @@ struct stub_manager * WINAPI get_stub_manager(struct apartment *apt, OID oid)
 }
 
 /* add some external references (ie from a client that unmarshaled an ifptr) */
-ULONG WINAPI stub_manager_ext_addref(struct stub_manager *m, ULONG refs, BOOL tableweak)
+ULONG stub_manager_ext_addref(struct stub_manager *m, ULONG refs, BOOL tableweak)
 {
     BOOL first_extern_ref;
     ULONG rc;
@@ -448,7 +448,7 @@ ULONG WINAPI stub_manager_ext_addref(struct stub_manager *m, ULONG refs, BOOL ta
 }
 
 /* remove some external references */
-ULONG WINAPI stub_manager_ext_release(struct stub_manager *m, ULONG refs, BOOL tableweak, BOOL last_unlock_releases)
+ULONG stub_manager_ext_release(struct stub_manager *m, ULONG refs, BOOL tableweak, BOOL last_unlock_releases)
 {
     BOOL last_extern_ref;
     ULONG rc;
@@ -571,7 +571,7 @@ HRESULT WINAPI ipid_get_dispatch_params(const IPID *ipid, struct apartment **stu
 }
 
 /* returns TRUE if it is possible to unmarshal, FALSE otherwise. */
-BOOL WINAPI stub_manager_notify_unmarshal(struct stub_manager *m, const IPID *ipid)
+BOOL stub_manager_notify_unmarshal(struct stub_manager *m, const IPID *ipid)
 {
     BOOL ret = TRUE;
     struct ifstub *ifstub;
@@ -602,7 +602,7 @@ BOOL WINAPI stub_manager_notify_unmarshal(struct stub_manager *m, const IPID *ip
 }
 
 /* handles refcounting for CoReleaseMarshalData */
-void WINAPI stub_manager_release_marshal_data(struct stub_manager *m, ULONG refs, const IPID *ipid, BOOL tableweak)
+void stub_manager_release_marshal_data(struct stub_manager *m, ULONG refs, const IPID *ipid, BOOL tableweak)
 {
     struct ifstub *ifstub;
 
@@ -618,7 +618,7 @@ void WINAPI stub_manager_release_marshal_data(struct stub_manager *m, ULONG refs
 }
 
 /* is an ifstub table marshaled? */
-BOOL WINAPI stub_manager_is_table_marshaled(struct stub_manager *m, const IPID *ipid)
+BOOL stub_manager_is_table_marshaled(struct stub_manager *m, const IPID *ipid)
 {
     struct ifstub *ifstub = stub_manager_ipid_to_ifstub(m, ipid);
  

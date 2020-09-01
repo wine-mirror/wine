@@ -43,7 +43,7 @@
 @ stdcall CoGetObject(wstr ptr ptr ptr)
 @ stdcall CoGetObjectContext(ptr ptr) combase.CoGetObjectContext
 @ stdcall CoGetPSClsid(ptr ptr) combase.CoGetPSClsid
-@ stdcall CoGetStandardMarshal(ptr ptr long ptr long ptr)
+@ stdcall CoGetStandardMarshal(ptr ptr long ptr long ptr) combase.CoGetStandardMarshal
 @ stdcall CoGetState(ptr)
 @ stub CoGetTIDFromIPID
 @ stdcall CoGetTreatAsClass(ptr ptr) combase.CoGetTreatAsClass
@@ -299,9 +299,10 @@
 @ stub WriteOleStg
 @ stub WriteStringStream
 
-@ stdcall Internal_apartment_disconnectproxies(ptr)
 @ stdcall Internal_RPC_ExecuteCall(ptr)
-@ stdcall marshal_object(ptr ptr ptr ptr long ptr long)
-@ stdcall unmarshal_object(ptr ptr long ptr ptr ptr ptr)
 @ stdcall RPC_CreateServerChannel(long ptr ptr)
 @ stdcall RPC_UnregisterInterface(ptr long)
+@ stdcall RPC_RegisterInterface(ptr)
+@ stdcall RPC_ResolveOxid(int64 ptr)
+@ stdcall RPC_StartRemoting(ptr)
+@ stdcall RPC_CreateClientChannel(ptr ptr ptr ptr long ptr ptr ptr)

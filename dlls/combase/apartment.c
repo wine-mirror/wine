@@ -443,8 +443,6 @@ void apartment_freeunusedlibraries(struct apartment *apt, DWORD delay)
     LeaveCriticalSection(&apt->cs);
 }
 
-extern HRESULT WINAPI Internal_apartment_disconnectproxies(struct apartment *apt);
-
 void WINAPI apartment_release(struct apartment *apt)
 {
     DWORD refcount;
@@ -499,7 +497,7 @@ void WINAPI apartment_release(struct apartment *apt)
         /* no locking is needed for this apartment, because no other thread
          * can access it at this point */
 
-        Internal_apartment_disconnectproxies(apt);
+        apartment_disconnectproxies(apt);
 
         if (apt->win) DestroyWindow(apt->win);
         if (apt->host_apt_tid) PostThreadMessageW(apt->host_apt_tid, WM_QUIT, 0, 0);
@@ -629,7 +627,7 @@ struct apartment * WINAPI apartment_get_current_or_mta(void)
 }
 
 /* The given OXID must be local to this process */
-struct apartment * WINAPI apartment_findfromoxid(OXID oxid)
+struct apartment * apartment_findfromoxid(OXID oxid)
 {
     struct apartment *result = NULL;
     struct list *cursor;
@@ -1236,7 +1234,7 @@ static BOOL WINAPI register_class( INIT_ONCE *once, void *param, void **context 
 
 /* create a window for the apartment or return the current one if one has
  * already been created */
-HRESULT WINAPI apartment_createwindowifneeded(struct apartment *apt)
+HRESULT apartment_createwindowifneeded(struct apartment *apt)
 {
     static INIT_ONCE class_init_once = INIT_ONCE_STATIC_INIT;
 

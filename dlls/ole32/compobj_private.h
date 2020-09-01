@@ -109,19 +109,6 @@ struct stub_manager
     BOOL              disconnected; /* CoDisconnectObject has been called (CS lock) */
 };
 
-/* imported interface proxy */
-struct ifproxy
-{
-  struct list entry;       /* entry in proxy_manager list (CS parent->cs) */
-  struct proxy_manager *parent; /* owning proxy_manager (RO) */
-  LPVOID iface;            /* interface pointer (RO) */
-  STDOBJREF stdobjref;     /* marshal data that represents this object (RO) */
-  IID iid;                 /* interface ID (RO) */
-  LPRPCPROXYBUFFER proxy;  /* interface proxy (RO) */
-  ULONG refs;              /* imported (public) references (LOCK) */
-  IRpcChannelBuffer *chan; /* channel to object (CS parent->cs) */
-};
-
 struct apartment
 {
   struct list entry;
@@ -195,35 +182,31 @@ HRESULT FTMarshalCF_Create(REFIID riid, LPVOID *ppv) DECLSPEC_HIDDEN;
 /* Stub Manager */
 
 extern ULONG WINAPI stub_manager_int_release(struct stub_manager *This) DECLSPEC_HIDDEN;
-extern struct stub_manager * WINAPI get_stub_manager(struct apartment *apt, OID oid) DECLSPEC_HIDDEN;
 
 /* RPC Backend */
 
 struct dispatch_params;
 
-void    RPC_StartRemoting(struct apartment *apt) DECLSPEC_HIDDEN;
-HRESULT RPC_CreateClientChannel(const OXID *oxid, const IPID *ipid,
+HRESULT WINAPI RPC_CreateClientChannel(const OXID *oxid, const IPID *ipid,
                                 const OXID_INFO *oxid_info, const IID *iid,
                                 DWORD dest_context, void *dest_context_data,
                                 IRpcChannelBuffer **chan, struct apartment *apt) DECLSPEC_HIDDEN;
-HRESULT RPC_RegisterInterface(REFIID riid) DECLSPEC_HIDDEN;
+HRESULT WINAPI RPC_RegisterInterface(REFIID riid) DECLSPEC_HIDDEN;
 HRESULT RPC_RegisterChannelHook(REFGUID rguid, IChannelHook *hook) DECLSPEC_HIDDEN;
 void    RPC_UnregisterAllChannelHooks(void) DECLSPEC_HIDDEN;
-HRESULT RPC_ResolveOxid(OXID oxid, OXID_INFO *oxid_info) DECLSPEC_HIDDEN;
+HRESULT WINAPI RPC_ResolveOxid(OXID oxid, OXID_INFO *oxid_info) DECLSPEC_HIDDEN;
 
 /* Drag and drop */
 void OLEDD_UnInitialize(void) DECLSPEC_HIDDEN;
 
 /* Apartment Functions */
 
-extern struct apartment * WINAPI apartment_findfromoxid(OXID oxid) DECLSPEC_HIDDEN;
 extern void WINAPI apartment_release(struct apartment *apt) DECLSPEC_HIDDEN;
 static inline HRESULT apartment_getoxid(const struct apartment *apt, OXID *oxid)
 {
     *oxid = apt->oxid;
     return S_OK;
 }
-extern HRESULT WINAPI apartment_createwindowifneeded(struct apartment *apt) DECLSPEC_HIDDEN;
 extern HWND WINAPI apartment_getwindow(const struct apartment *apt) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI enter_apartment(struct oletls *info, DWORD model) DECLSPEC_HIDDEN;
 void WINAPI leave_apartment(struct oletls *info) DECLSPEC_HIDDEN;

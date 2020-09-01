@@ -1096,7 +1096,7 @@ static const IRpcChannelBufferVtbl ServerRpcChannelBufferVtbl =
 };
 
 /* returns a channel buffer for proxies */
-HRESULT RPC_CreateClientChannel(const OXID *oxid, const IPID *ipid,
+HRESULT WINAPI RPC_CreateClientChannel(const OXID *oxid, const IPID *ipid,
                                 const OXID_INFO *oxid_info, const IID *iid,
                                 DWORD dest_context, void *dest_context_data,
                                 IRpcChannelBuffer **chan, struct apartment *apt)
@@ -1531,7 +1531,7 @@ static void __RPC_STUB dispatch_rpc(RPC_MESSAGE *msg)
 }
 
 /* stub registration */
-HRESULT RPC_RegisterInterface(REFIID riid)
+HRESULT WINAPI RPC_RegisterInterface(REFIID riid)
 {
     struct registered_if *rif;
     BOOL found = FALSE;
@@ -1610,7 +1610,7 @@ void WINAPI RPC_UnregisterInterface(REFIID riid, BOOL wait)
 
 /* get the info for an OXID, including the IPID for the rem unknown interface
  * and the string binding */
-HRESULT RPC_ResolveOxid(OXID oxid, OXID_INFO *oxid_info)
+HRESULT WINAPI RPC_ResolveOxid(OXID oxid, OXID_INFO *oxid_info)
 {
     TRACE("%s\n", wine_dbgstr_longlong(oxid));
 
@@ -1631,7 +1631,7 @@ HRESULT RPC_ResolveOxid(OXID oxid, OXID_INFO *oxid_info)
 
 /* make the apartment reachable by other threads and processes and create the
  * IRemUnknown object */
-void RPC_StartRemoting(struct apartment *apt)
+void WINAPI RPC_StartRemoting(struct apartment *apt)
 {
     if (!InterlockedExchange(&apt->remoting_started, TRUE))
     {
