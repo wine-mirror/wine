@@ -749,8 +749,11 @@ static void startup_info_dump( struct object *obj, int verbose )
     struct startup_info *info = (struct startup_info *)obj;
     assert( obj->ops == &startup_info_ops );
 
-    fprintf( stderr, "Startup info in=%04x out=%04x err=%04x\n",
-             info->data->hstdin, info->data->hstdout, info->data->hstderr );
+    fputs( "Startup info", stderr );
+    if (info->data)
+        fprintf( stderr, " in=%04x out=%04x err=%04x",
+                 info->data->hstdin, info->data->hstdout, info->data->hstderr );
+    fputc( '\n', stderr );
 }
 
 static int startup_info_signaled( struct object *obj, struct wait_queue_entry *entry )
