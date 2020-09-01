@@ -192,6 +192,7 @@ struct console_host_ioctl
 struct console_server
 {
     struct object         obj;         /* object header */
+    struct fd            *fd;          /* pseudo-fd for ioctls */
     struct console_input *console;     /* attached console */
     struct list           queue;       /* ioctl queue */
     struct list           read_queue;  /* blocking read queue */
@@ -201,6 +202,7 @@ struct console_server
 static void console_server_dump( struct object *obj, int verbose );
 static void console_server_destroy( struct object *obj );
 static int console_server_signaled( struct object *obj, struct wait_queue_entry *entry );
+static struct fd *console_server_get_fd( struct object *obj );
 static struct object *console_server_lookup_name( struct object *obj, struct unicode_str *name, unsigned int attr );
 static struct object *console_server_open_file( struct object *obj, unsigned int access,
                                                 unsigned int sharing, unsigned int options );
@@ -215,7 +217,7 @@ static const struct object_ops console_server_ops =
     console_server_signaled,          /* signaled */
     no_satisfied,                     /* satisfied */
     no_signal,                        /* signal */
-    no_get_fd,                        /* get_fd */
+    console_server_get_fd,            /* get_fd */
     default_fd_map_access,            /* map_access */
     default_get_sd,                   /* get_sd */
     default_set_sd,                   /* set_sd */
@@ -226,6 +228,23 @@ static const struct object_ops console_server_ops =
     no_kernel_obj_list,               /* get_kernel_obj_list */
     fd_close_handle,                  /* close_handle */
     console_server_destroy            /* destroy */
+};
+
+static int console_server_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
+
+static const struct fd_ops console_server_fd_ops =
+{
+    default_fd_get_poll_events,   /* get_poll_events */
+    default_poll_event,           /* poll_event */
+    console_get_fd_type,          /* get_fd_type */
+    no_fd_read,                   /* read */
+    no_fd_write,                  /* write */
+    no_fd_flush,                  /* flush */
+    no_fd_get_file_info,          /* get_file_info */
+    no_fd_get_volume_info,        /* get_volume_info */
+    console_server_ioctl,         /* ioctl */
+    default_fd_queue_async,       /* queue_async */
+    default_fd_reselect_async     /* reselect_async */
 };
 
 struct font_info
@@ -1598,6 +1617,7 @@ static void console_server_destroy( struct object *obj )
     struct console_server *server = (struct console_server *)obj;
     assert( obj->ops == &console_server_ops );
     disconnect_console_server( server );
+    if (server->fd) release_object( server->fd );
 }
 
 static struct object *console_server_lookup_name( struct object *obj, struct unicode_str *name, unsigned int attr )
@@ -1638,6 +1658,13 @@ static int console_server_signaled( struct object *obj, struct wait_queue_entry 
     return !server->console || !list_empty( &server->queue );
 }
 
+static struct fd *console_server_get_fd( struct object* obj )
+{
+    struct console_server *server = (struct console_server*)obj;
+    assert( obj->ops == &console_server_ops );
+    return (struct fd *)grab_object( server->fd );
+}
+
 static struct object *console_server_open_file( struct object *obj, unsigned int access,
                                                 unsigned int sharing, unsigned int options )
 {
@@ -1653,6 +1680,13 @@ static struct object *create_console_server( void )
     server->busy    = 0;
     list_init( &server->queue );
     list_init( &server->read_queue );
+    server->fd = alloc_pseudo_fd( &console_server_fd_ops, &server->obj, FILE_SYNCHRONOUS_IO_NONALERT );
+    if (!server->fd)
+    {
+        release_object( server );
+        return NULL;
+    }
+    allow_fd_caching(server->fd);
 
     return &server->obj;
 }
@@ -2134,6 +2168,35 @@ static int console_input_events_ioctl( struct fd *fd, ioctl_code_t code, struct 
             return 0;
         }
         return console_input_ioctl( evts->console->fd, code, async );
+    }
+}
+
+static int console_server_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
+{
+    struct console_server *server = get_fd_user( fd );
+
+    switch (code)
+    {
+    case IOCTL_CONDRV_CTRL_EVENT:
+        {
+            const struct condrv_ctrl_event *event = get_req_data();
+            if (get_req_data_size() != sizeof(*event))
+            {
+                set_error( STATUS_INVALID_PARAMETER );
+                return 0;
+            }
+            if (!server->console)
+            {
+                set_error( STATUS_INVALID_HANDLE );
+                return 0;
+            }
+            propagate_console_signal( server->console, event->event, event->group_id );
+            return !get_error();
+        }
+
+    default:
+        set_error( STATUS_INVALID_HANDLE );
+        return 0;
     }
 }
 
