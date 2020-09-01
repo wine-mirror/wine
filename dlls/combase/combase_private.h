@@ -102,7 +102,7 @@ static inline struct apartment* com_get_current_apt(void)
     return tlsdata->apt;
 }
 
-HWND WINAPI apartment_getwindow(const struct apartment *apt) DECLSPEC_HIDDEN;
+HWND apartment_getwindow(const struct apartment *apt) DECLSPEC_HIDDEN;
 HRESULT apartment_createwindowifneeded(struct apartment *apt) DECLSPEC_HIDDEN;
 void apartment_freeunusedlibraries(struct apartment *apt, DWORD unload_delay) DECLSPEC_HIDDEN;
 void apartment_global_cleanup(void) DECLSPEC_HIDDEN;
@@ -114,6 +114,18 @@ HRESULT rpcss_get_next_seqid(DWORD *id) DECLSPEC_HIDDEN;
 HRESULT rpc_get_local_class_object(REFCLSID rclsid, REFIID riid, void **obj) DECLSPEC_HIDDEN;
 HRESULT rpc_start_local_server(REFCLSID clsid, IStream *stream, BOOL multi_use, void **registration) DECLSPEC_HIDDEN;
 void rpc_stop_local_server(void *registration) DECLSPEC_HIDDEN;
+HRESULT rpc_create_clientchannel(const OXID *oxid, const IPID *ipid, const OXID_INFO *oxid_info, const IID *iid,
+        DWORD dest_context, void *dest_context_data, IRpcChannelBuffer **chan, struct apartment *apt) DECLSPEC_HIDDEN;
+HRESULT rpc_create_serverchannel(DWORD dest_context, void *dest_context_data, IRpcChannelBuffer **chan) DECLSPEC_HIDDEN;
+HRESULT rpc_register_interface(REFIID riid) DECLSPEC_HIDDEN;
+void rpc_unregister_interface(REFIID riid, BOOL wait) DECLSPEC_HIDDEN;
+HRESULT rpc_resolve_oxid(OXID oxid, OXID_INFO *oxid_info) DECLSPEC_HIDDEN;
+void rpc_start_remoting(struct apartment *apt) DECLSPEC_HIDDEN;
+HRESULT rpc_register_channel_hook(REFGUID rguid, IChannelHook *hook) DECLSPEC_HIDDEN;
+void rpc_unregister_channel_hooks(void) DECLSPEC_HIDDEN;
+
+struct dispatch_params;
+void rpc_execute_call(struct dispatch_params *params);
 
 enum class_reg_data_origin
 {
@@ -136,10 +148,10 @@ struct class_reg_data
     } u;
 };
 
-HRESULT WINAPI enter_apartment(struct tlsdata *data, DWORD model);
-void WINAPI leave_apartment(struct tlsdata *data);
-void WINAPI apartment_release(struct apartment *apt);
-struct apartment * WINAPI apartment_get_current_or_mta(void);
+HRESULT enter_apartment(struct tlsdata *data, DWORD model) DECLSPEC_HIDDEN;
+void leave_apartment(struct tlsdata *data) DECLSPEC_HIDDEN;
+void apartment_release(struct apartment *apt) DECLSPEC_HIDDEN;
+struct apartment * apartment_get_current_or_mta(void) DECLSPEC_HIDDEN;
 HRESULT apartment_increment_mta_usage(CO_MTA_USAGE_COOKIE *cookie) DECLSPEC_HIDDEN;
 void apartment_decrement_mta_usage(CO_MTA_USAGE_COOKIE cookie) DECLSPEC_HIDDEN;
 struct apartment * apartment_get_mta(void) DECLSPEC_HIDDEN;
@@ -151,6 +163,9 @@ IUnknown *com_get_registered_class_object(const struct apartment *apartment, REF
 void apartment_revoke_all_classes(const struct apartment *apt) DECLSPEC_HIDDEN;
 struct apartment * apartment_findfromoxid(OXID oxid) DECLSPEC_HIDDEN;
 struct apartment * apartment_findfromtid(DWORD tid) DECLSPEC_HIDDEN;
+
+HRESULT marshal_object(struct apartment *apt, STDOBJREF *stdobjref, REFIID riid, IUnknown *object,
+        DWORD dest_context, void *dest_context_data, MSHLFLAGS mshlflags) DECLSPEC_HIDDEN;
 
 /* Stub Manager */
 
@@ -219,7 +234,7 @@ struct stub_manager
     BOOL              disconnected; /* CoDisconnectObject has been called (CS lock) */
 };
 
-ULONG WINAPI stub_manager_int_release(struct stub_manager *stub_manager) DECLSPEC_HIDDEN;
+ULONG stub_manager_int_release(struct stub_manager *stub_manager) DECLSPEC_HIDDEN;
 struct stub_manager * get_stub_manager_from_object(struct apartment *apt, IUnknown *object, BOOL alloc) DECLSPEC_HIDDEN;
 void stub_manager_disconnect(struct stub_manager *m) DECLSPEC_HIDDEN;
 ULONG stub_manager_ext_addref(struct stub_manager *m, ULONG refs, BOOL tableweak) DECLSPEC_HIDDEN;
@@ -231,3 +246,7 @@ BOOL stub_manager_notify_unmarshal(struct stub_manager *m, const IPID *ipid) DEC
 struct ifstub * stub_manager_find_ifstub(struct stub_manager *m, REFIID iid, MSHLFLAGS flags) DECLSPEC_HIDDEN;
 struct ifstub * stub_manager_new_ifstub(struct stub_manager *m, IRpcStubBuffer *sb, REFIID iid, DWORD dest_context,
     void *dest_context_data, MSHLFLAGS flags) DECLSPEC_HIDDEN;
+HRESULT ipid_get_dispatch_params(const IPID *ipid, struct apartment **stub_apt,
+        struct stub_manager **manager, IRpcStubBuffer **stub, IRpcChannelBuffer **chan,
+        IID *iid, IUnknown **iface) DECLSPEC_HIDDEN;
+HRESULT start_apartment_remote_unknown(struct apartment *apt) DECLSPEC_HIDDEN;

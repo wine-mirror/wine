@@ -139,6 +139,7 @@
 @ stdcall CoQueryProxyBlanket(ptr ptr ptr ptr ptr ptr ptr ptr)
 @ stub CoReactivateObject
 @ stub CoRegisterActivationFilter
+@ stdcall CoRegisterChannelHook(ptr ptr)
 @ stdcall CoRegisterClassObject(ptr ptr long long ptr)
 @ stdcall CoRegisterInitializeSpy(ptr ptr)
 @ stdcall CoRegisterMallocSpy(ptr)
@@ -350,12 +351,3 @@
 @ stdcall WindowsSubstringWithSpecifiedLength(ptr long long ptr)
 @ stdcall WindowsTrimStringEnd(ptr ptr ptr)
 @ stdcall WindowsTrimStringStart(ptr ptr ptr)
-
-@ stdcall apartment_get_current_or_mta()
-@ stdcall apartment_release(ptr)
-@ stdcall enter_apartment(ptr long)
-@ stdcall leave_apartment(ptr)
-@ stdcall apartment_getwindow(ptr)
-@ stdcall stub_manager_int_release(ptr)
-@ stdcall ipid_get_dispatch_params(ptr ptr ptr ptr ptr ptr ptr)
-@ stdcall start_apartment_remote_unknown(ptr)

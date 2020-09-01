@@ -930,26 +930,6 @@ HRESULT WINAPI CoGetObject(LPCWSTR pszName, BIND_OPTS *pBindOptions,
     return hr;
 }
 
-/***********************************************************************
- *           CoRegisterChannelHook [OLE32.@]
- *
- * Registers a process-wide hook that is called during ORPC calls.
- *
- * PARAMS
- *  guidExtension [I] GUID of the channel hook to register.
- *  pChannelHook  [I] Channel hook object to register.
- *
- * RETURNS
- *  Success: S_OK.
- *  Failure: HRESULT code.
- */
-HRESULT WINAPI CoRegisterChannelHook(REFGUID guidExtension, IChannelHook *pChannelHook)
-{
-    TRACE("(%s, %p)\n", debugstr_guid(guidExtension), pChannelHook);
-
-    return RPC_RegisterChannelHook(guidExtension, pChannelHook);
-}
-
 /* Returns expanded dll path from the registry or activation context. */
 static BOOL get_object_dll_path(const struct class_reg_data *regdata, WCHAR *dst, DWORD dstlen)
 {
@@ -1176,7 +1156,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID reserved)
     case DLL_PROCESS_DETACH:
         if (reserved) break;
         release_std_git();
-        RPC_UnregisterAllChannelHooks();
         break;
     }
     return TRUE;

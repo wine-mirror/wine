@@ -44,11 +44,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
-extern HRESULT WINAPI marshal_object(struct apartment *apt, STDOBJREF *stdobjref, REFIID riid, IUnknown *object,
-        DWORD dest_context, void *dest_context_data, MSHLFLAGS mshlflags);
-extern HRESULT WINAPI RPC_CreateServerChannel(DWORD dest_context, void *dest_context_data, IRpcChannelBuffer **chan);
-extern void WINAPI RPC_UnregisterInterface(REFIID riid, BOOL wait);
-
 /* generates an ipid in the following format (similar to native version):
  * Data1 = apartment-local ipid counter
  * Data2 = apartment creator thread ID
@@ -92,7 +87,7 @@ struct ifstub * stub_manager_new_ifstub(struct stub_manager *m, IRpcStubBuffer *
         return NULL;
     }
 
-    hr = RPC_CreateServerChannel(dest_context, dest_context_data, &stub->chan);
+    hr = rpc_create_serverchannel(dest_context, dest_context_data, &stub->chan);
     if (hr != S_OK)
     {
         IUnknown_Release(stub->iface);
@@ -131,7 +126,7 @@ static void stub_manager_delete_ifstub(struct stub_manager *m, struct ifstub *if
     list_remove(&ifstub->entry);
 
     if (!m->disconnected)
-        RPC_UnregisterInterface(&ifstub->iid, TRUE);
+        rpc_unregister_interface(&ifstub->iid, TRUE);
 
     if (ifstub->stubbuffer) IRpcStubBuffer_Release(ifstub->stubbuffer);
     IUnknown_Release(ifstub->iface);
@@ -255,7 +250,7 @@ void stub_manager_disconnect(struct stub_manager *m)
     if (!m->disconnected)
     {
         LIST_FOR_EACH_ENTRY(ifstub, &m->ifstubs, struct ifstub, entry)
-            RPC_UnregisterInterface(&ifstub->iid, FALSE);
+            rpc_unregister_interface(&ifstub->iid, FALSE);
 
         m->disconnected = TRUE;
     }
@@ -314,7 +309,7 @@ static ULONG stub_manager_int_addref(struct stub_manager *m)
 }
 
 /* decrements the internal refcount */
-ULONG WINAPI stub_manager_int_release(struct stub_manager *m)
+ULONG stub_manager_int_release(struct stub_manager *m)
 {
     ULONG refs;
     struct apartment *apt = m->apt;
@@ -542,10 +537,9 @@ static HRESULT ipid_to_stub_manager(const IPID *ipid, struct apartment **stub_ap
 /* gets the apartment, stub and channel of an object. the caller must
  * release the references to all objects (except iface) if the function
  * returned success, otherwise no references are returned. */
-HRESULT WINAPI ipid_get_dispatch_params(const IPID *ipid, struct apartment **stub_apt,
-                                 struct stub_manager **manager,
-                                 IRpcStubBuffer **stub, IRpcChannelBuffer **chan,
-                                 IID *iid, IUnknown **iface)
+HRESULT ipid_get_dispatch_params(const IPID *ipid, struct apartment **stub_apt,
+        struct stub_manager **manager, IRpcStubBuffer **stub, IRpcChannelBuffer **chan,
+        IID *iid, IUnknown **iface)
 {
     struct stub_manager *stubmgr;
     struct ifstub *ifstub;
@@ -826,7 +820,7 @@ static const IRemUnknownVtbl RemUnknown_Vtbl =
 };
 
 /* starts the IRemUnknown listener for the current apartment */
-HRESULT WINAPI start_apartment_remote_unknown(struct apartment *apt)
+HRESULT start_apartment_remote_unknown(struct apartment *apt)
 {
     IRemUnknown *pRemUnknown;
     HRESULT hr = S_OK;

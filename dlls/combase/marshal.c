@@ -36,9 +36,6 @@ HRESULT WINAPI RPC_CreateClientChannel(const OXID *oxid, const IPID *ipid,
                                 const OXID_INFO *oxid_info, const IID *iid,
                                 DWORD dest_context, void *dest_context_data,
                                 IRpcChannelBuffer **chan, struct apartment *apt);
-HRESULT WINAPI RPC_RegisterInterface(REFIID riid);
-HRESULT WINAPI RPC_ResolveOxid(OXID oxid, OXID_INFO *oxid_info);
-void WINAPI RPC_StartRemoting(struct apartment *apt);
 
 static HRESULT unmarshal_object(const STDOBJREF *stdobjref, struct apartment *apt,
                                 MSHCTX dest_context, void *dest_context_data,
@@ -889,7 +886,7 @@ static inline HRESULT get_facbuf_for_iid(REFIID riid, IPSFactoryBuffer **facbuf)
 }
 
 /* marshals an object into a STDOBJREF structure */
-HRESULT WINAPI marshal_object(struct apartment *apt, STDOBJREF *stdobjref, REFIID riid, IUnknown *object,
+HRESULT marshal_object(struct apartment *apt, STDOBJREF *stdobjref, REFIID riid, IUnknown *object,
     DWORD dest_context, void *dest_context_data, MSHLFLAGS mshlflags)
 {
     struct stub_manager *manager;
@@ -971,15 +968,13 @@ HRESULT WINAPI marshal_object(struct apartment *apt, STDOBJREF *stdobjref, REFII
     }
 
     /* FIXME: check return value */
-    RPC_RegisterInterface(riid);
+    rpc_register_interface(riid);
 
     stdobjref->ipid = ifstub->ipid;
 
     stub_manager_int_release(manager);
     return S_OK;
 }
-
-
 
 /* Client-side identity of the server object */
 
@@ -1583,7 +1578,7 @@ static HRESULT proxy_manager_construct(
     }
     else
     {
-        HRESULT hr = RPC_ResolveOxid(oxid, &This->oxid_info);
+        HRESULT hr = rpc_resolve_oxid(oxid, &This->oxid_info);
         if (FAILED(hr))
         {
             CloseHandle(This->remoting_mutex);
@@ -2081,7 +2076,7 @@ static HRESULT WINAPI StdMarshalImpl_MarshalInterface(IMarshal *iface, IStream *
     }
 
     /* make sure this apartment can be reached from other threads / processes */
-    RPC_StartRemoting(apt);
+    rpc_start_remoting(apt);
 
     fill_std_objref(&objref, riid, NULL);
     hr = marshal_object(apt, &objref.u_objref.u_standard.std, riid, pv, dest_context,
@@ -2134,14 +2129,11 @@ static HRESULT unmarshal_object(const STDOBJREF *stdobjref, struct apartment *ap
         if (hr == E_NOINTERFACE)
         {
             IRpcChannelBuffer *chanbuf;
-            hr = RPC_CreateClientChannel(&stdobjref->oxid, &stdobjref->ipid,
-                                         &proxy_manager->oxid_info, riid,
-                                         proxy_manager->dest_context,
-                                         proxy_manager->dest_context_data,
-                                         &chanbuf, apt);
+            hr = rpc_create_clientchannel(&stdobjref->oxid, &stdobjref->ipid,
+                    &proxy_manager->oxid_info, riid, proxy_manager->dest_context,
+                    proxy_manager->dest_context_data, &chanbuf, apt);
             if (hr == S_OK)
-                hr = proxy_manager_create_ifproxy(proxy_manager, stdobjref,
-                                                  riid, chanbuf, &ifproxy);
+                hr = proxy_manager_create_ifproxy(proxy_manager, stdobjref, riid, chanbuf, &ifproxy);
         }
         else
             IUnknown_AddRef((IUnknown *)ifproxy->iface);

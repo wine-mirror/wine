@@ -3053,6 +3053,16 @@ HRESULT WINAPI CoLockObjectExternal(IUnknown *object, BOOL lock, BOOL last_unloc
 }
 
 /***********************************************************************
+ *           CoRegisterChannelHook    (combase.@)
+ */
+HRESULT WINAPI CoRegisterChannelHook(REFGUID guidExtension, IChannelHook *channel_hook)
+{
+    TRACE("%s, %p\n", debugstr_guid(guidExtension), channel_hook);
+
+    return rpc_register_channel_hook(guidExtension, channel_hook);
+}
+
+/***********************************************************************
  *            DllMain     (combase.@)
  */
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, LPVOID reserved)
@@ -3068,6 +3078,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, LPVOID reserved)
         if (reserved) break;
         apartment_global_cleanup();
         DeleteCriticalSection(&registered_classes_cs);
+        rpc_unregister_channel_hooks();
         break;
     case DLL_THREAD_DETACH:
         com_cleanup_tlsdata();

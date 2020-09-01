@@ -33,7 +33,6 @@ C_SRCS = \
 	oleobj.c \
 	oleproxy.c \
 	pointermoniker.c \
-	rpc.c \
 	stg_prop.c \
 	stg_stream.c \
 	storage32.c \

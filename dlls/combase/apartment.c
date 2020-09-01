@@ -443,7 +443,7 @@ void apartment_freeunusedlibraries(struct apartment *apt, DWORD delay)
     LeaveCriticalSection(&apt->cs);
 }
 
-void WINAPI apartment_release(struct apartment *apt)
+void apartment_release(struct apartment *apt)
 {
     DWORD refcount;
 
@@ -615,7 +615,7 @@ struct apartment * apartment_get_mta(void)
 
 /* Return the current apartment if it exists, or, failing that, the MTA. Caller
  * must free the returned apartment in either case. */
-struct apartment * WINAPI apartment_get_current_or_mta(void)
+struct apartment * apartment_get_current_or_mta(void)
 {
     struct apartment *apt = com_get_current_apt();
     if (apt)
@@ -1098,14 +1098,13 @@ static HRESULT apartment_hostobject(struct apartment *apt, const struct host_obj
 }
 
 struct dispatch_params;
-extern void WINAPI Internal_RPC_ExecuteCall(struct dispatch_params *params);
 
 static LRESULT CALLBACK apartment_wndproc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch (msg)
     {
     case DM_EXECUTERPC:
-        Internal_RPC_ExecuteCall((struct dispatch_params *)lParam);
+        rpc_execute_call((struct dispatch_params *)lParam);
         return 0;
     case DM_HOSTOBJECT:
         return apartment_hostobject(com_get_current_apt(), (const struct host_object_params *)lParam);
@@ -1119,7 +1118,7 @@ static BOOL apartment_is_model(const struct apartment *apt, DWORD model)
     return (apt->multi_threaded == !(model & COINIT_APARTMENTTHREADED));
 }
 
-HRESULT WINAPI enter_apartment(struct tlsdata *data, DWORD model)
+HRESULT enter_apartment(struct tlsdata *data, DWORD model)
 {
     HRESULT hr = S_OK;
 
@@ -1143,7 +1142,7 @@ HRESULT WINAPI enter_apartment(struct tlsdata *data, DWORD model)
     return hr;
 }
 
-void WINAPI leave_apartment(struct tlsdata *data)
+void leave_apartment(struct tlsdata *data)
 {
     if (!--data->inits)
     {
@@ -1262,7 +1261,7 @@ HRESULT apartment_createwindowifneeded(struct apartment *apt)
 }
 
 /* retrieves the window for the main- or apartment-threaded apartment */
-HWND WINAPI apartment_getwindow(const struct apartment *apt)
+HWND apartment_getwindow(const struct apartment *apt)
 {
     assert(!apt->multi_threaded);
     return apt->win;

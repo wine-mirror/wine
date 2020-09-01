@@ -39,113 +39,9 @@
 #include "winreg.h"
 #include "winternl.h"
 
-struct apartment;
-
 DEFINE_OLEGUID( CLSID_DfMarshal, 0x0000030b, 0, 0 );
 
-/* signal to stub manager that this is a rem unknown object */
-#define MSHLFLAGSP_REMUNKNOWN   0x80000000
-
-/* Thread-safety Annotation Legend:
- *
- * RO    - The value is read only. It never changes after creation, so no
- *         locking is required.
- * LOCK  - The value is written to only using Interlocked* functions.
- * CS    - The value is read or written to inside a critical section.
- *         The identifier following "CS" is the specific critical section that
- *         must be used.
- * MUTEX - The value is read or written to with a mutex held.
- *         The identifier following "MUTEX" is the specific mutex that
- *         must be used.
- */
-
-typedef enum ifstub_state
-{
-    STUBSTATE_NORMAL_MARSHALED,
-    STUBSTATE_NORMAL_UNMARSHALED,
-    STUBSTATE_TABLE_WEAK_MARSHALED,
-    STUBSTATE_TABLE_WEAK_UNMARSHALED,
-    STUBSTATE_TABLE_STRONG,
-} STUB_STATE;
-
-/* an interface stub */
-struct ifstub   
-{
-    struct list       entry;      /* entry in stub_manager->ifstubs list (CS stub_manager->lock) */
-    IRpcStubBuffer   *stubbuffer; /* RO */
-    IID               iid;        /* RO */
-    IPID              ipid;       /* RO */
-    IUnknown         *iface;      /* RO */
-    MSHLFLAGS         flags;      /* so we can enforce process-local marshalling rules (RO) */
-    IRpcChannelBuffer*chan;       /* channel passed to IRpcStubBuffer::Invoke (RO) */
-};
-
-
-/* stub managers hold refs on the object and each interface stub */
-struct stub_manager
-{
-    struct list       entry;      /* entry in apartment stubmgr list (CS apt->cs) */
-    struct list       ifstubs;    /* list of active ifstubs for the object (CS lock) */
-    CRITICAL_SECTION  lock;
-    struct apartment *apt;        /* owning apt (RO) */
-
-    ULONG             extrefs;    /* number of 'external' references (CS lock) */
-    ULONG             refs;       /* internal reference count (CS apt->cs) */
-    ULONG             weakrefs;   /* number of weak references (CS lock) */
-    OID               oid;        /* apartment-scoped unique identifier (RO) */
-    IUnknown         *object;     /* the object we are managing the stub for (RO) */
-    ULONG             next_ipid;  /* currently unused (LOCK) */
-    OXID_INFO         oxid_info;  /* string binding, ipid of rem unknown and other information (RO) */
-
-    IExternalConnection *extern_conn;
-
-    /* We need to keep a count of the outstanding marshals, so we can enforce the
-     * marshalling rules (ie, you can only unmarshal normal marshals once). Note
-     * that these counts do NOT include unmarshalled interfaces, once a stream is
-     * unmarshalled and a proxy set up, this count is decremented.
-     */
-
-    ULONG             norm_refs;  /* refcount of normal marshals (CS lock) */
-    BOOL              disconnected; /* CoDisconnectObject has been called (CS lock) */
-};
-
-struct apartment
-{
-  struct list entry;
-
-  LONG  refs;              /* refcount of the apartment (LOCK) */
-  BOOL multi_threaded;     /* multi-threaded or single-threaded apartment? (RO) */
-  DWORD tid;               /* thread id (RO) */
-  OXID oxid;               /* object exporter ID (RO) */
-  LONG ipidc;              /* interface pointer ID counter, starts at 1 (LOCK) */
-  CRITICAL_SECTION cs;     /* thread safety */
-  struct list proxies;     /* imported objects (CS cs) */
-  struct list stubmgrs;    /* stub managers for exported objects (CS cs) */
-  BOOL remunk_exported;    /* has the IRemUnknown interface for this apartment been created yet? (CS cs) */
-  LONG remoting_started;   /* has the RPC system been started for this apartment? (LOCK) */
-  struct list loaded_dlls; /* list of dlls loaded by this apartment (CS cs) */
-  DWORD host_apt_tid;      /* thread ID of apartment hosting objects of differing threading model (CS cs) */
-  HWND host_apt_hwnd;      /* handle to apartment window of host apartment (CS cs) */
-  struct local_server *local_server; /* A marshallable object exposing local servers (CS cs) */
-  BOOL being_destroyed;    /* is currently being destroyed */
-
-  /* FIXME: OIDs should be given out by RPCSS */
-  OID oidc;                /* object ID counter, starts at 1, zero is invalid OID (CS cs) */
-
-  /* STA-only fields */
-  HWND win;                /* message window (LOCK) */
-  LPMESSAGEFILTER filter;  /* message filter (CS cs) */
-  BOOL main;               /* is this a main-threaded-apartment? (RO) */
-  /* MTA-only */
-  struct list usage_cookies; /* Used for refcount control with CoIncrementMTAUsage()/CoDecrementMTAUsage(). */
-};
-
-struct init_spy
-{
-    struct list entry;
-    IInitializeSpy *spy;
-    unsigned int id;
-};
+struct apartment;
 
 /* this is what is stored in TEB->ReservedForOle */
 struct oletls
@@ -170,7 +66,6 @@ struct oletls
     DWORD            spies_lock;
 };
 
-
 /* Global Interface Table Functions */
 extern void release_std_git(void) DECLSPEC_HIDDEN;
 extern HRESULT StdGlobalInterfaceTable_GetFactory(LPVOID *ppv) DECLSPEC_HIDDEN;
@@ -179,47 +74,8 @@ HRESULT COM_OpenKeyForCLSID(REFCLSID clsid, LPCWSTR keyname, REGSAM access, HKEY
 HRESULT MARSHAL_GetStandardMarshalCF(LPVOID *ppv) DECLSPEC_HIDDEN;
 HRESULT FTMarshalCF_Create(REFIID riid, LPVOID *ppv) DECLSPEC_HIDDEN;
 
-/* Stub Manager */
-
-extern ULONG WINAPI stub_manager_int_release(struct stub_manager *This) DECLSPEC_HIDDEN;
-
-/* RPC Backend */
-
-struct dispatch_params;
-
-HRESULT WINAPI RPC_CreateClientChannel(const OXID *oxid, const IPID *ipid,
-                                const OXID_INFO *oxid_info, const IID *iid,
-                                DWORD dest_context, void *dest_context_data,
-                                IRpcChannelBuffer **chan, struct apartment *apt) DECLSPEC_HIDDEN;
-HRESULT WINAPI RPC_RegisterInterface(REFIID riid) DECLSPEC_HIDDEN;
-HRESULT RPC_RegisterChannelHook(REFGUID rguid, IChannelHook *hook) DECLSPEC_HIDDEN;
-void    RPC_UnregisterAllChannelHooks(void) DECLSPEC_HIDDEN;
-HRESULT WINAPI RPC_ResolveOxid(OXID oxid, OXID_INFO *oxid_info) DECLSPEC_HIDDEN;
-
 /* Drag and drop */
 void OLEDD_UnInitialize(void) DECLSPEC_HIDDEN;
-
-/* Apartment Functions */
-
-extern void WINAPI apartment_release(struct apartment *apt) DECLSPEC_HIDDEN;
-static inline HRESULT apartment_getoxid(const struct apartment *apt, OXID *oxid)
-{
-    *oxid = apt->oxid;
-    return S_OK;
-}
-extern HWND WINAPI apartment_getwindow(const struct apartment *apt) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI enter_apartment(struct oletls *info, DWORD model) DECLSPEC_HIDDEN;
-void WINAPI leave_apartment(struct oletls *info) DECLSPEC_HIDDEN;
-extern struct apartment * WINAPI apartment_get_current_or_mta(void) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI apartment_get_local_server_stream(struct apartment *apt, IStream **ret) DECLSPEC_HIDDEN;
-
-/* DCOM messages used by the apartment window (not compatible with native) */
-#define DM_EXECUTERPC   (WM_USER + 0) /* WPARAM = 0, LPARAM = (struct dispatch_params *) */
-#define DM_HOSTOBJECT   (WM_USER + 1) /* WPARAM = 0, LPARAM = (struct host_object_params *) */
-
-/*
- * Per-thread values are stored in the TEB on offset 0xF80
- */
 
 extern HRESULT WINAPI InternalTlsAllocData(struct oletls **tlsdata);
 

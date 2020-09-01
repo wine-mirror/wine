@@ -64,7 +64,7 @@
 @ stdcall CoQueryClientBlanket(ptr ptr ptr ptr ptr ptr ptr) combase.CoQueryClientBlanket
 @ stdcall CoQueryProxyBlanket(ptr ptr ptr ptr ptr ptr ptr ptr) combase.CoQueryProxyBlanket
 @ stub CoQueryReleaseObject
-@ stdcall CoRegisterChannelHook(ptr ptr)
+@ stdcall CoRegisterChannelHook(ptr ptr) combase.CoRegisterChannelHook
 @ stdcall CoRegisterClassObject(ptr ptr long long ptr) combase.CoRegisterClassObject
 @ stdcall CoRegisterInitializeSpy(ptr ptr) combase.CoRegisterInitializeSpy
 @ stdcall CoRegisterMallocSpy(ptr) combase.CoRegisterMallocSpy
@@ -298,11 +298,3 @@
 @ stdcall WriteFmtUserTypeStg(ptr long ptr)
 @ stub WriteOleStg
 @ stub WriteStringStream
-
-@ stdcall Internal_RPC_ExecuteCall(ptr)
-@ stdcall RPC_CreateServerChannel(long ptr ptr)
-@ stdcall RPC_UnregisterInterface(ptr long)
-@ stdcall RPC_RegisterInterface(ptr)
-@ stdcall RPC_ResolveOxid(int64 ptr)
-@ stdcall RPC_StartRemoting(ptr)
-@ stdcall RPC_CreateClientChannel(ptr ptr ptr ptr long ptr ptr ptr)
