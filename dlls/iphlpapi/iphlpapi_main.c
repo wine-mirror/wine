@@ -1008,12 +1008,19 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
         WCHAR *dst;
         DWORD buflen, type;
         INTERNAL_IF_OPER_STATUS status;
+        NET_LUID luid;
+        GUID guid;
 
         memset(aa, 0, sizeof(IP_ADAPTER_ADDRESSES));
         aa->u.s.Length  = sizeof(IP_ADAPTER_ADDRESSES);
         aa->u.s.IfIndex = index;
 
-        sprintf(ptr, "{%08x-0000-0000-0000-000000000000}", index);
+        ConvertInterfaceIndexToLuid(index, &luid);
+        ConvertInterfaceLuidToGuid(&luid, &guid);
+        sprintf(ptr, "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
+                guid.Data1, guid.Data2, guid.Data3, guid.Data4[0], guid.Data4[1],
+                guid.Data4[2], guid.Data4[3], guid.Data4[4], guid.Data4[5],
+                guid.Data4[6], guid.Data4[7]);
         aa->AdapterName = ptr;
         ptr += 39;
 
@@ -1786,7 +1793,7 @@ DWORD WINAPI GetIfEntry2( MIB_IF_ROW2 *row2 )
     row2->InterfaceLuid.Info.NetLuidIndex = row.dwIndex;
     row2->InterfaceLuid.Info.IfType       = row.dwType;
     row2->InterfaceIndex                  = row.dwIndex;
-    row2->InterfaceGuid.Data1             = row.dwIndex;
+    ConvertInterfaceLuidToGuid( &row2->InterfaceLuid, &row2->InterfaceGuid );
     row2->Type                            = row.dwType;
     row2->Mtu                             = row.dwMtu;
     MultiByteToWideChar( CP_UNIXCP, 0, (const char *)row.bDescr, -1, row2->Description, len );
