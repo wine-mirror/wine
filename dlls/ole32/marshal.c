@@ -95,7 +95,7 @@ static inline struct proxy_manager *impl_from_IClientSecurity( IClientSecurity *
     return CONTAINING_RECORD(iface, struct proxy_manager, IClientSecurity_iface);
 }
 
-static HRESULT unmarshal_object(const STDOBJREF *stdobjref, struct apartment *apt,
+HRESULT WINAPI unmarshal_object(const STDOBJREF *stdobjref, struct apartment *apt,
                                 MSHCTX dest_context, void *dest_context_data,
                                 REFIID riid, const OXID_INFO *oxid_info,
                                 void **object);
@@ -1347,7 +1347,7 @@ StdMarshalImpl_MarshalInterface(
 /* helper for StdMarshalImpl_UnmarshalInterface - does the unmarshaling with
  * no questions asked about the rules surrounding same-apartment unmarshals
  * and table marshaling */
-static HRESULT unmarshal_object(const STDOBJREF *stdobjref, struct apartment *apt,
+HRESULT WINAPI unmarshal_object(const STDOBJREF *stdobjref, struct apartment *apt,
                                 MSHCTX dest_context, void *dest_context_data,
                                 REFIID riid, const OXID_INFO *oxid_info,
                                 void **object)
@@ -1696,145 +1696,6 @@ HRESULT WINAPI CoGetStandardMarshal(REFIID riid, IUnknown *pUnk,
         debugstr_guid(riid),pUnk,dwDestContext,pvDestContext,mshlflags,ppMarshal);
 
     return StdMarshalImpl_Construct(&IID_IMarshal, dwDestContext, pvDestContext, (void**)ppMarshal);
-}
-
-/***********************************************************************
- *		get_unmarshaler_from_stream	[internal]
- *
- * Creates an IMarshal* object according to the data marshaled to the stream.
- * The function leaves the stream pointer at the start of the data written
- * to the stream by the IMarshal* object.
- */
-static HRESULT get_unmarshaler_from_stream(IStream *stream, IMarshal **marshal, IID *iid)
-{
-    HRESULT hr;
-    ULONG res;
-    OBJREF objref;
-
-    /* read common OBJREF header */
-    hr = IStream_Read(stream, &objref, FIELD_OFFSET(OBJREF, u_objref), &res);
-    if (hr != S_OK || (res != FIELD_OFFSET(OBJREF, u_objref)))
-    {
-        ERR("Failed to read common OBJREF header, 0x%08x\n", hr);
-        return STG_E_READFAULT;
-    }
-
-    /* sanity check on header */
-    if (objref.signature != OBJREF_SIGNATURE)
-    {
-        ERR("Bad OBJREF signature 0x%08x\n", objref.signature);
-        return RPC_E_INVALID_OBJREF;
-    }
-
-    if (iid) *iid = objref.iid;
-
-    /* FIXME: handler marshaling */
-    if (objref.flags & OBJREF_STANDARD)
-    {
-        TRACE("Using standard unmarshaling\n");
-        *marshal = NULL;
-        return S_FALSE;
-    }
-    else if (objref.flags & OBJREF_CUSTOM)
-    {
-        ULONG custom_header_size = FIELD_OFFSET(OBJREF, u_objref.u_custom.pData) - 
-                                   FIELD_OFFSET(OBJREF, u_objref.u_custom);
-        TRACE("Using custom unmarshaling\n");
-        /* read constant sized OR_CUSTOM data from stream */
-        hr = IStream_Read(stream, &objref.u_objref.u_custom,
-                          custom_header_size, &res);
-        if (hr != S_OK || (res != custom_header_size))
-        {
-            ERR("Failed to read OR_CUSTOM header, 0x%08x\n", hr);
-            return STG_E_READFAULT;
-        }
-        /* now create the marshaler specified in the stream */
-        hr = CoCreateInstance(&objref.u_objref.u_custom.clsid, NULL,
-                              CLSCTX_INPROC_SERVER, &IID_IMarshal,
-                              (LPVOID*)marshal);
-    }
-    else
-    {
-        FIXME("Invalid or unimplemented marshaling type specified: %x\n",
-            objref.flags);
-        return RPC_E_INVALID_OBJREF;
-    }
-
-    if (hr != S_OK)
-        ERR("Failed to create marshal, 0x%08x\n", hr);
-
-    return hr;
-}
-
-/***********************************************************************
- *		CoUnmarshalInterface	[OLE32.@]
- *
- * Unmarshals an object from a stream by creating a proxy to the remote
- * object, if necessary.
- *
- * PARAMS
- *
- *  pStream [I] Stream containing the marshaled object.
- *  riid    [I] Interface identifier of the object to create a proxy to.
- *  ppv     [O] Address where proxy will be stored.
- *
- * RETURNS
- *
- *  Success: S_OK.
- *  Failure: HRESULT code.
- *
- * SEE ALSO
- *  CoMarshalInterface().
- */
-HRESULT WINAPI CoUnmarshalInterface(IStream *pStream, REFIID riid, LPVOID *ppv)
-{
-    HRESULT hr;
-    LPMARSHAL pMarshal;
-    IID iid;
-    IUnknown *object;
-
-    TRACE("(%p, %s, %p)\n", pStream, debugstr_guid(riid), ppv);
-
-    if (!pStream || !ppv)
-        return E_INVALIDARG;
-
-    hr = get_unmarshaler_from_stream(pStream, &pMarshal, &iid);
-    if (hr == S_FALSE)
-    {
-        hr = std_unmarshal_interface(0, NULL, pStream, &iid, (void**)&object);
-        if (hr != S_OK)
-            ERR("StdMarshal UnmarshalInterface failed, 0x%08x\n", hr);
-    }
-    else if (hr == S_OK)
-    {
-        /* call the helper object to do the actual unmarshaling */
-        hr = IMarshal_UnmarshalInterface(pMarshal, pStream, &iid, (LPVOID*)&object);
-        IMarshal_Release(pMarshal);
-        if (hr != S_OK)
-            ERR("IMarshal::UnmarshalInterface failed, 0x%08x\n", hr);
-    }
-
-    if (hr == S_OK)
-    {
-        /* IID_NULL means use the interface ID of the marshaled object */
-        if (!IsEqualIID(riid, &IID_NULL) && !IsEqualIID(riid, &iid))
-        {
-            TRACE("requested interface != marshalled interface, additional QI needed\n");
-            hr = IUnknown_QueryInterface(object, riid, ppv);
-            if (hr != S_OK)
-                ERR("Couldn't query for interface %s, hr = 0x%08x\n",
-                    debugstr_guid(riid), hr);
-            IUnknown_Release(object);
-        }
-        else
-        {
-            *ppv = object;
-        }
-    }
-
-    TRACE("completed with hr 0x%x\n", hr);
-    
-    return hr;
 }
 
 static HRESULT WINAPI StdMarshalCF_QueryInterface(LPCLASSFACTORY iface,

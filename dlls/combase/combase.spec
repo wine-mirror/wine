@@ -166,7 +166,7 @@
 @ stdcall CoUninitialize()
 @ stub CoUnloadingWOW
 @ stdcall CoUnmarshalHresult(ptr ptr)
-@ stdcall CoUnmarshalInterface(ptr ptr ptr) ole32.CoUnmarshalInterface
+@ stdcall CoUnmarshalInterface(ptr ptr ptr)
 @ stub CoVrfCheckThreadState
 @ stub CoVrfGetThreadState
 @ stub CoVrfReleaseThreadState

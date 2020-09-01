@@ -106,6 +106,7 @@ HWND WINAPI apartment_getwindow(const struct apartment *apt) DECLSPEC_HIDDEN;
 HRESULT WINAPI apartment_createwindowifneeded(struct apartment *apt) DECLSPEC_HIDDEN;
 void apartment_freeunusedlibraries(struct apartment *apt, DWORD unload_delay) DECLSPEC_HIDDEN;
 void apartment_global_cleanup(void) DECLSPEC_HIDDEN;
+OXID apartment_getoxid(const struct apartment *apt) DECLSPEC_HIDDEN;
 
 /* RpcSs interface */
 HRESULT rpcss_get_next_seqid(DWORD *id) DECLSPEC_HIDDEN;
@@ -224,3 +225,5 @@ ULONG WINAPI stub_manager_ext_addref(struct stub_manager *m, ULONG refs, BOOL ta
 ULONG WINAPI stub_manager_ext_release(struct stub_manager *m, ULONG refs, BOOL tableweak, BOOL last_unlock_releases) DECLSPEC_HIDDEN;
 struct stub_manager * WINAPI get_stub_manager(struct apartment *apt, OID oid);
 void WINAPI stub_manager_release_marshal_data(struct stub_manager *m, ULONG refs, const IPID *ipid, BOOL tableweak);
+BOOL WINAPI stub_manager_is_table_marshaled(struct stub_manager *m, const IPID *ipid);
+BOOL WINAPI stub_manager_notify_unmarshal(struct stub_manager *m, const IPID *ipid);

@@ -90,7 +90,7 @@
 @ stdcall CoUninitialize() combase.CoUninitialize
 @ stub CoUnloadingWOW
 @ stdcall CoUnmarshalHresult(ptr ptr) combase.CoUnmarshalHresult
-@ stdcall CoUnmarshalInterface(ptr ptr ptr)
+@ stdcall CoUnmarshalInterface(ptr ptr ptr) combase.CoUnmarshalInterface
 @ stdcall CoWaitForMultipleHandles(long long long ptr ptr) combase.CoWaitForMultipleHandles
 @ stdcall CreateAntiMoniker(ptr)
 @ stdcall CreateBindCtx(long ptr)
@@ -302,5 +302,6 @@
 @ stdcall Internal_apartment_disconnectproxies(ptr)
 @ stdcall Internal_RPC_ExecuteCall(ptr)
 @ stdcall marshal_object(ptr ptr ptr ptr long ptr long)
+@ stdcall unmarshal_object(ptr ptr long ptr ptr ptr ptr)
 @ stdcall RPC_CreateServerChannel(long ptr ptr)
 @ stdcall RPC_UnregisterInterface(ptr long)

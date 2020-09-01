@@ -29,6 +29,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
+HRESULT WINAPI unmarshal_object(const STDOBJREF *stdobjref, struct apartment *apt,
+                                MSHCTX dest_context, void *dest_context_data,
+                                REFIID riid, const OXID_INFO *oxid_info,
+                                void **object);
+
 /* private flag indicating that the object was marshaled as table-weak */
 #define SORFP_TABLEWEAK SORF_OXRES1
 
@@ -646,5 +651,146 @@ HRESULT WINAPI CoReleaseMarshalData(IStream *stream)
         ERR("IMarshal::ReleaseMarshalData failed with error %#x\n", hr);
 
     IMarshal_Release(marshal);
+    return hr;
+}
+
+static HRESULT std_unmarshal_interface(MSHCTX dest_context, void *dest_context_data,
+        IStream *stream, REFIID riid, void **ppv)
+{
+    struct stub_manager *stubmgr = NULL;
+    struct OR_STANDARD obj;
+    ULONG res;
+    HRESULT hres;
+    struct apartment *apt, *stub_apt;
+
+    TRACE("(...,%s,....)\n", debugstr_guid(riid));
+
+    /* we need an apartment to unmarshal into */
+    if (!(apt = apartment_get_current_or_mta()))
+    {
+        ERR("Apartment not initialized\n");
+        return CO_E_NOTINITIALIZED;
+    }
+
+    /* read STDOBJREF from wire */
+    hres = IStream_Read(stream, &obj, FIELD_OFFSET(struct OR_STANDARD, saResAddr.aStringArray), &res);
+    if (hres != S_OK)
+    {
+        apartment_release(apt);
+        return STG_E_READFAULT;
+    }
+
+    if (obj.saResAddr.wNumEntries)
+    {
+        ERR("unsupported size of DUALSTRINGARRAY\n");
+        return E_NOTIMPL;
+    }
+
+    /* check if we're marshalling back to ourselves */
+    if ((apartment_getoxid(apt) == obj.std.oxid) && (stubmgr = get_stub_manager(apt, obj.std.oid)))
+    {
+        TRACE("Unmarshalling object marshalled in same apartment for iid %s, "
+              "returning original object %p\n", debugstr_guid(riid), stubmgr->object);
+
+        hres = IUnknown_QueryInterface(stubmgr->object, riid, ppv);
+
+        /* unref the ifstub. FIXME: only do this on success? */
+        if (!stub_manager_is_table_marshaled(stubmgr, &obj.std.ipid))
+            stub_manager_ext_release(stubmgr, obj.std.cPublicRefs, obj.std.flags & SORFP_TABLEWEAK, FALSE);
+
+        stub_manager_int_release(stubmgr);
+        apartment_release(apt);
+        return hres;
+    }
+
+    /* notify stub manager about unmarshal if process-local object.
+     * note: if the oxid is not found then we and native will quite happily
+     * ignore table marshaling and normal marshaling rules regarding number of
+     * unmarshals, etc, but if you abuse these rules then your proxy could end
+     * up returning RPC_E_DISCONNECTED. */
+    if ((stub_apt = apartment_findfromoxid(obj.std.oxid)))
+    {
+        if ((stubmgr = get_stub_manager(stub_apt, obj.std.oid)))
+        {
+            if (!stub_manager_notify_unmarshal(stubmgr, &obj.std.ipid))
+                hres = CO_E_OBJNOTCONNECTED;
+        }
+        else
+        {
+            WARN("Couldn't find object for OXID %s, OID %s, assuming disconnected\n",
+                wine_dbgstr_longlong(obj.std.oxid),
+                wine_dbgstr_longlong(obj.std.oid));
+            hres = CO_E_OBJNOTCONNECTED;
+        }
+    }
+    else
+        TRACE("Treating unmarshal from OXID %s as inter-process\n",
+            wine_dbgstr_longlong(obj.std.oxid));
+
+    if (hres == S_OK)
+        hres = unmarshal_object(&obj.std, apt, dest_context,
+                                dest_context_data, riid,
+                                stubmgr ? &stubmgr->oxid_info : NULL, ppv);
+
+    if (stubmgr) stub_manager_int_release(stubmgr);
+    if (stub_apt) apartment_release(stub_apt);
+
+    if (hres != S_OK) WARN("Failed with error 0x%08x\n", hres);
+    else TRACE("Successfully created proxy %p\n", *ppv);
+
+    apartment_release(apt);
+    return hres;
+}
+
+/***********************************************************************
+ *            CoUnmarshalInterface        (combase.@)
+ */
+HRESULT WINAPI CoUnmarshalInterface(IStream *stream, REFIID riid, void **ppv)
+{
+    IMarshal *marshal;
+    IUnknown *object;
+    HRESULT hr;
+    IID iid;
+
+    TRACE("%p, %s, %p\n", stream, debugstr_guid(riid), ppv);
+
+    if (!stream || !ppv)
+        return E_INVALIDARG;
+
+    hr = get_unmarshaler_from_stream(stream, &marshal, &iid);
+    if (hr == S_FALSE)
+    {
+        hr = std_unmarshal_interface(0, NULL, stream, &iid, (void **)&object);
+        if (hr != S_OK)
+            ERR("StdMarshal UnmarshalInterface failed, hr %#x\n", hr);
+    }
+    else if (hr == S_OK)
+    {
+        /* call the helper object to do the actual unmarshaling */
+        hr = IMarshal_UnmarshalInterface(marshal, stream, &iid, (void **)&object);
+        IMarshal_Release(marshal);
+        if (hr != S_OK)
+            ERR("IMarshal::UnmarshalInterface failed, hr %#x\n", hr);
+    }
+
+    if (hr == S_OK)
+    {
+        /* IID_NULL means use the interface ID of the marshaled object */
+        if (!IsEqualIID(riid, &IID_NULL) && !IsEqualIID(riid, &iid))
+        {
+            TRACE("requested interface != marshalled interface, additional QI needed\n");
+            hr = IUnknown_QueryInterface(object, riid, ppv);
+            if (hr != S_OK)
+                ERR("Couldn't query for interface %s, hr %#x\n", debugstr_guid(riid), hr);
+            IUnknown_Release(object);
+        }
+        else
+        {
+            *ppv = object;
+        }
+    }
+
+    TRACE("completed with hr 0x%x\n", hr);
+
     return hr;
 }

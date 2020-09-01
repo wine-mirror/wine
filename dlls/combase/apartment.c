@@ -1270,6 +1270,11 @@ HWND WINAPI apartment_getwindow(const struct apartment *apt)
     return apt->win;
 }
 
+OXID apartment_getoxid(const struct apartment *apt)
+{
+    return apt->oxid;
+}
+
 void apartment_global_cleanup(void)
 {
     if (apt_win_class)
