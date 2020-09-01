@@ -1368,7 +1368,6 @@ static struct unix_funcs unix_funcs =
     get_locales,
     virtual_release_address_space,
     exec_process,
-    server_init_process_done,
     set_show_dot_files,
     load_so_dll,
     load_builtin_dll,
@@ -1401,6 +1400,7 @@ static void start_main_thread(void)
     init_files();
     NtCreateKeyedEvent( &keyed_event, GENERIC_READ | GENERIC_WRITE, NULL, 0 );
     p__wine_set_unix_funcs( NTDLL_UNIXLIB_VERSION, &unix_funcs );
+    server_init_process_done();
 }
 
 

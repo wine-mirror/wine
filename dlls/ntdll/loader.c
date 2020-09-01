@@ -4073,8 +4073,6 @@ static void process_init(void)
     teb->Tib.StackBase = stack.StackBase;
     teb->Tib.StackLimit = stack.StackLimit;
     teb->DeallocationStack = stack.DeallocationStack;
-
-    unix_funcs->server_init_process_done( kernel32_start_process );
 }
 
 /***********************************************************************
