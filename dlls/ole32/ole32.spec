@@ -72,7 +72,7 @@
 @ stdcall CoRegisterPSClsid(ptr ptr) combase.CoRegisterPSClsid
 @ stdcall CoRegisterSurrogate(ptr)
 @ stdcall CoRegisterSurrogateEx(ptr ptr)
-@ stdcall CoReleaseMarshalData(ptr)
+@ stdcall CoReleaseMarshalData(ptr) combase.CoReleaseMarshalData
 @ stdcall CoReleaseServerProcess() combase.CoReleaseServerProcess
 @ stdcall CoResumeClassObjects()
 @ stdcall CoRevertToSelf() combase.CoRevertToSelf

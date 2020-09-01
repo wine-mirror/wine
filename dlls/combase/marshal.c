@@ -29,6 +29,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
+/* private flag indicating that the object was marshaled as table-weak */
+#define SORFP_TABLEWEAK SORF_OXRES1
+
 struct ftmarshaler
 {
     IUnknown IUnknown_inner;
@@ -505,5 +508,143 @@ cleanup:
 
     TRACE("completed with hr %#x\n", hr);
 
+    return hr;
+}
+
+/* Creates an IMarshal* object according to the data marshaled to the stream.
+ * The function leaves the stream pointer at the start of the data written
+ * to the stream by the IMarshal* object.
+ */
+static HRESULT get_unmarshaler_from_stream(IStream *stream, IMarshal **marshal, IID *iid)
+{
+    OBJREF objref;
+    HRESULT hr;
+    ULONG res;
+
+    /* read common OBJREF header */
+    hr = IStream_Read(stream, &objref, FIELD_OFFSET(OBJREF, u_objref), &res);
+    if (hr != S_OK || (res != FIELD_OFFSET(OBJREF, u_objref)))
+    {
+        ERR("Failed to read common OBJREF header, 0x%08x\n", hr);
+        return STG_E_READFAULT;
+    }
+
+    /* sanity check on header */
+    if (objref.signature != OBJREF_SIGNATURE)
+    {
+        ERR("Bad OBJREF signature 0x%08x\n", objref.signature);
+        return RPC_E_INVALID_OBJREF;
+    }
+
+    if (iid) *iid = objref.iid;
+
+    /* FIXME: handler marshaling */
+    if (objref.flags & OBJREF_STANDARD)
+    {
+        TRACE("Using standard unmarshaling\n");
+        *marshal = NULL;
+        return S_FALSE;
+    }
+    else if (objref.flags & OBJREF_CUSTOM)
+    {
+        ULONG custom_header_size = FIELD_OFFSET(OBJREF, u_objref.u_custom.pData) -
+                                   FIELD_OFFSET(OBJREF, u_objref.u_custom);
+        TRACE("Using custom unmarshaling\n");
+        /* read constant sized OR_CUSTOM data from stream */
+        hr = IStream_Read(stream, &objref.u_objref.u_custom,
+                          custom_header_size, &res);
+        if (hr != S_OK || (res != custom_header_size))
+        {
+            ERR("Failed to read OR_CUSTOM header, 0x%08x\n", hr);
+            return STG_E_READFAULT;
+        }
+        /* now create the marshaler specified in the stream */
+        hr = CoCreateInstance(&objref.u_objref.u_custom.clsid, NULL,
+                              CLSCTX_INPROC_SERVER, &IID_IMarshal,
+                              (LPVOID*)marshal);
+    }
+    else
+    {
+        FIXME("Invalid or unimplemented marshaling type specified: %x\n",
+            objref.flags);
+        return RPC_E_INVALID_OBJREF;
+    }
+
+    if (hr != S_OK)
+        ERR("Failed to create marshal, 0x%08x\n", hr);
+
+    return hr;
+}
+
+static HRESULT std_release_marshal_data(IStream *stream)
+{
+    struct stub_manager *stubmgr;
+    struct OR_STANDARD  obj;
+    struct apartment *apt;
+    ULONG res;
+    HRESULT hr;
+
+    hr = IStream_Read(stream, &obj, FIELD_OFFSET(struct OR_STANDARD, saResAddr.aStringArray), &res);
+    if (hr != S_OK) return STG_E_READFAULT;
+
+    if (obj.saResAddr.wNumEntries)
+    {
+        ERR("unsupported size of DUALSTRINGARRAY\n");
+        return E_NOTIMPL;
+    }
+
+    TRACE("oxid = %s, oid = %s, ipid = %s\n", wine_dbgstr_longlong(obj.std.oxid),
+            wine_dbgstr_longlong(obj.std.oid), wine_dbgstr_guid(&obj.std.ipid));
+
+    if (!(apt = apartment_findfromoxid(obj.std.oxid)))
+    {
+        WARN("Could not map OXID %s to apartment object\n",
+            wine_dbgstr_longlong(obj.std.oxid));
+        return RPC_E_INVALID_OBJREF;
+    }
+
+    if (!(stubmgr = get_stub_manager(apt, obj.std.oid)))
+    {
+        apartment_release(apt);
+        ERR("could not map object ID to stub manager, oxid=%s, oid=%s\n",
+            wine_dbgstr_longlong(obj.std.oxid), wine_dbgstr_longlong(obj.std.oid));
+        return RPC_E_INVALID_OBJREF;
+    }
+
+    stub_manager_release_marshal_data(stubmgr, obj.std.cPublicRefs, &obj.std.ipid, obj.std.flags & SORFP_TABLEWEAK);
+
+    stub_manager_int_release(stubmgr);
+    apartment_release(apt);
+
+    return S_OK;
+}
+
+/***********************************************************************
+ *            CoReleaseMarshalData        (combase.@)
+ */
+HRESULT WINAPI CoReleaseMarshalData(IStream *stream)
+{
+    IMarshal *marshal;
+    HRESULT hr;
+
+    TRACE("%p\n", stream);
+
+    hr = get_unmarshaler_from_stream(stream, &marshal, NULL);
+    if (hr == S_FALSE)
+    {
+        hr = std_release_marshal_data(stream);
+        if (hr != S_OK)
+            ERR("StdMarshal ReleaseMarshalData failed with error %#x\n", hr);
+        return hr;
+    }
+    if (hr != S_OK)
+        return hr;
+
+    /* call the helper object to do the releasing of marshal data */
+    hr = IMarshal_ReleaseMarshalData(marshal, stream);
+    if (hr != S_OK)
+        ERR("IMarshal::ReleaseMarshalData failed with error %#x\n", hr);
+
+    IMarshal_Release(marshal);
     return hr;
 }

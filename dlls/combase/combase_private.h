@@ -222,3 +222,5 @@ struct stub_manager * WINAPI get_stub_manager_from_object(struct apartment *apt,
 void stub_manager_disconnect(struct stub_manager *m) DECLSPEC_HIDDEN;
 ULONG WINAPI stub_manager_ext_addref(struct stub_manager *m, ULONG refs, BOOL tableweak) DECLSPEC_HIDDEN;
 ULONG WINAPI stub_manager_ext_release(struct stub_manager *m, ULONG refs, BOOL tableweak, BOOL last_unlock_releases) DECLSPEC_HIDDEN;
+struct stub_manager * WINAPI get_stub_manager(struct apartment *apt, OID oid);
+void WINAPI stub_manager_release_marshal_data(struct stub_manager *m, ULONG refs, const IPID *ipid, BOOL tableweak);

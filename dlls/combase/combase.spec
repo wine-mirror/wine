@@ -146,7 +146,7 @@
 @ stdcall CoRegisterPSClsid(ptr ptr)
 @ stdcall CoRegisterSurrogate(ptr) ole32.CoRegisterSurrogate
 @ stdcall CoRegisterSurrogateEx(ptr ptr) ole32.CoRegisterSurrogateEx
-@ stdcall CoReleaseMarshalData(ptr) ole32.CoReleaseMarshalData
+@ stdcall CoReleaseMarshalData(ptr)
 @ stdcall CoReleaseServerProcess()
 @ stdcall CoResumeClassObjects() ole32.CoResumeClassObjects
 @ stub CoRetireServer

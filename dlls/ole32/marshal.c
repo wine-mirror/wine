@@ -1837,56 +1837,6 @@ HRESULT WINAPI CoUnmarshalInterface(IStream *pStream, REFIID riid, LPVOID *ppv)
     return hr;
 }
 
-/***********************************************************************
- *		CoReleaseMarshalData	[OLE32.@]
- *
- * Releases resources associated with an object that has been marshaled into
- * a stream.
- *
- * PARAMS
- *
- *  pStream [I] The stream that the object has been marshaled into.
- *
- * RETURNS
- *  Success: S_OK.
- *  Failure: HRESULT error code.
- *
- * NOTES
- * 
- * Call this function to release resources associated with a normal or
- * table-weak marshal that will not be unmarshaled, and all table-strong
- * marshals when they are no longer needed.
- *
- * SEE ALSO
- *  CoMarshalInterface(), CoUnmarshalInterface().
- */
-HRESULT WINAPI CoReleaseMarshalData(IStream *pStream)
-{
-    HRESULT	hr;
-    LPMARSHAL pMarshal;
-
-    TRACE("(%p)\n", pStream);
-
-    hr = get_unmarshaler_from_stream(pStream, &pMarshal, NULL);
-    if (hr == S_FALSE)
-    {
-        hr = std_release_marshal_data(pStream);
-        if (hr != S_OK)
-            ERR("StdMarshal ReleaseMarshalData failed with error 0x%08x\n", hr);
-        return hr;
-    }
-    if (hr != S_OK)
-        return hr;
-
-    /* call the helper object to do the releasing of marshal data */
-    hr = IMarshal_ReleaseMarshalData(pMarshal, pStream);
-    if (hr != S_OK)
-        ERR("IMarshal::ReleaseMarshalData failed with error 0x%08x\n", hr);
-
-    IMarshal_Release(pMarshal);
-    return hr;
-}
-
 static HRESULT WINAPI StdMarshalCF_QueryInterface(LPCLASSFACTORY iface,
                                                   REFIID riid, LPVOID *ppv)
 {
