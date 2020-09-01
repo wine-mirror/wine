@@ -39,6 +39,16 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
+extern BOOL WINAPI stub_manager_is_table_marshaled(struct stub_manager *m, const IPID *ipid);
+extern BOOL WINAPI stub_manager_notify_unmarshal(struct stub_manager *m, const IPID *ipid);
+extern ULONG WINAPI stub_manager_ext_release(struct stub_manager *m, ULONG refs, BOOL tableweak, BOOL last_unlock_releases);
+extern void WINAPI stub_manager_release_marshal_data(struct stub_manager *m, ULONG refs, const IPID *ipid, BOOL tableweak);
+extern struct stub_manager * WINAPI get_stub_manager_from_object(struct apartment *apt, IUnknown *object, BOOL alloc);
+extern struct ifstub * WINAPI stub_manager_find_ifstub(struct stub_manager *m, REFIID iid, MSHLFLAGS flags);
+extern ULONG WINAPI stub_manager_ext_addref(struct stub_manager *m, ULONG refs, BOOL tableweak);
+extern struct ifstub * WINAPI stub_manager_new_ifstub(struct stub_manager *m, IRpcStubBuffer *sb, REFIID iid,
+    DWORD dest_context, void *dest_context_data, MSHLFLAGS flags);
+
 /* number of refs given out for normal marshaling */
 #define NORMALEXTREFS 5
 
@@ -118,7 +128,7 @@ static inline HRESULT get_facbuf_for_iid(REFIID riid, IPSFactoryBuffer **facbuf)
 }
 
 /* marshals an object into a STDOBJREF structure */
-HRESULT marshal_object(struct apartment *apt, STDOBJREF *stdobjref, REFIID riid, IUnknown *object,
+HRESULT WINAPI marshal_object(struct apartment *apt, STDOBJREF *stdobjref, REFIID riid, IUnknown *object,
     DWORD dest_context, void *dest_context_data, MSHLFLAGS mshlflags)
 {
     struct stub_manager *manager;

@@ -444,7 +444,6 @@ void apartment_freeunusedlibraries(struct apartment *apt, DWORD delay)
 }
 
 extern HRESULT WINAPI Internal_apartment_disconnectproxies(struct apartment *apt);
-extern ULONG WINAPI Internal_stub_manager_int_release(struct stub_manager *stubmgr);
 
 void WINAPI apartment_release(struct apartment *apt)
 {
@@ -513,7 +512,7 @@ void WINAPI apartment_release(struct apartment *apt)
              * stub manager list in the apartment and all non-apartment users
              * must have a ref on the apartment and so it cannot be destroyed).
              */
-            Internal_stub_manager_int_release(stubmgr);
+            stub_manager_int_release(stubmgr);
         }
 
         /* if this assert fires, then another thread took a reference to a
@@ -654,7 +653,7 @@ struct apartment * WINAPI apartment_findfromoxid(OXID oxid)
 /* gets the apartment which has a given creator thread ID. The caller must
  * release the reference from the apartment as soon as the apartment pointer
  * is no longer required. */
-struct apartment * WINAPI apartment_findfromtid(DWORD tid)
+struct apartment * apartment_findfromtid(DWORD tid)
 {
     struct apartment *result = NULL;
     struct list *cursor;

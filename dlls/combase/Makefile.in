@@ -14,7 +14,9 @@ C_SRCS = \
 	roapi.c \
 	rpc.c \
 	string.c \
+	stubmanager.c \
 	usrmarshal.c
 
 IDL_SRCS = \
+	dcom.idl \
 	irpcss.idl

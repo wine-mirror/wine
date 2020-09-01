@@ -113,34 +113,6 @@ HRESULT rpc_get_local_class_object(REFCLSID rclsid, REFIID riid, void **obj) DEC
 HRESULT rpc_start_local_server(REFCLSID clsid, IStream *stream, BOOL multi_use, void **registration) DECLSPEC_HIDDEN;
 void rpc_stop_local_server(void *registration) DECLSPEC_HIDDEN;
 
-/* stub managers hold refs on the object and each interface stub */
-struct stub_manager
-{
-    struct list       entry;      /* entry in apartment stubmgr list (CS apt->cs) */
-    struct list       ifstubs;    /* list of active ifstubs for the object (CS lock) */
-    CRITICAL_SECTION  lock;
-    struct apartment *apt;        /* owning apt (RO) */
-
-    ULONG             extrefs;    /* number of 'external' references (CS lock) */
-    ULONG             refs;       /* internal reference count (CS apt->cs) */
-    ULONG             weakrefs;   /* number of weak references (CS lock) */
-    OID               oid;        /* apartment-scoped unique identifier (RO) */
-    IUnknown         *object;     /* the object we are managing the stub for (RO) */
-    ULONG             next_ipid;  /* currently unused (LOCK) */
-    OXID_INFO         oxid_info;  /* string binding, ipid of rem unknown and other information (RO) */
-
-    IExternalConnection *extern_conn;
-
-    /* We need to keep a count of the outstanding marshals, so we can enforce the
-     * marshalling rules (ie, you can only unmarshal normal marshals once). Note
-     * that these counts do NOT include unmarshalled interfaces, once a stream is
-     * unmarshalled and a proxy set up, this count is decremented.
-     */
-
-    ULONG             norm_refs;  /* refcount of normal marshals (CS lock) */
-    BOOL              disconnected; /* CoDisconnectObject has been called (CS lock) */
-};
-
 enum class_reg_data_origin
 {
     CLASS_REG_ACTCTX,
@@ -175,7 +147,78 @@ HRESULT apartment_get_local_server_stream(struct apartment *apt, IStream **ret) 
 IUnknown *com_get_registered_class_object(const struct apartment *apartment, REFCLSID rclsid,
         DWORD clscontext) DECLSPEC_HIDDEN;
 void apartment_revoke_all_classes(const struct apartment *apt) DECLSPEC_HIDDEN;
+struct apartment * WINAPI apartment_findfromoxid(OXID oxid);
+struct apartment * apartment_findfromtid(DWORD tid) DECLSPEC_HIDDEN;
 
 /* Stub Manager */
 
-ULONG stub_manager_int_release(struct stub_manager *This) DECLSPEC_HIDDEN;
+/* signal to stub manager that this is a rem unknown object */
+#define MSHLFLAGSP_REMUNKNOWN   0x80000000
+
+/* Thread-safety Annotation Legend:
+ *
+ * RO    - The value is read only. It never changes after creation, so no
+ *         locking is required.
+ * LOCK  - The value is written to only using Interlocked* functions.
+ * CS    - The value is read or written to inside a critical section.
+ *         The identifier following "CS" is the specific critical section that
+ *         must be used.
+ * MUTEX - The value is read or written to with a mutex held.
+ *         The identifier following "MUTEX" is the specific mutex that
+ *         must be used.
+ */
+
+typedef enum ifstub_state
+{
+    STUBSTATE_NORMAL_MARSHALED,
+    STUBSTATE_NORMAL_UNMARSHALED,
+    STUBSTATE_TABLE_WEAK_MARSHALED,
+    STUBSTATE_TABLE_WEAK_UNMARSHALED,
+    STUBSTATE_TABLE_STRONG,
+} STUB_STATE;
+
+/* an interface stub */
+struct ifstub
+{
+    struct list       entry;      /* entry in stub_manager->ifstubs list (CS stub_manager->lock) */
+    IRpcStubBuffer   *stubbuffer; /* RO */
+    IID               iid;        /* RO */
+    IPID              ipid;       /* RO */
+    IUnknown         *iface;      /* RO */
+    MSHLFLAGS         flags;      /* so we can enforce process-local marshalling rules (RO) */
+    IRpcChannelBuffer*chan;       /* channel passed to IRpcStubBuffer::Invoke (RO) */
+};
+
+/* stub managers hold refs on the object and each interface stub */
+struct stub_manager
+{
+    struct list       entry;      /* entry in apartment stubmgr list (CS apt->cs) */
+    struct list       ifstubs;    /* list of active ifstubs for the object (CS lock) */
+    CRITICAL_SECTION  lock;
+    struct apartment *apt;        /* owning apt (RO) */
+
+    ULONG             extrefs;    /* number of 'external' references (CS lock) */
+    ULONG             refs;       /* internal reference count (CS apt->cs) */
+    ULONG             weakrefs;   /* number of weak references (CS lock) */
+    OID               oid;        /* apartment-scoped unique identifier (RO) */
+    IUnknown         *object;     /* the object we are managing the stub for (RO) */
+    ULONG             next_ipid;  /* currently unused (LOCK) */
+    OXID_INFO         oxid_info;  /* string binding, ipid of rem unknown and other information (RO) */
+
+    IExternalConnection *extern_conn;
+
+    /* We need to keep a count of the outstanding marshals, so we can enforce the
+     * marshalling rules (ie, you can only unmarshal normal marshals once). Note
+     * that these counts do NOT include unmarshalled interfaces, once a stream is
+     * unmarshalled and a proxy set up, this count is decremented.
+     */
+
+    ULONG             norm_refs;  /* refcount of normal marshals (CS lock) */
+    BOOL              disconnected; /* CoDisconnectObject has been called (CS lock) */
+};
+
+ULONG WINAPI stub_manager_int_release(struct stub_manager *stub_manager) DECLSPEC_HIDDEN;
+struct stub_manager * WINAPI get_stub_manager_from_object(struct apartment *apt, IUnknown *object, BOOL alloc);
+void stub_manager_disconnect(struct stub_manager *m) DECLSPEC_HIDDEN;
+ULONG WINAPI stub_manager_ext_addref(struct stub_manager *m, ULONG refs, BOOL tableweak) DECLSPEC_HIDDEN;
+ULONG WINAPI stub_manager_ext_release(struct stub_manager *m, ULONG refs, BOOL tableweak, BOOL last_unlock_releases) DECLSPEC_HIDDEN;

@@ -89,7 +89,7 @@
 @ stdcall CoDecrementMTAUsage(ptr)
 @ stdcall CoDisableCallCancellation(ptr) ole32.CoDisableCallCancellation
 @ stub CoDisconnectContext
-@ stdcall CoDisconnectObject(ptr long) ole32.CoDisconnectObject
+@ stdcall CoDisconnectObject(ptr long)
 @ stdcall CoEnableCallCancellation(ptr) ole32.CoEnableCallCancellation
 @ stdcall CoFileTimeNow(ptr)
 @ stdcall CoFreeUnusedLibraries()
@@ -128,7 +128,7 @@
 @ stdcall CoInitializeWOW(long long) ole32.CoInitializeWOW
 @ stub CoInvalidateRemoteMachineBindings
 @ stdcall CoIsHandlerConnected(ptr) ole32.CoIsHandlerConnected
-@ stdcall CoLockObjectExternal(ptr long long) ole32.CoLockObjectExternal
+@ stdcall CoLockObjectExternal(ptr long long)
 @ stdcall CoMarshalHresult(ptr long)
 @ stdcall CoMarshalInterThreadInterfaceInStream(ptr ptr ptr)
 @ stdcall CoMarshalInterface(ptr ptr ptr long ptr long)
@@ -358,4 +358,15 @@
 @ stdcall apartment_findfromoxid(int64)
 @ stdcall apartment_getwindow(ptr)
 @ stdcall apartment_createwindowifneeded(ptr)
-@ stdcall apartment_findfromtid(long)
+@ stdcall stub_manager_int_release(ptr)
+@ stdcall get_stub_manager(ptr int64)
+@ stdcall stub_manager_is_table_marshaled(ptr ptr)
+@ stdcall stub_manager_notify_unmarshal(ptr ptr)
+@ stdcall stub_manager_ext_release(ptr long long long)
+@ stdcall stub_manager_release_marshal_data(ptr long ptr long)
+@ stdcall get_stub_manager_from_object(ptr ptr long)
+@ stdcall stub_manager_find_ifstub(ptr ptr long)
+@ stdcall stub_manager_ext_addref(ptr long long)
+@ stdcall stub_manager_new_ifstub(ptr ptr ptr long ptr long)
+@ stdcall ipid_get_dispatch_params(ptr ptr ptr ptr ptr ptr ptr)
+@ stdcall start_apartment_remote_unknown(ptr)

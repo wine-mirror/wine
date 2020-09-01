@@ -37,7 +37,6 @@ C_SRCS = \
 	stg_prop.c \
 	stg_stream.c \
 	storage32.c \
-	stubmanager.c \
 	usrmarshal.c
 
 RC_SRCS = ole32res.rc

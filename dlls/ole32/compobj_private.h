@@ -194,24 +194,8 @@ HRESULT FTMarshalCF_Create(REFIID riid, LPVOID *ppv) DECLSPEC_HIDDEN;
 
 /* Stub Manager */
 
-ULONG stub_manager_int_release(struct stub_manager *This) DECLSPEC_HIDDEN;
-ULONG stub_manager_ext_addref(struct stub_manager *m, ULONG refs, BOOL tableweak) DECLSPEC_HIDDEN;
-ULONG stub_manager_ext_release(struct stub_manager *m, ULONG refs, BOOL tableweak, BOOL last_unlock_releases) DECLSPEC_HIDDEN;
-struct ifstub *stub_manager_new_ifstub(struct stub_manager *m, IRpcStubBuffer *sb, REFIID iid,
-     DWORD dest_context, void *dest_context_data, MSHLFLAGS flags) DECLSPEC_HIDDEN;
-struct ifstub *stub_manager_find_ifstub(struct stub_manager *m, REFIID iid, MSHLFLAGS flags) DECLSPEC_HIDDEN;
-struct stub_manager *get_stub_manager(struct apartment *apt, OID oid) DECLSPEC_HIDDEN;
-struct stub_manager *get_stub_manager_from_object(struct apartment *apt, IUnknown *object, BOOL alloc) DECLSPEC_HIDDEN;
-BOOL stub_manager_notify_unmarshal(struct stub_manager *m, const IPID *ipid) DECLSPEC_HIDDEN;
-BOOL stub_manager_is_table_marshaled(struct stub_manager *m, const IPID *ipid) DECLSPEC_HIDDEN;
-void stub_manager_release_marshal_data(struct stub_manager *m, ULONG refs, const IPID *ipid, BOOL tableweak) DECLSPEC_HIDDEN;
-void stub_manager_disconnect(struct stub_manager *m) DECLSPEC_HIDDEN;
-HRESULT ipid_get_dispatch_params(const IPID *ipid, struct apartment **stub_apt, struct stub_manager **manager, IRpcStubBuffer **stub,
-                                 IRpcChannelBuffer **chan, IID *iid, IUnknown **iface) DECLSPEC_HIDDEN;
-HRESULT start_apartment_remote_unknown(struct apartment *apt) DECLSPEC_HIDDEN;
-
-HRESULT marshal_object(struct apartment *apt, STDOBJREF *stdobjref, REFIID riid, IUnknown *obj, DWORD dest_context,
-        void *dest_context_data, MSHLFLAGS mshlflags) DECLSPEC_HIDDEN;
+extern ULONG WINAPI stub_manager_int_release(struct stub_manager *This) DECLSPEC_HIDDEN;
+extern struct stub_manager * WINAPI get_stub_manager(struct apartment *apt, OID oid) DECLSPEC_HIDDEN;
 
 /* RPC Backend */
 
@@ -222,9 +206,7 @@ HRESULT RPC_CreateClientChannel(const OXID *oxid, const IPID *ipid,
                                 const OXID_INFO *oxid_info, const IID *iid,
                                 DWORD dest_context, void *dest_context_data,
                                 IRpcChannelBuffer **chan, struct apartment *apt) DECLSPEC_HIDDEN;
-HRESULT RPC_CreateServerChannel(DWORD dest_context, void *dest_context_data, IRpcChannelBuffer **chan) DECLSPEC_HIDDEN;
 HRESULT RPC_RegisterInterface(REFIID riid) DECLSPEC_HIDDEN;
-void    RPC_UnregisterInterface(REFIID riid, BOOL wait) DECLSPEC_HIDDEN;
 HRESULT RPC_RegisterChannelHook(REFGUID rguid, IChannelHook *hook) DECLSPEC_HIDDEN;
 void    RPC_UnregisterAllChannelHooks(void) DECLSPEC_HIDDEN;
 HRESULT RPC_ResolveOxid(OXID oxid, OXID_INFO *oxid_info) DECLSPEC_HIDDEN;
@@ -235,7 +217,6 @@ void OLEDD_UnInitialize(void) DECLSPEC_HIDDEN;
 /* Apartment Functions */
 
 extern struct apartment * WINAPI apartment_findfromoxid(OXID oxid) DECLSPEC_HIDDEN;
-extern struct apartment * WINAPI apartment_findfromtid(DWORD tid) DECLSPEC_HIDDEN;
 extern void WINAPI apartment_release(struct apartment *apt) DECLSPEC_HIDDEN;
 static inline HRESULT apartment_getoxid(const struct apartment *apt, OXID *oxid)
 {

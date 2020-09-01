@@ -43,6 +43,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
+extern HRESULT WINAPI ipid_get_dispatch_params(const IPID *ipid, struct apartment **stub_apt,
+    struct stub_manager **manager, IRpcStubBuffer **stub, IRpcChannelBuffer **chan, IID *iid, IUnknown **iface);
+extern HRESULT WINAPI start_apartment_remote_unknown(struct apartment *apt);
+
 static void __RPC_STUB dispatch_rpc(RPC_MESSAGE *msg);
 
 /* we only use one function to dispatch calls for all methods - we use the
@@ -1159,7 +1163,7 @@ HRESULT RPC_CreateClientChannel(const OXID *oxid, const IPID *ipid,
     return S_OK;
 }
 
-HRESULT RPC_CreateServerChannel(DWORD dest_context, void *dest_context_data, IRpcChannelBuffer **chan)
+HRESULT WINAPI RPC_CreateServerChannel(DWORD dest_context, void *dest_context_data, IRpcChannelBuffer **chan)
 {
     RpcChannelBuffer *This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
     if (!This)
@@ -1584,7 +1588,7 @@ HRESULT RPC_RegisterInterface(REFIID riid)
 }
 
 /* stub unregistration */
-void RPC_UnregisterInterface(REFIID riid, BOOL wait)
+void WINAPI RPC_UnregisterInterface(REFIID riid, BOOL wait)
 {
     struct registered_if *rif;
     EnterCriticalSection(&csRegIf);

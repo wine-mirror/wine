@@ -16,7 +16,7 @@
 @ stdcall CoCreateInstanceEx(ptr ptr long ptr long ptr) combase.CoCreateInstanceEx
 @ stdcall CoDecrementMTAUsage(ptr) combase.CoDecrementMTAUsage
 @ stdcall CoDisableCallCancellation(ptr)
-@ stdcall CoDisconnectObject(ptr long)
+@ stdcall CoDisconnectObject(ptr long) combase.CoDisconnectObject
 @ stdcall CoDosDateTimeToFileTime(long long ptr) kernel32.DosDateTimeToFileTime
 @ stdcall CoEnableCallCancellation(ptr)
 @ stdcall CoFileTimeNow(ptr) combase.CoFileTimeNow
@@ -56,7 +56,7 @@
 @ stdcall CoIsHandlerConnected(ptr)
 @ stdcall CoIsOle1Class (ptr)
 @ stdcall CoLoadLibrary(wstr long)
-@ stdcall CoLockObjectExternal(ptr long long)
+@ stdcall CoLockObjectExternal(ptr long long) combase.CoLockObjectExternal
 @ stdcall CoMarshalHresult(ptr long) combase.CoMarshalHresult
 @ stdcall CoMarshalInterThreadInterfaceInStream(ptr ptr ptr) combase.CoMarshalInterThreadInterfaceInStream
 @ stdcall CoMarshalInterface(ptr ptr ptr long ptr long) combase.CoMarshalInterface
@@ -298,6 +298,9 @@
 @ stdcall WriteFmtUserTypeStg(ptr long ptr)
 @ stub WriteOleStg
 @ stub WriteStringStream
+
 @ stdcall Internal_apartment_disconnectproxies(ptr)
 @ stdcall Internal_RPC_ExecuteCall(ptr)
-@ stdcall Internal_stub_manager_int_release(ptr)
+@ stdcall marshal_object(ptr ptr ptr ptr long ptr long)
+@ stdcall RPC_CreateServerChannel(long ptr ptr)
+@ stdcall RPC_UnregisterInterface(ptr long)

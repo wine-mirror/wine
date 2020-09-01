@@ -2968,6 +2968,90 @@ ULONG WINAPI CoReleaseServerProcess(void)
     return refs;
 }
 
+/******************************************************************************
+ *            CoDisconnectObject    (combase.@)
+ */
+HRESULT WINAPI CoDisconnectObject(IUnknown *object, DWORD reserved)
+{
+    struct stub_manager *manager;
+    struct apartment *apt;
+    IMarshal *marshal;
+    HRESULT hr;
+
+    TRACE("%p, %#x\n", object, reserved);
+
+    if (!object)
+        return E_INVALIDARG;
+
+    hr = IUnknown_QueryInterface(object, &IID_IMarshal, (void **)&marshal);
+    if (hr == S_OK)
+    {
+        hr = IMarshal_DisconnectObject(marshal, reserved);
+        IMarshal_Release(marshal);
+        return hr;
+    }
+
+    if (!(apt = apartment_get_current_or_mta()))
+    {
+        ERR("apartment not initialised\n");
+        return CO_E_NOTINITIALIZED;
+    }
+
+    manager = get_stub_manager_from_object(apt, object, FALSE);
+    if (manager)
+    {
+        stub_manager_disconnect(manager);
+        /* Release stub manager twice, to remove the apartment reference. */
+        stub_manager_int_release(manager);
+        stub_manager_int_release(manager);
+    }
+
+    /* Note: native is pretty broken here because it just silently
+     * fails, without returning an appropriate error code if the object was
+     * not found, making apps think that the object was disconnected, when
+     * it actually wasn't */
+
+    apartment_release(apt);
+    return S_OK;
+}
+
+/******************************************************************************
+ *            CoLockObjectExternal    (combase.@)
+ */
+HRESULT WINAPI CoLockObjectExternal(IUnknown *object, BOOL lock, BOOL last_unlock_releases)
+{
+    struct stub_manager *stubmgr;
+    struct apartment *apt;
+
+    TRACE("%p, %d, %d\n", object, lock, last_unlock_releases);
+
+    if (!(apt = apartment_get_current_or_mta()))
+    {
+        ERR("apartment not initialised\n");
+        return CO_E_NOTINITIALIZED;
+    }
+
+    stubmgr = get_stub_manager_from_object(apt, object, lock);
+    if (!stubmgr)
+    {
+        WARN("stub object not found %p\n", object);
+        /* Note: native is pretty broken here because it just silently
+         * fails, without returning an appropriate error code, making apps
+         * think that the object was disconnected, when it actually wasn't */
+        apartment_release(apt);
+        return S_OK;
+    }
+
+    if (lock)
+        stub_manager_ext_addref(stubmgr, 1, FALSE);
+    else
+        stub_manager_ext_release(stubmgr, 1, FALSE, last_unlock_releases);
+
+    stub_manager_int_release(stubmgr);
+    apartment_release(apt);
+    return S_OK;
+}
+
 /***********************************************************************
  *            DllMain     (combase.@)
  */
