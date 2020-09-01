@@ -1510,7 +1510,7 @@
 @ stdcall SetUserGeoID(long)
 @ stdcall SetWaitableTimer(long ptr long ptr ptr long)
 @ stdcall SetWaitableTimerEx(long ptr long ptr ptr ptr long)
-# @ stub SetXStateFeaturesMask
+@ stdcall -arch=i386,x86_64 SetXStateFeaturesMask(ptr int64)
 @ stdcall SetupComm(long long long)
 # @ stub SharedLocalIsEnabled
 @ stdcall SignalObjectAndWait(long long long long)

@@ -861,3 +861,13 @@ void * WINAPI RtlLocateLegacyContext( CONTEXT_EX *context_ex, ULONG *length )
 
     return (BYTE *)context_ex + context_ex->Legacy.Offset;
 }
+
+/**********************************************************************
+ *              RtlSetExtendedFeaturesMask  (NTDLL.@)
+ */
+void WINAPI RtlSetExtendedFeaturesMask( CONTEXT_EX *context_ex, ULONG64 feature_mask )
+{
+    XSTATE *xs = (XSTATE *)((BYTE *)context_ex + context_ex->XState.Offset);
+
+    xs->Mask = RtlGetEnabledExtendedFeatures( feature_mask ) & ~(ULONG64)3;
+}

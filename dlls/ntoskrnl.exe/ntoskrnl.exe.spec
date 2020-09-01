@@ -1235,6 +1235,7 @@
 @ stdcall RtlSetBits(ptr long long)
 @ stdcall RtlSetControlSecurityDescriptor(ptr long long)
 @ stdcall RtlSetDaclSecurityDescriptor(ptr long ptr long)
+@ stdcall RtlSetExtendedFeaturesMask(ptr int64)
 @ stdcall RtlSetGroupSecurityDescriptor(ptr ptr long)
 @ stdcall RtlSetOwnerSecurityDescriptor(ptr ptr long)
 @ stdcall RtlSetSaclSecurityDescriptor(ptr long ptr long)

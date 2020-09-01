@@ -1236,10 +1236,10 @@ BOOL WINAPI InitializeContext( void *buffer, DWORD context_flags, CONTEXT **cont
 #endif
 
 
+#if defined(__x86_64__)
 /***********************************************************************
  *           LocateXStateFeature   (kernelbase.@)
  */
-#if defined(__x86_64__)
 void * WINAPI LocateXStateFeature( CONTEXT *context, DWORD feature_id, DWORD *length )
 {
     if (!(context->ContextFlags & CONTEXT_AMD64))
@@ -1262,7 +1262,28 @@ void * WINAPI LocateXStateFeature( CONTEXT *context, DWORD feature_id, DWORD *le
 
     return &context->u.FltSave;
 }
+
+/***********************************************************************
+ *           SetXStateFeaturesMask (kernelbase.@)
+ */
+BOOL WINAPI SetXStateFeaturesMask( CONTEXT *context, DWORD64 feature_mask )
+{
+    if (!(context->ContextFlags & CONTEXT_AMD64))
+        return FALSE;
+
+    if (feature_mask & 0x3)
+        context->ContextFlags |= CONTEXT_FLOATING_POINT;
+
+    if ((context->ContextFlags & CONTEXT_XSTATE) != CONTEXT_XSTATE)
+        return !(feature_mask & ~(DWORD64)3);
+
+    RtlSetExtendedFeaturesMask( (CONTEXT_EX *)(context + 1), feature_mask );
+    return TRUE;
+}
 #elif defined(__i386__)
+/***********************************************************************
+ *           LocateXStateFeature   (kernelbase.@)
+ */
 void * WINAPI LocateXStateFeature( CONTEXT *context, DWORD feature_id, DWORD *length )
 {
     if (!(context->ContextFlags & CONTEXT_X86))
@@ -1284,6 +1305,24 @@ void * WINAPI LocateXStateFeature( CONTEXT *context, DWORD feature_id, DWORD *le
         *length = offsetof(XSAVE_FORMAT, XmmRegisters);
 
     return &context->ExtendedRegisters;
+}
+
+/***********************************************************************
+ *           SetXStateFeaturesMask (kernelbase.@)
+ */
+BOOL WINAPI SetXStateFeaturesMask( CONTEXT *context, DWORD64 feature_mask )
+{
+    if (!(context->ContextFlags & CONTEXT_X86))
+        return FALSE;
+
+    if (feature_mask & 0x3)
+        context->ContextFlags |= CONTEXT_EXTENDED_REGISTERS;
+
+    if ((context->ContextFlags & CONTEXT_XSTATE) != CONTEXT_XSTATE)
+        return !(feature_mask & ~(DWORD64)3);
+
+    RtlSetExtendedFeaturesMask( (CONTEXT_EX *)(context + 1), feature_mask );
+    return TRUE;
 }
 #endif
 
