@@ -1,4 +1,5 @@
 MODULE    = ndis.sys
+IMPORTS   = advapi32 ntoskrnl iphlpapi
 EXTRADLLFLAGS = -Wl,--subsystem,native -mno-cygwin
 
 C_SRCS = \
