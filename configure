@@ -21057,6 +21057,7 @@ wine_fn_config_makefile dlls/mtxdm enable_mtxdm
 wine_fn_config_makefile dlls/ncrypt enable_ncrypt
 wine_fn_config_makefile dlls/nddeapi enable_nddeapi
 wine_fn_config_makefile dlls/ndis.sys enable_ndis_sys
+wine_fn_config_makefile dlls/ndis.sys/tests enable_tests
 wine_fn_config_makefile dlls/netapi32 enable_netapi32
 wine_fn_config_makefile dlls/netapi32/tests enable_tests
 wine_fn_config_makefile dlls/netcfgx enable_netcfgx
