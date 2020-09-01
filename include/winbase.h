@@ -2337,6 +2337,7 @@ WINBASEAPI UINT        WINAPI GetWindowsDirectoryA(LPSTR,UINT);
 WINBASEAPI UINT        WINAPI GetWindowsDirectoryW(LPWSTR,UINT);
 #define                       GetWindowsDirectory WINELIB_NAME_AW(GetWindowsDirectory)
 WINBASEAPI UINT        WINAPI GetWriteWatch(DWORD,LPVOID,SIZE_T,LPVOID*,ULONG_PTR*,ULONG*);
+WINBASEAPI BOOL        WINAPI GetXStateFeaturesMask(CONTEXT*,DWORD64*);
 WINBASEAPI ATOM        WINAPI GlobalAddAtomA(LPCSTR);
 WINBASEAPI ATOM        WINAPI GlobalAddAtomW(LPCWSTR);
 #define                       GlobalAddAtom WINELIB_NAME_AW(GlobalAddAtom)

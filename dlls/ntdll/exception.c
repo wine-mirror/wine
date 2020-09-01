@@ -871,3 +871,14 @@ void WINAPI RtlSetExtendedFeaturesMask( CONTEXT_EX *context_ex, ULONG64 feature_
 
     xs->Mask = RtlGetEnabledExtendedFeatures( feature_mask ) & ~(ULONG64)3;
 }
+
+
+/**********************************************************************
+ *              RtlGetExtendedFeaturesMask  (NTDLL.@)
+ */
+ULONG64 WINAPI RtlGetExtendedFeaturesMask( CONTEXT_EX *context_ex )
+{
+    XSTATE *xs = (XSTATE *)((BYTE *)context_ex + context_ex->XState.Offset);
+
+    return xs->Mask & ~(ULONG64)3;
+}

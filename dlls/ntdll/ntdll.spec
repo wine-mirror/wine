@@ -697,6 +697,7 @@
 @ stdcall RtlGetExePath(wstr ptr)
 @ stdcall RtlGetExtendedContextLength(long ptr)
 @ stdcall RtlGetExtendedContextLength2(long ptr int64)
+@ stdcall -ret64 RtlGetExtendedFeaturesMask(ptr)
 # @ stub RtlGetFirstRange
 @ stdcall RtlGetFrame()
 @ stdcall RtlGetFullPathName_U(wstr long ptr ptr)

@@ -1280,6 +1280,23 @@ BOOL WINAPI SetXStateFeaturesMask( CONTEXT *context, DWORD64 feature_mask )
     RtlSetExtendedFeaturesMask( (CONTEXT_EX *)(context + 1), feature_mask );
     return TRUE;
 }
+
+/***********************************************************************
+ *           GetXStateFeaturesMask (kernelbase.@)
+ */
+BOOL WINAPI GetXStateFeaturesMask( CONTEXT *context, DWORD64 *feature_mask )
+{
+    if (!(context->ContextFlags & CONTEXT_AMD64))
+        return FALSE;
+
+    *feature_mask = (context->ContextFlags & CONTEXT_FLOATING_POINT) == CONTEXT_FLOATING_POINT
+            ? 3 : 0;
+
+    if ((context->ContextFlags & CONTEXT_XSTATE) == CONTEXT_XSTATE)
+        *feature_mask |= RtlGetExtendedFeaturesMask( (CONTEXT_EX *)(context + 1) );
+
+    return TRUE;
+}
 #elif defined(__i386__)
 /***********************************************************************
  *           LocateXStateFeature   (kernelbase.@)
@@ -1322,6 +1339,23 @@ BOOL WINAPI SetXStateFeaturesMask( CONTEXT *context, DWORD64 feature_mask )
         return !(feature_mask & ~(DWORD64)3);
 
     RtlSetExtendedFeaturesMask( (CONTEXT_EX *)(context + 1), feature_mask );
+    return TRUE;
+}
+
+/***********************************************************************
+ *           GetXStateFeaturesMask (kernelbase.@)
+ */
+BOOL WINAPI GetXStateFeaturesMask( CONTEXT *context, DWORD64 *feature_mask )
+{
+    if (!(context->ContextFlags & CONTEXT_X86))
+        return FALSE;
+
+    *feature_mask = (context->ContextFlags & CONTEXT_EXTENDED_REGISTERS) == CONTEXT_EXTENDED_REGISTERS
+            ? 3 : 0;
+
+    if ((context->ContextFlags & CONTEXT_XSTATE) == CONTEXT_XSTATE)
+        *feature_mask |= RtlGetExtendedFeaturesMask( (CONTEXT_EX *)(context + 1) );
+
     return TRUE;
 }
 #endif

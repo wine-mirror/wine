@@ -54,6 +54,7 @@ static NTSTATUS  (WINAPI *pRtlInitializeExtendedContext2)(void *context, ULONG c
 static void *    (WINAPI *pRtlLocateExtendedFeature)(CONTEXT_EX *context_ex, ULONG feature_id, ULONG *length);
 static void *    (WINAPI *pRtlLocateLegacyContext)(CONTEXT_EX *context_ex, ULONG *length);
 static void      (WINAPI *pRtlSetExtendedFeaturesMask)(CONTEXT_EX *context_ex, ULONG64 feature_mask);
+static ULONG64   (WINAPI *pRtlGetExtendedFeaturesMask)(CONTEXT_EX *context_ex);
 static NTSTATUS  (WINAPI *pNtReadVirtualMemory)(HANDLE, const void*, void*, SIZE_T, SIZE_T*);
 static NTSTATUS  (WINAPI *pNtTerminateProcess)(HANDLE handle, LONG exit_code);
 static NTSTATUS  (WINAPI *pNtQueryInformationProcess)(HANDLE, PROCESSINFOCLASS, PVOID, ULONG, PULONG);
@@ -69,6 +70,7 @@ static BOOL      (WINAPI *pInitializeContext2)(void *buffer, DWORD context_flags
         DWORD *length, ULONG64 compaction_mask);
 static void *    (WINAPI *pLocateXStateFeature)(CONTEXT *context, DWORD feature_id, DWORD *length);
 static BOOL      (WINAPI *pSetXStateFeaturesMask)(CONTEXT *context, DWORD64 feature_mask);
+static BOOL      (WINAPI *pGetXStateFeaturesMask)(CONTEXT *context, DWORD64 *feature_mask);
 
 #define RTL_UNLOAD_EVENT_TRACE_NUMBER 64
 
@@ -6197,6 +6199,7 @@ static void test_extended_context(void)
     ULONG flags, flags_fpx;
     CONTEXT *context;
     unsigned data[8];
+    ULONG64 mask;
     XSTATE *xs;
     BOOL bret;
     void *p;
@@ -6326,14 +6329,29 @@ static void test_extended_context(void)
             if (0)
             {
                 /* Crashes on Windows. */
+                pGetXStateFeaturesMask(context, NULL);
+                pRtlGetExtendedFeaturesMask(context_ex);
                 pRtlSetExtendedFeaturesMask(context_ex, 0);
             }
+
+            flags_fpx = flags & 0x10000 ? flags | 0x20 : flags | 0x8;
+
+            mask = 0xdeadbeef;
+            bret = pGetXStateFeaturesMask(context, &mask);
+            SetLastError(0xdeadbeef);
+            if (flags & CONTEXT_NATIVE)
+                ok(bret && mask == ((flags & flags_fpx) == flags_fpx ? 0x3 : 0),
+                        "Got unexpected bret %#x, mask %s, flags %#x.\n", bret, wine_dbgstr_longlong(mask), flags);
+            else
+                ok(!bret && mask == 0xdeadbeef && GetLastError() == 0xdeadbeef,
+                        "Got unexpected bret %#x, mask %s, GetLastError() %#x, flags %#x.\n",
+                        bret, wine_dbgstr_longlong(mask), GetLastError(), flags);
+
             bret = pSetXStateFeaturesMask(context, 0);
             ok(bret == !!(flags & CONTEXT_NATIVE), "Got unexpected bret %#x, flags %#x.\n", bret, flags);
             context_flags = *(DWORD *)(context_buffer + context_arch[test].flags_offset);
             ok(context_flags == flags, "Got unexpected ContextFlags %#x, flags %#x.\n", context_flags, flags);
 
-            flags_fpx = flags & 0x10000 ? flags | 0x20 : flags | 0x8;
             bret = pSetXStateFeaturesMask(context, 1);
             ok(bret == !!(flags & CONTEXT_NATIVE), "Got unexpected bret %#x, flags %#x.\n", bret, flags);
             context_flags = *(DWORD *)(context_buffer + context_arch[test].flags_offset);
@@ -6624,8 +6642,19 @@ static void test_extended_context(void)
         else
             ok(!p && length2 == 0xdeadbeef, "Got unexpected p %p, length %#x, flags %#x.\n", p, length2, flags);
 
+        mask = 0xdeadbeef;
+        bret = pGetXStateFeaturesMask(context, &mask);
+        if (flags & CONTEXT_NATIVE)
+            ok(bret && !mask,
+                    "Got unexpected bret %#x, mask %s, flags %#x.\n", bret, wine_dbgstr_longlong(mask), flags);
+        else
+            ok(!bret && mask == 0xdeadbeef,
+                    "Got unexpected bret %#x, mask %s, flags %#x.\n", bret, wine_dbgstr_longlong(mask), flags);
+
         expected_compaction = compaction_enabled ? ((ULONG64)1 << 63) | enabled_features : 0;
         ok(!xs->Mask, "Got unexpected Mask %s.\n", wine_dbgstr_longlong(xs->Mask));
+        mask = pRtlGetExtendedFeaturesMask(context_ex);
+        ok(mask == (xs->Mask & ~(ULONG64)3), "Got unexpected mask %s.\n", wine_dbgstr_longlong(mask));
         ok(xs->CompactionMask == expected_compaction,
                 "Got unexpected CompactionMask %s.\n", wine_dbgstr_longlong(xs->CompactionMask));
         ok(!xs->Reserved[0], "Got unexpected Reserved[0]  %s.\n", wine_dbgstr_longlong(xs->Reserved[0]));
@@ -6634,6 +6663,8 @@ static void test_extended_context(void)
         xs->CompactionMask = 0xdeadbeef;
         pRtlSetExtendedFeaturesMask(context_ex, 0);
         ok(!xs->Mask, "Got unexpected Mask %s.\n", wine_dbgstr_longlong(xs->Mask));
+        mask = pRtlGetExtendedFeaturesMask(context_ex);
+        ok(mask == (xs->Mask & ~(ULONG64)3), "Got unexpected mask %s.\n", wine_dbgstr_longlong(mask));
         ok(xs->CompactionMask == 0xdeadbeef, "Got unexpected CompactionMask %s.\n", wine_dbgstr_longlong(xs->CompactionMask));
         context_flags = *(DWORD *)(context_buffer + context_arch[test].flags_offset);
         ok(context_flags == flags, "Got unexpected ContextFlags %#x, flags %#x.\n", context->ContextFlags, flags);
@@ -6642,6 +6673,8 @@ static void test_extended_context(void)
         xs->CompactionMask = 0;
         pRtlSetExtendedFeaturesMask(context_ex, ~(ULONG64)0);
         ok(xs->Mask == (enabled_features & ~(ULONG64)3), "Got unexpected Mask %s.\n", wine_dbgstr_longlong(xs->Mask));
+        mask = pRtlGetExtendedFeaturesMask(context_ex);
+        ok(mask == (xs->Mask & ~(ULONG64)3), "Got unexpected mask %s.\n", wine_dbgstr_longlong(mask));
         ok(!xs->CompactionMask, "Got unexpected CompactionMask %s.\n",
                 wine_dbgstr_longlong(xs->CompactionMask));
         context_flags = *(DWORD *)(context_buffer + context_arch[test].flags_offset);
@@ -6655,8 +6688,19 @@ static void test_extended_context(void)
         ok(context_flags == (bret ? flags_fpx : flags),
                 "Got unexpected ContextFlags %#x, flags %#x.\n", context_flags, flags);
         ok(xs->Mask == bret ? 4 : 0xdeadbeef, "Got unexpected Mask %s.\n", wine_dbgstr_longlong(xs->Mask));
+        mask = pRtlGetExtendedFeaturesMask(context_ex);
+        ok(mask == (xs->Mask & ~(ULONG64)3), "Got unexpected mask %s.\n", wine_dbgstr_longlong(mask));
         ok(xs->CompactionMask == bret ? expected_compaction : 0xdeadbeef, "Got unexpected CompactionMask %s.\n",
                 wine_dbgstr_longlong(xs->CompactionMask));
+
+        mask = 0xdeadbeef;
+        bret = pGetXStateFeaturesMask(context, &mask);
+        if (flags & CONTEXT_NATIVE)
+            ok(bret && mask == enabled_features,
+                    "Got unexpected bret %#x, mask %s, flags %#x.\n", bret, wine_dbgstr_longlong(mask), flags);
+        else
+            ok(!bret && mask == 0xdeadbeef,
+                    "Got unexpected bret %#x, mask %s, flags %#x.\n", bret, wine_dbgstr_longlong(mask), flags);
 
         if (pRtlGetExtendedContextLength2)
         {
@@ -6820,6 +6864,7 @@ START_TEST(exception)
     X(RtlLocateExtendedFeature);
     X(RtlLocateLegacyContext);
     X(RtlSetExtendedFeaturesMask);
+    X(RtlGetExtendedFeaturesMask);
 #undef X
 
 #define X(f) p##f = (void*)GetProcAddress(hkernel32, #f)
@@ -6830,6 +6875,7 @@ START_TEST(exception)
     X(InitializeContext2);
     X(LocateXStateFeature);
     X(SetXStateFeaturesMask);
+    X(GetXStateFeaturesMask);
 #undef X
 
     if (pRtlAddVectoredExceptionHandler && pRtlRemoveVectoredExceptionHandler)

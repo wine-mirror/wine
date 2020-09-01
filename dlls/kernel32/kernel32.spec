@@ -895,6 +895,7 @@
 @ stdcall -import GetWindowsDirectoryA(ptr long)
 @ stdcall -import GetWindowsDirectoryW(ptr long)
 @ stdcall -import GetWriteWatch(long ptr long ptr ptr ptr)
+@ stdcall -import -arch=i386,x86_64 GetXStateFeaturesMask(ptr ptr)
 @ stdcall -import -arch=i386,x86_64 SetXStateFeaturesMask(ptr int64)
 @ stdcall GlobalAddAtomA(str)
 @ stdcall GlobalAddAtomW(wstr)

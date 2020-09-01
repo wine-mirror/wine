@@ -1845,6 +1845,7 @@ NTSTATUS  WINAPI RtlGetExtendedContextLength2(ULONG,ULONG*,ULONG64);
 void *    WINAPI RtlLocateLegacyContext(CONTEXT_EX*,ULONG*);
 void *    WINAPI RtlLocateExtendedFeature(CONTEXT_EX*,ULONG,ULONG*);
 void *    WINAPI RtlLocateExtendedFeature2(CONTEXT_EX*,ULONG,XSTATE_CONFIGURATION*,ULONG*);
+ULONG64   WINAPI RtlGetExtendedFeaturesMask(CONTEXT_EX*);
 void      WINAPI RtlSetExtendedFeaturesMask(CONTEXT_EX*,ULONG64);
 #endif
 
