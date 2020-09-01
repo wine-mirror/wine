@@ -3207,6 +3207,7 @@ DWORD WINAPI ConvertInterfaceLuidToGuid(const NET_LUID *luid, GUID *guid)
 
     memset( guid, 0, sizeof(*guid) );
     guid->Data1 = luid->Info.NetLuidIndex;
+    memcpy( guid->Data4+2, "NetDev", 6 );
     return NO_ERROR;
 }
 
