@@ -55,6 +55,32 @@ static void add_key(const WCHAR *guidstrW, const MIB_IF_ROW2 *netdev)
     }
 }
 
+static int add_device(DRIVER_OBJECT *driver, const WCHAR *guidstrW, MIB_IF_ROW2 *netdev)
+{
+    WCHAR nameW[47], linkW[51];
+    UNICODE_STRING name, link;
+    DEVICE_OBJECT *device;
+    NTSTATUS status;
+
+    swprintf( nameW, ARRAY_SIZE(nameW), L"\\Device\\%s", guidstrW );
+    RtlInitUnicodeString( &name, nameW );
+
+    swprintf( linkW, ARRAY_SIZE(linkW), L"\\DosDevices\\%s", guidstrW );
+    RtlInitUnicodeString( &link, linkW );
+
+    if (!(status = IoCreateDevice( driver, sizeof(*netdev), &name, 0, 0, FALSE, &device )))
+        status = IoCreateSymbolicLink( &link, &name );
+    if (status)
+    {
+        FIXME( "failed to create device error %x\n", status );
+        return 0;
+    }
+
+    memcpy( device->DeviceExtension, netdev, sizeof(*netdev) );
+    return 1;
+}
+
+
 static void create_network_devices(DRIVER_OBJECT *driver)
 {
     MIB_IF_TABLE2 *table;
@@ -73,7 +99,8 @@ static void create_network_devices(DRIVER_OBJECT *driver)
                   guid->Data4[2], guid->Data4[3], guid->Data4[4], guid->Data4[5],
                   guid->Data4[6], guid->Data4[7] );
 
-        add_key( guidstrW, &table->Table[i] );
+        if (add_device( driver, guidstrW, &table->Table[i] ))
+            add_key( guidstrW, &table->Table[i] );
     }
 
     FreeMibTable( table );
