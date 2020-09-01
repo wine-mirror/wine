@@ -163,6 +163,7 @@ AddService=FontCache,0,FontCacheService
 AddService=Schedule,0,TaskSchedulerService
 AddService=Winmgmt,0,WinmgmtService
 AddService=wuauserv,0,wuauService
+AddService=NDIS,0x800,NDISService
 
 [DefaultInstall.NT.Services]
 AddService=BITS,0,BITSService
@@ -180,6 +181,7 @@ AddService=FontCache,0,FontCacheService
 AddService=Schedule,0,TaskSchedulerService
 AddService=Winmgmt,0,WinmgmtService
 AddService=wuauserv,0,wuauService
+AddService=NDIS,0x800,NDISService
 
 [DefaultInstall.ntamd64.Services]
 AddService=BITS,0,BITSService
@@ -197,6 +199,7 @@ AddService=FontCache,0,FontCacheService
 AddService=Schedule,0,TaskSchedulerService
 AddService=Winmgmt,0,WinmgmtService
 AddService=wuauserv,0,wuauService
+AddService=NDIS,0x800,NDISService
 
 [DefaultInstall.ntarm64.Services]
 AddService=BITS,0,BITSService
@@ -214,6 +217,7 @@ AddService=FontCache,0,FontCacheService
 AddService=Schedule,0,TaskSchedulerService
 AddService=Winmgmt,0,WinmgmtService
 AddService=wuauserv,0,wuauService
+AddService=NDIS,0x800,NDISService
 
 [Strings]
 MciExtStr="Software\Microsoft\Windows NT\CurrentVersion\MCI Extensions"
@@ -3628,6 +3632,16 @@ ServiceBinary="%12%\mountmgr.sys"
 ServiceType=1
 StartType=2
 ErrorControl=1
+LoadOrderGroup="System Bus Extender"
+
+[NDISService]
+Description="NDIS service"
+DisplayName="NDIS"
+ServiceBinary="%12%\ndis.sys"
+ServiceType=1
+StartType=2
+ErrorControl=1
+LoadOrderGroup="System Bus Extender"
 
 [RpcSsService]
 Description="RPC service"
