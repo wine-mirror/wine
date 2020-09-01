@@ -105,37 +105,32 @@ void WINAPI RtlExitUserThread( ULONG status )
  */
 #ifdef __i386__
 __ASM_STDCALL_FUNC( RtlUserThreadStart, 8,
-                   "pushl %ebp\n\t"
-                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
-                   __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
-                   "movl %esp,%ebp\n\t"
-                   __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
-                   "pushl %ebx\n\t"  /* arg */
-                   "pushl %eax\n\t"  /* entry */
-                   "call " __ASM_NAME("call_thread_func") )
+                   "movl %ebx,8(%esp)\n\t"  /* arg */
+                   "movl %eax,4(%esp)\n\t"  /* entry */
+                   "jmp " __ASM_NAME("call_thread_func") )
 
-/* wrapper for apps that don't declare the thread function correctly */
-extern DWORD call_thread_func_wrapper( PRTL_THREAD_START_ROUTINE entry, void *arg );
-__ASM_GLOBAL_FUNC(call_thread_func_wrapper,
+/* wrapper to call BaseThreadInitThunk */
+extern void DECLSPEC_NORETURN call_thread_func_wrapper( void *thunk, PRTL_THREAD_START_ROUTINE entry, void *arg );
+__ASM_GLOBAL_FUNC( call_thread_func_wrapper,
                   "pushl %ebp\n\t"
                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
                   __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
                   "movl %esp,%ebp\n\t"
                   __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
-                  "subl $4,%esp\n\t"
-                  "pushl 12(%ebp)\n\t"
-                  "call *8(%ebp)\n\t"
-                  "leave\n\t"
-                  __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
-                  __ASM_CFI(".cfi_same_value %ebp\n\t")
-                  "ret" )
+                   "subl $4,%esp\n\t"
+                   "andl $~0xf,%esp\n\t"
+                   "xorl %ecx,%ecx\n\t"
+                   "movl 12(%ebp),%edx\n\t"
+                   "movl 16(%ebp),%eax\n\t"
+                   "movl %eax,(%esp)\n\t"
+                   "call *8(%ebp)" )
 
 void DECLSPEC_HIDDEN call_thread_func( PRTL_THREAD_START_ROUTINE entry, void *arg )
 {
     __TRY
     {
         TRACE_(relay)( "\1Starting thread proc %p (arg=%p)\n", entry, arg );
-        RtlExitUserThread( call_thread_func_wrapper( entry, arg ));
+        call_thread_func_wrapper( pBaseThreadInitThunk, entry, arg );
     }
     __EXCEPT(call_unhandled_exception_filter)
     {
@@ -151,7 +146,7 @@ void WINAPI RtlUserThreadStart( PRTL_THREAD_START_ROUTINE entry, void *arg )
     __TRY
     {
         TRACE_(relay)( "\1Starting thread proc %p (arg=%p)\n", entry, arg );
-        RtlExitUserThread( ((LPTHREAD_START_ROUTINE)entry)( arg ));
+        pBaseThreadInitThunk( 0, (LPTHREAD_START_ROUTINE)entry, arg );
     }
     __EXCEPT(call_unhandled_exception_filter)
     {

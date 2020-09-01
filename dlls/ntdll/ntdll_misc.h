@@ -82,6 +82,7 @@ extern const WCHAR windows_dir[] DECLSPEC_HIDDEN;
 extern const WCHAR system_dir[] DECLSPEC_HIDDEN;
 extern const WCHAR syswow64_dir[] DECLSPEC_HIDDEN;
 
+extern void (FASTCALL *pBaseThreadInitThunk)(DWORD,LPTHREAD_START_ROUTINE,void *) DECLSPEC_HIDDEN;
 extern const struct unix_funcs *unix_funcs DECLSPEC_HIDDEN;
 
 extern void init_directories(void) DECLSPEC_HIDDEN;

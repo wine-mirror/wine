@@ -31,7 +31,36 @@
 #include "winerror.h"
 #include "winternl.h"
 
+#include "wine/asm.h"
 #include "kernel_private.h"
+
+
+#ifdef __i386__
+__ASM_STDCALL_FUNC( __fastcall_BaseThreadInitThunk, 12,
+                    "pushl %ebp\n\t"
+                    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                    __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
+                    "movl %esp,%ebp\n\t"
+                    __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
+                    "pushl %ebx\n\t"
+                    __ASM_CFI(".cfi_rel_offset %ebx,-4\n\t")
+                    "movl 8(%ebp),%ebx\n\t"
+                    /* deliberately mis-align the stack by 8, Doom 3 needs this */
+                    "pushl 4(%ebp)\n\t"  /* Driller expects readable address at this offset */
+                    "pushl 4(%ebp)\n\t"
+                    "pushl %ebx\n\t"
+                    "call *%edx\n\t"
+                    "movl %eax,(%esp)\n\t"
+                    "call " __ASM_STDCALL( "RtlExitUserThread", 4 ))
+#endif
+
+/***********************************************************************
+ *           BaseThreadInitThunk (KERNEL32.@)
+ */
+void __fastcall BaseThreadInitThunk( DWORD unknown, LPTHREAD_START_ROUTINE entry, void *arg )
+{
+    RtlExitUserThread( entry( arg ) );
+}
 
 
 /***********************************************************************

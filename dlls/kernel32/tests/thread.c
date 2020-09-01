@@ -1176,10 +1176,24 @@ static void test_SetThreadContext(void)
     CloseHandle( thread );
 }
 
+static DWORD WINAPI test_stack( void *arg )
+{
+    DWORD *stack = (DWORD *)(((DWORD)&arg & ~0xfff) + 0x1000);
+
+    ok( stack == NtCurrentTeb()->Tib.StackBase, "wrong stack %p/%p\n",
+        stack, NtCurrentTeb()->Tib.StackBase );
+    ok( !stack[-1], "wrong data %p = %08x\n", stack - 1, stack[-1] );
+    ok( stack[-2] == (DWORD)arg, "wrong data %p = %08x\n", stack - 2, stack[-2] );
+    ok( stack[-3] == (DWORD)test_stack, "wrong data %p = %08x\n", stack - 3, stack[-3] );
+    ok( !stack[-4], "wrong data %p = %08x\n", stack - 4, stack[-4] );
+    return 0;
+}
+
 static void test_GetThreadContext(void)
 {
     CONTEXT ctx;
     BOOL ret;
+    HANDLE thread;
 
     memset(&ctx, 0xcc, sizeof(ctx));
     ctx.ContextFlags = CONTEXT_DEBUG_REGISTERS;
@@ -1188,6 +1202,10 @@ static void test_GetThreadContext(void)
     ok(ctx.ContextFlags == CONTEXT_DEBUG_REGISTERS, "ContextFlags = %x\n", ctx.ContextFlags);
     ok(!ctx.Dr0, "Dr0 = %x\n", ctx.Dr0);
     ok(!ctx.Dr1, "Dr0 = %x\n", ctx.Dr0);
+
+    thread = CreateThread( NULL, 0, test_stack, (void *)0x1234, 0, NULL );
+    WaitForSingleObject( thread, 1000 );
+    CloseHandle( thread );
 }
 
 static void test_GetThreadSelectorEntry(void)
