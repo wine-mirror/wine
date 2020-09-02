@@ -6151,6 +6151,116 @@ static void test_extended_context(void)
         0xc5, 0xfc, 0x11, 0x00,       /* vmovups %ymm0,(%ax) */
         0xc3,                         /* ret  */
     };
+
+    struct call_func_offsets
+    {
+        unsigned int func_addr;
+        unsigned int func_param1;
+        unsigned int func_param2;
+        unsigned int ymm0_save;
+    };
+#ifdef __x86_64__
+    static BYTE call_func_code_set_ymm0[] =
+    {
+        0x55,                         /* pushq %rbp */
+        0x48, 0xb8,                   /* mov imm,%rax */
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+
+        0x48, 0xb9,                   /* mov imm,%rcx */
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+
+        0x48, 0xba,                   /* mov imm,%rdx */
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+
+        0x48, 0xbd,                   /* mov imm,%rbp */
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+
+        0xc5, 0xfc, 0x10, 0x45, 0x00, /* vmovups (%rbp),%ymm0 */
+        0xff, 0xd0,                   /* call *rax */
+        0xc5, 0xfc, 0x11, 0x45, 0x00, /* vmovups %ymm0,(%rbp) */
+        0x5d,                         /* popq %rbp */
+        0xc3,                         /* ret  */
+    };
+    static BYTE call_func_code_reset_ymm_state[] =
+    {
+        0x55,                         /* pushq %rbp */
+        0x48, 0xb8,                   /* mov imm,%rax */
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+
+        0x48, 0xb9,                   /* mov imm,%rcx */
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+
+        0x48, 0xba,                   /* mov imm,%rdx */
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+
+        0x48, 0xbd,                   /* mov imm,%rbp */
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+
+        0xc5, 0xf8, 0x77,             /* vzeroupper */
+        0x0f, 0x57, 0xc0,             /* xorps  %xmm0,%xmm0 */
+        0xff, 0xd0,                   /* call *rax */
+        0xc5, 0xfc, 0x11, 0x45, 0x00, /* vmovups %ymm0,(%rbp) */
+        0x5d,                         /* popq %rbp */
+        0xc3,                         /* ret  */
+    };
+    static const struct call_func_offsets call_func_offsets = {3, 13, 23, 33};
+#else
+    static BYTE call_func_code_set_ymm0[] =
+    {
+        0x55,                         /* pushl %ebp */
+        0xb8,                         /* mov imm,%eax */
+        0x00, 0x00, 0x00, 0x00,
+
+        0xb9,                         /* mov imm,%ecx */
+        0x00, 0x00, 0x00, 0x00,
+
+        0xba,                         /* mov imm,%edx */
+        0x00, 0x00, 0x00, 0x00,
+
+        0xbd,                         /* mov imm,%ebp */
+        0x00, 0x00, 0x00, 0x00,
+
+        0x81, 0xfa, 0xef, 0xbe, 0xad, 0xde,
+                                      /* cmpl $0xdeadbeef, %edx */
+        0x74, 0x01,                   /* je 1f */
+        0x52,                         /* pushl %edx */
+        0x51,                         /* 1: pushl %ecx */
+        0xc5, 0xfc, 0x10, 0x45, 0x00, /* vmovups (%ebp),%ymm0 */
+        0xff, 0xd0,                   /* call *eax */
+        0xc5, 0xfc, 0x11, 0x45, 0x00, /* vmovups %ymm0,(%ebp) */
+        0x5d,                         /* popl %ebp */
+        0xc3,                         /* ret  */
+    };
+    static BYTE call_func_code_reset_ymm_state[] =
+    {
+        0x55,                         /* pushl %ebp */
+        0xb8,                         /* mov imm,%eax */
+        0x00, 0x00, 0x00, 0x00,
+
+        0xb9,                         /* mov imm,%ecx */
+        0x00, 0x00, 0x00, 0x00,
+
+        0xba,                         /* mov imm,%edx */
+        0x00, 0x00, 0x00, 0x00,
+
+        0xbd,                         /* mov imm,%ebp */
+        0x00, 0x00, 0x00, 0x00,
+
+        0x81, 0xfa, 0xef, 0xbe, 0xad, 0xde,
+                                      /* cmpl $0xdeadbeef, %edx */
+        0x74, 0x01,                   /* je 1f */
+        0x52,                         /* pushl %edx */
+        0x51,                         /* 1: pushl %ecx */
+        0xc5, 0xf8, 0x77,             /* vzeroupper */
+        0x0f, 0x57, 0xc0,             /* xorps  %xmm0,%xmm0 */
+        0xff, 0xd0,                   /* call *eax */
+        0xc5, 0xfc, 0x11, 0x45, 0x00, /* vmovups %ymm0,(%ebp) */
+        0x5d,                         /* popl %ebp */
+        0xc3,                         /* ret  */
+    };
+    static const struct call_func_offsets call_func_offsets = {2, 7, 12, 17};
+#endif
+
     static const struct
     {
         ULONG flag;
@@ -6197,8 +6307,9 @@ static void test_extended_context(void)
     DECLSPEC_ALIGN(64) BYTE context_buffer[2048];
     unsigned int i, j, address_offset, test;
     ULONG ret, ret2, length, length2, align;
+    ULONG flags, flags_fpx, expected_flags;
+    ULONG (WINAPI* func)(void) = code_mem;
     CONTEXT_EX *context_ex;
-    ULONG flags, flags_fpx;
     CONTEXT *context;
     unsigned data[8];
     ULONG64 mask;
@@ -6792,6 +6903,161 @@ static void test_extended_context(void)
         skip("AVX is not supported.\n");
         return;
     }
+
+    /* Test RtlCaptureContext (doesn't support xstates). */
+    length = sizeof(context_buffer);
+    memset(context_buffer, 0xcc, sizeof(context_buffer));
+    bret = pInitializeContext(context_buffer, CONTEXT_XSTATE, &context, &length);
+    ok(bret, "Got unexpected bret %#x.\n", bret);
+    context_ex = (CONTEXT_EX *)(context + 1);
+    xs = (XSTATE *)((BYTE *)context_ex + context_ex->XState.Offset);
+
+    *(void **)(call_func_code_set_ymm0 + call_func_offsets.func_addr) = RtlCaptureContext;
+    *(void **)(call_func_code_set_ymm0 + call_func_offsets.func_param1) = context;
+    *(void **)(call_func_code_set_ymm0 + call_func_offsets.func_param2) = (void *)0xdeadbeef;
+    *(void **)(call_func_code_set_ymm0 + call_func_offsets.ymm0_save) = data;
+    memcpy(code_mem, call_func_code_set_ymm0, sizeof(call_func_code_set_ymm0));
+
+    memcpy(data, test_extended_context_data, sizeof(data));
+    func();
+    ok(context->ContextFlags == (CONTEXT_FULL | CONTEXT_SEGMENTS), "Got unexpected ContextFlags %#x.\n",
+            context->ContextFlags);
+    for (i = 0; i < 8; ++i)
+        ok(data[i] == test_extended_context_data[i], "Got unexpected data %#x, i %u.\n", data[i], i);
+
+    /* Test GetThreadContext (current thread, ymm0 set). */
+    length = sizeof(context_buffer);
+    memset(context_buffer, 0xcc, sizeof(context_buffer));
+    bret = pInitializeContext(context_buffer, CONTEXT_FULL | CONTEXT_XSTATE | CONTEXT_FLOATING_POINT,
+            &context, &length);
+    ok(bret, "Got unexpected bret %#x.\n", bret);
+    memset(&xs->YmmContext, 0xcc, sizeof(xs->YmmContext));
+
+    expected_flags = CONTEXT_FULL | CONTEXT_XSTATE | CONTEXT_FLOATING_POINT;
+#ifdef __i386__
+    expected_flags |= CONTEXT_EXTENDED_REGISTERS;
+#endif
+    pSetXStateFeaturesMask(context, ~(ULONG64)0);
+    ok(context->ContextFlags == expected_flags, "Got unexpected ContextFlags %#x.\n",
+            context->ContextFlags);
+    *(void **)(call_func_code_set_ymm0 + call_func_offsets.func_addr) = GetThreadContext;
+    *(void **)(call_func_code_set_ymm0 + call_func_offsets.func_param1) = (void *)GetCurrentThread();
+    *(void **)(call_func_code_set_ymm0 + call_func_offsets.func_param2) = context;
+    *(void **)(call_func_code_set_ymm0 + call_func_offsets.ymm0_save) = data;
+    memcpy(code_mem, call_func_code_set_ymm0, sizeof(call_func_code_set_ymm0));
+    xs->CompactionMask = 2;
+    if (!compaction_enabled)
+        xs->Mask = 0;
+    context_ex->XState.Length = sizeof(XSTATE);
+
+    bret = func();
+    ok(bret, "Got unexpected bret %#x, GetLastError() %u.\n", bret, GetLastError());
+
+    ok(context->ContextFlags == expected_flags, "Got unexpected ContextFlags %#x.\n",
+            context->ContextFlags);
+    expected_compaction = compaction_enabled ? (ULONG64)1 << 63 : 0;
+
+    ok(!xs->Mask, "Got unexpected Mask %s.\n", wine_dbgstr_longlong(xs->Mask));
+    ok(xs->CompactionMask == expected_compaction, "Got unexpected CompactionMask %s.\n",
+            wine_dbgstr_longlong(xs->CompactionMask));
+
+    for (i = 4; i < 8; ++i)
+        ok(data[i] == test_extended_context_data[i], "Got unexpected data %#x, i %u.\n", data[i], i);
+
+    for (i = 0; i < 4; ++i)
+        ok(((ULONG *)&xs->YmmContext)[i] == 0xcccccccc,
+                "Got unexpected data %#x, i %u.\n", ((ULONG *)&xs->YmmContext)[i], i);
+
+    expected_compaction = compaction_enabled ? ((ULONG64)1 << 63) | 4 : 0;
+
+    xs->CompactionMask = 4;
+    xs->Mask = compaction_enabled ? 0 : 4;
+    context_ex->XState.Length = sizeof(XSTATE) + 64;
+    bret = func();
+    ok(!bret && GetLastError() == ERROR_INVALID_PARAMETER,
+            "Got unexpected bret %#x, GetLastError() %u.\n", bret, GetLastError());
+    ok(context->ContextFlags == expected_flags, "Got unexpected ContextFlags %#x.\n",
+            context->ContextFlags);
+    ok(xs->Mask == (compaction_enabled ? 0 : 4), "Got unexpected Mask %s.\n", wine_dbgstr_longlong(xs->Mask));
+    ok(xs->CompactionMask == 4, "Got unexpected CompactionMask %s.\n",
+            wine_dbgstr_longlong(xs->CompactionMask));
+    for (i = 0; i < 4; ++i)
+        ok(((ULONG *)&xs->YmmContext)[i] == 0xcccccccc,
+                "Got unexpected data %#x, i %u.\n", ((ULONG *)&xs->YmmContext)[i], i);
+
+    xs->CompactionMask = 4;
+    xs->Mask = compaction_enabled ? 0 : 4;
+    context_ex->XState.Length = offsetof(XSTATE, YmmContext);
+    bret = func();
+    ok(context->ContextFlags == expected_flags, "Got unexpected ContextFlags %#x.\n",
+            context->ContextFlags);
+    ok(!bret && GetLastError() == ERROR_MORE_DATA,
+            "Got unexpected bret %#x, GetLastError() %u.\n", bret, GetLastError());
+    ok(xs->Mask == 4, "Got unexpected Mask %s.\n", wine_dbgstr_longlong(xs->Mask));
+    ok(xs->CompactionMask == expected_compaction, "Got unexpected CompactionMask %s.\n",
+            wine_dbgstr_longlong(xs->CompactionMask));
+    for (i = 0; i < 4; ++i)
+        ok(((ULONG *)&xs->YmmContext)[i] == 0xcccccccc,
+                "Got unexpected data %#x, i %u.\n", ((ULONG *)&xs->YmmContext)[i], i);
+
+    context_ex->XState.Length = sizeof(XSTATE);
+    xs->CompactionMask = 4;
+    xs->Mask = compaction_enabled ? 0 : 4;
+    bret = func();
+    ok(bret, "Got unexpected bret %#x, GetLastError() %u.\n", bret, GetLastError());
+
+    ok(context->ContextFlags == expected_flags, "Got unexpected ContextFlags %#x.\n",
+            context->ContextFlags);
+
+    ok(xs->Mask == 4, "Got unexpected Mask %s.\n", wine_dbgstr_longlong(xs->Mask));
+    ok(xs->CompactionMask == expected_compaction, "Got unexpected CompactionMask %s.\n",
+            wine_dbgstr_longlong(xs->CompactionMask));
+
+    for (i = 4; i < 8; ++i)
+        ok(data[i] == test_extended_context_data[i], "Got unexpected data %#x, i %u.\n", data[i], i);
+
+    for (i = 0; i < 4; ++i)
+        ok(((ULONG *)&xs->YmmContext)[i] == test_extended_context_data[i + 4],
+                "Got unexpected data %#x, i %u.\n", ((ULONG *)&xs->YmmContext)[i], i);
+
+    /* Test GetThreadContext (current thread, ymm state cleared). */
+    length = sizeof(context_buffer);
+    memset(context_buffer, 0xcc, sizeof(context_buffer));
+    bret = pInitializeContext(context_buffer, CONTEXT_FULL | CONTEXT_XSTATE | CONTEXT_FLOATING_POINT,
+            &context, &length);
+    memset(&xs->YmmContext, 0xcc, sizeof(xs->YmmContext));
+    ok(bret, "Got unexpected bret %#x.\n", bret);
+    pSetXStateFeaturesMask(context, ~(ULONG64)0);
+    *(void **)(call_func_code_reset_ymm_state + call_func_offsets.func_addr) = GetThreadContext;
+    *(void **)(call_func_code_reset_ymm_state + call_func_offsets.func_param1) = (void *)GetCurrentThread();
+    *(void **)(call_func_code_reset_ymm_state + call_func_offsets.func_param2) = context;
+    *(void **)(call_func_code_reset_ymm_state + call_func_offsets.ymm0_save) = data;
+    memcpy(code_mem, call_func_code_reset_ymm_state, sizeof(call_func_code_reset_ymm_state));
+
+    bret = func();
+    ok(bret, "Got unexpected bret %#x, GetLastError() %u.\n", bret, GetLastError());
+
+    expected_flags = CONTEXT_FULL | CONTEXT_XSTATE | CONTEXT_FLOATING_POINT;
+#ifdef __i386__
+    expected_flags |= CONTEXT_EXTENDED_REGISTERS;
+#endif
+    ok(context->ContextFlags == expected_flags, "Got unexpected ContextFlags %#x.\n",
+            context->ContextFlags);
+
+    expected_compaction = compaction_enabled ? ((ULONG64)1 << 63) | 4 : 0;
+
+    xs = (XSTATE *)((BYTE *)context_ex + context_ex->XState.Offset);
+    ok(!xs->Mask, "Got unexpected Mask %s.\n", wine_dbgstr_longlong(xs->Mask));
+    ok(xs->CompactionMask == expected_compaction, "Got unexpected CompactionMask %s.\n",
+            wine_dbgstr_longlong(xs->CompactionMask));
+
+    for (i = 4; i < 8; ++i)
+        ok(!data[i], "Got unexpected data %#x, i %u.\n", data[i], i);
+
+    for (i = 0; i < 4; ++i)
+        ok(((ULONG *)&xs->YmmContext)[i] == 0xcccccccc
+                || broken(((ULONG *)&xs->YmmContext)[i] == test_extended_context_data[i + 4]),
+                "Got unexpected data %#x, i %u.\n", ((ULONG *)&xs->YmmContext)[i], i);
 
     /* Test fault exception context. */
     memset(data, 0xff, sizeof(data));
