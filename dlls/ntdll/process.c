@@ -59,13 +59,13 @@ PEB * WINAPI RtlGetCurrentPeb(void)
  */
 NTSTATUS restart_process( RTL_USER_PROCESS_PARAMETERS *params, NTSTATUS status )
 {
-    static const WCHAR argsW[] = {'%','s','%','s',' ','-','-','a','p','p','-','n','a','m','e',' ','"','%','s','"',' ','%','s',0};
+    static const WCHAR argsW[] = {'%','s',' ','-','-','a','p','p','-','n','a','m','e',' ','"','%','s','"',' ','%','s',0};
     static const WCHAR winevdm[] = {'w','i','n','e','v','d','m','.','e','x','e',0};
     static const WCHAR comW[] = {'.','c','o','m',0};
     static const WCHAR pifW[] = {'.','p','i','f',0};
 
     DWORD len;
-    WCHAR *p, *cmdline;
+    WCHAR *p, *appname, *cmdline;
     UNICODE_STRING pathW, cmdW;
 
     /* check for .com or .pif extension */
@@ -80,20 +80,23 @@ NTSTATUS restart_process( RTL_USER_PROCESS_PARAMETERS *params, NTSTATUS status )
     case STATUS_NO_MEMORY:
     case STATUS_INVALID_IMAGE_FORMAT:
     case STATUS_INVALID_IMAGE_NOT_MZ:
-        if (!RtlDosPathNameToNtPathName_U( params->ImagePathName.Buffer, &pathW, NULL, NULL ))
-            return status;
-        status = unix_funcs->exec_process( &pathW, &params->CommandLine, status );
+        status = unix_funcs->exec_process( &params->ImagePathName, &params->CommandLine, status );
         break;
     case STATUS_INVALID_IMAGE_WIN_16:
     case STATUS_INVALID_IMAGE_NE_FORMAT:
     case STATUS_INVALID_IMAGE_PROTECT:
-        len = (wcslen(system_dir) + wcslen(winevdm) + 16 + wcslen(params->ImagePathName.Buffer) +
-               wcslen(params->CommandLine.Buffer));
+        len = wcslen(system_dir) + wcslen(winevdm) + 1;
+        if (!(appname = RtlAllocateHeap( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
+            return STATUS_NO_MEMORY;
+        wcscpy( appname, (is_win64 || is_wow64) ? syswow64_dir : system_dir );
+        wcscat( appname, winevdm );
+
+        len += 16 + wcslen(params->ImagePathName.Buffer) + wcslen(params->CommandLine.Buffer);
         if (!(cmdline = RtlAllocateHeap( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
             return STATUS_NO_MEMORY;
-        swprintf( cmdline, len, argsW, (is_win64 || is_wow64) ? syswow64_dir : system_dir,
-                  winevdm, params->ImagePathName.Buffer, params->CommandLine.Buffer );
-        RtlInitUnicodeString( &pathW, winevdm );
+        swprintf( cmdline, len, argsW, appname, params->ImagePathName.Buffer, params->CommandLine.Buffer );
+
+        RtlInitUnicodeString( &pathW, appname );
         RtlInitUnicodeString( &cmdW, cmdline );
         status = unix_funcs->exec_process( &pathW, &cmdW, status );
         break;
