@@ -21,7 +21,6 @@ C_SRCS = \
 	filemoniker.c \
 	ftmarshal.c \
 	git.c \
-	hglobalstream.c \
 	itemmoniker.c \
 	marshal.c \
 	memlockbytes.c \

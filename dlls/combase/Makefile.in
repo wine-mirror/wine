@@ -9,6 +9,7 @@ C_SRCS = \
 	apartment.c \
 	combase.c \
 	errorinfo.c \
+	hglobalstream.c \
 	malloc.c \
 	marshal.c \
 	roapi.c \

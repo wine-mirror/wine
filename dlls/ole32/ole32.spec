@@ -105,7 +105,7 @@
 @ stub CreateObjrefMoniker
 @ stdcall CreateOleAdviseHolder(ptr)
 @ stdcall CreatePointerMoniker(ptr ptr)
-@ stdcall CreateStreamOnHGlobal(ptr long ptr)
+@ stdcall CreateStreamOnHGlobal(ptr long ptr) combase.CreateStreamOnHGlobal
 @ stdcall DestroyRunningObjectTable()
 @ stdcall DllDebugObjectRPCHook(long ptr) combase.DllDebugObjectRPCHook
 @ stdcall -private DllGetClassObject (ptr ptr ptr)
@@ -121,7 +121,7 @@
 @ stub GetDocumentBitStg
 @ stdcall GetErrorInfo(long ptr) combase.GetErrorInfo
 @ stdcall GetHGlobalFromILockBytes(ptr ptr)
-@ stdcall GetHGlobalFromStream(ptr ptr)
+@ stdcall GetHGlobalFromStream(ptr ptr) combase.GetHGlobalFromStream
 @ stub GetHookInterface
 @ stdcall GetRunningObjectTable(long ptr)
 @ stdcall HACCEL_UserFree(ptr ptr) combase.HACCEL_UserFree

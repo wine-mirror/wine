@@ -174,7 +174,7 @@
 @ stdcall CoWaitForMultipleHandles(long long long ptr ptr)
 @ stub CoWaitForMultipleObjects
 @ stdcall CreateErrorInfo(ptr)
-@ stdcall CreateStreamOnHGlobal(ptr long ptr) ole32.CreateStreamOnHGlobal
+@ stdcall CreateStreamOnHGlobal(ptr long ptr)
 @ stub DcomChannelSetHResult
 @ stdcall DllDebugObjectRPCHook(long ptr)
 @ stdcall DllGetActivationFactory(ptr ptr)
@@ -185,7 +185,7 @@
 @ stub GetCatalogHelper
 @ stdcall GetErrorInfo(long ptr)
 @ stub GetFuncDescs
-@ stdcall GetHGlobalFromStream(ptr ptr) ole32.GetHGlobalFromStream
+@ stdcall GetHGlobalFromStream(ptr ptr)
 @ stub GetHookInterface
 @ stdcall GetRestrictedErrorInfo(ptr)
 @ stdcall HACCEL_UserFree(ptr ptr)
