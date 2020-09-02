@@ -1730,6 +1730,12 @@ static void test_ECDSA(void)
     status = pBCryptImportKeyPair(alg, NULL, BCRYPT_ECCPUBLIC_BLOB, &key, buffer, size, 0);
     ok(status == STATUS_INVALID_PARAMETER, "Expected STATUS_INVALID_PARAMETER, got %08x\n", status);
 
+    ecckey->dwMagic = BCRYPT_ECDH_PUBLIC_P256_MAGIC;
+    ecckey->cbKey = 32;
+    status = pBCryptImportKeyPair(alg, NULL, BCRYPT_ECCPUBLIC_BLOB, &key, buffer, size, 0);
+    ok(status == STATUS_INVALID_PARAMETER, "Expected STATUS_INVALID_PARAMETER, got %08x\n", status);
+
+    ecckey->dwMagic = BCRYPT_ECDSA_PUBLIC_P256_MAGIC;
     ecckey->cbKey = 32;
     status = pBCryptImportKeyPair(alg, NULL, BCRYPT_ECCPUBLIC_BLOB, &key, buffer, size, 0);
     ok(!status, "BCryptImportKeyPair failed: %08x\n", status);
@@ -1749,6 +1755,12 @@ static void test_ECDSA(void)
     status = pBCryptImportKeyPair(alg, NULL, BCRYPT_ECCPRIVATE_BLOB, &key, buffer, size, 0);
     ok(status == STATUS_INVALID_PARAMETER, "Expected STATUS_INVALID_PARAMETER, got %08x\n", status);
 
+    ecckey->dwMagic = BCRYPT_ECDH_PRIVATE_P256_MAGIC;
+    ecckey->cbKey = 32;
+    status = pBCryptImportKeyPair(alg, NULL, BCRYPT_ECCPRIVATE_BLOB, &key, buffer, size, 0);
+    ok(status == STATUS_INVALID_PARAMETER, "Expected STATUS_INVALID_PARAMETER, got %08x\n", status);
+
+    ecckey->dwMagic = BCRYPT_ECDSA_PRIVATE_P256_MAGIC;
     ecckey->cbKey = 32;
     status = pBCryptImportKeyPair(alg, NULL, BCRYPT_ECCPRIVATE_BLOB, &key, buffer, size, 0);
     ok(!status, "BCryptImportKeyPair failed: %08x\n", status);

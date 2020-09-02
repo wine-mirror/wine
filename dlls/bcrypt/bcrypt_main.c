@@ -1171,7 +1171,7 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
             return STATUS_NOT_SUPPORTED;
         }
 
-        if (ecc_blob->dwMagic != magic) return STATUS_NOT_SUPPORTED;
+        if (ecc_blob->dwMagic != magic) return STATUS_INVALID_PARAMETER;
         if (ecc_blob->cbKey != key_size || input_len < sizeof(*ecc_blob) + ecc_blob->cbKey * 2)
             return STATUS_INVALID_PARAMETER;
 
@@ -1211,7 +1211,7 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
             return STATUS_NOT_SUPPORTED;
         }
 
-        if (ecc_blob->dwMagic != magic) return STATUS_NOT_SUPPORTED;
+        if (ecc_blob->dwMagic != magic) return STATUS_INVALID_PARAMETER;
         if (ecc_blob->cbKey != key_size || input_len < sizeof(*ecc_blob) + ecc_blob->cbKey * 3)
             return STATUS_INVALID_PARAMETER;
 
