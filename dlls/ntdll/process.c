@@ -38,12 +38,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(process);
 
-static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
-
-
-/*
- *	Process object
- */
 
 /******************************************************************************
  *  RtlGetCurrentPeb  [NTDLL.@]
@@ -52,56 +46,6 @@ static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
 PEB * WINAPI RtlGetCurrentPeb(void)
 {
     return NtCurrentTeb()->Peb;
-}
-
-/***********************************************************************
- *           restart_process
- */
-NTSTATUS restart_process( RTL_USER_PROCESS_PARAMETERS *params, NTSTATUS status )
-{
-    static const WCHAR argsW[] = {'%','s',' ','-','-','a','p','p','-','n','a','m','e',' ','"','%','s','"',' ','%','s',0};
-    static const WCHAR winevdm[] = {'w','i','n','e','v','d','m','.','e','x','e',0};
-    static const WCHAR comW[] = {'.','c','o','m',0};
-    static const WCHAR pifW[] = {'.','p','i','f',0};
-
-    DWORD len;
-    WCHAR *p, *appname, *cmdline;
-    UNICODE_STRING pathW, cmdW;
-
-    /* check for .com or .pif extension */
-    if (status == STATUS_INVALID_IMAGE_NOT_MZ &&
-        (p = wcsrchr( params->ImagePathName.Buffer, '.' )) &&
-        (!wcsicmp( p, comW ) || !wcsicmp( p, pifW )))
-        status = STATUS_INVALID_IMAGE_WIN_16;
-
-    switch (status)
-    {
-    case STATUS_CONFLICTING_ADDRESSES:
-    case STATUS_NO_MEMORY:
-    case STATUS_INVALID_IMAGE_FORMAT:
-    case STATUS_INVALID_IMAGE_NOT_MZ:
-        status = unix_funcs->exec_process( &params->ImagePathName, &params->CommandLine, status );
-        break;
-    case STATUS_INVALID_IMAGE_WIN_16:
-    case STATUS_INVALID_IMAGE_NE_FORMAT:
-    case STATUS_INVALID_IMAGE_PROTECT:
-        len = wcslen(system_dir) + wcslen(winevdm) + 1;
-        if (!(appname = RtlAllocateHeap( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
-            return STATUS_NO_MEMORY;
-        wcscpy( appname, (is_win64 || is_wow64) ? syswow64_dir : system_dir );
-        wcscat( appname, winevdm );
-
-        len += 16 + wcslen(params->ImagePathName.Buffer) + wcslen(params->CommandLine.Buffer);
-        if (!(cmdline = RtlAllocateHeap( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
-            return STATUS_NO_MEMORY;
-        swprintf( cmdline, len, argsW, appname, params->ImagePathName.Buffer, params->CommandLine.Buffer );
-
-        RtlInitUnicodeString( &pathW, appname );
-        RtlInitUnicodeString( &cmdW, cmdline );
-        status = unix_funcs->exec_process( &pathW, &cmdW, status );
-        break;
-    }
-    return status;
 }
 
 

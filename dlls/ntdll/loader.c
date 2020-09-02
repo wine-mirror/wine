@@ -70,6 +70,7 @@ const WCHAR system_dir[] = {'C',':','\\','w','i','n','d','o','w','s','\\',
 const WCHAR syswow64_dir[] = {'C',':','\\','w','i','n','d','o','w','s','\\',
                               's','y','s','w','o','w','6','4','\\',0};
 
+static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
 BOOL is_wow64 = FALSE;
 
 /* system search path */
@@ -3931,6 +3932,29 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
 
 
 /***********************************************************************
+ *           restart_winevdm
+ */
+static void restart_winevdm( RTL_USER_PROCESS_PARAMETERS *params )
+{
+    DWORD len;
+    WCHAR *appname, *cmdline;
+
+    len = wcslen(system_dir) + wcslen(L"winevdm.exe") + 1;
+    appname = RtlAllocateHeap( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+    wcscpy( appname, (is_win64 || is_wow64) ? syswow64_dir : system_dir );
+    wcscat( appname, L"winevdm.exe" );
+
+    len += 16 + wcslen(params->ImagePathName.Buffer) + wcslen(params->CommandLine.Buffer);
+    cmdline = RtlAllocateHeap( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+    swprintf( cmdline, len, L"%s --app-name \"%s\" %s",
+              appname, params->ImagePathName.Buffer, params->CommandLine.Buffer );
+
+    RtlInitUnicodeString( &params->ImagePathName, appname );
+    RtlInitUnicodeString( &params->CommandLine, cmdline );
+}
+
+
+/***********************************************************************
  *           process_init
  */
 static void process_init(void)
@@ -4024,21 +4048,33 @@ static void process_init(void)
     }
     else
     {
-        status = restart_process( params, status );
         switch (status)
         {
-        case STATUS_INVALID_IMAGE_WIN_64:
-            ERR( "%s 64-bit application not supported in 32-bit prefix\n",
-                 debugstr_us(&params->ImagePathName) );
+        case STATUS_INVALID_IMAGE_NOT_MZ:
+        {
+            WCHAR *p = wcsrchr( params->ImagePathName.Buffer, '.' );
+            if (p && (!wcsicmp( p, L".com" ) || !wcsicmp( p, L".pif" )))
+            {
+                restart_winevdm( params );
+                status = STATUS_INVALID_IMAGE_WIN_16;
+            }
+            status = unix_funcs->exec_process( status );
             break;
+        }
         case STATUS_INVALID_IMAGE_WIN_16:
         case STATUS_INVALID_IMAGE_NE_FORMAT:
         case STATUS_INVALID_IMAGE_PROTECT:
-            ERR( "%s 16-bit application not supported on this system\n",
-                 debugstr_us(&params->ImagePathName) );
+            restart_winevdm( params );
+            status = unix_funcs->exec_process( status );
             break;
+        case STATUS_CONFLICTING_ADDRESSES:
+        case STATUS_NO_MEMORY:
         case STATUS_INVALID_IMAGE_FORMAT:
-            ERR( "%s not supported on this system\n", debugstr_us(&params->ImagePathName) );
+            status = unix_funcs->exec_process( status );
+            break;
+        case STATUS_INVALID_IMAGE_WIN_64:
+            ERR( "%s 64-bit application not supported in 32-bit prefix\n",
+                 debugstr_us(&params->ImagePathName) );
             break;
         case STATUS_DLL_NOT_FOUND:
             ERR( "%s not found\n", debugstr_us(&params->ImagePathName) );

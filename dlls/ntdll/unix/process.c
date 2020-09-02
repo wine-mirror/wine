@@ -613,8 +613,9 @@ static NTSTATUS spawn_process( const RTL_USER_PROCESS_PARAMETERS *params, int so
 /***********************************************************************
  *           exec_process
  */
-NTSTATUS CDECL exec_process( UNICODE_STRING *path, UNICODE_STRING *cmdline, NTSTATUS status )
+NTSTATUS CDECL exec_process( NTSTATUS status )
 {
+    RTL_USER_PROCESS_PARAMETERS *params = NtCurrentTeb()->Peb->ProcessParameters;
     pe_image_info_t pe_info;
     int unixdir, socketfd[2];
     char **argv;
@@ -631,7 +632,7 @@ NTSTATUS CDECL exec_process( UNICODE_STRING *path, UNICODE_STRING *cmdline, NTST
     {
         UNICODE_STRING image;
         if (getenv( "WINEPRELOADRESERVE" )) return status;
-        image.Buffer = get_nt_pathname( path );
+        image.Buffer = get_nt_pathname( &params->ImagePathName );
         image.Length = wcslen( image.Buffer ) * sizeof(WCHAR);
         if ((status = get_pe_file_info( &image, &handle, &pe_info ))) return status;
         break;
@@ -647,7 +648,7 @@ NTSTATUS CDECL exec_process( UNICODE_STRING *path, UNICODE_STRING *cmdline, NTST
         return status;
     }
 
-    unixdir = get_unix_curdir( NtCurrentTeb()->Peb->ProcessParameters );
+    unixdir = get_unix_curdir( params );
 
     if (socketpair( PF_UNIX, SOCK_STREAM, 0, socketfd ) == -1) return STATUS_TOO_MANY_OPENED_FILES;
 #ifdef SO_PASSCRED
@@ -670,7 +671,7 @@ NTSTATUS CDECL exec_process( UNICODE_STRING *path, UNICODE_STRING *cmdline, NTST
 
     if (!status)
     {
-        if (!(argv = build_argv( cmdline, 2 ))) return STATUS_NO_MEMORY;
+        if (!(argv = build_argv( &params->CommandLine, 2 ))) return STATUS_NO_MEMORY;
         fchdir( unixdir );
         do
         {
