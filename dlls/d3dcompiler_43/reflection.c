@@ -857,6 +857,12 @@ static HRESULT STDMETHODCALLTYPE d3dcompiler_shader_reflection_variable_GetDesc(
     desc->uFlags = This->flags;
     desc->DefaultValue = This->default_value;
 
+    /* TODO test and set proper values for texture. */
+    desc->StartTexture = 0xffffffff;
+    desc->TextureSize = 0;
+    desc->StartSampler = 0xffffffff;
+    desc->SamplerSize = 0;
+
     return S_OK;
 }
 
