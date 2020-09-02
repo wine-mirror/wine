@@ -900,8 +900,7 @@ BOOL WINAPI ConvertToAutoInheritPrivateObjectSecurity( PSECURITY_DESCRIPTOR pare
                                                        GUID *type, BOOL is_dir,
                                                        PGENERIC_MAPPING mapping )
 {
-    FIXME("%p %p %p %p %d %p - stub\n", parent, current, descr, type, is_dir, mapping );
-    return FALSE;
+    return set_ntstatus( RtlConvertToAutoInheritSecurityObject( parent, current, descr, type, is_dir, mapping ));
 }
 
 /******************************************************************************
