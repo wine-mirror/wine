@@ -26815,7 +26815,7 @@ static void test_sample_mask(void)
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     get_rt_readback(rt, &rb);
     colour = get_readback_color(&rb, 64, 64);
-    todo_wine ok(color_match(colour, 0xffff8080, 1), "Got unexpected colour %08x.\n", colour);
+    ok(color_match(colour, 0xffff8080, 1), "Got unexpected colour %08x.\n", colour);
     release_surface_readback(&rb);
 
     hr = IDirect3DDevice9_EndScene(device);

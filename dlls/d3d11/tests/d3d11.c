@@ -29017,7 +29017,7 @@ static void test_sample_mask(void)
     draw_quad(&test_context);
     ID3D11DeviceContext_ResolveSubresource(context, (ID3D11Resource *)test_context.backbuffer, 0,
             (ID3D11Resource *)texture, 0, texture_desc.Format);
-    todo_wine check_texture_color(test_context.backbuffer, 0x3f3f3f3f, 1);
+    check_texture_color(test_context.backbuffer, 0x3f3f3f3f, 1);
 
     ID3D11RenderTargetView_Release(rtv);
     ID3D11Texture2D_Release(texture);
