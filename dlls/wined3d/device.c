@@ -1705,34 +1705,38 @@ static void resolve_depth_buffer(struct wined3d_device *device)
 }
 
 void CDECL wined3d_device_set_blend_state(struct wined3d_device *device,
-        struct wined3d_blend_state *blend_state, const struct wined3d_color *blend_factor)
+        struct wined3d_blend_state *blend_state, const struct wined3d_color *blend_factor, unsigned int sample_mask)
 {
     struct wined3d_state *state = &device->state;
     struct wined3d_blend_state *prev;
 
-    TRACE("device %p, blend_state %p, blend_factor %s.\n", device, blend_state, debug_color(blend_factor));
+    TRACE("device %p, blend_state %p, blend_factor %s, sample_mask %#x.\n",
+            device, blend_state, debug_color(blend_factor), sample_mask);
 
     prev = state->blend_state;
-    if (prev == blend_state && !memcmp(blend_factor, &state->blend_factor, sizeof(*blend_factor)))
+    if (prev == blend_state && !memcmp(blend_factor, &state->blend_factor, sizeof(*blend_factor))
+            && sample_mask == state->sample_mask)
         return;
 
     if (blend_state)
         wined3d_blend_state_incref(blend_state);
     state->blend_state = blend_state;
     state->blend_factor = *blend_factor;
-    wined3d_cs_emit_set_blend_state(device->cs, blend_state, blend_factor);
+    state->sample_mask = sample_mask;
+    wined3d_cs_emit_set_blend_state(device->cs, blend_state, blend_factor, sample_mask);
     if (prev)
         wined3d_blend_state_decref(prev);
 }
 
 struct wined3d_blend_state * CDECL wined3d_device_get_blend_state(const struct wined3d_device *device,
-        struct wined3d_color *blend_factor)
+        struct wined3d_color *blend_factor, unsigned int *sample_mask)
 {
     const struct wined3d_state *state = &device->state;
 
-    TRACE("device %p, blend_factor %p.\n", device, blend_factor);
+    TRACE("device %p, blend_factor %p, sample_mask %p.\n", device, blend_factor, sample_mask);
 
     *blend_factor = state->blend_factor;
+    *sample_mask = state->sample_mask;
     return state->blend_state;
 }
 
@@ -3615,6 +3619,7 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
             switch (idx)
             {
                 case WINED3D_RS_BLENDFACTOR:
+                case WINED3D_RS_MULTISAMPLEMASK:
                 case WINED3D_RS_ALPHABLENDENABLE:
                 case WINED3D_RS_SRCBLEND:
                 case WINED3D_RS_DESTBLEND:
@@ -3692,6 +3697,7 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
         struct wined3d_blend_state_desc desc;
         struct wine_rb_entry *entry;
         struct wined3d_color colour;
+        unsigned int sample_mask;
 
         memset(&desc, 0, sizeof(desc));
         desc.alpha_to_coverage = state->alpha_to_coverage;
@@ -3738,17 +3744,17 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
         if (wined3d_bitmap_is_set(changed->renderState, WINED3D_RS_BLENDFACTOR))
             wined3d_color_from_d3dcolor(&colour, state->rs[WINED3D_RS_BLENDFACTOR]);
         else
-            wined3d_device_get_blend_state(device, &colour);
+            wined3d_device_get_blend_state(device, &colour, &sample_mask);
 
         if ((entry = wine_rb_get(&device->blend_states, &desc)))
         {
             blend_state = WINE_RB_ENTRY_VALUE(entry, struct wined3d_blend_state, entry);
-            wined3d_device_set_blend_state(device, blend_state, &colour);
+            wined3d_device_set_blend_state(device, blend_state, &colour, state->rs[WINED3D_RS_MULTISAMPLEMASK]);
         }
         else if (SUCCEEDED(wined3d_blend_state_create(device, &desc, NULL,
                 &wined3d_null_parent_ops, &blend_state)))
         {
-            wined3d_device_set_blend_state(device, blend_state, &colour);
+            wined3d_device_set_blend_state(device, blend_state, &colour, state->rs[WINED3D_RS_MULTISAMPLEMASK]);
             if (wine_rb_put(&device->blend_states, &desc, &blend_state->entry) == -1)
             {
                 ERR("Failed to insert blend state.\n");

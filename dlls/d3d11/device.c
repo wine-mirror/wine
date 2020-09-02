@@ -715,13 +715,12 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_OMSetBlendState(ID3D11Devi
         blend_factor = default_blend_factor;
 
     wined3d_mutex_lock();
-    wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_MULTISAMPLEMASK, sample_mask);
     if (!(blend_state_impl = unsafe_impl_from_ID3D11BlendState(blend_state)))
         wined3d_device_set_blend_state(device->wined3d_device, NULL,
-                (const struct wined3d_color *)blend_factor);
+                (const struct wined3d_color *)blend_factor, sample_mask);
     else
         wined3d_device_set_blend_state(device->wined3d_device, blend_state_impl->wined3d_state,
-                (const struct wined3d_color *)blend_factor);
+                (const struct wined3d_color *)blend_factor, sample_mask);
     wined3d_mutex_unlock();
 }
 
@@ -1886,7 +1885,7 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_OMGetBlendState(ID3D11Devi
 
     wined3d_mutex_lock();
     if ((wined3d_state = wined3d_device_get_blend_state(device->wined3d_device,
-            (struct wined3d_color *)blend_factor)))
+            (struct wined3d_color *)blend_factor, sample_mask)))
     {
         blend_state_impl = wined3d_blend_state_get_parent(wined3d_state);
         ID3D11BlendState_AddRef(*blend_state = &blend_state_impl->ID3D11BlendState_iface);
@@ -1895,7 +1894,6 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_OMGetBlendState(ID3D11Devi
     {
         *blend_state = NULL;
     }
-    *sample_mask = wined3d_device_get_render_state(device->wined3d_device, WINED3D_RS_MULTISAMPLEMASK);
     wined3d_mutex_unlock();
 }
 

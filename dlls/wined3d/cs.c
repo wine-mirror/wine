@@ -266,6 +266,7 @@ struct wined3d_cs_set_blend_state
     enum wined3d_cs_op opcode;
     struct wined3d_blend_state *state;
     struct wined3d_color factor;
+    unsigned int sample_mask;
 };
 
 struct wined3d_cs_set_rasterizer_state
@@ -1636,10 +1637,12 @@ static void wined3d_cs_exec_set_blend_state(struct wined3d_cs *cs, const void *d
     }
     state->blend_factor = op->factor;
     device_invalidate_state(cs->device, STATE_BLEND_FACTOR);
+    state->sample_mask = op->sample_mask;
+    device_invalidate_state(cs->device, STATE_SAMPLE_MASK);
 }
 
 void wined3d_cs_emit_set_blend_state(struct wined3d_cs *cs, struct wined3d_blend_state *state,
-        const struct wined3d_color *blend_factor)
+        const struct wined3d_color *blend_factor, unsigned int sample_mask)
 {
     struct wined3d_cs_set_blend_state *op;
 
@@ -1647,6 +1650,7 @@ void wined3d_cs_emit_set_blend_state(struct wined3d_cs *cs, struct wined3d_blend
     op->opcode = WINED3D_CS_OP_SET_BLEND_STATE;
     op->state = state;
     op->factor = *blend_factor;
+    op->sample_mask = sample_mask;
 
     wined3d_cs_submit(cs, WINED3D_CS_QUEUE_DEFAULT);
 }

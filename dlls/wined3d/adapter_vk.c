@@ -39,6 +39,7 @@ static const struct wined3d_state_entry_template misc_state_template_vk[] =
     {STATE_STREAM_OUTPUT,                                 {STATE_STREAM_OUTPUT,                                 state_nop}},
     {STATE_BLEND,                                         {STATE_BLEND,                                         state_nop}},
     {STATE_BLEND_FACTOR,                                  {STATE_BLEND_FACTOR,                                  state_nop}},
+    {STATE_SAMPLE_MASK,                                   {STATE_SAMPLE_MASK,                                   state_nop}},
     {STATE_STREAMSRC,                                     {STATE_STREAMSRC,                                     state_nop}},
     {STATE_VDECL,                                         {STATE_VDECL,                                         state_nop}},
     {STATE_RASTERIZER,                                    {STATE_RASTERIZER,                                    state_nop}},
@@ -161,7 +162,6 @@ static const struct wined3d_state_entry_template misc_state_template_vk[] =
     {STATE_RENDER(WINED3D_RS_ADAPTIVETESS_W),             {STATE_RENDER(WINED3D_RS_ENABLEADAPTIVETESSELLATION)}},
     {STATE_RENDER(WINED3D_RS_ENABLEADAPTIVETESSELLATION), {STATE_RENDER(WINED3D_RS_ENABLEADAPTIVETESSELLATION), state_nop}},
     {STATE_RENDER(WINED3D_RS_MULTISAMPLEANTIALIAS),       {STATE_RENDER(WINED3D_RS_MULTISAMPLEANTIALIAS),       state_nop}},
-    {STATE_RENDER(WINED3D_RS_MULTISAMPLEMASK),            {STATE_RENDER(WINED3D_RS_MULTISAMPLEMASK),            state_nop}},
     {STATE_RENDER(WINED3D_RS_DEBUGMONITORTOKEN),          {STATE_RENDER(WINED3D_RS_DEBUGMONITORTOKEN),          state_nop}},
     {STATE_RENDER(WINED3D_RS_ZVISIBLE),                   {STATE_RENDER(WINED3D_RS_ZVISIBLE),                   state_nop}},
     /* Samplers */

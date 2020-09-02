@@ -2339,7 +2339,7 @@ void __cdecl wined3d_device_evict_managed_resources(struct wined3d_device *devic
 void __cdecl wined3d_device_flush(struct wined3d_device *device);
 UINT __cdecl wined3d_device_get_available_texture_mem(const struct wined3d_device *device);
 struct wined3d_blend_state * __cdecl wined3d_device_get_blend_state(const struct wined3d_device *device,
-        struct wined3d_color *blend_factor);
+        struct wined3d_color *blend_factor, unsigned int *sample_mask);
 HRESULT __cdecl wined3d_device_get_clip_status(const struct wined3d_device *device,
         struct wined3d_clip_status *clip_status);
 struct wined3d_shader * __cdecl wined3d_device_get_compute_shader(const struct wined3d_device *device);
@@ -2422,7 +2422,7 @@ void __cdecl wined3d_device_resolve_sub_resource(struct wined3d_device *device,
         enum wined3d_format_id format_id);
 void __cdecl wined3d_device_set_base_vertex_index(struct wined3d_device *device, INT base_index);
 void __cdecl wined3d_device_set_blend_state(struct wined3d_device *device, struct wined3d_blend_state *blend_state,
-        const struct wined3d_color *blend_factor);
+        const struct wined3d_color *blend_factor, unsigned int sample_mask);
 HRESULT __cdecl wined3d_device_set_clip_status(struct wined3d_device *device,
         const struct wined3d_clip_status *clip_status);
 void __cdecl wined3d_device_set_compute_shader(struct wined3d_device *device, struct wined3d_shader *shader);

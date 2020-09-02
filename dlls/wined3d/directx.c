@@ -2365,6 +2365,7 @@ static const struct wined3d_state_entry_template misc_state_template_no3d[] =
     {STATE_STREAM_OUTPUT,                                 {STATE_VDECL}},
     {STATE_BLEND,                                         {STATE_VDECL}},
     {STATE_BLEND_FACTOR,                                  {STATE_VDECL}},
+    {STATE_SAMPLE_MASK,                                   {STATE_VDECL}},
     {STATE_STREAMSRC,                                     {STATE_VDECL}},
     {STATE_VDECL,                                         {STATE_VDECL, state_nop}},
     {STATE_RASTERIZER,                                    {STATE_VDECL}},
@@ -2487,7 +2488,6 @@ static const struct wined3d_state_entry_template misc_state_template_no3d[] =
     {STATE_RENDER(WINED3D_RS_ADAPTIVETESS_W),             {STATE_VDECL}},
     {STATE_RENDER(WINED3D_RS_ENABLEADAPTIVETESSELLATION), {STATE_VDECL}},
     {STATE_RENDER(WINED3D_RS_MULTISAMPLEANTIALIAS),       {STATE_VDECL}},
-    {STATE_RENDER(WINED3D_RS_MULTISAMPLEMASK),            {STATE_VDECL}},
     {STATE_RENDER(WINED3D_RS_DEBUGMONITORTOKEN),          {STATE_VDECL}},
     {STATE_RENDER(WINED3D_RS_ZVISIBLE),                   {STATE_VDECL}},
     /* Samplers */
