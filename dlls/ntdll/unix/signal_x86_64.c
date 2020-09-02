@@ -1474,6 +1474,56 @@ static void save_context( struct xcontext *xcontext, const ucontext_t *sigcontex
 
 
 /***********************************************************************
+ *           save_xstate
+ *
+ * Save the XState context
+ */
+static inline NTSTATUS save_xstate( CONTEXT *context )
+{
+    CONTEXT_EX *context_ex = (CONTEXT_EX *)(context + 1);
+    DECLSPEC_ALIGN(64) struct
+    {
+        XSAVE_FORMAT xsave;
+        XSTATE xstate;
+    }
+    xsave_area;
+    XSTATE *xs;
+
+    if (!(user_shared_data->XState.EnabledFeatures && (xs = xstate_from_context( context ))))
+        return STATUS_SUCCESS;
+
+    if (context_ex->XState.Length < offsetof(XSTATE, YmmContext)
+            || context_ex->XState.Length > sizeof(XSTATE))
+        return STATUS_INVALID_PARAMETER;
+
+    if (user_shared_data->XState.CompactionEnabled)
+    {
+        /* xsavec doesn't use anything from the save area. */
+        __asm__ volatile( "xsavec %0" : "=m"(xsave_area)
+                : "a" ((unsigned int)(xs->CompactionMask & (1 << XSTATE_AVX))), "d" (0) );
+    }
+    else
+    {
+        /* xsave preserves those bits in the mask which are not in EDX:EAX, so zero it. */
+        xsave_area.xstate.Mask = xsave_area.xstate.CompactionMask = 0;
+        __asm__ volatile( "xsave %0" : "=m"(xsave_area)
+                : "a" ((unsigned int)(xs->Mask & (1 << XSTATE_AVX))), "d" (0) );
+    }
+
+    memcpy(xs, &xsave_area.xstate, offsetof(XSTATE, YmmContext));
+    if (xs->Mask & (1 << XSTATE_AVX))
+    {
+        if (context_ex->XState.Length < sizeof(XSTATE))
+            return STATUS_BUFFER_OVERFLOW;
+
+        memcpy(&xs->YmmContext, &xsave_area.xstate.YmmContext, sizeof(xs->YmmContext));
+    }
+
+    return STATUS_SUCCESS;
+}
+
+
+/***********************************************************************
  *           restore_context
  *
  * Build a sigcontext from the register values.
@@ -1772,12 +1822,16 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
  */
 NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
 {
-    NTSTATUS ret;
+    NTSTATUS ret, xsave_status;
     DWORD needed_flags;
     struct syscall_frame *frame = amd64_thread_data()->syscall_frame;
     BOOL self = (handle == GetCurrentThread());
 
     if (!context) return STATUS_INVALID_PARAMETER;
+
+    /* Save xstate before any calls which can potentially change volatile ymm registers.
+     * E. g., debug output will clobber ymm registers. */
+    xsave_status = self ? save_xstate( context ) : STATUS_SUCCESS; /* FIXME: other thread. */
 
     needed_flags = context->ContextFlags & ~CONTEXT_AMD64;
 
@@ -1851,7 +1905,8 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
             amd64_thread_data()->dr7 = context->Dr7;
         }
     }
-    return STATUS_SUCCESS;
+
+    return xsave_status;
 }
 
 extern void CDECL raise_func_trampoline( void *dispatcher );
