@@ -1544,7 +1544,7 @@ static HRESULT d3dcompiler_parse_rdef(struct d3dcompiler_shader_reflection *r, c
             else
             {
                 desc->Space = 0;
-                desc->uID = 0;
+                desc->uID = desc->BindPoint;
             }
         }
     }
