@@ -33,6 +33,9 @@
 #include "winreg.h"
 #include "wincred.h"
 #include "winternl.h"
+#include "winioctl.h"
+#define WINE_MOUNTMGR_EXTENSIONS
+#include "ddk/mountmgr.h"
 
 #include "crypt.h"
 
@@ -1389,6 +1392,86 @@ BOOL WINAPI CredReadA(LPCSTR TargetName, DWORD Type, DWORD Flags, PCREDENTIALA *
     return TRUE;
 }
 
+static DWORD host_read_credential( const WCHAR *targetname, CREDENTIALW **ret_credential )
+{
+    struct mountmgr_credential *cred_in, *cred_out = NULL, *tmp;
+    DWORD err = ERROR_OUTOFMEMORY, size_in, size_out, size_name = (strlenW( targetname ) + 1) * sizeof(WCHAR);
+    HANDLE mgr;
+    WCHAR *ptr;
+    BOOL ret;
+
+    mgr = CreateFileW( MOUNTMGR_DOS_DEVICE_NAME, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL,
+                       OPEN_EXISTING, 0, 0 );
+    if (mgr == INVALID_HANDLE_VALUE) return GetLastError();
+
+    size_in = sizeof(*cred_in) + size_name;
+    if (!(cred_in = heap_alloc( size_in )))
+    {
+        CloseHandle( mgr );
+        return ERROR_OUTOFMEMORY;
+    }
+    cred_in->targetname_offset = sizeof(*cred_in);
+    cred_in->targetname_size   = size_name;
+    ptr = (WCHAR *)(cred_in + 1);
+    strcpyW( ptr, targetname );
+
+    size_out = 256;
+    if (!(cred_out = heap_alloc( size_out ))) goto done;
+
+    for (;;)
+    {
+        ret = DeviceIoControl( mgr, IOCTL_MOUNTMGR_READ_CREDENTIAL, cred_in, size_in, cred_out, size_out, NULL, NULL );
+        if (ret || (err = GetLastError()) != ERROR_MORE_DATA) break;
+        size_out *= 2;
+        if (!(tmp = heap_realloc( cred_out, size_out ))) goto done;
+        cred_out = tmp;
+    }
+
+    if (ret)
+    {
+        CREDENTIALW *credential;
+        DWORD size = sizeof(*credential) + cred_out->targetname_size + cred_out->username_size + cred_out->comment_size +
+                     cred_out->blob_size;
+
+        if (!(credential = heap_alloc_zero( size )))
+        {
+            err = ERROR_OUTOFMEMORY;
+            goto done;
+        }
+        ptr = (WCHAR *)(credential + 1);
+
+        credential->Type = CRED_TYPE_DOMAIN_PASSWORD;
+        memcpy( ptr, (char *)cred_out + cred_out->targetname_offset, cred_out->targetname_size );
+        credential->TargetName = ptr;
+        ptr += strlenW( ptr ) + 1;
+        if (cred_out->comment_size)
+        {
+            memcpy( ptr, (char *)cred_out + cred_out->comment_offset, cred_out->comment_size );
+            credential->Comment = ptr;
+            ptr += strlenW( ptr ) + 1;
+        }
+        credential->LastWritten = cred_out->last_written;
+        if ((credential->CredentialBlobSize = cred_out->blob_size))
+        {
+            memcpy( ptr, (char *)cred_out + cred_out->blob_offset, cred_out->blob_size );
+            credential->CredentialBlob = (BYTE *)ptr;
+            ptr += cred_out->blob_size / sizeof(WCHAR);
+        }
+        credential->Persist = CRED_PERSIST_LOCAL_MACHINE;
+        memcpy( ptr, (char *)cred_out + cred_out->username_offset, cred_out->username_size );
+        credential->UserName = ptr;
+
+        *ret_credential = credential;
+        err = ERROR_SUCCESS;
+    }
+
+done:
+    heap_free( cred_in );
+    heap_free( cred_out );
+    CloseHandle( mgr );
+    return err;
+}
+
 /******************************************************************************
  * CredReadW [ADVAPI32.@]
  */
@@ -1423,77 +1506,16 @@ BOOL WINAPI CredReadW(LPCWSTR TargetName, DWORD Type, DWORD Flags, PCREDENTIALW 
         return FALSE;
     }
 
-#ifdef __APPLE__
     if (Type == CRED_TYPE_DOMAIN_PASSWORD)
     {
-        int status;
-        SecKeychainSearchRef search;
-        status = SecKeychainSearchCreateFromAttributes(NULL, kSecGenericPasswordItemClass, NULL, &search);
-        if (status == noErr)
+        ret = host_read_credential( TargetName, Credential );
+        if (ret != ERROR_SUCCESS && ret != ERROR_NOT_SUPPORTED)
         {
-            SecKeychainItemRef item;
-            while (SecKeychainSearchCopyNext(search, &item) == noErr)
-            {
-                SecKeychainAttributeInfo info;
-                SecKeychainAttributeList *attr_list;
-                UInt32 info_tags[] = { kSecServiceItemAttr };
-                LPWSTR target_name;
-                INT str_len;
-                info.count = ARRAY_SIZE(info_tags);
-                info.tag = info_tags;
-                info.format = NULL;
-                status = SecKeychainItemCopyAttributesAndData(item, &info, NULL, &attr_list, NULL, NULL);
-                len = sizeof(**Credential);
-                if (status != noErr)
-                {
-                    WARN("SecKeychainItemCopyAttributesAndData returned status %d\n", status);
-                    continue;
-                }
-                if (attr_list->count != 1 || attr_list->attr[0].tag != kSecServiceItemAttr)
-                {
-                    CFRelease(item);
-                    continue;
-                }
-                str_len = MultiByteToWideChar(CP_UTF8, 0, attr_list->attr[0].data, attr_list->attr[0].length, NULL, 0);
-                target_name = heap_alloc((str_len + 1) * sizeof(WCHAR));
-                MultiByteToWideChar(CP_UTF8, 0, attr_list->attr[0].data, attr_list->attr[0].length, target_name, str_len);
-                /* nul terminate */
-                target_name[str_len] = '\0';
-                if (strcmpiW(TargetName, target_name))
-                {
-                    CFRelease(item);
-                    heap_free(target_name);
-                    continue;
-                }
-                heap_free(target_name);
-                SecKeychainItemFreeAttributesAndData(attr_list, NULL);
-                ret = mac_read_credential_from_item(item, TRUE, NULL, NULL, &len);
-                if (ret == ERROR_SUCCESS)
-                {
-                    *Credential = heap_alloc(len);
-                    if (*Credential)
-                    {
-                        len = sizeof(**Credential);
-                        ret = mac_read_credential_from_item(item, TRUE, *Credential,
-                                                            (char *)(*Credential + 1), &len);
-                    }
-                    else
-                        ret = ERROR_OUTOFMEMORY;
-                    CFRelease(item);
-                    CFRelease(search);
-                    if (ret != ERROR_SUCCESS)
-                    {
-                        SetLastError(ret);
-                        return FALSE;
-                    }
-                    return TRUE;
-                }
-                CFRelease(item);
-            }
-            CFRelease(search);
+            SetLastError(ret);
+            return FALSE;
         }
+        if (ret == ERROR_SUCCESS) return TRUE;
     }
-#endif
 
     ret = open_cred_mgr_key(&hkeyMgr, FALSE);
     if (ret != ERROR_SUCCESS)
