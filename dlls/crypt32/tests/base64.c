@@ -240,7 +240,6 @@ static void test_CryptBinaryToString(void)
 {
     static const DWORD flags[] = { 0, CRYPT_STRING_NOCR, CRYPT_STRING_NOCRLF };
     static const WCHAR hexdig[] = L"0123456789abcdef";
-    OSVERSIONINFOA ver = { sizeof(ver) };
     BYTE input[256 * sizeof(WCHAR)];
     DWORD strLen, strLen2, i, j;
     WCHAR *hex, *cmp, *ptr;
