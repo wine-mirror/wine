@@ -157,6 +157,66 @@ static void test_reflection_references(void)
 }
 #endif
 
+#if D3D_COMPILER_VERSION
+static void test_reflection_interfaces(void)
+{
+    ID3D12ShaderReflection *ref12 = NULL;
+    ID3D11ShaderReflection *ref11;
+    HRESULT hr, expected_hr;
+    IUnknown *iface, *iunk;
+    ULONG count;
+
+    expected_hr = D3D_COMPILER_VERSION < 46 ? E_NOINTERFACE : D3D_COMPILER_VERSION == 46 ? E_INVALIDARG : S_OK;
+    hr = call_reflect(test_reflection_blob, test_reflection_blob[6], &IID_ID3D12ShaderReflection, (void **)&ref12);
+    /* Broken with older d3dcompiler_47. */
+    ok(hr == expected_hr || broken(expected_hr == S_OK && hr == E_NOINTERFACE), "Got unexpected hr %#x.\n", hr);
+
+    if (hr != S_OK)
+        return;
+
+    hr = call_reflect(test_reflection_blob, test_reflection_blob[6], &IID_ID3D11ShaderReflection, (void **)&ref11);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = ref12->lpVtbl->QueryInterface(ref12, &IID_ID3D11ShaderReflection, (void **)&iface);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(iface == (void *)ref12, "Got unexpected interfaces %p, %p.\n", iface, ref12);
+    hr = iface->lpVtbl->QueryInterface(iface, &IID_IUnknown, (void **)&iunk);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(iface == iunk, "Got unexpected iface %p.\n", iface);
+    iface->lpVtbl->Release(iunk);
+    iface->lpVtbl->Release(iface);
+
+    hr = ref12->lpVtbl->QueryInterface(ref12, &IID_IUnknown, (void **)&iface);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(iface == (IUnknown *)ref12, "Got unexpected iface %p.\n", iface);
+    iface->lpVtbl->Release(iface);
+
+    hr = ref11->lpVtbl->QueryInterface(ref11, &IID_ID3D12ShaderReflection, (void **)&iface);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(iface == (void *)ref11, "Got unexpected interfaces %p, %p.\n", iface, ref11);
+    hr = iface->lpVtbl->QueryInterface(iface, &IID_IUnknown, (void **)&iunk);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(iface == iunk, "Got unexpected iface %p.\n", iface);
+    iface->lpVtbl->Release(iunk);
+    iface->lpVtbl->Release(iface);
+
+    hr = ref11->lpVtbl->QueryInterface(ref11, &IID_IUnknown, (void **)&iface);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(iface == (IUnknown *)ref11, "Got unexpected iface %p.\n", iface);
+    iface->lpVtbl->Release(iface);
+
+    hr = ref11->lpVtbl->QueryInterface(ref11, &IID_ID3D10ShaderReflection, (void **)&iface);
+    ok(hr == E_NOINTERFACE, "Got unexpected hr %#x.\n", hr);
+    hr = ref12->lpVtbl->QueryInterface(ref12, &IID_ID3D10ShaderReflection, (void **)&iface);
+    ok(hr == E_NOINTERFACE, "Got unexpected hr %#x.\n", hr);
+
+    count = ref12->lpVtbl->Release(ref12);
+    ok(!count, "Got unexpected ref count %u.\n", count);
+    count = ref11->lpVtbl->Release(ref11);
+    ok(!count, "Got unexpected ref count %u.\n", count);
+}
+#endif
+
 /*
  * fxc.exe /E VS /Tvs_4_1 /Fx
  */
@@ -1802,6 +1862,7 @@ START_TEST(reflection)
 
 #if D3D_COMPILER_VERSION
     test_reflection_references();
+    test_reflection_interfaces();
 #endif
     test_reflection_desc_vs();
     test_reflection_desc_ps();
