@@ -74,6 +74,22 @@ struct mountmgr_unix_drive
     USHORT    label_offset;
 };
 
+#define IOCTL_MOUNTMGR_READ_CREDENTIAL       CTL_CODE(MOUNTMGRCONTROLTYPE, 48, METHOD_BUFFERED, FILE_READ_ACCESS)
+
+struct mountmgr_credential
+{
+    ULONG    targetname_offset;
+    ULONG    targetname_size;
+    ULONG    username_offset;
+    ULONG    username_size;
+    ULONG    comment_offset;
+    ULONG    comment_size;
+    ULONG    blob_offset;
+    ULONG    blob_size;
+    BOOL     blob_preserve;
+    FILETIME last_written;
+};
+
 #define IOCTL_MOUNTMGR_QUERY_DHCP_REQUEST_PARAMS CTL_CODE(MOUNTMGRCONTROLTYPE, 64, METHOD_BUFFERED, FILE_READ_ACCESS | FILE_WRITE_ACCESS)
 
 struct mountmgr_dhcp_request_param
