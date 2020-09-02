@@ -2244,3 +2244,13 @@ void rpc_start_remoting(struct apartment *apt)
     }
     start_apartment_remote_unknown(apt);
 }
+
+/******************************************************************************
+ *            DllDebugObjectRPCHook    (combase.@)
+ */
+BOOL WINAPI DllDebugObjectRPCHook(BOOL trace, /* ORPC_INIT_ARGS * */ void *args)
+{
+    FIXME("%d, %p: stub\n", trace, args);
+
+    return TRUE;
+}

@@ -87,10 +87,10 @@
 @ stub CoDeactivateObject
 @ stub CoDecodeProxy
 @ stdcall CoDecrementMTAUsage(ptr)
-@ stdcall CoDisableCallCancellation(ptr) ole32.CoDisableCallCancellation
+@ stdcall CoDisableCallCancellation(ptr)
 @ stub CoDisconnectContext
 @ stdcall CoDisconnectObject(ptr long)
-@ stdcall CoEnableCallCancellation(ptr) ole32.CoEnableCallCancellation
+@ stdcall CoEnableCallCancellation(ptr)
 @ stdcall CoFileTimeNow(ptr)
 @ stdcall CoFreeUnusedLibraries()
 @ stdcall CoFreeUnusedLibrariesEx(long long)
@@ -99,7 +99,7 @@
 @ stdcall CoGetApartmentType(ptr ptr)
 @ stdcall CoGetCallContext(ptr ptr)
 @ stdcall CoGetCallState(long ptr)
-@ stdcall CoGetCallerTID(ptr) ole32.CoGetCallerTID
+@ stdcall CoGetCallerTID(ptr)
 @ stub CoGetCancelObject
 @ stdcall CoGetClassObject(ptr long ptr ptr ptr)
 @ stub CoGetClassVersion
@@ -125,9 +125,9 @@
 @ stdcall CoIncrementMTAUsage(ptr)
 @ stdcall CoInitializeEx(ptr long)
 @ stdcall CoInitializeSecurity(ptr long ptr ptr long long ptr long ptr)
-@ stdcall CoInitializeWOW(long long) ole32.CoInitializeWOW
+@ stdcall CoInitializeWOW(long long)
 @ stub CoInvalidateRemoteMachineBindings
-@ stdcall CoIsHandlerConnected(ptr) ole32.CoIsHandlerConnected
+@ stdcall CoIsHandlerConnected(ptr)
 @ stdcall CoLockObjectExternal(ptr long long)
 @ stdcall CoMarshalHresult(ptr long)
 @ stdcall CoMarshalInterThreadInterfaceInStream(ptr ptr ptr)
@@ -145,11 +145,11 @@
 @ stdcall CoRegisterMallocSpy(ptr)
 @ stdcall CoRegisterMessageFilter(ptr ptr)
 @ stdcall CoRegisterPSClsid(ptr ptr)
-@ stdcall CoRegisterSurrogate(ptr) ole32.CoRegisterSurrogate
-@ stdcall CoRegisterSurrogateEx(ptr ptr) ole32.CoRegisterSurrogateEx
+@ stdcall CoRegisterSurrogate(ptr)
+@ stdcall CoRegisterSurrogateEx(ptr ptr)
 @ stdcall CoReleaseMarshalData(ptr)
 @ stdcall CoReleaseServerProcess()
-@ stdcall CoResumeClassObjects() ole32.CoResumeClassObjects
+@ stdcall CoResumeClassObjects()
 @ stub CoRetireServer
 @ stdcall CoRevertToSelf()
 @ stdcall CoRevokeClassObject(long)
@@ -158,7 +158,7 @@
 @ stub CoSetCancelObject
 @ stdcall CoSetErrorInfo(long ptr) SetErrorInfo
 @ stdcall CoSetProxyBlanket(ptr long long ptr long long ptr long)
-@ stdcall CoSuspendClassObjects() ole32.CoSuspendClassObjects
+@ stdcall CoSuspendClassObjects()
 @ stdcall CoSwitchCallContext(ptr ptr)
 @ stdcall CoTaskMemAlloc(long)
 @ stdcall CoTaskMemFree(ptr)
@@ -176,7 +176,7 @@
 @ stdcall CreateErrorInfo(ptr)
 @ stdcall CreateStreamOnHGlobal(ptr long ptr) ole32.CreateStreamOnHGlobal
 @ stub DcomChannelSetHResult
-@ stdcall DllDebugObjectRPCHook(long ptr) ole32.DllDebugObjectRPCHook
+@ stdcall DllDebugObjectRPCHook(long ptr)
 @ stdcall DllGetActivationFactory(ptr ptr)
 @ stdcall -private DllGetClassObject(ptr ptr ptr) ole32.DllGetClassObject
 @ stub EnableHookObject

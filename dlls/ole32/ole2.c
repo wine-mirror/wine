@@ -2729,14 +2729,3 @@ void WINAPI PropSysFreeString(LPOLESTR str)
 {
     SysFreeString(str);
 }
-
-/******************************************************************************
- * DllDebugObjectRPCHook (OLE32.@)
- * turns on and off internal debugging,  pointer is only used on macintosh
- */
-
-BOOL WINAPI DllDebugObjectRPCHook(BOOL b, void *dummy)
-{
-  FIXME("stub\n");
-  return TRUE;
-}

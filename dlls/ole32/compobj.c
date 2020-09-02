@@ -562,21 +562,6 @@ HRESULT COM_OpenKeyForCLSID(REFCLSID clsid, LPCWSTR keyname, REGSAM access, HKEY
 }
 
 /***********************************************************************
- *        CoResumeClassObjects (OLE32.@)
- *
- * Resumes all class objects registered with REGCLS_SUSPENDED.
- *
- * RETURNS
- *  Success: S_OK.
- *  Failure: HRESULT code.
- */
-HRESULT WINAPI CoResumeClassObjects(void)
-{
-       FIXME("stub\n");
-	return S_OK;
-}
-
-/***********************************************************************
  *           CoLoadLibrary (OLE32.@)
  *
  * Loads a library.
@@ -633,24 +618,6 @@ void WINAPI CoFreeLibrary(HINSTANCE hLibrary)
 void WINAPI CoFreeAllLibraries(void)
 {
     /* NOP */
-}
-
-/***********************************************************************
- *           CoInitializeWOW (OLE32.@)
- *
- * WOW equivalent of CoInitialize?
- *
- * PARAMS
- *  x [I] Unknown.
- *  y [I] Unknown.
- *
- * RETURNS
- *  Unknown.
- */
-HRESULT WINAPI CoInitializeWOW(DWORD x,DWORD y)
-{
-    FIXME("(0x%08x,0x%08x),stub!\n",x,y);
-    return 0;
 }
 
 /***********************************************************************
@@ -835,41 +802,6 @@ BOOL WINAPI IsEqualGUID(
 }
 
 /***********************************************************************
- *           CoSuspendClassObjects [OLE32.@]
- *
- * Suspends all registered class objects to prevent further requests coming in
- * for those objects.
- *
- * RETURNS
- *  Success: S_OK.
- *  Failure: HRESULT code.
- */
-HRESULT WINAPI CoSuspendClassObjects(void)
-{
-    FIXME("\n");
-    return S_OK;
-}
-
-/***********************************************************************
- *           CoIsHandlerConnected [OLE32.@]
- *
- * Determines whether a proxy is connected to a remote stub.
- *
- * PARAMS
- *  pUnk [I] Pointer to object that may or may not be connected.
- *
- * RETURNS
- *  TRUE if pUnk is not a proxy or if pUnk is connected to a remote stub, or
- *  FALSE otherwise.
- */
-BOOL WINAPI CoIsHandlerConnected(IUnknown *pUnk)
-{
-    FIXME("%p\n", pUnk);
-
-    return TRUE;
-}
-
-/***********************************************************************
  *           CoAllowSetForegroundWindow [OLE32.@]
  *
  */
@@ -1003,46 +935,6 @@ HRESULT Handler_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
     }
 
     return CLASS_E_CLASSNOTAVAILABLE;
-}
-
-/***********************************************************************
- *           CoDisableCallCancellation [OLE32.@]
- */
-HRESULT WINAPI CoDisableCallCancellation(void *reserved)
-{
-    FIXME("(%p): stub\n", reserved);
-
-    return E_NOTIMPL;
-}
-
-/***********************************************************************
- *           CoEnableCallCancellation [OLE32.@]
- */
-HRESULT WINAPI CoEnableCallCancellation(void *reserved)
-{
-    FIXME("(%p): stub\n", reserved);
-
-    return E_NOTIMPL;
-}
-
-/***********************************************************************
- *           CoRegisterSurrogate [OLE32.@]
- */
-HRESULT WINAPI CoRegisterSurrogate(ISurrogate *surrogate)
-{
-    FIXME("(%p): stub\n", surrogate);
-
-    return E_NOTIMPL;
-}
-
-/***********************************************************************
- *           CoRegisterSurrogateEx [OLE32.@]
- */
-HRESULT WINAPI CoRegisterSurrogateEx(REFGUID guid, void *reserved)
-{
-    FIXME("(%s %p): stub\n", debugstr_guid(guid), reserved);
-
-    return E_NOTIMPL;
 }
 
 typedef struct {

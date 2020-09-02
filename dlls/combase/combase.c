@@ -2596,6 +2596,16 @@ static void unlock_init_spies(struct tlsdata *tlsdata)
 }
 
 /******************************************************************************
+ *           CoInitializeWOW    (combase.@)
+ */
+HRESULT WINAPI CoInitializeWOW(DWORD arg1, DWORD arg2)
+{
+    FIXME("%#x, %#x\n", arg1, arg2);
+
+    return S_OK;
+}
+
+/******************************************************************************
  *                    CoInitializeEx    (combase.@)
  */
 HRESULT WINAPI DECLSPEC_HOTPATCH CoInitializeEx(void *reserved, DWORD model)
@@ -3060,6 +3070,85 @@ HRESULT WINAPI CoRegisterChannelHook(REFGUID guidExtension, IChannelHook *channe
     TRACE("%s, %p\n", debugstr_guid(guidExtension), channel_hook);
 
     return rpc_register_channel_hook(guidExtension, channel_hook);
+}
+
+/***********************************************************************
+ *           CoDisableCallCancellation    (combase.@)
+ */
+HRESULT WINAPI CoDisableCallCancellation(void *reserved)
+{
+    FIXME("%p stub\n", reserved);
+
+    return E_NOTIMPL;
+}
+
+/***********************************************************************
+ *           CoEnableCallCancellation    (combase.@)
+ */
+HRESULT WINAPI CoEnableCallCancellation(void *reserved)
+{
+    FIXME("%p stub\n", reserved);
+
+    return E_NOTIMPL;
+}
+
+/***********************************************************************
+ *           CoGetCallerTID    (combase.@)
+ */
+HRESULT WINAPI CoGetCallerTID(DWORD *tid)
+{
+    FIXME("stub!\n");
+    return E_NOTIMPL;
+}
+
+/***********************************************************************
+ *           CoIsHandlerConnected    (combase.@)
+ */
+BOOL WINAPI CoIsHandlerConnected(IUnknown *object)
+{
+    FIXME("%p\n", object);
+
+    return TRUE;
+}
+
+/***********************************************************************
+ *           CoSuspendClassObjects   (combase.@)
+ */
+HRESULT WINAPI CoSuspendClassObjects(void)
+{
+    FIXME("\n");
+
+    return S_OK;
+}
+
+/***********************************************************************
+ *           CoResumeClassObjects    (combase.@)
+ */
+HRESULT WINAPI CoResumeClassObjects(void)
+{
+    FIXME("stub\n");
+
+    return S_OK;
+}
+
+/***********************************************************************
+ *           CoRegisterSurrogate    (combase.@)
+ */
+HRESULT WINAPI CoRegisterSurrogate(ISurrogate *surrogate)
+{
+    FIXME("%p stub\n", surrogate);
+
+    return E_NOTIMPL;
+}
+
+/***********************************************************************
+ *           CoRegisterSurrogateEx  (combase.@)
+ */
+HRESULT WINAPI CoRegisterSurrogateEx(REFGUID guid, void *reserved)
+{
+    FIXME("%s, %p stub\n", debugstr_guid(guid), reserved);
+
+    return E_NOTIMPL;
 }
 
 /***********************************************************************
