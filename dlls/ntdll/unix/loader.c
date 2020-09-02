@@ -1406,42 +1406,11 @@ static void start_main_thread(void)
 
 
 #ifdef __APPLE__
-struct apple_stack_info
-{
-    void *stack;
-    size_t desired_size;
-};
-
 static void *apple_wine_thread( void *arg )
 {
     start_main_thread();
     return NULL;
 }
-
-/***********************************************************************
- *           apple_alloc_thread_stack
- *
- * Callback for mmap_enum_reserved_areas to allocate space for
- * the secondary thread's stack.
- */
-#ifndef _WIN64
-static int CDECL apple_alloc_thread_stack( void *base, size_t size, void *arg )
-{
-    struct apple_stack_info *info = arg;
-
-    /* For mysterious reasons, putting the thread stack at the very top
-     * of the address space causes subsequent execs to fail, even on the
-     * child side of a fork.  Avoid the top 16MB. */
-    char * const limit = (char*)0xff000000;
-    if ((char *)base >= limit) return 0;
-    if (size > limit - (char*)base)
-        size = limit - (char*)base;
-    if (size < info->desired_size) return 0;
-    info->stack = wine_anon_mmap( (char *)base + size - info->desired_size,
-                                  info->desired_size, PROT_READ|PROT_WRITE, MAP_FIXED );
-    return (info->stack != (void *)-1);
-}
-#endif
 
 /***********************************************************************
  *           apple_create_wine_thread
@@ -1453,33 +1422,13 @@ static int CDECL apple_alloc_thread_stack( void *base, size_t size, void *arg )
  */
 static void apple_create_wine_thread( void *arg )
 {
-    int success = 0;
     pthread_t thread;
     pthread_attr_t attr;
 
-    if (!pthread_attr_init( &attr ))
-    {
-#ifndef _WIN64
-        struct apple_stack_info info;
-
-        /* Try to put the new thread's stack in the reserved area.  If this
-         * fails, just let it go wherever.  It'll be a waste of space, but we
-         * can go on. */
-        if (!pthread_attr_getstacksize( &attr, &info.desired_size ) &&
-            mmap_enum_reserved_areas( apple_alloc_thread_stack, &info, 1 ))
-        {
-            mmap_remove_reserved_area( info.stack, info.desired_size );
-            pthread_attr_setstackaddr( &attr, (char*)info.stack + info.desired_size );
-        }
-#endif
-
-        if (!pthread_attr_setdetachstate( &attr, PTHREAD_CREATE_JOINABLE ) &&
-            !pthread_create( &thread, &attr, apple_wine_thread, NULL ))
-            success = 1;
-
-        pthread_attr_destroy( &attr );
-    }
-    if (!success) exit(1);
+    pthread_attr_init( &attr );
+    pthread_attr_setdetachstate( &attr, PTHREAD_CREATE_JOINABLE );
+    if (pthread_create( &thread, &attr, apple_wine_thread, NULL )) exit(1);
+    pthread_attr_destroy( &attr );
 }
 
 

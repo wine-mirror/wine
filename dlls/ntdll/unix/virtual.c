@@ -212,6 +212,8 @@ static inline BOOL is_inside_signal_stack( void *ptr )
 }
 
 
+static void mmap_add_reserved_area( void *addr, SIZE_T size );
+
 static void reserve_area( void *addr, void *end )
 {
 #ifdef __APPLE__
@@ -351,7 +353,7 @@ static void mmap_init( const struct preload_info *preload_info )
 #endif
 }
 
-void CDECL mmap_add_reserved_area( void *addr, SIZE_T size )
+static void mmap_add_reserved_area( void *addr, SIZE_T size )
 {
     struct reserved_area *area;
     struct list *ptr;
@@ -400,7 +402,7 @@ void CDECL mmap_add_reserved_area( void *addr, SIZE_T size )
     }
 }
 
-void CDECL mmap_remove_reserved_area( void *addr, SIZE_T size )
+static void mmap_remove_reserved_area( void *addr, SIZE_T size )
 {
     struct reserved_area *area;
     struct list *ptr;
@@ -460,7 +462,7 @@ void CDECL mmap_remove_reserved_area( void *addr, SIZE_T size )
     }
 }
 
-int CDECL mmap_is_in_reserved_area( void *addr, SIZE_T size )
+static int mmap_is_in_reserved_area( void *addr, SIZE_T size )
 {
     struct reserved_area *area;
     struct list *ptr;
@@ -477,8 +479,8 @@ int CDECL mmap_is_in_reserved_area( void *addr, SIZE_T size )
     return 0;
 }
 
-int CDECL mmap_enum_reserved_areas( int (CDECL *enum_func)(void *base, SIZE_T size, void *arg),
-                                    void *arg, int top_down )
+static int mmap_enum_reserved_areas( int (CDECL *enum_func)(void *base, SIZE_T size, void *arg),
+                                     void *arg, int top_down )
 {
     int ret = 0;
     struct list *ptr;
