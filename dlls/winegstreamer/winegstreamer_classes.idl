@@ -54,3 +54,10 @@ coclass Gstreamer_Splitter {}
     uuid(88753b26-5b24-49bd-b2e7-0c445c78c982)
 ]
 coclass VideoProcessorMFT {}
+
+[
+    helpstring("Generic Decodebin Byte Stream Handler"),
+    threading(both),
+    uuid(317df618-5e5a-468a-9f15-d827a9a08162)
+]
+coclass GStreamerByteStreamHandler {}

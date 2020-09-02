@@ -6057,6 +6057,12 @@ static HRESULT resolver_get_bytestream_handler(IMFByteStream *stream, const WCHA
             break;
     }
 
+    if (FAILED(hr))
+    {
+        static const GUID CLSID_GStreamerByteStreamHandler = {0x317df618, 0x5e5a, 0x468a, {0x9f, 0x15, 0xd8, 0x27, 0xa9, 0xa0, 0x81, 0x62}};
+        hr = CoCreateInstance(&CLSID_GStreamerByteStreamHandler, NULL, CLSCTX_INPROC_SERVER, &IID_IMFByteStreamHandler, (void **)handler);
+    }
+
     CoTaskMemFree(mimeW);
     return hr;
 }

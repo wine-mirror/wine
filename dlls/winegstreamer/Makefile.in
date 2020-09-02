@@ -10,6 +10,7 @@ C_SRCS = \
 	gst_cbs.c \
 	gstdemux.c \
 	main.c \
+	media_source.c \
 	mediatype.c \
 	mfplat.c \
 	pin.c \

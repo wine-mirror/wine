@@ -398,6 +398,8 @@ failed:
     return hr;
 }
 
+static const GUID CLSID_GStreamerByteStreamHandler = {0x317df618, 0x5e5a, 0x468a, {0x9f, 0x15, 0xd8, 0x27, 0xa9, 0xa0, 0x81, 0x62}};
+
 static const struct class_object
 {
     const GUID *clsid;
@@ -406,6 +408,7 @@ static const struct class_object
 class_objects[] =
 {
     { &CLSID_VideoProcessorMFT, &video_processor_create },
+    { &CLSID_GStreamerByteStreamHandler, &winegstreamer_stream_handler_create },
 };
 
 HRESULT mfplat_get_class_object(REFCLSID rclsid, REFIID riid, void **obj)
