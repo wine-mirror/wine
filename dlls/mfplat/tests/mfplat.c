@@ -382,12 +382,16 @@ static HRESULT WINAPI test_create_from_file_handler_callback_Invoke(IMFAsyncCall
     handler = (IMFSchemeHandler *)IMFAsyncResult_GetStateNoAddRef(result);
 
     hr = IMFSchemeHandler_EndCreateObject(handler, result, &obj_type, &object);
+todo_wine
     ok(hr == S_OK, "Failed to create an object, hr %#x.\n", hr);
 
-    hr = IMFAsyncResult_GetObject(result, &object2);
-    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        hr = IMFAsyncResult_GetObject(result, &object2);
+        ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
 
-    IUnknown_Release(object);
+        IUnknown_Release(object);
+    }
 
     SetEvent(callback->event);
 
@@ -502,13 +506,43 @@ static void test_source_resolver(void)
 
     hr = IMFSourceResolver_CreateObjectFromByteStream(resolver, stream, NULL, MF_RESOLUTION_MEDIASOURCE, NULL,
             &obj_type, (IUnknown **)&mediasource);
-    todo_wine ok(hr == MF_E_UNSUPPORTED_BYTESTREAM_TYPE, "got 0x%08x\n", hr);
+    ok(hr == MF_E_UNSUPPORTED_BYTESTREAM_TYPE, "got 0x%08x\n", hr);
     if (hr == S_OK) IMFMediaSource_Release(mediasource);
 
     hr = IMFSourceResolver_CreateObjectFromByteStream(resolver, stream, NULL, MF_RESOLUTION_BYTESTREAM, NULL,
             &obj_type, (IUnknown **)&mediasource);
-    todo_wine ok(hr == MF_E_UNSUPPORTED_BYTESTREAM_TYPE, "got 0x%08x\n", hr);
+    ok(hr == MF_E_UNSUPPORTED_BYTESTREAM_TYPE, "got 0x%08x\n", hr);
 
+    IMFByteStream_Release(stream);
+
+    /* Create from URL. */
+    callback.event = CreateEventA(NULL, FALSE, FALSE, NULL);
+
+    hr = IMFSourceResolver_CreateObjectFromURL(resolver, L"nonexisting.mp4", MF_RESOLUTION_BYTESTREAM, NULL, &obj_type,
+            (IUnknown **)&stream);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "Unexpected hr %#x.\n", hr);
+
+    hr = IMFSourceResolver_CreateObjectFromURL(resolver, filename, MF_RESOLUTION_BYTESTREAM, NULL, &obj_type,
+            (IUnknown **)&stream);
+    ok(hr == S_OK, "Failed to resolve url, hr %#x.\n", hr);
+    IMFByteStream_Release(stream);
+
+    hr = IMFSourceResolver_BeginCreateObjectFromURL(resolver, filename, MF_RESOLUTION_BYTESTREAM, NULL,
+            &cancel_cookie, &callback.IMFAsyncCallback_iface, (IUnknown *)resolver);
+    ok(hr == S_OK, "Create request failed, hr %#x.\n", hr);
+    ok(cancel_cookie != NULL, "Unexpected cancel object.\n");
+    IUnknown_Release(cancel_cookie);
+
+    if (SUCCEEDED(hr))
+        WaitForSingleObject(callback.event, INFINITE);
+
+    /* With explicit scheme. */
+    lstrcpyW(pathW, fileschemeW);
+    lstrcatW(pathW, filename);
+
+    hr = IMFSourceResolver_CreateObjectFromURL(resolver, pathW, MF_RESOLUTION_BYTESTREAM, NULL, &obj_type,
+            (IUnknown **)&stream);
+    ok(hr == S_OK, "Failed to resolve url, hr %#x.\n", hr);
     IMFByteStream_Release(stream);
 
     /* We have to create a new bytestream here, because all following
@@ -522,14 +556,31 @@ static void test_source_resolver(void)
     ok(hr == S_OK, "Failed to set string value, hr %#x.\n", hr);
     IMFAttributes_Release(attributes);
 
+    /* Start of gstreamer dependent tests */
+
     hr = IMFSourceResolver_CreateObjectFromByteStream(resolver, stream, NULL, MF_RESOLUTION_MEDIASOURCE, NULL,
             &obj_type, (IUnknown **)&mediasource);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    if (strcmp(winetest_platform, "wine"))
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+    if (FAILED(hr))
+    {
+        IMFByteStream_Release(stream);
+        IMFSourceResolver_Release(resolver);
+
+        hr = MFShutdown();
+        ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
+
+        DeleteFileW(filename);
+        return;
+    }
     ok(mediasource != NULL, "got %p\n", mediasource);
     ok(obj_type == MF_OBJECT_MEDIASOURCE, "got %d\n", obj_type);
 
     hr = IMFMediaSource_CreatePresentationDescriptor(mediasource, &descriptor);
+todo_wine
     ok(hr == S_OK, "Failed to get presentation descriptor, hr %#x.\n", hr);
+    if (FAILED(hr))
+        goto skip_source_tests;
     ok(descriptor != NULL, "got %p\n", descriptor);
 
     hr = IMFPresentationDescriptor_GetStreamDescriptorByIndex(descriptor, 0, &selected, &sd);
@@ -540,10 +591,7 @@ static void test_source_resolver(void)
     IMFStreamDescriptor_Release(sd);
 
     hr = IMFMediaTypeHandler_GetMajorType(handler, &guid);
-todo_wine
     ok(hr == S_OK, "Failed to get stream major type, hr %#x.\n", hr);
-    if (FAILED(hr))
-        goto skip_source_tests;
 
     /* Check major/minor type for the test media. */
     ok(IsEqualGUID(&guid, &MFMediaType_Video), "Unexpected major type %s.\n", debugstr_guid(&guid));
@@ -624,6 +672,7 @@ todo_wine
     get_event((IMFMediaEventGenerator *)mediasource, MEEndOfPresentation, NULL);
 
     IMFMediaTypeHandler_Release(handler);
+    IMFPresentationDescriptor_Release(descriptor);
 
     hr = IMFMediaSource_Shutdown(mediasource);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
@@ -633,41 +682,8 @@ todo_wine
 
 skip_source_tests:
 
-    IMFPresentationDescriptor_Release(descriptor);
     IMFMediaSource_Release(mediasource);
     IMFByteStream_Release(stream);
-
-    /* Create from URL. */
-    callback.event = CreateEventA(NULL, FALSE, FALSE, NULL);
-
-    hr = IMFSourceResolver_CreateObjectFromURL(resolver, L"nonexisting.mp4", MF_RESOLUTION_BYTESTREAM, NULL, &obj_type,
-            (IUnknown **)&stream);
-    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "Unexpected hr %#x.\n", hr);
-
-    hr = IMFSourceResolver_CreateObjectFromURL(resolver, filename, MF_RESOLUTION_BYTESTREAM, NULL, &obj_type,
-            (IUnknown **)&stream);
-    ok(hr == S_OK, "Failed to resolve url, hr %#x.\n", hr);
-    IMFByteStream_Release(stream);
-
-    hr = IMFSourceResolver_BeginCreateObjectFromURL(resolver, filename, MF_RESOLUTION_BYTESTREAM, NULL,
-            &cancel_cookie, &callback.IMFAsyncCallback_iface, (IUnknown *)resolver);
-    ok(hr == S_OK, "Create request failed, hr %#x.\n", hr);
-    ok(cancel_cookie != NULL, "Unexpected cancel object.\n");
-    IUnknown_Release(cancel_cookie);
-
-    if (SUCCEEDED(hr))
-        WaitForSingleObject(callback.event, INFINITE);
-
-    /* With explicit scheme. */
-    lstrcpyW(pathW, fileschemeW);
-    lstrcatW(pathW, filename);
-
-    hr = IMFSourceResolver_CreateObjectFromURL(resolver, pathW, MF_RESOLUTION_BYTESTREAM, NULL, &obj_type,
-            (IUnknown **)&stream);
-    ok(hr == S_OK, "Failed to resolve url, hr %#x.\n", hr);
-    IMFByteStream_Release(stream);
-
-    IMFSourceResolver_Release(resolver);
 
     /* Create directly through scheme handler. */
     hr = CoInitialize(NULL);
@@ -693,12 +709,14 @@ skip_source_tests:
     if (do_uninit)
         CoUninitialize();
 
+    CloseHandle(callback.event);
+
+    IMFSourceResolver_Release(resolver);
+
     hr = MFShutdown();
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
 
     DeleteFileW(filename);
-
-    CloseHandle(callback.event);
 }
 
 static void init_functions(void)

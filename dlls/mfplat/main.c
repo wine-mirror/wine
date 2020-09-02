@@ -5679,188 +5679,6 @@ HRESULT WINAPI MFGetPluginControl(IMFPluginControl **ret)
     return S_OK;
 }
 
-typedef struct _mfsource
-{
-    IMFMediaSource IMFMediaSource_iface;
-    LONG ref;
-} mfsource;
-
-static inline mfsource *impl_from_IMFMediaSource(IMFMediaSource *iface)
-{
-    return CONTAINING_RECORD(iface, mfsource, IMFMediaSource_iface);
-}
-
-static HRESULT WINAPI mfsource_QueryInterface(IMFMediaSource *iface, REFIID riid, void **out)
-{
-    mfsource *This = impl_from_IMFMediaSource(iface);
-
-    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), out);
-
-    if (IsEqualIID(riid, &IID_IMFMediaSource) ||
-        IsEqualIID(riid, &IID_IMFMediaEventGenerator) ||
-        IsEqualIID(riid, &IID_IUnknown))
-    {
-        *out = &This->IMFMediaSource_iface;
-    }
-    else
-    {
-        FIXME("(%s, %p)\n", debugstr_guid(riid), out);
-        *out = NULL;
-        return E_NOINTERFACE;
-    }
-
-    IUnknown_AddRef((IUnknown*)*out);
-    return S_OK;
-}
-
-static ULONG WINAPI mfsource_AddRef(IMFMediaSource *iface)
-{
-    mfsource *This = impl_from_IMFMediaSource(iface);
-    ULONG ref = InterlockedIncrement(&This->ref);
-
-    TRACE("(%p) ref=%u\n", This, ref);
-
-    return ref;
-}
-
-static ULONG WINAPI mfsource_Release(IMFMediaSource *iface)
-{
-    mfsource *This = impl_from_IMFMediaSource(iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
-
-    TRACE("(%p) ref=%u\n", This, ref);
-
-    if (!ref)
-    {
-        HeapFree(GetProcessHeap(), 0, This);
-    }
-
-    return ref;
-}
-
-static HRESULT WINAPI mfsource_GetEvent(IMFMediaSource *iface, DWORD flags, IMFMediaEvent **event)
-{
-    mfsource *This = impl_from_IMFMediaSource(iface);
-
-    FIXME("(%p)->(%#x, %p)\n", This, flags, event);
-
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI mfsource_BeginGetEvent(IMFMediaSource *iface, IMFAsyncCallback *callback, IUnknown *state)
-{
-    mfsource *This = impl_from_IMFMediaSource(iface);
-
-    FIXME("(%p)->(%p, %p)\n", This, callback, state);
-
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI mfsource_EndGetEvent(IMFMediaSource *iface, IMFAsyncResult *result, IMFMediaEvent **event)
-{
-    mfsource *This = impl_from_IMFMediaSource(iface);
-
-    FIXME("(%p)->(%p, %p)\n", This, result, event);
-
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI mfsource_QueueEvent(IMFMediaSource *iface, MediaEventType event_type, REFGUID ext_type,
-        HRESULT hr, const PROPVARIANT *value)
-{
-    mfsource *This = impl_from_IMFMediaSource(iface);
-
-    FIXME("(%p)->(%d, %s, %#x, %p)\n", This, event_type, debugstr_guid(ext_type), hr, value);
-
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI mfsource_GetCharacteristics(IMFMediaSource *iface, DWORD *characteristics)
-{
-    mfsource *This = impl_from_IMFMediaSource(iface);
-
-    FIXME("(%p)->(%p): stub\n", This, characteristics);
-
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI mfsource_CreatePresentationDescriptor(IMFMediaSource *iface, IMFPresentationDescriptor **descriptor)
-{
-    mfsource *This = impl_from_IMFMediaSource(iface);
-    IMFStreamDescriptor *sd;
-    IMFMediaType *mediatype;
-    HRESULT hr;
-
-    FIXME("(%p)->(%p): stub\n", This, descriptor);
-
-    if (FAILED(hr = MFCreateMediaType(&mediatype)))
-        return hr;
-
-    hr = MFCreateStreamDescriptor(0, 1, &mediatype, &sd);
-    IMFMediaType_Release(mediatype);
-    if (FAILED(hr))
-        return hr;
-
-    hr = MFCreatePresentationDescriptor(1, &sd, descriptor);
-    IMFStreamDescriptor_Release(sd);
-
-    return hr;
-}
-
-static HRESULT WINAPI mfsource_Start(IMFMediaSource *iface, IMFPresentationDescriptor *descriptor,
-                                     const GUID *time_format, const PROPVARIANT *start_position)
-{
-    mfsource *This = impl_from_IMFMediaSource(iface);
-
-    FIXME("(%p)->(%p, %p, %p): stub\n", This, descriptor, time_format, start_position);
-
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI mfsource_Stop(IMFMediaSource *iface)
-{
-    mfsource *This = impl_from_IMFMediaSource(iface);
-
-    FIXME("(%p): stub\n", This);
-
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI mfsource_Pause(IMFMediaSource *iface)
-{
-    mfsource *This = impl_from_IMFMediaSource(iface);
-
-    FIXME("(%p): stub\n", This);
-
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI mfsource_Shutdown(IMFMediaSource *iface)
-{
-    mfsource *This = impl_from_IMFMediaSource(iface);
-
-    FIXME("(%p): stub\n", This);
-
-    return S_OK;
-}
-
-static const IMFMediaSourceVtbl mfsourcevtbl =
-{
-    mfsource_QueryInterface,
-    mfsource_AddRef,
-    mfsource_Release,
-    mfsource_GetEvent,
-    mfsource_BeginGetEvent,
-    mfsource_EndGetEvent,
-    mfsource_QueueEvent,
-    mfsource_GetCharacteristics,
-    mfsource_CreatePresentationDescriptor,
-    mfsource_Start,
-    mfsource_Stop,
-    mfsource_Pause,
-    mfsource_Shutdown,
-};
-
 enum resolved_object_origin
 {
     OBJECT_FROM_BYTESTREAM,
@@ -6505,7 +6323,7 @@ static HRESULT WINAPI source_resolver_CreateObjectFromByteStream(IMFSourceResolv
         return E_POINTER;
 
     if (FAILED(hr = resolver_get_bytestream_handler(stream, url, flags, &handler)))
-        goto fallback;
+        return MF_E_UNSUPPORTED_BYTESTREAM_TYPE;
 
     hr = RtwqCreateAsyncResult((IUnknown *)handler, NULL, NULL, &result);
     IMFByteStreamHandler_Release(handler);
@@ -6528,28 +6346,7 @@ static HRESULT WINAPI source_resolver_CreateObjectFromByteStream(IMFSourceResolv
     hr = resolver_end_create_object(resolver, OBJECT_FROM_BYTESTREAM, result, obj_type, object);
     IRtwqAsyncResult_Release(result);
 
-    /* TODO: following stub is left intentionally until real source plugins are implemented.  */
-    if (SUCCEEDED(hr))
-        return hr;
-
-fallback:
-    if (flags & MF_RESOLUTION_MEDIASOURCE)
-    {
-        mfsource *new_object;
-
-        new_object = HeapAlloc( GetProcessHeap(), 0, sizeof(*new_object) );
-        if (!new_object)
-            return E_OUTOFMEMORY;
-
-        new_object->IMFMediaSource_iface.lpVtbl = &mfsourcevtbl;
-        new_object->ref = 1;
-
-        *object = (IUnknown *)&new_object->IMFMediaSource_iface;
-        *obj_type = MF_OBJECT_MEDIASOURCE;
-        return S_OK;
-    }
-
-    return E_NOTIMPL;
+    return hr;
 }
 
 static HRESULT WINAPI source_resolver_BeginCreateObjectFromURL(IMFSourceResolver *iface, const WCHAR *url,
