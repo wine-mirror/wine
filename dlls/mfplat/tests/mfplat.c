@@ -673,13 +673,13 @@ todo_wine
     IMFMediaTypeHandler_Release(handler);
     IMFPresentationDescriptor_Release(descriptor);
 
+skip_source_tests:
+
     hr = IMFMediaSource_Shutdown(mediasource);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMFMediaSource_CreatePresentationDescriptor(mediasource, NULL);
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
-
-skip_source_tests:
 
     IMFMediaSource_Release(mediasource);
     IMFByteStream_Release(stream);
