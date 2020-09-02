@@ -29,8 +29,6 @@
  *
  * TODO list:           (items bunched together depend on each other)
  *
- *   - Implement the service control manager (in rpcss) to keep track
- *     of registered class objects: ISCM::ServerRegisterClsid et al
  *   - Implement the OXID resolver so we don't need magic endpoint names for
  *     clients and servers to meet up
  *

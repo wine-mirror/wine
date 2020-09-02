@@ -115,10 +115,6 @@ static CRITICAL_SECTION_DEBUG psclsid_cs_debug =
 };
 static CRITICAL_SECTION cs_registered_ps = { &psclsid_cs_debug, -1, 0, 0, 0, 0 };
 
-/*
- * TODO: Make this data structure aware of inter-process communication. This
- *       means that parts of this will be exported to rpcss.
- */
 struct registered_class
 {
     struct list entry;
@@ -127,8 +123,8 @@ struct registered_class
     IUnknown *object;
     DWORD clscontext;
     DWORD flags;
-    DWORD cookie;
-    void *RpcRegistration;
+    unsigned int cookie;
+    unsigned int rpcss_cookie;
 };
 
 static struct list registered_classes = LIST_INIT(registered_classes);
@@ -2824,7 +2820,7 @@ HRESULT WINAPI CoRegisterClassObject(REFCLSID rclsid, IUnknown *object, DWORD cl
         return CO_E_OBJISREG;
     }
 
-    newclass = heap_alloc(sizeof(*newclass));
+    newclass = heap_alloc_zero(sizeof(*newclass));
     if (!newclass)
     {
         apartment_release(apt);
@@ -2835,7 +2831,6 @@ HRESULT WINAPI CoRegisterClassObject(REFCLSID rclsid, IUnknown *object, DWORD cl
     newclass->apartment_id = apt->oxid;
     newclass->clscontext = clscontext;
     newclass->flags = flags;
-    newclass->RpcRegistration = NULL;
 
     if (!(newclass->cookie = InterlockedIncrement(&next_cookie)))
         newclass->cookie = InterlockedIncrement(&next_cookie);
@@ -2860,8 +2855,7 @@ HRESULT WINAPI CoRegisterClassObject(REFCLSID rclsid, IUnknown *object, DWORD cl
             return hr;
         }
 
-        hr = rpc_start_local_server(&newclass->clsid, marshal_stream, flags & (REGCLS_MULTIPLEUSE|REGCLS_MULTI_SEPARATE),
-                &newclass->RpcRegistration);
+        hr = rpc_register_local_server(&newclass->clsid, marshal_stream, flags, &newclass->rpcss_cookie);
         IStream_Release(marshal_stream);
     }
 
@@ -2874,10 +2868,26 @@ static void com_revoke_class_object(struct registered_class *entry)
     list_remove(&entry->entry);
 
     if (entry->clscontext & CLSCTX_LOCAL_SERVER)
-        rpc_stop_local_server(entry->RpcRegistration);
+        rpc_revoke_local_server(entry->rpcss_cookie);
 
     IUnknown_Release(entry->object);
     heap_free(entry);
+}
+
+/* Cleans up rpcss registry */
+static void com_revoke_local_servers(void)
+{
+    struct registered_class *cur, *cur2;
+
+    EnterCriticalSection(&registered_classes_cs);
+
+    LIST_FOR_EACH_ENTRY_SAFE(cur, cur2, &registered_classes, struct registered_class, entry)
+    {
+        if (cur->clscontext & CLSCTX_LOCAL_SERVER)
+            com_revoke_class_object(cur);
+    }
+
+    LeaveCriticalSection(&registered_classes_cs);
 }
 
 void apartment_revoke_all_classes(const struct apartment *apt)
@@ -3164,6 +3174,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, LPVOID reserved)
         hProxyDll = hinstDLL;
         break;
     case DLL_PROCESS_DETACH:
+        com_revoke_local_servers();
         if (reserved) break;
         apartment_global_cleanup();
         DeleteCriticalSection(&registered_classes_cs);

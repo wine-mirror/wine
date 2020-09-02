@@ -31,12 +31,112 @@
 #include "irpcss.h"
 
 #include "wine/debug.h"
+#include "wine/heap.h"
+#include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
 static WCHAR rpcssW[] = {'R','p','c','S','s',0};
 static HANDLE exit_event;
 static SERVICE_STATUS_HANDLE service_handle;
+
+struct registered_class
+{
+    struct list entry;
+    GUID clsid;
+    unsigned int cookie;
+    PMInterfacePointer object;
+    unsigned int single_use : 1;
+};
+
+static CRITICAL_SECTION registered_classes_cs = { NULL, -1, 0, 0, 0, 0 };
+static struct list registered_classes = LIST_INIT(registered_classes);
+
+HRESULT __cdecl irpcss_server_register(handle_t h, const GUID *clsid, DWORD flags,
+        PMInterfacePointer object, unsigned int *cookie)
+{
+    struct registered_class *entry;
+    static int next_cookie;
+
+    if (!(entry = heap_alloc_zero(sizeof(*entry))))
+        return E_OUTOFMEMORY;
+
+    entry->clsid = *clsid;
+    entry->single_use = !(flags & (REGCLS_MULTIPLEUSE | REGCLS_MULTI_SEPARATE));
+    if (!(entry->object = heap_alloc(FIELD_OFFSET(MInterfacePointer, abData[object->ulCntData]))))
+    {
+        heap_free(entry);
+        return E_OUTOFMEMORY;
+    }
+    entry->object->ulCntData = object->ulCntData;
+    memcpy(&entry->object->abData, object->abData, object->ulCntData);
+    *cookie = entry->cookie = InterlockedIncrement(&next_cookie);
+
+    EnterCriticalSection(&registered_classes_cs);
+    list_add_tail(&registered_classes, &entry->entry);
+    LeaveCriticalSection(&registered_classes_cs);
+
+    return S_OK;
+}
+
+static void scm_revoke_class(struct registered_class *_class)
+{
+    list_remove(&_class->entry);
+    heap_free(_class->object);
+    heap_free(_class);
+}
+
+HRESULT __cdecl irpcss_server_revoke(handle_t h, unsigned int cookie)
+{
+    struct registered_class *cur;
+
+    EnterCriticalSection(&registered_classes_cs);
+
+    LIST_FOR_EACH_ENTRY(cur, &registered_classes, struct registered_class, entry)
+    {
+        if (cur->cookie == cookie)
+        {
+            scm_revoke_class(cur);
+            break;
+        }
+    }
+
+    LeaveCriticalSection(&registered_classes_cs);
+
+    return S_OK;
+}
+
+HRESULT __cdecl irpcss_get_class_object(handle_t h, const GUID *clsid,
+        PMInterfacePointer *object)
+{
+    struct registered_class *cur;
+
+    *object = NULL;
+
+    EnterCriticalSection(&registered_classes_cs);
+
+    LIST_FOR_EACH_ENTRY(cur, &registered_classes, struct registered_class, entry)
+    {
+        if (!memcmp(clsid, &cur->clsid, sizeof(*clsid)))
+        {
+            *object = MIDL_user_allocate(FIELD_OFFSET(MInterfacePointer, abData[cur->object->ulCntData]));
+            if (*object)
+            {
+                (*object)->ulCntData = cur->object->ulCntData;
+                memcpy((*object)->abData, cur->object->abData, cur->object->ulCntData);
+            }
+
+            if (cur->single_use)
+                scm_revoke_class(cur);
+
+            break;
+        }
+    }
+
+    LeaveCriticalSection(&registered_classes_cs);
+
+    return *object ? S_OK : E_NOINTERFACE;
+}
 
 HRESULT __cdecl irpcss_get_thread_seq_id(handle_t h, DWORD *id)
 {

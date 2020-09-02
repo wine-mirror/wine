@@ -363,11 +363,25 @@ HRESULT WINAPI InternalIrotRevoke(IrotCookie cookie, IrotContextHandle *ctxt_han
     RPCSS_CALL_END
 }
 
-static void get_localserver_pipe_name(WCHAR *pipefn, REFCLSID rclsid)
+static HRESULT rpcss_server_register(REFCLSID clsid, DWORD flags, MInterfacePointer *obj, unsigned int *cookie)
 {
-    static const WCHAR wszPipeRef[] = {'\\','\\','.','\\','p','i','p','e','\\',0};
-    lstrcpyW(pipefn, wszPipeRef);
-    StringFromGUID2(rclsid, pipefn + ARRAY_SIZE(wszPipeRef) - 1, CHARS_IN_GUID);
+    RPCSS_CALL_START
+    hr = irpcss_server_register(get_irpcss_handle(), clsid, flags, obj, cookie);
+    RPCSS_CALL_END
+}
+
+HRESULT rpc_revoke_local_server(unsigned int cookie)
+{
+    RPCSS_CALL_START
+    hr = irpcss_server_revoke(get_irpcss_handle(), cookie);
+    RPCSS_CALL_END
+}
+
+static HRESULT rpcss_get_class_object(REFCLSID rclsid, PMInterfacePointer *objref)
+{
+    RPCSS_CALL_START
+    hr = irpcss_get_class_object(get_irpcss_handle(), rclsid, objref);
+    RPCSS_CALL_END
 }
 
 static DWORD start_local_service(const WCHAR *name, DWORD num, LPCWSTR *params)
@@ -509,261 +523,103 @@ static HRESULT create_server(REFCLSID rclsid, HANDLE *process)
     return S_OK;
 }
 
-/* FIXME: should call to rpcss instead */
 HRESULT rpc_get_local_class_object(REFCLSID rclsid, REFIID riid, void **obj)
 {
-    HRESULT        hr;
-    HANDLE         hPipe;
-    WCHAR          pipefn[100];
-    DWORD          res, bufferlen;
-    char           marshalbuffer[200];
-    IStream       *pStm;
-    LARGE_INTEGER  seekto;
-    ULARGE_INTEGER newpos;
-    int            tries = 0;
+    PMInterfacePointer objref = NULL;
     IServiceProvider *local_server;
-
+    IStream *stream = NULL;
+    ULARGE_INTEGER newpos;
+    LARGE_INTEGER seekto;
+    int tries = 0;
+    ULONG length;
+    HRESULT hr;
     static const int MAXTRIES = 30; /* 30 seconds */
 
-    TRACE("rclsid %s, riid %s\n", debugstr_guid(rclsid), debugstr_guid(riid));
-
-    get_localserver_pipe_name(pipefn, rclsid);
+    TRACE("clsid %s, riid %s\n", debugstr_guid(rclsid), debugstr_guid(riid));
 
     while (tries++ < MAXTRIES)
     {
-        TRACE("waiting for %s\n", debugstr_w(pipefn));
+        DWORD index, start_ticks;
+        HANDLE process = 0;
 
-        WaitNamedPipeW(pipefn, NMPWAIT_WAIT_FOREVER);
-        hPipe = CreateFileW(pipefn, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
-        if (hPipe == INVALID_HANDLE_VALUE)
+        if (SUCCEEDED(hr = rpcss_get_class_object(rclsid, &objref)))
+            break;
+
+        if (tries == 1)
         {
-            DWORD index;
-            DWORD start_ticks;
-            HANDLE process = 0;
-            if (tries == 1)
-            {
-                if ((hr = create_local_service(rclsid)) && (hr = create_server(rclsid, &process)))
-                    return hr;
-            }
-            else
-            {
-                WARN("Connecting to %s, no response yet, retrying: le is %u\n", debugstr_w(pipefn), GetLastError());
-            }
-            /* wait for one second, even if messages arrive */
-            start_ticks = GetTickCount();
-            do
-            {
-                if (SUCCEEDED(CoWaitForMultipleHandles(0, 1000, (process != 0), &process, &index)) && process && !index)
-                {
-                    WARN("server for %s failed to start\n", debugstr_guid(rclsid));
-                    CloseHandle( hPipe );
-                    CloseHandle( process );
-                    return E_NOINTERFACE;
-                }
-            } while (GetTickCount() - start_ticks < 1000);
-            if (process) CloseHandle(process);
-            continue;
+            if ((hr = create_local_service(rclsid)) && (hr = create_server(rclsid, &process)) )
+                return hr;
         }
-        bufferlen = 0;
-        if (!ReadFile(hPipe, marshalbuffer, sizeof(marshalbuffer), &bufferlen, NULL))
+
+        /* Wait for one second, even if messages arrive. */
+        start_ticks = GetTickCount();
+        do
         {
-            FIXME("Failed to read marshal id from classfactory of %s.\n", debugstr_guid(rclsid));
-            CloseHandle(hPipe);
-            Sleep(1000);
-            continue;
-        }
-        TRACE("read marshal id from pipe\n");
-        CloseHandle(hPipe);
-        break;
+            if (SUCCEEDED(CoWaitForMultipleHandles(0, 1000, (process != 0), &process, &index)) && process && !index)
+            {
+                WARN("Server for %s failed to start.\n", debugstr_guid(rclsid));
+                CloseHandle(process);
+                return E_NOINTERFACE;
+            }
+        } while (GetTickCount() - start_ticks < 1000);
+
+        if (process) CloseHandle(process);
     }
 
-    if (tries >= MAXTRIES)
+    if (!objref || tries >= MAXTRIES)
         return E_NOINTERFACE;
 
-    hr = CreateStreamOnHGlobal(0, TRUE, &pStm);
-    if (hr != S_OK) return hr;
-    hr = IStream_Write(pStm, marshalbuffer, bufferlen, &res);
-    if (hr != S_OK) goto out;
-    seekto.u.LowPart = 0;seekto.u.HighPart = 0;
-    hr = IStream_Seek(pStm, seekto, STREAM_SEEK_SET, &newpos);
-    TRACE("unmarshalling local server\n");
-    hr = CoUnmarshalInterface(pStm, &IID_IServiceProvider, (void **)&local_server);
-    if(SUCCEEDED(hr))
-        hr = IServiceProvider_QueryService(local_server, rclsid, riid, obj);
-    IServiceProvider_Release(local_server);
-out:
-    IStream_Release(pStm);
+    if (SUCCEEDED(hr = CreateStreamOnHGlobal(0, TRUE, &stream)))
+        hr = IStream_Write(stream, objref->abData, objref->ulCntData, &length);
+
+    MIDL_user_free(objref);
+
+    if (SUCCEEDED(hr))
+    {
+        seekto.QuadPart = 0;
+        IStream_Seek(stream, seekto, STREAM_SEEK_SET, &newpos);
+
+        TRACE("Unmarshalling local server.\n");
+        hr = CoUnmarshalInterface(stream, &IID_IServiceProvider, (void **)&local_server);
+        if (SUCCEEDED(hr))
+        {
+            hr = IServiceProvider_QueryService(local_server, rclsid, riid, obj);
+            IServiceProvider_Release(local_server);
+        }
+    }
+
+    if (stream)
+        IStream_Release(stream);
+
     return hr;
 }
 
-struct local_server_params
+HRESULT rpc_register_local_server(REFCLSID clsid, IStream *stream, DWORD flags, unsigned int *cookie)
 {
-    CLSID clsid;
-    IStream *stream;
-    HANDLE pipe;
-    HANDLE stop_event;
-    HANDLE thread;
-    BOOL multi_use;
-};
+    MInterfacePointer *obj;
+    const void *ptr;
+    HGLOBAL hmem;
+    SIZE_T size;
+    HRESULT hr;
 
-/* FIXME: should call to rpcss instead */
-static DWORD WINAPI local_server_thread(void *param)
-{
-    struct local_server_params * lsp = param;
-    WCHAR 		pipefn[100];
-    HRESULT		hres;
-    IStream		*pStm = lsp->stream;
-    STATSTG		ststg;
-    unsigned char	*buffer;
-    int 		buflen;
-    LARGE_INTEGER	seekto;
-    ULARGE_INTEGER	newpos;
-    ULONG		res;
-    BOOL multi_use = lsp->multi_use;
-    OVERLAPPED ovl;
-    HANDLE pipe_event, hPipe = lsp->pipe, new_pipe;
-    DWORD  bytes;
+    TRACE("%s, %#x\n", debugstr_guid(clsid), flags);
 
-    TRACE("Starting threader for %s.\n",debugstr_guid(&lsp->clsid));
+    hr = GetHGlobalFromStream(stream, &hmem);
+    if (FAILED(hr)) return hr;
 
-    memset(&ovl, 0, sizeof(ovl));
-    get_localserver_pipe_name(pipefn, &lsp->clsid);
-    ovl.hEvent = pipe_event = CreateEventW(NULL, FALSE, FALSE, NULL);
-
-    while (1) {
-        if (!ConnectNamedPipe(hPipe, &ovl))
-        {
-            DWORD error = GetLastError();
-            if (error == ERROR_IO_PENDING)
-            {
-                HANDLE handles[2] = { pipe_event, lsp->stop_event };
-                DWORD ret;
-                ret = WaitForMultipleObjects(2, handles, FALSE, INFINITE);
-                if (ret != WAIT_OBJECT_0)
-                    break;
-            }
-            /* client already connected isn't an error */
-            else if (error != ERROR_PIPE_CONNECTED)
-            {
-                ERR("ConnectNamedPipe failed with error %d\n", GetLastError());
-                break;
-            }
-        }
-
-        TRACE("marshalling LocalServer to client\n");
-
-        hres = IStream_Stat(pStm,&ststg,STATFLAG_NONAME);
-        if (hres != S_OK)
-            break;
-
-        seekto.u.LowPart = 0;
-        seekto.u.HighPart = 0;
-        hres = IStream_Seek(pStm,seekto,STREAM_SEEK_SET,&newpos);
-        if (hres != S_OK) {
-            FIXME("IStream_Seek failed, %x\n",hres);
-            break;
-        }
-
-        buflen = ststg.cbSize.u.LowPart;
-        buffer = HeapAlloc(GetProcessHeap(),0,buflen);
-
-        hres = IStream_Read(pStm,buffer,buflen,&res);
-        if (hres != S_OK) {
-            FIXME("Stream Read failed, %x\n",hres);
-            HeapFree(GetProcessHeap(),0,buffer);
-            break;
-        }
-
-        WriteFile(hPipe,buffer,buflen,&res,&ovl);
-        GetOverlappedResult(hPipe, &ovl, &bytes, TRUE);
-        HeapFree(GetProcessHeap(),0,buffer);
-
-        FlushFileBuffers(hPipe);
-        DisconnectNamedPipe(hPipe);
-        TRACE("done marshalling LocalServer\n");
-
-        if (!multi_use)
-        {
-            TRACE("single use object, shutting down pipe %s\n", debugstr_w(pipefn));
-            break;
-        }
-        new_pipe = CreateNamedPipeW( pipefn, PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
-                                     PIPE_TYPE_BYTE|PIPE_WAIT, PIPE_UNLIMITED_INSTANCES,
-                                     4096, 4096, 500 /* 0.5 second timeout */, NULL );
-        if (new_pipe == INVALID_HANDLE_VALUE)
-        {
-            FIXME("pipe creation failed for %s, le is %u\n", debugstr_w(pipefn), GetLastError());
-            break;
-        }
-        CloseHandle(hPipe);
-        hPipe = new_pipe;
-    }
-
-    CloseHandle(pipe_event);
-    CloseHandle(hPipe);
-    return 0;
-}
-
-HRESULT rpc_start_local_server(REFCLSID clsid, IStream *stream, BOOL multi_use, void **registration)
-{
-    DWORD tid, err;
-    struct local_server_params *lsp;
-    WCHAR pipefn[100];
-
-    lsp = HeapAlloc(GetProcessHeap(), 0, sizeof(*lsp));
-    if (!lsp)
+    size = GlobalSize(hmem);
+    if (!(obj = heap_alloc(FIELD_OFFSET(MInterfacePointer, abData[size]))))
         return E_OUTOFMEMORY;
+    obj->ulCntData = size;
+    ptr = GlobalLock(hmem);
+    memcpy(obj->abData, ptr, size);
+    GlobalUnlock(hmem);
 
-    lsp->clsid = *clsid;
-    lsp->stream = stream;
-    IStream_AddRef(stream);
-    lsp->stop_event = CreateEventW(NULL, FALSE, FALSE, NULL);
-    if (!lsp->stop_event)
-    {
-        HeapFree(GetProcessHeap(), 0, lsp);
-        return HRESULT_FROM_WIN32(GetLastError());
-    }
-    lsp->multi_use = multi_use;
+    hr = rpcss_server_register(clsid, flags, obj, cookie);
 
-    get_localserver_pipe_name(pipefn, &lsp->clsid);
-    lsp->pipe = CreateNamedPipeW(pipefn, PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
-                                 PIPE_TYPE_BYTE|PIPE_WAIT, PIPE_UNLIMITED_INSTANCES,
-                                 4096, 4096, 500 /* 0.5 second timeout */, NULL);
-    if (lsp->pipe == INVALID_HANDLE_VALUE)
-    {
-        err = GetLastError();
-        FIXME("pipe creation failed for %s, le is %u\n", debugstr_w(pipefn), GetLastError());
-        CloseHandle(lsp->stop_event);
-        HeapFree(GetProcessHeap(), 0, lsp);
-        return HRESULT_FROM_WIN32(err);
-    }
+    heap_free(obj);
 
-    lsp->thread = CreateThread(NULL, 0, local_server_thread, lsp, 0, &tid);
-    if (!lsp->thread)
-    {
-        CloseHandle(lsp->pipe);
-        CloseHandle(lsp->stop_event);
-        HeapFree(GetProcessHeap(), 0, lsp);
-        return HRESULT_FROM_WIN32(GetLastError());
-    }
-
-    *registration = lsp;
-    return S_OK;
-}
-
-void rpc_stop_local_server(void *registration)
-{
-    struct local_server_params *lsp = registration;
-
-    /* signal local_server_thread to stop */
-    SetEvent(lsp->stop_event);
-    /* wait for it to exit */
-    WaitForSingleObject(lsp->thread, INFINITE);
-
-    IStream_Release(lsp->stream);
-    CloseHandle(lsp->stop_event);
-    CloseHandle(lsp->thread);
-    HeapFree(GetProcessHeap(), 0, lsp);
+    return hr;
 }
 
 static HRESULT unmarshal_ORPCTHAT(RPC_MESSAGE *msg, ORPCTHAT *orpcthat, ORPC_EXTENT_ARRAY *orpc_ext_array,

@@ -17,6 +17,7 @@
  */
 
 import "wtypes.idl";
+#include "wine/orpc.idl"
 
 cpp_quote("#define IRPCSS_PROTSEQ {'n','c','a','l','r','p','c',0}")
 cpp_quote("#define IRPCSS_ENDPOINT {'i','r','p','c','s','s',0}")
@@ -27,6 +28,22 @@ cpp_quote("#define IRPCSS_ENDPOINT {'i','r','p','c','s','s',0}")
 ]
 interface Irpcss
 {
+    HRESULT irpcss_server_register(
+        [in] handle_t handle,
+        [in] const GUID *clsid,
+        [in] unsigned int flags,
+        [in] PMInterfacePointer object,
+        [out] unsigned int *cookie);
+
+    HRESULT irpcss_server_revoke(
+        [in] handle_t handle,
+        [in] unsigned int cookie);
+
+    HRESULT irpcss_get_class_object(
+        [in] handle_t handle,
+        [in] const GUID *clsid,
+        [out] PMInterfacePointer *object);
+
     HRESULT irpcss_get_thread_seq_id(
         [in] handle_t handle,
         [out] DWORD *sequence_id);

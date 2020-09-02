@@ -112,8 +112,8 @@ HRESULT apartment_disconnectproxies(struct apartment *apt) DECLSPEC_HIDDEN;
 /* RpcSs interface */
 HRESULT rpcss_get_next_seqid(DWORD *id) DECLSPEC_HIDDEN;
 HRESULT rpc_get_local_class_object(REFCLSID rclsid, REFIID riid, void **obj) DECLSPEC_HIDDEN;
-HRESULT rpc_start_local_server(REFCLSID clsid, IStream *stream, BOOL multi_use, void **registration) DECLSPEC_HIDDEN;
-void rpc_stop_local_server(void *registration) DECLSPEC_HIDDEN;
+HRESULT rpc_register_local_server(REFCLSID clsid, IStream *stream, DWORD flags, unsigned int *cookie) DECLSPEC_HIDDEN;
+HRESULT rpc_revoke_local_server(unsigned int cookie) DECLSPEC_HIDDEN;
 HRESULT rpc_create_clientchannel(const OXID *oxid, const IPID *ipid, const OXID_INFO *oxid_info, const IID *iid,
         DWORD dest_context, void *dest_context_data, IRpcChannelBuffer **chan, struct apartment *apt) DECLSPEC_HIDDEN;
 HRESULT rpc_create_serverchannel(DWORD dest_context, void *dest_context_data, IRpcChannelBuffer **chan) DECLSPEC_HIDDEN;
