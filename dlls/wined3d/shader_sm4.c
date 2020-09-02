@@ -28,6 +28,9 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d_bytecode);
 
 #define WINED3D_SM4_MODIFIER_MASK               0x3fu
 
+#define WINED3D_SM5_MODIFIER_DATA_TYPE_SHIFT    6
+#define WINED3D_SM5_MODIFIER_DATA_TYPE_MASK     (0xffffu << WINED3D_SM5_MODIFIER_DATA_TYPE_SHIFT)
+
 #define WINED3D_SM5_MODIFIER_RESOURCE_TYPE_SHIFT 6
 #define WINED3D_SM5_MODIFIER_RESOURCE_TYPE_MASK (0xfu << WINED3D_SM5_MODIFIER_RESOURCE_TYPE_SHIFT)
 
@@ -312,6 +315,7 @@ enum wined3d_sm4_instruction_modifier
 {
     WINED3D_SM4_MODIFIER_AOFFIMMI       = 0x1,
     WINED3D_SM5_MODIFIER_RESOURCE_TYPE  = 0x2,
+    WINED3D_SM5_MODIFIER_DATA_TYPE      = 0x3,
 };
 
 enum wined3d_sm4_register_type
@@ -1651,6 +1655,17 @@ static void shader_sm4_read_instruction_modifier(DWORD modifier, struct wined3d_
             break;
         }
 
+        case WINED3D_SM5_MODIFIER_DATA_TYPE:
+        {
+            DWORD components = (modifier & WINED3D_SM5_MODIFIER_DATA_TYPE_MASK) >> WINED3D_SM5_MODIFIER_DATA_TYPE_SHIFT;
+            enum wined3d_sm4_data_type data_type = components & 0xf;
+
+            if ((components & 0xfff0) != (components & 0xf) * 0x1110)
+                FIXME("Components (%#x) have different data types.\n", components);
+            ins->resource_data_type = data_type_table[data_type];
+            break;
+        }
+
         case WINED3D_SM5_MODIFIER_RESOURCE_TYPE:
         {
             enum wined3d_sm4_resource_type resource_type
@@ -1731,6 +1746,7 @@ static void shader_sm4_read_instruction(void *data, const DWORD **ptr, struct wi
     ins->src_count = strlen(opcode_info->src_info);
     ins->src = priv->src_param;
     ins->resource_type = WINED3D_SHADER_RESOURCE_NONE;
+    ins->resource_data_type = WINED3D_DATA_FLOAT;
     memset(&ins->texel_offset, 0, sizeof(ins->texel_offset));
 
     p = *ptr;

@@ -2065,6 +2065,27 @@ static void shader_dump_resource_type(struct wined3d_string_buffer *buffer, enum
         shader_addline(buffer, "unknown");
 }
 
+static void shader_dump_data_type(struct wined3d_string_buffer *buffer, enum wined3d_data_type type)
+{
+    static const char *const data_type_names[] =
+    {
+        /* WINED3D_DATA_FLOAT    */ "(float)",
+        /* WINED3D_DATA_INT      */ "(int)",
+        /* WINED3D_DATA_RESOURCE */ "(resource)",
+        /* WINED3D_DATA_SAMPLER  */ "(sampler)",
+        /* WINED3D_DATA_UAV      */ "(uav)",
+        /* WINED3D_DATA_UINT     */ "(uint)",
+        /* WINED3D_DATA_UNORM    */ "(unorm)",
+        /* WINED3D_DATA_SNORM    */ "(snorm)",
+        /* WINED3D_DATA_OPAQUE   */ "(opaque)",
+    };
+
+    if (type <= ARRAY_SIZE(data_type_names))
+        shader_addline(buffer, "%s", data_type_names[type]);
+    else
+        shader_addline(buffer, "(unknown)");
+}
+
 static void shader_dump_decl_usage(struct wined3d_string_buffer *buffer,
         const struct wined3d_shader_semantic *semantic, unsigned int flags,
         const struct wined3d_shader_version *shader_version)
@@ -2101,32 +2122,7 @@ static void shader_dump_decl_usage(struct wined3d_string_buffer *buffer,
         shader_dump_resource_type(buffer, semantic->resource_type);
         if (semantic->reg.reg.type == WINED3DSPR_UAV)
             shader_dump_uav_flags(buffer, flags);
-        switch (semantic->resource_data_type)
-        {
-            case WINED3D_DATA_FLOAT:
-                shader_addline(buffer, " (float)");
-                break;
-
-            case WINED3D_DATA_INT:
-                shader_addline(buffer, " (int)");
-                break;
-
-            case WINED3D_DATA_UINT:
-                shader_addline(buffer, " (uint)");
-                break;
-
-            case WINED3D_DATA_UNORM:
-                shader_addline(buffer, " (unorm)");
-                break;
-
-            case WINED3D_DATA_SNORM:
-                shader_addline(buffer, " (snorm)");
-                break;
-
-            default:
-                shader_addline(buffer, " (unknown)");
-                break;
-        }
+        shader_dump_data_type(buffer, semantic->resource_data_type);
     }
     else
     {
@@ -3100,6 +3096,9 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
                 shader_dump_resource_type(&buffer, ins.resource_type);
                 shader_addline(&buffer, ")");
             }
+
+            if (ins.resource_data_type != WINED3D_DATA_FLOAT)
+                shader_dump_data_type(&buffer, ins.resource_data_type);
 
             for (i = 0; i < ins.dst_count; ++i)
             {

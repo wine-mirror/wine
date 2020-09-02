@@ -1247,6 +1247,7 @@ struct wined3d_shader_instruction
     const struct wined3d_shader_src_param *src;
     struct wined3d_shader_texel_offset texel_offset;
     enum wined3d_shader_resource_type resource_type;
+    enum wined3d_data_type resource_data_type;
     BOOL coissue;
     const struct wined3d_shader_src_param *predicate;
     union
