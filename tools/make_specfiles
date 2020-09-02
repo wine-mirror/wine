@@ -330,12 +330,14 @@ my @dll_groups =
   "api-ms-win-security-grouppolicy-l1-1-0",
  ],
  [
+  "combase",
+  "api-ms-win-core-com-private-l1-1-0",
+ ],
+ [
   "ole32",
   "api-ms-win-downlevel-ole32-l1-1-0",
   "api-ms-win-core-com-l1-1-0",
   "api-ms-win-core-com-l1-1-1",
-  "api-ms-win-core-com-private-l1-1-0",
-  "combase",
   "iprop",
  ],
  [

@@ -1,37 +1,37 @@
 @ stub CLSIDFromOle1Class
 @ stub CleanupOleStateInAllTls
-@ stub CleanupTlsOleState
+@ stdcall CleanupTlsOleState(ptr) combase.CleanupTlsOleState
 @ stub ClearCleanupFlag
-@ stub CoCreateErrorInfo
+@ stdcall CoCreateErrorInfo(ptr) combase.CoCreateErrorInfo
 @ stub CoCreateObjectInContext
 @ stub CoDeactivateObject
-@ stdcall CoGetActivationState(int128 long ptr) ole32.CoGetActivationState
+@ stdcall CoGetActivationState(int128 long ptr) combase.CoGetActivationState
 @ stub CoGetApartmentID
-@ stdcall CoGetCallState(long ptr) ole32.CoGetCallState
+@ stdcall CoGetCallState(long ptr) combase.CoGetCallState
 @ stub CoGetClassVersion
-@ stub CoGetErrorInfo
-@ stdcall CoGetInstanceFromFile(ptr ptr ptr long long wstr long ptr) ole32.CoGetInstanceFromFile
-@ stdcall CoGetInstanceFromIStorage(ptr ptr ptr long ptr long ptr) ole32.CoGetInstanceFromIStorage
+@ stdcall CoGetErrorInfo(long ptr) combase.CoGetErrorInfo
+@ stdcall CoGetInstanceFromFile(ptr ptr ptr long long wstr long ptr) combase.CoGetInstanceFromFile
+@ stdcall CoGetInstanceFromIStorage(ptr ptr ptr long ptr long ptr) combase.CoGetInstanceFromIStorage
 @ stub CoGetModuleType
 @ stub CoGetProcessIdentifier
 @ stub CoGetSystemSecurityPermissions
-@ stdcall CoInitializeWOW(long long) ole32.CoInitializeWOW
+@ stdcall CoInitializeWOW(long long) combase.CoInitializeWOW
 @ stub CoPopServiceDomain
 @ stub CoPushServiceDomain
 @ stub CoReactivateObject
-@ stdcall CoRegisterInitializeSpy(ptr ptr) ole32.CoRegisterInitializeSpy
-@ stdcall CoRegisterMallocSpy(ptr) ole32.CoRegisterMallocSpy
-@ stdcall CoRegisterMessageFilter(ptr ptr) ole32.CoRegisterMessageFilter
-@ stdcall CoRegisterSurrogateEx(ptr ptr) ole32.CoRegisterSurrogateEx
+@ stdcall CoRegisterInitializeSpy(ptr ptr) combase.CoRegisterInitializeSpy
+@ stdcall CoRegisterMallocSpy(ptr) combase.CoRegisterMallocSpy
+@ stdcall CoRegisterMessageFilter(ptr ptr) combase.CoRegisterMessageFilter
+@ stdcall CoRegisterSurrogateEx(ptr ptr) combase.CoRegisterSurrogateEx
 @ stub CoRetireServer
-@ stdcall CoRevokeInitializeSpy(int64) ole32.CoRevokeInitializeSpy
-@ stdcall CoRevokeMallocSpy() ole32.CoRevokeMallocSpy
-@ stub CoSetErrorInfo
+@ stdcall CoRevokeInitializeSpy(int64) combase.CoRevokeInitializeSpy
+@ stdcall CoRevokeMallocSpy() combase.CoRevokeMallocSpy
+@ stdcall CoSetErrorInfo(long ptr) combase.CoSetErrorInfo
 @ stub CoUnloadingWOW
 @ stub CoVrfCheckThreadState
 @ stub CoVrfGetThreadState
 @ stub CoVrfReleaseThreadState
-@ stdcall DllDebugObjectRPCHook(long ptr) ole32.DllDebugObjectRPCHook
+@ stdcall DllDebugObjectRPCHook(long ptr) combase.DllDebugObjectRPCHook
 @ stub EnableHookObject
 @ stub FreePropVariantArrayWorker
 @ stub GetCatalogHelper
@@ -51,7 +51,7 @@
 @ stub InternalCoIsSurrogateProcess
 @ stub InternalCoRegisterDisconnectCallback
 @ stub InternalCoRegisterSurrogatedObject
-@ stub InternalCoStdMarshalObject
+@ stdcall InternalCoStdMarshalObject(ptr long ptr ptr) combase.InternalCoStdMarshalObject
 @ stub InternalCoUnregisterDisconnectCallback
 @ stub InternalCompleteObjRef
 @ stub InternalCreateCAggId
@@ -60,15 +60,15 @@
 @ stub InternalFillLocalOXIDInfo
 @ stub InternalFreeObjRef
 @ stub InternalGetWindowPropInterface
-@ stub InternalIrotEnumRunning
-@ stub InternalIrotGetObject
-@ stub InternalIrotGetTimeOfLastChange
-@ stub InternalIrotIsRunning
-@ stub InternalIrotNoteChangeTime
-@ stub InternalIrotRegister
-@ stub InternalIrotRevoke
+@ stdcall InternalIrotEnumRunning(ptr) combase.InternalIrotEnumRunning
+@ stdcall InternalIrotGetObject(ptr ptr ptr) combase.InternalIrotGetObject
+@ stdcall InternalIrotGetTimeOfLastChange(ptr ptr) combase.InternalIrotGetTimeOfLastChange
+@ stdcall InternalIrotIsRunning(ptr) combase.InternalIrotIsRunning
+@ stdcall InternalIrotNoteChangeTime(long ptr) combase.InternalIrotNoteChangeTime
+@ stdcall InternalIrotRegister(ptr ptr ptr ptr long ptr ptr) combase.InternalIrotRegister
+@ stdcall InternalIrotRevoke(long ptr ptr ptr) combase.InternalIrotRevoke
 @ stub InternalIsApartmentInitialized
-@ stub InternalIsProcessInitialized
+@ stdcall InternalIsProcessInitialized() combase.InternalIsProcessInitialized
 @ stub InternalMarshalObjRef
 @ stub InternalNotifyDDStartOrStop
 @ stub InternalOleModalLoopBlockFn
@@ -79,7 +79,7 @@
 @ stub InternalSetAptCallCtrlOnTlsIfRequired
 @ stub InternalSetOleThunkWowPtr
 @ stub InternalStubInvoke
-@ stub InternalTlsAllocData
+@ stdcall InternalTlsAllocData(ptr) combase.InternalTlsAllocData
 @ stub InternalUnmarshalObjRef
 @ stub NdrExtStubInitialize
 @ stub NdrOleDllGetClassObject
