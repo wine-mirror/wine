@@ -99,7 +99,7 @@ NTSTATUS (WINAPI *pKiUserExceptionDispatcher)(EXCEPTION_RECORD*,CONTEXT*) = NULL
 void     (WINAPI *pLdrInitializeThunk)(CONTEXT*,void**,ULONG_PTR,ULONG_PTR) = NULL;
 void     (WINAPI *pRtlUserThreadStart)( PRTL_THREAD_START_ROUTINE entry, void *arg ) = NULL;
 
-static void (CDECL *p__wine_set_unix_funcs)( int version, const struct unix_funcs *funcs );
+static NTSTATUS (CDECL *p__wine_set_unix_funcs)( int version, const struct unix_funcs *funcs );
 
 #ifdef __GNUC__
 static void fatal_error( const char *err, ... ) __attribute__((noreturn, format(printf,1,2)));
@@ -1367,7 +1367,6 @@ static struct unix_funcs unix_funcs =
     get_unix_codepage_data,
     get_locales,
     virtual_release_address_space,
-    exec_process,
     set_show_dot_files,
     load_so_dll,
     load_builtin_dll,
@@ -1387,6 +1386,7 @@ static struct unix_funcs unix_funcs =
 static void start_main_thread(void)
 {
     BOOL suspend;
+    NTSTATUS status;
     TEB *teb = virtual_alloc_first_teb();
 
     signal_init_threading();
@@ -1399,7 +1399,8 @@ static void start_main_thread(void)
     init_cpu_info();
     init_files();
     NtCreateKeyedEvent( &keyed_event, GENERIC_READ | GENERIC_WRITE, NULL, 0 );
-    p__wine_set_unix_funcs( NTDLL_UNIXLIB_VERSION, &unix_funcs );
+    status = p__wine_set_unix_funcs( NTDLL_UNIXLIB_VERSION, &unix_funcs );
+    if (status) exec_process( status );
     server_init_process_done();
 }
 

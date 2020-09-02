@@ -613,7 +613,7 @@ static NTSTATUS spawn_process( const RTL_USER_PROCESS_PARAMETERS *params, int so
 /***********************************************************************
  *           exec_process
  */
-NTSTATUS CDECL exec_process( NTSTATUS status )
+void DECLSPEC_NORETURN exec_process( NTSTATUS status )
 {
     RTL_USER_PROCESS_PARAMETERS *params = NtCurrentTeb()->Peb->ProcessParameters;
     pe_image_info_t pe_info;
@@ -621,7 +621,7 @@ NTSTATUS CDECL exec_process( NTSTATUS status )
     char **argv;
     HANDLE handle;
 
-    if (startup_info_size) return status;  /* started from another Win32 process */
+    if (startup_info_size) goto done;  /* started from another Win32 process */
 
     switch (status)
     {
@@ -631,10 +631,10 @@ NTSTATUS CDECL exec_process( NTSTATUS status )
     case STATUS_INVALID_IMAGE_NOT_MZ:
     {
         UNICODE_STRING image;
-        if (getenv( "WINEPRELOADRESERVE" )) return status;
+        if (getenv( "WINEPRELOADRESERVE" )) goto done;
         image.Buffer = get_nt_pathname( &params->ImagePathName );
         image.Length = wcslen( image.Buffer ) * sizeof(WCHAR);
-        if ((status = get_pe_file_info( &image, &handle, &pe_info ))) return status;
+        if ((status = get_pe_file_info( &image, &handle, &pe_info ))) goto done;
         break;
     }
     case STATUS_INVALID_IMAGE_WIN_16:
@@ -645,12 +645,16 @@ NTSTATUS CDECL exec_process( NTSTATUS status )
         pe_info.cpu = CPU_x86;
         break;
     default:
-        return status;
+        goto done;
     }
 
     unixdir = get_unix_curdir( params );
 
-    if (socketpair( PF_UNIX, SOCK_STREAM, 0, socketfd ) == -1) return STATUS_TOO_MANY_OPENED_FILES;
+    if (socketpair( PF_UNIX, SOCK_STREAM, 0, socketfd ) == -1)
+    {
+        status = STATUS_TOO_MANY_OPENED_FILES;
+        goto done;
+    }
 #ifdef SO_PASSCRED
     else
     {
@@ -671,7 +675,11 @@ NTSTATUS CDECL exec_process( NTSTATUS status )
 
     if (!status)
     {
-        if (!(argv = build_argv( &params->CommandLine, 2 ))) return STATUS_NO_MEMORY;
+        if (!(argv = build_argv( &params->CommandLine, 2 )))
+        {
+            status = STATUS_NO_MEMORY;
+            goto done;
+        }
         fchdir( unixdir );
         do
         {
@@ -685,7 +693,19 @@ NTSTATUS CDECL exec_process( NTSTATUS status )
         free( argv );
     }
     close( socketfd[0] );
-    return status;
+
+done:
+    switch (status)
+    {
+    case STATUS_INVALID_IMAGE_FORMAT:
+    case STATUS_INVALID_IMAGE_NOT_MZ:
+        ERR( "%s not supported on this system\n", debugstr_us(&params->ImagePathName) );
+        break;
+    default:
+        ERR( "failed to load %s error %x\n", debugstr_us(&params->ImagePathName), status );
+        break;
+    }
+    for (;;) NtTerminateProcess( GetCurrentProcess(), status );
 }
 
 

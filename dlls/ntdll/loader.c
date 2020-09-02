@@ -3957,7 +3957,7 @@ static void restart_winevdm( RTL_USER_PROCESS_PARAMETERS *params )
 /***********************************************************************
  *           process_init
  */
-static void process_init(void)
+static NTSTATUS process_init(void)
 {
     static const WCHAR ntdllW[] = {'\\','?','?','\\','C',':','\\','w','i','n','d','o','w','s','\\',
                                    's','y','s','t','e','m','3','2','\\',
@@ -4058,20 +4058,17 @@ static void process_init(void)
                 restart_winevdm( params );
                 status = STATUS_INVALID_IMAGE_WIN_16;
             }
-            status = unix_funcs->exec_process( status );
-            break;
+            return status;
         }
         case STATUS_INVALID_IMAGE_WIN_16:
         case STATUS_INVALID_IMAGE_NE_FORMAT:
         case STATUS_INVALID_IMAGE_PROTECT:
             restart_winevdm( params );
-            status = unix_funcs->exec_process( status );
-            break;
+            return status;
         case STATUS_CONFLICTING_ADDRESSES:
         case STATUS_NO_MEMORY:
         case STATUS_INVALID_IMAGE_FORMAT:
-            status = unix_funcs->exec_process( status );
-            break;
+            return status;
         case STATUS_INVALID_IMAGE_WIN_64:
             ERR( "%s 64-bit application not supported in 32-bit prefix\n",
                  debugstr_us(&params->ImagePathName) );
@@ -4109,14 +4106,15 @@ static void process_init(void)
     teb->Tib.StackBase = stack.StackBase;
     teb->Tib.StackLimit = stack.StackLimit;
     teb->DeallocationStack = stack.DeallocationStack;
+    return STATUS_SUCCESS;
 }
 
 /***********************************************************************
  *           __wine_set_unix_funcs
  */
-void CDECL __wine_set_unix_funcs( int version, const struct unix_funcs *funcs )
+NTSTATUS CDECL __wine_set_unix_funcs( int version, const struct unix_funcs *funcs )
 {
     assert( version == NTDLL_UNIXLIB_VERSION );
     unix_funcs = funcs;
-    process_init();
+    return process_init();
 }

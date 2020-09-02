@@ -27,7 +27,7 @@
 struct _DISPATCHER_CONTEXT;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 103
+#define NTDLL_UNIXLIB_VERSION 104
 
 struct unix_funcs
 {
@@ -80,9 +80,6 @@ struct unix_funcs
 
     /* virtual memory functions */
     void          (CDECL *virtual_release_address_space)(void);
-
-    /* thread/process functions */
-    NTSTATUS      (CDECL *exec_process)( NTSTATUS status );
 
     /* file functions */
     void          (CDECL *set_show_dot_files)( BOOL enable );
