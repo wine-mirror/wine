@@ -680,7 +680,8 @@ static NTSTATUS export_gnutls_pubkey_rsa( gnutls_privkey_t gnutls_key, ULONG bit
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS export_gnutls_pubkey_ecc( gnutls_privkey_t gnutls_key, UCHAR **pubkey, ULONG *pubkey_len )
+static NTSTATUS export_gnutls_pubkey_ecc( gnutls_privkey_t gnutls_key, enum alg_id alg_id, UCHAR **pubkey,
+                                          ULONG *pubkey_len )
 {
     BCRYPT_ECCKEY_BLOB *ecc_blob;
     gnutls_ecc_curve_t curve;
@@ -689,20 +690,29 @@ static NTSTATUS export_gnutls_pubkey_ecc( gnutls_privkey_t gnutls_key, UCHAR **p
     UCHAR *src, *dst;
     int ret;
 
+    switch (alg_id)
+    {
+    case ALG_ID_ECDH_P256:
+        magic = BCRYPT_ECDH_PUBLIC_P256_MAGIC;
+        size = 32;
+        break;
+    case ALG_ID_ECDSA_P256:
+        magic = BCRYPT_ECDSA_PUBLIC_P256_MAGIC;
+        size = 32;
+        break;
+    default:
+        FIXME( "algorithm %u not supported\n", alg_id );
+        return STATUS_NOT_IMPLEMENTED;
+    }
+
     if ((ret = pgnutls_privkey_export_ecc_raw( gnutls_key, &curve, &x, &y, NULL )))
     {
         pgnutls_perror( ret );
         return STATUS_INTERNAL_ERROR;
     }
 
-    switch (curve)
+    if (curve != GNUTLS_ECC_CURVE_SECP256R1)
     {
-    case GNUTLS_ECC_CURVE_SECP256R1:
-        magic = BCRYPT_ECDH_PUBLIC_P256_MAGIC;
-        size = 32;
-        break;
-
-    default:
         FIXME( "curve %u not supported\n", curve );
         free( x.data ); free( y.data );
         return STATUS_NOT_IMPLEMENTED;
@@ -863,7 +873,7 @@ NTSTATUS key_asymmetric_generate( struct key *key )
         break;
 
     case GNUTLS_PK_ECC:
-        status = export_gnutls_pubkey_ecc( handle, &key->u.a.pubkey, &key->u.a.pubkey_len );
+        status = export_gnutls_pubkey_ecc( handle, key->alg_id, &key->u.a.pubkey, &key->u.a.pubkey_len );
         break;
 
     case GNUTLS_PK_DSA:
@@ -894,20 +904,30 @@ NTSTATUS key_export_ecc( struct key *key, UCHAR *buf, ULONG len, ULONG *ret_len 
     UCHAR *src, *dst;
     int ret;
 
+    switch (key->alg_id)
+    {
+    case ALG_ID_ECDH_P256:
+        magic = BCRYPT_ECDH_PRIVATE_P256_MAGIC;
+        size = 32;
+        break;
+    case ALG_ID_ECDSA_P256:
+        magic = BCRYPT_ECDSA_PRIVATE_P256_MAGIC;
+        size = 32;
+        break;
+
+    default:
+        FIXME( "algorithm %u does not yet support exporting ecc blob\n", key->alg_id );
+        return STATUS_NOT_IMPLEMENTED;
+    }
+
     if ((ret = pgnutls_privkey_export_ecc_raw( key->u.a.handle, &curve, &x, &y, &d )))
     {
         pgnutls_perror( ret );
         return STATUS_INTERNAL_ERROR;
     }
 
-    switch (curve)
+    if (curve != GNUTLS_ECC_CURVE_SECP256R1)
     {
-    case GNUTLS_ECC_CURVE_SECP256R1:
-        magic = BCRYPT_ECDH_PRIVATE_P256_MAGIC;
-        size = 32;
-        break;
-
-    default:
         FIXME( "curve %u not supported\n", curve );
         free( x.data ); free( y.data ); free( d.data );
         return STATUS_NOT_IMPLEMENTED;
@@ -982,7 +1002,7 @@ NTSTATUS key_import_ecc( struct key *key, UCHAR *buf, ULONG len )
         return STATUS_INTERNAL_ERROR;
     }
 
-    if ((status = export_gnutls_pubkey_ecc( handle, &key->u.a.pubkey, &key->u.a.pubkey_len )))
+    if ((status = export_gnutls_pubkey_ecc( handle, key->alg_id, &key->u.a.pubkey, &key->u.a.pubkey_len )))
     {
         pgnutls_privkey_deinit( handle );
         return status;
