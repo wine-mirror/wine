@@ -388,10 +388,13 @@ static void test_reflection_desc_vs(void)
 {
     struct D3D11_SIGNATURE_PARAMETER_DESC_46 desc_46 = {0};
     const D3D11_SIGNATURE_PARAMETER_DESC *pdesc;
-    D3D11_SIGNATURE_PARAMETER_DESC desc = {0};
+    D3D11_SIGNATURE_PARAMETER_DESC desc11 = {0};
+    D3D12_SIGNATURE_PARAMETER_DESC desc12 = {0};
     D3D_MIN_PRECISION expected_min_prec;
     D3D11_SHADER_DESC sdesc11 = {0};
+    D3D12_SHADER_DESC sdesc12 = {0};
     ID3D11ShaderReflection *ref11;
+    ID3D12ShaderReflection *ref12;
     unsigned int i;
     ULONG count;
     HRESULT hr;
@@ -401,6 +404,8 @@ static void test_reflection_desc_vs(void)
 
     hr = call_reflect(test_reflection_desc_vs_blob, test_reflection_desc_vs_blob[6], &IID_ID3D11ShaderReflection, (void **)&ref11);
     ok(hr == S_OK, "D3DReflect failed %x\n", hr);
+
+    ref11->lpVtbl->QueryInterface(ref11, &IID_ID3D12ShaderReflection, (void **)&ref12);
 
     hr = ref11->lpVtbl->GetDesc(ref11, NULL);
     ok(hr == E_FAIL, "GetDesc failed %x\n", hr);
@@ -447,18 +452,40 @@ static void test_reflection_desc_vs(void)
     ok(sdesc11.cInterlockedInstructions == 0, "GetDesc failed, got %u, expected %u\n", sdesc11.cInterlockedInstructions, 0);
     ok(sdesc11.cTextureStoreInstructions == 0, "GetDesc failed, got %u, expected %u\n", sdesc11.cTextureStoreInstructions, 0);
 
+    if (ref12)
+    {
+        hr = ref12->lpVtbl->GetDesc(ref12, &sdesc12);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        ok(!memcmp(&sdesc11, &sdesc12, sizeof(sdesc12)), "D3D11 and D3D12 descs do not match.\n");
+    }
+
 #if D3D_COMPILER_VERSION
     ret = ref11->lpVtbl->GetBitwiseInstructionCount(ref11);
-    ok(ret == 0, "GetBitwiseInstructionCount failed, got %u, expected %u\n", ret, 0);
+    ok(ret == 0, "Got unexpected ret %u.\n", ret);
 
     ret = ref11->lpVtbl->GetConversionInstructionCount(ref11);
-    ok(ret == 2, "GetConversionInstructionCount failed, got %u, expected %u\n", ret, 2);
+    ok(ret == 2, "Got unexpected ret %u.\n", ret);
 
     ret = ref11->lpVtbl->GetMovInstructionCount(ref11);
-    ok(ret == 10, "GetMovInstructionCount failed, got %u, expected %u\n", ret, 10);
+    ok(ret == 10, "Got unexpected ret %u.\n", ret);
 
     ret = ref11->lpVtbl->GetMovcInstructionCount(ref11);
-    ok(ret == 0, "GetMovcInstructionCount failed, got %u, expected %u\n", ret, 0);
+    ok(ret == 0, "Got unexpected ret %u.\n", ret);
+
+    if (ref12)
+    {
+        ret = ref12->lpVtbl->GetBitwiseInstructionCount(ref12);
+        ok(ret == 0, "Got unexpected ret %u.\n", ret);
+
+        ret = ref12->lpVtbl->GetConversionInstructionCount(ref12);
+        ok(ret == 2, "Got unexpected ret %u.\n", ret);
+
+        ret = ref12->lpVtbl->GetMovInstructionCount(ref12);
+        ok(ret == 10, "Got unexpected ret %u.\n", ret);
+
+        ret = ref12->lpVtbl->GetMovcInstructionCount(ref12);
+        ok(ret == 0, "Got unexpected ret %u.\n", ret);
+    }
 #endif
 
     /* GetIn/OutputParameterDesc */
@@ -476,63 +503,84 @@ static void test_reflection_desc_vs(void)
     {
         pdesc = &test_reflection_desc_vs_resultin[i];
 
-        hr = ref11->lpVtbl->GetInputParameterDesc(ref11, i, &desc);
-        ok(hr == S_OK, "GetInputParameterDesc(%u) failed, got %x, expected %x\n", i, hr, S_OK);
+        hr = ref11->lpVtbl->GetInputParameterDesc(ref11, i, &desc11);
+        ok(hr == S_OK, "Got unexpected hr %#x, i %u.\n", hr, i);
 
-        ok(!strcmp(desc.SemanticName, pdesc->SemanticName), "GetInputParameterDesc(%u) SemanticName failed, got \"%s\", expected \"%s\"\n",
-                i, desc.SemanticName, pdesc->SemanticName);
-        ok(desc.SemanticIndex == pdesc->SemanticIndex, "GetInputParameterDesc(%u) SemanticIndex failed, got %u, expected %u\n",
-                i, desc.SemanticIndex, pdesc->SemanticIndex);
-        ok(desc.Register == pdesc->Register, "GetInputParameterDesc(%u) Register failed, got %u, expected %u\n",
-                i, desc.Register, pdesc->Register);
-        ok(desc.SystemValueType == pdesc->SystemValueType, "GetInputParameterDesc(%u) SystemValueType failed, got %x, expected %x\n",
-                i, desc.SystemValueType, pdesc->SystemValueType);
-        ok(desc.ComponentType == pdesc->ComponentType, "GetInputParameterDesc(%u) ComponentType failed, got %x, expected %x\n",
-                i, desc.ComponentType, pdesc->ComponentType);
-        ok(desc.Mask == pdesc->Mask, "GetInputParameterDesc(%u) Mask failed, got %x, expected %x\n",
-                i, desc.Mask, pdesc->Mask);
-        ok(desc.ReadWriteMask == pdesc->ReadWriteMask, "GetInputParameterDesc(%u) ReadWriteMask failed, got %x, expected %x\n",
-                i, desc.ReadWriteMask, pdesc->ReadWriteMask);
+        ok(!strcmp(desc11.SemanticName, pdesc->SemanticName), "Got unexpected SemanticName \"%s\", i %u.\n",
+                desc11.SemanticName, i);
+        ok(desc11.SemanticIndex == pdesc->SemanticIndex, "Got unexpected SemanticIndex %u, i %u.\n",
+                desc11.SemanticIndex, i);
+        ok(desc11.Register == pdesc->Register, "Got unexpected Register %u, i %u.\n", desc11.Register, i);
+        ok(desc11.SystemValueType == pdesc->SystemValueType, "Got unexpected SystemValueType %u, i %u.\n",
+                desc11.SystemValueType, i);
+        ok(desc11.ComponentType == pdesc->ComponentType, "Got unexpected ComponentType %u, i %u.\n",
+                desc11.ComponentType, i);
+        ok(desc11.Mask == pdesc->Mask, "Got unexpected SystemValueType %#x, i %u.\n", desc11.Mask, i);
+        ok(desc11.ReadWriteMask == pdesc->ReadWriteMask, "Got unexpected ReadWriteMask %#x, i %u.\n",
+                desc11.ReadWriteMask, i);
         /* The Stream field of D3D11_SIGNATURE_PARAMETER_DESC is in the
          * trailing padding of the D3D10_SIGNATURE_PARAMETER_DESC struct on
          * 64-bits and thus undefined. Don't test it. */
         if (D3D_COMPILER_VERSION)
-            ok(desc.Stream == pdesc->Stream, "(%u): got unexpected Stream %u, expected %u.\n",
-                    i, desc.Stream, pdesc->Stream);
+            ok(desc11.Stream == pdesc->Stream, "Got unexpected Stream %u, i %u.\n",
+                    desc11.Stream, i);
         else if (sizeof(void *) == 4)
-            ok(!desc.Stream, "(%u): got unexpected Stream %u.\n", i, desc.Stream);
+            ok(!desc11.Stream, "Got unexpected Stream %u, i %u.\n", desc11.Stream, i);
+
+        if (ref12)
+        {
+            hr = ref12->lpVtbl->GetInputParameterDesc(ref12, i, &desc12);
+            ok(hr == S_OK, "Got unexpected hr %#x, i %u.\n", hr, i);
+
+            ok(!memcmp(&desc12, &desc11, sizeof(desc11)), "D3D11 and D3D12 descs do not match.\n");
+        }
     }
 
     for (i = 0; i < ARRAY_SIZE(test_reflection_desc_vs_resultout); ++i)
     {
         pdesc = &test_reflection_desc_vs_resultout[i];
 
-        hr = ref11->lpVtbl->GetOutputParameterDesc(ref11, i, &desc);
-        ok(hr == S_OK, "GetOutputParameterDesc(%u) failed, got %x, expected %x\n", i, hr, S_OK);
+        hr = ref11->lpVtbl->GetOutputParameterDesc(ref11, i, &desc11);
+        ok(hr == S_OK, "Got unexpected hr %#x, i %u.\n", hr, i);
 
-        ok(!strcmp(desc.SemanticName, pdesc->SemanticName), "GetOutputParameterDesc(%u) SemanticName failed, got \"%s\", expected \"%s\"\n",
-                i, desc.SemanticName, pdesc->SemanticName);
-        ok(desc.SemanticIndex == pdesc->SemanticIndex, "GetOutputParameterDesc(%u) SemanticIndex failed, got %u, expected %u\n",
-                i, desc.SemanticIndex, pdesc->SemanticIndex);
-        ok(desc.Register == pdesc->Register, "GetOutputParameterDesc(%u) Register failed, got %u, expected %u\n",
-                i, desc.Register, pdesc->Register);
-        ok(desc.SystemValueType == pdesc->SystemValueType, "GetOutputParameterDesc(%u) SystemValueType failed, got %x, expected %x\n",
-                i, desc.SystemValueType, pdesc->SystemValueType);
-        ok(desc.ComponentType == pdesc->ComponentType, "GetOutputParameterDesc(%u) ComponentType failed, got %x, expected %x\n",
-                i, desc.ComponentType, pdesc->ComponentType);
-        ok(desc.Mask == pdesc->Mask, "GetOutputParameterDesc(%u) Mask failed, got %x, expected %x\n",
-                i, desc.Mask, pdesc->Mask);
-        ok(desc.ReadWriteMask == pdesc->ReadWriteMask, "GetOutputParameterDesc(%u) ReadWriteMask failed, got %x, expected %x\n",
-                i, desc.ReadWriteMask, pdesc->ReadWriteMask);
+        ok(!strcmp(desc11.SemanticName, pdesc->SemanticName), "Got unexpected SemanticName \"%s\", i %u.\n",
+                desc11.SemanticName, i);
+        ok(desc11.SemanticIndex == pdesc->SemanticIndex, "Got unexpected SemanticIndex %u, i %u.\n",
+                desc11.SemanticIndex, i);
+        ok(desc11.Register == pdesc->Register, "Got unexpected Register %u, i %u.\n", desc11.Register, i);
+        ok(desc11.SystemValueType == pdesc->SystemValueType, "Got unexpected SystemValueType %u, i %u.\n",
+                desc11.SystemValueType, i);
+        ok(desc11.ComponentType == pdesc->ComponentType, "Got unexpected ComponentType %u, i %u.\n",
+                desc11.ComponentType, i);
+        ok(desc11.Mask == pdesc->Mask, "Got unexpected SystemValueType %#x, i %u.\n", desc11.Mask, i);
+        ok(desc11.ReadWriteMask == pdesc->ReadWriteMask, "Got unexpected ReadWriteMask %#x, i %u.\n",
+                desc11.ReadWriteMask, i);
+        /* The Stream field of D3D11_SIGNATURE_PARAMETER_DESC is in the
+         * trailing padding of the D3D10_SIGNATURE_PARAMETER_DESC struct on
+         * 64-bits and thus undefined. Don't test it. */
         if (D3D_COMPILER_VERSION)
-            ok(desc.Stream == pdesc->Stream, "(%u): got unexpected Stream %u, expected %u.\n",
-                    i, desc.Stream, pdesc->Stream);
+            ok(desc11.Stream == pdesc->Stream, "Got unexpected Stream %u, i %u.\n",
+                    desc11.Stream, i);
         else if (sizeof(void *) == 4)
-            ok(!desc.Stream, "(%u): got unexpected Stream %u.\n", i, desc.Stream);
+            ok(!desc11.Stream, "Got unexpected Stream %u, i %u.\n", desc11.Stream, i);
+
+        if (ref12)
+        {
+            hr = ref12->lpVtbl->GetOutputParameterDesc(ref12, i, &desc12);
+            ok(hr == S_OK, "Got unexpected hr %#x, i %u.\n", hr, i);
+
+            ok(!memcmp(&desc12, &desc11, sizeof(desc11)), "D3D11 and D3D12 descs do not match.\n");
+        }
+    }
+
+    if (ref12)
+    {
+        count = ref12->lpVtbl->Release(ref12);
+        ok(count == 1, "Got unexpected ref count %u.\n", count);
     }
 
     count = ref11->lpVtbl->Release(ref11);
-    ok(count == 0, "Release failed %u\n", count);
+    ok(count == 0, "Got unexpected ref count %u.\n", count);
 }
 
 /*
