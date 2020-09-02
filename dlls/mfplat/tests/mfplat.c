@@ -382,7 +382,6 @@ static HRESULT WINAPI test_create_from_file_handler_callback_Invoke(IMFAsyncCall
     handler = (IMFSchemeHandler *)IMFAsyncResult_GetStateNoAddRef(result);
 
     hr = IMFSchemeHandler_EndCreateObject(handler, result, &obj_type, &object);
-todo_wine
     ok(hr == S_OK, "Failed to create an object, hr %#x.\n", hr);
 
     if (SUCCEEDED(hr))

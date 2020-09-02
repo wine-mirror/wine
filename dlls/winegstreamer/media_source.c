@@ -34,6 +34,180 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
+struct media_source
+{
+    IMFMediaSource IMFMediaSource_iface;
+    LONG ref;
+};
+
+static inline struct media_source *impl_from_IMFMediaSource(IMFMediaSource *iface)
+{
+    return CONTAINING_RECORD(iface, struct media_source, IMFMediaSource_iface);
+}
+
+static HRESULT WINAPI media_source_QueryInterface(IMFMediaSource *iface, REFIID riid, void **out)
+{
+    struct media_source *source = impl_from_IMFMediaSource(iface);
+
+    TRACE("(%p)->(%s %p)\n", source, debugstr_guid(riid), out);
+
+    if (IsEqualIID(riid, &IID_IMFMediaSource) ||
+        IsEqualIID(riid, &IID_IMFMediaEventGenerator) ||
+        IsEqualIID(riid, &IID_IUnknown))
+    {
+        *out = &source->IMFMediaSource_iface;
+    }
+    else
+    {
+        FIXME("(%s, %p)\n", debugstr_guid(riid), out);
+        *out = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*out);
+    return S_OK;
+}
+
+static ULONG WINAPI media_source_AddRef(IMFMediaSource *iface)
+{
+    struct media_source *source = impl_from_IMFMediaSource(iface);
+    ULONG ref = InterlockedIncrement(&source->ref);
+
+    TRACE("(%p) ref=%u\n", source, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI media_source_Release(IMFMediaSource *iface)
+{
+    struct media_source *source = impl_from_IMFMediaSource(iface);
+    ULONG ref = InterlockedDecrement(&source->ref);
+
+    TRACE("(%p) ref=%u\n", source, ref);
+
+    if (!ref)
+    {
+        heap_free(source);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI media_source_GetEvent(IMFMediaSource *iface, DWORD flags, IMFMediaEvent **event)
+{
+    FIXME("(%p)->(%#x, %p)\n", iface, flags, event);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI media_source_BeginGetEvent(IMFMediaSource *iface, IMFAsyncCallback *callback, IUnknown *state)
+{
+    FIXME("(%p)->(%p, %p)\n", iface, callback, state);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI media_source_EndGetEvent(IMFMediaSource *iface, IMFAsyncResult *result, IMFMediaEvent **event)
+{
+    FIXME("(%p)->(%p, %p)\n", iface, result, event);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI media_source_QueueEvent(IMFMediaSource *iface, MediaEventType event_type, REFGUID ext_type,
+        HRESULT hr, const PROPVARIANT *value)
+{
+    FIXME("(%p)->(%d, %s, %#x, %p)\n", iface, event_type, debugstr_guid(ext_type), hr, value);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI media_source_GetCharacteristics(IMFMediaSource *iface, DWORD *characteristics)
+{
+    struct media_source *source = impl_from_IMFMediaSource(iface);
+
+    FIXME("(%p)->(%p): stub\n", source, characteristics);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI media_source_CreatePresentationDescriptor(IMFMediaSource *iface, IMFPresentationDescriptor **descriptor)
+{
+    struct media_source *source = impl_from_IMFMediaSource(iface);
+
+    FIXME("(%p)->(%p): stub\n", source, descriptor);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI media_source_Start(IMFMediaSource *iface, IMFPresentationDescriptor *descriptor,
+                                     const GUID *time_format, const PROPVARIANT *start_position)
+{
+    struct media_source *source = impl_from_IMFMediaSource(iface);
+
+    FIXME("(%p)->(%p, %p, %p): stub\n", source, descriptor, time_format, start_position);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI media_source_Stop(IMFMediaSource *iface)
+{
+    struct media_source *source = impl_from_IMFMediaSource(iface);
+
+    FIXME("(%p): stub\n", source);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI media_source_Pause(IMFMediaSource *iface)
+{
+    struct media_source *source = impl_from_IMFMediaSource(iface);
+
+    FIXME("(%p): stub\n", source);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI media_source_Shutdown(IMFMediaSource *iface)
+{
+    struct media_source *source = impl_from_IMFMediaSource(iface);
+
+    FIXME("(%p): stub\n", source);
+
+    return E_NOTIMPL;
+}
+
+static const IMFMediaSourceVtbl IMFMediaSource_vtbl =
+{
+    media_source_QueryInterface,
+    media_source_AddRef,
+    media_source_Release,
+    media_source_GetEvent,
+    media_source_BeginGetEvent,
+    media_source_EndGetEvent,
+    media_source_QueueEvent,
+    media_source_GetCharacteristics,
+    media_source_CreatePresentationDescriptor,
+    media_source_Start,
+    media_source_Stop,
+    media_source_Pause,
+    media_source_Shutdown,
+};
+
+static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_source **out_media_source)
+{
+    struct media_source *object = heap_alloc_zero(sizeof(*object));
+
+    if (!object)
+        return E_OUTOFMEMORY;
+
+    object->IMFMediaSource_iface.lpVtbl = &IMFMediaSource_vtbl;
+    object->ref = 1;
+
+    *out_media_source = object;
+    return S_OK;
+}
+
 struct winegstreamer_stream_handler_result
 {
     struct list entry;
@@ -386,9 +560,28 @@ static HRESULT WINAPI winegstreamer_stream_handler_callback_GetParameters(IMFAsy
 static HRESULT winegstreamer_stream_handler_create_object(struct winegstreamer_stream_handler *This, WCHAR *url, IMFByteStream *stream, DWORD flags,
                                             IPropertyStore *props, IUnknown **out_object, MF_OBJECT_TYPE *out_obj_type)
 {
-    FIXME("(%p %s %p %u %p %p %p)\n", This, debugstr_w(url), stream, flags, props, out_object, out_obj_type);
+    TRACE("(%p %s %p %u %p %p %p)\n", This, debugstr_w(url), stream, flags, props, out_object, out_obj_type);
 
-    return E_NOTIMPL;
+    if (flags & MF_RESOLUTION_MEDIASOURCE)
+    {
+        HRESULT hr;
+        struct media_source *new_source;
+
+        if (FAILED(hr = media_source_constructor(stream, &new_source)))
+            return hr;
+
+        TRACE("->(%p)\n", new_source);
+
+        *out_object = (IUnknown*)&new_source->IMFMediaSource_iface;
+        *out_obj_type = MF_OBJECT_MEDIASOURCE;
+
+        return S_OK;
+    }
+    else
+    {
+        FIXME("flags = %08x\n", flags);
+        return E_NOTIMPL;
+    }
 }
 
 static HRESULT WINAPI winegstreamer_stream_handler_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
