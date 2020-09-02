@@ -38,6 +38,7 @@ struct media_source
 {
     IMFMediaSource IMFMediaSource_iface;
     LONG ref;
+    IMFMediaEventQueue *event_queue;
 };
 
 static inline struct media_source *impl_from_IMFMediaSource(IMFMediaSource *iface)
@@ -87,6 +88,7 @@ static ULONG WINAPI media_source_Release(IMFMediaSource *iface)
 
     if (!ref)
     {
+        IMFMediaEventQueue_Release(source->event_queue);
         heap_free(source);
     }
 
@@ -95,31 +97,39 @@ static ULONG WINAPI media_source_Release(IMFMediaSource *iface)
 
 static HRESULT WINAPI media_source_GetEvent(IMFMediaSource *iface, DWORD flags, IMFMediaEvent **event)
 {
-    FIXME("(%p)->(%#x, %p)\n", iface, flags, event);
+    struct media_source *source = impl_from_IMFMediaSource(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p)->(%#x, %p)\n", source, flags, event);
+
+    return IMFMediaEventQueue_GetEvent(source->event_queue, flags, event);
 }
 
 static HRESULT WINAPI media_source_BeginGetEvent(IMFMediaSource *iface, IMFAsyncCallback *callback, IUnknown *state)
 {
-    FIXME("(%p)->(%p, %p)\n", iface, callback, state);
+    struct media_source *source = impl_from_IMFMediaSource(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p, %p)\n", source, callback, state);
+
+    return IMFMediaEventQueue_BeginGetEvent(source->event_queue, callback, state);
 }
 
 static HRESULT WINAPI media_source_EndGetEvent(IMFMediaSource *iface, IMFAsyncResult *result, IMFMediaEvent **event)
 {
-    FIXME("(%p)->(%p, %p)\n", iface, result, event);
+    struct media_source *source = impl_from_IMFMediaSource(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p, %p)\n", source, result, event);
+
+    return IMFMediaEventQueue_EndGetEvent(source->event_queue, result, event);
 }
 
 static HRESULT WINAPI media_source_QueueEvent(IMFMediaSource *iface, MediaEventType event_type, REFGUID ext_type,
         HRESULT hr, const PROPVARIANT *value)
 {
-    FIXME("(%p)->(%d, %s, %#x, %p)\n", iface, event_type, debugstr_guid(ext_type), hr, value);
+    struct media_source *source = impl_from_IMFMediaSource(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p)->(%d, %s, %#x, %p)\n", source, event_type, debugstr_guid(ext_type), hr, value);
+
+    return IMFMediaEventQueue_QueueEventParamVar(source->event_queue, event_type, ext_type, hr, value);
 }
 
 static HRESULT WINAPI media_source_GetCharacteristics(IMFMediaSource *iface, DWORD *characteristics)
@@ -197,15 +207,25 @@ static const IMFMediaSourceVtbl IMFMediaSource_vtbl =
 static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_source **out_media_source)
 {
     struct media_source *object = heap_alloc_zero(sizeof(*object));
+    HRESULT hr;
 
     if (!object)
         return E_OUTOFMEMORY;
+
+    if (FAILED(hr = MFCreateEventQueue(&object->event_queue)))
+        goto fail;
 
     object->IMFMediaSource_iface.lpVtbl = &IMFMediaSource_vtbl;
     object->ref = 1;
 
     *out_media_source = object;
     return S_OK;
+
+    fail:
+    WARN("Failed to construct MFMediaSource, hr %#x.\n", hr);
+
+    IMFMediaSource_Release(&object->IMFMediaSource_iface);
+    return hr;
 }
 
 struct winegstreamer_stream_handler_result
