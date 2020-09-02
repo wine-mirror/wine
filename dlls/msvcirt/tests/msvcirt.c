@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <windef.h>
 #include <winbase.h>
+#include <sys/stat.h>
 #include "wine/test.h"
 
 typedef void (*vtable_ptr)(void);
@@ -403,6 +404,22 @@ static void (*__thiscall p_iostream_vbase_dtor)(iostream*);
 static iostream* (*__thiscall p_iostream_assign_sb)(iostream*, streambuf*);
 static iostream* (*__thiscall p_iostream_assign)(iostream*, const iostream*);
 
+/* ifstream */
+static istream* (*__thiscall p_ifstream_copy_ctor)(istream*, const istream*, BOOL);
+static istream* (*__thiscall p_ifstream_buffer_ctor)(istream*, filedesc, char*, int, BOOL);
+static istream* (*__thiscall p_ifstream_fd_ctor)(istream*, filedesc fd, BOOL virt_init);
+static istream* (*__thiscall p_ifstream_open_ctor)(istream*, const char *name, ios_open_mode, int, BOOL);
+static istream* (*__thiscall p_ifstream_ctor)(istream*, BOOL);
+static void (*__thiscall p_ifstream_dtor)(ios*);
+static void (*__thiscall p_ifstream_vbase_dtor)(istream*);
+static void (*__thiscall p_ifstream_attach)(istream*, filedesc);
+static void (*__thiscall p_ifstream_close)(istream*);
+static filedesc (*__thiscall p_ifstream_fd)(istream*);
+static int (*__thiscall p_ifstream_is_open)(const istream*);
+static void (*__thiscall p_ifstream_open)(istream*, const char*, ios_open_mode, int);
+static filebuf* (*__thiscall p_ifstream_rdbuf)(const istream*);
+static int (*__thiscall p_ifstream_setmode)(istream*, int);
+
 /* strstream */
 static iostream* (*__thiscall p_strstream_copy_ctor)(iostream*, const iostream*, BOOL);
 static iostream* (*__thiscall p_strstream_buffer_ctor)(iostream*, char*, int, int, BOOL);
@@ -703,6 +720,21 @@ static BOOL init(void)
         SET(p_iostream_assign_sb, "??4iostream@@IEAAAEAV0@PEAVstreambuf@@@Z");
         SET(p_iostream_assign, "??4iostream@@IEAAAEAV0@AEAV0@@Z");
 
+        SET(p_ifstream_copy_ctor, "??0ifstream@@QEAA@AEBV0@@Z");
+        SET(p_ifstream_buffer_ctor, "??0ifstream@@QEAA@HPEADH@Z");
+        SET(p_ifstream_fd_ctor, "??0ifstream@@QEAA@H@Z");
+        SET(p_ifstream_open_ctor, "??0ifstream@@QEAA@PEBDHH@Z");
+        SET(p_ifstream_ctor, "??0ifstream@@QEAA@XZ");
+        SET(p_ifstream_dtor, "??1ifstream@@UEAA@XZ");
+        SET(p_ifstream_vbase_dtor, "??_Difstream@@QEAAXXZ");
+        SET(p_ifstream_attach, "?attach@ifstream@@QEAAXH@Z");
+        SET(p_ifstream_close, "?close@ifstream@@QEAAXXZ");
+        SET(p_ifstream_fd, "?fd@ifstream@@QEBAHXZ");
+        SET(p_ifstream_is_open, "?is_open@ifstream@@QEBAHXZ");
+        SET(p_ifstream_open, "?open@ifstream@@QEAAXPEBDHH@Z");
+        SET(p_ifstream_rdbuf, "?rdbuf@ifstream@@QEBAPEAVfilebuf@@XZ");
+        SET(p_ifstream_setmode, "?setmode@ifstream@@QEAAHH@Z");
+
         SET(p_strstream_copy_ctor, "??0strstream@@QEAA@AEBV0@@Z");
         SET(p_strstream_buffer_ctor, "??0strstream@@QEAA@PEADHH@Z");
         SET(p_strstream_ctor, "??0strstream@@QEAA@XZ");
@@ -916,6 +948,21 @@ static BOOL init(void)
         SET(p_iostream_vbase_dtor, "??_Diostream@@QAEXXZ");
         SET(p_iostream_assign_sb, "??4iostream@@IAEAAV0@PAVstreambuf@@@Z");
         SET(p_iostream_assign, "??4iostream@@IAEAAV0@AAV0@@Z");
+
+        SET(p_ifstream_copy_ctor, "??0ifstream@@QAE@ABV0@@Z");
+        SET(p_ifstream_fd_ctor, "??0ifstream@@QAE@H@Z");
+        SET(p_ifstream_buffer_ctor, "??0ifstream@@QAE@HPADH@Z");
+        SET(p_ifstream_open_ctor, "??0ifstream@@QAE@PBDHH@Z");
+        SET(p_ifstream_ctor, "??0ifstream@@QAE@XZ");
+        SET(p_ifstream_dtor, "??1ifstream@@UAE@XZ");
+        SET(p_ifstream_vbase_dtor, "??_Difstream@@QAEXXZ");
+        SET(p_ifstream_attach, "?attach@ifstream@@QAEXH@Z");
+        SET(p_ifstream_close, "?close@ifstream@@QAEXXZ");
+        SET(p_ifstream_fd, "?fd@ifstream@@QBEHXZ");
+        SET(p_ifstream_is_open, "?is_open@ifstream@@QBEHXZ");
+        SET(p_ifstream_open, "?open@ifstream@@QAEXPBDHH@Z");
+        SET(p_ifstream_rdbuf, "?rdbuf@ifstream@@QBEPAVfilebuf@@XZ");
+        SET(p_ifstream_setmode, "?setmode@ifstream@@QAEHH@Z");
 
         SET(p_strstream_copy_ctor, "??0strstream@@QAE@ABV0@@Z");
         SET(p_strstream_buffer_ctor, "??0strstream@@QAE@PADHH@Z");
@@ -6720,6 +6767,209 @@ static void test_iostream(void)
     ok(ios2.base_ios.do_lock == 0xcdcdcdcd, "expected %d got %d\n", 0xcdcdcdcd, ios2.base_ios.do_lock);
 }
 
+static void test_ifstream(void)
+{
+    const char *filename = "ifstream_test";
+    istream ifs, ifs_copy, *pifs;
+    filebuf *pfb;
+    char buffer[64];
+    char st[8];
+    int fd, ret, i;
+
+    memset(&ifs, 0xab, sizeof(istream));
+
+    /* constructors/destructors */
+    pifs = call_func2(p_ifstream_ctor, &ifs, TRUE);
+    pfb = (filebuf*) ifs.base_ios.sb;
+    ok(pifs == &ifs, "wrong return, expected %p got %p\n", &ifs, pifs);
+    ok(ifs.extract_delim == 0, "expected 0 got %d\n", ifs.extract_delim);
+    ok(ifs.count == 0, "expected 0 got %d\n", ifs.count);
+    ok(ifs.base_ios.sb != NULL, "expected not %p got %p\n", NULL, ifs.base_ios.sb);
+    ok(ifs.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, ifs.base_ios.state);
+    ok(ifs.base_ios.delbuf == 1, "expected 1 got %d\n", ifs.base_ios.delbuf);
+    ok(ifs.base_ios.tie == NULL, "expected %p got %p\n", NULL, ifs.base_ios.tie);
+    ok(ifs.base_ios.flags == FLAGS_skipws, "expected %x got %x\n", FLAGS_skipws, ifs.base_ios.flags);
+    ok(ifs.base_ios.precision == 6, "expected 6 got %d\n", ifs.base_ios.precision);
+    ok(ifs.base_ios.fill == ' ', "expected 32 got %d\n", ifs.base_ios.fill);
+    ok(ifs.base_ios.width == 0, "expected 0 got %d\n", ifs.base_ios.width);
+    ok(ifs.base_ios.do_lock == -1, "expected -1 got %d\n", ifs.base_ios.do_lock);
+    ok(pfb->fd == -1, "wrong fd, expected -1 got %d\n", pfb->fd);
+    ok(pfb->close == 0, "wrong value, expected 0 got %d\n", pfb->close);
+    ok(pfb->base.allocated == 0, "wrong allocate value, expected 0 got %d\n", pfb->base.allocated);
+    ok(pfb->base.unbuffered == 0, "wrong unbuffered value, expected 0 got %d\n", pfb->base.unbuffered);
+    ok(pfb->base.base == NULL, "wrong buffer, expected %p got %p\n", NULL, pfb->base.base);
+    ok(pfb->base.ebuf == NULL, "wrong ebuf, expected %p got %p\n", NULL, pfb->base.ebuf);
+    ok(pfb->fd == -1, "wrong fd, expected 0 got %d\n", pfb->fd);
+    call_func1(p_ifstream_vbase_dtor, &ifs);
+
+    pifs = call_func3(p_ifstream_fd_ctor, &ifs, 42, TRUE);
+    pfb = (filebuf*) ifs.base_ios.sb;
+    ok(pifs == &ifs, "wrong return, expected %p got %p\n", &ifs, pifs);
+    ok(ifs.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, ifs.base_ios.state);
+    ok(ifs.base_ios.delbuf == 1, "expected 1 got %d\n", ifs.base_ios.delbuf);
+    ok(pfb->base.allocated == 0, "wrong allocate value, expected 0 got %d\n", pfb->base.allocated);
+    ok(pfb->base.unbuffered == 0, "wrong unbuffered value, expected 0 got %d\n", pfb->base.unbuffered);
+    ok(pfb->base.base == NULL, "wrong buffer, expected %p got %p\n", NULL, pfb->base.base);
+    ok(pfb->base.ebuf == NULL, "wrong ebuf, expected %p got %p\n", NULL, pfb->base.ebuf);
+    ok(pfb->fd == 42, "wrong fd, expected 42 got %d\n", pfb->fd);
+    ok(pfb->close == 0, "wrong value, expected 0 got %d\n", pfb->close);
+
+    pifs = call_func3(p_ifstream_copy_ctor, &ifs_copy, &ifs, TRUE);
+    pfb = (filebuf*) ifs_copy.base_ios.sb;
+    ok(pifs == &ifs_copy, "wrong return, expected %p got %p\n", &ifs_copy, pifs);
+    ok(ifs_copy.base_ios.sb == ifs.base_ios.sb, "expected shared streambuf\n");
+    ok(ifs.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, ifs.base_ios.state);
+    ok(ifs_copy.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, ifs_copy.base_ios.state);
+
+    call_func1(p_ifstream_vbase_dtor, &ifs_copy);
+    call_func1(p_ifstream_dtor, &ifs.base_ios);
+
+    pifs = call_func5(p_ifstream_buffer_ctor, &ifs, 53, buffer, ARRAY_SIZE(buffer), TRUE);
+    pfb = (filebuf*) ifs.base_ios.sb;
+    ok(ifs.base_ios.delbuf == 1, "expected 1 got %d\n", ifs.base_ios.delbuf);
+    ok(pifs == &ifs, "wrong return, expected %p got %p\n", &ifs, pifs);
+    ok(ifs.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, ifs.base_ios.state);
+    ok(pfb->base.allocated == 0, "wrong allocate value, expected 0 got %d\n", pfb->base.allocated);
+    ok(pfb->base.unbuffered == 0, "wrong unbuffered value, expected 0 got %d\n", pfb->base.unbuffered);
+    ok(pfb->base.base == buffer, "wrong buffer, expected %p got %p\n", buffer, pfb->base.base);
+    ok(pfb->base.ebuf == buffer + ARRAY_SIZE(buffer), "wrong ebuf, expected %p got %p\n", buffer + ARRAY_SIZE(buffer), pfb->base.ebuf);
+    ok(pfb->fd == 53, "wrong fd, expected 53 got %d\n", pfb->fd);
+    ok(pfb->close == 0, "wrong value, expected 0 got %d\n", pfb->close);
+    call_func1(p_ifstream_dtor, &ifs.base_ios);
+
+    pifs = call_func5(p_ifstream_buffer_ctor, &ifs, 64, NULL, 0, TRUE);
+    pfb = (filebuf*) ifs.base_ios.sb;
+    ok(ifs.base_ios.delbuf == 1, "expected 1 got %d\n", ifs.base_ios.delbuf);
+    ok(ifs.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, ifs.base_ios.state);
+    ok(pifs == &ifs, "wrong return, expected %p got %p\n", &ifs, pifs);
+    ok(ifs.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, ifs.base_ios.state);
+    ok(pfb->base.allocated == 0, "wrong allocate value, expected 0 got %d\n", pfb->base.allocated);
+    ok(pfb->base.unbuffered == 1, "wrong unbuffered value, expected 1 got %d\n", pfb->base.unbuffered);
+    ok(pfb->base.base == NULL, "wrong buffer, expected %p got %p\n", NULL, pfb->base.base);
+    ok(pfb->base.ebuf == NULL, "wrong ebuf, expected %p got %p\n", NULL, pfb->base.ebuf);
+    ok(pfb->fd == 64, "wrong fd, expected 64 got %d\n", pfb->fd);
+    ok(pfb->close == 0, "wrong value, expected 0 got %d\n", pfb->close);
+    call_func1(p_ifstream_vbase_dtor, &ifs);
+
+    pifs = call_func5(p_ifstream_open_ctor, &ifs, filename, OPENMODE_in, filebuf_openprot, TRUE);
+    pfb = (filebuf*) ifs.base_ios.sb;
+    ok(ifs.base_ios.delbuf == 1, "expected 1 got %d\n", ifs.base_ios.delbuf);
+    ok(ifs.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, ifs.base_ios.state);
+    ok(pifs == &ifs, "wrong return, expected %p got %p\n", &ifs, pifs);
+    ok(pfb->base.allocated == 1, "wrong allocate value, expected 1 got %d\n", pfb->base.allocated);
+    ok(pfb->base.unbuffered == 0, "wrong unbuffered value, expected 0 got %d\n", pfb->base.unbuffered);
+    ok(pfb->base.base != NULL, "wrong buffer, expected not %p got %p\n", NULL, pfb->base.base);
+    ok(pfb->base.ebuf != NULL, "wrong ebuf, expected not %p got %p\n", NULL, pfb->base.ebuf);
+    ok(pfb->fd != -1, "wrong fd, expected not -1 got %d\n", pfb->fd);
+    fd = pfb->fd;
+    ok(pfb->close == 1, "wrong value, expected 1 got %d\n", pfb->close);
+    call_func1(p_ifstream_vbase_dtor, &ifs);
+    ok(_close(fd) == -1, "expected ifstream to close opened file\n");
+
+    /* attach */
+    pifs = call_func2(p_ifstream_ctor, &ifs, TRUE);
+    pfb = (filebuf*) ifs.base_ios.sb;
+    ok(pifs == &ifs, "wrong return, expected %p got %p\n", &ifs, pifs);
+    call_func2(p_ifstream_attach, &ifs, 42);
+    ok(ifs.base_ios.state == IOSTATE_goodbit, "attaching on vanilla stream set some state bits\n");
+    fd = (int) call_func1(p_ifstream_fd, &ifs);
+    ok(fd == 42, "wrong fd, expected 42 got %d\n", fd);
+    ok(pfb->close == 0, "wrong close value, expected 0 got %d\n", pfb->close);
+    ifs.base_ios.state = IOSTATE_eofbit;
+    call_func2(p_ifstream_attach, &ifs, 53);
+    ok(ifs.base_ios.state == (IOSTATE_eofbit | IOSTATE_failbit), "attaching on already setup stream did not set failbit\n");
+    ok(fd == 42, "wrong fd, expected 42 got %d\n", fd);
+    call_func1(p_ifstream_vbase_dtor, &ifs);
+
+    /* fd */
+    pifs = call_func2(p_ifstream_ctor, &ifs, TRUE);
+    pfb = (filebuf*) ifs.base_ios.sb;
+    ok(pifs == &ifs, "wrong return, expected %p got %p\n", &ifs, pifs);
+    fd = (int) call_func1(p_ifstream_fd, &ifs);
+    ok(ifs.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, ifs.base_ios.state);
+    ok(fd == -1, "wrong fd, expected -1 but got %d\n", fd);
+    call_func1(p_ifstream_vbase_dtor, &ifs);
+
+    pifs = call_func5(p_ifstream_open_ctor, &ifs, filename, OPENMODE_in, filebuf_openprot, TRUE);
+    pfb = (filebuf*) ifs.base_ios.sb;
+    ok(pifs == &ifs, "wrong return, expected %p got %p\n", &ifs, pifs);
+    fd = (int) call_func1(p_ifstream_fd, &ifs);
+    ok(ifs.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, ifs.base_ios.state);
+    ok(fd == pfb->fd, "wrong fd, expected %d but got %d\n", pfb->fd, fd);
+
+    /* rdbuf */
+    pfb = (filebuf*) call_func1(p_ifstream_rdbuf, &ifs);
+    ok((streambuf*) pfb == ifs.base_ios.sb, "wrong return, expected %p got %p\n", ifs.base_ios.sb, pfb);
+    ok(ifs.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, ifs.base_ios.state);
+
+    /* setmode */
+    ret = (int) call_func2(p_ifstream_setmode, &ifs, filebuf_binary);
+    ok(ret == filebuf_text, "wrong return, expected %d got %d\n", filebuf_text, ret);
+    ok(ifs.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, ifs.base_ios.state);
+    ret = (int) call_func2(p_ifstream_setmode, &ifs, filebuf_binary);
+    ok(ret == filebuf_binary, "wrong return, expected %d got %d\n", filebuf_binary, ret);
+    ok(ifs.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, ifs.base_ios.state);
+    ret = (int) call_func2(p_ifstream_setmode, &ifs, filebuf_text);
+    ok(ret == filebuf_binary, "wrong return, expected %d got %d\n", filebuf_binary, ret);
+    ok(ifs.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, ifs.base_ios.state);
+    ret = (int) call_func2(p_ifstream_setmode, &ifs, 0x9000);
+    ok(ret == -1, "wrong return, expected -1 got %d\n", ret);
+    ok(ifs.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, ifs.base_ios.state);
+
+    /* close && is_open */
+    ok((int) call_func1(p_ifstream_is_open, &ifs) == 1, "expected ifstream to be open\n");
+    ifs.base_ios.state = IOSTATE_eofbit | IOSTATE_failbit;
+    call_func1(p_ifstream_close, &ifs);
+    ok(ifs.base_ios.state == IOSTATE_goodbit, "close did not clear state = %d\n", ifs.base_ios.state);
+    ifs.base_ios.state = IOSTATE_eofbit;
+    call_func1(p_ifstream_close, &ifs);
+    ok(ifs.base_ios.state == (IOSTATE_eofbit | IOSTATE_failbit), "close on a closed stream did not set failbit\n");
+    ok((int) call_func1(p_ifstream_is_open, &ifs) == 0, "expected ifstream to not be open\n");
+    ok(_close(fd) == -1, "expected close to close the opened file\n");
+
+    /* open */
+    ifs.base_ios.state = IOSTATE_eofbit;
+    call_func4(p_ifstream_open, &ifs, filename, OPENMODE_in, filebuf_openprot);
+    fd = (int) call_func1(p_ifstream_fd, &ifs);
+    ok(fd != -1, "wrong fd, expected not -1 got %d\n", fd);
+    ok(ifs.base_ios.state == IOSTATE_eofbit, "open did not succeed\n");
+    call_func4(p_ifstream_open, &ifs, filename, OPENMODE_in, filebuf_openprot);
+    ok(ifs.base_ios.state == (IOSTATE_eofbit | IOSTATE_failbit), "second open did not set failbit\n");
+    call_func1(p_ifstream_close, &ifs);
+
+    /* write something we can read later */
+    fd = _open(filename, _O_TRUNC|_O_CREAT|_O_RDWR, _S_IWRITE);
+    ok(fd != -1, "_open failed\n");
+    ok(_write(fd, "test 12", 7) == 7, "_write failed\n");
+    ok(_close(fd) == 0, "_close failed\n");
+
+    /* integration with parent istream - reading */
+    ifs.base_ios.state = IOSTATE_goodbit; /* open doesn't clear the state */
+    call_func4(p_ifstream_open, &ifs, filename, OPENMODE_out, filebuf_openprot); /* make sure that OPENMODE_in is implicit */
+    memset(st, 'A', sizeof(st));
+    st[7] = 0;
+    pifs = call_func2(p_istream_read_str, &ifs, st);
+    ok(pifs == &ifs, "wrong return, expected %p got %p\n", &ifs, pifs);
+    ok(!strcmp(st, "test"), "expected 'test' got '%s'\n", st);
+
+    i = 12345;
+    pifs = call_func2(p_istream_read_int, pifs, &i);
+    ok(pifs == &ifs, "wrong return, expected %p got %p\n", &ifs, pifs);
+    ok(i == 12, "expected 12 got %d\n", i);
+    call_func1(p_ifstream_vbase_dtor, &ifs);
+
+    /* make sure that OPENMODE_in is implicit with open_ctor */
+    pifs = call_func5(p_ifstream_open_ctor, &ifs, filename, OPENMODE_out, filebuf_openprot, TRUE);
+    ok(pifs == &ifs, "wrong return, expected %p got %p\n", &ifs, pifs);
+    memset(st, 'A', sizeof(st));
+    st[7] = 0;
+    pifs = call_func2(p_istream_read_str, &ifs, st);
+    ok(pifs == &ifs, "wrong return, expected %p got %p\n", &ifs, pifs);
+    ok(!strcmp(st, "test"), "expected 'test' got '%s'\n", st);
+    call_func1(p_ifstream_vbase_dtor, &ifs);
+    ok(_unlink(filename) == 0, "Couldn't unlink file named '%s'\n", filename);
+}
+
 static void test_strstream(void)
 {
     iostream ios1, ios2, *pios;
@@ -7538,6 +7788,7 @@ START_TEST(msvcirt)
     test_istream_withassign();
     test_istrstream();
     test_iostream();
+    test_ifstream();
     test_strstream();
     test_stdiostream();
     test_Iostream_init();
