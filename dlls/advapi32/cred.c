@@ -826,59 +826,6 @@ static DWORD mac_enumerate_credentials(LPCWSTR filter, PCREDENTIALW *credentials
     SecKeychainSetUserInteractionAllowed(saved_user_interaction_allowed);
     return ERROR_SUCCESS;
 }
-
-static DWORD mac_delete_credential(LPCWSTR TargetName)
-{
-    int status;
-    SecKeychainSearchRef search;
-    status = SecKeychainSearchCreateFromAttributes(NULL, kSecGenericPasswordItemClass, NULL, &search);
-    if (status == noErr)
-    {
-        SecKeychainItemRef item;
-        while (SecKeychainSearchCopyNext(search, &item) == noErr)
-        {
-            SecKeychainAttributeInfo info;
-            SecKeychainAttributeList *attr_list;
-            UInt32 info_tags[] = { kSecServiceItemAttr };
-            LPWSTR target_name;
-            INT str_len;
-            info.count = ARRAY_SIZE(info_tags);
-            info.tag = info_tags;
-            info.format = NULL;
-            status = SecKeychainItemCopyAttributesAndData(item, &info, NULL, &attr_list, NULL, NULL);
-            if (status != noErr)
-            {
-                WARN("SecKeychainItemCopyAttributesAndData returned status %d\n", status);
-                continue;
-            }
-            if (attr_list->count != 1 || attr_list->attr[0].tag != kSecServiceItemAttr)
-            {
-                CFRelease(item);
-                continue;
-            }
-            str_len = MultiByteToWideChar(CP_UTF8, 0, attr_list->attr[0].data, attr_list->attr[0].length, NULL, 0);
-            target_name = heap_alloc((str_len + 1) * sizeof(WCHAR));
-            MultiByteToWideChar(CP_UTF8, 0, attr_list->attr[0].data, attr_list->attr[0].length, target_name, str_len);
-            /* nul terminate */
-            target_name[str_len] = '\0';
-            if (strcmpiW(TargetName, target_name))
-            {
-                CFRelease(item);
-                heap_free(target_name);
-                continue;
-            }
-            heap_free(target_name);
-            SecKeychainItemFreeAttributesAndData(attr_list, NULL);
-            SecKeychainItemDelete(item);
-            CFRelease(item);
-            CFRelease(search);
-
-            return ERROR_SUCCESS;
-        }
-        CFRelease(search);
-    }
-    return ERROR_NOT_FOUND;
-}
 #endif
 
 /******************************************************************************
@@ -1095,6 +1042,36 @@ BOOL WINAPI CredDeleteA(LPCSTR TargetName, DWORD Type, DWORD Flags)
     return ret;
 }
 
+static DWORD host_delete_credential( const WCHAR *targetname )
+{
+    struct mountmgr_credential *cred;
+    DWORD size, name_size = (strlenW( targetname ) + 1) * sizeof(WCHAR);
+    HANDLE mgr;
+    WCHAR *ptr;
+    BOOL ret;
+
+    mgr = CreateFileW( MOUNTMGR_DOS_DEVICE_NAME, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL,
+                       OPEN_EXISTING, 0, 0 );
+    if (mgr == INVALID_HANDLE_VALUE) return GetLastError();
+
+    size = sizeof(*cred) + name_size;
+    if (!(cred = heap_alloc( size )))
+    {
+        CloseHandle( mgr );
+        return ERROR_OUTOFMEMORY;
+    }
+    cred->targetname_offset = sizeof(*cred);
+    cred->targetname_size   = name_size;
+    ptr = (WCHAR *)(cred + 1);
+    strcpyW( ptr, targetname );
+
+    ret = DeviceIoControl( mgr, IOCTL_MOUNTMGR_DELETE_CREDENTIAL, cred, size, NULL, 0, NULL, NULL );
+    heap_free( cred );
+    CloseHandle( mgr );
+
+    return ret ? ERROR_SUCCESS : GetLastError();
+}
+
 /******************************************************************************
  * CredDeleteW [ADVAPI32.@]
  */
@@ -1126,14 +1103,12 @@ BOOL WINAPI CredDeleteW(LPCWSTR TargetName, DWORD Type, DWORD Flags)
         return FALSE;
     }
 
-#ifdef __APPLE__
     if (Type == CRED_TYPE_DOMAIN_PASSWORD)
     {
-        ret = mac_delete_credential(TargetName);
+        ret = host_delete_credential(TargetName);
         if (ret == ERROR_SUCCESS)
             return TRUE;
     }
-#endif
 
     ret = open_cred_mgr_key(&hkeyMgr, TRUE);
     if (ret != ERROR_SUCCESS)
