@@ -1929,7 +1929,7 @@ static void test_SitehWnd(void)
     todo_wine ok(!site_hwnd, "got %p\n", (HWND)(LONG_PTR)site_hwnd);
 
     hr = IScriptControl_put_SitehWnd(sc, 1);
-    todo_wine ok(hr == CTL_E_INVALIDPROPERTYVALUE, "got 0x%08x\n", hr);
+    ok(hr == CTL_E_INVALIDPROPERTYVALUE, "got 0x%08x\n", hr);
 
     site_hwnd = 0xdeadbeef;
     hr = IScriptControl_get_SitehWnd(sc, &site_hwnd);

@@ -165,6 +165,7 @@ struct ScriptControl {
     IConnectionPointContainer IConnectionPointContainer_iface;
     LONG ref;
     IOleClientSite *site;
+    HWND site_hwnd;
     SIZEL extent;
     LONG timeout;
     VARIANT_BOOL allow_ui;
@@ -2751,8 +2752,12 @@ static HRESULT WINAPI ScriptControl_put_SitehWnd(IScriptControl *iface, LONG hwn
 {
     ScriptControl *This = impl_from_IScriptControl(iface);
 
-    FIXME("(%p)->(%x)\n", This, hwnd);
+    TRACE("(%p)->(%x)\n", This, hwnd);
 
+    if (hwnd && !IsWindow(LongToHandle(hwnd)))
+        return CTL_E_INVALIDPROPERTYVALUE;
+
+    This->site_hwnd = LongToHandle(hwnd);
     return S_OK;
 }
 
