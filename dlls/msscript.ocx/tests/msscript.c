@@ -1921,20 +1921,20 @@ static void test_SitehWnd(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IScriptControl_get_SitehWnd(sc, NULL);
-    todo_wine ok(hr == E_POINTER, "got 0x%08x\n", hr);
+    ok(hr == E_POINTER, "got 0x%08x\n", hr);
 
     site_hwnd = 0xdeadbeef;
     hr = IScriptControl_get_SitehWnd(sc, &site_hwnd);
-    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
-    todo_wine ok(!site_hwnd, "got %p\n", (HWND)(LONG_PTR)site_hwnd);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(!site_hwnd, "got %p\n", (HWND)(LONG_PTR)site_hwnd);
 
     hr = IScriptControl_put_SitehWnd(sc, 1);
     ok(hr == CTL_E_INVALIDPROPERTYVALUE, "got 0x%08x\n", hr);
 
     site_hwnd = 0xdeadbeef;
     hr = IScriptControl_get_SitehWnd(sc, &site_hwnd);
-    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
-    todo_wine ok(!site_hwnd, "got %p\n", (HWND)(LONG_PTR)site_hwnd);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(!site_hwnd, "got %p\n", (HWND)(LONG_PTR)site_hwnd);
 
     hr = IScriptControl_put_SitehWnd(sc, 0);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -1949,8 +1949,8 @@ static void test_SitehWnd(void)
 
     site_hwnd = 0;
     hr = IScriptControl_get_SitehWnd(sc, &site_hwnd);
-    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
-    todo_wine ok((HWND)(LONG_PTR)site_hwnd == hwnd, "got %p, expected %p\n", (HWND)(LONG_PTR)site_hwnd, hwnd);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok((HWND)(LONG_PTR)site_hwnd == hwnd, "got %p, expected %p\n", (HWND)(LONG_PTR)site_hwnd, hwnd);
 
     IScriptControl_Release(sc);
 
@@ -1989,8 +1989,8 @@ static void test_SitehWnd(void)
 
         site_hwnd = 0;
         hr = IScriptControl_get_SitehWnd(sc, &site_hwnd);
-        todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
-        todo_wine ok((HWND)(LONG_PTR)site_hwnd == hwnd, "got %p, expected %p\n", (HWND)(LONG_PTR)site_hwnd, hwnd);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok((HWND)(LONG_PTR)site_hwnd == hwnd, "got %p, expected %p\n", (HWND)(LONG_PTR)site_hwnd, hwnd);
 
         window = NULL;
         hr = IActiveScriptSiteWindow_GetWindow(site_window, NULL);
@@ -2008,8 +2008,8 @@ static void test_SitehWnd(void)
         hr = IScriptControl_put_SitehWnd(sc, 0);
         ok(hr == S_OK, "got 0x%08x\n", hr);
         hr = IScriptControl_get_SitehWnd(sc, &site_hwnd);
-        todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
-        todo_wine ok(!site_hwnd, "got %p\n", (HWND)(LONG_PTR)site_hwnd);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(!site_hwnd, "got %p\n", (HWND)(LONG_PTR)site_hwnd);
 
         window = (HWND)0xdeadbeef;
         hr = IActiveScriptSiteWindow_GetWindow(site_window, &window);
@@ -2020,8 +2020,8 @@ static void test_SitehWnd(void)
         hr = IScriptControl_put_SitehWnd(sc, (LONG)(LONG_PTR)hwnd);
         ok(hr == S_OK, "got 0x%08x\n", hr);
         hr = IScriptControl_get_SitehWnd(sc, &site_hwnd);
-        todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
-        todo_wine ok((HWND)(LONG_PTR)site_hwnd == hwnd, "got %p, expected %p\n", (HWND)(LONG_PTR)site_hwnd, hwnd);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok((HWND)(LONG_PTR)site_hwnd == hwnd, "got %p, expected %p\n", (HWND)(LONG_PTR)site_hwnd, hwnd);
 
         window = NULL;
         hr = IActiveScriptSiteWindow_GetWindow(site_window, &window);
@@ -2032,8 +2032,8 @@ static void test_SitehWnd(void)
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
         hr = IScriptControl_get_SitehWnd(sc, &site_hwnd);
-        todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
-        todo_wine ok((HWND)(LONG_PTR)site_hwnd == hwnd, "got %p, expected %p\n", (HWND)(LONG_PTR)site_hwnd, hwnd);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok((HWND)(LONG_PTR)site_hwnd == hwnd, "got %p, expected %p\n", (HWND)(LONG_PTR)site_hwnd, hwnd);
 
         window = NULL;
         hr = IActiveScriptSiteWindow_GetWindow(site_window, &window);

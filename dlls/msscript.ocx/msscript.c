@@ -2764,8 +2764,13 @@ static HRESULT WINAPI ScriptControl_put_SitehWnd(IScriptControl *iface, LONG hwn
 static HRESULT WINAPI ScriptControl_get_SitehWnd(IScriptControl *iface, LONG *p)
 {
     ScriptControl *This = impl_from_IScriptControl(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if (!p) return E_POINTER;
+
+    *p = HandleToLong(This->site_hwnd);
+    return S_OK;
 }
 
 static HRESULT WINAPI ScriptControl_get_Timeout(IScriptControl *iface, LONG *p)
