@@ -1905,6 +1905,166 @@ static void test_AllowUI(void)
     IScriptControl_Release(sc);
 }
 
+static void test_SitehWnd(void)
+{
+    IScriptControl *sc;
+    LONG site_hwnd;
+    HRESULT hr;
+    HWND hwnd;
+    BSTR str;
+
+    hwnd = CreateWindowA("static", NULL, WS_OVERLAPPEDWINDOW, 50, 50, 100, 100, NULL, NULL, NULL, NULL);
+    ok(hwnd != NULL, "failed to create window, error %08x\n", GetLastError());
+
+    hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IScriptControl, (void**)&sc);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IScriptControl_get_SitehWnd(sc, NULL);
+    todo_wine ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
+    site_hwnd = 0xdeadbeef;
+    hr = IScriptControl_get_SitehWnd(sc, &site_hwnd);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(!site_hwnd, "got %p\n", (HWND)(LONG_PTR)site_hwnd);
+
+    hr = IScriptControl_put_SitehWnd(sc, 1);
+    todo_wine ok(hr == CTL_E_INVALIDPROPERTYVALUE, "got 0x%08x\n", hr);
+
+    site_hwnd = 0xdeadbeef;
+    hr = IScriptControl_get_SitehWnd(sc, &site_hwnd);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(!site_hwnd, "got %p\n", (HWND)(LONG_PTR)site_hwnd);
+
+    hr = IScriptControl_put_SitehWnd(sc, 0);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IScriptControl_put_SitehWnd(sc, (LONG)(LONG_PTR)hwnd);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    str = SysAllocString(L"vbscript");
+    hr = IScriptControl_put_Language(sc, str);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    SysFreeString(str);
+
+    site_hwnd = 0;
+    hr = IScriptControl_get_SitehWnd(sc, &site_hwnd);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok((HWND)(LONG_PTR)site_hwnd == hwnd, "got %p, expected %p\n", (HWND)(LONG_PTR)site_hwnd, hwnd);
+
+    IScriptControl_Release(sc);
+
+    /* custom script engine */
+    if (have_custom_engine)
+    {
+        IActiveScriptSiteWindow *site_window;
+        HWND window;
+
+        hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
+                              &IID_IScriptControl, (void **)&sc);
+        ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08x.\n", hr);
+
+        hr = IScriptControl_put_SitehWnd(sc, (LONG)(LONG_PTR)hwnd);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        SET_EXPECT(CreateInstance);
+        SET_EXPECT(SetInterfaceSafetyOptions);
+        SET_EXPECT(SetScriptSite);
+        SET_EXPECT(QI_IActiveScriptParse);
+        SET_EXPECT(InitNew);
+
+        str = SysAllocString(L"testscript");
+        hr = IScriptControl_put_Language(sc, str);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        SysFreeString(str);
+
+        CHECK_CALLED(CreateInstance);
+        CHECK_CALLED(SetInterfaceSafetyOptions);
+        CHECK_CALLED(SetScriptSite);
+        CHECK_CALLED(QI_IActiveScriptParse);
+        CHECK_CALLED(InitNew);
+
+        hr = IActiveScriptSite_QueryInterface(site, &IID_IActiveScriptSiteWindow, (void**)&site_window);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        site_hwnd = 0;
+        hr = IScriptControl_get_SitehWnd(sc, &site_hwnd);
+        todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+        todo_wine ok((HWND)(LONG_PTR)site_hwnd == hwnd, "got %p, expected %p\n", (HWND)(LONG_PTR)site_hwnd, hwnd);
+
+        window = NULL;
+        hr = IActiveScriptSiteWindow_GetWindow(site_window, NULL);
+        todo_wine ok(hr == E_POINTER, "got 0x%08x\n", hr);
+        hr = IActiveScriptSiteWindow_GetWindow(site_window, &window);
+        todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+        todo_wine ok(window == hwnd, "got %p, expected %p\n", window, hwnd);
+
+        hr = IActiveScriptSiteWindow_EnableModeless(site_window, FALSE);
+        todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+        hr = IActiveScriptSiteWindow_EnableModeless(site_window, TRUE);
+        todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        site_hwnd = 0xdeadbeef;
+        hr = IScriptControl_put_SitehWnd(sc, 0);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        hr = IScriptControl_get_SitehWnd(sc, &site_hwnd);
+        todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+        todo_wine ok(!site_hwnd, "got %p\n", (HWND)(LONG_PTR)site_hwnd);
+
+        window = (HWND)0xdeadbeef;
+        hr = IActiveScriptSiteWindow_GetWindow(site_window, &window);
+        todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+        todo_wine ok(!window, "got %p\n", window);
+
+        site_hwnd = 0;
+        hr = IScriptControl_put_SitehWnd(sc, (LONG)(LONG_PTR)hwnd);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        hr = IScriptControl_get_SitehWnd(sc, &site_hwnd);
+        todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+        todo_wine ok((HWND)(LONG_PTR)site_hwnd == hwnd, "got %p, expected %p\n", (HWND)(LONG_PTR)site_hwnd, hwnd);
+
+        window = NULL;
+        hr = IActiveScriptSiteWindow_GetWindow(site_window, &window);
+        todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+        todo_wine ok(window == hwnd, "got %p, expected %p\n", window, hwnd);
+
+        hr = IScriptControl_put_AllowUI(sc, VARIANT_FALSE);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IScriptControl_get_SitehWnd(sc, &site_hwnd);
+        todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+        todo_wine ok((HWND)(LONG_PTR)site_hwnd == hwnd, "got %p, expected %p\n", (HWND)(LONG_PTR)site_hwnd, hwnd);
+
+        window = NULL;
+        hr = IActiveScriptSiteWindow_GetWindow(site_window, &window);
+        todo_wine ok(hr == E_FAIL, "got 0x%08x\n", hr);
+        ok(!window, "got %p\n", window);
+
+        hr = IScriptControl_put_AllowUI(sc, VARIANT_TRUE);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        window = NULL;
+        hr = IActiveScriptSiteWindow_GetWindow(site_window, &window);
+        todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+        todo_wine ok(window == hwnd, "got %p, expected %p\n", window, hwnd);
+
+        IActiveScriptSite_Release(site);
+
+        SET_EXPECT(Close);
+        IScriptControl_Release(sc);
+        CHECK_CALLED(Close);
+
+        window = NULL;
+        hr = IActiveScriptSiteWindow_GetWindow(site_window, &window);
+        todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+        todo_wine ok(window == hwnd, "got %p, expected %p\n", window, hwnd);
+
+        IActiveScriptSiteWindow_Release(site_window);
+    }
+
+    DestroyWindow(hwnd);
+}
+
 static void test_UseSafeSubset(void)
 {
     IScriptControl *sc;
@@ -4100,6 +4260,7 @@ START_TEST(msscript)
     test_Reset();
     test_AddObject();
     test_AllowUI();
+    test_SitehWnd();
     test_UseSafeSubset();
     test_State();
     test_IScriptControl_Eval();
