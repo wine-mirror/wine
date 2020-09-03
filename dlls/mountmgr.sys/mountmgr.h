@@ -36,6 +36,8 @@
 extern void initialize_dbus(void) DECLSPEC_HIDDEN;
 extern void initialize_diskarbitration(void) DECLSPEC_HIDDEN;
 
+extern WCHAR *strdupW( const WCHAR * ) DECLSPEC_HIDDEN;
+
 /* device functions */
 
 enum device_type

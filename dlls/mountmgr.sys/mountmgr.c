@@ -836,6 +836,137 @@ static NTSTATUS delete_credential( void *buff, SIZE_T insize, SIZE_T outsize, IO
     CFRelease( item );
     return STATUS_SUCCESS;
 }
+
+static BOOL match_credential( void *data, UInt32 data_len, const WCHAR *filter )
+{
+    int len;
+    WCHAR *targetname;
+    const WCHAR *p;
+    BOOL ret;
+
+    if (!*filter) return TRUE;
+
+    len = MultiByteToWideChar( CP_UTF8, 0, data, data_len, NULL, 0 );
+    if (!(targetname = RtlAllocateHeap( GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) ))) return FALSE;
+    MultiByteToWideChar( CP_UTF8, 0, data, data_len, targetname, len );
+    targetname[len] = 0;
+
+    TRACE( "comparing filter %s to target name %s\n", debugstr_w(filter), debugstr_w(targetname) );
+
+    p = strchrW( filter, '*' );
+    ret = CompareStringW( GetThreadLocale(), NORM_IGNORECASE, filter,
+                          (p && !p[1]) ? p - filter : -1, targetname, (p && !p[1]) ? p - filter : -1 ) == CSTR_EQUAL;
+    RtlFreeHeap( GetProcessHeap(), 0, targetname );
+    return ret;
+}
+
+static NTSTATUS search_credentials( const WCHAR *filter, struct mountmgr_credential_list *list, SIZE_T *ret_count, SIZE_T *ret_size )
+{
+    SecKeychainSearchRef search;
+    SecKeychainItemRef item;
+    int status;
+    ULONG i = 0;
+    SIZE_T data_offset, data_size = 0, size;
+    NTSTATUS ret = STATUS_NOT_FOUND;
+
+    status = SecKeychainSearchCreateFromAttributes( NULL, kSecGenericPasswordItemClass, NULL, &search );
+    if (status != noErr)
+    {
+        ERR( "SecKeychainSearchCreateFromAttributes returned status %d\n", status );
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    while (SecKeychainSearchCopyNext( search, &item ) == noErr)
+    {
+        SecKeychainAttributeInfo info;
+        SecKeychainAttributeList *attr_list;
+        UInt32 info_tags[] = { kSecServiceItemAttr };
+        BOOL match;
+
+        info.count  = ARRAY_SIZE(info_tags);
+        info.tag    = info_tags;
+        info.format = NULL;
+        status = SecKeychainItemCopyAttributesAndData( item, &info, NULL, &attr_list, NULL, NULL );
+        if (status != noErr)
+        {
+            WARN( "SecKeychainItemCopyAttributesAndData returned status %d\n", status );
+            CFRelease( item );
+            continue;
+        }
+        if (attr_list->count != 1 || attr_list->attr[0].tag != kSecServiceItemAttr)
+        {
+            SecKeychainItemFreeAttributesAndData( attr_list, NULL );
+            CFRelease( item );
+            continue;
+        }
+        TRACE( "service item: %.*s\n", (int)attr_list->attr[0].length, (char *)attr_list->attr[0].data );
+
+        match = match_credential( attr_list->attr[0].data, attr_list->attr[0].length, filter );
+        SecKeychainItemFreeAttributesAndData( attr_list, NULL );
+        if (!match)
+        {
+            CFRelease( item );
+            continue;
+        }
+
+        if (!list) ret = fill_credential( item, FALSE, NULL, 0, 0, &size );
+        else
+        {
+            data_offset = FIELD_OFFSET( struct mountmgr_credential_list, creds[list->count] ) -
+                          FIELD_OFFSET( struct mountmgr_credential_list, creds[i] ) + data_size;
+            ret = fill_credential( item, FALSE, &list->creds[i], data_offset, list->size - data_offset, &size );
+        }
+
+        CFRelease( item );
+        if (ret == STATUS_NOT_FOUND) continue;
+        if (ret != STATUS_SUCCESS) break;
+        data_size += size - sizeof(struct mountmgr_credential);
+        i++;
+    }
+
+    if (ret_count) *ret_count = i;
+    if (ret_size) *ret_size = FIELD_OFFSET( struct mountmgr_credential_list, creds[i] ) + data_size;
+
+    CFRelease( search );
+    return ret;
+}
+
+static NTSTATUS enumerate_credentials( void *buff, SIZE_T insize, SIZE_T outsize, IO_STATUS_BLOCK *iosb )
+{
+    struct mountmgr_credential_list *list = buff;
+    WCHAR *filter;
+    SIZE_T size, count;
+    Boolean saved_user_interaction_allowed;
+    NTSTATUS status;
+
+    if (!check_credential_string( buff, insize, list->filter_size, list->filter_offset )) return STATUS_INVALID_PARAMETER;
+    if (!(filter = strdupW( (const WCHAR *)((const char *)list + list->filter_offset) ))) return STATUS_NO_MEMORY;
+
+    SecKeychainGetUserInteractionAllowed( &saved_user_interaction_allowed );
+    SecKeychainSetUserInteractionAllowed( false );
+
+    if ((status = search_credentials( filter, NULL, &count, &size )) == STATUS_SUCCESS)
+    {
+
+        if (size > outsize)
+        {
+            if (size >= sizeof(list->size)) list->size = size;
+            iosb->Information = sizeof(list->size);
+            status = STATUS_MORE_ENTRIES;
+        }
+        else
+        {
+            list->size  = size;
+            list->count = count;
+            iosb->Information = size;
+            status = search_credentials( filter, list, NULL, NULL );
+        }
+    }
+
+    SecKeychainSetUserInteractionAllowed( saved_user_interaction_allowed );
+    RtlFreeHeap( GetProcessHeap(), 0, filter );
+    return status;
+}
 #endif /* __APPLE__ */
 
 /* handler for ioctls on the mount manager device */
@@ -936,6 +1067,17 @@ static NTSTATUS WINAPI mountmgr_ioctl( DEVICE_OBJECT *device, IRP *irp )
                                                     irpsp->Parameters.DeviceIoControl.InputBufferLength,
                                                     irpsp->Parameters.DeviceIoControl.OutputBufferLength,
                                                     &irp->IoStatus );
+        break;
+    case IOCTL_MOUNTMGR_ENUMERATE_CREDENTIALS:
+        if (irpsp->Parameters.DeviceIoControl.InputBufferLength < sizeof(struct mountmgr_credential_list))
+        {
+            irp->IoStatus.u.Status = STATUS_INVALID_PARAMETER;
+            break;
+        }
+        irp->IoStatus.u.Status = enumerate_credentials( irp->AssociatedIrp.SystemBuffer,
+                                                        irpsp->Parameters.DeviceIoControl.InputBufferLength,
+                                                        irpsp->Parameters.DeviceIoControl.OutputBufferLength,
+                                                        &irp->IoStatus );
         break;
 #endif
     default:
