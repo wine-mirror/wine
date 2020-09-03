@@ -59,7 +59,6 @@
 #include "windef.h"
 #include "winnt.h"
 #include "winternl.h"
-#include "wine/library.h"
 #include "wine/exception.h"
 #include "wine/list.h"
 #include "wine/rbtree.h"
@@ -173,12 +172,6 @@ static struct list teb_list = LIST_INIT( teb_list );
 #ifndef MAP_NORESERVE
 #define MAP_NORESERVE 0
 #endif
-#ifndef MAP_TRYFIXED
-#define MAP_TRYFIXED 0
-#endif
-#ifndef MAP_FIXED_NOREPLACE
-#define MAP_FIXED_NOREPLACE 0
-#endif
 
 #ifdef _WIN64  /* on 64-bit the page protection bytes use a 2-level table */
 static const size_t pages_vprot_shift = 20;
@@ -209,6 +202,11 @@ static inline BOOL is_inside_signal_stack( void *ptr )
 {
     return ((char *)ptr >= (char *)get_signal_stack() &&
             (char *)ptr < (char *)get_signal_stack() + signal_stack_size);
+}
+
+static inline BOOL is_beyond_limit( const void *addr, size_t size, const void *limit )
+{
+    return (addr >= limit || (const char *)addr + size > (const char *)limit);
 }
 
 /* mmap() anonymous memory at a fixed address */
@@ -375,6 +373,48 @@ static int mmap_enum_reserved_areas( int (CDECL *enum_func)(void *base, SIZE_T s
     return ret;
 }
 
+static void *anon_mmap_tryfixed( void *start, size_t size, int prot, int flags )
+{
+    void *ptr;
+
+#ifdef MAP_FIXED_NOREPLACE
+    ptr = mmap( start, size, prot, MAP_FIXED_NOREPLACE | MAP_PRIVATE | MAP_ANON | flags, -1, 0 );
+#elif defined(MAP_TRYFIXED)
+    ptr = mmap( start, size, prot, MAP_TRYFIXED | MAP_PRIVATE | MAP_ANON | flags, -1, 0 );
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
+    ptr = mmap( start, size, prot, MAP_FIXED | MAP_EXCL | MAP_PRIVATE | MAP_ANON | flags, -1, 0 );
+    if (ptr == MAP_FAILED && errno == EINVAL) errno = EEXIST;
+#elif defined(__APPLE__)
+    mach_vm_address_t result = (mach_vm_address_t)start;
+    kern_return_t ret = mach_vm_map( mach_task_self(), &result, size, 0, VM_FLAGS_FIXED,
+                                     MEMORY_OBJECT_NULL, 0, 0, prot, VM_PROT_ALL, VM_INHERIT_COPY );
+
+    if (!ret)
+    {
+        if ((ptr = anon_mmap_fixed( start, size, prot, flags )) == MAP_FAILED)
+            mach_vm_deallocate( mach_task_self(), result, size );
+    }
+    else
+    {
+        errno = (ret == KERN_NO_SPACE ? EEXIST : ENOMEM);
+        ptr = MAP_FAILED;
+    }
+#else
+    ptr = mmap( start, size, prot, MAP_PRIVATE | MAP_ANON | flags, -1, 0 );
+#endif
+    if (ptr != MAP_FAILED && ptr != start)
+    {
+        if (is_beyond_limit( ptr, size, user_space_limit ))
+        {
+            anon_mmap_fixed( ptr, size, PROT_NONE, MAP_NORESERVE );
+            mmap_add_reserved_area( ptr, size );
+        }
+        else munmap( ptr, size );
+        ptr = MAP_FAILED;
+        errno = EEXIST;
+    }
+    return ptr;
+}
 
 static void reserve_area( void *addr, void *end )
 {
@@ -432,23 +472,15 @@ static void reserve_area( void *addr, void *end )
     }
 #else
     void *ptr;
-    int flags = MAP_PRIVATE | MAP_ANON | MAP_NORESERVE | MAP_TRYFIXED;
     size_t size = (char *)end - (char *)addr;
 
     if (!size) return;
 
-#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
-    ptr = mmap( addr, size, PROT_NONE, flags | MAP_FIXED | MAP_EXCL, -1, 0 );
-#else
-    ptr = mmap( addr, size, PROT_NONE, flags, -1, 0 );
-#endif
-    if (ptr == addr)
+    if ((ptr = anon_mmap_tryfixed( addr, size, PROT_NONE, MAP_NORESERVE )) != MAP_FAILED)
     {
         mmap_add_reserved_area( addr, size );
         return;
     }
-    if (ptr != (void *)-1) munmap( ptr, size );
-
     size = (size / 2) & ~granularity_mask;
     if (size)
     {
@@ -1028,20 +1060,14 @@ static void* try_map_free_area( void *base, void *end, ptrdiff_t step,
 
     while (start && base <= start && (char*)start + size <= (char*)end)
     {
-        if ((ptr = wine_anon_mmap( start, size, unix_prot, MAP_FIXED_NOREPLACE )) == start)
-            return start;
+        if ((ptr = anon_mmap_tryfixed( start, size, unix_prot, 0 )) != MAP_FAILED) return start;
         TRACE( "Found free area is already mapped, start %p.\n", start );
-
-        if (ptr == (void *)-1 && errno != EEXIST)
+        if (errno != EEXIST)
         {
-            ERR( "wine_anon_mmap() error %s, range %p-%p, unix_prot %#x.\n",
-                    strerror(errno), start, (char *)start + size, unix_prot );
+            ERR( "mmap() error %s, range %p-%p, unix_prot %#x.\n",
+                 strerror(errno), start, (char *)start + size, unix_prot );
             return NULL;
         }
-
-        if (ptr != (void *)-1)
-            munmap( ptr, size );
-
         if ((step > 0 && (char *)end - (char *)start < step) ||
             (step < 0 && (char *)start - (char *)base < -step) ||
             step == 0)
@@ -1240,17 +1266,6 @@ static int CDECL get_area_boundary_callback( void *start, SIZE_T size, void *arg
     }
     area->boundary = start;
     return 1;
-}
-
-
-/***********************************************************************
- *           is_beyond_limit
- *
- * Check if an address range goes beyond a given limit.
- */
-static inline BOOL is_beyond_limit( const void *addr, size_t size, const void *limit )
-{
-    return (addr >= limit || (const char *)addr + size > (const char *)limit);
 }
 
 
@@ -1678,17 +1693,11 @@ static NTSTATUS map_fixed_area( void *base, size_t size, unsigned int vprot )
         return status;
     }
     case 0:  /* not in a reserved area, do a normal allocation */
-        if ((ptr = wine_anon_mmap( base, size, get_unix_prot(vprot), 0 )) == (void *)-1)
+        if ((ptr = anon_mmap_tryfixed( base, size, get_unix_prot(vprot), 0 )) == MAP_FAILED)
         {
             if (errno == ENOMEM) return STATUS_NO_MEMORY;
+            if (errno == EEXIST) return STATUS_CONFLICTING_ADDRESSES;
             return STATUS_INVALID_PARAMETER;
-        }
-        if (ptr != base)
-        {
-            /* We couldn't get the address we wanted */
-            if (is_beyond_limit( ptr, size, user_space_limit )) add_reserved_area( ptr, size );
-            else munmap( ptr, size );
-            return STATUS_CONFLICTING_ADDRESSES;
         }
         break;
 
@@ -1917,20 +1926,16 @@ static NTSTATUS allocate_dos_memory( struct file_view **view, unsigned int vprot
 
     if (mmap_is_in_reserved_area( low_64k, dosmem_size - 0x10000 ) != 1)
     {
-        addr = wine_anon_mmap( low_64k, dosmem_size - 0x10000, unix_prot, 0 );
-        if (addr != low_64k)
-        {
-            if (addr != (void *)-1) munmap( addr, dosmem_size - 0x10000 );
-            return map_view( view, NULL, dosmem_size, FALSE, vprot, 0 );
-        }
+        addr = anon_mmap_tryfixed( low_64k, dosmem_size - 0x10000, unix_prot, 0 );
+        if (addr == MAP_FAILED) return map_view( view, NULL, dosmem_size, FALSE, vprot, 0 );
     }
 
     /* now try to allocate the low 64K too */
 
     if (mmap_is_in_reserved_area( NULL, 0x10000 ) != 1)
     {
-        addr = wine_anon_mmap( (void *)page_size, 0x10000 - page_size, unix_prot, 0 );
-        if (addr == (void *)page_size)
+        addr = anon_mmap_tryfixed( (void *)page_size, 0x10000 - page_size, unix_prot, 0 );
+        if (addr != MAP_FAILED)
         {
             if (!anon_mmap_fixed( NULL, page_size, unix_prot, 0 ))
             {
@@ -1941,7 +1946,6 @@ static NTSTATUS allocate_dos_memory( struct file_view **view, unsigned int vprot
         }
         else
         {
-            if (addr != (void *)-1) munmap( addr, 0x10000 - page_size );
             addr = low_64k;
             TRACE( "failed to map low 64K range\n" );
         }
