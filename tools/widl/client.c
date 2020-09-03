@@ -61,8 +61,7 @@ static void write_client_func_decl( const type_t *iface, const var_t *func )
     fprintf(client, " %s ", callconv);
     fprintf(client, "%s%s(\n", prefix_client, get_name(func));
     indent++;
-    if (args)
-        write_args(client, args, iface->name, 0, TRUE);
+    if (args) write_args(client, args, iface->name, 0, TRUE, NAME_DEFAULT);
     else
         print_client("void");
     fprintf(client, ")\n");
