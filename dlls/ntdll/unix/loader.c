@@ -87,7 +87,6 @@
 #include "winternl.h"
 #include "unix_private.h"
 #include "wine/list.h"
-#include "wine/library.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(module);
@@ -814,6 +813,48 @@ static void load_builtin_callback( void *module, const char *filename )
 {
     callback_module = module;
 }
+
+
+/***********************************************************************
+ *           load_libwine
+ */
+static void load_libwine(void)
+{
+#ifdef __APPLE__
+#define LIBWINE "libwine.1.dylib"
+#elif defined(__ANDROID__)
+#define LIBWINE "libwine.so"
+#else
+#define LIBWINE "libwine.so.1"
+#endif
+    typedef void (*load_dll_callback_t)( void *, const char * );
+    static void (*p_wine_dll_set_callback)( load_dll_callback_t load );
+    static int *p___wine_main_argc;
+    static char ***p___wine_main_argv;
+    static char ***p___wine_main_environ;
+    static WCHAR ***p___wine_main_wargv;
+
+    char *path;
+    void *handle;
+
+    if (build_dir) path = build_path( build_dir, "libs/wine/" LIBWINE );
+    else path = build_path( dll_dir, "../" LIBWINE );
+
+    if (!(handle = dlopen( path, RTLD_NOW )) && !(handle = dlopen( LIBWINE, RTLD_NOW ))) return;
+
+    p_wine_dll_set_callback = dlsym( handle, "wine_dll_set_callback" );
+    p___wine_main_argc      = dlsym( handle, "__wine_main_argc" );
+    p___wine_main_argv      = dlsym( handle, "__wine_main_argv" );
+    p___wine_main_wargv     = dlsym( handle, "__wine_main_wargv" );
+    p___wine_main_environ   = dlsym( handle, "__wine_main_environ" );
+
+    if (p_wine_dll_set_callback) p_wine_dll_set_callback( load_builtin_callback );
+    if (p___wine_main_argc) *p___wine_main_argc = main_argc;
+    if (p___wine_main_argv) *p___wine_main_argv = main_argv;
+    if (p___wine_main_wargv) *p___wine_main_wargv = main_wargv;
+    if (p___wine_main_environ) *p___wine_main_environ = main_envp;
+}
+
 
 /***********************************************************************
  *           dlopen_dll
@@ -1610,7 +1651,7 @@ void __wine_main( int argc, char *argv[], char *envp[] )
     load_ntdll();
 
     init_environment( argc, argv, envp );
-    wine_dll_set_callback( load_builtin_callback );
+    load_libwine();
 
 #ifdef __APPLE__
     apple_main_thread();
