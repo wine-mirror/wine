@@ -211,6 +211,11 @@ static inline BOOL is_inside_signal_stack( void *ptr )
             (char *)ptr < (char *)get_signal_stack() + signal_stack_size);
 }
 
+/* mmap() anonymous memory at a fixed address */
+void *anon_mmap_fixed( void *start, size_t size, int prot, int flags )
+{
+    return mmap( start, size, prot, MAP_PRIVATE | MAP_ANON | MAP_FIXED | flags, -1, 0 );
+}
 
 static void mmap_add_reserved_area( void *addr, SIZE_T size )
 {
@@ -1163,7 +1168,7 @@ static void add_reserved_area( void *addr, size_t size )
         addr = user_space_limit;
     }
     /* blow away existing mappings */
-    wine_anon_mmap( addr, size, PROT_NONE, MAP_NORESERVE | MAP_FIXED );
+    anon_mmap_fixed( addr, size, PROT_NONE, MAP_NORESERVE );
     mmap_add_reserved_area( addr, size );
 }
 
@@ -1266,7 +1271,7 @@ static inline void unmap_area( void *addr, size_t size )
         break;
     }
     case 1:  /* in a reserved area */
-        wine_anon_mmap( addr, size, PROT_NONE, MAP_NORESERVE | MAP_FIXED );
+        anon_mmap_fixed( addr, size, PROT_NONE, MAP_NORESERVE );
         break;
     default:
     case 0:  /* not in a reserved area */
@@ -1684,7 +1689,7 @@ static NTSTATUS map_fixed_area( void *base, size_t size, unsigned int vprot )
     case 1:  /* in a reserved area, make sure the address is available */
         if (find_view_range( base, size )) return STATUS_CONFLICTING_ADDRESSES;
         /* replace the reserved area by our mapping */
-        if ((ptr = wine_anon_mmap( base, size, get_unix_prot(vprot), MAP_FIXED )) != base)
+        if ((ptr = anon_mmap_fixed( base, size, get_unix_prot(vprot), 0 )) != base)
             return STATUS_INVALID_PARAMETER;
         break;
     }
@@ -1725,7 +1730,7 @@ static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size,
         {
             ptr = alloc.result;
             TRACE( "got mem in reserved area %p-%p\n", ptr, (char *)ptr + size );
-            if (wine_anon_mmap( ptr, size, get_unix_prot(vprot), MAP_FIXED ) != ptr)
+            if (anon_mmap_fixed( ptr, size, get_unix_prot(vprot), 0 ) != ptr)
                 return STATUS_INVALID_PARAMETER;
             goto done;
         }
@@ -1817,8 +1822,8 @@ static NTSTATUS map_file_into_view( struct file_view *view, int fd, size_t start
     }
 
     /* Reserve the memory with an anonymous mmap */
-    ptr = wine_anon_mmap( (char *)view->base + start, size, PROT_READ | PROT_WRITE, MAP_FIXED );
-    if (ptr == (void *)-1) return STATUS_NO_MEMORY;
+    ptr = anon_mmap_fixed( (char *)view->base + start, size, PROT_READ | PROT_WRITE, 0 );
+    if (ptr == MAP_FAILED) return STATUS_NO_MEMORY;
     /* Now read in the file */
     pread( fd, ptr, size, offset );
     if (prot != (PROT_READ|PROT_WRITE)) mprotect( ptr, size, prot );  /* Set the right protection */
@@ -1875,7 +1880,7 @@ static SIZE_T get_committed_size( struct file_view *view, void *base, BYTE *vpro
  */
 static NTSTATUS decommit_pages( struct file_view *view, size_t start, size_t size )
 {
-    if (wine_anon_mmap( (char *)view->base + start, size, PROT_NONE, MAP_FIXED ) != (void *)-1)
+    if (anon_mmap_fixed( (char *)view->base + start, size, PROT_NONE, 0 ) != MAP_FAILED)
     {
         set_page_vprot_bits( (char *)view->base + start, size, 0, VPROT_COMMITTED );
         return STATUS_SUCCESS;
@@ -1920,7 +1925,7 @@ static NTSTATUS allocate_dos_memory( struct file_view **view, unsigned int vprot
         addr = wine_anon_mmap( (void *)page_size, 0x10000 - page_size, unix_prot, 0 );
         if (addr == (void *)page_size)
         {
-            if (!wine_anon_mmap( NULL, page_size, unix_prot, MAP_FIXED ))
+            if (!anon_mmap_fixed( NULL, page_size, unix_prot, 0 ))
             {
                 addr = NULL;
                 TRACE( "successfully mapped low 64K range\n" );
@@ -1938,7 +1943,7 @@ static NTSTATUS allocate_dos_memory( struct file_view **view, unsigned int vprot
     /* now reserve the whole range */
 
     size = (char *)dosmem_size - (char *)addr;
-    wine_anon_mmap( addr, size, unix_prot, MAP_FIXED );
+    anon_mmap_fixed( addr, size, unix_prot, 0 );
     return create_view( view, addr, size, vprot );
 }
 
@@ -2350,9 +2355,8 @@ static int CDECL alloc_virtual_heap( void *base, SIZE_T size, void *arg )
     if (is_beyond_limit( base, size, address_space_limit )) address_space_limit = (char *)base + size;
     if (size < alloc->size) return 0;
     if (is_win64 && base < (void *)0x80000000) return 0;
-    alloc->base = wine_anon_mmap( (char *)base + size - alloc->size, alloc->size,
-                                  PROT_READ|PROT_WRITE, MAP_FIXED );
-    return (alloc->base != (void *)-1);
+    alloc->base = anon_mmap_fixed( (char *)base + size - alloc->size, alloc->size, PROT_READ|PROT_WRITE, 0 );
+    return (alloc->base != MAP_FAILED);
 }
 
 /***********************************************************************
@@ -2417,7 +2421,7 @@ void virtual_init(void)
     /* make the DOS area accessible (except the low 64K) to hide bugs in broken apps like Excel 2003 */
     size = (char *)address_space_start - (char *)0x10000;
     if (size && mmap_is_in_reserved_area( (void*)0x10000, size ) == 1)
-        wine_anon_mmap( (void *)0x10000, size, PROT_READ | PROT_WRITE, MAP_FIXED );
+        anon_mmap_fixed( (void *)0x10000, size, PROT_READ | PROT_WRITE, 0 );
 }
 
 
