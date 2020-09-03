@@ -81,6 +81,8 @@ static var_t *reg_const(var_t *var);
 
 static void push_namespace(const char *name);
 static void pop_namespace(const char *name);
+static void init_lookup_namespace(const char *name);
+static void push_lookup_namespace(const char *name);
 
 static void check_arg_attrs(const var_t *arg);
 static void check_statements(const statement_list_t *stmts, int is_inside_library);
@@ -122,6 +124,7 @@ static struct namespace global_namespace = {
 };
 
 static struct namespace *current_namespace = &global_namespace;
+static struct namespace *lookup_namespace = &global_namespace;
 
 static typelib_t *current_typelib;
 
@@ -156,7 +159,7 @@ static typelib_t *current_typelib;
 }
 
 %token <str> aIDENTIFIER aPRAGMA
-%token <str> aKNOWNTYPE
+%token <str> aKNOWNTYPE aNAMESPACE
 %token <num> aNUM aHEXNUM
 %token <dbl> aDOUBLE
 %token <str> aSTRING aWSTRING aSQSTRING
@@ -271,7 +274,7 @@ static typelib_t *current_typelib;
 %type <str> namespacedef
 %type <type> base_type int_std
 %type <type> enumdef structdef uniondef typedecl
-%type <type> type
+%type <type> type qualified_seq qualified_type
 %type <ifref> coclass_int
 %type <ifref_list> coclass_ints
 %type <var> arg ne_union_field union_field s_field case enum declaration
@@ -817,6 +820,16 @@ int_std:  tINT					{ $$ = type_new_int(TYPE_BASIC_INT, 0); }
 	| tINT3264				{ $$ = type_new_int(TYPE_BASIC_INT3264, 0); }
 	;
 
+qualified_seq:
+      aKNOWNTYPE      { $$ = find_type_or_error($1, 0); }
+    | aIDENTIFIER '.' { push_lookup_namespace($1); } qualified_seq { $$ = $4; }
+    ;
+
+qualified_type:
+      aKNOWNTYPE     { $$ = find_type_or_error($1, 0); }
+    | aNAMESPACE '.' { init_lookup_namespace($1); } qualified_seq { $$ = $4; }
+    ;
+
 coclass:  tCOCLASS aIDENTIFIER			{ $$ = type_new_coclass($2); }
 	| tCOCLASS aKNOWNTYPE			{ $$ = find_type($2, NULL, 0);
 						  if (type_get_type_detect_alias($$) != TYPE_COCLASS)
@@ -837,6 +850,7 @@ coclassdef: coclasshdr '{' coclass_ints '}' semicolon_opt
 	;
 
 namespacedef: tNAMESPACE aIDENTIFIER		{ $$ = $2; }
+	| tNAMESPACE aNAMESPACE                 { $$ = $2; }
 	;
 
 coclass_ints:					{ $$ = NULL; }
@@ -881,7 +895,7 @@ dispinterfacedef: dispinterfacehdr '{'
 	;
 
 inherit:					{ $$ = NULL; }
-	| ':' aKNOWNTYPE			{ $$ = find_type_or_error2($2, 0); }
+	| ':' qualified_type                    { $$ = $2; }
 	;
 
 interface: tINTERFACE aIDENTIFIER		{ $$ = get_type(TYPE_INTERFACE, $2, current_namespace, 0); }
@@ -1096,7 +1110,7 @@ structdef: tSTRUCT t_ident '{' fields '}'	{ $$ = type_new_struct($2, current_nam
 	;
 
 type:	  tVOID					{ $$ = type_new_void(); }
-	| aKNOWNTYPE				{ $$ = find_type_or_error($1, 0); }
+	| qualified_type                        { $$ = $1; }
 	| base_type				{ $$ = $1; }
 	| enumdef				{ $$ = $1; }
 	| tENUM aIDENTIFIER			{ $$ = type_new_enum($2, current_namespace, FALSE, NULL); }
@@ -1848,6 +1862,20 @@ static void pop_namespace(const char *name)
   current_namespace = current_namespace->parent;
 }
 
+static void init_lookup_namespace(const char *name)
+{
+    if (!(lookup_namespace = find_sub_namespace(&global_namespace, name)))
+        error_loc("namespace '%s' not found\n", name);
+}
+
+static void push_lookup_namespace(const char *name)
+{
+    struct namespace *namespace;
+    if (!(namespace = find_sub_namespace(lookup_namespace, name)))
+        error_loc("namespace '%s' not found\n", name);
+    lookup_namespace = namespace;
+}
+
 struct rtype {
   const char *name;
   type_t *type;
@@ -1959,12 +1987,14 @@ type_t *find_type(const char *name, struct namespace *namespace, int t)
 
 static type_t *find_type_or_error(const char *name, int t)
 {
-  type_t *type = find_type(name, current_namespace, t);
-  if (!type) {
-    error_loc("type '%s' not found\n", name);
-    return NULL;
-  }
-  return type;
+    type_t *type;
+    if (!(type = find_type(name, current_namespace, t)) &&
+        !(type = find_type(name, lookup_namespace, t)))
+    {
+        error_loc("type '%s' not found\n", name);
+        return NULL;
+    }
+    return type;
 }
 
 static type_t *find_type_or_error2(char *name, int t)
@@ -1976,7 +2006,15 @@ static type_t *find_type_or_error2(char *name, int t)
 
 int is_type(const char *name)
 {
-  return find_type(name, current_namespace, 0) != NULL;
+    return find_type(name, current_namespace, 0) != NULL ||
+           find_type(name, lookup_namespace, 0) != NULL;
+}
+
+int is_namespace(const char *name)
+{
+    if (!winrt_mode) return 0;
+    return find_sub_namespace(current_namespace, name) != NULL ||
+           find_sub_namespace(&global_namespace, name) != NULL;
 }
 
 type_t *get_type(enum type_type type, char *name, struct namespace *namespace, int t)

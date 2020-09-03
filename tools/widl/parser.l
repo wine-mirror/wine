@@ -451,7 +451,7 @@ static int kw_token(const char *kw)
 		return kwp->token;
 	}
 	parser_lval.str = xstrdup(kw);
-	return is_type(kw) ? aKNOWNTYPE : aIDENTIFIER;
+	return is_type(kw) ? aKNOWNTYPE : is_namespace(kw) ? aNAMESPACE : aIDENTIFIER;
 }
 
 static int attr_token(const char *kw)
