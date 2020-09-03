@@ -775,9 +775,9 @@ static HRESULT WINAPI ActiveScriptSiteWindow_EnableModeless(IActiveScriptSiteWin
 {
     ScriptHost *This = impl_from_IActiveScriptSiteWindow(iface);
 
-    FIXME("(%p, %d)\n", This, enable);
+    FIXME("(%p, %d): stub\n", This, enable);
 
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static const IActiveScriptSiteWindowVtbl ActiveScriptSiteWindowVtbl = {

@@ -2000,9 +2000,9 @@ static void test_SitehWnd(void)
         ok(window == hwnd, "got %p, expected %p\n", window, hwnd);
 
         hr = IActiveScriptSiteWindow_EnableModeless(site_window, FALSE);
-        todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
         hr = IActiveScriptSiteWindow_EnableModeless(site_window, TRUE);
-        todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
 
         site_hwnd = 0xdeadbeef;
         hr = IScriptControl_put_SitehWnd(sc, 0);
