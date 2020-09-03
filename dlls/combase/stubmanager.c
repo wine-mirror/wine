@@ -137,14 +137,11 @@ static void stub_manager_delete_ifstub(struct stub_manager *m, struct ifstub *if
 
 static struct ifstub *stub_manager_ipid_to_ifstub(struct stub_manager *m, const IPID *ipid)
 {
-    struct list    *cursor;
-    struct ifstub  *result = NULL;
+    struct ifstub *result = NULL, *ifstub;
 
     EnterCriticalSection(&m->lock);
-    LIST_FOR_EACH( cursor, &m->ifstubs )
+    LIST_FOR_EACH_ENTRY(ifstub, &m->ifstubs, struct ifstub, entry)
     {
-        struct ifstub *ifstub = LIST_ENTRY( cursor, struct ifstub, entry );
-
         if (IsEqualGUID(ipid, &ifstub->ipid))
         {
             result = ifstub;
@@ -337,8 +334,7 @@ ULONG stub_manager_int_release(struct stub_manager *m)
  * it must also call release on the stub manager when it is no longer needed */
 struct stub_manager * get_stub_manager_from_object(struct apartment *apt, IUnknown *obj, BOOL alloc)
 {
-    struct stub_manager *result = NULL;
-    struct list         *cursor;
+    struct stub_manager *result = NULL, *m;
     IUnknown *object;
     HRESULT hres;
 
@@ -350,10 +346,8 @@ struct stub_manager * get_stub_manager_from_object(struct apartment *apt, IUnkno
     }
 
     EnterCriticalSection(&apt->cs);
-    LIST_FOR_EACH(cursor, &apt->stubmgrs)
+    LIST_FOR_EACH_ENTRY(m, &apt->stubmgrs, struct stub_manager, entry)
     {
-        struct stub_manager *m = LIST_ENTRY( cursor, struct stub_manager, entry );
-
         if (m->object == object)
         {
             result = m;
@@ -386,14 +380,11 @@ struct stub_manager * get_stub_manager_from_object(struct apartment *apt, IUnkno
  * it must also call release on the stub manager when it is no longer needed */
 struct stub_manager * get_stub_manager(struct apartment *apt, OID oid)
 {
-    struct stub_manager *result = NULL;
-    struct list         *cursor;
+    struct stub_manager *result = NULL, *m;
 
     EnterCriticalSection(&apt->cs);
-    LIST_FOR_EACH(cursor, &apt->stubmgrs)
+    LIST_FOR_EACH_ENTRY(m, &apt->stubmgrs, struct stub_manager, entry)
     {
-        struct stub_manager *m = LIST_ENTRY(cursor, struct stub_manager, entry);
-
         if (m->oid == oid)
         {
             result = m;
@@ -480,14 +471,11 @@ ULONG stub_manager_ext_release(struct stub_manager *m, ULONG refs, BOOL tablewea
  * it must also call release on the stub manager when it is no longer needed */
 static struct stub_manager *get_stub_manager_from_ipid(struct apartment *apt, const IPID *ipid, struct ifstub **ifstub)
 {
-    struct stub_manager *result = NULL;
-    struct list         *cursor;
+    struct stub_manager *result = NULL, *m;
 
     EnterCriticalSection(&apt->cs);
-    LIST_FOR_EACH(cursor, &apt->stubmgrs)
+    LIST_FOR_EACH_ENTRY(m, &apt->stubmgrs, struct stub_manager, entry)
     {
-        struct stub_manager *m = LIST_ENTRY(cursor, struct stub_manager, entry);
-
         if ((*ifstub = stub_manager_ipid_to_ifstub(m, ipid)))
         {
             result = m;

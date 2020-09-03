@@ -1803,12 +1803,11 @@ static HRESULT proxy_manager_create_ifproxy(
 static HRESULT proxy_manager_find_ifproxy(struct proxy_manager * This, REFIID riid, struct ifproxy ** ifproxy_found)
 {
     HRESULT hr = E_NOINTERFACE; /* assume not found */
-    struct list * cursor;
+    struct ifproxy *ifproxy;
 
     EnterCriticalSection(&This->cs);
-    LIST_FOR_EACH(cursor, &This->interfaces)
+    LIST_FOR_EACH_ENTRY(ifproxy, &This->interfaces, struct ifproxy, entry)
     {
-        struct ifproxy * ifproxy = LIST_ENTRY(cursor, struct ifproxy, entry);
         if (IsEqualIID(riid, &ifproxy->iid))
         {
             *ifproxy_found = ifproxy;
@@ -1823,7 +1822,7 @@ static HRESULT proxy_manager_find_ifproxy(struct proxy_manager * This, REFIID ri
 
 static void proxy_manager_disconnect(struct proxy_manager * This)
 {
-    struct list * cursor;
+    struct ifproxy *ifproxy;
 
     TRACE("oxid = %s, oid = %s\n", wine_dbgstr_longlong(This->oxid),
         wine_dbgstr_longlong(This->oid));
@@ -1836,9 +1835,8 @@ static void proxy_manager_disconnect(struct proxy_manager * This)
      * working */
     if (!(This->sorflags & SORFP_NOLIFETIMEMGMT))
     {
-        LIST_FOR_EACH(cursor, &This->interfaces)
+        LIST_FOR_EACH_ENTRY(ifproxy, &This->interfaces, struct ifproxy, entry)
         {
-            struct ifproxy * ifproxy = LIST_ENTRY(cursor, struct ifproxy, entry);
             ifproxy_disconnect(ifproxy);
         }
     }
@@ -1963,13 +1961,12 @@ static void proxy_manager_destroy(struct proxy_manager * This)
  * reference to the proxy_manager when the object is no longer used. */
 static BOOL find_proxy_manager(struct apartment * apt, OXID oxid, OID oid, struct proxy_manager ** proxy_found)
 {
+    struct proxy_manager *proxy;
     BOOL found = FALSE;
-    struct list * cursor;
 
     EnterCriticalSection(&apt->cs);
-    LIST_FOR_EACH(cursor, &apt->proxies)
+    LIST_FOR_EACH_ENTRY(proxy, &apt->proxies, struct proxy_manager, entry)
     {
-        struct proxy_manager * proxy = LIST_ENTRY(cursor, struct proxy_manager, entry);
         if ((oxid == proxy->oxid) && (oid == proxy->oid))
         {
             /* be careful of a race with ClientIdentity_Release, which would
@@ -1989,11 +1986,10 @@ static BOOL find_proxy_manager(struct apartment * apt, OXID oxid, OID oid, struc
 
 HRESULT apartment_disconnectproxies(struct apartment *apt)
 {
-    struct list * cursor;
+    struct proxy_manager *proxy;
 
-    LIST_FOR_EACH(cursor, &apt->proxies)
+    LIST_FOR_EACH_ENTRY(proxy, &apt->proxies, struct proxy_manager, entry)
     {
-        struct proxy_manager * proxy = LIST_ENTRY(cursor, struct proxy_manager, entry);
         proxy_manager_disconnect(proxy);
     }
 

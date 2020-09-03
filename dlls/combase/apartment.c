@@ -629,13 +629,11 @@ struct apartment * apartment_get_current_or_mta(void)
 /* The given OXID must be local to this process */
 struct apartment * apartment_findfromoxid(OXID oxid)
 {
-    struct apartment *result = NULL;
-    struct list *cursor;
+    struct apartment *result = NULL, *apt;
 
     EnterCriticalSection(&apt_cs);
-    LIST_FOR_EACH( cursor, &apts )
+    LIST_FOR_EACH_ENTRY(apt, &apts, struct apartment, entry)
     {
-        struct apartment *apt = LIST_ENTRY( cursor, struct apartment, entry );
         if (apt->oxid == oxid)
         {
             result = apt;
@@ -653,13 +651,11 @@ struct apartment * apartment_findfromoxid(OXID oxid)
  * is no longer required. */
 struct apartment * apartment_findfromtid(DWORD tid)
 {
-    struct apartment *result = NULL;
-    struct list *cursor;
+    struct apartment *result = NULL, *apt;
 
     EnterCriticalSection(&apt_cs);
-    LIST_FOR_EACH( cursor, &apts )
+    LIST_FOR_EACH_ENTRY(apt, &apts, struct apartment, entry)
     {
-        struct apartment *apt = LIST_ENTRY( cursor, struct apartment, entry );
         if (apt->tid == tid)
         {
             result = apt;
