@@ -731,6 +731,94 @@ static NTSTATUS read_credential( void *buff, SIZE_T insize, SIZE_T outsize, IO_S
     iosb->Information = size;
     return (size > outsize) ? STATUS_BUFFER_OVERFLOW : STATUS_SUCCESS;
 }
+
+static NTSTATUS write_credential( void *buff, SIZE_T insize, SIZE_T outsize, IO_STATUS_BLOCK *iosb )
+{
+    const struct mountmgr_credential *cred = buff;
+    int status, len, len_password = 0;
+    const WCHAR *ptr;
+    SecKeychainItemRef keychain_item;
+    char *targetname, *username = NULL, *password = NULL;
+    SecKeychainAttribute attrs[1];
+    SecKeychainAttributeList attr_list;
+    NTSTATUS ret = STATUS_NO_MEMORY;
+
+    if (!check_credential_string( buff, insize, cred->targetname_size, cred->targetname_offset ) ||
+        !check_credential_string( buff, insize, cred->username_size, cred->username_offset ) ||
+        ((cred->blob_size && cred->blob_size % sizeof(WCHAR)) || cred->blob_offset + cred->blob_size > insize) ||
+        (cred->comment_size && !check_credential_string( buff, insize, cred->comment_size, cred->comment_offset )) ||
+        sizeof(*cred) + cred->targetname_size + cred->username_size + cred->blob_size + cred->comment_size > insize)
+    {
+        return STATUS_INVALID_PARAMETER;
+    }
+
+    ptr = (const WCHAR *)((const char *)cred + cred->targetname_offset);
+    len = WideCharToMultiByte( CP_UTF8, 0, ptr, -1, NULL, 0, NULL, NULL );
+    if (!(targetname = RtlAllocateHeap( GetProcessHeap(), 0, len ))) goto error;
+    WideCharToMultiByte( CP_UTF8, 0, ptr, -1, targetname, len, NULL, NULL );
+
+    ptr = (const WCHAR *)((const char *)cred + cred->username_offset);
+    len = WideCharToMultiByte( CP_UTF8, 0, ptr, -1, NULL, 0, NULL, NULL );
+    if (!(username = RtlAllocateHeap( GetProcessHeap(), 0, len ))) goto error;
+    WideCharToMultiByte( CP_UTF8, 0, ptr, -1, username, len, NULL, NULL );
+
+    if (cred->blob_size)
+    {
+        ptr = (const WCHAR *)((const char *)cred + cred->blob_offset);
+        len_password = WideCharToMultiByte( CP_UTF8, 0, ptr, cred->blob_size / sizeof(WCHAR), NULL, 0, NULL, NULL );
+        if (!(password = RtlAllocateHeap( GetProcessHeap(), 0, len_password ))) goto error;
+        WideCharToMultiByte( CP_UTF8, 0, ptr, cred->blob_size / sizeof(WCHAR), password, len_password, NULL, NULL );
+    }
+
+    TRACE("adding target %s, username %s using Keychain\n", targetname, username );
+    status = SecKeychainAddGenericPassword( NULL, strlen(targetname), targetname, strlen(username), username,
+                                            len_password, password, &keychain_item );
+    if (status != noErr) ERR( "SecKeychainAddGenericPassword returned %d\n", status );
+    if (status == errSecDuplicateItem)
+    {
+        status = SecKeychainFindGenericPassword( NULL, strlen(targetname), targetname, strlen(username), username, NULL,
+                                                 NULL, &keychain_item );
+        if (status != noErr) ERR( "SecKeychainFindGenericPassword returned %d\n", status );
+    }
+    RtlFreeHeap( GetProcessHeap(), 0, username );
+    RtlFreeHeap( GetProcessHeap(), 0, targetname );
+    if (status != noErr)
+    {
+        RtlFreeHeap( GetProcessHeap(), 0, password );
+        return STATUS_UNSUCCESSFUL;
+    }
+    if (cred->comment_size)
+    {
+        attr_list.count = 1;
+        attr_list.attr  = attrs;
+        attrs[0].tag    = kSecCommentItemAttr;
+        ptr = (const WCHAR *)((const char *)cred + cred->comment_offset);
+        attrs[0].length = WideCharToMultiByte( CP_UTF8, 0, ptr, -1, NULL, 0, NULL, NULL );
+        if (attrs[0].length) attrs[0].length--;
+        if (!(attrs[0].data = RtlAllocateHeap( GetProcessHeap(), 0, attrs[0].length ))) goto error;
+        WideCharToMultiByte( CP_UTF8, 0, ptr, -1, attrs[0].data, attrs[0].length, NULL, NULL );
+    }
+    else
+    {
+        attr_list.count = 0;
+        attr_list.attr  = NULL;
+    }
+    status = SecKeychainItemModifyAttributesAndData( keychain_item, &attr_list, cred->blob_preserve ? 0 : len_password,
+                                                     cred->blob_preserve ? NULL : password );
+
+    if (cred->comment_size) RtlFreeHeap( GetProcessHeap(), 0, attrs[0].data );
+    RtlFreeHeap( GetProcessHeap(), 0, password );
+    /* FIXME: set TargetAlias attribute */
+    CFRelease( keychain_item );
+    if (status != noErr) return STATUS_UNSUCCESSFUL;
+    return STATUS_SUCCESS;
+
+error:
+    RtlFreeHeap( GetProcessHeap(), 0, username );
+    RtlFreeHeap( GetProcessHeap(), 0, targetname );
+    RtlFreeHeap( GetProcessHeap(), 0, password );
+    return ret;
+}
 #endif /* __APPLE__ */
 
 /* handler for ioctls on the mount manager device */
@@ -809,6 +897,17 @@ static NTSTATUS WINAPI mountmgr_ioctl( DEVICE_OBJECT *device, IRP *irp )
                                                   irpsp->Parameters.DeviceIoControl.InputBufferLength,
                                                   irpsp->Parameters.DeviceIoControl.OutputBufferLength,
                                                   &irp->IoStatus );
+        break;
+    case IOCTL_MOUNTMGR_WRITE_CREDENTIAL:
+        if (irpsp->Parameters.DeviceIoControl.InputBufferLength < sizeof(struct mountmgr_credential))
+        {
+            irp->IoStatus.u.Status = STATUS_INVALID_PARAMETER;
+            break;
+        }
+        irp->IoStatus.u.Status = write_credential( irp->AssociatedIrp.SystemBuffer,
+                                                   irpsp->Parameters.DeviceIoControl.InputBufferLength,
+                                                   irpsp->Parameters.DeviceIoControl.OutputBufferLength,
+                                                   &irp->IoStatus );
         break;
 #endif
     default:
