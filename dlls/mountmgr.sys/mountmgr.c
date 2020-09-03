@@ -819,6 +819,23 @@ error:
     RtlFreeHeap( GetProcessHeap(), 0, password );
     return ret;
 }
+
+static NTSTATUS delete_credential( void *buff, SIZE_T insize, SIZE_T outsize, IO_STATUS_BLOCK *iosb )
+{
+    const struct mountmgr_credential *cred = buff;
+    const WCHAR *targetname;
+    SecKeychainItemRef item;
+
+    if (!check_credential_string( buff, insize, cred->targetname_size, cred->targetname_offset ))
+        return STATUS_INVALID_PARAMETER;
+    targetname = (const WCHAR *)((const char *)cred + cred->targetname_offset);
+
+    if (!(item = find_credential( targetname ))) return STATUS_NOT_FOUND;
+
+    SecKeychainItemDelete( item );
+    CFRelease( item );
+    return STATUS_SUCCESS;
+}
 #endif /* __APPLE__ */
 
 /* handler for ioctls on the mount manager device */
@@ -908,6 +925,17 @@ static NTSTATUS WINAPI mountmgr_ioctl( DEVICE_OBJECT *device, IRP *irp )
                                                    irpsp->Parameters.DeviceIoControl.InputBufferLength,
                                                    irpsp->Parameters.DeviceIoControl.OutputBufferLength,
                                                    &irp->IoStatus );
+        break;
+    case IOCTL_MOUNTMGR_DELETE_CREDENTIAL:
+        if (irpsp->Parameters.DeviceIoControl.InputBufferLength < sizeof(struct mountmgr_credential))
+        {
+            irp->IoStatus.u.Status = STATUS_INVALID_PARAMETER;
+            break;
+        }
+        irp->IoStatus.u.Status = delete_credential( irp->AssociatedIrp.SystemBuffer,
+                                                    irpsp->Parameters.DeviceIoControl.InputBufferLength,
+                                                    irpsp->Parameters.DeviceIoControl.OutputBufferLength,
+                                                    &irp->IoStatus );
         break;
 #endif
     default:
