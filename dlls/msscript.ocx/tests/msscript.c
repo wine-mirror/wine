@@ -91,6 +91,7 @@ static const WCHAR vbW[] = {'V','B','S','c','r','i','p','t',0};
 
 DEFINE_EXPECT(CreateInstance);
 DEFINE_EXPECT(SetInterfaceSafetyOptions);
+DEFINE_EXPECT(SetInterfaceSafetyOptions_UseSafeSubset);
 DEFINE_EXPECT(InitNew);
 DEFINE_EXPECT(Close);
 DEFINE_EXPECT(Bind);
@@ -278,12 +279,13 @@ static HRESULT WINAPI ObjectSafety_GetInterfaceSafetyOptions(IObjectSafety *ifac
 static HRESULT WINAPI ObjectSafety_SetInterfaceSafetyOptions(IObjectSafety *iface, REFIID riid,
         DWORD mask, DWORD options)
 {
-    CHECK_EXPECT(SetInterfaceSafetyOptions);
+    if (options == INTERFACESAFE_FOR_UNTRUSTED_DATA)
+        CHECK_EXPECT(SetInterfaceSafetyOptions_UseSafeSubset);
+    else
+        CHECK_EXPECT(SetInterfaceSafetyOptions);
 
     ok(IsEqualGUID(&IID_IActiveScriptParse, riid), "unexpected riid %s\n", wine_dbgstr_guid(riid));
-
     ok(mask == INTERFACESAFE_FOR_UNTRUSTED_DATA, "option mask = %x\n", mask);
-    ok(options == 0, "options = %x\n", options);
 
     return S_OK;
 }
@@ -2100,6 +2102,91 @@ static void test_UseSafeSubset(void)
     ok(use_safe_subset == VARIANT_TRUE, "got %d\n", use_safe_subset);
 
     IScriptControl_Release(sc);
+
+    /* custom script engine */
+    if (have_custom_engine)
+    {
+        hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
+                              &IID_IScriptControl, (void **)&sc);
+        ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08x.\n", hr);
+
+        SET_EXPECT(CreateInstance);
+        SET_EXPECT(SetInterfaceSafetyOptions);
+        SET_EXPECT(SetScriptSite);
+        SET_EXPECT(QI_IActiveScriptParse);
+        SET_EXPECT(InitNew);
+
+        str = SysAllocString(L"testscript");
+        hr = IScriptControl_put_Language(sc, str);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        SysFreeString(str);
+
+        CHECK_CALLED(CreateInstance);
+        CHECK_CALLED(SetInterfaceSafetyOptions);
+        CHECK_CALLED(SetScriptSite);
+        CHECK_CALLED(QI_IActiveScriptParse);
+        CHECK_CALLED(InitNew);
+
+        hr = IScriptControl_get_UseSafeSubset(sc, &use_safe_subset);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(use_safe_subset == VARIANT_FALSE, "got %d\n", use_safe_subset);
+
+        SET_EXPECT(SetInterfaceSafetyOptions_UseSafeSubset);
+        hr = IScriptControl_put_UseSafeSubset(sc, VARIANT_TRUE);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        CHECK_CALLED(SetInterfaceSafetyOptions_UseSafeSubset);
+
+        hr = IScriptControl_get_UseSafeSubset(sc, &use_safe_subset);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(use_safe_subset == VARIANT_TRUE, "got %d\n", use_safe_subset);
+
+        hr = IScriptControl_put_UseSafeSubset(sc, VARIANT_TRUE);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        SET_EXPECT(SetInterfaceSafetyOptions);
+        hr = IScriptControl_put_UseSafeSubset(sc, VARIANT_FALSE);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        CHECK_CALLED(SetInterfaceSafetyOptions);
+
+        hr = IScriptControl_put_UseSafeSubset(sc, VARIANT_FALSE);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        IActiveScriptSite_Release(site);
+
+        SET_EXPECT(Close);
+        IScriptControl_Release(sc);
+        CHECK_CALLED(Close);
+
+        hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
+                              &IID_IScriptControl, (void **)&sc);
+        ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08x.\n", hr);
+
+        hr = IScriptControl_put_UseSafeSubset(sc, VARIANT_TRUE);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        SET_EXPECT(CreateInstance);
+        SET_EXPECT(SetInterfaceSafetyOptions_UseSafeSubset);
+        SET_EXPECT(SetScriptSite);
+        SET_EXPECT(QI_IActiveScriptParse);
+        SET_EXPECT(InitNew);
+
+        str = SysAllocString(L"testscript");
+        hr = IScriptControl_put_Language(sc, str);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        SysFreeString(str);
+
+        CHECK_CALLED(CreateInstance);
+        CHECK_CALLED(SetInterfaceSafetyOptions_UseSafeSubset);
+        CHECK_CALLED(SetScriptSite);
+        CHECK_CALLED(QI_IActiveScriptParse);
+        CHECK_CALLED(InitNew);
+
+        IActiveScriptSite_Release(site);
+
+        SET_EXPECT(Close);
+        IScriptControl_Release(sc);
+        CHECK_CALLED(Close);
+    }
 }
 
 static void test_State(void)

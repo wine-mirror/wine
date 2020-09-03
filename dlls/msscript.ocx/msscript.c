@@ -2426,9 +2426,30 @@ static const IScriptErrorVtbl ScriptErrorVtbl = {
     ScriptError_Clear
 };
 
-static HRESULT init_script_host(ScriptControl *control, const CLSID *clsid, ScriptHost **ret)
+static HRESULT set_safety_opts(IActiveScript *script, VARIANT_BOOL use_safe_subset)
 {
     IObjectSafety *objsafety;
+    HRESULT hr;
+
+    hr = IActiveScript_QueryInterface(script, &IID_IObjectSafety, (void**)&objsafety);
+    if (FAILED(hr)) {
+        FIXME("Could not get IObjectSafety, %#x\n", hr);
+        return hr;
+    }
+
+    hr = IObjectSafety_SetInterfaceSafetyOptions(objsafety, &IID_IActiveScriptParse, INTERFACESAFE_FOR_UNTRUSTED_DATA,
+                                                 use_safe_subset ? INTERFACESAFE_FOR_UNTRUSTED_DATA : 0);
+    IObjectSafety_Release(objsafety);
+    if (FAILED(hr)) {
+        FIXME("SetInterfaceSafetyOptions failed, %#x\n", hr);
+        return hr;
+    }
+
+    return hr;
+}
+
+static HRESULT init_script_host(ScriptControl *control, const CLSID *clsid, ScriptHost **ret)
+{
     ScriptHost *host;
     HRESULT hr;
 
@@ -2455,18 +2476,8 @@ static HRESULT init_script_host(ScriptControl *control, const CLSID *clsid, Scri
         goto failed;
     }
 
-    hr = IActiveScript_QueryInterface(host->script, &IID_IObjectSafety, (void**)&objsafety);
-    if (FAILED(hr)) {
-        FIXME("Could not get IObjectSafety, %#x\n", hr);
-        goto failed;
-    }
-
-    hr = IObjectSafety_SetInterfaceSafetyOptions(objsafety, &IID_IActiveScriptParse, INTERFACESAFE_FOR_UNTRUSTED_DATA, 0);
-    IObjectSafety_Release(objsafety);
-    if (FAILED(hr)) {
-        FIXME("SetInterfaceSafetyOptions failed, %#x\n", hr);
-        goto failed;
-    }
+    hr = set_safety_opts(host->script, control->use_safe_subset);
+    if (FAILED(hr)) goto failed;
 
     hr = IActiveScript_SetScriptSite(host->script, &host->IActiveScriptSite_iface);
     if (FAILED(hr)) {
@@ -2849,6 +2860,9 @@ static HRESULT WINAPI ScriptControl_put_UseSafeSubset(IScriptControl *iface, VAR
 {
     ScriptControl *This = impl_from_IScriptControl(iface);
     TRACE("(%p)->(%x)\n", This, use_safe_subset);
+
+    if (This->host && This->use_safe_subset != use_safe_subset)
+        set_safety_opts(This->host->script, use_safe_subset);
 
     This->use_safe_subset = use_safe_subset;
     return S_OK;
