@@ -445,7 +445,7 @@ static BOOL grab_clipping_window( const RECT *clip )
     if (!data->clip_hwnd) sync_window_cursor( clip_window );
     InterlockedExchangePointer( (void **)&cursor_window, msg_hwnd );
     data->clip_hwnd = msg_hwnd;
-    SendMessageW( GetDesktopWindow(), WM_X11DRV_CLIP_CURSOR, 0, (LPARAM)msg_hwnd );
+    SendNotifyMessageW( GetDesktopWindow(), WM_X11DRV_CLIP_CURSOR, 0, (LPARAM)msg_hwnd );
     return TRUE;
 }
 
@@ -465,7 +465,7 @@ void ungrab_clipping_window(void)
     XUnmapWindow( display, clip_window );
     if (clipping_cursor) XUngrabPointer( display, CurrentTime );
     clipping_cursor = FALSE;
-    SendMessageW( GetDesktopWindow(), WM_X11DRV_CLIP_CURSOR, 0, 0 );
+    SendNotifyMessageW( GetDesktopWindow(), WM_X11DRV_CLIP_CURSOR, 0, 0 );
 }
 
 /***********************************************************************
