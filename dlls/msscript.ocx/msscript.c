@@ -147,6 +147,7 @@ struct ScriptHost {
     IActiveScript *script;
     IActiveScriptParse *parse;
     ScriptError *error;
+    HWND site_hwnd;
     SCRIPTSTATE script_state;
     CLSID clsid;
 
@@ -761,9 +762,13 @@ static HRESULT WINAPI ActiveScriptSiteWindow_GetWindow(IActiveScriptSiteWindow *
 {
     ScriptHost *This = impl_from_IActiveScriptSiteWindow(iface);
 
-    FIXME("(%p, %p)\n", This, hwnd);
+    TRACE("(%p, %p)\n", This, hwnd);
 
-    return E_NOTIMPL;
+    if (!hwnd) return E_POINTER;
+    if (This->site_hwnd == ((HWND)-1)) return E_FAIL;
+
+    *hwnd = This->site_hwnd;
+    return S_OK;
 }
 
 static HRESULT WINAPI ActiveScriptSiteWindow_EnableModeless(IActiveScriptSiteWindow *iface, BOOL enable)
@@ -2481,6 +2486,7 @@ static HRESULT init_script_host(ScriptControl *control, const CLSID *clsid, Scri
         goto failed;
     }
     host->script_state = SCRIPTSTATE_INITIALIZED;
+    host->site_hwnd = control->allow_ui ? control->site_hwnd : ((HWND)-1);
     host->error = control->error;
     IScriptError_AddRef(&host->error->IScriptError_iface);
 
@@ -2758,6 +2764,8 @@ static HRESULT WINAPI ScriptControl_put_SitehWnd(IScriptControl *iface, LONG hwn
         return CTL_E_INVALIDPROPERTYVALUE;
 
     This->site_hwnd = LongToHandle(hwnd);
+    if (This->host)
+        This->host->site_hwnd = This->allow_ui ? This->site_hwnd : ((HWND)-1);
     return S_OK;
 }
 
@@ -2820,6 +2828,8 @@ static HRESULT WINAPI ScriptControl_put_AllowUI(IScriptControl *iface, VARIANT_B
     TRACE("(%p)->(%x)\n", This, allow_ui);
 
     This->allow_ui = allow_ui;
+    if (This->host)
+        This->host->site_hwnd = allow_ui ? This->site_hwnd : ((HWND)-1);
     return S_OK;
 }
 
