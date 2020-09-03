@@ -1959,7 +1959,7 @@ type_t *find_type(const char *name, struct namespace *namespace, int t)
 
 static type_t *find_type_or_error(const char *name, int t)
 {
-  type_t *type = find_type(name, NULL, t);
+  type_t *type = find_type(name, current_namespace, t);
   if (!type) {
     error_loc("type '%s' not found\n", name);
     return NULL;
