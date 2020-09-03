@@ -497,85 +497,73 @@ static DWORD registry_write_credential(HKEY hkey, const CREDENTIALW *credential,
     return ret;
 }
 
-#ifdef __APPLE__
-static DWORD mac_write_credential(const CREDENTIALW *credential, BOOL preserve_blob)
+static DWORD host_write_credential( const CREDENTIALW *credential, BOOL preserve_blob )
 {
-    int status;
-    SecKeychainItemRef keychain_item;
-    char *username, *password, *servername;
-    UInt32 userlen, pwlen, serverlen;
-    SecKeychainAttribute attrs[1];
-    SecKeychainAttributeList attr_list;
+    struct mountmgr_credential *cred;
+    HANDLE mgr;
+    DWORD size;
+    WCHAR *ptr;
+    BOOL ret;
 
     if (credential->Flags)
-        FIXME("Flags 0x%x not written\n", credential->Flags);
+        FIXME( "flags 0x%x not written\n", credential->Flags );
     if (credential->Type != CRED_TYPE_DOMAIN_PASSWORD)
-        FIXME("credential type of %d not supported\n", credential->Type);
+        FIXME( "credential type of %d not supported\n", credential->Type );
     if (credential->Persist != CRED_PERSIST_LOCAL_MACHINE)
-        FIXME("persist value of %d not supported\n", credential->Persist);
+        FIXME( "persist value of %d not supported\n", credential->Persist );
     if (credential->AttributeCount)
-        FIXME("custom attributes not supported\n");
+        FIXME( "custom attributes not supported\n" );
 
-    userlen = WideCharToMultiByte(CP_UTF8, 0, credential->UserName, -1, NULL, 0, NULL, NULL);
-    username = heap_alloc(userlen * sizeof(*username));
-    WideCharToMultiByte(CP_UTF8, 0, credential->UserName, -1, username, userlen, NULL, NULL);
+    if (credential->CredentialBlobSize % sizeof(WCHAR)) return ERROR_NOT_SUPPORTED;
 
-    serverlen = WideCharToMultiByte(CP_UTF8, 0, credential->TargetName, -1, NULL, 0, NULL, NULL);
-    servername = heap_alloc(serverlen * sizeof(*servername));
-    WideCharToMultiByte(CP_UTF8, 0, credential->TargetName, -1, servername, serverlen, NULL, NULL);
-    pwlen = WideCharToMultiByte(CP_UTF8, 0, (LPCWSTR)credential->CredentialBlob,
-                                credential->CredentialBlobSize / sizeof(WCHAR), NULL, 0, NULL, NULL);
-    password = heap_alloc(pwlen * sizeof(*password));
-    WideCharToMultiByte(CP_UTF8, 0, (LPCWSTR)credential->CredentialBlob,
-                        credential->CredentialBlobSize / sizeof(WCHAR), password, pwlen, NULL, NULL);
+    mgr = CreateFileW( MOUNTMGR_DOS_DEVICE_NAME, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL,
+                       OPEN_EXISTING, 0, 0 );
+    if (mgr == INVALID_HANDLE_VALUE) return GetLastError();
 
-    TRACE("adding server %s, username %s using Keychain\n", servername, username);
-    status = SecKeychainAddGenericPassword(NULL, strlen(servername), servername, strlen(username),
-                                           username, strlen(password), password, &keychain_item);
-    if (status != noErr)
-        ERR("SecKeychainAddGenericPassword returned %d\n", status);
-    if (status == errSecDuplicateItem)
+    size = sizeof(*cred) + (strlenW( credential->TargetName ) + strlenW( credential->UserName ) + 2) * sizeof(WCHAR);
+    size += credential->CredentialBlobSize;
+    if (credential->Comment) size += (strlenW( credential->Comment ) + 1) * sizeof(WCHAR);
+    if (!(cred = heap_alloc( size )))
     {
-        status = SecKeychainFindGenericPassword(NULL, strlen(servername), servername, strlen(username),
-                                                username, NULL, NULL, &keychain_item);
-        if (status != noErr)
-            ERR("SecKeychainFindGenericPassword returned %d\n", status);
+        CloseHandle( mgr );
+        return ERROR_OUTOFMEMORY;
     }
-    heap_free(username);
-    heap_free(servername);
-    if (status != noErr)
+    ptr = (WCHAR *)(cred + 1);
+
+    cred->targetname_offset = sizeof(*cred);
+    cred->targetname_size   = (strlenW( credential->TargetName ) + 1) * sizeof(WCHAR);
+    strcpyW( ptr, credential->TargetName );
+    ptr += cred->targetname_size / sizeof(WCHAR);
+
+    cred->username_offset = cred->targetname_offset + cred->targetname_size;
+    cred->username_size   = (strlenW( credential->UserName ) + 1) * sizeof(WCHAR);
+    strcpyW( ptr, credential->UserName );
+    ptr += cred->username_size / sizeof(WCHAR);
+
+    cred->blob_offset = cred->username_offset + cred->username_size;
+    if (credential->CredentialBlob)
     {
-        heap_free(password);
-        return ERROR_GEN_FAILURE;
+        cred->blob_size = credential->CredentialBlobSize;
+        memcpy( ptr, credential->CredentialBlob, credential->CredentialBlobSize );
+        ptr += cred->blob_size / sizeof(WCHAR);
     }
+    else cred->blob_size = 0;
+    cred->blob_preserve = preserve_blob;
+
+    cred->comment_offset = cred->blob_offset + cred->blob_size;
     if (credential->Comment)
     {
-        attr_list.count = 1;
-        attr_list.attr = attrs;
-        attrs[0].tag = kSecCommentItemAttr;
-        attrs[0].length = WideCharToMultiByte(CP_UTF8, 0, credential->Comment, -1, NULL, 0, NULL, NULL);
-        if (attrs[0].length) attrs[0].length--;
-        attrs[0].data = heap_alloc(attrs[0].length);
-        WideCharToMultiByte(CP_UTF8, 0, credential->Comment, -1, attrs[0].data, attrs[0].length, NULL, NULL);
+        cred->comment_size = (strlenW( credential->Comment ) + 1) * sizeof(WCHAR);
+        strcpyW( ptr, credential->Comment );
     }
-    else
-    {
-        attr_list.count = 0;
-        attr_list.attr = NULL;
-    }
-    status = SecKeychainItemModifyAttributesAndData(keychain_item, &attr_list,
-                                                    preserve_blob ? 0 : strlen(password),
-                                                    preserve_blob ? NULL : password);
-    if (credential->Comment)
-        heap_free(attrs[0].data);
-    heap_free(password);
-    /* FIXME: set TargetAlias attribute */
-    CFRelease(keychain_item);
-    if (status != noErr)
-        return ERROR_GEN_FAILURE;
-    return ERROR_SUCCESS;
+    else cred->comment_size = 0;
+
+    ret = DeviceIoControl( mgr, IOCTL_MOUNTMGR_WRITE_CREDENTIAL, cred, size, NULL, 0, NULL, NULL );
+    heap_free( cred );
+    CloseHandle( mgr );
+
+    return ret ? ERROR_SUCCESS : GetLastError();
 }
-#endif
 
 static DWORD open_cred_mgr_key(HKEY *hkey, BOOL open_for_write)
 {
@@ -1823,20 +1811,18 @@ BOOL WINAPI CredWriteW(PCREDENTIALW Credential, DWORD Flags)
         }
     }
 
-#ifdef __APPLE__
     if (!Credential->AttributeCount &&
         Credential->Type == CRED_TYPE_DOMAIN_PASSWORD &&
         (Credential->Persist == CRED_PERSIST_LOCAL_MACHINE || Credential->Persist == CRED_PERSIST_ENTERPRISE))
     {
-        ret = mac_write_credential(Credential, Flags & CRED_PRESERVE_CREDENTIAL_BLOB);
-        if (ret != ERROR_SUCCESS)
+        ret = host_write_credential(Credential, Flags & CRED_PRESERVE_CREDENTIAL_BLOB);
+        if (ret != ERROR_SUCCESS && ret != ERROR_NOT_SUPPORTED)
         {
             SetLastError(ret);
             return FALSE;
         }
-        return TRUE;
+        if (ret == ERROR_SUCCESS) return TRUE;
     }
-#endif
 
     ret = open_cred_mgr_key(&hkeyMgr, FALSE);
     if (ret != ERROR_SUCCESS)
