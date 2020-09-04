@@ -21,6 +21,8 @@
 
 #include <stdarg.h>
 #include <stdlib.h>
+#include <assert.h>
+
 #include <ntstatus.h>
 #define WIN32_NO_STATUS
 #include <windef.h>
@@ -54,23 +56,27 @@ struct font_info
 
 struct console
 {
-    HANDLE                server;        /* console server handle */
-    unsigned int          mode;          /* input mode */
-    struct screen_buffer *active;        /* active screen buffer */
-    INPUT_RECORD         *records;       /* input records */
-    unsigned int          record_count;  /* number of input records */
-    unsigned int          record_size;   /* size of input records buffer */
-    size_t                pending_read;  /* size of pending read buffer */
-    WCHAR                *title;         /* console title */
-    size_t                title_len;     /* length of console title */
-    struct history_line **history;       /* lines history */
-    unsigned int          history_size;  /* number of entries in history array */
-    unsigned int          history_index; /* number of used entries in history array */
-    unsigned int          history_mode;  /* mode of history (non zero means remove doubled strings */
-    unsigned int          edition_mode;  /* index to edition mode flavors */
-    unsigned int          input_cp;      /* console input codepage */
-    unsigned int          output_cp;     /* console output codepage */
-    unsigned int          win;           /* window handle if backend supports it */
+    HANDLE                server;              /* console server handle */
+    unsigned int          mode;                /* input mode */
+    struct screen_buffer *active;              /* active screen buffer */
+    INPUT_RECORD         *records;             /* input records */
+    unsigned int          record_count;        /* number of input records */
+    unsigned int          record_size;         /* size of input records buffer */
+    size_t                pending_read;        /* size of pending read buffer */
+    WCHAR                *title;               /* console title */
+    size_t                title_len;           /* length of console title */
+    struct history_line **history;             /* lines history */
+    unsigned int          history_size;        /* number of entries in history array */
+    unsigned int          history_index;       /* number of used entries in history array */
+    unsigned int          history_mode;        /* mode of history (non zero means remove doubled strings */
+    unsigned int          edition_mode;        /* index to edition mode flavors */
+    unsigned int          input_cp;            /* console input codepage */
+    unsigned int          output_cp;           /* console output codepage */
+    unsigned int          win;                 /* window handle if backend supports it */
+    HANDLE                tty_output;          /* handle to tty output stream */
+    char                  tty_buffer[4096];    /* tty output buffer */
+    size_t                tty_buffer_count;    /* tty buffer size */
+    unsigned int          tty_attr;            /* current tty char attributes */
 };
 
 struct screen_buffer
@@ -185,6 +191,75 @@ static void destroy_screen_buffer( struct screen_buffer *screen_buffer )
 static BOOL is_active( struct screen_buffer *screen_buffer )
 {
     return screen_buffer == screen_buffer->console->active;
+}
+
+static void tty_flush( struct console *console )
+{
+    if (!console->tty_output || !console->tty_buffer_count) return;
+    TRACE("%s\n", debugstr_an(console->tty_buffer, console->tty_buffer_count));
+    if (!WriteFile( console->tty_output, console->tty_buffer, console->tty_buffer_count,
+                    NULL, NULL ))
+        WARN( "write failed: %u\n", GetLastError() );
+    console->tty_buffer_count = 0;
+}
+
+static void tty_write( struct console *console, const char *buffer, size_t size )
+{
+    if (!size || !console->tty_output) return;
+    if (console->tty_buffer_count + size > sizeof(console->tty_buffer))
+        tty_flush( console );
+    if (console->tty_buffer_count + size <= sizeof(console->tty_buffer))
+    {
+        memcpy( console->tty_buffer + console->tty_buffer_count, buffer, size );
+        console->tty_buffer_count += size;
+    }
+    else
+    {
+        assert( !console->tty_buffer_count );
+        if (!WriteFile( console->tty_output, buffer, size, NULL, NULL ))
+            WARN( "write failed: %u\n", GetLastError() );
+    }
+}
+
+static void set_tty_attr( struct console *console, unsigned int attr )
+{
+    char buf[8];
+
+    if ((attr & 0x0f) != (console->tty_attr & 0x0f))
+    {
+        if ((attr & 0x0f) != 7)
+        {
+            unsigned int n = 30;
+            if (attr & FOREGROUND_BLUE)  n += 4;
+            if (attr & FOREGROUND_GREEN) n += 2;
+            if (attr & FOREGROUND_RED)   n += 1;
+            if (attr & FOREGROUND_INTENSITY) n += 60;
+            sprintf(buf, "\x1b[%um", n);
+            tty_write( console, buf, strlen(buf) );
+        }
+        else tty_write( console, "\x1b[m", 3 );
+    }
+
+    if ((attr & 0xf0) != (console->tty_attr & 0xf0) && attr != 7)
+    {
+        unsigned int n = 40;
+        if (attr & BACKGROUND_BLUE)  n += 4;
+        if (attr & BACKGROUND_GREEN) n += 2;
+        if (attr & BACKGROUND_RED)   n += 1;
+        if (attr & BACKGROUND_INTENSITY) n += 60;
+        sprintf(buf, "\x1b[%um", n);
+        tty_write( console, buf, strlen(buf) );
+    }
+
+    console->tty_attr = attr;
+}
+
+static void init_tty_output( struct console *console )
+{
+    /* initialize tty output, but don't flush */
+    tty_write( console, "\x1b[2J", 4 ); /* clear screen */
+    set_tty_attr( console, console->active->attr );
+    tty_write( console, "\x1b[H", 3 );  /* move cursor to (0,0) */
 }
 
 static NTSTATUS read_console_input( struct console *console, size_t out_size )
@@ -1199,6 +1274,11 @@ int __cdecl wmain(int argc, WCHAR *argv[])
     }
 
     if (!(console.active = create_screen_buffer( &console, 1, width, height ))) return 1;
+    if (headless)
+    {
+        console.tty_output = GetStdHandle( STD_OUTPUT_HANDLE );
+        init_tty_output( &console );
+    }
 
     return main_loop( &console, signal );
 }
