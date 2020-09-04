@@ -147,6 +147,12 @@ HRESULT WINAPI D3DX10GetImageInfoFromFileW(const WCHAR *src_file, ID3DX10ThreadP
         HRESULT *result);
 #define        D3DX10GetImageInfoFromFile WINELIB_NAME_AW(D3DX10GetImageInfoFromFile)
 
+HRESULT WINAPI D3DX10GetImageInfoFromResourceA(HMODULE module, const char *resource, ID3DX10ThreadPump *pump,
+        D3DX10_IMAGE_INFO *info, HRESULT *result);
+HRESULT WINAPI D3DX10GetImageInfoFromResourceW(HMODULE module, const WCHAR *resource, ID3DX10ThreadPump *pump,
+        D3DX10_IMAGE_INFO *info, HRESULT *result);
+#define        D3DX10GetImageInfoFromResource WINELIB_NAME_AW(D3DX10GetImageInfoFromResource)
+
 HRESULT WINAPI D3DX10GetImageInfoFromMemory(const void *src_data, SIZE_T src_data_size, ID3DX10ThreadPump *pump,
         D3DX10_IMAGE_INFO *img_info, HRESULT *hresult);
 

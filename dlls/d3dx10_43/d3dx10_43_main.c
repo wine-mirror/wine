@@ -313,6 +313,24 @@ HRESULT WINAPI D3DX10GetImageInfoFromFileW(const WCHAR *src_file, ID3DX10ThreadP
     return E_NOTIMPL;
 }
 
+HRESULT WINAPI D3DX10GetImageInfoFromResourceA(HMODULE module, const char *resource, ID3DX10ThreadPump *pump,
+        D3DX10_IMAGE_INFO *info, HRESULT *result)
+{
+    FIXME("module %p, resource %s, pump %p, info %p, result %p\n",
+            module, debugstr_a(resource), pump, info, result);
+
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI D3DX10GetImageInfoFromResourceW(HMODULE module, const WCHAR *resource, ID3DX10ThreadPump *pump,
+        D3DX10_IMAGE_INFO *info, HRESULT *result)
+{
+    FIXME("module %p, resource %s, pump %p, info %p, result %p\n",
+            module, debugstr_w(resource), pump, info, result);
+
+    return E_NOTIMPL;
+}
+
 HRESULT WINAPI D3DX10GetImageInfoFromMemory(const void *src_data, SIZE_T src_data_size, ID3DX10ThreadPump *pump,
         D3DX10_IMAGE_INFO *img_info, HRESULT *hresult)
 {
