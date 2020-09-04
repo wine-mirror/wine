@@ -777,7 +777,7 @@ static BOOL handle_syscall_fault( ucontext_t *context, EXCEPTION_RECORD *rec )
         REGn_sig(28, context) = frame->x28;
         FP_sig(context)       = frame->x29;
         LR_sig(context)       = frame->ret_addr;
-        SP_sig(context)       = (DWORD)&frame->thunk_x29;
+        SP_sig(context)       = (ULONG64)&frame->thunk_x29;
         PC_sig(context)       = frame->thunk_addr;
         arm64_thread_data()->syscall_frame = NULL;
     }
