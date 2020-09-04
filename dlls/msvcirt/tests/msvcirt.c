@@ -1168,16 +1168,22 @@ static void test_streambuf(void)
     sb.do_lock = -1;
 
     /* setb */
+    sb.unbuffered = 1;
     call_func4(p_streambuf_setb, &sb, reserve, reserve+16, 0);
+    ok(sb.unbuffered == 1, "wrong unbuffered value, expected 1 got %d\n", sb.unbuffered);
     ok(sb.base == reserve, "wrong base pointer, expected %p got %p\n", reserve, sb.base);
     ok(sb.ebuf == reserve+16, "wrong ebuf pointer, expected %p got %p\n", reserve+16, sb.ebuf);
     call_func4(p_streambuf_setb, &sb, reserve, reserve+16, 4);
+    ok(sb.unbuffered == 1, "wrong unbuffered value, expected 1 got %d\n", sb.unbuffered);
     ok(sb.allocated == 4, "wrong allocate value, expected 4 got %d\n", sb.allocated);
     sb.allocated = 0;
+    sb.unbuffered = 0;
     call_func4(p_streambuf_setb, &sb, NULL, NULL, 3);
+    ok(sb.unbuffered == 0, "wrong unbuffered value, expected 0 got %d\n", sb.unbuffered);
     ok(sb.allocated == 3, "wrong allocate value, expected 3 got %d\n", sb.allocated);
 
     /* setbuf */
+    sb.unbuffered = 0;
     psb = call_func3(p_streambuf_setbuf, &sb, NULL, 5);
     ok(psb == &sb, "wrong return value, expected %p got %p\n", &sb, psb);
     ok(sb.allocated == 3, "wrong allocate value, expected 3 got %d\n", sb.allocated);
@@ -1659,21 +1665,75 @@ static void test_filebuf(void)
 
     /* setbuf */
     fb1.base.do_lock = 0;
+    fb1.fd = -1; /* closed */
+    ok(fb1.base.allocated == 0, "wrong allocate value, expected 0 got %d\n", fb1.base.allocated);
+    ok(fb1.base.unbuffered == 0, "wrong unbuffered value, expected 0 got %d\n", fb1.base.unbuffered);
+    ok(fb1.fd == -1, "wrong fd, expected -1 got %d\n", fb1.fd);
+    fb1.base.unbuffered = 1;
     pret = (filebuf*) call_func3(p_filebuf_setbuf, &fb1, read_buffer, 16);
     ok(pret == &fb1, "wrong return, expected %p got %p\n", &fb1, pret);
     ok(fb1.base.allocated == 0, "wrong allocate value, expected 0 got %d\n", fb1.base.allocated);
+    ok(fb1.base.unbuffered == 1, "wrong unbuffered value, expected 1 got %d\n", fb1.base.unbuffered);
     ok(fb1.base.base == read_buffer, "wrong buffer, expected %p got %p\n", read_buffer, fb1.base.base);
     ok(fb1.base.pbase == NULL, "wrong put area, expected %p got %p\n", NULL, fb1.base.pbase);
+    ok(fb1.base.allocated == 0, "wrong allocate value, expected 0 got %d\n", fb1.base.allocated);
+    pret = (filebuf*) call_func3(p_filebuf_setbuf, &fb1, read_buffer + 8, 8);
+    ok(pret == &fb1, "wrong return, expected %p got %p\n", NULL, pret);
+    ok(fb1.base.allocated == 0, "wrong allocate value, expected 0 got %d\n", fb1.base.allocated);
+    ok(fb1.base.unbuffered == 1, "wrong unbuffered value, expected 1 got %d\n", fb1.base.unbuffered);
+    ok(fb1.base.base == read_buffer + 8, "wrong buffer, expected %p got %p\n", read_buffer + 8, fb1.base.base);
+    ok(fb1.base.pbase == NULL, "wrong put area, expected %p got %p\n", NULL, fb1.base.pbase);
+    fb1.base.unbuffered = 0;
+    pret = (filebuf*) call_func3(p_filebuf_setbuf, &fb1, NULL, 0);
+    ok(fb1.base.allocated == 0, "wrong allocate value, expected 0 got %d\n", fb1.base.allocated);
+    ok(fb1.base.unbuffered == 1, "wrong unbuffered value, expected 1 got %d\n", fb1.base.unbuffered);
+    ok(fb1.base.base == read_buffer + 8, "wrong buffer, expected %p got %p\n", read_buffer + 8, fb1.base.base);
+    ok(fb1.base.pbase == NULL, "wrong put area, expected %p got %p\n", NULL, fb1.base.pbase);
+    ok((int) call_func1(p_streambuf_doallocate, &fb1.base) == 1, "failed to allocate buffer\n");
+    ok(fb1.base.allocated == 1, "wrong allocate value, expected 1 got %d\n", fb1.base.allocated);
+    ok(fb1.base.unbuffered == 1, "wrong unbuffered value, expected 1 got %d\n", fb1.base.unbuffered);
+    ok(fb1.base.base != NULL, "wrong buffer, expected not NULL got %p\n", fb1.base.base);
+    pret = (filebuf*) call_func3(p_filebuf_setbuf, &fb1, read_buffer + 2, 14);
+    ok(pret == &fb1, "wrong return, expected %p got %p\n", &fb1, pret);
+    ok(fb1.base.allocated == 0, "wrong allocate value, expected 0 got %d\n", fb1.base.allocated);
+    ok(fb1.base.unbuffered == 1, "wrong unbuffered value, expected 1 got %d\n", fb1.base.unbuffered);
+    ok(fb1.base.base == read_buffer + 2, "wrong buffer, expected %p got %p\n", read_buffer + 2, fb1.base.base);
+    ok(fb1.base.pbase == NULL, "wrong put area, expected %p got %p\n", NULL, fb1.base.pbase);
+    ok(fb1.base.allocated == 0, "wrong allocate value, expected 0 got %d\n", fb1.base.allocated);
+    fb1.fd = 1; /* opened */
+    fb1.base.unbuffered = 1;
+    fb1.base.base = fb1.base.ebuf = NULL;
+    pret = (filebuf*) call_func3(p_filebuf_setbuf, &fb1, read_buffer, 16);
+    ok(pret == &fb1, "wrong return, expected %p got %p\n", &fb1, pret);
+    ok(fb1.base.allocated == 0, "wrong allocate value, expected 0 got %d\n", fb1.base.allocated);
+    ok(fb1.base.unbuffered == 1, "wrong unbuffered value, expected 1 got %d\n", fb1.base.unbuffered);
+    ok(fb1.base.base == read_buffer, "wrong buffer, expected %p got %p\n", read_buffer, fb1.base.base);
+    ok(fb1.base.pbase == NULL, "wrong put area, expected %p got %p\n", NULL, fb1.base.pbase);
+    pret = (filebuf*) call_func3(p_filebuf_setbuf, &fb1, read_buffer + 8, 8);
+    ok(pret == NULL, "wrong return, expected %p got %p\n", NULL, pret);
+    ok(fb1.base.allocated == 0, "wrong allocate value, expected 0 got %d\n", fb1.base.allocated);
+    ok(fb1.base.unbuffered == 1, "wrong unbuffered value, expected 1 got %d\n", fb1.base.unbuffered);
+    ok(fb1.base.base == read_buffer, "wrong buffer, expected %p got %p\n", read_buffer, fb1.base.base);
+    ok(fb1.base.pbase == NULL, "wrong put area, expected %p got %p\n", NULL, fb1.base.pbase);
+    fb1.base.unbuffered = 0;
+    pret = (filebuf*) call_func3(p_filebuf_setbuf, &fb1, NULL, 0);
+    ok(fb1.base.allocated == 0, "wrong allocate value, expected 0 got %d\n", fb1.base.allocated);
+    ok(fb1.base.unbuffered == 0, "wrong unbuffered value, expected 0 got %d\n", fb1.base.unbuffered);
+    ok(fb1.base.base == read_buffer, "wrong buffer, expected %p got %p\n", read_buffer, fb1.base.base);
+    ok(fb1.base.pbase == NULL, "wrong put area, expected %p got %p\n", NULL, fb1.base.pbase);
+    fb1.base.unbuffered = 1;
     fb1.base.pbase = fb1.base.pptr = fb1.base.base;
     fb1.base.epptr = fb1.base.ebuf;
     fb1.base.do_lock = -1;
     pret = (filebuf*) call_func3(p_filebuf_setbuf, &fb1, read_buffer, 16);
     ok(pret == NULL, "wrong return, expected %p got %p\n", NULL, pret);
     ok(fb1.base.allocated == 0, "wrong allocate value, expected 0 got %d\n", fb1.base.allocated);
+    ok(fb1.base.unbuffered == 1, "wrong unbuffered value, expected 1 got %d\n", fb1.base.unbuffered);
     ok(fb1.base.base == read_buffer, "wrong buffer, expected %p got %p\n", read_buffer, fb1.base.base);
     ok(fb1.base.pbase == read_buffer, "wrong put area, expected %p got %p\n", read_buffer, fb1.base.pbase);
     fb1.base.base = fb1.base.ebuf = NULL;
     fb1.base.do_lock = 0;
+    fb1.base.unbuffered = 0;
     pret = (filebuf*) call_func3(p_filebuf_setbuf, &fb1, read_buffer, 0);
     ok(pret == &fb1, "wrong return, expected %p got %p\n", &fb1, pret);
     ok(fb1.base.allocated == 0, "wrong allocate value, expected 0 got %d\n", fb1.base.allocated);

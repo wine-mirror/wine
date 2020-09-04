@@ -1175,16 +1175,28 @@ streampos __thiscall filebuf_seekoff(filebuf *this, streamoff offset, ios_seek_d
 DEFINE_THISCALL_WRAPPER(filebuf_setbuf, 12)
 streambuf* __thiscall filebuf_setbuf(filebuf *this, char *buffer, int length)
 {
-    streambuf *ret;
-
     TRACE("(%p %p %d)\n", this, buffer, length);
-    if (this->base.base != NULL)
+
+    if (filebuf_is_open(this) && this->base.base != NULL)
         return NULL;
 
     streambuf_lock(&this->base);
-    ret = streambuf_setbuf(&this->base, buffer, length);
+
+    if (buffer == NULL || !length) {
+        this->base.unbuffered = 1;
+    } else {
+        if (this->base.allocated) {
+            MSVCRT_operator_delete(this->base.base);
+            this->base.allocated = 0;
+        }
+
+        this->base.base = buffer;
+        this->base.ebuf = buffer + length;
+    }
+
     streambuf_unlock(&this->base);
-    return ret;
+
+    return &this->base;
 }
 
 /* ?setmode@filebuf@@QAEHH@Z */
