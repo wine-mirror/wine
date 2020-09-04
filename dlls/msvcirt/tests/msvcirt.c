@@ -446,6 +446,10 @@ static const char* (*__thiscall p_exception_what)(exception*);
 static logic_error* (*__thiscall p_logic_error_ctor)(logic_error*, const char**);
 static void (*__thiscall p_logic_error_dtor)(logic_error*);
 
+/* locking */
+static void (*__cdecl p__mtlock)(CRITICAL_SECTION *);
+static void (*__cdecl p__mtunlock)(CRITICAL_SECTION *);
+
 /* Predefined streams */
 static istream *p_cin;
 static ostream *p_cout, *p_cerr, *p_clog;
@@ -1001,6 +1005,9 @@ static BOOL init(void)
     SET(p_cout, "?cout@@3Vostream_withassign@@A");
     SET(p_cerr, "?cerr@@3Vostream_withassign@@A");
     SET(p_clog, "?clog@@3Vostream_withassign@@A");
+
+    SET(p__mtlock, "_mtlock");
+    SET(p__mtunlock, "_mtunlock");
 
     init_thiscall_thunk();
     return TRUE;
@@ -7763,6 +7770,47 @@ static void test_exception(void)
     call_func1(p_logic_error_dtor, (void*) &le);
 }
 
+static DWORD WINAPI _try_enter_critical(void *crit)
+{
+    BOOL ret = TryEnterCriticalSection(crit);
+
+    if (ret)
+        LeaveCriticalSection(crit);
+
+    return ret;
+}
+
+static void test_mtlock_mtunlock(void)
+{
+    CRITICAL_SECTION crit;
+    HANDLE thread;
+    DWORD exit_code, ret;
+
+    InitializeCriticalSection(&crit);
+
+    p__mtlock(&crit);
+
+    thread = CreateThread(NULL, 0, _try_enter_critical, &crit, 0, NULL);
+    ok(thread != NULL, "failed to create a thread, error: %x\n", GetLastError());
+    ret = WaitForSingleObject(thread, 1000);
+    ok(ret == WAIT_OBJECT_0, "failed to wait for the thread, ret: %d, error: %x\n", ret, GetLastError());
+    ok(GetExitCodeThread(thread, &exit_code), "failed to get exit code of the thread\n");
+    ok(exit_code == FALSE, "the thread entered critical section\n");
+    ret = CloseHandle(thread);
+    ok(ret, "failed to close thread's handle, error: %x\n", GetLastError());
+
+    p__mtunlock(&crit);
+
+    thread = CreateThread(NULL, 0, _try_enter_critical, &crit, 0, NULL);
+    ok(thread != NULL, "failed to create a thread, error: %x\n", GetLastError());
+    ret = WaitForSingleObject(thread, 1000);
+    ok(ret == WAIT_OBJECT_0, "failed to wait for the thread, ret: %d, error: %x\n", ret, GetLastError());
+    ok(GetExitCodeThread(thread, &exit_code), "failed to get exit code of the thread\n");
+    ok(exit_code == TRUE, "the thread was not able to enter critical section\n");
+    ret = CloseHandle(thread);
+    ok(ret, "failed to close thread's handle, error: %x\n", GetLastError());
+}
+
 START_TEST(msvcirt)
 {
     if(!init())
@@ -7790,6 +7838,7 @@ START_TEST(msvcirt)
     test_Iostream_init();
     test_std_streams();
     test_exception();
+    test_mtlock_mtunlock();
 
     FreeLibrary(msvcrt);
     FreeLibrary(msvcirt);

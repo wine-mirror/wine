@@ -786,5 +786,5 @@
 @ thiscall -arch=win32 ?xsputn@streambuf@@UAEHPBDH@Z(ptr ptr long) streambuf_xsputn
 @ cdecl -arch=win64 ?xsputn@streambuf@@UEAAHPEBDH@Z(ptr ptr long) streambuf_xsputn
 @ stub __dummy_export
-@ stub _mtlock
-@ stub _mtunlock
+@ cdecl _mtlock(ptr)
+@ cdecl _mtunlock(ptr)
