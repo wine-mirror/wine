@@ -700,7 +700,7 @@ __ASM_GLOBAL_FUNC( call_user_exception_dispatcher,
                    "mov x0, x19\n\t"
                    "mov x1, x20\n\t"
                    "mov x2, x21\n\t"
-                   "ldp x19, x20, [x5, #64]\n\t"   /* frame->x19,x20 */
+                   "ldp x19, x20, [x5, #80]\n\t"   /* frame->x19,x20 */
                    "ldp x21, x22, [x5, #96]\n\t"   /* frame->x21,x22 */
                    "ldp x23, x24, [x5, #112]\n\t"  /* frame->x23,x24 */
                    "ldp x25, x26, [x5, #128]\n\t"  /* frame->x25,x26 */
