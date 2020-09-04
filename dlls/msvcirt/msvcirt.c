@@ -3024,11 +3024,15 @@ ostream* __thiscall ostrstream_buffer_ctor(ostream *this, char *buffer, int leng
 
     TRACE("(%p %p %d %d %d)\n", this, buffer, length, mode, virt_init);
 
-    if (ssb) {
-        strstreambuf_buffer_ctor(ssb, buffer, length, buffer);
-        if (mode & (OPENMODE_app|OPENMODE_ate))
-            ssb->base.pptr = buffer + strlen(buffer);
+    if (!ssb) {
+        FIXME("out of memory\n");
+        return NULL;
     }
+
+    strstreambuf_buffer_ctor(ssb, buffer, length, buffer);
+    if (mode & (OPENMODE_app|OPENMODE_ate))
+        ssb->base.pptr = buffer + strlen(buffer);
+
     return ostrstream_internal_sb_ctor(this, ssb, virt_init);
 }
 
@@ -3041,8 +3045,13 @@ ostream* __thiscall ostrstream_ctor(ostream *this, BOOL virt_init)
 
     TRACE("(%p %d)\n", this, virt_init);
 
-    if (ssb)
-        strstreambuf_ctor(ssb);
+    if (!ssb) {
+        FIXME("out of memory\n");
+        return NULL;
+    }
+
+    strstreambuf_ctor(ssb);
+
     return ostrstream_internal_sb_ctor(this, ssb, virt_init);
 }
 
@@ -4081,11 +4090,14 @@ istream* __thiscall istrstream_buffer_ctor(istream *this, char *buffer, int leng
 
     TRACE("(%p %p %d %d)\n", this, buffer, length, virt_init);
 
-    if (ssb) {
-        strstreambuf_buffer_ctor(ssb, buffer, length, NULL);
-        istream_sb_ctor(this, &ssb->base, virt_init);
-    } else
-        istream_ctor(this, virt_init);
+    if (!ssb) {
+        FIXME("out of memory\n");
+        return NULL;
+    }
+
+    strstreambuf_buffer_ctor(ssb, buffer, length, NULL);
+    istream_sb_ctor(this, &ssb->base, virt_init);
+
     base = istream_get_ios(this);
     base->vtable = &MSVCP_istrstream_vtable;
     base->delbuf = 1;
@@ -4137,8 +4149,7 @@ istream* __thiscall ifstream_buffer_ctor(istream *this, filedesc fd, char *buffe
 
     TRACE("(%p %d %p %d %d)\n", this, fd, buffer, length, virt_init);
 
-    if (!fb)
-    {
+    if (!fb) {
         FIXME("out of memory\n");
         return NULL;
     }
@@ -4163,8 +4174,7 @@ istream* __thiscall ifstream_fd_ctor(istream *this, filedesc fd, BOOL virt_init)
 
     TRACE("(%p %d %d)\n", this, fd, virt_init);
 
-    if (!fb)
-    {
+    if (!fb) {
         FIXME("out of memory\n");
         return NULL;
     }
@@ -4189,8 +4199,7 @@ istream* __thiscall ifstream_open_ctor(istream *this, const char *name, ios_open
 
     TRACE("(%p %s %d %d %d)\n", this, name, mode, protection, virt_init);
 
-    if (!fb)
-    {
+    if (!fb) {
         FIXME("out of memory\n");
         return NULL;
     }
@@ -4500,13 +4509,17 @@ iostream* __thiscall strstream_buffer_ctor(iostream *this, char *buffer, int len
 
     TRACE("(%p %p %d %d %d)\n", this, buffer, length, mode, virt_init);
 
-    if (ssb) {
-        strstreambuf_buffer_ctor(ssb, buffer, length, buffer);
-        if ((mode & OPENMODE_out) && (mode & (OPENMODE_app|OPENMODE_ate)))
-            ssb->base.pptr = buffer + strlen(buffer);
-        return iostream_internal_sb_ctor(this, &ssb->base, &MSVCP_strstream_vtable, virt_init);
+    if (!ssb) {
+        FIXME("out of memory\n");
+        return NULL;
     }
-    return iostream_internal_sb_ctor(this, NULL, &MSVCP_strstream_vtable, virt_init);
+
+    strstreambuf_buffer_ctor(ssb, buffer, length, buffer);
+
+    if ((mode & OPENMODE_out) && (mode & (OPENMODE_app|OPENMODE_ate)))
+        ssb->base.pptr = buffer + strlen(buffer);
+
+    return iostream_internal_sb_ctor(this, &ssb->base, &MSVCP_strstream_vtable, virt_init);
 }
 
 /* ??0strstream@@QAE@XZ */
@@ -4518,11 +4531,14 @@ iostream* __thiscall strstream_ctor(iostream *this, BOOL virt_init)
 
     TRACE("(%p %d)\n", this, virt_init);
 
-    if (ssb) {
-        strstreambuf_ctor(ssb);
-        return iostream_internal_sb_ctor(this, &ssb->base, &MSVCP_strstream_vtable, virt_init);
+    if (!ssb) {
+        FIXME("out of memory\n");
+        return NULL;
     }
-    return iostream_internal_sb_ctor(this, NULL, &MSVCP_strstream_vtable, virt_init);
+
+    strstreambuf_ctor(ssb);
+
+    return iostream_internal_sb_ctor(this, &ssb->base, &MSVCP_strstream_vtable, virt_init);
 }
 
 /* ?pcount@strstream@@QBEHXZ */
@@ -4567,11 +4583,14 @@ iostream* __thiscall stdiostream_file_ctor(iostream *this, FILE *file, BOOL virt
 
     TRACE("(%p %p %d)\n", this, file, virt_init);
 
-    if (stb) {
-        stdiobuf_file_ctor(stb, file);
-        return iostream_internal_sb_ctor(this, &stb->base, &MSVCP_stdiostream_vtable, virt_init);
+    if (!stb) {
+        FIXME("out of memory\n");
+        return NULL;
     }
-    return iostream_internal_sb_ctor(this, NULL, &MSVCP_stdiostream_vtable, virt_init);
+
+    stdiobuf_file_ctor(stb, file);
+
+    return iostream_internal_sb_ctor(this, &stb->base, &MSVCP_stdiostream_vtable, virt_init);
 }
 
 /* ?rdbuf@stdiostream@@QBEPAVstdiobuf@@XZ */
