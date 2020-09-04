@@ -940,9 +940,7 @@ PVOID WINAPI RtlVirtualUnwind( ULONG type, ULONG_PTR base, ULONG_PTR pc,
  * else. All CFI instructions are either DW_CFA_def_cfa_expression or
  * DW_CFA_expression, and the expressions have the following format:
  *
- * DW_OP_breg29; sleb128 0x10           | Load x29 + 0x10
- * DW_OP_deref                          | Get *(x29 + 0x10) == context
- * DW_OP_plus_uconst; uleb128 <OFFSET>  | Add offset to get struct member
+ * DW_OP_breg31; sleb128 <OFFSET>       | Load x31 + struct member offset
  * [DW_OP_deref]                        | Dereference, only for CFA
  */
 extern void * WINAPI call_consolidate_callback( CONTEXT *context,
@@ -950,40 +948,60 @@ extern void * WINAPI call_consolidate_callback( CONTEXT *context,
                                                 EXCEPTION_RECORD *rec,
                                                 TEB *teb );
 __ASM_GLOBAL_FUNC( call_consolidate_callback,
-                   "stp x29, x30, [sp, #-0x20]!\n\t"
-                   __ASM_CFI(".cfi_def_cfa_offset 32\n\t")
-                   __ASM_CFI(".cfi_offset 29, -32\n\t")
-                   __ASM_CFI(".cfi_offset 30, -24\n\t")
+                   "stp x29, x30, [sp, #-0x30]!\n\t"
+                   __ASM_CFI(".cfi_def_cfa_offset 48\n\t")
+                   __ASM_CFI(".cfi_offset 29, -48\n\t")
+                   __ASM_CFI(".cfi_offset 30, -40\n\t")
+                   __ASM_SEH(".seh_nop\n\t")
+                   "stp x1,  x2,  [sp, #0x10]\n\t"
+                   __ASM_SEH(".seh_nop\n\t")
+                   "str x3,       [sp, #0x20]\n\t"
+                   __ASM_SEH(".seh_nop\n\t")
                    "mov x29, sp\n\t"
                    __ASM_CFI(".cfi_def_cfa_register 29\n\t")
-                   "str x0, [sp, 0x10]\n\t"
+                   __ASM_SEH(".seh_nop\n\t")
                    __ASM_CFI(".cfi_remember_state\n\t")
-                   __ASM_CFI(".cfi_escape 0x0f,0x07,0x8d,0x10,0x06,0x23,0x80,0x02,0x06\n\t") /* CFA */
-                   __ASM_CFI(".cfi_escape 0x10,0x13,0x06,0x8d,0x10,0x06,0x23,0xa0,0x01\n\t") /* x19 */
-                   __ASM_CFI(".cfi_escape 0x10,0x14,0x06,0x8d,0x10,0x06,0x23,0xa8,0x01\n\t") /* x20 */
-                   __ASM_CFI(".cfi_escape 0x10,0x15,0x06,0x8d,0x10,0x06,0x23,0xb0,0x01\n\t") /* x21 */
-                   __ASM_CFI(".cfi_escape 0x10,0x16,0x06,0x8d,0x10,0x06,0x23,0xb8,0x01\n\t") /* x22 */
-                   __ASM_CFI(".cfi_escape 0x10,0x17,0x06,0x8d,0x10,0x06,0x23,0xc0,0x01\n\t") /* x23 */
-                   __ASM_CFI(".cfi_escape 0x10,0x18,0x06,0x8d,0x10,0x06,0x23,0xc8,0x01\n\t") /* x24 */
-                   __ASM_CFI(".cfi_escape 0x10,0x19,0x06,0x8d,0x10,0x06,0x23,0xd0,0x01\n\t") /* x25 */
-                   __ASM_CFI(".cfi_escape 0x10,0x1a,0x06,0x8d,0x10,0x06,0x23,0xd8,0x01\n\t") /* x26 */
-                   __ASM_CFI(".cfi_escape 0x10,0x1b,0x06,0x8d,0x10,0x06,0x23,0xe0,0x01\n\t") /* x27 */
-                   __ASM_CFI(".cfi_escape 0x10,0x1c,0x06,0x8d,0x10,0x06,0x23,0xe8,0x01\n\t") /* x28 */
-                   __ASM_CFI(".cfi_escape 0x10,0x1d,0x06,0x8d,0x10,0x06,0x23,0xf0,0x01\n\t") /* x29 */
-                   __ASM_CFI(".cfi_escape 0x10,0x1e,0x06,0x8d,0x10,0x06,0x23,0xf8,0x01\n\t") /* x30 */
-                   __ASM_CFI(".cfi_escape 0x10,0x48,0x06,0x8d,0x10,0x06,0x23,0x90,0x03\n\t") /* d8  */
-                   __ASM_CFI(".cfi_escape 0x10,0x49,0x06,0x8d,0x10,0x06,0x23,0xa0,0x03\n\t") /* d9  */
-                   __ASM_CFI(".cfi_escape 0x10,0x4a,0x06,0x8d,0x10,0x06,0x23,0xb0,0x03\n\t") /* d10 */
-                   __ASM_CFI(".cfi_escape 0x10,0x4b,0x06,0x8d,0x10,0x06,0x23,0xc0,0x03\n\t") /* d11 */
-                   __ASM_CFI(".cfi_escape 0x10,0x4c,0x06,0x8d,0x10,0x06,0x23,0xd0,0x03\n\t") /* d12 */
-                   __ASM_CFI(".cfi_escape 0x10,0x4d,0x06,0x8d,0x10,0x06,0x23,0xe0,0x03\n\t") /* d13 */
-                   __ASM_CFI(".cfi_escape 0x10,0x4e,0x06,0x8d,0x10,0x06,0x23,0xf0,0x03\n\t") /* d14 */
-                   __ASM_CFI(".cfi_escape 0x10,0x4f,0x06,0x8d,0x10,0x06,0x23,0x80,0x04\n\t") /* d15 */
+                   /* Memcpy the context onto the stack */
+                   "sub sp, sp, #0x390\n\t"
+                   __ASM_SEH(".seh_nop\n\t")
+                   "mov x1,  x0\n\t"
+                   __ASM_SEH(".seh_nop\n\t")
+                   "mov x0,  sp\n\t"
+                   __ASM_SEH(".seh_nop\n\t")
+                   "mov x2,  #0x390\n\t"
+                   __ASM_SEH(".seh_nop\n\t")
+                   "bl " __ASM_NAME("memcpy") "\n\t"
+                   __ASM_CFI(".cfi_def_cfa 31, 0\n\t")
+                   __ASM_CFI(".cfi_escape 0x0f,0x04,0x8f,0x80,0x02,0x06\n\t") /* CFA, DW_OP_breg31 + 0x100, DW_OP_deref */
+                   __ASM_CFI(".cfi_escape 0x10,0x13,0x03,0x8f,0xa0,0x01\n\t") /* x19, DW_OP_breg31 + 0xA0 */
+                   __ASM_CFI(".cfi_escape 0x10,0x14,0x03,0x8f,0xa8,0x01\n\t") /* x20 */
+                   __ASM_CFI(".cfi_escape 0x10,0x15,0x03,0x8f,0xb0,0x01\n\t") /* x21 */
+                   __ASM_CFI(".cfi_escape 0x10,0x16,0x03,0x8f,0xb8,0x01\n\t") /* x22 */
+                   __ASM_CFI(".cfi_escape 0x10,0x17,0x03,0x8f,0xc0,0x01\n\t") /* x23 */
+                   __ASM_CFI(".cfi_escape 0x10,0x18,0x03,0x8f,0xc8,0x01\n\t") /* x24 */
+                   __ASM_CFI(".cfi_escape 0x10,0x19,0x03,0x8f,0xd0,0x01\n\t") /* x25 */
+                   __ASM_CFI(".cfi_escape 0x10,0x1a,0x03,0x8f,0xd8,0x01\n\t") /* x26 */
+                   __ASM_CFI(".cfi_escape 0x10,0x1b,0x03,0x8f,0xe0,0x01\n\t") /* x27 */
+                   __ASM_CFI(".cfi_escape 0x10,0x1c,0x03,0x8f,0xe8,0x01\n\t") /* x28 */
+                   __ASM_CFI(".cfi_escape 0x10,0x1d,0x03,0x8f,0xf0,0x01\n\t") /* x29 */
+                   __ASM_CFI(".cfi_escape 0x10,0x1e,0x03,0x8f,0xf8,0x01\n\t") /* x30 */
+                   __ASM_CFI(".cfi_escape 0x10,0x48,0x03,0x8f,0x90,0x03\n\t") /* d8  */
+                   __ASM_CFI(".cfi_escape 0x10,0x49,0x03,0x8f,0x98,0x03\n\t") /* d9  */
+                   __ASM_CFI(".cfi_escape 0x10,0x4a,0x03,0x8f,0xa0,0x03\n\t") /* d10 */
+                   __ASM_CFI(".cfi_escape 0x10,0x4b,0x03,0x8f,0xa8,0x03\n\t") /* d11 */
+                   __ASM_CFI(".cfi_escape 0x10,0x4c,0x03,0x8f,0xb0,0x03\n\t") /* d12 */
+                   __ASM_CFI(".cfi_escape 0x10,0x4d,0x03,0x8f,0xb8,0x03\n\t") /* d13 */
+                   __ASM_CFI(".cfi_escape 0x10,0x4e,0x03,0x8f,0xc0,0x03\n\t") /* d14 */
+                   __ASM_CFI(".cfi_escape 0x10,0x4f,0x03,0x8f,0xc8,0x03\n\t") /* d15 */
+                   __ASM_SEH(".seh_context\n\t")
+                   __ASM_SEH(".seh_endprologue\n\t")
+                   "ldp x1,  x2,  [x29, #0x10]\n\t"
+                   "ldr x18,      [x29, #0x20]\n\t"
                    "mov x0,  x2\n\t"
-                   "mov x18, x3\n\t"
                    "blr x1\n\t"
+                   "mov sp,  x29\n\t"
                    __ASM_CFI(".cfi_restore_state\n\t")
-                   "ldp x29, x30, [sp], #32\n\t"
+                   "ldp x29, x30, [sp], #48\n\t"
                    __ASM_CFI(".cfi_restore 30\n\t")
                    __ASM_CFI(".cfi_restore 29\n\t")
                    __ASM_CFI(".cfi_def_cfa 31, 0\n\t")
@@ -1188,6 +1206,9 @@ void WINAPI RtlUnwind( void *frame, void *target_ip, EXCEPTION_RECORD *rec, void
 __ASM_STDCALL_FUNC( RtlRaiseException, 4,
                    "sub sp, sp, #0x3b0\n\t" /* 0x390 (context) + 0x20 */
                    "stp x29, x30, [sp]\n\t"
+                   __ASM_SEH(".seh_stackalloc 0x3b0\n\t")
+                   __ASM_SEH(".seh_save_fplr 0\n\t")
+                   __ASM_SEH(".seh_endprologue\n\t")
                    __ASM_CFI(".cfi_def_cfa x29, 944\n\t")
                    __ASM_CFI(".cfi_offset x30, -936\n\t")
                    __ASM_CFI(".cfi_offset x29, -944\n\t")
