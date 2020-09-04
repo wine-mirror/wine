@@ -883,6 +883,18 @@ static NTSTATUS fill_output( struct screen_buffer *screen_buffer, const struct c
         return STATUS_INVALID_PARAMETER;
     }
 
+    if (count && is_active(screen_buffer))
+    {
+        RECT update_rect;
+        SetRect( &update_rect,
+                 params->x % screen_buffer->width,
+                 params->y + params->x / screen_buffer->width,
+                 (params->x + i - 1) % screen_buffer->width,
+                 params->y + (params->x + i - 1) / screen_buffer->width );
+        update_output( screen_buffer, &update_rect );
+        tty_sync( screen_buffer->console );
+    }
+
     if (!(result = alloc_ioctl_buffer( sizeof(*result) ))) return STATUS_NO_MEMORY;
     *result = count;
     return STATUS_SUCCESS;

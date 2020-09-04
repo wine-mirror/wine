@@ -145,6 +145,7 @@ static BOOL expect_erase_line_(unsigned line, unsigned int cnt)
 
 enum req_type
 {
+    REQ_FILL_CHAR,
     REQ_SET_CURSOR,
     REQ_SET_TITLE,
     REQ_WRITE_CHARACTERS,
@@ -171,6 +172,12 @@ struct pseudoconsole_req
             SMALL_RECT region;
             CHAR_INFO buf[1];
         } write_output;
+        struct
+        {
+            WCHAR ch;
+            DWORD count;
+            COORD coord;
+        } fill;
     } u;
 };
 
@@ -250,6 +257,20 @@ static void child_write_output_(unsigned int line, CHAR_INFO *buf, unsigned int 
     ok_(__FILE__,line)(region.Top == out_top, "Top = %u\n", region.Top);
     ok_(__FILE__,line)(region.Right == out_right, "Right = %u\n", region.Right);
     ok_(__FILE__,line)(region.Bottom == out_bottom, "Bottom = %u\n", region.Bottom);
+}
+
+static void child_fill_character(WCHAR ch, DWORD count, int x, int y)
+{
+    struct pseudoconsole_req req;
+    BOOL ret;
+
+    req.type = REQ_FILL_CHAR;
+    req.u.fill.ch = ch;
+    req.u.fill.count = count;
+    req.u.fill.coord.X = x;
+    req.u.fill.coord.Y = y;
+    ret = WriteFile(child_pipe, &req, sizeof(req), &count, NULL);
+    ok(ret, "WriteFile failed: %u\n", GetLastError());
 }
 
 static void test_tty_output(void)
@@ -463,6 +484,15 @@ static void test_tty_output(void)
     expect_output_sequence("\x1b[4;3H");   /* set cursor */
     expect_output_sequence("\x1b[?25h");   /* show cursor */
     expect_empty_output();
+
+    child_fill_character('i', 5, 15, 16);
+    expect_hide_cursor();
+    expect_output_sequence("\x1b[m");      /* default attributes */
+    expect_output_sequence("\x1b[17;16H"); /* set cursor */
+    expect_output_sequence("iiiii");
+    expect_output_sequence("\x1b[4;3H");   /* set cursor */
+    expect_output_sequence("\x1b[?25h");   /* show cursor */
+    expect_empty_output();
 }
 
 static void child_process(HANDLE pipe)
@@ -483,6 +513,12 @@ static void child_process(HANDLE pipe)
         const struct pseudoconsole_req *req = (void *)buf;
         switch (req->type)
         {
+        case REQ_FILL_CHAR:
+            ret = FillConsoleOutputCharacterW(output, req->u.fill.ch, req->u.fill.count, req->u.fill.coord, &count);
+            ok(ret, "FillConsoleOutputCharacter failed: %u\n", GetLastError());
+            ok(count == req->u.fill.count, "count = %u, expected %u\n", count, req->u.fill.count);
+            break;
+
         case REQ_SET_CURSOR:
             ret = SetConsoleCursorPosition(output, req->u.coord);
             ok(ret, "SetConsoleCursorPosition failed: %u\n", GetLastError());
