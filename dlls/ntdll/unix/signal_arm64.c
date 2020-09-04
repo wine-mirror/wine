@@ -655,21 +655,17 @@ __ASM_GLOBAL_FUNC( call_user_apc_dispatcher,
                    "mov sp, x0\n\t"
                    "b 2f\n"
                    "1:\tldr x0, [x25]\n\t"
-                   "sub x19, x0, #0x390\n\t"
-                   "mov x0, sp\n\t"
-                   "cmp x19, x0\n\t"
-                   "csel x0, x19, x0, lo\n\t"
-                   "mov sp, x0\n\t"
+                   "sub sp, x0, #0x390\n\t"
                    "mov w2, #0x400000\n\t"       /* context.ContextFlags = CONTEXT_FULL */
                    "movk w2, #7\n\t"
-                   "mov x1, x19\n\t"
-                   "str w2, [x19]\n\t"
+                   "str w2, [sp]\n\t"
+                   "mov x1, sp\n\t"
                    "mov x0, #~1\n\t"
                    "bl " __ASM_NAME("NtGetContextThread") "\n\t"
                    "mov w2, #0xc0\n\t"           /* context.X0 = STATUS_USER_APC */
-                   "str x2, [x19, #8]\n\t"
+                   "str x2, [sp, #8]\n\t"
                    "str xzr, [x25]\n\t"
-                   "mov x0, x19\n"               /* context */
+                   "mov x0, sp\n"                /* context */
                    "2:\tldr lr, [x0, #0xf8]\n\t" /* context.Lr */
                    "mov x1, x20\n\t"             /* ctx */
                    "mov x2, x21\n\t"             /* arg1 */

@@ -1669,34 +1669,36 @@ __ASM_GLOBAL_FUNC( call_user_apc_dispatcher,
                    "jz 1f\n\t"
                    "movl 0xc4(%esi),%eax\n\t"    /* context_ptr->Rsp */
                    "leal -0x2f8(%eax),%eax\n\t"  /* sizeof(CONTEXT) + offsetof(frame,ret_addr) + params */
-                   "movl %esi,4(%eax)\n\t"
-                   "movl 8(%esp),%ecx\n\t"       /* ctx */
-                   "movl %ecx,8(%eax)\n\t"
-                   "movl 12(%esp),%ecx\n\t"      /* arg1 */
-                   "movl %ecx,12(%eax)\n\t"
-                   "movl 16(%esp),%ecx\n\t"      /* arg2 */
-                   "movl %ecx,16(%eax)\n\t"
                    "movl 20(%esp),%ecx\n\t"      /* func */
                    "movl %ecx,20(%eax)\n\t"
+                   "movl 8(%esp),%ebx\n\t"       /* ctx */
+                   "movl 12(%esp),%edx\n\t"      /* arg1 */
+                   "movl 16(%esp),%ecx\n\t"      /* arg2 */
                    "leal 4(%eax),%esp\n\t"
                    "jmp 2f\n"
                    "1:\tmovl %fs:0x1f8,%eax\n\t" /* x86_thread_data()->syscall_frame */
                    "leal -0x2cc(%eax),%esi\n\t"
-                   "movl %esp,%ecx\n\t"
+                   "movl %esp,%ebx\n\t"
                    "cmpl %esp,%esi\n\t"
                    "cmovbl %esi,%esp\n\t"
-                   "pushl 20(%ecx)\n\t"          /* func */
-                   "pushl 16(%ecx)\n\t"          /* arg2 */
-                   "pushl 12(%ecx)\n\t"          /* arg1 */
-                   "pushl 8(%ecx)\n\t"           /* ctx */
-                   "pushl %esi\n\t"              /* context */
                    "movl $0x00010007,(%esi)\n\t" /* context.ContextFlags = CONTEXT_FULL */
                    "pushl %esi\n\t"              /* context */
                    "pushl $0xfffffffe\n\t"
                    "call " __ASM_STDCALL("NtGetContextThread",8) "\n\t"
                    "movl $0xc0,0xb0(%esi)\n"     /* context.Eax = STATUS_USER_APC */
-                   "2:\tmovl $0,%fs:0x1f8\n\t"   /* x86_thread_data()->syscall_frame = NULL */
-                   "pushl $0xdeaddead\n\t"
+                   "movl 20(%ebx),%eax\n\t"      /* func */
+                   "movl 16(%ebx),%ecx\n\t"      /* arg2 */
+                   "movl 12(%ebx),%edx\n\t"      /* arg1 */
+                   "movl 8(%ebx),%ebx\n\t"       /* ctx */
+                   "leal -20(%esi),%esp\n\t"
+                   "movl %eax,16(%esp)\n"        /* func */
+                   "2:\tmovl %ecx,12(%esp)\n\t"  /* arg2 */
+                   "movl %edx,8(%esp)\n\t"       /* arg1 */
+                   "movl %ebx,4(%esp)\n\t"       /* ctx */
+                   "movl %esi,(%esp)\n\t"        /* context */
+                   "movl $0,%fs:0x1f8\n\t"       /* x86_thread_data()->syscall_frame = NULL */
+                   "movl 0xb4(%esi),%ebp\n\t"    /* context.Ebp */
+                   "pushl 0xb8(%esi)\n\t"        /* context.Eip */
                    "jmp *%edi\n" )
 
 

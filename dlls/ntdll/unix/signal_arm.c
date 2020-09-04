@@ -602,18 +602,16 @@ __ASM_GLOBAL_FUNC( call_user_apc_dispatcher,
                    "mov sp, r0\n\t"
                    "b 2f\n"
                    "1:\tldr r0, [r10]\n\t"
-                   "sub r11, r0, #0x1a0\n\t"
-                   "cmp r11, sp\n\t"
-                   "movlo sp, r11\n\t"
+                   "sub sp, r0, #0x1a0\n\t"
                    "mov r0, #3\n\t"
                    "movt r0, #32\n\t"
-                   "str r0, [r11]\n\t"         /* context.ContextFlags = CONTEXT_FULL */
-                   "mov r1, r11\n\t"
+                   "str r0, [sp]\n\t"         /* context.ContextFlags = CONTEXT_FULL */
+                   "mov r1, sp\n\t"
                    "mov r0, #~1\n\t"
                    "bl " __ASM_NAME("NtGetContextThread") "\n\t"
                    "mov r0, #0xc0\n\t"
-                   "str r0, [r11, #4]\n\t"    /* context.R0 = STATUS_USER_APC */
-                   "mov r0, r11\n\t"
+                   "str r0, [sp, #4]\n\t"     /* context.R0 = STATUS_USER_APC */
+                   "mov r0, sp\n\t"
                    "mov ip, #0\n\t"
                    "str ip, [r10]\n\t"
                    "2:\tmov r1, r5\n\t"       /* ctx */
