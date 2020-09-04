@@ -13865,7 +13865,6 @@ static void test_get_display_mode(void)
             devmode.dmPelsWidth, surface_desc.dwWidth);
     ok(surface_desc.dwHeight == devmode.dmPelsHeight, "Expected height %u, got %u.\n",
             devmode.dmPelsHeight, surface_desc.dwHeight);
-    todo_wine_if(devmode.dmDisplayFrequency != 60)
     ok(surface_desc.dwRefreshRate == devmode.dmDisplayFrequency, "Expected frequency %u, got %u.\n",
             devmode.dmDisplayFrequency, surface_desc.dwRefreshRate);
     ok(surface_desc.ddpfPixelFormat.dwSize == sizeof(surface_desc.ddpfPixelFormat),
