@@ -21452,6 +21452,7 @@ wine_fn_config_makefile programs/clock enable_clock
 wine_fn_config_makefile programs/cmd enable_cmd
 wine_fn_config_makefile programs/cmd/tests enable_tests
 wine_fn_config_makefile programs/conhost enable_conhost
+wine_fn_config_makefile programs/conhost/tests enable_tests
 wine_fn_config_makefile programs/control enable_control
 wine_fn_config_makefile programs/cscript enable_cscript
 wine_fn_config_makefile programs/dism enable_dism
