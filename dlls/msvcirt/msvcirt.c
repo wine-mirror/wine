@@ -4723,6 +4723,18 @@ DEFINE_VTBL_WRAPPER(56);
 void* (__cdecl *MSVCRT_operator_new)(SIZE_T);
 void (__cdecl *MSVCRT_operator_delete)(void*);
 
+void __cdecl _mtlock(CRITICAL_SECTION *crit)
+{
+    TRACE("(%p)\n", crit);
+    EnterCriticalSection(crit);
+}
+
+void __cdecl _mtunlock(CRITICAL_SECTION *crit)
+{
+    TRACE("(%p)\n", crit);
+    LeaveCriticalSection(crit);
+}
+
 static void init_cxx_funcs(void)
 {
     HMODULE hmod = GetModuleHandleA("msvcrt.dll");

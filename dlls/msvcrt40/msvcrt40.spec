@@ -1163,8 +1163,8 @@
 @ cdecl _mkdir(str) msvcrt._mkdir
 @ cdecl _mktemp(str) msvcrt._mktemp
 @ cdecl _msize(ptr) msvcrt._msize
-@ stub _mtlock
-@ stub _mtunlock
+@ cdecl _mtlock(ptr) msvcirt._mtlock
+@ cdecl _mtunlock(ptr) msvcirt._mtunlock
 @ cdecl _nextafter(double double) msvcrt._nextafter
 @ cdecl _onexit(ptr) msvcrt._onexit
 @ varargs _open(str long) msvcrt._open
