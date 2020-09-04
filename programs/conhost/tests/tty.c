@@ -145,8 +145,10 @@ static BOOL expect_erase_line_(unsigned line, unsigned int cnt)
 
 enum req_type
 {
+    REQ_CREATE_SCREEN_BUFFER,
     REQ_FILL_CHAR,
     REQ_SCROLL,
+    REQ_SET_ACTIVE,
     REQ_SET_CURSOR,
     REQ_SET_TITLE,
     REQ_WRITE_CHARACTERS,
@@ -160,6 +162,7 @@ struct pseudoconsole_req
     {
         WCHAR string[1];
         COORD coord;
+        HANDLE handle;
         struct
         {
             COORD coord;
@@ -234,6 +237,33 @@ static void child_set_cursor(const unsigned int x, unsigned int y)
     ok(ret, "WriteFile failed: %u\n", GetLastError());
 }
 
+static HANDLE child_create_screen_buffer(void)
+{
+    struct pseudoconsole_req req;
+    HANDLE handle;
+    DWORD count;
+    BOOL ret;
+
+    req.type = REQ_CREATE_SCREEN_BUFFER;
+    ret = WriteFile(child_pipe, &req, sizeof(req), &count, NULL);
+    ok(ret, "WriteFile failed: %u\n", GetLastError());
+    ret = ReadFile(child_pipe, &handle, sizeof(handle), &count, NULL);
+    ok(ret, "ReadFile failed: %u\n", GetLastError());
+    return handle;
+}
+
+static void child_set_active(HANDLE handle)
+{
+    struct pseudoconsole_req req;
+    DWORD count;
+    BOOL ret;
+
+    req.type = REQ_SET_ACTIVE;
+    req.u.handle = handle;
+    ret = WriteFile(child_pipe, &req, sizeof(req), &count, NULL);
+    ok(ret, "WriteFile failed: %u\n", GetLastError());
+}
+
 #define child_write_output(a,b,c,d,e,f,g,h,j,k,l,m,n) child_write_output_(__LINE__,a,b,c,d,e,f,g,h,j,k,l,m,n)
 static void child_write_output_(unsigned int line, CHAR_INFO *buf, unsigned int size_x, unsigned int size_y,
                                 unsigned int coord_x, unsigned int coord_y, unsigned int left,
@@ -303,6 +333,7 @@ static void child_fill_character(WCHAR ch, DWORD count, int x, int y)
 static void test_tty_output(void)
 {
     CHAR_INFO char_info_buf[2048], char_info;
+    HANDLE sb, sb2;
     unsigned int i;
 
     /* simple write chars */
@@ -532,6 +563,52 @@ static void test_tty_output(void)
     expect_output_sequence("\x1b[4;3H");   /* set cursor */
     expect_output_sequence("\x1b[?25h");   /* show cursor */
     expect_empty_output();
+
+    sb = child_create_screen_buffer();
+    child_set_active(sb);
+    expect_hide_cursor();
+    expect_output_sequence("\x1b[H");      /* set cursor */
+    for (i = 0; i < 40; i++)
+    {
+        expect_erase_line(30);
+        if (i != 39) expect_output_sequence("\r\n");
+    }
+    expect_output_sequence("\x1b[H");      /* set cursor */
+    expect_output_sequence("\x1b[?25h");   /* show cursor */
+    expect_empty_output();
+
+    child_write_characters(L"new sb", 0, 0);
+    skip_hide_cursor();
+    expect_output_sequence("new sb");
+    ok(skip_sequence("\x1b[H") || skip_sequence("\r"), "expected set cursor\n");
+    skip_sequence("\x1b[?25h");            /* show cursor */
+    expect_empty_output();
+
+    sb2 = child_create_screen_buffer();
+    child_set_active(sb2);
+    expect_hide_cursor();
+    for (i = 0; i < 40; i++)
+    {
+        expect_erase_line(30);
+        if (i != 39) expect_output_sequence("\r\n");
+    }
+    expect_output_sequence("\x1b[H");      /* set cursor */
+    expect_output_sequence("\x1b[?25h");   /* show cursor */
+    expect_empty_output();
+
+    child_set_active(sb);
+    expect_hide_cursor();
+    expect_output_sequence("new sb");
+    expect_erase_line(24);
+    expect_output_sequence("\r\n");
+    for (i = 1; i < 40; i++)
+    {
+        expect_erase_line(30);
+        if (i != 39) expect_output_sequence("\r\n");
+    }
+    expect_output_sequence("\x1b[H");      /* set cursor */
+    expect_output_sequence("\x1b[?25h");   /* show cursor */
+    expect_empty_output();
 }
 
 static void child_process(HANDLE pipe)
@@ -552,6 +629,20 @@ static void child_process(HANDLE pipe)
         const struct pseudoconsole_req *req = (void *)buf;
         switch (req->type)
         {
+        case REQ_CREATE_SCREEN_BUFFER:
+            {
+                HANDLE handle;
+                DWORD count;
+                SetLastError(0xdeadbeef);
+                handle = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE,
+                                                   FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+                                                   CONSOLE_TEXTMODE_BUFFER, NULL);
+                ok(handle != INVALID_HANDLE_VALUE, "CreateConsoleScreenBuffer failed: %u\n", GetLastError());
+                ret = WriteFile(pipe, &handle, sizeof(handle), &count, NULL);
+                ok(ret, "WriteFile failed: %u\n", GetLastError());
+                break;
+            }
+
         case REQ_SCROLL:
             ret = ScrollConsoleScreenBufferW(output, &req->u.scroll.rect, NULL, req->u.scroll.dst, &req->u.scroll.fill);
             ok(ret, "ScrollConsoleScreenBuffer failed: %u\n", GetLastError());
@@ -561,6 +652,12 @@ static void child_process(HANDLE pipe)
             ret = FillConsoleOutputCharacterW(output, req->u.fill.ch, req->u.fill.count, req->u.fill.coord, &count);
             ok(ret, "FillConsoleOutputCharacter failed: %u\n", GetLastError());
             ok(count == req->u.fill.count, "count = %u, expected %u\n", count, req->u.fill.count);
+            break;
+
+        case REQ_SET_ACTIVE:
+            output = req->u.handle;
+            ret = SetConsoleActiveScreenBuffer(output);
+            ok(ret, "SetConsoleActiveScreenBuffer failed: %u\n", GetLastError());
             break;
 
         case REQ_SET_CURSOR:

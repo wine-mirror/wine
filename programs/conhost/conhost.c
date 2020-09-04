@@ -451,6 +451,17 @@ static NTSTATUS write_console_input( struct console *console, const INPUT_RECORD
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS screen_buffer_activate( struct screen_buffer *screen_buffer )
+{
+    RECT update_rect;
+    TRACE( "%p\n", screen_buffer );
+    screen_buffer->console->active = screen_buffer;
+    SetRect( &update_rect, 0, 0, screen_buffer->width - 1, screen_buffer->height - 1);
+    update_output( screen_buffer, &update_rect );
+    tty_sync( screen_buffer->console );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS get_output_info( struct screen_buffer *screen_buffer, size_t *out_size )
 {
     struct condrv_output_info *info;
@@ -1043,8 +1054,7 @@ static NTSTATUS screen_buffer_ioctl( struct screen_buffer *screen_buffer, unsign
 
     case IOCTL_CONDRV_ACTIVATE:
         if (in_size || *out_size) return STATUS_INVALID_PARAMETER;
-        screen_buffer->console->active = screen_buffer;
-        return STATUS_SUCCESS;
+        return screen_buffer_activate( screen_buffer );
 
     case IOCTL_CONDRV_GET_MODE:
         {
