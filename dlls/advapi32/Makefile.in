@@ -3,7 +3,6 @@ MODULE    = advapi32.dll
 IMPORTLIB = advapi32
 IMPORTS   = kernelbase sechost
 DELAYIMPORTS = rpcrt4
-EXTRALIBS = $(SECURITY_LIBS)
 
 C_SRCS = \
 	advapi.c \

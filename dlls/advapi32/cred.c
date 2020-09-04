@@ -22,12 +22,6 @@
 #include <time.h>
 #include <limits.h>
 
-#ifdef __APPLE__
-# include <Security/SecKeychain.h>
-# include <Security/SecKeychainItem.h>
-# include <Security/SecKeychainSearch.h>
-#endif
-
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
@@ -236,189 +230,6 @@ static DWORD registry_read_credential(HKEY hkey, PCREDENTIALW credential,
         return ERROR_REGISTRY_CORRUPT;
     return ret;
 }
-
-#ifdef __APPLE__
-static DWORD mac_read_credential_from_item(SecKeychainItemRef item, BOOL require_password,
-                                           PCREDENTIALW credential, char *buffer,
-                                           DWORD *len)
-{
-    int status;
-    UInt32 i, cred_blob_len;
-    void *cred_blob;
-    WCHAR *user = NULL;
-    BOOL user_name_present = FALSE;
-    SecKeychainAttributeInfo info;
-    SecKeychainAttributeList *attr_list;
-    UInt32 info_tags[] = { kSecServiceItemAttr, kSecAccountItemAttr,
-                           kSecCommentItemAttr, kSecCreationDateItemAttr };
-    info.count = ARRAY_SIZE(info_tags);
-    info.tag = info_tags;
-    info.format = NULL;
-    status = SecKeychainItemCopyAttributesAndData(item, &info, NULL, &attr_list, &cred_blob_len, &cred_blob);
-    if (status == errSecAuthFailed && !require_password)
-    {
-        cred_blob_len = 0;
-        cred_blob = NULL;
-        status = SecKeychainItemCopyAttributesAndData(item, &info, NULL, &attr_list, &cred_blob_len, NULL);
-    }
-    if (status != noErr)
-    {
-        WARN("SecKeychainItemCopyAttributesAndData returned status %d\n", status);
-        return ERROR_NOT_FOUND;
-    }
-
-    for (i = 0; i < attr_list->count; i++)
-        if (attr_list->attr[i].tag == kSecAccountItemAttr && attr_list->attr[i].data)
-        {
-            user_name_present = TRUE;
-            break;
-        }
-    if (!user_name_present)
-    {
-        WARN("no kSecAccountItemAttr for item\n");
-        SecKeychainItemFreeAttributesAndData(attr_list, cred_blob);
-        return ERROR_NOT_FOUND;
-    }
-
-    if (buffer)
-    {
-        credential->Flags = 0;
-        credential->Type = CRED_TYPE_DOMAIN_PASSWORD;
-        credential->TargetName = NULL;
-        credential->Comment = NULL;
-        memset(&credential->LastWritten, 0, sizeof(credential->LastWritten));
-        credential->CredentialBlobSize = 0;
-        credential->CredentialBlob = NULL;
-        credential->Persist = CRED_PERSIST_LOCAL_MACHINE;
-        credential->AttributeCount = 0;
-        credential->Attributes = NULL;
-        credential->TargetAlias = NULL;
-        credential->UserName = NULL;
-    }
-    for (i = 0; i < attr_list->count; i++)
-    {
-        switch (attr_list->attr[i].tag)
-        {
-            case kSecServiceItemAttr:
-                TRACE("kSecServiceItemAttr: %.*s\n", (int)attr_list->attr[i].length,
-                      (char *)attr_list->attr[i].data);
-                if (!attr_list->attr[i].data) continue;
-                if (buffer)
-                {
-                    INT str_len;
-                    credential->TargetName = (LPWSTR)buffer;
-                    str_len = MultiByteToWideChar(CP_UTF8, 0, attr_list->attr[i].data,
-                                                  attr_list->attr[i].length, (LPWSTR)buffer, 0xffff);
-                    credential->TargetName[str_len] = '\0';
-                    buffer += (str_len + 1) * sizeof(WCHAR);
-                    *len += (str_len + 1) * sizeof(WCHAR);
-                }
-                else
-                {
-                    INT str_len;
-                    str_len = MultiByteToWideChar(CP_UTF8, 0, attr_list->attr[i].data,
-                                                  attr_list->attr[i].length, NULL, 0);
-                    *len += (str_len + 1) * sizeof(WCHAR);
-                }
-                break;
-            case kSecAccountItemAttr:
-            {
-                INT str_len;
-                TRACE("kSecAccountItemAttr: %.*s\n", (int)attr_list->attr[i].length,
-                      (char *)attr_list->attr[i].data);
-                if (!attr_list->attr[i].data) continue;
-                str_len = MultiByteToWideChar(CP_UTF8, 0, attr_list->attr[i].data,
-                                              attr_list->attr[i].length, NULL, 0);
-                user = heap_alloc((str_len + 1) * sizeof(WCHAR));
-                MultiByteToWideChar(CP_UTF8, 0, attr_list->attr[i].data,
-                                    attr_list->attr[i].length, user, str_len);
-                user[str_len] = '\0';
-                break;
-            }
-            case kSecCommentItemAttr:
-                TRACE("kSecCommentItemAttr: %.*s\n", (int)attr_list->attr[i].length,
-                      (char *)attr_list->attr[i].data);
-                if (!attr_list->attr[i].data) continue;
-                if (buffer)
-                {
-                    INT str_len;
-                    credential->Comment = (LPWSTR)buffer;
-                    str_len = MultiByteToWideChar(CP_UTF8, 0, attr_list->attr[i].data,
-                                                  attr_list->attr[i].length, (LPWSTR)buffer, 0xffff);
-                    credential->Comment[str_len] = '\0';
-                    buffer += (str_len + 1) * sizeof(WCHAR);
-                    *len += (str_len + 1) * sizeof(WCHAR);
-                }
-                else
-                {
-                    INT str_len;
-                    str_len = MultiByteToWideChar(CP_UTF8, 0, attr_list->attr[i].data,
-                                                  attr_list->attr[i].length, NULL, 0);
-                    *len += (str_len + 1) * sizeof(WCHAR);
-                }
-                break;
-            case kSecCreationDateItemAttr:
-                TRACE("kSecCreationDateItemAttr: %.*s\n", (int)attr_list->attr[i].length,
-                      (char *)attr_list->attr[i].data);
-                if (!attr_list->attr[i].data) continue;
-                if (buffer)
-                {
-                    LARGE_INTEGER win_time;
-                    struct tm tm;
-                    time_t time;
-                    memset(&tm, 0, sizeof(tm));
-                    strptime(attr_list->attr[i].data, "%Y%m%d%H%M%SZ", &tm);
-                    time = mktime(&tm);
-                    RtlSecondsSince1970ToTime(time, &win_time);
-                    credential->LastWritten.dwLowDateTime = win_time.u.LowPart;
-                    credential->LastWritten.dwHighDateTime = win_time.u.HighPart;
-                }
-                break;
-            default:
-                FIXME("unhandled attribute %u\n", (unsigned)attr_list->attr[i].tag);
-                break;
-        }
-    }
-
-    if (user)
-    {
-        INT str_len;
-        if (buffer)
-            credential->UserName = (LPWSTR)buffer;
-        str_len = strlenW(user);
-        *len += (str_len + 1) * sizeof(WCHAR);
-        if (buffer)
-        {
-            memcpy(buffer, user, (str_len + 1) * sizeof(WCHAR));
-            buffer += (str_len + 1) * sizeof(WCHAR);
-            TRACE("UserName = %s\n", debugstr_w(credential->UserName));
-        }
-    }
-    heap_free(user);
-
-    if (cred_blob)
-    {
-        if (buffer)
-        {
-            INT str_len;
-            credential->CredentialBlob = (BYTE *)buffer;
-            str_len = MultiByteToWideChar(CP_UTF8, 0, cred_blob, cred_blob_len,
-                                          (LPWSTR)buffer, 0xffff);
-            credential->CredentialBlobSize = str_len * sizeof(WCHAR);
-            *len += str_len * sizeof(WCHAR);
-        }
-        else
-        {
-            INT str_len;
-            str_len = MultiByteToWideChar(CP_UTF8, 0, cred_blob, cred_blob_len,
-                                          NULL, 0);
-            *len += str_len * sizeof(WCHAR);
-        }
-    }
-    SecKeychainItemFreeAttributesAndData(attr_list, cred_blob);
-    return ERROR_SUCCESS;
-}
-#endif
 
 static DWORD write_credential_blob(HKEY hkey, LPCWSTR target_name, DWORD type,
                                    const BYTE key_data[KEY_SIZE],
@@ -735,98 +546,6 @@ static DWORD registry_enumerate_credentials(HKEY hkeyMgr, LPCWSTR filter,
     }
     return ret;
 }
-
-#ifdef __APPLE__
-static BOOL mac_credential_matches_filter(void *data, UInt32 data_len, const WCHAR *filter)
-{
-    int len;
-    WCHAR *target_name;
-    const WCHAR *p;
-    BOOL ret;
-
-    if (!filter) return TRUE;
-
-    len = MultiByteToWideChar(CP_UTF8, 0, data, data_len, NULL, 0);
-    if (!(target_name = heap_alloc((len + 1) * sizeof(WCHAR)))) return FALSE;
-    MultiByteToWideChar(CP_UTF8, 0, data, data_len, target_name, len);
-    target_name[len] = 0;
-
-    TRACE("comparing filter %s to target name %s\n", debugstr_w(filter), debugstr_w(target_name));
-
-    p = strchrW(filter, '*');
-    ret = CompareStringW(GetThreadLocale(), NORM_IGNORECASE, filter,
-                         (p && !p[1] ? p - filter : -1), target_name,
-                         (p && !p[1] ? p - filter : -1)) == CSTR_EQUAL;
-    heap_free(target_name);
-    return ret;
-}
-
-static DWORD mac_enumerate_credentials(LPCWSTR filter, PCREDENTIALW *credentials,
-                                       char *buffer, DWORD *len, DWORD *count)
-{
-    SecKeychainSearchRef search;
-    SecKeychainItemRef item;
-    int status;
-    Boolean saved_user_interaction_allowed;
-    DWORD ret;
-
-    SecKeychainGetUserInteractionAllowed(&saved_user_interaction_allowed);
-    SecKeychainSetUserInteractionAllowed(false);
-
-    status = SecKeychainSearchCreateFromAttributes(NULL, kSecGenericPasswordItemClass, NULL, &search);
-    if (status == noErr)
-    {
-        while (SecKeychainSearchCopyNext(search, &item) == noErr)
-        {
-            SecKeychainAttributeInfo info;
-            SecKeychainAttributeList *attr_list;
-            UInt32 info_tags[] = { kSecServiceItemAttr };
-            BOOL match;
-
-            info.count = ARRAY_SIZE(info_tags);
-            info.tag = info_tags;
-            info.format = NULL;
-            status = SecKeychainItemCopyAttributesAndData(item, &info, NULL, &attr_list, NULL, NULL);
-            if (status != noErr)
-            {
-                WARN("SecKeychainItemCopyAttributesAndData returned status %d\n", status);
-                continue;
-            }
-            if (buffer)
-            {
-                *len = sizeof(CREDENTIALW);
-                credentials[*count] = (PCREDENTIALW)buffer;
-            }
-            else
-                *len += sizeof(CREDENTIALW);
-            if (attr_list->count != 1 || attr_list->attr[0].tag != kSecServiceItemAttr)
-            {
-                SecKeychainItemFreeAttributesAndData(attr_list, NULL);
-                continue;
-            }
-            TRACE("service item: %.*s\n", (int)attr_list->attr[0].length, (char *)attr_list->attr[0].data);
-            match = mac_credential_matches_filter(attr_list->attr[0].data, attr_list->attr[0].length, filter);
-            SecKeychainItemFreeAttributesAndData(attr_list, NULL);
-            if (!match) continue;
-            ret = mac_read_credential_from_item(item, FALSE,
-                                                buffer ? credentials[*count] : NULL,
-                                                buffer ? buffer + sizeof(CREDENTIALW) : NULL,
-                                                len);
-            CFRelease(item);
-            if (ret == ERROR_SUCCESS)
-            {
-                (*count)++;
-                if (buffer) buffer += *len;
-            }
-        }
-        CFRelease(search);
-    }
-    else
-        ERR("SecKeychainSearchCreateFromAttributes returned status %d\n", status);
-    SecKeychainSetUserInteractionAllowed(saved_user_interaction_allowed);
-    return ERROR_SUCCESS;
-}
-#endif
 
 /******************************************************************************
  * convert_PCREDENTIALW_to_PCREDENTIALA [internal]
@@ -1194,11 +913,113 @@ BOOL WINAPI CredEnumerateA(LPCSTR Filter, DWORD Flags, DWORD *Count,
     return TRUE;
 }
 
+#define CRED_LIST_COUNT 16
+#define CRED_DATA_SIZE  2048
+static DWORD host_enumerate_credentials( const WCHAR *filter, CREDENTIALW **credentials, char *buf, DWORD *len, DWORD *count )
+{
+    static const WCHAR emptyW[] = {0};
+    struct mountmgr_credential_list *list, *tmp;
+    DWORD i, j, ret, size, filter_size, offset = 0;
+    HANDLE mgr;
+    WCHAR *ptr;
+
+    if (filter) filter_size = (strlenW( filter ) + 1) * sizeof(WCHAR);
+    else
+    {
+        filter = emptyW;
+        filter_size = sizeof(emptyW);
+    }
+
+    mgr = CreateFileW( MOUNTMGR_DOS_DEVICE_NAME, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0 );
+    if (mgr == INVALID_HANDLE_VALUE) return GetLastError();
+
+    size = FIELD_OFFSET( struct mountmgr_credential_list, creds[CRED_LIST_COUNT] ) + filter_size + CRED_DATA_SIZE;
+    if (!(list = heap_alloc( size )))
+    {
+        CloseHandle( mgr );
+        return ERROR_OUTOFMEMORY;
+    }
+
+    for (;;)
+    {
+        list->filter_offset = sizeof(*list);
+        list->filter_size   = filter_size;
+        ptr = (WCHAR *)((char *)list + list->filter_offset);
+        strcpyW( ptr, filter );
+
+        if (DeviceIoControl( mgr, IOCTL_MOUNTMGR_ENUMERATE_CREDENTIALS, list, size, list, size, NULL, NULL )) break;
+        if ((ret = GetLastError()) != ERROR_MORE_DATA) goto done;
+
+        size = list->size + filter_size;
+        if (!(tmp = heap_realloc( list, size )))
+        {
+            ret = ERROR_OUTOFMEMORY;
+            goto done;
+        }
+        list = tmp;
+    }
+
+    for (i = 0, j = *count; i < list->count; i++)
+    {
+        CREDENTIALW *cred = (CREDENTIALW *)(buf + offset);
+
+        offset += sizeof(*cred) + list->creds[i].targetname_size + list->creds[i].comment_size + list->creds[i].blob_size +
+                  list->creds[i].username_size;
+        if (!buf) continue;
+
+        ptr = (WCHAR *)(cred + 1);
+        cred->Flags      = 0;
+        cred->Type       = CRED_TYPE_DOMAIN_PASSWORD;
+        cred->TargetName = ptr;
+        memcpy( cred->TargetName, (char *)&list->creds[i] + list->creds[i].targetname_offset, list->creds[i].targetname_size );
+        ptr += list->creds[i].targetname_size / sizeof(WCHAR);
+        if (list->creds[i].comment_size)
+        {
+            cred->Comment = ptr;
+            memcpy( cred->Comment, (char *)&list->creds[i] + list->creds[i].comment_offset, list->creds[i].comment_size );
+            ptr += list->creds[i].comment_size / sizeof(WCHAR);
+        }
+        else cred->Comment = NULL;
+        cred->LastWritten = list->creds[i].last_written;
+        if (list->creds[i].blob_size)
+        {
+            cred->CredentialBlobSize = list->creds[i].blob_size;
+            cred->CredentialBlob     = (BYTE *)ptr;
+            memcpy( cred->CredentialBlob, (char *)&list->creds[i] + list->creds[i].blob_offset, list->creds[i].blob_size );
+            ptr += list->creds[i].blob_size / sizeof(WCHAR);
+        }
+        else
+        {
+            cred->CredentialBlobSize = 0;
+            cred->CredentialBlob     = NULL;
+        }
+        cred->Persist        = CRED_PERSIST_LOCAL_MACHINE;
+        cred->AttributeCount = 0;
+        cred->Attributes     = NULL;
+        cred->TargetAlias    = NULL;
+        if (list->creds[i].username_size)
+        {
+            cred->UserName = ptr;
+            memcpy( cred->UserName, (char *)&list->creds[i] + list->creds[i].username_offset, list->creds[i].username_size );
+        }
+        else cred->UserName = NULL;
+        if (credentials) credentials[j++] = cred;
+    }
+
+    *len += offset;
+    *count += list->count;
+    ret = ERROR_SUCCESS;
+
+done:
+    heap_free( list );
+    CloseHandle( mgr );
+    return ret;
+}
+
 /******************************************************************************
  * CredEnumerateW [ADVAPI32.@]
  */
-BOOL WINAPI CredEnumerateW(LPCWSTR Filter, DWORD Flags, DWORD *Count,
-                           PCREDENTIALW **Credentials)
+BOOL WINAPI CredEnumerateW(LPCWSTR Filter, DWORD Flags, DWORD *Count, PCREDENTIALW **Credentials)
 {
     HKEY hkeyMgr;
     DWORD ret;
@@ -1252,10 +1073,11 @@ BOOL WINAPI CredEnumerateW(LPCWSTR Filter, DWORD Flags, DWORD *Count,
     len = 0;
     ret = registry_enumerate_credentials(hkeyMgr, Filter, target_name, target_name_len,
                                          key_data, NULL, NULL, &len, Count);
-#ifdef __APPLE__
     if (ret == ERROR_SUCCESS)
-        ret = mac_enumerate_credentials(Filter, NULL, NULL, &len, Count);
-#endif
+    {
+        ret = host_enumerate_credentials(Filter, NULL, NULL, &len, Count);
+        if (ret == ERROR_NOT_SUPPORTED) ret = ERROR_SUCCESS;
+    }
     if (ret == ERROR_SUCCESS && *Count == 0)
         ret = ERROR_NOT_FOUND;
     if (ret != ERROR_SUCCESS)
@@ -1275,18 +1097,15 @@ BOOL WINAPI CredEnumerateW(LPCWSTR Filter, DWORD Flags, DWORD *Count,
         {
             buffer += *Count * sizeof(PCREDENTIALW);
             *Count = 0;
-            ret = registry_enumerate_credentials(hkeyMgr, Filter, target_name,
-                                                 target_name_len, key_data,
-                                                 *Credentials, &buffer, &len,
-                                                 Count);
-#ifdef __APPLE__
+            ret = registry_enumerate_credentials(hkeyMgr, Filter, target_name, target_name_len, key_data,
+                                                 *Credentials, &buffer, &len, Count);
             if (ret == ERROR_SUCCESS)
-                ret = mac_enumerate_credentials(Filter, *Credentials,
-                                                buffer, &len, Count);
-#endif
+            {
+                ret = host_enumerate_credentials(Filter, *Credentials, buffer, &len, Count);
+                if (ret == ERROR_NOT_SUPPORTED) ret = ERROR_SUCCESS;
+            }
         }
-        else
-            ret = ERROR_OUTOFMEMORY;
+        else ret = ERROR_OUTOFMEMORY;
     }
 
     heap_free(target_name);
