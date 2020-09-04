@@ -905,6 +905,7 @@ static NTSTATUS scroll_output( struct screen_buffer *screen_buffer, const struct
     int x, y, xsrc, ysrc, w, h;
     char_info_t *psrc, *pdst;
     SMALL_RECT src, dst;
+    RECT update_rect;
     SMALL_RECT clip;
 
     xsrc = params->scroll.Left;
@@ -993,6 +994,10 @@ static NTSTATUS scroll_output( struct screen_buffer *screen_buffer, const struct
         for (x = left; x <= right; x++) screen_buffer->data[y * screen_buffer->width + x] = params->fill;
     }
 
+    SetRect( &update_rect, min( src.Left, dst.Left ), min( src.Top, dst.Top ),
+             max( src.Right, dst.Right ), max( src.Bottom, dst.Bottom ));
+    update_output( screen_buffer, &update_rect );
+    tty_sync( screen_buffer->console );
     return STATUS_SUCCESS;
 }
 

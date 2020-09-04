@@ -146,6 +146,7 @@ static BOOL expect_erase_line_(unsigned line, unsigned int cnt)
 enum req_type
 {
     REQ_FILL_CHAR,
+    REQ_SCROLL,
     REQ_SET_CURSOR,
     REQ_SET_TITLE,
     REQ_WRITE_CHARACTERS,
@@ -172,6 +173,12 @@ struct pseudoconsole_req
             SMALL_RECT region;
             CHAR_INFO buf[1];
         } write_output;
+        struct
+        {
+            SMALL_RECT rect;
+            COORD dst;
+            CHAR_INFO fill;
+        } scroll;
         struct
         {
             WCHAR ch;
@@ -257,6 +264,26 @@ static void child_write_output_(unsigned int line, CHAR_INFO *buf, unsigned int 
     ok_(__FILE__,line)(region.Top == out_top, "Top = %u\n", region.Top);
     ok_(__FILE__,line)(region.Right == out_right, "Right = %u\n", region.Right);
     ok_(__FILE__,line)(region.Bottom == out_bottom, "Bottom = %u\n", region.Bottom);
+}
+
+static void child_scroll(unsigned int src_left, unsigned int src_top, unsigned int src_right,
+                         unsigned int src_bottom, unsigned int dst_x, unsigned int dst_y, WCHAR fill)
+{
+    struct pseudoconsole_req req;
+    DWORD count;
+    BOOL ret;
+
+    req.type = REQ_SCROLL;
+    req.u.scroll.rect.Left   = src_left;
+    req.u.scroll.rect.Top    = src_top;
+    req.u.scroll.rect.Right  = src_right;
+    req.u.scroll.rect.Bottom = src_bottom;
+    req.u.scroll.dst.X = dst_x;
+    req.u.scroll.dst.Y = dst_y;
+    req.u.scroll.fill.Char.UnicodeChar = fill;
+    req.u.scroll.fill.Attributes = 0;
+    ret = WriteFile(child_pipe, &req, sizeof(req), &count, NULL);
+    ok(ret, "WriteFile failed: %u\n", GetLastError());
 }
 
 static void child_fill_character(WCHAR ch, DWORD count, int x, int y)
@@ -418,6 +445,18 @@ static void test_tty_output(void)
     expect_output_sequence("\x1b[?25h");   /* show cursor */
     expect_empty_output();
 
+    child_scroll(/* scroll rect */ 0, 7, 2, 8, /* destination */ 2, 8, /* fill */ 'x');
+    expect_hide_cursor();
+    if (skip_sequence("\x1b[m"))           /* default attr */
+        expect_output_sequence("\x1b[30m");/* foreground black */
+    expect_output_sequence("\x1b[8;1H");   /* set cursor */
+    expect_output_sequence("xxx89\r\n");
+    expect_output_sequence("xx567\r\n");
+    expect_output_sequence("90234");
+    expect_output_sequence("\x1b[4;3H");   /* set cursor */
+    expect_output_sequence("\x1b[?25h");   /* show cursor */
+    expect_empty_output();
+
     child_write_characters(L"xxx", 3, 10);
     expect_hide_cursor();
     expect_output_sequence("\x1b[m");      /* default attributes */
@@ -513,6 +552,11 @@ static void child_process(HANDLE pipe)
         const struct pseudoconsole_req *req = (void *)buf;
         switch (req->type)
         {
+        case REQ_SCROLL:
+            ret = ScrollConsoleScreenBufferW(output, &req->u.scroll.rect, NULL, req->u.scroll.dst, &req->u.scroll.fill);
+            ok(ret, "ScrollConsoleScreenBuffer failed: %u\n", GetLastError());
+            break;
+
         case REQ_FILL_CHAR:
             ret = FillConsoleOutputCharacterW(output, req->u.fill.ch, req->u.fill.count, req->u.fill.coord, &count);
             ok(ret, "FillConsoleOutputCharacter failed: %u\n", GetLastError());
