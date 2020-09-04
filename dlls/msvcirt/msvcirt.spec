@@ -663,8 +663,8 @@
 @ cdecl -arch=win64 ?setbuf@filebuf@@UEAAPEAVstreambuf@@PEADH@Z(ptr ptr long) filebuf_setbuf
 @ stub -arch=win32 ?setbuf@fstream@@QAEPAVstreambuf@@PADH@Z  # class streambuf * __thiscall fstream::setbuf(char *,int)
 @ stub -arch=win64 ?setbuf@fstream@@QEAAPEAVstreambuf@@PEADH@Z
-@ stub -arch=win32 ?setbuf@ifstream@@QAEPAVstreambuf@@PADH@Z  # class streambuf * __thiscall ifstream::setbuf(char *,int)
-@ stub -arch=win64 ?setbuf@ifstream@@QEAAPEAVstreambuf@@PEADH@Z
+@ thiscall -arch=win32 ?setbuf@ifstream@@QAEPAVstreambuf@@PADH@Z(ptr ptr long) ifstream_setbuf
+@ cdecl -arch=win64 ?setbuf@ifstream@@QEAAPEAVstreambuf@@PEADH@Z(ptr ptr long) ifstream_setbuf
 @ stub -arch=win32 ?setbuf@ofstream@@QAEPAVstreambuf@@PADH@Z  # class streambuf * __thiscall ofstream::setbuf(char *,int)
 @ stub -arch=win64 ?setbuf@ofstream@@QEAAPEAVstreambuf@@PEADH@Z
 @ thiscall -arch=win32 ?setbuf@streambuf@@UAEPAV1@PADH@Z(ptr ptr long) streambuf_setbuf

@@ -651,8 +651,8 @@
 @ cdecl -arch=win64 ?setbuf@filebuf@@UEAAPEAVstreambuf@@PEADH@Z(ptr ptr long) msvcirt.?setbuf@filebuf@@UEAAPEAVstreambuf@@PEADH@Z
 @ stub -arch=win32 ?setbuf@fstream@@QAEPAVstreambuf@@PADH@Z
 @ stub -arch=win64 ?setbuf@fstream@@QEAAPEAVstreambuf@@PEADH@Z
-@ stub -arch=win32 ?setbuf@ifstream@@QAEPAVstreambuf@@PADH@Z
-@ stub -arch=win64 ?setbuf@ifstream@@QEAAPEAVstreambuf@@PEADH@Z
+@ thiscall -arch=win32 ?setbuf@ifstream@@QAEPAVstreambuf@@PADH@Z(ptr ptr long) msvcirt.?setbuf@ifstream@@QAEPAVstreambuf@@PADH@Z
+@ cdecl -arch=win64 ?setbuf@ifstream@@QEAAPEAVstreambuf@@PEADH@Z(ptr ptr long) msvcirt.?setbuf@ifstream@@QEAAPEAVstreambuf@@PEADH@Z
 @ stub -arch=win32 ?setbuf@ofstream@@QAEPAVstreambuf@@PADH@Z
 @ stub -arch=win64 ?setbuf@ofstream@@QEAAPEAVstreambuf@@PEADH@Z
 @ thiscall -arch=win32 ?setbuf@streambuf@@UAEPAV1@PADH@Z(ptr ptr long) msvcirt.?setbuf@streambuf@@UAEPAV1@PADH@Z

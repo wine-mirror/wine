@@ -4276,6 +4276,24 @@ void __thiscall ifstream_open(istream *this, const char *name, ios_open_mode mod
         ios_clear(base, base->state | IOSTATE_failbit);
 }
 
+/* ?setbuf@ifstream@@QAEPAVstreambuf@@PADH@Z */
+/* ?setbuf@ifstream@@QEAAPEAVstreambuf@@PEADH@Z */
+DEFINE_THISCALL_WRAPPER(ifstream_setbuf, 12)
+streambuf* __thiscall ifstream_setbuf(istream *this, char *buffer, int length)
+{
+    ios *base = istream_get_ios(this);
+    filebuf* fb = ifstream_rdbuf(this);
+
+    TRACE("(%p %p %d)\n", this, buffer, length);
+
+    if (filebuf_is_open(fb)) {
+        ios_clear(base, base->state | IOSTATE_failbit);
+        return NULL;
+    }
+
+    return filebuf_setbuf(fb, buffer, length);
+}
+
 /* ?setmode@ifstream@@QAEHH@Z */
 /* ?setmode@ifstream@@QEAAHH@Z */
 DEFINE_THISCALL_WRAPPER(ifstream_setmode, 8)

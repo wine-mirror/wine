@@ -418,6 +418,7 @@ static filedesc (*__thiscall p_ifstream_fd)(istream*);
 static int (*__thiscall p_ifstream_is_open)(const istream*);
 static void (*__thiscall p_ifstream_open)(istream*, const char*, ios_open_mode, int);
 static filebuf* (*__thiscall p_ifstream_rdbuf)(const istream*);
+static streambuf* (*__thiscall p_ifstream_setbuf)(istream*, char*, int);
 static int (*__thiscall p_ifstream_setmode)(istream*, int);
 
 /* strstream */
@@ -733,6 +734,7 @@ static BOOL init(void)
         SET(p_ifstream_is_open, "?is_open@ifstream@@QEBAHXZ");
         SET(p_ifstream_open, "?open@ifstream@@QEAAXPEBDHH@Z");
         SET(p_ifstream_rdbuf, "?rdbuf@ifstream@@QEBAPEAVfilebuf@@XZ");
+        SET(p_ifstream_setbuf, "?setbuf@ifstream@@QEAAPEAVstreambuf@@PEADH@Z");
         SET(p_ifstream_setmode, "?setmode@ifstream@@QEAAHH@Z");
 
         SET(p_strstream_copy_ctor, "??0strstream@@QEAA@AEBV0@@Z");
@@ -962,6 +964,7 @@ static BOOL init(void)
         SET(p_ifstream_is_open, "?is_open@ifstream@@QBEHXZ");
         SET(p_ifstream_open, "?open@ifstream@@QAEXPBDHH@Z");
         SET(p_ifstream_rdbuf, "?rdbuf@ifstream@@QBEPAVfilebuf@@XZ");
+        SET(p_ifstream_setbuf, "?setbuf@ifstream@@QAEPAVstreambuf@@PADH@Z");
         SET(p_ifstream_setmode, "?setmode@ifstream@@QAEHH@Z");
 
         SET(p_strstream_copy_ctor, "??0strstream@@QAE@ABV0@@Z");
@@ -6831,6 +6834,7 @@ static void test_ifstream(void)
 {
     const char *filename = "ifstream_test";
     istream ifs, ifs_copy, *pifs;
+    streambuf *psb;
     filebuf *pfb;
     char buffer[64];
     char st[8];
@@ -6925,6 +6929,132 @@ static void test_ifstream(void)
     ok(pfb->close == 1, "wrong value, expected 1 got %d\n", pfb->close);
     call_func1(p_ifstream_vbase_dtor, &ifs);
     ok(_close(fd) == -1, "expected ifstream to close opened file\n");
+
+    /* setbuf */
+    call_func5(p_ifstream_buffer_ctor, &ifs, -1, NULL, 0, TRUE);
+    ok(ifs.base_ios.sb->base == NULL, "wrong base value, expected NULL got %p\n", ifs.base_ios.sb->base);
+    ok(ifs.base_ios.sb->ebuf == NULL, "wrong ebuf value, expected NULL got %p\n", ifs.base_ios.sb->ebuf);
+    ok(ifs.base_ios.sb->unbuffered == 1, "wrong unbuffered value, expected 1 got %d\n", pfb->base.unbuffered);
+    ok(ifs.base_ios.sb->allocated == 0, "wrong allocated value, expected 0 got %d\n", ifs.base_ios.sb->allocated);
+
+    psb = call_func3(p_ifstream_setbuf, &ifs, buffer, ARRAY_SIZE(buffer));
+    ok(psb == ifs.base_ios.sb, "wrong return, expected %p got %p\n", ifs.base_ios.sb, psb);
+    ok(ifs.base_ios.sb->base == buffer, "wrong buffer, expected %p got %p\n", buffer, ifs.base_ios.sb->base);
+    ok(ifs.base_ios.sb->ebuf == buffer + ARRAY_SIZE(buffer), "wrong ebuf, expected %p got %p\n", buffer + ARRAY_SIZE(buffer), ifs.base_ios.sb->ebuf);
+    ok(ifs.base_ios.sb->unbuffered == 1, "wrong unbuffered value, expected 1 got %d\n", ifs.base_ios.sb->unbuffered);
+    ok(ifs.base_ios.sb->allocated == 0, "wrong allocated value, expected 0 got %d\n", ifs.base_ios.sb->allocated);
+    ok(ifs.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, ifs.base_ios.state);
+
+    psb = call_func3(p_ifstream_setbuf, &ifs, NULL, 0);
+    ok(psb == ifs.base_ios.sb, "wrong return, expected %p got %p\n", ifs.base_ios.sb, psb);
+    ok(ifs.base_ios.sb->base == buffer, "wrong buffer, expected %p got %p\n", buffer, ifs.base_ios.sb->base);
+    ok(ifs.base_ios.sb->ebuf == buffer + ARRAY_SIZE(buffer), "wrong ebuf, expected %p got %p\n", buffer + ARRAY_SIZE(buffer), ifs.base_ios.sb->ebuf);
+    ok(ifs.base_ios.sb->unbuffered == 1, "wrong unbuffered value, expected 1 got %d\n", ifs.base_ios.sb->unbuffered);
+    ok(ifs.base_ios.sb->allocated == 0, "wrong allocated value, expected 0 got %d\n", ifs.base_ios.sb->allocated);
+    ok(ifs.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, ifs.base_ios.state);
+    call_func1(p_ifstream_vbase_dtor, &ifs);
+
+    call_func2(p_ifstream_ctor, &ifs, TRUE);
+    ok(ifs.base_ios.sb->base == NULL, "wrong base value, expected NULL got %p\n", ifs.base_ios.sb->base);
+    ok(ifs.base_ios.sb->ebuf == NULL, "wrong ebuf value, expected NULL got %p\n", ifs.base_ios.sb->ebuf);
+    ok(ifs.base_ios.sb->unbuffered == 0, "wrong unbuffered value, expected 0 got %d\n", ifs.base_ios.sb->unbuffered);
+    ok(ifs.base_ios.sb->allocated == 0, "wrong allocated value, expected 0 got %d\n", ifs.base_ios.sb->allocated);
+    ok(ifs.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, ifs.base_ios.state);
+
+    psb = call_func3(p_ifstream_setbuf, &ifs, buffer, ARRAY_SIZE(buffer));
+    ok(psb == ifs.base_ios.sb, "wrong return, expected %p got %p\n", ifs.base_ios.sb, psb);
+    ok(ifs.base_ios.sb->base == buffer, "wrong buffer, expected %p got %p\n", buffer, ifs.base_ios.sb->base);
+    ok(ifs.base_ios.sb->ebuf == buffer + ARRAY_SIZE(buffer), "wrong ebuf, expected %p got %p\n", buffer + ARRAY_SIZE(buffer), ifs.base_ios.sb->ebuf);
+    ok(ifs.base_ios.sb->unbuffered == 0, "wrong unbuffered value, expected 0 got %d\n", ifs.base_ios.sb->unbuffered);
+    ok(ifs.base_ios.sb->allocated == 0, "wrong allocated value, expected 0 got %d\n", ifs.base_ios.sb->allocated);
+    ok(ifs.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, ifs.base_ios.state);
+
+    psb = call_func3(p_ifstream_setbuf, &ifs, NULL, 0);
+    ok(psb == ifs.base_ios.sb, "wrong return, expected %p got %p\n", ifs.base_ios.sb, psb);
+    ok(ifs.base_ios.sb->base == buffer, "wrong buffer, expected %p got %p\n", buffer, ifs.base_ios.sb->base);
+    ok(ifs.base_ios.sb->ebuf == buffer + ARRAY_SIZE(buffer), "wrong ebuf, expected %p got %p\n", buffer + ARRAY_SIZE(buffer), ifs.base_ios.sb->ebuf);
+    ok(ifs.base_ios.sb->unbuffered == 1, "wrong unbuffered value, expected 1 got %d\n", ifs.base_ios.sb->unbuffered);
+    ok(ifs.base_ios.sb->allocated == 0, "wrong allocated value, expected 0 got %d\n", ifs.base_ios.sb->allocated);
+    ok(ifs.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, ifs.base_ios.state);
+
+    psb = call_func3(p_ifstream_setbuf, &ifs, buffer + 8, ARRAY_SIZE(buffer) - 8);
+    ok(psb == ifs.base_ios.sb, "wrong return, expected %p got %p\n", ifs.base_ios.sb, psb);
+    ok(ifs.base_ios.sb->base == buffer + 8, "wrong buffer, expected %p got %p\n", buffer + 8, ifs.base_ios.sb->base);
+    ok(ifs.base_ios.sb->ebuf == buffer + ARRAY_SIZE(buffer), "wrong ebuf, expected %p got %p\n", buffer + ARRAY_SIZE(buffer), ifs.base_ios.sb->ebuf);
+    ok(ifs.base_ios.sb->unbuffered == 1, "wrong unbuffered value, expected 1 got %d\n", ifs.base_ios.sb->unbuffered);
+    ok(ifs.base_ios.sb->allocated == 0, "wrong allocated value, expected 0 got %d\n", ifs.base_ios.sb->allocated);
+    ok(ifs.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, ifs.base_ios.state);
+
+    psb = call_func3(p_ifstream_setbuf, &ifs, buffer + 8, 0);
+    ok(psb == ifs.base_ios.sb, "wrong return, expected %p got %p\n", ifs.base_ios.sb, psb);
+    ok(ifs.base_ios.sb->base == buffer + 8, "wrong buffer, expected %p got %p\n", buffer + 8, ifs.base_ios.sb->base);
+    ok(ifs.base_ios.sb->ebuf == buffer + ARRAY_SIZE(buffer), "wrong ebuf, expected %p got %p\n", buffer + ARRAY_SIZE(buffer), ifs.base_ios.sb->ebuf);
+    ok(ifs.base_ios.sb->unbuffered == 1, "wrong unbuffered value, expected 1 got %d\n", ifs.base_ios.sb->unbuffered);
+    ok(ifs.base_ios.sb->allocated == 0, "wrong allocated value, expected 0 got %d\n", ifs.base_ios.sb->allocated);
+    ok(ifs.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, ifs.base_ios.state);
+
+    psb = call_func3(p_ifstream_setbuf, &ifs, buffer + 4, ARRAY_SIZE(buffer) - 4);
+    ok(psb == ifs.base_ios.sb, "wrong return, expected %p got %p\n", ifs.base_ios.sb, psb);
+    ok(ifs.base_ios.sb->base == buffer + 4, "wrong buffer, expected %p got %p\n", buffer + 4, ifs.base_ios.sb->base);
+    ok(ifs.base_ios.sb->ebuf == buffer + ARRAY_SIZE(buffer), "wrong ebuf, expected %p got %p\n", buffer + ARRAY_SIZE(buffer), ifs.base_ios.sb->ebuf);
+    ok(ifs.base_ios.sb->unbuffered == 1, "wrong unbuffered value, expected 1 got %d\n", ifs.base_ios.sb->unbuffered);
+    ok(ifs.base_ios.sb->allocated == 0, "wrong allocated value, expected 0 got %d\n", ifs.base_ios.sb->allocated);
+    ok(ifs.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, ifs.base_ios.state);
+
+    psb = call_func3(p_ifstream_setbuf, &ifs, NULL, 5);
+    ok(psb == ifs.base_ios.sb, "wrong return, expected %p got %p\n", ifs.base_ios.sb, psb);
+    ok(ifs.base_ios.sb->base == buffer + 4, "wrong buffer, expected %p got %p\n", buffer + 4, ifs.base_ios.sb->base);
+    ok(ifs.base_ios.sb->ebuf == buffer + ARRAY_SIZE(buffer), "wrong ebuf, expected %p got %p\n", buffer + ARRAY_SIZE(buffer), ifs.base_ios.sb->ebuf);
+    ok(ifs.base_ios.sb->unbuffered == 1, "wrong unbuffered value, expected 1 got %d\n", ifs.base_ios.sb->unbuffered);
+    ok(ifs.base_ios.sb->allocated == 0, "wrong allocated value, expected 0 got %d\n", ifs.base_ios.sb->allocated);
+    ok(ifs.base_ios.state == IOSTATE_goodbit, "expected %d got %d\n", IOSTATE_goodbit, ifs.base_ios.state);
+    call_func1(p_ifstream_vbase_dtor, &ifs);
+
+    /* setbuf - seems to be a nop and always return NULL in those other cases */
+    pifs = call_func5(p_ifstream_buffer_ctor, &ifs, 42, NULL, 0, TRUE);
+    ok(ifs.base_ios.sb->base == NULL, "wrong base value, expected NULL got %p\n", ifs.base_ios.sb->base);
+    ok(ifs.base_ios.sb->ebuf == NULL, "wrong ebuf value, expected NULL got %p\n", ifs.base_ios.sb->ebuf);
+    ok(ifs.base_ios.sb->unbuffered == 1, "wrong unbuffered value, expected 1 got %d\n", ifs.base_ios.sb->unbuffered);
+    ok(ifs.base_ios.sb->allocated == 0, "wrong allocated value, expected 0 got %d\n", ifs.base_ios.sb->allocated);
+
+    ifs.base_ios.state = IOSTATE_eofbit;
+    psb = call_func3(p_ifstream_setbuf, &ifs, buffer, ARRAY_SIZE(buffer));
+    ok(psb == NULL, "wrong return, expected NULL got %p\n", psb);
+    ok(ifs.base_ios.sb->base == NULL, "wrong base value, expected NULL got %p\n", ifs.base_ios.sb->base);
+    ok(ifs.base_ios.sb->ebuf == NULL, "wrong ebuf value, expected NULL got %p\n", ifs.base_ios.sb->ebuf);
+    ok(ifs.base_ios.sb->unbuffered == 1, "wrong unbuffered value, expected 1 got %d\n", ifs.base_ios.sb->unbuffered);
+    ok(ifs.base_ios.sb->allocated == 0, "wrong allocated value, expected 0 got %d\n", ifs.base_ios.sb->allocated);
+    ok(ifs.base_ios.state == (IOSTATE_eofbit | IOSTATE_failbit), "attaching on already setup stream did not set failbit\n");
+
+    ifs.base_ios.state = IOSTATE_eofbit;
+    psb = call_func3(p_ifstream_setbuf, &ifs, NULL, 0);
+    ok(psb == NULL, "wrong return, expected NULL got %p\n", psb);
+    ok(ifs.base_ios.sb->base == NULL, "wrong base value, expected NULL got %p\n", ifs.base_ios.sb->base);
+    ok(ifs.base_ios.sb->ebuf == NULL, "wrong ebuf value, expected NULL got %p\n", ifs.base_ios.sb->ebuf);
+    ok(ifs.base_ios.sb->unbuffered == 1, "wrong unbuffered value, expected 1 got %d\n", ifs.base_ios.sb->unbuffered);
+    ok(ifs.base_ios.sb->allocated == 0, "wrong allocated value, expected 0 got %d\n", ifs.base_ios.sb->allocated);
+    ok(ifs.base_ios.state == (IOSTATE_eofbit | IOSTATE_failbit), "attaching on already setup stream did not set failbit\n");
+    call_func1(p_ifstream_vbase_dtor, &ifs);
+
+    pifs = call_func5(p_ifstream_open_ctor, &ifs, filename, OPENMODE_in, filebuf_openprot, TRUE);
+    ifs.base_ios.state = IOSTATE_eofbit;
+    psb = call_func3(p_ifstream_setbuf, &ifs, NULL, 0);
+    ok(psb == NULL, "wrong return, expected NULL got %p\n", psb);
+    ok(ifs.base_ios.sb->base != NULL, "wrong base value, expected NULL got %p\n", ifs.base_ios.sb->base);
+    ok(ifs.base_ios.sb->ebuf != NULL, "wrong ebuf value, expected NULL got %p\n", ifs.base_ios.sb->ebuf);
+    ok(ifs.base_ios.sb->unbuffered == 0, "wrong unbuffered value, expected 0 got %d\n", ifs.base_ios.sb->unbuffered);
+    ok(ifs.base_ios.sb->allocated == 1, "wrong allocated value, expected 1 got %d\n", ifs.base_ios.sb->allocated);
+    ok(ifs.base_ios.state == (IOSTATE_eofbit | IOSTATE_failbit), "attaching on already setup stream did not set failbit\n");
+
+    ifs.base_ios.state = IOSTATE_eofbit;
+    psb = call_func3(p_ifstream_setbuf, &ifs, buffer, ARRAY_SIZE(buffer));
+    ok(psb == NULL, "wrong return, expected NULL got %p\n", psb);
+    ok(ifs.base_ios.sb->base != NULL, "wrong base value, expected NULL got %p\n", ifs.base_ios.sb->base);
+    ok(ifs.base_ios.sb->base != buffer, "wrong base value, expected not %p got %p\n", buffer, ifs.base_ios.sb->base);
+    ok(ifs.base_ios.sb->unbuffered == 0, "wrong unbuffered value, expected 0 got %d\n", ifs.base_ios.sb->unbuffered);
+    ok(ifs.base_ios.sb->allocated == 1, "wrong allocated value, expected 1 got %d\n", ifs.base_ios.sb->allocated);
+    ok(ifs.base_ios.state == (IOSTATE_eofbit | IOSTATE_failbit), "attaching on already setup stream did not set failbit\n");
+    call_func1(p_ifstream_vbase_dtor, &ifs);
 
     /* attach */
     pifs = call_func2(p_ifstream_ctor, &ifs, TRUE);
