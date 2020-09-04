@@ -70,11 +70,9 @@ struct video_mixer
     struct output_stream output;
 
     COLORREF bkgnd_color;
-
     IDirect3DDeviceManager9 *device_manager;
-
     IMediaEventSink *event_sink;
-
+    IMFAttributes *attributes;
     CRITICAL_SECTION cs;
 };
 
@@ -246,6 +244,8 @@ static ULONG WINAPI video_mixer_inner_Release(IUnknown *iface)
         video_mixer_clear_types(mixer);
         if (mixer->device_manager)
             IDirect3DDeviceManager9_Release(mixer->device_manager);
+        if (mixer->attributes)
+            IMFAttributes_Release(mixer->attributes);
         DeleteCriticalSection(&mixer->cs);
         free(mixer);
     }
@@ -360,9 +360,17 @@ static HRESULT WINAPI video_mixer_transform_GetOutputStreamInfo(IMFTransform *if
 
 static HRESULT WINAPI video_mixer_transform_GetAttributes(IMFTransform *iface, IMFAttributes **attributes)
 {
-    FIXME("%p, %p.\n", iface, attributes);
+    struct video_mixer *mixer = impl_from_IMFTransform(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, attributes);
+
+    if (!attributes)
+        return E_POINTER;
+
+    *attributes = mixer->attributes;
+    IMFAttributes_AddRef(*attributes);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI video_mixer_transform_GetInputStreamAttributes(IMFTransform *iface, DWORD id,
@@ -1317,6 +1325,8 @@ HRESULT WINAPI MFCreateVideoMixer(IUnknown *owner, REFIID riid_device, REFIID ri
 HRESULT evr_mixer_create(IUnknown *outer, void **out)
 {
     struct video_mixer *object;
+    MFVideoNormalizedRect rect;
+    HRESULT hr;
 
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
@@ -1335,6 +1345,14 @@ HRESULT evr_mixer_create(IUnknown *outer, void **out)
     object->input_count = 1;
     video_mixer_init_input(&object->inputs[0]);
     InitializeCriticalSection(&object->cs);
+    if (FAILED(hr = MFCreateAttributes(&object->attributes, 0)))
+    {
+        IUnknown_Release(&object->IUnknown_inner);
+        return hr;
+    }
+    rect.left = rect.top = 0.0f;
+    rect.right = rect.bottom = 1.0f;
+    IMFAttributes_SetBlob(object->attributes, &VIDEO_ZOOM_RECT, (const UINT8 *)&rect, sizeof(rect));
 
     *out = &object->IUnknown_inner;
 

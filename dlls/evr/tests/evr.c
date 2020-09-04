@@ -419,6 +419,7 @@ static void test_default_mixer(void)
     DWORD input_count, output_count;
     IMFVideoProcessor *processor;
     IMFVideoDeviceID *deviceid;
+    MFVideoNormalizedRect rect;
     DWORD input_id, output_id;
     IMFTransform *transform;
     DXVA2_ValueRange range;
@@ -507,6 +508,29 @@ todo_wine
 
     hr = IMFTransform_QueryInterface(transform, &IID_IMFVideoDeviceID, (void **)&deviceid);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_GetAttributes(transform, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_GetAttributes(transform, &attributes);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_GetAttributes(transform, &attributes2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(attributes == attributes2, "Unexpected attributes instance.\n");
+    IMFAttributes_Release(attributes2);
+
+    hr = IMFAttributes_GetCount(attributes, &count);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(count == 1, "Unexpected attribute count %u.\n", count);
+
+    memset(&rect, 0, sizeof(rect));
+    hr = IMFAttributes_GetBlob(attributes, &VIDEO_ZOOM_RECT, (UINT8 *)&rect, sizeof(rect), NULL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(rect.left == 0.0f && rect.top == 0.0f && rect.right == 1.0f && rect.bottom == 1.0f,
+            "Unexpected zoom rect (%f, %f) - (%f, %f).\n", rect.left, rect.top, rect.right, rect.bottom);
+
+    IMFAttributes_Release(attributes);
 
     hr = IMFVideoDeviceID_GetDeviceID(deviceid, NULL);
     ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
