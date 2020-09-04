@@ -1257,7 +1257,7 @@ static const IQualityControlVtbl AviMuxOut_QualityControlVtbl = {
 
 static inline AviMuxIn *impl_sink_from_strmbase_pin(struct strmbase_pin *iface)
 {
-    return CONTAINING_RECORD(iface, AviMuxIn, pin.pin.IPin_iface);
+    return CONTAINING_RECORD(iface, AviMuxIn, pin.pin);
 }
 
 static HRESULT sink_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)
