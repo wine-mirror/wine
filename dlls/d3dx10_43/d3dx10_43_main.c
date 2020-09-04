@@ -297,6 +297,22 @@ HRESULT WINAPI D3DX10GetFeatureLevel1(ID3D10Device *device, ID3D10Device1 **devi
     return ID3D10Device_QueryInterface(device, &IID_ID3D10Device1, (void **)device1);
 }
 
+HRESULT WINAPI D3DX10GetImageInfoFromFileA(const char *src_file, ID3DX10ThreadPump *pump, D3DX10_IMAGE_INFO *info,
+        HRESULT *result)
+{
+    FIXME("src_file %s, pump %p, info %p, result %p\n", debugstr_a(src_file), pump, info, result);
+
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI D3DX10GetImageInfoFromFileW(const WCHAR *src_file, ID3DX10ThreadPump *pump, D3DX10_IMAGE_INFO *info,
+        HRESULT *result)
+{
+    FIXME("src_file %s, pump %p, info %p, result %p\n", debugstr_w(src_file), pump, info, result);
+
+    return E_NOTIMPL;
+}
+
 HRESULT WINAPI D3DX10GetImageInfoFromMemory(const void *src_data, SIZE_T src_data_size, ID3DX10ThreadPump *pump,
         D3DX10_IMAGE_INFO *img_info, HRESULT *hresult)
 {
