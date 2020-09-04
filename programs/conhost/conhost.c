@@ -76,7 +76,10 @@ struct console
     HANDLE                tty_output;          /* handle to tty output stream */
     char                  tty_buffer[4096];    /* tty output buffer */
     size_t                tty_buffer_count;    /* tty buffer size */
+    unsigned int          tty_cursor_x;        /* tty cursor position */
+    unsigned int          tty_cursor_y;
     unsigned int          tty_attr;            /* current tty char attributes */
+    int                   tty_cursor_visible;  /* tty cursor visibility flag */
 };
 
 struct screen_buffer
@@ -221,6 +224,49 @@ static void tty_write( struct console *console, const char *buffer, size_t size 
     }
 }
 
+static void *tty_alloc_buffer( struct console *console, size_t size )
+{
+    void *ret;
+    if (console->tty_buffer_count + size > sizeof(console->tty_buffer)) return NULL;
+    ret = console->tty_buffer + console->tty_buffer_count;
+    console->tty_buffer_count += size;
+    return ret;
+}
+
+static void hide_tty_cursor( struct console *console )
+{
+    if (console->tty_cursor_visible)
+    {
+        tty_write(  console, "\x1b[25l", 5 );
+        console->tty_cursor_visible = FALSE;
+    }
+}
+
+static void set_tty_cursor( struct console *console, unsigned int x, unsigned int y )
+{
+    char buf[64];
+
+    if (console->tty_cursor_x == x && console->tty_cursor_y == y) return;
+
+    if (!x && y == console->tty_cursor_y + 1) strcpy( buf, "\r\n" );
+    else if (!x && y == console->tty_cursor_y) strcpy( buf, "\r" );
+    else if (y == console->tty_cursor_y)
+    {
+        if (x + 1 == console->tty_cursor_x) strcpy( buf, "\b" );
+        else if (x > console->tty_cursor_x) sprintf( buf, "\x1b[%uC", x - console->tty_cursor_x );
+        else sprintf( buf, "\x1b[%uD", console->tty_cursor_x - x );
+    }
+    else if (x || y)
+    {
+        hide_tty_cursor( console );
+        sprintf( buf, "\x1b[%u;%uH", y + 1, x + 1);
+    }
+    else strcpy( buf, "\x1b[H" );
+    console->tty_cursor_x = x;
+    console->tty_cursor_y = y;
+    tty_write( console, buf, strlen(buf) );
+}
+
 static void set_tty_attr( struct console *console, unsigned int attr )
 {
     char buf[8];
@@ -254,12 +300,31 @@ static void set_tty_attr( struct console *console, unsigned int attr )
     console->tty_attr = attr;
 }
 
+static void tty_sync( struct console *console )
+{
+    if (!console->tty_output) return;
+
+    if (console->active->cursor_visible)
+    {
+        set_tty_cursor( console, console->active->cursor_x, console->active->cursor_y );
+        if (!console->tty_cursor_visible)
+        {
+            tty_write( console, "\x1b[?25h", 6 ); /* show cursor */
+            console->tty_cursor_visible = TRUE;
+        }
+    }
+    else if (console->tty_cursor_visible)
+        hide_tty_cursor( console );
+    tty_flush( console );
+}
+
 static void init_tty_output( struct console *console )
 {
     /* initialize tty output, but don't flush */
     tty_write( console, "\x1b[2J", 4 ); /* clear screen */
     set_tty_attr( console, console->active->attr );
     tty_write( console, "\x1b[H", 3 );  /* move cursor to (0,0) */
+    console->tty_cursor_visible = TRUE;
 }
 
 static NTSTATUS read_console_input( struct console *console, size_t out_size )
@@ -865,6 +930,19 @@ static NTSTATUS set_console_title( struct console *console, const WCHAR *in_titl
     free( console->title );
     console->title     = title;
     console->title_len = size;
+
+    if (console->tty_output)
+    {
+        size_t len;
+        char *vt;
+
+        tty_write( console, "\x1b]0;", 4 );
+        len = WideCharToMultiByte( CP_UTF8, 0, console->title, size / sizeof(WCHAR), NULL, 0, NULL, NULL);
+        if ((vt = tty_alloc_buffer( console, len )))
+            WideCharToMultiByte( CP_UTF8, 0, console->title, size / sizeof(WCHAR), vt, len, NULL, NULL );
+        tty_write( console, "\x07", 1 );
+        tty_sync( console );
+    }
     return STATUS_SUCCESS;
 }
 
