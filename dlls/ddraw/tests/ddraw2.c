@@ -14495,8 +14495,11 @@ struct find_different_mode_param
 {
     unsigned int old_width;
     unsigned int old_height;
+    unsigned int old_frequency;
     unsigned int new_width;
     unsigned int new_height;
+    unsigned int new_frequency;
+    unsigned int new_bpp;
 };
 
 static HRESULT CALLBACK find_different_mode_callback(DDSURFACEDESC *surface_desc, void *context)
@@ -14506,10 +14509,13 @@ static HRESULT CALLBACK find_different_mode_callback(DDSURFACEDESC *surface_desc
     if (U1(U4(*surface_desc).ddpfPixelFormat).dwRGBBitCount != registry_mode.dmBitsPerPel)
         return DDENUMRET_OK;
 
-    if (surface_desc->dwWidth != param->old_width && surface_desc->dwHeight != param->old_height)
+    if (surface_desc->dwWidth != param->old_width && surface_desc->dwHeight != param->old_height &&
+            surface_desc->dwRefreshRate != param->old_frequency)
     {
         param->new_width = surface_desc->dwWidth;
         param->new_height = surface_desc->dwHeight;
+        param->new_frequency = surface_desc->dwRefreshRate;
+        param->new_bpp = surface_desc->ddpfPixelFormat.dwRGBBitCount;
         return DDENUMRET_CANCEL;
     }
 
@@ -14722,7 +14728,84 @@ static BOOL CALLBACK test_get_display_mode_cb(HMONITOR monitor, HDC hdc, RECT *m
 
 static void test_get_display_mode(void)
 {
+    static const DWORD flags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_REFRESHRATE | DDSD_PIXELFORMAT | DDSD_PITCH;
+    struct find_different_mode_param param;
+    DDSURFACEDESC surface_desc;
+    IDirectDraw2 *ddraw;
+    DEVMODEW devmode;
+    HWND window;
+    HRESULT hr;
+    BOOL ret;
+
     EnumDisplayMonitors(NULL, NULL, test_get_display_mode_cb, 0);
+
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+    window = create_window();
+    ok(!!window, "Failed to create a window.\n");
+
+    hr = IDirectDraw2_SetCooperativeLevel(ddraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
+    ok(hr == DD_OK, "SetCooperativeLevel failed, hr %#x.\n", hr);
+
+    memset(&devmode, 0, sizeof(devmode));
+    devmode.dmSize = sizeof(devmode);
+    ret = EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &devmode);
+    ok(ret, "EnumDisplaySettingsW failed, error %#x.\n", GetLastError());
+
+    surface_desc.dwSize = sizeof(surface_desc);
+    hr = IDirectDraw2_GetDisplayMode(ddraw, &surface_desc);
+    ok(hr == DD_OK, "GetDisplayMode failed, hr %#x.\n", hr);
+    ok(surface_desc.dwSize == sizeof(surface_desc), "Expected dwSize %u, got %u.\n",
+            sizeof(surface_desc), surface_desc.dwSize);
+    ok(surface_desc.dwFlags == flags, "Expected dwFlags %#x, got %#x.\n", flags,
+            surface_desc.dwFlags);
+    ok(surface_desc.dwWidth == devmode.dmPelsWidth, "Expected width %u, got %u.\n",
+            devmode.dmPelsWidth, surface_desc.dwWidth);
+    ok(surface_desc.dwHeight == devmode.dmPelsHeight, "Expected height %u, got %u.\n",
+            devmode.dmPelsHeight, surface_desc.dwHeight);
+    todo_wine_if(devmode.dmDisplayFrequency != 60)
+    ok(surface_desc.dwRefreshRate == devmode.dmDisplayFrequency, "Expected frequency %u, got %u.\n",
+            devmode.dmDisplayFrequency, surface_desc.dwRefreshRate);
+    ok(surface_desc.ddpfPixelFormat.dwSize == sizeof(surface_desc.ddpfPixelFormat),
+            "Expected ddpfPixelFormat.dwSize %u, got %u.\n", sizeof(surface_desc.ddpfPixelFormat),
+            surface_desc.ddpfPixelFormat.dwSize);
+    ok(surface_desc.ddpfPixelFormat.dwRGBBitCount == devmode.dmBitsPerPel,
+            "Expected ddpfPixelFormat.dwRGBBitCount %u, got %u.\n", devmode.dmBitsPerPel,
+            surface_desc.ddpfPixelFormat.dwRGBBitCount);
+    ok(surface_desc.lPitch == devmode.dmPelsWidth * devmode.dmBitsPerPel / 8,
+            "Expected pitch %u, got %u.\n", devmode.dmPelsWidth * devmode.dmBitsPerPel / 8,
+            surface_desc.lPitch);
+
+    memset(&param, 0, sizeof(param));
+    param.old_frequency = surface_desc.dwRefreshRate;
+    hr = IDirectDraw2_EnumDisplayModes(ddraw, DDEDM_REFRESHRATES, NULL, &param,
+            find_different_mode_callback);
+    ok(hr == DD_OK, "EnumDisplayModes failed, hr %#x.\n", hr);
+    if (!param.new_frequency)
+    {
+        skip("Failed to find a display mode with a different frequency.\n");
+        goto done;
+    }
+
+    hr = IDirectDraw2_SetDisplayMode(ddraw, param.new_width, param.new_height, param.new_bpp,
+            param.new_frequency, 0);
+    ok(hr == DD_OK, "SetDisplayMode failed, hr %#x.\n", hr);
+    hr = IDirectDraw2_GetDisplayMode(ddraw, &surface_desc);
+    ok(hr == DD_OK, "GetDisplayMode failed, hr %#x.\n", hr);
+    ok(surface_desc.dwWidth == param.new_width, "Expected width %u, got %u.\n", param.new_width,
+            surface_desc.dwWidth);
+    ok(surface_desc.dwHeight == param.new_height, "Expected height %u, got %u.\n", param.new_height,
+            surface_desc.dwHeight);
+    todo_wine
+    ok(surface_desc.dwRefreshRate == param.new_frequency, "Expected frequency %u, got %u.\n",
+            param.new_frequency, surface_desc.dwRefreshRate);
+    ok(surface_desc.ddpfPixelFormat.dwRGBBitCount == param.new_bpp,
+            "Expected ddpfPixelFormat.dwRGBBitCount %u, got %u.\n", devmode.dmBitsPerPel,
+            surface_desc.ddpfPixelFormat.dwRGBBitCount);
+
+done:
+    DestroyWindow(window);
+    IDirectDraw2_Release(ddraw);
 }
 
 START_TEST(ddraw2)

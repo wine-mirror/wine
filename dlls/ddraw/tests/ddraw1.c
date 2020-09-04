@@ -13837,7 +13837,48 @@ static BOOL CALLBACK test_get_display_mode_cb(HMONITOR monitor, HDC hdc, RECT *m
 
 static void test_get_display_mode(void)
 {
+    static const DWORD flags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_REFRESHRATE | DDSD_PIXELFORMAT | DDSD_PITCH;
+    DDSURFACEDESC surface_desc;
+    IDirectDraw *ddraw;
+    DEVMODEW devmode;
+    HRESULT hr;
+    BOOL ret;
+
     EnumDisplayMonitors(NULL, NULL, test_get_display_mode_cb, 0);
+
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+
+    memset(&devmode, 0, sizeof(devmode));
+    devmode.dmSize = sizeof(devmode);
+    ret = EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &devmode);
+    ok(ret, "EnumDisplaySettingsW failed, error %#x.\n", GetLastError());
+
+    surface_desc.dwSize = sizeof(surface_desc);
+    hr = IDirectDraw_GetDisplayMode(ddraw, &surface_desc);
+    ok(hr == DD_OK, "GetDisplayMode failed, hr %#x.\n", hr);
+    ok(surface_desc.dwSize == sizeof(surface_desc), "Expected dwSize %u, got %u.\n",
+            sizeof(surface_desc), surface_desc.dwSize);
+    ok(surface_desc.dwFlags == flags, "Expected dwFlags %#x, got %#x.\n", flags,
+            surface_desc.dwFlags);
+    ok(surface_desc.dwWidth == devmode.dmPelsWidth, "Expected width %u, got %u.\n",
+            devmode.dmPelsWidth, surface_desc.dwWidth);
+    ok(surface_desc.dwHeight == devmode.dmPelsHeight, "Expected height %u, got %u.\n",
+            devmode.dmPelsHeight, surface_desc.dwHeight);
+    todo_wine_if(devmode.dmDisplayFrequency != 60)
+    ok(surface_desc.dwRefreshRate == devmode.dmDisplayFrequency, "Expected frequency %u, got %u.\n",
+            devmode.dmDisplayFrequency, surface_desc.dwRefreshRate);
+    ok(surface_desc.ddpfPixelFormat.dwSize == sizeof(surface_desc.ddpfPixelFormat),
+            "Expected ddpfPixelFormat.dwSize %u, got %u.\n", sizeof(surface_desc.ddpfPixelFormat),
+            surface_desc.ddpfPixelFormat.dwSize);
+    ok(surface_desc.ddpfPixelFormat.dwRGBBitCount == devmode.dmBitsPerPel,
+            "Expected ddpfPixelFormat.dwRGBBitCount %u, got %u.\n", devmode.dmBitsPerPel,
+            surface_desc.ddpfPixelFormat.dwRGBBitCount);
+    ok(surface_desc.lPitch == devmode.dmPelsWidth * devmode.dmBitsPerPel / 8,
+            "Expected pitch %u, got %u.\n", devmode.dmPelsWidth * devmode.dmBitsPerPel / 8,
+            surface_desc.lPitch);
+
+    IDirectDraw_Release(ddraw);
 }
 
 START_TEST(ddraw1)
