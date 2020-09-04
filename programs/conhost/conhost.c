@@ -613,6 +613,7 @@ static NTSTATUS set_output_info( struct screen_buffer *screen_buffer,
         }
     }
 
+    if (is_active( screen_buffer )) tty_sync( screen_buffer->console );
     return STATUS_SUCCESS;
 }
 
