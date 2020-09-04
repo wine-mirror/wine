@@ -327,6 +327,45 @@ static void init_tty_output( struct console *console )
     console->tty_cursor_visible = TRUE;
 }
 
+static void update_output( struct screen_buffer *screen_buffer, const RECT *rect )
+{
+    int x, y, size, trailing_spaces;
+    char_info_t *ch;
+    char buf[8];
+
+    if (!is_active( screen_buffer ) || !screen_buffer->console->tty_output) return;
+    TRACE( "%s\n", wine_dbgstr_rect( rect ));
+
+    hide_tty_cursor( screen_buffer->console );
+
+    for (y = rect->top; y <= rect->bottom; y++)
+    {
+        for (trailing_spaces = 0; trailing_spaces < screen_buffer->width; trailing_spaces++)
+        {
+            ch = &screen_buffer->data[(y + 1) * screen_buffer->width - trailing_spaces - 1];
+            if (ch->ch != ' ' || ch->attr != 7) break;
+        }
+        if (trailing_spaces < 4) trailing_spaces = 0;
+
+        for (x = rect->left; x <= rect->right; x++)
+        {
+            ch = &screen_buffer->data[y * screen_buffer->width + x];
+            set_tty_attr( screen_buffer->console, ch->attr );
+            set_tty_cursor( screen_buffer->console, x, y );
+
+            if (x + trailing_spaces >= screen_buffer->width)
+            {
+                tty_write( screen_buffer->console, "\x1b[K", 3 );
+                break;
+            }
+
+            size = WideCharToMultiByte( CP_UTF8, 0, &ch->ch, 1, buf, sizeof(buf), NULL, NULL );
+            tty_write( screen_buffer->console, buf, size );
+            screen_buffer->console->tty_cursor_x++;
+        }
+    }
+}
+
 static NTSTATUS read_console_input( struct console *console, size_t out_size )
 {
     size_t count = min( out_size / sizeof(INPUT_RECORD), console->record_count );
@@ -669,6 +708,34 @@ static NTSTATUS write_output( struct screen_buffer *screen_buffer, const struct 
         default:
             return STATUS_INVALID_PARAMETER;
         }
+    }
+
+    if (i && is_active( screen_buffer ))
+    {
+        RECT update_rect;
+
+        update_rect.left = params->x;
+        update_rect.top  = params->y;
+        if (params->width)
+        {
+            update_rect.bottom = min( params->y + entry_cnt / params->width, screen_buffer->height ) - 1;
+            update_rect.right  = min( params->x + params->width, screen_buffer->width ) - 1;
+        }
+        else
+        {
+            update_rect.bottom = params->y + (params->x + i - 1) / screen_buffer->width;
+            if (update_rect.bottom != params->y)
+            {
+                update_rect.left = 0;
+                update_rect.right = screen_buffer->width - 1;
+            }
+            else
+            {
+                update_rect.right = params->x + i - 1;
+            }
+        }
+        update_output( screen_buffer, &update_rect );
+        tty_sync( screen_buffer->console );
     }
 
     if (*out_size == sizeof(SMALL_RECT))
