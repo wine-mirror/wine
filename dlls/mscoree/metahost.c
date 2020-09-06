@@ -298,6 +298,21 @@ fail:
     return E_FAIL;
 }
 
+static char* get_exe_basename_utf8(void)
+{
+    WCHAR filenameW[MAX_PATH], *basenameW;
+
+    GetModuleFileNameW(NULL, filenameW, MAX_PATH);
+
+    basenameW = wcsrchr(filenameW, '\\');
+    if (basenameW)
+        basenameW += 1;
+    else
+        basenameW = filenameW;
+
+    return WtoA(basenameW);
+}
+
 MonoDomain* get_root_domain(void)
 {
     static MonoDomain* root_domain;
@@ -309,8 +324,13 @@ MonoDomain* get_root_domain(void)
 
     if (root_domain == NULL)
     {
-        /* FIXME: Use exe filename to name the domain? */
-        root_domain = mono_jit_init_version("mscorlib.dll", "v4.0.30319");
+        char *exe_basename;
+
+        exe_basename = get_exe_basename_utf8();
+
+        root_domain = mono_jit_init_version(exe_basename, "v4.0.30319");
+
+        HeapFree(GetProcessHeap(), 0, exe_basename);
 
         is_mono_started = TRUE;
     }
