@@ -99,7 +99,6 @@
  *   -- LVM_GETINSERTMARKRECT
  *   -- LVM_GETNUMBEROFWORKAREAS
  *   -- LVM_GETOUTLINECOLOR, LVM_SETOUTLINECOLOR
- *   -- LVM_GETSELECTEDCOLUMN, LVM_SETSELECTEDCOLUMN
  *   -- LVM_GETISEARCHSTRINGW, LVM_GETISEARCHSTRINGA
  *   -- LVM_GETTILEINFO, LVM_SETTILEINFO
  *   -- LVM_GETTILEVIEWINFO, LVM_SETTILEVIEWINFO
@@ -248,6 +247,7 @@ typedef struct tagLISTVIEW_INFO
   /* columns */
   HDPA hdpaColumns;		/* array of COLUMN_INFO pointers */
   BOOL colRectsDirty;		/* trigger column rectangles requery from header */
+  INT selected_column;          /* index for LVM_SETSELECTEDCOLUMN/LVM_GETSELECTEDCOLUMN */
 
   /* item metrics */
   BOOL bNoItemMetrics;		/* flags if item metrics are not yet computed */
@@ -9506,6 +9506,7 @@ static LRESULT LISTVIEW_NCCreate(HWND hwnd, WPARAM wParam, const CREATESTRUCTW *
   infoPtr->itemEdit.fEnabled = FALSE;
   infoPtr->iVersion = COMCTL32_VERSION;
   infoPtr->colRectsDirty = FALSE;
+  infoPtr->selected_column = -1;
 
   /* get default font (icon title) */
   SystemParametersInfoW(SPI_GETICONTITLELOGFONT, 0, &logFont, 0);
@@ -11465,7 +11466,8 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
   /* case LVM_GETOUTLINECOLOR: */
 
-  /* case LVM_GETSELECTEDCOLUMN: */
+  case LVM_GETSELECTEDCOLUMN:
+    return infoPtr->selected_column;
 
   case LVM_GETSELECTEDCOUNT:
     return LISTVIEW_GetSelectedCount(infoPtr);
@@ -11638,7 +11640,9 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
   /* case LVM_SETOUTLINECOLOR: */
 
-  /* case LVM_SETSELECTEDCOLUMN: */
+  case LVM_SETSELECTEDCOLUMN:
+    infoPtr->selected_column = (INT)wParam;
+    return TRUE;
 
   case LVM_SETSELECTIONMARK:
     return LISTVIEW_SetSelectionMark(infoPtr, (INT)lParam);

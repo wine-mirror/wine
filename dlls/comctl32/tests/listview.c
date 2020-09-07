@@ -6659,6 +6659,42 @@ static void test_item_state_change(void)
     }
 }
 
+static void test_selected_column(void)
+{
+    static const DWORD styles[] = { LVS_ICON, LVS_LIST, LVS_REPORT, LVS_SMALLICON };
+    int ret, i;
+    HWND hwnd;
+
+    for (i = 0; i < ARRAY_SIZE(styles); ++i)
+    {
+        hwnd = create_listview_control(styles[i]);
+
+        /* Initial value */
+        ret = SendMessageA(hwnd, LVM_GETSELECTEDCOLUMN, 0, 0);
+        ok(ret == -1, "Unexpected column %d.\n", ret);
+
+        ret = SendMessageA(hwnd, LVM_SETSELECTEDCOLUMN, -100, 0);
+        ok(ret == 1, "Unexpected return value %d.\n", ret);
+
+        ret = SendMessageA(hwnd, LVM_GETSELECTEDCOLUMN, 0, 0);
+        ok(ret == -100, "Unexpected column %d.\n", ret);
+
+        ret = SendMessageA(hwnd, LVM_SETSELECTEDCOLUMN, 100, 0);
+        ok(ret == 1, "Unexpected return value %d.\n", ret);
+
+        ret = SendMessageA(hwnd, LVM_GETSELECTEDCOLUMN, 0, 0);
+        ok(ret == 100, "Unexpected column %d.\n", ret);
+
+        ret = SendMessageA(hwnd, LVM_SETSELECTEDCOLUMN, -1, 0);
+        ok(ret == 1, "Unexpected return value %d.\n", ret);
+
+        ret = SendMessageA(hwnd, LVM_GETSELECTEDCOLUMN, 0, 0);
+        ok(ret == -1, "Unexpected column %d.\n", ret);
+
+        DestroyWindow(hwnd);
+    }
+}
+
 START_TEST(listview)
 {
     ULONG_PTR ctx_cookie;
@@ -6766,6 +6802,7 @@ START_TEST(listview)
     test_LVN_ENDLABELEDIT();
     test_LVM_GETCOUNTPERPAGE();
     test_item_state_change();
+    test_selected_column();
 
     unload_v6_module(ctx_cookie, hCtx);
 
