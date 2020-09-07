@@ -734,7 +734,7 @@ static HRESULT video_renderer_create_mixer(struct video_renderer *renderer, IMFA
     CLSID clsid;
     HRESULT hr;
 
-    if (SUCCEEDED(IMFAttributes_GetUnknown(attributes, &MF_ACTIVATE_CUSTOM_VIDEO_MIXER_ACTIVATE,
+    if (SUCCEEDED(hr = IMFAttributes_GetUnknown(attributes, &MF_ACTIVATE_CUSTOM_VIDEO_MIXER_ACTIVATE,
             &IID_IMFActivate, (void **)&activate)))
     {
         IMFAttributes_GetUINT32(attributes, &MF_ACTIVATE_CUSTOM_VIDEO_MIXER_FLAGS, &flags);
@@ -744,23 +744,31 @@ static HRESULT video_renderer_create_mixer(struct video_renderer *renderer, IMFA
             return hr;
     }
 
-    if (FAILED(IMFAttributes_GetGUID(attributes, &MF_ACTIVATE_CUSTOM_VIDEO_MIXER_CLSID, &clsid)))
-        memcpy(&clsid, &CLSID_MFVideoMixer9, sizeof(clsid));
-
-    if (SUCCEEDED(hr = CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IMFTransform, (void **)out)))
+    /* Activation object failed, use class activation. */
+    if (FAILED(hr))
     {
-        if (SUCCEEDED(hr = IMFTransform_QueryInterface(*out, &IID_IMFTopologyServiceLookupClient,
-                (void **)&lookup_client)))
+        if (FAILED(IMFAttributes_GetGUID(attributes, &MF_ACTIVATE_CUSTOM_VIDEO_MIXER_CLSID, &clsid)))
+            memcpy(&clsid, &CLSID_MFVideoMixer9, sizeof(clsid));
+        hr = CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IMFTransform, (void **)out);
+    }
+
+    if (FAILED(hr))
+    {
+        WARN("Failed to create a mixer object, hr %#x.\n", hr);
+        return hr;
+    }
+
+    if (SUCCEEDED(hr = IMFTransform_QueryInterface(*out, &IID_IMFTopologyServiceLookupClient,
+            (void **)&lookup_client)))
+    {
+        renderer->flags |= EVR_INIT_SERVICES;
+        if (SUCCEEDED(hr = IMFTopologyServiceLookupClient_InitServicePointers(lookup_client,
+                &renderer->IMFTopologyServiceLookup_iface)))
         {
-            renderer->flags |= EVR_INIT_SERVICES;
-            if (SUCCEEDED(hr = IMFTopologyServiceLookupClient_InitServicePointers(lookup_client,
-                    &renderer->IMFTopologyServiceLookup_iface)))
-            {
-                renderer->flags |= EVR_MIXER_INITED_SERVICES;
-            }
-            renderer->flags &= ~EVR_INIT_SERVICES;
-            IMFTopologyServiceLookupClient_Release(lookup_client);
+            renderer->flags |= EVR_MIXER_INITED_SERVICES;
         }
+        renderer->flags &= ~EVR_INIT_SERVICES;
+        IMFTopologyServiceLookupClient_Release(lookup_client);
     }
 
     return hr;
