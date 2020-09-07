@@ -6962,12 +6962,14 @@ static void test_extended_context(void)
 
             length = 0xdeadbeef;
             ret = pRtlGetExtendedContextLength2(flags, &length, 0);
-            ok(!ret && length == expected_length_xstate - sizeof(YMMCONTEXT),
+            ok((!ret && length == expected_length_xstate - sizeof(YMMCONTEXT))
+                    || broken(!ret && length == expected_length_xstate) /* win10pro */,
                     "Got unexpected result ret %#x, length %#x, test %u.\n", ret, length, test);
 
             length = 0xdeadbeef;
             ret = pRtlGetExtendedContextLength2(flags, &length, 3);
-            ok(!ret && length == expected_length_xstate - sizeof(YMMCONTEXT),
+            ok((!ret && length == expected_length_xstate - sizeof(YMMCONTEXT))
+                    || broken(!ret && length == expected_length_xstate) /* win10pro */,
                     "Got unexpected result ret %#x, length %#x, test %u.\n", ret, length, test);
 
             length = 0xdeadbeef;
@@ -7149,7 +7151,9 @@ static void test_extended_context(void)
 
             length2 = 0xdeadbeef;
             p = pRtlLocateExtendedFeature(context_ex, 2, &length2);
-            ok(!p && length2 == sizeof(YMMCONTEXT), "Got unexpected p %p, length %#x, flags %#x.\n", p, length2, flags);
+            ok((!p && length2 == sizeof(YMMCONTEXT))
+                    || broken(p && length2 == sizeof(YMMCONTEXT)) /* win10pro */,
+                    "Got unexpected p %p, length %#x, flags %#x.\n", p, length2, flags);
 
             length2 = 0xdeadbeef;
             p = pLocateXStateFeature(context, 2, &length2);
@@ -7171,7 +7175,8 @@ static void test_extended_context(void)
                     - context_arch[test].context_length;
             ok(context_ex->XState.Offset == expected_offset,
                     "Got unexpected Offset %d, flags %#x.\n", context_ex->XState.Offset, flags);
-            ok(context_ex->XState.Length == sizeof(XSTATE) - sizeof(YMMCONTEXT),
+            ok(context_ex->XState.Length == sizeof(XSTATE) - sizeof(YMMCONTEXT)
+                    || broken(context_ex->XState.Length == sizeof(XSTATE)) /* win10pro */,
                     "Got unexpected Length %#x, flags %#x.\n", context_ex->XState.Length, flags);
 
             ok(context_ex->All.Offset == -(int)context_arch[test].context_length,
@@ -7267,7 +7272,8 @@ static void test_extended_context(void)
             context->ContextFlags);
     expected_compaction = compaction_enabled ? (ULONG64)1 << 63 : 0;
 
-    ok(!xs->Mask, "Got unexpected Mask %s.\n", wine_dbgstr_longlong(xs->Mask));
+    ok(!xs->Mask || broken(xs->Mask == 4) /* win10pro */,
+            "Got unexpected Mask %s.\n", wine_dbgstr_longlong(xs->Mask));
     ok(xs->CompactionMask == expected_compaction, "Got unexpected CompactionMask %s.\n",
             wine_dbgstr_longlong(xs->CompactionMask));
 
@@ -7275,7 +7281,7 @@ static void test_extended_context(void)
         ok(data[i] == test_extended_context_data[i], "Got unexpected data %#x, i %u.\n", data[i], i);
 
     for (i = 0; i < 4; ++i)
-        ok(((ULONG *)&xs->YmmContext)[i] == 0xcccccccc,
+        ok(((ULONG *)&xs->YmmContext)[i] == (xs->Mask == 4 ? test_extended_context_data[i + 4] : 0xcccccccc),
                 "Got unexpected data %#x, i %u.\n", ((ULONG *)&xs->YmmContext)[i], i);
 
     expected_compaction = compaction_enabled ? ((ULONG64)1 << 63) | 4 : 0;
@@ -7292,7 +7298,8 @@ static void test_extended_context(void)
     ok(xs->CompactionMask == 4, "Got unexpected CompactionMask %s.\n",
             wine_dbgstr_longlong(xs->CompactionMask));
     for (i = 0; i < 4; ++i)
-        ok(((ULONG *)&xs->YmmContext)[i] == 0xcccccccc,
+        ok(((ULONG *)&xs->YmmContext)[i] == 0xcccccccc
+                || broken(((ULONG *)&xs->YmmContext)[i] == test_extended_context_data[i + 4]) /* win10pro */,
                 "Got unexpected data %#x, i %u.\n", ((ULONG *)&xs->YmmContext)[i], i);
 
     xs->CompactionMask = 4;
@@ -7307,7 +7314,8 @@ static void test_extended_context(void)
     ok(xs->CompactionMask == expected_compaction, "Got unexpected CompactionMask %s.\n",
             wine_dbgstr_longlong(xs->CompactionMask));
     for (i = 0; i < 4; ++i)
-        ok(((ULONG *)&xs->YmmContext)[i] == 0xcccccccc,
+        ok(((ULONG *)&xs->YmmContext)[i] == 0xcccccccc
+                || broken(((ULONG *)&xs->YmmContext)[i] == test_extended_context_data[i + 4]) /* win10pro */,
                 "Got unexpected data %#x, i %u.\n", ((ULONG *)&xs->YmmContext)[i], i);
 
     context_ex->XState.Length = sizeof(XSTATE);
