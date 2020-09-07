@@ -40,6 +40,7 @@ struct video_stream
     LONG refcount;
     unsigned int id;
     struct video_renderer *parent;
+    IMFMediaEventQueue *event_queue;
 };
 
 struct video_renderer
@@ -167,6 +168,8 @@ static ULONG WINAPI video_stream_sink_Release(IMFStreamSink *iface)
 
     if (!refcount)
     {
+        if (stream->event_queue)
+            IMFMediaEventQueue_Release(stream->event_queue);
         heap_free(stream);
     }
 
@@ -175,32 +178,40 @@ static ULONG WINAPI video_stream_sink_Release(IMFStreamSink *iface)
 
 static HRESULT WINAPI video_stream_sink_GetEvent(IMFStreamSink *iface, DWORD flags, IMFMediaEvent **event)
 {
-    FIXME("%p, %#x, %p.\n", iface, flags, event);
+    struct video_stream *stream = impl_from_IMFStreamSink(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %#x, %p.\n", iface, flags, event);
+
+    return IMFMediaEventQueue_GetEvent(stream->event_queue, flags, event);
 }
 
 static HRESULT WINAPI video_stream_sink_BeginGetEvent(IMFStreamSink *iface, IMFAsyncCallback *callback, IUnknown *state)
 {
-    FIXME("%p, %p, %p.\n", iface, callback, state);
+    struct video_stream *stream = impl_from_IMFStreamSink(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %p.\n", iface, callback, state);
+
+    return IMFMediaEventQueue_BeginGetEvent(stream->event_queue, callback, state);
 }
 
 static HRESULT WINAPI video_stream_sink_EndGetEvent(IMFStreamSink *iface, IMFAsyncResult *result,
         IMFMediaEvent **event)
 {
-    FIXME("%p, %p, %p.\n", iface, result, event);
+    struct video_stream *stream = impl_from_IMFStreamSink(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %p.\n", iface, result, event);
+
+    return IMFMediaEventQueue_EndGetEvent(stream->event_queue, result, event);
 }
 
 static HRESULT WINAPI video_stream_sink_QueueEvent(IMFStreamSink *iface, MediaEventType event_type,
-        REFGUID exttype, HRESULT hr_status, const PROPVARIANT *value)
+        REFGUID ext_type, HRESULT hr, const PROPVARIANT *value)
 {
-    FIXME("%p, %d, %s, %#x, %p.\n", iface, event_type, debugstr_guid(exttype), hr_status, value);
+    struct video_stream *stream = impl_from_IMFStreamSink(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %d, %s, %#x, %p.\n", iface, event_type, debugstr_guid(ext_type), hr, value);
+
+    return IMFMediaEventQueue_QueueEventParamVar(stream->event_queue, event_type, ext_type, hr, value);
 }
 
 static HRESULT WINAPI video_stream_sink_GetMediaSink(IMFStreamSink *iface, IMFMediaSink **sink)
@@ -289,12 +300,17 @@ static HRESULT video_renderer_stream_create(struct video_renderer *renderer, uns
         struct video_stream **ret)
 {
     struct video_stream *stream;
+    HRESULT hr;
 
     if (!(stream = heap_alloc_zero(sizeof(*stream))))
         return E_OUTOFMEMORY;
 
     stream->IMFStreamSink_iface.lpVtbl = &video_stream_sink_vtbl;
     stream->refcount = 1;
+
+    if (FAILED(hr = MFCreateEventQueue(&stream->event_queue)))
+        return hr;
+
     stream->parent = renderer;
     IMFMediaSink_AddRef(&stream->parent->IMFMediaSink_iface);
     stream->id = id;
@@ -628,6 +644,7 @@ static HRESULT WINAPI video_renderer_sink_Shutdown(IMFMediaSink *iface)
     {
         IMFMediaSink_Release(&renderer->streams[i]->parent->IMFMediaSink_iface);
         renderer->streams[i]->parent = NULL;
+        IMFMediaEventQueue_Shutdown(renderer->streams[i]->event_queue);
         IMFStreamSink_Release(&renderer->streams[i]->IMFStreamSink_iface);
         renderer->streams[i] = NULL;
     }
