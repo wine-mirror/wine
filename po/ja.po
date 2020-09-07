@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2020-05-10 19:59+0900\n"
+"PO-Revision-Date: 2020-09-07 22:53+0900\n"
 "Last-Translator: Akihiro Sagawa <sagawa.aki@gmail.com>\n"
 "Language-Team: Japanese\n"
 "Language: ja\n"
@@ -3606,7 +3606,7 @@ msgstr "ゲーム コントローラ"
 
 #: joy.rc:32
 msgid "Test and configure game controllers."
-msgstr ""
+msgstr "ゲーム コントローラのテストと設定をします。"
 
 #: jscript.rc:28
 msgid "Error converting object to primitive type"
@@ -3614,17 +3614,15 @@ msgstr "オブジェクトを基本型に変換できません"
 
 #: jscript.rc:29
 msgid "Invalid procedure call or argument"
-msgstr "手続き呼び出しまたは引数が無効です"
+msgstr "使用できない手続き呼び出しまたは引数です"
 
 #: jscript.rc:30
 msgid "Subscript out of range"
 msgstr "添字が範囲外です"
 
 #: jscript.rc:31
-#, fuzzy
-#| msgid "Out of paper; "
 msgid "Out of stack space"
-msgstr "用紙切れ - "
+msgstr "スタック スペースが不足しています"
 
 #: jscript.rc:32
 msgid "Object required"
@@ -3672,7 +3670,7 @@ msgstr "'='を期待していました"
 
 #: jscript.rc:43
 msgid "Invalid character"
-msgstr "無効な文字です"
+msgstr "使用できない文字です"
 
 #: jscript.rc:44
 msgid "Unterminated string constant"
@@ -3763,16 +3761,12 @@ msgid "JScript object expected"
 msgstr "JScript オブジェクトを期待していました"
 
 #: jscript.rc:63
-#, fuzzy
-#| msgid "Array object expected"
 msgid "Enumerator object expected"
-msgstr "配列オブジェクトを期待していました"
+msgstr "列挙子オブジェクトを期待していました"
 
 #: jscript.rc:64
-#, fuzzy
-#| msgid "Boolean object expected"
 msgid "Regular Expression object expected"
-msgstr "Boolean オブジェクトを期待していました"
+msgstr "正規表現オブジェクトを期待していました"
 
 #: jscript.rc:65
 msgid "Syntax error in regular expression"
@@ -3784,7 +3778,7 @@ msgstr "例外が送出されましたが捕捉されませんでした"
 
 #: jscript.rc:68
 msgid "URI to be encoded contains invalid characters"
-msgstr "エンコードされる URI に無効な文字が含まれています"
+msgstr "エンコードされる URI に使用できない文字が含まれています"
 
 #: jscript.rc:67
 msgid "URI to be decoded is incorrect"
@@ -3841,7 +3835,7 @@ msgstr "処理は成功しました。\n"
 
 #: winerror.mc:33
 msgid "Invalid function.\n"
-msgstr "ファンクションが正しくありません。\n"
+msgstr "使用できないファンクションです。\n"
 
 #: winerror.mc:38
 msgid "File not found.\n"
@@ -6797,10 +6791,8 @@ msgid "Connection reset by peer.\n"
 msgstr "相手側により接続がリセットされました。\n"
 
 #: winerror.mc:3767
-#, fuzzy
-#| msgid "Not implemented"
 msgid "Not implemented.\n"
-msgstr "未実装"
+msgstr "未実装です。\n"
 
 #: winerror.mc:3760
 msgid "No Signature found in file.\n"
@@ -8402,7 +8394,7 @@ msgstr "接続をテスト(&T)"
 
 #: version.rc:92
 msgid "Advanced"
-msgstr "中級"
+msgstr "高度"
 
 #: version.rc:95
 msgid "Network settings"
@@ -12504,6 +12496,9 @@ msgid ""
 "\n"
 "hardlink      hardlink management\n"
 msgstr ""
+"- サポートしているコマンド -\n"
+"\n"
+"hardlink      ハードリンクの管理\n"
 
 #: fsutil.mc:35
 msgid ""
@@ -12511,10 +12506,13 @@ msgid ""
 "\n"
 "create        create a hardlink\n"
 msgstr ""
+"- Hardlink - サポートしているコマンド -\n"
+"\n"
+"create        ハードリンクを作成する\n"
 
 #: fsutil.mc:40
 msgid "Syntax: fsutil hardlink create <new> <existing>\n"
-msgstr ""
+msgstr "構文: fsutil hardlink create <新規> <既存>\n"
 
 #: hostname.rc:30
 msgid "Usage: hostname\n"
@@ -12526,7 +12524,7 @@ msgstr "エラー: 無効なオプション '%c'。\n"
 
 #: hostname.rc:32
 msgid "Error: Could not get hostname: %u.\n"
-msgstr "エラー: ホスト名が得られません: %u\n"
+msgstr "エラー: ホスト名が得られません: %u。\n"
 
 #: hostname.rc:33
 msgid ""
@@ -16519,10 +16517,8 @@ msgid "&Beginner"
 msgstr "初級(&B)"
 
 #: winemine.rc:45
-#, fuzzy
-#| msgid "Interface"
 msgid "&Intermediate"
-msgstr "インターフェイス"
+msgstr "中級(&I)"
 
 #: winemine.rc:46
 msgid "&Expert"
@@ -16553,10 +16549,8 @@ msgid "Beginner"
 msgstr "初級"
 
 #: winemine.rc:65
-#, fuzzy
-#| msgid "Interface"
 msgid "Intermediate"
-msgstr "インターフェイス"
+msgstr "中級"
 
 #: winemine.rc:66
 msgid "Expert"
