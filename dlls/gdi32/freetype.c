@@ -269,7 +269,7 @@ struct enum_data
 typedef struct tagFace {
     struct list entry;
     unsigned int refcount;
-    WCHAR *StyleName;
+    WCHAR *style_name;
     WCHAR *full_name;
     WCHAR *file;
     dev_t dev;
@@ -1527,7 +1527,7 @@ static WCHAR *ft_face_get_full_name( FT_Face ft_face, LANGID langid )
 
 static inline BOOL faces_equal( const Face *f1, const Face *f2 )
 {
-    if (strcmpiW( f1->StyleName, f2->StyleName )) return FALSE;
+    if (strcmpiW( f1->style_name, f2->style_name )) return FALSE;
     if (f1->scalable) return TRUE;
     if (f1->size.y_ppem != f2->size.y_ppem) return FALSE;
     return !memcmp( &f1->fs, &f2->fs, sizeof(f1->fs) );
@@ -1553,7 +1553,7 @@ static void release_face( Face *face )
         release_family( face->family );
     }
     HeapFree( GetProcessHeap(), 0, face->file );
-    HeapFree( GetProcessHeap(), 0, face->StyleName );
+    HeapFree( GetProcessHeap(), 0, face->style_name );
     HeapFree( GetProcessHeap(), 0, face->full_name );
     HeapFree( GetProcessHeap(), 0, face->cached_enum_data );
     HeapFree( GetProcessHeap(), 0, face );
@@ -1695,13 +1695,13 @@ static void load_face(HKEY hkey_face, WCHAR *face_name, Family *family, void *bu
 
         face->refcount = 1;
         face->file = strdupW( buffer );
-        face->StyleName = strdupW(face_name);
+        face->style_name = strdupW( face_name );
 
         needed = buffer_size;
         if (RegQueryValueExW( hkey_face, face_full_name_value, NULL, NULL, buffer, &needed ) != ERROR_SUCCESS)
         {
             ERR( "couldn't find full name for %s %s in cache\n", debugstr_w(family->FamilyName),
-                 debugstr_w(face->StyleName) );
+                 debugstr_w(face->style_name) );
             release_face( face );
             return;
         }
@@ -1876,13 +1876,12 @@ static void add_face_to_cache(Face *face)
         RegSetValueExW(hkey_family, english_name_value, 0, REG_SZ, (BYTE*)face->family->EnglishName,
                        (strlenW(face->family->EnglishName) + 1) * sizeof(WCHAR));
 
-    if(face->scalable)
-        face_key_name = face->StyleName;
+    if (face->scalable) face_key_name = face->style_name;
     else
     {
         static const WCHAR fmtW[] = {'%','s','\\','%','d',0};
-        face_key_name = HeapAlloc(GetProcessHeap(), 0, (strlenW(face->StyleName) + 10) * sizeof(WCHAR));
-        sprintfW(face_key_name, fmtW, face->StyleName, face->size.y_ppem);
+        face_key_name = HeapAlloc( GetProcessHeap(), 0, (strlenW( face->style_name ) + 10) * sizeof(WCHAR) );
+        sprintfW( face_key_name, fmtW, face->style_name, face->size.y_ppem );
     }
     RegCreateKeyExW(hkey_family, face_key_name, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL,
                     &hkey_face, NULL);
@@ -1922,13 +1921,13 @@ static void remove_face_from_cache( Face *face )
 
     if (face->scalable)
     {
-        RegDeleteKeyW( hkey_family, face->StyleName );
+        RegDeleteKeyW( hkey_family, face->style_name );
     }
     else
     {
         static const WCHAR fmtW[] = {'%','s','\\','%','d',0};
-        WCHAR *face_key_name = HeapAlloc(GetProcessHeap(), 0, (strlenW(face->StyleName) + 10) * sizeof(WCHAR));
-        sprintfW(face_key_name, fmtW, face->StyleName, face->size.y_ppem);
+        WCHAR *face_key_name = HeapAlloc( GetProcessHeap(), 0, (strlenW( face->style_name ) + 10) * sizeof(WCHAR) );
+        sprintfW( face_key_name, fmtW, face->style_name, face->size.y_ppem );
         RegDeleteKeyW( hkey_family, face_key_name );
         HeapFree(GetProcessHeap(), 0, face_key_name);
     }
@@ -2120,7 +2119,7 @@ static Face *create_face( FT_Face ft_face, FT_Long face_index, const char *file,
     Face *face = HeapAlloc( GetProcessHeap(), 0, sizeof(*face) );
 
     face->refcount = 1;
-    face->StyleName = ft_face_get_style_name( ft_face, GetSystemDefaultLangID() );
+    face->style_name = ft_face_get_style_name( ft_face, GetSystemDefaultLangID() );
     face->full_name = ft_face_get_full_name( ft_face, GetSystemDefaultLangID() );
     if (flags & ADDFONT_VERTICAL_FONT) face->full_name = get_vertical_name( face->full_name );
 
@@ -2380,7 +2379,7 @@ static void DumpFontList(void)
     LIST_FOR_EACH_ENTRY( family, &font_list, Family, entry ) {
         TRACE("Family: %s\n", debugstr_w(family->FamilyName));
         LIST_FOR_EACH_ENTRY( face, &family->faces, Face, entry ) {
-            TRACE( "\t%s\t%s\t%08x", debugstr_w(face->StyleName), debugstr_w(face->full_name),
+            TRACE( "\t%s\t%s\t%08x", debugstr_w(face->style_name), debugstr_w(face->full_name),
                    face->fs.fsCsb[0] );
             if(!face->scalable)
                 TRACE(" %d", face->size.height);
@@ -6195,7 +6194,7 @@ static void GetEnumStructs(Face *face, const WCHAR *family_name, LPENUMLOGFONTEX
 
         lstrcpynW(pelf->elfLogFont.lfFaceName, family_name, LF_FACESIZE);
         lstrcpynW( pelf->elfFullName, face->full_name, LF_FULLFACESIZE );
-        lstrcpynW(pelf->elfStyle, face->StyleName, LF_FACESIZE);
+        lstrcpynW( pelf->elfStyle, face->style_name, LF_FACESIZE );
     }
 
     pntm->ntmTm.ntmFlags = face->ntmFlags;
