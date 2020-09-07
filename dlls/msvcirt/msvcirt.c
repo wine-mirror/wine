@@ -315,10 +315,10 @@ DEFINE_RTTI_DATA2(ifstream, sizeof(istream),
 DEFINE_RTTI_DATA4(iostream, sizeof(iostream),
     &istream_rtti_base_descriptor, &ios_rtti_base_descriptor,
     &ostream_rtti_base_descriptor, &ios_rtti_base_descriptor, ".?AViostream@@")
-DEFINE_RTTI_DATA4(strstream, sizeof(iostream),
+DEFINE_RTTI_DATA5(strstream, sizeof(iostream), &iostream_rtti_base_descriptor,
     &istream_rtti_base_descriptor, &ios_rtti_base_descriptor,
     &ostream_rtti_base_descriptor, &ios_rtti_base_descriptor, ".?AVstrstream@@")
-DEFINE_RTTI_DATA4(stdiostream, sizeof(iostream),
+DEFINE_RTTI_DATA5(stdiostream, sizeof(iostream), &iostream_rtti_base_descriptor,
     &istream_rtti_base_descriptor, &ios_rtti_base_descriptor,
     &ostream_rtti_base_descriptor, &ios_rtti_base_descriptor, ".?AVstdiostream@@")
 
