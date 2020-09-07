@@ -708,6 +708,7 @@ static void *unwind_packed_data( ULONG_PTR base, ULONG_PTR pc, RUNTIME_FUNCTION 
             switch (func->u.s.CR)
             {
             case 3:
+                len++; /* mov x29,sp */
                 len++; /* stp x29,lr,[sp,0] */
                 if (local_size <= 512) break;
                 /* fall through */
@@ -717,9 +718,10 @@ static void *unwind_packed_data( ULONG_PTR base, ULONG_PTR pc, RUNTIME_FUNCTION 
                 if (local_size > 4088) len++;  /* sub sp,sp,#4088 */
                 break;
             }
-            if (offset < len + 4 * func->u.s.H)  /* prolog */
+            len += 4 * func->u.s.H;
+            if (offset < len)  /* prolog */
             {
-                skip = len + 4 * func->u.s.H - offset;
+                skip = len - offset;
             }
             else if (offset >= func->u.s.FunctionLength - (len + 1))  /* epilog */
             {
@@ -733,6 +735,7 @@ static void *unwind_packed_data( ULONG_PTR base, ULONG_PTR pc, RUNTIME_FUNCTION 
         if (func->u.s.CR == 3)
         {
             DWORD64 *fp = (DWORD64 *) context->u.s.Fp; /* u.X[29] */
+            context->Sp = context->u.s.Fp;
             context->u.X[29] = fp[0];
             context->u.X[30] = fp[1];
         }
@@ -748,34 +751,36 @@ static void *unwind_packed_data( ULONG_PTR base, ULONG_PTR pc, RUNTIME_FUNCTION 
         switch (func->u.s.CR)
         {
         case 3:
+            /* mov x29,sp */
+            if (pos++ >= skip) context->Sp = context->u.s.Fp;
             if (local_size <= 512)
             {
                 /* stp x29,lr,[sp,-#local_size]! */
-                if (pos++ > skip) restore_regs( 29, 2, -local_size_regs, context, ptrs );
+                if (pos++ >= skip) restore_regs( 29, 2, -local_size_regs, context, ptrs );
                 break;
             }
             /* stp x29,lr,[sp,0] */
-            if (pos++ > skip) restore_regs( 29, 2, 0, context, ptrs );
+            if (pos++ >= skip) restore_regs( 29, 2, 0, context, ptrs );
             /* fall through */
         case 0:
         case 1:
             if (!local_size) break;
             /* sub sp,sp,#local_size */
-            if (pos++ > skip) context->Sp += (local_size - 1) % 4088 + 1;
-            if (local_size > 4088 && pos++ > skip) context->Sp += 4088;
+            if (pos++ >= skip) context->Sp += (local_size - 1) % 4088 + 1;
+            if (local_size > 4088 && pos++ >= skip) context->Sp += 4088;
             break;
         }
 
-        if (func->u.s.H && offset < len + 4) pos += 4;
+        if (func->u.s.H) pos += 4;
 
         if (fp_size)
         {
-            if (func->u.s.RegF % 2 == 0 && pos++ > skip)
+            if (func->u.s.RegF % 2 == 0 && pos++ >= skip)
                 /* str d%u,[sp,#fp_size] */
                 restore_fpregs( 8 + func->u.s.RegF, 1, int_regs + fp_regs - 1, context, ptrs );
-            for (i = func->u.s.RegF / 2 - 1; i >= 0; i--)
+            for (i = (func->u.s.RegF + 1) / 2 - 1; i >= 0; i--)
             {
-                if (pos++ <= skip) continue;
+                if (pos++ < skip) continue;
                 if (!i && !int_size)
                      /* stp d8,d9,[sp,-#regsave]! */
                     restore_fpregs( 8, 2, -saved_regs, context, ptrs );
@@ -785,9 +790,9 @@ static void *unwind_packed_data( ULONG_PTR base, ULONG_PTR pc, RUNTIME_FUNCTION 
             }
         }
 
-        if (pos++ > skip)
+        if (func->u.s.RegI % 2)
         {
-            if (func->u.s.RegI % 2)
+            if (pos++ >= skip)
             {
                 /* stp xn,lr,[sp,#offset] */
                 if (func->u.s.CR == 1) restore_regs( 30, 1, int_regs - 1, context, ptrs );
@@ -796,14 +801,16 @@ static void *unwind_packed_data( ULONG_PTR base, ULONG_PTR pc, RUNTIME_FUNCTION 
                               (func->u.s.RegI > 1) ? func->u.s.RegI - 1 : -saved_regs,
                               context, ptrs );
             }
-            else if (func->u.s.CR == 1)
-                /* str lr,[sp,#offset] */
-                restore_regs( 30, 1, func->u.s.RegI ? int_regs - 1 : -saved_regs, context, ptrs );
+        }
+        else if (func->u.s.CR == 1)
+        {
+            /* str lr,[sp,#offset] */
+            if (pos++ >= skip) restore_regs( 30, 1, func->u.s.RegI ? int_regs - 1 : -saved_regs, context, ptrs );
         }
 
-        for (i = func->u.s.RegI / 2 - 1; i >= 0; i--)
+        for (i = func->u.s.RegI/ 2 - 1; i >= 0; i--)
         {
-            if (pos++ <= skip) continue;
+            if (pos++ < skip) continue;
             if (i)
                 /* stp xn,xn+1,[sp,#offset] */
                 restore_regs( 19 + 2 * i, 2, 2 * i, context, ptrs );
