@@ -1482,6 +1482,26 @@ static WCHAR *get_face_name(FT_Face ft_face, FT_UShort name_id, LANGID language_
     return NULL;
 }
 
+static WCHAR *ft_face_get_family_name( FT_Face ft_face, LANGID langid )
+{
+    WCHAR *family_name;
+
+    if ((family_name = get_face_name( ft_face, TT_NAME_ID_FONT_FAMILY, langid )))
+        return family_name;
+
+    return towstr( CP_ACP, ft_face->family_name );
+}
+
+static WCHAR *ft_face_get_style_name( FT_Face ft_face, LANGID langid )
+{
+    WCHAR *style_name;
+
+    if ((style_name = get_face_name( ft_face, TT_NAME_ID_FONT_SUBFAMILY, langid )))
+        return style_name;
+
+    return towstr( CP_ACP, ft_face->style_name );
+}
+
 static inline BOOL faces_equal( const Face *f1, const Face *f2 )
 {
     if (strcmpiW( f1->StyleName, f2->StyleName )) return FALSE;
@@ -1905,55 +1925,44 @@ static WCHAR *prepend_at(WCHAR *family)
     return str;
 }
 
-static void get_family_names( FT_Face ft_face, WCHAR **name, WCHAR **english, BOOL vertical )
+static Family *get_family( FT_Face ft_face, BOOL vertical )
 {
-    *english = get_face_name( ft_face, TT_NAME_ID_FONT_FAMILY, MAKELANGID(LANG_ENGLISH,SUBLANG_DEFAULT) );
-    if (!*english) *english = towstr( CP_ACP, ft_face->family_name );
+    Family *family;
+    WCHAR *family_name, *english_name;
 
-    *name = get_face_name( ft_face, TT_NAME_ID_FONT_FAMILY, GetSystemDefaultLCID() );
-    if (!*name)
+    family_name = ft_face_get_family_name( ft_face, GetSystemDefaultLCID() );
+    english_name = ft_face_get_family_name( ft_face, MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT) );
+
+    if (!strcmpiW( family_name, english_name ))
     {
-        *name = *english;
-        *english = NULL;
-    }
-    else if (!strcmpiW( *name, *english ))
-    {
-        HeapFree( GetProcessHeap(), 0, *english );
-        *english = NULL;
+        HeapFree( GetProcessHeap(), 0, english_name );
+        english_name = NULL;
     }
 
     if (vertical)
     {
-        *name = prepend_at( *name );
-        *english = prepend_at( *english );
+        family_name = prepend_at( family_name );
+        english_name = prepend_at( english_name );
     }
-}
 
-static Family *get_family( FT_Face ft_face, BOOL vertical )
-{
-    Family *family;
-    WCHAR *name, *english_name;
-
-    get_family_names( ft_face, &name, &english_name, vertical );
-
-    family = find_family_from_name( name );
+    family = find_family_from_name( family_name );
 
     if (!family)
     {
-        family = create_family( name, english_name );
+        family = create_family( family_name, english_name );
         if (english_name)
         {
             FontSubst *subst = HeapAlloc( GetProcessHeap(), 0, sizeof(*subst) );
             subst->from.name = strdupW( english_name );
             subst->from.charset = -1;
-            subst->to.name = strdupW( name );
+            subst->to.name = strdupW( family_name );
             subst->to.charset = -1;
             add_font_subst( &font_subst_list, subst, 0 );
         }
     }
     else
     {
-        HeapFree( GetProcessHeap(), 0, name );
+        HeapFree( GetProcessHeap(), 0, family_name );
         HeapFree( GetProcessHeap(), 0, english_name );
         family->refcount++;
     }
@@ -2088,9 +2097,7 @@ static Face *create_face( FT_Face ft_face, FT_Long face_index, const char *file,
     Face *face = HeapAlloc( GetProcessHeap(), 0, sizeof(*face) );
 
     face->refcount = 1;
-    face->StyleName = get_face_name( ft_face, TT_NAME_ID_FONT_SUBFAMILY, GetSystemDefaultLangID() );
-    if (!face->StyleName) face->StyleName = towstr( CP_ACP, ft_face->style_name );
-
+    face->StyleName = ft_face_get_style_name( ft_face, GetSystemDefaultLangID() );
     face->FullName = get_face_name( ft_face, TT_NAME_ID_FULL_NAME, GetSystemDefaultLangID() );
     if (flags & ADDFONT_VERTICAL_FONT)
         face->FullName = prepend_at( face->FullName );
@@ -3498,20 +3505,19 @@ static BOOL get_fontdir( const char *unix_name, struct fontdir *fd )
 {
     FT_Face ft_face = new_ft_face( unix_name, NULL, 0, 0, FALSE );
     Face *face;
-    WCHAR *name, *english_name;
+    WCHAR *family_name;
     ENUMLOGFONTEXW elf;
     NEWTEXTMETRICEXW ntm;
     DWORD type;
 
     if (!ft_face) return FALSE;
     face = create_face( ft_face, 0, unix_name, NULL, 0, 0 );
-    get_family_names( ft_face, &name, &english_name, FALSE );
+    family_name = ft_face_get_family_name( ft_face, GetSystemDefaultLCID() );
     pFT_Done_Face( ft_face );
 
-    GetEnumStructs( face, name, &elf, &ntm, &type );
+    GetEnumStructs( face, family_name, &elf, &ntm, &type );
     release_face( face );
-    HeapFree( GetProcessHeap(), 0, name );
-    HeapFree( GetProcessHeap(), 0, english_name );
+    HeapFree( GetProcessHeap(), 0, family_name );
 
     if ((type & TRUETYPE_FONTTYPE) == 0) return FALSE;
 
@@ -7955,12 +7961,7 @@ static BOOL get_outline_text_metrics(GdiFont *font)
     lenfam = (strlenW(font->name) + 1) * sizeof(WCHAR);
     family_nameW = strdupW(font->name);
 
-    style_nameW = get_face_name( ft_face, TT_NAME_ID_FONT_SUBFAMILY, GetSystemDefaultLangID() );
-    if (!style_nameW)
-    {
-        FIXME("failed to read style_nameW for font %s!\n", wine_dbgstr_w(font->name));
-        style_nameW = towstr( CP_ACP, ft_face->style_name );
-    }
+    style_nameW = ft_face_get_style_name( ft_face, GetSystemDefaultLangID() );
     lensty = (strlenW(style_nameW) + 1) * sizeof(WCHAR);
 
     face_nameW = get_face_name( ft_face, TT_NAME_ID_FULL_NAME, GetSystemDefaultLangID() );
