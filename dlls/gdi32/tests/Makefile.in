@@ -22,6 +22,8 @@ FONT_SRCS = \
 	vertical.sfd \
 	wine_longname.sfd \
 	wine_test.sfd \
+	wine_ttfnames.sfd \
+	wine_ttfnames_bold.sfd \
 	wine_vdmx.sfd
 
 RC_SRCS = resource.rc

@@ -6940,6 +6940,76 @@ static void test_long_names(void)
     ReleaseDC(NULL, dc);
 }
 
+static void test_ttf_names(void)
+{
+    struct enum_fullname_data efnd;
+    char ttf_name[MAX_PATH], ttf_name_bold[MAX_PATH];
+    LOGFONTA font = {0};
+    HFONT handle_font;
+    int ret;
+    HDC dc;
+
+    if (!write_ttf_file("wine_ttfnames.ttf", ttf_name))
+    {
+        skip("Failed to create ttf file for testing\n");
+        return;
+    }
+
+    if (!write_ttf_file("wine_ttfnames_bold.ttf", ttf_name_bold))
+    {
+        skip("Failed to create ttf file for testing\n");
+        DeleteFileA(ttf_name);
+        return;
+    }
+
+    ret = AddFontResourceExA(ttf_name, FR_PRIVATE, 0);
+    ok(ret, "AddFontResourceEx() failed\n");
+
+    ret = AddFontResourceExA(ttf_name_bold, FR_PRIVATE, 0);
+    ok(ret, "AddFontResourceEx() failed\n");
+
+    dc = GetDC(NULL);
+
+    strcpy(font.lfFaceName, "Wine_TTF_Names_Long_Family1_Con");
+    memset(&efnd, 0, sizeof(efnd));
+    EnumFontFamiliesExA(dc, &font, enum_fullname_data_proc, (LPARAM)&efnd, 0);
+    ok(efnd.total == 0, "EnumFontFamiliesExA must not find font.\n");
+
+    /* Windows doesn't match with Typographic/Preferred Family tags */
+    strcpy(font.lfFaceName, "Wine TTF Names Long Family1");
+    memset(&efnd, 0, sizeof(efnd));
+    EnumFontFamiliesExA(dc, &font, enum_fullname_data_proc, (LPARAM)&efnd, 0);
+    ok(efnd.total == 0, "EnumFontFamiliesExA must not find font.\n");
+
+    strcpy(font.lfFaceName, "Wine TTF Names Long Family1 Ext");
+    memset(&efnd, 0, sizeof(efnd));
+    EnumFontFamiliesExA(dc, &font, enum_fullname_data_proc, (LPARAM)&efnd, 0);
+    todo_wine
+    ok(efnd.total == 2, "EnumFontFamiliesExA found %d fonts, expected 2.\n", efnd.total);
+
+    strcpy(font.lfFaceName, "Wine TTF Names Long Family1 Con");
+    memset(&efnd, 0, sizeof(efnd));
+    EnumFontFamiliesExA(dc, &font, enum_fullname_data_proc, (LPARAM)&efnd, 0);
+    todo_wine
+    ok(efnd.total == 2, "EnumFontFamiliesExA found %d fonts, expected 2.\n", efnd.total);
+
+    handle_font = CreateFontIndirectA(&font);
+    ok(handle_font != NULL, "CreateFontIndirectA failed\n");
+    DeleteObject(handle_font);
+
+    ret = RemoveFontResourceExA(ttf_name_bold, FR_PRIVATE, 0);
+    todo_wine
+    ok(ret, "RemoveFontResourceEx() failed\n");
+
+    DeleteFileA(ttf_name_bold);
+
+    ret = RemoveFontResourceExA(ttf_name, FR_PRIVATE, 0);
+    ok(ret, "RemoveFontResourceEx() failed\n");
+
+    DeleteFileA(ttf_name);
+    ReleaseDC(NULL, dc);
+}
+
 typedef struct
 {
     USHORT majorVersion;
@@ -7351,6 +7421,7 @@ START_TEST(font)
     test_bitmap_font_glyph_index();
     test_GetCharWidthI();
     test_long_names();
+    test_ttf_names();
     test_char_width();
 
     /* These tests should be last test until RemoveFontResource
