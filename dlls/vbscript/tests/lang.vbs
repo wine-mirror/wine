@@ -346,6 +346,10 @@ while empty
 wend
 
 x = 0
+WHILE x < 3 : x = x + 1 : Wend
+Call ok(x = 3, "x not equal to 3")
+
+x = 0
 WHILE x < 3 : x = x + 1
 Wend
 Call ok(x = 3, "x not equal to 3")
@@ -370,6 +374,8 @@ call ok((x and y), "x or y is false after while")
 do while false
 loop
 
+do while false : loop
+
 do while true
     exit do
     ok false, "exit do didn't work"
@@ -378,6 +384,10 @@ loop
 x = 0
 Do While x < 2 : x = x + 1
 Loop
+Call ok(x = 2, "x not equal to 2")
+
+x = 0
+Do While x < 2 : x = x + 1: Loop
 Call ok(x = 2, "x not equal to 2")
 
 x = 0
@@ -407,6 +417,10 @@ loop
 x = 0
 Do: :: x = x + 2
 Loop Until x = 4
+Call ok(x = 4, "x not equal to 4")
+
+x = 0
+Do: :: x = x + 2 :::  : Loop Until x = 4
 Call ok(x = 4, "x not equal to 4")
 
 x = 5
@@ -542,6 +556,16 @@ for x = 1 to 5 :
     Call ok(false, "exit for not escaped the loop?")
 next
 
+dim a1(8)
+a1(6)=8
+for x=1 to 8:a1(x)=x-1:next
+Call ok(a1(6) = 5, "colon used in for loop")
+
+a1(6)=8
+for x=1 to 8:y=1
+a1(x)=x-2:next
+Call ok(a1(6) = 4, "colon used in for loop")
+
 do while true
     for x = 1 to 100
         exit do
@@ -573,6 +597,15 @@ next
 Call ok(y = 3, "y = " & y)
 Call ok(z = 6, "z = " & z)
 Call ok(getVT(x) = "VT_EMPTY*", "getVT(x) = " & getVT(x))
+
+Call collectionObj.reset()
+y = 0
+x = 10
+z = 0
+for each x in collectionObj : z = z + 2 : y = y+1 ::
+Call ok(x = y, "x <> y") : next
+Call ok(y = 3, "y = " & y)
+Call ok(z = 6, "z = " & z)
 
 Call collectionObj.reset()
 y = false

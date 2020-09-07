@@ -178,8 +178,8 @@ StatementsNl_opt
     | StatementsNl                          { $$ = $1; }
 
 StatementsNl
-    : StatementNl                           { $$ = $1; }
-    | StatementNl StatementsNl              { $$ = link_statements($1, $2); }
+    : SimpleStatement StSep                 { $$ = $1; }
+    | SimpleStatement StSep StatementsNl    { $$ = link_statements($1, $3); }
 
 StatementNl
     : Statement tNL                         { $$ = $1; }
