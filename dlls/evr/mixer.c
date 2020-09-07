@@ -284,7 +284,7 @@ static HRESULT WINAPI video_mixer_transform_GetStreamLimits(IMFTransform *iface,
     TRACE("%p, %p, %p, %p, %p.\n", iface, input_minimum, input_maximum, output_minimum, output_maximum);
 
     *input_minimum = 1;
-    *input_maximum = 16;
+    *input_maximum = MAX_MIXER_INPUT_STREAMS;
     *output_minimum = 1;
     *output_maximum = 1;
 
