@@ -6984,13 +6984,11 @@ static void test_ttf_names(void)
     strcpy(font.lfFaceName, "Wine TTF Names Long Family1 Ext");
     memset(&efnd, 0, sizeof(efnd));
     EnumFontFamiliesExA(dc, &font, enum_fullname_data_proc, (LPARAM)&efnd, 0);
-    todo_wine
     ok(efnd.total == 2, "EnumFontFamiliesExA found %d fonts, expected 2.\n", efnd.total);
 
     strcpy(font.lfFaceName, "Wine TTF Names Long Family1 Con");
     memset(&efnd, 0, sizeof(efnd));
     EnumFontFamiliesExA(dc, &font, enum_fullname_data_proc, (LPARAM)&efnd, 0);
-    todo_wine
     ok(efnd.total == 2, "EnumFontFamiliesExA found %d fonts, expected 2.\n", efnd.total);
 
     handle_font = CreateFontIndirectA(&font);
@@ -6998,7 +6996,6 @@ static void test_ttf_names(void)
     DeleteObject(handle_font);
 
     ret = RemoveFontResourceExA(ttf_name_bold, FR_PRIVATE, 0);
-    todo_wine
     ok(ret, "RemoveFontResourceEx() failed\n");
 
     DeleteFileA(ttf_name_bold);

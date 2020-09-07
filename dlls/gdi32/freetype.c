@@ -1521,7 +1521,7 @@ static WCHAR *ft_face_get_full_name( FT_Face ft_face, LANGID langid )
 
 static inline BOOL faces_equal( const Face *f1, const Face *f2 )
 {
-    if (strcmpiW( f1->style_name, f2->style_name )) return FALSE;
+    if (strcmpiW( f1->full_name, f2->full_name )) return FALSE;
     if (f1->scalable) return TRUE;
     if (f1->size.y_ppem != f2->size.y_ppem) return FALSE;
     return !memcmp( &f1->fs, &f2->fs, sizeof(f1->fs) );
