@@ -1911,18 +1911,17 @@ static void remove_face_from_cache( Face *face )
     RegCloseKey(hkey_family);
 }
 
-static WCHAR *prepend_at(WCHAR *family)
+static WCHAR *get_vertical_name( WCHAR *name )
 {
-    WCHAR *str;
+    SIZE_T length;
+    if (!name) return NULL;
+    if (name[0] == '@') return name;
 
-    if (!family)
-        return NULL;
-
-    str = HeapAlloc(GetProcessHeap(), 0, sizeof (WCHAR) * (strlenW(family) + 2));
-    str[0] = '@';
-    strcpyW(str + 1, family);
-    HeapFree(GetProcessHeap(), 0, family);
-    return str;
+    length = strlenW( name ) + 1;
+    name = HeapReAlloc( GetProcessHeap(), 0, name, (length + 1) * sizeof(WCHAR) );
+    memmove( name + 1, name, length * sizeof(WCHAR) );
+    name[0] = '@';
+    return name;
 }
 
 static Family *get_family( FT_Face ft_face, BOOL vertical )
@@ -1941,8 +1940,8 @@ static Family *get_family( FT_Face ft_face, BOOL vertical )
 
     if (vertical)
     {
-        family_name = prepend_at( family_name );
-        english_name = prepend_at( english_name );
+        family_name = get_vertical_name( family_name );
+        english_name = get_vertical_name( english_name );
     }
 
     family = find_family_from_name( family_name );
@@ -2099,8 +2098,7 @@ static Face *create_face( FT_Face ft_face, FT_Long face_index, const char *file,
     face->refcount = 1;
     face->StyleName = ft_face_get_style_name( ft_face, GetSystemDefaultLangID() );
     face->FullName = get_face_name( ft_face, TT_NAME_ID_FULL_NAME, GetSystemDefaultLangID() );
-    if (flags & ADDFONT_VERTICAL_FONT)
-        face->FullName = prepend_at( face->FullName );
+    if (flags & ADDFONT_VERTICAL_FONT) face->FullName = get_vertical_name( face->FullName );
 
     face->dev = 0;
     face->ino = 0;
@@ -2378,10 +2376,10 @@ static BOOL map_vertical_font_family(const WCHAR *orig, const WCHAR *repl, const
     if (!face || !(face->fs.fsCsb[0] & FS_DBCS_MASK))
         return FALSE;
 
-    at_orig = prepend_at(strdupW(orig));
+    at_orig = get_vertical_name( strdupW( orig ) );
     if (at_orig && !find_family_from_any_name(at_orig))
     {
-        at_repl = prepend_at(strdupW(repl));
+        at_repl = get_vertical_name( strdupW( repl ) );
         if (at_repl)
             ret = map_font_family(at_orig, at_repl);
     }
@@ -7970,7 +7968,7 @@ static BOOL get_outline_text_metrics(GdiFont *font)
         FIXME("failed to read face_nameW for font %s!\n", wine_dbgstr_w(font->name));
         face_nameW = strdupW(font->name);
     }
-    if (font->name[0] == '@') face_nameW = prepend_at( face_nameW );
+    if (font->name[0] == '@') face_nameW = get_vertical_name( face_nameW );
     lenface = (strlenW(face_nameW) + 1) * sizeof(WCHAR);
 
     full_nameW = get_face_name( ft_face, TT_NAME_ID_UNIQUE_ID, GetSystemDefaultLangID() );
