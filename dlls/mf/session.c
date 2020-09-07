@@ -24,6 +24,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "mfidl.h"
+#include "evr.h"
 
 #include "wine/debug.h"
 #include "wine/heap.h"
@@ -1793,6 +1794,57 @@ static HRESULT WINAPI session_get_service_GetService(IMFGetService *iface, REFGU
     else if (IsEqualGUID(service, &MF_LOCAL_MFT_REGISTRATION_SERVICE))
     {
         return IMFLocalMFTRegistration_QueryInterface(&local_mft_registration, riid, obj);
+    }
+    else if (IsEqualGUID(service, &MR_VIDEO_RENDER_SERVICE))
+    {
+        IMFStreamSink *stream_sink;
+        IMFTopologyNode *node;
+        IUnknown *vr, *object;
+        IMFCollection *nodes;
+        IMFMediaSink *sink;
+        unsigned int i = 0;
+        HRESULT hr;
+
+        EnterCriticalSection(&session->cs);
+
+        /* Use first sink to support IMFVideoRenderer. */
+        if (session->presentation.current_topology)
+        {
+            if (SUCCEEDED(IMFTopology_GetOutputNodeCollection(session->presentation.current_topology,
+                    &nodes)))
+            {
+                while (IMFCollection_GetElement(nodes, i++, (IUnknown **)&node) == S_OK)
+                {
+                    if (SUCCEEDED(IMFTopologyNode_GetObject(node, &object)))
+                    {
+                        if (SUCCEEDED(IUnknown_QueryInterface(object, &IID_IMFStreamSink, (void **)&stream_sink)))
+                        {
+                            if (SUCCEEDED(IMFStreamSink_GetMediaSink(stream_sink, &sink)))
+                            {
+                                if (SUCCEEDED(IMFMediaSink_QueryInterface(sink, &IID_IMFVideoRenderer, (void **)&vr)))
+                                {
+                                    if (FAILED(hr = MFGetService(vr, service, riid, obj)))
+                                        WARN("Failed to get service from video renderer %#x.\n", hr);
+                                    IUnknown_Release(vr);
+                                }
+                            }
+                            IMFStreamSink_Release(stream_sink);
+                        }
+
+                        IUnknown_Release(object);
+                    }
+
+                    IMFTopologyNode_Release(node);
+
+                    if (*obj)
+                        break;
+                }
+
+                IMFCollection_Release(nodes);
+            }
+        }
+
+        LeaveCriticalSection(&session->cs);
     }
     else
         FIXME("Unsupported service %s.\n", debugstr_guid(service));
