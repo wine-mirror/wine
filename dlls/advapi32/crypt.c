@@ -2422,6 +2422,36 @@ BOOL WINAPI SystemFunction035(LPCSTR lpszDllFilePath)
     return TRUE;
 }
 
+static CRITICAL_SECTION random_cs;
+static CRITICAL_SECTION_DEBUG random_debug =
+{
+    0, 0, &random_cs,
+    { &random_debug.ProcessLocksList, &random_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": random_cs") }
+};
+static CRITICAL_SECTION random_cs = { &random_debug, -1, 0, 0, 0, 0 };
+
+#define MAX_CPUS 128
+static char random_buf[sizeof(SYSTEM_INTERRUPT_INFORMATION) * MAX_CPUS];
+static ULONG random_len;
+static ULONG random_pos;
+
+/* FIXME: assumes interrupt information provides sufficient randomness */
+static BOOL fill_random_buffer(void)
+{
+    ULONG len = sizeof(SYSTEM_INTERRUPT_INFORMATION) * min( NtCurrentTeb()->Peb->NumberOfProcessors, MAX_CPUS );
+    NTSTATUS status;
+
+    if ((status = NtQuerySystemInformation( SystemInterruptInformation, random_buf, len, NULL )))
+    {
+        WARN( "failed to get random bytes %08x\n", status );
+        return FALSE;
+    }
+    random_len = len;
+    random_pos = 0;
+    return TRUE;
+}
+
 /******************************************************************************
  * SystemFunction036   (ADVAPI32.@)
  *
@@ -2436,26 +2466,30 @@ BOOL WINAPI SystemFunction035(LPCSTR lpszDllFilePath)
  *  Failure: FALSE
  */
 
-BOOLEAN WINAPI SystemFunction036(PVOID pbBuffer, ULONG dwLen)
+BOOLEAN WINAPI SystemFunction036( void *buffer, ULONG len )
 {
-    int dev_random;
+    char *ptr = buffer;
 
-    dev_random = open("/dev/urandom", O_RDONLY);
-    if (dev_random != -1)
+    EnterCriticalSection( &random_cs );
+    while (len)
     {
-        if (read(dev_random, pbBuffer, dwLen) == (ssize_t)dwLen)
+        ULONG size;
+        if (random_pos >= random_len && !fill_random_buffer())
         {
-            close(dev_random);
-            return TRUE;
+            SetLastError( NTE_FAIL );
+            LeaveCriticalSection( &random_cs );
+            return FALSE;
         }
-        close(dev_random);
+        size = min( len, random_len - random_pos );
+        memcpy( ptr, random_buf + random_pos, size );
+        random_pos += size;
+        ptr += size;
+        len -= size;
     }
-    else
-        FIXME("couldn't open /dev/urandom\n");
-    SetLastError(NTE_FAIL);
-    return FALSE;
-}    
-    
+    LeaveCriticalSection( &random_cs );
+    return TRUE;
+}
+
 /*
    These functions have nearly identical prototypes to CryptProtectMemory and CryptUnprotectMemory,
    in crypt32.dll.
