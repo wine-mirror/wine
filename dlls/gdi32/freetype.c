@@ -300,8 +300,8 @@ typedef struct tagFace {
 typedef struct tagFamily {
     struct list entry;
     unsigned int refcount;
-    WCHAR *FamilyName;
-    WCHAR *EnglishName;
+    WCHAR family_name[LF_FACESIZE];
+    WCHAR english_name[LF_FACESIZE];
     struct list faces;
     struct list *replacement;
 } Family;
@@ -1040,8 +1040,7 @@ static Face *find_face_from_filename(const WCHAR *file_name, const WCHAR *face_n
     LIST_FOR_EACH_ENTRY(family, &font_list, Family, entry)
     {
         const struct list *face_list;
-        if(face_name && strncmpiW(face_name, family->FamilyName, LF_FACESIZE - 1))
-            continue;
+        if (face_name && strncmpiW( face_name, family->family_name, LF_FACESIZE - 1 )) continue;
         face_list = get_face_list_from_family(family);
         LIST_FOR_EACH_ENTRY(face, face_list, Face, entry)
         {
@@ -1065,10 +1064,7 @@ static Family *find_family_from_name(const WCHAR *name)
     Family *family;
 
     LIST_FOR_EACH_ENTRY(family, &font_list, Family, entry)
-    {
-        if(!strncmpiW(family->FamilyName, name, LF_FACESIZE -1))
-            return family;
-    }
+        if (!strncmpiW( family->family_name, name, LF_FACESIZE - 1 )) return family;
 
     return NULL;
 }
@@ -1079,10 +1075,8 @@ static Family *find_family_from_any_name(const WCHAR *name)
 
     LIST_FOR_EACH_ENTRY(family, &font_list, Family, entry)
     {
-        if(!strncmpiW(family->FamilyName, name, LF_FACESIZE - 1))
-            return family;
-        if(family->EnglishName && !strncmpiW(family->EnglishName, name, LF_FACESIZE - 1))
-            return family;
+        if (!strncmpiW( family->family_name, name, LF_FACESIZE - 1 )) return family;
+        if (!strncmpiW( family->english_name, name, LF_FACESIZE - 1 )) return family;
     }
 
     return NULL;
@@ -1538,8 +1532,6 @@ static void release_family( Family *family )
     if (--family->refcount) return;
     assert( list_empty( &family->faces ));
     list_remove( &family->entry );
-    HeapFree( GetProcessHeap(), 0, family->FamilyName );
-    HeapFree( GetProcessHeap(), 0, family->EnglishName );
     HeapFree( GetProcessHeap(), 0, family );
 }
 
@@ -1586,7 +1578,7 @@ static BOOL insert_face_in_family_list( Face *face, Family *family )
         if (faces_equal( face, cursor ))
         {
             TRACE( "Already loaded face %s in family %s, original version %lx, new version %lx\n",
-                   debugstr_w(face->full_name), debugstr_w(family->FamilyName),
+                   debugstr_w(face->full_name), debugstr_w(family->family_name),
                    cursor->font_version, face->font_version );
 
             if (face->file && face->dev == cursor->dev && face->ino == cursor->ino)
@@ -1619,7 +1611,7 @@ static BOOL insert_face_in_family_list( Face *face, Family *family )
     }
 
     TRACE( "Adding face %s in family %s from %s\n", debugstr_w(face->full_name),
-           debugstr_w(family->FamilyName), debugstr_w(face->file) );
+           debugstr_w(family->family_name), debugstr_w(face->file) );
     list_add_before( &cursor->entry, &face->entry );
     face->family = family;
     family->refcount++;
@@ -1631,12 +1623,13 @@ static BOOL insert_face_in_family_list( Face *face, Family *family )
  * NB This function stores the ptrs to the strings to save copying.
  * Don't free them after calling.
  */
-static Family *create_family( WCHAR *name, WCHAR *english_name )
+static Family *create_family( WCHAR *family_name, WCHAR *english_name )
 {
     Family * const family = HeapAlloc( GetProcessHeap(), 0, sizeof(*family) );
     family->refcount = 1;
-    family->FamilyName = name;
-    family->EnglishName = english_name;
+    lstrcpynW( family->family_name, family_name, LF_FACESIZE );
+    if (english_name) lstrcpynW( family->english_name, english_name, LF_FACESIZE );
+    else family->english_name[0] = 0;
     list_init( &family->faces );
     family->replacement = &family->faces;
     list_add_tail( &font_list, &family->entry );
@@ -1700,7 +1693,7 @@ static void load_face(HKEY hkey_face, WCHAR *face_name, Family *family, void *bu
         needed = buffer_size;
         if (RegQueryValueExW( hkey_face, face_full_name_value, NULL, NULL, buffer, &needed ) != ERROR_SUCCESS)
         {
-            ERR( "couldn't find full name for %s %s in cache\n", debugstr_w(family->FamilyName),
+            ERR( "couldn't find full name for %s %s in cache\n", debugstr_w(family->family_name),
                  debugstr_w(face->style_name) );
             release_face( face );
             return;
@@ -1740,7 +1733,7 @@ static void load_face(HKEY hkey_face, WCHAR *face_name, Family *family, void *bu
               face->fs.fsUsb[2], face->fs.fsUsb[3]);
 
         if (insert_face_in_family_list(face, family))
-            TRACE( "Added face %s to family %s\n", debugstr_w(face->full_name), debugstr_w(family->FamilyName) );
+            TRACE( "Added face %s to family %s\n", debugstr_w(face->full_name), debugstr_w(family->family_name) );
 
         release_face( face );
     }
@@ -1769,7 +1762,7 @@ static void reorder_vertical_fonts(void)
 
     LIST_FOR_EACH_ENTRY_SAFE( family, next, &font_list, Family, entry )
     {
-        if (family->FamilyName[0] != '@') continue;
+        if (family->family_name[0] != '@') continue;
         list_remove( &family->entry );
         list_add_tail( &vertical_families, &family->entry );
     }
@@ -1780,7 +1773,7 @@ static void reorder_vertical_fonts(void)
     {
         family = LIST_ENTRY( ptr, Family, entry );
         vert_family = LIST_ENTRY( vptr, Family, entry );
-        if (strcmpiW( family->FamilyName, vert_family->FamilyName + 1 ) > 0)
+        if (strcmpiW( family->family_name, vert_family->family_name + 1 ) > 0)
         {
             list_remove( vptr );
             list_add_before( ptr, vptr );
@@ -1801,7 +1794,7 @@ static void load_font_list_from_cache(HKEY hkey_font_cache)
     size = sizeof(buffer);
     while (!RegEnumKeyExW(hkey_font_cache, family_index++, buffer, &size, NULL, NULL, NULL, NULL))
     {
-        WCHAR *english_family = NULL;
+        WCHAR *english_name = NULL;
         WCHAR *family_name = strdupW( buffer );
         DWORD face_index = 0;
 
@@ -1809,14 +1802,14 @@ static void load_font_list_from_cache(HKEY hkey_font_cache)
         TRACE("opened family key %s\n", debugstr_w(family_name));
         size = sizeof(buffer);
         if (!RegQueryValueExW(hkey_family, english_name_value, NULL, NULL, (BYTE *)buffer, &size))
-            english_family = strdupW( buffer );
+            english_name = strdupW( buffer );
 
-        family = create_family(family_name, english_family);
+        family = create_family( family_name, english_name );
 
-        if(english_family)
+        if (english_name)
         {
             FontSubst *subst = HeapAlloc(GetProcessHeap(), 0, sizeof(*subst));
-            subst->from.name = strdupW(english_family);
+            subst->from.name = strdupW( english_name );
             subst->from.charset = -1;
             subst->to.name = strdupW(family_name);
             subst->to.charset = -1;
@@ -1837,6 +1830,10 @@ static void load_font_list_from_cache(HKEY hkey_font_cache)
             HeapFree( GetProcessHeap(), 0, face_name );
             size = sizeof(buffer);
         }
+
+        HeapFree( GetProcessHeap(), 0, family_name );
+        HeapFree( GetProcessHeap(), 0, english_name );
+
         RegCloseKey(hkey_family);
         release_family( family );
         size = sizeof(buffer);
@@ -1870,11 +1867,11 @@ static void add_face_to_cache(Face *face)
     HKEY hkey_family, hkey_face;
     WCHAR *face_key_name;
 
-    RegCreateKeyExW(hkey_font_cache, face->family->FamilyName, 0,
-                    NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey_family, NULL);
-    if(face->family->EnglishName)
-        RegSetValueExW(hkey_family, english_name_value, 0, REG_SZ, (BYTE*)face->family->EnglishName,
-                       (strlenW(face->family->EnglishName) + 1) * sizeof(WCHAR));
+    RegCreateKeyExW( hkey_font_cache, face->family->family_name, 0, NULL, REG_OPTION_VOLATILE,
+                     KEY_ALL_ACCESS, NULL, &hkey_family, NULL );
+    if (face->family->english_name[0])
+        RegSetValueExW( hkey_family, english_name_value, 0, REG_SZ, (BYTE *)face->family->english_name,
+                        (strlenW( face->family->english_name ) + 1) * sizeof(WCHAR) );
 
     if (face->scalable) face_key_name = face->style_name;
     else
@@ -1917,7 +1914,7 @@ static void remove_face_from_cache( Face *face )
 {
     HKEY hkey_family;
 
-    RegOpenKeyExW( hkey_font_cache, face->family->FamilyName, 0, KEY_ALL_ACCESS, &hkey_family );
+    RegOpenKeyExW( hkey_font_cache, face->family->family_name, 0, KEY_ALL_ACCESS, &hkey_family );
 
     if (face->scalable)
     {
@@ -1967,27 +1964,19 @@ static Family *get_family( FT_Face ft_face, BOOL vertical )
         english_name = get_vertical_name( english_name );
     }
 
-    family = find_family_from_name( family_name );
+    if ((family = find_family_from_name( family_name ))) family->refcount++;
+    else if ((family = create_family( family_name, english_name )) && english_name)
+    {
+        FontSubst *subst = HeapAlloc( GetProcessHeap(), 0, sizeof(*subst) );
+        subst->from.name = strdupW( english_name );
+        subst->from.charset = -1;
+        subst->to.name = strdupW( family_name );
+        subst->to.charset = -1;
+        add_font_subst( &font_subst_list, subst, 0 );
+    }
 
-    if (!family)
-    {
-        family = create_family( family_name, english_name );
-        if (english_name)
-        {
-            FontSubst *subst = HeapAlloc( GetProcessHeap(), 0, sizeof(*subst) );
-            subst->from.name = strdupW( english_name );
-            subst->from.charset = -1;
-            subst->to.name = strdupW( family_name );
-            subst->to.charset = -1;
-            add_font_subst( &font_subst_list, subst, 0 );
-        }
-    }
-    else
-    {
-        HeapFree( GetProcessHeap(), 0, family_name );
-        HeapFree( GetProcessHeap(), 0, english_name );
-        family->refcount++;
-    }
+    HeapFree( GetProcessHeap(), 0, family_name );
+    HeapFree( GetProcessHeap(), 0, english_name );
 
     return family;
 }
@@ -2185,7 +2174,7 @@ static void AddFaceToList(FT_Face ft_face, const char *file, void *font_data_ptr
     {
         if (flags & ADDFONT_ADD_TO_CACHE)
             add_face_to_cache( face );
-        TRACE( "Added face %s to family %s\n", debugstr_w(face->full_name), debugstr_w(family->FamilyName) );
+        TRACE( "Added face %s to family %s\n", debugstr_w(face->full_name), debugstr_w(family->family_name) );
     }
     release_face( face );
     release_family( family );
@@ -2377,7 +2366,7 @@ static void DumpFontList(void)
     Face *face;
 
     LIST_FOR_EACH_ENTRY( family, &font_list, Family, entry ) {
-        TRACE("Family: %s\n", debugstr_w(family->FamilyName));
+        TRACE( "Family: %s\n", debugstr_w(family->family_name) );
         LIST_FOR_EACH_ENTRY( face, &family->faces, Face, entry ) {
             TRACE( "\t%s\t%s\t%08x", debugstr_w(face->style_name), debugstr_w(face->full_name),
                    face->fs.fsCsb[0] );
@@ -2421,8 +2410,8 @@ static BOOL map_font_family(const WCHAR *orig, const WCHAR *repl)
         if (new_family != NULL)
         {
             TRACE("mapping %s to %s\n", debugstr_w(repl), debugstr_w(orig));
-            new_family->FamilyName = strdupW(orig);
-            new_family->EnglishName = NULL;
+            lstrcpynW( new_family->family_name, orig, LF_FACESIZE );
+            new_family->english_name[0] = 0;
             list_init(&new_family->faces);
             new_family->replacement = &family->faces;
             list_add_tail(&font_list, &new_family->entry);
@@ -4387,7 +4376,7 @@ static BOOL move_to_front(const WCHAR *name)
     Family *family, *cursor2;
     LIST_FOR_EACH_ENTRY_SAFE(family, cursor2, &font_list, Family, entry)
     {
-        if(!strncmpiW(family->FamilyName, name, LF_FACESIZE - 1))
+        if (!strncmpiW( family->family_name, name, LF_FACESIZE - 1 ))
         {
             list_remove(&family->entry);
             list_add_head(&font_list, &family->entry);
@@ -5371,7 +5360,7 @@ static Family* get_fontconfig_family(DWORD pitch_and_family, const CHARSETINFO *
         family = find_family_from_any_name(nameW);
         if (!family) continue;
 
-        font_link = find_font_link(family->FamilyName);
+        font_link = find_font_link( family->family_name );
         face_list = get_face_list_from_family(family);
         LIST_FOR_EACH_ENTRY( face, face_list, Face, entry ) {
             if (!face->scalable)
@@ -5677,10 +5666,10 @@ static HFONT CDECL freetype_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags
 	   or if that's unavailable the first charset that the font supports.
 	*/
         LIST_FOR_EACH_ENTRY( family, &font_list, Family, entry ) {
-            if (!strncmpiW(family->FamilyName, FaceName, LF_FACESIZE - 1) ||
-                (psub && !strncmpiW(family->FamilyName, psub->to.name, LF_FACESIZE - 1)))
+            if (!strncmpiW( family->family_name, FaceName, LF_FACESIZE - 1 ) ||
+                (psub && !strncmpiW( family->family_name, psub->to.name, LF_FACESIZE - 1 )))
             {
-                font_link = find_font_link(family->FamilyName);
+                font_link = find_font_link( family->family_name );
                 face_list = get_face_list_from_family(family);
                 LIST_FOR_EACH_ENTRY( face, face_list, Face, entry ) {
                     if (!(face->scalable || can_use_bitmap))
@@ -5704,7 +5693,7 @@ static HFONT CDECL freetype_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags
                 {
                     if (csi.fs.fsCsb[0] & face->fs.fsCsb[0] || !csi.fs.fsCsb[0])
                         goto found_face;
-                    font_link = find_font_link(family->FamilyName);
+                    font_link = find_font_link( family->family_name );
                     if (font_link != NULL &&
                         csi.fs.fsCsb[0] & font_link->fs.fsCsb[0])
                         goto found_face;
@@ -5732,7 +5721,7 @@ static HFONT CDECL freetype_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags
                     family = face->family;
                     if (csi.fs.fsCsb[0] & face->fs.fsCsb[0] || !csi.fs.fsCsb[0])
                         goto found;
-                    links = find_font_link(family->FamilyName);
+                    links = find_font_link( family->family_name );
                     if (links != NULL && csi.fs.fsCsb[0] & links->fs.fsCsb[0])
                         goto found;
                 }
@@ -5769,8 +5758,9 @@ static HFONT CDECL freetype_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags
     else
         strcpyW(lf.lfFaceName, default_sans);
     LIST_FOR_EACH_ENTRY( family, &font_list, Family, entry ) {
-        if(!strncmpiW(family->FamilyName, lf.lfFaceName, LF_FACESIZE - 1)) {
-            font_link = find_font_link(family->FamilyName);
+        if (!strncmpiW( family->family_name, lf.lfFaceName, LF_FACESIZE - 1 ))
+        {
+            font_link = find_font_link( family->family_name );
             face_list = get_face_list_from_family(family);
             LIST_FOR_EACH_ENTRY( face, face_list, Face, entry ) {
                 if (!(face->scalable || can_use_bitmap))
@@ -5791,7 +5781,7 @@ static HFONT CDECL freetype_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags
 
     last_resort_family = NULL;
     LIST_FOR_EACH_ENTRY( family, &font_list, Family, entry ) {
-        font_link = find_font_link(family->FamilyName);
+        font_link = find_font_link( family->family_name );
         face_list = get_face_list_from_family(family);
         LIST_FOR_EACH_ENTRY( face, face_list, Face, entry ) {
             if(!(face->flags & ADDFONT_VERTICAL_FONT) == !want_vertical &&
@@ -5841,7 +5831,7 @@ found:
     height = lf.lfHeight;
 
     face = best = best_bitmap = NULL;
-    font_link = find_font_link(family->FamilyName);
+    font_link = find_font_link( family->family_name );
     face_list = get_face_list_from_family(family);
     LIST_FOR_EACH_ENTRY(face, face_list, Face, entry)
     {
@@ -5894,7 +5884,7 @@ found_face:
         ret->codepage = csi.ciACP;
     }
     else
-        ret->charset = get_nearest_charset(family->FamilyName, face, &ret->codepage);
+        ret->charset = get_nearest_charset( family->family_name, face, &ret->codepage );
 
     TRACE( "Chosen: %s (%s/%p:%ld)\n", debugstr_w(face->full_name), debugstr_w(face->file),
            face->font_data_ptr, face->face_index );
@@ -5955,7 +5945,7 @@ found_face:
     pick_charmap( ret->ft_face, ret->charset );
 
     ret->orientation = FT_IS_SCALABLE(ret->ft_face) ? lf.lfOrientation : 0;
-    ret->name = psub ? strdupW(psub->from.name) : strdupW(family->FamilyName);
+    ret->name = psub ? strdupW( psub->from.name ) : strdupW( family->family_name );
     ret->underline = lf.lfUnderline ? 0xff : 0;
     ret->strikeout = lf.lfStrikeOut ? 0xff : 0;
     create_child_font_list(ret);
@@ -6240,7 +6230,7 @@ static BOOL family_matches(Family *family, const WCHAR *face_name)
     Face *face;
     const struct list *face_list;
 
-    if (!strncmpiW(face_name, family->FamilyName, LF_FACESIZE - 1)) return TRUE;
+    if (!strncmpiW( face_name, family->family_name, LF_FACESIZE - 1 )) return TRUE;
 
     face_list = get_face_list_from_family(family);
     LIST_FOR_EACH_ENTRY(face, face_list, Face, entry)
@@ -6263,7 +6253,7 @@ static BOOL enum_face_charsets(const Family *family, Face *face, struct enum_cha
     DWORD type = 0;
     DWORD i;
 
-    GetEnumStructs(face, face->family->FamilyName, &elf, &ntm, &type);
+    GetEnumStructs( face, face->family->family_name, &elf, &ntm, &type );
     for(i = 0; i < list->total; i++) {
         if(!face->scalable && face->fs.fsCsb[0] == 0) { /* OEM bitmap */
             elf.elfLogFont.lfCharSet = ntm.ntmTm.tmCharSet = OEM_CHARSET;
@@ -6284,7 +6274,7 @@ static BOOL enum_face_charsets(const Family *family, Face *face, struct enum_cha
         /* Font Replacement */
         if (family != face->family)
         {
-            lstrcpynW(elf.elfLogFont.lfFaceName, family->FamilyName, LF_FACESIZE);
+            lstrcpynW( elf.elfLogFont.lfFaceName, family->family_name, LF_FACESIZE );
             lstrcpynW( elf.elfFullName, face->full_name, LF_FULLFACESIZE );
         }
         if (subst)
@@ -6342,7 +6332,7 @@ static BOOL CDECL freetype_EnumFonts( PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW
             if (!family_matches(family, face_name)) continue;
             face_list = get_face_list_from_family(family);
             LIST_FOR_EACH_ENTRY( face, face_list, Face, entry ) {
-                if (!face_matches(family->FamilyName, face, face_name)) continue;
+                if (!face_matches( family->family_name, face, face_name )) continue;
                 if (!enum_face_charsets(family, face, &enum_charsets, proc, lparam, psub ? psub->from.name : NULL)) return FALSE;
 	    }
 	}
@@ -8383,7 +8373,7 @@ static BOOL load_child_font(GdiFont *font, CHILD_FONT *child)
     child->font->ntmFlags = child_face->ntmFlags;
     child->font->orientation = font->orientation;
     child->font->scale_y = font->scale_y;
-    child->font->name = strdupW( child_face->family->FamilyName );
+    child->font->name = strdupW( child_face->family->family_name );
     child->font->base_font = font;
     TRACE("created child font %p for base %p\n", child->font, font);
     return TRUE;
