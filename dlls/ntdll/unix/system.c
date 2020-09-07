@@ -29,6 +29,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
 #ifdef HAVE_SYS_TIME_H
 # include <sys/time.h>
 #endif
@@ -41,6 +42,9 @@
 #endif
 #ifdef HAVE_MACHINE_CPU_H
 # include <machine/cpu.h>
+#endif
+#ifdef HAVE_SYS_RANDOM_H
+# include <sys/random.h>
 #endif
 #ifdef HAVE_IOKIT_IOKITLIB_H
 # include <CoreFoundation/CoreFoundation.h>
@@ -2422,16 +2426,36 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
 
     case SystemInterruptInformation:
     {
-        SYSTEM_INTERRUPT_INFORMATION sii = {{ 0 }};
-
-        len = sizeof(sii);
+        len = NtCurrentTeb()->Peb->NumberOfProcessors * sizeof(SYSTEM_INTERRUPT_INFORMATION);
         if (size >= len)
         {
             if (!info) ret = STATUS_ACCESS_VIOLATION;
-            else memcpy( info, &sii, len);
+            else
+            {
+#ifdef HAVE_GETRANDOM
+                int ret;
+                do
+                {
+                    ret = getrandom( info, len, 0 );
+                }
+                while (ret == -1 && errno == EINTR);
+#else
+                int fd = open( "/dev/urandom", O_RDONLY );
+                if (fd != -1)
+                {
+                    int ret;
+                    do
+                    {
+                        ret = read( fd, info, len );
+                    }
+                    while (ret == -1 && errno == EINTR);
+                    close( fd );
+                }
+                else WARN( "can't open /dev/urandom\n" );
+#endif
+            }
         }
         else ret = STATUS_INFO_LENGTH_MISMATCH;
-        FIXME("info_class SYSTEM_INTERRUPT_INFORMATION\n");
         break;
     }
 
