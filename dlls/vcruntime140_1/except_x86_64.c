@@ -103,6 +103,7 @@ typedef struct
     BOOL rethrow;
     INT search_state;
     INT unwind_state;
+    EXCEPTION_RECORD *prev_rec;
 } cxx_catch_ctx;
 
 typedef struct
@@ -473,7 +474,7 @@ static LONG CALLBACK cxx_rethrow_filter(PEXCEPTION_POINTERS eptrs, void *c)
     FlsSetValue(fls_index, (void*)(DWORD_PTR)ctx->search_state);
     if (rec->ExceptionCode != CXX_EXCEPTION)
         return EXCEPTION_CONTINUE_SEARCH;
-    if (rec->ExceptionInformation[1] == ((EXCEPTION_RECORD*)*__current_exception())->ExceptionInformation[1])
+    if (rec->ExceptionInformation[1] == ctx->prev_rec->ExceptionInformation[1])
         ctx->rethrow = TRUE;
     return EXCEPTION_CONTINUE_SEARCH;
 }
@@ -503,6 +504,7 @@ static void* WINAPI call_catch_block4(EXCEPTION_RECORD *rec)
     __CxxRegisterExceptionObject(&ep, &ctx.frame_info);
     ctx.search_state = rec->ExceptionInformation[2];
     ctx.unwind_state = rec->ExceptionInformation[3];
+    ctx.prev_rec = prev_rec;
     (*__processing_throw())--;
     __TRY
     {
@@ -685,6 +687,12 @@ static DWORD cxx_frame_handler4(EXCEPTION_RECORD *rec, ULONG64 frame,
 
     if (rec->ExceptionCode == CXX_EXCEPTION)
     {
+        if (!rec->ExceptionInformation[1] && !rec->ExceptionInformation[2])
+        {
+            TRACE("rethrow detected.\n");
+            *rec = *(EXCEPTION_RECORD*)*__current_exception();
+        }
+
         exc_type = (cxx_exception_type *)rec->ExceptionInformation[2];
 
         if (TRACE_ON(seh))
