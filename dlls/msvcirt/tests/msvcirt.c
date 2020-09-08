@@ -232,6 +232,7 @@ static int (*__thiscall p_filebuf_sync)(filebuf*);
 static int (*__thiscall p_filebuf_overflow)(filebuf*, int);
 static int (*__thiscall p_filebuf_underflow)(filebuf*);
 static streampos (*__thiscall p_filebuf_seekoff)(filebuf*, streamoff, ios_seek_dir, int);
+static int (*__thiscall p_filebuf_is_open)(filebuf*);
 
 /* strstreambuf */
 static strstreambuf* (*__thiscall p_strstreambuf_dynamic_ctor)(strstreambuf*, int);
@@ -436,6 +437,11 @@ static void (*__thiscall p_stdiostream_dtor)(ios*);
 static void (*__thiscall p_stdiostream_vbase_dtor)(iostream*);
 static iostream* (*__thiscall p_stdiostream_assign)(iostream*, const iostream*);
 
+/* fstream */
+static iostream* (*__thiscall p_fstream_open_ctor)(iostream*, const char*, ios_open_mode, int, BOOL);
+static void (*__thiscall p_fstream_dtor)(ios*);
+static void (*__thiscall p_fstream_vbase_dtor)(iostream*);
+
 /* Iostream_init */
 static void* (*__thiscall p_Iostream_init_ios_ctor)(void*, ios*, int);
 
@@ -574,6 +580,7 @@ static BOOL init(void)
         SET(p_filebuf_overflow, "?overflow@filebuf@@UEAAHH@Z");
         SET(p_filebuf_underflow, "?underflow@filebuf@@UEAAHXZ");
         SET(p_filebuf_seekoff, "?seekoff@filebuf@@UEAAJJW4seek_dir@ios@@H@Z");
+        SET(p_filebuf_is_open, "?is_open@filebuf@@QEBAHXZ");
 
         SET(p_strstreambuf_dynamic_ctor, "??0strstreambuf@@QEAA@H@Z");
         SET(p_strstreambuf_funcs_ctor, "??0strstreambuf@@QEAA@P6APEAXJ@ZP6AXPEAX@Z@Z");
@@ -754,6 +761,10 @@ static BOOL init(void)
         SET(p_stdiostream_vbase_dtor, "??_Dstdiostream@@QEAAXXZ");
         SET(p_stdiostream_assign, "??4stdiostream@@QEAAAEAV0@AEAV0@@Z");
 
+        SET(p_fstream_open_ctor, "??0fstream@@QEAA@PEBDHH@Z");
+        SET(p_fstream_dtor, "??1fstream@@UEAA@XZ");
+        SET(p_fstream_vbase_dtor, "??_Dfstream@@QEAAXXZ");
+
         SET(p_Iostream_init_ios_ctor, "??0Iostream_init@@QEAA@AEAVios@@H@Z");
 
         SET(p_exception_ctor, "??0exception@@QEAA@AEBQEBD@Z");
@@ -804,6 +815,7 @@ static BOOL init(void)
         SET(p_filebuf_overflow, "?overflow@filebuf@@UAEHH@Z");
         SET(p_filebuf_underflow, "?underflow@filebuf@@UAEHXZ");
         SET(p_filebuf_seekoff, "?seekoff@filebuf@@UAEJJW4seek_dir@ios@@H@Z");
+        SET(p_filebuf_is_open, "?is_open@filebuf@@QBEHXZ");
 
         SET(p_strstreambuf_dynamic_ctor, "??0strstreambuf@@QAE@H@Z");
         SET(p_strstreambuf_funcs_ctor, "??0strstreambuf@@QAE@P6APAXJ@ZP6AXPAX@Z@Z");
@@ -983,6 +995,10 @@ static BOOL init(void)
         SET(p_stdiostream_dtor, "??1stdiostream@@UAE@XZ");
         SET(p_stdiostream_vbase_dtor, "??_Dstdiostream@@QAEXXZ");
         SET(p_stdiostream_assign, "??4stdiostream@@QAEAAV0@AAV0@@Z");
+
+        SET(p_fstream_open_ctor, "??0fstream@@QAE@PBDHH@Z");
+        SET(p_fstream_dtor, "??1fstream@@UAE@XZ");
+        SET(p_fstream_vbase_dtor, "??_Dfstream@@QAEXXZ");
 
         SET(p_Iostream_init_ios_ctor, "??0Iostream_init@@QAE@AAVios@@H@Z");
 
@@ -7936,6 +7952,63 @@ static void test_std_streams(void)
     ok(p_cin->count == 0xabababab, "expected %d got %d\n", 0xabababab, p_cin->count);
 }
 
+static void test_fstream(void)
+{
+    iostream fs, *pfs;
+    filebuf *pfb;
+    ostream *pos;
+    istream *pis;
+    int i;
+    char st[8];
+    const char *filename = "fstream_test";
+
+    /* constructors */
+    pfs = call_func5(p_fstream_open_ctor, &fs, filename, OPENMODE_out, filebuf_openprot, TRUE);
+    ok(pfs == &fs, "constructor returned wrong pointer, expected %p got %p\n", &fs, pfs);
+    ok(fs.base_ios.state == IOSTATE_goodbit, "wrong stream state, expected %d got %d\n", IOSTATE_goodbit, fs.base_ios.state);
+    pfb = (filebuf*) fs.base_ios.sb;
+    ok((int) call_func1(p_filebuf_is_open, pfb) == TRUE, "expected filebuf to be open\n");
+    ok(fs.base_ios.delbuf == 1, "internal filebuf not makred for deletion\n");
+
+    /* integration with ostream */
+    pos = call_func2(p_ostream_print_str, (ostream*) &fs.base2, "ftest ");
+    ok(pos == (ostream*) &fs.base2, "stream operation returned wrong pointer, expected %p got %p\n", &fs, &fs.base2);
+    pos = call_func2(p_ostream_print_int, (ostream*) &fs.base2, 15);
+    ok(pos == (ostream*) &fs.base2, "stream operation returned wrong pointer, expected %p got %p\n", &fs, &fs.base2);
+
+    /* make sure that OPENMODE_in is not implied */
+    ok(_lseek(pfb->fd, 0, SEEK_SET) == 0, "_lseek failed\n");
+    ok(_read(pfb->fd, st, 1) == -1, "_read succeded on OPENMODE_out only fstream\n");
+
+    /* reopen the file for reading */
+    call_func1(p_fstream_vbase_dtor, &fs);
+    pfs = call_func5(p_fstream_open_ctor, &fs, filename, OPENMODE_in, filebuf_openprot, TRUE);
+    ok(pfs == &fs, "constructor returned wrong pointer, expected %p got %p\n", &fs, pfs);
+    ok(fs.base_ios.state == IOSTATE_goodbit, "wrong stream state, expected %d got %d\n", IOSTATE_goodbit, fs.base_ios.state);
+    pfb = (filebuf*) fs.base_ios.sb;
+    ok((int) call_func1(p_filebuf_is_open, pfb) == TRUE, "expected filebuf to be open\n");
+
+    /* integration with istream */
+    memset(st, 'A', sizeof(st));
+    pis = call_func2(p_istream_read_str, (istream*) &fs.base1, st);
+    ok(pis == (istream*) &fs.base1, "stream operation returned wrong pointer, expected %p got %p\n", &fs, &fs.base1);
+    st[7] = 0;
+    ok(!strcmp(st, "ftest"), "expected 'ftest' got '%s'\n", st);
+
+    i = 12345;
+    pis = call_func2(p_istream_read_int, (istream*) &fs.base1, &i);
+    ok(pis == (istream*) &fs.base1, "stream operation returned wrong pointer, expected %p got %p\n", &fs, &fs.base1);
+    ok(i == 15, "expected 12 got %d\n", i);
+
+    /* make sure that OPENMODE_out is not implied */
+    ok(_lseek(pfb->fd, 0, SEEK_SET) == 0, "_lseek failed\n");
+    ok(_write(pfb->fd, "blabla", 6) == -1, "_write succeded on OPENMODE_in fstream\n");
+
+    /* cleanup */
+    call_func1(p_fstream_vbase_dtor, &fs);
+    ok(_unlink(filename) == 0, "Couldn't unlink file named '%s', some filedescs are still open?\n", filename);
+}
+
 static void test_exception(void)
 {
     const char *unknown = "Unknown exception";
@@ -8031,6 +8104,7 @@ START_TEST(msvcirt)
     test_stdiostream();
     test_Iostream_init();
     test_std_streams();
+    test_fstream();
     test_exception();
     test_mtlock_mtunlock();
 
