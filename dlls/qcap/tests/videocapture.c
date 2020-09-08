@@ -109,7 +109,7 @@ static void test_stream_config(IPin *pin)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     DeleteMediaType(format2);
     hr = IEnumMediaTypes_Next(enum_media_types, 1, &format2, NULL);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     IEnumMediaTypes_Release(enum_media_types);
 
     format->majortype = MEDIATYPE_Audio;
@@ -200,10 +200,7 @@ static void test_stream_config(IPin *pin)
         ok(hr == S_OK, "Got hr %#x.\n", hr);
         hr = IEnumMediaTypes_Next(enum_media_types, 1, &format2, NULL);
         ok(hr == S_OK, "Got hr %#x.\n", hr);
-
-        todo_wine_if (!compare_media_types(format, format2))
-            ok(compare_media_types(format, format2), "Media types didn't match.\n");
-
+        ok(compare_media_types(format, format2), "Media types didn't match.\n");
         DeleteMediaType(format2);
         IEnumMediaTypes_Release(enum_media_types);
 

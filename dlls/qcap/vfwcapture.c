@@ -521,21 +521,10 @@ static HRESULT source_query_accept(struct strmbase_pin *pin, const AM_MEDIA_TYPE
 }
 
 static HRESULT source_get_media_type(struct strmbase_pin *pin,
-        unsigned int index, AM_MEDIA_TYPE *pmt)
+        unsigned int index, AM_MEDIA_TYPE *mt)
 {
     VfwCapture *filter = impl_from_strmbase_pin(pin);
-    AM_MEDIA_TYPE *vfw_pmt;
-    HRESULT hr;
-
-    if (index >= filter->device->ops->get_caps_count(filter->device))
-        return VFW_S_NO_MORE_ITEMS;
-
-    if (SUCCEEDED(hr = filter->device->ops->get_caps(filter->device, index, &vfw_pmt, NULL)))
-    {
-        CopyMediaType(pmt, vfw_pmt);
-        DeleteMediaType(vfw_pmt);
-    }
-    return hr;
+    return filter->device->ops->get_media_type(filter->device, index, mt);
 }
 
 static HRESULT source_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)
