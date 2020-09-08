@@ -401,33 +401,65 @@ static void test_calchash(void)
 
 static void test_CryptCATOpen(void)
 {
-    HANDLE hcat;
-    char empty[MAX_PATH];
-    WCHAR emptyW[MAX_PATH];
-    HANDLE file;
+    WCHAR filename[MAX_PATH], temp_path[MAX_PATH];
+    HANDLE cat;
+    DWORD flags;
     BOOL ret;
+    FILE *file;
+    char buffer[10];
+
+    GetTempPathW(ARRAY_SIZE(temp_path), temp_path);
+    GetTempFileNameW(temp_path, L"cat", 0, filename);
 
     SetLastError(0xdeadbeef);
-    hcat = pCryptCATOpen(NULL, 0, 0, 0, 0);
-    ok(hcat == INVALID_HANDLE_VALUE, "CryptCATOpen succeeded\n");
-    ok(GetLastError() == ERROR_INVALID_PARAMETER,
-       "Expected ERROR_INVALID_PARAMETER, got %08x\n", GetLastError());
+    cat = pCryptCATOpen(NULL, 0, 0, 0, 0);
+    ok(cat == INVALID_HANDLE_VALUE, "expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got error %u\n", GetLastError());
 
-    if (!GetTempFileNameA(CURR_DIR, "cat", 0, empty)) return;
+    for (flags = 0; flags < 8; ++flags)
+    {
+        SetLastError(0xdeadbeef);
+        cat = pCryptCATOpen(filename, flags, 0, 0, 0);
+        if (flags == CRYPTCAT_OPEN_EXISTING)
+        {
+            ok(cat == INVALID_HANDLE_VALUE, "flags %#x: expected failure\n", flags);
+            ok(GetLastError() == ERROR_FILE_NOT_FOUND, "flags %#x: got error %u\n", flags, GetLastError());
+            ret = DeleteFileW(filename);
+            ok(!ret, "flags %#x: expected failure\n", flags);
+        }
+        else
+        {
+            todo_wine ok(cat != INVALID_HANDLE_VALUE, "flags %#x: expected success\n", flags);
+            todo_wine ok(!GetLastError(), "flags %#x: got error %u\n", flags, GetLastError());
+            ret = pCryptCATClose(cat);
+            todo_wine ok(ret, "flags %#x: failed to close file\n", flags);
+            ret = DeleteFileW(filename);
+            todo_wine_if (flags & (CRYPTCAT_OPEN_ALWAYS | CRYPTCAT_OPEN_CREATENEW))
+                ok(ret, "flags %#x: failed to delete file, error %u\n", flags, GetLastError());
+        }
 
-    file = CreateFileA(empty, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
-    ok(file != INVALID_HANDLE_VALUE, "CreateFileA failed %u\n", GetLastError());
-    CloseHandle(file);
-    MultiByteToWideChar(CP_ACP, 0, empty, -1, emptyW, MAX_PATH);
+        file = _wfopen(filename, L"w");
+        fputs("test text", file);
+        fclose(file);
 
-    hcat = pCryptCATOpen(emptyW, 0, 0, 0, 0);
-    todo_wine
-    ok(hcat != INVALID_HANDLE_VALUE, "Expected a correct handle\n");
+        SetLastError(0xdeadbeef);
+        cat = pCryptCATOpen(filename, flags, 0, 0, 0);
+        todo_wine ok(cat != INVALID_HANDLE_VALUE, "flags %#x: expected success\n", flags);
+        todo_wine ok(!GetLastError(), "flags %#x: got error %u\n", flags, GetLastError());
+        ret = pCryptCATClose(cat);
+        todo_wine ok(ret, "flags %#x: failed to close file\n", flags);
 
-    ret = pCryptCATClose(hcat);
-    todo_wine
-    ok(ret, "CryptCATClose failed\n");
-    DeleteFileA(empty);
+        file = _wfopen(filename, L"r");
+        ret = fread(buffer, 1, sizeof(buffer), file);
+        if (flags & CRYPTCAT_OPEN_CREATENEW)
+            todo_wine ok(!ret, "flags %#x: got %s\n", flags, debugstr_an(buffer, ret));
+        else
+            ok(ret == 9 && !strncmp(buffer, "test text", ret), "flags %#x: got %s\n", flags, debugstr_an(buffer, ret));
+        fclose(file);
+
+        ret = DeleteFileW(filename);
+        ok(ret, "flags %#x: failed to delete file, error %u\n", flags, GetLastError());
+    }
 }
 
 static DWORD error_area;
