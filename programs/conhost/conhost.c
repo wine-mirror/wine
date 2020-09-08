@@ -247,7 +247,7 @@ static void hide_tty_cursor( struct console *console )
 {
     if (console->tty_cursor_visible)
     {
-        tty_write(  console, "\x1b[25l", 5 );
+        tty_write(  console, "\x1b[?25l", 6 );
         console->tty_cursor_visible = FALSE;
     }
 }

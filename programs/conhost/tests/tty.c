@@ -119,7 +119,7 @@ static BOOL skip_byte_(unsigned int line, char ch)
 static void expect_hide_cursor_(unsigned int line)
 {
     if (!console_output_count) fetch_console_output_(line);
-    ok_(__FILE__,line)(skip_sequence_(line, "\x1b[25l") || broken(skip_sequence_(line, "\x1b[?25l")),
+    ok_(__FILE__,line)(skip_sequence_(line, "\x1b[?25l") || broken(skip_sequence_(line, "\x1b[25l")),
                        "expected hide cursor escape\n");
 }
 
