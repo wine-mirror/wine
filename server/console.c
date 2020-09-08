@@ -784,7 +784,7 @@ obj_handle_t inherit_console( struct thread *parent_thread, obj_handle_t handle,
     process->console = console;
     console->num_proc++;
     return alloc_handle( process, process->console,
-                         SYNCHRONIZE | FILE_READ_ATTRIBUTES | FILE_WRITE_ATTRIBUTES, 0 );
+                         SYNCHRONIZE | GENERIC_READ | GENERIC_WRITE, 0 );
 }
 
 struct thread *console_get_renderer( struct console_input *console )
