@@ -73,6 +73,7 @@ struct console
     unsigned int          input_cp;            /* console input codepage */
     unsigned int          output_cp;           /* console output codepage */
     unsigned int          win;                 /* window handle if backend supports it */
+    HANDLE                tty_input;           /* handle to tty input stream */
     HANDLE                tty_output;          /* handle to tty output stream */
     char                  tty_buffer[4096];    /* tty output buffer */
     size_t                tty_buffer_count;    /* tty buffer size */
@@ -105,6 +106,15 @@ struct screen_buffer
 };
 
 static const char_info_t empty_char_info = { ' ', 0x0007 };  /* white on black space */
+
+static CRITICAL_SECTION console_section;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &console_section,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": console_section") }
+};
+static CRITICAL_SECTION console_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 static void *ioctl_buffer;
 static size_t ioctl_buffer_size;
@@ -454,6 +464,247 @@ static NTSTATUS write_console_input( struct console *console, const INPUT_RECORD
     }
     console->record_count += count;
     return flush ? process_console_input( console ) : STATUS_SUCCESS;
+}
+
+static void set_key_input_record( INPUT_RECORD *record, WCHAR ch, unsigned int vk, BOOL is_down, unsigned int ctrl_state )
+{
+    record->EventType = KEY_EVENT;
+    record->Event.KeyEvent.bKeyDown = is_down;
+    record->Event.KeyEvent.wRepeatCount = 1;
+    record->Event.KeyEvent.uChar.UnicodeChar = ch;
+    record->Event.KeyEvent.wVirtualKeyCode = vk;
+    record->Event.KeyEvent.wVirtualScanCode = MapVirtualKeyW( vk, MAPVK_VK_TO_VSC );
+    record->Event.KeyEvent.dwControlKeyState = ctrl_state;
+}
+
+static NTSTATUS key_press( struct console *console, WCHAR ch, unsigned int vk, unsigned int ctrl_state )
+{
+    INPUT_RECORD records[8];
+    unsigned int count = 0, ctrl = 0;
+
+    if (ctrl_state & SHIFT_PRESSED)
+    {
+        ctrl |= SHIFT_PRESSED;
+        set_key_input_record( &records[count++], 0, VK_SHIFT, TRUE, ctrl );
+    }
+    if (ctrl_state & LEFT_ALT_PRESSED)
+    {
+        ctrl |= LEFT_ALT_PRESSED;
+        set_key_input_record( &records[count++], 0, VK_MENU, TRUE, ctrl );
+    }
+    if (ctrl_state & LEFT_CTRL_PRESSED)
+    {
+        ctrl |= LEFT_CTRL_PRESSED;
+        set_key_input_record( &records[count++], 0, VK_CONTROL, TRUE, ctrl );
+    }
+
+    set_key_input_record( &records[count++], ch, vk, TRUE, ctrl );
+    set_key_input_record( &records[count++], ch, vk, FALSE, ctrl );
+
+    if (ctrl & LEFT_CTRL_PRESSED)
+    {
+        ctrl &= ~LEFT_CTRL_PRESSED;
+        set_key_input_record( &records[count++], 0, VK_CONTROL, FALSE, ctrl );
+    }
+    if (ctrl & LEFT_ALT_PRESSED)
+    {
+        ctrl &= ~LEFT_ALT_PRESSED;
+        set_key_input_record( &records[count++], 0, VK_MENU, FALSE, ctrl );
+    }
+    if (ctrl & SHIFT_PRESSED)
+    {
+        ctrl &= ~SHIFT_PRESSED;
+        set_key_input_record( &records[count++], 0, VK_SHIFT, FALSE, ctrl );
+    }
+
+    return write_console_input( console, records, count, FALSE );
+}
+
+static void char_key_press( struct console *console, WCHAR ch, unsigned int ctrl )
+{
+    unsigned int vk = VkKeyScanW( ch );
+    if (vk == ~0) vk = 0;
+    if (vk & 0x0100) ctrl |= SHIFT_PRESSED;
+    if (vk & 0x0200) ctrl |= LEFT_CTRL_PRESSED;
+    if (vk & 0x0400) ctrl |= LEFT_ALT_PRESSED;
+    vk &= 0xff;
+    key_press( console, ch, vk, ctrl );
+}
+
+static unsigned int escape_char_to_vk( WCHAR ch )
+{
+    switch (ch)
+    {
+    case 'A': return VK_UP;
+    case 'B': return VK_DOWN;
+    case 'C': return VK_RIGHT;
+    case 'D': return VK_LEFT;
+    case 'H': return VK_HOME;
+    case 'F': return VK_END;
+    case 'P': return VK_F1;
+    case 'Q': return VK_F2;
+    case 'R': return VK_F3;
+    case 'S': return VK_F4;
+    default:  return 0;
+    }
+}
+
+static unsigned int escape_number_to_vk( unsigned int n )
+{
+    switch(n)
+    {
+    case 2:  return VK_INSERT;
+    case 3:  return VK_DELETE;
+    case 5:  return VK_PRIOR;
+    case 6:  return VK_NEXT;
+    case 15: return VK_F5;
+    case 17: return VK_F6;
+    case 18: return VK_F7;
+    case 19: return VK_F8;
+    case 20: return VK_F9;
+    case 21: return VK_F10;
+    case 23: return VK_F11;
+    case 24: return VK_F12;
+    default: return 0;
+    }
+}
+
+static unsigned int convert_modifiers( unsigned int n )
+{
+    unsigned int ctrl = 0;
+    if (!n || n > 16) return 0;
+    n--;
+    if (n & 1) ctrl |= SHIFT_PRESSED;
+    if (n & 2) ctrl |= LEFT_ALT_PRESSED;
+    if (n & 4) ctrl |= LEFT_CTRL_PRESSED;
+    return ctrl;
+}
+
+static unsigned int process_csi_sequence( struct console *console, const WCHAR *buf, size_t size )
+{
+    unsigned int n, count = 0, params[8], params_cnt = 0, vk;
+
+    for (;;)
+    {
+        n = 0;
+        while (count < size && '0' <= buf[count] && buf[count] <= '9')
+            n = n * 10 + buf[count++] - '0';
+        if (params_cnt < ARRAY_SIZE(params)) params[params_cnt++] = n;
+        else FIXME( "too many params, skipping %u\n", n );
+        if (count == size) return 0;
+        if (buf[count] != ';') break;
+        if (++count == size) return 0;
+    }
+
+    if ((vk = escape_char_to_vk( buf[count] )))
+    {
+        key_press( console, 0, vk, params_cnt >= 2 ? convert_modifiers( params[1] ) : 0 );
+        return count + 1;
+    }
+
+    switch (buf[count])
+    {
+    case '~':
+        vk = escape_number_to_vk( params[0] );
+        key_press( console, 0, vk, params_cnt == 2 ? convert_modifiers( params[1] ) : 0 );
+        return count + 1;
+
+    default:
+        FIXME( "unhandled sequence %s\n", debugstr_wn( buf, size ));
+        return 0;
+    }
+}
+
+static unsigned int process_input_escape( struct console *console, const WCHAR *buf, size_t size )
+{
+    unsigned int vk = 0, count = 0, nlen;
+
+    if (!size)
+    {
+        key_press( console, 0, VK_ESCAPE, 0 );
+        return 0;
+    }
+
+    switch(buf[0])
+    {
+    case '[':
+        if (++count == size) break;
+        if ((nlen = process_csi_sequence( console, buf + 1, size - 1 ))) return count + nlen;
+        break;
+
+    case 'O':
+        if (++count == size) break;
+        vk = escape_char_to_vk( buf[1] );
+        if (vk)
+        {
+            key_press( console, 0, vk, 0 );
+            return count + 1;
+        }
+    }
+
+    char_key_press( console, buf[0], LEFT_ALT_PRESSED );
+    return 1;
+}
+
+static DWORD WINAPI tty_input( void *param )
+{
+    struct console *console = param;
+    IO_STATUS_BLOCK io;
+    HANDLE event;
+    char read_buf[4096];
+    WCHAR buf[4096];
+    DWORD count, i;
+    NTSTATUS status;
+
+    event = CreateEventW( NULL, TRUE, FALSE, NULL );
+
+    for (;;)
+    {
+        status = NtReadFile( console->tty_input, event, NULL, NULL, &io, read_buf, sizeof(read_buf), NULL, NULL );
+        if (status == STATUS_PENDING)
+        {
+            if ((status = NtWaitForSingleObject( event, FALSE, NULL ))) break;
+            status = io.Status;
+        }
+        if (status) break;
+
+        EnterCriticalSection( &console_section );
+
+        /* FIXME: Handle partial char read */
+        count = MultiByteToWideChar(CP_UTF8, 0, read_buf, io.Information, buf, ARRAY_SIZE(buf));
+
+        TRACE( "%s\n", debugstr_wn(buf, count) );
+
+        for (i = 0; i < count; i++)
+        {
+            WCHAR ch = buf[i];
+            switch (ch)
+            {
+            case 3: /* end of text */
+                return 0;
+            case '\n':
+                key_press( console, '\n', VK_RETURN, LEFT_CTRL_PRESSED );
+                break;
+            case '\b':
+                key_press( console, ch, 'H', LEFT_CTRL_PRESSED );
+                break;
+            case 0x1b:
+                i += process_input_escape( console, buf + i + 1, count - i - 1 );
+                break;
+            case 0x7f:
+                key_press( console, '\b', VK_BACK, 0 );
+                break;
+            default:
+                char_key_press( console, ch, 0 );
+            }
+        }
+
+        process_console_input( console );
+        LeaveCriticalSection( &console_section );
+    }
+
+    TRACE( "NtReadFile failed: %#x\n", status );
+    return 0;
 }
 
 static NTSTATUS screen_buffer_activate( struct screen_buffer *screen_buffer )
@@ -1358,7 +1609,10 @@ static int main_loop( struct console *console, HANDLE signal )
         switch (res)
         {
         case WAIT_OBJECT_0:
-            if (process_console_ioctls( console )) return 0;
+            EnterCriticalSection( &console_section );
+            status = process_console_ioctls( console );
+            LeaveCriticalSection( &console_section );
+            if (status) return 0;
             break;
 
         case WAIT_OBJECT_0 + 1:
@@ -1385,7 +1639,7 @@ static int main_loop( struct console *console, HANDLE signal )
 int __cdecl wmain(int argc, WCHAR *argv[])
 {
     int headless = 0, i, width = 80, height = 150;
-    HANDLE signal = NULL;
+    HANDLE signal = NULL, input_thread;
     WCHAR *end;
 
     static struct console console;
@@ -1454,8 +1708,13 @@ int __cdecl wmain(int argc, WCHAR *argv[])
     if (!(console.active = create_screen_buffer( &console, 1, width, height ))) return 1;
     if (headless)
     {
+        console.tty_input  = GetStdHandle( STD_INPUT_HANDLE );
         console.tty_output = GetStdHandle( STD_OUTPUT_HANDLE );
         init_tty_output( &console );
+
+        if (!(input_thread = CreateThread( NULL, 0, tty_input, &console, 0, NULL )))
+            return 1;
+        CloseHandle( input_thread );
     }
 
     return main_loop( &console, signal );
