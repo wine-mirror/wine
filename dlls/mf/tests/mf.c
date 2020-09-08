@@ -3236,16 +3236,19 @@ todo_wine
 static void test_evr(void)
 {
     IMFMediaEventGenerator *ev_generator;
+    IMFMediaTypeHandler *type_handler;
     IMFVideoRenderer *video_renderer;
     IMFClockStateSink *clock_sink;
     IMFMediaSinkPreroll *preroll;
     IMFMediaSink *sink, *sink2;
+    IMFStreamSink *stream_sink;
     IMFActivate *activate;
     DWORD flags, count;
     IMFGetService *gs;
     IUnknown *unk;
     UINT64 value;
     HRESULT hr;
+    GUID guid;
 
     hr = CoInitialize(NULL);
     ok(hr == S_OK, "Failed to initialize, hr %#x.\n", hr);
@@ -3266,6 +3269,23 @@ static void test_evr(void)
 
     hr = IMFActivate_ActivateObject(activate, &IID_IMFMediaSink, (void **)&sink);
     ok(hr == S_OK, "Failed to activate, hr %#x.\n", hr);
+
+    /* Primary stream type handler. */
+    hr = IMFMediaSink_GetStreamSinkById(sink, 0, &stream_sink);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFStreamSink_GetMediaTypeHandler(stream_sink, &type_handler);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaTypeHandler_GetMajorType(type_handler, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaTypeHandler_GetMajorType(type_handler, &guid);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(IsEqualGUID(&guid, &MFMediaType_Video), "Unexpected type %s.\n", wine_dbgstr_guid(&guid));
+
+    IMFStreamSink_Release(stream_sink);
+    IMFMediaTypeHandler_Release(type_handler);
 
     hr = IMFMediaSink_GetCharacteristics(sink, &flags);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);

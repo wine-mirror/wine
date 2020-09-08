@@ -385,9 +385,18 @@ static HRESULT WINAPI video_stream_typehandler_GetCurrentMediaType(IMFMediaTypeH
 
 static HRESULT WINAPI video_stream_typehandler_GetMajorType(IMFMediaTypeHandler *iface, GUID *type)
 {
-    FIXME("%p, %p.\n", iface, type);
+    struct video_stream *stream = impl_from_IMFMediaTypeHandler(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, type);
+
+    if (!stream->parent)
+        return MF_E_STREAMSINK_REMOVED;
+
+    if (!type)
+        return E_POINTER;
+
+    memcpy(type, &MFMediaType_Video, sizeof(*type));
+    return S_OK;
 }
 
 static const IMFMediaTypeHandlerVtbl video_stream_type_handler_vtbl =
