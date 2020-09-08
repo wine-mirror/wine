@@ -873,7 +873,7 @@ HANDLE WINAPI CryptCATOpen(WCHAR *filename, DWORD flags, HCRYPTPROV hProv,
     if (flags == CRYPTCAT_OPEN_EXISTING)
         open_mode = OPEN_EXISTING;
     if (flags & CRYPTCAT_OPEN_CREATENEW)
-        open_mode = CREATE_NEW;
+        open_mode = CREATE_ALWAYS;
 
     file = CreateFileW(filename, GENERIC_READ, FILE_SHARE_READ, NULL, open_mode, 0, NULL);
     if (file == INVALID_HANDLE_VALUE) return INVALID_HANDLE_VALUE;

@@ -451,7 +451,7 @@ static void test_CryptCATOpen(void)
         file = _wfopen(filename, L"r");
         ret = fread(buffer, 1, sizeof(buffer), file);
         if (flags & CRYPTCAT_OPEN_CREATENEW)
-            todo_wine ok(!ret, "flags %#x: got %s\n", flags, debugstr_an(buffer, ret));
+            ok(!ret, "flags %#x: got %s\n", flags, debugstr_an(buffer, ret));
         else
             ok(ret == 9 && !strncmp(buffer, "test text", ret), "flags %#x: got %s\n", flags, debugstr_an(buffer, ret));
         fclose(file);
