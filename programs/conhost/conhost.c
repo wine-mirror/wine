@@ -396,9 +396,19 @@ static NTSTATUS read_console_input( struct console *console, size_t out_size )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS process_console_input( struct console *console )
+{
+    if (console->record_count && console->pending_read)
+    {
+        read_console_input( console, console->pending_read );
+        console->pending_read = 0;
+    }
+    return STATUS_SUCCESS;
+}
+
 /* add input events to a console input queue */
 static NTSTATUS write_console_input( struct console *console, const INPUT_RECORD *records,
-                                     unsigned int count )
+                                     unsigned int count, BOOL flush )
 {
     TRACE( "%u\n", count );
 
@@ -443,12 +453,7 @@ static NTSTATUS write_console_input( struct console *console, const INPUT_RECORD
         }
     }
     console->record_count += count;
-    if (count && console->pending_read)
-    {
-        read_console_input( console, console->pending_read );
-        console->pending_read = 0;
-    }
-    return STATUS_SUCCESS;
+    return flush ? process_console_input( console ) : STATUS_SUCCESS;
 }
 
 static NTSTATUS screen_buffer_activate( struct screen_buffer *screen_buffer )
@@ -604,7 +609,7 @@ static NTSTATUS set_output_info( struct screen_buffer *screen_buffer,
             ir.EventType = WINDOW_BUFFER_SIZE_EVENT;
             ir.Event.WindowBufferSizeEvent.dwSize.X = info->width;
             ir.Event.WindowBufferSizeEvent.dwSize.Y = info->height;
-            write_console_input( screen_buffer->console, &ir, 1 );
+            write_console_input( screen_buffer->console, &ir, 1, TRUE );
         }
     }
     if (params->mask & SET_CONSOLE_OUTPUT_INFO_ATTR)
@@ -1146,7 +1151,7 @@ static NTSTATUS console_input_ioctl( struct console *console, unsigned int code,
 
     case IOCTL_CONDRV_WRITE_INPUT:
         if (in_size % sizeof(INPUT_RECORD) || *out_size) return STATUS_INVALID_PARAMETER;
-        return write_console_input( console, in_data, in_size / sizeof(INPUT_RECORD) );
+        return write_console_input( console, in_data, in_size / sizeof(INPUT_RECORD), TRUE );
 
     case IOCTL_CONDRV_PEEK:
         {
