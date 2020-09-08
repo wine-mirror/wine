@@ -215,18 +215,15 @@ static int macdrv_get_gpu_info_from_entry(struct macdrv_gpu* gpu, io_registry_en
 
     if (IORegistryEntryGetRegistryEntryID(gpu_entry, &gpu->id) != kIOReturnSuccess)
         goto done;
-    if (get_entry_property_uint32(gpu_entry, CFSTR("vendor-id"), &gpu->vendor_id))
-        goto done;
-    if (get_entry_property_uint32(gpu_entry, CFSTR("device-id"), &gpu->device_id))
-        goto done;
-    if (get_entry_property_uint32(gpu_entry, CFSTR("subsystem-id"), &gpu->subsys_id))
-        goto done;
-    if (get_entry_property_uint32(gpu_entry, CFSTR("revision-id"), &gpu->revision_id))
-        goto done;
-    if (get_entry_property_string(gpu_entry, CFSTR("model"), gpu->name, sizeof(gpu->name)))
-        goto done;
 
     ret = 0;
+
+    get_entry_property_uint32(gpu_entry, CFSTR("vendor-id"), &gpu->vendor_id);
+    get_entry_property_uint32(gpu_entry, CFSTR("device-id"), &gpu->device_id);
+    get_entry_property_uint32(gpu_entry, CFSTR("subsystem-id"), &gpu->subsys_id);
+    get_entry_property_uint32(gpu_entry, CFSTR("revision-id"), &gpu->revision_id);
+    get_entry_property_string(gpu_entry, CFSTR("model"), gpu->name, sizeof(gpu->name));
+
 done:
     if (gpu_entry != entry)
         IOObjectRelease(gpu_entry);
