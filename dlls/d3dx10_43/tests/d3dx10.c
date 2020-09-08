@@ -618,6 +618,37 @@ static ID3D10Device *create_device(void)
     return NULL;
 }
 
+static void check_image_info(D3DX10_IMAGE_INFO *image_info, unsigned int i, unsigned int line)
+{
+    ok_(__FILE__, line)(image_info->Width == test_image[i].expected.Width,
+            "Test %u: Got unexpected Width %u, expected %u.\n",
+            i, image_info->Width, test_image[i].expected.Width);
+    ok_(__FILE__, line)(image_info->Height == test_image[i].expected.Height,
+            "Test %u: Got unexpected Height %u, expected %u.\n",
+            i, image_info->Height, test_image[i].expected.Height);
+    ok_(__FILE__, line)(image_info->Depth == test_image[i].expected.Depth,
+            "Test %u: Got unexpected Depth %u, expected %u.\n",
+            i, image_info->Depth, test_image[i].expected.Depth);
+    ok_(__FILE__, line)(image_info->ArraySize == test_image[i].expected.ArraySize,
+            "Test %u: Got unexpected ArraySize %u, expected %u.\n",
+            i, image_info->ArraySize, test_image[i].expected.ArraySize);
+    ok_(__FILE__, line)(image_info->MipLevels == test_image[i].expected.MipLevels,
+            "Test %u: Got unexpected MipLevels %u, expected %u.\n",
+            i, image_info->MipLevels, test_image[i].expected.MipLevels);
+    ok_(__FILE__, line)(image_info->MiscFlags == test_image[i].expected.MiscFlags,
+            "Test %u: Got unexpected MiscFlags %#x, expected %#x.\n",
+            i, image_info->MiscFlags, test_image[i].expected.MiscFlags);
+    ok_(__FILE__, line)(image_info->Format == test_image[i].expected.Format,
+            "Test %u: Got unexpected Format %#x, expected %#x.\n",
+            i, image_info->Format, test_image[i].expected.Format);
+    ok_(__FILE__, line)(image_info->ResourceDimension == test_image[i].expected.ResourceDimension,
+            "Test %u: Got unexpected ResourceDimension %u, expected %u.\n",
+            i, image_info->ResourceDimension, test_image[i].expected.ResourceDimension);
+    ok_(__FILE__, line)(image_info->ImageFileFormat == test_image[i].expected.ImageFileFormat,
+            "Test %u: Got unexpected ImageFileFormat %u, expected %u.\n",
+            i, image_info->ImageFileFormat, test_image[i].expected.ImageFileFormat);
+}
+
 static void test_D3DX10UnsetAllDeviceObjects(void)
 {
     static const D3D10_INPUT_ELEMENT_DESC layout_desc[] =
@@ -1347,34 +1378,7 @@ static void test_get_image_info(void)
             ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
         if (hr != S_OK)
             continue;
-
-        ok(image_info.Width == test_image[i].expected.Width,
-                "Test %u: Got unexpected Width %u, expected %u.\n",
-                i, image_info.Width, test_image[i].expected.Width);
-        ok(image_info.Height == test_image[i].expected.Height,
-                "Test %u: Got unexpected Height %u, expected %u.\n",
-                i, image_info.Height, test_image[i].expected.Height);
-        ok(image_info.Depth == test_image[i].expected.Depth,
-                "Test %u: Got unexpected Depth %u, expected %u.\n",
-                i, image_info.Depth, test_image[i].expected.Depth);
-        ok(image_info.ArraySize == test_image[i].expected.ArraySize,
-                "Test %u: Got unexpected ArraySize %u, expected %u.\n",
-                i, image_info.ArraySize, test_image[i].expected.ArraySize);
-        ok(image_info.MipLevels == test_image[i].expected.MipLevels,
-                "Test %u: Got unexpected MipLevels %u, expected %u.\n",
-                i, image_info.MipLevels, test_image[i].expected.MipLevels);
-        ok(image_info.MiscFlags == test_image[i].expected.MiscFlags,
-                "Test %u: Got unexpected MiscFlags %#x, expected %#x.\n",
-                i, image_info.MiscFlags, test_image[i].expected.MiscFlags);
-        ok(image_info.Format == test_image[i].expected.Format,
-                "Test %u: Got unexpected Format %#x, expected %#x.\n",
-                i, image_info.Format, test_image[i].expected.Format);
-        ok(image_info.ResourceDimension == test_image[i].expected.ResourceDimension,
-                "Test %u: Got unexpected ResourceDimension %u, expected %u.\n",
-                i, image_info.ResourceDimension, test_image[i].expected.ResourceDimension);
-        ok(image_info.ImageFileFormat == test_image[i].expected.ImageFileFormat,
-                "Test %u: Got unexpected ImageFileFormat %u, expected %u.\n",
-                i, image_info.ImageFileFormat, test_image[i].expected.ImageFileFormat);
+        check_image_info(&image_info, i, __LINE__);
     }
 
     CoUninitialize();
