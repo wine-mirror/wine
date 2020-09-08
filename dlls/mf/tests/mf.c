@@ -1451,7 +1451,10 @@ todo_wine
         return;
 
     hr = IMFMediaSource_CreatePresentationDescriptor(source, &pd);
+todo_wine
     ok(hr == S_OK, "Failed to create descriptor, hr %#x.\n", hr);
+    if (FAILED(hr))
+        return;
 
     hr = IMFPresentationDescriptor_GetStreamDescriptorByIndex(pd, 0, &selected, &sd);
     ok(hr == S_OK, "Failed to get stream descriptor, hr %#x.\n", hr);
