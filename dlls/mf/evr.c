@@ -409,11 +409,35 @@ static HRESULT WINAPI video_renderer_sink_GetCharacteristics(IMFMediaSink *iface
     return S_OK;
 }
 
+static HRESULT video_renderer_add_stream(struct video_renderer *renderer, unsigned int id,
+        IMFStreamSink **stream_sink)
+{
+    struct video_stream *stream;
+    HRESULT hr;
+
+    if (!mf_array_reserve((void **)&renderer->streams, &renderer->stream_size, renderer->stream_count + 1,
+            sizeof(*renderer->streams)))
+    {
+        return E_OUTOFMEMORY;
+    }
+
+    if (SUCCEEDED(hr = video_renderer_stream_create(renderer, id, &stream)))
+    {
+        if (stream_sink)
+        {
+            *stream_sink = &stream->IMFStreamSink_iface;
+            IMFStreamSink_AddRef(*stream_sink);
+        }
+        renderer->streams[renderer->stream_count++] = stream;
+    }
+
+    return hr;
+}
+
 static HRESULT WINAPI video_renderer_sink_AddStreamSink(IMFMediaSink *iface, DWORD id,
     IMFMediaType *media_type, IMFStreamSink **stream_sink)
 {
     struct video_renderer *renderer = impl_from_IMFMediaSink(iface);
-    struct video_stream *stream;
     HRESULT hr;
 
     TRACE("%p, %#x, %p, %p.\n", iface, id, media_type, stream_sink);
@@ -425,20 +449,7 @@ static HRESULT WINAPI video_renderer_sink_AddStreamSink(IMFMediaSink *iface, DWO
         hr = MF_E_SHUTDOWN;
     else if (SUCCEEDED(hr = IMFTransform_AddInputStreams(renderer->mixer, 1, &id)))
     {
-        if (mf_array_reserve((void **)&renderer->streams, &renderer->stream_size, renderer->stream_count + 1,
-                sizeof(*renderer->streams)))
-        {
-            if (SUCCEEDED(hr = video_renderer_stream_create(renderer, id, &stream)))
-            {
-                *stream_sink = &stream->IMFStreamSink_iface;
-                IMFStreamSink_AddRef(*stream_sink);
-                renderer->streams[renderer->stream_count++] = stream;
-            }
-        }
-        else
-            hr = E_OUTOFMEMORY;
-
-        if (FAILED(hr))
+        if (FAILED(hr = video_renderer_add_stream(renderer, id, stream_sink)))
             IMFTransform_DeleteInputStream(renderer->mixer, id);
 
     }
@@ -1107,6 +1118,35 @@ static HRESULT video_renderer_create_mixer(struct video_renderer *renderer, IMFA
         }
         renderer->flags &= ~EVR_INIT_SERVICES;
         IMFTopologyServiceLookupClient_Release(lookup_client);
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        unsigned int input_count, output_count;
+        unsigned int *ids, *oids;
+        size_t i;
+
+        /* Create stream sinks for inputs that mixer already has by default. */
+        if (SUCCEEDED(IMFTransform_GetStreamCount(*out, &input_count, &output_count)))
+        {
+            ids = heap_calloc(input_count, sizeof(*ids));
+            oids = heap_calloc(output_count, sizeof(*oids));
+
+            if (ids && oids)
+            {
+                if (SUCCEEDED(IMFTransform_GetStreamIDs(*out, input_count, ids, output_count, oids)))
+                {
+                    for (i = 0; i < input_count; ++i)
+                    {
+                        video_renderer_add_stream(renderer, ids[i], NULL);
+                    }
+                }
+
+            }
+
+            heap_free(ids);
+            heap_free(oids);
+        }
     }
 
     return hr;
