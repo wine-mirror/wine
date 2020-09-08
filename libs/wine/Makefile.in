@@ -84,8 +84,6 @@ C_SRCS = \
 	utf8.c \
 	wctomb.c
 
-EXTRA_OBJS = version.o
-
 config_EXTRADEFS = \
 	-DBINDIR='"${bindir}"' \
 	-DDLLDIR='"${dlldir}"' \
@@ -98,9 +96,3 @@ SHAREDLIB = $(LIBWINE_SHAREDLIB)
 
 libwine_LDFLAGS = $(LIBWINE_LDFLAGS)
 libwine_DEPS = $(LIBWINE_DEPENDS)
-
-version.c: dummy
-	version=`(GIT_DIR=$(top_srcdir)/.git git describe HEAD 2>/dev/null || echo "wine-$(PACKAGE_VERSION)") | sed -n -e '$$s/\(.*\)/const char wine_build[] = "\1";/p'` && (echo $$version | cmp -s - $@) || echo $$version >$@ || (rm -f $@ && exit 1)
-
-dummy:
-.PHONY: dummy

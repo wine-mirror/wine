@@ -10,9 +10,6 @@ WINE_1.0
     wine_casemap_lower;
     wine_casemap_upper;
     wine_dll_set_callback;
-    wine_exec_wine_binary;
-    wine_get_build_id;
-    wine_get_version;
     wine_init;
     wine_init_argv0_path;
     wine_mmap_add_reserved_area;
@@ -87,8 +84,10 @@ WINE_1.0
     wine_dll_unload;
     wine_dlopen;
     wine_dlsym;
+    wine_exec_wine_binary;
     wine_fold_string;
     wine_get_build_dir;
+    wine_get_build_id;
     wine_get_config_dir;
     wine_get_cs;
     wine_get_data_dir;
@@ -100,6 +99,7 @@ WINE_1.0
     wine_get_sortkey;
     wine_get_ss;
     wine_get_user_name;
+    wine_get_version;
     wine_is_dbcs_leadbyte;
     wine_ldt_alloc_entries;
     wine_ldt_alloc_fs;

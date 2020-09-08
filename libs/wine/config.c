@@ -92,14 +92,6 @@ static char *xstrdup( const char *str )
     return res;
 }
 
-/* check if a string ends in a given substring */
-static inline int strendswith( const char* str, const char* end )
-{
-    size_t len = strlen( str );
-    size_t tail = strlen( end );
-    return len >= tail && !strcmp( str + len - tail, end );
-}
-
 /* build a path from the specified dir and name */
 static char *build_path( const char *dir, const char *name )
 {
@@ -348,6 +340,14 @@ static char *config_dir;
 static char *server_dir;
 static char *user_name;
 
+/* check if a string ends in a given substring */
+static inline int strendswith( const char* str, const char* end )
+{
+    size_t len = strlen( str );
+    size_t tail = strlen( end );
+    return len >= tail && !strcmp( str + len - tail, end );
+}
+
 /* remove all trailing slashes from a path name */
 static inline void remove_trailing_slashes( char *path )
 {
@@ -500,25 +500,16 @@ const char *wine_get_user_name_obsolete(void)
     return user_name;
 }
 
-__ASM_OBSOLETE(wine_get_build_dir);
-__ASM_OBSOLETE(wine_get_config_dir);
-__ASM_OBSOLETE(wine_get_data_dir);
-__ASM_OBSOLETE(wine_get_server_dir);
-__ASM_OBSOLETE(wine_get_user_name);
-
-#endif /* __ASM_OBSOLETE */
-
 /* return the standard version string */
-const char *wine_get_version(void)
+const char *wine_get_version_obsolete(void)
 {
     return PACKAGE_VERSION;
 }
 
 /* return the build id string */
-const char *wine_get_build_id(void)
+const char *wine_get_build_id_obsolete(void)
 {
-    extern const char wine_build[];
-    return wine_build;
+    return PACKAGE_VERSION;
 }
 
 /* exec a binary using the preloader if requested; helper for wine_exec_wine_binary */
@@ -563,7 +554,7 @@ static void preloader_exec( char **argv, int use_preloader )
 }
 
 /* exec a wine internal binary (either the wine loader or the wine server) */
-void wine_exec_wine_binary( const char *name, char **argv, const char *env_var )
+void wine_exec_wine_binary_obsolete( const char *name, char **argv, const char *env_var )
 {
     const char *path, *pos, *ptr;
     int use_preloader;
@@ -630,3 +621,14 @@ void wine_exec_wine_binary( const char *name, char **argv, const char *env_var )
     preloader_exec( argv, use_preloader );
     free( argv[0] );
 }
+
+__ASM_OBSOLETE(wine_get_build_dir);
+__ASM_OBSOLETE(wine_get_build_id);
+__ASM_OBSOLETE(wine_get_config_dir);
+__ASM_OBSOLETE(wine_get_data_dir);
+__ASM_OBSOLETE(wine_get_server_dir);
+__ASM_OBSOLETE(wine_get_user_name);
+__ASM_OBSOLETE(wine_get_version);
+__ASM_OBSOLETE(wine_exec_wine_binary);
+
+#endif /* __ASM_OBSOLETE */
