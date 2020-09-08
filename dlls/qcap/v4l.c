@@ -96,6 +96,8 @@ struct v4l_device
     struct caps *caps;
     LONG caps_count;
 
+    int image_size, image_pitch;
+
     struct strmbase_source *pin;
     int fd, mmap;
 
@@ -194,6 +196,8 @@ static BOOL set_caps(struct v4l_device *device, const struct caps *caps)
     }
 
     device->current_caps = caps;
+    device->image_size = width * height * caps->video_info.bmiHeader.biBitCount / 8;
+    device->image_pitch = width * caps->video_info.bmiHeader.biBitCount / 8;
 
     return TRUE;
 }
@@ -304,15 +308,11 @@ static HRESULT v4l_device_set_prop(struct video_capture_device *iface,
 static void reverse_image(struct v4l_device *device, LPBYTE output, const BYTE *input)
 {
     int inoffset, outoffset, pitch;
-    UINT width, height, depth;
 
-    width = device->current_caps->video_info.bmiHeader.biWidth;
-    height = device->current_caps->video_info.bmiHeader.biHeight;
-    depth = device->current_caps->video_info.bmiHeader.biBitCount / 8;
     /* the whole image needs to be reversed,
        because the dibs are messed up in windows */
-    outoffset = width * height * depth;
-    pitch = width * depth;
+    outoffset = device->image_size;
+    pitch = device->image_pitch;
     inoffset = 0;
     while (outoffset > 0)
     {
@@ -330,14 +330,8 @@ static DWORD WINAPI ReadThread(void *arg)
     HRESULT hr;
     IMediaSample *pSample = NULL;
     unsigned char *pTarget, *image_data;
-    unsigned int image_size;
-    UINT width, height, depth;
 
-    width = device->current_caps->video_info.bmiHeader.biWidth;
-    height = device->current_caps->video_info.bmiHeader.biHeight;
-    depth = device->current_caps->video_info.bmiHeader.biBitCount / 8;
-    image_size = width * height * depth;
-    if (!(image_data = heap_alloc(image_size)))
+    if (!(image_data = heap_alloc(device->image_size)))
     {
         ERR("Failed to allocate memory.\n");
         return 0;
@@ -363,15 +357,14 @@ static DWORD WINAPI ReadThread(void *arg)
         {
             int len;
             
-            len = width * height * depth;
-            IMediaSample_SetActualDataLength(pSample, len);
+            IMediaSample_SetActualDataLength(pSample, device->image_size);
 
             len = IMediaSample_GetActualDataLength(pSample);
             TRACE("Data length: %d KB\n", len / 1024);
 
             IMediaSample_GetPointer(pSample, &pTarget);
 
-            while (video_read(device->fd, image_data, image_size) == -1)
+            while (video_read(device->fd, image_data, device->image_size) == -1)
             {
                 if (errno != EAGAIN)
                 {
@@ -403,8 +396,7 @@ static void v4l_device_init_stream(struct video_capture_device *iface)
     HRESULT hr;
 
     req_props.cBuffers = 3;
-    req_props.cbBuffer = device->current_caps->video_info.bmiHeader.biWidth * device->current_caps->video_info.bmiHeader.biHeight;
-    req_props.cbBuffer = (req_props.cbBuffer * device->current_caps->video_info.bmiHeader.biBitCount) / 8;
+    req_props.cbBuffer = device->image_size;
     req_props.cbAlign = 1;
     req_props.cbPrefix = 0;
 
