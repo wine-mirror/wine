@@ -1486,25 +1486,37 @@ static const D3D11_SHADER_TYPE_DESC test_reflection_constant_buffer_type_result[
 
 static void test_reflection_constant_buffer(void)
 {
-    HRESULT hr;
-    ULONG count;
-    ID3D11ShaderReflection *ref11;
+    ID3D12ShaderReflectionType *t12, *mt12, *mt12_2, *t12_dummy = NULL, *t12_valid = NULL;
+    ID3D12ShaderReflectionConstantBuffer *cb12, *cb12_dummy = NULL, *cb12_valid = NULL;
     ID3D11ShaderReflectionConstantBuffer *cb11, *cb11_dummy = NULL, *cb11_valid = NULL;
-    ID3D11ShaderReflectionVariable *v11, *v11_dummy = NULL, *v11_valid = NULL;
     ID3D11ShaderReflectionType *t11, *t, *t2, *t11_dummy = NULL, *t11_valid = NULL;
-    D3D11_SHADER_BUFFER_DESC cbdesc = {0};
-    D3D11_SHADER_VARIABLE_DESC vdesc = {0};
-    D3D11_SHADER_TYPE_DESC tdesc = {0};
-    D3D11_SHADER_DESC sdesc = {0};
-    const D3D11_SHADER_BUFFER_DESC *pcbdesc;
+    ID3D12ShaderReflectionVariable *v12, *v12_dummy = NULL, *v12_valid = NULL;
+    ID3D11ShaderReflectionVariable *v11, *v11_dummy = NULL, *v11_valid = NULL;
+    D3D12_SHADER_VARIABLE_DESC vdesc12 = {0};
     const D3D11_SHADER_VARIABLE_DESC *pvdesc;
+    const D3D11_SHADER_BUFFER_DESC *pcbdesc;
+    D3D12_SHADER_BUFFER_DESC cbdesc12 = {0};
+    D3D11_SHADER_VARIABLE_DESC vdesc = {0};
+    D3D11_SHADER_BUFFER_DESC cbdesc = {0};
+    ID3D12ShaderReflection *ref12 = NULL;
     const D3D11_SHADER_TYPE_DESC *ptdesc;
+    D3D12_SHADER_TYPE_DESC tdesc12 = {0};
+    D3D11_SHADER_TYPE_DESC tdesc = {0};
+    ID3D11ShaderReflection *ref11;
+    D3D11_SHADER_DESC sdesc = {0};
     unsigned int i, expected;
     LPCSTR string;
+    ULONG count;
+    HRESULT hr;
 
     hr = call_reflect(test_reflection_constant_buffer_blob, test_reflection_constant_buffer_blob[6],
             &IID_ID3D11ShaderReflection, (void **)&ref11);
     ok(hr == S_OK, "D3DReflect failed %x\n", hr);
+
+#if D3D_COMPILER_VERSION
+    call_reflect(test_reflection_constant_buffer_blob, test_reflection_constant_buffer_blob[6],
+            &IID_ID3D12ShaderReflection, (void **)&ref12);
+#endif
 
     hr = ref11->lpVtbl->GetDesc(ref11, &sdesc);
     ok(hr == S_OK, "GetDesc failed %x\n", hr);
@@ -1556,20 +1568,44 @@ static void test_reflection_constant_buffer(void)
 
     /* get the dummys for comparison */
     cb11_dummy = ref11->lpVtbl->GetConstantBufferByIndex(ref11, 0xffffffff);
-    ok(cb11_dummy != NULL, "GetConstantBufferByIndex failed\n");
+    ok(!!cb11_dummy, "Got unexpected buffer %p.\n", cb11_dummy);
 
+    if (ref12)
+    {
+        cb12_dummy = ref12->lpVtbl->GetConstantBufferByIndex(ref12, 0xffffffff);
+        ok(!!cb12_dummy, "Got unexpected buffer %p.\n", cb12_dummy);
+        ok(cb12_dummy == (void *)cb11_dummy, "Got unexpected buffer %p.\n", cb12_dummy);
+
+        v12_dummy = cb12_dummy->lpVtbl->GetVariableByIndex(cb12_dummy, 0xffffffff);
+        ok(!!v12_dummy, "Got unexpected NULL variable.\n");
+    }
     v11_dummy = cb11_dummy->lpVtbl->GetVariableByIndex(cb11_dummy, 0xffffffff);
-    ok(v11_dummy != NULL, "GetVariableByIndex failed\n");
+    ok(!!v11_dummy, "Got unexpected NULL variable.\n");
 
     t11_dummy = v11_dummy->lpVtbl->GetType(v11_dummy);
-    ok(t11_dummy != NULL, "GetType failed\n");
+    ok(!!t11_dummy, "Got NULL type.\n");
 
     /* get the valid variables */
     cb11_valid = ref11->lpVtbl->GetConstantBufferByIndex(ref11, 1);
-    ok(cb11_valid != cb11_dummy && cb11_valid, "GetConstantBufferByIndex failed\n");
+    ok(cb11_valid != cb11_dummy && cb11_valid, "Got unexpected buffer %p.\n", cb11_valid);
+    if (ref12)
+    {
+        cb12_valid = ref12->lpVtbl->GetConstantBufferByIndex(ref12, 1);
+        ok(cb12_valid != cb12_dummy && cb12_valid, "Got unexpected buffer %p.\n", cb11_valid);
+        ok(cb12_valid != (void *)cb11_valid, "Got unexpected buffer %p.\n", cb12_valid);
+
+        v12_valid = cb12_valid->lpVtbl->GetVariableByIndex(cb12_valid, 0);
+        ok(v12_valid != v12_dummy && v12_valid, "Got unexpected variable %p.\n", v12_valid);
+
+        t12_dummy = v12_dummy->lpVtbl->GetType(v12_dummy);
+        ok(!!t12_dummy, "Got NULL type.\n");
+
+        t12_valid = v12_valid->lpVtbl->GetType(v12_valid);
+        ok(t12_valid != t12_dummy && t12_valid, "GetType failed\n");
+    }
 
     v11_valid = cb11_valid->lpVtbl->GetVariableByIndex(cb11_valid, 0);
-    ok(v11_valid != v11_dummy && v11_valid, "GetVariableByIndex failed\n");
+    ok(v11_valid != v11_dummy && v11_valid, "Got unexpected variable %p.\n", v11_valid);
 
     t11_valid = v11_valid->lpVtbl->GetType(v11_valid);
     ok(t11_valid != t11_dummy && t11_valid, "GetType failed\n");
@@ -1583,30 +1619,36 @@ static void test_reflection_constant_buffer(void)
 
 #if D3D_COMPILER_VERSION
     v11 = ref11->lpVtbl->GetVariableByName(ref11, NULL);
-    ok(v11_dummy == v11, "GetVariableByIndex failed, got %p, expected %p\n", v11, v11_dummy);
+    ok(v11_dummy == v11, "Got unexpected variable %p.\n", v11);
 
     v11 = ref11->lpVtbl->GetVariableByName(ref11, "invalid");
-    ok(v11_dummy == v11, "GetVariableByName failed, got %p, expected %p\n", v11, v11_dummy);
+    ok(v11_dummy == v11, "Got unexpected variable %p.\n", v11);
 
     v11 = ref11->lpVtbl->GetVariableByName(ref11, "a");
-    ok(v11_valid == v11, "GetVariableByName failed, got %p, expected %p\n", v11, v11_valid);
+    ok(v11_valid == v11, "Got unexpected variable %p.\n", v11);
 #endif
 
     /* constant buffer calls */
     v11 = cb11_dummy->lpVtbl->GetVariableByName(cb11_dummy, NULL);
-    ok(v11_dummy == v11, "GetVariableByName failed, got %p, expected %p\n", v11, v11_dummy);
+    ok(v11_dummy == v11, "Got unexpected variable %p.\n", v11);
 
     v11 = cb11_dummy->lpVtbl->GetVariableByName(cb11_dummy, "invalid");
-    ok(v11_dummy == v11, "GetVariableByName failed, got %p, expected %p\n", v11, v11_dummy);
+    ok(v11_dummy == v11, "Got unexpected variable %p.\n", v11);
 
     v11 = cb11_valid->lpVtbl->GetVariableByName(cb11_valid, NULL);
-    ok(v11_dummy == v11, "GetVariableByName failed, got %p, expected %p\n", v11, v11_dummy);
+    ok(v11_dummy == v11, "Got unexpected variable %p.\n", v11);
 
     v11 = cb11_valid->lpVtbl->GetVariableByName(cb11_valid, "invalid");
-    ok(v11_dummy == v11, "GetVariableByName failed, got %p, expected %p\n", v11, v11_dummy);
+    ok(v11_dummy == v11, "Got unexpected variable %p.\n", v11);
 
     v11 = cb11_valid->lpVtbl->GetVariableByName(cb11_valid, "a");
-    ok(v11_valid == v11, "GetVariableByName failed, got %p, expected %p\n", v11, v11_valid);
+    ok(v11_valid == v11, "Got unexpected variable %p.\n", v11);
+
+    if (ref12)
+    {
+        v12 = cb12_valid->lpVtbl->GetVariableByName(cb12_valid, "a");
+        ok(v12_valid == v12, "Got unexpected variable %p.\n", v12);
+    }
 
     hr = cb11_dummy->lpVtbl->GetDesc(cb11_dummy, NULL);
     ok(hr == E_FAIL, "GetDesc failed, got %x, expected %x\n", hr, E_FAIL);
@@ -1681,21 +1723,30 @@ static void test_reflection_constant_buffer(void)
         pcbdesc = &test_reflection_constant_buffer_cb_result[i];
 
         cb11 = ref11->lpVtbl->GetConstantBufferByIndex(ref11, i);
-        ok(cb11_dummy != cb11, "GetConstantBufferByIndex(%u) failed\n", i);
+        ok(cb11_dummy != cb11, "Got dummy constant buffer, i %u.\n", i);
 
         hr = cb11->lpVtbl->GetDesc(cb11, &cbdesc);
-        ok(hr == S_OK, "GetDesc(%u) failed, got %x, expected %x\n", i, hr, S_OK);
+        ok(hr == S_OK, "Got unexpected hr %#x, i %u.\n", hr, i);
 
-        ok(!strcmp(cbdesc.Name, pcbdesc->Name), "GetDesc(%u) Name failed, got \"%s\", expected \"%s\"\n",
-                i, cbdesc.Name, pcbdesc->Name);
-        ok(cbdesc.Type == pcbdesc->Type, "GetDesc(%u) Type failed, got %x, expected %x\n",
-                i, cbdesc.Type, pcbdesc->Type);
-        ok(cbdesc.Variables == pcbdesc->Variables, "GetDesc(%u) Variables failed, got %u, expected %u\n",
-                i, cbdesc.Variables, pcbdesc->Variables);
-        ok(cbdesc.Size == pcbdesc->Size, "GetDesc(%u) Size failed, got %u, expected %u\n",
-                i, cbdesc.Size, pcbdesc->Size);
-        ok(cbdesc.uFlags == pcbdesc->uFlags, "GetDesc(%u) uFlags failed, got %u, expected %u\n",
-                i, cbdesc.uFlags, pcbdesc->uFlags);
+        ok(!strcmp(cbdesc.Name, pcbdesc->Name), "Got unexpected name \"%s\", i %u.\n", cbdesc.Name, i);
+        ok(cbdesc.Type == pcbdesc->Type, "Got unexpected Type %#x, i %u.\n", cbdesc.Type, i);
+        ok(cbdesc.Variables == pcbdesc->Variables, "Got unexpected Variables %u, i %u.\n", cbdesc.Variables, i);
+        ok(cbdesc.Size == pcbdesc->Size, "Got unexpected Size %u, i %u.\n", cbdesc.Size, i);
+        ok(cbdesc.uFlags == pcbdesc->uFlags, "Got unexpected uFlags %#x, i %u.\n", cbdesc.uFlags, i);
+
+        if (ref12)
+        {
+            cb12 = ref12->lpVtbl->GetConstantBufferByIndex(ref12, i);
+            ok(cb12_dummy != cb12, "Got dummy constant buffer, i %u.\n", i);
+
+            hr = cb12->lpVtbl->GetDesc(cb12, &cbdesc12);
+            ok(hr == S_OK, "Got unexpected hr %#x, i %u.\n", hr, i);
+
+            ok(!strcmp(cbdesc12.Name, pcbdesc->Name), "Got unexpected name \"%s\", i %u.\n", cbdesc.Name, i);
+            ok(cbdesc.Type == pcbdesc->Type, "Got unexpected Type %#x, i %u.\n", cbdesc.Type, i);
+            ok(!memcmp(&cbdesc12.Type, &cbdesc.Type, sizeof(cbdesc) - offsetof(D3D11_SHADER_BUFFER_DESC, Type)),
+                    "CB description does not match. i %u.\n", i);
+        }
     }
 
     /* variables */
@@ -1707,45 +1758,85 @@ static void test_reflection_constant_buffer(void)
             v11 = ref11->lpVtbl->GetVariableByName(ref11, pvdesc->Name);
         else
             v11 = cb11_valid->lpVtbl->GetVariableByName(cb11_valid, pvdesc->Name);
-        ok(v11_dummy != v11, "Test %u: got unexpected variable %p.\n", i, v11);
+        ok(v11_dummy != v11, "Test %u, got unexpected variable %p.\n", i, v11);
+
+        if (D3D_COMPILER_VERSION)
+        {
+            vdesc.StartTexture = 0xdeadbeef;
+            vdesc.TextureSize = 0xdeadbeef;
+            vdesc.StartSampler = 0xdeadbeef;
+            vdesc.SamplerSize = 0xdeadbeef;
+        }
+        else
+        {
+            vdesc.StartTexture = 0xffffffff;
+            vdesc.StartSampler = 0xffffffff;
+        }
 
         hr = v11->lpVtbl->GetDesc(v11, &vdesc);
-        ok(hr == S_OK, "GetDesc(%u) failed, got %x, expected %x\n", i, hr, S_OK);
+        ok(hr == S_OK, "Got unexpected hr %#x, i %u.\n", hr, i);
 
-        ok(!strcmp(vdesc.Name, pvdesc->Name), "GetDesc(%u) Name failed, got \"%s\", expected \"%s\"\n",
-                i, vdesc.Name, pvdesc->Name);
-        ok(vdesc.StartOffset == pvdesc->StartOffset, "GetDesc(%u) StartOffset failed, got %u, expected %u\n",
-                i, vdesc.StartOffset, pvdesc->StartOffset);
-        ok(vdesc.Size == pvdesc->Size, "GetDesc(%u) Size failed, got %u, expected %u\n",
-                i, vdesc.Size, pvdesc->Size);
-        ok(vdesc.uFlags == pvdesc->uFlags, "GetDesc(%u) uFlags failed, got %u, expected %u\n",
-                i, vdesc.uFlags, pvdesc->uFlags);
-        ok(vdesc.DefaultValue == pvdesc->DefaultValue, "GetDesc(%u) DefaultValue failed\n", i);
+        ok(!strcmp(vdesc.Name, pvdesc->Name), "Got unexpected name \"%s\", i %u", vdesc.Name, i);
+        ok(vdesc.StartOffset == pvdesc->StartOffset, "Got unexpected StartOffset %u, i %u.\n",
+                vdesc.StartOffset, i);
+        ok(vdesc.Size == pvdesc->Size, "Got unexpected Size %u, i %u.\n", vdesc.Size, i);
+        ok(vdesc.uFlags == pvdesc->uFlags, "Got unexpected uFlags %#x, i %u.\n", vdesc.uFlags, i);
+        ok(vdesc.DefaultValue == pvdesc->DefaultValue, "Got unexpected DefaultValue %p, i %u.\n",
+                vdesc.DefaultValue, i);
+        todo_wine_if(D3D_COMPILER_VERSION)
+        {
+            ok(vdesc.StartTexture == 0xffffffff, "Got unexpected StartTexture %#x, i %u.\n", vdesc.StartTexture, i);
+            ok(!vdesc.TextureSize, "Got unexpected TextureSize %u, i %u.\n", vdesc.TextureSize, i);
+            ok(vdesc.StartSampler == 0xffffffff, "Got unexpected StartSampler %u, i %u.\n", vdesc.StartSampler, i);
+            ok(!vdesc.SamplerSize, "Got unexpected SamplerSize %u, i %u.\n", vdesc.SamplerSize, i);
+        }
+
+        if (ref12)
+        {
+            v12 = ref12->lpVtbl->GetVariableByName(ref12, pvdesc->Name);
+            ok(v12_dummy != v12, "Test %u, got unexpected variable %p.\n", i, v12);
+            hr = v12->lpVtbl->GetDesc(v12, &vdesc12);
+            ok(hr == S_OK, "Got unexpected hr %#x, i %u.\n", hr, i);
+            ok(!strcmp(vdesc12.Name, pvdesc->Name), "Got unexpected name \"%s\", i %u", vdesc12.Name, i);
+            todo_wine ok(!memcmp(&vdesc12.StartOffset, &vdesc.StartOffset,
+                    sizeof(vdesc) - offsetof(D3D11_SHADER_VARIABLE_DESC, StartOffset)),
+                    "D3D11 and D3D12 descs do not match.\n");
+        }
+        else
+        {
+            /* Silence compiler warning. */
+            v12 = NULL;
+        }
 
         /* types */
         ptdesc = &test_reflection_constant_buffer_type_result[test_reflection_constant_buffer_variable_result[i].type];
 
         t11 = v11->lpVtbl->GetType(v11);
-        ok(t11_dummy != t11, "GetType(%u) failed\n", i);
+        ok(t11_dummy != t11, "Got unexpected type %p, i %u.\n", t11, i);
 
         hr = t11->lpVtbl->GetDesc(t11, &tdesc);
-        ok(hr == S_OK, "GetDesc(%u) failed, got %x, expected %x\n", i, hr, S_OK);
+        ok(hr == S_OK, "Got unexpected hr %#x, i %u.\n", hr, i);
 
-        ok(tdesc.Class == ptdesc->Class, "GetDesc(%u) Class failed, got %x, expected %x\n",
-                i, tdesc.Class, ptdesc->Class);
-        ok(tdesc.Type == ptdesc->Type, "GetDesc(%u) Type failed, got %x, expected %x\n",
-                i, tdesc.Type, ptdesc->Type);
-        ok(tdesc.Rows == ptdesc->Rows, "GetDesc(%u) Rows failed, got %x, expected %x\n",
-                i, tdesc.Rows, ptdesc->Rows);
-        ok(tdesc.Columns == ptdesc->Columns, "GetDesc(%u) Columns failed, got %u, expected %u\n",
-                i, tdesc.Columns, ptdesc->Columns);
-        ok(tdesc.Elements == ptdesc->Elements, "GetDesc(%u) Elements failed, got %u, expected %u\n",
-                i, tdesc.Elements, ptdesc->Elements);
-        ok(tdesc.Offset == ptdesc->Offset, "GetDesc(%u) Offset failed, got %u, expected %u\n",
-                i, tdesc.Offset, ptdesc->Offset);
+        ok(tdesc.Class == ptdesc->Class, "Got unexpected Class %u, i %u.\n", tdesc.Class, i);
+        ok(tdesc.Type == ptdesc->Type, "Got unexpected Type %u, i %u.\n", tdesc.Type, i);
+        ok(tdesc.Rows == ptdesc->Rows, "Got unexpected Rows %u, i %u.\n", tdesc.Rows, i);
+        ok(tdesc.Columns == ptdesc->Columns, "Got unexpected Columns %u, i %u.\n", tdesc.Columns, i);
+        ok(tdesc.Elements == ptdesc->Elements, "Got unexpected Elements %u, i %u.\n", tdesc.Elements, i);
+        ok(tdesc.Offset == ptdesc->Offset, "Got unexpected Offset %u, i %u.\n", tdesc.Offset, i);
         if (D3D_COMPILER_VERSION)
-            ok(!strcmp(tdesc.Name, ptdesc->Name), "Test %u: got unexpected Name %s.\n",
-                    i, debugstr_a(tdesc.Name));
+            ok(!strcmp(tdesc.Name, ptdesc->Name), "Got unexpected Name %s, i %u.\n", debugstr_a(tdesc.Name), i);
+
+        if (ref12)
+        {
+            t12 = v12->lpVtbl->GetType(v12);
+            ok(t12_dummy != t12, "Got unexpected type %p, i %u.\n", t12, i);
+
+            hr = t12->lpVtbl->GetDesc(t12, &tdesc12);
+            ok(hr == S_OK, "Got unexpected hr %#x, i %u.\n", hr, i);
+            ok(!memcmp(&tdesc12, &tdesc, offsetof(D3D11_SHADER_TYPE_DESC, Name)),
+                    "D3D11 and D3D12 descs do not match.\n");
+            ok(!strcmp(tdesc12.Name, ptdesc->Name), "Got unexpected Name %s, i %u.\n", debugstr_a(tdesc12.Name), i);
+        }
     }
 
     /* types */
@@ -1756,47 +1847,91 @@ static void test_reflection_constant_buffer(void)
     ok(v11_dummy != v11, "Got unexpected variable %p.\n", v11);
 
     t11 = v11->lpVtbl->GetType(v11);
-    ok(t11 != t11_dummy, "GetType failed\n");
+    ok(t11 != t11_dummy, "Got unexpected type %p.\n", t11);
 
     t = t11->lpVtbl->GetMemberTypeByIndex(t11, 0);
-    ok(t != t11_dummy, "GetMemberTypeByIndex failed\n");
+    ok(t != t11_dummy, "Got unexpected type %p.\n", t);
 
     t2 = t11->lpVtbl->GetMemberTypeByName(t11, "a");
-    ok(t == t2, "GetMemberTypeByName failed, got %p, expected %p\n", t2, t);
+    ok(t == t2, "Got unexpected type %p.\n", t2);
 
     string = t11->lpVtbl->GetMemberTypeName(t11, 0);
-    ok(!strcmp(string, "a"), "GetMemberTypeName failed, got \"%s\", expected \"%s\"\n", string, "a");
+    ok(!strcmp(string, "a"), "Got unexpected string \"%s\".\n", string);
 
     t = t11->lpVtbl->GetMemberTypeByIndex(t11, 1);
-    ok(t != t11_dummy, "GetMemberTypeByIndex failed\n");
+    ok(t != t11_dummy, "Got unexpected type %p.\n", t);
 
     t2 = t11->lpVtbl->GetMemberTypeByName(t11, "b");
-    ok(t == t2, "GetMemberTypeByName failed, got %p, expected %p\n", t2, t);
+    ok(t == t2, "Got unexpected type %p.\n", t2);
 
     string = t11->lpVtbl->GetMemberTypeName(t11, 1);
-    ok(!strcmp(string, "b"), "GetMemberTypeName failed, got \"%s\", expected \"%s\"\n", string, "b");
+    ok(!strcmp(string, "b"), "Got unexpected string \"%s\".\n", string);
 
 #if D3D_COMPILER_VERSION
     /* float vs float (in struct) */
     hr = t11->lpVtbl->IsEqual(t11, t11_valid);
-    ok(hr == S_FALSE, "IsEqual failed, got %x, expected %x\n", hr, S_FALSE);
+    ok(hr == S_FALSE, "Got unexpected hr %#x.\n", hr);
 
     hr = t11_valid->lpVtbl->IsEqual(t11_valid, t11);
-    ok(hr == S_FALSE, "IsEqual failed, got %x, expected %x\n", hr, S_FALSE);
+    ok(hr == S_FALSE, "Got unexpected hr %#x.\n", hr);
 
     /* float vs float */
     t = t11->lpVtbl->GetMemberTypeByIndex(t11, 0);
-    ok(t != t11_dummy, "GetMemberTypeByIndex failed\n");
+    ok(t != t11_dummy, "Got unexpected type %p.\n", t);
 
     t2 = t11->lpVtbl->GetMemberTypeByIndex(t11, 1);
-    ok(t2 != t11_dummy, "GetMemberTypeByIndex failed\n");
+    ok(t2 != t11_dummy, "Got unexpected type %p.\n", t2);
 
     hr = t->lpVtbl->IsEqual(t, t2);
-    ok(hr == S_OK, "IsEqual failed, got %x, expected %x\n", hr, S_OK);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
 #endif
 
+    if (ref12)
+    {
+        v12 = ref12->lpVtbl->GetVariableByName(ref12, "t");
+        ok(v12_dummy != v12, "Got unexpected variable %p.\n", v12);
+
+        t12 = v12->lpVtbl->GetType(v12);
+        ok(t12 != t12_dummy, "Got unexpected type %p.\n", t12);
+
+        mt12 = t12->lpVtbl->GetMemberTypeByIndex(t12, 0);
+        ok(mt12 != t12_dummy, "Got unexpected type %p.\n", mt12);
+
+        mt12_2 = t12->lpVtbl->GetMemberTypeByName(t12, "a");
+        ok(mt12 == mt12_2, "Got unexpected type %p.\n", mt12_2);
+
+        string = t12->lpVtbl->GetMemberTypeName(t12, 0);
+        ok(!strcmp(string, "a"), "Got unexpected string \"%s\".\n", string);
+
+        mt12 = t12->lpVtbl->GetMemberTypeByIndex(t12, 1);
+        ok(mt12 != t12_dummy, "Got unexpected type %p.\n", mt12);
+
+        mt12_2 = t12->lpVtbl->GetMemberTypeByName(t12, "b");
+        ok(mt12 == mt12_2, "Got unexpected type %p.\n", mt12_2);
+
+        string = t12->lpVtbl->GetMemberTypeName(t12, 1);
+        ok(!strcmp(string, "b"), "Got unexpected string \"%s\".\n", string);
+
+        hr = t12->lpVtbl->IsEqual(t12, t12_valid);
+        ok(hr == S_FALSE, "Got unexpected hr %#x.\n", hr);
+
+        hr = t12_valid->lpVtbl->IsEqual(t12_valid, t12);
+        ok(hr == S_FALSE, "Got unexpected hr %#x.\n", hr);
+
+        mt12 = t12->lpVtbl->GetMemberTypeByIndex(t12, 0);
+        ok(mt12 != t12_dummy, "Got unexpected type %p.\n", mt12);
+
+        mt12_2 = t12->lpVtbl->GetMemberTypeByIndex(t12, 1);
+        ok(mt12_2 != t12_dummy, "Got unexpected type %p.\n", mt12_2);
+
+        hr = mt12->lpVtbl->IsEqual(mt12, mt12_2);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+        count = ref12->lpVtbl->Release(ref12);
+        ok(!count, "Got unexpected ref count %u.\n", count);
+    }
     count = ref11->lpVtbl->Release(ref11);
-    ok(count == 0, "Release failed %u\n", count);
+    ok(!count, "Got unexpected ref count %u.\n", count);
 }
 
 /*
