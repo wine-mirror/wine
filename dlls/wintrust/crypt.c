@@ -856,7 +856,7 @@ HANDLE WINAPI CryptCATOpen(WCHAR *filename, DWORD flags, HCRYPTPROV hProv,
 {
     HANDLE file, hmsg;
     BYTE *buffer = NULL;
-    DWORD size, open_mode = OPEN_EXISTING;
+    DWORD size, open_mode = OPEN_ALWAYS;
     struct cryptcat *cc;
 
     TRACE("filename %s, flags %#x, provider %#lx, version %#x, type %#x\n",
@@ -870,8 +870,8 @@ HANDLE WINAPI CryptCATOpen(WCHAR *filename, DWORD flags, HCRYPTPROV hProv,
 
     if (!dwEncodingType)  dwEncodingType  = X509_ASN_ENCODING | PKCS_7_ASN_ENCODING;
 
-    if (flags & CRYPTCAT_OPEN_ALWAYS)
-        open_mode = OPEN_ALWAYS;
+    if (flags == CRYPTCAT_OPEN_EXISTING)
+        open_mode = OPEN_EXISTING;
     if (flags & CRYPTCAT_OPEN_CREATENEW)
         open_mode = CREATE_NEW;
 
