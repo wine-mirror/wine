@@ -1790,6 +1790,8 @@ void macdrv_init_display_devices(BOOL force)
     if (macdrv_get_gpus(&gpus, &gpu_count))
         goto done;
     TRACE("GPU count: %d\n", gpu_count);
+    if (!gpu_count)
+        ERR("No GPUs detected\n");
 
     for (gpu = 0; gpu < gpu_count; gpu++)
     {
