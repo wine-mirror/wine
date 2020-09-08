@@ -434,8 +434,7 @@ static void test_CryptCATOpen(void)
             ret = pCryptCATClose(cat);
             todo_wine ok(ret, "flags %#x: failed to close file\n", flags);
             ret = DeleteFileW(filename);
-            todo_wine_if (flags & (CRYPTCAT_OPEN_ALWAYS | CRYPTCAT_OPEN_CREATENEW))
-                ok(ret, "flags %#x: failed to delete file, error %u\n", flags, GetLastError());
+            ok(ret, "flags %#x: failed to delete file, error %u\n", flags, GetLastError());
         }
 
         file = _wfopen(filename, L"w");

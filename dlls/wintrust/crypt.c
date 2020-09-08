@@ -851,18 +851,18 @@ BOOL WINAPI CryptCATCatalogInfoFromContext(HCATINFO hcatinfo, CATALOG_INFO *info
 /***********************************************************************
  *      CryptCATOpen  (WINTRUST.@)
  */
-HANDLE WINAPI CryptCATOpen(LPWSTR pwszFileName, DWORD fdwOpenFlags, HCRYPTPROV hProv,
+HANDLE WINAPI CryptCATOpen(WCHAR *filename, DWORD flags, HCRYPTPROV hProv,
                            DWORD dwPublicVersion, DWORD dwEncodingType)
 {
     HANDLE file, hmsg;
     BYTE *buffer = NULL;
-    DWORD size, flags = OPEN_EXISTING;
+    DWORD size, open_mode = OPEN_EXISTING;
     struct cryptcat *cc;
 
-    TRACE("%s, %x, %lx, %x, %x\n", debugstr_w(pwszFileName), fdwOpenFlags,
-          hProv, dwPublicVersion, dwEncodingType);
+    TRACE("filename %s, flags %#x, provider %#lx, version %#x, type %#x\n",
+          debugstr_w(filename), flags, hProv, dwPublicVersion, dwEncodingType);
 
-    if (!pwszFileName)
+    if (!filename)
     {
         SetLastError(ERROR_INVALID_PARAMETER);
         return INVALID_HANDLE_VALUE;
@@ -870,10 +870,12 @@ HANDLE WINAPI CryptCATOpen(LPWSTR pwszFileName, DWORD fdwOpenFlags, HCRYPTPROV h
 
     if (!dwEncodingType)  dwEncodingType  = X509_ASN_ENCODING | PKCS_7_ASN_ENCODING;
 
-    if (fdwOpenFlags & CRYPTCAT_OPEN_ALWAYS)    flags |= OPEN_ALWAYS;
-    if (fdwOpenFlags & CRYPTCAT_OPEN_CREATENEW) flags |= CREATE_NEW;
+    if (flags & CRYPTCAT_OPEN_ALWAYS)
+        open_mode = OPEN_ALWAYS;
+    if (flags & CRYPTCAT_OPEN_CREATENEW)
+        open_mode = CREATE_NEW;
 
-    file = CreateFileW(pwszFileName, GENERIC_READ, FILE_SHARE_READ, NULL, flags, 0, NULL);
+    file = CreateFileW(filename, GENERIC_READ, FILE_SHARE_READ, NULL, open_mode, 0, NULL);
     if (file == INVALID_HANDLE_VALUE) return INVALID_HANDLE_VALUE;
 
     size = GetFileSize(file, NULL);
@@ -951,7 +953,7 @@ HANDLE WINAPI CryptCATOpen(LPWSTR pwszFileName, DWORD fdwOpenFlags, HCRYPTPROV h
             p += size;
         }
         cc->inner = decode_inner_content(hmsg, dwEncodingType, &cc->inner_len);
-        if (!cc->inner || !CryptSIPRetrieveSubjectGuid(pwszFileName, NULL, &cc->subject))
+        if (!cc->inner || !CryptSIPRetrieveSubjectGuid(filename, NULL, &cc->subject))
         {
             CryptMsgClose(hmsg);
             HeapFree(GetProcessHeap(), 0, cc->attr);
