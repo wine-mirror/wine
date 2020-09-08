@@ -335,7 +335,7 @@ static void wine_vk_init_once(void)
  * driver is responsible for handling e.g. surface extensions.
  */
 static VkResult wine_vk_instance_convert_create_info(const VkInstanceCreateInfo *src,
-        VkInstanceCreateInfo *dst)
+        VkInstanceCreateInfo *dst, struct VkInstance_T *object)
 {
     unsigned int i;
     VkResult res;
@@ -351,8 +351,14 @@ static VkResult wine_vk_instance_convert_create_info(const VkInstanceCreateInfo 
     /* ICDs don't support any layers, so nothing to copy. Modern versions of the loader
      * filter this data out as well.
      */
-    dst->enabledLayerCount = 0;
-    dst->ppEnabledLayerNames = NULL;
+    if (object->quirks & WINEVULKAN_QUIRK_IGNORE_EXPLICIT_LAYERS) {
+        dst->enabledLayerCount = 0;
+        dst->ppEnabledLayerNames = NULL;
+        WARN("Ignoring explicit layers!\n");
+    } else if (dst->enabledLayerCount) {
+        FIXME("Loading explicit layers is not supported by winevulkan!\n");
+        return VK_ERROR_LAYER_NOT_PRESENT;
+    }
 
     TRACE("Enabled %u instance extensions.\n", dst->enabledExtensionCount);
     for (i = 0; i < dst->enabledExtensionCount; i++)
@@ -673,7 +679,7 @@ VkResult WINAPI wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
     }
     object->base.loader_magic = VULKAN_ICD_MAGIC_VALUE;
 
-    res = wine_vk_instance_convert_create_info(create_info, &create_info_host);
+    res = wine_vk_instance_convert_create_info(create_info, &create_info_host, object);
     if (res != VK_SUCCESS)
     {
         wine_vk_instance_free(object);
