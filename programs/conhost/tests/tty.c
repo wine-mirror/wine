@@ -147,6 +147,7 @@ enum req_type
 {
     REQ_CREATE_SCREEN_BUFFER,
     REQ_FILL_CHAR,
+    REQ_GET_INPUT,
     REQ_SCROLL,
     REQ_SET_ACTIVE,
     REQ_SET_CURSOR,
@@ -328,6 +329,111 @@ static void child_fill_character(WCHAR ch, DWORD count, int x, int y)
     req.u.fill.coord.Y = y;
     ret = WriteFile(child_pipe, &req, sizeof(req), &count, NULL);
     ok(ret, "WriteFile failed: %u\n", GetLastError());
+}
+
+static void expect_input(unsigned int event_type, INPUT_RECORD *record)
+{
+    struct pseudoconsole_req req = { REQ_GET_INPUT };
+    INPUT_RECORD input;
+    DWORD read;
+    BOOL ret;
+
+    ret = WriteFile(child_pipe, &req, sizeof(req), &read, NULL);
+    ok(ret, "WriteFile failed: %u\n", GetLastError());
+
+    ret = ReadFile(child_pipe, &input, sizeof(input), &read, NULL);
+    ok(ret, "ReadFile failed: %u\n", GetLastError());
+
+    ok(input.EventType == event_type, "EventType = %u, expected %u\n", input.EventType, event_type);
+    if (record) *record = input;
+}
+
+static BOOL get_key_input(unsigned int vt, INPUT_RECORD *record)
+{
+    static INPUT_RECORD prev_record;
+    static BOOL have_prev_record;
+
+    if (!have_prev_record)
+    {
+        expect_input(KEY_EVENT, &prev_record);
+        have_prev_record = TRUE;
+    }
+
+    if (vt && prev_record.Event.KeyEvent.wVirtualKeyCode != vt) return FALSE;
+    *record = prev_record;
+    have_prev_record = FALSE;
+    return TRUE;
+}
+
+#define expect_key_input(a,b,c,d) expect_key_input_(__LINE__,0,a,b,c,d)
+static void expect_key_input_(unsigned int line, unsigned int ctx, WCHAR ch, unsigned int vk,
+                              BOOL down, unsigned int ctrl_state)
+{
+    unsigned int vs = MapVirtualKeyW(vk, MAPVK_VK_TO_VSC);
+    INPUT_RECORD record;
+
+    get_key_input(0, &record);
+    ok_(__FILE__,line)(record.Event.KeyEvent.bKeyDown == down, "%x: bKeyDown = %x\n",
+                       ctx, record.Event.KeyEvent.bKeyDown);
+    ok_(__FILE__,line)(record.Event.KeyEvent.wRepeatCount == 1, "%x: wRepeatCount = %x\n",
+                       ctx, record.Event.KeyEvent.wRepeatCount);
+    ok_(__FILE__,line)(record.Event.KeyEvent.uChar.UnicodeChar == ch, "%x: UnicodeChar = %x\n",
+                       ctx, record.Event.KeyEvent.uChar.UnicodeChar);
+    ok_(__FILE__,line)(record.Event.KeyEvent.wVirtualKeyCode == vk,
+                       "%x: wVirtualKeyCode = %x, expected %x\n", ctx,
+                       record.Event.KeyEvent.wVirtualKeyCode, vk);
+    ok_(__FILE__,line)(record.Event.KeyEvent.wVirtualScanCode == vs,
+                       "%x: wVirtualScanCode = %x expected %x\n", ctx,
+                       record.Event.KeyEvent.wVirtualScanCode, vs);
+    ok_(__FILE__,line)(record.Event.KeyEvent.dwControlKeyState == ctrl_state,
+                       "%x: dwControlKeyState = %x\n", ctx, record.Event.KeyEvent.dwControlKeyState);
+}
+
+#define get_input_key_vt() get_input_key_vt_(__LINE__)
+static unsigned int get_input_key_vt_(unsigned int line)
+{
+    INPUT_RECORD record;
+
+    get_key_input(0, &record);
+    ok_(__FILE__,line)(record.Event.KeyEvent.wRepeatCount == 1, "wRepeatCount = %x\n",
+                       record.Event.KeyEvent.wRepeatCount);
+    return record.Event.KeyEvent.wVirtualKeyCode;
+}
+
+#define expect_key_pressed(a,b,c) expect_key_pressed_(__LINE__,0,a,b,c)
+#define expect_key_pressed_ctx(a,b,c,d) expect_key_pressed_(__LINE__,a,b,c,d)
+static void expect_key_pressed_(unsigned int line, unsigned int ctx, WCHAR ch, unsigned int vk,
+                                unsigned int ctrl_state)
+{
+    if (ctrl_state & SHIFT_PRESSED)
+        expect_key_input_(line, ctx, 0, VK_SHIFT, TRUE, SHIFT_PRESSED);
+    if (ctrl_state & LEFT_ALT_PRESSED)
+        expect_key_input_(line, ctx, 0, VK_MENU, TRUE,
+                          LEFT_ALT_PRESSED | (ctrl_state & SHIFT_PRESSED));
+    if (ctrl_state & LEFT_CTRL_PRESSED)
+        expect_key_input_(line, ctx, 0, VK_CONTROL, TRUE,
+                          LEFT_CTRL_PRESSED | (ctrl_state & (SHIFT_PRESSED | LEFT_ALT_PRESSED)));
+    expect_key_input_(line, ctx, ch, vk, TRUE, ctrl_state);
+    expect_key_input_(line, ctx, ch, vk, FALSE, ctrl_state);
+    if (ctrl_state & LEFT_CTRL_PRESSED)
+        expect_key_input_(line, ctx, 0, VK_CONTROL, FALSE,
+                          ctrl_state & (SHIFT_PRESSED | LEFT_ALT_PRESSED));
+    if (ctrl_state & LEFT_ALT_PRESSED)
+        expect_key_input_(line, ctx, 0, VK_MENU, FALSE, ctrl_state & SHIFT_PRESSED);
+    if (ctrl_state & SHIFT_PRESSED)
+        expect_key_input_(line, ctx, 0, VK_SHIFT, FALSE, 0);
+}
+
+#define expect_char_key(a) expect_char_key_(__LINE__,a)
+static void expect_char_key_(unsigned int line, WCHAR ch)
+{
+    unsigned int ctrl = 0, vk;
+    vk = VkKeyScanW(ch);
+    if (vk == ~0) vk = 0;
+    if (vk & 0x0100) ctrl |= SHIFT_PRESSED;
+    if (vk & 0x0200) ctrl |= LEFT_CTRL_PRESSED;
+    vk &= 0xff;
+    expect_key_pressed_(line, ch, ch, vk, ctrl);
 }
 
 static void test_tty_output(void)
@@ -611,6 +717,140 @@ static void test_tty_output(void)
     expect_empty_output();
 }
 
+static void write_console_pipe(const char *buf)
+{
+    DWORD written;
+    BOOL res;
+    res = WriteFile(console_pipe, buf, strlen(buf), &written, NULL);
+    ok(res, "WriteFile failed: %u\n", GetLastError());
+}
+
+static void test_tty_input(void)
+{
+    INPUT_RECORD ir;
+    unsigned int i;
+    char buf[8];
+
+    static const struct
+    {
+        const char *str;
+        WCHAR ch;
+        unsigned int vk;
+        unsigned int ctrl;
+    } escape_test[] = {
+        { "\x1b[A",          0,      VK_UP,       0 },
+        { "\x1b[B",          0,      VK_DOWN,     0 },
+        { "\x1b[C",          0,      VK_RIGHT,    0 },
+        { "\x1b[D",          0,      VK_LEFT,     0 },
+        { "\x1b[H",          0,      VK_HOME,     0 },
+        { "\x1b[F",          0,      VK_END,      0 },
+        { "\x1b[2~",         0,      VK_INSERT,   0 },
+        { "\x1b[3~",         0,      VK_DELETE,   0 },
+        { "\x1b[5~",         0,      VK_PRIOR,    0 },
+        { "\x1b[6~",         0,      VK_NEXT,     0 },
+        { "\x1b[15~",        0,      VK_F5,       0 },
+        { "\x1b[17~",        0,      VK_F6,       0 },
+        { "\x1b[18~",        0,      VK_F7,       0 },
+        { "\x1b[19~",        0,      VK_F8,       0 },
+        { "\x1b[20~",        0,      VK_F9,       0 },
+        { "\x1b[21~",        0,      VK_F10,      0 },
+        /* 0x10 */
+        { "\x1b[23~",        0,      VK_F11,      0 },
+        { "\x1b[24~",        0,      VK_F12,      0 },
+        { "\x1bOP",          0,      VK_F1,       0 },
+        { "\x1bOQ",          0,      VK_F2,       0 },
+        { "\x1bOR",          0,      VK_F3,       0 },
+        { "\x1bOS",          0,      VK_F4,       0 },
+        { "\x1b[1;1A",       0,      VK_UP,       0 },
+        { "\x1b[1;2A",       0,      VK_UP,       SHIFT_PRESSED },
+        { "\x1b[1;3A",       0,      VK_UP,       LEFT_ALT_PRESSED },
+        { "\x1b[1;4A",       0,      VK_UP,       SHIFT_PRESSED | LEFT_ALT_PRESSED },
+        { "\x1b[1;5A",       0,      VK_UP,       LEFT_CTRL_PRESSED },
+        { "\x1b[1;6A",       0,      VK_UP,       SHIFT_PRESSED | LEFT_CTRL_PRESSED },
+        { "\x1b[1;7A",       0,      VK_UP,       LEFT_ALT_PRESSED  | LEFT_CTRL_PRESSED },
+        { "\x1b[1;8A",       0,      VK_UP,       SHIFT_PRESSED | LEFT_ALT_PRESSED  | LEFT_CTRL_PRESSED },
+        { "\x1b[1;9A",       0,      VK_UP,       0 },
+        { "\x1b[1;10A",      0,      VK_UP,       SHIFT_PRESSED },
+        /* 0x20 */
+        { "\x1b[1;11A",      0,      VK_UP,       LEFT_ALT_PRESSED },
+        { "\x1b[1;12A",      0,      VK_UP,       SHIFT_PRESSED | LEFT_ALT_PRESSED },
+        { "\x1b[1;13A",      0,      VK_UP,       LEFT_CTRL_PRESSED },
+        { "\x1b[1;14A",      0,      VK_UP,       SHIFT_PRESSED | LEFT_CTRL_PRESSED },
+        { "\x1b[1;15A",      0,      VK_UP,       LEFT_ALT_PRESSED  | LEFT_CTRL_PRESSED },
+        { "\x1b[1;16A",      0,      VK_UP,       SHIFT_PRESSED | LEFT_ALT_PRESSED  | LEFT_CTRL_PRESSED },
+        { "\x1b[1;2P",       0,      VK_F1,       SHIFT_PRESSED },
+        { "\x1b[2;3~",       0,      VK_INSERT,   LEFT_ALT_PRESSED },
+        { "\x1b[2;3;5;6~",   0,      VK_INSERT,   0 },
+        { "\x1b[6;2;3;5;1~", 0,      VK_NEXT,     0 },
+        { "\xe4\xb8\x80",    0x4e00, 0,           0 },
+        { "\x1b\x1b",        0x1b,   VK_ESCAPE,   LEFT_ALT_PRESSED },
+        { "\x1b""1",         '1',    '1',         LEFT_ALT_PRESSED },
+        { "\x1b""x",         'x',    'X',         LEFT_ALT_PRESSED },
+        { "\x1b""[",         '[',    VK_OEM_4,    LEFT_ALT_PRESSED },
+        { "\x7f",            '\b',   VK_BACK,     0 },
+    };
+
+    write_console_pipe("x");
+    if (!get_input_key_vt())
+    {
+        skip("Skipping tests on settings that don't have VT mapping for 'x'\n");
+        get_input_key_vt();
+        return;
+    }
+    get_input_key_vt();
+
+    write_console_pipe("aBCd");
+    expect_char_key('a');
+    expect_char_key('B');
+    expect_char_key('C');
+    expect_char_key('d');
+
+    for (i = 1; i < 0x7f; i++)
+    {
+        if (i == 3 || i == '\n' || i == 0x1b || i == 0x1f) continue;
+        buf[0] = i;
+        buf[1] = 0;
+        write_console_pipe(buf);
+        if (i == 8)
+            expect_key_pressed('\b', 'H', LEFT_CTRL_PRESSED);
+        else if (i == 0x7f)
+            expect_char_key(8);
+        else
+            expect_char_key(i);
+    }
+
+    write_console_pipe("\r\n");
+    expect_key_pressed('\r', VK_RETURN, 0);
+    expect_key_pressed('\n', VK_RETURN, LEFT_CTRL_PRESSED);
+
+    write_console_pipe("\xc4\x85");
+    if (get_key_input(VK_MENU, &ir))
+    {
+        expect_key_input(0x105, 'A', TRUE, LEFT_CTRL_PRESSED | RIGHT_ALT_PRESSED);
+        expect_key_input(0x105, 'A', FALSE, LEFT_CTRL_PRESSED | RIGHT_ALT_PRESSED);
+        expect_key_input(0, VK_MENU, FALSE, ENHANCED_KEY);
+    }
+    else
+    {
+        expect_key_input(0x105, 0, TRUE, 0);
+        expect_key_input(0x105, 0, FALSE, 0);
+    }
+
+    for (i = 0; i < ARRAY_SIZE(escape_test); i++)
+    {
+        write_console_pipe(escape_test[i].str);
+        expect_key_pressed_ctx(i, escape_test[i].ch, escape_test[i].vk, escape_test[i].ctrl);
+    }
+
+    for (i = 0x80; i < 0x100; i += 11)
+    {
+        buf[0] = i;
+        buf[1] = 0;
+        write_console_pipe(buf);
+        expect_empty_output();
+    }
+}
+
 static void child_process(HANDLE pipe)
 {
     HANDLE output, input;
@@ -639,6 +879,17 @@ static void child_process(HANDLE pipe)
                                                    CONSOLE_TEXTMODE_BUFFER, NULL);
                 ok(handle != INVALID_HANDLE_VALUE, "CreateConsoleScreenBuffer failed: %u\n", GetLastError());
                 ret = WriteFile(pipe, &handle, sizeof(handle), &count, NULL);
+                ok(ret, "WriteFile failed: %u\n", GetLastError());
+                break;
+            }
+
+        case REQ_GET_INPUT:
+            {
+                INPUT_RECORD record;
+                ret = ReadConsoleInputW(input, &record, 1, &count);
+                ok(ret, "ReadConsoleInputW failed: %u\n", GetLastError());
+                ok(count == 1, "count = %u\n", count);
+                ret = WriteFile(pipe, &record, sizeof(record), &count, NULL);
                 ok(ret, "WriteFile failed: %u\n", GetLastError());
                 break;
             }
@@ -780,7 +1031,11 @@ static void test_pseudoconsole(void)
     skip_sequence("\x1b[?25h");          /* show cursor */
     expect_empty_output();
 
-    if (!broken_version) test_tty_output();
+    if (!broken_version)
+    {
+        test_tty_output();
+        test_tty_input();
+    }
     else win_skip("Skipping tty output tests on broken Windows version\n");
 
     pClosePseudoConsole(console);
