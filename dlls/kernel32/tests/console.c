@@ -3652,14 +3652,14 @@ static void test_FreeConsole(void)
     ret = SetConsoleOutputCP(GetOEMCP());
     ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "SetConsoleCP returned %x(%u)\n", ret, GetLastError());
 
+    if (skip_nt) return;
+
     SetLastError(0xdeadbeef);
     memset( title, 0xc0, sizeof(title) );
     size = GetConsoleTitleW( title, ARRAY_SIZE(title) );
     ok(!size, "GetConsoleTitleW returned %u\n", size);
     ok(title[0] == 0xc0c0, "title byffer changed\n");
     ok(GetLastError() == ERROR_INVALID_HANDLE, "last error %u\n", GetLastError());
-
-    if (skip_nt) return;
 
     SetLastError(0xdeadbeef);
     ret = SetConsoleTitleW( L"test" );
