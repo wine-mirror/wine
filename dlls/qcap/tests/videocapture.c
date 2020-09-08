@@ -23,6 +23,12 @@
 #include "wine/test.h"
 #include "wine/strmbase.h"
 
+static BOOL compare_media_types(const AM_MEDIA_TYPE *a, const AM_MEDIA_TYPE *b)
+{
+    return !memcmp(a, b, offsetof(AM_MEDIA_TYPE, pbFormat))
+            && !memcmp(a->pbFormat, b->pbFormat, a->cbFormat);
+}
+
 #define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
 static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOOL supported)
 {
@@ -78,11 +84,11 @@ static void test_media_types(IPin *pin)
 static void test_stream_config(IPin *pin)
 {
     VIDEOINFOHEADER *video_info, *video_info2;
+    LONG depth, compression, count, size, i;
+    IEnumMediaTypes *enum_media_types;
     AM_MEDIA_TYPE *format, *format2;
-    VIDEO_STREAM_CONFIG_CAPS vscc;
     IAMStreamConfig *stream_config;
-    LONG depth, compression;
-    LONG count, size;
+    VIDEO_STREAM_CONFIG_CAPS vscc;
     HRESULT hr;
 
     hr = IPin_QueryInterface(pin, &IID_IAMStreamConfig, (void **)&stream_config);
@@ -95,6 +101,16 @@ static void test_stream_config(IPin *pin)
 
     hr = IAMStreamConfig_SetFormat(stream_config, format);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    /* After setting the format, a single media type is enumerated.
+     * This persists until the filter is released. */
+    IPin_EnumMediaTypes(pin, &enum_media_types);
+    hr = IEnumMediaTypes_Next(enum_media_types, 1, &format2, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    DeleteMediaType(format2);
+    hr = IEnumMediaTypes_Next(enum_media_types, 1, &format2, NULL);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    IEnumMediaTypes_Release(enum_media_types);
 
     format->majortype = MEDIATYPE_Audio;
     hr = IAMStreamConfig_SetFormat(stream_config, format);
@@ -162,14 +178,37 @@ static void test_stream_config(IPin *pin)
     hr = IAMStreamConfig_GetStreamCaps(stream_config, 100000, &format, (BYTE *)&vscc);
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
-    hr = IAMStreamConfig_GetStreamCaps(stream_config, 0, &format, (BYTE *)&vscc);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(IsEqualGUID(&format->majortype, &MEDIATYPE_Video), "Got wrong majortype: %s.\n",
-            debugstr_guid(&MEDIATYPE_Video));
-    ok(IsEqualGUID(&vscc.guid, &FORMAT_VideoInfo)
-            || IsEqualGUID(&vscc.guid, &FORMAT_VideoInfo2), "Got wrong guid: %s.\n",
-            debugstr_guid(&vscc.guid));
-    FreeMediaType(format);
+    for (i = 0; i < count; ++i)
+    {
+        hr = IAMStreamConfig_GetStreamCaps(stream_config, i, &format, (BYTE *)&vscc);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(IsEqualGUID(&format->majortype, &MEDIATYPE_Video), "Got wrong majortype: %s.\n",
+                debugstr_guid(&MEDIATYPE_Video));
+        ok(IsEqualGUID(&vscc.guid, &FORMAT_VideoInfo)
+                || IsEqualGUID(&vscc.guid, &FORMAT_VideoInfo2), "Got wrong guid: %s.\n",
+                debugstr_guid(&vscc.guid));
+
+        hr = IAMStreamConfig_SetFormat(stream_config, format);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+        hr = IAMStreamConfig_GetFormat(stream_config, &format2);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(compare_media_types(format, format2), "Media types didn't match.\n");
+        DeleteMediaType(format2);
+
+        hr = IPin_EnumMediaTypes(pin, &enum_media_types);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        hr = IEnumMediaTypes_Next(enum_media_types, 1, &format2, NULL);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+        todo_wine_if (!compare_media_types(format, format2))
+            ok(compare_media_types(format, format2), "Media types didn't match.\n");
+
+        DeleteMediaType(format2);
+        IEnumMediaTypes_Release(enum_media_types);
+
+        DeleteMediaType(format);
+    }
 
     IAMStreamConfig_Release(stream_config);
 }
