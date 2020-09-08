@@ -33,7 +33,6 @@
 #include "winternl.h"
 #include "shlwapi.h"
 #include "wine/unicode.h"
-#include "wine/library.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(profile);

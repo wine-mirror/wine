@@ -27,7 +27,6 @@
 
 #include "winternl.h"
 #include "wine/exception.h"
-#include "wine/library.h"
 
 #include "wine/debug.h"
 

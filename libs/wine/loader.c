@@ -63,7 +63,6 @@ extern char **environ;
 #include "windef.h"
 #include "winbase.h"
 #include "wine/asm.h"
-#include "wine/library.h"
 
 /* argc/argv for the Windows application */
 int __wine_main_argc = 0;
@@ -92,6 +91,7 @@ static int nb_dlls;
 
 static const IMAGE_NT_HEADERS *main_exe;
 
+typedef void (*load_dll_callback_t)( void *, const char * );
 static load_dll_callback_t load_dll_callback;
 
 extern const char *build_dir;
@@ -100,6 +100,9 @@ static const char **dll_paths;
 static unsigned int nb_dll_paths;
 static int dll_path_maxlen;
 
+extern void *wine_anon_mmap( void *start, size_t size, int prot, int flags );
+extern void wine_init_argv0_path( const char *argv0 );
+extern void wine_init( int argc, char *argv[], char *error, int error_size );
 extern void mmap_init(void);
 extern const char *get_dlldir( const char **default_dlldir );
 

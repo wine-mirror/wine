@@ -29,7 +29,6 @@
 #include "winuser.h"
 #include "mmddk.h"
 #include "coreaudio.h"
-#include "wine/library.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(coreaudio);

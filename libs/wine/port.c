@@ -30,7 +30,6 @@
 
 #define WINE_UNICODE_INLINE  /* nothing */
 #include "wine/unicode.h"
-#include "wine/library.h"
 
 /* functions from libwine_port that are also exported from libwine for backwards compatibility,
  * on platforms that require it */
