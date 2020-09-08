@@ -414,6 +414,7 @@ static void test_default_mixer(void)
 {
     DWORD input_min, input_max, output_min, output_max;
     IMFAttributes *attributes, *attributes2;
+    IMFVideoMixerControl2 *mixer_control2;
     MFT_OUTPUT_STREAM_INFO output_info;
     MFT_INPUT_STREAM_INFO input_info;
     DWORD input_count, output_count;
@@ -424,12 +425,12 @@ static void test_default_mixer(void)
     IMFTransform *transform;
     DXVA2_ValueRange range;
     DXVA2_Fixed32 value;
+    DWORD flags, count;
     IMFGetService *gs;
     COLORREF color;
     unsigned int i;
     DWORD ids[16];
     IUnknown *unk;
-    DWORD count;
     GUID *guids;
     HRESULT hr;
     IID iid;
@@ -454,6 +455,18 @@ static void test_default_mixer(void)
     hr = IMFGetService_GetService(gs, &MR_VIDEO_MIXER_SERVICE, &IID_IMFVideoMixerControl, (void **)&unk);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     IUnknown_Release(unk);
+
+    if (SUCCEEDED(IMFGetService_GetService(gs, &MR_VIDEO_MIXER_SERVICE, &IID_IMFVideoMixerControl2, (void **)&mixer_control2)))
+    {
+        hr = IMFVideoMixerControl2_GetMixingPrefs(mixer_control2, NULL);
+        ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+        hr = IMFVideoMixerControl2_GetMixingPrefs(mixer_control2, &flags);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        ok(!flags, "Unexpected flags %#x.\n", flags);
+
+        IMFVideoMixerControl2_Release(mixer_control2);
+    }
 
     hr = IMFVideoProcessor_GetBackgroundColor(processor, NULL);
     ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);

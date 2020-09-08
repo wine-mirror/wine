@@ -73,6 +73,7 @@ struct video_mixer
     IDirect3DDeviceManager9 *device_manager;
     IMediaEventSink *event_sink;
     IMFAttributes *attributes;
+    unsigned int mixing_flags;
     CRITICAL_SECTION cs;
 };
 
@@ -1008,16 +1009,31 @@ static HRESULT WINAPI video_mixer_control_GetStreamOutputRect(IMFVideoMixerContr
 
 static HRESULT WINAPI video_mixer_control_SetMixingPrefs(IMFVideoMixerControl2 *iface, DWORD flags)
 {
-    FIXME("%p, %#x.\n", iface, flags);
+    struct video_mixer *mixer = impl_from_IMFVideoMixerControl2(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %#x.\n", iface, flags);
+
+    EnterCriticalSection(&mixer->cs);
+    mixer->mixing_flags = flags;
+    LeaveCriticalSection(&mixer->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI video_mixer_control_GetMixingPrefs(IMFVideoMixerControl2 *iface, DWORD *flags)
 {
-    FIXME("%p, %p.\n", iface, flags);
+    struct video_mixer *mixer = impl_from_IMFVideoMixerControl2(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, flags);
+
+    if (!flags)
+        return E_POINTER;
+
+    EnterCriticalSection(&mixer->cs);
+    *flags = mixer->mixing_flags;
+    LeaveCriticalSection(&mixer->cs);
+
+    return S_OK;
 }
 
 static const IMFVideoMixerControl2Vtbl video_mixer_control_vtbl =
