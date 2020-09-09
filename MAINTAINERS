@@ -198,8 +198,6 @@ M:	Huw Davies <huw@codeweavers.com>
 F:	dlls/combase/
 F:	dlls/ole32/compobj.c
 F:	dlls/ole32/marshal.c
-F:	dlls/ole32/rpc.c
-F:	dlls/ole32/stubmanager.c
 F:	dlls/ole32/usrmarshal.c
 
 OLE Storage
