@@ -1280,6 +1280,7 @@ static GstBusSyncReply watch_bus(GstBus *bus, GstMessage *msg, gpointer data)
     default:
         break;
     }
+    gst_message_unref(msg);
     return GST_BUS_DROP;
 }
 
