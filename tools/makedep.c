@@ -208,6 +208,7 @@ struct makefile
     /* values generated at output time */
     struct strarray in_files;
     struct strarray ok_files;
+    struct strarray pot_files;
     struct strarray clean_files;
     struct strarray distclean_files;
     struct strarray uninstall_files;
@@ -2657,32 +2658,18 @@ static void output_po_files( const struct makefile *make )
 {
     const char *po_dir = src_dir_path( make, "po" );
     struct strarray pot_files = empty_strarray;
-    struct incl_file *source;
-    unsigned int i;
+    unsigned int i, j;
 
     for (i = 0; i < make->subdirs.count; i++)
     {
         struct makefile *submake = make->submakes[i];
 
-        LIST_FOR_EACH_ENTRY( source, &submake->sources, struct incl_file, entry )
+        for (j = 0; j < submake->pot_files.count; j++)
         {
-            if (source->file->flags & FLAG_PARENTDIR) continue;
-            if (strendswith( source->name, ".rc" ) && (source->file->flags & FLAG_RC_PO))
-            {
-                char *pot_file = replace_extension( source->name, ".rc", ".pot" );
-                char *pot_path = base_dir_path( submake, pot_file );
-                output( "%s: tools/wrc include dummy\n", pot_path );
-                output( "\t@cd %s && $(MAKE) %s\n", base_dir_path( submake, "" ), pot_file );
-                strarray_add( &pot_files, pot_path );
-            }
-            else if (strendswith( source->name, ".mc" ))
-            {
-                char *pot_file = replace_extension( source->name, ".mc", ".pot" );
-                char *pot_path = base_dir_path( submake, pot_file );
-                output( "%s: tools/wmc include dummy\n", pot_path );
-                output( "\t@cd %s && $(MAKE) %s\n", base_dir_path( submake, "" ), pot_file );
-                strarray_add( &pot_files, pot_path );
-            }
+            char *pot_path = base_dir_path( submake, submake->pot_files.str[j] );
+            output( "%s: dummy\n", pot_path );
+            output( "\t@cd %s && $(MAKE) %s\n", base_dir_path( submake, "" ), submake->pot_files.str[j] );
+            strarray_add( &pot_files, pot_path );
         }
     }
     if (linguas.count)
@@ -2697,6 +2684,8 @@ static void output_po_files( const struct makefile *make )
             output_filename( strmake( "%s/%s.po", po_dir, linguas.str[i] ));
         output( "\n" );
     }
+    output_filenames( pot_files );
+    output( ": tools/wrc tools/wmc include\n" );
     output( "%s/wine.pot:", po_dir );
     output_filenames( pot_files );
     output( "\n" );
@@ -2766,7 +2755,7 @@ static void output_source_rc( struct makefile *make, struct incl_file *source, c
     strarray_add( &make->res_files, strmake( "%s.res", obj ));
     if (source->file->flags & FLAG_RC_PO && !(source->file->flags & FLAG_PARENTDIR))
     {
-        strarray_add( &make->clean_files, strmake( "%s.pot", obj ));
+        strarray_add( &make->pot_files, strmake( "%s.pot", obj ));
         output( "%s.pot ", obj_dir_path( make, obj ) );
     }
     output( "%s.res: %s", obj_dir_path( make, obj ), source->filename );
@@ -2800,7 +2789,7 @@ static void output_source_mc( struct makefile *make, struct incl_file *source, c
     char *obj_path = obj_dir_path( make, obj );
 
     strarray_add( &make->res_files, strmake( "%s.res", obj ));
-    strarray_add( &make->clean_files, strmake( "%s.pot", obj ));
+    strarray_add( &make->pot_files, strmake( "%s.pot", obj ));
     output( "%s.pot %s.res: %s", obj_path, obj_path, source->filename );
     output_filename( tools_path( make, "wmc" ));
     output_filenames( source->dependencies );
@@ -3977,6 +3966,7 @@ static void output_sources( struct makefile *make )
     strarray_addall( &make->clean_files, make->crossobj_files );
     strarray_addall( &make->clean_files, make->unixobj_files );
     strarray_addall( &make->clean_files, make->res_files );
+    strarray_addall( &make->clean_files, make->pot_files );
     strarray_addall( &make->clean_files, make->debug_files );
     strarray_addall( &make->clean_files, make->all_targets );
     strarray_addall( &make->clean_files, make->extra_targets );
