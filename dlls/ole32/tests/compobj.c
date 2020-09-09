@@ -72,8 +72,6 @@ DEFINE_EXPECT(PostUninitialize);
 /* functions that are not present on all versions of Windows */
 static HRESULT (WINAPI * pCoGetObjectContext)(REFIID riid, LPVOID *ppv);
 static HRESULT (WINAPI * pCoSwitchCallContext)(IUnknown *pObject, IUnknown **ppOldObject);
-static HRESULT (WINAPI * pCoGetTreatAsClass)(REFCLSID clsidOld, LPCLSID pClsidNew);
-static HRESULT (WINAPI * pCoTreatAsClass)(REFCLSID clsidOld, REFCLSID pClsidNew);
 static HRESULT (WINAPI * pCoGetContextToken)(ULONG_PTR *token);
 static HRESULT (WINAPI * pCoGetApartmentType)(APTTYPE *type, APTTYPEQUALIFIER *qualifier);
 static HRESULT (WINAPI * pCoIncrementMTAUsage)(CO_MTA_USAGE_COOKIE *cookie);
@@ -2190,21 +2188,15 @@ static void test_TreatAsClass(void)
     HKEY clsidkey, deadbeefkey;
     LONG lr;
 
-    if (!pCoGetTreatAsClass)
-    {
-        win_skip("CoGetTreatAsClass not present\n");
-        return;
-    }
-
-    hr = pCoGetTreatAsClass(&deadbeef,&out);
+    hr = CoGetTreatAsClass(&deadbeef,&out);
     ok (hr == S_FALSE, "expected S_FALSE got %x\n",hr);
     ok (IsEqualGUID(&out,&deadbeef), "expected to get same clsid back\n");
 
-    hr = pCoGetTreatAsClass(NULL, &out);
+    hr = CoGetTreatAsClass(NULL, &out);
     ok(hr == E_INVALIDARG, "expected E_INVALIDARG got %08x\n", hr);
     ok(IsEqualGUID(&out, &deadbeef), "expected no change to the clsid\n");
 
-    hr = pCoGetTreatAsClass(&deadbeef, NULL);
+    hr = CoGetTreatAsClass(&deadbeef, NULL);
     ok(hr == E_INVALIDARG, "expected E_INVALIDARG got %08x\n", hr);
 
     lr = RegOpenKeyExA(HKEY_CLASSES_ROOT, "CLSID", 0, KEY_READ, &clsidkey);
@@ -2217,17 +2209,17 @@ static void test_TreatAsClass(void)
         return;
     }
 
-    hr = pCoTreatAsClass(&deadbeef, &deadbeef);
+    hr = CoTreatAsClass(&deadbeef, &deadbeef);
     ok(hr == REGDB_E_WRITEREGDB, "CoTreatAsClass gave wrong error: %08x\n", hr);
 
-    hr = pCoTreatAsClass(&deadbeef, &CLSID_FileProtocol);
+    hr = CoTreatAsClass(&deadbeef, &CLSID_FileProtocol);
     if(hr == REGDB_E_WRITEREGDB){
         win_skip("Insufficient privileges to use CoTreatAsClass\n");
         goto exit;
     }
     ok(hr == S_OK, "CoTreatAsClass failed: %08x\n", hr);
 
-    hr = pCoGetTreatAsClass(&deadbeef, &out);
+    hr = CoGetTreatAsClass(&deadbeef, &out);
     ok(hr == S_OK, "CoGetTreatAsClass failed: %08x\n",hr);
     ok(IsEqualGUID(&out, &CLSID_FileProtocol), "expected to get substituted clsid\n");
 
@@ -2263,10 +2255,10 @@ static void test_TreatAsClass(void)
         IUnknown_Release(pIP);
     }
 
-    hr = pCoTreatAsClass(&deadbeef, &CLSID_NULL);
+    hr = CoTreatAsClass(&deadbeef, &CLSID_NULL);
     ok(hr == S_OK, "CoTreatAsClass failed: %08x\n", hr);
 
-    hr = pCoGetTreatAsClass(&deadbeef, &out);
+    hr = CoGetTreatAsClass(&deadbeef, &out);
     ok(hr == S_FALSE, "expected S_FALSE got %08x\n", hr);
     ok(IsEqualGUID(&out, &deadbeef), "expected to get same clsid back\n");
 
@@ -3956,8 +3948,6 @@ static void init_funcs(void)
 
     pCoGetObjectContext = (void*)GetProcAddress(hOle32, "CoGetObjectContext");
     pCoSwitchCallContext = (void*)GetProcAddress(hOle32, "CoSwitchCallContext");
-    pCoGetTreatAsClass = (void*)GetProcAddress(hOle32,"CoGetTreatAsClass");
-    pCoTreatAsClass = (void*)GetProcAddress(hOle32,"CoTreatAsClass");
     pCoGetContextToken = (void*)GetProcAddress(hOle32, "CoGetContextToken");
     pCoGetApartmentType = (void*)GetProcAddress(hOle32, "CoGetApartmentType");
     pCoIncrementMTAUsage = (void*)GetProcAddress(hOle32, "CoIncrementMTAUsage");
