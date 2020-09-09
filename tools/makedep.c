@@ -2559,13 +2559,13 @@ static void output_install_rules( struct makefile *make, enum install_rules rule
         }
     }
 
-    output( "install %s::", target );
+    output( "%s %s::", obj_dir_path( make, "install" ), obj_dir_path( make, target ));
     output_filenames( targets );
     output( "\n" );
     output_install_commands( make, NULL, files );
 
-    strarray_add_uniq( &make->phony_targets, "install" );
-    strarray_add_uniq( &make->phony_targets, target );
+    strarray_add_uniq( &make->phony_targets, obj_dir_path( make, "install" ));
+    strarray_add_uniq( &make->phony_targets, obj_dir_path( make, target ));
 }
 
 
@@ -2628,8 +2628,7 @@ static void output_uninstall_rules( struct makefile *make )
 /*******************************************************************
  *         output_importlib_symlinks
  */
-static struct strarray output_importlib_symlinks( const struct makefile *parent,
-                                                  const struct makefile *make )
+static struct strarray output_importlib_symlinks( const struct makefile *make )
 {
     struct strarray ret = empty_strarray;
     const char *lib, *dst, *ext[4];
@@ -2642,7 +2641,7 @@ static struct strarray output_importlib_symlinks( const struct makefile *parent,
     for (i = 0; i < count; i++)
     {
         lib = strmake( "lib%s.%s", make->importlib, ext[i] );
-        dst = concat_paths( obj_dir_path( parent, "dlls" ), lib );
+        dst = concat_paths( obj_dir_path( top_makefile, "dlls" ), lib );
         output( "%s: %s\n", dst, base_dir_path( make, lib ));
         output_symlink_rule( concat_paths( make->base_dir + strlen("dlls/"), lib ), dst );
         strarray_add( &ret, dst );
@@ -3357,7 +3356,7 @@ static void output_module( struct makefile *make )
 
         strarray_add( &make->all_targets, unix_lib );
         add_install_rule( make, make->module, unix_lib, strmake( "p$(dlldir)/%s", unix_lib ));
-        output( "%s:", unix_lib );
+        output( "%s:", obj_dir_path( make, unix_lib ));
         if (spec_file) output_filename( spec_file );
         output_filenames_obj_dir( make, make->unixobj_files );
         output_filenames( unix_deps );
@@ -3576,18 +3575,18 @@ static void output_test_module( struct makefile *make )
             testmodule, obj_dir_path( make, stripped ), ext, tools_path( make, "wrc" ));
 
     output_filenames_obj_dir( make, make->ok_files );
-    output( ": %s%s ../%s%s\n", testmodule, ext, make->testdll, parent_ext );
-    output( "check test:" );
+    output( ": %s%s ../%s%s\n", obj_dir_path( make, testmodule ), ext, make->testdll, parent_ext );
+    output( "%s %s:", obj_dir_path( make, "check" ), obj_dir_path( make, "test" ));
     if (!make->disabled && parent && !parent->disabled) output_filenames_obj_dir( make, make->ok_files );
     output( "\n" );
-    strarray_add( &make->phony_targets, "check" );
-    strarray_add( &make->phony_targets, "test" );
-    output( "testclean::\n" );
+    strarray_add_uniq( &make->phony_targets, obj_dir_path( make, "check" ));
+    strarray_add_uniq( &make->phony_targets, obj_dir_path( make, "test" ));
+    output( "%s::\n", obj_dir_path( make, "testclean" ));
     output( "\trm -f" );
     output_filenames_obj_dir( make, make->ok_files );
     output( "\n" );
     strarray_addall( &make->clean_files, make->ok_files );
-    strarray_add( &make->phony_targets, "testclean" );
+    strarray_add_uniq( &make->phony_targets, obj_dir_path( make, "testclean" ));
 }
 
 
@@ -3745,7 +3744,7 @@ static void output_subdirs( struct makefile *make )
                 }
             }
             if (needs_implib_symlink( submake ))
-                strarray_addall( &symlinks, output_importlib_symlinks( make, submake ));
+                strarray_addall( &symlinks, output_importlib_symlinks( submake ));
         }
 
         if (submake->disabled) continue;
@@ -3884,7 +3883,7 @@ static void output_sources( struct makefile *make )
     struct incl_file *source;
     unsigned int i, j;
 
-    strarray_add( &make->phony_targets, "all" );
+    strarray_add_uniq( &make->phony_targets, "all" );
 
     LIST_FOR_EACH_ENTRY( source, &make->sources, struct incl_file, entry )
     {
@@ -3947,9 +3946,10 @@ static void output_sources( struct makefile *make )
     {
         if (make->all_targets.count)
         {
-            output( "all:" );
+            output( "%s:", obj_dir_path( make, "all" ));
             output_filenames_obj_dir( make, make->all_targets );
             output( "\n" );
+            strarray_add_uniq( &make->phony_targets, obj_dir_path( make, "all" ));
         }
         output_install_rules( make, INSTALL_LIB, "install-lib" );
         output_install_rules( make, INSTALL_DEV, "install-dev" );
@@ -3977,8 +3977,7 @@ static void output_sources( struct makefile *make )
         output( "\trm -f" );
         output_filenames_obj_dir( make, make->clean_files );
         output( "\n" );
-        if (make->obj_dir) output( "__clean__: %s\n", obj_dir_path( make, "clean" ));
-        strarray_add( &make->phony_targets, obj_dir_path( make, "clean" ));
+        strarray_add_uniq( &make->phony_targets, obj_dir_path( make, "clean" ));
     }
 
     if (make->phony_targets.count)
