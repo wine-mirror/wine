@@ -8,7 +8,7 @@
 @ stdcall CoCreateGuid(ptr) ole32.CoCreateGuid
 @ stdcall CoCreateInstance(ptr ptr long ptr ptr) ole32.CoCreateInstance
 @ stdcall CoCreateInstanceEx(ptr ptr long ptr long ptr) ole32.CoCreateInstanceEx
-@ stub CoCreateInstanceFromApp
+@ stdcall CoCreateInstanceFromApp(ptr ptr long ptr long ptr) ole32.CoCreateInstanceFromApp
 @ stub CoDecodeProxy
 @ stdcall CoDecrementMTAUsage(ptr) ole32.CoDecrementMTAUsage
 @ stdcall CoDisableCallCancellation(ptr) ole32.CoDisableCallCancellation

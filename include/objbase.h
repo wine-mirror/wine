@@ -319,6 +319,8 @@ HRESULT WINAPI CoCreateInstanceEx(REFCLSID      rclsid,
 				  COSERVERINFO* pServerInfo,
 				  ULONG         cmq,
 				  MULTI_QI*     pResults);
+HRESULT WINAPI CoCreateInstanceFromApp(REFCLSID clsid, IUnknown *outer, DWORD clscontext, void *reserved,
+        DWORD count, MULTI_QI *results);
 
 HRESULT WINAPI CoGetInstanceFromFile(COSERVERINFO* pServerInfo, CLSID* pClsid, IUnknown* punkOuter, DWORD dwClsCtx, DWORD grfMode, OLECHAR* pwszName, DWORD dwCount, MULTI_QI* pResults);
 HRESULT WINAPI CoGetInstanceFromIStorage(COSERVERINFO* pServerInfo, CLSID* pClsid, IUnknown* punkOuter, DWORD dwClsCtx, IStorage* pstg, DWORD dwCount, MULTI_QI* pResults);

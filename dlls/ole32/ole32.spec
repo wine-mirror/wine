@@ -14,6 +14,7 @@
 @ stdcall CoCreateGuid(ptr) combase.CoCreateGuid
 @ stdcall CoCreateInstance(ptr ptr long ptr ptr) combase.CoCreateInstance
 @ stdcall CoCreateInstanceEx(ptr ptr long ptr long ptr) combase.CoCreateInstanceEx
+@ stdcall CoCreateInstanceFromApp(ptr ptr long ptr long ptr) combase.CoCreateInstanceFromApp
 @ stdcall CoDecrementMTAUsage(ptr) combase.CoDecrementMTAUsage
 @ stdcall CoDisableCallCancellation(ptr) combase.CoDisableCallCancellation
 @ stdcall CoDisconnectObject(ptr long) combase.CoDisconnectObject

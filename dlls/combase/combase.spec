@@ -82,7 +82,7 @@
 @ stdcall CoCreateGuid(ptr)
 @ stdcall CoCreateInstance(ptr ptr long ptr ptr)
 @ stdcall CoCreateInstanceEx(ptr ptr long ptr long ptr)
-@ stub CoCreateInstanceFromApp
+@ stdcall CoCreateInstanceFromApp(ptr ptr long ptr long ptr)
 @ stub CoCreateObjectInContext
 @ stub CoDeactivateObject
 @ stub CoDecodeProxy
