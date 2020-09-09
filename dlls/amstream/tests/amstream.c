@@ -209,6 +209,39 @@ static const DDSURFACEDESC rgb32_format =
     .ddpfPixelFormat.dwBBitMask = 0x0000ff,
 };
 
+static const DDSURFACEDESC argb32_format =
+{
+    .dwSize = sizeof(DDSURFACEDESC),
+    .dwFlags = DDSD_PIXELFORMAT,
+    .ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT),
+    .ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS,
+    .ddpfPixelFormat.dwRGBBitCount = 32,
+    .ddpfPixelFormat.dwRBitMask = 0xff0000,
+    .ddpfPixelFormat.dwGBitMask = 0x00ff00,
+    .ddpfPixelFormat.dwBBitMask = 0x0000ff,
+    .ddpfPixelFormat.dwRGBAlphaBitMask = 0xff000000,
+};
+
+static const DDSURFACEDESC yuy2_format =
+{
+    .dwSize = sizeof(DDSURFACEDESC),
+    .dwFlags = DDSD_PIXELFORMAT,
+    .ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT),
+    .ddpfPixelFormat.dwFlags = DDPF_FOURCC,
+    .ddpfPixelFormat.dwFourCC = MAKEFOURCC('Y', 'U', 'Y', '2'),
+    .ddpfPixelFormat.dwYUVBitCount = 16,
+};
+
+static const DDSURFACEDESC yv12_format =
+{
+    .dwSize = sizeof(DDSURFACEDESC),
+    .dwFlags = DDSD_PIXELFORMAT,
+    .ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT),
+    .ddpfPixelFormat.dwFlags = DDPF_FOURCC,
+    .ddpfPixelFormat.dwFourCC = MAKEFOURCC('Y', 'V', '1', '2'),
+    .ddpfPixelFormat.dwYUVBitCount = 12,
+};
+
 static const WCHAR primary_video_sink_id[] = L"I{A35FF56A-9FDA-11D0-8FDF-00C04FD9189D}";
 static const WCHAR primary_audio_sink_id[] = L"I{A35FF56B-9FDA-11D0-8FDF-00C04FD9189D}";
 
@@ -4632,6 +4665,230 @@ static void test_ddrawstream_get_format(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+#define check_ddrawstream_set_format(a,b,c,d) check_ddrawstream_set_format_(__LINE__,a,b,c,d)
+static void check_ddrawstream_set_format_(int line, IDirectDrawMediaStream *stream,
+        const DDSURFACEDESC *format, const AM_MEDIA_TYPE *mt, HRESULT expected_hr)
+{
+    struct testfilter source;
+    FILTER_INFO filter_info;
+    PIN_INFO pin_info;
+    HRESULT hr;
+    IPin *pin;
+
+    hr = IDirectDrawMediaStream_QueryInterface(stream, &IID_IPin, (void **)&pin);
+    ok_(__FILE__, line)(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IPin_QueryPinInfo(pin, &pin_info);
+    ok_(__FILE__, line)(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IBaseFilter_QueryFilterInfo(pin_info.pFilter, &filter_info);
+    ok_(__FILE__, line)(hr == S_OK, "Got hr %#x.\n", hr);
+
+    testfilter_init(&source);
+
+    hr = IFilterGraph_AddFilter(filter_info.pGraph, &source.filter.IBaseFilter_iface, L"source");
+    ok_(__FILE__, line)(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IDirectDrawMediaStream_SetFormat(stream, format, NULL);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x.\n", hr);
+
+    if (mt)
+    {
+        DDSURFACEDESC current_format;
+        DDSURFACEDESC desired_format;
+        DWORD flags;
+
+        hr = IFilterGraph_ConnectDirect(filter_info.pGraph, &source.source.pin.IPin_iface, pin, mt);
+        ok_(__FILE__, line)(hr == S_OK, "Got hr %#x.\n", hr);
+
+        memset(&current_format, 0xcc, sizeof(current_format));
+        memset(&desired_format, 0xcc, sizeof(desired_format));
+        flags = 0xdeadbeef;
+        current_format.dwSize = sizeof(current_format);
+        desired_format.dwSize = sizeof(desired_format);
+        hr = IDirectDrawMediaStream_GetFormat(stream, &current_format, NULL, &desired_format, &flags);
+        ok_(__FILE__, line)(hr == S_OK, "Got hr %#x.\n", hr);
+        if (format->dwFlags & DDSD_PIXELFORMAT)
+        {
+            ok_(__FILE__, line)(current_format.dwFlags == (DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_PIXELFORMAT),
+                    "Got current format flags %#x.\n", current_format.dwFlags);
+            ok_(__FILE__, line)(memcmp(&current_format.ddpfPixelFormat, &format->ddpfPixelFormat, sizeof(DDPIXELFORMAT)) == 0,
+                    "Current pixel format didn't match.\n");
+            ok_(__FILE__, line)(memcmp(&desired_format.ddpfPixelFormat, &format->ddpfPixelFormat, sizeof(DDPIXELFORMAT)) == 0,
+                    "Desired pixel format didn't match.\n");
+        }
+        else
+        {
+            ok_(__FILE__, line)(current_format.dwFlags == (DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS),
+                    "Got flags %#x.\n", current_format.dwFlags);
+        }
+        ok_(__FILE__, line)(desired_format.dwFlags == (DDSD_WIDTH | DDSD_HEIGHT),
+                "Got desired format flags %#x.\n", desired_format.dwFlags);
+        ok_(__FILE__, line)(current_format.ddsCaps.dwCaps == (DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY),
+                "Got current format caps %#x.\n", current_format.ddsCaps.dwCaps);
+        ok_(__FILE__, line)(desired_format.ddsCaps.dwCaps == (DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY),
+                "Got desired format caps %#x.\n", desired_format.ddsCaps.dwCaps);
+        ok_(__FILE__, line)(flags == 0, "Got flags %#x.\n", flags);
+
+        hr = IFilterGraph_Disconnect(filter_info.pGraph, &source.source.pin.IPin_iface);
+        ok_(__FILE__, line)(hr == S_OK, "Got hr %#x.\n", hr);
+        hr = IFilterGraph_Disconnect(filter_info.pGraph, pin);
+        ok_(__FILE__, line)(hr == S_OK, "Got hr %#x.\n", hr);
+    }
+
+    hr = IFilterGraph_RemoveFilter(filter_info.pGraph, &source.filter.IBaseFilter_iface);
+    ok_(__FILE__, line)(hr == S_OK, "Got hr %#x.\n", hr);
+
+    IFilterGraph_Release(filter_info.pGraph);
+    IBaseFilter_Release(pin_info.pFilter);
+    IPin_Release(pin);
+}
+
+static void test_ddrawstream_set_format(void)
+{
+    static const DDSURFACEDESC rgb1_format =
+    {
+        .dwSize = sizeof(DDSURFACEDESC),
+        .dwFlags = DDSD_PIXELFORMAT,
+        .ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT),
+        .ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_PALETTEINDEXED1,
+        .ddpfPixelFormat.dwRGBBitCount = 1,
+    };
+    static const DDSURFACEDESC rgb2_format =
+    {
+        .dwSize = sizeof(DDSURFACEDESC),
+        .dwFlags = DDSD_PIXELFORMAT,
+        .ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT),
+        .ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_PALETTEINDEXED2,
+        .ddpfPixelFormat.dwRGBBitCount = 2,
+    };
+    static const DDSURFACEDESC rgb4_format =
+    {
+        .dwSize = sizeof(DDSURFACEDESC),
+        .dwFlags = DDSD_PIXELFORMAT,
+        .ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT),
+        .ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_PALETTEINDEXED4,
+        .ddpfPixelFormat.dwRGBBitCount = 4,
+    };
+    static const DDSURFACEDESC rgb4to8_format =
+    {
+        .dwSize = sizeof(DDSURFACEDESC),
+        .dwFlags = DDSD_PIXELFORMAT,
+        .ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT),
+        .ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_PALETTEINDEXEDTO8,
+        .ddpfPixelFormat.dwRGBBitCount = 4,
+    };
+    static const DDSURFACEDESC rgb332_format =
+    {
+        .dwSize = sizeof(DDSURFACEDESC),
+        .dwFlags = DDSD_PIXELFORMAT,
+        .ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT),
+        .ddpfPixelFormat.dwFlags = DDPF_RGB,
+        .ddpfPixelFormat.dwRGBBitCount = 8,
+        .ddpfPixelFormat.dwRBitMask = 0xe0,
+        .ddpfPixelFormat.dwGBitMask = 0x1c,
+        .ddpfPixelFormat.dwBBitMask = 0x03,
+    };
+
+    IDirectDrawMediaStream *ddraw_stream;
+    IAMMultiMediaStream *mmstream;
+    DDSURFACEDESC format;
+    IMediaStream *stream;
+    HRESULT hr;
+    ULONG ref;
+
+    mmstream = create_ammultimediastream();
+
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryVideo, 0, &stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMediaStream_QueryInterface(stream, &IID_IDirectDrawMediaStream, (void **)&ddraw_stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    check_ddrawstream_set_format(ddraw_stream, &rgb8_format, &rgb8_mt, S_OK);
+    check_ddrawstream_set_format(ddraw_stream, &rgb555_format, &rgb555_mt, S_OK);
+    check_ddrawstream_set_format(ddraw_stream, &rgb565_format, &rgb565_mt, S_OK);
+    check_ddrawstream_set_format(ddraw_stream, &rgb24_format, &rgb24_mt, S_OK);
+    check_ddrawstream_set_format(ddraw_stream, &rgb32_format, &rgb32_mt, S_OK);
+    check_ddrawstream_set_format(ddraw_stream, &argb32_format, &rgb32_mt, S_OK);
+    check_ddrawstream_set_format(ddraw_stream, &yuy2_format, NULL, S_OK);
+    check_ddrawstream_set_format(ddraw_stream, &yv12_format, NULL, S_OK);
+
+    format = rgb32_format;
+    format.ddpfPixelFormat.dwFlags |= DDPF_ALPHAPIXELS | DDPF_ALPHA
+            | DDPF_COMPRESSED | DDPF_RGBTOYUV | DDPF_ZBUFFER | DDPF_ZPIXELS | DDPF_STENCILBUFFER
+            | DDPF_ALPHAPREMULT | DDPF_LUMINANCE | DDPF_BUMPLUMINANCE | DDPF_BUMPDUDV;
+    check_ddrawstream_set_format(ddraw_stream, &format, &rgb32_mt, S_OK);
+
+    format = yuy2_format;
+    format.ddpfPixelFormat.dwFlags |= DDPF_ALPHAPIXELS | DDPF_ALPHA
+            | DDPF_PALETTEINDEXED4 | DDPF_PALETTEINDEXEDTO8 | DDPF_PALETTEINDEXED8
+            | DDPF_RGB | DDPF_COMPRESSED | DDPF_RGBTOYUV | DDPF_YUV | DDPF_ZBUFFER
+            | DDPF_PALETTEINDEXED1 | DDPF_PALETTEINDEXED2 | DDPF_ZPIXELS
+            | DDPF_STENCILBUFFER | DDPF_ALPHAPREMULT | DDPF_LUMINANCE
+            | DDPF_BUMPLUMINANCE | DDPF_BUMPDUDV;
+    check_ddrawstream_set_format(ddraw_stream, &format, NULL, S_OK);
+
+    format = rgb32_format;
+    format.dwFlags |= DDSD_CAPS;
+    format.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_VIDEOMEMORY;
+    check_ddrawstream_set_format(ddraw_stream, &format, &rgb32_mt, S_OK);
+
+    format = rgb8_format;
+    format.dwFlags = 0;
+    check_ddrawstream_set_format(ddraw_stream, &format, &rgb32_mt, S_OK);
+
+    check_ddrawstream_set_format(ddraw_stream, &rgb1_format, NULL, DDERR_INVALIDSURFACETYPE);
+    check_ddrawstream_set_format(ddraw_stream, &rgb2_format, NULL, DDERR_INVALIDSURFACETYPE);
+    check_ddrawstream_set_format(ddraw_stream, &rgb4_format, NULL, DDERR_INVALIDSURFACETYPE);
+    check_ddrawstream_set_format(ddraw_stream, &rgb4to8_format, NULL, DDERR_INVALIDSURFACETYPE);
+    check_ddrawstream_set_format(ddraw_stream, &rgb332_format, NULL, DDERR_INVALIDSURFACETYPE);
+
+    format = rgb8_format;
+    format.ddpfPixelFormat.dwFlags &= ~DDPF_RGB;
+    check_ddrawstream_set_format(ddraw_stream, &format, NULL, DDERR_INVALIDSURFACETYPE);
+
+    format = rgb8_format;
+    format.ddpfPixelFormat.dwFlags |= DDPF_PALETTEINDEXED1;
+    check_ddrawstream_set_format(ddraw_stream, &format, NULL, DDERR_INVALIDSURFACETYPE);
+
+    format = rgb32_format;
+    format.ddpfPixelFormat.dwFlags |= DDPF_PALETTEINDEXED8;
+    check_ddrawstream_set_format(ddraw_stream, &format, NULL, DDERR_INVALIDSURFACETYPE);
+
+    format = rgb32_format;
+    format.ddpfPixelFormat.dwFlags |= DDPF_YUV;
+    check_ddrawstream_set_format(ddraw_stream, &format, NULL, DDERR_INVALIDSURFACETYPE);
+
+    format = rgb565_format;
+    format.ddpfPixelFormat.dwRBitMask = 0x001f;
+    format.ddpfPixelFormat.dwGBitMask = 0x07e0;
+    format.ddpfPixelFormat.dwBBitMask = 0xf800;
+    check_ddrawstream_set_format(ddraw_stream, &format, NULL, DDERR_INVALIDSURFACETYPE);
+
+    format = rgb32_format;
+    format.ddpfPixelFormat.dwRBitMask = 0x00ff00;
+    format.ddpfPixelFormat.dwGBitMask = 0x0000ff;
+    format.ddpfPixelFormat.dwBBitMask = 0xff0000;
+    check_ddrawstream_set_format(ddraw_stream, &format, NULL, DDERR_INVALIDSURFACETYPE);
+
+    format = yuy2_format;
+    format.ddpfPixelFormat.dwYUVBitCount = 0;
+    check_ddrawstream_set_format(ddraw_stream, &format, NULL, E_INVALIDARG);
+
+    format = rgb32_format;
+    format.dwSize = sizeof(DDSURFACEDESC) + 1;
+    check_ddrawstream_set_format(ddraw_stream, &format, NULL, E_INVALIDARG);
+
+    format = rgb32_format;
+    format.ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT) + 1;
+    check_ddrawstream_set_format(ddraw_stream, &format, NULL, DDERR_INVALIDSURFACETYPE);
+
+    ref = IAMMultiMediaStream_Release(mmstream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    IDirectDrawMediaStream_Release(ddraw_stream);
+    ref = IMediaStream_Release(stream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+}
+
 static void check_ammediastream_join_am_multi_media_stream(const CLSID *clsid)
 {
     IAMMultiMediaStream *mmstream = create_ammultimediastream();
@@ -6094,6 +6351,7 @@ START_TEST(amstream)
     test_ddrawstream_receive_connection();
     test_ddrawstream_create_sample();
     test_ddrawstream_get_format();
+    test_ddrawstream_set_format();
 
     test_ddrawstreamsample_get_media_stream();
 

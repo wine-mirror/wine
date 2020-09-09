@@ -415,11 +415,86 @@ static HRESULT WINAPI ddraw_IDirectDrawMediaStream_GetFormat(IDirectDrawMediaStr
 }
 
 static HRESULT WINAPI ddraw_IDirectDrawMediaStream_SetFormat(IDirectDrawMediaStream *iface,
-        const DDSURFACEDESC *pDDSurfaceDesc, IDirectDrawPalette *pDirectDrawPalette)
+        const DDSURFACEDESC *format, IDirectDrawPalette *palette)
 {
-    FIXME("(%p)->(%p,%p) stub!\n", iface, pDDSurfaceDesc, pDirectDrawPalette);
+    struct ddraw_stream *stream = impl_from_IDirectDrawMediaStream(iface);
 
-    return E_NOTIMPL;
+    TRACE("stream %p, format %p, palette %p.\n", stream, format, palette);
+
+    if (palette)
+        FIXME("Setting palette is not yet supported.\n");
+
+    if (!format)
+        return E_POINTER;
+
+    if (format->dwSize != sizeof(DDSURFACEDESC))
+        return E_INVALIDARG;
+
+    if (format->dwFlags & DDSD_PIXELFORMAT)
+    {
+        if (format->ddpfPixelFormat.dwSize != sizeof(DDPIXELFORMAT))
+            return DDERR_INVALIDSURFACETYPE;
+
+        if (format->ddpfPixelFormat.dwFlags & DDPF_FOURCC)
+        {
+            if (!format->ddpfPixelFormat.u1.dwRGBBitCount)
+                return E_INVALIDARG;
+        }
+        else
+        {
+            if (format->ddpfPixelFormat.dwFlags & (DDPF_YUV | DDPF_PALETTEINDEXED1 |
+                    DDPF_PALETTEINDEXED2 | DDPF_PALETTEINDEXED4 | DDPF_PALETTEINDEXEDTO8))
+                return DDERR_INVALIDSURFACETYPE;
+
+            if (!(format->ddpfPixelFormat.dwFlags & DDPF_RGB))
+                return DDERR_INVALIDSURFACETYPE;
+
+            switch (format->ddpfPixelFormat.u1.dwRGBBitCount)
+            {
+            case 8:
+                if (!(format->ddpfPixelFormat.dwFlags & DDPF_PALETTEINDEXED8))
+                    return DDERR_INVALIDSURFACETYPE;
+                break;
+            case 16:
+                if (format->ddpfPixelFormat.dwFlags & DDPF_PALETTEINDEXED8)
+                    return DDERR_INVALIDSURFACETYPE;
+                if ((format->ddpfPixelFormat.u2.dwRBitMask != 0x7c00 ||
+                    format->ddpfPixelFormat.u3.dwGBitMask != 0x03e0 ||
+                    format->ddpfPixelFormat.u4.dwBBitMask != 0x001f) &&
+                    (format->ddpfPixelFormat.u2.dwRBitMask != 0xf800 ||
+                    format->ddpfPixelFormat.u3.dwGBitMask != 0x07e0 ||
+                    format->ddpfPixelFormat.u4.dwBBitMask != 0x001f))
+                    return DDERR_INVALIDSURFACETYPE;
+                break;
+            case 24:
+            case 32:
+                if (format->ddpfPixelFormat.dwFlags & DDPF_PALETTEINDEXED8)
+                    return DDERR_INVALIDSURFACETYPE;
+                if (format->ddpfPixelFormat.u2.dwRBitMask != 0xff0000 ||
+                    format->ddpfPixelFormat.u3.dwGBitMask != 0x00ff00 ||
+                    format->ddpfPixelFormat.u4.dwBBitMask != 0x0000ff)
+                    return DDERR_INVALIDSURFACETYPE;
+                break;
+            default:
+                return DDERR_INVALIDSURFACETYPE;
+            }
+        }
+    }
+
+    EnterCriticalSection(&stream->cs);
+
+    stream->format.flags = format->dwFlags & (DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT);
+    if (format->dwFlags & (DDSD_WIDTH | DDSD_HEIGHT))
+    {
+        stream->format.width = format->dwWidth;
+        stream->format.height = format->dwHeight;
+    }
+    if (format->dwFlags & DDSD_PIXELFORMAT)
+        stream->format.pf = format->ddpfPixelFormat;
+
+    LeaveCriticalSection(&stream->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ddraw_IDirectDrawMediaStream_GetDirectDraw(IDirectDrawMediaStream *iface,
