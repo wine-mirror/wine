@@ -61,6 +61,26 @@ struct ddraw_stream
 static HRESULT ddrawstreamsample_create(struct ddraw_stream *parent, IDirectDrawSurface *surface,
     const RECT *rect, IDirectDrawStreamSample **ddraw_stream_sample);
 
+static BOOL is_format_compatible(struct ddraw_stream *stream,
+        DWORD width, DWORD height, const DDPIXELFORMAT *connection_pf)
+{
+    if (stream->format.flags & DDSD_HEIGHT)
+    {
+        if (stream->format.width != width || stream->format.height != height)
+            return FALSE;
+    }
+    if (stream->format.flags & DDSD_PIXELFORMAT)
+    {
+        if (stream->format.pf.dwFlags & DDPF_FOURCC)
+            return FALSE;
+        if (stream->format.pf.u1.dwRGBBitCount != connection_pf->u1.dwRGBBitCount)
+            return FALSE;
+        if (stream->format.pf.u1.dwRGBBitCount == 16 && stream->format.pf.u3.dwGBitMask != connection_pf->u3.dwGBitMask)
+            return FALSE;
+    }
+    return TRUE;
+}
+
 static inline struct ddraw_stream *impl_from_IAMMediaStream(IAMMediaStream *iface)
 {
     return CONTAINING_RECORD(iface, struct ddraw_stream, IAMMediaStream_iface);
@@ -819,6 +839,12 @@ static HRESULT WINAPI ddraw_sink_ReceiveConnection(IPin *iface, IPin *peer, cons
         pf.u4.dwBBitMask = 0x0000ff;
     }
     else
+    {
+        LeaveCriticalSection(&stream->cs);
+        return VFW_E_TYPE_NOT_ACCEPTED;
+    }
+
+    if (!is_format_compatible(stream, width, height, &pf))
     {
         LeaveCriticalSection(&stream->cs);
         return VFW_E_TYPE_NOT_ACCEPTED;

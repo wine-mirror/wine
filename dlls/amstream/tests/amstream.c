@@ -3353,12 +3353,33 @@ static void test_ddrawstream_receive_connection(void)
     IDirectDrawMediaStream *ddraw_stream;
     IAMMultiMediaStream *mmstream;
     struct testfilter source;
+    DDSURFACEDESC format;
     IMediaStream *stream;
+    VIDEOINFO video_info;
     AM_MEDIA_TYPE mt;
     HRESULT hr;
     ULONG ref;
     IPin *pin;
     int i;
+
+    static const VIDEOINFO yuy2_video_info =
+    {
+        .bmiHeader.biSize = sizeof(BITMAPINFOHEADER),
+        .bmiHeader.biWidth = 333,
+        .bmiHeader.biHeight = -444,
+        .bmiHeader.biPlanes = 1,
+        .bmiHeader.biBitCount = 16,
+        .bmiHeader.biCompression = MAKEFOURCC('Y', 'U', 'Y', '2'),
+    };
+
+    const AM_MEDIA_TYPE yuy2_mt =
+    {
+        .majortype = MEDIATYPE_Video,
+        .subtype = MEDIASUBTYPE_YUY2,
+        .formattype = FORMAT_VideoInfo,
+        .cbFormat = sizeof(VIDEOINFOHEADER),
+        .pbFormat = (BYTE *)&yuy2_video_info,
+    };
 
     const AM_MEDIA_TYPE video_mt =
     {
@@ -3419,6 +3440,137 @@ static void test_ddrawstream_receive_connection(void)
             ok(hr == S_OK, "Got hr %#x.\n", hr);
         }
     }
+
+    format = rgb8_format;
+    format.dwFlags = DDSD_WIDTH;
+    format.dwWidth = 222;
+    format.dwHeight = 555;
+    hr = IDirectDrawMediaStream_SetFormat(ddraw_stream, &format, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IPin_ReceiveConnection(pin, &source.source.pin.IPin_iface, &rgb32_mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IPin_Disconnect(pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    format = rgb8_format;
+    format.dwFlags = DDSD_HEIGHT;
+    format.dwWidth = 333;
+    format.dwHeight = 444;
+    hr = IDirectDrawMediaStream_SetFormat(ddraw_stream, &format, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    video_info = rgb555_video_info;
+    video_info.bmiHeader.biWidth = 333;
+    video_info.bmiHeader.biHeight = 444;
+    mt = rgb555_mt;
+    mt.pbFormat = (BYTE *)&video_info;
+    hr = IPin_ReceiveConnection(pin, &source.source.pin.IPin_iface, &mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IPin_Disconnect(pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IPin_ReceiveConnection(pin, &source.source.pin.IPin_iface, &rgb32_mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IPin_Disconnect(pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    video_info = rgb32_video_info;
+    video_info.bmiHeader.biWidth = 332;
+    video_info.bmiHeader.biHeight = 444;
+    mt = rgb32_mt;
+    mt.pbFormat = (BYTE *)&video_info;
+    hr = IPin_ReceiveConnection(pin, &source.source.pin.IPin_iface, &mt);
+    ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+
+    video_info = rgb32_video_info;
+    video_info.bmiHeader.biWidth = 333;
+    video_info.bmiHeader.biHeight = 443;
+    mt = rgb32_mt;
+    mt.pbFormat = (BYTE *)&video_info;
+    hr = IPin_ReceiveConnection(pin, &source.source.pin.IPin_iface, &mt);
+    ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+
+    hr = IDirectDrawMediaStream_SetFormat(ddraw_stream, &rgb8_format, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IPin_ReceiveConnection(pin, &source.source.pin.IPin_iface, &rgb555_mt);
+    ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+
+    hr = IPin_ReceiveConnection(pin, &source.source.pin.IPin_iface, &rgb8_mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IPin_Disconnect(pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IDirectDrawMediaStream_SetFormat(ddraw_stream, &rgb555_format, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IPin_ReceiveConnection(pin, &source.source.pin.IPin_iface, &rgb565_mt);
+    ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+
+    hr = IPin_ReceiveConnection(pin, &source.source.pin.IPin_iface, &rgb555_mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IPin_Disconnect(pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IDirectDrawMediaStream_SetFormat(ddraw_stream, &rgb565_format, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IPin_ReceiveConnection(pin, &source.source.pin.IPin_iface, &rgb24_mt);
+    ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+
+    hr = IPin_ReceiveConnection(pin, &source.source.pin.IPin_iface, &rgb565_mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IPin_Disconnect(pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IDirectDrawMediaStream_SetFormat(ddraw_stream, &rgb24_format, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IPin_ReceiveConnection(pin, &source.source.pin.IPin_iface, &rgb32_mt);
+    ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+
+    hr = IPin_ReceiveConnection(pin, &source.source.pin.IPin_iface, &rgb24_mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IPin_Disconnect(pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IDirectDrawMediaStream_SetFormat(ddraw_stream, &rgb32_format, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IPin_ReceiveConnection(pin, &source.source.pin.IPin_iface, &rgb8_mt);
+    ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+
+    hr = IPin_ReceiveConnection(pin, &source.source.pin.IPin_iface, &rgb32_mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IPin_Disconnect(pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IDirectDrawMediaStream_SetFormat(ddraw_stream, &yuy2_format, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IPin_ReceiveConnection(pin, &source.source.pin.IPin_iface, &yuy2_mt);
+    ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+
+    format = yuy2_format;
+    format.ddpfPixelFormat.dwRBitMask = 0xf800;
+    format.ddpfPixelFormat.dwGBitMask = 0x07e0;
+    format.ddpfPixelFormat.dwBBitMask = 0x001f;
+    hr = IDirectDrawMediaStream_SetFormat(ddraw_stream, &format, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IPin_ReceiveConnection(pin, &source.source.pin.IPin_iface, &rgb565_mt);
+    ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+
+    format = rgb8_format;
+    format.dwFlags = 0;
+    hr = IDirectDrawMediaStream_SetFormat(ddraw_stream, &format, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IPin_ReceiveConnection(pin, &source.source.pin.IPin_iface, &rgb565_mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IPin_Disconnect(pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     ref = IAMMultiMediaStream_Release(mmstream);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
