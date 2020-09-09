@@ -1420,15 +1420,22 @@ static HRESULT ddrawstreamsample_create(struct ddraw_stream *parent, IDirectDraw
 
         desc.dwSize = sizeof(desc);
         desc.dwFlags = DDSD_CAPS|DDSD_HEIGHT|DDSD_WIDTH|DDSD_PIXELFORMAT;
-        desc.dwHeight = 100;
-        desc.dwWidth = 100;
-        desc.ddpfPixelFormat.dwSize = sizeof(desc.ddpfPixelFormat);
-        desc.ddpfPixelFormat.dwFlags = DDPF_RGB;
-        desc.ddpfPixelFormat.u1.dwRGBBitCount = 32;
-        desc.ddpfPixelFormat.u2.dwRBitMask = 0xff0000;
-        desc.ddpfPixelFormat.u3.dwGBitMask = 0x00ff00;
-        desc.ddpfPixelFormat.u4.dwBBitMask = 0x0000ff;
-        desc.ddpfPixelFormat.u5.dwRGBAlphaBitMask = 0;
+        desc.dwHeight = parent->format.height;
+        desc.dwWidth = parent->format.width;
+        if (parent->format.flags & DDSD_PIXELFORMAT)
+        {
+            desc.ddpfPixelFormat = parent->format.pf;
+        }
+        else
+        {
+            desc.ddpfPixelFormat.dwSize = sizeof(desc.ddpfPixelFormat);
+            desc.ddpfPixelFormat.dwFlags = DDPF_RGB;
+            desc.ddpfPixelFormat.u1.dwRGBBitCount = 32;
+            desc.ddpfPixelFormat.u2.dwRBitMask = 0xff0000;
+            desc.ddpfPixelFormat.u3.dwGBitMask = 0x00ff00;
+            desc.ddpfPixelFormat.u4.dwBBitMask = 0x0000ff;
+            desc.ddpfPixelFormat.u5.dwRGBAlphaBitMask = 0;
+        }
         desc.ddsCaps.dwCaps = DDSCAPS_SYSTEMMEMORY|DDSCAPS_OFFSCREENPLAIN;
         desc.lpSurface = NULL;
 

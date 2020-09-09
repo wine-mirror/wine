@@ -6415,6 +6415,83 @@ static void test_audiostreamsample_get_audio_data(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+#define get_ddrawstream_create_sample_desc(a,b,c,d) get_ddrawstream_create_sample_desc_(__LINE__,a,b,c,d)
+static void get_ddrawstream_create_sample_desc_(int line, const DDSURFACEDESC *format1,
+        const DDSURFACEDESC *format2, const AM_MEDIA_TYPE *mt, DDSURFACEDESC *desc)
+{
+    IAMMultiMediaStream *mmstream = create_ammultimediastream();
+    IDirectDrawMediaStream *ddraw_stream;
+    IDirectDrawStreamSample *sample;
+    IDirectDrawSurface *surface;
+    struct testfilter source;
+    IGraphBuilder *graph;
+    IMediaStream *stream;
+    HRESULT hr;
+    ULONG ref;
+    IPin *pin;
+
+    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_READ, 0, NULL);
+    ok_(__FILE__, line)(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryVideo, 0, &stream);
+    ok_(__FILE__, line)(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMediaStream_QueryInterface(stream, &IID_IDirectDrawMediaStream, (void **)&ddraw_stream);
+    ok_(__FILE__, line)(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMediaStream_QueryInterface(stream, &IID_IPin, (void **)&pin);
+    ok_(__FILE__, line)(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IAMMultiMediaStream_GetFilterGraph(mmstream, &graph);
+    ok_(__FILE__, line)(hr == S_OK, "Got hr %#x.\n", hr);
+
+    testfilter_init(&source);
+
+    hr = IGraphBuilder_AddFilter(graph, &source.filter.IBaseFilter_iface, NULL);
+    ok_(__FILE__, line)(hr == S_OK, "Got hr %#x.\n", hr);
+
+    if (format1)
+    {
+        hr = IDirectDrawMediaStream_SetFormat(ddraw_stream, format1, NULL);
+        ok_(__FILE__, line)(hr == S_OK, "Got hr %#x.\n", hr);
+    }
+    if (format2)
+    {
+        hr = IDirectDrawMediaStream_SetFormat(ddraw_stream, format2, NULL);
+        ok_(__FILE__, line)(hr == S_OK, "Got hr %#x.\n", hr);
+    }
+    if (mt)
+    {
+        hr = IGraphBuilder_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, mt);
+        ok_(__FILE__, line)(hr == S_OK, "Got hr %#x.\n", hr);
+
+        hr = IGraphBuilder_Disconnect(graph, &source.source.pin.IPin_iface);
+        ok_(__FILE__, line)(hr == S_OK, "Got hr %#x.\n", hr);
+        hr = IGraphBuilder_Disconnect(graph, pin);
+        ok_(__FILE__, line)(hr == S_OK, "Got hr %#x.\n", hr);
+    }
+
+    hr = IDirectDrawMediaStream_CreateSample(ddraw_stream, NULL, NULL, 0, &sample);
+    ok_(__FILE__, line)(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IDirectDrawStreamSample_GetSurface(sample, &surface, NULL);
+    ok_(__FILE__, line)(hr == S_OK, "Got hr %#x.\n", hr);
+    ok_(__FILE__, line)(!!surface, "Expected non-NULL sufrace.\n");
+
+    desc->dwSize = sizeof(*desc);
+    hr = IDirectDrawSurface_GetSurfaceDesc(surface, desc);
+    ok_(__FILE__, line)(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ref = IDirectDrawStreamSample_Release(sample);
+    ok_(__FILE__, line)(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IDirectDrawSurface_Release(surface);
+    ok_(__FILE__, line)(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IAMMultiMediaStream_Release(mmstream);
+    ok_(__FILE__, line)(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IGraphBuilder_Release(graph);
+    ok_(__FILE__, line)(!ref, "Got outstanding refcount %d.\n", ref);
+    IPin_Release(pin);
+    IDirectDrawMediaStream_Release(ddraw_stream);
+    ref = IMediaStream_Release(stream);
+    ok_(__FILE__, line)(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 static void test_ddrawstream_create_sample(void)
 {
     IAMMultiMediaStream *mmstream = create_ammultimediastream();
@@ -6422,6 +6499,8 @@ static void test_ddrawstream_create_sample(void)
     DDSURFACEDESC desc = { sizeof(desc) };
     IDirectDrawMediaStream *ddraw_stream;
     IDirectDrawStreamSample *sample;
+    DDSURFACEDESC format1;
+    DDSURFACEDESC format2;
     IMediaStream *stream;
     IDirectDraw *ddraw;
     HRESULT hr;
@@ -6523,6 +6602,101 @@ static void test_ddrawstream_create_sample(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
     ref = IDirectDraw_Release(ddraw);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+    format1 = rgb8_format;
+    format1.dwFlags = 0;
+    format1.dwWidth = 333;
+    format1.dwHeight = 444;
+    get_ddrawstream_create_sample_desc(&format1, NULL, NULL, &desc);
+    ok(desc.dwWidth == 100, "Got width %u.\n", desc.dwWidth);
+    ok(desc.dwHeight == 100, "Got height %u.\n", desc.dwHeight);
+    ok(desc.ddpfPixelFormat.dwFlags == DDPF_RGB, "Got flags %#x.\n", desc.ddpfPixelFormat.dwFlags);
+    ok(desc.ddpfPixelFormat.dwRGBBitCount == 32, "Got rgb bit count %u.\n", desc.ddpfPixelFormat.dwRGBBitCount);
+    ok(desc.ddpfPixelFormat.dwRBitMask == 0xff0000, "Got r bit mask %#x.\n", desc.ddpfPixelFormat.dwRBitMask);
+    ok(desc.ddpfPixelFormat.dwGBitMask == 0x00ff00, "Got g bit mask %#x.\n", desc.ddpfPixelFormat.dwGBitMask);
+    ok(desc.ddpfPixelFormat.dwBBitMask == 0x0000ff, "Got b bit mask %#x.\n", desc.ddpfPixelFormat.dwBBitMask);
+
+    format1 = rgb8_format;
+    format1.dwFlags |= DDSD_WIDTH;
+    format1.dwWidth = 333;
+    format1.dwHeight = 444;
+    format2 = rgb8_format;
+    format2.dwFlags = 0;
+    get_ddrawstream_create_sample_desc(&format1, &format2, NULL, &desc);
+    ok(desc.dwWidth == 333, "Got width %u.\n", desc.dwWidth);
+    ok(desc.dwHeight == 444, "Got height %u.\n", desc.dwHeight);
+
+    format1 = rgb8_format;
+    format1.dwFlags |= DDSD_HEIGHT;
+    format1.dwWidth = 333;
+    format1.dwHeight = 444;
+    format2 = rgb8_format;
+    format2.dwFlags = 0;
+    get_ddrawstream_create_sample_desc(&format1, &format2, NULL, &desc);
+    ok(desc.dwWidth == 333, "Got width %u.\n", desc.dwWidth);
+    ok(desc.dwHeight == 444, "Got height %u.\n", desc.dwHeight);
+
+    get_ddrawstream_create_sample_desc(NULL, NULL, &rgb8_mt, &desc);
+    ok(desc.dwWidth == 333, "Got width %u.\n", desc.dwWidth);
+    ok(desc.dwHeight == 444, "Got height %u.\n", desc.dwHeight);
+    ok(desc.ddpfPixelFormat.dwFlags == DDPF_RGB, "Got flags %#x.\n", desc.ddpfPixelFormat.dwFlags);
+    ok(desc.ddpfPixelFormat.dwRGBBitCount == 32, "Got rgb bit count %u.\n", desc.ddpfPixelFormat.dwRGBBitCount);
+    ok(desc.ddpfPixelFormat.dwRBitMask == 0xff0000, "Got r bit mask %#x.\n", desc.ddpfPixelFormat.dwRBitMask);
+    ok(desc.ddpfPixelFormat.dwGBitMask == 0x00ff00, "Got g bit mask %#x.\n", desc.ddpfPixelFormat.dwGBitMask);
+    ok(desc.ddpfPixelFormat.dwBBitMask == 0x0000ff, "Got b bit mask %#x.\n", desc.ddpfPixelFormat.dwBBitMask);
+
+    get_ddrawstream_create_sample_desc(&rgb565_format, NULL, NULL, &desc);
+    ok(desc.dwWidth == 100, "Got width %u.\n", desc.dwWidth);
+    ok(desc.dwHeight == 100, "Got height %u.\n", desc.dwHeight);
+    ok(desc.ddpfPixelFormat.dwFlags == DDPF_RGB, "Got flags %#x.\n", desc.ddpfPixelFormat.dwFlags);
+    ok(desc.ddpfPixelFormat.dwRGBBitCount == 16, "Got rgb bit count %u.\n", desc.ddpfPixelFormat.dwRGBBitCount);
+    ok(desc.ddpfPixelFormat.dwRBitMask == 0xf800, "Got r bit mask %#x.\n", desc.ddpfPixelFormat.dwRBitMask);
+    ok(desc.ddpfPixelFormat.dwGBitMask == 0x07e0, "Got g bit mask %#x.\n", desc.ddpfPixelFormat.dwGBitMask);
+    ok(desc.ddpfPixelFormat.dwBBitMask == 0x001f, "Got b bit mask %#x.\n", desc.ddpfPixelFormat.dwBBitMask);
+
+    get_ddrawstream_create_sample_desc(&argb32_format, NULL, NULL, &desc);
+    ok(desc.dwWidth == 100, "Got width %u.\n", desc.dwWidth);
+    ok(desc.dwHeight == 100, "Got height %u.\n", desc.dwHeight);
+    ok(desc.ddpfPixelFormat.dwFlags == (DDPF_RGB | DDPF_ALPHAPIXELS), "Got flags %#x.\n", desc.ddpfPixelFormat.dwFlags);
+    ok(desc.ddpfPixelFormat.dwRGBBitCount == 32, "Got rgb bit count %u.\n", desc.ddpfPixelFormat.dwRGBBitCount);
+    ok(desc.ddpfPixelFormat.dwRBitMask == 0xff0000, "Got r bit mask %#x.\n", desc.ddpfPixelFormat.dwRBitMask);
+    ok(desc.ddpfPixelFormat.dwGBitMask == 0x00ff00, "Got g bit mask %#x.\n", desc.ddpfPixelFormat.dwGBitMask);
+    ok(desc.ddpfPixelFormat.dwBBitMask == 0x0000ff, "Got b bit mask %#x.\n", desc.ddpfPixelFormat.dwBBitMask);
+    ok(desc.ddpfPixelFormat.dwRGBAlphaBitMask == 0xff000000,
+            "Got alpha bit mask %#x.\n", desc.ddpfPixelFormat.dwBBitMask);
+
+    format1 = rgb32_format;
+    format1.dwFlags |= DDSD_CAPS;
+    format1.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_VIDEOMEMORY;
+    get_ddrawstream_create_sample_desc(&format1, NULL, NULL, &desc);
+    ok(desc.ddsCaps.dwCaps & DDSCAPS_OFFSCREENPLAIN, "Expected set DDSCAPS_OFFSCREENPLAIN.\n");
+    ok(desc.ddsCaps.dwCaps & DDSCAPS_SYSTEMMEMORY, "Expected set DDSCAPS_SYSTEMMEMORY.\n");
+    ok(!(desc.ddsCaps.dwCaps & DDSCAPS_VIDEOMEMORY), "Expected unset DDSCAPS_VIDEOMEMORY.\n");
+    ok(desc.dwWidth == 100, "Got width %u.\n", desc.dwWidth);
+    ok(desc.dwHeight == 100, "Got height %u.\n", desc.dwHeight);
+    ok(desc.ddpfPixelFormat.dwFlags == DDPF_RGB, "Got flags %#x.\n", desc.ddpfPixelFormat.dwFlags);
+    ok(desc.ddpfPixelFormat.dwRGBBitCount == 32, "Got rgb bit count %u.\n", desc.ddpfPixelFormat.dwRGBBitCount);
+    ok(desc.ddpfPixelFormat.dwRBitMask == 0xff0000, "Got r bit mask %#x.\n", desc.ddpfPixelFormat.dwRBitMask);
+    ok(desc.ddpfPixelFormat.dwGBitMask == 0x00ff00, "Got g bit mask %#x.\n", desc.ddpfPixelFormat.dwGBitMask);
+    ok(desc.ddpfPixelFormat.dwBBitMask == 0x0000ff, "Got b bit mask %#x.\n", desc.ddpfPixelFormat.dwBBitMask);
+
+    format1 = rgb32_format;
+    format1.dwFlags |= DDSD_CKSRCBLT;
+    format1.ddckCKSrcBlt.dwColorSpaceLowValue = 0xff00ff;
+    format1.ddckCKSrcBlt.dwColorSpaceHighValue = 0xff00ff;
+    get_ddrawstream_create_sample_desc(&format1, NULL, NULL, &desc);
+    ok(!(desc.dwFlags & DDSD_CKSRCBLT), "Expected unset DDSD_CKSRCBLT.\n");
+    ok(desc.dwWidth == 100, "Got width %u.\n", desc.dwWidth);
+    ok(desc.dwHeight == 100, "Got height %u.\n", desc.dwHeight);
+    ok(desc.ddpfPixelFormat.dwFlags == DDPF_RGB, "Got flags %#x.\n", desc.ddpfPixelFormat.dwFlags);
+    ok(desc.ddpfPixelFormat.dwRGBBitCount == 32, "Got rgb bit count %u.\n", desc.ddpfPixelFormat.dwRGBBitCount);
+    ok(desc.ddpfPixelFormat.dwRBitMask == 0xff0000, "Got r bit mask %#x.\n", desc.ddpfPixelFormat.dwRBitMask);
+    ok(desc.ddpfPixelFormat.dwGBitMask == 0x00ff00, "Got g bit mask %#x.\n", desc.ddpfPixelFormat.dwGBitMask);
+    ok(desc.ddpfPixelFormat.dwBBitMask == 0x0000ff, "Got b bit mask %#x.\n", desc.ddpfPixelFormat.dwBBitMask);
+    ok(desc.ddckCKSrcBlt.dwColorSpaceLowValue == 0, "Got color key low value %#x.\n",
+            desc.ddckCKSrcBlt.dwColorSpaceLowValue);
+    ok(desc.ddckCKSrcBlt.dwColorSpaceHighValue == 0, "Got color key high value %#x.\n",
+            desc.ddckCKSrcBlt.dwColorSpaceHighValue);
 }
 
 static void test_ddrawstreamsample_get_media_stream(void)
