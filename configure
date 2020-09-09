@@ -750,8 +750,6 @@ TOP_INSTALL_DEV
 TOP_INSTALL_LIB
 LDEXECFLAGS
 LDDLLFLAGS
-LDRPATH_LOCAL
-LDRPATH_INSTALL
 DLLFLAGS
 CPP
 OPENGL_LIBS
@@ -7882,10 +7880,6 @@ done
 
 DLLFLAGS="-D_REENTRANT"
 
-LDRPATH_INSTALL=""
-
-LDRPATH_LOCAL=""
-
 LDDLLFLAGS=""
 
 LDEXECFLAGS=""
@@ -8715,8 +8709,6 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
     LIBEXT="dylib"
     DLLFLAGS="$DLLFLAGS -fPIC"
     LDDLLFLAGS="-fPIC"
-    LDRPATH_INSTALL="-Wl,-rpath,@loader_path/\`\$(MAKEDEP) -R \${bindir} \${libdir}\`"
-    LDRPATH_LOCAL="-Wl,-rpath,@loader_path/\$(top_builddir)/libs/wine"
         COREFOUNDATION_LIBS="-framework CoreFoundation"
 
     IOKIT_LIBS="-framework IOKit -framework CoreFoundation"
@@ -9174,88 +9166,6 @@ if test "x$ac_cv_cflags__fPIC__Wl___export_dynamic" = xyes; then :
   WINELOADER_LDFLAGS="-Wl,--export-dynamic"
 fi
     WINEPRELOADER_LDFLAGS="-static -nostartfiles -nodefaultlibs -Wl,-Ttext=0x7d400000"
-    as_ac_var=`$as_echo "ac_cv_cflags_-fPIC -Wl,--rpath,\\$ORIGIN/../lib" | $as_tr_sh`
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -fPIC -Wl,--rpath,\$ORIGIN/../lib" >&5
-$as_echo_n "checking whether the compiler supports -fPIC -Wl,--rpath,\$ORIGIN/../lib... " >&6; }
-if eval \${$as_ac_var+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_wine_try_cflags_saved=$CFLAGS
-CFLAGS="$CFLAGS -fPIC -Wl,--rpath,\$ORIGIN/../lib"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-int main(int argc, char **argv) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  eval "$as_ac_var=yes"
-else
-  eval "$as_ac_var=no"
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-fi
-eval ac_res=\$$as_ac_var
-	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-$as_echo "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
-  LDRPATH_INSTALL="-Wl,--rpath,\\\$\$ORIGIN/\`\$(MAKEDEP) -R \${bindir} \${libdir}\`"
-                     LDRPATH_LOCAL="-Wl,--rpath,\\\$\$ORIGIN/\$(top_builddir)/libs/wine"
-else
-  as_ac_var=`$as_echo "ac_cv_cflags_-fPIC -Wl,-R,\\$ORIGIN/../lib" | $as_tr_sh`
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -fPIC -Wl,-R,\$ORIGIN/../lib" >&5
-$as_echo_n "checking whether the compiler supports -fPIC -Wl,-R,\$ORIGIN/../lib... " >&6; }
-if eval \${$as_ac_var+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_wine_try_cflags_saved=$CFLAGS
-CFLAGS="$CFLAGS -fPIC -Wl,-R,\$ORIGIN/../lib"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-int main(int argc, char **argv) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  eval "$as_ac_var=yes"
-else
-  eval "$as_ac_var=no"
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-fi
-eval ac_res=\$$as_ac_var
-	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-$as_echo "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
-  LDRPATH_INSTALL="-Wl,-R,\\\$\$ORIGIN/\`\$(MAKEDEP) -R \${bindir} \${libdir}\`"
-                          LDRPATH_LOCAL="-Wl,-R,\\\$\$ORIGIN/\$(top_builddir)/libs/wine"
-fi
-fi
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,--enable-new-dtags" >&5
-$as_echo_n "checking whether the compiler supports -Wl,--enable-new-dtags... " >&6; }
-if ${ac_cv_cflags__Wl___enable_new_dtags+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_wine_try_cflags_saved=$CFLAGS
-CFLAGS="$CFLAGS -Wl,--enable-new-dtags"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-int main(int argc, char **argv) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_cflags__Wl___enable_new_dtags=yes
-else
-  ac_cv_cflags__Wl___enable_new_dtags=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wl___enable_new_dtags" >&5
-$as_echo "$ac_cv_cflags__Wl___enable_new_dtags" >&6; }
-if test "x$ac_cv_cflags__Wl___enable_new_dtags" = xyes; then :
-  LDRPATH_INSTALL="$LDRPATH_INSTALL -Wl,--enable-new-dtags"
-fi
 
     LIBWINE_SHAREDLIB="libwine.so"
 
@@ -9530,90 +9440,6 @@ if test "x$ac_cv_cflags__Wl___export_dynamic" = xyes; then :
   WINELOADER_LDFLAGS="-Wl,--export-dynamic"
 fi
       WINEPRELOADER_LDFLAGS="-static -nostartfiles -nodefaultlibs -Wl,-Ttext=0x7d400000"
-
-      as_ac_var=`$as_echo "ac_cv_cflags_-Wl,--rpath,\\$ORIGIN/../lib" | $as_tr_sh`
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,--rpath,\$ORIGIN/../lib" >&5
-$as_echo_n "checking whether the compiler supports -Wl,--rpath,\$ORIGIN/../lib... " >&6; }
-if eval \${$as_ac_var+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_wine_try_cflags_saved=$CFLAGS
-CFLAGS="$CFLAGS -Wl,--rpath,\$ORIGIN/../lib"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-int main(int argc, char **argv) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  eval "$as_ac_var=yes"
-else
-  eval "$as_ac_var=no"
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-fi
-eval ac_res=\$$as_ac_var
-	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-$as_echo "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
-  LDRPATH_INSTALL="-Wl,--rpath,\\\$\$ORIGIN/\`\$(MAKEDEP) -R \${bindir} \${libdir}\`"
-                       LDRPATH_LOCAL="-Wl,--rpath,\\\$\$ORIGIN/\$(top_builddir)/libs/wine"
-else
-  as_ac_var=`$as_echo "ac_cv_cflags_-Wl,-R,\\$ORIGIN/../lib" | $as_tr_sh`
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-R,\$ORIGIN/../lib" >&5
-$as_echo_n "checking whether the compiler supports -Wl,-R,\$ORIGIN/../lib... " >&6; }
-if eval \${$as_ac_var+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_wine_try_cflags_saved=$CFLAGS
-CFLAGS="$CFLAGS -Wl,-R,\$ORIGIN/../lib"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-int main(int argc, char **argv) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  eval "$as_ac_var=yes"
-else
-  eval "$as_ac_var=no"
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-fi
-eval ac_res=\$$as_ac_var
-	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-$as_echo "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
-  LDRPATH_INSTALL="-Wl,-R,\\\$\$ORIGIN/\`\$(MAKEDEP) -R \${bindir} \${libdir}\`"
-                            LDRPATH_LOCAL="-Wl,-R,\\\$\$ORIGIN/\$(top_builddir)/libs/wine"
-fi
-fi
-
-      { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,--enable-new-dtags" >&5
-$as_echo_n "checking whether the compiler supports -Wl,--enable-new-dtags... " >&6; }
-if ${ac_cv_cflags__Wl___enable_new_dtags+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_wine_try_cflags_saved=$CFLAGS
-CFLAGS="$CFLAGS -Wl,--enable-new-dtags"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-int main(int argc, char **argv) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_cflags__Wl___enable_new_dtags=yes
-else
-  ac_cv_cflags__Wl___enable_new_dtags=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wl___enable_new_dtags" >&5
-$as_echo "$ac_cv_cflags__Wl___enable_new_dtags" >&6; }
-if test "x$ac_cv_cflags__Wl___enable_new_dtags" = xyes; then :
-  LDRPATH_INSTALL="$LDRPATH_INSTALL -Wl,--enable-new-dtags"
-fi
 
       case $host_cpu in
         *i[3456789]86* | x86_64 | *aarch64*)

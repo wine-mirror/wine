@@ -3592,8 +3592,6 @@ static void output_test_module( struct makefile *make )
 static void output_programs( struct makefile *make )
 {
     unsigned int i, j;
-    char *ldrpath_local   = get_expanded_make_variable( make, "LDRPATH_LOCAL" );
-    char *ldrpath_install = get_expanded_make_variable( make, "LDRPATH_INSTALL" );
 
     for (i = 0; i < make->programs.count; i++)
     {
@@ -3614,28 +3612,6 @@ static void output_programs( struct makefile *make )
         output( "\n" );
         output( "\t$(CC) -o $@" );
         output_filenames_obj_dir( make, objs );
-
-        if (strarray_exists( &all_libs, "-lwine" ))
-        {
-            strarray_add( &all_libs, strmake( "-L%s", top_obj_dir_path( make, "libs/wine" )));
-            if (ldrpath_local && ldrpath_install)
-            {
-                program_installed = strmake( "%s-installed%s", make->programs.str[i], exe_ext );
-                output_filename( ldrpath_local );
-                output_filenames( all_libs );
-                output_filename( "$(LDFLAGS)" );
-                output( "\n" );
-                output( "%s:", obj_dir_path( make, program_installed ) );
-                output_filenames_obj_dir( make, objs );
-                output_filenames( deps );
-                output( "\n" );
-                output( "\t$(CC) -o $@" );
-                output_filenames_obj_dir( make, objs );
-                output_filename( ldrpath_install );
-                strarray_add( &make->all_targets, program_installed );
-            }
-        }
-
         output_filenames( all_libs );
         output_filename( "$(LDFLAGS)" );
         output( "\n" );

@@ -701,8 +701,6 @@ AC_CHECK_HEADERS([libprocstat.h],,,
 dnl **** Check for working dll ****
 
 AC_SUBST(DLLFLAGS,"-D_REENTRANT")
-AC_SUBST(LDRPATH_INSTALL,"")
-AC_SUBST(LDRPATH_LOCAL,"")
 AC_SUBST(LDDLLFLAGS,"")
 AC_SUBST(LDEXECFLAGS,"")
 AC_SUBST(TOP_INSTALL_LIB,"")
@@ -748,8 +746,6 @@ case $host_os in
     LIBEXT="dylib"
     DLLFLAGS="$DLLFLAGS -fPIC"
     LDDLLFLAGS="-fPIC"
-    LDRPATH_INSTALL="-Wl,-rpath,@loader_path/\`\$(MAKEDEP) -R \${bindir} \${libdir}\`"
-    LDRPATH_LOCAL="-Wl,-rpath,@loader_path/\$(top_builddir)/libs/wine"
     dnl declare needed frameworks
     AC_SUBST(COREFOUNDATION_LIBS,"-framework CoreFoundation")
     AC_SUBST(IOKIT_LIBS,"-framework IOKit -framework CoreFoundation")
@@ -916,14 +912,6 @@ case $host_os in
     WINE_TRY_CFLAGS([-fPIC -Wl,--export-dynamic],
                     [WINELOADER_LDFLAGS="-Wl,--export-dynamic"])
     WINEPRELOADER_LDFLAGS="-static -nostartfiles -nodefaultlibs -Wl,-Ttext=0x7d400000"
-    WINE_TRY_CFLAGS([-fPIC -Wl,--rpath,\$ORIGIN/../lib],
-                    [LDRPATH_INSTALL="-Wl,--rpath,\\\$\$ORIGIN/\`\$(MAKEDEP) -R \${bindir} \${libdir}\`"
-                     LDRPATH_LOCAL="-Wl,--rpath,\\\$\$ORIGIN/\$(top_builddir)/libs/wine"],
-        [WINE_TRY_CFLAGS([-fPIC -Wl,-R,\$ORIGIN/../lib],
-                         [LDRPATH_INSTALL="-Wl,-R,\\\$\$ORIGIN/\`\$(MAKEDEP) -R \${bindir} \${libdir}\`"
-                          LDRPATH_LOCAL="-Wl,-R,\\\$\$ORIGIN/\$(top_builddir)/libs/wine"])])
-    WINE_TRY_CFLAGS([-Wl,--enable-new-dtags],
-                    [LDRPATH_INSTALL="$LDRPATH_INSTALL -Wl,--enable-new-dtags"])
 
     AC_SUBST(LIBWINE_SHAREDLIB,"libwine.so")
     AC_SUBST(LIBWINE_LDFLAGS,["-shared -Wl,-soname,libwine.so"])
@@ -971,16 +959,6 @@ case $host_os in
       WINE_TRY_CFLAGS([-Wl,--export-dynamic],
                       [WINELOADER_LDFLAGS="-Wl,--export-dynamic"])
       WINEPRELOADER_LDFLAGS="-static -nostartfiles -nodefaultlibs -Wl,-Ttext=0x7d400000"
-
-      WINE_TRY_CFLAGS([-Wl,--rpath,\$ORIGIN/../lib],
-                      [LDRPATH_INSTALL="-Wl,--rpath,\\\$\$ORIGIN/\`\$(MAKEDEP) -R \${bindir} \${libdir}\`"
-                       LDRPATH_LOCAL="-Wl,--rpath,\\\$\$ORIGIN/\$(top_builddir)/libs/wine"],
-          [WINE_TRY_CFLAGS([-Wl,-R,\$ORIGIN/../lib],
-                           [LDRPATH_INSTALL="-Wl,-R,\\\$\$ORIGIN/\`\$(MAKEDEP) -R \${bindir} \${libdir}\`"
-                            LDRPATH_LOCAL="-Wl,-R,\\\$\$ORIGIN/\$(top_builddir)/libs/wine"])])
-
-      WINE_TRY_CFLAGS([-Wl,--enable-new-dtags],
-                      [LDRPATH_INSTALL="$LDRPATH_INSTALL -Wl,--enable-new-dtags"])
 
       case $host_cpu in
         *i[[3456789]]86* | x86_64 | *aarch64*)
