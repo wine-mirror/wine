@@ -424,8 +424,8 @@ static void test_default_mixer(void)
     DWORD input_id, output_id;
     IMFTransform *transform;
     DXVA2_ValueRange range;
-    DXVA2_Fixed32 value;
-    DWORD flags, count;
+    DXVA2_Fixed32 dxva_value;
+    DWORD flags, value, count;
     IMFGetService *gs;
     COLORREF color;
     unsigned int i;
@@ -487,7 +487,7 @@ static void test_default_mixer(void)
 todo_wine
     ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#x.\n", hr);
 
-    hr = IMFVideoProcessor_GetFilteringValue(processor, DXVA2_DetailFilterChromaLevel, &value);
+    hr = IMFVideoProcessor_GetFilteringValue(processor, DXVA2_DetailFilterChromaLevel, &dxva_value);
 todo_wine
     ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#x.\n", hr);
 
@@ -531,6 +531,25 @@ todo_wine
     hr = IMFTransform_GetAttributes(transform, &attributes2);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(attributes == attributes2, "Unexpected attributes instance.\n");
+    IMFAttributes_Release(attributes2);
+
+    hr = IMFTransform_QueryInterface(transform, &IID_IMFAttributes, (void **)&attributes2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(attributes != attributes2, "Unexpected attributes instance.\n");
+
+    hr = IMFAttributes_QueryInterface(attributes2, &IID_IMFTransform, (void **)&unk);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IUnknown_Release(unk);
+
+    hr = IMFAttributes_GetCount(attributes2, &count);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(count == 1, "Unexpected attribute count %u.\n", count);
+
+    value = 0;
+    hr = IMFAttributes_GetUINT32(attributes2, &MF_SA_D3D_AWARE, &value);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(value == 1, "Unexpected value %d.\n", value);
+
     IMFAttributes_Release(attributes2);
 
     hr = IMFAttributes_GetCount(attributes, &count);

@@ -60,6 +60,7 @@ struct video_mixer
     IMFVideoMixerBitmap IMFVideoMixerBitmap_iface;
     IMFVideoPositionMapper IMFVideoPositionMapper_iface;
     IMFVideoProcessor IMFVideoProcessor_iface;
+    IMFAttributes IMFAttributes_iface;
     IUnknown IUnknown_inner;
     IUnknown *outer_unk;
     LONG refcount;
@@ -73,6 +74,7 @@ struct video_mixer
     IDirect3DDeviceManager9 *device_manager;
     IMediaEventSink *event_sink;
     IMFAttributes *attributes;
+    IMFAttributes *internal_attributes;
     unsigned int mixing_flags;
     CRITICAL_SECTION cs;
 };
@@ -120,6 +122,11 @@ static struct video_mixer *impl_from_IMFVideoPositionMapper(IMFVideoPositionMapp
 static struct video_mixer *impl_from_IMFVideoProcessor(IMFVideoProcessor *iface)
 {
     return CONTAINING_RECORD(iface, struct video_mixer, IMFVideoProcessor_iface);
+}
+
+static struct video_mixer *impl_from_IMFAttributes(IMFAttributes *iface)
+{
+    return CONTAINING_RECORD(iface, struct video_mixer, IMFAttributes_iface);
 }
 
 static int video_mixer_compare_input_id(const void *a, const void *b)
@@ -206,6 +213,10 @@ static HRESULT WINAPI video_mixer_inner_QueryInterface(IUnknown *iface, REFIID r
     {
         *obj = &mixer->IMFVideoProcessor_iface;
     }
+    else if (IsEqualIID(riid, &IID_IMFAttributes))
+    {
+        *obj = &mixer->IMFAttributes_iface;
+    }
     else
     {
         WARN("Unsupported interface %s.\n", debugstr_guid(riid));
@@ -247,6 +258,8 @@ static ULONG WINAPI video_mixer_inner_Release(IUnknown *iface)
             IDirect3DDeviceManager9_Release(mixer->device_manager);
         if (mixer->attributes)
             IMFAttributes_Release(mixer->attributes);
+        if (mixer->internal_attributes)
+            IMFAttributes_Release(mixer->internal_attributes);
         DeleteCriticalSection(&mixer->cs);
         free(mixer);
     }
@@ -1326,6 +1339,337 @@ static const IMFVideoProcessorVtbl video_mixer_processor_vtbl =
     video_mixer_processor_SetBackgroundColor,
 };
 
+static HRESULT WINAPI video_mixer_attributes_QueryInterface(IMFAttributes *iface, REFIID riid, void **out)
+{
+    struct video_mixer *mixer = impl_from_IMFAttributes(iface);
+    return IMFTransform_QueryInterface(&mixer->IMFTransform_iface, riid, out);
+}
+
+static ULONG WINAPI video_mixer_attributes_AddRef(IMFAttributes *iface)
+{
+    struct video_mixer *mixer = impl_from_IMFAttributes(iface);
+    return IMFTransform_AddRef(&mixer->IMFTransform_iface);
+}
+
+static ULONG WINAPI video_mixer_attributes_Release(IMFAttributes *iface)
+{
+    struct video_mixer *mixer = impl_from_IMFAttributes(iface);
+    return IMFTransform_Release(&mixer->IMFTransform_iface);
+}
+
+static HRESULT WINAPI video_mixer_attributes_GetItem(IMFAttributes *iface, REFGUID key, PROPVARIANT *value)
+{
+    struct video_mixer *mixer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(key), value);
+
+    return IMFAttributes_GetItem(mixer->internal_attributes, key, value);
+}
+
+static HRESULT WINAPI video_mixer_attributes_GetItemType(IMFAttributes *iface, REFGUID key, MF_ATTRIBUTE_TYPE *type)
+{
+    struct video_mixer *mixer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(key), type);
+
+    return IMFAttributes_GetItemType(mixer->internal_attributes, key, type);
+}
+
+static HRESULT WINAPI video_mixer_attributes_CompareItem(IMFAttributes *iface, REFGUID key,
+        REFPROPVARIANT value, BOOL *result)
+{
+    struct video_mixer *mixer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p, %p.\n", iface, debugstr_guid(key), value, result);
+
+    return IMFAttributes_CompareItem(mixer->internal_attributes, key, value, result);
+}
+
+static HRESULT WINAPI video_mixer_attributes_Compare(IMFAttributes *iface, IMFAttributes *theirs,
+        MF_ATTRIBUTES_MATCH_TYPE match_type, BOOL *ret)
+{
+    struct video_mixer *mixer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %p, %d, %p.\n", iface, theirs, match_type, ret);
+
+    return IMFAttributes_Compare(mixer->internal_attributes, theirs, match_type, ret);
+}
+
+static HRESULT WINAPI video_mixer_attributes_GetUINT32(IMFAttributes *iface, REFGUID key, UINT32 *value)
+{
+    struct video_mixer *mixer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(key), value);
+
+    return IMFAttributes_GetUINT32(mixer->internal_attributes, key, value);
+}
+
+static HRESULT WINAPI video_mixer_attributes_GetUINT64(IMFAttributes *iface, REFGUID key, UINT64 *value)
+{
+    struct video_mixer *mixer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(key), value);
+
+    return IMFAttributes_GetUINT64(mixer->internal_attributes, key, value);
+}
+
+static HRESULT WINAPI video_mixer_attributes_GetDouble(IMFAttributes *iface, REFGUID key, double *value)
+{
+    struct video_mixer *mixer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(key), value);
+
+    return IMFAttributes_GetDouble(mixer->internal_attributes, key, value);
+}
+
+static HRESULT WINAPI video_mixer_attributes_GetGUID(IMFAttributes *iface, REFGUID key, GUID *value)
+{
+    struct video_mixer *mixer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(key), value);
+
+    return IMFAttributes_GetGUID(mixer->internal_attributes, key, value);
+}
+
+static HRESULT WINAPI video_mixer_attributes_GetStringLength(IMFAttributes *iface, REFGUID key, UINT32 *length)
+{
+    struct video_mixer *mixer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(key), length);
+
+    return IMFAttributes_GetStringLength(mixer->internal_attributes, key, length);
+}
+
+static HRESULT WINAPI video_mixer_attributes_GetString(IMFAttributes *iface, REFGUID key, WCHAR *value,
+        UINT32 size, UINT32 *length)
+{
+    struct video_mixer *mixer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p, %d, %p.\n", iface, debugstr_guid(key), value, size, length);
+
+    return IMFAttributes_GetString(mixer->internal_attributes, key, value, size, length);
+}
+
+static HRESULT WINAPI video_mixer_attributes_GetAllocatedString(IMFAttributes *iface, REFGUID key,
+        WCHAR **value, UINT32 *length)
+{
+    struct video_mixer *mixer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p, %p.\n", iface, debugstr_guid(key), value, length);
+
+    return IMFAttributes_GetAllocatedString(mixer->internal_attributes, key, value, length);
+}
+
+static HRESULT WINAPI video_mixer_attributes_GetBlobSize(IMFAttributes *iface, REFGUID key, UINT32 *size)
+{
+    struct video_mixer *mixer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(key), size);
+
+    return IMFAttributes_GetBlobSize(mixer->internal_attributes, key, size);
+}
+
+static HRESULT WINAPI video_mixer_attributes_GetBlob(IMFAttributes *iface, REFGUID key, UINT8 *buf,
+                UINT32 bufsize, UINT32 *blobsize)
+{
+    struct video_mixer *mixer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p, %d, %p.\n", iface, debugstr_guid(key), buf, bufsize, blobsize);
+
+    return IMFAttributes_GetBlob(mixer->internal_attributes, key, buf, bufsize, blobsize);
+}
+
+static HRESULT WINAPI video_mixer_attributes_GetAllocatedBlob(IMFAttributes *iface, REFGUID key, UINT8 **buf, UINT32 *size)
+{
+    struct video_mixer *mixer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p, %p.\n", iface, debugstr_guid(key), buf, size);
+
+    return IMFAttributes_GetAllocatedBlob(mixer->internal_attributes, key, buf, size);
+}
+
+static HRESULT WINAPI video_mixer_attributes_GetUnknown(IMFAttributes *iface, REFGUID key, REFIID riid, void **out)
+{
+    struct video_mixer *mixer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %s, %p.\n", iface, debugstr_guid(key), debugstr_guid(riid), out);
+
+    return IMFAttributes_GetUnknown(mixer->internal_attributes, key, riid, out);
+}
+
+static HRESULT WINAPI video_mixer_attributes_SetItem(IMFAttributes *iface, REFGUID key, REFPROPVARIANT value)
+{
+    struct video_mixer *mixer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(key), value);
+
+    return IMFAttributes_SetItem(mixer->internal_attributes, key, value);
+}
+
+static HRESULT WINAPI video_mixer_attributes_DeleteItem(IMFAttributes *iface, REFGUID key)
+{
+    struct video_mixer *mixer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s.\n", iface, debugstr_guid(key));
+
+    return IMFAttributes_DeleteItem(mixer->internal_attributes, key);
+}
+
+static HRESULT WINAPI video_mixer_attributes_DeleteAllItems(IMFAttributes *iface)
+{
+    struct video_mixer *mixer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p.\n", iface);
+
+    return IMFAttributes_DeleteAllItems(mixer->internal_attributes);
+}
+
+static HRESULT WINAPI video_mixer_attributes_SetUINT32(IMFAttributes *iface, REFGUID key, UINT32 value)
+{
+    struct video_mixer *mixer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %u.\n", iface, debugstr_guid(key), value);
+
+    return IMFAttributes_SetUINT32(mixer->internal_attributes, key, value);
+}
+
+static HRESULT WINAPI video_mixer_attributes_SetUINT64(IMFAttributes *iface, REFGUID key, UINT64 value)
+{
+    struct video_mixer *mixer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %s.\n", iface, debugstr_guid(key), wine_dbgstr_longlong(value));
+
+    return IMFAttributes_SetUINT64(mixer->internal_attributes, key, value);
+}
+
+static HRESULT WINAPI video_mixer_attributes_SetDouble(IMFAttributes *iface, REFGUID key, double value)
+{
+    struct video_mixer *mixer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %f.\n", iface, debugstr_guid(key), value);
+
+    return IMFAttributes_SetDouble(mixer->internal_attributes, key, value);
+}
+
+static HRESULT WINAPI video_mixer_attributes_SetGUID(IMFAttributes *iface, REFGUID key, REFGUID value)
+{
+    struct video_mixer *mixer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %s.\n", iface, debugstr_guid(key), debugstr_guid(value));
+
+    return IMFAttributes_SetGUID(mixer->internal_attributes, key, value);
+}
+
+static HRESULT WINAPI video_mixer_attributes_SetString(IMFAttributes *iface, REFGUID key, const WCHAR *value)
+{
+    struct video_mixer *mixer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %s.\n", iface, debugstr_guid(key), debugstr_w(value));
+
+    return IMFAttributes_SetString(mixer->internal_attributes, key, value);
+}
+
+static HRESULT WINAPI video_mixer_attributes_SetBlob(IMFAttributes *iface, REFGUID key, const UINT8 *buf, UINT32 size)
+{
+    struct video_mixer *mixer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p, %u.\n", iface, debugstr_guid(key), buf, size);
+
+    return IMFAttributes_SetBlob(mixer->internal_attributes, key, buf, size);
+}
+
+static HRESULT WINAPI video_mixer_attributes_SetUnknown(IMFAttributes *iface, REFGUID key, IUnknown *unknown)
+{
+    struct video_mixer *mixer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(key), unknown);
+
+    return IMFAttributes_SetUnknown(mixer->internal_attributes, key, unknown);
+}
+
+static HRESULT WINAPI video_mixer_attributes_LockStore(IMFAttributes *iface)
+{
+    struct video_mixer *mixer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p.\n", iface);
+
+    return IMFAttributes_LockStore(mixer->internal_attributes);
+}
+
+static HRESULT WINAPI video_mixer_attributes_UnlockStore(IMFAttributes *iface)
+{
+    struct video_mixer *mixer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p.\n", iface);
+
+    return IMFAttributes_UnlockStore(mixer->internal_attributes);
+}
+
+static HRESULT WINAPI video_mixer_attributes_GetCount(IMFAttributes *iface, UINT32 *count)
+{
+    struct video_mixer *mixer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %p.\n", iface, count);
+
+    return IMFAttributes_GetCount(mixer->internal_attributes, count);
+}
+
+static HRESULT WINAPI video_mixer_attributes_GetItemByIndex(IMFAttributes *iface, UINT32 index,
+        GUID *key, PROPVARIANT *value)
+{
+    struct video_mixer *mixer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %u, %p, %p.\n", iface, index, key, value);
+
+    return IMFAttributes_GetItemByIndex(mixer->internal_attributes, index, key, value);
+}
+
+static HRESULT WINAPI video_mixer_attributes_CopyAllItems(IMFAttributes *iface, IMFAttributes *dest)
+{
+    struct video_mixer *mixer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %p.\n", iface, dest);
+
+    return IMFAttributes_CopyAllItems(mixer->internal_attributes, dest);
+}
+
+static const IMFAttributesVtbl video_mixer_attributes_vtbl =
+{
+    video_mixer_attributes_QueryInterface,
+    video_mixer_attributes_AddRef,
+    video_mixer_attributes_Release,
+    video_mixer_attributes_GetItem,
+    video_mixer_attributes_GetItemType,
+    video_mixer_attributes_CompareItem,
+    video_mixer_attributes_Compare,
+    video_mixer_attributes_GetUINT32,
+    video_mixer_attributes_GetUINT64,
+    video_mixer_attributes_GetDouble,
+    video_mixer_attributes_GetGUID,
+    video_mixer_attributes_GetStringLength,
+    video_mixer_attributes_GetString,
+    video_mixer_attributes_GetAllocatedString,
+    video_mixer_attributes_GetBlobSize,
+    video_mixer_attributes_GetBlob,
+    video_mixer_attributes_GetAllocatedBlob,
+    video_mixer_attributes_GetUnknown,
+    video_mixer_attributes_SetItem,
+    video_mixer_attributes_DeleteItem,
+    video_mixer_attributes_DeleteAllItems,
+    video_mixer_attributes_SetUINT32,
+    video_mixer_attributes_SetUINT64,
+    video_mixer_attributes_SetDouble,
+    video_mixer_attributes_SetGUID,
+    video_mixer_attributes_SetString,
+    video_mixer_attributes_SetBlob,
+    video_mixer_attributes_SetUnknown,
+    video_mixer_attributes_LockStore,
+    video_mixer_attributes_UnlockStore,
+    video_mixer_attributes_GetCount,
+    video_mixer_attributes_GetItemByIndex,
+    video_mixer_attributes_CopyAllItems
+};
+
 HRESULT WINAPI MFCreateVideoMixer(IUnknown *owner, REFIID riid_device, REFIID riid, void **obj)
 {
     TRACE("%p, %s, %s, %p.\n", owner, debugstr_guid(riid_device), debugstr_guid(riid), obj);
@@ -1355,6 +1699,7 @@ HRESULT evr_mixer_create(IUnknown *outer, void **out)
     object->IMFVideoMixerBitmap_iface.lpVtbl = &video_mixer_bitmap_vtbl;
     object->IMFVideoPositionMapper_iface.lpVtbl = &video_mixer_position_mapper_vtbl;
     object->IMFVideoProcessor_iface.lpVtbl = &video_mixer_processor_vtbl;
+    object->IMFAttributes_iface.lpVtbl = &video_mixer_attributes_vtbl;
     object->IUnknown_inner.lpVtbl = &video_mixer_inner_vtbl;
     object->outer_unk = outer ? outer : &object->IUnknown_inner;
     object->refcount = 1;
@@ -1366,9 +1711,19 @@ HRESULT evr_mixer_create(IUnknown *outer, void **out)
         IUnknown_Release(&object->IUnknown_inner);
         return hr;
     }
+    if (FAILED(hr = MFCreateAttributes(&object->internal_attributes, 0)))
+    {
+        IUnknown_Release(&object->IUnknown_inner);
+        return hr;
+    }
+
+    /* Default attributes configuration. */
+
     rect.left = rect.top = 0.0f;
     rect.right = rect.bottom = 1.0f;
     IMFAttributes_SetBlob(object->attributes, &VIDEO_ZOOM_RECT, (const UINT8 *)&rect, sizeof(rect));
+
+    IMFAttributes_SetUINT32(object->internal_attributes, &MF_SA_D3D_AWARE, 1);
 
     *out = &object->IUnknown_inner;
 
