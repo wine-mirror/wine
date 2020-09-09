@@ -54,6 +54,9 @@ extern "C" {
 #define CRYPTCAT_E_CDF_ATTR_TOOFEWVALUES    0x00020002
 #define CRYPTCAT_E_CDF_ATTR_TYPECOMBO       0x00020004
 
+#define CRYPTCAT_VERSION_1  0x100
+#define CRYPTCAT_VERSION_2  0x200
+
 #include <pshpack8.h>
 
 typedef struct CRYPTCATATTRIBUTE_
