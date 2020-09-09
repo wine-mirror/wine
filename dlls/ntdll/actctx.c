@@ -2265,7 +2265,11 @@ static void parse_dependent_assembly_elem( xmlbuf_t *xmlbuf, struct actctx_loade
         {
             parse_assembly_identity_elem(xmlbuf, acl->actctx, &ai, &elem);
             /* store the newly found identity for later loading */
-            if (ai.arch && !wcscmp(ai.arch, wildcardW)) ai.arch = strdupW( current_archW );
+            if (ai.arch && !wcscmp(ai.arch, wildcardW))
+            {
+                RtlFreeHeap( GetProcessHeap(), 0, ai.arch );
+                ai.arch = strdupW( current_archW );
+            }
             TRACE( "adding name=%s version=%s arch=%s\n",
                    debugstr_w(ai.name), debugstr_version(&ai.version), debugstr_w(ai.arch) );
             if (!add_dependent_assembly_id(acl, &ai)) set_error( xmlbuf );
