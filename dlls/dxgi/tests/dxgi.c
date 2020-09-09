@@ -207,8 +207,9 @@ static unsigned int check_multisample_quality_levels(IDXGIDevice *dxgi_device,
 #define MODE_DESC_IGNORE_FORMAT            0x00000004u
 #define MODE_DESC_IGNORE_SCANLINE_ORDERING 0x00000008u
 #define MODE_DESC_IGNORE_SCALING           0x00000010u
+#define MODE_DESC_IGNORE_EXACT_RESOLUTION  0x00000020u
 
-#define MODE_DESC_CHECK_RESOLUTION         (~MODE_DESC_IGNORE_RESOLUTION)
+#define MODE_DESC_CHECK_RESOLUTION         (~MODE_DESC_IGNORE_RESOLUTION & ~MODE_DESC_IGNORE_EXACT_RESOLUTION)
 #define MODE_DESC_CHECK_FORMAT             (~MODE_DESC_IGNORE_FORMAT)
 
 #define check_mode_desc(a, b, c) check_mode_desc_(__LINE__, a, b, c)
@@ -217,10 +218,16 @@ static void check_mode_desc_(unsigned int line, const DXGI_MODE_DESC *desc,
 {
     if (!(ignore_flags & MODE_DESC_IGNORE_RESOLUTION))
     {
-        ok_(__FILE__, line)(desc->Width == expected_desc->Width
-                && desc->Height == expected_desc->Height,
-                "Got resolution %ux%u, expected %ux%u.\n",
-                desc->Width, desc->Height, expected_desc->Width, expected_desc->Height);
+        if (ignore_flags & MODE_DESC_IGNORE_EXACT_RESOLUTION)
+            ok_(__FILE__, line)(desc->Width * desc->Height ==
+                    expected_desc->Width * expected_desc->Height,
+                    "Got resolution %ux%u, expected %ux%u.\n",
+                    desc->Width, desc->Height, expected_desc->Width, expected_desc->Height);
+        else
+            ok_(__FILE__, line)(desc->Width == expected_desc->Width &&
+                    desc->Height == expected_desc->Height,
+                    "Got resolution %ux%u, expected %ux%u.\n",
+                    desc->Width, desc->Height, expected_desc->Width, expected_desc->Height);
     }
     if (!(ignore_flags & MODE_DESC_IGNORE_REFRESH_RATE))
     {
@@ -1526,7 +1533,8 @@ static void test_find_closest_matching_mode(void)
         mode.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
         hr = IDXGIOutput_FindClosestMatchingMode(output, &mode, &matching_mode, NULL);
         ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-        check_mode_desc(&matching_mode, &modes[i], MODE_DESC_CHECK_RESOLUTION & MODE_DESC_CHECK_FORMAT);
+        check_mode_desc(&matching_mode, &modes[i],
+                (MODE_DESC_CHECK_RESOLUTION & MODE_DESC_CHECK_FORMAT) | MODE_DESC_IGNORE_EXACT_RESOLUTION);
 
         memset(&mode, 0, sizeof(mode));
         mode.Width = modes[i].Width + 1;
@@ -1534,7 +1542,8 @@ static void test_find_closest_matching_mode(void)
         mode.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
         hr = IDXGIOutput_FindClosestMatchingMode(output, &mode, &matching_mode, NULL);
         ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-        check_mode_desc(&matching_mode, &modes[i], MODE_DESC_CHECK_RESOLUTION & MODE_DESC_CHECK_FORMAT);
+        check_mode_desc(&matching_mode, &modes[i],
+                (MODE_DESC_CHECK_RESOLUTION & MODE_DESC_CHECK_FORMAT) | MODE_DESC_IGNORE_EXACT_RESOLUTION);
     }
 
     memset(&mode, 0, sizeof(mode));
