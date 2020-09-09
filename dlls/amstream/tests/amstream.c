@@ -51,6 +51,164 @@ static const AM_MEDIA_TYPE audio_mt =
     .pbFormat = (BYTE *)&audio_format,
 };
 
+static const VIDEOINFO rgb8_video_info =
+{
+    .bmiHeader.biSize = sizeof(BITMAPINFOHEADER),
+    .bmiHeader.biWidth = 333,
+    .bmiHeader.biHeight = -444,
+    .bmiHeader.biPlanes = 1,
+    .bmiHeader.biBitCount = 8,
+    .bmiHeader.biCompression = BI_RGB,
+};
+
+static const VIDEOINFO rgb555_video_info =
+{
+    .bmiHeader.biSize = sizeof(BITMAPINFOHEADER),
+    .bmiHeader.biWidth = 333,
+    .bmiHeader.biHeight = -444,
+    .bmiHeader.biPlanes = 1,
+    .bmiHeader.biBitCount = 16,
+    .bmiHeader.biCompression = BI_RGB,
+};
+
+static const VIDEOINFO rgb565_video_info =
+{
+    .bmiHeader.biSize = sizeof(BITMAPINFOHEADER),
+    .bmiHeader.biWidth = 333,
+    .bmiHeader.biHeight = -444,
+    .bmiHeader.biPlanes = 1,
+    .bmiHeader.biBitCount = 16,
+    .bmiHeader.biCompression = BI_BITFIELDS,
+    .dwBitMasks = {0xf800, 0x07e0, 0x001f},
+};
+
+static const VIDEOINFO rgb24_video_info =
+{
+    .bmiHeader.biSize = sizeof(BITMAPINFOHEADER),
+    .bmiHeader.biWidth = 333,
+    .bmiHeader.biHeight = -444,
+    .bmiHeader.biPlanes = 1,
+    .bmiHeader.biBitCount = 24,
+    .bmiHeader.biCompression = BI_RGB,
+};
+
+static const VIDEOINFO rgb32_video_info =
+{
+    .bmiHeader.biSize = sizeof(BITMAPINFOHEADER),
+    .bmiHeader.biWidth = 333,
+    .bmiHeader.biHeight = -444,
+    .bmiHeader.biPlanes = 1,
+    .bmiHeader.biBitCount = 32,
+    .bmiHeader.biCompression = BI_RGB,
+};
+
+static const AM_MEDIA_TYPE rgb8_mt =
+{
+    /* MEDIATYPE_Video, MEDIASUBTYPE_RGB8, FORMAT_VideoInfo */
+    .majortype = {0x73646976, 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}},
+    .subtype = {0xe436eb7a, 0x524f, 0x11ce, {0x9f, 0x53, 0x00, 0x20, 0xaf, 0x0b, 0xa7, 0x70}},
+    .formattype = {0x05589f80, 0xc356, 0x11ce, {0xbf, 0x01, 0x00, 0xaa, 0x00, 0x55, 0x59, 0x5a}},
+    .cbFormat = sizeof(VIDEOINFO),
+    .pbFormat = (BYTE *)&rgb8_video_info,
+};
+
+static const AM_MEDIA_TYPE rgb555_mt =
+{
+    /* MEDIATYPE_Video, MEDIASUBTYPE_RGB555, FORMAT_VideoInfo */
+    .majortype = {0x73646976, 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}},
+    .subtype = {0xe436eb7c, 0x524f, 0x11ce, {0x9f, 0x53, 0x00, 0x20, 0xaf, 0x0b, 0xa7, 0x70}},
+    .formattype = {0x05589f80, 0xc356, 0x11ce, {0xbf, 0x01, 0x00, 0xaa, 0x00, 0x55, 0x59, 0x5a}},
+    .cbFormat = sizeof(VIDEOINFO),
+    .pbFormat = (BYTE *)&rgb555_video_info,
+};
+
+static const AM_MEDIA_TYPE rgb565_mt =
+{
+    /* MEDIATYPE_Video, MEDIASUBTYPE_RGB565, FORMAT_VideoInfo */
+    .majortype = {0x73646976, 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}},
+    .subtype = {0xe436eb7b, 0x524f, 0x11ce, {0x9f, 0x53, 0x00, 0x20, 0xaf, 0x0b, 0xa7, 0x70}},
+    .formattype = {0x05589f80, 0xc356, 0x11ce, {0xbf, 0x01, 0x00, 0xaa, 0x00, 0x55, 0x59, 0x5a}},
+    .cbFormat = sizeof(VIDEOINFO),
+    .pbFormat = (BYTE *)&rgb565_video_info,
+};
+
+static const AM_MEDIA_TYPE rgb24_mt =
+{
+    /* MEDIATYPE_Video, MEDIASUBTYPE_RGB24, FORMAT_VideoInfo */
+    .majortype = {0x73646976, 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}},
+    .subtype = {0xe436eb7d, 0x524f, 0x11ce, {0x9f, 0x53, 0x00, 0x20, 0xaf, 0x0b, 0xa7, 0x70}},
+    .formattype = {0x05589f80, 0xc356, 0x11ce, {0xbf, 0x01, 0x00, 0xaa, 0x00, 0x55, 0x59, 0x5a}},
+    .cbFormat = sizeof(VIDEOINFO),
+    .pbFormat = (BYTE *)&rgb24_video_info,
+};
+
+static const AM_MEDIA_TYPE rgb32_mt =
+{
+    /* MEDIATYPE_Video, MEDIASUBTYPE_RGB32, FORMAT_VideoInfo */
+    .majortype = {0x73646976, 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}},
+    .subtype = {0xe436eb7e, 0x524f, 0x11ce, {0x9f, 0x53, 0x00, 0x20, 0xaf, 0x0b, 0xa7, 0x70}},
+    .formattype = {0x05589f80, 0xc356, 0x11ce, {0xbf, 0x01, 0x00, 0xaa, 0x00, 0x55, 0x59, 0x5a}},
+    .cbFormat = sizeof(VIDEOINFO),
+    .pbFormat = (BYTE *)&rgb32_video_info,
+};
+
+static const DDSURFACEDESC rgb8_format =
+{
+    .dwSize = sizeof(DDSURFACEDESC),
+    .dwFlags = DDSD_PIXELFORMAT,
+    .ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT),
+    .ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_PALETTEINDEXED8,
+    .ddpfPixelFormat.dwRGBBitCount = 8,
+};
+
+static const DDSURFACEDESC rgb555_format =
+{
+    .dwSize = sizeof(DDSURFACEDESC),
+    .dwFlags = DDSD_PIXELFORMAT,
+    .ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT),
+    .ddpfPixelFormat.dwFlags = DDPF_RGB,
+    .ddpfPixelFormat.dwRGBBitCount = 16,
+    .ddpfPixelFormat.dwRBitMask = 0x7c00,
+    .ddpfPixelFormat.dwGBitMask = 0x03e0,
+    .ddpfPixelFormat.dwBBitMask = 0x001f,
+};
+
+static const DDSURFACEDESC rgb565_format =
+{
+    .dwSize = sizeof(DDSURFACEDESC),
+    .dwFlags = DDSD_PIXELFORMAT,
+    .ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT),
+    .ddpfPixelFormat.dwFlags = DDPF_RGB,
+    .ddpfPixelFormat.dwRGBBitCount = 16,
+    .ddpfPixelFormat.dwRBitMask = 0xf800,
+    .ddpfPixelFormat.dwGBitMask = 0x07e0,
+    .ddpfPixelFormat.dwBBitMask = 0x001f,
+};
+
+static const DDSURFACEDESC rgb24_format =
+{
+    .dwSize = sizeof(DDSURFACEDESC),
+    .dwFlags = DDSD_PIXELFORMAT,
+    .ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT),
+    .ddpfPixelFormat.dwFlags = DDPF_RGB,
+    .ddpfPixelFormat.dwRGBBitCount = 24,
+    .ddpfPixelFormat.dwRBitMask = 0xff0000,
+    .ddpfPixelFormat.dwGBitMask = 0x00ff00,
+    .ddpfPixelFormat.dwBBitMask = 0x0000ff,
+};
+
+static const DDSURFACEDESC rgb32_format =
+{
+    .dwSize = sizeof(DDSURFACEDESC),
+    .dwFlags = DDSD_PIXELFORMAT,
+    .ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT),
+    .ddpfPixelFormat.dwFlags = DDPF_RGB,
+    .ddpfPixelFormat.dwRGBBitCount = 32,
+    .ddpfPixelFormat.dwRBitMask = 0xff0000,
+    .ddpfPixelFormat.dwGBitMask = 0x00ff00,
+    .ddpfPixelFormat.dwBBitMask = 0x0000ff,
+};
+
 static const WCHAR primary_video_sink_id[] = L"I{A35FF56A-9FDA-11D0-8FDF-00C04FD9189D}";
 static const WCHAR primary_audio_sink_id[] = L"I{A35FF56B-9FDA-11D0-8FDF-00C04FD9189D}";
 
@@ -4354,6 +4512,126 @@ static void test_ddrawstream_initialize(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+#define check_ddrawstream_get_format(a,b,c) check_ddrawstream_get_format_(__LINE__,a,b,c)
+static void check_ddrawstream_get_format_(int line, IDirectDrawMediaStream *stream,
+        const AM_MEDIA_TYPE *mt, const DDSURFACEDESC *expected_format)
+{
+    DDSURFACEDESC current_format;
+    DDSURFACEDESC desired_format;
+    struct testfilter source;
+    FILTER_INFO filter_info;
+    DDSURFACEDESC format;
+    PIN_INFO pin_info;
+    DWORD flags;
+    HRESULT hr;
+    IPin *pin;
+
+    hr = IDirectDrawMediaStream_QueryInterface(stream, &IID_IPin, (void **)&pin);
+    ok_(__FILE__, line)(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IPin_QueryPinInfo(pin, &pin_info);
+    ok_(__FILE__, line)(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IBaseFilter_QueryFilterInfo(pin_info.pFilter, &filter_info);
+    ok_(__FILE__, line)(hr == S_OK, "Got hr %#x.\n", hr);
+
+    testfilter_init(&source);
+
+    hr = IFilterGraph_AddFilter(filter_info.pGraph, &source.filter.IBaseFilter_iface, L"source");
+    ok_(__FILE__, line)(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IFilterGraph_ConnectDirect(filter_info.pGraph, &source.source.pin.IPin_iface, pin, mt);
+    ok_(__FILE__, line)(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IDirectDrawMediaStream_GetFormat(stream, NULL, NULL, NULL, NULL);
+    ok_(__FILE__, line)(hr == S_OK, "Got hr %#x.\n", hr);
+
+    memset(&current_format, 0xcc, sizeof(current_format));
+    current_format.dwSize = sizeof(current_format);
+    memset(&desired_format, 0xcc, sizeof(desired_format));
+    desired_format.dwSize = sizeof(desired_format);
+    flags = 0xdeadbeef;
+    hr = IDirectDrawMediaStream_GetFormat(stream, &current_format, NULL, &desired_format, &flags);
+    ok_(__FILE__, line)(hr == S_OK, "Got hr %#x.\n", hr);
+    memset(&format, 0xcc, sizeof(format));
+    format.dwSize = sizeof(format);
+    format.ddpfPixelFormat = expected_format->ddpfPixelFormat;
+    format.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS;
+    format.dwWidth = 333;
+    format.dwHeight = 444;
+    format.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY;
+    ok_(__FILE__, line)(memcmp(&current_format, &format, sizeof(DDSURFACEDESC)) == 0, "Current format didn't match.\n");
+    format.dwFlags = DDSD_WIDTH | DDSD_HEIGHT;
+    ok_(__FILE__, line)(memcmp(&desired_format, &format, sizeof(DDSURFACEDESC)) == 0, "Desired format didn't match.\n");
+
+    hr = IFilterGraph_Disconnect(filter_info.pGraph, &source.source.pin.IPin_iface);
+    ok_(__FILE__, line)(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IFilterGraph_Disconnect(filter_info.pGraph, pin);
+    ok_(__FILE__, line)(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IFilterGraph_RemoveFilter(filter_info.pGraph, &source.filter.IBaseFilter_iface);
+    ok_(__FILE__, line)(hr == S_OK, "Got hr %#x.\n", hr);
+
+    IFilterGraph_Release(filter_info.pGraph);
+    IBaseFilter_Release(pin_info.pFilter);
+    IPin_Release(pin);
+}
+
+static void test_ddrawstream_get_format(void)
+{
+    IAMMultiMediaStream *mmstream = create_ammultimediastream();
+    IDirectDrawMediaStream *ddraw_stream;
+    DDSURFACEDESC current_format;
+    DDSURFACEDESC desired_format;
+    IDirectDrawPalette *palette;
+    IMediaStream *stream;
+    VIDEOINFO video_info;
+    AM_MEDIA_TYPE mt;
+    DWORD flags;
+    HRESULT hr;
+    ULONG ref;
+
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryVideo, 0, &stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMediaStream_QueryInterface(stream, &IID_IDirectDrawMediaStream, (void **)&ddraw_stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    current_format.dwSize = sizeof(current_format);
+    desired_format.dwSize = sizeof(desired_format);
+    hr = IDirectDrawMediaStream_GetFormat(ddraw_stream, &current_format, &palette, &desired_format, &flags);
+    ok(hr == MS_E_NOSTREAM, "Got hr %#x.\n", hr);
+
+    video_info = rgb32_video_info;
+    video_info.rcSource.right = 222;
+    video_info.rcSource.bottom = 333;
+    video_info.rcTarget.right = 444;
+    video_info.rcTarget.bottom = 666;
+    mt = rgb32_mt;
+    mt.pbFormat = (BYTE *)&video_info;
+    check_ddrawstream_get_format(ddraw_stream, &mt, &rgb32_format);
+
+    video_info = rgb32_video_info;
+    video_info.bmiHeader.biHeight = 444;
+    mt = rgb32_mt;
+    mt.pbFormat = (BYTE *)&video_info;
+    check_ddrawstream_get_format(ddraw_stream, &mt, &rgb32_format);
+
+    check_ddrawstream_get_format(ddraw_stream, &rgb8_mt, &rgb8_format);
+    check_ddrawstream_get_format(ddraw_stream, &rgb555_mt, &rgb555_format);
+    check_ddrawstream_get_format(ddraw_stream, &rgb565_mt, &rgb565_format);
+    check_ddrawstream_get_format(ddraw_stream, &rgb24_mt, &rgb24_format);
+    check_ddrawstream_get_format(ddraw_stream, &rgb32_mt, &rgb32_format);
+
+    current_format.dwSize = sizeof(current_format);
+    desired_format.dwSize = sizeof(desired_format);
+    hr = IDirectDrawMediaStream_GetFormat(ddraw_stream, &current_format, &palette, &desired_format, &flags);
+    ok(hr == MS_E_NOSTREAM, "Got hr %#x.\n", hr);
+
+    ref = IAMMultiMediaStream_Release(mmstream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    IDirectDrawMediaStream_Release(ddraw_stream);
+    ref = IMediaStream_Release(stream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 static void check_ammediastream_join_am_multi_media_stream(const CLSID *clsid)
 {
     IAMMultiMediaStream *mmstream = create_ammultimediastream();
@@ -5815,6 +6093,7 @@ START_TEST(amstream)
     test_ddrawstream_getsetdirectdraw();
     test_ddrawstream_receive_connection();
     test_ddrawstream_create_sample();
+    test_ddrawstream_get_format();
 
     test_ddrawstreamsample_get_media_stream();
 
