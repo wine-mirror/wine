@@ -17,8 +17,8 @@ BISON_SRCS = parser.y
 wrc_EXTRADEFS = \
 	-DNLSDIR="\"${nlsdir}\"" \
 	-DINCLUDEDIR="\"${includedir}\"" \
-	-DBIN_TO_NLSDIR=\"`$(MAKEDEP) -R ${bindir} ${nlsdir}`\" \
-	-DBIN_TO_INCLUDEDIR=\"`$(MAKEDEP) -R ${bindir} ${includedir}`\"
+	-DBIN_TO_NLSDIR=\"`${MAKEDEP} -R ${bindir} ${nlsdir}`\" \
+	-DBIN_TO_INCLUDEDIR=\"`${MAKEDEP} -R ${bindir} ${includedir}`\"
 
 EXTRALIBS = $(GETTEXTPO_LIBS) -lwpp
 

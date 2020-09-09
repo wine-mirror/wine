@@ -21,7 +21,7 @@ BISON_SRCS = parser.y
 
 widl_EXTRADEFS = \
 	-DINCLUDEDIR="\"${includedir}\"" \
-	-DBIN_TO_INCLUDEDIR=\"`$(MAKEDEP) -R ${bindir} ${includedir}`\"
+	-DBIN_TO_INCLUDEDIR=\"`${MAKEDEP} -R ${bindir} ${includedir}`\"
 
 EXTRALIBS = -lwpp
 
