@@ -446,23 +446,14 @@ static void test_create_storage_modes(void)
 
 static void test_stgcreatestorageex(void)
 {
-   HRESULT (WINAPI *pStgCreateStorageEx)(const WCHAR* pwcsName, DWORD grfMode, DWORD stgfmt, DWORD grfAttrs, STGOPTIONS* pStgOptions, void* reserved, REFIID riid, void** ppObjectOpen);
-   HMODULE hOle32 = GetModuleHandleA("ole32");
    IStorage *stg = NULL;
    STGOPTIONS stgoptions = {1, 0, 4096};
    HRESULT r;
 
-   pStgCreateStorageEx = (void *) GetProcAddress(hOle32, "StgCreateStorageEx");
-   if (!pStgCreateStorageEx)
-   {
-      win_skip("skipping test on NT4\n");
-      return;
-   }
-
    DeleteFileA(filenameA);
 
    /* Verify that StgCreateStorageEx can accept an options param */
-   r = pStgCreateStorageEx( filename,
+   r = StgCreateStorageEx( filename,
                            STGM_SHARE_EXCLUSIVE | STGM_READWRITE,
                            STGFMT_DOCFILE,
                            0,
@@ -471,19 +462,13 @@ static void test_stgcreatestorageex(void)
                            &IID_IStorage,
                            (void **) &stg);
    ok(r==S_OK || r==STG_E_UNIMPLEMENTEDFUNCTION, "StgCreateStorageEx with options failed\n");
-   if (r==STG_E_UNIMPLEMENTEDFUNCTION)
-   {
-      /* We're on win98 which means all bets are off.  Let's get out of here. */
-      win_skip("skipping test on win9x\n");
-      return;
-   }
 
    r = IStorage_Release(stg);
    ok(r == 0, "storage not released\n");
    ok(DeleteFileA(filenameA), "failed to delete file\n");
 
    /* Verify that StgCreateStorageEx can accept a NULL pStgOptions */
-   r = pStgCreateStorageEx( filename,
+   r = StgCreateStorageEx( filename,
                            STGM_SHARE_EXCLUSIVE | STGM_READWRITE,
                            STGFMT_STORAGE,
                            0,

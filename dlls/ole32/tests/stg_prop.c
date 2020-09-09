@@ -24,22 +24,6 @@
 #define PID_BEHAVIOR 0x80000003
 #endif
 
-static HRESULT (WINAPI *pFmtIdToPropStgName)(const FMTID *, LPOLESTR);
-static HRESULT (WINAPI *pPropStgNameToFmtId)(const LPOLESTR, FMTID *);
-static HRESULT (WINAPI *pStgCreatePropSetStg)(IStorage *, DWORD, IPropertySetStorage **);
-static HRESULT (WINAPI *pStgCreatePropStg)(IUnknown *, REFFMTID, const CLSID *, DWORD, DWORD, IPropertyStorage **);
-static HRESULT (WINAPI *pStgOpenPropStg)(IUnknown *, REFFMTID, DWORD, DWORD, IPropertyStorage **);
-
-static void init_function_pointers(void)
-{
-    HMODULE hmod = GetModuleHandleA("ole32.dll");
-    pFmtIdToPropStgName = (void*)GetProcAddress(hmod, "FmtIdToPropStgName");
-    pPropStgNameToFmtId = (void*)GetProcAddress(hmod, "PropStgNameToFmtId");
-    pStgCreatePropSetStg = (void*)GetProcAddress(hmod, "StgCreatePropSetStg");
-    pStgCreatePropStg = (void*)GetProcAddress(hmod, "StgCreatePropStg");
-    pStgOpenPropStg = (void*)GetProcAddress(hmod, "StgOpenPropStg");
-}
-
 /* FIXME: this creates an ANSI storage, try to find conditions under which
  * Unicode translation fails
  */
@@ -79,13 +63,7 @@ static void testPropsHelper(IPropertySetStorage **propSetStorage)
 
     if(propSetStorage)
     {
-        if(!pStgCreatePropSetStg)
-        {
-            IStorage_Release(storage);
-            DeleteFileW(filename);
-            return;
-        }
-        hr = pStgCreatePropSetStg(storage, 0, propSetStorage);
+        hr = StgCreatePropSetStg(storage, 0, propSetStorage);
         ok(hr == S_OK, "StgCreatePropSetStg failed: 0x%08x\n", hr);
 
         hr = IPropertySetStorage_Create(*propSetStorage,
@@ -100,14 +78,7 @@ static void testPropsHelper(IPropertySetStorage **propSetStorage)
          STGM_CREATE | STGM_READWRITE | STGM_SHARE_EXCLUSIVE, 0, 0, &stream);
         ok(hr == S_OK, "IStorage_CreateStream failed: 0x%08x\n", hr);
 
-        if(!pStgCreatePropStg)
-        {
-            IStorage_Release(storage);
-            IUnknown_Release(stream);
-            DeleteFileW(filename);
-            return;
-        }
-        hr = pStgCreatePropStg((IUnknown *)stream, &FMTID_SummaryInformation,
+        hr = StgCreatePropStg((IUnknown *)stream, &FMTID_SummaryInformation,
          NULL, PROPSETFLAG_ANSI, 0, &propertyStorage);
         ok(hr == S_OK, "StgCreatePropStg failed: 0x%08x\n", hr);
     }
@@ -289,7 +260,7 @@ static void testPropsHelper(IPropertySetStorage **propSetStorage)
 
     if(propSetStorage)
     {
-        hr = pStgCreatePropSetStg(storage, 0, propSetStorage);
+        hr = StgCreatePropSetStg(storage, 0, propSetStorage);
         ok(hr == S_OK, "StgCreatePropSetStg failed: 0x%08x\n", hr);
 
         hr = IPropertySetStorage_Open(*propSetStorage, &FMTID_SummaryInformation,
@@ -302,14 +273,7 @@ static void testPropsHelper(IPropertySetStorage **propSetStorage)
          0, STGM_READWRITE | STGM_SHARE_EXCLUSIVE, 0, &stream);
         ok(hr == S_OK, "IStorage_OpenStream failed: 0x%08x\n", hr);
 
-        if(!pStgOpenPropStg)
-        {
-            IStorage_Release(storage);
-            IUnknown_Release(stream);
-            DeleteFileW(filename);
-            return;
-        }
-        hr = pStgOpenPropStg((IUnknown *)stream, &FMTID_SummaryInformation,
+        hr = StgOpenPropStg((IUnknown *)stream, &FMTID_SummaryInformation,
          PROPSETFLAG_DEFAULT, 0, &propertyStorage);
         ok(hr == S_OK, "StgOpenPropStg failed: 0x%08x\n", hr);
     }
@@ -345,7 +309,7 @@ static void testPropsHelper(IPropertySetStorage **propSetStorage)
 
     if(propSetStorage)
     {
-        hr = pStgCreatePropSetStg(storage, 0, propSetStorage);
+        hr = StgCreatePropSetStg(storage, 0, propSetStorage);
         ok(hr == S_OK, "StgCreatePropSetStg failed: 0x%08x\n", hr);
 
         hr = IPropertySetStorage_Create(*propSetStorage,
@@ -360,7 +324,7 @@ static void testPropsHelper(IPropertySetStorage **propSetStorage)
          STGM_CREATE | STGM_READWRITE | STGM_SHARE_EXCLUSIVE, 0, 0, &stream);
         ok(hr == S_OK, "IStorage_CreateStream failed: 0x%08x\n", hr);
 
-        hr = pStgCreatePropStg((IUnknown *)stream, &anyOldGuid, NULL,
+        hr = StgCreatePropStg((IUnknown *)stream, &anyOldGuid, NULL,
          PROPSETFLAG_DEFAULT, 0, &propertyStorage);
         ok(hr == S_OK, "StgCreatePropStg failed: 0x%08x\n", hr);
     }
@@ -387,7 +351,7 @@ static void testPropsHelper(IPropertySetStorage **propSetStorage)
 
     if(propSetStorage)
     {
-        hr = pStgCreatePropSetStg(storage, 0, propSetStorage);
+        hr = StgCreatePropSetStg(storage, 0, propSetStorage);
         ok(hr == S_OK, "StgCreatePropSetStg failed: 0x%08x\n", hr);
 
         hr = IPropertySetStorage_Open(*propSetStorage, &anyOldGuid,
@@ -400,7 +364,7 @@ static void testPropsHelper(IPropertySetStorage **propSetStorage)
          0, STGM_READWRITE | STGM_SHARE_EXCLUSIVE, 0, &stream);
         ok(hr == S_OK, "IStorage_OpenStream failed: 0x%08x\n", hr);
 
-        hr = pStgOpenPropStg((IUnknown *)stream, &anyOldGuid,
+        hr = StgOpenPropStg((IUnknown *)stream, &anyOldGuid,
          PROPSETFLAG_DEFAULT, 0, &propertyStorage);
         ok(hr == S_OK, "StgOpenPropStg failed: 0x%08x\n", hr);
     }
@@ -451,13 +415,7 @@ static void testCodepage(void)
      STGM_READWRITE | STGM_SHARE_EXCLUSIVE | STGM_CREATE, 0, &storage);
     ok(hr == S_OK, "StgCreateDocfile failed: 0x%08x\n", hr);
 
-    if(!pStgCreatePropSetStg)
-    {
-        IStorage_Release(storage);
-        DeleteFileW(fileName);
-        return;
-    }
-    hr = pStgCreatePropSetStg(storage, 0, &propSetStorage);
+    hr = StgCreatePropSetStg(storage, 0, &propSetStorage);
     ok(hr == S_OK, "StgCreatePropSetStg failed: 0x%08x\n", hr);
 
     hr = IPropertySetStorage_Create(propSetStorage,
@@ -540,7 +498,7 @@ static void testCodepage(void)
      STGM_READWRITE | STGM_SHARE_EXCLUSIVE | STGM_CREATE, 0, &storage);
     ok(hr == S_OK, "StgCreateDocfile failed: 0x%08x\n", hr);
 
-    hr = pStgCreatePropSetStg(storage, 0, &propSetStorage);
+    hr = StgCreatePropSetStg(storage, 0, &propSetStorage);
     ok(hr == S_OK, "StgCreatePropSetStg failed: 0x%08x\n", hr);
 
     hr = IPropertySetStorage_Create(propSetStorage,
@@ -609,64 +567,60 @@ static void testFmtId(void)
     FMTID fmtid;
     HRESULT hr;
 
-    if (pFmtIdToPropStgName) {
-    hr = pFmtIdToPropStgName(NULL, name);
+    hr = FmtIdToPropStgName(NULL, name);
     ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got 0x%08x\n", hr);
-    hr = pFmtIdToPropStgName(&FMTID_SummaryInformation, NULL);
+    hr = FmtIdToPropStgName(&FMTID_SummaryInformation, NULL);
     ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got 0x%08x\n", hr);
-    hr = pFmtIdToPropStgName(&FMTID_SummaryInformation, name);
+    hr = FmtIdToPropStgName(&FMTID_SummaryInformation, name);
     ok(hr == S_OK, "FmtIdToPropStgName failed: 0x%08x\n", hr);
     ok(!memcmp(name, szSummaryInfo, (lstrlenW(szSummaryInfo) + 1) *
      sizeof(WCHAR)), "Got wrong name for FMTID_SummaryInformation\n");
-    hr = pFmtIdToPropStgName(&FMTID_DocSummaryInformation, name);
+    hr = FmtIdToPropStgName(&FMTID_DocSummaryInformation, name);
     ok(hr == S_OK, "FmtIdToPropStgName failed: 0x%08x\n", hr);
     ok(!memcmp(name, szDocSummaryInfo, (lstrlenW(szDocSummaryInfo) + 1) *
      sizeof(WCHAR)), "Got wrong name for FMTID_DocSummaryInformation\n");
-    hr = pFmtIdToPropStgName(&FMTID_UserDefinedProperties, name);
+    hr = FmtIdToPropStgName(&FMTID_UserDefinedProperties, name);
     ok(hr == S_OK, "FmtIdToPropStgName failed: 0x%08x\n", hr);
     ok(!memcmp(name, szDocSummaryInfo, (lstrlenW(szDocSummaryInfo) + 1) *
      sizeof(WCHAR)), "Got wrong name for FMTID_DocSummaryInformation\n");
-    hr = pFmtIdToPropStgName(&IID_IPropertySetStorage, name);
+    hr = FmtIdToPropStgName(&IID_IPropertySetStorage, name);
     ok(hr == S_OK, "FmtIdToPropStgName failed: 0x%08x\n", hr);
     ok(!memcmp(name, szIID_IPropSetStg, (lstrlenW(szIID_IPropSetStg) + 1) *
      sizeof(WCHAR)), "Got wrong name for IID_IPropertySetStorage\n");
-    }
 
-    if(pPropStgNameToFmtId) {
     /* test args first */
-    hr = pPropStgNameToFmtId(NULL, NULL);
+    hr = PropStgNameToFmtId(NULL, NULL);
     ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got 0x%08x\n", hr);
-    hr = pPropStgNameToFmtId(NULL, &fmtid);
+    hr = PropStgNameToFmtId(NULL, &fmtid);
     ok(hr == STG_E_INVALIDNAME, "Expected STG_E_INVALIDNAME, got 0x%08x\n",
      hr);
-    hr = pPropStgNameToFmtId(szDocSummaryInfo, NULL);
+    hr = PropStgNameToFmtId(szDocSummaryInfo, NULL);
     ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got 0x%08x\n", hr);
     /* test the known format IDs */
-    hr = pPropStgNameToFmtId(szSummaryInfo, &fmtid);
+    hr = PropStgNameToFmtId(szSummaryInfo, &fmtid);
     ok(hr == S_OK, "PropStgNameToFmtId failed: 0x%08x\n", hr);
     ok(!memcmp(&fmtid, &FMTID_SummaryInformation, sizeof(fmtid)),
      "Got unexpected FMTID, expected FMTID_SummaryInformation\n");
-    hr = pPropStgNameToFmtId(szDocSummaryInfo, &fmtid);
+    hr = PropStgNameToFmtId(szDocSummaryInfo, &fmtid);
     ok(hr == S_OK, "PropStgNameToFmtId failed: 0x%08x\n", hr);
     ok(!memcmp(&fmtid, &FMTID_DocSummaryInformation, sizeof(fmtid)),
      "Got unexpected FMTID, expected FMTID_DocSummaryInformation\n");
     /* test another GUID */
-    hr = pPropStgNameToFmtId(szIID_IPropSetStg, &fmtid);
+    hr = PropStgNameToFmtId(szIID_IPropSetStg, &fmtid);
     ok(hr == S_OK, "PropStgNameToFmtId failed: 0x%08x\n", hr);
     ok(!memcmp(&fmtid, &IID_IPropertySetStorage, sizeof(fmtid)),
      "Got unexpected FMTID, expected IID_IPropertySetStorage\n");
     /* now check case matching */
     CharUpperW(szDocSummaryInfo + 1);
-    hr = pPropStgNameToFmtId(szDocSummaryInfo, &fmtid);
+    hr = PropStgNameToFmtId(szDocSummaryInfo, &fmtid);
     ok(hr == S_OK, "PropStgNameToFmtId failed: 0x%08x\n", hr);
     ok(!memcmp(&fmtid, &FMTID_DocSummaryInformation, sizeof(fmtid)),
      "Got unexpected FMTID, expected FMTID_DocSummaryInformation\n");
     CharUpperW(szIID_IPropSetStg + 1);
-    hr = pPropStgNameToFmtId(szIID_IPropSetStg, &fmtid);
+    hr = PropStgNameToFmtId(szIID_IPropSetStg, &fmtid);
     ok(hr == S_OK, "PropStgNameToFmtId failed: 0x%08x\n", hr);
     ok(!memcmp(&fmtid, &IID_IPropertySetStorage, sizeof(fmtid)),
      "Got unexpected FMTID, expected IID_IPropertySetStorage\n");
-    }
 }
 
 static void test_propertyset_storage_enum(void)
@@ -785,7 +739,6 @@ todo_wine {
 
 START_TEST(stg_prop)
 {
-    init_function_pointers();
     testProps();
     testCodepage();
     testFmtId();
