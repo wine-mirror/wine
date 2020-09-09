@@ -51,6 +51,7 @@ struct ddraw_stream
     IDirectDraw *ddraw;
     CRITICAL_SECTION cs;
     IMediaStreamFilter *filter;
+    IFilterGraph *graph;
 
     IPin *peer;
     IMemAllocator *allocator;
@@ -294,6 +295,8 @@ static HRESULT WINAPI ddraw_IAMMediaStream_JoinFilterGraph(IAMMediaStream *iface
 
     TRACE("stream %p, filtergraph %p.\n", stream, filtergraph);
 
+    stream->graph = filtergraph;
+
     return S_OK;
 }
 
@@ -438,6 +441,10 @@ static HRESULT WINAPI ddraw_IDirectDrawMediaStream_SetFormat(IDirectDrawMediaStr
         const DDSURFACEDESC *format, IDirectDrawPalette *palette)
 {
     struct ddraw_stream *stream = impl_from_IDirectDrawMediaStream(iface);
+    AM_MEDIA_TYPE old_media_type;
+    struct format old_format;
+    IPin *old_peer;
+    HRESULT hr;
 
     TRACE("stream %p, format %p, palette %p.\n", stream, format, palette);
 
@@ -503,6 +510,7 @@ static HRESULT WINAPI ddraw_IDirectDrawMediaStream_SetFormat(IDirectDrawMediaStr
 
     EnterCriticalSection(&stream->cs);
 
+    old_format = stream->format;
     stream->format.flags = format->dwFlags & (DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT);
     if (format->dwFlags & (DDSD_WIDTH | DDSD_HEIGHT))
     {
@@ -511,6 +519,35 @@ static HRESULT WINAPI ddraw_IDirectDrawMediaStream_SetFormat(IDirectDrawMediaStr
     }
     if (format->dwFlags & DDSD_PIXELFORMAT)
         stream->format.pf = format->ddpfPixelFormat;
+
+    if (stream->peer && !is_format_compatible(stream, old_format.width, old_format.height, &old_format.pf))
+    {
+        hr = CopyMediaType(&old_media_type, &stream->mt);
+        if (FAILED(hr))
+        {
+            stream->format = old_format;
+            LeaveCriticalSection(&stream->cs);
+            return hr;
+        }
+        old_peer = stream->peer;
+        IPin_AddRef(old_peer);
+
+        IFilterGraph_Disconnect(stream->graph, stream->peer);
+        IFilterGraph_Disconnect(stream->graph, &stream->IPin_iface);
+        hr = IFilterGraph_ConnectDirect(stream->graph, old_peer, &stream->IPin_iface, NULL);
+        if (FAILED(hr))
+        {
+            stream->format = old_format;
+            IFilterGraph_ConnectDirect(stream->graph, old_peer, &stream->IPin_iface, &old_media_type);
+            IPin_Release(old_peer);
+            FreeMediaType(&old_media_type);
+            LeaveCriticalSection(&stream->cs);
+            return DDERR_INVALIDSURFACETYPE;
+        }
+
+        IPin_Release(old_peer);
+        FreeMediaType(&old_media_type);
+    }
 
     LeaveCriticalSection(&stream->cs);
 
