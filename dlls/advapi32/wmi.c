@@ -29,7 +29,6 @@
 #define _WMI_SOURCE_
 #include "wmium.h"
 
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 #include "advapi32_misc.h"

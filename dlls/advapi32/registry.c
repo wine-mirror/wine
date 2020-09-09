@@ -36,7 +36,6 @@
 #include "winerror.h"
 #include "winternl.h"
 
-#include "wine/unicode.h"
 #include "wine/debug.h"
 #include "wine/list.h"
 
@@ -365,7 +364,7 @@ LSTATUS WINAPI RegSetValueW( HKEY hkey, LPCWSTR subkey, DWORD type, LPCWSTR data
 
     if (type != REG_SZ || !data) return ERROR_INVALID_PARAMETER;
 
-    return RegSetKeyValueW( hkey, subkey, NULL, type, data, (strlenW(data) + 1)*sizeof(WCHAR) );
+    return RegSetKeyValueW( hkey, subkey, NULL, type, data, (lstrlenW(data) + 1)*sizeof(WCHAR) );
 }
 
 /******************************************************************************
@@ -576,7 +575,7 @@ LSTATUS WINAPI RegConnectRegistryW( LPCWSTR lpMachineName, HKEY hKey,
             lpMachineName += 2;
         if (GetComputerNameW(compName, &len))
         {
-            if (!strcmpiW(lpMachineName, compName))
+            if (!wcsicmp(lpMachineName, compName))
                 ret = RegOpenKeyW(hKey, NULL, phkResult);
             else
             {

@@ -30,7 +30,6 @@
 #include "evntrace.h"
 #include "evntprov.h"
 
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 #include "advapi32_misc.h"

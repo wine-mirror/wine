@@ -24,7 +24,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winsvc.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 #include "advapi32_misc.h"
@@ -168,9 +167,9 @@ EnumServicesStatusW( SC_HANDLE manager, DWORD type, DWORD state, ENUM_SERVICE_ST
     for (i = 0; i < count; i++)
     {
         *ret_size += sizeof(ENUM_SERVICE_STATUSW);
-        *ret_size += (strlenW( status_ex[i].lpServiceName ) + 1) * sizeof(WCHAR);
+        *ret_size += (lstrlenW( status_ex[i].lpServiceName ) + 1) * sizeof(WCHAR);
         if (status_ex[i].lpDisplayName)
-            *ret_size += (strlenW( status_ex[i].lpDisplayName ) + 1) * sizeof(WCHAR);
+            *ret_size += (lstrlenW( status_ex[i].lpDisplayName ) + 1) * sizeof(WCHAR);
 
         if (*ret_size <= size)
             ++*ret_count;
@@ -179,14 +178,14 @@ EnumServicesStatusW( SC_HANDLE manager, DWORD type, DWORD state, ENUM_SERVICE_ST
     p = (WCHAR *)(status + *ret_count);
     for (i = 0; i < *ret_count; i++)
     {
-        strcpyW( p, status_ex[i].lpServiceName );
+        lstrcpyW( p, status_ex[i].lpServiceName );
         status[i].lpServiceName = (WCHAR *)p;
-        p += strlenW( p ) + 1;
+        p += lstrlenW( p ) + 1;
         if (status_ex[i].lpDisplayName)
         {
-            strcpyW( p, status_ex[i].lpDisplayName );
+            lstrcpyW( p, status_ex[i].lpDisplayName );
             status[i].lpDisplayName = (WCHAR *)p;
-            p += strlenW( p ) + 1;
+            p += lstrlenW( p ) + 1;
         }
         else status[i].lpDisplayName = NULL;
 

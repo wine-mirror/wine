@@ -4044,7 +4044,7 @@ START_TEST(loader)
     test_wow64_redirection();
     test_dll_file( "ntdll.dll", FALSE );
     test_dll_file( "kernel32.dll", TRUE );
-    test_dll_file( "advapi32.dll", TRUE );
+    test_dll_file( "advapi32.dll", FALSE );
     test_dll_file( "user32.dll", TRUE );
     /* loader test must be last, it can corrupt the internal loader state on Windows */
     test_Loader();
