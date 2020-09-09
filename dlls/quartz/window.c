@@ -334,6 +334,9 @@ HRESULT WINAPI BaseControlWindowImpl_get_Visible(IVideoWindow *iface, LONG *visi
 
     TRACE("window %p, visible %p.\n", window, visible);
 
+    if (!visible)
+        return E_POINTER;
+
     *visible = IsWindowVisible(window->hwnd) ? OATRUE : OAFALSE;
     return S_OK;
 }

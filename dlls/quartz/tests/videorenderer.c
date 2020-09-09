@@ -2257,6 +2257,9 @@ static void test_video_window(void)
     hr = IBaseFilter_QueryInterface(filter, &IID_IVideoWindow, (void **)&window);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
+    hr = IVideoWindow_get_Visible(window, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
     hr = IVideoWindow_get_Caption(window, &caption);
     todo_wine ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
 
