@@ -1675,14 +1675,14 @@ static void test_CreateFileW(void)
 
 static void test_CreateFile2(void)
 {
-    HANDLE hFile;
+    HANDLE hFile, iocp;
     WCHAR temp_path[MAX_PATH];
     WCHAR filename[MAX_PATH];
     CREATEFILE2_EXTENDED_PARAMETERS exparams;
     static const WCHAR emptyW[]={'\0'};
     static const WCHAR prefix[] = {'p','f','x',0};
     static const WCHAR bogus[] = { '\\', '\\', '.', '\\', 'B', 'O', 'G', 'U', 'S', 0 };
-    DWORD ret;
+    DWORD i, ret;
 
     if (!pCreateFile2)
     {
@@ -1699,8 +1699,8 @@ static void test_CreateFile2(void)
 
     SetLastError(0xdeadbeef);
     exparams.dwSize = sizeof(exparams);
-    exparams.dwFileAttributes = FILE_FLAG_RANDOM_ACCESS;
-    exparams.dwFileFlags = 0;
+    exparams.dwFileAttributes = 0;
+    exparams.dwFileFlags = FILE_FLAG_RANDOM_ACCESS;
     exparams.dwSecurityQosFlags = 0;
     exparams.lpSecurityAttributes = NULL;
     exparams.hTemplateFile = 0;
@@ -1744,14 +1744,46 @@ static void test_CreateFile2(void)
 
     ret = CreateDirectoryW(filename, NULL);
     ok(ret == TRUE, "couldn't create temporary directory\n");
-    exparams.dwFileAttributes = FILE_ATTRIBUTE_NORMAL | FILE_FLAG_BACKUP_SEMANTICS;
+    exparams.dwFileAttributes = FILE_ATTRIBUTE_NORMAL;
+    exparams.dwFileFlags = FILE_FLAG_BACKUP_SEMANTICS;
+    SetLastError(0xdeadbeef);
     hFile = pCreateFile2(filename, GENERIC_READ | GENERIC_WRITE, 0, OPEN_ALWAYS, &exparams);
-    todo_wine
-    ok(hFile == INVALID_HANDLE_VALUE,
-       "expected CreateFile2 to fail on existing directory, error: %d\n", GetLastError());
+    ok(hFile != INVALID_HANDLE_VALUE,
+       "CreateFile2 failed with FILE_FLAG_BACKUP_SEMANTICS on existing directory, error: %d\n", GetLastError());
     CloseHandle(hFile);
     ret = RemoveDirectoryW(filename);
     ok(ret, "DeleteFileW: error %d\n", GetLastError());
+
+    for (i = 0; i < 2; ++i)
+    {
+        memset(&exparams, 0, sizeof(exparams));
+        exparams.dwSize = sizeof(exparams);
+        if (i == 0)
+        {
+            exparams.dwFileAttributes = FILE_ATTRIBUTE_NORMAL;
+            exparams.dwFileFlags = FILE_FLAG_OVERLAPPED | FILE_FLAG_DELETE_ON_CLOSE;
+        }
+        else
+        {
+            exparams.dwFileFlags = FILE_ATTRIBUTE_NORMAL;
+            exparams.dwFileAttributes = FILE_FLAG_OVERLAPPED | FILE_FLAG_DELETE_ON_CLOSE;
+        }
+
+        SetLastError(0xdeadbeef);
+        hFile = pCreateFile2(filename, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, CREATE_ALWAYS, &exparams);
+        ok(hFile != INVALID_HANDLE_VALUE && GetLastError() == 0, "%d: hFile %p, last error %u\n", i, hFile, GetLastError());
+
+        iocp = CreateIoCompletionPort(hFile, NULL, 0, 2);
+        if (i == 1) ok(iocp == NULL && GetLastError() == ERROR_INVALID_PARAMETER, "%d: CreateIoCompletionPort returned %p, error %u\n", i, iocp, GetLastError());
+        else ok(iocp != INVALID_HANDLE_VALUE && GetLastError() == 0, "%d: CreateIoCompletionPort returned %p, error %u\n", i, iocp, GetLastError());
+
+        CloseHandle(iocp);
+        CloseHandle(hFile);
+
+        ret = DeleteFileW(filename);
+        if (i == 1) ok(ret, "%d: unexpected DeleteFileW failure, error %u\n", i, GetLastError());
+        else ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND, "%d: unexpected DeleteFileW result, ret %d error %u\n", i, ret, GetLastError());
+    }
 }
 
 static void test_GetTempFileNameA(void)

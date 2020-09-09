@@ -655,13 +655,39 @@ BOOL WINAPI DECLSPEC_HOTPATCH CreateDirectoryExW( LPCWSTR template, LPCWSTR path
 HANDLE WINAPI DECLSPEC_HOTPATCH CreateFile2( LPCWSTR name, DWORD access, DWORD sharing, DWORD creation,
                                              CREATEFILE2_EXTENDED_PARAMETERS *params )
 {
+    static const DWORD attributes_mask = FILE_ATTRIBUTE_READONLY |
+                                         FILE_ATTRIBUTE_HIDDEN |
+                                         FILE_ATTRIBUTE_SYSTEM |
+                                         FILE_ATTRIBUTE_ARCHIVE |
+                                         FILE_ATTRIBUTE_NORMAL |
+                                         FILE_ATTRIBUTE_TEMPORARY |
+                                         FILE_ATTRIBUTE_OFFLINE |
+                                         FILE_ATTRIBUTE_ENCRYPTED |
+                                         FILE_ATTRIBUTE_INTEGRITY_STREAM;
+    static const DWORD flags_mask = FILE_FLAG_BACKUP_SEMANTICS |
+                                    FILE_FLAG_DELETE_ON_CLOSE |
+                                    FILE_FLAG_NO_BUFFERING |
+                                    FILE_FLAG_OPEN_NO_RECALL |
+                                    FILE_FLAG_OPEN_REPARSE_POINT |
+                                    FILE_FLAG_OVERLAPPED |
+                                    FILE_FLAG_POSIX_SEMANTICS |
+                                    FILE_FLAG_RANDOM_ACCESS |
+                                    FILE_FLAG_SEQUENTIAL_SCAN |
+                                    FILE_FLAG_WRITE_THROUGH;
+
     LPSECURITY_ATTRIBUTES sa = params ? params->lpSecurityAttributes : NULL;
-    DWORD attributes = params ? params->dwFileAttributes : 0;
     HANDLE template = params ? params->hTemplateFile : NULL;
+    DWORD attributes = params ? params->dwFileAttributes : 0;
+    DWORD flags = params ? params->dwFileFlags : 0;
 
     FIXME( "(%s %x %x %x %p), partial stub\n", debugstr_w(name), access, sharing, creation, params );
 
-    return CreateFileW( name, access, sharing, sa, creation, attributes, template );
+    if (attributes & ~attributes_mask) FIXME( "unsupported attributes %#x\n", attributes );
+    if (flags & ~flags_mask) FIXME( "unsupported flags %#x\n", flags );
+    attributes &= attributes_mask;
+    flags &= flags_mask;
+
+    return CreateFileW( name, access, sharing, sa, creation, flags | attributes, template );
 }
 
 
