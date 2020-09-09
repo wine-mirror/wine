@@ -3529,13 +3529,17 @@ static void test_client_security(void)
     hr = IClassFactory_QueryInterface(pProxy, &IID_IUnknown, (LPVOID*)&pUnknown1);
     ok_ole_success(hr, "IUnknown_QueryInterface IID_IUnknown");
 
-    hr = IClassFactory_QueryInterface(pProxy, &IID_IRemUnknown, (LPVOID*)&pProxy2);
-    ok_ole_success(hr, "IUnknown_QueryInterface IID_IStream");
+    /* Does not work on Windows 10 19xx+ */
+    if (SUCCEEDED(IClassFactory_QueryInterface(pProxy, &IID_IRemUnknown, (void **)&pProxy2)))
+    {
+        hr = IUnknown_QueryInterface(pProxy2, &IID_IUnknown, (void **)&pUnknown2);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
-    hr = IUnknown_QueryInterface(pProxy2, &IID_IUnknown, (LPVOID*)&pUnknown2);
-    ok_ole_success(hr, "IUnknown_QueryInterface IID_IUnknown");
+        ok(pUnknown1 == pUnknown2, "both proxy's IUnknowns should be the same - %p, %p\n", pUnknown1, pUnknown2);
+        IUnknown_Release(pUnknown2);
 
-    ok(pUnknown1 == pUnknown2, "both proxy's IUnknowns should be the same - %p, %p\n", pUnknown1, pUnknown2);
+        IUnknown_Release(pProxy2);
+    }
 
     hr = IClassFactory_QueryInterface(pProxy, &IID_IMarshal, (LPVOID*)&pMarshal);
     ok_ole_success(hr, "IUnknown_QueryInterface IID_IMarshal");
@@ -3572,9 +3576,7 @@ static void test_client_security(void)
     CoTaskMemFree(pServerPrincName);
 
     IClassFactory_Release(pProxy);
-    IUnknown_Release(pProxy2);
     IUnknown_Release(pUnknown1);
-    IUnknown_Release(pUnknown2);
     IMarshal_Release(pMarshal);
     IClientSecurity_Release(pCliSec);
 
