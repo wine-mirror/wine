@@ -548,9 +548,12 @@ static void wait_fullscreen_state_(unsigned int line, IDXGISwapChain *swapchain,
             "Got unexpected state %#x, expected %#x.\n", state, expected);
 }
 
-#define wait_vidpn_exclusive_ownership(a, b, c) wait_vidpn_exclusive_ownership_(__LINE__, a, b, c)
-static void wait_vidpn_exclusive_ownership_(unsigned int line,
-        const D3DKMT_CHECKVIDPNEXCLUSIVEOWNERSHIP *desc, NTSTATUS expected, BOOL todo)
+/* VidPN exclusive ownership doesn't change immediately.
+ * This helper is used to wait for the expected status */
+#define get_expected_vidpn_exclusive_ownership(a, b) \
+        get_expected_vidpn_exclusive_ownership_(__LINE__, a, b)
+static NTSTATUS get_expected_vidpn_exclusive_ownership_(unsigned int line,
+        const D3DKMT_CHECKVIDPNEXCLUSIVEOWNERSHIP *desc, NTSTATUS expected)
 {
     static const unsigned int wait_timeout = 2000;
     static const unsigned int wait_step = 100;
@@ -565,8 +568,7 @@ static void wait_vidpn_exclusive_ownership_(unsigned int line,
         Sleep(wait_step);
         total_time += wait_step;
     }
-    todo_wine_if(todo) ok_(__FILE__, line)(status == expected,
-            "Got unexpected status %#x, expected %#x.\n", status, expected);
+    return status;
 }
 
 static HWND create_window(void)
@@ -6315,7 +6317,9 @@ static void test_output_ownership(IUnknown *device, BOOL is_d3d12)
 
     check_ownership_desc.hAdapter = open_adapter_gdi_desc.hAdapter;
     check_ownership_desc.VidPnSourceId = open_adapter_gdi_desc.VidPnSourceId;
-    wait_vidpn_exclusive_ownership(&check_ownership_desc, STATUS_SUCCESS, FALSE);
+    status = get_expected_vidpn_exclusive_ownership(&check_ownership_desc, STATUS_SUCCESS);
+    ok(status == STATUS_SUCCESS, "Got unexpected status %#x, expected %#x.\n", status,
+            STATUS_SUCCESS);
 
     swapchain_desc.BufferDesc.Width = 800;
     swapchain_desc.BufferDesc.Height = 600;
@@ -6349,20 +6353,41 @@ static void test_output_ownership(IUnknown *device, BOOL is_d3d12)
     hr = IDXGISwapChain_GetFullscreenState(swapchain, &fullscreen, NULL);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     ok(fullscreen, "Got unexpected fullscreen state.\n");
+    /* Win10 1909 doesn't seem to grab output exclusive ownership.
+     * And all output ownership calls return S_OK on D3D10 and D3D12 with 1909. */
     if (is_d3d12)
-        wait_vidpn_exclusive_ownership(&check_ownership_desc, STATUS_SUCCESS, FALSE);
+    {
+        status = get_expected_vidpn_exclusive_ownership(&check_ownership_desc, STATUS_SUCCESS);
+        ok(status == STATUS_SUCCESS, "Got unexpected status %#x, expected %#x.\n", status,
+                STATUS_SUCCESS);
+    }
     else
-        wait_vidpn_exclusive_ownership(&check_ownership_desc, STATUS_GRAPHICS_PRESENT_OCCLUDED, TRUE);
+    {
+        status = get_expected_vidpn_exclusive_ownership(&check_ownership_desc,
+                STATUS_GRAPHICS_PRESENT_OCCLUDED);
+        todo_wine ok(status == STATUS_GRAPHICS_PRESENT_OCCLUDED ||
+                broken(status == STATUS_SUCCESS), /* Win10 1909 */
+                "Got unexpected status %#x, expected %#x.\n", status,
+                STATUS_GRAPHICS_PRESENT_OCCLUDED);
+    }
     hr = IDXGIOutput_TakeOwnership(output, NULL, FALSE);
-    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DXGI_ERROR_INVALID_CALL || broken(hr == S_OK), /* Win10 1909 */
+            "Got unexpected hr %#x.\n", hr);
     hr = IDXGIOutput_TakeOwnership(output, NULL, TRUE);
-    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DXGI_ERROR_INVALID_CALL || broken(hr == S_OK), /* Win10 1909 */
+            "Got unexpected hr %#x.\n", hr);
     hr = IDXGIOutput_TakeOwnership(output, device, FALSE);
-    todo_wine ok(hr == (is_d3d12 ? E_NOINTERFACE : E_INVALIDARG), "Got unexpected hr %#x.\n", hr);
+    if (is_d3d12)
+        todo_wine ok(hr == E_NOINTERFACE || hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    else
+        todo_wine ok(hr == E_INVALIDARG || broken(hr == S_OK), /* Win10 1909 */
+                "Got unexpected hr %#x.\n", hr);
     hr = IDXGIOutput_TakeOwnership(output, device, TRUE);
-    todo_wine_if(is_d3d12) ok(hr == (is_d3d12 ? E_NOINTERFACE : S_OK), "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_NOINTERFACE || hr == S_OK, "Got unexpected hr %#x.\n", hr);
     IDXGIOutput_ReleaseOwnership(output);
-    wait_vidpn_exclusive_ownership(&check_ownership_desc, STATUS_SUCCESS, FALSE);
+    status = get_expected_vidpn_exclusive_ownership(&check_ownership_desc, STATUS_SUCCESS);
+    ok(status == STATUS_SUCCESS, "Got unexpected status %#x, expected %#x.\n", status,
+            STATUS_SUCCESS);
 
     /* IDXGIOutput_TakeOwnership always returns E_NOINTERFACE for d3d12. Tests
      * finished. */
@@ -6370,16 +6395,21 @@ static void test_output_ownership(IUnknown *device, BOOL is_d3d12)
         goto done;
 
     hr = IDXGIOutput_TakeOwnership(output, device, FALSE);
-    ok(hr == DXGI_ERROR_NOT_CURRENTLY_AVAILABLE, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DXGI_ERROR_NOT_CURRENTLY_AVAILABLE || broken(hr == S_OK), /* Win10 1909 */
+            "Got unexpected hr %#x.\n", hr);
     IDXGIOutput_ReleaseOwnership(output);
 
     hr = IDXGIOutput_TakeOwnership(output, device, TRUE);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     /* Note that the "exclusive" parameter to IDXGIOutput_TakeOwnership()
      * seems to behave opposite to what's described by MSDN. */
-    wait_vidpn_exclusive_ownership(&check_ownership_desc, STATUS_GRAPHICS_PRESENT_OCCLUDED, FALSE);
+    status = get_expected_vidpn_exclusive_ownership(&check_ownership_desc,
+            STATUS_GRAPHICS_PRESENT_OCCLUDED);
+    ok(status == STATUS_GRAPHICS_PRESENT_OCCLUDED ||
+            broken(status == STATUS_SUCCESS), /* Win10 1909 */
+            "Got unexpected status %#x, expected %#x.\n", status, STATUS_GRAPHICS_PRESENT_OCCLUDED);
     hr = IDXGIOutput_TakeOwnership(output, device, FALSE);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG || broken(hr == S_OK) /* Win10 1909 */, "Got unexpected hr %#x.\n", hr);
     IDXGIOutput_ReleaseOwnership(output);
 
     /* Swapchain in windowed mode. */
@@ -6389,16 +6419,24 @@ static void test_output_ownership(IUnknown *device, BOOL is_d3d12)
     hr = IDXGISwapChain_GetFullscreenState(swapchain, &fullscreen, NULL);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     ok(!fullscreen, "Unexpected fullscreen state.\n");
-    wait_vidpn_exclusive_ownership(&check_ownership_desc, STATUS_SUCCESS, FALSE);
+    status = get_expected_vidpn_exclusive_ownership(&check_ownership_desc, STATUS_SUCCESS);
+    ok(status == STATUS_SUCCESS, "Got unexpected status %#x, expected %#x.\n", status,
+            STATUS_SUCCESS);
 
     hr = IDXGIOutput_TakeOwnership(output, device, FALSE);
-    ok(hr == DXGI_ERROR_NOT_CURRENTLY_AVAILABLE, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DXGI_ERROR_NOT_CURRENTLY_AVAILABLE || broken(hr == S_OK), /* Win10 1909 */
+            "Got unexpected hr %#x.\n", hr);
 
     hr = IDXGIOutput_TakeOwnership(output, device, TRUE);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    wait_vidpn_exclusive_ownership(&check_ownership_desc, STATUS_GRAPHICS_PRESENT_OCCLUDED, FALSE);
+    status = get_expected_vidpn_exclusive_ownership(&check_ownership_desc,
+            STATUS_GRAPHICS_PRESENT_OCCLUDED);
+    ok(status == STATUS_GRAPHICS_PRESENT_OCCLUDED || broken(hr == S_OK), /* Win10 1909 */
+            "Got unexpected status %#x, expected %#x.\n", status, STATUS_GRAPHICS_PRESENT_OCCLUDED);
     IDXGIOutput_ReleaseOwnership(output);
-    wait_vidpn_exclusive_ownership(&check_ownership_desc, STATUS_SUCCESS, FALSE);
+    status = get_expected_vidpn_exclusive_ownership(&check_ownership_desc, STATUS_SUCCESS);
+    ok(status == STATUS_SUCCESS, "Got unexpected status %#x, expected %#x.\n", status,
+            STATUS_SUCCESS);
 
 done:
     IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
