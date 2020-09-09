@@ -2152,6 +2152,24 @@ static int needs_delay_lib( const struct makefile *make )
 
 
 /*******************************************************************
+ *         needs_implib_symlink
+ */
+static int needs_implib_symlink( const struct makefile *make )
+{
+    if (!make->module) return 0;
+    if (!make->importlib) return 0;
+    if (make->is_win16 && make->disabled) return 0;
+    if (strncmp( make->base_dir, "dlls/", 5 )) return 0;
+    if (!strcmp( make->module, make->importlib )) return 0;
+    if (!strchr( make->importlib, '.' ) &&
+        !strncmp( make->module, make->importlib, strlen( make->importlib )) &&
+        !strcmp( make->module + strlen( make->importlib ), ".dll" ))
+        return 0;
+    return 1;
+}
+
+
+/*******************************************************************
  *         add_default_libraries
  */
 static struct strarray add_default_libraries( const struct makefile *make, struct strarray *deps,
@@ -2227,8 +2245,12 @@ static struct strarray add_import_libs( const struct makefile *make, struct stra
                 if (is_cross || !*dll_ext || submake->staticimplib)
                     lib = base_dir_path( submake, strmake( "lib%s.a", name ));
                 else
+                {
                     strarray_add( deps, top_obj_dir_path( make,
                                             strmake( "%s/lib%s.def", submake->base_dir, name )));
+                    if (needs_implib_symlink( submake ))
+                        strarray_add( deps, top_obj_dir_path( make, strmake( "dlls/lib%s.def", name )));
+                }
                 break;
             }
 
@@ -2237,13 +2259,17 @@ static struct strarray add_import_libs( const struct makefile *make, struct stra
 
         if (lib)
         {
-            if (delay && !delay_load_flag && (is_cross || !*dll_ext))
-                lib = replace_extension( lib, ".a", ".delay.a" );
-            else if (is_cross)
-                lib = replace_extension( lib, ".a", ".cross.a" );
+            const char *ext = NULL;
+
+            if (delay && !delay_load_flag && (is_cross || !*dll_ext)) ext = ".delay.a";
+            else if (is_cross) ext = ".cross.a";
+            if (ext) lib = replace_extension( lib, ".a", ext );
             lib = top_obj_dir_path( make, lib );
             strarray_add( deps, lib );
             strarray_add( &ret, lib );
+            if (needs_implib_symlink( top_makefile->submakes[j] ))
+                strarray_add( deps, top_obj_dir_path( make,
+                                                      strmake( "dlls/lib%s%s", name, ext ? ext : ".a" )));
         }
         else strarray_add( &ret, strmake( "-l%s", name ));
     }
@@ -2608,17 +2634,7 @@ static struct strarray output_importlib_symlinks( const struct makefile *parent,
     const char *lib, *dst, *ext[4];
     int i, count = 0;
 
-    if (!make->module) return ret;
-    if (!make->importlib) return ret;
-    if (make->is_win16 && make->disabled) return ret;
-    if (strncmp( make->base_dir, "dlls/", 5 )) return ret;
-    if (!strcmp( make->module, make->importlib )) return ret;
-    if (!strchr( make->importlib, '.' ) &&
-        !strncmp( make->module, make->importlib, strlen( make->importlib )) &&
-        !strcmp( make->module + strlen( make->importlib ), ".dll" ))
-        return ret;
-
-    ext[count++] = *dll_ext ? "def" : "a";
+    ext[count++] = (*dll_ext && !make->implib_objs.count) ? "def" : "a";
     if (needs_delay_lib( make )) ext[count++] = "delay.a";
     if (needs_cross_lib( make )) ext[count++] = "cross.a";
 
@@ -3739,7 +3755,8 @@ static void output_subdirs( struct makefile *make )
                     output( "\n" );
                 }
             }
-            strarray_addall( &symlinks, output_importlib_symlinks( make, submake ));
+            if (needs_implib_symlink( submake ))
+                strarray_addall( &symlinks, output_importlib_symlinks( make, submake ));
         }
 
         if (submake->disabled) continue;
