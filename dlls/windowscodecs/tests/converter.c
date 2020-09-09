@@ -1401,13 +1401,13 @@ static void test_multi_encoder_impl(const struct bitmap_data **srcs, const CLSID
                     }
 
                     hr = IWICBitmapFrameEncode_WriteSource(frameencode, &src_obj->IWICBitmapSource_iface, rc);
-                    todo_wine_if(!set_size) {
                     if (rc && (rc->Width <= 0 || rc->Height <= 0))
                     {
                         /* WriteSource fails but WriteSource_Proxy succeeds. */
                         ok(hr == E_INVALIDARG, "WriteSource should fail, hr=%x (%s)\n", hr, name);
                         hr = IWICBitmapFrameEncode_WriteSource_Proxy(frameencode, &src_obj->IWICBitmapSource_iface, rc);
                         if (!set_size && rc->Width < 0)
+                            todo_wine
                             ok(hr == WINCODEC_ERR_SOURCERECTDOESNOTMATCHDIMENSIONS,
                                "WriteSource_Proxy(%dx%d) got unexpected hr %x (%s)\n", rc->Width, rc->Height, hr, name);
                         else
@@ -1423,12 +1423,12 @@ static void test_multi_encoder_impl(const struct bitmap_data **srcs, const CLSID
                             ok(hr == S_OK, "WriteSource(NULL) failed, hr=%x (%s)\n", hr, name);
 
                     }
-                    }
 
                     if (SUCCEEDED(hr))
                     {
                         hr = IWICBitmapFrameEncode_Commit(frameencode);
                         if (!set_size && rc && rc->Height < 0)
+                            todo_wine
                             ok(hr == WINCODEC_ERR_UNEXPECTEDSIZE, "Commit got unexpected hr %x (%s)\n", hr, name);
                         else
                             ok(hr == S_OK, "Commit failed, hr=%x (%s)\n", hr, name);

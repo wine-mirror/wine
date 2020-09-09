@@ -125,10 +125,29 @@ HRESULT configure_write_source(IWICBitmapFrameEncode *iface,
     const WICPixelFormatGUID *format,
     INT width, INT height, double xres, double yres)
 {
+    UINT src_width, src_height;
     HRESULT hr = S_OK;
 
-    if (width == 0 || height == 0)
-        return WINCODEC_ERR_WRONGSTATE;
+    if (width == 0 && height == 0)
+    {
+        if (prc)
+        {
+            if (prc->Width <= 0 || prc->Height <= 0) return E_INVALIDARG;
+            width = prc->Width;
+            height = prc->Height;
+        }
+        else
+        {
+            hr = IWICBitmapSource_GetSize(source, &src_width, &src_height);
+            if (FAILED(hr)) return hr;
+            if (src_width == 0 || src_height == 0) return E_INVALIDARG;
+            width = src_width;
+            height = src_height;
+        }
+        hr = IWICBitmapFrameEncode_SetSize(iface, (UINT)width, (UINT)height);
+        if (FAILED(hr)) return hr;
+    }
+    if (width == 0 || height == 0) return E_INVALIDARG;
 
     if (!format)
     {
