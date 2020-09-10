@@ -104,7 +104,7 @@ typedef struct {
     UINT	cyMax;		/* max height of the whole menu, 0 is screen height */
     HBRUSH	hbrBack;	/* brush for menu background */
     DWORD	dwContextHelpID;
-    DWORD	dwMenuData;	/* application defined value */
+    ULONG_PTR	dwMenuData;	/* application defined value */
     HMENU       hSysMenuOwner;  /* Handle to the dummy sys menu holder */
     WORD        textOffset;     /* Offset of text when items have both bitmaps and text */
 } POPUPMENU, *LPPOPUPMENU;
