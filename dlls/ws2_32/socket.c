@@ -1770,9 +1770,17 @@ int WINAPI WSAStartup(WORD wVersionRequested, LPWSADATA lpWSAData)
  */
 INT WINAPI WSACleanup(void)
 {
-    if (num_startup) {
-        num_startup--;
-        TRACE("pending cleanups: %d\n", num_startup);
+    TRACE("decreasing startup count from %d\n", num_startup);
+    if (num_startup)
+    {
+        if (!--num_startup)
+        {
+            unsigned int i;
+
+            for (i = 0; i < socket_list_size; ++i)
+                CloseHandle(SOCKET2HANDLE(socket_list[i]));
+            memset(socket_list, 0, socket_list_size * sizeof(*socket_list));
+        }
         return 0;
     }
     SetLastError(WSANOTINITIALISED);
