@@ -675,6 +675,8 @@ static void test_basics(void)
     ok(hr == S_OK, "got 0x%08x.\n", hr);
     hr = IFileOpenDialog_SetFileTypes(pfod, 0, filterspec);
     ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
+    hr = IFileOpenDialog_SetFileTypes(pfod, 0, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x.\n", hr);
     hr = IFileOpenDialog_SetFileTypeIndex(pfod, 0);
     ok(hr == S_OK, "got 0x%08x.\n", hr);
     hr = IFileOpenDialog_GetFileTypeIndex(pfod, &filetype);

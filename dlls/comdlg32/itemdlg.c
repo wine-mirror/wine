@@ -2402,11 +2402,11 @@ static HRESULT WINAPI IFileDialog2_fnSetFileTypes(IFileDialog2 *iface, UINT cFil
     UINT i;
     TRACE("%p (%d, %p)\n", This, cFileTypes, rgFilterSpec);
 
-    if(This->filterspecs)
-        return E_UNEXPECTED;
-
     if(!rgFilterSpec)
         return E_INVALIDARG;
+
+    if(This->filterspecs)
+        return E_UNEXPECTED;
 
     if(!cFileTypes)
         return S_OK;
