@@ -323,8 +323,15 @@ static void round_points(POINT *pti, GpPointF *ptf, INT count)
     int i;
 
     for(i = 0; i < count; i++){
-        pti[i].x = gdip_round(ptf[i].X);
-        pti[i].y = gdip_round(ptf[i].Y);
+        if(isnan(ptf[i].X))
+            pti[i].x = 0;
+        else
+            pti[i].x = gdip_round(ptf[i].X);
+
+        if(isnan(ptf[i].Y))
+            pti[i].y = 0;
+        else
+            pti[i].y = gdip_round(ptf[i].Y);
     }
 }
 
