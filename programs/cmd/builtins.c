@@ -3003,6 +3003,7 @@ void WCMD_move (void)
     WCHAR  src[MAX_PATH];
     DWORD attribs;
     BOOL ok = TRUE;
+    DWORD flags = 0;
 
     WINE_TRACE("Processing file '%s'\n", wine_dbgstr_w(fd.cFileName));
 
@@ -3051,20 +3052,14 @@ void WCMD_move (void)
         question = WCMD_format_string(WCMD_LoadMessage(WCMD_OVERWRITE), dest);
         ok = WCMD_ask_confirm(question, FALSE, NULL);
         LocalFree(question);
-
-        /* So delete the destination prior to the move */
-        if (ok) {
-          if (!DeleteFileW(dest)) {
-            WCMD_print_error ();
-            errorlevel = 1;
-            ok = FALSE;
-          }
-        }
       }
+
+      if (ok)
+        flags |= MOVEFILE_REPLACE_EXISTING;
     }
 
     if (ok) {
-      status = MoveFileW(src, dest);
+      status = MoveFileExW(src, dest, flags);
     } else {
       status = TRUE;
     }
