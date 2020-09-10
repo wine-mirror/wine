@@ -3402,6 +3402,18 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CheckFormatSupport(ID3D11Device2 *
         }
     }
 
+    /* d3d11 requires 4 and 8 sample counts support for formats reported to
+     * support multisample. */
+    if (wined3d_check_device_multisample_type(wined3d_adapter, params.device_type, wined3d_format,
+            TRUE, WINED3D_MULTISAMPLE_4_SAMPLES, NULL) == WINED3D_OK &&
+            wined3d_check_device_multisample_type(wined3d_adapter, params.device_type, wined3d_format,
+            TRUE, WINED3D_MULTISAMPLE_8_SAMPLES, NULL) == WINED3D_OK)
+    {
+        *format_support |= D3D11_FORMAT_SUPPORT_MULTISAMPLE_RESOLVE
+                | D3D11_FORMAT_SUPPORT_MULTISAMPLE_RENDERTARGET
+                | D3D11_FORMAT_SUPPORT_MULTISAMPLE_LOAD;
+    }
+
     return S_OK;
 }
 
