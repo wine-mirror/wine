@@ -3033,15 +3033,28 @@ void WCMD_move (void)
       WCHAR copycmd[MAXSTRING];
       DWORD len;
 
-      /* /-Y has the highest priority, then /Y and finally the COPYCMD env. variable */
+      /* Default whether automatic overwriting is on. If we are interactive then
+         we prompt by default, otherwise we overwrite by default
+         /-Y has the highest priority, then /Y and finally the COPYCMD env. variable */
       if (wcsstr (quals, parmNoY))
         force = FALSE;
       else if (wcsstr (quals, parmY))
         force = TRUE;
       else {
         static const WCHAR copyCmdW[] = {'C','O','P','Y','C','M','D','\0'};
+        /* By default, we will force the overwrite in batch mode and ask for
+         * confirmation in interactive mode. */
+        force = !interactive;
+        /* If COPYCMD is set, then we force the overwrite with /Y and ask for
+         * confirmation with /-Y. If COPYCMD is neither of those, then we use the
+         * default behavior. */
         len = GetEnvironmentVariableW(copyCmdW, copycmd, ARRAY_SIZE(copycmd));
-        force = (len && len < ARRAY_SIZE(copycmd) && !lstrcmpiW(copycmd, parmY));
+        if (len && len < ARRAY_SIZE(copycmd)) {
+          if (!lstrcmpiW (copycmd, parmY))
+            force = TRUE;
+          else if (!lstrcmpiW (copycmd, parmNoY))
+            force = FALSE;
+        }
       }
 
       /* Prompt if overwriting */
