@@ -434,6 +434,51 @@ static HRESULT parse_script_text(ScriptModule *module, BSTR script_text, DWORD f
     return hr;
 }
 
+static HRESULT WINAPI sp_caller_QueryInterface(IServiceProvider *iface, REFIID riid, void **obj)
+{
+    if (IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IServiceProvider, riid))
+        *obj = iface;
+    else
+    {
+        FIXME("(%p)->(%s)\n", iface, debugstr_guid(riid));
+        *obj = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*obj);
+    return S_OK;
+}
+
+static ULONG WINAPI sp_caller_AddRef(IServiceProvider *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI sp_caller_Release(IServiceProvider *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI sp_caller_QueryService(IServiceProvider *iface, REFGUID service, REFIID riid, void **obj)
+{
+    FIXME("(%p)->(%s %s %p): semi-stub\n", iface, debugstr_guid(service), debugstr_guid(riid), obj);
+
+    *obj = NULL;
+    if (IsEqualGUID(&SID_GetCaller, service))
+        return S_OK;
+
+    return E_NOINTERFACE;
+}
+
+static const IServiceProviderVtbl sp_caller_vtbl = {
+    sp_caller_QueryInterface,
+    sp_caller_AddRef,
+    sp_caller_Release,
+    sp_caller_QueryService
+};
+
+static IServiceProvider sp_caller = { &sp_caller_vtbl };
+
 static HRESULT run_procedure(ScriptModule *module, BSTR procedure_name, SAFEARRAY *args, VARIANT *res)
 {
     IDispatchEx *dispex;
@@ -475,7 +520,7 @@ static HRESULT run_procedure(ScriptModule *module, BSTR procedure_name, SAFEARRA
         else
         {
             hr = IDispatchEx_InvokeEx(dispex, dispid, LOCALE_USER_DEFAULT,
-                                      DISPATCH_METHOD, &dp, res, NULL, NULL);
+                                      DISPATCH_METHOD, &dp, res, NULL, &sp_caller);
             IDispatchEx_Release(dispex);
         }
     }

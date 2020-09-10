@@ -673,6 +673,10 @@ static HRESULT WINAPI DispatchEx_GetDispID(IDispatchEx *iface, BSTR bstrName, DW
 static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags,
         DISPPARAMS *pdp, VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
 {
+    IServiceProvider *sp;
+    IUnknown *unk;
+    HRESULT hr;
+
     CHECK_EXPECT(InvokeEx);
     ok(lcid == LOCALE_USER_DEFAULT, "unexpected lcid %u.\n", lcid);
     ok(wFlags == DISPATCH_METHOD, "unexpected wFlags %u.\n", wFlags);
@@ -690,6 +694,32 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
             "unexpected second parameter V_VT = %d, V_I4 = %d.\n",
             V_VT(pdp->rgvarg), V_I4(pdp->rgvarg));
     }
+    ok(!!pspCaller, "unexpected NULL pspCaller.\n");
+
+    hr = IActiveScriptSite_QueryInterface(site, &IID_IServiceProvider, (void**)&sp);
+    ok(hr == S_OK, "Failed to retrieve IID_IServiceProvider from script site: 0x%08x.\n", hr);
+    ok(sp != pspCaller, "Same IServiceProvider objects.\n");
+    IServiceProvider_Release(sp);
+
+    hr = IServiceProvider_QueryInterface(pspCaller, &IID_IActiveScriptSite, (void**)&unk);
+    ok(hr == E_NOINTERFACE, "QueryInterface IActiveScriptSite returned: 0x%08x.\n", hr);
+
+    unk = (IUnknown*)0xdeadbeef;
+    hr = IServiceProvider_QueryService(pspCaller, &SID_GetCaller, NULL, (void**)&unk);
+    ok(hr == S_OK, "QueryService failed: 0x%08x.\n", hr);
+    ok(!unk, "unexpected object returned %p.\n", unk);
+    unk = (IUnknown*)0xdeadbeef;
+    hr = IServiceProvider_QueryService(pspCaller, &SID_GetCaller, &IID_IUnknown, (void**)&unk);
+    ok(hr == S_OK, "QueryService failed: 0x%08x.\n", hr);
+    ok(!unk, "unexpected object returned %p.\n", unk);
+    sp = (IServiceProvider*)0xdeadbeef;
+    hr = IServiceProvider_QueryService(pspCaller, &SID_GetCaller, &IID_IServiceProvider, (void**)&sp);
+    ok(hr == S_OK, "QueryService failed: 0x%08x.\n", hr);
+    ok(!sp, "unexpected object returned %p.\n", sp);
+    unk = (IUnknown*)0xdeadbeef;
+    hr = IServiceProvider_QueryService(pspCaller, &SID_VariantConversion, &IID_IVariantChangeType, (void**)&unk);
+    ok(hr == E_NOINTERFACE, "QueryService returned: 0x%08x.\n", hr);
+    ok(!unk, "unexpected object returned %p.\n", unk);
 
     V_VT(pvarRes) = VT_I2;
     V_I2(pvarRes) = 42;
