@@ -18514,6 +18514,11 @@ static void test_format_support(const D3D_FEATURE_LEVEL feature_level)
         ok(hr == S_OK || (hr == E_FAIL && !format_support[format]),
                 "Got unexpected result for format %#x: hr %#x, format_support %#x.\n",
                 format, hr, format_support[format]);
+        if (format_support[format] & D3D11_FORMAT_SUPPORT_MIP_AUTOGEN)
+        {
+            ok(format_support[format] & D3D11_FORMAT_SUPPORT_TEXTURE2D,
+                    "Got unexpected format support %#x for format %#x", format_support[format], format);
+        }
     }
 
     for (format = DXGI_FORMAT_UNKNOWN; format <= DXGI_FORMAT_B4G4R4A4_UNORM; ++format)
