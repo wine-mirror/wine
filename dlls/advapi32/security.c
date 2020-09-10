@@ -63,116 +63,52 @@ typedef struct _AccountSid {
     LPCWSTR alias;
 } AccountSid;
 
-static const WCHAR Account_Operators[] = { 'A','c','c','o','u','n','t',' ','O','p','e','r','a','t','o','r','s',0 };
-static const WCHAR Administrator[] = {'A','d','m','i','n','i','s','t','r','a','t','o','r',0 };
-static const WCHAR Administrators[] = { 'A','d','m','i','n','i','s','t','r','a','t','o','r','s',0 };
-static const WCHAR ALL_APPLICATION_PACKAGES[] = { 'A','L','L',' ','A','P','P','L','I','C','A','T','I','O','N',' ','P','A','C','K','A','G','E','S',0 };
-static const WCHAR ANONYMOUS_LOGON[] = { 'A','N','O','N','Y','M','O','U','S',' ','L','O','G','O','N',0 };
-static const WCHAR APPLICATION_PACKAGE_AUTHORITY[] = { 'A','P','P','L','I','C','A','T','I','O','N',' ','P','A','C','K','A','G','E',' ','A','U','T','H','O','R','I','T','Y',0 };
-static const WCHAR Authenticated_Users[] = { 'A','u','t','h','e','n','t','i','c','a','t','e','d',' ','U','s','e','r','s',0 };
-static const WCHAR Backup_Operators[] = { 'B','a','c','k','u','p',' ','O','p','e','r','a','t','o','r','s',0 };
-static const WCHAR BATCH[] = { 'B','A','T','C','H',0 };
-static const WCHAR Blank[] = { 0 };
-static const WCHAR BUILTIN[] = { 'B','U','I','L','T','I','N',0 };
-static const WCHAR Cert_Publishers[] = { 'C','e','r','t',' ','P','u','b','l','i','s','h','e','r','s',0 };
-static const WCHAR CREATOR_GROUP[] = { 'C','R','E','A','T','O','R',' ','G','R','O','U','P',0 };
-static const WCHAR CREATOR_GROUP_SERVER[] = { 'C','R','E','A','T','O','R',' ','G','R','O','U','P',' ','S','E','R','V','E','R',0 };
-static const WCHAR CREATOR_OWNER[] = { 'C','R','E','A','T','O','R',' ','O','W','N','E','R',0 };
-static const WCHAR CREATOR_OWNER_SERVER[] = { 'C','R','E','A','T','O','R',' ','O','W','N','E','R',' ','S','E','R','V','E','R',0 };
-static const WCHAR CURRENT_USER[] = { 'C','U','R','R','E','N','T','_','U','S','E','R',0 };
-static const WCHAR DIALUP[] = { 'D','I','A','L','U','P',0 };
-static const WCHAR Digest_Authentication[] = { 'D','i','g','e','s','t',' ','A','u','t','h','e','n','t','i','c','a','t','i','o','n',0 };
-static const WCHAR Domain_Admins[] = { 'D','o','m','a','i','n',' ','A','d','m','i','n','s',0 };
-static const WCHAR Domain_Computers[] = { 'D','o','m','a','i','n',' ','C','o','m','p','u','t','e','r','s',0 };
-static const WCHAR Domain_Controllers[] = { 'D','o','m','a','i','n',' ','C','o','n','t','r','o','l','l','e','r','s',0 };
-static const WCHAR Domain_Guests[] = { 'D','o','m','a','i','n',' ','G','u','e','s','t','s',0 };
-static const WCHAR None[] = { 'N','o','n','e',0 };
-static const WCHAR Enterprise_Admins[] = { 'E','n','t','e','r','p','r','i','s','e',' ','A','d','m','i','n','s',0 };
-static const WCHAR ENTERPRISE_DOMAIN_CONTROLLERS[] = { 'E','N','T','E','R','P','R','I','S','E',' ','D','O','M','A','I','N',' ','C','O','N','T','R','O','L','L','E','R','S',0 };
-static const WCHAR Everyone[] = { 'E','v','e','r','y','o','n','e',0 };
-static const WCHAR Group_Policy_Creator_Owners[] = { 'G','r','o','u','p',' ','P','o','l','i','c','y',' ','C','r','e','a','t','o','r',' ','O','w','n','e','r','s',0 };
-static const WCHAR Guest[] = { 'G','u','e','s','t',0 };
-static const WCHAR Guests[] = { 'G','u','e','s','t','s',0 };
-static const WCHAR INTERACTIVE[] = { 'I','N','T','E','R','A','C','T','I','V','E',0 };
-static const WCHAR LOCAL[] = { 'L','O','C','A','L',0 };
-static const WCHAR LOCAL_SERVICE[] = { 'L','O','C','A','L',' ','S','E','R','V','I','C','E',0 };
-static const WCHAR LOCAL_SERVICE2[] = { 'L','O','C','A','L','S','E','R','V','I','C','E',0 };
-static const WCHAR NETWORK[] = { 'N','E','T','W','O','R','K',0 };
-static const WCHAR Network_Configuration_Operators[] = { 'N','e','t','w','o','r','k',' ','C','o','n','f','i','g','u','r','a','t','i','o','n',' ','O','p','e','r','a','t','o','r','s',0 };
-static const WCHAR NETWORK_SERVICE[] = { 'N','E','T','W','O','R','K',' ','S','E','R','V','I','C','E',0 };
-static const WCHAR NETWORK_SERVICE2[] = { 'N','E','T','W','O','R','K','S','E','R','V','I','C','E',0 };
-static const WCHAR NT_AUTHORITY[] = { 'N','T',' ','A','U','T','H','O','R','I','T','Y',0 };
-static const WCHAR NT_Pseudo_Domain[] = { 'N','T',' ','P','s','e','u','d','o',' ','D','o','m','a','i','n',0 };
-static const WCHAR NTML_Authentication[] = { 'N','T','M','L',' ','A','u','t','h','e','n','t','i','c','a','t','i','o','n',0 };
-static const WCHAR NULL_SID[] = { 'N','U','L','L',' ','S','I','D',0 };
-static const WCHAR Other_Organization[] = { 'O','t','h','e','r',' ','O','r','g','a','n','i','z','a','t','i','o','n',0 };
-static const WCHAR Performance_Log_Users[] = { 'P','e','r','f','o','r','m','a','n','c','e',' ','L','o','g',' ','U','s','e','r','s',0 };
-static const WCHAR Performance_Monitor_Users[] = { 'P','e','r','f','o','r','m','a','n','c','e',' ','M','o','n','i','t','o','r',' ','U','s','e','r','s',0 };
-static const WCHAR Power_Users[] = { 'P','o','w','e','r',' ','U','s','e','r','s',0 };
-static const WCHAR Pre_Windows_2000_Compatible_Access[] = { 'P','r','e','-','W','i','n','d','o','w','s',' ','2','0','0','0',' ','C','o','m','p','a','t','i','b','l','e',' ','A','c','c','e','s','s',0 };
-static const WCHAR Print_Operators[] = { 'P','r','i','n','t',' ','O','p','e','r','a','t','o','r','s',0 };
-static const WCHAR PROXY[] = { 'P','R','O','X','Y',0 };
-static const WCHAR RAS_and_IAS_Servers[] = { 'R','A','S',' ','a','n','d',' ','I','A','S',' ','S','e','r','v','e','r','s',0 };
-static const WCHAR Remote_Desktop_Users[] = { 'R','e','m','o','t','e',' ','D','e','s','k','t','o','p',' ','U','s','e','r','s',0 };
-static const WCHAR REMOTE_INTERACTIVE_LOGON[] = { 'R','E','M','O','T','E',' ','I','N','T','E','R','A','C','T','I','V','E',' ','L','O','G','O','N',0 };
-static const WCHAR Replicators[] = { 'R','e','p','l','i','c','a','t','o','r','s',0 };
-static const WCHAR RESTRICTED[] = { 'R','E','S','T','R','I','C','T','E','D',0 };
-static const WCHAR SChannel_Authentication[] = { 'S','C','h','a','n','n','e','l',' ','A','u','t','h','e','n','t','i','c','a','t','i','o','n',0 };
-static const WCHAR Schema_Admins[] = { 'S','c','h','e','m','a',' ','A','d','m','i','n','s',0 };
-static const WCHAR SELF[] = { 'S','E','L','F',0 };
-static const WCHAR Server_Operators[] = { 'S','e','r','v','e','r',' ','O','p','e','r','a','t','o','r','s',0 };
-static const WCHAR SERVICE[] = { 'S','E','R','V','I','C','E',0 };
-static const WCHAR SYSTEM[] = { 'S','Y','S','T','E','M',0 };
-static const WCHAR TERMINAL_SERVER_USER[] = { 'T','E','R','M','I','N','A','L',' ','S','E','R','V','E','R',' ','U','S','E','R',0 };
-static const WCHAR This_Organization[] = { 'T','h','i','s',' ','O','r','g','a','n','i','z','a','t','i','o','n',0 };
-static const WCHAR Users[] = { 'U','s','e','r','s',0 };
-
 static const AccountSid ACCOUNT_SIDS[] = {
-    { WinNullSid, NULL_SID, Blank, SidTypeWellKnownGroup },
-    { WinWorldSid, Everyone, Blank, SidTypeWellKnownGroup },
-    { WinLocalSid, LOCAL, Blank, SidTypeWellKnownGroup },
-    { WinCreatorOwnerSid, CREATOR_OWNER, Blank, SidTypeWellKnownGroup },
-    { WinCreatorGroupSid, CREATOR_GROUP, Blank, SidTypeWellKnownGroup },
-    { WinCreatorOwnerServerSid, CREATOR_OWNER_SERVER, Blank, SidTypeWellKnownGroup },
-    { WinCreatorGroupServerSid, CREATOR_GROUP_SERVER, Blank, SidTypeWellKnownGroup },
-    { WinNtAuthoritySid, NT_Pseudo_Domain, NT_Pseudo_Domain, SidTypeDomain },
-    { WinDialupSid, DIALUP, NT_AUTHORITY, SidTypeWellKnownGroup },
-    { WinNetworkSid, NETWORK, NT_AUTHORITY, SidTypeWellKnownGroup },
-    { WinBatchSid, BATCH, NT_AUTHORITY, SidTypeWellKnownGroup },
-    { WinInteractiveSid, INTERACTIVE, NT_AUTHORITY, SidTypeWellKnownGroup },
-    { WinServiceSid, SERVICE, NT_AUTHORITY, SidTypeWellKnownGroup },
-    { WinAnonymousSid, ANONYMOUS_LOGON, NT_AUTHORITY, SidTypeWellKnownGroup },
-    { WinProxySid, PROXY, NT_AUTHORITY, SidTypeWellKnownGroup },
-    { WinEnterpriseControllersSid, ENTERPRISE_DOMAIN_CONTROLLERS, NT_AUTHORITY, SidTypeWellKnownGroup },
-    { WinSelfSid, SELF, NT_AUTHORITY, SidTypeWellKnownGroup },
-    { WinAuthenticatedUserSid, Authenticated_Users, NT_AUTHORITY, SidTypeWellKnownGroup },
-    { WinRestrictedCodeSid, RESTRICTED, NT_AUTHORITY, SidTypeWellKnownGroup },
-    { WinTerminalServerSid, TERMINAL_SERVER_USER, NT_AUTHORITY, SidTypeWellKnownGroup },
-    { WinRemoteLogonIdSid, REMOTE_INTERACTIVE_LOGON, NT_AUTHORITY, SidTypeWellKnownGroup },
-    { WinLocalSystemSid, SYSTEM, NT_AUTHORITY, SidTypeWellKnownGroup },
-    { WinLocalServiceSid, LOCAL_SERVICE, NT_AUTHORITY, SidTypeWellKnownGroup, LOCAL_SERVICE2 },
-    { WinNetworkServiceSid, NETWORK_SERVICE, NT_AUTHORITY, SidTypeWellKnownGroup , NETWORK_SERVICE2},
-    { WinBuiltinDomainSid, BUILTIN, BUILTIN, SidTypeDomain },
-    { WinBuiltinAdministratorsSid, Administrators, BUILTIN, SidTypeAlias },
-    { WinBuiltinUsersSid, Users, BUILTIN, SidTypeAlias },
-    { WinBuiltinGuestsSid, Guests, BUILTIN, SidTypeAlias },
-    { WinBuiltinPowerUsersSid, Power_Users, BUILTIN, SidTypeAlias },
-    { WinBuiltinAccountOperatorsSid, Account_Operators, BUILTIN, SidTypeAlias },
-    { WinBuiltinSystemOperatorsSid, Server_Operators, BUILTIN, SidTypeAlias },
-    { WinBuiltinPrintOperatorsSid, Print_Operators, BUILTIN, SidTypeAlias },
-    { WinBuiltinBackupOperatorsSid, Backup_Operators, BUILTIN, SidTypeAlias },
-    { WinBuiltinReplicatorSid, Replicators, BUILTIN, SidTypeAlias },
-    { WinBuiltinPreWindows2000CompatibleAccessSid, Pre_Windows_2000_Compatible_Access, BUILTIN, SidTypeAlias },
-    { WinBuiltinRemoteDesktopUsersSid, Remote_Desktop_Users, BUILTIN, SidTypeAlias },
-    { WinBuiltinNetworkConfigurationOperatorsSid, Network_Configuration_Operators, BUILTIN, SidTypeAlias },
-    { WinNTLMAuthenticationSid, NTML_Authentication, NT_AUTHORITY, SidTypeWellKnownGroup },
-    { WinDigestAuthenticationSid, Digest_Authentication, NT_AUTHORITY, SidTypeWellKnownGroup },
-    { WinSChannelAuthenticationSid, SChannel_Authentication, NT_AUTHORITY, SidTypeWellKnownGroup },
-    { WinThisOrganizationSid, This_Organization, NT_AUTHORITY, SidTypeWellKnownGroup },
-    { WinOtherOrganizationSid, Other_Organization, NT_AUTHORITY, SidTypeWellKnownGroup },
-    { WinBuiltinPerfMonitoringUsersSid, Performance_Monitor_Users, BUILTIN, SidTypeAlias },
-    { WinBuiltinPerfLoggingUsersSid, Performance_Log_Users, BUILTIN, SidTypeAlias },
-    { WinBuiltinAnyPackageSid, ALL_APPLICATION_PACKAGES, APPLICATION_PACKAGE_AUTHORITY, SidTypeWellKnownGroup },
+    { WinNullSid, L"NULL SID", L"", SidTypeWellKnownGroup },
+    { WinWorldSid, L"Everyone", L"", SidTypeWellKnownGroup },
+    { WinLocalSid, L"LOCAL", L"", SidTypeWellKnownGroup },
+    { WinCreatorOwnerSid, L"CREATOR OWNER", L"", SidTypeWellKnownGroup },
+    { WinCreatorGroupSid, L"CREATOR GROUP", L"", SidTypeWellKnownGroup },
+    { WinCreatorOwnerServerSid, L"CREATOR OWNER SERVER", L"", SidTypeWellKnownGroup },
+    { WinCreatorGroupServerSid, L"CREATOR GROUP SERVER", L"", SidTypeWellKnownGroup },
+    { WinNtAuthoritySid, L"NT Pseudo Domain", L"NT Pseudo Domain", SidTypeDomain },
+    { WinDialupSid, L"DIALUP", L"NT AUTHORITY", SidTypeWellKnownGroup },
+    { WinNetworkSid, L"NETWORK", L"NT AUTHORITY", SidTypeWellKnownGroup },
+    { WinBatchSid, L"BATCH", L"NT AUTHORITY", SidTypeWellKnownGroup },
+    { WinInteractiveSid, L"INTERACTIVE", L"NT AUTHORITY", SidTypeWellKnownGroup },
+    { WinServiceSid, L"SERVICE", L"NT AUTHORITY", SidTypeWellKnownGroup },
+    { WinAnonymousSid, L"ANONYMOUS LOGON", L"NT AUTHORITY", SidTypeWellKnownGroup },
+    { WinProxySid, L"PROXY", L"NT AUTHORITY", SidTypeWellKnownGroup },
+    { WinEnterpriseControllersSid, L"ENTERPRISE DOMAIN CONTROLLERS", L"NT AUTHORITY", SidTypeWellKnownGroup },
+    { WinSelfSid, L"SELF", L"NT AUTHORITY", SidTypeWellKnownGroup },
+    { WinAuthenticatedUserSid, L"Authenticated Users", L"NT AUTHORITY", SidTypeWellKnownGroup },
+    { WinRestrictedCodeSid, L"RESTRICTED", L"NT AUTHORITY", SidTypeWellKnownGroup },
+    { WinTerminalServerSid, L"TERMINAL SERVER USER", L"NT AUTHORITY", SidTypeWellKnownGroup },
+    { WinRemoteLogonIdSid, L"REMOTE INTERACTIVE LOGON", L"NT AUTHORITY", SidTypeWellKnownGroup },
+    { WinLocalSystemSid, L"SYSTEM", L"NT AUTHORITY", SidTypeWellKnownGroup },
+    { WinLocalServiceSid, L"LOCAL SERVICE", L"NT AUTHORITY", SidTypeWellKnownGroup, L"LOCALSERVICE" },
+    { WinNetworkServiceSid, L"NETWORK SERVICE", L"NT AUTHORITY", SidTypeWellKnownGroup , L"NETWORKSERVICE"},
+    { WinBuiltinDomainSid, L"BUILTIN", L"BUILTIN", SidTypeDomain },
+    { WinBuiltinAdministratorsSid, L"Administrators", L"BUILTIN", SidTypeAlias },
+    { WinBuiltinUsersSid, L"Users", L"BUILTIN", SidTypeAlias },
+    { WinBuiltinGuestsSid, L"Guests", L"BUILTIN", SidTypeAlias },
+    { WinBuiltinPowerUsersSid, L"Power Users", L"BUILTIN", SidTypeAlias },
+    { WinBuiltinAccountOperatorsSid, L"Account Operators", L"BUILTIN", SidTypeAlias },
+    { WinBuiltinSystemOperatorsSid, L"Server Operators", L"BUILTIN", SidTypeAlias },
+    { WinBuiltinPrintOperatorsSid, L"Print Operators", L"BUILTIN", SidTypeAlias },
+    { WinBuiltinBackupOperatorsSid, L"Backup Operators", L"BUILTIN", SidTypeAlias },
+    { WinBuiltinReplicatorSid, L"Replicators", L"BUILTIN", SidTypeAlias },
+    { WinBuiltinPreWindows2000CompatibleAccessSid, L"Pre-Windows 2000 Compatible Access", L"BUILTIN", SidTypeAlias },
+    { WinBuiltinRemoteDesktopUsersSid, L"Remote Desktop Users", L"BUILTIN", SidTypeAlias },
+    { WinBuiltinNetworkConfigurationOperatorsSid, L"Network Configuration Operators", L"BUILTIN", SidTypeAlias },
+    { WinNTLMAuthenticationSid, L"NTML Authentication", L"NT AUTHORITY", SidTypeWellKnownGroup },
+    { WinDigestAuthenticationSid, L"Digest Authentication", L"NT AUTHORITY", SidTypeWellKnownGroup },
+    { WinSChannelAuthenticationSid, L"SChannel Authentication", L"NT AUTHORITY", SidTypeWellKnownGroup },
+    { WinThisOrganizationSid, L"This Organization", L"NT AUTHORITY", SidTypeWellKnownGroup },
+    { WinOtherOrganizationSid, L"Other Organization", L"NT AUTHORITY", SidTypeWellKnownGroup },
+    { WinBuiltinPerfMonitoringUsersSid, L"Performance Monitor Users", L"BUILTIN", SidTypeAlias },
+    { WinBuiltinPerfLoggingUsersSid, L"Performance Log Users", L"BUILTIN", SidTypeAlias },
+    { WinBuiltinAnyPackageSid, L"ALL APPLICATION PACKAGES", L"APPLICATION PACKAGE AUTHORITY", SidTypeWellKnownGroup },
 };
 
 const char * debugstr_sid(PSID sid)
@@ -265,22 +201,18 @@ static inline DWORD get_security_service( LPWSTR full_service_name, DWORD access
 /* helper function for SE_REGISTRY_KEY objects in [Get|Set]NamedSecurityInfo */
 static inline DWORD get_security_regkey( LPWSTR full_key_name, DWORD access, HANDLE *key )
 {
-    static const WCHAR classes_rootW[] = {'C','L','A','S','S','E','S','_','R','O','O','T',0};
-    static const WCHAR current_userW[] = {'C','U','R','R','E','N','T','_','U','S','E','R',0};
-    static const WCHAR machineW[] = {'M','A','C','H','I','N','E',0};
-    static const WCHAR usersW[] = {'U','S','E','R','S',0};
     LPWSTR p = wcschr(full_key_name, '\\');
     int len = p-full_key_name;
     HKEY hParent;
 
     if (!p) return ERROR_INVALID_PARAMETER;
-    if (wcsncmp( full_key_name, classes_rootW, len ) == 0)
+    if (!wcsncmp( full_key_name, L"CLASSES_ROOT", len ))
         hParent = HKEY_CLASSES_ROOT;
-    else if (wcsncmp( full_key_name, current_userW, len ) == 0)
+    else if (!wcsncmp( full_key_name, L"CURRENT_USER", len ))
         hParent = HKEY_CURRENT_USER;
-    else if (wcsncmp( full_key_name, machineW, len ) == 0)
+    else if (!wcsncmp( full_key_name, L"MACHINE", len ))
         hParent = HKEY_LOCAL_MACHINE;
-    else if (wcsncmp( full_key_name, usersW, len ) == 0)
+    else if (!wcsncmp( full_key_name, L"USERS", len ))
         hParent = HKEY_USERS;
     else
         return ERROR_INVALID_PARAMETER;
@@ -519,99 +451,39 @@ done:
     return ret;
 } 
 
-
-static const WCHAR SE_CREATE_TOKEN_NAME_W[] =
- { 'S','e','C','r','e','a','t','e','T','o','k','e','n','P','r','i','v','i','l','e','g','e',0 };
-static const WCHAR SE_ASSIGNPRIMARYTOKEN_NAME_W[] =
- { 'S','e','A','s','s','i','g','n','P','r','i','m','a','r','y','T','o','k','e','n','P','r','i','v','i','l','e','g','e',0 };
-static const WCHAR SE_LOCK_MEMORY_NAME_W[] =
- { 'S','e','L','o','c','k','M','e','m','o','r','y','P','r','i','v','i','l','e','g','e',0 };
-static const WCHAR SE_INCREASE_QUOTA_NAME_W[] =
- { 'S','e','I','n','c','r','e','a','s','e','Q','u','o','t','a','P','r','i','v','i','l','e','g','e',0 };
-static const WCHAR SE_MACHINE_ACCOUNT_NAME_W[] =
- { 'S','e','M','a','c','h','i','n','e','A','c','c','o','u','n','t','P','r','i','v','i','l','e','g','e',0 };
-static const WCHAR SE_TCB_NAME_W[] =
- { 'S','e','T','c','b','P','r','i','v','i','l','e','g','e',0 };
-static const WCHAR SE_SECURITY_NAME_W[] =
- { 'S','e','S','e','c','u','r','i','t','y','P','r','i','v','i','l','e','g','e',0 };
-static const WCHAR SE_TAKE_OWNERSHIP_NAME_W[] =
- { 'S','e','T','a','k','e','O','w','n','e','r','s','h','i','p','P','r','i','v','i','l','e','g','e',0 };
-static const WCHAR SE_LOAD_DRIVER_NAME_W[] =
- { 'S','e','L','o','a','d','D','r','i','v','e','r','P','r','i','v','i','l','e','g','e',0 };
-static const WCHAR SE_SYSTEM_PROFILE_NAME_W[] =
- { 'S','e','S','y','s','t','e','m','P','r','o','f','i','l','e','P','r','i','v','i','l','e','g','e',0 };
-static const WCHAR SE_SYSTEMTIME_NAME_W[] =
- { 'S','e','S','y','s','t','e','m','t','i','m','e','P','r','i','v','i','l','e','g','e',0 };
-static const WCHAR SE_PROF_SINGLE_PROCESS_NAME_W[] =
- { 'S','e','P','r','o','f','i','l','e','S','i','n','g','l','e','P','r','o','c','e','s','s','P','r','i','v','i','l','e','g','e',0 };
-static const WCHAR SE_INC_BASE_PRIORITY_NAME_W[] =
- { 'S','e','I','n','c','r','e','a','s','e','B','a','s','e','P','r','i','o','r','i','t','y','P','r','i','v','i','l','e','g','e',0 };
-static const WCHAR SE_CREATE_PAGEFILE_NAME_W[] =
- { 'S','e','C','r','e','a','t','e','P','a','g','e','f','i','l','e','P','r','i','v','i','l','e','g','e',0 };
-static const WCHAR SE_CREATE_PERMANENT_NAME_W[] =
- { 'S','e','C','r','e','a','t','e','P','e','r','m','a','n','e','n','t','P','r','i','v','i','l','e','g','e',0 };
-static const WCHAR SE_BACKUP_NAME_W[] =
- { 'S','e','B','a','c','k','u','p','P','r','i','v','i','l','e','g','e',0 };
-static const WCHAR SE_RESTORE_NAME_W[] =
- { 'S','e','R','e','s','t','o','r','e','P','r','i','v','i','l','e','g','e',0 };
-static const WCHAR SE_SHUTDOWN_NAME_W[] =
- { 'S','e','S','h','u','t','d','o','w','n','P','r','i','v','i','l','e','g','e',0 };
-static const WCHAR SE_DEBUG_NAME_W[] =
- { 'S','e','D','e','b','u','g','P','r','i','v','i','l','e','g','e',0 };
-static const WCHAR SE_AUDIT_NAME_W[] =
- { 'S','e','A','u','d','i','t','P','r','i','v','i','l','e','g','e',0 };
-static const WCHAR SE_SYSTEM_ENVIRONMENT_NAME_W[] =
- { 'S','e','S','y','s','t','e','m','E','n','v','i','r','o','n','m','e','n','t','P','r','i','v','i','l','e','g','e',0 };
-static const WCHAR SE_CHANGE_NOTIFY_NAME_W[] =
- { 'S','e','C','h','a','n','g','e','N','o','t','i','f','y','P','r','i','v','i','l','e','g','e',0 };
-static const WCHAR SE_REMOTE_SHUTDOWN_NAME_W[] =
- { 'S','e','R','e','m','o','t','e','S','h','u','t','d','o','w','n','P','r','i','v','i','l','e','g','e',0 };
-static const WCHAR SE_UNDOCK_NAME_W[] =
- { 'S','e','U','n','d','o','c','k','P','r','i','v','i','l','e','g','e',0 };
-static const WCHAR SE_SYNC_AGENT_NAME_W[] =
- { 'S','e','S','y','n','c','A','g','e','n','t','P','r','i','v','i','l','e','g','e',0 };
-static const WCHAR SE_ENABLE_DELEGATION_NAME_W[] =
- { 'S','e','E','n','a','b','l','e','D','e','l','e','g','a','t','i','o','n','P','r','i','v','i','l','e','g','e',0 };
-static const WCHAR SE_MANAGE_VOLUME_NAME_W[] =
- { 'S','e','M','a','n','a','g','e','V','o','l','u','m','e','P','r','i','v','i','l','e','g','e',0 };
-static const WCHAR SE_IMPERSONATE_NAME_W[] =
- { 'S','e','I','m','p','e','r','s','o','n','a','t','e','P','r','i','v','i','l','e','g','e',0 };
-static const WCHAR SE_CREATE_GLOBAL_NAME_W[] =
- { 'S','e','C','r','e','a','t','e','G','l','o','b','a','l','P','r','i','v','i','l','e','g','e',0 };
-
 static const WCHAR * const WellKnownPrivNames[SE_MAX_WELL_KNOWN_PRIVILEGE + 1] =
 {
     NULL,
     NULL,
-    SE_CREATE_TOKEN_NAME_W,
-    SE_ASSIGNPRIMARYTOKEN_NAME_W,
-    SE_LOCK_MEMORY_NAME_W,
-    SE_INCREASE_QUOTA_NAME_W,
-    SE_MACHINE_ACCOUNT_NAME_W,
-    SE_TCB_NAME_W,
-    SE_SECURITY_NAME_W,
-    SE_TAKE_OWNERSHIP_NAME_W,
-    SE_LOAD_DRIVER_NAME_W,
-    SE_SYSTEM_PROFILE_NAME_W,
-    SE_SYSTEMTIME_NAME_W,
-    SE_PROF_SINGLE_PROCESS_NAME_W,
-    SE_INC_BASE_PRIORITY_NAME_W,
-    SE_CREATE_PAGEFILE_NAME_W,
-    SE_CREATE_PERMANENT_NAME_W,
-    SE_BACKUP_NAME_W,
-    SE_RESTORE_NAME_W,
-    SE_SHUTDOWN_NAME_W,
-    SE_DEBUG_NAME_W,
-    SE_AUDIT_NAME_W,
-    SE_SYSTEM_ENVIRONMENT_NAME_W,
-    SE_CHANGE_NOTIFY_NAME_W,
-    SE_REMOTE_SHUTDOWN_NAME_W,
-    SE_UNDOCK_NAME_W,
-    SE_SYNC_AGENT_NAME_W,
-    SE_ENABLE_DELEGATION_NAME_W,
-    SE_MANAGE_VOLUME_NAME_W,
-    SE_IMPERSONATE_NAME_W,
-    SE_CREATE_GLOBAL_NAME_W,
+    L"SeCreateTokenPrivilege",
+    L"SeAssignPrimaryTokenPrivilege",
+    L"SeLockMemoryPrivilege",
+    L"SeIncreaseQuotaPrivilege",
+    L"SeMachineAccountPrivilege",
+    L"SeTcbPrivilege",
+    L"SeSecurityPrivilege",
+    L"SeTakeOwnershipPrivilege",
+    L"SeLoadDriverPrivilege",
+    L"SeSystemProfilePrivilege",
+    L"SeSystemtimePrivilege",
+    L"SeProfileSingleProcessPrivilege",
+    L"SeIncreaseBasePriorityPrivilege",
+    L"SeCreatePagefilePrivilege",
+    L"SeCreatePermanentPrivilege",
+    L"SeBackupPrivilege",
+    L"SeRestorePrivilege",
+    L"SeShutdownPrivilege",
+    L"SeDebugPrivilege",
+    L"SeAuditPrivilege",
+    L"SeSystemEnvironmentPrivilege",
+    L"SeChangeNotifyPrivilege",
+    L"SeRemoteShutdownPrivilege",
+    L"SeUndockPrivilege",
+    L"SeSyncAgentPrivilege",
+    L"SeEnableDelegationPrivilege",
+    L"SeManageVolumePrivilege",
+    L"SeImpersonatePrivilege",
+    L"SeCreateGlobalPrivilege",
 };
 
 const WCHAR *get_wellknown_privilege_name(const LUID *luid)
@@ -1001,7 +873,7 @@ LookupAccountSidW(
             if (result) {
                 if (EqualSid(sid, &local)) {
                     dm = computer_name;
-                    ac = Blank;
+                    ac = L"";
                     use = 3;
                 } else {
                     local.SubAuthorityCount++;
@@ -1011,41 +883,41 @@ LookupAccountSidW(
                         use = 1;
                         switch (((MAX_SID *)sid)->SubAuthority[4]) {
                         case DOMAIN_USER_RID_ADMIN:
-                            ac = Administrator;
+                            ac = L"Administrator";
                             break;
                         case DOMAIN_USER_RID_GUEST:
-                            ac = Guest;
+                            ac = L"Guest";
                             break;
                         case DOMAIN_GROUP_RID_ADMINS:
-                            ac = Domain_Admins;
+                            ac = L"Domain Admins";
                             break;
                         case DOMAIN_GROUP_RID_USERS:
-                            ac = None;
+                            ac = L"None";
                             use = SidTypeGroup;
                             break;
                         case DOMAIN_GROUP_RID_GUESTS:
-                            ac = Domain_Guests;
+                            ac = L"Domain Guests";
                             break;
                         case DOMAIN_GROUP_RID_COMPUTERS:
-                            ac = Domain_Computers;
+                            ac = L"Domain Computers";
                             break;
                         case DOMAIN_GROUP_RID_CONTROLLERS:
-                            ac = Domain_Controllers;
+                            ac = L"Domain Controllers";
                             break;
                         case DOMAIN_GROUP_RID_CERT_ADMINS:
-                            ac = Cert_Publishers;
+                            ac = L"Cert Publishers";
                             break;
                         case DOMAIN_GROUP_RID_SCHEMA_ADMINS:
-                            ac = Schema_Admins;
+                            ac = L"Schema Admins";
                             break;
                         case DOMAIN_GROUP_RID_ENTERPRISE_ADMINS:
-                            ac = Enterprise_Admins;
+                            ac = L"Enterprise Admins";
                             break;
                         case DOMAIN_GROUP_RID_POLICY_ADMINS:
-                            ac = Group_Policy_Creator_Owners;
+                            ac = L"Group Policy Creator Owners";
                             break;
                         case DOMAIN_ALIAS_RID_RAS_SERVERS:
-                            ac = RAS_and_IAS_Servers;
+                            ac = L"RAS and IAS Servers";
                             break;
                         case 1000:	/* first user account */
                             size = UNLEN + 1;
@@ -1519,9 +1391,9 @@ BOOL WINAPI LookupAccountNameW( LPCWSTR lpSystemName, LPCWSTR lpAccountName, PSI
         return FALSE;
     }
 
-    if (!lpAccountName || !wcscmp( lpAccountName, Blank ))
+    if (!lpAccountName || !wcscmp( lpAccountName, L"" ))
     {
-        lpAccountName = BUILTIN;
+        lpAccountName = L"BUILTIN";
     }
 
     RtlInitUnicodeString( &account, lpAccountName );
@@ -2146,7 +2018,7 @@ static DWORD trustee_to_sid( DWORD nDestinationSidLength, PSID pDestinationSid, 
         DWORD sid_size = nDestinationSidLength;
         DWORD domain_size = MAX_COMPUTERNAME_LENGTH + 1;
         SID_NAME_USE use;
-        if (!wcscmp( pTrustee->ptstrName, CURRENT_USER ))
+        if (!wcscmp( pTrustee->ptstrName, L"CURRENT_USER" ))
         {
             if (!lookup_user_account_name( pDestinationSid, &sid_size, NULL, &domain_size, &use ))
             {

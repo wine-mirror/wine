@@ -42,19 +42,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(cred);
 /* the size of the ARC4 key used to encrypt the password data */
 #define KEY_SIZE 8
 
-static const WCHAR wszCredentialManagerKey[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\',
-    'C','r','e','d','e','n','t','i','a','l',' ','M','a','n','a','g','e','r',0};
-static const WCHAR wszEncryptionKeyValue[] = {'E','n','c','r','y','p','t','i','o','n','K','e','y',0};
-
-static const WCHAR wszFlagsValue[] = {'F','l','a','g','s',0};
-static const WCHAR wszTypeValue[] = {'T','y','p','e',0};
-static const WCHAR wszCommentValue[] = {'C','o','m','m','e','n','t',0};
-static const WCHAR wszLastWrittenValue[] = {'L','a','s','t','W','r','i','t','t','e','n',0};
-static const WCHAR wszPersistValue[] = {'P','e','r','s','i','s','t',0};
-static const WCHAR wszTargetAliasValue[] = {'T','a','r','g','e','t','A','l','i','a','s',0};
-static const WCHAR wszUserNameValue[] = {'U','s','e','r','N','a','m','e',0};
-static const WCHAR wszPasswordValue[] = {'P','a','s','s','w','o','r','d',0};
-
 static DWORD read_credential_blob(HKEY hkey, const BYTE key_data[KEY_SIZE],
                                   LPBYTE credential_blob,
                                   DWORD *credential_blob_size)
@@ -63,7 +50,7 @@ static DWORD read_credential_blob(HKEY hkey, const BYTE key_data[KEY_SIZE],
     DWORD type;
 
     *credential_blob_size = 0;
-    ret = RegQueryValueExW(hkey, wszPasswordValue, 0, &type, NULL, credential_blob_size);
+    ret = RegQueryValueExW(hkey, L"Password", 0, &type, NULL, credential_blob_size);
     if (ret != ERROR_SUCCESS)
         return ret;
     else if (type != REG_BINARY)
@@ -73,7 +60,7 @@ static DWORD read_credential_blob(HKEY hkey, const BYTE key_data[KEY_SIZE],
         struct ustring data;
         struct ustring key;
 
-        ret = RegQueryValueExW(hkey, wszPasswordValue, 0, &type, credential_blob,
+        ret = RegQueryValueExW(hkey, L"Password", 0, &type, credential_blob,
                                credential_blob_size);
         if (ret != ERROR_SUCCESS)
             return ret;
@@ -113,7 +100,7 @@ static DWORD registry_read_credential(HKEY hkey, PCREDENTIALW credential,
         buffer += count;
     }
 
-    ret = RegQueryValueExW(hkey, wszCommentValue, 0, &type, NULL, &count);
+    ret = RegQueryValueExW(hkey, L"Comment", 0, &type, NULL, &count);
     if (ret != ERROR_FILE_NOT_FOUND && ret != ERROR_SUCCESS)
         return ret;
     else if (type != REG_SZ)
@@ -122,7 +109,7 @@ static DWORD registry_read_credential(HKEY hkey, PCREDENTIALW credential,
     if (credential)
     {
         credential->Comment = (LPWSTR)buffer;
-        ret = RegQueryValueExW(hkey, wszCommentValue, 0, &type, (LPVOID)credential->Comment,
+        ret = RegQueryValueExW(hkey, L"Comment", 0, &type, (LPVOID)credential->Comment,
                                &count);
         if (ret == ERROR_FILE_NOT_FOUND)
             credential->Comment = NULL;
@@ -134,7 +121,7 @@ static DWORD registry_read_credential(HKEY hkey, PCREDENTIALW credential,
             buffer += count;
     }
 
-    ret = RegQueryValueExW(hkey, wszTargetAliasValue, 0, &type, NULL, &count);
+    ret = RegQueryValueExW(hkey, L"TargetAlias", 0, &type, NULL, &count);
     if (ret != ERROR_FILE_NOT_FOUND && ret != ERROR_SUCCESS)
         return ret;
     else if (type != REG_SZ)
@@ -143,7 +130,7 @@ static DWORD registry_read_credential(HKEY hkey, PCREDENTIALW credential,
     if (credential)
     {
         credential->TargetAlias = (LPWSTR)buffer;
-        ret = RegQueryValueExW(hkey, wszTargetAliasValue, 0, &type, (LPVOID)credential->TargetAlias,
+        ret = RegQueryValueExW(hkey, L"TargetAlias", 0, &type, (LPVOID)credential->TargetAlias,
                                &count);
         if (ret == ERROR_FILE_NOT_FOUND)
             credential->TargetAlias = NULL;
@@ -155,7 +142,7 @@ static DWORD registry_read_credential(HKEY hkey, PCREDENTIALW credential,
             buffer += count;
     }
 
-    ret = RegQueryValueExW(hkey, wszUserNameValue, 0, &type, NULL, &count);
+    ret = RegQueryValueExW(hkey, L"UserName", 0, &type, NULL, &count);
     if (ret != ERROR_FILE_NOT_FOUND && ret != ERROR_SUCCESS)
         return ret;
     else if (type != REG_SZ)
@@ -164,7 +151,7 @@ static DWORD registry_read_credential(HKEY hkey, PCREDENTIALW credential,
     if (credential)
     {
         credential->UserName = (LPWSTR)buffer;
-        ret = RegQueryValueExW(hkey, wszUserNameValue, 0, &type, (LPVOID)credential->UserName,
+        ret = RegQueryValueExW(hkey, L"UserName", 0, &type, (LPVOID)credential->UserName,
                                &count);
         if (ret == ERROR_FILE_NOT_FOUND)
             credential->UserName = NULL;
@@ -201,14 +188,14 @@ static DWORD registry_read_credential(HKEY hkey, PCREDENTIALW credential,
     if (!credential) return ERROR_SUCCESS;
 
     count = sizeof(credential->Flags);
-    ret = RegQueryValueExW(hkey, wszFlagsValue, NULL, &type, (LPVOID)&credential->Flags,
+    ret = RegQueryValueExW(hkey, L"Flags", NULL, &type, (LPVOID)&credential->Flags,
                            &count);
     if (ret != ERROR_SUCCESS)
         return ret;
     else if (type != REG_DWORD)
         return ERROR_REGISTRY_CORRUPT;
     count = sizeof(credential->Type);
-    ret = RegQueryValueExW(hkey, wszTypeValue, NULL, &type, (LPVOID)&credential->Type,
+    ret = RegQueryValueExW(hkey, L"Type", NULL, &type, (LPVOID)&credential->Type,
                            &count);
     if (ret != ERROR_SUCCESS)
         return ret;
@@ -216,14 +203,14 @@ static DWORD registry_read_credential(HKEY hkey, PCREDENTIALW credential,
         return ERROR_REGISTRY_CORRUPT;
 
     count = sizeof(credential->LastWritten);
-    ret = RegQueryValueExW(hkey, wszLastWrittenValue, NULL, &type, (LPVOID)&credential->LastWritten,
+    ret = RegQueryValueExW(hkey, L"LastWritten", NULL, &type, (LPVOID)&credential->LastWritten,
                            &count);
     if (ret != ERROR_SUCCESS)
         return ret;
     else if (type != REG_BINARY)
         return ERROR_REGISTRY_CORRUPT;
     count = sizeof(credential->Persist);
-    ret = RegQueryValueExW(hkey, wszPersistValue, NULL, &type, (LPVOID)&credential->Persist,
+    ret = RegQueryValueExW(hkey, L"Persist", NULL, &type, (LPVOID)&credential->Persist,
                            &count);
     if (ret == ERROR_SUCCESS && type != REG_DWORD)
         return ERROR_REGISTRY_CORRUPT;
@@ -250,7 +237,7 @@ static DWORD write_credential_blob(HKEY hkey, LPCWSTR target_name, DWORD type,
     data.Buffer = encrypted_credential_blob;
     SystemFunction032(&data, &key);
 
-    ret = RegSetValueExW(hkey, wszPasswordValue, 0, REG_BINARY, encrypted_credential_blob, credential_blob_size);
+    ret = RegSetValueExW(hkey, L"Password", 0, REG_BINARY, encrypted_credential_blob, credential_blob_size);
     heap_free(encrypted_credential_blob);
 
     return ret;
@@ -264,10 +251,10 @@ static DWORD registry_write_credential(HKEY hkey, const CREDENTIALW *credential,
 
     GetSystemTimeAsFileTime(&LastWritten);
 
-    ret = RegSetValueExW(hkey, wszFlagsValue, 0, REG_DWORD, (const BYTE*)&credential->Flags,
+    ret = RegSetValueExW(hkey, L"Flags", 0, REG_DWORD, (const BYTE*)&credential->Flags,
                          sizeof(credential->Flags));
     if (ret != ERROR_SUCCESS) return ret;
-    ret = RegSetValueExW(hkey, wszTypeValue, 0, REG_DWORD, (const BYTE*)&credential->Type,
+    ret = RegSetValueExW(hkey, L"Type", 0, REG_DWORD, (const BYTE*)&credential->Type,
                          sizeof(credential->Type));
     if (ret != ERROR_SUCCESS) return ret;
     ret = RegSetValueExW(hkey, NULL, 0, REG_SZ, (LPVOID)credential->TargetName,
@@ -275,26 +262,26 @@ static DWORD registry_write_credential(HKEY hkey, const CREDENTIALW *credential,
     if (ret != ERROR_SUCCESS) return ret;
     if (credential->Comment)
     {
-        ret = RegSetValueExW(hkey, wszCommentValue, 0, REG_SZ, (LPVOID)credential->Comment,
+        ret = RegSetValueExW(hkey, L"Comment", 0, REG_SZ, (LPVOID)credential->Comment,
                              sizeof(WCHAR)*(lstrlenW(credential->Comment)+1));
         if (ret != ERROR_SUCCESS) return ret;
     }
-    ret = RegSetValueExW(hkey, wszLastWrittenValue, 0, REG_BINARY, (LPVOID)&LastWritten,
+    ret = RegSetValueExW(hkey, L"LastWritten", 0, REG_BINARY, (LPVOID)&LastWritten,
                          sizeof(LastWritten));
     if (ret != ERROR_SUCCESS) return ret;
-    ret = RegSetValueExW(hkey, wszPersistValue, 0, REG_DWORD, (const BYTE*)&credential->Persist,
+    ret = RegSetValueExW(hkey, L"Persist", 0, REG_DWORD, (const BYTE*)&credential->Persist,
                          sizeof(credential->Persist));
     if (ret != ERROR_SUCCESS) return ret;
     /* FIXME: Attributes */
     if (credential->TargetAlias)
     {
-        ret = RegSetValueExW(hkey, wszTargetAliasValue, 0, REG_SZ, (LPVOID)credential->TargetAlias,
+        ret = RegSetValueExW(hkey, L"TargetAlias", 0, REG_SZ, (LPVOID)credential->TargetAlias,
                              sizeof(WCHAR)*(lstrlenW(credential->TargetAlias)+1));
         if (ret != ERROR_SUCCESS) return ret;
     }
     if (credential->UserName)
     {
-        ret = RegSetValueExW(hkey, wszUserNameValue, 0, REG_SZ, (LPVOID)credential->UserName,
+        ret = RegSetValueExW(hkey, L"UserName", 0, REG_SZ, (LPVOID)credential->UserName,
                              sizeof(WCHAR)*(lstrlenW(credential->UserName)+1));
         if (ret != ERROR_SUCCESS) return ret;
     }
@@ -377,7 +364,7 @@ static DWORD host_write_credential( const CREDENTIALW *credential, BOOL preserve
 
 static DWORD open_cred_mgr_key(HKEY *hkey, BOOL open_for_write)
 {
-    return RegCreateKeyExW(HKEY_CURRENT_USER, wszCredentialManagerKey, 0,
+    return RegCreateKeyExW(HKEY_CURRENT_USER, L"Software\\Wine\\Credential Manager", 0,
                            NULL, REG_OPTION_NON_VOLATILE,
                            KEY_READ | (open_for_write ? KEY_WRITE : 0), NULL, hkey, NULL);
 }
@@ -395,7 +382,7 @@ static DWORD get_cred_mgr_encryption_key(HKEY hkeyMgr, BYTE key_data[KEY_SIZE])
     memcpy(key_data, my_key_data, KEY_SIZE);
 
     count = KEY_SIZE;
-    ret = RegQueryValueExW(hkeyMgr, wszEncryptionKeyValue, NULL, &type, key_data,
+    ret = RegQueryValueExW(hkeyMgr, L"EncryptionKey", NULL, &type, key_data,
                            &count);
     if (ret == ERROR_SUCCESS)
     {
@@ -415,14 +402,14 @@ static DWORD get_cred_mgr_encryption_key(HKEY hkeyMgr, BYTE key_data[KEY_SIZE])
     value = RtlUniform(&seed);
     *(DWORD *)(key_data + 4) = value;
 
-    ret = RegSetValueExW(hkeyMgr, wszEncryptionKeyValue, 0, REG_BINARY,
+    ret = RegSetValueExW(hkeyMgr, L"EncryptionKey", 0, REG_BINARY,
                          key_data, KEY_SIZE);
     if (ret == ERROR_ACCESS_DENIED)
     {
         ret = open_cred_mgr_key(&hkeyMgr, TRUE);
         if (ret == ERROR_SUCCESS)
         {
-            ret = RegSetValueExW(hkeyMgr, wszEncryptionKeyValue, 0, REG_BINARY,
+            ret = RegSetValueExW(hkeyMgr, L"EncryptionKey", 0, REG_BINARY,
                                  key_data, KEY_SIZE);
             RegCloseKey(hkeyMgr);
         }
@@ -432,8 +419,6 @@ static DWORD get_cred_mgr_encryption_key(HKEY hkeyMgr, BYTE key_data[KEY_SIZE])
 
 static LPWSTR get_key_name_for_target(LPCWSTR target_name, DWORD type)
 {
-    static const WCHAR wszGenericPrefix[] = {'G','e','n','e','r','i','c',':',' ',0};
-    static const WCHAR wszDomPasswdPrefix[] = {'D','o','m','P','a','s','s','w','d',':',' ',0};
     INT len;
     LPCWSTR prefix = NULL;
     LPWSTR key_name, p;
@@ -441,13 +426,13 @@ static LPWSTR get_key_name_for_target(LPCWSTR target_name, DWORD type)
     len = lstrlenW(target_name);
     if (type == CRED_TYPE_GENERIC)
     {
-        prefix = wszGenericPrefix;
-        len += ARRAY_SIZE(wszGenericPrefix);
+        prefix = L"Generic: ";
+        len += ARRAY_SIZE(L"Generic: ");
     }
     else
     {
-        prefix = wszDomPasswdPrefix;
-        len += ARRAY_SIZE(wszDomPasswdPrefix);
+        prefix = L"DomPasswd: ";
+        len += ARRAY_SIZE(L"DomPasswd: ");
     }
 
     key_name = heap_alloc(len * sizeof(WCHAR));
@@ -916,7 +901,6 @@ BOOL WINAPI CredEnumerateA(LPCSTR Filter, DWORD Flags, DWORD *Count,
 #define CRED_DATA_SIZE  2048
 static DWORD host_enumerate_credentials( const WCHAR *filter, CREDENTIALW **credentials, char *buf, DWORD *len, DWORD *count )
 {
-    static const WCHAR emptyW[] = {0};
     struct mountmgr_credential_list *list, *tmp;
     DWORD i, j, ret, size, filter_size, offset = 0;
     HANDLE mgr;
@@ -925,8 +909,8 @@ static DWORD host_enumerate_credentials( const WCHAR *filter, CREDENTIALW **cred
     if (filter) filter_size = (lstrlenW( filter ) + 1) * sizeof(WCHAR);
     else
     {
-        filter = emptyW;
-        filter_size = sizeof(emptyW);
+        filter = L"";
+        filter_size = sizeof(L"");
     }
 
     mgr = CreateFileW( MOUNTMGR_DOS_DEVICE_NAME, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0 );
