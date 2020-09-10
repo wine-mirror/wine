@@ -378,6 +378,14 @@ BOOL CRYPT_ReadSerializedStoreFromBlob(const CRYPT_DATA_BLOB *blob,
  */
 void CRYPT_FixKeyProvInfoPointers(PCRYPT_KEY_PROV_INFO info) DECLSPEC_HIDDEN;
 
+struct store_CERT_KEY_CONTEXT
+{
+    DWORD   cbSize;
+    DWORD64 hCryptProv;
+    DWORD   dwKeySpec;
+};
+void CRYPT_ConvertKeyContext(const struct store_CERT_KEY_CONTEXT *src, CERT_KEY_CONTEXT *dst) DECLSPEC_HIDDEN;
+
 /**
  *  String functions
  */

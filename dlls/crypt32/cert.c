@@ -428,6 +428,13 @@ static BOOL CertContext_CopyParam(void *pvData, DWORD *pcbData, const void *pb,
     return ret;
 }
 
+void CRYPT_ConvertKeyContext(const struct store_CERT_KEY_CONTEXT *src, CERT_KEY_CONTEXT *dst)
+{
+    dst->cbSize = sizeof(*dst);
+    dst->hCryptProv = src->hCryptProv;
+    dst->dwKeySpec = src->dwKeySpec;
+}
+
 static BOOL CertContext_GetProperty(cert_t *cert, DWORD dwPropId,
  void *pvData, DWORD *pcbData)
 {
@@ -441,7 +448,16 @@ static BOOL CertContext_GetProperty(cert_t *cert, DWORD dwPropId,
     else
         ret = FALSE;
     if (ret)
+    {
+        CERT_KEY_CONTEXT ctx;
+        if (dwPropId == CERT_KEY_CONTEXT_PROP_ID)
+        {
+            CRYPT_ConvertKeyContext((const struct store_CERT_KEY_CONTEXT *)blob.pbData, &ctx);
+            blob.pbData = (BYTE *)&ctx;
+            blob.cbData = ctx.cbSize;
+        }
         ret = CertContext_CopyParam(pvData, pcbData, blob.pbData, blob.cbData);
+    }
     else
     {
         /* Implicit properties */
@@ -732,6 +748,19 @@ static BOOL CertContext_SetKeyProvInfoProperty(CONTEXT_PROPERTY_LIST *properties
     return ret;
 }
 
+static BOOL CertContext_SetKeyContextProperty(CONTEXT_PROPERTY_LIST *properties,
+ const CERT_KEY_CONTEXT *keyContext)
+{
+    struct store_CERT_KEY_CONTEXT ctx;
+
+    ctx.cbSize = sizeof(ctx);
+    ctx.hCryptProv = keyContext->hCryptProv;
+    ctx.dwKeySpec = keyContext->dwKeySpec;
+
+    return ContextPropertyList_SetProperty(properties, CERT_KEY_CONTEXT_PROP_ID,
+     (const BYTE *)&ctx, ctx.cbSize);
+}
+
 static BOOL CertContext_SetProperty(cert_t *cert, DWORD dwPropId,
  DWORD dwFlags, const void *pvData)
 {
@@ -790,7 +819,6 @@ static BOOL CertContext_SetProperty(cert_t *cert, DWORD dwPropId,
             }
             break;
         case CERT_KEY_CONTEXT_PROP_ID:
-        {
             if (pvData)
             {
                 const CERT_KEY_CONTEXT *keyContext = pvData;
@@ -801,8 +829,7 @@ static BOOL CertContext_SetProperty(cert_t *cert, DWORD dwPropId,
                     ret = FALSE;
                 }
                 else
-                    ret = ContextPropertyList_SetProperty(cert->base.properties, dwPropId,
-                     (const BYTE *)keyContext, keyContext->cbSize);
+                    ret = CertContext_SetKeyContextProperty(cert->base.properties, pvData);
             }
             else
             {
@@ -810,7 +837,6 @@ static BOOL CertContext_SetProperty(cert_t *cert, DWORD dwPropId,
                 ret = TRUE;
             }
             break;
-        }
         case CERT_KEY_PROV_INFO_PROP_ID:
             if (pvData)
                 ret = CertContext_SetKeyProvInfoProperty(cert->base.properties, pvData);

@@ -280,6 +280,13 @@ static BOOL CRYPT_ReadContextProp(
              hdr->propID, 0, pbElement);
             break;
         }
+        case CERT_KEY_CONTEXT_PROP_ID:
+        {
+            CERT_KEY_CONTEXT ctx;
+            CRYPT_ConvertKeyContext((struct store_CERT_KEY_CONTEXT *)pbElement, &ctx);
+            ret = contextInterface->setProp(context, hdr->propID, 0, &ctx);
+            break;
+        }
         default:
             ret = FALSE;
         }
