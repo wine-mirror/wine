@@ -1343,8 +1343,8 @@ original file still present
 ------------ Testing move ------------
 --- file move
 file move succeeded
-@todo_wine@file move with overwrite succeeded@or_broken@file overwrite impossible!
-@todo_wine@bar@or_broken@baz
+file move with overwrite succeeded@or_broken@file overwrite impossible!
+bar@or_broken@baz
 read-only files are moveable
 file moved in subdirectory
 moving a file to itself is a no-op@or_broken@moving a file to itself should be a no-op!
