@@ -267,26 +267,22 @@ static int WS2_recv_base( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
                           LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine,
                           LPWSABUF lpControlBuffer );
 
-/* critical section to protect some non-reentrant net function */
-static CRITICAL_SECTION csWSgetXXXbyYYY;
-static CRITICAL_SECTION_DEBUG critsect_debug =
-{
-    0, 0, &csWSgetXXXbyYYY,
-    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": csWSgetXXXbyYYY") }
-};
-static CRITICAL_SECTION csWSgetXXXbyYYY = { &critsect_debug, -1, 0, 0, 0, 0 };
+#define DECLARE_CRITICAL_SECTION(cs) \
+    static CRITICAL_SECTION cs; \
+    static CRITICAL_SECTION_DEBUG cs##_debug = \
+    { 0, 0, &cs, { &cs##_debug.ProcessLocksList, &cs##_debug.ProcessLocksList }, \
+      0, 0, { (DWORD_PTR)(__FILE__ ": " # cs) }}; \
+    static CRITICAL_SECTION cs = { &cs##_debug, -1, 0, 0, 0, 0 }
+
+DECLARE_CRITICAL_SECTION(csWSgetXXXbyYYY);
+DECLARE_CRITICAL_SECTION(cs_if_addr_cache);
+DECLARE_CRITICAL_SECTION(cs_socket_list);
 
 static in_addr_t *if_addr_cache;
 static unsigned int if_addr_cache_size;
-static CRITICAL_SECTION cs_if_addr_cache;
-static CRITICAL_SECTION_DEBUG cs_if_addr_cache_debug =
-{
-    0, 0, &cs_if_addr_cache,
-    { &cs_if_addr_cache_debug.ProcessLocksList, &cs_if_addr_cache_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": cs_if_addr_cache") }
-};
-static CRITICAL_SECTION cs_if_addr_cache = { &cs_if_addr_cache_debug, -1, 0, 0, 0, 0 };
+
+static SOCKET *socket_list;
+static unsigned int socket_list_size;
 
 union generic_unix_sockaddr
 {
@@ -480,6 +476,48 @@ static inline const char *debugstr_optval(const char *optval, int optlenval)
 /* HANDLE<->SOCKET conversion (SOCKET is UINT_PTR). */
 #define SOCKET2HANDLE(s) ((HANDLE)(s))
 #define HANDLE2SOCKET(h) ((SOCKET)(h))
+
+static BOOL socket_list_add(SOCKET socket)
+{
+    unsigned int i, new_size;
+    SOCKET *new_array;
+
+    EnterCriticalSection(&cs_socket_list);
+    for (i = 0; i < socket_list_size; ++i)
+    {
+        if (!socket_list[i])
+        {
+            socket_list[i] = socket;
+            LeaveCriticalSection(&cs_socket_list);
+            return TRUE;
+        }
+    }
+    new_size = max(socket_list_size * 2, 8);
+    if (!(new_array = heap_realloc(socket_list, new_size * sizeof(*socket_list))))
+        return FALSE;
+    socket_list = new_array;
+    memset(socket_list + socket_list_size, 0, (new_size - socket_list_size) * sizeof(*socket_list));
+    socket_list[socket_list_size] = socket;
+    socket_list_size = new_size;
+    LeaveCriticalSection(&cs_socket_list);
+    return TRUE;
+}
+
+static void socket_list_remove(SOCKET socket)
+{
+    unsigned int i;
+
+    EnterCriticalSection(&cs_socket_list);
+    for (i = 0; i < socket_list_size; ++i)
+    {
+        if (socket_list[i] == socket)
+        {
+            socket_list[i] = 0;
+            break;
+        }
+    }
+    LeaveCriticalSection(&cs_socket_list);
+}
 
 /****************************************************************
  * Async IO declarations
@@ -2832,6 +2870,11 @@ SOCKET WINAPI WS_accept(SOCKET s, struct WS_sockaddr *addr, int *addrlen32)
         SERVER_END_REQ;
         if (!err)
         {
+            if (!socket_list_add(as))
+            {
+                CloseHandle(SOCKET2HANDLE(as));
+                return SOCKET_ERROR;
+            }
             if (addr && addrlen32 && WS_getpeername(as, addr, addrlen32))
             {
                 WS_closesocket(as);
@@ -3483,6 +3526,7 @@ int WINAPI WS_closesocket(SOCKET s)
         if (fd >= 0)
         {
             release_sock_fd(s, fd);
+            socket_list_remove(s);
             if (CloseHandle(SOCKET2HANDLE(s)))
                 res = 0;
         }
@@ -7558,10 +7602,16 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
     }
 
     /* hack for WSADuplicateSocket */
-    if (lpProtocolInfo && lpProtocolInfo->dwServiceFlags4 == 0xff00ff00) {
-      ret = lpProtocolInfo->dwServiceFlags3;
-      TRACE("\tgot duplicate %04lx\n", ret);
-      return ret;
+    if (lpProtocolInfo && lpProtocolInfo->dwServiceFlags4 == 0xff00ff00)
+    {
+        ret = lpProtocolInfo->dwServiceFlags3;
+        TRACE("\tgot duplicate %04lx\n", ret);
+        if (!socket_list_add(ret))
+        {
+            CloseHandle(SOCKET2HANDLE(ret));
+            return INVALID_SOCKET;
+        }
+        return ret;
     }
 
     if (lpProtocolInfo)
@@ -7685,7 +7735,12 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
             }
         }
 #endif
-       return ret;
+        if (!socket_list_add(ret))
+        {
+            CloseHandle(SOCKET2HANDLE(ret));
+            return INVALID_SOCKET;
+        }
+        return ret;
     }
 
     if (err == WSAEACCES) /* raw socket denied */
