@@ -48,8 +48,6 @@ extern obj_handle_t open_object( struct process *process, obj_handle_t parent, u
                                  const struct object_ops *ops, const struct unicode_str *name,
                                  unsigned int attr );
 extern obj_handle_t find_inherited_handle( struct process *process, const struct object_ops *ops );
-extern obj_handle_t enumerate_handles( struct process *process, const struct object_ops *ops,
-                                       unsigned int *index );
 extern void close_process_handles( struct process *process );
 extern struct handle_table *alloc_handle_table( struct process *process, int count );
 extern struct handle_table *copy_handle_table( struct process *process, struct process *parent );
