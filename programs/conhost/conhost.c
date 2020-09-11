@@ -337,13 +337,19 @@ static void init_tty_output( struct console *console )
     console->tty_cursor_visible = TRUE;
 }
 
-static void update_output( struct screen_buffer *screen_buffer, const RECT *rect )
+static void empty_update_rect( struct screen_buffer *screen_buffer, RECT *rect )
+{
+    SetRect( rect, screen_buffer->width, screen_buffer->height, 0, 0 );
+}
+
+static void update_output( struct screen_buffer *screen_buffer, RECT *rect )
 {
     int x, y, size, trailing_spaces;
     char_info_t *ch;
     char buf[8];
 
     if (!is_active( screen_buffer ) || !screen_buffer->console->tty_output) return;
+    if (rect->top > rect->bottom || rect->right < rect->left) return;
     TRACE( "%s\n", wine_dbgstr_rect( rect ));
 
     hide_tty_cursor( screen_buffer->console );
@@ -374,6 +380,54 @@ static void update_output( struct screen_buffer *screen_buffer, const RECT *rect
             screen_buffer->console->tty_cursor_x++;
         }
     }
+
+    empty_update_rect( screen_buffer, rect );
+}
+
+static void new_line( struct screen_buffer *screen_buffer, RECT *update_rect )
+{
+    unsigned int i;
+
+    assert( screen_buffer->cursor_y == screen_buffer->height );
+    screen_buffer->cursor_y--;
+
+    if (screen_buffer->console->tty_output)
+        update_output( screen_buffer, update_rect );
+    else
+        SetRect( update_rect, 0, 0, screen_buffer->width - 1, screen_buffer->height - 1 );
+
+    memmove( screen_buffer->data, screen_buffer->data + screen_buffer->width,
+             screen_buffer->width * (screen_buffer->height - 1) * sizeof(*screen_buffer->data) );
+    for (i = 0; i < screen_buffer->width; i++)
+        screen_buffer->data[screen_buffer->width * (screen_buffer->height - 1) + i] = empty_char_info;
+    if (is_active( screen_buffer ))
+    {
+        screen_buffer->console->tty_cursor_y--;
+        if (screen_buffer->console->tty_cursor_y != screen_buffer->height - 2)
+            set_tty_cursor( screen_buffer->console, 0, screen_buffer->height - 2 );
+        set_tty_cursor( screen_buffer->console, 0, screen_buffer->height - 1 );
+    }
+}
+
+static void write_char( struct screen_buffer *screen_buffer, WCHAR ch, RECT *update_rect )
+{
+    if (screen_buffer->cursor_x == screen_buffer->width)
+    {
+        screen_buffer->cursor_x = 0;
+        screen_buffer->cursor_y++;
+    }
+    if (screen_buffer->cursor_y == screen_buffer->height)
+    {
+        new_line( screen_buffer, update_rect );
+    }
+
+    screen_buffer->data[screen_buffer->cursor_y * screen_buffer->width + screen_buffer->cursor_x].ch = ch;
+    screen_buffer->data[screen_buffer->cursor_y * screen_buffer->width + screen_buffer->cursor_x].attr = screen_buffer->attr;
+    update_rect->left   = min( update_rect->left,   screen_buffer->cursor_x );
+    update_rect->top    = min( update_rect->top,    screen_buffer->cursor_y );
+    update_rect->right  = max( update_rect->right,  screen_buffer->cursor_x );
+    update_rect->bottom = max( update_rect->bottom, screen_buffer->cursor_y );
+    screen_buffer->cursor_x++;
 }
 
 static NTSTATUS read_console_input( struct console *console, size_t out_size )
@@ -923,6 +977,59 @@ static NTSTATUS set_output_info( struct screen_buffer *screen_buffer,
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS write_console( struct screen_buffer *screen_buffer, const WCHAR *buffer, size_t len )
+{
+    RECT update_rect;
+    size_t i, j;
+
+    TRACE( "%s\n", debugstr_wn(buffer, len) );
+
+    empty_update_rect( screen_buffer, &update_rect );
+
+    for (i = 0; i < len; i++)
+    {
+        if (screen_buffer->mode & ENABLE_PROCESSED_OUTPUT)
+        {
+            switch (buffer[i])
+            {
+            case '\b':
+                if (screen_buffer->cursor_x) screen_buffer->cursor_x--;
+                continue;
+            case '\t':
+                j = min( screen_buffer->width - screen_buffer->cursor_x, 8 - (screen_buffer->cursor_x % 8) );
+                while (j--) write_char( screen_buffer, ' ', &update_rect );
+                continue;
+            case '\n':
+                screen_buffer->cursor_x = 0;
+                if (++screen_buffer->cursor_y == screen_buffer->height)
+                    new_line( screen_buffer, &update_rect );
+                else if (screen_buffer->mode & ENABLE_WRAP_AT_EOL_OUTPUT)
+                    update_output( screen_buffer, &update_rect );
+                continue;
+            case '\a':
+                FIXME( "beep\n" );
+                continue;
+            case '\r':
+                screen_buffer->cursor_x = 0;
+                continue;
+            }
+        }
+        if (screen_buffer->cursor_x == screen_buffer->width && !(screen_buffer->mode & ENABLE_WRAP_AT_EOL_OUTPUT))
+            screen_buffer->cursor_x = update_rect.left;
+        write_char( screen_buffer, buffer[i], &update_rect );
+    }
+
+    if (screen_buffer->cursor_x == screen_buffer->width)
+    {
+        if (screen_buffer->mode & ENABLE_WRAP_AT_EOL_OUTPUT) screen_buffer->cursor_x--;
+        else screen_buffer->cursor_x = update_rect.left;
+    }
+
+    update_output( screen_buffer, &update_rect );
+    tty_sync( screen_buffer->console );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS write_output( struct screen_buffer *screen_buffer, const struct condrv_output_params *params,
                               size_t in_size, size_t *out_size )
 {
@@ -1327,6 +1434,10 @@ static NTSTATUS screen_buffer_ioctl( struct screen_buffer *screen_buffer, unsign
         screen_buffer->mode = *(unsigned int *)in_data;
         TRACE( "set %x mode\n", screen_buffer->mode );
         return STATUS_SUCCESS;
+
+    case IOCTL_CONDRV_WRITE_CONSOLE:
+        if (in_size % sizeof(WCHAR) || *out_size) return STATUS_INVALID_PARAMETER;
+        return write_console( screen_buffer, in_data, in_size / sizeof(WCHAR) );
 
     case IOCTL_CONDRV_WRITE_OUTPUT:
         if ((*out_size != sizeof(DWORD) && *out_size != sizeof(SMALL_RECT)) ||
