@@ -1479,7 +1479,7 @@ static struct file *open_include_file( const struct makefile *make, struct incl_
     /* check for extra targets */
     if (strarray_exists( &make->extra_targets, pFile->name ))
     {
-        pFile->sourcename = filename;
+        pFile->sourcename = src_dir_path( make, pFile->name );
         pFile->filename = obj_dir_path( make, pFile->name );
         return NULL;
     }
@@ -2404,7 +2404,7 @@ static struct strarray get_source_defines( struct makefile *make, struct incl_fi
     if (source->use_msvcrt)
         strarray_add( &ret, strmake( "-I%s", top_src_dir_path( make, "include/msvcrt" )));
     for (i = 0; i < make->include_paths.count; i++)
-        strarray_add( &ret, strmake( "-I%s", obj_dir_path( make, make->include_paths.str[i] )));
+        strarray_add( &ret, strmake( "-I%s", make->include_paths.str[i] ));
     strarray_addall( &ret, make->define_args );
     strarray_addall( &ret, get_expanded_file_local_var( make, obj, "EXTRADEFS" ));
     return ret;
@@ -2486,12 +2486,18 @@ static void output_symlink_rule( const char *src_name, const char *link_name )
  */
 static void output_srcdir_symlink( struct makefile *make, const char *obj )
 {
-    char *src_file;
+    char *src_file, *dst_file, *src_name;
 
     if (!make->src_dir) return;
     src_file = src_dir_path( make, obj );
-    output( "%s: %s\n", obj, src_file );
-    output_symlink_rule( src_file, obj );
+    dst_file = obj_dir_path( make, obj );
+    output( "%s: %s\n", dst_file, src_file );
+
+    src_name = src_file;
+    if (src_name[0] != '/' && make->obj_dir)
+        src_name = concat_paths( get_relative_path( make->obj_dir, "" ), src_name );
+
+    output_symlink_rule( src_name, dst_file );
     strarray_add( &make->all_targets, obj );
 }
 
@@ -2736,7 +2742,7 @@ static void output_source_y( struct makefile *make, struct incl_file *source, co
                 source->filename, obj_dir_path( make, header ));
         strarray_add( &make->clean_files, header );
     }
-    else output( "%s.tab.c: %s\n", obj, source->filename );
+    else output( "%s.tab.c: %s\n", obj_dir_path( make, obj ), source->filename );
 
     output( "\t%s -p %s_ -o $@ %s\n", bison, obj, source->filename );
 }
@@ -3168,8 +3174,8 @@ static void output_source_default( struct makefile *make, struct incl_file *sour
             strarray_add( &make->ok_files, strmake( "%s.ok", obj ));
             output( "%s.ok:\n", obj_dir_path( make, obj ));
             output( "\t%s $(RUNTESTFLAGS) -T %s -M %s -p %s%s %s && touch $@\n",
-                    top_src_dir_path( make, "tools/runtest" ), top_obj_dir_path( make, "" ),
-                    make->testdll, replace_extension( make->testdll, ".dll", "_test.exe" ),
+                    top_src_dir_path( make, "tools/runtest" ), top_obj_dir_path( make, "" ), make->testdll,
+                    obj_dir_path( make, replace_extension( make->testdll, ".dll", "_test.exe" )),
                     make->is_cross ? "" : dll_ext, obj );
         }
     }
@@ -3538,7 +3544,7 @@ static void output_shared_lib( struct makefile *make )
     for (i = 1; i < names.count; i++)
     {
         output( "%s: %s\n", obj_dir_path( make, names.str[i] ), obj_dir_path( make, names.str[i-1] ));
-        output_symlink_rule( obj_dir_path( make, names.str[i-1] ), obj_dir_path( make, names.str[i] ));
+        output_symlink_rule( names.str[i-1], obj_dir_path( make, names.str[i] ));
         add_install_rule( make, names.str[i], names.str[i-1],
                           strmake( "y$(libdir)/%s", names.str[i] ));
     }
@@ -3651,7 +3657,7 @@ static void output_programs( struct makefile *make )
         for (j = 0; j < symlinks.count; j++)
         {
             output( "%s: %s\n", obj_dir_path( make, symlinks.str[j] ), obj_dir_path( make, program ));
-            output_symlink_rule( obj_dir_path( make, program ), obj_dir_path( make, symlinks.str[j] ));
+            output_symlink_rule( program, obj_dir_path( make, symlinks.str[j] ));
         }
         strarray_addall( &make->all_targets, symlinks );
 
