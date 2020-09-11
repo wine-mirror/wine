@@ -794,6 +794,13 @@ BOOL WINAPI WriteConsoleW(HANDLE hConsoleOutput, LPCVOID lpBuffer, DWORD nNumber
 
     if (lpNumberOfCharsWritten) *lpNumberOfCharsWritten = 0;
 
+    if (DeviceIoControl(hConsoleOutput, IOCTL_CONDRV_WRITE_CONSOLE, (void *)lpBuffer,
+                        nNumberOfCharsToWrite * sizeof(WCHAR), NULL, 0, NULL, NULL))
+    {
+        if (lpNumberOfCharsWritten) *lpNumberOfCharsWritten = nNumberOfCharsToWrite;
+        return TRUE;
+    }
+
     if ((fd = get_console_bare_fd(hConsoleOutput)) != -1)
     {
         char*           ptr;
