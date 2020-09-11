@@ -39,7 +39,7 @@ def add_icon_task( dir, scale )
         outputs.dir( outdir )
         doFirst { outdir.mkdirs() }
         def png = new File( outdir, "wine.png" )
-        def svg = new File( "@srcdir@", "wine.svg" )
+        def svg = new File( srcdir, "wine.svg" )
         inputs.file( svg )
         outputs.file( png )
         commandLine "rsvg-convert", "-z", scale, "-o", png, svg
@@ -97,10 +97,10 @@ android
     sourceSets
     {
         main.assets.srcDirs = [ "assets" ]
-        main.java.srcDirs = [ "@srcdir@" ]
+        main.java.srcDirs = [ srcdir ]
         main.jniLibs.srcDirs = [ "lib" ]
         main.java.excludes = [ "build" ]
         main.res.srcDirs = [ "res" ]
-        main.manifest.srcFile "@srcdir@/AndroidManifest.xml"
+        main.manifest.srcFile srcdir + "/AndroidManifest.xml"
     }
 }
