@@ -3972,6 +3972,7 @@ static void test_pseudo_console_child(HANDLE input, HANDLE output)
 
     ret = GetConsoleMode(output, &mode);
     ok(ret, "GetConsoleMode failed: %u\n", GetLastError());
+    mode &= ~ENABLE_VIRTUAL_TERMINAL_PROCESSING;
     ok(mode == (ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT), "mode = %x\n", mode);
 
     ret = SetConsoleMode(output, mode & ~ENABLE_WRAP_AT_EOL_OUTPUT);
