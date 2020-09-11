@@ -5085,7 +5085,7 @@ static void test_WM_DEVICECHANGE(HWND hwnd)
     }
 }
 
-static DWORD CALLBACK show_window_thread(LPVOID arg)
+static DWORD CALLBACK hide_window_thread( LPVOID arg )
 {
    HWND hwnd = arg;
 
@@ -5093,6 +5093,16 @@ static DWORD CALLBACK show_window_thread(LPVOID arg)
    ok(ShowWindow(hwnd, SW_HIDE) == FALSE, "ShowWindow(SW_HIDE) expected FALSE\n");
 
    return 0;
+}
+
+static DWORD CALLBACK show_window_thread( LPVOID arg )
+{
+    HWND hwnd = arg;
+
+    /* function will not return if ShowWindow(SW_SHOW) calls SendMessage() */
+    ok( ShowWindow( hwnd, SW_SHOW ), "ShowWindow(SW_SHOW) expected TRUE\n" ); /* actually it's 24... */
+
+    return 0;
 }
 
 /* Helper function to easier test SetWindowPos messages */
@@ -5156,7 +5166,7 @@ static void test_messages(void)
     ok_sequence(WmEmptySeq, "ShowWindow(SW_HIDE):overlapped", FALSE);
 
     /* test ShowWindow(SW_HIDE) on a hidden window -  multi-threaded */
-    hthread = CreateThread(NULL, 0, show_window_thread, hwnd, 0, &tid);
+    hthread = CreateThread( NULL, 0, hide_window_thread, hwnd, 0, &tid );
     ok(hthread != NULL, "CreateThread failed, error %d\n", GetLastError());
     ok(WaitForSingleObject(hthread, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
     CloseHandle(hthread);
@@ -5166,6 +5176,14 @@ static void test_messages(void)
     ShowWindow(hwnd, SW_SHOW);
     flush_events();
     ok_sequence(WmShowOverlappedSeq, "ShowWindow(SW_SHOW):overlapped", TRUE);
+
+    /* test ShowWindow(SW_SHOW) on a visible window -  multi-threaded */
+    hthread = CreateThread( NULL, 0, show_window_thread, hwnd, 0, &tid );
+    ok( hthread != NULL, "CreateThread failed, error %d\n", GetLastError() );
+    ok( WaitForSingleObject( hthread, INFINITE ) == WAIT_OBJECT_0, "WaitForSingleObject failed\n" );
+    CloseHandle( hthread );
+    flush_events();
+    ok_sequence( WmEmptySeq, "ShowWindow(SW_SHOW):overlapped", FALSE );
 
     ShowWindow(hwnd, SW_HIDE);
     flush_events();
