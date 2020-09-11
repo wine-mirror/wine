@@ -1277,6 +1277,11 @@ static void test_pseudoconsole(void)
     }
     else win_skip("Skipping tty output tests on broken Windows version\n");
 
+    CloseHandle(child_pipe);
+    wait_child_process(child_process);
+    CloseHandle(child_process);
+    expect_empty_output();
+
     pClosePseudoConsole(console);
     CloseHandle(console_pipe_end);
     CloseHandle(console_pipe);
