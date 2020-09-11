@@ -217,6 +217,7 @@ struct makefile
     struct strarray crossobj_files;
     struct strarray unixobj_files;
     struct strarray res_files;
+    struct strarray font_files;
     struct strarray c2man_files;
     struct strarray debug_files;
     struct strarray dlldata_files;
@@ -2935,7 +2936,7 @@ static void output_source_sfd( struct makefile *make, struct incl_file *source, 
         output( "%s: %s\n", ttf_file, source->filename );
         output( "\t%s -script %s %s $@\n",
                 fontforge, top_src_dir_path( make, "fonts/genttf.ff" ), source->filename );
-        if (!(source->file->flags & FLAG_SFD_FONTS)) output( "all: %s\n", ttf_file );
+        if (!(source->file->flags & FLAG_SFD_FONTS)) strarray_add( &make->font_files, ttf_obj );
     }
     if (source->file->flags & FLAG_INSTALL)
     {
@@ -3982,6 +3983,7 @@ static void output_sources( struct makefile *make )
         {
             output( "%s:", obj_dir_path( make, "all" ));
             output_filenames_obj_dir( make, make->all_targets );
+            output_filenames_obj_dir( make, make->font_files );
             output( "\n" );
             strarray_add_uniq( &make->phony_targets, obj_dir_path( make, "all" ));
         }
