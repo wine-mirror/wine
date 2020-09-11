@@ -6,6 +6,14 @@ HKLM
         {
             NoRemove Speech
             {
+                NoRemove AudioOutput
+                {
+                    val DefaultDefaultTokenId = s 'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech\AudioOutput\TokenEnums\MMAudioOut\'
+                    NoRemove MMAudioOut
+                    {
+                        val CLSID = s '{AB1890A0-E91F-11D2-BB91-00C04F8EE6C0}'
+                    }
+                }
                 NoRemove Voices
                 {
                 }
