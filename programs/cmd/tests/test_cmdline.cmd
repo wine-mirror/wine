@@ -178,6 +178,10 @@ rem cond 5 - string between quotes must be name of executable
 cmd /c "say five"
 echo @echo 5 >"say five.bat"
 cmd /c "say five"
+rem cond 6 - && between quotes
+cd .&&"cmd.exe" /c "echo hi"
+cd "."&&cmd.exe /c "echo hi"
+cd "."&&"cmd.exe" /c "echo hi"
 
 echo ------- Testing CMD /C qualifier treatment ------------
 rem no need for space after /c
