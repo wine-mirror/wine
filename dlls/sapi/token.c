@@ -489,8 +489,38 @@ static HRESULT WINAPI token_category_SetDefaultTokenId( ISpObjectTokenCategory *
 static HRESULT WINAPI token_category_GetDefaultTokenId( ISpObjectTokenCategory *iface,
                                                         LPWSTR *id )
 {
-    FIXME( "stub\n" );
-    return E_NOTIMPL;
+    struct token_category *This = impl_from_ISpObjectTokenCategory( iface );
+    struct data_key *this_data_key;
+    LONG res;
+    WCHAR regvalue[512];
+    DWORD regvalue_size = sizeof( regvalue );
+
+    FIXME( "(%p)->(%p): semi-stub\n", iface, id );
+
+    if (!This->data_key)
+        return SPERR_UNINITIALIZED;
+
+    if (!id)
+        return E_POINTER;
+
+    /* todo: check HKCU's DefaultTokenId before */
+
+    this_data_key = impl_from_ISpRegDataKey( This->data_key );
+
+    res = RegGetValueW( this_data_key->key, NULL, L"DefaultDefaultTokenId", RRF_RT_REG_SZ,
+                        NULL, &regvalue, &regvalue_size);
+    if (res == ERROR_FILE_NOT_FOUND) {
+        return SPERR_NOT_FOUND;
+    } else if (res != ERROR_SUCCESS) {
+        /* probably not the correct return value */
+        FIXME( "returning %08x\n", res );
+        return res;
+    }
+
+    *id = CoTaskMemAlloc( regvalue_size );
+    wcscpy( *id, regvalue );
+
+    return S_OK;
 }
 
 const struct ISpObjectTokenCategoryVtbl token_category_vtbl =

@@ -116,11 +116,70 @@ static void test_token_enum(void)
     ISpObjectTokenEnumBuilder_Release( token_enum );
 }
 
+static void test_default_token_id(void)
+{
+    ISpObjectTokenCategory *cat;
+    HRESULT hr;
+    LPWSTR token_id = NULL;
+    LONG res;
+    WCHAR regvalue[512];
+    DWORD regvalue_size;
+
+    hr = CoCreateInstance( &CLSID_SpObjectTokenCategory, NULL, CLSCTX_INPROC_SERVER,
+                           &IID_ISpObjectTokenCategory, (void **)&cat );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    token_id = (LPWSTR)0xdeadbeef;
+    hr = ISpObjectTokenCategory_GetDefaultTokenId( cat, &token_id );
+    ok( hr == SPERR_UNINITIALIZED, "got %08x\n", hr );
+    ok( token_id == (LPWSTR)0xdeadbeef, "got %p\n", token_id );
+
+    hr = ISpObjectTokenCategory_GetDefaultTokenId( cat, NULL );
+    ok( hr == SPERR_UNINITIALIZED, "got %08x\n", hr );
+
+    hr = ISpObjectTokenCategory_SetId( cat, SPCAT_AUDIOOUT, FALSE );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = ISpObjectTokenCategory_GetDefaultTokenId( cat, NULL );
+    ok( hr == E_POINTER, "got %08x\n", hr );
+
+    token_id = (LPWSTR)0xdeadbeef;
+    hr = ISpObjectTokenCategory_GetDefaultTokenId( cat, &token_id );
+
+    /* AudioOutput under windows server returns this error */
+    if (hr == SPERR_NOT_FOUND) {
+        /* also happens if TokenEnums/Tokens is empty or doesn't exist */
+        skip( "AudioOutput category not found for GetDefaultTokenId\n" );
+        return;
+    }
+
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( token_id != (LPWSTR)0xdeadbeef && token_id != NULL, "got %p\n", token_id );
+
+    regvalue_size = sizeof( regvalue );
+    res = RegGetValueW( HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Speech\\AudioOutput",
+                        L"DefaultDefaultTokenId", RRF_RT_REG_SZ, NULL,
+                        (LPVOID)&regvalue, &regvalue_size);
+    if (res == ERROR_FILE_NOT_FOUND) {
+        skip( "DefaultDefaultTokenId not found for AudioOutput category (%s)\n",
+              wine_dbgstr_w(token_id) );
+    } else {
+        ok( res == ERROR_SUCCESS, "got %08x\n", res );
+        ok( !wcscmp(regvalue, token_id),
+            "GetDefaultTokenId (%s) should be equal to the DefaultDefaultTokenId key (%s)\n",
+            wine_dbgstr_w(token_id), wine_dbgstr_w(regvalue) );
+    }
+
+    CoTaskMemFree( token_id );
+    ISpObjectTokenCategory_Release( cat );
+}
+
 START_TEST(token)
 {
     CoInitialize( NULL );
     test_data_key();
     test_token_category();
     test_token_enum();
+    test_default_token_id();
     CoUninitialize();
 }
