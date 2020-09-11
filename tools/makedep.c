@@ -76,6 +76,7 @@ struct incl_file
     struct file       *file;
     char              *name;
     char              *filename;
+    char              *basename;      /* base target name for generated files */
     char              *sourcename;    /* source file name for generated headers */
     struct incl_file  *included_by;   /* file that included this one */
     int                included_line; /* line where this file was included */
@@ -975,7 +976,8 @@ static struct incl_file *add_generated_source( struct makefile *make,
     memset( file, 0, sizeof(*file) );
     file->file = add_file( name );
     file->name = xstrdup( name );
-    file->filename = obj_dir_path( make, filename ? filename : name );
+    file->basename = xstrdup( filename ? filename : name );
+    file->filename = obj_dir_path( make, file->basename );
     file->file->flags = FLAG_GENERATED;
     file->use_msvcrt = make->use_msvcrt;
     list_add_tail( &make->sources, &file->entry );
@@ -3122,7 +3124,7 @@ static void output_source_default( struct makefile *make, struct incl_file *sour
 
     if ((source->file->flags & FLAG_GENERATED) &&
         (!make->testdll || !strendswith( source->filename, "testlist.c" )))
-        strarray_add( &make->clean_files, source->filename );
+        strarray_add( &make->clean_files, source->basename );
     if (source->file->flags & FLAG_C_IMPLIB) strarray_add( &make->implib_objs, strmake( "%s.o", obj ));
 
     if (need_obj)
