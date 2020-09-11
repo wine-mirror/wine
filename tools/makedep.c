@@ -1841,12 +1841,7 @@ static struct makefile *parse_makefile( const char *path )
     struct makefile *make = xmalloc( sizeof(*make) );
 
     memset( make, 0, sizeof(*make) );
-    if (path)
-    {
-        make->top_obj_dir = get_relative_path( path, "" );
-        make->base_dir = path;
-        if (!strcmp( make->base_dir, "." )) make->base_dir = NULL;
-    }
+    make->base_dir = path;
 
     file = open_input_makefile( make );
     while ((buffer = get_line( file )))
@@ -4286,6 +4281,8 @@ static void load_sources( struct makefile *make )
     struct strarray value;
     struct incl_file *file;
 
+    if (make->base_dir) make->top_obj_dir = get_relative_path( make->base_dir, "" );
+
     if (root_src_dir)
     {
         make->top_src_dir = concat_paths( make->top_obj_dir, root_src_dir );
@@ -4488,6 +4485,8 @@ int main( int argc, char *argv[] )
         exit( 0 );
     }
 
+    if (argc > 1) fatal_error( "Directory arguments not supported in this mode\n" );
+
     atexit( cleanup_files );
     signal( SIGTERM, exit_on_signal );
     signal( SIGINT, exit_on_signal );
@@ -4539,31 +4538,20 @@ int main( int argc, char *argv[] )
     if (!tools_ext) tools_ext = "";
     if (!man_ext) man_ext = "3w";
 
-    if (argc == 1)
-    {
-        disabled_dirs = get_expanded_make_var_array( top_makefile, "DISABLED_SUBDIRS" );
-        top_makefile->subdirs = get_expanded_make_var_array( top_makefile, "SUBDIRS" );
-        top_makefile->submakes = xmalloc( top_makefile->subdirs.count * sizeof(*top_makefile->submakes) );
+    disabled_dirs = get_expanded_make_var_array( top_makefile, "DISABLED_SUBDIRS" );
+    top_makefile->subdirs = get_expanded_make_var_array( top_makefile, "SUBDIRS" );
+    top_makefile->submakes = xmalloc( top_makefile->subdirs.count * sizeof(*top_makefile->submakes) );
 
-        for (i = 0; i < top_makefile->subdirs.count; i++)
-            top_makefile->submakes[i] = parse_makefile( top_makefile->subdirs.str[i] );
+    for (i = 0; i < top_makefile->subdirs.count; i++)
+        top_makefile->submakes[i] = parse_makefile( top_makefile->subdirs.str[i] );
 
-        load_sources( top_makefile );
-        for (i = 0; i < top_makefile->subdirs.count; i++)
-            load_sources( top_makefile->submakes[i] );
+    load_sources( top_makefile );
+    for (i = 0; i < top_makefile->subdirs.count; i++)
+        load_sources( top_makefile->submakes[i] );
 
-        for (i = 0; i < top_makefile->subdirs.count; i++)
-            output_dependencies( top_makefile->submakes[i] );
+    for (i = 0; i < top_makefile->subdirs.count; i++)
+        output_dependencies( top_makefile->submakes[i] );
 
-        output_dependencies( top_makefile );
-        return 0;
-    }
-
-    for (i = 1; i < argc; i++)
-    {
-        struct makefile *make = parse_makefile( argv[i] );
-        load_sources( make );
-        output_dependencies( make );
-    }
+    output_dependencies( top_makefile );
     return 0;
 }
