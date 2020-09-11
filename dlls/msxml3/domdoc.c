@@ -797,13 +797,17 @@ static HRESULT domdoc_load_from_stream(domdoc *doc, ISequentialStream *stream)
 
     hr = GetHGlobalFromStream(hstream, &hglobal);
     if (FAILED(hr))
+    {
+        IStream_Release(hstream);
         return hr;
+    }
 
     len = GlobalSize(hglobal);
     ptr = GlobalLock(hglobal);
     if (len)
         xmldoc = doparse(doc, ptr, len, XML_CHAR_ENCODING_NONE);
     GlobalUnlock(hglobal);
+    IStream_Release(hstream);
 
     if (!xmldoc)
     {
