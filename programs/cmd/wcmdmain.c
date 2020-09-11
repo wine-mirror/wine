@@ -1792,7 +1792,8 @@ static BOOL WCMD_IsEndQuote(const WCHAR *quote, int quoteIndex)
 
         /* Quote counting ends at EOL, redirection, space or pipe if current quote is complete */
         else if(((quoteCount % 2) == 0)
-            && ((quote[i] == '<') || (quote[i] == '>') || (quote[i] == '|') || (quote[i] == ' ')))
+            && ((quote[i] == '<') || (quote[i] == '>') || (quote[i] == '|') || (quote[i] == ' ') ||
+                (quote[i] == '&')))
         {
             break;
         }
