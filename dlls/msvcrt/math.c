@@ -1502,6 +1502,16 @@ MSVCRT_longlong CDECL MSVCRT_llabs( MSVCRT_longlong n )
 }
 #endif
 
+#if _MSVCR_VER>=120
+/*********************************************************************
+ *		imaxabs (MSVCR120.@)
+ */
+MSVCRT_intmax_t CDECL MSVCRT_imaxabs( MSVCRT_intmax_t n )
+{
+    return n >= 0 ? n : -n;
+}
+#endif
+
 /*********************************************************************
  *		_abs64 (MSVCRT.@)
  */

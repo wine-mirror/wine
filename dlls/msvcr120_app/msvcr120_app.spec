@@ -1874,7 +1874,7 @@
 @ cdecl ilogb(double) msvcr120.ilogb
 @ cdecl ilogbf(float) msvcr120.ilogbf
 @ cdecl ilogbl(double) msvcr120.ilogbl
-@ stub imaxabs
+@ cdecl -ret64 imaxabs(int64) msvcr120.imaxabs
 @ stub imaxdiv
 @ cdecl isalnum(long) msvcr120.isalnum
 @ cdecl isalpha(long) msvcr120.isalpha

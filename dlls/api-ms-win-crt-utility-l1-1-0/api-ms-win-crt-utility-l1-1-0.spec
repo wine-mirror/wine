@@ -17,7 +17,7 @@
 @ cdecl bsearch(ptr ptr long long ptr) ucrtbase.bsearch
 @ cdecl bsearch_s(ptr ptr long long ptr ptr) ucrtbase.bsearch_s
 @ cdecl -ret64 div(long long) ucrtbase.div
-@ stub imaxabs
+@ cdecl -ret64 imaxabs(int64) ucrtbase.imaxabs
 @ stub imaxdiv
 @ cdecl labs(long) ucrtbase.labs
 @ cdecl -ret64 ldiv(long long) ucrtbase.ldiv

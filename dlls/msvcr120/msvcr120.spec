@@ -2210,7 +2210,7 @@
 @ cdecl ilogb(double) MSVCR120_ilogb
 @ cdecl ilogbf(float) MSVCR120_ilogbf
 @ cdecl ilogbl(double) MSVCR120_ilogbl
-@ stub imaxabs
+@ cdecl -ret64 imaxabs(int64) MSVCRT_imaxabs
 @ stub imaxdiv
 @ cdecl is_wctype(long long) MSVCRT_iswctype
 @ cdecl isalnum(long) MSVCRT_isalnum
