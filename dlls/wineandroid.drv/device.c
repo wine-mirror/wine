@@ -687,7 +687,7 @@ static int status_to_android_error( NTSTATUS status )
 
 static jobject load_java_method( jmethodID *method, const char *name, const char *args )
 {
-    jobject object = wine_get_java_object();
+    jobject object = p_wine_get_java_object();
 
     if (!*method)
     {
@@ -1163,7 +1163,7 @@ static DWORD CALLBACK device_thread( void *arg )
 
     TRACE( "starting process %x\n", GetCurrentProcessId() );
 
-    if (!(java_vm = wine_get_java_vm())) return 0;  /* not running under Java */
+    if (!(java_vm = p_wine_get_java_vm())) return 0;  /* not running under Java */
 
     init_java_thread( java_vm );
 

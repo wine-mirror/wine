@@ -155,7 +155,7 @@ union event_data
 
 int send_event( const union event_data *data ) DECLSPEC_HIDDEN;
 
-extern JavaVM *wine_get_java_vm(void);
-extern jobject wine_get_java_object(void);
+extern JavaVM * (*p_wine_get_java_vm)(void);
+extern jobject (*p_wine_get_java_object)(void);
 
 #endif  /* __WINE_ANDROID_H */
