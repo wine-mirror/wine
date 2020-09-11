@@ -159,9 +159,9 @@ static struct screen_buffer *create_screen_buffer( struct console *console, int 
     screen_buffer->max_width      = 80;
     screen_buffer->max_height     = 25;
     screen_buffer->win.left       = 0;
-    screen_buffer->win.right      = screen_buffer->max_width - 1;
+    screen_buffer->win.right      = min( screen_buffer->max_width - 1, width - 1 );
     screen_buffer->win.top        = 0;
-    screen_buffer->win.bottom     = screen_buffer->max_height - 1;
+    screen_buffer->win.bottom     = min( screen_buffer->max_height - 1, height - 1);
     screen_buffer->font.width     = 0;
     screen_buffer->font.height    = 0;
     screen_buffer->font.weight    = FW_NORMAL;

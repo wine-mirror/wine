@@ -151,8 +151,10 @@ enum req_type
     REQ_SCROLL,
     REQ_SET_ACTIVE,
     REQ_SET_CURSOR,
+    REQ_SET_OUTPUT_MODE,
     REQ_SET_TITLE,
     REQ_WRITE_CHARACTERS,
+    REQ_WRITE_CONSOLE,
     REQ_WRITE_OUTPUT,
 };
 
@@ -164,6 +166,7 @@ struct pseudoconsole_req
         WCHAR string[1];
         COORD coord;
         HANDLE handle;
+        DWORD mode;
         struct
         {
             COORD coord;
@@ -331,6 +334,18 @@ static void child_fill_character(WCHAR ch, DWORD count, int x, int y)
     ok(ret, "WriteFile failed: %u\n", GetLastError());
 }
 
+static void child_set_output_mode(DWORD mode)
+{
+    struct pseudoconsole_req req;
+    DWORD count;
+    BOOL ret;
+
+    req.type = REQ_SET_OUTPUT_MODE;
+    req.u.mode = mode;
+    ret = WriteFile(child_pipe, &req, sizeof(req), &count, NULL);
+    ok(ret, "WriteFile failed: %u\n", GetLastError());
+}
+
 static void expect_input(unsigned int event_type, INPUT_RECORD *record)
 {
     struct pseudoconsole_req req = { REQ_GET_INPUT };
@@ -434,6 +449,218 @@ static void expect_char_key_(unsigned int line, WCHAR ch)
     if (vk & 0x0200) ctrl |= LEFT_CTRL_PRESSED;
     vk &= 0xff;
     expect_key_pressed_(line, ch, ch, vk, ctrl);
+}
+
+static void test_write_console(void)
+{
+    child_string_request(REQ_WRITE_CONSOLE, L"abc");
+    skip_hide_cursor();
+    expect_output_sequence("abc");
+    skip_sequence("\x1b[?25h");            /* show cursor */
+
+    child_string_request(REQ_WRITE_CONSOLE, L"\tt");
+    skip_hide_cursor();
+    if (!skip_sequence("\x1b[3C")) expect_output_sequence("   ");
+    expect_output_sequence("t");
+    skip_sequence("\x1b[?25h");            /* show cursor */
+    expect_empty_output();
+
+    child_string_request(REQ_WRITE_CONSOLE, L"x\rr");
+    expect_hide_cursor();
+    expect_output_sequence("\rr abc   tx");
+    if (!skip_sequence("\x1b[9D"))
+        expect_output_sequence("\x1b[4;2H"); /* set cursor */
+    expect_output_sequence("\x1b[?25h");     /* show cursor */
+    expect_empty_output();
+
+    child_string_request(REQ_WRITE_CONSOLE, L"yz\r\n");
+    skip_hide_cursor();
+    expect_output_sequence("yz\r\n");
+    skip_sequence("\x1b[?25h");              /* show cursor */
+    expect_empty_output();
+
+    child_string_request(REQ_WRITE_CONSOLE, L"abc\r\n123\r\ncde\r");
+    skip_hide_cursor();
+    expect_output_sequence("abc\r\n123\r\ncde\r");
+    skip_sequence("\x1b[?25h");              /* show cursor */
+    expect_empty_output();
+
+    child_set_cursor(0, 39);
+    expect_hide_cursor();
+    expect_output_sequence("\x1b[40;1H");    /* set cursor */
+    expect_output_sequence("\x1b[?25h");     /* show cursor */
+    expect_empty_output();
+
+    child_string_request(REQ_WRITE_CONSOLE, L"yz\r\n");
+    skip_hide_cursor();
+    expect_output_sequence("yz\r");
+    if (skip_sequence("\x1b[?25h"))          /* show cursor */
+        expect_output_sequence("\x1b[?25l"); /* hide cursor */
+    expect_output_sequence("\n");            /* next line */
+    if (skip_sequence("\x1b[30X"))           /* erase the line */
+    {
+        expect_output_sequence("\x1b[30C");  /* move cursor to the end of the line */
+        expect_output_sequence("\r");
+    }
+    skip_sequence("\x1b[?25h");              /* show cursor */
+    expect_empty_output();
+
+    child_string_request(REQ_WRITE_CONSOLE, L"");
+    expect_empty_output();
+
+    child_string_request(REQ_WRITE_CONSOLE, L"ab\n");
+    skip_hide_cursor();
+    expect_output_sequence("ab");
+    if (skip_sequence("\x1b[?25h"))          /* show cursor */
+        expect_output_sequence("\x1b[?25l"); /* hide cursor */
+    expect_output_sequence("\r\n");          /* next line */
+    if (skip_sequence("\x1b[30X"))           /* erase the line */
+    {
+        expect_output_sequence("\x1b[30C");  /* move cursor to the end of the line */
+        expect_output_sequence("\r");
+    }
+    skip_sequence("\x1b[?25h");              /* show cursor */
+    expect_empty_output();
+
+    child_set_cursor(28, 10);
+    expect_hide_cursor();
+    expect_output_sequence("\x1b[11;29H");   /* set cursor */
+    expect_output_sequence("\x1b[?25h");     /* show cursor */
+    expect_empty_output();
+
+    child_string_request(REQ_WRITE_CONSOLE, L"xy");
+    skip_hide_cursor();
+    expect_output_sequence("xy");
+    if (!skip_sequence("\b")) expect_output_sequence("\r\n");
+    skip_sequence("\x1b[?25h");              /* show cursor */
+    expect_empty_output();
+
+    child_set_cursor(28, 10);
+    fetch_console_output();
+    if (!skip_sequence("\b"))
+    {
+        expect_hide_cursor();
+        expect_output_sequence("\x1b[11;29H"); /* set cursor */
+        expect_output_sequence("\x1b[?25h");   /* show cursor */
+    }
+    expect_empty_output();
+
+    child_string_request(REQ_WRITE_CONSOLE, L"abc");
+    skip_hide_cursor();
+    expect_output_sequence("\r                            ab");
+    expect_output_sequence("\r\nc");
+    if (expect_erase_line(29))
+        expect_output_sequence("\x1b[12;2H"); /* set cursor */
+    skip_sequence("\x1b[?25h");               /* show cursor */
+    expect_empty_output();
+
+    child_set_cursor(28, 39);
+    expect_hide_cursor();
+    expect_output_sequence("\x1b[40;29H");    /* set cursor */
+    expect_output_sequence("\x1b[?25h");      /* show cursor */
+    expect_empty_output();
+
+    child_string_request(REQ_WRITE_CONSOLE, L"abc");
+    skip_hide_cursor();
+    expect_output_sequence("ab");
+    skip_sequence("\x1b[40;29H");             /* set cursor */
+    if (skip_sequence("\x1b[?25h"))           /* show cursor */
+        expect_output_sequence("\x1b[?25l");  /* hide cursor */
+    else
+        skip_sequence("\b");
+    expect_output_sequence("\r\nc");
+    if (skip_sequence("\x1b[29X"))            /* erase the line */
+    {
+        expect_output_sequence("\x1b[29C");   /* move cursor to the end of the line */
+        expect_output_sequence("\x1b[40;2H"); /* set cursor */
+    }
+    skip_sequence("\x1b[?25h");               /* show cursor */
+    expect_empty_output();
+
+    child_set_cursor(28, 39);
+    skip_hide_cursor();
+    if (!skip_sequence("\x1b[27C"))
+        expect_output_sequence("\x1b[40;29H"); /* set cursor */
+    skip_sequence("\x1b[?25h");                /* show cursor */
+    expect_empty_output();
+
+    child_string_request(REQ_WRITE_CONSOLE, L"XY");
+    skip_hide_cursor();
+    expect_output_sequence("XY");
+    skip_sequence("\x1b[40;29H");             /* set cursor */
+    if (skip_sequence("\x1b[?25h"))           /* show cursor */
+        expect_output_sequence("\x1b[?25l");  /* hide cursor */
+    if (!skip_sequence("\b"))
+    {
+        expect_output_sequence("\r\n");
+        expect_output_sequence("\x1b[30X");   /* erase the line */
+        expect_output_sequence("\x1b[30C");   /* move cursor to the end of the line */
+        expect_output_sequence("\r");         /* set cursor */
+    }
+    skip_sequence("\x1b[?25h");               /* show cursor */
+    expect_empty_output();
+
+    child_string_request(REQ_WRITE_CONSOLE, L"\n");
+    skip_hide_cursor();
+    if (!skip_sequence("\r\n"))
+    {
+        expect_output_sequence("\n");
+        expect_output_sequence("\x1b[30X");   /* erase the line */
+        expect_output_sequence("\x1b[30C");   /* move cursor to the end of the line */
+        expect_output_sequence("\r");         /* set cursor */
+    }
+    skip_sequence("\x1b[?25h");               /* show cursor */
+    expect_empty_output();
+
+    child_set_output_mode(ENABLE_PROCESSED_OUTPUT);
+
+    child_set_cursor(28, 11);
+    expect_hide_cursor();
+    expect_output_sequence("\x1b[12;29H");    /* set cursor */
+    skip_sequence("\x1b[?25h");               /* show cursor */
+
+    child_string_request(REQ_WRITE_CONSOLE, L"xyz1234");
+    skip_hide_cursor();
+    expect_output_sequence("43\b");
+    skip_sequence("\x1b[?25h");               /* show cursor */
+    expect_empty_output();
+
+    child_set_cursor(28, 11);
+    skip_hide_cursor();
+    expect_output_sequence("\b");             /* backspace */
+    skip_sequence("\x1b[?25h");               /* show cursor */
+
+    child_string_request(REQ_WRITE_CONSOLE, L"xyz123");
+    expect_hide_cursor();
+    expect_output_sequence("23");
+    if (!skip_sequence("\x1b[2D"))
+        expect_output_sequence("\x1b[12;29H");/* set cursor */
+    expect_output_sequence("\x1b[?25h");      /* show cursor */
+    expect_empty_output();
+
+    child_set_cursor(28, 11);
+    child_string_request(REQ_WRITE_CONSOLE, L"abcdef\n\r123456789012345678901234567890xyz");
+    expect_hide_cursor();
+    if (skip_sequence("\x1b[?25h")) expect_hide_cursor();
+    expect_output_sequence("\r                            ef\r\n");
+    expect_output_sequence("xyz456789012345678901234567890");
+    if (!skip_sequence("\x1b[27D"))
+        expect_output_sequence("\x1b[13;4H"); /* set cursor */
+    expect_output_sequence("\x1b[?25h");      /* show cursor */
+    expect_empty_output();
+
+    child_set_cursor(28, 11);
+    expect_hide_cursor();
+    expect_output_sequence("\x1b[12;29H");    /* set cursor */
+    expect_output_sequence("\x1b[?25h");      /* show cursor */
+
+    child_string_request(REQ_WRITE_CONSOLE, L"AB\r\n");
+    skip_hide_cursor();
+    expect_output_sequence("AB\r\n");
+    skip_sequence("\x1b[?25h");               /* show cursor */
+    expect_empty_output();
+
+    child_set_output_mode(ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT);
 }
 
 static void test_tty_output(void)
@@ -669,6 +896,8 @@ static void test_tty_output(void)
     expect_output_sequence("\x1b[4;3H");   /* set cursor */
     expect_output_sequence("\x1b[?25h");   /* show cursor */
     expect_empty_output();
+
+    test_write_console();
 
     sb = child_create_screen_buffer();
     child_set_active(sb);
@@ -916,6 +1145,11 @@ static void child_process(HANDLE pipe)
             ok(ret, "SetConsoleCursorPosition failed: %u\n", GetLastError());
             break;
 
+        case REQ_SET_OUTPUT_MODE:
+            ret = SetConsoleMode(output, req->u.mode);
+            ok(ret, "SetConsoleMode failed: %u\n", GetLastError());
+            break;
+
         case REQ_SET_TITLE:
             ret = SetConsoleTitleW(req->u.string);
             ok(ret, "SetConsoleTitleW failed: %u\n", GetLastError());
@@ -926,6 +1160,11 @@ static void child_process(HANDLE pipe)
                                                req->u.write_characters.len,
                                                req->u.write_characters.coord, &count);
             ok(ret, "WriteConsoleOutputCharacterW failed: %u\n", GetLastError());
+            break;
+
+        case REQ_WRITE_CONSOLE:
+            ret = WriteConsoleW(output, req->u.string, lstrlenW(req->u.string), NULL, NULL);
+            ok(ret, "SetConsoleTitleW failed: %u\n", GetLastError());
             break;
 
         case REQ_WRITE_OUTPUT:
