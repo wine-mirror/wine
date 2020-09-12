@@ -845,7 +845,7 @@ msgstr "檔案名稱："
 msgid "Files of type:"
 msgstr "檔案類型："
 
-#: comdlg32.rc:33
+#: comdlg32.rc:33 vbscript.rc:35
 msgid "File not found"
 msgstr "找不到檔案"
 
@@ -3607,11 +3607,11 @@ msgstr ""
 msgid "Error converting object to primitive type"
 msgstr "轉換物件到基本類型時發生錯誤"
 
-#: jscript.rc:29
+#: jscript.rc:29 vbscript.rc:29
 msgid "Invalid procedure call or argument"
 msgstr "無效的程序呼叫或引數"
 
-#: jscript.rc:30
+#: jscript.rc:30 vbscript.rc:32
 msgid "Subscript out of range"
 msgstr "註標超出範圍"
 
@@ -3629,11 +3629,11 @@ msgstr "需要物件"
 msgid "Automation server can't create object"
 msgstr "自動作業伺服器無法建立物件"
 
-#: jscript.rc:34
+#: jscript.rc:34 vbscript.rc:49
 msgid "Object doesn't support this property or method"
 msgstr "物件不支援這個屬性或方法"
 
-#: jscript.rc:35
+#: jscript.rc:35 vbscript.rc:50
 msgid "Object doesn't support this action"
 msgstr "物件不支援此動作"
 
@@ -3721,7 +3721,7 @@ msgstr ""
 msgid "Microsoft JScript runtime error"
 msgstr ""
 
-#: jscript.rc:80
+#: jscript.rc:80 vbscript.rc:64
 #, fuzzy
 #| msgid "Unknown error"
 msgid "Unknown runtime error"
@@ -10941,6 +10941,152 @@ msgstr "選擇視窗"
 #: user32.rc:72
 msgid "&More Windows..."
 msgstr "更多視窗(&M)..."
+
+#: vbscript.rc:30
+msgid "Overflow"
+msgstr ""
+
+#: vbscript.rc:31
+#, fuzzy
+#| msgid "Out of memory."
+msgid "Out of memory"
+msgstr "記憶體不足。"
+
+#: vbscript.rc:33
+msgid "This array is fixed or temporarily locked"
+msgstr ""
+
+#: vbscript.rc:34
+#, fuzzy
+#| msgid "Data type mismatch.\n"
+msgid "Type mismatch"
+msgstr "資料類型不匹配。\n"
+
+#: vbscript.rc:36
+#, fuzzy
+#| msgid "I/O device error.\n"
+msgid "Device I/O error"
+msgstr "I/O 裝置錯誤。\n"
+
+#: vbscript.rc:37
+#, fuzzy
+#| msgid "File already exists.\n"
+msgid "File already exists"
+msgstr "檔案已經存在。\n"
+
+#: vbscript.rc:38
+#, fuzzy
+#| msgid "Disk full.\n"
+msgid "Disk full"
+msgstr "磁碟已滿。\n"
+
+#: vbscript.rc:39
+#, fuzzy
+#| msgid "Too many open files.\n"
+msgid "Too many files"
+msgstr "開啟過多檔案。\n"
+
+#: vbscript.rc:40
+#, fuzzy
+#| msgid "Access denied.\n"
+msgid "Permission denied"
+msgstr "存取被拒。\n"
+
+#: vbscript.rc:41
+msgid "Path/File access error"
+msgstr ""
+
+#: vbscript.rc:42
+#, fuzzy
+#| msgid "Path not found.\n"
+msgid "Path not found"
+msgstr "找不到路徑。\n"
+
+#: vbscript.rc:43
+#, fuzzy
+#| msgid "(value not set)"
+msgid "Object variable not set"
+msgstr "(沒有設值)"
+
+#: vbscript.rc:44
+#, fuzzy
+#| msgid "Invalid user buffer.\n"
+msgid "Invalid use of Null"
+msgstr "無效的使用者緩衝區。\n"
+
+#: vbscript.rc:45
+msgid "Can't create necessary temporary file"
+msgstr ""
+
+#: vbscript.rc:46
+#, fuzzy
+#| msgid "Automation server can't create object"
+msgid "ActiveX component can't create object"
+msgstr "自動作業伺服器無法建立物件"
+
+#: vbscript.rc:47
+#, fuzzy
+#| msgid "Object doesn't support this action"
+msgid "Class doesn't support Automation"
+msgstr "物件不支援此動作"
+
+#: vbscript.rc:48
+msgid "File name or class name not found during Automation operation"
+msgstr ""
+
+#: vbscript.rc:51
+#, fuzzy
+#| msgid "Object doesn't support this action"
+msgid "Object doesn't support named arguments"
+msgstr "物件不支援此動作"
+
+#: vbscript.rc:52
+#, fuzzy
+#| msgid "Object doesn't support this action"
+msgid "Object doesn't support current locale setting"
+msgstr "物件不支援此動作"
+
+#: vbscript.rc:53 vbscript.rc:54
+#, fuzzy
+#| msgid "Element not found.\n"
+msgid "Named argument not found"
+msgstr "找不到元件。\n"
+
+#: vbscript.rc:55
+msgid "Wrong number of arguments or invalid property assignment"
+msgstr ""
+
+#: vbscript.rc:56
+#, fuzzy
+#| msgid "Object Class Violation"
+msgid "Object not a collection"
+msgstr "物件類別違規"
+
+#: vbscript.rc:57
+#, fuzzy
+#| msgid "Specified control was not found in message"
+msgid "Specified DLL function not found"
+msgstr "在訊息中找不到指定的控制"
+
+#: vbscript.rc:58
+msgid "Variable uses an Automation type not supported in VBScript"
+msgstr ""
+
+#: vbscript.rc:59
+msgid "The remote server machine does not exist or is unavailable"
+msgstr ""
+
+#: vbscript.rc:60
+msgid "Invalid or unqualified reference"
+msgstr ""
+
+#: vbscript.rc:62
+msgid "Microsoft VBScript compilation error"
+msgstr ""
+
+#: vbscript.rc:63
+msgid "Microsoft VBScript runtime error"
+msgstr ""
 
 #: winemac.rc:33
 #, fuzzy

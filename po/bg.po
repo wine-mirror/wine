@@ -864,7 +864,7 @@ msgstr "&Файл"
 msgid "Files of type:"
 msgstr "&Тип файлове:"
 
-#: comdlg32.rc:33
+#: comdlg32.rc:33 vbscript.rc:35
 msgid "File not found"
 msgstr "Файлът не е намерен"
 
@@ -3653,11 +3653,11 @@ msgstr ""
 msgid "Error converting object to primitive type"
 msgstr ""
 
-#: jscript.rc:29
+#: jscript.rc:29 vbscript.rc:29
 msgid "Invalid procedure call or argument"
 msgstr ""
 
-#: jscript.rc:30
+#: jscript.rc:30 vbscript.rc:32
 msgid "Subscript out of range"
 msgstr ""
 
@@ -3675,11 +3675,11 @@ msgstr ""
 msgid "Automation server can't create object"
 msgstr ""
 
-#: jscript.rc:34
+#: jscript.rc:34 vbscript.rc:49
 msgid "Object doesn't support this property or method"
 msgstr ""
 
-#: jscript.rc:35
+#: jscript.rc:35 vbscript.rc:50
 msgid "Object doesn't support this action"
 msgstr ""
 
@@ -3761,7 +3761,7 @@ msgstr ""
 msgid "Microsoft JScript runtime error"
 msgstr ""
 
-#: jscript.rc:80
+#: jscript.rc:80 vbscript.rc:64
 #, fuzzy
 msgid "Unknown runtime error"
 msgstr "Пре&гледай изходния код"
@@ -10867,6 +10867,126 @@ msgstr ""
 #: user32.rc:72
 msgid "&More Windows..."
 msgstr "&Още прозорци..."
+
+#: vbscript.rc:30
+msgid "Overflow"
+msgstr ""
+
+#: vbscript.rc:31
+#, fuzzy
+#| msgid "Out of memory."
+msgid "Out of memory"
+msgstr "Недостиг на памет."
+
+#: vbscript.rc:33
+msgid "This array is fixed or temporarily locked"
+msgstr ""
+
+#: vbscript.rc:34
+msgid "Type mismatch"
+msgstr ""
+
+#: vbscript.rc:36
+msgid "Device I/O error"
+msgstr ""
+
+#: vbscript.rc:37
+#, fuzzy
+msgid "File already exists"
+msgstr "Файлът не съществува.\n"
+
+#: vbscript.rc:38
+msgid "Disk full"
+msgstr ""
+
+#: vbscript.rc:39
+#, fuzzy
+msgid "Too many files"
+msgstr "Отвори файл"
+
+#: vbscript.rc:40
+msgid "Permission denied"
+msgstr ""
+
+#: vbscript.rc:41
+msgid "Path/File access error"
+msgstr ""
+
+#: vbscript.rc:42
+#, fuzzy
+msgid "Path not found"
+msgstr "пътят %s не е намерен.\n"
+
+#: vbscript.rc:43
+msgid "Object variable not set"
+msgstr ""
+
+#: vbscript.rc:44
+#, fuzzy
+msgid "Invalid use of Null"
+msgstr "Невалидни знаци в пътя.\n"
+
+#: vbscript.rc:45
+msgid "Can't create necessary temporary file"
+msgstr ""
+
+#: vbscript.rc:46
+msgid "ActiveX component can't create object"
+msgstr ""
+
+#: vbscript.rc:47
+msgid "Class doesn't support Automation"
+msgstr ""
+
+#: vbscript.rc:48
+msgid "File name or class name not found during Automation operation"
+msgstr ""
+
+#: vbscript.rc:51
+msgid "Object doesn't support named arguments"
+msgstr ""
+
+#: vbscript.rc:52
+msgid "Object doesn't support current locale setting"
+msgstr ""
+
+#: vbscript.rc:53 vbscript.rc:54
+#, fuzzy
+msgid "Named argument not found"
+msgstr "Файлът не е намерен.\n"
+
+#: vbscript.rc:55
+msgid "Wrong number of arguments or invalid property assignment"
+msgstr ""
+
+#: vbscript.rc:56
+msgid "Object not a collection"
+msgstr ""
+
+#: vbscript.rc:57
+#, fuzzy
+msgid "Specified DLL function not found"
+msgstr "Файлът не е намерен.\n"
+
+#: vbscript.rc:58
+msgid "Variable uses an Automation type not supported in VBScript"
+msgstr ""
+
+#: vbscript.rc:59
+msgid "The remote server machine does not exist or is unavailable"
+msgstr ""
+
+#: vbscript.rc:60
+msgid "Invalid or unqualified reference"
+msgstr ""
+
+#: vbscript.rc:62
+msgid "Microsoft VBScript compilation error"
+msgstr ""
+
+#: vbscript.rc:63
+msgid "Microsoft VBScript runtime error"
+msgstr ""
 
 #: winemac.rc:33
 msgid "Hide %@"

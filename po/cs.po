@@ -857,7 +857,7 @@ msgstr "Název souboru:"
 msgid "Files of type:"
 msgstr "Soubory typu:"
 
-#: comdlg32.rc:33
+#: comdlg32.rc:33 vbscript.rc:35
 msgid "File not found"
 msgstr "Soubor nebyl nalezen"
 
@@ -3586,11 +3586,11 @@ msgstr ""
 msgid "Error converting object to primitive type"
 msgstr "Chyba při převodu objektu na jednoduchý typ"
 
-#: jscript.rc:29
+#: jscript.rc:29 vbscript.rc:29
 msgid "Invalid procedure call or argument"
 msgstr "Chybné volání procedury či argument"
 
-#: jscript.rc:30
+#: jscript.rc:30 vbscript.rc:32
 msgid "Subscript out of range"
 msgstr ""
 
@@ -3608,11 +3608,11 @@ msgstr "Vyžadován objekt"
 msgid "Automation server can't create object"
 msgstr "Automatizační server nemůže vytvořit objekt"
 
-#: jscript.rc:34
+#: jscript.rc:34 vbscript.rc:49
 msgid "Object doesn't support this property or method"
 msgstr ""
 
-#: jscript.rc:35
+#: jscript.rc:35 vbscript.rc:50
 msgid "Object doesn't support this action"
 msgstr "Objekt nepodporuje tuto akci"
 
@@ -3692,7 +3692,7 @@ msgstr ""
 msgid "Microsoft JScript runtime error"
 msgstr ""
 
-#: jscript.rc:80
+#: jscript.rc:80 vbscript.rc:64
 #, fuzzy
 #| msgid "Unknown error"
 msgid "Unknown runtime error"
@@ -10823,6 +10823,148 @@ msgstr "Vybrat okno"
 #: user32.rc:72
 msgid "&More Windows..."
 msgstr "&Více oken..."
+
+#: vbscript.rc:30
+msgid "Overflow"
+msgstr ""
+
+#: vbscript.rc:31
+#, fuzzy
+#| msgid "Out of memory."
+msgid "Out of memory"
+msgstr "Nedostatek paměti."
+
+#: vbscript.rc:33
+msgid "This array is fixed or temporarily locked"
+msgstr ""
+
+#: vbscript.rc:34
+msgid "Type mismatch"
+msgstr ""
+
+#: vbscript.rc:36
+#, fuzzy
+#| msgid "I/O device error.\n"
+msgid "Device I/O error"
+msgstr "Chyba vstupně/výstupního zařízení.\n"
+
+#: vbscript.rc:37
+#, fuzzy
+#| msgid "File already exists.\n"
+msgid "File already exists"
+msgstr "Soubor již existuje.\n"
+
+#: vbscript.rc:38
+#, fuzzy
+#| msgid "Disk full.\n"
+msgid "Disk full"
+msgstr "Disk je plný.\n"
+
+#: vbscript.rc:39
+#, fuzzy
+#| msgid "Too many open files.\n"
+msgid "Too many files"
+msgstr "Příliš mnoho otevřených souborů.\n"
+
+#: vbscript.rc:40
+#, fuzzy
+#| msgid "Access denied.\n"
+msgid "Permission denied"
+msgstr "Přístup odepřen.\n"
+
+#: vbscript.rc:41
+msgid "Path/File access error"
+msgstr ""
+
+#: vbscript.rc:42
+#, fuzzy
+#| msgid "Path not found.\n"
+msgid "Path not found"
+msgstr "Cesta nenalezena.\n"
+
+#: vbscript.rc:43
+#, fuzzy
+#| msgid "(value not set)"
+msgid "Object variable not set"
+msgstr "(hodnota nenastavena)"
+
+#: vbscript.rc:44
+#, fuzzy
+#| msgid "Invalid separator file.\n"
+msgid "Invalid use of Null"
+msgstr "Neplatný oddělovací soubor.\n"
+
+#: vbscript.rc:45
+msgid "Can't create necessary temporary file"
+msgstr ""
+
+#: vbscript.rc:46
+#, fuzzy
+#| msgid "Automation server can't create object"
+msgid "ActiveX component can't create object"
+msgstr "Automatizační server nemůže vytvořit objekt"
+
+#: vbscript.rc:47
+#, fuzzy
+#| msgid "Object doesn't support this action"
+msgid "Class doesn't support Automation"
+msgstr "Objekt nepodporuje tuto akci"
+
+#: vbscript.rc:48
+msgid "File name or class name not found during Automation operation"
+msgstr ""
+
+#: vbscript.rc:51
+#, fuzzy
+#| msgid "Object doesn't support this action"
+msgid "Object doesn't support named arguments"
+msgstr "Objekt nepodporuje tuto akci"
+
+#: vbscript.rc:52
+#, fuzzy
+#| msgid "Object doesn't support this action"
+msgid "Object doesn't support current locale setting"
+msgstr "Objekt nepodporuje tuto akci"
+
+#: vbscript.rc:53 vbscript.rc:54
+#, fuzzy
+#| msgid "Element not found.\n"
+msgid "Named argument not found"
+msgstr "Prvek nenalezen.\n"
+
+#: vbscript.rc:55
+msgid "Wrong number of arguments or invalid property assignment"
+msgstr ""
+
+#: vbscript.rc:56
+msgid "Object not a collection"
+msgstr ""
+
+#: vbscript.rc:57
+#, fuzzy
+#| msgid "Specified control was not found in message"
+msgid "Specified DLL function not found"
+msgstr "Určený ovládací prvek nebyl ve zprávě nalezen"
+
+#: vbscript.rc:58
+msgid "Variable uses an Automation type not supported in VBScript"
+msgstr ""
+
+#: vbscript.rc:59
+msgid "The remote server machine does not exist or is unavailable"
+msgstr ""
+
+#: vbscript.rc:60
+msgid "Invalid or unqualified reference"
+msgstr ""
+
+#: vbscript.rc:62
+msgid "Microsoft VBScript compilation error"
+msgstr ""
+
+#: vbscript.rc:63
+msgid "Microsoft VBScript runtime error"
+msgstr ""
 
 #: winemac.rc:33
 msgid "Hide %@"

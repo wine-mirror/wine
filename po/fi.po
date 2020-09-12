@@ -844,7 +844,7 @@ msgstr "Tiedosto:"
 msgid "Files of type:"
 msgstr "Tyyppi:"
 
-#: comdlg32.rc:33
+#: comdlg32.rc:33 vbscript.rc:35
 msgid "File not found"
 msgstr "Tiedostoa ei löydy"
 
@@ -3614,11 +3614,11 @@ msgstr "Testaa ja säädä peliohjaimia."
 msgid "Error converting object to primitive type"
 msgstr "Virhe muunnettaessa objektia alkeistyypiksi"
 
-#: jscript.rc:29
+#: jscript.rc:29 vbscript.rc:29
 msgid "Invalid procedure call or argument"
 msgstr "Virheellinen proseduurikutsu tai argumentti"
 
-#: jscript.rc:30
+#: jscript.rc:30 vbscript.rc:32
 msgid "Subscript out of range"
 msgstr "Indeksi alueen ulkopuolella"
 
@@ -3634,11 +3634,11 @@ msgstr "Vaaditaan objekti"
 msgid "Automation server can't create object"
 msgstr "Automaatiopalvelin ei voi luoda objektia"
 
-#: jscript.rc:34
+#: jscript.rc:34 vbscript.rc:49
 msgid "Object doesn't support this property or method"
 msgstr "Objekti ei tue tätä ominaisuutta tai metodia"
 
-#: jscript.rc:35
+#: jscript.rc:35 vbscript.rc:50
 msgid "Object doesn't support this action"
 msgstr "Objekti ei tue tätä toimintoa"
 
@@ -3718,7 +3718,7 @@ msgstr "Microsoft JScript -käännösvirhe"
 msgid "Microsoft JScript runtime error"
 msgstr "Microsoft JScript -suoritusvirhe"
 
-#: jscript.rc:80
+#: jscript.rc:80 vbscript.rc:64
 msgid "Unknown runtime error"
 msgstr "Tuntematon ajonaikainen virhe"
 
@@ -10559,6 +10559,156 @@ msgstr "Valitse ikkuna"
 #: user32.rc:72
 msgid "&More Windows..."
 msgstr "&Lisää ikkunoita..."
+
+#: vbscript.rc:30
+msgid "Overflow"
+msgstr ""
+
+#: vbscript.rc:31
+#, fuzzy
+#| msgid "Out of memory."
+msgid "Out of memory"
+msgstr "Muisti ei riitä."
+
+#: vbscript.rc:33
+msgid "This array is fixed or temporarily locked"
+msgstr ""
+
+#: vbscript.rc:34
+#, fuzzy
+#| msgid "Data type mismatch.\n"
+msgid "Type mismatch"
+msgstr "Tietotyyppi ei täsmää.\n"
+
+#: vbscript.rc:36
+#, fuzzy
+#| msgid "I/O device error.\n"
+msgid "Device I/O error"
+msgstr "I/O-laitteen virhe.\n"
+
+#: vbscript.rc:37
+#, fuzzy
+#| msgid "File already exists.\n"
+msgid "File already exists"
+msgstr "Tiedosto on jo olemassa.\n"
+
+#: vbscript.rc:38
+#, fuzzy
+#| msgid "Disk full.\n"
+msgid "Disk full"
+msgstr "Levy täynnä.\n"
+
+#: vbscript.rc:39
+#, fuzzy
+#| msgid "Too many open files.\n"
+msgid "Too many files"
+msgstr "Liian monta avointa tiedostoa.\n"
+
+#: vbscript.rc:40
+#, fuzzy
+#| msgid "Access denied.\n"
+msgid "Permission denied"
+msgstr "Pääsy estetty.\n"
+
+#: vbscript.rc:41
+msgid "Path/File access error"
+msgstr ""
+
+#: vbscript.rc:42
+#, fuzzy
+#| msgid "Path not found.\n"
+msgid "Path not found"
+msgstr "Polkua ei löydy.\n"
+
+#: vbscript.rc:43
+#, fuzzy
+#| msgid "(value not set)"
+msgid "Object variable not set"
+msgstr "(arvoa ei asetettu)"
+
+#: vbscript.rc:44
+#, fuzzy
+#| msgid "Invalid user buffer.\n"
+msgid "Invalid use of Null"
+msgstr "Annettu puskuri ei kelpaa.\n"
+
+#: vbscript.rc:45
+msgid "Can't create necessary temporary file"
+msgstr ""
+
+#: vbscript.rc:46
+#, fuzzy
+#| msgid "Automation server can't create object"
+msgid "ActiveX component can't create object"
+msgstr "Automaatiopalvelin ei voi luoda objektia"
+
+#: vbscript.rc:47
+#, fuzzy
+#| msgid "Object doesn't support this action"
+msgid "Class doesn't support Automation"
+msgstr "Objekti ei tue tätä toimintoa"
+
+#: vbscript.rc:48
+msgid "File name or class name not found during Automation operation"
+msgstr ""
+
+#: vbscript.rc:51
+#, fuzzy
+#| msgid "Object doesn't support this action"
+msgid "Object doesn't support named arguments"
+msgstr "Objekti ei tue tätä toimintoa"
+
+#: vbscript.rc:52
+#, fuzzy
+#| msgid "Object doesn't support this action"
+msgid "Object doesn't support current locale setting"
+msgstr "Objekti ei tue tätä toimintoa"
+
+#: vbscript.rc:53 vbscript.rc:54
+#, fuzzy
+#| msgid "Element not found.\n"
+msgid "Named argument not found"
+msgstr "Elementtiä ei löydy.\n"
+
+#: vbscript.rc:55
+msgid "Wrong number of arguments or invalid property assignment"
+msgstr ""
+
+#: vbscript.rc:56
+#, fuzzy
+#| msgid "Object Class Violation"
+msgid "Object not a collection"
+msgstr "Objektiluokkarikkomus"
+
+#: vbscript.rc:57
+#, fuzzy
+#| msgid "Specified control was not found in message"
+msgid "Specified DLL function not found"
+msgstr "Viestistä ei löytynyt määriteltyä kontrollia"
+
+#: vbscript.rc:58
+msgid "Variable uses an Automation type not supported in VBScript"
+msgstr ""
+
+#: vbscript.rc:59
+msgid "The remote server machine does not exist or is unavailable"
+msgstr ""
+
+#: vbscript.rc:60
+msgid "Invalid or unqualified reference"
+msgstr ""
+
+#: vbscript.rc:62
+#, fuzzy
+#| msgid "Microsoft JScript compilation error"
+msgid "Microsoft VBScript compilation error"
+msgstr "Microsoft JScript -käännösvirhe"
+
+#: vbscript.rc:63
+#, fuzzy
+#| msgid "Microsoft JScript runtime error"
+msgid "Microsoft VBScript runtime error"
+msgstr "Microsoft JScript -suoritusvirhe"
 
 #: winemac.rc:33
 msgid "Hide %@"

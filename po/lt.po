@@ -849,7 +849,7 @@ msgstr "Failo vardas:"
 msgid "Files of type:"
 msgstr "Failų tipai:"
 
-#: comdlg32.rc:33
+#: comdlg32.rc:33 vbscript.rc:35
 msgid "File not found"
 msgstr "Failas nerastas"
 
@@ -3623,11 +3623,11 @@ msgstr "Tikrinti ir konfigūruoti žaidimų valdiklius."
 msgid "Error converting object to primitive type"
 msgstr "Klaida keičiant objektą į primityvų tipą"
 
-#: jscript.rc:29
+#: jscript.rc:29 vbscript.rc:29
 msgid "Invalid procedure call or argument"
 msgstr "Netinkamas kreipinys į procedūrą ar argumentas"
 
-#: jscript.rc:30
+#: jscript.rc:30 vbscript.rc:32
 msgid "Subscript out of range"
 msgstr "Indeksas nepatenka į rėžius"
 
@@ -3643,11 +3643,11 @@ msgstr "Reikalingas objektas"
 msgid "Automation server can't create object"
 msgstr "Automatizavimo serveriui nepavyko sukurti objekto"
 
-#: jscript.rc:34
+#: jscript.rc:34 vbscript.rc:49
 msgid "Object doesn't support this property or method"
 msgstr "Objektas nepalaiko šios savybės ar metodo"
 
-#: jscript.rc:35
+#: jscript.rc:35 vbscript.rc:50
 msgid "Object doesn't support this action"
 msgstr "Objektas nepalaiko šio veiksmo"
 
@@ -3727,7 +3727,7 @@ msgstr "Microsoft JScript kompiliavimo klaida"
 msgid "Microsoft JScript runtime error"
 msgstr "Microsoft JScript vykdymo klaida"
 
-#: jscript.rc:80
+#: jscript.rc:80 vbscript.rc:64
 msgid "Unknown runtime error"
 msgstr "Nežinoma vykdymo klaida"
 
@@ -10569,6 +10569,156 @@ msgstr "Išrinkti langą"
 #: user32.rc:72
 msgid "&More Windows..."
 msgstr "&Daugiau langų..."
+
+#: vbscript.rc:30
+msgid "Overflow"
+msgstr ""
+
+#: vbscript.rc:31
+#, fuzzy
+#| msgid "Out of memory."
+msgid "Out of memory"
+msgstr "Trūksta atminties."
+
+#: vbscript.rc:33
+msgid "This array is fixed or temporarily locked"
+msgstr ""
+
+#: vbscript.rc:34
+#, fuzzy
+#| msgid "Data type mismatch.\n"
+msgid "Type mismatch"
+msgstr "Duomenų tipo neatitikimas.\n"
+
+#: vbscript.rc:36
+#, fuzzy
+#| msgid "I/O device error.\n"
+msgid "Device I/O error"
+msgstr "Į/I įrenginio klaida.\n"
+
+#: vbscript.rc:37
+#, fuzzy
+#| msgid "File already exists.\n"
+msgid "File already exists"
+msgstr "Failas jau egzistuoja.\n"
+
+#: vbscript.rc:38
+#, fuzzy
+#| msgid "Disk full.\n"
+msgid "Disk full"
+msgstr "Diskas pilnas.\n"
+
+#: vbscript.rc:39
+#, fuzzy
+#| msgid "Too many open files.\n"
+msgid "Too many files"
+msgstr "Per daug atvertų failų.\n"
+
+#: vbscript.rc:40
+#, fuzzy
+#| msgid "Access denied.\n"
+msgid "Permission denied"
+msgstr "Prieiga nesuteikta.\n"
+
+#: vbscript.rc:41
+msgid "Path/File access error"
+msgstr ""
+
+#: vbscript.rc:42
+#, fuzzy
+#| msgid "Path not found.\n"
+msgid "Path not found"
+msgstr "Kelias nerastas.\n"
+
+#: vbscript.rc:43
+#, fuzzy
+#| msgid "(value not set)"
+msgid "Object variable not set"
+msgstr "(reikšmė nenustatyta)"
+
+#: vbscript.rc:44
+#, fuzzy
+#| msgid "Invalid user buffer.\n"
+msgid "Invalid use of Null"
+msgstr "Netinkamas naudotojo buferis.\n"
+
+#: vbscript.rc:45
+msgid "Can't create necessary temporary file"
+msgstr ""
+
+#: vbscript.rc:46
+#, fuzzy
+#| msgid "Automation server can't create object"
+msgid "ActiveX component can't create object"
+msgstr "Automatizavimo serveriui nepavyko sukurti objekto"
+
+#: vbscript.rc:47
+#, fuzzy
+#| msgid "Object doesn't support this action"
+msgid "Class doesn't support Automation"
+msgstr "Objektas nepalaiko šio veiksmo"
+
+#: vbscript.rc:48
+msgid "File name or class name not found during Automation operation"
+msgstr ""
+
+#: vbscript.rc:51
+#, fuzzy
+#| msgid "Object doesn't support this action"
+msgid "Object doesn't support named arguments"
+msgstr "Objektas nepalaiko šio veiksmo"
+
+#: vbscript.rc:52
+#, fuzzy
+#| msgid "Object doesn't support this action"
+msgid "Object doesn't support current locale setting"
+msgstr "Objektas nepalaiko šio veiksmo"
+
+#: vbscript.rc:53 vbscript.rc:54
+#, fuzzy
+#| msgid "Element not found.\n"
+msgid "Named argument not found"
+msgstr "Elementas nerastas.\n"
+
+#: vbscript.rc:55
+msgid "Wrong number of arguments or invalid property assignment"
+msgstr ""
+
+#: vbscript.rc:56
+#, fuzzy
+#| msgid "Object Class Violation"
+msgid "Object not a collection"
+msgstr "Objekto klasės pažeidimas"
+
+#: vbscript.rc:57
+#, fuzzy
+#| msgid "Specified control was not found in message"
+msgid "Specified DLL function not found"
+msgstr "Nurodytas valdiklis nerastas pranešime"
+
+#: vbscript.rc:58
+msgid "Variable uses an Automation type not supported in VBScript"
+msgstr ""
+
+#: vbscript.rc:59
+msgid "The remote server machine does not exist or is unavailable"
+msgstr ""
+
+#: vbscript.rc:60
+msgid "Invalid or unqualified reference"
+msgstr ""
+
+#: vbscript.rc:62
+#, fuzzy
+#| msgid "Microsoft JScript compilation error"
+msgid "Microsoft VBScript compilation error"
+msgstr "Microsoft JScript kompiliavimo klaida"
+
+#: vbscript.rc:63
+#, fuzzy
+#| msgid "Microsoft JScript runtime error"
+msgid "Microsoft VBScript runtime error"
+msgstr "Microsoft JScript vykdymo klaida"
 
 #: winemac.rc:33
 msgid "Hide %@"

@@ -866,7 +866,7 @@ msgstr "&Датотека"
 msgid "Files of type:"
 msgstr "Датотеке &врсте:"
 
-#: comdlg32.rc:33
+#: comdlg32.rc:33 vbscript.rc:35
 msgid "File not found"
 msgstr "Датотека није пронађена"
 
@@ -3671,11 +3671,11 @@ msgstr ""
 msgid "Error converting object to primitive type"
 msgstr "Грешка у претварању објекта у основну врсту"
 
-#: jscript.rc:29
+#: jscript.rc:29 vbscript.rc:29
 msgid "Invalid procedure call or argument"
 msgstr "Неважећи поступак позива или аргумента"
 
-#: jscript.rc:30
+#: jscript.rc:30 vbscript.rc:32
 msgid "Subscript out of range"
 msgstr "Потпис је ван домета"
 
@@ -3694,11 +3694,11 @@ msgstr "Очекивани објекат"
 msgid "Automation server can't create object"
 msgstr "Аутоматизовани сервер не може да створи објекат"
 
-#: jscript.rc:34
+#: jscript.rc:34 vbscript.rc:49
 msgid "Object doesn't support this property or method"
 msgstr "Објекат не подржава ово својство или методу"
 
-#: jscript.rc:35
+#: jscript.rc:35 vbscript.rc:50
 msgid "Object doesn't support this action"
 msgstr "Објекат не подржава ову радњу"
 
@@ -3787,7 +3787,7 @@ msgstr ""
 msgid "Microsoft JScript runtime error"
 msgstr ""
 
-#: jscript.rc:80
+#: jscript.rc:80 vbscript.rc:64
 #, fuzzy
 msgid "Unknown runtime error"
 msgstr "Непознат извор"
@@ -11121,6 +11121,137 @@ msgstr "Избор"
 #: user32.rc:72
 msgid "&More Windows..."
 msgstr "&Више прозора..."
+
+#: vbscript.rc:30
+msgid "Overflow"
+msgstr ""
+
+#: vbscript.rc:31
+#, fuzzy
+#| msgid "Out of memory."
+msgid "Out of memory"
+msgstr "Нема више меморије."
+
+#: vbscript.rc:33
+msgid "This array is fixed or temporarily locked"
+msgstr ""
+
+#: vbscript.rc:34
+msgid "Type mismatch"
+msgstr ""
+
+#: vbscript.rc:36
+msgid "Device I/O error"
+msgstr ""
+
+#: vbscript.rc:37
+#, fuzzy
+msgid "File already exists"
+msgstr "Порт %s већ постоји.\n"
+
+#: vbscript.rc:38
+msgid "Disk full"
+msgstr ""
+
+#: vbscript.rc:39
+#, fuzzy
+msgid "Too many files"
+msgstr "Отвори датотеку"
+
+#: vbscript.rc:40
+msgid "Permission denied"
+msgstr ""
+
+#: vbscript.rc:41
+msgid "Path/File access error"
+msgstr ""
+
+#: vbscript.rc:42
+#, fuzzy
+msgid "Path not found"
+msgstr "%s путања није пронађена.\n"
+
+#: vbscript.rc:43
+msgid "Object variable not set"
+msgstr ""
+
+#: vbscript.rc:44
+#, fuzzy
+msgid "Invalid use of Null"
+msgstr "Неисправни акредитиви.\n"
+
+#: vbscript.rc:45
+msgid "Can't create necessary temporary file"
+msgstr ""
+
+#: vbscript.rc:46
+#, fuzzy
+#| msgid "Automation server can't create object"
+msgid "ActiveX component can't create object"
+msgstr "Аутоматизовани сервер не може да створи објекат"
+
+#: vbscript.rc:47
+#, fuzzy
+#| msgid "Object doesn't support this action"
+msgid "Class doesn't support Automation"
+msgstr "Објекат не подржава ову радњу"
+
+#: vbscript.rc:48
+msgid "File name or class name not found during Automation operation"
+msgstr ""
+
+#: vbscript.rc:51
+#, fuzzy
+#| msgid "Object doesn't support this action"
+msgid "Object doesn't support named arguments"
+msgstr "Објекат не подржава ову радњу"
+
+#: vbscript.rc:52
+#, fuzzy
+#| msgid "Object doesn't support this action"
+msgid "Object doesn't support current locale setting"
+msgstr "Објекат не подржава ову радњу"
+
+#: vbscript.rc:53 vbscript.rc:54
+#, fuzzy
+msgid "Named argument not found"
+msgstr "Датотека није пронађена.\n"
+
+#: vbscript.rc:55
+msgid "Wrong number of arguments or invalid property assignment"
+msgstr ""
+
+#: vbscript.rc:56
+#, fuzzy
+#| msgid "Object Class Violation"
+msgid "Object not a collection"
+msgstr "Кршење класе објеката"
+
+#: vbscript.rc:57
+#, fuzzy
+#| msgid "Specified control was not found in message"
+msgid "Specified DLL function not found"
+msgstr "Наведена контрола није пронађена у поруци"
+
+#: vbscript.rc:58
+msgid "Variable uses an Automation type not supported in VBScript"
+msgstr ""
+
+#: vbscript.rc:59
+msgid "The remote server machine does not exist or is unavailable"
+msgstr ""
+
+#: vbscript.rc:60
+msgid "Invalid or unqualified reference"
+msgstr ""
+
+#: vbscript.rc:62
+msgid "Microsoft VBScript compilation error"
+msgstr ""
+
+#: vbscript.rc:63
+msgid "Microsoft VBScript runtime error"
+msgstr ""
 
 #: winemac.rc:33
 #, fuzzy

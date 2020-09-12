@@ -851,7 +851,7 @@ msgstr "Nome do arquivo:"
 msgid "Files of type:"
 msgstr "Arquivos do tipo:"
 
-#: comdlg32.rc:33
+#: comdlg32.rc:33 vbscript.rc:35
 msgid "File not found"
 msgstr "Arquivo não encontrado"
 
@@ -3633,11 +3633,11 @@ msgstr "Testar e configurar controle de jogos."
 msgid "Error converting object to primitive type"
 msgstr "Erro ao converter objeto em tipo primitivo"
 
-#: jscript.rc:29
+#: jscript.rc:29 vbscript.rc:29
 msgid "Invalid procedure call or argument"
 msgstr "Argumento ou chamada de procedimento inválida"
 
-#: jscript.rc:30
+#: jscript.rc:30 vbscript.rc:32
 msgid "Subscript out of range"
 msgstr "Índice fora do intervalo"
 
@@ -3653,11 +3653,11 @@ msgstr "Objeto requerido"
 msgid "Automation server can't create object"
 msgstr "O servidor de automação não conseguiu criar o objeto"
 
-#: jscript.rc:34
+#: jscript.rc:34 vbscript.rc:49
 msgid "Object doesn't support this property or method"
 msgstr "O objeto não suporta esta propriedade ou método"
 
-#: jscript.rc:35
+#: jscript.rc:35 vbscript.rc:50
 msgid "Object doesn't support this action"
 msgstr "O objeto não suporta esta ação"
 
@@ -3737,7 +3737,7 @@ msgstr "Microsoft JScript erro de compilação"
 msgid "Microsoft JScript runtime error"
 msgstr "Microsoft JScript erro de execução"
 
-#: jscript.rc:80
+#: jscript.rc:80 vbscript.rc:64
 msgid "Unknown runtime error"
 msgstr "Erro de execução desconhecido"
 
@@ -10587,6 +10587,156 @@ msgstr "Selecionar Janela"
 #: user32.rc:72
 msgid "&More Windows..."
 msgstr "&Mais Janelas..."
+
+#: vbscript.rc:30
+msgid "Overflow"
+msgstr ""
+
+#: vbscript.rc:31
+#, fuzzy
+#| msgid "Out of memory."
+msgid "Out of memory"
+msgstr "Memória insuficiente."
+
+#: vbscript.rc:33
+msgid "This array is fixed or temporarily locked"
+msgstr ""
+
+#: vbscript.rc:34
+#, fuzzy
+#| msgid "Data type mismatch.\n"
+msgid "Type mismatch"
+msgstr "Tipo de dados diferente.\n"
+
+#: vbscript.rc:36
+#, fuzzy
+#| msgid "I/O device error.\n"
+msgid "Device I/O error"
+msgstr "Erro em dispositivo de E/S.\n"
+
+#: vbscript.rc:37
+#, fuzzy
+#| msgid "File already exists.\n"
+msgid "File already exists"
+msgstr "O arquivo já existe.\n"
+
+#: vbscript.rc:38
+#, fuzzy
+#| msgid "Disk full.\n"
+msgid "Disk full"
+msgstr "Disco cheio.\n"
+
+#: vbscript.rc:39
+#, fuzzy
+#| msgid "Too many open files.\n"
+msgid "Too many files"
+msgstr "Muitos arquivos abertos.\n"
+
+#: vbscript.rc:40
+#, fuzzy
+#| msgid "Access denied.\n"
+msgid "Permission denied"
+msgstr "Acesso negado.\n"
+
+#: vbscript.rc:41
+msgid "Path/File access error"
+msgstr ""
+
+#: vbscript.rc:42
+#, fuzzy
+#| msgid "Path not found.\n"
+msgid "Path not found"
+msgstr "Caminho não encontrado.\n"
+
+#: vbscript.rc:43
+#, fuzzy
+#| msgid "(value not set)"
+msgid "Object variable not set"
+msgstr "(valor não dado)"
+
+#: vbscript.rc:44
+#, fuzzy
+#| msgid "Invalid user buffer.\n"
+msgid "Invalid use of Null"
+msgstr "Buffer de usuário inválido.\n"
+
+#: vbscript.rc:45
+msgid "Can't create necessary temporary file"
+msgstr ""
+
+#: vbscript.rc:46
+#, fuzzy
+#| msgid "Automation server can't create object"
+msgid "ActiveX component can't create object"
+msgstr "O servidor de automação não conseguiu criar o objeto"
+
+#: vbscript.rc:47
+#, fuzzy
+#| msgid "Object doesn't support this action"
+msgid "Class doesn't support Automation"
+msgstr "O objeto não suporta esta ação"
+
+#: vbscript.rc:48
+msgid "File name or class name not found during Automation operation"
+msgstr ""
+
+#: vbscript.rc:51
+#, fuzzy
+#| msgid "Object doesn't support this action"
+msgid "Object doesn't support named arguments"
+msgstr "O objeto não suporta esta ação"
+
+#: vbscript.rc:52
+#, fuzzy
+#| msgid "Object doesn't support this action"
+msgid "Object doesn't support current locale setting"
+msgstr "O objeto não suporta esta ação"
+
+#: vbscript.rc:53 vbscript.rc:54
+#, fuzzy
+#| msgid "Element not found.\n"
+msgid "Named argument not found"
+msgstr "Elemento não encontrado.\n"
+
+#: vbscript.rc:55
+msgid "Wrong number of arguments or invalid property assignment"
+msgstr ""
+
+#: vbscript.rc:56
+#, fuzzy
+#| msgid "Object Class Violation"
+msgid "Object not a collection"
+msgstr "Violação da Classe de Objeto"
+
+#: vbscript.rc:57
+#, fuzzy
+#| msgid "Specified control was not found in message"
+msgid "Specified DLL function not found"
+msgstr "O controle especificado não foi encontrado na mensagem"
+
+#: vbscript.rc:58
+msgid "Variable uses an Automation type not supported in VBScript"
+msgstr ""
+
+#: vbscript.rc:59
+msgid "The remote server machine does not exist or is unavailable"
+msgstr ""
+
+#: vbscript.rc:60
+msgid "Invalid or unqualified reference"
+msgstr ""
+
+#: vbscript.rc:62
+#, fuzzy
+#| msgid "Microsoft JScript compilation error"
+msgid "Microsoft VBScript compilation error"
+msgstr "Microsoft JScript erro de compilação"
+
+#: vbscript.rc:63
+#, fuzzy
+#| msgid "Microsoft JScript runtime error"
+msgid "Microsoft VBScript runtime error"
+msgstr "Microsoft JScript erro de execução"
 
 #: winemac.rc:33
 msgid "Hide %@"

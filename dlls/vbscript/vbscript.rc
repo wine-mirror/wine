@@ -19,6 +19,8 @@
 #include <windef.h>
 #include "vbscript_defs.h"
 
+#pragma makedep po
+
 LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 
 STRINGTABLE

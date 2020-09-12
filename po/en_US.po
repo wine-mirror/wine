@@ -849,7 +849,7 @@ msgstr "File name:"
 msgid "Files of type:"
 msgstr "Files of type:"
 
-#: comdlg32.rc:33
+#: comdlg32.rc:33 vbscript.rc:35
 msgid "File not found"
 msgstr "File not found"
 
@@ -3620,11 +3620,11 @@ msgstr "Test and configure game controllers."
 msgid "Error converting object to primitive type"
 msgstr "Error converting object to primitive type"
 
-#: jscript.rc:29
+#: jscript.rc:29 vbscript.rc:29
 msgid "Invalid procedure call or argument"
 msgstr "Invalid procedure call or argument"
 
-#: jscript.rc:30
+#: jscript.rc:30 vbscript.rc:32
 msgid "Subscript out of range"
 msgstr "Subscript out of range"
 
@@ -3640,11 +3640,11 @@ msgstr "Object required"
 msgid "Automation server can't create object"
 msgstr "Automation server can't create object"
 
-#: jscript.rc:34
+#: jscript.rc:34 vbscript.rc:49
 msgid "Object doesn't support this property or method"
 msgstr "Object doesn't support this property or method"
 
-#: jscript.rc:35
+#: jscript.rc:35 vbscript.rc:50
 msgid "Object doesn't support this action"
 msgstr "Object doesn't support this action"
 
@@ -3724,7 +3724,7 @@ msgstr "Microsoft JScript compilation error"
 msgid "Microsoft JScript runtime error"
 msgstr "Microsoft JScript runtime error"
 
-#: jscript.rc:80
+#: jscript.rc:80 vbscript.rc:64
 msgid "Unknown runtime error"
 msgstr "Unknown runtime error"
 
@@ -10569,6 +10569,118 @@ msgstr "Select Window"
 #: user32.rc:72
 msgid "&More Windows..."
 msgstr "&More Windows..."
+
+#: vbscript.rc:30
+msgid "Overflow"
+msgstr "Overflow"
+
+#: vbscript.rc:31
+msgid "Out of memory"
+msgstr "Out of memory"
+
+#: vbscript.rc:33
+msgid "This array is fixed or temporarily locked"
+msgstr "This array is fixed or temporarily locked"
+
+#: vbscript.rc:34
+msgid "Type mismatch"
+msgstr "Type mismatch"
+
+#: vbscript.rc:36
+msgid "Device I/O error"
+msgstr "Device I/O error"
+
+#: vbscript.rc:37
+msgid "File already exists"
+msgstr "File already exists"
+
+#: vbscript.rc:38
+msgid "Disk full"
+msgstr "Disk full"
+
+#: vbscript.rc:39
+msgid "Too many files"
+msgstr "Too many files"
+
+#: vbscript.rc:40
+msgid "Permission denied"
+msgstr "Permission denied"
+
+#: vbscript.rc:41
+msgid "Path/File access error"
+msgstr "Path/File access error"
+
+#: vbscript.rc:42
+msgid "Path not found"
+msgstr "Path not found"
+
+#: vbscript.rc:43
+msgid "Object variable not set"
+msgstr "Object variable not set"
+
+#: vbscript.rc:44
+msgid "Invalid use of Null"
+msgstr "Invalid use of Null"
+
+#: vbscript.rc:45
+msgid "Can't create necessary temporary file"
+msgstr "Can't create necessary temporary file"
+
+#: vbscript.rc:46
+msgid "ActiveX component can't create object"
+msgstr "ActiveX component can't create object"
+
+#: vbscript.rc:47
+msgid "Class doesn't support Automation"
+msgstr "Class doesn't support Automation"
+
+#: vbscript.rc:48
+msgid "File name or class name not found during Automation operation"
+msgstr "File name or class name not found during Automation operation"
+
+#: vbscript.rc:51
+msgid "Object doesn't support named arguments"
+msgstr "Object doesn't support named arguments"
+
+#: vbscript.rc:52
+msgid "Object doesn't support current locale setting"
+msgstr "Object doesn't support current locale setting"
+
+#: vbscript.rc:53 vbscript.rc:54
+msgid "Named argument not found"
+msgstr "Named argument not found"
+
+#: vbscript.rc:55
+msgid "Wrong number of arguments or invalid property assignment"
+msgstr "Wrong number of arguments or invalid property assignment"
+
+#: vbscript.rc:56
+msgid "Object not a collection"
+msgstr "Object not a collection"
+
+#: vbscript.rc:57
+msgid "Specified DLL function not found"
+msgstr "Specified DLL function not found"
+
+#: vbscript.rc:58
+msgid "Variable uses an Automation type not supported in VBScript"
+msgstr "Variable uses an Automation type not supported in VBScript"
+
+#: vbscript.rc:59
+msgid "The remote server machine does not exist or is unavailable"
+msgstr "The remote server machine does not exist or is unavailable"
+
+#: vbscript.rc:60
+msgid "Invalid or unqualified reference"
+msgstr "Invalid or unqualified reference"
+
+#: vbscript.rc:62
+msgid "Microsoft VBScript compilation error"
+msgstr "Microsoft VBScript compilation error"
+
+#: vbscript.rc:63
+msgid "Microsoft VBScript runtime error"
+msgstr "Microsoft VBScript runtime error"
 
 #: winemac.rc:33
 msgid "Hide %@"
