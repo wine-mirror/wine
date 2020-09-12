@@ -1,7 +1,7 @@
 /*
  * Generate include file dependencies
  *
- * Copyright 1996, 2013 Alexandre Julliard
+ * Copyright 1996, 2013, 2020 Alexandre Julliard
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -794,6 +794,17 @@ static char *tools_path( const struct makefile *make, const char *name )
 
 
 /*******************************************************************
+ *         strarray_addall_path
+ */
+static void strarray_addall_path( struct strarray *array, const char *dir, struct strarray added )
+{
+    unsigned int i;
+
+    for (i = 0; i < added.count; i++) strarray_add( array, concat_paths( dir, added.str[i] ));
+}
+
+
+/*******************************************************************
  *         get_line
  */
 static char *get_line( FILE *file )
@@ -1347,10 +1358,10 @@ static struct file *load_file( const char *name )
 static struct file *open_include_path_file( const struct makefile *make, const char *dir,
                                             const char *name, char **filename )
 {
-    char *src_path = base_dir_path( make, concat_paths( dir, name ));
+    char *src_path = concat_paths( dir, name );
     struct file *ret = load_file( src_path );
 
-    if (ret) *filename = src_dir_path( make, concat_paths( dir, name ));
+    if (ret) *filename = src_path;
     return ret;
 }
 
@@ -1842,7 +1853,7 @@ static struct makefile *parse_makefile( const char *path )
     struct makefile *make = xmalloc( sizeof(*make) );
 
     memset( make, 0, sizeof(*make) );
-    make->base_dir = path;
+    make->obj_dir = make->base_dir = path;
 
     file = open_input_makefile( make );
     while ((buffer = get_line( file )))
@@ -2683,21 +2694,8 @@ static struct strarray output_importlib_symlinks( const struct makefile *make )
 static void output_po_files( const struct makefile *make )
 {
     const char *po_dir = src_dir_path( make, "po" );
-    struct strarray pot_files = empty_strarray;
-    unsigned int i, j;
+    unsigned int i;
 
-    for (i = 0; i < make->subdirs.count; i++)
-    {
-        struct makefile *submake = make->submakes[i];
-
-        for (j = 0; j < submake->pot_files.count; j++)
-        {
-            char *pot_path = base_dir_path( submake, submake->pot_files.str[j] );
-            output( "%s: dummy\n", pot_path );
-            output( "\t@cd %s && $(MAKE) %s\n", base_dir_path( submake, "" ), submake->pot_files.str[j] );
-            strarray_add( &pot_files, pot_path );
-        }
-    }
     if (linguas.count)
     {
         for (i = 0; i < linguas.count; i++)
@@ -2710,13 +2708,11 @@ static void output_po_files( const struct makefile *make )
             output_filename( strmake( "%s/%s.po", po_dir, linguas.str[i] ));
         output( "\n" );
     }
-    output_filenames( pot_files );
-    output( ": tools/wrc tools/wmc include\n" );
     output( "%s/wine.pot:", po_dir );
-    output_filenames( pot_files );
+    output_filenames( make->pot_files );
     output( "\n" );
     output( "\tmsgcat -o $@" );
-    output_filenames( pot_files );
+    output_filenames( make->pot_files );
     output( "\n" );
 }
 
@@ -3282,7 +3278,6 @@ static void output_man_pages( struct makefile *make )
         strarray_add( &make->phony_targets, "sgmlpages" );
         strarray_add( &make->phony_targets, "xmlpages" );
     }
-    else output( "manpages htmlpages sgmlpages xmlpages::\n" );
 }
 
 
@@ -3465,6 +3460,8 @@ static void output_module( struct makefile *make )
             output_filenames_obj_dir( make, cross_files );
             output( "\n" );
         }
+        if (needs_implib_symlink( make ))
+            strarray_addall( &top_makefile->clean_files, output_importlib_symlinks( make ));
     }
 
     if (spec_file)
@@ -3596,15 +3593,15 @@ static void output_test_module( struct makefile *make )
     output_filename( tools_path( make, "winegcc" ));
     output( "\n" );
 
-    if (!make->disabled && !strarray_exists( &disabled_dirs, "programs/winetest" ))
-        output( "all: %s/%s\n", top_obj_dir_path( make, "programs/winetest" ), testres );
     output( "%s/%s: %s%s\n", top_obj_dir_path( make, "programs/winetest" ), testres,
             obj_dir_path( make, stripped ), ext );
     output( "\techo \"%s TESTRES \\\"%s%s\\\"\" | %s -u -o $@\n",
             testmodule, obj_dir_path( make, stripped ), ext, tools_path( make, "wrc" ));
 
     output_filenames_obj_dir( make, make->ok_files );
-    output( ": %s%s ../%s%s\n", obj_dir_path( make, testmodule ), ext, make->testdll, parent_ext );
+    output( ": %s%s", obj_dir_path( make, testmodule ), ext );
+    if (parent) output( " %s%s", obj_dir_path( parent, make->testdll ), parent_ext );
+    output( "\n" );
     output( "%s %s:", obj_dir_path( make, "check" ), obj_dir_path( make, "test" ));
     if (!make->disabled && parent && !parent->disabled) output_filenames_obj_dir( make, make->ok_files );
     output( "\n" );
@@ -3671,205 +3668,85 @@ static void output_programs( struct makefile *make )
  */
 static void output_subdirs( struct makefile *make )
 {
-    struct strarray symlinks = empty_strarray;
-    struct strarray all_deps = empty_strarray;
-    struct strarray build_deps = empty_strarray;
-    struct strarray builddeps_deps = empty_strarray;
+    struct strarray all_targets = empty_strarray;
     struct strarray makefile_deps = empty_strarray;
     struct strarray clean_files = empty_strarray;
     struct strarray testclean_files = empty_strarray;
     struct strarray distclean_files = empty_strarray;
-    struct strarray tools_deps = empty_strarray;
+    struct strarray dependencies = empty_strarray;
+    struct strarray install_lib_deps = empty_strarray;
+    struct strarray install_dev_deps = empty_strarray;
     struct strarray tooldeps_deps = empty_strarray;
-    struct strarray winetest_deps = empty_strarray;
-    unsigned int i, j;
+    struct strarray buildtest_deps = empty_strarray;
+    unsigned int i;
 
+    strarray_addall( &clean_files, make->clean_files );
     strarray_addall( &distclean_files, make->distclean_files );
+    strarray_addall( &all_targets, make->all_targets );
     for (i = 0; i < make->subdirs.count; i++)
     {
         const struct makefile *submake = make->submakes[i];
-        char *subdir = base_dir_path( submake, "" );
 
         strarray_add( &makefile_deps, top_src_dir_path( make, base_dir_path( submake,
                                                         strmake ( "%s.in", output_makefile_name ))));
-        for (j = 0; j < submake->clean_files.count; j++)
-            strarray_add( &clean_files, base_dir_path( submake, submake->clean_files.str[j] ));
-        for (j = 0; j < submake->distclean_files.count; j++)
-            strarray_add( &distclean_files, base_dir_path( submake, submake->distclean_files.str[j] ));
-        for (j = 0; j < submake->ok_files.count; j++)
-            strarray_add( &testclean_files, base_dir_path( submake, submake->ok_files.str[j] ));
-
-        /* import libs are still created for disabled dirs, except for win16 ones */
-        if (submake->module && submake->importlib && !(submake->disabled && submake->is_win16))
-        {
-            char *importlib_path = base_dir_path( submake, strmake( "lib%s", submake->importlib ));
-            if (submake->implib_objs.count)
-            {
-                output( "%s.a: dummy\n", importlib_path );
-                output( "\t@cd %s && $(MAKE) lib%s.a\n", subdir, submake->importlib );
-                strarray_add( &tools_deps, strmake( "%s.a", importlib_path ));
-                if (needs_cross_lib( submake ))
-                {
-                    output( "%s.cross.a: dummy\n", importlib_path );
-                    output( "\t@cd %s && $(MAKE) lib%s.cross.a\n", subdir, submake->importlib );
-                    strarray_add( &tools_deps, strmake( "%s.cross.a", importlib_path ));
-                }
-                if (needs_delay_lib( submake ))
-                {
-                    output( "%s.delay.a: dummy\n", importlib_path );
-                    output( "\t@cd %s && $(MAKE) lib%s.delay.a\n", subdir, submake->importlib );
-                    strarray_add( &tools_deps, strmake( "%s.delay.a", importlib_path ));
-                }
-            }
-            else
-            {
-                char *spec_file = top_src_dir_path( make, base_dir_path( submake,
-                                                   replace_extension( submake->module, ".dll", ".spec" )));
-                if (*dll_ext)
-                {
-                    output( "%s.def: %s", importlib_path, spec_file );
-                    strarray_add( &build_deps, strmake( "%s.def", importlib_path ));
-                }
-                else
-                {
-                    if (needs_delay_lib( submake ))
-                    {
-                        output( "%s.delay.a ", importlib_path );
-                        strarray_add( &build_deps, strmake( "%s.delay.a", importlib_path ));
-                    }
-                    output( "%s.a: %s", importlib_path, spec_file );
-                    strarray_add( &build_deps, strmake( "%s.a", importlib_path ));
-                }
-                output_filename( tools_path( make, "winebuild" ));
-                output( "\n" );
-                output( "\t%s -w -o $@", tools_path( make, "winebuild" ));
-                output_filename( *dll_ext ? "--def" : "--implib" );
-                output_filenames( target_flags );
-                if (submake->is_win16) output_filename( "-m16" );
-                output_filename( "--export" );
-                output_filename( spec_file );
-                output( "\n" );
-                if (crosstarget && (needs_cross_lib( submake ) || needs_delay_lib( submake )))
-                {
-                    if (needs_cross_lib( submake ))
-                    {
-                        output_filename( strmake( "%s.cross.a", importlib_path ));
-                        strarray_add( &build_deps, strmake( "%s.cross.a", importlib_path ));
-                    }
-                    if (needs_delay_lib( submake ))
-                    {
-                        output_filename( strmake( "%s.delay.a", importlib_path ));
-                        strarray_add( &build_deps, strmake( "%s.delay.a", importlib_path ));
-                    }
-                    output( ": %s", spec_file );
-                    output_filename( tools_path( make, "winebuild" ));
-                    output( "\n" );
-                    output( "\t%s -b %s -w -o $@", tools_path( make, "winebuild" ), crosstarget );
-                    if (submake->is_win16) output_filename( "-m16" );
-                    output_filename( "--implib" );
-                    output_filename( "--export" );
-                    output_filename( spec_file );
-                    output( "\n" );
-                }
-            }
-            if (needs_implib_symlink( submake ))
-                strarray_addall( &symlinks, output_importlib_symlinks( submake ));
-        }
+        strarray_addall_uniq( &make->phony_targets, submake->phony_targets );
+        strarray_addall_uniq( &make->uninstall_files, submake->uninstall_files );
+        strarray_addall_uniq( &dependencies, submake->dependencies );
+        strarray_addall_path( &clean_files, submake->obj_dir, submake->clean_files );
+        strarray_addall_path( &distclean_files, submake->obj_dir, submake->distclean_files );
+        strarray_addall_path( &testclean_files, submake->obj_dir, submake->ok_files );
+        strarray_addall_path( &make->pot_files, submake->obj_dir, submake->pot_files );
 
         if (submake->disabled) continue;
-        strarray_add( &all_deps, subdir );
 
-        if (submake->module)
-        {
-            if (!submake->staticlib)
-            {
-                strarray_add( &builddeps_deps, subdir );
-                if (!submake->is_exe)
-                {
-                    output( "manpages htmlpages sgmlpages xmlpages::\n" );
-                    output( "\t@cd %s && $(MAKE) $@\n", subdir );
-                }
-            }
-            else strarray_add( &tools_deps, subdir );
-        }
-        else if (submake->testdll)
-        {
-            output( "%s/test: dummy\n", subdir );
-            output( "\t@cd %s && $(MAKE) test\n", subdir );
-            strarray_add( &winetest_deps, subdir );
-            strarray_add( &builddeps_deps, subdir );
-        }
-        else
-        {
-            if (!strcmp( submake->base_dir, "tools" ) || !strncmp( submake->base_dir, "tools/", 6 ))
-            {
-                strarray_add( &tooldeps_deps, submake->base_dir );
-                for (j = 0; j < submake->programs.count; j++)
-                    output( "%s/%s%s: %s\n", submake->base_dir,
-                            submake->programs.str[j], tools_ext, submake->base_dir );
-            }
-            if (submake->programs.count || submake->sharedlib)
-            {
-                struct strarray libs = get_expanded_make_var_array( submake, "EXTRALIBS" );
-                for (j = 0; j < submake->programs.count; j++)
-                    strarray_addall( &libs, get_expanded_file_local_var( submake,
-                                                                    submake->programs.str[j], "LDFLAGS" ));
-                output( "%s: libs/port", submake->base_dir );
-                for (j = 0; j < libs.count; j++)
-                {
-                    if (!strcmp( libs.str[j], "-lwpp" )) output_filename( "libs/wpp" );
-                    if (!strcmp( libs.str[j], "-lwine" )) output_filename( "libs/wine" );
-                }
-                output( "\n" );
-            }
-        }
-
+        strarray_addall_path( &all_targets, submake->obj_dir, submake->all_targets );
+        if (!strcmp( submake->obj_dir, "tools" ) || !strncmp( submake->obj_dir, "tools/", 6 ))
+            strarray_add( &tooldeps_deps, obj_dir_path( submake, "all" ));
+        if (submake->testdll)
+            strarray_add( &buildtest_deps, obj_dir_path( submake, "all" ));
         if (submake->install_rules[INSTALL_LIB].count)
-        {
-            output( "install install-lib:: %s\n", submake->base_dir );
-            output_install_commands( make, submake, submake->install_rules[INSTALL_LIB] );
-        }
+            strarray_add( &install_lib_deps, obj_dir_path( submake, "install-lib" ));
         if (submake->install_rules[INSTALL_DEV].count)
-        {
-            output( "install install-dev:: %s\n", submake->base_dir );
-            output_install_commands( make, submake, submake->install_rules[INSTALL_DEV] );
-        }
+            strarray_add( &install_dev_deps, obj_dir_path( submake, "install-dev" ));
     }
+    strarray_addall( &dependencies, makefile_deps );
     output( "all:" );
-    output_filenames( all_deps );
+    output_filenames( all_targets );
     output( "\n" );
-    output_filenames( all_deps );
-    output( ": dummy\n" );
-    output( "\t@cd $@ && $(MAKE)\n" );
     output( "Makefile:" );
     output_filenames( makefile_deps );
     output( "\n" );
-    output_filenames( makefile_deps );
+    output_filenames( dependencies );
     output( ":\n" );
-    if (tooldeps_deps.count)
+    if (install_lib_deps.count)
     {
-        output( "__tooldeps__:" );
-        output_filenames( tooldeps_deps );
+        output( "install install-lib::" );
+        output_filenames( install_lib_deps );
         output( "\n" );
-        strarray_add( &make->phony_targets, "__tooldeps__" );
+        strarray_add_uniq( &make->phony_targets, "install" );
+        strarray_add_uniq( &make->phony_targets, "install-lib" );
     }
-    if (winetest_deps.count)
+    if (install_dev_deps.count)
     {
-        output( "buildtests programs/winetest:" );
-        output_filenames( winetest_deps );
+        output( "install install-dev::" );
+        output_filenames( install_dev_deps );
         output( "\n" );
-        output( "check test:" );
-        for (i = 0; i < winetest_deps.count; i++)
-        {
-            char *target = strmake( "%s/test", winetest_deps.str[i] );
-            output_filename( target );
-            strarray_add( &make->phony_targets, target );
-        }
-        output( "\n" );
-        strarray_add( &make->phony_targets, "buildtests" );
-        strarray_add( &make->phony_targets, "check" );
-        strarray_add( &make->phony_targets, "test" );
+        strarray_add_uniq( &make->phony_targets, "install" );
+        strarray_add_uniq( &make->phony_targets, "install-dev" );
     }
+    output_uninstall_rules( make );
+    if (buildtest_deps.count)
+    {
+        output( "buildtests:" );
+        output_filenames( buildtest_deps );
+        output( "\n" );
+        strarray_add_uniq( &make->phony_targets, "buildtests" );
+    }
+    output( "check test:" );
+    output_filenames( testclean_files );
+    output( "\n" );
+    strarray_add_uniq( &make->phony_targets, "check" );
+    strarray_add_uniq( &make->phony_targets, "test" );
 
     output( "clean::\n");
     output_rm_filenames( clean_files );
@@ -3877,30 +3754,25 @@ static void output_subdirs( struct makefile *make )
     output_rm_filenames( testclean_files );
     output( "distclean::\n");
     output_rm_filenames( distclean_files );
-    output_filenames( tools_deps );
-    output( ":" );
-    output_filename( tools_dir_path( make, "widl" ));
-    output_filename( tools_dir_path( make, "winebuild" ));
-    output_filename( tools_dir_path( make, "winegcc" ));
-    output_filename( obj_dir_path( make, "include" ));
-    output( "\n" );
-    output_filenames( builddeps_deps );
-    output( ": __builddeps__\n" );
-    strarray_add( &make->phony_targets, "distclean" );
-    strarray_add( &make->phony_targets, "testclean" );
-    strarray_addall( &make->phony_targets, all_deps );
+    strarray_add_uniq( &make->phony_targets, "distclean" );
+    strarray_add_uniq( &make->phony_targets, "testclean" );
 
-    strarray_addall( &make->clean_files, symlinks );
-    strarray_addall( &build_deps, tools_deps );
-    strarray_addall( &build_deps, symlinks );
-    if (build_deps.count)
+    if (tooldeps_deps.count)
     {
-        output( "__builddeps__:" );
-        output_filenames( build_deps );
+        output( "__tooldeps__:" );
+        output_filenames( tooldeps_deps );
         output( "\n" );
-        strarray_add( &make->phony_targets, "__builddeps__" );
+        strarray_add_uniq( &make->phony_targets, "__tooldeps__" );
     }
+
     if (get_expanded_make_variable( make, "GETTEXTPO_LIBS" )) output_po_files( make );
+
+    if (make->phony_targets.count)
+    {
+        output( ".PHONY:" );
+        output_filenames( make->phony_targets );
+        output( "\n" );
+    }
 }
 
 
@@ -3909,6 +3781,7 @@ static void output_subdirs( struct makefile *make )
  */
 static void output_sources( struct makefile *make )
 {
+    struct strarray all_targets = empty_strarray;
     struct incl_file *source;
     unsigned int i, j;
 
@@ -3975,29 +3848,6 @@ static void output_sources( struct makefile *make )
     else if (!strcmp( make->base_dir, "po" ))
         strarray_add( &make->distclean_files, "LINGUAS" );
 
-    if (make->subdirs.count) output_subdirs( make );
-
-    if (!make->disabled)
-    {
-        if (make->all_targets.count)
-        {
-            output( "%s:", obj_dir_path( make, "all" ));
-            output_filenames_obj_dir( make, make->all_targets );
-            output_filenames_obj_dir( make, make->font_files );
-            output( "\n" );
-            strarray_add_uniq( &make->phony_targets, obj_dir_path( make, "all" ));
-        }
-        output_install_rules( make, INSTALL_LIB, "install-lib" );
-        output_install_rules( make, INSTALL_DEV, "install-dev" );
-        output_uninstall_rules( make );
-    }
-
-    if (make->dependencies.count)
-    {
-        output_filenames( make->dependencies );
-        output( ":\n" );
-    }
-
     strarray_addall( &make->clean_files, make->object_files );
     strarray_addall( &make->clean_files, make->crossobj_files );
     strarray_addall( &make->clean_files, make->unixobj_files );
@@ -4006,20 +3856,31 @@ static void output_sources( struct makefile *make )
     strarray_addall( &make->clean_files, make->debug_files );
     strarray_addall( &make->clean_files, make->all_targets );
 
+    if (make->subdirs.count)
+    {
+        output_subdirs( make );
+        return;
+    }
+
+    strarray_addall( &all_targets, make->all_targets );
+    strarray_addall( &all_targets, make->font_files );
+    if (all_targets.count)
+    {
+        output( "%s:", obj_dir_path( make, "all" ));
+        output_filenames_obj_dir( make, all_targets );
+        output( "\n" );
+        strarray_add_uniq( &make->phony_targets, obj_dir_path( make, "all" ));
+    }
+    output_install_rules( make, INSTALL_LIB, "install-lib" );
+    output_install_rules( make, INSTALL_DEV, "install-dev" );
+
     if (make->clean_files.count)
     {
         output( "%s::\n", obj_dir_path( make, "clean" ));
         output( "\trm -f" );
         output_filenames_obj_dir( make, make->clean_files );
         output( "\n" );
-        strarray_add_uniq( &make->phony_targets, obj_dir_path( make, "clean" ));
-    }
-
-    if (make->phony_targets.count)
-    {
-        output( ".PHONY:" );
-        output_filenames( make->phony_targets );
-        output( "\n" );
+        strarray_add( &make->phony_targets, obj_dir_path( make, "clean" ));
     }
 }
 
@@ -4189,22 +4050,34 @@ static void output_gitignore( const char *dest, struct strarray files )
 
 
 /*******************************************************************
- *         output_top_variables
+ *         output_stub_makefile
  */
-static void output_top_variables( const struct makefile *make )
+static void output_stub_makefile( struct makefile *make )
 {
-    unsigned int i;
-    struct strarray *vars = &top_makefile->vars;
+    struct strarray targets = empty_strarray;
+    const char *make_var = strarray_get_value( &top_makefile->vars, "MAKE" );
 
-    if (!make->base_dir) return;  /* don't output variables in the top makefile */
+    if (make_var) output( "MAKE = %s\n\n", make_var );
+    output( "all:\n" );
 
-    output( "# Automatically generated by make depend; DO NOT EDIT!!\n\n" );
-    output( "all:\n\n" );
-    for (i = 0; i < vars->count; i += 2)
+    if (make->all_targets.count) strarray_add( &targets, "all" );
+    if (make->install_rules[INSTALL_LIB].count || make->install_rules[INSTALL_DEV].count)
+        strarray_add( &targets, "install" );
+    if (make->install_rules[INSTALL_LIB].count) strarray_add( &targets, "install-lib" );
+    if (make->install_rules[INSTALL_DEV].count) strarray_add( &targets, "install-dev" );
+    if (make->clean_files.count) strarray_add( &targets, "clean" );
+    if (make->ok_files.count)
     {
-        if (!strcmp( vars->str[i], "SUBDIRS" )) continue;  /* not inherited */
-        output( "%s = %s\n", vars->str[i], get_make_variable( make, vars->str[i] ));
+        strarray_add( &targets, "check" );
+        strarray_add( &targets, "test" );
+        strarray_add( &targets, "testclean" );
     }
+
+    output_filenames( targets );
+    output( ":\n" );
+    output( "\t@cd %s && $(MAKE) %s/$@\n", get_relative_path( make->obj_dir, "" ), make->obj_dir );
+    output( ".PHONY:" );
+    output_filenames( targets );
     output( "\n" );
 }
 
@@ -4217,13 +4090,12 @@ static void output_dependencies( struct makefile *make )
     struct strarray ignore_files = empty_strarray;
     char buffer[1024];
     FILE *src_file;
-    int found = 0;
+    int i, found = 0;
 
     if (make->base_dir) create_dir( make->base_dir );
 
     output_file_name = base_dir_path( make, output_makefile_name );
     output_file = create_temp_file( output_file_name );
-    output_top_variables( make );
 
     /* copy the contents of the source makefile */
     src_file = open_input_makefile( make );
@@ -4236,7 +4108,13 @@ static void output_dependencies( struct makefile *make )
     input_file_name = NULL;
 
     if (!found) output( "\n%s (everything below this line is auto-generated; DO NOT EDIT!!)\n", separator );
-    output_sources( make );
+
+    if (!make->base_dir)
+    {
+        for (i = 0; i < make->subdirs.count; i++) output_sources( make->submakes[i] );
+        output_sources( make );
+    }
+    else output_stub_makefile( make );
 
     fclose( output_file );
     output_file = NULL;
@@ -4282,8 +4160,6 @@ static void load_sources( struct makefile *make )
     unsigned int i;
     struct strarray value;
     struct incl_file *file;
-
-    if (make->base_dir) make->top_obj_dir = get_relative_path( make->base_dir, "" );
 
     if (root_src_dir)
     {
@@ -4551,9 +4427,9 @@ int main( int argc, char *argv[] )
     for (i = 0; i < top_makefile->subdirs.count; i++)
         load_sources( top_makefile->submakes[i] );
 
+    output_dependencies( top_makefile );
     for (i = 0; i < top_makefile->subdirs.count; i++)
         output_dependencies( top_makefile->submakes[i] );
 
-    output_dependencies( top_makefile );
     return 0;
 }

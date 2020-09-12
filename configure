@@ -8725,10 +8725,10 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
     SYSTEMCONFIGURATION_LIBS="-framework SystemConfiguration"
 
 
-    WINELOADER_LDFLAGS="-Wl,-pie,-pagezero_size,0x1000,-sectcreate,__TEXT,__info_plist,wine_info.plist"
+    WINELOADER_LDFLAGS="-Wl,-pie,-pagezero_size,0x1000,-sectcreate,__TEXT,__info_plist,loader/wine_info.plist"
 
     wine_can_build_preloader=yes
-    WINEPRELOADER_LDFLAGS="-nostartfiles -nodefaultlibs -e _start -ldylib1.o -Wl,-image_base,0x7d400000,-pagezero_size,0x1000,-sectcreate,__TEXT,__info_plist,wine_info.plist"
+    WINEPRELOADER_LDFLAGS="-nostartfiles -nodefaultlibs -e _start -ldylib1.o -Wl,-image_base,0x7d400000,-pagezero_size,0x1000,-sectcreate,__TEXT,__info_plist,loader/wine_info.plist"
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-no_new_main -e _main" >&5
 $as_echo_n "checking whether the compiler supports -Wl,-no_new_main -e _main... " >&6; }
 if ${ac_cv_cflags__Wl__no_new_main__e__main+:} false; then :
@@ -20127,8 +20127,10 @@ wine_fn_append_rule "
 all: Makefile
 Makefile: $srcdir/Makefile.in config.status \$(MAKEDEP)
 	@./config.status Make.tmp Makefile
-depend: \$(MAKEDEP) dummy
-	\$(MAKEDEP)"
+depend: \$(MAKEDEP)
+	\$(MAKEDEP)
+dummy:
+.PHONY: depend dummy"
 
 ac_config_links="$ac_config_links wine:tools/winewrapper"
 wine_fn_config_symlink wine
@@ -21431,9 +21433,7 @@ if test "x$enable_tools" != xno
 then
     wine_fn_append_rule "tools/makedep$ac_exeext: $srcdir/tools/makedep.c include/config.h config.status
 	@./config.status tools/makedep
-Makefile: tools/makedep$ac_exeext
-fonts: tools/sfnt2fon
-include: tools tools/widl"
+Makefile: tools/makedep$ac_exeext"
 else
     wine_fn_append_rule "\$(MAKEDEP):
 	@echo \"You need to run make in $TOOLSDIR first\" && false"

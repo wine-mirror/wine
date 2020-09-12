@@ -20,12 +20,3 @@ EXTRA_OBJS = build.res
 EXTRA_TARGETS = build.nfo
 
 INSTALL_LIB = none
-
-build.rc: dummy
-	build="STRINGTABLE { 1 \"`GIT_DIR=$(top_srcdir)/.git git rev-parse HEAD 2>/dev/null`\" }" && (echo $$build | cmp -s - $@) || echo $$build >$@ || (rm -f $@ && exit 1)
-
-build.nfo:
-	-$(CC) -v 2>$@
-
-dummy:
-.PHONY: dummy
