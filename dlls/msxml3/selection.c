@@ -519,7 +519,7 @@ static HRESULT WINAPI enumvariant_Next(
         ret_count++;
     }
 
-    if (fetched) (*fetched)++;
+    if (fetched) *fetched = ret_count;
 
     /* we need to advance one step more for some reason */
     if (ret_count)
