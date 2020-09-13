@@ -1445,7 +1445,7 @@
 @ cdecl _strtof_l(str ptr ptr) msvcr120._strtof_l
 @ cdecl -ret64 _strtoi64(str ptr long) msvcr120._strtoi64
 @ cdecl -ret64 _strtoi64_l(str ptr long ptr) msvcr120._strtoi64_l
-@ stub _strtoimax_l
+@ cdecl -ret64 _strtoimax_l(str ptr long ptr) msvcr120._strtoimax_l
 @ cdecl _strtol_l(str ptr long ptr) msvcr120._strtol_l
 @ stub _strtold_l
 @ cdecl -ret64 _strtoll_l(str ptr long ptr) msvcr120._strtoll_l
@@ -1453,7 +1453,7 @@
 @ cdecl -ret64 _strtoui64_l(str ptr long ptr) msvcr120._strtoui64_l
 @ cdecl _strtoul_l(str ptr long ptr) msvcr120._strtoul_l
 @ cdecl -ret64 _strtoull_l(str ptr long ptr) msvcr120._strtoull_l
-@ stub _strtoumax_l
+@ cdecl -ret64 _strtoumax_l(str ptr long ptr) msvcr120._strtoumax_l
 @ cdecl _strupr(str) msvcr120._strupr
 @ cdecl _strupr_l(str ptr) msvcr120._strupr_l
 @ cdecl _strupr_s(str long) msvcr120._strupr_s
@@ -2050,7 +2050,7 @@
 @ cdecl strstr(str str) msvcr120.strstr
 @ cdecl strtod(str ptr) msvcr120.strtod
 @ cdecl strtof(str ptr) msvcr120.strtof
-@ stub strtoimax
+@ cdecl -ret64 strtoimax(str ptr long) msvcr120.strtoimax
 @ cdecl strtok(str str) msvcr120.strtok
 @ cdecl strtok_s(ptr str ptr) msvcr120.strtok_s
 @ cdecl strtol(str ptr long) msvcr120.strtol
@@ -2058,7 +2058,7 @@
 @ cdecl -ret64 strtoll(str ptr long) msvcr120.strtoll
 @ cdecl strtoul(str ptr long) msvcr120.strtoul
 @ cdecl -ret64 strtoull(str ptr long) msvcr120.strtoull
-@ stub strtoumax
+@ cdecl -ret64 strtoumax(str ptr long) msvcr120.strtoumax
 @ cdecl strxfrm(ptr str long) msvcr120.strxfrm
 @ varargs swprintf_s(ptr long wstr) msvcr120.swprintf_s
 @ varargs swscanf(wstr wstr) msvcr120.swscanf
