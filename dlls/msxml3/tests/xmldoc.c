@@ -656,7 +656,7 @@ static void test_xmlelem_collection(void)
     WCHAR path[MAX_PATH];
     LONG length, type;
     ULONG num_vars;
-    VARIANT var, dummy, vIndex, vName;
+    VARIANT var[3], dummy, vIndex, vName;
     BSTR url, str;
     static const CHAR szBankXML[] = "bank.xml";
     static const WCHAR szNumber[] = {'N','U','M','B','E','R',0};
@@ -738,16 +738,16 @@ static void test_xmlelem_collection(void)
     IUnknown_Release(unk);
 
     /* <Number>1234</Number> */
-    hr = IEnumVARIANT_Next(enumVar, 1, &var, &num_vars);
+    hr = IEnumVARIANT_Next(enumVar, 1, &var[0], &num_vars);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    ok(V_VT(&var) == VT_DISPATCH, "Expected VT_DISPATCH, got %d\n", V_VT(&var));
+    ok(V_VT(&var[0]) == VT_DISPATCH, "Expected VT_DISPATCH, got %d\n", V_VT(&var[0]));
     ok(num_vars == 1, "Expected 1, got %d\n", num_vars);
 
-    hr = IDispatch_QueryInterface(V_DISPATCH(&var), &IID_IXMLElement, (LPVOID *)&child);
+    hr = IDispatch_QueryInterface(V_DISPATCH(&var[0]), &IID_IXMLElement, (LPVOID *)&child);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(child != NULL, "Expected non-NULL child\n");
 
-    VariantClear(&var);
+    VariantClear(&var[0]);
 
     hr = IXMLElement_get_type(child, &type);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
@@ -760,10 +760,12 @@ static void test_xmlelem_collection(void)
     IXMLElement_Release(child);
 
     /* <Name>Captain Ahab</Name> */
-    hr = IEnumVARIANT_Next(enumVar, 1, &var, &num_vars);
+    hr = IEnumVARIANT_Next(enumVar, 1, &var[0], &num_vars);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    ok(V_VT(&var) == VT_DISPATCH, "Expected VT_DISPATCH, got %d\n", V_VT(&var));
+    ok(V_VT(&var[0]) == VT_DISPATCH, "Expected VT_DISPATCH, got %d\n", V_VT(&var[0]));
     ok(num_vars == 1, "Expected 1, got %d\n", num_vars);
+
+    VariantClear(&var[0]);
 
     /* try advance further, no children left */
     V_VT(&dummy) = VT_I4;
@@ -777,11 +779,42 @@ static void test_xmlelem_collection(void)
     ok(hr == S_FALSE, "Expected S_FALSE, got %08x\n", hr);
     ok(V_VT(&dummy) == VT_EMPTY, "Expected 0, got %d\n", V_VT(&dummy));
 
-    hr = IDispatch_QueryInterface(V_DISPATCH(&var), &IID_IXMLElement, (LPVOID *)&child);
+    hr = IEnumVARIANT_Reset(enumVar);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    /* retrieve multiple elements */
+    hr = IEnumVARIANT_Next(enumVar, 2, var, &num_vars);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(V_VT(&var[0]) == VT_DISPATCH, "Expected VT_DISPATCH, got %d\n", V_VT(&var[0]));
+    ok(V_VT(&var[1]) == VT_DISPATCH, "Expected VT_DISPATCH, got %d\n", V_VT(&var[1]));
+    ok(num_vars == 2, "Expected 2, got %d\n", num_vars);
+
+    V_VT(&dummy) = VT_I4;
+    hr = IEnumVARIANT_Next(enumVar, 1, &dummy, &num_vars);
+    ok(hr == S_FALSE, "Expected S_FALSE, got %08x\n", hr);
+    ok(V_VT(&dummy) == VT_EMPTY, "Expected 0, got %d\n", V_VT(&dummy));
+    ok(num_vars == 0, "Expected 0, got %d\n", num_vars);
+
+    hr = IEnumVARIANT_Reset(enumVar);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    VariantClear(&var[1]);
+    VariantClear(&var[0]);
+
+    /* request more elements than available */
+    hr = IEnumVARIANT_Next(enumVar, 3, var, &num_vars);
+    ok(hr == S_FALSE, "Expected S_FALSE, got %08x\n", hr);
+    ok(V_VT(&var[0]) == VT_DISPATCH, "Expected VT_DISPATCH, got %d\n", V_VT(&var[0]));
+    ok(V_VT(&var[1]) == VT_DISPATCH, "Expected VT_DISPATCH, got %d\n", V_VT(&var[1]));
+    ok(V_VT(&var[2]) == VT_EMPTY, "Expected 0, got %d\n", V_VT(&var[2]));
+    ok(num_vars == 2, "Expected 2, got %d\n", num_vars);
+
+    hr = IDispatch_QueryInterface(V_DISPATCH(&var[1]), &IID_IXMLElement, (LPVOID *)&child);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(child != NULL, "Expected non-NULL child\n");
 
-    VariantClear(&var);
+    VariantClear(&var[1]);
+    VariantClear(&var[0]);
 
     hr = IXMLElement_get_type(child, &type);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);

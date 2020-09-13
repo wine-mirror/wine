@@ -753,28 +753,32 @@ static HRESULT WINAPI xmlelem_collection_IEnumVARIANT_Next(
     IEnumVARIANT *iface, ULONG celt, VARIANT *rgVar, ULONG *fetched)
 {
     xmlelem_collection *This = impl_from_IEnumVARIANT(iface);
-    xmlNodePtr ptr = This->current;
+    HRESULT hr;
 
     TRACE("(%p)->(%d %p %p)\n", This, celt, rgVar, fetched);
 
     if (!rgVar)
         return E_INVALIDARG;
 
-    /* FIXME: handle celt */
-    if (fetched)
-        *fetched = 1;
+    if (fetched) *fetched = 0;
 
-    if (This->current)
-        This->current = This->current->next;
-    else
+    if (!This->current)
     {
         V_VT(rgVar) = VT_EMPTY;
-        if (fetched) *fetched = 0;
         return S_FALSE;
     }
 
-    V_VT(rgVar) = VT_DISPATCH;
-    return XMLElement_create(ptr, (LPVOID *)&V_DISPATCH(rgVar), FALSE);
+    while (celt > 0 && This->current)
+    {
+        V_VT(rgVar) = VT_DISPATCH;
+        hr = XMLElement_create(This->current, (void **)&V_DISPATCH(rgVar), FALSE);
+        if (FAILED(hr)) return hr;
+        This->current = This->current->next;
+        if (--celt && This->current) ++rgVar;
+        if (fetched) ++*fetched;
+    }
+
+    return celt == 0 ? S_OK : S_FALSE;
 }
 
 static HRESULT WINAPI xmlelem_collection_IEnumVARIANT_Skip(
