@@ -543,8 +543,10 @@ static HRESULT WINAPI enumvariant_Skip(
 static HRESULT WINAPI enumvariant_Reset(IEnumVARIANT *iface)
 {
     enumvariant *This = impl_from_IEnumVARIANT( iface );
-    FIXME("(%p): stub\n", This);
-    return E_NOTIMPL;
+
+    TRACE("%p\n", This);
+    This->pos = 0;
+    return S_OK;
 }
 
 static HRESULT WINAPI enumvariant_Clone(

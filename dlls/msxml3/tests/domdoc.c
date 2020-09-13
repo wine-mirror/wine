@@ -10236,7 +10236,6 @@ static void test_selection(void)
     SysFreeString(name);
     IXMLDOMNode_Release(node);
     VariantClear(&v[0]);
-    IEnumVARIANT_Release(enum1);
 
     hr = IXMLDOMSelection_nextNode(selection, &node);
     EXPECT_HR(hr, S_OK);
@@ -10246,12 +10245,10 @@ static void test_selection(void)
     IXMLDOMNode_Release(node);
     SysFreeString(name);
 
-    /* getting multiple elements */
-    enum1 = NULL;
-    hr = IXMLDOMSelection_get__newEnum(selection, (IUnknown**)&enum1);
+    hr = IEnumVARIANT_Reset(enum1);
     EXPECT_HR(hr, S_OK);
-    ok(enum1 != NULL, "got %p\n", enum1);
 
+    /* getting multiple elements */
     V_VT(&v[1]) = VT_EMPTY;
     V_VT(&v[0]) = VT_EMPTY;
     hr = IEnumVARIANT_Next(enum1, 2, v, &ret);
@@ -12154,12 +12151,8 @@ static void test_get_namespaces(void)
     ok(fetched == 0, "got %d, expected 0\n", fetched);
     ok(V_VT(&v[0]) == VT_EMPTY, "got %d\n", V_VT(&v[0]));
 
-    IEnumVARIANT_Release(enumv);
-
-    enumv = (void*)0xdeadbeef;
-    hr = IXMLDOMSchemaCollection_get__newEnum(collection, (IUnknown**)&enumv);
+    hr = IEnumVARIANT_Reset(enumv);
     EXPECT_HR(hr, S_OK);
-    ok(enumv != NULL, "got %p\n", enumv);
 
     V_VT(&v[1]) = VT_EMPTY;
     V_VT(&v[0]) = VT_EMPTY;
@@ -12284,12 +12277,8 @@ static void test_get_namespaces(void)
     EXPECT_HR(hr, S_FALSE);
     ok(V_VT(&v[0]) == VT_EMPTY, "got %d\n", V_VT(&v[0]));
 
-    IEnumVARIANT_Release(enumv);
-
-    enumv = (void*)0xdeadbeef;
-    hr = IXMLDOMSchemaCollection_get__newEnum(collection, (IUnknown**)&enumv);
+    hr = IEnumVARIANT_Reset(enumv);
     EXPECT_HR(hr, S_OK);
-    ok(enumv != NULL, "got %p\n", enumv);
 
     V_VT(&v[1]) = VT_EMPTY;
     V_VT(&v[0]) = VT_EMPTY;
@@ -12747,9 +12736,8 @@ static void test_namedmap_newenum(void)
     ok(!lstrcmpW(str, L"attr2"), "got %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
     IXMLDOMNode_Release(node);
-    IEnumVARIANT_Release(enum2);
 
-    hr = IXMLDOMNamedNodeMap__newEnum(map, (IUnknown**)&enum2);
+    hr = IEnumVARIANT_Reset(enum2);
     EXPECT_HR(hr, S_OK);
 
     V_VT(&v[1]) = VT_EMPTY;
