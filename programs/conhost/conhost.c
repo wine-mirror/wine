@@ -54,6 +54,26 @@ struct font_info
     size_t    face_len;
 };
 
+struct edit_line
+{
+    NTSTATUS              status;              /* edit status */
+    WCHAR                *buf;                 /* the line being edited */
+    unsigned int          len;                 /* number of chars in line */
+    size_t                size;                /* buffer size */
+    unsigned int          cursor;              /* offset for cursor in current line */
+    WCHAR                *yanked;              /* yanked line */
+    unsigned int          mark;                /* marked point (emacs mode only) */
+    unsigned int          history_index;       /* history index */
+    WCHAR                *current_history;     /* buffer for the recent history entry */
+    BOOL                  insert_key;          /* insert key state */
+    BOOL                  insert_mode;         /* insert mode */
+    unsigned int          update_begin;        /* update region */
+    unsigned int          update_end;
+    unsigned int          end_offset;          /* offset of the last written char */
+    unsigned int          home_x;              /* home position */
+    unsigned int          home_y;
+};
+
 struct console
 {
     HANDLE                server;              /* console server handle */
@@ -62,7 +82,12 @@ struct console
     INPUT_RECORD         *records;             /* input records */
     unsigned int          record_count;        /* number of input records */
     unsigned int          record_size;         /* size of input records buffer */
+    WCHAR                *read_buffer;         /* buffer of data available for read */
+    size_t                read_buffer_count;   /* size of available data */
+    size_t                read_buffer_size;    /* size of buffer */
+    unsigned int          read_ioctl;          /* current read ioctl */
     size_t                pending_read;        /* size of pending read buffer */
+    struct edit_line      edit_line;           /* edit line context */
     WCHAR                *title;               /* console title */
     size_t                title_len;           /* length of console title */
     struct history_line **history;             /* lines history */
@@ -430,28 +455,32 @@ static void write_char( struct screen_buffer *screen_buffer, WCHAR ch, RECT *upd
     screen_buffer->cursor_x++;
 }
 
-static NTSTATUS read_console_input( struct console *console, size_t out_size )
+static NTSTATUS read_complete( struct console *console, NTSTATUS status, const void *buf, size_t size, int signal )
 {
-    size_t count = min( out_size / sizeof(INPUT_RECORD), console->record_count );
-    NTSTATUS status;
-
-    TRACE("count %u\n", count);
-
     SERVER_START_REQ( get_next_console_request )
     {
         req->handle = wine_server_obj_handle( console->server );
-        req->signal = count < console->record_count;
+        req->signal = signal;
         req->read   = 1;
-        req->status = STATUS_SUCCESS;
-        wine_server_add_data( req, console->records, count * sizeof(*console->records) );
+        req->status = status;
+        wine_server_add_data( req, buf, size );
         status = wine_server_call( req );
     }
     SERVER_END_REQ;
-    if (status)
-    {
-        ERR( "failed: %#x\n", status );
-        return status;
-    }
+    if (status) ERR( "failed: %#x\n", status );
+    console->read_ioctl = 0;
+    console->pending_read = 0;
+    return status;
+}
+
+static NTSTATUS read_console_input( struct console *console, size_t out_size )
+{
+    size_t count = min( out_size / sizeof(INPUT_RECORD), console->record_count );
+
+    TRACE("count %u\n", count);
+
+    read_complete( console, STATUS_SUCCESS, console->records, count * sizeof(*console->records),
+                   console->record_count > count );
 
     if (count < console->record_count)
         memmove( console->records, console->records + count,
@@ -460,14 +489,157 @@ static NTSTATUS read_console_input( struct console *console, size_t out_size )
     return STATUS_SUCCESS;
 }
 
+static void read_from_buffer( struct console *console, size_t out_size )
+{
+    out_size = min( out_size, console->read_buffer_count * sizeof(WCHAR) );
+    read_complete( console, STATUS_SUCCESS, console->read_buffer, out_size, console->record_count != 0  );
+    if (out_size / sizeof(WCHAR) < console->read_buffer_count)
+    {
+        memmove( console->read_buffer, console->read_buffer + out_size / sizeof(WCHAR),
+                 console->read_buffer_count * sizeof(WCHAR) - out_size );
+    }
+    if (!(console->read_buffer_count -= out_size / sizeof(WCHAR)))
+        free( console->read_buffer );
+}
+
+static void edit_line_update( struct console *console, unsigned int begin, unsigned int length )
+{
+    struct edit_line *ctx = &console->edit_line;
+    if (!length) return;
+    ctx->update_begin = min( ctx->update_begin, begin );
+    ctx->update_end   = max( ctx->update_end, begin + length - 1 );
+}
+
+static BOOL edit_line_grow( struct console *console, size_t length )
+{
+    struct edit_line *ctx = &console->edit_line;
+    WCHAR *new_buf;
+    size_t new_size;
+
+    if (ctx->len + length < ctx->size) return TRUE;
+
+    /* round up size to 32 byte-WCHAR boundary */
+    new_size = (ctx->len + length + 32) & ~31;
+    if (!(new_buf = realloc( ctx->buf, sizeof(WCHAR) * new_size )))
+    {
+        ctx->status = STATUS_NO_MEMORY;
+        return FALSE;
+    }
+    ctx->buf  = new_buf;
+    ctx->size = new_size;
+    return TRUE;
+}
+
+static void edit_line_insert( struct console *console, const WCHAR *str, unsigned int len )
+{
+    struct edit_line *ctx = &console->edit_line;
+    unsigned int update_len;
+
+    if (!len) return;
+    if (ctx->insert_mode)
+    {
+        if (!edit_line_grow( console, len )) return;
+        if (ctx->len > ctx->cursor)
+            memmove( &ctx->buf[ctx->cursor + len], &ctx->buf[ctx->cursor],
+                     (ctx->len - ctx->cursor) * sizeof(WCHAR) );
+        ctx->len += len;
+        update_len = ctx->len - ctx->cursor;
+    }
+    else
+    {
+        if (ctx->cursor + len > ctx->len)
+        {
+            if (!edit_line_grow( console, (ctx->cursor + len) - ctx->len) )
+                return;
+            ctx->len = ctx->cursor + len;
+        }
+        update_len = len;
+    }
+    memcpy( &ctx->buf[ctx->cursor], str, len * sizeof(WCHAR) );
+    ctx->buf[ctx->len] = 0;
+    edit_line_update( console, ctx->cursor, update_len );
+    ctx->cursor += len;
+}
+
 static NTSTATUS process_console_input( struct console *console )
 {
-    if (console->record_count && console->pending_read)
+    struct edit_line *ctx = &console->edit_line;
+    unsigned int i;
+
+    switch (console->read_ioctl)
     {
-        read_console_input( console, console->pending_read );
-        console->pending_read = 0;
+    case IOCTL_CONDRV_READ_INPUT:
+        if (console->record_count) read_console_input( console, console->pending_read );
+        return STATUS_SUCCESS;
+    case IOCTL_CONDRV_READ_CONSOLE:
+        break;
+    default:
+        return STATUS_SUCCESS;
     }
+
+    ctx->update_begin = ctx->len + 1;
+    ctx->update_end = 0;
+
+    for (i = 0; i < console->record_count && ctx->status == STATUS_PENDING; i++)
+    {
+        INPUT_RECORD ir = console->records[i];
+
+        if (ir.EventType != KEY_EVENT || !ir.Event.KeyEvent.bKeyDown) continue;
+
+        TRACE( "key code=%02x scan=%02x char=%02x state=%08x\n",
+               ir.Event.KeyEvent.wVirtualKeyCode, ir.Event.KeyEvent.wVirtualScanCode,
+               ir.Event.KeyEvent.uChar.UnicodeChar, ir.Event.KeyEvent.dwControlKeyState );
+
+        if (ir.Event.KeyEvent.uChar.UnicodeChar && !(ir.Event.KeyEvent.dwControlKeyState & LEFT_ALT_PRESSED))
+            edit_line_insert( console, &ir.Event.KeyEvent.uChar.UnicodeChar, 1 );
+
+        if (!(console->mode & ENABLE_LINE_INPUT) && ctx->status == STATUS_PENDING &&
+            ctx->len >= console->pending_read / sizeof(WCHAR))
+            ctx->status = STATUS_SUCCESS;
+    }
+
+    if (console->record_count > i) memmove( console->records, console->records + i,
+                                            (console->record_count - i) * sizeof(*console->records) );
+    console->record_count -= i;
+
+    if (ctx->status == STATUS_PENDING && !(console->mode & ENABLE_LINE_INPUT) && ctx->len)
+        ctx->status = STATUS_SUCCESS;
+
+    if (ctx->status == STATUS_PENDING) return STATUS_SUCCESS;
+
+    console->read_buffer = ctx->buf;
+    console->read_buffer_count = ctx->len;
+    console->read_buffer_size = ctx->size;
+
+    if (ctx->status) read_complete( console, ctx->status, NULL, 0, console->record_count );
+    else read_from_buffer( console, console->pending_read );
+
+    /* reset context */
+    free( ctx->yanked );
+    free( ctx->current_history );
+    memset( &console->edit_line, 0, sizeof(console->edit_line) );
     return STATUS_SUCCESS;
+}
+
+static NTSTATUS read_console( struct console *console, size_t out_size )
+{
+    TRACE("\n");
+
+    if (!out_size || console->read_buffer_count)
+    {
+        read_from_buffer( console, out_size );
+        return STATUS_SUCCESS;
+    }
+
+    console->edit_line.history_index = console->history_index;
+    console->edit_line.home_x = console->active->cursor_x;
+    console->edit_line.home_y = console->active->cursor_y;
+    console->edit_line.status = STATUS_PENDING;
+    if (edit_line_grow( console, 1 )) console->edit_line.buf[0] = 0;
+
+    console->read_ioctl = IOCTL_CONDRV_READ_CONSOLE;
+    console->pending_read = out_size;
+    return process_console_input( console );
 }
 
 /* add input events to a console input queue */
@@ -1494,6 +1666,10 @@ static NTSTATUS console_input_ioctl( struct console *console, unsigned int code,
         TRACE( "set %x mode\n", console->mode );
         return STATUS_SUCCESS;
 
+    case IOCTL_CONDRV_READ_CONSOLE:
+        if (in_size || *out_size % sizeof(WCHAR)) return STATUS_INVALID_PARAMETER;
+        return read_console( console, *out_size );
+
     case IOCTL_CONDRV_READ_INPUT:
         {
             unsigned int blocking;
@@ -1503,6 +1679,7 @@ static NTSTATUS console_input_ioctl( struct console *console, unsigned int code,
             if (blocking && !console->record_count && *out_size)
             {
                 TRACE( "pending read" );
+                console->read_ioctl = IOCTL_CONDRV_READ_INPUT;
                 console->pending_read = *out_size;
                 return STATUS_PENDING;
             }
