@@ -51,7 +51,8 @@ static const IID * const tid_ids[] =
     &IID_FolderItem2,
     &IID_FolderItems3,
     &IID_FolderItemVerb,
-    &IID_FolderItemVerbs
+    &IID_FolderItemVerbs,
+    &IID_IShellLinkDual2
 };
 static ITypeInfo *typeinfos[LAST_tid];
 
@@ -102,6 +103,11 @@ typedef struct {
     BSTR name;
 } FolderItemVerbImpl;
 
+typedef struct {
+    IShellLinkDual2 IShellLinkDual2_iface;
+    LONG ref;
+} ShellLinkObjectImpl;
+
 static inline ShellDispatch *impl_from_IShellDispatch6(IShellDispatch6 *iface)
 {
     return CONTAINING_RECORD(iface, ShellDispatch, IShellDispatch6_iface);
@@ -130,6 +136,11 @@ static inline FolderItemVerbsImpl *impl_from_FolderItemVerbs(FolderItemVerbs *if
 static inline FolderItemVerbImpl *impl_from_FolderItemVerb(FolderItemVerb *iface)
 {
     return CONTAINING_RECORD(iface, FolderItemVerbImpl, FolderItemVerb_iface);
+}
+
+static inline ShellLinkObjectImpl *impl_from_IShellLinkDual(IShellLinkDual2 *iface)
+{
+    return CONTAINING_RECORD(iface, ShellLinkObjectImpl, IShellLinkDual2_iface);
 }
 
 static HRESULT load_typelib(void)
@@ -617,6 +628,273 @@ failed:
     return hr;
 }
 
+static HRESULT WINAPI ShellLinkObject_QueryInterface(IShellLinkDual2 *iface, REFIID riid,
+        LPVOID *ppv)
+{
+    ShellLinkObjectImpl *This = impl_from_IShellLinkDual(iface);
+
+    TRACE("(%p,%s,%p)\n", iface, debugstr_guid(riid), ppv);
+
+    if (!ppv) return E_INVALIDARG;
+
+    if (IsEqualIID(&IID_IUnknown, riid) ||
+        IsEqualIID(&IID_IDispatch, riid) ||
+        IsEqualIID(&IID_IShellLinkDual, riid) ||
+        IsEqualIID(&IID_IShellLinkDual2, riid))
+        *ppv = &This->IShellLinkDual2_iface;
+    else
+    {
+        WARN("not implemented for %s\n", debugstr_guid(riid));
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI ShellLinkObject_AddRef(IShellLinkDual2 *iface)
+{
+    ShellLinkObjectImpl *This = impl_from_IShellLinkDual(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p), new refcount=%i\n", iface, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI ShellLinkObject_Release(IShellLinkDual2 *iface)
+{
+    ShellLinkObjectImpl *This = impl_from_IShellLinkDual(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p), new refcount=%i\n", iface, ref);
+
+    if (!ref)
+    {
+        heap_free(This);
+    }
+    return ref;
+}
+
+static HRESULT WINAPI ShellLinkObject_GetTypeInfoCount(IShellLinkDual2 *iface, UINT *pctinfo)
+{
+    TRACE("(%p,%p)\n", iface, pctinfo);
+
+    *pctinfo = 1;
+    return S_OK;
+}
+
+static HRESULT WINAPI ShellLinkObject_GetTypeInfo(IShellLinkDual2 *iface, UINT iTInfo,
+        LCID lcid, ITypeInfo **ppTInfo)
+{
+    HRESULT hr;
+
+    TRACE("(%p,%u,%d,%p)\n", iface, iTInfo, lcid, ppTInfo);
+
+    hr = get_typeinfo(IShellLinkDual2_tid, ppTInfo);
+    if (SUCCEEDED(hr))
+        ITypeInfo_AddRef(*ppTInfo);
+
+    return hr;
+}
+
+static HRESULT WINAPI ShellLinkObject_GetIDsOfNames(IShellLinkDual2 *iface, REFIID riid,
+        LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    ITypeInfo *ti;
+    HRESULT hr;
+
+    TRACE("(%p,%s,%p,%u,%d,%p)\n", iface, shdebugstr_guid(riid), rgszNames, cNames, lcid,
+            rgDispId);
+
+    hr = get_typeinfo(IShellLinkDual2_tid, &ti);
+    if (SUCCEEDED(hr))
+        hr = ITypeInfo_GetIDsOfNames(ti, rgszNames, cNames, rgDispId);
+    return hr;
+}
+
+static HRESULT WINAPI ShellLinkObject_Invoke(IShellLinkDual2 *iface, DISPID dispIdMember,
+        REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
+        VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    ShellLinkObjectImpl *This = impl_from_IShellLinkDual(iface);
+    ITypeInfo *ti;
+    HRESULT hr;
+
+    TRACE("(%p,%d,%s,%d,%u,%p,%p,%p,%p)\n", iface, dispIdMember, shdebugstr_guid(riid), lcid,
+            wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+
+    hr = get_typeinfo(IShellLinkDual2_tid, &ti);
+    if (SUCCEEDED(hr))
+        hr = ITypeInfo_Invoke(ti, This, dispIdMember, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+    return hr;
+}
+
+static HRESULT WINAPI ShellLinkObject_get_Path(IShellLinkDual2 *iface, BSTR *pbs)
+{
+    FIXME("(%p, %p)\n", iface, pbs);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellLinkObject_put_Path(IShellLinkDual2 *iface, BSTR bs)
+{
+    FIXME("(%p, %s)\n", iface, debugstr_w(bs));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellLinkObject_get_Description(IShellLinkDual2 *iface, BSTR *pbs)
+{
+    FIXME("(%p, %p)\n", iface, pbs);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellLinkObject_put_Description(IShellLinkDual2 *iface, BSTR bs)
+{
+    FIXME("(%p, %s)\n", iface, debugstr_w(bs));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellLinkObject_get_WorkingDirectory(IShellLinkDual2 *iface, BSTR *pbs)
+{
+    FIXME("(%p, %p)\n", iface, pbs);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellLinkObject_put_WorkingDirectory(IShellLinkDual2 *iface, BSTR bs)
+{
+    FIXME("(%p, %s)\n", iface, debugstr_w(bs));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellLinkObject_get_Arguments(IShellLinkDual2 *iface, BSTR *pbs)
+{
+    FIXME("(%p, %p)\n", iface, pbs);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellLinkObject_put_Arguments(IShellLinkDual2 *iface, BSTR bs)
+{
+    FIXME("(%p, %s)\n", iface, debugstr_w(bs));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellLinkObject_get_Hotkey(IShellLinkDual2 *iface, int *piHK)
+{
+    FIXME("(%p, %p)\n", iface, piHK);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellLinkObject_put_Hotkey(IShellLinkDual2 *iface, int iHK)
+{
+    FIXME("(%p, %d)\n", iface, iHK);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellLinkObject_get_ShowCommand(IShellLinkDual2 *iface, int *piShowCommand)
+{
+    FIXME("(%p, %p)\n", iface, piShowCommand);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellLinkObject_put_ShowCommand(IShellLinkDual2 *iface, int iShowCommand)
+{
+    FIXME("(%p, %d)\n", iface, iShowCommand);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellLinkObject_Resolve(IShellLinkDual2 *iface, int fFlags)
+{
+    FIXME("(%p, %d)\n", iface, fFlags);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellLinkObject_GetIconLocation(IShellLinkDual2 *iface, BSTR *pbs,
+                                                      int *piIcon)
+{
+    FIXME("(%p, %p, %p)\n", iface, pbs, piIcon);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellLinkObject_SetIconLocation(IShellLinkDual2 *iface, BSTR bs,
+                                                      int iIcon)
+{
+    FIXME("(%p, %s, %d)\n", iface, debugstr_w(bs), iIcon);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellLinkObject_Save(IShellLinkDual2 *iface, VARIANT vWhere)
+{
+    FIXME("(%p, %s)\n", iface, debugstr_variant(&vWhere));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellLinkObject_get_Target(IShellLinkDual2 *iface, FolderItem **ppfi)
+{
+    FIXME("(%p, %p)\n", iface, ppfi);
+
+    return E_NOTIMPL;
+}
+
+static const IShellLinkDual2Vtbl ShellLinkObjectVtbl = {
+    ShellLinkObject_QueryInterface,
+    ShellLinkObject_AddRef,
+    ShellLinkObject_Release,
+    ShellLinkObject_GetTypeInfoCount,
+    ShellLinkObject_GetTypeInfo,
+    ShellLinkObject_GetIDsOfNames,
+    ShellLinkObject_Invoke,
+    ShellLinkObject_get_Path,
+    ShellLinkObject_put_Path,
+    ShellLinkObject_get_Description,
+    ShellLinkObject_put_Description,
+    ShellLinkObject_get_WorkingDirectory,
+    ShellLinkObject_put_WorkingDirectory,
+    ShellLinkObject_get_Arguments,
+    ShellLinkObject_put_Arguments,
+    ShellLinkObject_get_Hotkey,
+    ShellLinkObject_put_Hotkey,
+    ShellLinkObject_get_ShowCommand,
+    ShellLinkObject_put_ShowCommand,
+    ShellLinkObject_Resolve,
+    ShellLinkObject_GetIconLocation,
+    ShellLinkObject_SetIconLocation,
+    ShellLinkObject_Save,
+    ShellLinkObject_get_Target,
+};
+
+static HRESULT ShellLinkObject_Constructor(IShellLinkDual2 **link)
+{
+    ShellLinkObjectImpl *This;
+
+    FIXME("(%p)\n", link);
+
+    *link = NULL;
+
+    This = heap_alloc(sizeof(*This));
+    if (!This) return E_OUTOFMEMORY;
+    This->IShellLinkDual2_iface.lpVtbl = &ShellLinkObjectVtbl;
+    This->ref = 1;
+
+    *link = (IShellLinkDual2 *)&This->IShellLinkDual2_iface;
+    return S_OK;
+}
+
 static HRESULT WINAPI FolderItemImpl_QueryInterface(FolderItem2 *iface,
         REFIID riid, LPVOID *ppv)
 {
@@ -803,10 +1081,23 @@ static HRESULT WINAPI FolderItemImpl_get_Path(FolderItem2 *iface, BSTR *path)
 static HRESULT WINAPI FolderItemImpl_get_GetLink(FolderItem2 *iface,
         IDispatch **ppid)
 {
-    FIXME("(%p,%p)\n", iface, ppid);
+    IShellLinkDual2 *link;
+    HRESULT hr;
+    FolderItemImpl *This = impl_from_FolderItem(iface);
+
+    TRACE("(%p,%p)\n", iface, ppid);
 
     *ppid = NULL;
-    return E_NOTIMPL;
+
+    if (!(This->attributes & SFGAO_LINK))
+        return E_NOTIMPL;
+
+    hr = ShellLinkObject_Constructor(&link);
+    if (hr != S_OK)
+        return hr;
+
+    *ppid = (IDispatch*)link;
+    return S_OK;
 }
 
 static HRESULT WINAPI FolderItemImpl_get_GetFolder(FolderItem2 *iface,

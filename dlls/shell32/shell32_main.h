@@ -222,6 +222,7 @@ enum tid_t {
     FolderItems3_tid,
     FolderItemVerb_tid,
     FolderItemVerbs_tid,
+    IShellLinkDual2_tid,
     LAST_tid
 };
 

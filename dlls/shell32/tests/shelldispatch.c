@@ -1408,6 +1408,154 @@ if (0) { /* crashes on winxp/win2k3 */
     IShellDispatch_Release(sd);
 }
 
+static void test_ShellLinkObject(void)
+{
+    HRESULT hr;
+    IShellDispatch *sd;
+    WCHAR path[MAX_PATH],
+        empty_path[MAX_PATH],
+        link_path[MAX_PATH];
+    VARIANT v;
+    Folder2 *folder2;
+    Folder *folder;
+    FolderItem *item;
+    IDispatch *dispatch;
+    IShellLinkW *sl;
+    IShellLinkDual2* sld;
+    IPersistFile *pf;
+    BOOL ret;
+    BSTR str;
+    HANDLE file;
+    int hk;
+
+    hr = CoCreateInstance(&CLSID_Shell, NULL, CLSCTX_INPROC_SERVER,
+        &IID_IShellDispatch, (void**)&sd);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    GetTempPathW(MAX_PATH, path);
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = SysAllocString(path);
+    hr = IShellDispatch_NameSpace(sd, v, &folder);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    VariantClear(&v);
+
+    hr = Folder_QueryInterface(folder, &IID_Folder2, (void**)&folder2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    Folder_Release(folder);
+
+    hr = Folder2_get_Self(folder2, &item);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    dispatch = (IDispatch*)0xdeadbeef;
+    hr = FolderItem_get_GetLink(item, &dispatch);
+    ok(hr == E_NOTIMPL, "got 0x%08x\n", hr);
+    ok(dispatch == NULL, "got %p\n", dispatch);
+
+    FolderItem_Release(item);
+
+    PathCombineW(empty_path, path, L"winetest_empty_file.txt");
+    file = CreateFileW(empty_path, 0, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "CreateFile failed: %08x\n", GetLastError());
+    CloseHandle(file);
+
+    hr = CoCreateInstance(&CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, &IID_IShellLinkW, (LPVOID*)&sl);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IShellLinkW_SetPath(sl, empty_path);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IShellLinkW_GetPath(sl, empty_path, MAX_PATH, NULL, 0);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IShellLinkW_SetDescription(sl, L"description");
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IShellLinkW_SetWorkingDirectory(sl, L"working directory");
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IShellLinkW_SetArguments(sl, L"arguments");
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IShellLinkW_SetHotkey(sl, 1234);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IShellLinkW_SetShowCmd(sl, 1);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IShellLinkW_QueryInterface(sl, &IID_IPersistFile, (LPVOID*)&pf);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    PathCombineW(link_path, path, L"winetest_filled.lnk");
+    hr = IPersistFile_Save(pf, link_path, TRUE);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    IPersistFile_Release(pf);
+    IShellLinkW_Release(sl);
+
+    str = SysAllocString(L"winetest_filled.lnk");
+    hr = Folder2_ParseName(folder2, str, &item);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    SysFreeString(str);
+
+    dispatch = NULL;
+    hr = FolderItem_get_GetLink(item, &dispatch);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(dispatch != NULL, "got %p\n", dispatch);
+
+    if (dispatch) {
+        sld = (IShellLinkDual2*)dispatch;
+
+        str = NULL;
+        hr = IShellLinkDual2_get_Path(sld, &str);
+        todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+        if (hr == S_OK) {
+            ok(!wcscmp(str, empty_path), "got %s (wanted %s)\n",
+               wine_dbgstr_w(str), wine_dbgstr_w(empty_path));
+            SysFreeString(str);
+        }
+
+        str = NULL;
+        hr = IShellLinkDual2_get_Description(sld, &str);
+        todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+        if (hr == S_OK) {
+            ok(!wcscmp(str, L"description"), "got %s\n", wine_dbgstr_w(str));
+            SysFreeString(str);
+        }
+
+        str = NULL;
+        hr = IShellLinkDual2_get_WorkingDirectory(sld, &str);
+        todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+        if (hr == S_OK) {
+            ok(!wcscmp(str, L"working directory"), "got %s\n", wine_dbgstr_w(str));
+            SysFreeString(str);
+        }
+
+        str = NULL;
+        hr = IShellLinkDual2_get_Arguments(sld, &str);
+        todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+        if (hr == S_OK) {
+            ok(!wcscmp(str, L"arguments"), "got %s\n", wine_dbgstr_w(str));
+            SysFreeString(str);
+        }
+
+        hk = 0;
+        hr = IShellLinkDual2_get_Hotkey(sld, &hk);
+        todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+        todo_wine ok(hk == 1234, "got %i\n", hk);
+
+        hk = 0;
+        hr = IShellLinkDual2_get_ShowCommand(sld, &hk);
+        todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+        todo_wine ok(hk == 1, "got %i\n", hk);
+
+        IShellLinkDual2_Release(sld);
+    }
+
+    FolderItem_Release(item);
+
+    ret = DeleteFileW(link_path);
+    ok(ret, "DeleteFile failed: %08x\n", GetLastError());
+    ret = DeleteFileW(empty_path);
+    ok(ret, "DeleteFile failed: %08x\n", GetLastError());
+
+    Folder2_Release(folder2);
+
+    IShellDispatch_Release(sd);
+}
+
 static void test_ShellExecute(void)
 {
     HRESULT hr;
@@ -1466,6 +1614,7 @@ START_TEST(shelldispatch)
     test_ShellWindows();
     test_ParseName();
     test_Verbs();
+    test_ShellLinkObject();
     test_ShellExecute();
 
     CoUninitialize();
