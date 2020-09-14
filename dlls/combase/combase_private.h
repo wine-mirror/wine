@@ -61,7 +61,6 @@ HRESULT open_appidkey_from_clsid(REFCLSID clsid, REGSAM access, HKEY *subkey) DE
 #define DM_EXECUTERPC   (WM_USER + 0) /* WPARAM = 0, LPARAM = (struct dispatch_params *) */
 #define DM_HOSTOBJECT   (WM_USER + 1) /* WPARAM = 0, LPARAM = (struct host_object_params *) */
 
-#define WINE_CLSCTX_DONT_HOST   0x80000000
 #define CHARS_IN_GUID 39
 
 /* this is what is stored in TEB->ReservedForOle */
@@ -156,7 +155,7 @@ HRESULT apartment_increment_mta_usage(CO_MTA_USAGE_COOKIE *cookie) DECLSPEC_HIDD
 void apartment_decrement_mta_usage(CO_MTA_USAGE_COOKIE cookie) DECLSPEC_HIDDEN;
 struct apartment * apartment_get_mta(void) DECLSPEC_HIDDEN;
 HRESULT apartment_get_inproc_class_object(struct apartment *apt, const struct class_reg_data *regdata,
-        REFCLSID rclsid, REFIID riid, BOOL hostifnecessary, void **ppv) DECLSPEC_HIDDEN;
+        REFCLSID rclsid, REFIID riid, DWORD class_context, void **ppv) DECLSPEC_HIDDEN;
 HRESULT apartment_get_local_server_stream(struct apartment *apt, IStream **ret) DECLSPEC_HIDDEN;
 IUnknown *com_get_registered_class_object(const struct apartment *apartment, REFCLSID rclsid,
         DWORD clscontext) DECLSPEC_HIDDEN;
