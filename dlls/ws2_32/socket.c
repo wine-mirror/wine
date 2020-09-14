@@ -826,6 +826,7 @@ static const int ws_aiflag_map[][2] =
 #ifdef  AI_V4MAPPED
     MAP_OPTION( AI_V4MAPPED ),
 #endif
+    MAP_OPTION( AI_ALL ),
     MAP_OPTION( AI_ADDRCONFIG ),
 };
 
