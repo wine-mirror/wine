@@ -541,6 +541,13 @@ BOOL WINAPI ReadConsoleW(HANDLE hConsoleInput, LPVOID lpBuffer,
         return FALSE;
     }
 
+    if (DeviceIoControl(hConsoleInput, IOCTL_CONDRV_READ_CONSOLE, NULL, 0, lpBuffer,
+                        nNumberOfCharsToRead * sizeof(WCHAR), lpNumberOfCharsRead, NULL))
+    {
+        *lpNumberOfCharsRead /= sizeof(WCHAR);
+        return TRUE;
+    }
+
     if (!GetConsoleMode(hConsoleInput, &mode))
         return FALSE;
     if ((fd = get_console_bare_fd(hConsoleInput)) != -1)

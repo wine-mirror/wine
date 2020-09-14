@@ -1693,7 +1693,7 @@ static struct object *create_console_server( void )
 
 static int is_blocking_read_ioctl( unsigned int code )
 {
-    return code == IOCTL_CONDRV_READ_INPUT;
+    return code == IOCTL_CONDRV_READ_INPUT || code == IOCTL_CONDRV_READ_CONSOLE;
 }
 
 static int console_input_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
@@ -1898,8 +1898,12 @@ static int console_input_ioctl( struct fd *fd, ioctl_code_t code, struct async *
         }
 
     default:
-        set_error( STATUS_INVALID_HANDLE );
-        return 0;
+        if (!console->server || code >> 16 != FILE_DEVICE_CONSOLE)
+        {
+            set_error( STATUS_INVALID_HANDLE );
+            return 0;
+        }
+        return queue_host_ioctl( console->server, code, 0, async, &console->ioctl_q );
     }
 }
 
