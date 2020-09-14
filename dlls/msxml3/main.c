@@ -51,6 +51,7 @@
 #include "ole2.h"
 #include "rpcproxy.h"
 #include "msxml.h"
+#include "msxml2.h"
 #include "msxml6.h"
 
 #include "wine/unicode.h"
@@ -393,6 +394,29 @@ static void init_char_encoders(void)
 
 #endif  /* HAVE_LIBXML2 */
 
+const CLSID* DOMDocument_version(MSXML_VERSION v)
+{
+    switch (v)
+    {
+    default:
+    case MSXML_DEFAULT: return &CLSID_DOMDocument;
+    case MSXML3: return &CLSID_DOMDocument30;
+    case MSXML4: return &CLSID_DOMDocument40;
+    case MSXML6: return &CLSID_DOMDocument60;
+    }
+}
+
+const CLSID* SchemaCache_version(MSXML_VERSION v)
+{
+    switch (v)
+    {
+    default:
+    case MSXML_DEFAULT: return &CLSID_XMLSchemaCache;
+    case MSXML3: return &CLSID_XMLSchemaCache30;
+    case MSXML4: return &CLSID_XMLSchemaCache40;
+    case MSXML6: return &CLSID_XMLSchemaCache60;
+    }
+}
 
 HRESULT WINAPI DllCanUnloadNow(void)
 {
