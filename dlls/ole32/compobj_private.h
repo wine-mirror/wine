@@ -41,8 +41,6 @@
 
 DEFINE_OLEGUID( CLSID_DfMarshal, 0x0000030b, 0, 0 );
 
-struct apartment;
-
 /* this is what is stored in TEB->ReservedForOle */
 struct oletls
 {
@@ -95,13 +93,7 @@ static inline struct apartment * COM_CurrentApt(void)
     return COM_CurrentInfo()->apt;
 }
 
-/* helpers for debugging */
-# define DEBUG_SET_CRITSEC_NAME(cs, name) (cs)->DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": " name)
-# define DEBUG_CLEAR_CRITSEC_NAME(cs) (cs)->DebugInfo->Spare[0] = 0
-
 #define CHARS_IN_GUID 39 /* including NULL */
-
-#define WINE_CLSCTX_DONT_HOST   0x80000000
 
 /* from dlldata.c */
 extern HINSTANCE hProxyDll DECLSPEC_HIDDEN;
