@@ -413,8 +413,8 @@ static void new_line( struct screen_buffer *screen_buffer, RECT *update_rect )
 {
     unsigned int i;
 
-    assert( screen_buffer->cursor_y == screen_buffer->height );
-    screen_buffer->cursor_y--;
+    assert( screen_buffer->cursor_y >= screen_buffer->height );
+    screen_buffer->cursor_y = screen_buffer->height - 1;
 
     if (screen_buffer->console->tty_output)
         update_output( screen_buffer, update_rect );
@@ -434,7 +434,7 @@ static void new_line( struct screen_buffer *screen_buffer, RECT *update_rect )
     }
 }
 
-static void write_char( struct screen_buffer *screen_buffer, WCHAR ch, RECT *update_rect )
+static void write_char( struct screen_buffer *screen_buffer, WCHAR ch, RECT *update_rect, unsigned int *home_y )
 {
     if (screen_buffer->cursor_x == screen_buffer->width)
     {
@@ -443,6 +443,11 @@ static void write_char( struct screen_buffer *screen_buffer, WCHAR ch, RECT *upd
     }
     if (screen_buffer->cursor_y == screen_buffer->height)
     {
+        if (home_y)
+        {
+            if (!*home_y) return;
+            (*home_y)--;
+        }
         new_line( screen_buffer, update_rect );
     }
 
@@ -561,6 +566,88 @@ static void edit_line_insert( struct console *console, const WCHAR *str, unsigne
     ctx->cursor += len;
 }
 
+static unsigned int edit_line_string_width( const WCHAR *str, unsigned int len)
+{
+    unsigned int i, offset = 0;
+    for (i = 0; i < len; i++) offset += str[i] < ' ' ? 2 : 1;
+    return offset;
+}
+
+static void update_read_output( struct console *console )
+{
+    struct screen_buffer *screen_buffer = console->active;
+    struct edit_line *ctx = &console->edit_line;
+    int offset = 0, j, end_offset;
+    RECT update_rect;
+
+    empty_update_rect( screen_buffer, &update_rect );
+
+    if (ctx->update_end >= ctx->update_begin)
+    {
+        TRACE( "update %d-%d %s\n", ctx->update_begin, ctx->update_end,
+               debugstr_wn( ctx->buf + ctx->update_begin, ctx->update_end - ctx->update_begin + 1 ));
+
+        hide_tty_cursor( screen_buffer->console );
+
+        offset = edit_line_string_width( ctx->buf, ctx->update_begin );
+        screen_buffer->cursor_x = (ctx->home_x + offset) % screen_buffer->width;
+        screen_buffer->cursor_y = ctx->home_y + (ctx->home_x + offset) / screen_buffer->width;
+        for (j = ctx->update_begin; j <= ctx->update_end; j++)
+        {
+            if (screen_buffer->cursor_y >= screen_buffer->height && !ctx->home_y) break;
+            if (j >= ctx->len) break;
+            if (ctx->buf[j] < ' ')
+            {
+                write_char( screen_buffer, '^', &update_rect, &ctx->home_y );
+                write_char( screen_buffer, '@' + ctx->buf[j], &update_rect, &ctx->home_y );
+                offset += 2;
+            }
+            else
+            {
+                write_char( screen_buffer, ctx->buf[j], &update_rect, &ctx->home_y );
+                offset++;
+            }
+        }
+        end_offset = ctx->end_offset;
+        ctx->end_offset = offset;
+        if (j >= ctx->len)
+        {
+            /* clear trailing characters if buffer was shortened */
+            while (offset < end_offset && screen_buffer->cursor_y < screen_buffer->height)
+            {
+                write_char( screen_buffer, ' ', &update_rect, &ctx->home_y );
+                offset++;
+            }
+        }
+    }
+
+    if (!ctx->status)
+    {
+        offset = edit_line_string_width( ctx->buf, ctx->len );
+        screen_buffer->cursor_x = 0;
+        screen_buffer->cursor_y = ctx->home_y + (ctx->home_x + offset) / screen_buffer->width;
+        if (++screen_buffer->cursor_y >= screen_buffer->height)
+            new_line( screen_buffer, &update_rect );
+    }
+    else
+    {
+        offset = edit_line_string_width( ctx->buf, ctx->cursor );
+        screen_buffer->cursor_y = ctx->home_y + (ctx->home_x + offset) / screen_buffer->width;
+        if (screen_buffer->cursor_y < screen_buffer->height)
+        {
+            screen_buffer->cursor_x = (ctx->home_x + offset) % screen_buffer->width;
+        }
+        else
+        {
+            screen_buffer->cursor_x = screen_buffer->width - 1;
+            screen_buffer->cursor_y = screen_buffer->height - 1;
+        }
+    }
+
+    update_output( screen_buffer, &update_rect );
+    tty_sync( screen_buffer->console );
+}
+
 static NTSTATUS process_console_input( struct console *console )
 {
     struct edit_line *ctx = &console->edit_line;
@@ -605,6 +692,7 @@ static NTSTATUS process_console_input( struct console *console )
     if (ctx->status == STATUS_PENDING && !(console->mode & ENABLE_LINE_INPUT) && ctx->len)
         ctx->status = STATUS_SUCCESS;
 
+    if (console->mode & ENABLE_ECHO_INPUT) update_read_output( console );
     if (ctx->status == STATUS_PENDING) return STATUS_SUCCESS;
 
     console->read_buffer = ctx->buf;
@@ -1169,7 +1257,7 @@ static NTSTATUS write_console( struct screen_buffer *screen_buffer, const WCHAR 
                 continue;
             case '\t':
                 j = min( screen_buffer->width - screen_buffer->cursor_x, 8 - (screen_buffer->cursor_x % 8) );
-                while (j--) write_char( screen_buffer, ' ', &update_rect );
+                while (j--) write_char( screen_buffer, ' ', &update_rect, NULL );
                 continue;
             case '\n':
                 screen_buffer->cursor_x = 0;
@@ -1188,7 +1276,7 @@ static NTSTATUS write_console( struct screen_buffer *screen_buffer, const WCHAR 
         }
         if (screen_buffer->cursor_x == screen_buffer->width && !(screen_buffer->mode & ENABLE_WRAP_AT_EOL_OUTPUT))
             screen_buffer->cursor_x = update_rect.left;
-        write_char( screen_buffer, buffer[i], &update_rect );
+        write_char( screen_buffer, buffer[i], &update_rect, NULL );
     }
 
     if (screen_buffer->cursor_x == screen_buffer->width)
