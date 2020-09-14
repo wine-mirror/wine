@@ -1481,7 +1481,7 @@ static void test_ShellLinkObject(void)
 
         str = NULL;
         hr = IShellLinkDual2_get_Path(sld, &str);
-        todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
         if (hr == S_OK) {
             ok(!wcscmp(str, empty_path), "got %s (wanted %s)\n",
                wine_dbgstr_w(str), wine_dbgstr_w(empty_path));

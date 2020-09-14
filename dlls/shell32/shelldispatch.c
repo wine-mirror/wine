@@ -106,6 +106,8 @@ typedef struct {
 typedef struct {
     IShellLinkDual2 IShellLinkDual2_iface;
     LONG ref;
+
+    IShellLinkW *shell_link;
 } ShellLinkObjectImpl;
 
 static inline ShellDispatch *impl_from_IShellDispatch6(IShellDispatch6 *iface)
@@ -671,6 +673,7 @@ static ULONG WINAPI ShellLinkObject_Release(IShellLinkDual2 *iface)
 
     if (!ref)
     {
+        if (This->shell_link) IShellLinkW_Release(This->shell_link);
         heap_free(This);
     }
     return ref;
@@ -732,9 +735,20 @@ static HRESULT WINAPI ShellLinkObject_Invoke(IShellLinkDual2 *iface, DISPID disp
 
 static HRESULT WINAPI ShellLinkObject_get_Path(IShellLinkDual2 *iface, BSTR *pbs)
 {
-    FIXME("(%p, %p)\n", iface, pbs);
+    ShellLinkObjectImpl *This = impl_from_IShellLinkDual(iface);
+    WCHAR path[MAX_PATH];
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("(%p, %p)\n", iface, pbs);
+
+    *pbs = NULL;
+
+    hr = IShellLinkW_GetPath(This->shell_link, path, MAX_PATH, NULL, 0);
+    if (hr != S_OK)
+        return hr;
+
+    *pbs = SysAllocString(path);
+    return hr;
 }
 
 static HRESULT WINAPI ShellLinkObject_put_Path(IShellLinkDual2 *iface, BSTR bs)
@@ -878,11 +892,13 @@ static const IShellLinkDual2Vtbl ShellLinkObjectVtbl = {
     ShellLinkObject_get_Target,
 };
 
-static HRESULT ShellLinkObject_Constructor(IShellLinkDual2 **link)
+static HRESULT ShellLinkObject_Constructor(FolderItemImpl *item, IShellLinkDual2 **link)
 {
+    HRESULT hr;
+    IPersistFile *persist_file = NULL;
     ShellLinkObjectImpl *This;
 
-    FIXME("(%p)\n", link);
+    TRACE("(%p, %p)\n", item, link);
 
     *link = NULL;
 
@@ -890,6 +906,33 @@ static HRESULT ShellLinkObject_Constructor(IShellLinkDual2 **link)
     if (!This) return E_OUTOFMEMORY;
     This->IShellLinkDual2_iface.lpVtbl = &ShellLinkObjectVtbl;
     This->ref = 1;
+
+    This->shell_link = NULL;
+    hr = CoCreateInstance(&CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_IShellLinkW, (LPVOID*)&This->shell_link);
+    if (FAILED(hr))
+    {
+        heap_free(This);
+        return hr;
+    }
+
+    hr = IShellLinkW_QueryInterface(This->shell_link, &IID_IPersistFile,
+                                    (LPVOID*)&persist_file);
+    if (FAILED(hr))
+    {
+        IShellLinkW_Release(This->shell_link);
+        heap_free(This);
+        return hr;
+    }
+
+    hr = IPersistFile_Load(persist_file, item->path, STGM_READ);
+    IPersistFile_Release(persist_file);
+    if (FAILED(hr))
+    {
+        IShellLinkW_Release(This->shell_link);
+        heap_free(This);
+        return hr;
+    }
 
     *link = (IShellLinkDual2 *)&This->IShellLinkDual2_iface;
     return S_OK;
@@ -1092,7 +1135,7 @@ static HRESULT WINAPI FolderItemImpl_get_GetLink(FolderItem2 *iface,
     if (!(This->attributes & SFGAO_LINK))
         return E_NOTIMPL;
 
-    hr = ShellLinkObject_Constructor(&link);
+    hr = ShellLinkObject_Constructor(This, &link);
     if (hr != S_OK)
         return hr;
 
