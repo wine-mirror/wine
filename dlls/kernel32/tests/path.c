@@ -1877,7 +1877,8 @@ static void test_SearchPathA(void)
     ok(ret && ret == strlen(path2A), "got %d\n", ret);
     bret = CopyFileA(path2A, pathA, FALSE);
     ok(bret != 0, "failed to copy test executable to temp directory, %u\n", GetLastError());
-    sprintf(path3A, "%s%s%s", curdirA, curdirA[strlen(curdirA)-1] != '\\' ? "\\" : "", kernel32A);
+    GetModuleFileNameA( GetModuleHandleA(0), path3A, sizeof(path3A) );
+    strcpy( strrchr( path3A, '\\' ) + 1, kernel32A );
     bret = CopyFileA(path2A, path3A, FALSE);
     ok(bret != 0, "failed to copy test executable to launch directory, %u\n", GetLastError());
     bret = SetCurrentDirectoryA(tmpdirA);
