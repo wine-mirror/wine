@@ -1755,8 +1755,11 @@ static void write_header_stmts(FILE *header, const statement_list_t *stmts, cons
         break;
       }
       case STMT_LIBRARY:
+        fprintf(header, "#ifndef __%s_LIBRARY_DEFINED__\n", stmt->u.lib->name);
+        fprintf(header, "#define __%s_LIBRARY_DEFINED__\n", stmt->u.lib->name);
         write_library(header, stmt->u.lib);
         write_header_stmts(header, stmt->u.lib->stmts, NULL, FALSE);
+        fprintf(header, "#endif /* __%s_LIBRARY_DEFINED__ */\n", stmt->u.lib->name);
         break;
       case STMT_CPPQUOTE:
         fprintf(header, "%s\n", stmt->u.str);
