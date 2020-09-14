@@ -99,6 +99,10 @@ interface ISchemaAny;
 interface ISchemaIdentityConstraint;
 interface ISchemaNotation;
 
+cpp_quote("#ifdef __ISAXXMLReader_INTERFACE_DEFINED__")
+cpp_quote("#undef __MSXML2_LIBRARY_DEFINED__")
+cpp_quote("#endif")
+
 cpp_quote("#ifndef __MSXML_DOMNODETYPE_DEFINED")
 cpp_quote("#define __MSXML_DOMNODETYPE_DEFINED")
 typedef enum tagDOMNodeType

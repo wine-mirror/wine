@@ -31,6 +31,10 @@ import "oaidl.idl";
 #define vi_progid(str)
 #endif
 
+cpp_quote("#ifdef __ISAXXMLReader_INTERFACE_DEFINED__")
+cpp_quote("#undef __MSXML2_LIBRARY_DEFINED__")
+cpp_quote("#endif")
+
 [
     uuid(f5078f18-c551-11d3-89b9-0000f81fe221),
     version(3.0),
