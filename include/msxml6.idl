@@ -133,6 +133,8 @@ typedef enum tagDOMNodeType
 } DOMNodeType;
 cpp_quote("#endif")
 
+cpp_quote("#ifndef __msxml_som_enums__")
+cpp_quote("#define __msxml_som_enums__")
 typedef enum _SOMITEMTYPE
 {
     SOMITEM_SCHEMA                      = 0x1000,
@@ -260,6 +262,7 @@ typedef enum _SCHEMATYPEVARIETY
     SCHEMATYPEVARIETY_LIST      =  1,
     SCHEMATYPEVARIETY_UNION     =  2,
 } SCHEMATYPEVARIETY;
+cpp_quote("#endif /* __msxml_som_enums__ */")
 
 [
 local,
