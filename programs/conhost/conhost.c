@@ -507,6 +507,35 @@ static void read_from_buffer( struct console *console, size_t out_size )
         free( console->read_buffer );
 }
 
+static void append_input_history( struct console *console, const WCHAR *str, size_t len )
+{
+    struct history_line *ptr;
+
+    if (!console->history_size) return;
+
+    /* don't duplicate entry */
+    if (console->history_mode && console->history_index &&
+        console->history[console->history_index - 1]->len == len &&
+        !memcmp( console->history[console->history_index - 1]->text, str, len ))
+        return;
+
+    if (!(ptr = malloc( offsetof( struct history_line, text[len / sizeof(WCHAR)] )))) return;
+    ptr->len = len;
+    memcpy( ptr->text, str, len );
+
+    if (console->history_index < console->history_size)
+    {
+        console->history[console->history_index++] = ptr;
+    }
+    else
+    {
+        free( console->history[0]) ;
+        memmove( &console->history[0], &console->history[1],
+                 (console->history_size - 1) * sizeof(*console->history) );
+        console->history[console->history_size - 1] = ptr;
+    }
+}
+
 static void edit_line_update( struct console *console, unsigned int begin, unsigned int length )
 {
     struct edit_line *ctx = &console->edit_line;
@@ -533,6 +562,19 @@ static BOOL edit_line_grow( struct console *console, size_t length )
     ctx->buf  = new_buf;
     ctx->size = new_size;
     return TRUE;
+}
+
+static void edit_line_delete( struct console *console, int begin, int end )
+{
+    struct edit_line *ctx = &console->edit_line;
+    unsigned int len = end - begin;
+
+    edit_line_update( console, begin, ctx->len - begin );
+    if (end < ctx->len)
+        memmove( &ctx->buf[begin], &ctx->buf[end], (ctx->len - end) * sizeof(WCHAR));
+    ctx->len -= len;
+    edit_line_update( console, 0, ctx->len );
+    ctx->buf[ctx->len] = 0;
 }
 
 static void edit_line_insert( struct console *console, const WCHAR *str, unsigned int len )
@@ -565,6 +607,524 @@ static void edit_line_insert( struct console *console, const WCHAR *str, unsigne
     edit_line_update( console, ctx->cursor, update_len );
     ctx->cursor += len;
 }
+
+static void edit_line_save_yank( struct console *console, unsigned int begin, unsigned int end )
+{
+    struct edit_line *ctx = &console->edit_line;
+    unsigned int len = end - begin;
+    if (len <= 0) return;
+
+    free(ctx->yanked);
+    ctx->yanked = malloc( (len + 1) * sizeof(WCHAR) );
+    if (!ctx->yanked)
+    {
+        ctx->status = STATUS_NO_MEMORY;
+        return;
+    }
+    memcpy( ctx->yanked, &ctx->buf[begin], len * sizeof(WCHAR) );
+    ctx->yanked[len] = 0;
+}
+
+static int edit_line_left_word_transition( struct console *console, int offset )
+{
+    offset--;
+    while (offset >= 0 && !iswalnum( console->edit_line.buf[offset] )) offset--;
+    while (offset >= 0 && iswalnum( console->edit_line.buf[offset] )) offset--;
+    if (offset >= 0) offset++;
+    return max( offset, 0 );
+}
+
+static int edit_line_right_word_transition( struct console *console, int offset )
+{
+    offset++;
+    while (offset <= console->edit_line.len && iswalnum( console->edit_line.buf[offset] ))
+        offset++;
+    while (offset <= console->edit_line.len && !iswalnum( console->edit_line.buf[offset] ))
+        offset++;
+    return min(offset, console->edit_line.len);
+}
+
+static WCHAR *edit_line_history( struct console *console, unsigned int index )
+{
+    WCHAR *ptr = NULL;
+
+    if (index < console->history_index)
+    {
+        if ((ptr = malloc( console->history[index]->len + sizeof(WCHAR) )))
+        {
+            memcpy( ptr, console->history[index]->text, console->history[index]->len );
+            ptr[console->history[index]->len / sizeof(WCHAR)] = 0;
+        }
+    }
+    else if(console->edit_line.current_history)
+    {
+        if ((ptr = malloc( (lstrlenW(console->edit_line.current_history) + 1) * sizeof(WCHAR) )))
+            lstrcpyW( ptr, console->edit_line.current_history );
+    }
+    return ptr;
+}
+
+static void edit_line_move_to_history( struct console *console, int index )
+{
+    struct edit_line *ctx = &console->edit_line;
+    WCHAR *line = edit_line_history(console, index);
+    size_t len = line ? lstrlenW(line) : 0;
+
+    /* save current line edition for recall when needed */
+    if (ctx->history_index == console->history_index)
+    {
+        free( ctx->current_history );
+        ctx->current_history = malloc( (ctx->len + 1) * sizeof(WCHAR) );
+        if (ctx->current_history)
+        {
+            memcpy( ctx->current_history, ctx->buf, (ctx->len + 1) * sizeof(WCHAR) );
+        }
+        else
+        {
+            ctx->status = STATUS_NO_MEMORY;
+            return;
+        }
+    }
+
+    /* need to clean also the screen if new string is shorter than old one */
+    edit_line_delete(console, 0, ctx->len);
+    ctx->cursor = 0;
+    /* insert new string */
+    if (edit_line_grow(console, len + 1))
+    {
+        edit_line_insert( console, line, len );
+        ctx->history_index = index;
+    }
+    free(line);
+}
+
+static void edit_line_find_in_history( struct console *console )
+{
+    struct edit_line *ctx = &console->edit_line;
+    int start_pos = ctx->history_index;
+    unsigned int len, oldoffset;
+    WCHAR *line;
+
+    if (ctx->history_index && ctx->history_index == console->history_index + 1)
+    {
+        start_pos--;
+        ctx->history_index--;
+    }
+
+    do
+    {
+       line = edit_line_history(console, ctx->history_index);
+
+       if (ctx->history_index) ctx->history_index--;
+       else ctx->history_index = console->history_index;
+
+       len = lstrlenW(line) + 1;
+       if (len >= ctx->cursor && !memcmp( ctx->buf, line, ctx->cursor * sizeof(WCHAR) ))
+       {
+           /* need to clean also the screen if new string is shorter than old one */
+           edit_line_delete(console, 0, ctx->len);
+
+           if (edit_line_grow(console, len))
+           {
+              oldoffset = ctx->cursor;
+              ctx->cursor = 0;
+              edit_line_insert( console, line, len - 1 );
+              ctx->cursor = oldoffset;
+              free(line);
+              return;
+           }
+       }
+       free(line);
+    }
+    while (ctx->history_index != start_pos);
+}
+
+static void edit_line_move_left( struct console *console )
+{
+    if (console->edit_line.cursor > 0) console->edit_line.cursor--;
+}
+
+static void edit_line_move_right( struct console *console )
+{
+    struct edit_line *ctx = &console->edit_line;
+    if (ctx->cursor < ctx->len) ctx->cursor++;
+}
+
+static void edit_line_move_left_word( struct console *console )
+{
+    console->edit_line.cursor = edit_line_left_word_transition( console, console->edit_line.cursor );
+}
+
+static void edit_line_move_right_word( struct console *console )
+{
+    console->edit_line.cursor = edit_line_right_word_transition( console, console->edit_line.cursor );
+}
+
+static void edit_line_move_home( struct console *console )
+{
+    console->edit_line.cursor = 0;
+}
+
+static void edit_line_move_end( struct console *console )
+{
+    console->edit_line.cursor = console->edit_line.len;
+}
+
+static void edit_line_set_mark( struct console *console )
+{
+    console->edit_line.mark = console->edit_line.cursor;
+}
+
+static void edit_line_exchange_mark( struct console *console )
+{
+    struct edit_line *ctx = &console->edit_line;
+    unsigned int cursor;
+
+    if (ctx->mark > ctx->len) return;
+    cursor = ctx->cursor;
+    ctx->cursor = ctx->mark;
+    ctx->mark = cursor;
+}
+
+static void edit_line_copy_marked_zone( struct console *console )
+{
+    struct edit_line *ctx = &console->edit_line;
+    unsigned int begin, end;
+
+    if (ctx->mark > ctx->len || ctx->mark == ctx->cursor) return;
+    if (ctx->mark > ctx->cursor)
+    {
+        begin = ctx->cursor;
+        end   = ctx->mark;
+    }
+    else
+    {
+        begin = ctx->mark;
+        end = ctx->cursor;
+    }
+    edit_line_save_yank( console, begin, end );
+}
+
+static void edit_line_transpose_char( struct console *console )
+{
+    struct edit_line *ctx = &console->edit_line;
+    WCHAR c;
+
+    if (!ctx->cursor || ctx->cursor == ctx->len) return;
+
+    c = ctx->buf[ctx->cursor];
+    ctx->buf[ctx->cursor] = ctx->buf[ctx->cursor - 1];
+    ctx->buf[ctx->cursor - 1] = c;
+
+    edit_line_update( console, ctx->cursor - 1, 2 );
+    ctx->cursor++;
+}
+
+static void edit_line_transpose_words( struct console *console )
+{
+    struct edit_line *ctx = &console->edit_line;
+    unsigned int left_offset = edit_line_left_word_transition( console, ctx->cursor );
+    unsigned int right_offset = edit_line_right_word_transition( console, ctx->cursor );
+    if (left_offset < ctx->cursor && right_offset > ctx->cursor)
+    {
+        unsigned int len_r = right_offset - ctx->cursor;
+        unsigned int len_l = ctx->cursor - left_offset;
+        char *tmp = malloc( len_r * sizeof(WCHAR) );
+        if (!tmp)
+        {
+            ctx->status = STATUS_NO_MEMORY;
+            return;
+        }
+
+        memcpy( tmp, &ctx->buf[ctx->cursor], len_r * sizeof(WCHAR) );
+        memmove( &ctx->buf[left_offset + len_r], &ctx->buf[left_offset],
+                 len_l * sizeof(WCHAR) );
+        memcpy( &ctx->buf[left_offset], tmp, len_r * sizeof(WCHAR) );
+        free(tmp);
+
+        edit_line_update( console, left_offset, len_l + len_r );
+        ctx->cursor = right_offset;
+    }
+}
+
+static void edit_line_lower_case_word( struct console *console )
+{
+    struct edit_line *ctx = &console->edit_line;
+    unsigned int new_offset = edit_line_right_word_transition( console, ctx->cursor );
+    if (new_offset != ctx->cursor)
+    {
+        CharLowerBuffW( ctx->buf + ctx->cursor, new_offset - ctx->cursor + 1 );
+        edit_line_update( console, ctx->cursor, new_offset - ctx->cursor + 1 );
+        ctx->cursor = new_offset;
+    }
+}
+
+static void edit_line_upper_case_word( struct console *console )
+{
+    struct edit_line *ctx = &console->edit_line;
+    unsigned int new_offset = edit_line_right_word_transition( console, ctx->cursor );
+    if (new_offset != ctx->cursor)
+    {
+        CharUpperBuffW( ctx->buf + ctx->cursor, new_offset - ctx->cursor + 1 );
+        edit_line_update( console, ctx->cursor, new_offset - ctx->cursor + 1 );
+        ctx->cursor = new_offset;
+    }
+}
+
+static void edit_line_capitalize_word( struct console *console )
+{
+    struct edit_line *ctx = &console->edit_line;
+    unsigned int new_offset = edit_line_right_word_transition( console, ctx->cursor );
+    if (new_offset != ctx->cursor)
+    {
+        CharUpperBuffW( ctx->buf + ctx->cursor, 1 );
+        CharLowerBuffW( ctx->buf + ctx->cursor + 1, new_offset - ctx->cursor );
+        edit_line_update( console, ctx->cursor, new_offset - ctx->cursor + 1 );
+        ctx->cursor = new_offset;
+    }
+}
+
+static void edit_line_yank( struct console *console )
+{
+    struct edit_line *ctx = &console->edit_line;
+    if (ctx->yanked) edit_line_insert( console, ctx->yanked, wcslen(ctx->yanked) );
+}
+
+static void edit_line_kill_suffix( struct console *console )
+{
+    struct edit_line *ctx = &console->edit_line;
+    edit_line_save_yank( console, ctx->cursor, ctx->len );
+    edit_line_delete( console, ctx->cursor, ctx->len );
+}
+
+static void edit_line_kill_prefix( struct console *console )
+{
+    struct edit_line *ctx = &console->edit_line;
+    if (ctx->cursor)
+    {
+        edit_line_save_yank( console, 0, ctx->cursor );
+        edit_line_delete( console, 0, ctx->cursor );
+        ctx->cursor = 0;
+    }
+}
+
+static void edit_line_kill_marked_zone( struct console *console )
+{
+    struct edit_line *ctx = &console->edit_line;
+    unsigned int begin, end;
+
+    if (ctx->mark > ctx->len || ctx->mark == ctx->cursor)
+        return;
+    if (ctx->mark > ctx->cursor)
+    {
+        begin = ctx->cursor;
+        end   = ctx->mark;
+    }
+    else
+    {
+        begin = ctx->mark;
+        end   = ctx->cursor;
+    }
+    edit_line_save_yank( console, begin, end );
+    edit_line_delete( console, begin, end );
+    ctx->cursor = begin;
+}
+
+static void edit_line_delete_prev( struct console *console )
+{
+    struct edit_line *ctx = &console->edit_line;
+    if (ctx->cursor)
+    {
+        edit_line_delete( console, ctx->cursor - 1, ctx->cursor );
+        ctx->cursor--;
+    }
+}
+
+static void edit_line_delete_char( struct console *console )
+{
+    struct edit_line *ctx = &console->edit_line;
+    if (ctx->cursor < ctx->len)
+        edit_line_delete( console, ctx->cursor, ctx->cursor + 1 );
+}
+
+static void edit_line_delete_left_word( struct console *console )
+{
+    struct edit_line *ctx = &console->edit_line;
+    unsigned int new_offset = edit_line_left_word_transition( console, ctx->cursor );
+    if (new_offset != ctx->cursor)
+    {
+        edit_line_delete( console, new_offset, ctx->cursor );
+        ctx->cursor = new_offset;
+    }
+}
+
+static void edit_line_delete_right_word( struct console *console )
+{
+    struct edit_line *ctx = &console->edit_line;
+    unsigned int new_offset = edit_line_right_word_transition( console, ctx->cursor );
+    if (new_offset != ctx->cursor)
+    {
+        edit_line_delete( console, ctx->cursor, new_offset );
+    }
+}
+
+static void edit_line_move_to_prev_hist( struct console *console )
+{
+    if (console->edit_line.history_index)
+        edit_line_move_to_history( console, console->edit_line.history_index - 1 );
+}
+
+static void edit_line_move_to_next_hist( struct console *console )
+{
+    if (console->edit_line.history_index < console->history_index)
+        edit_line_move_to_history( console, console->edit_line.history_index + 1 );
+}
+
+static void edit_line_move_to_first_hist( struct console *console )
+{
+    if (console->edit_line.history_index)
+        edit_line_move_to_history( console, 0 );
+}
+
+static void edit_line_move_to_last_hist( struct console *console )
+{
+    if (console->edit_line.history_index != console->history_index)
+        edit_line_move_to_history( console, console->history_index );
+}
+
+static void edit_line_redraw( struct console *console )
+{
+    if (console->mode & ENABLE_ECHO_INPUT)
+        edit_line_update( console, 0, console->edit_line.len );
+}
+
+static void edit_line_toggle_insert( struct console *console )
+{
+    struct edit_line *ctx = &console->edit_line;
+    ctx->insert_key = !ctx->insert_key;
+    console->active->cursor_size = ctx->insert_key ? 100 : 25;
+}
+
+static void edit_line_done( struct console *console )
+{
+    console->edit_line.status = STATUS_SUCCESS;
+}
+
+struct edit_line_key_entry
+{
+    WCHAR val;  /* vk or unicode char */
+    void (*func)( struct console *console );
+};
+
+struct edit_line_key_map
+{
+    DWORD key_state;      /* keyState (from INPUT_RECORD) to match */
+    BOOL  is_char;        /* check vk or char */
+    const struct edit_line_key_entry *entries;
+};
+
+#define CTRL(x) ((x) - '@')
+static const struct edit_line_key_entry std_key_map[] =
+{
+    { VK_BACK,   edit_line_delete_prev },
+    { VK_RETURN, edit_line_done        },
+    { VK_DELETE, edit_line_delete_char },
+    { 0 }
+};
+
+static const struct edit_line_key_entry emacs_key_map_ctrl[] =
+{
+    { CTRL('@'), edit_line_set_mark          },
+    { CTRL('A'), edit_line_move_home         },
+    { CTRL('B'), edit_line_move_left         },
+    { CTRL('D'), edit_line_delete_char       },
+    { CTRL('E'), edit_line_move_end          },
+    { CTRL('F'), edit_line_move_right        },
+    { CTRL('H'), edit_line_delete_prev       },
+    { CTRL('J'), edit_line_done              },
+    { CTRL('K'), edit_line_kill_suffix       },
+    { CTRL('L'), edit_line_redraw            },
+    { CTRL('M'), edit_line_done              },
+    { CTRL('N'), edit_line_move_to_next_hist },
+    { CTRL('P'), edit_line_move_to_prev_hist },
+    { CTRL('T'), edit_line_transpose_char    },
+    { CTRL('W'), edit_line_kill_marked_zone  },
+    { CTRL('X'), edit_line_exchange_mark     },
+    { CTRL('Y'), edit_line_yank              },
+    { 0 }
+};
+
+static const struct edit_line_key_entry emacs_key_map_alt[] =
+{
+    { 0x7f, edit_line_delete_left_word   },
+    { '<',  edit_line_move_to_first_hist },
+    { '>',  edit_line_move_to_last_hist  },
+    { 'b',  edit_line_move_left_word     },
+    { 'c',  edit_line_capitalize_word    },
+    { 'd',  edit_line_delete_right_word  },
+    { 'f',  edit_line_move_right_word    },
+    { 'l',  edit_line_lower_case_word    },
+    { 't',  edit_line_transpose_words    },
+    { 'u',  edit_line_upper_case_word    },
+    { 'w',  edit_line_copy_marked_zone   },
+    { 0 }
+};
+
+static const struct edit_line_key_entry emacs_std_key_map[] =
+{
+    { VK_PRIOR,  edit_line_move_to_prev_hist },
+    { VK_NEXT,   edit_line_move_to_next_hist },
+    { VK_END,    edit_line_move_end          },
+    { VK_HOME,   edit_line_move_home         },
+    { VK_RIGHT,  edit_line_move_right        },
+    { VK_LEFT,   edit_line_move_left         },
+    { VK_INSERT, edit_line_toggle_insert     },
+    { 0 }
+};
+
+static const struct edit_line_key_map emacs_key_map[] =
+{
+    { 0,                  0, std_key_map        },
+    { 0,                  0, emacs_std_key_map  },
+    { RIGHT_ALT_PRESSED,  1, emacs_key_map_alt  },
+    { LEFT_ALT_PRESSED,   1, emacs_key_map_alt  },
+    { RIGHT_CTRL_PRESSED, 1, emacs_key_map_ctrl },
+    { LEFT_CTRL_PRESSED,  1, emacs_key_map_ctrl },
+    { 0 }
+};
+
+static const struct edit_line_key_entry win32_std_key_map[] =
+{
+    { VK_LEFT,   edit_line_move_left         },
+    { VK_RIGHT,  edit_line_move_right        },
+    { VK_HOME,   edit_line_move_home         },
+    { VK_END,    edit_line_move_end          },
+    { VK_UP,     edit_line_move_to_prev_hist },
+    { VK_DOWN,   edit_line_move_to_next_hist },
+    { VK_INSERT, edit_line_toggle_insert     },
+    { VK_F8,     edit_line_find_in_history   },
+    { 0 }
+};
+
+static const struct edit_line_key_entry win32_key_map_ctrl[] =
+{
+    { VK_LEFT,  edit_line_move_left_word  },
+    { VK_RIGHT, edit_line_move_right_word },
+    { VK_END,   edit_line_kill_suffix     },
+    { VK_HOME,  edit_line_kill_prefix     },
+    { 0 }
+};
+
+static const struct edit_line_key_map win32_key_map[] =
+{
+    { 0,                  0, std_key_map        },
+    { SHIFT_PRESSED,      0, std_key_map        },
+    { 0,                  0, win32_std_key_map  },
+    { RIGHT_CTRL_PRESSED, 0, win32_key_map_ctrl },
+    { LEFT_CTRL_PRESSED,  0, win32_key_map_ctrl },
+    { 0 }
+};
+#undef CTRL
 
 static unsigned int edit_line_string_width( const WCHAR *str, unsigned int len)
 {
@@ -669,6 +1229,7 @@ static NTSTATUS process_console_input( struct console *console )
 
     for (i = 0; i < console->record_count && ctx->status == STATUS_PENDING; i++)
     {
+        void (*func)( struct console *console ) = NULL;
         INPUT_RECORD ir = console->records[i];
 
         if (ir.EventType != KEY_EVENT || !ir.Event.KeyEvent.bKeyDown) continue;
@@ -677,7 +1238,45 @@ static NTSTATUS process_console_input( struct console *console )
                ir.Event.KeyEvent.wVirtualKeyCode, ir.Event.KeyEvent.wVirtualScanCode,
                ir.Event.KeyEvent.uChar.UnicodeChar, ir.Event.KeyEvent.dwControlKeyState );
 
-        if (ir.Event.KeyEvent.uChar.UnicodeChar && !(ir.Event.KeyEvent.dwControlKeyState & LEFT_ALT_PRESSED))
+        if (console->mode & ENABLE_LINE_INPUT)
+        {
+            const struct edit_line_key_entry *entry;
+            const struct edit_line_key_map *map;
+            unsigned int state;
+
+            /* mask out some bits which don't interest us */
+            state = ir.Event.KeyEvent.dwControlKeyState & ~(NUMLOCK_ON|SCROLLLOCK_ON|CAPSLOCK_ON|ENHANCED_KEY);
+
+            func = NULL;
+            for (map = console->edition_mode ? emacs_key_map : win32_key_map; map->entries != NULL; map++)
+            {
+                if (map->key_state != state)
+                    continue;
+                if (map->is_char)
+                {
+                    for (entry = &map->entries[0]; entry->func != 0; entry++)
+                        if (entry->val == ir.Event.KeyEvent.uChar.UnicodeChar) break;
+                }
+                else
+                {
+                    for (entry = &map->entries[0]; entry->func != 0; entry++)
+                        if (entry->val == ir.Event.KeyEvent.wVirtualKeyCode) break;
+
+                }
+                if (entry->func)
+                {
+                    func = entry->func;
+                    break;
+                }
+            }
+        }
+
+        ctx->insert_mode = ((console->mode & (ENABLE_INSERT_MODE | ENABLE_EXTENDED_FLAGS)) ==
+                            (ENABLE_INSERT_MODE | ENABLE_EXTENDED_FLAGS))
+            ^ ctx->insert_key;
+
+        if (func) func( console );
+        else if (ir.Event.KeyEvent.uChar.UnicodeChar && !(ir.Event.KeyEvent.dwControlKeyState & LEFT_ALT_PRESSED))
             edit_line_insert( console, &ir.Event.KeyEvent.uChar.UnicodeChar, 1 );
 
         if (!(console->mode & ENABLE_LINE_INPUT) && ctx->status == STATUS_PENDING &&
@@ -694,6 +1293,18 @@ static NTSTATUS process_console_input( struct console *console )
 
     if (console->mode & ENABLE_ECHO_INPUT) update_read_output( console );
     if (ctx->status == STATUS_PENDING) return STATUS_SUCCESS;
+
+    if (!ctx->status && (console->mode & ENABLE_LINE_INPUT))
+    {
+        if (ctx->len) append_input_history( console, ctx->buf, ctx->len * sizeof(WCHAR) );
+        if (edit_line_grow(console, 2))
+        {
+            ctx->buf[ctx->len++] = '\r';
+            ctx->buf[ctx->len++] = '\n';
+            ctx->buf[ctx->len] = 0;
+            TRACE( "return %s\n", debugstr_wn( ctx->buf, ctx->len ));
+        }
+    }
 
     console->read_buffer = ctx->buf;
     console->read_buffer_count = ctx->len;
