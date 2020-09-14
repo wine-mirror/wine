@@ -736,7 +736,7 @@ char **build_envp( const WCHAR *envW )
  *
  * Change the process name in the ps output.
  */
-static void set_process_name( int argc, char *argv[] )
+static int set_process_name( int argc, char *argv[] )
 {
     BOOL shift_strings;
     char *p, *name;
@@ -790,6 +790,7 @@ static void set_process_name( int argc, char *argv[] )
 #endif
     prctl( PR_SET_NAME, name );
 #endif  /* HAVE_PRCTL */
+    return argc - 1;
 }
 
 
@@ -954,14 +955,14 @@ void init_environment( int argc, char *argv[], char *envp[] )
 
     init_unix_codepage();
     init_locale();
-    set_process_name( argc, argv );
 
     if ((case_table = read_nls_file( "l_intl" )))
     {
         uctable = case_table + 2;
         lctable = case_table + case_table[1] + 2;
     }
-    main_argc = argc;
+
+    main_argc = set_process_name( argc, argv );
     main_argv = argv;
     main_wargv = build_wargv( argv );
     main_envp = envp;
