@@ -30,8 +30,6 @@ includedir      = @includedir@
 fontdir         = ${datadir}/wine/fonts
 nlsdir          = ${datadir}/wine/nls
 dlldir          = ${libdir}/wine
-top_srcdir      = @top_srcdir@
-top_builddir    = @top_builddir@
 srcdir          = @srcdir@
 SHELL           = /bin/sh
 CC              = @CC@
@@ -111,7 +109,7 @@ distclean:: clean
 # Rules for API documentation
 
 install-manpages:: manpages
-	for i in documentation/man$(api_manext)/*.$(api_manext); do $(top_srcdir)/tools/install-sh -m 644 $(INSTALL_DATA_FLAGS) $$i $(DESTDIR)$(mandir)/$$i; done
+	for i in documentation/man$(api_manext)/*.$(api_manext); do $(srcdir)/tools/install-sh -m 644 $(INSTALL_DATA_FLAGS) $$i $(DESTDIR)$(mandir)/$$i; done
 
 .PHONY: install-manpages
 
@@ -136,8 +134,8 @@ TAGSFLAGS = --langmap='c:+.idl.l.rh,make:(Make*.in)'
 
 TAGS etags:
 	rm -f TAGS
-	(test -d .git && git ls-files || find -L $(top_srcdir) -name '*.[ch]' -print) | xargs etags -a $(TAGSFLAGS)
+	(test -d .git && git ls-files || find -L $(srcdir) -name '*.[ch]' -print) | xargs etags -a $(TAGSFLAGS)
 
 tags ctags:
 	rm -f tags
-	(test -d .git && git ls-files || find -L $(top_srcdir) -name '*.[ch]' -print) | xargs ctags -a $(TAGSFLAGS)
+	(test -d .git && git ls-files || find -L $(srcdir) -name '*.[ch]' -print) | xargs ctags -a $(TAGSFLAGS)

@@ -121,8 +121,6 @@ ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $ac_cflags"
 $6
 CPPFLAGS=$ac_save_CPPFLAGS
-test -z "$ac_cflags" || ac_cflags=`echo " $ac_cflags" | sed 's/ -I\([[^/]]\)/ -I\$(top_builddir)\/\1/g'`
-test -z "$ac_libs" || ac_libs=`echo " $ac_libs" | sed 's/ -L\([[^/]]\)/ -L\$(top_builddir)\/\1/g'`
 AS_VAR_POPDEF([ac_libs])dnl
 AS_VAR_POPDEF([ac_cflags])])dnl
 

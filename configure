@@ -5838,16 +5838,12 @@ fi
 $as_echo "$wine_cv_toolsdir" >&6; }
 if test -z "$wine_cv_toolsdir"; then
     wine_makedep=tools/makedep
-    TOOLSDIR="\$(top_builddir)"
+    TOOLSDIR="."
 
 elif test -d "$wine_cv_toolsdir/tools/winebuild"; then
     wine_makedep=$wine_cv_toolsdir/tools/makedep
-    case "$wine_cv_toolsdir" in
-       /*) TOOLSDIR=$wine_cv_toolsdir
- ;;
-       *)  TOOLSDIR="\$(top_builddir)/$wine_cv_toolsdir"
- ;;
-    esac
+    TOOLSDIR=$wine_cv_toolsdir
+
     enable_tools=${enable_tools:-no}
     test -f "$wine_makedep" || as_fn_error $? "the Wine tools have not yet been built in $wine_cv_toolsdir" "$LINENO" 5
 else
@@ -13152,8 +13148,6 @@ fi
             XML2_LIBS=""
         fi
 CPPFLAGS=$ac_save_CPPFLAGS
-test -z "$XML2_CFLAGS" || XML2_CFLAGS=`echo " $XML2_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
-test -z "$XML2_LIBS" || XML2_LIBS=`echo " $XML2_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
 fi
 if test "$ac_cv_lib_xml2_xmlParseMemory" != "yes"; then :
@@ -13262,8 +13256,6 @@ fi
             XSLT_CFLAGS=""
         fi
 CPPFLAGS=$ac_save_CPPFLAGS
-test -z "$XSLT_CFLAGS" || XSLT_CFLAGS=`echo " $XSLT_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
-test -z "$XSLT_LIBS" || XSLT_LIBS=`echo " $XSLT_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
 fi
 if test "x$ac_cv_lib_soname_xslt" = "x"; then :
@@ -13350,8 +13342,6 @@ else
 fi
 
 CPPFLAGS=$ac_save_CPPFLAGS
-test -z "$INOTIFY_CFLAGS" || INOTIFY_CFLAGS=`echo " $INOTIFY_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
-test -z "$INOTIFY_LIBS" || INOTIFY_LIBS=`echo " $INOTIFY_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
 fi
 if test "$ac_cv_header_sys_inotify_h" != "yes"; then :
@@ -13446,8 +13436,6 @@ fi
 
 
 CPPFLAGS=$ac_save_CPPFLAGS
-test -z "$DBUS_CFLAGS" || DBUS_CFLAGS=`echo " $DBUS_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
-test -z "$DBUS_LIBS" || DBUS_LIBS=`echo " $DBUS_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
 fi
 if test "x$ac_cv_lib_soname_dbus_1" = "x" -a \
@@ -13543,8 +13531,6 @@ fi
 
 
 CPPFLAGS=$ac_save_CPPFLAGS
-test -z "$HAL_CFLAGS" || HAL_CFLAGS=`echo " $HAL_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
-test -z "$HAL_LIBS" || HAL_LIBS=`echo " $HAL_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
     if test "x$ac_cv_lib_soname_hal" = "x" -a \
                                "x$ac_cv_header_DiskArbitration_DiskArbitration_h" != "xyes"; then :
@@ -13671,8 +13657,6 @@ fi
 
 
 CPPFLAGS=$ac_save_CPPFLAGS
-test -z "$GNUTLS_CFLAGS" || GNUTLS_CFLAGS=`echo " $GNUTLS_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
-test -z "$GNUTLS_LIBS" || GNUTLS_LIBS=`echo " $GNUTLS_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
 fi
 if test "x$ac_cv_lib_soname_gnutls" = "x"; then :
@@ -13907,8 +13891,6 @@ fi
 
 
 CPPFLAGS=$ac_save_CPPFLAGS
-test -z "$SANE_CFLAGS" || SANE_CFLAGS=`echo " $SANE_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
-test -z "$SANE_LIBS" || SANE_LIBS=`echo " $SANE_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
 fi
 if test "x$ac_cv_lib_soname_sane" = "x"; then :
@@ -13990,8 +13972,6 @@ fi
 
 
 CPPFLAGS=$ac_save_CPPFLAGS
-test -z "$USB_CFLAGS" || USB_CFLAGS=`echo " $USB_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
-test -z "$USB_LIBS" || USB_LIBS=`echo " $USB_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
 fi
 if test "$ac_cv_lib_usb_1_0_libusb_interrupt_event_handler" != "yes"; then :
@@ -14143,8 +14123,6 @@ fi
 
 
 CPPFLAGS=$ac_save_CPPFLAGS
-test -z "$GPHOTO2_CFLAGS" || GPHOTO2_CFLAGS=`echo " $GPHOTO2_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
-test -z "$GPHOTO2_LIBS" || GPHOTO2_LIBS=`echo " $GPHOTO2_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
     if ${GPHOTO2_PORT_CFLAGS:+false} :; then :
   if ${PKG_CONFIG+:} false; then :
@@ -14215,8 +14193,6 @@ fi
 
 
 CPPFLAGS=$ac_save_CPPFLAGS
-test -z "$GPHOTO2_PORT_CFLAGS" || GPHOTO2_PORT_CFLAGS=`echo " $GPHOTO2_PORT_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
-test -z "$GPHOTO2_PORT_LIBS" || GPHOTO2_PORT_LIBS=`echo " $GPHOTO2_PORT_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
 fi
 if test "$ac_cv_lib_gphoto2_gp_camera_new" != "yes"; then :
@@ -14413,8 +14389,6 @@ fi
             LCMS2_LIBS=""
         fi
 CPPFLAGS=$ac_save_CPPFLAGS
-test -z "$LCMS2_CFLAGS" || LCMS2_CFLAGS=`echo " $LCMS2_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
-test -z "$LCMS2_LIBS" || LCMS2_LIBS=`echo " $LCMS2_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
 fi
 if test "$ac_cv_lib_lcms2_cmsOpenProfileFromFile" != "yes"; then :
@@ -14534,8 +14508,6 @@ fi
             FREETYPE_LIBS=""
         fi
 CPPFLAGS=$ac_save_CPPFLAGS
-test -z "$FREETYPE_CFLAGS" || FREETYPE_CFLAGS=`echo " $FREETYPE_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
-test -z "$FREETYPE_LIBS" || FREETYPE_LIBS=`echo " $FREETYPE_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
 fi
 if test "x$ac_cv_lib_soname_freetype" = x; then :
@@ -14708,8 +14680,6 @@ fi
 done
 
 CPPFLAGS=$ac_save_CPPFLAGS
-test -z "$PULSE_CFLAGS" || PULSE_CFLAGS=`echo " $PULSE_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
-test -z "$PULSE_LIBS" || PULSE_LIBS=`echo " $PULSE_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
 fi
 if test -z "$PULSE_LIBS"; then :
@@ -14819,8 +14789,6 @@ fi
 
 
 CPPFLAGS=$ac_save_CPPFLAGS
-test -z "$GSTREAMER_CFLAGS" || GSTREAMER_CFLAGS=`echo " $GSTREAMER_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
-test -z "$GSTREAMER_LIBS" || GSTREAMER_LIBS=`echo " $GSTREAMER_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
 fi
 if test "x$ac_glib2_broken" != xyes -a "x$ac_cv_lib_gstreamer_1_0_gst_pad_new" != xyes -a "x$ac_cv_header_QuickTime_ImageCompression_h" != xyes ; then :
@@ -15051,8 +15019,6 @@ fi
 done
 
 CPPFLAGS=$ac_save_CPPFLAGS
-test -z "$UDEV_CFLAGS" || UDEV_CFLAGS=`echo " $UDEV_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
-test -z "$UDEV_LIBS" || UDEV_LIBS=`echo " $UDEV_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
 fi
 if test "x$UDEV_LIBS" = "x"; then :
@@ -15152,8 +15118,6 @@ $as_echo "#define HAVE_LIBUNWIND 1" >>confdefs.h
 
         fi
 CPPFLAGS=$ac_save_CPPFLAGS
-test -z "$UNWIND_CFLAGS" || UNWIND_CFLAGS=`echo " $UNWIND_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
-test -z "$UNWIND_LIBS" || UNWIND_LIBS=`echo " $UNWIND_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
 fi
 case $host in
@@ -15255,8 +15219,6 @@ fi
 done
 
 CPPFLAGS=$ac_save_CPPFLAGS
-test -z "$SDL2_CFLAGS" || SDL2_CFLAGS=`echo " $SDL2_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
-test -z "$SDL2_LIBS" || SDL2_LIBS=`echo " $SDL2_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
 fi
 if test "x$ac_cv_lib_soname_SDL2" = "x"; then :
@@ -15374,8 +15336,6 @@ done
 LIBS="$ac_wine_check_funcs_save_LIBS"
 
 CPPFLAGS=$ac_save_CPPFLAGS
-test -z "$FAUDIO_CFLAGS" || FAUDIO_CFLAGS=`echo " $FAUDIO_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
-test -z "$FAUDIO_LIBS" || FAUDIO_LIBS=`echo " $FAUDIO_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
 fi
 if test "x$ac_cv_lib_soname_FAudio" = "x"; then :
@@ -15480,8 +15440,6 @@ _ACEOF
 fi
     fi
 CPPFLAGS=$ac_save_CPPFLAGS
-test -z "$CAPI20_CFLAGS" || CAPI20_CFLAGS=`echo " $CAPI20_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
-test -z "$CAPI20_LIBS" || CAPI20_LIBS=`echo " $CAPI20_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
 fi
 if test "x$ac_cv_lib_soname_capi20" = "x"; then :
@@ -15588,8 +15546,6 @@ fi
                             CUPS_LIBS=""
                         fi
 CPPFLAGS=$ac_save_CPPFLAGS
-test -z "$CUPS_CFLAGS" || CUPS_CFLAGS=`echo " $CUPS_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
-test -z "$CUPS_LIBS" || CUPS_LIBS=`echo " $CUPS_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
 fi
 if test "x$ac_cv_lib_soname_cups" = "x"; then :
@@ -15694,8 +15650,6 @@ fi
             FONTCONFIG_CFLAGS=""
         fi
 CPPFLAGS=$ac_save_CPPFLAGS
-test -z "$FONTCONFIG_CFLAGS" || FONTCONFIG_CFLAGS=`echo " $FONTCONFIG_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
-test -z "$FONTCONFIG_LIBS" || FONTCONFIG_LIBS=`echo " $FONTCONFIG_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
 fi
 if test "x$ac_cv_lib_soname_fontconfig" = "x"; then :
@@ -15868,8 +15822,6 @@ fi
              KRB5_CFLAGS=""
          fi
 CPPFLAGS=$ac_save_CPPFLAGS
-test -z "$KRB5_CFLAGS" || KRB5_CFLAGS=`echo " $KRB5_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
-test -z "$KRB5_LIBS" || KRB5_LIBS=`echo " $KRB5_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
 fi
 if test "x$ac_cv_lib_soname_krb5" = "x"; then :
@@ -15976,8 +15928,6 @@ fi
             GSSAPI_CFLAGS=""
         fi
 CPPFLAGS=$ac_save_CPPFLAGS
-test -z "$GSSAPI_CFLAGS" || GSSAPI_CFLAGS=`echo " $GSSAPI_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
-test -z "$GSSAPI_LIBS" || GSSAPI_LIBS=`echo " $GSSAPI_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
 fi
 if test "x$ac_cv_lib_soname_gssapi_krb5" = "x"; then :
@@ -16082,8 +16032,6 @@ fi
             JPEG_CFLAGS=""
         fi
 CPPFLAGS=$ac_save_CPPFLAGS
-test -z "$JPEG_CFLAGS" || JPEG_CFLAGS=`echo " $JPEG_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
-test -z "$JPEG_LIBS" || JPEG_LIBS=`echo " $JPEG_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
 fi
 if test "x$ac_cv_lib_soname_jpeg" = "x"; then :
@@ -16188,8 +16136,6 @@ fi
             PNG_CFLAGS=""
         fi
 CPPFLAGS=$ac_save_CPPFLAGS
-test -z "$PNG_CFLAGS" || PNG_CFLAGS=`echo " $PNG_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
-test -z "$PNG_LIBS" || PNG_LIBS=`echo " $PNG_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
 fi
 if test "x$ac_cv_lib_soname_png" = "x"; then :
@@ -16292,8 +16238,6 @@ _ACEOF
 fi
         fi
 CPPFLAGS=$ac_save_CPPFLAGS
-test -z "$TIFF_CFLAGS" || TIFF_CFLAGS=`echo " $TIFF_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
-test -z "$TIFF_LIBS" || TIFF_LIBS=`echo " $TIFF_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
 fi
 if test "x$ac_cv_lib_soname_tiff" = "x"; then :
@@ -16386,8 +16330,6 @@ fi
             MPG123_LIBS=""
         fi
 CPPFLAGS=$ac_save_CPPFLAGS
-test -z "$MPG123_CFLAGS" || MPG123_CFLAGS=`echo " $MPG123_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
-test -z "$MPG123_LIBS" || MPG123_LIBS=`echo " $MPG123_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
 fi
 if test "x$ac_cv_lib_mpg123_mpg123_feed" != xyes -a x"$ac_cv_header_CoreAudio_CoreAudio_h" != xyes; then :
@@ -16744,8 +16686,6 @@ _ACEOF
 
 fi
 CPPFLAGS=$ac_save_CPPFLAGS
-test -z "$NETAPI_CFLAGS" || NETAPI_CFLAGS=`echo " $NETAPI_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
-test -z "$NETAPI_LIBS" || NETAPI_LIBS=`echo " $NETAPI_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
 fi
 
@@ -16956,8 +16896,6 @@ _ACEOF
 
 fi
 CPPFLAGS=$ac_save_CPPFLAGS
-test -z "$VKD3D_CFLAGS" || VKD3D_CFLAGS=`echo " $VKD3D_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
-test -z "$VKD3D_LIBS" || VKD3D_LIBS=`echo " $VKD3D_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
 fi
 if test "x$ac_cv_lib_soname_vkd3d" = "x"; then :
@@ -18447,8 +18385,6 @@ LIBS="$ac_wine_check_funcs_save_LIBS"
             LDAP_LIBS=""
         fi
 CPPFLAGS=$ac_save_CPPFLAGS
-test -z "$LDAP_CFLAGS" || LDAP_CFLAGS=`echo " $LDAP_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
-test -z "$LDAP_LIBS" || LDAP_LIBS=`echo " $LDAP_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
 fi
 if test "x$LDAP_LIBS" = "x"; then :

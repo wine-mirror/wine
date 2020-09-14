@@ -239,13 +239,10 @@ AC_CACHE_CHECK([for the directory containing the Wine tools], wine_cv_toolsdir,
    fi])
 if test -z "$wine_cv_toolsdir"; then
     wine_makedep=tools/makedep
-    AC_SUBST(TOOLSDIR,"\$(top_builddir)")
+    AC_SUBST(TOOLSDIR,".")
 elif test -d "$wine_cv_toolsdir/tools/winebuild"; then
     wine_makedep=$wine_cv_toolsdir/tools/makedep
-    case "$wine_cv_toolsdir" in
-       /*) AC_SUBST(TOOLSDIR,$wine_cv_toolsdir) ;;
-       *)  AC_SUBST(TOOLSDIR,"\$(top_builddir)/$wine_cv_toolsdir") ;;
-    esac
+    AC_SUBST(TOOLSDIR,$wine_cv_toolsdir)
     enable_tools=${enable_tools:-no}
     test -f "$wine_makedep" || AC_MSG_ERROR([the Wine tools have not yet been built in $wine_cv_toolsdir])
 else
