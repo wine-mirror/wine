@@ -711,10 +711,34 @@ static char *get_relative_path( const char *from, const char *dest )
  */
 static char *concat_paths( const char *base, const char *path )
 {
+    int i, len;
+    char *ret;
+
     if (!base || !base[0]) return xstrdup( path && path[0] ? path : "." );
     if (!path || !path[0]) return xstrdup( base );
     if (path[0] == '/') return xstrdup( path );
-    return strmake( "%s/%s", base, path );
+
+    len = strlen( base );
+    while (len && base[len - 1] == '/') len--;
+    while (len && !strncmp( path, "..", 2 ) && (!path[2] || path[2] == '/'))
+    {
+        for (i = len; i > 0; i--) if (base[i - 1] == '/') break;
+        if (i == len - 2 && !memcmp( base + i, "..", 2 )) break;  /* we can't go up if we already have ".." */
+        if (i != len - 1 || base[i] != '.')
+        {
+            path += 2;
+            while (*path == '/') path++;
+        }
+        /* else ignore "." element */
+        while (i > 0 && base[i - 1] == '/') i--;
+        len = i;
+    }
+    if (!len && base[0] != '/') return xstrdup( path[0] ? path : "." );
+    ret = xmalloc( len + strlen( path ) + 2 );
+    memcpy( ret, base, len );
+    ret[len++] = '/';
+    strcpy( ret + len, path );
+    return ret;
 }
 
 
@@ -2775,7 +2799,7 @@ static void output_source_rc( struct makefile *make, struct incl_file *source, c
     if (source->file->flags & FLAG_GENERATED) strarray_add( &make->clean_files, source->name );
     if (linguas.count && (source->file->flags & FLAG_RC_PO)) po_dir = top_obj_dir_path( make, "po" );
     strarray_add( &make->res_files, strmake( "%s.res", obj ));
-    if (source->file->flags & FLAG_RC_PO && !(source->file->flags & FLAG_PARENTDIR))
+    if (source->file->flags & FLAG_RC_PO)
     {
         strarray_add( &make->pot_files, strmake( "%s.pot", obj ));
         output( "%s.pot ", obj_dir_path( make, obj ) );
