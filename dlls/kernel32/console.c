@@ -526,6 +526,7 @@ BOOL WINAPI ReadConsoleA( HANDLE handle, LPVOID buffer, DWORD length, DWORD *ret
 BOOL WINAPI ReadConsoleW(HANDLE hConsoleInput, LPVOID lpBuffer,
 			 DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, LPVOID lpReserved)
 {
+    IO_STATUS_BLOCK io;
     DWORD	charsread;
     LPWSTR	xbuf = lpBuffer;
     DWORD	mode;
@@ -541,10 +542,10 @@ BOOL WINAPI ReadConsoleW(HANDLE hConsoleInput, LPVOID lpBuffer,
         return FALSE;
     }
 
-    if (DeviceIoControl(hConsoleInput, IOCTL_CONDRV_READ_CONSOLE, NULL, 0, lpBuffer,
-                        nNumberOfCharsToRead * sizeof(WCHAR), lpNumberOfCharsRead, NULL))
+    if (!NtDeviceIoControlFile(hConsoleInput, NULL, NULL, NULL, &io, IOCTL_CONDRV_READ_CONSOLE, NULL, 0, lpBuffer,
+                               nNumberOfCharsToRead * sizeof(WCHAR)))
     {
-        *lpNumberOfCharsRead /= sizeof(WCHAR);
+        if (lpNumberOfCharsRead) *lpNumberOfCharsRead = io.Information / sizeof(WCHAR);
         return TRUE;
     }
 
@@ -794,6 +795,7 @@ BOOL WINAPI WriteConsoleW(HANDLE hConsoleOutput, LPCVOID lpBuffer, DWORD nNumber
     const WCHAR*		psz = lpBuffer;
     CONSOLE_SCREEN_BUFFER_INFO	csbi;
     int				k, first = 0, fd;
+    IO_STATUS_BLOCK io;
 
     TRACE("%p %s %d %p %p\n",
 	  hConsoleOutput, debugstr_wn(lpBuffer, nNumberOfCharsToWrite),
@@ -801,8 +803,8 @@ BOOL WINAPI WriteConsoleW(HANDLE hConsoleOutput, LPCVOID lpBuffer, DWORD nNumber
 
     if (lpNumberOfCharsWritten) *lpNumberOfCharsWritten = 0;
 
-    if (DeviceIoControl(hConsoleOutput, IOCTL_CONDRV_WRITE_CONSOLE, (void *)lpBuffer,
-                        nNumberOfCharsToWrite * sizeof(WCHAR), NULL, 0, NULL, NULL))
+    if (!NtDeviceIoControlFile(hConsoleOutput, NULL, NULL, NULL, &io, IOCTL_CONDRV_WRITE_CONSOLE, (void *)lpBuffer,
+                               nNumberOfCharsToWrite * sizeof(WCHAR), NULL, 0))
     {
         if (lpNumberOfCharsWritten) *lpNumberOfCharsWritten = nNumberOfCharsToWrite;
         return TRUE;
