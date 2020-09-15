@@ -702,16 +702,18 @@ static void test_ChangeDisplaySettingsEx(void)
         dm2.dmSize = sizeof(dm2);
         for (mode = 0; EnumDisplaySettingsA(devices[device].name, mode, &dm2); ++mode)
         {
-            if (dm2.dmPelsWidth != dm.dmPelsWidth && dm2.dmPelsHeight != dm.dmPelsHeight)
+            /* Use the same color depth because the win2008 TestBots are unable to change it */
+            if (dm2.dmPelsWidth != dm.dmPelsWidth && dm2.dmPelsHeight != dm.dmPelsHeight &&
+                    dm2.dmBitsPerPel == dm.dmBitsPerPel)
                 break;
         }
-        ok(dm2.dmPelsWidth != dm.dmPelsWidth && dm2.dmPelsHeight != dm.dmPelsHeight, "Failed to find a different mode.\n");
+        ok(dm2.dmPelsWidth != dm.dmPelsWidth && dm2.dmPelsHeight != dm.dmPelsHeight &&
+                dm2.dmBitsPerPel == dm.dmBitsPerPel, "Failed to find a different mode.\n");
 
         /* Test normal operation */
+        dm = dm2;
+        dm.dmFields |= DM_POSITION;
         dm.dmPosition = position;
-        dm.dmPelsWidth = dm2.dmPelsWidth;
-        dm.dmPelsHeight = dm2.dmPelsHeight;
-        dm.dmDisplayFrequency = dm2.dmDisplayFrequency;
         res = ChangeDisplaySettingsExA(devices[device].name, &dm, NULL, CDS_UPDATEREGISTRY | CDS_NORESET, NULL);
         ok(res == DISP_CHANGE_SUCCESSFUL ||
                 broken(res == DISP_CHANGE_FAILED), /* win8 TestBot */
