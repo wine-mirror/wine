@@ -1010,6 +1010,24 @@ int CDECL MSVCRT_vsnprintf_s( char *str, MSVCRT_size_t sizeOfBuffer,
     return MSVCRT_vsnprintf_s_l(str,sizeOfBuffer, count, format, NULL, valist);
 }
 
+/*********************************************************************
+ *              _vsnprintf_c_l (MSVCRT.@)
+ */
+int CDECL MSVCRT_vsnprintf_c_l(char *str, MSVCRT_size_t len, const char *format,
+        MSVCRT__locale_t locale, __ms_va_list valist)
+{
+    return MSVCRT_vsnprintf_s_l_opt(str, len, len, format, 0, locale, valist);
+}
+
+/*********************************************************************
+ *              _vsnprintf_c (MSVCRT.@)
+ */
+int CDECL MSVCRT_vsnprintf_c(char *str, MSVCRT_size_t len,
+        const char *format, __ms_va_list valist)
+{
+    return MSVCRT_vsnprintf_c_l(str, len, format, NULL, valist);
+}
+
 #if _MSVCR_VER>=140
 
 /*********************************************************************
@@ -1216,6 +1234,25 @@ int CDECL MSVCRT_vsnwprintf_l(MSVCRT_wchar_t *str, MSVCRT_size_t len,
             arg_clbk_valist, NULL, &valist);
     puts_clbk_str_w(&ctx, 1, &nullbyte);
     return ret;
+}
+
+/*********************************************************************
+ *              _vswprintf_c_l (MSVCRT.@)
+ */
+int CDECL MSVCRT_vswprintf_c_l(MSVCRT_wchar_t *str, MSVCRT_size_t len,
+        const MSVCRT_wchar_t *format, MSVCRT__locale_t locale,
+        __ms_va_list valist)
+{
+    return MSVCRT_vsnwprintf_s_l_opt(str, len, len, format, 0, locale, valist);
+}
+
+/*********************************************************************
+ *              _vswprintf_c (MSVCRT.@)
+ */
+int CDECL MSVCRT_vswprintf_c(MSVCRT_wchar_t *str, MSVCRT_size_t len,
+        const MSVCRT_wchar_t *format, __ms_va_list valist)
+{
+    return MSVCRT_vswprintf_c_l(str, len, format, NULL, valist);
 }
 
 static int MSVCRT_vswprintf_p_l_opt(MSVCRT_wchar_t *buffer, MSVCRT_size_t length,

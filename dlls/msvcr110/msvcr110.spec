@@ -1811,8 +1811,8 @@
 @ cdecl _vscwprintf_p(wstr ptr) MSVCRT__vscwprintf_p
 @ cdecl _vscwprintf_p_l(wstr ptr ptr) MSVCRT__vscwprintf_p_l
 @ cdecl -norelay _vsnprintf(ptr long str ptr) MSVCRT_vsnprintf
-@ cdecl _vsnprintf_c(ptr long str ptr) MSVCRT_vsnprintf
-@ cdecl _vsnprintf_c_l(ptr long str ptr ptr) MSVCRT_vsnprintf_l
+@ cdecl _vsnprintf_c(ptr long str ptr) MSVCRT_vsnprintf_c
+@ cdecl _vsnprintf_c_l(ptr long str ptr ptr) MSVCRT_vsnprintf_c_l
 @ cdecl _vsnprintf_l(ptr long str ptr ptr) MSVCRT_vsnprintf_l
 @ cdecl _vsnprintf_s(ptr long long str ptr) MSVCRT_vsnprintf_s
 @ cdecl _vsnprintf_s_l(ptr long long str ptr ptr) MSVCRT_vsnprintf_s_l
@@ -1825,8 +1825,8 @@
 @ cdecl _vsprintf_p_l(ptr long str ptr ptr) MSVCRT_vsprintf_p_l
 @ cdecl _vsprintf_s_l(ptr long str ptr ptr) MSVCRT_vsprintf_s_l
 @ cdecl _vswprintf(ptr wstr ptr) MSVCRT_vswprintf
-@ cdecl _vswprintf_c(ptr long wstr ptr) MSVCRT_vsnwprintf
-@ cdecl _vswprintf_c_l(ptr long wstr ptr ptr) MSVCRT_vsnwprintf_l
+@ cdecl _vswprintf_c(ptr long wstr ptr) MSVCRT_vswprintf_c
+@ cdecl _vswprintf_c_l(ptr long wstr ptr ptr) MSVCRT_vswprintf_c_l
 @ cdecl _vswprintf_l(ptr wstr ptr ptr) MSVCRT_vswprintf_l
 @ cdecl _vswprintf_p(ptr long wstr ptr) MSVCRT__vswprintf_p
 @ cdecl _vswprintf_p_l(ptr long wstr ptr ptr) MSVCRT_vswprintf_p_l

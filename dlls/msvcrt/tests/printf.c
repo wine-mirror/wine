@@ -917,6 +917,11 @@ static void test_vswprintf(void)
     ok(ret == 10, "got %d, expected 10\n", ret);
     ok(!memcmp(buf, out, sizeof(out)), "buf = %s\n", wine_dbgstr_w(buf));
 
+    memset(buf, 'x', sizeof(buf));
+    ret = _vswprintf_c_wrapper(buf, 10, format, number, 123);
+    ok(ret == -1, "got %d, expected -1\n", ret);
+    ok(!wcscmp(buf, L"number 12"), "buf = %s\n", wine_dbgstr_w(buf));
+
     memset(buf, 0, sizeof(buf));
     ret = _vswprintf_c_l_wrapper(buf, 20, format, NULL, number, 123);
     ok(ret == 10, "got %d, expected 10\n", ret);
