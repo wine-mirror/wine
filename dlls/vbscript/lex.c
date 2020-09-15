@@ -393,11 +393,18 @@ static int parse_next_token(void *lval, unsigned *loc, parser_ctx_t *ctx)
         /*
          * We need to distinguish between '.' used as part of a member expression and
          * a beginning of a dot expression (a member expression accessing with statement
-         * expression).
+         * expression) and a floating point number like ".2" .
          */
         c = ctx->ptr > ctx->code ? ctx->ptr[-1] : '\n';
+        if (is_identifier_char(c) || c == ')') {
+            ctx->ptr++;
+            return '.';
+        }
+        c = ctx->ptr[1];
+        if('0' <= c && c <= '9')
+            return parse_numeric_literal(ctx, lval);
         ctx->ptr++;
-        return is_identifier_char(c) || c == ')' ? '.' : tDOT;
+        return tDOT;
     case '-':
         if(ctx->is_html && ctx->ptr[1] == '-' && ctx->ptr[2] == '>')
             return comment_line(ctx);
