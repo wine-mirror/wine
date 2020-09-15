@@ -73,13 +73,15 @@ static HRESULT WINAPI IXACT3CueImpl_GetState(IXACT3Cue *iface, DWORD *pdwState)
 static HRESULT WINAPI IXACT3CueImpl_Destroy(IXACT3Cue *iface)
 {
     XACT3CueImpl *This = impl_from_IXACT3Cue(iface);
-    HRESULT hr;
+    UINT ret;
 
     TRACE("(%p)\n", iface);
 
-    hr = FACTCue_Destroy(This->fact_cue);
+    ret = FACTCue_Destroy(This->fact_cue);
+    if (ret != 0)
+        WARN("FACTCue_Destroy returned %d\n", ret);
     HeapFree(GetProcessHeap(), 0, This);
-    return hr;
+    return S_OK;
 }
 
 static HRESULT WINAPI IXACT3CueImpl_SetMatrixCoefficients(IXACT3Cue *iface,
