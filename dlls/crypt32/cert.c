@@ -566,7 +566,7 @@ void CRYPT_FixKeyProvInfoPointers(PCRYPT_KEY_PROV_INFO buf)
 
     if (store->pwszContainerName)
     {
-        info.pwszContainerName = (LPWSTR)p;
+        info.pwszContainerName = (LPWSTR)((BYTE *)store + store->pwszContainerName);
         p += (lstrlenW(info.pwszContainerName) + 1) * sizeof(WCHAR);
     }
     else
@@ -574,7 +574,7 @@ void CRYPT_FixKeyProvInfoPointers(PCRYPT_KEY_PROV_INFO buf)
 
     if (store->pwszProvName)
     {
-        info.pwszProvName = (LPWSTR)p;
+        info.pwszProvName = (LPWSTR)((BYTE *)store + store->pwszProvName);
         p += (lstrlenW(info.pwszProvName) + 1) * sizeof(WCHAR);
     }
     else
@@ -705,6 +705,7 @@ static void CRYPT_CopyKeyProvInfo(store_CRYPT_KEY_PROV_INFO *to, const CRYPT_KEY
     to->dwProvType = from->dwProvType;
     to->dwFlags = from->dwFlags;
     to->cProvParam = from->cProvParam;
+    to->rgProvParam = 0;
     to->dwKeySpec = from->dwKeySpec;
 
     for (i = 0; i < to->cProvParam; i++)
@@ -713,6 +714,7 @@ static void CRYPT_CopyKeyProvInfo(store_CRYPT_KEY_PROV_INFO *to, const CRYPT_KEY
         p += sizeof(*param);
 
         param->dwParam = from->rgProvParam[i].dwParam;
+        param->pbData = 0;
         param->cbData = from->rgProvParam[i].cbData;
         param->dwFlags = from->rgProvParam[i].dwFlags;
         memcpy(p, from->rgProvParam[i].pbData, from->rgProvParam[i].cbData);
