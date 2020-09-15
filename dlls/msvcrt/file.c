@@ -3504,7 +3504,8 @@ int CDECL MSVCRT__write(int fd, const void* buf, unsigned int count)
             }
 #endif
 
-            for (;  i < count && j < sizeof(conv)-1; i++, j++, len++)
+            for (; i < count && j < sizeof(conv)-1 &&
+                    len < (sizeof(lfbuf) - 1) / sizeof(WCHAR); i++, j++, len++)
             {
                 if (MSVCRT_isleadbyte((unsigned char)s[i]))
                 {
