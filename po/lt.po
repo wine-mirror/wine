@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2020-08-26 09:41+0300\n"
+"PO-Revision-Date: 2020-09-15 21:49+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -10740,153 +10740,116 @@ msgstr "&Daugiau langų..."
 
 #: dlls/vbscript/vbscript.rc:30
 msgid "Overflow"
-msgstr ""
+msgstr "Perpildymas"
 
 #: dlls/vbscript/vbscript.rc:31
-#, fuzzy
-#| msgid "Out of memory."
 msgid "Out of memory"
-msgstr "Trūksta atminties."
+msgstr "Trūksta atminties"
 
 #: dlls/vbscript/vbscript.rc:33
 msgid "This array is fixed or temporarily locked"
-msgstr ""
+msgstr "Šis masyvas yra fiksuotas arba laikinai užblokuotas"
 
 #: dlls/vbscript/vbscript.rc:34
-#, fuzzy
-#| msgid "Data type mismatch.\n"
 msgid "Type mismatch"
-msgstr "Duomenų tipo neatitikimas.\n"
+msgstr "Tipo neatitikimas"
 
 #: dlls/vbscript/vbscript.rc:36
-#, fuzzy
-#| msgid "I/O device error.\n"
 msgid "Device I/O error"
-msgstr "Į/I įrenginio klaida.\n"
+msgstr "Įrenginio Į/I klaida"
 
 #: dlls/vbscript/vbscript.rc:37
-#, fuzzy
-#| msgid "File already exists.\n"
 msgid "File already exists"
-msgstr "Failas jau egzistuoja.\n"
+msgstr "Failas jau egzistuoja"
 
 #: dlls/vbscript/vbscript.rc:38
-#, fuzzy
-#| msgid "Disk full.\n"
 msgid "Disk full"
-msgstr "Diskas pilnas.\n"
+msgstr "Diskas pilnas"
 
 #: dlls/vbscript/vbscript.rc:39
-#, fuzzy
-#| msgid "Too many open files.\n"
 msgid "Too many files"
-msgstr "Per daug atvertų failų.\n"
+msgstr "Per daug failų"
 
 #: dlls/vbscript/vbscript.rc:40
-#, fuzzy
-#| msgid "Access denied.\n"
 msgid "Permission denied"
-msgstr "Prieiga nesuteikta.\n"
+msgstr "Prieiga nesuteikta"
 
 #: dlls/vbscript/vbscript.rc:41
 msgid "Path/File access error"
-msgstr ""
+msgstr "Kelio/failo prieigos klaida"
 
 #: dlls/vbscript/vbscript.rc:42
-#, fuzzy
-#| msgid "Path not found.\n"
 msgid "Path not found"
-msgstr "Kelias nerastas.\n"
+msgstr "Kelias nerastas"
 
 #: dlls/vbscript/vbscript.rc:43
-#, fuzzy
-#| msgid "(value not set)"
 msgid "Object variable not set"
-msgstr "(reikšmė nenustatyta)"
+msgstr "Objekto kintamasis nenustatytas"
 
 #: dlls/vbscript/vbscript.rc:44
-#, fuzzy
-#| msgid "Invalid user buffer.\n"
 msgid "Invalid use of Null"
-msgstr "Netinkamas naudotojo buferis.\n"
+msgstr "Netinkamas Null naudojimas"
 
 #: dlls/vbscript/vbscript.rc:45
 msgid "Can't create necessary temporary file"
-msgstr ""
+msgstr "Nepavyko sukurti reikalingo laikinojo failo"
 
 #: dlls/vbscript/vbscript.rc:46
-#, fuzzy
-#| msgid "Automation server can't create object"
 msgid "ActiveX component can't create object"
-msgstr "Automatizavimo serveriui nepavyko sukurti objekto"
+msgstr "ActiveX komponentui nepavyko sukurti objekto"
 
 #: dlls/vbscript/vbscript.rc:47
-#, fuzzy
-#| msgid "Object doesn't support this action"
 msgid "Class doesn't support Automation"
-msgstr "Objektas nepalaiko šio veiksmo"
+msgstr "Klasė nepalaiko Automatizavimo"
 
 #: dlls/vbscript/vbscript.rc:48
 msgid "File name or class name not found during Automation operation"
 msgstr ""
+"Failo vardas arba klasės vardas nerastas vykdant Automatizavimo operaciją"
 
 #: dlls/vbscript/vbscript.rc:51
-#, fuzzy
-#| msgid "Object doesn't support this action"
 msgid "Object doesn't support named arguments"
-msgstr "Objektas nepalaiko šio veiksmo"
+msgstr "Objektas nepalaiko įvardytų argumentų"
 
 #: dlls/vbscript/vbscript.rc:52
-#, fuzzy
-#| msgid "Object doesn't support this action"
 msgid "Object doesn't support current locale setting"
-msgstr "Objektas nepalaiko šio veiksmo"
+msgstr "Objektas nepalaiko dabartinės lokalės nuostatos"
 
 #: dlls/vbscript/vbscript.rc:53 dlls/vbscript/vbscript.rc:54
-#, fuzzy
-#| msgid "Element not found.\n"
 msgid "Named argument not found"
-msgstr "Elementas nerastas.\n"
+msgstr "Įvardytas elementas nerastas"
 
 #: dlls/vbscript/vbscript.rc:55
 msgid "Wrong number of arguments or invalid property assignment"
-msgstr ""
+msgstr "Neteisingas argumentų skaičius ar neteisingas savybės priskyrimas"
 
 #: dlls/vbscript/vbscript.rc:56
-#, fuzzy
-#| msgid "Object Class Violation"
 msgid "Object not a collection"
-msgstr "Objekto klasės pažeidimas"
+msgstr "Objektas nėra rinkinys"
 
 #: dlls/vbscript/vbscript.rc:57
-#, fuzzy
-#| msgid "Specified control was not found in message"
 msgid "Specified DLL function not found"
-msgstr "Nurodytas valdiklis nerastas pranešime"
+msgstr "Nurodyta DLL funkcija nerasta"
 
 #: dlls/vbscript/vbscript.rc:58
 msgid "Variable uses an Automation type not supported in VBScript"
-msgstr ""
+msgstr "Kintamasis naudoja Automatizavimo tipą nepalaikomą VBScript"
 
 #: dlls/vbscript/vbscript.rc:59
 msgid "The remote server machine does not exist or is unavailable"
-msgstr ""
+msgstr "Nutolęs serveris neegzistuoja arba nepasiekiamas"
 
 #: dlls/vbscript/vbscript.rc:60
 msgid "Invalid or unqualified reference"
-msgstr ""
+msgstr "Netinkama arba nepatikslinta nuoroda"
 
 #: dlls/vbscript/vbscript.rc:62
-#, fuzzy
-#| msgid "Microsoft JScript compilation error"
 msgid "Microsoft VBScript compilation error"
-msgstr "Microsoft JScript kompiliavimo klaida"
+msgstr "Microsoft VBScript kompiliavimo klaida"
 
 #: dlls/vbscript/vbscript.rc:63
-#, fuzzy
-#| msgid "Microsoft JScript runtime error"
 msgid "Microsoft VBScript runtime error"
-msgstr "Microsoft JScript vykdymo klaida"
+msgstr "Microsoft VBScript vykdymo klaida"
 
 #: dlls/winemac.drv/winemac.rc:33
 msgid "Hide %@"
