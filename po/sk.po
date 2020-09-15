@@ -80,8 +80,8 @@ msgstr "Informácie o podpore"
 #: dlls/shell32/shell32.rc:276 dlls/shell32/shell32.rc:300
 #: dlls/shell32/shell32.rc:322 dlls/shell32/shell32.rc:341
 #: dlls/shlwapi/shlwapi.rc:44 dlls/twain_32/twain.rc:32
-#: dlls/user32/user32.rc:83 dlls/user32/user32.rc:98 dlls/wininet/wininet.rc:51
-#: dlls/wininet/wininet.rc:71 dlls/winspool.drv/winspool.rc:42
+#: dlls/user32/user32.rc:83 dlls/user32/user32.rc:98 dlls/wininet/wininet.rc:62
+#: dlls/wininet/wininet.rc:82 dlls/winspool.drv/winspool.rc:42
 #: programs/net/net.rc:47 programs/notepad/notepad.rc:117
 #: programs/oleview/oleview.rc:161 programs/oleview/oleview.rc:174
 #: programs/progman/progman.rc:106 programs/progman/progman.rc:124
@@ -188,7 +188,7 @@ msgstr "&Inštalovať"
 #: dlls/shell32/shell32.rc:301 dlls/shell32/shell32.rc:312
 #: dlls/shell32/shell32.rc:342 dlls/shlwapi/shlwapi.rc:45
 #: dlls/twain_32/twain.rc:33 dlls/user32/user32.rc:84 dlls/user32/user32.rc:99
-#: dlls/wininet/wininet.rc:52 dlls/wininet/wininet.rc:72
+#: dlls/wininet/wininet.rc:63 dlls/wininet/wininet.rc:83
 #: dlls/winspool.drv/winspool.rc:43 programs/notepad/notepad.rc:118
 #: programs/oleview/oleview.rc:162 programs/oleview/oleview.rc:175
 #: programs/progman/progman.rc:107 programs/progman/progman.rc:125
@@ -2113,13 +2113,13 @@ msgid "Meets Criteria="
 msgstr ""
 
 #: dlls/crypt32/crypt32.rc:222 dlls/cryptui/cryptui.rc:166
-#: dlls/oleaut32/oleaut32.rc:32 dlls/wininet/wininet.rc:83
+#: dlls/oleaut32/oleaut32.rc:32 dlls/wininet/wininet.rc:94
 #: programs/ipconfig/ipconfig.rc:47
 msgid "Yes"
 msgstr "Áno"
 
 #: dlls/crypt32/crypt32.rc:223 dlls/cryptui/cryptui.rc:167
-#: dlls/oleaut32/oleaut32.rc:33 dlls/wininet/wininet.rc:84
+#: dlls/oleaut32/oleaut32.rc:33 dlls/wininet/wininet.rc:95
 #: programs/ipconfig/ipconfig.rc:48
 msgid "No"
 msgstr "Nie"
@@ -2662,7 +2662,7 @@ msgstr ""
 msgid "Serial number"
 msgstr "Sériové číslo"
 
-#: dlls/cryptui/cryptui.rc:56
+#: dlls/cryptui/cryptui.rc:56 dlls/wininet/wininet.rc:34
 msgid "Issuer"
 msgstr ""
 
@@ -2674,7 +2674,7 @@ msgstr ""
 msgid "Valid to"
 msgstr ""
 
-#: dlls/cryptui/cryptui.rc:59
+#: dlls/cryptui/cryptui.rc:59 dlls/wininet/wininet.rc:33
 msgid "Subject"
 msgstr "Predmet"
 
@@ -2835,7 +2835,7 @@ msgstr ""
 msgid "Issued By"
 msgstr ""
 
-#: dlls/cryptui/cryptui.rc:106
+#: dlls/cryptui/cryptui.rc:106 dlls/wininet/wininet.rc:36
 msgid "Expiration Date"
 msgstr ""
 
@@ -3639,7 +3639,7 @@ msgstr "Vlastné"
 msgid "Very Low"
 msgstr "Veľmi nízke"
 
-#: dlls/inetcpl.cpl/inetcpl.rc:36
+#: dlls/inetcpl.cpl/inetcpl.rc:36 dlls/wininet/wininet.rc:42
 msgid "Low"
 msgstr "Nízke"
 
@@ -3651,7 +3651,7 @@ msgstr "Stredné"
 msgid "Increased"
 msgstr "Zvýšené"
 
-#: dlls/inetcpl.cpl/inetcpl.rc:39
+#: dlls/inetcpl.cpl/inetcpl.rc:39 dlls/wininet/wininet.rc:41
 msgid "High"
 msgstr "Vysoké"
 
@@ -7519,27 +7519,27 @@ msgstr "Súbor už existuje.\n"
 msgid "Clock is not simple\n"
 msgstr "Nápoveda nedostupná."
 
-#: dlls/mpr/mpr.rc:35 dlls/wininet/wininet.rc:37
+#: dlls/mpr/mpr.rc:35 dlls/wininet/wininet.rc:48
 msgid "Enter Network Password"
 msgstr ""
 
-#: dlls/mpr/mpr.rc:38 dlls/wininet/wininet.rc:40 dlls/wininet/wininet.rc:60
+#: dlls/mpr/mpr.rc:38 dlls/wininet/wininet.rc:51 dlls/wininet/wininet.rc:71
 msgid "Please enter your username and password:"
 msgstr ""
 
-#: dlls/mpr/mpr.rc:39 dlls/wininet/wininet.rc:41
+#: dlls/mpr/mpr.rc:39 dlls/wininet/wininet.rc:52
 msgid "Proxy"
 msgstr ""
 
-#: dlls/mpr/mpr.rc:41 dlls/wininet/wininet.rc:43 dlls/wininet/wininet.rc:63
+#: dlls/mpr/mpr.rc:41 dlls/wininet/wininet.rc:54 dlls/wininet/wininet.rc:74
 msgid "User"
 msgstr ""
 
-#: dlls/mpr/mpr.rc:42 dlls/wininet/wininet.rc:44 dlls/wininet/wininet.rc:64
+#: dlls/mpr/mpr.rc:42 dlls/wininet/wininet.rc:55 dlls/wininet/wininet.rc:75
 msgid "Password"
 msgstr ""
 
-#: dlls/mpr/mpr.rc:47 dlls/wininet/wininet.rc:49 dlls/wininet/wininet.rc:69
+#: dlls/mpr/mpr.rc:47 dlls/wininet/wininet.rc:60 dlls/wininet/wininet.rc:80
 msgid "&Save this password (insecure)"
 msgstr ""
 
@@ -10920,7 +10920,7 @@ msgstr ""
 msgid "W. Australia Daylight Time"
 msgstr ""
 
-#: dlls/urlmon/urlmon.rc:32 dlls/wininet/wininet.rc:77
+#: dlls/urlmon/urlmon.rc:32 dlls/wininet/wininet.rc:88
 msgid "Security Warning"
 msgstr ""
 
@@ -11212,23 +11212,23 @@ msgstr ""
 msgid "Setup"
 msgstr "&Nastaviť"
 
-#: dlls/wininet/wininet.rc:42 dlls/wininet/wininet.rc:62
+#: dlls/wininet/wininet.rc:53 dlls/wininet/wininet.rc:73
 msgid "Realm"
 msgstr ""
 
-#: dlls/wininet/wininet.rc:57
+#: dlls/wininet/wininet.rc:68
 msgid "Authentication Required"
 msgstr ""
 
-#: dlls/wininet/wininet.rc:61
+#: dlls/wininet/wininet.rc:72
 msgid "Server"
 msgstr ""
 
-#: dlls/wininet/wininet.rc:80
+#: dlls/wininet/wininet.rc:91
 msgid "There is a problem with the certificate for this site."
 msgstr ""
 
-#: dlls/wininet/wininet.rc:82
+#: dlls/wininet/wininet.rc:93
 msgid "Do you want to continue anyway?"
 msgstr ""
 
@@ -11251,6 +11251,34 @@ msgstr ""
 #: dlls/wininet/wininet.rc:32
 msgid ""
 "There is at least one unspecified security problem with this certificate."
+msgstr ""
+
+#: dlls/wininet/wininet.rc:35
+msgid "Effective Date"
+msgstr ""
+
+#: dlls/wininet/wininet.rc:37
+#, fuzzy
+#| msgid "Security"
+msgid "Security Protocol"
+msgstr "Bezpečnosť"
+
+#: dlls/wininet/wininet.rc:38
+#, fuzzy
+#| msgid "Content Type"
+msgid "Signature Type"
+msgstr "Typ obsahu"
+
+#: dlls/wininet/wininet.rc:39
+msgid "Encryption Type"
+msgstr ""
+
+#: dlls/wininet/wininet.rc:40
+msgid "Privacy Strength"
+msgstr ""
+
+#: dlls/wininet/wininet.rc:43
+msgid "bits"
 msgstr ""
 
 #: dlls/wininet/winineterror.mc:26

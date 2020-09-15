@@ -76,8 +76,8 @@ msgstr "Сведения о поддержке"
 #: dlls/shell32/shell32.rc:276 dlls/shell32/shell32.rc:300
 #: dlls/shell32/shell32.rc:322 dlls/shell32/shell32.rc:341
 #: dlls/shlwapi/shlwapi.rc:44 dlls/twain_32/twain.rc:32
-#: dlls/user32/user32.rc:83 dlls/user32/user32.rc:98 dlls/wininet/wininet.rc:51
-#: dlls/wininet/wininet.rc:71 dlls/winspool.drv/winspool.rc:42
+#: dlls/user32/user32.rc:83 dlls/user32/user32.rc:98 dlls/wininet/wininet.rc:62
+#: dlls/wininet/wininet.rc:82 dlls/winspool.drv/winspool.rc:42
 #: programs/net/net.rc:47 programs/notepad/notepad.rc:117
 #: programs/oleview/oleview.rc:161 programs/oleview/oleview.rc:174
 #: programs/progman/progman.rc:106 programs/progman/progman.rc:124
@@ -184,7 +184,7 @@ msgstr "&Установить"
 #: dlls/shell32/shell32.rc:301 dlls/shell32/shell32.rc:312
 #: dlls/shell32/shell32.rc:342 dlls/shlwapi/shlwapi.rc:45
 #: dlls/twain_32/twain.rc:33 dlls/user32/user32.rc:84 dlls/user32/user32.rc:99
-#: dlls/wininet/wininet.rc:52 dlls/wininet/wininet.rc:72
+#: dlls/wininet/wininet.rc:63 dlls/wininet/wininet.rc:83
 #: dlls/winspool.drv/winspool.rc:43 programs/notepad/notepad.rc:118
 #: programs/oleview/oleview.rc:162 programs/oleview/oleview.rc:175
 #: programs/progman/progman.rc:107 programs/progman/progman.rc:125
@@ -2094,13 +2094,13 @@ msgid "Meets Criteria="
 msgstr "Удовлетворяет критерию="
 
 #: dlls/crypt32/crypt32.rc:222 dlls/cryptui/cryptui.rc:166
-#: dlls/oleaut32/oleaut32.rc:32 dlls/wininet/wininet.rc:83
+#: dlls/oleaut32/oleaut32.rc:32 dlls/wininet/wininet.rc:94
 #: programs/ipconfig/ipconfig.rc:47
 msgid "Yes"
 msgstr "Да"
 
 #: dlls/crypt32/crypt32.rc:223 dlls/cryptui/cryptui.rc:167
-#: dlls/oleaut32/oleaut32.rc:33 dlls/wininet/wininet.rc:84
+#: dlls/oleaut32/oleaut32.rc:33 dlls/wininet/wininet.rc:95
 #: programs/ipconfig/ipconfig.rc:48
 msgid "No"
 msgstr "Нет"
@@ -2676,7 +2676,7 @@ msgstr "Только свойства"
 msgid "Serial number"
 msgstr "Серийный номер"
 
-#: dlls/cryptui/cryptui.rc:56
+#: dlls/cryptui/cryptui.rc:56 dlls/wininet/wininet.rc:34
 msgid "Issuer"
 msgstr "Поставщик"
 
@@ -2688,7 +2688,7 @@ msgstr "Действителен с"
 msgid "Valid to"
 msgstr "Действителен до"
 
-#: dlls/cryptui/cryptui.rc:59
+#: dlls/cryptui/cryptui.rc:59 dlls/wininet/wininet.rc:33
 msgid "Subject"
 msgstr "Субъект"
 
@@ -2853,7 +2853,7 @@ msgstr "Кому выдан"
 msgid "Issued By"
 msgstr "Кем выдан"
 
-#: dlls/cryptui/cryptui.rc:106
+#: dlls/cryptui/cryptui.rc:106 dlls/wininet/wininet.rc:36
 msgid "Expiration Date"
 msgstr "Дата окончания действия"
 
@@ -3675,7 +3675,7 @@ msgstr "Пользовательский"
 msgid "Very Low"
 msgstr "Очень низкий"
 
-#: dlls/inetcpl.cpl/inetcpl.rc:36
+#: dlls/inetcpl.cpl/inetcpl.rc:36 dlls/wininet/wininet.rc:42
 msgid "Low"
 msgstr "Низкий"
 
@@ -3687,7 +3687,7 @@ msgstr "Средний"
 msgid "Increased"
 msgstr "Повышенный"
 
-#: dlls/inetcpl.cpl/inetcpl.rc:39
+#: dlls/inetcpl.cpl/inetcpl.rc:39 dlls/wininet/wininet.rc:41
 msgid "High"
 msgstr "Высокий"
 
@@ -7394,27 +7394,27 @@ msgstr "Состояние часов уже установлено.\n"
 msgid "Clock is not simple\n"
 msgstr "Часы недоступны.\n"
 
-#: dlls/mpr/mpr.rc:35 dlls/wininet/wininet.rc:37
+#: dlls/mpr/mpr.rc:35 dlls/wininet/wininet.rc:48
 msgid "Enter Network Password"
 msgstr "Введите сетевой пароль"
 
-#: dlls/mpr/mpr.rc:38 dlls/wininet/wininet.rc:40 dlls/wininet/wininet.rc:60
+#: dlls/mpr/mpr.rc:38 dlls/wininet/wininet.rc:51 dlls/wininet/wininet.rc:71
 msgid "Please enter your username and password:"
 msgstr "Введите ваши имя и пароль пользователя:"
 
-#: dlls/mpr/mpr.rc:39 dlls/wininet/wininet.rc:41
+#: dlls/mpr/mpr.rc:39 dlls/wininet/wininet.rc:52
 msgid "Proxy"
 msgstr "Прокси"
 
-#: dlls/mpr/mpr.rc:41 dlls/wininet/wininet.rc:43 dlls/wininet/wininet.rc:63
+#: dlls/mpr/mpr.rc:41 dlls/wininet/wininet.rc:54 dlls/wininet/wininet.rc:74
 msgid "User"
 msgstr "Имя"
 
-#: dlls/mpr/mpr.rc:42 dlls/wininet/wininet.rc:44 dlls/wininet/wininet.rc:64
+#: dlls/mpr/mpr.rc:42 dlls/wininet/wininet.rc:55 dlls/wininet/wininet.rc:75
 msgid "Password"
 msgstr "Пароль"
 
-#: dlls/mpr/mpr.rc:47 dlls/wininet/wininet.rc:49 dlls/wininet/wininet.rc:69
+#: dlls/mpr/mpr.rc:47 dlls/wininet/wininet.rc:60 dlls/wininet/wininet.rc:80
 msgid "&Save this password (insecure)"
 msgstr "&Сохранить этот пароль (небезопасно)"
 
@@ -10698,7 +10698,7 @@ msgstr ""
 msgid "W. Australia Daylight Time"
 msgstr ""
 
-#: dlls/urlmon/urlmon.rc:32 dlls/wininet/wininet.rc:77
+#: dlls/urlmon/urlmon.rc:32 dlls/wininet/wininet.rc:88
 msgid "Security Warning"
 msgstr "Предупреждение о безопасности"
 
@@ -10993,23 +10993,23 @@ msgstr "Двухсторонняя печать:"
 msgid "Setup"
 msgstr "Настройка"
 
-#: dlls/wininet/wininet.rc:42 dlls/wininet/wininet.rc:62
+#: dlls/wininet/wininet.rc:53 dlls/wininet/wininet.rc:73
 msgid "Realm"
 msgstr "Домен"
 
-#: dlls/wininet/wininet.rc:57
+#: dlls/wininet/wininet.rc:68
 msgid "Authentication Required"
 msgstr "Требуется идентификация"
 
-#: dlls/wininet/wininet.rc:61
+#: dlls/wininet/wininet.rc:72
 msgid "Server"
 msgstr "Сервер"
 
-#: dlls/wininet/wininet.rc:80
+#: dlls/wininet/wininet.rc:91
 msgid "There is a problem with the certificate for this site."
 msgstr "Проблема с сертификатом для этого сайта."
 
-#: dlls/wininet/wininet.rc:82
+#: dlls/wininet/wininet.rc:93
 msgid "Do you want to continue anyway?"
 msgstr "Всё равно хотите продолжить?"
 
@@ -11034,6 +11034,36 @@ msgid ""
 "There is at least one unspecified security problem with this certificate."
 msgstr ""
 "С этим сертификатам связана минимум одна неизвестная проблема безопасности."
+
+#: dlls/wininet/wininet.rc:35
+msgid "Effective Date"
+msgstr ""
+
+#: dlls/wininet/wininet.rc:37
+#, fuzzy
+#| msgid "Security"
+msgid "Security Protocol"
+msgstr "Безопасность"
+
+#: dlls/wininet/wininet.rc:38
+#, fuzzy
+#| msgid "Signature"
+msgid "Signature Type"
+msgstr "Подпись"
+
+#: dlls/wininet/wininet.rc:39
+#, fuzzy
+#| msgid "Encrypting File System"
+msgid "Encryption Type"
+msgstr "Шифрованная файловая система"
+
+#: dlls/wininet/wininet.rc:40
+msgid "Privacy Strength"
+msgstr ""
+
+#: dlls/wininet/wininet.rc:43
+msgid "bits"
+msgstr ""
 
 #: dlls/wininet/winineterror.mc:26
 msgid "The request has timed out.\n"
