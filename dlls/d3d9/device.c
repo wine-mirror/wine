@@ -1345,9 +1345,13 @@ static HRESULT WINAPI d3d9_device_CreateTexture(IDirect3DDevice9Ex *iface,
     }
 
     if (set_mem)
+    {
+        wined3d_mutex_lock();
         wined3d_texture_update_desc(object->wined3d_texture, 0, width, height,
                 wined3dformat_from_d3dformat(format), WINED3D_MULTISAMPLE_NONE, 0,
                 *shared_handle, 0);
+        wined3d_mutex_unlock();
+    }
 
     TRACE("Created texture %p.\n", object);
     *texture = (IDirect3DTexture9 *)&object->IDirect3DBaseTexture9_iface;
