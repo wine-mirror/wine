@@ -137,9 +137,9 @@ static BOOL expect_erase_line_(unsigned line, unsigned int cnt)
     if (skip_sequence("\x1b[K")) return FALSE;
     ok(broken(1), "expected erase line\n");
     sprintf(buf, "\x1b[%uX", cnt);
-    expect_output_sequence(buf);  /* erase the rest of the line */
+    expect_output_sequence_(line, cnt, buf);  /* erase the rest of the line */
     sprintf(buf, "\x1b[%uC", cnt);
-    expect_output_sequence(buf);  /* move cursor to the end of the line */
+    expect_output_sequence_(line, cnt, buf);  /* move cursor to the end of the line */
     return TRUE;
 }
 
@@ -1280,6 +1280,19 @@ static void test_pseudoconsole(void)
     CloseHandle(child_pipe);
     wait_child_process(child_process);
     CloseHandle(child_process);
+
+    /* native sometimes clears the screen here */
+    if (skip_sequence("\x1b[25l"))
+    {
+        unsigned int i;
+        skip_sequence("\x1b[H");
+        for (i = 0; i < 40; i++)
+        {
+            expect_output_sequence("\x1b[K");
+            if (i != 39) expect_output_sequence("\r\n");
+        }
+        skip_sequence("\x1b[H\x1b[?25h");
+    }
     expect_empty_output();
 
     pClosePseudoConsole(console);
