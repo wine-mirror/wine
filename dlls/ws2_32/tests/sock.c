@@ -5273,6 +5273,55 @@ static void test_get_extension_func(void)
     closesocket(s);
 }
 
+static void test_backlog_query(void)
+{
+    const struct sockaddr_in addr = {.sin_family = AF_INET, .sin_addr.s_addr = htonl(INADDR_LOOPBACK)};
+    GUID acceptex_guid = WSAID_ACCEPTEX;
+    LPFN_ACCEPTEX pAcceptEx;
+    struct sockaddr_in destaddr;
+    DWORD size;
+    SOCKET s, listener;
+    int len, ret;
+    ULONG backlog = 0;
+
+    listener = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ok(listener != -1, "failed to create socket, error %u\n", WSAGetLastError());
+
+    ret = WSAIoctl(listener, SIO_GET_EXTENSION_FUNCTION_POINTER, &acceptex_guid, sizeof(acceptex_guid),
+            &pAcceptEx, sizeof(pAcceptEx), &size, NULL, NULL);
+    ok(!ret, "failed to get AcceptEx, error %u\n", WSAGetLastError());
+
+    ret = bind(listener, (const struct sockaddr *)&addr, sizeof(addr));
+    ok(!ret, "failed to bind, error %u\n", WSAGetLastError());
+    len = sizeof(destaddr);
+    ret = getsockname(listener, (struct sockaddr *)&destaddr, &len);
+    ok(!ret, "failed to get address, error %u\n", WSAGetLastError());
+    ret = listen(listener, 2);
+    ok(!ret, "failed to listen, error %u\n", WSAGetLastError());
+
+    s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ret = WSAIoctl(s, SIO_IDEAL_SEND_BACKLOG_QUERY, NULL, 0, &backlog, sizeof(backlog), &size, NULL, NULL);
+    ok(ret == SOCKET_ERROR && WSAGetLastError() == WSAENOTCONN,
+       "WSAIoctl() failed: %d/%d\n", ret, WSAGetLastError());
+
+    ret = connect(s, (struct sockaddr *)&destaddr, sizeof(destaddr));
+    ok(!ret, "failed to connect, error %u\n", WSAGetLastError());
+    ret = WSAIoctl(s, SIO_IDEAL_SEND_BACKLOG_QUERY, NULL, 0, &backlog, sizeof(backlog), &size, NULL, NULL);
+    ok(!ret, "WSAIoctl() failed: %d\n", WSAGetLastError());
+    ok(backlog == 0x10000, "got %08lx\n", backlog);
+
+    closesocket(listener);
+    closesocket(s);
+
+    s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+
+    backlog = 0;
+    ret = WSAIoctl(s, SIO_IDEAL_SEND_BACKLOG_QUERY, NULL, 0, &backlog, sizeof(backlog), &size, NULL, NULL);
+    ok(ret == SOCKET_ERROR && WSAGetLastError() == WSAEOPNOTSUPP,
+       "WSAIoctl() failed: %d/%d\n", ret, WSAGetLastError());
+    closesocket(s);
+}
+
 static void test_base_handle(void)
 {
     OVERLAPPED overlapped = {0}, *overlapped_ptr;
@@ -13242,6 +13291,7 @@ START_TEST( sock )
     test_fionbio();
     test_fionread_siocatmark();
     test_get_extension_func();
+    test_backlog_query();
     test_get_interface_list();
     test_keepalive_vals();
     test_sioRoutingInterfaceQuery();
