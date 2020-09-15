@@ -148,9 +148,11 @@ enum req_type
     REQ_CREATE_SCREEN_BUFFER,
     REQ_FILL_CHAR,
     REQ_GET_INPUT,
+    REQ_READ_CONSOLE,
     REQ_SCROLL,
     REQ_SET_ACTIVE,
     REQ_SET_CURSOR,
+    REQ_SET_INPUT_MODE,
     REQ_SET_OUTPUT_MODE,
     REQ_SET_TITLE,
     REQ_WRITE_CHARACTERS,
@@ -167,6 +169,7 @@ struct pseudoconsole_req
         COORD coord;
         HANDLE handle;
         DWORD mode;
+        size_t size;
         struct
         {
             COORD coord;
@@ -334,6 +337,18 @@ static void child_fill_character(WCHAR ch, DWORD count, int x, int y)
     ok(ret, "WriteFile failed: %u\n", GetLastError());
 }
 
+static void child_set_input_mode(HANDLE pipe, DWORD mode)
+{
+    struct pseudoconsole_req req;
+    DWORD count;
+    BOOL ret;
+
+    req.type = REQ_SET_INPUT_MODE;
+    req.u.mode = mode;
+    ret = WriteFile(pipe, &req, sizeof(req), &count, NULL);
+    ok(ret, "WriteFile failed: %u\n", GetLastError());
+}
+
 static void child_set_output_mode(DWORD mode)
 {
     struct pseudoconsole_req req;
@@ -344,6 +359,34 @@ static void child_set_output_mode(DWORD mode)
     req.u.mode = mode;
     ret = WriteFile(child_pipe, &req, sizeof(req), &count, NULL);
     ok(ret, "WriteFile failed: %u\n", GetLastError());
+}
+
+static void child_read_console(HANDLE pipe, size_t size)
+{
+    struct pseudoconsole_req req;
+    DWORD count;
+    BOOL ret;
+
+    req.type = REQ_READ_CONSOLE;
+    req.u.size = size;
+    ret = WriteFile(pipe, &req, sizeof(req), &count, NULL);
+    ok(ret, "WriteFile failed: %u\n", GetLastError());
+}
+
+#define child_expect_read_result(a,b) child_expect_read_result_(__LINE__,a,b)
+static void child_expect_read_result_(unsigned int line, HANDLE pipe, const WCHAR *expect)
+{
+    size_t exlen = wcslen(expect);
+    WCHAR buf[4096];
+    DWORD count;
+    BOOL ret;
+
+    ret = ReadFile(pipe, buf, sizeof(buf), &count, NULL);
+    ok_(__FILE__,line)(ret, "ReadFile failed: %u\n", GetLastError());
+    ok_(__FILE__,line)(count == exlen * sizeof(WCHAR), "got %u, expected %u\n",
+                       count, exlen * sizeof(WCHAR));
+    buf[count / sizeof(WCHAR)] = 0;
+    ok_(__FILE__,line)(!memcmp(expect, buf, count), "unexpected data %s\n", wine_dbgstr_w(buf));
 }
 
 static void expect_input(unsigned int event_type, INPUT_RECORD *record)
@@ -954,6 +997,42 @@ static void write_console_pipe(const char *buf)
     ok(res, "WriteFile failed: %u\n", GetLastError());
 }
 
+static void test_read_console(void)
+{
+    child_set_input_mode(child_pipe, ENABLE_PROCESSED_INPUT);
+
+    child_read_console(child_pipe, 100);
+    write_console_pipe("abc");
+    expect_empty_output();
+    child_expect_read_result(child_pipe, L"abc");
+    expect_empty_output();
+
+    child_read_console(child_pipe, 1);
+    write_console_pipe("xyz");
+    child_expect_read_result(child_pipe, L"x");
+    child_read_console(child_pipe, 100);
+    child_expect_read_result(child_pipe, L"yz");
+    expect_empty_output();
+
+    child_set_input_mode(child_pipe, ENABLE_PROCESSED_INPUT | ENABLE_LINE_INPUT |
+                         ENABLE_ECHO_INPUT | ENABLE_MOUSE_INPUT | ENABLE_INSERT_MODE |
+                         ENABLE_QUICK_EDIT_MODE | ENABLE_EXTENDED_FLAGS | ENABLE_AUTO_POSITION);
+
+    child_read_console(child_pipe, 100);
+    write_console_pipe("xyz");
+    skip_hide_cursor();
+    expect_output_sequence("xyz");
+    skip_sequence("\x1b[?25h"); /* show cursor */
+    write_console_pipe("ab\r\n");
+    child_expect_read_result(child_pipe, L"xyzab\r\n");
+    skip_hide_cursor();
+    expect_output_sequence("ab\r\n");
+    skip_sequence("\x1b[?25h"); /* show cursor */
+    expect_key_input('\r', VK_RETURN, 0, FALSE);
+    expect_key_pressed('\n', VK_RETURN, LEFT_CTRL_PRESSED);
+    expect_empty_output();
+}
+
 static void test_tty_input(void)
 {
     INPUT_RECORD ir;
@@ -1101,7 +1180,6 @@ static void child_process(HANDLE pipe)
         case REQ_CREATE_SCREEN_BUFFER:
             {
                 HANDLE handle;
-                DWORD count;
                 SetLastError(0xdeadbeef);
                 handle = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE,
                                                    FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
@@ -1123,6 +1201,13 @@ static void child_process(HANDLE pipe)
                 break;
             }
 
+        case REQ_READ_CONSOLE:
+            ret = ReadConsoleW(input, buf, req->u.size, &count, NULL );
+            ok(ret, "ReadConsoleW failed: %u\n", GetLastError());
+            ret = WriteFile(pipe, buf, count * sizeof(WCHAR), NULL, NULL);
+            ok(ret, "WriteFile failed: %u\n", GetLastError());
+            break;
+
         case REQ_SCROLL:
             ret = ScrollConsoleScreenBufferW(output, &req->u.scroll.rect, NULL, req->u.scroll.dst, &req->u.scroll.fill);
             ok(ret, "ScrollConsoleScreenBuffer failed: %u\n", GetLastError());
@@ -1143,6 +1228,11 @@ static void child_process(HANDLE pipe)
         case REQ_SET_CURSOR:
             ret = SetConsoleCursorPosition(output, req->u.coord);
             ok(ret, "SetConsoleCursorPosition failed: %u\n", GetLastError());
+            break;
+
+        case REQ_SET_INPUT_MODE:
+            ret = SetConsoleMode(input, req->u.mode);
+            ok(ret, "SetConsoleMode failed: %u\n", GetLastError());
             break;
 
         case REQ_SET_OUTPUT_MODE:
@@ -1273,6 +1363,7 @@ static void test_pseudoconsole(void)
     if (!broken_version)
     {
         test_tty_output();
+        test_read_console();
         test_tty_input();
     }
     else win_skip("Skipping tty output tests on broken Windows version\n");
