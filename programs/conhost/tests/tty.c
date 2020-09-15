@@ -44,10 +44,10 @@ static void fetch_console_output_(unsigned int line)
     {
         ok_(__FILE__,line)(GetLastError() == ERROR_IO_PENDING, "read failed: %u\n", GetLastError());
         if (GetLastError() != ERROR_IO_PENDING) return;
-        WaitForSingleObject(o.hEvent, 1000);
+        WaitForSingleObject(o.hEvent, 5000);
     }
     ret = GetOverlappedResult(console_pipe, &o, &count, FALSE);
-    if (!ret && GetLastError() == ERROR_IO_PENDING)
+    if (!ret && GetLastError() == ERROR_IO_INCOMPLETE)
         CancelIoEx(console_pipe, &o);
 
     ok_(__FILE__,line)(ret, "Read file failed: %u\n", GetLastError());
