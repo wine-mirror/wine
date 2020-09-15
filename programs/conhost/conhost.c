@@ -223,6 +223,7 @@ static void destroy_screen_buffer( struct screen_buffer *screen_buffer )
     if (screen_buffer->console->active == screen_buffer)
         screen_buffer->console->active = NULL;
     wine_rb_remove( &screen_buffer_map, &screen_buffer->entry );
+    free( screen_buffer->data );
     free( screen_buffer );
 }
 
