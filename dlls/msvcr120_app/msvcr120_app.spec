@@ -1384,7 +1384,7 @@
 @ varargs _snprintf_c_l(ptr long str ptr) msvcr120._snprintf_c_l
 @ varargs _snprintf_l(ptr long str ptr) msvcr120._snprintf_l
 @ varargs _snprintf_s(ptr long long str) msvcr120._snprintf_s
-@ stub _snprintf_s_l
+@ varargs _snprintf_s_l(ptr long long str ptr) msvcr120._snprintf_s_l
 @ varargs _snscanf(str long str) msvcr120._snscanf
 @ varargs _snscanf_l(str long str ptr) msvcr120._snscanf_l
 @ varargs _snscanf_s(str long str) msvcr120._snscanf_s

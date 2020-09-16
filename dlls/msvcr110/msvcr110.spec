@@ -1654,7 +1654,7 @@
 @ varargs _snprintf_c_l(ptr long str ptr) MSVCRT_snprintf_c_l
 @ varargs _snprintf_l(ptr long str ptr) MSVCRT__snprintf_l
 @ varargs _snprintf_s(ptr long long str) MSVCRT__snprintf_s
-@ stub _snprintf_s_l
+@ varargs _snprintf_s_l(ptr long long str ptr) MSVCRT_snprintf_s_l
 @ varargs _snscanf(str long str) MSVCRT__snscanf
 @ varargs _snscanf_l(str long str ptr) MSVCRT__snscanf_l
 @ varargs _snscanf_s(str long str) MSVCRT__snscanf_s
