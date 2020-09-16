@@ -1023,6 +1023,9 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_CopySubresourceRegion(ID3D
             iface, dst_resource, dst_subresource_idx, dst_x, dst_y, dst_z,
             src_resource, src_subresource_idx, src_box);
 
+    if (!dst_resource || !src_resource)
+        return;
+
     if (src_box)
         wined3d_box_set(&wined3d_src_box, src_box->left, src_box->top,
                 src_box->right, src_box->bottom, src_box->front, src_box->back);
@@ -2490,6 +2493,9 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_CopySubresourceRegion1(ID3
             "src_resource %p, src_subresource_idx %u, src_box %p, flags %#x.\n",
             iface, dst_resource, dst_subresource_idx, dst_x, dst_y, dst_z,
             src_resource, src_subresource_idx, src_box, flags);
+
+    if (!dst_resource || !src_resource)
+        return;
 
     if (src_box)
         wined3d_box_set(&wined3d_src_box, src_box->left, src_box->top,
@@ -4537,6 +4543,9 @@ static void STDMETHODCALLTYPE d3d10_device_CopySubresourceRegion(ID3D10Device1 *
             "src_resource %p, src_subresource_idx %u, src_box %p.\n",
             iface, dst_resource, dst_subresource_idx, dst_x, dst_y, dst_z,
             src_resource, src_subresource_idx, src_box);
+
+    if (!dst_resource || !src_resource)
+        return;
 
     if (src_box)
         wined3d_box_set(&wined3d_src_box, src_box->left, src_box->top,
