@@ -1727,10 +1727,27 @@ static HRESULT Global_Asc(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VA
         str = conv_str;
     }
 
-    if(!SysStringLen(str) || *str >= 0x100)
+    if(!SysStringLen(str))
         hres = MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
-    else if(res)
-        hres = return_short(res, *str);
+    else {
+        unsigned char buf[2];
+        short val = 0;
+        int n = WideCharToMultiByte(CP_ACP, 0, str, 1, (char*)buf, sizeof(buf), NULL, NULL);
+        switch(n) {
+        case 1:
+            val = buf[0];
+            break;
+        case 2:
+            val = (buf[0] << 8) | buf[1];
+            break;
+        default:
+            WARN("Failed to convert %x\n", *str);
+            hres = MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
+        }
+        if(SUCCEEDED(hres))
+            hres = return_short(res, val);
+    }
+
     SysFreeString(conv_str);
     return hres;
 }
