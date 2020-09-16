@@ -201,6 +201,7 @@ static int build_exe( const sec_build* sec_descr )
     opt->SectionAlignment = page_size;
     opt->FileAlignment = page_size;
 
+    opt->NumberOfRvaAndSizes = IMAGE_FILE_RESOURCE_DIRECTORY + 1;
     opt->DataDirectory[IMAGE_FILE_RESOURCE_DIRECTORY].VirtualAddress = rva_rsrc_start;
     opt->DataDirectory[IMAGE_FILE_RESOURCE_DIRECTORY].Size = page_size;
 
@@ -355,6 +356,39 @@ static void update_resources_bigdata( void )
 
     r = EndUpdateResourceA( res, FALSE );
     ok( r, "EndUpdateResource failed\n");
+}
+
+static void update_resources_name( void )
+{
+    char foo[] = "resource data", res_name[] = "name", res_type[] = "type";
+    HANDLE res = NULL;
+    HMODULE module;
+    HRSRC rsrc;
+    BOOL ret;
+
+    res = BeginUpdateResourceA( filename, TRUE );
+    ok( res != NULL, "BeginUpdateResource failed: %u\n", GetLastError() );
+    if ( !res ) return;
+
+    ret = UpdateResourceA( res, res_type, res_name, MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), foo, sizeof(foo) );
+    ok( ret == TRUE, "UpdateResource failed: %u\n", GetLastError() );
+
+    ret = EndUpdateResourceA( res, FALSE );
+    ok( ret, "EndUpdateResource failed: %u\n", GetLastError() );
+    if ( !ret ) return;
+
+    module = LoadLibraryExA( filename, NULL, LOAD_LIBRARY_AS_DATAFILE );
+    ok( module != NULL, "LoadLibraryEx failed: %u\n", GetLastError() );
+    if ( !module ) return;
+
+    rsrc = FindResourceA( module, res_name, res_type );
+    todo_wine
+    ok( rsrc != NULL ||
+        broken( GetLastError() == ERROR_RESOURCE_TYPE_NOT_FOUND ) /* win2008 */,
+        "FindResource failed: %u\n", GetLastError() );
+
+    ret = FreeLibrary(module);
+    ok( ret, "FreeLibrary failed: %u\n", GetLastError() );
 }
 
 static void check_exe( const sec_verify *verify )
@@ -515,6 +549,7 @@ START_TEST(resource)
         check_exe( &sec->chk_version );
         update_resources_bigdata();
         check_exe( &sec->chk_bigdata );
+        update_resources_name();
         DeleteFileA( filename );
     }
     test_find_resource();
