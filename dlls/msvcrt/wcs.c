@@ -1152,7 +1152,7 @@ int CDECL MSVCRT__vscprintf_p(const char *format, __ms_va_list argptr)
 /*********************************************************************
  *		_snprintf (MSVCRT.@)
  */
-int WINAPIV MSVCRT__snprintf(char *str, unsigned int len, const char *format, ...)
+int WINAPIV MSVCRT__snprintf(char *str, MSVCRT_size_t len, const char *format, ...)
 {
     int retval;
     __ms_va_list valist;
@@ -1165,7 +1165,7 @@ int WINAPIV MSVCRT__snprintf(char *str, unsigned int len, const char *format, ..
 /*********************************************************************
  *		_snprintf_l (MSVCRT.@)
  */
-int WINAPIV MSVCRT__snprintf_l(char *str, unsigned int count, MSVCRT__locale_t locale,
+int WINAPIV MSVCRT__snprintf_l(char *str, MSVCRT_size_t count, MSVCRT__locale_t locale,
     const char *format, ...)
 {
     int retval;
@@ -1179,7 +1179,7 @@ int WINAPIV MSVCRT__snprintf_l(char *str, unsigned int count, MSVCRT__locale_t l
 /*********************************************************************
  *		_snprintf_s (MSVCRT.@)
  */
-int WINAPIV MSVCRT__snprintf_s(char *str, unsigned int len, unsigned int count,
+int WINAPIV MSVCRT__snprintf_s(char *str, MSVCRT_size_t len, MSVCRT_size_t count,
     const char *format, ...)
 {
     int retval;
@@ -1339,7 +1339,7 @@ int CDECL MSVCRT_vsnwprintf_s(MSVCRT_wchar_t *str, MSVCRT_size_t sizeOfBuffer,
 /*********************************************************************
  *		_snwprintf (MSVCRT.@)
  */
-int WINAPIV MSVCRT__snwprintf( MSVCRT_wchar_t *str, unsigned int len, const MSVCRT_wchar_t *format, ...)
+int WINAPIV MSVCRT__snwprintf( MSVCRT_wchar_t *str, MSVCRT_size_t len, const MSVCRT_wchar_t *format, ...)
 {
     int retval;
     __ms_va_list valist;
@@ -1352,7 +1352,7 @@ int WINAPIV MSVCRT__snwprintf( MSVCRT_wchar_t *str, unsigned int len, const MSVC
 /*********************************************************************
  *		_snwprintf_l (MSVCRT.@)
  */
-int WINAPIV MSVCRT__snwprintf_l( MSVCRT_wchar_t *str, unsigned int len, const MSVCRT_wchar_t *format,
+int WINAPIV MSVCRT__snwprintf_l( MSVCRT_wchar_t *str, MSVCRT_size_t len, const MSVCRT_wchar_t *format,
         MSVCRT__locale_t locale, ...)
 {
     int retval;
@@ -1366,7 +1366,7 @@ int WINAPIV MSVCRT__snwprintf_l( MSVCRT_wchar_t *str, unsigned int len, const MS
 /*********************************************************************
  *		_snwprintf_s (MSVCRT.@)
  */
-int WINAPIV MSVCRT__snwprintf_s( MSVCRT_wchar_t *str, unsigned int len, unsigned int count,
+int WINAPIV MSVCRT__snwprintf_s( MSVCRT_wchar_t *str, MSVCRT_size_t len, MSVCRT_size_t count,
     const MSVCRT_wchar_t *format, ...)
 {
     int retval;
@@ -1380,7 +1380,7 @@ int WINAPIV MSVCRT__snwprintf_s( MSVCRT_wchar_t *str, unsigned int len, unsigned
 /*********************************************************************
  *              _snwprintf_s_l (MSVCRT.@)
  */
-int WINAPIV MSVCRT__snwprintf_s_l( MSVCRT_wchar_t *str, unsigned int len, unsigned int count,
+int WINAPIV MSVCRT__snwprintf_s_l( MSVCRT_wchar_t *str, MSVCRT_size_t len, MSVCRT_size_t count,
         const MSVCRT_wchar_t *format, MSVCRT__locale_t locale, ... )
 {
     int retval;
