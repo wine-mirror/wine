@@ -12689,6 +12689,11 @@ static void test_copy_subresource_region(void)
 
     ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, red);
 
+    ID3D11DeviceContext_CopySubresourceRegion(context, (ID3D11Resource *)dst_texture, 0,
+            1, 1, 0, NULL, 0, &box);
+    ID3D11DeviceContext_CopySubresourceRegion(context, NULL, 0,
+            1, 1, 0, (ID3D11Resource *)src_texture, 0, &box);
+
     set_box(&box, 0, 0, 0, 2, 2, 1);
     ID3D11DeviceContext_CopySubresourceRegion(context, (ID3D11Resource *)dst_texture, 0,
             1, 1, 0, (ID3D11Resource *)src_texture, 0, &box);
