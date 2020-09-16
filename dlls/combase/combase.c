@@ -3104,9 +3104,20 @@ HRESULT WINAPI CoRegisterChannelHook(REFGUID guidExtension, IChannelHook *channe
  */
 HRESULT WINAPI CoDisableCallCancellation(void *reserved)
 {
-    FIXME("%p stub\n", reserved);
+    struct tlsdata *tlsdata;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p\n", reserved);
+
+    if (FAILED(hr = com_get_tlsdata(&tlsdata)))
+        return hr;
+
+    if (!tlsdata->cancelcount)
+        return CO_E_CANCEL_DISABLED;
+
+    tlsdata->cancelcount--;
+
+    return S_OK;
 }
 
 /***********************************************************************
@@ -3114,9 +3125,17 @@ HRESULT WINAPI CoDisableCallCancellation(void *reserved)
  */
 HRESULT WINAPI CoEnableCallCancellation(void *reserved)
 {
-    FIXME("%p stub\n", reserved);
+    struct tlsdata *tlsdata;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p\n", reserved);
+
+    if (FAILED(hr = com_get_tlsdata(&tlsdata)))
+        return hr;
+
+    tlsdata->cancelcount++;
+
+    return S_OK;
 }
 
 /***********************************************************************

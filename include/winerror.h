@@ -2679,6 +2679,7 @@ static inline HRESULT HRESULT_FROM_WIN32(unsigned int x)
 #define RPC_E_NO_CONTEXT                                   _HRESULT_TYPEDEF_(0x8001011E)
 #define RPC_E_TIMEOUT                                      _HRESULT_TYPEDEF_(0x8001011F)
 #define RPC_E_NO_SYNC                                      _HRESULT_TYPEDEF_(0x80010120)
+#define CO_E_CANCEL_DISABLED                               _HRESULT_TYPEDEF_(0x80010140)
 #define RPC_E_UNEXPECTED                                   _HRESULT_TYPEDEF_(0x8001FFFF)
 
 #define DISP_E_UNKNOWNINTERFACE                            _HRESULT_TYPEDEF_(0x80020001)

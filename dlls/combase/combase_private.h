@@ -84,6 +84,7 @@ struct tlsdata
     IUnknown         *state;         /* see CoSetState */
     struct list       spies;         /* Spies installed with CoRegisterInitializeSpy */
     DWORD             spies_lock;
+    DWORD             cancelcount;
 };
 
 extern HRESULT WINAPI InternalTlsAllocData(struct tlsdata **data);

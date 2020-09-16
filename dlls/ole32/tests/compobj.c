@@ -4186,6 +4186,64 @@ todo_wine
     CoUninitialize();
 }
 
+static void test_call_cancellation(void)
+{
+    HRESULT hr;
+
+    /* Cancellation is disabled initially. */
+    hr = CoDisableCallCancellation(NULL);
+    ok(hr == CO_E_CANCEL_DISABLED, "Unexpected hr %#x.\n", hr);
+
+    hr = CoEnableCallCancellation(NULL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = CoDisableCallCancellation(NULL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = CoDisableCallCancellation(NULL);
+    ok(hr == CO_E_CANCEL_DISABLED, "Unexpected hr %#x.\n", hr);
+
+    hr = CoEnableCallCancellation(NULL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    /* Counter is not affected by initialization. */
+    hr = CoInitialize(NULL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = CoDisableCallCancellation(NULL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = CoDisableCallCancellation(NULL);
+    ok(hr == CO_E_CANCEL_DISABLED, "Unexpected hr %#x.\n", hr);
+
+    hr = CoEnableCallCancellation(NULL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    CoUninitialize();
+
+    hr = CoDisableCallCancellation(NULL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = CoDisableCallCancellation(NULL);
+    ok(hr == CO_E_CANCEL_DISABLED, "Unexpected hr %#x.\n", hr);
+
+    /* It's cumulative. */
+    hr = CoEnableCallCancellation(NULL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = CoEnableCallCancellation(NULL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = CoDisableCallCancellation(NULL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = CoDisableCallCancellation(NULL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = CoDisableCallCancellation(NULL);
+    ok(hr == CO_E_CANCEL_DISABLED, "Unexpected hr %#x.\n", hr);
+}
+
 START_TEST(compobj)
 {
     init_funcs();
@@ -4236,6 +4294,7 @@ START_TEST(compobj)
     test_CoGetCurrentProcess();
     test_mta_usage();
     test_CoCreateInstanceFromApp();
+    test_call_cancellation();
 
     DeleteFileA( testlib );
 }
