@@ -799,14 +799,12 @@ obj_handle_t inherit_console( struct thread *parent_thread, obj_handle_t handle,
 {
     struct console_input *console = NULL;
 
-    if (handle && !(console = (struct console_input *)get_handle_obj( current->process, handle, 0,
-                                                                      &console_input_ops )))
-        return 0;
+    if (handle) return duplicate_handle( current->process, handle, process, 0, 0, DUP_HANDLE_SAME_ACCESS );
 
     /* if parent is a renderer, then attach current process to its console
      * a bit hacky....
      */
-    if (!console && hconin && parent_thread)
+    if (hconin && parent_thread)
     {
         /* FIXME: should we check some access rights ? */
         if (!(console = (struct console_input *)get_handle_obj( parent_thread->process, hconin,

@@ -54,6 +54,7 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static CRITICAL_SECTION console_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
+static HANDLE console_connection;
 static HANDLE console_wait_event;
 static unsigned int console_flags;
 
@@ -206,6 +207,21 @@ static HANDLE create_console_reference( HANDLE root )
                            FILE_READ_PROPERTIES | SYNCHRONIZE, &attr, &iosb, NULL, FILE_ATTRIBUTE_NORMAL,
                            0, FILE_OPEN, FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0 );
     return set_ntstatus( status ) ? handle : NULL;
+}
+
+static BOOL create_console_connection( HANDLE root )
+{
+    OBJECT_ATTRIBUTES attr = {sizeof(attr)};
+    UNICODE_STRING string;
+    IO_STATUS_BLOCK iosb;
+    NTSTATUS status;
+
+    RtlInitUnicodeString( &string, root ? L"Connection" : L"\\Device\\ConDrv\\Connection" );
+    attr.RootDirectory = root;
+    attr.ObjectName = &string;
+    status = NtCreateFile( &console_connection, FILE_WRITE_PROPERTIES | FILE_READ_PROPERTIES | SYNCHRONIZE, &attr,
+                           &iosb, NULL, FILE_ATTRIBUTE_NORMAL, 0, FILE_OPEN, FILE_NON_DIRECTORY_FILE, NULL, 0 );
+    return set_ntstatus( status );
 }
 
 static BOOL init_console_std_handles(void)
@@ -567,6 +583,9 @@ BOOL WINAPI DECLSPEC_HOTPATCH FreeConsole(void)
     BOOL ret;
 
     RtlEnterCriticalSection( &console_section );
+
+    NtClose( console_connection );
+    console_connection = NULL;
 
     NtClose( RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle );
     RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle = NULL;
@@ -1734,6 +1753,7 @@ void init_console( void )
         if (RtlImageNtHeader( mod )->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
             AllocConsole();
     }
+    else if (params->ConsoleHandle) create_console_connection( params->ConsoleHandle );
 
     RtlAddVectoredExceptionHandler( FALSE, handle_ctrl_c );
 }
