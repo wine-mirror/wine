@@ -4213,12 +4213,13 @@ istream* __thiscall ifstream_open_ctor(istream *this, const char *name, ios_open
 
     filebuf_ctor(fb);
     istream_sb_ctor(this, &fb->base, virt_init);
-    filebuf_open(fb, name, mode|OPENMODE_in, protection);
 
     base = istream_get_ios(this);
     base->vtable = &MSVCP_ifstream_vtable;
     base->delbuf = 1;
 
+    if (!filebuf_open(fb, name, mode|OPENMODE_in, protection))
+        base->state |= IOSTATE_failbit;
     return this;
 }
 
