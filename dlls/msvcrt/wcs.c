@@ -1177,6 +1177,33 @@ int WINAPIV MSVCRT__snprintf_l(char *str, MSVCRT_size_t count, MSVCRT__locale_t 
 }
 
 /*********************************************************************
+ *              _snprintf_c_l (MSVCRT.@)
+ */
+int WINAPIV MSVCRT_snprintf_c_l(char *str, MSVCRT_size_t count, const char *format,
+        MSVCRT__locale_t locale, ...)
+{
+    int retval;
+    __ms_va_list valist;
+    __ms_va_start(valist, locale);
+    retval = MSVCRT_vsnprintf_c_l(str, count, format, locale, valist);
+    __ms_va_end(valist);
+    return retval;
+}
+
+/*********************************************************************
+ *              _snprintf_c (MSVCRT.@)
+ */
+int WINAPIV MSVCRT_snprintf_c(char *str, MSVCRT_size_t count, const char *format, ...)
+{
+    int retval;
+    __ms_va_list valist;
+    __ms_va_start(valist, format);
+    retval = MSVCRT_vsnprintf_c(str, count, format, valist);
+    __ms_va_end(valist);
+    return retval;
+}
+
+/*********************************************************************
  *		_snprintf_s (MSVCRT.@)
  */
 int WINAPIV MSVCRT__snprintf_s(char *str, MSVCRT_size_t len, MSVCRT_size_t count,
@@ -1528,6 +1555,38 @@ int WINAPIV MSVCRT__swprintf_s_l(MSVCRT_wchar_t *str, MSVCRT_size_t numberOfElem
 
     __ms_va_start(ap, locale);
     r = MSVCRT_vsnwprintf_s_l(str, numberOfElements, INT_MAX, format, locale, ap);
+    __ms_va_end(ap);
+
+    return r;
+}
+
+/*********************************************************************
+ *              _swprintf_c_l (MSVCRT.@)
+ */
+int WINAPIV MSVCRT_swprintf_c_l(MSVCRT_wchar_t *str, MSVCRT_size_t len,
+        const MSVCRT_wchar_t *format, MSVCRT__locale_t locale, ... )
+{
+    __ms_va_list ap;
+    int r;
+
+    __ms_va_start(ap, locale);
+    r = MSVCRT_vswprintf_c_l(str, len, format, locale, ap);
+    __ms_va_end(ap);
+
+    return r;
+}
+
+/*********************************************************************
+ *              _swprintf_c (MSVCRT.@)
+ */
+int WINAPIV MSVCRT_swprintf_c(MSVCRT_wchar_t *str, MSVCRT_size_t len,
+        const MSVCRT_wchar_t *format, ... )
+{
+    __ms_va_list ap;
+    int r;
+
+    __ms_va_start(ap, format);
+    r = MSVCRT_vswprintf_c(str, len, format, ap);
     __ms_va_end(ap);
 
     return r;

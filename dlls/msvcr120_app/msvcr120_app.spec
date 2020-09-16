@@ -1380,8 +1380,8 @@
 @ cdecl _setmbcp(long) msvcr120._setmbcp
 @ cdecl _setmode(long long) msvcr120._setmode
 @ varargs _snprintf(ptr long str) msvcr120._snprintf
-@ stub _snprintf_c
-@ stub _snprintf_c_l
+@ varargs _snprintf_c(ptr long str) msvcr120._snprintf_c
+@ varargs _snprintf_c_l(ptr long str ptr) msvcr120._snprintf_c_l
 @ varargs _snprintf_l(ptr long str ptr) msvcr120._snprintf_l
 @ varargs _snprintf_s(ptr long long str) msvcr120._snprintf_s
 @ stub _snprintf_s_l
@@ -1461,8 +1461,8 @@
 @ cdecl _strxfrm_l(ptr str long ptr) msvcr120._strxfrm_l
 @ cdecl _swab(str str long) msvcr120._swab
 @ varargs _swprintf(ptr wstr) msvcr120._swprintf
-@ stub _swprintf_c
-@ stub _swprintf_c_l
+@ varargs _swprintf_c(ptr long str) msvcr120._swprintf_c
+@ varargs _swprintf_c_l(ptr long str ptr) msvcr120._swprintf_c_l
 @ stub _swprintf_p
 @ varargs _swprintf_p_l(ptr long wstr ptr) msvcr120._swprintf_p_l
 @ varargs _swprintf_s_l(ptr long wstr ptr) msvcr120._swprintf_s_l

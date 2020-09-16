@@ -909,8 +909,8 @@
 @ stub _setsystime(ptr long)
 @ cdecl _sleep(long) MSVCRT__sleep
 @ varargs _snprintf(ptr long str) MSVCRT__snprintf
-# stub _snprintf_c(ptr long str)
-# stub _snprintf_c_l(ptr long str ptr)
+@ varargs _snprintf_c(ptr long str) MSVCRT_snprintf_c
+@ varargs _snprintf_c_l(ptr long str ptr) MSVCRT_snprintf_c_l
 @ varargs _snprintf_l(ptr long str ptr) MSVCRT__snprintf_l
 @ varargs _snprintf_s(ptr long long str) MSVCRT__snprintf_s
 # stub _snprintf_s_l(ptr long long str ptr)
@@ -990,8 +990,8 @@
 @ cdecl _strxfrm_l(ptr str long ptr) MSVCRT__strxfrm_l
 @ cdecl _swab(str str long) MSVCRT__swab
 @ varargs _swprintf(ptr wstr) MSVCRT_swprintf
-# stub _swprintf_c(ptr long str)
-# stub _swprintf_c_l(ptr long str ptr)
+@ varargs _swprintf_c(ptr long str) MSVCRT_swprintf_c
+@ varargs _swprintf_c_l(ptr long str ptr) MSVCRT_swprintf_c_l
 @ varargs _swprintf_p_l(ptr long wstr ptr) MSVCRT_swprintf_p_l
 @ varargs _swprintf_s_l(ptr long wstr ptr) MSVCRT__swprintf_s_l
 @ varargs _swscanf_l(wstr wstr ptr) MSVCRT__swscanf_l
