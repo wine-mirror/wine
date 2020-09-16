@@ -781,6 +781,8 @@ struct object_token
 {
     ISpObjectToken ISpObjectToken_iface;
     LONG ref;
+
+    HKEY token_key;
 };
 
 static struct object_token *impl_from_ISpObjectToken( ISpObjectToken *iface )
@@ -827,6 +829,7 @@ static ULONG WINAPI token_Release( ISpObjectToken *iface )
 
     if (!ref)
     {
+        if (This->token_key) RegCloseKey( This->token_key );
         heap_free( This );
     }
 
@@ -923,8 +926,28 @@ static HRESULT WINAPI token_SetId( ISpObjectToken *iface,
                                    LPCWSTR category_id, LPCWSTR token_id,
                                    BOOL create )
 {
-    FIXME( "stub\n" );
-    return E_NOTIMPL;
+    struct object_token *This = impl_from_ISpObjectToken( iface );
+    BOOL res;
+    HRESULT hr;
+    HKEY root, key;
+    const WCHAR *subkey;
+
+    FIXME( "(%p)->(%s %s %d): semi-stub\n", This, debugstr_w( category_id ),
+           debugstr_w(token_id), create );
+
+    if (This->token_key) return SPERR_ALREADY_INITIALIZED;
+
+    if (!token_id) return E_POINTER;
+
+    hr = parse_cat_id( token_id, &root, &subkey );
+    if (hr != S_OK) return SPERR_NOT_FOUND;
+
+    res = RegOpenKeyExW( root, subkey, 0, KEY_ALL_ACCESS, &key );
+    if (res) return SPERR_NOT_FOUND;
+
+    This->token_key = key;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI token_GetId( ISpObjectToken *iface,
@@ -1046,6 +1069,8 @@ HRESULT token_create( IUnknown *outer, REFIID iid, void **obj )
     if (!This) return E_OUTOFMEMORY;
     This->ISpObjectToken_iface.lpVtbl = &token_vtbl;
     This->ref = 1;
+
+    This->token_key = NULL;
 
     hr = ISpObjectToken_QueryInterface( &This->ISpObjectToken_iface, iid, obj );
 

@@ -202,23 +202,23 @@ static void test_object_token(void)
     ok( cat == (LPVOID)0xdeadbeef, "got %p\n", cat );
 
     hr = ISpObjectToken_SetId( token, NULL, NULL, FALSE );
-    todo_wine ok( hr == E_POINTER, "got %08x\n", hr );
+    ok( hr == E_POINTER, "got %08x\n", hr );
     hr = ISpObjectToken_SetId( token, L"bogus", NULL, FALSE );
-    todo_wine ok( hr == E_POINTER, "got %08x\n", hr );
+    ok( hr == E_POINTER, "got %08x\n", hr );
 
     hr = ISpObjectToken_SetId( token, NULL, L"bogus", FALSE );
-    todo_wine ok( hr == SPERR_NOT_FOUND, "got %08x\n", hr );
+    ok( hr == SPERR_NOT_FOUND, "got %08x\n", hr );
     hr = ISpObjectToken_SetId( token, NULL, L"HKEY_LOCAL_MACHINE\\SOFTWARE\\winetest bogus", FALSE );
-    todo_wine ok( hr == SPERR_NOT_FOUND, "got %08x\n", hr );
+    ok( hr == SPERR_NOT_FOUND, "got %08x\n", hr );
 
     /* SetId succeeds even if the key is invalid, but exists */
     hr = ISpObjectToken_SetId( token, NULL, L"HKEY_LOCAL_MACHINE\\SOFTWARE", FALSE );
-    todo_wine ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %08x\n", hr );
 
     hr = ISpObjectToken_SetId( token, NULL, NULL, FALSE );
-    todo_wine ok( hr == SPERR_ALREADY_INITIALIZED, "got %08x\n", hr );
+    ok( hr == SPERR_ALREADY_INITIALIZED, "got %08x\n", hr );
     hr = ISpObjectToken_SetId( token, NULL, L"bogus", FALSE );
-    todo_wine ok( hr == SPERR_ALREADY_INITIALIZED, "got %08x\n", hr );
+    ok( hr == SPERR_ALREADY_INITIALIZED, "got %08x\n", hr );
 
     hr = ISpObjectToken_GetId( token, NULL );
     todo_wine ok( hr == E_POINTER, "got %08x\n", hr );
@@ -265,7 +265,7 @@ static void test_object_token(void)
 
     /* NULL appears to auto-detect the category */
     hr = ISpObjectToken_SetId( token, NULL, token_id, FALSE );
-    todo_wine ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %08x\n", hr );
 
     tempW = NULL;
     hr = ISpObjectToken_GetId( token, &tempW );
