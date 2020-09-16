@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2020-09-15 21:49+0300\n"
+"PO-Revision-Date: 2020-09-16 23:11+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -10946,33 +10946,27 @@ msgstr "Yra mažiausiai viena nenustatyta saugumo problema su šiuo liudijimu."
 
 #: dlls/wininet/wininet.rc:35
 msgid "Effective Date"
-msgstr ""
+msgstr "Įsigaliojimo data"
 
 #: dlls/wininet/wininet.rc:37
-#, fuzzy
-#| msgid "Security"
 msgid "Security Protocol"
-msgstr "Saugumas"
+msgstr "Saugumo protokolas"
 
 #: dlls/wininet/wininet.rc:38
-#, fuzzy
-#| msgid "Signature"
 msgid "Signature Type"
-msgstr "Parašas"
+msgstr "Parašo tipas"
 
 #: dlls/wininet/wininet.rc:39
-#, fuzzy
-#| msgid "Encrypting File System"
 msgid "Encryption Type"
-msgstr "Failų šifravimo sistema"
+msgstr "Šifravimo tipas"
 
 #: dlls/wininet/wininet.rc:40
 msgid "Privacy Strength"
-msgstr ""
+msgstr "Privatumo stiprumas"
 
 #: dlls/wininet/wininet.rc:43
 msgid "bits"
-msgstr ""
+msgstr "bitai"
 
 #: dlls/wininet/winineterror.mc:26
 msgid "The request has timed out.\n"
