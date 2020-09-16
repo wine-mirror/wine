@@ -1842,6 +1842,11 @@ call testAsc("   ", 32)
 call testAsc(Chr(255), 255)
 call testAsc(Chr(0), 0)
 if isEnglishLang then testAsc true, 84
+if Asc(Chr(&h81)) = &h8145 then
+    ' Japanese (CP 932)
+    call testAsc(Chr(&h8e8e), -29042)
+    call testAsc(Chr(220), 220)
+end if
 call testAscError()
 
 sub testErrNumber(n)
