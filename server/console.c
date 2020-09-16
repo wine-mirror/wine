@@ -80,6 +80,7 @@ struct console_input
 static void console_input_dump( struct object *obj, int verbose );
 static void console_input_destroy( struct object *obj );
 static struct fd *console_input_get_fd( struct object *obj );
+static struct object *console_input_lookup_name( struct object *obj, struct unicode_str *name, unsigned int attr );
 static struct object *console_input_open_file( struct object *obj, unsigned int access,
                                                unsigned int sharing, unsigned int options );
 
@@ -97,7 +98,7 @@ static const struct object_ops console_input_ops =
     default_fd_map_access,            /* map_access */
     default_get_sd,                   /* get_sd */
     default_set_sd,                   /* set_sd */
-    no_lookup_name,                   /* lookup_name */
+    console_input_lookup_name,        /* lookup_name */
     no_link_name,                     /* link_name */
     NULL,                             /* unlink_name */
     console_input_open_file,          /* open_file */
@@ -355,6 +356,39 @@ static const struct object_ops console_device_ops =
     console_device_open_file,         /* open_file */
     no_kernel_obj_list,               /* get_kernel_obj_list */
     no_close_handle,                  /* close_handle */
+    no_destroy                        /* destroy */
+};
+
+struct console_connection
+{
+    struct object         obj;         /* object header */
+};
+
+static void console_connection_dump( struct object *obj, int verbose );
+static struct object *console_connection_open_file( struct object *obj, unsigned int access,
+                                                    unsigned int sharing, unsigned int options );
+static int console_connection_close_handle( struct object *obj, struct process *process, obj_handle_t handle );
+
+static const struct object_ops console_connection_ops =
+{
+    sizeof(struct console_connection),/* size */
+    console_connection_dump,          /* dump */
+    console_device_get_type,          /* get_type */
+    no_add_queue,                     /* add_queue */
+    NULL,                             /* remove_queue */
+    NULL,                             /* signaled */
+    no_satisfied,                     /* satisfied */
+    no_signal,                        /* signal */
+    no_get_fd,                        /* get_fd */
+    no_map_access,                    /* map_access */
+    default_get_sd,                   /* get_sd */
+    default_set_sd,                   /* set_sd */
+    no_lookup_name,                   /* lookup_name */
+    directory_link_name,              /* link_name */
+    default_unlink_name,              /* unlink_name */
+    console_connection_open_file,     /* open_file */
+    no_kernel_obj_list,               /* get_kernel_obj_list */
+    console_connection_close_handle,  /* close_handle */
     no_destroy                        /* destroy */
 };
 
@@ -1286,6 +1320,39 @@ static void console_input_destroy( struct object *obj )
     free( console_in->history );
 }
 
+static struct object *create_console_connection( struct console_input *console )
+{
+    struct console_connection *connection;
+
+    if (current->process->console)
+    {
+        set_error( STATUS_ACCESS_DENIED );
+        return NULL;
+    }
+
+    if (!(connection = alloc_object( &console_connection_ops ))) return NULL;
+
+    current->process->console = (struct console_input *)grab_object( console );
+    console->num_proc++;
+
+    return &connection->obj;
+}
+
+static struct object *console_input_lookup_name( struct object *obj, struct unicode_str *name, unsigned int attr )
+{
+    struct console_input *console = (struct console_input *)obj;
+    static const WCHAR connectionW[]    = {'C','o','n','n','e','c','t','i','o','n'};
+    assert( obj->ops == &console_input_ops );
+
+    if (name->len == sizeof(connectionW) && !memcmp( name->str, connectionW, name->len ))
+    {
+        name->len = 0;
+        return create_console_connection( console );
+    }
+
+    return NULL;
+}
+
 static struct object *console_input_open_file( struct object *obj, unsigned int access,
                                                unsigned int sharing, unsigned int options )
 {
@@ -2207,6 +2274,23 @@ static int console_server_ioctl( struct fd *fd, ioctl_code_t code, struct async 
         set_error( STATUS_INVALID_HANDLE );
         return 0;
     }
+}
+
+static void console_connection_dump( struct object *obj, int verbose )
+{
+    fputs( "console connection\n", stderr );
+}
+
+static struct object *console_connection_open_file( struct object *obj, unsigned int access,
+                                                    unsigned int sharing, unsigned int options )
+{
+    return grab_object( obj );
+}
+
+static int console_connection_close_handle( struct object *obj, struct process *process, obj_handle_t handle )
+{
+    free_console( process );
+    return 1;
 }
 
 static struct object_type *console_device_get_type( struct object *obj )
