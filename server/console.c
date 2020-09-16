@@ -1330,8 +1330,11 @@ static struct object *create_console_connection( struct console_input *console )
 
     if (!(connection = alloc_object( &console_connection_ops ))) return NULL;
 
-    current->process->console = (struct console_input *)grab_object( console );
-    console->num_proc++;
+    if (console)
+    {
+        current->process->console = (struct console_input *)grab_object( console );
+        console->num_proc++;
+    }
 
     return &connection->obj;
 }
@@ -2305,6 +2308,7 @@ static void console_device_dump( struct object *obj, int verbose )
 
 static struct object *console_device_lookup_name( struct object *obj, struct unicode_str *name, unsigned int attr )
 {
+    static const WCHAR connectionW[]    = {'C','o','n','n','e','c','t','i','o','n'};
     static const WCHAR consoleW[]       = {'C','o','n','s','o','l','e'};
     static const WCHAR current_inW[]    = {'C','u','r','r','e','n','t','I','n'};
     static const WCHAR current_outW[]   = {'C','u','r','r','e','n','t','O','u','t'};
@@ -2361,6 +2365,12 @@ static struct object *console_device_lookup_name( struct object *obj, struct uni
     {
         name->len = 0;
         return create_console_server();
+    }
+
+    if (name->len == sizeof(connectionW) && !memcmp( name->str, connectionW, name->len ))
+    {
+        name->len = 0;
+        return create_console_connection( NULL );
     }
 
     return NULL;
