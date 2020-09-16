@@ -641,8 +641,8 @@ static void test_getregiondata(void)
     expect_float(buf + 25, 50.0);
     expect_float(buf + 26, 70.2);
     expect_dword(buf + 27, 0x01010100);
-    ok(*(buf + 28) == 0x00000101 || *(buf + 28) == 0x43050101 /* Win 7 */,
-       "expected 00000101 or 43050101 got %08x\n", *(buf + 28));
+    ok((*(buf + 28) & 0xffff) == 0x0101,
+       "expected ????0101 got %08x\n", *(buf + 28));
     expect_dword(buf + 29, 0xeeeeeeee);
     test_region_data(buf, needed, __LINE__);
 
@@ -791,9 +791,8 @@ static void test_getregiondata(void)
     expect_float(buf + 30, 789.799561);
     expect_dword(buf + 31, 0x03030300);
     expect_dword(buf + 32, 0x03030301);
-    ok(*(buf + 33) == 0x00030303 /* before win7 */ ||
-       *(buf + 33) == 0x43030303 /* 32-bit win7 */ || *(buf + 33) == 0x4c030303 /* 64-bit win7 */,
-       "expected 0x00030303 or 0x43030303 or 0x4c030303 got %08x\n", *(buf + 33));
+    ok((*(buf + 33) & 0xffffff) == 0x030303,
+       "expected 0x??030303 got %08x\n", *(buf + 33));
     expect_dword(buf + 34, 0xeeeeeeee);
     test_region_data(buf, needed, __LINE__);
 
