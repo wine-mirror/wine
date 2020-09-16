@@ -1065,6 +1065,19 @@ library SpeechLib
     }
 
     [
+        uuid(ef411752-3736-4cb4-9c8c-8ef4ccb58efe),
+        helpstring("Object Token"),
+        progid("SAPI.SpObjectToken.1"),
+        vi_progid("SAPI.SpObjectToken"),
+        threading(both)
+    ]
+    coclass SpObjectToken
+    {
+        interface ISpObjectToken;
+        [default] interface ISpDataKey;
+    }
+
+    [
         uuid(3bee4890-4fe9-4a37-8c1e-5e7e12791c1f)
     ]
     coclass SpSharedRecognizer

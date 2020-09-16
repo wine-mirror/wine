@@ -174,6 +174,130 @@ static void test_default_token_id(void)
     ISpObjectTokenCategory_Release( cat );
 }
 
+static void test_object_token(void)
+{
+    ISpObjectToken *token;
+    HRESULT hr;
+    LPWSTR tempW, token_id;
+    ISpObjectTokenCategory *cat;
+
+    hr = CoCreateInstance( &CLSID_SpObjectToken, NULL, CLSCTX_INPROC_SERVER,
+                           &IID_ISpObjectToken, (void **)&token );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = ISpObjectToken_GetId( token, NULL );
+    todo_wine ok( hr == SPERR_UNINITIALIZED, "got %08x\n", hr );
+
+    tempW = (LPWSTR)0xdeadbeef;
+    hr = ISpObjectToken_GetId( token, &tempW );
+    todo_wine ok( hr == SPERR_UNINITIALIZED, "got %08x\n", hr );
+    ok( tempW == (LPWSTR)0xdeadbeef, "got %s\n", wine_dbgstr_w(tempW) );
+
+    hr = ISpObjectToken_GetCategory( token, NULL );
+    todo_wine ok( hr == SPERR_UNINITIALIZED, "got %08x\n", hr );
+
+    cat = (LPVOID)0xdeadbeef;
+    hr = ISpObjectToken_GetCategory( token, &cat );
+    todo_wine ok( hr == SPERR_UNINITIALIZED, "got %08x\n", hr );
+    ok( cat == (LPVOID)0xdeadbeef, "got %p\n", cat );
+
+    hr = ISpObjectToken_SetId( token, NULL, NULL, FALSE );
+    todo_wine ok( hr == E_POINTER, "got %08x\n", hr );
+    hr = ISpObjectToken_SetId( token, L"bogus", NULL, FALSE );
+    todo_wine ok( hr == E_POINTER, "got %08x\n", hr );
+
+    hr = ISpObjectToken_SetId( token, NULL, L"bogus", FALSE );
+    todo_wine ok( hr == SPERR_NOT_FOUND, "got %08x\n", hr );
+    hr = ISpObjectToken_SetId( token, NULL, L"HKEY_LOCAL_MACHINE\\SOFTWARE\\winetest bogus", FALSE );
+    todo_wine ok( hr == SPERR_NOT_FOUND, "got %08x\n", hr );
+
+    /* SetId succeeds even if the key is invalid, but exists */
+    hr = ISpObjectToken_SetId( token, NULL, L"HKEY_LOCAL_MACHINE\\SOFTWARE", FALSE );
+    todo_wine ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = ISpObjectToken_SetId( token, NULL, NULL, FALSE );
+    todo_wine ok( hr == SPERR_ALREADY_INITIALIZED, "got %08x\n", hr );
+    hr = ISpObjectToken_SetId( token, NULL, L"bogus", FALSE );
+    todo_wine ok( hr == SPERR_ALREADY_INITIALIZED, "got %08x\n", hr );
+
+    hr = ISpObjectToken_GetId( token, NULL );
+    todo_wine ok( hr == E_POINTER, "got %08x\n", hr );
+
+    hr = ISpObjectToken_GetCategory( token, NULL );
+    todo_wine ok( hr == E_POINTER, "got %08x\n", hr );
+
+    tempW = NULL;
+    hr = ISpObjectToken_GetId( token, &tempW );
+    todo_wine ok( hr == S_OK, "got %08x\n", hr );
+    todo_wine ok( tempW != NULL, "got %p\n", tempW );
+    if (tempW) {
+        ok( !wcscmp(tempW, L"HKEY_LOCAL_MACHINE\\SOFTWARE"), "got %s\n",
+            wine_dbgstr_w(tempW) );
+        CoTaskMemFree( tempW );
+    }
+
+    cat = (LPVOID)0xdeadbeef;
+    hr = ISpObjectToken_GetCategory( token, &cat );
+    todo_wine ok( hr == SPERR_INVALID_REGISTRY_KEY, "got %08x\n", hr );
+    ok( cat == (LPVOID)0xdeadbeef, "got %p\n", cat );
+
+    /* get the default token id for SPCAT_AUDIOOUT */
+    hr = CoCreateInstance( &CLSID_SpObjectTokenCategory, NULL, CLSCTX_INPROC_SERVER,
+                           &IID_ISpObjectTokenCategory, (void **)&cat );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = ISpObjectTokenCategory_SetId( cat, SPCAT_AUDIOOUT, FALSE );
+    ok( hr == S_OK, "got %08x\n", hr );
+    token_id = (LPWSTR)0xdeadbeef;
+    hr = ISpObjectTokenCategory_GetDefaultTokenId( cat, &token_id );
+    if (hr == SPERR_NOT_FOUND) {
+        skip( "AudioOutput category not found for GetDefaultTokenId\n" );
+        return;
+    }
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( token_id != (LPWSTR)0xdeadbeef && token_id != NULL, "got %p\n", token_id );
+    ISpObjectTokenCategory_Release( cat );
+
+    /* recreate token in order to SetId again */
+    ISpObjectToken_Release( token );
+    hr = CoCreateInstance( &CLSID_SpObjectToken, NULL, CLSCTX_INPROC_SERVER,
+                           &IID_ISpObjectToken, (void **)&token );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    /* NULL appears to auto-detect the category */
+    hr = ISpObjectToken_SetId( token, NULL, token_id, FALSE );
+    todo_wine ok( hr == S_OK, "got %08x\n", hr );
+
+    tempW = NULL;
+    hr = ISpObjectToken_GetId( token, &tempW );
+    todo_wine ok( hr == S_OK, "got %08x\n", hr );
+    todo_wine ok( tempW != NULL, "got %p\n", tempW );
+    if (tempW) {
+        ok( !wcsncmp(tempW, token_id, wcslen(token_id)),
+            "got %s (expected %s)\n", wine_dbgstr_w(tempW), wine_dbgstr_w(token_id) );
+        CoTaskMemFree( tempW );
+    }
+
+    cat = (LPVOID)0xdeadbeef;
+    hr = ISpObjectToken_GetCategory( token, &cat );
+    todo_wine ok( hr == S_OK, "got %08x\n", hr );
+    todo_wine ok( cat != (LPVOID)0xdeadbeef, "got %p\n", cat );
+    if (cat != (LPVOID)0xdeadbeef) {
+        tempW = NULL;
+        hr = ISpObjectTokenCategory_GetId( cat, &tempW );
+        todo_wine ok( hr == S_OK, "got %08x\n", hr );
+        todo_wine ok( tempW != NULL, "got %p\n", tempW );
+        if (tempW) {
+            ok( !wcscmp(tempW, SPCAT_AUDIOOUT), "got %s\n", wine_dbgstr_w(tempW) );
+            CoTaskMemFree( tempW );
+        }
+
+        /* not freed by ISpObjectToken_Release */
+        ISpObjectTokenCategory_Release( cat );
+    }
+
+    ISpObjectToken_Release( token );
+}
+
 START_TEST(token)
 {
     CoInitialize( NULL );
@@ -181,5 +305,6 @@ START_TEST(token)
     test_token_category();
     test_token_enum();
     test_default_token_id();
+    test_object_token();
     CoUninitialize();
 }

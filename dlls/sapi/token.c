@@ -776,3 +776,279 @@ HRESULT token_enum_create( IUnknown *outer, REFIID iid, void **obj )
     ISpObjectTokenEnumBuilder_Release( &This->ISpObjectTokenEnumBuilder_iface );
     return hr;
 }
+
+struct object_token
+{
+    ISpObjectToken ISpObjectToken_iface;
+    LONG ref;
+};
+
+static struct object_token *impl_from_ISpObjectToken( ISpObjectToken *iface )
+{
+    return CONTAINING_RECORD( iface, struct object_token, ISpObjectToken_iface );
+}
+
+static HRESULT WINAPI token_QueryInterface( ISpObjectToken *iface,
+                                            REFIID iid, void **obj )
+{
+    struct object_token *This = impl_from_ISpObjectToken( iface );
+
+    TRACE( "(%p)->(%s %p)\n", This, debugstr_guid( iid ), obj );
+
+    if (IsEqualIID( iid, &IID_IUnknown ) ||
+        IsEqualIID( iid, &IID_ISpDataKey ) ||
+        IsEqualIID( iid, &IID_ISpObjectToken ))
+    {
+        ISpObjectToken_AddRef( iface );
+        *obj = iface;
+        return S_OK;
+    }
+
+    FIXME( "interface %s not implemented\n", debugstr_guid( iid ) );
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI token_AddRef( ISpObjectToken *iface )
+{
+    struct object_token *This = impl_from_ISpObjectToken( iface );
+    ULONG ref = InterlockedIncrement( &This->ref );
+
+    TRACE( "(%p) ref = %u\n", This, ref );
+    return ref;
+}
+
+static ULONG WINAPI token_Release( ISpObjectToken *iface )
+{
+    struct object_token *This = impl_from_ISpObjectToken( iface );
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE( "(%p) ref = %u\n", This, ref );
+
+    if (!ref)
+    {
+        heap_free( This );
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI token_SetData( ISpObjectToken *iface,
+                                     LPCWSTR name, ULONG size,
+                                     const BYTE *data )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_GetData( ISpObjectToken *iface,
+                                     LPCWSTR name, ULONG *size,
+                                     BYTE *data )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_SetStringValue( ISpObjectToken *iface,
+                                            LPCWSTR name, LPCWSTR value )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_GetStringValue( ISpObjectToken *iface,
+                                            LPCWSTR name, LPWSTR *value )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_SetDWORD( ISpObjectToken *iface,
+                                      LPCWSTR name, DWORD value )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_GetDWORD( ISpObjectToken *iface,
+                                      LPCWSTR name, DWORD *pdwValue )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_OpenKey( ISpObjectToken *iface,
+                                     LPCWSTR name, ISpDataKey **sub_key )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_CreateKey( ISpObjectToken *iface,
+                                       LPCWSTR name, ISpDataKey **sub_key )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_DeleteKey( ISpObjectToken *iface,
+                                       LPCWSTR name )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_DeleteValue( ISpObjectToken *iface,
+                                         LPCWSTR name )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_EnumKeys( ISpObjectToken *iface,
+                                      ULONG index, LPWSTR *sub_key )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_EnumValues( ISpObjectToken *iface,
+                                        ULONG index, LPWSTR *value )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_SetId( ISpObjectToken *iface,
+                                   LPCWSTR category_id, LPCWSTR token_id,
+                                   BOOL create )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_GetId( ISpObjectToken *iface,
+                                   LPWSTR *token_id )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_GetCategory( ISpObjectToken *iface,
+                                         ISpObjectTokenCategory **category )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_CreateInstance( ISpObjectToken *iface,
+                                            IUnknown *outer,
+                                            DWORD class_context,
+                                            REFIID riid,
+                                            void **object )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_GetStorageFileName( ISpObjectToken *iface,
+                                                REFCLSID caller,
+                                                LPCWSTR key_name,
+                                                LPCWSTR filename,
+                                                ULONG folder,
+                                                LPWSTR *filepath )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_RemoveStorageFileName( ISpObjectToken *iface,
+                                                   REFCLSID caller,
+                                                   LPCWSTR key_name,
+                                                   BOOL delete_file )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_Remove( ISpObjectToken *iface,
+                                    REFCLSID caller )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_IsUISupported( ISpObjectToken *iface,
+                                           LPCWSTR ui_type,
+                                           void *extra_data,
+                                           ULONG extra_data_size,
+                                           IUnknown *object,
+                                           BOOL *supported )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_DisplayUI( ISpObjectToken *iface,
+                                       HWND parent,
+                                       LPCWSTR title,
+                                       LPCWSTR ui_type,
+                                       void *extra_data,
+                                       ULONG extra_data_size,
+                                       IUnknown *object )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_MatchesAttributes( ISpObjectToken *iface,
+                                               LPCWSTR attributes,
+                                               BOOL *matches )
+{
+    FIXME( "stub\n" );
+    return E_NOTIMPL;
+}
+
+const struct ISpObjectTokenVtbl token_vtbl =
+{
+    token_QueryInterface,
+    token_AddRef,
+    token_Release,
+    token_SetData,
+    token_GetData,
+    token_SetStringValue,
+    token_GetStringValue,
+    token_SetDWORD,
+    token_GetDWORD,
+    token_OpenKey,
+    token_CreateKey,
+    token_DeleteKey,
+    token_DeleteValue,
+    token_EnumKeys,
+    token_EnumValues,
+    token_SetId,
+    token_GetId,
+    token_GetCategory,
+    token_CreateInstance,
+    token_GetStorageFileName,
+    token_RemoveStorageFileName,
+    token_Remove,
+    token_IsUISupported,
+    token_DisplayUI,
+    token_MatchesAttributes
+};
+
+HRESULT token_create( IUnknown *outer, REFIID iid, void **obj )
+{
+    struct object_token *This = heap_alloc( sizeof(*This) );
+    HRESULT hr;
+
+    if (!This) return E_OUTOFMEMORY;
+    This->ISpObjectToken_iface.lpVtbl = &token_vtbl;
+    This->ref = 1;
+
+    hr = ISpObjectToken_QueryInterface( &This->ISpObjectToken_iface, iid, obj );
+
+    ISpObjectToken_Release( &This->ISpObjectToken_iface );
+    return hr;
+}

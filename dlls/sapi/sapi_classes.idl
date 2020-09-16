@@ -52,6 +52,19 @@ coclass SpObjectTokenEnum
 }
 
 [
+    uuid(ef411752-3736-4cb4-9c8c-8ef4ccb58efe),
+    helpstring("Object Token"),
+    progid("SAPI.SpObjectToken.1"),
+    vi_progid("SAPI.SpObjectToken"),
+    threading(both)
+]
+coclass SpObjectToken
+{
+    interface ISpObjectToken;
+    [default] interface ISpDataKey;
+}
+
+[
     uuid(96749377-3391-11d2-9ee3-00c04f797396),
     helpstring("Speech Voice"),
     progid("SAPI.SpVoice.1"),
