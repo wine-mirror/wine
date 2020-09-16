@@ -183,7 +183,6 @@ DECL_HANDLER(enable_socket_event);
 DECL_HANDLER(set_socket_deferred);
 DECL_HANDLER(alloc_console);
 DECL_HANDLER(free_console);
-DECL_HANDLER(attach_console);
 DECL_HANDLER(get_console_wait_event);
 DECL_HANDLER(append_console_input_history);
 DECL_HANDLER(get_console_input_history);
@@ -471,7 +470,6 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_set_socket_deferred,
     (req_handler)req_alloc_console,
     (req_handler)req_free_console,
-    (req_handler)req_attach_console,
     (req_handler)req_get_console_wait_event,
     (req_handler)req_append_console_input_history,
     (req_handler)req_get_console_input_history,
@@ -1108,8 +1106,6 @@ C_ASSERT( sizeof(struct alloc_console_request) == 32 );
 C_ASSERT( FIELD_OFFSET(struct alloc_console_reply, handle_in) == 8 );
 C_ASSERT( sizeof(struct alloc_console_reply) == 16 );
 C_ASSERT( sizeof(struct free_console_request) == 16 );
-C_ASSERT( FIELD_OFFSET(struct attach_console_request, pid) == 12 );
-C_ASSERT( sizeof(struct attach_console_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct get_console_wait_event_request, handle) == 12 );
 C_ASSERT( sizeof(struct get_console_wait_event_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct get_console_wait_event_reply, event) == 8 );

@@ -2565,35 +2565,6 @@ DECL_HANDLER(free_console)
     free_console( current->process );
 }
 
-/* attach to a other process's console */
-DECL_HANDLER(attach_console)
-{
-    struct process *process;
-
-    if (current->process->console)
-    {
-        set_error( STATUS_ACCESS_DENIED );
-        return;
-    }
-
-    process = get_process_from_id( req->pid == ATTACH_PARENT_PROCESS
-                                   ? current->process->parent_id : req->pid );
-    if (!process) return;
-
-    if (process->console && process->console->active)
-    {
-        current->process->console = (struct console_input *)grab_object( process->console );
-        current->process->console->num_proc++;
-    }
-    else
-    {
-        set_error( STATUS_INVALID_HANDLE );
-    }
-
-    release_object( process );
-    return;
-}
-
 /* appends a string to console's history */
 DECL_HANDLER(append_console_input_history)
 {

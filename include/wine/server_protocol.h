@@ -1850,18 +1850,6 @@ struct free_console_reply
 
 
 
-struct attach_console_request
-{
-    struct request_header __header;
-    process_id_t pid;
-};
-struct attach_console_reply
-{
-    struct reply_header __header;
-};
-
-
-
 struct get_console_wait_event_request
 {
     struct request_header __header;
@@ -5522,7 +5510,6 @@ enum request
     REQ_set_socket_deferred,
     REQ_alloc_console,
     REQ_free_console,
-    REQ_attach_console,
     REQ_get_console_wait_event,
     REQ_append_console_input_history,
     REQ_get_console_input_history,
@@ -5811,7 +5798,6 @@ union generic_request
     struct set_socket_deferred_request set_socket_deferred_request;
     struct alloc_console_request alloc_console_request;
     struct free_console_request free_console_request;
-    struct attach_console_request attach_console_request;
     struct get_console_wait_event_request get_console_wait_event_request;
     struct append_console_input_history_request append_console_input_history_request;
     struct get_console_input_history_request get_console_input_history_request;
@@ -6098,7 +6084,6 @@ union generic_reply
     struct set_socket_deferred_reply set_socket_deferred_reply;
     struct alloc_console_reply alloc_console_reply;
     struct free_console_reply free_console_reply;
-    struct attach_console_reply attach_console_reply;
     struct get_console_wait_event_reply get_console_wait_event_reply;
     struct append_console_input_history_reply append_console_input_history_reply;
     struct get_console_input_history_reply get_console_input_history_reply;
@@ -6320,7 +6305,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 641
+#define SERVER_PROTOCOL_VERSION 642
 
 /* ### protocol_version end ### */
 
