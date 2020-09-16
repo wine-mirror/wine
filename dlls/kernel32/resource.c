@@ -36,6 +36,7 @@
 #include "wine/exception.h"
 #include "wine/unicode.h"
 #include "wine/list.h"
+#include "kernel_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(resource);
 
@@ -62,6 +63,26 @@ static NTSTATUS get_res_nameA( LPCSTR name, UNICODE_STRING *str )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS get_res_nameW( LPCWSTR name, UNICODE_STRING *str )
+{
+    if (IS_INTRESOURCE(name))
+    {
+        str->Buffer = ULongToPtr( LOWORD(name) );
+        return STATUS_SUCCESS;
+    }
+    if (name[0] == '#')
+    {
+        ULONG value;
+        RtlInitUnicodeString( str, name + 1 );
+        if (RtlUnicodeStringToInteger( str, 10, &value ) != STATUS_SUCCESS || HIWORD(value))
+            return STATUS_INVALID_PARAMETER;
+        str->Buffer = ULongToPtr(value);
+        return STATUS_SUCCESS;
+    }
+    RtlCreateUnicodeString( str, name );
+    RtlUpcaseUnicodeString( str, str, FALSE );
+    return STATUS_SUCCESS;
+}
 
 /**********************************************************************
  *	    FindResourceExA  (KERNEL32.@)
@@ -1290,27 +1311,37 @@ BOOL WINAPI UpdateResourceW( HANDLE hUpdate, LPCWSTR lpType, LPCWSTR lpName,
                              WORD wLanguage, LPVOID lpData, DWORD cbData)
 {
     QUEUEDUPDATES *updates;
+    UNICODE_STRING nameW, typeW;
     BOOL ret = FALSE;
 
     TRACE("%p %s %s %08x %p %d\n", hUpdate,
           debugstr_w(lpType), debugstr_w(lpName), wLanguage, lpData, cbData);
 
+    nameW.Buffer = typeW.Buffer = NULL;
     updates = GlobalLock(hUpdate);
     if (updates)
     {
+        if (!set_ntstatus( get_res_nameW( lpName, &nameW ))) goto done;
+        if (!set_ntstatus( get_res_nameW( lpType, &typeW ))) goto done;
+
         if (lpData == NULL && cbData == 0)  /* remove resource */
         {
-            ret = update_add_resource( updates, lpType, lpName, wLanguage, NULL, TRUE );
+            ret = update_add_resource( updates, typeW.Buffer, nameW.Buffer, wLanguage, NULL, TRUE );
         }
         else
         {
             struct resource_data *data;
             data = allocate_resource_data( wLanguage, 0, lpData, cbData, TRUE );
             if (data)
-                ret = update_add_resource( updates, lpType, lpName, wLanguage, data, TRUE );
+                ret = update_add_resource( updates, typeW.Buffer, nameW.Buffer, wLanguage, data, TRUE );
         }
+
+    done:
         GlobalUnlock(hUpdate);
     }
+
+    if (!IS_INTRESOURCE(nameW.Buffer)) HeapFree( GetProcessHeap(), 0, nameW.Buffer );
+    if (!IS_INTRESOURCE(typeW.Buffer)) HeapFree( GetProcessHeap(), 0, typeW.Buffer );
     return ret;
 }
 

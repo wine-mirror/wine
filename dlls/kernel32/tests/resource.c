@@ -382,7 +382,6 @@ static void update_resources_name( void )
     if ( !module ) return;
 
     rsrc = FindResourceA( module, res_name, res_type );
-    todo_wine
     ok( rsrc != NULL ||
         broken( GetLastError() == ERROR_RESOURCE_TYPE_NOT_FOUND ) /* win2008 */,
         "FindResource failed: %u\n", GetLastError() );
