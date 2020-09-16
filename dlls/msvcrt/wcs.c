@@ -1165,12 +1165,12 @@ int WINAPIV MSVCRT__snprintf(char *str, MSVCRT_size_t len, const char *format, .
 /*********************************************************************
  *		_snprintf_l (MSVCRT.@)
  */
-int WINAPIV MSVCRT__snprintf_l(char *str, MSVCRT_size_t count, MSVCRT__locale_t locale,
-    const char *format, ...)
+int WINAPIV MSVCRT__snprintf_l(char *str, MSVCRT_size_t count, const char *format,
+        MSVCRT__locale_t locale, ...)
 {
     int retval;
     __ms_va_list valist;
-    __ms_va_start(valist, format);
+    __ms_va_start(valist, locale);
     retval = MSVCRT_vsnprintf_l(str, count, format, locale, valist);
     __ms_va_end(valist);
     return retval;
