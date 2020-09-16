@@ -367,6 +367,7 @@ struct console_connection
 
 static void console_connection_dump( struct object *obj, int verbose );
 static struct fd *console_connection_get_fd( struct object *obj );
+static struct object *console_connection_lookup_name( struct object *obj, struct unicode_str *name, unsigned int attr );
 static struct object *console_connection_open_file( struct object *obj, unsigned int access,
                                                     unsigned int sharing, unsigned int options );
 static int console_connection_close_handle( struct object *obj, struct process *process, obj_handle_t handle );
@@ -386,7 +387,7 @@ static const struct object_ops console_connection_ops =
     no_map_access,                    /* map_access */
     default_get_sd,                   /* get_sd */
     default_set_sd,                   /* set_sd */
-    no_lookup_name,                   /* lookup_name */
+    console_connection_lookup_name,   /* lookup_name */
     directory_link_name,              /* link_name */
     default_unlink_name,              /* unlink_name */
     console_connection_open_file,     /* open_file */
@@ -2351,6 +2352,24 @@ static struct fd *console_connection_get_fd( struct object *obj )
 {
     struct console_connection *connection = (struct console_connection *)obj;
     return (struct fd *)grab_object( connection->fd );
+}
+
+static struct object *console_connection_lookup_name( struct object *obj, struct unicode_str *name, unsigned int attr )
+{
+    static const WCHAR referenceW[] = {'R','e','f','e','r','e','n','c','e'};
+
+    if (name->len == sizeof(referenceW) && !memcmp( name->str, referenceW, name->len ))
+    {
+        if (!current->process->console)
+        {
+            set_error( STATUS_INVALID_HANDLE );
+            return NULL;
+        }
+        name->len = 0;
+        return grab_object( current->process->console );
+    }
+
+    return NULL;
 }
 
 static struct object *console_connection_open_file( struct object *obj, unsigned int access,
