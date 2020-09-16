@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2020-08-31 09:45-0300\n"
+"PO-Revision-Date: 2020-09-15 21:16-0300\n"
 "Last-Translator: Roberto Augusto Pungartnik <rpungartnik@gmail.com>\n"
 "Language-Team: Portuguese (Brazil)\n"
 "Language: pt_BR\n"
@@ -10758,153 +10758,115 @@ msgstr "&Mais Janelas..."
 
 #: dlls/vbscript/vbscript.rc:30
 msgid "Overflow"
-msgstr ""
+msgstr "Extravasamento"
 
 #: dlls/vbscript/vbscript.rc:31
-#, fuzzy
-#| msgid "Out of memory."
 msgid "Out of memory"
-msgstr "Memória insuficiente."
+msgstr "Memória insuficiente"
 
 #: dlls/vbscript/vbscript.rc:33
 msgid "This array is fixed or temporarily locked"
-msgstr ""
+msgstr "Este array está fixo ou temporariamente bloqueado"
 
 #: dlls/vbscript/vbscript.rc:34
-#, fuzzy
-#| msgid "Data type mismatch.\n"
 msgid "Type mismatch"
-msgstr "Tipo de dados diferente.\n"
+msgstr "Tipo de dados diferente"
 
 #: dlls/vbscript/vbscript.rc:36
-#, fuzzy
-#| msgid "I/O device error.\n"
 msgid "Device I/O error"
-msgstr "Erro em dispositivo de E/S.\n"
+msgstr "Erro em dispositivo de E/S"
 
 #: dlls/vbscript/vbscript.rc:37
-#, fuzzy
-#| msgid "File already exists.\n"
 msgid "File already exists"
-msgstr "O arquivo já existe.\n"
+msgstr "O arquivo já existe"
 
 #: dlls/vbscript/vbscript.rc:38
-#, fuzzy
-#| msgid "Disk full.\n"
 msgid "Disk full"
-msgstr "Disco cheio.\n"
+msgstr "Disco cheio"
 
 #: dlls/vbscript/vbscript.rc:39
-#, fuzzy
-#| msgid "Too many open files.\n"
 msgid "Too many files"
-msgstr "Muitos arquivos abertos.\n"
+msgstr "Muitos arquivos abertos"
 
 #: dlls/vbscript/vbscript.rc:40
-#, fuzzy
-#| msgid "Access denied.\n"
 msgid "Permission denied"
-msgstr "Acesso negado.\n"
+msgstr "Acesso negado"
 
 #: dlls/vbscript/vbscript.rc:41
 msgid "Path/File access error"
-msgstr ""
+msgstr "Falha de acesso ao Caminho/Arquivo"
 
 #: dlls/vbscript/vbscript.rc:42
-#, fuzzy
-#| msgid "Path not found.\n"
 msgid "Path not found"
-msgstr "Caminho não encontrado.\n"
+msgstr "Caminho não encontrado"
 
 #: dlls/vbscript/vbscript.rc:43
-#, fuzzy
-#| msgid "(value not set)"
 msgid "Object variable not set"
-msgstr "(valor não dado)"
+msgstr "Objeto variável não setado"
 
 #: dlls/vbscript/vbscript.rc:44
-#, fuzzy
-#| msgid "Invalid user buffer.\n"
 msgid "Invalid use of Null"
-msgstr "Buffer de usuário inválido.\n"
+msgstr "Usuo inválido de Null"
 
 #: dlls/vbscript/vbscript.rc:45
 msgid "Can't create necessary temporary file"
-msgstr ""
+msgstr "Arquivo temporário não pode ser criado"
 
 #: dlls/vbscript/vbscript.rc:46
-#, fuzzy
-#| msgid "Automation server can't create object"
 msgid "ActiveX component can't create object"
-msgstr "O servidor de automação não conseguiu criar o objeto"
+msgstr "Componente ActiveX não pode criar objeto"
 
 #: dlls/vbscript/vbscript.rc:47
-#, fuzzy
-#| msgid "Object doesn't support this action"
 msgid "Class doesn't support Automation"
-msgstr "O objeto não suporta esta ação"
+msgstr "Classe não suporta nomeação automática"
 
 #: dlls/vbscript/vbscript.rc:48
 msgid "File name or class name not found during Automation operation"
-msgstr ""
+msgstr "Nome de arquivo ou classe não encontrado durante operação automática"
 
 #: dlls/vbscript/vbscript.rc:51
-#, fuzzy
-#| msgid "Object doesn't support this action"
 msgid "Object doesn't support named arguments"
-msgstr "O objeto não suporta esta ação"
+msgstr "O objeto não suporta argumentos nomeados"
 
 #: dlls/vbscript/vbscript.rc:52
-#, fuzzy
-#| msgid "Object doesn't support this action"
 msgid "Object doesn't support current locale setting"
 msgstr "O objeto não suporta esta ação"
 
 #: dlls/vbscript/vbscript.rc:53 dlls/vbscript/vbscript.rc:54
-#, fuzzy
-#| msgid "Element not found.\n"
 msgid "Named argument not found"
-msgstr "Elemento não encontrado.\n"
+msgstr "Argumento nomeado não encontrado"
 
 #: dlls/vbscript/vbscript.rc:55
 msgid "Wrong number of arguments or invalid property assignment"
-msgstr ""
+msgstr "Numero de argumento errado ou propriedade inválida"
 
 #: dlls/vbscript/vbscript.rc:56
-#, fuzzy
-#| msgid "Object Class Violation"
 msgid "Object not a collection"
-msgstr "Violação da Classe de Objeto"
+msgstr "Objeto não é coleção"
 
 #: dlls/vbscript/vbscript.rc:57
-#, fuzzy
-#| msgid "Specified control was not found in message"
 msgid "Specified DLL function not found"
-msgstr "O controle especificado não foi encontrado na mensagem"
+msgstr "DLL de função não encontrada"
 
 #: dlls/vbscript/vbscript.rc:58
 msgid "Variable uses an Automation type not supported in VBScript"
-msgstr ""
+msgstr "Variável usa um tipo de automação não suportado em VBScript"
 
 #: dlls/vbscript/vbscript.rc:59
 msgid "The remote server machine does not exist or is unavailable"
-msgstr ""
+msgstr "Servidor remoto não existe ou esta inacessível"
 
 #: dlls/vbscript/vbscript.rc:60
 msgid "Invalid or unqualified reference"
-msgstr ""
+msgstr "Referência inválida"
 
 #: dlls/vbscript/vbscript.rc:62
-#, fuzzy
-#| msgid "Microsoft JScript compilation error"
 msgid "Microsoft VBScript compilation error"
-msgstr "Microsoft JScript erro de compilação"
+msgstr "Microsoft VBScript erro de compilação"
 
 #: dlls/vbscript/vbscript.rc:63
-#, fuzzy
-#| msgid "Microsoft JScript runtime error"
 msgid "Microsoft VBScript runtime error"
-msgstr "Microsoft JScript erro de execução"
+msgstr "Microsoft VBScript erro de execução"
 
 #: dlls/winemac.drv/winemac.rc:33
 msgid "Hide %@"
@@ -11002,33 +10964,27 @@ msgstr ""
 
 #: dlls/wininet/wininet.rc:35
 msgid "Effective Date"
-msgstr ""
+msgstr "Data de Início"
 
 #: dlls/wininet/wininet.rc:37
-#, fuzzy
-#| msgid "Security"
 msgid "Security Protocol"
-msgstr "Segurança"
+msgstr "Protocolo de Segurança"
 
 #: dlls/wininet/wininet.rc:38
-#, fuzzy
-#| msgid "Signature"
 msgid "Signature Type"
-msgstr "Assinatura"
+msgstr "Tipo de Assinatura"
 
 #: dlls/wininet/wininet.rc:39
-#, fuzzy
-#| msgid "Encrypting File System"
 msgid "Encryption Type"
-msgstr "Encriptando Sistema de Arquivos"
+msgstr "Tipo de encriptação"
 
 #: dlls/wininet/wininet.rc:40
 msgid "Privacy Strength"
-msgstr ""
+msgstr "Nível de Privacidade"
 
 #: dlls/wininet/wininet.rc:43
 msgid "bits"
-msgstr ""
+msgstr "bits"
 
 #: dlls/wininet/winineterror.mc:26
 msgid "The request has timed out.\n"
