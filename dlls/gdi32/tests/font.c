@@ -7208,7 +7208,7 @@ static void test_lang_names(void)
         memset( &efnd, 0, sizeof(efnd) );
         EnumFontFamiliesExA( dc, &font, enum_fullname_data_proc, (LPARAM)&efnd, 0 );
         if (PRIMARYLANGID(GetSystemDefaultLangID()) == LANG_ENGLISH)
-            todo_wine ok( efnd.total == min( 2, i + 1 ), "%d: EnumFontFamiliesExA unexpected count %u.\n", i, efnd.total );
+            ok( efnd.total == min( 2, i + 1 ), "%d: EnumFontFamiliesExA unexpected count %u.\n", i, efnd.total );
         else /* (zh-tw) doesn't match here probably because there's an (en) name too */
             ok( efnd.total == 0, "%d: EnumFontFamiliesExA unexpected count %u.\n", i, efnd.total );
 
@@ -7222,7 +7222,7 @@ static void test_lang_names(void)
         memset( &efnd, 0, sizeof(efnd) );
         EnumFontFamiliesExA( dc, &font, enum_fullname_data_proc, (LPARAM)&efnd, 0 );
         /* as wine_langnames3.sfd does not specify (en) name, (fr) is preferred */
-        if (i == 2) todo_wine ok( efnd.total == 1, "%d: EnumFontFamiliesExA unexpected count %u.\n", i, efnd.total );
+        if (i == 2) ok( efnd.total == 1, "%d: EnumFontFamiliesExA unexpected count %u.\n", i, efnd.total );
         else ok( efnd.total == 0, "%d: EnumFontFamiliesExA unexpected count %u.\n", i, efnd.total );
 
         strcpy( font.lfFaceName, "Wine Lang Cond (ko)" );

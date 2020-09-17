@@ -301,7 +301,7 @@ typedef struct tagFamily {
     struct list entry;
     unsigned int refcount;
     WCHAR family_name[LF_FACESIZE];
-    WCHAR english_name[LF_FACESIZE];
+    WCHAR second_name[LF_FACESIZE];
     struct list faces;
     struct list *replacement;
 } Family;
@@ -574,7 +574,7 @@ typedef struct tagFontSubst {
 static const WCHAR wine_fonts_key[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\',
                                        'F','o','n','t','s',0};
 static const WCHAR wine_fonts_cache_key[] = {'C','a','c','h','e',0};
-static const WCHAR english_name_value[] = {'E','n','g','l','i','s','h',' ','N','a','m','e',0};
+static const WCHAR second_name_value[] = {'S','e','c','o','n','d',' ','N','a','m','e',0};
 static const WCHAR face_index_value[] = {'I','n','d','e','x',0};
 static const WCHAR face_ntmflags_value[] = {'N','t','m','f','l','a','g','s',0};
 static const WCHAR face_version_value[] = {'V','e','r','s','i','o','n',0};
@@ -1076,7 +1076,7 @@ static Family *find_family_from_any_name(const WCHAR *name)
     LIST_FOR_EACH_ENTRY(family, &font_list, Family, entry)
     {
         if (!strncmpiW( family->family_name, name, LF_FACESIZE - 1 )) return family;
-        if (!strncmpiW( family->english_name, name, LF_FACESIZE - 1 )) return family;
+        if (!strncmpiW( family->second_name, name, LF_FACESIZE - 1 )) return family;
     }
 
     return NULL;
@@ -1415,6 +1415,7 @@ static int match_name_table_language( const FT_SfntName *name, LANGID lang )
     if (name_lang == lang) res += 30;
     else if (PRIMARYLANGID( name_lang ) == PRIMARYLANGID( lang )) res += 20;
     else if (name_lang == MAKELANGID( LANG_ENGLISH, SUBLANG_DEFAULT )) res += 10;
+    else if (lang == MAKELANGID( LANG_NEUTRAL, SUBLANG_NEUTRAL )) res += 5 * (0x100000 - name_lang);
     return res;
 }
 
@@ -1623,13 +1624,13 @@ static BOOL insert_face_in_family_list( Face *face, Family *family )
  * NB This function stores the ptrs to the strings to save copying.
  * Don't free them after calling.
  */
-static Family *create_family( WCHAR *family_name, WCHAR *english_name )
+static Family *create_family( WCHAR *family_name, WCHAR *second_name )
 {
     Family * const family = HeapAlloc( GetProcessHeap(), 0, sizeof(*family) );
     family->refcount = 1;
     lstrcpynW( family->family_name, family_name, LF_FACESIZE );
-    if (english_name) lstrcpynW( family->english_name, english_name, LF_FACESIZE );
-    else family->english_name[0] = 0;
+    if (second_name) lstrcpynW( family->second_name, second_name, LF_FACESIZE );
+    else family->second_name[0] = 0;
     list_init( &family->faces );
     family->replacement = &family->faces;
     list_add_tail( &font_list, &family->entry );
@@ -1794,22 +1795,22 @@ static void load_font_list_from_cache(HKEY hkey_font_cache)
     size = sizeof(buffer);
     while (!RegEnumKeyExW(hkey_font_cache, family_index++, buffer, &size, NULL, NULL, NULL, NULL))
     {
-        WCHAR *english_name = NULL;
+        WCHAR *second_name = NULL;
         WCHAR *family_name = strdupW( buffer );
         DWORD face_index = 0;
 
         RegOpenKeyExW(hkey_font_cache, family_name, 0, KEY_ALL_ACCESS, &hkey_family);
         TRACE("opened family key %s\n", debugstr_w(family_name));
         size = sizeof(buffer);
-        if (!RegQueryValueExW(hkey_family, english_name_value, NULL, NULL, (BYTE *)buffer, &size))
-            english_name = strdupW( buffer );
+        if (!RegQueryValueExW( hkey_family, second_name_value, NULL, NULL, (BYTE *)buffer, &size ))
+            second_name = strdupW( buffer );
 
-        family = create_family( family_name, english_name );
+        family = create_family( family_name, second_name );
 
-        if (english_name)
+        if (second_name)
         {
             FontSubst *subst = HeapAlloc(GetProcessHeap(), 0, sizeof(*subst));
-            subst->from.name = strdupW( english_name );
+            subst->from.name = strdupW( second_name );
             subst->from.charset = -1;
             subst->to.name = strdupW(family_name);
             subst->to.charset = -1;
@@ -1832,7 +1833,7 @@ static void load_font_list_from_cache(HKEY hkey_font_cache)
         }
 
         HeapFree( GetProcessHeap(), 0, family_name );
-        HeapFree( GetProcessHeap(), 0, english_name );
+        HeapFree( GetProcessHeap(), 0, second_name );
 
         RegCloseKey(hkey_family);
         release_family( family );
@@ -1869,9 +1870,9 @@ static void add_face_to_cache(Face *face)
 
     RegCreateKeyExW( hkey_font_cache, face->family->family_name, 0, NULL, REG_OPTION_VOLATILE,
                      KEY_ALL_ACCESS, NULL, &hkey_family, NULL );
-    if (face->family->english_name[0])
-        RegSetValueExW( hkey_family, english_name_value, 0, REG_SZ, (BYTE *)face->family->english_name,
-                        (strlenW( face->family->english_name ) + 1) * sizeof(WCHAR) );
+    if (face->family->second_name[0])
+        RegSetValueExW( hkey_family, second_name_value, 0, REG_SZ, (BYTE *)face->family->second_name,
+                        (strlenW( face->family->second_name ) + 1) * sizeof(WCHAR) );
 
     if (face->scalable) face_key_name = face->style_name;
     else
@@ -1947,28 +1948,35 @@ static WCHAR *get_vertical_name( WCHAR *name )
 static Family *get_family( FT_Face ft_face, BOOL vertical )
 {
     Family *family;
-    WCHAR *family_name, *english_name;
+    WCHAR *family_name, *second_name;
 
     family_name = ft_face_get_family_name( ft_face, GetSystemDefaultLCID() );
-    english_name = ft_face_get_family_name( ft_face, MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT) );
+    second_name = ft_face_get_family_name( ft_face, MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT) );
 
-    if (!strcmpiW( family_name, english_name ))
+    /* try to find another secondary name, preferring the lowest langids */
+    if (!strcmpiW( family_name, second_name ))
     {
-        HeapFree( GetProcessHeap(), 0, english_name );
-        english_name = NULL;
+        HeapFree( GetProcessHeap(), 0, second_name );
+        second_name = ft_face_get_family_name( ft_face, MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL) );
+    }
+
+    if (!strcmpiW( family_name, second_name ))
+    {
+        HeapFree( GetProcessHeap(), 0, second_name );
+        second_name = NULL;
     }
 
     if (vertical)
     {
         family_name = get_vertical_name( family_name );
-        english_name = get_vertical_name( english_name );
+        second_name = get_vertical_name( second_name );
     }
 
     if ((family = find_family_from_name( family_name ))) family->refcount++;
-    else if ((family = create_family( family_name, english_name )) && english_name)
+    else if ((family = create_family( family_name, second_name )) && second_name)
     {
         FontSubst *subst = HeapAlloc( GetProcessHeap(), 0, sizeof(*subst) );
-        subst->from.name = strdupW( english_name );
+        subst->from.name = strdupW( second_name );
         subst->from.charset = -1;
         subst->to.name = strdupW( family_name );
         subst->to.charset = -1;
@@ -1976,7 +1984,7 @@ static Family *get_family( FT_Face ft_face, BOOL vertical )
     }
 
     HeapFree( GetProcessHeap(), 0, family_name );
-    HeapFree( GetProcessHeap(), 0, english_name );
+    HeapFree( GetProcessHeap(), 0, second_name );
 
     return family;
 }
@@ -2411,7 +2419,7 @@ static BOOL map_font_family(const WCHAR *orig, const WCHAR *repl)
         {
             TRACE("mapping %s to %s\n", debugstr_w(repl), debugstr_w(orig));
             lstrcpynW( new_family->family_name, orig, LF_FACESIZE );
-            new_family->english_name[0] = 0;
+            new_family->second_name[0] = 0;
             list_init(&new_family->faces);
             new_family->replacement = &family->faces;
             list_add_tail(&font_list, &new_family->entry);
