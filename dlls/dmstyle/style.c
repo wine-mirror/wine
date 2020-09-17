@@ -201,8 +201,8 @@ static HRESULT WINAPI IDirectMusicStyle8Impl_GetMotif(IDirectMusicStyle8 *iface,
         IDirectMusicSegment **ppSegment)
 {
         IDirectMusicStyle8Impl *This = impl_from_IDirectMusicStyle8(iface);
-	FIXME("(%p, %p, %p): stub\n", This, pwszName, ppSegment);
-	return S_OK;
+        FIXME("(%p, %s, %p): stub\n", This, debugstr_w(pwszName), ppSegment);
+        return S_FALSE;
 }
 
 static HRESULT WINAPI IDirectMusicStyle8Impl_GetDefaultChordMap(IDirectMusicStyle8 *iface,
