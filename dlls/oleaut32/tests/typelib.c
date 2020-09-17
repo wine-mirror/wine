@@ -3978,6 +3978,14 @@ static const struct map_entry funckind_map[] = {
     {0, NULL}
 };
 
+static const struct map_entry varkind_map[] = {
+    MAP_ENTRY(VAR_PERINSTANCE),
+    MAP_ENTRY(VAR_STATIC),
+    MAP_ENTRY(VAR_CONST),
+    MAP_ENTRY(VAR_DISPATCH),
+    {0, NULL}
+};
+
 static const struct map_entry invkind_map[] = {
     MAP_ENTRY(INVOKE_FUNC),
     MAP_ENTRY(INVOKE_PROPERTYGET),
@@ -4248,6 +4256,65 @@ static const char *dump_func_flags(DWORD flags)
     return buf;
 }
 
+static const char *dump_var_flags(DWORD flags)
+{
+    static char buf[256];
+
+    if (!flags) return "0";
+
+    buf[0] = 0;
+
+#define ADD_FLAG(x) if (flags & x) { if (buf[0]) strcat(buf, "|"); strcat(buf, #x); flags &= ~x; }
+    ADD_FLAG(VARFLAG_FREADONLY)
+    ADD_FLAG(VARFLAG_FSOURCE)
+    ADD_FLAG(VARFLAG_FBINDABLE)
+    ADD_FLAG(VARFLAG_FREQUESTEDIT)
+    ADD_FLAG(VARFLAG_FDISPLAYBIND)
+    ADD_FLAG(VARFLAG_FDEFAULTBIND)
+    ADD_FLAG(VARFLAG_FHIDDEN)
+    ADD_FLAG(VARFLAG_FRESTRICTED)
+    ADD_FLAG(VARFLAG_FDEFAULTCOLLELEM)
+    ADD_FLAG(VARFLAG_FUIDEFAULT)
+    ADD_FLAG(VARFLAG_FNONBROWSABLE)
+    ADD_FLAG(VARFLAG_FREPLACEABLE)
+    ADD_FLAG(VARFLAG_FIMMEDIATEBIND)
+#undef ADD_FLAG
+
+    assert(!flags);
+    assert(strlen(buf) < sizeof(buf));
+
+    return buf;
+}
+
+static const char *dump_variant_info(const VARIANT *v)
+{
+    const char *vt_str = map_value(V_VT(v), vt_map);
+    static char buf[256];
+    switch(V_VT(v)) {
+        case VT_I1: sprintf(buf, "{ %s, { .value_int = %d } }", vt_str, V_I1(v)); break;
+        case VT_I2: sprintf(buf, "{ %s, { .value_int = %d } }", vt_str, V_I2(v)); break;
+        case VT_I4: sprintf(buf, "{ %s, { .value_int = %d } }", vt_str, V_I4(v)); break;
+        case VT_I8: sprintf(buf, "{ %s, { .value_int = %s } }", vt_str, wine_dbgstr_longlong(V_I8(v))); break;
+        case VT_INT: sprintf(buf, "{ %s, { .value_int = %d } }", vt_str, V_UINT(v)); break;
+        case VT_BOOL: sprintf(buf, "{ %s, { .value_int = %d } }", vt_str, V_BOOL(v)); break;
+
+        case VT_UI1: sprintf(buf, "{ %s, { .value_uint = %u } }", vt_str, V_UI1(v)); break;
+        case VT_UI2: sprintf(buf, "{ %s, { .value_uint = %u } }", vt_str, V_UI2(v)); break;
+        case VT_UI4: sprintf(buf, "{ %s, { .value_uint = %u } }", vt_str, V_UI4(v)); break;
+        case VT_UI8: sprintf(buf, "{ %s, { .value_uint = %u } }", vt_str, wine_dbgstr_longlong(V_UI8(v))); break;
+        case VT_UINT: sprintf(buf, "{ %s, { .value_uint = %u } }", vt_str, V_UINT(v)); break;
+
+        case VT_R4: sprintf(buf, "{ %s, { .value_float = %0.9g } }", vt_str, V_R4(v)); break;
+        case VT_R8: sprintf(buf, "{ %s, { .value_float = %0.17g } }", vt_str, V_R8(v)); break;
+
+        case VT_BSTR: sprintf(buf, "{ %s, { .value_str = \"%s\" } }", vt_str, dump_string(V_BSTR(v))); break;
+        default:
+            printf("failed - dump_variant_info: cannot serialize %s\n", vt_str);
+            sprintf(buf, "{ %s, { /* cannot dump */ } }", vt_str);
+    }
+    return buf;
+}
+
 static int get_href_type(ITypeInfo *info, TYPEDESC *tdesc)
 {
     int href_type = -1;
@@ -4289,7 +4356,7 @@ static void test_dump_typelib(const WCHAR *name)
         TYPEATTR *attr;
         BSTR name;
         DWORD help_ctx;
-        int f = 0;
+        int f = 0, v = 0;
 
         OLE_CHECK(ITypeLib_GetDocumentation(lib, i, &name, NULL, &help_ctx, NULL));
         printf("{\n"
@@ -4301,11 +4368,11 @@ static void test_dump_typelib(const WCHAR *name)
         printf("  \"%s\",\n", wine_dbgstr_guid(&attr->guid));
 
         printf("  /*kind*/ %s, /*flags*/ %s, /*align*/ %s, /*size*/ %s,\n"
-               "  /*helpctx*/ 0x%04x, /*version*/ 0x%08x, /*#vtbl*/ %d, /*#func*/ %d,\n",
+               "  /*helpctx*/ 0x%04x, /*version*/ 0x%08x, /*#vtbl*/ %d, /*#func*/ %d, /*#var*/ %d,\n",
             map_value(attr->typekind, tkind_map), dump_type_flags(attr->wTypeFlags),
             print_align(name, attr), print_size(name, attr),
             help_ctx, MAKELONG(attr->wMinorVerNum, attr->wMajorVerNum),
-            attr->cbSizeVft/sizeof(void*), attr->cFuncs);
+            attr->cbSizeVft/sizeof(void*), attr->cFuncs, attr->cVars);
 
         printf("  { /* funcs */%s", attr->cFuncs ? "\n" : " },\n");
         while (1)
@@ -4347,7 +4414,37 @@ static void test_dump_typelib(const WCHAR *name)
             ITypeInfo_ReleaseFuncDesc(info, desc);
             f++;
         }
-        if (attr->cFuncs) printf("  }\n");
+        if (attr->cFuncs) printf("  },\n");
+
+        printf("  { /* vars */%s", attr->cVars ? "\n" : " },\n");
+        while (1)
+        {
+            VARDESC *desc;
+            BSTR varname;
+            UINT cNames;
+            if (FAILED(ITypeInfo_GetVarDesc(info, v, &desc)))
+                break;
+            OLE_CHECK(ITypeInfo_GetNames(info, desc->memid, &varname, 1, &cNames));
+            if(cNames!=1) { printf("GetNames failed - VARDESC should have one name, got %d\n", cNames); return; }
+            printf("    {\n"
+                   "      /*id*/ 0x%x, /*name*/ \"%s\", /*flags*/ %s, /*kind*/ %s,\n",
+                desc->memid, dump_string(varname), dump_var_flags(desc->wVarFlags), map_value(desc->varkind, varkind_map));
+            SysFreeString(varname);
+            if (desc->varkind == VAR_PERINSTANCE) {
+                printf("      { .oInst = %d },\n", desc->DUMMYUNIONNAME.oInst);
+            } else if (desc->varkind == VAR_CONST) {
+                printf("      { .varValue = %s },\n", dump_variant_info(desc->DUMMYUNIONNAME.lpvarValue));
+            } else {
+                printf("      { /* DUMMYUNIONNAME unused*/ },\n");
+            }
+            printf("      {%s, %s, %s}, /* ret */\n", map_value(desc->elemdescVar.tdesc.vt, vt_map),
+                map_value(get_href_type(info, &desc->elemdescVar.tdesc), tkind_map), dump_param_flags(U(desc->elemdescVar).paramdesc.wParamFlags));
+            printf("    },\n");
+            ITypeInfo_ReleaseVarDesc(info, desc);
+            v++;
+        }
+        if (attr->cVars) printf("  },\n");
+
         printf("},\n");
         ITypeInfo_ReleaseTypeAttr(info, attr);
         ITypeInfo_Release(info);
@@ -4357,6 +4454,16 @@ static void test_dump_typelib(const WCHAR *name)
 }
 
 #else
+
+typedef struct _variant_info {
+    VARTYPE vt;
+    union {
+        INT64 value_int;
+        UINT64 value_uint;
+        double value_float;
+        const char * value_str;
+    };
+} variant_info;
 
 typedef struct _element_info
 {
@@ -4381,6 +4488,19 @@ typedef struct _function_info
     LPCSTR names[15];
 } function_info;
 
+typedef struct _var_info
+{
+    MEMBERID memid;
+    LPCSTR name;
+    WORD wVarFlags;
+    VARKIND varkind;
+    union {
+        ULONG oInst; /* VAR_PERINSTANCE */
+        variant_info varValue; /* VAR_CONST */
+    } DUMMYUNIONNAME;
+    element_info elemdescVar;
+} var_info;
+
 typedef struct _type_info
 {
     LPCSTR name;
@@ -4393,23 +4513,33 @@ typedef struct _type_info
     DWORD version;
     USHORT cbSizeVft;
     USHORT cFuncs;
+    USHORT cVars;
     function_info funcs[20];
+    var_info vars[20];
 } type_info;
 
+static const SYSKIND info_syskind = SYS_WIN32;
 static const type_info info[] = {
 /*** Autogenerated data. Do not edit, change the generator above instead. ***/
 {
   "g",
   "{b14b6bb5-904e-4ff9-b247-bd361f7a0001}",
   /*kind*/ TKIND_RECORD, /*flags*/ 0, /*align*/ TYPE_ALIGNMENT(struct g), /*size*/ sizeof(struct g),
-  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0,
+  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0, /*#var*/ 1,
   { /* funcs */ },
+  { /* vars */
+    {
+      /*id*/ 0x40000000, /*name*/ "g1", /*flags*/ 0, /*kind*/ VAR_PERINSTANCE,
+      { .oInst = 0 },
+      {VT_INT, -1, PARAMFLAG_NONE}, /* ret */
+    },
+  },
 },
 {
   "test_iface",
   "{b14b6bb5-904e-4ff9-b247-bd361f7a0002}",
   /*kind*/ TKIND_INTERFACE, /*flags*/ 0, /*align*/ TYPE_ALIGNMENT(test_iface*), /*size*/ sizeof(test_iface*),
-  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 4, /*#func*/ 1,
+  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 4, /*#func*/ 1, /*#var*/ 0,
   { /* funcs */
     {
       /*id*/ 0x60010000, /*func*/ FUNC_PUREVIRTUAL, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
@@ -4425,13 +4555,14 @@ static const type_info info[] = {
         NULL,
       },
     },
-  }
+  },
+  { /* vars */ },
 },
 {
   "parent_iface",
   "{b14b6bb5-904e-4ff9-b247-bd361f7aa001}",
   /*kind*/ TKIND_INTERFACE, /*flags*/ 0, /*align*/ TYPE_ALIGNMENT(parent_iface*), /*size*/ sizeof(parent_iface*),
-  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 4, /*#func*/ 1,
+  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 4, /*#func*/ 1, /*#var*/ 0,
   { /* funcs */
     {
       /*id*/ 0x60010000, /*func*/ FUNC_PUREVIRTUAL, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
@@ -4447,13 +4578,14 @@ static const type_info info[] = {
         NULL,
       },
     },
-  }
+  },
+  { /* vars */ },
 },
 {
   "child_iface",
   "{b14b6bb5-904e-4ff9-b247-bd361f7aa002}",
   /*kind*/ TKIND_INTERFACE, /*flags*/ 0, /*align*/ TYPE_ALIGNMENT(child_iface*), /*size*/ sizeof(child_iface*),
-  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 5, /*#func*/ 1,
+  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 5, /*#func*/ 1, /*#var*/ 0,
   { /* funcs */
     {
       /*id*/ 0x60020000, /*func*/ FUNC_PUREVIRTUAL, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
@@ -4467,55 +4599,74 @@ static const type_info info[] = {
         NULL,
       },
     },
-  }
+  },
+  { /* vars */ },
 },
 {
   "_n",
   "{016fe2ec-b2c8-45f8-b23b-39e53a753903}",
   /*kind*/ TKIND_RECORD, /*flags*/ 0, /*align*/ TYPE_ALIGNMENT(struct _n), /*size*/ sizeof(struct _n),
-  /*helpctx*/ 0x0003, /*version*/ 0x00010002, /*#vtbl*/ 0, /*#func*/ 0,
+  /*helpctx*/ 0x0003, /*version*/ 0x00010002, /*#vtbl*/ 0, /*#func*/ 0, /*#var*/ 1,
   { /* funcs */ },
+  { /* vars */
+    {
+      /*id*/ 0x40000000, /*name*/ "n1", /*flags*/ 0, /*kind*/ VAR_PERINSTANCE,
+      { .oInst = 0 },
+      {VT_INT, -1, PARAMFLAG_NONE}, /* ret */
+    },
+  },
 },
 {
   "n",
   "{016fe2ec-b2c8-45f8-b23b-39e53a753902}",
   /*kind*/ TKIND_ALIAS, /*flags*/ TYPEFLAG_FHIDDEN, /*align*/ TYPE_ALIGNMENT(n), /*size*/ sizeof(n),
-  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0,
+  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0, /*#var*/ 0,
   { /* funcs */ },
+  { /* vars */ },
 },
 {
   "nn",
   "{00000000-0000-0000-0000-000000000000}",
   /*kind*/ TKIND_ALIAS, /*flags*/ 0, /*align*/ TYPE_ALIGNMENT(nn), /*size*/ sizeof(nn),
-  /*helpctx*/ 0x0003, /*version*/ 0x00010002, /*#vtbl*/ 0, /*#func*/ 0,
+  /*helpctx*/ 0x0003, /*version*/ 0x00010002, /*#vtbl*/ 0, /*#func*/ 0, /*#var*/ 0,
   { /* funcs */ },
+  { /* vars */ },
 },
 {
   "_m",
   "{016fe2ec-b2c8-45f8-b23b-39e53a753906}",
   /*kind*/ TKIND_RECORD, /*flags*/ 0, /*align*/ TYPE_ALIGNMENT(struct _m), /*size*/ sizeof(struct _m),
-  /*helpctx*/ 0x0003, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0,
+  /*helpctx*/ 0x0003, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0, /*#var*/ 1,
   { /* funcs */ },
+  { /* vars */
+    {
+      /*id*/ 0x40000000, /*name*/ "m1", /*flags*/ 0, /*kind*/ VAR_PERINSTANCE,
+      { .oInst = 0 },
+      {VT_INT, -1, PARAMFLAG_NONE}, /* ret */
+    },
+  },
 },
 {
   "m",
   "{016fe2ec-b2c8-45f8-b23b-39e53a753905}",
   /*kind*/ TKIND_ALIAS, /*flags*/ TYPEFLAG_FHIDDEN, /*align*/ TYPE_ALIGNMENT(m), /*size*/ sizeof(m),
-  /*helpctx*/ 0x0000, /*version*/ 0x00010002, /*#vtbl*/ 0, /*#func*/ 0,
+  /*helpctx*/ 0x0000, /*version*/ 0x00010002, /*#vtbl*/ 0, /*#func*/ 0, /*#var*/ 0,
   { /* funcs */ },
+  { /* vars */ },
 },
 {
   "mm",
   "{00000000-0000-0000-0000-000000000000}",
   /*kind*/ TKIND_ALIAS, /*flags*/ 0, /*align*/ TYPE_ALIGNMENT(mm), /*size*/ sizeof(mm),
-  /*helpctx*/ 0x0003, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0,
+  /*helpctx*/ 0x0003, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0, /*#var*/ 0,
   { /* funcs */ },
+  { /* vars */ },
 },
 {
   "IDualIface",
   "{b14b6bb5-904e-4ff9-b247-bd361f7aaedd}",
   /*kind*/ TKIND_DISPATCH, /*flags*/ TYPEFLAG_FDISPATCHABLE|TYPEFLAG_FDUAL, /*align*/ TYPE_ALIGNMENT(IDualIface*), /*size*/ sizeof(IDualIface*),
-  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 7, /*#func*/ 8,
+  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 7, /*#func*/ 8, /*#var*/ 0,
   { /* funcs */
     {
       /*id*/ 0x60000000, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
@@ -4651,13 +4802,14 @@ static const type_info info[] = {
         NULL,
       },
     },
-  }
+  },
+  { /* vars */ },
 },
 {
   "ISimpleIface",
   "{ec5dfcd6-eeb0-4cd6-b51e-8030e1dac009}",
   /*kind*/ TKIND_INTERFACE, /*flags*/ TYPEFLAG_FDISPATCHABLE, /*align*/ TYPE_ALIGNMENT(ISimpleIface*), /*size*/ sizeof(ISimpleIface*),
-  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 8, /*#func*/ 1,
+  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 8, /*#func*/ 1, /*#var*/ 0,
   { /* funcs */
     {
       /*id*/ 0x60020000, /*func*/ FUNC_PUREVIRTUAL, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
@@ -4671,153 +4823,338 @@ static const type_info info[] = {
         NULL,
       },
     },
-  }
+  },
+  { /* vars */ },
 },
 {
   "test_struct",
   "{4029f190-ca4a-4611-aeb9-673983cb96dd}",
   /*kind*/ TKIND_RECORD, /*flags*/ 0, /*align*/ TYPE_ALIGNMENT(struct test_struct), /*size*/ sizeof(struct test_struct),
-  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0,
+  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0, /*#var*/ 4,
   { /* funcs */ },
+  { /* vars */
+    {
+      /*id*/ 0x40000000, /*name*/ "hr", /*flags*/ 0, /*kind*/ VAR_PERINSTANCE,
+      { .oInst = 0 },
+      {VT_HRESULT, -1, PARAMFLAG_NONE}, /* ret */
+    },
+    {
+      /*id*/ 0x40000001, /*name*/ "b", /*flags*/ 0, /*kind*/ VAR_PERINSTANCE,
+      { .oInst = 4 },
+      {VT_BOOL, -1, PARAMFLAG_NONE}, /* ret */
+    },
+    {
+      /*id*/ 0x40000002, /*name*/ "disp", /*flags*/ 0, /*kind*/ VAR_PERINSTANCE,
+      { .oInst = 8 },
+      {VT_DISPATCH, -1, PARAMFLAG_NONE}, /* ret */
+    },
+    {
+      /*id*/ 0x40000003, /*name*/ "bstr", /*flags*/ 0, /*kind*/ VAR_PERINSTANCE,
+      { .oInst = 12 },
+      {VT_BSTR, -1, PARAMFLAG_NONE}, /* ret */
+    },
+  },
 },
 {
   "test_struct2",
   "{4029f190-ca4a-4611-aeb9-673983cb96de}",
   /*kind*/ TKIND_RECORD, /*flags*/ 0, /*align*/ TYPE_ALIGNMENT(struct test_struct2), /*size*/ sizeof(struct test_struct2),
-  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0,
+  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0, /*#var*/ 4,
   { /* funcs */ },
+  { /* vars */
+    {
+      /*id*/ 0x40000000, /*name*/ "hr", /*flags*/ 0, /*kind*/ VAR_PERINSTANCE,
+      { .oInst = 0 },
+      {VT_HRESULT, -1, PARAMFLAG_NONE}, /* ret */
+    },
+    {
+      /*id*/ 0x40000001, /*name*/ "b", /*flags*/ 0, /*kind*/ VAR_PERINSTANCE,
+      { .oInst = 4 },
+      {VT_BOOL, -1, PARAMFLAG_NONE}, /* ret */
+    },
+    {
+      /*id*/ 0x40000002, /*name*/ "disp", /*flags*/ 0, /*kind*/ VAR_PERINSTANCE,
+      { .oInst = 8 },
+      {VT_DISPATCH, -1, PARAMFLAG_NONE}, /* ret */
+    },
+    {
+      /*id*/ 0x40000003, /*name*/ "bstr", /*flags*/ 0, /*kind*/ VAR_PERINSTANCE,
+      { .oInst = 12 },
+      {VT_BSTR, -1, PARAMFLAG_NONE}, /* ret */
+    },
+  },
 },
 {
   "t_INT",
   "{016fe2ec-b2c8-45f8-b23b-39e53a75396a}",
   /*kind*/ TKIND_ALIAS, /*flags*/ TYPEFLAG_FRESTRICTED, /*align*/ TYPE_ALIGNMENT(t_INT), /*size*/ sizeof(t_INT),
-  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0,
+  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0, /*#var*/ 0,
   { /* funcs */ },
+  { /* vars */ },
 },
 {
   "a",
   "{00000000-0000-0000-0000-000000000000}",
   /*kind*/ TKIND_ALIAS, /*flags*/ 0, /*align*/ TYPE_ALIGNMENT(a), /*size*/ sizeof(a),
-  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0,
+  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0, /*#var*/ 0,
   { /* funcs */ },
+  { /* vars */ },
 },
 {
   "_a",
   "{00000000-0000-0000-0000-000000000000}",
   /*kind*/ TKIND_ENUM, /*flags*/ 0, /*align*/ 4, /*size*/ 4,
-  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0,
+  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0, /*#var*/ 2,
   { /* funcs */ },
+  { /* vars */
+    {
+      /*id*/ 0x40000000, /*name*/ "a1", /*flags*/ 0, /*kind*/ VAR_CONST,
+      { .varValue = { VT_I4, { .value_int = 0 } } },
+      {VT_INT, -1, PARAMFLAG_NONE}, /* ret */
+    },
+    {
+      /*id*/ 0x40000001, /*name*/ "a2", /*flags*/ 0, /*kind*/ VAR_CONST,
+      { .varValue = { VT_I4, { .value_int = 1 } } },
+      {VT_INT, -1, PARAMFLAG_NONE}, /* ret */
+    },
+  },
 },
 {
   "aa",
   "{00000000-0000-0000-0000-000000000000}",
   /*kind*/ TKIND_ENUM, /*flags*/ 0, /*align*/ 4, /*size*/ 4,
-  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0,
+  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0, /*#var*/ 2,
   { /* funcs */ },
+  { /* vars */
+    {
+      /*id*/ 0x40000000, /*name*/ "aa1", /*flags*/ 0, /*kind*/ VAR_CONST,
+      { .varValue = { VT_I4, { .value_int = 0 } } },
+      {VT_INT, -1, PARAMFLAG_NONE}, /* ret */
+    },
+    {
+      /*id*/ 0x40000001, /*name*/ "aa2", /*flags*/ 0, /*kind*/ VAR_CONST,
+      { .varValue = { VT_I4, { .value_int = 1 } } },
+      {VT_INT, -1, PARAMFLAG_NONE}, /* ret */
+    },
+  },
 },
 {
   "_b",
   "{00000000-0000-0000-0000-000000000000}",
   /*kind*/ TKIND_ENUM, /*flags*/ 0, /*align*/ 4, /*size*/ 4,
-  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0,
+  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0, /*#var*/ 2,
   { /* funcs */ },
+  { /* vars */
+    {
+      /*id*/ 0x40000000, /*name*/ "b1", /*flags*/ 0, /*kind*/ VAR_CONST,
+      { .varValue = { VT_I4, { .value_int = 0 } } },
+      {VT_INT, -1, PARAMFLAG_NONE}, /* ret */
+    },
+    {
+      /*id*/ 0x40000001, /*name*/ "b2", /*flags*/ 0, /*kind*/ VAR_CONST,
+      { .varValue = { VT_I4, { .value_int = 1 } } },
+      {VT_INT, -1, PARAMFLAG_NONE}, /* ret */
+    },
+  },
 },
 {
   "bb",
   "{00000000-0000-0000-0000-000000000000}",
   /*kind*/ TKIND_ENUM, /*flags*/ 0, /*align*/ 4, /*size*/ 4,
-  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0,
+  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0, /*#var*/ 2,
   { /* funcs */ },
+  { /* vars */
+    {
+      /*id*/ 0x40000000, /*name*/ "bb1", /*flags*/ 0, /*kind*/ VAR_CONST,
+      { .varValue = { VT_I4, { .value_int = 0 } } },
+      {VT_INT, -1, PARAMFLAG_NONE}, /* ret */
+    },
+    {
+      /*id*/ 0x40000001, /*name*/ "bb2", /*flags*/ 0, /*kind*/ VAR_CONST,
+      { .varValue = { VT_I4, { .value_int = 1 } } },
+      {VT_INT, -1, PARAMFLAG_NONE}, /* ret */
+    },
+  },
 },
 {
   "c",
   "{016fe2ec-b2c8-45f8-b23b-39e53a75396b}",
   /*kind*/ TKIND_ALIAS, /*flags*/ 0, /*align*/ TYPE_ALIGNMENT(c), /*size*/ sizeof(c),
-  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0,
+  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0, /*#var*/ 0,
   { /* funcs */ },
+  { /* vars */ },
 },
 {
   "_c",
   "{00000000-0000-0000-0000-000000000000}",
   /*kind*/ TKIND_ENUM, /*flags*/ 0, /*align*/ 4, /*size*/ 4,
-  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0,
+  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0, /*#var*/ 2,
   { /* funcs */ },
+  { /* vars */
+    {
+      /*id*/ 0x40000000, /*name*/ "c1", /*flags*/ 0, /*kind*/ VAR_CONST,
+      { .varValue = { VT_I4, { .value_int = 0 } } },
+      {VT_INT, -1, PARAMFLAG_NONE}, /* ret */
+    },
+    {
+      /*id*/ 0x40000001, /*name*/ "c2", /*flags*/ 0, /*kind*/ VAR_CONST,
+      { .varValue = { VT_I4, { .value_int = 1 } } },
+      {VT_INT, -1, PARAMFLAG_NONE}, /* ret */
+    },
+  },
 },
 {
   "cc",
   "{016fe2ec-b2c8-45f8-b23b-39e53a75396c}",
   /*kind*/ TKIND_ENUM, /*flags*/ 0, /*align*/ 4, /*size*/ 4,
-  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0,
+  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0, /*#var*/ 2,
   { /* funcs */ },
+  { /* vars */
+    {
+      /*id*/ 0x40000000, /*name*/ "cc1", /*flags*/ 0, /*kind*/ VAR_CONST,
+      { .varValue = { VT_I4, { .value_int = 0 } } },
+      {VT_INT, -1, PARAMFLAG_NONE}, /* ret */
+    },
+    {
+      /*id*/ 0x40000001, /*name*/ "cc2", /*flags*/ 0, /*kind*/ VAR_CONST,
+      { .varValue = { VT_I4, { .value_int = 1 } } },
+      {VT_INT, -1, PARAMFLAG_NONE}, /* ret */
+    },
+  },
 },
 {
   "d",
   "{016fe2ec-b2c8-45f8-b23b-39e53a75396d}",
   /*kind*/ TKIND_ALIAS, /*flags*/ TYPEFLAG_FRESTRICTED|TYPEFLAG_FHIDDEN, /*align*/ TYPE_ALIGNMENT(d), /*size*/ sizeof(d),
-  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0,
+  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0, /*#var*/ 0,
   { /* funcs */ },
+  { /* vars */ },
 },
 {
   "_d",
   "{00000000-0000-0000-0000-000000000000}",
   /*kind*/ TKIND_ENUM, /*flags*/ TYPEFLAG_FRESTRICTED|TYPEFLAG_FHIDDEN, /*align*/ 4, /*size*/ 4,
-  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0,
+  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0, /*#var*/ 2,
   { /* funcs */ },
+  { /* vars */
+    {
+      /*id*/ 0x40000000, /*name*/ "d1", /*flags*/ 0, /*kind*/ VAR_CONST,
+      { .varValue = { VT_I4, { .value_int = 0 } } },
+      {VT_INT, -1, PARAMFLAG_NONE}, /* ret */
+    },
+    {
+      /*id*/ 0x40000001, /*name*/ "d2", /*flags*/ 0, /*kind*/ VAR_CONST,
+      { .varValue = { VT_I4, { .value_int = 1 } } },
+      {VT_INT, -1, PARAMFLAG_NONE}, /* ret */
+    },
+  },
 },
 {
   "dd",
   "{016fe2ec-b2c8-45f8-b23b-39e53a75396e}",
   /*kind*/ TKIND_ENUM, /*flags*/ TYPEFLAG_FRESTRICTED|TYPEFLAG_FHIDDEN, /*align*/ 4, /*size*/ 4,
-  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0,
+  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0, /*#var*/ 2,
   { /* funcs */ },
+  { /* vars */
+    {
+      /*id*/ 0x40000000, /*name*/ "dd1", /*flags*/ 0, /*kind*/ VAR_CONST,
+      { .varValue = { VT_I4, { .value_int = 0 } } },
+      {VT_INT, -1, PARAMFLAG_NONE}, /* ret */
+    },
+    {
+      /*id*/ 0x40000001, /*name*/ "dd2", /*flags*/ 0, /*kind*/ VAR_CONST,
+      { .varValue = { VT_I4, { .value_int = 1 } } },
+      {VT_INT, -1, PARAMFLAG_NONE}, /* ret */
+    },
+  },
 },
 {
   "e",
   "{016fe2ec-b2c8-45f8-b23b-39e53a753970}",
   /*kind*/ TKIND_ALIAS, /*flags*/ TYPEFLAG_FRESTRICTED|TYPEFLAG_FHIDDEN, /*align*/ TYPE_ALIGNMENT(e), /*size*/ sizeof(e),
-  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0,
+  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0, /*#var*/ 0,
   { /* funcs */ },
+  { /* vars */ },
 },
 {
   "_e",
   "{00000000-0000-0000-0000-000000000000}",
   /*kind*/ TKIND_RECORD, /*flags*/ TYPEFLAG_FRESTRICTED|TYPEFLAG_FHIDDEN, /*align*/ TYPE_ALIGNMENT(struct _e), /*size*/ sizeof(struct _e),
-  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0,
+  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0, /*#var*/ 1,
   { /* funcs */ },
+  { /* vars */
+    {
+      /*id*/ 0x40000000, /*name*/ "e1", /*flags*/ 0, /*kind*/ VAR_PERINSTANCE,
+      { .oInst = 0 },
+      {VT_INT, -1, PARAMFLAG_NONE}, /* ret */
+    },
+  },
 },
 {
   "ee",
   "{016fe2ec-b2c8-45f8-b23b-39e53a753971}",
   /*kind*/ TKIND_RECORD, /*flags*/ TYPEFLAG_FRESTRICTED|TYPEFLAG_FHIDDEN, /*align*/ TYPE_ALIGNMENT(struct ee), /*size*/ sizeof(struct ee),
-  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0,
+  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0, /*#var*/ 1,
   { /* funcs */ },
+  { /* vars */
+    {
+      /*id*/ 0x40000000, /*name*/ "ee1", /*flags*/ 0, /*kind*/ VAR_PERINSTANCE,
+      { .oInst = 0 },
+      {VT_INT, -1, PARAMFLAG_NONE}, /* ret */
+    },
+  },
 },
 {
   "f",
   "{016fe2ec-b2c8-45f8-b23b-39e53a753972}",
   /*kind*/ TKIND_ALIAS, /*flags*/ TYPEFLAG_FRESTRICTED|TYPEFLAG_FHIDDEN, /*align*/ TYPE_ALIGNMENT(f), /*size*/ sizeof(f),
-  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0,
+  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0, /*#var*/ 0,
   { /* funcs */ },
+  { /* vars */ },
 },
 {
   "_f",
   "{00000000-0000-0000-0000-000000000000}",
   /*kind*/ TKIND_UNION, /*flags*/ TYPEFLAG_FRESTRICTED|TYPEFLAG_FHIDDEN, /*align*/ TYPE_ALIGNMENT(union _f), /*size*/ sizeof(union _f),
-  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0,
+  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0, /*#var*/ 2,
   { /* funcs */ },
+  { /* vars */
+    {
+      /*id*/ 0x40000000, /*name*/ "f1", /*flags*/ 0, /*kind*/ VAR_PERINSTANCE,
+      { .oInst = 0 },
+      {VT_INT, -1, PARAMFLAG_NONE}, /* ret */
+    },
+    {
+      /*id*/ 0x40000001, /*name*/ "f2", /*flags*/ 0, /*kind*/ VAR_PERINSTANCE,
+      { .oInst = 0 },
+      {VT_PTR, -1, PARAMFLAG_NONE}, /* ret */
+    },
+  },
 },
 {
   "ff",
   "{016fe2ec-b2c8-45f8-b23b-39e53a753973}",
   /*kind*/ TKIND_UNION, /*flags*/ TYPEFLAG_FRESTRICTED|TYPEFLAG_FHIDDEN, /*align*/ TYPE_ALIGNMENT(union ff), /*size*/ sizeof(union ff),
-  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0,
+  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0, /*#var*/ 2,
   { /* funcs */ },
+  { /* vars */
+    {
+      /*id*/ 0x40000000, /*name*/ "ff1", /*flags*/ 0, /*kind*/ VAR_PERINSTANCE,
+      { .oInst = 0 },
+      {VT_INT, -1, PARAMFLAG_NONE}, /* ret */
+    },
+    {
+      /*id*/ 0x40000001, /*name*/ "ff2", /*flags*/ 0, /*kind*/ VAR_PERINSTANCE,
+      { .oInst = 0 },
+      {VT_PTR, -1, PARAMFLAG_NONE}, /* ret */
+    },
+  },
 },
 {
   "ITestIface",
   "{ec5dfcd6-eeb0-4cd6-b51e-8030e1dac00a}",
   /*kind*/ TKIND_INTERFACE, /*flags*/ TYPEFLAG_FDISPATCHABLE, /*align*/ TYPE_ALIGNMENT(ITestIface*), /*size*/ sizeof(ITestIface*),
-  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 13, /*#func*/ 6,
+  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 13, /*#func*/ 6, /*#var*/ 0,
   { /* funcs */
     {
       /*id*/ 0x60020000, /*func*/ FUNC_PUREVIRTUAL, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
@@ -4903,9 +5240,28 @@ static const type_info info[] = {
         NULL,
       },
     },
-  }
+  },
+  { /* vars */ },
 }
 };
+
+#define check_variant_info(value, expected) { \
+    expect_int(V_VT(value), (expected)->vt); \
+    switch(V_VT(value)) { \
+        case VT_I1: expect_int(V_I1(value), (expected)->value_int); break; \
+        case VT_I2: expect_int(V_I2(value), (expected)->value_int); break; \
+        case VT_I4: expect_int(V_I4(value), (expected)->value_int); break; \
+        case VT_I8: expect_int(V_I8(value), (expected)->value_int); break; \
+        case VT_BOOL: expect_int(V_BOOL(value), (expected)->value_int); break; \
+        case VT_INT: expect_int(V_INT(value), (expected)->value_int); break; \
+        case VT_UI1: expect_int(V_UI1(value), (expected)->value_uint); break; \
+        case VT_UI2: expect_int(V_UI2(value), (expected)->value_uint); break; \
+        case VT_UI4: expect_int(V_UI4(value), (expected)->value_uint); break; \
+        case VT_UI8: expect_int(V_UI8(value), (expected)->value_uint); break; \
+        case VT_UINT: expect_int(V_UINT(value), (expected)->value_uint); break; \
+        case VT_BSTR: expect_wstr_acpval(V_BSTR(value), (expected)->value_str); break; \
+        default: skip("check_variant_info: comparing value not implemented for VARTYPE %d\n",V_VT(value)); \
+    } }
 
 #define check_type(elem, info) { \
       expect_int((elem)->tdesc.vt, (info)->vt);                     \
@@ -4917,11 +5273,19 @@ static void test_dump_typelib(const WCHAR *name)
     ITypeLib *typelib;
     int ticount = ARRAY_SIZE(info);
     CUSTDATA cust_data;
-    int iface, func;
+    int iface, func, var;
     VARIANT v;
     HRESULT hr;
+    TLIBATTR *libattr;
 
     ole_check(LoadTypeLibEx(name, REGKIND_NONE, &typelib));
+
+    ole_check(ITypeLib_GetLibAttr(typelib, &libattr));
+    if(libattr->syskind != info_syskind) {
+        /* struct VARDESC::oInst may vary from changes in sizeof(void *) affecting the offset of later fields*/
+        skip("ignoring VARDESC::oInst, (libattr->syskind expected %d got %d)\n", info_syskind, libattr->syskind);
+    }
+
     expect_eq(ITypeLib_GetTypeInfoCount(typelib), ticount, UINT, "%d");
     for (iface = 0; iface < ticount; iface++)
     {
@@ -4947,6 +5311,7 @@ static void test_dump_typelib(const WCHAR *name)
         expect_int(MAKELONG(typeattr->wMinorVerNum, typeattr->wMajorVerNum), ti->version);
         expect_int(typeattr->cbSizeVft, ti->cbSizeVft * sizeof(void*));
         expect_int(typeattr->cFuncs, ti->cFuncs);
+        expect_int(typeattr->cVars, ti->cVars);
 
         /* compare type uuid */
         if (ti->uuid && *ti->uuid)
@@ -5036,11 +5401,49 @@ static void test_dump_typelib(const WCHAR *name)
             ClearCustData(&cust_data);
         }
 
+        for (var = 0; var < typeattr->cVars; var++)
+        {
+            const var_info *var_info = &ti->vars[var];
+            VARDESC *desc;
+            BSTR varname;
+            UINT cNames;
+
+            trace("Variable %s\n", var_info->name);
+            ole_check(ITypeInfo_GetVarDesc(typeinfo, var, &desc));
+
+            expect_int(desc->memid, var_info->memid);
+
+            ole_check(ITypeInfo_GetNames(typeinfo, desc->memid, &varname, 1, &cNames));
+            expect_int(cNames, 1);
+            expect_wstr_acpval(varname, var_info->name);
+            SysFreeString(varname);
+
+            expect_null(desc->lpstrSchema); /* Reserved */
+            expect_int(desc->wVarFlags, var_info->wVarFlags);
+            expect_int(desc->varkind, var_info->varkind);
+            if (desc->varkind == VAR_PERINSTANCE) {
+                /* oInst depends on preceding field data sizes (except for unions),
+                 * so it may not be valid to expect it to match info[] on other platforms */
+                if ((libattr->syskind == info_syskind) || (typeattr->typekind == TKIND_UNION)) {
+                    expect_int(desc->DUMMYUNIONNAME.oInst, var_info->DUMMYUNIONNAME.oInst);
+                }
+            } else if(desc->varkind == VAR_CONST) {
+                check_variant_info(desc->DUMMYUNIONNAME.lpvarValue, &var_info->DUMMYUNIONNAME.varValue);
+            } else {
+                expect_null(desc->DUMMYUNIONNAME.lpvarValue);
+            }
+
+            check_type(&desc->elemdescVar, &var_info->elemdescVar);
+
+            ITypeInfo_ReleaseVarDesc(typeinfo, desc);
+        }
+
         ITypeInfo_ReleaseTypeAttr(typeinfo, typeattr);
 
         ITypeInfo2_Release(typeinfo2);
         ITypeInfo_Release(typeinfo);
     }
+    ITypeLib_ReleaseTLibAttr(typelib, libattr);
     ITypeLib_Release(typelib);
 }
 
