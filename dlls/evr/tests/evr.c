@@ -805,11 +805,11 @@ done:
 
 static void test_default_mixer_type_negotiation(void)
 {
+    IMFMediaType *media_type, *media_type2;
     IDirect3DDeviceManager9 *manager;
     DXVA2_VideoProcessorCaps caps;
     IMFVideoMediaType *video_type;
     IMFVideoProcessor *processor;
-    IMFMediaType *media_type;
     IDirect3DDevice9 *device;
     IMFTransform *transform;
     GUID guid, *guids;
@@ -896,6 +896,18 @@ static void test_default_mixer_type_negotiation(void)
 todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
+    hr = IMFTransform_GetInputCurrentType(transform, 0, &media_type);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+if (hr == S_OK)
+{
+    ok(media_type != (IMFMediaType *)video_type, "Unexpected media type instance.\n");
+    hr = IMFTransform_GetInputCurrentType(transform, 0, &media_type2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(media_type == media_type2, "Unexpected media type instance.\n");
+    IMFMediaType_Release(media_type);
+    IMFMediaType_Release(media_type2);
+}
     hr = IMFTransform_QueryInterface(transform, &IID_IMFVideoProcessor, (void **)&processor);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
