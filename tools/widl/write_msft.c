@@ -1746,11 +1746,12 @@ static HRESULT add_var_desc(msft_typeinfo_t *typeinfo, UINT index, var_t* var)
         typeinfo->datawidth += var_datawidth;
         break;
     case TKIND_UNION:
-        typedata[4] = typeinfo->datawidth;
+        typedata[4] = 0;
         typeinfo->datawidth = max(typeinfo->datawidth, var_datawidth);
         break;
     case TKIND_DISPATCH:
         var_kind = 3; /* VAR_DISPATCH */
+        typedata[4] = 0;
         typeinfo->datawidth = pointer_size;
         break;
     default:
