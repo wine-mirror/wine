@@ -59,13 +59,31 @@ static IDirect3DDevice9 *create_device(IDirect3D9 *d3d9, HWND focus_window)
     return device;
 }
 
+static void test_surface_desc(IDirect3DSurface9 *surface)
+{
+    D3DSURFACE_DESC desc = { 0 };
+    HRESULT hr;
+
+    hr = IDirect3DSurface9_GetDesc(surface, &desc);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    ok(desc.Format == D3DFMT_X8R8G8B8, "Unexpected format %d.\n", desc.Format);
+    ok(desc.Type == D3DRTYPE_SURFACE, "Unexpected type %d.\n", desc.Type);
+    ok(desc.Usage == 0, "Unexpected usage %d.\n", desc.Usage);
+    ok(desc.Pool == D3DPOOL_DEFAULT, "Unexpected pool %d.\n", desc.Pool);
+    ok(desc.MultiSampleType == D3DMULTISAMPLE_NONE, "Unexpected multisample type %d.\n", desc.MultiSampleType);
+    ok(desc.MultiSampleQuality == 0, "Unexpected multisample quality %d.\n", desc.MultiSampleQuality);
+    ok(desc.Width == 64, "Unexpected width %u.\n", desc.Width);
+    ok(desc.Height == 64, "Unexpected height %u.\n", desc.Height);
+}
+
 static void test_device_manager(void)
 {
     IDirectXVideoProcessorService *processor_service;
     IDirectXVideoAccelerationService *accel_service;
     IDirect3DDevice9 *device, *device2, *device3;
     IDirect3DDeviceManager9 *manager;
-    IDirect3DSurface9 *surface;
+    IDirect3DSurface9 *surfaces[2];
     int refcount, refcount2;
     HANDLE handle, handle1;
     IDirect3D9 *d3d;
@@ -262,12 +280,20 @@ static void test_device_manager(void)
     hr = DXVA2CreateVideoService(device, &IID_IDirectXVideoAccelerationService, (void **)&accel_service);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
-    hr = IDirectXVideoAccelerationService_CreateSurface(accel_service, 64, 64, 1, D3DFMT_X8R8G8B8,
-            D3DPOOL_DEFAULT, 0, DXVA2_VideoProcessorRenderTarget, &surface, NULL);
-todo_wine
+    surfaces[0] = surfaces[1] = NULL;
+    hr = IDirectXVideoAccelerationService_CreateSurface(accel_service, 64, 64, 0, D3DFMT_X8R8G8B8,
+            D3DPOOL_DEFAULT, 0, DXVA2_VideoProcessorRenderTarget, surfaces, NULL);
     ok(hr == S_OK, "Failed to create a surface, hr %#x.\n", hr);
-    if (SUCCEEDED(hr))
-        IDirect3DSurface9_Release(surface);
+    ok(!!surfaces[0] && !surfaces[1], "Unexpected surfaces.\n");
+    IDirect3DSurface9_Release(surfaces[0]);
+
+    hr = IDirectXVideoAccelerationService_CreateSurface(accel_service, 64, 64, 1, D3DFMT_X8R8G8B8,
+            D3DPOOL_DEFAULT, 0, DXVA2_VideoProcessorRenderTarget, surfaces, NULL);
+    ok(hr == S_OK, "Failed to create a surface, hr %#x.\n", hr);
+    ok(!!surfaces[0] && !!surfaces[1], "Unexpected surfaces.\n");
+    test_surface_desc(surfaces[0]);
+    IDirect3DSurface9_Release(surfaces[0]);
+    IDirect3DSurface9_Release(surfaces[1]);
 
     IDirectXVideoAccelerationService_Release(accel_service);
 
@@ -281,20 +307,16 @@ todo_wine
     hr = IDirect3DDeviceManager9_CloseDeviceHandle(manager, handle);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
-    hr = IDirectXVideoAccelerationService_CreateSurface(accel_service, 64, 64, 1, D3DFMT_X8R8G8B8,
-            D3DPOOL_DEFAULT, 0, DXVA2_VideoProcessorRenderTarget, &surface, NULL);
-todo_wine
+    hr = IDirectXVideoAccelerationService_CreateSurface(accel_service, 64, 64, 0, D3DFMT_X8R8G8B8,
+            D3DPOOL_DEFAULT, 0, DXVA2_VideoProcessorRenderTarget, surfaces, NULL);
     ok(hr == S_OK, "Failed to create a surface, hr %#x.\n", hr);
 
-    if (SUCCEEDED(hr))
-    {
-        hr = IDirect3DSurface9_GetDevice(surface, &device3);
-        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-        ok(device2 == device3, "Unexpected device.\n");
-        IDirect3DDevice9_Release(device3);
+    hr = IDirect3DSurface9_GetDevice(surfaces[0], &device3);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(device2 == device3, "Unexpected device.\n");
+    IDirect3DDevice9_Release(device3);
 
-        IDirect3DSurface9_Release(surface);
-    }
+    IDirect3DSurface9_Release(surfaces[0]);
 
     IDirectXVideoAccelerationService_Release(accel_service);
 
