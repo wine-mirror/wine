@@ -20,6 +20,9 @@ C_SRCS = \
 
 FONT_SRCS = \
 	vertical.sfd \
+	wine_langnames.sfd \
+	wine_langnames2.sfd \
+	wine_langnames3.sfd \
 	wine_longname.sfd \
 	wine_test.sfd \
 	wine_ttfnames.sfd \
