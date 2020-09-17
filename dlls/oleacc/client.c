@@ -274,7 +274,6 @@ static HRESULT WINAPI Client_get_accHelpTopic(IAccessible *iface,
 static HRESULT WINAPI Client_get_accKeyboardShortcut(IAccessible *iface,
         VARIANT varID, BSTR *pszKeyboardShortcut)
 {
-    static const WCHAR shortcut_fmt[] = {'A','l','t','+','!',0};
     Client *This = impl_from_Client(iface);
     WCHAR name[1024];
     UINT i, len;
@@ -293,7 +292,7 @@ static HRESULT WINAPI Client_get_accKeyboardShortcut(IAccessible *iface,
     if(i+1 >= len)
         return S_FALSE;
 
-    *pszKeyboardShortcut = SysAllocString(shortcut_fmt);
+    *pszKeyboardShortcut = SysAllocString(L"Alt+!");
     if(!*pszKeyboardShortcut)
         return E_OUTOFMEMORY;
 

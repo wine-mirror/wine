@@ -37,15 +37,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(oleacc);
 
 static const WCHAR lresult_atom_prefix[] = {'w','i','n','e','_','o','l','e','a','c','c',':'};
 
-static const WCHAR menuW[] = {'#','3','2','7','6','8',0};
-static const WCHAR desktopW[] = {'#','3','2','7','6','9',0};
-static const WCHAR dialogW[] = {'#','3','2','7','7','0',0};
-static const WCHAR winswitchW[] = {'#','3','2','7','7','1',0};
-static const WCHAR mdi_clientW[] = {'M','D','I','C','l','i','e','n','t',0};
-static const WCHAR richeditW[] = {'R','I','C','H','E','D','I','T',0};
-static const WCHAR richedit20aW[] = {'R','i','c','h','E','d','i','t','2','0','A',0};
-static const WCHAR richedit20wW[] = {'R','i','c','h','E','d','i','t','2','0','W',0};
-
 typedef HRESULT (WINAPI *accessible_create)(HWND, const IID*, void**);
 
 extern HRESULT WINAPI OLEACC_DllGetClassObject(REFCLSID, REFIID, void**) DECLSPEC_HIDDEN;
@@ -60,15 +51,15 @@ static struct {
     accessible_create create_window;
 } builtin_classes[] = {
     {WC_LISTBOXW,           0x10000, NULL, NULL},
-    {menuW,                 0x10001, NULL, NULL},
+    {L"#32768",             0x10001, NULL, NULL}, /* menu */
     {WC_BUTTONW,            0x10002, NULL, NULL},
     {WC_STATICW,            0x10003, NULL, NULL},
     {WC_EDITW,              0x10004, NULL, NULL},
     {WC_COMBOBOXW,          0x10005, NULL, NULL},
-    {dialogW,               0x10006, NULL, NULL},
-    {winswitchW,            0x10007, NULL, NULL},
-    {mdi_clientW,           0x10008, NULL, NULL},
-    {desktopW,              0x10009, NULL, NULL},
+    {L"#32770",             0x10006, NULL, NULL}, /* dialog */
+    {L"#32771",             0x10007, NULL, NULL}, /* winswitcher */
+    {L"MDIClient",          0x10008, NULL, NULL},
+    {L"#32769",             0x10009, NULL, NULL}, /* desktop */
     {WC_SCROLLBARW,         0x1000a, NULL, NULL},
     {STATUSCLASSNAMEW,      0x1000b, NULL, NULL},
     {TOOLBARCLASSNAMEW,     0x1000c, NULL, NULL},
@@ -85,9 +76,9 @@ static struct {
     {MONTHCAL_CLASSW,       0,       NULL, NULL},
     {DATETIMEPICK_CLASSW,   0,       NULL, NULL},
     {WC_IPADDRESSW,         0,       NULL, NULL},
-    {richeditW,             0x1001c, NULL, NULL},
-    {richedit20aW,          0,       NULL, NULL},
-    {richedit20wW,          0,       NULL, NULL},
+    {L"RICHEDIT",           0x1001c, NULL, NULL},
+    {L"RichEdit20A",        0,       NULL, NULL},
+    {L"RichEdit20W",        0,       NULL, NULL},
 };
 
 static HINSTANCE oleacc_handle = 0;
@@ -243,7 +234,6 @@ HRESULT WINAPI ObjectFromLresult( LRESULT result, REFIID riid, WPARAM wParam, vo
 
 LRESULT WINAPI LresultFromObject( REFIID riid, WPARAM wParam, LPUNKNOWN pAcc )
 {
-    static const WCHAR atom_fmt[] = {'%','0','8','x',':','%','0','8','x',':','%','0','8','x',0};
     static const LARGE_INTEGER seek_zero = {{0}};
 
     WCHAR atom_str[ARRAY_SIZE(lresult_atom_prefix)+3*8+3];
@@ -319,7 +309,7 @@ LRESULT WINAPI LresultFromObject( REFIID riid, WPARAM wParam, LPUNKNOWN pAcc )
     }
 
     memcpy(atom_str, lresult_atom_prefix, sizeof(lresult_atom_prefix));
-    swprintf(atom_str+ARRAY_SIZE(lresult_atom_prefix), 3*8 + 3, atom_fmt, GetCurrentProcessId(),
+    swprintf(atom_str+ARRAY_SIZE(lresult_atom_prefix), 3*8 + 3, L"%08x:%08x:%08x", GetCurrentProcessId(),
              HandleToUlong(mapping), stat.cbSize.u.LowPart);
     atom = GlobalAddAtomW(atom_str);
     if(!atom) {
