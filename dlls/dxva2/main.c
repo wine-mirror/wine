@@ -180,9 +180,15 @@ static HRESULT WINAPI device_manager_processor_service_RegisterVideoProcessorSof
 static HRESULT WINAPI device_manager_processor_service_GetVideoProcessorDeviceGuids(
         IDirectXVideoProcessorService *iface, const DXVA2_VideoDesc *video_desc, UINT *count, GUID **guids)
 {
-    FIXME("%p, %p, %p, %p.\n", iface, video_desc, count, guids);
+    FIXME("%p, %p, %p, %p semi-stub.\n", iface, video_desc, count, guids);
 
-    return E_NOTIMPL;
+    if (!(*guids = CoTaskMemAlloc(sizeof(**guids))))
+        return E_OUTOFMEMORY;
+
+    memcpy(*guids, &DXVA2_VideoProcSoftwareDevice, sizeof(**guids));
+    *count = 1;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI device_manager_processor_service_GetVideoProcessorRenderTargets(
