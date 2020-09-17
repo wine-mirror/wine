@@ -726,9 +726,6 @@ static void test_AccessibleChildren(IAccessible *acc)
 
 static void test_default_client_accessible_object(void)
 {
-    static const WCHAR testW[] = {'t','e','s','t',' ','t',' ','&','j','u','n','k',0};
-    static const WCHAR shortcutW[] = {'A','l','t','+','t',0};
-
     IAccessible *acc;
     IDispatch *disp;
     IOleWindow *ow;
@@ -813,7 +810,7 @@ static void test_default_client_accessible_object(void)
     V_I4(&vid) = CHILDID_SELF;
     hr = IAccessible_get_accName(acc, vid, &str);
     ok(hr == S_OK, "got %x\n", hr);
-    ok(!lstrcmpW(str, testW), "name = %s\n", wine_dbgstr_w(str));
+    ok(!lstrcmpW(str, L"test t &junk"), "name = %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
     V_I4(&vid) = 1;
@@ -855,7 +852,7 @@ static void test_default_client_accessible_object(void)
 
     hr = IAccessible_get_accKeyboardShortcut(acc, vid, &str);
     ok(hr == S_OK, "got %x\n", hr);
-    ok(!lstrcmpW(str, shortcutW), "str = %s\n", wine_dbgstr_w(str));
+    ok(!lstrcmpW(str, L"Alt+t"), "str = %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
     str = (void*)0xdeadbeef;
