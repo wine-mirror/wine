@@ -425,21 +425,22 @@ static HRESULT parse_bands_list(IDirectMusicBandTrack *This, DMUS_PRIVATE_CHUNK 
 	  StreamSize = Chunk.dwSize - sizeof(FOURCC);
 	  switch (Chunk.fccID) {
 	  case DMUS_FOURCC_BAND_FORM: {
-	    LPSTREAM pClonedStream = NULL;
+	    ULARGE_INTEGER liOrigPos;
 	    TRACE_(dmfile)(": BAND RIFF\n");
-	    
-	    IStream_Clone (pStm, &pClonedStream);
-	    
-	    liMove.QuadPart = 0;
-	    liMove.QuadPart -= sizeof(FOURCC) + (sizeof(FOURCC)+sizeof(DWORD));
-	    IStream_Seek (pClonedStream, liMove, STREAM_SEEK_CUR, NULL);
 
-            hr = load_band(This, pClonedStream, &pBand, &header);
+	    liMove.QuadPart = 0;
+	    IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, &liOrigPos);
+
+	    liMove.QuadPart -= sizeof(FOURCC) + (sizeof(FOURCC)+sizeof(DWORD));
+	    IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
+
+            hr = load_band(This, pStm, &pBand, &header);
 	    if (FAILED(hr)) {
 	      ERR(": could not load track\n");
 	      return hr;
 	    }
-	    IStream_Release (pClonedStream);
+	    liMove.QuadPart = (LONGLONG)liOrigPos.QuadPart;
+	    IStream_Seek (pStm, liMove, STREAM_SEEK_SET, NULL);
 	    
 	    IDirectMusicTrack_Release(pBand); pBand = NULL; /* now we can release at as it inserted */
 	    
