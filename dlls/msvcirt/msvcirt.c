@@ -4627,13 +4627,14 @@ iostream* __thiscall fstream_open_ctor(iostream *this, const char *name, ios_ope
     }
 
     filebuf_ctor(fb);
-    filebuf_open(fb, name, mode, protection);
 
     iostream_internal_sb_ctor(this, &fb->base, &MSVCP_fstream_vtable, virt_init);
 
     base = istream_get_ios(&this->base1);
     base->delbuf = 1;
 
+    if (!filebuf_open(fb, name, mode, protection))
+        base->state |= IOSTATE_failbit;
     return this;
 }
 
