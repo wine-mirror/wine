@@ -533,7 +533,9 @@ static HRESULT WINAPI video_mixer_transform_GetOutputAvailableType(IMFTransform 
 
     EnterCriticalSection(&mixer->cs);
 
-    if (index >= mixer->output.type_count)
+    if (!mixer->inputs[0].media_type)
+        hr = MF_E_TRANSFORM_TYPE_NOT_SET;
+    else if (index >= mixer->output.type_count)
         hr = MF_E_NO_MORE_TYPES;
     else
     {
