@@ -53,7 +53,7 @@
     { \
         CHAR buf[260]; \
         expect_eq(!WideCharToMultiByte(CP_ACP, 0, (expr), -1, buf, 260, NULL, NULL), 0, int, "%d"); \
-        ok(strcmp(value, buf) == 0, #expr " expected \"%s\" got \"%s\"\n", value, buf); \
+        ok(value && strcmp(value, buf) == 0, #expr " expected \"%s\" got \"%s\"\n", value, buf); \
     }
 
 #define ole_expect(expr, expect) { \
