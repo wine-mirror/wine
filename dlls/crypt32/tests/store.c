@@ -3286,7 +3286,8 @@ static void test_PFXImportCertStore(void)
     CRYPT_DATA_BLOB pfx;
     const CERT_CONTEXT *cert;
     CERT_KEY_CONTEXT key;
-    CRYPT_KEY_PROV_INFO keyprov;
+    char buf[512];
+    CRYPT_KEY_PROV_INFO *keyprov = (CRYPT_KEY_PROV_INFO *)buf;
     CERT_INFO *info;
     DWORD count, size;
     BOOL ret;
@@ -3299,7 +3300,7 @@ static void test_PFXImportCertStore(void)
     pfx.pbData = (BYTE *)pfxdata;
     pfx.cbData = sizeof(pfxdata);
     store = PFXImportCertStore( &pfx, NULL, CRYPT_EXPORTABLE|CRYPT_USER_KEYSET|PKCS12_NO_PERSIST_KEY );
-    ok( store != NULL || broken(store == NULL) /* winxp */, "got %p\n", store );
+    ok( store != NULL || broken(store == NULL) /* winxp */, "got %u\n", GetLastError() );
     if (!store) return;
     count = countCertsInStore( store );
     ok( count == 1, "got %u\n", count );
@@ -3324,11 +3325,28 @@ static void test_PFXImportCertStore(void)
     ok( key.hCryptProv, "hCryptProv not set\n" );
     ok( key.dwKeySpec == AT_KEYEXCHANGE, "got %u\n", key.dwKeySpec );
 
-    size = sizeof(keyprov);
+    size = sizeof(buf);
     SetLastError( 0xdeadbeef );
-    ret = CertGetCertificateContextProperty( cert, CERT_KEY_PROV_INFO_PROP_ID, &keyprov, &size );
+    ret = CertGetCertificateContextProperty( cert, CERT_KEY_PROV_INFO_PROP_ID, keyprov, &size );
+    ok( !ret && GetLastError() == CRYPT_E_NOT_FOUND, "got %08x\n", GetLastError() );
+    CertFreeCertificateContext( cert );
+    CertCloseStore( store, 0 );
+
+    /* without PKCS12_NO_PERSIST_KEY */
+    store = PFXImportCertStore( &pfx, NULL, CRYPT_EXPORTABLE|CRYPT_USER_KEYSET );
+    ok( store != NULL, "got %u\n", GetLastError() );
+
+    cert = CertFindCertificateInStore( store, X509_ASN_ENCODING, 0, CERT_FIND_ANY, NULL, NULL );
+    ok( cert != NULL, "got %08x\n", GetLastError() );
+
+    size = sizeof(key);
+    ret = CertGetCertificateContextProperty( cert, CERT_KEY_CONTEXT_PROP_ID, &key, &size );
     ok( !ret && GetLastError() == CRYPT_E_NOT_FOUND, "got %08x\n", GetLastError() );
 
+    size = sizeof(buf);
+    ret = CertGetCertificateContextProperty( cert, CERT_KEY_PROV_INFO_PROP_ID, buf, &size );
+    ok(ret, "got %u\n", GetLastError());
+    CertFreeCertificateContext( cert );
     CertCloseStore( store, 0 );
 }
 

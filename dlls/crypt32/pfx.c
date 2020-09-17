@@ -256,6 +256,77 @@ static char *password_to_ascii( const WCHAR *str )
 
 #endif
 
+static BOOL set_key_context( const void *ctx, HCRYPTPROV prov )
+{
+    CERT_KEY_CONTEXT key_ctx;
+    key_ctx.cbSize     = sizeof(key_ctx);
+    key_ctx.hCryptProv = prov;
+    key_ctx.dwKeySpec  = AT_KEYEXCHANGE;
+    return CertSetCertificateContextProperty( ctx, CERT_KEY_CONTEXT_PROP_ID, 0, &key_ctx );
+}
+
+static WCHAR *get_provider_property( HCRYPTPROV prov, DWORD prop_id, DWORD *len )
+{
+    DWORD size = 0;
+    WCHAR *ret;
+    char *str;
+
+    CryptGetProvParam( prov, prop_id, NULL, &size, 0 );
+    if (!size) return NULL;
+    if (!(str = CryptMemAlloc( size ))) return NULL;
+    CryptGetProvParam( prov, prop_id, (BYTE *)str, &size, 0 );
+
+    *len = MultiByteToWideChar( CP_ACP, 0, str, -1, NULL, 0 );
+    if ((ret = CryptMemAlloc( *len * sizeof(WCHAR) ))) MultiByteToWideChar( CP_ACP, 0, str, -1, ret, *len );
+    CryptMemFree( str );
+    return ret;
+}
+
+static BOOL set_key_prov_info( const void *ctx, HCRYPTPROV prov )
+{
+    CRYPT_KEY_PROV_INFO *prov_info;
+    DWORD size, len_container, len_name;
+    WCHAR *ptr, *container, *name;
+    BOOL ret;
+
+    if (!(container = get_provider_property( prov, PP_CONTAINER, &len_container ))) return FALSE;
+    if (!(name = get_provider_property( prov, PP_NAME, &len_name )))
+    {
+        CryptMemFree( container );
+        return FALSE;
+    }
+    if (!(prov_info = CryptMemAlloc( sizeof(*prov_info) + (len_container + len_name) * sizeof(WCHAR) )))
+    {
+        CryptMemFree( container );
+        CryptMemFree( name );
+        return FALSE;
+    }
+
+    ptr = (WCHAR *)(prov_info + 1);
+    prov_info->pwszContainerName = ptr;
+    strcpyW( prov_info->pwszContainerName, container );
+
+    ptr += len_container;
+    prov_info->pwszProvName = ptr;
+    strcpyW( prov_info->pwszProvName, name );
+
+    size = sizeof(prov_info->dwProvType);
+    CryptGetProvParam( prov, PP_PROVTYPE, (BYTE *)&prov_info->dwProvType, &size, 0 );
+
+    prov_info->dwFlags     = 0;
+    prov_info->cProvParam  = 0;
+    prov_info->rgProvParam = NULL;
+    size = sizeof(prov_info->dwKeySpec);
+    CryptGetProvParam( prov, PP_KEYSPEC, (BYTE *)&prov_info->dwKeySpec, &size, 0 );
+
+    ret = CertSetCertificateContextProperty( ctx, CERT_KEY_PROV_INFO_PROP_ID, 0, prov_info );
+
+    CryptMemFree( prov_info );
+    CryptMemFree( name );
+    CryptMemFree( container );
+    return ret;
+}
+
 HCERTSTORE WINAPI PFXImportCertStore( CRYPT_DATA_BLOB *pfx, const WCHAR *password, DWORD flags )
 {
 #ifdef SONAME_LIBGNUTLS
@@ -265,7 +336,6 @@ HCERTSTORE WINAPI PFXImportCertStore( CRYPT_DATA_BLOB *pfx, const WCHAR *passwor
     gnutls_x509_crt_t *chain;
     unsigned int chain_len, i;
     HCERTSTORE store = NULL;
-    CERT_KEY_CONTEXT key_ctx;
     HCRYPTPROV prov = 0;
     char *pwd = NULL;
     int ret;
@@ -339,16 +409,21 @@ HCERTSTORE WINAPI PFXImportCertStore( CRYPT_DATA_BLOB *pfx, const WCHAR *passwor
         }
         heap_free( crt_data );
 
-        key_ctx.cbSize     = sizeof(key_ctx);
-        key_ctx.hCryptProv = prov;
-        key_ctx.dwKeySpec  = AT_KEYEXCHANGE;
-        if (!CertSetCertificateContextProperty( ctx, CERT_KEY_CONTEXT_PROP_ID, 0, &key_ctx ))
+        if (flags & PKCS12_NO_PERSIST_KEY)
         {
-            WARN( "CertSetCertificateContextProperty failed %08x\n", GetLastError() );
+            if (!set_key_context( ctx, prov ))
+            {
+                WARN( "failed to set context property %08x\n", GetLastError() );
+                CertFreeCertificateContext( ctx );
+                goto error;
+            }
+        }
+        else if (!set_key_prov_info( ctx, prov ))
+        {
+            WARN( "failed to set provider info property %08x\n", GetLastError() );
             CertFreeCertificateContext( ctx );
             goto error;
         }
-
         if (!CertAddCertificateContextToStore( store, ctx, CERT_STORE_ADD_ALWAYS, NULL ))
         {
             WARN( "CertAddCertificateContextToStore failed %08x\n", GetLastError() );
