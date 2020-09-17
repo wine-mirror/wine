@@ -1743,35 +1743,19 @@ static snapshot *snapshot_construct(DWORD seq_no)
  */
 static void register_clipboard_formats(void)
 {
-    static const WCHAR OwnerLink[] = {'O','w','n','e','r','L','i','n','k',0};
-    static const WCHAR FileName[] = {'F','i','l','e','N','a','m','e',0};
-    static const WCHAR FileNameW[] = {'F','i','l','e','N','a','m','e','W',0};
-    static const WCHAR DataObject[] = {'D','a','t','a','O','b','j','e','c','t',0};
-    static const WCHAR EmbeddedObject[] = {'E','m','b','e','d','d','e','d',' ','O','b','j','e','c','t',0};
-    static const WCHAR EmbedSource[] = {'E','m','b','e','d',' ','S','o','u','r','c','e',0};
-    static const WCHAR CustomLinkSource[] = {'C','u','s','t','o','m',' ','L','i','n','k',' ','S','o','u','r','c','e',0};
-    static const WCHAR LinkSource[] = {'L','i','n','k',' ','S','o','u','r','c','e',0};
-    static const WCHAR ObjectDescriptor[] = {'O','b','j','e','c','t',' ','D','e','s','c','r','i','p','t','o','r',0};
-    static const WCHAR LinkSourceDescriptor[] = {'L','i','n','k',' ','S','o','u','r','c','e',' ',
-                                                 'D','e','s','c','r','i','p','t','o','r',0};
-    static const WCHAR OlePrivateData[] = {'O','l','e',' ','P','r','i','v','a','t','e',' ','D','a','t','a',0};
+    ownerlink_clipboard_format = RegisterClipboardFormatW(L"OwnerLink");
+    filename_clipboard_format = RegisterClipboardFormatW(L"FileName");
+    filenameW_clipboard_format = RegisterClipboardFormatW(L"FileNameW");
+    dataobject_clipboard_format = RegisterClipboardFormatW(L"DataObject");
+    embedded_object_clipboard_format = RegisterClipboardFormatW(L"Embedded Object");
+    embed_source_clipboard_format = RegisterClipboardFormatW(L"Embed Source");
+    custom_link_source_clipboard_format = RegisterClipboardFormatW(L"Custom Link Source");
+    link_source_clipboard_format = RegisterClipboardFormatW(L"Link Source");
+    object_descriptor_clipboard_format = RegisterClipboardFormatW(L"Object Descriptor");
+    link_source_descriptor_clipboard_format = RegisterClipboardFormatW(L"Link Source Descriptor");
+    ole_private_data_clipboard_format = RegisterClipboardFormatW(L"Ole Private Data");
 
-    static const WCHAR WineMarshalledDataObject[] = {'W','i','n','e',' ','M','a','r','s','h','a','l','l','e','d',' ',
-                                                     'D','a','t','a','O','b','j','e','c','t',0};
-
-    ownerlink_clipboard_format = RegisterClipboardFormatW(OwnerLink);
-    filename_clipboard_format = RegisterClipboardFormatW(FileName);
-    filenameW_clipboard_format = RegisterClipboardFormatW(FileNameW);
-    dataobject_clipboard_format = RegisterClipboardFormatW(DataObject);
-    embedded_object_clipboard_format = RegisterClipboardFormatW(EmbeddedObject);
-    embed_source_clipboard_format = RegisterClipboardFormatW(EmbedSource);
-    custom_link_source_clipboard_format = RegisterClipboardFormatW(CustomLinkSource);
-    link_source_clipboard_format = RegisterClipboardFormatW(LinkSource);
-    object_descriptor_clipboard_format = RegisterClipboardFormatW(ObjectDescriptor);
-    link_source_descriptor_clipboard_format = RegisterClipboardFormatW(LinkSourceDescriptor);
-    ole_private_data_clipboard_format = RegisterClipboardFormatW(OlePrivateData);
-
-    wine_marshal_clipboard_format = RegisterClipboardFormatW(WineMarshalledDataObject);
+    wine_marshal_clipboard_format = RegisterClipboardFormatW(L"Wine Marshalled DataObject");
 }
 
 /***********************************************************************
@@ -2026,9 +2010,6 @@ void OLEClipbrd_UnInitialize(void)
 
     if ( clipbrd )
     {
-        static const WCHAR ole32W[] = {'o','l','e','3','2',0};
-        HINSTANCE hinst = GetModuleHandleW(ole32W);
-
         /* OleUninitialize() does not release the reference to the dataobject, so
            take an additional reference here.  This reference is then leaked. */
         if (clipbrd->src_data)
@@ -2040,7 +2021,7 @@ void OLEClipbrd_UnInitialize(void)
         if ( clipbrd->window )
         {
             DestroyWindow(clipbrd->window);
-            UnregisterClassW( clipbrd_wndclass, hinst );
+            UnregisterClassW( clipbrd_wndclass, GetModuleHandleW(L"ole32") );
         }
 
         IStream_Release(clipbrd->marshal_data);
@@ -2115,9 +2096,7 @@ static LRESULT CALLBACK clipbrd_wndproc(HWND hwnd, UINT message, WPARAM wparam, 
 static HWND create_clipbrd_window(void)
 {
     WNDCLASSEXW class;
-    static const WCHAR ole32W[] = {'o','l','e','3','2',0};
-    static const WCHAR title[] = {'C','l','i','p','b','o','a','r','d','W','i','n','d','o','w',0};
-    HINSTANCE hinst = GetModuleHandleW(ole32W);
+    HINSTANCE hinst = GetModuleHandleW(L"ole32");
 
     class.cbSize         = sizeof(class);
     class.style          = 0;
@@ -2134,7 +2113,7 @@ static HWND create_clipbrd_window(void)
 
     RegisterClassExW(&class);
 
-    return CreateWindowW(clipbrd_wndclass, title, WS_POPUP | WS_CLIPSIBLINGS | WS_OVERLAPPED,
+    return CreateWindowW(clipbrd_wndclass, L"ClipboardWindow", WS_POPUP | WS_CLIPSIBLINGS | WS_OVERLAPPED,
                          0, 0, 0, 0, HWND_MESSAGE, NULL, hinst, 0);
 }
 
