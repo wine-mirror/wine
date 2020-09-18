@@ -56,7 +56,7 @@ ASN1module_t WINAPI ASN1_CreateModule(ASN1uint32_t ver, ASN1encodingrule_e rule,
     if (!encoder || !decoder || !freemem || !size)
         return module;
 
-    module = heap_alloc(sizeof(module));
+    module = heap_alloc(sizeof(*module));
     if (module)
     {
         module->nModuleName = magic;
@@ -103,7 +103,7 @@ ASN1error_e WINAPI ASN1_CreateEncoder(ASN1module_t module, ASN1encoding_t *encod
     if (!module || !encoder)
         return ASN1_ERR_BADARGS;
 
-    enc = heap_alloc(sizeof(enc));
+    enc = heap_alloc(sizeof(*enc));
     if (!enc)
     {
         return ASN1_ERR_MEMORY;
@@ -153,7 +153,7 @@ ASN1error_e WINAPI ASN1_CreateDecoder(ASN1module_t module, ASN1decoding_t *decod
     if (!module || !decoder)
         return ASN1_ERR_BADARGS;
 
-    dec = heap_alloc(sizeof(dec));
+    dec = heap_alloc(sizeof(*dec));
     if (!dec)
     {
         return ASN1_ERR_MEMORY;
