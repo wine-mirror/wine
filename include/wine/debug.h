@@ -225,7 +225,9 @@ static inline const char *wine_dbgstr_an( const char *str, int n )
 
     if (!str) return "(null)";
     if (!((ULONG_PTR)str >> 16)) return wine_dbg_sprintf( "#%04x", LOWORD(str) );
+#ifndef WINE_UNIX_LIB
     if (IsBadStringPtrA( str, n )) return "(invalid)";
+#endif
     if (n == -1) for (n = 0; str[n]; n++) ;
     *dst++ = '"';
     while (n-- > 0 && dst <= buffer + sizeof(buffer) - 9)
@@ -267,7 +269,9 @@ static inline const char *wine_dbgstr_wn( const WCHAR *str, int n )
 
     if (!str) return "(null)";
     if (!((ULONG_PTR)str >> 16)) return wine_dbg_sprintf( "#%04x", LOWORD(str) );
+#ifndef WINE_UNIX_LIB
     if (IsBadStringPtrW( str, n )) return "(invalid)";
+#endif
     if (n == -1) for (n = 0; str[n]; n++) ;
     *dst++ = 'L';
     *dst++ = '"';
