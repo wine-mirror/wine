@@ -2168,21 +2168,17 @@ static int needs_implib_symlink( const struct makefile *make )
 
 
 /*******************************************************************
- *         add_default_libraries
+ *         add_unix_libraries
  */
-static struct strarray add_default_libraries( const struct makefile *make, struct strarray *deps,
-                                              int add_unix_libs )
+static struct strarray add_unix_libraries( const struct makefile *make, struct strarray *deps )
 {
     struct strarray ret = empty_strarray;
     struct strarray all_libs = empty_strarray;
     unsigned int i, j;
 
-    if (add_unix_libs)
-    {
-        strarray_add( &all_libs, "-lwine_port" );
-        strarray_addall( &all_libs, get_expanded_make_var_array( make, "EXTRALIBS" ));
-        strarray_addall( &all_libs, libs );
-    }
+    strarray_add( &all_libs, "-lwine_port" );
+    strarray_addall( &all_libs, get_expanded_make_var_array( make, "EXTRALIBS" ));
+    strarray_addall( &all_libs, libs );
 
     for (i = 0; i < all_libs.count; i++)
     {
@@ -3283,7 +3279,7 @@ static void output_module( struct makefile *make )
     }
     else if (*dll_ext)
     {
-        strarray_addall( &all_libs, add_default_libraries( make, &dep_libs, !make->use_msvcrt ));
+        if (!make->use_msvcrt) strarray_addall( &all_libs, add_unix_libraries( make, &dep_libs ));
         for (i = 0; i < make->delayimports.count; i++)
             strarray_add( &all_libs, strmake( "-Wl,-delayload,%s%s", make->delayimports.str[i],
                                               strchr( make->delayimports.str[i], '.' ) ? "" : ".dll" ));
@@ -3297,7 +3293,7 @@ static void output_module( struct makefile *make )
     }
     else
     {
-        strarray_addall( &all_libs, add_default_libraries( make, &dep_libs, 1 ));
+        strarray_addall( &all_libs, add_unix_libraries( make, &dep_libs ));
         strarray_add( &make->all_targets, make->module );
         add_install_rule( make, make->module, make->module,
                           strmake( "p$(%s)/%s", spec_file ? "dlldir" : "bindir", make->module ));
@@ -3345,7 +3341,7 @@ static void output_module( struct makefile *make )
         strarray_addall( &unix_libs, add_import_libs( make, &unix_deps, make->delayimports, 1, 1 ));
         strarray_addall( &unix_libs, add_import_libs( make, &unix_deps, make->imports, 0, 1 ));
         add_import_libs( make, &unix_deps, get_default_imports( make ), 0, 1 );  /* dependencies only */
-        strarray_addall( &unix_libs, add_default_libraries( make, &unix_deps, 1 ));
+        strarray_addall( &unix_libs, add_unix_libraries( make, &unix_deps ));
 
         strarray_add( &make->all_targets, unix_lib );
         add_install_rule( make, make->module, unix_lib, strmake( "p$(dlldir)/%s", unix_lib ));
@@ -3490,7 +3486,7 @@ static void output_shared_lib( struct makefile *make )
 
     strarray_addall( &dep_libs, get_local_dependencies( make, basename, make->in_files ));
     strarray_addall( &all_libs, get_expanded_file_local_var( make, basename, "LDFLAGS" ));
-    strarray_addall( &all_libs, add_default_libraries( make, &dep_libs, 1 ));
+    strarray_addall( &all_libs, add_unix_libraries( make, &dep_libs ));
 
     output( "%s:", obj_dir_path( make, make->sharedlib ));
     output_filenames_obj_dir( make, make->object_files );
@@ -3602,7 +3598,7 @@ static void output_programs( struct makefile *make )
 
         if (!objs.count) objs = make->object_files;
         if (!strarray_exists( &all_libs, "-nodefaultlibs" ))
-            strarray_addall( &all_libs, add_default_libraries( make, &deps, 1 ));
+            strarray_addall( &all_libs, add_unix_libraries( make, &deps ));
 
         output( "%s:", obj_dir_path( make, program ) );
         output_filenames_obj_dir( make, objs );
