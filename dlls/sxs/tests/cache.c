@@ -162,6 +162,8 @@ static void test_QueryAssemblyInfo( void )
     ok( !info.uliAssemblySizeInKB.u.LowPart, "got %u\n", info.uliAssemblySizeInKB.u.LowPart );
     ok( info.cchBuf == ARRAY_SIZE( path ), "got %u\n", info.cchBuf );
     ok( path[0], "empty path\n" );
+    lstrcatW( path, L"comctl32.dll" );
+    ok( GetFileAttributesW( path ) != INVALID_FILE_ATTRIBUTES, "%s should exist\n", wine_dbgstr_w( path ));
 
     memset( &info, 0, sizeof(info) );
     info.cbAssemblyInfo = sizeof(info);

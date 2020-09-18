@@ -122,23 +122,22 @@ static WCHAR *build_assembly_name( const WCHAR *arch, const WCHAR *name, const W
     return wcslwr( ret );
 }
 
-static WCHAR *build_manifest_path( const WCHAR *arch, const WCHAR *name, const WCHAR *token,
-                                   const WCHAR *version )
+static WCHAR *build_dll_path( const WCHAR *arch, const WCHAR *name, const WCHAR *token,
+                              const WCHAR *version )
 {
-    static const WCHAR fmtW[] =
-        {'%','s','m','a','n','i','f','e','s','t','s','\\','%','s','.','m','a','n','i','f','e','s','t',0};
     WCHAR *path = NULL, *ret, sxsdir[MAX_PATH];
     unsigned int len;
 
     if (!(path = build_assembly_name( arch, name, token, version, &len ))) return NULL;
-    len += ARRAY_SIZE(fmtW);
-    len += build_sxs_path( sxsdir );
+    len += build_sxs_path( sxsdir ) + 1;
     if (!(ret = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
     {
         HeapFree( GetProcessHeap(), 0, path );
         return NULL;
     }
-    swprintf( ret, len, fmtW, sxsdir, path );
+    lstrcpyW( ret, sxsdir );
+    lstrcatW( ret, path );
+    lstrcatW( ret, L"\\" );
     HeapFree( GetProcessHeap(), 0, path );
     return ret;
 }
@@ -202,7 +201,7 @@ static HRESULT WINAPI cache_QueryAssemblyInfo(
     struct cache *cache = impl_from_IAssemblyCache( iface );
     IAssemblyName *name_obj;
     const WCHAR *arch, *name, *token, *type, *version;
-    WCHAR *p, *path = NULL;
+    WCHAR *path = NULL;
     unsigned int len;
     HRESULT hr;
 
@@ -232,7 +231,7 @@ static HRESULT WINAPI cache_QueryAssemblyInfo(
     }
     cache_lock( cache );
 
-    if (!wcscmp( type, win32W )) path = build_manifest_path( arch, name, token, version );
+    if (!wcscmp( type, win32W )) path = build_dll_path( arch, name, token, version );
     else if (!wcscmp( type, win32_policyW )) path = build_policy_path( arch, name, token, version );
     else
     {
@@ -250,7 +249,6 @@ static HRESULT WINAPI cache_QueryAssemblyInfo(
         info->dwAssemblyFlags = ASSEMBLYINFO_FLAG_INSTALLED;
         TRACE("assembly is installed\n");
     }
-    if ((p = wcsrchr( path, '\\' ))) *p = 0;
     len = lstrlenW( path ) + 1;
     if (info->pszCurrentAssemblyPathBuf)
     {
