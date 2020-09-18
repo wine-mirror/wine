@@ -134,12 +134,39 @@ static ULONG WINAPI IDirectMusicStyle8Impl_Release(IDirectMusicStyle8 *iface)
 }
 
 /* IDirectMusicStyle8Impl IDirectMusicStyle(8) part: */
-static HRESULT WINAPI IDirectMusicStyle8Impl_GetBand(IDirectMusicStyle8 *iface, WCHAR *pwszName,
-        IDirectMusicBand **ppBand)
+static HRESULT WINAPI IDirectMusicStyle8Impl_GetBand(IDirectMusicStyle8 *iface, WCHAR *name,
+        IDirectMusicBand **band)
 {
-        IDirectMusicStyle8Impl *This = impl_from_IDirectMusicStyle8(iface);
-	FIXME("(%p, %p, %p): stub\n", This, pwszName, ppBand);
-	return S_OK;
+    IDirectMusicStyle8Impl *This = impl_from_IDirectMusicStyle8(iface);
+    struct style_band *sband;
+    HRESULT hr;
+
+    TRACE("(%p, %s, %p)\n", This, debugstr_w(name), band);
+
+    if (!name)
+        return E_POINTER;
+
+    LIST_FOR_EACH_ENTRY(sband, &This->bands, struct style_band, entry) {
+        IDirectMusicObject *obj;
+
+        hr = IDirectMusicBand_QueryInterface(sband->pBand, &IID_IDirectMusicObject, (void**)&obj);
+        if (SUCCEEDED(hr)) {
+            DMUS_OBJECTDESC desc;
+
+            if (IDirectMusicObject_GetDescriptor(obj, &desc) == S_OK) {
+                if (desc.dwValidData & DMUS_OBJ_NAME && !lstrcmpW(name, desc.wszName)) {
+                    IDirectMusicObject_Release(obj);
+                    IDirectMusicBand_AddRef(sband->pBand);
+                    *band = sband->pBand;
+                    return S_OK;
+                }
+            }
+
+            IDirectMusicObject_Release(obj);
+        }
+    }
+
+    return S_FALSE;
 }
 
 static HRESULT WINAPI IDirectMusicStyle8Impl_EnumBand(IDirectMusicStyle8 *iface, DWORD dwIndex,
