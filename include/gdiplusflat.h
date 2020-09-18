@@ -220,6 +220,9 @@ GpStatus WINGDIPAPI GdipEnumerateMetafileDestRectI(GpGraphics*,GDIPCONST GpMetaf
 GpStatus WINGDIPAPI GdipEnumerateMetafileSrcRectDestPoints(GpGraphics*,
     GDIPCONST GpMetafile*,GDIPCONST GpPointF*,INT,GDIPCONST GpRectF*,Unit,
     EnumerateMetafileProc,VOID*,GDIPCONST GpImageAttributes*);
+GpStatus WINGDIPAPI GdipEnumerateMetafileSrcRectDestRect( GpGraphics*, GDIPCONST GpMetafile*,
+    GDIPCONST GpRectF* , GDIPCONST GpRectF*, Unit, EnumerateMetafileProc, VOID*,
+    GDIPCONST GpImageAttributes*);
 GpStatus WINGDIPAPI GdipFillClosedCurve2(GpGraphics*,GpBrush*,GDIPCONST GpPointF*,INT,
     REAL,GpFillMode);
 GpStatus WINGDIPAPI GdipFillClosedCurve2I(GpGraphics*,GpBrush*,GDIPCONST GpPoint*,INT,
