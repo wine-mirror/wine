@@ -90,11 +90,27 @@ static ULONG WINAPI IDirectMusicBandImpl_Release(IDirectMusicBand *iface)
 }
 
 static HRESULT WINAPI IDirectMusicBandImpl_CreateSegment(IDirectMusicBand *iface,
-        IDirectMusicSegment **ppSegment)
+        IDirectMusicSegment **segment)
 {
-        IDirectMusicBandImpl *This = impl_from_IDirectMusicBand(iface);
-	FIXME("(%p, %p): stub\n", This, ppSegment);
-	return S_OK;
+    IDirectMusicBandImpl *This = impl_from_IDirectMusicBand(iface);
+    HRESULT hr;
+    DMUS_BAND_PARAM bandparam;
+
+    FIXME("(%p, %p): semi-stub\n", This, segment);
+
+    hr = CoCreateInstance(&CLSID_DirectMusicSegment, NULL, CLSCTX_INPROC,
+            &IID_IDirectMusicSegment, (void**)segment);
+    if (FAILED(hr))
+        return hr;
+
+    bandparam.mtTimePhysical = 0;
+    bandparam.pBand = &This->IDirectMusicBand_iface;
+    IDirectMusicBand_AddRef(bandparam.pBand);
+    hr = IDirectMusicSegment_SetParam(*segment, &GUID_BandParam, 0xffffffff, DMUS_SEG_ALLTRACKS,
+            0, &bandparam);
+    IDirectMusicBand_Release(bandparam.pBand);
+
+    return hr;
 }
 
 static HRESULT WINAPI IDirectMusicBandImpl_Download(IDirectMusicBand *iface,
