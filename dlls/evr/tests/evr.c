@@ -893,7 +893,6 @@ static void test_default_mixer_type_negotiation(void)
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMFTransform_SetInputType(transform, 0, (IMFMediaType *)video_type, 0);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMFTransform_GetInputCurrentType(transform, 0, &media_type);
