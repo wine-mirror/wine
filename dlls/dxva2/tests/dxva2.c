@@ -82,13 +82,16 @@ static void test_device_manager(void)
     IDirectXVideoProcessorService *processor_service;
     IDirectXVideoAccelerationService *accel_service;
     IDirect3DDevice9 *device, *device2, *device3;
+    IDirectXVideoProcessorService *proc_service;
     IDirect3DDeviceManager9 *manager;
     IDirect3DSurface9 *surfaces[2];
+    DXVA2_VideoDesc video_desc;
     int refcount, refcount2;
     HANDLE handle, handle1;
+    D3DFORMAT *formats;
+    UINT token, count;
     IDirect3D9 *d3d;
     HWND window;
-    UINT token;
     HRESULT hr;
     RECT rect;
 
@@ -296,6 +299,24 @@ static void test_device_manager(void)
     IDirect3DSurface9_Release(surfaces[1]);
 
     IDirectXVideoAccelerationService_Release(accel_service);
+
+    /* RT formats. */
+    hr = DXVA2CreateVideoService(device, &IID_IDirectXVideoProcessorService, (void **)&proc_service);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    memset(&video_desc, 0, sizeof(video_desc));
+    video_desc.SampleWidth = 64;
+    video_desc.SampleHeight = 64;
+    video_desc.Format = D3DFMT_A8R8G8B8;
+
+    count = 0;
+    hr = IDirectXVideoProcessorService_GetVideoProcessorRenderTargets(proc_service, &DXVA2_VideoProcSoftwareDevice,
+            &video_desc, &count, &formats);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(count, "Unexpected format count %u.\n", count);
+    CoTaskMemFree(formats);
+
+    IDirectXVideoProcessorService_Release(proc_service);
 
     hr = IDirect3DDeviceManager9_OpenDeviceHandle(manager, &handle);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);

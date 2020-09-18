@@ -195,7 +195,23 @@ static HRESULT WINAPI device_manager_processor_service_GetVideoProcessorRenderTa
         IDirectXVideoProcessorService *iface, REFGUID deviceguid, const DXVA2_VideoDesc *video_desc, UINT *count,
         D3DFORMAT **formats)
 {
-    FIXME("%p, %s, %p, %p, %p.\n", iface, debugstr_guid(deviceguid), video_desc, count, formats);
+    TRACE("%p, %s, %p, %p, %p.\n", iface, debugstr_guid(deviceguid), video_desc, count, formats);
+
+    if (IsEqualGUID(deviceguid, &DXVA2_VideoProcSoftwareDevice))
+    {
+        /* FIXME: filter some input formats */
+
+        if (!(*formats = CoTaskMemAlloc(2 * sizeof(**formats))))
+            return E_OUTOFMEMORY;
+
+        *count = 2;
+        (*formats)[0] = D3DFMT_X8R8G8B8;
+        (*formats)[1] = D3DFMT_A8R8G8B8;
+
+        return S_OK;
+    }
+    else
+        FIXME("Unsupported device %s.\n", debugstr_guid(deviceguid));
 
     return E_NOTIMPL;
 }
