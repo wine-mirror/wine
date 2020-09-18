@@ -45,6 +45,8 @@ static void test_setlocale(void)
         "LC_MONETARY=Greek_Greece.1253;LC_NUMERIC=Polish_Poland.1250;LC_TIME=C";
 
     char *ret, buf[100];
+    char *ptr;
+    int len;
 
     ret = setlocale(20, "C");
     ok(ret == NULL, "ret = %s\n", ret);
@@ -611,6 +613,27 @@ static void test_setlocale(void)
                 LOCALE_IDEFAULTCODEPAGE, buf+strlen(buf), 80);
         ok(!strcmp(ret, buf), "ret = %s, expected %s\n", ret, buf);
     }
+
+    GetLocaleInfoA(GetUserDefaultLCID(), LOCALE_IDEFAULTCODEPAGE, buf, sizeof(buf));
+    if(IsValidCodePage(atoi(buf))) {
+        ret = setlocale(LC_ALL, ".OCP");
+        ok(ret != NULL, "ret == NULL\n");
+        ptr = strchr(ret, '.');
+        ok(ptr && !strcmp(ptr + 1, buf), "ret %s, buf %s.\n", ret, buf);
+    }
+
+    len = GetLocaleInfoA(GetUserDefaultLCID(), LOCALE_IDEFAULTANSICODEPAGE, buf, sizeof(buf)) - 1;
+    if(buf[0] == '0' && !buf[1])
+        len = sprintf(buf, "%d", GetACP());
+    ret = setlocale(LC_ALL, ".ACP");
+    ok(ret != NULL, "ret == NULL\n");
+    ptr = strchr(ret, '.');
+    ok(ptr && !strncmp(ptr + 1, buf, len), "ret %s, buf %s.\n", ret, buf);
+
+    ret = setlocale(LC_ALL, ".1250");
+    ok(ret != NULL, "ret == NULL\n");
+    ptr = strchr(ret, '.');
+    ok(ptr && !strcmp(ptr, ".1250"), "ret %s, buf %s.\n", ret, buf);
 
     ret = setlocale(LC_ALL, "English_United States.UTF8");
     ok(ret == NULL, "ret != NULL\n");
