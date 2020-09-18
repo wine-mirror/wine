@@ -9819,6 +9819,15 @@ static void test_copy_subresource_region(void)
 
     ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, red);
 
+    if (!is_warp_device(device))
+    {
+        /* Broken on Win2008 Warp */
+        ID3D10Device_CopySubresourceRegion(device, (ID3D10Resource *)dst_texture, 0,
+                1, 1, 0, NULL, 0, &box);
+        ID3D10Device_CopySubresourceRegion(device, NULL, 0,
+                1, 1, 0, (ID3D10Resource *)src_texture, 0, &box);
+    }
+
     set_box(&box, 0, 0, 0, 2, 2, 1);
     ID3D10Device_CopySubresourceRegion(device, (ID3D10Resource *)dst_texture, 0,
             1, 1, 0, (ID3D10Resource *)src_texture, 0, &box);
