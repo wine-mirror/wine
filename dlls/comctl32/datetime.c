@@ -1565,6 +1565,20 @@ DATETIME_GetText (const DATETIME_INFO *infoPtr, INT count, LPWSTR dst)
     return lstrlenW(dst);
 }
 
+static int DATETIME_GetTextLength(const DATETIME_INFO *info)
+{
+    int i, length = 0;
+    WCHAR buffer[80];
+
+    TRACE("%p.\n", info);
+
+    for (i = 0; i < info->nrFields; i++)
+    {
+        DATETIME_ReturnTxt(info, i, buffer, ARRAY_SIZE(buffer));
+        length += lstrlenW(buffer);
+    }
+    return length;
+}
 
 static LRESULT WINAPI
 DATETIME_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -1680,6 +1694,9 @@ DATETIME_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case WM_GETTEXT:
         return (LRESULT) DATETIME_GetText(infoPtr, wParam, (LPWSTR)lParam);
+
+    case WM_GETTEXTLENGTH:
+        return (LRESULT)DATETIME_GetTextLength(infoPtr);
 
     case WM_SETTEXT:
         return CB_ERR;

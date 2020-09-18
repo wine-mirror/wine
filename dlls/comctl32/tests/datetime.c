@@ -793,7 +793,12 @@ static void test_wm_set_get_text(void)
         if (ret == 0)
             skip("GetDateFormat failed, returned %ld, error %d\n", ret, GetLastError());
         else
+        {
             ok(!strcmp(buff, time), "Expected %s, got %s\n", time, buff);
+
+            ret = SendMessageA(hWnd, WM_GETTEXTLENGTH, 0, 0);
+            ok(ret == strlen(time), "Got wrong length: %ld, expected %d.\n", ret, strlen(time));
+        }
     }
 
     DestroyWindow(hWnd);
