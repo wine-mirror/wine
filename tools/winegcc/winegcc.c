@@ -1219,7 +1219,7 @@ static void build(struct options* opts)
         add_library(opts, lib_dirs, files, "user32");
     }
 
-    if (!opts->nodefaultlibs)
+    if (!opts->nodefaultlibs && !opts->unix_lib)
     {
         add_library(opts, lib_dirs, files, "winecrt0");
         if (opts->use_msvcrt)

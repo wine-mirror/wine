@@ -2219,11 +2219,7 @@ static struct strarray add_import_libs( const struct makefile *make, struct stra
         const char *lib = NULL;
 
         /* skip module's own importlib, its object files will be linked directly */
-        if (make->importlib && !strcmp( make->importlib, imports.str[i] ))
-        {
-            if (!is_unix) continue;
-            if (strarray_exists( &make->extradllflags, "-nodefaultlibs" )) continue;
-        }
+        if (make->importlib && !strcmp( make->importlib, imports.str[i] )) continue;
 
         for (j = 0; j < subdirs.count; j++)
         {
@@ -3325,6 +3321,7 @@ static void output_module( struct makefile *make )
 
     if (make->unixobj_files.count)
     {
+        struct strarray unix_imports = empty_strarray;
         struct strarray unix_libs = empty_strarray;
         struct strarray unix_deps = empty_strarray;
         char *ext, *unix_lib = xmalloc( strlen( make->module ) + strlen( dll_ext ) + 1 );
@@ -3332,15 +3329,11 @@ static void output_module( struct makefile *make )
         if ((ext = get_extension( unix_lib ))) *ext = 0;
         strcat( unix_lib, dll_ext );
 
-        if (make->importlib)
-        {
-            struct strarray imp = empty_strarray;
-            strarray_add( &imp, make->importlib );
-            strarray_addall( &unix_libs, add_import_libs( make, &unix_deps, imp, 1, 1 ));
-        }
-        strarray_addall( &unix_libs, add_import_libs( make, &unix_deps, make->delayimports, 1, 1 ));
-        strarray_addall( &unix_libs, add_import_libs( make, &unix_deps, make->imports, 0, 1 ));
-        add_import_libs( make, &unix_deps, get_default_imports( make ), 0, 1 );  /* dependencies only */
+        if (!strarray_exists( &make->extradllflags, "-nodefaultlibs" ))
+            strarray_add( &unix_imports, "ntdll" );
+        strarray_add( &unix_imports, "winecrt0" );
+
+        strarray_addall( &unix_libs, add_import_libs( make, &unix_deps, unix_imports, 0, 1 ));
         strarray_addall( &unix_libs, add_unix_libraries( make, &unix_deps ));
 
         strarray_add( &make->all_targets, unix_lib );
