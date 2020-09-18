@@ -2750,7 +2750,7 @@ int create_msft_typelib(typelib_t *typelib)
        and midl's version number */
     time_override = getenv( "WIDL_TIME_OVERRIDE");
     cur_time = time_override ? atol( time_override) : time(NULL);
-    sprintf(info_string, "Created by WIDL version %s at %s\n", PACKAGE_VERSION, ctime(&cur_time));
+    sprintf(info_string, "Created by WIDL version %s at %s", PACKAGE_VERSION, ctime(&cur_time));
     set_custdata(msft, &midl_info_guid, VT_BSTR, info_string, &msft->typelib_header.CustomDataOffset);
     set_custdata(msft, &midl_time_guid, VT_UI4, &cur_time, &msft->typelib_header.CustomDataOffset);
     set_custdata(msft, &midl_version_guid, VT_UI4, &version, &msft->typelib_header.CustomDataOffset);
