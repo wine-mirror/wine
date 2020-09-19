@@ -1164,6 +1164,64 @@ static void sock_release_ifchange( struct sock *sock )
     }
 }
 
+static struct object_type *socket_device_get_type( struct object *obj );
+static void socket_device_dump( struct object *obj, int verbose );
+static struct object *socket_device_lookup_name( struct object *obj, struct unicode_str *name, unsigned int attr );
+static struct object *socket_device_open_file( struct object *obj, unsigned int access,
+                                               unsigned int sharing, unsigned int options );
+
+static const struct object_ops socket_device_ops =
+{
+    sizeof(struct object),      /* size */
+    socket_device_dump,         /* dump */
+    socket_device_get_type,     /* get_type */
+    no_add_queue,               /* add_queue */
+    NULL,                       /* remove_queue */
+    NULL,                       /* signaled */
+    no_satisfied,               /* satisfied */
+    no_signal,                  /* signal */
+    no_get_fd,                  /* get_fd */
+    default_fd_map_access,      /* map_access */
+    default_get_sd,             /* get_sd */
+    default_set_sd,             /* set_sd */
+    socket_device_lookup_name,  /* lookup_name */
+    directory_link_name,        /* link_name */
+    default_unlink_name,        /* unlink_name */
+    socket_device_open_file,    /* open_file */
+    no_kernel_obj_list,         /* get_kernel_obj_list */
+    no_close_handle,            /* close_handle */
+    no_destroy                  /* destroy */
+};
+
+static struct object_type *socket_device_get_type( struct object *obj )
+{
+    static const WCHAR name[] = {'D','e','v','i','c','e'};
+    static const struct unicode_str str = { name, sizeof(name) };
+    return get_object_type( &str );
+}
+
+static void socket_device_dump( struct object *obj, int verbose )
+{
+    fputs( "Socket device\n", stderr );
+}
+
+static struct object *socket_device_lookup_name( struct object *obj, struct unicode_str *name, unsigned int attr )
+{
+    return NULL;
+}
+
+static struct object *socket_device_open_file( struct object *obj, unsigned int access,
+                                               unsigned int sharing, unsigned int options )
+{
+    set_error( STATUS_NOT_IMPLEMENTED );
+    return NULL;
+}
+
+struct object *create_socket_device( struct object *root, const struct unicode_str *name )
+{
+    return create_named_object( root, &socket_device_ops, name, 0, NULL );
+}
+
 /* create a socket */
 DECL_HANDLER(create_socket)
 {

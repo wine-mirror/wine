@@ -373,10 +373,12 @@ void init_directories(void)
     static const WCHAR mailslotW[] = {'M','a','i','l','S','l','o','t'};
     static const WCHAR condrvW[] = {'C','o','n','D','r','v'};
     static const WCHAR nullW[] = {'N','u','l','l'};
+    static const WCHAR afdW[] = {'A','f','d'};
     static const struct unicode_str named_pipe_str = {named_pipeW, sizeof(named_pipeW)};
     static const struct unicode_str mailslot_str = {mailslotW, sizeof(mailslotW)};
     static const struct unicode_str condrv_str = {condrvW, sizeof(condrvW)};
     static const struct unicode_str null_str = {nullW, sizeof(nullW)};
+    static const struct unicode_str afd_str = {afdW, sizeof(afdW)};
 
     /* events */
     static const WCHAR event_low_memW[] = {'L','o','w','M','e','m','o','r','y','C','o','n','d','i','t','i','o','n'};
@@ -404,7 +406,7 @@ void init_directories(void)
     struct directory *dir_driver, *dir_device, *dir_global, *dir_kernel;
     struct object *link_dosdev, *link_global, *link_nul, *link_pipe, *link_mailslot;
     struct object *link_conin, *link_conout, *link_con;
-    struct object *named_pipe_device, *mailslot_device, *null_device, *user_data_mapping, *console_device;
+    struct object *named_pipe_device, *mailslot_device, *null_device, *user_data_mapping, *console_device, *socket_device;
     struct keyed_event *keyed_event;
     unsigned int i;
 
@@ -422,11 +424,13 @@ void init_directories(void)
     named_pipe_device = create_named_pipe_device( &dir_device->obj, &named_pipe_str );
     mailslot_device   = create_mailslot_device( &dir_device->obj, &mailslot_str );
     console_device    = create_console_device( &dir_device->obj, &condrv_str );
+    socket_device     = create_socket_device( &dir_device->obj, &afd_str );
     null_device       = create_unix_device( &dir_device->obj, &null_str, "/dev/null" );
     make_object_static( named_pipe_device );
     make_object_static( mailslot_device );
     make_object_static( null_device );
     make_object_static( console_device );
+    make_object_static( socket_device );
 
     /* sessions */
     create_session( 0 );
