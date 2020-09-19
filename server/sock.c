@@ -58,6 +58,7 @@
 #include "winerror.h"
 #define USE_WS_PREFIX
 #include "winsock2.h"
+#include "wine/afd.h"
 
 #include "process.h"
 #include "file.h"
@@ -133,6 +134,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 static void sock_queue_async( struct fd *fd, struct async *async, int type, int count );
 static void sock_reselect_async( struct fd *fd, struct async_queue *queue );
 
+static int init_socket( struct sock *sock, int family, int type, int protocol, unsigned int flags );
 static int sock_get_ntstatus( int err );
 static unsigned int sock_get_error( int err );
 
@@ -542,10 +544,23 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 
     assert( sock->obj.ops == &sock_ops );
 
-    if (get_unix_fd( fd ) == -1) return 0;
+    if (get_unix_fd( fd ) == -1 && code != IOCTL_AFD_CREATE) return 0;
 
     switch(code)
     {
+    case IOCTL_AFD_CREATE:
+    {
+        const struct afd_create_params *params = get_req_data();
+
+        if (get_req_data_size() != sizeof(*params))
+        {
+            set_error( STATUS_INVALID_PARAMETER );
+            return 0;
+        }
+        init_socket( sock, params->family, params->type, params->protocol, params->flags );
+        return 0;
+    }
+
     case WS_SIO_ADDRESS_LIST_CHANGE:
         if ((sock->state & FD_WINE_NONBLOCKING) && async_is_blocking( async ))
         {
@@ -679,6 +694,8 @@ static int init_socket( struct sock *sock, int family, int type, int protocol, u
     sock->proto  = protocol;
     sock->type   = type;
     sock->family = family;
+
+    if (sock->fd) release_object( sock->fd );
 
     if (!(sock->fd = create_anonymous_fd( &sock_fd_ops, sockfd, &sock->obj,
                             (flags & WSA_FLAG_OVERLAPPED) ? 0 : FILE_SYNCHRONOUS_IO_NONALERT )))
