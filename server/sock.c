@@ -1249,20 +1249,6 @@ struct object *create_socket_device( struct object *root, const struct unicode_s
     return create_named_object( root, &socket_device_ops, name, 0, NULL );
 }
 
-/* create a socket */
-DECL_HANDLER(create_socket)
-{
-    struct sock *sock;
-
-    reply->handle = 0;
-    if ((sock = create_socket()) != NULL)
-    {
-        if (!init_socket( sock, req->family, req->type, req->protocol, req->flags ))
-            reply->handle = alloc_handle( current->process, &sock->obj, req->access, req->attributes );
-        release_object( sock );
-    }
-}
-
 /* accept a socket */
 DECL_HANDLER(accept_socket)
 {

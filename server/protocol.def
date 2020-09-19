@@ -1380,19 +1380,6 @@ enum server_fd_type
 @END
 
 
-/* Create a socket */
-@REQ(create_socket)
-    unsigned int access;        /* wanted access rights */
-    unsigned int attributes;    /* object attributes */
-    int          family;        /* family, see socket manpage */
-    int          type;          /* type, see socket manpage */
-    int          protocol;      /* protocol, see socket manpage */
-    unsigned int flags;         /* socket flags */
-@REPLY
-    obj_handle_t handle;        /* handle to the new socket */
-@END
-
-
 /* Accept a socket */
 @REQ(accept_socket)
     obj_handle_t lhandle;       /* handle to the listening socket */

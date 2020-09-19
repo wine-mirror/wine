@@ -1945,21 +1945,6 @@ static void dump_unlock_file_request( const struct unlock_file_request *req )
     dump_uint64( ", count=", &req->count );
 }
 
-static void dump_create_socket_request( const struct create_socket_request *req )
-{
-    fprintf( stderr, " access=%08x", req->access );
-    fprintf( stderr, ", attributes=%08x", req->attributes );
-    fprintf( stderr, ", family=%d", req->family );
-    fprintf( stderr, ", type=%d", req->type );
-    fprintf( stderr, ", protocol=%d", req->protocol );
-    fprintf( stderr, ", flags=%08x", req->flags );
-}
-
-static void dump_create_socket_reply( const struct create_socket_reply *req )
-{
-    fprintf( stderr, " handle=%04x", req->handle );
-}
-
 static void dump_accept_socket_request( const struct accept_socket_request *req )
 {
     fprintf( stderr, " lhandle=%04x", req->lhandle );
@@ -4479,7 +4464,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_volume_info_request,
     (dump_func)dump_lock_file_request,
     (dump_func)dump_unlock_file_request,
-    (dump_func)dump_create_socket_request,
     (dump_func)dump_accept_socket_request,
     (dump_func)dump_accept_into_socket_request,
     (dump_func)dump_set_socket_event_request,
@@ -4763,7 +4747,6 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_volume_info_reply,
     (dump_func)dump_lock_file_reply,
     NULL,
-    (dump_func)dump_create_socket_reply,
     (dump_func)dump_accept_socket_reply,
     NULL,
     NULL,
@@ -5047,7 +5030,6 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "get_volume_info",
     "lock_file",
     "unlock_file",
-    "create_socket",
     "accept_socket",
     "accept_into_socket",
     "set_socket_event",
