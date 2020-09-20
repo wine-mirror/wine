@@ -914,7 +914,7 @@ void info_win32_exception(void)
         break;
     case EXCEPTION_WINE_STUB:
         {
-            char dll[32], name[256];
+            char dll[64], name[256];
             memory_get_string(dbg_curr_process,
                               (void*)rec->ExceptionInformation[0], TRUE, FALSE,
                               dll, sizeof(dll));
