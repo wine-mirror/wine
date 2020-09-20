@@ -779,8 +779,16 @@ NTSTATUS WINAPI NtSetSecurityObject( HANDLE handle, SECURITY_INFORMATION info, P
     InitializeObjectAttributes( &attr, NULL, 0, 0, descr );
     if ((status = alloc_object_attributes( &attr, &objattr, &len ))) return status;
     sd = (struct security_descriptor *)(objattr + 1);
-    if (info & OWNER_SECURITY_INFORMATION && !sd->owner_len) return STATUS_INVALID_SECURITY_DESCR;
-    if (info & GROUP_SECURITY_INFORMATION && !sd->group_len) return STATUS_INVALID_SECURITY_DESCR;
+    if (info & OWNER_SECURITY_INFORMATION && !sd->owner_len)
+    {
+        free( objattr );
+        return STATUS_INVALID_SECURITY_DESCR;
+    }
+    if (info & GROUP_SECURITY_INFORMATION && !sd->group_len)
+    {
+        free( objattr );
+        return STATUS_INVALID_SECURITY_DESCR;
+    }
     if (info & (SACL_SECURITY_INFORMATION | LABEL_SECURITY_INFORMATION)) sd->control |= SE_SACL_PRESENT;
     if (info & DACL_SECURITY_INFORMATION) sd->control |= SE_DACL_PRESENT;
 
