@@ -953,16 +953,18 @@ static int get_next_timeout(void)
         if ((ptr = list_head( &abs_timeout_list )) != NULL)
         {
             struct timeout_user *timeout = LIST_ENTRY( ptr, struct timeout_user, entry );
-            int diff = (timeout->when - current_time + 9999) / 10000;
-            if (diff < 0) diff = 0;
+            timeout_t diff = (timeout->when - current_time + 9999) / 10000;
+            if (diff > INT_MAX) diff = INT_MAX;
+            else if (diff < 0) diff = 0;
             if (ret == -1 || diff < ret) ret = diff;
         }
 
         if ((ptr = list_head( &rel_timeout_list )) != NULL)
         {
             struct timeout_user *timeout = LIST_ENTRY( ptr, struct timeout_user, entry );
-            int diff = (-timeout->when - monotonic_time + 9999) / 10000;
-            if (diff < 0) diff = 0;
+            timeout_t diff = (-timeout->when - monotonic_time + 9999) / 10000;
+            if (diff > INT_MAX) diff = INT_MAX;
+            else if (diff < 0) diff = 0;
             if (ret == -1 || diff < ret) ret = diff;
         }
     }
