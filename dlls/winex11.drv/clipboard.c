@@ -673,7 +673,7 @@ static HANDLE unicode_text_from_string( UINT codepage, const void *data, size_t 
     MultiByteToWideChar( codepage, 0, data, size, strW + count, count );
     for (i = j = 0; i < count; i++)
     {
-        if (strW[i + count] == '\n') strW[j++] = '\r';
+        if (strW[i + count] == '\n' && (!i || strW[i + count - 1] != '\r')) strW[j++] = '\r';
         strW[j++] = strW[i + count];
     }
     strW[j++] = 0;
