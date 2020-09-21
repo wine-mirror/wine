@@ -147,7 +147,7 @@ static NTSTATUS create_pipe(PHANDLE handle, ULONG access, ULONG sharing, ULONG o
     attr.Length                   = sizeof(attr);
     attr.RootDirectory            = 0;
     attr.ObjectName               = &name;
-    attr.Attributes               = 0x40; /*case insensitive */
+    attr.Attributes               = OBJ_CASE_INSENSITIVE;
     attr.SecurityDescriptor       = NULL;
     attr.SecurityQualityOfService = NULL;
 
@@ -188,7 +188,7 @@ static void test_create_invalid(void)
     attr.Length                   = sizeof(attr);
     attr.RootDirectory            = 0;
     attr.ObjectName               = &name;
-    attr.Attributes               = 0x40; /*case insensitive */
+    attr.Attributes               = OBJ_CASE_INSENSITIVE;
     attr.SecurityDescriptor       = NULL;
     attr.SecurityQualityOfService = NULL;
 
@@ -592,7 +592,7 @@ static void test_filepipeinfo(void)
     attr.Length                   = sizeof(attr);
     attr.RootDirectory            = 0;
     attr.ObjectName               = &name;
-    attr.Attributes               = 0x40; /* case insensitive */
+    attr.Attributes               = OBJ_CASE_INSENSITIVE;
     attr.SecurityDescriptor       = NULL;
     attr.SecurityQualityOfService = NULL;
 
@@ -2402,6 +2402,100 @@ static void test_security_info(void)
     HeapFree(GetProcessHeap(), 0, local_sid);
 }
 
+static void test_empty_name(void)
+{
+    HANDLE hdirectory, hpipe, hwrite, handle;
+    OBJECT_ATTRIBUTES attr;
+    LARGE_INTEGER timeout;
+    UNICODE_STRING name;
+    IO_STATUS_BLOCK io;
+    DWORD data, length;
+    NTSTATUS status;
+    BOOL ret;
+
+    hpipe = hwrite = NULL;
+
+    attr.Length                   = sizeof(attr);
+    attr.Attributes               = OBJ_CASE_INSENSITIVE;
+    attr.SecurityDescriptor       = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    pRtlInitUnicodeString(&name, L"\\Device\\NamedPipe");
+    attr.RootDirectory            = 0;
+    attr.ObjectName               = &name;
+
+    status = NtCreateFile(&hdirectory, GENERIC_READ | SYNCHRONIZE, &attr, &io, NULL, 0,
+            FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_OPEN, 0, NULL, 0 );
+    ok(!status, "Got unexpected status %#x.\n", status);
+
+    name.Buffer = NULL;
+    name.Length = 0;
+    name.MaximumLength = 0;
+    attr.RootDirectory = hdirectory;
+
+    timeout.QuadPart = -(LONG64)10000000;
+    status = pNtCreateNamedPipeFile(&hpipe, GENERIC_READ | FILE_WRITE_ATTRIBUTES | SYNCHRONIZE, &attr,
+            &io, FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_CREATE, FILE_SYNCHRONOUS_IO_NONALERT,
+            0, 0, 0, 3, 4096, 4096, &timeout);
+    todo_wine ok(status == STATUS_OBJECT_NAME_INVALID, "Got unexpected status %#x.\n", status);
+
+    CloseHandle(hdirectory);
+
+    pRtlInitUnicodeString(&name, L"\\Device\\NamedPipe\\");
+    attr.RootDirectory            = 0;
+    attr.ObjectName               = &name;
+
+    status = NtCreateFile(&hdirectory, GENERIC_READ | SYNCHRONIZE, &attr, &io, NULL, 0,
+            FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_OPEN, 0, NULL, 0 );
+    ok(!status, "Got unexpected status %#x.\n", status);
+
+    name.Buffer = NULL;
+    name.Length = 0;
+    name.MaximumLength = 0;
+    attr.RootDirectory = hdirectory;
+
+    status = pNtCreateNamedPipeFile(&hpipe, GENERIC_READ | SYNCHRONIZE, &attr,
+            &io, FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_CREATE, FILE_SYNCHRONOUS_IO_NONALERT,
+            0, 0, 0, 3, 4096, 4096, &timeout);
+    todo_wine ok(!status, "Got unexpected status %#x.\n", status);
+
+    status = pNtCreateNamedPipeFile(&handle, GENERIC_READ | SYNCHRONIZE, &attr,
+            &io, FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_OPEN, FILE_SYNCHRONOUS_IO_NONALERT,
+            0, 0, 0, 1, 4096, 4096, &timeout);
+    todo_wine ok(status == STATUS_OBJECT_NAME_NOT_FOUND, "Got unexpected status %#x.\n", status);
+
+    attr.RootDirectory = hpipe;
+    status = NtCreateFile(&hwrite, GENERIC_WRITE | FILE_WRITE_ATTRIBUTES | SYNCHRONIZE, &attr, &io, NULL, 0,
+            FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_OPEN, FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0 );
+    todo_wine ok(!status, "Got unexpected status %#x.\n", status);
+
+    attr.RootDirectory = hpipe;
+    status = NtCreateFile(&handle, GENERIC_READ | SYNCHRONIZE, &attr, &io, NULL, 0,
+            FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_OPEN,
+            FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0 );
+    todo_wine ok(status == STATUS_PIPE_NOT_AVAILABLE, "Got unexpected status %#x.\n", status);
+
+    attr.RootDirectory = hpipe;
+    status = NtCreateFile(&handle, GENERIC_WRITE | SYNCHRONIZE, &attr, &io, NULL, 0,
+            FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_OPEN, FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0 );
+    todo_wine ok(status == STATUS_PIPE_NOT_AVAILABLE, "Got unexpected status %#x.\n", status);
+
+    data = 0xdeadbeef;
+    ret = WriteFile(hwrite, &data, sizeof(data), &length, NULL);
+    todo_wine ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    todo_wine ok(length == sizeof(data), "Got unexpected length %#x.\n", length);
+
+    data = 0;
+    ret = ReadFile(hpipe, &data, sizeof(data), &length, NULL);
+    todo_wine ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    todo_wine ok(length == sizeof(data), "Got unexpected length %#x.\n", length);
+    todo_wine ok(data == 0xdeadbeef, "Got unexpected data %#x.\n", data);
+
+    CloseHandle(hwrite);
+    CloseHandle(hpipe);
+    CloseHandle(hdirectory);
+}
+
 START_TEST(pipe)
 {
     if (!init_func_ptrs())
@@ -2455,6 +2549,7 @@ START_TEST(pipe)
     test_volume_info();
     test_file_info();
     test_security_info();
+    test_empty_name();
 
     pipe_for_each_state(create_pipe_server, connect_pipe, test_pipe_state);
     pipe_for_each_state(create_pipe_server, connect_and_write_pipe, test_pipe_with_data_state);
