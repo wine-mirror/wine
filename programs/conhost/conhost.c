@@ -99,6 +99,7 @@ struct console
     unsigned int          input_cp;            /* console input codepage */
     unsigned int          output_cp;           /* console output codepage */
     unsigned int          win;                 /* window handle if backend supports it */
+    HANDLE                input_thread;        /* input thread handle */
     HANDLE                tty_input;           /* handle to tty input stream */
     HANDLE                tty_output;          /* handle to tty output stream */
     char                  tty_buffer[4096];    /* tty output buffer */
@@ -1681,9 +1682,18 @@ static DWORD WINAPI tty_input( void *param )
 
     EnterCriticalSection( &console_section );
     if (console->read_ioctl) read_complete( console, status, NULL, 0, FALSE );
+    CloseHandle( console->input_thread );
+    console->input_thread = NULL;
     LeaveCriticalSection( &console_section );
 
     return 0;
+}
+
+static BOOL ensure_tty_input_thread( struct console *console )
+{
+    if (!console->input_thread)
+        console->input_thread = CreateThread( NULL, 0, tty_input, console, 0, NULL );
+    return console->input_thread != NULL;
 }
 
 static NTSTATUS screen_buffer_activate( struct screen_buffer *screen_buffer )
@@ -2424,6 +2434,7 @@ static NTSTATUS console_input_ioctl( struct console *console, unsigned int code,
 
     case IOCTL_CONDRV_READ_CONSOLE:
         if (in_size || *out_size % sizeof(WCHAR)) return STATUS_INVALID_PARAMETER;
+        ensure_tty_input_thread( console );
         return read_console( console, *out_size );
 
     case IOCTL_CONDRV_READ_INPUT:
@@ -2431,6 +2442,7 @@ static NTSTATUS console_input_ioctl( struct console *console, unsigned int code,
             unsigned int blocking;
             NTSTATUS status;
             if (in_size && in_size != sizeof(blocking)) return STATUS_INVALID_PARAMETER;
+            ensure_tty_input_thread( console );
             blocking = in_size && *(unsigned int *)in_data;
             if (blocking && !console->record_count && *out_size)
             {
@@ -2683,7 +2695,7 @@ static int main_loop( struct console *console, HANDLE signal )
 int __cdecl wmain(int argc, WCHAR *argv[])
 {
     int headless = 0, i, width = 0, height = 0;
-    HANDLE signal = NULL, input_thread;
+    HANDLE signal = NULL;
     WCHAR *end;
 
     static struct console console;
@@ -2764,10 +2776,7 @@ int __cdecl wmain(int argc, WCHAR *argv[])
         console.tty_input  = GetStdHandle( STD_INPUT_HANDLE );
         console.tty_output = GetStdHandle( STD_OUTPUT_HANDLE );
         init_tty_output( &console );
-
-        if (!(input_thread = CreateThread( NULL, 0, tty_input, &console, 0, NULL )))
-            return 1;
-        CloseHandle( input_thread );
+        if (!console.is_unix && !ensure_tty_input_thread( &console )) return 1;
     }
 
     return main_loop( &console, signal );
