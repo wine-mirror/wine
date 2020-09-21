@@ -1745,20 +1745,26 @@ static void test_message_from_64bit_number(void)
 
 static void test_message_system_errors(void)
 {
-    static const DWORD error_codes[] =
+    static const struct
     {
-        E_NOTIMPL,
+        DWORD error_code;
+        BOOL broken;
+    }
+    tests[] =
+    {
+        {E_NOTIMPL},
+        {DXGI_ERROR_INVALID_CALL, TRUE /* Available since Win8 */},
     };
 
     char buffer[256];
     unsigned int i;
     DWORD len;
 
-    for (i = 0; i < ARRAY_SIZE(error_codes); ++i)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
-        len = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, error_codes[i],
+        len = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, tests[i].error_code,
                 LANG_USER_DEFAULT, buffer, ARRAY_SIZE(buffer), NULL);
-        ok(len, "Got zero len, code %#x.\n", error_codes[i]);
+        ok(len || broken(tests[i].broken), "Got zero len, code %#x.\n", tests[i].error_code);
     }
 }
 

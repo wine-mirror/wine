@@ -7039,6 +7039,12 @@ msgstr "Non implementato"
 msgid "No Signature found in file.\n"
 msgstr "Messaggio 0x%1 non trovato nel file %2.\n"
 
+#: dlls/kernel32/winerror.mc:3774
+#, fuzzy
+#| msgid "Invalid level.\n"
+msgid "Invalid call.\n"
+msgstr "Livello non valido.\n"
+
 #: dlls/localspl/localspl.rc:31 dlls/localui/localui.rc:31
 #: dlls/winspool.drv/winspool.rc:30
 msgid "Local Port"

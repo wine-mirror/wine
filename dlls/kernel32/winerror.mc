@@ -3764,3 +3764,10 @@ SymbolicName=E_NOTIMPL
 Language=ENU
 Not implemented.
 .
+MessageId=0x1
+Severity=CoError
+Facility=Dxgi
+SymbolicName=DXGI_ERROR_INVALID_CALL
+Language=ENU
+Invalid call.
+.

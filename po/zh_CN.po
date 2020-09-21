@@ -6883,6 +6883,12 @@ msgstr "尚未实现"
 msgid "No Signature found in file.\n"
 msgstr "未在文件内找到签名。\n"
 
+#: dlls/kernel32/winerror.mc:3774
+#, fuzzy
+#| msgid "Invalid level.\n"
+msgid "Invalid call.\n"
+msgstr "无效的级别。\n"
+
 #: dlls/localspl/localspl.rc:31 dlls/localui/localui.rc:31
 #: dlls/winspool.drv/winspool.rc:30
 msgid "Local Port"

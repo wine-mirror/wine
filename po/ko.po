@@ -6923,6 +6923,12 @@ msgstr "구현되지 않음"
 msgid "No Signature found in file.\n"
 msgstr "서명 또는 인증서를 찾을 수 없습니다.\n"
 
+#: dlls/kernel32/winerror.mc:3774
+#, fuzzy
+#| msgid "Invalid level.\n"
+msgid "Invalid call.\n"
+msgstr "올바르지 않은 레벨.\n"
+
 #: dlls/localspl/localspl.rc:31 dlls/localui/localui.rc:31
 #: dlls/winspool.drv/winspool.rc:30
 msgid "Local Port"
