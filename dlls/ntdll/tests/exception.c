@@ -7437,12 +7437,12 @@ static void check_changes_in_range_(const char *file, unsigned int line, const B
 
         if (flag & flags && p[i] != 0xcc)
         {
-            ok_(file, line)(0, "Got unexected byte %#x at %#x, flags %#x.\n", p[i], i, flags);
+            ok_(file, line)(0, "Got unexpected byte %#x at %#x, flags %#x.\n", p[i], i, flags);
             return;
         }
         else if (!(flag & flags) && p[i] != 0xdd)
         {
-            ok_(file, line)(0, "Got unexected byte %#x at %#x, flags %#x.\n", p[i], i, flags);
+            ok_(file, line)(0, "Got unexpected byte %#x at %#x, flags %#x.\n", p[i], i, flags);
             return;
         }
     }
