@@ -8365,7 +8365,7 @@ static void test_fstream(void)
 
     /* make sure that OPENMODE_in is not implied */
     ok(_lseek(pfb->fd, 0, SEEK_SET) == 0, "_lseek failed\n");
-    ok(_read(pfb->fd, st, 1) == -1, "_read succeded on OPENMODE_out only fstream\n");
+    ok(_read(pfb->fd, st, 1) == -1, "_read succeeded on OPENMODE_out only fstream\n");
 
     /* reopen the file for reading */
     call_func1(p_fstream_vbase_dtor, &fs);
@@ -8389,7 +8389,7 @@ static void test_fstream(void)
 
     /* make sure that OPENMODE_out is not implied */
     ok(_lseek(pfb->fd, 0, SEEK_SET) == 0, "_lseek failed\n");
-    ok(_write(pfb->fd, "blabla", 6) == -1, "_write succeded on OPENMODE_in fstream\n");
+    ok(_write(pfb->fd, "blabla", 6) == -1, "_write succeeded on OPENMODE_in fstream\n");
 
     /* cleanup */
     call_func1(p_fstream_vbase_dtor, &fs);
