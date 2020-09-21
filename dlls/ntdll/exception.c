@@ -696,7 +696,7 @@ static const struct context_parameters
     ULONG flags_offset;
     const struct context_copy_range *copy_ranges;
 }
-arch_context_paramaters[] =
+arch_context_parameters[] =
 {
     {0x00100000, 0xd810005f, 0x4d0, 0x4d0, 0x20, 7, 0xf, 0x30, copy_ranges_amd64},
     {0x00010000, 0xd801007f, 0x2cc,  0xcc, 0x18, 3, 0x3,    0,   copy_ranges_x86},
@@ -706,10 +706,10 @@ static const struct context_parameters *context_get_parameters( ULONG context_fl
 {
     unsigned int i;
 
-    for (i = 0; i < ARRAY_SIZE(arch_context_paramaters); ++i)
+    for (i = 0; i < ARRAY_SIZE(arch_context_parameters); ++i)
     {
-        if (context_flags & arch_context_paramaters[i].arch_flag)
-            return context_flags & ~arch_context_paramaters[i].supported_flags ? NULL : &arch_context_paramaters[i];
+        if (context_flags & arch_context_parameters[i].arch_flag)
+            return context_flags & ~arch_context_parameters[i].supported_flags ? NULL : &arch_context_parameters[i];
     }
     return NULL;
 }
