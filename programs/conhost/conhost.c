@@ -309,6 +309,27 @@ static void set_tty_cursor( struct console *console, unsigned int x, unsigned in
     tty_write( console, buf, strlen(buf) );
 }
 
+static void set_tty_cursor_relative( struct console *console, unsigned int x, unsigned int y )
+{
+    if (y < console->tty_cursor_y)
+    {
+        char buf[64];
+        sprintf( buf, "\x1b[%uA", console->tty_cursor_y - y );
+        tty_write( console, buf, strlen(buf) );
+        console->tty_cursor_y = y;
+    }
+    else
+    {
+        while (console->tty_cursor_y < y)
+        {
+            console->tty_cursor_x = 0;
+            console->tty_cursor_y++;
+            tty_write( console, "\r\n", 2 );
+        }
+    }
+    set_tty_cursor( console, x, y );
+}
+
 static void set_tty_attr( struct console *console, unsigned int attr )
 {
     char buf[8];
@@ -1216,7 +1237,16 @@ static void update_read_output( struct console *console )
         }
     }
 
-    update_output( screen_buffer, &update_rect );
+    /* always try to use relative cursor positions in UNIX mode so that it works even if cursor
+     * position is out of sync */
+    if (update_rect.left <= update_rect.right && update_rect.top <= update_rect.bottom)
+    {
+        if (console->is_unix)
+            set_tty_cursor_relative( screen_buffer->console, update_rect.left, update_rect.top );
+        update_output( screen_buffer, &update_rect );
+    }
+    if (console->is_unix)
+        set_tty_cursor_relative( screen_buffer->console, screen_buffer->cursor_x, screen_buffer->cursor_y );
     tty_sync( screen_buffer->console );
 }
 
