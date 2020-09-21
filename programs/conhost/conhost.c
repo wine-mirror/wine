@@ -473,7 +473,7 @@ static NTSTATUS read_complete( struct console *console, NTSTATUS status, const v
         status = wine_server_call( req );
     }
     SERVER_END_REQ;
-    if (status) ERR( "failed: %#x\n", status );
+    if (status && (console->read_ioctl || status != STATUS_INVALID_HANDLE)) ERR( "failed: %#x\n", status );
     console->read_ioctl = 0;
     console->pending_read = 0;
     return status;
@@ -1580,6 +1580,7 @@ static DWORD WINAPI tty_input( void *param )
     char read_buf[4096];
     WCHAR buf[4096];
     DWORD count, i;
+    BOOL signaled;
     NTSTATUS status;
 
     event = CreateEventW( NULL, TRUE, FALSE, NULL );
@@ -1595,6 +1596,7 @@ static DWORD WINAPI tty_input( void *param )
         if (status) break;
 
         EnterCriticalSection( &console_section );
+        signaled = console->record_count != 0;
 
         /* FIXME: Handle partial char read */
         count = MultiByteToWideChar(CP_UTF8, 0, read_buf, io.Information, buf, ARRAY_SIZE(buf));
@@ -1626,6 +1628,11 @@ static DWORD WINAPI tty_input( void *param )
         }
 
         process_console_input( console );
+        if (!signaled && console->record_count)
+        {
+            assert( !console->read_ioctl );
+            read_complete( console, STATUS_SUCCESS, NULL, 0, TRUE ); /* signal console */
+        }
         LeaveCriticalSection( &console_section );
     }
 
