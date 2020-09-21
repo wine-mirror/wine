@@ -1156,12 +1156,29 @@ NTSTATUS CDECL get_dynamic_environment( WCHAR *env, SIZE_T *size )
 void CDECL get_initial_console( RTL_USER_PROCESS_PARAMETERS *params )
 {
     int output_fd = -1;
-    if (isatty(0) || isatty(1) || isatty(2)) params->ConsoleHandle = CONSOLE_HANDLE_SHELL;
-    if (!isatty(0)) wine_server_fd_to_handle( 0, GENERIC_READ|SYNCHRONIZE,  OBJ_INHERIT, &params->hStdInput );
-    if (!isatty(2)) wine_server_fd_to_handle( 2, GENERIC_WRITE|SYNCHRONIZE, OBJ_INHERIT, &params->hStdError );
-    else output_fd = 2;
-    if (!isatty(1)) wine_server_fd_to_handle( 1, GENERIC_WRITE|SYNCHRONIZE, OBJ_INHERIT, &params->hStdOutput );
-    else output_fd = 1;
+
+    wine_server_fd_to_handle( 0, GENERIC_READ|SYNCHRONIZE,  OBJ_INHERIT, &params->hStdInput );
+    wine_server_fd_to_handle( 1, GENERIC_WRITE|SYNCHRONIZE, OBJ_INHERIT, &params->hStdOutput );
+    wine_server_fd_to_handle( 2, GENERIC_WRITE|SYNCHRONIZE, OBJ_INHERIT, &params->hStdError );
+
+    /* mark tty handles for kernelbase, see init_console */
+    if (params->hStdInput && isatty(0))
+    {
+        params->ConsoleHandle = CONSOLE_HANDLE_SHELL;
+        params->hStdInput = (HANDLE)((UINT_PTR)params->hStdInput | 1);
+    }
+    if (params->hStdError && isatty(2))
+    {
+        params->ConsoleHandle = CONSOLE_HANDLE_SHELL;
+        params->hStdError = (HANDLE)((UINT_PTR)params->hStdError | 1);
+        output_fd = 2;
+    }
+    if (params->hStdOutput && isatty(1))
+    {
+        params->ConsoleHandle = CONSOLE_HANDLE_SHELL;
+        params->hStdOutput = (HANDLE)((UINT_PTR)params->hStdOutput | 1);
+        output_fd = 1;
+    }
 
     if (output_fd != -1)
     {

@@ -1656,11 +1656,18 @@ static HANDLE create_pseudo_console( COORD size, HANDLE input, HANDLE output, HA
     si.StartupInfo.hStdError  = output;
     si.StartupInfo.dwFlags    = STARTF_USESTDHANDLES;
     swprintf( conhost_path, ARRAY_SIZE(conhost_path), L"%s\\conhost.exe", system_dir );
-    swprintf( cmd, ARRAY_SIZE(cmd),
-              L"\"%s\" --headless %s--width %u --height %u --signal 0x%x --server 0x%x",
-              conhost_path, (flags & PSEUDOCONSOLE_INHERIT_CURSOR) ? L"--inheritcursor " : L"",
-              size.X, size.Y, signal, server );
-
+    if (signal)
+    {
+        swprintf( cmd, ARRAY_SIZE(cmd),
+                  L"\"%s\" --headless %s--width %u --height %u --signal 0x%x --server 0x%x",
+                  conhost_path, (flags & PSEUDOCONSOLE_INHERIT_CURSOR) ? L"--inheritcursor " : L"",
+                  size.X, size.Y, signal, server );
+    }
+    else
+    {
+        swprintf( cmd, ARRAY_SIZE(cmd), L"\"%s\" --unix --width %u --height %u --server 0x%x",
+                  conhost_path, size.X, size.Y, server );
+    }
     Wow64DisableWow64FsRedirection( &redir );
     res = CreateProcessW( conhost_path, cmd, NULL, NULL, TRUE, DETACHED_PROCESS, NULL, NULL,
                           &si.StartupInfo, &pi );
@@ -1745,11 +1752,52 @@ HRESULT WINAPI ResizePseudoConsole( HPCON handle, COORD size )
     return E_NOTIMPL;
 }
 
+static BOOL is_tty_handle( HANDLE handle )
+{
+    return ((UINT_PTR)handle & 3) == 1;
+}
+
 void init_console( void )
 {
     RTL_USER_PROCESS_PARAMETERS *params = RtlGetCurrentPeb()->ProcessParameters;
 
-    if (params->ConsoleHandle == CONSOLE_HANDLE_ALLOC)
+    if (params->ConsoleHandle == CONSOLE_HANDLE_SHELL)
+    {
+        HANDLE tty_in = NULL, tty_out = NULL, process = NULL;
+        COORD size;
+
+        if (is_tty_handle( params->hStdInput ))
+        {
+            tty_in = params->hStdInput;
+            params->hStdInput = NULL;
+        }
+        if (is_tty_handle( params->hStdOutput ))
+        {
+            tty_out = params->hStdOutput;
+            params->hStdOutput = NULL;
+        }
+        if (is_tty_handle( params->hStdError ))
+        {
+            if (tty_out) CloseHandle( params->hStdError );
+            else tty_out = params->hStdError;
+            params->hStdError = NULL;
+        }
+
+        size.X = params->dwXCountChars;
+        size.Y = params->dwYCountChars;
+        TRACE( "creating unix console (size %u %u)\n", size.X, size.Y );
+        params->ConsoleHandle = create_pseudo_console( size, tty_in, tty_out, NULL, 0, &process );
+        CloseHandle( process );
+        CloseHandle( tty_in );
+        CloseHandle( tty_out );
+
+        if (params->ConsoleHandle && create_console_connection( params->ConsoleHandle ))
+        {
+            init_console_std_handles( FALSE );
+            console_flags = 0;
+        }
+    }
+    else if (params->ConsoleHandle == CONSOLE_HANDLE_ALLOC)
     {
         HMODULE mod = GetModuleHandleW( NULL );
         params->ConsoleHandle = NULL;
