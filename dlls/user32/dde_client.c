@@ -40,7 +40,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ddeml);
 
 static LRESULT CALLBACK WDML_ClientProc(HWND, UINT, WPARAM, LPARAM);	/* only for one client, not conv list */
 const char WDML_szClientConvClassA[] = "WineDdeClientA";
-const WCHAR WDML_szClientConvClassW[] = {'W','i','n','e','D','d','e','C','l','i','e','n','t','W',0};
+const WCHAR WDML_szClientConvClassW[] = L"WineDdeClientW";
 
 /******************************************************************************
  * DdeConnectList [USER32.@]  Establishes conversation with DDE servers

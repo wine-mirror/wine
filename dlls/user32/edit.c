@@ -3193,18 +3193,16 @@ static LRESULT EDIT_WM_Char(EDITSTATE *es, WCHAR c)
 				EDIT_MoveHome(es, FALSE, FALSE);
 				EDIT_MoveDown_ML(es, FALSE);
 			} else {
-				static const WCHAR cr_lfW[] = {'\r','\n'};
-				EDIT_EM_ReplaceSel(es, TRUE, cr_lfW, 2, TRUE, TRUE);
+				EDIT_EM_ReplaceSel(es, TRUE, L"\r\n", 2, TRUE, TRUE);
 			}
 		}
 		break;
 	case '\t':
 		if ((es->style & ES_MULTILINE) && !(es->style & ES_READONLY))
 		{
-			static const WCHAR tabW[] = {'\t'};
                         if (EDIT_IsInsideDialog(es))
                             break;
-			EDIT_EM_ReplaceSel(es, TRUE, tabW, 1, TRUE, TRUE);
+			EDIT_EM_ReplaceSel(es, TRUE, L"\t", 1, TRUE, TRUE);
 		}
 		break;
 	case VK_BACK:
@@ -5250,10 +5248,9 @@ LRESULT EditWndProc_common( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, B
 /*********************************************************************
  * edit class descriptor
  */
-static const WCHAR editW[] = {'E','d','i','t',0};
 const struct builtin_class_descr EDIT_builtin_class =
 {
-    editW,                /* name */
+    L"Edit",              /* name */
     CS_DBLCLKS | CS_PARENTDC,   /* style */
     WINPROC_EDIT,         /* proc */
 #ifdef __i386__

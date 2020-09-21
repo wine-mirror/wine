@@ -244,10 +244,9 @@ static void remove_item_data(LB_DESCR *descr, UINT index)
 /*********************************************************************
  * listbox class descriptor
  */
-static const WCHAR listboxW[] = {'L','i','s','t','B','o','x',0};
 const struct builtin_class_descr LISTBOX_builtin_class =
 {
-    listboxW,             /* name */
+    L"ListBox",           /* name */
     CS_DBLCLKS /*| CS_PARENTDC*/,  /* style */
     WINPROC_LISTBOX,      /* proc */
     sizeof(LB_DESCR *),   /* extra */
@@ -259,10 +258,9 @@ const struct builtin_class_descr LISTBOX_builtin_class =
 /*********************************************************************
  * combolbox class descriptor
  */
-static const WCHAR combolboxW[] = {'C','o','m','b','o','L','B','o','x',0};
 const struct builtin_class_descr COMBOLBOX_builtin_class =
 {
-    combolboxW,           /* name */
+    L"ComboLBox",         /* name */
     CS_DBLCLKS | CS_SAVEBITS,  /* style */
     WINPROC_LISTBOX,      /* proc */
     sizeof(LB_DESCR *),   /* extra */
@@ -1701,8 +1699,7 @@ static LRESULT LISTBOX_InsertString( LB_DESCR *descr, INT index, LPCWSTR str )
 
     if (HAS_STRINGS(descr))
     {
-        static const WCHAR empty_stringW[] = { 0 };
-        if (!str) str = empty_stringW;
+        if (!str) str = L"";
         if (!(new_str = HeapAlloc( GetProcessHeap(), 0, (lstrlenW(str) + 1) * sizeof(WCHAR) )))
         {
             SEND_NOTIFICATION( descr, LBN_ERRSPACE );
@@ -1896,16 +1893,14 @@ static LRESULT LISTBOX_Directory( LB_DESCR *descr, UINT attrib,
                 WCHAR buffer[270];
                 if (entry.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
                 {
-                    static const WCHAR bracketW[]  = { ']',0 };
-                    static const WCHAR dotW[] = { '.',0 };
                     if (!(attrib & DDL_DIRECTORY) ||
-                        !wcscmp( entry.cFileName, dotW )) continue;
+                        !wcscmp( entry.cFileName, L"." )) continue;
                     buffer[0] = '[';
                     if (!long_names && entry.cAlternateFileName[0])
                         lstrcpyW( buffer + 1, entry.cAlternateFileName );
                     else
                         lstrcpyW( buffer + 1, entry.cFileName );
-                    lstrcatW(buffer, bracketW);
+                    lstrcatW(buffer, L"]");
                 }
                 else  /* not a directory */
                 {
@@ -1937,8 +1932,8 @@ static LRESULT LISTBOX_Directory( LB_DESCR *descr, UINT attrib,
         /* scan drives */
         if (attrib & DDL_DRIVES)
         {
-            WCHAR buffer[] = {'[','-','a','-',']',0};
-            WCHAR root[] = {'A',':','\\',0};
+            WCHAR buffer[] = L"[-a-]";
+            WCHAR root[] = L"A:\\";
             int drive;
             for (drive = 0; drive < 26; drive++, buffer[2]++, root[0]++)
             {

@@ -123,28 +123,28 @@ ATOM get_int_atom_value( LPCWSTR name )
  */
 static BOOL is_comctl32_class( const WCHAR *name )
 {
-    static const WCHAR classesW[][20] =
+    static const WCHAR *classesW[] =
     {
-        {'C','o','m','b','o','B','o','x','E','x','3','2',0},
-        {'m','s','c','t','l','s','_','h','o','t','k','e','y','3','2',0},
-        {'m','s','c','t','l','s','_','p','r','o','g','r','e','s','s','3','2',0},
-        {'m','s','c','t','l','s','_','s','t','a','t','u','s','b','a','r','3','2',0},
-        {'m','s','c','t','l','s','_','t','r','a','c','k','b','a','r','3','2',0},
-        {'m','s','c','t','l','s','_','u','p','d','o','w','n','3','2',0},
-        {'N','a','t','i','v','e','F','o','n','t','C','t','l',0},
-        {'R','e','B','a','r','W','i','n','d','o','w','3','2',0},
-        {'S','y','s','A','n','i','m','a','t','e','3','2',0},
-        {'S','y','s','D','a','t','e','T','i','m','e','P','i','c','k','3','2',0},
-        {'S','y','s','H','e','a','d','e','r','3','2',0},
-        {'S','y','s','I','P','A','d','d','r','e','s','s','3','2',0},
-        {'S','y','s','L','i','n','k',0},
-        {'S','y','s','L','i','s','t','V','i','e','w','3','2',0},
-        {'S','y','s','M','o','n','t','h','C','a','l','3','2',0},
-        {'S','y','s','P','a','g','e','r',0},
-        {'S','y','s','T','a','b','C','o','n','t','r','o','l','3','2',0},
-        {'S','y','s','T','r','e','e','V','i','e','w','3','2',0},
-        {'T','o','o','l','b','a','r','W','i','n','d','o','w','3','2',0},
-        {'t','o','o','l','t','i','p','s','_','c','l','a','s','s','3','2',0},
+        L"ComboBoxEx32",
+        L"msctls_hotkey32",
+        L"msctls_progress32",
+        L"msctls_statusbar32",
+        L"msctls_trackbar32",
+        L"msctls_updown32",
+        L"NativeFontCtl",
+        L"ReBarWindow32",
+        L"SysAnimate32",
+        L"SysDateTimePick32",
+        L"SysHeader32",
+        L"SysIPAddress32",
+        L"SysLink",
+        L"SysListView32",
+        L"SysMonthCal32",
+        L"SysPager",
+        L"SysTabControl32",
+        L"SysTreeView32",
+        L"ToolbarWindow32",
+        L"tooltips_class32",
     };
 
     int min = 0, max = ARRAY_SIZE( classesW ) - 1;
@@ -161,11 +161,11 @@ static BOOL is_comctl32_class( const WCHAR *name )
 
 static BOOL is_builtin_class( const WCHAR *name )
 {
-    static const WCHAR classesW[][20] =
+    static const WCHAR *classesW[] =
     {
-        {'I','M','E',0},
-        {'M','D','I','C','l','i','e','n','t',0},
-        {'S','c','r','o','l','l','b','a','r',0},
+        L"IME",
+        L"MDIClient",
+        L"Scrollbar",
     };
 
     int min = 0, max = ARRAY_SIZE( classesW ) - 1;
@@ -408,7 +408,6 @@ const WCHAR *CLASS_GetVersionedName( const WCHAR *name, UINT *basename_offset, W
  */
 static CLASS *CLASS_FindClass( LPCWSTR name, HINSTANCE hinstance )
 {
-    static const WCHAR comctl32W[] = {'c','o','m','c','t','l','3','2','.','d','l','l',0};
     struct list *ptr;
     ATOM atom = get_int_atom_value( name );
 
@@ -443,8 +442,8 @@ static CLASS *CLASS_FindClass( LPCWSTR name, HINSTANCE hinstance )
 
         if (atom) break;
         if (!is_comctl32_class( name )) break;
-        if (GetModuleHandleW( comctl32W )) break;
-        if (!LoadLibraryW( comctl32W )) break;
+        if (GetModuleHandleW( L"comctl32.dll" )) break;
+        if (!LoadLibraryW( L"comctl32.dll" )) break;
         TRACE( "%s retrying after loading comctl32\n", debugstr_w(name) );
     }
 

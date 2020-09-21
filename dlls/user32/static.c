@@ -83,10 +83,9 @@ static const pfPaint staticPaintFunc[SS_TYPEMASK+1] =
 /*********************************************************************
  * static class descriptor
  */
-static const WCHAR staticW[] = {'S','t','a','t','i','c',0};
 const struct builtin_class_descr STATIC_builtin_class =
 {
-    staticW,             /* name */
+    L"Static",           /* name */
     CS_DBLCLKS | CS_PARENTDC, /* style  */
     WINPROC_STATIC,      /* proc */
     STATIC_EXTRA_BYTES,  /* extra */

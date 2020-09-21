@@ -918,7 +918,6 @@ static BOOL UITOOLS95_DrawFrameCaption(HDC dc, LPRECT r, UINT uFlags)
     int xc = (myr.left+myr.right)/2;
     int yc = (myr.top+myr.bottom)/2;
     WCHAR str[] = {0, 0};
-    static const WCHAR glyphFontName[] = { 'M','a','r','l','e','t','t',0 };
     UINT alignsave;
     int bksave;
     COLORREF clrsave;
@@ -940,7 +939,7 @@ static BOOL UITOOLS95_DrawFrameCaption(HDC dc, LPRECT r, UINT uFlags)
     
     hf = CreateFontW(-SmallDiam, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
                     SYMBOL_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
-                    DEFAULT_QUALITY, FIXED_PITCH|FF_DONTCARE, glyphFontName);
+                    DEFAULT_QUALITY, FIXED_PITCH|FF_DONTCARE, L"Marlett");
     alignsave = SetTextAlign(dc, TA_TOP|TA_LEFT);
     bksave = SetBkMode(dc, TRANSPARENT);
     clrsave = GetTextColor(dc);

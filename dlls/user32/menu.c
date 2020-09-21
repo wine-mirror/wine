@@ -400,9 +400,7 @@ static inline UINT get_scroll_arrow_height(const POPUPMENU *menu)
  */
 static HMENU MENU_CopySysPopup(BOOL mdi)
 {
-    static const WCHAR sysmenuW[] = {'S','Y','S','M','E','N','U',0};
-    static const WCHAR sysmenumdiW[] = {'S','Y','S','M','E','N','U','M','D','I',0};
-    HMENU hMenu = LoadMenuW(user32_module, (mdi ? sysmenumdiW : sysmenuW));
+    HMENU hMenu = LoadMenuW(user32_module, mdi ? L"SYSMENUMDI" : L"SYSMENU");
 
     if( hMenu ) {
         MENUINFO minfo;
@@ -979,9 +977,7 @@ static void MENU_DrawBitmapItem( HDC hdc, MENUITEM *lpitem, const RECT *rect,
             /* draw the magic bitmaps using marlett font characters */
             /* FIXME: fontsize and the position (x,y) could probably be better */
             HFONT hfont, hfontsav;
-            LOGFONTW logfont = { 0, 0, 0, 0, FW_NORMAL,
-                0, 0, 0, SYMBOL_CHARSET, 0, 0, 0, 0,
-                { 'M','a','r','l','e','t','t',0 } };
+            LOGFONTW logfont = { 0, 0, 0, 0, FW_NORMAL, 0, 0, 0, SYMBOL_CHARSET, 0, 0, 0, 0, L"Marlett" };
             logfont.lfHeight =  min( h, w) - 5 ;
             TRACE(" height %d rect %s\n", logfont.lfHeight, wine_dbgstr_rect( rect));
             hfont = CreateFontIndirectW( &logfont);

@@ -50,7 +50,6 @@ const struct builtin_class_descr ICONTITLE_builtin_class =
  */
 static BOOL ICONTITLE_SetTitlePos( HWND hwnd, HWND owner )
 {
-    static const WCHAR emptyTitleText[] = {'<','.','.','.','>',0};
     WCHAR str[80];
     HDC hDC;
     HFONT hPrevFont;
@@ -65,7 +64,7 @@ static BOOL ICONTITLE_SetTitlePos( HWND hwnd, HWND owner )
 
     if( !length )
     {
-        lstrcpyW( str, emptyTitleText );
+        lstrcpyW( str, L"<...>" );
         length = lstrlenW( str );
     }
 

@@ -92,13 +92,6 @@ static void init_wallpaper( const WCHAR *wallpaper )
  */
 LRESULT WINAPI DesktopWndProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
-    static const WCHAR display_device_guid_propW[] = {
-        '_','_','w','i','n','e','_','d','i','s','p','l','a','y','_',
-        'd','e','v','i','c','e','_','g','u','i','d',0 };
-    static const WCHAR guid_formatW[] = {
-        '%','0','8','x','-','%','0','4','x','-','%','0','4','x','-','%','0','2','x','%','0','2','x','-',
-        '%','0','2','x','%','0','2','x','%','0','2','x','%','0','2','x','%','0','2','x','%','0','2','x',0};
-
     switch (message)
     {
     case WM_NCCREATE:
@@ -113,11 +106,12 @@ LRESULT WINAPI DesktopWndProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
 
             if (GetAncestor( hwnd, GA_PARENT )) return FALSE;  /* refuse to create non-desktop window */
 
-            swprintf( buffer, ARRAY_SIZE(buffer), guid_formatW, guid->Data1, guid->Data2, guid->Data3,
+            swprintf( buffer, ARRAY_SIZE(buffer), L"%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+                      guid->Data1, guid->Data2, guid->Data3,
                       guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
                       guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7] );
             atom = GlobalAddAtomW( buffer );
-            SetPropW( hwnd, display_device_guid_propW, ULongToHandle( atom ) );
+            SetPropW( hwnd, L"__wine_display_device_guid", ULongToHandle( atom ) );
         }
         return TRUE;
     }

@@ -518,13 +518,11 @@ INT WINAPI MessageBoxIndirectW( LPMSGBOXPARAMSW msgbox )
     int ret;
     UINT i;
     struct ThreadWindows threadWindows;
-    static const WCHAR msg_box_res_nameW[] = { 'M','S','G','B','O','X',0 };
 
-    if (!(hRes = FindResourceExW(user32_module, (LPWSTR)RT_DIALOG,
-                                 msg_box_res_nameW, msgbox->dwLanguageId)))
+    if (!(hRes = FindResourceExW(user32_module, (LPWSTR)RT_DIALOG, L"MSGBOX", msgbox->dwLanguageId)))
     {
         if (!msgbox->dwLanguageId ||
-            !(hRes = FindResourceExW(user32_module, (LPWSTR)RT_DIALOG, msg_box_res_nameW, LANG_NEUTRAL)))
+            !(hRes = FindResourceExW(user32_module, (LPWSTR)RT_DIALOG, L"MSGBOX", LANG_NEUTRAL)))
             return 0;
     }
     if (!(tmplate = LoadResource(user32_module, hRes)))

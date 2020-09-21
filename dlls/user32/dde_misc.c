@@ -44,7 +44,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ddeml);
 
 static WDML_INSTANCE*	WDML_InstanceList = NULL;
 static LONG		WDML_MaxInstanceID = 0;  /* OK for present, have to worry about wrap-around later */
-const WCHAR		WDML_szEventClass[] = {'W','i','n','e','D','d','e','E','v','e','n','t','C','l','a','s','s',0};
+const WCHAR		WDML_szEventClass[] = L"WineDdeEventClass";
 
 /* protection for instance list */
 static CRITICAL_SECTION WDML_CritSect;
@@ -1646,7 +1646,6 @@ HGLOBAL WDML_DataHandle2Global(HDDEDATA hDdeData, BOOL fResponse, BOOL fRelease,
  */
 WDML_SERVER*	WDML_AddServer(WDML_INSTANCE* pInstance, HSZ hszService, HSZ hszTopic)
 {
-    static const WCHAR fmtW[] = {'%','s','(','0','x','%','*','x',')',0};
     WDML_SERVER* 	pServer;
     WCHAR		buf1[256];
     WCHAR		buf2[256];
@@ -1658,7 +1657,7 @@ WDML_SERVER*	WDML_AddServer(WDML_INSTANCE* pInstance, HSZ hszService, HSZ hszTop
     WDML_IncHSZ(pInstance, hszService);
 
     DdeQueryStringW(pInstance->instanceID, hszService, buf1, 256, CP_WINUNICODE);
-    swprintf(buf2, 256, fmtW, buf1, 2*sizeof(ULONG_PTR), GetCurrentProcessId());
+    swprintf(buf2, 256, L"%s(0x%*x)", buf1, 2*sizeof(ULONG_PTR), GetCurrentProcessId());
     pServer->hszServiceSpec = DdeCreateStringHandleW(pInstance->instanceID, buf2, CP_WINUNICODE);
 
     pServer->atomService = WDML_MakeAtomFromHsz(pServer->hszService);

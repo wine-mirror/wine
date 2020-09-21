@@ -139,14 +139,14 @@ static const WORD *DIALOG_GetControl32( const WORD *p, DLG_CONTROL_INFO *info,
 
     if (GET_WORD(p) == 0xffff)
     {
-        static const WCHAR class_names[6][10] =
+        static const WCHAR *class_names[6] =
         {
-            { 'B','u','t','t','o','n', },             /* 0x80 */
-            { 'E','d','i','t', },                     /* 0x81 */
-            { 'S','t','a','t','i','c', },             /* 0x82 */
-            { 'L','i','s','t','B','o','x', },         /* 0x83 */
-            { 'S','c','r','o','l','l','B','a','r', }, /* 0x84 */
-            { 'C','o','m','b','o','B','o','x', }      /* 0x85 */
+            L"Button",    /* 0x80 */
+            L"Edit",      /* 0x81 */
+            L"Static",    /* 0x82 */
+            L"ListBox",   /* 0x83 */
+            L"ScrollBar", /* 0x84 */
+            L"ComboBox"   /* 0x85 */
         };
         WORD id = GET_WORD(p+1);
         /* Windows treats dialog control class ids 0-5 same way as 0x80-0x85 */
@@ -1816,8 +1816,8 @@ static INT DIALOG_DlgDirListW( HWND hDlg, LPWSTR spec, INT idLBox,
 {
     HWND hwnd;
     LPWSTR orig_spec = spec;
-    WCHAR any[] = {'*','.','*',0};
-    WCHAR star[] = {'*',0};
+    WCHAR any[] = L"*.*";
+    WCHAR star[] = L"*";
 
 #define SENDMSG(msg,wparam,lparam) \
     ((attrib & DDL_POSTMSGS) ? PostMessageW( hwnd, msg, wparam, lparam ) \

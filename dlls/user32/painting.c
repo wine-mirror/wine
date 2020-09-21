@@ -57,8 +57,6 @@ static struct list dce_list = LIST_INIT(dce_list);
 
 static BOOL CALLBACK dc_hook( HDC hDC, WORD code, DWORD_PTR data, LPARAM lParam );
 
-static const WCHAR displayW[] = { 'D','I','S','P','L','A','Y',0 };
-
 
 /***********************************************************************
  *           dump_rdw_flags
@@ -225,7 +223,7 @@ static struct dce *alloc_dce(void)
     struct dce *dce;
 
     if (!(dce = HeapAlloc( GetProcessHeap(), 0, sizeof(*dce) ))) return NULL;
-    if (!(dce->hdc = CreateDCW( displayW, NULL, NULL, NULL )))
+    if (!(dce->hdc = CreateDCW( L"DISPLAY", NULL, NULL, NULL )))
     {
         HeapFree( GetProcessHeap(), 0, dce );
         return 0;

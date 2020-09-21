@@ -280,11 +280,9 @@ static const INPUT_MESSAGE_SOURCE msg_source_unavailable = { IMDT_UNAVAILABLE, I
 
 
 /* Message class descriptor */
-static const WCHAR messageW[] = {'M','e','s','s','a','g','e',0};
-
 const struct builtin_class_descr MESSAGE_builtin_class =
 {
-    messageW,             /* name */
+    L"Message",           /* name */
     0,                    /* style */
     WINPROC_MESSAGE,      /* proc */
     0,                    /* extra */

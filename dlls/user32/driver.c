@@ -45,22 +45,11 @@ static BOOL CDECL nodrv_CreateWindow( HWND hwnd );
 
 static BOOL load_desktop_driver( HWND hwnd, HMODULE *module )
 {
-    static const WCHAR display_device_guid_propW[] = {
-        '_','_','w','i','n','e','_','d','i','s','p','l','a','y','_',
-        'd','e','v','i','c','e','_','g','u','i','d',0 };
-    static const WCHAR key_pathW[] = {
-        'S','y','s','t','e','m','\\',
-        'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
-        'C','o','n','t','r','o','l','\\',
-        'V','i','d','e','o','\\','{',0};
-    static const WCHAR displayW[] = {'}','\\','0','0','0','0',0};
-    static const WCHAR driverW[] = {'G','r','a','p','h','i','c','s','D','r','i','v','e','r',0};
-    static const WCHAR nullW[] = {'n','u','l','l',0};
     BOOL ret = FALSE;
     HKEY hkey;
     DWORD size;
     WCHAR path[MAX_PATH];
-    WCHAR key[ARRAY_SIZE(key_pathW) + ARRAY_SIZE(displayW) + 40];
+    WCHAR key[ARRAY_SIZE(L"System\\CurrentControlSet\\Control\\Video\\{}\\0000") + 40];
     UINT guid_atom;
 
     USER_CheckNotLock();
@@ -68,15 +57,15 @@ static BOOL load_desktop_driver( HWND hwnd, HMODULE *module )
     strcpy( driver_load_error, "The explorer process failed to start." );  /* default error */
     SendMessageW( hwnd, WM_NULL, 0, 0 );  /* wait for the desktop process to be ready */
 
-    guid_atom = HandleToULong( GetPropW( hwnd, display_device_guid_propW ));
-    memcpy( key, key_pathW, sizeof(key_pathW) );
+    guid_atom = HandleToULong( GetPropW( hwnd, L"__wine_display_device_guid" ));
+    lstrcpyW( key, L"System\\CurrentControlSet\\Control\\Video\\{" );
     if (!GlobalGetAtomNameW( guid_atom, key + lstrlenW(key), 40 )) return 0;
-    lstrcatW( key, displayW );
+    lstrcatW( key, L"}\\0000" );
     if (RegOpenKeyW( HKEY_LOCAL_MACHINE, key, &hkey )) return 0;
     size = sizeof(path);
-    if (!RegQueryValueExW( hkey, driverW, NULL, NULL, (BYTE *)path, &size ))
+    if (!RegQueryValueExW( hkey, L"GraphicsDriver", NULL, NULL, (BYTE *)path, &size ))
     {
-        if ((ret = !wcscmp( path, nullW ))) *module = NULL;
+        if ((ret = !wcscmp( path, L"null" ))) *module = NULL;
         else ret = (*module = LoadLibraryW( path )) != NULL;
         if (!ret) ERR( "failed to load %s\n", debugstr_w(path) );
         TRACE( "%s %p\n", debugstr_w(path), *module );
@@ -214,7 +203,6 @@ static UINT CDECL nulldrv_GetKeyboardLayoutList( INT size, HKL *layouts )
     INT count = 0;
     ULONG_PTR baselayout;
     LANGID langid;
-    static const WCHAR szKeyboardReg[] = {'S','y','s','t','e','m','\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\','C','o','n','t','r','o','l','\\','K','e','y','b','o','a','r','d',' ','L','a','y','o','u','t','s',0};
 
     baselayout = GetUserDefaultLCID();
     langid = PRIMARYLANGID(LANGIDFROMLCID(baselayout));
@@ -224,7 +212,7 @@ static UINT CDECL nulldrv_GetKeyboardLayoutList( INT size, HKL *layouts )
         baselayout |= baselayout << 16;
 
     /* Enumerate the Registry */
-    rc = RegOpenKeyW(HKEY_LOCAL_MACHINE,szKeyboardReg,&hKeyKeyboard);
+    rc = RegOpenKeyW(HKEY_LOCAL_MACHINE,L"System\\CurrentControlSet\\Control\\Keyboard Layouts",&hKeyKeyboard);
     if (rc == ERROR_SUCCESS)
     {
         do {

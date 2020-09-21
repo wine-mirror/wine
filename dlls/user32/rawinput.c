@@ -645,8 +645,6 @@ UINT WINAPI GetRawInputDeviceInfoA(HANDLE device, UINT command, void *data, UINT
 UINT WINAPI GetRawInputDeviceInfoW(HANDLE handle, UINT command, void *data, UINT *data_size)
 {
     /* FIXME: Most of this is made up. */
-    static const WCHAR keyboard_name[] = {'\\','\\','?','\\','W','I','N','E','_','K','E','Y','B','O','A','R','D',0};
-    static const WCHAR mouse_name[] = {'\\','\\','?','\\','W','I','N','E','_','M','O','U','S','E',0};
     static const RID_DEVICE_INFO_KEYBOARD keyboard_info = {0, 0, 1, 12, 3, 101};
     static const RID_DEVICE_INFO_MOUSE mouse_info = {1, 5, 0, FALSE};
 
@@ -673,13 +671,13 @@ UINT WINAPI GetRawInputDeviceInfoW(HANDLE handle, UINT command, void *data, UINT
         avail_bytes = *data_size * sizeof(WCHAR);
         if (handle == WINE_MOUSE_HANDLE)
         {
-            *data_size = ARRAY_SIZE(mouse_name);
-            to_copy = mouse_name;
+            *data_size = ARRAY_SIZE(L"\\\\?\\WINE_MOUSE");
+            to_copy = L"\\\\?\\WINE_MOUSE";
         }
         else if (handle == WINE_KEYBOARD_HANDLE)
         {
-            *data_size = ARRAY_SIZE(keyboard_name);
-            to_copy = keyboard_name;
+            *data_size = ARRAY_SIZE(L"\\\\?\\WINE_KEYBOARD");
+            to_copy = L"\\\\?\\WINE_KEYBOARD";
         }
         else
         {

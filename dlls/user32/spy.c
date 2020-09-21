@@ -1671,9 +1671,6 @@ static const USER_MSG propsht_array[] = {
           USM(PSM_SETTITLEW           ,0),
           USM(PSM_SETFINISHTEXTW      ,0),
 };
-static const WCHAR PropSheetInfoStr[] =
-    {'P','r','o','p','e','r','t','y','S','h','e','e','t','I','n','f','o',0 };
-
 static const USER_MSG updown_array[] = {
           USM(UDM_SETRANGE            ,0),
           USM(UDM_GETRANGE            ,0),
@@ -2145,7 +2142,7 @@ static void SPY_GetClassName( SPY_INSTANCE *sp_e )
 {
     /* special code to detect a property sheet dialog   */
     if ((GetClassLongW(sp_e->msg_hwnd, GCW_ATOM) == WC_DIALOG) &&
-        (GetPropW(sp_e->msg_hwnd, PropSheetInfoStr))) {
+        (GetPropW(sp_e->msg_hwnd, L"PropertySheetInfo"))) {
         lstrcpyW(sp_e->wnd_class, WC_PROPSHEETW);
     }
     else {

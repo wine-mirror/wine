@@ -1447,8 +1447,6 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
     }
     else
     {
-        static const WCHAR messageW[] = {'M','e','s','s','a','g','e',0};
-
         if ((cs->style & (WS_CHILD|WS_POPUP)) == WS_CHILD)
         {
             WARN("No parent for child window\n" );
@@ -1458,7 +1456,7 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
 
         /* are we creating the desktop or HWND_MESSAGE parent itself? */
         if (className != (LPCWSTR)DESKTOP_CLASS_ATOM &&
-            (IS_INTRESOURCE(className) || wcsicmp( className, messageW )))
+            (IS_INTRESOURCE(className) || wcsicmp( className, L"Message" )))
         {
             DWORD layout;
             GetProcessDefaultLayout( &layout );
@@ -2084,13 +2082,11 @@ HWND WINAPI GetDesktopWindow(void)
 
     if (!thread_info->top_window)
     {
-        static const WCHAR explorer[] = {'\\','e','x','p','l','o','r','e','r','.','e','x','e',0};
-        static const WCHAR args[] = {' ','/','d','e','s','k','t','o','p',0};
         STARTUPINFOW si;
         PROCESS_INFORMATION pi;
         WCHAR windir[MAX_PATH];
-        WCHAR app[MAX_PATH + ARRAY_SIZE( explorer )];
-        WCHAR cmdline[MAX_PATH + ARRAY_SIZE( explorer ) + ARRAY_SIZE( args )];
+        WCHAR app[MAX_PATH + ARRAY_SIZE( L"\\explorer.exe" )];
+        WCHAR cmdline[MAX_PATH + ARRAY_SIZE( L"\\explorer.exe /desktop" )];
         WCHAR desktop[MAX_PATH];
         void *redir;
 
@@ -2120,9 +2116,9 @@ HWND WINAPI GetDesktopWindow(void)
 
         GetSystemDirectoryW( windir, MAX_PATH );
         lstrcpyW( app, windir );
-        lstrcatW( app, explorer );
+        lstrcatW( app, L"\\explorer.exe" );
         lstrcpyW( cmdline, app );
-        lstrcatW( cmdline, args );
+        lstrcatW( cmdline, L" /desktop" );
 
         Wow64DisableWow64FsRedirection( &redir );
         if (CreateProcessW( app, cmdline, NULL, NULL, FALSE, DETACHED_PROCESS,
@@ -4054,11 +4050,6 @@ BOOL WINAPI GetProcessDefaultLayout( DWORD *layout )
     }
     if (process_layout == ~0u)
     {
-        static const WCHAR translationW[] = { '\\','V','a','r','F','i','l','e','I','n','f','o',
-                                              '\\','T','r','a','n','s','l','a','t','i','o','n', 0 };
-        static const WCHAR filedescW[] = { '\\','S','t','r','i','n','g','F','i','l','e','I','n','f','o',
-                                           '\\','%','0','4','x','%','0','4','x',
-                                           '\\','F','i','l','e','D','e','s','c','r','i','p','t','i','o','n',0 };
         WCHAR *str, buffer[MAX_PATH];
         DWORD i, len, version_layout = 0;
         DWORD user_lang = GetUserDefaultLangID();
@@ -4069,7 +4060,7 @@ BOOL WINAPI GetProcessDefaultLayout( DWORD *layout )
         if (!(len = GetFileVersionInfoSizeW( buffer, NULL ))) goto done;
         if (!(data = HeapAlloc( GetProcessHeap(), 0, len ))) goto done;
         if (!GetFileVersionInfoW( buffer, 0, len, data )) goto done;
-        if (!VerQueryValueW( data, translationW, (void **)&languages, &len ) || !len) goto done;
+        if (!VerQueryValueW( data, L"\\VarFileInfo\\Translation", (void **)&languages, &len ) || !len) goto done;
 
         len /= sizeof(DWORD);
         for (i = 0; i < len; i++) if (LOWORD(languages[i]) == user_lang) break;
@@ -4078,7 +4069,8 @@ BOOL WINAPI GetProcessDefaultLayout( DWORD *layout )
                 if (LOWORD(languages[i]) == MAKELANGID( PRIMARYLANGID(user_lang), SUBLANG_NEUTRAL )) break;
         if (i == len) i = 0;  /* default to the first one */
 
-        swprintf( buffer, ARRAY_SIZE(buffer), filedescW, LOWORD(languages[i]), HIWORD(languages[i]) );
+        swprintf( buffer, ARRAY_SIZE(buffer), L"\\StringFileInfo\\%04x%04x\\FileDescription",
+                  LOWORD(languages[i]), HIWORD(languages[i]) );
         if (!VerQueryValueW( data, buffer, (void **)&str, &len )) goto done;
         TRACE( "found description %s\n", debugstr_w( str ));
         if (str[0] == 0x200e && str[1] == 0x200e) version_layout = LAYOUT_RTL;
