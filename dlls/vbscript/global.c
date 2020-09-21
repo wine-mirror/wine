@@ -2316,8 +2316,8 @@ static HRESULT Global_Join(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, V
 
 static HRESULT Global_Split(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
-    BSTR str, string, delimeter = NULL;
-    int count, max, mode, len, start, end, ret, delimeterlen = 1;
+    BSTR str, string, delimiter = NULL;
+    int count, max, mode, len, start, end, ret, delimiterlen = 1;
     int i,*indices = NULL, indices_max = 8;
     SAFEARRAYBOUND bounds;
     SAFEARRAY *sa = NULL;
@@ -2342,13 +2342,13 @@ static HRESULT Global_Split(BuiltinDisp *This, VARIANT *args, unsigned args_cnt,
 
     if(args_cnt > 1) {
         if(V_VT(args+1) != VT_BSTR) {
-            hres = to_string(args+1, &delimeter);
+            hres = to_string(args+1, &delimiter);
             if(FAILED(hres))
                 goto error;
         }else {
-            delimeter = V_BSTR(args+1);
+            delimiter = V_BSTR(args+1);
         }
-        delimeterlen = SysStringLen(delimeter);
+        delimiterlen = SysStringLen(delimiter);
     }
 
     if(args_cnt > 2) {
@@ -2388,9 +2388,9 @@ static HRESULT Global_Split(BuiltinDisp *This, VARIANT *args, unsigned args_cnt,
 
     while(1) {
         ret = -1;
-        if (delimeterlen) {
+        if (delimiterlen) {
             ret = FindStringOrdinal(FIND_FROMSTART, string + start, len - start,
-                                    delimeter ? delimeter : L" ", delimeterlen, mode);
+                                    delimiter ? delimiter : L" ", delimiterlen, mode);
         }
 
         if (ret == -1) {
@@ -2410,7 +2410,7 @@ static HRESULT Global_Split(BuiltinDisp *This, VARIANT *args, unsigned args_cnt,
         indices[count++] = end;
 
         if (ret == -1 || count == max) break;
-        start = start + ret + delimeterlen;
+        start = start + ret + delimiterlen;
         if (start > len) break;
     }
 
@@ -2443,7 +2443,7 @@ static HRESULT Global_Split(BuiltinDisp *This, VARIANT *args, unsigned args_cnt,
             SafeArrayDestroy(sa);
             goto error;
         }
-        start = indices[i]+delimeterlen;
+        start = indices[i]+delimiterlen;
     }
     SafeArrayUnaccessData(sa);
 
@@ -2459,7 +2459,7 @@ error:
     if(V_VT(args) != VT_BSTR)
         SysFreeString(string);
     if(V_VT(args+1) != VT_BSTR)
-        SysFreeString(delimeter);
+        SysFreeString(delimiter);
     return hres;
 }
 
