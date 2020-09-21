@@ -1131,7 +1131,7 @@ static void test_color_formats(void)
     ok(bps[0] == 8 && bps[1] == 8 && bps[2] == 8 && bps[3] == 0,
        "expected bps 8,8,8,0 got %d,%d,%d,%d\n", bps[0], bps[1], bps[2], bps[3]);
 
-    for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
+    for (i = 0; i < ARRAY_SIZE(td); i++)
     {
         if (td[i].data)
         {
