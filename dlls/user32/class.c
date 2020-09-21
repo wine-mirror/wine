@@ -19,9 +19,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <assert.h>
 #include <stdarg.h>
 #include <stdlib.h>
@@ -31,7 +28,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
-#include "wine/unicode.h"
+#include "winnls.h"
 #include "win.h"
 #include "user_private.h"
 #include "controls.h"
@@ -155,7 +152,7 @@ static BOOL is_comctl32_class( const WCHAR *name )
     while (min <= max)
     {
         int res, pos = (min + max) / 2;
-        if (!(res = strcmpiW( name, classesW[pos] ))) return TRUE;
+        if (!(res = wcsicmp( name, classesW[pos] ))) return TRUE;
         if (res < 0) max = pos - 1;
         else min = pos + 1;
     }
@@ -176,7 +173,7 @@ static BOOL is_builtin_class( const WCHAR *name )
     while (min <= max)
     {
         int res, pos = (min + max) / 2;
-        if (!(res = strcmpiW( name, classesW[pos] ))) return TRUE;
+        if (!(res = wcsicmp( name, classesW[pos] ))) return TRUE;
         if (res < 0) max = pos - 1;
         else min = pos + 1;
     }
@@ -243,7 +240,7 @@ static BOOL set_server_info( HWND hwnd, INT offset, LONG_PTR newval, UINT size )
 static inline LPSTR CLASS_GetMenuNameA( CLASS *classPtr )
 {
     if (IS_INTRESOURCE(classPtr->menuName)) return (LPSTR)classPtr->menuName;
-    return (LPSTR)(classPtr->menuName + strlenW(classPtr->menuName) + 1);
+    return (LPSTR)(classPtr->menuName + lstrlenW(classPtr->menuName) + 1);
 }
 
 
@@ -288,7 +285,7 @@ static void CLASS_SetMenuNameW( CLASS *classPtr, LPCWSTR name )
     if (!IS_INTRESOURCE(classPtr->menuName)) HeapFree( GetProcessHeap(), 0, classPtr->menuName );
     if (!IS_INTRESOURCE(name))
     {
-        DWORD lenW = strlenW(name) + 1;
+        DWORD lenW = lstrlenW(name) + 1;
         DWORD lenA = WideCharToMultiByte( CP_ACP, 0, name, lenW, NULL, 0, NULL, NULL );
         classPtr->menuName = HeapAlloc( GetProcessHeap(), 0, lenA + lenW*sizeof(WCHAR) );
         memcpy( classPtr->menuName, name, lenW*sizeof(WCHAR) );
@@ -355,7 +352,7 @@ const WCHAR *CLASS_GetVersionedName( const WCHAR *name, UINT *basename_offset, W
         return name;
 
     wndclass = (struct wndclass_redirect_data *)data.lpData;
-    *basename_offset = wndclass->name_len / sizeof(WCHAR) - strlenW(name);
+    *basename_offset = wndclass->name_len / sizeof(WCHAR) - lstrlenW(name);
 
     module = (const WCHAR *)((BYTE *)data.lpSectionBase + wndclass->module_offset);
     if (!(hmod = GetModuleHandleW( module )))
@@ -367,7 +364,7 @@ const WCHAR *CLASS_GetVersionedName( const WCHAR *name, UINT *basename_offset, W
     if (combined)
     {
         memcpy(combined, ret, *basename_offset * sizeof(WCHAR));
-        strcpyW(&combined[*basename_offset], name);
+        lstrcpyW(&combined[*basename_offset], name);
         ret = combined;
     }
 
@@ -381,7 +378,7 @@ const WCHAR *CLASS_GetVersionedName( const WCHAR *name, UINT *basename_offset, W
         LIST_FOR_EACH( ptr, &class_list )
         {
             CLASS *class = LIST_ENTRY( ptr, CLASS, entry );
-            if (strcmpiW( class->name, ret )) continue;
+            if (wcsicmp( class->name, ret )) continue;
             if (!class->local || class->hInstance == hmod)
             {
                 found = TRUE;
@@ -434,7 +431,7 @@ static CLASS *CLASS_FindClass( LPCWSTR name, HINSTANCE hinstance )
             }
             else
             {
-                if (strcmpiW( class->name, name )) continue;
+                if (wcsicmp( class->name, name )) continue;
             }
             if (!class->local || class->hInstance == hinstance)
             {
@@ -483,7 +480,7 @@ static CLASS *CLASS_RegisterClass( LPCWSTR name, UINT basename_offset, HINSTANCE
     classPtr->basename = classPtr->name;
     if (!classPtr->atomName && name)
     {
-        strcpyW( classPtr->name, name );
+        lstrcpyW( classPtr->name, name );
         classPtr->basename += basename_offset;
     }
     else GlobalGetAtomNameW( classPtr->atomName, classPtr->name, ARRAY_SIZE( classPtr->name ));
@@ -498,7 +495,7 @@ static CLASS *CLASS_RegisterClass( LPCWSTR name, UINT basename_offset, HINSTANCE
         req->client_ptr = wine_server_client_ptr( classPtr );
         req->atom       = classPtr->atomName;
         req->name_offset = basename_offset;
-        if (!req->atom && name) wine_server_add_data( req, name, strlenW(name) * sizeof(WCHAR) );
+        if (!req->atom && name) wine_server_add_data( req, name, lstrlenW(name) * sizeof(WCHAR) );
         ret = !wine_server_call_err( req );
         classPtr->atomName = reply->atom;
     }
@@ -805,7 +802,7 @@ BOOL WINAPI UnregisterClassW( LPCWSTR className, HINSTANCE hInstance )
     {
         req->instance = wine_server_client_ptr( hInstance );
         if (!(req->atom = get_int_atom_value(className)) && className)
-            wine_server_add_data( req, className, strlenW(className) * sizeof(WCHAR) );
+            wine_server_add_data( req, className, lstrlenW(className) * sizeof(WCHAR) );
         if (!wine_server_call_err( req )) classPtr = wine_server_get_ptr( reply->client_ptr );
     }
     SERVER_END_REQ;
@@ -1182,7 +1179,7 @@ INT WINAPI GetClassNameA( HWND hwnd, LPSTR buffer, INT count )
 
     if (count <= 0) return 0;
     if (!GetClassNameW( hwnd, tmpbuf, ARRAY_SIZE( tmpbuf ))) return 0;
-    RtlUnicodeToMultiByteN( buffer, count - 1, &len, tmpbuf, strlenW(tmpbuf) * sizeof(WCHAR) );
+    RtlUnicodeToMultiByteN( buffer, count - 1, &len, tmpbuf, lstrlenW(tmpbuf) * sizeof(WCHAR) );
     buffer[len] = 0;
     return len;
 }
@@ -1231,7 +1228,7 @@ INT WINAPI GetClassNameW( HWND hwnd, LPWSTR buffer, INT count )
         /* Return original name class was registered with. */
         lstrcpynW( buffer, class->basename, count );
         release_class_ptr( class );
-        ret = strlenW( buffer );
+        ret = lstrlenW( buffer );
     }
     return ret;
 }

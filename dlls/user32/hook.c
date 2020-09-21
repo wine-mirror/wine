@@ -62,21 +62,18 @@
  *     WH_MOUSE_LL                  Implemented but should use SendMessage instead
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdarg.h>
 #include <assert.h>
 
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "winerror.h"
 #include "win.h"
 #include "user_private.h"
 #include "wine/server.h"
-#include "wine/unicode.h"
 #include "wine/asm.h"
 #include "wine/debug.h"
 #include "winternl.h"
@@ -187,7 +184,7 @@ static HHOOK set_windows_hook( INT id, HOOKPROC proc, HINSTANCE inst, DWORD tid,
         if (inst) /* make proc relative to the module base */
         {
             req->proc = wine_server_client_ptr( (void *)((char *)proc - (char *)inst) );
-            wine_server_add_data( req, module, strlenW(module) * sizeof(WCHAR) );
+            wine_server_add_data( req, module, lstrlenW(module) * sizeof(WCHAR) );
         }
         else req->proc = wine_server_client_ptr( proc );
 
@@ -744,7 +741,7 @@ HWINEVENTHOOK WINAPI SetWinEventHook(DWORD event_min, DWORD event_max,
         if (inst) /* make proc relative to the module base */
         {
             req->proc = wine_server_client_ptr( (void *)((char *)proc - (char *)inst) );
-            wine_server_add_data( req, module, strlenW(module) * sizeof(WCHAR) );
+            wine_server_add_data( req, module, lstrlenW(module) * sizeof(WCHAR) );
         }
         else req->proc = wine_server_client_ptr( proc );
 

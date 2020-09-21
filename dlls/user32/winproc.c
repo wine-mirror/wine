@@ -19,20 +19,17 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <assert.h>
 #include <stdarg.h>
 #include <string.h>
 
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "wingdi.h"
 #include "controls.h"
 #include "win.h"
 #include "user_private.h"
-#include "wine/unicode.h"
 #include "wine/asm.h"
 #include "wine/debug.h"
 
@@ -524,7 +521,7 @@ LRESULT WINPROC_CallProcAtoW( winproc_callback_t callback, HWND hwnd, UINT msg, 
             {
                 DWORD len;
                 RtlUnicodeToMultiByteN( (LPSTR)lParam, ~0u, &len,
-                                        buffer, (strlenW(buffer) + 1) * sizeof(WCHAR) );
+                                        buffer, (lstrlenW(buffer) + 1) * sizeof(WCHAR) );
                 *result = len - 1;
             }
         }
@@ -639,12 +636,12 @@ static LRESULT WINPROC_CallProcWtoA( winproc_callback_t callback, HWND hwnd, UIN
 
             if (!IS_INTRESOURCE(csW->lpszClass))
             {
-                class_lenW = (strlenW(csW->lpszClass) + 1) * sizeof(WCHAR);
+                class_lenW = (lstrlenW(csW->lpszClass) + 1) * sizeof(WCHAR);
                 RtlUnicodeToMultiByteSize(&class_lenA, csW->lpszClass, class_lenW);
             }
             if (!IS_INTRESOURCE(csW->lpszName))
             {
-                name_lenW = (strlenW(csW->lpszName) + 1) * sizeof(WCHAR);
+                name_lenW = (lstrlenW(csW->lpszName) + 1) * sizeof(WCHAR);
                 RtlUnicodeToMultiByteSize(&name_lenA, csW->lpszName, name_lenW);
             }
 
@@ -724,7 +721,7 @@ static LRESULT WINPROC_CallProcWtoA( winproc_callback_t callback, HWND hwnd, UIN
         {
             char *ptr, buffer[512];
             LPCWSTR strW = (LPCWSTR)lParam;
-            DWORD lenA, lenW = (strlenW(strW) + 1) * sizeof(WCHAR);
+            DWORD lenA, lenW = (lstrlenW(strW) + 1) * sizeof(WCHAR);
 
             RtlUnicodeToMultiByteSize( &lenA, strW, lenW );
             if ((ptr = get_buffer( buffer, sizeof(buffer), lenA )))
@@ -747,12 +744,12 @@ static LRESULT WINPROC_CallProcWtoA( winproc_callback_t callback, HWND hwnd, UIN
 
             if (!IS_INTRESOURCE(csW->szTitle))
             {
-                title_lenW = (strlenW(csW->szTitle) + 1) * sizeof(WCHAR);
+                title_lenW = (lstrlenW(csW->szTitle) + 1) * sizeof(WCHAR);
                 RtlUnicodeToMultiByteSize( &title_lenA, csW->szTitle, title_lenW );
             }
             if (!IS_INTRESOURCE(csW->szClass))
             {
-                class_lenW = (strlenW(csW->szClass) + 1) * sizeof(WCHAR);
+                class_lenW = (lstrlenW(csW->szClass) + 1) * sizeof(WCHAR);
                 RtlUnicodeToMultiByteSize( &class_lenA, csW->szClass, class_lenW );
             }
 

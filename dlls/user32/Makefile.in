@@ -5,6 +5,8 @@ IMPORTS   = setupapi gdi32 version sechost advapi32 kernelbase
 EXTRAINCL = $(PNG_CFLAGS)
 DELAYIMPORTS = hid imm32 usp10
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	button.c \
 	caret.c \

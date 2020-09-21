@@ -24,9 +24,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <assert.h>
 #include <stdarg.h>
 #include <string.h>
@@ -43,7 +40,6 @@
 #include "win.h"
 #include "user_private.h"
 #include "wine/list.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(cursor);
@@ -1047,8 +1043,8 @@ done:
         release_icon_frame( info, frame );
         if (!IS_INTRESOURCE(resname))
         {
-            info->resname = HeapAlloc( GetProcessHeap(), 0, (strlenW(resname) + 1) * sizeof(WCHAR) );
-            if (info->resname) strcpyW( info->resname, resname );
+            info->resname = HeapAlloc( GetProcessHeap(), 0, (lstrlenW(resname) + 1) * sizeof(WCHAR) );
+            if (info->resname) lstrcpyW( info->resname, resname );
         }
         else info->resname = MAKEINTRESOURCEW( LOWORD(resname) );
 

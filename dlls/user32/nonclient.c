@@ -18,8 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <stdarg.h>
 
 #include "windef.h"
@@ -1583,9 +1581,12 @@ LRESULT NC_HandleSysCommand( HWND hwnd, WPARAM wParam, LPARAM lParam )
             if (hmodule)
             {
                 BOOL (WINAPI *aboutproc)(HWND, LPCSTR, LPCSTR, HICON);
+                extern const char * CDECL wine_get_version(void);
+                char app[256];
 
+                sprintf( app, "Wine %s", wine_get_version() );
                 aboutproc = (void *)GetProcAddress( hmodule, "ShellAboutA" );
-                if (aboutproc) aboutproc( hwnd, PACKAGE_STRING, NULL, 0 );
+                if (aboutproc) aboutproc( hwnd, app, NULL, 0 );
                 FreeLibrary( hmodule );
             }
         }

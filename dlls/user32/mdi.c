@@ -90,10 +90,10 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "wownt32.h"
-#include "wine/unicode.h"
 #include "win.h"
 #include "controls.h"
 #include "user_private.h"
@@ -984,8 +984,8 @@ static void MDI_UpdateFrameText( HWND frame, HWND hClient, BOOL repaint, LPCWSTR
     if (lpTitle)
     {
 	HeapFree( GetProcessHeap(), 0, ci->frameTitle );
-	if ((ci->frameTitle = HeapAlloc( GetProcessHeap(), 0, (strlenW(lpTitle)+1)*sizeof(WCHAR))))
-            strcpyW( ci->frameTitle, lpTitle );
+	if ((ci->frameTitle = HeapAlloc( GetProcessHeap(), 0, (lstrlenW(lpTitle)+1)*sizeof(WCHAR))))
+            lstrcpyW( ci->frameTitle, lpTitle );
     }
 
     if (ci->frameTitle)
@@ -996,16 +996,16 @@ static void MDI_UpdateFrameText( HWND frame, HWND hClient, BOOL repaint, LPCWSTR
 
 	    static const WCHAR lpBracket[]  = {' ','-',' ','[',0};
 	    static const WCHAR lpBracket2[]  = {']',0};
-	    int	i_frame_text_length = strlenW(ci->frameTitle);
+	    int	i_frame_text_length = lstrlenW(ci->frameTitle);
 
 	    lstrcpynW( lpBuffer, ci->frameTitle, MDI_MAXTITLELENGTH);
 
 	    if( i_frame_text_length + 6 < MDI_MAXTITLELENGTH )
             {
-		strcatW( lpBuffer, lpBracket );
+		lstrcatW( lpBuffer, lpBracket );
                 if (GetWindowTextW( ci->hwndActiveChild, lpBuffer + i_frame_text_length + 4,
                                     MDI_MAXTITLELENGTH - i_frame_text_length - 5 ))
-                    strcatW( lpBuffer, lpBracket2 );
+                    lstrcatW( lpBuffer, lpBracket2 );
                 else
                     lpBuffer[i_frame_text_length] = 0;  /* remove bracket */
             }
@@ -1919,7 +1919,7 @@ static INT_PTR WINAPI MDI_MoreWindowsDlgProc (HWND hDlg, UINT iMsg, WPARAM wPara
                    continue;
                SendMessageW(hListBox, LB_ADDSTRING, 0, (LPARAM)buffer );
                SendMessageW(hListBox, LB_SETITEMDATA, i, (LPARAM)ci->child[i] );
-               length = strlenW(buffer);  /* FIXME: should use GetTextExtentPoint */
+               length = lstrlenW(buffer);  /* FIXME: should use GetTextExtentPoint */
                if (length > widest)
                    widest = length;
            }

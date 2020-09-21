@@ -18,9 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <assert.h>
 #include <stdarg.h>
 #include <stdlib.h>
@@ -28,9 +25,9 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "winver.h"
 #include "wine/server.h"
-#include "wine/unicode.h"
 #include "wine/asm.h"
 #include "win.h"
 #include "user_private.h"
@@ -212,7 +209,7 @@ static WND *create_window_handle( HWND parent, HWND owner, LPCWSTR name,
         req->dpi      = GetDpiForSystem();
         req->awareness = awareness;
         if (!(req->atom = get_int_atom_value( name )) && name)
-            wine_server_add_data( req, name, strlenW(name)*sizeof(WCHAR) );
+            wine_server_add_data( req, name, lstrlenW(name)*sizeof(WCHAR) );
         if (!wine_server_call_err( req ))
         {
             handle      = wine_server_ptr_handle( reply->handle );
@@ -333,7 +330,7 @@ static HWND *list_window_children( HDESK desktop, HWND hwnd, LPCWSTR class, DWOR
             req->parent = wine_server_user_handle( hwnd );
             req->tid = tid;
             req->atom = atom;
-            if (!atom && class) wine_server_add_data( req, class, strlenW(class)*sizeof(WCHAR) );
+            if (!atom && class) wine_server_add_data( req, class, lstrlenW(class)*sizeof(WCHAR) );
             wine_server_set_reply( req, list, (size-1) * sizeof(user_handle_t) );
             if (!wine_server_call( req )) count = reply->count;
         }
@@ -1461,7 +1458,7 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
 
         /* are we creating the desktop or HWND_MESSAGE parent itself? */
         if (className != (LPCWSTR)DESKTOP_CLASS_ATOM &&
-            (IS_INTRESOURCE(className) || strcmpiW( className, messageW )))
+            (IS_INTRESOURCE(className) || wcsicmp( className, messageW )))
         {
             DWORD layout;
             GetProcessDefaultLayout( &layout );
@@ -1975,7 +1972,7 @@ HWND WINAPI FindWindowExW( HWND parent, HWND child, LPCWSTR className, LPCWSTR t
 
     if (title)
     {
-        len = strlenW(title) + 1;  /* one extra char to check for chars beyond the end */
+        len = lstrlenW(title) + 1;  /* one extra char to check for chars beyond the end */
         if (!(buffer = HeapAlloc( GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) ))) return 0;
     }
 
@@ -1995,7 +1992,7 @@ HWND WINAPI FindWindowExW( HWND parent, HWND child, LPCWSTR className, LPCWSTR t
         {
             if (InternalGetWindowText( list[i], buffer, len + 1 ))
             {
-                if (!strcmpiW( buffer, title )) break;
+                if (!wcsicmp( buffer, title )) break;
             }
             else
             {
@@ -2122,10 +2119,10 @@ HWND WINAPI GetDesktopWindow(void)
         si.hStdError  = GetStdHandle( STD_ERROR_HANDLE );
 
         GetSystemDirectoryW( windir, MAX_PATH );
-        strcpyW( app, windir );
-        strcatW( app, explorer );
-        strcpyW( cmdline, app );
-        strcatW( cmdline, args );
+        lstrcpyW( app, windir );
+        lstrcatW( app, explorer );
+        lstrcpyW( cmdline, app );
+        lstrcatW( cmdline, args );
 
         Wow64DisableWow64FsRedirection( &redir );
         if (CreateProcessW( app, cmdline, NULL, NULL, FALSE, DETACHED_PROCESS,
@@ -2914,7 +2911,7 @@ INT WINAPI InternalGetWindowText(HWND hwnd,LPWSTR lpString,INT nMaxCount )
     {
         get_server_window_text( hwnd, lpString, nMaxCount );
     }
-    return strlenW(lpString);
+    return lstrlenW(lpString);
 }
 
 
@@ -2933,7 +2930,7 @@ INT WINAPI GetWindowTextW( HWND hwnd, LPWSTR lpString, INT nMaxCount )
 
     /* when window belongs to other process, don't send a message */
     get_server_window_text( hwnd, lpString, nMaxCount );
-    return strlenW(lpString);
+    return lstrlenW(lpString);
 }
 
 
@@ -4081,7 +4078,7 @@ BOOL WINAPI GetProcessDefaultLayout( DWORD *layout )
                 if (LOWORD(languages[i]) == MAKELANGID( PRIMARYLANGID(user_lang), SUBLANG_NEUTRAL )) break;
         if (i == len) i = 0;  /* default to the first one */
 
-        sprintfW( buffer, filedescW, LOWORD(languages[i]), HIWORD(languages[i]) );
+        swprintf( buffer, ARRAY_SIZE(buffer), filedescW, LOWORD(languages[i]), HIWORD(languages[i]) );
         if (!VerQueryValueW( data, buffer, (void **)&str, &len )) goto done;
         TRACE( "found description %s\n", debugstr_w( str ));
         if (str[0] == 0x200e && str[1] == 0x200e) version_layout = LAYOUT_RTL;

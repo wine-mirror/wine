@@ -19,7 +19,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
 #include <stdarg.h>
 
 #define NONAMELESSUNION
@@ -684,7 +683,7 @@ UINT WINAPI GetRawInputDeviceInfoW(HANDLE handle, UINT command, void *data, UINT
         }
         else
         {
-            *data_size = strlenW(device->path) + 1;
+            *data_size = lstrlenW(device->path) + 1;
             to_copy = device->path;
         }
         to_copy_bytes = *data_size * sizeof(WCHAR);
@@ -745,7 +744,7 @@ UINT WINAPI GetRawInputDeviceInfoW(HANDLE handle, UINT command, void *data, UINT
     return *data_size;
 }
 
-static int compare_raw_input_devices(const void *ap, const void *bp)
+static int __cdecl compare_raw_input_devices(const void *ap, const void *bp)
 {
     const RAWINPUTDEVICE a = *(const RAWINPUTDEVICE *)ap;
     const RAWINPUTDEVICE b = *(const RAWINPUTDEVICE *)bp;

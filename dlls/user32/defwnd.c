@@ -19,9 +19,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <string.h>
 #include <stdarg.h>
 
@@ -33,7 +30,6 @@
 #include "win.h"
 #include "user_private.h"
 #include "controls.h"
-#include "wine/unicode.h"
 #include "wine/server.h"
 #include "wine/exception.h"
 #include "wine/debug.h"
@@ -137,13 +133,13 @@ static LRESULT DEFWND_SetTextW( HWND hwnd, LPCWSTR text )
         return 0;
 
     if (!text) text = empty_string;
-    count = strlenW(text) + 1;
+    count = lstrlenW(text) + 1;
 
     if (!(wndPtr = WIN_GetPtr( hwnd ))) return 0;
     HeapFree(GetProcessHeap(), 0, wndPtr->text);
     if ((wndPtr->text = HeapAlloc(GetProcessHeap(), 0, count * sizeof(WCHAR))))
     {
-        strcpyW( wndPtr->text, text );
+        lstrcpyW( wndPtr->text, text );
         SERVER_START_REQ( set_window_text )
         {
             req->handle = wine_server_user_handle( hwnd );
@@ -814,7 +810,7 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
         {
             WND *wndPtr = WIN_GetPtr( hwnd );
             if (wndPtr && wndPtr->text)
-                result = WideCharToMultiByte( CP_ACP, 0, wndPtr->text, strlenW(wndPtr->text),
+                result = WideCharToMultiByte( CP_ACP, 0, wndPtr->text, lstrlenW(wndPtr->text),
                                               NULL, 0, NULL, NULL );
             WIN_ReleasePtr( wndPtr );
         }
@@ -936,7 +932,7 @@ static LPARAM DEFWND_GetTextW( WND *wndPtr, LPWSTR dest, WPARAM wParam )
         if (wndPtr->text)
         {
             lstrcpynW( dest, wndPtr->text, wParam );
-            result = strlenW( dest );
+            result = lstrlenW( dest );
         }
         else dest[0] = '\0';
     }
@@ -998,7 +994,7 @@ LRESULT WINAPI DefWindowProcW(
     case WM_GETTEXTLENGTH:
         {
             WND *wndPtr = WIN_GetPtr( hwnd );
-            if (wndPtr && wndPtr->text) result = (LRESULT)strlenW(wndPtr->text);
+            if (wndPtr && wndPtr->text) result = (LRESULT)lstrlenW(wndPtr->text);
             WIN_ReleasePtr( wndPtr );
         }
         break;

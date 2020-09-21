@@ -20,13 +20,15 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <wchar.h>
+
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "wine/debug.h"
 #include "wine/gdi_driver.h"
-#include "wine/unicode.h"
 
 #include "user_private.h"
 #include "controls.h"
@@ -68,13 +70,13 @@ static BOOL load_desktop_driver( HWND hwnd, HMODULE *module )
 
     guid_atom = HandleToULong( GetPropW( hwnd, display_device_guid_propW ));
     memcpy( key, key_pathW, sizeof(key_pathW) );
-    if (!GlobalGetAtomNameW( guid_atom, key + strlenW(key), 40 )) return 0;
-    strcatW( key, displayW );
+    if (!GlobalGetAtomNameW( guid_atom, key + lstrlenW(key), 40 )) return 0;
+    lstrcatW( key, displayW );
     if (RegOpenKeyW( HKEY_LOCAL_MACHINE, key, &hkey )) return 0;
     size = sizeof(path);
     if (!RegQueryValueExW( hkey, driverW, NULL, NULL, (BYTE *)path, &size ))
     {
-        if ((ret = !strcmpW( path, nullW ))) *module = NULL;
+        if ((ret = !wcscmp( path, nullW ))) *module = NULL;
         else ret = (*module = LoadLibraryW( path )) != NULL;
         if (!ret) ERR( "failed to load %s\n", debugstr_w(path) );
         TRACE( "%s %p\n", debugstr_w(path), *module );
@@ -231,7 +233,7 @@ static UINT CDECL nulldrv_GetKeyboardLayoutList( INT size, HKL *layouts )
             rc = RegEnumKeyW(hKeyKeyboard, count, szKeyName, 9);
             if (rc == ERROR_SUCCESS)
             {
-                layout = (HKL)(ULONG_PTR)strtoulW(szKeyName,NULL,16);
+                layout = (HKL)(ULONG_PTR)wcstoul(szKeyName,NULL,16);
                 if (baselayout != 0 && layout == (HKL)baselayout)
                     baselayout = 0; /* found in the registry do not add again */
                 if (size && layouts)

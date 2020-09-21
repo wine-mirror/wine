@@ -24,9 +24,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -35,7 +32,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
-#include "wine/unicode.h"
 #include "winnls.h"
 #include "controls.h"
 #include "usp10.h"
@@ -142,7 +138,7 @@ static void TEXT_Ellipsify (HDC hdc, WCHAR *str, unsigned int max_len,
     unsigned int len_ellipsis;
     unsigned int lo, mid, hi;
 
-    len_ellipsis = strlenW (ELLIPSISW);
+    len_ellipsis = lstrlenW (ELLIPSISW);
     if (len_ellipsis > max_len) len_ellipsis = max_len;
     if (*len_str > max_len - len_ellipsis)
         *len_str = max_len - len_ellipsis;
@@ -239,7 +235,7 @@ static void TEXT_PathEllipsify (HDC hdc, WCHAR *str, unsigned int max_len,
     int len_under;
     WCHAR *lastBkSlash, *lastFwdSlash, *lastSlash;
 
-    len_ellipsis = strlenW (ELLIPSISW);
+    len_ellipsis = lstrlenW (ELLIPSISW);
     if (!max_len) return;
     if (len_ellipsis >= max_len) len_ellipsis = max_len - 1;
     if (*len_str + len_ellipsis >= max_len)
@@ -249,8 +245,8 @@ static void TEXT_PathEllipsify (HDC hdc, WCHAR *str, unsigned int max_len,
          */
     str[*len_str] = '\0'; /* to simplify things */
 
-    lastBkSlash  = strrchrW (str, BACK_SLASH);
-    lastFwdSlash = strrchrW (str, FORWARD_SLASH);
+    lastBkSlash  = wcsrchr (str, BACK_SLASH);
+    lastFwdSlash = wcsrchr (str, FORWARD_SLASH);
     lastSlash = lastBkSlash > lastFwdSlash ? lastBkSlash : lastFwdSlash;
     if (!lastSlash) lastSlash = str;
     len_trailing = *len_str - (lastSlash - str);
@@ -915,7 +911,7 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
 
     if (count == -1)
     {
-        count = strlenW(str);
+        count = lstrlenW(str);
         if (count == 0)
         {
             if( flags & DT_CALCRECT)
@@ -1286,7 +1282,7 @@ BOOL WINAPI GrayStringW( HDC hdc, HBRUSH hbr, GRAYSTRINGPROC gsprc,
                          LPARAM lParam, INT cch, INT x, INT y,
                          INT cx, INT cy )
 {
-    if (!cch) cch = strlenW( (LPCWSTR)lParam );
+    if (!cch) cch = lstrlenW( (LPCWSTR)lParam );
     if ((cx == 0 || cy == 0) && cch != -1)
     {
         SIZE s;

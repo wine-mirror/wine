@@ -18,14 +18,13 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <assert.h>
 #include <limits.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <wchar.h>
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
@@ -47,7 +46,6 @@
 #include "win.h"
 #include "user_private.h"
 #include "wine/gdi_driver.h"
-#include "wine/unicode.h"
 #include "wine/asm.h"
 #include "wine/debug.h"
 
@@ -595,10 +593,10 @@ static BOOL is_valid_adapter_name(const WCHAR *name)
     long int adapter_idx;
     WCHAR *end;
 
-    if (strncmpiW(name, ADAPTER_PREFIX, ARRAY_SIZE(ADAPTER_PREFIX)))
+    if (wcsnicmp(name, ADAPTER_PREFIX, ARRAY_SIZE(ADAPTER_PREFIX)))
         return FALSE;
 
-    adapter_idx = strtolW(name + ARRAY_SIZE(ADAPTER_PREFIX), &end, 10);
+    adapter_idx = wcstol(name + ARRAY_SIZE(ADAPTER_PREFIX), &end, 10);
     if (*end || adapter_idx < 1)
         return FALSE;
 
@@ -723,7 +721,7 @@ static BOOL save_entry( const struct sysparam_entry *entry, const void *data, DW
 /* save a string value to a registry entry */
 static BOOL save_entry_string( const struct sysparam_entry *entry, const WCHAR *str, UINT flags )
 {
-    return save_entry( entry, str, (strlenW(str) + 1) * sizeof(WCHAR), REG_SZ, flags );
+    return save_entry( entry, str, (lstrlenW(str) + 1) * sizeof(WCHAR), REG_SZ, flags );
 }
 
 /* initialize an entry in the registry if missing */
@@ -743,7 +741,7 @@ static BOOL init_entry( struct sysparam_entry *entry, const void *data, DWORD si
 /* initialize a string value in the registry if missing */
 static BOOL init_entry_string( struct sysparam_entry *entry, const WCHAR *str )
 {
-    return init_entry( entry, str, (strlenW(str) + 1) * sizeof(WCHAR), REG_SZ );
+    return init_entry( entry, str, (lstrlenW(str) + 1) * sizeof(WCHAR), REG_SZ );
 }
 
 HDC get_display_dc(void)
@@ -811,7 +809,7 @@ static INT CALLBACK real_fontname_proc(const LOGFONTW *lf, const TEXTMETRICW *nt
 static void get_real_fontname( LOGFONTW *lf, WCHAR fullname[LF_FACESIZE] )
 {
     HDC hdc = get_display_dc();
-    strcpyW( fullname, lf->lfFaceName );
+    lstrcpyW( fullname, lf->lfFaceName );
     EnumFontFamiliesExW( hdc, lf, real_fontname_proc, (LPARAM)fullname, 0 );
     release_display_dc( hdc );
 }
@@ -860,7 +858,7 @@ static BOOL get_uint_entry( union sysparam_all_entry *entry, UINT int_param, voi
     {
         WCHAR buf[32];
 
-        if (load_entry( &entry->hdr, buf, sizeof(buf) )) entry->uint.val = atoiW( buf );
+        if (load_entry( &entry->hdr, buf, sizeof(buf) )) entry->uint.val = wcstol( buf, NULL, 10 );
     }
     *(UINT *)ptr_param = entry->uint.val;
     return TRUE;
@@ -919,7 +917,7 @@ static BOOL get_twips_entry( union sysparam_all_entry *entry, UINT int_param, vo
     {
         WCHAR buf[32];
 
-        if (load_entry( &entry->hdr, buf, sizeof(buf) )) entry->uint.val = atoiW( buf );
+        if (load_entry( &entry->hdr, buf, sizeof(buf) )) entry->uint.val = wcstol( buf, NULL, 10 );
     }
 
     /* Dimensions are quoted as being "twips" values if negative and pixels if positive.
@@ -955,7 +953,7 @@ static BOOL get_bool_entry( union sysparam_all_entry *entry, UINT int_param, voi
     {
         WCHAR buf[32];
 
-        if (load_entry( &entry->hdr, buf, sizeof(buf) )) entry->bool.val = atoiW( buf ) != 0;
+        if (load_entry( &entry->hdr, buf, sizeof(buf) )) entry->bool.val = wcstol( buf, NULL, 10 ) != 0;
     }
     *(UINT *)ptr_param = entry->bool.val;
     return TRUE;
@@ -1059,13 +1057,13 @@ static BOOL get_rgb_entry( union sysparam_all_entry *entry, UINT int_param, void
             DWORD r, g, b;
             WCHAR *end, *str = buf;
 
-            r = strtoulW( str, &end, 10 );
+            r = wcstoul( str, &end, 10 );
             if (end == str || !*end) goto done;
             str = end + 1;
-            g = strtoulW( str, &end, 10 );
+            g = wcstoul( str, &end, 10 );
             if (end == str || !*end) goto done;
             str = end + 1;
-            b = strtoulW( str, &end, 10 );
+            b = wcstoul( str, &end, 10 );
             if (end == str) goto done;
             if (r > 255 || g > 255 || b > 255) goto done;
             entry->rgb.val = RGB( r, g, b );
@@ -1147,7 +1145,7 @@ static BOOL get_font_entry( union sysparam_all_entry *entry, UINT int_param, voi
     }
     font = entry->font.val;
     font.lfHeight = map_to_dpi( font.lfHeight, dpi );
-    strcpyW( font.lfFaceName, entry->font.fullname );
+    lstrcpyW( font.lfFaceName, entry->font.fullname );
     *(LOGFONTW *)ptr_param = font;
     return TRUE;
 }
@@ -1160,7 +1158,7 @@ static BOOL set_font_entry( union sysparam_all_entry *entry, UINT int_param, voi
 
     memcpy( &font, ptr_param, sizeof(font) );
     /* zero pad the end of lfFaceName so we don't save uninitialised data */
-    ptr = memchrW( font.lfFaceName, 0, LF_FACESIZE );
+    ptr = wmemchr( font.lfFaceName, 0, LF_FACESIZE );
     if (ptr) memset( ptr, 0, (font.lfFaceName + LF_FACESIZE - ptr) * sizeof(WCHAR) );
     if (font.lfHeight < 0) font.lfHeight = map_from_system_dpi( font.lfHeight );
 
@@ -1207,7 +1205,7 @@ static BOOL set_path_entry( union sysparam_all_entry *entry, UINT int_param, voi
     ret = save_entry_string( &entry->hdr, buffer, flags );
     if (ret)
     {
-        strcpyW( entry->path.path, buffer );
+        lstrcpyW( entry->path.path, buffer );
         entry->hdr.loaded = TRUE;
     }
     return ret;
@@ -4030,7 +4028,7 @@ static BOOL update_monitor_cache(void)
                                         (BYTE *)monitors[monitor_count].szDevice, CCHDEVICENAME * sizeof(WCHAR), NULL, 0))
             goto fail;
         monitors[monitor_count].dwFlags =
-            !lstrcmpW( DEFAULT_ADAPTER_NAME, monitors[monitor_count].szDevice ) ? MONITORINFOF_PRIMARY : 0;
+            !wcscmp( DEFAULT_ADAPTER_NAME, monitors[monitor_count].szDevice ) ? MONITORINFOF_PRIMARY : 0;
 
         monitor_count++;
     }
@@ -4301,7 +4299,7 @@ BOOL WINAPI EnumDisplayDevicesW( LPCWSTR device, DWORD index, DISPLAY_DEVICEW *i
     /* Find adapter */
     if (!device)
     {
-        sprintfW( key_nameW, VIDEO_VALUE_FMT, index );
+        swprintf( key_nameW, ARRAY_SIZE(key_nameW), VIDEO_VALUE_FMT, index );
         size = sizeof(bufferW);
         if (RegGetValueW( HKEY_LOCAL_MACHINE, VIDEO_KEY, key_nameW, RRF_RT_REG_SZ, NULL, bufferW, &size ))
             goto done;
@@ -4311,7 +4309,7 @@ BOOL WINAPI EnumDisplayDevicesW( LPCWSTR device, DWORD index, DISPLAY_DEVICEW *i
             lstrcpyW( info->DeviceKey, bufferW );
 
         /* DeviceName */
-        sprintfW( info->DeviceName, ADAPTER_FMT, index + 1 );
+        swprintf( info->DeviceName, ARRAY_SIZE(info->DeviceName), ADAPTER_FMT, index + 1 );
 
         /* Strip \Registry\Machine\ */
         lstrcpyW( key_nameW, bufferW + 18 );
@@ -4352,23 +4350,23 @@ BOOL WINAPI EnumDisplayDevicesW( LPCWSTR device, DWORD index, DISPLAY_DEVICEW *i
     else
     {
         /* Check adapter name */
-        if (strncmpiW( device, ADAPTER_PREFIX, ARRAY_SIZE(ADAPTER_PREFIX) ))
+        if (wcsnicmp( device, ADAPTER_PREFIX, ARRAY_SIZE(ADAPTER_PREFIX) ))
             goto done;
 
-        adapter_index = strtolW( device + ARRAY_SIZE(ADAPTER_PREFIX), NULL, 10 );
-        sprintfW( key_nameW, VIDEO_VALUE_FMT, adapter_index - 1 );
+        adapter_index = wcstol( device + ARRAY_SIZE(ADAPTER_PREFIX), NULL, 10 );
+        swprintf( key_nameW, ARRAY_SIZE(key_nameW), VIDEO_VALUE_FMT, adapter_index - 1 );
 
         size = sizeof(bufferW);
         if (RegGetValueW( HKEY_LOCAL_MACHINE, VIDEO_KEY, key_nameW, RRF_RT_REG_SZ, NULL, bufferW, &size ))
             goto done;
 
         /* DeviceName */
-        sprintfW( info->DeviceName, MONITOR_FMT, adapter_index, index );
+        swprintf( info->DeviceName, ARRAY_SIZE(info->DeviceName), MONITOR_FMT, adapter_index, index );
 
         /* Get monitor instance */
         /* Strip \Registry\Machine\ first */
         lstrcpyW( key_nameW, bufferW + 18 );
-        sprintfW( bufferW, MONITOR_ID_VALUE_FMT, index );
+        swprintf( bufferW, ARRAY_SIZE(bufferW), MONITOR_ID_VALUE_FMT, index );
 
         size = sizeof(instanceW);
         if (RegGetValueW( HKEY_CURRENT_CONFIG, key_nameW, bufferW, RRF_RT_REG_SZ, NULL, instanceW, &size ))
@@ -4409,7 +4407,7 @@ BOOL WINAPI EnumDisplayDevicesW( LPCWSTR device, DWORD index, DISPLAY_DEVICEW *i
                 lstrcatW( info->DeviceID, instanceW );
                 lstrcatW( info->DeviceID, GUID_DEVINTERFACE_MONITOR );
                 /* Replace '\\' with '#' after prefix */
-                for (next_charW = info->DeviceID + strlenW( MONITOR_INTERFACE_PREFIX ); *next_charW;
+                for (next_charW = info->DeviceID + lstrlenW( MONITOR_INTERFACE_PREFIX ); *next_charW;
                      next_charW++)
                 {
                     if (*next_charW == '\\')
@@ -4817,7 +4815,7 @@ LONG WINAPI QueryDisplayConfig(UINT32 flags, UINT32 *numpathelements, DISPLAYCON
             goto done;
 
         /* Extract the adapter index from device_name to use as the source ID */
-        adapter_index = strtolW(device_name + ARRAY_SIZE(ADAPTER_PREFIX), NULL, 10);
+        adapter_index = wcstol(device_name + ARRAY_SIZE(ADAPTER_PREFIX), NULL, 10);
         adapter_index--;
 
         if (path_index == *numpathelements || mode_index == *numinfoelements)
@@ -4914,7 +4912,7 @@ LONG WINAPI DisplayConfigGetDeviceInfo(DISPLAYCONFIG_DEVICE_INFO_HEADER *packet)
                                            &type, (BYTE *)device_name, sizeof(device_name), NULL, 0))
                 continue;
 
-            source_id = strtolW(device_name + ARRAY_SIZE(ADAPTER_PREFIX), NULL, 10);
+            source_id = wcstol(device_name + ARRAY_SIZE(ADAPTER_PREFIX), NULL, 10);
             source_id--;
             if (source_name->header.id != source_id)
                 continue;

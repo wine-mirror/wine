@@ -18,21 +18,15 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
 
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
 #include "winnls.h"
 #include "controls.h"
-#include "wine/unicode.h"
 
 static HBRUSH hbrushPattern;
 static HBITMAP hbitmapWallPaper;
@@ -119,7 +113,7 @@ LRESULT WINAPI DesktopWndProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
 
             if (GetAncestor( hwnd, GA_PARENT )) return FALSE;  /* refuse to create non-desktop window */
 
-            sprintfW( buffer, guid_formatW, guid->Data1, guid->Data2, guid->Data3,
+            swprintf( buffer, ARRAY_SIZE(buffer), guid_formatW, guid->Data1, guid->Data2, guid->Data3,
                       guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
                       guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7] );
             atom = GlobalAddAtomW( buffer );

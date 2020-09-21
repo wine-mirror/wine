@@ -18,9 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
@@ -34,7 +31,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winnls.h"
-#include "wine/unicode.h"
 #include "controls.h"
 #include "win.h"
 #include "user_private.h"
@@ -167,7 +163,7 @@ static const WORD *DIALOG_GetControl32( const WORD *p, DLG_CONTROL_INFO *info,
     else
     {
         info->className = p;
-        p += strlenW( info->className ) + 1;
+        p += lstrlenW( info->className ) + 1;
     }
 
     if (GET_WORD(p) == 0xffff)  /* Is it an integer id? */
@@ -178,7 +174,7 @@ static const WORD *DIALOG_GetControl32( const WORD *p, DLG_CONTROL_INFO *info,
     else
     {
         info->windowName = p;
-        p += strlenW( info->windowName ) + 1;
+        p += lstrlenW( info->windowName ) + 1;
     }
 
     TRACE("    %s %s %ld, %d, %d, %d, %d, %08x, %08x, %08x\n",
@@ -361,7 +357,7 @@ static LPCSTR DIALOG_ParseTemplate32( LPCSTR template, DLG_TEMPLATE * result )
     default:
         result->menuName = p;
         TRACE(" MENU %s\n", debugstr_w(result->menuName) );
-        p += strlenW( result->menuName ) + 1;
+        p += lstrlenW( result->menuName ) + 1;
         break;
     }
 
@@ -381,14 +377,14 @@ static LPCSTR DIALOG_ParseTemplate32( LPCSTR template, DLG_TEMPLATE * result )
     default:
         result->className = p;
         TRACE(" CLASS %s\n", debugstr_w( result->className ));
-        p += strlenW( result->className ) + 1;
+        p += lstrlenW( result->className ) + 1;
         break;
     }
 
     /* Get the window caption */
 
     result->caption = p;
-    p += strlenW( result->caption ) + 1;
+    p += lstrlenW( result->caption ) + 1;
     TRACE(" CAPTION %s\n", debugstr_w( result->caption ) );
 
     /* Get the font name */
@@ -423,7 +419,7 @@ static LPCSTR DIALOG_ParseTemplate32( LPCSTR template, DLG_TEMPLATE * result )
                 result->italic = LOBYTE(GET_WORD(p)); p++;
             }
             result->faceName = p;
-            p += strlenW( result->faceName ) + 1;
+            p += lstrlenW( result->faceName ) + 1;
 
             TRACE(" FONT %d, %s, %d, %s\n",
                   result->pointSize, debugstr_w( result->faceName ),
@@ -972,12 +968,12 @@ static BOOL DIALOG_IsAccelerator( HWND hwnd, HWND hwndDlg, WPARAM wParam )
 
                 do
                 {
-                    p = strchrW( p + 2, '&' );
+                    p = wcschr( p + 2, '&' );
                 }
                 while (p != NULL && p[1] == '&');
 
                 /* and check if it's the one we're looking for */
-                if (p != NULL && toupperW( p[1] ) == toupperW( wParam ) )
+                if (p != NULL && towupper( p[1] ) == towupper( wParam ) )
                 {
                     if ((dlgCode & DLGC_STATIC) || (style & 0x0f) == BS_GROUPBOX )
                     {
@@ -1220,7 +1216,7 @@ BOOL WINAPI IsDialogMessageW( HWND hwndDlg, LPMSG msg )
                             {
                                 INT length;
                                 SendMessageW (hwndNext, WM_GETTEXT, maxlen, (LPARAM) buffer);
-                                length = strlenW (buffer);
+                                length = lstrlenW (buffer);
                                 HeapFree (GetProcessHeap(), 0, buffer);
                                 SendMessageW (hwndNext, EM_SETSEL, 0, length);
                             }
@@ -1783,17 +1779,17 @@ static BOOL DIALOG_DlgDirSelect( HWND hwnd, LPWSTR str, INT len,
         }
         else
         {
-            buffer[strlenW(buffer)-1] = '\\';
+            buffer[lstrlenW(buffer)-1] = '\\';
             ptr = buffer + 1;
         }
     }
     else
     {
         /* Filenames without a dot extension must have one tacked at the end */
-        if (strchrW(buffer, '.') == NULL)
+        if (wcschr(buffer, '.') == NULL)
         {
-            buffer[strlenW(buffer)+1] = '\0';
-            buffer[strlenW(buffer)] = '.';
+            buffer[lstrlenW(buffer)+1] = '\0';
+            buffer[lstrlenW(buffer)] = '.';
         }
         ptr = buffer;
     }
@@ -1835,15 +1831,15 @@ static INT DIALOG_DlgDirListW( HWND hDlg, LPWSTR spec, INT idLBox,
     {
         WCHAR *p, *p2;
 
-        if (!strchrW(spec, '*') && !strchrW(spec, '?'))
+        if (!wcschr(spec, '*') && !wcschr(spec, '?'))
         {
             SetLastError(ERROR_NO_WILDCARD_CHARACTERS);
             return FALSE;
         }
         p = spec;
-        if ((p2 = strchrW( p, ':' ))) p = p2 + 1;
-        if ((p2 = strrchrW( p, '\\' ))) p = p2;
-        if ((p2 = strrchrW( p, '/' ))) p = p2;
+        if ((p2 = wcschr( p, ':' ))) p = p2 + 1;
+        if ((p2 = wcsrchr( p, '\\' ))) p = p2;
+        if ((p2 = wcsrchr( p, '/' ))) p = p2;
         if (p != spec)
         {
             WCHAR sep = *p;
