@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2020-09-16 23:11+0300\n"
+"PO-Revision-Date: 2020-09-21 23:29+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -6936,16 +6936,12 @@ msgid "No Signature found in file.\n"
 msgstr "Joks parašas nerastas faile.\n"
 
 #: dlls/kernel32/winerror.mc:3774
-#, fuzzy
-#| msgid "Invalid level.\n"
 msgid "Invalid call.\n"
-msgstr "Neteisingas lygis.\n"
+msgstr "Neteisingas kreipinys.\n"
 
 #: dlls/kernel32/winerror.mc:3781
-#, fuzzy
-#| msgid "Value is not available.\n"
 msgid "Resource is not currently available.\n"
-msgstr "Reikšmė neprieinama.\n"
+msgstr "Išteklius šiuo metu neprieinamas.\n"
 
 #: dlls/localspl/localspl.rc:31 dlls/localui/localui.rc:31
 #: dlls/winspool.drv/winspool.rc:30
