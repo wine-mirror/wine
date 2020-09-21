@@ -254,8 +254,6 @@ static char *password_to_ascii( const WCHAR *str )
     return ret;
 }
 
-#endif
-
 static BOOL set_key_context( const void *ctx, HCRYPTPROV prov )
 {
     CERT_KEY_CONTEXT key_ctx;
@@ -326,6 +324,8 @@ static BOOL set_key_prov_info( const void *ctx, HCRYPTPROV prov )
     CryptMemFree( container );
     return ret;
 }
+
+#endif
 
 HCERTSTORE WINAPI PFXImportCertStore( CRYPT_DATA_BLOB *pfx, const WCHAR *password, DWORD flags )
 {
