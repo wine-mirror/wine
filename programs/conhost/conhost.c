@@ -1637,6 +1637,11 @@ static DWORD WINAPI tty_input( void *param )
     }
 
     TRACE( "NtReadFile failed: %#x\n", status );
+
+    EnterCriticalSection( &console_section );
+    if (console->read_ioctl) read_complete( console, status, NULL, 0, FALSE );
+    LeaveCriticalSection( &console_section );
+
     return 0;
 }
 
