@@ -1659,6 +1659,7 @@ static DWORD WINAPI tty_input( void *param )
             switch (ch)
             {
             case 3: /* end of text */
+                LeaveCriticalSection( &console_section );
                 return 0;
             case '\n':
                 key_press( console, '\n', VK_RETURN, LEFT_CTRL_PRESSED );
