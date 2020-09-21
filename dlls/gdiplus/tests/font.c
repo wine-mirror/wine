@@ -335,7 +335,7 @@ static void test_logfont(void)
         memset(&lfa, 0, sizeof(lfa));
         lstrcpyA(lfa.lfFaceName, "Times New Roman");
 
-        for (i = 0; i < sizeof(test_sizes)/sizeof(test_sizes[0]); ++i)
+        for (i = 0; i < ARRAY_SIZE(test_sizes); ++i)
         {
             lfa.lfHeight = test_sizes[i].input;
 
