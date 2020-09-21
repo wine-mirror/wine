@@ -3756,6 +3756,9 @@ static inline PLIST_ENTRY RemoveTailList(PLIST_ENTRY le)
 
 #ifdef __WINESRC__
 
+/* Wine internal functions */
+extern NTSTATUS CDECL __wine_init_unix_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out );
+
 /* The thread information for 16-bit threads */
 /* NtCurrentTeb()->SubSystemTib points to this */
 typedef struct

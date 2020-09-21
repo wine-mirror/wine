@@ -123,6 +123,8 @@ const char *build_dir = NULL;
 const char *config_dir = NULL;
 const char **dll_paths = NULL;
 const char *user_name = NULL;
+static HMODULE ntdll_module;
+static const IMAGE_EXPORT_DIRECTORY *ntdll_exports;
 
 struct file_id
 {
@@ -136,6 +138,7 @@ struct builtin_module
     struct file_id id;
     void          *handle;
     void          *module;
+    void          *unix_module;
 };
 
 static struct list builtin_modules = LIST_INIT( builtin_modules );
@@ -146,6 +149,7 @@ static NTSTATUS add_builtin_module( void *module, void *handle, const struct sta
     if (!(builtin = malloc( sizeof(*builtin) ))) return STATUS_NO_MEMORY;
     builtin->handle = handle;
     builtin->module = module;
+    builtin->unix_module = NULL;
     if (st)
     {
         builtin->id.dev = st->st_dev;
@@ -782,11 +786,76 @@ static ULONG_PTR find_named_export( HMODULE module, const IMAGE_EXPORT_DIRECTORY
     return 0;
 }
 
+static ULONG_PTR find_pe_export( HMODULE module, const IMAGE_EXPORT_DIRECTORY *exports,
+                                 const IMAGE_IMPORT_BY_NAME *name )
+{
+    const WORD *ordinals = (const WORD *)((BYTE *)module + exports->AddressOfNameOrdinals);
+    const DWORD *names = (const DWORD *)((BYTE *)module + exports->AddressOfNames);
+
+    if (name->Hint < exports->NumberOfNames)
+    {
+        char *ename = (char *)module + names[name->Hint];
+        if (!strcmp( ename, (char *)name->Name ))
+            return find_ordinal_export( module, exports, ordinals[name->Hint] );
+    }
+    return find_named_export( module, exports, (char *)name->Name );
+}
+
+static inline void *get_rva( void *module, ULONG_PTR addr )
+{
+    return (BYTE *)module + addr;
+}
+
+static NTSTATUS fixup_ntdll_imports( const char *name, HMODULE module )
+{
+    const IMAGE_NT_HEADERS *nt;
+    const IMAGE_IMPORT_DESCRIPTOR *descr;
+    const IMAGE_THUNK_DATA *import_list;
+    IMAGE_THUNK_DATA *thunk_list;
+
+    nt = get_rva( module, ((IMAGE_DOS_HEADER *)module)->e_lfanew );
+    descr = get_rva( module, nt->OptionalHeader.DataDirectory[IMAGE_FILE_IMPORT_DIRECTORY].VirtualAddress );
+    for (; descr->Name && descr->FirstThunk; descr++)
+    {
+        thunk_list = get_rva( module, descr->FirstThunk );
+
+        /* ntdll must be the only import */
+        if (strcmp( get_rva( module, descr->Name ), "ntdll.dll" ))
+        {
+            ERR( "module %s is importing %s\n", debugstr_a(name), (char *)get_rva( module, descr->Name ));
+            return STATUS_PROCEDURE_NOT_FOUND;
+        }
+        if (descr->u.OriginalFirstThunk)
+            import_list = get_rva( module, descr->u.OriginalFirstThunk );
+        else
+            import_list = thunk_list;
+
+        while (import_list->u1.Ordinal)
+        {
+            if (IMAGE_SNAP_BY_ORDINAL( import_list->u1.Ordinal ))
+            {
+                int ordinal = IMAGE_ORDINAL( import_list->u1.Ordinal ) - ntdll_exports->Base;
+                thunk_list->u1.Function = find_ordinal_export( ntdll_module, ntdll_exports, ordinal );
+                if (!thunk_list->u1.Function) ERR( "%s: ntdll.%u not found\n", debugstr_a(name), ordinal );
+            }
+            else  /* import by name */
+            {
+                IMAGE_IMPORT_BY_NAME *pe_name = get_rva( module, import_list->u1.AddressOfData );
+                thunk_list->u1.Function = find_pe_export( ntdll_module, ntdll_exports, pe_name );
+                if (!thunk_list->u1.Function) ERR( "%s: ntdll.%s not found\n", debugstr_a(name), pe_name->Name );
+            }
+            import_list++;
+            thunk_list++;
+        }
+    }
+    return STATUS_SUCCESS;
+}
+
 static void load_ntdll_functions( HMODULE module )
 {
-    const IMAGE_EXPORT_DIRECTORY *ntdll_exports = get_export_dir( module );
     void **ptr;
 
+    ntdll_exports = get_export_dir( module );
     assert( ntdll_exports );
 
 #define GET_FUNC(name) \
@@ -923,6 +992,55 @@ already_loaded:
     *ret_module = builtin->module;
     dlclose( handle );
     return STATUS_SUCCESS;
+}
+
+
+/***********************************************************************
+ *           dlopen_unix_dll
+ */
+static NTSTATUS dlopen_unix_dll( void *module, const char *name, void **unix_entry )
+{
+    struct builtin_module *builtin;
+    void *unix_module, *handle, *entry;
+    const IMAGE_NT_HEADERS *nt;
+    NTSTATUS status = STATUS_INVALID_IMAGE_FORMAT;
+
+    handle = dlopen( name, RTLD_NOW );
+    if (!handle) return STATUS_DLL_NOT_FOUND;
+    if (!(nt = dlsym( handle, "__wine_spec_nt_header" ))) goto done;
+    if (!(entry = dlsym( handle, "__wine_init_unix_lib" ))) goto done;
+
+    unix_module = (HMODULE)((nt->OptionalHeader.ImageBase + 0xffff) & ~0xffff);
+    LIST_FOR_EACH_ENTRY( builtin, &builtin_modules, struct builtin_module, entry )
+    {
+        if (builtin->module == module)
+        {
+            if (builtin->unix_module == unix_module)  /* already loaded */
+            {
+                status = STATUS_SUCCESS;
+                goto done;
+            }
+            if (builtin->unix_module)
+            {
+                ERR( "module %p already has a Unix module that's not %s\n", module, debugstr_a(name) );
+                goto done;
+            }
+            if ((status = map_so_dll( nt, unix_module ))) goto done;
+            if ((status = fixup_ntdll_imports( name, unix_module ))) goto done;
+            builtin->unix_module = handle;
+            *unix_entry = entry;
+            return STATUS_SUCCESS;
+        }
+        else if (builtin->unix_module == unix_module)
+        {
+            ERR( "%s already loaded for module %p\n", debugstr_a(name), module );
+            goto done;
+        }
+    }
+    ERR( "builtin module not found for %s\n", debugstr_a(name) );
+done:
+    dlclose( handle );
+    return status;
 }
 
 
@@ -1136,11 +1254,11 @@ static NTSTATUS open_builtin_file( char *name, void **module, SECTION_IMAGE_INFO
 /***********************************************************************
  *           load_builtin_dll
  */
-static NTSTATUS CDECL load_builtin_dll( const WCHAR *name, void **module,
+static NTSTATUS CDECL load_builtin_dll( const WCHAR *name, void **module, void **unix_entry,
                                         SECTION_IMAGE_INFORMATION *image_info )
 {
     unsigned int i, pos, len, namelen, maxlen = 0;
-    char *ptr, *file;
+    char *ptr = NULL, *file, *ext = NULL;
     NTSTATUS status = STATUS_DLL_NOT_FOUND;
     BOOL found_image = FALSE;
 
@@ -1157,6 +1275,7 @@ static NTSTATUS CDECL load_builtin_dll( const WCHAR *name, void **module,
         if (name[i] > 127) goto done;
         file[pos + i] = (char)name[i];
         if (file[pos + i] >= 'A' && file[pos + i] <= 'Z') file[pos + i] += 'a' - 'A';
+        else if (file[pos + i] == '.') ext = file + pos + i;
     }
     file[--pos] = '/';
 
@@ -1166,7 +1285,7 @@ static NTSTATUS CDECL load_builtin_dll( const WCHAR *name, void **module,
         ptr = file + pos;
         namelen = len + 1;
         file[pos + len + 1] = 0;
-        if (namelen > 4 && !memcmp( ptr + namelen - 4, ".dll", 4 )) namelen -= 4;
+        if (ext && !strcmp( ext, ".dll" )) namelen -= 4;
         ptr = prepend( ptr, ptr, namelen );
         ptr = prepend( ptr, "/dlls", sizeof("/dlls") - 1 );
         ptr = prepend( ptr, build_dir, strlen(build_dir) );
@@ -1177,7 +1296,7 @@ static NTSTATUS CDECL load_builtin_dll( const WCHAR *name, void **module,
         ptr = file + pos;
         namelen = len + 1;
         file[pos + len + 1] = 0;
-        if (namelen > 4 && !memcmp( ptr + namelen - 4, ".exe", 4 )) namelen -= 4;
+        if (ext && !strcmp( ext, ".exe" )) namelen -= 4;
         ptr = prepend( ptr, ptr, namelen );
         ptr = prepend( ptr, "/programs", sizeof("/programs") - 1 );
         ptr = prepend( ptr, build_dir, strlen(build_dir) );
@@ -1198,6 +1317,11 @@ static NTSTATUS CDECL load_builtin_dll( const WCHAR *name, void **module,
     WARN( "cannot find builtin library for %s\n", debugstr_w(name) );
 
 done:
+    if (!status && ext)
+    {
+        strcpy( ext, ".so" );
+        dlopen_unix_dll( *module, ptr, unix_entry );
+    }
     free( file );
     return status;
 }
@@ -1215,6 +1339,7 @@ static NTSTATUS CDECL unload_builtin_dll( void *module )
         if (builtin->module != module) continue;
         list_remove( &builtin->entry );
         if (builtin->handle) dlclose( builtin->handle );
+        if (builtin->unix_module) dlclose( builtin->unix_module );
         free( builtin );
         return STATUS_SUCCESS;
     }
@@ -1334,6 +1459,7 @@ static void load_ntdll(void)
     if (status) fatal_error( "failed to load %s error %x\n", name, status );
     free( name );
     load_ntdll_functions( module );
+    ntdll_module = module;
 }
 
 

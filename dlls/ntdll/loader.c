@@ -128,6 +128,7 @@ typedef struct _wine_modref
 {
     LDR_DATA_TABLE_ENTRY  ldr;
     struct file_id        id;
+    void                 *unix_entry;
     int                   alloc_deps;
     int                   nDeps;
     struct _wine_modref **deps;
@@ -2356,7 +2357,7 @@ static NTSTATUS load_builtin_dll( LPCWSTR load_path, const UNICODE_STRING *nt_na
 {
     const WCHAR *name, *p;
     NTSTATUS status;
-    void *module = NULL;
+    void *module = NULL, *unix_entry = NULL;
     SECTION_IMAGE_INFORMATION image_info;
 
     /* Fix the name in case we have a full path and extension */
@@ -2368,7 +2369,7 @@ static NTSTATUS load_builtin_dll( LPCWSTR load_path, const UNICODE_STRING *nt_na
 
     if (!module_ptr) module_ptr = &module;
 
-    status = unix_funcs->load_builtin_dll( name, module_ptr, &image_info );
+    status = unix_funcs->load_builtin_dll( name, module_ptr, &unix_entry, &image_info );
     if (status) return status;
 
     if ((*pwm = get_modref( *module_ptr )))  /* already loaded */
@@ -2383,7 +2384,8 @@ static NTSTATUS load_builtin_dll( LPCWSTR load_path, const UNICODE_STRING *nt_na
 
     TRACE( "loading %s from %s\n", debugstr_w(name), debugstr_us(nt_name) );
     status = build_module( load_path, nt_name, module_ptr, &image_info, NULL, flags, pwm );
-    if (status && *module_ptr) unix_funcs->unload_builtin_dll( *module_ptr );
+    if (!status) (*pwm)->unix_entry = unix_entry;
+    else if (*module_ptr) unix_funcs->unload_builtin_dll( *module_ptr );
     return status;
 }
 
@@ -2754,6 +2756,29 @@ done:
     RtlFreeUnicodeString( &nt_name );
     return nts;
 }
+
+
+/***********************************************************************
+ *              __wine_init_unix_lib
+ */
+NTSTATUS __cdecl __wine_init_unix_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )
+{
+    WINE_MODREF *wm;
+    NTSTATUS ret = STATUS_DLL_NOT_FOUND;
+
+    RtlEnterCriticalSection( &loader_section );
+
+    if ((wm = get_modref( module )))
+    {
+        NTSTATUS (CDECL *init_func)( HMODULE, DWORD, const void *, void * ) = wm->unix_entry;
+        if (init_func) ret = init_func( module, reason, ptr_in, ptr_out );
+    }
+    else ret = STATUS_INVALID_HANDLE;
+
+    RtlLeaveCriticalSection( &loader_section );
+    return ret;
+}
+
 
 /******************************************************************
  *		LdrLoadDll (NTDLL.@)

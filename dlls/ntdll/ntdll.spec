@@ -1597,7 +1597,10 @@
 @ cdecl -syscall wine_server_release_fd(long long)
 @ cdecl -syscall wine_server_send_fd(long)
 @ cdecl -syscall __wine_make_process_system()
+
+# Unix interface
 @ cdecl __wine_set_unix_funcs(long ptr)
+@ cdecl __wine_init_unix_lib(long long ptr ptr)
 @ extern __wine_syscall_dispatcher
 @ extern -arch=i386 __wine_ldt_copy
 
