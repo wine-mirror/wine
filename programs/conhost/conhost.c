@@ -233,6 +233,11 @@ static BOOL is_active( struct screen_buffer *screen_buffer )
     return screen_buffer == screen_buffer->console->active;
 }
 
+static unsigned int get_tty_cp( struct console *console )
+{
+    return console->is_unix ? CP_UNIXCP : CP_UTF8;
+}
+
 static void tty_flush( struct console *console )
 {
     if (!console->tty_output || !console->tty_buffer_count) return;
@@ -406,7 +411,8 @@ static void update_output( struct screen_buffer *screen_buffer, RECT *rect )
                 break;
             }
 
-            size = WideCharToMultiByte( CP_UTF8, 0, &ch->ch, 1, buf, sizeof(buf), NULL, NULL );
+            size = WideCharToMultiByte( get_tty_cp( screen_buffer->console ), 0,
+                                        &ch->ch, 1, buf, sizeof(buf), NULL, NULL );
             tty_write( screen_buffer->console, buf, size );
             screen_buffer->console->tty_cursor_x++;
         }
@@ -1604,7 +1610,7 @@ static DWORD WINAPI tty_input( void *param )
         signaled = console->record_count != 0;
 
         /* FIXME: Handle partial char read */
-        count = MultiByteToWideChar(CP_UTF8, 0, read_buf, io.Information, buf, ARRAY_SIZE(buf));
+        count = MultiByteToWideChar( get_tty_cp( console ), 0, read_buf, io.Information, buf, ARRAY_SIZE(buf) );
 
         TRACE( "%s\n", debugstr_wn(buf, count) );
 
@@ -2288,9 +2294,9 @@ static NTSTATUS set_console_title( struct console *console, const WCHAR *in_titl
         char *vt;
 
         tty_write( console, "\x1b]0;", 4 );
-        len = WideCharToMultiByte( CP_UTF8, 0, console->title, size / sizeof(WCHAR), NULL, 0, NULL, NULL);
+        len = WideCharToMultiByte( get_tty_cp( console ), 0, console->title, size / sizeof(WCHAR), NULL, 0, NULL, NULL);
         if ((vt = tty_alloc_buffer( console, len )))
-            WideCharToMultiByte( CP_UTF8, 0, console->title, size / sizeof(WCHAR), vt, len, NULL, NULL );
+            WideCharToMultiByte( get_tty_cp( console ), 0, console->title, size / sizeof(WCHAR), vt, len, NULL, NULL );
         tty_write( console, "\x07", 1 );
         tty_sync( console );
     }
