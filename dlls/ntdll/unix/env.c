@@ -55,6 +55,7 @@
 #include "winternl.h"
 #include "winbase.h"
 #include "winnls.h"
+#include "wine/condrv.h"
 #include "wine/debug.h"
 #include "unix_private.h"
 
@@ -1151,13 +1152,12 @@ NTSTATUS CDECL get_dynamic_environment( WCHAR *env, SIZE_T *size )
  *
  * Return the initial console handles.
  */
-void CDECL get_initial_console( HANDLE *handle, HANDLE *std_in, HANDLE *std_out, HANDLE *std_err )
+void CDECL get_initial_console( RTL_USER_PROCESS_PARAMETERS *params )
 {
-    *handle = *std_in = *std_out = *std_err = 0;
-    if (isatty(0) || isatty(1) || isatty(2)) *handle = (HANDLE)2; /* see kernel32/kernel_private.h */
-    if (!isatty(0)) wine_server_fd_to_handle( 0, GENERIC_READ|SYNCHRONIZE,  OBJ_INHERIT, std_in );
-    if (!isatty(1)) wine_server_fd_to_handle( 1, GENERIC_WRITE|SYNCHRONIZE, OBJ_INHERIT, std_out );
-    if (!isatty(2)) wine_server_fd_to_handle( 2, GENERIC_WRITE|SYNCHRONIZE, OBJ_INHERIT, std_err );
+    if (isatty(0) || isatty(1) || isatty(2)) params->ConsoleHandle = CONSOLE_HANDLE_SHELL;
+    if (!isatty(0)) wine_server_fd_to_handle( 0, GENERIC_READ|SYNCHRONIZE,  OBJ_INHERIT, &params->hStdInput );
+    if (!isatty(1)) wine_server_fd_to_handle( 1, GENERIC_WRITE|SYNCHRONIZE, OBJ_INHERIT, &params->hStdOutput );
+    if (!isatty(2)) wine_server_fd_to_handle( 2, GENERIC_WRITE|SYNCHRONIZE, OBJ_INHERIT, &params->hStdError );
 }
 
 

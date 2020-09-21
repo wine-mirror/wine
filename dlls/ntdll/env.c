@@ -1254,8 +1254,7 @@ void init_user_process_params(void)
         RtlFreeUnicodeString( &cmdline );
         RtlReleasePath( load_path );
 
-        unix_funcs->get_initial_console( &params->ConsoleHandle, &params->hStdInput,
-                                         &params->hStdOutput, &params->hStdError );
+        unix_funcs->get_initial_console( params );
         params->wShowWindow = 1; /* SW_SHOWNORMAL */
 
         run_wineboot( &params->Environment );
