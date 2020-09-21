@@ -185,6 +185,20 @@ typedef struct VkRenderPassBeginInfo_host
 } VkRenderPassBeginInfo_host;
 
 
+typedef struct VkBlitImageInfo2KHR_host
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkImage srcImage;
+    VkImageLayout srcImageLayout;
+    VkImage dstImage;
+    VkImageLayout dstImageLayout;
+    uint32_t regionCount;
+    const VkImageBlit2KHR *pRegions;
+    VkFilter filter;
+} VkBlitImageInfo2KHR_host;
+
+
 typedef struct VkGeometryTrianglesNV_host
 {
     VkStructureType sType;
@@ -251,6 +265,27 @@ typedef struct VkBufferCopy_host
 } VkBufferCopy_host;
 
 
+typedef struct VkBufferCopy2KHR_host
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkDeviceSize srcOffset;
+    VkDeviceSize dstOffset;
+    VkDeviceSize size;
+} VkBufferCopy2KHR_host;
+
+
+typedef struct VkCopyBufferInfo2KHR_host
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkBuffer srcBuffer;
+    VkBuffer dstBuffer;
+    uint32_t regionCount;
+    const VkBufferCopy2KHR_host *pRegions;
+} VkCopyBufferInfo2KHR_host;
+
+
 typedef struct VkBufferImageCopy_host
 {
     VkDeviceSize bufferOffset;
@@ -260,6 +295,56 @@ typedef struct VkBufferImageCopy_host
     VkOffset3D imageOffset;
     VkExtent3D imageExtent;
 } VkBufferImageCopy_host;
+
+
+typedef struct VkBufferImageCopy2KHR_host
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkDeviceSize bufferOffset;
+    uint32_t bufferRowLength;
+    uint32_t bufferImageHeight;
+    VkImageSubresourceLayers imageSubresource;
+    VkOffset3D imageOffset;
+    VkExtent3D imageExtent;
+} VkBufferImageCopy2KHR_host;
+
+
+typedef struct VkCopyBufferToImageInfo2KHR_host
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkBuffer srcBuffer;
+    VkImage dstImage;
+    VkImageLayout dstImageLayout;
+    uint32_t regionCount;
+    const VkBufferImageCopy2KHR_host *pRegions;
+} VkCopyBufferToImageInfo2KHR_host;
+
+
+typedef struct VkCopyImageInfo2KHR_host
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkImage srcImage;
+    VkImageLayout srcImageLayout;
+    VkImage dstImage;
+    VkImageLayout dstImageLayout;
+    uint32_t regionCount;
+    const VkImageCopy2KHR *pRegions;
+} VkCopyImageInfo2KHR_host;
+
+
+typedef struct VkCopyImageToBufferInfo2KHR_host
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkImage srcImage;
+    VkImageLayout srcImageLayout;
+    VkBuffer dstBuffer;
+    uint32_t regionCount;
+    const VkBufferImageCopy2KHR_host *pRegions;
+} VkCopyImageToBufferInfo2KHR_host;
 
 
 typedef struct VkIndirectCommandsStreamNV_host
@@ -347,6 +432,19 @@ typedef struct VkWriteDescriptorSet_host
     const VkDescriptorBufferInfo_host *pBufferInfo;
     const VkBufferView *pTexelBufferView;
 } VkWriteDescriptorSet_host;
+
+
+typedef struct VkResolveImageInfo2KHR_host
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkImage srcImage;
+    VkImageLayout srcImageLayout;
+    VkImage dstImage;
+    VkImageLayout dstImageLayout;
+    uint32_t regionCount;
+    const VkImageResolve2KHR *pRegions;
+} VkResolveImageInfo2KHR_host;
 
 
 typedef struct VkPerformanceMarkerInfoINTEL_host
@@ -1065,6 +1163,11 @@ struct vulkan_device_funcs
     void (*p_vkCmdBindVertexBuffers2EXT)(VkCommandBuffer, uint32_t, uint32_t, const VkBuffer *, const VkDeviceSize *, const VkDeviceSize *, const VkDeviceSize *);
     void (*p_vkCmdBlitImage)(VkCommandBuffer, VkImage, VkImageLayout, VkImage, VkImageLayout, uint32_t, const VkImageBlit *, VkFilter);
 #if defined(USE_STRUCT_CONVERSION)
+    void (*p_vkCmdBlitImage2KHR)(VkCommandBuffer, const VkBlitImageInfo2KHR_host *);
+#else
+    void (*p_vkCmdBlitImage2KHR)(VkCommandBuffer, const VkBlitImageInfo2KHR *);
+#endif
+#if defined(USE_STRUCT_CONVERSION)
     void (*p_vkCmdBuildAccelerationStructureNV)(VkCommandBuffer, const VkAccelerationStructureInfoNV_host *, VkBuffer, VkDeviceSize, VkBool32, VkAccelerationStructureKHR, VkAccelerationStructureKHR, VkBuffer, VkDeviceSize);
 #else
     void (*p_vkCmdBuildAccelerationStructureNV)(VkCommandBuffer, const VkAccelerationStructureInfoNV *, VkBuffer, VkDeviceSize, VkBool32, VkAccelerationStructureKHR, VkAccelerationStructureKHR, VkBuffer, VkDeviceSize);
@@ -1079,15 +1182,35 @@ struct vulkan_device_funcs
     void (*p_vkCmdCopyBuffer)(VkCommandBuffer, VkBuffer, VkBuffer, uint32_t, const VkBufferCopy *);
 #endif
 #if defined(USE_STRUCT_CONVERSION)
+    void (*p_vkCmdCopyBuffer2KHR)(VkCommandBuffer, const VkCopyBufferInfo2KHR_host *);
+#else
+    void (*p_vkCmdCopyBuffer2KHR)(VkCommandBuffer, const VkCopyBufferInfo2KHR *);
+#endif
+#if defined(USE_STRUCT_CONVERSION)
     void (*p_vkCmdCopyBufferToImage)(VkCommandBuffer, VkBuffer, VkImage, VkImageLayout, uint32_t, const VkBufferImageCopy_host *);
 #else
     void (*p_vkCmdCopyBufferToImage)(VkCommandBuffer, VkBuffer, VkImage, VkImageLayout, uint32_t, const VkBufferImageCopy *);
 #endif
+#if defined(USE_STRUCT_CONVERSION)
+    void (*p_vkCmdCopyBufferToImage2KHR)(VkCommandBuffer, const VkCopyBufferToImageInfo2KHR_host *);
+#else
+    void (*p_vkCmdCopyBufferToImage2KHR)(VkCommandBuffer, const VkCopyBufferToImageInfo2KHR *);
+#endif
     void (*p_vkCmdCopyImage)(VkCommandBuffer, VkImage, VkImageLayout, VkImage, VkImageLayout, uint32_t, const VkImageCopy *);
+#if defined(USE_STRUCT_CONVERSION)
+    void (*p_vkCmdCopyImage2KHR)(VkCommandBuffer, const VkCopyImageInfo2KHR_host *);
+#else
+    void (*p_vkCmdCopyImage2KHR)(VkCommandBuffer, const VkCopyImageInfo2KHR *);
+#endif
 #if defined(USE_STRUCT_CONVERSION)
     void (*p_vkCmdCopyImageToBuffer)(VkCommandBuffer, VkImage, VkImageLayout, VkBuffer, uint32_t, const VkBufferImageCopy_host *);
 #else
     void (*p_vkCmdCopyImageToBuffer)(VkCommandBuffer, VkImage, VkImageLayout, VkBuffer, uint32_t, const VkBufferImageCopy *);
+#endif
+#if defined(USE_STRUCT_CONVERSION)
+    void (*p_vkCmdCopyImageToBuffer2KHR)(VkCommandBuffer, const VkCopyImageToBufferInfo2KHR_host *);
+#else
+    void (*p_vkCmdCopyImageToBuffer2KHR)(VkCommandBuffer, const VkCopyImageToBufferInfo2KHR *);
 #endif
     void (*p_vkCmdCopyQueryPoolResults)(VkCommandBuffer, VkQueryPool, uint32_t, uint32_t, VkBuffer, VkDeviceSize, VkDeviceSize, VkQueryResultFlags);
     void (*p_vkCmdDispatch)(VkCommandBuffer, uint32_t, uint32_t, uint32_t);
@@ -1145,6 +1268,11 @@ struct vulkan_device_funcs
     void (*p_vkCmdResetEvent)(VkCommandBuffer, VkEvent, VkPipelineStageFlags);
     void (*p_vkCmdResetQueryPool)(VkCommandBuffer, VkQueryPool, uint32_t, uint32_t);
     void (*p_vkCmdResolveImage)(VkCommandBuffer, VkImage, VkImageLayout, VkImage, VkImageLayout, uint32_t, const VkImageResolve *);
+#if defined(USE_STRUCT_CONVERSION)
+    void (*p_vkCmdResolveImage2KHR)(VkCommandBuffer, const VkResolveImageInfo2KHR_host *);
+#else
+    void (*p_vkCmdResolveImage2KHR)(VkCommandBuffer, const VkResolveImageInfo2KHR *);
+#endif
     void (*p_vkCmdSetBlendConstants)(VkCommandBuffer, const float[4]);
     void (*p_vkCmdSetCheckpointNV)(VkCommandBuffer, const void *);
     void (*p_vkCmdSetCoarseSampleOrderNV)(VkCommandBuffer, VkCoarseSampleOrderTypeNV, uint32_t, const VkCoarseSampleOrderCustomNV *);
@@ -1628,15 +1756,20 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkCmdBindVertexBuffers) \
     USE_VK_FUNC(vkCmdBindVertexBuffers2EXT) \
     USE_VK_FUNC(vkCmdBlitImage) \
+    USE_VK_FUNC(vkCmdBlitImage2KHR) \
     USE_VK_FUNC(vkCmdBuildAccelerationStructureNV) \
     USE_VK_FUNC(vkCmdClearAttachments) \
     USE_VK_FUNC(vkCmdClearColorImage) \
     USE_VK_FUNC(vkCmdClearDepthStencilImage) \
     USE_VK_FUNC(vkCmdCopyAccelerationStructureNV) \
     USE_VK_FUNC(vkCmdCopyBuffer) \
+    USE_VK_FUNC(vkCmdCopyBuffer2KHR) \
     USE_VK_FUNC(vkCmdCopyBufferToImage) \
+    USE_VK_FUNC(vkCmdCopyBufferToImage2KHR) \
     USE_VK_FUNC(vkCmdCopyImage) \
+    USE_VK_FUNC(vkCmdCopyImage2KHR) \
     USE_VK_FUNC(vkCmdCopyImageToBuffer) \
+    USE_VK_FUNC(vkCmdCopyImageToBuffer2KHR) \
     USE_VK_FUNC(vkCmdCopyQueryPoolResults) \
     USE_VK_FUNC(vkCmdDispatch) \
     USE_VK_FUNC(vkCmdDispatchBase) \
@@ -1677,6 +1810,7 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkCmdResetEvent) \
     USE_VK_FUNC(vkCmdResetQueryPool) \
     USE_VK_FUNC(vkCmdResolveImage) \
+    USE_VK_FUNC(vkCmdResolveImage2KHR) \
     USE_VK_FUNC(vkCmdSetBlendConstants) \
     USE_VK_FUNC(vkCmdSetCheckpointNV) \
     USE_VK_FUNC(vkCmdSetCoarseSampleOrderNV) \

@@ -213,6 +213,21 @@ static inline void convert_VkRenderPassBeginInfo_win_to_host(const VkRenderPassB
     out->pClearValues = in->pClearValues;
 }
 
+static inline void convert_VkBlitImageInfo2KHR_win_to_host(const VkBlitImageInfo2KHR *in, VkBlitImageInfo2KHR_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->srcImage = in->srcImage;
+    out->srcImageLayout = in->srcImageLayout;
+    out->dstImage = in->dstImage;
+    out->dstImageLayout = in->dstImageLayout;
+    out->regionCount = in->regionCount;
+    out->pRegions = in->pRegions;
+    out->filter = in->filter;
+}
+
 static inline void convert_VkGeometryTrianglesNV_win_to_host(const VkGeometryTrianglesNV *in, VkGeometryTrianglesNV_host *out)
 {
     if (!in) return;
@@ -322,6 +337,50 @@ static inline void free_VkBufferCopy_array(VkBufferCopy_host *in, uint32_t count
     heap_free(in);
 }
 
+static inline VkBufferCopy2KHR_host *convert_VkBufferCopy2KHR_array_win_to_host(const VkBufferCopy2KHR *in, uint32_t count)
+{
+    VkBufferCopy2KHR_host *out;
+    unsigned int i;
+
+    if (!in) return NULL;
+
+    out = heap_alloc(count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        out[i].sType = in[i].sType;
+        out[i].pNext = in[i].pNext;
+        out[i].srcOffset = in[i].srcOffset;
+        out[i].dstOffset = in[i].dstOffset;
+        out[i].size = in[i].size;
+    }
+
+    return out;
+}
+
+static inline void free_VkBufferCopy2KHR_array(VkBufferCopy2KHR_host *in, uint32_t count)
+{
+    if (!in) return;
+
+    heap_free(in);
+}
+
+static inline void convert_VkCopyBufferInfo2KHR_win_to_host(const VkCopyBufferInfo2KHR *in, VkCopyBufferInfo2KHR_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->srcBuffer = in->srcBuffer;
+    out->dstBuffer = in->dstBuffer;
+    out->regionCount = in->regionCount;
+    out->pRegions = convert_VkBufferCopy2KHR_array_win_to_host(in->pRegions, in->regionCount);
+}
+
+static inline void free_VkCopyBufferInfo2KHR(VkCopyBufferInfo2KHR_host *in)
+{
+    free_VkBufferCopy2KHR_array((VkBufferCopy2KHR_host *)in->pRegions, in->regionCount);
+}
+
 static inline VkBufferImageCopy_host *convert_VkBufferImageCopy_array_win_to_host(const VkBufferImageCopy *in, uint32_t count)
 {
     VkBufferImageCopy_host *out;
@@ -348,6 +407,86 @@ static inline void free_VkBufferImageCopy_array(VkBufferImageCopy_host *in, uint
     if (!in) return;
 
     heap_free(in);
+}
+
+static inline VkBufferImageCopy2KHR_host *convert_VkBufferImageCopy2KHR_array_win_to_host(const VkBufferImageCopy2KHR *in, uint32_t count)
+{
+    VkBufferImageCopy2KHR_host *out;
+    unsigned int i;
+
+    if (!in) return NULL;
+
+    out = heap_alloc(count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        out[i].sType = in[i].sType;
+        out[i].pNext = in[i].pNext;
+        out[i].bufferOffset = in[i].bufferOffset;
+        out[i].bufferRowLength = in[i].bufferRowLength;
+        out[i].bufferImageHeight = in[i].bufferImageHeight;
+        out[i].imageSubresource = in[i].imageSubresource;
+        out[i].imageOffset = in[i].imageOffset;
+        out[i].imageExtent = in[i].imageExtent;
+    }
+
+    return out;
+}
+
+static inline void free_VkBufferImageCopy2KHR_array(VkBufferImageCopy2KHR_host *in, uint32_t count)
+{
+    if (!in) return;
+
+    heap_free(in);
+}
+
+static inline void convert_VkCopyBufferToImageInfo2KHR_win_to_host(const VkCopyBufferToImageInfo2KHR *in, VkCopyBufferToImageInfo2KHR_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->srcBuffer = in->srcBuffer;
+    out->dstImage = in->dstImage;
+    out->dstImageLayout = in->dstImageLayout;
+    out->regionCount = in->regionCount;
+    out->pRegions = convert_VkBufferImageCopy2KHR_array_win_to_host(in->pRegions, in->regionCount);
+}
+
+static inline void free_VkCopyBufferToImageInfo2KHR(VkCopyBufferToImageInfo2KHR_host *in)
+{
+    free_VkBufferImageCopy2KHR_array((VkBufferImageCopy2KHR_host *)in->pRegions, in->regionCount);
+}
+
+static inline void convert_VkCopyImageInfo2KHR_win_to_host(const VkCopyImageInfo2KHR *in, VkCopyImageInfo2KHR_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->srcImage = in->srcImage;
+    out->srcImageLayout = in->srcImageLayout;
+    out->dstImage = in->dstImage;
+    out->dstImageLayout = in->dstImageLayout;
+    out->regionCount = in->regionCount;
+    out->pRegions = in->pRegions;
+}
+
+static inline void convert_VkCopyImageToBufferInfo2KHR_win_to_host(const VkCopyImageToBufferInfo2KHR *in, VkCopyImageToBufferInfo2KHR_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->srcImage = in->srcImage;
+    out->srcImageLayout = in->srcImageLayout;
+    out->dstBuffer = in->dstBuffer;
+    out->regionCount = in->regionCount;
+    out->pRegions = convert_VkBufferImageCopy2KHR_array_win_to_host(in->pRegions, in->regionCount);
+}
+
+static inline void free_VkCopyImageToBufferInfo2KHR(VkCopyImageToBufferInfo2KHR_host *in)
+{
+    free_VkBufferImageCopy2KHR_array((VkBufferImageCopy2KHR_host *)in->pRegions, in->regionCount);
 }
 
 static inline VkIndirectCommandsStreamNV_host *convert_VkIndirectCommandsStreamNV_array_win_to_host(const VkIndirectCommandsStreamNV *in, uint32_t count)
@@ -550,6 +689,20 @@ static inline void free_VkWriteDescriptorSet_array(VkWriteDescriptorSet_host *in
         free_VkDescriptorBufferInfo_array((VkDescriptorBufferInfo_host *)in[i].pBufferInfo, in[i].descriptorCount);
     }
     heap_free(in);
+}
+
+static inline void convert_VkResolveImageInfo2KHR_win_to_host(const VkResolveImageInfo2KHR *in, VkResolveImageInfo2KHR_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->srcImage = in->srcImage;
+    out->srcImageLayout = in->srcImageLayout;
+    out->dstImage = in->dstImage;
+    out->dstImageLayout = in->dstImageLayout;
+    out->regionCount = in->regionCount;
+    out->pRegions = in->pRegions;
 }
 
 static inline void convert_VkPerformanceMarkerInfoINTEL_win_to_host(const VkPerformanceMarkerInfoINTEL *in, VkPerformanceMarkerInfoINTEL_host *out)
@@ -3202,6 +3355,21 @@ void WINAPI wine_vkCmdBlitImage(VkCommandBuffer commandBuffer, VkImage srcImage,
     commandBuffer->device->funcs.p_vkCmdBlitImage(commandBuffer->command_buffer, srcImage, srcImageLayout, dstImage, dstImageLayout, regionCount, pRegions, filter);
 }
 
+static void WINAPI wine_vkCmdBlitImage2KHR(VkCommandBuffer commandBuffer, const VkBlitImageInfo2KHR *pBlitImageInfo)
+{
+#if defined(USE_STRUCT_CONVERSION)
+    VkBlitImageInfo2KHR_host pBlitImageInfo_host;
+    TRACE("%p, %p\n", commandBuffer, pBlitImageInfo);
+
+    convert_VkBlitImageInfo2KHR_win_to_host(pBlitImageInfo, &pBlitImageInfo_host);
+    commandBuffer->device->funcs.p_vkCmdBlitImage2KHR(commandBuffer->command_buffer, &pBlitImageInfo_host);
+
+#else
+    TRACE("%p, %p\n", commandBuffer, pBlitImageInfo);
+    commandBuffer->device->funcs.p_vkCmdBlitImage2KHR(commandBuffer->command_buffer, pBlitImageInfo);
+#endif
+}
+
 static void WINAPI wine_vkCmdBuildAccelerationStructureNV(VkCommandBuffer commandBuffer, const VkAccelerationStructureInfoNV *pInfo, VkBuffer instanceData, VkDeviceSize instanceOffset, VkBool32 update, VkAccelerationStructureKHR dst, VkAccelerationStructureKHR src, VkBuffer scratch, VkDeviceSize scratchOffset)
 {
 #if defined(USE_STRUCT_CONVERSION)
@@ -3258,6 +3426,22 @@ void WINAPI wine_vkCmdCopyBuffer(VkCommandBuffer commandBuffer, VkBuffer srcBuff
 #endif
 }
 
+static void WINAPI wine_vkCmdCopyBuffer2KHR(VkCommandBuffer commandBuffer, const VkCopyBufferInfo2KHR *pCopyBufferInfo)
+{
+#if defined(USE_STRUCT_CONVERSION)
+    VkCopyBufferInfo2KHR_host pCopyBufferInfo_host;
+    TRACE("%p, %p\n", commandBuffer, pCopyBufferInfo);
+
+    convert_VkCopyBufferInfo2KHR_win_to_host(pCopyBufferInfo, &pCopyBufferInfo_host);
+    commandBuffer->device->funcs.p_vkCmdCopyBuffer2KHR(commandBuffer->command_buffer, &pCopyBufferInfo_host);
+
+    free_VkCopyBufferInfo2KHR(&pCopyBufferInfo_host);
+#else
+    TRACE("%p, %p\n", commandBuffer, pCopyBufferInfo);
+    commandBuffer->device->funcs.p_vkCmdCopyBuffer2KHR(commandBuffer->command_buffer, pCopyBufferInfo);
+#endif
+}
+
 void WINAPI wine_vkCmdCopyBufferToImage(VkCommandBuffer commandBuffer, VkBuffer srcBuffer, VkImage dstImage, VkImageLayout dstImageLayout, uint32_t regionCount, const VkBufferImageCopy *pRegions)
 {
 #if defined(USE_STRUCT_CONVERSION)
@@ -3274,10 +3458,41 @@ void WINAPI wine_vkCmdCopyBufferToImage(VkCommandBuffer commandBuffer, VkBuffer 
 #endif
 }
 
+static void WINAPI wine_vkCmdCopyBufferToImage2KHR(VkCommandBuffer commandBuffer, const VkCopyBufferToImageInfo2KHR *pCopyBufferToImageInfo)
+{
+#if defined(USE_STRUCT_CONVERSION)
+    VkCopyBufferToImageInfo2KHR_host pCopyBufferToImageInfo_host;
+    TRACE("%p, %p\n", commandBuffer, pCopyBufferToImageInfo);
+
+    convert_VkCopyBufferToImageInfo2KHR_win_to_host(pCopyBufferToImageInfo, &pCopyBufferToImageInfo_host);
+    commandBuffer->device->funcs.p_vkCmdCopyBufferToImage2KHR(commandBuffer->command_buffer, &pCopyBufferToImageInfo_host);
+
+    free_VkCopyBufferToImageInfo2KHR(&pCopyBufferToImageInfo_host);
+#else
+    TRACE("%p, %p\n", commandBuffer, pCopyBufferToImageInfo);
+    commandBuffer->device->funcs.p_vkCmdCopyBufferToImage2KHR(commandBuffer->command_buffer, pCopyBufferToImageInfo);
+#endif
+}
+
 void WINAPI wine_vkCmdCopyImage(VkCommandBuffer commandBuffer, VkImage srcImage, VkImageLayout srcImageLayout, VkImage dstImage, VkImageLayout dstImageLayout, uint32_t regionCount, const VkImageCopy *pRegions)
 {
     TRACE("%p, 0x%s, %#x, 0x%s, %#x, %u, %p\n", commandBuffer, wine_dbgstr_longlong(srcImage), srcImageLayout, wine_dbgstr_longlong(dstImage), dstImageLayout, regionCount, pRegions);
     commandBuffer->device->funcs.p_vkCmdCopyImage(commandBuffer->command_buffer, srcImage, srcImageLayout, dstImage, dstImageLayout, regionCount, pRegions);
+}
+
+static void WINAPI wine_vkCmdCopyImage2KHR(VkCommandBuffer commandBuffer, const VkCopyImageInfo2KHR *pCopyImageInfo)
+{
+#if defined(USE_STRUCT_CONVERSION)
+    VkCopyImageInfo2KHR_host pCopyImageInfo_host;
+    TRACE("%p, %p\n", commandBuffer, pCopyImageInfo);
+
+    convert_VkCopyImageInfo2KHR_win_to_host(pCopyImageInfo, &pCopyImageInfo_host);
+    commandBuffer->device->funcs.p_vkCmdCopyImage2KHR(commandBuffer->command_buffer, &pCopyImageInfo_host);
+
+#else
+    TRACE("%p, %p\n", commandBuffer, pCopyImageInfo);
+    commandBuffer->device->funcs.p_vkCmdCopyImage2KHR(commandBuffer->command_buffer, pCopyImageInfo);
+#endif
 }
 
 void WINAPI wine_vkCmdCopyImageToBuffer(VkCommandBuffer commandBuffer, VkImage srcImage, VkImageLayout srcImageLayout, VkBuffer dstBuffer, uint32_t regionCount, const VkBufferImageCopy *pRegions)
@@ -3293,6 +3508,22 @@ void WINAPI wine_vkCmdCopyImageToBuffer(VkCommandBuffer commandBuffer, VkImage s
 #else
     TRACE("%p, 0x%s, %#x, 0x%s, %u, %p\n", commandBuffer, wine_dbgstr_longlong(srcImage), srcImageLayout, wine_dbgstr_longlong(dstBuffer), regionCount, pRegions);
     commandBuffer->device->funcs.p_vkCmdCopyImageToBuffer(commandBuffer->command_buffer, srcImage, srcImageLayout, dstBuffer, regionCount, pRegions);
+#endif
+}
+
+static void WINAPI wine_vkCmdCopyImageToBuffer2KHR(VkCommandBuffer commandBuffer, const VkCopyImageToBufferInfo2KHR *pCopyImageToBufferInfo)
+{
+#if defined(USE_STRUCT_CONVERSION)
+    VkCopyImageToBufferInfo2KHR_host pCopyImageToBufferInfo_host;
+    TRACE("%p, %p\n", commandBuffer, pCopyImageToBufferInfo);
+
+    convert_VkCopyImageToBufferInfo2KHR_win_to_host(pCopyImageToBufferInfo, &pCopyImageToBufferInfo_host);
+    commandBuffer->device->funcs.p_vkCmdCopyImageToBuffer2KHR(commandBuffer->command_buffer, &pCopyImageToBufferInfo_host);
+
+    free_VkCopyImageToBufferInfo2KHR(&pCopyImageToBufferInfo_host);
+#else
+    TRACE("%p, %p\n", commandBuffer, pCopyImageToBufferInfo);
+    commandBuffer->device->funcs.p_vkCmdCopyImageToBuffer2KHR(commandBuffer->command_buffer, pCopyImageToBufferInfo);
 #endif
 }
 
@@ -3571,6 +3802,21 @@ void WINAPI wine_vkCmdResolveImage(VkCommandBuffer commandBuffer, VkImage srcIma
 {
     TRACE("%p, 0x%s, %#x, 0x%s, %#x, %u, %p\n", commandBuffer, wine_dbgstr_longlong(srcImage), srcImageLayout, wine_dbgstr_longlong(dstImage), dstImageLayout, regionCount, pRegions);
     commandBuffer->device->funcs.p_vkCmdResolveImage(commandBuffer->command_buffer, srcImage, srcImageLayout, dstImage, dstImageLayout, regionCount, pRegions);
+}
+
+static void WINAPI wine_vkCmdResolveImage2KHR(VkCommandBuffer commandBuffer, const VkResolveImageInfo2KHR *pResolveImageInfo)
+{
+#if defined(USE_STRUCT_CONVERSION)
+    VkResolveImageInfo2KHR_host pResolveImageInfo_host;
+    TRACE("%p, %p\n", commandBuffer, pResolveImageInfo);
+
+    convert_VkResolveImageInfo2KHR_win_to_host(pResolveImageInfo, &pResolveImageInfo_host);
+    commandBuffer->device->funcs.p_vkCmdResolveImage2KHR(commandBuffer->command_buffer, &pResolveImageInfo_host);
+
+#else
+    TRACE("%p, %p\n", commandBuffer, pResolveImageInfo);
+    commandBuffer->device->funcs.p_vkCmdResolveImage2KHR(commandBuffer->command_buffer, pResolveImageInfo);
+#endif
 }
 
 void WINAPI wine_vkCmdSetBlendConstants(VkCommandBuffer commandBuffer, const float blendConstants[4])
@@ -5470,15 +5716,20 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCmdBindVertexBuffers", &wine_vkCmdBindVertexBuffers},
     {"vkCmdBindVertexBuffers2EXT", &wine_vkCmdBindVertexBuffers2EXT},
     {"vkCmdBlitImage", &wine_vkCmdBlitImage},
+    {"vkCmdBlitImage2KHR", &wine_vkCmdBlitImage2KHR},
     {"vkCmdBuildAccelerationStructureNV", &wine_vkCmdBuildAccelerationStructureNV},
     {"vkCmdClearAttachments", &wine_vkCmdClearAttachments},
     {"vkCmdClearColorImage", &wine_vkCmdClearColorImage},
     {"vkCmdClearDepthStencilImage", &wine_vkCmdClearDepthStencilImage},
     {"vkCmdCopyAccelerationStructureNV", &wine_vkCmdCopyAccelerationStructureNV},
     {"vkCmdCopyBuffer", &wine_vkCmdCopyBuffer},
+    {"vkCmdCopyBuffer2KHR", &wine_vkCmdCopyBuffer2KHR},
     {"vkCmdCopyBufferToImage", &wine_vkCmdCopyBufferToImage},
+    {"vkCmdCopyBufferToImage2KHR", &wine_vkCmdCopyBufferToImage2KHR},
     {"vkCmdCopyImage", &wine_vkCmdCopyImage},
+    {"vkCmdCopyImage2KHR", &wine_vkCmdCopyImage2KHR},
     {"vkCmdCopyImageToBuffer", &wine_vkCmdCopyImageToBuffer},
+    {"vkCmdCopyImageToBuffer2KHR", &wine_vkCmdCopyImageToBuffer2KHR},
     {"vkCmdCopyQueryPoolResults", &wine_vkCmdCopyQueryPoolResults},
     {"vkCmdDispatch", &wine_vkCmdDispatch},
     {"vkCmdDispatchBase", &wine_vkCmdDispatchBase},
@@ -5519,6 +5770,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCmdResetEvent", &wine_vkCmdResetEvent},
     {"vkCmdResetQueryPool", &wine_vkCmdResetQueryPool},
     {"vkCmdResolveImage", &wine_vkCmdResolveImage},
+    {"vkCmdResolveImage2KHR", &wine_vkCmdResolveImage2KHR},
     {"vkCmdSetBlendConstants", &wine_vkCmdSetBlendConstants},
     {"vkCmdSetCheckpointNV", &wine_vkCmdSetCheckpointNV},
     {"vkCmdSetCoarseSampleOrderNV", &wine_vkCmdSetCoarseSampleOrderNV},
@@ -5876,6 +6128,7 @@ static const char * const vk_device_extensions[] =
     "VK_KHR_8bit_storage",
     "VK_KHR_bind_memory2",
     "VK_KHR_buffer_device_address",
+    "VK_KHR_copy_commands2",
     "VK_KHR_create_renderpass2",
     "VK_KHR_dedicated_allocation",
     "VK_KHR_depth_stencil_resolve",
