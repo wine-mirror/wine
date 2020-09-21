@@ -28,6 +28,8 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <signal.h>
+#include <sys/ioctl.h>
+#include <termios.h>
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -198,6 +200,8 @@ struct console_server
     struct list           queue;       /* ioctl queue */
     struct list           read_queue;  /* blocking read queue */
     int                   busy;        /* flag if server processing an ioctl */
+    int                   term_fd;     /* UNIX terminal fd */
+    struct termios        termios;     /* original termios */
 };
 
 static void console_server_dump( struct object *obj, int verbose );
@@ -663,6 +667,13 @@ static void disconnect_console_server( struct console_server *server )
         struct console_host_ioctl *call = LIST_ENTRY( list_head( &server->read_queue ), struct console_host_ioctl, entry );
         list_remove( &call->entry );
         console_host_ioctl_terminate( call, STATUS_CANCELLED );
+    }
+
+    if (server->term_fd != -1)
+    {
+        tcsetattr( server->term_fd, TCSANOW, &server->termios );
+        close( server->term_fd );
+        server->term_fd = -1;
     }
 
     if (server->console)
@@ -1772,6 +1783,7 @@ static struct object *create_console_server( void )
     if (!(server = alloc_object( &console_server_ops ))) return NULL;
     server->console = NULL;
     server->busy    = 0;
+    server->term_fd = -1;
     list_init( &server->queue );
     list_init( &server->read_queue );
     server->fd = alloc_pseudo_fd( &console_server_fd_ops, &server->obj, FILE_SYNCHRONOUS_IO_NONALERT );
@@ -2335,6 +2347,53 @@ static int console_server_ioctl( struct fd *fd, ioctl_code_t code, struct async 
             }
             propagate_console_signal( server->console, event->event, event->group_id );
             return !get_error();
+        }
+
+    case IOCTL_CONDRV_SETUP_INPUT:
+        {
+            struct termios term;
+            obj_handle_t handle;
+            struct file *file;
+            int unix_fd;
+
+            if (get_req_data_size() != sizeof(unsigned int) || get_reply_max_size())
+            {
+                set_error( STATUS_INVALID_PARAMETER );
+                return 0;
+            }
+            if (server->term_fd != -1)
+            {
+                tcsetattr( server->term_fd, TCSANOW, &server->termios );
+                close( server->term_fd );
+                server->term_fd = -1;
+            }
+            handle = *(unsigned int *)get_req_data();
+            if (!handle) return 1;
+            if (!(file = get_file_obj( current->process, handle, FILE_READ_DATA  )))
+            {
+                return 0;
+            }
+            unix_fd = get_file_unix_fd( file );
+            release_object( file );
+
+            if (tcgetattr( unix_fd, &server->termios ))
+            {
+                file_set_error();
+                return 0;
+            }
+            term = server->termios;
+            term.c_lflag &= ~(ECHO | ECHONL | ICANON | IEXTEN);
+            term.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
+            term.c_cflag &= ~(CSIZE | PARENB);
+            term.c_cflag |= CS8;
+            term.c_cc[VMIN] = 1;
+            term.c_cc[VTIME] = 0;
+            if (tcsetattr( unix_fd, TCSANOW, &term ) || (server->term_fd = dup( unix_fd )) == -1)
+            {
+                file_set_error();
+                return 0;
+            }
+            return 1;
         }
 
     default:
