@@ -6889,6 +6889,12 @@ msgstr "未在文件内找到签名。\n"
 msgid "Invalid call.\n"
 msgstr "无效的级别。\n"
 
+#: dlls/kernel32/winerror.mc:3781
+#, fuzzy
+#| msgid "Value is not available.\n"
+msgid "Resource is not currently available.\n"
+msgstr "值不可用。\n"
+
 #: dlls/localspl/localspl.rc:31 dlls/localui/localui.rc:31
 #: dlls/winspool.drv/winspool.rc:30
 msgid "Local Port"

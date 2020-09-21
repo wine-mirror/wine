@@ -3771,3 +3771,10 @@ SymbolicName=DXGI_ERROR_INVALID_CALL
 Language=ENU
 Invalid call.
 .
+MessageId=0x22
+Severity=CoError
+Facility=Dxgi
+SymbolicName=DXGI_ERROR_NOT_CURRENTLY_AVAILABLE
+Language=ENU
+Resource is not currently available.
+.

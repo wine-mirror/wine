@@ -6982,6 +6982,12 @@ msgstr "Poruka 0x%1 nije pronađena u datoteci %2.\n"
 msgid "Invalid call.\n"
 msgstr "Neispravna razina.\n"
 
+#: dlls/kernel32/winerror.mc:3781
+#, fuzzy
+#| msgid "Help not available."
+msgid "Resource is not currently available.\n"
+msgstr "Pomoć nije dostupna."
+
 #: dlls/localspl/localspl.rc:31 dlls/localui/localui.rc:31
 #: dlls/winspool.drv/winspool.rc:30
 msgid "Local Port"

@@ -6959,6 +6959,12 @@ msgstr "Відсутній підпис файла.\n"
 msgid "Invalid call.\n"
 msgstr "Невірний рівень.\n"
 
+#: dlls/kernel32/winerror.mc:3781
+#, fuzzy
+#| msgid "Value is not available.\n"
+msgid "Resource is not currently available.\n"
+msgstr "Значення недоступне.\n"
+
 #: dlls/localspl/localspl.rc:31 dlls/localui/localui.rc:31
 #: dlls/winspool.drv/winspool.rc:30
 msgid "Local Port"

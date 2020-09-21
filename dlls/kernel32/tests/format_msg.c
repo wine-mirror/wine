@@ -1754,6 +1754,7 @@ static void test_message_system_errors(void)
     {
         {E_NOTIMPL},
         {DXGI_ERROR_INVALID_CALL, TRUE /* Available since Win8 */},
+        {DXGI_ERROR_NOT_CURRENTLY_AVAILABLE, TRUE /* Available since Win8 */},
     };
 
     char buffer[256];

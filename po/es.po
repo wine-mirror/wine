@@ -7028,6 +7028,12 @@ msgstr "El mensaje 0x%1 no pudo encontrarse en el fichero %2.\n"
 msgid "Invalid call.\n"
 msgstr "Nivel inválido.\n"
 
+#: dlls/kernel32/winerror.mc:3781
+#, fuzzy
+#| msgid "Help not available."
+msgid "Resource is not currently available.\n"
+msgstr "Ayuda no disponible."
+
 #: dlls/localspl/localspl.rc:31 dlls/localui/localui.rc:31
 #: dlls/winspool.drv/winspool.rc:30
 msgid "Local Port"

@@ -7036,6 +7036,12 @@ msgstr "0x%1 üzenet nem található a %2 fájlban.\n"
 msgid "Invalid call.\n"
 msgstr "Érvénytelen szint.\n"
 
+#: dlls/kernel32/winerror.mc:3781
+#, fuzzy
+#| msgid "Help not available."
+msgid "Resource is not currently available.\n"
+msgstr "A súgó nem elérhető."
+
 #: dlls/localspl/localspl.rc:31 dlls/localui/localui.rc:31
 #: dlls/winspool.drv/winspool.rc:30
 msgid "Local Port"

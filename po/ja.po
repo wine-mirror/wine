@@ -6929,6 +6929,12 @@ msgstr "ファイルにデジタル署名がありません。\n"
 msgid "Invalid call.\n"
 msgstr "レベルは正しくありません。\n"
 
+#: dlls/kernel32/winerror.mc:3781
+#, fuzzy
+#| msgid "Value is not available.\n"
+msgid "Resource is not currently available.\n"
+msgstr "値は利用可能ではありません。\n"
+
 #: dlls/localspl/localspl.rc:31 dlls/localui/localui.rc:31
 #: dlls/winspool.drv/winspool.rc:30
 msgid "Local Port"

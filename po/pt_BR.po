@@ -6950,6 +6950,12 @@ msgstr "Nenhuma Assinatura encontrada no arquivo.\n"
 msgid "Invalid call.\n"
 msgstr "Nível inválido.\n"
 
+#: dlls/kernel32/winerror.mc:3781
+#, fuzzy
+#| msgid "Value is not available.\n"
+msgid "Resource is not currently available.\n"
+msgstr "Valor não disponível.\n"
+
 #: dlls/localspl/localspl.rc:31 dlls/localui/localui.rc:31
 #: dlls/winspool.drv/winspool.rc:30
 msgid "Local Port"

@@ -7003,6 +7003,12 @@ msgstr "Message 0x%1 introuvable dans le fichier %2.\n"
 msgid "Invalid call.\n"
 msgstr "Niveau non valide.\n"
 
+#: dlls/kernel32/winerror.mc:3781
+#, fuzzy
+#| msgid "Help not available."
+msgid "Resource is not currently available.\n"
+msgstr "Impossible d'afficher l'aide."
+
 #: dlls/localspl/localspl.rc:31 dlls/localui/localui.rc:31
 #: dlls/winspool.drv/winspool.rc:30
 msgid "Local Port"
