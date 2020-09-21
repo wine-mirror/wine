@@ -923,7 +923,7 @@ static void test_tty_output(void)
     expect_output_sequence("\x1b[32m");    /* foreground black */
     expect_output_sequence("\x1b[1;8H");   /* set cursor */
     expect_output_sequence("0");
-    expect_output_sequence("\x1b[41m");    /* backgorund red */
+    expect_output_sequence("\x1b[41m");    /* background red */
     expect_output_sequence("1");
     expect_output_sequence("\x1b[30m");    /* foreground black */
     expect_output_sequence("2");
