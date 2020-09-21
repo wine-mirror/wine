@@ -394,8 +394,7 @@ static ULONG WINAPI create_object_context_Release(IUnknown *iface)
             IPropertyStore_Release(context->props);
         if (context->stream)
             IMFByteStream_Release(context->stream);
-        if (context->url)
-            heap_free(context->url);
+        heap_free(context->url);
         heap_free(context);
     }
 
