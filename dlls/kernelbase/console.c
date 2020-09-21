@@ -224,20 +224,18 @@ static BOOL create_console_connection( HANDLE root )
     return set_ntstatus( status );
 }
 
-static BOOL init_console_std_handles(void)
+static BOOL init_console_std_handles( BOOL override_all )
 {
     HANDLE std_out = NULL, std_err = NULL, handle;
     OBJECT_ATTRIBUTES attr = {sizeof(attr)};
     IO_STATUS_BLOCK iosb;
     UNICODE_STRING name;
-    STARTUPINFOW si;
     NTSTATUS status;
 
-    GetStartupInfoW( &si );
     attr.ObjectName = &name;
     attr.Attributes = OBJ_INHERIT;
 
-    if (!(si.dwFlags & STARTF_USESTDHANDLES) || !GetStdHandle( STD_INPUT_HANDLE ))
+    if (override_all || !GetStdHandle( STD_INPUT_HANDLE ))
     {
         /* FIXME: Use unbound console handle */
         RtlInitUnicodeString( &name, L"\\Device\\ConDrv\\CurrentIn" );
@@ -250,7 +248,7 @@ static BOOL init_console_std_handles(void)
         SetStdHandle( STD_INPUT_HANDLE, console_handle_map( handle ));
     }
 
-    if (si.dwFlags & STARTF_USESTDHANDLES)
+    if (!override_all)
     {
         std_out = GetStdHandle( STD_OUTPUT_HANDLE );
         std_err = GetStdHandle( STD_ERROR_HANDLE );
@@ -306,7 +304,13 @@ BOOL WINAPI DECLSPEC_HOTPATCH AttachConsole( DWORD pid )
     if (ret)
     {
         RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle = create_console_reference( console_connection );
-        ret = RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle && init_console_std_handles();
+        if (RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle)
+        {
+            STARTUPINFOW si;
+            GetStartupInfoW( &si );
+            init_console_std_handles( !(si.dwFlags & STARTF_USESTDHANDLES) );
+        }
+        else ret = FALSE;
     }
 
     if (!ret) FreeConsole();
@@ -379,7 +383,7 @@ BOOL WINAPI AllocConsole(void)
         CloseHandle( pi.hProcess );
     }
     CloseHandle( event );
-    if (!ret || !init_console_std_handles()) goto error;
+    if (!ret || !init_console_std_handles( !(app_si.dwFlags & STARTF_USESTDHANDLES) )) goto error;
     console = CreateFileW( L"CONIN$", GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE, 0, NULL, OPEN_EXISTING, 0, 0 );
     if (console == INVALID_HANDLE_VALUE) goto error;
     RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle = console;
