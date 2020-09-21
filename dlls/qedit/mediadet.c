@@ -66,8 +66,7 @@ static void MD_cleanup(MediaDetImpl *This)
     This->splitter = NULL;
     if (This->graph) IGraphBuilder_Release(This->graph);
     This->graph = NULL;
-    if (This->filename)
-        free(This->filename);
+    free(This->filename);
     This->filename = NULL;
     This->num_streams = -1;
     This->cur_stream = 0;
