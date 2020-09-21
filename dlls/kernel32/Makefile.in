@@ -2,7 +2,6 @@ EXTRADEFS = -D_KERNEL32_ -D_NORMALIZE_
 MODULE    = kernel32.dll
 IMPORTLIB = kernel32
 IMPORTS   = winecrt0 kernelbase ntdll
-EXTRALIBS = $(COREFOUNDATION_LIBS) $(POLL_LIBS) $(RT_LIBS)
 EXTRADLLFLAGS = -nodefaultlibs -Wb,-F,KERNEL32.dll -Wl,--image-base,0x7b600000
 
 C_SRCS = \
@@ -26,7 +25,6 @@ C_SRCS = \
 	resource.c \
 	sync.c \
 	tape.c \
-	term.c \
 	thread.c \
 	toolhelp.c \
 	version.c \
