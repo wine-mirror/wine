@@ -1876,7 +1876,10 @@ static NTSTATUS write_console( struct screen_buffer *screen_buffer, const WCHAR 
                 if (++screen_buffer->cursor_y == screen_buffer->height)
                     new_line( screen_buffer, &update_rect );
                 else if (screen_buffer->mode & ENABLE_WRAP_AT_EOL_OUTPUT)
+                {
                     update_output( screen_buffer, &update_rect );
+                    set_tty_cursor( screen_buffer->console, screen_buffer->cursor_x, screen_buffer->cursor_y );
+                }
                 continue;
             case '\a':
                 FIXME( "beep\n" );
