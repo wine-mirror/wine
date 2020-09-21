@@ -1625,6 +1625,14 @@ static DWORD WINAPI tty_input( void *param )
     BOOL signaled;
     NTSTATUS status;
 
+    if (console->is_unix)
+    {
+        unsigned int h = condrv_handle( console->tty_input );
+        status = NtDeviceIoControlFile( console->server, NULL, NULL, NULL, &io, IOCTL_CONDRV_SETUP_INPUT,
+                                        &h, sizeof(h), NULL, 0 );
+        if (status) ERR( "input setup failed: %#x\n", status );
+    }
+
     event = CreateEventW( NULL, TRUE, FALSE, NULL );
 
     for (;;)
@@ -1682,6 +1690,13 @@ static DWORD WINAPI tty_input( void *param )
 
     EnterCriticalSection( &console_section );
     if (console->read_ioctl) read_complete( console, status, NULL, 0, FALSE );
+    if (console->is_unix)
+    {
+        unsigned int h = 0;
+        status = NtDeviceIoControlFile( console->server, NULL, NULL, NULL, &io, IOCTL_CONDRV_SETUP_INPUT,
+                                        &h, sizeof(h), NULL, 0 );
+        if (status) ERR( "input restore failed: %#x\n", status );
+    }
     CloseHandle( console->input_thread );
     console->input_thread = NULL;
     LeaveCriticalSection( &console_section );
