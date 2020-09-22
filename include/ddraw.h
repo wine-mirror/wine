@@ -895,6 +895,9 @@ typedef struct _DDPIXELFORMAT {
 #define DDOVER_BOB                              0x00200000
 #define DDOVER_OVERRIDEBOBWEAVE                 0x00400000
 #define DDOVER_INTERLEAVED                      0x00800000
+#define DDOVER_BOBHARDWARE                      0x01000000
+#define DDOVER_ARGBSCALEFACTORS                 0x02000000
+#define DDOVER_DEGRADEARGBSCALING               0x04000000
 
 /* DDPIXELFORMAT.dwFlags */
 #define DDPF_ALPHAPIXELS		0x00000001
