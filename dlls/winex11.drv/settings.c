@@ -497,7 +497,7 @@ static DEVMODEW *get_full_mode(ULONG_PTR id, DEVMODEW *dev_mode)
     if (is_detached_mode(dev_mode))
         return dev_mode;
 
-    if (!handler.get_modes(id, 0, &modes, &mode_count))
+    if (!handler.get_modes(id, EDS_ROTATEDMODE, &modes, &mode_count))
         return NULL;
 
     qsort(modes, mode_count, sizeof(*modes) + modes[0].dmDriverExtra, mode_compare);
@@ -518,6 +518,9 @@ static DEVMODEW *get_full_mode(ULONG_PTR id, DEVMODEW *dev_mode)
             found_mode->dmDisplayFrequency &&
             dev_mode->dmDisplayFrequency != 1 &&
             dev_mode->dmDisplayFrequency != found_mode->dmDisplayFrequency)
+            continue;
+        if (dev_mode->dmFields & DM_DISPLAYORIENTATION &&
+            found_mode->u1.s2.dmDisplayOrientation != dev_mode->u1.s2.dmDisplayOrientation)
             continue;
 
         break;
