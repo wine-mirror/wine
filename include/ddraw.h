@@ -376,6 +376,21 @@ typedef struct _DDSCAPS {
 #define DDSCAPS2_EXTENDEDFORMATPRIMARY  0x40000000
 #define DDSCAPS2_ADDITIONALPRIMARY      0x80000000
 
+/* DDSCAPS2.dwCaps3 */
+#define DDSCAPS3_MULTISAMPLE_MASK               0x0000001f
+#define DDSCAPS3_MULTISAMPLE_QUALITY_MASK       0x000000e0
+#define DDSCAPS3_MULTISAMPLE_QUALITY_SHIFT      5
+#define DDSCAPS3_RESERVED1                      0x00000100
+#define DDSCAPS3_RESERVED2                      0x00000200
+#define DDSCAPS3_LIGHTWEIGHTMIPMAP              0x00000400
+#define DDSCAPS3_AUTOGENMIPMAP                  0x00000800
+#define DDSCAPS3_DMAP                           0x00001000
+#ifndef D3D_DISABLE_9EX
+#define DDSCAPS3_CREATESHAREDRESOURCE           0x00002000
+#define DDSCAPS3_READONLYRESOURCE               0x00004000
+#define DDSCAPS3_OPENSHAREDRESOURCE             0x00008000
+#endif /* !D3D_DISABLE_9EX */
+
 typedef struct _DDSCAPS2 {
 	DWORD	dwCaps;	/* capabilities of surface wanted */
 	DWORD   dwCaps2; /* additional capabilities */
