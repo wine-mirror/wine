@@ -3685,7 +3685,7 @@ static void test_process_info(HANDLE hproc)
         case ProcessPriorityClass:
         case ProcessPriorityBoost:
         case ProcessLUIDDeviceMapsEnabled:
-        case 33 /* ProcessIoPriority */:
+        case ProcessIoPriority:
         case ProcessIoCounters:
         case ProcessVmCounters:
         case ProcessWow64Information:
