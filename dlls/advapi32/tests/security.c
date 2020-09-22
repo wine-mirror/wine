@@ -7529,6 +7529,196 @@ static void test_EqualDomainSid(void)
     FreeSid(domainsid);
 }
 
+static DWORD WINAPI duplicate_handle_access_thread(void *arg)
+{
+    HANDLE event = arg, event2;
+    BOOL ret;
+
+    event2 = OpenEventA(SYNCHRONIZE, FALSE, "test_dup");
+    ok(!!event2, "got error %u\n", GetLastError());
+    CloseHandle(event2);
+
+    event2 = OpenEventA(EVENT_MODIFY_STATE, FALSE, "test_dup");
+    ok(!!event2, "got error %u\n", GetLastError());
+    CloseHandle(event2);
+
+    ret = DuplicateHandle(GetCurrentProcess(), event, GetCurrentProcess(),
+            &event2, EVENT_MODIFY_STATE, FALSE, 0);
+    ok(ret, "got error %u\n", GetLastError());
+    CloseHandle(event2);
+
+    return 0;
+}
+
+static void test_duplicate_handle_access(void)
+{
+    char acl_buffer[200], everyone_sid_buffer[100], local_sid_buffer[100], cmdline[300];
+    HANDLE token, restricted, impersonation, all_event, sync_event, event2, thread;
+    SECURITY_ATTRIBUTES sa = {.nLength = sizeof(sa)};
+    SID *everyone_sid = (SID *)everyone_sid_buffer;
+    SID *local_sid = (SID *)local_sid_buffer;
+    ACL *acl = (ACL *)acl_buffer;
+    SID_AND_ATTRIBUTES sid_attr;
+    SECURITY_DESCRIPTOR sd;
+    PROCESS_INFORMATION pi;
+    STARTUPINFOA si = {0};
+    DWORD size;
+    BOOL ret;
+
+    /* DuplicateHandle() validates access against the calling thread's token and
+     * the target process's token. It does *not* validate access against the
+     * calling process's token, even if the calling thread is not impersonating.
+     */
+
+    ret = OpenProcessToken(GetCurrentProcess(), TOKEN_DUPLICATE | TOKEN_QUERY | TOKEN_ASSIGN_PRIMARY, &token);
+    ok(ret, "got error %u\n", GetLastError());
+
+    size = sizeof(everyone_sid_buffer);
+    ret = CreateWellKnownSid(WinWorldSid, NULL, everyone_sid, &size);
+    ok(ret, "got error %u\n", GetLastError());
+    size = sizeof(local_sid_buffer);
+    ret = CreateWellKnownSid(WinLocalSid, NULL, local_sid, &size);
+    ok(ret, "got error %u\n", GetLastError());
+
+    InitializeAcl(acl, sizeof(acl_buffer), ACL_REVISION);
+    ret = AddAccessAllowedAce(acl, ACL_REVISION, SYNCHRONIZE, everyone_sid);
+    ok(ret, "got error %u\n", GetLastError());
+    InitializeSecurityDescriptor(&sd, SECURITY_DESCRIPTOR_REVISION);
+    ret = AddAccessAllowedAce(acl, ACL_REVISION, EVENT_MODIFY_STATE, local_sid);
+    ok(ret, "got error %u\n", GetLastError());
+    InitializeSecurityDescriptor(&sd, SECURITY_DESCRIPTOR_REVISION);
+    ret = SetSecurityDescriptorDacl(&sd, TRUE, acl, FALSE);
+    ok(ret, "got error %u\n", GetLastError());
+    sa.lpSecurityDescriptor = &sd;
+
+    sid_attr.Sid = local_sid;
+    sid_attr.Attributes = 0;
+    ret = CreateRestrictedToken(token, 0, 1, &sid_attr, 0, NULL, 0, NULL, &restricted);
+    ok(ret, "got error %u\n", GetLastError());
+    ret = DuplicateTokenEx(restricted, TOKEN_IMPERSONATE, NULL,
+            SecurityImpersonation, TokenImpersonation, &impersonation);
+    ok(ret, "got error %u\n", GetLastError());
+
+    all_event = CreateEventA(&sa, TRUE, TRUE, "test_dup");
+    ok(!!all_event, "got error %u\n", GetLastError());
+    sync_event = OpenEventA(SYNCHRONIZE, FALSE, "test_dup");
+    ok(!!sync_event, "got error %u\n", GetLastError());
+
+    event2 = OpenEventA(SYNCHRONIZE, FALSE, "test_dup");
+    ok(!!event2, "got error %u\n", GetLastError());
+    CloseHandle(event2);
+
+    event2 = OpenEventA(EVENT_MODIFY_STATE, FALSE, "test_dup");
+    ok(!!event2, "got error %u\n", GetLastError());
+    CloseHandle(event2);
+
+    ret = DuplicateHandle(GetCurrentProcess(), all_event, GetCurrentProcess(), &event2, EVENT_MODIFY_STATE, FALSE, 0);
+    ok(ret, "got error %u\n", GetLastError());
+    CloseHandle(event2);
+
+    ret = DuplicateHandle(GetCurrentProcess(), sync_event, GetCurrentProcess(), &event2, EVENT_MODIFY_STATE, FALSE, 0);
+    ok(ret, "got error %u\n", GetLastError());
+    CloseHandle(event2);
+
+    ret = SetThreadToken(NULL, impersonation);
+    ok(ret, "got error %u\n", GetLastError());
+
+    thread = CreateThread(NULL, 0, duplicate_handle_access_thread, sync_event, 0, NULL);
+    ret = WaitForSingleObject(thread, 1000);
+    ok(!ret, "wait failed\n");
+
+    event2 = OpenEventA(SYNCHRONIZE, FALSE, "test_dup");
+    ok(!!event2, "got error %u\n", GetLastError());
+    CloseHandle(event2);
+
+    SetLastError(0xdeadbeef);
+    event2 = OpenEventA(EVENT_MODIFY_STATE, FALSE, "test_dup");
+    todo_wine ok(!event2, "expected failure\n");
+    todo_wine ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %u\n", GetLastError());
+
+    ret = DuplicateHandle(GetCurrentProcess(), all_event, GetCurrentProcess(), &event2, EVENT_MODIFY_STATE, FALSE, 0);
+    ok(ret, "got error %u\n", GetLastError());
+    CloseHandle(event2);
+
+    SetLastError(0xdeadbeef);
+    ret = DuplicateHandle(GetCurrentProcess(), sync_event, GetCurrentProcess(), &event2, EVENT_MODIFY_STATE, FALSE, 0);
+    todo_wine ok(!ret, "expected failure\n");
+    todo_wine ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %u\n", GetLastError());
+
+    ret = RevertToSelf();
+    ok(ret, "got error %u\n", GetLastError());
+
+    sprintf(cmdline, "%s security duplicate %Iu %u %Iu", myARGV[0],
+            (ULONG_PTR)sync_event, GetCurrentProcessId(), (ULONG_PTR)impersonation );
+    ret = CreateProcessAsUserA(restricted, NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    ok(ret, "got error %u\n", GetLastError());
+
+    ret = DuplicateHandle(GetCurrentProcess(), all_event, pi.hProcess, &event2, EVENT_MODIFY_STATE, FALSE, 0);
+    ok(ret, "got error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = DuplicateHandle(GetCurrentProcess(), sync_event, pi.hProcess, &event2, EVENT_MODIFY_STATE, FALSE, 0);
+    todo_wine ok(!ret, "expected failure\n");
+    todo_wine ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %u\n", GetLastError());
+
+    ret = WaitForSingleObject(pi.hProcess, 1000);
+    ok(!ret, "wait failed\n");
+
+    CloseHandle(impersonation);
+    CloseHandle(restricted);
+    CloseHandle(token);
+    CloseHandle(sync_event);
+    CloseHandle(all_event);
+}
+
+static void test_duplicate_handle_access_child(void)
+{
+    HANDLE event, event2, process, token;
+    BOOL ret;
+
+    event = (HANDLE)(ULONG_PTR)_atoi64(myARGV[3]);
+    process = OpenProcess(PROCESS_DUP_HANDLE, FALSE, atoi(myARGV[4]));
+    ok(!!process, "failed to open process, error %u\n", GetLastError());
+
+    event2 = OpenEventA(SYNCHRONIZE, FALSE, "test_dup");
+    ok(!!event2, "got error %u\n", GetLastError());
+    CloseHandle(event2);
+
+    SetLastError(0xdeadbeef);
+    event2 = OpenEventA(EVENT_MODIFY_STATE, FALSE, "test_dup");
+    todo_wine ok(!event2, "expected failure\n");
+    todo_wine ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %u\n", GetLastError());
+
+    ret = DuplicateHandle(process, event, process, &event2, EVENT_MODIFY_STATE, FALSE, 0);
+    ok(ret, "got error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = DuplicateHandle(process, event, GetCurrentProcess(), &event2, EVENT_MODIFY_STATE, FALSE, 0);
+    todo_wine ok(!ret, "expected failure\n");
+    todo_wine ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %u\n", GetLastError());
+
+    ret = DuplicateHandle(process, (HANDLE)(ULONG_PTR)_atoi64(myARGV[5]),
+            GetCurrentProcess(), &token, 0, FALSE, DUPLICATE_SAME_ACCESS);
+    ok(ret, "failed to retrieve token, error %u\n", GetLastError());
+    ret = SetThreadToken(NULL, token);
+    ok(ret, "failed to set thread token, error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = DuplicateHandle(process, event, process, &event2, EVENT_MODIFY_STATE, FALSE, 0);
+    todo_wine ok(!ret, "expected failure\n");
+    todo_wine ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = DuplicateHandle(process, event, GetCurrentProcess(), &event2, EVENT_MODIFY_STATE, FALSE, 0);
+    todo_wine ok(!ret, "expected failure\n");
+    todo_wine ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %u\n", GetLastError());
+
+    ret = RevertToSelf();
+    ok(ret, "failed to revert, error %u\n", GetLastError());
+    CloseHandle(token);
+    CloseHandle(process);
+}
+
 START_TEST(security)
 {
     init();
@@ -7538,8 +7728,10 @@ START_TEST(security)
     {
         if (!strcmp(myARGV[2], "test_token_sd"))
             test_child_token_sd();
-        else
+        else if (!strcmp(myARGV[2], "test"))
             test_process_security_child();
+        else if (!strcmp(myARGV[2], "duplicate"))
+            test_duplicate_handle_access_child();
         return;
     }
     test_kernel_objects_security();
@@ -7585,6 +7777,7 @@ START_TEST(security)
     test_token_label();
     test_GetExplicitEntriesFromAclW();
     test_BuildSecurityDescriptorW();
+    test_duplicate_handle_access();
 
     /* Must be the last test, modifies process token */
     test_token_security_descriptor();
