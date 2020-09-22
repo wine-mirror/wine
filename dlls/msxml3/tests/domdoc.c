@@ -4064,9 +4064,9 @@ static void test_removeNamedItem(void)
 {
     IXMLDOMDocument *doc;
     IXMLDOMElement *element;
-    IXMLDOMNode *pr_node, *removed_node, *removed_node2;
+    IXMLDOMNode *node, *removed_node, *removed_node2;
     IXMLDOMNodeList *root_list;
-    IXMLDOMNamedNodeMap * pr_attrs;
+    IXMLDOMNamedNodeMap *map;
     VARIANT_BOOL b;
     BSTR str;
     LONG len;
@@ -4084,61 +4084,102 @@ static void test_removeNamedItem(void)
     r = IXMLDOMElement_get_childNodes( element, &root_list );
     ok( r == S_OK, "ret %08x\n", r);
 
-    r = IXMLDOMNodeList_get_item( root_list, 1, &pr_node );
+    r = IXMLDOMNodeList_get_item( root_list, 1, &node );
     ok( r == S_OK, "ret %08x\n", r);
 
-    r = IXMLDOMNode_get_attributes( pr_node, &pr_attrs );
+    r = IXMLDOMNode_get_attributes( node, &map );
     ok( r == S_OK, "ret %08x\n", r);
 
-    r = IXMLDOMNamedNodeMap_get_length( pr_attrs, &len );
+    r = IXMLDOMNamedNodeMap_get_length( map, &len );
     ok( r == S_OK, "ret %08x\n", r);
     ok( len == 3, "length %d\n", len);
 
     removed_node = (void*)0xdeadbeef;
-    r = IXMLDOMNamedNodeMap_removeNamedItem( pr_attrs, NULL, &removed_node);
+    r = IXMLDOMNamedNodeMap_removeNamedItem( map, NULL, &removed_node );
     ok ( r == E_INVALIDARG, "ret %08x\n", r);
     ok ( removed_node == (void*)0xdeadbeef, "got %p\n", removed_node);
 
     removed_node = (void*)0xdeadbeef;
     str = SysAllocString(szvr);
-    r = IXMLDOMNamedNodeMap_removeNamedItem( pr_attrs, str, &removed_node);
+    r = IXMLDOMNamedNodeMap_removeNamedItem( map, str, &removed_node );
     ok ( r == S_OK, "ret %08x\n", r);
 
     removed_node2 = (void*)0xdeadbeef;
-    r = IXMLDOMNamedNodeMap_removeNamedItem( pr_attrs, str, &removed_node2);
+    r = IXMLDOMNamedNodeMap_removeNamedItem( map, str, &removed_node2 );
     ok ( r == S_FALSE, "ret %08x\n", r);
     ok ( removed_node2 == NULL, "got %p\n", removed_node2 );
 
-    r = IXMLDOMNamedNodeMap_get_length( pr_attrs, &len );
+    r = IXMLDOMNamedNodeMap_get_length( map, &len );
     ok( r == S_OK, "ret %08x\n", r);
     ok( len == 2, "length %d\n", len);
 
-    r = IXMLDOMNamedNodeMap_setNamedItem( pr_attrs, removed_node, NULL);
+    r = IXMLDOMNamedNodeMap_setNamedItem( map, removed_node, NULL );
     ok ( r == S_OK, "ret %08x\n", r);
     IXMLDOMNode_Release(removed_node);
 
-    r = IXMLDOMNamedNodeMap_get_length( pr_attrs, &len );
+    r = IXMLDOMNamedNodeMap_get_length( map, &len );
     ok( r == S_OK, "ret %08x\n", r);
     ok( len == 3, "length %d\n", len);
 
-    r = IXMLDOMNamedNodeMap_removeNamedItem( pr_attrs, str, NULL);
+    r = IXMLDOMNamedNodeMap_removeNamedItem( map, str, NULL );
     ok ( r == S_OK, "ret %08x\n", r);
 
-    r = IXMLDOMNamedNodeMap_get_length( pr_attrs, &len );
+    r = IXMLDOMNamedNodeMap_get_length( map, &len );
     ok( r == S_OK, "ret %08x\n", r);
     ok( len == 2, "length %d\n", len);
 
-    r = IXMLDOMNamedNodeMap_removeNamedItem( pr_attrs, str, NULL);
+    r = IXMLDOMNamedNodeMap_removeNamedItem( map, str, NULL );
     ok ( r == S_FALSE, "ret %08x\n", r);
 
     SysFreeString(str);
 
-    IXMLDOMNamedNodeMap_Release( pr_attrs );
-    IXMLDOMNode_Release( pr_node );
+    IXMLDOMNamedNodeMap_Release( map );
+    IXMLDOMNode_Release( node );
     IXMLDOMNodeList_Release( root_list );
     IXMLDOMElement_Release( element );
-    IXMLDOMDocument_Release( doc );
 
+    /* test with namespaces */
+    r = IXMLDOMDocument_loadXML( doc, _bstr_(default_ns_doc), &b );
+    EXPECT_HR(r, S_OK);
+
+    r = IXMLDOMDocument_selectSingleNode( doc, _bstr_("a"), &node );
+    EXPECT_HR(r, S_OK);
+
+    r = IXMLDOMNode_QueryInterface( node, &IID_IXMLDOMElement, (void**)&element );
+    EXPECT_HR(r, S_OK);
+    IXMLDOMNode_Release( node );
+
+    r = IXMLDOMElement_get_attributes( element, &map );
+    EXPECT_HR(r, S_OK);
+
+    removed_node = (void*)0xdeadbeef;
+    r = IXMLDOMNamedNodeMap_removeNamedItem( map, _bstr_("foo:bar"), &removed_node );
+    EXPECT_HR(r, S_FALSE);
+    ok ( removed_node == NULL, "got %p\n", removed_node );
+
+    removed_node = NULL;
+    r = IXMLDOMNamedNodeMap_removeNamedItem( map, _bstr_("d"), &removed_node );
+    EXPECT_HR(r, S_OK);
+    IXMLDOMNode_Release( removed_node );
+
+    removed_node = NULL;
+    r = IXMLDOMNamedNodeMap_removeNamedItem( map, _bstr_("ns:b"), &removed_node );
+    todo_wine EXPECT_HR(r, S_OK);
+    if (removed_node) IXMLDOMNode_Release( removed_node );
+
+    removed_node = NULL;
+    r = IXMLDOMNamedNodeMap_removeNamedItem( map, _bstr_("xml:lang"), &removed_node );
+    todo_wine EXPECT_HR(r, S_OK);
+    if (removed_node) IXMLDOMNode_Release( removed_node );
+
+    len = -1;
+    r = IXMLDOMNamedNodeMap_get_length( map, &len );
+    EXPECT_HR(r, S_OK);
+    todo_wine ok( len == 2, "length %d\n", len );
+
+    IXMLDOMNamedNodeMap_Release( map );
+    IXMLDOMElement_Release( element );
+    IXMLDOMDocument_Release( doc );
     free_bstrs();
 }
 
