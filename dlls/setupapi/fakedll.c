@@ -34,6 +34,7 @@
 #include "winnt.h"
 #include "winternl.h"
 #include "wine/debug.h"
+#include "wine/list.h"
 #include "ole2.h"
 #include "atliface.h"
 
@@ -632,39 +633,22 @@ static void append_manifest_filename( const xmlstr_t *arch, const xmlstr_t *name
     wcslwr( buffer );
 }
 
-static BOOL create_winsxs_dll( const WCHAR *dll_name, const xmlstr_t *arch, const xmlstr_t *name,
-                               const xmlstr_t *key, const xmlstr_t *version, const xmlstr_t *lang,
-                               const void *dll_data, size_t dll_size )
+static WCHAR* create_winsxs_dll_path( const xmlstr_t *arch, const xmlstr_t *name,
+                                      const xmlstr_t *key, const xmlstr_t *version,
+                                      const xmlstr_t *lang )
 {
     WCHAR *path;
-    const WCHAR *filename;
-    DWORD written, path_len;
-    HANDLE handle;
-    BOOL ret = FALSE;
-
-    if (!(filename = wcsrchr( dll_name, '\\' ))) filename = dll_name;
-    else filename++;
+    DWORD path_len;
 
     path_len = GetWindowsDirectoryW( NULL, 0 ) + ARRAY_SIZE( L"\\winsxs\\" )
-        + arch->len + name->len + key->len + version->len + 18 + lstrlenW( filename ) + 1;
+        + arch->len + name->len + key->len + version->len + 19;
 
     path = HeapAlloc( GetProcessHeap(), 0, path_len * sizeof(WCHAR) );
     GetWindowsDirectoryW( path, path_len );
     lstrcatW( path, L"\\winsxs\\" );
     append_manifest_filename( arch, name, key, version, lang, path, path_len );
     lstrcatW( path, L"\\" );
-    lstrcatW( path, filename );
-    handle = create_dest_file( path );
-    if (handle && handle != INVALID_HANDLE_VALUE)
-    {
-        TRACE( "creating %s\n", debugstr_w(path) );
-        ret = (WriteFile( handle, dll_data, dll_size, &written, NULL ) && written == dll_size);
-        if (!ret) ERR( "failed to write to %s (error=%u)\n", debugstr_w(path), GetLastError() );
-        CloseHandle( handle );
-        if (!ret) DeleteFileW( path );
-    }
-    HeapFree( GetProcessHeap(), 0, path );
-    return ret;
+    return path;
 }
 
 static BOOL create_manifest( const xmlstr_t *arch, const xmlstr_t *name, const xmlstr_t *key,
@@ -702,10 +686,19 @@ static BOOL create_manifest( const xmlstr_t *arch, const xmlstr_t *name, const x
     return ret;
 }
 
-struct dll_data {
-    const WCHAR *name;
-    const void *data;
-    SIZE_T size;
+struct delay_copy
+{
+    struct list entry;
+    WCHAR *src;
+    WCHAR *dest;
+    WCHAR data[1];
+};
+
+struct dll_data
+{
+    struct list *delay_copy;
+    const WCHAR *src_dir;
+    DWORD src_len;
 };
 
 static BOOL CALLBACK register_manifest( HMODULE module, const WCHAR *type, WCHAR *res_name, LONG_PTR arg )
@@ -722,6 +715,8 @@ static BOOL CALLBACK register_manifest( HMODULE module, const WCHAR *type, WCHAR
     static const char current_arch[] = "none";
 #endif
     const struct dll_data *dll_data = (const struct dll_data*)arg;
+    WCHAR *dest = NULL;
+    DWORD dest_len = 0;
     xmlbuf_t buffer;
     xmlstr_t elem, attr_name, attr_value;
     xmlstr_t name, version, arch, key, lang;
@@ -743,7 +738,40 @@ static BOOL CALLBACK register_manifest( HMODULE module, const WCHAR *type, WCHAR
 
     while (next_xml_elem( &buffer, &elem ))
     {
+        if (xmlstr_cmp( &elem, "file" ))
+        {
+            while (next_xml_attr( &buffer, &attr_name, &attr_value, &error ))
+            {
+                if (xmlstr_cmp(&attr_name, "name"))
+                {
+                    name = attr_value;
+                    break;
+                }
+            }
+
+            if (!error && dest && name.ptr)
+            {
+                struct delay_copy *add = HeapAlloc( GetProcessHeap(), 0,
+                        sizeof(*add) + (dll_data->src_len + name.len +
+                            dest_len + name.len + 1) * sizeof(WCHAR) );
+                add->src = add->data;
+                memcpy( add->src, dll_data->src_dir, dll_data->src_len * sizeof(WCHAR) );
+                MultiByteToWideChar( CP_UTF8, 0, name.ptr, name.len,
+                        add->src + dll_data->src_len, name.len );
+                add->src[dll_data->src_len + name.len] = 0;
+                add->dest = add->data + dll_data->src_len + name.len + 1;
+                memcpy( add->dest, dest, dest_len * sizeof(WCHAR) );
+                memcpy( add->dest + dest_len, add->src + dll_data->src_len,
+                        (name.len + 1) * sizeof(WCHAR) );
+                TRACE("schedule copy %s -> %s\n", wine_dbgstr_w(add->src), wine_dbgstr_w(add->dest));
+                list_add_tail( dll_data->delay_copy, &add->entry );
+            }
+            continue;
+        }
+
         if (!xmlstr_cmp( &elem, "assemblyIdentity" )) continue;
+        HeapFree( GetProcessHeap(), 0, dest );
+        dest = NULL;
         while (next_xml_attr( &buffer, &attr_name, &attr_value, &error ))
         {
             if (xmlstr_cmp(&attr_name, "name")) name = attr_value;
@@ -767,17 +795,19 @@ static BOOL CALLBACK register_manifest( HMODULE module, const WCHAR *type, WCHAR
                 memcpy( new_buffer + strlen(new_buffer), arch.ptr, len - (arch.ptr - manifest) );
                 arch.ptr = current_arch;
                 arch.len = strlen( current_arch );
-                if (create_winsxs_dll( dll_data->name, &arch, &name, &key, &version, &lang, dll_data->data, dll_data->size ))
-                    create_manifest( &arch, &name, &key, &version, &lang, new_buffer, len + arch.len );
+                dest = create_winsxs_dll_path( &arch, &name, &key, &version, &lang );
+                create_manifest( &arch, &name, &key, &version, &lang, new_buffer, len + arch.len );
                 HeapFree( GetProcessHeap(), 0, new_buffer );
             }
             else
             {
-                if (create_winsxs_dll( dll_data->name, &arch, &name, &key, &version, &lang, dll_data->data, dll_data->size ))
-                    create_manifest( &arch, &name, &key, &version, &lang, manifest, len );
+                dest = create_winsxs_dll_path( &arch, &name, &key, &version, &lang );
+                create_manifest( &arch, &name, &key, &version, &lang, manifest, len );
             }
+            dest_len = wcslen( dest );
         }
     }
+    HeapFree( GetProcessHeap(), 0, dest );
 
     return TRUE;
 }
@@ -800,14 +830,18 @@ static BOOL CALLBACK register_resource( HMODULE module, LPCWSTR type, LPWSTR nam
     return TRUE;
 }
 
-static void register_fake_dll( const WCHAR *name, const void *data, size_t size )
+static void register_fake_dll( const WCHAR *name, const void *data, size_t size, struct list *delay_copy )
 {
     const IMAGE_RESOURCE_DIRECTORY *resdir;
     LDR_RESOURCE_INFO info;
     HRESULT hr = S_OK;
     HMODULE module = (HMODULE)((ULONG_PTR)data | 1);
-    struct dll_data dll_data = { name, data, size };
+    struct dll_data dll_data = { delay_copy, name, 0 };
+    const WCHAR *p;
 
+    if (!(p = wcsrchr( name, '\\' ))) p = name;
+    else p++;
+    dll_data.src_len = p - name;
     EnumResourceNamesW( module, (WCHAR*)RT_MANIFEST, register_manifest, (LONG_PTR)&dll_data );
 
     info.Type = (ULONG_PTR)L"WINE_REGISTRY";
@@ -838,7 +872,7 @@ static void register_fake_dll( const WCHAR *name, const void *data, size_t size 
 }
 
 /* copy a fake dll file to the dest directory */
-static int install_fake_dll( WCHAR *dest, WCHAR *file, const WCHAR *ext, BOOL expect_builtin )
+static int install_fake_dll( WCHAR *dest, WCHAR *file, const WCHAR *ext, BOOL expect_builtin, struct list *delay_copy )
 {
     int ret;
     SIZE_T size;
@@ -867,12 +901,44 @@ static int install_fake_dll( WCHAR *dest, WCHAR *file, const WCHAR *ext, BOOL ex
             ret = (WriteFile( h, data, size, &written, NULL ) && written == size);
             if (!ret) ERR( "failed to write to %s (error=%u)\n", debugstr_w(dest), GetLastError() );
             CloseHandle( h );
-            if (ret) register_fake_dll( dest, data, size );
+            if (ret) register_fake_dll( dest, data, size, delay_copy );
             else DeleteFileW( dest );
         }
     }
     *destname = 0;  /* restore it for next file */
     return ret;
+}
+
+static void delay_copy_files( struct list *delay_copy )
+{
+    struct delay_copy *copy, *next;
+    DWORD written;
+    SIZE_T size;
+    void *data;
+    HANDLE h;
+    int ret;
+
+    LIST_FOR_EACH_ENTRY_SAFE( copy, next, delay_copy, struct delay_copy, entry )
+    {
+        list_remove( &copy->entry );
+        ret = read_file( copy->src, &data, &size, TRUE );
+        if (ret == -1) ret = read_file( copy->src, &data, &size, FALSE );
+        if (ret != 1)
+        {
+            HeapFree( GetProcessHeap(), 0, copy );
+            continue;
+        }
+
+        h = create_dest_file( copy->dest );
+        if (h && h != INVALID_HANDLE_VALUE)
+        {
+            ret = (WriteFile( h, data, size, &written, NULL ) && written == size);
+            if (!ret) ERR( "failed to write to %s (error=%u)\n", debugstr_w(copy->dest), GetLastError() );
+            CloseHandle( h );
+            if (!ret) DeleteFileW( copy->dest );
+        }
+        HeapFree( GetProcessHeap(), 0, copy );
+    }
 }
 
 /* find and install all fake dlls in a given lib directory */
@@ -881,6 +947,7 @@ static void install_lib_dir( WCHAR *dest, WCHAR *file, const WCHAR *default_ext,
     WCHAR *name;
     intptr_t handle;
     struct _wfinddata_t data;
+    struct list delay_copy = LIST_INIT( delay_copy );
 
     file[1] = '\\';  /* change \??\ to \\?\ */
     name = file + lstrlenW(file);
@@ -899,13 +966,15 @@ static void install_lib_dir( WCHAR *dest, WCHAR *file, const WCHAR *default_ext,
             lstrcatW( name, L"\\" );
             lstrcatW( name, data.name );
             if (!wcschr( data.name, '.' )) lstrcatW( name, default_ext );
-            if (!install_fake_dll( dest, file, NULL, expect_builtin ))
-                install_fake_dll( dest, file, L".fake", FALSE );
+            if (!install_fake_dll( dest, file, NULL, expect_builtin, &delay_copy ))
+                install_fake_dll( dest, file, L".fake", FALSE, &delay_copy );
         }
-        else install_fake_dll( dest, file, NULL, expect_builtin );
+        else install_fake_dll( dest, file, NULL, expect_builtin, &delay_copy );
     }
     while (!_wfindnext( handle, &data ));
     _findclose( handle );
+
+    delay_copy_files( &delay_copy );
 }
 
 /* create fake dlls in dirname for all the files we can find */
@@ -956,6 +1025,7 @@ static BOOL create_wildcard_dlls( const WCHAR *dirname )
  */
 BOOL create_fake_dll( const WCHAR *name, const WCHAR *source )
 {
+    struct list delay_copy = LIST_INIT( delay_copy );
     HANDLE h;
     BOOL ret;
     SIZE_T size;
@@ -989,7 +1059,7 @@ BOOL create_fake_dll( const WCHAR *name, const WCHAR *source )
         DWORD written;
 
         ret = (WriteFile( h, buffer, size, &written, NULL ) && written == size);
-        if (ret) register_fake_dll( name, buffer, size );
+        if (ret) register_fake_dll( name, buffer, size, &delay_copy );
         else ERR( "failed to write to %s (error=%u)\n", debugstr_w(name), GetLastError() );
     }
     else
@@ -1000,6 +1070,8 @@ BOOL create_fake_dll( const WCHAR *name, const WCHAR *source )
 
     CloseHandle( h );
     if (!ret) DeleteFileW( name );
+
+    delay_copy_files( &delay_copy );
     return ret;
 }
 
