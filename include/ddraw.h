@@ -743,6 +743,7 @@ typedef struct _DDPIXELFORMAT {
 	DWORD	dwAlphaBitDepth;        /* C: how many bits for alpha channels*/
 	DWORD	dwLuminanceBitCount;
 	DWORD	dwBumpBitCount;
+	DWORD	dwPrivateFormatBitCount;
     } DUMMYUNIONNAME1;
     union {
 	DWORD	dwRBitMask;             /* 10: mask for red bit*/
@@ -750,12 +751,17 @@ typedef struct _DDPIXELFORMAT {
 	DWORD	dwStencilBitDepth;
 	DWORD	dwLuminanceBitMask;
 	DWORD	dwBumpDuBitMask;
+	DWORD	dwOperations;
     } DUMMYUNIONNAME2;
     union {
 	DWORD	dwGBitMask;             /* 14: mask for green bits*/
 	DWORD	dwUBitMask;             /* 14: mask for U bits*/
 	DWORD	dwZBitMask;
 	DWORD	dwBumpDvBitMask;
+	struct {
+		WORD	wFlipMSTypes;
+		WORD	wBltMSTypes;
+	} MultiSampleCaps;
     } DUMMYUNIONNAME3;
     union {
 	DWORD   dwBBitMask;             /* 18: mask for blue bits*/
