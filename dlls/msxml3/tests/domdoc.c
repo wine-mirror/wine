@@ -4164,18 +4164,18 @@ static void test_removeNamedItem(void)
 
     removed_node = NULL;
     r = IXMLDOMNamedNodeMap_removeNamedItem( map, _bstr_("ns:b"), &removed_node );
-    todo_wine EXPECT_HR(r, S_OK);
-    if (removed_node) IXMLDOMNode_Release( removed_node );
+    EXPECT_HR(r, S_OK);
+    IXMLDOMNode_Release( removed_node );
 
     removed_node = NULL;
     r = IXMLDOMNamedNodeMap_removeNamedItem( map, _bstr_("xml:lang"), &removed_node );
-    todo_wine EXPECT_HR(r, S_OK);
-    if (removed_node) IXMLDOMNode_Release( removed_node );
+    EXPECT_HR(r, S_OK);
+    IXMLDOMNode_Release( removed_node );
 
     len = -1;
     r = IXMLDOMNamedNodeMap_get_length( map, &len );
     EXPECT_HR(r, S_OK);
-    todo_wine ok( len == 2, "length %d\n", len );
+    ok( len == 2, "length %d\n", len );
 
     IXMLDOMNamedNodeMap_Release( map );
     IXMLDOMElement_Release( element );

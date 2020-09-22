@@ -1749,8 +1749,43 @@ static HRESULT domelem_remove_qualified_item(xmlNodePtr node, BSTR name, BSTR ur
 
 static HRESULT domelem_remove_named_item(xmlNodePtr node, BSTR name, IXMLDOMNode **item)
 {
+    xmlChar *nameA, *local, *prefix;
+    BSTR uriW, localW;
+    xmlNsPtr ns;
+    HRESULT hr;
+
     TRACE("(%p)->(%s %p)\n", node, debugstr_w(name), item);
-    return domelem_remove_qualified_item(node, name, NULL, item);
+
+    nameA = xmlchar_from_wchar(name);
+    local = xmlSplitQName2(nameA, &prefix);
+    heap_free(nameA);
+
+    if (!local)
+        return domelem_remove_qualified_item(node, name, NULL, item);
+
+    ns = xmlSearchNs(node->doc, node, prefix);
+
+    xmlFree(prefix);
+
+    if (!ns)
+    {
+        xmlFree(local);
+        if (item) *item = NULL;
+        return item ? S_FALSE : E_INVALIDARG;
+    }
+
+    uriW = bstr_from_xmlChar(ns->href);
+    localW = bstr_from_xmlChar(local);
+    xmlFree(local);
+
+    TRACE("removing qualified node %s, uri=%s\n", debugstr_w(localW), debugstr_w(uriW));
+
+    hr = domelem_remove_qualified_item(node, localW, uriW, item);
+
+    SysFreeString(localW);
+    SysFreeString(uriW);
+
+    return hr;
 }
 
 static HRESULT domelem_get_item(const xmlNodePtr node, LONG index, IXMLDOMNode **item)
