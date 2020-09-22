@@ -34,20 +34,17 @@ static CHAR string[MAX_PATH];
 
 static BOOL (WINAPI *pGetComputerNameExA)(COMPUTER_NAME_FORMAT,LPSTR,LPDWORD);
 static BOOL (WINAPI *pGetComputerNameExW)(COMPUTER_NAME_FORMAT,LPWSTR,LPDWORD);
-static BOOL (WINAPI *pOpenProcessToken)(HANDLE,DWORD,PHANDLE);
 static BOOL (WINAPI *pGetUserProfileDirectoryA)(HANDLE,LPSTR,LPDWORD);
 static BOOL (WINAPI *pSetEnvironmentStringsW)(WCHAR *);
 
 static void init_functionpointers(void)
 {
     HMODULE hkernel32 = GetModuleHandleA("kernel32.dll");
-    HMODULE hadvapi32 = GetModuleHandleA("advapi32.dll");
     HMODULE huserenv = LoadLibraryA("userenv.dll");
 
     pGetComputerNameExA = (void *)GetProcAddress(hkernel32, "GetComputerNameExA");
     pGetComputerNameExW = (void *)GetProcAddress(hkernel32, "GetComputerNameExW");
     pSetEnvironmentStringsW = (void *)GetProcAddress(hkernel32, "SetEnvironmentStringsW");
-    pOpenProcessToken = (void *)GetProcAddress(hadvapi32, "OpenProcessToken");
     pGetUserProfileDirectoryA = (void *)GetProcAddress(huserenv,
                                                        "GetUserProfileDirectoryA");
 }
@@ -65,12 +62,12 @@ static void test_Predefined(void)
      * Check value of %USERPROFILE%, should be same as GetUserProfileDirectory()
      * If this fails, your test environment is probably not set up
      */
-    if (pOpenProcessToken == NULL || pGetUserProfileDirectoryA == NULL)
+    if (pGetUserProfileDirectoryA == NULL)
     {
         skip("Skipping USERPROFILE check\n");
         return;
     }
-    NoErr = pOpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &Token);
+    NoErr = OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &Token);
     ok(NoErr, "Failed to open token, error %u\n", GetLastError());
     DataSize = sizeof(Data);
     NoErr = pGetUserProfileDirectoryA(Token, Data, &DataSize);

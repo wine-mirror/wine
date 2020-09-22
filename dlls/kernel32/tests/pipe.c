@@ -36,7 +36,6 @@
 static HANDLE alarm_event;
 static BOOL (WINAPI *pDuplicateTokenEx)(HANDLE,DWORD,LPSECURITY_ATTRIBUTES,
                                         SECURITY_IMPERSONATION_LEVEL,TOKEN_TYPE,PHANDLE);
-static DWORD (WINAPI *pQueueUserAPC)(PAPCFUNC pfnAPC, HANDLE hThread, ULONG_PTR dwData);
 static BOOL (WINAPI *pCancelIoEx)(HANDLE handle, LPOVERLAPPED lpOverlapped);
 static BOOL (WINAPI *pGetNamedPipeClientProcessId)(HANDLE,ULONG*);
 static BOOL (WINAPI *pGetNamedPipeServerProcessId)(HANDLE,ULONG*);
@@ -908,9 +907,10 @@ static DWORD CALLBACK serverThreadMain2(LPVOID arg)
 
 
         user_apc_ran = FALSE;
-        if (i == 0 && pQueueUserAPC) {
+        if (i == 0)
+        {
             if (winetest_debug > 1) trace("Queueing an user APC\n"); /* verify the pipe is non alerable */
-            ret = pQueueUserAPC(&user_apc, GetCurrentThread(), 0);
+            ret = QueueUserAPC(&user_apc, GetCurrentThread(), 0);
             ok(ret, "QueueUserAPC failed: %d\n", GetLastError());
         }
 
@@ -939,7 +939,7 @@ static DWORD CALLBACK serverThreadMain2(LPVOID arg)
 
         ok(user_apc_ran == FALSE, "UserAPC ran, pipe using alertable io mode\n");
 
-        if (i == 0 && pQueueUserAPC)
+        if (i == 0)
             SleepEx(0, TRUE); /* get rid of apc */
 
         /* Set up next echo server */
@@ -1530,8 +1530,7 @@ static void test_CreatePipe(void)
     char readbuf[32];
 
     user_apc_ran = FALSE;
-    if (pQueueUserAPC)
-        ok(pQueueUserAPC(user_apc, GetCurrentThread(), 0), "couldn't create user apc\n");
+    ok(QueueUserAPC(user_apc, GetCurrentThread(), 0), "couldn't create user apc\n");
 
     pipe_attr.nLength = sizeof(SECURITY_ATTRIBUTES); 
     pipe_attr.bInheritHandle = TRUE; 
@@ -4126,7 +4125,6 @@ START_TEST(pipe)
     hmod = GetModuleHandleA("advapi32.dll");
     pDuplicateTokenEx = (void *) GetProcAddress(hmod, "DuplicateTokenEx");
     hmod = GetModuleHandleA("kernel32.dll");
-    pQueueUserAPC = (void *) GetProcAddress(hmod, "QueueUserAPC");
     pCancelIoEx = (void *) GetProcAddress(hmod, "CancelIoEx");
     pGetNamedPipeClientProcessId = (void *) GetProcAddress(hmod, "GetNamedPipeClientProcessId");
     pGetNamedPipeServerProcessId = (void *) GetProcAddress(hmod, "GetNamedPipeServerProcessId");

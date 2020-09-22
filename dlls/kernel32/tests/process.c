@@ -67,8 +67,6 @@ static void   (WINAPI *pGetNativeSystemInfo)(LPSYSTEM_INFO);
 static BOOL   (WINAPI *pGetSystemRegistryQuota)(PDWORD, PDWORD);
 static BOOL   (WINAPI *pIsWow64Process)(HANDLE,PBOOL);
 static BOOL   (WINAPI *pIsWow64Process2)(HANDLE, USHORT *, USHORT *);
-static LPVOID (WINAPI *pVirtualAllocEx)(HANDLE, LPVOID, SIZE_T, DWORD, DWORD);
-static BOOL   (WINAPI *pVirtualFreeEx)(HANDLE, LPVOID, SIZE_T, DWORD);
 static BOOL   (WINAPI *pQueryFullProcessImageNameA)(HANDLE hProcess, DWORD dwFlags, LPSTR lpExeName, PDWORD lpdwSize);
 static BOOL   (WINAPI *pQueryFullProcessImageNameW)(HANDLE hProcess, DWORD dwFlags, LPWSTR lpExeName, PDWORD lpdwSize);
 static DWORD  (WINAPI *pK32GetProcessImageFileNameA)(HANDLE,LPSTR,DWORD);
@@ -81,7 +79,6 @@ static BOOL   (WINAPI *pSetInformationJobObject)(HANDLE job, JOBOBJECTINFOCLASS 
 static HANDLE (WINAPI *pCreateIoCompletionPort)(HANDLE file, HANDLE existing_port, ULONG_PTR key, DWORD threads);
 static BOOL   (WINAPI *pGetNumaProcessorNode)(UCHAR, PUCHAR);
 static NTSTATUS (WINAPI *pNtQueryInformationProcess)(HANDLE, PROCESSINFOCLASS, PVOID, ULONG, PULONG);
-static BOOL   (WINAPI *pProcessIdToSessionId)(DWORD,DWORD*);
 static DWORD  (WINAPI *pWTSGetActiveConsoleSessionId)(void);
 static HANDLE (WINAPI *pCreateToolhelp32Snapshot)(DWORD, DWORD);
 static BOOL   (WINAPI *pProcess32First)(HANDLE, PROCESSENTRY32*);
@@ -251,8 +248,6 @@ static BOOL init(void)
     pGetSystemRegistryQuota = (void *) GetProcAddress(hkernel32, "GetSystemRegistryQuota");
     pIsWow64Process = (void *) GetProcAddress(hkernel32, "IsWow64Process");
     pIsWow64Process2 = (void *) GetProcAddress(hkernel32, "IsWow64Process2");
-    pVirtualAllocEx = (void *) GetProcAddress(hkernel32, "VirtualAllocEx");
-    pVirtualFreeEx = (void *) GetProcAddress(hkernel32, "VirtualFreeEx");
     pQueryFullProcessImageNameA = (void *) GetProcAddress(hkernel32, "QueryFullProcessImageNameA");
     pQueryFullProcessImageNameW = (void *) GetProcAddress(hkernel32, "QueryFullProcessImageNameW");
     pK32GetProcessImageFileNameA = (void *) GetProcAddress(hkernel32, "K32GetProcessImageFileNameA");
@@ -264,7 +259,6 @@ static BOOL init(void)
     pSetInformationJobObject = (void *)GetProcAddress(hkernel32, "SetInformationJobObject");
     pCreateIoCompletionPort = (void *)GetProcAddress(hkernel32, "CreateIoCompletionPort");
     pGetNumaProcessorNode = (void *)GetProcAddress(hkernel32, "GetNumaProcessorNode");
-    pProcessIdToSessionId = (void *)GetProcAddress(hkernel32, "ProcessIdToSessionId");
     pWTSGetActiveConsoleSessionId = (void *)GetProcAddress(hkernel32, "WTSGetActiveConsoleSessionId");
     pCreateToolhelp32Snapshot = (void *)GetProcAddress(hkernel32, "CreateToolhelp32Snapshot");
     pProcess32First = (void *)GetProcAddress(hkernel32, "Process32First");
@@ -1714,18 +1708,12 @@ static void test_OpenProcess(void)
     SIZE_T dummy, read_bytes;
     BOOL ret;
 
-    /* not exported in all windows versions */
-    if ((!pVirtualAllocEx) || (!pVirtualFreeEx)) {
-        win_skip("VirtualAllocEx not found\n");
-        return;
-    }
-
     /* without PROCESS_VM_OPERATION */
     hproc = OpenProcess(PROCESS_ALL_ACCESS_NT4 & ~PROCESS_VM_OPERATION, FALSE, GetCurrentProcessId());
     ok(hproc != NULL, "OpenProcess error %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
-    addr1 = pVirtualAllocEx(hproc, 0, 0xFFFC, MEM_RESERVE, PAGE_NOACCESS);
+    addr1 = VirtualAllocEx(hproc, 0, 0xFFFC, MEM_RESERVE, PAGE_NOACCESS);
     ok(!addr1, "VirtualAllocEx should fail\n");
     if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
     {   /* Win9x */
@@ -1746,7 +1734,7 @@ static void test_OpenProcess(void)
     hproc = OpenProcess(PROCESS_VM_OPERATION, FALSE, GetCurrentProcessId());
     ok(hproc != NULL, "OpenProcess error %d\n", GetLastError());
 
-    addr1 = pVirtualAllocEx(hproc, 0, 0xFFFC, MEM_RESERVE, PAGE_NOACCESS);
+    addr1 = VirtualAllocEx(hproc, 0, 0xFFFC, MEM_RESERVE, PAGE_NOACCESS);
     ok(addr1 != NULL, "VirtualAllocEx error %d\n", GetLastError());
 
     /* without PROCESS_QUERY_INFORMATION */
@@ -1783,7 +1771,7 @@ static void test_OpenProcess(void)
     ok(info.Type == MEM_PRIVATE, "%x != MEM_PRIVATE\n", info.Type);
 
     SetLastError(0xdeadbeef);
-    ok(!pVirtualFreeEx(hproc, addr1, 0, MEM_RELEASE),
+    ok(!VirtualFreeEx(hproc, addr1, 0, MEM_RELEASE),
        "VirtualFreeEx without PROCESS_VM_OPERATION rights should fail\n");
     ok(GetLastError() == ERROR_ACCESS_DENIED, "wrong error %d\n", GetLastError());
 
@@ -1810,7 +1798,7 @@ static void test_OpenProcess(void)
             ok(GetLastError() == ERROR_ACCESS_DENIED, "wrong error %d\n", GetLastError());
 
         SetLastError(0xdeadbeef);
-        ok(!pVirtualFreeEx(hproc, addr1, 0, MEM_RELEASE),
+        ok(!VirtualFreeEx(hproc, addr1, 0, MEM_RELEASE),
            "VirtualFreeEx without PROCESS_VM_OPERATION rights should fail\n");
         ok(GetLastError() == ERROR_ACCESS_DENIED, "wrong error %d\n", GetLastError());
 
@@ -3564,13 +3552,7 @@ static void test_session_info(void)
     DWORD session_id, active_session;
     BOOL r;
 
-    if (!pProcessIdToSessionId)
-    {
-        win_skip("ProcessIdToSessionId is missing\n");
-        return;
-    }
-
-    r = pProcessIdToSessionId(GetCurrentProcessId(), &session_id);
+    r = ProcessIdToSessionId(GetCurrentProcessId(), &session_id);
     ok(r, "ProcessIdToSessionId failed: %u\n", GetLastError());
     trace("session_id = %x\n", session_id);
 

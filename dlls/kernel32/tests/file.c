@@ -38,11 +38,9 @@
 #undef DeleteFile  /* needed for FILE_DISPOSITION_INFO */
 
 static HANDLE (WINAPI *pFindFirstFileExA)(LPCSTR,FINDEX_INFO_LEVELS,LPVOID,FINDEX_SEARCH_OPS,LPVOID,DWORD);
-static BOOL (WINAPI *pReplaceFileA)(LPCSTR, LPCSTR, LPCSTR, DWORD, LPVOID, LPVOID);
 static BOOL (WINAPI *pReplaceFileW)(LPCWSTR, LPCWSTR, LPCWSTR, DWORD, LPVOID, LPVOID);
 static UINT (WINAPI *pGetSystemWindowsDirectoryA)(LPSTR, UINT);
 static BOOL (WINAPI *pGetVolumeNameForVolumeMountPointA)(LPCSTR, LPSTR, DWORD);
-static DWORD (WINAPI *pQueueUserAPC)(PAPCFUNC pfnAPC, HANDLE hThread, ULONG_PTR dwData);
 static BOOL (WINAPI *pGetFileInformationByHandleEx)(HANDLE, FILE_INFO_BY_HANDLE_CLASS, LPVOID, DWORD);
 static HANDLE (WINAPI *pOpenFileById)(HANDLE, LPFILE_ID_DESCRIPTOR, DWORD, DWORD, LPSECURITY_ATTRIBUTES, DWORD);
 static BOOL (WINAPI *pSetFileValidData)(HANDLE, LONGLONG);
@@ -95,11 +93,9 @@ static void InitFunctionPointers(void)
     pRtlFreeUnicodeString = (void *)GetProcAddress(hntdll, "RtlFreeUnicodeString");
 
     pFindFirstFileExA=(void*)GetProcAddress(hkernel32, "FindFirstFileExA");
-    pReplaceFileA=(void*)GetProcAddress(hkernel32, "ReplaceFileA");
     pReplaceFileW=(void*)GetProcAddress(hkernel32, "ReplaceFileW");
     pGetSystemWindowsDirectoryA=(void*)GetProcAddress(hkernel32, "GetSystemWindowsDirectoryA");
     pGetVolumeNameForVolumeMountPointA = (void *) GetProcAddress(hkernel32, "GetVolumeNameForVolumeMountPointA");
-    pQueueUserAPC = (void *) GetProcAddress(hkernel32, "QueueUserAPC");
     pGetFileInformationByHandleEx = (void *) GetProcAddress(hkernel32, "GetFileInformationByHandleEx");
     pOpenFileById = (void *) GetProcAddress(hkernel32, "OpenFileById");
     pSetFileValidData = (void *) GetProcAddress(hkernel32, "SetFileValidData");
@@ -3149,11 +3145,8 @@ static void test_read_write(void)
     ok(hFile != INVALID_HANDLE_VALUE, "CreateFileA: error %d\n", GetLastError());
 
     user_apc_ran = FALSE;
-    if (pQueueUserAPC) {
-        trace("Queueing an user APC\n"); /* verify the file is non alerable */
-        ret = pQueueUserAPC(&user_apc, GetCurrentThread(), 0);
-        ok(ret, "QueueUserAPC failed: %d\n", GetLastError());
-    }
+    ret = QueueUserAPC(&user_apc, GetCurrentThread(), 0);
+    ok(ret, "QueueUserAPC failed: %d\n", GetLastError());
 
     SetLastError(12345678);
     bytes = 12345678;
@@ -3192,8 +3185,7 @@ static void test_read_write(void)
     ok(!bytes, "bytes = %d\n", bytes);
 
     ok(user_apc_ran == FALSE, "UserAPC ran, file using alertable io mode\n");
-    if (pQueueUserAPC)
-        SleepEx(0, TRUE); /* get rid of apc */
+    SleepEx(0, TRUE); /* get rid of apc */
 
     /* test passing protected memory as buffer */
 
@@ -3593,12 +3585,6 @@ static void test_ReplaceFileA(void)
     BOOL retok, removeBackup = FALSE;
     char **argv;
 
-    if (!pReplaceFileA)
-    {
-        win_skip("ReplaceFileA() is missing\n");
-        return;
-    }
-
     ret = GetTempPathA(MAX_PATH, temp_path);
     ok(ret != 0, "GetTempPathA error %d\n", GetLastError());
     ok(ret < MAX_PATH, "temp path should fit into MAX_PATH\n");
@@ -3664,7 +3650,7 @@ static void test_ReplaceFileA(void)
      * TODO: flags are not implemented
      */
     SetLastError(0xdeadbeef);
-    ret = pReplaceFileA(replaced, replacement, backup, 0, 0, 0);
+    ret = ReplaceFileA(replaced, replacement, backup, 0, 0, 0);
     ok(ret, "ReplaceFileA: unexpected error %d\n", GetLastError());
     /* make sure that the backup has the size of the old "replaced" file */
     hBackupFile = CreateFileA(backup, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
@@ -3710,7 +3696,7 @@ static void test_ReplaceFileA(void)
      * TODO: flags are not implemented
      */
     SetLastError(0xdeadbeef);
-    ret = pReplaceFileA(replaced, replacement, NULL, 0, 0, 0);
+    ret = ReplaceFileA(replaced, replacement, NULL, 0, 0, 0);
     ok(ret || GetLastError() == ERROR_ACCESS_DENIED,
        "ReplaceFileA: unexpected error %d\n", GetLastError());
 
@@ -3724,7 +3710,7 @@ static void test_ReplaceFileA(void)
      * TODO: flags are not implemented
      */
     SetLastError(0xdeadbeef);
-    ret = pReplaceFileA(replaced, replacement, backup, 0, 0, 0);
+    ret = ReplaceFileA(replaced, replacement, backup, 0, 0, 0);
     ok(ret || GetLastError() == ERROR_ACCESS_DENIED,
        "ReplaceFileA: unexpected error %d\n", GetLastError());
     if (ret)
@@ -3741,7 +3727,7 @@ static void test_ReplaceFileA(void)
      * TODO: flags are not implemented
      */
     SetLastError(0xdeadbeef);
-    ret = pReplaceFileA(replaced, replacement, backup, 0, 0, 0);
+    ret = ReplaceFileA(replaced, replacement, backup, 0, 0, 0);
     ok(ret == 0 && GetLastError() == ERROR_ACCESS_DENIED, "ReplaceFileA: unexpected error %d\n", GetLastError());
     /* make sure that the replacement file still exists */
     hReplacementFile = CreateFileA(replacement, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
@@ -3759,7 +3745,7 @@ static void test_ReplaceFileA(void)
     ok(ret != 0, "GetTempFileNameA error (replacement) %#x\n", GetLastError());
     ret = SetFileAttributesA(replacement, FILE_ATTRIBUTE_READONLY);
     ok(ret, "SetFileAttributesA: error setting to readonly %#x\n", GetLastError());
-    ret = pReplaceFileA(replaced, replacement, NULL, 0, 0, 0);
+    ret = ReplaceFileA(replaced, replacement, NULL, 0, 0, 0);
     ok(GetLastError() == ERROR_ACCESS_DENIED, "ReplaceFileA: unexpected error %#x\n", GetLastError());
     ret = SetFileAttributesA(replacement, FILE_ATTRIBUTE_NORMAL);
     ok(ret, "SetFileAttributesA: error setting to normal %#x\n", GetLastError());
@@ -3777,7 +3763,7 @@ static void test_ReplaceFileA(void)
     ok(hReplacedFile != INVALID_HANDLE_VALUE,
        "unexpected error, replaced file should be able to be opened %d\n", GetLastError());
     /*Calling ReplaceFileA on an exe should succeed*/
-    ret = pReplaceFileA(replaced, replacement, NULL, 0, 0, 0);
+    ret = ReplaceFileA(replaced, replacement, NULL, 0, 0, 0);
     ok(ret, "ReplaceFileA: unexpected error %d\n", GetLastError());
     CloseHandle(hReplacedFile);
 
@@ -3787,7 +3773,7 @@ static void test_ReplaceFileA(void)
     hReplacementFile = CreateFileA(replacement, GENERIC_READ | SYNCHRONIZE, FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, 0, 0);
     ok(hReplacementFile != INVALID_HANDLE_VALUE, "unexpected error, replacement file should be able to be opened %d\n",
        GetLastError());
-    ret = pReplaceFileA(replaced, replacement, NULL, 0, 0, 0);
+    ret = ReplaceFileA(replaced, replacement, NULL, 0, 0, 0);
     ok(!ret, "expect failure\n");
     ok(GetLastError() == ERROR_SHARING_VIOLATION, "expect ERROR_SHARING_VIOLATION, got %#x.\n", GetLastError());
     CloseHandle(hReplacementFile);
@@ -3800,7 +3786,7 @@ static void test_ReplaceFileA(void)
      * TODO: flags are not implemented
      */
     SetLastError(0xdeadbeef);
-    ret = pReplaceFileA(replaced, replacement, backup, 0, 0, 0);
+    ret = ReplaceFileA(replaced, replacement, backup, 0, 0, 0);
     ok(!ret && (GetLastError() == ERROR_FILE_NOT_FOUND ||
        GetLastError() == ERROR_ACCESS_DENIED),
        "ReplaceFileA: unexpected error %d\n", GetLastError());
@@ -3809,7 +3795,7 @@ static void test_ReplaceFileA(void)
      * TODO: flags are not implemented
      */
     SetLastError(0xdeadbeef);
-    ret = pReplaceFileA(replaced, replacement, NULL, 0, 0, 0);
+    ret = ReplaceFileA(replaced, replacement, NULL, 0, 0, 0);
     ok(!ret && (GetLastError() == ERROR_FILE_NOT_FOUND ||
         GetLastError() == ERROR_ACCESS_DENIED),
         "ReplaceFileA: unexpected error %d\n", GetLastError());
