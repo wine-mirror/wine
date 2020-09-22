@@ -88,7 +88,7 @@ msgstr "Informace o podpoře"
 #: programs/regedit/regedit.rc:336 programs/regedit/regedit.rc:349
 #: programs/regedit/regedit.rc:362 programs/taskmgr/taskmgr.rc:442
 #: programs/taskmgr/taskmgr.rc:517 programs/winecfg/winecfg.rc:213
-#: programs/winecfg/winecfg.rc:223 programs/wineconsole/wineconsole.rc:135
+#: programs/winecfg/winecfg.rc:223 programs/wineconsole/wineconsole.rc:133
 #: programs/winefile/winefile.rc:127 programs/winefile/winefile.rc:150
 #: programs/winefile/winefile.rc:180 programs/winemine/winemine.rc:73
 #: programs/winemine/winemine.rc:84 programs/winemine/winemine.rc:98
@@ -194,7 +194,7 @@ msgstr "&Instalovat"
 #: programs/regedit/regedit.rc:363 programs/taskmgr/taskmgr.rc:443
 #: programs/taskmgr/taskmgr.rc:518 programs/wineboot/wineboot.rc:34
 #: programs/winecfg/winecfg.rc:214 programs/winecfg/winecfg.rc:224
-#: programs/wineconsole/wineconsole.rc:136 programs/winefile/winefile.rc:128
+#: programs/wineconsole/wineconsole.rc:134 programs/winefile/winefile.rc:128
 #: programs/winefile/winefile.rc:151 programs/winefile/winefile.rc:181
 #: programs/winemine/winemine.rc:99 programs/wordpad/wordpad.rc:216
 #: programs/wordpad/wordpad.rc:227 programs/wordpad/wordpad.rc:245
@@ -655,7 +655,7 @@ msgstr "&Formát"
 msgid "&Source"
 msgstr "&Zdroj"
 
-#: dlls/comdlg32/comdlg32.rc:251 programs/wineconsole/wineconsole.rc:85
+#: dlls/comdlg32/comdlg32.rc:251 programs/wineconsole/wineconsole.rc:83
 msgid "Font"
 msgstr "Písmo"
 
@@ -3345,7 +3345,7 @@ msgstr "Domů"
 msgid "Sync"
 msgstr "Synchronizovat"
 
-#: dlls/hhctrl.ocx/hhctrl.rc:50 programs/wineconsole/wineconsole.rc:60
+#: dlls/hhctrl.ocx/hhctrl.rc:50 programs/wineconsole/wineconsole.rc:58
 #: programs/wordpad/wordpad.rc:166
 msgid "Options"
 msgstr "Volby"
@@ -10950,7 +10950,7 @@ msgid "&Move"
 msgstr "Pře&sunout"
 
 #: dlls/user32/user32.rc:32 dlls/user32/user32.rc:45
-#: programs/wineconsole/wineconsole.rc:93
+#: programs/wineconsole/wineconsole.rc:91
 msgid "&Size"
 msgstr "&Velikost"
 
@@ -16599,115 +16599,115 @@ msgstr "Zvýraznění v menu"
 msgid "Menu Bar"
 msgstr "Lišta menu"
 
-#: programs/wineconsole/wineconsole.rc:63
+#: programs/wineconsole/wineconsole.rc:61
 msgid "Cursor size"
 msgstr "Velikost kurzoru"
 
-#: programs/wineconsole/wineconsole.rc:64
+#: programs/wineconsole/wineconsole.rc:62
 msgid "&Small"
 msgstr "M&alý"
 
-#: programs/wineconsole/wineconsole.rc:65
+#: programs/wineconsole/wineconsole.rc:63
 msgid "&Medium"
 msgstr "&Střední"
 
-#: programs/wineconsole/wineconsole.rc:66
+#: programs/wineconsole/wineconsole.rc:64
 msgid "&Large"
 msgstr "Ve&lký"
 
-#: programs/wineconsole/wineconsole.rc:68
+#: programs/wineconsole/wineconsole.rc:66
 msgid "Command history"
 msgstr "Historie příkazů"
 
-#: programs/wineconsole/wineconsole.rc:69
+#: programs/wineconsole/wineconsole.rc:67
 msgid "&Buffer size:"
 msgstr "Velikost záso&bníku:"
 
-#: programs/wineconsole/wineconsole.rc:72
+#: programs/wineconsole/wineconsole.rc:70
 msgid "&Remove duplicates"
 msgstr "Odst&ranit duplicity"
 
-#: programs/wineconsole/wineconsole.rc:74
+#: programs/wineconsole/wineconsole.rc:72
 msgid "Popup menu"
 msgstr "Vyskakovací nabídka"
 
-#: programs/wineconsole/wineconsole.rc:75
+#: programs/wineconsole/wineconsole.rc:73
 msgid "&Control"
 msgstr "&Ctrl"
 
-#: programs/wineconsole/wineconsole.rc:76
+#: programs/wineconsole/wineconsole.rc:74
 msgid "S&hift"
 msgstr "S&hift"
 
-#: programs/wineconsole/wineconsole.rc:78
+#: programs/wineconsole/wineconsole.rc:76
 msgid "Console"
 msgstr "Konzole"
 
-#: programs/wineconsole/wineconsole.rc:79
+#: programs/wineconsole/wineconsole.rc:77
 msgid "&Quick Edit mode"
 msgstr "&Quick edit režim"
 
-#: programs/wineconsole/wineconsole.rc:80
+#: programs/wineconsole/wineconsole.rc:78
 msgid "&Insert mode"
 msgstr "Režim vkládán&í"
 
-#: programs/wineconsole/wineconsole.rc:88
+#: programs/wineconsole/wineconsole.rc:86
 msgid "&Font"
 msgstr "&Písmo"
 
-#: programs/wineconsole/wineconsole.rc:90
+#: programs/wineconsole/wineconsole.rc:88
 msgid "&Color"
 msgstr "&Barva"
 
-#: programs/wineconsole/wineconsole.rc:101
+#: programs/wineconsole/wineconsole.rc:99
 msgid "Configuration"
 msgstr "Nastavení"
 
-#: programs/wineconsole/wineconsole.rc:104
+#: programs/wineconsole/wineconsole.rc:102
 msgid "Buffer zone"
 msgstr "Oblast zásobníku"
 
-#: programs/wineconsole/wineconsole.rc:105
+#: programs/wineconsole/wineconsole.rc:103
 msgid "&Width:"
 msgstr "Šířka :"
 
-#: programs/wineconsole/wineconsole.rc:108
+#: programs/wineconsole/wineconsole.rc:106
 msgid "&Height:"
 msgstr "&Výška:"
 
-#: programs/wineconsole/wineconsole.rc:112
+#: programs/wineconsole/wineconsole.rc:110
 msgid "Window size"
 msgstr "Velikost okna"
 
-#: programs/wineconsole/wineconsole.rc:113
+#: programs/wineconsole/wineconsole.rc:111
 msgid "W&idth:"
 msgstr "Šíř&ka:"
 
-#: programs/wineconsole/wineconsole.rc:116
+#: programs/wineconsole/wineconsole.rc:114
 msgid "H&eight:"
 msgstr "Výšk&a:"
 
-#: programs/wineconsole/wineconsole.rc:120
+#: programs/wineconsole/wineconsole.rc:118
 msgid "End of program"
 msgstr "Konec programu"
 
-#: programs/wineconsole/wineconsole.rc:121
+#: programs/wineconsole/wineconsole.rc:119
 msgid "&Close console"
 msgstr "Uzavřít &konzoli"
 
-#: programs/wineconsole/wineconsole.rc:123
+#: programs/wineconsole/wineconsole.rc:121
 msgid "Edition"
 msgstr "Edice"
 
-#: programs/wineconsole/wineconsole.rc:129
+#: programs/wineconsole/wineconsole.rc:127
 msgid "Console parameters"
 msgstr "Parametry konzole"
 
-#: programs/wineconsole/wineconsole.rc:132
+#: programs/wineconsole/wineconsole.rc:130
 msgid "Retain these settings for later sessions"
 msgstr "Zachovat tyto změny pro další sezení"
 
-#: programs/wineconsole/wineconsole.rc:133
+#: programs/wineconsole/wineconsole.rc:131
 msgid "Modify only current session"
 msgstr "Upravit pouze současné sezení"
 
@@ -16797,22 +16797,12 @@ msgstr ""
 "\n"
 "Volby:\n"
 
-#: programs/wineconsole/wineconsole.rc:52
-msgid ""
-"  --backend={user|curses}  Choosing user will spawn a new window, curses "
-"will\n"
-"                           try to setup the current terminal as a Wine "
-"console.\n"
-msgstr ""
-"  --backend={user|curses}  Voba „user“ vytvoří nové okno, „curses“ se\n"
-"                           pokusí udělat Wine terminál z toho stávajícího.\n"
-
-#: programs/wineconsole/wineconsole.rc:53
+#: programs/wineconsole/wineconsole.rc:51
 msgid "  <command>                The Wine program to launch in the console.\n"
 msgstr ""
 "  <příkaz>                program určený pro spuštění ve Wine konzoli.\n"
 
-#: programs/wineconsole/wineconsole.rc:54
+#: programs/wineconsole/wineconsole.rc:52
 msgid ""
 "\n"
 "Example:\n"

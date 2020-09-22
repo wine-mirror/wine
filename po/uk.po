@@ -86,7 +86,7 @@ msgstr "Дані підтримки"
 #: programs/regedit/regedit.rc:336 programs/regedit/regedit.rc:349
 #: programs/regedit/regedit.rc:362 programs/taskmgr/taskmgr.rc:442
 #: programs/taskmgr/taskmgr.rc:517 programs/winecfg/winecfg.rc:213
-#: programs/winecfg/winecfg.rc:223 programs/wineconsole/wineconsole.rc:135
+#: programs/winecfg/winecfg.rc:223 programs/wineconsole/wineconsole.rc:133
 #: programs/winefile/winefile.rc:127 programs/winefile/winefile.rc:150
 #: programs/winefile/winefile.rc:180 programs/winemine/winemine.rc:73
 #: programs/winemine/winemine.rc:84 programs/winemine/winemine.rc:98
@@ -192,7 +192,7 @@ msgstr "&Встановити"
 #: programs/regedit/regedit.rc:363 programs/taskmgr/taskmgr.rc:443
 #: programs/taskmgr/taskmgr.rc:518 programs/wineboot/wineboot.rc:34
 #: programs/winecfg/winecfg.rc:214 programs/winecfg/winecfg.rc:224
-#: programs/wineconsole/wineconsole.rc:136 programs/winefile/winefile.rc:128
+#: programs/wineconsole/wineconsole.rc:134 programs/winefile/winefile.rc:128
 #: programs/winefile/winefile.rc:151 programs/winefile/winefile.rc:181
 #: programs/winemine/winemine.rc:99 programs/wordpad/wordpad.rc:216
 #: programs/wordpad/wordpad.rc:227 programs/wordpad/wordpad.rc:245
@@ -645,7 +645,7 @@ msgstr "Ро&змір"
 msgid "&Source"
 msgstr "&Джерело"
 
-#: dlls/comdlg32/comdlg32.rc:251 programs/wineconsole/wineconsole.rc:85
+#: dlls/comdlg32/comdlg32.rc:251 programs/wineconsole/wineconsole.rc:83
 msgid "Font"
 msgstr "Шрифт"
 
@@ -3393,7 +3393,7 @@ msgstr "Додому"
 msgid "Sync"
 msgstr "Синхронізувати"
 
-#: dlls/hhctrl.ocx/hhctrl.rc:50 programs/wineconsole/wineconsole.rc:60
+#: dlls/hhctrl.ocx/hhctrl.rc:50 programs/wineconsole/wineconsole.rc:58
 #: programs/wordpad/wordpad.rc:166
 msgid "Options"
 msgstr "Параметри"
@@ -10834,7 +10834,7 @@ msgid "&Move"
 msgstr "&Пересунути"
 
 #: dlls/user32/user32.rc:32 dlls/user32/user32.rc:45
-#: programs/wineconsole/wineconsole.rc:93
+#: programs/wineconsole/wineconsole.rc:91
 msgid "&Size"
 msgstr "Роз&мір"
 
@@ -16569,115 +16569,115 @@ msgstr "Меню - підсвічування"
 msgid "Menu Bar"
 msgstr "Рядок меню"
 
-#: programs/wineconsole/wineconsole.rc:63
+#: programs/wineconsole/wineconsole.rc:61
 msgid "Cursor size"
 msgstr "Розмір курсора"
 
-#: programs/wineconsole/wineconsole.rc:64
+#: programs/wineconsole/wineconsole.rc:62
 msgid "&Small"
 msgstr "&Малий"
 
-#: programs/wineconsole/wineconsole.rc:65
+#: programs/wineconsole/wineconsole.rc:63
 msgid "&Medium"
 msgstr "&Середній"
 
-#: programs/wineconsole/wineconsole.rc:66
+#: programs/wineconsole/wineconsole.rc:64
 msgid "&Large"
 msgstr "&Великий"
 
-#: programs/wineconsole/wineconsole.rc:68
+#: programs/wineconsole/wineconsole.rc:66
 msgid "Command history"
 msgstr "Історія команд"
 
-#: programs/wineconsole/wineconsole.rc:69
+#: programs/wineconsole/wineconsole.rc:67
 msgid "&Buffer size:"
 msgstr "&Розмір буфера:"
 
-#: programs/wineconsole/wineconsole.rc:72
+#: programs/wineconsole/wineconsole.rc:70
 msgid "&Remove duplicates"
 msgstr "&Видаляти повтори"
 
-#: programs/wineconsole/wineconsole.rc:74
+#: programs/wineconsole/wineconsole.rc:72
 msgid "Popup menu"
 msgstr "Спливаюче меню"
 
-#: programs/wineconsole/wineconsole.rc:75
+#: programs/wineconsole/wineconsole.rc:73
 msgid "&Control"
 msgstr ""
 
-#: programs/wineconsole/wineconsole.rc:76
+#: programs/wineconsole/wineconsole.rc:74
 msgid "S&hift"
 msgstr ""
 
-#: programs/wineconsole/wineconsole.rc:78
+#: programs/wineconsole/wineconsole.rc:76
 msgid "Console"
 msgstr "Консоль"
 
-#: programs/wineconsole/wineconsole.rc:79
+#: programs/wineconsole/wineconsole.rc:77
 msgid "&Quick Edit mode"
 msgstr "&Швидке редагування"
 
-#: programs/wineconsole/wineconsole.rc:80
+#: programs/wineconsole/wineconsole.rc:78
 msgid "&Insert mode"
 msgstr "&Режим вставки"
 
-#: programs/wineconsole/wineconsole.rc:88
+#: programs/wineconsole/wineconsole.rc:86
 msgid "&Font"
 msgstr "&Шрифт"
 
-#: programs/wineconsole/wineconsole.rc:90
+#: programs/wineconsole/wineconsole.rc:88
 msgid "&Color"
 msgstr "&Колір"
 
-#: programs/wineconsole/wineconsole.rc:101
+#: programs/wineconsole/wineconsole.rc:99
 msgid "Configuration"
 msgstr "Конфігурація"
 
-#: programs/wineconsole/wineconsole.rc:104
+#: programs/wineconsole/wineconsole.rc:102
 msgid "Buffer zone"
 msgstr "Зона буфера"
 
-#: programs/wineconsole/wineconsole.rc:105
+#: programs/wineconsole/wineconsole.rc:103
 msgid "&Width:"
 msgstr "&Ширина:"
 
-#: programs/wineconsole/wineconsole.rc:108
+#: programs/wineconsole/wineconsole.rc:106
 msgid "&Height:"
 msgstr "&Висота:"
 
-#: programs/wineconsole/wineconsole.rc:112
+#: programs/wineconsole/wineconsole.rc:110
 msgid "Window size"
 msgstr "Розмір вікна"
 
-#: programs/wineconsole/wineconsole.rc:113
+#: programs/wineconsole/wineconsole.rc:111
 msgid "W&idth:"
 msgstr "Ш&ирина:"
 
-#: programs/wineconsole/wineconsole.rc:116
+#: programs/wineconsole/wineconsole.rc:114
 msgid "H&eight:"
 msgstr "Висо&та:"
 
-#: programs/wineconsole/wineconsole.rc:120
+#: programs/wineconsole/wineconsole.rc:118
 msgid "End of program"
 msgstr "Завершення програми"
 
-#: programs/wineconsole/wineconsole.rc:121
+#: programs/wineconsole/wineconsole.rc:119
 msgid "&Close console"
 msgstr "&Закрити консоль"
 
-#: programs/wineconsole/wineconsole.rc:123
+#: programs/wineconsole/wineconsole.rc:121
 msgid "Edition"
 msgstr "Випуск"
 
-#: programs/wineconsole/wineconsole.rc:129
+#: programs/wineconsole/wineconsole.rc:127
 msgid "Console parameters"
 msgstr "Параметри консолі"
 
-#: programs/wineconsole/wineconsole.rc:132
+#: programs/wineconsole/wineconsole.rc:130
 msgid "Retain these settings for later sessions"
 msgstr "Зберегти ці налаштування для наступних сесій"
 
-#: programs/wineconsole/wineconsole.rc:133
+#: programs/wineconsole/wineconsole.rc:131
 msgid "Modify only current session"
 msgstr "Змінювати лише поточну сесію"
 
@@ -16765,22 +16765,12 @@ msgstr ""
 "\n"
 "Параметри:\n"
 
-#: programs/wineconsole/wineconsole.rc:52
-msgid ""
-"  --backend={user|curses}  Choosing user will spawn a new window, curses "
-"will\n"
-"                           try to setup the current terminal as a Wine "
-"console.\n"
-msgstr ""
-"  --backend={user|curses}  Вибір user відкриє нове вікно, curses спробує\n"
-"                           налаштувати поточний термінал як консоль Wine.\n"
-
-#: programs/wineconsole/wineconsole.rc:53
+#: programs/wineconsole/wineconsole.rc:51
 msgid "  <command>                The Wine program to launch in the console.\n"
 msgstr ""
 "  <команда>                Назва програми для запуску в консолі Wine.\n"
 
-#: programs/wineconsole/wineconsole.rc:54
+#: programs/wineconsole/wineconsole.rc:52
 msgid ""
 "\n"
 "Example:\n"

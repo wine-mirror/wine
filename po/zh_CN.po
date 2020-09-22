@@ -84,7 +84,7 @@ msgstr "技术支持信息"
 #: programs/regedit/regedit.rc:336 programs/regedit/regedit.rc:349
 #: programs/regedit/regedit.rc:362 programs/taskmgr/taskmgr.rc:442
 #: programs/taskmgr/taskmgr.rc:517 programs/winecfg/winecfg.rc:213
-#: programs/winecfg/winecfg.rc:223 programs/wineconsole/wineconsole.rc:135
+#: programs/winecfg/winecfg.rc:223 programs/wineconsole/wineconsole.rc:133
 #: programs/winefile/winefile.rc:127 programs/winefile/winefile.rc:150
 #: programs/winefile/winefile.rc:180 programs/winemine/winemine.rc:73
 #: programs/winemine/winemine.rc:84 programs/winemine/winemine.rc:98
@@ -188,7 +188,7 @@ msgstr "安装(&I)"
 #: programs/regedit/regedit.rc:363 programs/taskmgr/taskmgr.rc:443
 #: programs/taskmgr/taskmgr.rc:518 programs/wineboot/wineboot.rc:34
 #: programs/winecfg/winecfg.rc:214 programs/winecfg/winecfg.rc:224
-#: programs/wineconsole/wineconsole.rc:136 programs/winefile/winefile.rc:128
+#: programs/wineconsole/wineconsole.rc:134 programs/winefile/winefile.rc:128
 #: programs/winefile/winefile.rc:151 programs/winefile/winefile.rc:181
 #: programs/winemine/winemine.rc:99 programs/wordpad/wordpad.rc:216
 #: programs/wordpad/wordpad.rc:227 programs/wordpad/wordpad.rc:245
@@ -636,7 +636,7 @@ msgstr "纸张大小(&Z)"
 msgid "&Source"
 msgstr "纸张来源(&S)"
 
-#: dlls/comdlg32/comdlg32.rc:251 programs/wineconsole/wineconsole.rc:85
+#: dlls/comdlg32/comdlg32.rc:251 programs/wineconsole/wineconsole.rc:83
 msgid "Font"
 msgstr "字体"
 
@@ -3341,7 +3341,7 @@ msgstr "首页"
 msgid "Sync"
 msgstr "同步"
 
-#: dlls/hhctrl.ocx/hhctrl.rc:50 programs/wineconsole/wineconsole.rc:60
+#: dlls/hhctrl.ocx/hhctrl.rc:50 programs/wineconsole/wineconsole.rc:58
 #: programs/wordpad/wordpad.rc:166
 msgid "Options"
 msgstr "选项"
@@ -10622,7 +10622,7 @@ msgid "&Move"
 msgstr "移动(&M)"
 
 #: dlls/user32/user32.rc:32 dlls/user32/user32.rc:45
-#: programs/wineconsole/wineconsole.rc:93
+#: programs/wineconsole/wineconsole.rc:91
 msgid "&Size"
 msgstr "大小(&S)"
 
@@ -16187,115 +16187,115 @@ msgstr "菜单高亮"
 msgid "Menu Bar"
 msgstr "菜单栏"
 
-#: programs/wineconsole/wineconsole.rc:63
+#: programs/wineconsole/wineconsole.rc:61
 msgid "Cursor size"
 msgstr "光标尺寸"
 
-#: programs/wineconsole/wineconsole.rc:64
+#: programs/wineconsole/wineconsole.rc:62
 msgid "&Small"
 msgstr "小(&S)"
 
-#: programs/wineconsole/wineconsole.rc:65
+#: programs/wineconsole/wineconsole.rc:63
 msgid "&Medium"
 msgstr "中(&M)"
 
-#: programs/wineconsole/wineconsole.rc:66
+#: programs/wineconsole/wineconsole.rc:64
 msgid "&Large"
 msgstr "大(&L)"
 
-#: programs/wineconsole/wineconsole.rc:68
+#: programs/wineconsole/wineconsole.rc:66
 msgid "Command history"
 msgstr "命令历史"
 
-#: programs/wineconsole/wineconsole.rc:69
+#: programs/wineconsole/wineconsole.rc:67
 msgid "&Buffer size:"
 msgstr "缓冲区大小(&B)："
 
-#: programs/wineconsole/wineconsole.rc:72
+#: programs/wineconsole/wineconsole.rc:70
 msgid "&Remove duplicates"
 msgstr "删除重复(&R)"
 
-#: programs/wineconsole/wineconsole.rc:74
+#: programs/wineconsole/wineconsole.rc:72
 msgid "Popup menu"
 msgstr "弹出菜单"
 
-#: programs/wineconsole/wineconsole.rc:75
+#: programs/wineconsole/wineconsole.rc:73
 msgid "&Control"
 msgstr "&Control"
 
-#: programs/wineconsole/wineconsole.rc:76
+#: programs/wineconsole/wineconsole.rc:74
 msgid "S&hift"
 msgstr "S&hift"
 
-#: programs/wineconsole/wineconsole.rc:78
+#: programs/wineconsole/wineconsole.rc:76
 msgid "Console"
 msgstr "控制台"
 
-#: programs/wineconsole/wineconsole.rc:79
+#: programs/wineconsole/wineconsole.rc:77
 msgid "&Quick Edit mode"
 msgstr "快速编辑模式(&Q)"
 
-#: programs/wineconsole/wineconsole.rc:80
+#: programs/wineconsole/wineconsole.rc:78
 msgid "&Insert mode"
 msgstr "插入模式(&I)"
 
-#: programs/wineconsole/wineconsole.rc:88
+#: programs/wineconsole/wineconsole.rc:86
 msgid "&Font"
 msgstr "字体(&F)"
 
-#: programs/wineconsole/wineconsole.rc:90
+#: programs/wineconsole/wineconsole.rc:88
 msgid "&Color"
 msgstr "颜色(&C)"
 
-#: programs/wineconsole/wineconsole.rc:101
+#: programs/wineconsole/wineconsole.rc:99
 msgid "Configuration"
 msgstr "配置"
 
-#: programs/wineconsole/wineconsole.rc:104
+#: programs/wineconsole/wineconsole.rc:102
 msgid "Buffer zone"
 msgstr "缓冲区"
 
-#: programs/wineconsole/wineconsole.rc:105
+#: programs/wineconsole/wineconsole.rc:103
 msgid "&Width:"
 msgstr "宽度(&W)："
 
-#: programs/wineconsole/wineconsole.rc:108
+#: programs/wineconsole/wineconsole.rc:106
 msgid "&Height:"
 msgstr "高度(&H)："
 
-#: programs/wineconsole/wineconsole.rc:112
+#: programs/wineconsole/wineconsole.rc:110
 msgid "Window size"
 msgstr "窗口大小"
 
-#: programs/wineconsole/wineconsole.rc:113
+#: programs/wineconsole/wineconsole.rc:111
 msgid "W&idth:"
 msgstr "宽度(&I)："
 
-#: programs/wineconsole/wineconsole.rc:116
+#: programs/wineconsole/wineconsole.rc:114
 msgid "H&eight:"
 msgstr "高度(&E)："
 
-#: programs/wineconsole/wineconsole.rc:120
+#: programs/wineconsole/wineconsole.rc:118
 msgid "End of program"
 msgstr "当程序退出后"
 
-#: programs/wineconsole/wineconsole.rc:121
+#: programs/wineconsole/wineconsole.rc:119
 msgid "&Close console"
 msgstr "关闭控制台(&C)"
 
-#: programs/wineconsole/wineconsole.rc:123
+#: programs/wineconsole/wineconsole.rc:121
 msgid "Edition"
 msgstr "版本"
 
-#: programs/wineconsole/wineconsole.rc:129
+#: programs/wineconsole/wineconsole.rc:127
 msgid "Console parameters"
 msgstr "控制台参数"
 
-#: programs/wineconsole/wineconsole.rc:132
+#: programs/wineconsole/wineconsole.rc:130
 msgid "Retain these settings for later sessions"
 msgstr "保留当前配置以便以后使用"
 
-#: programs/wineconsole/wineconsole.rc:133
+#: programs/wineconsole/wineconsole.rc:131
 msgid "Modify only current session"
 msgstr "仅修改当前会话"
 
@@ -16383,21 +16383,11 @@ msgstr ""
 "\n"
 "选项：\n"
 
-#: programs/wineconsole/wineconsole.rc:52
-msgid ""
-"  --backend={user|curses}  Choosing user will spawn a new window, curses "
-"will\n"
-"                           try to setup the current terminal as a Wine "
-"console.\n"
-msgstr ""
-"  --backend={user|curses}   选 user 会打开新窗口；选 curses 会试图在当前\n"
-"                            终端中运行 Wine 控制台。\n"
-
-#: programs/wineconsole/wineconsole.rc:53
+#: programs/wineconsole/wineconsole.rc:51
 msgid "  <command>                The Wine program to launch in the console.\n"
 msgstr "  <command>                 要在控制台运行的 Wine 程序。\n"
 
-#: programs/wineconsole/wineconsole.rc:54
+#: programs/wineconsole/wineconsole.rc:52
 msgid ""
 "\n"
 "Example:\n"

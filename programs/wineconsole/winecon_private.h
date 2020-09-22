@@ -104,4 +104,3 @@ enum init_return {
     init_success, init_failed, init_not_supported
 };
 extern enum init_return WCUSER_InitBackend(struct inner_data* data);
-extern enum init_return WCCURSES_InitBackend(struct inner_data* data);

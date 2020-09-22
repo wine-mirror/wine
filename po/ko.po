@@ -86,7 +86,7 @@ msgstr "지원 정보"
 #: programs/regedit/regedit.rc:336 programs/regedit/regedit.rc:349
 #: programs/regedit/regedit.rc:362 programs/taskmgr/taskmgr.rc:442
 #: programs/taskmgr/taskmgr.rc:517 programs/winecfg/winecfg.rc:213
-#: programs/winecfg/winecfg.rc:223 programs/wineconsole/wineconsole.rc:135
+#: programs/winecfg/winecfg.rc:223 programs/wineconsole/wineconsole.rc:133
 #: programs/winefile/winefile.rc:127 programs/winefile/winefile.rc:150
 #: programs/winefile/winefile.rc:180 programs/winemine/winemine.rc:73
 #: programs/winemine/winemine.rc:84 programs/winemine/winemine.rc:98
@@ -192,7 +192,7 @@ msgstr "설치(&I)"
 #: programs/regedit/regedit.rc:363 programs/taskmgr/taskmgr.rc:443
 #: programs/taskmgr/taskmgr.rc:518 programs/wineboot/wineboot.rc:34
 #: programs/winecfg/winecfg.rc:214 programs/winecfg/winecfg.rc:224
-#: programs/wineconsole/wineconsole.rc:136 programs/winefile/winefile.rc:128
+#: programs/wineconsole/wineconsole.rc:134 programs/winefile/winefile.rc:128
 #: programs/winefile/winefile.rc:151 programs/winefile/winefile.rc:181
 #: programs/winemine/winemine.rc:99 programs/wordpad/wordpad.rc:216
 #: programs/wordpad/wordpad.rc:227 programs/wordpad/wordpad.rc:245
@@ -647,7 +647,7 @@ msgstr "크기(&Z)"
 msgid "&Source"
 msgstr "원본(&S)"
 
-#: dlls/comdlg32/comdlg32.rc:251 programs/wineconsole/wineconsole.rc:85
+#: dlls/comdlg32/comdlg32.rc:251 programs/wineconsole/wineconsole.rc:83
 msgid "Font"
 msgstr "글꼴"
 
@@ -3375,7 +3375,7 @@ msgstr "홈"
 msgid "Sync"
 msgstr "동기화"
 
-#: dlls/hhctrl.ocx/hhctrl.rc:50 programs/wineconsole/wineconsole.rc:60
+#: dlls/hhctrl.ocx/hhctrl.rc:50 programs/wineconsole/wineconsole.rc:58
 #: programs/wordpad/wordpad.rc:166
 msgid "Options"
 msgstr "옵션"
@@ -10750,7 +10750,7 @@ msgid "&Move"
 msgstr "이동(&M)"
 
 #: dlls/user32/user32.rc:32 dlls/user32/user32.rc:45
-#: programs/wineconsole/wineconsole.rc:93
+#: programs/wineconsole/wineconsole.rc:91
 msgid "&Size"
 msgstr "크기(&S)"
 
@@ -16451,115 +16451,115 @@ msgstr "메뉴 하이라이트"
 msgid "Menu Bar"
 msgstr "메뉴바"
 
-#: programs/wineconsole/wineconsole.rc:63
+#: programs/wineconsole/wineconsole.rc:61
 msgid "Cursor size"
 msgstr "커서 크기"
 
-#: programs/wineconsole/wineconsole.rc:64
+#: programs/wineconsole/wineconsole.rc:62
 msgid "&Small"
 msgstr "작게(&S)"
 
-#: programs/wineconsole/wineconsole.rc:65
+#: programs/wineconsole/wineconsole.rc:63
 msgid "&Medium"
 msgstr "중간(&M)"
 
-#: programs/wineconsole/wineconsole.rc:66
+#: programs/wineconsole/wineconsole.rc:64
 msgid "&Large"
 msgstr "크게(&L)"
 
-#: programs/wineconsole/wineconsole.rc:68
+#: programs/wineconsole/wineconsole.rc:66
 msgid "Command history"
 msgstr "명령 기록"
 
-#: programs/wineconsole/wineconsole.rc:69
+#: programs/wineconsole/wineconsole.rc:67
 msgid "&Buffer size:"
 msgstr "버퍼 크기(&B):"
 
-#: programs/wineconsole/wineconsole.rc:72
+#: programs/wineconsole/wineconsole.rc:70
 msgid "&Remove duplicates"
 msgstr "중복 제거(&R)"
 
-#: programs/wineconsole/wineconsole.rc:74
+#: programs/wineconsole/wineconsole.rc:72
 msgid "Popup menu"
 msgstr "팝업 메뉴"
 
-#: programs/wineconsole/wineconsole.rc:75
+#: programs/wineconsole/wineconsole.rc:73
 msgid "&Control"
 msgstr "컨트롤(&C)"
 
-#: programs/wineconsole/wineconsole.rc:76
+#: programs/wineconsole/wineconsole.rc:74
 msgid "S&hift"
 msgstr "쉬프트(&H)"
 
-#: programs/wineconsole/wineconsole.rc:78
+#: programs/wineconsole/wineconsole.rc:76
 msgid "Console"
 msgstr "콘솔"
 
-#: programs/wineconsole/wineconsole.rc:79
+#: programs/wineconsole/wineconsole.rc:77
 msgid "&Quick Edit mode"
 msgstr "빠른 편집 모드(&Q)"
 
-#: programs/wineconsole/wineconsole.rc:80
+#: programs/wineconsole/wineconsole.rc:78
 msgid "&Insert mode"
 msgstr "삽입 모드(&I)"
 
-#: programs/wineconsole/wineconsole.rc:88
+#: programs/wineconsole/wineconsole.rc:86
 msgid "&Font"
 msgstr "글꼴(&F)"
 
-#: programs/wineconsole/wineconsole.rc:90
+#: programs/wineconsole/wineconsole.rc:88
 msgid "&Color"
 msgstr "색상(&C)"
 
-#: programs/wineconsole/wineconsole.rc:101
+#: programs/wineconsole/wineconsole.rc:99
 msgid "Configuration"
 msgstr "설정"
 
-#: programs/wineconsole/wineconsole.rc:104
+#: programs/wineconsole/wineconsole.rc:102
 msgid "Buffer zone"
 msgstr "버퍼 존"
 
-#: programs/wineconsole/wineconsole.rc:105
+#: programs/wineconsole/wineconsole.rc:103
 msgid "&Width:"
 msgstr "너비(&W):"
 
-#: programs/wineconsole/wineconsole.rc:108
+#: programs/wineconsole/wineconsole.rc:106
 msgid "&Height:"
 msgstr "높이(&H):"
 
-#: programs/wineconsole/wineconsole.rc:112
+#: programs/wineconsole/wineconsole.rc:110
 msgid "Window size"
 msgstr "창 크기"
 
-#: programs/wineconsole/wineconsole.rc:113
+#: programs/wineconsole/wineconsole.rc:111
 msgid "W&idth:"
 msgstr "너비(&I) :"
 
-#: programs/wineconsole/wineconsole.rc:116
+#: programs/wineconsole/wineconsole.rc:114
 msgid "H&eight:"
 msgstr "높이(&E) :"
 
-#: programs/wineconsole/wineconsole.rc:120
+#: programs/wineconsole/wineconsole.rc:118
 msgid "End of program"
 msgstr "프로그램의 끝"
 
-#: programs/wineconsole/wineconsole.rc:121
+#: programs/wineconsole/wineconsole.rc:119
 msgid "&Close console"
 msgstr "콘솔 닫기(&C)"
 
-#: programs/wineconsole/wineconsole.rc:123
+#: programs/wineconsole/wineconsole.rc:121
 msgid "Edition"
 msgstr "에디션"
 
-#: programs/wineconsole/wineconsole.rc:129
+#: programs/wineconsole/wineconsole.rc:127
 msgid "Console parameters"
 msgstr "콘솔 매개변수"
 
-#: programs/wineconsole/wineconsole.rc:132
+#: programs/wineconsole/wineconsole.rc:130
 msgid "Retain these settings for later sessions"
 msgstr "나중의 세션을 위해 설정 보존"
 
-#: programs/wineconsole/wineconsole.rc:133
+#: programs/wineconsole/wineconsole.rc:131
 msgid "Modify only current session"
 msgstr "오직 현재의 세션만 변경"
 
@@ -16647,22 +16647,11 @@ msgstr ""
 "\n"
 "옵션:\n"
 
-#: programs/wineconsole/wineconsole.rc:52
-msgid ""
-"  --backend={user|curses}  Choosing user will spawn a new window, curses "
-"will\n"
-"                           try to setup the current terminal as a Wine "
-"console.\n"
-msgstr ""
-"  --backend={user|curses}  사용자가 새 창을 열 것인지,\n"
-"                            curses으로 Wine 콘솔처럼 현재 명령줄 해석기에  나"
-"타낼 것인지 선택.\n"
-
-#: programs/wineconsole/wineconsole.rc:53
+#: programs/wineconsole/wineconsole.rc:51
 msgid "  <command>                The Wine program to launch in the console.\n"
 msgstr "  <명령>                 The Wine 프로그램은 콘솔을 통해서 시작됨.\n"
 
-#: programs/wineconsole/wineconsole.rc:54
+#: programs/wineconsole/wineconsole.rc:52
 msgid ""
 "\n"
 "Example:\n"

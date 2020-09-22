@@ -54,7 +54,6 @@ static void printf_res(UINT uResId, ...)
 static void WINECON_Usage(void)
 {
     printf_res(IDS_USAGE_HEADER);
-    printf_res(IDS_USAGE_BACKEND);
     printf_res(IDS_USAGE_COMMAND);
     printf_res(IDS_USAGE_FOOTER);
 }
@@ -721,49 +720,34 @@ static struct inner_data* WINECON_Init(HINSTANCE hInst, DWORD pid, LPCWSTR appna
     WINE_TRACE("using con_out %p\n", con_out);
 
     /* filling data->curcfg from cfg */
-    switch ((*backend)(data))
-    {
-    case init_not_supported:
-        if (backend == WCCURSES_InitBackend)
-        {
-            if (WCUSER_InitBackend( data ) != init_success) break;
-        }
-        else if (backend == WCUSER_InitBackend)
-        {
-            if (WCCURSES_InitBackend( data ) != init_success) break;
-        }
-        /* fall through */
-    case init_success:
-        WINECON_GetServerConfig(data);
-        data->cells = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                data->curcfg.sb_width * data->curcfg.sb_height * sizeof(CHAR_INFO));
-        if (!data->cells) goto error;
-        data->fnResizeScreenBuffer(data);
-        data->fnComputePositions(data);
-        WINECON_SetConfig(data, &cfg);
-        data->curcfg.registry = cfg.registry;
-        WINECON_DumpConfig("fint", &data->curcfg);
+    if ((*backend)(data) != init_success) goto error;
 
-        memset(&input_params, 0, sizeof(input_params));
-        input_params.mask = SET_CONSOLE_INPUT_INFO_WIN;
-        input_params.info.win = condrv_handle(data->hWnd);
-        ret = DeviceIoControl(data->console, IOCTL_CONDRV_SET_INPUT_INFO, &input_params, sizeof(input_params),
-                              NULL, 0, NULL, NULL);
-        if (!ret) goto error;
+    WINECON_GetServerConfig(data);
+    data->cells = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                            data->curcfg.sb_width * data->curcfg.sb_height * sizeof(CHAR_INFO));
+    if (!data->cells) goto error;
+    data->fnResizeScreenBuffer(data);
+    data->fnComputePositions(data);
+    WINECON_SetConfig(data, &cfg);
+    data->curcfg.registry = cfg.registry;
+    WINECON_DumpConfig("fint", &data->curcfg);
 
-        ret = DeviceIoControl(data->console, IOCTL_CONDRV_SET_TITLE, (void *)appname,
-                              lstrlenW(appname) * sizeof(WCHAR), NULL, 0, NULL, NULL);
-        if (!ret) goto error;
+    memset(&input_params, 0, sizeof(input_params));
+    input_params.mask = SET_CONSOLE_INPUT_INFO_WIN;
+    input_params.info.win = condrv_handle(data->hWnd);
+    ret = DeviceIoControl(data->console, IOCTL_CONDRV_SET_INPUT_INFO, &input_params, sizeof(input_params),
+                          NULL, 0, NULL, NULL);
+    if (!ret) goto error;
 
-        if (cmdline && !WINECON_Spawn(data, cmdline, con_in, con_out)) goto error;
+    ret = DeviceIoControl(data->console, IOCTL_CONDRV_SET_TITLE, (void *)appname,
+                          lstrlenW(appname) * sizeof(WCHAR), NULL, 0, NULL, NULL);
+    if (!ret) goto error;
 
-        CloseHandle(con_in);
-        CloseHandle(con_out);
-        return data;
+    if (cmdline && !WINECON_Spawn(data, cmdline, con_in, con_out)) goto error;
 
-    case init_failed:
-        break;
-    }
+    CloseHandle(con_in);
+    CloseHandle(con_out);
+    return data;
 
  error:
     WINE_ERR("failed to init.\n");
@@ -807,21 +791,6 @@ static UINT WINECON_ParseOptions(const char* lpCmdLine, struct wc_init* wci)
             wci->mode = from_event;
             wci->ptr = end;
         }
-        else if (strncmp(wci->ptr, "--backend=", 10) == 0)
-        {
-            if (strncmp(wci->ptr + 10, "user", 4) == 0)
-            {
-                wci->backend = WCUSER_InitBackend;
-                wci->ptr += 14;
-            }
-            else if (strncmp(wci->ptr + 10, "curses", 6) == 0)
-            {
-                wci->backend = WCCURSES_InitBackend;
-                wci->ptr += 16;
-            }
-            else
-                return IDS_CMD_INVALID_BACKEND;
-        }
         else if (!strncmp(wci->ptr, "--help", 6) &&
                  (!wci->ptr[6] || wci->ptr[6] == ' ' || wci->ptr[6] == '\t'))
             return IDS_CMD_ABOUT|WINECON_CMD_SHOW_USAGE;
@@ -845,7 +814,6 @@ static UINT WINECON_ParseOptions(const char* lpCmdLine, struct wc_init* wci)
  *	wineconsole --use-event=<int>	used when a new console is created (AllocConsole)
  *	wineconsole <pgm> <arguments>	used to start the program <pgm> from the command line in
  *					a freshly created console
- * --backend=(curses|user) can also be used to select the desired backend
  */
 int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR lpCmdLine, INT nCmdShow)
 {

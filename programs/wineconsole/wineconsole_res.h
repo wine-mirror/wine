@@ -50,7 +50,6 @@
 #define IDS_CMD_LAUNCH_FAILED      0x304
 
 #define IDS_USAGE_HEADER           0x310
-#define IDS_USAGE_BACKEND          0x311
 #define IDS_USAGE_COMMAND          0x312
 #define IDS_USAGE_FOOTER           0x313
 
