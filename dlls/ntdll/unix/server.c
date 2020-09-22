@@ -105,6 +105,7 @@ static const char *server_dir;
 
 unsigned int server_cpus = 0;
 BOOL is_wow64 = FALSE;
+BOOL process_exiting = FALSE;
 
 timeout_t server_start_time = 0;  /* time of server startup */
 
