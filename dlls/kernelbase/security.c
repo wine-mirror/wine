@@ -646,27 +646,46 @@ exit:
  * CreateRestrictedToken    (kernelbase.@)
  */
 BOOL WINAPI CreateRestrictedToken( HANDLE token, DWORD flags,
-                                   DWORD disable_count, PSID_AND_ATTRIBUTES disable_sids,
-                                   DWORD delete_count, PLUID_AND_ATTRIBUTES delete_privs,
-                                   DWORD restrict_count, PSID_AND_ATTRIBUTES restrict_sids, PHANDLE ret )
+                                   DWORD disable_sid_count, SID_AND_ATTRIBUTES *disable_sids,
+                                   DWORD delete_priv_count, LUID_AND_ATTRIBUTES *delete_privs,
+                                   DWORD restrict_sid_count, SID_AND_ATTRIBUTES *restrict_sids, HANDLE *ret )
 {
-    TOKEN_TYPE type;
-    SECURITY_IMPERSONATION_LEVEL level = SecurityAnonymous;
-    DWORD size;
+    TOKEN_PRIVILEGES *nt_privs = NULL;
+    TOKEN_GROUPS *nt_disable_sids = NULL, *nt_restrict_sids = NULL;
+    NTSTATUS status = STATUS_NO_MEMORY;
 
-    FIXME("(%p, 0x%x, %u, %p, %u, %p, %u, %p, %p): stub\n",
-          token, flags, disable_count, disable_sids, delete_count, delete_privs,
-          restrict_count, restrict_sids, ret );
+    TRACE("token %p, flags %#x, disable_sids %u %p, delete_privs %u %p, restrict_sids %u %p, ret %p\n",
+            token, flags, disable_sid_count, disable_sids, delete_priv_count, delete_privs,
+            restrict_sid_count, restrict_sids, ret);
 
-    size = sizeof(type);
-    if (!GetTokenInformation( token, TokenType, &type, size, &size )) return FALSE;
-    if (type == TokenImpersonation)
+    if (disable_sid_count)
     {
-        size = sizeof(level);
-        if (!GetTokenInformation( token, TokenImpersonationLevel, &level, size, &size ))
-            return FALSE;
+        if (!(nt_disable_sids = heap_alloc( offsetof( TOKEN_GROUPS, Groups[disable_sid_count] ) ))) goto out;
+        nt_disable_sids->GroupCount = disable_sid_count;
+        memcpy( nt_disable_sids->Groups, disable_sids, disable_sid_count * sizeof(SID_AND_ATTRIBUTES) );
     }
-    return DuplicateTokenEx( token, MAXIMUM_ALLOWED, NULL, level, type, ret );
+
+    if (delete_priv_count)
+    {
+        if (!(nt_privs = heap_alloc( offsetof( TOKEN_GROUPS, Groups[delete_priv_count] ) ))) goto out;
+        nt_privs->PrivilegeCount = delete_priv_count;
+        memcpy( nt_privs->Privileges, delete_privs, delete_priv_count * sizeof(SID_AND_ATTRIBUTES) );
+    }
+
+    if (restrict_sid_count)
+    {
+        if (!(nt_restrict_sids = heap_alloc( offsetof( TOKEN_GROUPS, Groups[restrict_sid_count] ) ))) goto out;
+        nt_restrict_sids->GroupCount = restrict_sid_count;
+        memcpy( nt_restrict_sids->Groups, restrict_sids, restrict_sid_count * sizeof(SID_AND_ATTRIBUTES) );
+    }
+
+    status = NtFilterToken(token, flags, nt_disable_sids, nt_privs, nt_restrict_sids, ret);
+
+out:
+    heap_free(nt_disable_sids);
+    heap_free(nt_privs);
+    heap_free(nt_restrict_sids);
+    return set_ntstatus( status );
 }
 
 /******************************************************************************

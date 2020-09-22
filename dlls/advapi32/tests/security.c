@@ -5237,7 +5237,7 @@ static void test_CreateRestrictedToken(void)
     is_member = TRUE;
     ret = pCheckTokenMembership(r_token, removed_sid, &is_member);
     ok(ret, "got error %d\n", GetLastError());
-    todo_wine ok(!is_member, "not a member\n");
+    ok(!is_member, "not a member\n");
 
     ret = GetTokenInformation(r_token, TokenGroups, NULL, 0, &size);
     ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %d with error %d\n",
@@ -5251,8 +5251,8 @@ static void test_CreateRestrictedToken(void)
         if (EqualSid(groups2->Groups[i].Sid, removed_sid))
         {
             DWORD attr = groups2->Groups[i].Attributes;
-            todo_wine ok(attr & SE_GROUP_USE_FOR_DENY_ONLY, "got wrong attributes %#x\n", attr);
-            todo_wine ok(!(attr & SE_GROUP_ENABLED), "got wrong attributes %#x\n", attr);
+            ok(attr & SE_GROUP_USE_FOR_DENY_ONLY, "got wrong attributes %#x\n", attr);
+            ok(!(attr & SE_GROUP_ENABLED), "got wrong attributes %#x\n", attr);
             break;
         }
     }
@@ -5307,7 +5307,7 @@ static void test_CreateRestrictedToken(void)
     priv_set.Privilege[0].Attributes = 0;
     ret = PrivilegeCheck(r_token, &priv_set, &is_member);
     ok(ret, "got error %u\n", GetLastError());
-    todo_wine ok(!is_member, "privilege should not be enabled\n");
+    ok(!is_member, "privilege should not be enabled\n");
 
     ret = GetTokenInformation(r_token, TokenPrivileges, privs, sizeof(privs_buffer), &size);
     ok(ret, "got error %u\n", GetLastError());
@@ -5318,7 +5318,7 @@ static void test_CreateRestrictedToken(void)
         if (!memcmp(&privs->Privileges[i].Luid, &luid, sizeof(luid)))
             is_member = TRUE;
     }
-    todo_wine ok(!is_member, "disabled privilege should not be present\n");
+    ok(!is_member, "disabled privilege should not be present\n");
 
     CloseHandle(r_token);
 
@@ -7679,8 +7679,8 @@ static void test_duplicate_handle_access(void)
 
     SetLastError(0xdeadbeef);
     event2 = OpenEventA(EVENT_MODIFY_STATE, FALSE, "test_dup");
-    todo_wine ok(!event2, "expected failure\n");
-    todo_wine ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %u\n", GetLastError());
+    ok(!event2, "expected failure\n");
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %u\n", GetLastError());
 
     ret = DuplicateHandle(GetCurrentProcess(), all_event, GetCurrentProcess(), &event2, EVENT_MODIFY_STATE, FALSE, 0);
     ok(ret, "got error %u\n", GetLastError());
@@ -7688,8 +7688,8 @@ static void test_duplicate_handle_access(void)
 
     SetLastError(0xdeadbeef);
     ret = DuplicateHandle(GetCurrentProcess(), sync_event, GetCurrentProcess(), &event2, EVENT_MODIFY_STATE, FALSE, 0);
-    todo_wine ok(!ret, "expected failure\n");
-    todo_wine ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %u\n", GetLastError());
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %u\n", GetLastError());
 
     ret = RevertToSelf();
     ok(ret, "got error %u\n", GetLastError());
@@ -7751,13 +7751,13 @@ static void test_duplicate_handle_access_child(void)
 
     SetLastError(0xdeadbeef);
     ret = DuplicateHandle(process, event, process, &event2, EVENT_MODIFY_STATE, FALSE, 0);
-    todo_wine ok(!ret, "expected failure\n");
-    todo_wine ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %u\n", GetLastError());
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = DuplicateHandle(process, event, GetCurrentProcess(), &event2, EVENT_MODIFY_STATE, FALSE, 0);
-    todo_wine ok(!ret, "expected failure\n");
-    todo_wine ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %u\n", GetLastError());
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %u\n", GetLastError());
 
     ret = RevertToSelf();
     ok(ret, "failed to revert, error %u\n", GetLastError());
