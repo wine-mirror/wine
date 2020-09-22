@@ -1807,8 +1807,6 @@ struct alloc_console_request
     unsigned int access;
     unsigned int attributes;
     process_id_t pid;
-    int          input_fd;
-    char __pad_28[4];
 };
 struct alloc_console_reply
 {
@@ -1882,7 +1880,7 @@ struct create_console_output_request
     unsigned int access;
     unsigned int attributes;
     unsigned int share;
-    int          fd;
+    char __pad_28[4];
 };
 struct create_console_output_reply
 {
@@ -6283,7 +6281,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 644
+#define SERVER_PROTOCOL_VERSION 645
 
 /* ### protocol_version end ### */
 

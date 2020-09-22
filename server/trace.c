@@ -2020,7 +2020,6 @@ static void dump_alloc_console_request( const struct alloc_console_request *req 
     fprintf( stderr, " access=%08x", req->access );
     fprintf( stderr, ", attributes=%08x", req->attributes );
     fprintf( stderr, ", pid=%04x", req->pid );
-    fprintf( stderr, ", input_fd=%d", req->input_fd );
 }
 
 static void dump_alloc_console_reply( const struct alloc_console_reply *req )
@@ -2066,7 +2065,6 @@ static void dump_create_console_output_request( const struct create_console_outp
     fprintf( stderr, ", access=%08x", req->access );
     fprintf( stderr, ", attributes=%08x", req->attributes );
     fprintf( stderr, ", share=%08x", req->share );
-    fprintf( stderr, ", fd=%d", req->fd );
 }
 
 static void dump_create_console_output_reply( const struct create_console_output_reply *req )

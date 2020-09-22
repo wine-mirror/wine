@@ -569,15 +569,13 @@ static struct object *create_console_input_events(void)
     return &evt->obj;
 }
 
-static struct object *create_console_input( int fd )
+static struct object *create_console_input(void)
 {
     struct console_input *console_input;
 
     if (!(console_input = alloc_object( &console_input_ops )))
-    {
-        if (fd != -1) close( fd );
         return NULL;
-    }
+
     console_input->renderer      = NULL;
     console_input->mode          = ENABLE_PROCESSED_INPUT | ENABLE_LINE_INPUT |
                                    ENABLE_ECHO_INPUT | ENABLE_MOUSE_INPUT | ENABLE_INSERT_MODE |
@@ -606,21 +604,13 @@ static struct object *create_console_input( int fd )
 
     if (!console_input->history || !console_input->event)
     {
-        if (fd != -1) close( fd );
         console_input->history_size = 0;
         release_object( console_input );
         return NULL;
     }
-    if (fd != -1) /* bare console */
-    {
-        console_input->fd = create_anonymous_fd( &console_input_fd_ops, fd, &console_input->obj,
-                                                 FILE_SYNCHRONOUS_IO_NONALERT );
-    }
-    else
-    {
-        console_input->fd = alloc_pseudo_fd( &console_input_fd_ops, &console_input->obj,
-                                             FILE_SYNCHRONOUS_IO_NONALERT );
-    }
+
+    console_input->fd = alloc_pseudo_fd( &console_input_fd_ops, &console_input->obj,
+                                         FILE_SYNCHRONOUS_IO_NONALERT );
     if (!console_input->fd)
     {
         release_object( console_input );
@@ -730,7 +720,7 @@ static void set_active_screen_buffer( struct console_input *console_input, struc
     console_input_events_append( console_input, &evt );
 }
 
-static struct object *create_console_output( struct console_input *console_input, int fd )
+static struct object *create_console_output( struct console_input *console_input )
 {
     struct screen_buffer *screen_buffer;
     int	i;
@@ -742,10 +732,8 @@ static struct object *create_console_output( struct console_input *console_input
     }
 
     if (!(screen_buffer = alloc_object( &screen_buffer_ops )))
-    {
-        if (fd != -1) close( fd );
         return NULL;
-    }
+
     screen_buffer->id             = ++console_input->last_id;
     screen_buffer->mode           = ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT;
     screen_buffer->input          = console_input;
@@ -774,12 +762,8 @@ static struct object *create_console_output( struct console_input *console_input
     init_async_queue( &screen_buffer->ioctl_q );
     list_add_head( &screen_buffer_list, &screen_buffer->entry );
 
-    if (fd != -1)
-        screen_buffer->fd = create_anonymous_fd( &screen_buffer_fd_ops, fd, &screen_buffer->obj,
-                                                 FILE_SYNCHRONOUS_IO_NONALERT );
-    else
-        screen_buffer->fd = alloc_pseudo_fd( &screen_buffer_fd_ops, &screen_buffer->obj,
-                                             FILE_SYNCHRONOUS_IO_NONALERT );
+    screen_buffer->fd = alloc_pseudo_fd( &screen_buffer_fd_ops, &screen_buffer->obj,
+                                         FILE_SYNCHRONOUS_IO_NONALERT );
     if (!screen_buffer->fd)
     {
         release_object( screen_buffer );
@@ -1746,8 +1730,8 @@ static struct object *console_server_lookup_name( struct object *obj, struct uni
             set_error( STATUS_INVALID_HANDLE );
             return 0;
         }
-        if (!(server->console = (struct console_input *)create_console_input( -1 ))) return NULL;
-        if (!(screen_buffer = (struct screen_buffer *)create_console_output( server->console, -1 )))
+        if (!(server->console = (struct console_input *)create_console_input())) return NULL;
+        if (!(screen_buffer = (struct screen_buffer *)create_console_output( server->console )))
         {
             release_object( server->console );
             server->console = NULL;
@@ -2519,7 +2503,7 @@ static struct object *console_device_lookup_name( struct object *obj, struct uni
             return NULL;
         }
         name->len = 0;
-        return create_console_output( current->process->console, -1 );
+        return create_console_output( current->process->console );
     }
 
     if (name->len == sizeof(serverW) && !memcmp( name->str, serverW, name->len ))
@@ -2566,18 +2550,7 @@ DECL_HANDLER(alloc_console)
 {
     struct process *process;
     struct console_input *console;
-    int fd;
     int attach = 0;
-
-    if (req->input_fd != -1)
-    {
-        if ((fd = thread_get_inflight_fd( current, req->input_fd )) == -1)
-        {
-            set_error( STATUS_INVALID_PARAMETER );
-            return;
-        }
-    }
-    else fd = -1;
 
     switch (req->pid)
     {
@@ -2585,33 +2558,21 @@ DECL_HANDLER(alloc_console)
         /* console to be attached to parent process */
         if (!(process = get_process_from_id( current->process->parent_id )))
         {
-            if (fd != -1) close( fd );
             set_error( STATUS_ACCESS_DENIED );
             return;
         }
         attach = 1;
         break;
-    case 0xffffffff:
-        /* console to be attached to current process */
-        process = current->process;
-        grab_object( process );
-        attach = 1;
-        break;
     default:
         /* console to be attached to req->pid */
-        if (!(process = get_process_from_id( req->pid )))
-        {
-            if (fd != -1) close( fd );
-            return;
-        }
+        if (!(process = get_process_from_id( req->pid ))) return;
     }
 
     if (attach && process->console)
     {
-        if (fd != -1) close( fd );
         set_error( STATUS_ACCESS_DENIED );
     }
-    else if ((console = (struct console_input*)create_console_input( fd )))
+    else if ((console = (struct console_input*)create_console_input()))
     {
         if ((reply->handle_in = alloc_handle( current->process, console, req->access,
                                               req->attributes )) && attach)
@@ -2655,31 +2616,11 @@ DECL_HANDLER(create_console_output)
 {
     struct console_input *console;
     struct object        *screen_buffer;
-    int                   fd;
 
-    if (req->fd != -1)
-    {
-        if ((fd = thread_get_inflight_fd( current, req->fd )) == -1)
-        {
-            set_error( STATUS_INVALID_HANDLE );
-            return;
-        }
-    }
-    else fd = -1;
     if (!(console = console_input_get( req->handle_in, FILE_WRITE_PROPERTIES )))
-    {
-        if (fd != -1) close( fd );
         return;
-    }
-    if (console_input_is_bare( console ) ^ (fd != -1))
-    {
-        if (fd != -1) close( fd );
-        release_object( console );
-        set_error( STATUS_INVALID_HANDLE );
-        return;
-    }
 
-    screen_buffer = create_console_output( console, fd );
+    screen_buffer = create_console_output( console );
     if (screen_buffer)
     {
         /* FIXME: should store sharing and test it when opening the CONOUT$ device
