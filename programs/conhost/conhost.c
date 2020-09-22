@@ -2569,6 +2569,15 @@ static NTSTATUS console_input_ioctl( struct console *console, unsigned int code,
         if (in_size % sizeof(WCHAR) || *out_size) return STATUS_INVALID_PARAMETER;
         return set_console_title( console, in_data, in_size );
 
+    case IOCTL_CONDRV_BEEP:
+        if (in_size || *out_size) return STATUS_INVALID_PARAMETER;
+        if (console->is_unix)
+        {
+            tty_write( console, "\a", 1 );
+            tty_sync( console );
+        }
+        return STATUS_SUCCESS;
+
     default:
         FIXME( "unsupported ioctl %x\n", code );
         return STATUS_NOT_SUPPORTED;
