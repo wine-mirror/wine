@@ -465,6 +465,55 @@ static unsigned int get_frequency( const XRRModeInfo *mode )
     return (mode->dotClock + dots / 2) / dots;
 }
 
+static DWORD get_orientation( Rotation rotation )
+{
+    if (rotation & RR_Rotate_270) return DMDO_270;
+    if (rotation & RR_Rotate_180) return DMDO_180;
+    if (rotation & RR_Rotate_90) return DMDO_90;
+    return DMDO_DEFAULT;
+}
+
+static DWORD get_orientation_count( Rotation rotations )
+{
+    DWORD count = 0;
+
+    if (rotations & RR_Rotate_0) ++count;
+    if (rotations & RR_Rotate_90) ++count;
+    if (rotations & RR_Rotate_180) ++count;
+    if (rotations & RR_Rotate_270) ++count;
+    return count;
+}
+
+static Rotation get_rotation( DWORD orientation )
+{
+    return (Rotation)(1 << orientation);
+}
+
+static RRCrtc get_output_free_crtc( XRRScreenResources *resources, XRROutputInfo *output_info )
+{
+    XRRCrtcInfo *crtc_info;
+    INT crtc_idx;
+    RRCrtc crtc;
+
+    for (crtc_idx = 0; crtc_idx < output_info->ncrtc; ++crtc_idx)
+    {
+        crtc_info = pXRRGetCrtcInfo( gdi_display, resources, output_info->crtcs[crtc_idx] );
+        if (!crtc_info)
+            continue;
+
+        if (!crtc_info->noutput)
+        {
+            crtc = output_info->crtcs[crtc_idx];
+            pXRRFreeCrtcInfo( crtc_info );
+            return crtc;
+        }
+
+        pXRRFreeCrtcInfo( crtc_info );
+    }
+
+    return 0;
+}
+
 static RECT get_primary_rect( XRRScreenResources *resources )
 {
     XRROutputInfo *output_info = NULL;
@@ -1137,7 +1186,8 @@ static BOOL xrandr14_get_id( const WCHAR *device_name, ULONG_PTR *id )
     return FALSE;
 }
 
-static void add_xrandr14_mode( DEVMODEW *mode, XRRModeInfo *info, DWORD depth, DWORD frequency )
+static void add_xrandr14_mode( DEVMODEW *mode, XRRModeInfo *info, DWORD depth, DWORD frequency,
+                               DWORD orientation )
 {
     mode->dmSize = sizeof(*mode);
     mode->dmDriverExtra = sizeof(RRMode);
@@ -1148,24 +1198,35 @@ static void add_xrandr14_mode( DEVMODEW *mode, XRRModeInfo *info, DWORD depth, D
         mode->dmFields |= DM_DISPLAYFREQUENCY;
         mode->dmDisplayFrequency = frequency;
     }
-    mode->u1.s2.dmDisplayOrientation = DMDO_DEFAULT;
+    if (orientation == DMDO_DEFAULT || orientation == DMDO_180)
+    {
+        mode->dmPelsWidth = info->width;
+        mode->dmPelsHeight = info->height;
+    }
+    else
+    {
+        mode->dmPelsWidth = info->height;
+        mode->dmPelsHeight = info->width;
+    }
+    mode->u1.s2.dmDisplayOrientation = orientation;
     mode->dmBitsPerPel = depth;
-    mode->dmPelsWidth = info->width;
-    mode->dmPelsHeight = info->height;
     mode->u2.dmDisplayFlags = 0;
     memcpy( (BYTE *)mode + sizeof(*mode), &info->id, sizeof(info->id) );
 }
 
 static BOOL xrandr14_get_modes( ULONG_PTR id, DWORD flags, DEVMODEW **new_modes, UINT *mode_count )
 {
+    DWORD frequency, orientation, orientation_count;
     XRRScreenResources *screen_resources;
     XRROutputInfo *output_info = NULL;
     RROutput output = (RROutput)id;
+    XRRCrtcInfo *crtc_info = NULL;
     UINT depth_idx, mode_idx = 0;
     XRRModeInfo *mode_info;
     DEVMODEW *mode, *modes;
+    Rotation rotations;
     BOOL ret = FALSE;
-    DWORD frequency;
+    RRCrtc crtc;
     INT i, j;
 
     screen_resources = xrandr_get_screen_resources();
@@ -1184,9 +1245,44 @@ static BOOL xrandr14_get_modes( ULONG_PTR id, DWORD flags, DEVMODEW **new_modes,
         goto done;
     }
 
-    /* Allocate space for display modes in different color depths.
+    crtc = output_info->crtc;
+    if (!crtc)
+        crtc = get_output_free_crtc( screen_resources, output_info );
+    if (crtc)
+        crtc_info = pXRRGetCrtcInfo( gdi_display, screen_resources, crtc );
+
+    /* If the output is connected to a CRTC, use rotations reported by the CRTC */
+    if (crtc_info)
+    {
+        if (flags & EDS_ROTATEDMODE)
+        {
+            rotations = crtc_info->rotations;
+        }
+        else
+        {
+            /* According to the RandR spec, RRGetCrtcInfo should set the active rotation to Rotate_0
+             * when a CRTC is disabled. However, some RandR implementations report 0 in this case */
+            rotations = (crtc_info->rotation & 0xf) ? crtc_info->rotation : RR_Rotate_0;
+        }
+    }
+    /* Not connected to CRTC, assume all rotations are supported */
+    else
+    {
+        if (flags & EDS_ROTATEDMODE)
+        {
+            rotations = RR_Rotate_0 | RR_Rotate_90 | RR_Rotate_180 | RR_Rotate_270;
+        }
+        else
+        {
+            rotations = RR_Rotate_0;
+        }
+    }
+    orientation_count = get_orientation_count( rotations );
+
+    /* Allocate space for display modes in different color depths and orientations.
      * Store a RRMode at the end of each DEVMODEW as private driver data */
-    modes = heap_calloc( output_info->nmode * DEPTH_COUNT, sizeof(*modes) + sizeof(RRMode) );
+    modes = heap_calloc( output_info->nmode * DEPTH_COUNT * orientation_count,
+                         sizeof(*modes) + sizeof(RRMode) );
     if (!modes)
         goto done;
 
@@ -1202,9 +1298,15 @@ static BOOL xrandr14_get_modes( ULONG_PTR id, DWORD flags, DEVMODEW **new_modes,
 
             for (depth_idx = 0; depth_idx < DEPTH_COUNT; ++depth_idx)
             {
-                mode = (DEVMODEW *)((BYTE *)modes + (sizeof(*modes) + sizeof(RRMode)) * mode_idx);
-                add_xrandr14_mode( mode, mode_info, depths[depth_idx], frequency );
-                ++mode_idx;
+                for (orientation = DMDO_DEFAULT; orientation <= DMDO_270; ++orientation)
+                {
+                    if (!((1 << orientation) & rotations))
+                        continue;
+
+                    mode = (DEVMODEW *)((BYTE *)modes + (sizeof(*modes) + sizeof(RRMode)) * mode_idx);
+                    add_xrandr14_mode( mode, mode_info, depths[depth_idx], frequency, orientation );
+                    ++mode_idx;
+                }
             }
 
             break;
@@ -1215,6 +1317,8 @@ static BOOL xrandr14_get_modes( ULONG_PTR id, DWORD flags, DEVMODEW **new_modes,
     *new_modes = modes;
     *mode_count = mode_idx;
 done:
+    if (crtc_info)
+        pXRRFreeCrtcInfo( crtc_info );
     if (output_info)
         pXRRFreeOutputInfo( output_info );
     if (screen_resources)
@@ -1285,10 +1389,10 @@ static BOOL xrandr14_get_current_mode( ULONG_PTR id, DEVMODEW *mode )
 
     mode->dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT |
                      DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY | DM_POSITION;
-    mode->u1.s2.dmDisplayOrientation = DMDO_DEFAULT;
+    mode->u1.s2.dmDisplayOrientation = get_orientation( crtc_info->rotation );
     mode->dmBitsPerPel = screen_bpp;
-    mode->dmPelsWidth = mode_info->width;
-    mode->dmPelsHeight = mode_info->height;
+    mode->dmPelsWidth = crtc_info->width;
+    mode->dmPelsHeight = crtc_info->height;
     mode->u2.dmDisplayFlags = 0;
     mode->dmDisplayFrequency = get_frequency( mode_info );
     /* Convert RandR coordinates to virtual screen coordinates */
@@ -1314,8 +1418,8 @@ static LONG xrandr14_set_current_mode( ULONG_PTR id, DEVMODEW *mode )
     XRROutputInfo *output_info = NULL;
     XRRCrtcInfo *crtc_info = NULL;
     LONG ret = DISP_CHANGE_FAILED;
-    INT crtc_idx, output_count;
     Rotation rotation;
+    INT output_count;
     RRCrtc crtc = 0;
     Status status;
     RRMode rrmode;
@@ -1362,26 +1466,7 @@ static LONG xrandr14_set_current_mode( ULONG_PTR id, DEVMODEW *mode )
     /* Detached, need to find a free CRTC */
     else
     {
-        for (crtc_idx = 0; crtc_idx < output_info->ncrtc; ++crtc_idx)
-        {
-            crtc_info = pXRRGetCrtcInfo( gdi_display, screen_resources, output_info->crtcs[crtc_idx] );
-            if (!crtc_info)
-                goto done;
-
-            if (!crtc_info->noutput)
-            {
-                crtc = output_info->crtcs[crtc_idx];
-                pXRRFreeCrtcInfo( crtc_info );
-                crtc_info = NULL;
-                break;
-            }
-
-            pXRRFreeCrtcInfo( crtc_info );
-            crtc_info = NULL;
-        }
-
-        /* Failed to find a free CRTC */
-        if (crtc_idx == output_info->ncrtc)
+        if (!(crtc = get_output_free_crtc( screen_resources, output_info )))
             goto done;
     }
 
@@ -1396,14 +1481,13 @@ static LONG xrandr14_set_current_mode( ULONG_PTR id, DEVMODEW *mode )
     {
         outputs = crtc_info->outputs;
         output_count = crtc_info->noutput;
-        rotation = crtc_info->rotation;
     }
     else
     {
         outputs = &output;
         output_count = 1;
-        rotation = RR_Rotate_0;
     }
+    rotation = get_rotation( mode->u1.s2.dmDisplayOrientation );
 
     /* According to the RandR spec, the entire CRTC must fit inside the screen.
      * Since we use the union of all enabled CRTCs to determine the necessary

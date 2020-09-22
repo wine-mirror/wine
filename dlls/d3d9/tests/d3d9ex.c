@@ -621,7 +621,7 @@ static void test_get_adapter_displaymode_ex(void)
     ok(mode_ex.ScanLineOrdering != 0, "ScanLineOrdering returned 0\n");
     /* Check that orientation is returned correctly by GetAdapterDisplayModeEx
      * and EnumDisplaySettingsEx(). */
-    todo_wine ok(S2(U1(devmode)).dmDisplayOrientation == DMDO_180 && rotation == D3DDISPLAYROTATION_180,
+    ok(S2(U1(devmode)).dmDisplayOrientation == DMDO_180 && rotation == D3DDISPLAYROTATION_180,
             "rotation is %d instead of %d\n", rotation, S2(U1(devmode)).dmDisplayOrientation);
 
     trace("GetAdapterDisplayModeEx returned Width = %d, Height = %d, RefreshRate = %d, Format = %x, ScanLineOrdering = %x, rotation = %d\n",
