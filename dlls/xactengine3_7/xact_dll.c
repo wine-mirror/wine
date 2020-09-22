@@ -259,7 +259,7 @@ static HRESULT WINAPI IXACT3SoundBankImpl_Prepare(IXACT3SoundBank *iface,
 
     cue->IXACT3Cue_iface.lpVtbl = &XACT3Cue_Vtbl;
     cue->fact_cue = fcue;
-    *ppCue = (IXACT3Cue*)&cue->IXACT3Cue_iface;
+    *ppCue = &cue->IXACT3Cue_iface;
 
     TRACE("Created Cue: %p\n", cue);
 
@@ -301,7 +301,7 @@ static HRESULT WINAPI IXACT3SoundBankImpl_Play(IXACT3SoundBank *iface,
 
         cue->IXACT3Cue_iface.lpVtbl = &XACT3Cue_Vtbl;
         cue->fact_cue = fcue;
-        *ppCue = (IXACT3Cue*)&cue->IXACT3Cue_iface;
+        *ppCue = &cue->IXACT3Cue_iface;
     }
 
     return hr;
