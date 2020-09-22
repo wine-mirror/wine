@@ -1393,6 +1393,34 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetConsoleWindowInfo( HANDLE handle, BOOL absolute
 }
 
 
+/***********************************************************************
+ *            ReadConsoleInputA   (kernelbase.@)
+ */
+BOOL WINAPI ReadConsoleInputA( HANDLE handle, INPUT_RECORD *buffer, DWORD length, DWORD *count )
+{
+    DWORD read;
+
+    if (!ReadConsoleInputW( handle, buffer, length, &read )) return FALSE;
+    input_records_WtoA( buffer, read );
+    if (count) *count = read;
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *            ReadConsoleInputW   (kernelbase.@)
+ */
+BOOL WINAPI ReadConsoleInputW( HANDLE handle, INPUT_RECORD *buffer, DWORD length, DWORD *count )
+{
+    int blocking = 1;
+    if (!console_ioctl( handle, IOCTL_CONDRV_READ_INPUT, &blocking, sizeof(blocking),
+                        buffer, length * sizeof(*buffer), count ))
+        return FALSE;
+    *count /= sizeof(*buffer);
+    return TRUE;
+}
+
+
 /******************************************************************************
  *	WriteConsoleInputA   (kernelbase.@)
  */

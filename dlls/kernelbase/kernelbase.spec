@@ -1238,10 +1238,10 @@
 # @ stub RaiseFailFastException
 @ stdcall ReOpenFile(ptr long long long)
 @ stdcall ReadConsoleA(long ptr long ptr ptr) kernel32.ReadConsoleA
-@ stdcall ReadConsoleInputA(long ptr long ptr) kernel32.ReadConsoleInputA
+@ stdcall ReadConsoleInputA(long ptr long ptr)
 @ stub ReadConsoleInputExA
 @ stub ReadConsoleInputExW
-@ stdcall ReadConsoleInputW(long ptr long ptr) kernel32.ReadConsoleInputW
+@ stdcall ReadConsoleInputW(long ptr long ptr)
 @ stdcall ReadConsoleOutputA(long ptr long long ptr)
 @ stdcall ReadConsoleOutputAttribute(long ptr long long ptr)
 @ stdcall ReadConsoleOutputCharacterA(long ptr long long ptr)

@@ -58,32 +58,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(console);
 
-static CRITICAL_SECTION CONSOLE_CritSect;
-static CRITICAL_SECTION_DEBUG critsect_debug =
-{
-    0, 0, &CONSOLE_CritSect,
-    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": CONSOLE_CritSect") }
-};
-static CRITICAL_SECTION CONSOLE_CritSect = { &critsect_debug, -1, 0, 0, 0, 0 };
-
 static const WCHAR coninW[] = {'C','O','N','I','N','$',0};
 static const WCHAR conoutW[] = {'C','O','N','O','U','T','$',0};
-
-/* map input records to ASCII */
-static void input_records_WtoA( INPUT_RECORD *buffer, int count )
-{
-    UINT cp = GetConsoleCP();
-    int i;
-    char ch;
-
-    for (i = 0; i < count; i++)
-    {
-        if (buffer[i].EventType != KEY_EVENT) continue;
-        WideCharToMultiByte( cp, 0, &buffer[i].Event.KeyEvent.uChar.UnicodeChar, 1, &ch, 1, NULL, NULL );
-        buffer[i].Event.KeyEvent.uChar.AsciiChar = ch;
-    }
-}
 
 /******************************************************************************
  * GetConsoleWindow [KERNEL32.@] Get hwnd of the console window.
@@ -392,45 +368,6 @@ BOOL WINAPI ReadConsoleW(HANDLE hConsoleInput, LPVOID lpBuffer,
     if (lpNumberOfCharsRead) *lpNumberOfCharsRead = charsread;
 
     return TRUE;
-}
-
-
-/***********************************************************************
- *            ReadConsoleInputA   (KERNEL32.@)
- */
-BOOL WINAPI ReadConsoleInputA( HANDLE handle, INPUT_RECORD *buffer, DWORD length, DWORD *count )
-{
-    DWORD read;
-
-    if (!ReadConsoleInputW( handle, buffer, length, &read )) return FALSE;
-    input_records_WtoA( buffer, read );
-    if (count) *count = read;
-    return TRUE;
-}
-
-
-/***********************************************************************
- *            ReadConsoleInputW   (KERNEL32.@)
- */
-BOOL WINAPI ReadConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer,
-                              DWORD nLength, LPDWORD lpNumberOfEventsRead)
-{
-    DWORD idx = 0;
-    DWORD timeout = INFINITE;
-
-    if (!nLength)
-    {
-        if (lpNumberOfEventsRead) *lpNumberOfEventsRead = 0;
-        return TRUE;
-    }
-
-    /* loop until we get at least one event */
-    while (read_console_input(hConsoleInput, &lpBuffer[idx], timeout) == rci_gotone &&
-           ++idx < nLength)
-        timeout = 0;
-
-    if (lpNumberOfEventsRead) *lpNumberOfEventsRead = idx;
-    return idx != 0;
 }
 
 
