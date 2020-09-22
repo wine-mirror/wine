@@ -67,6 +67,9 @@ Call ok(W = 5, "W = " & W & " expected " & 5)
 x = "xx"
 Call ok(x = "xx", "x = " & x & " expected ""xx""")
 
+Dim public1 : public1 = 42
+Call ok(public1 = 42, "public1=" & public1 & " expected & " & 42)
+
 Call ok(true <> false, "true <> false is false")
 Call ok(not (true <> true), "true <> true is true")
 Call ok(not ("x" <> "x"), """x"" <> ""x"" is true")
