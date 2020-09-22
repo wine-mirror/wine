@@ -554,8 +554,7 @@ static BOOL next_xml_elem( xmlbuf_t *xmlbuf, xmlstr_t *elem )
     return xmlbuf->ptr != xmlbuf->end;
 }
 
-static BOOL next_xml_attr(xmlbuf_t* xmlbuf, xmlstr_t* name, xmlstr_t* value,
-                          BOOL* error, BOOL* end)
+static BOOL next_xml_attr(xmlbuf_t* xmlbuf, xmlstr_t* name, xmlstr_t* value, BOOL* error)
 {
     const char *ptr;
 
@@ -573,7 +572,6 @@ static BOOL next_xml_attr(xmlbuf_t* xmlbuf, xmlstr_t* name, xmlstr_t* value,
             return FALSE;
 
         xmlbuf->ptr++;
-        *end = TRUE;
         *error = FALSE;
         return FALSE;
     }
@@ -727,7 +725,7 @@ static BOOL CALLBACK register_manifest( HMODULE module, const WCHAR *type, WCHAR
     xmlbuf_t buffer;
     xmlstr_t elem, attr_name, attr_value;
     xmlstr_t name, version, arch, key, lang;
-    BOOL end = FALSE, error;
+    BOOL error;
     const char *manifest;
     SIZE_T len;
     HRSRC rsrc;
@@ -746,7 +744,7 @@ static BOOL CALLBACK register_manifest( HMODULE module, const WCHAR *type, WCHAR
     while (next_xml_elem( &buffer, &elem ))
     {
         if (!xmlstr_cmp( &elem, "assemblyIdentity" )) continue;
-        while (next_xml_attr( &buffer, &attr_name, &attr_value, &error, &end ))
+        while (next_xml_attr( &buffer, &attr_name, &attr_value, &error ))
         {
             if (xmlstr_cmp(&attr_name, "name")) name = attr_value;
             else if (xmlstr_cmp(&attr_name, "version")) version = attr_value;
