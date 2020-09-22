@@ -80,6 +80,8 @@ struct object_ops
     struct security_descriptor *(*get_sd)( struct object * );
     /* sets the security descriptor of the object */
     int (*set_sd)( struct object *, const struct security_descriptor *, unsigned int );
+    /* get the object full name */
+    WCHAR *(*get_full_name)(struct object *, data_size_t *);
     /* lookup a name if an object has a namespace */
     struct object *(*lookup_name)(struct object *, struct unicode_str *,unsigned int);
     /* link an object's name into a parent object */
@@ -132,7 +134,7 @@ extern void *memdup( const void *data, size_t len );
 extern void *alloc_object( const struct object_ops *ops );
 extern void namespace_add( struct namespace *namespace, struct object_name *ptr );
 extern const WCHAR *get_object_name( struct object *obj, data_size_t *len );
-extern WCHAR *get_object_full_name( struct object *obj, data_size_t *ret_len );
+extern WCHAR *default_get_full_name( struct object *obj, data_size_t *ret_len );
 extern void dump_object_name( struct object *obj );
 extern struct object *lookup_named_object( struct object *root, const struct unicode_str *name,
                                            unsigned int attr, struct unicode_str *name_left );
@@ -164,6 +166,7 @@ extern struct security_descriptor *default_get_sd( struct object *obj );
 extern int default_set_sd( struct object *obj, const struct security_descriptor *sd, unsigned int set_info );
 extern int set_sd_defaults_from_token( struct object *obj, const struct security_descriptor *sd,
                                        unsigned int set_info, struct token *token );
+extern WCHAR *no_get_full_name( struct object *obj, data_size_t *ret_len );
 extern struct object *no_lookup_name( struct object *obj, struct unicode_str *name, unsigned int attributes );
 extern int no_link_name( struct object *obj, struct object_name *name, struct object *parent );
 extern void default_unlink_name( struct object *obj, struct object_name *name );

@@ -129,6 +129,7 @@ static const struct object_ops handle_table_ops =
     no_map_access,                   /* map_access */
     default_get_sd,                  /* get_sd */
     default_set_sd,                  /* set_sd */
+    no_get_full_name,                /* get_full_name */
     no_lookup_name,                  /* lookup_name */
     no_link_name,                    /* link_name */
     NULL,                            /* unlink_name */
@@ -670,7 +671,7 @@ DECL_HANDLER(get_object_info)
     reply->access = get_handle_access( current->process, req->handle );
     reply->ref_count = obj->refcount;
     reply->handle_count = obj->handle_count;
-    if ((name = get_object_full_name( obj, &reply->total )))
+    if ((name = obj->ops->get_full_name( obj, &reply->total )))
         set_reply_data_ptr( name, min( reply->total, get_reply_max_size() ));
     release_object( obj );
 }

@@ -124,6 +124,7 @@ static const struct object_ops named_pipe_ops =
     named_pipe_map_access,        /* map_access */
     default_get_sd,               /* get_sd */
     default_set_sd,               /* set_sd */
+    default_get_full_name,        /* get_full_name */
     no_lookup_name,               /* lookup_name */
     named_pipe_link_name,         /* link_name */
     default_unlink_name,          /* unlink_name */
@@ -166,6 +167,7 @@ static const struct object_ops pipe_server_ops =
     default_fd_map_access,        /* map_access */
     pipe_end_get_sd,              /* get_sd */
     pipe_end_set_sd,              /* set_sd */
+    no_get_full_name,             /* get_full_name */
     no_lookup_name,               /* lookup_name */
     no_link_name,                 /* link_name */
     NULL,                         /* unlink_name */
@@ -208,6 +210,7 @@ static const struct object_ops pipe_client_ops =
     default_fd_map_access,        /* map_access */
     pipe_end_get_sd,              /* get_sd */
     pipe_end_set_sd,              /* set_sd */
+    no_get_full_name,             /* get_full_name */
     no_lookup_name,               /* lookup_name */
     no_link_name,                 /* link_name */
     NULL,                         /* unlink_name */
@@ -254,6 +257,7 @@ static const struct object_ops named_pipe_device_ops =
     no_map_access,                    /* map_access */
     default_get_sd,                   /* get_sd */
     default_set_sd,                   /* set_sd */
+    default_get_full_name,            /* get_full_name */
     named_pipe_device_lookup_name,    /* lookup_name */
     directory_link_name,              /* link_name */
     default_unlink_name,              /* unlink_name */
@@ -283,6 +287,7 @@ static const struct object_ops named_pipe_device_file_ops =
     default_fd_map_access,                   /* map_access */
     default_get_sd,                          /* get_sd */
     default_set_sd,                          /* set_sd */
+    no_get_full_name,                        /* get_full_name */
     no_lookup_name,                          /* lookup_name */
     no_link_name,                            /* link_name */
     NULL,                                    /* unlink_name */

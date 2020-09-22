@@ -100,6 +100,7 @@ static const struct object_ops console_input_ops =
     default_fd_map_access,            /* map_access */
     default_get_sd,                   /* get_sd */
     default_set_sd,                   /* set_sd */
+    no_get_full_name,                 /* get_full_name */
     console_input_lookup_name,        /* lookup_name */
     no_link_name,                     /* link_name */
     NULL,                             /* unlink_name */
@@ -158,6 +159,7 @@ static const struct object_ops console_input_events_ops =
     default_fd_map_access,            /* map_access */
     default_get_sd,                   /* get_sd */
     default_set_sd,                   /* set_sd */
+    no_get_full_name,                 /* get_full_name */
     no_lookup_name,                   /* lookup_name */
     no_link_name,                     /* link_name */
     NULL,                             /* unlink_name */
@@ -226,6 +228,7 @@ static const struct object_ops console_server_ops =
     default_fd_map_access,            /* map_access */
     default_get_sd,                   /* get_sd */
     default_set_sd,                   /* set_sd */
+    no_get_full_name,                 /* get_full_name */
     console_server_lookup_name,       /* lookup_name */
     no_link_name,                     /* link_name */
     NULL,                             /* unlink_name */
@@ -308,6 +311,7 @@ static const struct object_ops screen_buffer_ops =
     default_fd_map_access,            /* map_access */
     default_get_sd,                   /* get_sd */
     default_set_sd,                   /* set_sd */
+    no_get_full_name,                 /* get_full_name */
     no_lookup_name,                   /* lookup_name */
     no_link_name,                     /* link_name */
     NULL,                             /* unlink_name */
@@ -354,6 +358,7 @@ static const struct object_ops console_device_ops =
     default_fd_map_access,            /* map_access */
     default_get_sd,                   /* get_sd */
     default_set_sd,                   /* set_sd */
+    default_get_full_name,            /* get_full_name */
     console_device_lookup_name,       /* lookup_name */
     directory_link_name,              /* link_name */
     default_unlink_name,              /* unlink_name */
@@ -391,6 +396,7 @@ static const struct object_ops console_connection_ops =
     no_map_access,                    /* map_access */
     default_get_sd,                   /* get_sd */
     default_set_sd,                   /* set_sd */
+    no_get_full_name,                 /* get_full_name */
     console_connection_lookup_name,   /* lookup_name */
     directory_link_name,              /* link_name */
     default_unlink_name,              /* unlink_name */
