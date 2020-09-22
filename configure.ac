@@ -40,8 +40,6 @@ AC_ARG_WITH(cms,       AS_HELP_STRING([--without-cms],[do not use CMS (color man
 AC_ARG_WITH(coreaudio, AS_HELP_STRING([--without-coreaudio],[do not use the CoreAudio sound support]),
             [if test "x$withval" = "xno"; then ac_cv_header_CoreAudio_CoreAudio_h=no; fi])
 AC_ARG_WITH(cups,      AS_HELP_STRING([--without-cups],[do not use CUPS]))
-AC_ARG_WITH(curses,    AS_HELP_STRING([--without-curses],[do not use (n)curses]),
-            [if test "x$withval" = "xno"; then ac_cv_header_ncurses_h=no; ac_cv_header_curses_h=no; fi])
 AC_ARG_WITH(dbus,      AS_HELP_STRING([--without-dbus],[do not use DBus (dynamic device support)]))
 AC_ARG_WITH(faudio,    AS_HELP_STRING([--without-faudio],[do not use FAudio (XAudio2 support)]))
 AC_ARG_WITH(float-abi, AS_HELP_STRING([--with-float-abi=abi],[specify the ABI (soft|softfp|hard) for ARM platforms]))
@@ -436,7 +434,6 @@ AC_CHECK_HEADERS(\
 	arpa/nameser.h \
 	asm/types.h \
 	asm/user.h \
-	curses.h \
 	dirent.h \
 	dlfcn.h \
 	elf.h \
@@ -473,7 +470,6 @@ AC_CHECK_HEADERS(\
 	machine/cpu.h \
 	machine/sysarch.h \
 	mntent.h \
-	ncurses.h \
 	netdb.h \
 	netinet/in.h \
 	netinet/in_systm.h \
@@ -1449,22 +1445,6 @@ then
 fi
 WINE_WARNING_WITH(gnutls,[test "x$ac_cv_lib_soname_gnutls" = "x"],
                  [libgnutls ${notice_platform}development files not found, no schannel support.])
-
-dnl **** Check which curses lib to use ***
-CURSES_LIBS=""
-if test "$ac_cv_header_ncurses_h" = "yes"
-then
-    WINE_CHECK_SONAME(ncurses,waddch,[CURSES_LIBS="-lncurses"],,,[[libncursesw\\{0,1\\}]])
-elif test "$ac_cv_header_curses_h" = "yes"
-then
-    WINE_CHECK_SONAME(curses,waddch,[CURSES_LIBS="-lcurses"])
-fi
-ac_save_LIBS="$LIBS"
-LIBS="$LIBS $CURSES_LIBS"
-AC_CHECK_FUNCS(mousemask)
-LIBS="$ac_save_LIBS"
-WINE_NOTICE_WITH(curses,[test "x$ac_cv_lib_soname_curses$ac_cv_lib_soname_ncurses" = "x"],
-                 [lib(n)curses ${notice_platform}development files not found, curses won't be supported.])
 
 dnl **** Check for SANE ****
 if test "x$with_sane" != "xno"

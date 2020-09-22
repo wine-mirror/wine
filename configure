@@ -845,7 +845,6 @@ with_capi
 with_cms
 with_coreaudio
 with_cups
-with_curses
 with_dbus
 with_faudio
 with_float_abi
@@ -2576,7 +2575,6 @@ Optional Packages:
   --without-cms           do not use CMS (color management support)
   --without-coreaudio     do not use the CoreAudio sound support
   --without-cups          do not use CUPS
-  --without-curses        do not use (n)curses
   --without-dbus          do not use DBus (dynamic device support)
   --without-faudio        do not use FAudio (XAudio2 support)
   --with-float-abi=abi    specify the ABI (soft|softfp|hard) for ARM platforms
@@ -3925,12 +3923,6 @@ fi
 # Check whether --with-cups was given.
 if test "${with_cups+set}" = set; then :
   withval=$with_cups;
-fi
-
-
-# Check whether --with-curses was given.
-if test "${with_curses+set}" = set; then :
-  withval=$with_curses; if test "x$withval" = "xno"; then ac_cv_header_ncurses_h=no; ac_cv_header_curses_h=no; fi
 fi
 
 
@@ -7407,7 +7399,6 @@ for ac_header in \
 	arpa/nameser.h \
 	asm/types.h \
 	asm/user.h \
-	curses.h \
 	dirent.h \
 	dlfcn.h \
 	elf.h \
@@ -7444,7 +7435,6 @@ for ac_header in \
 	machine/cpu.h \
 	machine/sysarch.h \
 	mntent.h \
-	ncurses.h \
 	netdb.h \
 	netinet/in.h \
 	netinet/in_systm.h \
@@ -13665,146 +13655,6 @@ if test "x$ac_cv_lib_soname_gnutls" = "x"; then :
   xno) ;;
   *)   as_fn_error $? "libgnutls ${notice_platform}development files not found, no schannel support.
 This is an error since --with-gnutls was requested." "$LINENO" 5 ;;
-esac
-
-fi
-
-CURSES_LIBS=""
-if test "$ac_cv_header_ncurses_h" = "yes"
-then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lncurses" >&5
-$as_echo_n "checking for -lncurses... " >&6; }
-if ${ac_cv_lib_soname_ncurses+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_soname_save_LIBS=$LIBS
-LIBS="-lncurses  $LIBS"
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char waddch ();
-int
-main ()
-{
-return waddch ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  case "$LIBEXT" in
-    dll) ac_cv_lib_soname_ncurses=`$ac_cv_path_LDD conftest.exe | grep "ncurses" | sed -e "s/dll.*/dll/"';2,$d'` ;;
-    dylib) ac_cv_lib_soname_ncurses=`$OTOOL -L conftest$ac_exeext | grep "libncursesw\\{0,1\\}\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libncursesw\\{0,1\\}\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
-    *) ac_cv_lib_soname_ncurses=`$READELF -d conftest$ac_exeext | grep "NEEDED.*libncursesw\\{0,1\\}\\.$LIBEXT" | sed -e "s/^.*\\[\\(libncursesw\\{0,1\\}\\.$LIBEXT[^	 ]*\\)\\].*$/\1/"';2,$d'`
-       if ${ac_cv_lib_soname_ncurses:+false} :; then :
-  ac_cv_lib_soname_ncurses=`$LDD conftest$ac_exeext | grep "libncursesw\\{0,1\\}\\.$LIBEXT" | sed -e "s/^.*\(libncursesw\\{0,1\\}\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
-fi ;;
-  esac
-else
-  ac_cv_lib_soname_ncurses=
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-  LIBS=$ac_check_soname_save_LIBS
-fi
-if ${ac_cv_lib_soname_ncurses:+false} :; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
-$as_echo "not found" >&6; }
-
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_ncurses" >&5
-$as_echo "$ac_cv_lib_soname_ncurses" >&6; }
-
-cat >>confdefs.h <<_ACEOF
-#define SONAME_LIBNCURSES "$ac_cv_lib_soname_ncurses"
-_ACEOF
-
-       CURSES_LIBS="-lncurses"
-fi
-elif test "$ac_cv_header_curses_h" = "yes"
-then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lcurses" >&5
-$as_echo_n "checking for -lcurses... " >&6; }
-if ${ac_cv_lib_soname_curses+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_soname_save_LIBS=$LIBS
-LIBS="-lcurses  $LIBS"
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char waddch ();
-int
-main ()
-{
-return waddch ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  case "$LIBEXT" in
-    dll) ac_cv_lib_soname_curses=`$ac_cv_path_LDD conftest.exe | grep "curses" | sed -e "s/dll.*/dll/"';2,$d'` ;;
-    dylib) ac_cv_lib_soname_curses=`$OTOOL -L conftest$ac_exeext | grep "libcurses\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libcurses\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
-    *) ac_cv_lib_soname_curses=`$READELF -d conftest$ac_exeext | grep "NEEDED.*libcurses\\.$LIBEXT" | sed -e "s/^.*\\[\\(libcurses\\.$LIBEXT[^	 ]*\\)\\].*$/\1/"';2,$d'`
-       if ${ac_cv_lib_soname_curses:+false} :; then :
-  ac_cv_lib_soname_curses=`$LDD conftest$ac_exeext | grep "libcurses\\.$LIBEXT" | sed -e "s/^.*\(libcurses\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
-fi ;;
-  esac
-else
-  ac_cv_lib_soname_curses=
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-  LIBS=$ac_check_soname_save_LIBS
-fi
-if ${ac_cv_lib_soname_curses:+false} :; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
-$as_echo "not found" >&6; }
-
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_curses" >&5
-$as_echo "$ac_cv_lib_soname_curses" >&6; }
-
-cat >>confdefs.h <<_ACEOF
-#define SONAME_LIBCURSES "$ac_cv_lib_soname_curses"
-_ACEOF
-
-       CURSES_LIBS="-lcurses"
-fi
-fi
-ac_save_LIBS="$LIBS"
-LIBS="$LIBS $CURSES_LIBS"
-for ac_func in mousemask
-do :
-  ac_fn_c_check_func "$LINENO" "mousemask" "ac_cv_func_mousemask"
-if test "x$ac_cv_func_mousemask" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_MOUSEMASK 1
-_ACEOF
-
-fi
-done
-
-LIBS="$ac_save_LIBS"
-if test "x$ac_cv_lib_soname_curses$ac_cv_lib_soname_ncurses" = "x"; then :
-  case "x$with_curses" in
-  x)   as_fn_append wine_notices "|lib(n)curses ${notice_platform}development files not found, curses won't be supported." ;;
-  xno) ;;
-  *)   as_fn_error $? "lib(n)curses ${notice_platform}development files not found, curses won't be supported.
-This is an error since --with-curses was requested." "$LINENO" 5 ;;
 esac
 
 fi

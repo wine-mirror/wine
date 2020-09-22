@@ -94,9 +94,6 @@
 /* Define to 1 if you have the <cups/ppd.h> header file. */
 #undef HAVE_CUPS_PPD_H
 
-/* Define to 1 if you have the <curses.h> header file. */
-#undef HAVE_CURSES_H
-
 /* Define to 1 if you have the <dirent.h> header file. */
 #undef HAVE_DIRENT_H
 
@@ -570,17 +567,11 @@
 /* Define to 1 if you have the <mntent.h> header file. */
 #undef HAVE_MNTENT_H
 
-/* Define to 1 if you have the `mousemask' function. */
-#undef HAVE_MOUSEMASK
-
 /* Define to 1 if you have the <mpg123.h> header file. */
 #undef HAVE_MPG123_H
 
 /* Define if MTLDevice protocol has registryID property. */
 #undef HAVE_MTLDEVICE_REGISTRYID
-
-/* Define to 1 if you have the <ncurses.h> header file. */
-#undef HAVE_NCURSES_H
 
 /* Define to 1 if you have the `nearbyint' function. */
 #undef HAVE_NEARBYINT
@@ -1331,9 +1322,6 @@
 /* Define to the soname of the libcups library. */
 #undef SONAME_LIBCUPS
 
-/* Define to the soname of the libcurses library. */
-#undef SONAME_LIBCURSES
-
 /* Define to the soname of the libdbus-1 library. */
 #undef SONAME_LIBDBUS_1
 
@@ -1378,9 +1366,6 @@
 
 /* Define to the soname of the libMoltenVK library. */
 #undef SONAME_LIBMOLTENVK
-
-/* Define to the soname of the libncurses library. */
-#undef SONAME_LIBNCURSES
 
 /* Define to the soname of the libnetapi library. */
 #undef SONAME_LIBNETAPI
