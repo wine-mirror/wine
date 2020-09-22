@@ -764,7 +764,7 @@ static char *get_default_drive_device( const char *root )
     if (res == -1) res = stat( root, &st );
     if (res == -1) return NULL;
 
-    pthread_mutex_lock( &mnt_mutex );
+    mutex_lock( &mnt_mutex );
 
 #ifdef __ANDROID__
     if ((f = fopen( "/proc/mounts", "r" )))
@@ -786,7 +786,7 @@ static char *get_default_drive_device( const char *root )
     }
 #endif
     if (device) ret = strdup( device );
-    pthread_mutex_unlock( &mnt_mutex );
+    mutex_unlock( &mnt_mutex );
 
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__ ) || defined(__DragonFly__)
     char *device = NULL;
@@ -803,14 +803,14 @@ static char *get_default_drive_device( const char *root )
     if (res == -1) res = stat( root, &st );
     if (res == -1) return NULL;
 
-    pthread_mutex_lock( &mnt_mutex );
+    mutex_lock( &mnt_mutex );
 
     /* The FreeBSD parse_mount_entries doesn't require a file argument, so just
      * pass NULL.  Leave the argument in for symmetry.
      */
     device = parse_mount_entries( NULL, st.st_dev, st.st_ino );
     if (device) ret = strdup( device );
-    pthread_mutex_unlock( &mnt_mutex );
+    mutex_unlock( &mnt_mutex );
 
 #elif defined( sun )
     FILE *f;
@@ -828,7 +828,7 @@ static char *get_default_drive_device( const char *root )
     if (res == -1) res = stat( root, &st );
     if (res == -1) return NULL;
 
-    pthread_mutex_lock( &mnt_mutex );
+    mutex_lock( &mnt_mutex );
 
     if ((f = fopen( "/etc/mnttab", "r" )))
     {
@@ -842,7 +842,7 @@ static char *get_default_drive_device( const char *root )
         fclose( f );
     }
     if (device) ret = strdup( device );
-    pthread_mutex_unlock( &mnt_mutex );
+    mutex_unlock( &mnt_mutex );
 
 #elif defined(__APPLE__)
     struct statfs *mntStat;
@@ -860,7 +860,7 @@ static char *get_default_drive_device( const char *root )
     dev = st.st_dev;
     ino = st.st_ino;
 
-    pthread_mutex_lock( &mnt_mutex );
+    mutex_lock( &mnt_mutex );
 
     mntSize = getmntinfo(&mntStat, MNT_NOWAIT);
 
@@ -881,7 +881,7 @@ static char *get_default_drive_device( const char *root )
             }
         }
     }
-    pthread_mutex_unlock( &mnt_mutex );
+    mutex_unlock( &mnt_mutex );
 #else
     static int warned;
     if (!warned++) FIXME( "auto detection of DOS devices not supported on this platform\n" );
@@ -902,7 +902,7 @@ static char *get_device_mount_point( dev_t dev )
 #ifdef linux
     FILE *f;
 
-    pthread_mutex_lock( &mnt_mutex );
+    mutex_lock( &mnt_mutex );
 
 #ifdef __ANDROID__
     if ((f = fopen( "/proc/mounts", "r" )))
@@ -949,13 +949,13 @@ static char *get_device_mount_point( dev_t dev )
         }
         fclose( f );
     }
-    pthread_mutex_unlock( &mnt_mutex );
+    mutex_unlock( &mnt_mutex );
 #elif defined(__APPLE__)
     struct statfs *entry;
     struct stat st;
     int i, size;
 
-    pthread_mutex_lock( &mnt_mutex );
+    mutex_lock( &mnt_mutex );
 
     size = getmntinfo( &entry, MNT_NOWAIT );
     for (i = 0; i < size; i++)
@@ -967,7 +967,7 @@ static char *get_device_mount_point( dev_t dev )
             break;
         }
     }
-    pthread_mutex_unlock( &mnt_mutex );
+    mutex_unlock( &mnt_mutex );
 #else
     static int warned;
     if (!warned++) FIXME( "unmounting devices not supported on this platform\n" );
@@ -1851,7 +1851,7 @@ static unsigned int get_drives_info( struct file_identity info[MAX_DOS_DRIVES] )
     unsigned int ret;
     time_t now = time(NULL);
 
-    pthread_mutex_lock( &cache_mutex );
+    mutex_lock( &cache_mutex );
     if (now != last_update)
     {
         char *buffer, *p;
@@ -1885,7 +1885,7 @@ static unsigned int get_drives_info( struct file_identity info[MAX_DOS_DRIVES] )
     }
     memcpy( info, cache, sizeof(cache) );
     ret = nb_drives;
-    pthread_mutex_unlock( &cache_mutex );
+    mutex_unlock( &cache_mutex );
     return ret;
 }
 
@@ -2429,7 +2429,7 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event, PIO_APC_ROUTI
 
     io->Information = 0;
 
-    pthread_mutex_lock( &dir_mutex );
+    mutex_lock( &dir_mutex );
 
     cwd = open( ".", O_RDONLY );
     if (fchdir( fd ) != -1)
@@ -2456,7 +2456,7 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event, PIO_APC_ROUTI
     }
     else status = errno_to_status( errno );
 
-    pthread_mutex_unlock( &dir_mutex );
+    mutex_unlock( &dir_mutex );
 
     if (needs_close) close( fd );
     if (cwd != -1) close( cwd );
@@ -3012,7 +3012,7 @@ static NTSTATUS file_id_to_unix_file_name( const OBJECT_ATTRIBUTES *attr, char *
         goto done;
     }
 
-    pthread_mutex_lock( &dir_mutex );
+    mutex_lock( &dir_mutex );
     if ((old_cwd = open( ".", O_RDONLY )) != -1 && fchdir( root_fd ) != -1)
     {
         /* shortcut for ".." */
@@ -3033,7 +3033,7 @@ static NTSTATUS file_id_to_unix_file_name( const OBJECT_ATTRIBUTES *attr, char *
         if (fchdir( old_cwd ) == -1) chdir( "/" );
     }
     else status = errno_to_status( errno );
-    pthread_mutex_unlock( &dir_mutex );
+    mutex_unlock( &dir_mutex );
     if (old_cwd != -1) close( old_cwd );
 
 done:
@@ -3208,7 +3208,7 @@ static NTSTATUS nt_to_unix_file_name_attr( const OBJECT_ATTRIBUTES *attr, char *
         }
         else
         {
-            pthread_mutex_lock( &dir_mutex );
+            mutex_lock( &dir_mutex );
             if ((old_cwd = open( ".", O_RDONLY )) != -1 && fchdir( root_fd ) != -1)
             {
                 status = lookup_unix_name( name, name_len, &unix_name, unix_len, 1,
@@ -3216,7 +3216,7 @@ static NTSTATUS nt_to_unix_file_name_attr( const OBJECT_ATTRIBUTES *attr, char *
                 if (fchdir( old_cwd ) == -1) chdir( "/" );
             }
             else status = errno_to_status( errno );
-            pthread_mutex_unlock( &dir_mutex );
+            mutex_unlock( &dir_mutex );
             if (old_cwd != -1) close( old_cwd );
             if (needs_close) close( root_fd );
         }

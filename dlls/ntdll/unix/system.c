@@ -1929,7 +1929,7 @@ static void get_timezone_info( RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi )
     time_t year_start, year_end, tmp, dlt = 0, std = 0;
     int is_dst, bias;
 
-    pthread_mutex_lock( &tz_mutex );
+    mutex_lock( &tz_mutex );
 
     year_start = time(NULL);
     tm = gmtime(&year_start);
@@ -1939,7 +1939,7 @@ static void get_timezone_info( RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi )
     if (current_year == tm->tm_year && current_bias == bias)
     {
         *tzi = cached_tzi;
-        pthread_mutex_unlock( &tz_mutex );
+        mutex_unlock( &tz_mutex );
         return;
     }
 
@@ -2032,7 +2032,7 @@ static void get_timezone_info( RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi )
 
     find_reg_tz_info(tzi, tz_name, current_year + 1900);
     cached_tzi = *tzi;
-    pthread_mutex_unlock( &tz_mutex );
+    mutex_unlock( &tz_mutex );
 }
 
 

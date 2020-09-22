@@ -559,9 +559,9 @@ static NTSTATUS CDROM_SyncCache(int dev, int fd)
 
 static void CDROM_ClearCacheEntry(int dev)
 {
-    pthread_mutex_lock( &cache_mutex );
+    mutex_lock( &cache_mutex );
     cdrom_cache[dev].toc_good = 0;
-    pthread_mutex_unlock( &cache_mutex );
+    mutex_unlock( &cache_mutex );
 }
 
 
@@ -667,7 +667,7 @@ static NTSTATUS CDROM_Open(int fd, int* dev)
 
     if (fstat(fd, &st) == -1) return errno_to_status( errno );
 
-    pthread_mutex_lock( &cache_mutex );
+    mutex_lock( &cache_mutex );
     for (*dev = 0; *dev < MAX_CACHE_ENTRIES; (*dev)++)
     {
         if (empty == -1 &&
@@ -688,7 +688,7 @@ static NTSTATUS CDROM_Open(int fd, int* dev)
             cdrom_cache[*dev].inode   = st.st_ino;
         }
     }
-    pthread_mutex_unlock( &cache_mutex );
+    mutex_unlock( &cache_mutex );
 
     TRACE("%d, %d\n", *dev, fd);
     return ret;
@@ -840,13 +840,13 @@ static NTSTATUS CDROM_ReadTOC(int dev, int fd, CDROM_TOC* toc)
     if (dev < 0 || dev >= MAX_CACHE_ENTRIES)
         return STATUS_INVALID_PARAMETER;
 
-    pthread_mutex_lock( &cache_mutex );
+    mutex_lock( &cache_mutex );
     if (cdrom_cache[dev].toc_good || !(ret = CDROM_SyncCache(dev, fd)))
     {
         *toc = cdrom_cache[dev].toc;
         ret = STATUS_SUCCESS;
     }
-    pthread_mutex_unlock( &cache_mutex );
+    mutex_unlock( &cache_mutex );
     return ret;
 }
 
@@ -926,7 +926,7 @@ static NTSTATUS CDROM_ReadQChannel(int dev, int fd, const CDROM_SUB_Q_DATA_FORMA
     switch (fmt->Format)
     {
     case IOCTL_CDROM_CURRENT_POSITION:
-        pthread_mutex_lock( &cache_mutex );
+        mutex_lock( &cache_mutex );
 	if (hdr->AudioStatus==AUDIO_STATUS_IN_PROGRESS) {
           data->CurrentPosition.FormatCode = IOCTL_CDROM_CURRENT_POSITION;
           data->CurrentPosition.Control = sc.cdsc_ctrl;
@@ -951,7 +951,7 @@ static NTSTATUS CDROM_ReadQChannel(int dev, int fd, const CDROM_SUB_Q_DATA_FORMA
 	  cdrom_cache[dev].CurrentPosition.Header = *hdr; /* Preserve header info */
 	  data->CurrentPosition = cdrom_cache[dev].CurrentPosition;
 	}
-        pthread_mutex_unlock( &cache_mutex );
+        mutex_unlock( &cache_mutex );
         break;
     case IOCTL_CDROM_MEDIA_CATALOG:
         data->MediaCatalog.FormatCode = IOCTL_CDROM_MEDIA_CATALOG;
@@ -1037,7 +1037,7 @@ static NTSTATUS CDROM_ReadQChannel(int dev, int fd, const CDROM_SUB_Q_DATA_FORMA
     switch (fmt->Format)
     {
     case IOCTL_CDROM_CURRENT_POSITION:
-        pthread_mutex_lock( &cache_mutex );
+        mutex_lock( &cache_mutex );
 	if (hdr->AudioStatus==AUDIO_STATUS_IN_PROGRESS) {
           data->CurrentPosition.FormatCode = IOCTL_CDROM_CURRENT_POSITION;
           data->CurrentPosition.Control = sc.what.position.control;
@@ -1059,7 +1059,7 @@ static NTSTATUS CDROM_ReadQChannel(int dev, int fd, const CDROM_SUB_Q_DATA_FORMA
 	  cdrom_cache[dev].CurrentPosition.Header = *hdr; /* Preserve header info */
 	  data->CurrentPosition = cdrom_cache[dev].CurrentPosition;
 	}
-        pthread_mutex_unlock( &cache_mutex );
+        mutex_unlock( &cache_mutex );
         break;
     case IOCTL_CDROM_MEDIA_CATALOG:
         data->MediaCatalog.FormatCode = IOCTL_CDROM_MEDIA_CATALOG;
@@ -1248,7 +1248,7 @@ static NTSTATUS CDROM_SeekAudioMSF(int dev, int fd, const CDROM_SEEK_AUDIO_MSF* 
     if (i <= toc.FirstTrack || i > toc.LastTrack+1)
       return STATUS_INVALID_PARAMETER;
     i--;
-    pthread_mutex_lock( &cache_mutex );
+    mutex_lock( &cache_mutex );
     cp = &cdrom_cache[dev].CurrentPosition;
     cp->FormatCode = IOCTL_CDROM_CURRENT_POSITION;
     cp->Control = toc.TrackData[i-toc.FirstTrack].Control;
@@ -1262,7 +1262,7 @@ static NTSTATUS CDROM_SeekAudioMSF(int dev, int fd, const CDROM_SEEK_AUDIO_MSF* 
     frame -= FRAME_OF_TOC(toc,i);
     cp->TrackRelativeAddress[0] = 0;
     MSF_OF_FRAME(cp->TrackRelativeAddress[1], frame);
-    pthread_mutex_unlock( &cache_mutex );
+    mutex_unlock( &cache_mutex );
 
     /* If playing, then issue a seek command, otherwise do nothing */
 #ifdef linux

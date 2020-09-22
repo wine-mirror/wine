@@ -297,7 +297,7 @@ unsigned int CDECL wine_server_call( void *req_ptr )
 void server_enter_uninterrupted_section( pthread_mutex_t *mutex, sigset_t *sigset )
 {
     pthread_sigmask( SIG_BLOCK, &server_block_set, sigset );
-    pthread_mutex_lock( mutex );
+    mutex_lock( mutex );
 }
 
 
@@ -306,7 +306,7 @@ void server_enter_uninterrupted_section( pthread_mutex_t *mutex, sigset_t *sigse
  */
 void server_leave_uninterrupted_section( pthread_mutex_t *mutex, sigset_t *sigset )
 {
-    pthread_mutex_unlock( mutex );
+    mutex_unlock( mutex );
     pthread_sigmask( SIG_SETMASK, sigset, NULL );
 }
 
@@ -646,7 +646,7 @@ unsigned int server_select( const select_op_t *select_op, data_size_t size, UINT
         pthread_sigmask( SIG_SETMASK, &old_set, NULL );
         if (mutex)
         {
-            pthread_mutex_unlock( mutex );
+            mutex_unlock( mutex );
             mutex = NULL;
         }
         if (ret != STATUS_PENDING) break;
