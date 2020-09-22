@@ -1658,6 +1658,19 @@ BOOL WINAPI DECLSPEC_HOTPATCH WriteConsoleOutputCharacterW( HANDLE handle, LPCWS
     return ret;
 }
 
+
+/***********************************************************************
+ *           Beep   (kernelbase.@)
+ */
+BOOL WINAPI Beep( DWORD frequency, DWORD duration )
+{
+    /* FIXME: we should not require a console to be attached */
+    console_ioctl( RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle,
+                   IOCTL_CONDRV_BEEP, NULL, 0, NULL, 0, NULL );
+    return TRUE;
+}
+
+
 static HANDLE create_pseudo_console( COORD size, HANDLE input, HANDLE output, HANDLE signal,
                                      DWORD flags, HANDLE *process )
 {

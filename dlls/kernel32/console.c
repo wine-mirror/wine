@@ -68,18 +68,6 @@ HWND WINAPI GetConsoleWindow(void)
 }
 
 
-/***********************************************************************
- *           Beep   (KERNEL32.@)
- */
-BOOL WINAPI Beep( DWORD dwFreq, DWORD dwDur )
-{
-    /* FIXME: we should not require a console to be attached */
-    DeviceIoControl( RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle,
-                     IOCTL_CONDRV_BEEP, NULL, 0, NULL, 0, NULL, NULL );
-    return TRUE;
-}
-
-
 /******************************************************************
  *		OpenConsoleW            (KERNEL32.@)
  *

@@ -93,7 +93,7 @@
 # @ stub BasepCopyFileCallback
 # @ stub BasepCopyFileExW
 # @ stub BasepNotifyTrackingService
-@ stdcall Beep(long long) kernel32.Beep
+@ stdcall Beep(long long)
 @ stub BemCopyReference
 @ stub BemCreateContractFrom
 @ stub BemCreateReference

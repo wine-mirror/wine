@@ -195,7 +195,7 @@
 # @ stub BasepFreeActivationContextActivationBlock
 # @ stub BasepFreeAppCompatData
 # @ stub BasepMapModuleHandle
-@ stdcall Beep(long long)
+@ stdcall -import Beep(long long)
 @ stdcall BeginUpdateResourceA(str long)
 @ stdcall BeginUpdateResourceW(wstr long)
 @ stdcall BindIoCompletionCallback(long ptr long)
