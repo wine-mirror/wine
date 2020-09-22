@@ -1470,7 +1470,7 @@ static void test_query_object(void)
     status = pNtCreateKey( &handle, KEY_READ, &attr, 0, 0, 0, 0 );
     ok( status == STATUS_SUCCESS, "NtCreateKey failed status %x\n", status );
 
-    test_object_name( handle, L"\\REGISTRY\\MACHINE", TRUE );
+    test_object_name( handle, L"\\REGISTRY\\MACHINE", FALSE );
     test_object_type( handle, L"Key" );
 
     pNtClose( handle );
