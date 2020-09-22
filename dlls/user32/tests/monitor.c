@@ -938,6 +938,70 @@ static void test_ChangeDisplaySettingsEx(void)
         }
     }
 
+    /* Test changing each adapter to every supported display orientation */
+    for (device = 0; device < device_count; ++device)
+    {
+        memset(&dm, 0, sizeof(dm));
+        dm.dmSize = sizeof(dm);
+        res = EnumDisplaySettingsA(devices[device].name, ENUM_CURRENT_SETTINGS, &dm);
+        ok(res, "EnumDisplaySettingsA %s failed, error %#x.\n", devices[device].name, GetLastError());
+
+        memset(&dm2, 0, sizeof(dm2));
+        dm2.dmSize = sizeof(dm2);
+        for (mode = 0; EnumDisplaySettingsExA(devices[device].name, mode, &dm2, EDS_ROTATEDMODE); ++mode)
+        {
+            if (dm2.dmBitsPerPel != dm.dmBitsPerPel || dm2.dmDisplayFrequency != dm.dmDisplayFrequency)
+                continue;
+
+            if ((dm2.dmDisplayOrientation == DMDO_DEFAULT || dm2.dmDisplayOrientation == DMDO_180)
+                    && (dm2.dmPelsWidth != dm.dmPelsWidth || dm2.dmPelsHeight != dm.dmPelsHeight))
+                continue;
+
+            if ((dm2.dmDisplayOrientation == DMDO_90 || dm2.dmDisplayOrientation == DMDO_270)
+                    && (dm2.dmPelsWidth != dm.dmPelsHeight || dm2.dmPelsHeight != dm.dmPelsWidth))
+                continue;
+
+            res = ChangeDisplaySettingsExA(devices[device].name, &dm2, NULL, CDS_RESET, NULL);
+            if (res != DISP_CHANGE_SUCCESSFUL)
+            {
+                win_skip("Failed to change %s to mode %d.\n", devices[device].name, mode);
+                continue;
+            }
+            ok(res == DISP_CHANGE_SUCCESSFUL, "ChangeDisplaySettingsExA %s mode %d returned unexpected %d.\n",
+                    devices[device].name, mode, res);
+            flush_events();
+            expect_dm(dm2, devices[device].name, mode);
+
+            /* EnumDisplaySettingsEx without EDS_ROTATEDMODE reports modes with current orientation */
+            memset(&dm3, 0, sizeof(dm3));
+            dm3.dmSize = sizeof(dm3);
+            for (i = 0; EnumDisplaySettingsExA(devices[device].name, i, &dm3, 0); ++i)
+            {
+                ok(dm3.dmDisplayOrientation == dm2.dmDisplayOrientation,
+                        "Expected %s display mode %d orientation %d, got %d.\n",
+                        devices[device].name, i, dm2.dmDisplayOrientation, dm3.dmDisplayOrientation);
+            }
+            ok(i > 0, "Expected at least one display mode found.\n");
+
+            if (device == 0)
+            {
+                ok(GetSystemMetrics(SM_CXSCREEN) == dm2.dmPelsWidth, "Expected %d, got %d.\n",
+                        dm2.dmPelsWidth, GetSystemMetrics(SM_CXSCREEN));
+                ok(GetSystemMetrics(SM_CYSCREEN) == dm2.dmPelsHeight, "Expected %d, got %d.\n",
+                        dm2.dmPelsHeight, GetSystemMetrics(SM_CYSCREEN));
+            }
+
+            if (device_count == 1)
+            {
+                ok(GetSystemMetrics(SM_CXVIRTUALSCREEN) == dm2.dmPelsWidth, "Expected %d, got %d.\n",
+                        dm2.dmPelsWidth, GetSystemMetrics(SM_CXVIRTUALSCREEN));
+                ok(GetSystemMetrics(SM_CYVIRTUALSCREEN) == dm2.dmPelsHeight, "Expected %d, got %d.\n",
+                        dm2.dmPelsHeight, GetSystemMetrics(SM_CYVIRTUALSCREEN));
+            }
+        }
+        ok(mode > 0, "Expected at least one display mode found.\n");
+    }
+
     /* Restore all adapters to their original settings */
     for (device = 0; device < device_count; ++device)
     {
