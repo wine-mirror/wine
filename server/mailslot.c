@@ -217,6 +217,7 @@ static const struct object_ops mailslot_device_ops =
 
 static void mailslot_device_file_dump( struct object *obj, int verbose );
 static struct fd *mailslot_device_file_get_fd( struct object *obj );
+static WCHAR *mailslot_device_file_get_full_name( struct object *obj, data_size_t *len );
 static void mailslot_device_file_destroy( struct object *obj );
 static enum server_fd_type mailslot_device_file_get_fd_type( struct fd *fd );
 
@@ -234,7 +235,7 @@ static const struct object_ops mailslot_device_file_ops =
     default_fd_map_access,                  /* map_access */
     default_get_sd,                         /* get_sd */
     default_set_sd,                         /* set_sd */
-    no_get_full_name,                       /* get_full_name */
+    mailslot_device_file_get_full_name,     /* get_full_name */
     no_lookup_name,                         /* lookup_name */
     no_link_name,                           /* link_name */
     NULL,                                   /* unlink_name */
@@ -460,6 +461,12 @@ static struct fd *mailslot_device_file_get_fd( struct object *obj )
 {
     struct mailslot_device_file *file = (struct mailslot_device_file *)obj;
     return (struct fd *)grab_object( file->fd );
+}
+
+static WCHAR *mailslot_device_file_get_full_name( struct object *obj, data_size_t *len )
+{
+    struct mailslot_device_file *file = (struct mailslot_device_file *)obj;
+    return file->device->obj.ops->get_full_name( &file->device->obj, len );
 }
 
 static void mailslot_device_file_destroy( struct object *obj )
