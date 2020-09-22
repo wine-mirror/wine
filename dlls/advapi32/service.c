@@ -179,12 +179,12 @@ EnumServicesStatusW( SC_HANDLE manager, DWORD type, DWORD state, ENUM_SERVICE_ST
     for (i = 0; i < *ret_count; i++)
     {
         lstrcpyW( p, status_ex[i].lpServiceName );
-        status[i].lpServiceName = (WCHAR *)p;
+        status[i].lpServiceName = p;
         p += lstrlenW( p ) + 1;
         if (status_ex[i].lpDisplayName)
         {
             lstrcpyW( p, status_ex[i].lpDisplayName );
-            status[i].lpDisplayName = (WCHAR *)p;
+            status[i].lpDisplayName = p;
             p += lstrlenW( p ) + 1;
         }
         else status[i].lpDisplayName = NULL;
