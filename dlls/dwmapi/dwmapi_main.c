@@ -51,19 +51,20 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
  */
 HRESULT WINAPI DwmIsCompositionEnabled(BOOL *enabled)
 {
-    static int once;
-    if (!once)
-    {
-        FIXME("%p\n", enabled);
-        once = 1;
-    }
-    else
-        TRACE("%p\n", enabled);
+    OSVERSIONINFOW version;
+
+    TRACE("%p\n", enabled);
 
     if (!enabled)
         return E_INVALIDARG;
 
-    *enabled = FALSE;
+    version.dwOSVersionInfoSize = sizeof(OSVERSIONINFOW);
+
+    if (!GetVersionExW(&version))
+        *enabled = FALSE;
+    else
+        *enabled = (version.dwMajorVersion > 6 || (version.dwMajorVersion == 6 && version.dwMinorVersion >= 3));
+
     return S_OK;
 }
 
