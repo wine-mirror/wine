@@ -4102,7 +4102,6 @@ static void test_handle_list_attribute(BOOL child, HANDLE handle1, HANDLE handle
         CloseHandle(handle1);
 
         ret = GetHandleInformation(handle2, &flags);
-    todo_wine
         ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "Unexpected return value, error %d.\n", GetLastError());
 
         return;

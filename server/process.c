@@ -500,7 +500,8 @@ static void start_sigkill_timer( struct process *process )
 /* create a new process */
 /* if the function fails the fd is closed */
 struct process *create_process( int fd, struct process *parent, int inherit_all,
-                                const struct security_descriptor *sd )
+                                const struct security_descriptor *sd, const obj_handle_t *handles,
+                                unsigned int handle_count )
 {
     struct process *process;
 
@@ -573,7 +574,7 @@ struct process *create_process( int fd, struct process *parent, int inherit_all,
     else
     {
         process->parent_id = parent->id;
-        process->handles = inherit_all ? copy_handle_table( process, parent )
+        process->handles = inherit_all ? copy_handle_table( process, parent, handles, handle_count )
                                        : alloc_handle_table( process, 0 );
         /* Note: for security reasons, starting a new process does not attempt
          * to use the current impersonation token for the new process */
@@ -1101,6 +1102,7 @@ DECL_HANDLER(new_process)
     struct process *parent;
     struct thread *parent_thread = current;
     int socket_fd = thread_get_inflight_fd( current, req->socket_fd );
+    const obj_handle_t *handles = NULL;
 
     if (socket_fd == -1)
     {
@@ -1162,6 +1164,19 @@ DECL_HANDLER(new_process)
     info->data     = NULL;
 
     info_ptr = get_req_data_after_objattr( objattr, &info->data_size );
+
+    if ((req->handles_size & 3) || req->handles_size > info->data_size)
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        close( socket_fd );
+        goto done;
+    }
+    if (req->handles_size)
+    {
+        handles = info_ptr;
+        info_ptr = (const char *)info_ptr + req->handles_size;
+        info->data_size -= req->handles_size;
+    }
     info->info_size = min( req->info_size, info->data_size );
 
     if (req->info_size < sizeof(*info->data))
@@ -1202,7 +1217,8 @@ DECL_HANDLER(new_process)
 #undef FIXUP_LEN
     }
 
-    if (!(process = create_process( socket_fd, parent, req->inherit_all, sd ))) goto done;
+    if (!(process = create_process( socket_fd, parent, req->inherit_all, sd, handles, req->handles_size / sizeof(*handles) )))
+        goto done;
 
     process->startup_info = (struct startup_info *)grab_object( info );
 
@@ -1297,7 +1313,7 @@ DECL_HANDLER(exec_process)
         close( socket_fd );
         return;
     }
-    if (!(process = create_process( socket_fd, NULL, 0, NULL ))) return;
+    if (!(process = create_process( socket_fd, NULL, 0, NULL, NULL, 0 ))) return;
     create_thread( -1, process, NULL );
     release_object( process );
 }

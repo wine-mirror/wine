@@ -725,6 +725,7 @@ C_ASSERT( FIELD_OFFSET(struct new_process_request, exe_file) == 28 );
 C_ASSERT( FIELD_OFFSET(struct new_process_request, access) == 32 );
 C_ASSERT( FIELD_OFFSET(struct new_process_request, cpu) == 36 );
 C_ASSERT( FIELD_OFFSET(struct new_process_request, info_size) == 40 );
+C_ASSERT( FIELD_OFFSET(struct new_process_request, handles_size) == 44 );
 C_ASSERT( sizeof(struct new_process_request) == 48 );
 C_ASSERT( FIELD_OFFSET(struct new_process_reply, info) == 8 );
 C_ASSERT( FIELD_OFFSET(struct new_process_reply, pid) == 12 );

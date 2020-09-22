@@ -781,10 +781,11 @@ struct new_process_request
     unsigned int access;
     client_cpu_t cpu;
     data_size_t  info_size;
+    data_size_t  handles_size;
     /* VARARG(objattr,object_attributes); */
+    /* VARARG(handles,uints,handles_size); */
     /* VARARG(info,startup_info,info_size); */
     /* VARARG(env,unicode_str); */
-    char __pad_44[4];
 };
 struct new_process_reply
 {
@@ -6282,7 +6283,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 643
+#define SERVER_PROTOCOL_VERSION 644
 
 /* ### protocol_version end ### */
 

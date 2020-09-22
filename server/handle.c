@@ -355,7 +355,8 @@ static void shrink_handle_table( struct handle_table *table )
 
 /* copy the handle table of the parent process */
 /* return 1 if OK, 0 on error */
-struct handle_table *copy_handle_table( struct process *process, struct process *parent )
+struct handle_table *copy_handle_table( struct process *process, struct process *parent,
+                                        const obj_handle_t *handles, unsigned int handle_count )
 {
     struct handle_table *parent_table = parent->handles;
     struct handle_table *table;
@@ -367,15 +368,36 @@ struct handle_table *copy_handle_table( struct process *process, struct process 
     if (!(table = alloc_handle_table( process, parent_table->count )))
         return NULL;
 
-    if ((table->last = parent_table->last) >= 0)
+    if (handles)
     {
-        struct handle_entry *ptr = table->entries;
-        memcpy( ptr, parent_table->entries, (table->last + 1) * sizeof(struct handle_entry) );
-        for (i = 0; i <= table->last; i++, ptr++)
+        struct handle_entry *dst, *src;
+        int index;
+
+        dst = table->entries;
+        memset( dst, 0, parent_table->count * sizeof(*dst) );
+
+        for (i = 0; i < handle_count; i++)
         {
-            if (!ptr->ptr) continue;
-            if (ptr->access & RESERVED_INHERIT) grab_object_for_handle( ptr->ptr );
-            else ptr->ptr = NULL; /* don't inherit this entry */
+            src = get_handle( parent, handles[i] );
+            if (!src || !(src->access & RESERVED_INHERIT)) continue;
+            grab_object_for_handle( src->ptr );
+            index = handle_to_index( handles[i] );
+            dst[index] = *src;
+            table->last = max( table->last, index );
+        }
+    }
+    else
+    {
+        if ((table->last = parent_table->last) >= 0)
+        {
+            struct handle_entry *ptr = table->entries;
+            memcpy( ptr, parent_table->entries, (table->last + 1) * sizeof(struct handle_entry) );
+            for (i = 0; i <= table->last; i++, ptr++)
+            {
+                if (!ptr->ptr) continue;
+                if (ptr->access & RESERVED_INHERIT) grab_object_for_handle( ptr->ptr );
+                else ptr->ptr = NULL; /* don't inherit this entry */
+            }
         }
     }
     /* attempt to shrink the table */
