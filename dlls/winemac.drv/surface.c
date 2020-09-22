@@ -96,7 +96,7 @@ static void update_blit_data(struct macdrv_window_surface *surface)
 /***********************************************************************
  *              macdrv_surface_lock
  */
-static void macdrv_surface_lock(struct window_surface *window_surface)
+static void CDECL macdrv_surface_lock(struct window_surface *window_surface)
 {
     struct macdrv_window_surface *surface = get_mac_surface(window_surface);
 
@@ -106,7 +106,7 @@ static void macdrv_surface_lock(struct window_surface *window_surface)
 /***********************************************************************
  *              macdrv_surface_unlock
  */
-static void macdrv_surface_unlock(struct window_surface *window_surface)
+static void CDECL macdrv_surface_unlock(struct window_surface *window_surface)
 {
     struct macdrv_window_surface *surface = get_mac_surface(window_surface);
 
@@ -116,8 +116,8 @@ static void macdrv_surface_unlock(struct window_surface *window_surface)
 /***********************************************************************
  *              macdrv_surface_get_bitmap_info
  */
-static void *macdrv_surface_get_bitmap_info(struct window_surface *window_surface,
-                                            BITMAPINFO *info)
+static void *CDECL macdrv_surface_get_bitmap_info(struct window_surface *window_surface,
+                                                  BITMAPINFO *info)
 {
     struct macdrv_window_surface *surface = get_mac_surface(window_surface);
 
@@ -128,7 +128,7 @@ static void *macdrv_surface_get_bitmap_info(struct window_surface *window_surfac
 /***********************************************************************
  *              macdrv_surface_get_bounds
  */
-static RECT *macdrv_surface_get_bounds(struct window_surface *window_surface)
+static RECT *CDECL macdrv_surface_get_bounds(struct window_surface *window_surface)
 {
     struct macdrv_window_surface *surface = get_mac_surface(window_surface);
 
@@ -138,7 +138,7 @@ static RECT *macdrv_surface_get_bounds(struct window_surface *window_surface)
 /***********************************************************************
  *              macdrv_surface_set_region
  */
-static void macdrv_surface_set_region(struct window_surface *window_surface, HRGN region)
+static void CDECL macdrv_surface_set_region(struct window_surface *window_surface, HRGN region)
 {
     struct macdrv_window_surface *surface = get_mac_surface(window_surface);
 
@@ -164,7 +164,7 @@ static void macdrv_surface_set_region(struct window_surface *window_surface, HRG
 /***********************************************************************
  *              macdrv_surface_flush
  */
-static void macdrv_surface_flush(struct window_surface *window_surface)
+static void CDECL macdrv_surface_flush(struct window_surface *window_surface)
 {
     struct macdrv_window_surface *surface = get_mac_surface(window_surface);
     CGRect rect;
@@ -200,7 +200,7 @@ static void macdrv_surface_flush(struct window_surface *window_surface)
 /***********************************************************************
  *              macdrv_surface_destroy
  */
-static void macdrv_surface_destroy(struct window_surface *window_surface)
+static void CDECL macdrv_surface_destroy(struct window_surface *window_surface)
 {
     struct macdrv_window_surface *surface = get_mac_surface(window_surface);
 

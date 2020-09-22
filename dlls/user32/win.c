@@ -528,17 +528,17 @@ BOOL is_desktop_window( HWND hwnd )
  * Dummy window surface for windows that shouldn't get painted.
  */
 
-static void dummy_surface_lock( struct window_surface *window_surface )
+static void CDECL dummy_surface_lock( struct window_surface *window_surface )
 {
     /* nothing to do */
 }
 
-static void dummy_surface_unlock( struct window_surface *window_surface )
+static void CDECL dummy_surface_unlock( struct window_surface *window_surface )
 {
     /* nothing to do */
 }
 
-static void *dummy_surface_get_bitmap_info( struct window_surface *window_surface, BITMAPINFO *info )
+static void *CDECL dummy_surface_get_bitmap_info( struct window_surface *window_surface, BITMAPINFO *info )
 {
     static DWORD dummy_data;
 
@@ -556,23 +556,23 @@ static void *dummy_surface_get_bitmap_info( struct window_surface *window_surfac
     return &dummy_data;
 }
 
-static RECT *dummy_surface_get_bounds( struct window_surface *window_surface )
+static RECT *CDECL dummy_surface_get_bounds( struct window_surface *window_surface )
 {
     static RECT dummy_bounds;
     return &dummy_bounds;
 }
 
-static void dummy_surface_set_region( struct window_surface *window_surface, HRGN region )
+static void CDECL dummy_surface_set_region( struct window_surface *window_surface, HRGN region )
 {
     /* nothing to do */
 }
 
-static void dummy_surface_flush( struct window_surface *window_surface )
+static void CDECL dummy_surface_flush( struct window_surface *window_surface )
 {
     /* nothing to do */
 }
 
-static void dummy_surface_destroy( struct window_surface *window_surface )
+static void CDECL dummy_surface_destroy( struct window_surface *window_surface )
 {
     /* nothing to do */
 }

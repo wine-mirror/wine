@@ -656,7 +656,7 @@ static void apply_line_region( DWORD *dst, int width, int x, int y, const RECT *
 /***********************************************************************
  *           android_surface_lock
  */
-static void android_surface_lock( struct window_surface *window_surface )
+static void CDECL android_surface_lock( struct window_surface *window_surface )
 {
     struct android_window_surface *surface = get_android_surface( window_surface );
 
@@ -666,7 +666,7 @@ static void android_surface_lock( struct window_surface *window_surface )
 /***********************************************************************
  *           android_surface_unlock
  */
-static void android_surface_unlock( struct window_surface *window_surface )
+static void CDECL android_surface_unlock( struct window_surface *window_surface )
 {
     struct android_window_surface *surface = get_android_surface( window_surface );
 
@@ -676,7 +676,7 @@ static void android_surface_unlock( struct window_surface *window_surface )
 /***********************************************************************
  *           android_surface_get_bitmap_info
  */
-static void *android_surface_get_bitmap_info( struct window_surface *window_surface, BITMAPINFO *info )
+static void *CDECL android_surface_get_bitmap_info( struct window_surface *window_surface, BITMAPINFO *info )
 {
     struct android_window_surface *surface = get_android_surface( window_surface );
 
@@ -687,7 +687,7 @@ static void *android_surface_get_bitmap_info( struct window_surface *window_surf
 /***********************************************************************
  *           android_surface_get_bounds
  */
-static RECT *android_surface_get_bounds( struct window_surface *window_surface )
+static RECT *CDECL android_surface_get_bounds( struct window_surface *window_surface )
 {
     struct android_window_surface *surface = get_android_surface( window_surface );
 
@@ -697,7 +697,7 @@ static RECT *android_surface_get_bounds( struct window_surface *window_surface )
 /***********************************************************************
  *           android_surface_set_region
  */
-static void android_surface_set_region( struct window_surface *window_surface, HRGN region )
+static void CDECL android_surface_set_region( struct window_surface *window_surface, HRGN region )
 {
     struct android_window_surface *surface = get_android_surface( window_surface );
 
@@ -721,7 +721,7 @@ static void android_surface_set_region( struct window_surface *window_surface, H
 /***********************************************************************
  *           android_surface_flush
  */
-static void android_surface_flush( struct window_surface *window_surface )
+static void CDECL android_surface_flush( struct window_surface *window_surface )
 {
     struct android_window_surface *surface = get_android_surface( window_surface );
     ANativeWindow_Buffer buffer;
@@ -804,7 +804,7 @@ static void android_surface_flush( struct window_surface *window_surface )
 /***********************************************************************
  *           android_surface_destroy
  */
-static void android_surface_destroy( struct window_surface *window_surface )
+static void CDECL android_surface_destroy( struct window_surface *window_surface )
 {
     struct android_window_surface *surface = get_android_surface( window_surface );
 
