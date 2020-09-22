@@ -865,6 +865,8 @@ class VkFunctionPointer(object):
         text += ");\n"
         return text
 
+    def is_alias(self):
+        return False
 
 class VkHandle(object):
     def __init__(self, name, _type, parent, alias=None):
