@@ -54,7 +54,7 @@ struct gdi_image_bits
 {
     void   *ptr;       /* pointer to the bits */
     BOOL    is_copy;   /* whether this is a copy of the bits that can be modified */
-    void  (*free)(struct gdi_image_bits *);  /* callback for freeing the bits */
+    void  (CDECL *free)(struct gdi_image_bits *);  /* callback for freeing the bits */
     void   *param;     /* extra parameter for callback private use */
 };
 

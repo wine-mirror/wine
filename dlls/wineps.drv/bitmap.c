@@ -148,7 +148,7 @@ static inline DWORD max_ascii85_size(DWORD size)
     return (size + 3) / 4 * 5;
 }
 
-static void free_heap_bits( struct gdi_image_bits *bits )
+static void CDECL free_heap_bits( struct gdi_image_bits *bits )
 {
     HeapFree( GetProcessHeap(), 0, bits->ptr );
 }

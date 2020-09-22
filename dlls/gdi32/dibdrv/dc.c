@@ -565,7 +565,7 @@ static inline void unlock_surface( struct windrv_physdev *dev )
     if (GetTickCount() - dev->start_ticks > FLUSH_PERIOD) dev->surface->funcs->flush( dev->surface );
 }
 
-static void unlock_bits_surface( struct gdi_image_bits *bits )
+static void CDECL unlock_bits_surface( struct gdi_image_bits *bits )
 {
     struct window_surface *surface = bits->param;
     surface->funcs->unlock( surface );

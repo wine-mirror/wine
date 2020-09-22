@@ -914,12 +914,12 @@ BOOL CDECL X11DRV_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
 }
 
 
-static void free_heap_bits( struct gdi_image_bits *bits )
+static void CDECL free_heap_bits( struct gdi_image_bits *bits )
 {
     HeapFree( GetProcessHeap(), 0, bits->ptr );
 }
 
-static void free_ximage_bits( struct gdi_image_bits *bits )
+static void CDECL free_ximage_bits( struct gdi_image_bits *bits )
 {
     XFree( bits->ptr );
 }
