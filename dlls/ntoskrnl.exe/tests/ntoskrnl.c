@@ -511,7 +511,7 @@ static void test_object_info(void)
 
     status = NtQueryObject(device, ObjectNameInformation, buffer, sizeof(buffer), NULL);
     ok(!status, "got %#x\n", status);
-    todo_wine ok(compare_unicode_string(name_info->Name.Buffer, name_info->Name.Length, L"\\Device\\WineTestDriver"),
+    ok(compare_unicode_string(name_info->Name.Buffer, name_info->Name.Length, L"\\Device\\WineTestDriver"),
             "wrong name %s\n", debugstr_w(name_info->Name.Buffer));
 
     status = NtQueryObject(device, ObjectTypeInformation, buffer, sizeof(buffer), NULL);
