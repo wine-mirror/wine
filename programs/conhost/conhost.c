@@ -166,41 +166,48 @@ static int screen_buffer_compare_id( const void *key, const struct wine_rb_entry
 
 static struct wine_rb_tree screen_buffer_map = { screen_buffer_compare_id };
 
+static void destroy_screen_buffer( struct screen_buffer *screen_buffer )
+{
+    if (screen_buffer->console->active == screen_buffer)
+        screen_buffer->console->active = NULL;
+    wine_rb_remove( &screen_buffer_map, &screen_buffer->entry );
+    free( screen_buffer->data );
+    free( screen_buffer );
+}
+
 static struct screen_buffer *create_screen_buffer( struct console *console, int id, int width, int height )
 {
     struct screen_buffer *screen_buffer;
     unsigned int i;
 
-    if (!(screen_buffer = malloc( sizeof(*screen_buffer) ))) return NULL;
+    if (!(screen_buffer = calloc( 1, sizeof(*screen_buffer) ))) return NULL;
     screen_buffer->console        = console;
     screen_buffer->id             = id;
     screen_buffer->mode           = ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT;
     screen_buffer->cursor_size    = 100;
     screen_buffer->cursor_visible = 1;
-    screen_buffer->cursor_x       = 0;
-    screen_buffer->cursor_y       = 0;
     screen_buffer->width          = width;
     screen_buffer->height         = height;
     screen_buffer->attr           = 0x07;
     screen_buffer->popup_attr     = 0xf5;
     screen_buffer->max_width      = 80;
     screen_buffer->max_height     = 25;
-    screen_buffer->win.left       = 0;
     screen_buffer->win.right      = min( screen_buffer->max_width - 1, width - 1 );
-    screen_buffer->win.top        = 0;
     screen_buffer->win.bottom     = min( screen_buffer->max_height - 1, height - 1);
-    screen_buffer->font.width     = 0;
-    screen_buffer->font.height    = 0;
     screen_buffer->font.weight    = FW_NORMAL;
     screen_buffer->font.pitch_family = FIXED_PITCH | FF_DONTCARE;
-    screen_buffer->font.face_name = NULL;
-    screen_buffer->font.face_len  = 0;
-    memset( screen_buffer->color_map, 0, sizeof(screen_buffer->color_map) );
+
+    if (wine_rb_put( &screen_buffer_map, LongToPtr(id), &screen_buffer->entry ))
+    {
+        free( screen_buffer );
+        ERR( "id %x already exists\n", id );
+        return NULL;
+    }
 
     if (!(screen_buffer->data = malloc( screen_buffer->width * screen_buffer->height *
                                         sizeof(*screen_buffer->data) )))
     {
-        free( screen_buffer );
+        destroy_screen_buffer( screen_buffer );
         return NULL;
     }
 
@@ -211,22 +218,7 @@ static struct screen_buffer *create_screen_buffer( struct console *console, int 
         memcpy( &screen_buffer->data[i * screen_buffer->width], screen_buffer->data,
                 screen_buffer->width * sizeof(char_info_t) );
 
-    if (wine_rb_put( &screen_buffer_map, LongToPtr(id), &screen_buffer->entry ))
-    {
-        ERR( "id %x already exists\n", id );
-        return NULL;
-    }
-
     return screen_buffer;
-}
-
-static void destroy_screen_buffer( struct screen_buffer *screen_buffer )
-{
-    if (screen_buffer->console->active == screen_buffer)
-        screen_buffer->console->active = NULL;
-    wine_rb_remove( &screen_buffer_map, &screen_buffer->entry );
-    free( screen_buffer->data );
-    free( screen_buffer );
 }
 
 static BOOL is_active( struct screen_buffer *screen_buffer )
