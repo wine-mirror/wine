@@ -56,7 +56,9 @@ extern const PSID security_high_label_sid;
 extern struct token *token_create_admin(void);
 extern int token_assign_label( struct token *token, PSID label );
 extern struct token *token_duplicate( struct token *src_token, unsigned primary,
-                                      int impersonation_level, const struct security_descriptor *sd );
+                                      int impersonation_level, const struct security_descriptor *sd,
+                                      const LUID_AND_ATTRIBUTES *remove_privs, unsigned int remove_priv_count,
+                                      const SID *remove_groups, unsigned int remove_group_count );
 extern int token_check_privileges( struct token *token, int all_required,
                                    const LUID_AND_ATTRIBUTES *reqprivs,
                                    unsigned int count, LUID_AND_ATTRIBUTES *usedprivs);

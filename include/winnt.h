@@ -4288,6 +4288,11 @@ typedef enum _TOKEN_INFORMATION_CLASS {
 					TOKEN_ADJUST_SESSIONID | \
 					TOKEN_ADJUST_DEFAULT )
 
+#define DISABLE_MAX_PRIVILEGE 0x1
+#define SANDBOX_INERT         0x2
+#define LUA_TOKEN             0x4
+#define WRITE_RESTRICTED      0x8
+
 #ifndef _SECURITY_DEFINED
 #define _SECURITY_DEFINED
 

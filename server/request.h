@@ -340,6 +340,7 @@ DECL_HANDLER(adjust_token_privileges);
 DECL_HANDLER(get_token_privileges);
 DECL_HANDLER(check_token_privileges);
 DECL_HANDLER(duplicate_token);
+DECL_HANDLER(filter_token);
 DECL_HANDLER(access_check);
 DECL_HANDLER(get_token_sid);
 DECL_HANDLER(get_token_groups);
@@ -626,6 +627,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_get_token_privileges,
     (req_handler)req_check_token_privileges,
     (req_handler)req_duplicate_token,
+    (req_handler)req_filter_token,
     (req_handler)req_access_check,
     (req_handler)req_get_token_sid,
     (req_handler)req_get_token_groups,
@@ -1991,6 +1993,12 @@ C_ASSERT( FIELD_OFFSET(struct duplicate_token_request, impersonation_level) == 2
 C_ASSERT( sizeof(struct duplicate_token_request) == 32 );
 C_ASSERT( FIELD_OFFSET(struct duplicate_token_reply, new_handle) == 8 );
 C_ASSERT( sizeof(struct duplicate_token_reply) == 16 );
+C_ASSERT( FIELD_OFFSET(struct filter_token_request, handle) == 12 );
+C_ASSERT( FIELD_OFFSET(struct filter_token_request, flags) == 16 );
+C_ASSERT( FIELD_OFFSET(struct filter_token_request, privileges_size) == 20 );
+C_ASSERT( sizeof(struct filter_token_request) == 24 );
+C_ASSERT( FIELD_OFFSET(struct filter_token_reply, new_handle) == 8 );
+C_ASSERT( sizeof(struct filter_token_reply) == 16 );
 C_ASSERT( FIELD_OFFSET(struct access_check_request, handle) == 12 );
 C_ASSERT( FIELD_OFFSET(struct access_check_request, desired_access) == 16 );
 C_ASSERT( FIELD_OFFSET(struct access_check_request, mapping_read) == 20 );

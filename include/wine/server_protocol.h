@@ -4501,6 +4501,22 @@ struct duplicate_token_reply
     char __pad_12[4];
 };
 
+struct filter_token_request
+{
+    struct request_header __header;
+    obj_handle_t  handle;
+    unsigned int  flags;
+    data_size_t   privileges_size;
+    /* VARARG(privileges,LUID_AND_ATTRIBUTES,privileges_size); */
+    /* VARARG(disable_sids,SID); */
+};
+struct filter_token_reply
+{
+    struct reply_header __header;
+    obj_handle_t  new_handle;
+    char __pad_12[4];
+};
+
 struct access_check_request
 {
     struct request_header __header;
@@ -5646,6 +5662,7 @@ enum request
     REQ_get_token_privileges,
     REQ_check_token_privileges,
     REQ_duplicate_token,
+    REQ_filter_token,
     REQ_access_check,
     REQ_get_token_sid,
     REQ_get_token_groups,
@@ -5933,6 +5950,7 @@ union generic_request
     struct get_token_privileges_request get_token_privileges_request;
     struct check_token_privileges_request check_token_privileges_request;
     struct duplicate_token_request duplicate_token_request;
+    struct filter_token_request filter_token_request;
     struct access_check_request access_check_request;
     struct get_token_sid_request get_token_sid_request;
     struct get_token_groups_request get_token_groups_request;
@@ -6218,6 +6236,7 @@ union generic_reply
     struct get_token_privileges_reply get_token_privileges_reply;
     struct check_token_privileges_reply check_token_privileges_reply;
     struct duplicate_token_reply duplicate_token_reply;
+    struct filter_token_reply filter_token_reply;
     struct access_check_reply access_check_reply;
     struct get_token_sid_reply get_token_sid_reply;
     struct get_token_groups_reply get_token_groups_reply;
@@ -6281,7 +6300,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 645
+#define SERVER_PROTOCOL_VERSION 646
 
 /* ### protocol_version end ### */
 

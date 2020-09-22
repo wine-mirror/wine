@@ -3152,6 +3152,16 @@ enum caret_state
     obj_handle_t  new_handle; /* duplicated handle */
 @END
 
+@REQ(filter_token)
+    obj_handle_t  handle;          /* handle to the token to duplicate */
+    unsigned int  flags;           /* flags */
+    data_size_t   privileges_size; /* size of privileges */
+    VARARG(privileges,LUID_AND_ATTRIBUTES,privileges_size); /* privileges to remove from new token */
+    VARARG(disable_sids,SID);      /* array of groups to remove from new token */
+@REPLY
+    obj_handle_t  new_handle;      /* filtered handle */
+@END
+
 @REQ(access_check)
     obj_handle_t    handle; /* handle to the token */
     unsigned int    desired_access; /* desired access to the object */

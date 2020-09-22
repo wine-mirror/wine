@@ -286,6 +286,19 @@ static int acl_is_valid( const ACL *acl, data_size_t size )
     return TRUE;
 }
 
+static unsigned int get_sid_count( const SID *sid, data_size_t size )
+{
+    unsigned int count;
+
+    for (count = 0; size >= sizeof(SID) && security_sid_len( sid ) <= size; count++)
+    {
+        size -= security_sid_len( sid );
+        sid = (const SID *)((char *)sid + security_sid_len( sid ));
+    }
+
+    return count;
+}
+
 /* checks whether all members of a security descriptor fit inside the size
  * of memory specified */
 int sd_is_valid( const struct security_descriptor *sd, data_size_t size )
@@ -627,8 +640,36 @@ static struct token *create_token( unsigned primary, const SID *user,
     return token;
 }
 
+static int filter_group( struct group *group, const SID *filter, unsigned int count )
+{
+    unsigned int i;
+
+    for (i = 0; i < count; i++)
+    {
+        if (security_equal_sid( &group->sid, filter )) return 1;
+        filter = (const SID *)((char *)filter + security_sid_len( filter ));
+    }
+
+    return 0;
+}
+
+static int filter_privilege( struct privilege *privilege, const LUID_AND_ATTRIBUTES *filter, unsigned int count )
+{
+    unsigned int i;
+
+    for (i = 0; i < count; i++)
+    {
+        if (!memcmp( &privilege->luid, &filter[i].Luid, sizeof(LUID) ))
+            return 1;
+    }
+
+    return 0;
+}
+
 struct token *token_duplicate( struct token *src_token, unsigned primary,
-                               int impersonation_level, const struct security_descriptor *sd )
+                               int impersonation_level, const struct security_descriptor *sd,
+                               const LUID_AND_ATTRIBUTES *remove_privs, unsigned int remove_priv_count,
+                               const SID *remove_groups, unsigned int remove_group_count)
 {
     const luid_t *modified_id =
         primary || (impersonation_level == src_token->impersonation_level) ?
@@ -664,6 +705,12 @@ struct token *token_duplicate( struct token *src_token, unsigned primary,
             return NULL;
         }
         memcpy( newgroup, group, size );
+        if (filter_group( group, remove_groups, remove_group_count ))
+        {
+            newgroup->enabled = 0;
+            newgroup->def = 0;
+            newgroup->deny_only = 1;
+        }
         list_add_tail( &token->groups, &newgroup->entry );
         if (src_token->primary_group == &group->sid)
         {
@@ -675,11 +722,14 @@ struct token *token_duplicate( struct token *src_token, unsigned primary,
 
     /* copy privileges */
     LIST_FOR_EACH_ENTRY( privilege, &src_token->privileges, struct privilege, entry )
+    {
+        if (filter_privilege( privilege, remove_privs, remove_priv_count )) continue;
         if (!privilege_add( token, &privilege->luid, privilege->enabled ))
         {
             release_object( token );
             return NULL;
         }
+    }
 
     if (sd) default_set_sd( &token->obj, sd, OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION |
                             DACL_SECURITY_INFORMATION | SACL_SECURITY_INFORMATION );
@@ -1312,10 +1362,38 @@ DECL_HANDLER(duplicate_token)
                                                      TOKEN_DUPLICATE,
                                                      &token_ops )))
     {
-        struct token *token = token_duplicate( src_token, req->primary, req->impersonation_level, sd );
+        struct token *token = token_duplicate( src_token, req->primary, req->impersonation_level, sd, NULL, 0, NULL, 0 );
         if (token)
         {
             reply->new_handle = alloc_handle_no_access_check( current->process, token, req->access, objattr->attributes );
+            release_object( token );
+        }
+        release_object( src_token );
+    }
+}
+
+/* creates a restricted version of a token */
+DECL_HANDLER(filter_token)
+{
+    struct token *src_token;
+
+    if ((src_token = (struct token *)get_handle_obj( current->process, req->handle, TOKEN_DUPLICATE, &token_ops )))
+    {
+        const LUID_AND_ATTRIBUTES *filter_privileges = get_req_data();
+        unsigned int priv_count, group_count;
+        const SID *filter_groups;
+        struct token *token;
+
+        priv_count = min( req->privileges_size, get_req_data_size() ) / sizeof(LUID_AND_ATTRIBUTES);
+        filter_groups = (const SID *)((char *)filter_privileges + priv_count * sizeof(LUID_AND_ATTRIBUTES));
+        group_count = get_sid_count( filter_groups, get_req_data_size() - priv_count * sizeof(LUID_AND_ATTRIBUTES) );
+
+        token = token_duplicate( src_token, src_token->primary, src_token->impersonation_level, NULL,
+                                 filter_privileges, priv_count, filter_groups, group_count );
+        if (token)
+        {
+            unsigned int access = get_handle_access( current->process, req->handle );
+            reply->new_handle = alloc_handle_no_access_check( current->process, token, access, 0 );
             release_object( token );
         }
         release_object( src_token );
