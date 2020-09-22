@@ -3900,7 +3900,7 @@ static void test_ProcThreadAttributeList(void)
  * level 2: Process created by level 1 process with handle inheritance and level 0
  *          process parent substitute.
  * level 255: Process created by level 1 process during invalid parent handles testing. */
-void test_parent_process_attribute(unsigned int level, HANDLE read_pipe)
+static void test_parent_process_attribute(unsigned int level, HANDLE read_pipe)
 {
     PROCESS_BASIC_INFORMATION pbi;
     char buffer[MAX_PATH + 64];
@@ -4081,10 +4081,68 @@ void test_parent_process_attribute(unsigned int level, HANDLE read_pipe)
     }
 }
 
+static void test_handle_list_attribute(BOOL child, HANDLE handle1, HANDLE handle2)
+{
+    char buffer[MAX_PATH + 64];
+    HANDLE pipe[2];
+    PROCESS_INFORMATION info;
+    STARTUPINFOEXA si;
+    SIZE_T size;
+    BOOL ret;
+    SECURITY_ATTRIBUTES sa;
+
+    if (child)
+    {
+        DWORD flags;
+
+        flags = 0;
+        ret = GetHandleInformation(handle1, &flags);
+        ok(ret, "Failed to get handle info, error %d.\n", GetLastError());
+        ok(flags == HANDLE_FLAG_INHERIT, "Unexpected flags %#x.\n", flags);
+        CloseHandle(handle1);
+
+        ret = GetHandleInformation(handle2, &flags);
+    todo_wine
+        ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "Unexpected return value, error %d.\n", GetLastError());
+
+        return;
+    }
+
+    ret = pInitializeProcThreadAttributeList(NULL, 1, 0, &size);
+    ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+            "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+
+    memset(&si, 0, sizeof(si));
+    si.StartupInfo.cb = sizeof(si.StartupInfo);
+    si.lpAttributeList = heap_alloc(size);
+    ret = pInitializeProcThreadAttributeList(si.lpAttributeList, 1, 0, &size);
+    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+
+    memset(&sa, 0, sizeof(sa));
+    sa.nLength = sizeof(sa);
+    sa.bInheritHandle = TRUE;
+
+    ret = CreatePipe(&pipe[0], &pipe[1], &sa, 1024);
+    ok(ret, "Failed to create a pipe.\n");
+
+    ret = pUpdateProcThreadAttribute(si.lpAttributeList, 0, PROC_THREAD_ATTRIBUTE_HANDLE_LIST, &pipe[0],
+            sizeof(pipe[0]), NULL, NULL);
+    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+
+    sprintf(buffer, "\"%s\" process handlelist %p %p", selfname, pipe[0], pipe[1]);
+    ret = CreateProcessA(NULL, buffer, NULL, NULL, TRUE, EXTENDED_STARTUPINFO_PRESENT, NULL, NULL,
+            (STARTUPINFOA *)&si, &info);
+    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+
+    wait_and_close_child_process(&info);
+
+    CloseHandle(pipe[0]);
+    CloseHandle(pipe[1]);
+}
+
 START_TEST(process)
 {
-    HANDLE job;
-    HANDLE hproc;
+    HANDLE job, hproc, h, h2;
     BOOL b = init();
     ok(b, "Basic init of CreateProcess test\n");
     if (!b) return;
@@ -4146,10 +4204,15 @@ START_TEST(process)
         }
         else if (!strcmp(myARGV[2], "parent") && myARGC >= 5)
         {
-            HANDLE h;
-
             sscanf(myARGV[4], "%p", &h);
             test_parent_process_attribute(atoi(myARGV[3]), h);
+            return;
+        }
+        else if (!strcmp(myARGV[2], "handlelist") && myARGC >= 5)
+        {
+            sscanf(myARGV[3], "%p", &h);
+            sscanf(myARGV[4], "%p", &h2);
+            test_handle_list_attribute(TRUE, h, h2);
             return;
         }
 
@@ -4220,4 +4283,5 @@ START_TEST(process)
     test_BreakawayOk(job);
     CloseHandle(job);
     test_parent_process_attribute(0, NULL);
+    test_handle_list_attribute(FALSE, NULL, NULL);
 }
