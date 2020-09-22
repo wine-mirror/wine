@@ -359,18 +359,50 @@ BOOL get_primary_adapter(WCHAR *name)
 
 static int mode_compare(const void *p1, const void *p2)
 {
+    DWORD a_width, a_height, b_width, b_height;
     const DEVMODEW *a = p1, *b = p2;
 
+    /* Use the width and height in landscape mode for comparison */
+    if (a->u1.s2.dmDisplayOrientation == DMDO_DEFAULT || a->u1.s2.dmDisplayOrientation == DMDO_180)
+    {
+        a_width = a->dmPelsWidth;
+        a_height = a->dmPelsHeight;
+    }
+    else
+    {
+        a_width = a->dmPelsHeight;
+        a_height = a->dmPelsWidth;
+    }
+
+    if (b->u1.s2.dmDisplayOrientation == DMDO_DEFAULT || b->u1.s2.dmDisplayOrientation == DMDO_180)
+    {
+        b_width = b->dmPelsWidth;
+        b_height = b->dmPelsHeight;
+    }
+    else
+    {
+        b_width = b->dmPelsHeight;
+        b_height = b->dmPelsWidth;
+    }
+
+    /* Depth in descending order */
     if (a->dmBitsPerPel != b->dmBitsPerPel)
         return b->dmBitsPerPel - a->dmBitsPerPel;
 
-    if (a->dmPelsWidth != b->dmPelsWidth)
-        return a->dmPelsWidth - b->dmPelsWidth;
+    /* Width in ascending order */
+    if (a_width != b_width)
+        return a_width - b_width;
 
-    if (a->dmPelsHeight != b->dmPelsHeight)
-        return a->dmPelsHeight - b->dmPelsHeight;
+    /* Height in ascending order */
+    if (a_height != b_height)
+        return a_height - b_height;
 
-    return b->dmDisplayFrequency - a->dmDisplayFrequency;
+    /* Frequency in descending order */
+    if (a->dmDisplayFrequency != b->dmDisplayFrequency)
+        return b->dmDisplayFrequency - a->dmDisplayFrequency;
+
+    /* Orientation in ascending order */
+    return a->u1.s2.dmDisplayOrientation - b->u1.s2.dmDisplayOrientation;
 }
 
 /***********************************************************************
