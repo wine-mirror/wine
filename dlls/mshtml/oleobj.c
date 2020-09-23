@@ -606,15 +606,27 @@ static HRESULT WINAPI OleObject_GetUserType(IOleObject *iface, DWORD dwFormOfTyp
 static HRESULT WINAPI OleObject_SetExtent(IOleObject *iface, DWORD dwDrawAspect, SIZEL *psizel)
 {
     HTMLDocument *This = impl_from_IOleObject(iface);
-    FIXME("(%p)->(%d %p)\n", This, dwDrawAspect, psizel);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%d %p)\n", This, dwDrawAspect, psizel);
+
+    if (dwDrawAspect != DVASPECT_CONTENT)
+        return E_INVALIDARG;
+
+    This->doc_obj->extent = *psizel;
+    return S_OK;
 }
 
 static HRESULT WINAPI OleObject_GetExtent(IOleObject *iface, DWORD dwDrawAspect, SIZEL *psizel)
 {
     HTMLDocument *This = impl_from_IOleObject(iface);
-    FIXME("(%p)->(%d %p)\n", This, dwDrawAspect, psizel);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%d %p)\n", This, dwDrawAspect, psizel);
+
+    if (dwDrawAspect != DVASPECT_CONTENT)
+        return E_INVALIDARG;
+
+    *psizel = This->doc_obj->extent;
+    return S_OK;
 }
 
 static HRESULT WINAPI OleObject_Advise(IOleObject *iface, IAdviseSink *pAdvSink, DWORD *pdwConnection)
@@ -1473,4 +1485,6 @@ void HTMLDocument_OleObj_Init(HTMLDocument *This)
     This->IObjectWithSite_iface.lpVtbl = &ObjectWithSiteVtbl;
     This->IOleContainer_iface.lpVtbl = &OleContainerVtbl;
     This->IObjectSafety_iface.lpVtbl = &ObjectSafetyVtbl;
+    This->doc_obj->extent.cx = 1;
+    This->doc_obj->extent.cy = 1;
 }
