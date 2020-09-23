@@ -3613,40 +3613,6 @@ static void test_ddrawstream_receive_connection(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
-static void test_audiostream_set_state(void)
-{
-    IAMMultiMediaStream *mmstream = create_ammultimediastream();
-    IAMMediaStream *am_stream;
-    IMediaStream *stream;
-    HRESULT hr;
-    ULONG ref;
-
-    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_READ, 0, NULL);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryAudio, 0, &stream);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    hr = IMediaStream_QueryInterface(stream, &IID_IAMMediaStream, (void **)&am_stream);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-
-    hr = IAMMediaStream_SetState(am_stream, 4);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-
-    hr = IAMMediaStream_SetState(am_stream, State_Running);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-
-    hr = IAMMediaStream_SetState(am_stream, State_Paused);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-
-    hr = IAMMediaStream_SetState(am_stream, State_Stopped);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-
-    ref = IAMMultiMediaStream_Release(mmstream);
-    ok(!ref, "Got outstanding refcount %d.\n", ref);
-    IAMMediaStream_Release(am_stream);
-    ref = IMediaStream_Release(stream);
-    ok(!ref, "Got outstanding refcount %d.\n", ref);
-}
-
 void test_audiostream_end_of_stream(void)
 {
     IAMMultiMediaStream *mmstream = create_ammultimediastream();
@@ -5358,6 +5324,46 @@ static void test_ammediastream_join_filter_graph(void)
     check_ammediastream_join_filter_graph(&MSPID_PrimaryVideo);
 }
 
+static void check_ammediastream_set_state(const MSPID *id)
+{
+    IAMMultiMediaStream *mmstream = create_ammultimediastream();
+    IAMMediaStream *am_stream;
+    IMediaStream *stream;
+    HRESULT hr;
+    ULONG ref;
+
+    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_READ, 0, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, id, 0, &stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMediaStream_QueryInterface(stream, &IID_IAMMediaStream, (void **)&am_stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAMMediaStream_SetState(am_stream, 4);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAMMediaStream_SetState(am_stream, State_Running);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAMMediaStream_SetState(am_stream, State_Paused);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAMMediaStream_SetState(am_stream, State_Stopped);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ref = IAMMultiMediaStream_Release(mmstream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    IAMMediaStream_Release(am_stream);
+    ref = IMediaStream_Release(stream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
+static void test_ammediastream_set_state(void)
+{
+    check_ammediastream_set_state(&MSPID_PrimaryAudio);
+    check_ammediastream_set_state(&MSPID_PrimaryVideo);
+}
+
 void test_mediastreamfilter_get_state(void)
 {
     IAMMultiMediaStream *mmstream = create_ammultimediastream();
@@ -6787,7 +6793,6 @@ START_TEST(amstream)
     test_audiostream_get_format();
     test_audiostream_set_format();
     test_audiostream_receive_connection();
-    test_audiostream_set_state();
     test_audiostream_end_of_stream();
     test_audiostream_receive();
     test_audiostream_initialize();
@@ -6812,6 +6817,7 @@ START_TEST(amstream)
     test_ammediastream_join_am_multi_media_stream();
     test_ammediastream_join_filter();
     test_ammediastream_join_filter_graph();
+    test_ammediastream_set_state();
 
     test_mediastreamfilter_get_state();
     test_mediastreamfilter_stop_pause_run();

@@ -57,6 +57,7 @@ struct ddraw_stream
     IMemAllocator *allocator;
     AM_MEDIA_TYPE mt;
     struct format format;
+    FILTER_STATE state;
 };
 
 static HRESULT ddrawstreamsample_create(struct ddraw_stream *parent, IDirectDrawSurface *surface,
@@ -260,11 +261,17 @@ static HRESULT WINAPI ddraw_IAMMediaStream_Initialize(IAMMediaStream *iface, IUn
 
 static HRESULT WINAPI ddraw_IAMMediaStream_SetState(IAMMediaStream *iface, FILTER_STATE state)
 {
-    struct ddraw_stream *This = impl_from_IAMMediaStream(iface);
+    struct ddraw_stream *stream = impl_from_IAMMediaStream(iface);
 
-    FIXME("(%p/%p)->(%u) stub!\n", This, iface, state);
+    TRACE("stream %p, state %u.\n", stream, state);
 
-    return S_FALSE;
+    EnterCriticalSection(&stream->cs);
+
+    stream->state = state;
+
+    LeaveCriticalSection(&stream->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ddraw_IAMMediaStream_JoinAMMultiMediaStream(IAMMediaStream *iface, IAMMultiMediaStream *mmstream)
