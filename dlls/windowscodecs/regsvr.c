@@ -1192,6 +1192,48 @@ static struct decoder_pattern const jpeg_patterns[] = {
     {0}
 };
 
+static const BYTE wmp_magic_v0[] = {0x49, 0x49, 0xbc, 0x00};
+static const BYTE wmp_magic_v1[] = {0x49, 0x49, 0xbc, 0x01};
+
+static GUID const * const wmp_formats[] = {
+    &GUID_WICPixelFormat128bppRGBAFixedPoint,
+    &GUID_WICPixelFormat128bppRGBAFloat,
+    &GUID_WICPixelFormat128bppRGBFloat,
+    &GUID_WICPixelFormat16bppBGR555,
+    &GUID_WICPixelFormat16bppBGR565,
+    &GUID_WICPixelFormat16bppGray,
+    &GUID_WICPixelFormat16bppGrayFixedPoint,
+    &GUID_WICPixelFormat16bppGrayHalf,
+    &GUID_WICPixelFormat24bppBGR,
+    &GUID_WICPixelFormat24bppRGB,
+    &GUID_WICPixelFormat32bppBGR,
+    &GUID_WICPixelFormat32bppBGR101010,
+    &GUID_WICPixelFormat32bppBGRA,
+    &GUID_WICPixelFormat32bppCMYK,
+    &GUID_WICPixelFormat32bppGrayFixedPoint,
+    &GUID_WICPixelFormat32bppGrayFloat,
+    &GUID_WICPixelFormat32bppRGBE,
+    &GUID_WICPixelFormat40bppCMYKAlpha,
+    &GUID_WICPixelFormat48bppRGB,
+    &GUID_WICPixelFormat48bppRGBFixedPoint,
+    &GUID_WICPixelFormat48bppRGBHalf,
+    &GUID_WICPixelFormat64bppCMYK,
+    &GUID_WICPixelFormat64bppRGBA,
+    &GUID_WICPixelFormat64bppRGBAFixedPoint,
+    &GUID_WICPixelFormat64bppRGBAHalf,
+    &GUID_WICPixelFormat80bppCMYKAlpha,
+    &GUID_WICPixelFormat8bppGray,
+    &GUID_WICPixelFormat96bppRGBFixedPoint,
+    &GUID_WICPixelFormatBlackWhite,
+    NULL
+};
+
+static struct decoder_pattern const wmp_patterns[] = {
+    {4,0,wmp_magic_v0,mask_all,0},
+    {4,0,wmp_magic_v1,mask_all,0},
+    {0}
+};
+
 static const BYTE png_magic[] = {137,80,78,71,13,10,26,10};
 
 static GUID const * const png_formats[] = {
@@ -1335,6 +1377,17 @@ static struct regsvr_decoder const decoder_list[] = {
 	".jpg;.jpeg;.jfif",
 	jpeg_formats,
 	jpeg_patterns
+    },
+    {   &CLSID_WICWmpDecoder,
+	"The Wine Project",
+	"JPEG-XR Decoder",
+	"1.0.0.0",
+	&GUID_VendorMicrosoft,
+	&GUID_ContainerFormatWmp,
+	"image/jxr",
+	".jxr;.hdp;.wdp",
+	wmp_formats,
+	wmp_patterns
     },
     {   &CLSID_WICPngDecoder,
 	"The Wine Project",
