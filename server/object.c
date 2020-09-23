@@ -52,22 +52,13 @@ struct namespace
 
 #ifdef DEBUG_OBJECTS
 static struct list object_list = LIST_INIT(object_list);
-static struct list static_object_list = LIST_INIT(static_object_list);
 
 void dump_objects(void)
 {
-    struct list *p;
+    struct object *ptr;
 
-    LIST_FOR_EACH( p, &static_object_list )
+    LIST_FOR_EACH_ENTRY( ptr, &object_list, struct object, obj_list )
     {
-        struct object *ptr = LIST_ENTRY( p, struct object, obj_list );
-        fprintf( stderr, "%p:%d: ", ptr, ptr->refcount );
-        dump_object_name( ptr );
-        ptr->ops->dump( ptr, 1 );
-    }
-    LIST_FOR_EACH( p, &object_list )
-    {
-        struct object *ptr = LIST_ENTRY( p, struct object, obj_list );
         fprintf( stderr, "%p:%d: ", ptr, ptr->refcount );
         dump_object_name( ptr );
         ptr->ops->dump( ptr, 1 );
@@ -76,17 +67,11 @@ void dump_objects(void)
 
 void close_objects(void)
 {
-    struct list *ptr;
+    struct object *obj, *obj2;
 
-    /* release the static objects */
-    while ((ptr = list_head( &static_object_list )))
-    {
-        struct object *obj = LIST_ENTRY( ptr, struct object, obj_list );
-        /* move it back to the standard list before freeing */
-        list_remove( &obj->obj_list );
-        list_add_head( &object_list, &obj->obj_list );
-        release_object( obj );
-    }
+    /* release the permanent objects */
+    LIST_FOR_EACH_ENTRY_SAFE( obj, obj2, &object_list, struct object, obj_list )
+        if (obj->is_permanent) release_object( obj );
 
     dump_objects();  /* dump any remaining objects */
 }
@@ -404,26 +389,6 @@ void unlink_named_object( struct object *obj )
     obj->ops->unlink_name( obj, name_ptr );
     if (name_ptr->parent) release_object( name_ptr->parent );
     free( name_ptr );
-}
-
-/* mark an object as being permanent, i.e. only released at shutdown */
-void make_object_permanent( struct object *obj )
-{
-    obj->is_permanent = 1;
-#ifdef DEBUG_OBJECTS
-    list_remove( &obj->obj_list );
-    list_add_head( &static_object_list, &obj->obj_list );
-#endif
-}
-
-/* mark an object as no longer permanent */
-void make_object_temporary( struct object *obj )
-{
-    obj->is_permanent = 0;
-#ifdef DEBUG_OBJECTS
-    list_remove( &obj->obj_list );
-    list_add_head( &object_list, &obj->obj_list );
-#endif
 }
 
 /* grab an object (i.e. increment its refcount) and return the object */

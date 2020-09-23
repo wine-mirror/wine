@@ -145,8 +145,6 @@ extern void *create_named_object( struct object *parent, const struct object_ops
 extern void *open_named_object( struct object *parent, const struct object_ops *ops,
                                 const struct unicode_str *name, unsigned int attributes );
 extern void unlink_named_object( struct object *obj );
-extern void make_object_permanent( struct object *obj );
-extern void make_object_temporary( struct object *obj );
 extern struct namespace *create_namespace( unsigned int hash_size );
 extern void free_kernel_objects( struct object *obj );
 /* grab/release_object can take any pointer, but you better make sure */
@@ -179,6 +177,9 @@ extern void no_destroy( struct object *obj );
 extern void dump_objects(void);
 extern void close_objects(void);
 #endif
+
+static inline void make_object_permanent( struct object *obj ) { obj->is_permanent = 1; }
+static inline void make_object_temporary( struct object *obj ) { obj->is_permanent = 0; }
 
 /* event functions */
 
