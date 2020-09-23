@@ -2678,6 +2678,51 @@ static void test_refcount(void)
     CloseServiceHandle(scm_handle);
 }
 
+static void test_EventLog(void)
+{
+    SC_HANDLE scm_handle, svc_handle;
+    DWORD size;
+    BOOL ret;
+    QUERY_SERVICE_CONFIGA *config;
+
+    scm_handle = OpenSCManagerA(NULL, NULL, GENERIC_READ);
+    ok(scm_handle != NULL, "OpenSCManager error %u\n", GetLastError());
+
+    svc_handle = OpenServiceA(scm_handle, "EventLog", GENERIC_READ);
+    ok(svc_handle != NULL, "OpenService error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = QueryServiceConfigA(svc_handle, NULL, 0, &size);
+    ok(!ret, "QueryServiceConfig should fail\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %u\n", GetLastError());
+
+    config = HeapAlloc(GetProcessHeap(), 0, size);
+    ret = QueryServiceConfigA(svc_handle, config, size, &size);
+    ok(ret, "QueryServiceConfig error %u\n", GetLastError());
+
+    ok(config->dwServiceType == SERVICE_WIN32_SHARE_PROCESS, "got %#x\n", config->dwServiceType);
+    ok(config->dwStartType == SERVICE_AUTO_START, "got %u\n", config->dwStartType);
+    ok(config->dwErrorControl == SERVICE_ERROR_NORMAL, "got %u\n", config->dwErrorControl);
+    ok(!strcmpi(config->lpBinaryPathName, "C:\\windows\\system32\\services.exe") /* XP */ ||
+       !strcmpi(config->lpBinaryPathName, "C:\\windows\\system32\\svchost.exe -k LocalServiceNetworkRestricted") /* Vista+ */ ||
+       !strcmpi(config->lpBinaryPathName, "C:\\windows\\system32\\svchost.exe -k LocalServiceNetworkRestricted -p") /* Win10 */,
+       "got %s\n", config->lpBinaryPathName);
+todo_wine
+    ok(!strcmpi(config->lpLoadOrderGroup, "Event Log"), "got %s\n", config->lpLoadOrderGroup);
+    ok(config->dwTagId == 0, "Expected 0, got %d\n", config->dwTagId);
+    ok(!config->lpDependencies[0], "lpDependencies is not empty\n");
+    ok(!strcmp(config->lpServiceStartName, "LocalSystem") /* XP */ ||
+       !strcmp(config->lpServiceStartName, "NT AUTHORITY\\LocalService"),
+       "got %s\n", config->lpServiceStartName);
+    ok(!strcmp(config->lpDisplayName, "Event Log") /* XP */ ||
+       !strcmp(config->lpDisplayName, "Windows Event Log") /* Vista+ */, "got %s\n", config->lpDisplayName);
+
+    HeapFree(GetProcessHeap(), 0, config);
+
+    CloseServiceHandle(svc_handle);
+    CloseServiceHandle(scm_handle);
+}
+
 static DWORD WINAPI ctrl_handler(DWORD ctl, DWORD type, void *data, void *user)
 {
     HANDLE evt = user;
@@ -2775,4 +2820,5 @@ START_TEST(service)
      * and what the rules are
      */
     test_refcount();
+    test_EventLog();
 }

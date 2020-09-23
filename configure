@@ -1645,6 +1645,7 @@ enable_wdscore
 enable_webservices
 enable_wer
 enable_wevtapi
+enable_wevtsvc
 enable_wiaservc
 enable_wimgapi
 enable_windowscodecs
@@ -21007,6 +21008,7 @@ wine_fn_config_makefile dlls/webservices/tests enable_tests
 wine_fn_config_makefile dlls/wer enable_wer
 wine_fn_config_makefile dlls/wer/tests enable_tests
 wine_fn_config_makefile dlls/wevtapi enable_wevtapi
+wine_fn_config_makefile dlls/wevtsvc enable_wevtsvc
 wine_fn_config_makefile dlls/wiaservc enable_wiaservc
 wine_fn_config_makefile dlls/wiaservc/tests enable_tests
 wine_fn_config_makefile dlls/wimgapi enable_wimgapi
