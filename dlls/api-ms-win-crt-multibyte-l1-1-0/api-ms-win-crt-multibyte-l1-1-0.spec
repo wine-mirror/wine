@@ -154,7 +154,7 @@
 @ stub _mbsncpy_s
 @ stub _mbsncpy_s_l
 @ cdecl _mbsnextc(str) ucrtbase._mbsnextc
-@ stub _mbsnextc_l
+@ cdecl _mbsnextc_l(str ptr) ucrtbase._mbsnextc_l
 @ cdecl _mbsnicmp(str str long) ucrtbase._mbsnicmp
 @ stub _mbsnicmp_l
 @ cdecl _mbsnicoll(str str long) ucrtbase._mbsnicoll

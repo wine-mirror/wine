@@ -393,13 +393,21 @@ int CDECL _getmbcp(void)
 }
 
 /*********************************************************************
+ *		_mbsnextc_l(MSVCRT.@)
+ */
+unsigned int CDECL _mbsnextc_l(const unsigned char* str, MSVCRT__locale_t locale)
+{
+  if(_ismbblead_l(*str, locale))
+    return *str << 8 | str[1];
+  return *str;
+}
+
+/*********************************************************************
  *		_mbsnextc(MSVCRT.@)
  */
 unsigned int CDECL _mbsnextc(const unsigned char* str)
 {
-  if(_ismbblead(*str))
-    return *str << 8 | str[1];
-  return *str;
+    return _mbsnextc_l(str, NULL);
 }
 
 /*********************************************************************

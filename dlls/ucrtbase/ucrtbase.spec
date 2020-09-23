@@ -673,7 +673,7 @@
 @ stub _mbsncpy_s
 @ stub _mbsncpy_s_l
 @ cdecl _mbsnextc(str)
-@ stub _mbsnextc_l
+@ cdecl _mbsnextc_l(str ptr)
 @ cdecl _mbsnicmp(str str long)
 @ stub _mbsnicmp_l
 @ stub _mbsnicoll(str str long)
@@ -1242,7 +1242,7 @@
 @ stub _o__mbsncpy_s
 @ stub _o__mbsncpy_s_l
 @ cdecl _o__mbsnextc(str) _mbsnextc
-@ stub _o__mbsnextc_l
+@ cdecl _o__mbsnextc_l(str ptr) _mbsnextc_l
 @ cdecl _o__mbsnicmp(str str long) _mbsnicmp
 @ stub _o__mbsnicmp_l
 @ stub _o__mbsnicoll

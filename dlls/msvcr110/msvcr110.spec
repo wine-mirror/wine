@@ -1517,7 +1517,7 @@
 @ stub _mbsncpy_s
 @ stub _mbsncpy_s_l
 @ cdecl _mbsnextc(str)
-@ stub _mbsnextc_l
+@ cdecl _mbsnextc_l(str ptr)
 @ cdecl _mbsnicmp(str str long)
 @ stub _mbsnicmp_l
 @ stub _mbsnicoll(str str long)
