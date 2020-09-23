@@ -1571,7 +1571,9 @@ static BOOL wined3d_query_vk_poll(struct wined3d_query *query, uint32_t flags)
     if (query_vk->pending_count)
         goto unavailable;
 
-    if (!wined3d_query_vk_accumulate_data(query_vk, context_vk, &query_vk->pool_idx))
+    /* If the query was suspended, and then ended before it was resumed,
+     * there's no data to accumulate here. */
+    if (query_vk->pool_idx.pool_vk && !wined3d_query_vk_accumulate_data(query_vk, context_vk, &query_vk->pool_idx))
         goto unavailable;
 
     context_release(&context_vk->c);
