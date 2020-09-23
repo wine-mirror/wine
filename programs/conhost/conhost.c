@@ -1652,7 +1652,7 @@ static DWORD WINAPI tty_input( void *param )
             {
             case 3: /* end of text */
                 LeaveCriticalSection( &console_section );
-                return 0;
+                goto done;
             case '\n':
                 key_press( console, '\n', VK_RETURN, LEFT_CTRL_PRESSED );
                 break;
@@ -1681,6 +1681,7 @@ static DWORD WINAPI tty_input( void *param )
 
     TRACE( "NtReadFile failed: %#x\n", status );
 
+done:
     EnterCriticalSection( &console_section );
     if (console->read_ioctl) read_complete( console, status, NULL, 0, FALSE );
     if (console->is_unix)
