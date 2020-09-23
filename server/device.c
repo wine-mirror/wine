@@ -720,11 +720,12 @@ static struct device *create_device( struct object *root, const struct unicode_s
 }
 
 struct object *create_unix_device( struct object *root, const struct unicode_str *name,
+                                   unsigned int attr, const struct security_descriptor *sd,
                                    const char *unix_path )
 {
     struct device *device;
 
-    if ((device = create_named_object( root, &device_ops, name, 0, NULL )))
+    if ((device = create_named_object( root, &device_ops, name, attr, sd )))
     {
         device->unix_path = strdup( unix_path );
         device->manager = NULL;  /* no manager, requests go straight to the Unix device */

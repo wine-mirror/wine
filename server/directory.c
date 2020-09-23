@@ -423,11 +423,11 @@ void init_directories(void)
     make_object_static( &dir_objtype->obj );
 
     /* devices */
-    named_pipe_device = create_named_pipe_device( &dir_device->obj, &named_pipe_str );
-    mailslot_device   = create_mailslot_device( &dir_device->obj, &mailslot_str );
-    console_device    = create_console_device( &dir_device->obj, &condrv_str );
-    socket_device     = create_socket_device( &dir_device->obj, &afd_str );
-    null_device       = create_unix_device( &dir_device->obj, &null_str, "/dev/null" );
+    named_pipe_device = create_named_pipe_device( &dir_device->obj, &named_pipe_str, 0, NULL );
+    mailslot_device   = create_mailslot_device( &dir_device->obj, &mailslot_str, 0, NULL );
+    console_device    = create_console_device( &dir_device->obj, &condrv_str, 0, NULL );
+    socket_device     = create_socket_device( &dir_device->obj, &afd_str, 0, NULL );
+    null_device       = create_unix_device( &dir_device->obj, &null_str, 0, NULL, "/dev/null" );
     make_object_static( named_pipe_device );
     make_object_static( mailslot_device );
     make_object_static( null_device );

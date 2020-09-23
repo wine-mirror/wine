@@ -2540,9 +2540,10 @@ static struct object *console_device_open_file( struct object *obj, unsigned int
     return is_output ? grab_object( current->process->console->active ) : grab_object( current->process->console );
 }
 
-struct object *create_console_device( struct object *root, const struct unicode_str *name )
+struct object *create_console_device( struct object *root, const struct unicode_str *name,
+                                      unsigned int attr, const struct security_descriptor *sd )
 {
-    return create_named_object( root, &console_device_ops, name, 0, NULL );
+    return create_named_object( root, &console_device_ops, name, attr, sd );
 }
 
 /* allocate a console for the renderer */

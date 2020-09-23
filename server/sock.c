@@ -1247,9 +1247,10 @@ static struct object *socket_device_open_file( struct object *obj, unsigned int 
     return &sock->obj;
 }
 
-struct object *create_socket_device( struct object *root, const struct unicode_str *name )
+struct object *create_socket_device( struct object *root, const struct unicode_str *name,
+                                     unsigned int attr, const struct security_descriptor *sd )
 {
-    return create_named_object( root, &socket_device_ops, name, 0, NULL );
+    return create_named_object( root, &socket_device_ops, name, attr, sd );
 }
 
 /* accept a socket */

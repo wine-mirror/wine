@@ -176,12 +176,16 @@ extern struct object *create_user_data_mapping( struct object *root, const struc
 
 /* device functions */
 
-extern struct object *create_named_pipe_device( struct object *root, const struct unicode_str *name );
-extern struct object *create_mailslot_device( struct object *root, const struct unicode_str *name );
-extern struct object *create_console_device( struct object *root, const struct unicode_str *name );
-extern struct object *create_socket_device( struct object *root, const struct unicode_str *name );
+extern struct object *create_named_pipe_device( struct object *root, const struct unicode_str *name,
+                                                unsigned int attr, const struct security_descriptor *sd );
+extern struct object *create_mailslot_device( struct object *root, const struct unicode_str *name,
+                                              unsigned int attr, const struct security_descriptor *sd );
+extern struct object *create_console_device( struct object *root, const struct unicode_str *name,
+                                              unsigned int attr, const struct security_descriptor *sd );
+extern struct object *create_socket_device( struct object *root, const struct unicode_str *name,
+                                              unsigned int attr, const struct security_descriptor *sd );
 extern struct object *create_unix_device( struct object *root, const struct unicode_str *name,
-                                          const char *unix_path );
+                                          unsigned int attr, const struct security_descriptor *sd, const char *unix_path );
 
 /* change notification functions */
 

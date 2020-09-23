@@ -507,11 +507,12 @@ static void named_pipe_device_destroy( struct object *obj )
     free( device->pipes );
 }
 
-struct object *create_named_pipe_device( struct object *root, const struct unicode_str *name )
+struct object *create_named_pipe_device( struct object *root, const struct unicode_str *name,
+                                         unsigned int attr, const struct security_descriptor *sd )
 {
     struct named_pipe_device *dev;
 
-    if ((dev = create_named_object( root, &named_pipe_device_ops, name, 0, NULL )) &&
+    if ((dev = create_named_object( root, &named_pipe_device_ops, name, attr, sd )) &&
         get_error() != STATUS_OBJECT_NAME_EXISTS)
     {
         dev->pipes = NULL;
