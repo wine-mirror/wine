@@ -1984,6 +1984,8 @@ static NTSTATUS write_output( struct screen_buffer *screen_buffer, const struct 
     char_info_t *dest;
     char *src;
 
+    if (*out_size == sizeof(SMALL_RECT) && !params->width) return STATUS_INVALID_PARAMETER;
+
     entry_size = params->mode == CHAR_INFO_MODE_TEXTATTR ? sizeof(char_info_t) : sizeof(WCHAR);
     entry_cnt = (in_size - sizeof(*params)) / entry_size;
 
