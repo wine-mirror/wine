@@ -632,6 +632,8 @@ POLL_LIBS
 TOOLSEXT
 MSVCRTFLAGS
 EXTRACFLAGS
+VKD3D_SHADER_LIBS
+VKD3D_SHADER_CFLAGS
 VKD3D_LIBS
 VKD3D_CFLAGS
 NETAPI_LIBS
@@ -1928,6 +1930,8 @@ NETAPI_CFLAGS
 NETAPI_LIBS
 VKD3D_CFLAGS
 VKD3D_LIBS
+VKD3D_SHADER_CFLAGS
+VKD3D_SHADER_LIBS
 LDAP_CFLAGS
 LDAP_LIBS'
 
@@ -2730,6 +2734,10 @@ Some influential environment variables:
   VKD3D_CFLAGS
               C compiler flags for libvkd3d, overriding pkg-config
   VKD3D_LIBS  Linker flags for libvkd3d, overriding pkg-config
+  VKD3D_SHADER_CFLAGS
+              C compiler flags for libvkd3d-shader, overriding pkg-config
+  VKD3D_SHADER_LIBS
+              Linker flags for libvkd3d-shader, overriding pkg-config
   LDAP_CFLAGS C compiler flags for openldap, overriding pkg-config
   LDAP_LIBS   Linker flags for openldap, overriding pkg-config
 
@@ -16747,6 +16755,80 @@ _ACEOF
 fi
 CPPFLAGS=$ac_save_CPPFLAGS
 
+    if ${VKD3D_SHADER_CFLAGS:+false} :; then :
+  if ${PKG_CONFIG+:} false; then :
+  VKD3D_SHADER_CFLAGS=`$PKG_CONFIG --cflags libvkd3d-shader 2>/dev/null`
+fi
+fi
+
+if ${VKD3D_SHADER_LIBS:+false} :; then :
+  if ${PKG_CONFIG+:} false; then :
+  VKD3D_SHADER_LIBS=`$PKG_CONFIG --libs libvkd3d-shader 2>/dev/null`
+fi
+fi
+
+
+$as_echo "$as_me:${as_lineno-$LINENO}: libvkd3d-shader cflags: $VKD3D_SHADER_CFLAGS" >&5
+$as_echo "$as_me:${as_lineno-$LINENO}: libvkd3d-shader libs: $VKD3D_SHADER_LIBS" >&5
+ac_save_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS $VKD3D_SHADER_CFLAGS"
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lvkd3d-shader" >&5
+$as_echo_n "checking for -lvkd3d-shader... " >&6; }
+if ${ac_cv_lib_soname_vkd3d_shader+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_soname_save_LIBS=$LIBS
+LIBS="-lvkd3d-shader $VKD3D_SHADER_LIBS $LIBS"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char vkd3d_shader_compile ();
+int
+main ()
+{
+return vkd3d_shader_compile ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  case "$LIBEXT" in
+    dll) ac_cv_lib_soname_vkd3d_shader=`$ac_cv_path_LDD conftest.exe | grep "vkd3d-shader" | sed -e "s/dll.*/dll/"';2,$d'` ;;
+    dylib) ac_cv_lib_soname_vkd3d_shader=`$OTOOL -L conftest$ac_exeext | grep "libvkd3d-shader\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libvkd3d-shader\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    *) ac_cv_lib_soname_vkd3d_shader=`$READELF -d conftest$ac_exeext | grep "NEEDED.*libvkd3d-shader\\.$LIBEXT" | sed -e "s/^.*\\[\\(libvkd3d-shader\\.$LIBEXT[^	 ]*\\)\\].*$/\1/"';2,$d'`
+       if ${ac_cv_lib_soname_vkd3d_shader:+false} :; then :
+  ac_cv_lib_soname_vkd3d_shader=`$LDD conftest$ac_exeext | grep "libvkd3d-shader\\.$LIBEXT" | sed -e "s/^.*\(libvkd3d-shader\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
+fi ;;
+  esac
+else
+  ac_cv_lib_soname_vkd3d_shader=
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+  LIBS=$ac_check_soname_save_LIBS
+fi
+if ${ac_cv_lib_soname_vkd3d_shader:+false} :; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
+$as_echo "not found" >&6; }
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_vkd3d_shader" >&5
+$as_echo "$ac_cv_lib_soname_vkd3d_shader" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define SONAME_LIBVKD3D_SHADER "$ac_cv_lib_soname_vkd3d_shader"
+_ACEOF
+
+
+fi
+CPPFLAGS=$ac_save_CPPFLAGS
+
 fi
 if test "x$ac_cv_lib_soname_vkd3d" = "x"; then :
   case "x$with_vkd3d" in
@@ -19897,6 +19979,8 @@ NETAPI_CFLAGS = $NETAPI_CFLAGS
 NETAPI_LIBS = $NETAPI_LIBS
 VKD3D_CFLAGS = $VKD3D_CFLAGS
 VKD3D_LIBS = $VKD3D_LIBS
+VKD3D_SHADER_CFLAGS = $VKD3D_SHADER_CFLAGS
+VKD3D_SHADER_LIBS = $VKD3D_SHADER_LIBS
 POLL_LIBS = $POLL_LIBS
 RT_LIBS = $RT_LIBS
 LDAP_CFLAGS = $LDAP_CFLAGS

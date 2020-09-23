@@ -51,6 +51,9 @@
 #include "wine/debug.h"
 #include "wine/heap.h"
 #include "wine/unicode.h"
+#ifdef HAVE_FLOAT_H
+# include <float.h>
+#endif
 
 #include "objbase.h"
 #include "wine/wined3d.h"
@@ -1477,6 +1480,7 @@ extern const struct wined3d_shader_backend_ops arb_program_shader_backend DECLSP
 extern const struct wined3d_shader_backend_ops none_shader_backend DECLSPEC_HIDDEN;
 
 const struct wined3d_shader_backend_ops *wined3d_spirv_shader_backend_init_vk(void) DECLSPEC_HIDDEN;
+void wined3d_spirv_shader_backend_cleanup(void) DECLSPEC_HIDDEN;
 
 #define GL_EXTCALL(f) (gl_info->gl_ops.ext.p_##f)
 

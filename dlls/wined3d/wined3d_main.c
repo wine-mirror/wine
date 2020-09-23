@@ -405,6 +405,8 @@ static BOOL wined3d_dll_destroy(HINSTANCE hInstDLL)
     DWORD wined3d_context_tls_idx = context_get_tls_idx();
     unsigned int i;
 
+    wined3d_spirv_shader_backend_cleanup();
+
     if (!TlsFree(wined3d_context_tls_idx))
     {
         DWORD err = GetLastError();

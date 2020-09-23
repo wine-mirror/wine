@@ -1,6 +1,7 @@
 MODULE    = wined3d.dll
 IMPORTLIB = wined3d
 IMPORTS   = opengl32 user32 gdi32 advapi32
+EXTRAINCL = $(VKD3D_SHADER_CFLAGS)
 
 C_SRCS = \
 	adapter_gl.c \
