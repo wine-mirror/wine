@@ -227,6 +227,10 @@ typedef struct IDirectDrawGammaControl *LPDIRECTDRAWGAMMACONTROL;
 #define DDBLT_WAIT				0x01000000
 #define DDBLT_DEPTHFILL				0x02000000
 #define DDBLT_DONOTWAIT                         0x08000000
+#define DDBLT_PRESENTATION                      0x10000000
+#define DDBLT_LAST_PRESENTATION                 0x20000000
+#define DDBLT_EXTENDED_FLAGS                    0x40000000
+#define DDBLT_EXTENDED_LINEAR_CONTENT           0x00000004
 
 /* dwTrans for BltFast */
 #define DDBLTFAST_NOCOLORKEY			0x00000000
