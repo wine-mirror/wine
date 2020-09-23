@@ -15,4 +15,5 @@ C_SRCS = \
 	pngformat.c \
 	propertybag.c \
 	stream.c \
-	tiffformat.c
+	tiffformat.c \
+	wmpformat.c
