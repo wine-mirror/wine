@@ -347,7 +347,7 @@ void *create_named_object( struct object *parent, const struct object_ops *ops,
 done:
     if (attributes & OBJ_PERMANENT)
     {
-        make_object_static( new_obj );
+        make_object_permanent( new_obj );
         grab_object( new_obj );
     }
     return new_obj;
@@ -406,8 +406,8 @@ void unlink_named_object( struct object *obj )
     free( name_ptr );
 }
 
-/* mark an object as being stored statically, i.e. only released at shutdown */
-void make_object_static( struct object *obj )
+/* mark an object as being permanent, i.e. only released at shutdown */
+void make_object_permanent( struct object *obj )
 {
     obj->is_permanent = 1;
 #ifdef DEBUG_OBJECTS
@@ -416,7 +416,7 @@ void make_object_static( struct object *obj )
 #endif
 }
 
-/* mark an object as no longer static */
+/* mark an object as no longer permanent */
 void make_object_temporary( struct object *obj )
 {
     obj->is_permanent = 0;

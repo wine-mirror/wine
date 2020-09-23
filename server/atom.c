@@ -304,7 +304,7 @@ static struct atom_table *get_global_table( struct winstation *winstation, int c
             else
             {
                 global_table = table;
-                make_object_static( &global_table->obj );
+                make_object_permanent( &global_table->obj );
             }
         }
         else set_error( STATUS_OBJECT_NAME_NOT_FOUND );

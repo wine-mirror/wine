@@ -127,7 +127,7 @@ static struct handler *create_handler( signal_callback callback )
         return NULL;
     }
     set_fd_events( handler->fd, POLLIN );
-    make_object_static( &handler->obj );
+    make_object_permanent( &handler->obj );
     return handler;
 }
 

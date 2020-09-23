@@ -1742,7 +1742,7 @@ static int load_init_registry_from_file( const char *filename, struct key *key )
 
     save_branch_info[save_branch_count].path = filename;
     save_branch_info[save_branch_count++].key = (struct key *)grab_object( key );
-    make_object_static( &key->obj );
+    make_object_permanent( &key->obj );
     return (f != NULL);
 }
 
@@ -1813,7 +1813,7 @@ void init_registry(void)
     /* create the root key */
     root_key = alloc_key( &root_name, current_time );
     assert( root_key );
-    make_object_static( &root_key->obj );
+    make_object_permanent( &root_key->obj );
 
     /* load system.reg into Registry\Machine */
 

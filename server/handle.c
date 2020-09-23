@@ -298,7 +298,7 @@ static obj_handle_t alloc_global_handle_no_access_check( void *obj, unsigned int
     {
         if (!(global_table = alloc_handle_table( NULL, 0 )))
             return 0;
-        make_object_static( &global_table->obj );
+        make_object_permanent( &global_table->obj );
     }
     return handle_local_to_global( alloc_entry( global_table, obj, access ));
 }

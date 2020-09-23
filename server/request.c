@@ -871,7 +871,7 @@ static void acquire_lock(void)
         !(master_socket->fd = create_anonymous_fd( &master_socket_fd_ops, fd, &master_socket->obj, 0 )))
         fatal_error( "out of memory\n" );
     set_fd_events( master_socket->fd, POLLIN );
-    make_object_static( &master_socket->obj );
+    make_object_permanent( &master_socket->obj );
 }
 
 /* open the master server socket and start waiting for new clients */
