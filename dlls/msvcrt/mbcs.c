@@ -872,13 +872,17 @@ unsigned char* CDECL _mbsnbcpy(unsigned char* dst, const unsigned char* src, MSV
 }
 
 /*********************************************************************
- *		_mbscmp(MSVCRT.@)
+ *		_mbscmp_l(MSVCRT.@)
  */
-int CDECL _mbscmp(const unsigned char* str, const unsigned char* cmp)
+int CDECL _mbscmp_l(const unsigned char* str, const unsigned char* cmp, MSVCRT__locale_t locale)
 {
+  MSVCRT_pthreadmbcinfo mbcinfo;
+
   if (!str || !cmp) return INT_MAX;
 
-  if(get_mbcinfo()->ismbcodepage)
+  mbcinfo = locale ? locale->mbcinfo : get_mbcinfo();
+
+  if(mbcinfo->ismbcodepage)
   {
     unsigned int strc, cmpc;
     do {
@@ -886,8 +890,8 @@ int CDECL _mbscmp(const unsigned char* str, const unsigned char* cmp)
         return *cmp ? -1 : 0;
       if(!*cmp)
         return 1;
-      strc = _mbsnextc(str);
-      cmpc = _mbsnextc(cmp);
+      strc = _mbsnextc_l(str, locale);
+      cmpc = _mbsnextc_l(cmp, locale);
       if(strc != cmpc)
         return strc < cmpc ? -1 : 1;
       str +=(strc > 255) ? 2 : 1;
@@ -895,6 +899,14 @@ int CDECL _mbscmp(const unsigned char* str, const unsigned char* cmp)
     } while(1);
   }
   return u_strcmp(str, cmp); /* ASCII CP */
+}
+
+/*********************************************************************
+ *		_mbscmp(MSVCRT.@)
+ */
+int CDECL _mbscmp(const unsigned char* str, const unsigned char* cmp, MSVCRT__locale_t locale)
+{
+    return _mbscmp_l(str, cmp, NULL);
 }
 
 /*********************************************************************

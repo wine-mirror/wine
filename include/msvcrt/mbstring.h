@@ -65,6 +65,7 @@ int            __cdecl _mbsbtype(const unsigned char*,size_t);
 unsigned char* __cdecl _mbscat(unsigned char*,const unsigned char*);
 unsigned char* __cdecl _mbschr(const unsigned char*,unsigned int);
 int            __cdecl _mbscmp(const unsigned char*,const unsigned char*);
+int            __cdecl _mbscmp_l(const unsigned char*,const unsigned char*,_locale_t);
 int            __cdecl _mbscoll(const unsigned char*,const unsigned char*);
 unsigned char* __cdecl _mbscpy(unsigned char*,const unsigned char*);
 size_t         __cdecl _mbscspn(const unsigned char*,const unsigned char*);

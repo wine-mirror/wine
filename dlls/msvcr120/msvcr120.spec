@@ -1469,7 +1469,7 @@
 @ cdecl _mbschr(str long)
 @ stub _mbschr_l
 @ cdecl _mbscmp(str str)
-@ stub _mbscmp_l
+@ cdecl _mbscmp_l(str str ptr)
 @ cdecl _mbscoll(str str)
 @ cdecl _mbscoll_l(str str ptr)
 @ cdecl _mbscpy_s(ptr long str)

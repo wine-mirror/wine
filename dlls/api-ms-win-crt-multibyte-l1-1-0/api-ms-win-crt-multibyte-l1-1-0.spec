@@ -95,7 +95,7 @@
 @ cdecl _mbschr(str long) ucrtbase._mbschr
 @ stub _mbschr_l
 @ cdecl _mbscmp(str str) ucrtbase._mbscmp
-@ stub _mbscmp_l
+@ cdecl _mbscmp_l(str str ptr) ucrtbase._mbscmp_l
 @ cdecl _mbscoll(str str) ucrtbase._mbscoll
 @ cdecl _mbscoll_l(str str ptr) ucrtbase._mbscoll_l
 @ cdecl _mbscpy_s(ptr long str) ucrtbase._mbscpy_s

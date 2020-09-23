@@ -717,7 +717,7 @@
 @ cdecl _mbschr(str long)
 # stub _mbschr_l(str long ptr)
 @ cdecl _mbscmp(str str)
-# stub _mbscmp_l(str str ptr)
+@ cdecl _mbscmp_l(str str ptr)
 @ cdecl _mbscoll(str str)
 @ cdecl _mbscoll_l(str str ptr)
 @ cdecl _mbscpy(ptr str)

@@ -115,6 +115,7 @@ static int (__cdecl *p__memicmp)(const char*, const char*, size_t);
 static int (__cdecl *p__memicmp_l)(const char*, const char*, size_t, _locale_t);
 static size_t (__cdecl *p___strncnt)(const char*, size_t);
 static unsigned int (__cdecl *p_mbsnextc_l)(const unsigned char*, _locale_t);
+static int (__cdecl *p_mbscmp_l)(const unsigned char*, const unsigned char*, _locale_t);
 
 int CDECL __STRINGTOLD(_LDOUBLE*, char**, const char*, int);
 
@@ -3725,6 +3726,15 @@ static void test__mbscmp(void)
 
     ret = _mbscmp(b, a);
     ok(ret == 1, "got %d\n", ret);
+
+    if (!p_mbscmp_l)
+    {
+        win_skip("_mbscmp_l tests\n");
+        return;
+    }
+
+    ret = p_mbscmp_l(a, b, NULL);
+    ok(ret == -1, "got %d\n", ret);
 }
 
 static void test__ismbclx(void)
@@ -4458,6 +4468,7 @@ START_TEST(string)
     p__memicmp_l = (void*)GetProcAddress(hMsvcrt, "_memicmp_l");
     p___strncnt = (void*)GetProcAddress(hMsvcrt, "__strncnt");
     p_mbsnextc_l = (void*)GetProcAddress(hMsvcrt, "_mbsnextc_l");
+    p_mbscmp_l = (void*)GetProcAddress(hMsvcrt, "_mbscmp_l");
 
     /* MSVCRT memcpy behaves like memmove for overlapping moves,
        MFC42 CString::Insert seems to rely on that behaviour */

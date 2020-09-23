@@ -520,7 +520,7 @@
 @ cdecl _o__mbschr(str long) ucrtbase._o__mbschr
 @ stub _o__mbschr_l
 @ cdecl _o__mbscmp(str str) ucrtbase._o__mbscmp
-@ stub _o__mbscmp_l
+@ cdecl _o__mbscmp_l(str str ptr) ucrtbase._o__mbscmp_l
 @ cdecl _o__mbscoll(str str) ucrtbase._o__mbscoll
 @ cdecl _o__mbscoll_l(str str ptr) ucrtbase._o__mbscoll_l
 @ cdecl _o__mbscpy_s(ptr long str) ucrtbase._o__mbscpy_s

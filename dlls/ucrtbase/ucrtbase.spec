@@ -614,7 +614,7 @@
 @ cdecl _mbschr(str long)
 @ stub _mbschr_l
 @ cdecl _mbscmp(str str)
-@ stub _mbscmp_l
+@ cdecl _mbscmp_l(str str ptr)
 @ cdecl _mbscoll(str str)
 @ cdecl _mbscoll_l(str str ptr)
 @ cdecl _mbscpy_s(ptr long str)
@@ -1184,7 +1184,7 @@
 @ cdecl _o__mbschr(str long) _mbschr
 @ stub _o__mbschr_l
 @ cdecl _o__mbscmp(str str) _mbscmp
-@ stub _o__mbscmp_l
+@ cdecl _o__mbscmp_l(str str ptr) _mbscmp_l
 @ cdecl _o__mbscoll(str str) _mbscoll
 @ cdecl _o__mbscoll_l(str str ptr) _mbscoll_l
 @ cdecl _o__mbscpy_s(ptr long str) _mbscpy_s
