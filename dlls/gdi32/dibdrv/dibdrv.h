@@ -88,7 +88,7 @@ struct intensity_range
 struct font_intensities
 {
     struct intensity_range ranges[17];
-    struct font_gamma_ramp *gamma_ramp;
+    const struct font_gamma_ramp *gamma_ramp;
 };
 
 typedef struct dibdrv_physdev

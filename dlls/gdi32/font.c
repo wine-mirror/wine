@@ -730,19 +730,16 @@ static void update_font_code_page( DC *dc, HANDLE font )
     TRACE("charset %d => cp %d\n", charset, dc->font_code_page);
 }
 
-static struct font_gamma_ramp *get_font_gamma_ramp( void )
+static BOOL WINAPI fill_font_gamma_ramp( INIT_ONCE *once, void *param, void **context )
 {
     static const WCHAR desktopW[] = { 'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\',
                                       'D','e','s','k','t','o','p',0 };
     static const WCHAR smoothing_gamma[] = { 'F','o','n','t','S','m','o','o','t','h','i','n','g',
                                              'G','a','m','m','a',0 };
+    struct font_gamma_ramp *ramp = param;
     const DWORD gamma_default = 1400;
-    struct font_gamma_ramp *ramp;
     DWORD  i, gamma;
     HKEY key;
-
-    ramp = HeapAlloc( GetProcessHeap(), 0, sizeof(*ramp) );
-    if ( ramp == NULL) return NULL;
 
     gamma = gamma_default;
     if (RegOpenKeyW( HKEY_CURRENT_USER, desktopW, &key ) == ERROR_SUCCESS)
@@ -768,7 +765,16 @@ static struct font_gamma_ramp *get_font_gamma_ramp( void )
     ramp->gamma = gamma;
     TRACE("gamma %d\n", ramp->gamma);
 
-    return ramp;
+    return TRUE;
+}
+
+static struct font_gamma_ramp *get_font_gamma_ramp( void )
+{
+    static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
+    static struct font_gamma_ramp ramp;
+
+    InitOnceExecuteOnce( &init_once, fill_font_gamma_ramp, &ramp, NULL );
+    return &ramp;
 }
 
 /***********************************************************************

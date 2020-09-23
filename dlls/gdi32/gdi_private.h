@@ -99,7 +99,7 @@ typedef struct tagDC
 
     struct gdi_path *path;
 
-    struct font_gamma_ramp *font_gamma_ramp;
+    const struct font_gamma_ramp *font_gamma_ramp;
 
     UINT          font_code_page;
     WORD          ROPmode;
