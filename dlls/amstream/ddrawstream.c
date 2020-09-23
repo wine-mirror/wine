@@ -58,6 +58,7 @@ struct ddraw_stream
     AM_MEDIA_TYPE mt;
     struct format format;
     FILTER_STATE state;
+    BOOL eos;
 };
 
 static HRESULT ddrawstreamsample_create(struct ddraw_stream *parent, IDirectDrawSurface *surface,
@@ -266,6 +267,9 @@ static HRESULT WINAPI ddraw_IAMMediaStream_SetState(IAMMediaStream *iface, FILTE
     TRACE("stream %p, state %u.\n", stream, state);
 
     EnterCriticalSection(&stream->cs);
+
+    if (stream->state == State_Stopped)
+        stream->eos = FALSE;
 
     stream->state = state;
 
@@ -1061,8 +1065,23 @@ static HRESULT WINAPI ddraw_sink_QueryInternalConnections(IPin *iface, IPin **pi
 
 static HRESULT WINAPI ddraw_sink_EndOfStream(IPin *iface)
 {
-    FIXME("iface %p, stub!\n", iface);
-    return E_NOTIMPL;
+    struct ddraw_stream *stream = impl_from_IPin(iface);
+
+    TRACE("stream %p.\n", stream);
+
+    EnterCriticalSection(&stream->cs);
+
+    if (stream->eos)
+    {
+        LeaveCriticalSection(&stream->cs);
+        return E_FAIL;
+    }
+
+    stream->eos = TRUE;
+
+    LeaveCriticalSection(&stream->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ddraw_sink_BeginFlush(IPin *iface)
