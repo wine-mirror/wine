@@ -139,7 +139,7 @@ static HCRYPTPROV import_key( gnutls_x509_privkey_t key, DWORD flags )
     HCRYPTPROV prov = 0;
     HCRYPTKEY cryptkey;
     BYTE *buf, *src, *dst;
-    DWORD size;
+    DWORD size, acquire_flags;
 
     if ((ret = pgnutls_x509_privkey_get_pk_algorithm2( key, &bitlen )) < 0)
     {
@@ -209,17 +209,20 @@ static HCRYPTPROV import_key( gnutls_x509_privkey_t key, DWORD flags )
     else src = d.data;
     for (i = bitlen / 8 - 1; i >= 0; i--) *dst++ = src[i];
 
-    if (!CryptAcquireContextW( &prov, NULL, MS_ENHANCED_PROV_W, PROV_RSA_FULL, CRYPT_NEWKEYSET ))
+    acquire_flags = (flags & CRYPT_MACHINE_KEYSET) | CRYPT_NEWKEYSET;
+    if (!CryptAcquireContextW( &prov, NULL, MS_ENHANCED_PROV_W, PROV_RSA_FULL, acquire_flags ))
     {
         if (GetLastError() != NTE_EXISTS) goto done;
-        if (!CryptAcquireContextW( &prov, NULL, MS_ENHANCED_PROV_W, PROV_RSA_FULL, 0 ))
+
+        acquire_flags &= ~CRYPT_NEWKEYSET;
+        if (!CryptAcquireContextW( &prov, NULL, MS_ENHANCED_PROV_W, PROV_RSA_FULL, acquire_flags ))
         {
             WARN( "CryptAcquireContextW failed %08x\n", GetLastError() );
             goto done;
         }
     }
 
-    if (!CryptImportKey( prov, buf, size, 0, flags, &cryptkey ))
+    if (!CryptImportKey( prov, buf, size, 0, flags & CRYPT_EXPORTABLE, &cryptkey ))
     {
         WARN( "CryptImportKey failed %08x\n", GetLastError() );
         CryptReleaseContext( prov, 0 );
@@ -277,7 +280,7 @@ HCERTSTORE WINAPI PFXImportCertStore( CRYPT_DATA_BLOB *pfx, const WCHAR *passwor
         SetLastError( ERROR_INVALID_PARAMETER );
         return NULL;
     }
-    if (flags & ~(CRYPT_EXPORTABLE|CRYPT_USER_KEYSET|PKCS12_NO_PERSIST_KEY))
+    if (flags & ~(CRYPT_EXPORTABLE|CRYPT_USER_KEYSET|CRYPT_MACHINE_KEYSET|PKCS12_NO_PERSIST_KEY))
     {
         FIXME( "flags %08x not supported\n", flags );
         return NULL;
@@ -304,7 +307,7 @@ HCERTSTORE WINAPI PFXImportCertStore( CRYPT_DATA_BLOB *pfx, const WCHAR *passwor
         goto error;
     }
 
-    if (!(prov = import_key( key, flags & CRYPT_EXPORTABLE ))) goto error;
+    if (!(prov = import_key( key, flags ))) goto error;
     if (!(store = CertOpenStore( CERT_STORE_PROV_MEMORY, 0, 0, 0, NULL )))
     {
         WARN( "CertOpenStore failed %08x\n", GetLastError() );
