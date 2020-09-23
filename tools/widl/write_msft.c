@@ -2560,7 +2560,8 @@ static void set_lib_flags(msft_typelib_t *typelib)
 
 static void ctl2_write_segment(msft_typelib_t *typelib, int segment)
 {
-    put_data(typelib->typelib_segment_data[segment], typelib->typelib_segdir[segment].length);
+    if (typelib->typelib_segment_data[segment])
+        put_data(typelib->typelib_segment_data[segment], typelib->typelib_segdir[segment].length);
 }
 
 static void ctl2_finalize_typeinfos(msft_typelib_t *typelib, int filesize)
