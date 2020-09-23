@@ -6922,6 +6922,104 @@ static void test_OnAmbientPropertyChange(IHTMLDocument2 *doc)
 
 
 
+static void test_GetSetExtent(IHTMLDocument2 *doc)
+{
+    IOleObject *oleobj = NULL;
+    HRESULT hres;
+    SIZE extent;
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IOleObject, (void**)&oleobj);
+    ok(hres == S_OK, "QueryInterface(IID_IOleObject) failed: %08x\n", hres);
+    if(FAILED(hres))
+        return;
+
+    extent.cx = extent.cy = 0xdeadbeef;
+    hres = IOleObject_GetExtent(oleobj, DVASPECT_CONTENT, &extent);
+    ok(hres == S_OK, "GetExtent failed: %08x\n", hres);
+    ok(extent.cx == 1 && extent.cy == 1, "size = {%d %d} (expected {1 1})\n",
+       extent.cx, extent.cy);
+
+    extent.cx = extent.cy = 0xdeadbeef;
+    hres = IOleObject_GetExtent(oleobj, 0, &extent);
+    ok(hres == E_INVALIDARG, "GetExtent failed: %08x\n", hres);
+    ok(extent.cx == 0xdeadbeef && extent.cy == 0xdeadbeef, "size = {%d %d}\n", extent.cx, extent.cy);
+
+    extent.cx = extent.cy = 0xdeadbeef;
+    hres = IOleObject_GetExtent(oleobj, 7, &extent);
+    ok(hres == E_INVALIDARG, "GetExtent failed: %08x\n", hres);
+    ok(extent.cx == 0xdeadbeef && extent.cy == 0xdeadbeef, "size = {%d %d}\n", extent.cx, extent.cy);
+
+    extent.cx = 800;
+    extent.cy = 700;
+    hres = IOleObject_SetExtent(oleobj, 0, &extent);
+    ok(hres == E_INVALIDARG, "SetExtent failed: %08x\n", hres);
+
+    extent.cx = extent.cy = 0xdeadbeef;
+    hres = IOleObject_GetExtent(oleobj, DVASPECT_CONTENT, &extent);
+    ok(hres == S_OK, "GetExtent failed: %08x\n", hres);
+    ok(extent.cx == 1 && extent.cy == 1, "size = {%d %d} (expected {1 1})\n",
+       extent.cx, extent.cy);
+
+    extent.cx = 800;
+    extent.cy = 700;
+    hres = IOleObject_SetExtent(oleobj, 7, &extent);
+    ok(hres == E_INVALIDARG, "SetExtent failed: %08x\n", hres);
+
+    extent.cx = extent.cy = 0xdeadbeef;
+    hres = IOleObject_GetExtent(oleobj, DVASPECT_CONTENT, &extent);
+    ok(hres == S_OK, "GetExtent failed: %08x\n", hres);
+    ok(extent.cx == 1 && extent.cy == 1, "size = {%d %d} (expected {1 1})\n",
+       extent.cx, extent.cy);
+
+    extent.cx = extent.cy = 0xdeadbeef;
+    hres = IOleObject_SetExtent(oleobj, 0, &extent);
+    todo_wine ok(hres == E_FAIL, "SetExtent failed: %08x\n", hres);
+
+    extent.cx = extent.cy = 0xdeadbeef;
+    hres = IOleObject_GetExtent(oleobj, DVASPECT_CONTENT, &extent);
+    ok(hres == S_OK, "GetExtent failed: %08x\n", hres);
+    ok(extent.cx == 1 && extent.cy == 1, "size = {%d %d} (expected {1 1})\n",
+       extent.cx, extent.cy);
+
+    extent.cx = extent.cy = 0xdeadbeef;
+    hres = IOleObject_SetExtent(oleobj, 7, &extent);
+    todo_wine ok(hres == E_FAIL, "SetExtent failed: %08x\n", hres);
+
+    extent.cx = extent.cy = 0xdeadbeef;
+    hres = IOleObject_GetExtent(oleobj, DVASPECT_CONTENT, &extent);
+    ok(hres == S_OK, "GetExtent failed: %08x\n", hres);
+    ok(extent.cx == 1 && extent.cy == 1, "size = {%d %d} (expected {1 1})\n",
+       extent.cx, extent.cy);
+
+    extent.cx = extent.cy = 0xdeadbeef;
+    hres = IOleObject_SetExtent(oleobj, DVASPECT_CONTENT, &extent);
+    todo_wine ok(hres == E_FAIL, "SetExtent failed: %08x\n", hres);
+
+    extent.cx = extent.cy = 0xdeadbeef;
+    hres = IOleObject_GetExtent(oleobj, DVASPECT_CONTENT, &extent);
+    ok(hres == S_OK, "GetExtent failed: %08x\n", hres);
+    todo_wine ok(extent.cx == 1 && extent.cy == 1, "size = {%d %d} (expected {1 1})\n",
+       extent.cx, extent.cy);
+
+    extent.cx = 800;
+    extent.cy = 700;
+    hres = IOleObject_SetExtent(oleobj, DVASPECT_CONTENT, &extent);
+    ok(hres == S_OK, "SetExtent failed: %08x\n", hres);
+
+    extent.cx = extent.cy = 0xdeadbeef;
+    hres = IOleObject_GetExtent(oleobj, DVASPECT_CONTENT, &extent);
+    ok(hres == S_OK, "GetExtent failed: %08x\n", hres);
+    ok(extent.cx == 800 && extent.cy == 700, "size = {%d %d} (expected {800 700})\n",
+       extent.cx, extent.cy );
+
+    extent.cx = 1;
+    extent.cy = 1;
+    hres = IOleObject_SetExtent(oleobj, DVASPECT_CONTENT, &extent);
+    ok(hres == S_OK, "SetExtent failed: %08x\n", hres);
+
+    IOleObject_Release(oleobj);
+}
+
 static void test_OnAmbientPropertyChange2(IHTMLDocument2 *doc)
 {
     IOleControl *control = NULL;
@@ -7605,6 +7703,7 @@ static void test_HTMLDocument(BOOL do_load, BOOL mime)
     doc_unk = (IUnknown*)doc;
 
     test_QueryInterface(doc);
+    test_GetSetExtent(doc);
     test_Advise(doc);
     test_IsDirty(doc, S_FALSE);
     test_MSHTML_QueryStatus(doc, OLECMDF_SUPPORTED);

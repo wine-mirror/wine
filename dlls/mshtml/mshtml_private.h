@@ -711,6 +711,7 @@ struct HTMLDocumentObj {
 
     DWORD update;
     LONG task_magic;
+    SIZEL extent;
 };
 
 typedef struct nsWeakReference nsWeakReference;
