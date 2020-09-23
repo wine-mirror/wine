@@ -3348,6 +3348,16 @@ static void test_PFXImportCertStore(void)
     ok(ret, "got %u\n", GetLastError());
     CertFreeCertificateContext( cert );
     CertCloseStore( store, 0 );
+
+    /* CRYPT_MACHINE_KEYSET */
+    store = PFXImportCertStore( &pfx, NULL, CRYPT_MACHINE_KEYSET );
+    ok( store != NULL, "got %u\n", GetLastError() );
+
+    cert = CertFindCertificateInStore( store, X509_ASN_ENCODING, 0, CERT_FIND_ANY, NULL, NULL );
+    ok( cert != NULL, "got %08x\n", GetLastError() );
+
+    CertFreeCertificateContext( cert );
+    CertCloseStore( store, 0 );
 }
 
 static void test_CryptQueryObject(void)
