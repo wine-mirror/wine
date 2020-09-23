@@ -234,15 +234,9 @@ struct object_type *get_object_type( const struct unicode_str *name )
 {
     struct object_type *type;
 
-    if ((type = create_named_object( &dir_objtype->obj, &object_type_ops, name, OBJ_OPENIF, NULL )))
-    {
-        if (get_error() != STATUS_OBJECT_NAME_EXISTS)
-        {
-            grab_object( type );
-            make_object_static( &type->obj );
-        }
+    if ((type = create_named_object( &dir_objtype->obj, &object_type_ops, name,
+                                     OBJ_OPENIF | OBJ_PERMANENT, NULL )))
         clear_error();
-    }
     return type;
 }
 
@@ -281,28 +275,28 @@ static void create_session( unsigned int id )
 
     if (!id)
     {
-        dir_bno_global = create_directory( &root_directory->obj, &dir_bno_str, 0, HASH_SIZE, NULL );
-        dir_sessions   = create_directory( &root_directory->obj, &dir_sessions_str, 0, HASH_SIZE, NULL );
-        dir_bnolinks   = create_directory( &dir_sessions->obj, &dir_bnolinks_str, 0, HASH_SIZE, NULL );
-        make_object_static( (struct object *)dir_bno_global );
-        make_object_static( (struct object *)dir_bnolinks );
-        make_object_static( (struct object *)dir_sessions );
+        dir_bno_global = create_directory( &root_directory->obj, &dir_bno_str, OBJ_PERMANENT, HASH_SIZE, NULL );
+        dir_sessions   = create_directory( &root_directory->obj, &dir_sessions_str, OBJ_PERMANENT, HASH_SIZE, NULL );
+        dir_bnolinks   = create_directory( &dir_sessions->obj, &dir_bnolinks_str, OBJ_PERMANENT, HASH_SIZE, NULL );
+        release_object( dir_bno_global );
+        release_object( dir_bnolinks );
+        release_object( dir_sessions );
     }
 
     sprintf( id_strA, "%u", id );
     id_strW = ascii_to_unicode_str( id_strA, &id_str );
     dir_id = create_directory( &dir_sessions->obj, &id_str, 0, HASH_SIZE, NULL );
-    dir_dosdevices = create_directory( &dir_id->obj, &dir_dosdevices_str, 0, HASH_SIZE, NULL );
+    dir_dosdevices = create_directory( &dir_id->obj, &dir_dosdevices_str, OBJ_PERMANENT, HASH_SIZE, NULL );
 
     /* for session 0, directories are created under the root */
     if (!id)
     {
         dir_bno      = (struct directory *)grab_object( dir_bno_global );
         dir_windows  = create_directory( &root_directory->obj, &dir_windows_str, 0, HASH_SIZE, NULL );
-        link_bno     = create_obj_symlink( &dir_id->obj, &dir_bno_str, 0, &dir_bno->obj, NULL );
-        link_windows = create_obj_symlink( &dir_id->obj, &dir_windows_str, 0, &dir_windows->obj, NULL );
-        make_object_static( link_bno );
-        make_object_static( link_windows );
+        link_bno     = create_obj_symlink( &dir_id->obj, &dir_bno_str, OBJ_PERMANENT, &dir_bno->obj, NULL );
+        link_windows = create_obj_symlink( &dir_id->obj, &dir_windows_str, OBJ_PERMANENT, &dir_windows->obj, NULL );
+        release_object( link_bno );
+        release_object( link_windows );
     }
     else
     {
@@ -310,19 +304,19 @@ static void create_session( unsigned int id )
         dir_bno     = create_directory( &dir_id->obj, &dir_bno_str, 0, 37, NULL );
         dir_windows = create_directory( &dir_id->obj, &dir_windows_str, 0, HASH_SIZE, NULL );
     }
-    dir_winstation = create_directory( &dir_windows->obj, &dir_winstations_str, 0, HASH_SIZE, NULL );
+    dir_winstation = create_directory( &dir_windows->obj, &dir_winstations_str, OBJ_PERMANENT, HASH_SIZE, NULL );
 
-    link_global  = create_obj_symlink( &dir_bno->obj, &link_global_str, 0, &dir_bno_global->obj, NULL );
-    link_local   = create_obj_symlink( &dir_bno->obj, &link_local_str, 0, &dir_bno->obj, NULL );
-    link_session = create_obj_symlink( &dir_bno->obj, &link_session_str, 0, &dir_bnolinks->obj, NULL );
-    link_bno     = create_obj_symlink( &dir_bnolinks->obj, &id_str, 0, &dir_bno->obj, NULL );
-    make_object_static( link_global );
-    make_object_static( link_local );
-    make_object_static( link_session );
-    make_object_static( link_bno );
+    link_global  = create_obj_symlink( &dir_bno->obj, &link_global_str, OBJ_PERMANENT, &dir_bno_global->obj, NULL );
+    link_local   = create_obj_symlink( &dir_bno->obj, &link_local_str, OBJ_PERMANENT, &dir_bno->obj, NULL );
+    link_session = create_obj_symlink( &dir_bno->obj, &link_session_str, OBJ_PERMANENT, &dir_bnolinks->obj, NULL );
+    link_bno     = create_obj_symlink( &dir_bnolinks->obj, &id_str, OBJ_PERMANENT, &dir_bno->obj, NULL );
+    release_object( link_global );
+    release_object( link_local );
+    release_object( link_session );
+    release_object( link_bno );
 
-    make_object_static( &dir_dosdevices->obj );
-    make_object_static( &dir_winstation->obj );
+    release_object( dir_dosdevices );
+    release_object( dir_winstation );
     release_object( dir_windows );
     release_object( dir_bno );
     release_object( dir_id );
@@ -406,73 +400,54 @@ void init_directories(void)
     static const struct unicode_str user_data_str = {user_dataW, sizeof(user_dataW)};
 
     struct directory *dir_driver, *dir_device, *dir_global, *dir_kernel;
-    struct object *link_dosdev, *link_global, *link_nul, *link_pipe, *link_mailslot;
-    struct object *link_conin, *link_conout, *link_con;
-    struct object *named_pipe_device, *mailslot_device, *null_device, *user_data_mapping, *console_device, *socket_device;
-    struct keyed_event *keyed_event;
+    struct object *named_pipe_device, *mailslot_device, *null_device;
     unsigned int i;
 
-    root_directory = create_directory( NULL, NULL, 0, HASH_SIZE, NULL );
-    dir_driver     = create_directory( &root_directory->obj, &dir_driver_str, 0, HASH_SIZE, NULL );
-    dir_device     = create_directory( &root_directory->obj, &dir_device_str, 0, HASH_SIZE, NULL );
-    dir_objtype    = create_directory( &root_directory->obj, &dir_objtype_str, 0, HASH_SIZE, NULL );
-    dir_kernel     = create_directory( &root_directory->obj, &dir_kernel_str, 0, HASH_SIZE, NULL );
-    dir_global     = create_directory( &root_directory->obj, &dir_global_str, 0, HASH_SIZE, NULL );
-    make_object_static( &root_directory->obj );
-    make_object_static( &dir_driver->obj );
-    make_object_static( &dir_objtype->obj );
+    root_directory = create_directory( NULL, NULL, OBJ_PERMANENT, HASH_SIZE, NULL );
+    dir_driver     = create_directory( &root_directory->obj, &dir_driver_str, OBJ_PERMANENT, HASH_SIZE, NULL );
+    dir_device     = create_directory( &root_directory->obj, &dir_device_str, OBJ_PERMANENT, HASH_SIZE, NULL );
+    dir_objtype    = create_directory( &root_directory->obj, &dir_objtype_str, OBJ_PERMANENT, HASH_SIZE, NULL );
+    dir_kernel     = create_directory( &root_directory->obj, &dir_kernel_str, OBJ_PERMANENT, HASH_SIZE, NULL );
+    dir_global     = create_directory( &root_directory->obj, &dir_global_str, OBJ_PERMANENT, HASH_SIZE, NULL );
 
     /* devices */
-    named_pipe_device = create_named_pipe_device( &dir_device->obj, &named_pipe_str, 0, NULL );
-    mailslot_device   = create_mailslot_device( &dir_device->obj, &mailslot_str, 0, NULL );
-    console_device    = create_console_device( &dir_device->obj, &condrv_str, 0, NULL );
-    socket_device     = create_socket_device( &dir_device->obj, &afd_str, 0, NULL );
-    null_device       = create_unix_device( &dir_device->obj, &null_str, 0, NULL, "/dev/null" );
-    make_object_static( named_pipe_device );
-    make_object_static( mailslot_device );
-    make_object_static( null_device );
-    make_object_static( console_device );
-    make_object_static( socket_device );
+    named_pipe_device = create_named_pipe_device( &dir_device->obj, &named_pipe_str, OBJ_PERMANENT, NULL );
+    mailslot_device   = create_mailslot_device( &dir_device->obj, &mailslot_str, OBJ_PERMANENT, NULL );
+    null_device       = create_unix_device( &dir_device->obj, &null_str, OBJ_PERMANENT, NULL, "/dev/null" );
+    release_object( create_console_device( &dir_device->obj, &condrv_str, OBJ_PERMANENT, NULL ));
+    release_object( create_socket_device( &dir_device->obj, &afd_str, OBJ_PERMANENT, NULL ));
 
     /* sessions */
     create_session( 0 );
     create_session( 1 );
 
     /* symlinks */
-    link_dosdev    = create_obj_symlink( &root_directory->obj, &link_dosdev_str, 0, &dir_global->obj, NULL );
-    link_global    = create_obj_symlink( &dir_global->obj, &link_global_str, 0, &dir_global->obj, NULL );
-    link_nul       = create_obj_symlink( &dir_global->obj, &link_nul_str, 0, null_device, NULL );
-    link_pipe      = create_obj_symlink( &dir_global->obj, &link_pipe_str, 0, named_pipe_device, NULL );
-    link_mailslot  = create_obj_symlink( &dir_global->obj, &link_mailslot_str, 0, mailslot_device, NULL );
-    link_conin     = create_symlink( &dir_global->obj, &link_conin_str, 0, &link_currentin_str, NULL );
-    link_conout    = create_symlink( &dir_global->obj, &link_conout_str, 0, &link_currentout_str, NULL );
-    link_con       = create_symlink( &dir_global->obj, &link_con_str, 0, &link_console_str, NULL );
-    make_object_static( link_dosdev );
-    make_object_static( link_global );
-    make_object_static( link_nul );
-    make_object_static( link_pipe );
-    make_object_static( link_mailslot );
-    make_object_static( link_conin );
-    make_object_static( link_conout );
-    make_object_static( link_con );
+    release_object( create_obj_symlink( &root_directory->obj, &link_dosdev_str, OBJ_PERMANENT, &dir_global->obj, NULL ));
+    release_object( create_obj_symlink( &dir_global->obj, &link_global_str, OBJ_PERMANENT, &dir_global->obj, NULL ));
+    release_object( create_obj_symlink( &dir_global->obj, &link_nul_str, OBJ_PERMANENT, null_device, NULL ));
+    release_object( create_obj_symlink( &dir_global->obj, &link_pipe_str, OBJ_PERMANENT, named_pipe_device, NULL ));
+    release_object( create_obj_symlink( &dir_global->obj, &link_mailslot_str, OBJ_PERMANENT, mailslot_device, NULL ));
+    release_object( create_symlink( &dir_global->obj, &link_conin_str, OBJ_PERMANENT, &link_currentin_str, NULL ));
+    release_object( create_symlink( &dir_global->obj, &link_conout_str, OBJ_PERMANENT, &link_currentout_str, NULL ));
+    release_object( create_symlink( &dir_global->obj, &link_con_str, OBJ_PERMANENT, &link_console_str, NULL ));
 
     /* events */
     for (i = 0; i < ARRAY_SIZE( kernel_events ); i++)
-    {
-        struct event *event = create_event( &dir_kernel->obj, &kernel_events[i], 0, 1, 0, NULL );
-        make_object_static( (struct object *)event );
-    }
-    keyed_event = create_keyed_event( &dir_kernel->obj, &keyed_event_crit_sect_str, 0, NULL );
-    make_object_static( (struct object *)keyed_event );
+        release_object( create_event( &dir_kernel->obj, &kernel_events[i], OBJ_PERMANENT, 1, 0, NULL ));
+    release_object( create_keyed_event( &dir_kernel->obj, &keyed_event_crit_sect_str, OBJ_PERMANENT, NULL ));
 
     /* user data mapping */
-    user_data_mapping = create_user_data_mapping( &dir_kernel->obj, &user_data_str, 0, NULL );
-    make_object_static( user_data_mapping );
+    release_object( create_user_data_mapping( &dir_kernel->obj, &user_data_str, OBJ_PERMANENT, NULL ));
 
-    /* the objects hold references so we can release these directories */
-    release_object( dir_global );
+    release_object( named_pipe_device );
+    release_object( mailslot_device );
+    release_object( null_device );
+    release_object( root_directory );
+    release_object( dir_driver );
     release_object( dir_device );
+    release_object( dir_objtype );
     release_object( dir_kernel );
+    release_object( dir_global );
 }
 
 /* create a directory object */

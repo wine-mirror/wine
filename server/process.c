@@ -1633,8 +1633,8 @@ DECL_HANDLER(make_process_system)
 
     if (!shutdown_event)
     {
-        if (!(shutdown_event = create_event( NULL, NULL, 0, 1, 0, NULL ))) return;
-        make_object_static( (struct object *)shutdown_event );
+        if (!(shutdown_event = create_event( NULL, NULL, OBJ_PERMANENT, 1, 0, NULL ))) return;
+        release_object( shutdown_event );
     }
 
     if (!(reply->event = alloc_handle( current->process, shutdown_event, SYNCHRONIZE, 0 )))

@@ -293,11 +293,6 @@ static struct object *create_object( struct object *parent, const struct object_
 
     name_ptr->obj = obj;
     obj->name = name_ptr;
-    if (attributes & OBJ_PERMANENT)
-    {
-        make_object_static( obj );
-        grab_object( obj );
-    }
     return obj;
 
 failed:
@@ -325,7 +320,7 @@ void *create_named_object( struct object *parent, const struct object_ops *ops,
             free_object( new_obj );
             return NULL;
         }
-        return new_obj;
+        goto done;
     }
 
     if (!(obj = lookup_named_object( parent, name, attributes, &new_name ))) return NULL;
@@ -348,6 +343,13 @@ void *create_named_object( struct object *parent, const struct object_ops *ops,
 
     new_obj = create_object( obj, ops, &new_name, attributes, sd );
     release_object( obj );
+
+done:
+    if (attributes & OBJ_PERMANENT)
+    {
+        make_object_static( new_obj );
+        grab_object( new_obj );
+    }
     return new_obj;
 }
 
