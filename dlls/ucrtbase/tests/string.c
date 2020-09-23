@@ -516,6 +516,24 @@ static void test_SpecialCasing(void)
     }
 }
 
+static void test__mbbtype_l(void)
+{
+    int expected, ret;
+    unsigned int c;
+
+    _setmbcp(_MB_CP_LOCALE);
+    for (c = 0; c < 256; ++c)
+    {
+        expected = _mbbtype(c, 0);
+        ret = _mbbtype_l(c, 0, NULL);
+        ok(ret == expected, "c %#x, got ret %#x, expected %#x.\n", c, ret, expected);
+
+        expected = _mbbtype(c, 1);
+        ret = _mbbtype_l(c, 1, NULL);
+        ok(ret == expected, "c %#x, got ret %#x, expected %#x.\n", c, ret, expected);
+    }
+}
+
 START_TEST(string)
 {
     ok(_set_invalid_parameter_handler(test_invalid_parameter_handler) == NULL,
@@ -530,4 +548,5 @@ START_TEST(string)
     test_wcstok();
     test__strnicmp();
     test_SpecialCasing();
+    test__mbbtype_l();
 }

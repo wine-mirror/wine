@@ -584,7 +584,7 @@
 @ cdecl _mbbtombc(long)
 @ stub _mbbtombc_l
 @ cdecl _mbbtype(long long)
-@ stub _mbbtype_l
+@ cdecl _mbbtype_l(long long ptr)
 @ stub _mbcasemap
 @ cdecl _mbccpy(ptr ptr)
 @ cdecl _mbccpy_l(ptr ptr ptr)
@@ -1155,7 +1155,7 @@
 @ cdecl _o__mbbtombc(long) _mbbtombc
 @ stub _o__mbbtombc_l
 @ cdecl _o__mbbtype(long long) _mbbtype
-@ stub _o__mbbtype_l
+@ cdecl _o__mbbtype_l(long long ptr) _mbbtype_l
 @ cdecl _o__mbccpy(ptr ptr) _mbccpy
 @ cdecl _o__mbccpy_l(ptr ptr ptr) _mbccpy_l
 @ cdecl _o__mbccpy_s(ptr long ptr ptr) _mbccpy_s

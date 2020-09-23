@@ -35,6 +35,7 @@
 #undef strncpy
 #include "winbase.h"
 #include "winnls.h"
+#include "winuser.h"
 
 static char *buf_to_string(const unsigned char *bin, int len, int nr)
 {
@@ -4396,6 +4397,59 @@ static void test_SpecialCasing(void)
     }
 }
 
+
+static void test__mbbtype(void)
+{
+    static const char *test_locales[] =
+    {
+        "Arabic_Algeria",
+        "Chinese_China",
+        "English_Australia",
+        "French_Belgium",
+        "German_Austria",
+        "Greek",
+        "Hindi",
+        "Japanese",
+        "Korean",
+        "Polish",
+        "Portuguese_Brazil",
+        "Russian",
+        "Spanish_Argentina",
+        "Swedish_Finland",
+        "Ukrainian",
+        "Vietnamese",
+    };
+
+    int expected, ret;
+    unsigned int c, i;
+
+    for (i = 0; i < ARRAY_SIZE(test_locales); ++i)
+    {
+        setlocale(LC_ALL, test_locales[i]);
+        _setmbcp(_MB_CP_LOCALE);
+        for (c = 0; c < 256; ++c)
+        {
+            if (_ismbblead(c))
+                expected = _MBC_LEAD;
+            else if (isprint(c))
+                expected = _MBC_SINGLE;
+            else
+                expected = _MBC_ILLEGAL;
+
+            ret = _mbbtype(c, 0);
+            ok(ret == expected, "test %u, c %#x, got ret %#x, expected %#x.\n", i, c, ret, expected);
+
+            if (_ismbbtrail(c))
+                expected = _MBC_TRAIL;
+            else
+                expected = _MBC_ILLEGAL;
+
+            ret = _mbbtype(c, 1);
+            ok(ret == expected, "test %u, c %#x, got ret %#x, expected %#x.\n", i, c, ret, expected);
+        }
+    }
+}
+
 START_TEST(string)
 {
     char mem[100];
@@ -4550,4 +4604,5 @@ START_TEST(string)
     test_wcscmp();
     test___STRINGTOLD();
     test_SpecialCasing();
+    test__mbbtype();
 }

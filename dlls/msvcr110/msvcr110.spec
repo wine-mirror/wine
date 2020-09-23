@@ -1428,7 +1428,7 @@
 @ cdecl _mbbtombc(long)
 @ stub _mbbtombc_l
 @ cdecl _mbbtype(long long)
-@ stub _mbbtype_l
+@ cdecl _mbbtype_l(long long ptr)
 # extern _mbcasemap
 @ cdecl _mbccpy(ptr ptr)
 @ cdecl _mbccpy_l(ptr ptr ptr)

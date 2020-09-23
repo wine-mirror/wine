@@ -491,7 +491,7 @@
 @ cdecl _o__mbbtombc(long) ucrtbase._o__mbbtombc
 @ stub _o__mbbtombc_l
 @ cdecl _o__mbbtype(long long) ucrtbase._o__mbbtype
-@ stub _o__mbbtype_l
+@ cdecl _o__mbbtype_l(long long ptr) ucrtbase._o__mbbtype_l
 @ cdecl _o__mbccpy(ptr ptr) ucrtbase._o__mbccpy
 @ cdecl _o__mbccpy_l(ptr ptr ptr) ucrtbase._o__mbccpy_l
 @ cdecl _o__mbccpy_s(ptr long ptr ptr) ucrtbase._o__mbccpy_s

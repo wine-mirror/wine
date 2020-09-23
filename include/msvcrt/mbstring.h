@@ -51,6 +51,7 @@ int            __cdecl _ismbcsymbol(unsigned int);
 int            __cdecl _ismbcupper(unsigned int);
 unsigned int   __cdecl _mbbtombc(unsigned int);
 int            __cdecl _mbbtype(unsigned char,int);
+int            __cdecl _mbbtype_l(unsigned char,int,_locale_t);
 #define                _mbccmp(_cpc1,_cpc2) _mbsncmp((_cpc1),(_cpc2),1)
 void           __cdecl _mbccpy(unsigned char*,const unsigned char*);
 unsigned int   __cdecl _mbcjistojms(unsigned int);

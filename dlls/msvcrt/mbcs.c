@@ -1395,31 +1395,6 @@ unsigned int CDECL _mbbtombc(unsigned int c)
 }
 
 /*********************************************************************
- *		_mbbtype(MSVCRT.@)
- */
-int CDECL _mbbtype(unsigned char c, int type)
-{
-    if (type == 1)
-    {
-        if ((c >= 0x20 && c <= 0x7e) || (c >= 0xa1 && c <= 0xdf))
-            return _MBC_SINGLE;
-        else if ((c >= 0x40 && c <= 0x7e) || (c >= 0x80 && c <= 0xfc))
-            return _MBC_TRAIL;
-        else
-            return _MBC_ILLEGAL;
-    }
-    else
-    {
-        if ((c >= 0x20 && c <= 0x7e) || (c >= 0xa1 && c <= 0xdf))
-            return _MBC_SINGLE;
-        else if ((c >= 0x81 && c <= 0x9f) || (c >= 0xe0 && c <= 0xfc))
-            return _MBC_LEAD;
-        else
-            return _MBC_ILLEGAL;
-    }
-}
-
-/*********************************************************************
  *		_ismbbkana_l(MSVCRT.@)
  */
 int CDECL _ismbbkana_l(unsigned int c, MSVCRT__locale_t locale)
@@ -1728,6 +1703,26 @@ int CDECL _ismbstrail(const unsigned char* start, const unsigned char* str)
     return -1;
   else
     return 0;
+}
+
+/*********************************************************************
+ *		_mbbtype_l(MSVCRT.@)
+ */
+int CDECL _mbbtype_l(unsigned char c, int type, MSVCRT__locale_t locale)
+{
+    if (type == 1)
+        return _ismbbtrail_l(c, locale) ? _MBC_TRAIL : _MBC_ILLEGAL;
+    else
+        return _ismbblead_l(c, locale) ? _MBC_LEAD
+                : MSVCRT__isprint_l(c, locale) ? _MBC_SINGLE : _MBC_ILLEGAL;
+}
+
+/*********************************************************************
+ *		_mbbtype(MSVCRT.@)
+ */
+int CDECL _mbbtype(unsigned char c, int type)
+{
+    return _mbbtype_l(c, type, NULL);
 }
 
 /*********************************************************************

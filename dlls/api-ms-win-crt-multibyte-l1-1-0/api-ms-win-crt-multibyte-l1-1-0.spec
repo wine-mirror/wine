@@ -65,7 +65,7 @@
 @ cdecl _mbbtombc(long) ucrtbase._mbbtombc
 @ stub _mbbtombc_l
 @ cdecl _mbbtype(long long) ucrtbase._mbbtype
-@ stub _mbbtype_l
+@ cdecl _mbbtype_l(long long ptr) ucrtbase._mbbtype_l
 @ stub _mbcasemap
 @ cdecl _mbccpy(ptr ptr) ucrtbase._mbccpy
 @ cdecl _mbccpy_l(ptr ptr ptr) ucrtbase._mbccpy_l
