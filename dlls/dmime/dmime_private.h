@@ -114,6 +114,4 @@ static inline void DMIME_UnlockModule(void) { InterlockedDecrement( &DMIME_refCo
  * Misc.
  */
 
-#include "dmutils.h"
-
 #endif	/* __WINE_DMIME_PRIVATE_H */
