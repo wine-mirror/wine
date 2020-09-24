@@ -2168,9 +2168,9 @@ static NTSTATUS fill_output( struct screen_buffer *screen_buffer, const struct c
 
     TRACE( "(%u %u) mode %u\n", params->x, params->y, params->mode );
 
-    dest = screen_buffer->data + params->y * screen_buffer->width + params->x;
-
     if (params->y >= screen_buffer->height) return STATUS_SUCCESS;
+    dest = screen_buffer->data + min( params->y * screen_buffer->width + params->x,
+                                      screen_buffer->height * screen_buffer->width );
 
     if (params->wrap)
         end = screen_buffer->data + screen_buffer->height * screen_buffer->width;
