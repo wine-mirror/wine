@@ -2138,8 +2138,7 @@ static bool wined3d_context_vk_begin_render_pass(struct wined3d_context_vk *cont
         ++attachment_count;
     }
 
-    if ((state->render_states[WINED3D_RS_ZWRITEENABLE] || state->render_states[WINED3D_RS_ZENABLE])
-            && (view = state->fb.depth_stencil))
+    if (wined3d_state_uses_depth_buffer(state) && (view = state->fb.depth_stencil))
     {
         rtv_vk = wined3d_rendertarget_view_vk(view);
         vk_views[attachment_count] = wined3d_rendertarget_view_vk_get_image_view(rtv_vk, context_vk);
@@ -2155,8 +2154,7 @@ static bool wined3d_context_vk_begin_render_pass(struct wined3d_context_vk *cont
     }
 
     if (!(context_vk->vk_render_pass = wined3d_context_vk_get_render_pass(context_vk, &state->fb,
-            ARRAY_SIZE(state->fb.render_targets), state->render_states[WINED3D_RS_ZWRITEENABLE]
-            || state->render_states[WINED3D_RS_ZENABLE], 0)))
+            ARRAY_SIZE(state->fb.render_targets), wined3d_state_uses_depth_buffer(state), 0)))
     {
         ERR("Failed to get render pass.\n");
         return false;
@@ -2845,7 +2843,7 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
 
     if ((dsv = state->fb.depth_stencil))
     {
-        if (state->render_states[WINED3D_RS_ZWRITEENABLE] || state->render_states[WINED3D_RS_ZENABLE])
+        if (wined3d_state_uses_depth_buffer(state))
             wined3d_rendertarget_view_load_location(dsv, &context_vk->c, dsv->resource->draw_binding);
         else
             wined3d_rendertarget_view_prepare_location(dsv, &context_vk->c, dsv->resource->draw_binding);

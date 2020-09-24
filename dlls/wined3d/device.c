@@ -4264,8 +4264,7 @@ HRESULT CDECL wined3d_device_validate_device(const struct wined3d_device *device
         }
     }
 
-    if (state->render_states[WINED3D_RS_ZENABLE] || state->render_states[WINED3D_RS_ZWRITEENABLE]
-            || state->render_states[WINED3D_RS_STENCILENABLE])
+    if (wined3d_state_uses_depth_buffer(state) || state->render_states[WINED3D_RS_STENCILENABLE])
     {
         struct wined3d_rendertarget_view *rt = device->state.fb.render_targets[0];
         struct wined3d_rendertarget_view *ds = device->state.fb.depth_stencil;

@@ -4491,7 +4491,7 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
          * that we never copy the stencil data.*/
         DWORD location = context->render_offscreen ? dsv->resource->draw_binding : WINED3D_LOCATION_DRAWABLE;
 
-        if (state->render_states[WINED3D_RS_ZWRITEENABLE] || state->render_states[WINED3D_RS_ZENABLE])
+        if (wined3d_state_uses_depth_buffer(state))
             wined3d_rendertarget_view_load_location(dsv, context, location);
         else
             wined3d_rendertarget_view_prepare_location(dsv, context, location);

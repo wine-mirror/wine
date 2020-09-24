@@ -3624,6 +3624,11 @@ struct wined3d_state
     struct wined3d_rasterizer_state *rasterizer_state;
 };
 
+static inline bool wined3d_state_uses_depth_buffer(const struct wined3d_state *state)
+{
+    return state->render_states[WINED3D_RS_ZWRITEENABLE] || state->render_states[WINED3D_RS_ZENABLE];
+}
+
 struct wined3d_dummy_textures
 {
     GLuint tex_1d;
