@@ -7765,6 +7765,121 @@ static void test_duplicate_handle_access_child(void)
     CloseHandle(process);
 }
 
+#define join_process(a) join_process_(__LINE__, a)
+static void join_process_(int line, const PROCESS_INFORMATION *pi)
+{
+    DWORD ret = WaitForSingleObject(pi->hProcess, 1000);
+    ok_(__FILE__, line)(!ret, "wait failed\n");
+    CloseHandle(pi->hProcess);
+    CloseHandle(pi->hThread);
+}
+
+static void test_create_process_token(void)
+{
+    char cmdline[300], acl_buffer[200], sid_buffer[100];
+    SECURITY_ATTRIBUTES sa = {.nLength = sizeof(sa)};
+    ACL *acl = (ACL *)acl_buffer;
+    SID *sid = (SID *)sid_buffer;
+    SID_AND_ATTRIBUTES sid_attr;
+    HANDLE event, token, token2;
+    PROCESS_INFORMATION pi;
+    SECURITY_DESCRIPTOR sd;
+    STARTUPINFOA si = {0};
+    DWORD size;
+    BOOL ret;
+
+    size = sizeof(sid_buffer);
+    ret = CreateWellKnownSid(WinLocalSid, NULL, sid, &size);
+    ok(ret, "got error %u\n", GetLastError());
+    ret = InitializeAcl(acl, sizeof(acl_buffer), ACL_REVISION);
+    ok(ret, "got error %u\n", GetLastError());
+    ret = AddAccessAllowedAce(acl, ACL_REVISION, EVENT_MODIFY_STATE, sid);
+    ok(ret, "got error %u\n", GetLastError());
+    InitializeSecurityDescriptor(&sd, SECURITY_DESCRIPTOR_REVISION);
+    ret = SetSecurityDescriptorDacl(&sd, TRUE, acl, FALSE);
+    ok(ret, "got error %u\n", GetLastError());
+    sa.lpSecurityDescriptor = &sd;
+    event = CreateEventA(&sa, TRUE, TRUE, "test_event");
+    ok(!!event, "got error %u\n", GetLastError());
+
+    sprintf(cmdline, "%s security restricted 0", myARGV[0]);
+
+    ret = CreateProcessAsUserA(NULL, NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    ok(ret, "got error %u\n", GetLastError());
+    join_process(&pi);
+
+    ret = CreateProcessAsUserA(GetCurrentProcessToken(), NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    todo_wine ok(!ret, "expected failure\n");
+    todo_wine ok(GetLastError() == ERROR_INVALID_HANDLE, "got error %u\n", GetLastError());
+    if (ret) join_process(&pi);
+
+    ret = OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY | TOKEN_ASSIGN_PRIMARY, &token);
+    ok(ret, "got error %u\n", GetLastError());
+    ret = CreateProcessAsUserA(token, NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    ok(ret || broken(GetLastError() == ERROR_ACCESS_DENIED) /* < 7 */, "got error %u\n", GetLastError());
+    if (ret) join_process(&pi);
+    CloseHandle(token);
+
+    ret = OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token);
+    ok(ret, "got error %u\n", GetLastError());
+    ret = CreateProcessAsUserA(token, NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    todo_wine ok(!ret, "expected failure\n");
+    todo_wine ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %u\n", GetLastError());
+    if (ret) join_process(&pi);
+    CloseHandle(token);
+
+    ret = OpenProcessToken(GetCurrentProcess(), TOKEN_ASSIGN_PRIMARY, &token);
+    ok(ret, "got error %u\n", GetLastError());
+    ret = CreateProcessAsUserA(token, NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    todo_wine ok(!ret, "expected failure\n");
+    todo_wine ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %u\n", GetLastError());
+    if (ret) join_process(&pi);
+    CloseHandle(token);
+
+    ret = OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY | TOKEN_ASSIGN_PRIMARY | TOKEN_DUPLICATE, &token);
+    ok(ret, "got error %u\n", GetLastError());
+
+    ret = DuplicateTokenEx(token, TOKEN_QUERY | TOKEN_ASSIGN_PRIMARY, NULL,
+            SecurityImpersonation, TokenImpersonation, &token2);
+    ok(ret, "got error %u\n", GetLastError());
+    ret = CreateProcessAsUserA(token2, NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    ok(ret || broken(GetLastError() == ERROR_BAD_TOKEN_TYPE) /* < 7 */, "got error %u\n", GetLastError());
+    if (ret) join_process(&pi);
+    CloseHandle(token2);
+
+    sprintf(cmdline, "%s security restricted 1", myARGV[0]);
+    sid_attr.Sid = sid;
+    sid_attr.Attributes = 0;
+    ret = CreateRestrictedToken(token, 0, 1, &sid_attr, 0, NULL, 0, NULL, &token2);
+    ok(ret, "got error %u\n", GetLastError());
+    ret = CreateProcessAsUserA(token2, NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    ok(ret, "got error %u\n", GetLastError());
+    join_process(&pi);
+    CloseHandle(token2);
+
+    CloseHandle(token);
+
+    CloseHandle(event);
+}
+
+static void test_create_process_token_child(void)
+{
+    HANDLE event;
+
+    SetLastError(0xdeadbeef);
+    event = OpenEventA(EVENT_MODIFY_STATE, FALSE, "test_event");
+    if (!atoi(myARGV[3]))
+    {
+        ok(!!event, "got error %u\n", GetLastError());
+        CloseHandle(event);
+    }
+    else
+    {
+        todo_wine ok(!event, "expected failure\n");
+        todo_wine ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %u\n", GetLastError());
+    }
+}
+
 START_TEST(security)
 {
     init();
@@ -7778,6 +7893,8 @@ START_TEST(security)
             test_process_security_child();
         else if (!strcmp(myARGV[2], "duplicate"))
             test_duplicate_handle_access_child();
+        else if (!strcmp(myARGV[2], "restricted"))
+            test_create_process_token_child();
         return;
     }
     test_kernel_objects_security();
@@ -7824,6 +7941,7 @@ START_TEST(security)
     test_GetExplicitEntriesFromAclW();
     test_BuildSecurityDescriptorW();
     test_duplicate_handle_access();
+    test_create_process_token();
 
     /* Must be the last test, modifies process token */
     test_token_security_descriptor();
