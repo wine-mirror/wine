@@ -6507,6 +6507,7 @@ static void get_ddrawstream_create_sample_desc_(int line, const DDSURFACEDESC *f
 static void test_ddrawstream_create_sample(void)
 {
     IAMMultiMediaStream *mmstream = create_ammultimediastream();
+    DDSURFACEDESC desc2 = { sizeof(desc2) };
     IDirectDrawSurface *surface, *surface2;
     DDSURFACEDESC desc = { sizeof(desc) };
     IDirectDrawMediaStream *ddraw_stream;
@@ -6603,9 +6604,72 @@ static void test_ddrawstream_create_sample(void)
     hr = IDirectDrawMediaStream_CreateSample(ddraw_stream, surface, &rect, 0, &sample);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-    IDirectDrawMediaStream_Release(ddraw_stream);
     ref = IDirectDrawStreamSample_Release(sample);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IDirectDrawSurface_Release(surface);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+    memset(&desc, 0, sizeof(desc));
+    desc.dwSize = sizeof(desc);
+    desc.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT | DDSD_CAPS;
+    desc.dwWidth = 444;
+    desc.dwHeight = 400;
+    desc.ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT);
+    desc.ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
+    desc.ddpfPixelFormat.dwRGBBitCount = 32;
+    desc.ddpfPixelFormat.dwRBitMask = 0xff0000;
+    desc.ddpfPixelFormat.dwGBitMask = 0x00ff00;
+    desc.ddpfPixelFormat.dwBBitMask = 0x0000ff;
+    desc.ddpfPixelFormat.dwRGBAlphaBitMask = 0xff000000;
+    desc.ddsCaps.dwCaps = DDSCAPS_SYSTEMMEMORY | DDSCAPS_OFFSCREENPLAIN;
+    hr = IDirectDraw_CreateSurface(ddraw, &desc, &surface, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    SetRect(&rect, 111, 100, 333, 300);
+
+    hr = IDirectDrawMediaStream_CreateSample(ddraw_stream, surface, &rect, 0, &sample);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ref = IDirectDrawStreamSample_Release(sample);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+    hr = IDirectDrawMediaStream_CreateSample(ddraw_stream, NULL, NULL, 0, &sample);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    surface2 = NULL;
+    hr = IDirectDrawStreamSample_GetSurface(sample, &surface2, &rect);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface_GetSurfaceDesc(surface, &desc);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IDirectDrawSurface_GetSurfaceDesc(surface2, &desc2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(desc2.dwWidth == 222, "Got width %u.\n", desc2.dwWidth);
+    ok(desc2.dwHeight == 200, "Got height %u.\n", desc2.dwHeight);
+    ok(memcmp(&desc2.ddpfPixelFormat, &desc.ddpfPixelFormat, sizeof(DDPIXELFORMAT)) == 0,
+            "Pixel format didn't match.\n");
+
+    ref = IDirectDrawStreamSample_Release(sample);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IDirectDrawSurface_Release(surface);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IDirectDrawSurface_Release(surface2);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+    memset(&desc, 0, sizeof(desc));
+    desc.dwSize = sizeof(desc);
+    desc.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT | DDSD_CAPS;
+    desc.dwWidth = 444;
+    desc.dwHeight = 400;
+    desc.ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT);
+    desc.ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_PALETTEINDEXED4;
+    desc.ddpfPixelFormat.dwRGBBitCount = 4;
+    desc.ddsCaps.dwCaps = DDSCAPS_SYSTEMMEMORY | DDSCAPS_OFFSCREENPLAIN;
+    hr = IDirectDraw_CreateSurface(ddraw, &desc, &surface, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IDirectDrawMediaStream_CreateSample(ddraw_stream, surface, NULL, 0, &sample);
+    ok(hr == DDERR_INVALIDSURFACETYPE, "Got hr %#x.\n", hr);
+
+    IDirectDrawMediaStream_Release(ddraw_stream);
     ref = IDirectDrawSurface_Release(surface);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
     ref = IAMMultiMediaStream_Release(mmstream);
