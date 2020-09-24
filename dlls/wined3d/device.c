@@ -1060,6 +1060,7 @@ HRESULT wined3d_device_set_implicit_swapchain(struct wined3d_device *device, str
     static const struct wined3d_color black = {0.0f, 0.0f, 0.0f, 0.0f};
     const struct wined3d_swapchain_desc *swapchain_desc;
     DWORD clear_flags = 0;
+    unsigned int i;
     HRESULT hr;
 
     TRACE("device %p, swapchain %p.\n", device, swapchain);
@@ -1095,6 +1096,10 @@ HRESULT wined3d_device_set_implicit_swapchain(struct wined3d_device *device, str
         goto err_out;
     }
     device->swapchains[0] = swapchain;
+
+    for (i = 0; i < ARRAY_SIZE(device->state.fb.render_targets); ++i)
+        if (device->state.fb.render_targets[i])
+            wined3d_rtv_bind_count_dec(device->state.fb.render_targets[i]);
 
     memset(device->state.fb.render_targets, 0, sizeof(device->state.fb.render_targets));
     if (FAILED(hr = device->adapter->adapter_ops->adapter_init_3d(device)))
@@ -4849,13 +4854,19 @@ HRESULT CDECL wined3d_device_set_rendertarget_view(struct wined3d_device *device
         return WINED3D_OK;
 
     if (view)
+    {
         wined3d_rendertarget_view_incref(view);
+        wined3d_rtv_bind_count_inc(view);
+    }
     device->state.fb.render_targets[view_idx] = view;
     wined3d_cs_emit_set_rendertarget_view(device->cs, view_idx, view);
     /* Release after the assignment, to prevent device_resource_released()
      * from seeing the surface as still in use. */
     if (prev)
+    {
+        wined3d_rtv_bind_count_dec(prev);
         wined3d_rendertarget_view_decref(prev);
+    }
 
     wined3d_unbind_srv_for_rtv(device, view, FALSE);
 
@@ -4888,7 +4899,6 @@ HRESULT CDECL wined3d_device_set_depth_stencil_view(struct wined3d_device *devic
     wined3d_cs_emit_set_depth_stencil_view(device->cs, view);
     if (prev)
         wined3d_rendertarget_view_decref(prev);
-
     wined3d_unbind_srv_for_rtv(device, view, TRUE);
 
     return WINED3D_OK;

@@ -3936,7 +3936,8 @@ struct wined3d_resource
 {
     LONG ref;
     LONG bind_count;
-    LONG srv_bind_count_device;
+    uint32_t srv_bind_count_device;
+    uint32_t rtv_bind_count_device;
     LONG map_count;
     LONG access_count;
     struct wined3d_device *device;
@@ -5975,23 +5976,24 @@ static inline BOOL wined3d_dsv_srv_conflict(const struct wined3d_rendertarget_vi
 static inline BOOL wined3d_resource_check_fbo_attached(const struct wined3d_state *state,
         const struct wined3d_resource *resource, const struct wined3d_format *srv_format)
 {
-    struct wined3d_rendertarget_view * const *rts = &state->fb.render_targets[0];
     const struct wined3d_rendertarget_view *dsv;
-    unsigned int i;
 
     if ((resource->bind_flags & WINED3D_BIND_DEPTH_STENCIL)
             && (dsv = state->fb.depth_stencil) && dsv->resource == resource
             && wined3d_dsv_srv_conflict(dsv, srv_format))
         return TRUE;
 
-    if (!(resource->bind_flags & WINED3D_BIND_RENDER_TARGET))
-        return FALSE;
+    return resource->rtv_bind_count_device;
+}
 
-    for (i = 0; i < WINED3D_MAX_RENDER_TARGETS; ++i)
-        if (rts[i] && rts[i]->resource == resource)
-            return TRUE;
+static inline void wined3d_rtv_bind_count_inc(struct wined3d_rendertarget_view *rtv)
+{
+    ++rtv->resource->rtv_bind_count_device;
+}
 
-    return FALSE;
+static inline void wined3d_rtv_bind_count_dec(struct wined3d_rendertarget_view *rtv)
+{
+    --rtv->resource->rtv_bind_count_device;
 }
 
 static inline void wined3d_viewport_get_z_range(const struct wined3d_viewport *vp, float *min_z, float *max_z)
