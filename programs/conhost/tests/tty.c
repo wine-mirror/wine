@@ -1316,7 +1316,7 @@ static HPCON create_pseudo_console(HANDLE *console_pipe_end, HANDLE *child_proce
     ok(console_pipe != INVALID_HANDLE_VALUE, "CreateNamedPipeW failed: %u\n", GetLastError());
 
     *console_pipe_end = CreateFileW(L"\\\\.\\pipe\\pseudoconsoleconn", GENERIC_READ | GENERIC_WRITE,
-                                    0, &sec_attr, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
+                                    0, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
     ok(*console_pipe_end != INVALID_HANDLE_VALUE, "CreateFile failed: %u\n", GetLastError());
 
     child_pipe = CreateNamedPipeW(L"\\\\.\\pipe\\pseudoconsoleserver", PIPE_ACCESS_DUPLEX,
