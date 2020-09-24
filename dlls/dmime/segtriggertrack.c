@@ -24,7 +24,6 @@
 #include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmime);
-WINE_DECLARE_DEBUG_CHANNEL(dmfile);
 
 /*****************************************************************************
  * IDirectMusicSegTriggerTrack implementation
@@ -259,94 +258,55 @@ static inline IDirectMusicSegTriggerTrack *impl_from_IPersistStream(IPersistStre
     return CONTAINING_RECORD(iface, IDirectMusicSegTriggerTrack, dmobj.IPersistStream_iface);
 }
 
-static HRESULT parse_segment(IDirectMusicSegTriggerTrack *This, DWORD size, IStream *pStm)
+static HRESULT parse_segment_item(IDirectMusicSegTriggerTrack *This, IStream *stream,
+        const struct chunk_entry *lseg)
 {
-  DMUS_PRIVATE_CHUNK Chunk;
-  DWORD ListSize[3], ListCount[3];
-  LARGE_INTEGER liMove; /* used when skipping chunks */
-  HRESULT hr;
+    struct chunk_entry chunk = {.parent = lseg};
+    DMUS_PRIVATE_SEGMENT_ITEM *item;
+    HRESULT hr;
 
-  IDirectMusicObject* pObject = NULL;
-  LPDMUS_PRIVATE_SEGMENT_ITEM pNewItem = NULL;
+    /* First chunk is a header */
+    if (stream_get_chunk(stream, &chunk) != S_OK || chunk.id != DMUS_FOURCC_SEGMENTITEM_CHUNK)
+        return DMUS_E_TRACK_HDR_NOT_FIRST_CK;
+    if (!(item = heap_alloc_zero(sizeof(*item))))
+        return E_OUTOFMEMORY;
+    hr = stream_chunk_get_data(stream, &chunk, &item->header, sizeof(DMUS_IO_SEGMENT_ITEM_HEADER));
+    if (FAILED(hr))
+        goto error;
 
-  ListSize[0] = size - sizeof(FOURCC);
-  ListCount[0] = 0;
+    TRACE("Found DMUS_IO_SEGMENT_ITEM_HEADER\n");
+    TRACE("\tlTimePhysical: %u\n", item->header.lTimeLogical);
+    TRACE("\tlTimePhysical: %u\n", item->header.lTimePhysical);
+    TRACE("\tdwPlayFlags: %#08x\n", item->header.dwPlayFlags);
+    TRACE("\tdwFlags: %#08x\n", item->header.dwFlags);
 
-  do {
-    IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
-    ListCount[0] += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
-    TRACE_(dmfile)(": %s chunk (size = %d)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
-    switch (Chunk.fccID) { 
-    case DMUS_FOURCC_SEGMENTITEM_CHUNK: {
-      TRACE_(dmfile)(": segment item chunk\n"); 
-      /** alloc new item entry */
-      pNewItem = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(DMUS_PRIVATE_SEGMENT_ITEM));
-      if (!pNewItem)
-        return  E_OUTOFMEMORY;
+    /* Second chunk is a reference list */
+    if (stream_next_chunk(stream, &chunk) != S_OK || chunk.id != FOURCC_LIST ||
+            chunk.type != DMUS_FOURCC_REF_LIST) {
+        hr = DMUS_E_INVALID_SEGMENTTRIGGERTRACK;
+        goto error;
+    }
+    if (FAILED(hr = dmobj_parsereference(stream, &chunk, &item->pObject)))
+        goto error;
 
-      IStream_Read (pStm, &pNewItem->header, sizeof(DMUS_IO_SEGMENT_ITEM_HEADER), NULL);
-      TRACE_(dmfile)(" - lTimePhysical: %u\n", pNewItem->header.lTimeLogical);
-      TRACE_(dmfile)(" - lTimePhysical: %u\n", pNewItem->header.lTimePhysical);
-      TRACE_(dmfile)(" - dwPlayFlags: 0x%08x\n", pNewItem->header.dwPlayFlags);
-      TRACE_(dmfile)(" - dwFlags: 0x%08x\n", pNewItem->header.dwFlags);
-      list_add_tail (&This->Items, &pNewItem->entry);
-      break;
+    /* Optional third chunk if the reference is a motif */
+    if (item->header.dwFlags & DMUS_SEGMENTTRACKF_MOTIF) {
+        if (FAILED(hr = stream_next_chunk(stream, &chunk)))
+            goto error;
+        if (chunk.id == DMUS_FOURCC_SEGMENTITEMNAME_CHUNK)
+            if (FAILED(hr = stream_chunk_get_wstr(stream, &chunk, item->wszName, DMUS_MAX_NAME)))
+                goto error;
+
+        TRACE("Found motif name: %s\n", debugstr_w(item->wszName));
     }
-    case DMUS_FOURCC_SEGMENTITEMNAME_CHUNK: {
-      TRACE_(dmfile)(": segment item name chunk\n");
-      if (!pNewItem) {
-	ERR(": pNewItem not allocated, bad chunk order?\n");
-	return E_FAIL;
-      }
-      IStream_Read (pStm, pNewItem->wszName, Chunk.dwSize, NULL);
-      TRACE_(dmfile)(" - name: %s\n", debugstr_w(pNewItem->wszName));
-      break;
-    }
-    case FOURCC_LIST: {
-      struct chunk_entry list = {.id = FOURCC_LIST, .size = Chunk.dwSize};
-      static const LARGE_INTEGER zero;
-      IStream_Seek(pStm, zero, STREAM_SEEK_CUR, &list.offset);
-      list.offset.QuadPart -= sizeof(FOURCC) + sizeof(DWORD);
-      IStream_Read (pStm, &Chunk.fccID, sizeof(FOURCC), NULL);
-      TRACE_(dmfile)(": LIST chunk of type %s", debugstr_fourcc(Chunk.fccID));
-      list.type = Chunk.fccID;
-      ListSize[1] = Chunk.dwSize - sizeof(FOURCC);
-      ListCount[1] = 0;
-      switch (Chunk.fccID) { 
-      case DMUS_FOURCC_REF_LIST: {
-        TRACE_(dmfile)(": DMRF (DM References) list\n");
-        hr = dmobj_parsereference(pStm, &list, &pObject);
-	if (FAILED(hr)) {
-	  ERR(": could not load Reference\n");
-	  return hr;
-	}
-        if (!pNewItem) {
-	  ERR(": pNewItem not allocated, bad chunk order?\n");
-	  return E_FAIL;
-        }
-	pNewItem->pObject = pObject;
-	break;						
-      }
-      default: {
-	TRACE_(dmfile)(": unknown (skipping)\n");
-	liMove.QuadPart = Chunk.dwSize - sizeof(FOURCC);
-	IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
-	break;						
-      }
-      }	
-      break;
-    }
-    default: {
-      TRACE_(dmfile)(": unknown chunk (irrelevant & skipping)\n");
-      liMove.QuadPart = Chunk.dwSize;
-      IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
-      break;						
-    }
-    }
-    TRACE_(dmfile)(": ListCount[0] = %d < ListSize[0] = %d\n", ListCount[0], ListSize[0]);
-  } while (ListCount[0] < ListSize[0]);
-  
-  return S_OK;
+
+    list_add_tail(&This->Items, &item->entry);
+
+    return S_OK;
+
+error:
+    heap_free(item);
+    return hr;
 }
 
 static HRESULT parse_segments_list(IDirectMusicSegTriggerTrack *This, IStream *stream,
@@ -359,7 +319,7 @@ static HRESULT parse_segments_list(IDirectMusicSegTriggerTrack *This, IStream *s
 
     while ((hr = stream_next_chunk(stream, &chunk)) == S_OK)
         if (chunk.id == FOURCC_LIST && chunk.type == DMUS_FOURCC_SEGMENT_LIST)
-            if (FAILED(hr = parse_segment(This, stream, &chunk)))
+            if (FAILED(hr = parse_segment_item(This, stream, &chunk)))
                 break;
 
     return SUCCEEDED(hr) ? S_OK : hr;
