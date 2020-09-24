@@ -29441,12 +29441,13 @@ static void test_desktop_window(void)
 
 static void test_sample_attached_rtv(void)
 {
-    ID3D11ShaderResourceView *srv, *srv_test, *srv_ds;
+    ID3D11ShaderResourceView *srv, *srv2, *srv_test, *srv_ds;
+    D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc, srvds_desc;
     ID3D11Texture2D *texture, *texture2, *dstexture;
-    D3D11_SHADER_RESOURCE_VIEW_DESC srvds_desc;
+    ID3D11RenderTargetView *rtv, *rtv2, *rtvs[2];
     D3D11_DEPTH_STENCIL_VIEW_DESC dsview_desc;
     struct d3d11_test_context test_context;
-    ID3D11RenderTargetView *rtv, *rtvs[2];
+    D3D11_RENDER_TARGET_VIEW_DESC rtv_desc;
     D3D11_TEXTURE2D_DESC texture_desc;
     D3D_FEATURE_LEVEL feature_level;
     D3D11_SAMPLER_DESC sampler_desc;
@@ -29460,6 +29461,7 @@ static void test_sample_attached_rtv(void)
     ID3D11Device *device;
     unsigned int x, y;
     unsigned int i;
+    D3D11_BOX box;
     DWORD color;
     HRESULT hr;
 
@@ -29562,7 +29564,7 @@ static void test_sample_attached_rtv(void)
 
     texture_desc.Width = 64;
     texture_desc.Height = 64;
-    texture_desc.MipLevels = 1;
+    texture_desc.MipLevels = 2;
     texture_desc.ArraySize = 1;
     texture_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 
@@ -29586,7 +29588,15 @@ static void test_sample_attached_rtv(void)
 
     ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, red);
 
-    hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture2, NULL, &rtv);
+    memset(&rtv_desc, 0, sizeof(rtv_desc));
+    rtv_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    rtv_desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+    U(rtv_desc).Texture2D.MipSlice = 0;
+
+    hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture2, &rtv_desc, &rtv);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    U(rtv_desc).Texture2D.MipSlice = 1;
+    hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture2, &rtv_desc, &rtv2);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
 
     rtvs[0] = test_context.backbuffer_rtv;
@@ -29594,11 +29604,19 @@ static void test_sample_attached_rtv(void)
 
     ID3D11DeviceContext_OMSetRenderTargets(context, 2, rtvs, NULL);
 
-    hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture, NULL, &srv);
+    memset(&srv_desc, 0, sizeof(srv_desc));
+    srv_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    srv_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+    U(srv_desc).Texture2D.MipLevels = 1;
+
+    hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture, &srv_desc, &srv);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &srv);
 
     draw_quad(&test_context);
+
+    set_box(&box, 0, 0, 0, 320, 240, 1);
+    ID3D11DeviceContext_CopySubresourceRegion(context, (ID3D11Resource *)texture2, 1, 0, 0, 0, (ID3D11Resource *)texture2, 0, &box);
 
     get_texture_readback(texture2, 0, &rb);
     for (y = 0; y < 4; ++y)
@@ -29611,12 +29629,29 @@ static void test_sample_attached_rtv(void)
         }
     }
     release_resource_readback(&rb);
+    get_texture_readback(texture2, 1, &rb);
+    for (y = 0; y < 4; ++y)
+    {
+        for (x = 0; x < 4; ++x)
+        {
+            color = get_readback_color(&rb, 40 + x * 80, 30 + y * 60, 0);
+            ok(compare_color(color, 0x40404040, 2),
+                    "Got unexpected color 0x%08x at (%u, %u).\n", color, x, y);
+        }
+    }
+    release_resource_readback(&rb);
 
     ID3D11ShaderResourceView_Release(srv);
+    ID3D11DeviceContext_OMSetRenderTargets(context, 2, rtvs, NULL);
 
     ID3D11DeviceContext_ClearRenderTargetView(context, rtv, red);
 
-    hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture2, NULL, &srv);
+    hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture2, &srv_desc, &srv);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    U(srv_desc).Texture2D.MostDetailedMip = 1;
+    U(srv_desc).Texture2D.MipLevels = 1;
+    hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture2, &srv_desc, &srv2);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
 
     memset(&blend_desc, 0, sizeof(blend_desc));
@@ -29693,6 +29728,25 @@ static void test_sample_attached_rtv(void)
     ID3D11DeviceContext_PSGetShaderResources(context, 0, 1, &srv_test);
     ok(!srv_test, "Unexpected SRV %p.\n", srv_test);
 
+    ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &srv2);
+    ID3D11DeviceContext_OMSetRenderTargets(context, 2, rtvs, NULL);
+    ID3D11DeviceContext_PSGetShaderResources(context, 0, 1, &srv_test);
+    ok(!!srv_test, "Unexpected SRV %p.\n", srv_test);
+    ID3D11ShaderResourceView_Release(srv_test);
+
+    draw_quad(&test_context);
+    get_texture_readback(test_context.backbuffer, 0, &rb);
+    for (y = 0; y < 4; ++y)
+    {
+        for (x = 0; x < 4; ++x)
+        {
+            color = get_readback_color(&rb, 80 + x * 160, 60 + y * 120, 0);
+            ok(compare_color(color, 0x80808080, 2),
+                    "Got unexpected color 0x%08x at (%u, %u).\n", color, x, y);
+        }
+    }
+    release_resource_readback(&rb);
+
     texture_desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_DEPTH_STENCIL;
     memset(&dsview_desc, 0, sizeof(dsview_desc));
     dsview_desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
@@ -29750,7 +29804,9 @@ static void test_sample_attached_rtv(void)
 
     ID3D11DeviceContext_OMSetRenderTargets(context, 2, rtvs, NULL);
 
+    ID3D11RenderTargetView_Release(rtv2);
     ID3D11RenderTargetView_Release(rtv);
+    ID3D11ShaderResourceView_Release(srv2);
     ID3D11ShaderResourceView_Release(srv);
     ID3D11SamplerState_Release(sampler);
     ID3D11PixelShader_Release(ps);

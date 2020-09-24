@@ -1965,7 +1965,7 @@ static void wined3d_device_set_shader_resource_view(struct wined3d_device *devic
     if (view == prev)
         return;
 
-    if (view && (view->resource->rtv_bind_count_device
+    if (view && (wined3d_is_srv_rtv_bound(view)
             || ((dsv = device->state.fb.depth_stencil)
             && dsv->resource == view->resource && wined3d_dsv_srv_conflict(dsv, view->format))))
     {
@@ -1976,14 +1976,14 @@ static void wined3d_device_set_shader_resource_view(struct wined3d_device *devic
     if (view)
     {
         wined3d_shader_resource_view_incref(view);
-        ++view->resource->srv_bind_count_device;
+        wined3d_srv_bind_count_inc(view);
     }
 
     device->state.shader_resource_view[type][idx] = view;
     wined3d_cs_emit_set_shader_resource_view(device->cs, type, idx, view);
     if (prev)
     {
-        --prev->resource->srv_bind_count_device;
+        wined3d_srv_bind_count_dec(prev);
         wined3d_shader_resource_view_decref(prev);
     }
 }
@@ -4793,7 +4793,7 @@ struct wined3d_rendertarget_view * CDECL wined3d_device_get_depth_stencil_view(c
 static void wined3d_unbind_srv_for_rtv(struct wined3d_device *device,
         const struct wined3d_rendertarget_view *view, BOOL dsv)
 {
-    if (view && view->resource->srv_bind_count_device)
+    if (view && wined3d_is_rtv_srv_bound(view))
     {
         const struct wined3d_resource *resource = view->resource;
         const struct wined3d_shader_resource_view *srv;
@@ -4804,7 +4804,8 @@ static void wined3d_unbind_srv_for_rtv(struct wined3d_device *device,
         for (i = 0; i < WINED3D_SHADER_TYPE_COUNT; ++i)
             for (j = 0; j < MAX_SHADER_RESOURCE_VIEWS; ++j)
                 if ((srv = device->state.shader_resource_view[i][j]) && srv->resource == resource
-                        && (!dsv || wined3d_dsv_srv_conflict(view, srv->format)))
+                        && ((!dsv && wined3d_is_srv_rtv_bound(srv))
+                        || (dsv && wined3d_dsv_srv_conflict(view, srv->format))))
                     wined3d_device_set_shader_resource_view(device, i, j, NULL);
     }
 }

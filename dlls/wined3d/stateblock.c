@@ -450,7 +450,7 @@ void state_unbind_resources(struct wined3d_state *state)
             if ((srv = state->shader_resource_view[i][j]))
             {
                 state->shader_resource_view[i][j] = NULL;
-                --srv->resource->srv_bind_count_device;
+                wined3d_srv_bind_count_dec(srv);
                 wined3d_shader_resource_view_decref(srv);
             }
         }
