@@ -1635,8 +1635,12 @@ static int wined3d_graphics_pipeline_vk_compare(const void *key, const struct wi
     if ((ret = memcmp(&a->rs_desc, &b->rs_desc, sizeof(a->rs_desc))))
         return ret;
 
-    if ((ret = memcmp(&a->ms_desc, &b->ms_desc, sizeof(a->ms_desc))))
-        return ret;
+    if (a->ms_desc.rasterizationSamples != b->ms_desc.rasterizationSamples)
+        return a->ms_desc.rasterizationSamples - b->ms_desc.rasterizationSamples;
+    if (a->ms_desc.alphaToCoverageEnable != b->ms_desc.alphaToCoverageEnable)
+        return a->ms_desc.alphaToCoverageEnable - b->ms_desc.alphaToCoverageEnable;
+    if (a->sample_mask != b->sample_mask)
+        return a->sample_mask - b->sample_mask;
 
     if ((ret = memcmp(&a->ds_desc, &b->ds_desc, sizeof(a->ds_desc))))
         return ret;
@@ -1710,6 +1714,7 @@ static void wined3d_context_vk_init_graphics_pipeline_key(struct wined3d_context
     key->rs_desc.lineWidth = 1.0f;
 
     key->ms_desc.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+    key->ms_desc.pSampleMask = &key->sample_mask;
 
     key->ds_desc.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
     key->ds_desc.maxDepthBounds = 1.0f;
@@ -2020,10 +2025,11 @@ static bool wined3d_context_vk_update_graphics_pipeline_key(struct wined3d_conte
     }
 
     if (key->ms_desc.rasterizationSamples != context_vk->sample_count
-            || isStateDirty(&context_vk->c, STATE_BLEND))
+            || isStateDirty(&context_vk->c, STATE_BLEND) || isStateDirty(&context_vk->c, STATE_SAMPLE_MASK))
     {
         key->ms_desc.rasterizationSamples = context_vk->sample_count;
         key->ms_desc.alphaToCoverageEnable = state->blend_state && state->blend_state->desc.alpha_to_coverage;
+        key->sample_mask = state->sample_mask;
 
         update = true;
     }
