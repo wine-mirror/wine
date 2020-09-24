@@ -28,6 +28,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmime);
 /*****************************************************************************
  * IDirectMusicSegTriggerTrack implementation
  */
+struct segment_item {
+    struct list entry;
+    DMUS_IO_SEGMENT_ITEM_HEADER header;
+    IDirectMusicObject *dmobj;
+    WCHAR name[DMUS_MAX_NAME];
+};
+
 typedef struct IDirectMusicSegTriggerTrack {
     IDirectMusicTrack8 IDirectMusicTrack8_iface;
     struct dmobject dmobj;/* IPersistStream only */
@@ -83,14 +90,14 @@ static ULONG WINAPI segment_track_Release(IDirectMusicTrack8 *iface)
 
     if (!ref) {
         struct list *cursor, *cursor2;
-        DMUS_PRIVATE_SEGMENT_ITEM *item;
+        struct segment_item *item;
 
         LIST_FOR_EACH_SAFE(cursor, cursor2, &This->Items) {
-            item = LIST_ENTRY(cursor, DMUS_PRIVATE_SEGMENT_ITEM, entry);
+            item = LIST_ENTRY(cursor, struct segment_item, entry);
             list_remove(cursor);
 
-            if (item->pObject)
-                IDirectMusicObject_Release(item->pObject);
+            if (item->dmobj)
+                IDirectMusicObject_Release(item->dmobj);
             heap_free(item);
         }
 
@@ -262,7 +269,7 @@ static HRESULT parse_segment_item(IDirectMusicSegTriggerTrack *This, IStream *st
         const struct chunk_entry *lseg)
 {
     struct chunk_entry chunk = {.parent = lseg};
-    DMUS_PRIVATE_SEGMENT_ITEM *item;
+    struct segment_item *item;
     HRESULT hr;
 
     /* First chunk is a header */
@@ -286,7 +293,7 @@ static HRESULT parse_segment_item(IDirectMusicSegTriggerTrack *This, IStream *st
         hr = DMUS_E_INVALID_SEGMENTTRIGGERTRACK;
         goto error;
     }
-    if (FAILED(hr = dmobj_parsereference(stream, &chunk, &item->pObject)))
+    if (FAILED(hr = dmobj_parsereference(stream, &chunk, &item->dmobj)))
         goto error;
 
     /* Optional third chunk if the reference is a motif */
@@ -294,10 +301,10 @@ static HRESULT parse_segment_item(IDirectMusicSegTriggerTrack *This, IStream *st
         if (FAILED(hr = stream_next_chunk(stream, &chunk)))
             goto error;
         if (chunk.id == DMUS_FOURCC_SEGMENTITEMNAME_CHUNK)
-            if (FAILED(hr = stream_chunk_get_wstr(stream, &chunk, item->wszName, DMUS_MAX_NAME)))
+            if (FAILED(hr = stream_chunk_get_wstr(stream, &chunk, item->name, DMUS_MAX_NAME)))
                 goto error;
 
-        TRACE("Found motif name: %s\n", debugstr_w(item->wszName));
+        TRACE("Found motif name: %s\n", debugstr_w(item->name));
     }
 
     list_add_tail(&This->Items, &item->entry);
