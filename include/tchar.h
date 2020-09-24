@@ -240,7 +240,7 @@ typedef unsigned short wctype_t;
 #ifndef __TCHAR_DEFINED
 #if defined(WINE_UNICODE_NATIVE)
 typedef wchar_t       _TCHAR;
-#elif defined(WINE_UNICODE_CHAR16)
+#elif __cpp_unicode_literals >= 200710
 typedef char16_t      _TCHAR;
 #else
 typedef unsigned short _TCHAR;
