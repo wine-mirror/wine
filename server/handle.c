@@ -286,7 +286,7 @@ obj_handle_t alloc_handle( struct process *process, void *ptr, unsigned int acce
 {
     struct object *obj = ptr;
     access = obj->ops->map_access( obj, access ) & ~RESERVED_ALL;
-    if (access && !check_object_access( obj, &access )) return 0;
+    if (access && !check_object_access( NULL, obj, &access )) return 0;
     return alloc_handle_entry( process, ptr, access, attr );
 }
 
@@ -308,7 +308,7 @@ static obj_handle_t alloc_global_handle_no_access_check( void *obj, unsigned int
 /* return the handle, or 0 on error */
 static obj_handle_t alloc_global_handle( void *obj, unsigned int access )
 {
-    if (access && !check_object_access( obj, &access )) return 0;
+    if (access && !check_object_access( NULL, obj, &access )) return 0;
     return alloc_global_handle_no_access_check( obj, access );
 }
 
@@ -558,10 +558,17 @@ obj_handle_t duplicate_handle( struct process *src, obj_handle_t src_handle, str
     /* asking for the more access rights than src_access? */
     if (access & ~src_access)
     {
+        if ((current->token && !check_object_access( current->token, obj, &access )) ||
+            !check_object_access( dst->token, obj, &access ))
+        {
+            release_object( obj );
+            return 0;
+        }
+
         if (options & DUP_HANDLE_MAKE_GLOBAL)
             res = alloc_global_handle( obj, access );
         else
-            res = alloc_handle( dst, obj, access, attr );
+            res = alloc_handle_no_access_check( dst, obj, access, attr );
     }
     else
     {

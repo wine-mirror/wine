@@ -7704,8 +7704,8 @@ static void test_duplicate_handle_access(void)
 
     SetLastError(0xdeadbeef);
     ret = DuplicateHandle(GetCurrentProcess(), sync_event, pi.hProcess, &event2, EVENT_MODIFY_STATE, FALSE, 0);
-    todo_wine ok(!ret, "expected failure\n");
-    todo_wine ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %u\n", GetLastError());
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %u\n", GetLastError());
 
     ret = WaitForSingleObject(pi.hProcess, 1000);
     ok(!ret, "wait failed\n");
@@ -7736,7 +7736,7 @@ static void test_duplicate_handle_access_child(void)
     ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %u\n", GetLastError());
 
     ret = DuplicateHandle(process, event, process, &event2, EVENT_MODIFY_STATE, FALSE, 0);
-    todo_wine ok(ret, "got error %u\n", GetLastError());
+    ok(ret, "got error %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = DuplicateHandle(process, event, GetCurrentProcess(), &event2, EVENT_MODIFY_STATE, FALSE, 0);

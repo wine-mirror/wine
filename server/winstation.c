@@ -717,7 +717,7 @@ DECL_HANDLER(enum_winstation)
     {
         unsigned int access = WINSTA_ENUMERATE;
         if (req->index > index++) continue;
-        if (!check_object_access( &winsta->obj, &access )) continue;
+        if (!check_object_access( NULL, &winsta->obj, &access )) continue;
         clear_error();
         reply->next = index;
         if ((name = get_object_name( &winsta->obj, &len )))
@@ -746,7 +746,7 @@ DECL_HANDLER(enum_desktop)
         unsigned int access = DESKTOP_ENUMERATE;
         if (req->index > index++) continue;
         if (!desktop->obj.name) continue;
-        if (!check_object_access( &desktop->obj, &access )) continue;
+        if (!check_object_access( NULL, &desktop->obj, &access )) continue;
         if ((name = get_object_name( &desktop->obj, &len )))
             set_reply_data( name, min( len, get_reply_max_size() ));
         release_object( winstation );

@@ -1208,12 +1208,14 @@ const SID *token_get_primary_group( struct token *token )
     return token->primary_group;
 }
 
-int check_object_access(struct object *obj, unsigned int *access)
+int check_object_access(struct token *token, struct object *obj, unsigned int *access)
 {
     GENERIC_MAPPING mapping;
-    struct token *token = current->token ? current->token : current->process->token;
     unsigned int status;
     int res;
+
+    if (!token)
+        token = current->token ? current->token : current->process->token;
 
     mapping.GenericAll = obj->ops->map_access( obj, GENERIC_ALL );
 
