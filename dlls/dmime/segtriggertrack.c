@@ -254,6 +254,11 @@ static const IDirectMusicTrack8Vtbl dmtrack8_vtbl = {
     segment_track_Join
 };
 
+static inline IDirectMusicSegTriggerTrack *impl_from_IPersistStream(IPersistStream *iface)
+{
+    return CONTAINING_RECORD(iface, IDirectMusicSegTriggerTrack, dmobj.IPersistStream_iface);
+}
+
 static HRESULT parse_segment(IDirectMusicSegTriggerTrack *This, DMUS_PRIVATE_CHUNK *pChunk,
         IStream *pStm)
 {
@@ -350,20 +355,14 @@ static HRESULT parse_segment(IDirectMusicSegTriggerTrack *This, DMUS_PRIVATE_CHU
   return S_OK;
 }
 
-static HRESULT parse_segments_list(IDirectMusicSegTriggerTrack *This, DMUS_PRIVATE_CHUNK *pChunk,
-        IStream *pStm)
+static HRESULT parse_segments_list(IDirectMusicSegTriggerTrack *This, DWORD size, IStream *pStm)
 {
   HRESULT hr = E_FAIL;
   DMUS_PRIVATE_CHUNK Chunk;
   DWORD ListSize[3], ListCount[3];
   LARGE_INTEGER liMove; /* used when skipping chunks */
 
-  if (pChunk->fccID != DMUS_FOURCC_SEGMENTS_LIST) {
-    ERR_(dmfile)(": %s chunk should be a SEGMENTS list\n", debugstr_fourcc (pChunk->fccID));
-    return E_FAIL;
-  }
-
-  ListSize[0] = pChunk->dwSize - sizeof(FOURCC);
+  ListSize[0] = size - sizeof(FOURCC);
   ListCount[0] = 0;
 
   do {
@@ -405,113 +404,42 @@ static HRESULT parse_segments_list(IDirectMusicSegTriggerTrack *This, DMUS_PRIVA
   return S_OK;
 }
 
-static HRESULT parse_seqtrack_list(IDirectMusicSegTriggerTrack *This, DMUS_PRIVATE_CHUNK *pChunk,
-        IStream *pStm)
+static HRESULT WINAPI trigger_IPersistStream_Load(IPersistStream *iface, IStream *stream)
 {
-  HRESULT hr = E_FAIL;
-  DMUS_PRIVATE_CHUNK Chunk;
-  DWORD ListSize[3], ListCount[3];
-  LARGE_INTEGER liMove; /* used when skipping chunks */
+    IDirectMusicSegTriggerTrack *This = impl_from_IPersistStream(iface);
+    struct chunk_entry segt = {0};
+    struct chunk_entry chunk = {.parent = &segt};
+    DMUS_IO_SEGMENT_TRACK_HEADER header;
+    HRESULT hr;
 
-  if (pChunk->fccID != DMUS_FOURCC_SEGTRACK_LIST) {
-    ERR_(dmfile)(": %s chunk should be a SEGTRACK list\n", debugstr_fourcc (pChunk->fccID));
-    return E_FAIL;
-  }  
+    TRACE("(%p, %p): Loading\n", This, stream);
 
-  ListSize[0] = pChunk->dwSize - sizeof(FOURCC);
-  ListCount[0] = 0;
+    if (!stream)
+        return E_POINTER;
 
-  do {
-    IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
-    ListCount[0] += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
-    TRACE_(dmfile)(": %s chunk (size = %d)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
-    switch (Chunk.fccID) { 
-    case DMUS_FOURCC_SEGTRACK_CHUNK: {
-      TRACE_(dmfile)(": segment trigger track chunk\n");
-      liMove.QuadPart = Chunk.dwSize;
-      IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
-      break;
+    if (stream_get_chunk(stream, &segt) != S_OK || segt.id != FOURCC_LIST ||
+            segt.type != DMUS_FOURCC_SEGTRACK_LIST)
+        return DMUS_E_INVALID_SEGMENTTRIGGERTRACK;
+
+    if ((hr = stream_get_chunk(stream, &chunk)) != S_OK)
+        return FAILED(hr) ? hr : DMUS_E_INVALID_SEGMENTTRIGGERTRACK;
+
+    /* Optional and useless header chunk */
+    if (chunk.id == DMUS_FOURCC_SEGTRACK_CHUNK) {
+        hr = stream_chunk_get_data(stream, &chunk, &header, sizeof(DMUS_IO_SEGMENT_TRACK_HEADER));
+        if (FAILED(hr))
+            return hr;
+        if (header.dwFlags)
+            WARN("Got flags %#x; must be zero\n", header.dwFlags);
+
+        if ((hr = stream_get_chunk(stream, &chunk)) != S_OK)
+            return FAILED(hr) ? hr : DMUS_E_INVALID_SEGMENTTRIGGERTRACK;
     }
-    case FOURCC_LIST: {
-      IStream_Read (pStm, &Chunk.fccID, sizeof(FOURCC), NULL);
-      TRACE_(dmfile)(": LIST chunk of type %s", debugstr_fourcc(Chunk.fccID));
-      ListSize[1] = Chunk.dwSize - sizeof(FOURCC);
-      ListCount[1] = 0;
-      switch (Chunk.fccID) { 
-      case DMUS_FOURCC_SEGMENTS_LIST: {
-	TRACE_(dmfile)(": SEGMENTS list\n"); 
-        hr = parse_segments_list(This, &Chunk, pStm);
-	if (FAILED(hr)) return hr;
-	break;
-      }
-      default: {
-	TRACE_(dmfile)(": unknown (skipping)\n");
-	liMove.QuadPart = Chunk.dwSize - sizeof(FOURCC);
-	IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
-	break;						
-      }
-      }	
-      break;
-    }
-    default: {
-      TRACE_(dmfile)(": unknown chunk (irrelevant & skipping)\n");
-      liMove.QuadPart = Chunk.dwSize;
-      IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
-      break;						
-    }
-    }
-    TRACE_(dmfile)(": ListCount[0] = %d < ListSize[0] = %d\n", ListCount[0], ListSize[0]);
-  } while (ListCount[0] < ListSize[0]);
 
-  return S_OK;
-}
+    if (chunk.id != FOURCC_LIST || chunk.type != DMUS_FOURCC_SEGMENTS_LIST)
+        return DMUS_E_INVALID_SEGMENTTRIGGERTRACK;
 
-static inline IDirectMusicSegTriggerTrack *impl_from_IPersistStream(IPersistStream *iface)
-{
-    return CONTAINING_RECORD(iface, IDirectMusicSegTriggerTrack, dmobj.IPersistStream_iface);
-}
-
-static HRESULT WINAPI trigger_IPersistStream_Load(IPersistStream *iface, IStream *pStm)
-{
-  IDirectMusicSegTriggerTrack *This = impl_from_IPersistStream(iface);
-  DMUS_PRIVATE_CHUNK Chunk;
-  LARGE_INTEGER liMove;
-  HRESULT hr;
-
-  TRACE("(%p, %p): Loading\n", This, pStm);
-  
-  IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
-  TRACE_(dmfile)(": %s chunk (size = %d)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
-  switch (Chunk.fccID) {	
-  case FOURCC_LIST: {
-    IStream_Read (pStm, &Chunk.fccID, sizeof(FOURCC), NULL);
-    TRACE_(dmfile)(": %s chunk (size = %d)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
-    switch (Chunk.fccID) {
-    case DMUS_FOURCC_SEGTRACK_LIST: {
-      TRACE_(dmfile)(": segment trigger track list\n");
-      hr = parse_seqtrack_list(This, &Chunk, pStm);
-      if (FAILED(hr)) return hr;
-      break;    
-    }
-    default: {
-      TRACE_(dmfile)(": unexpected chunk; loading failed)\n");
-      liMove.QuadPart = Chunk.dwSize;
-      IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
-      return E_FAIL;
-    }
-    }
-    TRACE_(dmfile)(": reading finished\n");
-    break;
-  }
-  default: {
-    TRACE_(dmfile)(": unexpected chunk; loading failed)\n");
-    liMove.QuadPart = Chunk.dwSize;
-    IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL); /* skip the rest of the chunk */
-    return E_FAIL;
-  }
-  }  
-
-  return S_OK;
+    return parse_segments_list(This, chunk.size, stream);
 }
 
 static const IPersistStreamVtbl persiststream_vtbl = {
