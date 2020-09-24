@@ -2658,7 +2658,7 @@ static NTSTATUS process_console_ioctls( struct console *console )
 static int main_loop( struct console *console, HANDLE signal )
 {
     HANDLE signal_event = NULL;
-    HANDLE wait_handles[2];
+    HANDLE wait_handles[3];
     unsigned int wait_cnt = 0;
     unsigned short signal_id;
     IO_STATUS_BLOCK signal_io;
@@ -2677,6 +2677,7 @@ static int main_loop( struct console *console, HANDLE signal )
 
     wait_handles[wait_cnt++] = console->server;
     if (signal) wait_handles[wait_cnt++] = signal_event;
+    if (console->input_thread) wait_handles[wait_cnt++] = console->input_thread;
 
     for (;;)
     {
