@@ -56,12 +56,12 @@ NTSTATUS WINAPI RtlCreateUserProcess( UNICODE_STRING *path, ULONG attributes,
                                       RTL_USER_PROCESS_PARAMETERS *params,
                                       SECURITY_DESCRIPTOR *process_descr,
                                       SECURITY_DESCRIPTOR *thread_descr,
-                                      HANDLE parent, BOOLEAN inherit, HANDLE debug, HANDLE exception,
+                                      HANDLE parent, BOOLEAN inherit, HANDLE debug, HANDLE token,
                                       RTL_USER_PROCESS_INFORMATION *info )
 {
     OBJECT_ATTRIBUTES process_attr, thread_attr;
     PS_CREATE_INFO create_info;
-    ULONG_PTR buffer[offsetof( PS_ATTRIBUTE_LIST, Attributes[5] ) / sizeof(ULONG_PTR)];
+    ULONG_PTR buffer[offsetof( PS_ATTRIBUTE_LIST, Attributes[6] ) / sizeof(ULONG_PTR)];
     PS_ATTRIBUTE_LIST *attr = (PS_ATTRIBUTE_LIST *)buffer;
     UINT pos = 0;
 
@@ -95,6 +95,14 @@ NTSTATUS WINAPI RtlCreateUserProcess( UNICODE_STRING *path, ULONG attributes,
         attr->Attributes[pos].Attribute    = PS_ATTRIBUTE_DEBUG_PORT;
         attr->Attributes[pos].Size         = sizeof(debug);
         attr->Attributes[pos].ValuePtr     = debug;
+        attr->Attributes[pos].ReturnLength = NULL;
+        pos++;
+    }
+    if (token)
+    {
+        attr->Attributes[pos].Attribute    = PS_ATTRIBUTE_TOKEN;
+        attr->Attributes[pos].Size         = sizeof(token);
+        attr->Attributes[pos].ValuePtr     = token;
         attr->Attributes[pos].ReturnLength = NULL;
         pos++;
     }
