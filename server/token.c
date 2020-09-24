@@ -835,6 +835,11 @@ int token_assign_label( struct token *token, PSID label )
     return ret;
 }
 
+struct token *get_token_obj( struct process *process, obj_handle_t handle, unsigned int access )
+{
+    return (struct token *)get_handle_obj( process, handle, access, &token_ops );
+}
+
 struct token *token_create_admin( void )
 {
     struct token *token = NULL;

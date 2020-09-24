@@ -7732,16 +7732,16 @@ static void test_duplicate_handle_access_child(void)
 
     SetLastError(0xdeadbeef);
     event2 = OpenEventA(EVENT_MODIFY_STATE, FALSE, "test_dup");
-    todo_wine ok(!event2, "expected failure\n");
-    todo_wine ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %u\n", GetLastError());
+    ok(!event2, "expected failure\n");
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %u\n", GetLastError());
 
     ret = DuplicateHandle(process, event, process, &event2, EVENT_MODIFY_STATE, FALSE, 0);
-    ok(ret, "got error %u\n", GetLastError());
+    todo_wine ok(ret, "got error %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = DuplicateHandle(process, event, GetCurrentProcess(), &event2, EVENT_MODIFY_STATE, FALSE, 0);
-    todo_wine ok(!ret, "expected failure\n");
-    todo_wine ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %u\n", GetLastError());
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %u\n", GetLastError());
 
     ret = DuplicateHandle(process, (HANDLE)(ULONG_PTR)_atoi64(myARGV[5]),
             GetCurrentProcess(), &token, 0, FALSE, DUPLICATE_SAME_ACCESS);
@@ -7823,17 +7823,15 @@ static void test_create_process_token(void)
     ret = OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token);
     ok(ret, "got error %u\n", GetLastError());
     ret = CreateProcessAsUserA(token, NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
-    todo_wine ok(!ret, "expected failure\n");
-    todo_wine ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %u\n", GetLastError());
-    if (ret) join_process(&pi);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %u\n", GetLastError());
     CloseHandle(token);
 
     ret = OpenProcessToken(GetCurrentProcess(), TOKEN_ASSIGN_PRIMARY, &token);
     ok(ret, "got error %u\n", GetLastError());
     ret = CreateProcessAsUserA(token, NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
-    todo_wine ok(!ret, "expected failure\n");
-    todo_wine ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %u\n", GetLastError());
-    if (ret) join_process(&pi);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %u\n", GetLastError());
     CloseHandle(token);
 
     ret = OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY | TOKEN_ASSIGN_PRIMARY | TOKEN_DUPLICATE, &token);
@@ -7875,8 +7873,8 @@ static void test_create_process_token_child(void)
     }
     else
     {
-        todo_wine ok(!event, "expected failure\n");
-        todo_wine ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %u\n", GetLastError());
+        ok(!event, "expected failure\n");
+        ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %u\n", GetLastError());
     }
 }
 
