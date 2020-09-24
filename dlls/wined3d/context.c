@@ -347,7 +347,8 @@ static void context_preload_texture(struct wined3d_context *context,
     if (!(texture = state->textures[idx]))
         return;
 
-    if (wined3d_resource_check_fbo_attached(state, &texture->resource, NULL))
+    if (texture->resource.rtv_bind_count_device || (state->fb.depth_stencil
+            && state->fb.depth_stencil->resource == &texture->resource))
         context->uses_fbo_attached_resources = 1;
 
     wined3d_texture_load(texture, context, is_srgb_enabled(state->sampler_states[idx]));

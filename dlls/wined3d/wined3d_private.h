@@ -5973,19 +5973,6 @@ static inline BOOL wined3d_dsv_srv_conflict(const struct wined3d_rendertarget_vi
             || (srv_format->green_size && !(dsv->desc.flags & WINED3D_VIEW_READ_ONLY_STENCIL));
 }
 
-static inline BOOL wined3d_resource_check_fbo_attached(const struct wined3d_state *state,
-        const struct wined3d_resource *resource, const struct wined3d_format *srv_format)
-{
-    const struct wined3d_rendertarget_view *dsv;
-
-    if ((resource->bind_flags & WINED3D_BIND_DEPTH_STENCIL)
-            && (dsv = state->fb.depth_stencil) && dsv->resource == resource
-            && wined3d_dsv_srv_conflict(dsv, srv_format))
-        return TRUE;
-
-    return resource->rtv_bind_count_device;
-}
-
 static inline void wined3d_rtv_bind_count_inc(struct wined3d_rendertarget_view *rtv)
 {
     ++rtv->resource->rtv_bind_count_device;

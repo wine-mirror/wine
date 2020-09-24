@@ -1952,6 +1952,7 @@ struct wined3d_buffer * CDECL wined3d_device_get_constant_buffer(const struct wi
 static void wined3d_device_set_shader_resource_view(struct wined3d_device *device,
         enum wined3d_shader_type type, UINT idx, struct wined3d_shader_resource_view *view)
 {
+    const struct wined3d_rendertarget_view *dsv;
     struct wined3d_shader_resource_view *prev;
 
     if (idx >= MAX_SHADER_RESOURCE_VIEWS)
@@ -1964,7 +1965,9 @@ static void wined3d_device_set_shader_resource_view(struct wined3d_device *devic
     if (view == prev)
         return;
 
-    if (view && wined3d_resource_check_fbo_attached(&device->state, view->resource, view->format))
+    if (view && (view->resource->rtv_bind_count_device
+            || ((dsv = device->state.fb.depth_stencil)
+            && dsv->resource == view->resource && wined3d_dsv_srv_conflict(dsv, view->format))))
     {
         WARN("Application is trying to bind resource which is attached as render target.\n");
         view = NULL;
