@@ -56,13 +56,4 @@ extern LONG DMCOMPOS_refCount DECLSPEC_HIDDEN;
 static inline void DMCOMPOS_LockModule(void) { InterlockedIncrement( &DMCOMPOS_refCount ); }
 static inline void DMCOMPOS_UnlockModule(void) { InterlockedDecrement( &DMCOMPOS_refCount ); }
 
-/*****************************************************************************
- * Misc.
- */
-/* for simpler reading */
-typedef struct _DMUS_PRIVATE_CHUNK {
-	FOURCC fccID; /* FOURCC ID of the chunk */
-	DWORD dwSize; /* size of the chunk */
-} DMUS_PRIVATE_CHUNK, *LPDMUS_PRIVATE_CHUNK;
-
 #endif	/* __WINE_DMCOMPOS_PRIVATE_H */
