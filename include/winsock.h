@@ -1053,7 +1053,7 @@ int WINAPI WS(setsockopt)(SOCKET,int,int,const char*,int);
 int WINAPI WS(shutdown)(SOCKET,int);
 SOCKET WINAPI WS(socket)(int,int,int);
 
-#if defined(__MINGW32__) || defined (_MSC_VER)
+#if defined(__MINGW32__) || defined (_MSC_VER) || defined(__WINE_USE_MSVCRT)
 /* gethostname is not defined on Unix because of conflicts with unistd.h */
 int WINAPI WS(gethostname)(char*,int);
 #endif
