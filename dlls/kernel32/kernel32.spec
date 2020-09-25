@@ -1685,11 +1685,6 @@
 # All functions must be prefixed with '__wine_' (for internal functions)
 # or 'wine_' (for user-visible functions) to avoid namespace conflicts.
 
-# 16-bit relays (for backwards compatibility)
-@ cdecl -i386 -private __wine_dll_register_16(ptr str)
-@ cdecl -i386 -private __wine_dll_unregister_16(ptr)
-@ stub -i386 __wine_call_from_16_regs
-
 # Unix files
 @ cdecl wine_get_unix_file_name(wstr)
 @ cdecl wine_get_dos_file_name(str)
