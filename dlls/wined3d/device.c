@@ -3686,6 +3686,7 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
                     break;
 
                 case WINED3D_RS_ZENABLE:
+                case WINED3D_RS_ZWRITEENABLE:
                     set_depth_stencil_state = TRUE;
                     break;
 
@@ -3839,6 +3840,7 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
             default:
                 FIXME("Unrecognized depth buffer type %#x.\n", state->rs[WINED3D_RS_ZENABLE]);
         }
+        desc.depth_write = state->rs[WINED3D_RS_ZWRITEENABLE];
 
         if ((entry = wine_rb_get(&device->depth_stencil_states, &desc)))
         {

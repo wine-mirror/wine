@@ -726,7 +726,6 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_OMSetBlendState(ID3D11Devi
 
 static void set_default_depth_stencil_state(struct wined3d_device *wined3d_device)
 {
-    wined3d_device_set_render_state(wined3d_device, WINED3D_RS_ZWRITEENABLE, D3D11_DEPTH_WRITE_MASK_ALL);
     wined3d_device_set_render_state(wined3d_device, WINED3D_RS_ZFUNC, WINED3D_CMP_LESS);
     wined3d_device_set_render_state(wined3d_device, WINED3D_RS_STENCILENABLE, FALSE);
 }
@@ -759,10 +758,7 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_OMSetDepthStencilState(ID3
     back = &desc->BackFace;
 
     if (desc->DepthEnable)
-    {
-        wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_ZWRITEENABLE, desc->DepthWriteMask);
         wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_ZFUNC, desc->DepthFunc);
-    }
 
     wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_STENCILENABLE, desc->StencilEnable);
     if (desc->StencilEnable)

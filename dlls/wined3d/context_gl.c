@@ -4507,7 +4507,7 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
         return;
     }
 
-    if (dsv && state->render_states[WINED3D_RS_ZWRITEENABLE])
+    if (dsv && (!state->depth_stencil_state || state->depth_stencil_state->desc.depth_write))
     {
         DWORD location = context->render_offscreen ? dsv->resource->draw_binding : WINED3D_LOCATION_DRAWABLE;
 

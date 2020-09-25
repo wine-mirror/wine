@@ -2042,12 +2042,13 @@ static bool wined3d_context_vk_update_graphics_pipeline_key(struct wined3d_conte
         if (d)
         {
             key->ds_desc.depthTestEnable = d->desc.depth;
+            key->ds_desc.depthWriteEnable = d->desc.depth_write;
         }
         else
         {
             key->ds_desc.depthTestEnable = VK_TRUE;
+            key->ds_desc.depthWriteEnable = VK_TRUE;
         }
-        key->ds_desc.depthWriteEnable = !!state->render_states[WINED3D_RS_ZWRITEENABLE];
         key->ds_desc.depthCompareOp = vk_compare_op_from_wined3d(state->render_states[WINED3D_RS_ZFUNC]);
         key->ds_desc.stencilTestEnable = state->fb.depth_stencil && state->render_states[WINED3D_RS_STENCILENABLE];
         if (key->ds_desc.stencilTestEnable)
@@ -2862,7 +2863,7 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
             wined3d_rendertarget_view_load_location(dsv, &context_vk->c, dsv->resource->draw_binding);
         else
             wined3d_rendertarget_view_prepare_location(dsv, &context_vk->c, dsv->resource->draw_binding);
-        if (state->render_states[WINED3D_RS_ZWRITEENABLE])
+        if (!state->depth_stencil_state || state->depth_stencil_state->desc.depth_write)
             wined3d_rendertarget_view_invalidate_location(dsv, ~dsv->resource->draw_binding);
 
         sample_count = max(1, wined3d_resource_get_sample_count(dsv->resource));
