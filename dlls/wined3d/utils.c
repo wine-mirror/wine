@@ -5446,8 +5446,8 @@ void get_projection_matrix(const struct wined3d_context *context, const struct w
         float y_offset = flip
                 ? (center_offset - (2.0f * y) - h) / h
                 : (center_offset - (2.0f * y) - h) / -h;
-        enum wined3d_depth_buffer_type zenable = state->fb.depth_stencil ?
-                state->render_states[WINED3D_RS_ZENABLE] : WINED3D_ZB_FALSE;
+        bool zenable = state->fb.depth_stencil ?
+                (state->depth_stencil_state ? state->depth_stencil_state->desc.depth : true) : false;
         float z_scale = zenable ? clip_control ? 1.0f : 2.0f : 0.0f;
         float z_offset = zenable ? clip_control ? 0.0f : -1.0f : 0.0f;
         const struct wined3d_matrix projection =

@@ -2818,7 +2818,7 @@ void wined3d_context_gl_apply_blit_state(struct wined3d_context_gl *context_gl, 
         context_invalidate_state(context, STATE_RENDER(WINED3D_RS_ALPHATESTENABLE));
     }
     gl_info->gl_ops.gl.p_glDisable(GL_DEPTH_TEST);
-    context_invalidate_state(context, STATE_RENDER(WINED3D_RS_ZENABLE));
+    context_invalidate_state(context, STATE_DEPTH_STENCIL);
     gl_info->gl_ops.gl.p_glDisable(GL_BLEND);
     gl_info->gl_ops.gl.p_glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     context_invalidate_state(context, STATE_BLEND);

@@ -2034,10 +2034,19 @@ static bool wined3d_context_vk_update_graphics_pipeline_key(struct wined3d_conte
         update = true;
     }
 
-    if (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_RENDER(WINED3D_RS_ZENABLE))
+    if (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_DEPTH_STENCIL)
             || wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_FRAMEBUFFER))
     {
-        key->ds_desc.depthTestEnable = !!state->render_states[WINED3D_RS_ZENABLE];
+        const struct wined3d_depth_stencil_state *d = state->depth_stencil_state;
+
+        if (d)
+        {
+            key->ds_desc.depthTestEnable = d->desc.depth;
+        }
+        else
+        {
+            key->ds_desc.depthTestEnable = VK_TRUE;
+        }
         key->ds_desc.depthWriteEnable = !!state->render_states[WINED3D_RS_ZWRITEENABLE];
         key->ds_desc.depthCompareOp = vk_compare_op_from_wined3d(state->render_states[WINED3D_RS_ZFUNC]);
         key->ds_desc.stencilTestEnable = state->fb.depth_stencil && state->render_states[WINED3D_RS_STENCILENABLE];

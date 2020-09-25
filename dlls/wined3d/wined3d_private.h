@@ -3643,7 +3643,8 @@ struct wined3d_state
 
 static inline bool wined3d_state_uses_depth_buffer(const struct wined3d_state *state)
 {
-    return state->render_states[WINED3D_RS_ZWRITEENABLE] || state->render_states[WINED3D_RS_ZENABLE];
+    return state->render_states[WINED3D_RS_ZWRITEENABLE]
+            || !state->depth_stencil_state || state->depth_stencil_state->desc.depth;
 }
 
 struct wined3d_dummy_textures

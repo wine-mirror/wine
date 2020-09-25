@@ -3576,10 +3576,10 @@ static void wined3d_device_set_texture(struct wined3d_device *device,
 void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
         struct wined3d_stateblock *stateblock)
 {
+    BOOL set_blend_state = FALSE, set_depth_stencil_state = FALSE, set_rasterizer_state = FALSE;
     const struct wined3d_stateblock_state *state = &stateblock->stateblock_state;
     const struct wined3d_saved_states *changed = &stateblock->changed;
     const unsigned int word_bit_count = sizeof(DWORD) * CHAR_BIT;
-    BOOL set_blend_state = FALSE, set_rasterizer_state = FALSE;
     unsigned int i, j, start, idx;
     struct wined3d_range range;
     uint32_t map;
@@ -3682,6 +3682,10 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
                 case WINED3D_RS_COLORWRITEENABLE2:
                 case WINED3D_RS_COLORWRITEENABLE3:
                     set_blend_state = TRUE;
+                    break;
+
+                case WINED3D_RS_ZENABLE:
+                    set_depth_stencil_state = TRUE;
                     break;
 
                 case WINED3D_RS_FILLMODE:
@@ -3808,6 +3812,46 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
             {
                 ERR("Failed to insert blend state.\n");
                 wined3d_blend_state_decref(blend_state);
+            }
+        }
+    }
+
+    if (set_depth_stencil_state)
+    {
+        struct wined3d_depth_stencil_state *depth_stencil_state;
+        struct wined3d_depth_stencil_state_desc desc;
+        struct wine_rb_entry *entry;
+
+        memset(&desc, 0, sizeof(desc));
+        switch (state->rs[WINED3D_RS_ZENABLE])
+        {
+            case WINED3D_ZB_FALSE:
+                desc.depth = FALSE;
+                break;
+
+            case WINED3D_ZB_USEW:
+                FIXME("W buffer is not well handled.\n");
+            case WINED3D_ZB_TRUE:
+                desc.depth = TRUE;
+                break;
+
+            default:
+                FIXME("Unrecognized depth buffer type %#x.\n", state->rs[WINED3D_RS_ZENABLE]);
+        }
+
+        if ((entry = wine_rb_get(&device->depth_stencil_states, &desc)))
+        {
+            depth_stencil_state = WINE_RB_ENTRY_VALUE(entry, struct wined3d_depth_stencil_state, entry);
+            wined3d_device_set_depth_stencil_state(device, depth_stencil_state);
+        }
+        else if (SUCCEEDED(wined3d_depth_stencil_state_create(device, &desc, NULL,
+                &wined3d_null_parent_ops, &depth_stencil_state)))
+        {
+            wined3d_device_set_depth_stencil_state(device, depth_stencil_state);
+            if (wine_rb_put(&device->depth_stencil_states, &desc, &depth_stencil_state->entry) == -1)
+            {
+                ERR("Failed to insert depth/stencil state.\n");
+                wined3d_depth_stencil_state_decref(depth_stencil_state);
             }
         }
     }

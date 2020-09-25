@@ -291,42 +291,6 @@ static void state_lighting(struct wined3d_context *context, const struct wined3d
     }
 }
 
-static void state_zenable(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
-{
-    enum wined3d_depth_buffer_type zenable = state->render_states[WINED3D_RS_ZENABLE];
-    const struct wined3d_gl_info *gl_info = wined3d_context_gl(context)->gl_info;
-
-    /* No z test without depth stencil buffers */
-    if (!state->fb.depth_stencil)
-    {
-        TRACE("No Z buffer - disabling depth test\n");
-        zenable = WINED3D_ZB_FALSE;
-    }
-
-    switch (zenable)
-    {
-        case WINED3D_ZB_FALSE:
-            gl_info->gl_ops.gl.p_glDisable(GL_DEPTH_TEST);
-            checkGLcall("glDisable GL_DEPTH_TEST");
-            break;
-        case WINED3D_ZB_TRUE:
-            gl_info->gl_ops.gl.p_glEnable(GL_DEPTH_TEST);
-            checkGLcall("glEnable GL_DEPTH_TEST");
-            break;
-        case WINED3D_ZB_USEW:
-            gl_info->gl_ops.gl.p_glEnable(GL_DEPTH_TEST);
-            checkGLcall("glEnable GL_DEPTH_TEST");
-            FIXME("W buffer is not well handled\n");
-            break;
-        default:
-            FIXME("Unrecognized depth buffer type %#x.\n", zenable);
-            break;
-    }
-
-    if (context->last_was_rhw && !isStateDirty(context, STATE_TRANSFORM(WINED3D_TS_PROJECTION)))
-        context_apply_state(context, state, STATE_TRANSFORM(WINED3D_TS_PROJECTION));
-}
-
 static void cullmode(const struct wined3d_rasterizer_state *r, const struct wined3d_gl_info *gl_info)
 {
     enum wined3d_cull mode = r ? r->desc.cull_mode : WINED3D_CULL_BACK;
@@ -4780,7 +4744,6 @@ const struct wined3d_state_entry_template misc_state_template_gl[] =
     { STATE_INDEXBUFFER,                                  { STATE_INDEXBUFFER,                                  state_nop           }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_ANTIALIAS),                 { STATE_RENDER(WINED3D_RS_ANTIALIAS),                 state_antialias     }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_TEXTUREPERSPECTIVE),        { STATE_RENDER(WINED3D_RS_TEXTUREPERSPECTIVE),        state_nop           }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_ZENABLE),                   { STATE_RENDER(WINED3D_RS_ZENABLE),                   state_zenable       }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_WRAPU),                     { STATE_RENDER(WINED3D_RS_WRAPU),                     state_wrapu         }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_WRAPV),                     { STATE_RENDER(WINED3D_RS_WRAPV),                     state_wrapv         }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_LINEPATTERN),               { STATE_RENDER(WINED3D_RS_LINEPATTERN),               state_linepattern   }, WINED3D_GL_LEGACY_CONTEXT       },
@@ -5605,7 +5568,7 @@ static void validate_state_table(struct wined3d_state_entry *state_table)
     {
         {  1,   1},
         {  3,   3},
-        {  8,   8},
+        {  7,   8},
         { 17,  22},
         { 27,  27},
         { 40,  40},
