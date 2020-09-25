@@ -25,6 +25,8 @@
 
 #define IOCTL_AFD_CREATE                    CTL_CODE(FILE_DEVICE_NETWORK, 200, METHOD_BUFFERED, FILE_WRITE_ACCESS)
 
+#define IOCTL_AFD_ADDRESS_LIST_CHANGE       CTL_CODE(FILE_DEVICE_NETWORK, 323, METHOD_BUFFERED, 0)
+
 struct afd_create_params
 {
     int family, type, protocol;

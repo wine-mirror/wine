@@ -5164,6 +5164,10 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
     case 0x667e: /* Netscape tries hard to use bogus ioctl 0x667e */
         SetLastError(WSAEOPNOTSUPP);
         return SOCKET_ERROR;
+    case WS_SIO_ADDRESS_LIST_CHANGE:
+        code = IOCTL_AFD_ADDRESS_LIST_CHANGE;
+        status = WSAEOPNOTSUPP;
+        break;
     default:
         status = WSAEOPNOTSUPP;
         break;

@@ -562,7 +562,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         return 0;
     }
 
-    case WS_SIO_ADDRESS_LIST_CHANGE:
+    case IOCTL_AFD_ADDRESS_LIST_CHANGE:
         if ((sock->state & FD_WINE_NONBLOCKING) && async_is_blocking( async ))
         {
             set_win32_error( WSAEWOULDBLOCK );
@@ -572,6 +572,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         queue_async( &sock->ifchange_q, async );
         set_error( STATUS_PENDING );
         return 1;
+
     default:
         set_error( STATUS_NOT_SUPPORTED );
         return 0;
