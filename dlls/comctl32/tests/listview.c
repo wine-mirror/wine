@@ -50,9 +50,6 @@ enum seq_index {
 #define expect2(expected1, expected2, got1, got2) ok(expected1 == got1 && expected2 == got2, \
        "expected (%d,%d), got (%d,%d)\n", expected1, expected2, got1, got2)
 
-static const WCHAR testparentclassW[] =
-    {'L','i','s','t','v','i','e','w',' ','t','e','s','t',' ','p','a','r','e','n','t','W', 0};
-
 static HWND hwndparent, hwndparentW;
 /* prevents edit box creation, LVN_BEGINLABELEDIT return value */
 static BOOL blockEdit;
@@ -555,9 +552,8 @@ static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LP
 
                   if (g_disp_A_to_W && (dispinfo->item.mask & LVIF_TEXT))
                   {
-                      static const WCHAR testW[] = {'T','E','S','T',0};
                       dispinfo->hdr.code = LVN_GETDISPINFOW;
-                      memcpy(dispinfo->item.pszText, testW, sizeof(testW));
+                      lstrcpyW((WCHAR *)dispinfo->item.pszText, L"TEST");
                   }
 
                   /* test control buffer size for text, 10 used to mask cases when control
@@ -618,7 +614,7 @@ static BOOL register_parent_wnd_class(BOOL Unicode)
         clsW.hCursor = LoadCursorA(0, (LPCSTR)IDC_ARROW);
         clsW.hbrBackground = GetStockObject(WHITE_BRUSH);
         clsW.lpszMenuName = NULL;
-        clsW.lpszClassName = testparentclassW;
+        clsW.lpszClassName = L"Listview test parentW";
     }
     else
     {
@@ -639,7 +635,6 @@ static BOOL register_parent_wnd_class(BOOL Unicode)
 
 static HWND create_parent_window(BOOL Unicode)
 {
-    static const WCHAR nameW[] = {'t','e','s','t','p','a','r','e','n','t','n','a','m','e','W',0};
     HWND hwnd;
 
     if (!register_parent_wnd_class(Unicode))
@@ -649,7 +644,7 @@ static HWND create_parent_window(BOOL Unicode)
     notifyFormat = -1;
 
     if (Unicode)
-        hwnd = CreateWindowExW(0, testparentclassW, nameW,
+        hwnd = CreateWindowExW(0, L"Listview test parentW", L"testparentnameW",
                                WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX |
                                WS_MAXIMIZEBOX | WS_VISIBLE,
                                0, 0, 100, 100,
@@ -715,10 +710,9 @@ static HWND create_listview_controlW(DWORD style, HWND parent)
     WNDPROC oldproc;
     HWND hwnd;
     RECT rect;
-    static const WCHAR nameW[] = {'f','o','o',0};
 
     GetClientRect(parent, &rect);
-    hwnd = CreateWindowExW(0, WC_LISTVIEWW, nameW,
+    hwnd = CreateWindowExW(0, WC_LISTVIEWW, L"foo",
                            WS_CHILD | WS_BORDER | WS_VISIBLE | style,
                            0, 0, rect.right, rect.bottom,
                            parent, NULL, GetModuleHandleW(NULL), NULL);
@@ -1633,7 +1627,6 @@ static void test_header_presence_(HWND hwnd, BOOL present, int line)
 
 static void test_create(BOOL is_version_6)
 {
-    static const WCHAR testtextW[] = {'t','e','s','t',' ','t','e','x','t',0};
     char buff[16];
     HWND hList;
     HWND hHeader;
@@ -1822,7 +1815,7 @@ todo_wine_if(is_version_6)
     ok(!strcmp(buff, "test text"), "Unexpected window text %s.\n", buff);
     DestroyWindow(hList);
 
-    hList = CreateWindowExW(0, WC_LISTVIEWW, testtextW, WS_CHILD | WS_BORDER | WS_VISIBLE,
+    hList = CreateWindowExW(0, WC_LISTVIEWW, L"test text", WS_CHILD | WS_BORDER | WS_VISIBLE,
         0, 0, 100, 100, hwndparent, NULL, GetModuleHandleA(NULL), NULL);
     ok(hList != NULL, "Failed to create ListView window.\n");
     *buff = 0;

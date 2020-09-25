@@ -202,9 +202,6 @@ static void test_Alloc(void)
 
 static void test_LoadIconWithScaleDown(void)
 {
-    static const WCHAR nonexisting_fileW[] = {'n','o','n','e','x','i','s','t','i','n','g','.','i','c','o',0};
-    static const WCHAR nonexisting_resourceW[] = {'N','o','n','e','x','i','s','t','i','n','g',0};
-    static const WCHAR prefixW[] = {'I','C','O',0};
     HRESULT (WINAPI *pLoadIconMetric)(HINSTANCE, const WCHAR *, int, HICON *);
     HRESULT (WINAPI *pLoadIconWithScaleDown)(HINSTANCE, const WCHAR *, int, int, HICON *);
     WCHAR tmp_path[MAX_PATH], icon_path[MAX_PATH];
@@ -230,7 +227,7 @@ static void test_LoadIconWithScaleDown(void)
     }
 
     GetTempPathW(MAX_PATH, tmp_path);
-    GetTempFileNameW(tmp_path, prefixW, 0, icon_path);
+    GetTempFileNameW(tmp_path, L"ICO", 0, icon_path);
     handle = CreateFileW(icon_path, GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
                          FILE_ATTRIBUTE_NORMAL, NULL);
     ok(handle != INVALID_HANDLE_VALUE, "CreateFileW failed with error %u\n", GetLastError());
@@ -264,21 +261,21 @@ static void test_LoadIconWithScaleDown(void)
     ok(icon == NULL, "Expected NULL, got %p\n", icon);
 
     /* non-existing filename */
-    hr = pLoadIconMetric(NULL, nonexisting_fileW, LIM_LARGE, &icon);
+    hr = pLoadIconMetric(NULL, L"nonexisting.ico", LIM_LARGE, &icon);
     ok(hr == HRESULT_FROM_WIN32(ERROR_RESOURCE_TYPE_NOT_FOUND) || hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) /* Win7 */,
        "Expected HRESULT_FROM_WIN32(ERROR_RESOURCE_TYPE_NOT_FOUND), got %x\n", hr);
 
-    hr = pLoadIconWithScaleDown(NULL, nonexisting_fileW, 32, 32, &icon);
+    hr = pLoadIconWithScaleDown(NULL, L"nonexisting.ico", 32, 32, &icon);
     todo_wine
     ok(hr == HRESULT_FROM_WIN32(ERROR_RESOURCE_TYPE_NOT_FOUND),
        "Expected HRESULT_FROM_WIN32(ERROR_RESOURCE_TYPE_NOT_FOUND), got %x\n", hr);
 
     /* non-existing resource name */
-    hr = pLoadIconMetric(hinst, nonexisting_resourceW, LIM_LARGE, &icon);
+    hr = pLoadIconMetric(hinst, L"Nonexisting", LIM_LARGE, &icon);
     ok(hr == HRESULT_FROM_WIN32(ERROR_RESOURCE_TYPE_NOT_FOUND),
        "Expected HRESULT_FROM_WIN32(ERROR_RESOURCE_TYPE_NOT_FOUND), got %x\n", hr);
 
-    hr = pLoadIconWithScaleDown(hinst, nonexisting_resourceW, 32, 32, &icon);
+    hr = pLoadIconWithScaleDown(hinst, L"Noneexisting", 32, 32, &icon);
     ok(hr == HRESULT_FROM_WIN32(ERROR_RESOURCE_TYPE_NOT_FOUND),
        "Expected HRESULT_FROM_WIN32(ERROR_RESOURCE_TYPE_NOT_FOUND), got %x\n", hr);
 

@@ -489,7 +489,6 @@ static void test_buttons(void)
     TASKDIALOGCONFIG info = {0};
     static const DWORD command_link_flags[] = {0, TDF_USE_COMMAND_LINKS, TDF_USE_COMMAND_LINKS_NO_ICON};
     TASKDIALOG_BUTTON custom_buttons[TEST_NUM_BUTTONS], radio_buttons[TEST_NUM_RADIO_BUTTONS];
-    const WCHAR button_format[] = {'%','0','2','d',0};
     /* Each button has two digits as title, plus null-terminator */
     WCHAR button_titles[TEST_NUM_BUTTONS * 3], radio_button_titles[TEST_NUM_BUTTONS * 3];
     int i;
@@ -502,7 +501,7 @@ static void test_buttons(void)
     for (i = 0; i < TEST_NUM_BUTTONS; i++)
     {
         WCHAR *text = &button_titles[i * 3];
-        wsprintfW(text, button_format, i);
+        wsprintfW(text, L"%02d", i);
 
         custom_buttons[i].pszButtonText = text;
         custom_buttons[i].nButtonID = ID_START_BUTTON + i;
@@ -513,7 +512,7 @@ static void test_buttons(void)
     for (i = 0; i < TEST_NUM_RADIO_BUTTONS; i++)
     {
         WCHAR *text = &radio_button_titles[i * 3];
-        wsprintfW(text, button_format, i);
+        wsprintfW(text, L"%02d", i);
 
         radio_buttons[i].pszButtonText = text;
         radio_buttons[i].nButtonID = ID_START_RADIO_BUTTON + i;
@@ -779,7 +778,6 @@ static void test_progress_bar(void)
 static void test_verification_box(void)
 {
     TASKDIALOGCONFIG info = {0};
-    WCHAR textW[] = {'t', 'e', 'x', 't', 0};
 
     info.cbSize = sizeof(TASKDIALOGCONFIG);
     info.pfCallback = taskdialog_callback_proc;
@@ -792,7 +790,7 @@ static void test_verification_box(void)
     info.dwFlags = TDF_VERIFICATION_FLAG_CHECKED;
     run_test(&info, IDOK, 0, FALSE, msg_return_default_verification_checked, "default verification box: checked");
 
-    info.pszVerificationText = textW;
+    info.pszVerificationText = L"text";
     run_test(&info, IDOK, 0, FALSE, msg_return_default_verification_unchecked, "default verification box: unchecked");
 
     info.dwFlags = TDF_VERIFICATION_FLAG_CHECKED;
@@ -809,8 +807,6 @@ static void test_verification_box(void)
 static void test_navigate_page(void)
 {
     TASKDIALOGCONFIG info = {0};
-    static const WCHAR textW[] = {'t', 'e', 'x', 't', 0};
-    static const WCHAR button_format[] = {'%', '0', '2', 'd', 0};
     TASKDIALOG_BUTTON radio_buttons[TEST_NUM_RADIO_BUTTONS];
     WCHAR radio_button_titles[TEST_NUM_BUTTONS * 3];
     int i;
@@ -819,7 +815,7 @@ static void test_navigate_page(void)
     for (i = 0; i < TEST_NUM_RADIO_BUTTONS; i++)
     {
         WCHAR *text = &radio_button_titles[i * 3];
-        wsprintfW(text, button_format, i);
+        wsprintfW(text, L"%02d", i);
 
         radio_buttons[i].pszButtonText = text;
         radio_buttons[i].nButtonID = ID_START_RADIO_BUTTON + i;
@@ -833,7 +829,7 @@ static void test_navigate_page(void)
     info.pRadioButtons = radio_buttons;
 
     navigated_info = info;
-    navigated_info.pszVerificationText = textW;
+    navigated_info.pszVerificationText = L"text";
     navigated_info.dwFlags = TDF_VERIFICATION_FLAG_CHECKED;
 
     run_test(&info, IDOK, ID_START_RADIO_BUTTON, TRUE, msg_return_navigated_page, "navigate page: default");

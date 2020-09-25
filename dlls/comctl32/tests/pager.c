@@ -529,23 +529,16 @@ static LRESULT WINAPI test_notifyformat_proc(HWND hwnd, UINT message, WPARAM wPa
 
 static BOOL register_notifyformat_class(void)
 {
-    static const WCHAR class_w[] = {'P', 'a', 'g', 'e', 'r', ' ', 'n', 'o', 't', 'i', 'f', 'y', 'f',
-                                   'o', 'r', 'm', 'a', 't', ' ', 'c', 'l', 'a', 's', 's', 0};
     WNDCLASSW cls = {0};
 
     cls.lpfnWndProc = test_notifyformat_proc;
     cls.hInstance = GetModuleHandleW(NULL);
-    cls.lpszClassName = class_w;
+    cls.lpszClassName = L"Pager notifyformat class";
     return RegisterClassW(&cls);
 }
 
 static void test_wm_notifyformat(void)
 {
-    static const WCHAR class_w[] = {'P', 'a', 'g', 'e', 'r', ' ', 'n', 'o', 't', 'i', 'f', 'y', 'f',
-                                    'o', 'r', 'm', 'a', 't', ' ', 'c', 'l', 'a', 's', 's', 0};
-    static const WCHAR parent_w[] = {'p', 'a', 'r', 'e', 'n', 't', 0};
-    static const WCHAR pager_w[] = {'p', 'a', 'g', 'e', 'r', 0};
-    static const WCHAR child_w[] = {'c', 'h', 'i', 'l', 'd', 0};
     static const INT formats[] = {NFR_UNICODE, NFR_ANSI};
     HWND parent, pager, child;
     LRESULT ret;
@@ -558,11 +551,11 @@ static void test_wm_notifyformat(void)
     for (i = 0; i < ARRAY_SIZE(formats); i++)
     {
         notify_format = formats[i];
-        parent = CreateWindowW(class_w, parent_w, WS_OVERLAPPED, 0, 0, 100, 100, 0, 0, GetModuleHandleW(0), 0);
+        parent = CreateWindowW(L"Pager notifyformat class", L"parent", WS_OVERLAPPED, 0, 0, 100, 100, 0, 0, GetModuleHandleW(0), 0);
         ok(parent != NULL, "CreateWindow failed\n");
-        pager = CreateWindowW(WC_PAGESCROLLERW, pager_w, WS_CHILD, 0, 0, 100, 100, parent, 0, GetModuleHandleW(0), 0);
+        pager = CreateWindowW(WC_PAGESCROLLERW, L"pager", WS_CHILD, 0, 0, 100, 100, parent, 0, GetModuleHandleW(0), 0);
         ok(pager != NULL, "CreateWindow failed\n");
-        child = CreateWindowW(class_w, child_w, WS_CHILD, 0, 0, 100, 100, pager, 0, GetModuleHandleW(0), 0);
+        child = CreateWindowW(L"Pager notifyformat class", L"child", WS_CHILD, 0, 0, 100, 100, pager, 0, GetModuleHandleW(0), 0);
         ok(child != NULL, "CreateWindow failed\n");
         SendMessageW(pager, PGM_SETCHILD, 0, (LPARAM)child);
 
@@ -593,7 +586,7 @@ static void test_wm_notifyformat(void)
         DestroyWindow(parent);
     }
 
-    UnregisterClassW(class_w, GetModuleHandleW(NULL));
+    UnregisterClassW(L"Pager notifyformat class", GetModuleHandleW(NULL));
 }
 
 static void notify_generic_text_handler(CHAR **text, INT *text_max)
@@ -685,7 +678,6 @@ static void notify_datetime_handler(NMDATETIMEFORMATA *nm)
 
 static LRESULT WINAPI test_notify_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    static const WCHAR test[] = {'t', 'e', 's', 't', 0};
     switch (message)
     {
     case WM_NOTIFY:
@@ -895,7 +887,7 @@ static LRESULT WINAPI test_notify_proc(HWND hwnd, UINT message, WPARAM wParam, L
         }
         notify_test_info.received = TRUE;
         ok(!lstrcmpA(test_a, "test"), "test_a got modified\n");
-        ok(!lstrcmpW(test_w, test), "test_w got modified\n");
+        ok(!lstrcmpW(test_w, L"test"), "test_w got modified\n");
         return 0;
     }
     case WM_NOTIFYFORMAT:

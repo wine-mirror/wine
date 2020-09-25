@@ -1014,7 +1014,6 @@ static void test_button_messages(void)
 
 static void test_button_class(void)
 {
-    static const WCHAR testW[] = {'t','e','s','t',0};
     WNDCLASSEXW exW, ex2W;
     WNDCLASSEXA exA;
     char buffA[100];
@@ -1055,7 +1054,7 @@ static void test_button_class(void)
     DestroyWindow(hwnd);
 
     /* explicitly create with versioned class name */
-    hwnd = CreateWindowExW(0, nameW, testW, BS_CHECKBOX, 0, 0, 50, 14, NULL, 0, 0, NULL);
+    hwnd = CreateWindowExW(0, nameW, L"test", BS_CHECKBOX, 0, 0, 50, 14, NULL, 0, 0, NULL);
     ok(hwnd != NULL, "failed to create a window %s\n", wine_dbgstr_w(nameW));
 
     len = GetClassNameA(hwnd, buffA, sizeof(buffA));
@@ -1889,12 +1888,6 @@ static void test_bcm_get_ideal_size(void)
 {
     static const char *button_text2 = "WWWW\nWWWW";
     static const char *button_text = "WWWW";
-    static const WCHAR button_note_short[] = { 'W',0 };
-    static const WCHAR button_note_long[]  = { 'W','W','W','W','W','W','W','W','W','W','W','W','W','W','W','W',0 };
-    static const WCHAR button_note_wordy[] = { 'T','h','i','s',' ','i','s',' ','a',' ','l','o','n','g',' ','n','o','t','e',' ','f','o','r',' ','t','h','e',' ','b','u','t','t','o','n',',',' ',
-                                               'w','i','t','h',' ','m','a','n','y',' ','w','o','r','d','s',',',' ','w','h','i','c','h',' ','s','h','o','u','l','d',' ','b','e',' ',
-                                               'o','v','e','r','a','l','l',' ','l','o','n','g','e','r',' ','t','h','a','n',' ','t','h','e',' ','t','e','x','t',' ','(','g','i','v','e','n',' ',
-                                               't','h','e',' ','s','m','a','l','l','e','r',' ','f','o','n','t',')',' ','a','n','d',' ','t','h','u','s',' ','w','r','a','p','.',0 };
     static const DWORD imagelist_aligns[] = {BUTTON_IMAGELIST_ALIGN_LEFT, BUTTON_IMAGELIST_ALIGN_RIGHT,
                                              BUTTON_IMAGELIST_ALIGN_TOP, BUTTON_IMAGELIST_ALIGN_BOTTOM,
                                              BUTTON_IMAGELIST_ALIGN_CENTER};
@@ -2222,7 +2215,7 @@ static void test_bcm_get_ideal_size(void)
     hwnd = CreateWindowA(WC_BUTTONA, "a", style, 0, 0, client_width, client_height, NULL, NULL, 0, NULL);
     ok(hwnd != NULL, "Expected hwnd not NULL\n");
     SendMessageA(hwnd, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)hbmp);
-    ret = SendMessageA(hwnd, BCM_SETNOTE, 0, (LPARAM)button_note_short);
+    ret = SendMessageA(hwnd, BCM_SETNOTE, 0, (LPARAM)L"W");
     ok(ret == TRUE, "Expected BCM_SETNOTE to return true\n");
     size.cx = 13;
     size.cy = 0;
@@ -2238,7 +2231,7 @@ static void test_bcm_get_ideal_size(void)
     ok(size.cx > image_width && size.cy == height, "Expected ideal cx %d > %d and ideal cy %d == %d\n", size.cx, image_width, size.cy, height);
 
     /* Try longer note without word breaks, shouldn't extend height because no word splitting */
-    ret = SendMessageA(hwnd, BCM_SETNOTE, 0, (LPARAM)button_note_long);
+    ret = SendMessageA(hwnd, BCM_SETNOTE, 0, (LPARAM)L"WWWWWWWWWWWWWWWW");
     ok(ret == TRUE, "Expected BCM_SETNOTE to return true\n");
     k = size.cx;
     size.cy = 0;
@@ -2254,7 +2247,8 @@ static void test_bcm_get_ideal_size(void)
     ok(size.cx > k && size.cy == height, "Expected ideal cx %d > %d and ideal cy %d == %d\n", size.cx, k, size.cy, height);
 
     /* Use a very long note with words and the same width, should extend the height due to word wrap */
-    ret = SendMessageA(hwnd, BCM_SETNOTE, 0, (LPARAM)button_note_wordy);
+    ret = SendMessageA(hwnd, BCM_SETNOTE, 0, (LPARAM)L"This is a long note for the button with many words, which should "
+            "be overall longer than the text (given the smaller font) and thus wrap.");
     ok(ret == TRUE, "Expected BCM_SETNOTE to return true\n");
     k = size.cx;
     ret = SendMessageA(hwnd, BCM_GETIDEALSIZE, 0, (LPARAM)&size);

@@ -538,7 +538,6 @@ static void test_DPA_DestroyCallback(void)
 
 static void test_DPA_LoadStream(void)
 {
-    static const WCHAR szStg[] = { 'S','t','g',0 };
     IStorage* pStg = NULL;
     IStream* pStm = NULL;
     LARGE_INTEGER li;
@@ -566,7 +565,7 @@ static void test_DPA_LoadStream(void)
     hRes = StgCreateDocfile(NULL, dwMode|STGM_DELETEONRELEASE, 0, &pStg);
     expect(S_OK, hRes);
 
-    hRes = IStorage_CreateStream(pStg, szStg, dwMode, 0, 0, &pStm);
+    hRes = IStorage_CreateStream(pStg, L"Stg", dwMode, 0, 0, &pStm);
     expect(S_OK, hRes);
 
     /* write less than header size */
@@ -658,7 +657,6 @@ static void test_DPA_LoadStream(void)
 static void test_DPA_SaveStream(void)
 {
     HDPA dpa;
-    static const WCHAR szStg[] = { 'S','t','g',0 };
     IStorage* pStg = NULL;
     IStream* pStm = NULL;
     DWORD dwMode, dw;
@@ -685,7 +683,7 @@ static void test_DPA_SaveStream(void)
     hRes = StgCreateDocfile(NULL, dwMode|STGM_DELETEONRELEASE, 0, &pStg);
     expect(S_OK, hRes);
 
-    hRes = IStorage_CreateStream(pStg, szStg, dwMode, 0, 0, &pStm);
+    hRes = IStorage_CreateStream(pStg, L"Stg", dwMode, 0, 0, &pStm);
     expect(S_OK, hRes);
 
     dpa = pDPA_Create(0);

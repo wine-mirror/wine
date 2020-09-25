@@ -1106,7 +1106,6 @@ static void test_margin(void)
 
 static void test_TTM_ADDTOOL(BOOL is_v6)
 {
-    static const WCHAR testW[] = {'T','e','s','t',0};
     TTTOOLINFOW tiW;
     TTTOOLINFOA ti;
     int ret, size;
@@ -1153,7 +1152,7 @@ static void test_TTM_ADDTOOL(BOOL is_v6)
         tiW.hinst = GetModuleHandleA(NULL);
         tiW.uFlags = 0;
         tiW.uId = 0x1234abce;
-        tiW.lpszText = (LPWSTR)testW;
+        tiW.lpszText = (LPWSTR)L"Test";
         tiW.lParam = 0xdeadbeef;
         GetClientRect(hwnd, &tiW.rect);
 

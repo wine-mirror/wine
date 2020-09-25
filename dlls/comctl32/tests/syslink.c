@@ -106,8 +106,6 @@ static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LP
     return ret;
 }
 
-static const WCHAR parentClassW[] = {'S','y','s','l','i','n','k',' ','t','e','s','t',' ','p','a','r','e','n','t',' ','c','l','a','s','s',0};
-
 static BOOL register_parent_wnd_class(void)
 {
     WNDCLASSW cls;
@@ -121,17 +119,16 @@ static BOOL register_parent_wnd_class(void)
     cls.hCursor = LoadCursorW(0, (LPCWSTR)IDC_ARROW);
     cls.hbrBackground = GetStockObject(WHITE_BRUSH);
     cls.lpszMenuName = NULL;
-    cls.lpszClassName = parentClassW;
+    cls.lpszClassName = L"Syslink test parent class";
     return RegisterClassW(&cls);
 }
 
 static HWND create_parent_window(void)
 {
-    static const WCHAR titleW[] = {'S','y','s','l','i','n','k',' ','t','e','s','t',' ','p','a','r','e','n','t',' ','w','i','n','d','o','w',0};
     if (!register_parent_wnd_class())
         return NULL;
 
-    return CreateWindowExW(0, parentClassW, titleW,
+    return CreateWindowExW(0, L"Syslink test parent class", L"Syslink test parent window",
                            WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX |
                            WS_MAXIMIZEBOX | WS_VISIBLE,
                            0, 0, 200, 100, GetDesktopWindow(),
@@ -163,10 +160,9 @@ static LRESULT WINAPI syslink_subclass_proc(HWND hwnd, UINT message, WPARAM wPar
 static HWND create_syslink(DWORD style, HWND parent)
 {
     HWND hWndSysLink;
-    static const WCHAR linkW[] = {'H','e','a','d',' ','<','a',' ','h','r','e','f','=','"','l','i','n','k','1','"','>','N','a','m','e','1','<','/','a','>',' ','M','i','d','d','l','e',' ','<','a',' ','h','r','e','f','=','"','l','i','n','k','2','"','>','N','a','m','e','2','<','/','a','>',' ','T','a','i','l',0};
 
     /* Only Unicode will do here */
-    hWndSysLink = CreateWindowExW(0, WC_LINK, linkW,
+    hWndSysLink = CreateWindowExW(0, WC_LINK, L"Head <a href=\"link1\">Name1</a> Middle <a href=\"link2\">Name2</a> Tail",
                                 style, 0, 0, 150, 50,
                                 parent, NULL, GetModuleHandleW(NULL), NULL);
     if (!hWndSysLink) return NULL;

@@ -260,15 +260,15 @@ static void test_comboex_WM_LBUTTONDOWN(void)
     RECT rect;
     WCHAR buffer[3];
     static const UINT choices[] = {8,9,10,11,12,14,16,18,20,22,24,26,28,36,48,72};
-    static const WCHAR stringFormat[] = {'%','2','d','\0'};
 
     hComboEx = CreateWindowExA(0, WC_COMBOBOXEXA, NULL,
             WS_VISIBLE|WS_CHILD|CBS_DROPDOWN, 0, 0, 200, 150,
             hComboExParentWnd, NULL, hMainHinst, NULL);
 
-    for (i = 0; i < ARRAY_SIZE(choices); i++){
+    for (i = 0; i < ARRAY_SIZE(choices); i++)
+    {
         COMBOBOXEXITEMW cbexItem;
-        wsprintfW(buffer, stringFormat, choices[i]);
+        wsprintfW(buffer, L"%2d", choices[i]);
 
         memset(&cbexItem, 0x00, sizeof(cbexItem));
         cbexItem.mask = CBEIF_TEXT;

@@ -1992,8 +1992,6 @@ static void test_getstring(void)
     HWND hToolbar = NULL;
     char str[10];
     WCHAR strW[10];
-    static const char answer[] = "STR";
-    static const WCHAR answerW[] = { 'S','T','R',0 };
     INT r;
 
     hToolbar = CreateWindowExA(0, TOOLBARCLASSNAMEA, NULL, WS_CHILD | WS_VISIBLE, 0, 0, 0, 0, hMainWnd, (HMENU)5, GetModuleHandleA(NULL), NULL);
@@ -2009,18 +2007,17 @@ static void test_getstring(void)
     expect(-1, r);
     r = SendMessageW(hToolbar, TB_GETSTRINGW, MAKEWPARAM(0, 0), 0);
     expect(-1, r);
-    r = SendMessageA(hToolbar, TB_ADDSTRINGA, 0, (LPARAM)answer);
+    r = SendMessageA(hToolbar, TB_ADDSTRINGA, 0, (LPARAM)"STR");
     expect(0, r);
     r = SendMessageA(hToolbar, TB_GETSTRINGA, MAKEWPARAM(0, 0), 0);
-    expect(lstrlenA(answer), r);
+    ok(r == 3, "Unexpected return value %d.\n", r);
     r = SendMessageW(hToolbar, TB_GETSTRINGW, MAKEWPARAM(0, 0), 0);
-    expect(lstrlenA(answer), r);
+    ok(r == 3, "Unexpected return value %d.\n", r);
     r = SendMessageA(hToolbar, TB_GETSTRINGA, MAKEWPARAM(sizeof(str), 0), (LPARAM)str);
-    expect(lstrlenA(answer), r);
-    expect(0, lstrcmpA(answer, str));
+    ok(r == 3, "Unexpected return value %d.\n", r);
     r = SendMessageW(hToolbar, TB_GETSTRINGW, MAKEWPARAM(sizeof(strW), 0), (LPARAM)strW);
-    expect(lstrlenA(answer), r);
-    expect(0, lstrcmpW(answerW, strW));
+    ok(r == 3, "Unexpected return value %d.\n", r);
+    ok(!lstrcmpW(L"STR", strW), "Unexpected string %s.\n", wine_dbgstr_w(strW));
 
     DestroyWindow(hToolbar);
 }
@@ -2387,9 +2384,6 @@ static void test_save(void)
 {
     HWND wnd = NULL;
     TBSAVEPARAMSW params;
-    static const WCHAR subkey[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\',
-                                   'W','i','n','e','T','e','s','t',0};
-    static const WCHAR value[] = {'t','o','o','l','b','a','r','t','e','s','t',0};
     LONG res;
     HKEY key;
     BYTE data[100];
@@ -2420,8 +2414,8 @@ static void test_save(void)
     };
 
     params.hkr = HKEY_CURRENT_USER;
-    params.pszSubKey = subkey;
-    params.pszValueName = value;
+    params.pszSubKey = L"Software\\Wine\\WineTest";
+    params.pszValueName = L"toolbartest";
 
     rebuild_toolbar_with_buttons( &wnd );
     SendMessageW(wnd, TB_ADDBUTTONSW, ARRAY_SIZE(more_btns), (LPARAM)more_btns);
@@ -2432,9 +2426,9 @@ static void test_save(void)
     ok_sequence(sequences, PARENT_SEQ_INDEX, save_parent_seq, "save", FALSE);
     DestroyWindow( wnd );
 
-    res = RegOpenKeyW( HKEY_CURRENT_USER, subkey, &key );
+    res = RegOpenKeyW( HKEY_CURRENT_USER, L"Software\\Wine\\WineTest", &key );
     ok( !res, "got %08x\n", res );
-    res = RegQueryValueExW( key, value, NULL, &type, data, &size );
+    res = RegQueryValueExW( key, L"toolbartest", NULL, &type, data, &size );
     ok( !res, "got %08x\n", res );
     ok( type == REG_BINARY, "got %08x\n", type );
     ok( size == sizeof(expect), "got %08x\n", size );
@@ -2474,8 +2468,8 @@ static void test_save(void)
     }
 
     DestroyWindow( wnd );
-    RegOpenKeyW( HKEY_CURRENT_USER, subkey, &key );
-    RegDeleteValueW( key, value );
+    RegOpenKeyW( HKEY_CURRENT_USER, L"Software\\Wine\\WineTest", &key );
+    RegDeleteValueW( key, L"toolbartest" );
     RegCloseKey( key );
 }
 

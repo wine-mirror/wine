@@ -545,7 +545,6 @@ static void test_AddMRUData(void)
 
 static void test_CreateMRUListW(void)
 {
-    static const WCHAR mrutestW[] = {'M','R','U','T','e','s','t',0};
     MRUINFOW infoW;
     void *named;
     HKEY hKey;
@@ -568,7 +567,7 @@ static void test_CreateMRUListW(void)
     infoW.cbSize = sizeof(infoW);
     infoW.uMax = 1;
     infoW.fFlags = 0;
-    infoW.lpszSubKey = mrutestW;
+    infoW.lpszSubKey = L"MRUTest";
     infoW.hKey = hKey;
     infoW.lpfnCompare = NULL;
 
@@ -580,7 +579,7 @@ static void test_CreateMRUListW(void)
     infoW.cbSize = sizeof(infoW) - 1;
     infoW.uMax = 1;
     infoW.fFlags = 0;
-    infoW.lpszSubKey = mrutestW;
+    infoW.lpszSubKey = L"MRUTest";
     infoW.hKey = hKey;
     infoW.lpfnCompare = NULL;
 
@@ -592,7 +591,7 @@ static void test_CreateMRUListW(void)
     infoW.cbSize = sizeof(infoW) + 1;
     infoW.uMax = 1;
     infoW.fFlags = 0;
-    infoW.lpszSubKey = mrutestW;
+    infoW.lpszSubKey = L"MRUTest";
     infoW.hKey = hKey;
     infoW.lpfnCompare = NULL;
 
@@ -604,7 +603,7 @@ static void test_CreateMRUListW(void)
     infoW.cbSize = 0;
     infoW.uMax = 1;
     infoW.fFlags = 0;
-    infoW.lpszSubKey = mrutestW;
+    infoW.lpszSubKey = L"MRUTest";
     infoW.hKey = hKey;
     infoW.lpfnCompare = NULL;
 
@@ -616,7 +615,7 @@ static void test_CreateMRUListW(void)
     infoW.cbSize = sizeof(infoW);
     infoW.uMax = 1;
     infoW.fFlags = 0;
-    infoW.lpszSubKey = mrutestW;
+    infoW.lpszSubKey = L"MRUTest";
     infoW.hKey = NULL;
     infoW.lpfnCompare = NULL;
 
@@ -628,7 +627,6 @@ static void test_CreateMRUListW(void)
 
 static void test_CreateMRUListLazyW(void)
 {
-    static const WCHAR mrutestW[] = {'M','R','U','T','e','s','t',0};
     MRUINFOW infoW;
     void *named;
     HKEY hKey;
@@ -650,7 +648,7 @@ static void test_CreateMRUListLazyW(void)
     infoW.cbSize = sizeof(infoW);
     infoW.uMax = 1;
     infoW.fFlags = 0;
-    infoW.lpszSubKey = mrutestW;
+    infoW.lpszSubKey = L"MRUTest";
     infoW.hKey = hKey;
     infoW.lpfnCompare = NULL;
 
@@ -662,7 +660,7 @@ static void test_CreateMRUListLazyW(void)
     infoW.cbSize = sizeof(infoW) - 1;
     infoW.uMax = 1;
     infoW.fFlags = 0;
-    infoW.lpszSubKey = mrutestW;
+    infoW.lpszSubKey = L"MRUTest";
     infoW.hKey = hKey;
     infoW.lpfnCompare = NULL;
 
@@ -674,7 +672,7 @@ static void test_CreateMRUListLazyW(void)
     infoW.cbSize = sizeof(infoW) + 1;
     infoW.uMax = 1;
     infoW.fFlags = 0;
-    infoW.lpszSubKey = mrutestW;
+    infoW.lpszSubKey = L"MRUTest";
     infoW.hKey = hKey;
     infoW.lpfnCompare = NULL;
 
@@ -686,7 +684,7 @@ static void test_CreateMRUListLazyW(void)
     infoW.cbSize = 0;
     infoW.uMax = 1;
     infoW.fFlags = 0;
-    infoW.lpszSubKey = mrutestW;
+    infoW.lpszSubKey = L"MRUTest";
     infoW.hKey = hKey;
     infoW.lpfnCompare = NULL;
 
@@ -698,7 +696,7 @@ static void test_CreateMRUListLazyW(void)
     infoW.cbSize = sizeof(infoW);
     infoW.uMax = 1;
     infoW.fFlags = 0;
-    infoW.lpszSubKey = mrutestW;
+    infoW.lpszSubKey = L"MRUTest";
     infoW.hKey = NULL;
     infoW.lpfnCompare = NULL;
 

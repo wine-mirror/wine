@@ -1285,15 +1285,16 @@ static LRESULT CALLBACK parent_wnd_proc(HWND hWnd, UINT message, WPARAM wParam, 
                 break;
             case TVN_GETDISPINFOA: {
                 NMTVDISPINFOA *disp = (NMTVDISPINFOA *)lParam;
+                NMTVDISPINFOW *dispW = (NMTVDISPINFOW *)lParam;
+
                 if (disp->item.mask & TVIF_TEXT) {
                     lstrcpynA(disp->item.pszText, TEST_CALLBACK_TEXT, disp->item.cchTextMax);
                 }
 
-                if (g_disp_A_to_W && (disp->item.mask & TVIF_TEXT)) {
-                    static const WCHAR testW[] = {'T','E','S','T','2',0};
-
-                    disp->hdr.code = TVN_GETDISPINFOW;
-                    memcpy(disp->item.pszText, testW, sizeof(testW));
+                if (g_disp_A_to_W && (dispW->item.mask & TVIF_TEXT))
+                {
+                    dispW->hdr.code = TVN_GETDISPINFOW;
+                    lstrcpyW(dispW->item.pszText, L"TEST2");
                 }
 
                 if (g_disp_set_stateimage)

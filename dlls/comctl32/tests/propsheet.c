@@ -1077,7 +1077,6 @@ static UINT CALLBACK proppage_callback_w(HWND hwnd, UINT msg, PROPSHEETPAGEW *ps
 
 static void test_CreatePropertySheetPage(void)
 {
-    static const WCHAR titleW[] = {'T','i','t','l','e',0};
     struct custom_proppage page;
     HPROPSHEETPAGE hpsp;
     BOOL ret;
@@ -1117,7 +1116,7 @@ static void test_CreatePropertySheetPage(void)
     page.u.pageW.pfnDlgProc = page_dlg_proc_messages;
     page.u.pageW.pfnCallback = proppage_callback_w;
     page.u.pageW.lParam = (LPARAM)&page;
-    page.u.pageW.pszTitle = titleW;
+    page.u.pageW.pszTitle = L"Title";
 
     for (page.u.pageW.dwSize = PROPSHEETPAGEW_V1_SIZE - 1; page.u.pageW.dwSize <= PROPSHEETPAGEW_V4_SIZE + 1; page.u.pageW.dwSize++)
     {
