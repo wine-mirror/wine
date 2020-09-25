@@ -515,7 +515,7 @@ static void texture2d_depth_blt_fbo(const struct wined3d_device *device, struct 
             context_invalidate_state(context, STATE_RENDER(WINED3D_RS_TWOSIDEDSTENCILMODE));
         }
         gl_info->gl_ops.gl.p_glStencilMask(~0U);
-        context_invalidate_state(context, STATE_RENDER(WINED3D_RS_STENCILWRITEMASK));
+        context_invalidate_state(context, STATE_DEPTH_STENCIL);
     }
 
     gl_info->gl_ops.gl.p_glDisable(GL_SCISSOR_TEST);
@@ -5394,7 +5394,7 @@ static void ffp_blitter_clear_rendertargets(struct wined3d_device *device, unsig
             context_invalidate_state(context, STATE_RENDER(WINED3D_RS_TWOSIDEDSTENCILMODE));
         }
         gl_info->gl_ops.gl.p_glStencilMask(~0u);
-        context_invalidate_state(context, STATE_RENDER(WINED3D_RS_STENCILWRITEMASK));
+        context_invalidate_state(context, STATE_DEPTH_STENCIL);
         gl_info->gl_ops.gl.p_glClearStencil(stencil);
         checkGLcall("glClearStencil");
         clear_mask = clear_mask | GL_STENCIL_BUFFER_BIT;

@@ -3687,6 +3687,7 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
 
                 case WINED3D_RS_STENCILENABLE:
                 case WINED3D_RS_STENCILMASK:
+                case WINED3D_RS_STENCILWRITEMASK:
                 case WINED3D_RS_ZENABLE:
                 case WINED3D_RS_ZWRITEENABLE:
                     set_depth_stencil_state = TRUE;
@@ -3845,6 +3846,7 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
         desc.depth_write = state->rs[WINED3D_RS_ZWRITEENABLE];
         desc.stencil = state->rs[WINED3D_RS_STENCILENABLE];
         desc.stencil_read_mask = state->rs[WINED3D_RS_STENCILMASK];
+        desc.stencil_write_mask = state->rs[WINED3D_RS_STENCILWRITEMASK];
 
         if ((entry = wine_rb_get(&device->depth_stencil_states, &desc)))
         {

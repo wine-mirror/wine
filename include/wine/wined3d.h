@@ -2042,6 +2042,7 @@ struct wined3d_depth_stencil_state_desc
     BOOL depth_write;
     BOOL stencil;
     unsigned int stencil_read_mask;
+    unsigned int stencil_write_mask;
 };
 
 struct wined3d_rasterizer_state_desc
