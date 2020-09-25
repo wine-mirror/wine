@@ -32,6 +32,11 @@
 @ cdecl wined3d_buffer_get_resource(ptr)
 @ cdecl wined3d_buffer_incref(ptr)
 
+@ cdecl wined3d_depth_stencil_state_create(ptr ptr ptr ptr ptr)
+@ cdecl wined3d_depth_stencil_state_decref(ptr)
+@ cdecl wined3d_depth_stencil_state_get_parent(ptr)
+@ cdecl wined3d_depth_stencil_state_incref(ptr)
+
 @ cdecl wined3d_device_acquire_focus_window(ptr ptr)
 @ cdecl wined3d_device_apply_stateblock(ptr ptr)
 @ cdecl wined3d_device_begin_scene(ptr)
@@ -63,6 +68,7 @@
 @ cdecl wined3d_device_get_cs_resource_view(ptr long)
 @ cdecl wined3d_device_get_cs_sampler(ptr long)
 @ cdecl wined3d_device_get_cs_uav(ptr long)
+@ cdecl wined3d_device_get_depth_stencil_state(ptr)
 @ cdecl wined3d_device_get_depth_stencil_view(ptr)
 @ cdecl wined3d_device_get_device_caps(ptr ptr)
 @ cdecl wined3d_device_get_display_mode(ptr long ptr ptr)
@@ -117,6 +123,7 @@
 @ cdecl wined3d_device_set_cs_uav(ptr long ptr long)
 @ cdecl wined3d_device_set_cursor_position(ptr long long long)
 @ cdecl wined3d_device_set_cursor_properties(ptr long long ptr long)
+@ cdecl wined3d_device_set_depth_stencil_state(ptr ptr)
 @ cdecl wined3d_device_set_depth_stencil_view(ptr ptr)
 @ cdecl wined3d_device_set_dialog_box_mode(ptr long)
 @ cdecl wined3d_device_set_domain_shader(ptr ptr)

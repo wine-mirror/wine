@@ -1779,7 +1779,10 @@ enum wined3d_pipeline
 #define STATE_SAMPLE_MASK (STATE_BLEND_FACTOR + 1)
 #define STATE_IS_SAMPLE_MASK(a) ((a) == STATE_SAMPLE_MASK)
 
-#define STATE_COMPUTE_OFFSET (STATE_SAMPLE_MASK + 1)
+#define STATE_DEPTH_STENCIL (STATE_SAMPLE_MASK + 1)
+#define STATE_IS_DEPTH_STENCIL(a) ((a) == STATE_DEPTH_STENCIL)
+
+#define STATE_COMPUTE_OFFSET (STATE_DEPTH_STENCIL + 1)
 
 #define STATE_COMPUTE_SHADER (STATE_COMPUTE_OFFSET)
 #define STATE_IS_COMPUTE_SHADER(a) ((a) == STATE_COMPUTE_SHADER)
@@ -3541,6 +3544,18 @@ static inline unsigned int wined3d_blend_state_get_writemask(const struct wined3
     return state->desc.rt[index].writemask;
 }
 
+struct wined3d_depth_stencil_state
+{
+    LONG refcount;
+    struct wined3d_depth_stencil_state_desc desc;
+
+    void *parent;
+    const struct wined3d_parent_ops *parent_ops;
+
+    struct wined3d_device *device;
+    struct wine_rb_entry entry;
+};
+
 struct wined3d_rasterizer_state
 {
     LONG refcount;
@@ -3622,6 +3637,7 @@ struct wined3d_state
     struct wined3d_blend_state *blend_state;
     struct wined3d_color blend_factor;
     unsigned int sample_mask;
+    struct wined3d_depth_stencil_state *depth_stencil_state;
     struct wined3d_rasterizer_state *rasterizer_state;
 };
 
@@ -3695,7 +3711,7 @@ struct wined3d_device
 
     struct list             resources; /* a linked list to track resources created by the device */
     struct list             shaders;   /* a linked list to track shaders (pixel and vertex)      */
-    struct wine_rb_tree samplers, rasterizer_states, blend_states;
+    struct wine_rb_tree samplers, rasterizer_states, blend_states, depth_stencil_states;
 
     /* Render Target Support */
     struct wined3d_rendertarget_view *auto_depth_stencil_view;
@@ -4641,6 +4657,8 @@ void wined3d_cs_emit_set_color_key(struct wined3d_cs *cs, struct wined3d_texture
         WORD flags, const struct wined3d_color_key *color_key) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_constant_buffer(struct wined3d_cs *cs, enum wined3d_shader_type type,
         UINT cb_idx, struct wined3d_buffer *buffer) DECLSPEC_HIDDEN;
+void wined3d_cs_emit_set_depth_stencil_state(struct wined3d_cs *cs,
+        struct wined3d_depth_stencil_state *state) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_depth_stencil_view(struct wined3d_cs *cs,
         struct wined3d_rendertarget_view *view) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_index_buffer(struct wined3d_cs *cs, struct wined3d_buffer *buffer,

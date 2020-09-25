@@ -197,6 +197,13 @@ static void device_leftover_blend_state(struct wine_rb_entry *entry, void *conte
     ERR("Leftover blend state %p.\n", blend_state);
 }
 
+static void device_leftover_depth_stencil_state(struct wine_rb_entry *entry, void *context)
+{
+    struct wined3d_depth_stencil_state *state = WINE_RB_ENTRY_VALUE(entry, struct wined3d_depth_stencil_state, entry);
+
+    ERR("Leftover depth/stencil state %p.\n", state);
+}
+
 void wined3d_device_cleanup(struct wined3d_device *device)
 {
     unsigned int i;
@@ -234,6 +241,7 @@ void wined3d_device_cleanup(struct wined3d_device *device)
     wine_rb_destroy(&device->samplers, device_leftover_sampler, NULL);
     wine_rb_destroy(&device->rasterizer_states, device_leftover_rasterizer_state, NULL);
     wine_rb_destroy(&device->blend_states, device_leftover_blend_state, NULL);
+    wine_rb_destroy(&device->depth_stencil_states, device_leftover_depth_stencil_state, NULL);
 
     wined3d_decref(device->wined3d);
     device->wined3d = NULL;
@@ -1157,6 +1165,13 @@ static void device_free_blend_state(struct wine_rb_entry *entry, void *context)
     wined3d_blend_state_decref(blend_state);
 }
 
+static void device_free_depth_stencil_state(struct wine_rb_entry *entry, void *context)
+{
+    struct wined3d_depth_stencil_state *state = WINE_RB_ENTRY_VALUE(entry, struct wined3d_depth_stencil_state, entry);
+
+    wined3d_depth_stencil_state_decref(state);
+}
+
 void wined3d_device_uninit_3d(struct wined3d_device *device)
 {
     struct wined3d_resource *resource, *cursor;
@@ -1743,6 +1758,32 @@ struct wined3d_blend_state * CDECL wined3d_device_get_blend_state(const struct w
     *blend_factor = state->blend_factor;
     *sample_mask = state->sample_mask;
     return state->blend_state;
+}
+
+void CDECL wined3d_device_set_depth_stencil_state(struct wined3d_device *device,
+        struct wined3d_depth_stencil_state *state)
+{
+    struct wined3d_depth_stencil_state *prev;
+
+    TRACE("device %p, state %p.\n", device, state);
+
+    prev = device->state.depth_stencil_state;
+    if (prev == state)
+        return;
+
+    if (state)
+        wined3d_depth_stencil_state_incref(state);
+    device->state.depth_stencil_state = state;
+    wined3d_cs_emit_set_depth_stencil_state(device->cs, state);
+    if (prev)
+        wined3d_depth_stencil_state_decref(prev);
+}
+
+struct wined3d_depth_stencil_state * CDECL wined3d_device_get_depth_stencil_state(const struct wined3d_device *device)
+{
+    TRACE("device %p.\n", device);
+
+    return device->state.depth_stencil_state;
 }
 
 void CDECL wined3d_device_set_rasterizer_state(struct wined3d_device *device,
@@ -5391,6 +5432,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     wine_rb_clear(&device->samplers, device_free_sampler, NULL);
     wine_rb_clear(&device->rasterizer_states, device_free_rasterizer_state, NULL);
     wine_rb_clear(&device->blend_states, device_free_blend_state, NULL);
+    wine_rb_clear(&device->depth_stencil_states, device_free_depth_stencil_state, NULL);
 
     if (reset_state)
     {
@@ -5584,6 +5626,14 @@ static int wined3d_blend_state_compare(const void *key, const struct wine_rb_ent
     return memcmp(&state->desc, key, sizeof(state->desc));
 }
 
+static int wined3d_depth_stencil_state_compare(const void *key, const struct wine_rb_entry *entry)
+{
+    const struct wined3d_depth_stencil_state *state
+            = WINE_RB_ENTRY_VALUE(entry, struct wined3d_depth_stencil_state, entry);
+
+    return memcmp(&state->desc, key, sizeof(state->desc));
+}
+
 static BOOL wined3d_select_feature_level(const struct wined3d_adapter *adapter,
         const enum wined3d_feature_level *levels, unsigned int level_count,
         enum wined3d_feature_level *selected_level)
@@ -5645,6 +5695,7 @@ HRESULT wined3d_device_init(struct wined3d_device *device, struct wined3d *wined
     wine_rb_init(&device->samplers, wined3d_sampler_compare);
     wine_rb_init(&device->rasterizer_states, wined3d_rasterizer_state_compare);
     wine_rb_init(&device->blend_states, wined3d_blend_state_compare);
+    wine_rb_init(&device->depth_stencil_states, wined3d_depth_stencil_state_compare);
 
     if (vertex_pipeline->vp_states && fragment_pipeline->states
             && FAILED(hr = compile_state_table(device->state_table, device->multistate_funcs,
@@ -5655,6 +5706,7 @@ HRESULT wined3d_device_init(struct wined3d_device *device, struct wined3d *wined
         wine_rb_destroy(&device->samplers, NULL, NULL);
         wine_rb_destroy(&device->rasterizer_states, NULL, NULL);
         wine_rb_destroy(&device->blend_states, NULL, NULL);
+        wine_rb_destroy(&device->depth_stencil_states, NULL, NULL);
         wined3d_decref(device->wined3d);
         return hr;
     }
@@ -5681,6 +5733,7 @@ err:
     wine_rb_destroy(&device->samplers, NULL, NULL);
     wine_rb_destroy(&device->rasterizer_states, NULL, NULL);
     wine_rb_destroy(&device->blend_states, NULL, NULL);
+    wine_rb_destroy(&device->depth_stencil_states, NULL, NULL);
     wined3d_decref(device->wined3d);
     return hr;
 }

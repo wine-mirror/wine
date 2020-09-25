@@ -42,6 +42,7 @@ static const struct wined3d_state_entry_template misc_state_template_vk[] =
     {STATE_SAMPLE_MASK,                                   {STATE_SAMPLE_MASK,                                   state_nop}},
     {STATE_STREAMSRC,                                     {STATE_STREAMSRC,                                     state_nop}},
     {STATE_VDECL,                                         {STATE_VDECL,                                         state_nop}},
+    {STATE_DEPTH_STENCIL,                                 {STATE_DEPTH_STENCIL,                                 state_nop}},
     {STATE_RASTERIZER,                                    {STATE_RASTERIZER,                                    state_nop}},
     {STATE_SCISSORRECT,                                   {STATE_SCISSORRECT,                                   state_nop}},
     {STATE_POINTSPRITECOORDORIGIN,                        {STATE_POINTSPRITECOORDORIGIN,                        state_nop}},

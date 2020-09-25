@@ -2366,6 +2366,7 @@ static const struct wined3d_state_entry_template misc_state_template_no3d[] =
     {STATE_BLEND,                                         {STATE_VDECL}},
     {STATE_BLEND_FACTOR,                                  {STATE_VDECL}},
     {STATE_SAMPLE_MASK,                                   {STATE_VDECL}},
+    {STATE_DEPTH_STENCIL,                                 {STATE_VDECL}},
     {STATE_STREAMSRC,                                     {STATE_VDECL}},
     {STATE_VDECL,                                         {STATE_VDECL, state_nop}},
     {STATE_RASTERIZER,                                    {STATE_VDECL}},
