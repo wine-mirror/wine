@@ -440,6 +440,7 @@ struct d3d_depthstencil_state
     LONG refcount;
 
     struct wined3d_private_store private_store;
+    struct wined3d_depth_stencil_state *wined3d_state;
     D3D11_DEPTH_STENCIL_DESC desc;
     struct wine_rb_entry entry;
     ID3D11Device2 *device;
@@ -549,7 +550,6 @@ struct d3d_device
     struct wine_rb_tree rasterizer_states;
     struct wine_rb_tree sampler_states;
 
-    struct d3d_depthstencil_state *depth_stencil_state;
     UINT stencil_ref;
 };
 

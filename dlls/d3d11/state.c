@@ -493,13 +493,15 @@ static ULONG STDMETHODCALLTYPE d3d11_depthstencil_state_AddRef(ID3D11DepthStenci
 
     TRACE("%p increasing refcount to %u.\n", state, refcount);
 
-    return refcount;
-}
+    if (refcount == 1)
+    {
+        ID3D11Device2_AddRef(state->device);
+        wined3d_mutex_lock();
+        wined3d_depth_stencil_state_incref(state->wined3d_state);
+        wined3d_mutex_unlock();
+    }
 
-static void d3d_depthstencil_state_cleanup(struct d3d_depthstencil_state *state)
-{
-    wined3d_private_store_cleanup(&state->private_store);
-    ID3D11Device2_Release(state->device);
+    return refcount;
 }
 
 static ULONG STDMETHODCALLTYPE d3d11_depthstencil_state_Release(ID3D11DepthStencilState *iface)
@@ -511,12 +513,12 @@ static ULONG STDMETHODCALLTYPE d3d11_depthstencil_state_Release(ID3D11DepthStenc
 
     if (!refcount)
     {
-        struct d3d_device *device = impl_from_ID3D11Device2(state->device);
+        ID3D11Device2 *device = state->device;
+
         wined3d_mutex_lock();
-        wine_rb_remove(&device->depthstencil_states, &state->entry);
-        d3d_depthstencil_state_cleanup(state);
+        wined3d_depth_stencil_state_decref(state->wined3d_state);
         wined3d_mutex_unlock();
-        heap_free(state);
+        ID3D11Device2_Release(device);
     }
 
     return refcount;
@@ -695,23 +697,25 @@ static const struct ID3D10DepthStencilStateVtbl d3d10_depthstencil_state_vtbl =
     d3d10_depthstencil_state_GetDesc,
 };
 
-static HRESULT d3d_depthstencil_state_init(struct d3d_depthstencil_state *state, struct d3d_device *device,
-        const D3D11_DEPTH_STENCIL_DESC *desc)
+static void STDMETHODCALLTYPE d3d_depthstencil_state_wined3d_object_destroyed(void *parent)
 {
-    state->ID3D11DepthStencilState_iface.lpVtbl = &d3d11_depthstencil_state_vtbl;
-    state->ID3D10DepthStencilState_iface.lpVtbl = &d3d10_depthstencil_state_vtbl;
-    state->refcount = 1;
-    wined3d_private_store_init(&state->private_store);
-    state->desc = *desc;
+    struct d3d_depthstencil_state *state = parent;
+    struct d3d_device *device = impl_from_ID3D11Device2(state->device);
 
-    ID3D11Device2_AddRef(state->device = &device->ID3D11Device2_iface);
-
-    return S_OK;
+    wine_rb_remove(&device->depthstencil_states, &state->entry);
+    wined3d_private_store_cleanup(&state->private_store);
+    heap_free(parent);
 }
+
+static const struct wined3d_parent_ops d3d_depthstencil_state_wined3d_parent_ops =
+{
+    d3d_depthstencil_state_wined3d_object_destroyed,
+};
 
 HRESULT d3d_depthstencil_state_create(struct d3d_device *device, const D3D11_DEPTH_STENCIL_DESC *desc,
         struct d3d_depthstencil_state **state)
 {
+    struct wined3d_depth_stencil_state_desc wined3d_desc;
     struct d3d_depthstencil_state *object;
     D3D11_DEPTH_STENCIL_DESC tmp_desc;
     struct wine_rb_entry *entry;
@@ -775,25 +779,40 @@ HRESULT d3d_depthstencil_state_create(struct d3d_device *device, const D3D11_DEP
         return E_OUTOFMEMORY;
     }
 
-    if (FAILED(hr = d3d_depthstencil_state_init(object, device, &tmp_desc)))
-    {
-        WARN("Failed to initialize depthstencil state, hr %#x.\n", hr);
-        heap_free(object);
-        wined3d_mutex_unlock();
-        return hr;
-    }
+    object->ID3D11DepthStencilState_iface.lpVtbl = &d3d11_depthstencil_state_vtbl;
+    object->ID3D10DepthStencilState_iface.lpVtbl = &d3d10_depthstencil_state_vtbl;
+    object->refcount = 1;
+    wined3d_private_store_init(&object->private_store);
+    object->desc = tmp_desc;
 
     if (wine_rb_put(&device->depthstencil_states, &tmp_desc, &object->entry) == -1)
     {
-        ERR("Failed to insert depthstencil state entry.\n");
-        d3d_depthstencil_state_cleanup(object);
+        ERR("Failed to insert depth/stencil state entry.\n");
+        wined3d_private_store_cleanup(&object->private_store);
         heap_free(object);
         wined3d_mutex_unlock();
         return E_FAIL;
     }
+
+    wined3d_desc.depth = desc->DepthEnable;
+
+    /* We cannot fail after creating a wined3d_depth_stencil_state object. It
+     * would lead to double free. */
+    if (FAILED(hr = wined3d_depth_stencil_state_create(device->wined3d_device, &wined3d_desc,
+            object, &d3d_depthstencil_state_wined3d_parent_ops, &object->wined3d_state)))
+    {
+        WARN("Failed to create wined3d depth/stencil state, hr %#x.\n", hr);
+        wined3d_private_store_cleanup(&object->private_store);
+        wine_rb_remove(&device->depthstencil_states, &object->entry);
+        heap_free(object);
+        wined3d_mutex_unlock();
+        return hr;
+    }
     wined3d_mutex_unlock();
 
-    TRACE("Created depthstencil state %p.\n", object);
+    ID3D11Device2_AddRef(object->device = &device->ID3D11Device2_iface);
+
+    TRACE("Created depth/stencil state %p.\n", object);
     *state = object;
 
     return S_OK;
