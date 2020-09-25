@@ -315,7 +315,7 @@ static inline int sock_error( struct fd *fd )
 
 static int sock_dispatch_asyncs( struct sock *sock, int event, int error )
 {
-    if ( sock->flags & WSA_FLAG_OVERLAPPED )
+    if (is_fd_overlapped( sock->fd ))
     {
         if (event & (POLLIN|POLLPRI) && async_waiting( &sock->read_q ))
         {
@@ -680,6 +680,7 @@ static struct sock *create_socket(void)
 
 static int init_socket( struct sock *sock, int family, int type, int protocol, unsigned int flags )
 {
+    unsigned int options = 0;
     int sockfd;
 
     sockfd = socket( family, type, protocol );
@@ -696,10 +697,13 @@ static int init_socket( struct sock *sock, int family, int type, int protocol, u
     sock->type   = type;
     sock->family = family;
 
-    if (sock->fd) release_object( sock->fd );
+    if (sock->fd)
+    {
+        options = get_fd_options( sock->fd );
+        release_object( sock->fd );
+    }
 
-    if (!(sock->fd = create_anonymous_fd( &sock_fd_ops, sockfd, &sock->obj,
-                            (flags & WSA_FLAG_OVERLAPPED) ? 0 : FILE_SYNCHRONOUS_IO_NONALERT )))
+    if (!(sock->fd = create_anonymous_fd( &sock_fd_ops, sockfd, &sock->obj, options )))
     {
         return -1;
     }

@@ -7716,7 +7716,8 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
 
     RtlInitUnicodeString(&string, afdW);
     InitializeObjectAttributes(&attr, &string, (flags & WSA_FLAG_NO_HANDLE_INHERIT) ? 0 : OBJ_INHERIT, NULL, NULL);
-    if ((status = NtOpenFile(&handle, GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE, &attr, &io, 0, 0)))
+    if ((status = NtOpenFile(&handle, GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE, &attr,
+            &io, 0, (flags & WSA_FLAG_OVERLAPPED) ? 0 : FILE_SYNCHRONOUS_IO_NONALERT)))
     {
         WARN("Failed to create socket, status %#x.\n", status);
         WSASetLastError(NtStatusToWSAError(status));
@@ -7726,7 +7727,7 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
     create_params.family = unixaf;
     create_params.type = unixtype;
     create_params.protocol = protocol;
-    create_params.flags = flags & ~WSA_FLAG_NO_HANDLE_INHERIT;
+    create_params.flags = flags & ~(WSA_FLAG_NO_HANDLE_INHERIT | WSA_FLAG_OVERLAPPED);
     if ((status = NtDeviceIoControlFile(handle, NULL, NULL, NULL, &io,
             IOCTL_AFD_CREATE, &create_params, sizeof(create_params), NULL, 0)))
     {
