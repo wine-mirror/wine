@@ -3685,6 +3685,7 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
                     set_blend_state = TRUE;
                     break;
 
+                case WINED3D_RS_STENCILENABLE:
                 case WINED3D_RS_ZENABLE:
                 case WINED3D_RS_ZWRITEENABLE:
                     set_depth_stencil_state = TRUE;
@@ -3841,6 +3842,7 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
                 FIXME("Unrecognized depth buffer type %#x.\n", state->rs[WINED3D_RS_ZENABLE]);
         }
         desc.depth_write = state->rs[WINED3D_RS_ZWRITEENABLE];
+        desc.stencil = state->rs[WINED3D_RS_STENCILENABLE];
 
         if ((entry = wine_rb_get(&device->depth_stencil_states, &desc)))
         {
@@ -4360,7 +4362,8 @@ HRESULT CDECL wined3d_device_validate_device(const struct wined3d_device *device
         }
     }
 
-    if (wined3d_state_uses_depth_buffer(state) || state->render_states[WINED3D_RS_STENCILENABLE])
+    if (wined3d_state_uses_depth_buffer(state)
+            || (state->depth_stencil_state && state->depth_stencil_state->desc.stencil))
     {
         struct wined3d_rendertarget_view *rt = device->state.fb.render_targets[0];
         struct wined3d_rendertarget_view *ds = device->state.fb.depth_stencil;

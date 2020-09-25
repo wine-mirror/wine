@@ -2817,16 +2817,15 @@ void wined3d_context_gl_apply_blit_state(struct wined3d_context_gl *context_gl, 
         gl_info->gl_ops.gl.p_glDisable(GL_ALPHA_TEST);
         context_invalidate_state(context, STATE_RENDER(WINED3D_RS_ALPHATESTENABLE));
     }
-    gl_info->gl_ops.gl.p_glDisable(GL_DEPTH_TEST);
-    context_invalidate_state(context, STATE_DEPTH_STENCIL);
     gl_info->gl_ops.gl.p_glDisable(GL_BLEND);
     gl_info->gl_ops.gl.p_glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     context_invalidate_state(context, STATE_BLEND);
     gl_info->gl_ops.gl.p_glDisable(GL_CULL_FACE);
     gl_info->gl_ops.gl.p_glDisable(GL_SCISSOR_TEST);
     context_invalidate_state(context, STATE_RASTERIZER);
+    gl_info->gl_ops.gl.p_glDisable(GL_DEPTH_TEST);
     gl_info->gl_ops.gl.p_glDisable(GL_STENCIL_TEST);
-    context_invalidate_state(context, STATE_RENDER(WINED3D_RS_STENCILENABLE));
+    context_invalidate_state(context, STATE_DEPTH_STENCIL);
     if (gl_info->supported[ARB_POINT_SPRITE])
     {
         gl_info->gl_ops.gl.p_glDisable(GL_POINT_SPRITE_ARB);
