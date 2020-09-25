@@ -134,7 +134,6 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 static void sock_queue_async( struct fd *fd, struct async *async, int type, int count );
 static void sock_reselect_async( struct fd *fd, struct async_queue *queue );
 
-static int init_socket( struct sock *sock, int family, int type, int protocol, unsigned int flags );
 static int sock_get_ntstatus( int err );
 static unsigned int sock_get_error( int err );
 
@@ -539,46 +538,6 @@ static enum server_fd_type sock_get_fd_type( struct fd *fd )
     return FD_TYPE_SOCKET;
 }
 
-static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
-{
-    struct sock *sock = get_fd_user( fd );
-
-    assert( sock->obj.ops == &sock_ops );
-
-    if (get_unix_fd( fd ) == -1 && code != IOCTL_AFD_CREATE) return 0;
-
-    switch(code)
-    {
-    case IOCTL_AFD_CREATE:
-    {
-        const struct afd_create_params *params = get_req_data();
-
-        if (get_req_data_size() != sizeof(*params))
-        {
-            set_error( STATUS_INVALID_PARAMETER );
-            return 0;
-        }
-        init_socket( sock, params->family, params->type, params->protocol, params->flags );
-        return 0;
-    }
-
-    case IOCTL_AFD_ADDRESS_LIST_CHANGE:
-        if ((sock->state & FD_WINE_NONBLOCKING) && async_is_blocking( async ))
-        {
-            set_win32_error( WSAEWOULDBLOCK );
-            return 0;
-        }
-        if (!sock_get_ifchange( sock )) return 0;
-        queue_async( &sock->ifchange_q, async );
-        set_error( STATUS_PENDING );
-        return 1;
-
-    default:
-        set_error( STATUS_NOT_SUPPORTED );
-        return 0;
-    }
-}
-
 static void sock_queue_async( struct fd *fd, struct async *async, int type, int count )
 {
     struct sock *sock = get_fd_user( fd );
@@ -955,6 +914,46 @@ static int sock_get_ntstatus( int err )
             errno = err;
             perror("wineserver: sock_get_ntstatus() can't map error");
             return STATUS_UNSUCCESSFUL;
+    }
+}
+
+static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
+{
+    struct sock *sock = get_fd_user( fd );
+
+    assert( sock->obj.ops == &sock_ops );
+
+    if (get_unix_fd( fd ) == -1 && code != IOCTL_AFD_CREATE) return 0;
+
+    switch(code)
+    {
+    case IOCTL_AFD_CREATE:
+    {
+        const struct afd_create_params *params = get_req_data();
+
+        if (get_req_data_size() != sizeof(*params))
+        {
+            set_error( STATUS_INVALID_PARAMETER );
+            return 0;
+        }
+        init_socket( sock, params->family, params->type, params->protocol, params->flags );
+        return 0;
+    }
+
+    case IOCTL_AFD_ADDRESS_LIST_CHANGE:
+        if ((sock->state & FD_WINE_NONBLOCKING) && async_is_blocking( async ))
+        {
+            set_win32_error( WSAEWOULDBLOCK );
+            return 0;
+        }
+        if (!sock_get_ifchange( sock )) return 0;
+        queue_async( &sock->ifchange_q, async );
+        set_error( STATUS_PENDING );
+        return 1;
+
+    default:
+        set_error( STATUS_NOT_SUPPORTED );
+        return 0;
     }
 }
 
