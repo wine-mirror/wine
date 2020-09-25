@@ -765,6 +765,7 @@ static void test_wm_set_get_text(void)
 {
     static const CHAR a_str[] = "a";
     CHAR buff[16], time[16], caltype[3];
+    WCHAR buffW[16];
     HWND hWnd;
     LRESULT ret;
 
@@ -800,6 +801,16 @@ static void test_wm_set_get_text(void)
             ok(ret == strlen(time), "Got wrong length: %ld, expected %d.\n", ret, strlen(time));
         }
     }
+
+    DestroyWindow(hWnd);
+
+    /* Window text is not preserved. */
+    hWnd = CreateWindowExA(0, DATETIMEPICK_CLASSA, "testname", 0, 0, 50, 300, 120,
+            NULL, NULL, NULL, NULL);
+
+    buffW[0] = 1;
+    InternalGetWindowText(hWnd, buffW, ARRAY_SIZE(buffW));
+    ok(!buffW[0], "Unexpected window text %s.\n", wine_dbgstr_w(buffW));
 
     DestroyWindow(hWnd);
 }

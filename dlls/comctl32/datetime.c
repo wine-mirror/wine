@@ -1277,7 +1277,7 @@ DATETIME_NCCreate (HWND hwnd, const CREATESTRUCTW *lpcs)
     dwExStyle |= WS_EX_CLIENTEDGE;
     SetWindowLongW(hwnd, GWL_EXSTYLE, dwExStyle);
 
-    return DefWindowProcW(hwnd, WM_NCCREATE, 0, (LPARAM)lpcs);
+    return 1;
 }
 
 
