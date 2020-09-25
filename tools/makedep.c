@@ -3081,7 +3081,7 @@ static void output_source_default( struct makefile *make, struct incl_file *sour
                        ((source->file->flags & FLAG_C_IMPLIB) &&
                         (needs_cross_lib( make ) || needs_delay_lib( make ))) ||
                        (make->staticlib && needs_cross_lib( make ))));
-    int need_obj = ((*dll_ext || !make->staticlib || !(source->file->flags & FLAG_C_UNIX)) &&
+    int need_obj = ((*dll_ext || !(source->file->flags & FLAG_C_UNIX)) &&
                     (!need_cross ||
                      (source->file->flags & FLAG_C_IMPLIB) ||
                      (make->module && make->staticlib)));
