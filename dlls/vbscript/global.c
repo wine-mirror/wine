@@ -3148,7 +3148,7 @@ static HRESULT Err_Raise(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VA
     hres = to_int(args, &code);
     if(FAILED(hres))
         return hres;
-    if(code > 0 && code > 0xffff)
+    if(code == 0 || code > 0xffff)
         return E_INVALIDARG;
 
     if(args_cnt >= 2)
