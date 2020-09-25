@@ -906,7 +906,6 @@ static GstFlowReturn request_buffer_src(GstPad *pad, GstObject *parent, guint64 
         return GST_FLOW_ERROR;
     }
 
-    GST_BUFFER_OFFSET(*buf) = ofs;
     return GST_FLOW_OK;
 }
 
