@@ -5,13 +5,14 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-11-30 11:26-0600\n"
-"Last-Translator: Eduardo García <eduardo.garcia@gmx.com>\n"
+"PO-Revision-Date: 2020-09-26 17:17-0300\n"
+"Last-Translator: Roberto Augusto Pungartnik <rpungartnik@gmail.com>\n"
 "Language-Team: Spanish\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 2.0.6\n"
 
 #: dlls/appwiz.cpl/appwiz.rc:58
 msgid "Install/Uninstall"
@@ -203,10 +204,8 @@ msgid "Cancel"
 msgstr "Cancelar"
 
 #: dlls/appwiz.cpl/appwiz.rc:115
-#, fuzzy
-#| msgid "Wine Gecko Installer"
 msgid "Wine Mono Installer"
-msgstr "Instalador Wine Gecko"
+msgstr "Instalador Wine Mono"
 
 #: dlls/appwiz.cpl/appwiz.rc:118
 #, fuzzy
@@ -378,18 +377,16 @@ msgid "%1!u! %2 and %3!u! %4 remaining"
 msgstr ""
 
 #: dlls/browseui/browseui.rc:31
-#, fuzzy
-#| msgid "&Seconds"
 msgid "seconds"
-msgstr "&Segundos"
+msgstr "segundos"
 
 #: dlls/browseui/browseui.rc:32
 msgid "minutes"
-msgstr ""
+msgstr "minutos"
 
 #: dlls/browseui/browseui.rc:33
 msgid "hours"
-msgstr ""
+msgstr "horas"
 
 #: dlls/comctl32/comctl32.rc:68 programs/winefile/winefile.rc:156
 msgid "Properties for %s"
@@ -504,14 +501,10 @@ msgid "&Retry"
 msgstr "&Reintentar"
 
 #: dlls/comctl32/comctl32.rc:62
-#, fuzzy
-#| msgid "Hide &Tabs"
 msgid "Hide details"
-msgstr "Ocultar &Pestañas"
+msgstr "Ocultar Detalles"
 
 #: dlls/comctl32/comctl32.rc:63
-#, fuzzy
-#| msgid "Details"
 msgid "See details"
 msgstr "Detalles"
 
@@ -758,11 +751,9 @@ msgid "&Define Custom Colors >>"
 msgstr "&Definir colores personalizados >>"
 
 #: dlls/comdlg32/comdlg32.rc:312
-#, fuzzy
-#| msgid "&No"
 msgctxt "Solid"
 msgid "&o"
-msgstr "&No"
+msgstr "&o"
 
 #: dlls/comdlg32/comdlg32.rc:318 programs/regedit/regedit.rc:275
 #: programs/regedit/regedit.rc:285
@@ -1190,14 +1181,12 @@ msgid "Open File"
 msgstr "Abrir archivo"
 
 #: dlls/comdlg32/comdlg32.rc:148
-#, fuzzy
-#| msgid "New Folder"
 msgid "Select Folder"
-msgstr "Nueva carpeta"
+msgstr "Seleccionar la carpeta"
 
 #: dlls/comdlg32/comdlg32.rc:149
 msgid "Font size has to be a number."
-msgstr ""
+msgstr "El tamaño de la fuente debe ser un número"
 
 #: dlls/comdlg32/comdlg32.rc:84 programs/oleview/oleview.rc:98
 msgid "Ready"
@@ -3131,10 +3120,8 @@ msgid "Note: The private key for this certificate is not exportable."
 msgstr "Nota: La clave privada de este certificado no es exportable."
 
 #: dlls/cryptui/cryptui.rc:177
-#, fuzzy
-#| msgid "I&ntended purpose:"
 msgid "Intended Use"
-msgstr "Fi&nalidad prevista:"
+msgstr "Finalidad prevista"
 
 #: dlls/cryptui/cryptui.rc:178 dlls/shell32/shell32.rc:152
 msgid "Location"
@@ -3351,10 +3338,8 @@ msgid "&View Source"
 msgstr "&Ver código"
 
 #: dlls/hhctrl.ocx/hhctrl.rc:83
-#, fuzzy
-#| msgid "Properties"
 msgid "Proper&ties"
-msgstr "Propiedades"
+msgstr "Propieda&des"
 
 #: dlls/hhctrl.ocx/hhctrl.rc:87 dlls/shdoclc/shdoclc.rc:79
 #: dlls/shdoclc/shdoclc.rc:93 dlls/shdoclc/shdoclc.rc:117
@@ -3661,16 +3646,12 @@ msgid "Publishers..."
 msgstr "Publicadores..."
 
 #: dlls/inetcpl.cpl/inetcpl.rc:123
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Connections"
-msgstr "Conexión LAN"
+msgstr "Conexións"
 
 #: dlls/inetcpl.cpl/inetcpl.rc:125
-#, fuzzy
-#| msgid "Wine configuration"
 msgid "Automatic configuration"
-msgstr "Configuración de Wine"
+msgstr "Configuración automatica"
 
 #: dlls/inetcpl.cpl/inetcpl.rc:126
 msgid "Use Web Proxy Auto-Discovery (WPAD)"
@@ -3681,26 +3662,20 @@ msgid "Use Proxy Auto-Config (PAC) script"
 msgstr ""
 
 #: dlls/inetcpl.cpl/inetcpl.rc:128 dlls/inetcpl.cpl/inetcpl.rc:132
-#, fuzzy
-#| msgid "Address"
 msgid "Address:"
-msgstr "Dirección"
+msgstr "Dirección:"
 
 #: dlls/inetcpl.cpl/inetcpl.rc:130
-#, fuzzy
-#| msgid "&Local server"
 msgid "Proxy server"
-msgstr "Servidor &local"
+msgstr "Servidor Proxy"
 
 #: dlls/inetcpl.cpl/inetcpl.rc:131
 msgid "Use a proxy server"
 msgstr ""
 
 #: dlls/inetcpl.cpl/inetcpl.rc:134
-#, fuzzy
-#| msgid "Local Port"
 msgid "Port:"
-msgstr "Puerto local"
+msgstr "Puerto local:"
 
 #: dlls/inetcpl.cpl/inetcpl.rc:31
 msgid "Internet Settings"
@@ -3747,16 +3722,12 @@ msgid "&Disable"
 msgstr "&Deshabilitar"
 
 #: dlls/joy.cpl/joy.rc:41
-#, fuzzy
-#| msgid "&enable"
 msgid "&Enable"
-msgstr "&habilitar"
+msgstr "&Habilitar"
 
 #: dlls/joy.cpl/joy.rc:42
-#, fuzzy
-#| msgid "Disconnected"
 msgid "Connected"
-msgstr "Desconectado"
+msgstr "Conectado"
 
 #: dlls/joy.cpl/joy.rc:44
 #, fuzzy
@@ -3776,7 +3747,7 @@ msgstr ""
 
 #: dlls/joy.cpl/joy.rc:55
 msgid "Buttons"
-msgstr ""
+msgstr "Botones"
 
 #: dlls/joy.cpl/joy.rc:64
 msgid "Test Force Feedback"
@@ -3815,10 +3786,8 @@ msgid "Subscript out of range"
 msgstr "Subíndice fuera de rango"
 
 #: dlls/jscript/jscript.rc:31
-#, fuzzy
-#| msgid "Out of paper; "
 msgid "Out of stack space"
-msgstr "Sin papel; "
+msgstr "Sin espacio de pila"
 
 #: dlls/jscript/jscript.rc:32
 msgid "Object required"
@@ -3863,16 +3832,12 @@ msgid "Expected identifier"
 msgstr "Identificador del Sujeto de la Clave"
 
 #: dlls/jscript/jscript.rc:42
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected '='"
-msgstr "Esperado ';'"
+msgstr "Esperado '='"
 
 #: dlls/jscript/jscript.rc:43
-#, fuzzy
-#| msgid "Invalid parameter.\n"
 msgid "Invalid character"
-msgstr "Parámetro inválido.\n"
+msgstr "Caractere inválido"
 
 #: dlls/jscript/jscript.rc:44
 msgid "Unterminated string constant"
@@ -3899,28 +3864,24 @@ msgid "Label not found"
 msgstr "Etiqueta no encontrada"
 
 #: dlls/jscript/jscript.rc:50
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected '@end'"
-msgstr "Esperado ';'"
+msgstr "Esperado '@end'"
 
 #: dlls/jscript/jscript.rc:51
 msgid "Conditional compilation is turned off"
 msgstr "La compilación condicional está desactivada"
 
 #: dlls/jscript/jscript.rc:52
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected '@'"
-msgstr "Esperado ';'"
+msgstr "Esperado '@'"
 
 #: dlls/jscript/jscript.rc:78
 msgid "Microsoft JScript compilation error"
-msgstr ""
+msgstr "Error de compilación Microsoft JScript"
 
 #: dlls/jscript/jscript.rc:79
 msgid "Microsoft JScript runtime error"
-msgstr ""
+msgstr "Error de ejecución  Microsoft JScript"
 
 #: dlls/jscript/jscript.rc:80 dlls/vbscript/vbscript.rc:64
 #, fuzzy
@@ -4036,7 +3997,7 @@ msgstr ""
 
 #: include/wine/wine_common_ver.rc:129
 msgid "Wine kernel DLL"
-msgstr ""
+msgstr "DLL de núcle Wine"
 
 #: include/wine/wine_common_ver.rc:134 dlls/winemac.drv/winemac.rc:32
 #: programs/wineboot/wineboot.rc:42 programs/winecfg/winecfg.rc:137
@@ -7011,10 +6972,8 @@ msgid "Connection reset by peer.\n"
 msgstr "Conexión rechazada.\n"
 
 #: dlls/kernel32/winerror.mc:3767
-#, fuzzy
-#| msgid "Not implemented"
 msgid "Not implemented.\n"
-msgstr "No implementado"
+msgstr "No implementado.\n"
 
 #: dlls/kernel32/winerror.mc:3760
 #, fuzzy
@@ -7256,16 +7215,12 @@ msgid "Object or value wasn't found.\n"
 msgstr "UUID del objeto no encontrado.\n"
 
 #: dlls/mferror/mferror.mc:235
-#, fuzzy
-#| msgid "Help not available."
 msgid "Value is not available.\n"
-msgstr "Ayuda no disponible."
+msgstr "Valor no disponible.\n"
 
 #: dlls/mferror/mferror.mc:242
-#, fuzzy
-#| msgid "Help not available."
 msgid "Clock is not available.\n"
-msgstr "Ayuda no disponible."
+msgstr "Reloj no disponible.\n"
 
 #: dlls/mferror/mferror.mc:263
 #, fuzzy
@@ -7292,10 +7247,8 @@ msgid "Unsupported state transition.\n"
 msgstr "Nivel de autorización no soportado.\n"
 
 #: dlls/mferror/mferror.mc:291
-#, fuzzy
-#| msgid "A printer error occurred."
 msgid "Unrecoverable error occurred.\n"
-msgstr "Ha ocurrido un error en su impresora."
+msgstr "Ha ocurrido un error irrecuperable.\n"
 
 #: dlls/mferror/mferror.mc:298
 msgid "Sample has too many buffers.\n"
@@ -7372,10 +7325,8 @@ msgid "Vector property is required.\n"
 msgstr ""
 
 #: dlls/mferror/mferror.mc:389
-#, fuzzy
-#| msgid "Operation canceled by user.\n"
 msgid "Operation was cancelled.\n"
-msgstr "Operación cancelada por el usuario.\n"
+msgstr "Operación cancelada.\n"
 
 #: dlls/mferror/mferror.mc:396
 #, fuzzy
@@ -7558,10 +7509,8 @@ msgid "Optional node is invalid.\n"
 msgstr "Conexión inválida.\n"
 
 #: dlls/mferror/mferror.mc:634
-#, fuzzy
-#| msgid "Cannot find the printer."
 msgid "Cannot find decryptor.\n"
-msgstr "No se encuentra la impresora."
+msgstr "No se encuentra el descriptor.\n"
 
 #: dlls/mferror/mferror.mc:641
 #, fuzzy
@@ -7867,10 +7816,8 @@ msgid "Computing space requirements"
 msgstr ""
 
 #: dlls/msi/msi.rc:97
-#, fuzzy
-#| msgid "New Folder"
 msgid "Creating folders"
-msgstr "Nueva carpeta"
+msgstr "Creando carpetas"
 
 #: dlls/msi/msi.rc:98
 #, fuzzy
@@ -8023,10 +7970,8 @@ msgid "Registering user"
 msgstr "Recursos es uso.\n"
 
 #: dlls/msi/msi.rc:128
-#, fuzzy
-#| msgid "&Remove doubles"
 msgid "Removing duplicated files"
-msgstr "&Eliminar duplicados"
+msgstr "Eliminar archivos duplicados"
 
 #: dlls/msi/msi.rc:129 dlls/msi/msi.rc:153
 #, fuzzy
@@ -8035,16 +7980,12 @@ msgid "Updating environment strings"
 msgstr "Aplicando configuración de fuente"
 
 #: dlls/msi/msi.rc:130
-#, fuzzy
-#| msgid "&Remove application"
 msgid "Removing applications"
-msgstr "&Eliminar aplicación"
+msgstr "Eliminando aplicaciones"
 
 #: dlls/msi/msi.rc:131
-#, fuzzy
-#| msgid "Icon files"
 msgid "Removing files"
-msgstr "Archivos de icono"
+msgstr "Eliminando archivos"
 
 #: dlls/msi/msi.rc:132
 msgid "Removing folders"
@@ -8179,10 +8120,8 @@ msgid "File: [1],  Directory: [9],  Size: [6]"
 msgstr ""
 
 #: dlls/msi/msi.rc:168
-#, fuzzy
-#| msgid "application"
 msgid "Found application: [1]"
-msgstr "aplicación"
+msgstr "Aplicación encontrada: [1]"
 
 #: dlls/msi/msi.rc:169
 msgid "File: [1], Directory: [9], Size: [6]"
@@ -8652,32 +8591,24 @@ msgid "outline button"
 msgstr "botón con contorno"
 
 #: dlls/oleacc/oleacc.rc:97
-#, fuzzy
-#| msgid "Normal"
 msgctxt "object state"
 msgid "normal"
-msgstr "Normal"
+msgstr "normal"
 
 #: dlls/oleacc/oleacc.rc:98
-#, fuzzy
-#| msgid "Unavailable"
 msgctxt "object state"
 msgid "unavailable"
-msgstr "No disponible"
+msgstr "no disponible"
 
 #: dlls/oleacc/oleacc.rc:99
-#, fuzzy
-#| msgid "Select"
 msgctxt "object state"
 msgid "selected"
-msgstr "Seleccionar"
+msgstr "seleccionado"
 
 #: dlls/oleacc/oleacc.rc:100
-#, fuzzy
-#| msgid "Paused"
 msgctxt "object state"
 msgid "focused"
-msgstr "Pausado"
+msgstr "enfocado"
 
 #: dlls/oleacc/oleacc.rc:101
 #, fuzzy
@@ -8692,18 +8623,14 @@ msgid "checked"
 msgstr ""
 
 #: dlls/oleacc/oleacc.rc:103
-#, fuzzy
-#| msgid "Mixed"
 msgctxt "object state"
 msgid "mixed"
-msgstr "Mezclado"
+msgstr "mezclado"
 
 #: dlls/oleacc/oleacc.rc:104
-#, fuzzy
-#| msgid "&Read Only"
 msgctxt "object state"
 msgid "read only"
-msgstr "Sólo &lectura"
+msgstr "sólo lectura"
 
 #: dlls/oleacc/oleacc.rc:105
 #, fuzzy
@@ -8876,16 +8803,12 @@ msgid "Provider"
 msgstr "vídeo"
 
 #: dlls/oledb32/version.rc:59
-#, fuzzy
-#| msgid "Select the format you want to use:"
 msgid "Select the data you want to connect to:"
-msgstr "Seleccione el formato que quiere utilizar:"
+msgstr "Seleccione los datos que quiere conectar:"
 
 #: dlls/oledb32/version.rc:66
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Connection"
-msgstr "Conexión LAN"
+msgstr "Conexión"
 
 #: dlls/oledb32/version.rc:69
 #, fuzzy
@@ -8926,14 +8849,10 @@ msgid "2. Enter information to log on to the server"
 msgstr ""
 
 #: dlls/oledb32/version.rc:79
-#, fuzzy
-#| msgid "&User name:"
 msgid "User &name:"
 msgstr "&Usuario:"
 
 #: dlls/oledb32/version.rc:83
-#, fuzzy
-#| msgid "&Blank page"
 msgid "&Blank password"
 msgstr "Página en &blanco"
 
@@ -8948,10 +8867,8 @@ msgid "3. Enter the &initial catalog to use:"
 msgstr ""
 
 #: dlls/oledb32/version.rc:87
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "&Test Connection"
-msgstr "Conexión LAN"
+msgstr "&Prueba Conexión"
 
 #: dlls/oledb32/version.rc:92
 msgid "Advanced"
@@ -8992,10 +8909,8 @@ msgid "A&ccess:"
 msgstr "Éxito"
 
 #: dlls/oledb32/version.rc:110
-#, fuzzy
-#| msgid "&All"
 msgid "All"
-msgstr "&Todo"
+msgstr "Todo"
 
 #: dlls/oledb32/version.rc:114
 msgid ""
@@ -9004,10 +8919,8 @@ msgid ""
 msgstr ""
 
 #: dlls/oledb32/version.rc:115
-#, fuzzy
-#| msgid "&Edit..."
 msgid "&Edit Value..."
-msgstr "&Editar..."
+msgstr "&Editar Valor..."
 
 #: dlls/oledb32/version.rc:49
 #, fuzzy
@@ -9038,10 +8951,8 @@ msgid "OLE DB Provider(s)"
 msgstr ""
 
 #: dlls/oledb32/version.rc:41
-#, fuzzy
-#| msgid "Ready"
 msgid "Read"
-msgstr "Preparada"
+msgstr "Leer"
 
 #: dlls/oledb32/version.rc:42
 #, fuzzy
@@ -9178,16 +9089,12 @@ msgid "&Convert..."
 msgstr "&Fuente..."
 
 #: dlls/oledlg/oledlg.rc:36
-#, fuzzy
-#| msgid "&Object"
 msgid "%1 %2 &Object"
-msgstr "&Objeto"
+msgstr "%1 %2 &Objeto"
 
 #: dlls/oledlg/oledlg.rc:34
-#, fuzzy
-#| msgid "&Object"
 msgid "%1 &Object"
-msgstr "&Objeto"
+msgstr "%1 &Objeto"
 
 #: dlls/oledlg/oledlg.rc:33 programs/oleview/oleview.rc:40
 msgid "&Object"
@@ -9845,16 +9752,12 @@ msgid "&Archive"
 msgstr "A&rchivar"
 
 #: dlls/shell32/shell32.rc:386
-#, fuzzy
-#| msgid "Open:"
 msgid "Open with:"
-msgstr "Abrir:"
+msgstr "Abrir con:"
 
 #: dlls/shell32/shell32.rc:389
-#, fuzzy
-#| msgid "Change &Icon..."
 msgid "&Change..."
-msgstr "Cambiar &icono..."
+msgstr "&Cambiar..."
 
 #: dlls/shell32/shell32.rc:400
 #, fuzzy
@@ -10297,379 +10200,359 @@ msgstr "Nueva carpeta"
 
 #: dlls/tzres/tzres.rc:88
 msgid "China Standard Time"
-msgstr ""
+msgstr "Horario Estándar en China"
 
 #: dlls/tzres/tzres.rc:89
 msgid "China Daylight Time"
-msgstr ""
+msgstr "Horario de Verano en China"
 
 #: dlls/tzres/tzres.rc:170
 msgid "North Asia Standard Time"
-msgstr ""
+msgstr "Horario Estándar en Asia Norte"
 
 #: dlls/tzres/tzres.rc:171
 msgid "North Asia Daylight Time"
-msgstr ""
+msgstr "Horario de Verano en Asia Norte"
 
 #: dlls/tzres/tzres.rc:110
 msgid "Georgian Standard Time"
-msgstr ""
+msgstr "Horario Estándar en Georgia"
 
 #: dlls/tzres/tzres.rc:111
 msgid "Georgian Daylight Time"
-msgstr ""
+msgstr "Horario de Verano en Georgia"
 
 #: dlls/tzres/tzres.rc:162
 msgid "Nepal Standard Time"
-msgstr ""
+msgstr "Horario Estándar en Nepal "
 
 #: dlls/tzres/tzres.rc:163
 msgid "Nepal Daylight Time"
-msgstr ""
+msgstr "Horario de Verano en Nepal "
 
 #: dlls/tzres/tzres.rc:64
 msgid "Cape Verde Standard Time"
-msgstr ""
+msgstr "Horario Estándar en Cabo Verde"
 
 #: dlls/tzres/tzres.rc:65
 msgid "Cape Verde Daylight Time"
-msgstr ""
+msgstr "Horario de Verano en Cabo Verde"
 
 #: dlls/tzres/tzres.rc:120
-#, fuzzy
-#| msgid "Date and time"
 msgid "Haiti Standard Time"
-msgstr "Fecha y hora"
+msgstr "Horario Estándar en Haití"
 
 #: dlls/tzres/tzres.rc:121
-#, fuzzy
-#| msgid "Date and time"
 msgid "Haiti Daylight Time"
-msgstr "Fecha y hora"
+msgstr "Horario de Verano en Haití"
 
 #: dlls/tzres/tzres.rc:78
-#, fuzzy
-#| msgid "Central European"
 msgid "Central European Standard Time"
-msgstr "Central Europeo"
+msgstr "Horario Estándar Europa Central"
 
 #: dlls/tzres/tzres.rc:79
-#, fuzzy
-#| msgid "Central European"
 msgid "Central European Daylight Time"
-msgstr "Central Europeo"
+msgstr "Horario de Verano Europa Central"
 
 #: dlls/tzres/tzres.rc:150
 msgid "Morocco Standard Time"
-msgstr ""
+msgstr "Horario Estándar en Marruecos "
 
 #: dlls/tzres/tzres.rc:151
 msgid "Morocco Daylight Time"
-msgstr ""
+msgstr "Horario de Verano en Marruecos "
 
 #: dlls/tzres/tzres.rc:76
-#, fuzzy
-#| msgid "Central European"
 msgid "Central Europe Standard Time"
-msgstr "Central Europeo"
+msgstr "Horario Estándar Europa Central"
 
 #: dlls/tzres/tzres.rc:77
-#, fuzzy
-#| msgid "Central European"
 msgid "Central Europe Daylight Time"
-msgstr "Central Europeo"
+msgstr "Horario de Verano Europa Central"
 
 #: dlls/tzres/tzres.rc:126
 msgid "Iran Standard Time"
-msgstr ""
+msgstr "Horario Estándar en Irán "
 
 #: dlls/tzres/tzres.rc:127
 msgid "Iran Daylight Time"
-msgstr ""
+msgstr "Horario de Verano en Irán "
 
 #: dlls/tzres/tzres.rc:160
 msgid "Namibia Standard Time"
-msgstr ""
+msgstr "Horario Estándar en Namibia"
 
 #: dlls/tzres/tzres.rc:161
 msgid "Namibia Daylight Time"
-msgstr ""
+msgstr "Horario de Verano en Namibia"
 
 #: dlls/tzres/tzres.rc:210
 msgid "Tonga Standard Time"
-msgstr ""
+msgstr "Horario Estándar en Tonga"
 
 #: dlls/tzres/tzres.rc:211
 msgid "Tonga Daylight Time"
-msgstr ""
+msgstr "Horario de Verano en Tonga"
 
 #: dlls/tzres/tzres.rc:154
 msgid "Mountain Standard Time (Mexico)"
-msgstr ""
+msgstr "Horario Estándar de Montaña(México)"
 
 #: dlls/tzres/tzres.rc:155
 msgid "Mountain Daylight Time (Mexico)"
-msgstr ""
+msgstr "Horario de Verano de Montaña(México)"
 
 #: dlls/tzres/tzres.rc:112
-#, fuzzy
-#| msgid "&Standard bar"
 msgid "GMT Standard Time"
-msgstr "Barra &estándar"
+msgstr "Horario Estándar GMT"
 
 #: dlls/tzres/tzres.rc:113
 msgid "GMT Daylight Time"
-msgstr ""
+msgstr "Horario de Verano GMT"
 
 #: dlls/tzres/tzres.rc:72
 msgid "Central Asia Standard Time"
-msgstr ""
+msgstr "Horario Estándar Asia Central"
 
 #: dlls/tzres/tzres.rc:73
 msgid "Central Asia Daylight Time"
-msgstr ""
+msgstr "Horario de Verano Asia Central"
 
 #: dlls/tzres/tzres.rc:40
 msgid "Arabic Standard Time"
-msgstr ""
+msgstr "Horario Estándar Árabe"
 
 #: dlls/tzres/tzres.rc:41
 msgid "Arabic Daylight Time"
-msgstr ""
+msgstr "Horario de Verano Árabe"
 
 #: dlls/tzres/tzres.rc:140
 msgid "Magadan Standard Time"
-msgstr ""
+msgstr "Horario Estándar en Magadán"
 
 #: dlls/tzres/tzres.rc:141
 msgid "Magadan Daylight Time"
-msgstr ""
+msgstr "Horario de Verano en Magadán"
 
 #: dlls/tzres/tzres.rc:166
 msgid "Newfoundland Standard Time"
-msgstr ""
+msgstr "Horario Estándar en Terranova"
 
 #: dlls/tzres/tzres.rc:167
 msgid "Newfoundland Daylight Time"
-msgstr ""
+msgstr "Horario de Verano en Terranova"
 
 #: dlls/tzres/tzres.rc:234
 msgid "West Pacific Standard Time"
-msgstr ""
+msgstr "Horario Estándar del Pacifico Occidental"
 
 #: dlls/tzres/tzres.rc:235
 msgid "West Pacific Daylight Time"
-msgstr ""
+msgstr "Horario de Verano del Pacifico Occidental"
 
 #: dlls/tzres/tzres.rc:174
 msgid "Pacific Standard Time"
-msgstr ""
+msgstr "Horario Estándar del Pacifico"
 
 #: dlls/tzres/tzres.rc:175
 msgid "Pacific Daylight Time"
-msgstr ""
+msgstr "Horario de Verano del Pacifico"
 
 #: dlls/tzres/tzres.rc:50
 msgid "Azerbaijan Standard Time"
-msgstr ""
+msgstr "Horario Estándar en Azerbaiyán"
 
 #: dlls/tzres/tzres.rc:51
 msgid "Azerbaijan Daylight Time"
-msgstr ""
+msgstr "Horario de Verano en Azerbaiyán"
 
 #: dlls/tzres/tzres.rc:192
 msgid "Samoa Standard Time"
-msgstr ""
+msgstr "Horario Estándar en Samoa"
 
 #: dlls/tzres/tzres.rc:193
 msgid "Samoa Daylight Time"
-msgstr ""
+msgstr "Horario de Verano en Samoa"
 
 #: dlls/tzres/tzres.rc:132
 msgid "Kaliningrad Standard Time"
-msgstr ""
+msgstr "Horario Estándar en Kaliningrado"
 
 #: dlls/tzres/tzres.rc:133
 msgid "Kaliningrad Daylight Time"
-msgstr ""
+msgstr "Horario de Verano en Kaliningrado"
 
 #: dlls/tzres/tzres.rc:176
 msgid "Pacific Standard Time (Mexico)"
-msgstr ""
+msgstr "Horario Estándar del Pacifico(México)"
 
 #: dlls/tzres/tzres.rc:177
 msgid "Pacific Daylight Time (Mexico)"
-msgstr ""
+msgstr "Horario de Verano del Pacifico(México)"
 
 #: dlls/tzres/tzres.rc:146
 msgid "Middle East Standard Time"
-msgstr ""
+msgstr "Horario Estándar del Oriente Medio"
 
 #: dlls/tzres/tzres.rc:147
 msgid "Middle East Daylight Time"
-msgstr ""
+msgstr "Horario de Verano del Oriente Medio"
 
 #: dlls/tzres/tzres.rc:208
 msgid "Tokyo Standard Time"
-msgstr ""
+msgstr "Horario Estándar en Tokyo"
 
 #: dlls/tzres/tzres.rc:209
 msgid "Tokyo Daylight Time"
-msgstr ""
+msgstr "Horario de Verano en Tokyo"
 
 #: dlls/tzres/tzres.rc:138
 msgid "Line Islands Standard Time"
-msgstr ""
+msgstr "Horario Estándar en Islas de la Línea"
 
 #: dlls/tzres/tzres.rc:139
 msgid "Line Islands Daylight Time"
-msgstr ""
+msgstr "Horario de Verano en Islas de la Línea"
 
 #: dlls/tzres/tzres.rc:130
 msgid "Jordan Standard Time"
-msgstr ""
+msgstr "Horario Estándar en Jordania"
 
 #: dlls/tzres/tzres.rc:131
 msgid "Jordan Daylight Time"
-msgstr ""
+msgstr "Horario de Verano en Jordania"
 
 #: dlls/tzres/tzres.rc:82
 msgid "Central Standard Time"
-msgstr ""
+msgstr "Horario Estándar  Central"
 
 #: dlls/tzres/tzres.rc:83
 msgid "Central Daylight Time"
-msgstr ""
+msgstr "Horario de Verano Central"
 
 #: dlls/tzres/tzres.rc:52
 msgid "Azores Standard Time"
-msgstr ""
+msgstr "Horario Estándar en Azores"
 
 #: dlls/tzres/tzres.rc:53
 msgid "Azores Daylight Time"
-msgstr ""
+msgstr "Horario de Verano en Azores"
 
 #: dlls/tzres/tzres.rc:168
 msgid "North Asia East Standard Time"
-msgstr ""
+msgstr "Horario Estándar Noroeste del Asia"
 
 #: dlls/tzres/tzres.rc:169
 msgid "North Asia East Daylight Time"
-msgstr ""
+msgstr "Horario de Verano Noroeste del Asia"
 
 #: dlls/tzres/tzres.rc:42
 msgid "Argentina Standard Time"
-msgstr ""
+msgstr "Horario Estándar en Argentina"
 
 #: dlls/tzres/tzres.rc:43
 msgid "Argentina Daylight Time"
-msgstr ""
+msgstr "Horario de Verano en Argentina"
 
 #: dlls/tzres/tzres.rc:142
-#, fuzzy
-#| msgid "&Standard bar"
 msgid "Marquesas Standard Time"
-msgstr "Barra &estándar"
+msgstr "Horario Estándar Marquesas"
 
 #: dlls/tzres/tzres.rc:143
-#, fuzzy
-#| msgid "Date and time"
 msgid "Marquesas Daylight Time"
-msgstr "Fecha y hora"
+msgstr "Horario de Verano Marquesas"
 
 #: dlls/tzres/tzres.rc:156
 msgid "Myanmar Standard Time"
-msgstr ""
+msgstr "Horario Estándar en Birmania"
 
 #: dlls/tzres/tzres.rc:157
 msgid "Myanmar Daylight Time"
-msgstr ""
+msgstr "Horario de Verano en Birmania"
 
 #: dlls/tzres/tzres.rc:220 dlls/tzres/tzres.rc:221
 msgid "Coordinated Universal Time"
-msgstr ""
+msgstr "Tiempo Universal Coordinado"
 
 #: dlls/tzres/tzres.rc:124
 msgid "India Standard Time"
-msgstr ""
+msgstr "Horario Estándar en India"
 
 #: dlls/tzres/tzres.rc:125
 msgid "India Daylight Time"
-msgstr ""
+msgstr "Horario de Verano en India"
 
 #: dlls/tzres/tzres.rc:118
-#, fuzzy
-#| msgid "&Standard bar"
 msgid "GTB Standard Time"
-msgstr "Barra &estándar"
+msgstr "Horario Estándar GTB"
 
 #: dlls/tzres/tzres.rc:119
 msgid "GTB Daylight Time"
-msgstr ""
+msgstr "Horario de Verano GTB"
 
 #: dlls/tzres/tzres.rc:212
 msgid "Turkey Standard Time"
-msgstr ""
+msgstr "Horario Estándar en Turquía"
 
 #: dlls/tzres/tzres.rc:213
 msgid "Turkey Daylight Time"
-msgstr ""
+msgstr "Horario de Verano en Turquía"
 
 #: dlls/tzres/tzres.rc:106
 msgid "Fiji Standard Time"
-msgstr ""
+msgstr "Horario Estándar en Fiyi"
 
 #: dlls/tzres/tzres.rc:107
 msgid "Fiji Daylight Time"
-msgstr ""
+msgstr "Horario de Verano en Fiyi"
 
 #: dlls/tzres/tzres.rc:62
 msgid "Canada Central Standard Time"
-msgstr ""
+msgstr "Horario Estándar  en Canadá"
 
 #: dlls/tzres/tzres.rc:63
 msgid "Canada Central Daylight Time"
-msgstr ""
+msgstr "Horario de Verano en Canadá"
 
 #: dlls/tzres/tzres.rc:204
 msgid "Taipei Standard Time"
-msgstr ""
+msgstr "Horario Estándar en Taipéi"
 
 #: dlls/tzres/tzres.rc:205
 msgid "Taipei Daylight Time"
-msgstr ""
+msgstr "Horario de Verano en Taipéi"
 
 #: dlls/tzres/tzres.rc:230
 msgid "W. Europe Standard Time"
-msgstr ""
+msgstr "Horario Estándar Europa Occidental"
 
 #: dlls/tzres/tzres.rc:231
 msgid "W. Europe Daylight Time"
-msgstr ""
+msgstr "Horario de Verano Europa Occidental"
 
 #: dlls/tzres/tzres.rc:148
 msgid "Montevideo Standard Time"
-msgstr ""
+msgstr "Horario Estándar en Montevideo"
 
 #: dlls/tzres/tzres.rc:149
 msgid "Montevideo Daylight Time"
-msgstr ""
+msgstr "Horario de Verano en Montevideo"
 
 #: dlls/tzres/tzres.rc:178
 msgid "Pakistan Standard Time"
-msgstr ""
+msgstr "Horario Estándar  en Pakistán"
 
 #: dlls/tzres/tzres.rc:179
 msgid "Pakistan Daylight Time"
-msgstr ""
+msgstr "Horario de Verano en Pakistán"
 
 #: dlls/tzres/tzres.rc:66
 msgid "Caucasus Standard Time"
-msgstr ""
+msgstr "Horario Estándar en Cáucaso"
 
 #: dlls/tzres/tzres.rc:67
 msgid "Caucasus Daylight Time"
-msgstr ""
+msgstr "Horario de Verano en Cáucaso"
 
 #: dlls/tzres/tzres.rc:48
 msgid "AUS Eastern Standard Time"
@@ -10920,10 +10803,8 @@ msgid "Paraguay Daylight Time"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:90
-#, fuzzy
-#| msgid "Date and time"
 msgid "Dateline Standard Time"
-msgstr "Fecha y hora"
+msgstr "Horario Estándar Linea del Dia"
 
 #: dlls/tzres/tzres.rc:91
 msgid "Dateline Daylight Time"
@@ -10954,16 +10835,12 @@ msgid "Venezuela Daylight Time"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:60
-#, fuzzy
-#| msgid "Date and time"
 msgid "Bougainville Standard Time"
-msgstr "Fecha y hora"
+msgstr "Horario Estándar en Bougainville"
 
 #: dlls/tzres/tzres.rc:61
-#, fuzzy
-#| msgid "Date and time"
 msgid "Bougainville Daylight Time"
-msgstr "Fecha y hora"
+msgstr "Horario de Verano en Bougainville"
 
 #: dlls/tzres/tzres.rc:122
 msgid "Hawaiian Standard Time"
@@ -10990,16 +10867,12 @@ msgid "New Zealand Daylight Time"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:34
-#, fuzzy
-#| msgid "Date and time"
 msgid "Aleutian Standard Time"
-msgstr "Fecha y hora"
+msgstr "Horario Estándar en Islas Aleutianas"
 
 #: dlls/tzres/tzres.rc:35
-#, fuzzy
-#| msgid "Date and time"
 msgid "Aleutian Daylight Time"
-msgstr "Fecha y hora"
+msgstr "Horario de Verano en Islas Aleutianas"
 
 #: dlls/tzres/tzres.rc:74
 msgid "Central Brazilian Standard Time"
@@ -11034,16 +10907,12 @@ msgid "Greenland Daylight Time"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:98
-#, fuzzy
-#| msgid "Date and time"
 msgid "Easter Island Standard Time"
-msgstr "Fecha y hora"
+msgstr "Horario Estándar en Isla de Pascua"
 
 #: dlls/tzres/tzres.rc:99
-#, fuzzy
-#| msgid "Date and time"
 msgid "Easter Island Daylight Time"
-msgstr "Fecha y hora"
+msgstr "Horario de Verano en Isla de Pascua"
 
 #: dlls/tzres/tzres.rc:102
 msgid "Egypt Standard Time"
@@ -11086,16 +10955,12 @@ msgid "Korea Daylight Time"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:86
-#, fuzzy
-#| msgid "Date and time"
 msgid "Chatham Islands Standard Time"
-msgstr "Fecha y hora"
+msgstr "Horario Estándar Islas Chatham"
 
 #: dlls/tzres/tzres.rc:87
-#, fuzzy
-#| msgid "Date and time"
 msgid "Chatham Islands Daylight Time"
-msgstr "Fecha y hora"
+msgstr "Horario de Verano en Islas Chatham"
 
 #: dlls/tzres/tzres.rc:92
 msgid "E. Africa Standard Time"
@@ -11106,10 +10971,8 @@ msgid "E. Africa Daylight Time"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:108
-#, fuzzy
-#| msgid "&Standard bar"
 msgid "FLE Standard Time"
-msgstr "Barra &estándar"
+msgstr "Horario Estándar en FLE"
 
 #: dlls/tzres/tzres.rc:109
 msgid "FLE Daylight Time"
@@ -11192,16 +11055,12 @@ msgid "Installation of component failed: %08x"
 msgstr "No pudo aplicarse la transformación en la instalación.\n"
 
 #: dlls/urlmon/urlmon.rc:52
-#, fuzzy
-#| msgid "&Install"
 msgid "Install (%d)"
-msgstr "&Instalar"
+msgstr "Instalar (%d)"
 
 #: dlls/urlmon/urlmon.rc:53
-#, fuzzy
-#| msgid "&Install"
 msgid "Install"
-msgstr "&Instalar"
+msgstr "Instalar"
 
 #: dlls/user32/user32.rc:30 dlls/user32/user32.rc:43
 #: programs/taskmgr/taskmgr.rc:138
@@ -11427,46 +11286,36 @@ msgid "Hide Others"
 msgstr "Otro"
 
 #: dlls/winemac.drv/winemac.rc:36
-#, fuzzy
-#| msgid "Show"
 msgid "Show All"
-msgstr "Mostrar"
+msgstr "Mostrar Todo"
 
 #: dlls/winemac.drv/winemac.rc:37
 msgid "Quit %@"
-msgstr ""
+msgstr "Salir %@"
 
 #: dlls/winemac.drv/winemac.rc:38
 msgid "Quit"
-msgstr ""
+msgstr "Salir"
 
 #: dlls/winemac.drv/winemac.rc:40
-#, fuzzy
-#| msgid "&Window"
 msgid "Window"
-msgstr "&Ventana"
+msgstr "Ventana"
 
 #: dlls/winemac.drv/winemac.rc:41
-#, fuzzy
-#| msgid "&Minimize"
 msgid "Minimize"
-msgstr "&Minimizar"
+msgstr "Minimizar"
 
 #: dlls/winemac.drv/winemac.rc:42
-#, fuzzy
-#| msgid "Zoom in"
 msgid "Zoom"
-msgstr "Más zoom"
+msgstr "Zoom"
 
 #: dlls/winemac.drv/winemac.rc:43
 msgid "Enter Full Screen"
 msgstr ""
 
 #: dlls/winemac.drv/winemac.rc:44
-#, fuzzy
-#| msgid "&Bring To Front"
 msgid "Bring All to Front"
-msgstr "Traer al &Frente"
+msgstr "Traer Todo al Frente"
 
 #: dlls/wineps.drv/wineps.rc:31
 msgid "Paper Si&ze:"
@@ -11477,10 +11326,8 @@ msgid "Duplex:"
 msgstr "Dúplex:"
 
 #: dlls/wineps.drv/wineps.rc:50
-#, fuzzy
-#| msgid "&Setup"
 msgid "Setup"
-msgstr "&Configuración"
+msgstr "Configuración"
 
 #: dlls/wininet/wininet.rc:53 dlls/wininet/wininet.rc:73
 msgid "Realm"
@@ -11530,10 +11377,8 @@ msgid "Effective Date"
 msgstr ""
 
 #: dlls/wininet/wininet.rc:37
-#, fuzzy
-#| msgid "Security"
 msgid "Security Protocol"
-msgstr "Seguridad"
+msgstr "Protocolo de Seguridad"
 
 #: dlls/wininet/wininet.rc:38
 #, fuzzy
@@ -11553,7 +11398,7 @@ msgstr ""
 
 #: dlls/wininet/wininet.rc:43
 msgid "bits"
-msgstr ""
+msgstr "bits"
 
 #: dlls/wininet/winineterror.mc:26
 #, fuzzy
@@ -12261,11 +12106,11 @@ msgstr "columna"
 
 #: dlls/winmm/winmm.rc:138
 msgid "Master Volume"
-msgstr ""
+msgstr "Volumen principal"
 
 #: dlls/winmm/winmm.rc:139
 msgid "Mute"
-msgstr ""
+msgstr "Mudo"
 
 #: dlls/winspool.drv/winspool.rc:37
 msgid "Print to File"
@@ -13426,7 +13271,7 @@ msgstr "Símbolo del sistema de Wine"
 
 #: programs/cmd/cmd.rc:397
 msgid "Microsoft Windows %1!S!\n"
-msgstr ""
+msgstr "Microsoft Windows %1!S!\n"
 
 #: programs/cmd/cmd.rc:398
 msgid "More? "
@@ -13459,11 +13304,11 @@ msgstr ""
 
 #: programs/cmd/cmd.rc:405
 msgid "Division by zero error.\n"
-msgstr ""
+msgstr "Error división por cero.\n"
 
 #: programs/cmd/cmd.rc:406
 msgid "Expected an operand.\n"
-msgstr ""
+msgstr "Se esperaba un operando.\n"
 
 #: programs/cmd/cmd.rc:407
 #, fuzzy
@@ -13494,8 +13339,6 @@ msgid "Wine Explorer"
 msgstr "Explorador de Wine"
 
 #: programs/explorer/explorer.rc:33
-#, fuzzy
-#| msgid "StartUp"
 msgid "Start"
 msgstr "Arranque"
 
@@ -13788,11 +13631,11 @@ msgstr "Interfaces"
 
 #: programs/netstat/netstat.rc:36
 msgid "Sent"
-msgstr ""
+msgstr "Enviado"
 
 #: programs/netstat/netstat.rc:37
 msgid "Received"
-msgstr ""
+msgstr "Recibido"
 
 #: programs/netstat/netstat.rc:38
 #, fuzzy
@@ -13828,7 +13671,7 @@ msgstr "Puerto desconocido.\n"
 
 #: programs/netstat/netstat.rc:44
 msgid "TCP Statistics for IPv4"
-msgstr ""
+msgstr "Estadisticas TCP para IPv4"
 
 #: programs/netstat/netstat.rc:45
 #, fuzzy
@@ -13876,7 +13719,7 @@ msgstr ""
 
 #: programs/netstat/netstat.rc:53
 msgid "UDP Statistics for IPv4"
-msgstr ""
+msgstr "Estadisticas UDP para IPv4"
 
 #: programs/netstat/netstat.rc:54
 #, fuzzy
@@ -14972,7 +14815,7 @@ msgstr "&Acerca del Editor del registro"
 #: programs/regedit/regedit.rc:89 programs/regedit/regedit.rc:96
 #: programs/regedit/regedit.rc:230
 msgid "Expand"
-msgstr ""
+msgstr "Expandir"
 
 #: programs/regedit/regedit.rc:134 programs/regedit/regedit.rc:233
 #, fuzzy
@@ -16624,8 +16467,6 @@ msgstr ""
 "cambiar la configuración global o la configuración por aplicación."
 
 #: programs/winecfg/winecfg.rc:158
-#, fuzzy
-#| msgid "&Add application..."
 msgid "Add appli&cation..."
 msgstr "&Añadir aplicación..."
 
@@ -16758,8 +16599,6 @@ msgid "&Path:"
 msgstr "&Ruta:"
 
 #: programs/winecfg/winecfg.rc:246 programs/winecfg/winecfg.rc:37
-#, fuzzy
-#| msgid "Show &Advanced"
 msgid "Show Advan&ced"
 msgstr "Mostrar &avanzado"
 
@@ -16780,10 +16619,8 @@ msgid "S&erial:"
 msgstr "&Nº serie:"
 
 #: programs/winecfg/winecfg.rc:256
-#, fuzzy
-#| msgid "Show &dot files"
 msgid "&Show dot files"
-msgstr "Mostrar archivos &punto"
+msgstr "Mostrar archivo&s dot"
 
 #: programs/winecfg/winecfg.rc:263
 msgid "Driver diagnostics"
@@ -16872,8 +16709,6 @@ msgid "Select the Unix target directory, please."
 msgstr "Por favor, seleccione el directorio Unix de destino."
 
 #: programs/winecfg/winecfg.rc:36
-#, fuzzy
-#| msgid "Hide &Advanced"
 msgid "Hide Advan&ced"
 msgstr "Ocultar &avanzado"
 
