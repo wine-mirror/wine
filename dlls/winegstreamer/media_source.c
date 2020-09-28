@@ -17,9 +17,15 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "config.h"
+
+#include <gst/gst.h>
+
 #include "gst_private.h"
+#include "gst_cbs.h"
 
 #include <stdarg.h>
+#include <assert.h>
 
 #define COBJMACROS
 #define NONAMELESSUNION
@@ -27,6 +33,7 @@
 #include "mfapi.h"
 #include "mferror.h"
 #include "mfidl.h"
+#include "mfobjects.h"
 
 #include "wine/debug.h"
 #include "wine/heap.h"
@@ -39,6 +46,8 @@ struct media_source
     IMFMediaSource IMFMediaSource_iface;
     LONG ref;
     IMFMediaEventQueue *event_queue;
+    IMFByteStream *byte_stream;
+    GstPad *my_src;
     enum
     {
         SOURCE_OPENING,
@@ -50,6 +59,127 @@ struct media_source
 static inline struct media_source *impl_from_IMFMediaSource(IMFMediaSource *iface)
 {
     return CONTAINING_RECORD(iface, struct media_source, IMFMediaSource_iface);
+}
+
+static GstFlowReturn bytestream_wrapper_pull(GstPad *pad, GstObject *parent, guint64 ofs, guint len,
+        GstBuffer **buf)
+{
+    struct media_source *source = gst_pad_get_element_private(pad);
+    IMFByteStream *byte_stream = source->byte_stream;
+    ULONG bytes_read;
+    GstMapInfo info;
+    BOOL is_eof;
+    HRESULT hr;
+
+    TRACE("requesting %u bytes at %s from source %p into buffer %p\n", len, wine_dbgstr_longlong(ofs), source, *buf);
+
+    if (ofs != GST_BUFFER_OFFSET_NONE)
+    {
+        if (FAILED(IMFByteStream_SetCurrentPosition(byte_stream, ofs)))
+            return GST_FLOW_ERROR;
+    }
+
+    if (FAILED(IMFByteStream_IsEndOfStream(byte_stream, &is_eof)))
+        return GST_FLOW_ERROR;
+    if (is_eof)
+        return GST_FLOW_EOS;
+
+    if (!(*buf))
+        *buf = gst_buffer_new_and_alloc(len);
+    gst_buffer_map(*buf, &info, GST_MAP_WRITE);
+    hr = IMFByteStream_Read(byte_stream, info.data, len, &bytes_read);
+    gst_buffer_unmap(*buf, &info);
+
+    gst_buffer_set_size(*buf, bytes_read);
+
+    if (FAILED(hr))
+        return GST_FLOW_ERROR;
+    return GST_FLOW_OK;
+}
+
+static gboolean bytestream_query(GstPad *pad, GstObject *parent, GstQuery *query)
+{
+    struct media_source *source = gst_pad_get_element_private(pad);
+    GstFormat format;
+    QWORD bytestream_len;
+
+    TRACE("GStreamer queries source %p for %s\n", source, GST_QUERY_TYPE_NAME(query));
+
+    if (FAILED(IMFByteStream_GetLength(source->byte_stream, &bytestream_len)))
+        return FALSE;
+
+    switch (GST_QUERY_TYPE(query))
+    {
+        case GST_QUERY_DURATION:
+        {
+            gst_query_parse_duration(query, &format, NULL);
+            if (format == GST_FORMAT_PERCENT)
+            {
+                gst_query_set_duration(query, GST_FORMAT_PERCENT, GST_FORMAT_PERCENT_MAX);
+                return TRUE;
+            }
+            else if (format == GST_FORMAT_BYTES)
+            {
+                QWORD length;
+                IMFByteStream_GetLength(source->byte_stream, &length);
+                gst_query_set_duration(query, GST_FORMAT_BYTES, length);
+                return TRUE;
+            }
+            return FALSE;
+        }
+        case GST_QUERY_SEEKING:
+        {
+            gst_query_parse_seeking (query, &format, NULL, NULL, NULL);
+            if (format != GST_FORMAT_BYTES)
+            {
+                WARN("Cannot seek using format \"%s\".\n", gst_format_get_name(format));
+                return FALSE;
+            }
+            gst_query_set_seeking(query, GST_FORMAT_BYTES, 1, 0, bytestream_len);
+            return TRUE;
+        }
+        case GST_QUERY_SCHEDULING:
+        {
+            gst_query_set_scheduling(query, GST_SCHEDULING_FLAG_SEEKABLE, 1, -1, 0);
+            gst_query_add_scheduling_mode(query, GST_PAD_MODE_PULL);
+            return TRUE;
+        }
+        default:
+        {
+            WARN("Unhandled query type %s\n", GST_QUERY_TYPE_NAME(query));
+            return FALSE;
+        }
+    }
+}
+
+static gboolean bytestream_pad_mode_activate(GstPad *pad, GstObject *parent, GstPadMode mode, gboolean activate)
+{
+    struct media_source *source = gst_pad_get_element_private(pad);
+
+    TRACE("%s source pad for mediasource %p in %s mode.\n",
+            activate ? "Activating" : "Deactivating", source, gst_pad_mode_get_name(mode));
+
+    return mode == GST_PAD_MODE_PULL;
+}
+
+static gboolean bytestream_pad_event_process(GstPad *pad, GstObject *parent, GstEvent *event)
+{
+    struct media_source *source = gst_pad_get_element_private(pad);
+
+    TRACE("source %p, type \"%s\".\n", source, GST_EVENT_TYPE_NAME(event));
+
+    switch (event->type) {
+        /* the seek event should fail in pull mode */
+        case GST_EVENT_SEEK:
+            return FALSE;
+        default:
+            WARN("Ignoring \"%s\" event.\n", GST_EVENT_TYPE_NAME(event));
+        case GST_EVENT_TAG:
+        case GST_EVENT_QOS:
+        case GST_EVENT_RECONFIGURE:
+            return gst_pad_event_default(pad, parent, event);
+    }
+    return TRUE;
 }
 
 static HRESULT WINAPI media_source_QueryInterface(IMFMediaSource *iface, REFIID riid, void **out)
@@ -211,8 +341,12 @@ static HRESULT WINAPI media_source_Shutdown(IMFMediaSource *iface)
 
     source->state = SOURCE_SHUTDOWN;
 
+    if (source->my_src)
+        gst_object_unref(GST_OBJECT(source->my_src));
     if (source->event_queue)
         IMFMediaEventQueue_Shutdown(source->event_queue);
+    if (source->byte_stream)
+        IMFByteStream_Release(source->byte_stream);
 
     return S_OK;
 }
@@ -236,19 +370,31 @@ static const IMFMediaSourceVtbl IMFMediaSource_vtbl =
 
 static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_source **out_media_source)
 {
+    GstStaticPadTemplate src_template =
+        GST_STATIC_PAD_TEMPLATE("mf_src", GST_PAD_SRC, GST_PAD_ALWAYS, GST_STATIC_CAPS_ANY);
+
     struct media_source *object = heap_alloc_zero(sizeof(*object));
     HRESULT hr;
 
     if (!object)
         return E_OUTOFMEMORY;
 
+    object->IMFMediaSource_iface.lpVtbl = &IMFMediaSource_vtbl;
+    object->ref = 1;
+    object->byte_stream = bytestream;
+    IMFByteStream_AddRef(bytestream);
+
     if (FAILED(hr = MFCreateEventQueue(&object->event_queue)))
         goto fail;
 
-    object->state = SOURCE_STOPPED;
+    object->my_src = gst_pad_new_from_static_template(&src_template, "mf-src");
+    gst_pad_set_element_private(object->my_src, object);
+    gst_pad_set_getrange_function(object->my_src, bytestream_wrapper_pull_wrapper);
+    gst_pad_set_query_function(object->my_src, bytestream_query_wrapper);
+    gst_pad_set_activatemode_function(object->my_src, bytestream_pad_mode_activate_wrapper);
+    gst_pad_set_event_function(object->my_src, bytestream_pad_event_process_wrapper);
 
-    object->IMFMediaSource_iface.lpVtbl = &IMFMediaSource_vtbl;
-    object->ref = 1;
+    object->state = SOURCE_STOPPED;
 
     *out_media_source = object;
     return S_OK;
@@ -715,4 +861,41 @@ HRESULT winegstreamer_stream_handler_create(REFIID riid, void **obj)
     IMFByteStreamHandler_Release(&this->IMFByteStreamHandler_iface);
 
     return hr;
+}
+
+/* helper for callback forwarding */
+void perform_cb_media_source(struct cb_data *cbdata)
+{
+    switch(cbdata->type)
+    {
+    case BYTESTREAM_WRAPPER_PULL:
+        {
+            struct getrange_data *data = &cbdata->u.getrange_data;
+            cbdata->u.getrange_data.ret = bytestream_wrapper_pull(data->pad, data->parent,
+                    data->ofs, data->len, data->buf);
+            break;
+        }
+    case BYTESTREAM_QUERY:
+        {
+            struct query_function_data *data = &cbdata->u.query_function_data;
+            cbdata->u.query_function_data.ret = bytestream_query(data->pad, data->parent, data->query);
+            break;
+        }
+    case BYTESTREAM_PAD_MODE_ACTIVATE:
+        {
+            struct activate_mode_data *data = &cbdata->u.activate_mode_data;
+            cbdata->u.activate_mode_data.ret = bytestream_pad_mode_activate(data->pad, data->parent, data->mode, data->activate);
+            break;
+        }
+    case BYTESTREAM_PAD_EVENT_PROCESS:
+        {
+            struct event_src_data *data = &cbdata->u.event_src_data;
+            cbdata->u.event_src_data.ret = bytestream_pad_event_process(data->pad, data->parent, data->event);
+            break;
+        }
+    default:
+        {
+            assert(0);
+        }
+    }
 }
