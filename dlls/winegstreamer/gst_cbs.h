@@ -48,6 +48,10 @@ enum CB_TYPE {
     BYTESTREAM_QUERY,
     BYTESTREAM_PAD_MODE_ACTIVATE,
     BYTESTREAM_PAD_EVENT_PROCESS,
+    MF_SRC_BUS_WATCH,
+    MF_SRC_STREAM_ADDED,
+    MF_SRC_STREAM_REMOVED,
+    MF_SRC_NO_MORE_PADS,
     MEDIA_SOURCE_MAX,
 };
 
@@ -164,5 +168,9 @@ GstFlowReturn bytestream_wrapper_pull_wrapper(GstPad *pad, GstObject *parent, gu
 gboolean bytestream_query_wrapper(GstPad *pad, GstObject *parent, GstQuery *query) DECLSPEC_HIDDEN;
 gboolean bytestream_pad_mode_activate_wrapper(GstPad *pad, GstObject *parent, GstPadMode mode, gboolean activate) DECLSPEC_HIDDEN;
 gboolean bytestream_pad_event_process_wrapper(GstPad *pad, GstObject *parent, GstEvent *event) DECLSPEC_HIDDEN;
+GstBusSyncReply mf_src_bus_watch_wrapper(GstBus *bus, GstMessage *message, gpointer user) DECLSPEC_HIDDEN;
+void mf_src_stream_added_wrapper(GstElement *bin, GstPad *pad, gpointer user) DECLSPEC_HIDDEN;
+void mf_src_stream_removed_wrapper(GstElement *element, GstPad *pad, gpointer user) DECLSPEC_HIDDEN;
+void mf_src_no_more_pads_wrapper(GstElement *element, gpointer user) DECLSPEC_HIDDEN;
 
 #endif

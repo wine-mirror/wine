@@ -359,3 +359,48 @@ gboolean bytestream_pad_event_process_wrapper(GstPad *pad, GstObject *parent, Gs
 
     return cbdata.u.event_src_data.ret;
 }
+
+GstBusSyncReply mf_src_bus_watch_wrapper(GstBus *bus, GstMessage *message, gpointer user)
+{
+    struct cb_data cbdata = { MF_SRC_BUS_WATCH };
+
+    cbdata.u.watch_bus_data.bus = bus;
+    cbdata.u.watch_bus_data.msg = message;
+    cbdata.u.watch_bus_data.user = user;
+
+    call_cb(&cbdata);
+
+    return cbdata.u.watch_bus_data.ret;
+}
+
+void mf_src_stream_added_wrapper(GstElement *bin, GstPad *pad, gpointer user)
+{
+    struct cb_data cbdata = { MF_SRC_STREAM_ADDED };
+
+    cbdata.u.pad_added_data.element = bin;
+    cbdata.u.pad_added_data.pad = pad;
+    cbdata.u.pad_added_data.user = user;
+
+    call_cb(&cbdata);
+}
+
+void mf_src_stream_removed_wrapper(GstElement *element, GstPad *pad, gpointer user)
+{
+    struct cb_data cbdata = { MF_SRC_STREAM_REMOVED };
+
+    cbdata.u.pad_removed_data.element = element;
+    cbdata.u.pad_removed_data.pad = pad;
+    cbdata.u.pad_removed_data.user = user;
+
+    call_cb(&cbdata);
+}
+
+void mf_src_no_more_pads_wrapper(GstElement *element, gpointer user)
+{
+    struct cb_data cbdata = { MF_SRC_NO_MORE_PADS };
+
+    cbdata.u.no_more_pads_data.element = element;
+    cbdata.u.no_more_pads_data.user = user;
+
+    call_cb(&cbdata);
+}
