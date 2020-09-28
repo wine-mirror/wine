@@ -2074,9 +2074,6 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(IDirect3DSurface9 *dst_surface,
         }
         else /* if ((filter & 0xf) == D3DX_FILTER_POINT) */
         {
-            if ((filter & 0xf) != D3DX_FILTER_POINT)
-                FIXME("Unhandled filter %#x.\n", filter);
-
             /* Always apply a point filter until D3DX_FILTER_LINEAR,
              * D3DX_FILTER_TRIANGLE and D3DX_FILTER_BOX are implemented. */
             point_filter_argb_pixels(src_memory, src_pitch, 0, &src_size, srcformatdesc,
