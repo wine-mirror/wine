@@ -64,6 +64,7 @@
 #include <ntstatus.h>
 #define WIN32_NO_STATUS
 #include <windows.h>
+#include <ws2tcpip.h>
 #include <winternl.h>
 #include <ddk/wdm.h>
 #include <sddl.h>
@@ -813,6 +814,42 @@ static void create_environment_registry_keys( void )
     set_reg_value( env_key, L"PROCESSOR_REVISION", buffer );
 
     RegCloseKey( env_key );
+}
+
+/* create the ComputerName registry keys */
+static void create_computer_name_keys(void)
+{
+    struct addrinfo hints = {0}, *res;
+    char *dot, buffer[256];
+    HKEY key, subkey;
+
+    if (gethostname( buffer, sizeof(buffer) )) return;
+    hints.ai_flags = AI_CANONNAME;
+    if (getaddrinfo( buffer, NULL, &hints, &res )) return;
+    dot = strchr( res->ai_canonname, '.' );
+    if (dot) *dot++ = 0;
+    else dot = res->ai_canonname + strlen(res->ai_canonname);
+    SetComputerNameExA( ComputerNamePhysicalDnsDomain, dot );
+    SetComputerNameExA( ComputerNamePhysicalDnsHostname, res->ai_canonname );
+    freeaddrinfo( res );
+
+    if (RegOpenKeyW( HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Control\\ComputerName", &key ))
+        return;
+
+    if (!RegOpenKeyW( key, L"ComputerName", &subkey ))
+    {
+        DWORD type, size = sizeof(buffer);
+
+        if (RegQueryValueExW( subkey, L"ComputerName", NULL, &type, (BYTE *)buffer, &size )) size = 0;
+        RegCloseKey( subkey );
+        if (size && !RegCreateKeyExW( key, L"ActiveComputerName", 0, NULL, REG_OPTION_VOLATILE,
+                                      KEY_ALL_ACCESS, NULL, &subkey, NULL ))
+        {
+            RegSetValueExW( subkey, L"ComputerName", 0, type, (const BYTE *)buffer, size );
+            RegCloseKey( subkey );
+        }
+    }
+    RegCloseKey( key );
 }
 
 static void create_volatile_environment_registry_key(void)
@@ -1657,6 +1694,7 @@ int __cdecl main( int argc, char *argv[] )
     create_hardware_registry_keys();
     create_dynamic_registry_keys();
     create_environment_registry_keys();
+    create_computer_name_keys();
     wininit();
     pendingRename();
 
