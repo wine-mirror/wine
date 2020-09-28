@@ -1577,6 +1577,8 @@ static void start_main_thread(void)
     init_cpu_info();
     init_files();
     NtCreateKeyedEvent( &keyed_event, GENERIC_READ | GENERIC_WRITE, NULL, 0 );
+    load_ntdll();
+    load_libwine();
     status = p__wine_set_unix_funcs( NTDLL_UNIXLIB_VERSION, &unix_funcs );
     if (status) exec_process( status );
     server_init_process_done();
@@ -1785,10 +1787,7 @@ void __wine_main( int argc, char *argv[], char *envp[] )
 #endif
 
     virtual_init();
-    load_ntdll();
-
     init_environment( argc, argv, envp );
-    load_libwine();
 
 #ifdef __APPLE__
     apple_main_thread();
