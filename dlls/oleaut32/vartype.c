@@ -3873,7 +3873,7 @@ HRESULT WINAPI VarCySub(CY cyLeft, CY cyRight, CY* pCyOut)
  */
 HRESULT WINAPI VarCyAbs(CY cyIn, CY* pCyOut)
 {
-  if (cyIn.s.Hi == (int)0x80000000 && !cyIn.s.Lo)
+  if (cyIn.s.Hi == 0x80000000 && !cyIn.s.Lo)
     return DISP_E_OVERFLOW;
 
   pCyOut->int64 = cyIn.int64 < 0 ? -cyIn.int64 : cyIn.int64;
@@ -3948,7 +3948,7 @@ HRESULT WINAPI VarCyInt(CY cyIn, CY* pCyOut)
  */
 HRESULT WINAPI VarCyNeg(CY cyIn, CY* pCyOut)
 {
-  if (cyIn.s.Hi == (int)0x80000000 && !cyIn.s.Lo)
+  if (cyIn.s.Hi == 0x80000000 && !cyIn.s.Lo)
     return DISP_E_OVERFLOW;
 
   pCyOut->int64 = -cyIn.int64;
