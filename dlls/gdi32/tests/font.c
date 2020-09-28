@@ -5823,6 +5823,57 @@ todo_wine
     ReleaseDC(NULL, hdc);
 }
 
+static void test_GetGlyphOutline_character(void)
+{
+    HFONT hfont, hfont_old;
+    LOGFONTA lf;
+    HDC hdc;
+    DWORD ret;
+    GLYPHMETRICS gm1, gm2, gmn;
+    char test_chars[] = { 'A', 'D', '!', '\0' };
+    char *current_char;
+
+    memset(&lf, 0, sizeof(lf));
+    lf.lfHeight = 72;
+    lstrcpyA(lf.lfFaceName, "wine_test");
+
+    hfont = CreateFontIndirectA(&lf);
+    ok(hfont != 0, "CreateFontIndirectA error %u\n", GetLastError());
+
+    hdc = GetDC(NULL);
+
+    hfont_old = SelectObject(hdc, hfont);
+    ok(hfont_old != NULL, "SelectObject failed\n");
+
+    ret = GetGlyphOutlineW(hdc, 'Z', GGO_METRICS, &gmn, 0, NULL, &mat);
+    ok(ret != GDI_ERROR, "GetGlyphOutlineW failed to default to .notdef for character 'Z'\n");
+
+    for (current_char = test_chars; *current_char != '\0'; current_char++)
+    {
+        ret = GetGlyphOutlineW(hdc, *current_char, GGO_METRICS, &gm1, 0, NULL, &mat);
+        ok(ret != GDI_ERROR, "GetGlyphOutlineW failed for '%c'\n", *current_char);
+        ok(memcmp(&gm1, &gmn, sizeof(gmn)) != 0, "the test character '%c' matches .notdef\n", *current_char);
+
+        ret = GetGlyphOutlineW(hdc, 0x10000 + *current_char, GGO_METRICS, &gm2, 0, NULL, &mat);
+        ok(ret != GDI_ERROR, "GetGlyphOutlineW failed for 0x10000 + '%c'\n", *current_char);
+        ok(memcmp(&gm1, &gm2, sizeof(gmn)) == 0, "GetGlyphOutlineW returned wrong metrics for character 0x10000 + '%c'\n", *current_char);
+    }
+
+    ret = GetGlyphOutlineW(hdc, 0x3, GGO_METRICS|GGO_GLYPH_INDEX, &gm1, 0, NULL, &mat);
+    ok(ret != GDI_ERROR, "GetGlyphOutlineW failed for glyph index 0x3\n");
+
+    ret = GetGlyphOutlineW(hdc, 0xFFFF, GGO_METRICS|GGO_GLYPH_INDEX, &gm2, 0, NULL, &mat);
+    ok(ret == GDI_ERROR, "GetGlyphOutlineW for nonexistent glyph index 0xFFFF has succeded\n");
+
+    ret = GetGlyphOutlineW(hdc, 0x10003, GGO_METRICS|GGO_GLYPH_INDEX, &gm2, 0, NULL, &mat);
+    ok(ret != GDI_ERROR, "GetGlyphOutlineW for index 0x10003 has failed\n");
+    ok(memcmp(&gm1, &gm2, sizeof(gmn)) == 0, "GetGlyphOutlineW returned wrong metrics for glyph 0x10003\n");
+
+    SelectObject(hdc, hfont_old);
+    DeleteObject(hfont);
+    ReleaseDC(NULL, hdc);
+}
+
 static void test_fstype_fixup(void)
 {
     HDC hdc;
@@ -5945,6 +5996,7 @@ static void test_CreateScalableFontResource(void)
 
     test_GetGlyphOutline_empty_contour();
     test_GetGlyphOutline_metric_clipping();
+    test_GetGlyphOutline_character();
     test_fstype_fixup();
 
     ret = pRemoveFontResourceExA(fot_name, FR_PRIVATE, 0);
