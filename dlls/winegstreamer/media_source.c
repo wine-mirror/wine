@@ -48,6 +48,7 @@ struct media_stream
     LONG ref;
     struct media_source *parent_source;
     IMFMediaEventQueue *event_queue;
+    IMFStreamDescriptor *descriptor;
     GstElement *appsink;
     GstPad *their_src, *my_sink;
     enum
@@ -55,6 +56,7 @@ struct media_stream
         STREAM_INACTIVE,
         STREAM_SHUTDOWN,
     } state;
+    DWORD stream_id;
 };
 
 struct media_source
@@ -350,7 +352,10 @@ static HRESULT WINAPI media_stream_GetStreamDescriptor(IMFMediaStream* iface, IM
     if (stream->state == STREAM_SHUTDOWN)
         return MF_E_SHUTDOWN;
 
-    return E_NOTIMPL;
+    IMFStreamDescriptor_AddRef(stream->descriptor);
+    *descriptor = stream->descriptor;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI media_stream_RequestSample(IMFMediaStream *iface, IUnknown *token)
@@ -379,7 +384,7 @@ static const IMFMediaStreamVtbl media_stream_vtbl =
     media_stream_RequestSample
 };
 
-static HRESULT new_media_stream(struct media_source *source, GstPad *pad, struct media_stream **out_stream)
+static HRESULT new_media_stream(struct media_source *source, GstPad *pad, DWORD stream_id, struct media_stream **out_stream)
 {
     struct media_stream *object = heap_alloc_zero(sizeof(*object));
     HRESULT hr;
@@ -392,6 +397,7 @@ static HRESULT new_media_stream(struct media_source *source, GstPad *pad, struct
     IMFMediaSource_AddRef(&source->IMFMediaSource_iface);
     object->parent_source = source;
     object->their_src = pad;
+    object->stream_id = stream_id;
 
     object->state = STREAM_INACTIVE;
 
@@ -409,8 +415,6 @@ static HRESULT new_media_stream(struct media_source *source, GstPad *pad, struct
     g_object_set(object->appsink, "max-buffers", 5, NULL);
 
     object->my_sink = gst_element_get_static_pad(object->appsink, "sink");
-    gst_pad_set_element_private(object->my_sink, object);
-
     gst_pad_link(object->their_src, object->my_sink);
 
     gst_element_sync_state_with_parent(object->appsink);
@@ -424,6 +428,35 @@ fail:
     WARN("Failed to construct media stream, hr %#x.\n", hr);
 
     IMFMediaStream_Release(&object->IMFMediaStream_iface);
+    return hr;
+}
+
+static HRESULT media_stream_init_desc(struct media_stream *stream)
+{
+    GstCaps *current_caps = gst_pad_get_current_caps(stream->their_src);
+    IMFMediaTypeHandler *type_handler;
+    IMFMediaType *stream_type = NULL;
+    HRESULT hr;
+
+    stream_type = mf_media_type_from_caps(current_caps);
+    gst_caps_unref(current_caps);
+    if (!stream_type)
+        return E_FAIL;
+
+    hr = MFCreateStreamDescriptor(stream->stream_id, 1, &stream_type, &stream->descriptor);
+
+    IMFMediaType_Release(stream_type);
+
+    if (FAILED(hr))
+        return hr;
+
+    if (FAILED(hr = IMFStreamDescriptor_GetMediaTypeHandler(stream->descriptor, &type_handler)))
+        return hr;
+
+    hr = IMFMediaTypeHandler_SetCurrentMediaType(type_handler, stream_type);
+
+    IMFMediaTypeHandler_Release(type_handler);
+
     return hr;
 }
 
@@ -613,6 +646,8 @@ static HRESULT WINAPI media_source_Shutdown(IMFMediaSource *iface)
             gst_object_unref(GST_OBJECT(stream->my_sink));
         if (stream->event_queue)
             IMFMediaEventQueue_Shutdown(stream->event_queue);
+        if (stream->descriptor)
+            IMFStreamDescriptor_Release(stream->descriptor);
         if (stream->parent_source)
             IMFMediaSource_Release(&stream->parent_source->IMFMediaSource_iface);
 
@@ -654,7 +689,7 @@ static void stream_added(GstElement *element, GstPad *pad, gpointer user)
     if (gst_pad_get_direction(pad) != GST_PAD_SRC)
         return;
 
-    if (FAILED(new_media_stream(source, pad, &stream)))
+    if (FAILED(new_media_stream(source, pad, source->stream_count, &stream)))
         return;
 
     if (!(new_stream_array = heap_realloc(source->streams, (source->stream_count + 1) * (sizeof(*new_stream_array)))))
@@ -679,6 +714,7 @@ static void stream_removed(GstElement *element, GstPad *pad, gpointer user)
         if (stream->their_src != pad)
             continue;
         stream->their_src = NULL;
+        stream->state = STREAM_INACTIVE;
     }
 }
 
@@ -695,6 +731,7 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_
         GST_STATIC_PAD_TEMPLATE("mf_src", GST_PAD_SRC, GST_PAD_ALWAYS, GST_STATIC_CAPS_ANY);
 
     struct media_source *object = heap_alloc_zero(sizeof(*object));
+    unsigned int i;
     HRESULT hr;
     int ret;
 
@@ -768,6 +805,18 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_
     }
 
     WaitForSingleObject(object->no_more_pads_event, INFINITE);
+    for (i = 0; i < object->stream_count; i++)
+    {
+        GstSample *preroll;
+        g_signal_emit_by_name(object->streams[i]->appsink, "pull-preroll", &preroll);
+        if (FAILED(hr = media_stream_init_desc(object->streams[i])))
+        {
+            ERR("Failed to finish initialization of media stream %p, hr %x.\n", object->streams[i], hr);
+            IMFMediaStream_Release(&object->streams[i]->IMFMediaStream_iface);
+            goto fail;
+        }
+        gst_sample_unref(preroll);
+    }
 
     object->state = SOURCE_STOPPED;
 
