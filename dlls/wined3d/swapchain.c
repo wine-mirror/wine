@@ -219,9 +219,6 @@ HRESULT CDECL wined3d_swapchain_present(struct wined3d_swapchain *swapchain,
             swapchain, wine_dbgstr_rect(src_rect), wine_dbgstr_rect(dst_rect),
             dst_window_override, swap_interval, flags);
 
-    if (flags)
-        FIXME("Ignoring flags %#x.\n", flags);
-
     wined3d_mutex_lock();
 
     if (!swapchain->back_buffers)
