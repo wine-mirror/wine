@@ -5887,6 +5887,10 @@ static HRESULT TLB_AllocAndInitFuncDesc( const FUNCDESC *src, FUNCDESC **dest_pt
              * not pVarResult.  So the function signature should show no return value. */
             dest->elemdescFunc.tdesc.vt = VT_VOID;
 
+        /* The now-last (except [retval], removed above) parameter might be labeled [lcid].
+         * If so it will be supplied from Invoke(lcid), so also not via DISPPARAMS::rgvarg */
+        if (dest->cParams && (dest->lprgelemdescParam[dest->cParams - 1].u.paramdesc.wParamFlags & PARAMFLAG_FLCID))
+            dest->cParams--;
     }
 
     *dest_ptr = dest;
