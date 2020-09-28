@@ -5855,11 +5855,13 @@ static HRESULT TLB_AllocAndInitFuncDesc( const FUNCDESC *src, FUNCDESC **dest_pt
     } else
         dest->lprgelemdescParam = NULL;
 
-    /* special treatment for dispinterfaces: this makes functions appear
-     * to return their [retval] value when it is really returning an
-     * HRESULT */
-    if (dispinterface && dest->elemdescFunc.tdesc.vt == VT_HRESULT)
+    /* special treatment for dispinterface FUNCDESC based on an interface FUNCDESC.
+     * This accounts for several arguments that are separate in the signature of
+     * IDispatch::Invoke, rather than passed in DISPPARAMS::rgvarg[] */
+    if (dispinterface && (src->funckind != FUNC_DISPATCH))
     {
+        /* functions that have a [retval] parameter return this value into pVarResult.
+         * [retval] is always the last parameter (if present) */
         if (dest->cParams &&
             (dest->lprgelemdescParam[dest->cParams - 1].u.paramdesc.wParamFlags & PARAMFLAG_FRETVAL))
         {
@@ -5872,17 +5874,17 @@ static HRESULT TLB_AllocAndInitFuncDesc( const FUNCDESC *src, FUNCDESC **dest_pt
                 return E_UNEXPECTED;
             }
 
-            /* copy last parameter to the return value. we are using a flat
-             * buffer so there is no danger of leaking memory in
-             * elemdescFunc */
+            /* the type pointed to by this [retval] becomes elemdescFunc,
+             * i.e. the function signature's return type.
+             * We are using a flat buffer so there is no danger of leaking memory */
             dest->elemdescFunc.tdesc = *elemdesc->tdesc.u.lptdesc;
 
             /* remove the last parameter */
             dest->cParams--;
         }
-        else
-            /* otherwise this function is made to appear to have no return
-             * value */
+        else if (dest->elemdescFunc.tdesc.vt == VT_HRESULT)
+            /* Even if not otherwise replaced HRESULT is returned in pExcepInfo->scode,
+             * not pVarResult.  So the function signature should show no return value. */
             dest->elemdescFunc.tdesc.vt = VT_VOID;
 
     }
