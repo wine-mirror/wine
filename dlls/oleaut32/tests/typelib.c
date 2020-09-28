@@ -5283,6 +5283,659 @@ static const type_info info[] = {
     },
   },
   { /* vars */ },
+},
+{
+  "ITestDispatch",
+  "{2d4430d5-99ea-4645-85f0-c5814b72804b}",
+  /*kind*/ TKIND_DISPATCH, /*flags*/ TYPEFLAG_FDISPATCHABLE, /*align*/ TYPE_ALIGNMENT(ITestDispatch*), /*size*/ sizeof(ITestDispatch*),
+  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 7, /*#func*/ 7, /*#var*/ 2,
+  { /* funcs */
+    {
+      /*id*/ 0x1, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
+      /*#param*/ 0, /*#opt*/ 0, /*vtbl*/ 0, /*#scodes*/ 0, /*flags*/ 0,
+      {VT_VOID, -1, PARAMFLAG_NONE}, /* ret */
+      { /* params */
+        {-1, 0, 0}
+      },
+      { /* names */
+        "test_void",
+        NULL,
+      },
+    },
+    {
+      /*id*/ 0x2, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
+      /*#param*/ 1, /*#opt*/ 0, /*vtbl*/ 0, /*#scodes*/ 0, /*flags*/ 0,
+      {VT_VOID, -1, PARAMFLAG_NONE}, /* ret */
+      { /* params */
+        {VT_PTR, -1, PARAMFLAG_FOUT|PARAMFLAG_FRETVAL},
+        {-1, 0, 0}
+      },
+      { /* names */
+        "test_void_retval",
+        "ret",
+        NULL,
+      },
+    },
+    {
+      /*id*/ 0x3, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
+      /*#param*/ 0, /*#opt*/ 0, /*vtbl*/ 0, /*#scodes*/ 0, /*flags*/ 0,
+      {VT_HRESULT, -1, PARAMFLAG_NONE}, /* ret */
+      { /* params */
+        {-1, 0, 0}
+      },
+      { /* names */
+        "test_HRESULT",
+        NULL,
+      },
+    },
+    {
+      /*id*/ 0x4, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
+      /*#param*/ 1, /*#opt*/ 0, /*vtbl*/ 0, /*#scodes*/ 0, /*flags*/ 0,
+      {VT_HRESULT, -1, PARAMFLAG_NONE}, /* ret */
+      { /* params */
+        {VT_PTR, -1, PARAMFLAG_FOUT|PARAMFLAG_FRETVAL},
+        {-1, 0, 0}
+      },
+      { /* names */
+        "test_HRESULT_retval",
+        "ret",
+        NULL,
+      },
+    },
+    {
+      /*id*/ 0x5, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
+      /*#param*/ 0, /*#opt*/ 0, /*vtbl*/ 0, /*#scodes*/ 0, /*flags*/ 0,
+      {VT_INT, -1, PARAMFLAG_NONE}, /* ret */
+      { /* params */
+        {-1, 0, 0}
+      },
+      { /* names */
+        "test_int",
+        NULL,
+      },
+    },
+    {
+      /*id*/ 0x6, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
+      /*#param*/ 1, /*#opt*/ 0, /*vtbl*/ 0, /*#scodes*/ 0, /*flags*/ 0,
+      {VT_INT, -1, PARAMFLAG_NONE}, /* ret */
+      { /* params */
+        {VT_PTR, -1, PARAMFLAG_FOUT|PARAMFLAG_FRETVAL},
+        {-1, 0, 0}
+      },
+      { /* names */
+        "test_int_retval",
+        "ret",
+        NULL,
+      },
+    },
+    {
+      /*id*/ 0x7, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
+      /*#param*/ 2, /*#opt*/ 0, /*vtbl*/ 0, /*#scodes*/ 0, /*flags*/ 0,
+      {VT_R8, -1, PARAMFLAG_NONE}, /* ret */
+      { /* params */
+        {VT_BSTR, -1, PARAMFLAG_FIN},
+        {VT_I4, -1, PARAMFLAG_FLCID},
+        {-1, 0, 0}
+      },
+      { /* names */
+        "parse_lcid",
+        "x",
+        "lcid",
+        NULL,
+      },
+    },
+  },
+  { /* vars */
+    {
+      /*id*/ 0xa, /*name*/ "property_int", /*flags*/ 0, /*kind*/ VAR_DISPATCH,
+      { /* DUMMYUNIONNAME unused*/ },
+      {VT_INT, -1, PARAMFLAG_NONE}, /* ret */
+    },
+    {
+      /*id*/ 0xb, /*name*/ "property_HRESULT", /*flags*/ 0, /*kind*/ VAR_DISPATCH,
+      { /* DUMMYUNIONNAME unused*/ },
+      {VT_HRESULT, -1, PARAMFLAG_NONE}, /* ret */
+    },
+  },
+},
+{
+  "ITestDispDual",
+  "{79ca07f9-ac22-44ac-9aaf-811f45412293}",
+  /*kind*/ TKIND_DISPATCH, /*flags*/ TYPEFLAG_FDISPATCHABLE|TYPEFLAG_FDUAL, /*align*/ TYPE_ALIGNMENT(ITestDispDual*), /*size*/ sizeof(ITestDispDual*),
+  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 7, /*#func*/ 14, /*#var*/ 0,
+  { /* funcs */
+    {
+      /*id*/ 0x60000000, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
+      /*#param*/ 2, /*#opt*/ 0, /*vtbl*/ 0, /*#scodes*/ 0, /*flags*/ FUNCFLAG_FRESTRICTED,
+      {VT_VOID, -1, PARAMFLAG_NONE}, /* ret */
+      { /* params */
+        {VT_PTR, -1, PARAMFLAG_FIN},
+        {VT_PTR, -1, PARAMFLAG_FOUT},
+        {-1, 0, 0}
+      },
+      { /* names */
+        "QueryInterface",
+        "riid",
+        "ppvObj",
+        NULL,
+      },
+    },
+    {
+      /*id*/ 0x60000001, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
+      /*#param*/ 0, /*#opt*/ 0, /*vtbl*/ 1, /*#scodes*/ 0, /*flags*/ FUNCFLAG_FRESTRICTED,
+      {VT_UI4, -1, PARAMFLAG_NONE}, /* ret */
+      { /* params */
+        {-1, 0, 0}
+      },
+      { /* names */
+        "AddRef",
+        NULL,
+      },
+    },
+    {
+      /*id*/ 0x60000002, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
+      /*#param*/ 0, /*#opt*/ 0, /*vtbl*/ 2, /*#scodes*/ 0, /*flags*/ FUNCFLAG_FRESTRICTED,
+      {VT_UI4, -1, PARAMFLAG_NONE}, /* ret */
+      { /* params */
+        {-1, 0, 0}
+      },
+      { /* names */
+        "Release",
+        NULL,
+      },
+    },
+    {
+      /*id*/ 0x60010000, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
+      /*#param*/ 1, /*#opt*/ 0, /*vtbl*/ 3, /*#scodes*/ 0, /*flags*/ FUNCFLAG_FRESTRICTED,
+      {VT_VOID, -1, PARAMFLAG_NONE}, /* ret */
+      { /* params */
+        {VT_PTR, -1, PARAMFLAG_FOUT},
+        {-1, 0, 0}
+      },
+      { /* names */
+        "GetTypeInfoCount",
+        "pctinfo",
+        NULL,
+      },
+    },
+    {
+      /*id*/ 0x60010001, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
+      /*#param*/ 3, /*#opt*/ 0, /*vtbl*/ 4, /*#scodes*/ 0, /*flags*/ FUNCFLAG_FRESTRICTED,
+      {VT_VOID, -1, PARAMFLAG_NONE}, /* ret */
+      { /* params */
+        {VT_UINT, -1, PARAMFLAG_FIN},
+        {VT_UI4, -1, PARAMFLAG_FIN},
+        {VT_PTR, -1, PARAMFLAG_FOUT},
+        {-1, 0, 0}
+      },
+      { /* names */
+        "GetTypeInfo",
+        "itinfo",
+        "lcid",
+        "pptinfo",
+        NULL,
+      },
+    },
+    {
+      /*id*/ 0x60010002, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
+      /*#param*/ 5, /*#opt*/ 0, /*vtbl*/ 5, /*#scodes*/ 0, /*flags*/ FUNCFLAG_FRESTRICTED,
+      {VT_VOID, -1, PARAMFLAG_NONE}, /* ret */
+      { /* params */
+        {VT_PTR, -1, PARAMFLAG_FIN},
+        {VT_PTR, -1, PARAMFLAG_FIN},
+        {VT_UINT, -1, PARAMFLAG_FIN},
+        {VT_UI4, -1, PARAMFLAG_FIN},
+        {VT_PTR, -1, PARAMFLAG_FOUT},
+        {-1, 0, 0}
+      },
+      { /* names */
+        "GetIDsOfNames",
+        "riid",
+        "rgszNames",
+        "cNames",
+        "lcid",
+        "rgdispid",
+        NULL,
+      },
+    },
+    {
+      /*id*/ 0x60010003, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
+      /*#param*/ 8, /*#opt*/ 0, /*vtbl*/ 6, /*#scodes*/ 0, /*flags*/ FUNCFLAG_FRESTRICTED,
+      {VT_VOID, -1, PARAMFLAG_NONE}, /* ret */
+      { /* params */
+        {VT_I4, -1, PARAMFLAG_FIN},
+        {VT_PTR, -1, PARAMFLAG_FIN},
+        {VT_UI4, -1, PARAMFLAG_FIN},
+        {VT_UI2, -1, PARAMFLAG_FIN},
+        {VT_PTR, -1, PARAMFLAG_FIN},
+        {VT_PTR, -1, PARAMFLAG_FOUT},
+        {VT_PTR, -1, PARAMFLAG_FOUT},
+        {VT_PTR, -1, PARAMFLAG_FOUT},
+        {-1, 0, 0}
+      },
+      { /* names */
+        "Invoke",
+        "dispidMember",
+        "riid",
+        "lcid",
+        "wFlags",
+        "pdispparams",
+        "pvarResult",
+        "pexcepinfo",
+        "puArgErr",
+        NULL,
+      },
+    },
+    {
+      /*id*/ 0x1, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
+      /*#param*/ 0, /*#opt*/ 0, /*vtbl*/ 7, /*#scodes*/ 0, /*flags*/ 0,
+      {VT_VOID, -1, PARAMFLAG_NONE}, /* ret */
+      { /* params */
+        {-1, 0, 0}
+      },
+      { /* names */
+        "test_void",
+        NULL,
+      },
+    },
+    {
+      /*id*/ 0x2, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
+      /*#param*/ 0, /*#opt*/ 0, /*vtbl*/ 8, /*#scodes*/ 0, /*flags*/ 0,
+      {VT_R8, -1, PARAMFLAG_NONE}, /* ret */
+      { /* params */
+        {-1, 0, 0}
+      },
+      { /* names */
+        "test_void_retval",
+        NULL,
+      },
+    },
+    {
+      /*id*/ 0x3, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
+      /*#param*/ 0, /*#opt*/ 0, /*vtbl*/ 9, /*#scodes*/ 0, /*flags*/ 0,
+      {VT_VOID, -1, PARAMFLAG_NONE}, /* ret */
+      { /* params */
+        {-1, 0, 0}
+      },
+      { /* names */
+        "test_HRESULT",
+        NULL,
+      },
+    },
+    {
+      /*id*/ 0x4, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
+      /*#param*/ 0, /*#opt*/ 0, /*vtbl*/ 10, /*#scodes*/ 0, /*flags*/ 0,
+      {VT_R8, -1, PARAMFLAG_NONE}, /* ret */
+      { /* params */
+        {-1, 0, 0}
+      },
+      { /* names */
+        "test_HRESULT_retval",
+        NULL,
+      },
+    },
+    {
+      /*id*/ 0x5, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
+      /*#param*/ 0, /*#opt*/ 0, /*vtbl*/ 11, /*#scodes*/ 0, /*flags*/ 0,
+      {VT_INT, -1, PARAMFLAG_NONE}, /* ret */
+      { /* params */
+        {-1, 0, 0}
+      },
+      { /* names */
+        "test_int",
+        NULL,
+      },
+    },
+    {
+      /*id*/ 0x6, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
+      /*#param*/ 0, /*#opt*/ 0, /*vtbl*/ 12, /*#scodes*/ 0, /*flags*/ 0,
+      {VT_R8, -1, PARAMFLAG_NONE}, /* ret */
+      { /* params */
+        {-1, 0, 0}
+      },
+      { /* names */
+        "test_int_retval",
+        NULL,
+      },
+    },
+    {
+      /*id*/ 0x7, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
+      /*#param*/ 1, /*#opt*/ 0, /*vtbl*/ 13, /*#scodes*/ 0, /*flags*/ 0,
+      {VT_R8, -1, PARAMFLAG_NONE}, /* ret */
+      { /* params */
+        {VT_BSTR, -1, PARAMFLAG_FIN},
+        {-1, 0, 0}
+      },
+      { /* names */
+        "parse_lcid",
+        "x",
+        NULL,
+      },
+    },
+  },
+  { /* vars */ },
+},
+{
+  "ITestDispDual",
+  "{79ca07f9-ac22-44ac-9aaf-811f45412293}",
+  /*kind*/ TKIND_INTERFACE, /*flags*/ TYPEFLAG_FDISPATCHABLE|TYPEFLAG_FOLEAUTOMATION|TYPEFLAG_FDUAL, /*align*/ TYPE_ALIGNMENT(ITestDispDual*), /*size*/ sizeof(ITestDispDual*),
+  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 14, /*#func*/ 7, /*#var*/ 0,
+  { /* funcs */
+    {
+      /*id*/ 0x1, /*func*/ FUNC_PUREVIRTUAL, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
+      /*#param*/ 0, /*#opt*/ 0, /*vtbl*/ 7, /*#scodes*/ 0, /*flags*/ 0,
+      {VT_VOID, -1, PARAMFLAG_NONE}, /* ret */
+      { /* params */
+        {-1, 0, 0}
+      },
+      { /* names */
+        "test_void",
+        NULL,
+      },
+    },
+    {
+      /*id*/ 0x2, /*func*/ FUNC_PUREVIRTUAL, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
+      /*#param*/ 1, /*#opt*/ 0, /*vtbl*/ 8, /*#scodes*/ 0, /*flags*/ 0,
+      {VT_VOID, -1, PARAMFLAG_NONE}, /* ret */
+      { /* params */
+        {VT_PTR, -1, PARAMFLAG_FOUT|PARAMFLAG_FRETVAL},
+        {-1, 0, 0}
+      },
+      { /* names */
+        "test_void_retval",
+        "ret",
+        NULL,
+      },
+    },
+    {
+      /*id*/ 0x3, /*func*/ FUNC_PUREVIRTUAL, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
+      /*#param*/ 0, /*#opt*/ 0, /*vtbl*/ 9, /*#scodes*/ 0, /*flags*/ 0,
+      {VT_HRESULT, -1, PARAMFLAG_NONE}, /* ret */
+      { /* params */
+        {-1, 0, 0}
+      },
+      { /* names */
+        "test_HRESULT",
+        NULL,
+      },
+    },
+    {
+      /*id*/ 0x4, /*func*/ FUNC_PUREVIRTUAL, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
+      /*#param*/ 1, /*#opt*/ 0, /*vtbl*/ 10, /*#scodes*/ 0, /*flags*/ 0,
+      {VT_HRESULT, -1, PARAMFLAG_NONE}, /* ret */
+      { /* params */
+        {VT_PTR, -1, PARAMFLAG_FOUT|PARAMFLAG_FRETVAL},
+        {-1, 0, 0}
+      },
+      { /* names */
+        "test_HRESULT_retval",
+        "ret",
+        NULL,
+      },
+    },
+    {
+      /*id*/ 0x5, /*func*/ FUNC_PUREVIRTUAL, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
+      /*#param*/ 0, /*#opt*/ 0, /*vtbl*/ 11, /*#scodes*/ 0, /*flags*/ 0,
+      {VT_INT, -1, PARAMFLAG_NONE}, /* ret */
+      { /* params */
+        {-1, 0, 0}
+      },
+      { /* names */
+        "test_int",
+        NULL,
+      },
+    },
+    {
+      /*id*/ 0x6, /*func*/ FUNC_PUREVIRTUAL, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
+      /*#param*/ 1, /*#opt*/ 0, /*vtbl*/ 12, /*#scodes*/ 0, /*flags*/ 0,
+      {VT_INT, -1, PARAMFLAG_NONE}, /* ret */
+      { /* params */
+        {VT_PTR, -1, PARAMFLAG_FOUT|PARAMFLAG_FRETVAL},
+        {-1, 0, 0}
+      },
+      { /* names */
+        "test_int_retval",
+        "ret",
+        NULL,
+      },
+    },
+    {
+      /*id*/ 0x7, /*func*/ FUNC_PUREVIRTUAL, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
+      /*#param*/ 3, /*#opt*/ 0, /*vtbl*/ 13, /*#scodes*/ 0, /*flags*/ 0,
+      {VT_HRESULT, -1, PARAMFLAG_NONE}, /* ret */
+      { /* params */
+        {VT_BSTR, -1, PARAMFLAG_FIN},
+        {VT_I4, -1, PARAMFLAG_FLCID},
+        {VT_PTR, -1, PARAMFLAG_FOUT|PARAMFLAG_FRETVAL},
+        {-1, 0, 0}
+      },
+      { /* names */
+        "parse_lcid",
+        "x",
+        "lcid",
+        "ret",
+        NULL,
+      },
+    },
+  },
+  { /* vars */ },
+},
+{
+  "ITestDispInherit",
+  "{cdb105e3-24fb-4ae6-b826-801b7b2a0a07}",
+  /*kind*/ TKIND_DISPATCH, /*flags*/ TYPEFLAG_FDISPATCHABLE, /*align*/ TYPE_ALIGNMENT(ITestDispInherit*), /*size*/ sizeof(ITestDispInherit*),
+  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 7, /*#func*/ 14, /*#var*/ 0,
+  { /* funcs */
+    {
+      /*id*/ 0x60000000, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
+      /*#param*/ 2, /*#opt*/ 0, /*vtbl*/ 0, /*#scodes*/ 0, /*flags*/ FUNCFLAG_FRESTRICTED,
+      {VT_VOID, -1, PARAMFLAG_NONE}, /* ret */
+      { /* params */
+        {VT_PTR, -1, PARAMFLAG_FIN},
+        {VT_PTR, -1, PARAMFLAG_FOUT},
+        {-1, 0, 0}
+      },
+      { /* names */
+        "QueryInterface",
+        "riid",
+        "ppvObj",
+        NULL,
+      },
+    },
+    {
+      /*id*/ 0x60000001, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
+      /*#param*/ 0, /*#opt*/ 0, /*vtbl*/ 1, /*#scodes*/ 0, /*flags*/ FUNCFLAG_FRESTRICTED,
+      {VT_UI4, -1, PARAMFLAG_NONE}, /* ret */
+      { /* params */
+        {-1, 0, 0}
+      },
+      { /* names */
+        "AddRef",
+        NULL,
+      },
+    },
+    {
+      /*id*/ 0x60000002, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
+      /*#param*/ 0, /*#opt*/ 0, /*vtbl*/ 2, /*#scodes*/ 0, /*flags*/ FUNCFLAG_FRESTRICTED,
+      {VT_UI4, -1, PARAMFLAG_NONE}, /* ret */
+      { /* params */
+        {-1, 0, 0}
+      },
+      { /* names */
+        "Release",
+        NULL,
+      },
+    },
+    {
+      /*id*/ 0x60010000, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
+      /*#param*/ 1, /*#opt*/ 0, /*vtbl*/ 3, /*#scodes*/ 0, /*flags*/ FUNCFLAG_FRESTRICTED,
+      {VT_VOID, -1, PARAMFLAG_NONE}, /* ret */
+      { /* params */
+        {VT_PTR, -1, PARAMFLAG_FOUT},
+        {-1, 0, 0}
+      },
+      { /* names */
+        "GetTypeInfoCount",
+        "pctinfo",
+        NULL,
+      },
+    },
+    {
+      /*id*/ 0x60010001, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
+      /*#param*/ 3, /*#opt*/ 0, /*vtbl*/ 4, /*#scodes*/ 0, /*flags*/ FUNCFLAG_FRESTRICTED,
+      {VT_VOID, -1, PARAMFLAG_NONE}, /* ret */
+      { /* params */
+        {VT_UINT, -1, PARAMFLAG_FIN},
+        {VT_UI4, -1, PARAMFLAG_FIN},
+        {VT_PTR, -1, PARAMFLAG_FOUT},
+        {-1, 0, 0}
+      },
+      { /* names */
+        "GetTypeInfo",
+        "itinfo",
+        "lcid",
+        "pptinfo",
+        NULL,
+      },
+    },
+    {
+      /*id*/ 0x60010002, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
+      /*#param*/ 5, /*#opt*/ 0, /*vtbl*/ 5, /*#scodes*/ 0, /*flags*/ FUNCFLAG_FRESTRICTED,
+      {VT_VOID, -1, PARAMFLAG_NONE}, /* ret */
+      { /* params */
+        {VT_PTR, -1, PARAMFLAG_FIN},
+        {VT_PTR, -1, PARAMFLAG_FIN},
+        {VT_UINT, -1, PARAMFLAG_FIN},
+        {VT_UI4, -1, PARAMFLAG_FIN},
+        {VT_PTR, -1, PARAMFLAG_FOUT},
+        {-1, 0, 0}
+      },
+      { /* names */
+        "GetIDsOfNames",
+        "riid",
+        "rgszNames",
+        "cNames",
+        "lcid",
+        "rgdispid",
+        NULL,
+      },
+    },
+    {
+      /*id*/ 0x60010003, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
+      /*#param*/ 8, /*#opt*/ 0, /*vtbl*/ 6, /*#scodes*/ 0, /*flags*/ FUNCFLAG_FRESTRICTED,
+      {VT_VOID, -1, PARAMFLAG_NONE}, /* ret */
+      { /* params */
+        {VT_I4, -1, PARAMFLAG_FIN},
+        {VT_PTR, -1, PARAMFLAG_FIN},
+        {VT_UI4, -1, PARAMFLAG_FIN},
+        {VT_UI2, -1, PARAMFLAG_FIN},
+        {VT_PTR, -1, PARAMFLAG_FIN},
+        {VT_PTR, -1, PARAMFLAG_FOUT},
+        {VT_PTR, -1, PARAMFLAG_FOUT},
+        {VT_PTR, -1, PARAMFLAG_FOUT},
+        {-1, 0, 0}
+      },
+      { /* names */
+        "Invoke",
+        "dispidMember",
+        "riid",
+        "lcid",
+        "wFlags",
+        "pdispparams",
+        "pvarResult",
+        "pexcepinfo",
+        "puArgErr",
+        NULL,
+      },
+    },
+    {
+      /*id*/ 0x1, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
+      /*#param*/ 0, /*#opt*/ 0, /*vtbl*/ 7, /*#scodes*/ 0, /*flags*/ 0,
+      {VT_VOID, -1, PARAMFLAG_NONE}, /* ret */
+      { /* params */
+        {-1, 0, 0}
+      },
+      { /* names */
+        "test_void",
+        NULL,
+      },
+    },
+    {
+      /*id*/ 0x2, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
+      /*#param*/ 0, /*#opt*/ 0, /*vtbl*/ 8, /*#scodes*/ 0, /*flags*/ 0,
+      {VT_R8, -1, PARAMFLAG_NONE}, /* ret */
+      { /* params */
+        {-1, 0, 0}
+      },
+      { /* names */
+        "test_void_retval",
+        NULL,
+      },
+    },
+    {
+      /*id*/ 0x3, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
+      /*#param*/ 0, /*#opt*/ 0, /*vtbl*/ 9, /*#scodes*/ 0, /*flags*/ 0,
+      {VT_VOID, -1, PARAMFLAG_NONE}, /* ret */
+      { /* params */
+        {-1, 0, 0}
+      },
+      { /* names */
+        "test_HRESULT",
+        NULL,
+      },
+    },
+    {
+      /*id*/ 0x4, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
+      /*#param*/ 0, /*#opt*/ 0, /*vtbl*/ 10, /*#scodes*/ 0, /*flags*/ 0,
+      {VT_R8, -1, PARAMFLAG_NONE}, /* ret */
+      { /* params */
+        {-1, 0, 0}
+      },
+      { /* names */
+        "test_HRESULT_retval",
+        NULL,
+      },
+    },
+    {
+      /*id*/ 0x5, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
+      /*#param*/ 0, /*#opt*/ 0, /*vtbl*/ 11, /*#scodes*/ 0, /*flags*/ 0,
+      {VT_INT, -1, PARAMFLAG_NONE}, /* ret */
+      { /* params */
+        {-1, 0, 0}
+      },
+      { /* names */
+        "test_int",
+        NULL,
+      },
+    },
+    {
+      /*id*/ 0x6, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
+      /*#param*/ 0, /*#opt*/ 0, /*vtbl*/ 12, /*#scodes*/ 0, /*flags*/ 0,
+      {VT_R8, -1, PARAMFLAG_NONE}, /* ret */
+      { /* params */
+        {-1, 0, 0}
+      },
+      { /* names */
+        "test_int_retval",
+        NULL,
+      },
+    },
+    {
+      /*id*/ 0x7, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
+      /*#param*/ 1, /*#opt*/ 0, /*vtbl*/ 13, /*#scodes*/ 0, /*flags*/ 0,
+      {VT_R8, -1, PARAMFLAG_NONE}, /* ret */
+      { /* params */
+        {VT_BSTR, -1, PARAMFLAG_FIN},
+        {-1, 0, 0}
+      },
+      { /* names */
+        "parse_lcid",
+        "x",
+        NULL,
+      },
+    },
+  },
+  { /* vars */ },
 }
 };
 
