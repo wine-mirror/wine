@@ -1438,24 +1438,12 @@ found:
 static void load_ntdll(void)
 {
     NTSTATUS status;
+    SECTION_IMAGE_INFORMATION info;
     void *module;
-    int fd;
-    char *name = build_path( dll_dir, "ntdll.dll" );
+    char *name = build_path( dll_dir, "ntdll.dll.so" );
 
-    if ((fd = open( name, O_RDONLY )) != -1)
-    {
-        struct stat st;
-        fstat( fd, &st );
-        if (!(status = virtual_map_ntdll( fd, &module )))
-            add_builtin_module( module, NULL, &st );
-        close( fd );
-    }
-    else
-    {
-        free( name );
-        name = build_path( dll_dir, "ntdll.dll.so" );
-        status = dlopen_dll( name, &module );
-    }
+    name[strlen(name) - 3] = 0;  /* remove .so */
+    status = open_builtin_file( name, &module, &info );
     if (status) fatal_error( "failed to load %s error %x\n", name, status );
     free( name );
     load_ntdll_functions( module );
