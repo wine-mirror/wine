@@ -6759,9 +6759,8 @@ int WINAPI WS_getaddrinfo(LPCSTR nodename, LPCSTR servname, const struct WS_addr
     struct addrinfo *unixaires = NULL;
     int   result;
     struct addrinfo unixhints, *punixhints = NULL;
-    char *dot, *nodeV6 = NULL, *fqdn;
+    char *nodeV6 = NULL, *fqdn = NULL;
     const char *node;
-    size_t hostname_len = 0;
 
     *res = NULL;
     if (!nodename && !servname)
@@ -6770,16 +6769,13 @@ int WINAPI WS_getaddrinfo(LPCSTR nodename, LPCSTR servname, const struct WS_addr
         return WSAHOST_NOT_FOUND;
     }
 
-    fqdn = get_fqdn();
-    if (!fqdn) return WSA_NOT_ENOUGH_MEMORY;
-    dot = strchr(fqdn, '.');
-    if (dot)
-        hostname_len = dot - fqdn;
-
     if (!nodename)
         node = NULL;
     else if (!nodename[0])
+    {
+        if (!(fqdn = get_fqdn())) return WSA_NOT_ENOUGH_MEMORY;
         node = fqdn;
+    }
     else
     {
         node = nodename;
@@ -6792,11 +6788,7 @@ int WINAPI WS_getaddrinfo(LPCSTR nodename, LPCSTR servname, const struct WS_addr
             if (node[0] == '[' && (close_bracket = strchr(node + 1, ']')))
             {
                 nodeV6 = HeapAlloc(GetProcessHeap(), 0, close_bracket - node);
-                if (!nodeV6)
-                {
-                    HeapFree(GetProcessHeap(), 0, fqdn);
-                    return WSA_NOT_ENOUGH_MEMORY;
-                }
+                if (!nodeV6) return WSA_NOT_ENOUGH_MEMORY;
                 lstrcpynA(nodeV6, node + 1, close_bracket - node);
                 node = nodeV6;
             }
@@ -6847,14 +6839,21 @@ int WINAPI WS_getaddrinfo(LPCSTR nodename, LPCSTR servname, const struct WS_addr
     /* getaddrinfo(3) is thread safe, no need to wrap in CS */
     result = getaddrinfo(node, servname, punixhints, &unixaires);
 
-    if (result && (!hints || !(hints->ai_flags & WS_AI_NUMERICHOST))
-            && node && (!strcmp(fqdn, node) || (!strncmp(fqdn, node, hostname_len) && !node[hostname_len])))
+    if (result && (!hints || !(hints->ai_flags & WS_AI_NUMERICHOST)) && node)
     {
-        /* If it didn't work it means the host name IP is not in /etc/hosts, try again
-        * by sending a NULL host and avoid sending a NULL servname too because that
-        * is invalid */
-        ERR_(winediag)("Failed to resolve your host name IP\n");
-        result = getaddrinfo(NULL, servname ? servname : "0", punixhints, &unixaires);
+        if (!fqdn && !(fqdn = get_fqdn()))
+        {
+            HeapFree(GetProcessHeap(), 0, nodeV6);
+            return WSA_NOT_ENOUGH_MEMORY;
+        }
+        if (!strcmp(fqdn, node) || (!strncmp(fqdn, node, strlen(node)) && fqdn[strlen(node)] == '.'))
+        {
+            /* If it didn't work it means the host name IP is not in /etc/hosts, try again
+             * by sending a NULL host and avoid sending a NULL servname too because that
+             * is invalid */
+            ERR_(winediag)("Failed to resolve your host name IP\n");
+            result = getaddrinfo(NULL, servname ? servname : "0", punixhints, &unixaires);
+        }
     }
     TRACE("%s, %s %p -> %p %d\n", debugstr_a(nodename), debugstr_a(servname), hints, res, result);
     HeapFree(GetProcessHeap(), 0, fqdn);
