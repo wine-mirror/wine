@@ -21,9 +21,6 @@
  *
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <errno.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -33,10 +30,10 @@
 #define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "winternl.h"
 
 #include "kernel_private.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(file);
@@ -235,10 +232,10 @@ BOOL WINAPI CreateDirectoryExA( LPCSTR template, LPCSTR path, LPSECURITY_ATTRIBU
  */
 UINT WINAPI GetSystemDirectoryW( LPWSTR path, UINT count )
 {
-    UINT len = strlenW( DIR_System ) + 1;
+    UINT len = lstrlenW( DIR_System ) + 1;
     if (path && count >= len)
     {
-        strcpyW( path, DIR_System );
+        lstrcpyW( path, DIR_System );
         len--;
     }
     return len;

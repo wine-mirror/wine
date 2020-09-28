@@ -20,9 +20,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdarg.h>
 
 #define NONAMELESSUNION
@@ -34,7 +31,6 @@
 #include "winternl.h"
 #include "wine/debug.h"
 #include "wine/exception.h"
-#include "wine/unicode.h"
 #include "wine/list.h"
 #include "kernel_private.h"
 
@@ -213,7 +209,7 @@ static int resource_strcmp( LPCWSTR a, LPCWSTR b )
     if ( a == b )
         return 0;
     if (!IS_INTRESOURCE( a ) && !IS_INTRESOURCE( b ) )
-        return lstrcmpW( a, b );
+        return wcscmp( a, b );
     /* strings come before ids */
     if (!IS_INTRESOURCE( a ) && IS_INTRESOURCE( b ))
         return -1;

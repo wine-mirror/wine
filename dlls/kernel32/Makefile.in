@@ -1,8 +1,8 @@
 EXTRADEFS = -D_KERNEL32_ -D_NORMALIZE_
 MODULE    = kernel32.dll
 IMPORTLIB = kernel32
-IMPORTS   = winecrt0 kernelbase ntdll
-EXTRADLLFLAGS = -nodefaultlibs -Wb,-F,KERNEL32.dll -Wl,--image-base,0x7b600000
+IMPORTS   = kernelbase ntdll winecrt0
+EXTRADLLFLAGS = -mno-cygwin -nodefaultlibs -Wb,-F,KERNEL32.dll -Wl,--image-base,0x7b600000
 
 C_SRCS = \
 	atom.c \

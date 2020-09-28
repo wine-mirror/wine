@@ -39,7 +39,6 @@
 #include "wine/condrv.h"
 #include "wine/server.h"
 #include "wine/exception.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 #include "excpt.h"
 #include "console_private.h"
@@ -81,7 +80,7 @@ HANDLE WINAPI OpenConsoleW(LPCWSTR name, DWORD access, BOOL inherit, DWORD creat
 
     TRACE("(%s, 0x%08x, %d, %u)\n", debugstr_w(name), access, inherit, creation);
 
-    if (!name || (strcmpiW( coninW, name ) && strcmpiW( conoutW, name )) || creation != OPEN_EXISTING)
+    if (!name || (wcsicmp( coninW, name ) && wcsicmp( conoutW, name )) || creation != OPEN_EXISTING)
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return INVALID_HANDLE_VALUE;
@@ -674,7 +673,7 @@ int CONSOLE_GetHistory(int idx, WCHAR* buf, int buf_len)
  */
 BOOL	CONSOLE_AppendHistory(const WCHAR* ptr)
 {
-    size_t	len = strlenW(ptr);
+    size_t	len = lstrlenW(ptr);
     BOOL	ret;
 
     while (len && (ptr[len - 1] == '\n' || ptr[len - 1] == '\r')) len--;

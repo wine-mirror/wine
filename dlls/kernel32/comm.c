@@ -18,21 +18,18 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
 
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "winerror.h"
 #include "winioctl.h"
 #include "ddk/ntddser.h"
 
 #include "wine/server.h"
-#include "wine/unicode.h"
 
 #include "wine/debug.h"
 
@@ -50,7 +47,7 @@ static LPCWSTR COMM_ParseStart(LPCWSTR ptr)
 
 	/* The device control string may optionally start with "COMx" followed
 	   by an optional ':' and spaces. */
-	if(!strncmpiW(ptr, comW, 3))
+	if(!wcsnicmp(ptr, comW, 3))
 	{
 		ptr += 3;
 
@@ -84,7 +81,7 @@ static LPCWSTR COMM_ParseStart(LPCWSTR ptr)
 static LPCWSTR COMM_ParseNumber(LPCWSTR ptr, LPDWORD lpnumber)
 {
 	if(*ptr < '0' || *ptr > '9') return NULL;
-	*lpnumber = strtoulW(ptr, NULL, 10);
+	*lpnumber = wcstoul(ptr, NULL, 10);
 	while(*ptr >= '0' && *ptr <= '9') ptr++;
 	return ptr;
 }
@@ -145,7 +142,7 @@ static LPCWSTR COMM_ParseStopBits(LPCWSTR ptr, LPBYTE lpstopbits)
 	DWORD temp;
 	static const WCHAR stopbits15W[] = {'1','.','5',0};
 
-	if(!strncmpW(stopbits15W, ptr, 3))
+	if(!wcsncmp(stopbits15W, ptr, 3))
 	{
 		ptr += 3;
 		*lpstopbits = ONE5STOPBITS;
@@ -171,12 +168,12 @@ static LPCWSTR COMM_ParseOnOff(LPCWSTR ptr, LPDWORD lponoff)
 	static const WCHAR onW[] = {'o','n',0};
 	static const WCHAR offW[] = {'o','f','f',0};
 
-	if(!strncmpiW(onW, ptr, 2))
+	if(!wcsnicmp(onW, ptr, 2))
 	{
 		ptr += 2;
 		*lponoff = 1;
 	}
-	else if(!strncmpiW(offW, ptr, 3))
+	else if(!wcsnicmp(offW, ptr, 3))
 	{
 		ptr += 3;
 		*lponoff = 0;
@@ -314,31 +311,31 @@ static BOOL COMM_BuildNewCommDCB(LPCWSTR device, LPDCB lpdcb, LPCOMMTIMEOUTS lpt
 	{
 		while(*device == ' ') device++;
 
-		if(!strncmpiW(baudW, device, 5))
+		if(!wcsnicmp(baudW, device, 5))
 		{
 			baud = TRUE;
 			
 			if(!(device = COMM_ParseNumber(device + 5, &lpdcb->BaudRate)))
 				return FALSE;
 		}
-		else if(!strncmpiW(parityW, device, 7))
+		else if(!wcsnicmp(parityW, device, 7))
 		{
 			if(!(device = COMM_ParseParity(device + 7, &lpdcb->Parity)))
 				return FALSE;
 		}
-		else if(!strncmpiW(dataW, device, 5))
+		else if(!wcsnicmp(dataW, device, 5))
 		{
 			if(!(device = COMM_ParseByteSize(device + 5, &lpdcb->ByteSize)))
 				return FALSE;
 		}
-		else if(!strncmpiW(stopW, device, 5))
+		else if(!wcsnicmp(stopW, device, 5))
 		{
 			stop = TRUE;
 			
 			if(!(device = COMM_ParseStopBits(device + 5, &lpdcb->StopBits)))
 				return FALSE;
 		}
-		else if(!strncmpiW(toW, device, 3))
+		else if(!wcsnicmp(toW, device, 3))
 		{
 			if(!(device = COMM_ParseOnOff(device + 3, &temp)))
 				return FALSE;
@@ -349,7 +346,7 @@ static BOOL COMM_BuildNewCommDCB(LPCWSTR device, LPDCB lpdcb, LPCOMMTIMEOUTS lpt
 			lptimeouts->WriteTotalTimeoutMultiplier = 0;
 			lptimeouts->WriteTotalTimeoutConstant = temp ? 60000 : 0;
 		}
-		else if(!strncmpiW(xonW, device, 4))
+		else if(!wcsnicmp(xonW, device, 4))
 		{
 			if(!(device = COMM_ParseOnOff(device + 4, &temp)))
 				return FALSE;
@@ -357,35 +354,35 @@ static BOOL COMM_BuildNewCommDCB(LPCWSTR device, LPDCB lpdcb, LPCOMMTIMEOUTS lpt
 			lpdcb->fOutX = temp;
 			lpdcb->fInX = temp;
 		}
-		else if(!strncmpiW(odsrW, device, 5))
+		else if(!wcsnicmp(odsrW, device, 5))
 		{
 			if(!(device = COMM_ParseOnOff(device + 5, &temp)))
 				return FALSE;
 
 			lpdcb->fOutxDsrFlow = temp;
 		}
-		else if(!strncmpiW(octsW, device, 5))
+		else if(!wcsnicmp(octsW, device, 5))
 		{
 			if(!(device = COMM_ParseOnOff(device + 5, &temp)))
 				return FALSE;
 
 			lpdcb->fOutxCtsFlow = temp;
 		}
-		else if(!strncmpiW(dtrW, device, 4))
+		else if(!wcsnicmp(dtrW, device, 4))
 		{
 			if(!(device = COMM_ParseOnOff(device + 4, &temp)))
 				return FALSE;
 
 			lpdcb->fDtrControl = temp;
 		}
-		else if(!strncmpiW(rtsW, device, 4))
+		else if(!wcsnicmp(rtsW, device, 4))
 		{
 			if(!(device = COMM_ParseOnOff(device + 4, &temp)))
 				return FALSE;
 
 			lpdcb->fRtsControl = temp;
 		}
-		else if(!strncmpiW(idsrW, device, 5))
+		else if(!wcsnicmp(idsrW, device, 5))
 		{
 			if(!(device = COMM_ParseOnOff(device + 5, &temp)))
 				return FALSE;
@@ -500,7 +497,7 @@ BOOL WINAPI BuildCommDCBAndTimeoutsW(
 
 	if(ptr == NULL)
 		result = FALSE;
-	else if(strchrW(ptr, ','))
+	else if(wcschr(ptr, ','))
 		result = COMM_BuildOldCommDCB(ptr, &dcb);
 	else
 		result = COMM_BuildNewCommDCB(ptr, &dcb, &timeouts);
