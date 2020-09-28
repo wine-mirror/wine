@@ -6117,6 +6117,80 @@ static HRESULT WINAPI ITypeInfo_fnGetVarDesc( ITypeInfo2 *iface, UINT index,
     return TLB_AllocAndInitVarDesc(&pVDesc->vardesc, ppVarDesc);
 }
 
+/* internal function to make the inherited interfaces' methods appear
+ * part of the interface, remembering if the top-level was dispinterface */
+static HRESULT typeinfo_getnames( ITypeInfo *iface, MEMBERID memid, BSTR *names,
+                                  UINT max_names, UINT *num_names, BOOL dispinterface)
+{
+    ITypeInfoImpl *This = impl_from_ITypeInfo(iface);
+    const TLBFuncDesc *func_desc;
+    const TLBVarDesc *var_desc;
+    int i;
+
+    *num_names = 0;
+
+    func_desc = TLB_get_funcdesc_by_memberid(This, memid);
+    if (func_desc)
+    {
+        UINT params = func_desc->funcdesc.cParams;
+        if (!max_names || !func_desc->Name)
+            return S_OK;
+
+        *names = SysAllocString(TLB_get_bstr(func_desc->Name));
+        ++(*num_names);
+
+        if (dispinterface && (func_desc->funcdesc.funckind != FUNC_DISPATCH))
+        {
+            /* match the rewriting of special trailing parameters in TLB_AllocAndInitFuncDesc */
+            if ((params > 0) && (func_desc->funcdesc.lprgelemdescParam[params - 1].u.paramdesc.wParamFlags & PARAMFLAG_FRETVAL))
+                --params; /* Invoke(pVarResult) supplies the [retval] parameter, so it's hidden from DISPPARAMS */
+            if ((params > 0) && (func_desc->funcdesc.lprgelemdescParam[params - 1].u.paramdesc.wParamFlags & PARAMFLAG_FLCID))
+                --params; /* Invoke(lcid) supplies the [lcid] parameter, so it's hidden from DISPPARAMS */
+        }
+
+        for (i = 0; i < params; i++)
+        {
+            if (*num_names >= max_names || !func_desc->pParamDesc[i].Name)
+                return S_OK;
+            names[*num_names] = SysAllocString(TLB_get_bstr(func_desc->pParamDesc[i].Name));
+            ++(*num_names);
+        }
+        return S_OK;
+    }
+
+    var_desc = TLB_get_vardesc_by_memberid(This, memid);
+    if (var_desc)
+    {
+        *names = SysAllocString(TLB_get_bstr(var_desc->Name));
+        *num_names = 1;
+    }
+    else
+    {
+        if (This->impltypes &&
+            (This->typeattr.typekind == TKIND_INTERFACE || This->typeattr.typekind == TKIND_DISPATCH))
+        {
+            /* recursive search */
+            ITypeInfo *parent;
+            HRESULT result;
+            result = ITypeInfo_GetRefTypeInfo(iface, This->impltypes[0].hRef, &parent);
+            if (SUCCEEDED(result))
+            {
+                result = typeinfo_getnames(parent, memid, names, max_names, num_names, dispinterface);
+                ITypeInfo_Release(parent);
+                return result;
+            }
+            WARN("Could not search inherited interface!\n");
+        }
+        else
+	{
+            WARN("no names found\n");
+	}
+        *num_names = 0;
+        return TYPE_E_ELEMENTNOTFOUND;
+    }
+    return S_OK;
+}
+
 /* ITypeInfo_GetNames
  *
  * Retrieves the variable with the specified member ID (or the name of the
@@ -6124,69 +6198,17 @@ static HRESULT WINAPI ITypeInfo_fnGetVarDesc( ITypeInfo2 *iface, UINT index,
  * function ID.
  */
 static HRESULT WINAPI ITypeInfo_fnGetNames( ITypeInfo2 *iface, MEMBERID memid,
-        BSTR  *rgBstrNames, UINT cMaxNames, UINT  *pcNames)
+                                            BSTR *names, UINT max_names, UINT *num_names)
 {
     ITypeInfoImpl *This = impl_from_ITypeInfo2(iface);
-    const TLBFuncDesc *pFDesc;
-    const TLBVarDesc *pVDesc;
-    int i;
-    TRACE("(%p) memid=0x%08x Maxname=%d\n", This, memid, cMaxNames);
 
-    if(!rgBstrNames)
-        return E_INVALIDARG;
+    TRACE("(%p) memid 0x%08x max_names %d\n", This, memid, max_names);
 
-    *pcNames = 0;
+    if (!names) return E_INVALIDARG;
 
-    pFDesc = TLB_get_funcdesc_by_memberid(This, memid);
-    if(pFDesc)
-    {
-        if(!cMaxNames || !pFDesc->Name)
-            return S_OK;
-
-        *rgBstrNames = SysAllocString(TLB_get_bstr(pFDesc->Name));
-        ++(*pcNames);
-
-        for(i = 0; i < pFDesc->funcdesc.cParams; ++i){
-            if(*pcNames >= cMaxNames || !pFDesc->pParamDesc[i].Name)
-                return S_OK;
-            rgBstrNames[*pcNames] = SysAllocString(TLB_get_bstr(pFDesc->pParamDesc[i].Name));
-            ++(*pcNames);
-        }
-        return S_OK;
-    }
-
-    pVDesc = TLB_get_vardesc_by_memberid(This, memid);
-    if(pVDesc)
-    {
-      *rgBstrNames=SysAllocString(TLB_get_bstr(pVDesc->Name));
-      *pcNames=1;
-    }
-    else
-    {
-        if(This->impltypes &&
-	   (This->typeattr.typekind == TKIND_INTERFACE || This->typeattr.typekind == TKIND_DISPATCH)) {
-          /* recursive search */
-          ITypeInfo *pTInfo;
-          HRESULT result;
-          result = ITypeInfo2_GetRefTypeInfo(iface, This->impltypes[0].hRef, &pTInfo);
-          if(SUCCEEDED(result))
-	  {
-            result=ITypeInfo_GetNames(pTInfo, memid, rgBstrNames, cMaxNames, pcNames);
-            ITypeInfo_Release(pTInfo);
-            return result;
-          }
-          WARN("Could not search inherited interface!\n");
-        }
-        else
-	{
-          WARN("no names found\n");
-	}
-        *pcNames=0;
-        return TYPE_E_ELEMENTNOTFOUND;
-    }
-    return S_OK;
+    return typeinfo_getnames((ITypeInfo *)iface, memid, names, max_names, num_names,
+                             This->typeattr.typekind == TKIND_DISPATCH);
 }
-
 
 /* ITypeInfo::GetRefTypeOfImplType
  *
