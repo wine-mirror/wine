@@ -2905,6 +2905,8 @@ DWORD WINAPI GetGlyphOutlineW( HDC hdc, UINT uChar, UINT fuFormat,
     dc = get_dc_ptr(hdc);
     if(!dc) return GDI_ERROR;
 
+    uChar &= 0xffff;
+
     dev = GET_DC_PHYSDEV( dc, pGetGlyphOutline );
     ret = dev->funcs->pGetGlyphOutline( dev, uChar, fuFormat, lpgm, cbBuffer, lpBuffer, lpmat2 );
     release_dc_ptr( dc );
