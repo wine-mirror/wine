@@ -26,10 +26,6 @@
 #include "unixlib.h"
 #include "wine/list.h"
 
-#ifndef __GCC_HAVE_SYNC_COMPARE_AND_SWAP_8
-#define InterlockedCompareExchange64(dest,xchg,cmp) RtlInterlockedCompareExchange64(dest,xchg,cmp)
-#endif
-
 #ifdef __i386__
 static const enum cpu_type client_cpu = CPU_x86;
 #elif defined(__x86_64__)
