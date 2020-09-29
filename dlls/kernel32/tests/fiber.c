@@ -40,6 +40,7 @@ static BOOL (WINAPI *pFlsSetValue)(DWORD,PVOID);
 static NTSTATUS (WINAPI *pRtlFlsAlloc)(PFLS_CALLBACK_FUNCTION,DWORD*);
 static NTSTATUS (WINAPI *pRtlFlsFree)(ULONG);
 static NTSTATUS (WINAPI *pRtlFlsSetValue)(ULONG,void *);
+static NTSTATUS (WINAPI *pRtlFlsGetValue)(ULONG,void **);
 static void *fibers[3];
 static BYTE testparam = 185;
 static DWORD fls_index_to_set = FLS_OUT_OF_INDEXES;
@@ -72,6 +73,7 @@ static VOID init_funcs(void)
     X(RtlFlsAlloc);
     X(RtlFlsFree);
     X(RtlFlsSetValue);
+    X(RtlFlsGetValue);
 #undef X
 
 }
@@ -205,6 +207,16 @@ static void test_FiberLocalStorage(void)
 
     if (pRtlFlsAlloc)
     {
+        if (pRtlFlsGetValue)
+        {
+            status = pRtlFlsGetValue(0, NULL);
+            ok(status == STATUS_INVALID_PARAMETER, "Got unexpected status %#x.\n", status);
+        }
+        else
+        {
+            win_skip("RtlFlsGetValue is not available.\n");
+        }
+
         for (i = 0; i < FLS_TEST_INDEX_COUNT; ++i)
         {
             fls_indices[i] = 0xdeadbeef;
@@ -225,8 +237,21 @@ static void test_FiberLocalStorage(void)
         /* FLS limits are increased since Win10 18312. */
         ok(count && (count <= 127 || (count > 4000 && count < 4096)), "Got unexpected count %u.\n", count);
 
+        if (0)
+        {
+            /* crashes on Windows. */
+            pRtlFlsGetValue(fls_indices[0], NULL);
+        }
+
         for (i = 0; i < count; ++i)
         {
+            if (pRtlFlsGetValue)
+            {
+                status = pRtlFlsGetValue(fls_indices[i], &val);
+                ok(!status, "Got unexpected status %#x.\n", status);
+                ok(val == (void *)(ULONG_PTR)(i + 1), "Got unexpected val %p.\n", val);
+            }
+
             status = pRtlFlsFree(fls_indices[i]);
             ok(!status, "Got unexpected status %#x.\n", status);
         }
@@ -250,6 +275,14 @@ static void test_FiberLocalStorage(void)
     ok( val == NULL,
         "getting fls index 127 (unallocated) failed with error %u\n", GetLastError() );
 
+    if (pRtlFlsGetValue)
+    {
+        val = (void *)0xdeadbeef;
+        status = pRtlFlsGetValue(127, &val);
+        ok( !status, "Got unexpected status %#x.\n", status );
+        ok( !val, "Got unexpected val %p.\n", val );
+    }
+
     ret = pFlsSetValue( 127, (void*) 0x217 );
     ok( ret, "setting fls index 127 (unallocated) failed with error %u\n", GetLastError() );
 
@@ -258,6 +291,14 @@ static void test_FiberLocalStorage(void)
     ok( val == (void*) 0x217, "fls index 127 (unallocated) wrong value %p\n", val );
     ok( GetLastError() == ERROR_SUCCESS,
         "getting fls index 127 (unallocated) failed with error %u\n", GetLastError() );
+
+    if (pRtlFlsGetValue)
+    {
+        val = (void *)0xdeadbeef;
+        status = pRtlFlsGetValue(127, &val);
+        ok( !status, "Got unexpected status %#x.\n", status );
+        ok( val == (void*)0x217, "Got unexpected val %p.\n", val );
+    }
 
     /* FlsFree, FlsGetValue, and FlsSetValue out of bounds should return
      * ERROR_INVALID_PARAMETER
@@ -283,6 +324,14 @@ static void test_FiberLocalStorage(void)
     val = pFlsGetValue( 0 );
     ok( !val, "fls index 0 set to %p\n", val );
     ok( GetLastError() == ERROR_INVALID_PARAMETER, "setting fls index wrong error %u\n", GetLastError() );
+    if (pRtlFlsGetValue)
+    {
+        val = (void *)0xdeadbeef;
+        status = pRtlFlsGetValue(0, &val);
+        ok( status == STATUS_INVALID_PARAMETER, "Got unexpected status %#x.\n", status );
+        ok( val == (void*)0xdeadbeef, "Got unexpected val %p.\n", val );
+    }
+
     SetLastError( 0xdeadbeef );
     ret = pFlsSetValue( 0, (void *)0xdeadbeef );
     ok( !ret, "setting fls index 0 succeeded\n" );

@@ -1086,13 +1086,11 @@ BOOL WINAPI DECLSPEC_HOTPATCH FlsFree( DWORD index )
  */
 PVOID WINAPI DECLSPEC_HOTPATCH FlsGetValue( DWORD index )
 {
-    if (!index || index >= 8 * sizeof(NtCurrentTeb()->Peb->FlsBitmapBits) || !NtCurrentTeb()->FlsSlots)
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return NULL;
-    }
+    void *data;
+
+    if (!set_ntstatus( RtlFlsGetValue( index, &data ))) return NULL;
     SetLastError( ERROR_SUCCESS );
-    return NtCurrentTeb()->FlsSlots[index];
+    return data;
 }
 
 

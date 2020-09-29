@@ -329,3 +329,17 @@ NTSTATUS WINAPI DECLSPEC_HOTPATCH RtlFlsSetValue( ULONG index, void *data )
     NtCurrentTeb()->FlsSlots[index] = data;
     return STATUS_SUCCESS;
 }
+
+
+/***********************************************************************
+ *              RtlFlsGetValue (NTDLL.@)
+ */
+NTSTATUS WINAPI DECLSPEC_HOTPATCH RtlFlsGetValue( ULONG index, void **data )
+{
+    if (!index || index >= 8 * sizeof(NtCurrentTeb()->Peb->FlsBitmapBits) || !NtCurrentTeb()->FlsSlots)
+        return STATUS_INVALID_PARAMETER;
+
+    *data = NtCurrentTeb()->FlsSlots[index];
+
+    return STATUS_SUCCESS;
+}
