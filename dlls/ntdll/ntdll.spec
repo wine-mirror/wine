@@ -666,6 +666,7 @@
 @ stdcall RtlFindSetRuns(ptr ptr long long)
 @ stdcall RtlFirstEntrySList(ptr)
 @ stdcall RtlFirstFreeAce(ptr ptr)
+@ stdcall RtlFlsAlloc(ptr ptr)
 @ stub RtlFlushPropertySet
 # @ stub RtlFlushSecureMemoryCache
 @ stdcall RtlFormatCurrentUserKeyPath(ptr)

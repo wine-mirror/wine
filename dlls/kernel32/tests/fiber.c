@@ -18,6 +18,11 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <stdarg.h>
+
+#include <ntstatus.h>
+#define WIN32_NO_STATUS
+#include <winternl.h>
 #include "wine/test.h"
 
 static LPVOID (WINAPI *pCreateFiber)(SIZE_T,LPFIBER_START_ROUTINE,LPVOID);
@@ -32,6 +37,7 @@ static DWORD (WINAPI *pFlsAlloc)(PFLS_CALLBACK_FUNCTION);
 static BOOL (WINAPI *pFlsFree)(DWORD);
 static PVOID (WINAPI *pFlsGetValue)(DWORD);
 static BOOL (WINAPI *pFlsSetValue)(DWORD,PVOID);
+static NTSTATUS (WINAPI *pRtlFlsAlloc)(PFLS_CALLBACK_FUNCTION,DWORD*);
 
 static void *fibers[3];
 static BYTE testparam = 185;
@@ -44,6 +50,7 @@ static int cbCount = 0;
 static VOID init_funcs(void)
 {
     HMODULE hKernel32 = GetModuleHandleA("kernel32.dll");
+    HMODULE hntdll = GetModuleHandleA("ntdll.dll");
 
 #define X(f) p##f = (void*)GetProcAddress(hKernel32, #f);
     X(CreateFiber);
@@ -59,6 +66,11 @@ static VOID init_funcs(void)
     X(FlsGetValue);
     X(FlsSetValue);
 #undef X
+
+#define X(f) p##f = (void*)GetProcAddress(hntdll, #f);
+    X(RtlFlsAlloc);
+#undef X
+
 }
 
 static VOID WINAPI FiberLocalStorageProc(PVOID lpFlsData)
@@ -171,9 +183,14 @@ static void test_FiberHandling(void)
     if (pIsThreadAFiber) ok(!pIsThreadAFiber(), "IsThreadAFiber reported TRUE\n");
 }
 
+#define FLS_TEST_INDEX_COUNT 4096
+
 static void test_FiberLocalStorage(void)
 {
+    static DWORD fls_indices[FLS_TEST_INDEX_COUNT];
+    unsigned int i, count;
     DWORD fls, fls_2;
+    NTSTATUS status;
     BOOL ret;
     void* val;
 
@@ -181,6 +198,31 @@ static void test_FiberLocalStorage(void)
     {
         win_skip( "Fiber Local Storage not supported\n" );
         return;
+    }
+
+    if (pRtlFlsAlloc)
+    {
+        for (i = 0; i < FLS_TEST_INDEX_COUNT; ++i)
+        {
+            fls_indices[i] = 0xdeadbeef;
+            status = pRtlFlsAlloc(NULL, &fls_indices[i]);
+            ok(!status || status == STATUS_NO_MEMORY, "Got unexpected status %#x.\n", status);
+            if (status)
+            {
+                ok(fls_indices[i] == 0xdeadbeef, "Got unexpected index %#x.\n", fls_indices[i]);
+                break;
+            }
+        }
+        count = i;
+        /* FLS limits are increased since Win10 18312. */
+        ok(count && (count <= 127 || (count > 4000 && count < 4096)), "Got unexpected count %u.\n", count);
+
+        for (i = 0; i < count; ++i)
+            pFlsFree(fls_indices[i]);
+    }
+    else
+    {
+        win_skip("RtlFlsAlloc is not available.\n");
     }
 
     /* Test an unallocated index

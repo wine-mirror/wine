@@ -246,3 +246,46 @@ TEB_ACTIVE_FRAME * WINAPI RtlGetFrame(void)
 {
     return NtCurrentTeb()->ActiveFrame;
 }
+
+
+/***********************************************************************
+ * Fibers
+ ***********************************************************************/
+
+
+/***********************************************************************
+ *              RtlFlsAlloc  (NTDLL.@)
+ */
+NTSTATUS WINAPI DECLSPEC_HOTPATCH RtlFlsAlloc( PFLS_CALLBACK_FUNCTION callback, DWORD *ret_index )
+{
+    PEB * const peb = NtCurrentTeb()->Peb;
+    NTSTATUS status = STATUS_NO_MEMORY;
+    DWORD index;
+
+    RtlAcquirePebLock();
+    if (peb->FlsCallback ||
+        (peb->FlsCallback = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                        8 * sizeof(peb->FlsBitmapBits) * sizeof(void*) )))
+    {
+        index = RtlFindClearBitsAndSet( peb->FlsBitmap, 1, 1 );
+        if (index != ~0U)
+        {
+            if (!NtCurrentTeb()->FlsSlots &&
+                !(NtCurrentTeb()->FlsSlots = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                                        8 * sizeof(peb->FlsBitmapBits) * sizeof(void*) )))
+            {
+                RtlClearBits( peb->FlsBitmap, index, 1 );
+            }
+            else
+            {
+                NtCurrentTeb()->FlsSlots[index] = 0; /* clear the value */
+                peb->FlsCallback[index] = callback;
+                status = STATUS_SUCCESS;
+            }
+        }
+    }
+    RtlReleasePebLock();
+    if (!status)
+        *ret_index = index;
+    return status;
+}

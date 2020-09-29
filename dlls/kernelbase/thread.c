@@ -1066,38 +1066,8 @@ void WINAPI DECLSPEC_HOTPATCH SwitchToFiber( LPVOID fiber )
 DWORD WINAPI DECLSPEC_HOTPATCH FlsAlloc( PFLS_CALLBACK_FUNCTION callback )
 {
     DWORD index;
-    PEB * const peb = NtCurrentTeb()->Peb;
 
-    RtlAcquirePebLock();
-    if (!peb->FlsCallback &&
-        !(peb->FlsCallback = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                        8 * sizeof(peb->FlsBitmapBits) * sizeof(void*) )))
-    {
-        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-        index = FLS_OUT_OF_INDEXES;
-    }
-    else
-    {
-        index = RtlFindClearBitsAndSet( peb->FlsBitmap, 1, 1 );
-        if (index != ~0U)
-        {
-            if (!NtCurrentTeb()->FlsSlots &&
-                !(NtCurrentTeb()->FlsSlots = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                                        8 * sizeof(peb->FlsBitmapBits) * sizeof(void*) )))
-            {
-                RtlClearBits( peb->FlsBitmap, index, 1 );
-                index = FLS_OUT_OF_INDEXES;
-                SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-            }
-            else
-            {
-                NtCurrentTeb()->FlsSlots[index] = 0; /* clear the value */
-                peb->FlsCallback[index] = callback;
-            }
-        }
-        else SetLastError( ERROR_NO_MORE_ITEMS );
-    }
-    RtlReleasePebLock();
+    if (!set_ntstatus( RtlFlsAlloc( callback, &index ))) return FLS_OUT_OF_INDEXES;
     return index;
 }
 
