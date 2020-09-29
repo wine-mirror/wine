@@ -43,6 +43,18 @@
 #if defined(HAVE_COMMONCRYPTO_COMMONCRYPTOR_H) && MAC_OS_X_VERSION_MAX_ALLOWED >= 1080 && !defined(HAVE_GNUTLS_CIPHER_INIT)
 WINE_DEFAULT_DEBUG_CHANNEL(bcrypt);
 
+struct key_data
+{
+    CCCryptorRef   ref_encrypt;
+    CCCryptorRef   ref_decrypt;
+};
+C_ASSERT( sizeof(struct key_data) <= sizeof(((struct key *)0)->private) );
+
+static struct key_data *key_data( struct key *key )
+{
+    return (struct key_data *)key->private;
+}
+
 NTSTATUS key_set_property( struct key *key, const WCHAR *prop, UCHAR *value, ULONG size, ULONG flags )
 {
     if (!strcmpW( prop, BCRYPT_CHAINING_MODE ))
@@ -104,14 +116,14 @@ static CCMode get_cryptor_mode( struct key *key )
 
 void key_symmetric_vector_reset( struct key *key )
 {
-    if (!key->u.s.ref_encrypt) return;
+    if (!key_data(key)->ref_encrypt) return;
 
     TRACE( "invalidating cryptor handles\n" );
-    CCCryptorRelease( key->u.s.ref_encrypt );
-    key->u.s.ref_encrypt = NULL;
+    CCCryptorRelease( key_data(key)->ref_encrypt );
+    key_data(key)->ref_encrypt = NULL;
 
-    CCCryptorRelease( key->u.s.ref_decrypt );
-    key->u.s.ref_decrypt = NULL;
+    CCCryptorRelease( key_data(key)->ref_decrypt );
+    key_data(key)->ref_decrypt = NULL;
 }
 
 static NTSTATUS init_cryptor_handles( struct key *key )
@@ -119,23 +131,23 @@ static NTSTATUS init_cryptor_handles( struct key *key )
     CCCryptorStatus status;
     CCMode mode;
 
-    if (key->u.s.ref_encrypt) return STATUS_SUCCESS;
+    if (key_data(key)->ref_encrypt) return STATUS_SUCCESS;
     if (!(mode = get_cryptor_mode( key ))) return STATUS_NOT_SUPPORTED;
 
     if ((status = CCCryptorCreateWithMode( kCCEncrypt, mode, kCCAlgorithmAES128, ccNoPadding, key->u.s.vector,
                                            key->u.s.secret, key->u.s.secret_len, NULL, 0, 0, 0,
-                                           &key->u.s.ref_encrypt )) != kCCSuccess)
+                                           &key_data(key)->ref_encrypt )) != kCCSuccess)
     {
         WARN( "CCCryptorCreateWithMode failed %d\n", status );
         return STATUS_INTERNAL_ERROR;
     }
     if ((status = CCCryptorCreateWithMode( kCCDecrypt, mode, kCCAlgorithmAES128, ccNoPadding, key->u.s.vector,
                                            key->u.s.secret, key->u.s.secret_len, NULL, 0, 0, 0,
-                                           &key->u.s.ref_decrypt )) != kCCSuccess)
+                                           &key_data(key)->ref_decrypt )) != kCCSuccess)
     {
         WARN( "CCCryptorCreateWithMode failed %d\n", status );
-        CCCryptorRelease( key->u.s.ref_encrypt );
-        key->u.s.ref_encrypt = NULL;
+        CCCryptorRelease( key_data(key)->ref_encrypt );
+        key_data(key)->ref_encrypt = NULL;
         return STATUS_INTERNAL_ERROR;
     }
 
@@ -155,7 +167,7 @@ NTSTATUS key_symmetric_encrypt( struct key *key, const UCHAR *input, ULONG input
 
     if ((ret = init_cryptor_handles( key ))) return ret;
 
-    if ((status = CCCryptorUpdate( key->u.s.ref_encrypt, input, input_len, output, output_len, NULL  )) != kCCSuccess)
+    if ((status = CCCryptorUpdate( key_data(key)->ref_encrypt, input, input_len, output, output_len, NULL  )) != kCCSuccess)
     {
         WARN( "CCCryptorUpdate failed %d\n", status );
         return STATUS_INTERNAL_ERROR;
@@ -170,7 +182,7 @@ NTSTATUS key_symmetric_decrypt( struct key *key, const UCHAR *input, ULONG input
 
     if ((ret = init_cryptor_handles( key ))) return ret;
 
-    if ((status = CCCryptorUpdate( key->u.s.ref_decrypt, input, input_len, output, output_len, NULL  )) != kCCSuccess)
+    if ((status = CCCryptorUpdate( key_data(key)->ref_decrypt, input, input_len, output, output_len, NULL  )) != kCCSuccess)
     {
         WARN( "CCCryptorUpdate failed %d\n", status );
         return STATUS_INTERNAL_ERROR;
@@ -186,8 +198,8 @@ NTSTATUS key_symmetric_get_tag( struct key *key, UCHAR *tag, ULONG len )
 
 void key_symmetric_destroy( struct key *key )
 {
-    if (key->u.s.ref_encrypt) CCCryptorRelease( key->u.s.ref_encrypt );
-    if (key->u.s.ref_decrypt) CCCryptorRelease( key->u.s.ref_decrypt );
+    if (key_data(key)->ref_encrypt) CCCryptorRelease( key_data(key)->ref_encrypt );
+    if (key_data(key)->ref_decrypt) CCCryptorRelease( key_data(key)->ref_decrypt );
 }
 
 NTSTATUS key_asymmetric_init( struct key *key )

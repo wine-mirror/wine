@@ -21,14 +21,6 @@
 #define __BCRYPT_INTERNAL_H
 
 #include <stdarg.h>
-#ifdef HAVE_GNUTLS_CIPHER_INIT
-#include <gnutls/gnutls.h>
-#include <gnutls/crypto.h>
-#include <gnutls/abstract.h>
-#elif HAVE_COMMONCRYPTO_COMMONCRYPTOR_H
-#include <AvailabilityMacros.h>
-#include <CommonCrypto/CommonCryptor.h>
-#endif
 
 #include "windef.h"
 #include "winbase.h"
@@ -162,68 +154,6 @@ struct algorithm
     ULONG         flags;
 };
 
-#if defined(HAVE_GNUTLS_CIPHER_INIT)
-struct key_symmetric
-{
-    enum mode_id        mode;
-    ULONG               block_size;
-    gnutls_cipher_hd_t  handle;
-    UCHAR              *vector;
-    ULONG               vector_len;
-    UCHAR              *secret;
-    ULONG               secret_len;
-};
-
-struct key_asymmetric
-{
-    gnutls_privkey_t  handle;
-    ULONG             bitlen;     /* ignored for ECC keys */
-    UCHAR            *pubkey;
-    ULONG             pubkey_len;
-    DSSSEED           dss_seed;
-};
-
-struct key
-{
-    struct object hdr;
-    enum alg_id   alg_id;
-    union
-    {
-        struct key_symmetric  s;
-        struct key_asymmetric a;
-    } u;
-};
-#elif defined(HAVE_COMMONCRYPTO_COMMONCRYPTOR_H) && MAC_OS_X_VERSION_MAX_ALLOWED >= 1080
-struct key_symmetric
-{
-    enum mode_id   mode;
-    ULONG          block_size;
-    CCCryptorRef   ref_encrypt;
-    CCCryptorRef   ref_decrypt;
-    UCHAR         *vector;
-    ULONG          vector_len;
-    UCHAR         *secret;
-    ULONG          secret_len;
-};
-
-struct key_asymmetric
-{
-    ULONG  bitlen;
-    UCHAR *pubkey;
-    ULONG  pubkey_len;
-};
-
-struct key
-{
-    struct object hdr;
-    enum alg_id   alg_id;
-    union
-    {
-        struct key_symmetric  s;
-        struct key_asymmetric a;
-    } u;
-};
-#else
 struct key_symmetric
 {
     enum mode_id mode;
@@ -239,19 +169,20 @@ struct key_asymmetric
     ULONG             bitlen;     /* ignored for ECC keys */
     UCHAR            *pubkey;
     ULONG             pubkey_len;
+    DSSSEED           dss_seed;
 };
 
 struct key
 {
     struct object hdr;
     enum alg_id   alg_id;
+    void         *private[2];  /* private data for backend */
     union
     {
         struct key_symmetric s;
         struct key_asymmetric a;
     } u;
 };
-#endif
 
 struct secret
 {

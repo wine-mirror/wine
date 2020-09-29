@@ -64,6 +64,18 @@ typedef enum
 } gnutls_ecc_curve_t;
 #endif
 
+union key_data
+{
+    gnutls_cipher_hd_t cipher;
+    gnutls_privkey_t   privkey;
+};
+C_ASSERT( sizeof(union key_data) <= sizeof(((struct key *)0)->private) );
+
+static union key_data *key_data( struct key *key )
+{
+    return (union key_data *)key->private;
+}
+
 /* Not present in gnutls version < 3.0 */
 static int (*pgnutls_cipher_tag)(gnutls_cipher_hd_t, void *, size_t);
 static int (*pgnutls_cipher_add_auth)(gnutls_cipher_hd_t, const void *, size_t);
@@ -502,10 +514,10 @@ static gnutls_cipher_algorithm_t get_gnutls_cipher( const struct key *key )
 
 void key_symmetric_vector_reset( struct key *key )
 {
-    if (!key->u.s.handle) return;
+    if (!key_data(key)->cipher) return;
     TRACE( "invalidating cipher handle\n" );
-    pgnutls_cipher_deinit( key->u.s.handle );
-    key->u.s.handle = NULL;
+    pgnutls_cipher_deinit( key_data(key)->cipher );
+    key_data(key)->cipher = NULL;
 }
 
 static NTSTATUS init_cipher_handle( struct key *key )
@@ -514,7 +526,7 @@ static NTSTATUS init_cipher_handle( struct key *key )
     gnutls_datum_t secret, vector;
     int ret;
 
-    if (key->u.s.handle) return STATUS_SUCCESS;
+    if (key_data(key)->cipher) return STATUS_SUCCESS;
     if ((cipher = get_gnutls_cipher( key )) == GNUTLS_CIPHER_UNKNOWN) return STATUS_NOT_SUPPORTED;
 
     secret.data = key->u.s.secret;
@@ -523,7 +535,7 @@ static NTSTATUS init_cipher_handle( struct key *key )
     vector.data = key->u.s.vector;
     vector.size = key->u.s.vector_len;
 
-    if ((ret = pgnutls_cipher_init( &key->u.s.handle, cipher, &secret, key->u.s.vector ? &vector : NULL )))
+    if ((ret = pgnutls_cipher_init( &key_data(key)->cipher, cipher, &secret, key->u.s.vector ? &vector : NULL )))
     {
         pgnutls_perror( ret );
         return STATUS_INTERNAL_ERROR;
@@ -540,7 +552,7 @@ NTSTATUS key_symmetric_set_auth_data( struct key *key, UCHAR *auth_data, ULONG l
     if (!auth_data) return STATUS_SUCCESS;
     if ((status = init_cipher_handle( key ))) return status;
 
-    if ((ret = pgnutls_cipher_add_auth( key->u.s.handle, auth_data, len )))
+    if ((ret = pgnutls_cipher_add_auth( key_data(key)->cipher, auth_data, len )))
     {
         pgnutls_perror( ret );
         return STATUS_INTERNAL_ERROR;
@@ -555,7 +567,7 @@ NTSTATUS key_symmetric_encrypt( struct key *key, const UCHAR *input, ULONG input
 
     if ((status = init_cipher_handle( key ))) return status;
 
-    if ((ret = pgnutls_cipher_encrypt2( key->u.s.handle, input, input_len, output, output_len )))
+    if ((ret = pgnutls_cipher_encrypt2( key_data(key)->cipher, input, input_len, output, output_len )))
     {
         pgnutls_perror( ret );
         return STATUS_INTERNAL_ERROR;
@@ -570,7 +582,7 @@ NTSTATUS key_symmetric_decrypt( struct key *key, const UCHAR *input, ULONG input
 
     if ((status = init_cipher_handle( key ))) return status;
 
-    if ((ret = pgnutls_cipher_decrypt2( key->u.s.handle, input, input_len, output, output_len )))
+    if ((ret = pgnutls_cipher_decrypt2( key_data(key)->cipher, input, input_len, output, output_len )))
     {
         pgnutls_perror( ret );
         return STATUS_INTERNAL_ERROR;
@@ -585,7 +597,7 @@ NTSTATUS key_symmetric_get_tag( struct key *key, UCHAR *tag, ULONG len )
 
     if ((status = init_cipher_handle( key ))) return status;
 
-    if ((ret = pgnutls_cipher_tag( key->u.s.handle, tag, len )))
+    if ((ret = pgnutls_cipher_tag( key_data(key)->cipher, tag, len )))
     {
         pgnutls_perror( ret );
         return STATUS_INTERNAL_ERROR;
@@ -595,7 +607,7 @@ NTSTATUS key_symmetric_get_tag( struct key *key, UCHAR *tag, ULONG len )
 
 void key_symmetric_destroy( struct key *key )
 {
-    if (key->u.s.handle) pgnutls_cipher_deinit( key->u.s.handle );
+    if (key_data(key)->cipher) pgnutls_cipher_deinit( key_data(key)->cipher );
 }
 
 static NTSTATUS export_gnutls_pubkey_rsa( gnutls_privkey_t gnutls_key, ULONG bitlen, UCHAR **pubkey, ULONG *pubkey_len )
@@ -861,7 +873,7 @@ NTSTATUS key_asymmetric_generate( struct key *key )
         return status;
     }
 
-    key->u.a.handle = handle;
+    key_data(key)->privkey = handle;
     return STATUS_SUCCESS;
 }
 
@@ -890,7 +902,7 @@ NTSTATUS key_export_ecc( struct key *key, UCHAR *buf, ULONG len, ULONG *ret_len 
         return STATUS_NOT_IMPLEMENTED;
     }
 
-    if ((ret = pgnutls_privkey_export_ecc_raw( key->u.a.handle, &curve, &x, &y, &d )))
+    if ((ret = pgnutls_privkey_export_ecc_raw( key_data(key)->privkey, &curve, &x, &y, &d )))
     {
         pgnutls_perror( ret );
         return STATUS_INTERNAL_ERROR;
@@ -978,7 +990,7 @@ NTSTATUS key_import_ecc( struct key *key, UCHAR *buf, ULONG len )
         return status;
     }
 
-    key->u.a.handle = handle;
+    key_data(key)->privkey = handle;
     return STATUS_SUCCESS;
 }
 
@@ -990,7 +1002,7 @@ NTSTATUS key_export_dsa_capi( struct key *key, UCHAR *buf, ULONG len, ULONG *ret
     UCHAR *src, *dst;
     int ret, size;
 
-    if ((ret = pgnutls_privkey_export_dsa_raw( key->u.a.handle, &p, &q, &g, &y, &x )))
+    if ((ret = pgnutls_privkey_export_dsa_raw( key_data(key)->privkey, &p, &q, &g, &y, &x )))
     {
         pgnutls_perror( ret );
         return STATUS_INTERNAL_ERROR;
@@ -1087,7 +1099,7 @@ NTSTATUS key_import_dsa_capi( struct key *key, UCHAR *buf, ULONG len )
 
     memcpy( &key->u.a.dss_seed, x.data + x.size, sizeof(key->u.a.dss_seed) );
 
-    key->u.a.handle = handle;
+    key_data(key)->privkey = handle;
     return STATUS_SUCCESS;
 }
 
@@ -1528,7 +1540,7 @@ NTSTATUS key_asymmetric_sign( struct key *key, void *padding, UCHAR *input, ULON
         *ret_len = key->u.a.bitlen / 8;
         return STATUS_SUCCESS;
     }
-    if (!key->u.a.handle) return STATUS_INVALID_PARAMETER;
+    if (!key_data(key)->privkey) return STATUS_INVALID_PARAMETER;
 
     hash.data = input;
     hash.size = input_len;
@@ -1536,7 +1548,7 @@ NTSTATUS key_asymmetric_sign( struct key *key, void *padding, UCHAR *input, ULON
     signature.data = NULL;
     signature.size = 0;
 
-    if ((ret = pgnutls_privkey_sign_hash( key->u.a.handle, hash_alg, 0, &hash, &signature )))
+    if ((ret = pgnutls_privkey_sign_hash( key_data(key)->privkey, hash_alg, 0, &hash, &signature )))
     {
         pgnutls_perror( ret );
         return STATUS_INTERNAL_ERROR;
@@ -1550,6 +1562,6 @@ NTSTATUS key_asymmetric_sign( struct key *key, void *padding, UCHAR *input, ULON
 
 void key_asymmetric_destroy( struct key *key )
 {
-    if (key->u.a.handle) pgnutls_privkey_deinit( key->u.a.handle );
+    if (key_data(key)->privkey) pgnutls_privkey_deinit( key_data(key)->privkey );
 }
 #endif
