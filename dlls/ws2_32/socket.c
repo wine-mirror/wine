@@ -234,6 +234,37 @@ static const WSAPROTOCOL_INFOW supported_protocols[] =
         .szProtocol = {'U','D','P','/','I','P',0},
     },
     {
+        .dwServiceFlags1 = XP1_IFS_HANDLES | XP1_EXPEDITED_DATA | XP1_GRACEFUL_CLOSE
+                | XP1_GUARANTEED_ORDER | XP1_GUARANTEED_DELIVERY,
+        .dwProviderFlags = PFL_MATCHES_PROTOCOL_ZERO,
+        .ProviderId = {0xf9eab0c0, 0x26d4, 0x11d0, {0xbb, 0xbf, 0x00, 0xaa, 0x00, 0x6c, 0x34, 0xe4}},
+        .dwCatalogEntryId = 1004,
+        .ProtocolChain.ChainLen = 1,
+        .iVersion = 2,
+        .iAddressFamily = WS_AF_INET6,
+        .iMaxSockAddr = sizeof(struct WS_sockaddr_in6),
+        .iMinSockAddr = sizeof(struct WS_sockaddr_in6),
+        .iSocketType = WS_SOCK_STREAM,
+        .iProtocol = WS_IPPROTO_TCP,
+        .szProtocol = {'T','C','P','/','I','P','v','6',0},
+    },
+    {
+        .dwServiceFlags1 = XP1_IFS_HANDLES | XP1_SUPPORT_BROADCAST
+                | XP1_SUPPORT_MULTIPOINT | XP1_MESSAGE_ORIENTED | XP1_CONNECTIONLESS,
+        .dwProviderFlags = PFL_MATCHES_PROTOCOL_ZERO,
+        .ProviderId = {0xf9eab0c0, 0x26d4, 0x11d0, {0xbb, 0xbf, 0x00, 0xaa, 0x00, 0x6c, 0x34, 0xe4}},
+        .dwCatalogEntryId = 1005,
+        .ProtocolChain.ChainLen = 1,
+        .iVersion = 2,
+        .iAddressFamily = WS_AF_INET6,
+        .iMaxSockAddr = sizeof(struct WS_sockaddr_in6),
+        .iMinSockAddr = sizeof(struct WS_sockaddr_in6),
+        .iSocketType = WS_SOCK_DGRAM,
+        .iProtocol = WS_IPPROTO_UDP,
+        .dwMessageSize = 0xffbb,
+        .szProtocol = {'U','D','P','/','I','P','v','6',0},
+    },
+    {
         .dwServiceFlags1 = XP1_PARTIAL_MESSAGE | XP1_SUPPORT_BROADCAST
                 | XP1_SUPPORT_MULTIPOINT | XP1_MESSAGE_ORIENTED | XP1_CONNECTIONLESS,
         .dwProviderFlags = PFL_MATCHES_PROTOCOL_ZERO,
