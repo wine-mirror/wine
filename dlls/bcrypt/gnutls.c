@@ -455,39 +455,19 @@ NTSTATUS key_set_property( struct key *key, const WCHAR *prop, UCHAR *value, ULO
     return STATUS_NOT_IMPLEMENTED;
 }
 
-static ULONG get_block_size( struct algorithm *alg )
-{
-    ULONG ret = 0, size = sizeof(ret);
-    get_alg_property( alg, BCRYPT_BLOCK_LENGTH, (UCHAR *)&ret, sizeof(ret), &size );
-    return ret;
-}
-
-NTSTATUS key_symmetric_init( struct key *key, struct algorithm *alg, const UCHAR *secret, ULONG secret_len )
+NTSTATUS key_symmetric_init( struct key *key )
 {
     if (!libgnutls_handle) return STATUS_INTERNAL_ERROR;
 
-    switch (alg->id)
+    switch (key->alg_id)
     {
     case ALG_ID_AES:
-        break;
+        return STATUS_SUCCESS;
 
     default:
-        FIXME( "algorithm %u not supported\n", alg->id );
+        FIXME( "algorithm %u not supported\n", key->alg_id );
         return STATUS_NOT_SUPPORTED;
     }
-
-    if (!(key->u.s.block_size = get_block_size( alg ))) return STATUS_INVALID_PARAMETER;
-    if (!(key->u.s.secret = heap_alloc( secret_len ))) return STATUS_NO_MEMORY;
-    memcpy( key->u.s.secret, secret, secret_len );
-    key->u.s.secret_len = secret_len;
-
-    key->alg_id         = alg->id;
-    key->u.s.mode       = alg->mode;
-    key->u.s.handle     = 0;        /* initialized on first use */
-    key->u.s.vector     = NULL;
-    key->u.s.vector_len = 0;
-
-    return STATUS_SUCCESS;
 }
 
 static gnutls_cipher_algorithm_t get_gnutls_cipher( const struct key *key )

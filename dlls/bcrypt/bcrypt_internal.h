@@ -227,6 +227,11 @@ struct key
 struct key_symmetric
 {
     enum mode_id mode;
+    ULONG        block_size;
+    UCHAR       *vector;
+    ULONG        vector_len;
+    UCHAR       *secret;
+    ULONG        secret_len;
 };
 
 struct key_asymmetric
@@ -253,10 +258,8 @@ struct secret
     struct object hdr;
 };
 
-NTSTATUS get_alg_property( const struct algorithm *, const WCHAR *, UCHAR *, ULONG, ULONG * ) DECLSPEC_HIDDEN;
-
 NTSTATUS key_set_property( struct key *, const WCHAR *, UCHAR *, ULONG, ULONG ) DECLSPEC_HIDDEN;
-NTSTATUS key_symmetric_init( struct key *, struct algorithm *, const UCHAR *, ULONG ) DECLSPEC_HIDDEN;
+NTSTATUS key_symmetric_init( struct key * ) DECLSPEC_HIDDEN;
 void     key_symmetric_vector_reset( struct key * ) DECLSPEC_HIDDEN;
 NTSTATUS key_symmetric_set_auth_data( struct key *, UCHAR *, ULONG ) DECLSPEC_HIDDEN;
 NTSTATUS key_symmetric_encrypt( struct key *, const UCHAR *, ULONG, UCHAR *, ULONG ) DECLSPEC_HIDDEN;

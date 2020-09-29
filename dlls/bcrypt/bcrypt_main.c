@@ -550,7 +550,8 @@ static NTSTATUS get_dsa_property( enum mode_id mode, const WCHAR *prop, UCHAR *b
     return STATUS_NOT_IMPLEMENTED;
 }
 
-NTSTATUS get_alg_property( const struct algorithm *alg, const WCHAR *prop, UCHAR *buf, ULONG size, ULONG *ret_size )
+static NTSTATUS get_alg_property( const struct algorithm *alg, const WCHAR *prop,
+                                  UCHAR *buf, ULONG size, ULONG *ret_size )
 {
     NTSTATUS status;
 
@@ -1328,7 +1329,7 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
     return STATUS_NOT_SUPPORTED;
 }
 #else
-NTSTATUS key_symmetric_init( struct key *key, struct algorithm *alg, const UCHAR *secret, ULONG secret_len )
+NTSTATUS key_symmetric_init( struct key *key )
 {
     ERR( "support for keys not available at build time\n" );
     return STATUS_NOT_IMPLEMENTED;
@@ -1431,12 +1432,20 @@ NTSTATUS key_import_ecc( struct key *key, UCHAR *input, ULONG len )
 }
 #endif
 
+static ULONG get_block_size( struct algorithm *alg )
+{
+    ULONG ret = 0, size = sizeof(ret);
+    get_alg_property( alg, BCRYPT_BLOCK_LENGTH, (UCHAR *)&ret, sizeof(ret), &size );
+    return ret;
+}
+
 NTSTATUS WINAPI BCryptGenerateSymmetricKey( BCRYPT_ALG_HANDLE algorithm, BCRYPT_KEY_HANDLE *handle,
                                             UCHAR *object, ULONG object_len, UCHAR *secret, ULONG secret_len,
                                             ULONG flags )
 {
     struct algorithm *alg = algorithm;
     struct key *key;
+    ULONG block_size;
     NTSTATUS status;
 
     TRACE( "%p, %p, %p, %u, %p, %u, %08x\n", algorithm, handle, object, object_len, secret, secret_len, flags );
@@ -1444,11 +1453,25 @@ NTSTATUS WINAPI BCryptGenerateSymmetricKey( BCRYPT_ALG_HANDLE algorithm, BCRYPT_
     if (!alg || alg->hdr.magic != MAGIC_ALG) return STATUS_INVALID_HANDLE;
     if (object) FIXME( "ignoring object buffer\n" );
 
-    if (!(key = heap_alloc( sizeof(*key) ))) return STATUS_NO_MEMORY;
-    key->hdr.magic = MAGIC_KEY;
+    if (!(block_size = get_block_size( alg ))) return STATUS_INVALID_PARAMETER;
 
-    if ((status = key_symmetric_init( key, alg, secret, secret_len )))
+    if (!(key = heap_alloc_zero( sizeof(*key) ))) return STATUS_NO_MEMORY;
+    key->hdr.magic      = MAGIC_KEY;
+    key->alg_id         = alg->id;
+    key->u.s.mode       = alg->mode;
+    key->u.s.block_size = block_size;
+
+    if (!(key->u.s.secret = heap_alloc( secret_len )))
     {
+        heap_free( key );
+        return STATUS_NO_MEMORY;
+    }
+    memcpy( key->u.s.secret, secret, secret_len );
+    key->u.s.secret_len = secret_len;
+
+    if ((status = key_symmetric_init( key )))
+    {
+        heap_free( key->u.s.secret );
         heap_free( key );
         return status;
     }

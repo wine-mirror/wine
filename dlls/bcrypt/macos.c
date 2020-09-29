@@ -68,47 +68,26 @@ NTSTATUS key_set_property( struct key *key, const WCHAR *prop, UCHAR *value, ULO
     return STATUS_NOT_IMPLEMENTED;
 }
 
-static ULONG get_block_size( struct algorithm *alg )
+NTSTATUS key_symmetric_init( struct key *key )
 {
-    ULONG ret = 0, size = sizeof(ret);
-    get_alg_property( alg, BCRYPT_BLOCK_LENGTH, (UCHAR *)&ret, sizeof(ret), &size );
-    return ret;
-}
-
-NTSTATUS key_symmetric_init( struct key *key, struct algorithm *alg, const UCHAR *secret, ULONG secret_len )
-{
-    switch (alg->id)
+    switch (key->alg_id)
     {
     case ALG_ID_AES:
-        switch (alg->mode)
+        switch (key->u.s.mode)
         {
         case MODE_ID_ECB:
         case MODE_ID_CBC:
             break;
         default:
-            FIXME( "mode %u not supported\n", alg->mode );
+            FIXME( "mode %u not supported\n", key->u.s.mode );
             return STATUS_NOT_SUPPORTED;
         }
-        break;
+        return STATUS_SUCCESS;
 
     default:
-        FIXME( "algorithm %u not supported\n", alg->id );
+        FIXME( "algorithm %u not supported\n", key->alg_id );
         return STATUS_NOT_SUPPORTED;
     }
-
-    if (!(key->u.s.block_size = get_block_size( alg ))) return STATUS_INVALID_PARAMETER;
-    if (!(key->u.s.secret = heap_alloc( secret_len ))) return STATUS_NO_MEMORY;
-    memcpy( key->u.s.secret, secret, secret_len );
-    key->u.s.secret_len = secret_len;
-
-    key->alg_id          = alg->id;
-    key->u.s.mode        = alg->mode;
-    key->u.s.ref_encrypt = NULL;        /* initialized on first use */
-    key->u.s.ref_decrypt = NULL;
-    key->u.s.vector      = NULL;
-    key->u.s.vector_len  = 0;
-
-    return STATUS_SUCCESS;
 }
 
 static CCMode get_cryptor_mode( struct key *key )
