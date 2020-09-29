@@ -256,7 +256,7 @@ TEB_ACTIVE_FRAME * WINAPI RtlGetFrame(void)
 /***********************************************************************
  *              RtlFlsAlloc  (NTDLL.@)
  */
-NTSTATUS WINAPI DECLSPEC_HOTPATCH RtlFlsAlloc( PFLS_CALLBACK_FUNCTION callback, DWORD *ret_index )
+NTSTATUS WINAPI DECLSPEC_HOTPATCH RtlFlsAlloc( PFLS_CALLBACK_FUNCTION callback, ULONG *ret_index )
 {
     PEB * const peb = NtCurrentTeb()->Peb;
     NTSTATUS status = STATUS_NO_MEMORY;
@@ -287,5 +287,27 @@ NTSTATUS WINAPI DECLSPEC_HOTPATCH RtlFlsAlloc( PFLS_CALLBACK_FUNCTION callback, 
     RtlReleasePebLock();
     if (!status)
         *ret_index = index;
+    return status;
+}
+
+
+/***********************************************************************
+ *              RtlFlsFree   (NTDLL.@)
+ */
+NTSTATUS WINAPI DECLSPEC_HOTPATCH RtlFlsFree( ULONG index )
+{
+    NTSTATUS status;
+
+    RtlAcquirePebLock();
+    if (RtlAreBitsSet( NtCurrentTeb()->Peb->FlsBitmap, index, 1 ))
+    {
+        RtlClearBits( NtCurrentTeb()->Peb->FlsBitmap, index, 1 );
+        /* FIXME: call Fls callback */
+        /* FIXME: add equivalent of ThreadZeroTlsCell here */
+        if (NtCurrentTeb()->FlsSlots) NtCurrentTeb()->FlsSlots[index] = 0;
+        status = STATUS_SUCCESS;
+    }
+    else status = STATUS_INVALID_PARAMETER;
+    RtlReleasePebLock();
     return status;
 }

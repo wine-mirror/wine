@@ -38,7 +38,7 @@ static BOOL (WINAPI *pFlsFree)(DWORD);
 static PVOID (WINAPI *pFlsGetValue)(DWORD);
 static BOOL (WINAPI *pFlsSetValue)(DWORD,PVOID);
 static NTSTATUS (WINAPI *pRtlFlsAlloc)(PFLS_CALLBACK_FUNCTION,DWORD*);
-
+static NTSTATUS (WINAPI *pRtlFlsFree)(ULONG);
 static void *fibers[3];
 static BYTE testparam = 185;
 static DWORD fls_index_to_set = FLS_OUT_OF_INDEXES;
@@ -69,6 +69,7 @@ static VOID init_funcs(void)
 
 #define X(f) p##f = (void*)GetProcAddress(hntdll, #f);
     X(RtlFlsAlloc);
+    X(RtlFlsFree);
 #undef X
 
 }
@@ -218,7 +219,10 @@ static void test_FiberLocalStorage(void)
         ok(count && (count <= 127 || (count > 4000 && count < 4096)), "Got unexpected count %u.\n", count);
 
         for (i = 0; i < count; ++i)
-            pFlsFree(fls_indices[i]);
+        {
+            status = pRtlFlsFree(fls_indices[i]);
+            ok(!status, "Got unexpected status %#x.\n", status);
+        }
     }
     else
     {

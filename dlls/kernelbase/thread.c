@@ -1077,20 +1077,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH FlsAlloc( PFLS_CALLBACK_FUNCTION callback )
  */
 BOOL WINAPI DECLSPEC_HOTPATCH FlsFree( DWORD index )
 {
-    BOOL ret;
-
-    RtlAcquirePebLock();
-    ret = RtlAreBitsSet( NtCurrentTeb()->Peb->FlsBitmap, index, 1 );
-    if (ret) RtlClearBits( NtCurrentTeb()->Peb->FlsBitmap, index, 1 );
-    if (ret)
-    {
-        /* FIXME: call Fls callback */
-        /* FIXME: add equivalent of ThreadZeroTlsCell here */
-        if (NtCurrentTeb()->FlsSlots) NtCurrentTeb()->FlsSlots[index] = 0;
-    }
-    else SetLastError( ERROR_INVALID_PARAMETER );
-    RtlReleasePebLock();
-    return ret;
+    return set_ntstatus( RtlFlsFree( index ));
 }
 
 
