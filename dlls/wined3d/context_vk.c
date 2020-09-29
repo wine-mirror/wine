@@ -2046,7 +2046,7 @@ static bool wined3d_context_vk_update_graphics_pipeline_key(struct wined3d_conte
             key->ds_desc.stencilTestEnable = state->fb.depth_stencil && d->desc.stencil;
             if (key->ds_desc.stencilTestEnable)
             {
-                key->ds_desc.front.failOp = vk_stencil_op_from_wined3d(state->render_states[WINED3D_RS_STENCILFAIL]);
+                key->ds_desc.front.failOp = vk_stencil_op_from_wined3d(d->desc.front.fail_op);
                 key->ds_desc.front.passOp = vk_stencil_op_from_wined3d(d->desc.front.pass_op);
                 key->ds_desc.front.depthFailOp = vk_stencil_op_from_wined3d(
                         state->render_states[WINED3D_RS_STENCILZFAIL]);
@@ -2056,6 +2056,7 @@ static bool wined3d_context_vk_update_graphics_pipeline_key(struct wined3d_conte
                 key->ds_desc.front.reference = state->render_states[WINED3D_RS_STENCILREF]
                         & ((1 << state->fb.depth_stencil->format->stencil_size) - 1);
 
+                key->ds_desc.back.failOp = vk_stencil_op_from_wined3d(d->desc.back.fail_op);
                 key->ds_desc.back.passOp = vk_stencil_op_from_wined3d(d->desc.back.pass_op);
                 key->ds_desc.back.compareOp = vk_compare_op_from_wined3d(d->desc.back.func);
                 key->ds_desc.back.compareMask = d->desc.stencil_read_mask;
@@ -2065,8 +2066,6 @@ static bool wined3d_context_vk_update_graphics_pipeline_key(struct wined3d_conte
 
                 if (state->render_states[WINED3D_RS_TWOSIDEDSTENCILMODE])
                 {
-                    key->ds_desc.back.failOp = vk_stencil_op_from_wined3d(
-                            state->render_states[WINED3D_RS_BACK_STENCILFAIL]);
                     key->ds_desc.back.depthFailOp = vk_stencil_op_from_wined3d(
                             state->render_states[WINED3D_RS_BACK_STENCILZFAIL]);
                 }

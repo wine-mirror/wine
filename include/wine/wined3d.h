@@ -2038,6 +2038,7 @@ struct wined3d_blend_state_desc
 
 struct wined3d_stencil_op_desc
 {
+    enum wined3d_stencil_op fail_op;
     enum wined3d_stencil_op pass_op;
     enum wined3d_cmp_func func;
 };

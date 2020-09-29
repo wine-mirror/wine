@@ -1084,10 +1084,10 @@ static void state_stencil(struct wined3d_context *context, const struct wined3d_
         func_back = GL_ALWAYS;
     mask = d->desc.stencil_read_mask;
     ref = state->render_states[WINED3D_RS_STENCILREF] & ((1 << state->fb.depth_stencil->format->stencil_size) - 1);
-    stencilFail = gl_stencil_op(state->render_states[WINED3D_RS_STENCILFAIL]);
+    stencilFail = gl_stencil_op(d->desc.front.fail_op);
     depthFail = gl_stencil_op(state->render_states[WINED3D_RS_STENCILZFAIL]);
     stencilPass = gl_stencil_op(d->desc.front.pass_op);
-    stencilFail_back = gl_stencil_op(state->render_states[WINED3D_RS_BACK_STENCILFAIL]);
+    stencilFail_back = gl_stencil_op(d->desc.back.fail_op);
     depthFail_back = gl_stencil_op(state->render_states[WINED3D_RS_BACK_STENCILZFAIL]);
     stencilPass_back = gl_stencil_op(d->desc.back.pass_op);
 
@@ -4766,11 +4766,9 @@ const struct wined3d_state_entry_template misc_state_template_gl[] =
     { STATE_RENDER(WINED3D_RS_ANISOTROPY),                { STATE_RENDER(WINED3D_RS_ANISOTROPY),                state_anisotropy    }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_FLUSHBATCH),                { STATE_RENDER(WINED3D_RS_FLUSHBATCH),                state_flushbatch    }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_TRANSLUCENTSORTINDEPENDENT),{ STATE_RENDER(WINED3D_RS_TRANSLUCENTSORTINDEPENDENT),state_translucentsi }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_STENCILFAIL),               { STATE_DEPTH_STENCIL,                                NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_STENCILZFAIL),              { STATE_DEPTH_STENCIL,                                NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_STENCILREF),                { STATE_DEPTH_STENCIL,                                NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_TWOSIDEDSTENCILMODE),       { STATE_DEPTH_STENCIL,                                NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_BACK_STENCILFAIL),          { STATE_DEPTH_STENCIL,                                NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_BACK_STENCILZFAIL),         { STATE_DEPTH_STENCIL,                                NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_WRAP0),                     { STATE_RENDER(WINED3D_RS_WRAP0),                     state_wrap          }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_WRAP1),                     { STATE_RENDER(WINED3D_RS_WRAP0),                     NULL                }, WINED3D_GL_EXT_NONE             },
@@ -5570,7 +5568,7 @@ static void validate_state_table(struct wined3d_state_entry *state_table)
         { 40,  40},
         { 42,  45},
         { 47,  47},
-        { 52,  52},
+        { 52,  53},
         { 55,  56},
         { 58,  59},
         { 61, 127},
@@ -5579,6 +5577,7 @@ static void validate_state_table(struct wined3d_state_entry *state_table)
         {168, 169},
         {171, 171},
         {174, 177},
+        {186, 186},
         {188, 193},
         {195, 197},
         {206, 209},
