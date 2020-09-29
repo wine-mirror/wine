@@ -520,27 +520,12 @@ static gnutls_cipher_algorithm_t get_gnutls_cipher( const struct key *key )
     }
 }
 
-NTSTATUS key_symmetric_set_vector( struct key *key, UCHAR *vector, ULONG vector_len )
+void key_symmetric_vector_reset( struct key *key )
 {
-    if (key->u.s.handle && (!is_zero_vector( vector, vector_len ) ||
-        !is_equal_vector( key->u.s.vector, key->u.s.vector_len, vector, vector_len )))
-    {
-        TRACE( "invalidating cipher handle\n" );
-        pgnutls_cipher_deinit( key->u.s.handle );
-        key->u.s.handle = NULL;
-    }
-
-    heap_free( key->u.s.vector );
-    key->u.s.vector = NULL;
-    key->u.s.vector_len = 0;
-    if (vector)
-    {
-        if (!(key->u.s.vector = heap_alloc( vector_len ))) return STATUS_NO_MEMORY;
-        memcpy( key->u.s.vector, vector, vector_len );
-        key->u.s.vector_len = vector_len;
-    }
-
-    return STATUS_SUCCESS;
+    if (!key->u.s.handle) return;
+    TRACE( "invalidating cipher handle\n" );
+    pgnutls_cipher_deinit( key->u.s.handle );
+    key->u.s.handle = NULL;
 }
 
 static NTSTATUS init_cipher_handle( struct key *key )

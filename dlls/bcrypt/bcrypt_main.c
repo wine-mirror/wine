@@ -891,7 +891,7 @@ BOOL key_is_symmetric( struct key *key )
     return builtin_algorithms[key->alg_id].class == BCRYPT_CIPHER_INTERFACE;
 }
 
-BOOL is_zero_vector( const UCHAR *vector, ULONG len )
+static BOOL is_zero_vector( const UCHAR *vector, ULONG len )
 {
     ULONG i;
     if (!vector) return FALSE;
@@ -899,11 +899,29 @@ BOOL is_zero_vector( const UCHAR *vector, ULONG len )
     return TRUE;
 }
 
-BOOL is_equal_vector( const UCHAR *vector, ULONG len, const UCHAR *vector2, ULONG len2 )
+static BOOL is_equal_vector( const UCHAR *vector, ULONG len, const UCHAR *vector2, ULONG len2 )
 {
     if (!vector && !vector2) return TRUE;
     if (len != len2) return FALSE;
     return !memcmp( vector, vector2, len );
+}
+
+static NTSTATUS key_symmetric_set_vector( struct key *key, UCHAR *vector, ULONG vector_len )
+{
+    BOOL needs_reset = (!is_zero_vector( vector, vector_len ) ||
+                        !is_equal_vector( key->u.s.vector, key->u.s.vector_len, vector, vector_len ));
+
+    heap_free( key->u.s.vector );
+    key->u.s.vector = NULL;
+    key->u.s.vector_len = 0;
+    if (vector)
+    {
+        if (!(key->u.s.vector = heap_alloc( vector_len ))) return STATUS_NO_MEMORY;
+        memcpy( key->u.s.vector, vector, vector_len );
+        key->u.s.vector_len = vector_len;
+    }
+    if (needs_reset) key_symmetric_vector_reset( key );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS key_import( BCRYPT_ALG_HANDLE algorithm, const WCHAR *type, BCRYPT_KEY_HANDLE *key, UCHAR *object,

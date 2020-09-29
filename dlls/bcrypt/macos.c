@@ -123,30 +123,16 @@ static CCMode get_cryptor_mode( struct key *key )
     }
 }
 
-NTSTATUS key_symmetric_set_vector( struct key *key, UCHAR *vector, ULONG vector_len )
+void key_symmetric_vector_reset( struct key *key )
 {
-    if (key->u.s.ref_encrypt && (!is_zero_vector( vector, vector_len ) ||
-        !is_equal_vector( key->u.s.vector, key->u.s.vector_len, vector, vector_len )))
-    {
-        TRACE( "invalidating cryptor handles\n" );
-        CCCryptorRelease( key->u.s.ref_encrypt );
-        key->u.s.ref_encrypt = NULL;
+    if (!key->u.s.ref_encrypt) return;
 
-        CCCryptorRelease( key->u.s.ref_decrypt );
-        key->u.s.ref_decrypt = NULL;
-    }
+    TRACE( "invalidating cryptor handles\n" );
+    CCCryptorRelease( key->u.s.ref_encrypt );
+    key->u.s.ref_encrypt = NULL;
 
-    heap_free( key->u.s.vector );
-    key->u.s.vector = NULL;
-    key->u.s.vector_len = 0;
-    if (vector)
-    {
-        if (!(key->u.s.vector = heap_alloc( vector_len ))) return STATUS_NO_MEMORY;
-        memcpy( key->u.s.vector, vector, vector_len );
-        key->u.s.vector_len = vector_len;
-    }
-
-    return STATUS_SUCCESS;
+    CCCryptorRelease( key->u.s.ref_decrypt );
+    key->u.s.ref_decrypt = NULL;
 }
 
 static NTSTATUS init_cryptor_handles( struct key *key )
