@@ -2960,6 +2960,23 @@ VkResult convert_VkDeviceCreateInfo_struct_chain(const void *pNext, VkDeviceCrea
             break;
         }
 
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_IMAGE_ATOMIC_INT64_FEATURES_EXT:
+        {
+            const VkPhysicalDeviceShaderImageAtomicInt64FeaturesEXT *in = (const VkPhysicalDeviceShaderImageAtomicInt64FeaturesEXT *)in_header;
+            VkPhysicalDeviceShaderImageAtomicInt64FeaturesEXT *out;
+
+            if (!(out = heap_alloc(sizeof(*out)))) goto out_of_memory;
+
+            out->sType = in->sType;
+            out->pNext = NULL;
+            out->shaderImageInt64Atomics = in->shaderImageInt64Atomics;
+            out->sparseImageInt64Atomics = in->sparseImageInt64Atomics;
+
+            out_header->pNext = (VkBaseOutStructure *)out;
+            out_header = out_header->pNext;
+            break;
+        }
+
         default:
             FIXME("Application requested a linked structure of type %u.\n", in_header->sType);
         }
@@ -6105,6 +6122,7 @@ static const char * const vk_device_extensions[] =
     "VK_EXT_separate_stencil_usage",
     "VK_EXT_shader_atomic_float",
     "VK_EXT_shader_demote_to_helper_invocation",
+    "VK_EXT_shader_image_atomic_int64",
     "VK_EXT_shader_stencil_export",
     "VK_EXT_shader_subgroup_ballot",
     "VK_EXT_shader_subgroup_vote",
