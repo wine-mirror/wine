@@ -2071,7 +2071,7 @@ static bool wined3d_context_vk_update_graphics_pipeline_key(struct wined3d_conte
             key->ds_desc.depthWriteEnable = VK_TRUE;
             key->ds_desc.stencilTestEnable = VK_FALSE;
         }
-        key->ds_desc.depthCompareOp = vk_compare_op_from_wined3d(state->render_states[WINED3D_RS_ZFUNC]);
+        key->ds_desc.depthCompareOp = vk_compare_op_from_wined3d(d->desc.depth_func);
 
         update = true;
     }

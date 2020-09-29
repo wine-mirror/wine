@@ -796,6 +796,7 @@ HRESULT d3d_depthstencil_state_create(struct d3d_device *device, const D3D11_DEP
 
     wined3d_desc.depth = desc->DepthEnable;
     wined3d_desc.depth_write = desc->DepthWriteMask;
+    wined3d_desc.depth_func = desc->DepthFunc;
     wined3d_desc.stencil = desc->StencilEnable;
     wined3d_desc.stencil_read_mask = desc->StencilReadMask;
     wined3d_desc.stencil_write_mask = desc->StencilWriteMask;

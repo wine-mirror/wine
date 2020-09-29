@@ -2048,6 +2048,7 @@ struct wined3d_depth_stencil_state_desc
 {
     BOOL depth;
     BOOL depth_write;
+    enum wined3d_cmp_func depth_func;
     BOOL stencil;
     unsigned int stencil_read_mask;
     unsigned int stencil_write_mask;

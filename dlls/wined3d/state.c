@@ -388,17 +388,6 @@ GLenum wined3d_gl_compare_func(enum wined3d_cmp_func f)
     }
 }
 
-static void state_zfunc(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
-{
-    GLenum depth_func = wined3d_gl_compare_func(state->render_states[WINED3D_RS_ZFUNC]);
-    const struct wined3d_gl_info *gl_info = wined3d_context_gl(context)->gl_info;
-
-    if (!depth_func) return;
-
-    gl_info->gl_ops.gl.p_glDepthFunc(depth_func);
-    checkGLcall("glDepthFunc");
-}
-
 static void state_ambient(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = wined3d_context_gl(context)->gl_info;
@@ -1161,6 +1150,7 @@ static void depth(struct wined3d_context *context, const struct wined3d_state *s
     const struct wined3d_gl_info *gl_info = wined3d_context_gl(context)->gl_info;
     const struct wined3d_depth_stencil_state *d = state->depth_stencil_state;
     BOOL enable_depth = d ? d->desc.depth : TRUE;
+    GLenum depth_func = GL_LESS;
 
     if (!state->fb.depth_stencil)
     {
@@ -1188,6 +1178,14 @@ static void depth(struct wined3d_context *context, const struct wined3d_state *s
     {
         gl_info->gl_ops.gl.p_glDepthMask(GL_FALSE);
         checkGLcall("glDepthMask(GL_FALSE)");
+    }
+
+    if (d)
+        depth_func = wined3d_gl_compare_func(d->desc.depth_func);
+    if (depth_func)
+    {
+        gl_info->gl_ops.gl.p_glDepthFunc(depth_func);
+        checkGLcall("glDepthFunc");
     }
 
     if (context->last_was_rhw && !isStateDirty(context, STATE_TRANSFORM(WINED3D_TS_PROJECTION)))
@@ -4754,7 +4752,6 @@ const struct wined3d_state_entry_template misc_state_template_gl[] =
     { STATE_RENDER(WINED3D_RS_ROP2),                      { STATE_RENDER(WINED3D_RS_ROP2),                      state_rop2          }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_PLANEMASK),                 { STATE_RENDER(WINED3D_RS_PLANEMASK),                 state_planemask     }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_LASTPIXEL),                 { STATE_RENDER(WINED3D_RS_LASTPIXEL),                 state_lastpixel     }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_ZFUNC),                     { STATE_RENDER(WINED3D_RS_ZFUNC),                     state_zfunc         }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_DITHERENABLE),              { STATE_RENDER(WINED3D_RS_DITHERENABLE),              state_ditherenable  }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_SUBPIXEL),                  { STATE_RENDER(WINED3D_RS_SUBPIXEL),                  state_subpixel      }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_SUBPIXELX),                 { STATE_RENDER(WINED3D_RS_SUBPIXELX),                 state_subpixelx     }, WINED3D_GL_EXT_NONE             },
@@ -5558,7 +5555,7 @@ static void validate_state_table(struct wined3d_state_entry *state_table)
         {  3,   3},
         {  7,   8},
         { 14,  14},
-        { 17,  22},
+        { 17,  23},
         { 27,  27},
         { 40,  40},
         { 42,  45},
