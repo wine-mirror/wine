@@ -17,9 +17,6 @@
  *
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdarg.h>
 
 #include "ntstatus.h"
@@ -35,7 +32,6 @@
 
 #include "wine/debug.h"
 #include "wine/heap.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(bcrypt);
 
@@ -232,7 +228,7 @@ NTSTATUS WINAPI BCryptOpenAlgorithmProvider( BCRYPT_ALG_HANDLE *handle, LPCWSTR 
 
     for (i = 0; i < ARRAY_SIZE( builtin_algorithms ); i++)
     {
-        if (!strcmpW( id, builtin_algorithms[i].name))
+        if (!wcscmp( id, builtin_algorithms[i].name))
         {
             alg_id = i;
             break;
@@ -244,7 +240,7 @@ NTSTATUS WINAPI BCryptOpenAlgorithmProvider( BCRYPT_ALG_HANDLE *handle, LPCWSTR 
         return STATUS_NOT_IMPLEMENTED;
     }
 
-    if (implementation && strcmpW( implementation, MS_PRIMITIVE_PROVIDER ))
+    if (implementation && wcscmp( implementation, MS_PRIMITIVE_PROVIDER ))
     {
         FIXME( "implementation %s not supported\n", debugstr_w(implementation) );
         return STATUS_NOT_IMPLEMENTED;
@@ -434,7 +430,7 @@ struct hash
 
 static NTSTATUS generic_alg_property( enum alg_id id, const WCHAR *prop, UCHAR *buf, ULONG size, ULONG *ret_size )
 {
-    if (!strcmpW( prop, BCRYPT_OBJECT_LENGTH ))
+    if (!wcscmp( prop, BCRYPT_OBJECT_LENGTH ))
     {
         if (!builtin_algorithms[id].object_length)
             return STATUS_NOT_SUPPORTED;
@@ -446,7 +442,7 @@ static NTSTATUS generic_alg_property( enum alg_id id, const WCHAR *prop, UCHAR *
         return STATUS_SUCCESS;
     }
 
-    if (!strcmpW( prop, BCRYPT_HASH_LENGTH ))
+    if (!wcscmp( prop, BCRYPT_HASH_LENGTH ))
     {
         if (!builtin_algorithms[id].hash_length)
             return STATUS_NOT_SUPPORTED;
@@ -458,9 +454,9 @@ static NTSTATUS generic_alg_property( enum alg_id id, const WCHAR *prop, UCHAR *
         return STATUS_SUCCESS;
     }
 
-    if (!strcmpW( prop, BCRYPT_ALGORITHM_NAME ))
+    if (!wcscmp( prop, BCRYPT_ALGORITHM_NAME ))
     {
-        *ret_size = (strlenW(builtin_algorithms[id].name) + 1) * sizeof(WCHAR);
+        *ret_size = (lstrlenW(builtin_algorithms[id].name) + 1) * sizeof(WCHAR);
         if (size < *ret_size)
             return STATUS_BUFFER_TOO_SMALL;
         if(buf)
@@ -473,14 +469,14 @@ static NTSTATUS generic_alg_property( enum alg_id id, const WCHAR *prop, UCHAR *
 
 static NTSTATUS get_aes_property( enum mode_id mode, const WCHAR *prop, UCHAR *buf, ULONG size, ULONG *ret_size )
 {
-    if (!strcmpW( prop, BCRYPT_BLOCK_LENGTH ))
+    if (!wcscmp( prop, BCRYPT_BLOCK_LENGTH ))
     {
         *ret_size = sizeof(ULONG);
         if (size < sizeof(ULONG)) return STATUS_BUFFER_TOO_SMALL;
         if (buf) *(ULONG *)buf = BLOCK_LENGTH_AES;
         return STATUS_SUCCESS;
     }
-    if (!strcmpW( prop, BCRYPT_CHAINING_MODE ))
+    if (!wcscmp( prop, BCRYPT_CHAINING_MODE ))
     {
         const WCHAR *str;
         switch (mode)
@@ -493,10 +489,10 @@ static NTSTATUS get_aes_property( enum mode_id mode, const WCHAR *prop, UCHAR *b
 
         *ret_size = 64;
         if (size < *ret_size) return STATUS_BUFFER_TOO_SMALL;
-        memcpy( buf, str, (strlenW(str) + 1) * sizeof(WCHAR) );
+        memcpy( buf, str, (lstrlenW(str) + 1) * sizeof(WCHAR) );
         return STATUS_SUCCESS;
     }
-    if (!strcmpW( prop, BCRYPT_KEY_LENGTHS ))
+    if (!wcscmp( prop, BCRYPT_KEY_LENGTHS ))
     {
         BCRYPT_KEY_LENGTHS_STRUCT *key_lengths = (void *)buf;
         *ret_size = sizeof(*key_lengths);
@@ -509,7 +505,7 @@ static NTSTATUS get_aes_property( enum mode_id mode, const WCHAR *prop, UCHAR *b
         }
         return STATUS_SUCCESS;
     }
-    if (!strcmpW( prop, BCRYPT_AUTH_TAG_LENGTH ))
+    if (!wcscmp( prop, BCRYPT_AUTH_TAG_LENGTH ))
     {
         BCRYPT_AUTH_TAG_LENGTHS_STRUCT *tag_length = (void *)buf;
         if (mode != MODE_ID_GCM) return STATUS_NOT_SUPPORTED;
@@ -530,7 +526,7 @@ static NTSTATUS get_aes_property( enum mode_id mode, const WCHAR *prop, UCHAR *b
 
 static NTSTATUS get_rsa_property( enum mode_id mode, const WCHAR *prop, UCHAR *buf, ULONG size, ULONG *ret_size )
 {
-    if (!strcmpW( prop, BCRYPT_PADDING_SCHEMES ))
+    if (!wcscmp( prop, BCRYPT_PADDING_SCHEMES ))
     {
         *ret_size = sizeof(ULONG);
         if (size < sizeof(ULONG)) return STATUS_BUFFER_TOO_SMALL;
@@ -544,7 +540,7 @@ static NTSTATUS get_rsa_property( enum mode_id mode, const WCHAR *prop, UCHAR *b
 
 static NTSTATUS get_dsa_property( enum mode_id mode, const WCHAR *prop, UCHAR *buf, ULONG size, ULONG *ret_size )
 {
-    if (!strcmpW( prop, BCRYPT_PADDING_SCHEMES )) return STATUS_NOT_SUPPORTED;
+    if (!wcscmp( prop, BCRYPT_PADDING_SCHEMES )) return STATUS_NOT_SUPPORTED;
     FIXME( "unsupported property %s\n", debugstr_w(prop) );
     return STATUS_NOT_IMPLEMENTED;
 }
@@ -582,19 +578,19 @@ static NTSTATUS set_alg_property( struct algorithm *alg, const WCHAR *prop, UCHA
     switch (alg->id)
     {
     case ALG_ID_AES:
-        if (!strcmpW( prop, BCRYPT_CHAINING_MODE ))
+        if (!wcscmp( prop, BCRYPT_CHAINING_MODE ))
         {
-            if (!strcmpW( (WCHAR *)value, BCRYPT_CHAIN_MODE_ECB ))
+            if (!wcscmp( (WCHAR *)value, BCRYPT_CHAIN_MODE_ECB ))
             {
                 alg->mode = MODE_ID_ECB;
                 return STATUS_SUCCESS;
             }
-            else if (!strcmpW( (WCHAR *)value, BCRYPT_CHAIN_MODE_CBC ))
+            else if (!wcscmp( (WCHAR *)value, BCRYPT_CHAIN_MODE_CBC ))
             {
                 alg->mode = MODE_ID_CBC;
                 return STATUS_SUCCESS;
             }
-            else if (!strcmpW( (WCHAR *)value, BCRYPT_CHAIN_MODE_GCM ))
+            else if (!wcscmp( (WCHAR *)value, BCRYPT_CHAIN_MODE_GCM ))
             {
                 alg->mode = MODE_ID_GCM;
                 return STATUS_SUCCESS;
@@ -629,7 +625,7 @@ static NTSTATUS get_key_property( const struct key *key, const WCHAR *prop, UCHA
     switch (key->alg_id)
     {
     case ALG_ID_AES:
-        if (!strcmpW( prop, BCRYPT_AUTH_TAG_LENGTH )) return STATUS_NOT_SUPPORTED;
+        if (!wcscmp( prop, BCRYPT_AUTH_TAG_LENGTH )) return STATUS_NOT_SUPPORTED;
         return get_aes_property( key->u.s.mode, prop, buf, size, ret_size );
 
     default:
@@ -934,7 +930,7 @@ static NTSTATUS key_import( BCRYPT_ALG_HANDLE algorithm, const WCHAR *type, BCRY
 {
     ULONG len;
 
-    if (!strcmpW( type, BCRYPT_KEY_DATA_BLOB ))
+    if (!wcscmp( type, BCRYPT_KEY_DATA_BLOB ))
     {
         BCRYPT_KEY_DATA_BLOB_HEADER *header = (BCRYPT_KEY_DATA_BLOB_HEADER *)input;
 
@@ -950,7 +946,7 @@ static NTSTATUS key_import( BCRYPT_ALG_HANDLE algorithm, const WCHAR *type, BCRY
 
         return BCryptGenerateSymmetricKey( algorithm, key, object, object_len, (UCHAR *)&header[1], len, 0 );
     }
-    else if (!strcmpW( type, BCRYPT_OPAQUE_KEY_BLOB ))
+    else if (!wcscmp( type, BCRYPT_OPAQUE_KEY_BLOB ))
     {
         if (input_len < sizeof(len)) return STATUS_BUFFER_TOO_SMALL;
         len = *(ULONG *)input;
@@ -965,7 +961,7 @@ static NTSTATUS key_import( BCRYPT_ALG_HANDLE algorithm, const WCHAR *type, BCRY
 
 static NTSTATUS key_export( struct key *key, const WCHAR *type, UCHAR *output, ULONG output_len, ULONG *size )
 {
-    if (!strcmpW( type, BCRYPT_KEY_DATA_BLOB ))
+    if (!wcscmp( type, BCRYPT_KEY_DATA_BLOB ))
     {
         BCRYPT_KEY_DATA_BLOB_HEADER *header = (BCRYPT_KEY_DATA_BLOB_HEADER *)output;
         ULONG req_size = sizeof(BCRYPT_KEY_DATA_BLOB_HEADER) + key->u.s.secret_len;
@@ -979,7 +975,7 @@ static NTSTATUS key_export( struct key *key, const WCHAR *type, UCHAR *output, U
         memcpy( &header[1], key->u.s.secret, key->u.s.secret_len );
         return STATUS_SUCCESS;
     }
-    else if (!strcmpW( type, BCRYPT_OPAQUE_KEY_BLOB ))
+    else if (!wcscmp( type, BCRYPT_OPAQUE_KEY_BLOB ))
     {
         ULONG len, req_size = sizeof(len) + key->u.s.secret_len;
 
@@ -990,8 +986,8 @@ static NTSTATUS key_export( struct key *key, const WCHAR *type, UCHAR *output, U
         memcpy( output + sizeof(len), key->u.s.secret, key->u.s.secret_len );
         return STATUS_SUCCESS;
     }
-    else if (!strcmpW( type, BCRYPT_RSAPUBLIC_BLOB ) || !strcmpW( type, BCRYPT_DSA_PUBLIC_BLOB ) ||
-             !strcmpW( type, BCRYPT_ECCPUBLIC_BLOB ))
+    else if (!wcscmp( type, BCRYPT_RSAPUBLIC_BLOB ) || !wcscmp( type, BCRYPT_DSA_PUBLIC_BLOB ) ||
+             !wcscmp( type, BCRYPT_ECCPUBLIC_BLOB ))
     {
         *size = key->u.a.pubkey_len;
         if (output_len < key->u.a.pubkey_len) return STATUS_SUCCESS;
@@ -999,11 +995,11 @@ static NTSTATUS key_export( struct key *key, const WCHAR *type, UCHAR *output, U
         memcpy( output, key->u.a.pubkey, key->u.a.pubkey_len );
         return STATUS_SUCCESS;
     }
-    else if (!strcmpW( type, BCRYPT_ECCPRIVATE_BLOB ))
+    else if (!wcscmp( type, BCRYPT_ECCPRIVATE_BLOB ))
     {
         return key_funcs->key_export_ecc( key, output, output_len, size );
     }
-    else if (!strcmpW( type, LEGACY_DSA_V2_PRIVATE_BLOB ))
+    else if (!wcscmp( type, LEGACY_DSA_V2_PRIVATE_BLOB ))
     {
         return key_funcs->key_export_dsa_capi( key, output, output_len, size );
     }
@@ -1198,7 +1194,7 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
     struct key *key;
     NTSTATUS status;
 
-    if (!strcmpW( type, BCRYPT_ECCPUBLIC_BLOB ))
+    if (!wcscmp( type, BCRYPT_ECCPUBLIC_BLOB ))
     {
         BCRYPT_ECCKEY_BLOB *ecc_blob = (BCRYPT_ECCKEY_BLOB *)input;
         DWORD key_size, magic, size;
@@ -1234,7 +1230,7 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
         size = sizeof(*ecc_blob) + ecc_blob->cbKey * 2;
         return key_asymmetric_create( (struct key **)ret_key, alg, key_size * 8, (BYTE *)ecc_blob, size );
     }
-    else if (!strcmpW( type, BCRYPT_ECCPRIVATE_BLOB ))
+    else if (!wcscmp( type, BCRYPT_ECCPRIVATE_BLOB ))
     {
         BCRYPT_ECCKEY_BLOB *ecc_blob = (BCRYPT_ECCKEY_BLOB *)input;
         DWORD key_size, magic;
@@ -1271,7 +1267,7 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
         *ret_key = key;
         return STATUS_SUCCESS;
     }
-    else if (!strcmpW( type, BCRYPT_RSAPUBLIC_BLOB ))
+    else if (!wcscmp( type, BCRYPT_RSAPUBLIC_BLOB ))
     {
         BCRYPT_RSAKEY_BLOB *rsa_blob = (BCRYPT_RSAKEY_BLOB *)input;
         ULONG size;
@@ -1283,7 +1279,7 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
         size = sizeof(*rsa_blob) + rsa_blob->cbPublicExp + rsa_blob->cbModulus;
         return key_asymmetric_create( (struct key **)ret_key, alg, rsa_blob->BitLength, (BYTE *)rsa_blob, size );
     }
-    else if (!strcmpW( type, BCRYPT_DSA_PUBLIC_BLOB ))
+    else if (!wcscmp( type, BCRYPT_DSA_PUBLIC_BLOB ))
     {
         BCRYPT_DSA_KEY_BLOB *dsa_blob = (BCRYPT_DSA_KEY_BLOB *)input;
         ULONG size;
@@ -1295,7 +1291,7 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
         size = sizeof(*dsa_blob) + dsa_blob->cbKey * 3;
         return key_asymmetric_create( (struct key **)ret_key, alg, dsa_blob->cbKey * 8, (BYTE *)dsa_blob, size );
     }
-    else if (!strcmpW( type, LEGACY_DSA_V2_PRIVATE_BLOB ))
+    else if (!wcscmp( type, LEGACY_DSA_V2_PRIVATE_BLOB ))
     {
         BLOBHEADER *hdr = (BLOBHEADER *)input;
         DSSPUBKEY *pubkey;
