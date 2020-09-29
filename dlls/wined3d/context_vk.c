@@ -2048,8 +2048,7 @@ static bool wined3d_context_vk_update_graphics_pipeline_key(struct wined3d_conte
             {
                 key->ds_desc.front.failOp = vk_stencil_op_from_wined3d(d->desc.front.fail_op);
                 key->ds_desc.front.passOp = vk_stencil_op_from_wined3d(d->desc.front.pass_op);
-                key->ds_desc.front.depthFailOp = vk_stencil_op_from_wined3d(
-                        state->render_states[WINED3D_RS_STENCILZFAIL]);
+                key->ds_desc.front.depthFailOp = vk_stencil_op_from_wined3d(d->desc.front.depth_fail_op);
                 key->ds_desc.front.compareOp = vk_compare_op_from_wined3d(d->desc.front.func);
                 key->ds_desc.front.compareMask = d->desc.stencil_read_mask;
                 key->ds_desc.front.writeMask = d->desc.stencil_write_mask;
@@ -2058,21 +2057,12 @@ static bool wined3d_context_vk_update_graphics_pipeline_key(struct wined3d_conte
 
                 key->ds_desc.back.failOp = vk_stencil_op_from_wined3d(d->desc.back.fail_op);
                 key->ds_desc.back.passOp = vk_stencil_op_from_wined3d(d->desc.back.pass_op);
+                key->ds_desc.back.depthFailOp = vk_stencil_op_from_wined3d(d->desc.back.depth_fail_op);
                 key->ds_desc.back.compareOp = vk_compare_op_from_wined3d(d->desc.back.func);
                 key->ds_desc.back.compareMask = d->desc.stencil_read_mask;
                 key->ds_desc.back.writeMask = d->desc.stencil_write_mask;
                 key->ds_desc.back.reference = state->render_states[WINED3D_RS_STENCILREF]
                         & ((1 << state->fb.depth_stencil->format->stencil_size) - 1);
-
-                if (state->render_states[WINED3D_RS_TWOSIDEDSTENCILMODE])
-                {
-                    key->ds_desc.back.depthFailOp = vk_stencil_op_from_wined3d(
-                            state->render_states[WINED3D_RS_BACK_STENCILZFAIL]);
-                }
-                else
-                {
-                    key->ds_desc.back = key->ds_desc.front;
-                }
             }
         }
         else

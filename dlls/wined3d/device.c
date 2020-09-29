@@ -3688,12 +3688,14 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
                 case WINED3D_RS_BACK_STENCILFAIL:
                 case WINED3D_RS_BACK_STENCILFUNC:
                 case WINED3D_RS_BACK_STENCILPASS:
+                case WINED3D_RS_BACK_STENCILZFAIL:
                 case WINED3D_RS_STENCILENABLE:
                 case WINED3D_RS_STENCILFAIL:
                 case WINED3D_RS_STENCILFUNC:
                 case WINED3D_RS_STENCILMASK:
                 case WINED3D_RS_STENCILPASS:
                 case WINED3D_RS_STENCILWRITEMASK:
+                case WINED3D_RS_STENCILZFAIL:
                 case WINED3D_RS_TWOSIDEDSTENCILMODE:
                 case WINED3D_RS_ZENABLE:
                 case WINED3D_RS_ZWRITEENABLE:
@@ -3855,12 +3857,14 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
         desc.stencil_read_mask = state->rs[WINED3D_RS_STENCILMASK];
         desc.stencil_write_mask = state->rs[WINED3D_RS_STENCILWRITEMASK];
         desc.front.fail_op = state->rs[WINED3D_RS_STENCILFAIL];
+        desc.front.depth_fail_op = state->rs[WINED3D_RS_STENCILZFAIL];
         desc.front.pass_op = state->rs[WINED3D_RS_STENCILPASS];
         desc.front.func = state->rs[WINED3D_RS_STENCILFUNC];
 
         if (state->rs[WINED3D_RS_TWOSIDEDSTENCILMODE])
         {
             desc.back.fail_op = state->rs[WINED3D_RS_BACK_STENCILFAIL];
+            desc.back.depth_fail_op = state->rs[WINED3D_RS_BACK_STENCILZFAIL];
             desc.back.pass_op = state->rs[WINED3D_RS_BACK_STENCILPASS];
             desc.back.func = state->rs[WINED3D_RS_BACK_STENCILFUNC];
         }

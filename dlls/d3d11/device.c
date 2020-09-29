@@ -733,7 +733,6 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_OMSetDepthStencilState(ID3
         ID3D11DepthStencilState *depth_stencil_state, UINT stencil_ref)
 {
     struct d3d_device *device = device_from_immediate_ID3D11DeviceContext1(iface);
-    const D3D11_DEPTH_STENCILOP_DESC *front, *back;
     struct d3d_depthstencil_state *state_impl;
     const D3D11_DEPTH_STENCIL_DESC *desc;
 
@@ -753,30 +752,12 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_OMSetDepthStencilState(ID3
     wined3d_device_set_depth_stencil_state(device->wined3d_device, state_impl->wined3d_state);
     desc = &state_impl->desc;
 
-    front = &desc->FrontFace;
-    back = &desc->BackFace;
-
     if (desc->DepthEnable)
         wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_ZFUNC, desc->DepthFunc);
 
     if (desc->StencilEnable)
     {
         wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_STENCILREF, stencil_ref);
-
-        wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_STENCILZFAIL, front->StencilDepthFailOp);
-        if (front->StencilFailOp != back->StencilFailOp
-                || front->StencilDepthFailOp != back->StencilDepthFailOp
-                || front->StencilPassOp != back->StencilPassOp
-                || front->StencilFunc != back->StencilFunc)
-        {
-            wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_TWOSIDEDSTENCILMODE, TRUE);
-            wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_BACK_STENCILZFAIL,
-                    back->StencilDepthFailOp);
-        }
-        else
-        {
-            wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_TWOSIDEDSTENCILMODE, FALSE);
-        }
     }
     wined3d_mutex_unlock();
 }
