@@ -886,12 +886,12 @@ static NTSTATUS key_asymmetric_create( struct key **ret_key, struct algorithm *a
     return STATUS_SUCCESS;
 }
 
-#if defined(HAVE_GNUTLS_CIPHER_INIT) || defined(HAVE_COMMONCRYPTO_COMMONCRYPTOR_H) && MAC_OS_X_VERSION_MAX_ALLOWED >= 1080
-BOOL key_is_symmetric( struct key *key )
+static BOOL key_is_symmetric( struct key *key )
 {
     return builtin_algorithms[key->alg_id].class == BCRYPT_CIPHER_INTERFACE;
 }
 
+#if defined(HAVE_GNUTLS_CIPHER_INIT) || defined(HAVE_COMMONCRYPTO_COMMONCRYPTOR_H) && MAC_OS_X_VERSION_MAX_ALLOWED >= 1080
 static BOOL is_zero_vector( const UCHAR *vector, ULONG len )
 {
     ULONG i;
@@ -1335,12 +1335,6 @@ NTSTATUS key_symmetric_init( struct key *key )
     return STATUS_NOT_IMPLEMENTED;
 }
 
-BOOL key_is_symmetric( struct key *key )
-{
-    ERR( "support for keys not available at build time\n" );
-    return FALSE;
-}
-
 NTSTATUS key_set_property( struct key *key, const WCHAR *prop, UCHAR *value, ULONG size, ULONG flags )
 {
     ERR( "support for keys not available at build time\n" );
@@ -1392,10 +1386,14 @@ static NTSTATUS key_export( struct key *key, const WCHAR *type, UCHAR *output, U
     return STATUS_NOT_IMPLEMENTED;
 }
 
-NTSTATUS key_destroy( struct key *key )
+void key_symmetric_destroy( struct key *key )
 {
     ERR( "support for keys not available at build time\n" );
-    return STATUS_NOT_IMPLEMENTED;
+}
+
+void key_asymmetric_destroy( struct key *key )
+{
+    ERR( "support for keys not available at build time\n" );
 }
 
 static NTSTATUS key_encrypt( struct key *key,  UCHAR *input, ULONG input_len, void *padding, UCHAR *iv,
@@ -1628,8 +1626,20 @@ NTSTATUS WINAPI BCryptDestroyKey( BCRYPT_KEY_HANDLE handle )
     TRACE( "%p\n", handle );
 
     if (!key || key->hdr.magic != MAGIC_KEY) return STATUS_INVALID_HANDLE;
+    if (key_is_symmetric( key ))
+    {
+        key_symmetric_destroy( key );
+        heap_free( key->u.s.vector );
+        heap_free( key->u.s.secret );
+    }
+    else
+    {
+        key_asymmetric_destroy( key );
+        heap_free( key->u.a.pubkey );
+    }
     key->hdr.magic = 0;
-    return key_destroy( key );
+    heap_free( key );
+    return STATUS_SUCCESS;
 }
 
 NTSTATUS WINAPI BCryptEncrypt( BCRYPT_KEY_HANDLE handle, UCHAR *input, ULONG input_len, void *padding, UCHAR *iv,

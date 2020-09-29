@@ -184,6 +184,12 @@ NTSTATUS key_symmetric_get_tag( struct key *key, UCHAR *tag, ULONG len )
     return STATUS_NOT_IMPLEMENTED;
 }
 
+void key_symmetric_destroy( struct key *key )
+{
+    if (key->u.s.ref_encrypt) CCCryptorRelease( key->u.s.ref_encrypt );
+    if (key->u.s.ref_decrypt) CCCryptorRelease( key->u.s.ref_decrypt );
+}
+
 NTSTATUS key_asymmetric_init( struct key *key )
 {
     FIXME( "not implemented on Mac\n" );
@@ -234,13 +240,8 @@ NTSTATUS key_asymmetric_generate( struct key *key )
     return STATUS_NOT_IMPLEMENTED;
 }
 
-NTSTATUS key_destroy( struct key *key )
+void key_asymmetric_destroy( struct key *key )
 {
-    if (key->u.s.ref_encrypt) CCCryptorRelease( key->u.s.ref_encrypt );
-    if (key->u.s.ref_decrypt) CCCryptorRelease( key->u.s.ref_decrypt );
-    heap_free( key->u.s.vector );
-    heap_free( key->u.s.secret );
-    heap_free( key );
-    return STATUS_SUCCESS;
+    FIXME( "not implemented on Mac\n" );
 }
 #endif

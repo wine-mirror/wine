@@ -593,6 +593,11 @@ NTSTATUS key_symmetric_get_tag( struct key *key, UCHAR *tag, ULONG len )
     return STATUS_SUCCESS;
 }
 
+void key_symmetric_destroy( struct key *key )
+{
+    if (key->u.s.handle) pgnutls_cipher_deinit( key->u.s.handle );
+}
+
 static NTSTATUS export_gnutls_pubkey_rsa( gnutls_privkey_t gnutls_key, ULONG bitlen, UCHAR **pubkey, ULONG *pubkey_len )
 {
     BCRYPT_RSAKEY_BLOB *rsa_blob;
@@ -1543,20 +1548,8 @@ NTSTATUS key_asymmetric_sign( struct key *key, void *padding, UCHAR *input, ULON
     return status;
 }
 
-NTSTATUS key_destroy( struct key *key )
+void key_asymmetric_destroy( struct key *key )
 {
-    if (key_is_symmetric( key ))
-    {
-        if (key->u.s.handle) pgnutls_cipher_deinit( key->u.s.handle );
-        heap_free( key->u.s.vector );
-        heap_free( key->u.s.secret );
-    }
-    else
-    {
-        if (key->u.a.handle) pgnutls_privkey_deinit( key->u.a.handle );
-        heap_free( key->u.a.pubkey );
-    }
-    heap_free( key );
-    return STATUS_SUCCESS;
+    if (key->u.a.handle) pgnutls_privkey_deinit( key->u.a.handle );
 }
 #endif
