@@ -2989,6 +2989,8 @@ static void query_internal_format(struct wined3d_adapter *adapter,
                 WINED3DFMT_FLAG_VTF, "vertex texture usage");
         query_format_flag(gl_info, format, format->internal, GL_FILTER,
                 WINED3DFMT_FLAG_FILTERING, "filtering");
+        query_format_flag(gl_info, format, format->internal, GL_SHADER_IMAGE_STORE,
+                WINED3DFMT_FLAG_UNORDERED_ACCESS, "unordered access");
 
         if (srgb_format || format->srgb_internal != format->internal)
         {
@@ -4182,6 +4184,10 @@ static void init_vulkan_format_info(struct wined3d_format_vk *format,
     if (texture_flags & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT)
     {
         flags |= WINED3DFMT_FLAG_FILTERING;
+    }
+    if (texture_flags & VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT)
+    {
+        flags |= WINED3DFMT_FLAG_UNORDERED_ACCESS;
     }
 
     format->f.flags[WINED3D_GL_RES_TYPE_TEX_1D] |= flags;
