@@ -862,9 +862,22 @@ static NTSTATUS key_asymmetric_create( struct key **ret_key, struct algorithm *a
 
     if (!(key = heap_alloc_zero( sizeof(*key) ))) return STATUS_NO_MEMORY;
     key->hdr.magic  = MAGIC_KEY;
+    key->alg_id     = alg->id;
+    key->u.a.bitlen = bitlen;
 
-    if ((status = key_asymmetric_init( key, alg, bitlen, pubkey, pubkey_len )))
+    if (pubkey_len)
     {
+        if (!(key->u.a.pubkey = heap_alloc( pubkey_len )))
+        {
+            heap_free( key );
+            return STATUS_NO_MEMORY;
+        }
+        memcpy( key->u.a.pubkey, pubkey, pubkey_len );
+        key->u.a.pubkey_len = pubkey_len;
+    }
+    if ((status = key_asymmetric_init( key )))
+    {
+        heap_free( key->u.a.pubkey );
         heap_free( key );
         return status;
     }
@@ -1321,8 +1334,7 @@ static NTSTATUS key_duplicate( struct key *key_orig, struct key *key_copy )
     return STATUS_NOT_IMPLEMENTED;
 }
 
-NTSTATUS key_asymmetric_init( struct key *key, struct algorithm *alg, ULONG bitlen, const UCHAR *pubkey,
-                              ULONG pubkey_len )
+NTSTATUS key_asymmetric_init( struct key *key )
 {
     ERR( "support for keys not available at build time\n" );
     return STATUS_NOT_IMPLEMENTED;

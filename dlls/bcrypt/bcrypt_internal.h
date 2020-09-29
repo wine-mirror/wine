@@ -229,6 +229,13 @@ struct key_symmetric
     enum mode_id mode;
 };
 
+struct key_asymmetric
+{
+    ULONG             bitlen;     /* ignored for ECC keys */
+    UCHAR            *pubkey;
+    ULONG             pubkey_len;
+};
+
 struct key
 {
     struct object hdr;
@@ -236,6 +243,7 @@ struct key
     union
     {
         struct key_symmetric s;
+        struct key_asymmetric a;
     } u;
 };
 #endif
@@ -254,7 +262,7 @@ NTSTATUS key_symmetric_set_auth_data( struct key *, UCHAR *, ULONG ) DECLSPEC_HI
 NTSTATUS key_symmetric_encrypt( struct key *, const UCHAR *, ULONG, UCHAR *, ULONG ) DECLSPEC_HIDDEN;
 NTSTATUS key_symmetric_decrypt( struct key *, const UCHAR *, ULONG, UCHAR *, ULONG ) DECLSPEC_HIDDEN;
 NTSTATUS key_symmetric_get_tag( struct key *, UCHAR *, ULONG ) DECLSPEC_HIDDEN;
-NTSTATUS key_asymmetric_init( struct key *, struct algorithm *, ULONG, const UCHAR *, ULONG ) DECLSPEC_HIDDEN;
+NTSTATUS key_asymmetric_init( struct key * ) DECLSPEC_HIDDEN;
 NTSTATUS key_asymmetric_generate( struct key * ) DECLSPEC_HIDDEN;
 NTSTATUS key_asymmetric_sign( struct key *, void *, UCHAR *, ULONG, UCHAR *, ULONG, ULONG *, ULONG ) DECLSPEC_HIDDEN;
 NTSTATUS key_asymmetric_verify( struct key *, void *, UCHAR *, ULONG, UCHAR *, ULONG, DWORD ) DECLSPEC_HIDDEN;

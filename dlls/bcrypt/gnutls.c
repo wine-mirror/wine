@@ -1121,12 +1121,11 @@ NTSTATUS key_import_dsa_capi( struct key *key, UCHAR *buf, ULONG len )
     return STATUS_SUCCESS;
 }
 
-NTSTATUS key_asymmetric_init( struct key *key, struct algorithm *alg, ULONG bitlen, const UCHAR *pubkey,
-                              ULONG pubkey_len )
+NTSTATUS key_asymmetric_init( struct key *key )
 {
     if (!libgnutls_handle) return STATUS_INTERNAL_ERROR;
 
-    switch (alg->id)
+    switch (key->alg_id)
     {
     case ALG_ID_ECDH_P256:
     case ALG_ID_ECDSA_P256:
@@ -1134,23 +1133,12 @@ NTSTATUS key_asymmetric_init( struct key *key, struct algorithm *alg, ULONG bitl
     case ALG_ID_RSA:
     case ALG_ID_RSA_SIGN:
     case ALG_ID_DSA:
-        break;
+        return STATUS_SUCCESS;
 
     default:
-        FIXME( "algorithm %u not supported\n", alg->id );
+        FIXME( "algorithm %u not supported\n", key->alg_id );
         return STATUS_NOT_SUPPORTED;
     }
-
-    if (pubkey_len)
-    {
-        if (!(key->u.a.pubkey = heap_alloc( pubkey_len ))) return STATUS_NO_MEMORY;
-        memcpy( key->u.a.pubkey, pubkey, pubkey_len );
-        key->u.a.pubkey_len = pubkey_len;
-    }
-    key->alg_id     = alg->id;
-    key->u.a.bitlen = bitlen;
-
-    return STATUS_SUCCESS;
 }
 
 static NTSTATUS import_gnutls_pubkey_ecc( struct key *key, gnutls_pubkey_t *gnutls_key )
