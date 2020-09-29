@@ -2684,6 +2684,7 @@ static void test_EventLog(void)
     DWORD size;
     BOOL ret;
     QUERY_SERVICE_CONFIGA *config;
+    SERVICE_STATUS_PROCESS status;
 
     scm_handle = OpenSCManagerA(NULL, NULL, GENERIC_READ);
     ok(scm_handle != NULL, "OpenSCManager error %u\n", GetLastError());
@@ -2718,6 +2719,27 @@ todo_wine
        !strcmp(config->lpDisplayName, "Windows Event Log") /* Vista+ */, "got %s\n", config->lpDisplayName);
 
     HeapFree(GetProcessHeap(), 0, config);
+
+    memset(&status, 0, sizeof(status));
+    size = sizeof(status);
+    ret = QueryServiceStatusEx(svc_handle, SC_STATUS_PROCESS_INFO, (BYTE *)&status, size, &size);
+    ok(ret, "QueryServiceStatusEx error %u\n", GetLastError());
+    ok(status.dwServiceType == SERVICE_WIN32_SHARE_PROCESS ||
+       status.dwServiceType == (SERVICE_WIN32_SHARE_PROCESS | SERVICE_WIN32_OWN_PROCESS) /* Win10 */,
+       "got %#x\n", status.dwServiceType);
+    ok(status.dwCurrentState == SERVICE_RUNNING, "got %#x\n", status.dwCurrentState);
+todo_wine
+    ok(status.dwControlsAccepted == SERVICE_ACCEPT_SHUTDOWN /* XP */ ||
+       status.dwControlsAccepted == (SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN) /* 2008 */ ||
+       status.dwControlsAccepted == (SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_TIMECHANGE | SERVICE_ACCEPT_SHUTDOWN),
+       "got %#x\n", status.dwControlsAccepted);
+    ok(status.dwWin32ExitCode == 0, "got %#x\n", status.dwWin32ExitCode);
+    ok(status.dwServiceSpecificExitCode == 0, "got %#x\n", status.dwServiceSpecificExitCode);
+    ok(status.dwCheckPoint == 0, "got %#x\n", status.dwCheckPoint);
+    ok(status.dwWaitHint == 0, "got %#x\n", status.dwWaitHint);
+    ok(status.dwProcessId != 0, "got %#x\n", status.dwProcessId);
+    ok(status.dwServiceFlags == 0 || status.dwServiceFlags == SERVICE_RUNS_IN_SYSTEM_PROCESS /* XP */,
+       "got %#x\n", status.dwServiceFlags);
 
     CloseServiceHandle(svc_handle);
     CloseServiceHandle(scm_handle);

@@ -85,6 +85,8 @@ static const WCHAR SERVICES_FAILED_DATABASEW[] = { 'S','e','r','v','i','c','e','
 #define SERVICE_ACCEPT_POWEREVENT            0x00000040
 #define SERVICE_ACCEPT_SESSIONCHANGE         0x00000080
 #define SERVICE_ACCEPT_PRESHUTDOWN           0x00000100
+#define SERVICE_ACCEPT_TIMECHANGE            0x00000200
+#define SERVICE_ACCEPT_TRIGGEREVENT          0x00000400
 
 /* Service Control Manager Object access types */
 #define SC_MANAGER_CONNECT            0x0001
@@ -124,6 +126,7 @@ static const WCHAR SERVICES_FAILED_DATABASEW[] = { 'S','e','r','v','i','c','e','
 
 #define SERVICE_NO_CHANGE 0xffffffff
 
+#define SERVICE_RUNS_IN_SYSTEM_PROCESS 0x00000001
 
 /* Handle types */
 
