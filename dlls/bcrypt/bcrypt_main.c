@@ -854,6 +854,24 @@ NTSTATUS WINAPI BCryptHash( BCRYPT_ALG_HANDLE algorithm, UCHAR *secret, ULONG se
     return BCryptDestroyHash( handle );
 }
 
+static NTSTATUS key_asymmetric_create( struct key **ret_key, struct algorithm *alg, ULONG bitlen,
+                                       const UCHAR *pubkey, ULONG pubkey_len )
+{
+    struct key *key;
+    NTSTATUS status;
+
+    if (!(key = heap_alloc_zero( sizeof(*key) ))) return STATUS_NO_MEMORY;
+    key->hdr.magic  = MAGIC_KEY;
+
+    if ((status = key_asymmetric_init( key, alg, bitlen, pubkey, pubkey_len )))
+    {
+        heap_free( key );
+        return status;
+    }
+    *ret_key = key;
+    return STATUS_SUCCESS;
+}
+
 #if defined(HAVE_GNUTLS_CIPHER_INIT) || defined(HAVE_COMMONCRYPTO_COMMONCRYPTOR_H) && MAC_OS_X_VERSION_MAX_ALLOWED >= 1080
 BOOL key_is_symmetric( struct key *key )
 {
@@ -1175,18 +1193,8 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
         if (ecc_blob->cbKey != key_size || input_len < sizeof(*ecc_blob) + ecc_blob->cbKey * 2)
             return STATUS_INVALID_PARAMETER;
 
-        if (!(key = heap_alloc_zero( sizeof(*key) ))) return STATUS_NO_MEMORY;
-        key->hdr.magic = MAGIC_KEY;
-
         size = sizeof(*ecc_blob) + ecc_blob->cbKey * 2;
-        if ((status = key_asymmetric_init( key, alg, key_size * 8, (BYTE *)ecc_blob, size )))
-        {
-            heap_free( key );
-            return status;
-        }
-
-        *ret_key = key;
-        return STATUS_SUCCESS;
+        return key_asymmetric_create( (struct key **)ret_key, alg, key_size * 8, (BYTE *)ecc_blob, size );
     }
     else if (!strcmpW( type, BCRYPT_ECCPRIVATE_BLOB ))
     {
@@ -1215,17 +1223,10 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
         if (ecc_blob->cbKey != key_size || input_len < sizeof(*ecc_blob) + ecc_blob->cbKey * 3)
             return STATUS_INVALID_PARAMETER;
 
-        if (!(key = heap_alloc_zero( sizeof(*key) ))) return STATUS_NO_MEMORY;
-        key->hdr.magic = MAGIC_KEY;
-
-        if ((status = key_asymmetric_init( key, alg, key_size * 8, NULL, 0 )))
-        {
-            heap_free( key );
-            return status;
-        }
+        if ((status = key_asymmetric_create( &key, alg, key_size * 8, NULL, 0 ))) return status;
         if ((status = key_import_ecc( key, input, input_len )))
         {
-            heap_free( key );
+            BCryptDestroyKey( key );
             return status;
         }
 
@@ -1241,18 +1242,8 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
         if ((alg->id != ALG_ID_RSA && alg->id != ALG_ID_RSA_SIGN) || rsa_blob->Magic != BCRYPT_RSAPUBLIC_MAGIC)
             return STATUS_NOT_SUPPORTED;
 
-        if (!(key = heap_alloc_zero( sizeof(*key) ))) return STATUS_NO_MEMORY;
-        key->hdr.magic = MAGIC_KEY;
-
         size = sizeof(*rsa_blob) + rsa_blob->cbPublicExp + rsa_blob->cbModulus;
-        if ((status = key_asymmetric_init( key, alg, rsa_blob->BitLength, (BYTE *)rsa_blob, size )))
-        {
-            heap_free( key );
-            return status;
-        }
-
-        *ret_key = key;
-        return STATUS_SUCCESS;
+        return key_asymmetric_create( (struct key **)ret_key, alg, rsa_blob->BitLength, (BYTE *)rsa_blob, size );
     }
     else if (!strcmpW( type, BCRYPT_DSA_PUBLIC_BLOB ))
     {
@@ -1263,18 +1254,8 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
         if ((alg->id != ALG_ID_DSA) || dsa_blob->dwMagic != BCRYPT_DSA_PUBLIC_MAGIC)
             return STATUS_NOT_SUPPORTED;
 
-        if (!(key = heap_alloc_zero( sizeof(*key) ))) return STATUS_NO_MEMORY;
-        key->hdr.magic = MAGIC_KEY;
-
         size = sizeof(*dsa_blob) + dsa_blob->cbKey * 3;
-        if ((status = key_asymmetric_init( key, alg, dsa_blob->cbKey * 8, (BYTE *)dsa_blob, size )))
-        {
-            heap_free( key );
-            return status;
-        }
-
-        *ret_key = key;
-        return STATUS_SUCCESS;
+        return key_asymmetric_create( (struct key **)ret_key, alg, dsa_blob->cbKey * 8, (BYTE *)dsa_blob, size );
     }
     else if (!strcmpW( type, LEGACY_DSA_V2_PRIVATE_BLOB ))
     {
@@ -1301,17 +1282,10 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
         if (input_len < sizeof(*hdr) + sizeof(*pubkey) + (pubkey->bitlen / 8) * 2 + 40 + sizeof(DSSSEED))
             return STATUS_INVALID_PARAMETER;
 
-        if (!(key = heap_alloc_zero( sizeof(*key) ))) return STATUS_NO_MEMORY;
-        key->hdr.magic = MAGIC_KEY;
-
-        if ((status = key_asymmetric_init( key, alg, pubkey->bitlen, NULL, 0 )))
-        {
-            heap_free( key );
-            return status;
-        }
+        if ((status = key_asymmetric_create( &key, alg, pubkey->bitlen, NULL, 0 ))) return status;
         if ((status = key_import_dsa_capi( key, input, input_len )))
         {
-            heap_free( key );
+            BCryptDestroyKey( key );
             return status;
         }
 
@@ -1465,17 +1439,8 @@ NTSTATUS WINAPI BCryptGenerateKeyPair( BCRYPT_ALG_HANDLE algorithm, BCRYPT_KEY_H
     if (!alg || alg->hdr.magic != MAGIC_ALG) return STATUS_INVALID_HANDLE;
     if (!handle) return STATUS_INVALID_PARAMETER;
 
-    if (!(key = heap_alloc_zero( sizeof(*key) ))) return STATUS_NO_MEMORY;
-    key->hdr.magic = MAGIC_KEY;
-
-    if ((status = key_asymmetric_init( key, alg, key_len, NULL, 0 )))
-    {
-        heap_free( key );
-        return status;
-    }
-
-    *handle = key;
-    return STATUS_SUCCESS;
+    if (!(status = key_asymmetric_create( &key, alg, key_len, NULL, 0 ))) *handle = key;
+    return status;
 }
 
 NTSTATUS WINAPI BCryptFinalizeKeyPair( BCRYPT_KEY_HANDLE handle, ULONG flags )
