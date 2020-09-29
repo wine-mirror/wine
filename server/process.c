@@ -502,7 +502,7 @@ static void start_sigkill_timer( struct process *process )
 
 /* create a new process */
 /* if the function fails the fd is closed */
-struct process *create_process( int fd, struct process *parent, int inherit_all,
+struct process *create_process( int fd, struct process *parent, int inherit_all, const startup_info_t *info,
                                 const struct security_descriptor *sd, const obj_handle_t *handles,
                                 unsigned int handle_count, struct token *token )
 {
@@ -576,8 +576,14 @@ struct process *create_process( int fd, struct process *parent, int inherit_all,
     }
     else
     {
+        obj_handle_t std_handles[3];
+
+        std_handles[0] = info->hstdin;
+        std_handles[1] = info->hstdout;
+        std_handles[2] = info->hstderr;
+
         process->parent_id = parent->id;
-        process->handles = inherit_all ? copy_handle_table( process, parent, handles, handle_count )
+        process->handles = inherit_all ? copy_handle_table( process, parent, handles, handle_count, std_handles )
                                        : alloc_handle_table( process, 0 );
         /* Note: for security reasons, starting a new process does not attempt
          * to use the current impersonation token for the new process */
@@ -1227,7 +1233,7 @@ DECL_HANDLER(new_process)
         goto done;
     }
 
-    if (!(process = create_process( socket_fd, parent, req->inherit_all, sd,
+    if (!(process = create_process( socket_fd, parent, req->inherit_all, info->data, sd,
                                     handles, req->handles_size / sizeof(*handles), token )))
         goto done;
 
@@ -1325,7 +1331,7 @@ DECL_HANDLER(exec_process)
         close( socket_fd );
         return;
     }
-    if (!(process = create_process( socket_fd, NULL, 0, NULL, NULL, 0, NULL ))) return;
+    if (!(process = create_process( socket_fd, NULL, 0, NULL, NULL, NULL, 0, NULL ))) return;
     create_thread( -1, process, NULL );
     release_object( process );
 }
