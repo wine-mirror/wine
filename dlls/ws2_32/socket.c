@@ -185,21 +185,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(winsock);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
-/* names of the protocols */
-static const WCHAR NameIpxW[]   = {'I', 'P', 'X', '\0'};
-static const WCHAR NameSpxW[]   = {'S', 'P', 'X', '\0'};
-static const WCHAR NameSpxIIW[] = {'S', 'P', 'X', ' ', 'I', 'I', '\0'};
-static const WCHAR NameTcpW[]   = {'T', 'C', 'P', '/', 'I', 'P', '\0'};
-static const WCHAR NameUdpW[]   = {'U', 'D', 'P', '/', 'I', 'P', '\0'};
-
-/* Taken from Win2k */
-static const GUID ProviderIdIP = { 0xe70f1aa0, 0xab8b, 0x11cf,
-                                   { 0x8c, 0xa3, 0x00, 0x80, 0x5f, 0x48, 0xa1, 0x92 } };
-static const GUID ProviderIdIPX = { 0x11058240, 0xbe47, 0x11cf,
-                                    { 0x95, 0xc8, 0x00, 0x80, 0x5f, 0x48, 0xa1, 0x92 } };
-static const GUID ProviderIdSPX = { 0x11058241, 0xbe47, 0x11cf,
-                                    { 0x95, 0xc8, 0x00, 0x80, 0x5f, 0x48, 0xa1, 0x92 } };
-
 static const WSAPROTOCOL_INFOW supported_protocols[] =
 {
     {
@@ -2304,149 +2289,13 @@ static INT WS_DuplicateSocket(BOOL unicode, SOCKET s, DWORD dwProcessId, LPWSAPR
     return 0;
 }
 
-/*****************************************************************************
- *          WS_EnterSingleProtocolW [internal]
- *
- *    enters the protocol information of one given protocol into the given
- *    buffer.
- *
- * RETURNS
- *    TRUE if a protocol was entered into the buffer.
- *
- * BUGS
- *    - only implemented for IPX, SPX, SPXII, TCP, UDP
- *    - there is no check that the operating system supports the returned
- *      protocols
- */
-static BOOL WS_EnterSingleProtocolW( INT protocol, WSAPROTOCOL_INFOW* info )
-{
-    memset( info, 0, sizeof(WSAPROTOCOL_INFOW) );
-    info->iProtocol = protocol;
-
-    switch (protocol)
-    {
-    case WS_IPPROTO_TCP:
-        info->dwServiceFlags1 = XP1_IFS_HANDLES | XP1_EXPEDITED_DATA |
-                                XP1_GRACEFUL_CLOSE | XP1_GUARANTEED_ORDER |
-                                XP1_GUARANTEED_DELIVERY;
-        info->ProviderId = ProviderIdIP;
-        info->dwCatalogEntryId = 0x3e9;
-        info->dwProviderFlags = PFL_MATCHES_PROTOCOL_ZERO;
-        info->ProtocolChain.ChainLen = 1;
-        info->iVersion = 2;
-        info->iAddressFamily = WS_AF_INET;
-        info->iMaxSockAddr = 0x10;
-        info->iMinSockAddr = 0x10;
-        info->iSocketType = WS_SOCK_STREAM;
-        strcpyW( info->szProtocol, NameTcpW );
-        break;
-
-    case WS_IPPROTO_UDP:
-        info->dwServiceFlags1 = XP1_IFS_HANDLES | XP1_SUPPORT_BROADCAST |
-                                XP1_SUPPORT_MULTIPOINT | XP1_MESSAGE_ORIENTED |
-                                XP1_CONNECTIONLESS;
-        info->ProviderId = ProviderIdIP;
-        info->dwCatalogEntryId = 0x3ea;
-        info->dwProviderFlags = PFL_MATCHES_PROTOCOL_ZERO;
-        info->ProtocolChain.ChainLen = 1;
-        info->iVersion = 2;
-        info->iAddressFamily = WS_AF_INET;
-        info->iMaxSockAddr = 0x10;
-        info->iMinSockAddr = 0x10;
-        info->iSocketType = WS_SOCK_DGRAM;
-        info->dwMessageSize = 0xffbb;
-        strcpyW( info->szProtocol, NameUdpW );
-        break;
-
-    case WS_NSPROTO_IPX:
-        info->dwServiceFlags1 = XP1_PARTIAL_MESSAGE | XP1_SUPPORT_BROADCAST |
-                                XP1_SUPPORT_MULTIPOINT | XP1_MESSAGE_ORIENTED |
-                                XP1_CONNECTIONLESS;
-        info->ProviderId = ProviderIdIPX;
-        info->dwCatalogEntryId = 0x406;
-        info->dwProviderFlags = PFL_MATCHES_PROTOCOL_ZERO;
-        info->ProtocolChain.ChainLen = 1;
-        info->iVersion = 2;
-        info->iAddressFamily = WS_AF_IPX;
-        info->iMaxSockAddr = 0x10;
-        info->iMinSockAddr = 0x0e;
-        info->iSocketType = WS_SOCK_DGRAM;
-        info->iProtocolMaxOffset = 0xff;
-        info->dwMessageSize = 0x240;
-        strcpyW( info->szProtocol, NameIpxW );
-        break;
-
-    case WS_NSPROTO_SPX:
-        info->dwServiceFlags1 = XP1_IFS_HANDLES | XP1_PSEUDO_STREAM |
-                                XP1_MESSAGE_ORIENTED | XP1_GUARANTEED_ORDER |
-                                XP1_GUARANTEED_DELIVERY;
-        info->ProviderId = ProviderIdSPX;
-        info->dwCatalogEntryId = 0x407;
-        info->dwProviderFlags = PFL_MATCHES_PROTOCOL_ZERO;
-        info->ProtocolChain.ChainLen = 1;
-        info->iVersion = 2;
-        info->iAddressFamily = WS_AF_IPX;
-        info->iMaxSockAddr = 0x10;
-        info->iMinSockAddr = 0x0e;
-        info->iSocketType = WS_SOCK_SEQPACKET;
-        info->dwMessageSize = 0xffffffff;
-        strcpyW( info->szProtocol, NameSpxW );
-        break;
-
-    case WS_NSPROTO_SPXII:
-        info->dwServiceFlags1 = XP1_IFS_HANDLES | XP1_GRACEFUL_CLOSE |
-                                XP1_PSEUDO_STREAM | XP1_MESSAGE_ORIENTED |
-                                XP1_GUARANTEED_ORDER | XP1_GUARANTEED_DELIVERY;
-        info->ProviderId = ProviderIdSPX;
-        info->dwCatalogEntryId = 0x409;
-        info->dwProviderFlags = PFL_MATCHES_PROTOCOL_ZERO;
-        info->ProtocolChain.ChainLen = 1;
-        info->iVersion = 2;
-        info->iAddressFamily = WS_AF_IPX;
-        info->iMaxSockAddr = 0x10;
-        info->iMinSockAddr = 0x0e;
-        info->iSocketType = WS_SOCK_SEQPACKET;
-        info->dwMessageSize = 0xffffffff;
-        strcpyW( info->szProtocol, NameSpxIIW );
-        break;
-
-    default:
-        FIXME("unknown Protocol <0x%08x>\n", protocol);
-        return FALSE;
-    }
-    return TRUE;
-}
-
-/*****************************************************************************
- *          WS_EnterSingleProtocolA [internal]
- *
- *    see function WS_EnterSingleProtocolW
- *
- */
-static BOOL WS_EnterSingleProtocolA( INT protocol, WSAPROTOCOL_INFOA* info )
-{
-    WSAPROTOCOL_INFOW infow;
-    INT ret;
-    memset( info, 0, sizeof(WSAPROTOCOL_INFOA) );
-
-    ret = WS_EnterSingleProtocolW( protocol, &infow );
-    if (ret)
-    {
-        /* convert the structure from W to A */
-        memcpy( info, &infow, FIELD_OFFSET( WSAPROTOCOL_INFOA, szProtocol ) );
-        WideCharToMultiByte( CP_ACP, 0, infow.szProtocol, -1,
-                             info->szProtocol, WSAPROTOCOL_LEN+1, NULL, NULL );
-    }
-
-    return ret;
-}
-
 static BOOL ws_protocol_info(SOCKET s, int unicode, WSAPROTOCOL_INFOW *buffer, int *size)
 {
     NTSTATUS status;
     int address_family;
     int socket_type;
     int protocol;
+    unsigned int i;
 
     *size = unicode ? sizeof(WSAPROTOCOL_INFOW) : sizeof(WSAPROTOCOL_INFOA);
     memset(buffer, 0, *size);
@@ -2471,14 +2320,28 @@ static BOOL ws_protocol_info(SOCKET s, int unicode, WSAPROTOCOL_INFOW *buffer, i
         return FALSE;
     }
 
-    if (unicode)
-        WS_EnterSingleProtocolW( protocol, buffer);
-    else
-        WS_EnterSingleProtocolA( protocol, (WSAPROTOCOL_INFOA *)buffer);
-    buffer->iAddressFamily = address_family;
-    buffer->iSocketType = socket_type;
-    buffer->iProtocol = protocol;
-
+    for (i = 0; i < ARRAY_SIZE(supported_protocols); ++i)
+    {
+        const WSAPROTOCOL_INFOW *info = &supported_protocols[i];
+        if (address_family == info->iAddressFamily &&
+            socket_type == info->iSocketType &&
+            protocol >= info->iProtocol && protocol <= info->iProtocol + info->iProtocolMaxOffset)
+        {
+            if (unicode)
+                *buffer = *info;
+            else
+            {
+                WSAPROTOCOL_INFOA *bufferA = (WSAPROTOCOL_INFOA *)buffer;
+                memcpy( bufferA, info, offsetof( WSAPROTOCOL_INFOW, szProtocol ) );
+                WideCharToMultiByte( CP_ACP, 0, info->szProtocol, -1,
+                                     bufferA->szProtocol, sizeof(bufferA->szProtocol), NULL, NULL );
+            }
+            buffer->iProtocol = protocol;
+            return TRUE;
+        }
+    }
+    FIXME("Could not fill protocol information for family %d, type %d, protocol %d.\n",
+            address_family, socket_type, protocol);
     return TRUE;
 }
 
