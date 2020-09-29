@@ -2050,10 +2050,16 @@ static bool wined3d_context_vk_update_graphics_pipeline_key(struct wined3d_conte
                 key->ds_desc.front.passOp = vk_stencil_op_from_wined3d(state->render_states[WINED3D_RS_STENCILPASS]);
                 key->ds_desc.front.depthFailOp = vk_stencil_op_from_wined3d(
                         state->render_states[WINED3D_RS_STENCILZFAIL]);
-                key->ds_desc.front.compareOp = vk_compare_op_from_wined3d(state->render_states[WINED3D_RS_STENCILFUNC]);
+                key->ds_desc.front.compareOp = vk_compare_op_from_wined3d(d->desc.front.func);
                 key->ds_desc.front.compareMask = d->desc.stencil_read_mask;
                 key->ds_desc.front.writeMask = d->desc.stencil_write_mask;
                 key->ds_desc.front.reference = state->render_states[WINED3D_RS_STENCILREF]
+                        & ((1 << state->fb.depth_stencil->format->stencil_size) - 1);
+
+                key->ds_desc.back.compareOp = vk_compare_op_from_wined3d(d->desc.back.func);
+                key->ds_desc.back.compareMask = d->desc.stencil_read_mask;
+                key->ds_desc.back.writeMask = d->desc.stencil_write_mask;
+                key->ds_desc.back.reference = state->render_states[WINED3D_RS_STENCILREF]
                         & ((1 << state->fb.depth_stencil->format->stencil_size) - 1);
 
                 if (state->render_states[WINED3D_RS_TWOSIDEDSTENCILMODE])
@@ -2064,12 +2070,6 @@ static bool wined3d_context_vk_update_graphics_pipeline_key(struct wined3d_conte
                             state->render_states[WINED3D_RS_BACK_STENCILPASS]);
                     key->ds_desc.back.depthFailOp = vk_stencil_op_from_wined3d(
                             state->render_states[WINED3D_RS_BACK_STENCILZFAIL]);
-                    key->ds_desc.back.compareOp = vk_compare_op_from_wined3d(
-                            state->render_states[WINED3D_RS_BACK_STENCILFUNC]);
-                    key->ds_desc.back.compareMask = d->desc.stencil_read_mask;
-                    key->ds_desc.back.writeMask = d->desc.stencil_write_mask;
-                    key->ds_desc.back.reference = state->render_states[WINED3D_RS_STENCILREF]
-                            & ((1 << state->fb.depth_stencil->format->stencil_size) - 1);
                 }
                 else
                 {

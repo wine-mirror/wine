@@ -2036,6 +2036,11 @@ struct wined3d_blend_state_desc
     } rt[WINED3D_MAX_RENDER_TARGETS];
 };
 
+struct wined3d_stencil_op_desc
+{
+    enum wined3d_cmp_func func;
+};
+
 struct wined3d_depth_stencil_state_desc
 {
     BOOL depth;
@@ -2043,6 +2048,8 @@ struct wined3d_depth_stencil_state_desc
     BOOL stencil;
     unsigned int stencil_read_mask;
     unsigned int stencil_write_mask;
+    struct wined3d_stencil_op_desc front;
+    struct wined3d_stencil_op_desc back;
 };
 
 struct wined3d_rasterizer_state_desc
