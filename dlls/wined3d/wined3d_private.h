@@ -6005,6 +6005,11 @@ static inline BOOL wined3d_dsv_srv_conflict(const struct wined3d_rendertarget_vi
             || (srv_format->green_size && !(dsv->desc.flags & WINED3D_VIEW_READ_ONLY_STENCIL));
 }
 
+static inline unsigned int wined3d_bind_layer_count(const struct wined3d_texture *texture)
+{
+    return texture->resource.type == WINED3D_RTYPE_TEXTURE_3D ? texture->resource.depth : texture->layer_count;
+}
+
 static inline bool wined3d_srv_all_subresources(const struct wined3d_shader_resource_view *srv)
 {
     struct wined3d_texture *texture;
@@ -6017,7 +6022,7 @@ static inline bool wined3d_srv_all_subresources(const struct wined3d_shader_reso
 
     texture = texture_from_resource(srv->resource);
     return srv->desc.u.texture.level_count == texture->level_count
-            && srv->desc.u.texture.layer_count == texture->layer_count;
+            && srv->desc.u.texture.layer_count == wined3d_bind_layer_count(texture);
 }
 
 static inline bool wined3d_rtv_all_subresources(const struct wined3d_rendertarget_view *rtv)
@@ -6031,7 +6036,7 @@ static inline bool wined3d_rtv_all_subresources(const struct wined3d_rendertarge
         return FALSE;
 
     texture = texture_from_resource(rtv->resource);
-    return texture->level_count == 1 && rtv->layer_count == texture->layer_count;
+    return texture->level_count == 1 && rtv->layer_count == wined3d_bind_layer_count(texture);
 }
 
 static inline void wined3d_srv_bind_count_inc(struct wined3d_shader_resource_view *srv)
@@ -6049,7 +6054,7 @@ static inline void wined3d_srv_bind_count_inc(struct wined3d_shader_resource_vie
 
     if (!resource->sub_resource_bind_counts_device
             && !(resource->sub_resource_bind_counts_device = heap_alloc_zero(texture->level_count
-            * texture->layer_count * sizeof(*resource->sub_resource_bind_counts_device))))
+            * wined3d_bind_layer_count(texture) * sizeof(*resource->sub_resource_bind_counts_device))))
         return;
 
     for (layer = 0; layer < srv->desc.u.texture.layer_count; ++layer)
@@ -6098,7 +6103,7 @@ static inline void wined3d_rtv_bind_count_inc(struct wined3d_rendertarget_view *
 
     if (!resource->sub_resource_bind_counts_device
             && !(resource->sub_resource_bind_counts_device = heap_alloc_zero(texture->level_count
-            * texture->layer_count * sizeof(*resource->sub_resource_bind_counts_device))))
+            * wined3d_bind_layer_count(texture) * sizeof(*resource->sub_resource_bind_counts_device))))
         return;
 
     for (layer = 0; layer < rtv->layer_count; ++layer)
