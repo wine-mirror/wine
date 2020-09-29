@@ -217,13 +217,12 @@ static void test_FiberLocalStorage(void)
 
     SetLastError( 0xdeadbeef );
     ret = pFlsSetValue( 128, (void*) 0x217 );
-    ok( !ret, "setting fls index 128 (out of bounds) succeeded\n" );
-    ok( GetLastError() == ERROR_INVALID_PARAMETER,
+    ok( ret || GetLastError() == ERROR_INVALID_PARAMETER,
         "setting fls index 128 (out of bounds) wrong error %u\n", GetLastError() );
 
     SetLastError( 0xdeadbeef );
     val = pFlsGetValue( 128 );
-    ok( GetLastError() == ERROR_INVALID_PARAMETER,
+    ok( GetLastError() == ERROR_INVALID_PARAMETER || val == (void *)0x217,
         "getting fls index 128 (out of bounds) wrong error %u\n", GetLastError() );
 
     /* Test index 0 */
@@ -276,7 +275,7 @@ static void test_FiberLocalStorage(void)
 
     SetLastError( 0xdeadbeef );
     val = pFlsGetValue( fls_2 );
-    ok( val == NULL, "fls index %u wrong value %p\n", fls, val );
+    ok( val == NULL || val == (void *)0xdeadbabe, "fls index %u wrong value %p\n", fls, val );
     ok( GetLastError() == ERROR_SUCCESS,
         "getting fls index %u failed with error %u\n", fls_2, GetLastError() );
     pFlsFree( fls_2 );
