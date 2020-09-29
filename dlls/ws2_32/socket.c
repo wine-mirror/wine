@@ -200,6 +200,90 @@ static const GUID ProviderIdIPX = { 0x11058240, 0xbe47, 0x11cf,
 static const GUID ProviderIdSPX = { 0x11058241, 0xbe47, 0x11cf,
                                     { 0x95, 0xc8, 0x00, 0x80, 0x5f, 0x48, 0xa1, 0x92 } };
 
+static const WSAPROTOCOL_INFOW supported_protocols[] =
+{
+    {
+        .dwServiceFlags1 = XP1_IFS_HANDLES | XP1_EXPEDITED_DATA | XP1_GRACEFUL_CLOSE
+                | XP1_GUARANTEED_ORDER | XP1_GUARANTEED_DELIVERY,
+        .dwProviderFlags = PFL_MATCHES_PROTOCOL_ZERO,
+        .ProviderId = {0xe70f1aa0, 0xab8b, 0x11cf, {0x8c, 0xa3, 0x00, 0x80, 0x5f, 0x48, 0xa1, 0x92}},
+        .dwCatalogEntryId = 1001,
+        .ProtocolChain.ChainLen = 1,
+        .iVersion = 2,
+        .iAddressFamily = WS_AF_INET,
+        .iMaxSockAddr = sizeof(struct WS_sockaddr_in),
+        .iMinSockAddr = sizeof(struct WS_sockaddr_in),
+        .iSocketType = WS_SOCK_STREAM,
+        .iProtocol = WS_IPPROTO_TCP,
+        .szProtocol = {'T','C','P','/','I','P',0},
+    },
+    {
+        .dwServiceFlags1 = XP1_IFS_HANDLES | XP1_SUPPORT_BROADCAST
+                | XP1_SUPPORT_MULTIPOINT | XP1_MESSAGE_ORIENTED | XP1_CONNECTIONLESS,
+        .dwProviderFlags = PFL_MATCHES_PROTOCOL_ZERO,
+        .ProviderId = {0xe70f1aa0, 0xab8b, 0x11cf, {0x8c, 0xa3, 0x00, 0x80, 0x5f, 0x48, 0xa1, 0x92}},
+        .dwCatalogEntryId = 1002,
+        .ProtocolChain.ChainLen = 1,
+        .iVersion = 2,
+        .iAddressFamily = WS_AF_INET,
+        .iMaxSockAddr = sizeof(struct WS_sockaddr_in),
+        .iMinSockAddr = sizeof(struct WS_sockaddr_in),
+        .iSocketType = WS_SOCK_DGRAM,
+        .iProtocol = WS_IPPROTO_UDP,
+        .dwMessageSize = 0xffbb,
+        .szProtocol = {'U','D','P','/','I','P',0},
+    },
+    {
+        .dwServiceFlags1 = XP1_PARTIAL_MESSAGE | XP1_SUPPORT_BROADCAST
+                | XP1_SUPPORT_MULTIPOINT | XP1_MESSAGE_ORIENTED | XP1_CONNECTIONLESS,
+        .dwProviderFlags = PFL_MATCHES_PROTOCOL_ZERO,
+        .ProviderId = {0x11058240, 0xbe47, 0x11cf, {0x95, 0xc8, 0x00, 0x80, 0x5f, 0x48, 0xa1, 0x92}},
+        .dwCatalogEntryId = 1030,
+        .ProtocolChain.ChainLen = 1,
+        .iVersion = 2,
+        .iAddressFamily = WS_AF_IPX,
+        .iMaxSockAddr = sizeof(struct WS_sockaddr),
+        .iMinSockAddr = sizeof(struct WS_sockaddr_ipx),
+        .iSocketType = WS_SOCK_DGRAM,
+        .iProtocol = WS_NSPROTO_IPX,
+        .iProtocolMaxOffset = 255,
+        .dwMessageSize = 0x240,
+        .szProtocol = {'I','P','X',0},
+    },
+    {
+        .dwServiceFlags1 = XP1_IFS_HANDLES | XP1_PSEUDO_STREAM | XP1_MESSAGE_ORIENTED
+                | XP1_GUARANTEED_ORDER | XP1_GUARANTEED_DELIVERY,
+        .dwProviderFlags = PFL_MATCHES_PROTOCOL_ZERO,
+        .ProviderId = {0x11058241, 0xbe47, 0x11cf, {0x95, 0xc8, 0x00, 0x80, 0x5f, 0x48, 0xa1, 0x92}},
+        .dwCatalogEntryId = 1031,
+        .ProtocolChain.ChainLen = 1,
+        .iVersion = 2,
+        .iAddressFamily = WS_AF_IPX,
+        .iMaxSockAddr = sizeof(struct WS_sockaddr),
+        .iMinSockAddr = sizeof(struct WS_sockaddr_ipx),
+        .iSocketType = WS_SOCK_SEQPACKET,
+        .iProtocol = WS_NSPROTO_SPX,
+        .dwMessageSize = UINT_MAX,
+        .szProtocol = {'S','P','X',0},
+    },
+    {
+        .dwServiceFlags1 = XP1_IFS_HANDLES | XP1_GRACEFUL_CLOSE | XP1_PSEUDO_STREAM
+                | XP1_MESSAGE_ORIENTED | XP1_GUARANTEED_ORDER | XP1_GUARANTEED_DELIVERY,
+        .dwProviderFlags = PFL_MATCHES_PROTOCOL_ZERO,
+        .ProviderId = {0x11058241, 0xbe47, 0x11cf, {0x95, 0xc8, 0x00, 0x80, 0x5f, 0x48, 0xa1, 0x92}},
+        .dwCatalogEntryId = 1033,
+        .ProtocolChain.ChainLen = 1,
+        .iVersion = 2,
+        .iAddressFamily = WS_AF_IPX,
+        .iMaxSockAddr = sizeof(struct WS_sockaddr),
+        .iMinSockAddr = sizeof(struct WS_sockaddr_ipx),
+        .iSocketType = WS_SOCK_SEQPACKET,
+        .iProtocol = WS_NSPROTO_SPXII,
+        .dwMessageSize = UINT_MAX,
+        .szProtocol = {'S','P','X',' ','I','I',0},
+    },
+};
+
 static const INT valid_protocols[] =
 {
     WS_IPPROTO_TCP,
@@ -1869,15 +1953,6 @@ static inline BOOL supported_pf(int pf)
     }
 }
 
-static inline BOOL supported_protocol(int protocol)
-{
-    int i;
-    for (i = 0; i < ARRAY_SIZE(valid_protocols); i++)
-        if (protocol == valid_protocols[i])
-            return TRUE;
-    return FALSE;
-}
-
 /**********************************************************************/
 
 /* Returns the length of the converted address if successful, 0 if it was too
@@ -2343,54 +2418,6 @@ static BOOL WS_EnterSingleProtocolA( INT protocol, WSAPROTOCOL_INFOA* info )
     }
 
     return ret;
-}
-
-static INT WS_EnumProtocols( BOOL unicode, const INT *protocols, LPWSAPROTOCOL_INFOW buffer, LPDWORD len )
-{
-    INT i = 0, items = 0;
-    DWORD size = 0;
-    union _info
-    {
-      LPWSAPROTOCOL_INFOA a;
-      LPWSAPROTOCOL_INFOW w;
-    } info;
-    info.w = buffer;
-
-    if (!protocols) protocols = valid_protocols;
-
-    while (protocols[i])
-    {
-        if(supported_protocol(protocols[i++]))
-            items++;
-    }
-
-    size = items * (unicode ? sizeof(WSAPROTOCOL_INFOW) : sizeof(WSAPROTOCOL_INFOA));
-
-    TRACE("unicode %d, protocols %p, buffer %p, length %p %d, items %d, required %d\n",
-          unicode, protocols, buffer, len, len ? *len : 0, items, size);
-
-    if (*len < size || !buffer)
-    {
-        *len = size;
-        SetLastError(WSAENOBUFS);
-        return SOCKET_ERROR;
-    }
-
-    for (i = items = 0; protocols[i]; i++)
-    {
-        if (!supported_protocol(protocols[i])) continue;
-        if (unicode)
-        {
-            if (WS_EnterSingleProtocolW( protocols[i], &info.w[items] ))
-                items++;
-        }
-        else
-        {
-            if (WS_EnterSingleProtocolA( protocols[i], &info.a[items] ))
-                items++;
-        }
-    }
-    return items;
 }
 
 static BOOL ws_protocol_info(SOCKET s, int unicode, WSAPROTOCOL_INFOW *buffer, int *size)
@@ -9104,14 +9131,52 @@ INT WINAPI WSANSPIoctl( HANDLE hLookup, DWORD dwControlCode, LPVOID lpvInBuffer,
     return SOCKET_ERROR;
 }
 
+static BOOL protocol_matches_filter( const int *filter, int protocol )
+{
+    if (!filter) return TRUE;
+    while (*filter)
+    {
+        if (protocol == *filter++) return TRUE;
+    }
+    return FALSE;
+}
+
 /*****************************************************************************
  *          WSAEnumProtocolsA       [WS2_32.@]
  *
  *    see function WSAEnumProtocolsW
  */
-INT WINAPI WSAEnumProtocolsA( LPINT protocols, LPWSAPROTOCOL_INFOA buffer, LPDWORD len )
+int WINAPI WSAEnumProtocolsA( int *filter, WSAPROTOCOL_INFOA *protocols, DWORD *size )
 {
-    return WS_EnumProtocols( FALSE, protocols, (LPWSAPROTOCOL_INFOW) buffer, len);
+    DWORD i, count = 0;
+
+    TRACE("filter %p, protocols %p, size %p\n", filter, protocols, size);
+
+    for (i = 0; i < ARRAY_SIZE(supported_protocols); ++i)
+    {
+        if (protocol_matches_filter( filter, supported_protocols[i].iProtocol ))
+            ++count;
+    }
+
+    if (!protocols || *size < count * sizeof(WSAPROTOCOL_INFOA))
+    {
+        *size = count * sizeof(WSAPROTOCOL_INFOA);
+        WSASetLastError( WSAENOBUFS );
+        return SOCKET_ERROR;
+    }
+
+    count = 0;
+    for (i = 0; i < ARRAY_SIZE(supported_protocols); ++i)
+    {
+        if (protocol_matches_filter( filter, supported_protocols[i].iProtocol ))
+        {
+            memcpy( &protocols[count], &supported_protocols[i], offsetof( WSAPROTOCOL_INFOW, szProtocol ) );
+            WideCharToMultiByte( CP_ACP, 0, supported_protocols[i].szProtocol, -1,
+                                 protocols[count].szProtocol, sizeof(protocols[count].szProtocol), NULL, NULL );
+            ++count;
+        }
+    }
+    return count;
 }
 
 /*****************************************************************************
@@ -9151,9 +9216,32 @@ INT WINAPI WSAEnumProtocolsA( LPINT protocols, LPWSAPROTOCOL_INFOA buffer, LPDWO
  *  - there is no check that the operating system supports the returned
  *    protocols
  */
-INT WINAPI WSAEnumProtocolsW( LPINT protocols, LPWSAPROTOCOL_INFOW buffer, LPDWORD len )
+int WINAPI WSAEnumProtocolsW( int *filter, WSAPROTOCOL_INFOW *protocols, DWORD *size )
 {
-    return WS_EnumProtocols( TRUE, protocols, buffer, len);
+    DWORD i, count = 0;
+
+    TRACE("filter %p, protocols %p, size %p\n", filter, protocols, size);
+
+    for (i = 0; i < ARRAY_SIZE(supported_protocols); ++i)
+    {
+        if (protocol_matches_filter( filter, supported_protocols[i].iProtocol ))
+            ++count;
+    }
+
+    if (!protocols || *size < count * sizeof(WSAPROTOCOL_INFOW))
+    {
+        *size = count * sizeof(WSAPROTOCOL_INFOW);
+        WSASetLastError( WSAENOBUFS );
+        return SOCKET_ERROR;
+    }
+
+    count = 0;
+    for (i = 0; i < ARRAY_SIZE(supported_protocols); ++i)
+    {
+        if (protocol_matches_filter( filter, supported_protocols[i].iProtocol ))
+            protocols[count++] = supported_protocols[i];
+    }
+    return count;
 }
 
 /*****************************************************************************
