@@ -311,3 +311,21 @@ NTSTATUS WINAPI DECLSPEC_HOTPATCH RtlFlsFree( ULONG index )
     RtlReleasePebLock();
     return status;
 }
+
+
+/***********************************************************************
+ *              RtlFlsSetValue (NTDLL.@)
+ */
+NTSTATUS WINAPI DECLSPEC_HOTPATCH RtlFlsSetValue( ULONG index, void *data )
+{
+    if (!index || index >= 8 * sizeof(NtCurrentTeb()->Peb->FlsBitmapBits))
+        return STATUS_INVALID_PARAMETER;
+
+    if (!NtCurrentTeb()->FlsSlots &&
+        !(NtCurrentTeb()->FlsSlots = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                        8 * sizeof(NtCurrentTeb()->Peb->FlsBitmapBits) * sizeof(void*) )))
+        return STATUS_NO_MEMORY;
+
+    NtCurrentTeb()->FlsSlots[index] = data;
+    return STATUS_SUCCESS;
+}

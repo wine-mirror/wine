@@ -39,6 +39,7 @@ static PVOID (WINAPI *pFlsGetValue)(DWORD);
 static BOOL (WINAPI *pFlsSetValue)(DWORD,PVOID);
 static NTSTATUS (WINAPI *pRtlFlsAlloc)(PFLS_CALLBACK_FUNCTION,DWORD*);
 static NTSTATUS (WINAPI *pRtlFlsFree)(ULONG);
+static NTSTATUS (WINAPI *pRtlFlsSetValue)(ULONG,void *);
 static void *fibers[3];
 static BYTE testparam = 185;
 static DWORD fls_index_to_set = FLS_OUT_OF_INDEXES;
@@ -70,6 +71,7 @@ static VOID init_funcs(void)
 #define X(f) p##f = (void*)GetProcAddress(hntdll, #f);
     X(RtlFlsAlloc);
     X(RtlFlsFree);
+    X(RtlFlsSetValue);
 #undef X
 
 }
@@ -213,6 +215,11 @@ static void test_FiberLocalStorage(void)
                 ok(fls_indices[i] == 0xdeadbeef, "Got unexpected index %#x.\n", fls_indices[i]);
                 break;
             }
+            if (pRtlFlsSetValue)
+            {
+                status = pRtlFlsSetValue(fls_indices[i], (void *)(ULONG_PTR)(i + 1));
+                ok(!status, "Got unexpected status %#x.\n", status);
+            }
         }
         count = i;
         /* FLS limits are increased since Win10 18312. */
@@ -280,6 +287,11 @@ static void test_FiberLocalStorage(void)
     ret = pFlsSetValue( 0, (void *)0xdeadbeef );
     ok( !ret, "setting fls index 0 succeeded\n" );
     ok( GetLastError() == ERROR_INVALID_PARAMETER, "setting fls index wrong error %u\n", GetLastError() );
+    if (pRtlFlsSetValue)
+    {
+        status = pRtlFlsSetValue( 0, (void *)0xdeadbeef );
+        ok( status == STATUS_INVALID_PARAMETER, "Got unexpected status %#x.\n", status );
+    }
     SetLastError( 0xdeadbeef );
     val = pFlsGetValue( 0 );
     ok( !val, "fls index 0 wrong value %p\n", val );
@@ -291,8 +303,10 @@ static void test_FiberLocalStorage(void)
     ok( fls != 0, "fls index 0 allocated\n" );
     val = pFlsGetValue( fls );
     ok( !val, "fls index %u wrong value %p\n", fls, val );
+    SetLastError( 0xdeadbeef );
     ret = pFlsSetValue( fls, (void *)0xdeadbeef );
     ok( ret, "setting fls index %u failed\n", fls );
+    ok( GetLastError() == 0xdeadbeef, "setting fls index wrong error %u\n", GetLastError() );
     SetLastError( 0xdeadbeef );
     val = pFlsGetValue( fls );
     ok( val == (void *)0xdeadbeef, "fls index %u wrong value %p\n", fls, val );

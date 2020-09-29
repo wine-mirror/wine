@@ -668,6 +668,7 @@
 @ stdcall RtlFirstFreeAce(ptr ptr)
 @ stdcall RtlFlsAlloc(ptr ptr)
 @ stdcall RtlFlsFree(long)
+@ stdcall RtlFlsSetValue(long ptr)
 @ stub RtlFlushPropertySet
 # @ stub RtlFlushSecureMemoryCache
 @ stdcall RtlFormatCurrentUserKeyPath(ptr)

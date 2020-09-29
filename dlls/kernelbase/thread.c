@@ -1101,20 +1101,7 @@ PVOID WINAPI DECLSPEC_HOTPATCH FlsGetValue( DWORD index )
  */
 BOOL WINAPI DECLSPEC_HOTPATCH FlsSetValue( DWORD index, PVOID data )
 {
-    if (!index || index >= 8 * sizeof(NtCurrentTeb()->Peb->FlsBitmapBits))
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return FALSE;
-    }
-    if (!NtCurrentTeb()->FlsSlots &&
-        !(NtCurrentTeb()->FlsSlots = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                        8 * sizeof(NtCurrentTeb()->Peb->FlsBitmapBits) * sizeof(void*) )))
-    {
-        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-        return FALSE;
-    }
-    NtCurrentTeb()->FlsSlots[index] = data;
-    return TRUE;
+    return set_ntstatus( RtlFlsSetValue( index, data ));
 }
 
 
