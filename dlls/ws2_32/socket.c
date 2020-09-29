@@ -284,16 +284,6 @@ static const WSAPROTOCOL_INFOW supported_protocols[] =
     },
 };
 
-static const INT valid_protocols[] =
-{
-    WS_IPPROTO_TCP,
-    WS_IPPROTO_UDP,
-    WS_NSPROTO_IPX,
-    WS_NSPROTO_SPX,
-    WS_NSPROTO_SPXII,
-    0
-};
-
 #define IS_IPX_PROTO(X) ((X) >= WS_NSPROTO_IPX && (X) <= WS_NSPROTO_IPX + 255)
 
 #if defined(IP_UNICAST_IF) && defined(SO_ATTACH_FILTER)
@@ -7680,25 +7670,29 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
         return INVALID_SOCKET;
     }
 
-    if (!type)
+    if (!af && lpProtocolInfo)
     {
-        int autoproto = protocol;
-        WSAPROTOCOL_INFOW infow;
+        WSASetLastError(WSAEAFNOSUPPORT);
+        return INVALID_SOCKET;
+    }
 
-        /* default to the first valid protocol */
-        if (!autoproto)
-            autoproto = valid_protocols[0];
-        else if(IS_IPX_PROTO(autoproto))
-            autoproto = WS_NSPROTO_IPX;
+    if (!af || !type || !protocol)
+    {
+        unsigned int i;
 
-        if (WS_EnterSingleProtocolW(autoproto, &infow))
+        for (i = 0; i < ARRAY_SIZE(supported_protocols); ++i)
         {
-            type = infow.iSocketType;
+            const WSAPROTOCOL_INFOW *info = &supported_protocols[i];
 
-            /* after win2003 it's no longer possible to pass AF_UNSPEC
-               using the protocol info struct */
-            if (!lpProtocolInfo && af == WS_AF_UNSPEC)
-                af = infow.iAddressFamily;
+            if (af && af != info->iAddressFamily) continue;
+            if (type && type != info->iSocketType) continue;
+            if (protocol && (protocol < info->iProtocol ||
+                             protocol > info->iProtocol + info->iProtocolMaxOffset)) continue;
+            if (!protocol && !(info->dwProviderFlags & PFL_MATCHES_PROTOCOL_ZERO)) continue;
+
+            if (!af) af = supported_protocols[i].iAddressFamily;
+            if (!type) type = supported_protocols[i].iSocketType;
+            if (!protocol) protocol = supported_protocols[i].iProtocol;
         }
     }
 
@@ -7714,7 +7708,6 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
     unixaf = convert_af_w2u(af);
     unixtype = convert_socktype_w2u(type);
     protocol = convert_proto_w2u(protocol);
-    if (unixaf == AF_UNSPEC) unixaf = -1;
 
     /* filter invalid parameters */
     if (protocol < 0)
