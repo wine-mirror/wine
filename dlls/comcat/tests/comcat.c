@@ -66,26 +66,10 @@ static void do_enum(void)
 	GUID wanted_guid;
 	ULONG fetched = -1;
 
-        static const WCHAR szCatID[] = {
-			'{',
-			'd','e','a','d','c','a','f','e',
-			'-','0','0','0','0','-','0','0','0','0',
-			'-','0','0','0','0',
-			'-','0','0','0','0','0','0','0','0','0','0','0','0',
-			'}',0};
-        static const WCHAR szGuid[] = {
-			'{',
-			'd','e','a','d','c','a','f','e','-',
-			'b','e','e','d','-',
-			'b','e','a','d','-',
-			'd','e','a','d','-',
-			'c','a','f','e','b','e','a','d','d','e','a','d',
-			'}',0};
-
 	IEnumCLSID *pIEnum =(IEnumCLSID*)0xdeadcafe;
 
-	CLSIDFromString(szCatID,the_cat);
-	CLSIDFromString(szGuid,&wanted_guid);
+	CLSIDFromString(L"{deadcafe-0000-0000-0000-000000000000}", the_cat);
+	CLSIDFromString(L"{deadcafe-beed-bead-dead-cafebeaddead}", &wanted_guid);
 
 	OleInitialize(NULL);
 
