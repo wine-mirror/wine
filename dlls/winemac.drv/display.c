@@ -70,7 +70,7 @@ static const WCHAR pciW[] = {'P','C','I',0};
 static const WCHAR video_idW[] = {'V','i','d','e','o','I','D',0};
 static const WCHAR symbolic_link_valueW[]= {'S','y','m','b','o','l','i','c','L','i','n','k','V','a','l','u','e',0};
 static const WCHAR gpu_idW[] = {'G','P','U','I','D',0};
-static const WCHAR mointor_id_fmtW[] = {'M','o','n','i','t','o','r','I','D','%','d',0};
+static const WCHAR monitor_id_fmtW[] = {'M','o','n','i','t','o','r','I','D','%','d',0};
 static const WCHAR adapter_prefixW[] = {'\\','\\','.','\\','D','I','S','P','L','A','Y'};
 static const WCHAR adapter_name_fmtW[] = {'\\','\\','.','\\','D','I','S','P','L','A','Y','%','d',0};
 static const WCHAR state_flagsW[] = {'S','t','a','t','e','F','l','a','g','s',0};
@@ -1598,7 +1598,7 @@ static BOOL macdrv_init_adapter(HKEY video_hkey, int video_index, int gpu_index,
     /* Write all monitor instance paths under this adapter */
     for (i = 0; i < monitor_count; i++)
     {
-        sprintfW(key_nameW, mointor_id_fmtW, i);
+        sprintfW(key_nameW, monitor_id_fmtW, i);
         sprintfW(bufferW, monitor_instance_fmtW, video_index, i);
         if (RegSetValueExW(hkey, key_nameW, 0, REG_SZ, (const BYTE *)bufferW, (lstrlenW(bufferW) + 1) * sizeof(WCHAR)))
             goto done;
