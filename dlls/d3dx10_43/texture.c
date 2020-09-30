@@ -17,6 +17,7 @@
  */
 
 #include "wine/debug.h"
+#include "wine/heap.h"
 
 #define COBJMACROS
 
@@ -96,6 +97,57 @@ static DXGI_FORMAT get_d3dx10_dds_format(DXGI_FORMAT format)
     return format;
 }
 
+static HRESULT load_file(const WCHAR *filename, void **buffer, DWORD *size)
+{
+    HRESULT hr = S_OK;
+    DWORD bytes_read;
+    HANDLE file;
+    BOOL ret;
+
+    file = CreateFileW(filename, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
+    if (file == INVALID_HANDLE_VALUE)
+    {
+        hr = HRESULT_FROM_WIN32(GetLastError());
+        goto done;
+    }
+
+    *size = GetFileSize(file, NULL);
+    if (*size == INVALID_FILE_SIZE)
+    {
+        hr = HRESULT_FROM_WIN32(GetLastError());
+        goto done;
+    }
+
+    *buffer = heap_alloc(*size);
+    if (!*buffer)
+    {
+        hr = E_OUTOFMEMORY;
+        goto done;
+    }
+
+    ret = ReadFile(file, *buffer, *size, &bytes_read, NULL);
+    if (!ret)
+    {
+        hr = HRESULT_FROM_WIN32(GetLastError());
+        goto done;
+    }
+    if (bytes_read != *size)
+    {
+        hr = E_FAIL;
+        goto done;
+    }
+
+done:
+    if (FAILED(hr))
+    {
+        heap_free(*buffer);
+        *buffer = NULL;
+    }
+    if (file != INVALID_HANDLE_VALUE)
+        CloseHandle(file);
+    return hr;
+}
+
 HRESULT WINAPI D3DX10GetImageInfoFromFileA(const char *src_file, ID3DX10ThreadPump *pump, D3DX10_IMAGE_INFO *info,
         HRESULT *result)
 {
@@ -107,9 +159,23 @@ HRESULT WINAPI D3DX10GetImageInfoFromFileA(const char *src_file, ID3DX10ThreadPu
 HRESULT WINAPI D3DX10GetImageInfoFromFileW(const WCHAR *src_file, ID3DX10ThreadPump *pump, D3DX10_IMAGE_INFO *info,
         HRESULT *result)
 {
-    FIXME("src_file %s, pump %p, info %p, result %p\n", debugstr_w(src_file), pump, info, result);
+    void *buffer = NULL;
+    DWORD size = 0;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("src_file %s, pump %p, info %p, result %p.\n", debugstr_w(src_file), pump, info, result);
+
+    if (!src_file || !info)
+        return E_FAIL;
+
+    if (FAILED(load_file(src_file, &buffer, &size)))
+        return D3D10_ERROR_FILE_NOT_FOUND;
+
+    hr = D3DX10GetImageInfoFromMemory(buffer, size, pump, info, result);
+
+    heap_free(buffer);
+
+    return hr;
 }
 
 HRESULT WINAPI D3DX10GetImageInfoFromResourceA(HMODULE module, const char *resource, ID3DX10ThreadPump *pump,

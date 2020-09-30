@@ -1383,12 +1383,10 @@ static void test_get_image_info(void)
         check_image_info(&image_info, i, __LINE__);
     }
 
-    todo_wine {
     hr = D3DX10GetImageInfoFromFileW(NULL, NULL, &image_info, NULL);
     ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
     hr = D3DX10GetImageInfoFromFileW(L"deadbeaf", NULL, &image_info, NULL);
     ok(hr == D3D10_ERROR_FILE_NOT_FOUND, "Got unexpected hr %#x.\n", hr);
-    }
 
     for (i = 0; i < ARRAY_SIZE(test_image); ++i)
     {
@@ -1396,7 +1394,7 @@ static void test_get_image_info(void)
         hr = D3DX10GetImageInfoFromFileW(path, NULL, &image_info, NULL);
         delete_file(test_filename);
 
-        todo_wine
+        todo_wine_if(test_image[i].expected.ImageFileFormat == D3DX10_IFF_WMP)
         ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
         if (hr != S_OK)
             continue;
