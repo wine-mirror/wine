@@ -151,9 +151,29 @@ done:
 HRESULT WINAPI D3DX10GetImageInfoFromFileA(const char *src_file, ID3DX10ThreadPump *pump, D3DX10_IMAGE_INFO *info,
         HRESULT *result)
 {
-    FIXME("src_file %s, pump %p, info %p, result %p\n", debugstr_a(src_file), pump, info, result);
+    WCHAR *buffer;
+    int str_len;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("src_file %s, pump %p, info %p, result %p.\n", debugstr_a(src_file), pump, info, result);
+
+    if (!src_file || !info)
+        return E_FAIL;
+
+    str_len = MultiByteToWideChar(CP_ACP, 0, src_file, -1, NULL, 0);
+    if (!str_len)
+        return HRESULT_FROM_WIN32(GetLastError());
+
+    buffer = heap_alloc(str_len * sizeof(*buffer));
+    if (!buffer)
+        return E_OUTOFMEMORY;
+
+    MultiByteToWideChar(CP_ACP, 0, src_file, -1, buffer, str_len);
+    hr = D3DX10GetImageInfoFromFileW(buffer, pump, info, result);
+
+    heap_free(buffer);
+
+    return hr;
 }
 
 HRESULT WINAPI D3DX10GetImageInfoFromFileW(const WCHAR *src_file, ID3DX10ThreadPump *pump, D3DX10_IMAGE_INFO *info,
