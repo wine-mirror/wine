@@ -558,6 +558,14 @@ static BOOL compare_float(float f, float g, unsigned int ulps)
     return TRUE;
 }
 
+static char *get_str_a(const WCHAR *wstr)
+{
+    static char buffer[MAX_PATH];
+
+    WideCharToMultiByte(CP_ACP, 0, wstr, -1, buffer, sizeof(buffer), NULL, NULL);
+    return buffer;
+}
+
 static BOOL create_file(const WCHAR *filename, const void *data, unsigned int size, WCHAR *out_path)
 {
     WCHAR path[MAX_PATH];
@@ -1387,19 +1395,30 @@ static void test_get_image_info(void)
     ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
     hr = D3DX10GetImageInfoFromFileW(L"deadbeaf", NULL, &image_info, NULL);
     ok(hr == D3D10_ERROR_FILE_NOT_FOUND, "Got unexpected hr %#x.\n", hr);
+    todo_wine {
+    hr = D3DX10GetImageInfoFromFileA(NULL, NULL, &image_info, NULL);
+    ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+    hr = D3DX10GetImageInfoFromFileA("deadbeaf", NULL, &image_info, NULL);
+    ok(hr == D3D10_ERROR_FILE_NOT_FOUND, "Got unexpected hr %#x.\n", hr);
+    }
 
     for (i = 0; i < ARRAY_SIZE(test_image); ++i)
     {
         create_file(test_filename, test_image[i].data, test_image[i].size, path);
-        hr = D3DX10GetImageInfoFromFileW(path, NULL, &image_info, NULL);
-        delete_file(test_filename);
 
+        hr = D3DX10GetImageInfoFromFileW(path, NULL, &image_info, NULL);
         todo_wine_if(test_image[i].expected.ImageFileFormat == D3DX10_IFF_WMP)
         ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
-        if (hr != S_OK)
-            continue;
+        if (hr == S_OK)
+            check_image_info(&image_info, i, __LINE__);
 
-        check_image_info(&image_info, i, __LINE__);
+        hr = D3DX10GetImageInfoFromFileA(get_str_a(path), NULL, &image_info, NULL);
+        todo_wine
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        if (hr == S_OK)
+            check_image_info(&image_info, i, __LINE__);
+
+        delete_file(test_filename);
     }
 
     CoUninitialize();
