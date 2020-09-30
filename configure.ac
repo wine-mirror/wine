@@ -2063,7 +2063,7 @@ char*f(const char *h,char n) {return strchr(h,n);}]])],[ac_cv_c_logicalop_noisy=
             *arm*)         wine_cv_64bit_compare_swap="-march=armv7-a" ;;
             *)             wine_cv_64bit_compare_swap="unknown" ;;
            esac
-           if test "x$wine_cv_64bit_compare_swap" != unknown
+           if test "x$wine_cv_64bit_compare_swap" != xunknown
            then
                dnl try with the new flags
                CFLAGS="$CFLAGS $wine_cv_64bit_compare_swap"
