@@ -101,12 +101,11 @@ static void _check_string(int line, HSTRING str, LPCWSTR content, UINT32 length,
     ok_(__FILE__, line)(memcmp(ptr, content, sizeof(*content) * length) == 0, "Incorrect string content\n");
 }
 
-static const WCHAR input_string[] = { 'a', 'b', 'c', 'd', 'e', 'f', '\0', '\0' };
-static const WCHAR input_string1[] = { 'a', 'b', 'c', '\0' };
-static const WCHAR input_string2[] = { 'd', 'e', 'f', '\0' };
-static const WCHAR input_empty_string[] = { '\0' };
-static const WCHAR input_embed_null[] = { 'a', '\0', 'c', '\0', 'e', 'f', '\0' };
-static const WCHAR output_substring[] = { 'c', 'd', 'e', 'f', '\0' };
+static const WCHAR input_string[] = L"abcdef\0";
+static const WCHAR input_string1[] = L"abc";
+static const WCHAR input_string2[] = L"def";
+static const WCHAR input_embed_null[] = L"a\0c\0ef";
+static const WCHAR output_substring[] = L"cdef";
 
 static void test_create_delete(void)
 {
@@ -147,7 +146,7 @@ static void test_create_delete(void)
     ok(pWindowsDeleteString(str) == S_OK, "Failed to delete string\n");
 
     /* Test an empty string */
-    ok(pWindowsCreateString(input_empty_string, 0, &str) == S_OK, "Failed to create string\n");
+    ok(pWindowsCreateString(L"", 0, &str) == S_OK, "Failed to create string\n");
     ok(str == NULL, "Empty string not a null string\n");
     ok(pWindowsDeleteString(str) == S_OK, "Failed to delete string\n");
 
@@ -155,7 +154,7 @@ static void test_create_delete(void)
     ok(str == NULL, "Empty string not a null string\n");
     ok(pWindowsDeleteString(str) == S_OK, "Failed to delete string\n");
 
-    ok(pWindowsCreateStringReference(input_empty_string, 0, &header, &str) == S_OK, "Failed to create string\n");
+    ok(pWindowsCreateStringReference(L"", 0, &header, &str) == S_OK, "Failed to create string\n");
     ok(str == NULL, "Empty string not a null string\n");
     ok(pWindowsDeleteString(str) == S_OK, "Failed to delete string\n");
 
@@ -230,7 +229,7 @@ static void test_string_buffer(void)
     ok(ptr != NULL, "Empty string didn't return a buffer pointer\n");
     ok(pWindowsPromoteStringBuffer(buf, &str) == S_OK, "Failed to promote string buffer\n");
     ok(str == NULL, "Empty string isn't a null string\n");
-    check_string(str, input_empty_string, 0, FALSE);
+    check_string(str, L"", 0, FALSE);
     ok(pWindowsDeleteString(str) == S_OK, "Failed to delete string\n");
 
     ok(pWindowsDeleteStringBuffer(NULL) == S_OK, "Failed to delete null string buffer\n");

@@ -60,9 +60,6 @@ static BOOL init_functions(void)
 
 static void test_ActivationFactories(void)
 {
-    static const WCHAR xmldocumentW[] = { 'W','i','n','d','o','w','s','.','D','a','t','a','.','X','m','l','.',
-                                   'D','o','m','.','X','m','l','D','o','c','u','m','e','n','t',0 };
-    static const WCHAR nonexistW[] = { 'D','o','e','s','.','N','o','t','.','E','x','i','s','t',0 };
     HRESULT hr;
     HSTRING str, str2;
     IActivationFactory *factory = NULL;
@@ -74,10 +71,11 @@ static void test_ActivationFactories(void)
         return;
     }
 
-    hr = pWindowsCreateString(xmldocumentW, ARRAY_SIZE(xmldocumentW) - 1, &str);
+    hr = pWindowsCreateString(L"Windows.Data.Xml.Dom.XmlDocument",
+                              ARRAY_SIZE(L"Windows.Data.Xml.Dom.XmlDocument") - 1, &str);
     ok(hr == S_OK, "got %08x\n", hr);
 
-    hr = pWindowsCreateString(nonexistW, ARRAY_SIZE(nonexistW) - 1, &str2);
+    hr = pWindowsCreateString(L"Does.Not.Exist", ARRAY_SIZE(L"Does.Not.Exist") - 1, &str2);
     ok(hr == S_OK, "got %08x\n", hr);
 
     hr = pRoInitialize(RO_INIT_MULTITHREADED);
