@@ -1291,6 +1291,63 @@ static HRESULT interp_redim(exec_ctx_t *ctx)
     return S_OK;
 }
 
+static HRESULT interp_redim_preserve(exec_ctx_t *ctx)
+{
+    BSTR identifier = ctx->instr->arg1.bstr;
+    const unsigned dim_cnt = ctx->instr->arg2.uint;
+    unsigned i;
+    SAFEARRAYBOUND *bounds;
+    SAFEARRAY *array;
+    ref_t ref;
+    HRESULT hres;
+
+    TRACE("%s %u\n", debugstr_w(identifier), dim_cnt);
+
+    hres = lookup_identifier(ctx, identifier, VBDISP_LET, &ref);
+    if(FAILED(hres)) {
+        FIXME("lookup %s failed: %08x\n", debugstr_w(identifier), hres);
+        return hres;
+    }
+
+    if(ref.type != REF_VAR) {
+        FIXME("got ref.type = %d\n", ref.type);
+        return E_FAIL;
+    }
+
+    if(!(V_VT(ref.u.v) & VT_ARRAY)) {
+        FIXME("ReDim Preserve not valid on type %d\n", V_VT(ref.u.v));
+        return E_FAIL;
+    }
+
+    array = V_ARRAY(ref.u.v);
+
+    hres = array_bounds_from_stack(ctx, dim_cnt, &bounds);
+    if(FAILED(hres))
+        return hres;
+
+    if(array == NULL || array->cDims == 0) {
+        /* can initially allocate the array */
+        array = SafeArrayCreate(VT_VARIANT, dim_cnt, bounds);
+        VariantClear(ref.u.v);
+        V_VT(ref.u.v) = VT_ARRAY|VT_VARIANT;
+        V_ARRAY(ref.u.v) = array;
+        return S_OK;
+    } else if(array->cDims != dim_cnt) {
+        /* can't otherwise change the number of dimensions */
+        TRACE("Can't resize %s, cDims %d != %d\n", debugstr_w(identifier), array->cDims, dim_cnt);
+        return MAKE_VBSERROR(VBSE_OUT_OF_BOUNDS);
+    } else {
+        /* can resize the last dimensions (if others match */
+        for(i = 0; i+1 < dim_cnt; ++i) {
+            if(array->rgsabound[array->cDims - 1 - i].cElements != bounds[i].cElements) {
+                TRACE("Can't resize %s, bound[%d] %d != %d\n", debugstr_w(identifier), i, array->rgsabound[i].cElements, bounds[i].cElements);
+                return MAKE_VBSERROR(VBSE_OUT_OF_BOUNDS);
+            }
+        }
+        return SafeArrayRedim(array, &bounds[dim_cnt-1]);
+    }
+}
+
 static HRESULT interp_step(exec_ctx_t *ctx)
 {
     const BSTR ident = ctx->instr->arg2.bstr;

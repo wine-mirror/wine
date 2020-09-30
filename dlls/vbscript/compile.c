@@ -1128,16 +1128,18 @@ static HRESULT compile_redim_statement(compile_ctx_t *ctx, redim_statement_t *st
     unsigned arg_cnt;
     HRESULT hres;
 
-    if(stat->preserve) {
-        FIXME("Preserving redim not supported\n");
-        return E_NOTIMPL;
-    }
-
     hres = compile_args(ctx, stat->dims, &arg_cnt);
     if(FAILED(hres))
         return hres;
 
-    return push_instr_bstr_uint(ctx, OP_redim, stat->identifier, arg_cnt);
+    hres = push_instr_bstr_uint(ctx, stat->preserve ? OP_redim_preserve : OP_redim, stat->identifier, arg_cnt);
+    if(FAILED(hres))
+	return hres;
+
+    if(!emit_catch(ctx, 0))
+        return E_OUTOFMEMORY;
+
+    return S_OK;
 }
 
 static HRESULT compile_const_statement(compile_ctx_t *ctx, const_statement_t *stat)

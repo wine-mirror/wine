@@ -1412,6 +1412,28 @@ x = 1
 redim x(3)
 ok ubound(x) = 3, "ubound(x) = " & ubound(x)
 
+x(0) = 1
+x(1) = 2
+x(2) = 3
+x(2) = 4
+
+redim preserve x(1)
+ok ubound(x) = 1, "ubound(x) = " & ubound(x)
+ok x(0) = 1, "x(0) = " & x(1)
+ok x(1) = 2, "x(1) = " & x(1)
+
+redim preserve x(2)
+ok ubound(x) = 2, "ubound(x) = " & ubound(x)
+ok x(0) = 1, "x(0) = " & x(0)
+ok x(1) = 2, "x(1) = " & x(1)
+ok x(2) = vbEmpty, "x(2) = " & x(2)
+
+on error resume next
+redim preserve x(2,2)
+e = err.number
+on error goto 0
+ok e = 9, "e = " & e ' VBSE_OUT_OF_BOUNDS, cannot change cDims
+
 x = Array(1, 2)
 redim x(-1)
 ok lbound(x) = 0, "lbound(x) = " & lbound(x)
@@ -1421,6 +1443,40 @@ redim x(3, 2)
 ok ubound(x) = 3, "ubound(x) = " & ubound(x)
 ok ubound(x, 1) = 3, "ubound(x, 1) = " & ubound(x, 1)
 ok ubound(x, 2) = 2, "ubound(x, 2) = " & ubound(x, 2) & " expected 2"
+
+redim x(1, 3)
+x(0,0) = 1.1
+x(0,1) = 1.2
+x(0,2) = 1.3
+x(0,3) = 1.4
+x(1,0) = 2.1
+x(1,1) = 2.2
+x(1,2) = 2.3
+x(1,3) = 2.4
+
+redim preserve x(1,1)
+ok ubound(x, 1) = 1, "ubound(x, 1) = " & ubound(x, 1)
+ok ubound(x, 2) = 1, "ubound(x, 2) = " & ubound(x, 2)
+ok x(0,0) = 1.1, "x(0,0) = " & x(0,0)
+ok x(0,1) = 1.2, "x(0,1) = " & x(0,1)
+ok x(1,0) = 2.1, "x(1,0) = " & x(1,0)
+ok x(1,1) = 2.2, "x(1,1) = " & x(1,1)
+
+redim preserve x(1,2)
+ok ubound(x, 1) = 1, "ubound(x, 1) = " & ubound(x, 1)
+ok ubound(x, 2) = 2, "ubound(x, 2) = " & ubound(x, 2)
+ok x(0,0) = 1.1, "x(0,0) = " & x(0,0)
+ok x(0,1) = 1.2, "x(0,1) = " & x(0,1)
+ok x(1,0) = 2.1, "x(1,0) = " & x(1,0)
+ok x(1,1) = 2.2, "x(1,1) = " & x(1,1)
+ok x(0,2) = vbEmpty, "x(0,2) = " & x(0,2)
+ok x(1,2) = vbEmpty, "x(1,2) = " & x(1,1)
+
+on error resume next
+redim preserve x(2,2)
+e = err.number
+on error goto 0
+ok e = 9, "e = " & e ' VBSE_OUT_OF_BOUNDS, can only change rightmost dimension
 
 dim staticarray(4)
 on error resume next
