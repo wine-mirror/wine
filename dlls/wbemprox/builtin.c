@@ -3878,8 +3878,9 @@ static enum fill_status fill_videocontroller( struct table *table, const struct 
     hr = IDXGIAdapter_GetDesc( adapter, &desc );
     if (SUCCEEDED(hr))
     {
-        vidmem = desc.DedicatedVideoMemory;
-        name   = desc.Description;
+        if (desc.DedicatedVideoMemory > UINT_MAX) vidmem = 0xfff00000;
+        else vidmem = desc.DedicatedVideoMemory;
+        name = desc.Description;
     }
 
 done:
