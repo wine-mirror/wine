@@ -227,7 +227,7 @@ static void test_ACLMulti(void)
 {
     const char *strings1[] = {"a", "c", "e"};
     const char *strings2[] = {"a", "b", "d"};
-    WCHAR exp[] = {'A','B','C',0};
+    const WCHAR exp[] = L"ABC";
     IEnumString *obj;
     IEnumACString *unk;
     HRESULT hr;

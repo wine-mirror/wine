@@ -134,4 +134,40 @@ library Test
 		HRESULT test5(e value);
 		HRESULT test6(f value);
 	}
+
+	[uuid(2d4430d5-99ea-4645-85f0-c5814b72804b)]
+	dispinterface ITestDispatch
+	{
+		properties:
+		[id(10)] int property_int;
+		[id(11)] HRESULT property_HRESULT;
+
+		methods:
+		[id(1)] void test_void();
+		[id(2)] void test_void_retval([out,retval] double* ret);
+		[id(3)] HRESULT test_HRESULT();
+		[id(4)] HRESULT test_HRESULT_retval([out,retval] double* ret);
+		[id(5)] int test_int();
+		[id(6)] int test_int_retval([out,retval] double* ret);
+		[id(7)] double parse_lcid([in] BSTR x, [lcid] long lcid);
+
+	}
+
+	[uuid(79ca07f9-ac22-44ac-9aaf-811f45412293), dual]
+	interface ITestDispDual : IDispatch
+	{
+		[id(1)] void test_void();
+		[id(2)] void test_void_retval([out,retval] double* ret);
+		[id(3)] HRESULT test_HRESULT();
+		[id(4)] HRESULT test_HRESULT_retval([out,retval] double* ret);
+		[id(5)] int test_int();
+		[id(6)] int test_int_retval([out,retval] double* ret);
+		[id(7)] HRESULT parse_lcid([in] BSTR x, [lcid] long lcid, [out,retval] double *ret);
+	}
+
+	[uuid(cdb105e3-24fb-4ae6-b826-801b7b2a0a07)]
+	dispinterface ITestDispInherit
+	{
+		interface ITestDispDual;
+	}
 }

@@ -2458,7 +2458,7 @@ error:
     heap_free(indices);
     if(V_VT(args) != VT_BSTR)
         SysFreeString(string);
-    if(V_VT(args+1) != VT_BSTR)
+    if(args_cnt > 1 && V_VT(args+1) != VT_BSTR)
         SysFreeString(delimiter);
     return hres;
 }

@@ -51,7 +51,8 @@ extern obj_handle_t find_inherited_handle( struct process *process, const struct
 extern void close_process_handles( struct process *process );
 extern struct handle_table *alloc_handle_table( struct process *process, int count );
 extern struct handle_table *copy_handle_table( struct process *process, struct process *parent,
-                                               const obj_handle_t *handles, unsigned int handle_count );
+                                               const obj_handle_t *handles, unsigned int handle_count,
+                                               const obj_handle_t *std_handles );
 extern unsigned int get_handle_table_count( struct process *process);
 
 #endif  /* __WINE_SERVER_HANDLE_H */

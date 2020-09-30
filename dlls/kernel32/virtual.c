@@ -18,17 +18,11 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <fcntl.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
 
 #define WINE_NO_INLINE_STRING
 #include "ntstatus.h"
@@ -41,7 +35,6 @@
 #include "winerror.h"
 #include "psapi.h"
 #include "wine/exception.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 #include "kernel_private.h"
@@ -285,7 +278,7 @@ LPWSTR WINAPI lstrcatW( LPWSTR dst, LPCWSTR src )
 {
     __TRY
     {
-        strcatW( dst, src );
+        wcscat( dst, src );
     }
     __EXCEPT( badptr_handler )
     {
@@ -325,7 +318,7 @@ LPWSTR WINAPI lstrcpyW( LPWSTR dst, LPCWSTR src )
 {
     __TRY
     {
-        strcpyW( dst, src );
+        wcscpy( dst, src );
     }
     __EXCEPT( badptr_handler )
     {

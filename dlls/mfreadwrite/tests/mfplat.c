@@ -438,11 +438,13 @@ static struct test_media_stream *create_test_stream(DWORD stream_index, IMFMedia
     struct test_media_stream *stream;
     IMFPresentationDescriptor *pd;
     BOOL selected;
+    HRESULT hr;
 
     stream = heap_alloc_zero(sizeof(*stream));
     stream->IMFMediaStream_iface.lpVtbl = &test_media_stream_vtbl;
     stream->refcount = 1;
-    MFCreateEventQueue(&stream->event_queue);
+    hr = MFCreateEventQueue(&stream->event_queue);
+    ok(hr == S_OK, "Failed to create event queue, hr %#x.\n", hr);
     stream->source = source;
     IMFMediaSource_AddRef(stream->source);
     stream->is_new = TRUE;

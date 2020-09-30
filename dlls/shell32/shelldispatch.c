@@ -934,7 +934,7 @@ static HRESULT ShellLinkObject_Constructor(FolderItemImpl *item, IShellLinkDual2
         return hr;
     }
 
-    *link = (IShellLinkDual2 *)&This->IShellLinkDual2_iface;
+    *link = &This->IShellLinkDual2_iface;
     return S_OK;
 }
 

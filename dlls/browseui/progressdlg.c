@@ -86,15 +86,13 @@ static inline ProgressDialog *impl_from_IOleWindow(IOleWindow *iface)
     return CONTAINING_RECORD(iface, ProgressDialog, IOleWindow_iface);
 }
 
-static const WCHAR empty_string[] = {0};
-
 static void set_buffer(LPWSTR *buffer, LPCWSTR string)
 {
     IMalloc *malloc;
     ULONG cb;
 
     if (string == NULL)
-        string = empty_string;
+        string = L"";
     CoGetMalloc(MEMCTX_TASK, &malloc);
 
     cb = (lstrlenW(string) + 1)*sizeof(WCHAR);
@@ -134,9 +132,9 @@ static void update_dialog(ProgressDialog *This, DWORD dwUpdate)
         SetWindowTextW(This->hwnd, This->title);
 
     if (dwUpdate & UPDATE_LINE1)
-        SetDlgItemTextW(This->hwnd, IDC_TEXT_LINE, (This->isCancelled ? empty_string : This->lines[0]));
+        SetDlgItemTextW(This->hwnd, IDC_TEXT_LINE, (This->isCancelled ? L"" : This->lines[0]));
     if (dwUpdate & UPDATE_LINE2)
-        SetDlgItemTextW(This->hwnd, IDC_TEXT_LINE+1, (This->isCancelled ? empty_string : This->lines[1]));
+        SetDlgItemTextW(This->hwnd, IDC_TEXT_LINE+1, (This->isCancelled ? L"" : This->lines[1]));
     if (dwUpdate & UPDATE_LINE3)
         SetDlgItemTextW(This->hwnd, IDC_TEXT_LINE+2, (This->isCancelled ? This->cancelMsg : This->lines[2]));
 

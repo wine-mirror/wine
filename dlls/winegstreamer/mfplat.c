@@ -16,6 +16,11 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "config.h"
+#include <gst/gst.h>
+
+#include "gst_private.h"
+
 #include <stdarg.h>
 
 #include "gst_private.h"
@@ -435,4 +440,164 @@ HRESULT mfplat_get_class_object(REFCLSID rclsid, REFIID riid, void **obj)
     }
 
     return CLASS_E_CLASSNOTAVAILABLE;
+}
+
+static const struct
+{
+    const GUID *subtype;
+    GstVideoFormat format;
+}
+uncompressed_video_formats[] =
+{
+    {&MFVideoFormat_ARGB32,  GST_VIDEO_FORMAT_BGRA},
+    {&MFVideoFormat_RGB32,   GST_VIDEO_FORMAT_BGRx},
+    {&MFVideoFormat_RGB24,   GST_VIDEO_FORMAT_BGR},
+    {&MFVideoFormat_RGB565,  GST_VIDEO_FORMAT_BGR16},
+    {&MFVideoFormat_RGB555,  GST_VIDEO_FORMAT_BGR15},
+};
+
+/* returns NULL if doesn't match exactly */
+IMFMediaType *mf_media_type_from_caps(const GstCaps *caps)
+{
+    IMFMediaType *media_type;
+    GstStructure *info;
+    const char *mime_type;
+
+    if (TRACE_ON(mfplat))
+    {
+        gchar *human_readable = gst_caps_to_string(caps);
+        TRACE("caps = %s\n", debugstr_a(human_readable));
+        g_free(human_readable);
+    }
+
+    if (FAILED(MFCreateMediaType(&media_type)))
+        return NULL;
+
+    info = gst_caps_get_structure(caps, 0);
+    mime_type = gst_structure_get_name(info);
+
+    if (!strncmp(mime_type, "video", 5))
+    {
+        GstVideoInfo video_info;
+
+        if (!gst_video_info_from_caps(&video_info, caps))
+        {
+            return NULL;
+        }
+
+        IMFMediaType_SetGUID(media_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
+
+        IMFMediaType_SetUINT64(media_type, &MF_MT_FRAME_SIZE, ((UINT64)video_info.width << 32) | video_info.height);
+
+        IMFMediaType_SetUINT64(media_type, &MF_MT_FRAME_RATE, ((UINT64)video_info.fps_n << 32) | video_info.fps_d);
+
+        if (!strcmp(mime_type, "video/x-raw"))
+        {
+            GUID fourcc_subtype = MFVideoFormat_Base;
+            unsigned int i;
+
+            IMFMediaType_SetUINT32(media_type, &MF_MT_COMPRESSED, FALSE);
+
+            /* First try FOURCC */
+            if ((fourcc_subtype.Data1 = gst_video_format_to_fourcc(video_info.finfo->format)))
+            {
+                IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &fourcc_subtype);
+            }
+            else
+            {
+                for (i = 0; i < ARRAY_SIZE(uncompressed_video_formats); i++)
+                {
+                    if (uncompressed_video_formats[i].format == video_info.finfo->format)
+                    {
+                        IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, uncompressed_video_formats[i].subtype);
+                        break;
+                    }
+                }
+                if (i == ARRAY_SIZE(uncompressed_video_formats))
+                {
+                    FIXME("Unrecognized uncompressed video format %s\n", gst_video_format_to_string(video_info.finfo->format));
+                    IMFMediaType_Release(media_type);
+                    return NULL;
+                }
+            }
+        }
+        else
+        {
+            FIXME("Unrecognized video format %s\n", mime_type);
+            return NULL;
+        }
+    }
+    else if (!strncmp(mime_type, "audio", 5))
+    {
+        gint rate, channels, bitrate;
+        guint64 channel_mask;
+        IMFMediaType_SetGUID(media_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Audio);
+
+        if (gst_structure_get_int(info, "rate", &rate))
+            IMFMediaType_SetUINT32(media_type, &MF_MT_AUDIO_SAMPLES_PER_SECOND, rate);
+
+        if (gst_structure_get_int(info, "channels", &channels))
+            IMFMediaType_SetUINT32(media_type, &MF_MT_AUDIO_NUM_CHANNELS, channels);
+
+        if (gst_structure_get(info, "channel-mask", GST_TYPE_BITMASK, &channel_mask, NULL))
+            IMFMediaType_SetUINT32(media_type, &MF_MT_AUDIO_CHANNEL_MASK, channel_mask);
+
+        if (gst_structure_get_int(info, "bitrate", &bitrate))
+            IMFMediaType_SetUINT32(media_type, &MF_MT_AVG_BITRATE, bitrate);
+
+        if (!strcmp(mime_type, "audio/x-raw"))
+        {
+            GstAudioInfo audio_info;
+            DWORD depth;
+
+            if (!gst_audio_info_from_caps(&audio_info, caps))
+            {
+                ERR("Failed to get caps audio info\n");
+                IMFMediaType_Release(media_type);
+                return NULL;
+            }
+
+            depth = GST_AUDIO_INFO_DEPTH(&audio_info);
+
+            /* validation */
+            if ((audio_info.finfo->flags & GST_AUDIO_FORMAT_FLAG_INTEGER && depth > 8) ||
+                (audio_info.finfo->flags & GST_AUDIO_FORMAT_FLAG_SIGNED && depth <= 8) ||
+                (audio_info.finfo->endianness != G_LITTLE_ENDIAN && depth > 8))
+            {
+                IMFMediaType_Release(media_type);
+                return NULL;
+            }
+
+            /* conversion */
+            switch (audio_info.finfo->flags)
+            {
+                case GST_AUDIO_FORMAT_FLAG_FLOAT:
+                    IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &MFAudioFormat_Float);
+                    break;
+                case GST_AUDIO_FORMAT_FLAG_INTEGER:
+                case GST_AUDIO_FORMAT_FLAG_SIGNED:
+                    IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &MFAudioFormat_PCM);
+                    break;
+                default:
+                    FIXME("Unrecognized audio format %x\n", audio_info.finfo->format);
+                    IMFMediaType_Release(media_type);
+                    return NULL;
+            }
+
+            IMFMediaType_SetUINT32(media_type, &MF_MT_AUDIO_BITS_PER_SAMPLE, depth);
+        }
+        else
+        {
+            FIXME("Unrecognized audio format %s\n", mime_type);
+            IMFMediaType_Release(media_type);
+            return NULL;
+        }
+    }
+    else
+    {
+        IMFMediaType_Release(media_type);
+        return NULL;
+    }
+
+    return media_type;
 }

@@ -299,7 +299,7 @@ static HRESULT WINAPI stream_CopyTo(IStream *iface, IStream *dest, ULARGE_INTEGE
 
     while (cb.QuadPart > 0)
     {
-        ULONG chunk_size = chunk_size = cb.QuadPart >= sizeof(buffer) ? sizeof(buffer) : cb.u.LowPart;
+        ULONG chunk_size = cb.QuadPart >= sizeof(buffer) ? sizeof(buffer) : cb.u.LowPart;
         ULONG chunk_read, chunk_written;
 
         hr = IStream_Read(iface, buffer, chunk_size, &chunk_read);

@@ -3987,7 +3987,7 @@ static NTSTATUS process_init(void)
     static const WCHAR ntdllW[] = {'\\','?','?','\\','C',':','\\','w','i','n','d','o','w','s','\\',
                                    's','y','s','t','e','m','3','2','\\',
                                    'n','t','d','l','l','.','d','l','l',0};
-    static const WCHAR kernel32W[] = {'\\','?','?','\\','C',':','\\','w','i','n','d','o','w','s','\\',
+    static const WCHAR kernel32W[] = {'C',':','\\','w','i','n','d','o','w','s','\\',
                                       's','y','s','t','e','m','3','2','\\',
                                       'k','e','r','n','e','l','3','2','.','d','l','l',0};
     RTL_USER_PROCESS_PARAMETERS *params;
@@ -4044,8 +4044,7 @@ static NTSTATUS process_init(void)
     status = build_builtin_module( params->DllPath.Buffer, &nt_name, meminfo.AllocationBase, 0, &wm );
     assert( !status );
 
-    RtlInitUnicodeString( &nt_name, kernel32W );
-    if ((status = load_builtin_dll( params->DllPath.Buffer, &nt_name, NULL, 0, &wm )) != STATUS_SUCCESS)
+    if ((status = load_dll( params->DllPath.Buffer, kernel32W, NULL, 0, &wm )) != STATUS_SUCCESS)
     {
         MESSAGE( "wine: could not load kernel32.dll, status %x\n", status );
         NtTerminateProcess( GetCurrentProcess(), status );

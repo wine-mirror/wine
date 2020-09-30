@@ -2023,6 +2023,8 @@ found:
 void WINAPI ReleaseStgMedium(
   STGMEDIUM* pmedium)
 {
+  if (!pmedium) return;
+
   switch (pmedium->tymed)
   {
     case TYMED_HGLOBAL:

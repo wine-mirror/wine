@@ -1213,6 +1213,7 @@ void wined3d_device_uninit_3d(struct wined3d_device *device)
     wine_rb_clear(&device->samplers, device_free_sampler, NULL);
     wine_rb_clear(&device->rasterizer_states, device_free_rasterizer_state, NULL);
     wine_rb_clear(&device->blend_states, device_free_blend_state, NULL);
+    wine_rb_clear(&device->depth_stencil_states, device_free_depth_stencil_state, NULL);
 
     LIST_FOR_EACH_ENTRY_SAFE(resource, cursor, &device->resources, struct wined3d_resource, resource_list_entry)
     {
@@ -3684,7 +3685,21 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
                     set_blend_state = TRUE;
                     break;
 
+                case WINED3D_RS_BACK_STENCILFAIL:
+                case WINED3D_RS_BACK_STENCILFUNC:
+                case WINED3D_RS_BACK_STENCILPASS:
+                case WINED3D_RS_BACK_STENCILZFAIL:
+                case WINED3D_RS_STENCILENABLE:
+                case WINED3D_RS_STENCILFAIL:
+                case WINED3D_RS_STENCILFUNC:
+                case WINED3D_RS_STENCILMASK:
+                case WINED3D_RS_STENCILPASS:
+                case WINED3D_RS_STENCILWRITEMASK:
+                case WINED3D_RS_STENCILZFAIL:
+                case WINED3D_RS_TWOSIDEDSTENCILMODE:
                 case WINED3D_RS_ZENABLE:
+                case WINED3D_RS_ZFUNC:
+                case WINED3D_RS_ZWRITEENABLE:
                     set_depth_stencil_state = TRUE;
                     break;
 
@@ -3837,6 +3852,27 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
 
             default:
                 FIXME("Unrecognized depth buffer type %#x.\n", state->rs[WINED3D_RS_ZENABLE]);
+        }
+        desc.depth_write = state->rs[WINED3D_RS_ZWRITEENABLE];
+        desc.depth_func = state->rs[WINED3D_RS_ZFUNC];
+        desc.stencil = state->rs[WINED3D_RS_STENCILENABLE];
+        desc.stencil_read_mask = state->rs[WINED3D_RS_STENCILMASK];
+        desc.stencil_write_mask = state->rs[WINED3D_RS_STENCILWRITEMASK];
+        desc.front.fail_op = state->rs[WINED3D_RS_STENCILFAIL];
+        desc.front.depth_fail_op = state->rs[WINED3D_RS_STENCILZFAIL];
+        desc.front.pass_op = state->rs[WINED3D_RS_STENCILPASS];
+        desc.front.func = state->rs[WINED3D_RS_STENCILFUNC];
+
+        if (state->rs[WINED3D_RS_TWOSIDEDSTENCILMODE])
+        {
+            desc.back.fail_op = state->rs[WINED3D_RS_BACK_STENCILFAIL];
+            desc.back.depth_fail_op = state->rs[WINED3D_RS_BACK_STENCILZFAIL];
+            desc.back.pass_op = state->rs[WINED3D_RS_BACK_STENCILPASS];
+            desc.back.func = state->rs[WINED3D_RS_BACK_STENCILFUNC];
+        }
+        else
+        {
+            desc.back = desc.front;
         }
 
         if ((entry = wine_rb_get(&device->depth_stencil_states, &desc)))
@@ -4357,7 +4393,8 @@ HRESULT CDECL wined3d_device_validate_device(const struct wined3d_device *device
         }
     }
 
-    if (wined3d_state_uses_depth_buffer(state) || state->render_states[WINED3D_RS_STENCILENABLE])
+    if (wined3d_state_uses_depth_buffer(state)
+            || (state->depth_stencil_state && state->depth_stencil_state->desc.stencil))
     {
         struct wined3d_rendertarget_view *rt = device->state.fb.render_targets[0];
         struct wined3d_rendertarget_view *ds = device->state.fb.depth_stencil;

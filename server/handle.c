@@ -354,10 +354,26 @@ static void shrink_handle_table( struct handle_table *table )
     table->entries = new_entries;
 }
 
+static void inherit_handle( struct process *parent, const obj_handle_t handle, struct handle_table *table )
+{
+    struct handle_entry *dst, *src;
+    int index;
+
+    dst = table->entries;
+
+    src = get_handle( parent, handle );
+    if (!src || !(src->access & RESERVED_INHERIT)) return;
+    grab_object_for_handle( src->ptr );
+    index = handle_to_index( handle );
+    dst[index] = *src;
+    table->last = max( table->last, index );
+}
+
 /* copy the handle table of the parent process */
 /* return 1 if OK, 0 on error */
 struct handle_table *copy_handle_table( struct process *process, struct process *parent,
-                                        const obj_handle_t *handles, unsigned int handle_count )
+                                        const obj_handle_t *handles, unsigned int handle_count,
+                                        const obj_handle_t *std_handles )
 {
     struct handle_table *parent_table = parent->handles;
     struct handle_table *table;
@@ -371,20 +387,16 @@ struct handle_table *copy_handle_table( struct process *process, struct process 
 
     if (handles)
     {
-        struct handle_entry *dst, *src;
-        int index;
-
-        dst = table->entries;
-        memset( dst, 0, parent_table->count * sizeof(*dst) );
+        memset( table->entries, 0, parent_table->count * sizeof(*table->entries) );
 
         for (i = 0; i < handle_count; i++)
         {
-            src = get_handle( parent, handles[i] );
-            if (!src || !(src->access & RESERVED_INHERIT)) continue;
-            grab_object_for_handle( src->ptr );
-            index = handle_to_index( handles[i] );
-            dst[index] = *src;
-            table->last = max( table->last, index );
+            inherit_handle( parent, handles[i], table );
+        }
+
+        for (i = 0; i < 3; i++)
+        {
+            inherit_handle( parent, std_handles[i], table );
         }
     }
     else

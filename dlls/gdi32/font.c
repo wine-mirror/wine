@@ -42,6 +42,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(font);
 
+static HKEY wine_fonts_key;
+
   /* Device -> World size conversion */
 
 /* Performs a device to world transformation on the specified width (which
@@ -164,6 +166,413 @@ static const CHARSETINFO FONT_tci[MAXTCIINDEX] = {
   { DEFAULT_CHARSET, 0, {{0,0,0,0},{FS_LATIN1,0}} },
   { SYMBOL_CHARSET, CP_SYMBOL, {{0,0,0,0},{FS_SYMBOL,0}} }
 };
+
+static const WCHAR win9x_font_reg_key[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
+                                           'W','i','n','d','o','w','s','\\',
+                                           'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+                                           'F','o','n','t','s','\0'};
+
+static const WCHAR winnt_font_reg_key[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
+                                           'W','i','n','d','o','w','s',' ','N','T','\\',
+                                           'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+                                           'F','o','n','t','s','\0'};
+
+static const WCHAR system_fonts_reg_key[] = {'S','o','f','t','w','a','r','e','\\','F','o','n','t','s','\0'};
+static const WCHAR system_link[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
+                                    'W','i','n','d','o','w','s',' ','N','T','\\',
+                                    'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\','F','o','n','t','L','i','n','k','\\',
+                                    'S','y','s','t','e','m','L','i','n','k',0};
+static const WCHAR Lucida_Sans_Unicode[] = {'L','u','c','i','d','a',' ','S','a','n','s',' ','U','n','i','c','o','d','e',0};
+static const WCHAR Microsoft_Sans_Serif[] = {'M','i','c','r','o','s','o','f','t',' ','S','a','n','s',' ','S','e','r','i','f',0 };
+static const WCHAR Tahoma[] = {'T','a','h','o','m','a',0};
+
+static const struct nls_update_font_list
+{
+    UINT ansi_cp, oem_cp;
+    const char *oem, *fixed, *system;
+    const char *courier, *serif, *small, *sserif_96, *sserif_120;
+    /* these are for font substitutes */
+    const char *shelldlg, *tmsrmn;
+    const char *fixed_0, *system_0, *courier_0, *serif_0, *small_0, *sserif_0, *helv_0, *tmsrmn_0;
+    struct subst { const char *from, *to; } arial_0, courier_new_0, times_new_roman_0;
+} nls_update_font_list[] =
+{
+    /* Latin 1 (United States) */
+    { 1252, 437, "vgaoem.fon", "vgafix.fon", "vgasys.fon",
+      "coure.fon", "serife.fon", "smalle.fon", "sserife.fon", "sseriff.fon",
+      "Tahoma","Times New Roman"
+    },
+    /* Latin 1 (Multilingual) */
+    { 1252, 850, "vga850.fon", "vgafix.fon", "vgasys.fon",
+      "coure.fon", "serife.fon", "smalle.fon", "sserife.fon", "sseriff.fon",
+      "Tahoma","Times New Roman"  /* FIXME unverified */
+    },
+    /* Eastern Europe */
+    { 1250, 852, "vga852.fon", "vgafixe.fon", "vgasyse.fon",
+      "couree.fon", "serifee.fon", "smallee.fon", "sserifee.fon", "sseriffe.fon",
+      "Tahoma","Times New Roman", /* FIXME unverified */
+      "Fixedsys,238", "System,238",
+      "Courier New,238", "MS Serif,238", "Small Fonts,238",
+      "MS Sans Serif,238", "MS Sans Serif,238", "MS Serif,238",
+      { "Arial CE,0", "Arial,238" },
+      { "Courier New CE,0", "Courier New,238" },
+      { "Times New Roman CE,0", "Times New Roman,238" }
+    },
+    /* Cyrillic */
+    { 1251, 866, "vga866.fon", "vgafixr.fon", "vgasysr.fon",
+      "courer.fon", "serifer.fon", "smaller.fon", "sserifer.fon", "sseriffr.fon",
+      "Tahoma","Times New Roman", /* FIXME unverified */
+      "Fixedsys,204", "System,204",
+      "Courier New,204", "MS Serif,204", "Small Fonts,204",
+      "MS Sans Serif,204", "MS Sans Serif,204", "MS Serif,204",
+      { "Arial Cyr,0", "Arial,204" },
+      { "Courier New Cyr,0", "Courier New,204" },
+      { "Times New Roman Cyr,0", "Times New Roman,204" }
+    },
+    /* Greek */
+    { 1253, 737, "vga869.fon", "vgafixg.fon", "vgasysg.fon",
+      "coureg.fon", "serifeg.fon", "smalleg.fon", "sserifeg.fon", "sseriffg.fon",
+      "Tahoma","Times New Roman", /* FIXME unverified */
+      "Fixedsys,161", "System,161",
+      "Courier New,161", "MS Serif,161", "Small Fonts,161",
+      "MS Sans Serif,161", "MS Sans Serif,161", "MS Serif,161",
+      { "Arial Greek,0", "Arial,161" },
+      { "Courier New Greek,0", "Courier New,161" },
+      { "Times New Roman Greek,0", "Times New Roman,161" }
+    },
+    /* Turkish */
+    { 1254, 857, "vga857.fon", "vgafixt.fon", "vgasyst.fon",
+      "couret.fon", "serifet.fon", "smallet.fon", "sserifet.fon", "sserifft.fon",
+      "Tahoma","Times New Roman", /* FIXME unverified */
+      "Fixedsys,162", "System,162",
+      "Courier New,162", "MS Serif,162", "Small Fonts,162",
+      "MS Sans Serif,162", "MS Sans Serif,162", "MS Serif,162",
+      { "Arial Tur,0", "Arial,162" },
+      { "Courier New Tur,0", "Courier New,162" },
+      { "Times New Roman Tur,0", "Times New Roman,162" }
+    },
+    /* Hebrew */
+    { 1255, 862, "vgaoem.fon", "vgaf1255.fon", "vgas1255.fon",
+      "coue1255.fon", "sere1255.fon", "smae1255.fon", "ssee1255.fon", "ssef1255.fon",
+      "Tahoma","Times New Roman", /* FIXME unverified */
+      "Fixedsys,177", "System,177",
+      "Courier New,177", "MS Serif,177", "Small Fonts,177",
+      "MS Sans Serif,177", "MS Sans Serif,177", "MS Serif,177"
+    },
+    /* Arabic */
+    { 1256, 720, "vgaoem.fon", "vgaf1256.fon", "vgas1256.fon",
+      "coue1256.fon", "sere1256.fon", "smae1256.fon", "ssee1256.fon", "ssef1256.fon",
+      "Microsoft Sans Serif","Times New Roman",
+      "Fixedsys,178", "System,178",
+      "Courier New,178", "MS Serif,178", "Small Fonts,178",
+      "MS Sans Serif,178", "MS Sans Serif,178", "MS Serif,178"
+    },
+    /* Baltic */
+    { 1257, 775, "vga775.fon", "vgaf1257.fon", "vgas1257.fon",
+      "coue1257.fon", "sere1257.fon", "smae1257.fon", "ssee1257.fon", "ssef1257.fon",
+      "Tahoma","Times New Roman", /* FIXME unverified */
+      "Fixedsys,186", "System,186",
+      "Courier New,186", "MS Serif,186", "Small Fonts,186",
+      "MS Sans Serif,186", "MS Sans Serif,186", "MS Serif,186",
+      { "Arial Baltic,0", "Arial,186" },
+      { "Courier New Baltic,0", "Courier New,186" },
+      { "Times New Roman Baltic,0", "Times New Roman,186" }
+    },
+    /* Vietnamese */
+    { 1258, 1258, "vga850.fon", "vgafix.fon", "vgasys.fon",
+      "coure.fon", "serife.fon", "smalle.fon", "sserife.fon", "sseriff.fon",
+      "Tahoma","Times New Roman" /* FIXME unverified */
+    },
+    /* Thai */
+    { 874, 874, "vga850.fon", "vgaf874.fon", "vgas874.fon",
+      "coure.fon", "serife.fon", "smalle.fon", "ssee874.fon", "ssef874.fon",
+      "Tahoma","Times New Roman" /* FIXME unverified */
+    },
+    /* Japanese */
+    { 932, 932, "vga932.fon", "jvgafix.fon", "jvgasys.fon",
+      "coure.fon", "serife.fon", "jsmalle.fon", "sserife.fon", "sseriff.fon",
+      "MS UI Gothic","MS Serif"
+    },
+    /* Chinese Simplified */
+    { 936, 936, "vga936.fon", "svgafix.fon", "svgasys.fon",
+      "coure.fon", "serife.fon", "smalle.fon", "sserife.fon", "sseriff.fon",
+      "SimSun", "NSimSun"
+    },
+    /* Korean */
+    { 949, 949, "vga949.fon", "hvgafix.fon", "hvgasys.fon",
+      "coure.fon", "serife.fon", "smalle.fon", "sserife.fon", "sseriff.fon",
+      "Gulim",  "Batang"
+    },
+    /* Chinese Traditional */
+    { 950, 950, "vga950.fon", "cvgafix.fon", "cvgasys.fon",
+      "coure.fon", "serife.fon", "smalle.fon", "sserife.fon", "sseriff.fon",
+      "PMingLiU",  "MingLiU"
+    }
+};
+
+static inline BOOL is_dbcs_ansi_cp(UINT ansi_cp)
+{
+    return ( ansi_cp == 932       /* CP932 for Japanese */
+            || ansi_cp == 936     /* CP936 for Chinese Simplified */
+            || ansi_cp == 949     /* CP949 for Korean */
+            || ansi_cp == 950 );  /* CP950 for Chinese Traditional */
+}
+
+static void add_font_list(HKEY hkey, const struct nls_update_font_list *fl, int dpi)
+{
+    const char *sserif = (dpi <= 108) ? fl->sserif_96 : fl->sserif_120;
+
+    RegSetValueExA(hkey, "Courier", 0, REG_SZ, (const BYTE *)fl->courier, strlen(fl->courier)+1);
+    RegSetValueExA(hkey, "MS Serif", 0, REG_SZ, (const BYTE *)fl->serif, strlen(fl->serif)+1);
+    RegSetValueExA(hkey, "MS Sans Serif", 0, REG_SZ, (const BYTE *)sserif, strlen(sserif)+1);
+    RegSetValueExA(hkey, "Small Fonts", 0, REG_SZ, (const BYTE *)fl->small, strlen(fl->small)+1);
+}
+
+static void set_value_key(HKEY hkey, const char *name, const char *value)
+{
+    if (value)
+        RegSetValueExA(hkey, name, 0, REG_SZ, (const BYTE *)value, strlen(value) + 1);
+    else if (name)
+        RegDeleteValueA(hkey, name);
+}
+
+static void update_font_association_info(UINT current_ansi_codepage)
+{
+    static const char *font_assoc_reg_key = "System\\CurrentControlSet\\Control\\FontAssoc";
+    static const char *assoc_charset_subkey = "Associated Charset";
+
+    if (is_dbcs_ansi_cp(current_ansi_codepage))
+    {
+        HKEY hkey;
+        if (RegCreateKeyA(HKEY_LOCAL_MACHINE, font_assoc_reg_key, &hkey) == ERROR_SUCCESS)
+        {
+            HKEY hsubkey;
+            if (RegCreateKeyA(hkey, assoc_charset_subkey, &hsubkey) == ERROR_SUCCESS)
+            {
+                switch (current_ansi_codepage)
+                {
+                case 932:
+                    set_value_key(hsubkey, "ANSI(00)", "NO");
+                    set_value_key(hsubkey, "OEM(FF)", "NO");
+                    set_value_key(hsubkey, "SYMBOL(02)", "NO");
+                    break;
+                case 936:
+                case 949:
+                case 950:
+                    set_value_key(hsubkey, "ANSI(00)", "YES");
+                    set_value_key(hsubkey, "OEM(FF)", "YES");
+                    set_value_key(hsubkey, "SYMBOL(02)", "NO");
+                    break;
+                }
+                RegCloseKey(hsubkey);
+            }
+
+            /* TODO: Associated DefaultFonts */
+
+            RegCloseKey(hkey);
+        }
+    }
+    else
+        RegDeleteTreeA(HKEY_LOCAL_MACHINE, font_assoc_reg_key);
+}
+
+static void set_multi_value_key(HKEY hkey, const WCHAR *name, const WCHAR *value, DWORD len)
+{
+    if (value)
+        RegSetValueExW(hkey, name, 0, REG_MULTI_SZ, (const BYTE *)value, len);
+    else if (name)
+        RegDeleteValueW(hkey, name);
+}
+
+static void update_font_system_link_info(UINT current_ansi_codepage)
+{
+    static const WCHAR system_link_simplified_chinese[] =
+        {'S','I','M','S','U','N','.','T','T','C',',','S','i','m','S','u','n','\0',
+         'M','I','N','G','L','I','U','.','T','T','C',',','P','M','i','n','g','L','i','u','\0',
+         'M','S','G','O','T','H','I','C','.','T','T','C',',','M','S',' ','U','I',' ','G','o','t','h','i','c','\0',
+         'B','A','T','A','N','G','.','T','T','C',',','B','a','t','a','n','g','\0',
+         '\0'};
+    static const WCHAR system_link_traditional_chinese[] =
+        {'M','I','N','G','L','I','U','.','T','T','C',',','P','M','i','n','g','L','i','u','\0',
+         'S','I','M','S','U','N','.','T','T','C',',','S','i','m','S','u','n','\0',
+         'M','S','G','O','T','H','I','C','.','T','T','C',',','M','S',' ','U','I',' ','G','o','t','h','i','c','\0',
+         'B','A','T','A','N','G','.','T','T','C',',','B','a','t','a','n','g','\0',
+         '\0'};
+    static const WCHAR system_link_japanese[] =
+        {'M','S','G','O','T','H','I','C','.','T','T','C',',','M','S',' ','U','I',' ','G','o','t','h','i','c','\0',
+         'M','I','N','G','L','I','U','.','T','T','C',',','P','M','i','n','g','L','i','U','\0',
+         'S','I','M','S','U','N','.','T','T','C',',','S','i','m','S','u','n','\0',
+         'G','U','L','I','M','.','T','T','C',',','G','u','l','i','m','\0',
+         '\0'};
+    static const WCHAR system_link_korean[] =
+        {'G','U','L','I','M','.','T','T','C',',','G','u','l','i','m','\0',
+         'M','S','G','O','T','H','I','C','.','T','T','C',',','M','S',' ','U','I',' ','G','o','t','h','i','c','\0',
+         'M','I','N','G','L','I','U','.','T','T','C',',','P','M','i','n','g','L','i','U','\0',
+         'S','I','M','S','U','N','.','T','T','C',',','S','i','m','S','u','n','\0',
+         '\0'};
+    static const WCHAR system_link_non_cjk[] =
+        {'M','S','G','O','T','H','I','C','.','T','T','C',',','M','S',' ','U','I',' ','G','o','t','h','i','c','\0',
+         'M','I','N','G','L','I','U','.','T','T','C',',','P','M','i','n','g','L','i','U','\0',
+         'S','I','M','S','U','N','.','T','T','C',',','S','i','m','S','u','n','\0',
+         'G','U','L','I','M','.','T','T','C',',','G','u','l','i','m','\0',
+         '\0'};
+    HKEY hkey;
+
+    if (RegCreateKeyW(HKEY_LOCAL_MACHINE, system_link, &hkey) == ERROR_SUCCESS)
+    {
+        const WCHAR *link;
+        DWORD len;
+
+        switch (current_ansi_codepage)
+        {
+        case 932:
+            link = system_link_japanese;
+            len = sizeof(system_link_japanese);
+            break;
+        case 936:
+            link = system_link_simplified_chinese;
+            len = sizeof(system_link_simplified_chinese);
+            break;
+        case 949:
+            link = system_link_korean;
+            len = sizeof(system_link_korean);
+            break;
+        case 950:
+            link = system_link_traditional_chinese;
+            len = sizeof(system_link_traditional_chinese);
+            break;
+        default:
+            link = system_link_non_cjk;
+            len = sizeof(system_link_non_cjk);
+        }
+        set_multi_value_key(hkey, Lucida_Sans_Unicode, link, len);
+        set_multi_value_key(hkey, Microsoft_Sans_Serif, link, len);
+        set_multi_value_key(hkey, Tahoma, link, len);
+        RegCloseKey(hkey);
+    }
+}
+
+static void update_codepage(void)
+{
+    static const WCHAR logpixels[] = { 'L','o','g','P','i','x','e','l','s',0 };
+    char buf[40], cpbuf[40];
+    HKEY hkey;
+    DWORD len, type, size;
+    UINT i, ansi_cp, oem_cp;
+    DWORD screen_dpi, font_dpi = 0;
+    BOOL done = FALSE;
+
+    screen_dpi = get_dpi();
+    if (!screen_dpi) screen_dpi = 96;
+
+    size = sizeof(DWORD);
+    if (RegQueryValueExW(wine_fonts_key, logpixels, NULL, &type, (BYTE *)&font_dpi, &size) ||
+        type != REG_DWORD || size != sizeof(DWORD))
+        font_dpi = 0;
+
+    ansi_cp = GetACP();
+    oem_cp = GetOEMCP();
+    sprintf( cpbuf, "%u,%u", ansi_cp, oem_cp );
+
+    buf[0] = 0;
+    len = sizeof(buf);
+    if (!RegQueryValueExA(wine_fonts_key, "Codepages", 0, &type, (BYTE *)buf, &len) && type == REG_SZ)
+    {
+        if (!strcmp( buf, cpbuf ) && screen_dpi == font_dpi) return;  /* already set correctly */
+        TRACE("updating registry, codepages/logpixels changed %s/%u -> %u,%u/%u\n",
+              buf, font_dpi, ansi_cp, oem_cp, screen_dpi);
+    }
+    else TRACE("updating registry, codepages/logpixels changed none -> %u,%u/%u\n",
+               ansi_cp, oem_cp, screen_dpi);
+
+    RegSetValueExA(wine_fonts_key, "Codepages", 0, REG_SZ, (const BYTE *)cpbuf, strlen(cpbuf)+1);
+    RegSetValueExW(wine_fonts_key, logpixels, 0, REG_DWORD, (const BYTE *)&screen_dpi, sizeof(screen_dpi));
+
+    for (i = 0; i < ARRAY_SIZE(nls_update_font_list); i++)
+    {
+        if (nls_update_font_list[i].ansi_cp == ansi_cp && nls_update_font_list[i].oem_cp == oem_cp)
+        {
+            if (!RegCreateKeyW( HKEY_CURRENT_CONFIG, system_fonts_reg_key, &hkey ))
+            {
+                RegSetValueExA(hkey, "OEMFONT.FON", 0, REG_SZ, (const BYTE *)nls_update_font_list[i].oem,
+                               strlen(nls_update_font_list[i].oem)+1);
+                RegSetValueExA(hkey, "FIXEDFON.FON", 0, REG_SZ, (const BYTE *)nls_update_font_list[i].fixed,
+                               strlen(nls_update_font_list[i].fixed)+1);
+                RegSetValueExA(hkey, "FONTS.FON", 0, REG_SZ, (const BYTE *)nls_update_font_list[i].system,
+                               strlen(nls_update_font_list[i].system)+1);
+                RegCloseKey(hkey);
+            }
+            if (!RegCreateKeyW( HKEY_LOCAL_MACHINE, winnt_font_reg_key, &hkey ))
+            {
+                add_font_list(hkey, &nls_update_font_list[i], screen_dpi);
+                RegCloseKey(hkey);
+            }
+            if (!RegCreateKeyW( HKEY_LOCAL_MACHINE, win9x_font_reg_key, &hkey ))
+            {
+                add_font_list(hkey, &nls_update_font_list[i], screen_dpi);
+                RegCloseKey(hkey);
+            }
+            if (!RegCreateKeyA( HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Windows NT\\CurrentVersion\\FontSubstitutes", &hkey ))
+            {
+                RegSetValueExA(hkey, "MS Shell Dlg", 0, REG_SZ, (const BYTE *)nls_update_font_list[i].shelldlg,
+                               strlen(nls_update_font_list[i].shelldlg)+1);
+                RegSetValueExA(hkey, "Tms Rmn", 0, REG_SZ, (const BYTE *)nls_update_font_list[i].tmsrmn,
+                               strlen(nls_update_font_list[i].tmsrmn)+1);
+
+                set_value_key(hkey, "Fixedsys,0", nls_update_font_list[i].fixed_0);
+                set_value_key(hkey, "System,0", nls_update_font_list[i].system_0);
+                set_value_key(hkey, "Courier,0", nls_update_font_list[i].courier_0);
+                set_value_key(hkey, "MS Serif,0", nls_update_font_list[i].serif_0);
+                set_value_key(hkey, "Small Fonts,0", nls_update_font_list[i].small_0);
+                set_value_key(hkey, "MS Sans Serif,0", nls_update_font_list[i].sserif_0);
+                set_value_key(hkey, "Helv,0", nls_update_font_list[i].helv_0);
+                set_value_key(hkey, "Tms Rmn,0", nls_update_font_list[i].tmsrmn_0);
+
+                set_value_key(hkey, nls_update_font_list[i].arial_0.from, nls_update_font_list[i].arial_0.to);
+                set_value_key(hkey, nls_update_font_list[i].courier_new_0.from, nls_update_font_list[i].courier_new_0.to);
+                set_value_key(hkey, nls_update_font_list[i].times_new_roman_0.from, nls_update_font_list[i].times_new_roman_0.to);
+
+                RegCloseKey(hkey);
+            }
+            done = TRUE;
+        }
+        else
+        {
+            /* Delete the FontSubstitutes from other locales */
+            if (!RegCreateKeyA( HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Windows NT\\CurrentVersion\\FontSubstitutes", &hkey ))
+            {
+                set_value_key(hkey, nls_update_font_list[i].arial_0.from, NULL);
+                set_value_key(hkey, nls_update_font_list[i].courier_new_0.from, NULL);
+                set_value_key(hkey, nls_update_font_list[i].times_new_roman_0.from, NULL);
+                RegCloseKey(hkey);
+            }
+        }
+    }
+    if (!done)
+        FIXME("there is no font defaults for codepages %u,%u\n", ansi_cp, oem_cp);
+
+    /* update locale dependent font association info and font system link info in registry.
+       update only when codepages changed, not logpixels. */
+    if (strcmp(buf, cpbuf) != 0)
+    {
+        update_font_association_info(ansi_cp);
+        update_font_system_link_info(ansi_cp);
+    }
+}
+
+/***********************************************************************
+ *              font_init
+ */
+void font_init(void)
+{
+    if (RegCreateKeyExA( HKEY_CURRENT_USER, "Software\\Wine\\Fonts", 0, NULL, 0,
+                         KEY_ALL_ACCESS, NULL, &wine_fonts_key, NULL ))
+        return;
+
+    update_codepage();
+    WineEngInit();
+}
+
 
 static void FONT_LogFontAToW( const LOGFONTA *fontA, LPLOGFONTW fontW )
 {
@@ -2910,6 +3319,8 @@ DWORD WINAPI GetGlyphOutlineW( HDC hdc, UINT uChar, UINT fuFormat,
 
     dc = get_dc_ptr(hdc);
     if(!dc) return GDI_ERROR;
+
+    uChar &= 0xffff;
 
     dev = GET_DC_PHYSDEV( dc, pGetGlyphOutline );
     ret = dev->funcs->pGetGlyphOutline( dev, uChar, fuFormat, lpgm, cbBuffer, lpBuffer, lpmat2 );

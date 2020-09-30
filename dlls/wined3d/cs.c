@@ -1227,8 +1227,6 @@ static void wined3d_cs_exec_set_depth_stencil_view(struct wined3d_cs *cs, const 
     {
         /* Swapping NULL / non NULL depth stencil affects the depth and tests */
         device_invalidate_state(device, STATE_DEPTH_STENCIL);
-        device_invalidate_state(device, STATE_RENDER(WINED3D_RS_STENCILENABLE));
-        device_invalidate_state(device, STATE_RENDER(WINED3D_RS_STENCILWRITEMASK));
         device_invalidate_state(device, STATE_RASTERIZER);
     }
     else if (prev)

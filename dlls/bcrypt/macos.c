@@ -18,6 +18,10 @@
  *
  */
 
+#if 0
+#pragma makedep unix
+#endif
+
 #include "config.h"
 #include "wine/port.h"
 
@@ -37,13 +41,24 @@
 #include "bcrypt_internal.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "wine/unicode.h"
 
 #if defined(HAVE_COMMONCRYPTO_COMMONCRYPTOR_H) && MAC_OS_X_VERSION_MAX_ALLOWED >= 1080 && !defined(HAVE_GNUTLS_CIPHER_INIT)
 WINE_DEFAULT_DEBUG_CHANNEL(bcrypt);
 
-NTSTATUS key_set_property( struct key *key, const WCHAR *prop, UCHAR *value, ULONG size, ULONG flags )
+struct key_data
+{
+    CCCryptorRef   ref_encrypt;
+    CCCryptorRef   ref_decrypt;
+};
+C_ASSERT( sizeof(struct key_data) <= sizeof(((struct key *)0)->private) );
+
+static struct key_data *key_data( struct key *key )
+{
+    return (struct key_data *)key->private;
+}
+
+static NTSTATUS CDECL key_set_property( struct key *key, const WCHAR *prop, UCHAR *value, ULONG size, ULONG flags )
 {
     if (!strcmpW( prop, BCRYPT_CHAINING_MODE ))
     {
@@ -68,47 +83,26 @@ NTSTATUS key_set_property( struct key *key, const WCHAR *prop, UCHAR *value, ULO
     return STATUS_NOT_IMPLEMENTED;
 }
 
-static ULONG get_block_size( struct algorithm *alg )
+static NTSTATUS CDECL key_symmetric_init( struct key *key )
 {
-    ULONG ret = 0, size = sizeof(ret);
-    get_alg_property( alg, BCRYPT_BLOCK_LENGTH, (UCHAR *)&ret, sizeof(ret), &size );
-    return ret;
-}
-
-NTSTATUS key_symmetric_init( struct key *key, struct algorithm *alg, const UCHAR *secret, ULONG secret_len )
-{
-    switch (alg->id)
+    switch (key->alg_id)
     {
     case ALG_ID_AES:
-        switch (alg->mode)
+        switch (key->u.s.mode)
         {
         case MODE_ID_ECB:
         case MODE_ID_CBC:
             break;
         default:
-            FIXME( "mode %u not supported\n", alg->mode );
+            FIXME( "mode %u not supported\n", key->u.s.mode );
             return STATUS_NOT_SUPPORTED;
         }
-        break;
+        return STATUS_SUCCESS;
 
     default:
-        FIXME( "algorithm %u not supported\n", alg->id );
+        FIXME( "algorithm %u not supported\n", key->alg_id );
         return STATUS_NOT_SUPPORTED;
     }
-
-    if (!(key->u.s.block_size = get_block_size( alg ))) return STATUS_INVALID_PARAMETER;
-    if (!(key->u.s.secret = heap_alloc( secret_len ))) return STATUS_NO_MEMORY;
-    memcpy( key->u.s.secret, secret, secret_len );
-    key->u.s.secret_len = secret_len;
-
-    key->alg_id          = alg->id;
-    key->u.s.mode        = alg->mode;
-    key->u.s.ref_encrypt = NULL;        /* initialized on first use */
-    key->u.s.ref_decrypt = NULL;
-    key->u.s.vector      = NULL;
-    key->u.s.vector_len  = 0;
-
-    return STATUS_SUCCESS;
 }
 
 static CCMode get_cryptor_mode( struct key *key )
@@ -123,30 +117,16 @@ static CCMode get_cryptor_mode( struct key *key )
     }
 }
 
-NTSTATUS key_symmetric_set_vector( struct key *key, UCHAR *vector, ULONG vector_len )
+static void CDECL key_symmetric_vector_reset( struct key *key )
 {
-    if (key->u.s.ref_encrypt && (!is_zero_vector( vector, vector_len ) ||
-        !is_equal_vector( key->u.s.vector, key->u.s.vector_len, vector, vector_len )))
-    {
-        TRACE( "invalidating cryptor handles\n" );
-        CCCryptorRelease( key->u.s.ref_encrypt );
-        key->u.s.ref_encrypt = NULL;
+    if (!key_data(key)->ref_encrypt) return;
 
-        CCCryptorRelease( key->u.s.ref_decrypt );
-        key->u.s.ref_decrypt = NULL;
-    }
+    TRACE( "invalidating cryptor handles\n" );
+    CCCryptorRelease( key_data(key)->ref_encrypt );
+    key_data(key)->ref_encrypt = NULL;
 
-    heap_free( key->u.s.vector );
-    key->u.s.vector = NULL;
-    key->u.s.vector_len = 0;
-    if (vector)
-    {
-        if (!(key->u.s.vector = heap_alloc( vector_len ))) return STATUS_NO_MEMORY;
-        memcpy( key->u.s.vector, vector, vector_len );
-        key->u.s.vector_len = vector_len;
-    }
-
-    return STATUS_SUCCESS;
+    CCCryptorRelease( key_data(key)->ref_decrypt );
+    key_data(key)->ref_decrypt = NULL;
 }
 
 static NTSTATUS init_cryptor_handles( struct key *key )
@@ -154,43 +134,43 @@ static NTSTATUS init_cryptor_handles( struct key *key )
     CCCryptorStatus status;
     CCMode mode;
 
-    if (key->u.s.ref_encrypt) return STATUS_SUCCESS;
+    if (key_data(key)->ref_encrypt) return STATUS_SUCCESS;
     if (!(mode = get_cryptor_mode( key ))) return STATUS_NOT_SUPPORTED;
 
     if ((status = CCCryptorCreateWithMode( kCCEncrypt, mode, kCCAlgorithmAES128, ccNoPadding, key->u.s.vector,
                                            key->u.s.secret, key->u.s.secret_len, NULL, 0, 0, 0,
-                                           &key->u.s.ref_encrypt )) != kCCSuccess)
+                                           &key_data(key)->ref_encrypt )) != kCCSuccess)
     {
         WARN( "CCCryptorCreateWithMode failed %d\n", status );
         return STATUS_INTERNAL_ERROR;
     }
     if ((status = CCCryptorCreateWithMode( kCCDecrypt, mode, kCCAlgorithmAES128, ccNoPadding, key->u.s.vector,
                                            key->u.s.secret, key->u.s.secret_len, NULL, 0, 0, 0,
-                                           &key->u.s.ref_decrypt )) != kCCSuccess)
+                                           &key_data(key)->ref_decrypt )) != kCCSuccess)
     {
         WARN( "CCCryptorCreateWithMode failed %d\n", status );
-        CCCryptorRelease( key->u.s.ref_encrypt );
-        key->u.s.ref_encrypt = NULL;
+        CCCryptorRelease( key_data(key)->ref_encrypt );
+        key_data(key)->ref_encrypt = NULL;
         return STATUS_INTERNAL_ERROR;
     }
 
     return STATUS_SUCCESS;
 }
 
-NTSTATUS key_symmetric_set_auth_data( struct key *key, UCHAR *auth_data, ULONG len )
+static NTSTATUS CDECL key_symmetric_set_auth_data( struct key *key, UCHAR *auth_data, ULONG len )
 {
     FIXME( "not implemented on Mac\n" );
     return STATUS_NOT_IMPLEMENTED;
 }
 
-NTSTATUS key_symmetric_encrypt( struct key *key, const UCHAR *input, ULONG input_len, UCHAR *output, ULONG output_len  )
+static NTSTATUS CDECL key_symmetric_encrypt( struct key *key, const UCHAR *input, ULONG input_len, UCHAR *output, ULONG output_len  )
 {
     CCCryptorStatus status;
     NTSTATUS ret;
 
     if ((ret = init_cryptor_handles( key ))) return ret;
 
-    if ((status = CCCryptorUpdate( key->u.s.ref_encrypt, input, input_len, output, output_len, NULL  )) != kCCSuccess)
+    if ((status = CCCryptorUpdate( key_data(key)->ref_encrypt, input, input_len, output, output_len, NULL  )) != kCCSuccess)
     {
         WARN( "CCCryptorUpdate failed %d\n", status );
         return STATUS_INTERNAL_ERROR;
@@ -198,14 +178,14 @@ NTSTATUS key_symmetric_encrypt( struct key *key, const UCHAR *input, ULONG input
     return STATUS_SUCCESS;
 }
 
-NTSTATUS key_symmetric_decrypt( struct key *key, const UCHAR *input, ULONG input_len, UCHAR *output, ULONG output_len )
+static NTSTATUS CDECL key_symmetric_decrypt( struct key *key, const UCHAR *input, ULONG input_len, UCHAR *output, ULONG output_len )
 {
     CCCryptorStatus status;
     NTSTATUS ret;
 
     if ((ret = init_cryptor_handles( key ))) return ret;
 
-    if ((status = CCCryptorUpdate( key->u.s.ref_decrypt, input, input_len, output, output_len, NULL  )) != kCCSuccess)
+    if ((status = CCCryptorUpdate( key_data(key)->ref_decrypt, input, input_len, output, output_len, NULL  )) != kCCSuccess)
     {
         WARN( "CCCryptorUpdate failed %d\n", status );
         return STATUS_INTERNAL_ERROR;
@@ -213,70 +193,98 @@ NTSTATUS key_symmetric_decrypt( struct key *key, const UCHAR *input, ULONG input
     return STATUS_SUCCESS;
 }
 
-NTSTATUS key_symmetric_get_tag( struct key *key, UCHAR *tag, ULONG len )
+static NTSTATUS CDECL key_symmetric_get_tag( struct key *key, UCHAR *tag, ULONG len )
 {
     FIXME( "not implemented on Mac\n" );
     return STATUS_NOT_IMPLEMENTED;
 }
 
-NTSTATUS key_asymmetric_init( struct key *key, struct algorithm *alg, ULONG bitlen, const UCHAR *pubkey,
-                              ULONG pubkey_len )
+static void CDECL key_symmetric_destroy( struct key *key )
+{
+    if (key_data(key)->ref_encrypt) CCCryptorRelease( key_data(key)->ref_encrypt );
+    if (key_data(key)->ref_decrypt) CCCryptorRelease( key_data(key)->ref_decrypt );
+}
+
+static NTSTATUS CDECL key_asymmetric_init( struct key *key )
 {
     FIXME( "not implemented on Mac\n" );
     return STATUS_NOT_IMPLEMENTED;
 }
 
-NTSTATUS key_asymmetric_sign( struct key *key, void *padding, UCHAR *input, ULONG input_len, UCHAR *output,
-                              ULONG output_len, ULONG *ret_len, ULONG flags )
+static NTSTATUS CDECL key_asymmetric_sign( struct key *key, void *padding, UCHAR *input, ULONG input_len, UCHAR *output,
+                                           ULONG output_len, ULONG *ret_len, ULONG flags )
 {
     FIXME( "not implemented on Mac\n" );
     return STATUS_NOT_IMPLEMENTED;
 }
 
-NTSTATUS key_asymmetric_verify( struct key *key, void *padding, UCHAR *hash, ULONG hash_len, UCHAR *signature,
-                                ULONG signature_len, DWORD flags )
+static NTSTATUS CDECL key_asymmetric_verify( struct key *key, void *padding, UCHAR *hash, ULONG hash_len,
+                                             UCHAR *signature, ULONG signature_len, DWORD flags )
 {
     FIXME( "not implemented on Mac\n" );
     return STATUS_NOT_IMPLEMENTED;
 }
 
-NTSTATUS key_export_dsa_capi( struct key *key, UCHAR *buf, ULONG len, ULONG *ret_len )
+static NTSTATUS CDECL key_export_dsa_capi( struct key *key, UCHAR *buf, ULONG len, ULONG *ret_len )
 {
     FIXME( "not implemented on Mac\n" );
     return STATUS_NOT_IMPLEMENTED;
 }
 
-NTSTATUS key_export_ecc( struct key *key, UCHAR *output, ULONG len, ULONG *ret_len )
+static NTSTATUS CDECL key_export_ecc( struct key *key, UCHAR *output, ULONG len, ULONG *ret_len )
 {
     FIXME( "not implemented on Mac\n" );
     return STATUS_NOT_IMPLEMENTED;
 }
 
-NTSTATUS key_import_dsa_capi( struct key *key, UCHAR *buf, ULONG len )
+static NTSTATUS CDECL key_import_dsa_capi( struct key *key, UCHAR *buf, ULONG len )
 {
     FIXME( "not implemented on Mac\n" );
     return STATUS_NOT_IMPLEMENTED;
 }
 
-NTSTATUS key_import_ecc( struct key *key, UCHAR *input, ULONG len )
+static NTSTATUS CDECL key_import_ecc( struct key *key, UCHAR *input, ULONG len )
 {
     FIXME( "not implemented on Mac\n" );
     return STATUS_NOT_IMPLEMENTED;
 }
 
-NTSTATUS key_asymmetric_generate( struct key *key )
+static NTSTATUS CDECL key_asymmetric_generate( struct key *key )
 {
     FIXME( "not implemented on Mac\n" );
     return STATUS_NOT_IMPLEMENTED;
 }
 
-NTSTATUS key_destroy( struct key *key )
+static void CDECL key_asymmetric_destroy( struct key *key )
 {
-    if (key->u.s.ref_encrypt) CCCryptorRelease( key->u.s.ref_encrypt );
-    if (key->u.s.ref_decrypt) CCCryptorRelease( key->u.s.ref_decrypt );
-    heap_free( key->u.s.vector );
-    heap_free( key->u.s.secret );
-    heap_free( key );
+}
+
+static const struct key_funcs key_funcs =
+{
+    key_set_property,
+    key_symmetric_init,
+    key_symmetric_vector_reset,
+    key_symmetric_set_auth_data,
+    key_symmetric_encrypt,
+    key_symmetric_decrypt,
+    key_symmetric_get_tag,
+    key_symmetric_destroy,
+    key_asymmetric_init,
+    key_asymmetric_generate,
+    key_asymmetric_sign,
+    key_asymmetric_verify,
+    key_asymmetric_destroy,
+    key_export_dsa_capi,
+    key_export_ecc,
+    key_import_dsa_capi,
+    key_import_ecc
+};
+
+NTSTATUS CDECL __wine_init_unix_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )
+{
+    if (reason != DLL_PROCESS_ATTACH) return STATUS_SUCCESS;
+    *(const struct key_funcs **)ptr_out = &key_funcs;
     return STATUS_SUCCESS;
 }
+
 #endif

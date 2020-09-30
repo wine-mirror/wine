@@ -4870,9 +4870,6 @@ static void test_draw_text_layout(void)
         { D2D1_TEXT_ANTIALIAS_MODE_ALIASED, DWRITE_RENDERING_MODE_CLEARTYPE_GDI_NATURAL, E_INVALIDARG },
         { D2D1_TEXT_ANTIALIAS_MODE_ALIASED, DWRITE_RENDERING_MODE_CLEARTYPE_GDI_CLASSIC, E_INVALIDARG },
     };
-    static const WCHAR tahomaW[] = {'T','a','h','o','m','a',0};
-    static const WCHAR textW[] = {'t','e','x','t',0};
-    static const WCHAR emptyW[] = {0};
     D2D1_RENDER_TARGET_PROPERTIES desc;
     IDXGISwapChain *swapchain;
     ID2D1Factory *factory, *factory2;
@@ -4926,11 +4923,11 @@ static void test_draw_text_layout(void)
     hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, &IID_IDWriteFactory, (IUnknown **)&dwrite_factory);
     ok(SUCCEEDED(hr), "Failed to create factory, hr %#x.\n", hr);
 
-    hr = IDWriteFactory_CreateTextFormat(dwrite_factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 10.0f, emptyW, &text_format);
+    hr = IDWriteFactory_CreateTextFormat(dwrite_factory, L"Tahoma", NULL, DWRITE_FONT_WEIGHT_NORMAL,
+        DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, 10.0f, L"", &text_format);
     ok(SUCCEEDED(hr), "Failed to create text format, hr %#x.\n", hr);
 
-    hr = IDWriteFactory_CreateTextLayout(dwrite_factory, textW, 4, text_format, 100.0f, 100.0f, &text_layout);
+    hr = IDWriteFactory_CreateTextLayout(dwrite_factory, L"text", 4, text_format, 100.0f, 100.0f, &text_layout);
     ok(SUCCEEDED(hr), "Failed to create text layout, hr %#x.\n", hr);
 
     set_color(&color, 0.0f, 0.0f, 0.0f, 0.0f);

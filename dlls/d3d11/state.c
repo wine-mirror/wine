@@ -795,6 +795,19 @@ HRESULT d3d_depthstencil_state_create(struct d3d_device *device, const D3D11_DEP
     }
 
     wined3d_desc.depth = desc->DepthEnable;
+    wined3d_desc.depth_write = desc->DepthWriteMask;
+    wined3d_desc.depth_func = desc->DepthFunc;
+    wined3d_desc.stencil = desc->StencilEnable;
+    wined3d_desc.stencil_read_mask = desc->StencilReadMask;
+    wined3d_desc.stencil_write_mask = desc->StencilWriteMask;
+    wined3d_desc.front.fail_op = desc->FrontFace.StencilFailOp;
+    wined3d_desc.front.depth_fail_op = desc->FrontFace.StencilDepthFailOp;
+    wined3d_desc.front.pass_op = desc->FrontFace.StencilPassOp;
+    wined3d_desc.front.func = desc->FrontFace.StencilFunc;
+    wined3d_desc.back.fail_op = desc->BackFace.StencilFailOp;
+    wined3d_desc.back.depth_fail_op = desc->BackFace.StencilDepthFailOp;
+    wined3d_desc.back.pass_op = desc->BackFace.StencilPassOp;
+    wined3d_desc.back.func = desc->BackFace.StencilFunc;
 
     /* We cannot fail after creating a wined3d_depth_stencil_state object. It
      * would lead to double free. */

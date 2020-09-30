@@ -2817,16 +2817,15 @@ void wined3d_context_gl_apply_blit_state(struct wined3d_context_gl *context_gl, 
         gl_info->gl_ops.gl.p_glDisable(GL_ALPHA_TEST);
         context_invalidate_state(context, STATE_RENDER(WINED3D_RS_ALPHATESTENABLE));
     }
-    gl_info->gl_ops.gl.p_glDisable(GL_DEPTH_TEST);
-    context_invalidate_state(context, STATE_DEPTH_STENCIL);
     gl_info->gl_ops.gl.p_glDisable(GL_BLEND);
     gl_info->gl_ops.gl.p_glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     context_invalidate_state(context, STATE_BLEND);
     gl_info->gl_ops.gl.p_glDisable(GL_CULL_FACE);
     gl_info->gl_ops.gl.p_glDisable(GL_SCISSOR_TEST);
     context_invalidate_state(context, STATE_RASTERIZER);
+    gl_info->gl_ops.gl.p_glDisable(GL_DEPTH_TEST);
     gl_info->gl_ops.gl.p_glDisable(GL_STENCIL_TEST);
-    context_invalidate_state(context, STATE_RENDER(WINED3D_RS_STENCILENABLE));
+    context_invalidate_state(context, STATE_DEPTH_STENCIL);
     if (gl_info->supported[ARB_POINT_SPRITE])
     {
         gl_info->gl_ops.gl.p_glDisable(GL_POINT_SPRITE_ARB);
@@ -4507,7 +4506,7 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
         return;
     }
 
-    if (dsv && state->render_states[WINED3D_RS_ZWRITEENABLE])
+    if (dsv && (!state->depth_stencil_state || state->depth_stencil_state->desc.depth_write))
     {
         DWORD location = context->render_offscreen ? dsv->resource->draw_binding : WINED3D_LOCATION_DRAWABLE;
 

@@ -4610,6 +4610,11 @@ static void test_OleCreateStaticFromData(void)
     IStorage_Release(storage);
 }
 
+static void test_ReleaseStgMedium( void )
+{
+    ReleaseStgMedium( NULL );
+}
+
 START_TEST(ole2)
 {
     DWORD dwRegister;
@@ -4661,6 +4666,7 @@ START_TEST(ole2)
     test_data_cache_save_data();
     test_data_cache_contents();
     test_OleCreateStaticFromData();
+    test_ReleaseStgMedium();
 
     CoUninitialize();
 }

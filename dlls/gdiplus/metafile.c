@@ -3482,7 +3482,7 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
 
             if (flags & 0x8000)
             {
-                stat = GdipCreateSolidFill(draw->brush.Color, (GpSolidFill**)&solidfill);
+                stat = GdipCreateSolidFill(draw->brush.Color, &solidfill);
 
                 if (stat != Ok)
                     return InvalidParameter;

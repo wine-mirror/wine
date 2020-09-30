@@ -1604,12 +1604,26 @@ void output_syscalls( DLLSPEC *spec )
             output( "\tcmp x8, %u\n", count );
             output( "\tbcs 3f\n" );
             output( "\tstp x29, x30, [sp,#-160]!\n" );
+            output_cfi( "\t.cfi_def_cfa_offset 160\n" );
+            output_cfi( "\t.cfi_offset 29, -160\n" );
+            output_cfi( "\t.cfi_offset 30, -152\n" );
             output( "\tmov x29, sp\n" );
+            output_cfi( "\t.cfi_def_cfa_register 29\n" );
             output( "\tstp x27, x28, [sp, #144]\n" );
+            output_cfi( "\t.cfi_offset 27, -16\n" );
+            output_cfi( "\t.cfi_offset 28, -8\n" );
             output( "\tstp x25, x26, [sp, #128]\n" );
+            output_cfi( "\t.cfi_offset 25, -32\n" );
+            output_cfi( "\t.cfi_offset 26, -24\n" );
             output( "\tstp x23, x24, [sp, #112]\n" );
+            output_cfi( "\t.cfi_offset 23, -48\n" );
+            output_cfi( "\t.cfi_offset 24, -40\n" );
             output( "\tstp x21, x22, [sp, #96]\n" );
+            output_cfi( "\t.cfi_offset 21, -64\n" );
+            output_cfi( "\t.cfi_offset 22, -56\n" );
             output( "\tstp x19, x20, [sp, #80]\n" );
+            output_cfi( "\t.cfi_offset 19, -80\n" );
+            output_cfi( "\t.cfi_offset 20, -72\n" );
             output( "\tstp x6, x7, [sp, #64]\n" );
             output( "\tstp x4, x5, [sp, #48]\n" );
             output( "\tstp x2, x3, [sp, #32]\n" );
@@ -1735,6 +1749,9 @@ void output_syscalls( DLLSPEC *spec )
             break;
         case CPU_ARM64:
             output( "\tstp x29, x30, [sp,#-16]!\n" );
+            output_cfi( "\t.cfi_def_cfa_offset 16\n" );
+            output_cfi( "\t.cfi_offset 29, -16\n" );
+            output_cfi( "\t.cfi_offset 30, -8\n" );
             output( "\tmov x8, #%u\n", i );
             output( "\tadrp x16, %s\n", arm64_page( asm_name("__wine_syscall_dispatcher") ) );
             output( "\tldr x16, [x16, #%s]\n", arm64_pageoff( asm_name("__wine_syscall_dispatcher") ) );

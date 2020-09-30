@@ -24,7 +24,6 @@
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
-#define USE_WS_PREFIX
 #include "winsock2.h"
 #include "ws2ipdef.h"
 #include "iphlpapi.h"
@@ -582,14 +581,14 @@ static BOOL map_address_6to4( const SOCKADDR_IN6 *addr6, SOCKADDR_IN *addr4 )
 {
     ULONG i;
 
-    if (addr6->sin6_family != WS_AF_INET6) return FALSE;
+    if (addr6->sin6_family != AF_INET6) return FALSE;
 
     for (i = 0; i < 5; i++)
         if (addr6->sin6_addr.u.Word[i]) return FALSE;
 
     if (addr6->sin6_addr.u.Word[5] != 0xffff) return FALSE;
 
-    addr4->sin_family = WS_AF_INET;
+    addr4->sin_family = AF_INET;
     addr4->sin_port   = addr6->sin6_port;
     addr4->sin_addr.S_un.S_addr = addr6->sin6_addr.u.Word[6] << 16 | addr6->sin6_addr.u.Word[7];
     memset( &addr4->sin_zero, 0, sizeof(addr4->sin_zero) );
@@ -610,8 +609,8 @@ static HRESULT WINAPI cost_manager_GetDataPlanStatus(
 
     if (!pDataPlanStatus) return E_POINTER;
 
-    if (dst && ((dst->sa_family == WS_AF_INET && (dst4 = (SOCKADDR_IN *)dst)) ||
-               ((dst->sa_family == WS_AF_INET6 && map_address_6to4( (const SOCKADDR_IN6 *)dst, &addr4 )
+    if (dst && ((dst->sa_family == AF_INET && (dst4 = (SOCKADDR_IN *)dst)) ||
+               ((dst->sa_family == AF_INET6 && map_address_6to4( (const SOCKADDR_IN6 *)dst, &addr4 )
                 && (dst4 = &addr4)))))
     {
         if ((ret = GetBestInterface( dst4->sin_addr.S_un.S_addr, &index )))
@@ -1718,11 +1717,11 @@ static void init_networks( struct list_manager *mgr )
     list_init( &mgr->networks );
     list_init( &mgr->connections );
 
-    ret = GetAdaptersAddresses( WS_AF_UNSPEC, flags, NULL, NULL, &size );
+    ret = GetAdaptersAddresses( AF_UNSPEC, flags, NULL, NULL, &size );
     if (ret != ERROR_BUFFER_OVERFLOW) return;
 
     if (!(buf = heap_alloc( size ))) return;
-    if (GetAdaptersAddresses( WS_AF_UNSPEC, flags, NULL, buf, &size ))
+    if (GetAdaptersAddresses( AF_UNSPEC, flags, NULL, buf, &size ))
     {
         heap_free( buf );
         return;

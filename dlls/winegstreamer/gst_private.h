@@ -36,6 +36,7 @@
 #include "winuser.h"
 #include "dshow.h"
 #include "strmif.h"
+#include "mfobjects.h"
 #include "wine/heap.h"
 #include "wine/strmbase.h"
 
@@ -53,6 +54,9 @@ BOOL init_gstreamer(void) DECLSPEC_HIDDEN;
 void start_dispatch_thread(void) DECLSPEC_HIDDEN;
 
 extern HRESULT mfplat_get_class_object(REFCLSID rclsid, REFIID riid, void **obj) DECLSPEC_HIDDEN;
+
+HRESULT winegstreamer_stream_handler_create(REFIID riid, void **obj) DECLSPEC_HIDDEN;
+IMFMediaType *mf_media_type_from_caps(const GstCaps *caps) DECLSPEC_HIDDEN;
 
 HRESULT winegstreamer_stream_handler_create(REFIID riid, void **obj) DECLSPEC_HIDDEN;
 

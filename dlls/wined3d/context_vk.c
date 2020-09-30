@@ -2042,45 +2042,36 @@ static bool wined3d_context_vk_update_graphics_pipeline_key(struct wined3d_conte
         if (d)
         {
             key->ds_desc.depthTestEnable = d->desc.depth;
+            key->ds_desc.depthWriteEnable = d->desc.depth_write;
+            key->ds_desc.stencilTestEnable = state->fb.depth_stencil && d->desc.stencil;
+            if (key->ds_desc.stencilTestEnable)
+            {
+                key->ds_desc.front.failOp = vk_stencil_op_from_wined3d(d->desc.front.fail_op);
+                key->ds_desc.front.passOp = vk_stencil_op_from_wined3d(d->desc.front.pass_op);
+                key->ds_desc.front.depthFailOp = vk_stencil_op_from_wined3d(d->desc.front.depth_fail_op);
+                key->ds_desc.front.compareOp = vk_compare_op_from_wined3d(d->desc.front.func);
+                key->ds_desc.front.compareMask = d->desc.stencil_read_mask;
+                key->ds_desc.front.writeMask = d->desc.stencil_write_mask;
+                key->ds_desc.front.reference = state->render_states[WINED3D_RS_STENCILREF]
+                        & ((1 << state->fb.depth_stencil->format->stencil_size) - 1);
+
+                key->ds_desc.back.failOp = vk_stencil_op_from_wined3d(d->desc.back.fail_op);
+                key->ds_desc.back.passOp = vk_stencil_op_from_wined3d(d->desc.back.pass_op);
+                key->ds_desc.back.depthFailOp = vk_stencil_op_from_wined3d(d->desc.back.depth_fail_op);
+                key->ds_desc.back.compareOp = vk_compare_op_from_wined3d(d->desc.back.func);
+                key->ds_desc.back.compareMask = d->desc.stencil_read_mask;
+                key->ds_desc.back.writeMask = d->desc.stencil_write_mask;
+                key->ds_desc.back.reference = state->render_states[WINED3D_RS_STENCILREF]
+                        & ((1 << state->fb.depth_stencil->format->stencil_size) - 1);
+            }
         }
         else
         {
             key->ds_desc.depthTestEnable = VK_TRUE;
+            key->ds_desc.depthWriteEnable = VK_TRUE;
+            key->ds_desc.stencilTestEnable = VK_FALSE;
         }
-        key->ds_desc.depthWriteEnable = !!state->render_states[WINED3D_RS_ZWRITEENABLE];
-        key->ds_desc.depthCompareOp = vk_compare_op_from_wined3d(state->render_states[WINED3D_RS_ZFUNC]);
-        key->ds_desc.stencilTestEnable = state->fb.depth_stencil && state->render_states[WINED3D_RS_STENCILENABLE];
-        if (key->ds_desc.stencilTestEnable)
-        {
-            key->ds_desc.front.failOp = vk_stencil_op_from_wined3d(state->render_states[WINED3D_RS_STENCILFAIL]);
-            key->ds_desc.front.passOp = vk_stencil_op_from_wined3d(state->render_states[WINED3D_RS_STENCILPASS]);
-            key->ds_desc.front.depthFailOp = vk_stencil_op_from_wined3d(state->render_states[WINED3D_RS_STENCILZFAIL]);
-            key->ds_desc.front.compareOp = vk_compare_op_from_wined3d(state->render_states[WINED3D_RS_STENCILFUNC]);
-            key->ds_desc.front.compareMask = state->render_states[WINED3D_RS_STENCILMASK];
-            key->ds_desc.front.writeMask = state->render_states[WINED3D_RS_STENCILWRITEMASK];
-            key->ds_desc.front.reference = state->render_states[WINED3D_RS_STENCILREF]
-                    & ((1 << state->fb.depth_stencil->format->stencil_size) - 1);
-
-            if (state->render_states[WINED3D_RS_TWOSIDEDSTENCILMODE])
-            {
-                key->ds_desc.back.failOp = vk_stencil_op_from_wined3d(
-                        state->render_states[WINED3D_RS_BACK_STENCILFAIL]);
-                key->ds_desc.back.passOp = vk_stencil_op_from_wined3d(
-                        state->render_states[WINED3D_RS_BACK_STENCILPASS]);
-                key->ds_desc.back.depthFailOp = vk_stencil_op_from_wined3d(
-                        state->render_states[WINED3D_RS_BACK_STENCILZFAIL]);
-                key->ds_desc.back.compareOp = vk_compare_op_from_wined3d(
-                        state->render_states[WINED3D_RS_BACK_STENCILFUNC]);
-                key->ds_desc.back.compareMask = state->render_states[WINED3D_RS_STENCILMASK];
-                key->ds_desc.back.writeMask = state->render_states[WINED3D_RS_STENCILWRITEMASK];
-                key->ds_desc.back.reference = state->render_states[WINED3D_RS_STENCILREF]
-                        & ((1 << state->fb.depth_stencil->format->stencil_size) - 1);
-            }
-            else
-            {
-                key->ds_desc.back = key->ds_desc.front;
-            }
-        }
+        key->ds_desc.depthCompareOp = vk_compare_op_from_wined3d(d->desc.depth_func);
 
         update = true;
     }
@@ -2862,7 +2853,7 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
             wined3d_rendertarget_view_load_location(dsv, &context_vk->c, dsv->resource->draw_binding);
         else
             wined3d_rendertarget_view_prepare_location(dsv, &context_vk->c, dsv->resource->draw_binding);
-        if (state->render_states[WINED3D_RS_ZWRITEENABLE])
+        if (!state->depth_stencil_state || state->depth_stencil_state->desc.depth_write)
             wined3d_rendertarget_view_invalidate_location(dsv, ~dsv->resource->draw_binding);
 
         sample_count = max(1, wined3d_resource_get_sample_count(dsv->resource));

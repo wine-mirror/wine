@@ -51,13 +51,4 @@ extern LONG DSWAVE_refCount DECLSPEC_HIDDEN;
 static inline void DSWAVE_LockModule(void) { InterlockedIncrement( &DSWAVE_refCount ); }
 static inline void DSWAVE_UnlockModule(void) { InterlockedDecrement( &DSWAVE_refCount ); }
 
-/*****************************************************************************
- * Misc.
- */
-/* for simpler reading */
-typedef struct _DMUS_PRIVATE_CHUNK {
-	FOURCC fccID; /* FOURCC ID of the chunk */
-	DWORD dwSize; /* size of the chunk */
-} DMUS_PRIVATE_CHUNK, *LPDMUS_PRIVATE_CHUNK;
-
 #endif	/* __WINE_DSWAVE_PRIVATE_H */

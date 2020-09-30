@@ -1643,6 +1643,8 @@ static void test_ime_processkey(void)
                 trace("ProcessKey was correctly found\n");
         }
         TranslateMessage(&msg);
+        /* test calling TranslateMessage multiple times */
+        TranslateMessage(&msg);
         DispatchMessageW(&msg);
     }
 

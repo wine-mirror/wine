@@ -20,15 +20,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdarg.h>
 #include <stdio.h>
 #include <errno.h>
-#ifdef HAVE_SYS_STAT_H
-# include <sys/stat.h>
-#endif
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
@@ -46,7 +40,6 @@
 #include "shlwapi.h"
 
 #include "wine/exception.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(file);
@@ -132,7 +125,7 @@ DWORD FILE_name_WtoA( LPCWSTR src, INT srclen, LPSTR dest, INT destlen )
 {
     DWORD ret;
 
-    if (srclen < 0) srclen = strlenW( src ) + 1;
+    if (srclen < 0) srclen = lstrlenW( src ) + 1;
     if (!destlen)
     {
         if (!AreFileApisANSI())

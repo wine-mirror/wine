@@ -1645,6 +1645,7 @@ enable_wdscore
 enable_webservices
 enable_wer
 enable_wevtapi
+enable_wevtsvc
 enable_wiaservc
 enable_wimgapi
 enable_windowscodecs
@@ -8281,8 +8282,6 @@ if test "x$ac_cv_cflags__Wl___disable_stdcall_fixup" = xyes; then :
 fi ;;
     esac
         enable_iphlpapi=${enable_iphlpapi:-no}
-    enable_kernel32=${enable_kernel32:-no}
-    enable_ntdll=${enable_ntdll:-no}
     enable_ws2_32=${enable_ws2_32:-no}
     enable_loader=${enable_loader:-no}
     enable_server=${enable_server:-no}
@@ -17414,6 +17413,67 @@ $as_echo "$ac_cv_c_logicalop_noisy" >&6; }
       test "$ac_cv_c_logicalop_noisy" = yes || EXTRACFLAGS="$EXTRACFLAGS -Wlogical-op"
 fi
 
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for flags needed for 64-bit compare-and-swap support" >&5
+$as_echo_n "checking for flags needed for 64-bit compare-and-swap support... " >&6; }
+if ${wine_cv_64bit_compare_swap+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifndef __GCC_HAVE_SYNC_COMPARE_AND_SWAP_8
+#error no
+#endif
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  wine_cv_64bit_compare_swap="none needed"
+else
+  case $host_cpu in
+            *i[3456]86*) wine_cv_64bit_compare_swap="-march=i586" ;;
+            *arm*)         wine_cv_64bit_compare_swap="-march=armv7-a" ;;
+            *)             wine_cv_64bit_compare_swap="unknown" ;;
+           esac
+           if test "x$wine_cv_64bit_compare_swap" != xunknown
+           then
+                              CFLAGS="$CFLAGS $wine_cv_64bit_compare_swap"
+               cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifndef __GCC_HAVE_SYNC_COMPARE_AND_SWAP_8
+#error no
+#endif
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+
+else
+  wine_cv_64bit_compare_swap="unknown"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+               CFLAGS=$saved_CFLAGS
+           fi
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $wine_cv_64bit_compare_swap" >&5
+$as_echo "$wine_cv_64bit_compare_swap" >&6; }
+  case "$wine_cv_64bit_compare_swap" in
+      unknown) as_fn_error $? "gcc doesn't support 64-bit compare-and-swap on this platform" "$LINENO" 5 ;;
+      "none needed") ;;
+      *) EXTRACFLAGS="$EXTRACFLAGS $wine_cv_64bit_compare_swap" ;;
+  esac
+
     for ac_flag in $CFLAGS; do
     case $ac_flag in
       -g) { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -gdwarf-2" >&5
@@ -21007,6 +21067,7 @@ wine_fn_config_makefile dlls/webservices/tests enable_tests
 wine_fn_config_makefile dlls/wer enable_wer
 wine_fn_config_makefile dlls/wer/tests enable_tests
 wine_fn_config_makefile dlls/wevtapi enable_wevtapi
+wine_fn_config_makefile dlls/wevtsvc enable_wevtsvc
 wine_fn_config_makefile dlls/wiaservc enable_wiaservc
 wine_fn_config_makefile dlls/wiaservc/tests enable_tests
 wine_fn_config_makefile dlls/wimgapi enable_wimgapi

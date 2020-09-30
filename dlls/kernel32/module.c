@@ -18,18 +18,13 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <fcntl.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
+
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "winerror.h"
@@ -43,7 +38,6 @@
 #include "wine/list.h"
 #include "wine/asm.h"
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(module);
 
@@ -230,14 +224,14 @@ BOOL WINAPI GetBinaryTypeW( LPCWSTR name, LPDWORD type )
         *type = SCS_DOS_BINARY;
         return TRUE;
     case STATUS_INVALID_IMAGE_NOT_MZ:
-        if ((ptr = strrchrW( name, '.' )))
+        if ((ptr = wcsrchr( name, '.' )))
         {
-            if (!strcmpiW( ptr, comW ))
+            if (!wcsicmp( ptr, comW ))
             {
                 *type = SCS_DOS_BINARY;
                 return TRUE;
             }
-            if (!strcmpiW( ptr, pifW ))
+            if (!wcsicmp( ptr, pifW ))
             {
                 *type = SCS_PIF_BINARY;
                 return TRUE;

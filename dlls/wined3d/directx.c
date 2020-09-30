@@ -1618,7 +1618,8 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d,
         case WINED3D_RTYPE_NONE:
             allowed_usage = 0;
             allowed_bind_flags = WINED3D_BIND_RENDER_TARGET
-                    | WINED3D_BIND_DEPTH_STENCIL;
+                    | WINED3D_BIND_DEPTH_STENCIL
+                    | WINED3D_BIND_UNORDERED_ACCESS;
             gl_type = WINED3D_GL_RES_TYPE_TEX_2D;
             gl_type_end = WINED3D_GL_RES_TYPE_TEX_3D;
             break;
@@ -1633,7 +1634,8 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d,
                     | WINED3DUSAGE_QUERY_SRGBWRITE
                     | WINED3DUSAGE_QUERY_VERTEXTEXTURE
                     | WINED3DUSAGE_QUERY_WRAPANDMIP;
-            allowed_bind_flags = WINED3D_BIND_SHADER_RESOURCE;
+            allowed_bind_flags = WINED3D_BIND_SHADER_RESOURCE
+                    | WINED3D_BIND_UNORDERED_ACCESS;
             gl_type = gl_type_end = WINED3D_GL_RES_TYPE_TEX_1D;
             break;
 
@@ -1642,7 +1644,8 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d,
             if (bind_flags & WINED3D_BIND_RENDER_TARGET)
                 allowed_usage |= WINED3DUSAGE_QUERY_SRGBWRITE;
             allowed_bind_flags = WINED3D_BIND_RENDER_TARGET
-                    | WINED3D_BIND_DEPTH_STENCIL;
+                    | WINED3D_BIND_DEPTH_STENCIL
+                    | WINED3D_BIND_UNORDERED_ACCESS;
             if (!(bind_flags & WINED3D_BIND_SHADER_RESOURCE))
             {
                 if (!wined3d_check_surface_format(format))
@@ -1683,7 +1686,8 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d,
                     | WINED3DUSAGE_QUERY_SRGBWRITE
                     | WINED3DUSAGE_QUERY_VERTEXTEXTURE
                     | WINED3DUSAGE_QUERY_WRAPANDMIP;
-            allowed_bind_flags = WINED3D_BIND_SHADER_RESOURCE;
+            allowed_bind_flags = WINED3D_BIND_SHADER_RESOURCE
+                    | WINED3D_BIND_UNORDERED_ACCESS;
             gl_type = gl_type_end = WINED3D_GL_RES_TYPE_TEX_3D;
             break;
 
@@ -1713,6 +1717,8 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d,
         format_flags |= WINED3DFMT_FLAG_RENDERTARGET;
     if (bind_flags & WINED3D_BIND_DEPTH_STENCIL)
         format_flags |= WINED3DFMT_FLAG_DEPTH_STENCIL;
+    if (bind_flags & WINED3D_BIND_UNORDERED_ACCESS)
+        format_flags |= WINED3DFMT_FLAG_UNORDERED_ACCESS;
     if (usage & WINED3DUSAGE_QUERY_FILTER)
         format_flags |= WINED3DFMT_FLAG_FILTERING;
     if (usage & WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING)
@@ -1750,6 +1756,13 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d,
                 && !wined3d_check_depth_stencil_format(adapter, adapter_format, format, gl_type))
         {
             TRACE("Requested WINED3D_BIND_DEPTH_STENCIL, but format %s is not supported for depth/stencil buffers.\n",
+                    debug_d3dformat(check_format_id));
+            return WINED3DERR_NOTAVAILABLE;
+        }
+
+        if ((bind_flags & WINED3D_BIND_UNORDERED_ACCESS) && wined3d_format_is_typeless(format))
+        {
+            TRACE("Requested WINED3D_BIND_UNORDERED_ACCESS, but format %s is typeless.\n",
                     debug_d3dformat(check_format_id));
             return WINED3DERR_NOTAVAILABLE;
         }
@@ -2432,7 +2445,6 @@ static const struct wined3d_state_entry_template misc_state_template_no3d[] =
     {STATE_RENDER(WINED3D_RS_MONOENABLE),                 {STATE_VDECL}},
     {STATE_RENDER(WINED3D_RS_ROP2),                       {STATE_VDECL}},
     {STATE_RENDER(WINED3D_RS_PLANEMASK),                  {STATE_VDECL}},
-    {STATE_RENDER(WINED3D_RS_ZWRITEENABLE),               {STATE_VDECL}},
     {STATE_RENDER(WINED3D_RS_LASTPIXEL),                  {STATE_VDECL}},
     {STATE_RENDER(WINED3D_RS_ZFUNC),                      {STATE_VDECL}},
     {STATE_RENDER(WINED3D_RS_DITHERENABLE),               {STATE_VDECL}},
@@ -2444,19 +2456,7 @@ static const struct wined3d_state_entry_template misc_state_template_no3d[] =
     {STATE_RENDER(WINED3D_RS_ANISOTROPY),                 {STATE_VDECL}},
     {STATE_RENDER(WINED3D_RS_FLUSHBATCH),                 {STATE_VDECL}},
     {STATE_RENDER(WINED3D_RS_TRANSLUCENTSORTINDEPENDENT), {STATE_VDECL}},
-    {STATE_RENDER(WINED3D_RS_STENCILENABLE),              {STATE_VDECL}},
-    {STATE_RENDER(WINED3D_RS_STENCILFAIL),                {STATE_VDECL}},
-    {STATE_RENDER(WINED3D_RS_STENCILZFAIL),               {STATE_VDECL}},
-    {STATE_RENDER(WINED3D_RS_STENCILPASS),                {STATE_VDECL}},
-    {STATE_RENDER(WINED3D_RS_STENCILFUNC),                {STATE_VDECL}},
     {STATE_RENDER(WINED3D_RS_STENCILREF),                 {STATE_VDECL}},
-    {STATE_RENDER(WINED3D_RS_STENCILMASK),                {STATE_VDECL}},
-    {STATE_RENDER(WINED3D_RS_STENCILWRITEMASK),           {STATE_VDECL}},
-    {STATE_RENDER(WINED3D_RS_TWOSIDEDSTENCILMODE),        {STATE_VDECL}},
-    {STATE_RENDER(WINED3D_RS_BACK_STENCILFAIL),           {STATE_VDECL}},
-    {STATE_RENDER(WINED3D_RS_BACK_STENCILZFAIL),          {STATE_VDECL}},
-    {STATE_RENDER(WINED3D_RS_BACK_STENCILPASS),           {STATE_VDECL}},
-    {STATE_RENDER(WINED3D_RS_BACK_STENCILFUNC),           {STATE_VDECL}},
     {STATE_RENDER(WINED3D_RS_WRAP0),                      {STATE_VDECL}},
     {STATE_RENDER(WINED3D_RS_WRAP1),                      {STATE_VDECL}},
     {STATE_RENDER(WINED3D_RS_WRAP2),                      {STATE_VDECL}},

@@ -1245,7 +1245,7 @@ static void test_reflection_bound_resources(const DWORD *blob, const D3D12_SHADE
 #endif
         ok(desc11.uFlags == expected, "Got unexpected uFlags %#x, i %u.\n", desc11.uFlags, i);
         ok(desc11.ReturnType == pdesc->ReturnType, "Got unexpected ReturnType %#x, i %u.\n", desc11.ReturnType, i);
-        ok(desc11.Dimension == pdesc->Dimension, "Got unexpected Dimenstion %#x, i %u.\n", desc11.Dimension, i);
+        ok(desc11.Dimension == pdesc->Dimension, "Got unexpected Dimension %#x, i %u.\n", desc11.Dimension, i);
         ok(desc11.NumSamples == pdesc->NumSamples, "Got unexpected NumSamples %u, i %u.\n", desc11.NumSamples, i);
 
         if (ref12)
@@ -1309,7 +1309,7 @@ static void test_reflection_bound_resources(const DWORD *blob, const D3D12_SHADE
         ok(desc11.BindCount == pdesc->BindCount, "Got unexpected BindCount failed %u, i %u.\n", desc11.BindCount, i);
         ok(desc11.uFlags == pdesc->uFlags, "Got unexpected uFlags %#x, i %u.\n", desc11.uFlags, i);
         ok(desc11.ReturnType == pdesc->ReturnType, "Got unexpected ReturnType %#x, i %u.\n", desc11.ReturnType, i);
-        ok(desc11.Dimension == pdesc->Dimension, "Got unexpected Dimenstion %#x, i %u.\n", desc11.Dimension, i);
+        ok(desc11.Dimension == pdesc->Dimension, "Got unexpected Dimension %#x, i %u.\n", desc11.Dimension, i);
         ok(desc11.NumSamples == pdesc->NumSamples, "Got unexpected NumSamples %u, i %u.\n", desc11.NumSamples, i);
 
         if (ref12)

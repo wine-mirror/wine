@@ -946,22 +946,24 @@ static HRESULT get_system_propval( const struct view *view, UINT table_index, UI
         if (type) *type = CIM_SINT32;
         return S_OK;
     }
-    else if (!wcsicmp( name, L"__NAMESPACE" ))
+    if (!wcsicmp( name, L"__NAMESPACE" ))
     {
         if (ret)
         {
             V_VT( ret ) = VT_BSTR;
             V_BSTR( ret ) = view->proplist ? NULL : build_namespace();
+            if (!V_BSTR( ret )) V_VT( ret ) = VT_NULL;
         }
         if (type) *type = CIM_STRING;
         return S_OK;
     }
-    else if (!wcsicmp( name, L"__PATH" ))
+    if (!wcsicmp( name, L"__PATH" ))
     {
         if (ret)
         {
             V_VT( ret ) = VT_BSTR;
             V_BSTR( ret ) = build_path( view, table_index, result_index, name );
+            if (!V_BSTR( ret )) V_VT( ret ) = VT_NULL;
         }
         if (type) *type = CIM_STRING;
         return S_OK;
@@ -976,22 +978,24 @@ static HRESULT get_system_propval( const struct view *view, UINT table_index, UI
         if (type) *type = CIM_SINT32;
         return S_OK;
     }
-    else if (!wcsicmp( name, L"__RELPATH" ))
+    if (!wcsicmp( name, L"__RELPATH" ))
     {
         if (ret)
         {
             V_VT( ret ) = VT_BSTR;
             V_BSTR( ret ) = build_relpath( view, table_index, result_index, name );
+            if (!V_BSTR( ret )) V_VT( ret ) = VT_NULL;
         }
         if (type) *type = CIM_STRING;
         return S_OK;
     }
-    else if (!wcsicmp( name, L"__SERVER" ))
+    if (!wcsicmp( name, L"__SERVER" ))
     {
         if (ret)
         {
             V_VT( ret ) = VT_BSTR;
             V_BSTR( ret ) = view->proplist ? NULL : build_servername();
+            if (!V_BSTR( ret )) V_VT( ret ) = VT_NULL;
         }
         if (type) *type = CIM_STRING;
         return S_OK;

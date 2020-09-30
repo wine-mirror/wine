@@ -3,6 +3,8 @@ IMPORTS   = advapi32
 IMPORTLIB = bcrypt
 EXTRAINCL = $(GNUTLS_CFLAGS)
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	bcrypt_main.c \
 	gnutls.c \

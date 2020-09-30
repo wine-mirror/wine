@@ -146,6 +146,9 @@ HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID iid, void **out)
 
     TRACE("clsid %s, iid %s, out %p.\n", debugstr_guid(clsid), debugstr_guid(iid), out);
 
+    if (!init_gstreamer())
+        return CLASS_E_CLASSNOTAVAILABLE;
+
     if (SUCCEEDED(hr = mfplat_get_class_object(clsid, iid, out)))
         return hr;
 

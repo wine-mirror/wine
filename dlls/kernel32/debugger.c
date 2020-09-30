@@ -18,7 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -32,6 +31,8 @@
 #include "wine/exception.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(debugstr);
+
+void *dummy = RtlUnwind;  /* force importing RtlUnwind from ntdll */
 
 static LONG WINAPI debug_exception_handler( EXCEPTION_POINTERS *eptr )
 {

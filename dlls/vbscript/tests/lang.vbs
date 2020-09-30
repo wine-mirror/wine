@@ -69,6 +69,10 @@ Call ok(x = "xx", "x = " & x & " expected ""xx""")
 
 Dim public1 : public1 = 42
 Call ok(public1 = 42, "public1=" & public1 & " expected & " & 42)
+Private priv1 : priv1 = 43
+Call ok(priv1 = 43, "priv1=" & priv1 & " expected & " & 43)
+Public pub1 : pub1 = 44
+Call ok(pub1 = 44, "pub1=" & pub1 & " expected & " & 44)
 
 Call ok(true <> false, "true <> false is false")
 Call ok(not (true <> true), "true <> true is true")

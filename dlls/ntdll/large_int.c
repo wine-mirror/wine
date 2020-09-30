@@ -377,33 +377,10 @@ LONGLONG WINAPI RtlExtendedMagicDivide(
 /*************************************************************************
  *        RtlInterlockedCompareExchange64   (NTDLL.@)
  */
-#ifdef __GCC_HAVE_SYNC_COMPARE_AND_SWAP_8
 LONGLONG WINAPI RtlInterlockedCompareExchange64( LONGLONG *dest, LONGLONG xchg, LONGLONG compare )
 {
     return __sync_val_compare_and_swap( dest, compare, xchg );
 }
-#else
-__ASM_STDCALL_FUNC(RtlInterlockedCompareExchange64, 20,
-                   "push %ebx\n\t"
-                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
-                   __ASM_CFI(".cfi_rel_offset %ebx,0\n\t")
-                   "push %esi\n\t"
-                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
-                   __ASM_CFI(".cfi_rel_offset %esi,0\n\t")
-                   "movl 12(%esp),%esi\n\t"
-                   "movl 16(%esp),%ebx\n\t"
-                   "movl 20(%esp),%ecx\n\t"
-                   "movl 24(%esp),%eax\n\t"
-                   "movl 28(%esp),%edx\n\t"
-                   "lock; cmpxchg8b (%esi)\n\t"
-                   "pop %esi\n\t"
-                   __ASM_CFI(".cfi_same_value %esi\n\t")
-                   __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")
-                   "pop %ebx\n\t"
-                   __ASM_CFI(".cfi_same_value %ebx\n\t")
-                   __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")
-                   "ret $20")
-#endif
 
 #endif  /* _WIN64 */
 
