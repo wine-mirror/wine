@@ -58,7 +58,6 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 static CRITICAL_SECTION TIME_cbcrst = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 static    HANDLE                TIME_hMMTimer;
-static    BOOL                  TIME_TimeToDie = TRUE;
 static    CONDITION_VARIABLE    TIME_cv;
 
 /* link timer at the appropriate spot in the list */
@@ -198,7 +197,7 @@ static DWORD CALLBACK TIME_MMSysTimeThread(LPVOID arg)
     TRACE("Starting main winmm thread\n");
 
     EnterCriticalSection(&WINMM_cs);
-    while (! TIME_TimeToDie) 
+    while (1)
     {
         sleep_time = TIME_MMSysTimeCallback();
 
@@ -228,7 +227,6 @@ static DWORD CALLBACK TIME_MMSysTimeThread(LPVOID arg)
 static void TIME_MMTimeStart(void)
 {
     HMODULE mod;
-    TIME_TimeToDie = 0;
     if (TIME_hMMTimer) return;
 
     GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (LPCWSTR)TIME_MMSysTimeThread, &mod);
@@ -345,10 +343,8 @@ MMRESULT WINAPI timeKillEvent(UINT wID)
 	    break;
 	}
     }
-    if (list_empty(&timer_list)) {
-        TIME_TimeToDie = 1;
+    if (list_empty(&timer_list))
         WakeConditionVariable(&TIME_cv);
-    }
     LeaveCriticalSection(&WINMM_cs);
 
     if (!lpSelf)
