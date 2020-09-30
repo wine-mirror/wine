@@ -129,13 +129,12 @@ static void test_D3DX11CreateAsyncMemoryLoader(void)
 
 static void create_testfile(WCHAR *path, const void *data, int data_len)
 {
-    static const WCHAR test_filename[] = {'a','s','y','n','c','l','o','a','d','e','r','.','d','a','t','a',0};
     DWORD written;
     HANDLE file;
     BOOL ret;
 
     GetTempPathW(MAX_PATH, path);
-    lstrcatW(path, test_filename);
+    lstrcatW(path, L"asyncloader.data");
 
     file = CreateFileW(path, GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
     ok(file != INVALID_HANDLE_VALUE, "Test file creation failed, at %s, error %d.\n",
@@ -240,7 +239,6 @@ static void test_D3DX11CreateAsyncFileLoader(void)
 
 static void test_D3DX11CreateAsyncResourceLoader(void)
 {
-    static const WCHAR resource_name[] = {'n','o','n','a','m','e',0};
     ID3DX11DataLoader *loader;
     HRESULT hr;
 
@@ -259,7 +257,7 @@ static void test_D3DX11CreateAsyncResourceLoader(void)
     hr = D3DX11CreateAsyncResourceLoaderW(NULL, NULL, &loader);
     ok(hr == D3DX11_ERR_INVALID_DATA, "Got unexpected hr %#x.\n", hr);
 
-    hr = D3DX11CreateAsyncResourceLoaderW(NULL, resource_name, &loader);
+    hr = D3DX11CreateAsyncResourceLoaderW(NULL, L"noname", &loader);
     ok(hr == D3DX11_ERR_INVALID_DATA, "Got unexpected hr %#x.\n", hr);
 }
 
