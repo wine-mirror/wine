@@ -7519,7 +7519,6 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
     HANDLE handle;
     SOCKET ret;
     DWORD err;
-    int unixaf, unixtype, ipxptype = -1;
 
    /*
       FIXME: The "advanced" parameters of WSASocketW (lpProtocolInfo,
@@ -7590,18 +7589,6 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
         }
     }
 
-    /*
-       Windows has an extension to the IPX protocol that allows one to create sockets
-       and set the IPX packet type at the same time, to do that a caller will use
-       a protocol like NSPROTO_IPX + <PACKET TYPE>
-    */
-    if (IS_IPX_PROTO(protocol))
-        ipxptype = protocol - WS_NSPROTO_IPX;
-
-    /* convert the socket family, type and protocol */
-    unixaf = convert_af_w2u(af);
-    unixtype = convert_socktype_w2u(type);
-
     RtlInitUnicodeString(&string, afdW);
     InitializeObjectAttributes(&attr, &string, (flags & WSA_FLAG_NO_HANDLE_INHERIT) ? 0 : OBJ_INHERIT, NULL, NULL);
     if ((status = NtOpenFile(&handle, GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE, &attr,
@@ -7636,32 +7623,6 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
     ret = HANDLE2SOCKET(handle);
     TRACE("\tcreated %04lx\n", ret );
 
-    if (ipxptype > 0)
-        set_ipx_packettype(ret, ipxptype);
-
-    if (unixaf == AF_INET || unixaf == AF_INET6)
-    {
-        /* ensure IP_DONTFRAGMENT is disabled for SOCK_DGRAM and SOCK_RAW, enabled for SOCK_STREAM */
-        if (unixtype == SOCK_DGRAM || unixtype == SOCK_RAW) /* in Linux the global default can be enabled */
-            set_dont_fragment(ret, unixaf == AF_INET6 ? IPPROTO_IPV6 : IPPROTO_IP, FALSE);
-        else if (unixtype == SOCK_STREAM)
-            set_dont_fragment(ret, unixaf == AF_INET6 ? IPPROTO_IPV6 : IPPROTO_IP, TRUE);
-    }
-
-#ifdef IPV6_V6ONLY
-    if (unixaf == AF_INET6)
-    {
-        int fd = get_sock_fd(ret, 0, NULL);
-        if (fd != -1)
-        {
-            /* IPV6_V6ONLY is set by default on Windows */
-            int enable = 1;
-            if (setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, &enable, sizeof(enable)))
-                WARN("\tsetting IPV6_V6ONLY failed - errno = %i\n", errno);
-            release_sock_fd(ret, fd);
-        }
-    }
-#endif
     if (!socket_list_add(ret))
     {
         CloseHandle(handle);

@@ -712,6 +712,36 @@ static int get_unix_protocol( int protocol )
     }
 }
 
+static void set_dont_fragment( int fd, int level, int value )
+{
+    int optname;
+
+    if (level == IPPROTO_IP)
+    {
+#ifdef IP_DONTFRAG
+        optname = IP_DONTFRAG;
+#elif defined(IP_MTU_DISCOVER) && defined(IP_PMTUDISC_DO) && defined(IP_PMTUDISC_DONT)
+        optname = IP_MTU_DISCOVER;
+        value = value ? IP_PMTUDISC_DO : IP_PMTUDISC_DONT;
+#else
+        return;
+#endif
+    }
+    else
+    {
+#ifdef IPV6_DONTFRAG
+        optname = IPV6_DONTFRAG;
+#elif defined(IPV6_MTU_DISCOVER) && defined(IPV6_PMTUDISC_DO) && defined(IPV6_PMTUDISC_DONT)
+        optname = IPV6_MTU_DISCOVER;
+        value = value ? IPV6_PMTUDISC_DO : IPV6_PMTUDISC_DONT;
+#else
+        return;
+#endif
+    }
+
+    setsockopt( fd, level, optname, &value, sizeof(value) );
+}
+
 static int init_socket( struct sock *sock, int family, int type, int protocol, unsigned int flags )
 {
     unsigned int options = 0;
@@ -746,6 +776,41 @@ static int init_socket( struct sock *sock, int family, int type, int protocol, u
         return -1;
     }
     fcntl(sockfd, F_SETFL, O_NONBLOCK); /* make socket nonblocking */
+
+    if (family == WS_AF_IPX && protocol >= WS_NSPROTO_IPX && protocol <= WS_NSPROTO_IPX + 255)
+    {
+#ifdef HAS_IPX
+        int ipx_type = protocol - WS_NSPROTO_IPX;
+
+#ifdef SOL_IPX
+        setsockopt( sockfd, SOL_IPX, IPX_TYPE, &ipx_type, sizeof(ipx_type) );
+#else
+        struct ipx val;
+        /* Should we retrieve val using a getsockopt call and then
+         * set the modified one? */
+        val.ipx_pt = ipx_type;
+        setsockopt( sockfd, 0, SO_DEFAULT_HEADERS, &val, sizeof(val) );
+#endif
+#endif
+    }
+
+    if (unix_family == AF_INET || unix_family == AF_INET6)
+    {
+        /* ensure IP_DONTFRAGMENT is disabled for SOCK_DGRAM and SOCK_RAW, enabled for SOCK_STREAM */
+        if (unix_type == SOCK_DGRAM || unix_type == SOCK_RAW) /* in Linux the global default can be enabled */
+            set_dont_fragment( sockfd, unix_family == AF_INET6 ? IPPROTO_IPV6 : IPPROTO_IP, FALSE );
+        else if (unix_type == SOCK_STREAM)
+            set_dont_fragment( sockfd, unix_family == AF_INET6 ? IPPROTO_IPV6 : IPPROTO_IP, TRUE );
+    }
+
+#ifdef IPV6_V6ONLY
+    if (unix_family == AF_INET6)
+    {
+        static const int enable = 1;
+        setsockopt( sockfd, IPPROTO_IPV6, IPV6_V6ONLY, &enable, sizeof(enable) );
+    }
+#endif
+
     sock->state  = (type != SOCK_STREAM) ? (FD_READ|FD_WRITE) : 0;
     sock->flags  = flags;
     sock->proto  = unix_protocol;
