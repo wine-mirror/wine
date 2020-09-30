@@ -5770,14 +5770,6 @@ static HRESULT DirectPlayEnumerateAW(LPDPENUMDPCALLBACKA lpEnumCallbackA,
                                      LPVOID lpContext)
 {
     HKEY   hkResult;
-    static const WCHAR searchSubKey[] = {
-	'S', 'O', 'F', 'T', 'W', 'A', 'R', 'E', '\\',
-	'M', 'i', 'c', 'r', 'o', 's', 'o', 'f', 't', '\\',
-	'D', 'i', 'r', 'e', 'c', 't', 'P', 'l', 'a', 'y', '\\',
-	'S', 'e', 'r', 'v', 'i', 'c', 'e', ' ', 'P', 'r', 'o', 'v', 'i', 'd', 'e', 'r', 's', 0 };
-    static const WCHAR guidKey[] = { 'G', 'u', 'i', 'd', 0 };
-    static const WCHAR descW[] = { 'D', 'e', 's', 'c', 'r', 'i', 'p', 't', 'i', 'o', 'n', 'W', 0 };
-    
     DWORD  dwIndex;
     FILETIME filetime;
 
@@ -5797,7 +5789,7 @@ static HRESULT DirectPlayEnumerateAW(LPDPENUMDPCALLBACKA lpEnumCallbackA,
     }
     
     /* Need to loop over the service providers in the registry */
-    if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, searchSubKey,
+    if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\DirectPlay\\Service Providers",
 		      0, KEY_READ, &hkResult) != ERROR_SUCCESS)
     {
 	/* Hmmm. Does this mean that there are no service providers? */
@@ -5854,7 +5846,7 @@ static HRESULT DirectPlayEnumerateAW(LPDPENUMDPCALLBACKA lpEnumCallbackA,
 	}
 	
 	/* Get the GUID from the registry */
-	if (RegQueryValueExW(hkServiceProvider, guidKey,
+        if (RegQueryValueExW(hkServiceProvider, L"Guid",
 			     NULL, NULL, (LPBYTE) guidKeyContent, &sizeOfGuidKeyContent) != ERROR_SUCCESS)
 	{
 	    ERR(": missing GUID registry data member for service provider %s.\n", debugstr_w(subKeyName));
@@ -5899,8 +5891,8 @@ static HRESULT DirectPlayEnumerateAW(LPDPENUMDPCALLBACKA lpEnumCallbackA,
 	else
 	{
 	    DWORD sizeOfDescription = 0;
-	    
-	    if (RegQueryValueExW(hkServiceProvider, descW,
+
+            if (RegQueryValueExW(hkServiceProvider, L"DescriptionW",
 				 NULL, NULL, NULL, &sizeOfDescription) != ERROR_SUCCESS)
 	    {
 		ERR(": missing 'DescriptionW' registry data member for service provider %s.\n", debugstr_w(subKeyName));
@@ -5912,7 +5904,7 @@ static HRESULT DirectPlayEnumerateAW(LPDPENUMDPCALLBACKA lpEnumCallbackA,
 		max_sizeOfDescriptionW = sizeOfDescription;
 	    }
 	    descriptionW = HeapAlloc(GetProcessHeap(), 0, sizeOfDescription);
-	    RegQueryValueExW(hkServiceProvider, descW,
+            RegQueryValueExW(hkServiceProvider, L"DescriptionW",
 			     NULL, NULL, (LPBYTE) descriptionW, &sizeOfDescription);
 
 	    if (!lpEnumCallbackW(&guid_cache[dwIndex], descriptionW, 6, 0, lpContext))

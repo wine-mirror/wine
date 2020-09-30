@@ -6764,13 +6764,6 @@ done:
 
 static HRESULT set_firewall( enum firewall_op op )
 {
-    static const WCHAR dplaysvrW[] =
-        {'d','p','l','a','y','s','v','r','.','e','x','e',0};
-    static const WCHAR separator[] = {'\\',0};
-    static const WCHAR clientW[] =
-        {'d','p','l','a','y','_','c','l','i','e','n','t',0};
-    static const WCHAR serverW[] =
-        {'d','p','l','a','y','_','s','e','r','v','e','r',0};
     HRESULT hr, init;
     INetFwMgr *mgr = NULL;
     INetFwPolicy *policy = NULL;
@@ -6791,8 +6784,7 @@ static HRESULT set_firewall( enum firewall_op op )
         SysFreeString( image );
         return E_FAIL;
     }
-    lstrcatW(path, separator);
-    lstrcatW(path, dplaysvrW);
+    lstrcatW( path, L"\\dplaysvr.exe" );
 
     init = CoInitializeEx( 0, COINIT_APARTMENTTHREADED );
 
@@ -6820,7 +6812,7 @@ static HRESULT set_firewall( enum firewall_op op )
     hr = INetFwAuthorizedApplication_put_ProcessImageFileName( app, image );
     if (hr != S_OK) goto done;
 
-    name = SysAllocString( clientW );
+    name = SysAllocString( L"dplay_client" );
     hr = INetFwAuthorizedApplication_put_Name( app, name );
     SysFreeString( name );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -6845,7 +6837,7 @@ static HRESULT set_firewall( enum firewall_op op )
     hr = INetFwAuthorizedApplication_put_ProcessImageFileName( app, image );
     if (hr != S_OK) goto done;
 
-    name = SysAllocString( serverW );
+    name = SysAllocString( L"dplay_server" );
     hr = INetFwAuthorizedApplication_put_Name( app, name );
     SysFreeString( name );
     ok( hr == S_OK, "got %08x\n", hr );
