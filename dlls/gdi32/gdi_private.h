@@ -280,6 +280,8 @@ struct font_gamma_ramp
     BYTE  decode[256];
 };
 
+extern void font_init(void) DECLSPEC_HIDDEN;
+
 /* freetype.c */
 
 /* Undocumented structure filled in by GetFontRealizationInfo */

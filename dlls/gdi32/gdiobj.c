@@ -690,7 +690,7 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
 
     gdi32_module = inst;
     DisableThreadLibraryCalls( inst );
-    WineEngInit();
+    font_init();
 
     /* create stock objects */
     stock_objects[WHITE_BRUSH]  = CreateBrushIndirect( &WhiteBrush );
