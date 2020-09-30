@@ -3637,7 +3637,7 @@ INT WINAPI DECLSPEC_HOTPATCH GetCalendarInfoEx( const WCHAR *locale, CALID calen
 static CRITICAL_SECTION tzname_section;
 static CRITICAL_SECTION_DEBUG tzname_section_debug =
 {
-    0, 0, &locale_section,
+    0, 0, &tzname_section,
     { &tzname_section_debug.ProcessLocksList, &tzname_section_debug.ProcessLocksList },
       0, 0, { (DWORD_PTR)(__FILE__ ": tzname_section") }
 };
