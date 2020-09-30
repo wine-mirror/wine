@@ -30,6 +30,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
+#ifdef HAVE_NETINET_IN_H
+# include <netinet/in.h>
+#endif
 #ifdef HAVE_POLL_H
 # include <poll.h>
 #endif
@@ -51,6 +54,29 @@
 # include <linux/rtnetlink.h>
 #endif
 
+#ifdef HAVE_NETIPX_IPX_H
+# include <netipx/ipx.h>
+#elif defined(HAVE_LINUX_IPX_H)
+# ifdef HAVE_ASM_TYPES_H
+#  include <asm/types.h>
+# endif
+# ifdef HAVE_LINUX_TYPES_H
+#  include <linux/types.h>
+# endif
+# include <linux/ipx.h>
+#endif
+#if defined(SOL_IPX) || defined(SO_DEFAULT_HEADERS)
+# define HAS_IPX
+#endif
+
+#ifdef HAVE_LINUX_IRDA_H
+# ifdef HAVE_LINUX_TYPES_H
+#  include <linux/types.h>
+# endif
+# include <linux/irda.h>
+# define HAS_IRDA
+#endif
+
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
@@ -58,6 +84,7 @@
 #include "winerror.h"
 #define USE_WS_PREFIX
 #include "winsock2.h"
+#include "wsipx.h"
 #include "wine/afd.h"
 
 #include "process.h"
@@ -638,12 +665,80 @@ static struct sock *create_socket(void)
     return sock;
 }
 
+static int get_unix_family( int family )
+{
+    switch (family)
+    {
+        case WS_AF_INET: return AF_INET;
+        case WS_AF_INET6: return AF_INET6;
+#ifdef HAS_IPX
+        case WS_AF_IPX: return AF_IPX;
+#endif
+#ifdef AF_IRDA
+        case WS_AF_IRDA: return AF_IRDA;
+#endif
+        case WS_AF_UNSPEC: return AF_UNSPEC;
+        default: return -1;
+    }
+}
+
+static int get_unix_type( int type )
+{
+    switch (type)
+    {
+        case WS_SOCK_DGRAM: return SOCK_DGRAM;
+        case WS_SOCK_RAW: return SOCK_RAW;
+        case WS_SOCK_STREAM: return SOCK_STREAM;
+        default: return -1;
+    }
+}
+
+static int get_unix_protocol( int protocol )
+{
+    if (protocol >= WS_NSPROTO_IPX && protocol <= WS_NSPROTO_IPX + 255)
+        return protocol;
+
+    switch (protocol)
+    {
+        case WS_IPPROTO_ICMP: return IPPROTO_ICMP;
+        case WS_IPPROTO_IGMP: return IPPROTO_IGMP;
+        case WS_IPPROTO_IP: return IPPROTO_IP;
+        case WS_IPPROTO_IPIP: return IPPROTO_IPIP;
+        case WS_IPPROTO_IPV6: return IPPROTO_IPV6;
+        case WS_IPPROTO_RAW: return IPPROTO_RAW;
+        case WS_IPPROTO_TCP: return IPPROTO_TCP;
+        case WS_IPPROTO_UDP: return IPPROTO_UDP;
+        default: return -1;
+    }
+}
+
 static int init_socket( struct sock *sock, int family, int type, int protocol, unsigned int flags )
 {
     unsigned int options = 0;
-    int sockfd;
+    int sockfd, unix_type, unix_family, unix_protocol;
 
-    sockfd = socket( family, type, protocol );
+    unix_family = get_unix_family( family );
+    unix_type = get_unix_type( type );
+    unix_protocol = get_unix_protocol( protocol );
+
+    if (unix_protocol < 0)
+    {
+        if (type && unix_type < 0)
+            set_win32_error( WSAESOCKTNOSUPPORT );
+        else
+            set_win32_error( WSAEPROTONOSUPPORT );
+        return -1;
+    }
+    if (unix_family < 0)
+    {
+        if (family >= 0 && unix_type < 0)
+            set_win32_error( WSAESOCKTNOSUPPORT );
+        else
+            set_win32_error( WSAEAFNOSUPPORT );
+        return -1;
+    }
+
+    sockfd = socket( unix_family, unix_type, unix_protocol );
     if (sockfd == -1)
     {
         if (errno == EINVAL) set_win32_error( WSAESOCKTNOSUPPORT );
@@ -653,9 +748,9 @@ static int init_socket( struct sock *sock, int family, int type, int protocol, u
     fcntl(sockfd, F_SETFL, O_NONBLOCK); /* make socket nonblocking */
     sock->state  = (type != SOCK_STREAM) ? (FD_READ|FD_WRITE) : 0;
     sock->flags  = flags;
-    sock->proto  = protocol;
-    sock->type   = type;
-    sock->family = family;
+    sock->proto  = unix_protocol;
+    sock->type   = unix_type;
+    sock->family = unix_family;
 
     if (sock->fd)
     {

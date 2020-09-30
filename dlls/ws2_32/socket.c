@@ -7601,41 +7601,6 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
     /* convert the socket family, type and protocol */
     unixaf = convert_af_w2u(af);
     unixtype = convert_socktype_w2u(type);
-    protocol = convert_proto_w2u(protocol);
-
-    /* filter invalid parameters */
-    if (protocol < 0)
-    {
-        /* the type could not be converted */
-        if (type && unixtype < 0)
-        {
-            err = WSAESOCKTNOSUPPORT;
-            goto done;
-        }
-
-        err = WSAEPROTONOSUPPORT;
-        goto done;
-    }
-    if (unixaf < 0)
-    {
-        /* both family and protocol can't be invalid */
-        if (protocol <= 0)
-        {
-            err = WSAEINVAL;
-            goto done;
-        }
-
-        /* family could not be converted and neither socket type */
-        if (unixtype < 0 && af >= 0)
-        {
-
-            err = WSAESOCKTNOSUPPORT;
-            goto done;
-        }
-
-        err = WSAEAFNOSUPPORT;
-        goto done;
-    }
 
     RtlInitUnicodeString(&string, afdW);
     InitializeObjectAttributes(&attr, &string, (flags & WSA_FLAG_NO_HANDLE_INHERIT) ? 0 : OBJ_INHERIT, NULL, NULL);
@@ -7647,8 +7612,8 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
         return INVALID_SOCKET;
     }
 
-    create_params.family = unixaf;
-    create_params.type = unixtype;
+    create_params.family = af;
+    create_params.type = type;
     create_params.protocol = protocol;
     create_params.flags = flags & ~(WSA_FLAG_NO_HANDLE_INHERIT | WSA_FLAG_OVERLAPPED);
     if ((status = NtDeviceIoControlFile(handle, NULL, NULL, NULL, &io,
