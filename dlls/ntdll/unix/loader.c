@@ -138,7 +138,7 @@ struct builtin_module
     struct file_id id;
     void          *handle;
     void          *module;
-    void          *unix_module;
+    void          *unix_handle;
 };
 
 static struct list builtin_modules = LIST_INIT( builtin_modules );
@@ -149,7 +149,7 @@ static NTSTATUS add_builtin_module( void *module, void *handle, const struct sta
     if (!(builtin = malloc( sizeof(*builtin) ))) return STATUS_NO_MEMORY;
     builtin->handle = handle;
     builtin->module = module;
-    builtin->unix_module = NULL;
+    builtin->unix_handle = NULL;
     if (st)
     {
         builtin->id.dev = st->st_dev;
@@ -1015,23 +1015,24 @@ static NTSTATUS dlopen_unix_dll( void *module, const char *name, void **unix_ent
     {
         if (builtin->module == module)
         {
-            if (builtin->unix_module == unix_module)  /* already loaded */
+            if (builtin->unix_handle == handle)  /* already loaded */
             {
+                *unix_entry = entry;
                 status = STATUS_SUCCESS;
                 goto done;
             }
-            if (builtin->unix_module)
+            if (builtin->unix_handle)
             {
                 ERR( "module %p already has a Unix module that's not %s\n", module, debugstr_a(name) );
                 goto done;
             }
             if ((status = map_so_dll( nt, unix_module ))) goto done;
             if ((status = fixup_ntdll_imports( name, unix_module ))) goto done;
-            builtin->unix_module = handle;
+            builtin->unix_handle = handle;
             *unix_entry = entry;
             return STATUS_SUCCESS;
         }
-        else if (builtin->unix_module == unix_module)
+        else if (builtin->unix_handle == handle)
         {
             ERR( "%s already loaded for module %p\n", debugstr_a(name), module );
             goto done;
@@ -1339,7 +1340,7 @@ static NTSTATUS CDECL unload_builtin_dll( void *module )
         if (builtin->module != module) continue;
         list_remove( &builtin->entry );
         if (builtin->handle) dlclose( builtin->handle );
-        if (builtin->unix_module) dlclose( builtin->unix_module );
+        if (builtin->unix_handle) dlclose( builtin->unix_handle );
         free( builtin );
         return STATUS_SUCCESS;
     }
