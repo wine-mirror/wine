@@ -526,11 +526,16 @@ static HRESULT WINAPI IEnumDMO_fnNext(
 
         if (This->pInTypes)
         {
-            DWORD size = types_size, i;
+            DWORD size, i;
 
-            while ((ret = RegQueryValueExW(hkey, L"InputTypes", NULL, NULL,
-                    (BYTE *)types, &size)) == ERROR_MORE_DATA)
+            for (;;)
             {
+                size = types_size;
+                ret = RegQueryValueExW(hkey, L"InputTypes", NULL, NULL, (BYTE *)types, &size);
+                if (ret != ERROR_SUCCESS && ret != ERROR_MORE_DATA)
+                    break;
+                if (size <= types_size)
+                    break;
                 if (!array_reserve((void **)&types, &types_size, size, 1))
                 {
                     RegCloseKey(hkey);
@@ -559,9 +564,14 @@ static HRESULT WINAPI IEnumDMO_fnNext(
         {
             DWORD size = types_size, i;
 
-            while ((ret = RegQueryValueExW(hkey, L"OutputTypes", NULL, NULL,
-                    (BYTE *)types, &size)) == ERROR_MORE_DATA)
+            for (;;)
             {
+                size = types_size;
+                ret = RegQueryValueExW(hkey, L"OutputTypes", NULL, NULL, (BYTE *)types, &size);
+                if (ret != ERROR_SUCCESS && ret != ERROR_MORE_DATA)
+                    break;
+                if (size <= types_size)
+                    break;
                 if (!array_reserve((void **)&types, &types_size, size, 1))
                 {
                     RegCloseKey(hkey);

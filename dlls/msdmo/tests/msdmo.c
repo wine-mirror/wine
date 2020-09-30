@@ -88,6 +88,9 @@ static void test_DMOGetName(void)
 
 static void test_DMOEnum(void)
 {
+    static const DMO_PARTIAL_MEDIATYPE input_type = {{0x1111}, {0x2222}};
+    static const DMO_PARTIAL_MEDIATYPE wrong_type = {{0x3333}, {0x4444}};
+
     IEnumDMO *enum_dmo;
     HRESULT hr;
     CLSID clsid;
@@ -115,6 +118,47 @@ static void test_DMOEnum(void)
     ok(count == 0, "expected 0, got %d\n", count);
 
     IEnumDMO_Release(enum_dmo);
+
+    hr = DMORegister(L"testdmo", &GUID_unknowndmo, &GUID_unknowncategory, 0, 1, &input_type, 0, NULL);
+    if (hr != S_OK)
+        return;
+
+    hr = DMOEnum(&GUID_unknowncategory, 0, 0, NULL, 0, NULL, &enum_dmo);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumDMO_Next(enum_dmo, 1, &clsid, &name, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(IsEqualGUID(&clsid, &GUID_unknowndmo), "Got clsid %s.\n", debugstr_guid(&clsid));
+    ok(!wcscmp(name, L"testdmo"), "Got name %s.\n", debugstr_w(name));
+
+    hr = IEnumDMO_Next(enum_dmo, 1, &clsid, &name, NULL);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    IEnumDMO_Release(enum_dmo);
+
+    hr = DMOEnum(&GUID_unknowncategory, 0, 1, &input_type, 0, NULL, &enum_dmo);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumDMO_Next(enum_dmo, 1, &clsid, &name, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(IsEqualGUID(&clsid, &GUID_unknowndmo), "Got clsid %s.\n", debugstr_guid(&clsid));
+    ok(!wcscmp(name, L"testdmo"), "Got name %s.\n", debugstr_w(name));
+
+    hr = IEnumDMO_Next(enum_dmo, 1, &clsid, &name, NULL);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    IEnumDMO_Release(enum_dmo);
+
+    hr = DMOEnum(&GUID_unknowncategory, 0, 1, &wrong_type, 0, NULL, &enum_dmo);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumDMO_Next(enum_dmo, 1, &clsid, &name, NULL);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    IEnumDMO_Release(enum_dmo);
+
+    hr = DMOUnregister(&GUID_unknowndmo, &GUID_unknowncategory);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 }
 
 static void test_DMOGetTypes(void)
