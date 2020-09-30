@@ -193,6 +193,60 @@ static void test_priority(void)
     timeKillEvent(id);
 }
 
+static void CALLBACK kill_timer_callback(UINT id, UINT msg,
+        DWORD_PTR arg, DWORD_PTR dw1, DWORD_PTR dw2)
+{
+    HANDLE event = (HANDLE)arg;
+    MMRESULT res;
+
+    res = timeKillEvent(id);
+    ok(res == TIMERR_NOERROR, "timeKillEvent failed in callback\n");
+    SetEvent(event);
+}
+
+static void test_timer_lifetime(void)
+{
+    UINT timers[20], i;
+    HANDLE event;
+    MMRESULT res;
+
+    event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    ok(event != NULL, "CreateEvent failed\n");
+
+    for (i = 0; i < 20; i++)
+    {
+        timers[i] = timeSetEvent(10000, 0, event, 0, TIME_CALLBACK_EVENT_SET);
+        if (i < 16)
+            ok(timers[i] != 0, "%d) timeSetEvent failed\n", i);
+        else
+            ok(!timers[i], "%d) timeSetEvent succeeded\n", i);
+    }
+
+    for (i = 0; i < 16; i++)
+    {
+        res = timeKillEvent(timers[i]);
+        ok(res == TIMERR_NOERROR, "%d) timeKillEvent failed\n", i);
+    }
+
+    timers[0] = timeSetEvent(10, 0, event, 0, TIME_CALLBACK_EVENT_SET);
+    ok(timers[0], "timeSetEvent failed\n");
+    WaitForSingleObject(event, 1000);
+    timers[1] = timeSetEvent(1000, 0, event, 0, TIME_CALLBACK_EVENT_SET);
+    ok(timers[1], "timeSetEvent failed\n");
+    ok(timers[0] != timers[1], "timer got the same id as just destroyed timer\n");
+    res = timeKillEvent(timers[0]);
+    ok(res == TIMERR_NOCANDO, "timeKillEvent returned %d\n", res);
+    res = timeKillEvent(timers[1]);
+    ok(res == TIMERR_NOERROR, "timeKillEvent returned %d\n", res);
+
+    timers[0] = timeSetEvent(10, 0, kill_timer_callback, (DWORD_PTR)event, TIME_ONESHOT);
+    WaitForSingleObject(event, 1000);
+    timers[0] = timeSetEvent(10, 0, kill_timer_callback, (DWORD_PTR)event, TIME_KILL_SYNCHRONOUS);
+    WaitForSingleObject(event, 1000);
+
+    CloseHandle(event);
+}
+
 START_TEST(timer)
 {
     test_timeGetDevCaps();
@@ -216,4 +270,5 @@ START_TEST(timer)
     }
 
     test_priority();
+    test_timer_lifetime();
 }
