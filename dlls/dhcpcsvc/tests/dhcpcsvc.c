@@ -43,7 +43,7 @@ static IP_ADAPTER_ADDRESSES *get_adapters(void)
 
 static void test_DhcpRequestParams(void)
 {
-    static WCHAR nosuchW[] = {'n','o','s','u','c','h','a','d','a','p','t','e','r',0};
+    static WCHAR nosuchW[] = L"nosuchadapter";
     DHCPCAPI_PARAMS params[6];
     DHCPCAPI_PARAMS_ARRAY send_params, recv_params;
     IP_ADAPTER_ADDRESSES *adapters, *ptr;
