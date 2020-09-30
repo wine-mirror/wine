@@ -2306,9 +2306,9 @@ static BOOL ws_protocol_info(SOCKET s, int unicode, WSAPROTOCOL_INFOW *buffer, i
         status = wine_server_call( req );
         if (!status)
         {
-            address_family = convert_af_u2w(reply->family);
-            socket_type = convert_socktype_u2w(reply->type);
-            protocol = convert_proto_u2w(reply->protocol);
+            address_family = reply->family;
+            socket_type = reply->type;
+            protocol = reply->protocol;
         }
     }
     SERVER_END_REQ;

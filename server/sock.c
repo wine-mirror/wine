@@ -456,7 +456,7 @@ static void sock_poll_event( struct fd *fd, int event )
     else
     {
         /* normal data flow */
-        if ( sock->type == SOCK_STREAM && ( event & POLLIN ) )
+        if (sock->type == WS_SOCK_STREAM && (event & POLLIN))
         {
             char dummy;
             int nr;
@@ -546,8 +546,8 @@ static int sock_get_poll_events( struct fd *fd )
     else if (smask & FD_READ || (sock->state & FD_WINE_LISTENING && mask & FD_ACCEPT))
         ev |= POLLIN | POLLPRI;
     /* We use POLLIN with 0 bytes recv() as FD_CLOSE indication for stream sockets. */
-    else if ( sock->type == SOCK_STREAM && sock->state & FD_READ && mask & FD_CLOSE &&
-              !(sock->hmask & FD_READ) )
+    else if (sock->type == WS_SOCK_STREAM && (sock->state & FD_READ) && (mask & FD_CLOSE) &&
+              !(sock->hmask & FD_READ))
         ev |= POLLIN;
 
     if (async_queued( &sock->write_q ))
@@ -813,9 +813,9 @@ static int init_socket( struct sock *sock, int family, int type, int protocol, u
 
     sock->state  = (type != SOCK_STREAM) ? (FD_READ|FD_WRITE) : 0;
     sock->flags  = flags;
-    sock->proto  = unix_protocol;
-    sock->type   = unix_type;
-    sock->family = unix_family;
+    sock->proto  = protocol;
+    sock->type   = type;
+    sock->family = family;
 
     if (sock->fd)
     {
@@ -1540,7 +1540,7 @@ DECL_HANDLER(enable_socket_event)
     sock->hmask &= ~req->mask;
     sock->state |= req->sstate;
     sock->state &= ~req->cstate;
-    if ( sock->type != SOCK_STREAM ) sock->state &= ~STREAM_FLAG_MASK;
+    if (sock->type != WS_SOCK_STREAM) sock->state &= ~STREAM_FLAG_MASK;
 
     sock_reselect( sock );
 
