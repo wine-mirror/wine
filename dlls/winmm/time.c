@@ -107,7 +107,7 @@ static    CONDITION_VARIABLE    TIME_cv;
  */
 static int TIME_MMSysTimeCallback(void)
 {
-    WINE_TIMERENTRY *timer, copy;
+    WINE_TIMERENTRY *timer;
     int i, delta_time;
 
     /* since timeSetEvent() and timeKillEvent() can be called
@@ -139,15 +139,7 @@ static int TIME_MMSysTimeCallback(void)
         if (delta_time > 0) break;
 
         if (timer->wFlags & TIME_PERIODIC)
-        {
             timer->dwTriggerTime += timer->wDelay;
-        }
-        else
-        {
-            copy = *timer;
-            timer->wTimerID = 0;
-            timer = &copy;
-        }
 
         switch(timer->wFlags & (TIME_CALLBACK_EVENT_SET|TIME_CALLBACK_EVENT_PULSE))
         {
@@ -171,9 +163,12 @@ static int TIME_MMSysTimeCallback(void)
 
                 EnterCriticalSection(&WINMM_cs);
                 if (flags & TIME_KILL_SYNCHRONOUS) LeaveCriticalSection(&TIME_cbcrst);
+                if (id != timer->wTimerID) timer = NULL;
             }
             break;
         }
+        if (timer && !(timer->wFlags & TIME_PERIODIC))
+            timer->wTimerID = 0;
     }
     return delta_time;
 }
