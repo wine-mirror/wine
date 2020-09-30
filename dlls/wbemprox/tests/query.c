@@ -1414,6 +1414,13 @@ static void test_Win32_VideoController( IWbemServices *services )
         hr = IEnumWbemClassObject_Next( result, 10000, 1, &obj, &count );
         if (hr != S_OK) break;
 
+        check_property( obj, L"__CLASS", VT_BSTR, CIM_STRING );
+        check_property( obj, L"__GENUS", VT_I4, CIM_SINT32 );
+        check_property( obj, L"__NAMESPACE", VT_BSTR, CIM_STRING );
+        check_property( obj, L"__PATH", VT_BSTR, CIM_STRING );
+        check_property( obj, L"__PROPERTY_COUNT", VT_I4, CIM_SINT32 );
+        check_property( obj, L"__RELPATH", VT_BSTR, CIM_STRING );
+        check_property( obj, L"__SERVER", VT_BSTR, CIM_STRING );
         check_property( obj, L"AdapterCompatibility", VT_BSTR, CIM_STRING );
         check_property( obj, L"Availability", VT_I4, CIM_UINT16 );
         check_property( obj, L"ConfigManagerErrorCode", VT_I4, CIM_UINT32 );
@@ -1429,6 +1436,31 @@ static void test_Win32_VideoController( IWbemServices *services )
         VariantClear( &val );
 
         check_property( obj, L"Status", VT_BSTR, CIM_STRING );
+        IWbemClassObject_Release( obj );
+    }
+
+    IEnumWbemClassObject_Release( result );
+    SysFreeString( query );
+
+    query = SysAllocString( L"SELECT AdapterRAM FROM Win32_VideoController" );
+    hr = IWbemServices_ExecQuery( services, wql, query, 0, NULL, &result );
+    if (hr != S_OK)
+    {
+        win_skip( "Win32_VideoController not available\n" );
+        return;
+    }
+
+    for (;;)
+    {
+        hr = IEnumWbemClassObject_Next( result, 10000, 1, &obj, &count );
+        if (hr != S_OK) break;
+        check_property( obj, L"__CLASS", VT_BSTR, CIM_STRING );
+        check_property( obj, L"__GENUS", VT_I4, CIM_SINT32 );
+        check_property( obj, L"__NAMESPACE", VT_NULL, CIM_STRING );
+        check_property( obj, L"__PATH", VT_NULL, CIM_STRING );
+        check_property( obj, L"__PROPERTY_COUNT", VT_I4, CIM_SINT32 );
+        check_property( obj, L"__RELPATH", VT_NULL, CIM_STRING );
+        check_property( obj, L"__SERVER", VT_NULL, CIM_STRING );
         IWbemClassObject_Release( obj );
     }
 
