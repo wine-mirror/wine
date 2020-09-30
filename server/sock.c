@@ -1427,7 +1427,6 @@ DECL_HANDLER(accept_socket)
     {
         reply->handle = alloc_handle( current->process, &sock->obj, req->access, req->attributes );
         sock->wparam = reply->handle;  /* wparam for message is the socket handle */
-        sock_reselect( sock );
         release_object( &sock->obj );
     }
 }
@@ -1450,10 +1449,7 @@ DECL_HANDLER(accept_into_socket)
     }
 
     if (accept_into_socket( sock, acceptsock ))
-    {
         acceptsock->wparam = req->ahandle;  /* wparam for message is the socket handle */
-        sock_reselect( acceptsock );
-    }
     release_object( acceptsock );
     release_object( sock );
 }
