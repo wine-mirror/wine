@@ -1340,7 +1340,6 @@ static void test_D3DX10CreateAsyncFileLoader(void)
 
 static void test_D3DX10CreateAsyncResourceLoader(void)
 {
-    static const WCHAR resource_name[] = {'n','o','n','a','m','e',0};
     ID3DX10DataLoader *loader;
     HRESULT hr;
 
@@ -1359,7 +1358,7 @@ static void test_D3DX10CreateAsyncResourceLoader(void)
     hr = D3DX10CreateAsyncResourceLoaderW(NULL, NULL, &loader);
     ok(hr == D3DX10_ERR_INVALID_DATA, "Got unexpected hr %#x.\n", hr);
 
-    hr = D3DX10CreateAsyncResourceLoaderW(NULL, resource_name, &loader);
+    hr = D3DX10CreateAsyncResourceLoaderW(NULL, L"noname", &loader);
     ok(hr == D3DX10_ERR_INVALID_DATA, "Got unexpected hr %#x.\n", hr);
 }
 
