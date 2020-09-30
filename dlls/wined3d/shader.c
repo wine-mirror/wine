@@ -2059,7 +2059,7 @@ static void shader_dump_resource_type(struct wined3d_string_buffer *buffer, enum
         /* WINED3D_SHADER_RESOURCE_TEXTURE_CUBEARRAY    */ "texturecubearray",
     };
 
-    if (type <= ARRAY_SIZE(resource_type_names))
+    if (type < ARRAY_SIZE(resource_type_names))
         shader_addline(buffer, "%s", resource_type_names[type]);
     else
         shader_addline(buffer, "unknown");
@@ -2080,7 +2080,7 @@ static void shader_dump_data_type(struct wined3d_string_buffer *buffer, enum win
         /* WINED3D_DATA_OPAQUE   */ "(opaque)",
     };
 
-    if (type <= ARRAY_SIZE(data_type_names))
+    if (type < ARRAY_SIZE(data_type_names))
         shader_addline(buffer, "%s", data_type_names[type]);
     else
         shader_addline(buffer, "(unknown)");
