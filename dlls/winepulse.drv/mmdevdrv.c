@@ -2248,9 +2248,23 @@ static HRESULT WINAPI AudioClient_SetClientProperties(IAudioClient2 *iface,
 {
     ACImpl *This = impl_from_IAudioClient2(iface);
 
-    FIXME("(%p)->(%p)\n", This, prop);
+    TRACE("(%p)->(%p)\n", This, prop);
 
-    return E_NOTIMPL;
+    if(!prop)
+        return E_POINTER;
+
+    if(prop->cbSize != sizeof(*prop))
+        return E_INVALIDARG;
+
+    TRACE("{ bIsOffload: %u, eCategory: 0x%x, Options: 0x%x }\n",
+            prop->bIsOffload,
+            prop->eCategory,
+            prop->Options);
+
+    if(prop->bIsOffload)
+        return AUDCLNT_E_ENDPOINT_OFFLOAD_NOT_CAPABLE;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI AudioClient_GetBufferSizeLimits(IAudioClient2 *iface,
