@@ -42,7 +42,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(msftedit);
  */
 BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, LPVOID reserved)
 {
-    static const WCHAR riched20W[] = {'r','i','c','h','e','d','2','0','.','d','l','l',0};
     static HMODULE richedit;
 
     switch(reason)
@@ -51,7 +50,7 @@ BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, LPVOID reserved)
         return FALSE; /* prefer native version */
     case DLL_PROCESS_ATTACH:
         /* explicitly load riched20 since it creates the window classes at dll attach time */
-        richedit = LoadLibraryW( riched20W );
+        richedit = LoadLibraryW( L"riched20.dll" );
         DisableThreadLibraryCalls(inst);
         break;
     case DLL_PROCESS_DETACH:
