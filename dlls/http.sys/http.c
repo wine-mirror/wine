@@ -977,8 +977,6 @@ static void WINAPI unload(DRIVER_OBJECT *driver)
 
 NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, UNICODE_STRING *path)
 {
-    static const WCHAR device_nameW[] = {'\\','D','e','v','i','c','e','\\','H','t','t','p','\\','R','e','q','Q','u','e','u','e',0};
-    static const WCHAR directory_nameW[] = {'\\','D','e','v','i','c','e','\\','H','t','t','p',0};
     OBJECT_ATTRIBUTES attr = {sizeof(attr)};
     UNICODE_STRING string;
     WSADATA wsadata;
@@ -986,12 +984,12 @@ NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, UNICODE_STRING *path)
 
     TRACE("driver %p, path %s.\n", driver, debugstr_w(path->Buffer));
 
-    RtlInitUnicodeString(&string, directory_nameW);
+    RtlInitUnicodeString(&string, L"\\Device\\Http");
     attr.ObjectName = &string;
     if ((ret = NtCreateDirectoryObject(&directory_obj, 0, &attr)) && ret != STATUS_OBJECT_NAME_COLLISION)
         ERR("Failed to create \\Device\\Http directory, status %#x.\n", ret);
 
-    RtlInitUnicodeString(&string, device_nameW);
+    RtlInitUnicodeString(&string, L"\\Device\\Http\\ReqQueue");
     if ((ret = IoCreateDevice(driver, 0, &string, FILE_DEVICE_UNKNOWN, 0, FALSE, &device_obj)))
     {
         ERR("Failed to create request queue device, status %#x.\n", ret);
