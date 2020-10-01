@@ -380,13 +380,12 @@ static BOOL is_prefix_unique(struct list *namespaces, LPCWSTR prefix)
 
 static LPWSTR generate_namespace_prefix(IWSDXMLContextImpl *impl, void *parentMemoryBlock, LPCWSTR uri)
 {
-    static const WCHAR formatString[] = { 'u','n','%','d', 0 };
     WCHAR suggestedPrefix[7];
 
     /* Find a unique prefix */
     while (impl->nextUnknownPrefix < 1000)
     {
-        wsprintfW(suggestedPrefix, formatString, impl->nextUnknownPrefix++);
+        wsprintfW(suggestedPrefix, L"un%d", impl->nextUnknownPrefix++);
 
         /* For the unlikely event where somebody has explicitly created a prefix called 'unX', check it is unique */
         if (is_prefix_unique(impl->namespaces, suggestedPrefix))

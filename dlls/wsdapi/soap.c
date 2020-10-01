@@ -32,89 +32,39 @@ WINE_DEFAULT_DEBUG_CHANNEL(wsdapi);
 
 #define APP_MAX_DELAY                       500
 
-static const WCHAR discoveryTo[] = {
-    'u','r','n',':',
-    's','c','h','e','m','a','s','-','x','m','l','s','o','a','p','-','o','r','g',':',
-    'w','s',':','2','0','0','5',':','0','4',':',
-    'd','i','s','c','o','v','e','r','y', 0 };
+static const WCHAR *discoveryTo = L"urn:schemas-xmlsoap-org:ws:2005:04:discovery";
 
-static const WCHAR anonymousTo[] = {
-    'h','t','t','p',':','/','/',
-    's','c','h','e','m','a','s','.','x','m','l','s','o','a','p','.','o','r','g','/',
-    'w','s','/','2','0','0','4','/','0','8','/',
-    'a','d','d','r','e','s','s','i','n','g','/',
-    'r','o','l','e','/',
-    'a','n','o','n','y','m','o','u','s', 0 };
+static const WCHAR *actionProbe = L"http://schemas.xmlsoap.org/ws/2005/04/discovery/Probe";
 
-static const WCHAR actionHello[] = {
-    'h','t','t','p',':','/','/',
-    's','c','h','e','m','a','s','.','x','m','l','s','o','a','p','.','o','r','g','/',
-    'w','s','/','2','0','0','5','/','0','4','/',
-    'd','i','s','c','o','v','e','r','y','/',
-    'H','e','l','l','o', 0 };
+static const WCHAR *addressingNsUri = L"http://schemas.xmlsoap.org/ws/2004/08/addressing";
+static const WCHAR *discoveryNsUri = L"http://schemas.xmlsoap.org/ws/2005/04/discovery";
+static const WCHAR *envelopeNsUri = L"http://www.w3.org/2003/05/soap-envelope";
 
-static const WCHAR actionProbe[] = {
-    'h','t','t','p',':','/','/',
-    's','c','h','e','m','a','s','.','x','m','l','s','o','a','p','.','o','r','g','/',
-    'w','s','/','2','0','0','5','/','0','4','/',
-    'd','i','s','c','o','v','e','r','y','/',
-    'P','r','o','b','e', 0 };
-
-static const WCHAR actionProbeMatches[] = {
-    'h','t','t','p',':','/','/',
-    's','c','h','e','m','a','s','.','x','m','l','s','o','a','p','.','o','r','g','/',
-    'w','s','/','2','0','0','5','/','0','4','/',
-    'd','i','s','c','o','v','e','r','y','/',
-    'P','r','o','b','e','M','a','t','c','h','e','s', 0 };
-
-static const WCHAR actionBye[] = {
-    'h','t','t','p',':','/','/',
-    's','c','h','e','m','a','s','.','x','m','l','s','o','a','p','.','o','r','g','/',
-    'w','s','/','2','0','0','5','/','0','4','/',
-    'd','i','s','c','o','v','e','r','y','/',
-    'B','y','e', 0 };
-
-static const WCHAR addressingNsUri[] = {
-    'h','t','t','p',':','/','/',
-    's','c','h','e','m','a','s','.','x','m','l','s','o','a','p','.','o','r','g','/',
-    'w','s','/','2','0','0','4','/','0','8','/','a','d','d','r','e','s','s','i','n','g', 0 };
-
-static const WCHAR discoveryNsUri[] = {
-    'h','t','t','p',':','/','/',
-    's','c','h','e','m','a','s','.','x','m','l','s','o','a','p','.','o','r','g','/',
-    'w','s','/','2','0','0','5','/','0','4','/','d','i','s','c','o','v','e','r','y', 0 };
-
-static const WCHAR envelopeNsUri[] = {
-    'h','t','t','p',':','/','/',
-    'w','w','w','.','w','3','.','o','r','g','/',
-    '2','0','0','3','/','0','5','/','s','o','a','p','-','e','n','v','e','l','o','p','e', 0 };
-
-static const WCHAR addressingPrefix[] = { 'w','s','a', 0 };
-static const WCHAR discoveryPrefix[] = { 'w','s','d', 0 };
-static const WCHAR envelopePrefix[] = { 's','o','a','p', 0 };
-static const WCHAR headerString[] = { 'H','e','a','d','e','r', 0 };
-static const WCHAR actionString[] = { 'A','c','t','i','o','n', 0 };
-static const WCHAR messageIdString[] = { 'M','e','s','s','a','g','e','I','D', 0 };
-static const WCHAR toString[] = { 'T','o', 0 };
-static const WCHAR relatesToString[] = { 'R','e','l','a','t','e','s','T','o', 0 };
-static const WCHAR appSequenceString[] = { 'A','p','p','S','e','q','u','e','n','c','e', 0 };
-static const WCHAR instanceIdString[] = { 'I','n','s','t','a','n','c','e','I','d', 0 };
-static const WCHAR messageNumberString[] = { 'M','e','s','s','a','g','e','N','u','m','b','e','r', 0 };
-static const WCHAR sequenceIdString[] = { 'S','e','q','u','e','n','c','e','I','d', 0 };
-static const WCHAR emptyString[] = { 0 };
-static const WCHAR bodyString[] = { 'B','o','d','y', 0 };
-static const WCHAR helloString[] = { 'H','e','l','l','o', 0 };
-static const WCHAR probeString[] = { 'P','r','o','b','e', 0 };
-static const WCHAR probeMatchString[] = { 'P','r','o','b','e','M','a','t','c','h', 0 };
-static const WCHAR probeMatchesString[] = { 'P','r','o','b','e','M','a','t','c','h','e','s', 0 };
-static const WCHAR byeString[] = { 'B','y','e', 0 };
-static const WCHAR endpointReferenceString[] = { 'E','n','d','p','o','i','n','t','R','e','f','e','r','e','n','c','e', 0 };
-static const WCHAR addressString[] = { 'A','d','d','r','e','s','s', 0 };
-static const WCHAR referenceParametersString[] = { 'R','e','f','e','r','e','n','c','e','P','a','r','a','m','e','t','e','r','s', 0 };
-static const WCHAR typesString[] = { 'T','y','p','e','s', 0 };
-static const WCHAR scopesString[] = { 'S','c','o','p','e','s', 0 };
-static const WCHAR xAddrsString[] = { 'X','A','d','d','r','s', 0 };
-static const WCHAR metadataVersionString[] = { 'M','e','t','a','d','a','t','a','V','e','r','s','i','o','n', 0 };
+static const WCHAR *addressingPrefix = L"wsa";
+static const WCHAR *discoveryPrefix = L"wsd";
+static const WCHAR *envelopePrefix = L"soap";
+static const WCHAR *headerString = L"Header";
+static const WCHAR *actionString = L"Action";
+static const WCHAR *messageIdString = L"MessageID";
+static const WCHAR *toString = L"To";
+static const WCHAR *relatesToString = L"RelatesTo";
+static const WCHAR *appSequenceString = L"AppSequence";
+static const WCHAR *instanceIdString = L"InstanceId";
+static const WCHAR *messageNumberString = L"MessageNumber";
+static const WCHAR *sequenceIdString = L"SequenceId";
+static const WCHAR *bodyString = L"Body";
+static const WCHAR *helloString = L"Hello";
+static const WCHAR *probeString = L"Probe";
+static const WCHAR *probeMatchString = L"ProbeMatch";
+static const WCHAR *probeMatchesString = L"ProbeMatches";
+static const WCHAR *byeString = L"Bye";
+static const WCHAR *endpointReferenceString = L"EndpointReference";
+static const WCHAR *addressString = L"Address";
+static const WCHAR *referenceParametersString = L"ReferenceParameters";
+static const WCHAR *typesString = L"Types";
+static const WCHAR *scopesString = L"Scopes";
+static const WCHAR *xAddrsString = L"XAddrs";
+static const WCHAR *metadataVersionString = L"MetadataVersion";
 
 struct discovered_namespace
 {
@@ -211,7 +161,7 @@ static HRESULT write_xml_attribute(WSDXML_ATTRIBUTE *attribute, WS_XML_WRITER *w
 
     if (attribute->Name->Space == NULL)
     {
-        element_ns = populate_xml_string(emptyString);
+        element_ns = populate_xml_string(L"");
         if (element_ns == NULL) goto cleanup;
 
         ns_prefix = NULL;
@@ -364,8 +314,6 @@ HRESULT register_namespaces(IWSDXMLContext *xml_context)
 
 static BOOL create_guid(LPWSTR buffer)
 {
-    static const WCHAR formatString[] = { 'u','r','n',':','u','u','i','d',':','%','s', 0 };
-
     WCHAR* uuidString = NULL;
     UUID uuid;
 
@@ -377,7 +325,7 @@ static BOOL create_guid(LPWSTR buffer)
     if (uuidString == NULL)
         return FALSE;
 
-    wsprintfW(buffer, formatString, uuidString);
+    wsprintfW(buffer, L"urn:uuid:%s", uuidString);
     RpcStringFreeW((RPC_WSTR*)&uuidString);
 
     return TRUE;
@@ -401,7 +349,6 @@ static void populate_soap_header(WSD_SOAP_HEADER *header, LPCWSTR to, LPCWSTR ac
 
 static LPWSTR ulonglong_to_string(void *parent, ULONGLONG value)
 {
-    static const WCHAR formatString[] = { '%','I','6','4','u', 0 };
     LPWSTR ret;
 
     ret = WSDAllocateLinkedMemory(parent, MAX_ULONGLONG_STRING_SIZE * sizeof(WCHAR));
@@ -409,7 +356,7 @@ static LPWSTR ulonglong_to_string(void *parent, ULONGLONG value)
     if (ret == NULL)
         return NULL;
 
-    wsprintfW(ret, formatString, value);
+    wsprintfW(ret, L"%I64u", value);
     return ret;
 }
 
@@ -560,7 +507,6 @@ static BOOL add_discovered_namespace(struct list *namespaces, WSDXML_NAMESPACE *
 
 static HRESULT build_types_list(LPWSTR buffer, size_t buffer_size, const WSD_NAME_LIST *list, struct list *namespaces)
 {
-    static const WCHAR format_string[] = { '%', 's', ':', '%', 's', 0 };
     LPWSTR current_buf_pos = buffer;
     size_t memory_needed = 0;
     const WSD_NAME_LIST *cur = list;
@@ -577,7 +523,7 @@ static HRESULT build_types_list(LPWSTR buffer, size_t buffer_size, const WSD_NAM
         if (cur != list)
             *current_buf_pos++ = ' ';
 
-        current_buf_pos += wsprintfW(current_buf_pos, format_string, cur->Element->Space->PreferredPrefix,
+        current_buf_pos += wsprintfW(current_buf_pos, L"%s:%s", cur->Element->Space->PreferredPrefix,
             cur->Element->LocalName);
 
         /* Record the namespace in the discovered namespaces list */
@@ -738,7 +684,7 @@ static HRESULT create_soap_header_xml_elements(IWSDXMLContext *xml_context, WSD_
     }
 
     /* <d:AppSequence> */
-    ret = add_child_element(xml_context, header_element, discoveryNsUri, appSequenceString, emptyString, &app_sequence_element);
+    ret = add_child_element(xml_context, header_element, discoveryNsUri, appSequenceString, L"", &app_sequence_element);
     if (FAILED(ret)) goto cleanup;
 
     /* InstanceId attribute */
@@ -958,7 +904,7 @@ HRESULT send_hello_message(IWSDiscoveryPublisherImpl *impl, LPCWSTR id, ULONGLON
 
     list_init(discoveredNamespaces);
 
-    populate_soap_header(&soapHeader, discoveryTo, actionHello, message_id, &sequence, hdr_any);
+    populate_soap_header(&soapHeader, discoveryTo, L"http://schemas.xmlsoap.org/ws/2005/04/discovery/Hello", message_id, &sequence, hdr_any);
 
     ret = IWSDXMLContext_AddNameToNamespace(impl->xmlContext, envelopeNsUri, bodyString, &body_name);
     if (FAILED(ret)) goto cleanup;
@@ -1085,7 +1031,7 @@ HRESULT send_bye_message(IWSDiscoveryPublisherImpl *impl, LPCWSTR id, ULONGLONG 
 
     list_init(discovered_namespaces);
 
-    populate_soap_header(&soap_header, discoveryTo, actionBye, message_id, &sequence, NULL);
+    populate_soap_header(&soap_header, discoveryTo, L"http://schemas.xmlsoap.org/ws/2005/04/discovery/Bye", message_id, &sequence, NULL);
 
     ret = IWSDXMLContext_AddNameToNamespace(impl->xmlContext, envelopeNsUri, bodyString, &body_name);
     if (FAILED(ret)) goto cleanup;
@@ -1172,7 +1118,8 @@ HRESULT send_probe_matches_message(IWSDiscoveryPublisherImpl *impl, const WSD_SO
 
     list_init(discovered_namespaces);
 
-    populate_soap_header(&soap_header, anonymousTo, actionProbeMatches, msg_id, &sequence, header_any);
+    populate_soap_header(&soap_header, L"http://schemas.xmlsoap.org/ws/2004/08/addressing/role/anonymous",
+        L"http://schemas.xmlsoap.org/ws/2005/04/discovery/ProbeMatches", msg_id, &sequence, header_any);
     soap_header.RelatesTo.MessageID = probe_msg->Header.MessageID;
 
     ret = IWSDXMLContext_AddNameToNamespace(impl->xmlContext, envelopeNsUri, bodyString, &body_name);
