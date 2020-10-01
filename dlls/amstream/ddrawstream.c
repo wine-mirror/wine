@@ -70,6 +70,8 @@ struct ddraw_sample
     struct ddraw_stream *parent;
     IDirectDrawSurface *surface;
     RECT rect;
+    STREAM_TIME start_time;
+    STREAM_TIME end_time;
     CONDITION_VARIABLE update_cv;
 
     struct list entry;
@@ -96,7 +98,8 @@ static void flush_update_queue(struct ddraw_stream *stream, HRESULT update_hr)
     }
 }
 
-static HRESULT process_update(struct ddraw_sample *sample, int stride, BYTE *pointer)
+static HRESULT process_update(struct ddraw_sample *sample, int stride, BYTE *pointer,
+        STREAM_TIME start_time, STREAM_TIME end_time)
 {
     DDSURFACEDESC desc;
     DWORD row_size;
@@ -123,6 +126,9 @@ static HRESULT process_update(struct ddraw_sample *sample, int stride, BYTE *poi
     hr = IDirectDrawSurface_Unlock(sample->surface, desc.lpSurface);
     if (FAILED(hr))
         return hr;
+
+    sample->start_time = start_time;
+    sample->end_time = end_time;
 
     return S_OK;
 }
@@ -1259,6 +1265,8 @@ static HRESULT WINAPI ddraw_meminput_Receive(IMemInputPin *iface, IMediaSample *
 {
     struct ddraw_stream *stream = impl_from_IMemInputPin(iface);
     BITMAPINFOHEADER *bitmap_info;
+    REFERENCE_TIME start_time = 0;
+    REFERENCE_TIME end_time = 0;
     BYTE *top_down_pointer;
     int top_down_stride;
     BYTE *pointer;
@@ -1271,6 +1279,8 @@ static HRESULT WINAPI ddraw_meminput_Receive(IMemInputPin *iface, IMediaSample *
     hr = IMediaSample_GetPointer(sample, &pointer);
     if (FAILED(hr))
         return hr;
+
+    IMediaSample_GetTime(sample, &start_time, &end_time);
 
     EnterCriticalSection(&stream->cs);
 
@@ -1293,7 +1303,7 @@ static HRESULT WINAPI ddraw_meminput_Receive(IMemInputPin *iface, IMediaSample *
         {
             struct ddraw_sample *sample = LIST_ENTRY(list_head(&stream->update_queue), struct ddraw_sample, entry);
 
-            sample->update_hr = process_update(sample, top_down_stride, top_down_pointer);
+            sample->update_hr = process_update(sample, top_down_stride, top_down_pointer, start_time, end_time);
 
             remove_queued_update(sample);
             LeaveCriticalSection(&stream->cs);
@@ -1439,9 +1449,19 @@ static HRESULT WINAPI ddraw_sample_GetMediaStream(IDirectDrawStreamSample *iface
 static HRESULT WINAPI ddraw_sample_GetSampleTimes(IDirectDrawStreamSample *iface, STREAM_TIME *start_time,
                                                                  STREAM_TIME *end_time, STREAM_TIME *current_time)
 {
-    FIXME("(%p)->(%p,%p,%p): stub\n", iface, start_time, end_time, current_time);
+    struct ddraw_sample *sample = impl_from_IDirectDrawStreamSample(iface);
 
-    return E_NOTIMPL;
+    TRACE("sample %p, start_time %p, end_time %p, current_time %p.\n", sample, start_time, end_time, current_time);
+
+    if (current_time)
+        IMediaStreamFilter_GetCurrentStreamTime(sample->parent->filter, current_time);
+
+    if (start_time)
+        *start_time = sample->start_time;
+    if (end_time)
+        *end_time = sample->end_time;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ddraw_sample_SetSampleTimes(IDirectDrawStreamSample *iface, const STREAM_TIME *start_time,
