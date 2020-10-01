@@ -46,6 +46,7 @@ struct video_presenter
     IMFTopologyServiceLookupClient IMFTopologyServiceLookupClient_iface;
     IMFVideoDisplayControl IMFVideoDisplayControl_iface;
     IMFRateSupport IMFRateSupport_iface;
+    IMFGetService IMFGetService_iface;
     IUnknown IUnknown_inner;
     IUnknown *outer_unk;
     LONG refcount;
@@ -88,6 +89,11 @@ static struct video_presenter *impl_from_IMFRateSupport(IMFRateSupport *iface)
     return CONTAINING_RECORD(iface, struct video_presenter, IMFRateSupport_iface);
 }
 
+static struct video_presenter *impl_from_IMFGetService(IMFGetService *iface)
+{
+    return CONTAINING_RECORD(iface, struct video_presenter, IMFGetService_iface);
+}
+
 static HRESULT WINAPI video_presenter_inner_QueryInterface(IUnknown *iface, REFIID riid, void **obj)
 {
     struct video_presenter *presenter = impl_from_IUnknown(iface);
@@ -118,6 +124,10 @@ static HRESULT WINAPI video_presenter_inner_QueryInterface(IUnknown *iface, REFI
     else if (IsEqualIID(riid, &IID_IMFRateSupport))
     {
         *obj = &presenter->IMFRateSupport_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IMFGetService))
+    {
+        *obj = &presenter->IMFGetService_iface;
     }
     else
     {
@@ -576,6 +586,39 @@ static const IMFRateSupportVtbl video_presenter_rate_support_vtbl =
     video_presenter_rate_support_IsRateSupported,
 };
 
+static HRESULT WINAPI video_presenter_getservice_QueryInterface(IMFGetService *iface, REFIID riid, void **obj)
+{
+    struct video_presenter *presenter = impl_from_IMFGetService(iface);
+    return IMFVideoPresenter_QueryInterface(&presenter->IMFVideoPresenter_iface, riid, obj);
+}
+
+static ULONG WINAPI video_presenter_getservice_AddRef(IMFGetService *iface)
+{
+    struct video_presenter *presenter = impl_from_IMFGetService(iface);
+    return IMFVideoPresenter_AddRef(&presenter->IMFVideoPresenter_iface);
+}
+
+static ULONG WINAPI video_presenter_getservice_Release(IMFGetService *iface)
+{
+    struct video_presenter *presenter = impl_from_IMFGetService(iface);
+    return IMFVideoPresenter_Release(&presenter->IMFVideoPresenter_iface);
+}
+
+static HRESULT WINAPI video_presenter_getservice_GetService(IMFGetService *iface, REFGUID service, REFIID riid, void **obj)
+{
+    FIXME("%p, %s, %s, %p.\n", iface, debugstr_guid(service), debugstr_guid(riid), obj);
+
+    return E_NOTIMPL;
+}
+
+static const IMFGetServiceVtbl video_presenter_getservice_vtbl =
+{
+    video_presenter_getservice_QueryInterface,
+    video_presenter_getservice_AddRef,
+    video_presenter_getservice_Release,
+    video_presenter_getservice_GetService,
+};
+
 HRESULT WINAPI MFCreateVideoPresenter(IUnknown *owner, REFIID riid_device, REFIID riid, void **obj)
 {
     TRACE("%p, %s, %s, %p.\n", owner, debugstr_guid(riid_device), debugstr_guid(riid), obj);
@@ -600,6 +643,7 @@ HRESULT evr_presenter_create(IUnknown *outer, void **out)
     object->IMFTopologyServiceLookupClient_iface.lpVtbl = &video_presenter_service_client_vtbl;
     object->IMFVideoDisplayControl_iface.lpVtbl = &video_presenter_control_vtbl;
     object->IMFRateSupport_iface.lpVtbl = &video_presenter_rate_support_vtbl;
+    object->IMFGetService_iface.lpVtbl = &video_presenter_getservice_vtbl;
     object->IUnknown_inner.lpVtbl = &video_presenter_inner_vtbl;
     object->outer_unk = outer ? outer : &object->IUnknown_inner;
     object->refcount = 1;

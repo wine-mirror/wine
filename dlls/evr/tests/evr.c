@@ -1002,6 +1002,10 @@ static void test_default_presenter(void)
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     IUnknown_Release(unk);
 
+    hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFGetService, (void **)&unk);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IUnknown_Release(unk);
+
     /* Rate support. */
     hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFRateSupport, (void **)&rate_support);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
