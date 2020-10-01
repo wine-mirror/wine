@@ -25,9 +25,6 @@
  *
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -39,7 +36,6 @@
 #include "winternl.h"
 #include "winreg.h"
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 #include "sql.h"
 #include "sqltypes.h"
