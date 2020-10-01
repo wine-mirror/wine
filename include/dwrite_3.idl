@@ -80,6 +80,12 @@ typedef struct DWRITE_FONT_PROPERTY
     WCHAR const *localeName;
 } DWRITE_FONT_PROPERTY;
 
+cpp_quote("#ifdef __cplusplus")
+cpp_quote("#define DWRITE_MAKE_FONT_AXIS_TAG(a,b,c,d) (static_cast<DWRITE_FONT_AXIS_TAG>(DWRITE_MAKE_OPENTYPE_TAG(a,b,c,d)))")
+cpp_quote("#else")
+cpp_quote("#define DWRITE_MAKE_FONT_AXIS_TAG(a,b,c,d) (DWRITE_MAKE_OPENTYPE_TAG(a,b,c,d))")
+cpp_quote("#endif")
+
 typedef enum DWRITE_FONT_AXIS_TAG
 {
     DWRITE_FONT_AXIS_TAG_WEIGHT       = 0x74686777, /* 'wght' */
