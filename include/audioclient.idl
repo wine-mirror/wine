@@ -154,6 +154,35 @@ interface IAudioClient2 : IAudioClient
 [
     local,
     pointer_default(unique),
+    uuid(7ed4ee07-8e67-4cd4-8c1a-2b7a5987ad42),
+    object,
+]
+interface IAudioClient3 : IAudioClient2
+{
+    HRESULT GetSharedModeEnginePeriod(
+        [in] const WAVEFORMATEX *format,
+        [out] UINT32 *default_period_frames,
+        [out] UINT32 *unit_period_frames,
+        [out] UINT32 *min_period_frames,
+        [out] UINT32 *max_period_frames
+    );
+
+    HRESULT GetCurrentSharedModeEnginePeriod(
+        [out] WAVEFORMATEX **cur_format,
+        [out] UINT32 *cur_period_frames
+    );
+
+    HRESULT InitializeSharedAudioStream(
+        [in] DWORD flags,
+        [in] UINT32 period_frames,
+        [in] const WAVEFORMATEX *format,
+        [in] const GUID *session_guid
+    );
+}
+
+[
+    local,
+    pointer_default(unique),
     uuid(f294acfc-3146-4483-a7bf-addca7c260e2),
     object,
 ]
