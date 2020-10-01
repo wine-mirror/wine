@@ -896,17 +896,15 @@ static void test_default_mixer_type_negotiation(void)
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMFTransform_GetInputCurrentType(transform, 0, &media_type);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-if (hr == S_OK)
-{
     ok(media_type != (IMFMediaType *)video_type, "Unexpected media type instance.\n");
+
     hr = IMFTransform_GetInputCurrentType(transform, 0, &media_type2);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(media_type == media_type2, "Unexpected media type instance.\n");
     IMFMediaType_Release(media_type);
     IMFMediaType_Release(media_type2);
-}
+
     hr = IMFTransform_QueryInterface(transform, &IID_IMFVideoProcessor, (void **)&processor);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
@@ -919,31 +917,24 @@ todo_wine
     ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#x.\n", hr);
 
     hr = IMFTransform_GetInputCurrentType(transform, 0, &media_type);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    if (SUCCEEDED(hr))
-    {
-        ok(media_type != (IMFMediaType *)video_type, "Unexpected pointer.\n");
-        hr = IMFMediaType_QueryInterface(media_type, &IID_IMFVideoMediaType, (void **)&unk);
-        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-        IUnknown_Release(unk);
-        IMFMediaType_Release(media_type);
-    }
+    ok(media_type != (IMFMediaType *)video_type, "Unexpected pointer.\n");
+    hr = IMFMediaType_QueryInterface(media_type, &IID_IMFVideoMediaType, (void **)&unk);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IUnknown_Release(unk);
+    IMFMediaType_Release(media_type);
 
     hr = IMFVideoProcessor_GetAvailableVideoProcessorModes(processor, &count, &guids);
 todo_wine
     ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#x.\n", hr);
 
     hr = IMFTransform_GetOutputAvailableType(transform, 0, 0, &media_type);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
-    if (SUCCEEDED(hr))
-    {
-        hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
-        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-        IMFMediaType_Release(media_type);
-    }
+    hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IMFMediaType_Release(media_type);
 
     hr = IMFVideoProcessor_GetVideoProcessorMode(processor, &guid);
 todo_wine

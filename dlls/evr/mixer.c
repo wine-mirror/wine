@@ -686,7 +686,16 @@ static HRESULT WINAPI video_mixer_transform_SetInputType(IMFTransform *iface, DW
                                 &count, &guids)))
                         {
                             if (SUCCEEDED(hr = video_mixer_collect_output_types(mixer, &video_desc, service, count, guids)))
-                                FIXME("Set input type.\n");
+                            {
+                                GUID subtype = { 0 };
+
+                                if (FAILED(hr = IMFMediaType_GetGUID(media_type, &MF_MT_SUBTYPE, &subtype)))
+                                    WARN("Failed to get subtype %#x.\n", hr);
+
+                                if (SUCCEEDED(hr = MFCreateVideoMediaTypeFromSubtype(&subtype, &mixer->inputs[0].media_type)))
+                                    hr = IMFMediaType_CopyAllItems(media_type, (IMFAttributes *)mixer->inputs[0].media_type);
+
+                            }
                             CoTaskMemFree(guids);
                         }
                     }
