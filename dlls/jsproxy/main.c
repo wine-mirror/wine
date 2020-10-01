@@ -46,9 +46,6 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static CRITICAL_SECTION cs_jsproxy = { &critsect_debug, -1, 0, 0, 0, 0 };
 
-static const WCHAR global_funcsW[] = {'g','l','o','b','a','l','_','f','u','n','c','s',0};
-static const WCHAR dns_resolveW[] = {'d','n','s','_','r','e','s','o','l','v','e',0};
-
 /******************************************************************
  *      DllMain (jsproxy.@)
  */
@@ -271,7 +268,7 @@ static HRESULT WINAPI dispex_GetNameSpaceParent(
 static HRESULT WINAPI dispex_GetDispID(
     IDispatchEx *iface, BSTR name, DWORD flags, DISPID *id )
 {
-    if (!lstrcmpW( name, dns_resolveW ))
+    if (!lstrcmpW( name, L"dns_resolve" ))
     {
         *id = DISPID_GLOBAL_DNSRESOLVE;
         return S_OK;
@@ -306,7 +303,6 @@ static void printf_addr( const WCHAR *fmt, WCHAR *buf, SIZE_T size, struct socka
 
 static HRESULT dns_resolve( const WCHAR *hostname, VARIANT *result )
 {
-        static const WCHAR fmtW[] = {'%','u','.','%','u','.','%','u','.','%','u',0};
         WCHAR addr[16];
         struct addrinfo *ai, *elem;
         char *hostnameA;
@@ -329,7 +325,7 @@ static HRESULT dns_resolve( const WCHAR *hostname, VARIANT *result )
             freeaddrinfo( ai );
             return S_FALSE;
         }
-        printf_addr( fmtW, addr, ARRAY_SIZE(addr), (struct sockaddr_in *)elem->ai_addr );
+        printf_addr( L"%u.%u.%u.%u", addr, ARRAY_SIZE(addr), (struct sockaddr_in *)elem->ai_addr );
         freeaddrinfo( ai );
         V_VT( result ) = VT_BSTR;
         V_BSTR( result ) = SysAllocString( addr );
@@ -408,7 +404,7 @@ static HRESULT WINAPI site_GetItemInfo(
     IActiveScriptSite *iface, LPCOLESTR name, DWORD mask,
     IUnknown **item, ITypeInfo **type_info )
 {
-    if (!lstrcmpW( name, global_funcsW ) && mask == SCRIPTINFO_IUNKNOWN)
+    if (!lstrcmpW( name, L"global_funcs" ) && mask == SCRIPTINFO_IUNKNOWN)
     {
         *item = (IUnknown *)&global_dispex;
         return S_OK;
@@ -471,7 +467,6 @@ static IActiveScriptSite script_site = { &site_vtbl };
 
 static BSTR include_pac_utils( const WCHAR *script )
 {
-    static const WCHAR pacjsW[] = {'p','a','c','.','j','s',0};
     HMODULE hmod = GetModuleHandleA( "jsproxy.dll" );
     HRSRC rsrc;
     DWORD size;
@@ -479,7 +474,7 @@ static BSTR include_pac_utils( const WCHAR *script )
     BSTR ret;
     int len;
 
-    if (!(rsrc = FindResourceW( hmod, pacjsW, (LPCWSTR)40 ))) return NULL;
+    if (!(rsrc = FindResourceW( hmod, L"pac.js", (LPCWSTR)40 ))) return NULL;
     size = SizeofResource( hmod, rsrc );
     data = LoadResource( hmod, rsrc );
 
@@ -502,8 +497,6 @@ static BSTR include_pac_utils( const WCHAR *script )
 
 static BOOL run_script( const WCHAR *script, const WCHAR *url, const WCHAR *hostname, char **result_str, DWORD *result_len )
 {
-    static const WCHAR jscriptW[] = {'J','S','c','r','i','p','t',0};
-    static const WCHAR findproxyW[] = {'F','i','n','d','P','r','o','x','y','F','o','r','U','R','L',0};
     IActiveScriptParse *parser = NULL;
     IActiveScript *engine = NULL;
     IDispatch *dispatch = NULL;
@@ -516,7 +509,7 @@ static BOOL run_script( const WCHAR *script, const WCHAR *url, const WCHAR *host
     HRESULT hr, init;
 
     init = CoInitialize( NULL );
-    hr = CLSIDFromProgID( jscriptW, &clsid );
+    hr = CLSIDFromProgID( L"JScript", &clsid );
     if (hr != S_OK) goto done;
 
     hr = CoCreateInstance( &clsid, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
@@ -532,7 +525,7 @@ static BOOL run_script( const WCHAR *script, const WCHAR *url, const WCHAR *host
     hr = IActiveScript_SetScriptSite( engine, &script_site );
     if (hr != S_OK) goto done;
 
-    hr = IActiveScript_AddNamedItem( engine, global_funcsW, SCRIPTITEM_GLOBALMEMBERS );
+    hr = IActiveScript_AddNamedItem( engine, L"global_funcs", SCRIPTITEM_GLOBALMEMBERS );
     if (hr != S_OK) goto done;
 
     if (!(full_script = include_pac_utils( script ))) goto done;
@@ -546,7 +539,7 @@ static BOOL run_script( const WCHAR *script, const WCHAR *url, const WCHAR *host
     hr = IActiveScript_GetScriptDispatch( engine, NULL, &dispatch );
     if (hr != S_OK) goto done;
 
-    if (!(func = SysAllocString( findproxyW ))) goto done;
+    if (!(func = SysAllocString( L"FindProxyForURL" ))) goto done;
     hr = IDispatch_GetIDsOfNames( dispatch, &IID_NULL, &func, 1, LOCALE_SYSTEM_DEFAULT, &dispid );
     if (hr != S_OK) goto done;
 
