@@ -83,14 +83,13 @@ static DWORD WINAPI service_handler( DWORD ctrl, DWORD event_type, void *event_d
  */
 VOID WINAPI ServiceMain(DWORD argc, LPWSTR *argv)
 {
-    static const WCHAR fontcacheW[] = {'F','o','n','t','C','a','c','h','e',0};
     SERVICE_STATUS status;
 
     TRACE( "starting service\n" );
 
     stop_event = CreateEventW( NULL, TRUE, FALSE, NULL );
 
-    service_handle = RegisterServiceCtrlHandlerExW( fontcacheW, service_handler, NULL );
+    service_handle = RegisterServiceCtrlHandlerExW( L"FontCache", service_handler, NULL );
     if (!service_handle)
         return;
 
