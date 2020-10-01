@@ -2661,9 +2661,14 @@ static HRESULT WINAPI AudioClient_IsOffloadCapable(IAudioClient2 *iface,
 {
     ACImpl *This = impl_from_IAudioClient2(iface);
 
-    FIXME("(%p)->(0x%x, %p)\n", This, category, offload_capable);
+    TRACE("(%p)->(0x%x, %p)\n", This, category, offload_capable);
 
-    return E_NOTIMPL;
+    if(!offload_capable)
+        return E_INVALIDARG;
+
+    *offload_capable = FALSE;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI AudioClient_SetClientProperties(IAudioClient2 *iface,

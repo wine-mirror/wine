@@ -140,6 +140,7 @@ static void test_audioclient(void)
     WAVEFORMATEX *pwfx, *pwfx2;
     REFERENCE_TIME t1, t2;
     HANDLE handle;
+    BOOL offload_capable;
 
     hr = IMMDevice_Activate(dev, &IID_IAudioClient2, CLSCTX_INPROC_SERVER,
             NULL, (void**)&ac2);
@@ -252,6 +253,12 @@ static void test_audioclient(void)
 
     hr = IAudioClient_QueryInterface(ac, &IID_IAudioClient2, (void**)&ac2);
     ok(hr == S_OK, "Failed to query IAudioClient2 interface: %08x\n", hr);
+
+    hr = IAudioClient2_IsOffloadCapable(ac2, AudioCategory_BackgroundCapableMedia, NULL);
+    ok(hr == E_INVALIDARG, "IsOffloadCapable gave wrong error: %08x\n", hr);
+
+    hr = IAudioClient2_IsOffloadCapable(ac2, AudioCategory_BackgroundCapableMedia, &offload_capable);
+    ok(hr == S_OK, "IsOffloadCapable failed: %08x\n", hr);
 
     IAudioClient2_Release(ac2);
 
