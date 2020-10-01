@@ -32,12 +32,7 @@
 DEFINE_GUID(CLSID_wb_neutral,  0x369647e0,0x17b0,0x11ce,0x99,0x50,0x00,0xaa,0x00,0x4b,0xbb,0x1f);
 DEFINE_GUID(_IID_IWordBreaker, 0xD53552C8,0x77E3,0x101A,0xB5,0x52,0x08,0x00,0x2B,0x33,0xB0,0xE6);
 
-static const WCHAR teststring[] = {
-    's','q','u','a','r','e',' ',
-    'c','i','r','c','l','e',' ',
-    't','r','i','a','n','g','l','e',' ',
-    'b','o','x',0
-};
+static const WCHAR teststring[] = L"square circle triangle box";
 
 struct expected {
     UINT ofs;
@@ -48,10 +43,10 @@ struct expected {
 static int wordnum;
 
 static struct expected testres[] = {
-    { 0, 6, {'s','q','u','a','r','e',0 }},
-    { 7, 6, {'c','i','r','c','l','e',0 }},
-    { 14, 8, {'t','r','i','a','n','g','l','e',0 }},
-    { 23, 3, {'b','o','x',0}},
+    { 0, 6, L"square" },
+    { 7, 6, L"circle" },
+    { 14, 8, L"triangle" },
+    { 23, 3, L"box" },
 };
 
 static HRESULT WINAPI ws_QueryInterface(IWordSink *iface, REFIID riid, void **ppvObject)
