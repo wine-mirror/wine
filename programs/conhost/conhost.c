@@ -2425,6 +2425,8 @@ static NTSTATUS screen_buffer_ioctl( struct screen_buffer *screen_buffer, unsign
 static NTSTATUS console_input_ioctl( struct console *console, unsigned int code, const void *in_data,
                                      size_t in_size, size_t *out_size )
 {
+    NTSTATUS status;
+
     switch (code)
     {
     case IOCTL_CONDRV_GET_MODE:
@@ -2446,12 +2448,13 @@ static NTSTATUS console_input_ioctl( struct console *console, unsigned int code,
     case IOCTL_CONDRV_READ_CONSOLE:
         if (in_size || *out_size % sizeof(WCHAR)) return STATUS_INVALID_PARAMETER;
         ensure_tty_input_thread( console );
-        return read_console( console, *out_size );
+        status = read_console( console, *out_size );
+        *out_size = 0;
+        return status;
 
     case IOCTL_CONDRV_READ_INPUT:
         {
             unsigned int blocking;
-            NTSTATUS status;
             if (in_size && in_size != sizeof(blocking)) return STATUS_INVALID_PARAMETER;
             ensure_tty_input_thread( console );
             blocking = in_size && *(unsigned int *)in_data;
