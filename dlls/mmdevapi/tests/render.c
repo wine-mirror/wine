@@ -133,12 +133,18 @@ static void test_uninitialized(IAudioClient *ac)
 static void test_audioclient(void)
 {
     IAudioClient *ac;
+    IAudioClient2 *ac2;
     IUnknown *unk;
     HRESULT hr;
     ULONG ref;
     WAVEFORMATEX *pwfx, *pwfx2;
     REFERENCE_TIME t1, t2;
     HANDLE handle;
+
+    hr = IMMDevice_Activate(dev, &IID_IAudioClient2, CLSCTX_INPROC_SERVER,
+            NULL, (void**)&ac2);
+    ok(hr == S_OK, "IAudioClient2 Activation failed with %08x\n", hr);
+    IAudioClient2_Release(ac2);
 
     hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
             NULL, (void**)&ac);
@@ -243,6 +249,11 @@ static void test_audioclient(void)
            broken(hr == AUDCLNT_E_UNSUPPORTED_FORMAT/*w64 response from exclusive mode driver */),
            "IsFormatSupported(0xffffffff) call returns %08x\n", hr);
     }
+
+    hr = IAudioClient_QueryInterface(ac, &IID_IAudioClient2, (void**)&ac2);
+    ok(hr == S_OK, "Failed to query IAudioClient2 interface: %08x\n", hr);
+
+    IAudioClient2_Release(ac2);
 
     test_uninitialized(ac);
 
