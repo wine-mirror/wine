@@ -70,7 +70,7 @@ struct ddraw_sample
     struct ddraw_stream *parent;
     IDirectDrawSurface *surface;
     RECT rect;
-    HANDLE update_event;
+    CONDITION_VARIABLE update_cv;
 
     struct list entry;
     HRESULT update_hr;
@@ -82,7 +82,7 @@ static HRESULT ddrawstreamsample_create(struct ddraw_stream *parent, IDirectDraw
 static void remove_queued_update(struct ddraw_sample *sample)
 {
     list_remove(&sample->entry);
-    SetEvent(sample->update_event);
+    WakeConditionVariable(&sample->update_cv);
 }
 
 static void flush_update_queue(struct ddraw_stream *stream, HRESULT update_hr)
@@ -1414,7 +1414,6 @@ static ULONG WINAPI ddraw_sample_Release(IDirectDrawStreamSample *iface)
 
         if (sample->surface)
             IDirectDrawSurface_Release(sample->surface);
-        CloseHandle(sample->update_event);
         HeapFree(GetProcessHeap(), 0, sample);
     }
 
@@ -1491,6 +1490,7 @@ static HRESULT WINAPI ddraw_sample_Update(IDirectDrawStreamSample *iface,
     }
     if (!sample->parent->peer || sample->parent->eos)
     {
+        sample->update_hr = MS_S_ENDOFSTREAM;
         LeaveCriticalSection(&sample->parent->cs);
         return MS_S_ENDOFSTREAM;
     }
@@ -1501,25 +1501,58 @@ static HRESULT WINAPI ddraw_sample_Update(IDirectDrawStreamSample *iface,
     }
 
     sample->update_hr = MS_S_PENDING;
-    ResetEvent(sample->update_event);
     list_add_tail(&sample->parent->update_queue, &sample->entry);
     WakeConditionVariable(&sample->parent->update_queued_cv);
 
-    LeaveCriticalSection(&sample->parent->cs);
-
     if (flags & SSUPDATE_ASYNC)
+    {
+        LeaveCriticalSection(&sample->parent->cs);
         return MS_S_PENDING;
+    }
 
-    WaitForSingleObject(sample->update_event, INFINITE);
+    while (sample->update_hr == MS_S_PENDING)
+        SleepConditionVariableCS(&sample->update_cv, &sample->parent->cs, INFINITE);
+
+    LeaveCriticalSection(&sample->parent->cs);
 
     return sample->update_hr;
 }
 
 static HRESULT WINAPI ddraw_sample_CompletionStatus(IDirectDrawStreamSample *iface, DWORD flags, DWORD milliseconds)
 {
-    FIXME("(%p)->(%x,%u): stub\n", iface, flags, milliseconds);
+    struct ddraw_sample *sample = impl_from_IDirectDrawStreamSample(iface);
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("sample %p, flags %#x, milliseconds %u.\n", sample, flags, milliseconds);
+
+    EnterCriticalSection(&sample->parent->cs);
+
+    if (sample->update_hr == MS_S_PENDING)
+    {
+        if (flags & (COMPSTAT_NOUPDATEOK | COMPSTAT_ABORT))
+        {
+            sample->update_hr = MS_S_NOUPDATE;
+            remove_queued_update(sample);
+        }
+        else if (flags & COMPSTAT_WAIT)
+        {
+            DWORD start_time = GetTickCount();
+            DWORD elapsed = 0;
+            while (sample->update_hr == MS_S_PENDING && elapsed < milliseconds)
+            {
+                DWORD sleep_time = milliseconds - elapsed;
+                if (!SleepConditionVariableCS(&sample->update_cv, &sample->parent->cs, sleep_time))
+                    break;
+                elapsed = GetTickCount() - start_time;
+            }
+        }
+    }
+
+    hr = sample->update_hr;
+
+    LeaveCriticalSection(&sample->parent->cs);
+
+    return hr;
 }
 
 /*** IDirectDrawStreamSample methods ***/
@@ -1583,7 +1616,7 @@ static HRESULT ddrawstreamsample_create(struct ddraw_stream *parent, IDirectDraw
     object->IDirectDrawStreamSample_iface.lpVtbl = &DirectDrawStreamSample_Vtbl;
     object->ref = 1;
     object->parent = parent;
-    object->update_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    InitializeConditionVariable(&object->update_cv);
     IAMMediaStream_AddRef(&parent->IAMMediaStream_iface);
     ++parent->sample_refs;
 
