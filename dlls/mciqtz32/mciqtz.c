@@ -74,7 +74,6 @@ static WINE_MCIQTZ* MCIQTZ_mciGetOpenDev(UINT wDevID)
 static DWORD MCIQTZ_drvOpen(LPCWSTR str, LPMCI_OPEN_DRIVER_PARMSW modp)
 {
     WINE_MCIQTZ* wma;
-    static const WCHAR mciAviWStr[] = {'M','C','I','A','V','I',0};
 
     TRACE("(%s, %p)\n", debugstr_w(str), modp);
 
@@ -89,7 +88,7 @@ static DWORD MCIQTZ_drvOpen(LPCWSTR str, LPMCI_OPEN_DRIVER_PARMSW modp)
     wma->stop_event = CreateEventW(NULL, FALSE, FALSE, NULL);
     modp->wType = MCI_DEVTYPE_DIGITAL_VIDEO;
     wma->wDevID = modp->wDeviceID;
-    modp->wCustomCommandTable = wma->command_table = mciLoadCommandResource(MCIQTZ_hInstance, mciAviWStr, 0);
+    modp->wCustomCommandTable = wma->command_table = mciLoadCommandResource(MCIQTZ_hInstance, L"MCIAVI", 0);
     mciSetDriverData(wma->wDevID, (DWORD_PTR)wma);
 
     return modp->wDeviceID;
