@@ -966,9 +966,14 @@ done:
 
 static void test_default_presenter(void)
 {
+    D3DDEVICE_CREATION_PARAMETERS device_params = { 0 };
     IMFVideoPresenter *presenter;
     IMFRateSupport *rate_support;
+    IDirect3DDevice9 *d3d_device;
+    IDirect3DDeviceManager9 *dm;
     IMFVideoDeviceID *deviceid;
+    IMFGetService *gs;
+    HANDLE handle;
     IUnknown *unk;
     float rate;
     HRESULT hr;
@@ -1002,9 +1007,37 @@ static void test_default_presenter(void)
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     IUnknown_Release(unk);
 
-    hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFGetService, (void **)&unk);
+    hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFGetService, (void **)&gs);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    IUnknown_Release(unk);
+
+    hr = IMFGetService_GetService(gs, &MR_VIDEO_ACCELERATION_SERVICE, &IID_IDirect3DDeviceManager9, (void **)&dm);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDeviceManager9_OpenDeviceHandle(dm, &handle);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDeviceManager9_LockDevice(dm, handle, &d3d_device, FALSE);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+if (SUCCEEDED(hr))
+{
+    hr = IDirect3DDevice9_GetCreationParameters(d3d_device, &device_params);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(device_params.hFocusWindow == GetDesktopWindow(), "Unexpected window %p.\n", device_params.hFocusWindow);
+
+    IDirect3DDevice9_Release(d3d_device);
+
+    hr = IDirect3DDeviceManager9_UnlockDevice(dm, handle, FALSE);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDeviceManager9_CloseDeviceHandle(dm, handle);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+}
+    IDirect3DDeviceManager9_Release(dm);
+
+    IMFGetService_Release(gs);
 
     /* Rate support. */
     hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFRateSupport, (void **)&rate_support);

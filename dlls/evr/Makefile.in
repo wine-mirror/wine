@@ -1,6 +1,6 @@
 MODULE    = evr.dll
 IMPORTLIB = evr
-IMPORTS   = mfuuid strmiids strmbase uuid dxguid ole32 oleaut32
+IMPORTS   = mfuuid strmiids strmbase uuid dxguid ole32 oleaut32 dxva2
 DELAYIMPORTS = mfplat
 
 EXTRADLLFLAGS = -mno-cygwin

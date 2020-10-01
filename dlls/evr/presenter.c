@@ -22,6 +22,7 @@
 #include "d3d9.h"
 #include "mfapi.h"
 #include "mferror.h"
+#include "dxva2api.h"
 
 #include "evr_classes.h"
 #include "evr_private.h"
@@ -55,6 +56,8 @@ struct video_presenter
     IMFClock *clock;
     IMediaEventSink *event_sink;
 
+    IDirect3DDeviceManager9 *device_manager;
+    UINT reset_token;
     unsigned int state;
     CRITICAL_SECTION cs;
 };
@@ -174,6 +177,8 @@ static ULONG WINAPI video_presenter_inner_Release(IUnknown *iface)
     {
         video_presenter_clear_container(presenter);
         DeleteCriticalSection(&presenter->cs);
+        if (presenter->device_manager)
+            IDirect3DDeviceManager9_Release(presenter->device_manager);
         heap_free(presenter);
     }
 
@@ -606,7 +611,14 @@ static ULONG WINAPI video_presenter_getservice_Release(IMFGetService *iface)
 
 static HRESULT WINAPI video_presenter_getservice_GetService(IMFGetService *iface, REFGUID service, REFIID riid, void **obj)
 {
-    FIXME("%p, %s, %s, %p.\n", iface, debugstr_guid(service), debugstr_guid(riid), obj);
+    struct video_presenter *presenter = impl_from_IMFGetService(iface);
+
+    TRACE("%p, %s, %s, %p.\n", iface, debugstr_guid(service), debugstr_guid(riid), obj);
+
+    if (IsEqualGUID(&MR_VIDEO_ACCELERATION_SERVICE, service))
+        return IDirect3DDeviceManager9_QueryInterface(presenter->device_manager, riid, obj);
+
+    FIXME("Unimplemented service %s.\n", debugstr_guid(service));
 
     return E_NOTIMPL;
 }
@@ -634,6 +646,7 @@ HRESULT WINAPI MFCreateVideoPresenter(IUnknown *owner, REFIID riid_device, REFII
 HRESULT evr_presenter_create(IUnknown *outer, void **out)
 {
     struct video_presenter *object;
+    HRESULT hr;
 
     if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
@@ -648,6 +661,12 @@ HRESULT evr_presenter_create(IUnknown *outer, void **out)
     object->outer_unk = outer ? outer : &object->IUnknown_inner;
     object->refcount = 1;
     InitializeCriticalSection(&object->cs);
+
+    if (FAILED(hr = DXVA2CreateDirect3DDeviceManager9(&object->reset_token, &object->device_manager)))
+    {
+        IUnknown_Release(&object->IUnknown_inner);
+        return hr;
+    }
 
     *out = &object->IUnknown_inner;
 
