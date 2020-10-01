@@ -61,6 +61,7 @@ struct video_mixer
     IMFVideoPositionMapper IMFVideoPositionMapper_iface;
     IMFVideoProcessor IMFVideoProcessor_iface;
     IMFAttributes IMFAttributes_iface;
+    IMFQualityAdvise IMFQualityAdvise_iface;
     IUnknown IUnknown_inner;
     IUnknown *outer_unk;
     LONG refcount;
@@ -127,6 +128,11 @@ static struct video_mixer *impl_from_IMFVideoProcessor(IMFVideoProcessor *iface)
 static struct video_mixer *impl_from_IMFAttributes(IMFAttributes *iface)
 {
     return CONTAINING_RECORD(iface, struct video_mixer, IMFAttributes_iface);
+}
+
+static struct video_mixer *impl_from_IMFQualityAdvise(IMFQualityAdvise *iface)
+{
+    return CONTAINING_RECORD(iface, struct video_mixer, IMFQualityAdvise_iface);
 }
 
 static int video_mixer_compare_input_id(const void *a, const void *b)
@@ -216,6 +222,10 @@ static HRESULT WINAPI video_mixer_inner_QueryInterface(IUnknown *iface, REFIID r
     else if (IsEqualIID(riid, &IID_IMFAttributes))
     {
         *obj = &mixer->IMFAttributes_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IMFQualityAdvise))
+    {
+        *obj = &mixer->IMFQualityAdvise_iface;
     }
     else
     {
@@ -1685,6 +1695,71 @@ static const IMFAttributesVtbl video_mixer_attributes_vtbl =
     video_mixer_attributes_CopyAllItems
 };
 
+static HRESULT WINAPI video_mixer_quality_advise_QueryInterface(IMFQualityAdvise *iface, REFIID riid, void **out)
+{
+    struct video_mixer *mixer = impl_from_IMFQualityAdvise(iface);
+    return IMFTransform_QueryInterface(&mixer->IMFTransform_iface, riid, out);
+}
+
+static ULONG WINAPI video_mixer_quality_advise_AddRef(IMFQualityAdvise *iface)
+{
+    struct video_mixer *mixer = impl_from_IMFQualityAdvise(iface);
+    return IMFTransform_AddRef(&mixer->IMFTransform_iface);
+}
+
+static ULONG WINAPI video_mixer_quality_Release(IMFQualityAdvise *iface)
+{
+    struct video_mixer *mixer = impl_from_IMFQualityAdvise(iface);
+    return IMFTransform_Release(&mixer->IMFTransform_iface);
+}
+
+static HRESULT WINAPI video_mixer_quality_advise_SetDropMode(IMFQualityAdvise *iface, MF_QUALITY_DROP_MODE mode)
+{
+    FIXME("%p, %u.\n", iface, mode);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_mixer_quality_advise_SetQualityLevel(IMFQualityAdvise *iface, MF_QUALITY_LEVEL level)
+{
+    FIXME("%p, %u.\n", iface, level);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_mixer_quality_advise_GetDropMode(IMFQualityAdvise *iface, MF_QUALITY_DROP_MODE *mode)
+{
+    FIXME("%p, %p.\n", iface, mode);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_mixer_quality_advise_GetQualityLevel(IMFQualityAdvise *iface, MF_QUALITY_LEVEL *level)
+{
+    FIXME("%p, %p.\n", iface, level);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_mixer_quality_advise_DropTime(IMFQualityAdvise *iface, LONGLONG interval)
+{
+    FIXME("%p, %s.\n", iface, wine_dbgstr_longlong(interval));
+
+    return E_NOTIMPL;
+}
+
+static const IMFQualityAdviseVtbl video_mixer_quality_advise_vtbl =
+{
+    video_mixer_quality_advise_QueryInterface,
+    video_mixer_quality_advise_AddRef,
+    video_mixer_quality_Release,
+    video_mixer_quality_advise_SetDropMode,
+    video_mixer_quality_advise_SetQualityLevel,
+    video_mixer_quality_advise_GetDropMode,
+    video_mixer_quality_advise_GetQualityLevel,
+    video_mixer_quality_advise_DropTime,
+};
+
 HRESULT WINAPI MFCreateVideoMixer(IUnknown *owner, REFIID riid_device, REFIID riid, void **obj)
 {
     TRACE("%p, %s, %s, %p.\n", owner, debugstr_guid(riid_device), debugstr_guid(riid), obj);
@@ -1715,6 +1790,7 @@ HRESULT evr_mixer_create(IUnknown *outer, void **out)
     object->IMFVideoPositionMapper_iface.lpVtbl = &video_mixer_position_mapper_vtbl;
     object->IMFVideoProcessor_iface.lpVtbl = &video_mixer_processor_vtbl;
     object->IMFAttributes_iface.lpVtbl = &video_mixer_attributes_vtbl;
+    object->IMFQualityAdvise_iface.lpVtbl = &video_mixer_quality_advise_vtbl;
     object->IUnknown_inner.lpVtbl = &video_mixer_inner_vtbl;
     object->outer_unk = outer ? outer : &object->IUnknown_inner;
     object->refcount = 1;
