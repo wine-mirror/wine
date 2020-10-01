@@ -134,6 +134,7 @@ static void test_audioclient(void)
 {
     IAudioClient *ac;
     IAudioClient2 *ac2;
+    IAudioClient3 *ac3;
     IUnknown *unk;
     HRESULT hr;
     ULONG ref;
@@ -142,6 +143,14 @@ static void test_audioclient(void)
     HANDLE handle;
     BOOL offload_capable;
     AudioClientProperties client_props;
+
+    hr = IMMDevice_Activate(dev, &IID_IAudioClient3, CLSCTX_INPROC_SERVER,
+            NULL, (void**)&ac3);
+    ok(hr == S_OK ||
+            broken(hr == E_NOINTERFACE) /* win8 */,
+            "IAudioClient3 Activation failed with %08x\n", hr);
+    if(hr == S_OK)
+        IAudioClient3_Release(ac3);
 
     hr = IMMDevice_Activate(dev, &IID_IAudioClient2, CLSCTX_INPROC_SERVER,
             NULL, (void**)&ac2);
@@ -286,6 +295,14 @@ static void test_audioclient(void)
     ok(hr == S_OK, "SetClientProperties failed: %08x\n", hr);
 
     IAudioClient2_Release(ac2);
+
+    hr = IAudioClient_QueryInterface(ac, &IID_IAudioClient3, (void**)&ac3);
+    ok(hr == S_OK ||
+            broken(hr == E_NOINTERFACE) /* win8 */,
+            "Failed to query IAudioClient3 interface: %08x\n", hr);
+
+    if(hr == S_OK)
+        IAudioClient3_Release(ac3);
 
     test_uninitialized(ac);
 
