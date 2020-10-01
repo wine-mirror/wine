@@ -77,11 +77,9 @@ static void CreateUdpAddress_tests(void)
 static void GetSetTransportAddress_udp_tests(void)
 {
     IWSDUdpAddress *udpAddress = NULL;
-    const WCHAR ipv4Address[] = {'1','0','.','2','0','.','3','0','.','4','0',0};
-    const WCHAR ipv6Address[] = {'a','a','b','b',':','c','d',':',':','a','b','c',0};
-    const WCHAR ipv4AddressWithPort[] = {'1','0','.','2','0','.','3','0','.','4','0',':','1','2','4',0};
-    const WCHAR ipv6AddressWithPort[] = {'[','a','a','b','b',':','c','d',':',':','a','b','c',':','5','6','7',']',':','1','2','4',0};
-    const WCHAR invalidAddress[] = {'n','o','t','/','v','a','l','i','d',0};
+    const WCHAR *ipv4Address = L"10.20.30.40";
+    const WCHAR *ipv6Address = L"aabb:cd::abc";
+    const WCHAR *ipv6AddressWithPort = L"[aabb:cd::abc:567]:124";
     LPCWSTR returnedAddress = NULL;
     WSADATA wsaData;
     HRESULT rc;
@@ -103,7 +101,7 @@ static void GetSetTransportAddress_udp_tests(void)
     ok(rc == E_INVALIDARG, "SetTransportAddress(NULL) returned unexpected result: %08x\n", rc);
 
     /* Try setting an invalid address */
-    rc = IWSDUdpAddress_SetTransportAddress(udpAddress, invalidAddress);
+    rc = IWSDUdpAddress_SetTransportAddress(udpAddress, L"not/valid");
     ok(rc == HRESULT_FROM_WIN32(WSAHOST_NOT_FOUND), "SetTransportAddress(invalidAddress) returned unexpected result: %08x\n", rc);
 
     /* Try setting an IPv4 address */
@@ -119,7 +117,7 @@ static void GetSetTransportAddress_udp_tests(void)
     ok(lstrcmpW(returnedAddress, ipv4Address) == 0, "Returned address != ipv4Address (%s)\n", wine_dbgstr_w(returnedAddress));
 
     /* Try setting an IPv4 address with a port number */
-    rc = IWSDUdpAddress_SetTransportAddress(udpAddress, ipv4AddressWithPort);
+    rc = IWSDUdpAddress_SetTransportAddress(udpAddress, L"10.20.30.40:124");
     ok(rc == HRESULT_FROM_WIN32(WSAHOST_NOT_FOUND), "SetTransportAddress(ipv4Address) failed: %08x\n", rc);
 
     /* Try setting an IPv6 address */
@@ -254,15 +252,10 @@ static void GetSetSockaddr_udp_tests(void)
 
     const char *ipv4Address = "1.2.3.4";
     const short ipv4Port = 1234;
-    const WCHAR expectedIpv4TransportAddr[] = {'1','.','2','.','3','.','4',':','1','2','3','4',0};
-    const WCHAR expectedIpv4TransportAddrNoPort[] = {'1','.','2','.','3','.','4',0};
 
     const char *ipv6Address = "2a00:1234:5678:dead:beef::aaaa";
     const short ipv6Port = 2345;
-    const WCHAR expectedIpv6TransportAddr[] = {'[','2','a','0','0',':','1','2','3','4',':','5','6','7','8',':','d','e','a','d',':',
-        'b','e','e','f',':',':','a','a','a','a',']',':','2','3','4','5',0};
-    const WCHAR expectedIpv6TransportAddrNoPort[] = {'2','a','0','0',':','1','2','3','4',':','5','6','7','8',':','d','e','a','d',':',
-        'b','e','e','f',':',':','a','a','a','a',0};
+    const WCHAR *expectedIpv6TransportAddr = L"[2a00:1234:5678:dead:beef::aaaa]:2345";
 
     ZeroMemory(&storage1, sizeof(SOCKADDR_STORAGE));
     ZeroMemory(&storage2, sizeof(SOCKADDR_STORAGE));
@@ -328,7 +321,7 @@ static void GetSetSockaddr_udp_tests(void)
     rc = IWSDUdpAddress_GetTransportAddress(udpAddress, &returnedAddress);
     ok(rc == S_OK, "GetTransportAddress failed: %08x\n", rc);
     ok(returnedAddress != NULL, "GetTransportAddress returned unexpected address: %p\n", returnedAddress);
-    ok(lstrcmpW(returnedAddress, expectedIpv4TransportAddr) == 0, "GetTransportAddress returned unexpected address: %s\n", wine_dbgstr_w(returnedAddress));
+    ok(lstrcmpW(returnedAddress, L"1.2.3.4:1234") == 0, "GetTransportAddress returned unexpected address: %s\n", wine_dbgstr_w(returnedAddress));
 
     /* Check that GetPort doesn't return the port set via the socket */
     rc = IWSDUdpAddress_GetPort(udpAddress, &port);
@@ -345,7 +338,7 @@ static void GetSetSockaddr_udp_tests(void)
     rc = IWSDUdpAddress_GetTransportAddress(udpAddress, &returnedAddress);
     ok(rc == S_OK, "GetTransportAddress failed: %08x\n", rc);
     ok(returnedAddress != NULL, "GetTransportAddress returned unexpected address: %p\n", returnedAddress);
-    ok(lstrcmpW(returnedAddress, expectedIpv4TransportAddrNoPort) == 0, "GetTransportAddress returned unexpected address: %s\n", wine_dbgstr_w(returnedAddress));
+    ok(lstrcmpW(returnedAddress, L"1.2.3.4") == 0, "GetTransportAddress returned unexpected address: %s\n", wine_dbgstr_w(returnedAddress));
 
     /* Try setting an IPv6 address */
     sockAddr6Ptr = (struct sockaddr_in6 *) &storage2;
@@ -385,7 +378,7 @@ static void GetSetSockaddr_udp_tests(void)
     rc = IWSDUdpAddress_GetTransportAddress(udpAddress, &returnedAddress);
     ok(rc == S_OK, "GetTransportAddress failed: %08x\n", rc);
     ok(returnedAddress != NULL, "GetTransportAddress returned unexpected address: %p\n", returnedAddress);
-    ok(lstrcmpW(returnedAddress, expectedIpv6TransportAddrNoPort) == 0, "GetTransportAddress returned unexpected address: %s\n", wine_dbgstr_w(returnedAddress));
+    ok(lstrcmpW(returnedAddress, L"2a00:1234:5678:dead:beef::aaaa") == 0, "GetTransportAddress returned unexpected address: %s\n", wine_dbgstr_w(returnedAddress));
 
     rc = IWSDUdpAddress_SetSockaddr(udpAddress, &storage2);
     ok(rc == S_OK, "SetSockaddr returned unexpected result: %08x\n", rc);

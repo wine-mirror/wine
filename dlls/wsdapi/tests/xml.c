@@ -34,17 +34,14 @@ static void BuildAnyForSingleElement_tests(void)
     WSDXML_ELEMENT *element;
     WSDXML_NAME name;
     WSDXML_NAMESPACE ns;
-    WCHAR nameText[] = {'E','l','1',0};
-    static const WCHAR text[] = {'H','e','l','l','o',0};
-    static const WCHAR uri[] = {'h','t','t','p',':','/','/','t','e','s','t','.','t','e','s','t','/',0};
-    static const WCHAR prefix[] = {'t',0};
+    static const WCHAR *text = L"Hello";
     HRESULT hr;
 
     /* Populate structures */
-    ns.Uri = uri;
-    ns.PreferredPrefix = prefix;
+    ns.Uri = L"http://test.test/";
+    ns.PreferredPrefix = L"t";
 
-    name.LocalName = nameText;
+    name.LocalName = (WCHAR *) L"El1";
     name.Space = &ns;
 
     /* Test invalid arguments */
@@ -106,11 +103,7 @@ static void AddChild_tests(void)
     WSDXML_ELEMENT *parent, *child1, *child2;
     WSDXML_NAME parentName, child1Name, child2Name;
     WSDXML_NAMESPACE ns;
-    WCHAR parentNameText[] = {'D','a','d',0};
-    WCHAR child1NameText[] = {'T','i','m',0};
-    WCHAR child2NameText[] = {'B','o','b',0};
-    static const WCHAR uri[] = {'h','t','t','p',':','/','/','t','e','s','t','.','t','e','s','t','/',0};
-    static const WCHAR prefix[] = {'t',0};
+    static const WCHAR *child1NameText = L"Tim";
     HRESULT hr;
 
     /* Test invalid values */
@@ -118,16 +111,16 @@ static void AddChild_tests(void)
     ok(hr == E_INVALIDARG, "WSDXMLAddChild failed with %08x\n", hr);
 
     /* Populate structures */
-    ns.Uri = uri;
-    ns.PreferredPrefix = prefix;
+    ns.Uri = L"http://test.test/";
+    ns.PreferredPrefix = L"t";
 
-    parentName.LocalName = parentNameText;
+    parentName.LocalName = (WCHAR *) L"Dad";
     parentName.Space = &ns;
 
-    child1Name.LocalName = child1NameText;
+    child1Name.LocalName = (WCHAR *) child1NameText;
     child1Name.Space = &ns;
 
-    child2Name.LocalName = child2NameText;
+    child2Name.LocalName = (WCHAR *) L"Bob";
     child2Name.Space = &ns;
 
     /* Create some elements */
@@ -191,11 +184,7 @@ static void AddSibling_tests(void)
     WSDXML_ELEMENT *parent, *child1, *child2, *child3;
     WSDXML_NAME parentName, child1Name, child2Name;
     WSDXML_NAMESPACE ns;
-    WCHAR parentNameText[] = {'D','a','d',0};
-    WCHAR child1NameText[] = {'T','i','m',0};
-    WCHAR child2NameText[] = {'B','o','b',0};
-    static const WCHAR uri[] = {'h','t','t','p',':','/','/','t','e','s','t','.','t','e','s','t','/',0};
-    static const WCHAR prefix[] = {'t',0};
+    static const WCHAR *child1NameText = L"Tim";
     HRESULT hr;
 
     /* Test invalid values */
@@ -203,16 +192,16 @@ static void AddSibling_tests(void)
     ok(hr == E_INVALIDARG, "WSDXMLAddSibling failed with %08x\n", hr);
 
     /* Populate structures */
-    ns.Uri = uri;
-    ns.PreferredPrefix = prefix;
+    ns.Uri = L"http://test.test/";
+    ns.PreferredPrefix = L"t";
 
-    parentName.LocalName = parentNameText;
+    parentName.LocalName = (WCHAR *) L"Dad";
     parentName.Space = &ns;
 
-    child1Name.LocalName = child1NameText;
+    child1Name.LocalName = (WCHAR *) child1NameText;
     child1Name.Space = &ns;
 
-    child2Name.LocalName = child2NameText;
+    child2Name.LocalName = (WCHAR *) L"Bob";
     child2Name.Space = &ns;
 
     /* Create some elements */
@@ -273,36 +262,33 @@ static void GetValueFromAny_tests(void)
     WSDXML_ELEMENT *parent, *child1, *child2, *child3;
     WSDXML_NAME parentName, child1Name, child2Name, child3Name;
     WSDXML_NAMESPACE ns, ns2;
-    WCHAR parentNameText[] = {'D','a','d',0};
-    WCHAR child1NameText[] = {'T','i','m',0};
-    WCHAR child2NameText[] = {'B','o','b',0};
-    WCHAR child3NameText[] = {'J','o','e',0};
-    static const WCHAR child1Value[] = {'V','1',0};
-    static const WCHAR child2Value[] = {'V','2',0};
-    static const WCHAR uri[] = {'h','t','t','p',':','/','/','t','e','s','t','.','t','e','s','t','/',0};
-    static const WCHAR uri2[] = {'h','t','t','p',':','/','/','t','e','s','t','2','.','t','e','s','t','/',0};
-    static const WCHAR prefix[] = {'t',0};
-    static const WCHAR prefix2[] = {'u',0};
+    static const WCHAR *child1NameText = L"Tim";
+    static const WCHAR *child2NameText = L"Bob";
+    static const WCHAR *child3NameText = L"Joe";
+    static const WCHAR *child1Value = L"V1";
+    static const WCHAR *child2Value = L"V2";
+    static const WCHAR *uri = L"http://test.test/";
+    static const WCHAR *uri2 = L"http://test2.test/";
     LPCWSTR returnedValue = NULL, oldReturnedValue;
     HRESULT hr;
 
     /* Populate structures */
     ns.Uri = uri;
-    ns.PreferredPrefix = prefix;
+    ns.PreferredPrefix = L"t";
 
     ns2.Uri = uri2;
-    ns2.PreferredPrefix = prefix2;
+    ns2.PreferredPrefix = L"u";
 
-    parentName.LocalName = parentNameText;
+    parentName.LocalName = (WCHAR *) L"Dad";
     parentName.Space = &ns;
 
-    child1Name.LocalName = child1NameText;
+    child1Name.LocalName = (WCHAR *) child1NameText;
     child1Name.Space = &ns2;
 
-    child2Name.LocalName = child2NameText;
+    child2Name.LocalName = (WCHAR *) child2NameText;
     child2Name.Space = &ns;
 
-    child3Name.LocalName = child3NameText;
+    child3Name.LocalName = (WCHAR *) child3NameText;
     child3Name.Space = &ns;
 
     /* Create some elements */
@@ -379,15 +365,12 @@ static void GetValueFromAny_tests(void)
 
 static void XMLContext_AddNamespace_tests(void)
 {
-    static const WCHAR ns1Uri[] = {'h','t','t','p',':','/','/','t','e','s','t','.','t','e','s','t',0};
-    static const WCHAR ns2Uri[] = {'h','t','t','p',':','/','/','w','i','n','e','.','r','o','c','k','s',0};
-    static const WCHAR ns3Uri[] = {'h','t','t','p',':','/','/','t','e','s','t','.','a','g','a','i','n',0};
-    static const WCHAR ns4Uri[] = {'h','t','t','p',':','/','/','o','n','e','.','m','o','r','e',0};
-    static const WCHAR prefix1[] = {'t','s','t',0};
-    static const WCHAR prefix2[] = {'w','i','n','e',0};
-    static const WCHAR unPrefix0[] = {'u','n','0',0};
-    static const WCHAR unPrefix1[] = {'u','n','1',0};
-    static const WCHAR unPrefix2[] = {'u','n','2',0};
+    static const WCHAR *ns1Uri = L"http://test.test";
+    static const WCHAR *ns2Uri = L"http://wine.rocks";
+    static const WCHAR *ns3Uri = L"http://test.again";
+    static const WCHAR *prefix1 = L"tst";
+    static const WCHAR *prefix2 = L"wine";
+    static const WCHAR *unPrefix1 = L"un1";
 
     IWSDXMLContext *context;
     WSDXML_NAMESPACE *ns1 = NULL, *ns2 = NULL;
@@ -448,7 +431,7 @@ static void XMLContext_AddNamespace_tests(void)
     if (ns2 != NULL)
     {
         ok(lstrcmpW(ns2->Uri, ns2Uri) == 0, "URI returned by AddNamespace is not as expected (%s)\n", wine_dbgstr_w(ns2->Uri));
-        ok(lstrcmpW(ns2->PreferredPrefix, unPrefix0) == 0, "PreferredPrefix returned by AddNamespace is not as expected (%s)\n", wine_dbgstr_w(ns2->PreferredPrefix));
+        ok(lstrcmpW(ns2->PreferredPrefix, L"un0") == 0, "PreferredPrefix returned by AddNamespace is not as expected (%s)\n", wine_dbgstr_w(ns2->PreferredPrefix));
         ok(ns2->Names == NULL, "Names array is not empty\n");
         ok(ns2->NamesCount == 0, "NamesCount is not 0 (value = %d)\n", ns2->NamesCount);
         ok(ns2->Uri != ns2Uri, "URI has not been cloned\n");
@@ -459,7 +442,7 @@ static void XMLContext_AddNamespace_tests(void)
     WSDFreeLinkedMemory(ns2);
 
     /* Try explicitly creating a prefix called 'un1' */
-    hr = IWSDXMLContext_AddNamespace(context, ns4Uri, unPrefix1, &ns2);
+    hr = IWSDXMLContext_AddNamespace(context, L"http://one.more", unPrefix1, &ns2);
     ok(hr == S_OK, "AddNamespace failed with %08x\n", hr);
 
     /* Check the returned structure */
@@ -481,7 +464,7 @@ static void XMLContext_AddNamespace_tests(void)
 
     if (ns2 != NULL)
     {
-        ok(lstrcmpW(ns2->PreferredPrefix, unPrefix2) == 0, "PreferredPrefix returned by AddNamespace is not as expected (%s)\n", wine_dbgstr_w(ns2->PreferredPrefix));
+        ok(lstrcmpW(ns2->PreferredPrefix, L"un2") == 0, "PreferredPrefix returned by AddNamespace is not as expected (%s)\n", wine_dbgstr_w(ns2->PreferredPrefix));
     }
 
     WSDFreeLinkedMemory(ns2);
@@ -506,12 +489,11 @@ static void XMLContext_AddNamespace_tests(void)
 
 static void XMLContext_AddNameToNamespace_tests(void)
 {
-    static const WCHAR ns1Uri[] = {'h','t','t','p',':','/','/','t','e','s','t','.','t','e','s','t',0};
-    static const WCHAR ns2Uri[] = {'h','t','t','p',':','/','/','w','i','n','e','.','r','o','c','k','s',0};
-    static const WCHAR prefix2[] = {'w','i','n','e',0};
-    static const WCHAR unPrefix0[] = {'u','n','0',0};
-    static const WCHAR name1Text[] = {'B','o','b',0};
-    static const WCHAR name2Text[] = {'T','i','m',0};
+    static const WCHAR *ns1Uri = L"http://test.test";
+    static const WCHAR *ns2Uri = L"http://wine.rocks";
+    static const WCHAR *prefix2 = L"wine";
+    static const WCHAR *name1Text = L"Bob";
+    static const WCHAR *name2Text = L"Tim";
     IWSDXMLContext *context;
     WSDXML_NAMESPACE *ns2 = NULL;
     WSDXML_NAME *name1 = NULL, *name2 = NULL;
@@ -548,7 +530,7 @@ static void XMLContext_AddNameToNamespace_tests(void)
 
         ok(name1->Space != NULL, "Space returned by AddNameToNamespace is null\n");
         ok(lstrcmpW(name1->Space->Uri, ns1Uri) == 0, "URI returned by AddNameToNamespace is not as expected (%s)\n", wine_dbgstr_w(name1->Space->Uri));
-        ok(lstrcmpW(name1->Space->PreferredPrefix, unPrefix0) == 0, "PreferredPrefix returned by AddName is not as expected (%s)\n", wine_dbgstr_w(name1->Space->PreferredPrefix));
+        ok(lstrcmpW(name1->Space->PreferredPrefix, L"un0") == 0, "PreferredPrefix returned by AddName is not as expected (%s)\n", wine_dbgstr_w(name1->Space->PreferredPrefix));
         ok(name1->Space->Names == NULL, "Names array is not empty\n");
         ok(name1->Space->NamesCount == 0, "NamesCount is not 0 (value = %d)\n", name1->Space->NamesCount);
         ok(name1->Space->Uri != ns1Uri, "URI has not been cloned\n");

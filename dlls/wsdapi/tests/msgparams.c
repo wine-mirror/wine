@@ -71,7 +71,6 @@ static void LocalAddress_tests(void)
     IWSDUdpAddress *origUdpAddress = NULL;
     IWSDAddress *returnedAddress = NULL;
     IWSDUdpMessageParameters *udpMessageParams = NULL;
-    WCHAR address[] = {'1','.','2','.','3','.','4',0};
     WSADATA wsaData;
     HRESULT rc;
     int ret;
@@ -95,7 +94,7 @@ static void LocalAddress_tests(void)
     ok(rc == S_OK, "WSDCreateUdpAddress(NULL, &origUdpAddress) failed: %08x\n", rc);
     ok(origUdpAddress != NULL, "WSDCreateUdpMessageParameters(NULL, &origUdpAddress) failed: origUdpAddress == NULL\n");
 
-    rc = IWSDUdpAddress_SetTransportAddress(origUdpAddress, address);
+    rc = IWSDUdpAddress_SetTransportAddress(origUdpAddress, L"1.2.3.4");
     ok(rc == S_OK, "SetTransportAddress failed: %08x\n", rc);
 
     rc = IWSDUdpMessageParameters_SetLocalAddress(udpMessageParams, (IWSDAddress *)origUdpAddress);
@@ -129,7 +128,6 @@ static void RemoteAddress_tests(void)
     IWSDUdpAddress *origUdpAddress = NULL;
     IWSDAddress *returnedAddress = NULL;
     IWSDUdpMessageParameters *udpMessageParams = NULL;
-    WCHAR address[] = {'1','.','2','.','3','.','4',0};
     WSADATA wsaData;
     HRESULT rc;
     int ret;
@@ -153,7 +151,7 @@ static void RemoteAddress_tests(void)
     ok(rc == S_OK, "WSDCreateUdpAddress(NULL, &origUdpAddress) failed: %08x\n", rc);
     ok(origUdpAddress != NULL, "WSDCreateUdpMessageParameters(NULL, &origUdpAddress) failed: origUdpAddress == NULL\n");
 
-    rc = IWSDUdpAddress_SetTransportAddress(origUdpAddress, address);
+    rc = IWSDUdpAddress_SetTransportAddress(origUdpAddress, L"1.2.3.4");
     ok(rc == S_OK, "SetTransportAddress failed: %08x\n", rc);
 
     rc = IWSDUdpMessageParameters_SetRemoteAddress(udpMessageParams, (IWSDAddress *)origUdpAddress);

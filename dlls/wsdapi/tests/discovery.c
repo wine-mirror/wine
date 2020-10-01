@@ -52,23 +52,10 @@ static const char testProbeMessage[] = "<?xml version=\"1.0\" encoding=\"utf-8\"
     "<grog:Perry>ExtraInfo</grog:Perry></soap:Header>"
     "<soap:Body><wsd:Probe><wsd:Types>grog:Cider</wsd:Types><grog:Lager>MoreInfo</grog:Lager></wsd:Probe></soap:Body></soap:Envelope>";
 
-static const WCHAR discoveryTo[] = {
-    'u','r','n',':',
-    's','c','h','e','m','a','s','-','x','m','l','s','o','a','p','-','o','r','g',':',
-    'w','s',':','2','0','0','5',':','0','4',':',
-    'd','i','s','c','o','v','e','r','y', 0 };
-
-static const WCHAR actionProbe[] = {
-    'h','t','t','p',':','/','/',
-    's','c','h','e','m','a','s','.','x','m','l','s','o','a','p','.','o','r','g','/',
-    'w','s','/','2','0','0','5','/','0','4','/',
-    'd','i','s','c','o','v','e','r','y','/',
-    'P','r','o','b','e', 0 };
-
-static const WCHAR uri_more_tests[] = { 'h','t','t','p',':','/','/','m','o','r','e','.','t','e','s','t','s','/', 0 };
-static const WCHAR uri_more_tests_no_slash[] = { 'h','t','t','p',':','/','/','m','o','r','e','.','t','e','s','t','s', 0 };
-static const WCHAR prefix_grog[] = { 'g','r','o','g', 0 };
-static const WCHAR name_cider[] = { 'C','i','d','e','r', 0 };
+static const WCHAR *uri_more_tests = L"http://more.tests/";
+static const WCHAR *uri_more_tests_no_slash = L"http://more.tests";
+static const WCHAR *prefix_grog = L"grog";
+static const WCHAR *name_cider = L"Cider";
 
 static HANDLE probe_event = NULL;
 static UUID probe_message_id;
@@ -576,15 +563,13 @@ static HRESULT WINAPI IWSDiscoveryPublisherNotifyImpl_ProbeHandler(IWSDiscoveryP
 
     if (pSoap != NULL)
     {
-        static const WCHAR perry[] = {'P','e','r','r','y',0};
-        static const WCHAR extra_info[] = {'E','x','t','r','a','I','n','f','o',0};
         WSD_PROBE *probe_msg = (WSD_PROBE *) pSoap->Body;
         WSD_APP_SEQUENCE *appseq = (WSD_APP_SEQUENCE *) pSoap->Header.AppSequence;
 
         ok(pSoap->Body != NULL, "pSoap->Body == NULL\n");
-        ok(pSoap->Header.To != NULL && lstrcmpW(pSoap->Header.To, discoveryTo) == 0,
+        ok(pSoap->Header.To != NULL && lstrcmpW(pSoap->Header.To, L"urn:schemas-xmlsoap-org:ws:2005:04:discovery") == 0,
             "pSoap->Header.To == '%s'\n", wine_dbgstr_w(pSoap->Header.To));
-        ok(pSoap->Header.Action != NULL && lstrcmpW(pSoap->Header.Action, actionProbe) == 0,
+        ok(pSoap->Header.Action != NULL && lstrcmpW(pSoap->Header.Action, L"http://schemas.xmlsoap.org/ws/2005/04/discovery/Probe") == 0,
             "pSoap->Header.Action == '%s'\n", wine_dbgstr_w(pSoap->Header.Action));
 
         ok(pSoap->Header.MessageID != NULL, "pSoap->Header.MessageID == NULL\n");
@@ -607,25 +592,19 @@ static HRESULT WINAPI IWSDiscoveryPublisherNotifyImpl_ProbeHandler(IWSDiscoveryP
 
         if (appseq != NULL)
         {
-            static const WCHAR seq_id[] = {'u','r','n',':','u','u','i','d',':','6','3','8','a','b','e','e','8','-',
-                '1','2','4','d','-','4','b','6','a','-','8','b','8','5','-',
-                '8','c','f','2','8','3','7','a','2','f','d','2',0};
-
             ok(appseq->InstanceId == 21, "pSoap->Header.AppSequence->InstanceId = %s\n",
                 wine_dbgstr_longlong(appseq->InstanceId));
-            ok(lstrcmpW(appseq->SequenceId, seq_id) == 0, "pSoap->Header.AppSequence->SequenceId = '%s'\n",
+            ok(lstrcmpW(appseq->SequenceId, L"urn:uuid:638abee8-124d-4b6a-8b85-8cf2837a2fd2") == 0, "pSoap->Header.AppSequence->SequenceId = '%s'\n",
                 wine_dbgstr_w(appseq->SequenceId));
             ok(appseq->MessageNumber == 14, "pSoap->Header.AppSequence->MessageNumber = %s\n",
                 wine_dbgstr_longlong(appseq->MessageNumber));
         }
 
         verify_wsdxml_any_text("pSoap->Header.AnyHeaders", pSoap->Header.AnyHeaders, uri_more_tests_no_slash,
-            prefix_grog, perry, extra_info);
+            prefix_grog, L"Perry", L"ExtraInfo");
 
         if (probe_msg != NULL)
         {
-            static const WCHAR lager[] = {'L','a','g','e','r',0};
-            static const WCHAR more_info[] = {'M','o','r','e','I','n','f','o',0};
             IWSDUdpAddress *remote_addr = NULL;
             HRESULT rc;
 
@@ -639,7 +618,7 @@ static HRESULT WINAPI IWSDiscoveryPublisherNotifyImpl_ProbeHandler(IWSDiscoveryP
             }
 
             ok(probe_msg->Scopes == NULL, "Probe message Scopes != NULL\n");
-            verify_wsdxml_any_text("probe_msg->Any", probe_msg->Any, uri_more_tests_no_slash, prefix_grog, lager, more_info);
+            verify_wsdxml_any_text("probe_msg->Any", probe_msg->Any, uri_more_tests_no_slash, prefix_grog, L"Lager", L"MoreInfo");
 
             rc = IWSDMessageParameters_GetRemoteAddress(pMessageParameters, (IWSDAddress **) &remote_addr);
             ok(rc == S_OK, "IWSDMessageParameters_GetRemoteAddress returned %08x\n", rc);
@@ -653,13 +632,6 @@ static HRESULT WINAPI IWSDiscoveryPublisherNotifyImpl_ProbeHandler(IWSDiscoveryP
                 WSDXML_ELEMENT *header_any_element, *body_any_element, *endpoint_any_element, *ref_param_any_element;
                 WSDXML_NAME header_any_name;
                 WSDXML_NAMESPACE ns;
-                static const WCHAR header_any_name_text[] = {'B','e','e','r',0};
-                static const WCHAR header_any_text[] = {'P','u','b','l','i','s','h','T','e','s','t',0};
-                static const WCHAR body_any_text[] = {'B','o','d','y','T','e','s','t',0};
-                static const WCHAR endpoint_any_text[] = {'E','n','d','P','T','e','s','t',0};
-                static const WCHAR ref_param_any_text[] = {'R','e','f','P','T','e','s','t',0};
-                static const WCHAR uri[] = {'h','t','t','p',':','/','/','w','i','n','e','.','t','e','s','t','/',0};
-                static const WCHAR prefix[] = {'w','i','n','e',0};
                 BOOL probe_matches_message_seen = FALSE, endpoint_reference_seen = FALSE, app_sequence_seen = FALSE;
                 BOOL metadata_version_seen = FALSE, wine_ns_seen = FALSE, body_probe_matches_seen = FALSE;
                 BOOL types_seen = FALSE, any_header_seen = FALSE, any_body_seen = FALSE;
@@ -685,22 +657,22 @@ static HRESULT WINAPI IWSDiscoveryPublisherNotifyImpl_ProbeHandler(IWSDiscoveryP
                 sequenceIdW = utf8_to_wide(sequenceId);
 
                 /* Create "any" elements for header */
-                ns.Uri = uri;
-                ns.PreferredPrefix = prefix;
+                ns.Uri = L"http://wine.test/";
+                ns.PreferredPrefix = L"wine";
 
-                header_any_name.LocalName = (WCHAR *) header_any_name_text;
+                header_any_name.LocalName = (WCHAR *) L"Beer";
                 header_any_name.Space = &ns;
 
-                rc = WSDXMLBuildAnyForSingleElement(&header_any_name, header_any_text, &header_any_element);
+                rc = WSDXMLBuildAnyForSingleElement(&header_any_name, L"PublishTest", &header_any_element);
                 ok(rc == S_OK, "WSDXMLBuildAnyForSingleElement failed with %08x\n", rc);
 
-                rc = WSDXMLBuildAnyForSingleElement(&header_any_name, body_any_text, &body_any_element);
+                rc = WSDXMLBuildAnyForSingleElement(&header_any_name, L"BodyTest", &body_any_element);
                 ok(rc == S_OK, "WSDXMLBuildAnyForSingleElement failed with %08x\n", rc);
 
-                rc = WSDXMLBuildAnyForSingleElement(&header_any_name, endpoint_any_text, &endpoint_any_element);
+                rc = WSDXMLBuildAnyForSingleElement(&header_any_name, L"EndPTest", &endpoint_any_element);
                 ok(rc == S_OK, "WSDXMLBuildAnyForSingleElement failed with %08x\n", rc);
 
-                rc = WSDXMLBuildAnyForSingleElement(&header_any_name, ref_param_any_text, &ref_param_any_element);
+                rc = WSDXMLBuildAnyForSingleElement(&header_any_name, L"RefPTest", &ref_param_any_element);
                 ok(rc == S_OK, "WSDXMLBuildAnyForSingleElement failed with %08x\n", rc);
 
                 rc = IWSDiscoveryPublisher_MatchProbeEx(publisher_instance, pSoap, pMessageParameters, publisherIdW, 1, 1, 1,
@@ -929,14 +901,7 @@ static void Publish_tests(void)
     WSDXML_ELEMENT *header_any_element, *body_any_element, *endpoint_any_element, *ref_param_any_element;
     WSDXML_NAME header_any_name, another_name;
     WSDXML_NAMESPACE ns, ns2;
-    WCHAR header_any_name_text[] = {'B','e','e','r',0};
-    static const WCHAR header_any_text[] = {'P','u','b','l','i','s','h','T','e','s','t',0};
-    static const WCHAR body_any_text[] = {'B','o','d','y','T','e','s','t',0};
-    static const WCHAR endpoint_any_text[] = {'E','n','d','P','T','e','s','t',0};
-    static const WCHAR ref_param_any_text[] = {'R','e','f','P','T','e','s','t',0};
-    static const WCHAR uri[] = {'h','t','t','p',':','/','/','w','i','n','e','.','t','e','s','t','/',0};
-    static const WCHAR prefix[] = {'w','i','n','e',0};
-    static const WCHAR uri3[] = {'h','t','t','p',':','/','/','t','h','i','r','d','.','u','r','l','/',0};
+    static const WCHAR *uri = L"http://wine.test/";
     WSD_NAME_LIST types_list;
     WSD_URI_LIST scopes_list, xaddrs_list;
     unsigned char *probe_uuid_str;
@@ -1005,21 +970,21 @@ static void Publish_tests(void)
 
     /* Create "any" elements for header */
     ns.Uri = uri;
-    ns.PreferredPrefix = prefix;
+    ns.PreferredPrefix = L"wine";
 
-    header_any_name.LocalName = header_any_name_text;
+    header_any_name.LocalName = (WCHAR *) L"Beer";
     header_any_name.Space = &ns;
 
-    rc = WSDXMLBuildAnyForSingleElement(&header_any_name, header_any_text, &header_any_element);
+    rc = WSDXMLBuildAnyForSingleElement(&header_any_name, L"PublishTest", &header_any_element);
     ok(rc == S_OK, "WSDXMLBuildAnyForSingleElement failed with %08x\n", rc);
 
-    rc = WSDXMLBuildAnyForSingleElement(&header_any_name, body_any_text, &body_any_element);
+    rc = WSDXMLBuildAnyForSingleElement(&header_any_name, L"BodyTest", &body_any_element);
     ok(rc == S_OK, "WSDXMLBuildAnyForSingleElement failed with %08x\n", rc);
 
-    rc = WSDXMLBuildAnyForSingleElement(&header_any_name, endpoint_any_text, &endpoint_any_element);
+    rc = WSDXMLBuildAnyForSingleElement(&header_any_name, L"EndPTest", &endpoint_any_element);
     ok(rc == S_OK, "WSDXMLBuildAnyForSingleElement failed with %08x\n", rc);
 
-    rc = WSDXMLBuildAnyForSingleElement(&header_any_name, ref_param_any_text, &ref_param_any_element);
+    rc = WSDXMLBuildAnyForSingleElement(&header_any_name, L"RefPTest", &ref_param_any_element);
     ok(rc == S_OK, "WSDXMLBuildAnyForSingleElement failed with %08x\n", rc);
 
     /* Create types list */
@@ -1046,7 +1011,7 @@ static void Publish_tests(void)
     xaddrs_list.Element = uri_more_tests;
 
     xaddrs_list.Next->Next = NULL;
-    xaddrs_list.Next->Element = uri3;
+    xaddrs_list.Next->Element = L"http://third.url/";
 
     /* Publish the service */
     rc = IWSDiscoveryPublisher_PublishEx(publisher, publisherIdW, 1, 1, 1, sequenceIdW, &types_list, &scopes_list,
@@ -1187,10 +1152,6 @@ static void UnPublish_tests(void)
     WSDXML_ELEMENT *body_any_element;
     WSDXML_NAME body_any_name;
     WSDXML_NAMESPACE ns;
-    WCHAR body_any_name_text[] = {'B','e','e','r',0};
-    static const WCHAR body_any_text[] = {'B','o','d','y','T','e','s','t',0};
-    static const WCHAR uri[] = {'h','t','t','p',':','/','/','w','i','n','e','.','t','e','s','t','/',0};
-    static const WCHAR prefix[] = {'w','i','n','e',0};
 
     rc = WSDCreateDiscoveryPublisher(NULL, &publisher);
     ok(rc == S_OK, "WSDCreateDiscoveryPublisher(NULL, &publisher) failed: %08x\n", rc);
@@ -1224,13 +1185,13 @@ static void UnPublish_tests(void)
     ok(ret == TRUE, "Unable to listen on IPv4 addresses (ret == %d)\n", ret);
 
     /* Create "any" elements for header */
-    ns.Uri = uri;
-    ns.PreferredPrefix = prefix;
+    ns.Uri = L"http://wine.test/";
+    ns.PreferredPrefix = L"wine";
 
-    body_any_name.LocalName = body_any_name_text;
+    body_any_name.LocalName = (WCHAR *) L"Beer";
     body_any_name.Space = &ns;
 
-    rc = WSDXMLBuildAnyForSingleElement(&body_any_name, body_any_text, &body_any_element);
+    rc = WSDXMLBuildAnyForSingleElement(&body_any_name, L"BodyTest", &body_any_element);
     ok(rc == S_OK, "WSDXMLBuildAnyForSingleElement failed with %08x\n", rc);
 
     /* Unpublish the service */
@@ -1364,7 +1325,6 @@ done:
 
 static HRESULT set_firewall( enum firewall_op op )
 {
-    static const WCHAR testW[] = {'w','s','d','a','p','i','_','t','e','s','t',0};
     HRESULT hr, init;
     INetFwMgr *mgr = NULL;
     INetFwPolicy *policy = NULL;
@@ -1404,7 +1364,7 @@ static HRESULT set_firewall( enum firewall_op op )
     hr = INetFwAuthorizedApplication_put_ProcessImageFileName( app, image );
     if (hr != S_OK) goto done;
 
-    name = SysAllocString( testW );
+    name = SysAllocString( L"wsdapi_test" );
     hr = INetFwAuthorizedApplication_put_Name( app, name );
     SysFreeString( name );
     ok( hr == S_OK, "got %08x\n", hr );
