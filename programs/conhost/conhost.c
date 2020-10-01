@@ -2476,6 +2476,7 @@ static NTSTATUS console_input_ioctl( struct console *console, unsigned int code,
             void *result;
             TRACE( "peek\n ");
             if (in_size) return STATUS_INVALID_PARAMETER;
+            ensure_tty_input_thread( console );
             *out_size = min( *out_size, console->record_count * sizeof(INPUT_RECORD) );
             if (!(result = alloc_ioctl_buffer( *out_size ))) return STATUS_NO_MEMORY;
             if (*out_size) memcpy( result, console->records, *out_size );
