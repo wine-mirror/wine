@@ -372,14 +372,14 @@ static BOOL CALLBACK update_windows_on_display_change(HWND hwnd, LPARAM lparam)
         XReconfigureWMWindow(data->display, data->whole_window, data->vis.screen, mask, &changes);
     }
     release_win_data(data);
-    if (hwnd == GetForegroundWindow())
-        clip_fullscreen_window(hwnd, TRUE);
     return TRUE;
 }
 
 void X11DRV_DisplayDevices_Update(BOOL send_display_change)
 {
     RECT old_virtual_rect, new_virtual_rect;
+    DWORD tid, pid;
+    HWND foreground;
     UINT mask = 0;
 
     old_virtual_rect = get_virtual_screen_rect();
@@ -394,6 +394,13 @@ void X11DRV_DisplayDevices_Update(BOOL send_display_change)
 
     X11DRV_resize_desktop(send_display_change);
     EnumWindows(update_windows_on_display_change, (LPARAM)mask);
+
+    /* forward clip_fullscreen_window request to the foreground window */
+    if ((foreground = GetForegroundWindow()) && (tid = GetWindowThreadProcessId( foreground, &pid )) && pid == GetCurrentProcessId())
+    {
+        if (tid == GetCurrentThreadId()) clip_fullscreen_window( foreground, TRUE );
+        else SendNotifyMessageW( foreground, WM_X11DRV_CLIP_CURSOR_REQUEST, TRUE, TRUE );
+    }
 }
 
 /* Initialize a GPU instance.

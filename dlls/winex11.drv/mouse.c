@@ -1530,7 +1530,7 @@ BOOL CDECL X11DRV_ClipCursor( LPCRECT clip )
         if (tid && tid != GetCurrentThreadId() && pid == GetCurrentProcessId())
         {
             TRACE( "forwarding clip request to %p\n", foreground );
-            SendNotifyMessageW( foreground, WM_X11DRV_CLIP_CURSOR_REQUEST, 0, 0 );
+            SendNotifyMessageW( foreground, WM_X11DRV_CLIP_CURSOR_REQUEST, FALSE, FALSE );
             return TRUE;
         }
 
@@ -1559,7 +1559,7 @@ BOOL CDECL X11DRV_ClipCursor( LPCRECT clip )
  *
  * Function called upon receiving a WM_X11DRV_CLIP_CURSOR_REQUEST.
  */
-LRESULT clip_cursor_request( HWND hwnd )
+LRESULT clip_cursor_request( HWND hwnd, BOOL fullscreen, BOOL reset )
 {
     RECT clip;
 
@@ -1567,6 +1567,8 @@ LRESULT clip_cursor_request( HWND hwnd )
         WARN( "ignoring clip cursor request on desktop window.\n" );
     else if (hwnd != GetForegroundWindow())
         WARN( "ignoring clip cursor request on non-foreground window.\n" );
+    else if (fullscreen)
+        clip_fullscreen_window( hwnd, reset );
     else
     {
         GetClipCursor( &clip );
