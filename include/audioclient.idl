@@ -111,6 +111,46 @@ interface IAudioClient : IUnknown
     );
 }
 
+typedef enum _AUDCLNT_STREAMOPTIONS
+{
+    AUDCLNT_STREAMOPTIONS_NONE = 0,
+    AUDCLNT_STREAMOPTIONS_RAW = 1,
+    AUDCLNT_STREAMOPTIONS_MATCH_FORMAT = 2,
+} AUDCLNT_STREAMOPTIONS;
+
+typedef struct _AudioClientProperties
+{
+    UINT32 cbSize;
+    BOOL bIsOffload;
+    AUDIO_STREAM_CATEGORY eCategory;
+    AUDCLNT_STREAMOPTIONS Options;
+} AudioClientProperties;
+
+[
+    local,
+    pointer_default(unique),
+    uuid(726778cd-f60a-4eda-82de-e47610cd78aa),
+    object,
+]
+interface IAudioClient2 : IAudioClient
+{
+    HRESULT IsOffloadCapable(
+        AUDIO_STREAM_CATEGORY category,
+        [out] BOOL *offload_capable
+    );
+
+    HRESULT SetClientProperties(
+        [in] const AudioClientProperties *prop
+    );
+
+    HRESULT GetBufferSizeLimits(
+        [in] const WAVEFORMATEX *format,
+        BOOL event_driven,
+        [out] REFERENCE_TIME *min_duration,
+        [out] REFERENCE_TIME *max_duration
+    );
+}
+
 [
     local,
     pointer_default(unique),
