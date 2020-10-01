@@ -445,7 +445,7 @@ static BOOL grab_clipping_window( const RECT *clip )
     if (!data->clip_hwnd) sync_window_cursor( clip_window );
     InterlockedExchangePointer( (void **)&cursor_window, msg_hwnd );
     data->clip_hwnd = msg_hwnd;
-    SendNotifyMessageW( GetDesktopWindow(), WM_X11DRV_CLIP_CURSOR, 0, (LPARAM)msg_hwnd );
+    SendNotifyMessageW( GetDesktopWindow(), WM_X11DRV_CLIP_CURSOR_NOTIFY, 0, (LPARAM)msg_hwnd );
     return TRUE;
 }
 
@@ -465,7 +465,7 @@ void ungrab_clipping_window(void)
     XUnmapWindow( display, clip_window );
     if (clipping_cursor) XUngrabPointer( display, CurrentTime );
     clipping_cursor = FALSE;
-    SendNotifyMessageW( GetDesktopWindow(), WM_X11DRV_CLIP_CURSOR, 0, 0 );
+    SendNotifyMessageW( GetDesktopWindow(), WM_X11DRV_CLIP_CURSOR_NOTIFY, 0, 0 );
 }
 
 /***********************************************************************
@@ -493,12 +493,10 @@ void retry_grab_clipping_window(void)
         ClipCursor( &last_clip_rect );
 }
 
-BOOL CDECL X11DRV_ClipCursor( const RECT *clip );
-
 /***********************************************************************
  *             clip_cursor_notify
  *
- * Notification function called upon receiving a WM_X11DRV_CLIP_CURSOR.
+ * Notification function called upon receiving a WM_X11DRV_CLIP_CURSOR_NOTIFY.
  */
 LRESULT clip_cursor_notify( HWND hwnd, HWND prev_clip_hwnd, HWND new_clip_hwnd )
 {
@@ -511,7 +509,7 @@ LRESULT clip_cursor_notify( HWND hwnd, HWND prev_clip_hwnd, HWND new_clip_hwnd )
         HWND prev = clip_hwnd;
         clip_hwnd = new_clip_hwnd;
         if (prev || new_clip_hwnd) TRACE( "clip hwnd changed from %p to %p\n", prev, new_clip_hwnd );
-        if (prev) SendNotifyMessageW( prev, WM_X11DRV_CLIP_CURSOR, (WPARAM)prev, 0 );
+        if (prev) SendNotifyMessageW( prev, WM_X11DRV_CLIP_CURSOR_NOTIFY, (WPARAM)prev, 0 );
     }
     else if (hwnd == data->clip_hwnd)  /* this is a notification that clipping has been reset */
     {
@@ -520,13 +518,6 @@ LRESULT clip_cursor_notify( HWND hwnd, HWND prev_clip_hwnd, HWND new_clip_hwnd )
         data->clip_reset = GetTickCount();
         disable_xinput2();
         DestroyWindow( hwnd );
-    }
-    else if (hwnd == GetForegroundWindow())  /* request to clip */
-    {
-        RECT clip;
-
-        GetClipCursor( &clip );
-        X11DRV_ClipCursor( &clip );
     }
     else if (prev_clip_hwnd)
     {
@@ -1539,7 +1530,7 @@ BOOL CDECL X11DRV_ClipCursor( LPCRECT clip )
         if (tid && tid != GetCurrentThreadId() && pid == GetCurrentProcessId())
         {
             TRACE( "forwarding clip request to %p\n", foreground );
-            SendNotifyMessageW( foreground, WM_X11DRV_CLIP_CURSOR, 0, 0 );
+            SendNotifyMessageW( foreground, WM_X11DRV_CLIP_CURSOR_REQUEST, 0, 0 );
             return TRUE;
         }
 
@@ -1561,6 +1552,28 @@ BOOL CDECL X11DRV_ClipCursor( LPCRECT clip )
     }
     ungrab_clipping_window();
     return TRUE;
+}
+
+/***********************************************************************
+ *             clip_cursor_request
+ *
+ * Function called upon receiving a WM_X11DRV_CLIP_CURSOR_REQUEST.
+ */
+LRESULT clip_cursor_request( HWND hwnd )
+{
+    RECT clip;
+
+    if (hwnd == GetDesktopWindow())
+        WARN( "ignoring clip cursor request on desktop window.\n" );
+    else if (hwnd != GetForegroundWindow())
+        WARN( "ignoring clip cursor request on non-foreground window.\n" );
+    else
+    {
+        GetClipCursor( &clip );
+        X11DRV_ClipCursor( &clip );
+    }
+
+    return 0;
 }
 
 /***********************************************************************

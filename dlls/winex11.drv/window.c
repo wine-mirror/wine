@@ -2781,8 +2781,10 @@ LRESULT CDECL X11DRV_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
         else if (hwnd == x11drv_thread_data()->clip_hwnd)
             set_window_cursor( x11drv_thread_data()->clip_window, (HCURSOR)lp );
         return 0;
-    case WM_X11DRV_CLIP_CURSOR:
+    case WM_X11DRV_CLIP_CURSOR_NOTIFY:
         return clip_cursor_notify( hwnd, (HWND)wp, (HWND)lp );
+    case WM_X11DRV_CLIP_CURSOR_REQUEST:
+        return clip_cursor_request( hwnd );
     default:
         FIXME( "got window msg %x hwnd %p wp %lx lp %lx\n", msg, hwnd, wp, lp );
         return 0;
