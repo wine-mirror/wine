@@ -27,8 +27,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(http);
 
-static const WCHAR device_nameW[] = {'\\','D','e','v','i','c','e','\\','H','t','t','p','\\','R','e','q','Q','u','e','u','e',0};
-
 static WCHAR *heap_strdupW(const WCHAR *str)
 {
     int len = wcslen(str) + 1;
@@ -53,7 +51,6 @@ static WCHAR *heap_strdupW(const WCHAR *str)
  */
 ULONG WINAPI HttpInitialize(HTTPAPI_VERSION version, ULONG flags, void *reserved)
 {
-    static const WCHAR httpW[] = {'h','t','t','p',0};
     SC_HANDLE manager, service;
 
     TRACE("version %u.%u, flags %#x, reserved %p.\n", version.HttpApiMajorVersion,
@@ -68,7 +65,7 @@ ULONG WINAPI HttpInitialize(HTTPAPI_VERSION version, ULONG flags, void *reserved
     if (!(manager = OpenSCManagerW(NULL, NULL, SC_MANAGER_CONNECT)))
         return GetLastError();
 
-    if (!(service = OpenServiceW(manager, httpW, SERVICE_START)))
+    if (!(service = OpenServiceW(manager, L"http", SERVICE_START)))
     {
         ERR("Failed to open HTTP service, error %u.\n", GetLastError());
         CloseServiceHandle(manager);
@@ -205,7 +202,7 @@ ULONG WINAPI HttpCreateHttpHandle(HANDLE *handle, ULONG reserved)
     if (!handle)
         return ERROR_INVALID_PARAMETER;
 
-    RtlInitUnicodeString(&string, device_nameW);
+    RtlInitUnicodeString(&string, L"\\Device\\Http\\ReqQueue");
     attr.ObjectName = &string;
     return RtlNtStatusToDosError(NtCreateFile(handle, 0, &attr, &iosb, NULL,
             FILE_ATTRIBUTE_NORMAL, 0, FILE_OPEN, FILE_NON_DIRECTORY_FILE, NULL, 0));
@@ -752,7 +749,7 @@ ULONG WINAPI HttpCreateRequestQueue(HTTPAPI_VERSION version, const WCHAR *name,
     if (flags)
         FIXME("Unhandled flags %#x.\n", flags);
 
-    RtlInitUnicodeString(&string, device_nameW);
+    RtlInitUnicodeString(&string, L"\\Device\\Http\\ReqQueue");
     attr.ObjectName = &string;
     if (sa && sa->bInheritHandle)
         attr.Attributes |= OBJ_INHERIT;

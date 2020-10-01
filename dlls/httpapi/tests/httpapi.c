@@ -33,13 +33,6 @@
 
 #include "wine/test.h"
 
-static const WCHAR invalid_url1[] = {'h','t','t','p',':','/','/','l','o','c','a','l','h','o','s','t',':','5','0','0','0','0',0};
-static const WCHAR invalid_url2[] = {'l','o','c','a','l','h','o','s','t',':','5','0','0','0','0',0};
-static const WCHAR invalid_url3[] = {'l','o','c','a','l','h','o','s','t',':','5','0','0','0','0','/',0};
-static const WCHAR invalid_url4[] = {'h','t','t','p',':','/','/','l','o','c','a','l','h','o','s','t','/',0};
-static const WCHAR invalid_url5[] = {'h','t','t','p',':','/','/','l','o','c','a','l','h','o','s','t',':','/',0};
-static const WCHAR invalid_url6[] = {'h','t','t','p',':','/','/','l','o','c','a','l','h','o','s','t',':','0','/',0};
-
 static ULONG (WINAPI *pHttpAddUrlToUrlGroup)(HTTP_URL_GROUP_ID id, const WCHAR *url, HTTP_URL_CONTEXT context, ULONG reserved);
 static ULONG (WINAPI *pHttpCreateServerSession)(HTTPAPI_VERSION version, HTTP_SERVER_SESSION_ID *session_id, ULONG reserved);
 static ULONG (WINAPI *pHttpCreateRequestQueue)(HTTPAPI_VERSION version, const WCHAR *name, SECURITY_ATTRIBUTES *sa, ULONG flags, HANDLE *handle);
@@ -205,17 +198,17 @@ static void test_v1_server(void)
 
     ret = HttpAddUrl(NULL, L"http://localhost:50000/", NULL);
     ok(ret == ERROR_INVALID_HANDLE || ret == ERROR_INVALID_PARAMETER /* < Vista */, "Got error %u.\n", ret);
-    ret = HttpAddUrl(queue, invalid_url1, NULL);
+    ret = HttpAddUrl(queue, L"http://localhost:50000", NULL);
     ok(ret == ERROR_INVALID_PARAMETER, "Got error %u.\n", ret);
-    ret = HttpAddUrl(queue, invalid_url2, NULL);
+    ret = HttpAddUrl(queue, L"localhost:50000", NULL);
     ok(ret == ERROR_INVALID_PARAMETER, "Got error %u.\n", ret);
-    ret = HttpAddUrl(queue, invalid_url3, NULL);
+    ret = HttpAddUrl(queue, L"localhost:50000/", NULL);
     ok(ret == ERROR_INVALID_PARAMETER, "Got error %u.\n", ret);
-    ret = HttpAddUrl(queue, invalid_url4, NULL);
+    ret = HttpAddUrl(queue, L"http://localhost/", NULL);
     ok(ret == ERROR_INVALID_PARAMETER, "Got error %u.\n", ret);
-    ret = HttpAddUrl(queue, invalid_url5, NULL);
+    ret = HttpAddUrl(queue, L"http://localhost:/", NULL);
     ok(ret == ERROR_INVALID_PARAMETER, "Got error %u.\n", ret);
-    ret = HttpAddUrl(queue, invalid_url6, NULL);
+    ret = HttpAddUrl(queue, L"http://localhost:0/", NULL);
     ok(ret == ERROR_INVALID_PARAMETER, "Got error %u.\n", ret);
     port = add_url_v1(queue);
     swprintf(url, ARRAY_SIZE(url), L"http://localhost:%u/", port);
@@ -1273,17 +1266,17 @@ static void test_v2_server(void)
 
     port = add_url_v2(group);
 
-    ret = pHttpAddUrlToUrlGroup(group, invalid_url1, 0xdeadbeef, 0);
+    ret = pHttpAddUrlToUrlGroup(group, L"http://localhost:50000", 0xdeadbeef, 0);
     todo_wine ok(ret == ERROR_INVALID_PARAMETER, "Got error %u.\n", ret);
-    ret = pHttpAddUrlToUrlGroup(group, invalid_url2, 0xdeadbeef, 0);
+    ret = pHttpAddUrlToUrlGroup(group, L"localhost:50000", 0xdeadbeef, 0);
     todo_wine ok(ret == ERROR_INVALID_PARAMETER, "Got error %u.\n", ret);
-    ret = pHttpAddUrlToUrlGroup(group, invalid_url3, 0xdeadbeef, 0);
+    ret = pHttpAddUrlToUrlGroup(group, L"localhost:50000/", 0xdeadbeef, 0);
     todo_wine ok(ret == ERROR_INVALID_PARAMETER, "Got error %u.\n", ret);
-    ret = pHttpAddUrlToUrlGroup(group, invalid_url4, 0xdeadbeef, 0);
+    ret = pHttpAddUrlToUrlGroup(group, L"http://localhost/", 0xdeadbeef, 0);
     todo_wine ok(ret == ERROR_INVALID_PARAMETER, "Got error %u.\n", ret);
-    ret = pHttpAddUrlToUrlGroup(group, invalid_url5, 0xdeadbeef, 0);
+    ret = pHttpAddUrlToUrlGroup(group, L"http://localhost:/", 0xdeadbeef, 0);
     todo_wine ok(ret == ERROR_INVALID_PARAMETER, "Got error %u.\n", ret);
-    ret = pHttpAddUrlToUrlGroup(group, invalid_url6, 0xdeadbeef, 0);
+    ret = pHttpAddUrlToUrlGroup(group, L"http://localhost:0/", 0xdeadbeef, 0);
     todo_wine ok(ret == ERROR_INVALID_PARAMETER, "Got error %u.\n", ret);
     swprintf(url, ARRAY_SIZE(url), L"http://localhost:%u/", port);
     ret = pHttpAddUrlToUrlGroup(group, url, 0xdeadbeef, 0);
