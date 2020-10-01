@@ -548,9 +548,6 @@ static	LRESULT ADPCM_DriverDetails(PACMDRIVERDETAILSW add)
  */
 static	LRESULT	ADPCM_FormatTagDetails(PACMFORMATTAGDETAILSW aftd, DWORD dwQuery)
 {
-    static const WCHAR szPcm[]={'P','C','M',0};
-    static const WCHAR szImaAdPcm[]={'I','M','A',' ','A','D','P','C','M',0};
-
     switch (dwQuery)
     {
     case ACM_FORMATTAGDETAILSF_INDEX:
@@ -583,13 +580,13 @@ static	LRESULT	ADPCM_FormatTagDetails(PACMFORMATTAGDETAILSW aftd, DWORD dwQuery)
 	aftd->dwFormatTag = WAVE_FORMAT_PCM;
 	aftd->cbFormatSize = sizeof(PCMWAVEFORMAT);
 	aftd->cStandardFormats = ARRAY_SIZE(PCM_Formats);
-        lstrcpyW(aftd->szFormatTag, szPcm);
+        lstrcpyW(aftd->szFormatTag, L"PCM");
         break;
     case 1:
 	aftd->dwFormatTag = WAVE_FORMAT_IMA_ADPCM;
 	aftd->cbFormatSize = sizeof(IMAADPCMWAVEFORMAT);
 	aftd->cStandardFormats = ARRAY_SIZE(ADPCM_Formats);
-        lstrcpyW(aftd->szFormatTag, szImaAdPcm);
+        lstrcpyW(aftd->szFormatTag, L"IMA ADPCM");
 	break;
     }
     return MMSYSERR_NOERROR;
