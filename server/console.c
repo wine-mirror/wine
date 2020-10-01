@@ -2715,10 +2715,11 @@ DECL_HANDLER(get_next_console_request)
     if (ioctl)
     {
         unsigned int status = req->status;
+        if (status == STATUS_PENDING) status = STATUS_INVALID_PARAMETER;
         if (ioctl->async)
         {
             iosb = async_get_iosb( ioctl->async );
-            iosb->status = req->status;
+            iosb->status = status;
             iosb->out_size = min( iosb->out_size, get_req_data_size() );
             if (iosb->out_size)
             {
