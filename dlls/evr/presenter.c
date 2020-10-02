@@ -618,6 +618,17 @@ static HRESULT WINAPI video_presenter_getservice_GetService(IMFGetService *iface
     if (IsEqualGUID(&MR_VIDEO_ACCELERATION_SERVICE, service))
         return IDirect3DDeviceManager9_QueryInterface(presenter->device_manager, riid, obj);
 
+    if (IsEqualGUID(&MR_VIDEO_RENDER_SERVICE, service))
+    {
+        if (IsEqualIID(riid, &IID_IMFVideoDisplayControl))
+            return IMFVideoPresenter_QueryInterface(&presenter->IMFVideoPresenter_iface, riid, obj);
+        else
+        {
+            FIXME("Unsupported interface %s.\n", debugstr_guid(riid));
+            return E_NOTIMPL;
+        }
+    }
+
     FIXME("Unimplemented service %s.\n", debugstr_guid(service));
 
     return E_NOTIMPL;
