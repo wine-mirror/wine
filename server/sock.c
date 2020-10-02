@@ -1108,6 +1108,27 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         return 0;
     }
 
+    case IOCTL_AFD_ACCEPT_INTO:
+    {
+        static const int access = FILE_READ_ATTRIBUTES | FILE_WRITE_ATTRIBUTES | FILE_READ_DATA;
+        struct sock *acceptsock;
+        obj_handle_t handle;
+
+        if (get_req_data_size() != sizeof(handle))
+        {
+            set_error( STATUS_BUFFER_TOO_SMALL );
+            return 0;
+        }
+        handle = *(obj_handle_t *)get_req_data();
+
+        if (!(acceptsock = (struct sock *)get_handle_obj( current->process, handle, access, &sock_ops )))
+            return 0;
+        if (accept_into_socket( sock, acceptsock ))
+            acceptsock->wparam = handle;
+        release_object( acceptsock );
+        return 0;
+    }
+
     case IOCTL_AFD_ADDRESS_LIST_CHANGE:
         if ((sock->state & FD_WINE_NONBLOCKING) && async_is_blocking( async ))
         {
