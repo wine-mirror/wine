@@ -533,6 +533,7 @@ SOURCES = \
 	objbase.h \
 	objectarray.idl \
 	objidl.idl \
+	objidlbase.idl \
 	objsafe.idl \
 	objsel.h \
 	ocidl.idl \
