@@ -2517,13 +2517,11 @@ static NTSTATUS WS2_async_accept( void *user, IO_STATUS_BLOCK *iosb, NTSTATUS st
 
     if (status == STATUS_ALERTED)
     {
-        SERVER_START_REQ( accept_into_socket )
-        {
-            req->lhandle = wine_server_obj_handle( wsa->listen_socket );
-            req->ahandle = wine_server_obj_handle( wsa->accept_socket );
-            status = wine_server_call( req );
-        }
-        SERVER_END_REQ;
+        obj_handle_t accept_handle = wine_server_obj_handle( wsa->accept_socket );
+        IO_STATUS_BLOCK io;
+
+        status = NtDeviceIoControlFile( wsa->listen_socket, NULL, NULL, NULL, &io, IOCTL_AFD_ACCEPT_INTO,
+                                        &accept_handle, sizeof(accept_handle), NULL, 0 );
 
         if (NtStatusToWSAError( status ) == WSAEWOULDBLOCK)
             return STATUS_PENDING;
