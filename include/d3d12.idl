@@ -2139,17 +2139,6 @@ interface ID3D12Device : ID3D12Object
 }
 
 [
-    uuid(344488b7-6846-474b-b989-f027448245e0),
-    object,
-    local,
-    pointer_default(unique)
-]
-interface ID3D12Debug : IUnknown
-{
-    void EnableDebugLayer();
-}
-
-[
     uuid(34ab647b-3cc8-46ac-841b-c0965645c046),
     object,
     local,

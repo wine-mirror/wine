@@ -24,6 +24,7 @@
 #include "dxgi1_6.h"
 #include "d3d11.h"
 #include "d3d12.h"
+#include "d3d12sdklayers.h"
 #include "winternl.h"
 #include "ddk/d3dkmthk.h"
 #include "wine/heap.h"
