@@ -2771,9 +2771,11 @@ static int WS2_register_async_shutdown( SOCKET s, int type )
 SOCKET WINAPI WS_accept(SOCKET s, struct WS_sockaddr *addr, int *addrlen32)
 {
     DWORD err;
-    SOCKET as;
     int fd;
     BOOL is_blocking;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+    obj_handle_t accept_handle;
 
     TRACE("socket %04lx\n", s );
     err = sock_is_blocking(s, &is_blocking);
@@ -2782,18 +2784,12 @@ SOCKET WINAPI WS_accept(SOCKET s, struct WS_sockaddr *addr, int *addrlen32)
 
     for (;;)
     {
-        /* try accepting first (if there is a deferred connection) */
-        SERVER_START_REQ( accept_socket )
+        status = NtDeviceIoControlFile( SOCKET2HANDLE(s), NULL, NULL, NULL, &io, IOCTL_AFD_ACCEPT,
+                                        NULL, 0, &accept_handle, sizeof(accept_handle) );
+        if (!status)
         {
-            req->lhandle    = wine_server_obj_handle( SOCKET2HANDLE(s) );
-            req->access     = GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE;
-            req->attributes = OBJ_INHERIT;
-            err = NtStatusToWSAError( wine_server_call( req ));
-            as = HANDLE2SOCKET( wine_server_ptr_handle( reply->handle ));
-        }
-        SERVER_END_REQ;
-        if (!err)
-        {
+            SOCKET as = HANDLE2SOCKET(wine_server_ptr_handle( accept_handle ));
+
             if (!socket_list_add(as))
             {
                 CloseHandle(SOCKET2HANDLE(as));
@@ -2807,6 +2803,7 @@ SOCKET WINAPI WS_accept(SOCKET s, struct WS_sockaddr *addr, int *addrlen32)
             TRACE("\taccepted %04lx\n", as);
             return as;
         }
+        err = NtStatusToWSAError( status );
         if (!is_blocking) break;
         if (err != WSAEWOULDBLOCK) break;
         fd = get_sock_fd( s, FILE_READ_DATA, NULL );
