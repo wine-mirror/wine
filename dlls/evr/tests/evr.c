@@ -1056,20 +1056,17 @@ static void test_default_presenter(void)
 
     hwnd2 = hwnd;
     hr = IMFVideoDisplayControl_GetVideoWindow(display_control, &hwnd2);
-todo_wine {
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(hwnd2 == NULL, "Unexpected window %p.\n", hwnd2);
-}
+
     hr = IMFVideoDisplayControl_SetVideoWindow(display_control, hwnd);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hwnd2 = NULL;
     hr = IMFVideoDisplayControl_GetVideoWindow(display_control, &hwnd2);
-todo_wine {
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(hwnd2 == hwnd, "Unexpected window %p.\n", hwnd2);
-}
+
     hr = IDirect3DDeviceManager9_CloseDeviceHandle(dm, handle);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 

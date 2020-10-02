@@ -58,6 +58,7 @@ struct video_presenter
 
     IDirect3DDeviceManager9 *device_manager;
     UINT reset_token;
+    HWND video_window;
     unsigned int state;
     CRITICAL_SECTION cs;
 };
@@ -497,16 +498,26 @@ static HRESULT WINAPI video_presenter_control_GetAspectRatioMode(IMFVideoDisplay
 
 static HRESULT WINAPI video_presenter_control_SetVideoWindow(IMFVideoDisplayControl *iface, HWND window)
 {
-    FIXME("%p, %p.\n", iface, window);
+    struct video_presenter *presenter = impl_from_IMFVideoDisplayControl(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, window);
+
+    EnterCriticalSection(&presenter->cs);
+    presenter->video_window = window;
+    LeaveCriticalSection(&presenter->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI video_presenter_control_GetVideoWindow(IMFVideoDisplayControl *iface, HWND *window)
 {
-    FIXME("%p, %p.\n", iface, window);
+    struct video_presenter *presenter = impl_from_IMFVideoDisplayControl(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, window);
+
+    *window = presenter->video_window;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI video_presenter_control_RepaintVideo(IMFVideoDisplayControl *iface)
