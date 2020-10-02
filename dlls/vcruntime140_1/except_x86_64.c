@@ -657,6 +657,17 @@ static inline _se_translator_function get_se_translator(void)
     return __current_exception()[-2];
 }
 
+static void check_noexcept( PEXCEPTION_RECORD rec, const cxx_function_descr *descr )
+{
+    if (!(descr->header & FUNC_DESCR_IS_CATCH) &&
+            rec->ExceptionCode == CXX_EXCEPTION &&
+            (descr->header & FUNC_DESCR_NO_EXCEPT))
+    {
+        ERR("noexcept function propagating exception\n");
+        terminate();
+    }
+}
+
 static DWORD cxx_frame_handler4(EXCEPTION_RECORD *rec, ULONG64 frame,
         CONTEXT *context, DISPATCHER_CONTEXT *dispatch,
         const cxx_function_descr *descr, int trylevel)
@@ -683,7 +694,11 @@ static DWORD cxx_frame_handler4(EXCEPTION_RECORD *rec, ULONG64 frame,
         cxx_local_unwind4(orig_frame, dispatch, descr, trylevel, last_level);
         return ExceptionContinueSearch;
     }
-    if (!descr->tryblock_map) return ExceptionContinueSearch;
+    if (!descr->tryblock_map)
+    {
+        check_noexcept(rec, descr);
+        return ExceptionContinueSearch;
+    }
 
     if (rec->ExceptionCode == CXX_EXCEPTION)
     {
@@ -733,6 +748,7 @@ static DWORD cxx_frame_handler4(EXCEPTION_RECORD *rec, ULONG64 frame,
     }
 
     find_catch_block4(rec, context, NULL, frame, dispatch, descr, exc_type, orig_frame, trylevel);
+    check_noexcept(rec, descr);
     return ExceptionContinueSearch;
 }
 
@@ -759,7 +775,7 @@ EXCEPTION_DISPOSITION __cdecl __CxxFrameHandler4(EXCEPTION_RECORD *rec,
         return ExceptionContinueSearch;  /* handle only c++ exceptions */
 
     if (descr.header & ~(FUNC_DESCR_IS_CATCH | FUNC_DESCR_UNWIND_MAP |
-                FUNC_DESCR_TRYBLOCK_MAP | FUNC_DESCR_EHS))
+                FUNC_DESCR_TRYBLOCK_MAP | FUNC_DESCR_EHS | FUNC_DESCR_NO_EXCEPT))
     {
         FIXME("unsupported flags: %x\n", descr.header);
         return ExceptionContinueSearch;
