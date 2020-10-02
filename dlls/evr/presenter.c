@@ -563,6 +563,48 @@ static HRESULT WINAPI video_presenter_control_GetCurrentImage(IMFVideoDisplayCon
     return E_NOTIMPL;
 }
 
+static HRESULT WINAPI video_presenter_control_SetBorderColor(IMFVideoDisplayControl *iface, COLORREF color)
+{
+    FIXME("%p, %#x.\n", iface, color);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_presenter_control_GetBorderColor(IMFVideoDisplayControl *iface, COLORREF *color)
+{
+    FIXME("%p, %p.\n", iface, color);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_presenter_control_SetRenderingPrefs(IMFVideoDisplayControl *iface, DWORD flags)
+{
+    FIXME("%p, %#x.\n", iface, flags);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_presenter_control_GetRenderingPrefs(IMFVideoDisplayControl *iface, DWORD *flags)
+{
+    FIXME("%p, %p.\n", iface, flags);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_presenter_control_SetFullscreen(IMFVideoDisplayControl *iface, BOOL fullscreen)
+{
+    FIXME("%p, %d.\n", iface, fullscreen);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_presenter_control_GetFullscreen(IMFVideoDisplayControl *iface, BOOL *fullscreen)
+{
+    FIXME("%p, %p.\n", iface, fullscreen);
+
+    return E_NOTIMPL;
+}
+
 static const IMFVideoDisplayControlVtbl video_presenter_control_vtbl =
 {
     video_presenter_control_QueryInterface,
@@ -578,6 +620,12 @@ static const IMFVideoDisplayControlVtbl video_presenter_control_vtbl =
     video_presenter_control_GetVideoWindow,
     video_presenter_control_RepaintVideo,
     video_presenter_control_GetCurrentImage,
+    video_presenter_control_SetBorderColor,
+    video_presenter_control_GetBorderColor,
+    video_presenter_control_SetRenderingPrefs,
+    video_presenter_control_GetRenderingPrefs,
+    video_presenter_control_SetFullscreen,
+    video_presenter_control_GetFullscreen,
 };
 
 static HRESULT WINAPI video_presenter_rate_support_QueryInterface(IMFRateSupport *iface, REFIID riid, void **obj)
