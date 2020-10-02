@@ -5327,9 +5327,12 @@ static void test_multi_adapter(void)
     unsigned int output_count = 0, expected_output_count = 0;
     unsigned int adapter_index, output_index, device_index;
     DXGI_OUTPUT_DESC old_output_desc, output_desc;
+    DXGI_ADAPTER_DESC1 adapter_desc1;
+    DXGI_ADAPTER_DESC adapter_desc;
     DISPLAY_DEVICEW display_device;
     MONITORINFO monitor_info;
     DEVMODEW old_mode, mode;
+    IDXGIAdapter1 *adapter1;
     IDXGIFactory *factory;
     IDXGIAdapter *adapter;
     IDXGIOutput *output;
@@ -5531,6 +5534,48 @@ static void test_multi_adapter(void)
         IDXGIAdapter_Release(adapter);
     }
 
+    /* Windows 8+ always have a WARP adapter present at the end. */
+    todo_wine ok(adapter_index >= 2 || broken(adapter_index < 2) /* Windows 7 and before */,
+            "Got unexpected adapter count %u.\n", adapter_index);
+    if (adapter_index < 2)
+    {
+        todo_wine win_skip("WARP adapter missing, skipping tests.\n");
+        goto done;
+    }
+
+    hr = IDXGIFactory_EnumAdapters(factory, adapter_index - 1, &adapter);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDXGIAdapter_GetDesc(adapter, &adapter_desc);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(!lstrcmpW(adapter_desc.Description, L"Microsoft Basic Render Driver"),
+            "Got unexpected description %s.\n", wine_dbgstr_w(adapter_desc.Description));
+    todo_wine ok(adapter_desc.VendorId == 0x1414,
+            "Got unexpected vendor ID %#x.\n", adapter_desc.VendorId);
+    todo_wine ok(adapter_desc.DeviceId == 0x008c,
+            "Got unexpected device ID %#x.\n", adapter_desc.DeviceId);
+    ok(adapter_desc.SubSysId == 0x0000,
+            "Got unexpected sub-system ID %#x.\n", adapter_desc.SubSysId);
+    ok(adapter_desc.Revision == 0x0000,
+            "Got unexpected revision %#x.\n", adapter_desc.Revision);
+    todo_wine ok(!adapter_desc.DedicatedVideoMemory,
+            "Got unexpected DedicatedVideoMemory %#lx.\n", adapter_desc.DedicatedVideoMemory);
+    ok(!adapter_desc.DedicatedSystemMemory,
+            "Got unexpected DedicatedSystemMemory %#lx.\n", adapter_desc.DedicatedSystemMemory);
+
+    hr = IDXGIAdapter_QueryInterface(adapter, &IID_IDXGIAdapter1, (void **)&adapter1);
+    ok(hr == S_OK || broken(hr == E_NOINTERFACE), "Got unexpected hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        hr = IDXGIAdapter1_GetDesc1(adapter1, &adapter_desc1);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        todo_wine ok(adapter_desc1.Flags == DXGI_ADAPTER_FLAG_SOFTWARE,
+                "Got unexpected flags %#x.\n", adapter_desc1.Flags);
+        IDXGIAdapter1_Release(adapter1);
+    }
+
+    IDXGIAdapter_Release(adapter);
+
+done:
     IDXGIFactory_Release(factory);
 
     expected_output_count = GetSystemMetrics(SM_CMONITORS);
