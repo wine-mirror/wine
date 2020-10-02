@@ -35,6 +35,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winevdm);
 
+#define DOSBOX "dosbox"
 
 /*** PIF file structures ***/
 #include "pshpack1.h"
@@ -118,7 +119,7 @@ static char *find_dosbox(void)
 
     envpath_len = strlen( envpath );
     path = HeapAlloc( GetProcessHeap(), 0, envpath_len + 1 );
-    buffer = HeapAlloc( GetProcessHeap(), 0, envpath_len + sizeof("/dosbox") );
+    buffer = HeapAlloc( GetProcessHeap(), 0, envpath_len + strlen(DOSBOX) + 2 );
     strcpy( path, envpath );
 
     p = path;
@@ -130,7 +131,7 @@ static char *find_dosbox(void)
         while (*p && *p != ':') p++;
         if (*p == ':') *p++ = 0;
         strcpy( buffer, dir );
-        strcat( buffer, "/dosbox" );
+        strcat( buffer, "/" DOSBOX );
         if (!stat( buffer, &st ))
         {
             HeapFree( GetProcessHeap(), 0, path );
