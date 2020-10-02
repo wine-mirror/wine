@@ -1383,16 +1383,6 @@ enum server_fd_type
 @END
 
 
-/* Accept a socket */
-@REQ(accept_socket)
-    obj_handle_t lhandle;       /* handle to the listening socket */
-    unsigned int access;        /* wanted access rights */
-    unsigned int attributes;    /* object attributes */
-@REPLY
-    obj_handle_t handle;        /* handle to the new socket */
-@END
-
-
 /* Accept into an initialized socket */
 @REQ(accept_into_socket)
     obj_handle_t lhandle;       /* handle to the listening socket */
