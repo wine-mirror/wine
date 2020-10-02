@@ -970,6 +970,7 @@ static void test_default_presenter(void)
     D3DPRESENT_PARAMETERS present_params = { 0 };
     IMFVideoDisplayControl *display_control;
     IDirect3DSwapChain9 *swapchain;
+    MFVideoNormalizedRect src_rect;
     IMFVideoPresenter *presenter;
     IMFRateSupport *rate_support;
     IDirect3DDevice9 *d3d_device;
@@ -977,6 +978,7 @@ static void test_default_presenter(void)
     IMFVideoDeviceID *deviceid;
     IMFGetService *gs;
     HWND hwnd, hwnd2;
+    RECT dst_rect;
     HANDLE handle;
     IUnknown *unk;
     float rate;
@@ -1051,6 +1053,7 @@ static void test_default_presenter(void)
     hr = IDirect3DDeviceManager9_UnlockDevice(dm, handle, FALSE);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
+    /* Video window */
     hwnd = create_window();
     ok(!!hwnd, "Failed to create a test window.\n");
 
@@ -1066,6 +1069,69 @@ static void test_default_presenter(void)
     hr = IMFVideoDisplayControl_GetVideoWindow(display_control, &hwnd2);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(hwnd2 == hwnd, "Unexpected window %p.\n", hwnd2);
+
+    /* Video position */
+    hr = IMFVideoDisplayControl_GetVideoPosition(display_control, NULL, &dst_rect);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoDisplayControl_GetVideoPosition(display_control, &src_rect, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    SetRect(&dst_rect, 1, 2, 3, 4);
+    hr = IMFVideoDisplayControl_GetVideoPosition(display_control, &src_rect, &dst_rect);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(src_rect.left == 0.0f && src_rect.top == 0.0f && src_rect.right == 1.0f &&
+            src_rect.bottom == 1.0f, "Unexpected source rectangle.\n");
+    ok(dst_rect.left == 0 && dst_rect.right == 0 && dst_rect.top == 0 && dst_rect.bottom == 0,
+            "Unexpected destination rectangle %s.\n", wine_dbgstr_rect(&dst_rect));
+
+    hr = IMFVideoDisplayControl_SetVideoPosition(display_control, NULL, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    SetRect(&dst_rect, 0, 0, 10, 10);
+    hr = IMFVideoDisplayControl_SetVideoPosition(display_control, NULL, &dst_rect);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    SetRect(&dst_rect, 1, 2, 3, 4);
+    hr = IMFVideoDisplayControl_GetVideoPosition(display_control, &src_rect, &dst_rect);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(dst_rect.left == 0 && dst_rect.right == 10 && dst_rect.top == 0 && dst_rect.bottom == 10,
+            "Unexpected destination rectangle %s.\n", wine_dbgstr_rect(&dst_rect));
+
+    src_rect.left = src_rect.top = 0.0f;
+    src_rect.right = 2.0f;
+    src_rect.bottom = 1.0f;
+    hr = IMFVideoDisplayControl_SetVideoPosition(display_control, &src_rect, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    src_rect.left = -0.1f;
+    src_rect.top = 0.0f;
+    src_rect.right = 0.9f;
+    src_rect.bottom = 1.0f;
+    hr = IMFVideoDisplayControl_SetVideoPosition(display_control, &src_rect, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    src_rect.left = 0.1f;
+    src_rect.top = 0.2f;
+    src_rect.right = 0.8f;
+    src_rect.bottom = 0.9f;
+    hr = IMFVideoDisplayControl_SetVideoPosition(display_control, &src_rect, NULL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoDisplayControl_GetVideoPosition(display_control, &src_rect, &dst_rect);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(src_rect.left == 0.1f && src_rect.top == 0.2f && src_rect.right == 0.8f &&
+            src_rect.bottom == 0.9f, "Unexpected source rectangle.\n");
+
+    SetRect(&dst_rect, 1, 2, 999, 1000);
+    hr = IMFVideoDisplayControl_SetVideoPosition(display_control, NULL, &dst_rect);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    SetRect(&dst_rect, 0, 1, 3, 4);
+    hr = IMFVideoDisplayControl_GetVideoPosition(display_control, &src_rect, &dst_rect);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(dst_rect.left == 1 && dst_rect.right == 999 && dst_rect.top == 2 && dst_rect.bottom == 1000,
+            "Unexpected destination rectangle %s.\n", wine_dbgstr_rect(&dst_rect));
 
     hr = IDirect3DDeviceManager9_CloseDeviceHandle(dm, handle);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);

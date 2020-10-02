@@ -59,6 +59,8 @@ struct video_presenter
     IDirect3DDeviceManager9 *device_manager;
     UINT reset_token;
     HWND video_window;
+    MFVideoNormalizedRect src_rect;
+    RECT dst_rect;
     unsigned int state;
     CRITICAL_SECTION cs;
 };
@@ -467,19 +469,45 @@ static HRESULT WINAPI video_presenter_control_GetIdealVideoSize(IMFVideoDisplayC
 }
 
 static HRESULT WINAPI video_presenter_control_SetVideoPosition(IMFVideoDisplayControl *iface,
-        const MFVideoNormalizedRect *source, const RECT *dest)
+        const MFVideoNormalizedRect *src_rect, const RECT *dst_rect)
 {
-    FIXME("%p, %p, %p.\n", iface, source, dest);
+    struct video_presenter *presenter = impl_from_IMFVideoDisplayControl(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %s.\n", iface, src_rect, wine_dbgstr_rect(dst_rect));
+
+    if (!src_rect && !dst_rect)
+        return E_POINTER;
+
+    if (src_rect && (src_rect->left < 0.0f || src_rect->top < 0.0f ||
+                src_rect->right > 1.0f || src_rect->bottom > 1.0f))
+        return E_INVALIDARG;
+
+    EnterCriticalSection(&presenter->cs);
+    if (src_rect)
+        presenter->src_rect = *src_rect;
+    if (dst_rect)
+        presenter->dst_rect = *dst_rect;
+    LeaveCriticalSection(&presenter->cs);
+
+    return S_OK;
 }
 
-static HRESULT WINAPI video_presenter_control_GetVideoPosition(IMFVideoDisplayControl *iface, MFVideoNormalizedRect *source,
-        RECT *dest)
+static HRESULT WINAPI video_presenter_control_GetVideoPosition(IMFVideoDisplayControl *iface, MFVideoNormalizedRect *src_rect,
+        RECT *dst_rect)
 {
-    FIXME("%p, %p, %p.\n", iface, source, dest);
+    struct video_presenter *presenter = impl_from_IMFVideoDisplayControl(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %p.\n", iface, src_rect, dst_rect);
+
+    if (!src_rect || !dst_rect)
+        return E_POINTER;
+
+    EnterCriticalSection(&presenter->cs);
+    *src_rect = presenter->src_rect;
+    *dst_rect = presenter->dst_rect;
+    LeaveCriticalSection(&presenter->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI video_presenter_control_SetAspectRatioMode(IMFVideoDisplayControl *iface, DWORD mode)
@@ -718,6 +746,7 @@ HRESULT evr_presenter_create(IUnknown *outer, void **out)
     object->IUnknown_inner.lpVtbl = &video_presenter_inner_vtbl;
     object->outer_unk = outer ? outer : &object->IUnknown_inner;
     object->refcount = 1;
+    object->src_rect.right = object->src_rect.bottom = 1.0f;
     InitializeCriticalSection(&object->cs);
 
     if (FAILED(hr = DXVA2CreateDirect3DDeviceManager9(&object->reset_token, &object->device_manager)))
