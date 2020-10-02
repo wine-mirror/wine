@@ -1695,20 +1695,6 @@ struct unlock_file_reply
 
 
 
-struct accept_into_socket_request
-{
-    struct request_header __header;
-    obj_handle_t lhandle;
-    obj_handle_t ahandle;
-    char __pad_20[4];
-};
-struct accept_into_socket_reply
-{
-    struct reply_header __header;
-};
-
-
-
 struct set_socket_event_request
 {
     struct request_header __header;
@@ -5481,7 +5467,6 @@ enum request
     REQ_get_volume_info,
     REQ_lock_file,
     REQ_unlock_file,
-    REQ_accept_into_socket,
     REQ_set_socket_event,
     REQ_get_socket_event,
     REQ_get_socket_info,
@@ -5768,7 +5753,6 @@ union generic_request
     struct get_volume_info_request get_volume_info_request;
     struct lock_file_request lock_file_request;
     struct unlock_file_request unlock_file_request;
-    struct accept_into_socket_request accept_into_socket_request;
     struct set_socket_event_request set_socket_event_request;
     struct get_socket_event_request get_socket_event_request;
     struct get_socket_info_request get_socket_info_request;
@@ -6053,7 +6037,6 @@ union generic_reply
     struct get_volume_info_reply get_volume_info_reply;
     struct lock_file_reply lock_file_reply;
     struct unlock_file_reply unlock_file_reply;
-    struct accept_into_socket_reply accept_into_socket_reply;
     struct set_socket_event_reply set_socket_event_reply;
     struct get_socket_event_reply get_socket_event_reply;
     struct get_socket_info_reply get_socket_info_reply;
@@ -6283,7 +6266,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 648
+#define SERVER_PROTOCOL_VERSION 649
 
 /* ### protocol_version end ### */
 

@@ -1446,29 +1446,6 @@ struct object *create_socket_device( struct object *root, const struct unicode_s
     return create_named_object( root, &socket_device_ops, name, attr, sd );
 }
 
-/* accept a socket into an initialized socket */
-DECL_HANDLER(accept_into_socket)
-{
-    struct sock *sock, *acceptsock;
-    const int all_attributes = FILE_READ_ATTRIBUTES|FILE_WRITE_ATTRIBUTES|FILE_READ_DATA;
-
-    if (!(sock = (struct sock *)get_handle_obj( current->process, req->lhandle,
-                                                all_attributes, &sock_ops)))
-        return;
-
-    if (!(acceptsock = (struct sock *)get_handle_obj( current->process, req->ahandle,
-                                                      all_attributes, &sock_ops)))
-    {
-        release_object( sock );
-        return;
-    }
-
-    if (accept_into_socket( sock, acceptsock ))
-        acceptsock->wparam = req->ahandle;  /* wparam for message is the socket handle */
-    release_object( acceptsock );
-    release_object( sock );
-}
-
 /* set socket event parameters */
 DECL_HANDLER(set_socket_event)
 {
