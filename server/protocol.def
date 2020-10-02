@@ -787,6 +787,15 @@ struct rawinput_device
     user_handle_t  target;
 };
 
+typedef struct
+{
+    int x;
+    int y;
+    unsigned int time;
+    int __pad;
+    lparam_t info;
+} cursor_pos_t;
+
 /****************************************************************/
 /* Request declarations */
 
@@ -3550,6 +3559,12 @@ struct handle_info
 #define SET_CURSOR_POS    0x04
 #define SET_CURSOR_CLIP   0x08
 #define SET_CURSOR_NOCLIP 0x10
+
+/* Get the history of the 64 last cursor positions */
+@REQ(get_cursor_history)
+@REPLY
+    VARARG(history,cursor_positions);
+@END
 
 
 /* Batch read rawinput message data */

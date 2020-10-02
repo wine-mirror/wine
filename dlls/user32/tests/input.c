@@ -1473,14 +1473,18 @@ done:
     SetCursorPos(pt_org.x, pt_org.y);
 }
 
-static void test_GetMouseMovePointsEx(void)
+static void test_GetMouseMovePointsEx(const char *argv0)
 {
 #define BUFLIM  64
 #define MYERROR 0xdeadbeef
-    int count, retval;
+    PROCESS_INFORMATION process_info;
+    STARTUPINFOA startup_info;
+    char path[MAX_PATH];
+    int i, count, retval;
     MOUSEMOVEPOINT in;
     MOUSEMOVEPOINT out[200];
     POINT point;
+    TEST_INPUT input;
 
     /* Get a valid content for the input struct */
     if(!GetCursorPos(&point)) {
@@ -1605,8 +1609,192 @@ static void test_GetMouseMovePointsEx(void)
     ok(GetLastError() == ERROR_INVALID_PARAMETER || GetLastError() == MYERROR,
        "expected error ERROR_INVALID_PARAMETER, got %u\n", GetLastError());
 
+    /* more than 64 to be sure we wrap around */
+    for (i = 0; i < 67; i++)
+    {
+        in.x = i;
+        in.y = i*2;
+        SetCursorPos( in.x, in.y );
+    }
+
+    SetLastError( MYERROR );
+    retval = pGetMouseMovePointsEx( sizeof(MOUSEMOVEPOINT), &in, out, BUFLIM, GMMP_USE_DISPLAY_POINTS );
+    ok( retval == 64, "expected to get 64 mouse move points but got %d\n", retval );
+    ok( GetLastError() == MYERROR, "expected error to stay %x, got %x\n", MYERROR, GetLastError() );
+
+    for (i = 0; i < retval; i++)
+    {
+        ok( out[i].x == in.x && out[i].y == in.y, "wrong position %d, expected %dx%d got %dx%d\n", i, in.x, in.y, out[i].x, out[i].y );
+        in.x--;
+        in.y -= 2;
+    }
+
+    in.x = 1500;
+    in.y = 1500;
+    SetLastError( MYERROR );
+    retval = pGetMouseMovePointsEx( sizeof(MOUSEMOVEPOINT), &in, out, BUFLIM, GMMP_USE_DISPLAY_POINTS );
+    ok( retval == -1, "expected to get -1 but got %d\n", retval );
+    ok( GetLastError() == ERROR_POINT_NOT_FOUND, "expected error to be set to %x, got %x\n", ERROR_POINT_NOT_FOUND, GetLastError() );
+
+    /* make sure there's no deduplication */
+    in.x = 6;
+    in.y = 6;
+    SetCursorPos( in.x, in.y );
+    SetCursorPos( in.x, in.y );
+    retval = pGetMouseMovePointsEx( sizeof(MOUSEMOVEPOINT), &in, out, BUFLIM, GMMP_USE_DISPLAY_POINTS );
+    ok( retval == 64, "expected to get 64 mouse move points but got %d\n", retval );
+    ok( out[0].x == 6 && out[0].y == 6, "expected cursor position to be 6x6 but got %d %d\n", out[0].x, out[0].y );
+    ok( out[1].x == 6 && out[1].y == 6, "expected cursor position to be 6x6 but got %d %d\n", out[1].x, out[1].y );
+
+    /* make sure 2 events are distinguishable by their timestamps */
+    in.x = 150;
+    in.y = 75;
+    SetCursorPos( 30, 30 );
+    SetCursorPos( in.x, in.y );
+    SetCursorPos( 150, 150 );
+    Sleep( 3 );
+    SetCursorPos( in.x, in.y );
+
+    retval = pGetMouseMovePointsEx( sizeof(MOUSEMOVEPOINT), &in, out, BUFLIM, GMMP_USE_DISPLAY_POINTS );
+    ok( retval == 64, "expected to get 64 mouse move points but got %d\n", retval );
+    ok( out[0].x == 150 && out[0].y == 75, "expected cursor position to be 150x75 but got %d %d\n", out[0].x, out[0].y );
+    ok( out[1].x == 150 && out[1].y == 150, "expected cursor position to be 150x150 but got %d %d\n", out[1].x, out[1].y );
+    ok( out[2].x == 150 && out[2].y == 75, "expected cursor position to be 150x75 but got %d %d\n", out[2].x, out[2].y );
+
+    in.time = out[2].time;
+    retval = pGetMouseMovePointsEx( sizeof(MOUSEMOVEPOINT), &in, out, BUFLIM, GMMP_USE_DISPLAY_POINTS );
+    ok( retval == 62, "expected to get 62 mouse move points but got %d\n", retval );
+    ok( out[0].x == 150 && out[0].y == 75, "expected cursor position to be 150x75 but got %d %d\n", out[0].x, out[0].y );
+    ok( out[1].x == 30 && out[1].y == 30, "expected cursor position to be 30x30 but got %d %d\n", out[1].x, out[1].y );
+
+    /* events created through other means should also be on the list with correct extra info */
+    mouse_event( MOUSEEVENTF_MOVE, -13, 17, 0, 0xcafecafe );
+    ok( GetCursorPos( &point ), "failed to get cursor position\n" );
+    ok( in.x != point.x && in.y != point.y, "cursor didn't change position after mouse_event()\n" );
+    in.time = 0;
+    in.x = point.x;
+    in.y = point.y;
+    retval = pGetMouseMovePointsEx( sizeof(MOUSEMOVEPOINT), &in, out, BUFLIM, GMMP_USE_DISPLAY_POINTS );
+    ok( retval == 64, "expected to get 64 mouse move points but got %d\n", retval );
+    ok( out[0].dwExtraInfo == 0xcafecafe, "wrong extra info, got 0x%lx expected 0xcafecafe\n", out[0].dwExtraInfo );
+
+    input.type = INPUT_MOUSE;
+    memset( &input, 0, sizeof(input) );
+    input.u.mi.dwFlags = MOUSEEVENTF_MOVE;
+    input.u.mi.dwExtraInfo = 0xdeadbeef;
+    input.u.mi.dx = -17;
+    input.u.mi.dy = 13;
+    SendInput( 1, (INPUT *)&input, sizeof(INPUT) );
+    ok( GetCursorPos( &point ), "failed to get cursor position\n" );
+    ok( in.x != point.x && in.y != point.y, "cursor didn't change position after mouse_event()\n" );
+    in.time = 0;
+    in.x = point.x;
+    in.y = point.y;
+    retval = pGetMouseMovePointsEx( sizeof(MOUSEMOVEPOINT), &in, out, BUFLIM, GMMP_USE_DISPLAY_POINTS );
+    ok( retval == 64, "expected to get 64 mouse move points but got %d\n", retval );
+    ok( out[0].dwExtraInfo == 0xdeadbeef, "wrong extra info, got 0x%lx expected 0xdeadbeef\n", out[0].dwExtraInfo );
+
+    retval = pGetMouseMovePointsEx( sizeof(MOUSEMOVEPOINT), &in, out, BUFLIM, GMMP_USE_HIGH_RESOLUTION_POINTS );
+    todo_wine ok( retval == 64, "expected to get 64 high resolution mouse move points but got %d\n", retval );
+
+    sprintf(path, "%s input get_mouse_move_points_test", argv0);
+    memset(&startup_info, 0, sizeof(startup_info));
+    startup_info.cb = sizeof(startup_info);
+    startup_info.dwFlags = STARTF_USESHOWWINDOW;
+    startup_info.wShowWindow = SW_SHOWNORMAL;
+    retval = CreateProcessA(NULL, path, NULL, NULL, TRUE, 0, NULL, NULL, &startup_info, &process_info );
+    ok(retval, "CreateProcess \"%s\" failed err %u.\n", path, GetLastError());
+    winetest_wait_child_process(process_info.hProcess);
+    CloseHandle(process_info.hProcess);
+    CloseHandle(process_info.hThread);
 #undef BUFLIM
 #undef MYERROR
+}
+
+static void test_GetMouseMovePointsEx_process(void)
+{
+    int retval;
+    MOUSEMOVEPOINT in;
+    MOUSEMOVEPOINT out[64], out2[64];
+    POINT point;
+    HDESK desk0, desk1;
+    HWINSTA winstation0, winstation1;
+
+    memset( out, 0, sizeof(out) );
+    memset( out2, 0, sizeof(out2) );
+
+    /* move point history is shared between desktops within the same windowstation */
+    ok( GetCursorPos( &point ), "failed to get cursor position\n" );
+    in.time = 0;
+    in.x = point.x;
+    in.y = point.y;
+    retval = pGetMouseMovePointsEx( sizeof(MOUSEMOVEPOINT), &in, out, ARRAY_SIZE(out), GMMP_USE_DISPLAY_POINTS );
+    ok( retval == 64, "expected to get 64 mouse move points but got %d\n", retval );
+
+    desk0 = OpenInputDesktop( 0, FALSE, DESKTOP_ALL_ACCESS );
+    ok( desk0 != NULL, "OpenInputDesktop has failed with %d\n", GetLastError() );
+    desk1 = CreateDesktopA( "getmousemovepointsex_test_desktop", NULL, NULL, 0, DESKTOP_ALL_ACCESS, NULL );
+    ok( desk1 != NULL, "CreateDesktopA failed with %d\n", GetLastError() );
+
+    ok( SetThreadDesktop( desk1 ), "SetThreadDesktop failed!\n" );
+    ok( SwitchDesktop( desk1 ), "SwitchDesktop failed\n" );
+
+    retval = pGetMouseMovePointsEx( sizeof(MOUSEMOVEPOINT), &in, out2, ARRAY_SIZE(out2), GMMP_USE_DISPLAY_POINTS );
+    ok( retval == 64, "expected to get 64 mouse move points but got %d\n", retval );
+
+    ok( memcmp( out, out2, sizeof(out2) ) == 0, "expected to get exact same history on the new desktop\n" );
+
+    in.time = 0;
+    in.x = 38;
+    in.y = 27;
+    SetCursorPos( in.x, in.y );
+
+    retval = pGetMouseMovePointsEx( sizeof(MOUSEMOVEPOINT), &in, out2, ARRAY_SIZE(out2), GMMP_USE_DISPLAY_POINTS );
+    ok( retval == 64, "expected to get 64 mouse move points but got %d\n", retval );
+
+    ok( SetThreadDesktop( desk0 ), "SetThreadDesktop failed!\n" );
+    ok( SwitchDesktop( desk0 ), "SwitchDesktop failed\n" );
+
+    retval = pGetMouseMovePointsEx( sizeof(MOUSEMOVEPOINT), &in, out, ARRAY_SIZE(out), GMMP_USE_DISPLAY_POINTS );
+    ok( retval == 64, "expected to get 64 mouse move points but got %d\n", retval );
+    ok( memcmp( out, out2, sizeof( out2 ) ) == 0, "expected to get exact same history on the old desktop\n" );
+
+    CloseDesktop( desk1 );
+    CloseDesktop( desk0 );
+
+    /* non-default windowstations are non-interactive */
+    winstation0 = GetProcessWindowStation();
+    ok( winstation0 != NULL, "GetProcessWindowStation has failed with %d\n", GetLastError() );
+    desk0 = OpenInputDesktop( 0, FALSE, DESKTOP_ALL_ACCESS );
+    ok( desk0 != NULL, "OpenInputDesktop has failed with %d\n", GetLastError() );
+    winstation1 = CreateWindowStationA( "test_winstation", 0, WINSTA_ALL_ACCESS, NULL );
+
+    if (winstation1 == NULL && GetLastError() == ERROR_ACCESS_DENIED)
+    {
+        win_skip("not enough priviledges for CreateWindowStation\n");
+        CloseDesktop( desk0 );
+        CloseWindowStation( winstation0 );
+        return;
+    }
+
+    ok( winstation1 != NULL, "CreateWindowStationA has failed with %d\n", GetLastError() );
+    ok( SetProcessWindowStation( winstation1 ), "SetProcessWindowStation has failed\n" );
+
+    desk1 = CreateDesktopA( "getmousemovepointsex_test_desktop", NULL, NULL, 0, DESKTOP_ALL_ACCESS, NULL );
+    ok( desk1 != NULL, "CreateDesktopA failed with %d\n", GetLastError() );
+    ok( SetThreadDesktop( desk1 ), "SetThreadDesktop failed!\n" );
+
+    SetLastError( 0xDEADBEEF );
+    retval = pGetMouseMovePointsEx( sizeof(MOUSEMOVEPOINT), &in, out, ARRAY_SIZE(out), GMMP_USE_DISPLAY_POINTS );
+    todo_wine ok( retval == -1, "expected to get -1 mouse move points but got %d\n", retval );
+    todo_wine ok( GetLastError() == ERROR_ACCESS_DENIED, "expected ERROR_ACCESS_DENIED got %d\n", GetLastError() );
+
+    ok( SetProcessWindowStation( winstation0 ), "SetProcessWindowStation has failed\n" );
+    ok( SetThreadDesktop( desk0 ), "SetThreadDesktop failed!\n" );
+    CloseDesktop( desk1 );
+    CloseWindowStation( winstation1 );
+    CloseDesktop( desk0 );
+    CloseWindowStation( winstation0 );
 }
 
 static void test_GetRawInputDeviceList(void)
@@ -3807,6 +3995,12 @@ START_TEST(input)
         return;
     }
 
+    if (argc >= 3 && strcmp(argv[2], "get_mouse_move_points_test") == 0)
+    {
+        test_GetMouseMovePointsEx_process();
+        return;
+    }
+
     test_Input_blackbox();
     test_Input_whitebox();
     test_Input_unicode();
@@ -3828,7 +4022,7 @@ START_TEST(input)
     test_rawinput(argv[0]);
 
     if(pGetMouseMovePointsEx)
-        test_GetMouseMovePointsEx();
+        test_GetMouseMovePointsEx(argv[0]);
     else
         win_skip("GetMouseMovePointsEx is not available\n");
 

@@ -1267,22 +1267,64 @@ TrackMouseEvent (TRACKMOUSEEVENT *ptme)
  *     Success: count of point set in the buffer
  *     Failure: -1
  */
-int WINAPI GetMouseMovePointsEx(UINT size, LPMOUSEMOVEPOINT ptin, LPMOUSEMOVEPOINT ptout, int count, DWORD res) {
+int WINAPI GetMouseMovePointsEx( UINT size, LPMOUSEMOVEPOINT ptin, LPMOUSEMOVEPOINT ptout, int count, DWORD resolution )
+{
+    cursor_pos_t *pos, positions[64];
+    int copied;
+    unsigned int i;
 
-    if((size != sizeof(MOUSEMOVEPOINT)) || (count < 0) || (count > 64)) {
-        SetLastError(ERROR_INVALID_PARAMETER);
+
+    TRACE( "%d, %p, %p, %d, %d\n", size, ptin, ptout, count, resolution );
+
+    if ((size != sizeof(MOUSEMOVEPOINT)) || (count < 0) || (count > ARRAY_SIZE( positions )))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
         return -1;
     }
 
-    if(!ptin || (!ptout && count)) {
-        SetLastError(ERROR_NOACCESS);
+    if (!ptin || (!ptout && count))
+    {
+        SetLastError( ERROR_NOACCESS );
         return -1;
     }
 
-    FIXME("(%d %p %p %d %d) stub\n", size, ptin, ptout, count, res);
+    if (resolution != GMMP_USE_DISPLAY_POINTS)
+    {
+        FIXME( "only GMMP_USE_DISPLAY_POINTS is supported for now\n" );
+        SetLastError( ERROR_POINT_NOT_FOUND );
+        return -1;
+    }
 
-    SetLastError(ERROR_POINT_NOT_FOUND);
-    return -1;
+    SERVER_START_REQ( get_cursor_history )
+    {
+        wine_server_set_reply( req, &positions, sizeof(positions) );
+        if (wine_server_call_err( req )) return -1;
+    }
+    SERVER_END_REQ;
+
+    for (i = 0; i < ARRAY_SIZE( positions ); i++)
+    {
+        pos = &positions[i];
+        if (ptin->x == pos->x && ptin->y == pos->y && (!ptin->time || ptin->time == pos->time))
+            break;
+    }
+
+    if (i == ARRAY_SIZE( positions ))
+    {
+        SetLastError( ERROR_POINT_NOT_FOUND );
+        return -1;
+    }
+
+    for (copied = 0; copied < count && i < ARRAY_SIZE( positions ); copied++, i++)
+    {
+        pos = &positions[i];
+        ptout[copied].x = pos->x;
+        ptout[copied].y = pos->y;
+        ptout[copied].time = pos->time;
+        ptout[copied].dwExtraInfo = pos->info;
+    }
+
+    return copied;
 }
 
 /***********************************************************************

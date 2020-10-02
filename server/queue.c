@@ -227,6 +227,9 @@ static const struct object_ops thread_input_ops =
 /* pointer to input structure of foreground thread */
 static unsigned int last_input_time;
 
+static cursor_pos_t cursor_history[64];
+static unsigned int cursor_history_latest;
+
 static void queue_hardware_message( struct desktop *desktop, struct message *msg, int always_queue );
 static void free_message( struct message *msg );
 
@@ -1520,12 +1523,23 @@ static void update_rawinput_device(const struct rawinput_device *device)
     e->device.target = get_user_full_handle( e->device.target );
 }
 
+static void prepend_cursor_history( int x, int y, unsigned int time, lparam_t info )
+{
+    cursor_pos_t *pos = &cursor_history[--cursor_history_latest % ARRAY_SIZE(cursor_history)];
+
+    pos->x = x;
+    pos->y = y;
+    pos->time = time;
+    pos->info = info;
+}
+
 /* queue a hardware message into a given thread input */
 static void queue_hardware_message( struct desktop *desktop, struct message *msg, int always_queue )
 {
     user_handle_t win;
     struct thread *thread;
     struct thread_input *input;
+    struct hardware_msg_data *msg_data = msg->data;
     unsigned int msg_code;
 
     update_input_key_state( desktop, desktop->keystate, msg->msg, msg->wparam );
@@ -1541,7 +1555,11 @@ static void queue_hardware_message( struct desktop *desktop, struct message *msg
     }
     else if (msg->msg != WM_INPUT)
     {
-        if (msg->msg == WM_MOUSEMOVE && update_desktop_cursor_pos( desktop, msg->x, msg->y )) always_queue = 1;
+        if (msg->msg == WM_MOUSEMOVE)
+        {
+            prepend_cursor_history( msg->x, msg->y, msg->time, msg_data->info );
+            if (update_desktop_cursor_pos( desktop, msg->x, msg->y )) always_queue = 1;
+        }
         if (desktop->keystate[VK_LBUTTON] & 0x80)  msg->wparam |= MK_LBUTTON;
         if (desktop->keystate[VK_MBUTTON] & 0x80)  msg->wparam |= MK_MBUTTON;
         if (desktop->keystate[VK_RBUTTON] & 0x80)  msg->wparam |= MK_RBUTTON;
@@ -3220,6 +3238,17 @@ DECL_HANDLER(set_cursor)
     reply->new_y       = input->desktop->cursor.y;
     reply->new_clip    = input->desktop->cursor.clip;
     reply->last_change = input->desktop->cursor.last_change;
+}
+
+/* Get the history of the 64 last cursor positions */
+DECL_HANDLER(get_cursor_history)
+{
+    cursor_pos_t *pos;
+    unsigned int i, count = min( 64, get_reply_max_size() / sizeof(*pos) );
+
+    if ((pos = set_reply_data_size( count * sizeof(*pos) )))
+        for (i = 0; i < count; i++)
+            pos[i] = cursor_history[(i + cursor_history_latest) % ARRAY_SIZE(cursor_history)];
 }
 
 DECL_HANDLER(get_rawinput_buffer)

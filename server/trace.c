@@ -893,6 +893,24 @@ static void dump_varargs_rectangles( const char *prefix, data_size_t size )
     remove_data( size );
 }
 
+static void dump_varargs_cursor_positions( const char *prefix, data_size_t size )
+{
+    const cursor_pos_t *pos = cur_data;
+    data_size_t len = size / sizeof(*pos);
+
+    fprintf( stderr, "%s{", prefix );
+    while (len > 0)
+    {
+        fprintf( stderr, "{x=%d,y=%d,time=%u", pos->x, pos->y, pos->time );
+        dump_uint64( ",info=", &pos->info );
+        fputc( '}', stderr );
+        pos++;
+        if (--len) fputc( ',', stderr );
+    }
+    fputc( '}', stderr );
+    remove_data( size );
+}
+
 static void dump_varargs_message_data( const char *prefix, data_size_t size )
 {
     /* FIXME: dump the structured data */
@@ -4261,6 +4279,15 @@ static void dump_set_cursor_reply( const struct set_cursor_reply *req )
     fprintf( stderr, ", last_change=%08x", req->last_change );
 }
 
+static void dump_get_cursor_history_request( const struct get_cursor_history_request *req )
+{
+}
+
+static void dump_get_cursor_history_reply( const struct get_cursor_history_reply *req )
+{
+    dump_varargs_cursor_positions( " history=", cur_size );
+}
+
 static void dump_get_rawinput_buffer_request( const struct get_rawinput_buffer_request *req )
 {
     fprintf( stderr, " rawinput_size=%u", req->rawinput_size );
@@ -4627,6 +4654,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_alloc_user_handle_request,
     (dump_func)dump_free_user_handle_request,
     (dump_func)dump_set_cursor_request,
+    (dump_func)dump_get_cursor_history_request,
     (dump_func)dump_get_rawinput_buffer_request,
     (dump_func)dump_update_rawinput_devices_request,
     (dump_func)dump_get_rawinput_devices_request,
@@ -4904,6 +4932,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_alloc_user_handle_reply,
     NULL,
     (dump_func)dump_set_cursor_reply,
+    (dump_func)dump_get_cursor_history_reply,
     (dump_func)dump_get_rawinput_buffer_reply,
     NULL,
     (dump_func)dump_get_rawinput_devices_reply,
@@ -5181,6 +5210,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "alloc_user_handle",
     "free_user_handle",
     "set_cursor",
+    "get_cursor_history",
     "get_rawinput_buffer",
     "update_rawinput_devices",
     "get_rawinput_devices",
@@ -5248,6 +5278,7 @@ static const struct
     { "INFO_LENGTH_MISMATCH",        STATUS_INFO_LENGTH_MISMATCH },
     { "INSTANCE_NOT_AVAILABLE",      STATUS_INSTANCE_NOT_AVAILABLE },
     { "INSUFFICIENT_RESOURCES",      STATUS_INSUFFICIENT_RESOURCES },
+    { "INVALID_BUFFER_SIZE",         STATUS_INVALID_BUFFER_SIZE },
     { "INVALID_CID",                 STATUS_INVALID_CID },
     { "INVALID_DEVICE_REQUEST",      STATUS_INVALID_DEVICE_REQUEST },
     { "INVALID_FILE_FOR_SECTION",    STATUS_INVALID_FILE_FOR_SECTION },
