@@ -851,15 +851,10 @@ static int accept_new_fd( struct sock *sock )
 }
 
 /* accept a socket (creates a new fd) */
-static struct sock *accept_socket( obj_handle_t handle )
+static struct sock *accept_socket( struct sock *sock )
 {
     struct sock *acceptsock;
-    struct sock *sock;
     int	acceptfd;
-
-    sock = (struct sock *)get_handle_obj( current->process, handle, FILE_READ_DATA, &sock_ops );
-    if (!sock)
-        return NULL;
 
     if (get_unix_fd( sock->fd ) == -1) return NULL;
 
@@ -870,15 +865,10 @@ static struct sock *accept_socket( obj_handle_t handle )
     }
     else
     {
-        if ((acceptfd = accept_new_fd( sock )) == -1)
-        {
-            release_object( sock );
-            return NULL;
-        }
+        if ((acceptfd = accept_new_fd( sock )) == -1) return NULL;
         if (!(acceptsock = create_socket()))
         {
             close( acceptfd );
-            release_object( sock );
             return NULL;
         }
 
@@ -899,7 +889,6 @@ static struct sock *accept_socket( obj_handle_t handle )
                                                     get_fd_options( sock->fd ) )))
         {
             release_object( acceptsock );
-            release_object( sock );
             return NULL;
         }
     }
@@ -907,7 +896,6 @@ static struct sock *accept_socket( obj_handle_t handle )
     sock->pmask &= ~FD_ACCEPT;
     sock->hmask &= ~FD_ACCEPT;
     sock_reselect( sock );
-    release_object( sock );
     return acceptsock;
 }
 
@@ -1097,6 +1085,26 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
             return 0;
         }
         init_socket( sock, params->family, params->type, params->protocol, params->flags );
+        return 0;
+    }
+
+    case IOCTL_AFD_ACCEPT:
+    {
+        struct sock *acceptsock;
+        obj_handle_t handle;
+
+        if (get_reply_max_size() != sizeof(handle))
+        {
+            set_error( STATUS_BUFFER_TOO_SMALL );
+            return 0;
+        }
+
+        if (!(acceptsock = accept_socket( sock ))) return 0;
+        handle = alloc_handle( current->process, &acceptsock->obj,
+                               GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE, OBJ_INHERIT );
+        acceptsock->wparam = handle;
+        release_object( acceptsock );
+        set_reply_data( &handle, sizeof(handle) );
         return 0;
     }
 
@@ -1420,15 +1428,19 @@ struct object *create_socket_device( struct object *root, const struct unicode_s
 /* accept a socket */
 DECL_HANDLER(accept_socket)
 {
-    struct sock *sock;
+    struct sock *sock, *acceptsock;
+
+    if (!(sock = (struct sock *)get_handle_obj( current->process, req->lhandle, FILE_READ_DATA, &sock_ops )))
+        return;
 
     reply->handle = 0;
-    if ((sock = accept_socket( req->lhandle )) != NULL)
+    if ((acceptsock = accept_socket( sock )) != NULL)
     {
-        reply->handle = alloc_handle( current->process, &sock->obj, req->access, req->attributes );
-        sock->wparam = reply->handle;  /* wparam for message is the socket handle */
-        release_object( &sock->obj );
+        reply->handle = alloc_handle( current->process, &acceptsock->obj, req->access, req->attributes );
+        acceptsock->wparam = reply->handle;  /* wparam for message is the socket handle */
+        release_object( acceptsock );
     }
+    release_object( sock );
 }
 
 /* accept a socket into an initialized socket */
