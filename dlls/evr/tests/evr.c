@@ -39,7 +39,7 @@ static HWND create_window(void)
 
     AdjustWindowRect(&r, WS_OVERLAPPEDWINDOW | WS_VISIBLE, FALSE);
 
-    return CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+    return CreateWindowA("static", "evr_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
             0, 0, r.right - r.left, r.bottom - r.top, NULL, NULL, NULL, NULL);
 }
 
@@ -967,12 +967,16 @@ done:
 static void test_default_presenter(void)
 {
     D3DDEVICE_CREATION_PARAMETERS device_params = { 0 };
+    D3DPRESENT_PARAMETERS present_params = { 0 };
+    IMFVideoDisplayControl *display_control;
+    IDirect3DSwapChain9 *swapchain;
     IMFVideoPresenter *presenter;
     IMFRateSupport *rate_support;
     IDirect3DDevice9 *d3d_device;
     IDirect3DDeviceManager9 *dm;
     IMFVideoDeviceID *deviceid;
     IMFGetService *gs;
+    HWND hwnd, hwnd2;
     HANDLE handle;
     IUnknown *unk;
     float rate;
@@ -1010,33 +1014,70 @@ static void test_default_presenter(void)
     hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFGetService, (void **)&gs);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
+    hr = IMFGetService_GetService(gs, &MR_VIDEO_RENDER_SERVICE, &IID_IMFVideoDisplayControl, (void **)&display_control);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+        IMFVideoDisplayControl_Release(display_control);
+
     hr = IMFGetService_GetService(gs, &MR_VIDEO_ACCELERATION_SERVICE, &IID_IDirect3DDeviceManager9, (void **)&dm);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
+    hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFVideoDisplayControl, (void **)&display_control);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
     hr = IDirect3DDeviceManager9_OpenDeviceHandle(dm, &handle);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDeviceManager9_LockDevice(dm, handle, &d3d_device, FALSE);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
-if (SUCCEEDED(hr))
-{
     hr = IDirect3DDevice9_GetCreationParameters(d3d_device, &device_params);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(device_params.hFocusWindow == GetDesktopWindow(), "Unexpected window %p.\n", device_params.hFocusWindow);
+
+    hr = IDirect3DDevice9_GetSwapChain(d3d_device, 0, &swapchain);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DSwapChain9_GetPresentParameters(swapchain, &present_params);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    ok(present_params.hDeviceWindow == GetDesktopWindow(), "Unexpected device window.\n");
+    ok(present_params.Windowed, "Unexpected windowed mode.\n");
+    ok(present_params.SwapEffect == D3DSWAPEFFECT_COPY, "Unexpected swap effect.\n");
+    ok(present_params.Flags == D3DPRESENTFLAG_VIDEO, "Unexpected flags.\n");
+    ok(present_params.PresentationInterval == D3DPRESENT_INTERVAL_IMMEDIATE, "Unexpected present interval.\n");
 
     IDirect3DDevice9_Release(d3d_device);
 
     hr = IDirect3DDeviceManager9_UnlockDevice(dm, handle, FALSE);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
+    hwnd = create_window();
+    ok(!!hwnd, "Failed to create a test window.\n");
+
+    hwnd2 = hwnd;
+    hr = IMFVideoDisplayControl_GetVideoWindow(display_control, &hwnd2);
+todo_wine {
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hwnd2 == NULL, "Unexpected window %p.\n", hwnd2);
+}
+    hr = IMFVideoDisplayControl_SetVideoWindow(display_control, hwnd);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hwnd2 = NULL;
+    hr = IMFVideoDisplayControl_GetVideoWindow(display_control, &hwnd2);
+todo_wine {
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(hwnd2 == hwnd, "Unexpected window %p.\n", hwnd2);
+}
     hr = IDirect3DDeviceManager9_CloseDeviceHandle(dm, handle);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-}
+
     IDirect3DDeviceManager9_Release(dm);
 
+    IMFVideoDisplayControl_Release(display_control);
     IMFGetService_Release(gs);
 
     /* Rate support. */
@@ -1066,6 +1107,8 @@ if (SUCCEEDED(hr))
     IMFRateSupport_Release(rate_support);
 
     IMFVideoPresenter_Release(presenter);
+
+    DestroyWindow(hwnd);
 }
 
 static void test_MFCreateVideoMixerAndPresenter(void)

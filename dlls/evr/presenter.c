@@ -643,10 +643,46 @@ HRESULT WINAPI MFCreateVideoPresenter(IUnknown *owner, REFIID riid_device, REFII
     return CoCreateInstance(&CLSID_MFVideoPresenter9, owner, CLSCTX_INPROC_SERVER, riid, obj);
 }
 
+static HRESULT video_presenter_init_d3d(struct video_presenter *presenter)
+{
+    D3DPRESENT_PARAMETERS present_params = { 0 };
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    HRESULT hr;
+
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+
+    present_params.BackBufferCount = 1;
+    present_params.SwapEffect = D3DSWAPEFFECT_COPY;
+    present_params.hDeviceWindow = GetDesktopWindow();
+    present_params.Windowed = TRUE;
+    present_params.Flags = D3DPRESENTFLAG_VIDEO;
+    present_params.PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE;
+    hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, GetDesktopWindow(),
+            0, &present_params, &device);
+
+    IDirect3D9_Release(d3d);
+
+    if (FAILED(hr))
+    {
+        WARN("Failed to create d3d device, hr %#x.\n", hr);
+        return hr;
+    }
+
+    hr = IDirect3DDeviceManager9_ResetDevice(presenter->device_manager, device, presenter->reset_token);
+    IDirect3DDevice9_Release(device);
+    if (FAILED(hr))
+        WARN("Failed to set new device for the manager, hr %#x.\n", hr);
+
+    return hr;
+}
+
 HRESULT evr_presenter_create(IUnknown *outer, void **out)
 {
     struct video_presenter *object;
     HRESULT hr;
+
+    *out = NULL;
 
     if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
@@ -663,12 +699,13 @@ HRESULT evr_presenter_create(IUnknown *outer, void **out)
     InitializeCriticalSection(&object->cs);
 
     if (FAILED(hr = DXVA2CreateDirect3DDeviceManager9(&object->reset_token, &object->device_manager)))
-    {
         IUnknown_Release(&object->IUnknown_inner);
-        return hr;
-    }
 
-    *out = &object->IUnknown_inner;
+    if (FAILED(hr = video_presenter_init_d3d(object)))
+        IUnknown_Release(&object->IUnknown_inner);
 
-    return S_OK;
+    if (SUCCEEDED(hr))
+        *out = &object->IUnknown_inner;
+
+    return hr;
 }
