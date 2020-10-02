@@ -20,6 +20,17 @@ import "oaidl.idl";
 import "ocidl.idl";
 import "d3dcommon.idl";
 
+typedef enum D3D12_SHADER_VERSION_TYPE
+{
+    D3D12_SHVER_PIXEL_SHADER = 0x0,
+    D3D12_SHVER_VERTEX_SHADER = 0x1,
+    D3D12_SHVER_GEOMETRY_SHADER = 0x2,
+    D3D12_SHVER_HULL_SHADER = 0x3,
+    D3D12_SHVER_DOMAIN_SHADER = 0x4,
+    D3D12_SHVER_COMPUTE_SHADER = 0x5,
+    D3D12_SHVER_RESERVED0 = 0xfff0,
+} D3D12_SHADER_VERSION_TYPE;
+
 typedef struct _D3D12_SHADER_DESC
 {
     UINT Version;
