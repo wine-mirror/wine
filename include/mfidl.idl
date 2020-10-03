@@ -543,6 +543,36 @@ interface IMFPresentationDescriptor : IMFAttributes
 
 [
     object,
+    uuid(f88cfb8c-ef16-4991-b450-cb8c69e51704)
+]
+interface IMFMetadata : IUnknown
+{
+    HRESULT SetLanguage(
+        [in] const WCHAR *lang);
+
+    HRESULT GetLanguage(
+        [out] WCHAR **lang);
+
+    HRESULT GetAllLanguages(
+        [out] PROPVARIANT *languages);
+
+    HRESULT SetProperty(
+        [in] const WCHAR *name,
+        [in] const PROPVARIANT *values);
+
+    HRESULT GetProperty(
+        [in] const WCHAR *name,
+        [out] PROPVARIANT *values);
+
+    HRESULT DeleteProperty(
+        [in] const WCHAR *name);
+
+    HRESULT GetAllPropertyNames(
+        [out] PROPVARIANT *names);
+}
+
+[
+    object,
     uuid(197cd219-19cb-4de1-a64c-acf2edcbe59e),
     local
 ]
