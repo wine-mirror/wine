@@ -98,8 +98,6 @@ static ULONG WINAPI IHlinkBC_fnRelease (IHlinkBrowseContext* iface)
     return ref;
 }
 
-static const WCHAR szIdent[] = {'W','I','N','E','H','L','I','N','K',0};
-
 static HRESULT WINAPI IHlinkBC_Register(IHlinkBrowseContext* iface,
         DWORD dwReserved, IUnknown *piunk, IMoniker *pimk, DWORD *pdwRegister)
 {
@@ -111,7 +109,7 @@ static HRESULT WINAPI IHlinkBC_Register(IHlinkBrowseContext* iface,
 
     FIXME("(%p)->(%i %p %p %p)\n", This, dwReserved, piunk, pimk, pdwRegister);
 
-    hr = CreateItemMoniker(NULL, szIdent, &mon);
+    hr = CreateItemMoniker(NULL, L"WINEHLINK", &mon);
     if (FAILED(hr))
         return hr;
     CreateGenericComposite(mon, pimk, &composite);
@@ -137,7 +135,7 @@ static HRESULT WINAPI IHlinkBC_GetObject(IHlinkBrowseContext* iface,
 
     TRACE("(%p)->(%p, %d, %p)\n", This, pimk, fBindifRootRegistered, ppiunk);
 
-    hr = CreateItemMoniker(NULL, szIdent, &mon);
+    hr = CreateItemMoniker(NULL, L"WINEHLINK", &mon);
     if (FAILED(hr)) return hr;
     CreateGenericComposite(mon, pimk, &composite);
 

@@ -273,8 +273,6 @@ HRESULT WINAPI HlinkIsShortcut(LPCWSTR pwzFileName)
 {
     int len;
 
-    static const WCHAR url_ext[] = {'.','u','r','l',0};
-
     TRACE("(%s)\n", debugstr_w(pwzFileName));
 
     if(!pwzFileName)
@@ -284,7 +282,7 @@ HRESULT WINAPI HlinkIsShortcut(LPCWSTR pwzFileName)
     if(len < 0)
         return S_FALSE;
 
-    return wcsicmp(pwzFileName+len, url_ext) ? S_FALSE : S_OK;
+    return wcsicmp(pwzFileName+len, L".url") ? S_FALSE : S_OK;
 }
 
 /***********************************************************************
@@ -297,25 +295,16 @@ HRESULT WINAPI HlinkGetSpecialReference(ULONG uReference, LPWSTR *ppwzReference)
     WCHAR *buf;
     HKEY hkey;
 
-    static const WCHAR start_pageW[] = {'S','t','a','r','t',' ','P','a','g','e',0};
-    static const WCHAR search_pageW[] = {'S','e','a','r','c','h',' ','P','a','g','e',0};
-
-    static const WCHAR ie_main_keyW[] =
-        {'S','o','f','t','w','a','r','e',
-         '\\','M','i','c','r','o','s','o','f','t','\\',
-         'I','n','t','e','r','n','e','t',' ','E','x','p','l','o','r','e','r',
-         '\\','M','a','i','n',0};
-
     TRACE("(%u %p)\n", uReference, ppwzReference);
 
     *ppwzReference = NULL;
 
     switch(uReference) {
     case HLSR_HOME:
-        value_name = start_pageW;
+        value_name = L"Start Page";
         break;
     case HLSR_SEARCHPAGE:
-        value_name = search_pageW;
+        value_name = L"Search Page";
         break;
     case HLSR_HISTORYFOLDER:
         return E_NOTIMPL;
@@ -323,7 +312,7 @@ HRESULT WINAPI HlinkGetSpecialReference(ULONG uReference, LPWSTR *ppwzReference)
         return E_INVALIDARG;
     }
 
-    res = RegOpenKeyW(HKEY_CURRENT_USER, ie_main_keyW, &hkey);
+    res = RegOpenKeyW(HKEY_CURRENT_USER, L"Software\\Microsoft\\Internet Explorer\\Main", &hkey);
     if(res != ERROR_SUCCESS) {
         WARN("Could not open key: %u\n", res);
         return HRESULT_FROM_WIN32(res);
@@ -380,8 +369,7 @@ HRESULT WINAPI HlinkUpdateStackItem(IHlinkFrame *frame, IHlinkBrowseContext *bc,
 HRESULT WINAPI HlinkParseDisplayName(LPBC pibc, LPCWSTR pwzDisplayName, BOOL fNoForceAbs,
         ULONG *pcchEaten, IMoniker **ppimk)
 {
-    static const WCHAR file_colonW[] = {'f','i','l','e',':'};
-    ULONG eaten = 0;
+    ULONG eaten = 0, len;
     HRESULT hres;
 
     TRACE("(%p %s %x %p %p)\n", pibc, debugstr_w(pwzDisplayName), fNoForceAbs, pcchEaten, ppimk);
@@ -389,9 +377,10 @@ HRESULT WINAPI HlinkParseDisplayName(LPBC pibc, LPCWSTR pwzDisplayName, BOOL fNo
     if(fNoForceAbs)
         FIXME("Unsupported fNoForceAbs\n");
 
-    if(!wcsnicmp(pwzDisplayName, file_colonW, ARRAY_SIZE(file_colonW))) {
-        pwzDisplayName += ARRAY_SIZE(file_colonW);
-        eaten += ARRAY_SIZE(file_colonW);
+    len = ARRAY_SIZE(L"file:") - 1;
+    if(!wcsnicmp(pwzDisplayName, L"file:", len)) {
+        pwzDisplayName += len;
+        eaten += len;
 
         while(*pwzDisplayName == '/') {
             pwzDisplayName++;

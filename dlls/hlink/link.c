@@ -537,13 +537,12 @@ static HRESULT WINAPI IHlink_fnNavigate(IHlink *iface, DWORD flags, IBindCtx *us
         }
         else
         {
-            static const WCHAR szOpen[] = {'o','p','e','n',0};
             LPWSTR target = NULL;
 
             r = IHlink_GetStringReference(iface, HLINKGETREF_DEFAULT, &target, NULL);
             if (SUCCEEDED(r) && target)
             {
-                ShellExecuteW(NULL, szOpen, target, NULL, NULL, SW_SHOW);
+                ShellExecuteW(NULL, L"open", target, NULL, NULL, SW_SHOW);
                 CoTaskMemFree(target);
                 r = DRAGDROP_S_DROP;
             }

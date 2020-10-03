@@ -245,10 +245,9 @@ static HRESULT ExtServ_ImplSetAdditionalHeaders(ExtensionService* This, LPCWSTR 
     len = lstrlenW(pwzAdditionalHeaders);
 
     if(len && pwzAdditionalHeaders[len-1] != '\n' && pwzAdditionalHeaders[len-1] != '\r') {
-        static const WCHAR endlW[] = {'\r','\n',0};
-        This->headers = heap_alloc(len*sizeof(WCHAR) + sizeof(endlW));
+        This->headers = heap_alloc(len*sizeof(WCHAR) + sizeof(L"\r\n"));
         memcpy(This->headers, pwzAdditionalHeaders, len*sizeof(WCHAR));
-        memcpy(This->headers+len, endlW, sizeof(endlW));
+        memcpy(This->headers+len, L"\r\n", sizeof(L"\r\n"));
     }else {
         This->headers = hlink_strdupW(pwzAdditionalHeaders);
     }
