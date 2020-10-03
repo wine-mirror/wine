@@ -107,7 +107,6 @@ StartCount(void)
 VOID WINAPI
 ServiceMain(DWORD dwArgc, LPWSTR *lpszArgv)
 {
-    static const WCHAR stisvc_nameW[] = {'s','t','i','s','v','c',0};
     TRACE("(%d, %p)\n", dwArgc, lpszArgv);
 
     stop_event = CreateEventW(NULL, TRUE, FALSE, NULL);
@@ -116,7 +115,7 @@ ServiceMain(DWORD dwArgc, LPWSTR *lpszArgv)
         return;
     }
 
-    status_handle = RegisterServiceCtrlHandlerExW(stisvc_nameW, ServiceHandler, NULL);
+    status_handle = RegisterServiceCtrlHandlerExW(L"stisvc", ServiceHandler, NULL);
     if (!status_handle) {
         ERR("failed to register handler: %u\n", GetLastError());
         return;
