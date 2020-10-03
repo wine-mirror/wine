@@ -493,8 +493,6 @@ static	DWORD	wodGetPosition(WAVEMAPDATA* wom, LPMMTIME lpTime, DWORD dwParam2)
 
 static	DWORD	wodGetDevCaps(UINT wDevID, WAVEMAPDATA* wom, LPWAVEOUTCAPSW lpWaveCaps, DWORD dwParam2)
 {
-    static const WCHAR name[] = {'W','i','n','e',' ','w','a','v','e',' ','o','u','t',' ','m','a','p','p','e','r',0};
-
     TRACE("(%04x %p %p %08x)\n",wDevID, wom, lpWaveCaps, dwParam2);
 
     /* if opened low driver, forward message */
@@ -511,7 +509,7 @@ static	DWORD	wodGetDevCaps(UINT wDevID, WAVEMAPDATA* wom, LPWAVEOUTCAPSW lpWaveC
 	woc.wMid = 0x00FF;
 	woc.wPid = 0x0001;
 	woc.vDriverVersion = 0x0332;
-	lstrcpyW(woc.szPname, name);
+	lstrcpyW(woc.szPname, L"Wine wave out mapper");
 	woc.dwFormats =
             WAVE_FORMAT_96M08 | WAVE_FORMAT_96S08 | WAVE_FORMAT_96M16 | WAVE_FORMAT_96S16 |
             WAVE_FORMAT_48M08 | WAVE_FORMAT_48S08 | WAVE_FORMAT_48M16 | WAVE_FORMAT_48S16 |
@@ -1063,11 +1061,10 @@ static	DWORD	widGetDevCaps(UINT wDevID, WAVEMAPDATA* wim, LPWAVEINCAPSW lpWaveCa
     /* otherwise, return caps of mapper itself */
     if (wDevID == (UINT)-1 || wDevID == (UINT16)-1) {
         WAVEINCAPSW wic;
-        static const WCHAR init[] = {'W','i','n','e',' ','w','a','v','e',' ','i','n',' ','m','a','p','p','e','r',0};
 	wic.wMid = 0x00FF;
 	wic.wPid = 0x0001;
 	wic.vDriverVersion = 0x0001;
-	lstrcpyW(wic.szPname, init);
+	lstrcpyW(wic.szPname, L"Wine wave in mapper");
 	wic.dwFormats =
             WAVE_FORMAT_96M08 | WAVE_FORMAT_96S08 | WAVE_FORMAT_96M16 | WAVE_FORMAT_96S16 |
             WAVE_FORMAT_48M08 | WAVE_FORMAT_48S08 | WAVE_FORMAT_48M16 | WAVE_FORMAT_48S16 |
