@@ -220,9 +220,8 @@ static BOOL	MIDIMAP_LoadSettings(MIDIMAPDATA* mom)
 	size = sizeof(out);
 	if (!RegQueryValueExA(hKey, "UseScheme", 0, &type, (void*)&out, &size) && out)
 	{
-            static const WCHAR cs[] = {'C','u','r','r','e','n','t','S','c','h','e','m','e',0};
 	    size = sizeof(buffer);
-	    if (!RegQueryValueExW(hKey, cs, 0, &type, (void*)buffer, &size))
+            if (!RegQueryValueExW(hKey, L"CurrentScheme", 0, &type, (void*)buffer, &size))
 	    {
 		if (!(ret = MIDIMAP_LoadSettingsScheme(mom, buffer)))
 		    ret = MIDIMAP_LoadSettingsDefault(mom, NULL);
@@ -234,9 +233,8 @@ static BOOL	MIDIMAP_LoadSettings(MIDIMAPDATA* mom)
 	}
 	if (ret == 2)
 	{
-            static const WCHAR ci[] = {'C','u','r','r','e','n','t','I','n','s','t','r','u','m','e','n','t',0};
 	    size = sizeof(buffer);
-	    if (!RegQueryValueExW(hKey, ci, 0, &type, (void*)buffer, &size) && *buffer)
+            if (!RegQueryValueExW(hKey, L"CurrentInstrument", 0, &type, (void*)buffer, &size) && *buffer)
 	    {
 		ret = MIDIMAP_LoadSettingsDefault(mom, buffer);
 	    }
@@ -470,8 +468,7 @@ static DWORD modGetDevCaps(UINT wDevID, MIDIMAPDATA* mom, LPMIDIOUTCAPSW lpMidiC
 {
     static const MIDIOUTCAPSW mappercaps = {
 	0x00FF, 0x0001, 0x0100, /* Manufacturer and Product ID */
-	{'W','i','n','e',' ','m','i','d','i',' ','m','a','p','p','e','r',0},
-	MOD_MAPPER, 0, 0, 0xFFFF,
+        L"Wine midi mapper", MOD_MAPPER, 0, 0, 0xFFFF,
 	/* Native returns volume caps of underlying device + MIDICAPS_STREAM */
 	MIDICAPS_VOLUME|MIDICAPS_LRVOLUME
     };
@@ -552,7 +549,6 @@ DWORD WINAPI MIDIMAP_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
  */
 static LRESULT MIDIMAP_drvOpen(void)
 {
-    static const WCHAR  throughportW[] = {'M','i','d','i',' ','T','h','r','o','u','g','h',0};
     MIDIOUTCAPSW	moc;
     unsigned		dev, i;
     BOOL                found_valid_port = FALSE;
@@ -574,7 +570,7 @@ static LRESULT MIDIMAP_drvOpen(void)
 	    midiOutPorts[dev].lpbPatch = NULL;
 	    for (i = 0; i < 16; i++)
 		midiOutPorts[dev].aChn[i] = i;
-	    if (wcsncmp(midiOutPorts[dev].name, throughportW, lstrlenW(throughportW)) != 0)
+            if (wcsncmp(midiOutPorts[dev].name, L"Midi Through", lstrlenW(L"Midi Through")) != 0)
 	        found_valid_port = TRUE;
 	}
 	else
