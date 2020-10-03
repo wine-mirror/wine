@@ -657,11 +657,10 @@ static BOOL is_local_machineA( const CHAR *server )
 }
 static BOOL is_local_machineW( const WCHAR *server )
 {
-    static const WCHAR dotW[] = {'.',0};
     WCHAR buffer[MAX_COMPUTERNAME_LENGTH + 1];
     DWORD len = ARRAY_SIZE( buffer );
 
-    if (!server || !wcscmp( server, dotW )) return TRUE;
+    if (!server || !wcscmp( server, L"." )) return TRUE;
     if (GetComputerNameW( buffer, &len ) && !wcsicmp( server, buffer )) return TRUE;
     return FALSE;
 }
