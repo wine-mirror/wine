@@ -71,7 +71,6 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
 static	DWORD	MCIAVI_drvOpen(LPCWSTR str, LPMCI_OPEN_DRIVER_PARMSW modp)
 {
     WINE_MCIAVI*	wma;
-    static const WCHAR mciAviWStr[] = {'M','C','I','A','V','I',0};
 
     TRACE("%s, %p\n", debugstr_w(str), modp);
 
@@ -88,7 +87,7 @@ static	DWORD	MCIAVI_drvOpen(LPCWSTR str, LPMCI_OPEN_DRIVER_PARMSW modp)
     wma->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": WINE_MCIAVI.cs");
     wma->hStopEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
     wma->wDevID = modp->wDeviceID;
-    wma->wCommandTable = mciLoadCommandResource(MCIAVI_hInstance, mciAviWStr, 0);
+    wma->wCommandTable = mciLoadCommandResource(MCIAVI_hInstance, L"MCIAVI", 0);
     wma->dwStatus = MCI_MODE_NOT_READY;
     modp->wCustomCommandTable = wma->wCommandTable;
     modp->wType = MCI_DEVTYPE_DIGITAL_VIDEO;

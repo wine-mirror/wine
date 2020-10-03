@@ -190,8 +190,6 @@ DWORD	MCIAVI_mciInfo(UINT wDevID, DWORD dwFlags, LPMCI_DGV_INFO_PARMSW lpParms)
     LPCWSTR		str = 0;
     WINE_MCIAVI*	wma = MCIAVI_mciGetOpenDev(wDevID);
     DWORD		ret = 0;
-    static const WCHAR wszAviPlayer[] = {'W','i','n','e','\'','s',' ','A','V','I',' ','p','l','a','y','e','r',0};
-    static const WCHAR wszVersion[] = {'1','.','1',0};
 
     if (lpParms == NULL || lpParms->lpstrReturn == NULL)
 	return MCIERR_NULL_PARAMETER_BLOCK;
@@ -203,9 +201,9 @@ DWORD	MCIAVI_mciInfo(UINT wDevID, DWORD dwFlags, LPMCI_DGV_INFO_PARMSW lpParms)
     EnterCriticalSection(&wma->cs);
 
     if (dwFlags & MCI_INFO_PRODUCT)
-	str = wszAviPlayer;
+	str = L"Wine's AVI player";
     else if (dwFlags & MCI_INFO_VERSION)
-	str = wszVersion;
+	str = L"1.1";
     else if (dwFlags & MCI_INFO_FILE)
 	str = wma->lpFileName;
     else {
@@ -213,9 +211,8 @@ DWORD	MCIAVI_mciInfo(UINT wDevID, DWORD dwFlags, LPMCI_DGV_INFO_PARMSW lpParms)
 	ret = MCIERR_UNRECOGNIZED_COMMAND;
     }
     if (!ret) {
-	WCHAR zero = 0;
 	/* Only mciwave, mciseq and mcicda set dwRetSize (since NT). */
-	lstrcpynW(lpParms->lpstrReturn, str ? str : &zero, lpParms->dwRetSize);
+	lstrcpynW(lpParms->lpstrReturn, str ? str : L"", lpParms->dwRetSize);
     }
     LeaveCriticalSection(&wma->cs);
     return ret;

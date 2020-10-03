@@ -25,8 +25,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mciavi);
 
-static const WCHAR mciaviW[] = {'M','C','I','A','V','I',0};
-
 static LRESULT WINAPI MCIAVI_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     TRACE("hwnd=%p msg=%x wparam=%lx lparam=%lx\n", hWnd, uMsg, wParam, lParam);
@@ -87,7 +85,7 @@ static LRESULT WINAPI MCIAVI_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 
 BOOL MCIAVI_UnregisterClass(void)
 {
-    return UnregisterClassW(mciaviW, MCIAVI_hInstance);
+    return UnregisterClassW(L"MCIAVI", MCIAVI_hInstance);
 }
 
 BOOL MCIAVI_RegisterClass(void)
@@ -101,7 +99,7 @@ BOOL MCIAVI_RegisterClass(void)
     wndClass.hInstance     = MCIAVI_hInstance;
     wndClass.hCursor       = LoadCursorW(0, (LPCWSTR)IDC_ARROW);
     wndClass.hbrBackground = (HBRUSH)(COLOR_3DFACE + 1);
-    wndClass.lpszClassName = mciaviW;
+    wndClass.lpszClassName = L"MCIAVI";
 
     if (RegisterClassW(&wndClass)) return TRUE;
     if (GetLastError() == ERROR_CLASS_ALREADY_EXISTS) return TRUE;
@@ -111,7 +109,6 @@ BOOL MCIAVI_RegisterClass(void)
 
 BOOL    MCIAVI_CreateWindow(WINE_MCIAVI* wma, DWORD dwFlags, LPMCI_DGV_OPEN_PARMSW lpParms)
 {
-    static const WCHAR captionW[] = {'W','i','n','e',' ','M','C','I','-','A','V','I',' ','p','l','a','y','e','r',0};
     HWND	hParent = 0;
     DWORD	dwStyle = WS_OVERLAPPEDWINDOW;
     RECT        rc;
@@ -135,10 +132,8 @@ BOOL    MCIAVI_CreateWindow(WINE_MCIAVI* wma, DWORD dwFlags, LPMCI_DGV_OPEN_PARM
         rc.left = rc.top = CW_USEDEFAULT;
     }
 
-    wma->hWnd = CreateWindowW(mciaviW, captionW,
-                              dwStyle, rc.left, rc.top,
-                              rc.right, rc.bottom,
-                              hParent, 0, MCIAVI_hInstance,
+    wma->hWnd = CreateWindowW(L"MCIAVI", L"Wine MCI-AVI player", dwStyle, rc.left, rc.top,
+                              rc.right, rc.bottom, hParent, 0, MCIAVI_hInstance,
                               ULongToPtr(wma->wDevID));
     wma->hWndPaint = wma->hWnd;
 
