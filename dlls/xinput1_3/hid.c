@@ -243,12 +243,11 @@ void HID_find_gamepads(xinput_controller *devices)
     while (SetupDiEnumDeviceInterfaces(device_info_set, NULL, &hid_guid, idx++,
            &interface_data))
     {
-        static const WCHAR ig[] = {'I','G','_',0};
         if (!SetupDiGetDeviceInterfaceDetailW(device_info_set,
                 &interface_data, data, sizeof(*data) + detail_size, NULL, NULL))
             continue;
 
-        if (!wcsstr(data->DevicePath, ig))
+        if (!wcsstr(data->DevicePath, L"IG_"))
             continue;
 
         open_device_idx = -1;
