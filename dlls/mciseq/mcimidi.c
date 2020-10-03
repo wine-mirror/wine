@@ -1509,7 +1509,6 @@ static DWORD MIDI_mciInfo(WINE_MCIMIDI* wmm, DWORD dwFlags, LPMCI_INFO_PARMSW lp
 {
     LPCWSTR		str = 0;
     DWORD		ret = 0;
-    static const WCHAR wszMidiSeq[] = {'W','i','n','e','\'','s',' ','M','I','D','I',' ','s','e','q','u','e','n','c','e','r',0};
 
     TRACE("(%d, %08X, %p);\n", wmm->wDevID, dwFlags, lpParms);
 
@@ -1519,7 +1518,7 @@ static DWORD MIDI_mciInfo(WINE_MCIMIDI* wmm, DWORD dwFlags, LPMCI_INFO_PARMSW lp
     TRACE("buf=%p, len=%u\n", lpParms->lpstrReturn, lpParms->dwRetSize);
 
     switch (dwFlags & ~(MCI_WAIT|MCI_NOTIFY)) {
-    case MCI_INFO_PRODUCT:      str = wszMidiSeq; break;
+    case MCI_INFO_PRODUCT:      str = L"Wine's MIDI sequencer"; break;
     case MCI_INFO_FILE:         str = wmm->lpstrElementName; break;
     case MCI_INFO_COPYRIGHT:    str = wmm->lpstrCopyright; break;
     case MCI_INFO_NAME:         str = wmm->lpstrName; break;
@@ -1529,10 +1528,9 @@ static DWORD MIDI_mciInfo(WINE_MCIMIDI* wmm, DWORD dwFlags, LPMCI_INFO_PARMSW lp
     }
     if (!ret) {
 	if (lpParms->dwRetSize) {
-	    WCHAR zero = 0;
 	    /* FIXME? Since NT, mciwave, mciseq and mcicda set dwRetSize
 	     *        to the number of characters written, excluding \0. */
-	    lstrcpynW(lpParms->lpstrReturn, str ? str : &zero, lpParms->dwRetSize);
+            lstrcpynW(lpParms->lpstrReturn, str ? str : L"", lpParms->dwRetSize);
 	} else ret = MCIERR_PARAM_OVERFLOW;
     }
     if (MMSYSERR_NOERROR==ret && (dwFlags & MCI_NOTIFY))
