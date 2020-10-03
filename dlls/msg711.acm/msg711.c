@@ -675,10 +675,6 @@ static	LRESULT G711_DriverDetails(PACMDRIVERDETAILSW add)
  */
 static	LRESULT	G711_FormatTagDetails(PACMFORMATTAGDETAILSW aftd, DWORD dwQuery)
 {
-    static const WCHAR szPcm[]={'P','C','M',0};
-    static const WCHAR szALaw[]={'A','-','L','a','w',0};
-    static const WCHAR szULaw[]={'U','-','L','a','w',0};
-
     switch (dwQuery)
     {
     case ACM_FORMATTAGDETAILSF_INDEX:
@@ -712,19 +708,19 @@ static	LRESULT	G711_FormatTagDetails(PACMFORMATTAGDETAILSW aftd, DWORD dwQuery)
 	aftd->dwFormatTag = WAVE_FORMAT_PCM;
 	aftd->cbFormatSize = sizeof(PCMWAVEFORMAT);
 	aftd->cStandardFormats = ARRAY_SIZE(PCM_Formats);
-        lstrcpyW(aftd->szFormatTag, szPcm);
+        lstrcpyW(aftd->szFormatTag, L"PCM");
         break;
     case 1:
 	aftd->dwFormatTag = WAVE_FORMAT_ALAW;
 	aftd->cbFormatSize = sizeof(WAVEFORMATEX);
 	aftd->cStandardFormats = ARRAY_SIZE(ALaw_Formats);
-        lstrcpyW(aftd->szFormatTag, szALaw);
+        lstrcpyW(aftd->szFormatTag, L"A-Law");
 	break;
     case 2:
 	aftd->dwFormatTag = WAVE_FORMAT_MULAW;
 	aftd->cbFormatSize = sizeof(WAVEFORMATEX);
 	aftd->cStandardFormats = ARRAY_SIZE(ULaw_Formats);
-        lstrcpyW(aftd->szFormatTag, szULaw);
+        lstrcpyW(aftd->szFormatTag, L"U-Law");
 	break;
     }
     return MMSYSERR_NOERROR;
