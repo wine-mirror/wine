@@ -28,3 +28,16 @@ interface ID3D12Debug : IUnknown
 {
     void EnableDebugLayer();
 }
+
+[
+    uuid(affaa4ca-63fe-4d8e-b8ad-159000af4304),
+    object,
+    local,
+    pointer_default(unique)
+]
+interface ID3D12Debug1 : IUnknown
+{
+    void EnableDebugLayer();
+    void SetEnableGPUBasedValidation(BOOL enable);
+    void SetEnableSynchronizedCommandQueueValidation(BOOL enable);
+}
