@@ -55,7 +55,7 @@ static void test_OpenVirtualDisk(void)
     HANDLE handle;
     VIRTUAL_STORAGE_TYPE stgtype;
     OPEN_VIRTUAL_DISK_PARAMETERS param;
-    static const WCHAR vdisk[] = {'t','e','s','t','.','v','h','d',0};
+    static const WCHAR vdisk[] = L"test.vhd";
 
     ret = pOpenVirtualDisk(NULL, NULL, VIRTUAL_DISK_ACCESS_NONE, OPEN_VIRTUAL_DISK_FLAG_NO_PARENTS, NULL, &handle);
     ok(ret == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", ret);
