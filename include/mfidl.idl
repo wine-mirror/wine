@@ -428,7 +428,7 @@ interface IMFSourceResolver : IUnknown
             [out] IUnknown **object);
     [call_as(EndCreateObjectFromByteStream)] HRESULT RemoteEndCreateObjectFromByteStream([in] IUnknown *result,
             [out] MF_OBJECT_TYPE *obj_type, [out] IUnknown **object);
-    [local] HRESULT CanceObjectCreation([in] IUnknown *cancel_cookie);
+    [local] HRESULT CancelObjectCreation([in] IUnknown *cancel_cookie);
 }
 
 [
