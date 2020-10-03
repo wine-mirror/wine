@@ -280,12 +280,6 @@ HRESULT WINAPI PSRefreshPropertySchema(void)
 
 HRESULT WINAPI PSStringFromPropertyKey(REFPROPERTYKEY pkey, LPWSTR psz, UINT cch)
 {
-    static const WCHAR guid_fmtW[] = {'{','%','0','8','X','-','%','0','4','X','-',
-                                      '%','0','4','X','-','%','0','2','X','%','0','2','X','-',
-                                      '%','0','2','X','%','0','2','X','%','0','2','X',
-                                      '%','0','2','X','%','0','2','X','%','0','2','X','}',0};
-    static const WCHAR pid_fmtW[] = {'%','u',0};
-
     WCHAR pidW[PKEY_PIDSTR_MAX + 1];
     LPWSTR p = psz;
     int len;
@@ -305,8 +299,8 @@ HRESULT WINAPI PSStringFromPropertyKey(REFPROPERTYKEY pkey, LPWSTR psz, UINT cch
         return E_NOT_SUFFICIENT_BUFFER;
     }
 
-    swprintf(psz, cch, guid_fmtW, pkey->fmtid.Data1, pkey->fmtid.Data2,
-             pkey->fmtid.Data3, pkey->fmtid.Data4[0], pkey->fmtid.Data4[1],
+    swprintf(psz, cch, L"{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}", pkey->fmtid.Data1,
+             pkey->fmtid.Data2, pkey->fmtid.Data3, pkey->fmtid.Data4[0], pkey->fmtid.Data4[1],
              pkey->fmtid.Data4[2], pkey->fmtid.Data4[3], pkey->fmtid.Data4[4],
              pkey->fmtid.Data4[5], pkey->fmtid.Data4[6], pkey->fmtid.Data4[7]);
 
@@ -315,7 +309,7 @@ HRESULT WINAPI PSStringFromPropertyKey(REFPROPERTYKEY pkey, LPWSTR psz, UINT cch
     *p++ = ' ';
     cch -= GUIDSTRING_MAX - 1 + 1;
 
-    len = swprintf(pidW, ARRAY_SIZE(pidW), pid_fmtW, pkey->pid);
+    len = swprintf(pidW, ARRAY_SIZE(pidW), L"%u", pkey->pid);
 
     if (cch >= len + 1)
     {
