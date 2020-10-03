@@ -392,8 +392,6 @@ static const MIME_CP_INFO vietnamese_cp[] =
       "windows-1258", "windows-1258", "windows-1258" }
 };
 
-static const WCHAR asciiW[] = {'a','s','c','i','i',0};
-
 static const MIME_CP_INFO western_cp[] =
 {
     { "IBM EBCDIC (US-Canada)",
@@ -446,7 +444,7 @@ static const MIME_CP_INFO western_cp[] =
       20127, MIMECONTF_MAILNEWS | MIMECONTF_IMPORT | MIMECONTF_EXPORT |
              MIMECONTF_SAVABLE_MAILNEWS | MIMECONTF_VALID |
              MIMECONTF_VALID_NLS | MIMECONTF_MIME_LATEST,
-      "us-ascii", "us-ascii", "us-ascii", asciiW },
+      "us-ascii", "us-ascii", "us-ascii", L"ascii" },
     { "Western European (ISO)",
       28591, MIMECONTF_MAILNEWS | MIMECONTF_BROWSER | MIMECONTF_IMPORT |
              MIMECONTF_SAVABLE_MAILNEWS | MIMECONTF_SAVABLE_BROWSER |
@@ -3934,14 +3932,7 @@ static BOOL register_codepages(void)
     WCHAR buf[32];
     LSTATUS status;
 
-    static const WCHAR db_key_nameW[] = {
-        'M','I','M','E',
-        '\\','D','a','t','a','b','a','s','e',
-        '\\','C','o','d','e','p','a','g','e',0};
-    static const WCHAR familyW[] = {'F','a','m','i','l','y',0};
-    static const WCHAR formatW[] = {'%','u',0};
-
-    status = RegCreateKeyW(HKEY_CLASSES_ROOT, db_key_nameW, &db_key);
+    status = RegCreateKeyW(HKEY_CLASSES_ROOT, L"MIME\\Database\\Codepage", &db_key);
     if (status != ERROR_SUCCESS)
         return FALSE;
 
@@ -3949,7 +3940,7 @@ static BOOL register_codepages(void)
     {
         for (info = family->mime_cp_info; info < family->mime_cp_info + family->number_of_cp; info++)
         {
-            swprintf(buf, ARRAY_SIZE(buf), formatW, info->cp);
+            swprintf(buf, ARRAY_SIZE(buf), L"%u", info->cp);
             status = RegCreateKeyW(db_key, buf, &key);
             if (status != ERROR_SUCCESS)
                 continue;
@@ -3966,7 +3957,7 @@ static BOOL register_codepages(void)
             }
             else
             {
-                RegSetValueExW(key, familyW, 0, REG_DWORD, (BYTE*)&family->family_codepage,
+                RegSetValueExW(key, L"Family", 0, REG_DWORD, (BYTE*)&family->family_codepage,
                                sizeof(family->family_codepage));
             }
 
