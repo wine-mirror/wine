@@ -129,7 +129,7 @@ static WCHAR *build_dll_path( const WCHAR *arch, const WCHAR *name, const WCHAR 
     unsigned int len;
 
     if (!(path = build_assembly_name( arch, name, token, version, &len ))) return NULL;
-    len += build_sxs_path( sxsdir ) + 1;
+    len += build_sxs_path( sxsdir ) + 2;
     if (!(ret = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
     {
         HeapFree( GetProcessHeap(), 0, path );
