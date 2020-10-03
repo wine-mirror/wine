@@ -665,15 +665,13 @@ static DWORD MCICDA_Info(UINT wDevID, DWORD dwFlags, LPMCI_INFO_PARMSW lpParms)
     TRACE("buf=%p, len=%u\n", lpParms->lpstrReturn, lpParms->dwRetSize);
 
     if (dwFlags & MCI_INFO_PRODUCT) {
-        static const WCHAR wszAudioCd[] = {'W','i','n','e','\'','s',' ','a','u','d','i','o',' ','C','D',0};
-        str = wszAudioCd;
+        str = L"Wine's audio CD";
     } else if (dwFlags & MCI_INFO_MEDIA_UPC) {
 	ret = MCIERR_NO_IDENTITY;
     } else if (dwFlags & MCI_INFO_MEDIA_IDENTITY) {
 	DWORD	    res = 0;
         CDROM_TOC   toc;
         DWORD       br;
-	static const WCHAR wszLu[] = {'%','l','u',0};
 
         if (!device_io(wmcda->handle, IOCTL_CDROM_READ_TOC, NULL, 0,
                              &toc, sizeof(toc), &br, NULL)) {
@@ -681,7 +679,7 @@ static DWORD MCICDA_Info(UINT wDevID, DWORD dwFlags, LPMCI_INFO_PARMSW lpParms)
 	}
 
 	res = CDROM_Audio_GetSerial(&toc);
-	swprintf(buffer, ARRAY_SIZE(buffer), wszLu, res);
+	swprintf(buffer, ARRAY_SIZE(buffer), L"%lu", res);
 	str = buffer;
     } else {
 	WARN("Don't know this info command (%u)\n", dwFlags);
