@@ -88,8 +88,6 @@ DEFINE_EXPECT(Caller_QS_SecMgr);
 DEFINE_EXPECT(QI_IObjectWithSite);
 DEFINE_EXPECT(SetSite);
 
-static const WCHAR testW[] = {'t','e','s','t',0};
-
 static HRESULT QS_SecMgr_hres;
 static HRESULT ProcessUrlAction_hres;
 static DWORD ProcessUrlAction_policy;
@@ -753,7 +751,7 @@ static IActiveScriptParse *create_script(BOOL use_sec_mgr)
     hres = IActiveScript_SetScriptSite(script, &ActiveScriptSite);
     ok(hres == S_OK, "SetScriptSite failed: %08x\n", hres);
 
-    hres = IActiveScript_AddNamedItem(script, testW,
+    hres = IActiveScript_AddNamedItem(script, L"test",
             SCRIPTITEM_ISVISIBLE|SCRIPTITEM_ISSOURCE|SCRIPTITEM_GLOBALMEMBERS);
     ok(hres == S_OK, "AddNamedItem failed: %08x\n", hres);
 

@@ -1500,9 +1500,6 @@ static void test_vbscript_uninitializing(void)
     ULONG ref;
     HRESULT hres;
 
-    static const WCHAR script_textW[] =
-        {'F','u','n','c','t','i','o','n',' ','f','\n','E','n','d',' ','F','u','n','c','t','i','o','n','\n',0};
-
     script = create_vbscript();
 
     hres = IActiveScript_QueryInterface(script, &IID_IActiveScriptParse, (void**)&parse);
@@ -1529,7 +1526,7 @@ static void test_vbscript_uninitializing(void)
 
     test_state(script, SCRIPTSTATE_INITIALIZED);
 
-    hres = IActiveScriptParse_ParseScriptText(parse, script_textW, NULL, NULL, NULL, 0, 1, 0x42, NULL, NULL);
+    hres = IActiveScriptParse_ParseScriptText(parse, L"Function f\nEnd Function\n", NULL, NULL, NULL, 0, 1, 0x42, NULL, NULL);
     ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
 
     hres = IActiveScript_SetScriptSite(script, &ActiveScriptSite);

@@ -155,9 +155,6 @@ DEFINE_EXPECT(OnLeaveScript);
 #define FACILITY_VBS 0xa
 #define MAKE_VBSERROR(code) MAKE_HRESULT(SEVERITY_ERROR, FACILITY_VBS, code)
 
-static const WCHAR testW[] = {'t','e','s','t',0};
-static const WCHAR emptyW[] = {0};
-
 static BOOL strict_dispid_check, is_english, allow_ui;
 static int first_day_of_week;
 static const char *test_name = "(null)";
@@ -1957,7 +1954,7 @@ static IActiveScript *create_and_init_script(DWORD flags, BOOL start)
     hres = IActiveScript_SetScriptSite(engine, &ActiveScriptSite);
     ok(hres == S_OK, "SetScriptSite failed: %08x\n", hres);
 
-    hres = IActiveScript_AddNamedItem(engine, testW,
+    hres = IActiveScript_AddNamedItem(engine, L"test",
             SCRIPTITEM_ISVISIBLE|SCRIPTITEM_ISSOURCE|flags);
     ok(hres == S_OK, "AddNamedItem failed: %08x\n", hres);
 
@@ -2046,9 +2043,6 @@ static void test_parse_context(void)
     BSTR str;
     HRESULT hres;
 
-    static const WCHAR xW[] = {'x',0};
-    static const WCHAR yW[] = {'y',0};
-
     global_ref = 1;
     engine = create_and_init_script(0, TRUE);
     if(!engine)
@@ -2063,7 +2057,7 @@ static void test_parse_context(void)
 
     /* unknown identifier context is not a valid argument */
     str = a2bstr("Call reportSuccess()\n");
-    hres = IActiveScriptParse_ParseScriptText(parser, str, yW, NULL, NULL, 0, 0, 0, NULL, NULL);
+    hres = IActiveScriptParse_ParseScriptText(parser, str, L"y", NULL, NULL, 0, 0, 0, NULL, NULL);
     ok(hres == E_INVALIDARG, "ParseScriptText failed: %08x\n", hres);
     SysFreeString(str);
 
@@ -2080,14 +2074,14 @@ static void test_parse_context(void)
 
     /* known global variable is not a valid context */
     str = a2bstr("Call reportSuccess()\n");
-    hres = IActiveScriptParse_ParseScriptText(parser, str, xW, NULL, NULL, 0, 0, 0, NULL, NULL);
+    hres = IActiveScriptParse_ParseScriptText(parser, str, L"x", NULL, NULL, 0, 0, 0, NULL, NULL);
     ok(hres == E_INVALIDARG, "ParseScriptText failed: %08x\n", hres);
     SysFreeString(str);
 
     SET_EXPECT(global_success_d);
     SET_EXPECT(global_success_i);
     str = a2bstr("Call reportSuccess()\n");
-    hres = IActiveScriptParse_ParseScriptText(parser, str, testW, NULL, NULL, 0, 0, 0, NULL, NULL);
+    hres = IActiveScriptParse_ParseScriptText(parser, str, L"test", NULL, NULL, 0, 0, 0, NULL, NULL);
     ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
     SysFreeString(str);
     CHECK_CALLED(global_success_d);
@@ -2109,10 +2103,8 @@ static void _parse_htmlscript_a(unsigned line, const char *src)
     BSTR tmp;
     HRESULT hres;
 
-    static const WCHAR script_delimW[] = {'<','/','S','C','R','I','P','T','>',0};
-
     tmp = a2bstr(src);
-    hres = parse_script(SCRIPTITEM_GLOBALMEMBERS, tmp, script_delimW);
+    hres = parse_script(SCRIPTITEM_GLOBALMEMBERS, tmp, L"</SCRIPT>");
     SysFreeString(tmp);
     ok_(__FILE__,line)(hres == S_OK, "parse_script failed: %08x\n", hres);
 }
@@ -2124,10 +2116,8 @@ static IDispatchEx *parse_procedure(IActiveScriptParseProcedure2 *parse_proc, co
     BSTR str;
     HRESULT hres;
 
-    static const WCHAR delimiterW[] = {'\"',0};
-
     str = a2bstr(src);
-    hres = IActiveScriptParseProcedure2_ParseProcedureText(parse_proc, str, NULL, emptyW, NULL, NULL, delimiterW, 0, 0,
+    hres = IActiveScriptParseProcedure2_ParseProcedureText(parse_proc, str, NULL, L"", NULL, NULL, L"\"", 0, 0,
             SCRIPTPROC_HOSTMANAGESSOURCE|SCRIPTPROC_IMPLICIT_THIS|SCRIPTPROC_IMPLICIT_PARENTS|flags, &disp);
     SysFreeString(str);
     ok(hres == S_OK, "ParseProcedureText failed: %08x\n", hres);
@@ -2158,7 +2148,7 @@ static void test_procedures(void)
     hres = IActiveScript_QueryInterface(script, &IID_IActiveScriptParseProcedure2, (void**)&parse_proc);
     ok(hres == S_OK, "Could not get IActiveScriptParseProcedure2 iface: %08x\n", hres);
 
-    hres = IActiveScriptParseProcedure2_ParseProcedureText(parse_proc, NULL, NULL, emptyW, NULL, NULL, NULL, 0, 0, 0, &disp);
+    hres = IActiveScriptParseProcedure2_ParseProcedureText(parse_proc, NULL, NULL, L"", NULL, NULL, NULL, 0, 0, 0, &disp);
     ok(hres == S_OK, "ParseProcedureText failed: %08x\n", hres);
     IDispatch_Release(disp);
 
@@ -2385,7 +2375,7 @@ static void test_gc(void)
     hres = IActiveScript_SetScriptSite(engine, &ActiveScriptSite);
     ok(hres == S_OK, "SetScriptSite failed: %08x\n", hres);
 
-    hres = IActiveScript_AddNamedItem(engine, testW,
+    hres = IActiveScript_AddNamedItem(engine, L"test",
             SCRIPTITEM_ISVISIBLE|SCRIPTITEM_ISSOURCE|SCRIPTITEM_GLOBALMEMBERS);
     ok(hres == S_OK, "AddNamedItem failed: %08x\n", hres);
 
@@ -2643,7 +2633,7 @@ static HRESULT test_global_vars_ref(BOOL use_close)
     hres = IActiveScript_SetScriptSite(engine, &ActiveScriptSite);
     ok(hres == S_OK, "SetScriptSite failed: %08x\n", hres);
 
-    hres = IActiveScript_AddNamedItem(engine, testW, SCRIPTITEM_ISVISIBLE|SCRIPTITEM_ISSOURCE|SCRIPTITEM_GLOBALMEMBERS);
+    hres = IActiveScript_AddNamedItem(engine, L"test", SCRIPTITEM_ISVISIBLE|SCRIPTITEM_ISSOURCE|SCRIPTITEM_GLOBALMEMBERS);
     ok(hres == S_OK, "AddNamedItem failed: %08x\n", hres);
 
     hres = IActiveScript_SetScriptState(engine, SCRIPTSTATE_STARTED);
