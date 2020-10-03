@@ -29,40 +29,33 @@
 
 static void test_SLGetWindowsInformationDWORD(void)
 {
-    static const WCHAR NonexistentLicenseValueW[] = {'N','o','n','e','x','i','s','t','e','n','t','-',
-                                                     'L','i','c','e','n','s','e','-','V','a','l','u','e',0};
-    static const WCHAR KernelMUILanguageAllowedW[] = {'K','e','r','n','e','l','-','M','U','I','-',
-                                                      'L','a','n','g','u','a','g','e','-','A','l','l','o','w','e','d',0};
-    static const WCHAR KernelMUINumberAllowedW[] = {'K','e','r','n','e','l','-','M','U','I','-',
-                                                    'N','u','m','b','e','r','-','A','l','l','o','w','e','d',0};
-    static const WCHAR emptyW[] = {0};
     DWORD value;
     HRESULT res;
 
-    res = SLGetWindowsInformationDWORD(NonexistentLicenseValueW, NULL);
+    res = SLGetWindowsInformationDWORD(L"Nonexistent-License-Value", NULL);
     ok(res == E_INVALIDARG, "expected E_INVALIDARG, got %08x\n", res);
 
     res = SLGetWindowsInformationDWORD(NULL, &value);
     ok(res == E_INVALIDARG, "expected E_INVALIDARG, got %08x\n", res);
 
     value = 0xdeadbeef;
-    res = SLGetWindowsInformationDWORD(NonexistentLicenseValueW, &value);
+    res = SLGetWindowsInformationDWORD(L"Nonexistent-License-Value", &value);
     ok(res == SL_E_VALUE_NOT_FOUND, "expected SL_E_VALUE_NOT_FOUND, got %08x\n", res);
     ok(value == 0xdeadbeef, "expected value = 0xdeadbeef, got %u\n", value);
 
     value = 0xdeadbeef;
-    res = SLGetWindowsInformationDWORD(emptyW, &value);
+    res = SLGetWindowsInformationDWORD(L"", &value);
     ok(res == SL_E_RIGHT_NOT_GRANTED || broken(res == 0xd000000d) /* Win 8 */,
        "expected SL_E_RIGHT_NOT_GRANTED, got %08x\n", res);
     ok(value == 0xdeadbeef, "expected value = 0xdeadbeef, got %u\n", value);
 
     value = 0xdeadbeef;
-    res = SLGetWindowsInformationDWORD(KernelMUILanguageAllowedW, &value);
+    res = SLGetWindowsInformationDWORD(L"Kernel-MUI-Language-Allowed", &value);
     ok(res == SL_E_DATATYPE_MISMATCHED, "expected SL_E_DATATYPE_MISMATCHED, got %08x\n", res);
     ok(value == 0xdeadbeef, "expected value = 0xdeadbeef, got %u\n", value);
 
     value = 0xdeadbeef;
-    res = SLGetWindowsInformationDWORD(KernelMUINumberAllowedW, &value);
+    res = SLGetWindowsInformationDWORD(L"Kernel-MUI-Number-Allowed", &value);
     ok(res == S_OK, "expected S_OK, got %u\n", res);
     ok(value != 0xdeadbeef, "expected value != 0xdeadbeef\n");
 }
