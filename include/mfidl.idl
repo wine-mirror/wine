@@ -573,6 +573,19 @@ interface IMFMetadata : IUnknown
 
 [
     object,
+    uuid(56181d2d-e221-4adb-b1c8-3cee6a53f76f)
+]
+interface IMFMetadataProvider : IUnknown
+{
+    HRESULT GetMFMetadata(
+        [in] IMFPresentationDescriptor *descriptor,
+        [in] DWORD identifier,
+        [in] DWORD flags,
+        [out] IMFMetadata **metadata);
+}
+
+[
+    object,
     uuid(197cd219-19cb-4de1-a64c-acf2edcbe59e),
     local
 ]
