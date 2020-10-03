@@ -781,13 +781,6 @@ static void test_basics(void)
     int cbstate;
     WCHAR curdirW[MAX_PATH];
     WCHAR buf[MAX_PATH];
-    static const WCHAR testdirW[] = {'t','e','s','t','d','i','r',0};
-    static const WCHAR testdir2W[] =
-        {'t','e','s','t','d','i','r','\\','t','e','s','t','d','i','r','2',0};
-    static const WCHAR test1W[] =
-        {'t','e','s','t','d','i','r','\\','t','e','s','t','1','.','t','x','t',0};
-    static const WCHAR explorerW[] = {'E','x','p','l','o','r','e','r',0};
-    static const WCHAR randomW[] = {'_','_','h','e','l','l','o',0};
 
     /* These should exist on platforms supporting the NSTC */
     ok(pSHCreateShellItem != NULL, "No SHCreateShellItem.\n");
@@ -827,19 +820,19 @@ static void test_basics(void)
 
     lstrcpyW(buf, curdirW);
     myPathAddBackslashW(buf);
-    lstrcatW(buf, testdirW);
+    lstrcatW(buf, L"testdir");
     hr = pSHCreateItemFromParsingName(buf, NULL, &IID_IShellItem, (void**)&psitestdir);
     ok(hr == S_OK, "Got 0x%08x\n", hr);
     if(FAILED(hr)) goto cleanup;
     lstrcpyW(buf, curdirW);
     myPathAddBackslashW(buf);
-    lstrcatW(buf, testdir2W);
+    lstrcatW(buf, L"testdir\\testdir2");
     hr = pSHCreateItemFromParsingName(buf, NULL, &IID_IShellItem, (void**)&psitestdir2);
     ok(hr == S_OK, "Got 0x%08x\n", hr);
     if(FAILED(hr)) goto cleanup;
     lstrcpyW(buf, curdirW);
     myPathAddBackslashW(buf);
-    lstrcatW(buf, test1W);
+    lstrcatW(buf, L"testdir\\test1.txt");
     hr = pSHCreateItemFromParsingName(buf, NULL, &IID_IShellItem, (void**)&psitest1);
     ok(hr == S_OK, "Got 0x%08x\n", hr);
     if(FAILED(hr)) goto cleanup;
@@ -1725,9 +1718,9 @@ static void test_basics(void)
     {
         hr = INameSpaceTreeControl_SetTheme(pnstc, NULL);
         ok(hr == S_OK, "Got 0x%08x\n", hr);
-        hr = INameSpaceTreeControl_SetTheme(pnstc, explorerW);
+        hr = INameSpaceTreeControl_SetTheme(pnstc, L"Explorer");
         ok(hr == S_OK, "Got 0x%08x\n", hr);
-        hr = INameSpaceTreeControl_SetTheme(pnstc, randomW);
+        hr = INameSpaceTreeControl_SetTheme(pnstc, L"__hello");
         ok(hr == S_OK, "Got 0x%08x\n", hr);
     }
 

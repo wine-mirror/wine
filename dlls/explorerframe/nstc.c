@@ -75,8 +75,6 @@ static const DWORD unsupported_styles2 =
     NSTCS2_INTERRUPTNOTIFICATIONS | NSTCS2_SHOWNULLSPACEMENU | NSTCS2_DISPLAYPADDING |
     NSTCS2_DISPLAYPINNEDONLY | NTSCS2_NOSINGLETONAUTOEXPAND | NTSCS2_NEVERINSERTNONENUMERATED;
 
-static const WCHAR thispropW[] = {'P','R','O','P','_','T','H','I','S',0};
-
 static inline NSTC2Impl *impl_from_INameSpaceTreeControl2(INameSpaceTreeControl2 *iface)
 {
     return CONTAINING_RECORD(iface, NSTC2Impl, INameSpaceTreeControl2_iface);
@@ -510,7 +508,7 @@ static LRESULT create_namespacetree(HWND hWnd, CREATESTRUCTW *crs)
     This->tv_oldwndproc = (WNDPROC)SetWindowLongPtrW(This->hwnd_tv, GWLP_WNDPROC,
                                                      (ULONG_PTR)tv_wndproc);
     if(This->tv_oldwndproc)
-        SetPropW(This->hwnd_tv, thispropW, This);
+        SetPropW(This->hwnd_tv, L"PROP_THIS", This);
 
     return TRUE;
 }
@@ -534,7 +532,7 @@ static LRESULT destroy_namespacetree(NSTC2Impl *This)
     if(This->tv_oldwndproc)
     {
         SetWindowLongPtrW(This->hwnd_tv, GWLP_WNDPROC, (ULONG_PTR)This->tv_oldwndproc);
-        RemovePropW(This->hwnd_tv, thispropW);
+        RemovePropW(This->hwnd_tv, L"PROP_THIS");
     }
 
     INameSpaceTreeControl2_RemoveAllRoots(&This->INameSpaceTreeControl2_iface);
@@ -762,7 +760,7 @@ static LRESULT on_kbd_event(NSTC2Impl *This, UINT uMsg, WPARAM wParam, LPARAM lP
 
 static LRESULT CALLBACK tv_wndproc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam)
 {
-    NSTC2Impl *This = (NSTC2Impl*)GetPropW(hWnd, thispropW);
+    NSTC2Impl *This = (NSTC2Impl*)GetPropW(hWnd, L"PROP_THIS");
 
     switch(uMessage) {
     case WM_KEYDOWN:
@@ -879,9 +877,7 @@ static HRESULT WINAPI NSTC2_fnInitialize(INameSpaceTreeControl2* iface,
     DWORD window_style, window_ex_style;
     INITCOMMONCONTROLSEX icex;
     RECT rc;
-    static const WCHAR NSTC2_CLASS_NAME[] =
-        {'N','a','m','e','s','p','a','c','e','T','r','e','e',
-         'C','o','n','t','r','o','l',0};
+    static const WCHAR NSTC2_CLASS_NAME[] = L"NamespaceTreeControl";
 
     TRACE("%p (%p, %p, %x)\n", This, hwndParent, prc, nstcsFlags);
 
