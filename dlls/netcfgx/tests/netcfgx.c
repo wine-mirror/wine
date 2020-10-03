@@ -25,8 +25,6 @@
 
 static void create_configuration(void)
 {
-    static const WCHAR tcpipW[] = {'M','S','_','T','C','P','I','P',0};
-    static const WCHAR myclient[] = {'M','Y',' ','C','L','I','E','N','T',0};
     HRESULT hr;
     INetCfg *config = NULL;
     INetCfgLock *netlock = NULL;
@@ -40,7 +38,7 @@ static void create_configuration(void)
         hr = INetCfg_QueryInterface(config, &IID_INetCfgLock, (LPVOID*)&netlock);
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
-        hr = INetCfgLock_AcquireWriteLock(netlock, 5000, myclient, &client);
+        hr = INetCfgLock_AcquireWriteLock(netlock, 5000, L"MY CLIENT", &client);
         ok(hr == S_OK ||
            hr == E_ACCESSDENIED /* Not run as admin */, "got 0x%08x\n", hr);
         if(hr == S_OK)
@@ -55,10 +53,10 @@ static void create_configuration(void)
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
         /* AcquireWriteLock needs to be run before Initialize */
-        hr = INetCfgLock_AcquireWriteLock(netlock, 5000, myclient, &client);
+        hr = INetCfgLock_AcquireWriteLock(netlock, 5000, L"MY CLIENT", &client);
         todo_wine ok(hr == NETCFG_E_ALREADY_INITIALIZED || hr == E_ACCESSDENIED, "got 0x%08x\n", hr);
 
-        hr =  INetCfg_FindComponent(config, tcpipW, &component);
+        hr =  INetCfg_FindComponent(config, L"MS_TCPIP", &component);
         todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
         if(hr == S_OK)
         {
