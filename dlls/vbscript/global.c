@@ -2423,7 +2423,6 @@ static HRESULT Global_Split(BuiltinDisp *This, VARIANT *args, unsigned args_cnt,
     }
     hres = SafeArrayAccessData(sa, (void**)&data);
     if(FAILED(hres)) {
-        SafeArrayDestroy(sa);
         goto error;
     }
 
@@ -2440,7 +2439,6 @@ static HRESULT Global_Split(BuiltinDisp *This, VARIANT *args, unsigned args_cnt,
         hres = VariantCopyInd(data+i, &var);
         if(FAILED(hres)) {
             SafeArrayUnaccessData(sa);
-            SafeArrayDestroy(sa);
             goto error;
         }
         start = indices[i]+delimiterlen;
@@ -2452,7 +2450,7 @@ error:
         V_VT(res) = VT_ARRAY|VT_VARIANT;
         V_ARRAY(res) = sa;
     }else {
-        if (sa) SafeArrayDestroy(sa);
+        SafeArrayDestroy(sa);
     }
 
     heap_free(indices);
