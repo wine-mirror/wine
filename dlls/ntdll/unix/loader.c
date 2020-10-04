@@ -920,7 +920,9 @@ static void load_libwine(void)
     if (build_dir) path = build_path( build_dir, "libs/wine/" LIBWINE );
     else path = build_path( dll_dir, "../" LIBWINE );
 
-    if (!(handle = dlopen( path, RTLD_NOW )) && !(handle = dlopen( LIBWINE, RTLD_NOW ))) return;
+    handle = dlopen( path, RTLD_NOW );
+    free( path );
+    if (!handle && !(handle = dlopen( LIBWINE, RTLD_NOW ))) return;
 
     p_wine_dll_set_callback = dlsym( handle, "wine_dll_set_callback" );
     p___wine_main_argc      = dlsym( handle, "__wine_main_argc" );
