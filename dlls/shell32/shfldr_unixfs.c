@@ -1251,7 +1251,10 @@ static HRESULT WINAPI ShellFolder2_GetDisplayNameOf(IShellFolder2* iface,
                 LPWSTR pwszDosFileName = wine_get_dos_file_name(This->m_pszPath);
                 if (!pwszDosFileName) return HRESULT_FROM_WIN32(GetLastError());
                 lpName->u.pOleStr = SHAlloc((lstrlenW(pwszDosFileName) + 1) * sizeof(WCHAR));
-                if (!lpName->u.pOleStr) return HRESULT_FROM_WIN32(GetLastError());
+                if (!lpName->u.pOleStr) {
+                    heap_free(pwszDosFileName);
+                    return HRESULT_FROM_WIN32(GetLastError());
+                }
                 lstrcpyW(lpName->u.pOleStr, pwszDosFileName);
                 PathRemoveBackslashW(lpName->u.pOleStr);
                 heap_free(pwszDosFileName);
