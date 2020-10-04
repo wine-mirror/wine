@@ -3394,6 +3394,20 @@ HKLM,%CurrentVersionNT%\Time Zones\North Asia Standard Time,"MUI_Dlt",,"@tzres.d
 HKLM,%CurrentVersionNT%\Time Zones\North Asia Standard Time,"MUI_Std",,"@tzres.dll,-304"
 HKLM,%CurrentVersionNT%\Time Zones\North Asia Standard Time,"Std",,"North Asia Standard Time"
 HKLM,%CurrentVersionNT%\Time Zones\North Asia Standard Time,"TZI",1,5c,fe,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\North Korea Standard Time,"Display",,"Asia/Pyongyang"
+HKLM,%CurrentVersionNT%\Time Zones\North Korea Standard Time,"Dlt",,"North Korea Daylight Time"
+HKLM,%CurrentVersionNT%\Time Zones\North Korea Standard Time,"MUI_Dlt",,"@tzres.dll,-35889"
+HKLM,%CurrentVersionNT%\Time Zones\North Korea Standard Time,"MUI_Std",,"@tzres.dll,-35888"
+HKLM,%CurrentVersionNT%\Time Zones\North Korea Standard Time,"Std",,"North Korea Standard Time"
+HKLM,%CurrentVersionNT%\Time Zones\North Korea Standard Time,"TZI",1,e4,fd,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\North Korea Standard Time\Dynamic DST,"2014",1,e4,fd,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\North Korea Standard Time\Dynamic DST,"2015",1,e4,fd,ff,ff,00,00,00,00,1e,00,00,00,00,00,01,00,04,00,01,00,00,00,00,00,00,00,00,00,00,00,08,00,06,00,03,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\North Korea Standard Time\Dynamic DST,"2016",1,02,fe,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\North Korea Standard Time\Dynamic DST,"2017",1,02,fe,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\North Korea Standard Time\Dynamic DST,"2018",1,02,fe,ff,ff,00,00,00,00,e2,ff,ff,ff,00,00,01,00,01,00,01,00,00,00,00,00,00,00,00,00,00,00,05,00,05,00,01,00,17,00,1e,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\North Korea Standard Time\Dynamic DST,"2019",1,e4,fd,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\North Korea Standard Time\Dynamic DST,"FirstEntry",0x10001,"2014"
+HKLM,%CurrentVersionNT%\Time Zones\North Korea Standard Time\Dynamic DST,"LastEntry",0x10001,"2019"
 HKLM,%CurrentVersionNT%\Time Zones\Pacific SA Standard Time,"Display",,"America/Santiago"
 HKLM,%CurrentVersionNT%\Time Zones\Pacific SA Standard Time,"Dlt",,"Pacific SA Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Pacific SA Standard Time,"MUI_Dlt",,"@tzres.dll,-65009"
