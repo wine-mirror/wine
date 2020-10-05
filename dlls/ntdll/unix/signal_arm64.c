@@ -157,6 +157,7 @@ static inline struct arm64_thread_data *arm64_thread_data(void)
     return (struct arm64_thread_data *)ntdll_get_thread_data()->cpu_data;
 }
 
+extern void raise_func_trampoline( EXCEPTION_RECORD *rec, CONTEXT *context, void *dispatcher );
 
 /***********************************************************************
  *           unwind_builtin_dll
@@ -275,6 +276,17 @@ NTSTATUS CDECL unwind_builtin_dll( ULONG type, DISPATCHER_CONTEXT *dispatch, CON
 #endif
     unw_get_reg( &cursor, UNW_REG_IP,      (unw_word_t *)&context->Pc );
     context->ContextFlags |= CONTEXT_UNWOUND_TO_CALL;
+
+    if (info.start_ip == (unw_word_t)raise_func_trampoline) {
+        /* raise_func_trampoline has a full CONTEXT stored on the stack;
+         * restore the original Lr value from there. The function we unwind
+         * to might be a leaf function that hasn't backed up its own original
+         * Lr value on the stack.
+         * We could also just restore the full context here without doing
+         * unw_step at all. */
+        const CONTEXT *next_ctx = (const CONTEXT *) dispatch->EstablisherFrame;
+        context->u.s.Lr = next_ctx->u.s.Lr;
+    }
 
     TRACE( "next function pc=%016lx%s\n", context->Pc, rc ? "" : " (last frame)" );
     TRACE("  x0=%016lx  x1=%016lx  x2=%016lx  x3=%016lx\n",
@@ -573,20 +585,49 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
 }
 
 
-extern void raise_func_trampoline( EXCEPTION_RECORD *rec, CONTEXT *context, void *dispatcher, void *sp );
+/* Note, unwind_builtin_dll above has hardcoded assumptions on how this
+ * function stores things on the stack; if modified, modify that one in
+ * sync as well. */
 __ASM_GLOBAL_FUNC( raise_func_trampoline,
-                   __ASM_CFI(".cfi_signal_frame\n\t")
-                   "stp x29, x30, [sp, #-0x20]!\n\t"
-                   __ASM_CFI(".cfi_def_cfa_offset 32\n\t")
-                   __ASM_CFI(".cfi_offset 29, -32\n\t")
-                   __ASM_CFI(".cfi_offset 30, -24\n\t")
+                   "stp x29, x30, [sp, #-0x30]!\n\t"
+                   __ASM_CFI(".cfi_def_cfa_offset 48\n\t")
+                   __ASM_CFI(".cfi_offset 29, -48\n\t")
+                   __ASM_CFI(".cfi_offset 30, -40\n\t")
+                   "stp x0,  x1,  [sp, #0x10]\n\t"
+                   "str x2,       [sp, #0x20]\n\t"
                    "mov x29, sp\n\t"
                    __ASM_CFI(".cfi_def_cfa_register 29\n\t")
-                   "str x3, [sp, 0x10]\n\t"
                    __ASM_CFI(".cfi_remember_state\n\t")
-                   __ASM_CFI(".cfi_escape 0x0f,0x03,0x8d,0x10,0x06\n\t") /* CFA */
-                   __ASM_CFI(".cfi_escape 0x10,0x1d,0x02,0x8d,0x00\n\t") /* x29 */
-                   __ASM_CFI(".cfi_escape 0x10,0x1e,0x02,0x8d,0x08\n\t") /* x30 */
+
+                   /* Memcpy the context onto the stack */
+                   "sub sp, sp, #0x390\n\t"
+                   "mov x0,  sp\n\t"
+                   "mov x2,  #0x390\n\t"
+                   "bl " __ASM_NAME("memcpy") "\n\t"
+                   __ASM_CFI(".cfi_def_cfa 31, 0\n\t")
+                   __ASM_CFI(".cfi_escape 0x0f,0x04,0x8f,0x80,0x02,0x06\n\t") /* CFA, DW_OP_breg31 + 0x100, DW_OP_deref */
+                   __ASM_CFI(".cfi_escape 0x10,0x13,0x03,0x8f,0xa0,0x01\n\t") /* x19, DW_OP_breg31 + 0xA0 */
+                   __ASM_CFI(".cfi_escape 0x10,0x14,0x03,0x8f,0xa8,0x01\n\t") /* x20 */
+                   __ASM_CFI(".cfi_escape 0x10,0x15,0x03,0x8f,0xb0,0x01\n\t") /* x21 */
+                   __ASM_CFI(".cfi_escape 0x10,0x16,0x03,0x8f,0xb8,0x01\n\t") /* x22 */
+                   __ASM_CFI(".cfi_escape 0x10,0x17,0x03,0x8f,0xc0,0x01\n\t") /* x23 */
+                   __ASM_CFI(".cfi_escape 0x10,0x18,0x03,0x8f,0xc8,0x01\n\t") /* x24 */
+                   __ASM_CFI(".cfi_escape 0x10,0x19,0x03,0x8f,0xd0,0x01\n\t") /* x25 */
+                   __ASM_CFI(".cfi_escape 0x10,0x1a,0x03,0x8f,0xd8,0x01\n\t") /* x26 */
+                   __ASM_CFI(".cfi_escape 0x10,0x1b,0x03,0x8f,0xe0,0x01\n\t") /* x27 */
+                   __ASM_CFI(".cfi_escape 0x10,0x1c,0x03,0x8f,0xe8,0x01\n\t") /* x28 */
+                   __ASM_CFI(".cfi_escape 0x10,0x1d,0x03,0x8f,0xf0,0x01\n\t") /* x29 */
+                   __ASM_CFI(".cfi_escape 0x10,0x1e,0x03,0x8f,0x88,0x02\n\t") /* x30 = pc */
+                   __ASM_CFI(".cfi_escape 0x10,0x48,0x03,0x8f,0x90,0x03\n\t") /* d8  */
+                   __ASM_CFI(".cfi_escape 0x10,0x49,0x03,0x8f,0x98,0x03\n\t") /* d9  */
+                   __ASM_CFI(".cfi_escape 0x10,0x4a,0x03,0x8f,0xa0,0x03\n\t") /* d10 */
+                   __ASM_CFI(".cfi_escape 0x10,0x4b,0x03,0x8f,0xa8,0x03\n\t") /* d11 */
+                   __ASM_CFI(".cfi_escape 0x10,0x4c,0x03,0x8f,0xb0,0x03\n\t") /* d12 */
+                   __ASM_CFI(".cfi_escape 0x10,0x4d,0x03,0x8f,0xb8,0x03\n\t") /* d13 */
+                   __ASM_CFI(".cfi_escape 0x10,0x4e,0x03,0x8f,0xc0,0x03\n\t") /* d14 */
+                   __ASM_CFI(".cfi_escape 0x10,0x4f,0x03,0x8f,0xc8,0x03\n\t") /* d15 */
+                   "ldp x0,  x1,  [x29, #0x10]\n\t"
+                   "ldr x2,       [x29, #0x20]\n\t"
                    "blr x2\n\t"
                    __ASM_CFI(".cfi_restore_state\n\t")
                    "brk #1")
@@ -625,7 +666,6 @@ static void setup_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec )
     stack->rec = *rec;
     stack->context = context;
 
-    REGn_sig(3, sigcontext) = SP_sig(sigcontext); /* original stack pointer, fourth arg for raise_func_trampoline */
     SP_sig(sigcontext) = (ULONG_PTR)stack;
     LR_sig(sigcontext) = PC_sig(sigcontext);
     PC_sig(sigcontext) = (ULONG_PTR)raise_func_trampoline;
