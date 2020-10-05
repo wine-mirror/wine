@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2020-08-28 14:28+0200\n"
+"PO-Revision-Date: 2020-10-05 12:12+0200\n"
 "Last-Translator: Julian Rüger <jr98@gmx.net>\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -6942,16 +6942,12 @@ msgid "No Signature found in file.\n"
 msgstr "Keine Signatur in Datei gefunden.\n"
 
 #: dlls/kernel32/winerror.mc:3774
-#, fuzzy
-#| msgid "Invalid level.\n"
 msgid "Invalid call.\n"
-msgstr "Ungültige Ebene.\n"
+msgstr "Ungültiger Aufruf.\n"
 
 #: dlls/kernel32/winerror.mc:3781
-#, fuzzy
-#| msgid "Value is not available.\n"
 msgid "Resource is not currently available.\n"
-msgstr "Wert nicht verfügbar.\n"
+msgstr "Ressource ist zur Zeit nicht verfügbar.\n"
 
 #: dlls/localspl/localspl.rc:31 dlls/localui/localui.rc:31
 #: dlls/winspool.drv/winspool.rc:30
@@ -10775,153 +10771,116 @@ msgstr "&Mehr Fenster..."
 
 #: dlls/vbscript/vbscript.rc:30
 msgid "Overflow"
-msgstr ""
+msgstr "Überlauf"
 
 #: dlls/vbscript/vbscript.rc:31
-#, fuzzy
-#| msgid "Out of memory."
 msgid "Out of memory"
-msgstr "Kein freier Speicher mehr."
+msgstr "Speicher voll"
 
 #: dlls/vbscript/vbscript.rc:33
 msgid "This array is fixed or temporarily locked"
-msgstr ""
+msgstr "Array ist fixiert oder temporär gesperrt"
 
 #: dlls/vbscript/vbscript.rc:34
-#, fuzzy
-#| msgid "Data type mismatch.\n"
 msgid "Type mismatch"
-msgstr "Datentypen stimmen nicht überein.\n"
+msgstr "Datentypen inkongruent"
 
 #: dlls/vbscript/vbscript.rc:36
-#, fuzzy
-#| msgid "I/O device error.\n"
 msgid "Device I/O error"
-msgstr "E/A-Gerätefehler.\n"
+msgstr "E/A-Gerätefehler"
 
 #: dlls/vbscript/vbscript.rc:37
-#, fuzzy
-#| msgid "File already exists.\n"
 msgid "File already exists"
-msgstr "Datei existiert bereits.\n"
+msgstr "Datei existiert bereits"
 
 #: dlls/vbscript/vbscript.rc:38
-#, fuzzy
-#| msgid "Disk full.\n"
 msgid "Disk full"
-msgstr "Datenträger voll.\n"
+msgstr "Datenträger voll"
 
 #: dlls/vbscript/vbscript.rc:39
-#, fuzzy
-#| msgid "Too many open files.\n"
 msgid "Too many files"
-msgstr "Zu viele geöffnete Dateien.\n"
+msgstr "Zu viele Dateien"
 
 #: dlls/vbscript/vbscript.rc:40
-#, fuzzy
-#| msgid "Access denied.\n"
 msgid "Permission denied"
-msgstr "Zugriff verweigert.\n"
+msgstr "Keine Berechtigung"
 
 #: dlls/vbscript/vbscript.rc:41
 msgid "Path/File access error"
-msgstr ""
+msgstr "Pfad-/Dateizugriffsfehler"
 
 #: dlls/vbscript/vbscript.rc:42
-#, fuzzy
-#| msgid "Path not found.\n"
 msgid "Path not found"
-msgstr "Pfad nicht gefunden.\n"
+msgstr "Pfad nicht gefunden"
 
 #: dlls/vbscript/vbscript.rc:43
-#, fuzzy
-#| msgid "(value not set)"
 msgid "Object variable not set"
-msgstr "(Wert nicht gesetzt)"
+msgstr "Objektvariable nicht gesetzt"
 
 #: dlls/vbscript/vbscript.rc:44
-#, fuzzy
-#| msgid "Invalid user buffer.\n"
 msgid "Invalid use of Null"
-msgstr "Ungültiger Benutzerpuffer.\n"
+msgstr "Ungültige Verwendung von Null"
 
 #: dlls/vbscript/vbscript.rc:45
 msgid "Can't create necessary temporary file"
-msgstr ""
+msgstr "Notwendige temporäre Datei konnte nicht erzeugt werden"
 
 #: dlls/vbscript/vbscript.rc:46
-#, fuzzy
-#| msgid "Automation server can't create object"
 msgid "ActiveX component can't create object"
-msgstr "Automatisierungsserver konnte das Objekt nicht erstellen"
+msgstr "ActiveX-Komponente konnte Objekt nicht erstellen"
 
 #: dlls/vbscript/vbscript.rc:47
-#, fuzzy
-#| msgid "Object doesn't support this action"
 msgid "Class doesn't support Automation"
-msgstr "Das Objekt unterstützt diese Aktion nicht"
+msgstr "Klasse unterstützt keine Automation"
 
 #: dlls/vbscript/vbscript.rc:48
 msgid "File name or class name not found during Automation operation"
-msgstr ""
+msgstr "Datei- oder Klassenname nicht gefunden während Automationsablauf"
 
 #: dlls/vbscript/vbscript.rc:51
-#, fuzzy
-#| msgid "Object doesn't support this action"
 msgid "Object doesn't support named arguments"
-msgstr "Das Objekt unterstützt diese Aktion nicht"
+msgstr "Objekt unterstützt keine benannten Argumente"
 
 #: dlls/vbscript/vbscript.rc:52
-#, fuzzy
-#| msgid "Object doesn't support this action"
 msgid "Object doesn't support current locale setting"
-msgstr "Das Objekt unterstützt diese Aktion nicht"
+msgstr "Objekt unterstützt aktuelle Regionseinstellung nicht"
 
 #: dlls/vbscript/vbscript.rc:53 dlls/vbscript/vbscript.rc:54
-#, fuzzy
-#| msgid "Element not found.\n"
 msgid "Named argument not found"
-msgstr "Element nicht gefunden.\n"
+msgstr "Benanntes Argument nicht gefunden"
 
 #: dlls/vbscript/vbscript.rc:55
 msgid "Wrong number of arguments or invalid property assignment"
-msgstr ""
+msgstr "Falsche Anzahl an Argumenten oder ungültige Merkmalszuweisung"
 
 #: dlls/vbscript/vbscript.rc:56
-#, fuzzy
-#| msgid "Object Class Violation"
 msgid "Object not a collection"
-msgstr "Objektklasse verletzt"
+msgstr "Objekt ist keine Kollektion"
 
 #: dlls/vbscript/vbscript.rc:57
-#, fuzzy
-#| msgid "Specified control was not found in message"
 msgid "Specified DLL function not found"
-msgstr "Angegebenes Steuerobjekt wurde in der Meldung nicht gefunden"
+msgstr "Angegebene DLL-Funktion nicht gefunden"
 
 #: dlls/vbscript/vbscript.rc:58
 msgid "Variable uses an Automation type not supported in VBScript"
 msgstr ""
+"Variable verwendet einen in VBScript nicht unterstützten Automationstyp"
 
 #: dlls/vbscript/vbscript.rc:59
 msgid "The remote server machine does not exist or is unavailable"
-msgstr ""
+msgstr "Remoteserver existiert nicht oder ist nicht verfügbar"
 
 #: dlls/vbscript/vbscript.rc:60
 msgid "Invalid or unqualified reference"
-msgstr ""
+msgstr "Ungültige oder unqualifizierte Referenz"
 
 #: dlls/vbscript/vbscript.rc:62
-#, fuzzy
-#| msgid "Microsoft JScript compilation error"
 msgid "Microsoft VBScript compilation error"
-msgstr "Microsoft JScript Übersetzungsfehler"
+msgstr "Microsoft VBScript Übersetzungsfehler"
 
 #: dlls/vbscript/vbscript.rc:63
-#, fuzzy
-#| msgid "Microsoft JScript runtime error"
 msgid "Microsoft VBScript runtime error"
-msgstr "Microsoft JScript Laufzeitfehler"
+msgstr "Microsoft VBScript Laufzeitfehler"
 
 #: dlls/winemac.drv/winemac.rc:33
 msgid "Hide %@"
@@ -11017,37 +10976,32 @@ msgstr "Der Name auf dem Zertifikat entspricht nicht dem der Seite."
 msgid ""
 "There is at least one unspecified security problem with this certificate."
 msgstr ""
-"Es gibt mindestens ein unbekanntes Sicherheitsproblem mit diesem Zertifikat."
+"Es gibt mindestens ein unspezifisches Sicherheitsproblem mit diesem "
+"Zertifikat."
 
 #: dlls/wininet/wininet.rc:35
 msgid "Effective Date"
-msgstr ""
+msgstr "Effektives Datum"
 
 #: dlls/wininet/wininet.rc:37
-#, fuzzy
-#| msgid "Security"
 msgid "Security Protocol"
-msgstr "Sicherheit"
+msgstr "Sicherheitsprotokoll"
 
 #: dlls/wininet/wininet.rc:38
-#, fuzzy
-#| msgid "Signature"
 msgid "Signature Type"
-msgstr "Signatur"
+msgstr "Signaturtyp"
 
 #: dlls/wininet/wininet.rc:39
-#, fuzzy
-#| msgid "Encrypting File System"
 msgid "Encryption Type"
-msgstr "Verschlüsseltes Dateisystem"
+msgstr "Art der Verschlüsselung"
 
 #: dlls/wininet/wininet.rc:40
 msgid "Privacy Strength"
-msgstr ""
+msgstr "Privatsphäre"
 
 #: dlls/wininet/wininet.rc:43
 msgid "bits"
-msgstr ""
+msgstr "Bit"
 
 #: dlls/wininet/winineterror.mc:26
 msgid "The request has timed out.\n"
