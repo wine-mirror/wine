@@ -33,26 +33,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(dxdiag);
 static char output_buffer[1024];
 static const char crlf[2] = "\r\n";
 
-static const WCHAR DxDiag[] = {'D','x','D','i','a','g',0};
-
-static const WCHAR SystemInformation[] = {'S','y','s','t','e','m','I','n','f','o','r','m','a','t','i','o','n',0};
-static const WCHAR Time[] = {'T','i','m','e',0};
-static const WCHAR MachineName[] = {'M','a','c','h','i','n','e','N','a','m','e',0};
-static const WCHAR OperatingSystem[] = {'O','p','e','r','a','t','i','n','g','S','y','s','t','e','m',0};
-static const WCHAR Language[] = {'L','a','n','g','u','a','g','e',0};
-static const WCHAR SystemManufacturer[] = {'S','y','s','t','e','m','M','a','n','u','f','a','c','t','u','r','e','r',0};
-static const WCHAR SystemModel[] = {'S','y','s','t','e','m','M','o','d','e','l',0};
-static const WCHAR BIOS[] = {'B','I','O','S',0};
-static const WCHAR Processor[] = {'P','r','o','c','e','s','s','o','r',0};
-static const WCHAR Memory[] = {'M','e','m','o','r','y',0};
-static const WCHAR PageFile[] = {'P','a','g','e','F','i','l','e',0};
-static const WCHAR WindowsDir[] = {'W','i','n','d','o','w','s','D','i','r',0};
-static const WCHAR DirectXVersion[] = {'D','i','r','e','c','t','X','V','e','r','s','i','o','n',0};
-static const WCHAR DXSetupParameters[] = {'D','X','S','e','t','u','p','P','a','r','a','m','e','t','e','r','s',0};
-static const WCHAR DxDiagVersion[] = {'D','x','D','i','a','g','V','e','r','s','i','o','n',0};
-static const WCHAR DxDiagUnicode[] = {'D','x','D','i','a','g','U','n','i','c','o','d','e',0};
-static const WCHAR DxDiag64Bit[] = {'D','x','D','i','a','g','6','4','B','i','t',0};
-
 struct text_information_field
 {
     const char *field_name;
@@ -241,41 +221,38 @@ static HRESULT save_xml_document(IXMLDOMDocument *xmldoc, const WCHAR *filename)
 
 static inline void fill_system_xml_output_table(struct dxdiag_information *dxdiag_info, struct xml_information_field *fields)
 {
-    static const WCHAR zeroW[] = {'0',0};
-    static const WCHAR oneW[] = {'1',0};
-
-    fields[0].tag_name = Time;
+    fields[0].tag_name = L"Time";
     fields[0].value = dxdiag_info->system_info.szTimeEnglish;
-    fields[1].tag_name = MachineName;
+    fields[1].tag_name = L"MachineName";
     fields[1].value = dxdiag_info->system_info.szMachineNameEnglish;
-    fields[2].tag_name = OperatingSystem;
+    fields[2].tag_name = L"OperatingSystem";
     fields[2].value = dxdiag_info->system_info.szOSExLongEnglish;
-    fields[3].tag_name = Language;
+    fields[3].tag_name = L"Language";
     fields[3].value = dxdiag_info->system_info.szLanguagesEnglish;
-    fields[4].tag_name = SystemManufacturer;
+    fields[4].tag_name = L"SystemManufacturer";
     fields[4].value = dxdiag_info->system_info.szSystemManufacturerEnglish;
-    fields[5].tag_name = SystemModel;
+    fields[5].tag_name = L"SystemModel";
     fields[5].value = dxdiag_info->system_info.szSystemModelEnglish;
-    fields[6].tag_name = BIOS;
+    fields[6].tag_name = L"BIOS";
     fields[6].value = dxdiag_info->system_info.szBIOSEnglish;
-    fields[7].tag_name = Processor;
+    fields[7].tag_name = L"Processor";
     fields[7].value = dxdiag_info->system_info.szProcessorEnglish;
-    fields[8].tag_name = Memory;
+    fields[8].tag_name = L"Memory";
     fields[8].value = dxdiag_info->system_info.szPhysicalMemoryEnglish;
-    fields[9].tag_name = PageFile;
+    fields[9].tag_name = L"PageFile";
     fields[9].value = dxdiag_info->system_info.szPageFileEnglish;
-    fields[10].tag_name = WindowsDir;
+    fields[10].tag_name = L"WindowsDir";
     fields[10].value = dxdiag_info->system_info.szWindowsDir;
-    fields[11].tag_name = DirectXVersion;
+    fields[11].tag_name = L"DirectXVersion";
     fields[11].value = dxdiag_info->system_info.szDirectXVersionLongEnglish;
-    fields[12].tag_name = DXSetupParameters;
+    fields[12].tag_name = L"DXSetupParameters";
     fields[12].value = dxdiag_info->system_info.szSetupParamEnglish;
-    fields[13].tag_name = DxDiagVersion;
+    fields[13].tag_name = L"DxDiagVersion";
     fields[13].value = dxdiag_info->system_info.szDxDiagVersion;
-    fields[14].tag_name = DxDiagUnicode;
-    fields[14].value = oneW;
-    fields[15].tag_name = DxDiag64Bit;
-    fields[15].value = dxdiag_info->system_info.win64 ? oneW : zeroW;
+    fields[14].tag_name = L"DxDiagUnicode";
+    fields[14].value = L"1";
+    fields[15].tag_name = L"DxDiag64Bit";
+    fields[15].value = dxdiag_info->system_info.win64 ? L"1" : L"0";
 }
 
 static BOOL output_xml_information(struct dxdiag_information *dxdiag_info, const WCHAR *filename)
@@ -286,7 +263,7 @@ static BOOL output_xml_information(struct dxdiag_information *dxdiag_info, const
         struct xml_information_field fields[50];
     } output_table[] =
     {
-        {SystemInformation},
+        {L"SystemInformation"},
     };
 
     IXMLDOMDocument *xmldoc = NULL;
@@ -304,7 +281,7 @@ static BOOL output_xml_information(struct dxdiag_information *dxdiag_info, const
         goto error;
     }
 
-    if (!(dxdiag_element = xml_create_element(xmldoc, DxDiag)))
+    if (!(dxdiag_element = xml_create_element(xmldoc, L"DxDiag")))
         goto error;
 
     hr = IXMLDOMDocument_appendChild(xmldoc, (IXMLDOMNode *)dxdiag_element, NULL);
@@ -380,13 +357,11 @@ static struct output_backend
 {
     /* OUTPUT_TEXT */
     {
-        {'.','t','x','t',0},
-        output_text_information,
+        L".txt", output_text_information,
     },
     /* OUTPUT_XML */
     {
-        {'.','x','m','l',0},
-        output_xml_information,
+        L".xml", output_xml_information,
     },
 };
 

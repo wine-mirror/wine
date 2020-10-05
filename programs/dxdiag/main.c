@@ -105,11 +105,6 @@ static BOOL process_file_name(const WCHAR *cmdline, enum output_type output_type
 
 static BOOL process_command_line(const WCHAR *cmdline, struct command_line_info *info)
 {
-    static const WCHAR whql_colonW[] = {'w','h','q','l',':',0};
-    static const WCHAR offW[] = {'o','f','f',0};
-    static const WCHAR onW[] = {'o','n',0};
-    static const WCHAR dontskipW[] = {'d','o','n','t','s','k','i','p',0};
-
     info->whql_check = FALSE;
     info->output_type = OUTPUT_NONE;
 
@@ -143,17 +138,17 @@ static BOOL process_command_line(const WCHAR *cmdline, struct command_line_info 
                                      ARRAY_SIZE(info->outfile));
         case 'W':
         case 'w':
-            if (wcsnicmp(cmdline, whql_colonW, 5))
+            if (wcsnicmp(cmdline, L"whql:", 5))
                 return FALSE;
 
             cmdline += 5;
 
-            if (!wcsnicmp(cmdline, offW, 3))
+            if (!wcsnicmp(cmdline, L"off", 3))
             {
                 info->whql_check = FALSE;
                 cmdline += 2;
             }
-            else if (!wcsnicmp(cmdline, onW, 2))
+            else if (!wcsnicmp(cmdline, L"on", 2))
             {
                 info->whql_check = TRUE;
                 cmdline++;
@@ -165,7 +160,7 @@ static BOOL process_command_line(const WCHAR *cmdline, struct command_line_info 
 
         case 'd':
         case 'D':
-            if (wcsnicmp(cmdline, dontskipW, 8))
+            if (wcsnicmp(cmdline, L"dontskip", 8))
                 return FALSE;
             cmdline += 8;
             break;
