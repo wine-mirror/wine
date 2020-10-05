@@ -357,6 +357,41 @@ static ULONG WINAPI video_presenter_service_client_Release(IMFTopologyServiceLoo
     return IMFVideoPresenter_Release(&presenter->IMFVideoPresenter_iface);
 }
 
+static HRESULT video_presenter_attach_mixer(struct video_presenter *presenter, IMFTopologyServiceLookup *service_lookup)
+{
+    IMFVideoDeviceID *device_id;
+    unsigned int count;
+    GUID id = { 0 };
+    HRESULT hr;
+
+    count = 1;
+    if (FAILED(hr = IMFTopologyServiceLookup_LookupService(service_lookup, MF_SERVICE_LOOKUP_GLOBAL, 0,
+            &MR_VIDEO_MIXER_SERVICE, &IID_IMFTransform, (void **)&presenter->mixer, &count)))
+    {
+        WARN("Failed to get mixer interface, hr %#x.\n", hr);
+        return hr;
+    }
+
+    if (SUCCEEDED(hr = IMFTransform_QueryInterface(presenter->mixer, &IID_IMFVideoDeviceID, (void **)&device_id)))
+    {
+        if (SUCCEEDED(hr = IMFVideoDeviceID_GetDeviceID(device_id, &id)))
+        {
+            if (!IsEqualGUID(&id, &IID_IDirect3DDevice9))
+                hr = MF_E_INVALIDREQUEST;
+        }
+
+        IMFVideoDeviceID_Release(device_id);
+    }
+
+    if (FAILED(hr))
+    {
+        IMFTransform_Release(presenter->mixer);
+        presenter->mixer = NULL;
+    }
+
+    return hr;
+}
+
 static HRESULT WINAPI video_presenter_service_client_InitServicePointers(IMFTopologyServiceLookupClient *iface,
         IMFTopologyServiceLookup *service_lookup)
 {
@@ -384,20 +419,16 @@ static HRESULT WINAPI video_presenter_service_client_InitServicePointers(IMFTopo
         IMFTopologyServiceLookup_LookupService(service_lookup, MF_SERVICE_LOOKUP_GLOBAL, 0,
                 &MR_VIDEO_RENDER_SERVICE, &IID_IMFClock, (void **)&presenter->clock, &count);
 
-        count = 1;
-        if (SUCCEEDED(hr = IMFTopologyServiceLookup_LookupService(service_lookup, MF_SERVICE_LOOKUP_GLOBAL, 0,
-                &MR_VIDEO_MIXER_SERVICE, &IID_IMFTransform, (void **)&presenter->mixer, &count)))
-        {
-            /* FIXME: presumably should validate mixer's device id. */
-        }
-        else
-            WARN("Failed to get mixer interface, hr %#x.\n", hr);
+        hr = video_presenter_attach_mixer(presenter, service_lookup);
 
-        count = 1;
-        if (FAILED(hr = IMFTopologyServiceLookup_LookupService(service_lookup, MF_SERVICE_LOOKUP_GLOBAL, 0,
-                &MR_VIDEO_RENDER_SERVICE, &IID_IMediaEventSink, (void **)&presenter->event_sink, &count)))
+        if (SUCCEEDED(hr))
         {
-            WARN("Failed to get renderer event sink, hr %#x.\n", hr);
+            count = 1;
+            if (FAILED(hr = IMFTopologyServiceLookup_LookupService(service_lookup, MF_SERVICE_LOOKUP_GLOBAL, 0,
+                    &MR_VIDEO_RENDER_SERVICE, &IID_IMediaEventSink, (void **)&presenter->event_sink, &count)))
+            {
+                WARN("Failed to get renderer event sink, hr %#x.\n", hr);
+            }
         }
 
         if (SUCCEEDED(hr))
