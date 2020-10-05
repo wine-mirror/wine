@@ -2796,7 +2796,7 @@ done:
     ok(refcount == !is_d3d12, "Got unexpected refcount %u.\n", refcount);
 }
 
-static void test_default_fullscreen_target_output(void)
+static void test_default_fullscreen_target_output(IUnknown *device, BOOL is_d3d12)
 {
     IDXGIOutput *output, *containing_output, *target;
     unsigned int adapter_idx, output_idx;
@@ -2806,19 +2806,12 @@ static void test_default_fullscreen_target_output(void)
     IDXGISwapChain *swapchain;
     IDXGIFactory *factory;
     IDXGIAdapter *adapter;
-    IDXGIDevice *device;
+    BOOL fullscreen, ret;
     RECT window_rect;
     ULONG refcount;
     HRESULT hr;
-    BOOL ret;
 
-    if (!(device = create_device(0)))
-    {
-        skip("Failed to create device.\n");
-        return;
-    }
-
-    get_factory((IUnknown *)device, FALSE, &factory);
+    get_factory(device, is_d3d12, &factory);
 
     swapchain_desc.BufferDesc.RefreshRate.Numerator = 60;
     swapchain_desc.BufferDesc.RefreshRate.Denominator = 60;
@@ -2828,8 +2821,8 @@ static void test_default_fullscreen_target_output(void)
     swapchain_desc.SampleDesc.Count = 1;
     swapchain_desc.SampleDesc.Quality = 0;
     swapchain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    swapchain_desc.BufferCount = 1;
-    swapchain_desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+    swapchain_desc.BufferCount = is_d3d12 ? 2 : 1;
+    swapchain_desc.SwapEffect = is_d3d12 ? DXGI_SWAP_EFFECT_FLIP_DISCARD : DXGI_SWAP_EFFECT_DISCARD;
     swapchain_desc.Flags = 0;
 
     for (adapter_idx = 0; SUCCEEDED(IDXGIFactory_EnumAdapters(factory, adapter_idx, &adapter));
@@ -2847,6 +2840,14 @@ static void test_default_fullscreen_target_output(void)
                     &swapchain);
             ok(SUCCEEDED(hr), "Adapter %u output %u: CreateSwapChain failed, hr %#x.\n",
                     adapter_idx, output_idx, hr);
+
+            hr = IDXGISwapChain_GetFullscreenState(swapchain, &fullscreen, &containing_output);
+            ok(SUCCEEDED(hr), "Adapter %u output %u: GetFullscreenState failed, hr %#x.\n",
+                    adapter_idx, output_idx, hr);
+            ok(!fullscreen, "Adapter %u output %u: Expected not fullscreen.\n", adapter_idx,
+                    output_idx);
+            ok(!containing_output, "Adapter %u output %u: Expected a null output.\n", adapter_idx,
+                    output_idx);
 
             /* Move the OutputWindow to the current output. */
             hr = IDXGIOutput_GetDesc(output, &output_desc);
@@ -2948,10 +2949,20 @@ static void test_default_fullscreen_target_output(void)
                 continue;
             }
 
+            hr = IDXGISwapChain_GetFullscreenState(swapchain, &fullscreen, &containing_output);
+            ok(SUCCEEDED(hr), "Adapter %u output %u: GetFullscreenState failed, hr %#x.\n",
+                    adapter_idx, output_idx, hr);
+            ok(fullscreen, "Adapter %u output %u: Expected fullscreen.\n", adapter_idx, output_idx);
+            todo_wine_if(is_d3d12)
+            ok(!!containing_output, "Adapter %u output %u: Expected a valid output.\n", adapter_idx,
+                    output_idx);
+            if (containing_output)
+                IDXGIOutput_Release(containing_output);
+
             ret = GetWindowRect(swapchain_desc.OutputWindow, &window_rect);
             ok(ret, "Adapter %u output %u: GetWindowRect failed, error %#x.\n", adapter_idx,
                     output_idx, GetLastError());
-            ok(EqualRect(&window_rect, &output_desc.DesktopCoordinates),
+            todo_wine_if(is_d3d12) ok(EqualRect(&window_rect, &output_desc.DesktopCoordinates),
                     "Adapter %u output %u: Expect window rect %s, got %s.\n", adapter_idx,
                     output_idx, wine_dbgstr_rect(&output_desc.DesktopCoordinates),
                     wine_dbgstr_rect(&window_rect));
@@ -2979,10 +2990,8 @@ static void test_default_fullscreen_target_output(void)
         IDXGIAdapter_Release(adapter);
     }
 
-    refcount = IDXGIDevice_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
     refcount = IDXGIFactory_Release(factory);
-    ok(!refcount, "Factory has %u references left.\n", refcount);
+    ok(refcount == !is_d3d12, "IDXGIFactory has %u references left.\n", refcount);
 }
 
 static void test_windowed_resize_target(IDXGISwapChain *swapchain, HWND window,
@@ -6989,7 +6998,6 @@ START_TEST(dxgi)
 
     /* These tests use full-screen swapchains, so shouldn't run in parallel. */
     test_create_swapchain();
-    test_default_fullscreen_target_output();
     test_inexact_modes();
     test_gamma_control();
     test_multi_adapter();
@@ -7006,6 +7014,7 @@ START_TEST(dxgi)
     run_on_d3d10(test_cursor_clipping);
     run_on_d3d10(test_get_containing_output);
     run_on_d3d10(test_window_association);
+    run_on_d3d10(test_default_fullscreen_target_output);
 
     if (!(d3d12_module = LoadLibraryA("d3d12.dll")))
     {
@@ -7034,6 +7043,7 @@ START_TEST(dxgi)
     run_on_d3d12(test_colour_space_support);
     run_on_d3d12(test_get_containing_output);
     run_on_d3d12(test_window_association);
+    run_on_d3d12(test_default_fullscreen_target_output);
 
     FreeLibrary(d3d12_module);
 }
