@@ -470,7 +470,6 @@ static BOOL add_file( HFCI fci, WCHAR *name )
 
 static BOOL add_directory( HFCI fci, WCHAR *dir )
 {
-    static const WCHAR wildcardW[] = {'*',0};
     WCHAR *p, *buffer;
     HANDLE handle;
     WIN32_FIND_DATAW data;
@@ -480,7 +479,7 @@ static BOOL add_directory( HFCI fci, WCHAR *dir )
     lstrcpyW( buffer, dir );
     p = buffer + lstrlenW( buffer );
     if (p > buffer && p[-1] != '\\') *p++ = '\\';
-    lstrcpyW( p, wildcardW );
+    lstrcpyW( p, L"*" );
 
     if ((handle = FindFirstFileW( buffer, &data )) != INVALID_HANDLE_VALUE)
     {
@@ -524,7 +523,6 @@ static BOOL add_file_or_directory( HFCI fci, WCHAR *name )
 
 static int new_cabinet( char *cab_dir )
 {
-    static const WCHAR plusW[] = {'+',0};
     WCHAR **file;
     ERF erf;
     BOOL ret = FALSE;
@@ -550,7 +548,7 @@ static int new_cabinet( char *cab_dir )
 
     for (file = opt_files; *file; file++)
     {
-        if (!lstrcmpW( *file, plusW ))
+        if (!lstrcmpW( *file, L"+" ))
             FCIFlushFolder( fci, fci_get_next_cab, fci_status );
         else
             if (!(ret = add_file_or_directory( fci, *file ))) break;
@@ -586,9 +584,6 @@ static void usage( void )
 
 int __cdecl wmain( int argc, WCHAR *argv[] )
 {
-    static const WCHAR noneW[] = {'n','o','n','e',0};
-    static const WCHAR mszipW[] = {'m','s','z','i','p',0};
-
     WCHAR *p, *command;
     char buffer[MAX_PATH];
     char filename[MAX_PATH];
@@ -617,8 +612,8 @@ int __cdecl wmain( int argc, WCHAR *argv[] )
             break;
         case 'm':
             argv++; argc--;
-            if (!wcscmp( argv[1], noneW )) opt_compression = tcompTYPE_NONE;
-            else if (!wcscmp( argv[1], mszipW )) opt_compression = tcompTYPE_MSZIP;
+            if (!wcscmp( argv[1], L"none" )) opt_compression = tcompTYPE_NONE;
+            else if (!wcscmp( argv[1], L"mszip" )) opt_compression = tcompTYPE_MSZIP;
             else
             {
                 WINE_MESSAGE( "cabarc: Unknown compression type %s\n", debugstr_w(argv[1]));
