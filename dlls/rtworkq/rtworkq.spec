@@ -2,13 +2,13 @@
 @ stdcall RtwqAllocateSerialWorkQueue(long ptr)
 @ stdcall RtwqAllocateWorkQueue(long ptr)
 @ stdcall RtwqBeginRegisterWorkQueueWithMMCSS(long wstr long long ptr ptr)
-@ stub RtwqBeginUnregisterWorkQueueWithMMCSS
+@ stdcall RtwqBeginUnregisterWorkQueueWithMMCSS(long ptr ptr)
 @ stdcall RtwqCancelDeadline(long)
 @ stub RtwqCancelMultipleWaitingWorkItem
 @ stdcall RtwqCancelWorkItem(int64)
 @ stdcall RtwqCreateAsyncResult(ptr ptr ptr ptr)
-@ stub RtwqEndRegisterWorkQueueWithMMCSS
-@ stub RtwqEndUnregisterWorkQueueWithMMCSS
+@ stdcall RtwqEndRegisterWorkQueueWithMMCSS(ptr ptr)
+@ stdcall RtwqEndUnregisterWorkQueueWithMMCSS(ptr)
 @ stub RtwqGetPlatform
 @ stdcall RtwqGetWorkQueueMMCSSClass(long ptr ptr)
 @ stdcall RtwqGetWorkQueueMMCSSPriority(long ptr)

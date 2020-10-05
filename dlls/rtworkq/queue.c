@@ -1533,6 +1533,27 @@ HRESULT WINAPI RtwqBeginRegisterWorkQueueWithMMCSS(DWORD queue, const WCHAR *cla
     return E_NOTIMPL;
 }
 
+HRESULT WINAPI RtwqEndRegisterWorkQueueWithMMCSS(IRtwqAsyncResult *result, DWORD *taskid)
+{
+    FIXME("%p, %p.\n", result, taskid);
+
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI RtwqBeginUnregisterWorkQueueWithMMCSS(DWORD queue, IRtwqAsyncCallback *callback, IUnknown *state)
+{
+    FIXME("%#x, %p, %p.\n", queue, callback, state);
+
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI RtwqEndUnregisterWorkQueueWithMMCSS(IRtwqAsyncResult *result)
+{
+    FIXME("%p.\n", result);
+
+    return E_NOTIMPL;
+}
+
 HRESULT WINAPI RtwqRegisterPlatformEvents(IRtwqPlatformEvents *events)
 {
     FIXME("%p.\n", events);
