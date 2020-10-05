@@ -66,7 +66,7 @@
 @ stub MFCreateTranscodeSinkActivate
 @ stub MFCreateTranscodeTopology
 @ stub MFCreateUrlmonSchemePlugin
-@ stub MFCreateVideoRenderer
+@ stdcall MFCreateVideoRenderer(ptr ptr)
 @ stdcall MFCreateVideoRendererActivate(long ptr)
 @ stub MFCreateWMAEncoderActivate
 @ stub MFCreateWMVEncoderActivate

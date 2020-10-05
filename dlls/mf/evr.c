@@ -1388,3 +1388,31 @@ HRESULT WINAPI MFCreateVideoRendererActivate(HWND hwnd, IMFActivate **activate)
 
     return hr;
 }
+
+/***********************************************************************
+ *      MFCreateVideoRenderer (mf.@)
+ */
+HRESULT WINAPI MFCreateVideoRenderer(REFIID riid, void **renderer)
+{
+    IMFAttributes *attributes;
+    IUnknown *obj;
+    HRESULT hr;
+
+    TRACE("%s, %p.\n", debugstr_guid(riid), renderer);
+
+    *renderer = NULL;
+
+    if (FAILED(hr = MFCreateAttributes(&attributes, 0)))
+        return hr;
+
+    hr = evr_create_object(attributes, NULL, &obj);
+    IMFAttributes_Release(attributes);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = IUnknown_QueryInterface(obj, riid, renderer);
+        IUnknown_Release(obj);
+    }
+
+    return hr;
+}

@@ -313,5 +313,6 @@ cpp_quote("HRESULT WINAPI MFCreateVideoMixer(IUnknown *owner, REFIID riid_device
 cpp_quote("HRESULT WINAPI MFCreateVideoMixerAndPresenter(IUnknown *mixer_outer, IUnknown *presenter_outer, ")
 cpp_quote("        REFIID riid_mixer, void **mixer, REFIID riid_presenter, void **presenter);")
 cpp_quote("HRESULT WINAPI MFCreateVideoPresenter(IUnknown *owner, REFIID riid_device, REFIID riid, void **obj);")
+cpp_quote("HRESULT WINAPI MFCreateVideoRenderer(REFIID riid, void **renderer);")
 cpp_quote("HRESULT WINAPI MFCreateVideoSampleAllocator(REFIID riid, void **allocator);")
 cpp_quote("HRESULT WINAPI MFCreateVideoSampleFromSurface(IUnknown *surface, IMFSample **sample);")
