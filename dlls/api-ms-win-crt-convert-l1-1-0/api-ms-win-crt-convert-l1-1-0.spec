@@ -35,7 +35,7 @@
 @ cdecl -ret64 _strtoi64_l(str ptr long ptr) ucrtbase._strtoi64_l
 @ cdecl -ret64 _strtoimax_l(str ptr long ptr) ucrtbase._strtoimax_l
 @ cdecl _strtol_l(str ptr long ptr) ucrtbase._strtol_l
-@ stub _strtold_l
+@ cdecl _strtold_l(str ptr ptr) ucrtbase._strtold_l
 @ cdecl -ret64 _strtoll_l(str ptr long ptr) ucrtbase._strtoll_l
 @ cdecl -ret64 _strtoui64(str ptr long) ucrtbase._strtoui64
 @ cdecl -ret64 _strtoui64_l(str ptr long ptr) ucrtbase._strtoui64_l
@@ -96,7 +96,7 @@
 @ cdecl strtof(str ptr) ucrtbase.strtof
 @ cdecl -ret64 strtoimax(str ptr long) ucrtbase.strtoimax
 @ cdecl strtol(str ptr long) ucrtbase.strtol
-@ stub strtold
+@ cdecl strtold(str ptr) ucrtbase.strtold
 @ cdecl -ret64 strtoll(str ptr long) ucrtbase.strtoll
 @ cdecl strtoul(str ptr long) ucrtbase.strtoul
 @ cdecl -ret64 strtoull(str ptr long) ucrtbase.strtoull

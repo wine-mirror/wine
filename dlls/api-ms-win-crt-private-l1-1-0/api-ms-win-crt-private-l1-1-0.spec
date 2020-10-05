@@ -719,7 +719,7 @@
 @ cdecl -ret64 _o__strtoi64(str ptr long) ucrtbase._o__strtoi64
 @ cdecl -ret64 _o__strtoi64_l(str ptr long ptr) ucrtbase._o__strtoi64_l
 @ cdecl _o__strtol_l(str ptr long ptr) ucrtbase._o__strtol_l
-@ stub _o__strtold_l
+@ cdecl _o__strtold_l(str ptr ptr) ucrtbase._o__strtold_l
 @ cdecl -ret64 _o__strtoll_l(str ptr long ptr) ucrtbase._o__strtoll_l
 @ cdecl -ret64 _o__strtoui64(str ptr long) ucrtbase._o__strtoui64
 @ cdecl -ret64 _o__strtoui64_l(str ptr long ptr) ucrtbase._o__strtoui64_l
@@ -1126,7 +1126,7 @@
 @ cdecl _o_strtok(str str) ucrtbase._o_strtok
 @ cdecl _o_strtok_s(ptr str ptr) ucrtbase._o_strtok_s
 @ cdecl _o_strtol(str ptr long) ucrtbase._o_strtol
-@ stub _o_strtold
+@ cdecl _o_strtold(str ptr) ucrtbase._o_strtold
 @ cdecl -ret64 _o_strtoll(str ptr long) ucrtbase._o_strtoll
 @ cdecl _o_strtoul(str ptr long) ucrtbase._o_strtoul
 @ cdecl -ret64 _o_strtoull(str ptr long) ucrtbase._o_strtoull

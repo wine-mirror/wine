@@ -1383,7 +1383,7 @@
 @ cdecl -ret64 _o__strtoi64(str ptr long) MSVCRT_strtoi64
 @ cdecl -ret64 _o__strtoi64_l(str ptr long ptr) MSVCRT_strtoi64_l
 @ cdecl _o__strtol_l(str ptr long ptr) MSVCRT__strtol_l
-@ stub _o__strtold_l
+@ cdecl _o__strtold_l(str ptr ptr) MSVCRT_strtod_l
 @ cdecl -ret64 _o__strtoll_l(str ptr long ptr) MSVCRT_strtoi64_l
 @ cdecl -ret64 _o__strtoui64(str ptr long) MSVCRT_strtoui64
 @ cdecl -ret64 _o__strtoui64_l(str ptr long ptr) MSVCRT_strtoui64_l
@@ -1791,7 +1791,7 @@
 @ cdecl _o_strtok(str str) MSVCRT_strtok
 @ cdecl _o_strtok_s(ptr str ptr) MSVCRT_strtok_s
 @ cdecl _o_strtol(str ptr long) MSVCRT_strtol
-@ stub _o_strtold
+@ cdecl _o_strtold(str ptr) MSVCRT_strtod
 @ cdecl -ret64 _o_strtoll(str ptr long) MSVCRT_strtoi64
 @ cdecl _o_strtoul(str ptr long) MSVCRT_strtoul
 @ cdecl -ret64 _o_strtoull(str ptr long) MSVCRT_strtoui64
@@ -1954,7 +1954,7 @@
 @ cdecl -ret64 _strtoi64_l(str ptr long ptr) MSVCRT_strtoi64_l
 @ cdecl -ret64 _strtoimax_l(str ptr long ptr) MSVCRT_strtoi64_l
 @ cdecl _strtol_l(str ptr long ptr) MSVCRT__strtol_l
-@ stub _strtold_l
+@ cdecl _strtold_l(str ptr ptr) MSVCRT_strtod_l
 @ cdecl -ret64 _strtoll_l(str ptr long ptr) MSVCRT_strtoi64_l
 @ cdecl -ret64 _strtoui64(str ptr long) MSVCRT_strtoui64
 @ cdecl -ret64 _strtoui64_l(str ptr long ptr) MSVCRT_strtoui64_l
@@ -2522,7 +2522,7 @@
 @ cdecl strtok(str str) MSVCRT_strtok
 @ cdecl strtok_s(ptr str ptr) MSVCRT_strtok_s
 @ cdecl strtol(str ptr long) MSVCRT_strtol
-@ stub strtold
+@ cdecl strtold(str ptr) MSVCRT_strtod
 @ cdecl -ret64 strtoll(str ptr long) MSVCRT_strtoi64
 @ cdecl strtoul(str ptr long) MSVCRT_strtoul
 @ cdecl -ret64 strtoull(str ptr long) MSVCRT_strtoui64
