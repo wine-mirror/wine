@@ -2477,7 +2477,7 @@ static NTSTATUS console_input_ioctl( struct console *console, unsigned int code,
     case IOCTL_CONDRV_PEEK:
         {
             void *result;
-            TRACE( "peek\n ");
+            TRACE( "peek\n" );
             if (in_size) return STATUS_INVALID_PARAMETER;
             ensure_tty_input_thread( console );
             *out_size = min( *out_size, console->record_count * sizeof(INPUT_RECORD) );
