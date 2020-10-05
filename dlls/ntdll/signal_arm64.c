@@ -197,8 +197,16 @@ static NTSTATUS virtual_unwind( ULONG type, DISPATCHER_CONTEXT *dispatch, CONTEX
     }
     else
     {
-        WARN( "exception data not found in %s\n", debugstr_w(module->BaseDllName.Buffer) );
-        return STATUS_INVALID_DISPOSITION;
+        status = context->Pc != context->u.s.Lr ?
+                 STATUS_SUCCESS : STATUS_INVALID_DISPOSITION;
+        WARN( "exception data not found in %s for %p, LR %p, status %x\n",
+               debugstr_w(module->BaseDllName.Buffer), (void*) context->Pc,
+               (void*) context->u.s.Lr, status );
+        dispatch->EstablisherFrame = context->Sp;
+        dispatch->LanguageHandler = NULL;
+        context->Pc = context->u.s.Lr;
+        context->ContextFlags |= CONTEXT_UNWOUND_TO_CALL;
+        return status;
     }
 
     dispatch->EstablisherFrame = context->u.s.Fp;
