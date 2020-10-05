@@ -1295,7 +1295,6 @@ static HRESULT WINAPI dispevent_Invoke(IDispatch *iface, DISPID member, REFIID r
 
         hr = IXMLHttpRequest_get_responseText(httpreq, &text);
         ok(hr == S_OK, "got 0x%08x\n", hr);
-        ok(*text != 0, "got %s\n", wine_dbgstr_w(text));
         SysFreeString(text);
     }
 
@@ -1798,7 +1797,7 @@ static void test_server_xhr(void)
     V_VT(&body) = VT_EMPTY;
 
     hr = IServerXMLHTTPRequest_send(xhr, body);
-    if (hr == INET_E_RESOURCE_NOT_FOUND)
+    if (hr == INET_E_RESOURCE_NOT_FOUND || hr == WININET_E_NAME_NOT_RESOLVED)
     {
         skip("No connection could be made with test.winehq.org\n");
         IServerXMLHTTPRequest_Release(xhr);
