@@ -91,18 +91,15 @@ static int WINAPIV hostname_message_printfW(int msg, ...)
 
 static int hostname_message(int msg)
 {
-    static const WCHAR formatW[] = {'%','s',0};
     WCHAR msg_buffer[8192];
 
     LoadStringW(GetModuleHandleW(NULL), msg, msg_buffer, ARRAY_SIZE(msg_buffer));
 
-    return hostname_printfW(formatW, msg_buffer);
+    return hostname_printfW(L"%s", msg_buffer);
 }
 
 static int display_computer_name(void)
 {
-    static const WCHAR fmtW[] = {'%','s','\r','\n',0};
-
     WCHAR name[MAX_COMPUTERNAME_LENGTH + 1];
     DWORD size = ARRAY_SIZE(name);
     BOOL ret;
@@ -114,7 +111,7 @@ static int display_computer_name(void)
         return 1;
     }
 
-    hostname_printfW(fmtW, name);
+    hostname_printfW(L"%s\r\n", name);
     return 0;
 }
 
@@ -122,11 +119,9 @@ int __cdecl wmain(int argc, WCHAR *argv[])
 {
     if (argc > 1)
     {
-        static const WCHAR slashHelpW[] = {'/','?',0};
-
         unsigned int i;
 
-        if (!wcsncmp(argv[1], slashHelpW, ARRAY_SIZE(slashHelpW) - 1))
+        if (!wcsncmp(argv[1], L"/?", ARRAY_SIZE(L"/?") - 1))
         {
             hostname_message(STRING_USAGE);
             return 1;
