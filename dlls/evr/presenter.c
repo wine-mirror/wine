@@ -503,6 +503,7 @@ static HRESULT WINAPI video_presenter_control_SetVideoPosition(IMFVideoDisplayCo
         const MFVideoNormalizedRect *src_rect, const RECT *dst_rect)
 {
     struct video_presenter *presenter = impl_from_IMFVideoDisplayControl(iface);
+    HRESULT hr = S_OK;
 
     TRACE("%p, %p, %s.\n", iface, src_rect, wine_dbgstr_rect(dst_rect));
 
@@ -522,13 +523,18 @@ static HRESULT WINAPI video_presenter_control_SetVideoPosition(IMFVideoDisplayCo
         return E_INVALIDARG;
 
     EnterCriticalSection(&presenter->cs);
-    if (src_rect)
-        presenter->src_rect = *src_rect;
-    if (dst_rect)
-        presenter->dst_rect = *dst_rect;
+    if (!presenter->video_window)
+        hr = E_POINTER;
+    else
+    {
+        if (src_rect)
+            presenter->src_rect = *src_rect;
+        if (dst_rect)
+            presenter->dst_rect = *dst_rect;
+    }
     LeaveCriticalSection(&presenter->cs);
 
-    return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI video_presenter_control_GetVideoPosition(IMFVideoDisplayControl *iface, MFVideoNormalizedRect *src_rect,

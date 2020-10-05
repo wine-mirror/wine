@@ -970,7 +970,6 @@ static void test_default_presenter(void)
     D3DPRESENT_PARAMETERS present_params = { 0 };
     IMFVideoDisplayControl *display_control;
     IDirect3DSwapChain9 *swapchain;
-    MFVideoNormalizedRect src_rect;
     IMFVideoPresenter *presenter;
     IMFRateSupport *rate_support;
     IDirect3DDevice9 *d3d_device;
@@ -978,7 +977,6 @@ static void test_default_presenter(void)
     IMFVideoDeviceID *deviceid;
     IMFGetService *gs;
     HWND hwnd, hwnd2;
-    RECT dst_rect;
     HANDLE handle;
     IUnknown *unk;
     float rate;
@@ -1071,92 +1069,6 @@ static void test_default_presenter(void)
     ok(hwnd2 == hwnd, "Unexpected window %p.\n", hwnd2);
 
     /* Video position */
-    hr = IMFVideoDisplayControl_GetVideoPosition(display_control, NULL, &dst_rect);
-    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
-
-    hr = IMFVideoDisplayControl_GetVideoPosition(display_control, &src_rect, NULL);
-    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
-
-    SetRect(&dst_rect, 1, 2, 3, 4);
-    hr = IMFVideoDisplayControl_GetVideoPosition(display_control, &src_rect, &dst_rect);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    ok(src_rect.left == 0.0f && src_rect.top == 0.0f && src_rect.right == 1.0f &&
-            src_rect.bottom == 1.0f, "Unexpected source rectangle.\n");
-    ok(dst_rect.left == 0 && dst_rect.right == 0 && dst_rect.top == 0 && dst_rect.bottom == 0,
-            "Unexpected destination rectangle %s.\n", wine_dbgstr_rect(&dst_rect));
-
-    hr = IMFVideoDisplayControl_SetVideoPosition(display_control, NULL, NULL);
-    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
-
-    SetRect(&dst_rect, 0, 0, 10, 10);
-    hr = IMFVideoDisplayControl_SetVideoPosition(display_control, NULL, &dst_rect);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-
-    SetRect(&dst_rect, 1, 2, 3, 4);
-    hr = IMFVideoDisplayControl_GetVideoPosition(display_control, &src_rect, &dst_rect);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    ok(dst_rect.left == 0 && dst_rect.right == 10 && dst_rect.top == 0 && dst_rect.bottom == 10,
-            "Unexpected destination rectangle %s.\n", wine_dbgstr_rect(&dst_rect));
-
-    src_rect.left = src_rect.top = 0.0f;
-    src_rect.right = 2.0f;
-    src_rect.bottom = 1.0f;
-    hr = IMFVideoDisplayControl_SetVideoPosition(display_control, &src_rect, NULL);
-    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
-
-    src_rect.left = -0.1f;
-    src_rect.top = 0.0f;
-    src_rect.right = 0.9f;
-    src_rect.bottom = 1.0f;
-    hr = IMFVideoDisplayControl_SetVideoPosition(display_control, &src_rect, NULL);
-    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
-
-    /* Flipped source rectangle. */
-    src_rect.left = 0.5f;
-    src_rect.top = 0.0f;
-    src_rect.right = 0.4f;
-    src_rect.bottom = 1.0f;
-    hr = IMFVideoDisplayControl_SetVideoPosition(display_control, &src_rect, NULL);
-    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
-
-    src_rect.left = 0.0f;
-    src_rect.top = 0.5f;
-    src_rect.right = 0.4f;
-    src_rect.bottom = 0.1f;
-    hr = IMFVideoDisplayControl_SetVideoPosition(display_control, &src_rect, NULL);
-    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
-
-    src_rect.left = 0.1f;
-    src_rect.top = 0.2f;
-    src_rect.right = 0.8f;
-    src_rect.bottom = 0.9f;
-    hr = IMFVideoDisplayControl_SetVideoPosition(display_control, &src_rect, NULL);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-
-    hr = IMFVideoDisplayControl_GetVideoPosition(display_control, &src_rect, &dst_rect);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    ok(src_rect.left == 0.1f && src_rect.top == 0.2f && src_rect.right == 0.8f &&
-            src_rect.bottom == 0.9f, "Unexpected source rectangle.\n");
-
-    /* Flipped destination rectangle. */
-    SetRect(&dst_rect, 100, 1, 50, 1000);
-    hr = IMFVideoDisplayControl_SetVideoPosition(display_control, NULL, &dst_rect);
-    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
-
-    SetRect(&dst_rect, 1, 100, 100, 50);
-    hr = IMFVideoDisplayControl_SetVideoPosition(display_control, NULL, &dst_rect);
-    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
-
-    SetRect(&dst_rect, 1, 2, 999, 1000);
-    hr = IMFVideoDisplayControl_SetVideoPosition(display_control, NULL, &dst_rect);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-
-    SetRect(&dst_rect, 0, 1, 3, 4);
-    hr = IMFVideoDisplayControl_GetVideoPosition(display_control, &src_rect, &dst_rect);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    ok(dst_rect.left == 1 && dst_rect.right == 999 && dst_rect.top == 2 && dst_rect.bottom == 1000,
-            "Unexpected destination rectangle %s.\n", wine_dbgstr_rect(&dst_rect));
-
     hr = IDirect3DDeviceManager9_CloseDeviceHandle(dm, handle);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
@@ -1336,6 +1248,302 @@ todo_wine {
     IUnknown_Release(unk);
 }
 
+struct test_host
+{
+    IMFTopologyServiceLookup IMFTopologyServiceLookup_iface;
+    IMediaEventSink IMediaEventSink_iface;
+    IMFTransform *mixer;
+    IMFVideoPresenter *presenter;
+};
+
+static struct test_host *impl_from_test_host(IMFTopologyServiceLookup *iface)
+{
+    return CONTAINING_RECORD(iface, struct test_host, IMFTopologyServiceLookup_iface);
+}
+
+static struct test_host *impl_from_test_host_events(IMediaEventSink *iface)
+{
+    return CONTAINING_RECORD(iface, struct test_host, IMediaEventSink_iface);
+}
+
+static HRESULT WINAPI test_host_QueryInterface(IMFTopologyServiceLookup *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IMFTopologyServiceLookup) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IMFTopologyServiceLookup_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI test_host_AddRef(IMFTopologyServiceLookup *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI test_host_Release(IMFTopologyServiceLookup *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI test_host_LookupService(IMFTopologyServiceLookup *iface,
+        MF_SERVICE_LOOKUP_TYPE lookup_type, DWORD index, REFGUID service,
+        REFIID riid, void **objects, DWORD *num_objects)
+{
+    struct test_host *host = impl_from_test_host(iface);
+
+    ok(*num_objects == 1, "Unexpected number of requested objects %u\n", *num_objects);
+
+    memset(objects, 0, *num_objects * sizeof(*objects));
+
+    if (IsEqualGUID(service, &MR_VIDEO_RENDER_SERVICE))
+    {
+        if (IsEqualIID(riid, &IID_IMFClock)) return E_FAIL;
+        if (IsEqualIID(riid, &IID_IMediaEventSink))
+        {
+            *objects = &host->IMediaEventSink_iface;
+            IMediaEventSink_AddRef(&host->IMediaEventSink_iface);
+            return S_OK;
+        }
+
+        ok(0, "Unexpected interface %s.\n", wine_dbgstr_guid(riid));
+        return E_UNEXPECTED;
+    }
+
+    if (IsEqualGUID(service, &MR_VIDEO_MIXER_SERVICE))
+    {
+        if (IsEqualIID(riid, &IID_IMFTransform))
+        {
+            *objects = host->mixer;
+            IMFTransform_AddRef(host->mixer);
+            return S_OK;
+        }
+        ok(0, "Unexpected interface %s.\n", wine_dbgstr_guid(riid));
+        return E_UNEXPECTED;
+    }
+
+    return E_NOTIMPL;
+}
+
+static const IMFTopologyServiceLookupVtbl test_host_vtbl =
+{
+    test_host_QueryInterface,
+    test_host_AddRef,
+    test_host_Release,
+    test_host_LookupService,
+};
+
+static HRESULT WINAPI test_host_events_QueryInterface(IMediaEventSink *iface, REFIID riid, void **obj)
+{
+    struct test_host *host = impl_from_test_host_events(iface);
+    return IMFTopologyServiceLookup_QueryInterface(&host->IMFTopologyServiceLookup_iface, riid, obj);
+}
+
+static ULONG WINAPI test_host_events_AddRef(IMediaEventSink *iface)
+{
+    struct test_host *host = impl_from_test_host_events(iface);
+    return IMFTopologyServiceLookup_AddRef(&host->IMFTopologyServiceLookup_iface);
+}
+
+static ULONG WINAPI test_host_events_Release(IMediaEventSink *iface)
+{
+    struct test_host *host = impl_from_test_host_events(iface);
+    return IMFTopologyServiceLookup_Release(&host->IMFTopologyServiceLookup_iface);
+}
+
+static HRESULT WINAPI test_host_events_Notify(IMediaEventSink *iface, LONG code, LONG_PTR param1, LONG_PTR param2)
+{
+    return S_OK;
+}
+
+static const IMediaEventSinkVtbl test_host_events_vtbl =
+{
+    test_host_events_QueryInterface,
+    test_host_events_AddRef,
+    test_host_events_Release,
+    test_host_events_Notify,
+};
+
+static void init_test_host(struct test_host *host, IMFTransform *mixer, IMFVideoPresenter *presenter)
+{
+    host->IMFTopologyServiceLookup_iface.lpVtbl = &test_host_vtbl;
+    host->IMediaEventSink_iface.lpVtbl = &test_host_events_vtbl;
+    /* No need to keep references. */
+    host->mixer = mixer;
+    host->presenter = presenter;
+}
+
+static void test_presenter_video_position(void)
+{
+    IMFTopologyServiceLookupClient *lookup_client;
+    IMFVideoDisplayControl *display_control;
+    IMFAttributes *mixer_attributes;
+    MFVideoNormalizedRect src_rect;
+    IMFVideoPresenter *presenter;
+    struct test_host host;
+    IMFTransform *mixer;
+    RECT dst_rect;
+    HRESULT hr;
+    DWORD count;
+    HWND hwnd;
+
+    hr = MFCreateVideoMixer(NULL, &IID_IDirect3DDevice9, &IID_IMFTransform, (void **)&mixer);
+    ok(hr == S_OK, "Failed to create a mixer, hr %#x.\n", hr);
+
+    hr = MFCreateVideoPresenter(NULL, &IID_IDirect3DDevice9, &IID_IMFVideoPresenter, (void **)&presenter);
+    ok(hr == S_OK, "Failed to create default presenter, hr %#x.\n", hr);
+
+    hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFTopologyServiceLookupClient, (void **)&lookup_client);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    init_test_host(&host, mixer, presenter);
+
+    /* Clear default mixer attributes, then attach presenter. */
+    hr = IMFTransform_GetAttributes(mixer, &mixer_attributes);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFAttributes_DeleteAllItems(mixer_attributes);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTopologyServiceLookupClient_InitServicePointers(lookup_client, &host.IMFTopologyServiceLookup_iface);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFAttributes_GetCount(mixer_attributes, &count);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+todo_wine
+    ok(count == 1, "Unexpected count %u.\n", count);
+
+    memset(&src_rect, 0, sizeof(src_rect));
+    hr = IMFAttributes_GetBlob(mixer_attributes, &VIDEO_ZOOM_RECT, (UINT8 *)&src_rect, sizeof(src_rect), NULL);
+todo_wine {
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(src_rect.left == 0.0f && src_rect.top == 0.0f && src_rect.right == 1.0f &&
+            src_rect.bottom == 1.0f, "Unexpected source rectangle.\n");
+}
+
+    hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFVideoDisplayControl, (void **)&display_control);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoDisplayControl_GetVideoPosition(display_control, NULL, &dst_rect);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoDisplayControl_GetVideoPosition(display_control, &src_rect, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    SetRect(&dst_rect, 1, 2, 3, 4);
+    hr = IMFVideoDisplayControl_GetVideoPosition(display_control, &src_rect, &dst_rect);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(src_rect.left == 0.0f && src_rect.top == 0.0f && src_rect.right == 1.0f &&
+            src_rect.bottom == 1.0f, "Unexpected source rectangle.\n");
+    ok(dst_rect.left == 0 && dst_rect.right == 0 && dst_rect.top == 0 && dst_rect.bottom == 0,
+            "Unexpected destination rectangle %s.\n", wine_dbgstr_rect(&dst_rect));
+
+    hr = IMFVideoDisplayControl_SetVideoPosition(display_control, NULL, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    /* Setting position requires a window. */
+    hwnd = create_window();
+    ok(!!hwnd, "Failed to create a test window.\n");
+
+    SetRect(&dst_rect, 0, 0, 10, 10);
+    memset(&src_rect, 0, sizeof(src_rect));
+    hr = IMFVideoDisplayControl_SetVideoPosition(display_control, &src_rect, &dst_rect);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoDisplayControl_SetVideoWindow(display_control, hwnd);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    SetRect(&dst_rect, 0, 0, 10, 10);
+    hr = IMFVideoDisplayControl_SetVideoPosition(display_control, NULL, &dst_rect);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    SetRect(&dst_rect, 1, 2, 3, 4);
+    hr = IMFVideoDisplayControl_GetVideoPosition(display_control, &src_rect, &dst_rect);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(dst_rect.left == 0 && dst_rect.right == 10 && dst_rect.top == 0 && dst_rect.bottom == 10,
+            "Unexpected destination rectangle %s.\n", wine_dbgstr_rect(&dst_rect));
+
+    src_rect.left = src_rect.top = 0.0f;
+    src_rect.right = 2.0f;
+    src_rect.bottom = 1.0f;
+    hr = IMFVideoDisplayControl_SetVideoPosition(display_control, &src_rect, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    src_rect.left = -0.1f;
+    src_rect.top = 0.0f;
+    src_rect.right = 0.9f;
+    src_rect.bottom = 1.0f;
+    hr = IMFVideoDisplayControl_SetVideoPosition(display_control, &src_rect, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    /* Flipped source rectangle. */
+    src_rect.left = 0.5f;
+    src_rect.top = 0.0f;
+    src_rect.right = 0.4f;
+    src_rect.bottom = 1.0f;
+    hr = IMFVideoDisplayControl_SetVideoPosition(display_control, &src_rect, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    src_rect.left = 0.0f;
+    src_rect.top = 0.5f;
+    src_rect.right = 0.4f;
+    src_rect.bottom = 0.1f;
+    hr = IMFVideoDisplayControl_SetVideoPosition(display_control, &src_rect, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    src_rect.left = 0.1f;
+    src_rect.top = 0.2f;
+    src_rect.right = 0.8f;
+    src_rect.bottom = 0.9f;
+    hr = IMFVideoDisplayControl_SetVideoPosition(display_control, &src_rect, NULL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    /* Presenter updates mixer attribute. */
+    memset(&src_rect, 0, sizeof(src_rect));
+    hr = IMFAttributes_GetBlob(mixer_attributes, &VIDEO_ZOOM_RECT, (UINT8 *)&src_rect, sizeof(src_rect), NULL);
+todo_wine {
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(src_rect.left == 0.1f && src_rect.top == 0.2f && src_rect.right == 0.8f &&
+            src_rect.bottom == 0.9f, "Unexpected source rectangle.\n");
+}
+    hr = IMFVideoDisplayControl_GetVideoPosition(display_control, &src_rect, &dst_rect);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(src_rect.left == 0.1f && src_rect.top == 0.2f && src_rect.right == 0.8f &&
+            src_rect.bottom == 0.9f, "Unexpected source rectangle.\n");
+
+    SetRect(&dst_rect, 1, 2, 999, 1000);
+    hr = IMFVideoDisplayControl_SetVideoPosition(display_control, NULL, &dst_rect);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    SetRect(&dst_rect, 0, 1, 3, 4);
+    hr = IMFVideoDisplayControl_GetVideoPosition(display_control, &src_rect, &dst_rect);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(dst_rect.left == 1 && dst_rect.right == 999 && dst_rect.top == 2 && dst_rect.bottom == 1000,
+            "Unexpected destination rectangle %s.\n", wine_dbgstr_rect(&dst_rect));
+
+    /* Flipped destination rectangle. */
+    SetRect(&dst_rect, 100, 1, 50, 1000);
+    hr = IMFVideoDisplayControl_SetVideoPosition(display_control, NULL, &dst_rect);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    SetRect(&dst_rect, 1, 100, 100, 50);
+    hr = IMFVideoDisplayControl_SetVideoPosition(display_control, NULL, &dst_rect);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    IMFVideoDisplayControl_Release(display_control);
+
+    IMFTopologyServiceLookupClient_Release(lookup_client);
+    IMFVideoPresenter_Release(presenter);
+    IMFAttributes_Release(mixer_attributes);
+    IMFTransform_Release(mixer);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(evr)
 {
     CoInitialize(NULL);
@@ -1353,6 +1561,7 @@ START_TEST(evr)
     test_default_presenter();
     test_MFCreateVideoMixerAndPresenter();
     test_MFCreateVideoSampleAllocator();
+    test_presenter_video_position();
 
     CoUninitialize();
 }
