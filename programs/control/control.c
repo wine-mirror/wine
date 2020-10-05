@@ -26,26 +26,6 @@
 #include <windows.h>
 #include <shellapi.h>
 
-/* alphabetical list of recognized optional command line parameters */
-static const WCHAR szP_COLOR[] = {'C','O','L','O','R',0};
-static const WCHAR szP_DATETIME[] = {'D','A','T','E','/','T','I','M','E',0};
-static const WCHAR szP_DESKTOP[] = {'D','E','S','K','T','O','P',0};
-static const WCHAR szP_INTERNATIONAL[] = {'I','N','T','E','R','N','A','T','I','O','N','A','L',0};
-static const WCHAR szP_KEYBOARD[] = {'K','E','Y','B','O','A','R','D',0};
-static const WCHAR szP_MOUSE[] = {'M','O','U','S','E',0};
-static const WCHAR szP_PORTS[] = {'P','O','R','T','S',0};
-static const WCHAR szP_PRINTERS [] = {'P','R','I','N','T','E','R','S',0};
-
-/* alphabetical list of appropriate commands to execute */
-static const WCHAR szC_COLOR[] = {'d','e','s','k','.','c','p','l',',',',','2',0};
-static const WCHAR szC_DATETIME[] = {'t','i','m','e','d','a','t','e','.','c','p','l',0};
-static const WCHAR szC_DESKTOP[] = {'d','e','s','k','.','c','p','l',0};
-static const WCHAR szC_INTERNATIONAL[] = {'i','n','t','l','.','c','p','l',0};
-static const WCHAR szC_KEYBOARD[] = {'m','a','i','n','.','c','p','l',' ','@','1',0};
-static const WCHAR szC_MOUSE[] = {'m','a','i','n','.','c','p','l',0};
-static const WCHAR szC_PORTS[] = {'s','y','s','d','m','.','c','p','l',',',',','1',0};
-static const WCHAR szC_PRINTERS[] = {'m','a','i','n','.','c','p','l',' ','@','2',0};
-
 
 extern void WINAPI Control_RunDLLW(HWND hWnd, HINSTANCE hInst, LPCWSTR cmd, DWORD nCmdShow);
 
@@ -63,22 +43,22 @@ int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE hPrev, LPWSTR lpszCmdLine, INT nC
     }
 
     /* check for optional parameter */
-    if (!lstrcmpiW(lpszCmdLine,szP_COLOR))
-        launch(szC_COLOR);
-    if (!lstrcmpiW(lpszCmdLine,szP_DATETIME))
-        launch(szC_DATETIME);
-    if (!lstrcmpiW(lpszCmdLine,szP_DESKTOP))
-        launch(szC_DESKTOP);
-    if (!lstrcmpiW(lpszCmdLine,szP_INTERNATIONAL))
-        launch(szC_INTERNATIONAL);
-    if (!lstrcmpiW(lpszCmdLine,szP_KEYBOARD))
-        launch(szC_KEYBOARD);
-    if (!lstrcmpiW(lpszCmdLine,szP_MOUSE))
-        launch(szC_MOUSE);
-    if (!lstrcmpiW(lpszCmdLine,szP_PORTS))
-        launch(szC_PORTS);
-    if (!lstrcmpiW(lpszCmdLine,szP_PRINTERS))
-        launch(szC_PRINTERS);
+    if (!lstrcmpiW(lpszCmdLine, L"COLOR"))
+        launch(L"desk.cpl,,2");
+    if (!lstrcmpiW(lpszCmdLine, L"DATE/TIME"))
+        launch(L"timedate.cpl");
+    if (!lstrcmpiW(lpszCmdLine, L"DESKTOP"))
+        launch(L"desk.cpl");
+    if (!lstrcmpiW(lpszCmdLine, L"INTERNATIONAL"))
+        launch(L"intl.cpl");
+    if (!lstrcmpiW(lpszCmdLine, L"KEYBOARD"))
+        launch(L"main.cpl @1");
+    if (!lstrcmpiW(lpszCmdLine, L"MOUSE"))
+        launch(L"main.cpl");
+    if (!lstrcmpiW(lpszCmdLine, L"PORTS"))
+        launch(L"sysdm.cpl,,1");
+    if (!lstrcmpiW(lpszCmdLine, L"PRINTERS"))
+        launch(L"main.cpl @2");
 
     /* try to launch if a .cpl file is given directly */
     launch(lpszCmdLine);
