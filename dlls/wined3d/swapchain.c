@@ -2266,6 +2266,13 @@ HRESULT CDECL wined3d_swapchain_state_set_fullscreen(struct wined3d_swapchain_st
     return WINED3D_OK;
 }
 
+BOOL CDECL wined3d_swapchain_state_is_windowed(const struct wined3d_swapchain_state *state)
+{
+    TRACE("state %p.\n", state);
+
+    return state->desc.windowed;
+}
+
 void CDECL wined3d_swapchain_state_destroy(struct wined3d_swapchain_state *state)
 {
     heap_free(state);

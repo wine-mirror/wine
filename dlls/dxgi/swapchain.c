@@ -2276,7 +2276,11 @@ static HRESULT STDMETHODCALLTYPE d3d12_swapchain_GetFullscreenState(IDXGISwapCha
     TRACE("iface %p, fullscreen %p, target %p.\n", iface, fullscreen, target);
 
     if (fullscreen)
-        *fullscreen = !swapchain->fullscreen_desc.Windowed;
+    {
+        wined3d_mutex_lock();
+        *fullscreen = !wined3d_swapchain_state_is_windowed(swapchain->state);
+        wined3d_mutex_unlock();
+    }
 
     if (target && (*target = swapchain->target))
         IDXGIOutput_AddRef(*target);
@@ -2289,6 +2293,7 @@ static HRESULT STDMETHODCALLTYPE d3d12_swapchain_GetDesc(IDXGISwapChain4 *iface,
     struct d3d12_swapchain *swapchain = d3d12_swapchain_from_IDXGISwapChain4(iface);
     const DXGI_SWAP_CHAIN_FULLSCREEN_DESC *fullscreen_desc = &swapchain->fullscreen_desc;
     const DXGI_SWAP_CHAIN_DESC1 *swapchain_desc = &swapchain->desc;
+    BOOL windowed;
 
     TRACE("iface %p, desc %p.\n", iface, desc);
 
@@ -2297,6 +2302,10 @@ static HRESULT STDMETHODCALLTYPE d3d12_swapchain_GetDesc(IDXGISwapChain4 *iface,
         WARN("Invalid pointer.\n");
         return E_INVALIDARG;
     }
+
+    wined3d_mutex_lock();
+    windowed = wined3d_swapchain_state_is_windowed(swapchain->state);
+    wined3d_mutex_unlock();
 
     desc->BufferDesc.Width = swapchain_desc->Width;
     desc->BufferDesc.Height = swapchain_desc->Height;
@@ -2308,7 +2317,7 @@ static HRESULT STDMETHODCALLTYPE d3d12_swapchain_GetDesc(IDXGISwapChain4 *iface,
     desc->BufferUsage = swapchain_desc->BufferUsage;
     desc->BufferCount = swapchain_desc->BufferCount;
     desc->OutputWindow = swapchain->window;
-    desc->Windowed = fullscreen_desc->Windowed;
+    desc->Windowed = windowed;
     desc->SwapEffect = swapchain_desc->SwapEffect;
     desc->Flags = swapchain_desc->Flags;
 
@@ -2470,6 +2479,7 @@ static HRESULT STDMETHODCALLTYPE d3d12_swapchain_GetFullscreenDesc(IDXGISwapChai
         DXGI_SWAP_CHAIN_FULLSCREEN_DESC *desc)
 {
     struct d3d12_swapchain *swapchain = d3d12_swapchain_from_IDXGISwapChain4(iface);
+    BOOL windowed;
 
     TRACE("iface %p, desc %p.\n", iface, desc);
 
@@ -2479,7 +2489,12 @@ static HRESULT STDMETHODCALLTYPE d3d12_swapchain_GetFullscreenDesc(IDXGISwapChai
         return E_INVALIDARG;
     }
 
+    wined3d_mutex_lock();
+    windowed = wined3d_swapchain_state_is_windowed(swapchain->state);
+    wined3d_mutex_unlock();
+
     *desc = swapchain->fullscreen_desc;
+    desc->Windowed = windowed;
     return S_OK;
 }
 
