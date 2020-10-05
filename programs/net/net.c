@@ -155,7 +155,6 @@ static BOOL net_use(int argc, const WCHAR* argv[])
 
 static BOOL net_enum_services(void)
 {
-    static const WCHAR runningW[]={' ',' ',' ',' ','%','1','\n',0};
     SC_HANDLE SCManager;
     LPENUM_SERVICE_STATUS_PROCESSW services;
     DWORD size, i, count, resume;
@@ -184,7 +183,7 @@ static BOOL net_enum_services(void)
     output_string(STRING_RUNNING_HEADER);
     for(i = 0; i < count; i++)
     {
-        output_printf(runningW, services[i].lpDisplayName);
+        output_printf(L"    %1\n", services[i].lpDisplayName);
         WINE_TRACE("service=%s state=%d controls=%x\n",
                    wine_dbgstr_w(services[i].lpServiceName),
                    services[i].ServiceStatusProcess.dwCurrentState,
@@ -295,19 +294,13 @@ static BOOL arg_is(const WCHAR* str1, const WCHAR* str2)
 
 int __cdecl wmain(int argc, const WCHAR* argv[])
 {
-    static const WCHAR helpW[]={'h','e','l','p',0};
-    static const WCHAR shelpW[]={'/','h','e','l','p',0};
-    static const WCHAR startW[]={'s','t','a','r','t',0};
-    static const WCHAR stopW[]={'s','t','o','p',0};
-    static const WCHAR useW[]={'u','s','e',0};
-
     if (argc < 2)
     {
         output_string(STRING_USAGE);
         return 1;
     }
 
-    if(arg_is(argv[1], helpW))
+    if(arg_is(argv[1], L"help"))
     {
         if(argc > 3)
         {
@@ -316,14 +309,14 @@ int __cdecl wmain(int argc, const WCHAR* argv[])
         }
         if(argc == 2)
             output_string(STRING_USAGE);
-        else if(arg_is(argv[2], startW))
+        else if(arg_is(argv[2], L"start"))
             output_string(STRING_START_USAGE);
-        else if(arg_is(argv[2], stopW))
+        else if(arg_is(argv[2], L"stop"))
             output_string(STRING_STOP_USAGE);
         else
             output_string(STRING_USAGE);
     }
-    else if(arg_is(argv[1], startW))
+    else if(arg_is(argv[1], L"start"))
     {
         if(argc > 3)
         {
@@ -335,24 +328,24 @@ int __cdecl wmain(int argc, const WCHAR* argv[])
             if (!net_enum_services())
                 return 1;
         }
-        else if(arg_is(argv[2], shelpW))
+        else if(arg_is(argv[2], L"/help"))
             output_string(STRING_START_USAGE);
         else if(!net_service(NET_START, argv[2]))
             return 1;
     }
-    else if(arg_is(argv[1], stopW))
+    else if(arg_is(argv[1], L"stop"))
     {
         if(argc != 3)
         {
             output_string(STRING_STOP_USAGE);
             return 1;
         }
-        if(arg_is(argv[2], shelpW))
+        if(arg_is(argv[2], L"/help"))
             output_string(STRING_STOP_USAGE);
         else if(!net_service(NET_STOP, argv[2]))
             return 1;
     }
-    else if(arg_is(argv[1], useW))
+    else if(arg_is(argv[1], L"use"))
     {
         if(!net_use(argc, argv)) return 1;
     }
