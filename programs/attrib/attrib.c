@@ -24,8 +24,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(attrib);
 
-static const WCHAR starW[]  = {'*','\0'};
-
 /* =========================================================================
  * Load a string from the resource file, handling any error
  * Returns string retrieved from resource file
@@ -33,11 +31,10 @@ static const WCHAR starW[]  = {'*','\0'};
 static WCHAR *ATTRIB_LoadMessage(UINT id)
 {
     static WCHAR msg[MAXSTRING];
-    const WCHAR failedMsg[]  = {'F', 'a', 'i', 'l', 'e', 'd', '!', 0};
 
     if (!LoadStringW(GetModuleHandleW(NULL), id, msg, ARRAY_SIZE(msg))) {
         WINE_FIXME("LoadString failed with %d\n", GetLastError());
-        lstrcpyW(msg, failedMsg);
+        lstrcpyW(msg, L"Failed!");
     }
     return msg;
 }
@@ -144,8 +141,7 @@ static BOOL ATTRIB_processdirectory(const WCHAR *rootdir, const WCHAR *filespec,
     WCHAR buffer[MAX_PATH];
     HANDLE hff;
     WIN32_FIND_DATAW fd;
-    WCHAR flags[] = {' ',' ',' ',' ',' ',' ',' ',' ','\0'};
-    static const WCHAR slashW[] = {'\\','\0'};
+    WCHAR flags[] = L"        ";
 
     WINE_TRACE("Processing dir '%s', spec '%s', %d,%x,%x\n",
                wine_dbgstr_w(rootdir), wine_dbgstr_w(filespec),
@@ -155,25 +151,22 @@ static BOOL ATTRIB_processdirectory(const WCHAR *rootdir, const WCHAR *filespec,
 
       /* Build spec to search for */
       lstrcpyW(buffer, rootdir);
-      lstrcatW(buffer, starW);
+      lstrcatW(buffer, L"*");
 
       /* Search for directories in the location and recurse if necessary */
       WINE_TRACE("Searching for directories with '%s'\n", wine_dbgstr_w(buffer));
       hff = FindFirstFileW(buffer, &fd);
       if (hff != INVALID_HANDLE_VALUE) {
           do {
-              const WCHAR dot[] = {'.', 0};
-              const WCHAR dotdot[] = {'.', '.', 0};
-
               /* Only interested in directories, and not . nor .. */
               if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ||
-                  !lstrcmpW(fd.cFileName, dot) || !lstrcmpW(fd.cFileName, dotdot))
+                  !lstrcmpW(fd.cFileName, L".") || !lstrcmpW(fd.cFileName, L".."))
                   continue;
 
               /* Build new root dir to go searching in */
               lstrcpyW(buffer, rootdir);
               lstrcatW(buffer, fd.cFileName);
-              lstrcatW(buffer, slashW);
+              lstrcatW(buffer, L"\\");
               ATTRIB_processdirectory(buffer, filespec, recurse, includedirs,
                                       attrib_set, attrib_clear);
 
@@ -191,12 +184,10 @@ static BOOL ATTRIB_processdirectory(const WCHAR *rootdir, const WCHAR *filespec,
     hff = FindFirstFileW(buffer, &fd);
     if (hff != INVALID_HANDLE_VALUE) {
         do {
-            const WCHAR dot[] = {'.', 0};
-            const WCHAR dotdot[] = {'.', '.', 0};
             DWORD count;
             WINE_TRACE("Found '%s'\n", wine_dbgstr_w(fd.cFileName));
 
-            if (!lstrcmpW(fd.cFileName, dot) || !lstrcmpW(fd.cFileName, dotdot))
+            if (!lstrcmpW(fd.cFileName, L".") || !lstrcmpW(fd.cFileName, L".."))
                 continue;
 
             if (!includedirs && (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
@@ -212,7 +203,6 @@ static BOOL ATTRIB_processdirectory(const WCHAR *rootdir, const WCHAR *filespec,
                 SetFileAttributesW(buffer, fd.dwFileAttributes);
                 found = TRUE;
             } else {
-                static const WCHAR fmt[] = {'%','1',' ',' ',' ',' ',' ','%','2','\n','\0'};
                 if (fd.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) {
                     flags[4] = 'H';
                 }
@@ -233,7 +223,7 @@ static BOOL ATTRIB_processdirectory(const WCHAR *rootdir, const WCHAR *filespec,
                 }
                 lstrcpyW(buffer, rootdir);
                 lstrcatW(buffer, fd.cFileName);
-                ATTRIB_wprintf(fmt, flags, buffer);
+                ATTRIB_wprintf(L"%1     %2\n", flags, buffer);
                 for (count = 0; count < (ARRAY_SIZE(flags) - 1); count++) flags[count] = ' ';
                 found = TRUE;
             }
@@ -253,18 +243,16 @@ int __cdecl wmain(int argc, WCHAR *argv[])
     DWORD attrib_clear = 0;
     BOOL  attrib_recurse = FALSE;
     BOOL  attrib_includedirs = FALSE;
-    static const WCHAR help_option[] = {'/','?','\0'};
-    static const WCHAR wildcardsW[] = {'*','?','\0'};
     int i = 1;
     BOOL  found = FALSE;
 
-    if ((argc >= 2) && !lstrcmpW(argv[1], help_option)) {
+    if ((argc >= 2) && !lstrcmpW(argv[1], L"/?")) {
         ATTRIB_wprintf(ATTRIB_LoadMessage(STRING_HELP));
         return 0;
     }
 
     /* By default all files from current directory are taken into account */
-    lstrcpyW(name, starW);
+    lstrcpyW(name, L"*");
 
     while (i < argc) {
         WCHAR *param = argv[i++];
@@ -311,7 +299,7 @@ int __cdecl wmain(int argc, WCHAR *argv[])
 
     /* If a directory is explicitly supplied on the command line, and no
        wildcards are in the name, then allow it to be changed/displayed  */
-    if (wcspbrk(originalname, wildcardsW) == NULL) attrib_includedirs = TRUE;
+    if (wcspbrk(originalname, L"*?") == NULL) attrib_includedirs = TRUE;
 
     /* Do all the processing based on the filename arg */
     found = ATTRIB_processdirectory(curdir, name, attrib_recurse,
