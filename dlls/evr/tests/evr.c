@@ -1414,16 +1414,13 @@ static void test_presenter_video_position(void)
 
     hr = IMFAttributes_GetCount(mixer_attributes, &count);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-todo_wine
     ok(count == 1, "Unexpected count %u.\n", count);
 
     memset(&src_rect, 0, sizeof(src_rect));
     hr = IMFAttributes_GetBlob(mixer_attributes, &VIDEO_ZOOM_RECT, (UINT8 *)&src_rect, sizeof(src_rect), NULL);
-todo_wine {
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(src_rect.left == 0.0f && src_rect.top == 0.0f && src_rect.right == 1.0f &&
             src_rect.bottom == 1.0f, "Unexpected source rectangle.\n");
-}
 
     hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFVideoDisplayControl, (void **)&display_control);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
@@ -1505,11 +1502,10 @@ todo_wine {
     /* Presenter updates mixer attribute. */
     memset(&src_rect, 0, sizeof(src_rect));
     hr = IMFAttributes_GetBlob(mixer_attributes, &VIDEO_ZOOM_RECT, (UINT8 *)&src_rect, sizeof(src_rect), NULL);
-todo_wine {
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(src_rect.left == 0.1f && src_rect.top == 0.2f && src_rect.right == 0.8f &&
             src_rect.bottom == 0.9f, "Unexpected source rectangle.\n");
-}
+
     hr = IMFVideoDisplayControl_GetVideoPosition(display_control, &src_rect, &dst_rect);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(src_rect.left == 0.1f && src_rect.top == 0.2f && src_rect.right == 0.8f &&

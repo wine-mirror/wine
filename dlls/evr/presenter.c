@@ -357,6 +357,25 @@ static ULONG WINAPI video_presenter_service_client_Release(IMFTopologyServiceLoo
     return IMFVideoPresenter_Release(&presenter->IMFVideoPresenter_iface);
 }
 
+static void video_presenter_set_mixer_rect(struct video_presenter *presenter)
+{
+    IMFAttributes *attributes;
+    HRESULT hr;
+
+    if (!presenter->mixer)
+        return;
+
+    if (SUCCEEDED(IMFTransform_GetAttributes(presenter->mixer, &attributes)))
+    {
+        if (FAILED(hr = IMFAttributes_SetBlob(attributes, &VIDEO_ZOOM_RECT, (const UINT8 *)&presenter->src_rect,
+                sizeof(presenter->src_rect))))
+        {
+            WARN("Failed to set zoom rectangle attribute, hr %#x.\n", hr);
+        }
+        IMFAttributes_Release(attributes);
+    }
+}
+
 static HRESULT video_presenter_attach_mixer(struct video_presenter *presenter, IMFTopologyServiceLookup *service_lookup)
 {
     IMFVideoDeviceID *device_id;
@@ -388,6 +407,8 @@ static HRESULT video_presenter_attach_mixer(struct video_presenter *presenter, I
         IMFTransform_Release(presenter->mixer);
         presenter->mixer = NULL;
     }
+
+    video_presenter_set_mixer_rect(presenter);
 
     return hr;
 }
@@ -528,7 +549,13 @@ static HRESULT WINAPI video_presenter_control_SetVideoPosition(IMFVideoDisplayCo
     else
     {
         if (src_rect)
-            presenter->src_rect = *src_rect;
+        {
+            if (memcmp(&presenter->src_rect, src_rect, sizeof(*src_rect)))
+            {
+                presenter->src_rect = *src_rect;
+                video_presenter_set_mixer_rect(presenter);
+            }
+        }
         if (dst_rect)
             presenter->dst_rect = *dst_rect;
     }
