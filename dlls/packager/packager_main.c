@@ -181,8 +181,7 @@ static HRESULT WINAPI OleObject_GetClipboardData(IOleObject *iface, DWORD dwRese
 
 static HRESULT do_activate_object(struct Package *This, HWND parent)
 {
-    static const WCHAR openW[] = {'o','p','e','n',0};
-    ShellExecuteW(parent, openW, This->filename, NULL, NULL, SW_SHOW);
+    ShellExecuteW(parent, L"open", This->filename, NULL, NULL, SW_SHOW);
     return S_OK;
 }
 
@@ -396,11 +395,9 @@ static HRESULT WINAPI PersistStorage_Load(IPersistStorage* iface,
     WCHAR *stream_filename;
     WCHAR *base_end, extension[MAX_PATH];
 
-    static const WCHAR ole10nativeW[] = {0x0001,'O','l','e','1','0','N','a','t','i','v','e',0};
-
     TRACE("(%p)->(%p)\n", This, pStg);
 
-    hr = IStorage_OpenStream(pStg, ole10nativeW, NULL,
+    hr = IStorage_OpenStream(pStg, L"\1Ole10Native", NULL,
             STGM_READ | STGM_SHARE_EXCLUSIVE, 0, &stream);
     if(FAILED(hr)){
         TRACE("OpenStream gave: %08x\n", hr);
@@ -489,8 +486,6 @@ static HRESULT WINAPI PersistStorage_Load(IPersistStorage* iface,
     file = CreateFileW(This->filename, GENERIC_WRITE, FILE_SHARE_READ, NULL,
             CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
     while(file == INVALID_HANDLE_VALUE){
-        static const WCHAR fmtW[] = {' ','(','%','u',')',0};
-
         if(GetLastError() != ERROR_FILE_EXISTS){
             WARN("CreateFile failed: %u\n", GetLastError());
             hr = E_FAIL;
@@ -499,7 +494,7 @@ static HRESULT WINAPI PersistStorage_Load(IPersistStorage* iface,
 
         /* file exists, so increment file name and try again */
         ++i;
-        wsprintfW(base_end, fmtW, i);
+        wsprintfW(base_end, L" (%u)", i);
         lstrcatW(base_end, extension);
 
         file = CreateFileW(This->filename, GENERIC_WRITE, FILE_SHARE_READ, NULL,

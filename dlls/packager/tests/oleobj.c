@@ -210,9 +210,7 @@ static HRESULT WINAPI stg_CreateStream(IStorage* This, LPCOLESTR pwcsName,
 static HRESULT WINAPI stg_OpenStream(IStorage* This, LPCOLESTR pwcsName,
         void *reserved1, DWORD grfMode, DWORD reserved2, IStream **ppstm)
 {
-    static const WCHAR ole10NativeW[] = {1,'O','l','e','1','0','N','a','t','i','v','e',0};
-
-    if(lstrcmpW(pwcsName, ole10NativeW))
+    if(lstrcmpW(pwcsName, L"\1Ole10Native"))
         return STG_E_FILENOTFOUND;
 
     *ppstm = &ole10native_stream;
@@ -417,8 +415,6 @@ static void test_packager(void)
     char contents[11];
     BOOL br, extended = FALSE;
 
-    static const WCHAR filename3W[] = {'f','i','l','e','n','a','m','e','3','.','t','x','t',0};
-
     hr = CoCreateInstance(&CLSID_Package, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
             &IID_IOleObject, (void**)&oleobj);
     ok(hr == S_OK ||
@@ -458,7 +454,7 @@ static void test_packager(void)
 
     if(extended){
         len = GetTempPathW(ARRAY_SIZE(filename), filename);
-        lstrcpyW(filename + len, filename3W);
+        lstrcpyW(filename + len, L"filename3.txt");
 
         file = CreateFileW(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING,
                 FILE_ATTRIBUTE_NORMAL, NULL);
