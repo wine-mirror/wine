@@ -510,7 +510,15 @@ static HRESULT WINAPI video_presenter_control_SetVideoPosition(IMFVideoDisplayCo
         return E_POINTER;
 
     if (src_rect && (src_rect->left < 0.0f || src_rect->top < 0.0f ||
-                src_rect->right > 1.0f || src_rect->bottom > 1.0f))
+            src_rect->right > 1.0f || src_rect->bottom > 1.0f ||
+            src_rect->left > src_rect->right ||
+            src_rect->top > src_rect->bottom))
+    {
+        return E_INVALIDARG;
+    }
+
+    if (dst_rect && (dst_rect->left > dst_rect->right ||
+            dst_rect->top > dst_rect->bottom))
         return E_INVALIDARG;
 
     EnterCriticalSection(&presenter->cs);

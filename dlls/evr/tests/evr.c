@@ -1111,6 +1111,21 @@ static void test_default_presenter(void)
     hr = IMFVideoDisplayControl_SetVideoPosition(display_control, &src_rect, NULL);
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
+    /* Flipped source rectangle. */
+    src_rect.left = 0.5f;
+    src_rect.top = 0.0f;
+    src_rect.right = 0.4f;
+    src_rect.bottom = 1.0f;
+    hr = IMFVideoDisplayControl_SetVideoPosition(display_control, &src_rect, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    src_rect.left = 0.0f;
+    src_rect.top = 0.5f;
+    src_rect.right = 0.4f;
+    src_rect.bottom = 0.1f;
+    hr = IMFVideoDisplayControl_SetVideoPosition(display_control, &src_rect, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
     src_rect.left = 0.1f;
     src_rect.top = 0.2f;
     src_rect.right = 0.8f;
@@ -1122,6 +1137,15 @@ static void test_default_presenter(void)
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(src_rect.left == 0.1f && src_rect.top == 0.2f && src_rect.right == 0.8f &&
             src_rect.bottom == 0.9f, "Unexpected source rectangle.\n");
+
+    /* Flipped destination rectangle. */
+    SetRect(&dst_rect, 100, 1, 50, 1000);
+    hr = IMFVideoDisplayControl_SetVideoPosition(display_control, NULL, &dst_rect);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    SetRect(&dst_rect, 1, 100, 100, 50);
+    hr = IMFVideoDisplayControl_SetVideoPosition(display_control, NULL, &dst_rect);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
     SetRect(&dst_rect, 1, 2, 999, 1000);
     hr = IMFVideoDisplayControl_SetVideoPosition(display_control, NULL, &dst_rect);
