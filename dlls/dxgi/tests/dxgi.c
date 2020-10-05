@@ -6122,15 +6122,13 @@ done:
     ok(!refcount, "Factory has %u references left.\n", refcount);
 }
 
-static void test_window_association(void)
+static void test_window_association(IUnknown *device, BOOL is_d3d12)
 {
     DXGI_SWAP_CHAIN_DESC swapchain_desc;
     LONG_PTR original_wndproc, wndproc;
     IDXGIFactory *factory, *factory2;
     IDXGISwapChain *swapchain;
     IDXGIOutput *output;
-    IDXGIAdapter *adapter;
-    IDXGIDevice *device;
     HWND hwnd, hwnd2;
     BOOL fullscreen;
     unsigned int i;
@@ -6142,6 +6140,7 @@ static void test_window_association(void)
         UINT flag;
         BOOL expect_fullscreen;
         BOOL broken_d3d10;
+        BOOL todo_on_d3d12;
     }
     tests[] =
     {
@@ -6155,23 +6154,17 @@ static void test_window_association(void)
          * - Posting them hangs the posting thread. Another thread that keeps
          *   sending input is needed to avoid the hang. The hang is not
          *   because of flush_events(). */
-        {0, TRUE},
+        {0, TRUE, FALSE, TRUE},
         {0, FALSE},
         {DXGI_MWA_NO_WINDOW_CHANGES, FALSE},
         {DXGI_MWA_NO_WINDOW_CHANGES, FALSE},
         {DXGI_MWA_NO_ALT_ENTER, FALSE, TRUE},
         {DXGI_MWA_NO_ALT_ENTER, FALSE},
-        {DXGI_MWA_NO_PRINT_SCREEN, TRUE},
+        {DXGI_MWA_NO_PRINT_SCREEN, TRUE, FALSE, TRUE},
         {DXGI_MWA_NO_PRINT_SCREEN, FALSE},
-        {0, TRUE},
+        {0, TRUE, FALSE, TRUE},
         {0, FALSE}
     };
-
-    if (!(device = create_device(0)))
-    {
-        skip("Failed to create device.\n");
-        return;
-    }
 
     swapchain_desc.BufferDesc.Width = 640;
     swapchain_desc.BufferDesc.Height = 480;
@@ -6183,10 +6176,10 @@ static void test_window_association(void)
     swapchain_desc.SampleDesc.Count = 1;
     swapchain_desc.SampleDesc.Quality = 0;
     swapchain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    swapchain_desc.BufferCount = 1;
+    swapchain_desc.BufferCount = is_d3d12 ? 2 : 1;
     swapchain_desc.OutputWindow = CreateWindowA("static", "dxgi_test", 0, 0, 0, 400, 200, 0, 0, 0, 0);
     swapchain_desc.Windowed = TRUE;
-    swapchain_desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+    swapchain_desc.SwapEffect = is_d3d12 ? DXGI_SWAP_EFFECT_FLIP_DISCARD : DXGI_SWAP_EFFECT_DISCARD;
     swapchain_desc.Flags = 0;
 
     original_wndproc = GetWindowLongPtrW(swapchain_desc.OutputWindow, GWLP_WNDPROC);
@@ -6195,11 +6188,7 @@ static void test_window_association(void)
     hr = CreateDXGIFactory(&IID_IDXGIFactory, (void **)&factory2);
     ok(hr == S_OK, "Failed to create DXGI factory, hr %#x.\n", hr);
 
-    hr = IDXGIDevice_GetAdapter(device, &adapter);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDXGIAdapter_GetParent(adapter, &IID_IDXGIFactory, (void **)&factory);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    refcount = IDXGIAdapter_Release(adapter);
+    get_factory(device, is_d3d12, &factory);
 
     hr = IDXGIFactory_GetWindowAssociation(factory, NULL);
     ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
@@ -6229,7 +6218,7 @@ static void test_window_association(void)
     ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
 
     /* Alt+Enter tests. */
-    hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &swapchain_desc, &swapchain);
+    hr = IDXGIFactory_CreateSwapChain(factory, device, &swapchain_desc, &swapchain);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
 
     wndproc = GetWindowLongPtrW(swapchain_desc.OutputWindow, GWLP_WNDPROC);
@@ -6275,6 +6264,7 @@ static void test_window_association(void)
             output = NULL;
             hr = IDXGISwapChain_GetFullscreenState(swapchain, &fullscreen, &output);
             ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+            todo_wine_if(is_d3d12 && tests[i].todo_on_d3d12)
             ok(fullscreen == tests[i].expect_fullscreen
                     || broken(tests[i].broken_d3d10 && fullscreen),
                     "Test %u: Got unexpected fullscreen %#x.\n", i, fullscreen);
@@ -6299,10 +6289,8 @@ static void test_window_association(void)
     ok(!refcount, "IDXGISwapChain has %u references left.\n", refcount);
     DestroyWindow(swapchain_desc.OutputWindow);
 
-    refcount = IDXGIDevice_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
     refcount = IDXGIFactory_Release(factory);
-    ok(!refcount, "Factory has %u references left.\n", refcount);
+    ok(refcount == !is_d3d12, "IDXGIFactory has %u references left.\n", refcount);
 }
 
 static void test_output_ownership(IUnknown *device, BOOL is_d3d12)
@@ -7008,7 +6996,6 @@ START_TEST(dxgi)
     test_swapchain_parameters();
     test_swapchain_window_messages();
     test_swapchain_window_styles();
-    test_window_association();
     run_on_d3d10(test_set_fullscreen);
     run_on_d3d10(test_resize_target);
     run_on_d3d10(test_swapchain_resize);
@@ -7018,6 +7005,7 @@ START_TEST(dxgi)
     run_on_d3d10(test_output_ownership);
     run_on_d3d10(test_cursor_clipping);
     run_on_d3d10(test_get_containing_output);
+    run_on_d3d10(test_window_association);
 
     if (!(d3d12_module = LoadLibraryA("d3d12.dll")))
     {
@@ -7045,6 +7033,7 @@ START_TEST(dxgi)
     run_on_d3d12(test_frame_latency_event);
     run_on_d3d12(test_colour_space_support);
     run_on_d3d12(test_get_containing_output);
+    run_on_d3d12(test_window_association);
 
     FreeLibrary(d3d12_module);
 }
