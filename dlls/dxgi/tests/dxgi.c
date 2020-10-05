@@ -2953,7 +2953,6 @@ static void test_default_fullscreen_target_output(IUnknown *device, BOOL is_d3d1
             ok(SUCCEEDED(hr), "Adapter %u output %u: GetFullscreenState failed, hr %#x.\n",
                     adapter_idx, output_idx, hr);
             ok(fullscreen, "Adapter %u output %u: Expected fullscreen.\n", adapter_idx, output_idx);
-            todo_wine_if(is_d3d12)
             ok(!!containing_output, "Adapter %u output %u: Expected a valid output.\n", adapter_idx,
                     output_idx);
             if (containing_output)
@@ -2962,7 +2961,7 @@ static void test_default_fullscreen_target_output(IUnknown *device, BOOL is_d3d1
             ret = GetWindowRect(swapchain_desc.OutputWindow, &window_rect);
             ok(ret, "Adapter %u output %u: GetWindowRect failed, error %#x.\n", adapter_idx,
                     output_idx, GetLastError());
-            todo_wine_if(is_d3d12) ok(EqualRect(&window_rect, &output_desc.DesktopCoordinates),
+            ok(EqualRect(&window_rect, &output_desc.DesktopCoordinates),
                     "Adapter %u output %u: Expect window rect %s, got %s.\n", adapter_idx,
                     output_idx, wine_dbgstr_rect(&output_desc.DesktopCoordinates),
                     wine_dbgstr_rect(&window_rect));

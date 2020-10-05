@@ -2981,11 +2981,34 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
 
     hr = wined3d_swapchain_desc_from_dxgi(&wined3d_desc, output, window, swapchain_desc,
             fullscreen_desc);
-    IDXGIOutput_Release(output);
     if (FAILED(hr))
+    {
+        IDXGIOutput_Release(output);
         return hr;
+    }
+
     if (FAILED(hr = wined3d_swapchain_state_create(&wined3d_desc, window, &swapchain->state)))
+    {
+        IDXGIOutput_Release(output);
         return hr;
+    }
+
+    if (!fullscreen_desc->Windowed)
+    {
+        hr = wined3d_swapchain_state_set_fullscreen(swapchain->state, &wined3d_desc, NULL);
+        if (FAILED(hr))
+        {
+            wined3d_swapchain_state_destroy(swapchain->state);
+            IDXGIOutput_Release(output);
+            return hr;
+        }
+
+        swapchain->target = output;
+    }
+    else
+    {
+        IDXGIOutput_Release(output);
+    }
 
     if (swapchain_desc->BufferUsage && swapchain_desc->BufferUsage != DXGI_USAGE_RENDER_TARGET_OUTPUT)
         FIXME("Ignoring buffer usage %#x.\n", swapchain_desc->BufferUsage);
@@ -3002,8 +3025,6 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
         FIXME("Unhandled scanline ordering %#x.\n", fullscreen_desc->ScanlineOrdering);
     if (fullscreen_desc->Scaling)
         FIXME("Unhandled mode scaling %#x.\n", fullscreen_desc->Scaling);
-    if (!fullscreen_desc->Windowed)
-        FIXME("Fullscreen not supported yet.\n");
 
     vk_instance = vkd3d_instance_get_vk_instance(vkd3d_instance_from_device(device));
     vk_physical_device = vkd3d_get_vk_physical_device(device);
