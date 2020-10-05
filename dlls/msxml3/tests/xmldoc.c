@@ -95,14 +95,6 @@ static void test_xmldoc(void)
     HRESULT hr;
     BSTR name;
 
-    static const WCHAR szBankAccount[] = {'B','A','N','K','A','C','C','O','U','N','T',0};
-    static const WCHAR szNumber[] = {'N','U','M','B','E','R',0};
-    static const WCHAR szNumVal[] = {'1','2','3','4',0};
-    static const WCHAR szName[] = {'N','A','M','E',0};
-    static const WCHAR szNameVal[] = {'C','a','p','t','a','i','n',' ','A','h','a','b',0};
-    static const WCHAR szVersion[] = {'1','.','0',0};
-    static const WCHAR rootW[] = {'r','o','o','t',0};
-
     hr = CoCreateInstance(&CLSID_XMLDocument, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IXMLDocument, (void**)&doc);
     EXPECT_HR(hr, S_OK);
@@ -117,7 +109,7 @@ static void test_xmldoc(void)
     name = NULL;
     hr = ITypeInfo_GetDocumentation(ti, DISPID_XMLDOCUMENT_ROOT, &name, NULL, NULL, NULL);
     EXPECT_HR(hr, S_OK);
-    ok(!lstrcmpW(name, rootW), "got name %s\n", wine_dbgstr_w(name));
+    ok(!lstrcmpW(name, L"root"), "got name %s\n", wine_dbgstr_w(name));
     SysFreeString(name);
 
     ITypeInfo_Release(ti);
@@ -152,7 +144,7 @@ static void test_xmldoc(void)
     name = NULL;
     hr = IXMLDocument_get_version(doc, &name);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    ok(!lstrcmpW(name, szVersion), "Expected 1.0, got %s\n", wine_dbgstr_w(name));
+    ok(!lstrcmpW(name, L"1.0"), "Expected 1.0, got %s\n", wine_dbgstr_w(name));
     SysFreeString(name);
 
     /* doctype */
@@ -161,7 +153,7 @@ static void test_xmldoc(void)
 
     hr = IXMLDocument_get_doctype(doc, &name);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    ok(!lstrcmpW(name, szBankAccount), "Expected BANKACCOUNT, got %s\n", wine_dbgstr_w(name));
+    ok(!lstrcmpW(name, L"BANKACCOUNT"), "Expected BANKACCOUNT, got %s\n", wine_dbgstr_w(name));
     SysFreeString(name);
 
     hr = IXMLDocument_get_root(doc, &element);
@@ -181,7 +173,7 @@ static void test_xmldoc(void)
 
     hr = IXMLElement_get_tagName(element, &name);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    ok(!lstrcmpW(name, szBankAccount), "Expected BANKACCOUNT\n");
+    ok(!lstrcmpW(name, L"BANKACCOUNT"), "Expected BANKACCOUNT\n");
     SysFreeString(name);
 
     hr = IXMLElement_get_children(element, &collection);
@@ -206,7 +198,7 @@ static void test_xmldoc(void)
 
     hr = IXMLElement_get_tagName(child, &name);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    ok(!lstrcmpW(name, szNumber), "Expected NUMBER\n");
+    ok(!lstrcmpW(name, L"NUMBER"), "Expected NUMBER\n");
     SysFreeString(name);
 
     hr = IXMLElement_get_children(child, &inner);
@@ -227,7 +219,7 @@ static void test_xmldoc(void)
 
     hr = IXMLElement_get_text(value, &name);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    ok(!lstrcmpW(name, szNumVal), "Expected '1234'\n");
+    ok(!lstrcmpW(name, L"1234"), "Expected '1234'\n");
     SysFreeString(name);
 
     IXMLElementCollection_Release(inner);
@@ -253,7 +245,7 @@ static void test_xmldoc(void)
 
     hr = IXMLElement_get_tagName(child, &name);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    ok(!lstrcmpW(name, szName), "Expected NAME\n");
+    ok(!lstrcmpW(name, L"NAME"), "Expected NAME\n");
     SysFreeString(name);
 
     hr = IXMLElement_get_children(child, &inner);
@@ -275,7 +267,7 @@ static void test_xmldoc(void)
 
     hr = IXMLElement_get_text(value, &name);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    ok(!lstrcmpW(name, szNameVal), "Expected 'Captain Ahab'\n");
+    ok(!lstrcmpW(name, L"Captain Ahab"), "Expected 'Captain Ahab'\n");
     SysFreeString(name);
 
     IXMLElementCollection_Release(inner);
@@ -398,7 +390,6 @@ static void test_persiststreaminit(void)
     CHAR path[MAX_PATH];
     CLSID id;
     BSTR str;
-    static const WCHAR testW[] = {'t','e','s','t',0};
 
     hr = CoCreateInstance(&CLSID_XMLDocument, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IXMLDocument, (LPVOID*)&doc);
@@ -456,7 +447,7 @@ static void test_persiststreaminit(void)
     todo_wine ok(stat.cbSize.QuadPart > 0, "Expected >0\n");
     IStream_Release(stream);
 
-    str = SysAllocString(testW);
+    str = SysAllocString(L"test");
     hr = IXMLDocument_get_root(doc, &element);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     hr = IXMLElement_put_text(element, str);
@@ -658,16 +649,13 @@ static void test_xmlelem_collection(void)
     ULONG num_vars;
     VARIANT var[3], dummy, vIndex, vName;
     BSTR url, str;
-    static const CHAR szBankXML[] = "bank.xml";
-    static const WCHAR szNumber[] = {'N','U','M','B','E','R',0};
-    static const WCHAR szName[] = {'N','A','M','E',0};
 
     hr = CoCreateInstance(&CLSID_XMLDocument, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IXMLDocument, (LPVOID*)&doc);
     ok(hr == S_OK, "Expected S_OK, got 0x%08x\n", hr);
 
-    create_xml_file(szBankXML);
-    GetFullPathNameA(szBankXML, MAX_PATH, pathA, NULL);
+    create_xml_file("bank.xml");
+    GetFullPathNameA("bank.xml", MAX_PATH, pathA, NULL);
     MultiByteToWideChar(CP_ACP, 0, pathA, -1, path, MAX_PATH);
 
     url = SysAllocString(path);
@@ -755,7 +743,7 @@ static void test_xmlelem_collection(void)
 
     hr = IXMLElement_get_tagName(child, &str);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    ok(!lstrcmpW(str, szNumber), "Expected NUMBER\n");
+    ok(!lstrcmpW(str, L"NUMBER"), "Expected NUMBER\n");
     SysFreeString(str);
     IXMLElement_Release(child);
 
@@ -822,7 +810,7 @@ static void test_xmlelem_collection(void)
 
     hr = IXMLElement_get_tagName(child, &str);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    ok(!lstrcmpW(str, szName), "Expected NAME\n");
+    ok(!lstrcmpW(str, L"NAME"), "Expected NAME\n");
     SysFreeString(str);
     IXMLElement_Release(child);
 
@@ -841,7 +829,7 @@ static void test_xmlelem_collection(void)
 
     hr = IXMLElement_get_tagName(child, &str);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    ok(!lstrcmpW(str, szNumber), "Expected NUMBER\n");
+    ok(!lstrcmpW(str, L"NUMBER"), "Expected NUMBER\n");
     SysFreeString(str);
     IXMLElement_Release(child);
 
@@ -860,7 +848,7 @@ static void test_xmlelem_collection(void)
 
     hr = IXMLElement_get_tagName(child, &str);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    ok(!lstrcmpW(str, szName), "Expected NAME\n");
+    ok(!lstrcmpW(str, L"NAME"), "Expected NAME\n");
     SysFreeString(str);
     IXMLElement_Release(child);
 
@@ -896,13 +884,6 @@ static void test_xmlelem(void)
     LONG type, num_child;
     IDispatch *disp;
     ITypeInfo *ti;
-
-    static const WCHAR propName[] = {'p','r','o','p',0};
-    static const WCHAR propVal[] = {'v','a','l',0};
-    static const WCHAR nextVal[] = {'n','e','x','t',0};
-    static const WCHAR noexist[] = {'n','o','e','x','i','s','t',0};
-    static const WCHAR crazyCase1[] = {'C','R','a','z','Y','c','A','S','E',0};
-    static const WCHAR crazyCase2[] = {'C','R','A','Z','Y','C','A','S','E',0};
 
     hr = CoCreateInstance(&CLSID_XMLDocument, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IXMLDocument, (LPVOID*)&doc);
@@ -941,7 +922,7 @@ static void test_xmlelem(void)
     ok(hr == 1, "Expected 1, got %08x\n", hr);
     ok(parent == NULL, "Expected NULL parent\n");
 
-    str = SysAllocString(noexist);
+    str = SysAllocString(L"noexist");
     hr = IXMLElement_getAttribute(element, str, &vValue);
     ok(hr == S_FALSE, "Expected S_FALSE, got %08x\n", hr);
     ok(V_VT(&vValue) == VT_EMPTY, "Expected VT_EMPTY, got %d\n", V_VT(&vValue));
@@ -949,8 +930,8 @@ static void test_xmlelem(void)
     VariantClear(&vValue);
     SysFreeString(str);
 
-    str = SysAllocString(crazyCase1);
-    val = SysAllocString(propVal);
+    str = SysAllocString(L"CRazYcASE");
+    val = SysAllocString(L"val");
     V_VT(&vValue) = VT_BSTR;
     V_BSTR(&vValue) = val;
     hr = IXMLElement_setAttribute(element, str, vValue);
@@ -958,16 +939,16 @@ static void test_xmlelem(void)
     SysFreeString(str);
     SysFreeString(val);
 
-    str = SysAllocString(crazyCase2);
+    str = SysAllocString(L"CRAZYCASE");
     hr = IXMLElement_getAttribute(element, str, &vValue);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(V_VT(&vValue) == VT_BSTR, "Expected VT_BSTR, got %d\n", V_VT(&vValue));
-    ok(!lstrcmpW(V_BSTR(&vValue), propVal), "Expected 'val'\n");
+    ok(!lstrcmpW(V_BSTR(&vValue), L"val"), "Expected 'val'\n");
     VariantClear(&vValue);
     SysFreeString(str);
 
-    str = SysAllocString(propName);
-    val = SysAllocString(propVal);
+    str = SysAllocString(L"prop");
+    val = SysAllocString(L"val");
     V_VT(&vValue) = VT_BSTR;
     V_BSTR(&vValue) = val;
     hr = IXMLElement_setAttribute(element, str, vValue);
@@ -977,7 +958,7 @@ static void test_xmlelem(void)
     hr = IXMLElement_getAttribute(element, str, &vValue);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(V_VT(&vValue) == VT_BSTR, "Expected VT_BSTR, got %d\n", V_VT(&vValue));
-    ok(!lstrcmpW(V_BSTR(&vValue), propVal), "Expected 'val'\n");
+    ok(!lstrcmpW(V_BSTR(&vValue), L"val"), "Expected 'val'\n");
     VariantClear(&vValue);
 
     hr = IXMLElement_removeAttribute(element, str);
@@ -1009,7 +990,7 @@ static void test_xmlelem(void)
     SysFreeString(str);
 
     /* put_text with an ELEMENT */
-    str = SysAllocString(propVal);
+    str = SysAllocString(L"val");
     hr = IXMLElement_put_text(element, str);
     ok(hr == E_NOTIMPL, "Expected E_NOTIMPL, got %08x\n", hr);
     SysFreeString(str);
@@ -1024,7 +1005,7 @@ static void test_xmlelem(void)
     hr = IXMLElement_addChild(element, child, 0, -1);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
-    str = SysAllocString(propVal);
+    str = SysAllocString(L"val");
     hr = IXMLElement_put_text(child, str);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     SysFreeString(str);
@@ -1061,28 +1042,28 @@ static void test_xmlelem(void)
 
     hr = IXMLElement_get_text(element, &str);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    ok(!lstrcmpW(str, propVal), "Expected 'val'\n");
+    ok(!lstrcmpW(str, L"val"), "Expected 'val'\n");
     SysFreeString(str);
 
     hr = IXMLElement_get_text(child2, &str);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    ok(!lstrcmpW(str, propVal), "Expected 'val'\n");
+    ok(!lstrcmpW(str, L"val"), "Expected 'val'\n");
     SysFreeString(str);
 
     /* try put_text on ELEMENT again, now that it has a text child */
-    str = SysAllocString(nextVal);
+    str = SysAllocString(L"next");
     hr = IXMLElement_put_text(element, str);
     ok(hr == E_NOTIMPL, "Expected E_NOTIMPL, got %08x\n", hr);
     SysFreeString(str);
 
-    str = SysAllocString(nextVal);
+    str = SysAllocString(L"next");
     hr = IXMLElement_put_text(child2, str);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     SysFreeString(str);
 
     hr = IXMLElement_get_text(element, &str);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-    ok(!lstrcmpW(str, nextVal), "Expected 'val'\n");
+    ok(!lstrcmpW(str, L"next"), "Expected 'val'\n");
     SysFreeString(str);
 
     IXMLElement_Release(child2);

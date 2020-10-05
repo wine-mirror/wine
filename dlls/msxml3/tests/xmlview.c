@@ -121,14 +121,15 @@ static HRESULT WINAPI HTMLEvents_Invoke(IDispatch *iface, DISPID dispIdMember, R
         LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult,
         EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
-    if(dispIdMember == DISPID_HTMLDOCUMENTEVENTS2_ONREADYSTATECHANGE) {
-        static const WCHAR completeW[] = {'c','o','m','p','l','e','t','e',0};
+    if (dispIdMember == DISPID_HTMLDOCUMENTEVENTS2_ONREADYSTATECHANGE)
+    {
+        static const WCHAR completeW[] = L"complete";
         HRESULT hr;
         BSTR state;
 
         hr = IHTMLDocument2_get_readyState(html_doc, &state);
         ok(hr == S_OK, "got 0x%08x\n", hr);
-        if(!memcmp(state, completeW, sizeof(completeW)))
+        if (!memcmp(state, completeW, sizeof(completeW)))
             loaded = TRUE;
         SysFreeString(state);
     }
@@ -191,9 +192,6 @@ static void test_QueryInterface(void)
 
 static void test_Load(void)
 {
-    static const WCHAR xmlview_xmlW[] = {'/','x','m','l','/','x','m','l','v','i','e','w','.','x','m','l',0};
-    static const WCHAR res[] = {'r','e','s',':','/','/',0};
-
     WCHAR buf[1024];
     IPersistMoniker *pers_mon;
     IConnectionPointContainer *cpc;
@@ -205,9 +203,9 @@ static void test_Load(void)
     MSG msg;
     BSTR source;
 
-    lstrcpyW(buf, res);
-    GetModuleFileNameW(NULL, buf+lstrlenW(buf), ARRAY_SIZE(buf)-ARRAY_SIZE(res));
-    lstrcatW(buf, xmlview_xmlW);
+    lstrcpyW(buf, L"res://");
+    GetModuleFileNameW(NULL, buf+lstrlenW(buf), ARRAY_SIZE(buf)-ARRAY_SIZE(L"res://"));
+    lstrcatW(buf, L"/xml/xmlview.xml");
 
     if(!pCreateURLMoniker) {
         win_skip("CreateURLMoniker not available\n");

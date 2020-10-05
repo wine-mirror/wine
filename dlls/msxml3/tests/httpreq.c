@@ -1444,8 +1444,6 @@ static void test_XMLHTTP(void)
     static const char bodyA[] = "mode=Test";
     static const char urlA[] = "http://test.winehq.org/tests/post.php";
     static const char referertesturl[] = "http://test.winehq.org/tests/referer.php";
-    static const WCHAR wszExpectedResponse[] = {'F','A','I','L','E','D',0};
-    static const WCHAR norefererW[] = {'n','o',' ','r','e','f','e','r','e','r',' ','s','e','t',0};
 
     IXMLHttpRequest *xhr;
     IObjectWithSite *obj_site, *obj_site2;
@@ -1631,8 +1629,7 @@ static void test_XMLHTTP(void)
      * not what the server expects */
     if(hr == S_OK)
     {
-        ok(!memcmp(bstrResponse, wszExpectedResponse, sizeof(wszExpectedResponse)),
-            "expected %s, got %s\n", wine_dbgstr_w(wszExpectedResponse), wine_dbgstr_w(bstrResponse));
+        ok(!memcmp(bstrResponse, L"FAILED", 7 * sizeof(WCHAR)), "Unexpected response %s.\n", wine_dbgstr_w(bstrResponse));
         SysFreeString(bstrResponse);
     }
 
@@ -1713,7 +1710,7 @@ static void test_XMLHTTP(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
     hr = IXMLHttpRequest_get_responseText(xhr, &str);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(!lstrcmpW(str, norefererW), "got response text %s\n", wine_dbgstr_w(str));
+    ok(!lstrcmpW(str, L"no referer set"), "got response text %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
     /* interaction with object site */

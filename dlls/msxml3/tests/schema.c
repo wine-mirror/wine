@@ -37,14 +37,6 @@
 #define EXPECT_HR(hr,hr_exp) \
     ok(hr == hr_exp, "got 0x%08x, expected 0x%08x\n", hr, hr_exp)
 
-static const WCHAR xdr_schema_uri[] = {'x','-','s','c','h','e','m','a',':','t','e','s','t','.','x','m','l',0};
-
-static const WCHAR xdr_schema_xml[] = {
-    '<','S','c','h','e','m','a',' ','x','m','l','n','s','=','\"','u','r','n',':','s','c','h','e','m','a','s','-','m','i','c','r','o','s','o','f','t','-','c','o','m',':','x','m','l','-','d','a','t','a','\"','\n',
-    'x','m','l','n','s',':','d','t','=','\"','u','r','n',':','s','c','h','e','m','a','s','-','m','i','c','r','o','s','o','f','t','-','c','o','m',':','d','a','t','a','t','y','p','e','s','\"','>','\n',
-    '<','/','S','c','h','e','m','a','>','\n',0
-};
-
 static const CHAR xdr_schema1_uri[] = "x-schema:test1.xdr";
 static const CHAR xdr_schema1_xml[] =
 "<?xml version='1.0'?>"
@@ -498,7 +490,8 @@ static void* _create_object(const GUID *clsid, const char *name, const IID *iid,
 
 static void test_schema_refs(void)
 {
-    static const WCHAR emptyW[] = {0};
+    static const WCHAR xdr_schema_xml[] =
+        L"<Schema xmlns=\"urn:schemas-microsoft-com:xml-data\"\nxmlns:dt=\"urn:schemas-microsoft-com:datatypes\">\n</Schema>\n";
     IXMLDOMDocument2 *doc;
     IXMLDOMNode *node;
     IXMLDOMSchemaCollection *cache;
@@ -546,7 +539,7 @@ static void test_schema_refs(void)
     IXMLDOMNode_Release(node);
 
     node = NULL;
-    str = SysAllocString(emptyW);
+    str = SysAllocString(L"");
     ole_check(IXMLDOMSchemaCollection_get(cache, str, &node));
     ok(node != NULL, "%p\n", node);
     IXMLDOMNode_Release(node);
@@ -576,7 +569,7 @@ static void test_schema_refs(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(len == 0, "got %d\n", len);
 
-    str = SysAllocString(xdr_schema_uri);
+    str = SysAllocString(L"x-schema:test.xml");
     ole_check(IXMLDOMSchemaCollection_add(cache, str, _variantdoc_(doc)));
 
     /* IXMLDOMSchemaCollection_add doesn't add a ref on doc */
@@ -1430,8 +1423,6 @@ static void test_validate_on_load(void)
 
 static void test_obj_dispex(IUnknown *obj)
 {
-    static const WCHAR testW[] = {'t','e','s','t','p','r','o','p',0};
-    static const WCHAR starW[] = {'*',0};
     DISPID dispid = DISPID_SAX_XMLREADER_GETFEATURE;
     IDispatchEx *dispex;
     IUnknown *unk;
@@ -1449,7 +1440,7 @@ static void test_obj_dispex(IUnknown *obj)
     EXPECT_HR(hr, S_OK);
     ok(ticnt == 1, "ticnt=%u\n", ticnt);
 
-    name = SysAllocString(starW);
+    name = SysAllocString(L"*");
     hr = IDispatchEx_DeleteMemberByName(dispex, name, fdexNameCaseSensitive);
     EXPECT_HR(hr, E_NOTIMPL);
     SysFreeString(name);
@@ -1474,7 +1465,7 @@ static void test_obj_dispex(IUnknown *obj)
     EXPECT_HR(hr, E_NOTIMPL);
     ok(unk == (IUnknown*)0xdeadbeef, "got %p\n", unk);
 
-    name = SysAllocString(testW);
+    name = SysAllocString(L"testprop");
     hr = IDispatchEx_GetDispID(dispex, name, fdexNameEnsure, &dispid);
     ok(hr == DISP_E_UNKNOWNNAME, "got 0x%08x\n", hr);
     SysFreeString(name);
