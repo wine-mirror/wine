@@ -120,14 +120,6 @@ HRESULT WINAPI AddDelBackupEntryW(LPCWSTR lpcszFileList, LPCWSTR lpcszBackupDir,
     WCHAR szIniPath[MAX_PATH];
     LPCWSTR szString = NULL;
 
-    static const WCHAR szBackupEntry[] = {
-        '-','1',',','0',',','0',',','0',',','0',',','0',',','-','1',0
-    };
-    
-    static const WCHAR backslash[] = {'\\',0};
-    static const WCHAR ini[] = {'.','i','n','i',0};
-    static const WCHAR backup[] = {'b','a','c','k','u','p',0};
-
     TRACE("(%s, %s, %s, %d)\n", debugstr_w(lpcszFileList),
           debugstr_w(lpcszBackupDir), debugstr_w(lpcszBaseName), dwFlags);
 
@@ -139,21 +131,21 @@ HRESULT WINAPI AddDelBackupEntryW(LPCWSTR lpcszFileList, LPCWSTR lpcszBackupDir,
     else
         GetWindowsDirectoryW(szIniPath, MAX_PATH);
 
-    lstrcatW(szIniPath, backslash);
+    lstrcatW(szIniPath, L"\\");
     lstrcatW(szIniPath, lpcszBaseName);
-    lstrcatW(szIniPath, ini);
+    lstrcatW(szIniPath, L".ini");
 
     SetFileAttributesW(szIniPath, FILE_ATTRIBUTE_NORMAL);
 
     if (dwFlags & AADBE_ADD_ENTRY)
-        szString = szBackupEntry;
+        szString = L"-1,0,0,0,0,0,-1";
     else if (dwFlags & AADBE_DEL_ENTRY)
         szString = NULL;
 
     /* add or delete the INI entries */
     while (*lpcszFileList)
     {
-        WritePrivateProfileStringW(backup, lpcszFileList, szString, szIniPath);
+        WritePrivateProfileStringW(L"backup", lpcszFileList, szString, szIniPath);
         lpcszFileList += lstrlenW(lpcszFileList) + 1;
     }
 
@@ -332,10 +324,6 @@ static HRESULT DELNODE_recurse_dirtree(LPWSTR fname, DWORD flags)
     DWORD fattrs = GetFileAttributesW(fname);
     HRESULT ret = E_FAIL;
 
-    static const WCHAR asterisk[] = {'*',0};
-    static const WCHAR dot[] = {'.',0};
-    static const WCHAR dotdot[] = {'.','.',0};
-
     if (fattrs & FILE_ATTRIBUTE_DIRECTORY)
     {
         HANDLE hFindFile;
@@ -345,7 +333,7 @@ static HRESULT DELNODE_recurse_dirtree(LPWSTR fname, DWORD flags)
 
         /* Generate a path with wildcard suitable for iterating */
         if (fname_len && fname[fname_len-1] != '\\') fname[fname_len++] = '\\';
-        lstrcpyW(fname + fname_len, asterisk);
+        lstrcpyW(fname + fname_len, L"*");
 
         if ((hFindFile = FindFirstFileW(fname, &w32fd)) != INVALID_HANDLE_VALUE)
         {
@@ -353,8 +341,7 @@ static HRESULT DELNODE_recurse_dirtree(LPWSTR fname, DWORD flags)
             for (done = FALSE; !done; done = !FindNextFileW(hFindFile, &w32fd))
             {
                 TRACE("%s\n", debugstr_w(w32fd.cFileName));
-                if (lstrcmpW(dot, w32fd.cFileName) != 0 &&
-                    lstrcmpW(dotdot, w32fd.cFileName) != 0)
+                if (lstrcmpW(L".", w32fd.cFileName) != 0 && lstrcmpW(L"..", w32fd.cFileName) != 0)
                 {
                     lstrcpyW(fname + fname_len, w32fd.cFileName);
                     if (DELNODE_recurse_dirtree(fname, flags) != S_OK)
@@ -1063,12 +1050,6 @@ HRESULT WINAPI GetVersionFromFileExW(LPCWSTR lpszFilename, LPDWORD pdwMSVer,
     BOOL bFileCopied = FALSE;
     UINT uValueLen;
 
-    static const WCHAR backslash[] = {'\\',0};
-    static const WCHAR translation[] = {
-        '\\','V','a','r','F','i','l','e','I','n','f','o',
-        '\\','T','r','a','n','s','l','a','t','i','o','n',0
-    };
-
     TRACE("(%s, %p, %p, %d)\n", debugstr_w(lpszFilename),
           pdwMSVer, pdwLSVer, bVersion);
 
@@ -1106,8 +1087,7 @@ HRESULT WINAPI GetVersionFromFileExW(LPCWSTR lpszFilename, LPDWORD pdwMSVer,
 
     if (bVersion)
     {
-        if (!VerQueryValueW(pVersionInfo, backslash,
-            (LPVOID *)&pFixedVersionInfo, &uValueLen))
+        if (!VerQueryValueW(pVersionInfo, L"\\", (void **)&pFixedVersionInfo, &uValueLen))
             goto done;
 
         if (!uValueLen)
@@ -1118,7 +1098,7 @@ HRESULT WINAPI GetVersionFromFileExW(LPCWSTR lpszFilename, LPDWORD pdwMSVer,
     }
     else
     {
-        if (!VerQueryValueW(pVersionInfo, translation,
+        if (!VerQueryValueW(pVersionInfo, L"\\VarFileInfo\\Translation",
              (LPVOID *)&pLangAndCodePage, &uValueLen))
             goto done;
 

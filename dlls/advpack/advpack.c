@@ -41,13 +41,7 @@ typedef HRESULT (WINAPI *DLLREGISTER) (void);
 #define PREFIX_LEN          5
 
 /* registry path of the Installed Components key for per-user stubs */
-static const WCHAR setup_key[] = {
-    'S','O','F','T','W','A','R','E','\\',
-    'M','i','c','r','o','s','o','f','t','\\',
-    'A','c','t','i','v','e',' ','S','e','t','u','p','\\',
-    'I','n','s','t','a','l','l','e','d',' ',
-    'C','o','m','p','o','n','e','n','t','s',0
-};
+static const WCHAR setup_key[] = L"SOFTWARE\\Microsoft\\Active Setup\\Installed Components";
 
 /* Strip single quotes from a token - note size includes NULL */
 static void strip_quotes(WCHAR *buffer, DWORD *size)
@@ -73,9 +67,6 @@ static void get_dest_dir(HINF hInf, PCWSTR pszSection, PWSTR pszBuffer, DWORD dw
     HKEY root, subkey = 0;
     DWORD size;
 
-    static const WCHAR hklm[] = {'H','K','L','M',0};
-    static const WCHAR hkcu[] = {'H','K','C','U',0};
-
     /* load the destination parameters */
     SetupFindFirstLineW(hInf, pszSection, NULL, &context);
     SetupGetStringFieldW(&context, 1, prefix, PREFIX_LEN + 2, &size);
@@ -85,9 +76,9 @@ static void get_dest_dir(HINF hInf, PCWSTR pszSection, PWSTR pszBuffer, DWORD dw
     SetupGetStringFieldW(&context, 3, value, MAX_PATH + 2, &size);
     strip_quotes(value, &size);
 
-    if (!lstrcmpW(prefix, hklm))
+    if (!lstrcmpW(prefix, L"HKLM"))
         root = HKEY_LOCAL_MACHINE;
-    else if (!lstrcmpW(prefix, hkcu))
+    else if (!lstrcmpW(prefix, L"HKCU"))
         root = HKEY_CURRENT_USER;
     else
         root = NULL;
@@ -115,13 +106,7 @@ void set_ldids(HINF hInf, LPCWSTR pszInstallSection, LPCWSTR pszWorkingDir)
     DWORD size;
     int ldid;
 
-    static const WCHAR source_dir[] = {'S','o','u','r','c','e','D','i','r',0};
-
-    static const WCHAR custDestW[] = {
-        'C','u','s','t','o','m','D','e','s','t','i','n','a','t','i','o','n',0
-    };
-
-    if (!SetupGetLineTextW(NULL, hInf, pszInstallSection, custDestW,
+    if (!SetupGetLineTextW(NULL, hInf, pszInstallSection, L"CustomDestination",
                            field, MAX_FIELD_LENGTH, &size))
         return;
 
@@ -165,7 +150,7 @@ void set_ldids(HINF hInf, LPCWSTR pszInstallSection, LPCWSTR pszWorkingDir)
         }
 
         /* set dest to pszWorkingDir if key is SourceDir */
-        if (pszWorkingDir && !lstrcmpiW(value, source_dir))
+        if (pszWorkingDir && !lstrcmpiW(value, L"SourceDir"))
             lstrcpynW(dest, pszWorkingDir, MAX_PATH);
         else
             get_dest_dir(hInf, value, dest, MAX_PATH);
@@ -559,12 +544,6 @@ HRESULT WINAPI SetPerUserSecValuesW(PERUSERSECTIONW* pPerUser)
 {
     HKEY setup, guid;
 
-    static const WCHAR stub_path[] = {'S','t','u','b','P','a','t','h',0};
-    static const WCHAR version[] = {'V','e','r','s','i','o','n',0};
-    static const WCHAR locale[] = {'L','o','c','a','l','e',0};
-    static const WCHAR compid[] = {'C','o','m','p','o','n','e','n','t','I','D',0};
-    static const WCHAR isinstalled[] = {'I','s','I','n','s','t','a','l','l','e','d',0};
-
     TRACE("(%p)\n", pPerUser);
 
     if (!pPerUser || !*pPerUser->szGUID)
@@ -585,25 +564,25 @@ HRESULT WINAPI SetPerUserSecValuesW(PERUSERSECTIONW* pPerUser)
 
     if (*pPerUser->szStub)
     {
-        RegSetValueExW(guid, stub_path, 0, REG_SZ, (LPBYTE)pPerUser->szStub,
+        RegSetValueExW(guid, L"StubPath", 0, REG_SZ, (BYTE *)pPerUser->szStub,
                        (lstrlenW(pPerUser->szStub) + 1) * sizeof(WCHAR));
     }
 
     if (*pPerUser->szVersion)
     {
-        RegSetValueExW(guid, version, 0, REG_SZ, (LPBYTE)pPerUser->szVersion,
+        RegSetValueExW(guid, L"Version", 0, REG_SZ, (BYTE *)pPerUser->szVersion,
                        (lstrlenW(pPerUser->szVersion) + 1) * sizeof(WCHAR));
     }
 
     if (*pPerUser->szLocale)
     {
-        RegSetValueExW(guid, locale, 0, REG_SZ, (LPBYTE)pPerUser->szLocale,
+        RegSetValueExW(guid, L"Locale", 0, REG_SZ, (BYTE *)pPerUser->szLocale,
                        (lstrlenW(pPerUser->szLocale) + 1) * sizeof(WCHAR));
     }
 
     if (*pPerUser->szCompID)
     {
-        RegSetValueExW(guid, compid, 0, REG_SZ, (LPBYTE)pPerUser->szCompID,
+        RegSetValueExW(guid, L"ComponentID", 0, REG_SZ, (BYTE *)pPerUser->szCompID,
                        (lstrlenW(pPerUser->szCompID) + 1) * sizeof(WCHAR));
     }
 
@@ -613,7 +592,7 @@ HRESULT WINAPI SetPerUserSecValuesW(PERUSERSECTIONW* pPerUser)
                        (lstrlenW(pPerUser->szDispName) + 1) * sizeof(WCHAR));
     }
 
-    RegSetValueExW(guid, isinstalled, 0, REG_DWORD,
+    RegSetValueExW(guid, L"IsInstalled", 0, REG_DWORD,
                    (LPBYTE)&pPerUser->dwIsInstalled, sizeof(DWORD));
 
     RegCloseKey(guid);
@@ -911,10 +890,6 @@ HRESULT WINAPI UserInstStubWrapperW(HWND hWnd, HINSTANCE hInstance,
     HRESULT hr = S_OK;
     BOOL res;
 
-    static const WCHAR real_stub_path[] = {
-        'R','e','a','l','S','t','u','b','P','a','t','h',0
-    };
-
     TRACE("(%p, %p, %s, %i)\n", hWnd, hInstance, debugstr_w(pszParms), nShow);
 
     if (!pszParms || !*pszParms)
@@ -931,7 +906,7 @@ HRESULT WINAPI UserInstStubWrapperW(HWND hWnd, HINSTANCE hInstance,
         return E_FAIL;
     }
 
-    res = RegQueryValueExW(guid, real_stub_path, NULL, NULL, (LPBYTE)stub, &size);
+    res = RegQueryValueExW(guid, L"RealStubPath", NULL, NULL, (BYTE *)stub, &size);
     if (res || !*stub)
         goto done;
 

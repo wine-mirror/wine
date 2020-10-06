@@ -59,20 +59,6 @@ typedef struct _ADVInfo
 
 typedef HRESULT (*iterate_fields_func)(HINF hinf, PCWSTR field, const void *arg);
 
-/* Advanced INF commands */
-static const WCHAR CheckAdminRights[] = {
-    'C','h','e','c','k','A','d','m','i','n','R','i','g','h','t','s',0
-};
-static const WCHAR DelDirs[] = {'D','e','l','D','i','r','s',0};
-static const WCHAR PerUserInstall[] = {'P','e','r','U','s','e','r','I','n','s','t','a','l','l',0};
-static const WCHAR RegisterOCXs[] = {'R','e','g','i','s','t','e','r','O','C','X','s',0};
-static const WCHAR RunPreSetupCommands[] = {
-    'R','u','n','P','r','e','S','e','t','u','p','C','o','m','m','a','n','d','s',0
-};
-static const WCHAR RunPostSetupCommands[] = {
-    'R','u','n','P','o','s','t','S','e','t','u','p','C','o','m','m','a','n','d','s',0
-};
-
 /* Advanced INF callbacks */
 static HRESULT del_dirs_callback(HINF hinf, PCWSTR field, const void *arg)
 {
@@ -103,33 +89,25 @@ static HRESULT per_user_install_callback(HINF hinf, PCWSTR field, const void *ar
     INFCONTEXT context;
     DWORD size;
 
-    static const WCHAR disp_name[] = {'D','i','s','p','l','a','y','N','a','m','e',0};
-    static const WCHAR version[] = {'V','e','r','s','i','o','n',0};
-    static const WCHAR is_installed[] = {'I','s','I','n','s','t','a','l','l','e','d',0};
-    static const WCHAR comp_id[] = {'C','o','m','p','o','n','e','n','t','I','D',0};
-    static const WCHAR guid[] = {'G','U','I','D',0};
-    static const WCHAR locale[] = {'L','o','c','a','l','e',0};
-    static const WCHAR stub_path[] = {'S','t','u','b','P','a','t','h',0};
-
     per_user.bRollback = FALSE;
     per_user.dwIsInstalled = 0;
 
-    SetupGetLineTextW(NULL, hinf, field, disp_name, per_user.szDispName, ARRAY_SIZE(per_user.szDispName), &size);
+    SetupGetLineTextW(NULL, hinf, field, L"DisplayName", per_user.szDispName, ARRAY_SIZE(per_user.szDispName), &size);
 
-    SetupGetLineTextW(NULL, hinf, field, version, per_user.szVersion, ARRAY_SIZE(per_user.szVersion), &size);
+    SetupGetLineTextW(NULL, hinf, field, L"Version", per_user.szVersion, ARRAY_SIZE(per_user.szVersion), &size);
 
-    if (SetupFindFirstLineW(hinf, field, is_installed, &context))
+    if (SetupFindFirstLineW(hinf, field, L"IsInstalled", &context))
     {
         SetupGetIntField(&context, 1, (PINT)&per_user.dwIsInstalled);
     }
 
-    SetupGetLineTextW(NULL, hinf, field, comp_id, per_user.szCompID, ARRAY_SIZE(per_user.szCompID), &size);
+    SetupGetLineTextW(NULL, hinf, field, L"ComponentID", per_user.szCompID, ARRAY_SIZE(per_user.szCompID), &size);
 
-    SetupGetLineTextW(NULL, hinf, field, guid, per_user.szGUID, ARRAY_SIZE(per_user.szGUID), &size);
+    SetupGetLineTextW(NULL, hinf, field, L"GUID", per_user.szGUID, ARRAY_SIZE(per_user.szGUID), &size);
 
-    SetupGetLineTextW(NULL, hinf, field, locale, per_user.szLocale, ARRAY_SIZE(per_user.szLocale), &size);
+    SetupGetLineTextW(NULL, hinf, field, L"Locale", per_user.szLocale, ARRAY_SIZE(per_user.szLocale), &size);
 
-    SetupGetLineTextW(NULL, hinf, field, stub_path, per_user.szStub, ARRAY_SIZE(per_user.szStub), &size);
+    SetupGetLineTextW(NULL, hinf, field, L"StubPath", per_user.szStub, ARRAY_SIZE(per_user.szStub), &size);
 
     return SetPerUserSecValuesW(&per_user);
 }
@@ -299,8 +277,7 @@ static HRESULT check_admin_rights(const ADVInfo *info)
     INFCONTEXT context;
     HRESULT hr = S_OK;
 
-    if (!SetupFindFirstLineW(info->hinf, info->install_sec,
-                             CheckAdminRights, &context))
+    if (!SetupFindFirstLineW(info->hinf, info->install_sec, L"CheckAdminRights", &context))
         return S_OK;
 
     if (!SetupGetIntField(&context, 1, &check))
@@ -356,30 +333,29 @@ static HRESULT adv_install(ADVInfo *info)
     if (hr != S_OK)
         return hr;
 
-    hr = iterate_section_fields(info->hinf, info->install_sec, RunPreSetupCommands,
+    hr = iterate_section_fields(info->hinf, info->install_sec, L"RunPreSetupCommands",
                                 run_setup_commands_callback, info);
     if (hr != S_OK)
         return hr;
 
     OleInitialize(NULL);
     hr = iterate_section_fields(info->hinf, info->install_sec,
-                                RegisterOCXs, register_ocxs_callback, NULL);
+                                L"RegisterOCXs", register_ocxs_callback, NULL);
     OleUninitialize();
     if (hr != S_OK)
         return hr;
 
     hr = iterate_section_fields(info->hinf, info->install_sec,
-                                PerUserInstall, per_user_install_callback, info);
+                                L"PerUserInstall", per_user_install_callback, info);
     if (hr != S_OK)
         return hr;
 
-    hr = iterate_section_fields(info->hinf, info->install_sec, RunPostSetupCommands,
+    hr = iterate_section_fields(info->hinf, info->install_sec, L"RunPostSetupCommands",
                                 run_setup_commands_callback, info);
     if (hr != S_OK)
         return hr;
 
-    hr = iterate_section_fields(info->hinf, info->install_sec,
-                                DelDirs, del_dirs_callback, info);
+    hr = iterate_section_fields(info->hinf, info->install_sec, L"DelDirs", del_dirs_callback, info);
     if (hr != S_OK)
         return hr;
 
@@ -392,9 +368,6 @@ static HRESULT get_working_dir(ADVInfo *info, LPCWSTR inf_filename, LPCWSTR work
     WCHAR path[MAX_PATH];
     LPCWSTR ptr;
     DWORD len;
-
-    static const WCHAR backslash[] = {'\\',0};
-    static const WCHAR inf_dir[] = {'\\','I','N','F',0};
 
     if ((ptr = wcsrchr(inf_filename, '\\')))
     {
@@ -409,7 +382,7 @@ static HRESULT get_working_dir(ADVInfo *info, LPCWSTR inf_filename, LPCWSTR work
     else
     {
         GetCurrentDirectoryW(MAX_PATH, path);
-        lstrcatW(path, backslash);
+        lstrcatW(path, L"\\");
         lstrcatW(path, inf_filename);
 
         /* check if the INF file is in the current directory */
@@ -421,7 +394,7 @@ static HRESULT get_working_dir(ADVInfo *info, LPCWSTR inf_filename, LPCWSTR work
         {
             /* default to the windows\inf directory if all else fails */
             GetWindowsDirectoryW(path, MAX_PATH);
-            lstrcatW(path, inf_dir);
+            lstrcatW(path, L"\\INF");
         }
 
         len = lstrlenW(path) + 1;
@@ -445,7 +418,6 @@ static HRESULT install_init(LPCWSTR inf_filename, LPCWSTR install_sec,
     HRESULT hr;
     LPCWSTR ptr, path;
 
-    static const WCHAR backslash[] = {'\\',0};
     if (!(ptr = wcsrchr(inf_filename, '\\')))
         ptr = inf_filename;
 
@@ -485,7 +457,7 @@ static HRESULT install_init(LPCWSTR inf_filename, LPCWSTR install_sec,
         return E_OUTOFMEMORY;
 
     lstrcpyW(info->inf_path, info->working_dir);
-    lstrcatW(info->inf_path, backslash);
+    lstrcatW(info->inf_path, L"\\");
     lstrcatW(info->inf_path, info->inf_filename);
 
     /* RunSetupCommand opens unmodified filename parameter */

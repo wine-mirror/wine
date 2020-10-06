@@ -472,12 +472,7 @@ static void test_ExtractFiles(void)
     ok(!RemoveDirectoryA("dest\\testdir"), "Expected dest\\testdir to not exist\n");
 
     if(pExtractFilesW) {
-        static const WCHAR extract_cabW[] = {'e','x','t','r','a','c','t','.','c','a','b',0};
-        static const WCHAR destW[] = {'d','e','s','t',0};
-        static const WCHAR file_listW[] =
-            {'a','.','t','x','t',':','t','e','s','t','d','i','r','\\','c','.','t','x','t',0};
-
-        hr = pExtractFilesW(extract_cabW, destW, 0, file_listW, NULL, 0);
+        hr = pExtractFilesW(L"extract.cab", L"dest", 0, L"a.txt:testdir\\c.txt", NULL, 0);
         ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
         ok(DeleteFileA("dest\\a.txt"), "Expected dest\\a.txt to exist\n");
         ok(DeleteFileA("dest\\testdir\\c.txt"), "Expected dest\\testdir\\c.txt to exist\n");
