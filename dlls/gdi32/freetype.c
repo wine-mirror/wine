@@ -272,8 +272,6 @@ typedef struct tagFace {
     WCHAR *style_name;
     WCHAR *full_name;
     WCHAR *file;
-    dev_t dev;
-    ino_t ino;
     void *font_data_ptr;
     DWORD font_data_size;
     FT_Long face_index;
@@ -1573,7 +1571,7 @@ static BOOL insert_face_in_family_list( Face *face, Family *family )
                    debugstr_w(face->full_name), debugstr_w(family->family_name),
                    cursor->font_version, face->font_version );
 
-            if (face->file && face->dev == cursor->dev && face->ino == cursor->ino)
+            if (face->file && !strcmpiW( face->file, cursor->file ))
             {
                 cursor->refcount++;
                 TRACE("Font %s already in list, refcount now %d\n",
@@ -2100,10 +2098,9 @@ static inline void get_fontsig( FT_Face ft_face, FONTSIGNATURE *fs )
     }
 }
 
-static Face *create_face( FT_Face ft_face, FT_Long face_index, const WCHAR *dos_name, const char *unix_name,
+static Face *create_face( FT_Face ft_face, FT_Long face_index, const WCHAR *filename,
                           void *font_data_ptr, DWORD font_data_size, DWORD flags )
 {
-    struct stat st;
     Face *face = HeapAlloc( GetProcessHeap(), 0, sizeof(*face) );
 
     face->refcount = 1;
@@ -2111,18 +2108,11 @@ static Face *create_face( FT_Face ft_face, FT_Long face_index, const WCHAR *dos_
     face->full_name = ft_face_get_full_name( ft_face, GetSystemDefaultLangID() );
     if (flags & ADDFONT_VERTICAL_FONT) face->full_name = get_vertical_name( face->full_name );
 
-    face->dev = 0;
-    face->ino = 0;
-    if (unix_name)
+    if (filename)
     {
-        face->file = dos_name ? strdupW( dos_name ) : wine_get_dos_file_name( unix_name );
+        face->file = strdupW( filename );
         face->font_data_ptr = NULL;
         face->font_data_size = 0;
-        if (!stat( unix_name, &st ))
-        {
-            face->dev = st.st_dev;
-            face->ino = st.st_ino;
-        }
     }
     else
     {
@@ -2160,13 +2150,13 @@ static Face *create_face( FT_Face ft_face, FT_Long face_index, const WCHAR *dos_
     return face;
 }
 
-static void AddFaceToList(FT_Face ft_face, const WCHAR *dos_name, const char *unix_name,
-                          void *font_data_ptr, DWORD font_data_size, FT_Long face_index, DWORD flags )
+static void AddFaceToList(FT_Face ft_face, const WCHAR *file, void *font_data_ptr, DWORD font_data_size,
+                          FT_Long face_index, DWORD flags )
 {
     Face *face;
     Family *family;
 
-    face = create_face( ft_face, face_index, dos_name, unix_name, font_data_ptr, font_data_size, flags );
+    face = create_face( ft_face, face_index, file, font_data_ptr, font_data_size, flags );
     family = get_family( ft_face, flags & ADDFONT_VERTICAL_FONT );
 
     if (insert_face_in_family_list( face, family ))
@@ -2261,6 +2251,7 @@ static INT AddFontToList(const WCHAR *dos_name, const char *unix_name, void *fon
     FT_Face ft_face;
     FT_Long face_index = 0, num_faces;
     INT ret = 0;
+    WCHAR *filename = NULL;
 
     /* we always load external fonts from files - otherwise we would get a crash in update_reg_entries */
     assert(unix_name || !(flags & ADDFONT_EXTERNAL_FONT));
@@ -2286,26 +2277,28 @@ static INT AddFontToList(const WCHAR *dos_name, const char *unix_name, void *fon
     }
 #endif /* HAVE_CARBON_CARBON_H */
 
+    if (!dos_name && unix_name) dos_name = filename = wine_get_dos_file_name( unix_name );
+
     do {
         FONTSIGNATURE fs;
 
         ft_face = new_ft_face( unix_name, font_data_ptr, font_data_size, face_index, flags & ADDFONT_ALLOW_BITMAP );
-        if (!ft_face) return 0;
+        if (!ft_face) break;
 
         if(ft_face->family_name[0] == '.') /* Ignore fonts with names beginning with a dot */
         {
             TRACE("Ignoring %s since its family name begins with a dot\n", debugstr_a(unix_name));
             pFT_Done_Face(ft_face);
-            return 0;
+            break;
         }
 
-        AddFaceToList(ft_face, dos_name, unix_name, font_data_ptr, font_data_size, face_index, flags);
+        AddFaceToList(ft_face, dos_name, font_data_ptr, font_data_size, face_index, flags);
         ++ret;
 
         get_fontsig(ft_face, &fs);
         if (fs.fsCsb[0] & FS_DBCS_MASK)
         {
-            AddFaceToList(ft_face, dos_name, unix_name, font_data_ptr, font_data_size, face_index,
+            AddFaceToList(ft_face, dos_name, font_data_ptr, font_data_size, face_index,
                           flags | ADDFONT_VERTICAL_FONT);
             ++ret;
         }
@@ -2313,6 +2306,7 @@ static INT AddFontToList(const WCHAR *dos_name, const char *unix_name, void *fon
 	num_faces = ft_face->num_faces;
 	pFT_Done_Face(ft_face);
     } while(num_faces > ++face_index);
+    HeapFree( GetProcessHeap(), 0, filename );
     return ret;
 }
 
@@ -2333,12 +2327,8 @@ static int remove_font_resource( const WCHAR *file, DWORD flags )
 {
     Family *family, *family_next;
     Face *face, *face_next;
-    struct stat st;
     int count = 0;
-    char *unixname;
 
-    if (!(unixname = wine_get_unix_file_name( file ))) return 0;
-    if (stat( unixname, &st ) == -1) goto done;
     LIST_FOR_EACH_ENTRY_SAFE( family, family_next, &font_list, Family, entry )
     {
         family->refcount++;
@@ -2346,7 +2336,7 @@ static int remove_font_resource( const WCHAR *file, DWORD flags )
         {
             if (!face->file) continue;
             if (LOWORD(face->flags) != LOWORD(flags)) continue;
-            if (st.st_dev == face->dev && st.st_ino == face->ino)
+            if (!strcmpiW( face->file, file ))
             {
                 TRACE( "removing matching face %s refcount %d\n", debugstr_w(face->file), face->refcount );
                 release_face( face );
@@ -2355,8 +2345,6 @@ static int remove_font_resource( const WCHAR *file, DWORD flags )
 	}
         release_family( family );
     }
-done:
-    HeapFree( GetProcessHeap(), 0, unixname );
     return count;
 }
 
@@ -3500,19 +3488,17 @@ static BOOL get_fontdir( const WCHAR *dos_name, struct fontdir *fd )
 
     if (!(unix_name = wine_get_unix_file_name( dos_name ))) return FALSE;
     ft_face = new_ft_face( unix_name, NULL, 0, 0, FALSE );
-    if (ft_face)
-    {
-        face = create_face( ft_face, 0, dos_name, unix_name, NULL, 0, 0 );
-        if (face)
-        {
-            family_name = ft_face_get_family_name( ft_face, GetSystemDefaultLCID() );
-            GetEnumStructs( face, family_name, &elf, &ntm, &type );
-            release_face( face );
-            HeapFree( GetProcessHeap(), 0, family_name );
-        }
-        pFT_Done_Face( ft_face );
-    }
     HeapFree( GetProcessHeap(), 0, unix_name );
+    if (!ft_face) return FALSE;
+    face = create_face( ft_face, 0, dos_name, NULL, 0, 0 );
+    if (face)
+    {
+        family_name = ft_face_get_family_name( ft_face, GetSystemDefaultLCID() );
+        GetEnumStructs( face, family_name, &elf, &ntm, &type );
+        release_face( face );
+        HeapFree( GetProcessHeap(), 0, family_name );
+    }
+    pFT_Done_Face( ft_face );
 
     if (!face) return FALSE;
     if ((type & TRUETYPE_FONTTYPE) == 0) return FALSE;
