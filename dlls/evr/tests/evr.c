@@ -33,6 +33,14 @@ static const WCHAR sink_id[] = {'E','V','R',' ','I','n','p','u','t','0',0};
 
 static HRESULT (WINAPI *pMFCreateVideoMediaTypeFromSubtype)(const GUID *subtype, IMFVideoMediaType **video_type);
 
+static void set_rect(MFVideoNormalizedRect *rect, float left, float top, float right, float bottom)
+{
+    rect->left = left;
+    rect->top = top;
+    rect->right = right;
+    rect->bottom = bottom;
+}
+
 static HWND create_window(void)
 {
     RECT r = {0, 0, 640, 480};
@@ -1483,38 +1491,24 @@ static void test_presenter_video_position(void)
     ok(dst_rect.left == 0 && dst_rect.right == 10 && dst_rect.top == 0 && dst_rect.bottom == 10,
             "Unexpected destination rectangle %s.\n", wine_dbgstr_rect(&dst_rect));
 
-    src_rect.left = src_rect.top = 0.0f;
-    src_rect.right = 2.0f;
-    src_rect.bottom = 1.0f;
+    set_rect(&src_rect, 0.0f, 0.0f, 2.0f, 1.0f);
     hr = IMFVideoDisplayControl_SetVideoPosition(display_control, &src_rect, NULL);
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
-    src_rect.left = -0.1f;
-    src_rect.top = 0.0f;
-    src_rect.right = 0.9f;
-    src_rect.bottom = 1.0f;
+    set_rect(&src_rect, -0.1f, 0.0f, 0.9f, 1.0f);
     hr = IMFVideoDisplayControl_SetVideoPosition(display_control, &src_rect, NULL);
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
     /* Flipped source rectangle. */
-    src_rect.left = 0.5f;
-    src_rect.top = 0.0f;
-    src_rect.right = 0.4f;
-    src_rect.bottom = 1.0f;
+    set_rect(&src_rect, 0.5f, 0.0f, 0.4f, 1.0f);
     hr = IMFVideoDisplayControl_SetVideoPosition(display_control, &src_rect, NULL);
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
-    src_rect.left = 0.0f;
-    src_rect.top = 0.5f;
-    src_rect.right = 0.4f;
-    src_rect.bottom = 0.1f;
+    set_rect(&src_rect, 0.0f, 0.5f, 0.4f, 0.1f);
     hr = IMFVideoDisplayControl_SetVideoPosition(display_control, &src_rect, NULL);
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
-    src_rect.left = 0.1f;
-    src_rect.top = 0.2f;
-    src_rect.right = 0.8f;
-    src_rect.bottom = 0.9f;
+    set_rect(&src_rect, 0.1f, 0.2f, 0.8f, 0.9f);
     hr = IMFVideoDisplayControl_SetVideoPosition(display_control, &src_rect, NULL);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
@@ -1559,6 +1553,122 @@ static void test_presenter_video_position(void)
     DestroyWindow(hwnd);
 }
 
+static void test_presenter_native_video_size(void)
+{
+    IMFTopologyServiceLookupClient *lookup_client;
+    IMFVideoDisplayControl *display_control;
+    IMFVideoPresenter *presenter;
+    struct test_host host;
+    IMFTransform *mixer;
+    SIZE size, ratio;
+    HRESULT hr;
+
+    hr = MFCreateVideoMixer(NULL, &IID_IDirect3DDevice9, &IID_IMFTransform, (void **)&mixer);
+    ok(hr == S_OK, "Failed to create a mixer, hr %#x.\n", hr);
+
+    hr = MFCreateVideoPresenter(NULL, &IID_IDirect3DDevice9, &IID_IMFVideoPresenter, (void **)&presenter);
+    ok(hr == S_OK, "Failed to create default presenter, hr %#x.\n", hr);
+
+    hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFTopologyServiceLookupClient, (void **)&lookup_client);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFVideoDisplayControl, (void **)&display_control);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoDisplayControl_GetNativeVideoSize(display_control, NULL, NULL);
+todo_wine
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    memset(&size, 0xcc, sizeof(size));
+    hr = IMFVideoDisplayControl_GetNativeVideoSize(display_control, &size, NULL);
+todo_wine {
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(size.cx == 0 && size.cy == 0, "Unexpected size.\n");
+}
+    memset(&ratio, 0xcc, sizeof(ratio));
+    hr = IMFVideoDisplayControl_GetNativeVideoSize(display_control, NULL, &ratio);
+todo_wine {
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(ratio.cx == 0 && ratio.cy == 0, "Unexpected ratio.\n");
+}
+    hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFTopologyServiceLookupClient, (void **)&lookup_client);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    init_test_host(&host, mixer, presenter);
+
+    hr = IMFTopologyServiceLookupClient_InitServicePointers(lookup_client, &host.IMFTopologyServiceLookup_iface);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoDisplayControl_GetNativeVideoSize(display_control, &size, &ratio);
+todo_wine {
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(size.cx == 0 && size.cy == 0, "Unexpected size.\n");
+    ok(ratio.cx == 0 && ratio.cy == 0, "Unexpected ratio.\n");
+}
+    IMFVideoDisplayControl_Release(display_control);
+    IMFVideoPresenter_Release(presenter);
+    IMFTransform_Release(mixer);
+}
+
+static void test_mixer_output_rectangle(void)
+{
+    IMFVideoMixerControl *mixer_control;
+    MFVideoNormalizedRect rect;
+    IMFTransform *mixer;
+    HRESULT hr;
+
+    hr = MFCreateVideoMixer(NULL, &IID_IDirect3DDevice9, &IID_IMFTransform, (void **)&mixer);
+    ok(hr == S_OK, "Failed to create a mixer, hr %#x.\n", hr);
+
+    hr = IMFTransform_QueryInterface(mixer, &IID_IMFVideoMixerControl, (void **)&mixer_control);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoMixerControl_GetStreamOutputRect(mixer_control, 0, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    set_rect(&rect, 0.0f, 0.0f, 0.0f, 0.0f);
+    hr = IMFVideoMixerControl_GetStreamOutputRect(mixer_control, 0, &rect);
+    ok(hr == S_OK, "Failed to get output rect, hr %#x.\n", hr);
+    ok(rect.left == 0.0f && rect.top == 0.0f && rect.right == 1.0f && rect.bottom == 1.0f,
+            "Unexpected rectangle.\n");
+
+    hr = IMFVideoMixerControl_GetStreamOutputRect(mixer_control, 1, &rect);
+    ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoMixerControl_GetStreamOutputRect(mixer_control, 1, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoMixerControl_SetStreamOutputRect(mixer_control, 1, &rect);
+    ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoMixerControl_SetStreamOutputRect(mixer_control, 1, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    /* Wrong bounds. */
+    set_rect(&rect, 0.0f, 0.0f, 1.1f, 1.0f);
+    hr = IMFVideoMixerControl_SetStreamOutputRect(mixer_control, 0, &rect);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    set_rect(&rect, -0.1f, 0.0f, 0.5f, 1.0f);
+    hr = IMFVideoMixerControl_SetStreamOutputRect(mixer_control, 0, &rect);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    /* Flipped. */
+    set_rect(&rect, 1.0f, 0.0f, 0.0f, 1.0f);
+    hr = IMFVideoMixerControl_SetStreamOutputRect(mixer_control, 0, &rect);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    set_rect(&rect, 0.0f, 1.0f, 1.0f, 0.5f);
+    hr = IMFVideoMixerControl_SetStreamOutputRect(mixer_control, 0, &rect);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoMixerControl_SetStreamOutputRect(mixer_control, 0, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    IMFVideoMixerControl_Release(mixer_control);
+    IMFTransform_Release(mixer);
+}
+
 START_TEST(evr)
 {
     CoInitialize(NULL);
@@ -1577,6 +1687,8 @@ START_TEST(evr)
     test_MFCreateVideoMixerAndPresenter();
     test_MFCreateVideoSampleAllocator();
     test_presenter_video_position();
+    test_presenter_native_video_size();
+    test_mixer_output_rectangle();
 
     CoUninitialize();
 }
