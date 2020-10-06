@@ -627,18 +627,17 @@ static void test_mouse_keyboard(void)
 
     if (raw_devices[0].hwndTarget != NULL)
     {
-        WCHAR di_hwnd_class[] = {'D','I','E','m','W','i','n',0};
         WCHAR str[16];
         int i;
 
         di_hwnd = raw_devices[0].hwndTarget;
         i = GetClassNameW(di_hwnd, str, ARRAY_SIZE(str));
-        ok(i == lstrlenW(di_hwnd_class), "GetClassName returned incorrect length\n");
-        ok(!lstrcmpW(di_hwnd_class, str), "GetClassName returned incorrect name for this window's class\n");
+        ok(i == lstrlenW(L"DIEmWin"), "GetClassName returned incorrect length\n");
+        ok(!lstrcmpW(L"DIEmWin", str), "GetClassName returned incorrect name for this window's class\n");
 
         i = GetWindowTextW(di_hwnd, str, ARRAY_SIZE(str));
-        ok(i == lstrlenW(di_hwnd_class), "GetClassName returned incorrect length\n");
-        ok(!lstrcmpW(di_hwnd_class, str), "GetClassName returned incorrect name for this window's class\n");
+        ok(i == lstrlenW(L"DIEmWin"), "GetClassName returned incorrect length\n");
+        ok(!lstrcmpW(L"DIEmWin", str), "GetClassName returned incorrect name for this window's class\n");
     }
 
     hr = IDirectInputDevice8_Acquire(di_mouse);
