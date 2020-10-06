@@ -1336,6 +1336,54 @@ static NTSTATUS import_gnutls_pubkey_dsa( struct key *key, gnutls_pubkey_t *gnut
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS import_gnutls_pubkey_dsa_capi( struct key *key, gnutls_pubkey_t *gnutls_key )
+{
+    BLOBHEADER *hdr;
+    DSSPUBKEY *pubkey;
+    gnutls_datum_t p, q, g, y;
+    unsigned char *data, p_data[128], q_data[20], g_data[128], y_data[128];
+    int i, ret, size;
+
+    if ((ret = pgnutls_pubkey_init( gnutls_key )))
+    {
+        pgnutls_perror( ret );
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    hdr = (BLOBHEADER *)key->u.a.pubkey;
+    pubkey = (DSSPUBKEY *)(hdr + 1);
+    size = pubkey->bitlen / 8;
+    data = (unsigned char *)(pubkey + 1);
+
+    p.data = p_data;
+    p.size = size;
+    for (i = 0; i < p.size; i++) p.data[i] = data[p.size - i - 1];
+    data += p.size;
+
+    q.data = q_data;
+    q.size = sizeof(q_data);
+    for (i = 0; i < q.size; i++) q.data[i] = data[q.size - i - 1];
+    data += q.size;
+
+    g.data = g_data;
+    g.size = size;
+    for (i = 0; i < g.size; i++) g.data[i] = data[g.size - i - 1];
+    data += g.size;
+
+    y.data = y_data;
+    y.size = sizeof(y_data);
+    for (i = 0; i < y.size; i++) y.data[i] = data[y.size - i - 1];
+
+    if ((ret = pgnutls_pubkey_import_dsa_raw( *gnutls_key, &p, &q, &g, &y )))
+    {
+        pgnutls_perror( ret );
+        pgnutls_pubkey_deinit( *gnutls_key );
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS import_gnutls_pubkey( struct key *key, gnutls_pubkey_t *gnutls_key )
 {
     switch (key->alg_id)
@@ -1349,7 +1397,10 @@ static NTSTATUS import_gnutls_pubkey( struct key *key, gnutls_pubkey_t *gnutls_k
         return import_gnutls_pubkey_rsa( key, gnutls_key );
 
     case ALG_ID_DSA:
-        return import_gnutls_pubkey_dsa( key, gnutls_key );
+        if (key->u.a.flags & KEY_FLAG_LEGACY_DSA_V2)
+            return import_gnutls_pubkey_dsa_capi( key, gnutls_key );
+        else
+            return import_gnutls_pubkey_dsa( key, gnutls_key );
 
     default:
         FIXME("algorithm %u not yet supported\n", key->alg_id );

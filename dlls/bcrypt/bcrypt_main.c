@@ -1329,6 +1329,34 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
         *ret_key = key;
         return STATUS_SUCCESS;
     }
+    else if (!wcscmp( type, LEGACY_DSA_V2_PUBLIC_BLOB )) /* not supported on native */
+    {
+        BLOBHEADER *hdr = (BLOBHEADER *)input;
+        DSSPUBKEY *pubkey;
+        ULONG size;
+
+        if (alg->id != ALG_ID_DSA) return STATUS_NOT_SUPPORTED;
+        if (input_len < sizeof(*hdr)) return STATUS_INVALID_PARAMETER;
+
+        if (hdr->bType != PUBLICKEYBLOB && hdr->bVersion != 2 && hdr->aiKeyAlg != CALG_DSS_SIGN)
+        {
+            FIXME( "blob type %u version %u alg id %u not supported\n", hdr->bType, hdr->bVersion, hdr->aiKeyAlg );
+            return STATUS_NOT_SUPPORTED;
+        }
+
+        if (input_len < sizeof(*hdr) + sizeof(*pubkey)) return STATUS_INVALID_PARAMETER;
+        pubkey = (DSSPUBKEY *)(hdr + 1);
+        if (pubkey->magic != MAGIC_DSS1) return STATUS_NOT_SUPPORTED;
+
+        size = sizeof(*hdr) + sizeof(*pubkey) + (pubkey->bitlen / 8) * 3 + 20 + sizeof(DSSSEED);
+        if (input_len < size) return STATUS_INVALID_PARAMETER;
+
+        if ((status = key_asymmetric_create( &key, alg, pubkey->bitlen, (BYTE *)hdr, size ))) return status;
+        key->u.a.flags |= KEY_FLAG_LEGACY_DSA_V2;
+
+        *ret_key = key;
+        return STATUS_SUCCESS;
+    }
 
     FIXME( "unsupported key type %s\n", debugstr_w(type) );
     return STATUS_NOT_SUPPORTED;
