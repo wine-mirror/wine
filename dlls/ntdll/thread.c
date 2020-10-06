@@ -256,6 +256,15 @@ TEB_ACTIVE_FRAME * WINAPI RtlGetFrame(void)
 
 static GLOBAL_FLS_DATA fls_data;
 
+static RTL_CRITICAL_SECTION fls_section;
+static RTL_CRITICAL_SECTION_DEBUG fls_critsect_debug =
+{
+    0, 0, &fls_section,
+    { &fls_critsect_debug.ProcessLocksList, &fls_critsect_debug.ProcessLocksList },
+            0, 0, { (DWORD_PTR)(__FILE__ ": fls_section") }
+};
+static RTL_CRITICAL_SECTION fls_section = { &fls_critsect_debug, -1, 0, 0, 0, 0 };
+
 #define MAX_FLS_DATA_COUNT 0xff0
 
 void init_global_fls_data(void)
@@ -265,12 +274,12 @@ void init_global_fls_data(void)
 
 static void lock_fls_data(void)
 {
-    RtlAcquirePebLock();
+    RtlEnterCriticalSection( &fls_section );
 }
 
 static void unlock_fls_data(void)
 {
-    RtlReleasePebLock();
+    RtlLeaveCriticalSection( &fls_section );
 }
 
 static unsigned int fls_chunk_size( unsigned int chunk_index )

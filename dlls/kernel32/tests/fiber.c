@@ -37,6 +37,8 @@ static DWORD (WINAPI *pFlsAlloc)(PFLS_CALLBACK_FUNCTION);
 static BOOL (WINAPI *pFlsFree)(DWORD);
 static PVOID (WINAPI *pFlsGetValue)(DWORD);
 static BOOL (WINAPI *pFlsSetValue)(DWORD,PVOID);
+static void (WINAPI *pRtlAcquirePebLock)(void);
+static void (WINAPI *pRtlReleasePebLock)(void);
 static NTSTATUS (WINAPI *pRtlFlsAlloc)(PFLS_CALLBACK_FUNCTION,DWORD*);
 static NTSTATUS (WINAPI *pRtlFlsFree)(ULONG);
 static NTSTATUS (WINAPI *pRtlFlsSetValue)(ULONG,void *);
@@ -76,6 +78,8 @@ static VOID init_funcs(void)
     X(RtlFlsSetValue);
     X(RtlFlsGetValue);
     X(RtlProcessFlsData);
+    X(RtlAcquirePebLock);
+    X(RtlReleasePebLock);
 #undef X
 
 }
@@ -239,6 +243,19 @@ static unsigned int test_fls_chunk_index_from_index(unsigned int index, unsigned
     return chunk_index;
 }
 
+static HANDLE test_fiberlocalstorage_peb_locked_event;
+static HANDLE test_fiberlocalstorage_done_event;
+
+
+static DWORD WINAPI test_FiberLocalStorage_thread(void *arg)
+{
+    pRtlAcquirePebLock();
+    SetEvent(test_fiberlocalstorage_peb_locked_event);
+    WaitForSingleObject(test_fiberlocalstorage_done_event, INFINITE);
+    pRtlReleasePebLock();
+    return 0;
+}
+
 static void test_FiberLocalStorage(void)
 {
     static DWORD fls_indices[FLS_TEST_INDEX_COUNT];
@@ -246,10 +263,11 @@ static void test_FiberLocalStorage(void)
     LIST_ENTRY *fls_list_head, saved_entry;
     TEB_FLS_DATA *fls_data, *new_fls_data;
     GLOBAL_FLS_DATA *g_fls_data;
+    DWORD fls, fls_2, result;
     TEB *teb = NtCurrentTeb();
     PEB *peb = teb->Peb;
-    DWORD fls, fls_2;
     NTSTATUS status;
+    HANDLE hthread;
     SIZE_T size;
     void* val;
     BOOL ret;
@@ -424,17 +442,29 @@ static void test_FiberLocalStorage(void)
                 HeapSize(GetProcessHeap(), 0, new_fls_data);
             }
 
-            saved_entry = new_fls_data->fls_list_entry;
+            test_fiberlocalstorage_peb_locked_event = CreateEventA(NULL, FALSE, FALSE, NULL);
+            test_fiberlocalstorage_done_event = CreateEventA(NULL, FALSE, FALSE, NULL);
+            hthread = CreateThread(NULL, 0, test_FiberLocalStorage_thread, NULL, 0, NULL);
+            ok(!!hthread, "CreateThread failed.\n");
+            result = WaitForSingleObject(test_fiberlocalstorage_peb_locked_event, INFINITE);
+            ok(result == WAIT_OBJECT_0, "Got unexpected result %u.\n", result);
             teb->FlsSlots = NULL;
+
+            saved_entry = new_fls_data->fls_list_entry;
             pRtlProcessFlsData(new_fls_data, 1);
             ok(!teb->FlsSlots, "Got unexpected teb->FlsSlots %p.\n", teb->FlsSlots);
+
             teb->FlsSlots = fls_data;
+            SetEvent(test_fiberlocalstorage_done_event);
+            WaitForSingleObject(hthread, INFINITE);
+            CloseHandle(hthread);
+            CloseHandle(test_fiberlocalstorage_peb_locked_event);
+            CloseHandle(test_fiberlocalstorage_done_event);
 
             ok(new_fls_data->fls_list_entry.Flink == saved_entry.Flink, "Got unexpected Flink %p.\n",
                     saved_entry.Flink);
             ok(new_fls_data->fls_list_entry.Blink == saved_entry.Blink, "Got unexpected Flink %p.\n",
                     saved_entry.Blink);
-
             size = HeapSize(GetProcessHeap(), 0, new_fls_data);
             ok(size == sizeof(*new_fls_data), "Got unexpected size %p.\n", (void *)size);
             pRtlProcessFlsData(new_fls_data, 2);
