@@ -1458,7 +1458,7 @@
 @ cdecl _o__wcsnset_s(wstr long long long) MSVCRT__wcsnset_s
 @ cdecl _o__wcsset(wstr long) MSVCRT__wcsset
 @ cdecl _o__wcsset_s(wstr long long) MSVCRT__wcsset_s
-@ cdecl _o__wcstod_l(wstr ptr long) MSVCRT__wcstod_l
+@ cdecl _o__wcstod_l(wstr ptr ptr) MSVCRT__wcstod_l
 @ cdecl _o__wcstof_l(wstr ptr ptr) MSVCRT__wcstof_l
 @ cdecl -ret64 _o__wcstoi64(wstr ptr long) MSVCRT__wcstoi64
 @ cdecl -ret64 _o__wcstoi64_l(wstr ptr long ptr) MSVCRT__wcstoi64_l
@@ -2036,7 +2036,7 @@
 @ cdecl _wcsrev(wstr) MSVCRT__wcsrev
 @ cdecl _wcsset(wstr long) MSVCRT__wcsset
 @ cdecl _wcsset_s(wstr long long) MSVCRT__wcsset_s
-@ cdecl _wcstod_l(wstr ptr long) MSVCRT__wcstod_l
+@ cdecl _wcstod_l(wstr ptr ptr) MSVCRT__wcstod_l
 @ cdecl _wcstof_l(wstr ptr ptr) MSVCRT__wcstof_l
 @ cdecl -ret64 _wcstoi64(wstr ptr long) MSVCRT__wcstoi64
 @ cdecl -ret64 _wcstoi64_l(wstr ptr long ptr) MSVCRT__wcstoi64_l

@@ -1191,7 +1191,7 @@
 @ cdecl _wcsrev(wstr) MSVCRT__wcsrev
 @ cdecl _wcsset(wstr long) MSVCRT__wcsset
 @ cdecl _wcsset_s(wstr long long) MSVCRT__wcsset_s
-@ cdecl _wcstod_l(wstr ptr long) MSVCRT__wcstod_l
+@ cdecl _wcstod_l(wstr ptr ptr) MSVCRT__wcstod_l
 @ cdecl -ret64 _wcstoi64(wstr ptr long) MSVCRT__wcstoi64
 @ cdecl -ret64 _wcstoi64_l(wstr ptr long ptr) MSVCRT__wcstoi64_l
 @ cdecl _wcstol_l(wstr ptr long ptr) MSVCRT__wcstol_l

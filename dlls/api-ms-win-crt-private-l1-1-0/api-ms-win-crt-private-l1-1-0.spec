@@ -794,7 +794,7 @@
 @ cdecl _o__wcsnset_s(wstr long long long) ucrtbase._o__wcsnset_s
 @ cdecl _o__wcsset(wstr long) ucrtbase._o__wcsset
 @ cdecl _o__wcsset_s(wstr long long) ucrtbase._o__wcsset_s
-@ cdecl _o__wcstod_l(wstr ptr long) ucrtbase._o__wcstod_l
+@ cdecl _o__wcstod_l(wstr ptr ptr) ucrtbase._o__wcstod_l
 @ cdecl _o__wcstof_l(wstr ptr ptr) ucrtbase._o__wcstof_l
 @ cdecl -ret64 _o__wcstoi64(wstr ptr long) ucrtbase._o__wcstoi64
 @ cdecl -ret64 _o__wcstoi64_l(wstr ptr long ptr) ucrtbase._o__wcstoi64_l
