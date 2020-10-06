@@ -968,11 +968,13 @@ static NTSTATUS key_export( struct key *key, const WCHAR *type, UCHAR *output, U
 
         *size = req_size;
         if (output_len < req_size) return STATUS_BUFFER_TOO_SMALL;
-
-        header->dwMagic   = BCRYPT_KEY_DATA_BLOB_MAGIC;
-        header->dwVersion = BCRYPT_KEY_DATA_BLOB_VERSION1;
-        header->cbKeyData = key->u.s.secret_len;
-        memcpy( &header[1], key->u.s.secret, key->u.s.secret_len );
+        if (output)
+        {
+            header->dwMagic   = BCRYPT_KEY_DATA_BLOB_MAGIC;
+            header->dwVersion = BCRYPT_KEY_DATA_BLOB_VERSION1;
+            header->cbKeyData = key->u.s.secret_len;
+            memcpy( &header[1], key->u.s.secret, key->u.s.secret_len );
+        }
         return STATUS_SUCCESS;
     }
     else if (!wcscmp( type, BCRYPT_OPAQUE_KEY_BLOB ))
@@ -981,9 +983,11 @@ static NTSTATUS key_export( struct key *key, const WCHAR *type, UCHAR *output, U
 
         *size = req_size;
         if (output_len < req_size) return STATUS_BUFFER_TOO_SMALL;
-
-        *(ULONG *)output = key->u.s.secret_len;
-        memcpy( output + sizeof(len), key->u.s.secret, key->u.s.secret_len );
+        if (output)
+        {
+            *(ULONG *)output = key->u.s.secret_len;
+            memcpy( output + sizeof(len), key->u.s.secret, key->u.s.secret_len );
+        }
         return STATUS_SUCCESS;
     }
     else if (!wcscmp( type, BCRYPT_RSAPUBLIC_BLOB ) || !wcscmp( type, BCRYPT_DSA_PUBLIC_BLOB ) ||
@@ -991,8 +995,7 @@ static NTSTATUS key_export( struct key *key, const WCHAR *type, UCHAR *output, U
     {
         *size = key->u.a.pubkey_len;
         if (output_len < key->u.a.pubkey_len) return STATUS_SUCCESS;
-
-        memcpy( output, key->u.a.pubkey, key->u.a.pubkey_len );
+        if (output) memcpy( output, key->u.a.pubkey, key->u.a.pubkey_len );
         return STATUS_SUCCESS;
     }
     else if (!wcscmp( type, BCRYPT_ECCPRIVATE_BLOB ))
