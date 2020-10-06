@@ -392,6 +392,24 @@ static void empty_update_rect( struct screen_buffer *screen_buffer, RECT *rect )
     SetRect( rect, screen_buffer->width, screen_buffer->height, 0, 0 );
 }
 
+static void scroll_to_cursor( struct screen_buffer *screen_buffer )
+{
+    int w = screen_buffer->win.right - screen_buffer->win.left + 1;
+    int h = screen_buffer->win.bottom - screen_buffer->win.top + 1;
+
+    if (screen_buffer->cursor_x < screen_buffer->win.left)
+        screen_buffer->win.left = min( screen_buffer->cursor_x, screen_buffer->width - w );
+    else if (screen_buffer->cursor_x > screen_buffer->win.right)
+        screen_buffer->win.left = max( screen_buffer->cursor_x, w ) - w + 1;
+    screen_buffer->win.right = screen_buffer->win.left + w - 1;
+
+    if (screen_buffer->cursor_y < screen_buffer->win.top)
+        screen_buffer->win.top = min( screen_buffer->cursor_y, screen_buffer->height - h );
+    else if (screen_buffer->cursor_y > screen_buffer->win.bottom)
+        screen_buffer->win.top = max( screen_buffer->cursor_y, h ) - h + 1;
+    screen_buffer->win.bottom = screen_buffer->win.top + h - 1;
+}
+
 static void update_output( struct screen_buffer *screen_buffer, RECT *rect )
 {
     int x, y, size, trailing_spaces;
@@ -1237,6 +1255,7 @@ static void update_read_output( struct console *console )
         if (console->is_unix)
             set_tty_cursor_relative( screen_buffer->console, update_rect.left, update_rect.top );
         update_output( screen_buffer, &update_rect );
+        scroll_to_cursor( screen_buffer );
     }
     if (console->is_unix)
         set_tty_cursor_relative( screen_buffer->console, screen_buffer->cursor_x, screen_buffer->cursor_y );
@@ -1825,6 +1844,7 @@ static NTSTATUS set_output_info( struct screen_buffer *screen_buffer,
         {
             screen_buffer->cursor_x = info->cursor_x;
             screen_buffer->cursor_y = info->cursor_y;
+            scroll_to_cursor( screen_buffer );
         }
     }
     if (params->mask & SET_CONSOLE_OUTPUT_INFO_SIZE)
@@ -1972,6 +1992,7 @@ static NTSTATUS write_console( struct screen_buffer *screen_buffer, const WCHAR 
         else screen_buffer->cursor_x = update_rect.left;
     }
 
+    scroll_to_cursor( screen_buffer );
     update_output( screen_buffer, &update_rect );
     tty_sync( screen_buffer->console );
     return STATUS_SUCCESS;
