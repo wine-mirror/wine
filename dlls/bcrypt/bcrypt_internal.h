@@ -27,6 +27,7 @@
 #include "wincrypt.h"
 #include "bcrypt.h"
 
+#define MAGIC_DSS1 ('D' | ('S' << 8) | ('S' << 16) | ('1' << 24))
 #define MAGIC_DSS2 ('D' | ('S' << 8) | ('S' << 16) | ('2' << 24))
 
 typedef struct
@@ -164,9 +165,12 @@ struct key_symmetric
     ULONG        secret_len;
 };
 
+#define KEY_FLAG_LEGACY_DSA_V2  0x00000001
+
 struct key_asymmetric
 {
     ULONG             bitlen;     /* ignored for ECC keys */
+    ULONG             flags;
     UCHAR            *pubkey;
     ULONG             pubkey_len;
     DSSSEED           dss_seed;

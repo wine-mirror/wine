@@ -804,6 +804,89 @@ static NTSTATUS export_gnutls_pubkey_dsa( gnutls_privkey_t gnutls_key, ULONG bit
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS export_gnutls_pubkey_dsa_capi( gnutls_privkey_t gnutls_key, const DSSSEED *seed, ULONG bitlen,
+                                               UCHAR **pubkey, ULONG *pubkey_len )
+{
+    BLOBHEADER *hdr;
+    DSSPUBKEY *dsskey;
+    gnutls_datum_t p, q, g, y;
+    UCHAR *dst, *src;
+    int i, ret, size = sizeof(*hdr) + sizeof(*dsskey) + sizeof(*seed);
+
+    if (bitlen > 1024)
+    {
+        FIXME( "bitlen > 1024 not supported\n" );
+        return STATUS_NOT_IMPLEMENTED;
+    }
+
+    if ((ret = pgnutls_privkey_export_dsa_raw( gnutls_key, &p, &q, &g, &y, NULL )))
+    {
+        pgnutls_perror( ret );
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    if (!(hdr = RtlAllocateHeap( GetProcessHeap(), 0, size + p.size + q.size + g.size + y.size )))
+    {
+        pgnutls_perror( ret );
+        free( p.data ); free( q.data ); free( g.data ); free( y.data );
+        return STATUS_NO_MEMORY;
+    }
+
+    hdr->bType    = PUBLICKEYBLOB;
+    hdr->bVersion = 2;
+    hdr->reserved = 0;
+    hdr->aiKeyAlg = CALG_DSS_SIGN;
+
+    dsskey = (DSSPUBKEY *)(hdr + 1);
+    dsskey->magic  = MAGIC_DSS1;
+    dsskey->bitlen = bitlen;
+
+    dst = (UCHAR *)(dsskey + 1);
+    if (p.size % 2)
+    {
+        src = p.data + 1;
+        p.size--;
+    }
+    else src = p.data;
+    for (i = 0; i < p.size; i++) dst[i] = src[p.size - i - 1];
+
+    dst += p.size;
+    if (q.size % 2)
+    {
+        src = q.data + 1;
+        q.size--;
+    }
+    else src = q.data;
+    for (i = 0; i < q.size; i++) dst[i] = src[q.size - i - 1];
+
+    dst += q.size;
+    if (g.size % 2)
+    {
+        src = g.data + 1;
+        g.size--;
+    }
+    else src = g.data;
+    for (i = 0; i < g.size; i++) dst[i] = src[g.size - i - 1];
+
+    dst += g.size;
+    if (y.size % 2)
+    {
+        src = y.data + 1;
+        y.size--;
+    }
+    else src = y.data;
+    for (i = 0; i < y.size; i++) dst[i] = src[y.size - i - 1];
+
+    dst += y.size;
+    memcpy( dst, seed, sizeof(*seed) );
+
+    *pubkey = (UCHAR *)hdr;
+    *pubkey_len = size + p.size + q.size + g.size + y.size;
+
+    free( p.data ); free( q.data ); free( g.data ); free( y.data );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS CDECL key_asymmetric_generate( struct key *key )
 {
     gnutls_pk_algorithm_t pk_alg;
@@ -1069,6 +1152,7 @@ static NTSTATUS CDECL key_import_dsa_capi( struct key *key, UCHAR *buf, ULONG le
     unsigned char dummy[128];
     unsigned char *data, p_data[128], q_data[20], g_data[128], x_data[20];
     int i, ret, size;
+    NTSTATUS status;
 
     if ((ret = pgnutls_privkey_init( &handle )))
     {
@@ -1118,9 +1202,18 @@ static NTSTATUS CDECL key_import_dsa_capi( struct key *key, UCHAR *buf, ULONG le
         return STATUS_INTERNAL_ERROR;
     }
 
+    if ((status = export_gnutls_pubkey_dsa_capi( handle, &key->u.a.dss_seed, key->u.a.bitlen, &key->u.a.pubkey,
+                                                 &key->u.a.pubkey_len )))
+    {
+        pgnutls_privkey_deinit( handle );
+        return status;
+    }
+
     memcpy( &key->u.a.dss_seed, data, sizeof(key->u.a.dss_seed) );
 
+    key->u.a.flags |= KEY_FLAG_LEGACY_DSA_V2;
     key_data(key)->privkey = handle;
+
     return STATUS_SUCCESS;
 }
 

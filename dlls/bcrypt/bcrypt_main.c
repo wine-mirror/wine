@@ -991,7 +991,7 @@ static NTSTATUS key_export( struct key *key, const WCHAR *type, UCHAR *output, U
         return STATUS_SUCCESS;
     }
     else if (!wcscmp( type, BCRYPT_RSAPUBLIC_BLOB ) || !wcscmp( type, BCRYPT_DSA_PUBLIC_BLOB ) ||
-             !wcscmp( type, BCRYPT_ECCPUBLIC_BLOB ))
+             !wcscmp( type, BCRYPT_ECCPUBLIC_BLOB ) || !wcscmp( type, LEGACY_DSA_V2_PUBLIC_BLOB ))
     {
         *size = key->u.a.pubkey_len;
         if (output_len < key->u.a.pubkey_len) return STATUS_SUCCESS;
