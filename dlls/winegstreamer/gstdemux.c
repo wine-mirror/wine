@@ -194,11 +194,11 @@ static gboolean amt_from_gst_video_info(const GstVideoInfo *info, AM_MEDIA_TYPE 
             amt->subtype = MEDIASUBTYPE_RGB24;
             bih->biBitCount = 24;
             break;
-        case GST_VIDEO_FORMAT_BGR16:
+        case GST_VIDEO_FORMAT_RGB16:
             amt->subtype = MEDIASUBTYPE_RGB565;
             bih->biBitCount = 16;
             break;
-        case GST_VIDEO_FORMAT_BGR15:
+        case GST_VIDEO_FORMAT_RGB15:
             amt->subtype = MEDIASUBTYPE_RGB555;
             bih->biBitCount = 16;
             break;
@@ -380,8 +380,8 @@ static GstCaps *amt_to_gst_caps_video(const AM_MEDIA_TYPE *mt)
         {&MEDIASUBTYPE_ARGB32,  GST_VIDEO_FORMAT_BGRA},
         {&MEDIASUBTYPE_RGB32,   GST_VIDEO_FORMAT_BGRx},
         {&MEDIASUBTYPE_RGB24,   GST_VIDEO_FORMAT_BGR},
-        {&MEDIASUBTYPE_RGB565,  GST_VIDEO_FORMAT_BGR16},
-        {&MEDIASUBTYPE_RGB555,  GST_VIDEO_FORMAT_BGR15},
+        {&MEDIASUBTYPE_RGB565,  GST_VIDEO_FORMAT_RGB16},
+        {&MEDIASUBTYPE_RGB555,  GST_VIDEO_FORMAT_RGB15},
     };
 
     const VIDEOINFOHEADER *vih = (VIDEOINFOHEADER *)mt->pbFormat;
