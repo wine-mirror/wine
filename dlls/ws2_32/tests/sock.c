@@ -65,11 +65,7 @@
    k.keepaliveinterval = interval;
 
 /* Function pointers */
-static void  (WINAPI *pfreeaddrinfo)(struct addrinfo *);
-static int   (WINAPI *pgetaddrinfo)(LPCSTR,LPCSTR,const struct addrinfo *,struct addrinfo **);
-static void  (WINAPI *pFreeAddrInfoW)(PADDRINFOW);
 static void  (WINAPI *pFreeAddrInfoExW)(ADDRINFOEXW *ai);
-static int   (WINAPI *pGetAddrInfoW)(LPCWSTR,LPCWSTR,const ADDRINFOW *,PADDRINFOW *);
 static int   (WINAPI *pGetAddrInfoExW)(const WCHAR *name, const WCHAR *servname, DWORD namespace,
         GUID *namespace_id, const ADDRINFOEXW *hints, ADDRINFOEXW **result,
         struct timeval *timeout, OVERLAPPED *overlapped,
@@ -79,18 +75,8 @@ static PCSTR (WINAPI *pInetNtop)(INT,LPVOID,LPSTR,ULONG);
 static PCWSTR(WINAPI *pInetNtopW)(INT,LPVOID,LPWSTR,ULONG);
 static int   (WINAPI *pInetPtonA)(INT,LPCSTR,LPVOID);
 static int   (WINAPI *pInetPtonW)(INT,LPWSTR,LPVOID);
-static int   (WINAPI *pWSALookupServiceBeginW)(LPWSAQUERYSETW,DWORD,LPHANDLE);
-static int   (WINAPI *pWSALookupServiceEnd)(HANDLE);
-static int   (WINAPI *pWSALookupServiceNextW)(HANDLE,DWORD,LPDWORD,LPWSAQUERYSETW);
-static int   (WINAPI *pWSAEnumNameSpaceProvidersA)(LPDWORD,LPWSANAMESPACE_INFOA);
-static int   (WINAPI *pWSAEnumNameSpaceProvidersW)(LPDWORD,LPWSANAMESPACE_INFOW);
 static int   (WINAPI *pWSAPoll)(WSAPOLLFD *,ULONG,INT);
 static int   (WINAPI *pWSCGetProviderInfo)(LPGUID,WSC_PROVIDER_INFO_TYPE,PBYTE,size_t*,DWORD,LPINT);
-static int   (WINAPI *pWSCGetProviderPath)(LPGUID, LPWSTR, LPINT, LPINT);
-
-/* Function pointers from iphlpapi */
-static DWORD (WINAPI *pGetAdaptersInfo)(PIP_ADAPTER_INFO,PULONG);
-static DWORD (WINAPI *pGetIpForwardTable)(PMIB_IPFORWARDTABLE,PULONG,BOOL);
 
 /* Function pointers from ntdll */
 static DWORD (WINAPI *pNtClose)(HANDLE);
@@ -1212,34 +1198,17 @@ static void Init (void)
 {
     WORD ver = MAKEWORD (2, 2);
     WSADATA data;
-    HMODULE hws2_32 = GetModuleHandleA("ws2_32.dll"), hiphlpapi, ntdll;
+    HMODULE hws2_32 = GetModuleHandleA("ws2_32.dll"), ntdll;
 
-    pfreeaddrinfo = (void *)GetProcAddress(hws2_32, "freeaddrinfo");
-    pgetaddrinfo = (void *)GetProcAddress(hws2_32, "getaddrinfo");
-    pFreeAddrInfoW = (void *)GetProcAddress(hws2_32, "FreeAddrInfoW");
     pFreeAddrInfoExW = (void *)GetProcAddress(hws2_32, "FreeAddrInfoExW");
-    pGetAddrInfoW = (void *)GetProcAddress(hws2_32, "GetAddrInfoW");
     pGetAddrInfoExW = (void *)GetProcAddress(hws2_32, "GetAddrInfoExW");
     pGetAddrInfoExOverlappedResult = (void *)GetProcAddress(hws2_32, "GetAddrInfoExOverlappedResult");
     pInetNtop = (void *)GetProcAddress(hws2_32, "inet_ntop");
     pInetNtopW = (void *)GetProcAddress(hws2_32, "InetNtopW");
     pInetPtonA = (void *)GetProcAddress(hws2_32, "inet_pton");
     pInetPtonW = (void *)GetProcAddress(hws2_32, "InetPtonW");
-    pWSALookupServiceBeginW = (void *)GetProcAddress(hws2_32, "WSALookupServiceBeginW");
-    pWSALookupServiceEnd = (void *)GetProcAddress(hws2_32, "WSALookupServiceEnd");
-    pWSALookupServiceNextW = (void *)GetProcAddress(hws2_32, "WSALookupServiceNextW");
-    pWSAEnumNameSpaceProvidersA = (void *)GetProcAddress(hws2_32, "WSAEnumNameSpaceProvidersA");
-    pWSAEnumNameSpaceProvidersW = (void *)GetProcAddress(hws2_32, "WSAEnumNameSpaceProvidersW");
     pWSAPoll = (void *)GetProcAddress(hws2_32, "WSAPoll");
     pWSCGetProviderInfo = (void *)GetProcAddress(hws2_32, "WSCGetProviderInfo");
-    pWSCGetProviderPath = (void *)GetProcAddress(hws2_32, "WSCGetProviderPath");
-
-    hiphlpapi = LoadLibraryA("iphlpapi.dll");
-    if (hiphlpapi)
-    {
-        pGetIpForwardTable = (void *)GetProcAddress(hiphlpapi, "GetIpForwardTable");
-        pGetAdaptersInfo = (void *)GetProcAddress(hiphlpapi, "GetAdaptersInfo");
-    }
 
     ntdll = LoadLibraryA("ntdll.dll");
     if (ntdll)
@@ -4203,23 +4172,17 @@ static void test_gethostbyname(void)
         return;
     }
 
-    if (!pGetAdaptersInfo || !pGetIpForwardTable)
-    {
-        win_skip("GetAdaptersInfo and/or GetIpForwardTable not found, skipping tests\n");
-        return;
-    }
-
-    ret = pGetAdaptersInfo(NULL, &adap_size);
+    ret = GetAdaptersInfo(NULL, &adap_size);
     ok (ret  == ERROR_BUFFER_OVERFLOW, "GetAdaptersInfo failed with a different error: %d\n", ret);
-    ret = pGetIpForwardTable(NULL, &route_size, FALSE);
+    ret = GetIpForwardTable(NULL, &route_size, FALSE);
     ok (ret == ERROR_INSUFFICIENT_BUFFER, "GetIpForwardTable failed with a different error: %d\n", ret);
 
     adapters = HeapAlloc(GetProcessHeap(), 0, adap_size);
     routes = HeapAlloc(GetProcessHeap(), 0, route_size);
 
-    ret = pGetAdaptersInfo(adapters, &adap_size);
+    ret = GetAdaptersInfo(adapters, &adap_size);
     ok (ret  == NO_ERROR, "GetAdaptersInfo failed, error: %d\n", ret);
-    ret = pGetIpForwardTable(routes, &route_size, FALSE);
+    ret = GetIpForwardTable(routes, &route_size, FALSE);
     ok (ret == NO_ERROR, "GetIpForwardTable failed, error: %d\n", ret);
 
     /* This test only has meaning if there is more than one IP configured */
@@ -6788,116 +6751,111 @@ static void test_GetAddrInfoW(void)
     static const WCHAR idn_punycode[] =
         {'x','n','-','-','z','c','k','z','a','h','.','w','i','n','e','h','q','.','o','r','g',0};
 
-    if (!pGetAddrInfoW || !pFreeAddrInfoW)
-    {
-        win_skip("GetAddrInfoW and/or FreeAddrInfoW not present\n");
-        return;
-    }
     memset(&hint, 0, sizeof(ADDRINFOW));
     name[0] = 0;
     GetComputerNameExW( ComputerNamePhysicalDnsHostname, name, &size );
 
     result = (ADDRINFOW *)0xdeadbeef;
     WSASetLastError(0xdeadbeef);
-    ret = pGetAddrInfoW(NULL, NULL, NULL, &result);
+    ret = GetAddrInfoW(NULL, NULL, NULL, &result);
     ok(ret == WSAHOST_NOT_FOUND, "got %d expected WSAHOST_NOT_FOUND\n", ret);
     ok(WSAGetLastError() == WSAHOST_NOT_FOUND, "expected 11001, got %d\n", WSAGetLastError());
     ok(result == NULL, "got %p\n", result);
 
     result = NULL;
     WSASetLastError(0xdeadbeef);
-    ret = pGetAddrInfoW(empty, NULL, NULL, &result);
+    ret = GetAddrInfoW(empty, NULL, NULL, &result);
     ok(!ret, "GetAddrInfoW failed with %d\n", WSAGetLastError());
     ok(result != NULL, "GetAddrInfoW failed\n");
     ok(WSAGetLastError() == 0, "expected 0, got %d\n", WSAGetLastError());
-    pFreeAddrInfoW(result);
+    FreeAddrInfoW(result);
 
     result = NULL;
-    ret = pGetAddrInfoW(NULL, zero, NULL, &result);
+    ret = GetAddrInfoW(NULL, zero, NULL, &result);
     ok(!ret, "GetAddrInfoW failed with %d\n", WSAGetLastError());
     ok(result != NULL, "GetAddrInfoW failed\n");
 
     result2 = NULL;
-    ret = pGetAddrInfoW(NULL, empty, NULL, &result2);
+    ret = GetAddrInfoW(NULL, empty, NULL, &result2);
     ok(!ret, "GetAddrInfoW failed with %d\n", WSAGetLastError());
     ok(result2 != NULL, "GetAddrInfoW failed\n");
     compare_addrinfow(result, result2);
-    pFreeAddrInfoW(result);
-    pFreeAddrInfoW(result2);
+    FreeAddrInfoW(result);
+    FreeAddrInfoW(result2);
 
     result = NULL;
-    ret = pGetAddrInfoW(empty, zero, NULL, &result);
+    ret = GetAddrInfoW(empty, zero, NULL, &result);
     ok(!ret, "GetAddrInfoW failed with %d\n", WSAGetLastError());
     ok(WSAGetLastError() == 0, "expected 0, got %d\n", WSAGetLastError());
     ok(result != NULL, "GetAddrInfoW failed\n");
 
     result2 = NULL;
-    ret = pGetAddrInfoW(empty, empty, NULL, &result2);
+    ret = GetAddrInfoW(empty, empty, NULL, &result2);
     ok(!ret, "GetAddrInfoW failed with %d\n", WSAGetLastError());
     ok(result2 != NULL, "GetAddrInfoW failed\n");
     compare_addrinfow(result, result2);
-    pFreeAddrInfoW(result);
-    pFreeAddrInfoW(result2);
+    FreeAddrInfoW(result);
+    FreeAddrInfoW(result2);
 
     result = NULL;
-    ret = pGetAddrInfoW(localhost, NULL, NULL, &result);
+    ret = GetAddrInfoW(localhost, NULL, NULL, &result);
     ok(!ret, "GetAddrInfoW failed with %d\n", WSAGetLastError());
-    pFreeAddrInfoW(result);
+    FreeAddrInfoW(result);
 
     result = NULL;
-    ret = pGetAddrInfoW(localhost, empty, NULL, &result);
+    ret = GetAddrInfoW(localhost, empty, NULL, &result);
     ok(!ret, "GetAddrInfoW failed with %d\n", WSAGetLastError());
-    pFreeAddrInfoW(result);
+    FreeAddrInfoW(result);
 
     result = NULL;
-    ret = pGetAddrInfoW(localhost, zero, NULL, &result);
+    ret = GetAddrInfoW(localhost, zero, NULL, &result);
     ok(!ret, "GetAddrInfoW failed with %d\n", WSAGetLastError());
-    pFreeAddrInfoW(result);
+    FreeAddrInfoW(result);
 
     result = NULL;
-    ret = pGetAddrInfoW(localhost, port, NULL, &result);
+    ret = GetAddrInfoW(localhost, port, NULL, &result);
     ok(!ret, "GetAddrInfoW failed with %d\n", WSAGetLastError());
-    pFreeAddrInfoW(result);
+    FreeAddrInfoW(result);
 
     result = NULL;
-    ret = pGetAddrInfoW(localhost, NULL, &hint, &result);
+    ret = GetAddrInfoW(localhost, NULL, &hint, &result);
     ok(!ret, "GetAddrInfoW failed with %d\n", WSAGetLastError());
-    pFreeAddrInfoW(result);
+    FreeAddrInfoW(result);
 
     result = NULL;
     SetLastError(0xdeadbeef);
-    ret = pGetAddrInfoW(localhost, port, &hint, &result);
+    ret = GetAddrInfoW(localhost, port, &hint, &result);
     ok(!ret, "GetAddrInfoW failed with %d\n", WSAGetLastError());
     ok(WSAGetLastError() == 0, "expected 0, got %d\n", WSAGetLastError());
-    pFreeAddrInfoW(result);
+    FreeAddrInfoW(result);
 
     /* try to get information from the computer name, result is the same
      * as if requesting with an empty host name. */
-    ret = pGetAddrInfoW(name, NULL, NULL, &result);
+    ret = GetAddrInfoW(name, NULL, NULL, &result);
     ok(!ret, "GetAddrInfoW failed with %d\n", WSAGetLastError());
     ok(result != NULL, "GetAddrInfoW failed\n");
 
-    ret = pGetAddrInfoW(empty, NULL, NULL, &result2);
+    ret = GetAddrInfoW(empty, NULL, NULL, &result2);
     ok(!ret, "GetAddrInfoW failed with %d\n", WSAGetLastError());
     ok(result != NULL, "GetAddrInfoW failed\n");
     compare_addrinfow(result, result2);
-    pFreeAddrInfoW(result);
-    pFreeAddrInfoW(result2);
+    FreeAddrInfoW(result);
+    FreeAddrInfoW(result2);
 
-    ret = pGetAddrInfoW(name, empty, NULL, &result);
+    ret = GetAddrInfoW(name, empty, NULL, &result);
     ok(!ret, "GetAddrInfoW failed with %d\n", WSAGetLastError());
     ok(result != NULL, "GetAddrInfoW failed\n");
 
-    ret = pGetAddrInfoW(empty, empty, NULL, &result2);
+    ret = GetAddrInfoW(empty, empty, NULL, &result2);
     ok(!ret, "GetAddrInfoW failed with %d\n", WSAGetLastError());
     ok(result != NULL, "GetAddrInfoW failed\n");
     compare_addrinfow(result, result2);
-    pFreeAddrInfoW(result);
-    pFreeAddrInfoW(result2);
+    FreeAddrInfoW(result);
+    FreeAddrInfoW(result2);
 
     result = (ADDRINFOW *)0xdeadbeef;
     WSASetLastError(0xdeadbeef);
-    ret = pGetAddrInfoW(NULL, NULL, NULL, &result);
+    ret = GetAddrInfoW(NULL, NULL, NULL, &result);
     if(ret == 0)
     {
         skip("nxdomain returned success. Broken ISP redirects?\n");
@@ -6909,7 +6867,7 @@ static void test_GetAddrInfoW(void)
 
     result = (ADDRINFOW *)0xdeadbeef;
     WSASetLastError(0xdeadbeef);
-    ret = pGetAddrInfoW(nxdomain, NULL, NULL, &result);
+    ret = GetAddrInfoW(nxdomain, NULL, NULL, &result);
     if(ret == 0)
     {
         skip("nxdomain returned success. Broken ISP redirects?\n");
@@ -6927,7 +6885,7 @@ static void test_GetAddrInfoW(void)
 
         result = NULL;
         SetLastError(0xdeadbeef);
-        ret = pGetAddrInfoW(localhost, NULL, &hint, &result);
+        ret = GetAddrInfoW(localhost, NULL, &hint, &result);
         if (!ret)
         {
             if (hinttests[i].error)
@@ -6957,7 +6915,7 @@ static void test_GetAddrInfoW(void)
                 }
                 while (p);
             }
-            pFreeAddrInfoW(result);
+            FreeAddrInfoW(result);
         }
         else
         {
@@ -6972,10 +6930,10 @@ static void test_GetAddrInfoW(void)
 
     /* Test IDN resolution (Internationalized Domain Names) present since Windows 8 */
     result = NULL;
-    ret = pGetAddrInfoW(idn_punycode, NULL, NULL, &result);
+    ret = GetAddrInfoW(idn_punycode, NULL, NULL, &result);
     ok(!ret, "got %d expected success\n", ret);
     ok(result != NULL, "got %p\n", result);
-    pFreeAddrInfoW(result);
+    FreeAddrInfoW(result);
 
     hint.ai_family = AF_INET;
     hint.ai_socktype = 0;
@@ -6983,22 +6941,22 @@ static void test_GetAddrInfoW(void)
     hint.ai_flags = 0;
 
     result = NULL;
-    ret = pGetAddrInfoW(idn_punycode, NULL, &hint, &result);
+    ret = GetAddrInfoW(idn_punycode, NULL, &hint, &result);
     ok(!ret, "got %d expected success\n", ret);
     ok(result != NULL, "got %p\n", result);
 
     result2 = NULL;
-    ret = pGetAddrInfoW(idn_domain, NULL, NULL, &result2);
+    ret = GetAddrInfoW(idn_domain, NULL, NULL, &result2);
     if (ret == WSAHOST_NOT_FOUND && broken(1))
     {
-        pFreeAddrInfoW(result);
+        FreeAddrInfoW(result);
         win_skip("IDN resolution not supported in Win <= 7\n");
         return;
     }
 
     ok(!ret, "got %d expected success\n", ret);
     ok(result2 != NULL, "got %p\n", result2);
-    pFreeAddrInfoW(result2);
+    FreeAddrInfoW(result2);
 
     hint.ai_family = AF_INET;
     hint.ai_socktype = 0;
@@ -7006,15 +6964,15 @@ static void test_GetAddrInfoW(void)
     hint.ai_flags = 0;
 
     result2 = NULL;
-    ret = pGetAddrInfoW(idn_domain, NULL, &hint, &result2);
+    ret = GetAddrInfoW(idn_domain, NULL, &hint, &result2);
     ok(!ret, "got %d expected success\n", ret);
     ok(result2 != NULL, "got %p\n", result2);
 
     /* ensure manually resolved punycode and unicode hosts result in same data */
     compare_addrinfow(result, result2);
 
-    pFreeAddrInfoW(result);
-    pFreeAddrInfoW(result2);
+    FreeAddrInfoW(result);
+    FreeAddrInfoW(result2);
 
     hint.ai_family = AF_INET;
     hint.ai_socktype = 0;
@@ -7022,10 +6980,10 @@ static void test_GetAddrInfoW(void)
     hint.ai_flags = 0;
 
     result2 = NULL;
-    ret = pGetAddrInfoW(idn_domain, NULL, &hint, &result2);
+    ret = GetAddrInfoW(idn_domain, NULL, &hint, &result2);
     ok(!ret, "got %d expected success\n", ret);
     ok(result2 != NULL, "got %p\n", result2);
-    pFreeAddrInfoW(result2);
+    FreeAddrInfoW(result2);
 
     /* Disable IDN resolution and test again*/
     hint.ai_family = AF_INET;
@@ -7035,7 +6993,7 @@ static void test_GetAddrInfoW(void)
 
     SetLastError(0xdeadbeef);
     result2 = NULL;
-    ret = pGetAddrInfoW(idn_domain, NULL, &hint, &result2);
+    ret = GetAddrInfoW(idn_domain, NULL, &hint, &result2);
     ok(ret == WSAHOST_NOT_FOUND, "got %d expected WSAHOST_NOT_FOUND\n", ret);
     ok(WSAGetLastError() == WSAHOST_NOT_FOUND, "expected 11001, got %d\n", WSAGetLastError());
     ok(result2 == NULL, "got %p\n", result2);
@@ -7236,92 +7194,87 @@ static void test_getaddrinfo(void)
     CHAR name[256], *ip;
     DWORD size = sizeof(name);
 
-    if (!pgetaddrinfo || !pfreeaddrinfo)
-    {
-        win_skip("getaddrinfo and/or freeaddrinfo not present\n");
-        return;
-    }
     memset(&hint, 0, sizeof(ADDRINFOA));
     GetComputerNameExA( ComputerNamePhysicalDnsHostname, name, &size );
 
     result = (ADDRINFOA *)0xdeadbeef;
     WSASetLastError(0xdeadbeef);
-    ret = pgetaddrinfo(NULL, NULL, NULL, &result);
+    ret = getaddrinfo(NULL, NULL, NULL, &result);
     ok(ret == WSAHOST_NOT_FOUND, "got %d expected WSAHOST_NOT_FOUND\n", ret);
     ok(WSAGetLastError() == WSAHOST_NOT_FOUND, "expected 11001, got %d\n", WSAGetLastError());
     ok(result == NULL, "got %p\n", result);
 
     result = NULL;
     WSASetLastError(0xdeadbeef);
-    ret = pgetaddrinfo("", NULL, NULL, &result);
+    ret = getaddrinfo("", NULL, NULL, &result);
     ok(!ret, "getaddrinfo failed with %d\n", WSAGetLastError());
     ok(result != NULL, "getaddrinfo failed\n");
     ok(WSAGetLastError() == 0, "expected 0, got %d\n", WSAGetLastError());
-    pfreeaddrinfo(result);
+    freeaddrinfo(result);
 
     result = NULL;
-    ret = pgetaddrinfo(NULL, "0", NULL, &result);
+    ret = getaddrinfo(NULL, "0", NULL, &result);
     ok(!ret, "getaddrinfo failed with %d\n", WSAGetLastError());
-    ok(result != NULL, "getaddrinfo failed\n");
-
-    result2 = NULL;
-    ret = pgetaddrinfo(NULL, "", NULL, &result2);
-    ok(!ret, "getaddrinfo failed with %d\n", WSAGetLastError());
-    ok(result2 != NULL, "getaddrinfo failed\n");
-    compare_addrinfo(result, result2);
-    pfreeaddrinfo(result);
-    pfreeaddrinfo(result2);
-
-    result = NULL;
-    WSASetLastError(0xdeadbeef);
-    ret = pgetaddrinfo("", "0", NULL, &result);
-    ok(!ret, "getaddrinfo failed with %d\n", WSAGetLastError());
-    ok(WSAGetLastError() == 0, "expected 0, got %d\n", WSAGetLastError());
     ok(result != NULL, "getaddrinfo failed\n");
 
     result2 = NULL;
-    ret = pgetaddrinfo("", "", NULL, &result2);
+    ret = getaddrinfo(NULL, "", NULL, &result2);
     ok(!ret, "getaddrinfo failed with %d\n", WSAGetLastError());
     ok(result2 != NULL, "getaddrinfo failed\n");
     compare_addrinfo(result, result2);
-    pfreeaddrinfo(result);
-    pfreeaddrinfo(result2);
-
-    result = NULL;
-    ret = pgetaddrinfo("localhost", NULL, NULL, &result);
-    ok(!ret, "getaddrinfo failed with %d\n", WSAGetLastError());
-    pfreeaddrinfo(result);
-
-    result = NULL;
-    ret = pgetaddrinfo("localhost", "", NULL, &result);
-    ok(!ret, "getaddrinfo failed with %d\n", WSAGetLastError());
-    pfreeaddrinfo(result);
-
-    result = NULL;
-    ret = pgetaddrinfo("localhost", "0", NULL, &result);
-    ok(!ret, "getaddrinfo failed with %d\n", WSAGetLastError());
-    pfreeaddrinfo(result);
-
-    result = NULL;
-    ret = pgetaddrinfo("localhost", "80", NULL, &result);
-    ok(!ret, "getaddrinfo failed with %d\n", WSAGetLastError());
-    pfreeaddrinfo(result);
-
-    result = NULL;
-    ret = pgetaddrinfo("localhost", NULL, &hint, &result);
-    ok(!ret, "getaddrinfo failed with %d\n", WSAGetLastError());
-    pfreeaddrinfo(result);
+    freeaddrinfo(result);
+    freeaddrinfo(result2);
 
     result = NULL;
     WSASetLastError(0xdeadbeef);
-    ret = pgetaddrinfo("localhost", "80", &hint, &result);
+    ret = getaddrinfo("", "0", NULL, &result);
     ok(!ret, "getaddrinfo failed with %d\n", WSAGetLastError());
     ok(WSAGetLastError() == 0, "expected 0, got %d\n", WSAGetLastError());
-    pfreeaddrinfo(result);
+    ok(result != NULL, "getaddrinfo failed\n");
+
+    result2 = NULL;
+    ret = getaddrinfo("", "", NULL, &result2);
+    ok(!ret, "getaddrinfo failed with %d\n", WSAGetLastError());
+    ok(result2 != NULL, "getaddrinfo failed\n");
+    compare_addrinfo(result, result2);
+    freeaddrinfo(result);
+    freeaddrinfo(result2);
+
+    result = NULL;
+    ret = getaddrinfo("localhost", NULL, NULL, &result);
+    ok(!ret, "getaddrinfo failed with %d\n", WSAGetLastError());
+    freeaddrinfo(result);
+
+    result = NULL;
+    ret = getaddrinfo("localhost", "", NULL, &result);
+    ok(!ret, "getaddrinfo failed with %d\n", WSAGetLastError());
+    freeaddrinfo(result);
+
+    result = NULL;
+    ret = getaddrinfo("localhost", "0", NULL, &result);
+    ok(!ret, "getaddrinfo failed with %d\n", WSAGetLastError());
+    freeaddrinfo(result);
+
+    result = NULL;
+    ret = getaddrinfo("localhost", "80", NULL, &result);
+    ok(!ret, "getaddrinfo failed with %d\n", WSAGetLastError());
+    freeaddrinfo(result);
+
+    result = NULL;
+    ret = getaddrinfo("localhost", NULL, &hint, &result);
+    ok(!ret, "getaddrinfo failed with %d\n", WSAGetLastError());
+    freeaddrinfo(result);
+
+    result = NULL;
+    WSASetLastError(0xdeadbeef);
+    ret = getaddrinfo("localhost", "80", &hint, &result);
+    ok(!ret, "getaddrinfo failed with %d\n", WSAGetLastError());
+    ok(WSAGetLastError() == 0, "expected 0, got %d\n", WSAGetLastError());
+    freeaddrinfo(result);
 
     hint.ai_flags = AI_NUMERICHOST;
     result = (void*)0xdeadbeef;
-    ret = pgetaddrinfo("localhost", "80", &hint, &result);
+    ret = getaddrinfo("localhost", "80", &hint, &result);
     ok(ret == WSAHOST_NOT_FOUND, "getaddrinfo failed with %d\n", WSAGetLastError());
     ok(WSAGetLastError() == WSAHOST_NOT_FOUND, "expected WSAHOST_NOT_FOUND, got %d\n", WSAGetLastError());
     ok(!result, "result = %p\n", result);
@@ -7329,31 +7282,31 @@ static void test_getaddrinfo(void)
 
     /* try to get information from the computer name, result is the same
      * as if requesting with an empty host name. */
-    ret = pgetaddrinfo(name, NULL, NULL, &result);
+    ret = getaddrinfo(name, NULL, NULL, &result);
     ok(!ret, "getaddrinfo failed with %d\n", WSAGetLastError());
     ok(result != NULL, "GetAddrInfoW failed\n");
 
-    ret = pgetaddrinfo("", NULL, NULL, &result2);
+    ret = getaddrinfo("", NULL, NULL, &result2);
     ok(!ret, "getaddrinfo failed with %d\n", WSAGetLastError());
     ok(result != NULL, "GetAddrInfoW failed\n");
     compare_addrinfo(result, result2);
-    pfreeaddrinfo(result);
-    pfreeaddrinfo(result2);
+    freeaddrinfo(result);
+    freeaddrinfo(result2);
 
-    ret = pgetaddrinfo(name, "", NULL, &result);
+    ret = getaddrinfo(name, "", NULL, &result);
     ok(!ret, "getaddrinfo failed with %d\n", WSAGetLastError());
     ok(result != NULL, "GetAddrInfoW failed\n");
 
-    ret = pgetaddrinfo("", "", NULL, &result2);
+    ret = getaddrinfo("", "", NULL, &result2);
     ok(!ret, "getaddrinfo failed with %d\n", WSAGetLastError());
     ok(result != NULL, "GetAddrInfoW failed\n");
     compare_addrinfo(result, result2);
-    pfreeaddrinfo(result);
-    pfreeaddrinfo(result2);
+    freeaddrinfo(result);
+    freeaddrinfo(result2);
 
     result = (ADDRINFOA *)0xdeadbeef;
     WSASetLastError(0xdeadbeef);
-    ret = pgetaddrinfo("nxdomain.codeweavers.com", NULL, NULL, &result);
+    ret = getaddrinfo("nxdomain.codeweavers.com", NULL, NULL, &result);
     if(ret == 0)
     {
         skip("nxdomain returned success. Broken ISP redirects?\n");
@@ -7365,7 +7318,7 @@ static void test_getaddrinfo(void)
 
     /* Test IPv4 address conversion */
     result = NULL;
-    ret = pgetaddrinfo("192.168.1.253", NULL, NULL, &result);
+    ret = getaddrinfo("192.168.1.253", NULL, NULL, &result);
     ok(!ret, "getaddrinfo failed with %d\n", ret);
     ok(result->ai_family == AF_INET, "ai_family == %d\n", result->ai_family);
     ok(result->ai_addrlen >= sizeof(struct sockaddr_in), "ai_addrlen == %d\n", (int)result->ai_addrlen);
@@ -7376,12 +7329,12 @@ static void test_getaddrinfo(void)
 
     ip = inet_ntoa(sockaddr->sin_addr);
     ok(strcmp(ip, "192.168.1.253") == 0, "sockaddr->ai_addr == '%s'\n", ip);
-    pfreeaddrinfo(result);
+    freeaddrinfo(result);
 
     /* Test IPv4 address conversion with port */
     result = NULL;
     hint.ai_flags = AI_NUMERICHOST;
-    ret = pgetaddrinfo("192.168.1.253:1024", NULL, &hint, &result);
+    ret = getaddrinfo("192.168.1.253:1024", NULL, &hint, &result);
     hint.ai_flags = 0;
     ok(ret == WSAHOST_NOT_FOUND, "getaddrinfo returned unexpected result: %d\n", ret);
     ok(result == NULL, "expected NULL, got %p\n", result);
@@ -7389,52 +7342,52 @@ static void test_getaddrinfo(void)
     /* Test IPv6 address conversion */
     result = NULL;
     SetLastError(0xdeadbeef);
-    ret = pgetaddrinfo("2a00:2039:dead:beef:cafe::6666", NULL, NULL, &result);
+    ret = getaddrinfo("2a00:2039:dead:beef:cafe::6666", NULL, NULL, &result);
 
     if (result != NULL)
     {
         ok(!ret, "getaddrinfo failed with %d\n", ret);
         verify_ipv6_addrinfo(result, "2a00:2039:dead:beef:cafe::6666");
-        pfreeaddrinfo(result);
+        freeaddrinfo(result);
 
         /* Test IPv6 address conversion with brackets */
         result = NULL;
-        ret = pgetaddrinfo("[beef::cafe]", NULL, NULL, &result);
+        ret = getaddrinfo("[beef::cafe]", NULL, NULL, &result);
         ok(!ret, "getaddrinfo failed with %d\n", ret);
         verify_ipv6_addrinfo(result, "beef::cafe");
-        pfreeaddrinfo(result);
+        freeaddrinfo(result);
 
         /* Test IPv6 address conversion with brackets and hints */
         memset(&hint, 0, sizeof(ADDRINFOA));
         hint.ai_flags = AI_NUMERICHOST;
         hint.ai_family = AF_INET6;
         result = NULL;
-        ret = pgetaddrinfo("[beef::cafe]", NULL, &hint, &result);
+        ret = getaddrinfo("[beef::cafe]", NULL, &hint, &result);
         ok(!ret, "getaddrinfo failed with %d\n", ret);
         verify_ipv6_addrinfo(result, "beef::cafe");
-        pfreeaddrinfo(result);
+        freeaddrinfo(result);
 
         memset(&hint, 0, sizeof(ADDRINFOA));
         hint.ai_flags = AI_NUMERICHOST;
         hint.ai_family = AF_INET;
         result = NULL;
-        ret = pgetaddrinfo("[beef::cafe]", NULL, &hint, &result);
+        ret = getaddrinfo("[beef::cafe]", NULL, &hint, &result);
         ok(ret == WSAHOST_NOT_FOUND, "getaddrinfo failed with %d\n", ret);
 
         /* Test IPv6 address conversion with brackets and port */
         result = NULL;
-        ret = pgetaddrinfo("[beef::cafe]:10239", NULL, NULL, &result);
+        ret = getaddrinfo("[beef::cafe]:10239", NULL, NULL, &result);
         ok(!ret, "getaddrinfo failed with %d\n", ret);
         verify_ipv6_addrinfo(result, "beef::cafe");
-        pfreeaddrinfo(result);
+        freeaddrinfo(result);
 
         /* Test IPv6 address conversion with unmatched brackets */
         result = NULL;
         hint.ai_flags = AI_NUMERICHOST;
-        ret = pgetaddrinfo("[beef::cafe", NULL, &hint, &result);
+        ret = getaddrinfo("[beef::cafe", NULL, &hint, &result);
         ok(ret == WSAHOST_NOT_FOUND, "getaddrinfo failed with %d\n", ret);
 
-        ret = pgetaddrinfo("beef::cafe]", NULL, &hint, &result);
+        ret = getaddrinfo("beef::cafe]", NULL, &hint, &result);
         ok(ret == WSAHOST_NOT_FOUND, "getaddrinfo failed with %d\n", ret);
     }
     else
@@ -7453,7 +7406,7 @@ static void test_getaddrinfo(void)
 
         result = NULL;
         SetLastError(0xdeadbeef);
-        ret = pgetaddrinfo("localhost", NULL, &hint, &result);
+        ret = getaddrinfo("localhost", NULL, &hint, &result);
         if(!ret)
         {
             if (hinttests[i].error)
@@ -7483,7 +7436,7 @@ static void test_getaddrinfo(void)
                 }
                 while (p);
             }
-            pfreeaddrinfo(result);
+            freeaddrinfo(result);
         }
         else
         {
@@ -7497,7 +7450,7 @@ static void test_getaddrinfo(void)
     }
 
     memset(&hint, 0, sizeof(hint));
-    ret = pgetaddrinfo(NULL, "nonexistentservice", &hint, &result);
+    ret = getaddrinfo(NULL, "nonexistentservice", &hint, &result);
     ok(ret == WSATYPE_NOT_FOUND, "got %d\n", ret);
 }
 
@@ -9795,29 +9748,23 @@ static void test_WSALookupService(void)
     int ret;
     DWORD error, offset, bsize;
 
-    if (!pWSALookupServiceBeginW || !pWSALookupServiceEnd || !pWSALookupServiceNextW)
-    {
-        win_skip("WSALookupServiceBeginW or WSALookupServiceEnd or WSALookupServiceNextW not found\n");
-        return;
-    }
-
     qs = (WSAQUERYSETW *)buffer;
     memset(qs, 0, sizeof(*qs));
 
     /* invalid parameter tests */
-    ret = pWSALookupServiceBeginW(NULL, 0, &hnd);
+    ret = WSALookupServiceBeginW(NULL, 0, &hnd);
     error = WSAGetLastError();
     ok(ret == SOCKET_ERROR, "WSALookupServiceBeginW should have failed\n");
 todo_wine
     ok(error == WSAEFAULT, "expected 10014, got %d\n", error);
 
-    ret = pWSALookupServiceBeginW(qs, 0, NULL);
+    ret = WSALookupServiceBeginW(qs, 0, NULL);
     error = WSAGetLastError();
     ok(ret == SOCKET_ERROR, "WSALookupServiceBeginW should have failed\n");
 todo_wine
     ok(error == WSAEFAULT, "expected 10014, got %d\n", error);
 
-    ret = pWSALookupServiceBeginW(qs, 0, &hnd);
+    ret = WSALookupServiceBeginW(qs, 0, &hnd);
     error = WSAGetLastError();
     ok(ret == SOCKET_ERROR, "WSALookupServiceBeginW should have failed\n");
 todo_wine
@@ -9827,7 +9774,7 @@ todo_wine
        || broken(error == WSASERVICE_NOT_FOUND) /* == 2000 */,
        "expected 10022, got %d\n", error);
 
-    ret = pWSALookupServiceEnd(NULL);
+    ret = WSALookupServiceEnd(NULL);
     error = WSAGetLastError();
 todo_wine
     ok(ret == SOCKET_ERROR, "WSALookupServiceEnd should have failed\n");
@@ -9837,7 +9784,7 @@ todo_wine
     /* standard network list query */
     qs->dwSize = sizeof(*qs);
     hnd = (HANDLE)0xdeadbeef;
-    ret = pWSALookupServiceBeginW(qs, LUP_RETURN_ALL | LUP_DEEP, &hnd);
+    ret = WSALookupServiceBeginW(qs, LUP_RETURN_ALL | LUP_DEEP, &hnd);
     error = WSAGetLastError();
     if(ret && error == ERROR_INVALID_PARAMETER)
     {
@@ -9856,7 +9803,7 @@ todo_wine
         memset(qs, 0, sizeof(*qs));
         bsize = sizeof(buffer);
 
-        if (pWSALookupServiceNextW(hnd, 0, &bsize, qs) == SOCKET_ERROR)
+        if (WSALookupServiceNextW(hnd, 0, &bsize, qs) == SOCKET_ERROR)
         {
             error = WSAGetLastError();
             if (error == WSA_E_NO_MORE) break;
@@ -9945,7 +9892,7 @@ todo_wine
     }
     while (1);
 
-    ret = pWSALookupServiceEnd(hnd);
+    ret = WSALookupServiceEnd(hnd);
     ok(!ret, "WSALookupServiceEnd failed unexpectedly\n");
 }
 
@@ -9953,14 +9900,9 @@ static void test_WSAEnumNameSpaceProvidersA(void)
 {
     LPWSANAMESPACE_INFOA name = NULL;
     DWORD ret, error, blen = 0;
-    if (!pWSAEnumNameSpaceProvidersA)
-    {
-        win_skip("WSAEnumNameSpaceProvidersA not found\n");
-        return;
-    }
 
     SetLastError(0xdeadbeef);
-    ret = pWSAEnumNameSpaceProvidersA(&blen, name);
+    ret = WSAEnumNameSpaceProvidersA(&blen, name);
     error = WSAGetLastError();
 todo_wine
     ok(ret == SOCKET_ERROR, "Expected failure, got %u\n", ret);
@@ -9969,7 +9911,7 @@ todo_wine
 
     /* Invalid parameter tests */
     SetLastError(0xdeadbeef);
-    ret = pWSAEnumNameSpaceProvidersA(NULL, name);
+    ret = WSAEnumNameSpaceProvidersA(NULL, name);
     error = WSAGetLastError();
 todo_wine
     ok(ret == SOCKET_ERROR, "Expected failure, got %u\n", ret);
@@ -9977,7 +9919,7 @@ todo_wine
     ok(error == WSAEFAULT, "Expected 10014, got %u\n", error);
 
     SetLastError(0xdeadbeef);
-    ret = pWSAEnumNameSpaceProvidersA(NULL, NULL);
+    ret = WSAEnumNameSpaceProvidersA(NULL, NULL);
     error = WSAGetLastError();
 todo_wine
     ok(ret == SOCKET_ERROR, "Expected failure, got %u\n", ret);
@@ -9985,7 +9927,7 @@ todo_wine
     ok(error == WSAEFAULT, "Expected 10014, got %u\n", error);
 
     SetLastError(0xdeadbeef);
-    ret = pWSAEnumNameSpaceProvidersA(&blen, NULL);
+    ret = WSAEnumNameSpaceProvidersA(&blen, NULL);
     error = WSAGetLastError();
 todo_wine
     ok(ret == SOCKET_ERROR, "Expected failure, got %u\n", ret);
@@ -9994,7 +9936,7 @@ todo_wine
 
     name = HeapAlloc(GetProcessHeap(), 0, blen);
 
-    ret = pWSAEnumNameSpaceProvidersA(&blen, name);
+    ret = WSAEnumNameSpaceProvidersA(&blen, name);
 todo_wine
     ok(ret > 0, "Expected more than zero name space providers\n");
 
@@ -10005,14 +9947,9 @@ static void test_WSAEnumNameSpaceProvidersW(void)
 {
     LPWSANAMESPACE_INFOW name = NULL;
     DWORD ret, error, blen = 0, i;
-    if (!pWSAEnumNameSpaceProvidersW)
-    {
-        win_skip("WSAEnumNameSpaceProvidersW not found\n");
-        return;
-    }
 
     SetLastError(0xdeadbeef);
-    ret = pWSAEnumNameSpaceProvidersW(&blen, name);
+    ret = WSAEnumNameSpaceProvidersW(&blen, name);
     error = WSAGetLastError();
 todo_wine
     ok(ret == SOCKET_ERROR, "Expected failure, got %u\n", ret);
@@ -10021,7 +9958,7 @@ todo_wine
 
     /* Invalid parameter tests */
     SetLastError(0xdeadbeef);
-    ret = pWSAEnumNameSpaceProvidersW(NULL, name);
+    ret = WSAEnumNameSpaceProvidersW(NULL, name);
     error = WSAGetLastError();
 todo_wine
     ok(ret == SOCKET_ERROR, "Expected failure, got %u\n", ret);
@@ -10029,7 +9966,7 @@ todo_wine
     ok(error == WSAEFAULT, "Expected 10014, got %u\n", error);
 
     SetLastError(0xdeadbeef);
-    ret = pWSAEnumNameSpaceProvidersW(NULL, NULL);
+    ret = WSAEnumNameSpaceProvidersW(NULL, NULL);
     error = WSAGetLastError();
 todo_wine
     ok(ret == SOCKET_ERROR, "Expected failure, got %u\n", ret);
@@ -10037,7 +9974,7 @@ todo_wine
     ok(error == WSAEFAULT, "Expected 10014, got %u\n", error);
 
     SetLastError(0xdeadbeef);
-    ret = pWSAEnumNameSpaceProvidersW(&blen, NULL);
+    ret = WSAEnumNameSpaceProvidersW(&blen, NULL);
     error = WSAGetLastError();
 todo_wine
     ok(ret == SOCKET_ERROR, "Expected failure, got %u\n", ret);
@@ -10046,7 +9983,7 @@ todo_wine
 
     name = HeapAlloc(GetProcessHeap(), 0, blen);
 
-    ret = pWSAEnumNameSpaceProvidersW(&blen, name);
+    ret = WSAEnumNameSpaceProvidersW(&blen, name);
 todo_wine
     ok(ret > 0, "Expected more than zero name space providers\n");
 
@@ -10756,46 +10693,40 @@ static void test_WSCGetProviderPath(void)
     WCHAR buffer[256];
     INT ret, err, len;
 
-    if (!pWSCGetProviderPath)
-    {
-        skip("WSCGetProviderPath is not available.\n");
-        return;
-    }
-
-    ret = pWSCGetProviderPath(NULL, NULL, NULL, NULL);
+    ret = WSCGetProviderPath(NULL, NULL, NULL, NULL);
     ok(ret == SOCKET_ERROR, "Got unexpected ret %d.\n", ret);
 
-    ret = pWSCGetProviderPath(&provider, NULL, NULL, NULL);
+    ret = WSCGetProviderPath(&provider, NULL, NULL, NULL);
     ok(ret == SOCKET_ERROR, "Got unexpected ret %d.\n", ret);
 
-    ret = pWSCGetProviderPath(NULL, buffer, NULL, NULL);
+    ret = WSCGetProviderPath(NULL, buffer, NULL, NULL);
     ok(ret == SOCKET_ERROR, "Got unexpected ret %d.\n", ret);
 
     len = -1;
-    ret = pWSCGetProviderPath(NULL, NULL, &len, NULL);
+    ret = WSCGetProviderPath(NULL, NULL, &len, NULL);
     ok(ret == SOCKET_ERROR, "Got unexpected ret %d.\n", ret);
     ok(len == -1, "Got unexpected len %d.\n", len);
 
     err = 0;
-    ret = pWSCGetProviderPath(NULL, NULL, NULL, &err);
+    ret = WSCGetProviderPath(NULL, NULL, NULL, &err);
     ok(ret == SOCKET_ERROR, "Got unexpected ret %d.\n", ret);
     ok(err == WSAEFAULT, "Got unexpected error %d.\n", err);
 
     err = 0;
-    ret = pWSCGetProviderPath(&provider, NULL, NULL, &err);
+    ret = WSCGetProviderPath(&provider, NULL, NULL, &err);
     ok(ret == SOCKET_ERROR, "Got unexpected ret %d.\n", ret);
     ok(err == WSAEFAULT, "Got unexpected error %d.\n", err);
 
     err = 0;
     len = -1;
-    ret = pWSCGetProviderPath(&provider, NULL, &len, &err);
+    ret = WSCGetProviderPath(&provider, NULL, &len, &err);
     ok(ret == SOCKET_ERROR, "Got unexpected ret %d.\n", ret);
     ok(err == WSAEINVAL, "Got unexpected error %d.\n", err);
     ok(len == -1, "Got unexpected len %d.\n", len);
 
     err = 0;
     len = 256;
-    ret = pWSCGetProviderPath(&provider, NULL, &len, &err);
+    ret = WSCGetProviderPath(&provider, NULL, &len, &err);
     todo_wine ok(ret == SOCKET_ERROR, "Got unexpected ret %d.\n", ret);
     todo_wine ok(err == WSAEINVAL, "Got unexpected error %d.\n", err);
     ok(len == 256, "Got unexpected len %d.\n", len);
@@ -10803,7 +10734,7 @@ static void test_WSCGetProviderPath(void)
     /* Valid pointers and length but invalid GUID */
     err = 0;
     len = 256;
-    ret = pWSCGetProviderPath(&provider, buffer, &len, &err);
+    ret = WSCGetProviderPath(&provider, buffer, &len, &err);
     todo_wine ok(ret == SOCKET_ERROR, "Got unexpected ret %d.\n", ret);
     todo_wine ok(err == WSAEINVAL, "Got unexpected error %d.\n", err);
     ok(len == 256, "Got unexpected len %d.\n", len);
