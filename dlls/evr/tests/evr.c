@@ -1065,6 +1065,9 @@ static void test_default_presenter(void)
     hwnd = create_window();
     ok(!!hwnd, "Failed to create a test window.\n");
 
+    hr = IMFVideoDisplayControl_GetVideoWindow(display_control, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
     hwnd2 = hwnd;
     hr = IMFVideoDisplayControl_GetVideoWindow(display_control, &hwnd2);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);

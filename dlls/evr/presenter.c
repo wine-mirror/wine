@@ -616,7 +616,12 @@ static HRESULT WINAPI video_presenter_control_GetVideoWindow(IMFVideoDisplayCont
 
     TRACE("%p, %p.\n", iface, window);
 
+    if (!window)
+        return E_POINTER;
+
+    EnterCriticalSection(&presenter->cs);
     *window = presenter->video_window;
+    LeaveCriticalSection(&presenter->cs);
 
     return S_OK;
 }
