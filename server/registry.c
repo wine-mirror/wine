@@ -410,7 +410,6 @@ static WCHAR *key_get_full_name( struct object *obj, data_size_t *ret_len )
     for (key = (struct key *)obj; key != root_key; key = key->parent)
     {
         memcpy( ret + len - key->namelen, key->name, key->namelen );
-        dump_strW( (WCHAR *)(ret + len - key->namelen), key->namelen, stderr, "" );
         len -= key->namelen + sizeof(WCHAR);
         memcpy( ret + len, &backslash, sizeof(WCHAR) );
     }
