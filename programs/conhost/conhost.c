@@ -184,18 +184,29 @@ static struct screen_buffer *create_screen_buffer( struct console *console, int 
     screen_buffer->console        = console;
     screen_buffer->id             = id;
     screen_buffer->mode           = ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT;
-    screen_buffer->cursor_size    = 100;
+    screen_buffer->cursor_size    = 25;
     screen_buffer->cursor_visible = 1;
     screen_buffer->width          = width;
     screen_buffer->height         = height;
     screen_buffer->attr           = 0x07;
     screen_buffer->popup_attr     = 0xf5;
-    screen_buffer->max_width      = 80;
-    screen_buffer->max_height     = 25;
-    screen_buffer->win.right      = min( screen_buffer->max_width - 1, width - 1 );
-    screen_buffer->win.bottom     = min( screen_buffer->max_height - 1, height - 1);
     screen_buffer->font.weight    = FW_NORMAL;
     screen_buffer->font.pitch_family = FIXED_PITCH | FF_DONTCARE;
+
+    if (console->active)
+    {
+        screen_buffer->max_width  = console->active->max_width;
+        screen_buffer->max_height = console->active->max_height;
+        screen_buffer->win.right  = console->active->win.right  - console->active->win.left;
+        screen_buffer->win.bottom = console->active->win.bottom - console->active->win.top;
+    }
+    else
+    {
+        screen_buffer->max_width  = width;
+        screen_buffer->max_height = height;
+        screen_buffer->win.right  = width - 1;
+        screen_buffer->win.bottom = height - 1;
+    }
 
     if (wine_rb_put( &screen_buffer_map, LongToPtr(id), &screen_buffer->entry ))
     {
