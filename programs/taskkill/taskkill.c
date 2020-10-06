@@ -102,12 +102,11 @@ static int WINAPIV taskkill_message_printfW(int msg, ...)
 
 static int taskkill_message(int msg)
 {
-    static const WCHAR formatW[] = {'%','1',0};
     WCHAR msg_buffer[8192];
 
     LoadStringW(GetModuleHandleW(NULL), msg, msg_buffer, ARRAY_SIZE(msg_buffer));
 
-    return taskkill_printfW(formatW, msg_buffer);
+    return taskkill_printfW(L"%1", msg_buffer);
 }
 
 /* Post WM_CLOSE to all top-level windows belonging to the process with specified PID. */
@@ -444,12 +443,6 @@ static BOOL add_to_task_list(WCHAR *name)
  * options are detected as parameters when placed after options that accept one. */
 static BOOL process_arguments(int argc, WCHAR *argv[])
 {
-    static const WCHAR opForceTerminate[] = {'f',0};
-    static const WCHAR opImage[] = {'i','m',0};
-    static const WCHAR opPID[] = {'p','i','d',0};
-    static const WCHAR opHelp[] = {'?',0};
-    static const WCHAR opTerminateChildren[] = {'t',0};
-
     if (argc > 1)
     {
         int i;
@@ -460,7 +453,7 @@ static BOOL process_arguments(int argc, WCHAR *argv[])
         if (argc == 2)
         {
             argdata = argv[1];
-            if ((*argdata == '/' || *argdata == '-') && !lstrcmpW(opHelp, argdata + 1))
+            if ((*argdata == '/' || *argdata == '-') && !lstrcmpW(L"?", argdata + 1))
             {
                 taskkill_message(STRING_USAGE);
                 exit(0);
@@ -476,14 +469,14 @@ static BOOL process_arguments(int argc, WCHAR *argv[])
                 goto invalid;
             argdata++;
 
-            if (!wcsicmp(opTerminateChildren, argdata))
+            if (!wcsicmp(L"t", argdata))
                 WINE_FIXME("argument T not supported\n");
-            if (!wcsicmp(opForceTerminate, argdata))
+            if (!wcsicmp(L"f", argdata))
                 force_termination = TRUE;
             /* Options /IM and /PID appear to behave identically, except for
              * the fact that they cannot be specified at the same time. */
-            else if ((got_im = !wcsicmp(opImage, argdata)) ||
-                     (got_pid = !wcsicmp(opPID, argdata)))
+            else if ((got_im = !wcsicmp(L"im", argdata)) ||
+                     (got_pid = !wcsicmp(L"pid", argdata)))
             {
                 if (!argv[i + 1])
                 {
