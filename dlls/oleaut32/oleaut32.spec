@@ -194,9 +194,9 @@
 197 stdcall VarDecFromStr(wstr long long ptr)
 198 stdcall VarDecFromDisp(ptr long ptr)
 199 stdcall VarDecFromBool(long ptr)
-200 stdcall GetErrorInfo(long ptr) ole32.GetErrorInfo
-201 stdcall SetErrorInfo(long ptr) ole32.SetErrorInfo
-202 stdcall CreateErrorInfo(ptr) ole32.CreateErrorInfo
+200 stdcall -import GetErrorInfo(long ptr)
+201 stdcall -import SetErrorInfo(long ptr)
+202 stdcall -import CreateErrorInfo(ptr)
 203 stdcall VarDecRound(ptr long ptr)
 204 stdcall VarDecCmp(ptr ptr)
 205 stdcall VarI2FromI1(long ptr)
