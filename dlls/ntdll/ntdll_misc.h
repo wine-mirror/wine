@@ -129,5 +129,6 @@ static inline void ascii_to_unicode( WCHAR *dst, const char *src, size_t len )
 
 /* FLS data */
 extern void init_global_fls_data(void) DECLSPEC_HIDDEN;
+extern TEB_FLS_DATA *fls_alloc_data(void) DECLSPEC_HIDDEN;
 
 #endif

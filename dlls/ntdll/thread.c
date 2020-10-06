@@ -294,7 +294,7 @@ static unsigned int fls_chunk_index_from_index( unsigned int index, unsigned int
     return chunk_index;
 }
 
-static TEB_FLS_DATA * fls_alloc_data(void)
+TEB_FLS_DATA *fls_alloc_data(void)
 {
     TEB_FLS_DATA *fls;
 

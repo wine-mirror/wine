@@ -3511,6 +3511,8 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unknown2, ULONG_PTR 
     InsertHeadList( &tls_links, &NtCurrentTeb()->TlsLinks );
     RtlReleasePebLock();
 
+    NtCurrentTeb()->FlsSlots = fls_alloc_data();
+
     if (!attach_done)  /* first time around */
     {
         attach_done = 1;

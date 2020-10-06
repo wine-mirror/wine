@@ -2629,8 +2629,7 @@ todo_wine
             SetLastError(0xdeadbeef);
             value = pFlsGetValue(fls_index);
             ok(!value, "FlsGetValue returned %p, expected NULL\n", value);
-            todo_wine
-                ok(GetLastError() == ERROR_SUCCESS, "FlsGetValue failed with error %u\n", GetLastError());
+            ok(GetLastError() == ERROR_SUCCESS, "FlsGetValue failed with error %u\n", GetLastError());
             ret = pFlsSetValue(fls_index, (void*) 0x31415);
             ok(ret, "FlsSetValue failed\n");
             fls_count++;
