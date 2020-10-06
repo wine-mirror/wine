@@ -42,6 +42,7 @@ struct input_stream
     IMFAttributes *attributes;
     IMFVideoMediaType *media_type;
     MFVideoNormalizedRect rect;
+    unsigned int zorder;
 };
 
 struct output_stream
@@ -510,6 +511,8 @@ static HRESULT WINAPI video_mixer_transform_AddInputStreams(IMFTransform *iface,
 
         if (SUCCEEDED(hr))
         {
+            unsigned int zorder = mixer->input_count;
+
             for (i = 0; i < count; ++i)
             {
                 if ((input = bsearch(&ids[i], inputs, len, sizeof(*inputs), video_mixer_compare_input_id)))
@@ -518,6 +521,13 @@ static HRESULT WINAPI video_mixer_transform_AddInputStreams(IMFTransform *iface,
             memcpy(&mixer->input_ids[mixer->input_count], ids, count * sizeof(*ids));
             memcpy(mixer->inputs, inputs, len * sizeof(*inputs));
             mixer->input_count += count;
+
+            for (i = 0; i < count; ++i)
+            {
+                if (SUCCEEDED(video_mixer_get_input(mixer, ids[i], &input)))
+                    input->zorder = zorder;
+                zorder++;
+            }
         }
     }
     LeaveCriticalSection(&mixer->cs);
@@ -1016,18 +1026,55 @@ static ULONG WINAPI video_mixer_control_Release(IMFVideoMixerControl2 *iface)
     return IMFTransform_Release(&mixer->IMFTransform_iface);
 }
 
-static HRESULT WINAPI video_mixer_control_SetStreamZOrder(IMFVideoMixerControl2 *iface, DWORD stream_id, DWORD zorder)
+static HRESULT WINAPI video_mixer_control_SetStreamZOrder(IMFVideoMixerControl2 *iface, DWORD id, DWORD zorder)
 {
-    FIXME("%p, %u, %u.\n", iface, stream_id, zorder);
+    struct video_mixer *mixer = impl_from_IMFVideoMixerControl2(iface);
+    struct input_stream *stream;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %u, %u.\n", iface, id, zorder);
+
+    /* Can't change reference stream. */
+    if (!id && zorder)
+        return E_INVALIDARG;
+
+    EnterCriticalSection(&mixer->cs);
+
+    if (zorder >= mixer->input_count)
+        hr = E_INVALIDARG;
+    else if (SUCCEEDED(hr = video_mixer_get_input(mixer, id, &stream)))
+    {
+        /* Lowest zorder only applies to reference stream. */
+        if (id && !zorder)
+            hr = MF_E_INVALIDREQUEST;
+        else
+            stream->zorder = zorder;
+    }
+
+    LeaveCriticalSection(&mixer->cs);
+
+    return hr;
 }
 
-static HRESULT WINAPI video_mixer_control_GetStreamZOrder(IMFVideoMixerControl2 *iface, DWORD stream_id, DWORD *zorder)
+static HRESULT WINAPI video_mixer_control_GetStreamZOrder(IMFVideoMixerControl2 *iface, DWORD id, DWORD *zorder)
 {
-    FIXME("%p, %u, %p.\n", iface, stream_id, zorder);
+    struct video_mixer *mixer = impl_from_IMFVideoMixerControl2(iface);
+    struct input_stream *stream;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %u, %p.\n", iface, id, zorder);
+
+    if (!zorder)
+        return E_POINTER;
+
+    EnterCriticalSection(&mixer->cs);
+
+    if (SUCCEEDED(hr = video_mixer_get_input(mixer, id, &stream)))
+        *zorder = stream->zorder;
+
+    LeaveCriticalSection(&mixer->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI video_mixer_control_SetStreamOutputRect(IMFVideoMixerControl2 *iface, DWORD id,

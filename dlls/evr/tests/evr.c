@@ -1669,6 +1669,110 @@ static void test_mixer_output_rectangle(void)
     IMFTransform_Release(mixer);
 }
 
+static void test_mixer_zorder(void)
+{
+    IMFVideoMixerControl *mixer_control;
+    IMFTransform *mixer;
+    DWORD ids[2];
+    DWORD value;
+    HRESULT hr;
+
+    hr = MFCreateVideoMixer(NULL, &IID_IDirect3DDevice9, &IID_IMFTransform, (void **)&mixer);
+    ok(hr == S_OK, "Failed to create a mixer, hr %#x.\n", hr);
+
+    hr = IMFTransform_QueryInterface(mixer, &IID_IMFVideoMixerControl, (void **)&mixer_control);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoMixerControl_GetStreamZOrder(mixer_control, 0, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoMixerControl_GetStreamZOrder(mixer_control, 1, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    value = 1;
+    hr = IMFVideoMixerControl_GetStreamZOrder(mixer_control, 0, &value);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!value, "Unexpected value %u.\n", value);
+
+    value = 1;
+    hr = IMFVideoMixerControl_GetStreamZOrder(mixer_control, 1, &value);
+    ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoMixerControl_SetStreamZOrder(mixer_control, 0, 1);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoMixerControl_SetStreamZOrder(mixer_control, 1, 1);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    /* Exceeds maximum stream number. */
+    hr = IMFVideoMixerControl_SetStreamZOrder(mixer_control, 0, 20);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    value = 1;
+    hr = IMFTransform_AddInputStreams(mixer, 1, &value);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    value = 0;
+    hr = IMFVideoMixerControl_GetStreamZOrder(mixer_control, 1, &value);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(value == 1, "Unexpected zorder %u.\n", value);
+
+    hr = IMFVideoMixerControl_SetStreamZOrder(mixer_control, 1, 0);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoMixerControl_SetStreamZOrder(mixer_control, 1, 2);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoMixerControl_SetStreamZOrder(mixer_control, 0, 0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    value = 2;
+    hr = IMFTransform_AddInputStreams(mixer, 1, &value);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    value = 0;
+    hr = IMFVideoMixerControl_GetStreamZOrder(mixer_control, 2, &value);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(value == 2, "Unexpected zorder %u.\n", value);
+
+    hr = IMFVideoMixerControl_SetStreamZOrder(mixer_control, 2, 1);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    value = 3;
+    hr = IMFTransform_AddInputStreams(mixer, 1, &value);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    value = 0;
+    hr = IMFVideoMixerControl_GetStreamZOrder(mixer_control, 3, &value);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(value == 3, "Unexpected zorder %u.\n", value);
+
+    hr = IMFTransform_DeleteInputStream(mixer, 1);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMFTransform_DeleteInputStream(mixer, 2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMFTransform_DeleteInputStream(mixer, 3);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    ids[0] = 2;
+    ids[1] = 1;
+    hr = IMFTransform_AddInputStreams(mixer, 2, ids);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    value = 0;
+    hr = IMFVideoMixerControl_GetStreamZOrder(mixer_control, 1, &value);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(value == 2, "Unexpected zorder %u.\n", value);
+
+    value = 0;
+    hr = IMFVideoMixerControl_GetStreamZOrder(mixer_control, 2, &value);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(value == 1, "Unexpected zorder %u.\n", value);
+
+    IMFVideoMixerControl_Release(mixer_control);
+    IMFTransform_Release(mixer);
+}
+
 START_TEST(evr)
 {
     CoInitialize(NULL);
@@ -1689,6 +1793,7 @@ START_TEST(evr)
     test_presenter_video_position();
     test_presenter_native_video_size();
     test_mixer_output_rectangle();
+    test_mixer_zorder();
 
     CoUninitialize();
 }
