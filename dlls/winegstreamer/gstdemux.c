@@ -1722,6 +1722,8 @@ static HRESULT gstdecoder_source_get_media_type(struct gstdemux_source *pin,
         GST_VIDEO_FORMAT_BGRA,
         GST_VIDEO_FORMAT_BGRx,
         GST_VIDEO_FORMAT_BGR,
+        GST_VIDEO_FORMAT_RGB16,
+        GST_VIDEO_FORMAT_RGB15,
     };
 
     assert(caps); /* We shouldn't be able to get here if caps haven't been set. */
