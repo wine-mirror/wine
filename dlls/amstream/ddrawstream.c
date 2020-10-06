@@ -58,6 +58,7 @@ struct ddraw_stream
     AM_MEDIA_TYPE mt;
     struct format format;
     FILTER_STATE state;
+    REFERENCE_TIME segment_start;
     BOOL eos;
     BOOL flushing;
     CONDITION_VARIABLE update_queued_cv;
@@ -1192,9 +1193,18 @@ static HRESULT WINAPI ddraw_sink_EndFlush(IPin *iface)
 
 static HRESULT WINAPI ddraw_sink_NewSegment(IPin *iface, REFERENCE_TIME start, REFERENCE_TIME stop, double rate)
 {
-    FIXME("iface %p, start %s, stop %s, rate %0.16e, stub!\n",
-            iface, wine_dbgstr_longlong(start), wine_dbgstr_longlong(stop), rate);
-    return E_NOTIMPL;
+    struct ddraw_stream *stream = impl_from_IPin(iface);
+
+    TRACE("stream %p, start %s, stop %s, rate %0.16e\n",
+            stream, wine_dbgstr_longlong(start), wine_dbgstr_longlong(stop), rate);
+
+    EnterCriticalSection(&stream->cs);
+
+    stream->segment_start = start;
+
+    LeaveCriticalSection(&stream->cs);
+
+    return S_OK;
 }
 
 static const IPinVtbl ddraw_sink_vtbl =
@@ -1288,6 +1298,8 @@ static HRESULT WINAPI ddraw_meminput_Receive(IMemInputPin *iface, IMediaSample *
     BITMAPINFOHEADER *bitmap_info;
     REFERENCE_TIME start_time = 0;
     REFERENCE_TIME end_time = 0;
+    STREAM_TIME start_stream_time;
+    STREAM_TIME end_stream_time;
     BYTE *top_down_pointer;
     int top_down_stride;
     BYTE *pointer;
@@ -1313,6 +1325,9 @@ static HRESULT WINAPI ddraw_meminput_Receive(IMemInputPin *iface, IMediaSample *
     top_down_stride = top_down ? stride : -stride;
     top_down_pointer = top_down ? pointer : pointer + stride * (bitmap_info->biHeight - 1);
 
+    start_stream_time = start_time + stream->segment_start;
+    end_stream_time = end_time + stream->segment_start;
+
     for (;;)
     {
         if (stream->state == State_Stopped)
@@ -1329,7 +1344,8 @@ static HRESULT WINAPI ddraw_meminput_Receive(IMemInputPin *iface, IMediaSample *
         {
             struct ddraw_sample *sample = LIST_ENTRY(list_head(&stream->update_queue), struct ddraw_sample, entry);
 
-            sample->update_hr = process_update(sample, top_down_stride, top_down_pointer, start_time, end_time);
+            sample->update_hr = process_update(sample, top_down_stride, top_down_pointer,
+                    start_stream_time, end_stream_time);
 
             remove_queued_update(sample);
             LeaveCriticalSection(&stream->cs);
