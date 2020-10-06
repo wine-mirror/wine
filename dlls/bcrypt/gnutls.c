@@ -1003,7 +1003,7 @@ static NTSTATUS CDECL key_export_dsa_capi( struct key *key, UCHAR *buf, ULONG le
     DSSPUBKEY *pubkey;
     gnutls_datum_t p, q, g, y, x;
     UCHAR *src, *dst;
-    int ret, size;
+    int i, ret, size;
 
     if ((ret = pgnutls_privkey_export_dsa_raw( key_data(key)->privkey, &p, &q, &g, &y, &x )))
     {
@@ -1033,24 +1033,24 @@ static NTSTATUS CDECL key_export_dsa_capi( struct key *key, UCHAR *buf, ULONG le
         pubkey->bitlen = key->u.a.bitlen;
 
         dst = (UCHAR *)(pubkey + 1);
-        if (p.size == size + 1) src = p.data + 1;
+        if (p.size % 2) src = p.data + 1;
         else src = p.data;
-        memcpy( dst, src, size );
+        for (i = 0; i < size; i++) dst[i] = src[size - i - 1];
 
         dst += size;
-        if (q.size == 21) src = q.data + 1;
+        if (q.size % 2) src = q.data + 1;
         else src = q.data;
-        memcpy( dst, src, 20 );
+        for (i = 0; i < 20; i++) dst[i] = src[20 - i - 1];
 
         dst += 20;
-        if (g.size == size + 1) src = g.data + 1;
+        if (g.size % 2) src = g.data + 1;
         else src = g.data;
-        memcpy( dst, src, size );
+        for (i = 0; i < size; i++) dst[i] = src[size - i - 1];
 
         dst += size;
-        if (x.size == 21) src = x.data + 1;
+        if (x.size % 2) src = x.data + 1;
         else src = x.data;
-        memcpy( dst, src, 20 );
+        for (i = 0; i < 20; i++) dst[i] = src[20 - i - 1];
 
         dst += 20;
         memcpy( dst, &key->u.a.dss_seed, sizeof(key->u.a.dss_seed) );
@@ -1067,7 +1067,8 @@ static NTSTATUS CDECL key_import_dsa_capi( struct key *key, UCHAR *buf, ULONG le
     gnutls_privkey_t handle;
     gnutls_datum_t p, q, g, y, x;
     unsigned char dummy[128];
-    int ret, size;
+    unsigned char *data, p_data[128], q_data[20], g_data[128], x_data[20];
+    int i, ret, size;
 
     if ((ret = pgnutls_privkey_init( &handle )))
     {
@@ -1077,16 +1078,33 @@ static NTSTATUS CDECL key_import_dsa_capi( struct key *key, UCHAR *buf, ULONG le
 
     hdr = (BLOBHEADER *)buf;
     pubkey = (DSSPUBKEY *)(hdr + 1);
-    size = pubkey->bitlen / 8;
+    if ((size = pubkey->bitlen / 8) > sizeof(p_data))
+    {
+        FIXME( "size %u not supported\n", size );
+        pgnutls_privkey_deinit( handle );
+        return STATUS_NOT_SUPPORTED;
+    }
+    data = (unsigned char *)(pubkey + 1);
 
-    p.data = (unsigned char *)(pubkey + 1);
+    p.data = p_data;
     p.size = size;
-    q.data = p.data + size;
-    q.size = 20;
-    g.data = q.data + 20;
+    for (i = 0; i < p.size; i++) p.data[i] = data[p.size - i - 1];
+    data += p.size;
+
+    q.data = q_data;
+    q.size = sizeof(q_data);
+    for (i = 0; i < q.size; i++) q.data[i] = data[q.size - i - 1];
+    data += q.size;
+
+    g.data = g_data;
     g.size = size;
-    x.data = g.data + size;
-    x.size = 20;
+    for (i = 0; i < g.size; i++) g.data[i] = data[g.size - i - 1];
+    data += g.size;
+
+    x.data = x_data;
+    x.size = sizeof(x_data);
+    for (i = 0; i < x.size; i++) x.data[i] = data[x.size - i - 1];
+    data += x.size;
 
     WARN( "using dummy public key\n" );
     memset( dummy, 1, sizeof(dummy) );
@@ -1100,7 +1118,7 @@ static NTSTATUS CDECL key_import_dsa_capi( struct key *key, UCHAR *buf, ULONG le
         return STATUS_INTERNAL_ERROR;
     }
 
-    memcpy( &key->u.a.dss_seed, x.data + x.size, sizeof(key->u.a.dss_seed) );
+    memcpy( &key->u.a.dss_seed, data, sizeof(key->u.a.dss_seed) );
 
     key_data(key)->privkey = handle;
     return STATUS_SUCCESS;
