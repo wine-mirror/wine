@@ -573,8 +573,6 @@ static VOID WINAPI simple_server ( server_params *par )
     int pos, n_recvd, n_sent, n_expected = gen->n_chunks * gen->chunk_size, tmp, i,
         id = GetCurrentThreadId();
 
-    trace ( "simple_server (%x) starting\n", id );
-
     set_so_opentype ( FALSE ); /* non-overlapped */
     server_start ( par );
     mem = TlsGetValue ( tls );
@@ -582,13 +580,10 @@ static VOID WINAPI simple_server ( server_params *par )
     wsa_ok ( set_blocking ( mem->s, TRUE ), 0 ==, "simple_server (%x): failed to set blocking mode: %d\n");
     wsa_ok ( listen ( mem->s, SOMAXCONN ), 0 ==, "simple_server (%x): listen failed: %d\n");
 
-    trace ( "simple_server (%x) ready\n", id );
     SetEvent ( server_ready ); /* notify clients */
 
     for ( i = 0; i < min ( gen->n_clients, MAX_CLIENTS ); i++ )
     {
-        trace ( "simple_server (%x): waiting for client\n", id );
-
         /* accept a single connection */
         tmp = sizeof ( mem->sock[0].peer );
         mem->sock[0].s = accept ( mem->s, (struct sockaddr*) &mem->sock[0].peer, &tmp );
@@ -615,7 +610,6 @@ static VOID WINAPI simple_server ( server_params *par )
         mem->sock[0].s = INVALID_SOCKET;
     }
 
-    trace ( "simple_server (%x) exiting\n", id );
     server_stop ();
 }
 
@@ -630,8 +624,6 @@ static VOID WINAPI oob_server ( server_params *par )
     int pos, n_sent, n_recvd, n_expected = gen->n_chunks * gen->chunk_size, tmp,
         id = GetCurrentThreadId();
 
-    trace ( "oob_server (%x) starting\n", id );
-
     set_so_opentype ( FALSE ); /* non-overlapped */
     server_start ( par );
     mem = TlsGetValue ( tls );
@@ -639,10 +631,7 @@ static VOID WINAPI oob_server ( server_params *par )
     wsa_ok ( set_blocking ( mem->s, TRUE ), 0 ==, "oob_server (%x): failed to set blocking mode: %d\n");
     wsa_ok ( listen ( mem->s, SOMAXCONN ), 0 ==, "oob_server (%x): listen failed: %d\n");
 
-    trace ( "oob_server (%x) ready\n", id );
     SetEvent ( server_ready ); /* notify clients */
-
-    trace ( "oob_server (%x): waiting for client\n", id );
 
     /* accept a single connection */
     tmp = sizeof ( mem->sock[0].peer );
@@ -679,7 +668,6 @@ static VOID WINAPI oob_server ( server_params *par )
     n_expected -= 8;
 
     ioctlsocket ( mem->sock[0].s, SIOCATMARK, &atmark );
-    trace( "oob_server (%x): %s the OOB mark: %i\n", id, atmark == 1 ? "not at" : "at", atmark );
 
     /* Receive the rest of the out-of-band data and check atmark state */
     do_synchronous_recv ( mem->sock[0].s, mem->sock[0].buf, n_expected, 0, par->buflen );
@@ -691,7 +679,6 @@ static VOID WINAPI oob_server ( server_params *par )
     wsa_ok ( closesocket ( mem->sock[0].s ),  0 ==, "oob_server (%x): closesocket error: %d\n" );
     mem->sock[0].s = INVALID_SOCKET;
 
-    trace ( "oob_server (%x) exiting\n", id );
     server_stop ();
 }
 
@@ -708,8 +695,6 @@ static VOID WINAPI select_server ( server_params *par )
     struct timeval timeout = {0,10}; /* wait for 10 milliseconds */
     fd_set fds_recv, fds_send, fds_openrecv, fds_opensend;
 
-    trace ( "select_server (%x) starting\n", id );
-
     set_so_opentype ( FALSE ); /* non-overlapped */
     server_start ( par );
     mem = TlsGetValue ( tls );
@@ -717,7 +702,6 @@ static VOID WINAPI select_server ( server_params *par )
     wsa_ok ( set_blocking ( mem->s, FALSE ), 0 ==, "select_server (%x): failed to set blocking mode: %d\n");
     wsa_ok ( listen ( mem->s, SOMAXCONN ), 0 ==, "select_server (%x): listen failed: %d\n");
 
-    trace ( "select_server (%x) ready\n", id );
     SetEvent ( server_ready ); /* notify clients */
 
     FD_ZERO ( &fds_openrecv );
@@ -740,8 +724,6 @@ static VOID WINAPI select_server ( server_params *par )
         /* check for incoming requests */
         if ( FD_ISSET ( mem->s, &fds_recv ) ) {
             n_set += 1;
-
-            trace ( "select_server (%x): accepting client connection\n", id );
 
             /* accept a single connection */
             tmp = sizeof ( mem->sock[n_connections].peer );
@@ -821,7 +803,6 @@ static VOID WINAPI select_server ( server_params *par )
         mem->sock[i].s = INVALID_SOCKET;
     }
 
-    trace ( "select_server (%x) exiting\n", id );
     server_stop ();
 }
 
@@ -837,10 +818,8 @@ static VOID WINAPI simple_client ( client_params *par )
     int pos, n_sent, n_recvd, n_expected = gen->n_chunks * gen->chunk_size, id;
 
     id = GetCurrentThreadId();
-    trace ( "simple_client (%x): starting\n", id );
     /* wait here because we want to call set_so_opentype before creating a socket */
     WaitForSingleObject ( server_ready, INFINITE );
-    trace ( "simple_client (%x): server ready\n", id );
 
     check_so_opentype ();
     set_so_opentype ( FALSE ); /* non-overlapped */
@@ -852,7 +831,6 @@ static VOID WINAPI simple_client ( client_params *par )
              0 ==, "simple_client (%x): connect error: %d\n" );
     ok ( set_blocking ( mem->s, TRUE ) == 0,
          "simple_client (%x): failed to set blocking mode\n", id );
-    trace ( "simple_client (%x) connected\n", id );
 
     /* send data to server */
     n_sent = do_synchronous_send ( mem->s, mem->send_buf, n_expected, 0, par->buflen );
@@ -873,7 +851,6 @@ static VOID WINAPI simple_client ( client_params *par )
 
     /* cleanup */
     read_zero_bytes ( mem->s );
-    trace ( "simple_client (%x) exiting\n", id );
     client_stop ();
 }
 
@@ -887,10 +864,8 @@ static VOID WINAPI oob_client ( client_params *par )
     int pos, n_sent, n_recvd, n_expected = gen->n_chunks * gen->chunk_size, id;
 
     id = GetCurrentThreadId();
-    trace ( "oob_client (%x): starting\n", id );
     /* wait here because we want to call set_so_opentype before creating a socket */
     WaitForSingleObject ( server_ready, INFINITE );
-    trace ( "oob_client (%x): server ready\n", id );
 
     check_so_opentype ();
     set_so_opentype ( FALSE ); /* non-overlapped */
@@ -902,7 +877,6 @@ static VOID WINAPI oob_client ( client_params *par )
              0 ==, "oob_client (%x): connect error: %d\n" );
     ok ( set_blocking ( mem->s, TRUE ) == 0,
          "oob_client (%x): failed to set blocking mode\n", id );
-    trace ( "oob_client (%x) connected\n", id );
 
     /* send data to server */
     n_sent = do_synchronous_send ( mem->s, mem->send_buf, n_expected, 0, par->buflen );
@@ -926,7 +900,6 @@ static VOID WINAPI oob_client ( client_params *par )
 
     /* cleanup */
     read_zero_bytes ( mem->s );
-    trace ( "oob_client (%x) exiting\n", id );
     client_stop ();
 }
 
@@ -942,10 +915,8 @@ static VOID WINAPI simple_mixed_client ( client_params *par )
     struct sockaddr test;
 
     id = GetCurrentThreadId();
-    trace ( "simple_client (%x): starting\n", id );
     /* wait here because we want to call set_so_opentype before creating a socket */
     WaitForSingleObject ( server_ready, INFINITE );
-    trace ( "simple_client (%x): server ready\n", id );
 
     check_so_opentype ();
     set_so_opentype ( FALSE ); /* non-overlapped */
@@ -957,7 +928,6 @@ static VOID WINAPI simple_mixed_client ( client_params *par )
              0 ==, "simple_client (%x): connect error: %d\n" );
     ok ( set_blocking ( mem->s, TRUE ) == 0,
          "simple_client (%x): failed to set blocking mode\n", id );
-    trace ( "simple_client (%x) connected\n", id );
 
     /* send data to server */
     n_sent = do_synchronous_send ( mem->s, mem->send_buf, n_expected, 0, par->buflen );
@@ -995,7 +965,6 @@ static VOID WINAPI simple_mixed_client ( client_params *par )
 
     /* cleanup */
     read_zero_bytes ( mem->s );
-    trace ( "simple_client (%x) exiting\n", id );
     client_stop ();
 }
 
@@ -1013,9 +982,7 @@ static void WINAPI event_client ( client_params *par )
     char *send_last, *recv_last, *send_p, *recv_p;
     LONG mask = FD_READ | FD_WRITE | FD_CLOSE;
 
-    trace ( "event_client (%x): starting\n", id );
     client_start ( par );
-    trace ( "event_client (%x): server ready\n", id );
 
     mem = TlsGetValue ( tls );
 
@@ -1034,8 +1001,6 @@ static void WINAPI event_client ( client_params *par )
         ok ( err == 0, "event_client (%x): connect error: %d\n", id, err );
         if ( err ) goto out;
     }
-
-    trace ( "event_client (%x) connected\n", id );
 
     WSAEventSelect ( mem->s, event, mask );
 
@@ -1073,7 +1038,6 @@ static void WINAPI event_client ( client_params *par )
 
             if ( send_p == send_last )
             {
-                trace ( "event_client (%x): all data sent - shutdown\n", id );
                 shutdown ( mem->s, SD_SEND );
                 mask &= ~FD_WRITE;
                 WSAEventSelect ( mem->s, event, mask );
@@ -1094,7 +1058,6 @@ static void WINAPI event_client ( client_params *par )
                 if ( recv_p == recv_last )
                 {
                     mask &= ~FD_READ;
-                    trace ( "event_client (%x): all data received\n", id );
                     WSAEventSelect ( mem->s, event, mask );
                     break;
                 }
@@ -1106,7 +1069,6 @@ static void WINAPI event_client ( client_params *par )
         }   
         if ( wsa_events.lNetworkEvents & FD_CLOSE )
         {
-            trace ( "event_client (%x): close event\n", id );
             err = wsa_events.iErrorCode[ FD_CLOSE_BIT ];
             ok ( err == 0, "event_client (%x): FD_CLOSE error code: %d\n", id, err );
             break;
@@ -1124,7 +1086,6 @@ static void WINAPI event_client ( client_params *par )
 
 out:
     WSACloseEvent ( event );
-    trace ( "event_client (%x) exiting\n", id );
     client_stop ();
 }
 
@@ -1612,9 +1573,6 @@ todo_wine
         ok(!err,"getsockopt failed with %d\n", WSAGetLastError());
         ok(size == sizeof(WSAPROTOCOL_INFOW), "got size %d\n", size);
 
-        trace("provider name '%s', family %d, type %d, proto %d\n",
-              infoA.szProtocol, prottest[i].family, prottest[i].type, prottest[i].proto);
-
         ok(infoA.szProtocol[0], "WSAPROTOCOL_INFOA was not filled\n");
         ok(infoW.szProtocol[0], "WSAPROTOCOL_INFOW was not filled\n");
 
@@ -1956,7 +1914,6 @@ static void test_so_reuseaddr(void)
     if(rc==0)
     {
         int s3=socket(AF_INET, SOCK_STREAM, 0), s4;
-        trace("<= Win XP behavior of SO_REUSEADDR\n");
 
         /* If we could bind again in the same port this is Windows version <= XP.
          * Lets test if we can really connect to one of them. */
@@ -1982,7 +1939,6 @@ static void test_so_reuseaddr(void)
     }
     else
     {
-        trace(">= Win 2003 behavior of SO_REUSEADDR\n");
         err = WSAGetLastError();
         ok(err==WSAEACCES, "expected 10013, got %d\n", err);
 
@@ -2622,8 +2578,6 @@ static void test_WSASocket(void)
     }
     else
     {
-        trace("SOCK_RAW is supported\n");
-
         size = sizeof(socktype);
         socktype = 0xdead;
         err = getsockopt(sock, SOL_SOCKET, SO_TYPE, (char *) &socktype, &size);
@@ -2671,8 +2625,6 @@ static void test_WSASocket(void)
     {
         WSAPROTOCOL_INFOA info;
         closesocket(sock);
-
-        trace("IPX is supported\n");
 
         sock = WSASocketA(0, 0, NSPROTO_IPX, NULL, 0, 0);
         ok(sock != INVALID_SOCKET, "Failed to create socket: %d\n",
@@ -3864,8 +3816,6 @@ static void test_accept(void)
     connector = setup_connector_socket(&address, socklen, FALSE);
     if (connector == INVALID_SOCKET) goto done;
 
-    trace("Blocking accept next\n");
-
     accepted = WSAAccept(server_socket, NULL, NULL, AlwaysDeferConditionFunc, 0);
     ok(accepted == INVALID_SOCKET && WSAGetLastError() == WSATRY_AGAIN, "Failed to defer connection, %d\n", WSAGetLastError());
 
@@ -4153,7 +4103,6 @@ static void test_getsockname(void)
             ret = getsockname(sock, (struct sockaddr*)&sa_get, &sa_get_len);
             ok(ret == 0, "getsockname failed with %d\n", GetLastError());
             strcpy(ipstr, inet_ntoa(sa_get.sin_addr));
-            trace("testing bind on interface %s\n", ipstr);
             ok(sa_get.sin_addr.s_addr == sa_set.sin_addr.s_addr,
                "address does not match: %s != %s\n", ipstr, inet_ntoa(sa_set.sin_addr));
 
@@ -4238,13 +4187,13 @@ static void test_gethostbyname(void)
     addr_list = (struct in_addr **)he->h_addr_list;
     strcpy(first_ip, inet_ntoa(*addr_list[0]));
 
-    trace("List of local IPs:\n");
+    if (winetest_debug > 1) trace("List of local IPs:\n");
     for(count = 0; addr_list[count] != NULL; count++)
     {
         char *ip = inet_ntoa(*addr_list[count]);
         if (!strcmp(ip, "127.0.0.1"))
             local_ip = TRUE;
-        trace("%s\n", ip);
+        if (winetest_debug > 1) trace("%s\n", ip);
     }
 
     if (local_ip)
@@ -5354,8 +5303,6 @@ static void test_events(int useMessages)
 
     if (useMessages)
     {
-        trace("Event test using messages\n");
-
         wndclass.cbSize         = sizeof(wndclass);
         wndclass.style          = CS_HREDRAW | CS_VREDRAW;
         wndclass.lpfnWndProc    = ws2_test_WndProc;
@@ -5400,8 +5347,6 @@ static void test_events(int useMessages)
     }
     else
     {
-        trace("Event test using events\n");
-
         hEvent = WSACreateEvent();
         if (hEvent == INVALID_HANDLE_VALUE)
         {
@@ -7026,7 +6971,6 @@ static void test_GetAddrInfoW(void)
     }
 
     /* Test IDN resolution (Internationalized Domain Names) present since Windows 8 */
-    trace("Testing punycode IDN %s\n", wine_dbgstr_w(idn_punycode));
     result = NULL;
     ret = pGetAddrInfoW(idn_punycode, NULL, NULL, &result);
     ok(!ret, "got %d expected success\n", ret);
@@ -7043,7 +6987,6 @@ static void test_GetAddrInfoW(void)
     ok(!ret, "got %d expected success\n", ret);
     ok(result != NULL, "got %p\n", result);
 
-    trace("Testing unicode IDN %s\n", wine_dbgstr_w(idn_domain));
     result2 = NULL;
     ret = pGetAddrInfoW(idn_domain, NULL, NULL, &result2);
     if (ret == WSAHOST_NOT_FOUND && broken(1))
@@ -9921,6 +9864,8 @@ todo_wine
             break;
         }
 
+        if (winetest_debug <= 1) continue;
+
         WideCharToMultiByte(CP_ACP, 0, qs->lpszServiceInstanceName, -1,
                             strbuff, sizeof(strbuff), NULL, NULL);
         trace("Network Name: %s\n", strbuff);
@@ -10007,7 +9952,7 @@ todo_wine
 static void test_WSAEnumNameSpaceProvidersA(void)
 {
     LPWSANAMESPACE_INFOA name = NULL;
-    DWORD ret, error, blen = 0, i;
+    DWORD ret, error, blen = 0;
     if (!pWSAEnumNameSpaceProvidersA)
     {
         win_skip("WSAEnumNameSpaceProvidersA not found\n");
@@ -10052,26 +9997,6 @@ todo_wine
     ret = pWSAEnumNameSpaceProvidersA(&blen, name);
 todo_wine
     ok(ret > 0, "Expected more than zero name space providers\n");
-
-    for (i = 0;i < ret; i++)
-    {
-        trace("Name space Identifier (%p): %s\n", name[i].lpszIdentifier,
-              name[i].lpszIdentifier);
-        switch (name[i].dwNameSpace)
-        {
-            case NS_DNS:
-                trace("\tName space ID: NS_DNS (%u)\n", name[i].dwNameSpace);
-                break;
-            case NS_NLA:
-                trace("\tName space ID: NS_NLA (%u)\n", name[i].dwNameSpace);
-                break;
-            default:
-                trace("\tName space ID: Unknown (%u)\n", name[i].dwNameSpace);
-                break;
-        }
-        trace("\tActive:  %d\n", name[i].fActive);
-        trace("\tVersion: %d\n", name[i].dwVersion);
-    }
 
     HeapFree(GetProcessHeap(), 0, name);
 }
@@ -10125,24 +10050,27 @@ todo_wine
 todo_wine
     ok(ret > 0, "Expected more than zero name space providers\n");
 
-    for (i = 0;i < ret; i++)
+    if (winetest_debug > 1)
     {
-        trace("Name space Identifier (%p): %s\n", name[i].lpszIdentifier,
-               wine_dbgstr_w(name[i].lpszIdentifier));
-        switch (name[i].dwNameSpace)
+        for (i = 0;i < ret; i++)
         {
-            case NS_DNS:
-                trace("\tName space ID: NS_DNS (%u)\n", name[i].dwNameSpace);
-                break;
-            case NS_NLA:
-                trace("\tName space ID: NS_NLA (%u)\n", name[i].dwNameSpace);
-                break;
-            default:
-                trace("\tName space ID: Unknown (%u)\n", name[i].dwNameSpace);
-                break;
+            trace("Name space Identifier (%p): %s\n", name[i].lpszIdentifier,
+                   wine_dbgstr_w(name[i].lpszIdentifier));
+            switch (name[i].dwNameSpace)
+            {
+                case NS_DNS:
+                    trace("\tName space ID: NS_DNS (%u)\n", name[i].dwNameSpace);
+                    break;
+                case NS_NLA:
+                    trace("\tName space ID: NS_NLA (%u)\n", name[i].dwNameSpace);
+                    break;
+                default:
+                    trace("\tName space ID: Unknown (%u)\n", name[i].dwNameSpace);
+                    break;
+            }
+            trace("\tActive:  %d\n", name[i].fActive);
+            trace("\tVersion: %d\n", name[i].dwVersion);
         }
-        trace("\tActive:  %d\n", name[i].fActive);
-        trace("\tVersion: %d\n", name[i].dwVersion);
     }
 
     HeapFree(GetProcessHeap(), 0, name);
@@ -10900,11 +10828,7 @@ START_TEST( sock )
     test_extendedSocketOptions();
 
     for (i = 0; i < ARRAY_SIZE(tests); i++)
-    {
-        trace ( " **** STARTING TEST %d ****\n", i );
-        do_test (  &tests[i] );
-        trace ( " **** TEST %d COMPLETE ****\n", i );
-    }
+        do_test(&tests[i]);
 
     test_UDP();
 
