@@ -168,7 +168,6 @@ static RTL_CRITICAL_SECTION peb_lock = { &peb_critsect_debug, -1, 0, 0, 0, 0 };
 static PEB_LDR_DATA ldr = { sizeof(ldr), TRUE };
 static RTL_BITMAP tls_bitmap;
 static RTL_BITMAP tls_expansion_bitmap;
-static RTL_BITMAP fls_bitmap;
 
 static WINE_MODREF *cached_modref;
 static WINE_MODREF *current_modref;
@@ -4005,7 +4004,6 @@ static NTSTATUS process_init(void)
     peb->FastPebLock        = &peb_lock;
     peb->TlsBitmap          = &tls_bitmap;
     peb->TlsExpansionBitmap = &tls_expansion_bitmap;
-    peb->FlsBitmap          = &fls_bitmap;
     peb->LoaderLock         = &loader_section;
     peb->OSMajorVersion     = 5;
     peb->OSMinorVersion     = 1;
@@ -4014,13 +4012,11 @@ static NTSTATUS process_init(void)
     peb->SessionId          = 1;
     peb->ProcessHeap        = RtlCreateHeap( HEAP_GROWABLE, NULL, 0, 0, NULL, NULL );
 
-    InitializeListHead( &peb->FlsListHead );
     RtlInitializeBitMap( &tls_bitmap, peb->TlsBitmapBits, sizeof(peb->TlsBitmapBits) * 8 );
     RtlInitializeBitMap( &tls_expansion_bitmap, peb->TlsExpansionBitmapBits,
                          sizeof(peb->TlsExpansionBitmapBits) * 8 );
-    RtlInitializeBitMap( &fls_bitmap, peb->FlsBitmapBits, sizeof(peb->FlsBitmapBits) * 8 );
     RtlSetBits( peb->TlsBitmap, 0, 1 ); /* TLS index 0 is reserved and should be initialized to NULL. */
-    RtlSetBits( peb->FlsBitmap, 0, 1 );
+    init_global_fls_data();
 
     InitializeListHead( &ldr.InLoadOrderModuleList );
     InitializeListHead( &ldr.InMemoryOrderModuleList );

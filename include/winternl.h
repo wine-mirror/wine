@@ -265,6 +265,32 @@ typedef struct _TEB_ACTIVE_FRAME_EX
     void            *ExtensionIdentifier;
 } TEB_ACTIVE_FRAME_EX, *PTEB_ACTIVE_FRAME_EX;
 
+typedef struct _FLS_CALLBACK
+{
+    void                  *unknown;
+    PFLS_CALLBACK_FUNCTION callback; /* ~0 if NULL callback is set, NULL if FLS index is free. */
+} FLS_CALLBACK, *PFLS_CALLBACK;
+
+typedef struct _FLS_INFO_CHUNK
+{
+    ULONG           count;         /* number of allocated FLS indexes in the chunk. */
+    FLS_CALLBACK    callbacks[1];  /* the size is 0x10 for chunk 0 and is twice as
+                                    * the previous chunk size for the rest. */
+} FLS_INFO_CHUNK, *PFLS_INFO_CHUNK;
+
+typedef struct _GLOBAL_FLS_DATA
+{
+    FLS_INFO_CHUNK *fls_callback_chunks[8];
+    LIST_ENTRY      fls_list_head;
+    ULONG           fls_high_index;
+} GLOBAL_FLS_DATA, *PGLOBAL_FLS_DATA;
+
+typedef struct _TEB_FLS_DATA
+{
+    LIST_ENTRY      fls_list_entry;
+    void          **fls_data_chunks[8];
+} TEB_FLS_DATA, *PTEB_FLS_DATA;
+
 #define TEB_ACTIVE_FRAME_CONTEXT_FLAG_EXTENDED 0x00000001
 #define TEB_ACTIVE_FRAME_FLAG_EXTENDED         0x00000001
 
@@ -446,7 +472,7 @@ typedef struct _TEB
     ULONG                        HeapVirtualAffinity;               /* fa8/17b0 */
     PVOID                        CurrentTransactionHandle;          /* fac/17b8 */
     TEB_ACTIVE_FRAME            *ActiveFrame;                       /* fb0/17c0 */
-    PVOID                       *FlsSlots;                          /* fb4/17c8 */
+    TEB_FLS_DATA                *FlsSlots;                          /* fb4/17c8 */
     PVOID                        PreferredLanguages;                /* fb8/17d0 */
     PVOID                        UserPrefLanguages;                 /* fbc/17d8 */
     PVOID                        MergedPrefLanguages;               /* fc0/17e0 */

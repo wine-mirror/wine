@@ -34,6 +34,7 @@
 #include "wine/exception.h"
 
 WINE_DECLARE_DEBUG_CHANNEL(relay);
+WINE_DECLARE_DEBUG_CHANNEL(thread);
 
 struct _KUSER_SHARED_DATA *user_shared_data = (void *)0x7ffe0000;
 
@@ -253,41 +254,125 @@ TEB_ACTIVE_FRAME * WINAPI RtlGetFrame(void)
  ***********************************************************************/
 
 
+static GLOBAL_FLS_DATA fls_data;
+
+#define MAX_FLS_DATA_COUNT 0xff0
+
+void init_global_fls_data(void)
+{
+    InitializeListHead( &fls_data.fls_list_head );
+}
+
+static void lock_fls_data(void)
+{
+    RtlAcquirePebLock();
+}
+
+static void unlock_fls_data(void)
+{
+    RtlReleasePebLock();
+}
+
+static unsigned int fls_chunk_size( unsigned int chunk_index )
+{
+    return 0x10 << chunk_index;
+}
+
+static unsigned int fls_index_from_chunk_index( unsigned int chunk_index, unsigned int index )
+{
+    return 0x10 * ((1 << chunk_index) - 1) + index;
+}
+
+static unsigned int fls_chunk_index_from_index( unsigned int index, unsigned int *index_in_chunk )
+{
+    unsigned int chunk_index = 0;
+
+    while (index >= fls_chunk_size( chunk_index ))
+        index -= fls_chunk_size( chunk_index++ );
+
+    *index_in_chunk = index;
+    return chunk_index;
+}
+
+static TEB_FLS_DATA * fls_alloc_data(void)
+{
+    TEB_FLS_DATA *fls;
+
+    if (!(fls = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*fls) )))
+        return NULL;
+
+    lock_fls_data();
+    InsertTailList( &fls_data.fls_list_head, &fls->fls_list_entry );
+    unlock_fls_data();
+
+    return fls;
+}
+
+
 /***********************************************************************
  *              RtlFlsAlloc  (NTDLL.@)
  */
 NTSTATUS WINAPI DECLSPEC_HOTPATCH RtlFlsAlloc( PFLS_CALLBACK_FUNCTION callback, ULONG *ret_index )
 {
-    PEB * const peb = NtCurrentTeb()->Peb;
-    NTSTATUS status = STATUS_NO_MEMORY;
-    DWORD index;
+    unsigned int chunk_index, index, i;
+    FLS_INFO_CHUNK *chunk;
+    TEB_FLS_DATA *fls;
 
-    RtlAcquirePebLock();
-    if (peb->FlsCallback ||
-        (peb->FlsCallback = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                        8 * sizeof(peb->FlsBitmapBits) * sizeof(void*) )))
+    if (!(fls = NtCurrentTeb()->FlsSlots)
+            && !(NtCurrentTeb()->FlsSlots = fls = fls_alloc_data()))
+        return STATUS_NO_MEMORY;
+
+    lock_fls_data();
+    for (i = 0; i < ARRAY_SIZE(fls_data.fls_callback_chunks); ++i)
     {
-        index = RtlFindClearBitsAndSet( peb->FlsBitmap, 1, 1 );
-        if (index != ~0U)
+        if (!fls_data.fls_callback_chunks[i] || fls_data.fls_callback_chunks[i]->count < fls_chunk_size( i ))
+            break;
+    }
+
+    if ((chunk_index = i) == ARRAY_SIZE(fls_data.fls_callback_chunks))
+    {
+        unlock_fls_data();
+        return STATUS_NO_MEMORY;
+    }
+
+    if ((chunk = fls_data.fls_callback_chunks[chunk_index]))
+    {
+        for (index = 0; index < fls_chunk_size( chunk_index ); ++index)
+            if (!chunk->callbacks[index].callback)
+                break;
+        assert( index < fls_chunk_size( chunk_index ));
+    }
+    else
+    {
+        fls_data.fls_callback_chunks[chunk_index] = chunk = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                offsetof(FLS_INFO_CHUNK, callbacks) + sizeof(*chunk->callbacks) * fls_chunk_size( chunk_index ));
+        if (!chunk)
         {
-            if (!NtCurrentTeb()->FlsSlots &&
-                !(NtCurrentTeb()->FlsSlots = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                                        8 * sizeof(peb->FlsBitmapBits) * sizeof(void*) )))
-            {
-                RtlClearBits( peb->FlsBitmap, index, 1 );
-            }
-            else
-            {
-                NtCurrentTeb()->FlsSlots[index] = 0; /* clear the value */
-                peb->FlsCallback[index] = callback;
-                status = STATUS_SUCCESS;
-            }
+            unlock_fls_data();
+            return STATUS_NO_MEMORY;
+        }
+
+        if (chunk_index)
+        {
+            index = 0;
+        }
+        else
+        {
+            chunk->count = 1; /* FLS index 0 is prohibited. */
+            chunk->callbacks[0].callback = (void *)~(ULONG_PTR)0;
+            index = 1;
         }
     }
-    RtlReleasePebLock();
-    if (!status)
-        *ret_index = index;
-    return status;
+
+    ++chunk->count;
+    chunk->callbacks[index].callback = callback ? callback : (void *)~(ULONG_PTR)0;
+
+    if ((*ret_index = fls_index_from_chunk_index( chunk_index, index )) > fls_data.fls_high_index)
+        fls_data.fls_high_index = *ret_index;
+
+    unlock_fls_data();
+
+    return STATUS_SUCCESS;
 }
 
 
@@ -296,20 +381,37 @@ NTSTATUS WINAPI DECLSPEC_HOTPATCH RtlFlsAlloc( PFLS_CALLBACK_FUNCTION callback, 
  */
 NTSTATUS WINAPI DECLSPEC_HOTPATCH RtlFlsFree( ULONG index )
 {
-    NTSTATUS status;
+    unsigned int chunk_index, idx;
+    FLS_INFO_CHUNK *chunk;
+    TEB_FLS_DATA *fls;
 
-    RtlAcquirePebLock();
-    if (RtlAreBitsSet( NtCurrentTeb()->Peb->FlsBitmap, index, 1 ))
+    lock_fls_data();
+
+    if (!index || index > fls_data.fls_high_index)
     {
-        RtlClearBits( NtCurrentTeb()->Peb->FlsBitmap, index, 1 );
-        /* FIXME: call Fls callback */
-        /* FIXME: add equivalent of ThreadZeroTlsCell here */
-        if (NtCurrentTeb()->FlsSlots) NtCurrentTeb()->FlsSlots[index] = 0;
-        status = STATUS_SUCCESS;
+        unlock_fls_data();
+        return STATUS_INVALID_PARAMETER;
     }
-    else status = STATUS_INVALID_PARAMETER;
-    RtlReleasePebLock();
-    return status;
+
+    chunk_index = fls_chunk_index_from_index( index, &idx );
+    if (!(chunk = fls_data.fls_callback_chunks[chunk_index])
+            || !chunk->callbacks[idx].callback)
+    {
+        unlock_fls_data();
+        return STATUS_INVALID_PARAMETER;
+    }
+
+    if ((fls = NtCurrentTeb()->FlsSlots) && fls->fls_data_chunks[chunk_index])
+    {
+        /* FIXME: call Fls callback */
+        fls->fls_data_chunks[chunk_index][idx + 1] = NULL;
+    }
+
+    --chunk->count;
+    chunk->callbacks[idx].callback = NULL;
+
+    unlock_fls_data();
+    return STATUS_SUCCESS;
 }
 
 
@@ -318,15 +420,25 @@ NTSTATUS WINAPI DECLSPEC_HOTPATCH RtlFlsFree( ULONG index )
  */
 NTSTATUS WINAPI DECLSPEC_HOTPATCH RtlFlsSetValue( ULONG index, void *data )
 {
-    if (!index || index >= 8 * sizeof(NtCurrentTeb()->Peb->FlsBitmapBits))
+    unsigned int chunk_index, idx;
+    TEB_FLS_DATA *fls;
+
+    if (!index || index >= MAX_FLS_DATA_COUNT)
         return STATUS_INVALID_PARAMETER;
 
-    if (!NtCurrentTeb()->FlsSlots &&
-        !(NtCurrentTeb()->FlsSlots = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                        8 * sizeof(NtCurrentTeb()->Peb->FlsBitmapBits) * sizeof(void*) )))
+    if (!(fls = NtCurrentTeb()->FlsSlots)
+            && !(NtCurrentTeb()->FlsSlots = fls = fls_alloc_data()))
         return STATUS_NO_MEMORY;
 
-    NtCurrentTeb()->FlsSlots[index] = data;
+    chunk_index = fls_chunk_index_from_index( index, &idx );
+
+    if (!fls->fls_data_chunks[chunk_index] &&
+            !(fls->fls_data_chunks[chunk_index] = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY,
+            (fls_chunk_size( chunk_index ) + 1) * sizeof(*fls->fls_data_chunks[chunk_index]) )))
+        return STATUS_NO_MEMORY;
+
+    fls->fls_data_chunks[chunk_index][idx + 1] = data;
+
     return STATUS_SUCCESS;
 }
 
@@ -336,11 +448,15 @@ NTSTATUS WINAPI DECLSPEC_HOTPATCH RtlFlsSetValue( ULONG index, void *data )
  */
 NTSTATUS WINAPI DECLSPEC_HOTPATCH RtlFlsGetValue( ULONG index, void **data )
 {
-    if (!index || index >= 8 * sizeof(NtCurrentTeb()->Peb->FlsBitmapBits) || !NtCurrentTeb()->FlsSlots)
+    unsigned int chunk_index, idx;
+    TEB_FLS_DATA *fls;
+
+    if (!index || index >= MAX_FLS_DATA_COUNT || !(fls = NtCurrentTeb()->FlsSlots))
         return STATUS_INVALID_PARAMETER;
 
-    *data = NtCurrentTeb()->FlsSlots[index];
+    chunk_index = fls_chunk_index_from_index( index, &idx );
 
+    *data = fls->fls_data_chunks[chunk_index] ? fls->fls_data_chunks[chunk_index][idx + 1] : NULL;
     return STATUS_SUCCESS;
 }
 
@@ -350,6 +466,31 @@ NTSTATUS WINAPI DECLSPEC_HOTPATCH RtlFlsGetValue( ULONG index, void **data )
  */
 void WINAPI DECLSPEC_HOTPATCH RtlProcessFlsData( void *teb_fls_data, ULONG flags )
 {
+    TEB_FLS_DATA *fls = teb_fls_data;
+    unsigned int i;
+
+    TRACE_(thread)( "teb_fls_data %p, flags %#x.\n", teb_fls_data, flags );
+
+    if (flags & ~3)
+        FIXME_(thread)( "Unknown flags %#x.\n", flags );
+
+    if (!fls)
+        return;
+
+    if (flags & 1)
+    {
+        lock_fls_data();
+        /* Not using RemoveEntryList() as Windows does not zero list entry here. */
+        fls->fls_list_entry.Flink->Blink = fls->fls_list_entry.Blink;
+        fls->fls_list_entry.Blink->Flink = fls->fls_list_entry.Flink;
+        unlock_fls_data();
+    }
+
     if (flags & 2)
-        RtlFreeHeap( GetProcessHeap(), 0, teb_fls_data );
+    {
+        for (i = 0; i < ARRAY_SIZE(fls->fls_data_chunks); ++i)
+            RtlFreeHeap( GetProcessHeap(), 0, fls->fls_data_chunks[i] );
+
+        RtlFreeHeap( GetProcessHeap(), 0, fls );
+    }
 }

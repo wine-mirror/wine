@@ -127,4 +127,7 @@ static inline void ascii_to_unicode( WCHAR *dst, const char *src, size_t len )
     while (len--) *dst++ = (unsigned char)*src++;
 }
 
+/* FLS data */
+extern void init_global_fls_data(void) DECLSPEC_HIDDEN;
+
 #endif

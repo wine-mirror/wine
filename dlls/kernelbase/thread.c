@@ -762,7 +762,7 @@ struct fiber_data
     CONTEXT               context;           /* 14/30 fiber context */
     DWORD                 flags;             /*       fiber flags */
     LPFIBER_START_ROUTINE start;             /*       start routine */
-    void                **fls_slots;         /*       fiber storage slots */
+    void                 *fls_slots;         /*       fiber storage slots */
 };
 
 extern void WINAPI switch_fiber( CONTEXT *old, CONTEXT *new );
