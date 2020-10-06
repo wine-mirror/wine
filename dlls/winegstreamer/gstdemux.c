@@ -158,7 +158,7 @@ static gboolean amt_from_gst_audio_info(const GstAudioInfo *info, AM_MEDIA_TYPE 
 
 static gboolean amt_from_gst_video_info(const GstVideoInfo *info, AM_MEDIA_TYPE *amt)
 {
-    VIDEOINFOHEADER *vih;
+    VIDEOINFO *vih;
     BITMAPINFOHEADER *bih;
     gint32 width, height;
 
@@ -170,7 +170,7 @@ static gboolean amt_from_gst_video_info(const GstVideoInfo *info, AM_MEDIA_TYPE 
 
     amt->formattype = FORMAT_VideoInfo;
     amt->pbFormat = (BYTE*)vih;
-    amt->cbFormat = sizeof(*vih);
+    amt->cbFormat = sizeof(VIDEOINFOHEADER);
     amt->bFixedSizeSamples = FALSE;
     amt->bTemporalCompression = TRUE;
     amt->lSampleSize = 1;
@@ -180,6 +180,7 @@ static gboolean amt_from_gst_video_info(const GstVideoInfo *info, AM_MEDIA_TYPE 
 
     if (GST_VIDEO_INFO_IS_RGB(info))
     {
+        bih->biCompression = BI_RGB;
         switch (GST_VIDEO_INFO_FORMAT(info))
         {
         case GST_VIDEO_FORMAT_BGRA:
@@ -196,7 +197,12 @@ static gboolean amt_from_gst_video_info(const GstVideoInfo *info, AM_MEDIA_TYPE 
             break;
         case GST_VIDEO_FORMAT_RGB16:
             amt->subtype = MEDIASUBTYPE_RGB565;
+            amt->cbFormat = offsetof(VIDEOINFO, u.dwBitMasks[3]);
+            vih->u.dwBitMasks[iRED] = 0xf800;
+            vih->u.dwBitMasks[iGREEN] = 0x07e0;
+            vih->u.dwBitMasks[iBLUE] = 0x001f;
             bih->biBitCount = 16;
+            bih->biCompression = BI_BITFIELDS;
             break;
         case GST_VIDEO_FORMAT_RGB15:
             amt->subtype = MEDIASUBTYPE_RGB555;
@@ -207,7 +213,6 @@ static gboolean amt_from_gst_video_info(const GstVideoInfo *info, AM_MEDIA_TYPE 
             CoTaskMemFree(vih);
             return FALSE;
         }
-        bih->biCompression = BI_RGB;
     } else {
         amt->subtype = MEDIATYPE_Video;
         if (!(amt->subtype.Data1 = gst_video_format_to_fourcc(GST_VIDEO_INFO_FORMAT(info))))
@@ -2116,7 +2121,8 @@ static HRESULT WINAPI GSTOutPin_DecideBufferSize(struct strmbase_source *iface,
         buffer_size = format->bmiHeader.biSizeImage;
 
         gst_util_set_object_arg(G_OBJECT(pin->flip), "method",
-                format->bmiHeader.biCompression == BI_RGB ? "vertical-flip" : "none");
+                (format->bmiHeader.biCompression == BI_RGB
+                || format->bmiHeader.biCompression == BI_BITFIELDS) ? "vertical-flip" : "none");
     }
     else if (IsEqualGUID(&pin->pin.pin.mt.formattype, &FORMAT_WaveFormatEx)
             && (IsEqualGUID(&pin->pin.pin.mt.subtype, &MEDIASUBTYPE_PCM)
