@@ -1022,7 +1022,7 @@ void WINAPI DECLSPEC_HOTPATCH DeleteFiber( LPVOID fiber_ptr )
         RtlExitUserThread( 1 );
     }
     RtlFreeUserStack( fiber->stack_allocation );
-    HeapFree( GetProcessHeap(), 0, fiber->fls_slots );
+    RtlProcessFlsData( fiber->fls_slots, 3 );
     HeapFree( GetProcessHeap(), 0, fiber );
 }
 

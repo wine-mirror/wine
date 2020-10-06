@@ -3255,7 +3255,8 @@ void WINAPI LdrShutdownThread(void)
         for (i = 0; i < tls_module_count; i++) RtlFreeHeap( GetProcessHeap(), 0, pointers[i] );
         RtlFreeHeap( GetProcessHeap(), 0, pointers );
     }
-    RtlFreeHeap( GetProcessHeap(), 0, NtCurrentTeb()->FlsSlots );
+    RtlProcessFlsData( NtCurrentTeb()->FlsSlots, 3 );
+    NtCurrentTeb()->FlsSlots = NULL;
     RtlFreeHeap( GetProcessHeap(), 0, NtCurrentTeb()->TlsExpansionSlots );
     NtCurrentTeb()->TlsExpansionSlots = NULL;
     RtlReleasePebLock();

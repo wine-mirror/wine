@@ -343,3 +343,13 @@ NTSTATUS WINAPI DECLSPEC_HOTPATCH RtlFlsGetValue( ULONG index, void **data )
 
     return STATUS_SUCCESS;
 }
+
+
+/***********************************************************************
+ *              RtlProcessFlsData (NTDLL.@)
+ */
+void WINAPI DECLSPEC_HOTPATCH RtlProcessFlsData( void *teb_fls_data, ULONG flags )
+{
+    if (flags & 2)
+        RtlFreeHeap( GetProcessHeap(), 0, teb_fls_data );
+}

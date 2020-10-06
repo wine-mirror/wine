@@ -874,6 +874,7 @@
 @ stdcall RtlPopFrame(ptr)
 @ stdcall RtlPrefixString(ptr ptr long)
 @ stdcall RtlPrefixUnicodeString(ptr ptr long)
+@ stdcall RtlProcessFlsData(ptr long)
 @ stub RtlPropertySetNameToGuid
 @ stub RtlProtectHeap
 @ stdcall RtlPushFrame(ptr)
