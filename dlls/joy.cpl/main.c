@@ -38,8 +38,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(joycpl);
 
 DECLSPEC_HIDDEN HMODULE hcpl;
 
-static const WCHAR button_class[] = {'B','u','t','t','o','n','\0'};
-
 /*********************************************************************
  *  DllMain
  */
@@ -169,14 +167,11 @@ static void initialize_joysticks_list(HWND hwnd, struct JoystickData *data)
  */
 static BOOL get_app_key(HKEY *defkey, HKEY *appkey)
 {
-    static const WCHAR reg_key[] = { 'S','o','f','t','w','a','r','e','\\',
-                                     'W','i','n','e','\\',
-                                     'D','i','r','e','c','t','I','n','p','u','t','\\',
-                                     'J','o','y','s','t','i','c','k','s','\0' };
     *appkey = 0;
 
     /* Registry key can be found in HKCU\Software\Wine\DirectInput */
-    if (RegCreateKeyExW(HKEY_CURRENT_USER, reg_key, 0, NULL, 0, KEY_SET_VALUE | KEY_READ, NULL, defkey, NULL))
+    if (RegCreateKeyExW(HKEY_CURRENT_USER, L"Software\\Wine\\DirectInput\\Joysticks", 0, NULL, 0,
+                KEY_SET_VALUE | KEY_READ, NULL, defkey, NULL))
         *defkey = 0;
 
     return *defkey || *appkey;
@@ -215,13 +210,12 @@ static DWORD set_config_key(HKEY defkey, HKEY appkey, const WCHAR *name, const W
  */
 static void enable_joystick(WCHAR *joy_name, BOOL enable)
 {
-    static const WCHAR disabled_str[] = {'d','i','s','a','b','l','e','d','\0'};
     HKEY hkey, appkey;
 
     get_app_key(&hkey, &appkey);
 
     if (!enable)
-        set_config_key(hkey, appkey, joy_name, disabled_str, lstrlenW(disabled_str));
+        set_config_key(hkey, appkey, joy_name, L"disabled", lstrlenW(L"disabled"));
     else
         set_config_key(hkey, appkey, joy_name, NULL, 0);
 
@@ -231,7 +225,6 @@ static void enable_joystick(WCHAR *joy_name, BOOL enable)
 
 static void initialize_disabled_joysticks_list(HWND hwnd)
 {
-    static const WCHAR disabled_str[] = {'d','i','s','a','b','l','e','d','\0'};
     HKEY hkey, appkey;
     DWORD values = 0;
     LSTATUS status;
@@ -250,7 +243,7 @@ static void initialize_disabled_joysticks_list(HWND hwnd)
 
         status = RegEnumValueW(hkey, i, buf_name, &name_len, NULL, NULL, (BYTE*) buf_data, &data_len);
 
-        if (status == ERROR_SUCCESS && !lstrcmpW(disabled_str, buf_data))
+        if (status == ERROR_SUCCESS && !lstrcmpW(L"disabled", buf_data))
             SendDlgItemMessageW(hwnd, IDC_DISABLEDLIST, LB_ADDSTRING, 0, (LPARAM) buf_name);
     }
 
@@ -492,7 +485,7 @@ static void draw_joystick_buttons(HWND hwnd, struct JoystickData* data)
 
         button_number_to_wchar(i + 1, button_label);
 
-        data->graphics.buttons[i] = CreateWindowW(button_class, button_label, WS_CHILD,
+        data->graphics.buttons[i] = CreateWindowW(L"Button", button_label, WS_CHILD,
             r.left, r.top, r.right - r.left, r.bottom - r.top,
             hwnd, NULL, NULL, hinst);
 
@@ -504,8 +497,7 @@ static void draw_joystick_axes(HWND hwnd, struct JoystickData* data)
 {
     int i;
     HINSTANCE hinst = (HINSTANCE) GetWindowLongPtrW(hwnd, GWLP_HINSTANCE);
-    static const WCHAR axes_names[TEST_MAX_AXES][7] = { {'X',',','Y','\0'}, {'R','x',',','R','y','\0'},
-                                                        {'Z',',','R','z','\0'}, {'P','O','V','\0'} };
+    static const WCHAR axes_names[TEST_MAX_AXES][7] = { L"X,Y", L"Rx,Ry", L"Z,Rz", L"POV"};
     static const DWORD axes_idc[TEST_MAX_AXES] = { IDC_TESTGROUPXY, IDC_TESTGROUPRXRY,
                                                    IDC_TESTGROUPZRZ, IDC_TESTGROUPPOV };
 
@@ -521,7 +513,7 @@ static void draw_joystick_axes(HWND hwnd, struct JoystickData* data)
         r.bottom = r.top + TEST_AXIS_SIZE_Y;
         MapDialogRect(hwnd, &r);
 
-        data->graphics.axes[i] = CreateWindowW( button_class, NULL, WS_CHILD | WS_VISIBLE,
+        data->graphics.axes[i] = CreateWindowW(L"Button", NULL, WS_CHILD | WS_VISIBLE,
             r.left, r.top, r.right - r.left, r.bottom - r.top,
             hwnd, NULL, NULL, hinst);
     }
@@ -617,7 +609,7 @@ static void draw_ff_axis(HWND hwnd, struct JoystickData *data)
     MapDialogRect(hwnd, &r);
 
     /* Draw direction axis */
-    data->graphics.ff_axis = CreateWindowW( button_class, NULL, WS_CHILD | WS_VISIBLE,
+    data->graphics.ff_axis = CreateWindowW(L"Button", NULL, WS_CHILD | WS_VISIBLE,
         r.left, r.top, r.right - r.left, r.bottom - r.top,
         hwnd, NULL, NULL, hinst);
 }
