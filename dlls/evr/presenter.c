@@ -61,6 +61,7 @@ struct video_presenter
     HWND video_window;
     MFVideoNormalizedRect src_rect;
     RECT dst_rect;
+    DWORD rendering_prefs;
     unsigned int state;
     CRITICAL_SECTION cs;
 };
@@ -658,9 +659,18 @@ static HRESULT WINAPI video_presenter_control_SetRenderingPrefs(IMFVideoDisplayC
 
 static HRESULT WINAPI video_presenter_control_GetRenderingPrefs(IMFVideoDisplayControl *iface, DWORD *flags)
 {
-    FIXME("%p, %p.\n", iface, flags);
+    struct video_presenter *presenter = impl_from_IMFVideoDisplayControl(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, flags);
+
+    if (!flags)
+        return E_POINTER;
+
+    EnterCriticalSection(&presenter->cs);
+    *flags = presenter->rendering_prefs;
+    LeaveCriticalSection(&presenter->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI video_presenter_control_SetFullscreen(IMFVideoDisplayControl *iface, BOOL fullscreen)

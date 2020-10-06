@@ -979,6 +979,7 @@ static void test_default_presenter(void)
     HWND hwnd, hwnd2;
     HANDLE handle;
     IUnknown *unk;
+    DWORD flags;
     float rate;
     HRESULT hr;
     GUID iid;
@@ -1016,6 +1017,15 @@ static void test_default_presenter(void)
 
     hr = IMFGetService_GetService(gs, &MR_VIDEO_RENDER_SERVICE, &IID_IMFVideoDisplayControl, (void **)&display_control);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoDisplayControl_GetRenderingPrefs(display_control, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    flags = 123;
+    hr = IMFVideoDisplayControl_GetRenderingPrefs(display_control, &flags);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!flags, "Unexpected rendering flags %#x.\n", flags);
+
     IMFVideoDisplayControl_Release(display_control);
 
     hr = IMFGetService_GetService(gs, &MR_VIDEO_ACCELERATION_SERVICE, &IID_IDirect3DDeviceManager9, (void **)&dm);
