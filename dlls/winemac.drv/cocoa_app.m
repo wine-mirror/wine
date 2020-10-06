@@ -19,7 +19,6 @@
  */
 
 #import <Carbon/Carbon.h>
-#include <dlfcn.h>
 
 #import "cocoa_app.h"
 #import "cocoa_event.h"
@@ -1332,8 +1331,6 @@ static NSString* WineLocalizedString(unsigned int stringID)
 
     - (BOOL) installEventTap
     {
-        ProcessSerialNumber psn;
-        OSErr err;
         CGEventMask mask = CGEventMaskBit(kCGEventLeftMouseDown)        |
                            CGEventMaskBit(kCGEventLeftMouseUp)          |
                            CGEventMaskBit(kCGEventRightMouseDown)       |
@@ -1346,30 +1343,9 @@ static NSString* WineLocalizedString(unsigned int stringID)
                            CGEventMaskBit(kCGEventOtherMouseDragged)    |
                            CGEventMaskBit(kCGEventScrollWheel);
         CFRunLoopSourceRef source;
-        void* appServices;
-        OSErr (*pGetCurrentProcess)(ProcessSerialNumber* PSN);
 
         if (cursorClippingEventTap)
             return TRUE;
-
-        // We need to get the Mac GetCurrentProcess() from the ApplicationServices
-        // framework with dlsym() because the Win32 function of the same name
-        // obscures it.
-        appServices = dlopen("/System/Library/Frameworks/ApplicationServices.framework/ApplicationServices", RTLD_LAZY);
-        if (!appServices)
-            return FALSE;
-
-        pGetCurrentProcess = dlsym(appServices, "GetCurrentProcess");
-        if (!pGetCurrentProcess)
-        {
-            dlclose(appServices);
-            return FALSE;
-        }
-
-        err = pGetCurrentProcess(&psn);
-        dlclose(appServices);
-        if (err != noErr)
-            return FALSE;
 
         // We create an annotated session event tap rather than a process-specific
         // event tap because we need to programmatically move the cursor even when
