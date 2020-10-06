@@ -12,6 +12,8 @@
 13 stub @
 14 stub @
 15 stub @
+16 stub @
+17 stdcall ActivateAudioInterfaceAsync( wstr ptr ptr ptr ptr )
 
 @ stdcall -private DllCanUnloadNow()
 @ stdcall -private DllGetClassObject( ptr ptr ptr )

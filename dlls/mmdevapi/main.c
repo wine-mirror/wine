@@ -319,3 +319,168 @@ HRESULT WINAPI DllUnregisterServer(void)
 {
     return __wine_unregister_resources( instance );
 }
+
+struct activate_async_op {
+    IActivateAudioInterfaceAsyncOperation IActivateAudioInterfaceAsyncOperation_iface;
+    LONG ref;
+
+    IActivateAudioInterfaceCompletionHandler *callback;
+    HRESULT result_hr;
+    IUnknown *result_iface;
+};
+
+static struct activate_async_op *impl_from_IActivateAudioInterfaceAsyncOperation(IActivateAudioInterfaceAsyncOperation *iface)
+{
+    return CONTAINING_RECORD(iface, struct activate_async_op, IActivateAudioInterfaceAsyncOperation_iface);
+}
+
+static HRESULT WINAPI activate_async_op_QueryInterface(IActivateAudioInterfaceAsyncOperation *iface,
+        REFIID riid, void **ppv)
+{
+    struct activate_async_op *This = impl_from_IActivateAudioInterfaceAsyncOperation(iface);
+
+    TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), ppv);
+
+    if (!ppv)
+        return E_POINTER;
+
+    if (IsEqualIID(riid, &IID_IUnknown) ||
+            IsEqualIID(riid, &IID_IActivateAudioInterfaceAsyncOperation)) {
+        *ppv = &This->IActivateAudioInterfaceAsyncOperation_iface;
+    } else {
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI activate_async_op_AddRef(IActivateAudioInterfaceAsyncOperation *iface)
+{
+    struct activate_async_op *This = impl_from_IActivateAudioInterfaceAsyncOperation(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+    TRACE("(%p) refcount now %i\n", This, ref);
+    return ref;
+}
+
+static ULONG WINAPI activate_async_op_Release(IActivateAudioInterfaceAsyncOperation *iface)
+{
+    struct activate_async_op *This = impl_from_IActivateAudioInterfaceAsyncOperation(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+    TRACE("(%p) refcount now %i\n", This, ref);
+    if (!ref) {
+        if(This->result_iface)
+            IUnknown_Release(This->result_iface);
+        IActivateAudioInterfaceCompletionHandler_Release(This->callback);
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+    return ref;
+}
+
+static HRESULT WINAPI activate_async_op_GetActivateResult(IActivateAudioInterfaceAsyncOperation *iface,
+        HRESULT *result_hr, IUnknown **result_iface)
+{
+    struct activate_async_op *This = impl_from_IActivateAudioInterfaceAsyncOperation(iface);
+
+    TRACE("(%p)->(%p, %p)\n", This, result_hr, result_iface);
+
+    *result_hr = This->result_hr;
+
+    if(This->result_hr == S_OK){
+        *result_iface = This->result_iface;
+        IUnknown_AddRef(*result_iface);
+    }
+
+    return S_OK;
+}
+
+static IActivateAudioInterfaceAsyncOperationVtbl IActivateAudioInterfaceAsyncOperation_vtbl = {
+    activate_async_op_QueryInterface,
+    activate_async_op_AddRef,
+    activate_async_op_Release,
+    activate_async_op_GetActivateResult,
+};
+
+static DWORD WINAPI activate_async_threadproc(void *user)
+{
+    struct activate_async_op *op = user;
+
+    IActivateAudioInterfaceCompletionHandler_ActivateCompleted(op->callback, &op->IActivateAudioInterfaceAsyncOperation_iface);
+
+    IActivateAudioInterfaceAsyncOperation_Release(&op->IActivateAudioInterfaceAsyncOperation_iface);
+
+    return 0;
+}
+
+static HRESULT get_mmdevice_by_activatepath(const WCHAR *path, IMMDevice **mmdev)
+{
+    IMMDeviceEnumerator *devenum;
+    HRESULT hr;
+
+    static const WCHAR DEVINTERFACE_AUDIO_RENDER_WSTR[] = L"{E6327CAD-DCEC-4949-AE8A-991E976A79D2}";
+    static const WCHAR DEVINTERFACE_AUDIO_CAPTURE_WSTR[] = L"{2EEF81BE-33FA-4800-9670-1CD474972C3F}";
+
+    hr = MMDevEnum_Create(&IID_IMMDeviceEnumerator, (void**)&devenum);
+    if (FAILED(hr)) {
+        WARN("Failed to create MMDeviceEnumerator: %08x\n", hr);
+        return hr;
+    }
+
+    if (!lstrcmpiW(path, DEVINTERFACE_AUDIO_RENDER_WSTR)){
+        hr = IMMDeviceEnumerator_GetDefaultAudioEndpoint(devenum, eRender, eMultimedia, mmdev);
+    } else if (!lstrcmpiW(path, DEVINTERFACE_AUDIO_CAPTURE_WSTR)){
+        hr = IMMDeviceEnumerator_GetDefaultAudioEndpoint(devenum, eCapture, eMultimedia, mmdev);
+    } else {
+        FIXME("How to map path to device id? %s\n", debugstr_w(path));
+        hr = HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
+    }
+
+    if (FAILED(hr)) {
+        WARN("Failed to get requested device (%s): %08x\n", debugstr_w(path), hr);
+        *mmdev = NULL;
+        hr = HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
+    }
+
+    IMMDeviceEnumerator_Release(devenum);
+
+    return hr;
+}
+
+/***********************************************************************
+ *		ActivateAudioInterfaceAsync (MMDEVAPI.17)
+ */
+HRESULT WINAPI ActivateAudioInterfaceAsync(const WCHAR *path, REFIID riid,
+        PROPVARIANT *params, IActivateAudioInterfaceCompletionHandler *done_handler,
+        IActivateAudioInterfaceAsyncOperation **op_out)
+{
+    struct activate_async_op *op;
+    HANDLE ht;
+    IMMDevice *mmdev;
+
+    TRACE("(%s, %s, %p, %p, %p)\n", debugstr_w(path), debugstr_guid(riid),
+            params, done_handler, op_out);
+
+    op = HeapAlloc(GetProcessHeap(), 0, sizeof(*op));
+    if (!op)
+        return E_OUTOFMEMORY;
+
+    op->ref = 2; /* returned ref and threadproc ref */
+    op->IActivateAudioInterfaceAsyncOperation_iface.lpVtbl = &IActivateAudioInterfaceAsyncOperation_vtbl;
+    op->callback = done_handler;
+    IActivateAudioInterfaceCompletionHandler_AddRef(done_handler);
+
+    op->result_hr = get_mmdevice_by_activatepath(path, &mmdev);
+    if (SUCCEEDED(op->result_hr)) {
+        op->result_hr = IMMDevice_Activate(mmdev, riid, CLSCTX_INPROC_SERVER, params, (void**)&op->result_iface);
+        IMMDevice_Release(mmdev);
+    }else
+        op->result_iface = NULL;
+
+    ht = CreateThread(NULL, 0, &activate_async_threadproc, op, 0, NULL);
+    CloseHandle(ht);
+
+    *op_out = &op->IActivateAudioInterfaceAsyncOperation_iface;
+
+    return S_OK;
+}

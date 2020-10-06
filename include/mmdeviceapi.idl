@@ -26,6 +26,8 @@ cpp_quote("#ifndef E_UNSUPPORTED_TYPE")
 cpp_quote("#define E_UNSUPPORTED_TYPE HRESULT_FROM_WIN32(ERROR_UNSUPPORTED_TYPE)")
 cpp_quote("#endif")
 
+cpp_quote("DEFINE_GUID(DEVINTERFACE_AUDIO_RENDER, 0xe6327cad,0xdcec,0x4949,0xae,0x8a,0x99,0x1e,0x97,0x6a,0x79,0xd2);")
+cpp_quote("DEFINE_GUID(DEVINTERFACE_AUDIO_CAPTURE, 0x2eef81be,0x33fa,0x4800,0x96,0x70,0x1c,0xd4,0x74,0x97,0x2c,0x3f);")
 
 cpp_quote("#define DEVICE_STATE_ACTIVE 0x1")
 cpp_quote("#define DEVICE_STATE_DISABLED 0x2")
@@ -236,6 +238,40 @@ typedef struct _AudioExtensionParams
     IMMDevice *pPnpInterface;
     IMMDevice *pPnpDevnode;
 } AudioExtensionParams;
+
+[
+    object,
+    local,
+    uuid(72a22d78-cde4-431d-b8cc-843a71199b6d),
+    nonextensible,
+    pointer_default(unique)
+]
+interface IActivateAudioInterfaceAsyncOperation : IUnknown
+{
+    HRESULT GetActivateResult(
+        [out] HRESULT *result,
+        [out] IUnknown **iface
+    );
+}
+
+[
+    object,
+    local,
+    uuid(41d949ab-9862-444a-80f6-c261334da5eb),
+    nonextensible,
+    pointer_default(unique)
+]
+interface IActivateAudioInterfaceCompletionHandler : IUnknown
+{
+    HRESULT ActivateCompleted(
+        [in] IActivateAudioInterfaceAsyncOperation *op
+    );
+}
+
+cpp_quote("HRESULT WINAPI ActivateAudioInterfaceAsync(")
+cpp_quote("        const WCHAR *path, REFIID riid, PROPVARIANT *params,")
+cpp_quote("        IActivateAudioInterfaceCompletionHandler *done_handler,")
+cpp_quote("        IActivateAudioInterfaceAsyncOperation **op);")
 
 [
     uuid(2fdaafa3-7523-4f66-9957-9d5e7fe698f6),

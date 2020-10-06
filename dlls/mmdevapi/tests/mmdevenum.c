@@ -31,6 +31,9 @@
 
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
+static UINT g_num_mmdevs;
+static WCHAR g_device_path[MAX_PATH];
+
 /* Some of the QueryInterface tests are really just to check if I got the IIDs right :) */
 
 /* IMMDeviceCollection appears to have no QueryInterface method and instead forwards to mme */
@@ -85,6 +88,8 @@ static void test_collection(IMMDeviceEnumerator *mme, IMMDeviceCollection *col)
     ok(hr == E_INVALIDARG, "Asking for too high device returned 0x%08x\n", hr);
     ok(dev == NULL, "Returned non-null device\n");
 
+    g_num_mmdevs = numdev;
+
     if (numdev)
     {
         hr = IMMDeviceCollection_Item(col, 0, NULL);
@@ -101,6 +106,7 @@ static void test_collection(IMMDeviceEnumerator *mme, IMMDeviceCollection *col)
             {
                 IMMDevice *dev2;
 
+                lstrcpyW(g_device_path, id);
                 temp[sizeof(temp)-1] = 0;
                 WideCharToMultiByte(CP_ACP, 0, id, -1, temp, sizeof(temp)-1, NULL, NULL);
                 trace("Device found: %s\n", temp);
@@ -117,6 +123,188 @@ static void test_collection(IMMDeviceEnumerator *mme, IMMDeviceCollection *col)
             IMMDevice_Release(dev);
     }
     IMMDeviceCollection_Release(col);
+}
+
+static struct {
+    LONG ref;
+    HANDLE evt;
+    CRITICAL_SECTION lock;
+    IActivateAudioInterfaceAsyncOperation *op;
+    DWORD main_tid;
+    char msg_pfx[128];
+    IUnknown *result_iface;
+    HRESULT result_hr;
+} async_activate_test;
+
+static HRESULT WINAPI async_activate_QueryInterface(
+        IActivateAudioInterfaceCompletionHandler *iface,
+        REFIID riid,
+        void **ppvObject)
+{
+    if(IsEqualIID(riid, &IID_IUnknown) ||
+            IsEqualIID(riid, &IID_IAgileObject) ||
+            IsEqualIID(riid, &IID_IActivateAudioInterfaceCompletionHandler)){
+        *ppvObject = iface;
+        IUnknown_AddRef((IUnknown*)*ppvObject);
+        return S_OK;
+    }
+
+    *ppvObject = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI async_activate_AddRef(
+        IActivateAudioInterfaceCompletionHandler *iface)
+{
+    return InterlockedIncrement(&async_activate_test.ref);
+}
+
+static ULONG WINAPI async_activate_Release(
+        IActivateAudioInterfaceCompletionHandler *iface)
+{
+    ULONG ref = InterlockedDecrement(&async_activate_test.ref);
+    if(ref == 1)
+        SetEvent(async_activate_test.evt);
+    return ref;
+}
+
+static HRESULT WINAPI async_activate_ActivateCompleted(
+        IActivateAudioInterfaceCompletionHandler *iface,
+        IActivateAudioInterfaceAsyncOperation *op)
+{
+    HRESULT hr;
+
+    EnterCriticalSection(&async_activate_test.lock);
+    ok(op == async_activate_test.op,
+            "%s: Got different completion operation\n",
+            async_activate_test.msg_pfx);
+    LeaveCriticalSection(&async_activate_test.lock);
+
+    ok(GetCurrentThreadId() != async_activate_test.main_tid,
+            "%s: Expected callback on worker thread\n",
+            async_activate_test.msg_pfx);
+
+    hr = IActivateAudioInterfaceAsyncOperation_GetActivateResult(op,
+            &async_activate_test.result_hr, &async_activate_test.result_iface);
+    ok(hr == S_OK,
+            "%s: GetActivateResult failed: %08x\n",
+            async_activate_test.msg_pfx, hr);
+
+    return S_OK;
+}
+
+static IActivateAudioInterfaceCompletionHandlerVtbl async_activate_vtbl = {
+    async_activate_QueryInterface,
+    async_activate_AddRef,
+    async_activate_Release,
+    async_activate_ActivateCompleted,
+};
+
+static IActivateAudioInterfaceCompletionHandler async_activate_done = {
+    &async_activate_vtbl
+};
+
+static void test_ActivateAudioInterfaceAsync(void)
+{
+    HRESULT (* WINAPI pActivateAudioInterfaceAsync)(const WCHAR *path,
+            REFIID riid, PROPVARIANT *params,
+            IActivateAudioInterfaceCompletionHandler *done_handler,
+            IActivateAudioInterfaceAsyncOperation **op);
+    HANDLE h_mmdev;
+    HRESULT hr;
+    LPOLESTR path;
+    DWORD dr;
+    IAudioClient3 *ac3;
+
+    h_mmdev = LoadLibraryA("mmdevapi.dll");
+
+    /* some applications look this up by ordinal */
+    pActivateAudioInterfaceAsync = (void*)GetProcAddress(h_mmdev, (char *)17);
+    ok(pActivateAudioInterfaceAsync != NULL, "mmdevapi.ActivateAudioInterfaceAsync missing!\n");
+
+    async_activate_test.ref = 1;
+    async_activate_test.evt = CreateEventW(NULL, FALSE, FALSE, NULL);
+    InitializeCriticalSection(&async_activate_test.lock);
+    async_activate_test.op = NULL;
+    async_activate_test.main_tid = GetCurrentThreadId();
+    async_activate_test.result_iface = NULL;
+    async_activate_test.result_hr = 0;
+
+
+    /* try invalid device path */
+    strcpy(async_activate_test.msg_pfx, "invalid_path");
+
+    EnterCriticalSection(&async_activate_test.lock);
+    hr = pActivateAudioInterfaceAsync(L"winetest_bogus", &IID_IAudioClient3, NULL, &async_activate_done, &async_activate_test.op);
+    ok(hr == S_OK, "ActivateAudioInterfaceAsync failed: %08x\n", hr);
+    LeaveCriticalSection(&async_activate_test.lock);
+
+    IActivateAudioInterfaceAsyncOperation_Release(async_activate_test.op);
+
+    dr = WaitForSingleObject(async_activate_test.evt, 1000); /* wait for all refs other than our own to be released */
+    ok(dr == WAIT_OBJECT_0, "Timed out waiting for async activate to complete\n");
+    ok(async_activate_test.ref == 1, "ActivateAudioInterfaceAsync leaked a handler ref: %u\n", async_activate_test.ref);
+    ok(async_activate_test.result_hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
+            "mmdevice activation gave wrong result: %08x\n", async_activate_test.result_hr);
+    ok(async_activate_test.result_iface == NULL, "Got non-NULL iface pointer: %p\n", async_activate_test.result_iface);
+
+
+    /* device id from IMMDevice does not work */
+    if(g_num_mmdevs > 0){
+        strcpy(async_activate_test.msg_pfx, "mmdevice_id");
+
+        EnterCriticalSection(&async_activate_test.lock);
+        hr = pActivateAudioInterfaceAsync(g_device_path, &IID_IAudioClient3, NULL, &async_activate_done, &async_activate_test.op);
+        ok(hr == S_OK, "ActivateAudioInterfaceAsync failed: %08x\n", hr);
+        LeaveCriticalSection(&async_activate_test.lock);
+
+        IActivateAudioInterfaceAsyncOperation_Release(async_activate_test.op);
+
+        dr = WaitForSingleObject(async_activate_test.evt, 1000);
+        ok(dr == WAIT_OBJECT_0, "Timed out waiting for async activate to complete\n");
+        ok(async_activate_test.ref == 1, "ActivateAudioInterfaceAsync leaked a handler ref: %u\n", async_activate_test.ref);
+        ok(async_activate_test.result_hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
+                "mmdevice activation gave wrong result: %08x\n", async_activate_test.result_hr);
+        ok(async_activate_test.result_iface == NULL, "Got non-NULL iface pointer: %p\n", async_activate_test.result_iface);
+    }
+
+
+    /* try DEVINTERFACE_AUDIO_RENDER */
+    strcpy(async_activate_test.msg_pfx, "audio_render");
+    StringFromIID(&DEVINTERFACE_AUDIO_RENDER, &path);
+
+    EnterCriticalSection(&async_activate_test.lock);
+    hr = pActivateAudioInterfaceAsync(path, &IID_IAudioClient3, NULL, &async_activate_done, &async_activate_test.op);
+    ok(hr == S_OK, "ActivateAudioInterfaceAsync failed: %08x\n", hr);
+    LeaveCriticalSection(&async_activate_test.lock);
+
+    IActivateAudioInterfaceAsyncOperation_Release(async_activate_test.op);
+
+    dr = WaitForSingleObject(async_activate_test.evt, 1000);
+    ok(dr == WAIT_OBJECT_0, "Timed out waiting for async activate to complete\n");
+    ok(async_activate_test.ref == 1, "ActivateAudioInterfaceAsync leaked a handler ref\n");
+    ok(async_activate_test.result_hr == S_OK ||
+            (g_num_mmdevs == 0 && async_activate_test.result_hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)) || /* no devices */
+            broken(async_activate_test.result_hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)), /* win8 doesn't support DEVINTERFACE_AUDIO_RENDER */
+            "mmdevice activation gave wrong result: %08x\n", async_activate_test.result_hr);
+
+    if(async_activate_test.result_hr == S_OK){
+        ok(async_activate_test.result_iface != NULL, "Got NULL iface pointer on success?\n");
+
+        /* returned iface should be the IID we requested */
+        hr = IUnknown_QueryInterface(async_activate_test.result_iface, &IID_IAudioClient3, (void**)&ac3);
+        ok(hr == S_OK, "Failed to query IAudioClient3: %08x\n", hr);
+        ok(async_activate_test.result_iface == (IUnknown*)ac3,
+                "Activated interface other than IAudioClient3!\n");
+        IAudioClient3_Release(ac3);
+
+        IUnknown_Release(async_activate_test.result_iface);
+    }
+
+    CoTaskMemFree(path);
+
+    CloseHandle(async_activate_test.evt);
+    DeleteCriticalSection(&async_activate_test.lock);
 }
 
 static HRESULT WINAPI notif_QueryInterface(IMMNotificationClient *iface,
@@ -285,4 +473,6 @@ START_TEST(mmdevenum)
     ok(hr == E_NOTFOUND, "UnregisterEndpointNotificationCallback failed: %08x\n", hr);
 
     IMMDeviceEnumerator_Release(mme);
+
+    test_ActivateAudioInterfaceAsync();
 }
