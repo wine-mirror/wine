@@ -1045,7 +1045,7 @@ static Face *find_face_from_filename(const WCHAR *file_name, const WCHAR *face_n
         {
             if (!face->file)
                 continue;
-            file = strrchrW(face->file, '/');
+            file = strrchrW(face->file, '\\');
             if(!file)
                 file = face->file;
             else
@@ -1168,14 +1168,6 @@ static WCHAR *towstr(UINT cp, const char *str)
     wstr = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
     MultiByteToWideChar(cp, 0, str, -1, wstr, len);
     return wstr;
-}
-
-static char *strWtoA(UINT cp, const WCHAR *str)
-{
-    int len = WideCharToMultiByte( cp, 0, str, -1, NULL, 0, NULL, NULL );
-    char *ret = HeapAlloc( GetProcessHeap(), 0, len );
-    WideCharToMultiByte( cp, 0, str, -1, ret, len, NULL, NULL );
-    return ret;
 }
 
 static void split_subst_info(NameCs *nc, LPSTR str)
@@ -2108,8 +2100,8 @@ static inline void get_fontsig( FT_Face ft_face, FONTSIGNATURE *fs )
     }
 }
 
-static Face *create_face( FT_Face ft_face, FT_Long face_index, const char *file, void *font_data_ptr, DWORD font_data_size,
-                          DWORD flags )
+static Face *create_face( FT_Face ft_face, FT_Long face_index, const WCHAR *dos_name, const char *unix_name,
+                          void *font_data_ptr, DWORD font_data_size, DWORD flags )
 {
     struct stat st;
     Face *face = HeapAlloc( GetProcessHeap(), 0, sizeof(*face) );
@@ -2121,12 +2113,12 @@ static Face *create_face( FT_Face ft_face, FT_Long face_index, const char *file,
 
     face->dev = 0;
     face->ino = 0;
-    if (file)
+    if (unix_name)
     {
-        face->file = towstr( CP_UNIXCP, file );
+        face->file = dos_name ? strdupW( dos_name ) : wine_get_dos_file_name( unix_name );
         face->font_data_ptr = NULL;
         face->font_data_size = 0;
-        if (!stat( file, &st ))
+        if (!stat( unix_name, &st ))
         {
             face->dev = st.st_dev;
             face->ino = st.st_ino;
@@ -2168,13 +2160,13 @@ static Face *create_face( FT_Face ft_face, FT_Long face_index, const char *file,
     return face;
 }
 
-static void AddFaceToList(FT_Face ft_face, const char *file, void *font_data_ptr, DWORD font_data_size,
-                          FT_Long face_index, DWORD flags )
+static void AddFaceToList(FT_Face ft_face, const WCHAR *dos_name, const char *unix_name,
+                          void *font_data_ptr, DWORD font_data_size, FT_Long face_index, DWORD flags )
 {
     Face *face;
     Family *family;
 
-    face = create_face( ft_face, face_index, file, font_data_ptr, font_data_size, flags );
+    face = create_face( ft_face, face_index, dos_name, unix_name, font_data_ptr, font_data_size, flags );
     family = get_family( ft_face, flags & ADDFONT_VERTICAL_FONT );
 
     if (insert_face_in_family_list( face, family ))
@@ -2263,19 +2255,20 @@ fail:
     return NULL;
 }
 
-static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_size, DWORD flags)
+static INT AddFontToList(const WCHAR *dos_name, const char *unix_name, void *font_data_ptr,
+                         DWORD font_data_size, DWORD flags)
 {
     FT_Face ft_face;
     FT_Long face_index = 0, num_faces;
     INT ret = 0;
 
     /* we always load external fonts from files - otherwise we would get a crash in update_reg_entries */
-    assert(file || !(flags & ADDFONT_EXTERNAL_FONT));
+    assert(unix_name || !(flags & ADDFONT_EXTERNAL_FONT));
 
 #ifdef HAVE_CARBON_CARBON_H
-    if(file)
+    if(unix_name)
     {
-        char **mac_list = expand_mac_font(file);
+        char **mac_list = expand_mac_font(unix_name);
         if(mac_list)
         {
             BOOL had_one = FALSE;
@@ -2283,7 +2276,7 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
             for(cursor = mac_list; *cursor; cursor++)
             {
                 had_one = TRUE;
-                AddFontToList(*cursor, NULL, 0, flags);
+                AddFontToList(NULL, *cursor, NULL, 0, flags);
                 HeapFree(GetProcessHeap(), 0, *cursor);
             }
             HeapFree(GetProcessHeap(), 0, mac_list);
@@ -2296,23 +2289,23 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
     do {
         FONTSIGNATURE fs;
 
-        ft_face = new_ft_face( file, font_data_ptr, font_data_size, face_index, flags & ADDFONT_ALLOW_BITMAP );
+        ft_face = new_ft_face( unix_name, font_data_ptr, font_data_size, face_index, flags & ADDFONT_ALLOW_BITMAP );
         if (!ft_face) return 0;
 
         if(ft_face->family_name[0] == '.') /* Ignore fonts with names beginning with a dot */
         {
-            TRACE("Ignoring %s since its family name begins with a dot\n", debugstr_a(file));
+            TRACE("Ignoring %s since its family name begins with a dot\n", debugstr_a(unix_name));
             pFT_Done_Face(ft_face);
             return 0;
         }
 
-        AddFaceToList(ft_face, file, font_data_ptr, font_data_size, face_index, flags);
+        AddFaceToList(ft_face, dos_name, unix_name, font_data_ptr, font_data_size, face_index, flags);
         ++ret;
 
         get_fontsig(ft_face, &fs);
         if (fs.fsCsb[0] & FS_DBCS_MASK)
         {
-            AddFaceToList(ft_face, file, font_data_ptr, font_data_size, face_index,
+            AddFaceToList(ft_face, dos_name, unix_name, font_data_ptr, font_data_size, face_index,
                           flags | ADDFONT_VERTICAL_FONT);
             ++ret;
         }
@@ -2330,7 +2323,7 @@ static int add_font_resource( const WCHAR *file, DWORD flags )
 
     if (unixname)
     {
-        ret = AddFontToList( unixname, NULL, 0, flags );
+        ret = AddFontToList( file, unixname, NULL, 0, flags );
         HeapFree( GetProcessHeap(), 0, unixname );
     }
     return ret;
@@ -2601,7 +2594,7 @@ static void populate_system_links(const WCHAR *name, const WCHAR *const *values)
             {
                 if (!face->file)
                     continue;
-                file = strrchrW(face->file, '/');
+                file = strrchrW(face->file, '\\');
                 if (!file)
                     file = face->file;
                 else
@@ -2819,7 +2812,7 @@ static BOOL ReadFontDir(const char *dirname, BOOL external_fonts)
         {
             DWORD addfont_flags = ADDFONT_ADD_TO_CACHE;
             if(external_fonts) addfont_flags |= ADDFONT_EXTERNAL_FONT;
-            AddFontToList(path, NULL, 0, addfont_flags);
+            AddFontToList(NULL, path, NULL, 0, addfont_flags);
         }
     }
     closedir(dir);
@@ -2954,7 +2947,7 @@ static void load_fontconfig_fonts(void)
         if(len < 4) continue;
         ext = &file[ len - 3 ];
         if(_strnicmp(ext, "pfa", -1) && _strnicmp(ext, "pfb", -1))
-            AddFontToList(file, NULL, 0,
+            AddFontToList(NULL, file, NULL, 0,
                           ADDFONT_EXTERNAL_FONT | ADDFONT_ADD_TO_CACHE | ADDFONT_AA_FLAGS(aa_flags) );
     }
     pFcFontSetDestroy(fontset);
@@ -2974,7 +2967,7 @@ static void load_mac_font_callback(const void *value, void *context)
     if (path && CFStringGetFileSystemRepresentation(pathStr, path, len))
     {
         TRACE("font file %s\n", path);
-        AddFontToList(path, NULL, 0, ADDFONT_EXTERNAL_FONT | ADDFONT_ADD_TO_CACHE);
+        AddFontToList(NULL, path, NULL, 0, ADDFONT_EXTERNAL_FONT | ADDFONT_ADD_TO_CACHE);
     }
     HeapFree(GetProcessHeap(), 0, path);
 }
@@ -3102,7 +3095,8 @@ static void get_font_dir( WCHAR *path )
     {
         strcatW( path, fontsW );
     }
-    path[1] = '\\';  /* change \??\ to \\?\ */
+    if (path[5] == ':') memmove( path, path + 4, (strlenW(path) - 3) * sizeof(WCHAR) );
+    else path[1] = '\\';  /* change \??\ to \\?\ */
 }
 
 static void get_data_dir_path( LPCWSTR file, WCHAR *path )
@@ -3189,7 +3183,7 @@ static void update_reg_entries(void)
     DWORD len;
     Family *family;
     Face *face;
-    WCHAR *file, *path, *full_path;
+    WCHAR *file, *path;
     static const WCHAR TrueType[] = {' ','(','T','r','u','e','T','y','p','e',')','\0'};
 
     if(RegCreateKeyExW(HKEY_LOCAL_MACHINE, winnt_font_reg_key,
@@ -3214,7 +3208,6 @@ static void update_reg_entries(void)
 
     LIST_FOR_EACH_ENTRY( family, &font_list, Family, entry ) {
         LIST_FOR_EACH_ENTRY( face, &family->faces, Face, entry ) {
-            char *buffer;
             if (!(face->flags & ADDFONT_EXTERNAL_FONT)) continue;
 
             len = strlenW( face->full_name ) + 1;
@@ -3227,20 +3220,11 @@ static void update_reg_entries(void)
             if (face->scalable)
                 strcatW(valueW, TrueType);
 
-            buffer = strWtoA( CP_UNIXCP, face->file );
-            path = wine_get_dos_file_name( buffer );
-            HeapFree( GetProcessHeap(), 0, buffer );
-
-            if (path)
+            if ((path = get_full_path_name(face->file)))
             {
-                if ((full_path = get_full_path_name(path)))
-                {
-                    HeapFree(GetProcessHeap(), 0, path);
-                    path = full_path;
-                }
                 file = path;
             }
-            else if ((file = strrchrW(face->file, '/')))
+            else if ((file = strrchrW(face->file, '\\')))
             {
                 file++;
             }
@@ -3348,7 +3332,8 @@ INT WineEngAddFontResourceEx(LPCWSTR file, DWORD flags, PVOID pdv)
         EnterCriticalSection( &freetype_cs );
 
         if (!(flags & FR_PRIVATE)) addfont_flags |= ADDFONT_ADD_TO_CACHE;
-        ret = add_font_resource( file, addfont_flags );
+        if (GetFullPathNameW( file, MAX_PATH, path, NULL ))
+            ret = add_font_resource( path, addfont_flags );
 
         if (!ret && !strchrW(file, '\\')) {
             /* Try in %WINDIR%/fonts, needed for Fotobuch Designer */
@@ -3383,7 +3368,7 @@ HANDLE WineEngAddFontMemResourceEx(PVOID pbFont, DWORD cbFont, PVOID pdv, DWORD 
         memcpy(pFontCopy, pbFont, cbFont);
 
         EnterCriticalSection( &freetype_cs );
-        *pcFonts = AddFontToList(NULL, pFontCopy, cbFont, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE);
+        *pcFonts = AddFontToList(NULL, NULL, pFontCopy, cbFont, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE);
         LeaveCriticalSection( &freetype_cs );
 
         if (*pcFonts == 0)
@@ -3421,7 +3406,8 @@ BOOL WineEngRemoveFontResourceEx(LPCWSTR file, DWORD flags, PVOID pdv)
         EnterCriticalSection( &freetype_cs );
 
         if(!(flags & FR_PRIVATE)) addfont_flags |= ADDFONT_ADD_TO_CACHE;
-        ret = remove_font_resource( file, addfont_flags );
+        if (GetFullPathNameW( file, MAX_PATH, path, NULL ))
+            ret = remove_font_resource( path, addfont_flags );
 
         if (!ret && !strchrW(file, '\\'))
         {
@@ -3439,10 +3425,9 @@ BOOL WineEngRemoveFontResourceEx(LPCWSTR file, DWORD flags, PVOID pdv)
     return ret;
 }
 
-static char *get_ttf_file_name( LPCWSTR font_file, LPCWSTR font_path )
+static WCHAR *get_ttf_file_name( LPCWSTR font_file, LPCWSTR font_path )
 {
     WCHAR *fullname;
-    char *unix_name;
     int file_len;
 
     if (!font_file) return NULL;
@@ -3457,19 +3442,9 @@ static char *get_ttf_file_name( LPCWSTR font_file, LPCWSTR font_path )
         memcpy( fullname, font_path, path_len * sizeof(WCHAR) );
         fullname[path_len] = '\\';
         memcpy( fullname + path_len + 1, font_file, (file_len + 1) * sizeof(WCHAR) );
+        return fullname;
     }
-    else
-    {
-        int len = GetFullPathNameW( font_file, 0, NULL, NULL );
-        if (!len) return NULL;
-        fullname = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
-        if (!fullname) return NULL;
-        GetFullPathNameW( font_file, len, fullname, NULL );
-    }
-
-    unix_name = wine_get_unix_file_name( fullname );
-    HeapFree( GetProcessHeap(), 0, fullname );
-    return unix_name;
+    return get_full_path_name( font_file );
 }
 
 #include <pshpack1.h>
@@ -3513,24 +3488,33 @@ struct fontdir
 static void GetEnumStructs(Face *face, const WCHAR *family_name, LPENUMLOGFONTEXW pelf,
                            NEWTEXTMETRICEXW *pntm, LPDWORD ptype);
 
-static BOOL get_fontdir( const char *unix_name, struct fontdir *fd )
+static BOOL get_fontdir( const WCHAR *dos_name, struct fontdir *fd )
 {
-    FT_Face ft_face = new_ft_face( unix_name, NULL, 0, 0, FALSE );
-    Face *face;
+    FT_Face ft_face;
+    Face *face = NULL;
+    char *unix_name;
     WCHAR *family_name;
     ENUMLOGFONTEXW elf;
     NEWTEXTMETRICEXW ntm;
     DWORD type;
 
-    if (!ft_face) return FALSE;
-    face = create_face( ft_face, 0, unix_name, NULL, 0, 0 );
-    family_name = ft_face_get_family_name( ft_face, GetSystemDefaultLCID() );
-    pFT_Done_Face( ft_face );
+    if (!(unix_name = wine_get_unix_file_name( dos_name ))) return FALSE;
+    ft_face = new_ft_face( unix_name, NULL, 0, 0, FALSE );
+    if (ft_face)
+    {
+        face = create_face( ft_face, 0, dos_name, unix_name, NULL, 0, 0 );
+        if (face)
+        {
+            family_name = ft_face_get_family_name( ft_face, GetSystemDefaultLCID() );
+            GetEnumStructs( face, family_name, &elf, &ntm, &type );
+            release_face( face );
+            HeapFree( GetProcessHeap(), 0, family_name );
+        }
+        pFT_Done_Face( ft_face );
+    }
+    HeapFree( GetProcessHeap(), 0, unix_name );
 
-    GetEnumStructs( face, family_name, &elf, &ntm, &type );
-    release_face( face );
-    HeapFree( GetProcessHeap(), 0, family_name );
-
+    if (!face) return FALSE;
     if ((type & TRUETYPE_FONTTYPE) == 0) return FALSE;
 
     memset( fd, 0, sizeof(*fd) );
@@ -3724,11 +3708,11 @@ static BOOL create_fot( const WCHAR *resource, const WCHAR *font_file, const str
 BOOL WineEngCreateScalableFontResource( DWORD hidden, LPCWSTR resource,
                                         LPCWSTR font_file, LPCWSTR font_path )
 {
-    char *unix_name = get_ttf_file_name( font_file, font_path );
+    WCHAR *filename = get_ttf_file_name( font_file, font_path );
     struct fontdir fontdir;
     BOOL ret = FALSE;
 
-    if (!unix_name || !get_fontdir( unix_name, &fontdir ))
+    if (!filename || !get_fontdir( filename, &fontdir ))
         SetLastError( ERROR_INVALID_PARAMETER );
     else
     {
@@ -3736,7 +3720,7 @@ BOOL WineEngCreateScalableFontResource( DWORD hidden, LPCWSTR resource,
         ret = create_fot( resource, font_file, &fontdir );
     }
 
-    HeapFree( GetProcessHeap(), 0, unix_name );
+    HeapFree( GetProcessHeap(), 0, filename );
     return ret;
 }
 
@@ -4176,7 +4160,7 @@ static FT_Face OpenFontFace(GdiFont *font, Face *face, LONG width, LONG height)
 
     if (face->file)
     {
-        char *filename = strWtoA( CP_UNIXCP, face->file );
+        char *filename = wine_get_unix_file_name( face->file );
         font->mapping = map_font_file( filename );
         HeapFree( GetProcessHeap(), 0, filename );
         if (!font->mapping)
