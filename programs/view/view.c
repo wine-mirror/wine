@@ -24,7 +24,7 @@
 
 static HINSTANCE hInst;
 static HWND hMainWnd;
-static WCHAR szAppName[5] = {'V','i','e','w',0};
+static const WCHAR szAppName[] = L"View";
 static WCHAR szTitle[MAX_PATH];
 static WCHAR szFileTitle[MAX_PATH];
 
@@ -52,14 +52,13 @@ typedef struct
 static BOOL FileOpen(HWND hWnd, WCHAR *fn, int fnsz)
 {
   WCHAR filter[120], metafileFilter[100];
-  static const WCHAR filterW[] = {'%','s','%','c','*','.','w','m','f',';','*','.','e','m','f','%','c',0};
   OPENFILENAMEW ofn = { sizeof(OPENFILENAMEW),
                         0, 0, NULL, NULL, 0, 0, NULL,
                         fnsz, NULL, 0, NULL, NULL,
                         OFN_SHOWHELP, 0, 0, NULL, 0, NULL };
 
   LoadStringW( hInst, IDS_OPEN_META_STRING, metafileFilter, ARRAY_SIZE(metafileFilter) );
-  swprintf( filter, ARRAY_SIZE(filter), filterW, metafileFilter, 0, 0 );
+  swprintf( filter, ARRAY_SIZE(filter), L"%s%c*.wmf;*.emf%c", metafileFilter, 0, 0 );
 
   ofn.lpstrFilter = filter;
   ofn.hwndOwner = hWnd;
@@ -217,7 +216,6 @@ static void UpdateWindowCaption(void)
 {
   WCHAR szCaption[MAX_PATH];
   WCHAR szView[MAX_PATH];
-  static const WCHAR hyphenW[] = { ' ','-',' ',0 };
 
   LoadStringW(hInst, IDS_DESCRIPTION, szView, ARRAY_SIZE(szView));
 
@@ -225,7 +223,7 @@ static void UpdateWindowCaption(void)
   {
     lstrcpyW(szCaption, szFileTitle);
     LoadStringW(hInst, IDS_DESCRIPTION, szView, ARRAY_SIZE(szView));
-    lstrcatW(szCaption, hyphenW);
+    lstrcatW(szCaption, L" - ");
     lstrcatW(szCaption, szView);
   }
   else
