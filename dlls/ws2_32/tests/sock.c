@@ -2520,11 +2520,8 @@ static void test_WSASocket(void)
         {
             if (pi[j].iProtocol == autoprotocols[i])
             {
-                if (socktype == pi[j].iSocketType)
-                    err = 0;
-                else
-                    ok(0, "Wrong socket type, expected %d received %d\n",
-                       pi[j].iSocketType, socktype);
+                ok(pi[j].iSocketType == socktype, "expected %d, got %d\n", socktype, pi[j].iSocketType);
+                err = 0;
                 break;
             }
         }
@@ -4029,14 +4026,10 @@ static void test_getsockname(void)
     ok(sock != INVALID_SOCKET, "failed to create socket, error %u\n", WSAGetLastError());
 
     sa_get = sa_set;
-    if (getsockname(sock, (struct sockaddr*) &sa_get, &sa_get_len) == 0)
-        ok(0, "getsockname on unbound socket should fail\n");
-    else {
-        ok(WSAGetLastError() == WSAEINVAL, "getsockname on unbound socket "
-            "failed with %d, expected %d\n", WSAGetLastError(), WSAEINVAL);
-        ok(memcmp(&sa_get, &sa_set, sizeof(sa_get)) == 0,
-            "failed getsockname modified sockaddr when it shouldn't\n");
-    }
+    ret = getsockname(sock, (struct sockaddr *)&sa_get, &sa_get_len);
+    ok(ret == SOCKET_ERROR, "expected failure\n");
+    ok(WSAGetLastError() == WSAEINVAL, "got error %u\n", WSAGetLastError());
+    ok(!memcmp(&sa_get, &sa_set, sizeof(sa_get)), "address should not be changed\n");
 
     ret = bind(sock, (struct sockaddr *) &sa_set, sa_set_len);
     ok(!ret, "failed to bind, error %u\n", WSAGetLastError());
@@ -4819,18 +4812,8 @@ static void test_send(void)
     ok(!ret, "setsockopt SO_SNDBUF failed: %d - %d\n", ret, GetLastError());
 
     hThread = CreateThread(NULL, 0, drain_socket_thread, &dst, 0, &id);
-    if (hThread == NULL)
-    {
-        ok(0, "CreateThread failed, error %d\n", GetLastError());
-        goto end;
-    }
 
     buffer = HeapAlloc(GetProcessHeap(), 0, buflen);
-    if (buffer == NULL)
-    {
-        ok(0, "HeapAlloc failed, error %d\n", GetLastError());
-        goto end;
-    }
 
     /* fill the buffer with some nonsense */
     for (i = 0; i < buflen; ++i)
@@ -4839,10 +4822,7 @@ static void test_send(void)
     }
 
     ret = send(src, buffer, buflen, 0);
-    if (ret >= 0)
-        ok(ret == buflen, "send should have sent %d bytes, but it only sent %d\n", buflen, ret);
-    else
-        ok(0, "send failed, error %d\n", WSAGetLastError());
+    ok(ret == buflen, "send should have sent %d bytes, but it only sent %d\n", buflen, ret);
 
     buf.buf = buffer;
     buf.len = buflen;
@@ -5060,8 +5040,7 @@ static void flush_events(SOCKET s, HANDLE hEvent)
         if (dwRet == WAIT_OBJECT_0)
         {
             ret = WSAEnumNetworkEvents(s, hEvent, &netEvents);
-            if (ret)
-                ok(0, "WSAEnumNetworkEvents failed, error %d\n", ret);
+            ok(!ret, "failed to get network events, error %u\n", WSAGetLastError());
         }
     }
     else
@@ -5237,31 +5216,20 @@ static void test_events(int useMessages)
 
     /* don't use socketpair, we want connection event */
     src = socket(AF_INET, SOCK_STREAM, 0);
-    if (src == INVALID_SOCKET)
-    {
-        ok(0, "creating socket pair failed (%d), skipping test\n", GetLastError());
-        goto end;
-    }
+    ok(src != INVALID_SOCKET, "failed to create socket, error %u\n", WSAGetLastError());
 
     ret = set_blocking(src, TRUE);
     ok(!ret, "set_blocking failed, error %d\n", WSAGetLastError());
 
     src2 = socket(AF_INET, SOCK_STREAM, 0);
-    if (src2 == INVALID_SOCKET)
-    {
-        ok(0, "creating socket pair failed (%d), skipping test\n", GetLastError());
-        goto end;
-    }
+    ok(src2 != INVALID_SOCKET, "failed to create socket, error %u\n", WSAGetLastError());
 
     ret = set_blocking(src2, TRUE);
     ok(!ret, "set_blocking failed, error %d\n", WSAGetLastError());
 
     len = sizeof(BOOL);
-    if (getsockopt(src, SOL_SOCKET, SO_OOBINLINE, (void *)&bret, &len) == SOCKET_ERROR)
-    {
-        ok(0, "failed to get oobinline status, %d\n", GetLastError());
-        goto end;
-    }
+    ret = getsockopt(src, SOL_SOCKET, SO_OOBINLINE, (void *)&bret, &len);
+    ok(!ret, "failed to get address, error %u\n", WSAGetLastError());
     ok(bret == FALSE, "OOB not inline\n");
 
     if (useMessages)
@@ -5282,28 +5250,16 @@ static void test_events(int useMessages)
 
         hWnd = CreateWindowA(szClassName, "WS2Test", WS_OVERLAPPEDWINDOW,
                             0, 0, 500, 500, NULL, NULL, GetModuleHandleA(NULL), NULL);
-        if (!hWnd)
-        {
-            ok(0, "failed to create window: %d\n", GetLastError());
-            return;
-        }
+        ok(!!hWnd, "failed to create window\n");
 
         ret = WSAAsyncSelect(src, hWnd, WM_SOCKET, FD_CONNECT | FD_READ | FD_OOB | FD_WRITE | FD_CLOSE);
-        if (ret)
-        {
-            ok(0, "WSAAsyncSelect failed, error %d\n", ret);
-            goto end;
-        }
+        ok(!ret, "got error %u\n", WSAGetLastError());
 
         ok(set_blocking(src, TRUE) == SOCKET_ERROR, "set_blocking should failed!\n");
         ok(WSAGetLastError() == WSAEINVAL, "expect WSAEINVAL, returned %x\n", WSAGetLastError());
 
         ret = WSAAsyncSelect(src2, hWnd, WM_SOCKET, FD_CONNECT | FD_READ | FD_OOB | FD_WRITE | FD_CLOSE);
-        if (ret)
-        {
-            ok(0, "WSAAsyncSelect failed, error %d\n", ret);
-            goto end;
-        }
+        ok(!ret, "got error %u\n", WSAGetLastError());
 
         ok(set_blocking(src2, TRUE) == SOCKET_ERROR, "set_blocking should failed!\n");
         ok(WSAGetLastError() == WSAEINVAL, "expect WSAEINVAL, returned %x\n", WSAGetLastError());
@@ -5311,71 +5267,39 @@ static void test_events(int useMessages)
     else
     {
         hEvent = WSACreateEvent();
-        if (hEvent == INVALID_HANDLE_VALUE)
-        {
-            ok(0, "WSACreateEvent failed, error %d\n", GetLastError());
-            goto end;
-        }
+        ok(hEvent != WSA_INVALID_EVENT, "failed to create event, error %u\n", WSAGetLastError());
 
         hEvent2 = WSACreateEvent();
-        if (hEvent2 == INVALID_HANDLE_VALUE)
-        {
-            ok(0, "WSACreateEvent failed, error %d\n", GetLastError());
-            goto end;
-        }
+        ok(hEvent2 != WSA_INVALID_EVENT, "failed to create event, error %u\n", WSAGetLastError());
 
         ret = WSAEventSelect(src, hEvent, FD_CONNECT | FD_READ | FD_OOB | FD_WRITE | FD_CLOSE);
-        if (ret)
-        {
-            ok(0, "WSAEventSelect failed, error %d\n", ret);
-            goto end;
-        }
+        ok(!ret, "got error %u\n", WSAGetLastError());
 
         ok(set_blocking(src, TRUE) == SOCKET_ERROR, "set_blocking should failed!\n");
         ok(WSAGetLastError() == WSAEINVAL, "expect WSAEINVAL, returned %x\n", WSAGetLastError());
 
         ret = WSAEventSelect(src2, hEvent2, FD_CONNECT | FD_READ | FD_OOB | FD_WRITE | FD_CLOSE);
-        if (ret)
-        {
-            ok(0, "WSAEventSelect failed, error %d\n", ret);
-            goto end;
-        }
+        ok(!ret, "got error %u\n", WSAGetLastError());
 
         ok(set_blocking(src2, TRUE) == SOCKET_ERROR, "set_blocking should failed!\n");
         ok(WSAGetLastError() == WSAEINVAL, "expect WSAEINVAL, returned %x\n", WSAGetLastError());
     }
 
     server = socket(AF_INET, SOCK_STREAM, 0);
-    if (server == INVALID_SOCKET)
-    {
-        ok(0, "creating socket pair failed (%d), skipping test\n", GetLastError());
-        goto end;
-    }
+    ok(server != INVALID_SOCKET, "failed to create socket, error %u\n", WSAGetLastError());
 
     memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = inet_addr("127.0.0.1");
     ret = bind(server, (struct sockaddr*)&addr, sizeof(addr));
-    if (ret != 0)
-    {
-        ok(0, "creating socket pair failed (%d), skipping test\n", GetLastError());
-        goto end;
-    }
+    ok(!ret, "failed to bind, error %u\n", WSAGetLastError());
 
     len = sizeof(addr);
     ret = getsockname(server, (struct sockaddr*)&addr, &len);
-    if (ret != 0)
-    {
-        ok(0, "creating socket pair failed (%d), skipping test\n", GetLastError());
-        goto end;
-    }
+    ok(!ret, "failed to get address, error %u\n", WSAGetLastError());
 
     ret = listen(server, 2);
-    if (ret != 0)
-    {
-        ok(0, "creating socket pair failed (%d), skipping test\n", GetLastError());
-        goto end;
-    }
+    ok(!ret, "failed to listen, error %u\n", WSAGetLastError());
 
     SetLastError(0xdeadbeef);
     ret = connect(src, NULL, 0);
@@ -5383,34 +5307,18 @@ static void test_events(int useMessages)
     ok(GetLastError() == WSAEFAULT, "expected 10014, got %d\n", GetLastError());
 
     ret = connect(src, (struct sockaddr*)&addr, sizeof(addr));
-    if (ret == SOCKET_ERROR && WSAGetLastError() != WSAEWOULDBLOCK)
-    {
-        ok(0, "creating socket pair failed (%d), skipping test\n", GetLastError());
-        goto end;
-    }
+    ok(!ret || WSAGetLastError() == WSAEWOULDBLOCK, "failed to connect, error %u\n", WSAGetLastError());
 
     ret = connect(src2, (struct sockaddr*)&addr, sizeof(addr));
-    if (ret == SOCKET_ERROR && WSAGetLastError() != WSAEWOULDBLOCK)
-    {
-        ok(0, "creating socket pair failed (%d), skipping test\n", GetLastError());
-        goto end;
-    }
+    ok(!ret || WSAGetLastError() == WSAEWOULDBLOCK, "failed to connect, error %u\n", WSAGetLastError());
 
     len = sizeof(addr);
     dst = accept(server, (struct sockaddr*)&addr, &len);
-    if (dst == INVALID_SOCKET)
-    {
-        ok(0, "creating socket pair failed (%d), skipping test\n", GetLastError());
-        goto end;
-    }
+    ok(dst != INVALID_SOCKET, "failed to accept socket, error %u\n", WSAGetLastError());
 
     len = sizeof(addr);
     dst2 = accept(server, (struct sockaddr*)&addr, &len);
-    if (dst2 == INVALID_SOCKET)
-    {
-        ok(0, "creating socket pair failed (%d), skipping test\n", GetLastError());
-        goto end;
-    }
+    ok(dst2 != INVALID_SOCKET, "failed to accept socket, error %u\n", WSAGetLastError());
 
     closesocket(server);
     server = INVALID_SOCKET;
@@ -5420,32 +5328,12 @@ static void test_events(int useMessages)
        so make both sockets non-blocking. src is already non-blocking
        from the async select */
 
-    if (set_blocking(dst, FALSE))
-    {
-        ok(0, "ioctlsocket failed, error %d\n", WSAGetLastError());
-        goto end;
-    }
+    ret = set_blocking(dst, FALSE);
+    ok(!ret, "failed to set nonblocking, error %u\n", WSAGetLastError());
 
     buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, bufferSize);
-    if (buffer == NULL)
-    {
-        ok(0, "could not allocate memory for test\n");
-        goto end;
-    }
-
     ov.hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
-    if (ov.hEvent == NULL)
-    {
-        ok(0, "could not create event object, errno = %d\n", GetLastError());
-        goto end;
-    }
-
     ov2.hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
-    if (ov2.hEvent == NULL)
-    {
-        ok(0, "could not create event object, errno = %d\n", GetLastError());
-        goto end;
-    }
 
     /* FD_WRITE should be set initially, and allow us to send at least 1 byte */
     ok_event_seq(src, hEvent, connect_seq, NULL, 1);
@@ -5590,11 +5478,6 @@ static void test_events(int useMessages)
 
     /* Flood the send queue */
     hThread = CreateThread(NULL, 0, drain_socket_thread, &dst, 0, &id);
-    if (hThread == NULL)
-    {
-        ok(0, "CreateThread failed, error %d\n", GetLastError());
-        goto end;
-    }
 
     /* Now FD_WRITE should not be set, because the socket send buffer isn't full yet */
     ok_event_seq(src, hEvent, empty_seq, NULL, 0);
@@ -5610,17 +5493,11 @@ static void test_events(int useMessages)
         ret = send(src, buffer, bufferSize, 0);
     } while (ret == bufferSize);
     drain_pause = FALSE;
-    if (ret >= 0 || WSAGetLastError() == WSAEWOULDBLOCK)
-    {
-        Sleep(400); /* win9x */
-        broken_seq[0] = read_write_seq;
-        broken_seq[1] = NULL;
-        ok_event_seq(src, hEvent, write_seq, broken_seq, 0);
-    }
-    else
-    {
-        ok(0, "sending a lot of data failed with error %d\n", WSAGetLastError());
-    }
+    ok(ret >= 0 || WSAGetLastError() == WSAEWOULDBLOCK, "got error %u\n", WSAGetLastError());
+    Sleep(400); /* win9x */
+    broken_seq[0] = read_write_seq;
+    broken_seq[1] = NULL;
+    ok_event_seq(src, hEvent, write_seq, broken_seq, 0);
 
     /* Test how FD_CLOSE is handled */
     ret = send(dst, "12", 2, 0);
@@ -5629,7 +5506,6 @@ static void test_events(int useMessages)
     /* Wait a little and let the send complete */
     Sleep(100);
     closesocket(dst);
-    dst = INVALID_SOCKET;
     Sleep(100);
 
     /* We can never implement this in wine, best we can hope for is
@@ -5688,21 +5564,13 @@ static void test_events(int useMessages)
     if (useMessages)
     {
         ret = WSAAsyncSelect(src, hWnd, WM_SOCKET, 0);
-        if (ret)
-        {
-            ok(0, "WSAAsyncSelect failed, error %d\n", ret);
-            goto end;
-        }
+        ok(!ret, "got error %u\n", WSAGetLastError());
 
         ret = set_blocking(src, TRUE);
         ok(!ret, "set_blocking failed, error %d\n", WSAGetLastError());
 
         ret = WSAAsyncSelect(src2, hWnd, WM_SOCKET, 0);
-        if (ret)
-        {
-            ok(0, "WSAAsyncSelect failed, error %d\n", ret);
-            goto end;
-        }
+        ok(!ret, "got error %u\n", WSAGetLastError());
 
         ret = set_blocking(src2, TRUE);
         ok(!ret, "set_blocking failed, error %d\n", WSAGetLastError());
@@ -5710,56 +5578,30 @@ static void test_events(int useMessages)
     else
     {
         ret = WSAEventSelect(src, hEvent2, 0);
-        if (ret)
-        {
-            ok(0, "WSAAsyncSelect failed, error %d\n", ret);
-            goto end;
-        }
+        ok(!ret, "got error %u\n", WSAGetLastError());
 
         ret = set_blocking(src, TRUE);
         ok(!ret, "set_blocking failed, error %d\n", WSAGetLastError());
 
         ret = WSAEventSelect(src2, hEvent2, 0);
-        if (ret)
-        {
-            ok(0, "WSAAsyncSelect failed, error %d\n", ret);
-            goto end;
-        }
+        ok(!ret, "got error %u\n", WSAGetLastError());
 
         ret = set_blocking(src2, TRUE);
         ok(!ret, "set_blocking failed, error %d\n", WSAGetLastError());
     }
 
-end:
-    if (src != INVALID_SOCKET)
-    {
-        flush_events(src, hEvent);
-        closesocket(src);
-    }
-    if (src2 != INVALID_SOCKET)
-    {
-        flush_events(src2, hEvent2);
-        closesocket(src2);
-    }
+    flush_events(src, hEvent);
+    closesocket(src);
+    flush_events(src2, hEvent2);
+    closesocket(src2);
     HeapFree(GetProcessHeap(), 0, buffer);
-    if (server != INVALID_SOCKET)
-        closesocket(server);
-    if (dst != INVALID_SOCKET)
-        closesocket(dst);
-    if (dst2 != INVALID_SOCKET)
-        closesocket(dst2);
-    if (hThread != NULL)
-        CloseHandle(hThread);
-    if (hWnd != NULL)
-        DestroyWindow(hWnd);
-    if (hEvent != NULL)
-        CloseHandle(hEvent);
-    if (hEvent2 != NULL)
-        CloseHandle(hEvent2);
-    if (ov.hEvent != NULL)
-        CloseHandle(ov.hEvent);
-    if (ov2.hEvent != NULL)
-        CloseHandle(ov2.hEvent);
+    closesocket(dst2);
+    CloseHandle(hThread);
+    DestroyWindow(hWnd);
+    CloseHandle(hEvent);
+    CloseHandle(hEvent2);
+    CloseHandle(ov.hEvent);
+    CloseHandle(ov2.hEvent);
 }
 
 static void test_ipv6only(void)
@@ -6107,10 +5949,8 @@ static void test_WSASendTo(void)
     data_buf.len = sizeof(buf);
     data_buf.buf = buf;
 
-    if( (s = socket(AF_INET, SOCK_DGRAM, 0)) == INVALID_SOCKET) {
-        ok(0, "socket() failed error: %d\n", WSAGetLastError());
-        return;
-    }
+    s = socket(AF_INET, SOCK_DGRAM, 0);
+    ok(s != INVALID_SOCKET, "failed to create socket, error %u\n", WSAGetLastError());
 
     WSASetLastError(12345);
     ret = WSASendTo(INVALID_SOCKET, &data_buf, 1, NULL, 0, (struct sockaddr*)&addr, sizeof(addr), NULL, NULL);
@@ -6123,12 +5963,9 @@ static void test_WSASendTo(void)
        "WSASendTo() failed: %d/%d\n", ret, WSAGetLastError());
 
     WSASetLastError(12345);
-    if(WSASendTo(s, &data_buf, 1, &bytesSent, 0, (struct sockaddr*)&addr, sizeof(addr), NULL, NULL)) {
-        ok(0, "WSASendTo() failed error: %d\n", WSAGetLastError());
-        return;
-    }
-    ok(!WSAGetLastError(), "WSAGetLastError() should return zero after "
-            "a successful call to WSASendTo()\n");
+    ret = WSASendTo(s, &data_buf, 1, &bytesSent, 0, (struct sockaddr *)&addr, sizeof(addr), NULL, NULL);
+    ok(!ret, "expected success\n");
+    ok(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
 }
 
 static DWORD WINAPI recv_thread(LPVOID arg)
@@ -6886,45 +6723,33 @@ static void test_GetAddrInfoW(void)
         result = NULL;
         SetLastError(0xdeadbeef);
         ret = GetAddrInfoW(localhost, NULL, &hint, &result);
-        if (!ret)
+        todo_wine_if(hinttests[i].error) ok(ret == hinttests[i].error, "test %d: wrong ret %d\n", i, ret);
+        if(!ret)
         {
-            if (hinttests[i].error)
-                ok(0, "test %d: GetAddrInfoW succeeded unexpectedly\n", i);
-            else
+            for (p = result; p; p = p->ai_next)
             {
-                p = result;
-                do
-                {
-                    /* when AF_UNSPEC is used the return will be either AF_INET or AF_INET6 */
-                    if (hinttests[i].family == AF_UNSPEC)
-                        ok(p->ai_family == AF_INET || p->ai_family == AF_INET6,
-                           "test %d: expected AF_INET or AF_INET6, got %d\n",
-                           i, p->ai_family);
-                    else
-                        ok(p->ai_family == hinttests[i].family,
-                           "test %d: expected family %d, got %d\n",
-                           i, hinttests[i].family, p->ai_family);
+                /* when AF_UNSPEC is used the return will be either AF_INET or AF_INET6 */
+                if (hinttests[i].family == AF_UNSPEC)
+                    ok(p->ai_family == AF_INET || p->ai_family == AF_INET6,
+                       "test %d: expected AF_INET or AF_INET6, got %d\n",
+                       i, p->ai_family);
+                else
+                    ok(p->ai_family == hinttests[i].family,
+                       "test %d: expected family %d, got %d\n",
+                       i, hinttests[i].family, p->ai_family);
 
-                    ok(p->ai_socktype == hinttests[i].socktype,
-                       "test %d: expected type %d, got %d\n",
-                       i, hinttests[i].socktype, p->ai_socktype);
-                    ok(p->ai_protocol == hinttests[i].protocol,
-                       "test %d: expected protocol %d, got %d\n",
-                       i, hinttests[i].protocol, p->ai_protocol);
-                    p = p->ai_next;
-                }
-                while (p);
+                ok(p->ai_socktype == hinttests[i].socktype,
+                   "test %d: expected type %d, got %d\n",
+                   i, hinttests[i].socktype, p->ai_socktype);
+                ok(p->ai_protocol == hinttests[i].protocol,
+                   "test %d: expected protocol %d, got %d\n",
+                   i, hinttests[i].protocol, p->ai_protocol);
             }
             FreeAddrInfoW(result);
         }
         else
         {
-            DWORD err = WSAGetLastError();
-            if (hinttests[i].error)
-                ok(hinttests[i].error == err, "test %d: GetAddrInfoW failed with error %d, expected %d\n",
-                   i, err, hinttests[i].error);
-            else
-                ok(0, "test %d: GetAddrInfoW failed with %d (err %d)\n", i, ret, err);
+            ok(WSAGetLastError() == hinttests[i].error, "test %d: wrong error %d\n", i, WSAGetLastError());
         }
     }
 
@@ -7407,45 +7232,33 @@ static void test_getaddrinfo(void)
         result = NULL;
         SetLastError(0xdeadbeef);
         ret = getaddrinfo("localhost", NULL, &hint, &result);
+        todo_wine_if(hinttests[i].error) ok(ret == hinttests[i].error, "test %d: wrong ret %d\n", i, ret);
         if(!ret)
         {
-            if (hinttests[i].error)
-                ok(0, "test %d: getaddrinfo succeeded unexpectedly\n", i);
-            else
+            for (p = result; p; p = p->ai_next)
             {
-                p = result;
-                do
-                {
-                    /* when AF_UNSPEC is used the return will be either AF_INET or AF_INET6 */
-                    if (hinttests[i].family == AF_UNSPEC)
-                        ok(p->ai_family == AF_INET || p->ai_family == AF_INET6,
-                           "test %d: expected AF_INET or AF_INET6, got %d\n",
-                           i, p->ai_family);
-                    else
-                        ok(p->ai_family == hinttests[i].family,
-                           "test %d: expected family %d, got %d\n",
-                           i, hinttests[i].family, p->ai_family);
+                /* when AF_UNSPEC is used the return will be either AF_INET or AF_INET6 */
+                if (hinttests[i].family == AF_UNSPEC)
+                    ok(p->ai_family == AF_INET || p->ai_family == AF_INET6,
+                       "test %d: expected AF_INET or AF_INET6, got %d\n",
+                       i, p->ai_family);
+                else
+                    ok(p->ai_family == hinttests[i].family,
+                       "test %d: expected family %d, got %d\n",
+                       i, hinttests[i].family, p->ai_family);
 
-                    ok(p->ai_socktype == hinttests[i].socktype,
-                       "test %d: expected type %d, got %d\n",
-                       i, hinttests[i].socktype, p->ai_socktype);
-                    ok(p->ai_protocol == hinttests[i].protocol,
-                       "test %d: expected protocol %d, got %d\n",
-                       i, hinttests[i].protocol, p->ai_protocol);
-                    p = p->ai_next;
-                }
-                while (p);
+                ok(p->ai_socktype == hinttests[i].socktype,
+                   "test %d: expected type %d, got %d\n",
+                   i, hinttests[i].socktype, p->ai_socktype);
+                ok(p->ai_protocol == hinttests[i].protocol,
+                   "test %d: expected protocol %d, got %d\n",
+                   i, hinttests[i].protocol, p->ai_protocol);
             }
             freeaddrinfo(result);
         }
         else
         {
-            DWORD err = WSAGetLastError();
-            if (hinttests[i].error)
-                ok(hinttests[i].error == err, "test %d: getaddrinfo failed with error %d, expected %d\n",
-                   i, err, hinttests[i].error);
-            else
-                ok(0, "test %d: getaddrinfo failed with %d (err %d)\n", i, ret, err);
+            ok(WSAGetLastError() == hinttests[i].error, "test %d: wrong error %d\n", i, WSAGetLastError());
         }
     }
 
@@ -8774,11 +8587,7 @@ static HWND create_async_message_window(void)
 
     hWnd = CreateWindowA(class_name, "ws2_32 async message window", WS_OVERLAPPEDWINDOW,
                         0, 0, 500, 500, NULL, NULL, GetModuleHandleA(NULL), NULL);
-    if (!hWnd)
-    {
-        ok(0, "failed to create window: %u\n", GetLastError());
-        return NULL;
-    }
+    ok(!!hWnd, "failed to create window\n");
 
     return hWnd;
 }
@@ -9805,9 +9614,7 @@ todo_wine
 
         if (WSALookupServiceNextW(hnd, 0, &bsize, qs) == SOCKET_ERROR)
         {
-            error = WSAGetLastError();
-            if (error == WSA_E_NO_MORE) break;
-            ok(0, "Error %d happened while listing services\n", error);
+            ok(WSAGetLastError() == WSA_E_NO_MORE, "got error %u\n", WSAGetLastError());
             break;
         }
 
