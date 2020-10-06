@@ -4086,7 +4086,7 @@ static void test_pseudo_console(void)
 
 START_TEST(console)
 {
-    HANDLE hConIn, hConOut;
+    HANDLE hConIn, hConOut, revert_output = NULL;
     BOOL ret, test_current;
     CONSOLE_SCREEN_BUFFER_INFO	sbi;
     BOOL using_pseudo_console;
@@ -4174,6 +4174,16 @@ START_TEST(console)
         }
     }
 
+    if (test_current)
+    {
+        HANDLE sb;
+        revert_output = CreateFileA("CONOUT$", GENERIC_READ|GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
+        sb = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+                                       CONSOLE_TEXTMODE_BUFFER, NULL);
+        ok(sb != INVALID_HANDLE_VALUE, "Could not allocate screen buffer: %u\n", GetLastError());
+        SetConsoleActiveScreenBuffer(sb);
+    }
+
     hConIn = CreateFileA("CONIN$", GENERIC_READ|GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
     hConOut = CreateFileA("CONOUT$", GENERIC_READ|GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
 
@@ -4240,7 +4250,7 @@ START_TEST(console)
     else
         test_GetSetConsoleInputExeName();
 
-    test_GetConsoleProcessList();
+    if (!test_current) test_GetConsoleProcessList();
     test_OpenConsoleW();
     test_CreateFileW();
     test_OpenCON();
@@ -4260,12 +4270,15 @@ START_TEST(console)
     test_ReadConsoleOutputCharacterW(hConOut);
     test_ReadConsoleOutputAttribute(hConOut);
     test_ReadConsoleOutput(hConOut);
-    test_GetCurrentConsoleFont(hConOut);
-    test_GetCurrentConsoleFontEx(hConOut);
-    test_GetConsoleFontSize(hConOut);
-    test_GetLargestConsoleWindowSize(hConOut);
-    test_GetConsoleFontInfo(hConOut);
-    test_SetConsoleFont(hConOut);
+    if (!test_current)
+    {
+        test_GetCurrentConsoleFont(hConOut);
+        test_GetCurrentConsoleFontEx(hConOut);
+        test_GetConsoleFontSize(hConOut);
+        test_GetLargestConsoleWindowSize(hConOut);
+        test_GetConsoleFontInfo(hConOut);
+        test_SetConsoleFont(hConOut);
+    }
     test_GetConsoleScreenBufferInfoEx(hConOut);
     test_SetConsoleScreenBufferInfoEx(hConOut);
     test_console_title();
@@ -4276,4 +4289,6 @@ START_TEST(console)
         test_AllocConsole();
         test_FreeConsole();
     }
+    else if (revert_output) SetConsoleActiveScreenBuffer(revert_output);
+
 }
