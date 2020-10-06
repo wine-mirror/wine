@@ -446,10 +446,6 @@ static HRESULT install_init(LPCWSTR inf_filename, LPCWSTR install_sec,
     LPCWSTR ptr, path;
 
     static const WCHAR backslash[] = {'\\',0};
-    static const WCHAR default_install[] = {
-        'D','e','f','a','u','l','t','I','n','s','t','a','l','l',0
-    };
-
     if (!(ptr = wcsrchr(inf_filename, '\\')))
         ptr = inf_filename;
 
@@ -464,16 +460,16 @@ static HRESULT install_init(LPCWSTR inf_filename, LPCWSTR install_sec,
     /* FIXME: determine the proper platform to install (NTx86, etc) */
     if (!install_sec || !*install_sec)
     {
-        len = sizeof(default_install) - 1;
-        ptr = default_install;
+        len = ARRAY_SIZE(L"DefaultInstall");
+        ptr = L"DefaultInstall";
     }
     else
     {
-        len = lstrlenW(install_sec);
+        len = lstrlenW(install_sec) + 1;
         ptr = install_sec;
     }
 
-    info->install_sec = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR));
+    info->install_sec = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
     if (!info->install_sec)
         return E_OUTOFMEMORY;
 
