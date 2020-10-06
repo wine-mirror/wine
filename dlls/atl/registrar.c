@@ -32,27 +32,20 @@ static const struct {
     WCHAR name[22];
     HKEY  key;
 } root_keys[] = {
-    {{'H','K','E','Y','_','C','L','A','S','S','E','S','_','R','O','O','T',0},
-                    HKEY_CLASSES_ROOT},
-    {{'H','K','E','Y','_','C','U','R','R','E','N','T','_','U','S','E','R',0},
-                    HKEY_CURRENT_USER},
-    {{'H','K','E','Y','_','L','O','C','A','L','_','M','A','C','H','I','N','E',0},
-                    HKEY_LOCAL_MACHINE},
-    {{'H','K','E','Y','_','U','S','E','R','S',0},
-                    HKEY_USERS},
-    {{'H','K','E','Y','_','P','E','R','F','O','R','M','A','N','C','E','_','D','A','T','A',0},
-                    HKEY_PERFORMANCE_DATA},
-    {{'H','K','E','Y','_','D','Y','N','_','D','A','T','A',0},
-                    HKEY_DYN_DATA},
-    {{'H','K','E','Y','_','C','U','R','R','E','N','T','_','C','O','N','F','I','G',0},
-                    HKEY_CURRENT_CONFIG},
-    {{'H','K','C','R',0}, HKEY_CLASSES_ROOT},
-    {{'H','K','C','U',0}, HKEY_CURRENT_USER},
-    {{'H','K','L','M',0}, HKEY_LOCAL_MACHINE},
-    {{'H','K','U',0},     HKEY_USERS},
-    {{'H','K','P','D',0}, HKEY_PERFORMANCE_DATA},
-    {{'H','K','D','D',0}, HKEY_DYN_DATA},
-    {{'H','K','C','C',0}, HKEY_CURRENT_CONFIG}
+    {L"HKEY_CLASSES_ROOT",     HKEY_CLASSES_ROOT},
+    {L"HKEY_CURRENT_USER",     HKEY_CURRENT_USER},
+    {L"HKEY_LOCAL_MACHINE",    HKEY_LOCAL_MACHINE},
+    {L"HKEY_USERS",            HKEY_USERS},
+    {L"HKEY_PERFORMANCE_DATA", HKEY_PERFORMANCE_DATA},
+    {L"HKEY_DYN_DATA",         HKEY_DYN_DATA},
+    {L"HKEY_CURRENT_CONFIG",   HKEY_CURRENT_CONFIG},
+    {L"HKCR",                  HKEY_CLASSES_ROOT},
+    {L"HKCU",                  HKEY_CURRENT_USER},
+    {L"HKLM",                  HKEY_LOCAL_MACHINE},
+    {L"HKU",                   HKEY_USERS},
+    {L"HKPD",                  HKEY_PERFORMANCE_DATA},
+    {L"HKDD",                  HKEY_DYN_DATA},
+    {L"HKCC",                  HKEY_CURRENT_CONFIG}
 };
 
 typedef struct rep_list_str {
@@ -150,7 +143,6 @@ static HRESULT do_preprocess(const Registrar *This, LPCOLESTR data, strbuf *buf)
 {
     LPCOLESTR iter, iter2 = data;
     rep_list *rep_iter;
-    static const WCHAR wstr[] = {'%',0};
 
     iter = wcschr(data, '%');
     while(iter) {
@@ -164,7 +156,7 @@ static HRESULT do_preprocess(const Registrar *This, LPCOLESTR data, strbuf *buf)
             return DISP_E_EXCEPTION;
 
         if(iter == iter2) {
-            strbuf_write(wstr, buf, 1);
+            strbuf_write(L"%", buf, 1);
         }else {
             for(rep_iter = This->rep; rep_iter; rep_iter = rep_iter->next) {
                 if(rep_iter->key_len == iter-iter2
@@ -205,11 +197,6 @@ static HRESULT do_process_key(LPCOLESTR *pstr, HKEY parent_key, strbuf *buf, BOO
         DO_DELETE
     } key_type = NORMAL;
 
-    static const WCHAR wstrNoRemove[] = {'N','o','R','e','m','o','v','e',0};
-    static const WCHAR wstrForceRemove[] = {'F','o','r','c','e','R','e','m','o','v','e',0};
-    static const WCHAR wstrDelete[] = {'D','e','l','e','t','e',0};
-    static const WCHAR wstrval[] = {'v','a','l',0};
-
     iter = *pstr;
     hres = get_word(&iter, buf);
     if(FAILED(hres))
@@ -218,13 +205,13 @@ static HRESULT do_process_key(LPCOLESTR *pstr, HKEY parent_key, strbuf *buf, BOO
 
     while(buf->str[1] || buf->str[0] != '}') {
         key_type = NORMAL;
-        if(!lstrcmpiW(buf->str, wstrNoRemove))
+        if(!lstrcmpiW(buf->str, L"NoRemove"))
             key_type = NO_REMOVE;
-        else if(!lstrcmpiW(buf->str, wstrForceRemove))
+        else if(!lstrcmpiW(buf->str, L"ForceRemove"))
             key_type = FORCE_REMOVE;
-        else if(!lstrcmpiW(buf->str, wstrval))
+        else if(!lstrcmpiW(buf->str, L"val"))
             key_type = IS_VAL;
-        else if(!lstrcmpiW(buf->str, wstrDelete))
+        else if(!lstrcmpiW(buf->str, L"Delete"))
             key_type = DO_DELETE;
 
         if(key_type != NORMAL) {
@@ -716,9 +703,6 @@ HRESULT WINAPI AtlUpdateRegistryFromResourceD(HINSTANCE inst, LPCOLESTR res,
     IRegistrar *registrar;
     HRESULT hres;
 
-    static const WCHAR moduleW[] = {'M','O','D','U','L','E',0};
-    static const WCHAR registryW[] = {'R','E','G','I','S','T','R','Y',0};
-
     if(!GetModuleFileNameW(inst, module_name, MAX_PATH)) {
         FIXME("hinst %p: did not get module name\n", inst);
         return E_FAIL;
@@ -735,15 +719,15 @@ HRESULT WINAPI AtlUpdateRegistryFromResourceD(HINSTANCE inst, LPCOLESTR res,
             return hres;
     }
 
-    IRegistrar_AddReplacement(registrar, moduleW, module_name);
+    IRegistrar_AddReplacement(registrar, L"MODULE", module_name);
 
     for (iter = pMapEntries; iter && iter->szKey; iter++)
         IRegistrar_AddReplacement(registrar, iter->szKey, iter->szData);
 
     if(bRegister)
-        hres = IRegistrar_ResourceRegisterSz(registrar, module_name, res, registryW);
+        hres = IRegistrar_ResourceRegisterSz(registrar, module_name, res, L"REGISTRY");
     else
-        hres = IRegistrar_ResourceUnregisterSz(registrar, module_name, res, registryW);
+        hres = IRegistrar_ResourceUnregisterSz(registrar, module_name, res, L"REGISTRY");
 
     if(registrar != pReg)
         IRegistrar_Release(registrar);

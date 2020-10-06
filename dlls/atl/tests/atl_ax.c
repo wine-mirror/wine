@@ -115,7 +115,6 @@ static void test_ax_win(void)
 {
     BOOL ret;
     WNDCLASSEXW wcex;
-    static const WCHAR AtlAxWin[] = {'A','t','l','A','x','W','i','n',0};
     static HMODULE hinstance = 0;
 
     ret = AtlAxWinInit();
@@ -124,7 +123,7 @@ static void test_ax_win(void)
     hinstance = GetModuleHandleA(NULL);
     memset(&wcex, 0, sizeof(wcex));
     wcex.cbSize = sizeof(wcex);
-    ret = GetClassInfoExW(hinstance, AtlAxWin, &wcex);
+    ret = GetClassInfoExW(hinstance, L"AtlAxWin", &wcex);
     ok(ret, "AtlAxWin has not registered\n");
     ok(wcex.style == CS_GLOBALCLASS, "wcex.style %08x\n", wcex.style);
 }

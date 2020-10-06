@@ -55,8 +55,6 @@ typedef struct IOCS {
     BOOL fActive, fInPlace, fWindowless;
 } IOCS;
 
-static const WCHAR wine_atl_iocsW[] = {'_','_','W','I','N','E','_','A','T','L','_','I','O','C','S','\0'};
-
 /**********************************************************************
  * AtlAxWin class window procedure
  */
@@ -90,20 +88,20 @@ BOOL WINAPI AtlAxWinInit(void)
     WNDCLASSEXW wcex;
 
 #if _ATL_VER <= _ATL_VER_30
-#define ATL_NAME_SUFFIX 0
+#define ATL_NAME_SUFFIX
 #elif _ATL_VER == _ATL_VER_80
-#define ATL_NAME_SUFFIX '8','0',0
+#define ATL_NAME_SUFFIX L"80"
 #elif _ATL_VER == _ATL_VER_90
-#define ATL_NAME_SUFFIX '9','0',0
+#define ATL_NAME_SUFFIX L"90"
 #elif _ATL_VER == _ATL_VER_100
-#define ATL_NAME_SUFFIX '1','0','0',0
+#define ATL_NAME_SUFFIX L"100"
 #elif _ATL_VER == _ATL_VER_110
-#define ATL_NAME_SUFFIX '1','1','0',0
+#define ATL_NAME_SUFFIX L"110"
 #else
 #error Unsupported version
 #endif
 
-    static const WCHAR AtlAxWinW[] = {'A','t','l','A','x','W','i','n',ATL_NAME_SUFFIX};
+    static const WCHAR AtlAxWinW[] = L"AtlAxWin" ATL_NAME_SUFFIX;
 
     FIXME("version %04x semi-stub\n", _ATL_VER);
 
@@ -127,7 +125,7 @@ BOOL WINAPI AtlAxWinInit(void)
         return FALSE;
 
     if(_ATL_VER > _ATL_VER_30) {
-        static const WCHAR AtlAxWinLicW[] = {'A','t','l','A','x','W','i','n','L','i','c',ATL_NAME_SUFFIX};
+        static const WCHAR AtlAxWinLicW[] = L"AtlAxWinLic" ATL_NAME_SUFFIX;
 
         wcex.lpszClassName = AtlAxWinLicW;
         if ( !RegisterClassExW( &wcex ) )
@@ -152,7 +150,7 @@ static HRESULT IOCS_Detach( IOCS *This ) /* remove subclassing */
     if ( This->hWnd )
     {
         SetWindowLongPtrW( This->hWnd, GWLP_WNDPROC, (ULONG_PTR) This->OrigWndProc );
-        RemovePropW( This->hWnd, wine_atl_iocsW);
+        RemovePropW( This->hWnd, L"__WINE_ATL_IOCS" );
         This->hWnd = NULL;
     }
     if ( This->control )
@@ -906,7 +904,7 @@ static LRESULT IOCS_OnWndProc( IOCS *This, HWND hWnd, UINT uMsg, WPARAM wParam, 
 
 static LRESULT CALLBACK AtlHost_wndproc( HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam )
 {
-    IOCS *This = (IOCS*) GetPropW( hWnd, wine_atl_iocsW );
+    IOCS *This = (IOCS*) GetPropW( hWnd, L"__WINE_ATL_IOCS" );
     return IOCS_OnWndProc( This, hWnd, wMsg, wParam, lParam );
 }
 
@@ -915,7 +913,7 @@ static HRESULT IOCS_Attach( IOCS *This, HWND hWnd, IUnknown *pUnkControl ) /* su
     This->hWnd = hWnd;
     IUnknown_QueryInterface( pUnkControl, &IID_IOleObject, (void**)&This->control );
     IOleObject_SetClientSite( This->control, &This->IOleClientSite_iface );
-    SetPropW( hWnd, wine_atl_iocsW, This );
+    SetPropW( hWnd, L"__WINE_ATL_IOCS", This );
     This->OrigWndProc = (WNDPROC)SetWindowLongPtrW( hWnd, GWLP_WNDPROC, (ULONG_PTR) AtlHost_wndproc );
 
     return S_OK;
@@ -924,9 +922,8 @@ static HRESULT IOCS_Attach( IOCS *This, HWND hWnd, IUnknown *pUnkControl ) /* su
 static HRESULT IOCS_Init( IOCS *This )
 {
     RECT rect;
-    static const WCHAR AXWIN[] = {'A','X','W','I','N',0};
 
-    IOleObject_SetHostNames( This->control, AXWIN, AXWIN );
+    IOleObject_SetHostNames( This->control, L"AXWIN", L"AXWIN" );
 
     GetClientRect( This->hWnd, &rect );
     IOCS_OnSize( This, &rect );
@@ -1000,7 +997,6 @@ enum content
 
 static enum content get_content_type(LPCOLESTR name, CLSID *control_id)
 {
-    static const WCHAR mshtml_prefixW[] = {'m','s','h','t','m','l',':',0};
     WCHAR new_urlW[MAX_PATH];
     DWORD size = MAX_PATH;
 
@@ -1021,7 +1017,7 @@ static enum content get_content_type(LPCOLESTR name, CLSID *control_id)
         return IsURL;
     }
 
-    if (!wcsnicmp(name, mshtml_prefixW, 7))
+    if (!wcsnicmp(name, L"mshtml:", 7))
     {
         FIXME("mshtml prefix not implemented\n");
         *control_id = CLSID_WebBrowser;
@@ -1266,8 +1262,7 @@ static LPDLGTEMPLATEW AX_ConvertDialogTemplate(LPCDLGTEMPLATEW src_tmpl)
         src += lstrlenW(src) + 1; /* title */
         if ( GET_WORD(tmp) == '{' ) /* all this mess created because of this line */
         {
-            static const WCHAR AtlAxWin[] = {'A','t','l','A','x','W','i','n', 0};
-            PUT_BLOCK(AtlAxWin, ARRAY_SIZE(AtlAxWin));
+            PUT_BLOCK(L"AtlAxWin", ARRAY_SIZE(L"AtlAxWin"));
             PUT_BLOCK(tmp, lstrlenW(tmp)+1);
         } else
             PUT_BLOCK(tmp, src-tmp);
@@ -1373,7 +1368,7 @@ HRESULT WINAPI AtlAxGetHost(HWND hWnd, IUnknown **host)
 
     *host = NULL;
 
-    This = (IOCS*) GetPropW( hWnd, wine_atl_iocsW );
+    This = (IOCS*) GetPropW( hWnd, L"__WINE_ATL_IOCS" );
     if ( !This )
     {
         WARN("No container attached to %p\n", hWnd );
@@ -1395,7 +1390,7 @@ HRESULT WINAPI AtlAxGetControl(HWND hWnd, IUnknown **pUnk)
 
     *pUnk = NULL;
 
-    This = (IOCS*) GetPropW( hWnd, wine_atl_iocsW );
+    This = (IOCS*) GetPropW( hWnd, L"__WINE_ATL_IOCS" );
     if ( !This || !This->control )
     {
         WARN("No control attached to %p\n", hWnd );

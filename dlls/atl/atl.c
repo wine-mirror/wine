@@ -123,7 +123,6 @@ HRESULT WINAPI AtlUnmarshalPtr(IStream *stm, const IID *iid, IUnknown **ppUnk)
  */
 HDC WINAPI AtlCreateTargetDC( HDC hdc, DVTARGETDEVICE *dv )
 {
-    static const WCHAR displayW[] = {'d','i','s','p','l','a','y',0};
     const WCHAR *driver = NULL, *device = NULL, *port = NULL;
     DEVMODEW *devmode = NULL;
 
@@ -139,7 +138,7 @@ HDC WINAPI AtlCreateTargetDC( HDC hdc, DVTARGETDEVICE *dv )
     else
     {
         if (hdc) return hdc;
-        driver = displayW;
+        driver = L"display";
     }
     return CreateDCW( driver, device, port, devmode );
 }
@@ -342,12 +341,10 @@ HRESULT WINAPI AtlLoadTypeLib(HINSTANCE inst, LPCOLESTR lpszIndex,
     WCHAR *path;
     HRESULT hres;
 
-    static const WCHAR tlb_extW[] = {'.','t','l','b',0};
-
     TRACE("(%p %s %p %p)\n", inst, debugstr_w(lpszIndex), pbstrPath, ppTypeLib);
 
     index_len = lpszIndex ? lstrlenW(lpszIndex) : 0;
-    path = heap_alloc((MAX_PATH+index_len)*sizeof(WCHAR) + sizeof(tlb_extW));
+    path = heap_alloc((MAX_PATH+index_len)*sizeof(WCHAR) + sizeof(L".tlb"));
     if(!path)
         return E_OUTOFMEMORY;
 
@@ -367,7 +364,7 @@ HRESULT WINAPI AtlLoadTypeLib(HINSTANCE inst, LPCOLESTR lpszIndex,
         for(ptr = path+path_len-1; ptr > path && *ptr != '\\' && *ptr != '.'; ptr--);
         if(*ptr != '.')
             ptr = path+path_len;
-        memcpy(ptr, tlb_extW, sizeof(tlb_extW));
+        lstrcpyW(ptr, L".tlb");
         hres = LoadTypeLib(path, &typelib);
     }
 
@@ -781,20 +778,15 @@ HRESULT WINAPI AtlRegisterClassCategoriesHelper(REFCLSID clsid, const struct _AT
     }
 
     if(!reg) {
-        WCHAR reg_path[256] = {'C','L','S','I','D','\\'}, *ptr = reg_path+6;
-
-        static const WCHAR implemented_catW[] =
-            {'I','m','p','l','e','m','e','n','t','e','d',' ','C','a','t','e','g','o','r','i','e','s',0};
-        static const WCHAR required_catW[] =
-            {'R','e','q','u','i','r','e','d',' ','C','a','t','e','g','o','r','i','e','s',0};
+        WCHAR reg_path[256] = L"CLSID\\", *ptr = reg_path+6;
 
         ptr += StringFromGUID2(clsid, ptr, 64)-1;
         *ptr++ = '\\';
 
-        memcpy(ptr, implemented_catW, sizeof(implemented_catW));
+        lstrcpyW(ptr, L"Implemented Categories");
         RegDeleteKeyW(HKEY_CLASSES_ROOT, reg_path);
 
-        memcpy(ptr, required_catW, sizeof(required_catW));
+        lstrcpyW(ptr, L"Required Categories");
         RegDeleteKeyW(HKEY_CLASSES_ROOT, reg_path);
     }
 
