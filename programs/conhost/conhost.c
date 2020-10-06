@@ -1719,6 +1719,7 @@ done:
 
 static BOOL ensure_tty_input_thread( struct console *console )
 {
+    if (!console->tty_input) return TRUE;
     if (!console->input_thread)
         console->input_thread = CreateThread( NULL, 0, tty_input, console, 0, NULL );
     return console->input_thread != NULL;
