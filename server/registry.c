@@ -978,7 +978,7 @@ static void enum_key( struct key *key, int index, int info_class, struct enum_ke
         else if (info_class == KeyNameInformation)
         {
             reply->namelen = namelen;
-            memcpy( data, fullname, namelen );
+            memcpy( data, fullname, len );
         }
         else
         {
