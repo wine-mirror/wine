@@ -315,10 +315,10 @@ static DWORD call_teb_unwind_handler( EXCEPTION_RECORD *rec, DISPATCHER_CONTEXT 
 static DWORD __cdecl nested_exception_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
                                                CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher )
 {
-    if (rec->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND)) return ExceptionContinueSearch;
+    if (!(rec->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND)))
+        rec->ExceptionFlags |= EH_NESTED_CALL;
 
-    /* FIXME */
-    return ExceptionNestedException;
+    return ExceptionContinueSearch;
 }
 
 
