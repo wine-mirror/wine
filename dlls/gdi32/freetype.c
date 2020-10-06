@@ -572,20 +572,6 @@ typedef struct tagFontSubst {
 static const WCHAR wine_fonts_key[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\',
                                        'F','o','n','t','s',0};
 static const WCHAR wine_fonts_cache_key[] = {'C','a','c','h','e',0};
-static const WCHAR second_name_value[] = {'S','e','c','o','n','d',' ','N','a','m','e',0};
-static const WCHAR face_index_value[] = {'I','n','d','e','x',0};
-static const WCHAR face_ntmflags_value[] = {'N','t','m','f','l','a','g','s',0};
-static const WCHAR face_version_value[] = {'V','e','r','s','i','o','n',0};
-static const WCHAR face_height_value[] = {'H','e','i','g','h','t',0};
-static const WCHAR face_width_value[] = {'W','i','d','t','h',0};
-static const WCHAR face_size_value[] = {'S','i','z','e',0};
-static const WCHAR face_x_ppem_value[] = {'X','p','p','e','m',0};
-static const WCHAR face_y_ppem_value[] = {'Y','p','p','e','m',0};
-static const WCHAR face_flags_value[] = {'F','l','a','g','s',0};
-static const WCHAR face_internal_leading_value[] = {'I','n','t','e','r','n','a','l',' ','L','e','a','d','i','n','g',0};
-static const WCHAR face_font_sig_value[] = {'F','o','n','t',' ','S','i','g','n','a','t','u','r','e',0};
-static const WCHAR face_file_name_value[] = {'F','i','l','e',' ','N','a','m','e','\0'};
-static const WCHAR face_full_name_value[] = {'F','u','l','l',' ','N','a','m','e','\0'};
 
 
 struct font_mapping
@@ -1627,115 +1613,86 @@ static Family *create_family( WCHAR *family_name, WCHAR *second_name )
     return family;
 }
 
-static LONG reg_load_dword(HKEY hkey, const WCHAR *value, DWORD *data)
+struct cached_face
 {
-    DWORD type, size = sizeof(DWORD);
+    DWORD         index;
+    DWORD         flags;
+    DWORD         ntmflags;
+    DWORD         version;
+    DWORD         width;
+    DWORD         height;
+    DWORD         size;
+    DWORD         x_ppem;
+    DWORD         y_ppem;
+    DWORD         internal_leading;
+    FONTSIGNATURE fs;
+    WCHAR         full_name[1];
+    /* WCHAR      file_name[]; */
+};
 
-    if (RegQueryValueExW(hkey, value, NULL, &type, (BYTE *)data, &size) ||
-        type != REG_DWORD || size != sizeof(DWORD))
-    {
-        *data = 0;
-        return ERROR_BAD_CONFIGURATION;
-    }
-    return ERROR_SUCCESS;
-}
-
-static inline LONG reg_load_ftlong(HKEY hkey, const WCHAR *value, FT_Long *data)
+static void load_face(HKEY hkey_family, Family *family, void *buffer, DWORD buffer_size, BOOL scalable)
 {
-    DWORD dw;
-    LONG ret = reg_load_dword(hkey, value, &dw);
-    *data = dw;
-    return ret;
-}
-
-static inline LONG reg_load_ftshort(HKEY hkey, const WCHAR *value, FT_Short *data)
-{
-    DWORD dw;
-    LONG ret = reg_load_dword(hkey, value, &dw);
-    *data = dw;
-    return ret;
-}
-
-static inline LONG reg_save_dword(HKEY hkey, const WCHAR *value, DWORD data)
-{
-    return RegSetValueExW(hkey, value, 0, REG_DWORD, (BYTE*)&data, sizeof(DWORD));
-}
-
-static void load_face(HKEY hkey_face, WCHAR *face_name, Family *family, void *buffer, DWORD buffer_size)
-{
-    DWORD needed, strike_index = 0;
+    DWORD type, size, needed, index = 0;
+    Face *face;
     HKEY hkey_strike;
+    WCHAR name[256];
+    struct cached_face *cached = (struct cached_face *)buffer;
 
-    /* If we have a File Name key then this is a real font, not just the parent
-       key of a bunch of non-scalable strikes */
-    needed = buffer_size;
-    if (RegQueryValueExW(hkey_face, face_file_name_value, NULL, NULL, buffer, &needed) == ERROR_SUCCESS)
+    size = sizeof(name);
+    needed = buffer_size - sizeof(DWORD);
+    while (!RegEnumValueW( hkey_family, index++, name, &size, NULL, &type, buffer, &needed ))
     {
-        Face *face;
-        face = HeapAlloc(GetProcessHeap(), 0, sizeof(*face));
-        face->cached_enum_data = NULL;
-        face->family = NULL;
-
-        face->refcount = 1;
-        face->file = strdupW( buffer );
-        face->style_name = strdupW( face_name );
-
-        needed = buffer_size;
-        if (RegQueryValueExW( hkey_face, face_full_name_value, NULL, NULL, buffer, &needed ) != ERROR_SUCCESS)
+        if (type == REG_BINARY && needed > sizeof(*cached))
         {
-            ERR( "couldn't find full name for %s %s in cache\n", debugstr_w(family->family_name),
-                 debugstr_w(face->style_name) );
+            ((DWORD *)buffer)[needed / sizeof(DWORD)] = 0;
+
+            face = HeapAlloc(GetProcessHeap(), 0, sizeof(*face));
+            face->cached_enum_data = NULL;
+            face->family = NULL;
+            face->refcount = 1;
+            face->style_name = strdupW( name );
+            face->face_index = cached->index;
+            face->flags = cached->flags;
+            face->ntmFlags = cached->ntmflags;
+            face->font_version = cached->version;
+            face->size.width = cached->width;
+            face->size.height = cached->height;
+            face->size.size = cached->size;
+            face->size.x_ppem = cached->x_ppem;
+            face->size.y_ppem = cached->y_ppem;
+            face->size.internal_leading = cached->internal_leading;
+            face->fs = cached->fs;
+            face->full_name = strdupW( cached->full_name );
+            face->file = strdupW( cached->full_name + strlenW(cached->full_name) + 1 );
+            face->scalable = scalable;
+            if (!face->scalable)
+                TRACE("Adding bitmap size h %d w %d size %ld x_ppem %ld y_ppem %ld\n",
+                      face->size.height, face->size.width, face->size.size >> 6,
+                      face->size.x_ppem >> 6, face->size.y_ppem >> 6);
+
+            TRACE("fsCsb = %08x %08x/%08x %08x %08x %08x\n",
+                  face->fs.fsCsb[0], face->fs.fsCsb[1],
+                  face->fs.fsUsb[0], face->fs.fsUsb[1],
+                  face->fs.fsUsb[2], face->fs.fsUsb[3]);
+
+            if (insert_face_in_family_list(face, family))
+                TRACE( "Added face %s to family %s\n", debugstr_w(face->full_name), debugstr_w(family->family_name) );
+
             release_face( face );
-            return;
         }
-        face->full_name = strdupW( buffer );
-
-        reg_load_ftlong(hkey_face, face_index_value, &face->face_index);
-        reg_load_dword(hkey_face, face_ntmflags_value, &face->ntmFlags);
-        reg_load_ftlong(hkey_face, face_version_value, &face->font_version);
-        reg_load_dword(hkey_face, face_flags_value, &face->flags);
-
-        needed = sizeof(face->fs);
-        RegQueryValueExW(hkey_face, face_font_sig_value, NULL, NULL, (BYTE*)&face->fs, &needed);
-
-        if(reg_load_ftshort(hkey_face, face_height_value, &face->size.height) != ERROR_SUCCESS)
-        {
-            face->scalable = TRUE;
-            memset(&face->size, 0, sizeof(face->size));
-        }
-        else
-        {
-            face->scalable = FALSE;
-            reg_load_ftshort(hkey_face, face_width_value, &face->size.width);
-            reg_load_ftlong(hkey_face, face_size_value, &face->size.size);
-            reg_load_ftlong(hkey_face, face_x_ppem_value, &face->size.x_ppem);
-            reg_load_ftlong(hkey_face, face_y_ppem_value, &face->size.y_ppem);
-            reg_load_ftshort(hkey_face, face_internal_leading_value, &face->size.internal_leading);
-
-            TRACE("Adding bitmap size h %d w %d size %ld x_ppem %ld y_ppem %ld\n",
-                  face->size.height, face->size.width, face->size.size >> 6,
-                  face->size.x_ppem >> 6, face->size.y_ppem >> 6);
-        }
-
-        TRACE("fsCsb = %08x %08x/%08x %08x %08x %08x\n",
-              face->fs.fsCsb[0], face->fs.fsCsb[1],
-              face->fs.fsUsb[0], face->fs.fsUsb[1],
-              face->fs.fsUsb[2], face->fs.fsUsb[3]);
-
-        if (insert_face_in_family_list(face, family))
-            TRACE( "Added face %s to family %s\n", debugstr_w(face->full_name), debugstr_w(family->family_name) );
-
-        release_face( face );
+        size = sizeof(name);
+        needed = buffer_size - sizeof(DWORD);
     }
 
     /* load bitmap strikes */
 
+    index = 0;
     needed = buffer_size;
-    while (!RegEnumKeyExW(hkey_face, strike_index++, buffer, &needed, NULL, NULL, NULL, NULL))
+    while (!RegEnumKeyExW(hkey_family, index++, buffer, &needed, NULL, NULL, NULL, NULL))
     {
-        if (!RegOpenKeyExW(hkey_face, buffer, 0, KEY_ALL_ACCESS, &hkey_strike))
+        if (!RegOpenKeyExW(hkey_family, buffer, 0, KEY_ALL_ACCESS, &hkey_strike))
         {
-            load_face(hkey_strike, face_name, family, buffer, buffer_size);
+            load_face(hkey_strike, family, buffer, buffer_size, FALSE);
             RegCloseKey(hkey_strike);
         }
         needed = buffer_size;
@@ -1786,12 +1743,11 @@ static void load_font_list_from_cache(HKEY hkey_font_cache)
     {
         WCHAR *second_name = NULL;
         WCHAR *family_name = strdupW( buffer );
-        DWORD face_index = 0;
 
         RegOpenKeyExW(hkey_font_cache, family_name, 0, KEY_ALL_ACCESS, &hkey_family);
         TRACE("opened family key %s\n", debugstr_w(family_name));
         size = sizeof(buffer);
-        if (!RegQueryValueExW( hkey_family, second_name_value, NULL, NULL, (BYTE *)buffer, &size ))
+        if (!RegQueryValueExW( hkey_family, NULL, NULL, NULL, (BYTE *)buffer, &size ))
             second_name = strdupW( buffer );
 
         family = create_family( family_name, second_name );
@@ -1806,20 +1762,7 @@ static void load_font_list_from_cache(HKEY hkey_font_cache)
             add_font_subst(&font_subst_list, subst, 0);
         }
 
-        size = sizeof(buffer);
-        while (!RegEnumKeyExW(hkey_family, face_index++, buffer, &size, NULL, NULL, NULL, NULL))
-        {
-            WCHAR *face_name = strdupW( buffer );
-            HKEY hkey_face;
-
-            if (!RegOpenKeyExW(hkey_family, face_name, 0, KEY_ALL_ACCESS, &hkey_face))
-            {
-                load_face(hkey_face, face_name, family, buffer, sizeof(buffer));
-                RegCloseKey(hkey_face);
-            }
-            HeapFree( GetProcessHeap(), 0, face_name );
-            size = sizeof(buffer);
-        }
+        load_face(hkey_family, family, buffer, sizeof(buffer), TRUE);
 
         HeapFree( GetProcessHeap(), 0, family_name );
         HeapFree( GetProcessHeap(), 0, second_name );
@@ -1855,48 +1798,50 @@ static LONG create_font_cache_key(HKEY *hkey, DWORD *disposition)
 static void add_face_to_cache(Face *face)
 {
     HKEY hkey_family, hkey_face;
-    WCHAR *face_key_name;
+    DWORD len, buffer[1024];
+    struct cached_face *cached = (struct cached_face *)buffer;
 
     RegCreateKeyExW( hkey_font_cache, face->family->family_name, 0, NULL, REG_OPTION_VOLATILE,
                      KEY_ALL_ACCESS, NULL, &hkey_family, NULL );
     if (face->family->second_name[0])
-        RegSetValueExW( hkey_family, second_name_value, 0, REG_SZ, (BYTE *)face->family->second_name,
+        RegSetValueExW( hkey_family, NULL, 0, REG_SZ, (BYTE *)face->family->second_name,
                         (strlenW( face->family->second_name ) + 1) * sizeof(WCHAR) );
 
-    if (face->scalable) face_key_name = face->style_name;
-    else
+    if (!face->scalable)
     {
-        static const WCHAR fmtW[] = {'%','s','\\','%','d',0};
-        face_key_name = HeapAlloc( GetProcessHeap(), 0, (strlenW( face->style_name ) + 10) * sizeof(WCHAR) );
-        sprintfW( face_key_name, fmtW, face->style_name, face->size.y_ppem );
+        static const WCHAR fmtW[] = {'%','d',0};
+        WCHAR name[10];
+
+        sprintfW( name, fmtW, face->size.y_ppem );
+        RegCreateKeyExW( hkey_family, name, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS,
+                         NULL, &hkey_face, NULL);
     }
-    RegCreateKeyExW(hkey_family, face_key_name, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL,
-                    &hkey_face, NULL);
-    if(!face->scalable)
-        HeapFree(GetProcessHeap(), 0, face_key_name);
+    else hkey_face = hkey_family;
 
-    RegSetValueExW(hkey_face, face_file_name_value, 0, REG_SZ, (BYTE *)face->file,
-                   (strlenW(face->file) + 1) * sizeof(WCHAR));
-    RegSetValueExW( hkey_face, face_full_name_value, 0, REG_SZ, (BYTE *)face->full_name,
-                    (strlenW( face->full_name ) + 1) * sizeof(WCHAR) );
-
-    reg_save_dword(hkey_face, face_index_value, face->face_index);
-    reg_save_dword(hkey_face, face_ntmflags_value, face->ntmFlags);
-    reg_save_dword(hkey_face, face_version_value, face->font_version);
-    if (face->flags) reg_save_dword(hkey_face, face_flags_value, face->flags);
-
-    RegSetValueExW(hkey_face, face_font_sig_value, 0, REG_BINARY, (BYTE*)&face->fs, sizeof(face->fs));
-
-    if(!face->scalable)
+    memset( cached, 0, sizeof(*cached) );
+    cached->index = face->face_index;
+    cached->flags = face->flags;
+    cached->ntmflags = face->ntmFlags;
+    cached->version = face->font_version;
+    cached->fs = face->fs;
+    if (!face->scalable)
     {
-        reg_save_dword(hkey_face, face_height_value, face->size.height);
-        reg_save_dword(hkey_face, face_width_value, face->size.width);
-        reg_save_dword(hkey_face, face_size_value, face->size.size);
-        reg_save_dword(hkey_face, face_x_ppem_value, face->size.x_ppem);
-        reg_save_dword(hkey_face, face_y_ppem_value, face->size.y_ppem);
-        reg_save_dword(hkey_face, face_internal_leading_value, face->size.internal_leading);
+        cached->width = face->size.width;
+        cached->height = face->size.height;
+        cached->size = face->size.size;
+        cached->x_ppem = face->size.x_ppem;
+        cached->y_ppem = face->size.y_ppem;
+        cached->internal_leading = face->size.internal_leading;
     }
-    RegCloseKey(hkey_face);
+    strcpyW( cached->full_name, face->full_name );
+    len = strlenW( face->full_name ) + 1;
+    strcpyW( cached->full_name + len, face->file );
+    len += strlenW( face->file ) + 1;
+
+    RegSetValueExW( hkey_face, face->style_name, 0, REG_BINARY, (BYTE *)cached,
+                    offsetof( struct cached_face, full_name[len] ));
+
+    if (hkey_face != hkey_family) RegCloseKey(hkey_face);
     RegCloseKey(hkey_family);
 }
 
@@ -1908,15 +1853,14 @@ static void remove_face_from_cache( Face *face )
 
     if (face->scalable)
     {
-        RegDeleteKeyW( hkey_family, face->style_name );
+        RegDeleteValueW( hkey_family, face->style_name );
     }
     else
     {
-        static const WCHAR fmtW[] = {'%','s','\\','%','d',0};
-        WCHAR *face_key_name = HeapAlloc( GetProcessHeap(), 0, (strlenW( face->style_name ) + 10) * sizeof(WCHAR) );
-        sprintfW( face_key_name, fmtW, face->style_name, face->size.y_ppem );
-        RegDeleteKeyW( hkey_family, face_key_name );
-        HeapFree(GetProcessHeap(), 0, face_key_name);
+        static const WCHAR fmtW[] = {'%','d',0};
+        WCHAR name[10];
+        sprintfW( name, fmtW, face->size.y_ppem );
+        RegDeleteKeyW( hkey_family, name );
     }
     RegCloseKey(hkey_family);
 }
