@@ -1415,9 +1415,9 @@ static NTSTATUS format_gnutls_signature( enum alg_id type, gnutls_datum_t signat
     case ALG_ID_RSA:
     case ALG_ID_RSA_SIGN:
     {
-        if (output_len < signature.size) return STATUS_BUFFER_TOO_SMALL;
-        memcpy( output, signature.data, signature.size );
         *ret_len = signature.size;
+        if (output_len < signature.size) return STATUS_BUFFER_TOO_SMALL;
+        if (output) memcpy( output, signature.data, signature.size );
         return STATUS_SUCCESS;
     }
     case ALG_ID_ECDSA_P256:
@@ -1435,6 +1435,7 @@ static NTSTATUS format_gnutls_signature( enum alg_id type, gnutls_datum_t signat
             return STATUS_INTERNAL_ERROR;
         }
 
+        *ret_len = sig_len;
         if (output_len < sig_len) return STATUS_BUFFER_TOO_SMALL;
 
         if (r.size % 2) /* remove prepended zero byte */
@@ -1457,14 +1458,16 @@ static NTSTATUS format_gnutls_signature( enum alg_id type, gnutls_datum_t signat
             return STATUS_INTERNAL_ERROR;
         }
 
-        pad_size_r = (sig_len / 2) - r.size;
-        pad_size_s = (sig_len / 2) - s.size;
-        memset( output, 0, sig_len );
+        if (output)
+        {
+            pad_size_r = (sig_len / 2) - r.size;
+            pad_size_s = (sig_len / 2) - s.size;
+            memset( output, 0, sig_len );
 
-        memcpy( output + pad_size_r, r_data, r.size );
-        memcpy( output + (sig_len / 2) + pad_size_s, s_data, s.size );
+            memcpy( output + pad_size_r, r_data, r.size );
+            memcpy( output + (sig_len / 2) + pad_size_s, s_data, s.size );
+        }
 
-        *ret_len = sig_len;
         free( r.data ); free( s.data );
         return STATUS_SUCCESS;
     }
