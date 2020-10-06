@@ -4250,9 +4250,9 @@ START_TEST(console)
     test_console_title();
     if (!test_current)
     {
+        test_pseudo_console();
         test_AttachConsole(hConOut);
         test_AllocConsole();
         test_FreeConsole();
-        test_pseudo_console();
     }
 }
