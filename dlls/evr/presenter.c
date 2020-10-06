@@ -603,6 +603,9 @@ static HRESULT WINAPI video_presenter_control_SetVideoWindow(IMFVideoDisplayCont
 
     TRACE("%p, %p.\n", iface, window);
 
+    if (!IsWindow(window))
+        return E_INVALIDARG;
+
     EnterCriticalSection(&presenter->cs);
     presenter->video_window = window;
     LeaveCriticalSection(&presenter->cs);

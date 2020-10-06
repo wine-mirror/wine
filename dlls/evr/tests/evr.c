@@ -1073,6 +1073,12 @@ static void test_default_presenter(void)
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(hwnd2 == NULL, "Unexpected window %p.\n", hwnd2);
 
+    hr = IMFVideoDisplayControl_SetVideoWindow(display_control, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoDisplayControl_SetVideoWindow(display_control, (HWND)0x1);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
     hr = IMFVideoDisplayControl_SetVideoWindow(display_control, hwnd);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
