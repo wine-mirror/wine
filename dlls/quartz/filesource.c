@@ -183,9 +183,7 @@ static BOOL process_pattern_string(const WCHAR *pattern, HANDLE file)
 
 BOOL get_media_type(const WCHAR *filename, GUID *majortype, GUID *subtype, GUID *source_clsid)
 {
-    WCHAR extensions_path[278] = {'M','e','d','i','a',' ','T','y','p','e','\\','E','x','t','e','n','s','i','o','n','s','\\',0};
-    static const WCHAR wszExtensions[] = {'E','x','t','e','n','s','i','o','n','s',0};
-    static const WCHAR wszMediaType[] = {'M','e','d','i','a',' ','T','y','p','e',0};
+    WCHAR extensions_path[278] = L"Media Type\\Extensions\\";
     DWORD majortype_idx, size;
     const WCHAR *ext;
     HKEY parent_key;
@@ -223,7 +221,7 @@ BOOL get_media_type(const WCHAR *filename, GUID *majortype, GUID *subtype, GUID 
         return FALSE;
     }
 
-    if (RegOpenKeyExW(HKEY_CLASSES_ROOT, wszMediaType, 0, KEY_READ, &parent_key))
+    if (RegOpenKeyExW(HKEY_CLASSES_ROOT, L"Media Type", 0, KEY_READ, &parent_key))
     {
         CloseHandle(file);
         return FALSE;
@@ -239,7 +237,7 @@ BOOL get_media_type(const WCHAR *filename, GUID *majortype, GUID *subtype, GUID 
         if (RegEnumKeyExW(parent_key, majortype_idx, majortype_str, &size, NULL, NULL, NULL, NULL))
             break;
 
-        if (!wcscmp(majortype_str, wszExtensions))
+        if (!wcscmp(majortype_str, L"Extensions"))
             continue;
 
         if (RegOpenKeyExW(parent_key, majortype_str, 0, KEY_READ, &majortype_key))
