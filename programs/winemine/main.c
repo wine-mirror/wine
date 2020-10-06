@@ -33,19 +33,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(winemine);
 
 static const DWORD wnd_style = WS_OVERLAPPEDWINDOW & ~WS_THICKFRAME & ~WS_MAXIMIZEBOX;
-static const WCHAR registry_key[] = {'S','o','f','t','w','a','r','e','\\',
-                                     'M','i','c','r','o','s','o','f','t','\\',
-                                     'W','i','n','M','i','n','e',0};
-
-static const WCHAR xposW[] = {'X','p','o','s',0};
-static const WCHAR yposW[] = {'Y','p','o','s',0};
-static const WCHAR heightW[] = {'H','e','i','g','h','t',0};
-static const WCHAR widthW[] = {'W','i','d','t','h',0};
-static const WCHAR minesW[] = {'M','i','n','e','s',0};
-static const WCHAR difficultyW[] = {'D','i','f','f','i','c','u','l','t','y',0};
-static const WCHAR markW[] = {'M','a','r','k',0};
-static const WCHAR nameW[] = {'N','a','m','e','%','u',0};
-static const WCHAR timeW[] = {'T','i','m','e','%','u',0};
 
 void CheckLevel( BOARD *p_board )
 {
@@ -77,38 +64,38 @@ static void LoadBoard( BOARD *p_board )
     WCHAR key_name[8];
     unsigned i;
 
-    RegOpenKeyExW( HKEY_CURRENT_USER, registry_key, 0, KEY_QUERY_VALUE, &hkey );
+    RegOpenKeyExW( HKEY_CURRENT_USER, L"Software\\Microsoft\\WinMine", 0, KEY_QUERY_VALUE, &hkey );
 
     size = sizeof( p_board->pos.x );
-    if( RegQueryValueExW( hkey, xposW, NULL, &type, (BYTE*) &p_board->pos.x, &size ) )
+    if( RegQueryValueExW( hkey, L"Xpos", NULL, &type, (BYTE*) &p_board->pos.x, &size ) )
 	p_board->pos.x = 0;
 
     size = sizeof( p_board->pos.y );
-    if( RegQueryValueExW( hkey, yposW, NULL, &type, (BYTE*) &p_board->pos.y, &size ) )
+    if( RegQueryValueExW( hkey, L"Ypos", NULL, &type, (BYTE*) &p_board->pos.y, &size ) )
         p_board->pos.y = 0;
 
     size = sizeof( p_board->rows );
-    if( RegQueryValueExW( hkey, heightW, NULL, &type, (BYTE*) &p_board->rows, &size ) )
+    if( RegQueryValueExW( hkey, L"Height", NULL, &type, (BYTE*) &p_board->rows, &size ) )
         p_board->rows = BEGINNER_ROWS;
 
     size = sizeof( p_board->cols );
-    if( RegQueryValueExW( hkey, widthW, NULL, &type, (BYTE*) &p_board->cols, &size ) )
+    if( RegQueryValueExW( hkey, L"Width", NULL, &type, (BYTE*) &p_board->cols, &size ) )
         p_board->cols = BEGINNER_COLS;
 
     size = sizeof( p_board->mines );
-    if( RegQueryValueExW( hkey, minesW, NULL, &type, (BYTE*) &p_board->mines, &size ) )
+    if( RegQueryValueExW( hkey, L"Mines", NULL, &type, (BYTE*) &p_board->mines, &size ) )
         p_board->mines = BEGINNER_MINES;
 
     size = sizeof( p_board->difficulty );
-    if( RegQueryValueExW( hkey, difficultyW, NULL, &type, (BYTE*) &p_board->difficulty, &size ) )
+    if( RegQueryValueExW( hkey, L"Difficulty", NULL, &type, (BYTE*) &p_board->difficulty, &size ) )
         p_board->difficulty = BEGINNER;
 
     size = sizeof( p_board->IsMarkQ );
-    if( RegQueryValueExW( hkey, markW, NULL, &type, (BYTE*) &p_board->IsMarkQ, &size ) )
+    if( RegQueryValueExW( hkey, L"Mark", NULL, &type, (BYTE*) &p_board->IsMarkQ, &size ) )
         p_board->IsMarkQ = TRUE;
 
     for( i = 0; i < 3; i++ ) {
-        wsprintfW( key_name, nameW, i+1 );
+        wsprintfW( key_name, L"Name%u", i+1 );
         size = sizeof( data );
         if( RegQueryValueExW( hkey, key_name, NULL, &type,
                 (LPBYTE) data, &size ) == ERROR_SUCCESS )
@@ -118,7 +105,7 @@ static void LoadBoard( BOARD *p_board )
     }
 
     for( i = 0; i < 3; i++ ) {
-        wsprintfW( key_name, timeW, i+1 );
+        wsprintfW( key_name, L"Time%u", i+1 );
         size = sizeof( p_board->best_time[i] );
         if( RegQueryValueExW( hkey, key_name, NULL, &type, (BYTE*) &p_board->best_time[i], &size ) )
             p_board->best_time[i] = 999;
@@ -163,28 +150,28 @@ void SaveBoard( BOARD *p_board )
     WCHAR data[MAX_PLAYER_NAME_SIZE+1];
     WCHAR key_name[8];
 
-    if( RegCreateKeyExW( HKEY_CURRENT_USER, registry_key,
+    if( RegCreateKeyExW( HKEY_CURRENT_USER, L"Software\\Microsoft\\WinMine",
 	        0, NULL,
                 REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL,
                 &hkey, NULL ) != ERROR_SUCCESS)
         return;
 
-    RegSetValueExW( hkey, xposW, 0, REG_DWORD, (LPBYTE) &p_board->pos.x, sizeof(p_board->pos.x) );
-    RegSetValueExW( hkey, yposW, 0, REG_DWORD, (LPBYTE) &p_board->pos.y, sizeof(p_board->pos.y) );
-    RegSetValueExW( hkey, difficultyW, 0, REG_DWORD, (LPBYTE) &p_board->difficulty, sizeof(p_board->difficulty) );
-    RegSetValueExW( hkey, heightW, 0, REG_DWORD, (LPBYTE) &p_board->rows, sizeof(p_board->rows) );
-    RegSetValueExW( hkey, widthW, 0, REG_DWORD, (LPBYTE) &p_board->cols, sizeof(p_board->cols) );
-    RegSetValueExW( hkey, minesW, 0, REG_DWORD, (LPBYTE) &p_board->mines, sizeof(p_board->mines) );
-    RegSetValueExW( hkey, markW, 0, REG_DWORD, (LPBYTE) &p_board->IsMarkQ, sizeof(p_board->IsMarkQ) );
+    RegSetValueExW( hkey, L"Xpos", 0, REG_DWORD, (BYTE*) &p_board->pos.x, sizeof(p_board->pos.x) );
+    RegSetValueExW( hkey, L"Ypos", 0, REG_DWORD, (BYTE*) &p_board->pos.y, sizeof(p_board->pos.y) );
+    RegSetValueExW( hkey, L"Difficulty", 0, REG_DWORD, (BYTE*) &p_board->difficulty, sizeof(p_board->difficulty) );
+    RegSetValueExW( hkey, L"Height", 0, REG_DWORD, (BYTE*) &p_board->rows, sizeof(p_board->rows) );
+    RegSetValueExW( hkey, L"Width", 0, REG_DWORD, (BYTE*) &p_board->cols, sizeof(p_board->cols) );
+    RegSetValueExW( hkey, L"Mines", 0, REG_DWORD, (BYTE*) &p_board->mines, sizeof(p_board->mines) );
+    RegSetValueExW( hkey, L"Mark", 0, REG_DWORD, (BYTE*) &p_board->IsMarkQ, sizeof(p_board->IsMarkQ) );
 
     for( i = 0; i < 3; i++ ) {
-        wsprintfW( key_name, nameW, i+1 );
+        wsprintfW( key_name, L"Name%u", i+1 );
         lstrcpynW( data, p_board->best_name[i], ARRAY_SIZE(data));
         RegSetValueExW( hkey, key_name, 0, REG_SZ, (LPBYTE) data, (lstrlenW(data)+1) * sizeof(WCHAR) );
     }
 
     for( i = 0; i < 3; i++ ) {
-        wsprintfW( key_name, timeW, i+1 );
+        wsprintfW( key_name, L"Time%u", i+1 );
         RegSetValueExW( hkey, key_name, 0, REG_DWORD, (LPBYTE) &p_board->best_time[i], sizeof(p_board->best_time[i]) );
     }
     RegCloseKey( hkey );
