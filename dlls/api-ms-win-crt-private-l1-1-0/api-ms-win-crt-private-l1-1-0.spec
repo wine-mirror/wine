@@ -799,7 +799,7 @@
 @ cdecl -ret64 _o__wcstoi64(wstr ptr long) ucrtbase._o__wcstoi64
 @ cdecl -ret64 _o__wcstoi64_l(wstr ptr long ptr) ucrtbase._o__wcstoi64_l
 @ cdecl _o__wcstol_l(wstr ptr long ptr) ucrtbase._o__wcstol_l
-@ stub _o__wcstold_l
+@ cdecl _o__wcstold_l(wstr ptr ptr) ucrtbase._o__wcstold_l
 @ cdecl -ret64 _o__wcstoll_l(wstr ptr long ptr) ucrtbase._o__wcstoll_l
 @ cdecl _o__wcstombs_l(ptr ptr long ptr) ucrtbase._o__wcstombs_l
 @ cdecl _o__wcstombs_s_l(ptr ptr long wstr long ptr) ucrtbase._o__wcstombs_s_l
@@ -1163,7 +1163,7 @@
 @ cdecl _o_wcstok(wstr wstr ptr) ucrtbase._o_wcstok
 @ cdecl _o_wcstok_s(ptr wstr ptr) ucrtbase._o_wcstok_s
 @ cdecl _o_wcstol(wstr ptr long) ucrtbase._o_wcstol
-@ stub _o_wcstold
+@ cdecl _o_wcstold(wstr ptr ptr) ucrtbase._o_wcstold
 @ cdecl -ret64 _o_wcstoll(wstr ptr long) ucrtbase._o_wcstoll
 @ cdecl _o_wcstombs(ptr ptr long) ucrtbase._o_wcstombs
 @ cdecl _o_wcstombs_s(ptr ptr long wstr long) ucrtbase._o_wcstombs_s
