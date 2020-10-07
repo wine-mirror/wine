@@ -498,7 +498,7 @@ static ME_DisplayItem *ME_MaximizeSplit(ME_WrapContext *wc, ME_DisplayItem *p, i
 
 static ME_DisplayItem *ME_SplitByBacktracking(ME_WrapContext *wc, ME_DisplayItem *p, int loc)
 {
-  ME_DisplayItem *piter = p, *pp;
+  ME_DisplayItem *new_run;
   int i, idesp, len;
   ME_Run *run = &p->member.run;
 
@@ -509,9 +509,8 @@ static ME_DisplayItem *ME_SplitByBacktracking(ME_WrapContext *wc, ME_DisplayItem
   if (i) {
     /* don't split words */
     i = reverse_find_whitespace( get_text( run, 0 ), i );
-    pp = ME_MaximizeSplit(wc, p, i);
-    if (pp)
-      return pp;
+    new_run = ME_MaximizeSplit(wc, p, i);
+    if (new_run) return new_run;
   }
   TRACE("Must backtrack to split at: %s\n", debugstr_run( &p->member.run ));
   if (wc->pLastSplittableRun)
@@ -528,20 +527,16 @@ static ME_DisplayItem *ME_SplitByBacktracking(ME_WrapContext *wc, ME_DisplayItem
       ME_UpdateRunFlags(wc->context->editor, run);
       assert((wc->pLastSplittableRun->member.run.nFlags & MERF_SPLITTABLE));
 
-      piter = wc->pLastSplittableRun;
-      run = &piter->member.run;
+      p = wc->pLastSplittableRun;
+      run = &p->member.run;
       len = run->len;
       /* don't split words */
       i = reverse_find_whitespace( get_text( run, 0 ), len );
       if (i == len)
         i = reverse_find_non_whitespace( get_text( run, 0 ), len );
-      if (i) {
-        ME_DisplayItem *piter2 = split_run_extents(wc, piter, i);
-        wc->pt = piter2->member.run.pt;
-        return piter2;
-      }
-      /* splittable = must have whitespaces */
-      assert(0 == "Splittable, but no whitespaces");
+      new_run = split_run_extents(wc, p, i);
+      wc->pt = new_run->member.run.pt;
+      return new_run;
     }
     else
     {
@@ -553,24 +548,24 @@ static ME_DisplayItem *ME_SplitByBacktracking(ME_WrapContext *wc, ME_DisplayItem
   TRACE("Backtracking failed, trying desperate: %s\n", debugstr_run( &p->member.run ));
   /* OK, no better idea, so assume we MAY split words if we can split at all*/
   if (idesp)
-    return split_run_extents(wc, piter, idesp);
+    return split_run_extents(wc, p, idesp);
   else
-  if (wc->pRowStart && piter != wc->pRowStart)
+  if (wc->pRowStart && p != wc->pRowStart)
   {
     /* don't need to break current run, because it's possible to split
        before this run */
     wc->bOverflown = TRUE;
-    return piter;
+    return p;
   }
   else
   {
     /* split point inside first character - no choice but split after that char */
     if (len != 1) {
       /* the run is more than 1 char, so we may split */
-      return split_run_extents(wc, piter, 1);
+      return split_run_extents(wc, p, 1);
     }
     /* the run is one char, can't split it */
-    return piter;
+    return p;
   }
 }
 
