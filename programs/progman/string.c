@@ -26,10 +26,10 @@
 
 /* Class names */
 
-WCHAR STRING_MAIN_WIN_CLASS_NAME[]    = {'P','M','M','a','i','n',0};
-WCHAR STRING_MDI_WIN_CLASS_NAME[]     = {'M','D','I','C','L','I','E','N','T',0};
-WCHAR STRING_GROUP_WIN_CLASS_NAME[]   = {'P','M','G','r','o','u','p',0};
-WCHAR STRING_PROGRAM_WIN_CLASS_NAME[] = {'P','M','P','r','o','g','r','a','m',0};
+const WCHAR STRING_MAIN_WIN_CLASS_NAME[]    = L"PMMain";
+const WCHAR STRING_MDI_WIN_CLASS_NAME[]     = L"MDICLIENT";
+const WCHAR STRING_GROUP_WIN_CLASS_NAME[]   = L"PMGroup";
+const WCHAR STRING_PROGRAM_WIN_CLASS_NAME[] = L"PMProgram";
 
 VOID STRING_LoadMenus(VOID)
 {
