@@ -140,3 +140,13 @@ HRESULT WINAPI MFGetTimerPeriodicity(DWORD *period)
 
     return S_OK;
 }
+
+/***********************************************************************
+ *      MFBeginRegisterWorkQueueWithMMCSS (mfplat.@)
+ */
+HRESULT WINAPI MFBeginRegisterWorkQueueWithMMCSS(DWORD queue, const WCHAR *usage_class, DWORD taskid,
+        IMFAsyncCallback *callback, IUnknown *state)
+{
+    return RtwqBeginRegisterWorkQueueWithMMCSS(queue, usage_class, taskid, 0,
+            (IRtwqAsyncCallback *)callback, state);
+}

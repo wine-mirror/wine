@@ -488,6 +488,8 @@ HRESULT WINAPI MFAllocateWorkQueue(DWORD *queue);
 HRESULT WINAPI MFAllocateWorkQueueEx(MFASYNC_WORKQUEUE_TYPE queue_type, DWORD *queue);
 HRESULT WINAPI MFBeginCreateFile(MF_FILE_ACCESSMODE access_mode, MF_FILE_OPENMODE open_mode, MF_FILE_FLAGS flags,
         const WCHAR *path, IMFAsyncCallback *callback, IUnknown *state, IUnknown **cancel_cookie);
+HRESULT WINAPI MFBeginRegisterWorkQueueWithMMCSS(DWORD queue, const WCHAR *usage_class, DWORD taskid,
+        IMFAsyncCallback *callback, IUnknown *state);
 HRESULT WINAPI MFBeginRegisterWorkQueueWithMMCSSEx(DWORD queue, const WCHAR *usage_class, DWORD taskid, LONG priority,
         IMFAsyncCallback *callback, IUnknown *state);
 HRESULT WINAPI MFBeginUnregisterWorkQueueWithMMCSS(DWORD queue, IMFAsyncCallback *callback, IUnknown *state);
