@@ -99,33 +99,20 @@ static void test_BCryptGenRandom(void)
 
 static void test_BCryptGetFipsAlgorithmMode(void)
 {
-    static const WCHAR policyKeyVistaW[] = {
-        'S','y','s','t','e','m','\\',
-        'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
-        'C','o','n','t','r','o','l','\\',
-        'L','s','a','\\',
-        'F','I','P','S','A','l','g','o','r','i','t','h','m','P','o','l','i','c','y',0};
-    static const WCHAR policyValueVistaW[] = {'E','n','a','b','l','e','d',0};
-    static const WCHAR policyKeyXPW[] = {
-        'S','y','s','t','e','m','\\',
-        'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
-        'C','o','n','t','r','o','l','\\',
-        'L','s','a',0};
-    static const WCHAR policyValueXPW[] = {
-        'F','I','P','S','A','l','g','o','r','i','t','h','m','P','o','l','i','c','y',0};
     HKEY hkey = NULL;
     BOOLEAN expected;
     BOOLEAN enabled;
     DWORD value, count[2] = {sizeof(value), sizeof(value)};
     NTSTATUS ret;
 
-    if (RegOpenKeyW(HKEY_LOCAL_MACHINE, policyKeyVistaW, &hkey) == ERROR_SUCCESS &&
-        RegQueryValueExW(hkey, policyValueVistaW, NULL, NULL, (void *)&value, &count[0]) == ERROR_SUCCESS)
+    if (RegOpenKeyW(HKEY_LOCAL_MACHINE,
+                    L"System\\CurrentControlSet\\Control\\Lsa\\FIPSAlgorithmPolicy", &hkey) == ERROR_SUCCESS &&
+        RegQueryValueExW(hkey, L"Enabled", NULL, NULL, (void *)&value, &count[0]) == ERROR_SUCCESS)
     {
         expected = !!value;
     }
-      else if (RegOpenKeyW(HKEY_LOCAL_MACHINE, policyKeyXPW, &hkey) == ERROR_SUCCESS &&
-               RegQueryValueExW(hkey, policyValueXPW, NULL, NULL, (void *)&value, &count[0]) == ERROR_SUCCESS)
+      else if (RegOpenKeyW(HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Control\\Lsa", &hkey) == ERROR_SUCCESS &&
+               RegQueryValueExW(hkey, L"FIPSAlgorithmPolicy", NULL, NULL, (void *)&value, &count[0]) == ERROR_SUCCESS)
     {
         expected = !!value;
     }
@@ -2173,13 +2160,12 @@ static void test_ECDH(void)
 
 static void test_BCryptEnumContextFunctions(void)
 {
-    static const WCHAR sslW[] = {'S','S','L',0};
     CRYPT_CONTEXT_FUNCTIONS *buffer;
     NTSTATUS status;
     ULONG buflen;
 
     buffer = NULL;
-    status = pBCryptEnumContextFunctions( CRYPT_LOCAL, sslW, NCRYPT_SCHANNEL_INTERFACE, &buflen, &buffer );
+    status = pBCryptEnumContextFunctions( CRYPT_LOCAL, L"SSL", NCRYPT_SCHANNEL_INTERFACE, &buflen, &buffer );
     todo_wine ok( status == STATUS_SUCCESS, "got %08x\n", status);
     if (status == STATUS_SUCCESS) pBCryptFreeBuffer( buffer );
 }
