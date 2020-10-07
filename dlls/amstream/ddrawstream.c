@@ -70,6 +70,7 @@ struct ddraw_sample
     IDirectDrawStreamSample IDirectDrawStreamSample_iface;
     LONG ref;
     struct ddraw_stream *parent;
+    IMultiMediaStream *mmstream;
     IDirectDrawSurface *surface;
     RECT rect;
     STREAM_TIME start_time;
@@ -1462,6 +1463,8 @@ static ULONG WINAPI ddraw_sample_Release(IDirectDrawStreamSample *iface)
         --sample->parent->sample_refs;
         LeaveCriticalSection(&sample->parent->cs);
 
+        if (sample->mmstream)
+            IMultiMediaStream_Release(sample->mmstream);
         IAMMediaStream_Release(&sample->parent->IAMMediaStream_iface);
 
         if (sample->surface)
@@ -1678,8 +1681,11 @@ static HRESULT ddrawstreamsample_create(struct ddraw_stream *parent, IDirectDraw
     object->IDirectDrawStreamSample_iface.lpVtbl = &DirectDrawStreamSample_Vtbl;
     object->ref = 1;
     object->parent = parent;
+    object->mmstream = parent->parent;
     InitializeConditionVariable(&object->update_cv);
     IAMMediaStream_AddRef(&parent->IAMMediaStream_iface);
+    if (object->mmstream)
+        IMultiMediaStream_AddRef(object->mmstream);
     ++parent->sample_refs;
 
     if (surface)

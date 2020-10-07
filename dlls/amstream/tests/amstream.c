@@ -6904,9 +6904,11 @@ static void test_ddrawstream_create_sample(void)
     hr = IDirectDrawMediaStream_CreateSample(ddraw_stream, NULL, &rect, 0, &sample);
     ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
 
+    EXPECT_REF(mmstream, 1);
     EXPECT_REF(stream, 3);
     hr = IDirectDrawMediaStream_CreateSample(ddraw_stream, NULL, NULL, 0, &sample);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
+    EXPECT_REF(mmstream, 2);
     EXPECT_REF(stream, 4);
 
     hr = IDirectDrawStreamSample_GetSurface(sample, NULL, NULL);
