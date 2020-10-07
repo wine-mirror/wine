@@ -1240,6 +1240,14 @@ bool wined3d_context_vk_allocate_query(struct wined3d_context_vk *context_vk,
             free_pools = &context_vk->free_pipeline_statistics_query_pools;
             break;
 
+        case WINED3D_QUERY_TYPE_SO_STATISTICS:
+        case WINED3D_QUERY_TYPE_SO_STATISTICS_STREAM0:
+        case WINED3D_QUERY_TYPE_SO_STATISTICS_STREAM1:
+        case WINED3D_QUERY_TYPE_SO_STATISTICS_STREAM2:
+        case WINED3D_QUERY_TYPE_SO_STATISTICS_STREAM3:
+            free_pools = &context_vk->free_stream_output_statistics_query_pools;
+            break;
+
         default:
             FIXME("Unhandled query type %#x.\n", type);
             return false;
@@ -1303,6 +1311,7 @@ void wined3d_context_vk_cleanup(struct wined3d_context_vk *context_vk)
     wined3d_context_vk_destroy_query_pools(context_vk, &context_vk->free_occlusion_query_pools);
     wined3d_context_vk_destroy_query_pools(context_vk, &context_vk->free_timestamp_query_pools);
     wined3d_context_vk_destroy_query_pools(context_vk, &context_vk->free_pipeline_statistics_query_pools);
+    wined3d_context_vk_destroy_query_pools(context_vk, &context_vk->free_stream_output_statistics_query_pools);
     wine_rb_destroy(&context_vk->bo_slab_available, wined3d_context_vk_destroy_bo_slab, context_vk);
     heap_free(context_vk->pending_queries.queries);
     heap_free(context_vk->submitted.buffers);
@@ -3159,6 +3168,7 @@ HRESULT wined3d_context_vk_init(struct wined3d_context_vk *context_vk, struct wi
     list_init(&context_vk->free_occlusion_query_pools);
     list_init(&context_vk->free_timestamp_query_pools);
     list_init(&context_vk->free_pipeline_statistics_query_pools);
+    list_init(&context_vk->free_stream_output_statistics_query_pools);
 
     wine_rb_init(&context_vk->render_passes, wined3d_render_pass_vk_compare);
     wine_rb_init(&context_vk->pipeline_layouts, wined3d_pipeline_layout_vk_compare);
