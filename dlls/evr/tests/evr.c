@@ -1562,6 +1562,8 @@ static void test_presenter_native_video_size(void)
     IMFTransform *mixer;
     SIZE size, ratio;
     HRESULT hr;
+    IMFVideoMediaType *video_type;
+    IDirect3DDeviceManager9 *dm;
 
     hr = MFCreateVideoMixer(NULL, &IID_IDirect3DDevice9, &IID_IMFTransform, (void **)&mixer);
     ok(hr == S_OK, "Failed to create a mixer, hr %#x.\n", hr);
@@ -1594,6 +1596,27 @@ todo_wine {
     hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFTopologyServiceLookupClient, (void **)&lookup_client);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
+    /* Configure mixer primary stream. */
+    hr = MFGetService((IUnknown *)presenter, &MR_VIDEO_ACCELERATION_SERVICE, &IID_IDirect3DDeviceManager9, (void **)&dm);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_ProcessMessage(mixer, MFT_MESSAGE_SET_D3D_MANAGER, (ULONG_PTR)dm);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    IDirect3DDeviceManager9_Release(dm);
+
+    hr = pMFCreateVideoMediaTypeFromSubtype(&MFVideoFormat_RGB32, &video_type);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoMediaType_SetUINT64(video_type, &MF_MT_FRAME_SIZE, (UINT64)640 << 32 | 480);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMFVideoMediaType_SetUINT32(video_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, TRUE);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_SetInputType(mixer, 0, (IMFMediaType *)video_type, 0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    /* Native video size is cached on initialization. */
     init_test_host(&host, mixer, presenter);
 
     hr = IMFTopologyServiceLookupClient_InitServicePointers(lookup_client, &host.IMFTopologyServiceLookup_iface);
@@ -1602,9 +1625,37 @@ todo_wine {
     hr = IMFVideoDisplayControl_GetNativeVideoSize(display_control, &size, &ratio);
 todo_wine {
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    ok(size.cx == 0 && size.cy == 0, "Unexpected size.\n");
-    ok(ratio.cx == 0 && ratio.cy == 0, "Unexpected ratio.\n");
+    ok(size.cx == 640 && size.cy == 480, "Unexpected size %u x %u.\n", size.cx, size.cy);
+    ok((ratio.cx == 4 && ratio.cy == 3) || broken(!memcmp(&ratio, &size, sizeof(ratio))) /* < Win10 */,
+            "Unexpected ratio %u x %u.\n", ratio.cx, ratio.cy);
 }
+    /* Update input type. */
+    hr = IMFVideoMediaType_SetUINT64(video_type, &MF_MT_FRAME_SIZE, (UINT64)320 << 32 | 240);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_SetInputType(mixer, 0, (IMFMediaType *)video_type, 0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoDisplayControl_GetNativeVideoSize(display_control, &size, &ratio);
+todo_wine {
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(size.cx == 640 && size.cy == 480, "Unexpected size %u x %u.\n", size.cx, size.cy);
+    ok((ratio.cx == 4 && ratio.cy == 3) || broken(!memcmp(&ratio, &size, sizeof(ratio))) /* < Win10 */,
+            "Unexpected ratio %u x %u.\n", ratio.cx, ratio.cy);
+}
+    /* Negotiating types updates native video size. */
+    hr = IMFVideoPresenter_ProcessMessage(presenter, MFVP_MESSAGE_INVALIDATEMEDIATYPE, 0);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoDisplayControl_GetNativeVideoSize(display_control, &size, &ratio);
+todo_wine {
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(size.cx == 320 && size.cy == 240, "Unexpected size %u x %u.\n", size.cx, size.cy);
+    ok((ratio.cx == 4 && ratio.cy == 3) || broken(!memcmp(&ratio, &size, sizeof(ratio))) /* < Win10 */,
+            "Unexpected ratio %u x %u.\n", ratio.cx, ratio.cy);
+}
+    IMFVideoMediaType_Release(video_type);
     IMFVideoDisplayControl_Release(display_control);
     IMFVideoPresenter_Release(presenter);
     IMFTransform_Release(mixer);
