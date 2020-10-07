@@ -274,6 +274,7 @@ static void adapter_vk_destroy(struct wined3d_adapter *adapter)
     VK_CALL(vkDestroyInstance(vk_info->instance, NULL));
     wined3d_unload_vulkan(vk_info);
     wined3d_adapter_cleanup(&adapter_vk->a);
+    heap_free(adapter_vk->device_extensions);
     heap_free(adapter_vk);
 }
 
@@ -397,82 +398,12 @@ static const struct wined3d_allocator_ops wined3d_allocator_vk_ops =
     .allocator_destroy_chunk = wined3d_allocator_vk_destroy_chunk,
 };
 
-static const struct
-{
-    const char *name;
-    unsigned int core_since_version;
-}
-vulkan_device_extensions[] =
-{
-    {VK_EXT_VERTEX_ATTRIBUTE_DIVISOR_EXTENSION_NAME,    ~0u},
-    {VK_KHR_MAINTENANCE1_EXTENSION_NAME,                VK_API_VERSION_1_1},
-    {VK_KHR_SHADER_DRAW_PARAMETERS_EXTENSION_NAME,      VK_API_VERSION_1_1},
-    {VK_KHR_SWAPCHAIN_EXTENSION_NAME,                   ~0u},
-};
-
-static bool enable_vulkan_device_extensions(VkPhysicalDevice physical_device, uint32_t *extension_count,
-        const char *enabled_extensions[], const struct wined3d_vk_info *vk_info)
-{
-    VkExtensionProperties *extensions = NULL;
-    bool success = false, found;
-    unsigned int i, j, count;
-    VkResult vr;
-
-    *extension_count = 0;
-
-    if ((vr = VK_CALL(vkEnumerateDeviceExtensionProperties(physical_device, NULL, &count, NULL))) < 0)
-    {
-        ERR("Failed to enumerate device extensions, vr %s.\n", wined3d_debug_vkresult(vr));
-        goto done;
-    }
-    if (!(extensions = heap_calloc(count, sizeof(*extensions))))
-    {
-        WARN("Out of memory.\n");
-        goto done;
-    }
-    if ((vr = VK_CALL(vkEnumerateDeviceExtensionProperties(physical_device, NULL, &count, extensions))) < 0)
-    {
-        ERR("Failed to enumerate device extensions, vr %s.\n", wined3d_debug_vkresult(vr));
-        goto done;
-    }
-
-    for (i = 0; i < ARRAY_SIZE(vulkan_device_extensions); ++i)
-    {
-        if (vulkan_device_extensions[i].core_since_version <= vk_info->api_version)
-            continue;
-
-        for (j = 0, found = false; j < count; ++j)
-        {
-            if (!strcmp(extensions[j].extensionName, vulkan_device_extensions[i].name))
-            {
-                found = true;
-                break;
-            }
-        }
-
-        if (!found)
-        {
-            WARN("Required extension '%s' is not available.\n", vulkan_device_extensions[i].name);
-            goto done;
-        }
-
-        TRACE("Enabling instance extension '%s'.\n", vulkan_device_extensions[i].name);
-        enabled_extensions[(*extension_count)++] = vulkan_device_extensions[i].name;
-    }
-    success = true;
-
-done:
-    heap_free(extensions);
-    return success;
-}
-
 static HRESULT adapter_vk_create_device(struct wined3d *wined3d, const struct wined3d_adapter *adapter,
         enum wined3d_device_type device_type, HWND focus_window, unsigned int flags, BYTE surface_alignment,
         const enum wined3d_feature_level *levels, unsigned int level_count,
         struct wined3d_device_parent *device_parent, struct wined3d_device **device)
 {
     const struct wined3d_adapter_vk *adapter_vk = wined3d_adapter_vk_const(adapter);
-    const char *enabled_device_extensions[ARRAY_SIZE(vulkan_device_extensions)];
     VkPhysicalDeviceVertexAttributeDivisorFeaturesEXT *vertex_divisor_features;
     const struct wined3d_vk_info *vk_info = &adapter_vk->vk_info;
     struct wined3d_physical_device_info physical_device_info;
@@ -533,13 +464,8 @@ static HRESULT adapter_vk_create_device(struct wined3d *wined3d, const struct wi
     device_info.pQueueCreateInfos = &queue_info;
     device_info.enabledLayerCount = 0;
     device_info.ppEnabledLayerNames = NULL;
-    device_info.ppEnabledExtensionNames = enabled_device_extensions;
-    if (!enable_vulkan_device_extensions(physical_device,
-            &device_info.enabledExtensionCount, enabled_device_extensions, vk_info))
-    {
-        hr = E_FAIL;
-        goto fail;
-    }
+    device_info.enabledExtensionCount = adapter_vk->device_extension_count;
+    device_info.ppEnabledExtensionNames = adapter_vk->device_extensions;
     device_info.pEnabledFeatures = &features2->features;
 
     if ((vr = VK_CALL(vkCreateDevice(physical_device, &device_info, NULL, &vk_device))) < 0)
@@ -2146,6 +2072,93 @@ static void wined3d_adapter_vk_init_d3d_info(struct wined3d_adapter_vk *adapter_
     d3d_info->multisample_draw_location = WINED3D_LOCATION_TEXTURE_RGB;
 }
 
+static bool wined3d_adapter_vk_init_device_extensions(struct wined3d_adapter_vk *adapter_vk)
+{
+    VkPhysicalDevice physical_device = adapter_vk->physical_device;
+    struct wined3d_vk_info *vk_info = &adapter_vk->vk_info;
+    unsigned int count, enable_count, i, j;
+    const char **enabled_extensions = NULL;
+    VkExtensionProperties *extensions;
+    bool found, success = false;
+    SIZE_T enable_size = 0;
+    VkResult vr;
+
+    static const struct
+    {
+        const char *name;
+        unsigned int core_since_version;
+    }
+    info[] =
+    {
+        {VK_EXT_VERTEX_ATTRIBUTE_DIVISOR_EXTENSION_NAME,    ~0u},
+        {VK_KHR_MAINTENANCE1_EXTENSION_NAME,                VK_API_VERSION_1_1},
+        {VK_KHR_SHADER_DRAW_PARAMETERS_EXTENSION_NAME,      VK_API_VERSION_1_1},
+        {VK_KHR_SWAPCHAIN_EXTENSION_NAME,                   ~0u},
+    };
+
+    if ((vr = VK_CALL(vkEnumerateDeviceExtensionProperties(physical_device, NULL, &count, NULL))) < 0)
+    {
+        ERR("Failed to enumerate device extensions, vr %s.\n", wined3d_debug_vkresult(vr));
+        return false;
+    }
+
+    if (!(extensions = heap_calloc(count, sizeof(*extensions))))
+    {
+        ERR("Failed to allocate extension properties array.\n");
+        return false;
+    }
+
+    if ((vr = VK_CALL(vkEnumerateDeviceExtensionProperties(physical_device, NULL, &count, extensions))) < 0)
+    {
+        ERR("Failed to enumerate device extensions, vr %s.\n", wined3d_debug_vkresult(vr));
+        goto done;
+    }
+
+    for (i = 0, enable_count = 0; i < ARRAY_SIZE(info); ++i)
+    {
+        if (info[i].core_since_version <= vk_info->api_version)
+            continue;
+
+        for (j = 0, found = false; j < count; ++j)
+        {
+            if (!strcmp(extensions[j].extensionName, info[i].name))
+            {
+                found = true;
+                break;
+            }
+        }
+
+        if (!found)
+        {
+            WARN("Required extension '%s' is not available.\n", info[i].name);
+            goto done;
+        }
+
+        TRACE("Enabling device extension '%s'.\n", info[i].name);
+        if (!wined3d_array_reserve((void **)&enabled_extensions, &enable_size,
+                enable_count + 1, sizeof(*enabled_extensions)))
+        {
+            ERR("Failed to allocate enabled extensions array.\n");
+            goto done;
+        }
+        enabled_extensions[enable_count++] = info[i].name;
+    }
+    success = true;
+
+done:
+    if (success)
+    {
+        adapter_vk->device_extension_count = enable_count;
+        adapter_vk->device_extensions = enabled_extensions;
+    }
+    else
+    {
+        heap_free(enabled_extensions);
+    }
+    heap_free(extensions);
+    return success;
+}
+
 static BOOL wined3d_adapter_vk_init(struct wined3d_adapter_vk *adapter_vk,
         unsigned int ordinal, unsigned int wined3d_creation_flags)
 {
@@ -2167,6 +2180,9 @@ static BOOL wined3d_adapter_vk_init(struct wined3d_adapter_vk *adapter_vk,
     if (!(adapter_vk->physical_device = get_vulkan_physical_device(vk_info)))
         goto fail_vulkan;
 
+    if (!wined3d_adapter_vk_init_device_extensions(adapter_vk))
+        goto fail_vulkan;
+
     memset(&id_properties, 0, sizeof(id_properties));
     id_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES;
     properties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
@@ -2184,7 +2200,10 @@ static BOOL wined3d_adapter_vk_init(struct wined3d_adapter_vk *adapter_vk,
         luid = (LUID *)id_properties.deviceLUID;
 
     if (!wined3d_adapter_init(adapter, ordinal, luid, &wined3d_adapter_vk_ops))
+    {
+        heap_free(adapter_vk->device_extensions);
         goto fail_vulkan;
+    }
 
     adapter->vertex_pipe = wined3d_spirv_vertex_pipe_init_vk();
     adapter->fragment_pipe = wined3d_spirv_fragment_pipe_init_vk();
@@ -2210,6 +2229,7 @@ static BOOL wined3d_adapter_vk_init(struct wined3d_adapter_vk *adapter_vk,
 
 fail:
     wined3d_adapter_cleanup(adapter);
+    heap_free(adapter_vk->device_extensions);
 fail_vulkan:
     VK_CALL(vkDestroyInstance(vk_info->instance, NULL));
     wined3d_unload_vulkan(vk_info);

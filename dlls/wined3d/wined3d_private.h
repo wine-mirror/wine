@@ -3347,6 +3347,8 @@ struct wined3d_adapter_vk
     struct wined3d_adapter a;
 
     struct wined3d_vk_info vk_info;
+    unsigned int device_extension_count;
+    const char **device_extensions;
     VkPhysicalDevice physical_device;
 
     VkPhysicalDeviceLimits device_limits;
