@@ -9888,27 +9888,27 @@ msgstr "Çin Standart Saati"
 msgid "China Daylight Time"
 msgstr "Çin Yaz Saati"
 
-#: dlls/tzres/tzres.rc:170
+#: dlls/tzres/tzres.rc:172
 msgid "North Asia Standard Time"
 msgstr "Kuzey Asya Standart Saati"
 
-#: dlls/tzres/tzres.rc:171
+#: dlls/tzres/tzres.rc:173
 msgid "North Asia Daylight Time"
 msgstr "Kuzey Asya Yaz Saati"
 
-#: dlls/tzres/tzres.rc:110
+#: dlls/tzres/tzres.rc:112
 msgid "Georgian Standard Time"
 msgstr "Gürcistan Standart Saati"
 
-#: dlls/tzres/tzres.rc:111
+#: dlls/tzres/tzres.rc:113
 msgid "Georgian Daylight Time"
 msgstr "Gürcistan Yaz Saati"
 
-#: dlls/tzres/tzres.rc:162
+#: dlls/tzres/tzres.rc:164
 msgid "Nepal Standard Time"
 msgstr "Nepal Standart Saati"
 
-#: dlls/tzres/tzres.rc:163
+#: dlls/tzres/tzres.rc:165
 msgid "Nepal Daylight Time"
 msgstr "Nepal Yaz Saati"
 
@@ -9920,13 +9920,13 @@ msgstr "Yeşil Burun Adaları Standart Saati"
 msgid "Cape Verde Daylight Time"
 msgstr "Yeşil Burun Adaları Yaz Saati"
 
-#: dlls/tzres/tzres.rc:120
+#: dlls/tzres/tzres.rc:122
 #, fuzzy
 #| msgid "Hawaiian Standard Time"
 msgid "Haiti Standard Time"
 msgstr "Hawaii Standart Saati"
 
-#: dlls/tzres/tzres.rc:121
+#: dlls/tzres/tzres.rc:123
 #, fuzzy
 #| msgid "Hawaiian Daylight Time"
 msgid "Haiti Daylight Time"
@@ -9940,11 +9940,11 @@ msgstr "Orta Avrupa Standart Saati"
 msgid "Central European Daylight Time"
 msgstr "Orta Avrupa Yaz Saati"
 
-#: dlls/tzres/tzres.rc:150
+#: dlls/tzres/tzres.rc:152
 msgid "Morocco Standard Time"
 msgstr "Fas Standart Saati"
 
-#: dlls/tzres/tzres.rc:151
+#: dlls/tzres/tzres.rc:153
 msgid "Morocco Daylight Time"
 msgstr "Fas Yaz Saati"
 
@@ -9956,43 +9956,43 @@ msgstr "Orta Avrupa Standart Saati"
 msgid "Central Europe Daylight Time"
 msgstr "Orta Avrupa Yaz Saati"
 
-#: dlls/tzres/tzres.rc:126
+#: dlls/tzres/tzres.rc:128
 msgid "Iran Standard Time"
 msgstr "İran Standart Saati"
 
-#: dlls/tzres/tzres.rc:127
+#: dlls/tzres/tzres.rc:129
 msgid "Iran Daylight Time"
 msgstr "İran Yaz Saati"
 
-#: dlls/tzres/tzres.rc:160
+#: dlls/tzres/tzres.rc:162
 msgid "Namibia Standard Time"
 msgstr "Namibya Standart Saati"
 
-#: dlls/tzres/tzres.rc:161
+#: dlls/tzres/tzres.rc:163
 msgid "Namibia Daylight Time"
 msgstr "Namibya Yaz Saati"
 
-#: dlls/tzres/tzres.rc:212
+#: dlls/tzres/tzres.rc:214
 msgid "Tonga Standard Time"
 msgstr "Tonga Standart Saati"
 
-#: dlls/tzres/tzres.rc:213
+#: dlls/tzres/tzres.rc:215
 msgid "Tonga Daylight Time"
 msgstr "Tonga Yaz Saati"
 
-#: dlls/tzres/tzres.rc:154
+#: dlls/tzres/tzres.rc:156
 msgid "Mountain Standard Time (Mexico)"
 msgstr "Dağ Standart Saati (Meksika)"
 
-#: dlls/tzres/tzres.rc:155
+#: dlls/tzres/tzres.rc:157
 msgid "Mountain Daylight Time (Mexico)"
 msgstr "Dağ Yaz Saati (Meksika)"
 
-#: dlls/tzres/tzres.rc:112
+#: dlls/tzres/tzres.rc:114
 msgid "GMT Standard Time"
 msgstr "GMT Standart Saati"
 
-#: dlls/tzres/tzres.rc:113
+#: dlls/tzres/tzres.rc:115
 msgid "GMT Daylight Time"
 msgstr "GMT Yaz Saati"
 
@@ -10012,35 +10012,35 @@ msgstr "Arabistan Standart Saati"
 msgid "Arabic Daylight Time"
 msgstr "Arabistan Yaz Saati"
 
-#: dlls/tzres/tzres.rc:140
+#: dlls/tzres/tzres.rc:142
 msgid "Magadan Standard Time"
 msgstr "Magadan Standart Saati"
 
-#: dlls/tzres/tzres.rc:141
+#: dlls/tzres/tzres.rc:143
 msgid "Magadan Daylight Time"
 msgstr "Magadan Yaz Saati"
 
-#: dlls/tzres/tzres.rc:166
+#: dlls/tzres/tzres.rc:168
 msgid "Newfoundland Standard Time"
 msgstr "Newfoundland Standart Saati"
 
-#: dlls/tzres/tzres.rc:167
+#: dlls/tzres/tzres.rc:169
 msgid "Newfoundland Daylight Time"
 msgstr "Newfoundland Yaz Saati"
 
-#: dlls/tzres/tzres.rc:236
+#: dlls/tzres/tzres.rc:238
 msgid "West Pacific Standard Time"
 msgstr "Batı Pasifik Standart Saati"
 
-#: dlls/tzres/tzres.rc:237
+#: dlls/tzres/tzres.rc:239
 msgid "West Pacific Daylight Time"
 msgstr "Batı Pasifik Yaz Saati"
 
-#: dlls/tzres/tzres.rc:176
+#: dlls/tzres/tzres.rc:178
 msgid "Pacific Standard Time"
 msgstr "Pasifik Standart Saati"
 
-#: dlls/tzres/tzres.rc:177
+#: dlls/tzres/tzres.rc:179
 msgid "Pacific Daylight Time"
 msgstr "Pasifik Yaz Saati"
 
@@ -10052,59 +10052,71 @@ msgstr "Azerbaycan Standart Saati"
 msgid "Azerbaijan Daylight Time"
 msgstr "Azerbaycan Yaz Saati"
 
-#: dlls/tzres/tzres.rc:194
+#: dlls/tzres/tzres.rc:196
 msgid "Samoa Standard Time"
 msgstr "Samoa Standart Saati"
 
-#: dlls/tzres/tzres.rc:195
+#: dlls/tzres/tzres.rc:197
 msgid "Samoa Daylight Time"
 msgstr "Samoa Yaz Saati"
 
-#: dlls/tzres/tzres.rc:132
+#: dlls/tzres/tzres.rc:134
 msgid "Kaliningrad Standard Time"
 msgstr "Kaliningrad Standart Saati"
 
-#: dlls/tzres/tzres.rc:133
+#: dlls/tzres/tzres.rc:135
 msgid "Kaliningrad Daylight Time"
 msgstr "Kaliningrad Yaz Saati"
 
-#: dlls/tzres/tzres.rc:178
+#: dlls/tzres/tzres.rc:180
 msgid "Pacific Standard Time (Mexico)"
 msgstr "Pasifik Standart Saati (Meksika)"
 
-#: dlls/tzres/tzres.rc:179
+#: dlls/tzres/tzres.rc:181
 msgid "Pacific Daylight Time (Mexico)"
 msgstr "Pasifik Yaz Saati (Meksika)"
 
-#: dlls/tzres/tzres.rc:146
+#: dlls/tzres/tzres.rc:148
 msgid "Middle East Standard Time"
 msgstr "Ortadoğu Standart Saati"
 
-#: dlls/tzres/tzres.rc:147
+#: dlls/tzres/tzres.rc:149
 msgid "Middle East Daylight Time"
 msgstr "Ortadoğu Yaz Saati"
 
-#: dlls/tzres/tzres.rc:210
+#: dlls/tzres/tzres.rc:212
 msgid "Tokyo Standard Time"
 msgstr "Tokyo Standart Saati"
 
-#: dlls/tzres/tzres.rc:211
+#: dlls/tzres/tzres.rc:213
 msgid "Tokyo Daylight Time"
 msgstr "Tokyo Yaz Saati"
 
-#: dlls/tzres/tzres.rc:138
+#: dlls/tzres/tzres.rc:140
 msgid "Line Islands Standard Time"
 msgstr "Line Adaları Standart Saati"
 
-#: dlls/tzres/tzres.rc:139
+#: dlls/tzres/tzres.rc:141
 msgid "Line Islands Daylight Time"
 msgstr "Line Adaları Yaz Saati"
 
-#: dlls/tzres/tzres.rc:130
+#: dlls/tzres/tzres.rc:90
+#, fuzzy
+#| msgid "China Standard Time"
+msgid "Cuba Standard Time"
+msgstr "Çin Standart Saati"
+
+#: dlls/tzres/tzres.rc:91
+#, fuzzy
+#| msgid "China Daylight Time"
+msgid "Cuba Daylight Time"
+msgstr "Çin Yaz Saati"
+
+#: dlls/tzres/tzres.rc:132
 msgid "Jordan Standard Time"
 msgstr "Ürdün Standart Saati"
 
-#: dlls/tzres/tzres.rc:131
+#: dlls/tzres/tzres.rc:133
 msgid "Jordan Daylight Time"
 msgstr "Ürdün Yaz Saati"
 
@@ -10124,11 +10136,11 @@ msgstr "Azor Adaları Standart Saati"
 msgid "Azores Daylight Time"
 msgstr "Azor Adaları Yaz Saati"
 
-#: dlls/tzres/tzres.rc:168
+#: dlls/tzres/tzres.rc:170
 msgid "North Asia East Standard Time"
 msgstr "Kuzey Asya Doğu Standart Saati"
 
-#: dlls/tzres/tzres.rc:169
+#: dlls/tzres/tzres.rc:171
 msgid "North Asia East Daylight Time"
 msgstr "Kuzey Asya Doğu Yaz Saati"
 
@@ -10140,59 +10152,59 @@ msgstr "Arjantin Standart Saati"
 msgid "Argentina Daylight Time"
 msgstr "Arjantin Yaz Saati"
 
-#: dlls/tzres/tzres.rc:142
+#: dlls/tzres/tzres.rc:144
 #, fuzzy
 #| msgid "Mauritius Standard Time"
 msgid "Marquesas Standard Time"
 msgstr "Mauritius Standart Saati"
 
-#: dlls/tzres/tzres.rc:143
+#: dlls/tzres/tzres.rc:145
 #, fuzzy
 #| msgid "Mauritius Daylight Time"
 msgid "Marquesas Daylight Time"
 msgstr "Mauritius Yaz Saati"
 
-#: dlls/tzres/tzres.rc:156
+#: dlls/tzres/tzres.rc:158
 msgid "Myanmar Standard Time"
 msgstr "Myanmar Standart Saati"
 
-#: dlls/tzres/tzres.rc:157
+#: dlls/tzres/tzres.rc:159
 msgid "Myanmar Daylight Time"
 msgstr "Myanmar Yaz Saati"
 
-#: dlls/tzres/tzres.rc:222 dlls/tzres/tzres.rc:223
+#: dlls/tzres/tzres.rc:224 dlls/tzres/tzres.rc:225
 msgid "Coordinated Universal Time"
 msgstr "Eşgüdümlü Evrensel Saat"
 
-#: dlls/tzres/tzres.rc:124
+#: dlls/tzres/tzres.rc:126
 msgid "India Standard Time"
 msgstr "Hindistan Standart Saati"
 
-#: dlls/tzres/tzres.rc:125
+#: dlls/tzres/tzres.rc:127
 msgid "India Daylight Time"
 msgstr "Hindistan Yaz Saati"
 
-#: dlls/tzres/tzres.rc:118
+#: dlls/tzres/tzres.rc:120
 msgid "GTB Standard Time"
 msgstr "GTB Standart Saati"
 
-#: dlls/tzres/tzres.rc:119
+#: dlls/tzres/tzres.rc:121
 msgid "GTB Daylight Time"
 msgstr "GTB Yaz Saati"
 
-#: dlls/tzres/tzres.rc:214
+#: dlls/tzres/tzres.rc:216
 msgid "Turkey Standard Time"
 msgstr "Türkiye Standart Saati"
 
-#: dlls/tzres/tzres.rc:215
+#: dlls/tzres/tzres.rc:217
 msgid "Turkey Daylight Time"
 msgstr "Türkiye Yaz Saati"
 
-#: dlls/tzres/tzres.rc:106
+#: dlls/tzres/tzres.rc:108
 msgid "Fiji Standard Time"
 msgstr "Fiji Standart Saati"
 
-#: dlls/tzres/tzres.rc:107
+#: dlls/tzres/tzres.rc:109
 msgid "Fiji Daylight Time"
 msgstr "Fiji Yaz Saati"
 
@@ -10204,35 +10216,35 @@ msgstr "Orta Kanada Standart Saati"
 msgid "Canada Central Daylight Time"
 msgstr "Orta Kanada Yaz Saati"
 
-#: dlls/tzres/tzres.rc:206
+#: dlls/tzres/tzres.rc:208
 msgid "Taipei Standard Time"
 msgstr "Taipei Standart Saati"
 
-#: dlls/tzres/tzres.rc:207
+#: dlls/tzres/tzres.rc:209
 msgid "Taipei Daylight Time"
 msgstr "Taipei Yaz Saati"
 
-#: dlls/tzres/tzres.rc:232
+#: dlls/tzres/tzres.rc:234
 msgid "W. Europe Standard Time"
 msgstr "Batı Avrupa Standart Saati"
 
-#: dlls/tzres/tzres.rc:233
+#: dlls/tzres/tzres.rc:235
 msgid "W. Europe Daylight Time"
 msgstr "Batı Avrupa Yaz Saati"
 
-#: dlls/tzres/tzres.rc:148
+#: dlls/tzres/tzres.rc:150
 msgid "Montevideo Standard Time"
 msgstr "Montevideo Standart Saati"
 
-#: dlls/tzres/tzres.rc:149
+#: dlls/tzres/tzres.rc:151
 msgid "Montevideo Daylight Time"
 msgstr "Montevideo Yaz Saati"
 
-#: dlls/tzres/tzres.rc:180
+#: dlls/tzres/tzres.rc:182
 msgid "Pakistan Standard Time"
 msgstr "Pakistan Standart Saati"
 
-#: dlls/tzres/tzres.rc:181
+#: dlls/tzres/tzres.rc:183
 msgid "Pakistan Daylight Time"
 msgstr "Pakistan Yaz Saati"
 
@@ -10252,19 +10264,19 @@ msgstr "Doğu Avustralya Standart Saati"
 msgid "AUS Eastern Daylight Time"
 msgstr "Doğu Avustralya Yaz Saati"
 
-#: dlls/tzres/tzres.rc:158
+#: dlls/tzres/tzres.rc:160
 msgid "N. Central Asia Standard Time"
 msgstr "Kuzey Orta Asya Standart Saati"
 
-#: dlls/tzres/tzres.rc:159
+#: dlls/tzres/tzres.rc:161
 msgid "N. Central Asia Daylight Time"
 msgstr "Kuzey Orta Asya Yaz Saati"
 
-#: dlls/tzres/tzres.rc:100
+#: dlls/tzres/tzres.rc:102
 msgid "Eastern Standard Time"
 msgstr "Doğu Amerika Standart Saati"
 
-#: dlls/tzres/tzres.rc:101
+#: dlls/tzres/tzres.rc:103
 msgid "Eastern Daylight Time"
 msgstr "Doğu Amerika Yaz Saati"
 
@@ -10284,39 +10296,39 @@ msgstr "Atlas Okyanusu Standart Saati"
 msgid "Atlantic Daylight Time"
 msgstr "Atlas Okyanusu Yaz Saati"
 
-#: dlls/tzres/tzres.rc:152
+#: dlls/tzres/tzres.rc:154
 msgid "Mountain Standard Time"
 msgstr "Dağlık Amerika Standart Saati"
 
-#: dlls/tzres/tzres.rc:153
+#: dlls/tzres/tzres.rc:155
 msgid "Mountain Daylight Time"
 msgstr "Dağlık Amerika Yaz Saati"
 
-#: dlls/tzres/tzres.rc:218
+#: dlls/tzres/tzres.rc:220
 msgid "US Eastern Standard Time"
 msgstr "Doğu Amerika Standart Saati"
 
-#: dlls/tzres/tzres.rc:219
+#: dlls/tzres/tzres.rc:221
 msgid "US Eastern Daylight Time"
 msgstr "Doğu Amerika Yaz Saati"
 
-#: dlls/tzres/tzres.rc:172
+#: dlls/tzres/tzres.rc:174
 #, fuzzy
 #| msgid "Korea Standard Time"
 msgid "North Korea Standard Time"
 msgstr "Kore Standart Saati"
 
-#: dlls/tzres/tzres.rc:173
+#: dlls/tzres/tzres.rc:175
 #, fuzzy
 #| msgid "Korea Daylight Time"
 msgid "North Korea Daylight Time"
 msgstr "Kore Yaz Saati"
 
-#: dlls/tzres/tzres.rc:208
+#: dlls/tzres/tzres.rc:210
 msgid "Tasmania Standard Time"
 msgstr "Tazmanya Standart Saati"
 
-#: dlls/tzres/tzres.rc:209
+#: dlls/tzres/tzres.rc:211
 msgid "Tasmania Daylight Time"
 msgstr "Tazmanya Yaz Saati"
 
@@ -10328,19 +10340,19 @@ msgstr "Orta Amerika Standart Saati"
 msgid "Central America Daylight Time"
 msgstr "Orta Amerika Yaz Saati"
 
-#: dlls/tzres/tzres.rc:220
+#: dlls/tzres/tzres.rc:222
 msgid "US Mountain Standard Time"
 msgstr "Dağlık Amerika Standart Saati"
 
-#: dlls/tzres/tzres.rc:221
+#: dlls/tzres/tzres.rc:223
 msgid "US Mountain Daylight Time"
 msgstr "Dağlık Amerika Yaz Saati"
 
-#: dlls/tzres/tzres.rc:200
+#: dlls/tzres/tzres.rc:202
 msgid "South Africa Standard Time"
 msgstr "Güney Afrika Standart Saati"
 
-#: dlls/tzres/tzres.rc:201
+#: dlls/tzres/tzres.rc:203
 msgid "South Africa Daylight Time"
 msgstr "Güney Afrika Yaz Saati"
 
@@ -10352,11 +10364,11 @@ msgstr "Orta Avustralya Standart Saati"
 msgid "Cen. Australia Daylight Time"
 msgstr "Orta Avustralya Yaz Saati"
 
-#: dlls/tzres/tzres.rc:202
+#: dlls/tzres/tzres.rc:204
 msgid "Sri Lanka Standard Time"
 msgstr "Sri Lanka Standart Saati"
 
-#: dlls/tzres/tzres.rc:203
+#: dlls/tzres/tzres.rc:205
 msgid "Sri Lanka Daylight Time"
 msgstr "Sri Lanka Yaz Saati"
 
@@ -10368,19 +10380,19 @@ msgstr "Afganistan Standart Saati"
 msgid "Afghanistan Daylight Time"
 msgstr "Afganistan Yaz Saati"
 
-#: dlls/tzres/tzres.rc:238
+#: dlls/tzres/tzres.rc:240
 msgid "Yakutsk Standard Time"
 msgstr "Yakutsk Standart Saati"
 
-#: dlls/tzres/tzres.rc:239
+#: dlls/tzres/tzres.rc:241
 msgid "Yakutsk Daylight Time"
 msgstr "Yakutsk Yaz Saati"
 
-#: dlls/tzres/tzres.rc:188
+#: dlls/tzres/tzres.rc:190
 msgid "SA Eastern Standard Time"
 msgstr "Güney Amerika Doğu Standart Saati"
 
-#: dlls/tzres/tzres.rc:189
+#: dlls/tzres/tzres.rc:191
 msgid "SA Eastern Daylight Time"
 msgstr "Güney Amerika Doğu Yaz Saati"
 
@@ -10400,35 +10412,35 @@ msgstr "Arabistan Standart Saati"
 msgid "Arabian Daylight Time"
 msgstr "Arabistan Yaz Saati"
 
-#: dlls/tzres/tzres.rc:186
+#: dlls/tzres/tzres.rc:188
 msgid "Russian Standard Time"
 msgstr "Rusya Standart Saati"
 
-#: dlls/tzres/tzres.rc:187
+#: dlls/tzres/tzres.rc:189
 msgid "Russian Daylight Time"
 msgstr "Rusya Yaz Saati"
 
-#: dlls/tzres/tzres.rc:184
+#: dlls/tzres/tzres.rc:186
 msgid "Romance Standard Time"
 msgstr "Romanya Standart Saati"
 
-#: dlls/tzres/tzres.rc:185
+#: dlls/tzres/tzres.rc:187
 msgid "Romance Daylight Time"
 msgstr "Romanya Yaz Saati"
 
-#: dlls/tzres/tzres.rc:104
+#: dlls/tzres/tzres.rc:106
 msgid "Ekaterinburg Standard Time"
 msgstr "Ekaterinburg Standart Saati"
 
-#: dlls/tzres/tzres.rc:105
+#: dlls/tzres/tzres.rc:107
 msgid "Ekaterinburg Daylight Time"
 msgstr "Ekaterinburg Yaz Saati"
 
-#: dlls/tzres/tzres.rc:204
+#: dlls/tzres/tzres.rc:206
 msgid "Syria Standard Time"
 msgstr "Suriye Standart Saati"
 
-#: dlls/tzres/tzres.rc:205
+#: dlls/tzres/tzres.rc:207
 msgid "Syria Daylight Time"
 msgstr "Suriye Yaz Saati"
 
@@ -10440,27 +10452,27 @@ msgstr "Orta Avustralya Standart Saati"
 msgid "AUS Central Daylight Time"
 msgstr "Orta Avustralya Yaz Saati"
 
-#: dlls/tzres/tzres.rc:116
+#: dlls/tzres/tzres.rc:118
 msgid "Greenwich Standard Time"
 msgstr "Greenwich Standart Saati"
 
-#: dlls/tzres/tzres.rc:117
+#: dlls/tzres/tzres.rc:119
 msgid "Greenwich Daylight Time"
 msgstr "Greenwich Yaz Saati"
 
-#: dlls/tzres/tzres.rc:216
+#: dlls/tzres/tzres.rc:218
 msgid "Ulaanbaatar Standard Time"
 msgstr "Ulan Bator Standart Saati"
 
-#: dlls/tzres/tzres.rc:217
+#: dlls/tzres/tzres.rc:219
 msgid "Ulaanbaatar Daylight Time"
 msgstr "Ulan Bator Yaz Saati"
 
-#: dlls/tzres/tzres.rc:128
+#: dlls/tzres/tzres.rc:130
 msgid "Israel Standard Time"
 msgstr "İsrail Standart Saati"
 
-#: dlls/tzres/tzres.rc:129
+#: dlls/tzres/tzres.rc:131
 msgid "Israel Daylight Time"
 msgstr "İsrail Yaz Saati"
 
@@ -10472,19 +10484,19 @@ msgstr "Bangladeş Standart Saati"
 msgid "Bangladesh Daylight Time"
 msgstr "Bangladeş Yaz Saati"
 
-#: dlls/tzres/tzres.rc:190
+#: dlls/tzres/tzres.rc:192
 msgid "SA Pacific Standard Time"
 msgstr "Güney Amerika Pasifik Standart Saati"
 
-#: dlls/tzres/tzres.rc:191
+#: dlls/tzres/tzres.rc:193
 msgid "SA Pacific Daylight Time"
 msgstr "Güney Amerika Pasifik Yaz Saati"
 
-#: dlls/tzres/tzres.rc:234
+#: dlls/tzres/tzres.rc:236
 msgid "West Asia Standard Time"
 msgstr "Batı Asya Standart Saati"
 
-#: dlls/tzres/tzres.rc:235
+#: dlls/tzres/tzres.rc:237
 msgid "West Asia Daylight Time"
 msgstr "Batı Asya Yaz Saati"
 
@@ -10496,27 +10508,27 @@ msgstr "Alaska Standart Saati"
 msgid "Alaskan Daylight Time"
 msgstr "Alaska Yaz Saati"
 
-#: dlls/tzres/tzres.rc:182
+#: dlls/tzres/tzres.rc:184
 msgid "Paraguay Standard Time"
 msgstr "Paraguay Standart Saati"
 
-#: dlls/tzres/tzres.rc:183
+#: dlls/tzres/tzres.rc:185
 msgid "Paraguay Daylight Time"
 msgstr "Paraguay Yaz Saati"
 
-#: dlls/tzres/tzres.rc:90
+#: dlls/tzres/tzres.rc:92
 msgid "Dateline Standard Time"
 msgstr "Tarih Değiştirme Çizgisi Standart Saati"
 
-#: dlls/tzres/tzres.rc:91
+#: dlls/tzres/tzres.rc:93
 msgid "Dateline Daylight Time"
 msgstr "Tarih Değiştirme Çizgisi Yaz Saati"
 
-#: dlls/tzres/tzres.rc:136
+#: dlls/tzres/tzres.rc:138
 msgid "Libya Standard Time"
 msgstr "Libya Standart Saati"
 
-#: dlls/tzres/tzres.rc:137
+#: dlls/tzres/tzres.rc:139
 msgid "Libya Daylight Time"
 msgstr "Libya Yaz Saati"
 
@@ -10528,11 +10540,11 @@ msgstr "Bahia Standart Saati"
 msgid "Bahia Daylight Time"
 msgstr "Bahia Yaz Saati"
 
-#: dlls/tzres/tzres.rc:224
+#: dlls/tzres/tzres.rc:226
 msgid "Venezuela Standard Time"
 msgstr "Venezuela Standart Saati"
 
-#: dlls/tzres/tzres.rc:225
+#: dlls/tzres/tzres.rc:227
 msgid "Venezuela Daylight Time"
 msgstr "Venezuela Yaz Saati"
 
@@ -10548,27 +10560,27 @@ msgstr "Dağlık Amerika Standart Saati"
 msgid "Bougainville Daylight Time"
 msgstr "Dağlık Amerika Yaz Saati"
 
-#: dlls/tzres/tzres.rc:122
+#: dlls/tzres/tzres.rc:124
 msgid "Hawaiian Standard Time"
 msgstr "Hawaii Standart Saati"
 
-#: dlls/tzres/tzres.rc:123
+#: dlls/tzres/tzres.rc:125
 msgid "Hawaiian Daylight Time"
 msgstr "Hawaii Yaz Saati"
 
-#: dlls/tzres/tzres.rc:196
+#: dlls/tzres/tzres.rc:198
 msgid "SE Asia Standard Time"
 msgstr "Güneydoğu Asya Standart Saati"
 
-#: dlls/tzres/tzres.rc:197
+#: dlls/tzres/tzres.rc:199
 msgid "SE Asia Daylight Time"
 msgstr "Güneydoğu Asya Yaz Saati"
 
-#: dlls/tzres/tzres.rc:164
+#: dlls/tzres/tzres.rc:166
 msgid "New Zealand Standard Time"
 msgstr "Yeni Zelanda Standart Saati"
 
-#: dlls/tzres/tzres.rc:165
+#: dlls/tzres/tzres.rc:167
 msgid "New Zealand Daylight Time"
 msgstr "Yeni Zelanda Yaz Saati"
 
@@ -10600,67 +10612,67 @@ msgstr "Belarus Standart Saati"
 msgid "Belarus Daylight Time"
 msgstr "Belarus Yaz Saati"
 
-#: dlls/tzres/tzres.rc:192
+#: dlls/tzres/tzres.rc:194
 msgid "SA Western Standard Time"
 msgstr "Güney Amerika Batı Standart Saati"
 
-#: dlls/tzres/tzres.rc:193
+#: dlls/tzres/tzres.rc:195
 msgid "SA Western Daylight Time"
 msgstr "Güney Amerika Batı Yaz Saati"
 
-#: dlls/tzres/tzres.rc:114
+#: dlls/tzres/tzres.rc:116
 msgid "Greenland Standard Time"
 msgstr "Grönland Standart Saati"
 
-#: dlls/tzres/tzres.rc:115
+#: dlls/tzres/tzres.rc:117
 msgid "Greenland Daylight Time"
 msgstr "Grönland Yaz Saati"
 
-#: dlls/tzres/tzres.rc:98
+#: dlls/tzres/tzres.rc:100
 msgid "Easter Island Standard Time"
 msgstr "Paskalya Adası Standart Saati"
 
-#: dlls/tzres/tzres.rc:99
+#: dlls/tzres/tzres.rc:101
 msgid "Easter Island Daylight Time"
 msgstr "Paskalya Adası Yaz Saati"
 
-#: dlls/tzres/tzres.rc:102
+#: dlls/tzres/tzres.rc:104
 msgid "Egypt Standard Time"
 msgstr "Mısır Standart Saati"
 
-#: dlls/tzres/tzres.rc:103
+#: dlls/tzres/tzres.rc:105
 msgid "Egypt Daylight Time"
 msgstr "Mısır Yaz Saati"
 
-#: dlls/tzres/tzres.rc:144
+#: dlls/tzres/tzres.rc:146
 msgid "Mauritius Standard Time"
 msgstr "Mauritius Standart Saati"
 
-#: dlls/tzres/tzres.rc:145
+#: dlls/tzres/tzres.rc:147
 msgid "Mauritius Daylight Time"
 msgstr "Mauritius Yaz Saati"
 
-#: dlls/tzres/tzres.rc:226
+#: dlls/tzres/tzres.rc:228
 msgid "Vladivostok Standard Time"
 msgstr "Vladivostok Standart Saati"
 
-#: dlls/tzres/tzres.rc:227
+#: dlls/tzres/tzres.rc:229
 msgid "Vladivostok Daylight Time"
 msgstr "Vladivostok Yaz Saati"
 
-#: dlls/tzres/tzres.rc:198
+#: dlls/tzres/tzres.rc:200
 msgid "Singapore Standard Time"
 msgstr "Singapur Standart Saati"
 
-#: dlls/tzres/tzres.rc:199
+#: dlls/tzres/tzres.rc:201
 msgid "Singapore Daylight Time"
 msgstr "Singapur Yaz Saati"
 
-#: dlls/tzres/tzres.rc:134
+#: dlls/tzres/tzres.rc:136
 msgid "Korea Standard Time"
 msgstr "Kore Standart Saati"
 
-#: dlls/tzres/tzres.rc:135
+#: dlls/tzres/tzres.rc:137
 msgid "Korea Daylight Time"
 msgstr "Kore Yaz Saati"
 
@@ -10676,27 +10688,27 @@ msgstr "Paskalya Adası Standart Saati"
 msgid "Chatham Islands Daylight Time"
 msgstr "Paskalya Adası Yaz Saati"
 
-#: dlls/tzres/tzres.rc:92
+#: dlls/tzres/tzres.rc:94
 msgid "E. Africa Standard Time"
 msgstr "Doğu Afrika Standart Saati"
 
-#: dlls/tzres/tzres.rc:93
+#: dlls/tzres/tzres.rc:95
 msgid "E. Africa Daylight Time"
 msgstr "Doğu Afrika Yaz Saati"
 
-#: dlls/tzres/tzres.rc:108
+#: dlls/tzres/tzres.rc:110
 msgid "FLE Standard Time"
 msgstr "Finladiya-Litvanya-Estonya Standart Saati"
 
-#: dlls/tzres/tzres.rc:109
+#: dlls/tzres/tzres.rc:111
 msgid "FLE Daylight Time"
 msgstr "Finlandiya-Litvanya-Estonya Yaz Saati"
 
-#: dlls/tzres/tzres.rc:96
+#: dlls/tzres/tzres.rc:98
 msgid "E. South America Standard Time"
 msgstr "Güney Amerika Doğu Standart Saati"
 
-#: dlls/tzres/tzres.rc:97
+#: dlls/tzres/tzres.rc:99
 msgid "E. South America Daylight Time"
 msgstr "Güney Amerika Doğu Yaz Saati"
 
@@ -10708,35 +10720,35 @@ msgstr "Orta Pasifik Standart Saati"
 msgid "Central Pacific Daylight Time"
 msgstr "Orta Pasifik Yaz Saati"
 
-#: dlls/tzres/tzres.rc:230
+#: dlls/tzres/tzres.rc:232
 msgid "W. Central Africa Standard Time"
 msgstr "Orta Afrika Batı Standart Saati"
 
-#: dlls/tzres/tzres.rc:231
+#: dlls/tzres/tzres.rc:233
 msgid "W. Central Africa Daylight Time"
 msgstr "Orta Afrika Batı Yaz Saati"
 
-#: dlls/tzres/tzres.rc:174
+#: dlls/tzres/tzres.rc:176
 msgid "Pacific SA Standard Time"
 msgstr "Güney Amerika Pasifik Standart Saati"
 
-#: dlls/tzres/tzres.rc:175
+#: dlls/tzres/tzres.rc:177
 msgid "Pacific SA Daylight Time"
 msgstr "Güney Amerika Batı Yaz Saati"
 
-#: dlls/tzres/tzres.rc:94
+#: dlls/tzres/tzres.rc:96
 msgid "E. Australia Standard Time"
 msgstr "Doğu Avustralya Standart Saati"
 
-#: dlls/tzres/tzres.rc:95
+#: dlls/tzres/tzres.rc:97
 msgid "E. Australia Daylight Time"
 msgstr "Doğu Avustralya Yaz Saati"
 
-#: dlls/tzres/tzres.rc:228
+#: dlls/tzres/tzres.rc:230
 msgid "W. Australia Standard Time"
 msgstr "Batı Avustralya Standart Saati"
 
-#: dlls/tzres/tzres.rc:229
+#: dlls/tzres/tzres.rc:231
 msgid "W. Australia Daylight Time"
 msgstr "Batı Avustralya Yaz Saati"
 

@@ -2970,6 +2970,24 @@ HKLM,%CurrentVersionNT%\Time Zones\China Standard Time,"MUI_Dlt",,"@tzres.dll,-1
 HKLM,%CurrentVersionNT%\Time Zones\China Standard Time,"MUI_Std",,"@tzres.dll,-160"
 HKLM,%CurrentVersionNT%\Time Zones\China Standard Time,"Std",,"China Standard Time"
 HKLM,%CurrentVersionNT%\Time Zones\China Standard Time,"TZI",1,20,fe,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Cuba Standard Time,"Display",,"America/Havana"
+HKLM,%CurrentVersionNT%\Time Zones\Cuba Standard Time,"Dlt",,"Cuba Daylight Time"
+HKLM,%CurrentVersionNT%\Time Zones\Cuba Standard Time,"MUI_Dlt",,"@tzres.dll,-17137"
+HKLM,%CurrentVersionNT%\Time Zones\Cuba Standard Time,"MUI_Std",,"@tzres.dll,-17136"
+HKLM,%CurrentVersionNT%\Time Zones\Cuba Standard Time,"Std",,"Cuba Standard Time"
+HKLM,%CurrentVersionNT%\Time Zones\Cuba Standard Time,"TZI",1,2c,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0b,00,00,00,01,00,01,00,00,00,00,00,00,00,00,00,03,00,00,00,02,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Cuba Standard Time\Dynamic DST,"2004",1,2c,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,01,00,04,00,01,00,00,00,00,00,00,00,00,00,00,00,03,00,00,00,05,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Cuba Standard Time\Dynamic DST,"2005",1,f0,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Cuba Standard Time\Dynamic DST,"2006",1,2c,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,00,00,05,00,01,00,00,00,00,00,00,00,00,00,01,00,00,00,01,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Cuba Standard Time\Dynamic DST,"2007",1,2c,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,00,00,05,00,01,00,00,00,00,00,00,00,00,00,03,00,00,00,02,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Cuba Standard Time\Dynamic DST,"2008",1,2c,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,00,00,05,00,01,00,00,00,00,00,00,00,00,00,03,00,00,00,03,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Cuba Standard Time\Dynamic DST,"2009",1,2c,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,00,00,05,00,01,00,00,00,00,00,00,00,00,00,03,00,00,00,02,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Cuba Standard Time\Dynamic DST,"2010",1,2c,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,00,00,05,00,01,00,00,00,00,00,00,00,00,00,03,00,00,00,02,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Cuba Standard Time\Dynamic DST,"2011",1,2c,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0b,00,00,00,02,00,01,00,00,00,00,00,00,00,00,00,03,00,00,00,03,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Cuba Standard Time\Dynamic DST,"2012",1,2c,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0b,00,00,00,01,00,01,00,00,00,00,00,00,00,00,00,04,00,00,00,01,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Cuba Standard Time\Dynamic DST,"2013",1,2c,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0b,00,00,00,01,00,01,00,00,00,00,00,00,00,00,00,03,00,00,00,02,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Cuba Standard Time\Dynamic DST,"FirstEntry",0x10001,"2004"
+HKLM,%CurrentVersionNT%\Time Zones\Cuba Standard Time\Dynamic DST,"LastEntry",0x10001,"2013"
 HKLM,%CurrentVersionNT%\Time Zones\Dateline Standard Time,"Display",,"Etc/GMT+12"
 HKLM,%CurrentVersionNT%\Time Zones\Dateline Standard Time,"Dlt",,"Dateline Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Dateline Standard Time,"MUI_Dlt",,"@tzres.dll,-50385"
