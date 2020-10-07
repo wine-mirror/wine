@@ -172,6 +172,12 @@
     VK_DEVICE_PFN(vkUnmapMemory) \
     VK_DEVICE_PFN(vkUpdateDescriptorSets) \
     VK_DEVICE_PFN(vkWaitForFences) \
+    /* VK_EXT_transform_feedback */ \
+    VK_DEVICE_EXT_PFN(vkCmdBeginQueryIndexedEXT) \
+    VK_DEVICE_EXT_PFN(vkCmdBeginTransformFeedbackEXT) \
+    VK_DEVICE_EXT_PFN(vkCmdBindTransformFeedbackBuffersEXT) \
+    VK_DEVICE_EXT_PFN(vkCmdEndQueryIndexedEXT) \
+    VK_DEVICE_EXT_PFN(vkCmdEndTransformFeedbackEXT) \
     /* VK_KHR_swapchain */ \
     VK_DEVICE_PFN(vkAcquireNextImageKHR) \
     VK_DEVICE_PFN(vkCreateSwapchainKHR) \
@@ -186,11 +192,13 @@ struct vulkan_ops
 #define VK_INSTANCE_PFN     DECLARE_VK_PFN
 #define VK_INSTANCE_EXT_PFN DECLARE_VK_PFN
 #define VK_DEVICE_PFN       DECLARE_VK_PFN
+#define VK_DEVICE_EXT_PFN   DECLARE_VK_PFN
     VK_DEVICE_FUNCS()
     VK_INSTANCE_FUNCS()
 #undef VK_INSTANCE_PFN
 #undef VK_INSTANCE_EXT_PFN
 #undef VK_DEVICE_PFN
+#undef VK_DEVICE_EXT_PFN
 
     PFN_vkCreateInstance vkCreateInstance;
     PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr;
@@ -199,6 +207,7 @@ struct vulkan_ops
 enum wined3d_vk_extension
 {
     WINED3D_VK_EXT_NONE,
+    WINED3D_VK_EXT_TRANSFORM_FEEDBACK,
     WINED3D_VK_EXT_COUNT,
 };
 

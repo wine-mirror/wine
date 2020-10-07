@@ -2465,7 +2465,8 @@ struct wined3d_context_vk
     const struct wined3d_vk_info *vk_info;
 
     uint32_t update_compute_pipeline : 1;
-    uint32_t padding : 31;
+    uint32_t update_stream_output : 1;
+    uint32_t padding : 30;
 
     struct
     {
@@ -2504,6 +2505,10 @@ struct wined3d_context_vk
 
     VkSampleCountFlagBits sample_count;
     unsigned int rt_count;
+
+    VkBuffer vk_so_counters[WINED3D_MAX_STREAM_OUTPUT_BUFFERS];
+    VkDeviceSize vk_so_offsets[WINED3D_MAX_STREAM_OUTPUT_BUFFERS];
+    struct wined3d_bo_vk vk_so_counter_bo;
 
     struct list active_queries;
     struct wined3d_pending_queries_vk pending_queries;

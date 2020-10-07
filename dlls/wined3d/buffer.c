@@ -1579,11 +1579,13 @@ static BOOL wined3d_buffer_vk_create_buffer_object(struct wined3d_buffer_vk *buf
         usage |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
     if (bind_flags & WINED3D_BIND_SHADER_RESOURCE)
         usage |= VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT;
+    if (bind_flags & WINED3D_BIND_STREAM_OUTPUT)
+        usage |= VK_BUFFER_USAGE_TRANSFORM_FEEDBACK_BUFFER_BIT_EXT;
     if (bind_flags & WINED3D_BIND_UNORDERED_ACCESS)
         usage |= VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT;
     if (bind_flags & WINED3D_BIND_INDIRECT_BUFFER)
         usage |= VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT;
-    if (bind_flags & (WINED3D_BIND_STREAM_OUTPUT | WINED3D_BIND_RENDER_TARGET | WINED3D_BIND_DEPTH_STENCIL))
+    if (bind_flags & (WINED3D_BIND_RENDER_TARGET | WINED3D_BIND_DEPTH_STENCIL))
         FIXME("Ignoring some bind flags %#x.\n", bind_flags);
     memory_type = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
             | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
@@ -1711,8 +1713,17 @@ HRESULT wined3d_buffer_vk_init(struct wined3d_buffer_vk *buffer_vk, struct wined
         const struct wined3d_buffer_desc *desc, const struct wined3d_sub_resource_data *data,
         void *parent, const struct wined3d_parent_ops *parent_ops)
 {
+    const struct wined3d_vk_info *vk_info = &wined3d_adapter_vk(device->adapter)->vk_info;
+
     TRACE("buffer_vk %p, device %p, desc %p, data %p, parent %p, parent_ops %p.\n",
             buffer_vk, device, desc, data, parent, parent_ops);
+
+    if ((desc->bind_flags & WINED3D_BIND_STREAM_OUTPUT)
+            && !vk_info->supported[WINED3D_VK_EXT_TRANSFORM_FEEDBACK])
+    {
+        WARN("The Vulkan implementation does not support transform feedback.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
 
     if (desc->access & WINED3D_RESOURCE_ACCESS_GPU)
         buffer_vk->b.flags |= WINED3D_BUFFER_USE_BO;

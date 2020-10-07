@@ -311,6 +311,7 @@ static HRESULT wined3d_select_vulkan_queue_family(const struct wined3d_adapter_v
 
 struct wined3d_physical_device_info
 {
+    VkPhysicalDeviceTransformFeedbackFeaturesEXT xfb_features;
     VkPhysicalDeviceVertexAttributeDivisorFeaturesEXT vertex_divisor_features;
 
     VkPhysicalDeviceFeatures2 features2;
@@ -406,6 +407,7 @@ static HRESULT adapter_vk_create_device(struct wined3d *wined3d, const struct wi
     const struct wined3d_adapter_vk *adapter_vk = wined3d_adapter_vk_const(adapter);
     VkPhysicalDeviceVertexAttributeDivisorFeaturesEXT *vertex_divisor_features;
     const struct wined3d_vk_info *vk_info = &adapter_vk->vk_info;
+    VkPhysicalDeviceTransformFeedbackFeaturesEXT *xfb_features;
     struct wined3d_physical_device_info physical_device_info;
     static const float priorities[] = {1.0f};
     VkPhysicalDeviceFeatures2 *features2;
@@ -429,8 +431,12 @@ static HRESULT adapter_vk_create_device(struct wined3d *wined3d, const struct wi
 
     memset(&physical_device_info, 0, sizeof(physical_device_info));
 
+    xfb_features = &physical_device_info.xfb_features;
+    xfb_features->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TRANSFORM_FEEDBACK_FEATURES_EXT;
+
     vertex_divisor_features = &physical_device_info.vertex_divisor_features;
     vertex_divisor_features->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_DIVISOR_FEATURES_EXT;
+    vertex_divisor_features->pNext = xfb_features;
 
     features2 = &physical_device_info.features2;
     features2->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
@@ -482,15 +488,17 @@ static HRESULT adapter_vk_create_device(struct wined3d *wined3d, const struct wi
     device_vk->timestamp_bits = timestamp_bits;
 
     device_vk->vk_info = *vk_info;
-#define LOAD_DEVICE_PFN(name) \
+#define VK_DEVICE_PFN(name) \
     if (!(device_vk->vk_info.vk_ops.name = (void *)VK_CALL(vkGetDeviceProcAddr(vk_device, #name)))) \
     { \
         WARN("Could not get device proc addr for '" #name "'.\n"); \
         hr = E_FAIL; \
         goto fail; \
     }
-#define VK_DEVICE_PFN LOAD_DEVICE_PFN
+#define VK_DEVICE_EXT_PFN(name) \
+    device_vk->vk_info.vk_ops.name = (void *)VK_CALL(vkGetDeviceProcAddr(vk_device, #name));
     VK_DEVICE_FUNCS()
+#undef VK_DEVICE_EXT_PFN
 #undef VK_DEVICE_PFN
 
     if (!wined3d_allocator_init(&device_vk->allocator,
@@ -838,6 +846,11 @@ static VkAccessFlags vk_access_mask_from_buffer_usage(VkBufferUsageFlags usage)
         flags |= VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
     if (usage & VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT)
         flags |= VK_ACCESS_INDIRECT_COMMAND_READ_BIT;
+    if (usage & VK_BUFFER_USAGE_TRANSFORM_FEEDBACK_BUFFER_BIT_EXT)
+        flags |= VK_ACCESS_TRANSFORM_FEEDBACK_WRITE_BIT_EXT;
+    if (usage & VK_BUFFER_USAGE_TRANSFORM_FEEDBACK_COUNTER_BUFFER_BIT_EXT)
+        flags |= VK_ACCESS_TRANSFORM_FEEDBACK_COUNTER_READ_BIT_EXT
+                | VK_ACCESS_TRANSFORM_FEEDBACK_COUNTER_WRITE_BIT_EXT;
 
     return flags;
 }
@@ -1572,6 +1585,7 @@ static void adapter_vk_draw_primitive(struct wined3d_device *device,
     struct wined3d_context_vk *context_vk;
     VkCommandBuffer vk_command_buffer;
     uint32_t instance_count;
+    unsigned int i;
 
     TRACE("device %p, state %p, parameters %p.\n", device, state, parameters);
 
@@ -1587,6 +1601,30 @@ static void adapter_vk_draw_primitive(struct wined3d_device *device,
         ERR("Failed to apply draw state.\n");
         context_release(&context_vk->c);
         return;
+    }
+
+    if (context_vk->c.transform_feedback_active)
+    {
+        if (!context_vk->vk_so_counter_bo.vk_buffer)
+        {
+            struct wined3d_bo_vk *bo = &context_vk->vk_so_counter_bo;
+
+            if (!wined3d_context_vk_create_bo(context_vk, ARRAY_SIZE(context_vk->vk_so_counters) * sizeof(uint32_t) * 2,
+                    VK_BUFFER_USAGE_TRANSFORM_FEEDBACK_COUNTER_BUFFER_BIT_EXT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, bo))
+                ERR("Failed to create counter BO.\n");
+            for (i = 0; i < ARRAY_SIZE(context_vk->vk_so_counters); ++i)
+            {
+                context_vk->vk_so_counters[i] = bo->vk_buffer;
+                context_vk->vk_so_offsets[i] = bo->buffer_offset + i * sizeof(uint32_t) * 2;
+            }
+        }
+
+        wined3d_context_vk_reference_bo(context_vk, &context_vk->vk_so_counter_bo);
+        if (context_vk->c.transform_feedback_paused)
+            VK_CALL(vkCmdBeginTransformFeedbackEXT(vk_command_buffer, 0, ARRAY_SIZE(context_vk->vk_so_counters),
+                    context_vk->vk_so_counters, context_vk->vk_so_offsets));
+        else
+            VK_CALL(vkCmdBeginTransformFeedbackEXT(vk_command_buffer, 0, 0, NULL, NULL));
     }
 
     if (parameters->indirect)
@@ -1625,6 +1663,14 @@ static void adapter_vk_draw_primitive(struct wined3d_device *device,
         else
             VK_CALL(vkCmdDraw(vk_command_buffer, parameters->u.direct.index_count, instance_count,
                     parameters->u.direct.start_idx, parameters->u.direct.start_instance));
+    }
+
+    if (context_vk->c.transform_feedback_active)
+    {
+        VK_CALL(vkCmdEndTransformFeedbackEXT(vk_command_buffer, 0, ARRAY_SIZE(context_vk->vk_so_counters),
+                context_vk->vk_so_counters, context_vk->vk_so_offsets));
+        context_vk->c.transform_feedback_paused = 1;
+        context_vk->c.transform_feedback_active = 0;
     }
 
     context_release(&context_vk->c);
@@ -1882,11 +1928,13 @@ static BOOL wined3d_init_vulkan(struct wined3d_vk_info *vk_info)
 #define VK_INSTANCE_PFN     LOAD_INSTANCE_PFN
 #define VK_INSTANCE_EXT_PFN LOAD_INSTANCE_OPT_PFN
 #define VK_DEVICE_PFN       LOAD_INSTANCE_PFN
+#define VK_DEVICE_EXT_PFN   LOAD_INSTANCE_OPT_PFN
     VK_INSTANCE_FUNCS()
     VK_DEVICE_FUNCS()
 #undef VK_INSTANCE_PFN
 #undef VK_INSTANCE_EXT_PFN
 #undef VK_DEVICE_PFN
+#undef VK_DEVICE_EXT_PFN
 
 #define MAP_INSTANCE_FUNCTION(core_pfn, ext_pfn) \
     if (!vk_ops->core_pfn) \
@@ -2087,13 +2135,25 @@ static bool wined3d_adapter_vk_init_device_extensions(struct wined3d_adapter_vk 
     {
         const char *name;
         unsigned int core_since_version;
+        bool required;
     }
     info[] =
     {
-        {VK_EXT_VERTEX_ATTRIBUTE_DIVISOR_EXTENSION_NAME,    ~0u},
-        {VK_KHR_MAINTENANCE1_EXTENSION_NAME,                VK_API_VERSION_1_1},
-        {VK_KHR_SHADER_DRAW_PARAMETERS_EXTENSION_NAME,      VK_API_VERSION_1_1},
-        {VK_KHR_SWAPCHAIN_EXTENSION_NAME,                   ~0u},
+        {VK_EXT_TRANSFORM_FEEDBACK_EXTENSION_NAME,          ~0u},
+        {VK_EXT_VERTEX_ATTRIBUTE_DIVISOR_EXTENSION_NAME,    ~0u,                true},
+        {VK_KHR_MAINTENANCE1_EXTENSION_NAME,                VK_API_VERSION_1_1, true},
+        {VK_KHR_SHADER_DRAW_PARAMETERS_EXTENSION_NAME,      VK_API_VERSION_1_1, true},
+        {VK_KHR_SWAPCHAIN_EXTENSION_NAME,                   ~0u,                true},
+    };
+
+    static const struct
+    {
+        const char *name;
+        enum wined3d_vk_extension extension;
+    }
+    map[] =
+    {
+        {VK_EXT_TRANSFORM_FEEDBACK_EXTENSION_NAME,  WINED3D_VK_EXT_TRANSFORM_FEEDBACK},
     };
 
     if ((vr = VK_CALL(vkEnumerateDeviceExtensionProperties(physical_device, NULL, &count, NULL))) < 0)
@@ -2130,6 +2190,8 @@ static bool wined3d_adapter_vk_init_device_extensions(struct wined3d_adapter_vk 
 
         if (!found)
         {
+            if (!info[i].required)
+                continue;
             WARN("Required extension '%s' is not available.\n", info[i].name);
             goto done;
         }
@@ -2144,6 +2206,18 @@ static bool wined3d_adapter_vk_init_device_extensions(struct wined3d_adapter_vk 
         enabled_extensions[enable_count++] = info[i].name;
     }
     success = true;
+
+    for (i = 0; i < ARRAY_SIZE(map); ++i)
+    {
+        for (j = 0; j < enable_count; ++j)
+        {
+            if (!strcmp(enabled_extensions[j], map[i].name))
+            {
+                vk_info->supported[map[i].extension] = TRUE;
+                break;
+            }
+        }
+    }
 
 done:
     if (success)
