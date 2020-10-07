@@ -1654,6 +1654,37 @@ static void test_presenter_native_video_size(void)
     IMFTransform_Release(mixer);
 }
 
+static void test_presenter_ar_mode(void)
+{
+    IMFVideoDisplayControl *display_control;
+    HRESULT hr;
+    DWORD mode;
+
+    hr = MFCreateVideoPresenter(NULL, &IID_IDirect3DDevice9, &IID_IMFVideoDisplayControl, (void **)&display_control);
+    ok(hr == S_OK, "Failed to create default presenter, hr %#x.\n", hr);
+
+    hr = IMFVideoDisplayControl_GetAspectRatioMode(display_control, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    mode = 0;
+    hr = IMFVideoDisplayControl_GetAspectRatioMode(display_control, &mode);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(mode == (MFVideoARMode_PreservePicture | MFVideoARMode_PreservePixel), "Unexpected mode %#x.\n", mode);
+
+    hr = IMFVideoDisplayControl_SetAspectRatioMode(display_control, 0x100);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoDisplayControl_SetAspectRatioMode(display_control, MFVideoARMode_Mask);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    mode = 0;
+    hr = IMFVideoDisplayControl_GetAspectRatioMode(display_control, &mode);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(mode == MFVideoARMode_Mask, "Unexpected mode %#x.\n", mode);
+
+    IMFVideoDisplayControl_Release(display_control);
+}
+
 static void test_mixer_output_rectangle(void)
 {
     IMFVideoMixerControl *mixer_control;
@@ -1836,6 +1867,7 @@ START_TEST(evr)
     test_MFCreateVideoSampleAllocator();
     test_presenter_video_position();
     test_presenter_native_video_size();
+    test_presenter_ar_mode();
     test_mixer_output_rectangle();
     test_mixer_zorder();
 

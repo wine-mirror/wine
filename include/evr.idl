@@ -228,6 +228,15 @@ interface IMFDesiredSample : IUnknown
     void Clear();
 }
 
+typedef enum MFVideoAspectRatioMode
+{
+    MFVideoARMode_None             = 0x00000000,
+    MFVideoARMode_PreservePicture  = 0x00000001,
+    MFVideoARMode_PreservePixel    = 0x00000002,
+    MFVideoARMode_NonLinearStretch = 0x00000004,
+    MFVideoARMode_Mask             = 0x00000007,
+} MFVideoAspectRatioMode;
+
 [
     object,
     uuid(a490b1e4-ab84-4d31-a1b2-181e03b1077a),

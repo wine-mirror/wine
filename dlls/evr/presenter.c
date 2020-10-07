@@ -64,6 +64,7 @@ struct video_presenter
     DWORD rendering_prefs;
     SIZE native_size;
     SIZE native_ratio;
+    unsigned int ar_mode;
     unsigned int state;
     CRITICAL_SECTION cs;
 };
@@ -669,16 +670,34 @@ static HRESULT WINAPI video_presenter_control_GetVideoPosition(IMFVideoDisplayCo
 
 static HRESULT WINAPI video_presenter_control_SetAspectRatioMode(IMFVideoDisplayControl *iface, DWORD mode)
 {
-    FIXME("%p, %d.\n", iface, mode);
+    struct video_presenter *presenter = impl_from_IMFVideoDisplayControl(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %#x.\n", iface, mode);
+
+    if (mode & ~MFVideoARMode_Mask)
+        return E_INVALIDARG;
+
+    EnterCriticalSection(&presenter->cs);
+    presenter->ar_mode = mode;
+    LeaveCriticalSection(&presenter->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI video_presenter_control_GetAspectRatioMode(IMFVideoDisplayControl *iface, DWORD *mode)
 {
-    FIXME("%p, %p.\n", iface, mode);
+    struct video_presenter *presenter = impl_from_IMFVideoDisplayControl(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, mode);
+
+    if (!mode)
+        return E_POINTER;
+
+    EnterCriticalSection(&presenter->cs);
+    *mode = presenter->ar_mode;
+    LeaveCriticalSection(&presenter->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI video_presenter_control_SetVideoWindow(IMFVideoDisplayControl *iface, HWND window)
@@ -969,6 +988,7 @@ HRESULT evr_presenter_create(IUnknown *outer, void **out)
     object->outer_unk = outer ? outer : &object->IUnknown_inner;
     object->refcount = 1;
     object->src_rect.right = object->src_rect.bottom = 1.0f;
+    object->ar_mode = MFVideoARMode_PreservePicture | MFVideoARMode_PreservePixel;
     InitializeCriticalSection(&object->cs);
 
     if (FAILED(hr = DXVA2CreateDirect3DDeviceManager9(&object->reset_token, &object->device_manager)))
