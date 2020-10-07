@@ -1714,9 +1714,6 @@ static HRESULT AVIFILE_LoadFile(IAVIFileImpl *This)
 	  break;
 	case ckidSTREAMHEADER:
 	  {
-	    static const WCHAR streamTypeFmt[] = {'%','4','.','4','h','s',0};
-	    static const WCHAR streamNameFmt[] = {'%','s',' ','%','s',' ','#','%','d',0};
-
 	    AVIStreamHeader streamHdr;
 	    WCHAR           szType[25];
 	    UINT            count;
@@ -1754,7 +1751,7 @@ static HRESULT AVIFILE_LoadFile(IAVIFileImpl *This)
 	    else if (streamHdr.fccType == streamtypeAUDIO)
 	      LoadStringW(AVIFILE_hModule, IDS_AUDIO, szType, ARRAY_SIZE(szType));
 	    else
-	      wsprintfW(szType, streamTypeFmt, (char*)&streamHdr.fccType);
+              wsprintfW(szType, L"%4.4hs", (char*)&streamHdr.fccType);
 
 	    /* get count of this streamtype up to this stream */
 	    count = 0;
@@ -1766,7 +1763,7 @@ static HRESULT AVIFILE_LoadFile(IAVIFileImpl *This)
 	    memset(pStream->sInfo.szName, 0, sizeof(pStream->sInfo.szName));
 
 	    /* FIXME: avoid overflow -- better use wsnprintfW, which doesn't exists ! */
-	    wsprintfW(pStream->sInfo.szName, streamNameFmt,
+            wsprintfW(pStream->sInfo.szName, L"%s %s #%d",
 		      AVIFILE_BasenameW(This->szFileName), szType, count);
 	  }
 	  break;

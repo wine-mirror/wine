@@ -994,11 +994,7 @@ HRESULT WINAPI AVIBuildFilterA(LPSTR szFilter, LONG cbFilter, BOOL fSaving)
  */
 HRESULT WINAPI AVIBuildFilterW(LPWSTR szFilter, LONG cbFilter, BOOL fSaving)
 {
-  static const WCHAR all_files[] = { '*','.','*',0,0 };
-  static const WCHAR szClsid[] = {'C','L','S','I','D',0};
-  static const WCHAR szExtensionFmt[] = {';','*','.','%','s',0};
-  static const WCHAR szAVIFileExtensions[] =
-    {'A','V','I','F','i','l','e','\\','E','x','t','e','n','s','i','o','n','s',0};
+  static const WCHAR all_files[] = L"*.*\0";
 
   AVIFilter *lp;
   WCHAR      szAllFiles[40];
@@ -1030,7 +1026,7 @@ HRESULT WINAPI AVIBuildFilterW(LPWSTR szFilter, LONG cbFilter, BOOL fSaving)
    * First filter is named "All multimedia files" and its filter is a
    * collection of all possible extensions except "*.*".
    */
-  if (RegOpenKeyW(HKEY_CLASSES_ROOT, szAVIFileExtensions, &hKey) != ERROR_SUCCESS) {
+  if (RegOpenKeyW(HKEY_CLASSES_ROOT, L"AVIFile\\Extensions", &hKey) != ERROR_SUCCESS) {
     HeapFree(GetProcessHeap(), 0, lp);
     return AVIERR_ERROR;
   }
@@ -1065,7 +1061,7 @@ HRESULT WINAPI AVIBuildFilterW(LPWSTR szFilter, LONG cbFilter, BOOL fSaving)
     }
 
     /* append extension to the filter */
-    wsprintfW(szValue, szExtensionFmt, szFileExt);
+    wsprintfW(szValue, L";*.%s", szFileExt);
     if (lp[i].szExtensions[0] == 0)
       lstrcatW(lp[i].szExtensions, szValue + 1);
     else
@@ -1080,7 +1076,7 @@ HRESULT WINAPI AVIBuildFilterW(LPWSTR szFilter, LONG cbFilter, BOOL fSaving)
   RegCloseKey(hKey);
 
   /* 2. get descriptions for the CLSIDs and fill out szFilter */
-  if (RegOpenKeyW(HKEY_CLASSES_ROOT, szClsid, &hKey) != ERROR_SUCCESS) {
+  if (RegOpenKeyW(HKEY_CLASSES_ROOT, L"CLSID", &hKey) != ERROR_SUCCESS) {
     HeapFree(GetProcessHeap(), 0, lp);
     return AVIERR_ERROR;
   }
@@ -1254,9 +1250,6 @@ static BOOL AVISaveOptionsFmtChoose(HWND hWnd)
 
 static void AVISaveOptionsUpdate(HWND hWnd)
 {
-  static const WCHAR szVideoFmt[]={'%','l','d','x','%','l','d','x','%','d',0};
-  static const WCHAR szAudioFmt[]={'%','s',' ','%','s',0};
-
   WCHAR          szFormat[128];
   AVISTREAMINFOW sInfo;
   LPVOID         lpFormat;
@@ -1283,7 +1276,7 @@ static void AVISaveOptionsUpdate(HWND hWnd)
 	  LPBITMAPINFOHEADER lpbi = lpFormat;
 	  ICINFO icinfo;
 
-	  wsprintfW(szFormat, szVideoFmt, lpbi->biWidth,
+          wsprintfW(szFormat, L"%ldx%ldx%d", lpbi->biWidth,
 		    lpbi->biHeight, lpbi->biBitCount);
 
 	  if (lpbi->biCompression != BI_RGB) {
@@ -1320,7 +1313,7 @@ static void AVISaveOptionsUpdate(HWND hWnd)
 	  if (acmFormatTagDetailsW(NULL, &aftd,
 				   ACM_FORMATTAGDETAILSF_FORMATTAG) == S_OK) {
 	    if (acmFormatDetailsW(NULL,&afd,ACM_FORMATDETAILSF_FORMAT) == S_OK)
-	      wsprintfW(szFormat, szAudioFmt, afd.szFormat, aftd.szFormatTag);
+              wsprintfW(szFormat, L"%s %s", afd.szFormat, aftd.szFormatTag);
 	  }
 	}
       }
