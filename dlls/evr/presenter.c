@@ -103,6 +103,58 @@ static struct video_presenter *impl_from_IMFGetService(IMFGetService *iface)
     return CONTAINING_RECORD(iface, struct video_presenter, IMFGetService_iface);
 }
 
+static unsigned int get_gcd(unsigned int a, unsigned int b)
+{
+    unsigned int m;
+
+    while (b)
+    {
+        m = a % b;
+        a = b;
+        b = m;
+    }
+
+    return a;
+}
+
+static void video_presenter_get_native_video_size(struct video_presenter *presenter)
+{
+    IMFMediaType *media_type;
+    UINT64 frame_size = 0;
+
+    memset(&presenter->native_size, 0, sizeof(presenter->native_size));
+    memset(&presenter->native_ratio, 0, sizeof(presenter->native_ratio));
+
+    if (!presenter->mixer)
+        return;
+
+    if (FAILED(IMFTransform_GetInputCurrentType(presenter->mixer, 0, &media_type)))
+        return;
+
+    if (SUCCEEDED(IMFMediaType_GetUINT64(media_type, &MF_MT_FRAME_SIZE, &frame_size)))
+    {
+        unsigned int gcd;
+
+        presenter->native_size.cx = frame_size >> 32;
+        presenter->native_size.cy = frame_size;
+
+        if ((gcd = get_gcd(presenter->native_size.cx, presenter->native_size.cy)))
+        {
+            presenter->native_ratio.cx = presenter->native_size.cx / gcd;
+            presenter->native_ratio.cy = presenter->native_size.cy / gcd;
+        }
+    }
+
+    IMFMediaType_Release(media_type);
+}
+
+static HRESULT video_presenter_invalidate_media_type(struct video_presenter *presenter)
+{
+    video_presenter_get_native_video_size(presenter);
+
+    return S_OK;
+}
+
 static HRESULT WINAPI video_presenter_inner_QueryInterface(IUnknown *iface, REFIID riid, void **obj)
 {
     struct video_presenter *presenter = impl_from_IUnknown(iface);
@@ -277,9 +329,26 @@ static HRESULT WINAPI video_presenter_OnClockSetRate(IMFVideoPresenter *iface, M
 
 static HRESULT WINAPI video_presenter_ProcessMessage(IMFVideoPresenter *iface, MFVP_MESSAGE_TYPE message, ULONG_PTR param)
 {
-    FIXME("%p, %d, %lu.\n", iface, message, param);
+    struct video_presenter *presenter = impl_from_IMFVideoPresenter(iface);
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %d, %lu.\n", iface, message, param);
+
+    EnterCriticalSection(&presenter->cs);
+
+    switch (message)
+    {
+        case MFVP_MESSAGE_INVALIDATEMEDIATYPE:
+            hr = video_presenter_invalidate_media_type(presenter);
+            break;
+        default:
+            FIXME("Unsupported message %u.\n", message);
+            hr = E_NOTIMPL;
+    }
+
+    LeaveCriticalSection(&presenter->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI video_presenter_GetCurrentMediaType(IMFVideoPresenter *iface, IMFVideoMediaType **media_type)
@@ -377,51 +446,6 @@ static void video_presenter_set_mixer_rect(struct video_presenter *presenter)
         }
         IMFAttributes_Release(attributes);
     }
-}
-
-static unsigned int get_gcd(unsigned int a, unsigned int b)
-{
-    unsigned int m;
-
-    while (b)
-    {
-        m = a % b;
-        a = b;
-        b = m;
-    }
-
-    return a;
-}
-
-static void video_presenter_get_native_video_size(struct video_presenter *presenter)
-{
-    IMFMediaType *media_type;
-    UINT64 frame_size = 0;
-
-    memset(&presenter->native_size, 0, sizeof(presenter->native_size));
-    memset(&presenter->native_ratio, 0, sizeof(presenter->native_ratio));
-
-    if (!presenter->mixer)
-        return;
-
-    if (FAILED(IMFTransform_GetInputCurrentType(presenter->mixer, 0, &media_type)))
-        return;
-
-    if (SUCCEEDED(IMFMediaType_GetUINT64(media_type, &MF_MT_FRAME_SIZE, &frame_size)))
-    {
-        unsigned int gcd;
-
-        presenter->native_size.cx = frame_size >> 32;
-        presenter->native_size.cy = frame_size;
-
-        if ((gcd = get_gcd(presenter->native_size.cx, presenter->native_size.cy)))
-        {
-            presenter->native_ratio.cx = presenter->native_size.cx / gcd;
-            presenter->native_ratio.cy = presenter->native_size.cy / gcd;
-        }
-    }
-
-    IMFMediaType_Release(media_type);
 }
 
 static HRESULT video_presenter_attach_mixer(struct video_presenter *presenter, IMFTopologyServiceLookup *service_lookup)

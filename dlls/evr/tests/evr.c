@@ -1640,12 +1640,10 @@ static void test_presenter_native_video_size(void)
 
     /* Negotiating types updates native video size. */
     hr = IMFVideoPresenter_ProcessMessage(presenter, MFVP_MESSAGE_INVALIDATEMEDIATYPE, 0);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMFVideoDisplayControl_GetNativeVideoSize(display_control, &size, &ratio);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-todo_wine
     ok(size.cx == 320 && size.cy == 240, "Unexpected size %u x %u.\n", size.cx, size.cy);
     ok((ratio.cx == 4 && ratio.cy == 3) || broken(!memcmp(&ratio, &size, sizeof(ratio))) /* < Win10 */,
             "Unexpected ratio %u x %u.\n", ratio.cx, ratio.cy);
