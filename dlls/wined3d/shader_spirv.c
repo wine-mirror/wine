@@ -283,15 +283,17 @@ static void shader_spirv_init_shader_interface_vk(struct wined3d_shader_spirv_sh
     memset(iface, 0, sizeof(*iface));
     iface->vkd3d_interface.type = VKD3D_SHADER_STRUCTURE_TYPE_INTERFACE_INFO;
 
-    if (shader_type == WINED3D_SHADER_TYPE_GEOMETRY && shader->u.gs.so_desc.element_count)
+    if (shader_type == WINED3D_SHADER_TYPE_GEOMETRY && shader->u.gs.so_desc)
     {
+        const struct wined3d_stream_output_desc *so_desc = shader->u.gs.so_desc;
+
         iface->xfb_info.type = VKD3D_SHADER_STRUCTURE_TYPE_TRANSFORM_FEEDBACK_INFO;
         iface->xfb_info.next = NULL;
 
-        iface->xfb_info.elements = (const struct vkd3d_shader_transform_feedback_element *)shader->u.gs.so_desc.elements;
-        iface->xfb_info.element_count = shader->u.gs.so_desc.element_count;
-        iface->xfb_info.buffer_strides = shader->u.gs.so_desc.buffer_strides;
-        iface->xfb_info.buffer_stride_count = shader->u.gs.so_desc.buffer_stride_count;
+        iface->xfb_info.elements = (const struct vkd3d_shader_transform_feedback_element *)so_desc->elements;
+        iface->xfb_info.element_count = so_desc->element_count;
+        iface->xfb_info.buffer_strides = so_desc->buffer_strides;
+        iface->xfb_info.buffer_stride_count = so_desc->buffer_stride_count;
 
         iface->vkd3d_interface.next = &iface->xfb_info;
     }

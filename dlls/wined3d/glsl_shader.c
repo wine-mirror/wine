@@ -859,7 +859,7 @@ static BOOL shader_glsl_generate_transform_feedback_varyings(struct wined3d_stri
         const char **varyings, unsigned int *varying_count, char *strings, unsigned int *strings_length,
         GLenum buffer_mode, struct wined3d_shader *shader)
 {
-    const struct wined3d_stream_output_desc *so_desc = &shader->u.gs.so_desc;
+    const struct wined3d_stream_output_desc *so_desc = shader->u.gs.so_desc;
     unsigned int buffer_idx, count, length, highest_output_slot, stride;
     unsigned int i, register_idx, component_idx;
     BOOL have_varyings_to_record = FALSE;
@@ -948,7 +948,7 @@ static BOOL shader_glsl_generate_transform_feedback_varyings(struct wined3d_stri
 static void shader_glsl_init_transform_feedback(const struct wined3d_context_gl *context_gl,
         struct shader_glsl_priv *priv, GLuint program_id, struct wined3d_shader *shader)
 {
-    const struct wined3d_stream_output_desc *so_desc = &shader->u.gs.so_desc;
+    const struct wined3d_stream_output_desc *so_desc = shader->u.gs.so_desc;
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
     struct wined3d_string_buffer *buffer;
     unsigned int i, count, length;
@@ -956,7 +956,7 @@ static void shader_glsl_init_transform_feedback(const struct wined3d_context_gl 
     char *strings;
     GLenum mode;
 
-    if (!so_desc->element_count)
+    if (!so_desc)
         return;
 
     if (gl_info->supported[ARB_TRANSFORM_FEEDBACK3])
@@ -1005,7 +1005,7 @@ static void shader_glsl_init_transform_feedback(const struct wined3d_context_gl 
     if (!shader_glsl_generate_transform_feedback_varyings(buffer, NULL, &count, NULL, &length, mode, shader))
     {
         FIXME("No varyings to record, disabling transform feedback.\n");
-        shader->u.gs.so_desc.element_count = 0;
+        shader->u.gs.so_desc = NULL;
         string_buffer_release(&priv->string_buffers, buffer);
         return;
     }
@@ -7217,7 +7217,7 @@ static GLuint shader_glsl_generate_vs3_rasterizer_input_setup(struct shader_glsl
 static void shader_glsl_generate_stream_output_setup(struct wined3d_string_buffer *buffer,
         const struct wined3d_shader *shader)
 {
-    const struct wined3d_stream_output_desc *so_desc = &shader->u.gs.so_desc;
+    const struct wined3d_stream_output_desc *so_desc = shader->u.gs.so_desc;
     unsigned int i, register_idx, component_idx;
 
     shader_addline(buffer, "out shader_in_out\n{\n");

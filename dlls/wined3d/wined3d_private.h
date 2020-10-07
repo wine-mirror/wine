@@ -3671,6 +3671,13 @@ struct wined3d_dummy_textures
  * wined3d_device_create() ignores it. */
 #define WINED3DCREATE_MULTITHREADED 0x00000004
 
+struct wined3d_so_desc_entry
+{
+    struct wine_rb_entry entry;
+    struct wined3d_stream_output_desc desc;
+    struct wined3d_stream_output_element elements[1];
+};
+
 struct wined3d_device
 {
     LONG ref;
@@ -3715,6 +3722,7 @@ struct wined3d_device
 
     struct list             resources; /* a linked list to track resources created by the device */
     struct list             shaders;   /* a linked list to track shaders (pixel and vertex)      */
+    struct wine_rb_tree so_descs;
     struct wine_rb_tree samplers, rasterizer_states, blend_states, depth_stencil_states;
 
     /* Render Target Support */
@@ -5327,7 +5335,7 @@ struct wined3d_geometry_shader
     unsigned int vertices_out;
     unsigned int instance_count;
 
-    struct wined3d_stream_output_desc so_desc;
+    const struct wined3d_stream_output_desc *so_desc;
 };
 
 struct wined3d_pixel_shader
@@ -5723,7 +5731,7 @@ static inline BOOL use_transform_feedback(const struct wined3d_state *state)
 
     if (!(shader = state->shader[WINED3D_SHADER_TYPE_GEOMETRY]))
         return FALSE;
-    return shader->u.gs.so_desc.element_count;
+    return !!shader->u.gs.so_desc;
 }
 
 static inline void context_apply_state(struct wined3d_context *context,
@@ -5787,8 +5795,8 @@ static inline BOOL can_use_texture_swizzle(const struct wined3d_d3d_info *d3d_in
 
 static inline BOOL is_rasterization_disabled(const struct wined3d_shader *geometry_shader)
 {
-    return geometry_shader
-            && geometry_shader->u.gs.so_desc.rasterizer_stream_idx == WINED3D_NO_RASTERIZER_STREAM;
+    return geometry_shader && geometry_shader->u.gs.so_desc
+            && geometry_shader->u.gs.so_desc->rasterizer_stream_idx == WINED3D_NO_RASTERIZER_STREAM;
 }
 
 static inline DWORD wined3d_extract_bits(const DWORD *bitstream,

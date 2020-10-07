@@ -176,6 +176,13 @@ ULONG CDECL wined3d_device_incref(struct wined3d_device *device)
     return refcount;
 }
 
+static void device_free_so_desc(struct wine_rb_entry *entry, void *context)
+{
+    struct wined3d_so_desc_entry *s = WINE_RB_ENTRY_VALUE(entry, struct wined3d_so_desc_entry, entry);
+
+    heap_free(s);
+}
+
 static void device_leftover_sampler(struct wine_rb_entry *entry, void *context)
 {
     struct wined3d_sampler *sampler = WINE_RB_ENTRY_VALUE(entry, struct wined3d_sampler, entry);
@@ -242,6 +249,7 @@ void wined3d_device_cleanup(struct wined3d_device *device)
     wine_rb_destroy(&device->rasterizer_states, device_leftover_rasterizer_state, NULL);
     wine_rb_destroy(&device->blend_states, device_leftover_blend_state, NULL);
     wine_rb_destroy(&device->depth_stencil_states, device_leftover_depth_stencil_state, NULL);
+    wine_rb_destroy(&device->so_descs, device_free_so_desc, NULL);
 
     wined3d_decref(device->wined3d);
     device->wined3d = NULL;
@@ -5686,6 +5694,49 @@ void device_resource_released(struct wined3d_device *device, struct wined3d_reso
     TRACE("Resource released.\n");
 }
 
+static int wined3d_so_desc_compare(const void *key, const struct wine_rb_entry *entry)
+{
+    const struct wined3d_stream_output_desc *desc = &WINE_RB_ENTRY_VALUE(entry,
+            struct wined3d_so_desc_entry, entry)->desc;
+    const struct wined3d_stream_output_desc *k = key;
+    unsigned int i;
+    int ret;
+
+    if ((ret = (k->element_count - desc->element_count)))
+        return ret;
+    if ((ret = (k->buffer_stride_count - desc->buffer_stride_count)))
+        return ret;
+    if ((ret = (k->rasterizer_stream_idx - desc->rasterizer_stream_idx)))
+        return ret;
+
+    for (i = 0; i < k->element_count; ++i)
+    {
+        const struct wined3d_stream_output_element *b = &desc->elements[i];
+        const struct wined3d_stream_output_element *a = &k->elements[i];
+
+        if ((ret = (a->stream_idx - b->stream_idx)))
+            return ret;
+        if ((ret = strcmp(a->semantic_name, b->semantic_name)))
+            return ret;
+        if ((ret = (a->semantic_idx - b->semantic_idx)))
+            return ret;
+        if ((ret = (a->component_idx - b->component_idx)))
+            return ret;
+        if ((ret = (a->component_count - b->component_count)))
+            return ret;
+        if ((ret = (a->output_slot - b->output_slot)))
+            return ret;
+    }
+
+    for (i = 0; i < k->buffer_stride_count; ++i)
+    {
+        if ((ret = (k->buffer_strides[i] - desc->buffer_strides[i])))
+            return ret;
+    }
+
+    return 0;
+}
+
 static int wined3d_sampler_compare(const void *key, const struct wine_rb_entry *entry)
 {
     const struct wined3d_sampler *sampler = WINE_RB_ENTRY_VALUE(entry, struct wined3d_sampler, entry);
@@ -5773,6 +5824,7 @@ HRESULT wined3d_device_init(struct wined3d_device *device, struct wined3d *wined
 
     fragment_pipeline = adapter->fragment_pipe;
 
+    wine_rb_init(&device->so_descs, wined3d_so_desc_compare);
     wine_rb_init(&device->samplers, wined3d_sampler_compare);
     wine_rb_init(&device->rasterizer_states, wined3d_rasterizer_state_compare);
     wine_rb_init(&device->blend_states, wined3d_blend_state_compare);
@@ -5788,6 +5840,7 @@ HRESULT wined3d_device_init(struct wined3d_device *device, struct wined3d *wined
         wine_rb_destroy(&device->rasterizer_states, NULL, NULL);
         wine_rb_destroy(&device->blend_states, NULL, NULL);
         wine_rb_destroy(&device->depth_stencil_states, NULL, NULL);
+        wine_rb_destroy(&device->so_descs, NULL, NULL);
         wined3d_decref(device->wined3d);
         return hr;
     }
@@ -5815,6 +5868,7 @@ err:
     wine_rb_destroy(&device->rasterizer_states, NULL, NULL);
     wine_rb_destroy(&device->blend_states, NULL, NULL);
     wine_rb_destroy(&device->depth_stencil_states, NULL, NULL);
+    wine_rb_destroy(&device->so_descs, NULL, NULL);
     wined3d_decref(device->wined3d);
     return hr;
 }

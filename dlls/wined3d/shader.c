@@ -3137,10 +3137,6 @@ static void shader_cleanup(struct wined3d_shader *shader)
         heap_free(shader->u.hs.phases.fork);
         heap_free(shader->u.hs.phases.join);
     }
-    else if (shader->reg_maps.shader_version.type == WINED3D_SHADER_TYPE_GEOMETRY)
-    {
-        heap_free((void *)shader->u.gs.so_desc.elements);
-    }
 
     heap_free(shader->patch_constant_signature.elements);
     heap_free(shader->output_signature.elements);
@@ -3749,13 +3745,67 @@ BOOL shader_get_stream_output_register_info(const struct wined3d_shader *shader,
     return TRUE;
 }
 
+static HRESULT geometry_shader_init_so_desc(struct wined3d_geometry_shader *gs, struct wined3d_device *device,
+        const struct wined3d_stream_output_desc *so_desc)
+{
+    struct wined3d_so_desc_entry *s;
+    struct wine_rb_entry *entry;
+    unsigned int i;
+    size_t size;
+    char *name;
+
+    if ((entry = wine_rb_get(&device->so_descs, so_desc)))
+    {
+        gs->so_desc = &WINE_RB_ENTRY_VALUE(entry, struct wined3d_so_desc_entry, entry)->desc;
+        return WINED3D_OK;
+    }
+
+    size = FIELD_OFFSET(struct wined3d_so_desc_entry, elements[so_desc->element_count]);
+    for (i = 0; i < so_desc->element_count; ++i)
+    {
+        const char *n = so_desc->elements[i].semantic_name;
+
+        if (n)
+            size += strlen(n) + 1;
+    }
+    if (!(s = heap_alloc(size)))
+        return E_OUTOFMEMORY;
+
+    s->desc = *so_desc;
+
+    memcpy(s->elements, so_desc->elements, so_desc->element_count * sizeof(*s->elements));
+    s->desc.elements = s->elements;
+
+    name = (char *)&s->elements[s->desc.element_count];
+    for (i = 0; i < so_desc->element_count; ++i)
+    {
+        struct wined3d_stream_output_element *e = &s->elements[i];
+
+        if (!e->semantic_name)
+            continue;
+
+        size = strlen(e->semantic_name) + 1;
+        memcpy(name, e->semantic_name, size);
+        e->semantic_name = name;
+        name += size;
+    }
+
+    if (wine_rb_put(&device->so_descs, &s->desc, &s->entry) == -1)
+    {
+        heap_free(s);
+        return E_FAIL;
+    }
+    gs->so_desc = &s->desc;
+
+    return WINED3D_OK;
+}
+
 static HRESULT geometry_shader_init_stream_output(struct wined3d_shader *shader,
         const struct wined3d_stream_output_desc *so_desc)
 {
     const struct wined3d_shader_frontend *fe = shader->frontend;
     const struct wined3d_shader_signature_element *output;
     unsigned int i, component_idx, register_idx, mask;
-    struct wined3d_stream_output_element *elements;
     struct wined3d_shader_version shader_version;
     const DWORD *ptr;
     void *fe_data;
@@ -3795,16 +3845,9 @@ static HRESULT geometry_shader_init_stream_output(struct wined3d_shader *shader,
             return hr;
     }
 
-    if (!(elements = heap_calloc(so_desc->element_count, sizeof(*elements))))
-        return E_OUTOFMEMORY;
-
-    shader->u.gs.so_desc = *so_desc;
-    shader->u.gs.so_desc.elements = elements;
-    memcpy(elements, so_desc->elements, so_desc->element_count * sizeof(*elements));
-
     for (i = 0; i < so_desc->element_count; ++i)
     {
-        struct wined3d_stream_output_element *e = &elements[i];
+        const struct wined3d_stream_output_element *e = &so_desc->elements[i];
 
         if (!e->semantic_name)
             continue;
@@ -3816,8 +3859,6 @@ static HRESULT geometry_shader_init_stream_output(struct wined3d_shader *shader,
             return E_INVALIDARG;
         }
 
-        e->semantic_name = output->semantic_name;
-
         mask = ((1u << e->component_count) - 1) << component_idx;
         if ((output->mask & 0xff & mask) != mask)
         {
@@ -3825,6 +3866,12 @@ static HRESULT geometry_shader_init_stream_output(struct wined3d_shader *shader,
                     component_idx, e->component_count, mask, output->mask & 0xff);
             return E_INVALIDARG;
         }
+    }
+
+    if (FAILED(hr = geometry_shader_init_so_desc(&shader->u.gs, shader->device, so_desc)))
+    {
+        WARN("Failed to initialise stream output description, hr %#x.\n", hr);
+        return hr;
     }
 
     return WINED3D_OK;
