@@ -62,6 +62,8 @@ struct video_presenter
     MFVideoNormalizedRect src_rect;
     RECT dst_rect;
     DWORD rendering_prefs;
+    SIZE native_size;
+    SIZE native_ratio;
     unsigned int state;
     CRITICAL_SECTION cs;
 };
@@ -377,6 +379,51 @@ static void video_presenter_set_mixer_rect(struct video_presenter *presenter)
     }
 }
 
+static unsigned int get_gcd(unsigned int a, unsigned int b)
+{
+    unsigned int m;
+
+    while (b)
+    {
+        m = a % b;
+        a = b;
+        b = m;
+    }
+
+    return a;
+}
+
+static void video_presenter_get_native_video_size(struct video_presenter *presenter)
+{
+    IMFMediaType *media_type;
+    UINT64 frame_size = 0;
+
+    memset(&presenter->native_size, 0, sizeof(presenter->native_size));
+    memset(&presenter->native_ratio, 0, sizeof(presenter->native_ratio));
+
+    if (!presenter->mixer)
+        return;
+
+    if (FAILED(IMFTransform_GetInputCurrentType(presenter->mixer, 0, &media_type)))
+        return;
+
+    if (SUCCEEDED(IMFMediaType_GetUINT64(media_type, &MF_MT_FRAME_SIZE, &frame_size)))
+    {
+        unsigned int gcd;
+
+        presenter->native_size.cx = frame_size >> 32;
+        presenter->native_size.cy = frame_size;
+
+        if ((gcd = get_gcd(presenter->native_size.cx, presenter->native_size.cy)))
+        {
+            presenter->native_ratio.cx = presenter->native_size.cx / gcd;
+            presenter->native_ratio.cy = presenter->native_size.cy / gcd;
+        }
+    }
+
+    IMFMediaType_Release(media_type);
+}
+
 static HRESULT video_presenter_attach_mixer(struct video_presenter *presenter, IMFTopologyServiceLookup *service_lookup)
 {
     IMFVideoDeviceID *device_id;
@@ -410,6 +457,7 @@ static HRESULT video_presenter_attach_mixer(struct video_presenter *presenter, I
     }
 
     video_presenter_set_mixer_rect(presenter);
+    video_presenter_get_native_video_size(presenter);
 
     return hr;
 }
@@ -508,9 +556,21 @@ static ULONG WINAPI video_presenter_control_Release(IMFVideoDisplayControl *ifac
 static HRESULT WINAPI video_presenter_control_GetNativeVideoSize(IMFVideoDisplayControl *iface, SIZE *video_size,
         SIZE *aspect_ratio)
 {
-    FIXME("%p, %p, %p.\n", iface, video_size, aspect_ratio);
+    struct video_presenter *presenter = impl_from_IMFVideoDisplayControl(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %p.\n", iface, video_size, aspect_ratio);
+
+    if (!video_size && !aspect_ratio)
+        return E_POINTER;
+
+    EnterCriticalSection(&presenter->cs);
+    if (video_size)
+        *video_size = presenter->native_size;
+    if (aspect_ratio)
+        *aspect_ratio = presenter->native_ratio;
+    LeaveCriticalSection(&presenter->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI video_presenter_control_GetIdealVideoSize(IMFVideoDisplayControl *iface, SIZE *min_size,

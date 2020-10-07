@@ -1578,21 +1578,18 @@ static void test_presenter_native_video_size(void)
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMFVideoDisplayControl_GetNativeVideoSize(display_control, NULL, NULL);
-todo_wine
     ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
 
     memset(&size, 0xcc, sizeof(size));
     hr = IMFVideoDisplayControl_GetNativeVideoSize(display_control, &size, NULL);
-todo_wine {
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(size.cx == 0 && size.cy == 0, "Unexpected size.\n");
-}
+
     memset(&ratio, 0xcc, sizeof(ratio));
     hr = IMFVideoDisplayControl_GetNativeVideoSize(display_control, NULL, &ratio);
-todo_wine {
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(ratio.cx == 0 && ratio.cy == 0, "Unexpected ratio.\n");
-}
+
     hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFTopologyServiceLookupClient, (void **)&lookup_client);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
@@ -1623,12 +1620,11 @@ todo_wine {
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMFVideoDisplayControl_GetNativeVideoSize(display_control, &size, &ratio);
-todo_wine {
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(size.cx == 640 && size.cy == 480, "Unexpected size %u x %u.\n", size.cx, size.cy);
     ok((ratio.cx == 4 && ratio.cy == 3) || broken(!memcmp(&ratio, &size, sizeof(ratio))) /* < Win10 */,
             "Unexpected ratio %u x %u.\n", ratio.cx, ratio.cy);
-}
+
     /* Update input type. */
     hr = IMFVideoMediaType_SetUINT64(video_type, &MF_MT_FRAME_SIZE, (UINT64)320 << 32 | 240);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
@@ -1637,24 +1633,23 @@ todo_wine {
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMFVideoDisplayControl_GetNativeVideoSize(display_control, &size, &ratio);
-todo_wine {
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(size.cx == 640 && size.cy == 480, "Unexpected size %u x %u.\n", size.cx, size.cy);
     ok((ratio.cx == 4 && ratio.cy == 3) || broken(!memcmp(&ratio, &size, sizeof(ratio))) /* < Win10 */,
             "Unexpected ratio %u x %u.\n", ratio.cx, ratio.cy);
-}
+
     /* Negotiating types updates native video size. */
     hr = IMFVideoPresenter_ProcessMessage(presenter, MFVP_MESSAGE_INVALIDATEMEDIATYPE, 0);
 todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMFVideoDisplayControl_GetNativeVideoSize(display_control, &size, &ratio);
-todo_wine {
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+todo_wine
     ok(size.cx == 320 && size.cy == 240, "Unexpected size %u x %u.\n", size.cx, size.cy);
     ok((ratio.cx == 4 && ratio.cy == 3) || broken(!memcmp(&ratio, &size, sizeof(ratio))) /* < Win10 */,
             "Unexpected ratio %u x %u.\n", ratio.cx, ratio.cy);
-}
+
     IMFVideoMediaType_Release(video_type);
     IMFVideoDisplayControl_Release(display_control);
     IMFVideoPresenter_Release(presenter);
