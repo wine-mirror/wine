@@ -84,8 +84,6 @@ static void test_tr2_sys__Last_write_time(void)
     HANDLE file;
     int ret;
     FILETIME lwt;
-    static const WCHAR fileW[] = {'t','r','2','_','t','e','s','t','_','d','i','r','/','f','1',0};
-    static const WCHAR not_existW[] = {'n','o','t','_','e','x','i','s','t',0};
     __int64 last_write_time, newtime, margin_of_error = 10 * TICKSPERSEC;
     ret = p_tr2_sys__Make_dir("tr2_test_dir");
     ok(ret == 1, "test_tr2_sys__Make_dir(): expect 1 got %d\n", ret);
@@ -100,7 +98,7 @@ static void test_tr2_sys__Last_write_time(void)
     ok(last_write_time != newtime, "last_write_time should have changed: %s\n",
             wine_dbgstr_longlong(last_write_time));
 
-    last_write_time = p_tr2_sys__Last_write_time_wchar(fileW);
+    last_write_time = p_tr2_sys__Last_write_time_wchar(L"tr2_test_dir/f1");
     ok(last_write_time == newtime,
             "last_write_time and last_write_time_wchar returned different times (%s != %s)\n",
             wine_dbgstr_longlong(last_write_time), wine_dbgstr_longlong(newtime));
@@ -132,7 +130,7 @@ static void test_tr2_sys__Last_write_time(void)
             "don't fit the formula, last_write_time is %s\n", wine_dbgstr_longlong(last_write_time));
 
     newtime = 123456789;
-    p_tr2_sys__Last_write_time_set_wchar(fileW, newtime);
+    p_tr2_sys__Last_write_time_set_wchar(L"tr2_test_dir/f1", newtime);
     newtime = p_tr2_sys__Last_write_time("tr2_test_dir/f1");
     file = CreateFileA("tr2_test_dir/f1", 0, FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
             NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
@@ -149,7 +147,7 @@ static void test_tr2_sys__Last_write_time(void)
     last_write_time = p_tr2_sys__Last_write_time("not_exist");
     ok(errno == 0xdeadbeef, "tr2_sys__Last_write_time(): errno expect 0xdeadbeef, got %d\n", errno);
     ok(last_write_time == 0, "expect 0 got %s\n", wine_dbgstr_longlong(last_write_time));
-    last_write_time = p_tr2_sys__Last_write_time_wchar(not_existW);
+    last_write_time = p_tr2_sys__Last_write_time_wchar(L"not_exist");
     ok(errno == 0xdeadbeef, "tr2_sys__Last_write_time_wchar(): errno expect 0xdeadbeef, got %d\n", errno);
     ok(last_write_time == 0, "expect 0 got %s\n", wine_dbgstr_longlong(last_write_time));
     last_write_time = p_tr2_sys__Last_write_time(NULL);
@@ -160,7 +158,7 @@ static void test_tr2_sys__Last_write_time(void)
     errno = 0xdeadbeef;
     p_tr2_sys__Last_write_time_set("not_exist", newtime);
     ok(errno == 0xdeadbeef, "tr2_sys__Last_write_time(): errno expect 0xdeadbeef, got %d\n", errno);
-    p_tr2_sys__Last_write_time_set_wchar(not_existW, newtime);
+    p_tr2_sys__Last_write_time_set_wchar(L"not_exist", newtime);
     ok(errno == 0xdeadbeef, "tr2_sys__Last_write_time(): errno expect 0xdeadbeef, got %d\n", errno);
     p_tr2_sys__Last_write_time_set(NULL, newtime);
     ok(errno == 0xdeadbeef, "tr2_sys__Last_write_time(): errno expect 0xdeadbeef, got %d\n", errno);
