@@ -820,7 +820,7 @@ static void shader_spirv_select(void *shader_priv, struct wined3d_context *conte
     priv->fragment_pipe->fp_enable(context, !use_ps(state));
 
     bindings = &priv->bindings;
-    memcpy(binding_base, bindings->binding_base, sizeof(bindings));
+    memcpy(binding_base, bindings->binding_base, sizeof(bindings->binding_base));
     if (!shader_spirv_resource_bindings_init(bindings, &context_vk->graphics.bindings,
             state, ~(1u << WINED3D_SHADER_TYPE_COMPUTE)))
     {
