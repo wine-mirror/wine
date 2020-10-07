@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2020-09-21 23:29+0300\n"
+"PO-Revision-Date: 2020-10-07 10:39+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -10234,16 +10234,12 @@ msgid "US Eastern Daylight Time"
 msgstr "JAV Rytinis vasaros laikas"
 
 #: dlls/tzres/tzres.rc:172
-#, fuzzy
-#| msgid "Korea Standard Time"
 msgid "North Korea Standard Time"
-msgstr "Korėjos juostinis laikas"
+msgstr "Šiaurės Korėjos juostinis laikas"
 
 #: dlls/tzres/tzres.rc:173
-#, fuzzy
-#| msgid "Korea Daylight Time"
 msgid "North Korea Daylight Time"
-msgstr "Korėjos vasaros laikas"
+msgstr "Šiaurės Korėjos vasaros laikas"
 
 #: dlls/tzres/tzres.rc:208
 msgid "Tasmania Standard Time"
