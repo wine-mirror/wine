@@ -1761,6 +1761,7 @@ static void wined3d_context_vk_update_rasterisation_state(const struct wined3d_c
     if (!state->rasterizer_state)
     {
         desc->depthClampEnable = VK_FALSE;
+        desc->rasterizerDiscardEnable = is_rasterization_disabled(state->shader[WINED3D_SHADER_TYPE_GEOMETRY]);
         desc->cullMode = VK_CULL_MODE_BACK_BIT;
         desc->frontFace = VK_FRONT_FACE_CLOCKWISE;
         desc->depthBiasEnable = VK_FALSE;
@@ -1773,6 +1774,7 @@ static void wined3d_context_vk_update_rasterisation_state(const struct wined3d_c
 
     r = &state->rasterizer_state->desc;
     desc->depthClampEnable = !r->depth_clip;
+    desc->rasterizerDiscardEnable = is_rasterization_disabled(state->shader[WINED3D_SHADER_TYPE_GEOMETRY]);
     desc->cullMode = vk_cull_mode_from_wined3d(r->cull_mode);
     desc->frontFace = r->front_ccw ? VK_FRONT_FACE_COUNTER_CLOCKWISE : VK_FRONT_FACE_CLOCKWISE;
 
@@ -2017,7 +2019,8 @@ static bool wined3d_context_vk_update_graphics_pipeline_key(struct wined3d_conte
         update = true;
     }
 
-    if (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_RASTERIZER))
+    if (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_RASTERIZER)
+            || wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_SHADER(WINED3D_SHADER_TYPE_GEOMETRY)))
     {
         wined3d_context_vk_update_rasterisation_state(context_vk, state, key);
 
