@@ -393,6 +393,7 @@ static void IPADDRESS_SetFocusToField (const IPADDRESS_INFO *infoPtr, INT index)
 
     if (index > 3 || index < 0) index=0;
 
+    SendMessageW (infoPtr->Part[index].EditHwnd, EM_SETSEL, 0, -1);
     SetFocus (infoPtr->Part[index].EditHwnd);
 }
 

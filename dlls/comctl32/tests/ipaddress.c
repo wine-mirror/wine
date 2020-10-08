@@ -62,17 +62,71 @@ static void test_get_set_text(void)
     DestroyWindow(hwnd);
 }
 
+struct child_enum
+{
+    HWND fields[4];
+    unsigned int count;
+};
+
+static BOOL CALLBACK test_child_enum_proc(HWND hwnd, LPARAM param)
+{
+    struct child_enum *child_enum = (struct child_enum *)param;
+    char buff[16] = { 0 };
+    unsigned int index;
+
+    GetWindowTextA(hwnd, buff, ARRAY_SIZE(buff));
+    index = atoi(buff);
+    ok(index < 4, "Unexpected index.\n");
+    if (index < 4)
+        child_enum->fields[index] = hwnd;
+
+    return ++child_enum->count < 4;
+}
+
+static void test_IPM_SETFOCUS(void)
+{
+    struct child_enum child_enum = {{ 0 }};
+    unsigned int ret, from, to, i;
+    HWND hwnd;
+
+    hwnd = create_ipaddress_control();
+    ok(!!hwnd, "Failed to create control.\n");
+
+    ret = SendMessageA(hwnd, IPM_SETADDRESS, 0, MAKEIPADDRESS(0, 1, 2, 3));
+    ok(ret, "Unexpected return value %u.\n", ret);
+
+    EnumChildWindows(hwnd, test_child_enum_proc, (LPARAM)&child_enum);
+    ok(child_enum.count == 4, "Unexpected child count %u.\n", child_enum.count);
+
+    for (i = 0; i < 3; ++i)
+        SendMessageA(child_enum.fields[i], EM_SETSEL, -1, 0);
+
+    SendMessageA(child_enum.fields[0], EM_GETSEL, (WPARAM)&from, (LPARAM)&to);
+    ok(from == 0 && to == 0, "Unexpected selection %u x %u.\n", from, to);
+
+    ret = SendMessageA(hwnd, IPM_SETFOCUS, 0, 0);
+todo_wine
+    ok(ret, "Unexpected return value %u.\n", ret);
+
+    SendMessageA(child_enum.fields[0], EM_GETSEL, (WPARAM)&from, (LPARAM)&to);
+    ok(from == 0 && to == 1, "Unexpected selection %u x %u.\n", from, to);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(ipaddress)
 {
     ULONG_PTR cookie;
     HANDLE ctxt;
 
     test_get_set_text();
+    test_IPM_SETFOCUS();
 
     if (!load_v6_module(&cookie, &ctxt))
         return;
 
     test_get_set_text();
+    test_IPM_SETFOCUS();
 
     unload_v6_module(cookie, ctxt);
 }
