@@ -21,6 +21,9 @@
 #include "mf_private.h"
 #include "uuids.h"
 #include "evr.h"
+#include "d3d9.h"
+#include "initguid.h"
+#include "dxva2api.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
@@ -903,6 +906,7 @@ static HRESULT video_renderer_create_presenter(IMFAttributes *attributes, IMFVid
 static HRESULT video_renderer_configure_mixer(struct video_renderer *renderer)
 {
     IMFTopologyServiceLookupClient *lookup_client;
+    IMFAttributes *attributes;
     HRESULT hr;
 
     if (SUCCEEDED(hr = IMFTransform_QueryInterface(renderer->mixer, &IID_IMFTopologyServiceLookupClient,
@@ -945,6 +949,24 @@ static HRESULT video_renderer_configure_mixer(struct video_renderer *renderer)
             heap_free(ids);
             heap_free(oids);
         }
+    }
+
+    /* Set device manager that presenter should have created. */
+    if (SUCCEEDED(IMFTransform_QueryInterface(renderer->mixer, &IID_IMFAttributes, (void **)&attributes)))
+    {
+        IDirect3DDeviceManager9 *device_manager;
+        unsigned int value;
+
+        if (SUCCEEDED(IMFAttributes_GetUINT32(attributes, &MF_SA_D3D_AWARE, &value)) && value)
+        {
+            if (SUCCEEDED(MFGetService((IUnknown *)renderer->presenter, &MR_VIDEO_ACCELERATION_SERVICE,
+                    &IID_IDirect3DDeviceManager9, (void **)&device_manager)))
+            {
+                IMFTransform_ProcessMessage(renderer->mixer, MFT_MESSAGE_SET_D3D_MANAGER, (ULONG_PTR)device_manager);
+                IDirect3DDeviceManager9_Release(device_manager);
+            }
+        }
+        IMFAttributes_Release(attributes);
     }
 
     return hr;
