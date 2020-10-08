@@ -43,8 +43,7 @@ HRESULT DPVOICE_GetCompressionTypes(DVCOMPRESSIONINFO *pData, DWORD *pdwDataSize
 {
     static const DVCOMPRESSIONINFO pcm_type =
         {80, {0x8de12fd4,0x7cb3,0x48ce,{0xa7,0xe8,0x9c,0x47,0xa2,0x2e,0x8a,0xc5}}, NULL, NULL, 0, 64000};
-    static const WCHAR pcm_name[] =
-        {'M','S','-','P','C','M',' ','6','4',' ','k','b','i','t','/','s',0};
+    static const WCHAR pcm_name[] = L"MS-PCM 64 kbit/s";
 
     HRESULT ret;
     LPWSTR string_loc;

@@ -37,8 +37,7 @@ static DWORD port = 8888;
 static HANDLE connected = NULL;
 
 static const GUID appguid = { 0xcd0c3d4b, 0xe15e, 0x4cf2, { 0x9e, 0xa8, 0x6e, 0x1d, 0x65, 0x48, 0xc5, 0xa6 } };
-static WCHAR sessionname[] = {'w','i','n','e','g','a','m','e','s','s','e','r','v','e','r',0};
-static WCHAR localhost[] = {'l','o','c','a','l','h','o','s','t',0};
+static WCHAR sessionname[] = L"winegamesserver";
 
 
 static HRESULT WINAPI DirectPlayMessageHandler(void *lpvUserContext, DWORD dwMessageId, void *lpMessage)
@@ -102,7 +101,7 @@ static BOOL test_init_dpvoice_server(void)
         hr = IDirectPlay8Address_SetSP(localaddr, &CLSID_DP8SP_TCPIP);
         ok(hr == S_OK, "SetSP with 0x%08x\n", hr);
 
-        hr = IDirectPlay8Address_AddComponent(localaddr, DPNA_KEY_HOSTNAME, localhost, (lstrlenW(localhost)+1)*sizeof(WCHAR),
+        hr = IDirectPlay8Address_AddComponent(localaddr, DPNA_KEY_HOSTNAME, L"localhost", sizeof(L"localhost"),
                                             DPNA_DATATYPE_STRING );
         ok(hr == S_OK, "AddComponent(addr) with 0x%08x\n", hr);
 
@@ -150,7 +149,7 @@ static BOOL test_init_dpvoice_server(void)
 static BOOL test_init_dpvoice_client(void)
 {
     HRESULT hr;
-    WCHAR player[] = {'w','i','n','e','u','s','e','r',0};
+    WCHAR player[] = L"wineuser";
 
     hr = CoCreateInstance(&CLSID_DirectPlayVoiceClient, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectPlayVoiceClient, (void **)&vclient);
     if(hr == S_OK)
@@ -183,7 +182,7 @@ static BOOL test_init_dpvoice_client(void)
         hr = IDirectPlay8Address_SetSP(localaddr, &CLSID_DP8SP_TCPIP);
         ok(hr == S_OK, "SetSP with 0x%08x\n", hr);
 
-        hr = IDirectPlay8Address_AddComponent(hostaddr, DPNA_KEY_HOSTNAME, localhost, (lstrlenW(localhost)+1)*sizeof(WCHAR),
+        hr = IDirectPlay8Address_AddComponent(hostaddr, DPNA_KEY_HOSTNAME, L"localhost", sizeof(L"localhost"),
                                             DPNA_DATATYPE_STRING );
         ok(hr == S_OK, "AddComponent(addr) with 0x%08x\n", hr);
 
