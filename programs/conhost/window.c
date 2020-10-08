@@ -933,6 +933,22 @@ static LRESULT WINAPI window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
         update_window( console );
         break;
 
+    case WM_PAINT:
+        {
+            PAINTSTRUCT ps;
+
+            BeginPaint( console->win, &ps );
+            BitBlt( ps.hdc, 0, 0,
+                    (console->active->win.right - console->active->win.left + 1) * console->active->font.width,
+                    (console->active->win.bottom - console->active->win.top + 1) * console->active->font.height,
+                    console->window->mem_dc,
+                    console->active->win.left * console->active->font.width,
+                    console->active->win.top  * console->active->font.height,
+                    SRCCOPY );
+            EndPaint( console->win, &ps );
+            break;
+        }
+
     default:
         return DefWindowProcW( hwnd, msg, wparam, lparam );
     }
@@ -945,6 +961,16 @@ void update_window_config( struct console *console )
     if (!console->win || console->window->update_state != UPDATE_NONE) return;
     console->window->update_state = UPDATE_PENDING;
     PostMessageW( console->win, WM_UPDATE_CONFIG, 0, 0 );
+}
+
+void update_window_region( struct console *console, const RECT *update )
+{
+    RECT *window_rect = &console->window->update;
+    window_rect->left   = min( window_rect->left,   update->left );
+    window_rect->top    = min( window_rect->top,    update->top );
+    window_rect->right  = max( window_rect->right,  update->right );
+    window_rect->bottom = max( window_rect->bottom, update->bottom );
+    update_window_config( console );
 }
 
 BOOL init_window( struct console *console )

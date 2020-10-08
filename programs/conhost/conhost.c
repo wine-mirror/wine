@@ -318,9 +318,17 @@ static void update_output( struct screen_buffer *screen_buffer, RECT *rect )
     char_info_t *ch;
     char buf[8];
 
-    if (!is_active( screen_buffer ) || !screen_buffer->console->tty_output) return;
-    if (rect->top > rect->bottom || rect->right < rect->left) return;
+    if (!is_active( screen_buffer ) || rect->top > rect->bottom || rect->right < rect->left)
+        return;
+
     TRACE( "%s\n", wine_dbgstr_rect( rect ));
+
+    if (screen_buffer->console->win)
+    {
+        update_window_region( screen_buffer->console, rect );
+        return;
+    }
+    if (!screen_buffer->console->tty_output) return;
 
     hide_tty_cursor( screen_buffer->console );
 
