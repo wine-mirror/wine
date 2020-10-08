@@ -29,11 +29,19 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(conhost);
 
+enum update_state
+{
+    UPDATE_NONE,
+    UPDATE_PENDING,
+    UPDATE_BUSY
+};
+
 struct console_window
 {
     HDC               mem_dc;          /* memory DC holding the bitmap below */
     HBITMAP           bitmap;          /* bitmap of display window content */
     HFONT             font;            /* font used for rendering, usually fixed */
+    HBITMAP           cursor_bitmap;   /* bitmap used for the caret */
     unsigned int      ui_charset;      /* default UI charset */
     WCHAR            *config_key;      /* config registry key name */
     LONG              ext_leading;     /* external leading for font */
@@ -48,6 +56,9 @@ struct console_window
     unsigned int      sb_width;        /* active screen buffer width */
     unsigned int      sb_height;       /* active screen buffer height */
     COORD             cursor_pos;      /* cursor position */
+
+    RECT              update;          /* screen buffer update rect */
+    enum update_state update_state;    /* update state */
 };
 
 struct console_config
@@ -356,6 +367,251 @@ static void save_config( const WCHAR *key_name, const struct console_config *con
     RegCloseKey(key);
 }
 
+/* fill memory DC with current cells values */
+static void fill_mem_dc( struct console *console, const RECT *update )
+{
+    unsigned int i, j, k;
+    unsigned int attr;
+    char_info_t *cell;
+    HFONT old_font;
+    HBRUSH brush;
+    WCHAR *line;
+    INT *dx;
+    RECT r;
+
+    if (!console->window->font)
+        return;
+
+    if (!(line = malloc( (update->right - update->left + 1) * sizeof(WCHAR))) ) return;
+    dx = malloc( (update->right - update->left + 1) * sizeof(*dx) );
+
+    old_font = SelectObject( console->window->mem_dc, console->window->font );
+    for (j = update->top; j <= update->bottom; j++)
+    {
+        cell = &console->active->data[j * console->active->width];
+        for (i = update->left; i <= update->right; i++)
+        {
+            attr = cell[i].attr;
+            SetBkColor( console->window->mem_dc, console->active->color_map[(attr >> 4) & 0x0F] );
+            SetTextColor( console->window->mem_dc, console->active->color_map[attr & 0x0F] );
+            for (k = i; k <= update->right && cell[k].attr == attr; k++)
+            {
+                line[k - i] = cell[k].ch;
+                dx[k - i] = console->active->font.width;
+            }
+            ExtTextOutW( console->window->mem_dc, i * console->active->font.width,
+                         j * console->active->font.height, 0, NULL, line, k - i, dx );
+            if (console->window->ext_leading &&
+                (brush = CreateSolidBrush( console->active->color_map[(attr >> 4) & 0x0F] )))
+            {
+                r.left   = i * console->active->font.width;
+                r.top    = (j + 1) * console->active->font.height - console->window->ext_leading;
+                r.right  = k * console->active->font.width;
+                r.bottom = (j + 1) * console->active->font.height;
+                FillRect( console->window->mem_dc, &r, brush );
+                DeleteObject( brush );
+            }
+            i = k - 1;
+        }
+    }
+    SelectObject( console->window->mem_dc, old_font );
+    free( dx );
+    free( line );
+}
+
+/* set a new position for the cursor */
+static void update_window_cursor( struct console *console )
+{
+    if (console->win != GetFocus() || !console->active->cursor_visible) return;
+
+    SetCaretPos( (console->active->cursor_x - console->active->win.left) * console->active->font.width,
+                 (console->active->cursor_y - console->active->win.top)  * console->active->font.height );
+    ShowCaret( console->win );
+}
+
+/* sets a new shape for the cursor */
+static void shape_cursor( struct console *console )
+{
+    int size = console->active->cursor_size;
+
+    if (console->active->cursor_visible && console->win == GetFocus()) DestroyCaret();
+    if (console->window->cursor_bitmap) DeleteObject( console->window->cursor_bitmap );
+    console->window->cursor_bitmap = NULL;
+    console->window->cursor_visible = FALSE;
+
+    if (size != 100)
+    {
+        int w16b; /* number of bytes per row, aligned on word size */
+        int i, j, nbl;
+        BYTE *ptr;
+
+        w16b = ((console->active->font.width + 15) & ~15) / 8;
+        ptr = calloc( w16b, console->active->font.height );
+        if (!ptr) return;
+        nbl = max( (console->active->font.height * size) / 100, 1 );
+        for (j = console->active->font.height - nbl; j < console->active->font.height; j++)
+        {
+            for (i = 0; i < console->active->font.width; i++)
+            {
+                ptr[w16b * j + (i / 8)] |= 0x80 >> (i & 7);
+            }
+        }
+        console->window->cursor_bitmap = CreateBitmap( console->active->font.width,
+                                                       console->active->font.height, 1, 1, ptr );
+        free(ptr);
+    }
+}
+
+static void update_window( struct console *console )
+{
+    unsigned int win_width, win_height;
+    BOOL update_all = FALSE;
+    int dx, dy;
+    RECT r;
+
+    console->window->update_state = UPDATE_BUSY;
+
+    if (console->window->sb_width != console->active->width ||
+        console->window->sb_height != console->active->height ||
+        !console->window->bitmap)
+    {
+        console->window->sb_width  = console->active->width;
+        console->window->sb_height = console->active->height;
+
+        if (console->active->width && console->active->height && console->window->font)
+        {
+            HBITMAP bitmap;
+            HDC dc;
+            RECT r;
+
+            if (!(dc = GetDC( console->win ))) return;
+
+            bitmap = CreateCompatibleBitmap( dc,
+                                             console->active->width  * console->active->font.width,
+                                             console->active->height * console->active->font.height );
+            ReleaseDC( console->win, dc );
+            SelectObject( console->window->mem_dc, bitmap );
+
+            if (console->window->bitmap) DeleteObject( console->window->bitmap );
+            console->window->bitmap = bitmap;
+            SetRect( &r, 0, 0, console->active->width - 1, console->active->height - 1 );
+            fill_mem_dc( console, &r );
+        }
+
+        empty_update_rect( console->active, &console->window->update );
+        update_all = TRUE;
+    }
+
+    /* compute window size from desired client size */
+    win_width  = console->active->win.right - console->active->win.left + 1;
+    win_height = console->active->win.bottom - console->active->win.top + 1;
+
+    if (update_all || win_width != console->window->win_width ||
+        win_height != console->window->win_height)
+    {
+        console->window->win_width  = win_width;
+        console->window->win_height = win_height;
+
+        r.left   = r.top = 0;
+        r.right  = win_width  * console->active->font.width;
+        r.bottom = win_height * console->active->font.height;
+        AdjustWindowRect( &r, GetWindowLongW( console->win, GWL_STYLE ), FALSE );
+
+        dx = dy = 0;
+        if (console->active->width > win_width)
+        {
+            dy = GetSystemMetrics( SM_CYHSCROLL );
+            SetScrollRange( console->win, SB_HORZ, 0, console->active->width - win_width, FALSE );
+            SetScrollPos( console->win, SB_VERT, console->active->win.top, FALSE );
+            ShowScrollBar( console->win, SB_HORZ, TRUE );
+        }
+        else
+        {
+            ShowScrollBar( console->win, SB_HORZ, FALSE );
+        }
+
+        if (console->active->height > win_height)
+        {
+            dx = GetSystemMetrics( SM_CXVSCROLL );
+            SetScrollRange( console->win, SB_VERT, 0, console->active->height - win_height, FALSE );
+            SetScrollPos( console->win, SB_VERT, console->active->win.top, FALSE );
+            ShowScrollBar( console->win, SB_VERT, TRUE );
+        }
+        else
+            ShowScrollBar( console->win, SB_VERT, FALSE );
+
+        dx += r.right - r.left;
+        dy += r.bottom - r.top;
+        SetWindowPos( console->win, 0, 0, 0, dx, dy, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE );
+
+        SystemParametersInfoW( SPI_GETWORKAREA, 0, &r, 0 );
+        console->active->max_width  = (r.right - r.left) / console->active->font.width;
+        console->active->max_height = (r.bottom - r.top - GetSystemMetrics( SM_CYCAPTION )) /
+            console->active->font.height;
+
+        InvalidateRect( console->win, NULL, FALSE );
+        UpdateWindow( console->win );
+        update_all = TRUE;
+    }
+    else if (console->active->win.left != console->window->win_pos.X ||
+             console->active->win.top  != console->window->win_pos.Y)
+    {
+        ScrollWindow( console->win,
+                      (console->window->win_pos.X - console->active->win.left) * console->active->font.width,
+                      (console->window->win_pos.Y - console->active->win.top)  * console->active->font.height,
+                      NULL, NULL );
+        SetScrollPos( console->win, SB_HORZ, console->active->win.left, TRUE );
+        SetScrollPos( console->win, SB_VERT, console->active->win.top, TRUE );
+        InvalidateRect( console->win, NULL, FALSE );
+    }
+
+    console->window->win_pos.X = console->active->win.left;
+    console->window->win_pos.Y = console->active->win.top;
+
+    if (console->window->update.top  <= console->window->update.bottom &&
+        console->window->update.left <= console->window->update.right)
+    {
+        RECT *update = &console->window->update;
+        r.left   = (update->left   - console->active->win.left)     * console->active->font.width;
+        r.right  = (update->right  - console->active->win.left + 1) * console->active->font.width;
+        r.top    = (update->top    - console->active->win.top)      * console->active->font.height;
+        r.bottom = (update->bottom - console->active->win.top + 1)  * console->active->font.height;
+        fill_mem_dc( console, update );
+        empty_update_rect( console->active, &console->window->update );
+        InvalidateRect( console->win, &r, FALSE );
+        UpdateWindow( console->win );
+    }
+
+    if (update_all || console->active->cursor_size != console->window->cursor_size)
+    {
+        console->window->cursor_size = console->active->cursor_size;
+        shape_cursor( console );
+    }
+
+    if (console->active->cursor_visible != console->window->cursor_visible)
+    {
+        console->window->cursor_visible = console->active->cursor_visible;
+        if (console->win == GetFocus())
+        {
+            if (console->window->cursor_visible)
+                CreateCaret( console->win, console->window->cursor_bitmap,
+                             console->active->font.width, console->active->font.height );
+            else
+                DestroyCaret();
+        }
+    }
+
+    if (update_all || console->active->cursor_x != console->window->cursor_pos.X ||
+        console->active->cursor_y != console->window->cursor_pos.Y)
+    {
+        console->window->cursor_pos.X = console->active->cursor_x;
+        console->window->cursor_pos.Y = console->active->cursor_y;
+        update_window_cursor( console );
+    }
+
+    console->window->update_state = UPDATE_NONE;
+}
+
 static void fill_logfont( LOGFONTW *lf, const WCHAR *name, unsigned int height, unsigned int weight )
 {
     lf->lfHeight         = height;
@@ -640,6 +896,8 @@ static void apply_config( struct console *console, const struct console_config *
     {
         update_console_font( console, config->face_name, config->cell_height, config->font_weight );
     }
+
+    update_window( console );
 }
 
 static LRESULT window_create( HWND hwnd, const CREATESTRUCTW *create )
@@ -651,6 +909,7 @@ static LRESULT window_create( HWND hwnd, const CREATESTRUCTW *create )
     SetWindowLongPtrW( hwnd, 0, (DWORD_PTR)console );
     console->win = hwnd;
 
+    console->window->mem_dc = CreateCompatibleDC( 0 );
     return 0;
 }
 

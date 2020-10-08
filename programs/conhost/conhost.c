@@ -294,11 +294,6 @@ static void init_tty_output( struct console *console )
     console->tty_cursor_visible = TRUE;
 }
 
-static void empty_update_rect( struct screen_buffer *screen_buffer, RECT *rect )
-{
-    SetRect( rect, screen_buffer->width, screen_buffer->height, 0, 0 );
-}
-
 static void scroll_to_cursor( struct screen_buffer *screen_buffer )
 {
     int w = screen_buffer->win.right - screen_buffer->win.left + 1;

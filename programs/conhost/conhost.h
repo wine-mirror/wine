@@ -133,4 +133,9 @@ struct screen_buffer
 BOOL init_window( struct console *console );
 NTSTATUS change_screen_buffer_size( struct screen_buffer *screen_buffer, int new_width, int new_height );
 
+static inline void empty_update_rect( struct screen_buffer *screen_buffer, RECT *rect )
+{
+    SetRect( rect, screen_buffer->width, screen_buffer->height, 0, 0 );
+}
+
 #endif /* RC_INVOKED */
