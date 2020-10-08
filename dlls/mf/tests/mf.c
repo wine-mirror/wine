@@ -3235,16 +3235,20 @@ todo_wine
 
 static void test_evr(void)
 {
+    IMFVideoSampleAllocatorCallback *allocator_callback;
+    IMFStreamSink *stream_sink, *stream_sink2;
     IMFMediaEventGenerator *ev_generator;
+    IMFVideoSampleAllocator *allocator;
     IMFMediaTypeHandler *type_handler;
     IMFVideoRenderer *video_renderer;
     IMFClockStateSink *clock_sink;
     IMFMediaSinkPreroll *preroll;
     IMFMediaSink *sink, *sink2;
-    IMFStreamSink *stream_sink;
     IMFActivate *activate;
     DWORD flags, count;
+    LONG sample_count;
     IMFGetService *gs;
+    IMFSample *sample;
     IUnknown *unk;
     UINT64 value;
     HRESULT hr;
@@ -3292,8 +3296,42 @@ static void test_evr(void)
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(IsEqualGUID(&guid, &MFMediaType_Video), "Unexpected type %s.\n", wine_dbgstr_guid(&guid));
 
-    IMFStreamSink_Release(stream_sink);
     IMFMediaTypeHandler_Release(type_handler);
+
+    /* Stream uses an allocator. */
+    hr = MFGetService((IUnknown *)stream_sink, &MR_VIDEO_ACCELERATION_SERVICE, &IID_IMFVideoSampleAllocator,
+            (void **)&allocator);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoSampleAllocator_QueryInterface(allocator, &IID_IMFVideoSampleAllocatorCallback, (void **)&allocator_callback);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    sample_count = 0;
+    hr = IMFVideoSampleAllocatorCallback_GetFreeSampleCount(allocator_callback, &sample_count);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!sample_count, "Unexpected sample count %d.\n", sample_count);
+
+    hr = IMFVideoSampleAllocator_AllocateSample(allocator, &sample);
+todo_wine
+    ok(hr == MF_E_NOT_INITIALIZED, "Unexpected hr %#x.\n", hr);
+
+    IMFVideoSampleAllocatorCallback_Release(allocator_callback);
+    IMFVideoSampleAllocator_Release(allocator);
+
+    /* Same test for a substream. */
+    hr = IMFMediaSink_AddStreamSink(sink, 1, NULL, &stream_sink2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = MFGetService((IUnknown *)stream_sink2, &MR_VIDEO_ACCELERATION_SERVICE, &IID_IMFVideoSampleAllocator,
+            (void **)&allocator);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IMFVideoSampleAllocator_Release(allocator);
+
+    hr = IMFMediaSink_RemoveStreamSink(sink, 1);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    IMFStreamSink_Release(stream_sink2);
 
     hr = IMFMediaSink_GetCharacteristics(sink, &flags);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);

@@ -1,6 +1,7 @@
 MODULE    = mf.dll
 IMPORTLIB = mf
 IMPORTS   = advapi32 mfplat ole32 uuid mfuuid strmiids
+DELAYIMPORTS = evr
 
 EXTRADLLFLAGS = -mno-cygwin
 

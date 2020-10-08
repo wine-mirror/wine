@@ -46,6 +46,7 @@ struct video_stream
     unsigned int id;
     struct video_renderer *parent;
     IMFMediaEventQueue *event_queue;
+    IMFVideoSampleAllocator *allocator;
 };
 
 struct video_renderer
@@ -203,6 +204,8 @@ static ULONG WINAPI video_stream_sink_Release(IMFStreamSink *iface)
     {
         if (stream->event_queue)
             IMFMediaEventQueue_Release(stream->event_queue);
+        if (stream->allocator)
+            IMFVideoSampleAllocator_Release(stream->allocator);
         heap_free(stream);
     }
 
@@ -445,7 +448,18 @@ static ULONG WINAPI video_stream_get_service_Release(IMFGetService *iface)
 
 static HRESULT WINAPI video_stream_get_service_GetService(IMFGetService *iface, REFGUID service, REFIID riid, void **obj)
 {
-    FIXME("%p, %s, %s, %p.\n", iface, debugstr_guid(service), debugstr_guid(riid), obj);
+    struct video_stream *stream = impl_from_stream_IMFGetService(iface);
+
+    TRACE("%p, %s, %s, %p.\n", iface, debugstr_guid(service), debugstr_guid(riid), obj);
+
+    if (IsEqualGUID(service, &MR_VIDEO_ACCELERATION_SERVICE))
+    {
+        if (IsEqualIID(riid, &IID_IMFVideoSampleAllocator))
+            return IMFVideoSampleAllocator_QueryInterface(stream->allocator, riid, obj);
+        return E_NOINTERFACE;
+    }
+
+    FIXME("Unsupported service %s.\n", debugstr_guid(service));
 
     return E_NOTIMPL;
 }
@@ -473,7 +487,10 @@ static HRESULT video_renderer_stream_create(struct video_renderer *renderer, uns
     stream->refcount = 1;
 
     if (FAILED(hr = MFCreateEventQueue(&stream->event_queue)))
-        return hr;
+        goto failed;
+
+    if (FAILED(hr = MFCreateVideoSampleAllocator(&IID_IMFVideoSampleAllocator, (void **)&stream->allocator)))
+        goto failed;
 
     stream->parent = renderer;
     IMFMediaSink_AddRef(&stream->parent->IMFMediaSink_iface);
@@ -482,6 +499,12 @@ static HRESULT video_renderer_stream_create(struct video_renderer *renderer, uns
     *ret = stream;
 
     return S_OK;
+
+failed:
+
+    IMFStreamSink_Release(&stream->IMFStreamSink_iface);
+
+    return hr;
 }
 
 static HRESULT WINAPI video_renderer_sink_QueryInterface(IMFMediaSink *iface, REFIID riid, void **obj)
