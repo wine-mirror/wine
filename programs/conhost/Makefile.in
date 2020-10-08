@@ -1,8 +1,10 @@
 MODULE    = conhost.exe
-IMPORTS   = user32
+IMPORTS   = user32 gdi32
 
 EXTRADLLFLAGS = -mwindows -municode -mno-cygwin
 
-C_SRCS = conhost.c
+C_SRCS = \
+	conhost.c \
+	window.c
 
 RC_SRCS = version.rc
