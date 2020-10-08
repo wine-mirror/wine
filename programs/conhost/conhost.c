@@ -1162,6 +1162,7 @@ static void update_read_output( struct console *console )
     if (console->is_unix)
         set_tty_cursor_relative( screen_buffer->console, screen_buffer->cursor_x, screen_buffer->cursor_y );
     tty_sync( screen_buffer->console );
+    update_window_config( screen_buffer->console );
 }
 
 static NTSTATUS process_console_input( struct console *console )
@@ -1632,9 +1633,10 @@ static NTSTATUS screen_buffer_activate( struct screen_buffer *screen_buffer )
     RECT update_rect;
     TRACE( "%p\n", screen_buffer );
     screen_buffer->console->active = screen_buffer;
-    SetRect( &update_rect, 0, 0, screen_buffer->width - 1, screen_buffer->height - 1);
+    SetRect( &update_rect, 0, 0, screen_buffer->width - 1, screen_buffer->height - 1 );
     update_output( screen_buffer, &update_rect );
     tty_sync( screen_buffer->console );
+    update_window_config( screen_buffer->console );
     return STATUS_SUCCESS;
 }
 
@@ -1840,7 +1842,11 @@ static NTSTATUS set_output_info( struct screen_buffer *screen_buffer,
         }
     }
 
-    if (is_active( screen_buffer )) tty_sync( screen_buffer->console );
+    if (is_active( screen_buffer ))
+    {
+        tty_sync( screen_buffer->console );
+        update_window_config( screen_buffer->console );
+    }
     return STATUS_SUCCESS;
 }
 
@@ -1898,6 +1904,7 @@ static NTSTATUS write_console( struct screen_buffer *screen_buffer, const WCHAR 
     scroll_to_cursor( screen_buffer );
     update_output( screen_buffer, &update_rect );
     tty_sync( screen_buffer->console );
+    update_window_config( screen_buffer->console );
     return STATUS_SUCCESS;
 }
 
@@ -2384,7 +2391,7 @@ static NTSTATUS console_input_ioctl( struct console *console, unsigned int code,
             blocking = in_size && *(unsigned int *)in_data;
             if (blocking && !console->record_count && *out_size)
             {
-                TRACE( "pending read" );
+                TRACE( "pending read\n" );
                 console->read_ioctl = IOCTL_CONDRV_READ_INPUT;
                 console->pending_read = *out_size;
                 return STATUS_PENDING;

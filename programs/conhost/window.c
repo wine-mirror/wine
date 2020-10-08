@@ -29,6 +29,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(conhost);
 
+#define WM_UPDATE_CONFIG  (WM_USER + 1)
+
 enum update_state
 {
     UPDATE_NONE,
@@ -927,11 +929,22 @@ static LRESULT WINAPI window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
         PostQuitMessage( 0 );
         break;
 
+    case WM_UPDATE_CONFIG:
+        update_window( console );
+        break;
+
     default:
         return DefWindowProcW( hwnd, msg, wparam, lparam );
     }
 
     return 0;
+}
+
+void update_window_config( struct console *console )
+{
+    if (!console->win || console->window->update_state != UPDATE_NONE) return;
+    console->window->update_state = UPDATE_PENDING;
+    PostMessageW( console->win, WM_UPDATE_CONFIG, 0, 0 );
 }
 
 BOOL init_window( struct console *console )
