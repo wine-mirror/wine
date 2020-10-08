@@ -143,6 +143,19 @@ void add_marked_para(ME_TextEditor *editor, ME_DisplayItem *di)
     }
 }
 
+ME_Run *para_first_run( ME_Paragraph *para )
+{
+    ME_DisplayItem *di;
+
+    for (di = para_get_di( para ); di != para->next_para; di = di->next )
+    {
+        if (di->type != diRun) continue;
+        return &di->member.run;
+    }
+    ERR( "failed to find run in paragraph\n" );
+    return NULL;
+}
+
 void ME_MakeFirstParagraph(ME_TextEditor *editor)
 {
   static const WCHAR cr_lf[] = {'\r','\n',0};

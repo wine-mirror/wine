@@ -719,19 +719,15 @@ static void ME_PrepareParagraphForWrapping( ME_TextEditor *editor, ME_Context *c
     }
 }
 
-static HRESULT itemize_para( ME_Context *c, ME_DisplayItem *p )
+static HRESULT itemize_para( ME_Context *c, ME_Paragraph *para )
 {
-    ME_Paragraph *para = &p->member.para;
     ME_Run *run;
-    ME_DisplayItem *di;
     SCRIPT_ITEM buf[16], *items = buf;
     int items_passed = ARRAY_SIZE( buf ), num_items, cur_item;
     SCRIPT_CONTROL control = { LANG_USER_DEFAULT, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,
                                FALSE, FALSE, 0 };
     SCRIPT_STATE state = { 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, 0, 0 };
     HRESULT hr;
-
-    assert( p->type == diParagraph );
 
     if (para->fmt.dwMask & PFM_RTLPARA && para->fmt.wEffects & PFE_RTLPARA)
         state.uBidiLevel = 1;
@@ -763,19 +759,13 @@ static HRESULT itemize_para( ME_Context *c, ME_DisplayItem *p )
         }
 
         TRACE( "before splitting runs into ranges\n" );
-        for (di = p->next; di != p->member.para.next_para; di = di->next)
-        {
-            if (di->type != diRun) continue;
-            TRACE( "\t%d: %s\n", di->member.run.nCharOfs, debugstr_run( &di->member.run ) );
-        }
+        for (run = para_first_run( para ); run; run = run_next( run ))
+            TRACE( "\t%d: %s\n", run->nCharOfs, debugstr_run( run ) );
     }
 
     /* split runs into ranges at item boundaries */
-    for (di = p->next, cur_item = 0; di != p->member.para.next_para; di = di->next)
+    for (run = para_first_run( para ), cur_item = 0; run; run = run_next( run ))
     {
-        if (di->type != diRun) continue;
-        run = &di->member.run;
-
         if (run->nCharOfs == items[cur_item+1].iCharPos) cur_item++;
 
         items[cur_item].a.fLogicalOrder = TRUE;
@@ -785,7 +775,7 @@ static HRESULT itemize_para( ME_Context *c, ME_DisplayItem *p )
 
         if (run->nCharOfs + run->len > items[cur_item+1].iCharPos)
         {
-            ME_Cursor cursor = {p, di, items[cur_item+1].iCharPos - run->nCharOfs};
+            ME_Cursor cursor = {para_get_di( para ), run_get_di( run ), items[cur_item+1].iCharPos - run->nCharOfs};
             ME_SplitRunSimple( c->editor, &cursor );
         }
     }
@@ -793,11 +783,8 @@ static HRESULT itemize_para( ME_Context *c, ME_DisplayItem *p )
     if (TRACE_ON( richedit ))
     {
         TRACE( "after splitting into ranges\n" );
-        for (di = p->next; di != p->member.para.next_para; di = di->next)
-        {
-            if (di->type != diRun) continue;
-            TRACE( "\t%d: %s\n", di->member.run.nCharOfs, debugstr_run( &di->member.run ) );
-        }
+        for (run = para_first_run( para ); run; run = run_next( run ))
+            TRACE( "\t%d: %s\n", run->nCharOfs, debugstr_run( run ) );
     }
 
     para->nFlags |= MEPF_COMPLEX;
@@ -847,7 +834,7 @@ static void ME_WrapTextParagraph( ME_TextEditor *editor, ME_Context *c, ME_Parag
   if (!c->editor->cPasswordMask /* &&
       ScriptIsComplex( tp->member.para.text->szData, tp->member.para.text->nLen, SIC_COMPLEX ) == S_OK */)
   {
-      if (SUCCEEDED( itemize_para( c, para_get_di( para ) ) ))
+      if (SUCCEEDED( itemize_para( c, para ) ))
           shape_para( c, para_get_di( para ) );
   }
 
