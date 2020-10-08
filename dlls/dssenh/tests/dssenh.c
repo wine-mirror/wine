@@ -54,7 +54,6 @@ static void test_acquire_context(void)
     /* cannot acquire along with PROV_RSA_SIG, not compatible */
     SetLastError(0xdeadbeef);
     result = CryptAcquireContextA(&hProv, NULL, MS_DEF_DSS_PROV_A, PROV_RSA_SIG, 0);
-    todo_wine
     ok(!result && GetLastError() == NTE_PROV_TYPE_NO_MATCH,
         "Expected NTE_PROV_TYPE_NO_MATCH, got %08x\n", GetLastError());
 
@@ -574,7 +573,7 @@ static void test_data_encryption(const struct encrypt_test *tests, int testLen)
     SetLastError(0xdeadbeef);
     result = CryptAcquireContextA(
         &hProv, NULL, MS_ENH_DSS_DH_PROV_A, PROV_DSS_DH, CRYPT_VERIFYCONTEXT);
-    if(!result && GetLastError() == NTE_KEYSET_NOT_DEF)
+    if (!result)
     {
         skip("DSSENH is currently not available, skipping encryption tests.\n");
         return;
@@ -665,7 +664,7 @@ static void test_cipher_modes(const struct ciphermode_test *tests, int testLen)
     SetLastError(0xdeadbeef);
     result = CryptAcquireContextA(
         &hProv, NULL, MS_ENH_DSS_DH_PROV_A, PROV_DSS_DH, CRYPT_VERIFYCONTEXT);
-    if(!result && GetLastError() == NTE_KEYSET_NOT_DEF)
+    if (!result)
     {
         skip("DSSENH is currently not available, skipping block cipher mode tests.\n");
         return;
