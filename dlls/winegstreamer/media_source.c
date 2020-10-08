@@ -410,6 +410,19 @@ static HRESULT media_stream_connect_to_sink(struct media_stream *stream)
 
         gst_element_sync_state_with_parent(videoconvert);
     }
+    else if (!strcmp(stream_type, "audio/x-raw"))
+    {
+        GstElement *audioconvert = gst_element_factory_make("audioconvert", NULL);
+
+        gst_bin_add(GST_BIN(stream->parent_source->container), audioconvert);
+
+        stream->my_sink = gst_element_get_static_pad(audioconvert, "sink");
+
+        if (!gst_element_link(audioconvert, stream->appsink))
+            return E_FAIL;
+
+        gst_element_sync_state_with_parent(audioconvert);
+    }
     else
     {
         stream->my_sink = gst_element_get_static_pad(stream->appsink, "sink");
