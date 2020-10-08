@@ -29,11 +29,6 @@ void mark_para_rewrap(ME_TextEditor *editor, ME_DisplayItem *para)
     add_marked_para(editor, para);
 }
 
-ME_DisplayItem *get_di_from_para(ME_Paragraph *para)
-{
-    return (ME_DisplayItem *)((ptrdiff_t)para - offsetof(ME_DisplayItem, member));
-}
-
 static ME_DisplayItem *make_para(ME_TextEditor *editor)
 {
     ME_DisplayItem *item = ME_MakeDI(diParagraph);
@@ -454,7 +449,7 @@ static void para_num_clear_list( ME_TextEditor *editor, ME_Paragraph *para, cons
 {
     do
     {
-        mark_para_rewrap(editor, get_di_from_para(para));
+        mark_para_rewrap( editor, para_get_di( para ) );
         para_num_clear( &para->para_num );
         if (para->next_para->type != diParagraph) break;
         para = &para->next_para->member.para;
@@ -529,7 +524,7 @@ static BOOL ME_SetParaFormat(ME_TextEditor *editor, ME_Paragraph *para, const PA
 
   if (memcmp(&copy, &para->fmt, sizeof(PARAFORMAT2)))
   {
-    mark_para_rewrap(editor, get_di_from_para(para));
+    mark_para_rewrap( editor, para_get_di( para ) );
     if (((dwMask & PFM_NUMBERING)      && (copy.wNumbering != para->fmt.wNumbering)) ||
         ((dwMask & PFM_NUMBERINGSTART) && (copy.wNumberingStart != para->fmt.wNumberingStart)) ||
         ((dwMask & PFM_NUMBERINGSTYLE) && (copy.wNumberingStyle != para->fmt.wNumberingStyle)))

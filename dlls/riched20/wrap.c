@@ -43,7 +43,7 @@ typedef struct tagME_WrapContext
   int nRow;
   POINT pt;
   BOOL bOverflown, bWordWrap;
-  ME_DisplayItem *pPara;
+  ME_Paragraph *para;
   ME_Run *pRowStart;
   ME_Run *pLastSplittableRun;
 } ME_WrapContext;
@@ -131,8 +131,7 @@ static ME_Run *split_run_extents( ME_WrapContext *wc, ME_Run *run, int nVChar )
 {
   ME_TextEditor *editor = wc->context->editor;
   ME_Run *run2;
-  ME_Paragraph *para = &wc->pPara->member.para;
-  ME_Cursor cursor = {wc->pPara, run_get_di( run ), nVChar};
+  ME_Cursor cursor = {para_get_di( wc->para ), run_get_di( run ), nVChar};
 
   assert( run->nCharOfs != -1 );
   ME_CheckCharOffsets(editor);
@@ -147,7 +146,7 @@ static ME_Run *split_run_extents( ME_WrapContext *wc, ME_Run *run, int nVChar )
 
   shape_run( wc->context, run );
   shape_run( wc->context, run2 );
-  calc_run_extent(wc->context, para, wc->nRow ? wc->nLeftMargin : wc->nFirstMargin, run);
+  calc_run_extent(wc->context, wc->para, wc->nRow ? wc->nLeftMargin : wc->nFirstMargin, run);
 
   run2->pt.x = run->pt.x + run->nWidth;
   run2->pt.y = run->pt.y;
@@ -186,24 +185,23 @@ static ME_DisplayItem *ME_MakeRow(int height, int baseline, int width)
 
 static void ME_BeginRow(ME_WrapContext *wc)
 {
-  PARAFORMAT2 *pFmt;
-  ME_DisplayItem *para = wc->pPara;
-
-  pFmt = &para->member.para.fmt;
   wc->pRowStart = NULL;
   wc->bOverflown = FALSE;
   wc->pLastSplittableRun = NULL;
   wc->bWordWrap = wc->context->editor->bWordWrap;
-  if (para->member.para.nFlags & (MEPF_ROWSTART|MEPF_ROWEND)) {
+  if (wc->para->nFlags & (MEPF_ROWSTART | MEPF_ROWEND))
+  {
     wc->nAvailWidth = 0;
     wc->bWordWrap = FALSE;
-    if (para->member.para.nFlags & MEPF_ROWEND)
+    if (wc->para->nFlags & MEPF_ROWEND)
     {
-      ME_Cell *cell = &ME_FindItemBack(para, diCell)->member.cell;
+      ME_Cell *cell = &ME_FindItemBack( para_get_di( wc->para ), diCell)->member.cell;
       cell->nWidth = 0;
     }
-  } else if (para->member.para.pCell) {
-    ME_Cell *cell = &para->member.para.pCell->member.cell;
+  }
+  else if (wc->para->pCell)
+  {
+    ME_Cell *cell = &wc->para->pCell->member.cell;
     int width;
 
     width = cell->nRightBoundary;
@@ -211,7 +209,7 @@ static void ME_BeginRow(ME_WrapContext *wc)
       width -= cell->prev_cell->member.cell.nRightBoundary;
     if (!cell->prev_cell)
     {
-      int rowIndent = ME_GetTableRowEnd(para)->member.para.fmt.dxStartIndent;
+      int rowIndent = ME_GetTableRowEnd( para_get_di( wc->para ) )->member.para.fmt.dxStartIndent;
       width -= rowIndent;
     }
     cell->nWidth = max(ME_twips2pointsX(wc->context, width), 0);
@@ -225,7 +223,7 @@ static void ME_BeginRow(ME_WrapContext *wc)
   }
   wc->pt.x = wc->context->pt.x;
   if (wc->context->editor->bEmulateVersion10 && /* v1.0 - 3.0 */
-      pFmt->dwMask & PFM_TABLE && pFmt->wEffects & PFE_TABLE)
+      wc->para->fmt.dwMask & PFM_TABLE && wc->para->fmt.wEffects & PFE_TABLE)
     /* Shift the text down because of the border. */
     wc->pt.y++;
 }
@@ -285,15 +283,14 @@ static void ME_InsertRowStart( ME_WrapContext *wc, ME_Run *last )
 {
     ME_Run *run;
     ME_DisplayItem *row;
-    ME_Paragraph *para = &wc->pPara->member.para;
     BOOL bSkippingSpaces = TRUE;
     int ascent = 0, descent = 0, width = 0, shift = 0, align = 0;
 
     /* Include height of para numbering label */
-    if (wc->nRow == 0 && para->fmt.wNumbering)
+    if (wc->nRow == 0 && wc->para->fmt.wNumbering)
     {
-        ascent = para->para_num.style->tm.tmAscent;
-        descent = para->para_num.style->tm.tmDescent;
+        ascent = wc->para->para_num.style->tm.tmAscent;
+        descent = wc->para->para_num.style->tm.tmDescent;
     }
 
     for (run = last; run; run = run_prev( run ))
@@ -301,8 +298,8 @@ static void ME_InsertRowStart( ME_WrapContext *wc, ME_Run *last )
         /* ENDPARA run shouldn't affect row height, except if it's the only run in the paragraph */
         if (run == wc->pRowStart || !(run->nFlags & MERF_ENDPARA))
         {
-            if (run->nAscent>ascent) ascent = run->nAscent;
-            if (run->nDescent>descent) descent = run->nDescent;
+            if (run->nAscent > ascent) ascent = run->nAscent;
+            if (run->nDescent > descent) descent = run->nDescent;
             if (bSkippingSpaces)
             {
                 /* Exclude space characters from run width.
@@ -328,10 +325,10 @@ static void ME_InsertRowStart( ME_WrapContext *wc, ME_Run *last )
         if (run == wc->pRowStart) break;
     }
 
-    para->nWidth = max(para->nWidth, width);
+    wc->para->nWidth = max( wc->para->nWidth, width );
     row = ME_MakeRow( ascent + descent, ascent, width );
     if (wc->context->editor->bEmulateVersion10 && /* v1.0 - 3.0 */
-        (para->fmt.dwMask & PFM_TABLE) && (para->fmt.wEffects & PFE_TABLE))
+        (wc->para->fmt.dwMask & PFM_TABLE) && (wc->para->fmt.wEffects & PFE_TABLE))
     {
         /* The text was shifted down in ME_BeginRow so move the wrap context
          * back to where it should be. */
@@ -342,12 +339,12 @@ static void ME_InsertRowStart( ME_WrapContext *wc, ME_Run *last )
     row->member.row.pt = wc->pt;
     row->member.row.nLMargin = (!wc->nRow ? wc->nFirstMargin : wc->nLeftMargin);
     row->member.row.nRMargin = wc->nRightMargin;
-    assert(para->fmt.dwMask & PFM_ALIGNMENT);
-    align = para->fmt.wAlignment;
+    assert(wc->para->fmt.dwMask & PFM_ALIGNMENT);
+    align = wc->para->fmt.wAlignment;
     if (align == PFA_CENTER) shift = max((wc->nAvailWidth-width)/2, 0);
     if (align == PFA_RIGHT) shift = max(wc->nAvailWidth-width, 0);
 
-    if (para->nFlags & MEPF_COMPLEX) layout_row( wc->pRowStart, last );
+    if (wc->para->nFlags & MEPF_COMPLEX) layout_row( wc->pRowStart, last );
 
     row->member.row.pt.x = row->member.row.nLMargin + shift;
 
@@ -357,10 +354,10 @@ static void ME_InsertRowStart( ME_WrapContext *wc, ME_Run *last )
         if (run == last) break;
     }
 
-    if (wc->nRow == 0 && para->fmt.wNumbering)
+    if (wc->nRow == 0 && wc->para->fmt.wNumbering)
     {
-        para->para_num.pt.x = wc->nParaNumOffset + shift;
-        para->para_num.pt.y = wc->pt.y + row->member.row.nBaseline;
+        wc->para->para_num.pt.x = wc->nParaNumOffset + shift;
+        wc->para->para_num.pt.y = wc->pt.y + row->member.row.nBaseline;
     }
 
     ME_InsertBefore( run_get_di( wc->pRowStart ), row );
@@ -371,13 +368,10 @@ static void ME_InsertRowStart( ME_WrapContext *wc, ME_Run *last )
 
 static void ME_WrapEndParagraph( ME_WrapContext *wc )
 {
-  ME_DisplayItem *para = wc->pPara;
-  PARAFORMAT2 *pFmt = &para->member.para.fmt;
-
-  if (wc->pRowStart) ME_InsertRowStart( wc, para->member.para.eop_run );
+  if (wc->pRowStart) ME_InsertRowStart( wc, wc->para->eop_run );
 
   if (wc->context->editor->bEmulateVersion10 && /* v1.0 - 3.0 */
-      pFmt->dwMask & PFM_TABLE && pFmt->wEffects & PFE_TABLE)
+      wc->para->fmt.dwMask & PFM_TABLE && wc->para->fmt.wEffects & PFE_TABLE)
   {
     /* ME_BeginRow was called an extra time for the paragraph, and it shifts the
      * text down by one pixel for the border, so fix up the wrap context. */
@@ -391,7 +385,7 @@ static void ME_WrapSizeRun( ME_WrapContext *wc, ME_Run *run )
 
   ME_UpdateRunFlags( wc->context->editor, run );
 
-  calc_run_extent( wc->context, &wc->pPara->member.para,
+  calc_run_extent( wc->context, wc->para,
                    wc->nRow ? wc->nLeftMargin : wc->nFirstMargin, run );
 }
 
@@ -576,7 +570,7 @@ static ME_Run *ME_WrapHandleRun( ME_WrapContext *wc, ME_Run *run )
         ME_Run *new_run;
         wc->bOverflown = FALSE;
         new_run = split_run_extents( wc, run, black );
-        calc_run_extent( wc->context, &wc->pPara->member.para,
+        calc_run_extent( wc->context, wc->para,
                          wc->nRow ? wc->nLeftMargin : wc->nFirstMargin, run );
         ME_InsertRowStart( wc, run );
         return new_run;
@@ -859,7 +853,7 @@ static void ME_WrapTextParagraph( ME_TextEditor *editor, ME_Context *c, ME_Displ
   pFmt = &tp->member.para.fmt;
 
   wc.context = c;
-  wc.pPara = tp;
+  wc.para = &tp->member.para;
 /*   wc.para_style = tp->member.para.style; */
   wc.style = NULL;
   wc.nParaNumOffset = 0;

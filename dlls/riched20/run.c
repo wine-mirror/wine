@@ -367,7 +367,7 @@ ME_InsertRunAtCursor(ME_TextEditor *editor, ME_Cursor *cursor, ME_Style *style,
   ME_InsertBefore( insert_before, pDI );
   TRACE("Shift length:%d\n", len);
   ME_PropagateCharOffset( insert_before, len );
-  mark_para_rewrap(editor, get_di_from_para(insert_before->member.run.para));
+  mark_para_rewrap( editor, para_get_di( insert_before->member.run.para ) );
 
   /* Move any cursors that were at the end of the previous run to the end of the inserted run */
   prev = ME_FindItemBack( pDI, diRun );
@@ -787,7 +787,7 @@ void ME_SetCharFormat(ME_TextEditor *editor, ME_Cursor *start, ME_Cursor *end, C
       ME_ReleaseStyle(para->para_num.style);
       para->para_num.style = NULL;
     }
-    mark_para_rewrap(editor, get_di_from_para(para));
+    mark_para_rewrap( editor, para_get_di( para ) );
   }
 }
 
