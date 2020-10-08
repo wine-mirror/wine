@@ -36,7 +36,7 @@ static ULONG (SEC_ENTRY *pSspiPromptForCredentialsW)
 
 static void test_CredUIPromptForCredentials(void)
 {
-    static const WCHAR wszServerName[] = {'W','i','n','e','T','e','s','t',0};
+    static const WCHAR wszServerName[] = L"WineTest";
     DWORD ret;
     WCHAR username[256];
     WCHAR password[256];
@@ -77,14 +77,6 @@ static void test_CredUIPromptForCredentials(void)
 
     if (winetest_interactive)
     {
-        static const WCHAR wszCaption1[] = {'C','R','E','D','U','I','_','F','L','A','G','S','_','E','X','P','E','C','T','_','C','O','N','F','I','R','M','A','T','I','O','N',0};
-        static const WCHAR wszCaption2[] = {'C','R','E','D','U','I','_','F','L','A','G','S','_','I','N','C','O','R','R','E','C','T','_','P','A','S','S','W','O','R','D','|',
-            'C','R','E','D','U','I','_','F','L','A','G','S','_','E','X','P','E','C','T','_','C','O','N','F','I','R','M','A','T','I','O','N',0};
-        static const WCHAR wszCaption3[] = {'C','R','E','D','U','I','_','F','L','A','G','S','_','D','O','_','N','O','T','_','P','E','R','S','I','S','T','|',
-            'C','R','E','D','U','I','_','F','L','A','G','S','_','E','X','P','E','C','T','_','C','O','N','F','I','R','M','A','T','I','O','N',0};
-        static const WCHAR wszCaption4[] = {'C','R','E','D','U','I','_','F','L','A','G','S','_','P','E','R','S','I','S','T','|',
-            'C','R','E','D','U','I','_','F','L','A','G','S','_','E','X','P','E','C','T','_','C','O','N','F','I','R','M','A','T','I','O','N',0};
-
         ret = CredUIPromptForCredentialsW(NULL, wszServerName, NULL, 0, username,
                                           ARRAY_SIZE(username),
                                           password, ARRAY_SIZE(password),
@@ -96,7 +88,7 @@ static void test_CredUIPromptForCredentials(void)
             ok(ret == ERROR_SUCCESS, "CredUIConfirmCredentials failed with error %d\n", ret);
         }
 
-        credui_info.pszCaptionText = wszCaption1;
+        credui_info.pszCaptionText = L"CREDUI_FLAGS_EXPECT_CONFIRMATION";
         ret = CredUIPromptForCredentialsW(&credui_info, wszServerName, NULL, ERROR_ACCESS_DENIED,
                                           username, ARRAY_SIZE(username),
                                           password, ARRAY_SIZE(password),
@@ -108,7 +100,7 @@ static void test_CredUIPromptForCredentials(void)
             ok(ret == ERROR_SUCCESS, "CredUIConfirmCredentials failed with error %d\n", ret);
         }
 
-        credui_info.pszCaptionText = wszCaption2;
+        credui_info.pszCaptionText = L"CREDUI_FLAGS_INCORRECT_PASSWORD|CREDUI_FLAGS_EXPECT_CONFIRMATION";
         ret = CredUIPromptForCredentialsW(&credui_info, wszServerName, NULL, 0,
                                           username, ARRAY_SIZE(username),
                                           password, ARRAY_SIZE(password),
@@ -122,7 +114,7 @@ static void test_CredUIPromptForCredentials(void)
 
 
         save = TRUE;
-        credui_info.pszCaptionText = wszCaption3;
+        credui_info.pszCaptionText = L"CREDUI_FLAGS_DO_NOT_PERSIST|CREDUI_FLAGS_EXPECT_CONFIRMATION";
         ret = CredUIPromptForCredentialsW(&credui_info, wszServerName, NULL, 0,
                                           username, ARRAY_SIZE(username),
                                           password, ARRAY_SIZE(password),
@@ -131,7 +123,7 @@ static void test_CredUIPromptForCredentials(void)
         ok(save, "save flag should have been untouched\n");
 
         save = FALSE;
-        credui_info.pszCaptionText = wszCaption4;
+        credui_info.pszCaptionText = L"CREDUI_FLAGS_PERSIST|CREDUI_FLAGS_EXPECT_CONFIRMATION";
         ret = CredUIPromptForCredentialsW(&credui_info, wszServerName, NULL, 0,
                                           username, ARRAY_SIZE(username),
                                           password, ARRAY_SIZE(password),
@@ -149,8 +141,6 @@ static void test_CredUIPromptForCredentials(void)
 
 static void test_SspiPromptForCredentials(void)
 {
-    static const WCHAR targetW[] = {'S','s','p','i','T','e','s','t',0};
-    static const WCHAR basicW[] = {'b','a','s','i','c',0};
     ULONG ret;
     SECURITY_STATUS status;
     CREDUI_INFOW info;
@@ -166,20 +156,20 @@ static void test_SspiPromptForCredentials(void)
 
     info.cbSize         = sizeof(info);
     info.hwndParent     = NULL;
-    info.pszMessageText = targetW;
-    info.pszCaptionText = basicW;
+    info.pszMessageText = L"SspiTest";
+    info.pszCaptionText = L"basic";
     info.hbmBanner      = NULL;
-    ret = pSspiPromptForCredentialsW( NULL, &info, 0, basicW, NULL, &id, &save, 0 );
+    ret = pSspiPromptForCredentialsW( NULL, &info, 0, L"basic", NULL, &id, &save, 0 );
     ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
 
-    ret = pSspiPromptForCredentialsW( targetW, &info, 0, NULL, NULL, &id, &save, 0 );
+    ret = pSspiPromptForCredentialsW( L"SspiTest", &info, 0, NULL, NULL, &id, &save, 0 );
     ok( ret == ERROR_NO_SUCH_PACKAGE, "got %u\n", ret );
 
     if (winetest_interactive)
     {
         id = NULL;
         save = -1;
-        ret = pSspiPromptForCredentialsW( targetW, &info, 0, basicW, NULL, &id, &save, 0 );
+        ret = pSspiPromptForCredentialsW( L"SspiTest", &info, 0, L"basic", NULL, &id, &save, 0 );
         ok( ret == ERROR_SUCCESS || ret == ERROR_CANCELLED, "got %u\n", ret );
         if (ret == ERROR_SUCCESS)
         {

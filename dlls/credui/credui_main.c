@@ -868,9 +868,6 @@ ULONG SEC_ENTRY SspiPromptForCredentialsW( PCWSTR target, void *info,
                                            PSEC_WINNT_AUTH_IDENTITY_OPAQUE *output_id,
                                            BOOL *save, DWORD sspi_flags )
 {
-    static const WCHAR basicW[] = {'B','a','s','i','c',0};
-    static const WCHAR ntlmW[] = {'N','T','L','M',0};
-    static const WCHAR negotiateW[] = {'N','e','g','o','t','i','a','t','e',0};
     WCHAR username[CREDUI_MAX_USERNAME_LENGTH + 1] = {0};
     WCHAR password[CREDUI_MAX_PASSWORD_LENGTH + 1] = {0};
     DWORD len_username = ARRAY_SIZE(username);
@@ -883,8 +880,8 @@ ULONG SEC_ENTRY SspiPromptForCredentialsW( PCWSTR target, void *info,
            error, debugstr_w(package), input_id, output_id, save, sspi_flags );
 
     if (!target) return ERROR_INVALID_PARAMETER;
-    if (!package || (wcsicmp( package, basicW ) && wcsicmp( package, ntlmW ) &&
-                     wcsicmp( package, negotiateW )))
+    if (!package || (wcsicmp( package, L"Basic" ) && wcsicmp( package, L"NTLM" ) &&
+                     wcsicmp( package, L"Negotiate" )))
     {
         FIXME( "package %s not supported\n", debugstr_w(package) );
         return ERROR_NO_SUCH_PACKAGE;
@@ -923,7 +920,7 @@ ULONG SEC_ENTRY SspiPromptForCredentialsW( PCWSTR target, void *info,
         {
             user = ptr + 1;
             len_username = lstrlenW( user );
-            if (!wcsicmp( package, ntlmW ) || !wcsicmp( package, negotiateW ))
+            if (!wcsicmp( package, L"NTLM" ) || !wcsicmp( package, L"Negotiate" ))
             {
                 domain = username;
                 len_domain = ptr - username;
