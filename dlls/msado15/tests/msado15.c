@@ -675,6 +675,7 @@ static void test_Connection(void)
     IConnectionPointContainer *pointcontainer;
     LONG state, timeout;
     BSTR str, str2, str3;
+    ConnectModeEnum mode;
 
     hr = CoCreateInstance(&CLSID_Connection, NULL, CLSCTX_INPROC_SERVER, &IID__Connection, (void**)&connection);
     ok( hr == S_OK, "got %08x\n", hr );
@@ -717,6 +718,22 @@ if (0)   /* Crashes on windows */
     hr = _Connection_get_CommandTimeout(connection, &timeout);
     ok(hr == S_OK, "Failed to get state, hr 0x%08x\n", hr);
     ok(timeout == 300, "Unexpected timeout value %d\n", timeout);
+
+    mode = 0xdeadbeef;
+    hr = _Connection_get_Mode(connection, &mode);
+    ok(hr == S_OK, "Failed to get state, hr 0x%08x\n", hr);
+    ok(mode == adModeUnknown, "Unexpected mode value %d\n", mode);
+
+    hr = _Connection_put_Mode(connection, adModeShareDenyNone);
+    ok(hr == S_OK, "Failed to get state, hr 0x%08x\n", hr);
+
+    mode = adModeUnknown;
+    hr = _Connection_get_Mode(connection, &mode);
+    ok(hr == S_OK, "Failed to get state, hr 0x%08x\n", hr);
+    ok(mode == adModeShareDenyNone, "Unexpected mode value %d\n", mode);
+
+    hr = _Connection_put_Mode(connection, adModeUnknown);
+    ok(hr == S_OK, "Failed to get state, hr 0x%08x\n", hr);
 
     /* Default */
     str = (BSTR)0xdeadbeef;

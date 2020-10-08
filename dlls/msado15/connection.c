@@ -54,6 +54,7 @@ struct connection
     LONG                      timeout;
     WCHAR                    *datasource;
     WCHAR                    *provider;
+    ConnectModeEnum           mode;
     struct connection_point   cp_connev;
 };
 
@@ -336,14 +337,22 @@ static HRESULT WINAPI connection_put_CursorLocation( _Connection *iface, CursorL
 
 static HRESULT WINAPI connection_get_Mode( _Connection *iface, ConnectModeEnum *mode )
 {
-    FIXME( "%p, %p\n", iface, mode );
-    return E_NOTIMPL;
+    struct connection *connection = impl_from_Connection( iface );
+
+    TRACE( "%p, %p\n", iface, mode );
+
+    *mode = connection->mode;
+    return S_OK;
 }
 
 static HRESULT WINAPI connection_put_Mode( _Connection *iface, ConnectModeEnum mode )
 {
-    FIXME( "%p, %u\n", iface, mode );
-    return E_NOTIMPL;
+    struct connection *connection = impl_from_Connection( iface );
+
+    TRACE( "%p, %u\n", iface, mode );
+
+    connection->mode = mode;
+    return S_OK;
 }
 
 static HRESULT WINAPI connection_get_Provider( _Connection *iface, BSTR *str )
@@ -664,6 +673,7 @@ HRESULT Connection_create( void **obj )
     connection->timeout = 30;
     connection->datasource = NULL;
     connection->provider = SysAllocString(L"MSDASQL");
+    connection->mode = adModeUnknown;
 
     connection->cp_connev.conn = connection;
     connection->cp_connev.riid = &DIID_ConnectionEvents;
