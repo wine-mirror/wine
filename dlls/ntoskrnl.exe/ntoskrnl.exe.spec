@@ -733,7 +733,7 @@
 @ stdcall MmProbeAndLockPages(ptr long long)
 @ stub MmProbeAndLockProcessPages
 @ stub MmProbeAndLockSelectedPages
-@ stub MmProtectMdlSystemAddress
+@ stdcall MmProtectMdlSystemAddress(ptr long)
 @ stdcall MmQuerySystemSize()
 @ stub MmRemovePhysicalMemory
 @ stdcall MmResetDriverPaging(ptr)

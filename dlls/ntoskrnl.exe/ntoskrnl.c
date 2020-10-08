@@ -3146,6 +3146,15 @@ BOOLEAN WINAPI MmIsThisAnNtAsSystem(void)
 }
 
 /***********************************************************************
+ *           MmProtectMdlSystemAddress   (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI MmProtectMdlSystemAddress(PMDL MemoryDescriptorList, ULONG NewProtect)
+{
+    FIXME("(%p, %u) stub\n", MemoryDescriptorList, NewProtect);
+    return STATUS_SUCCESS;
+}
+
+/***********************************************************************
  *           MmQuerySystemSize   (NTOSKRNL.EXE.@)
  */
 MM_SYSTEMSIZE WINAPI MmQuerySystemSize(void)
