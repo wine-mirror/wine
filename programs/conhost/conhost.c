@@ -2596,6 +2596,7 @@ static int main_loop( struct console *console, HANDLE signal )
     unsigned short signal_id;
     IO_STATUS_BLOCK signal_io;
     NTSTATUS status;
+    BOOL pump_msgs;
     DWORD res;
 
     if (signal)
@@ -2611,10 +2612,25 @@ static int main_loop( struct console *console, HANDLE signal )
     wait_handles[wait_cnt++] = console->server;
     if (signal) wait_handles[wait_cnt++] = signal_event;
     if (console->input_thread) wait_handles[wait_cnt++] = console->input_thread;
+    pump_msgs = console->win != NULL;
 
     for (;;)
     {
-        res = WaitForMultipleObjects( wait_cnt, wait_handles, FALSE, INFINITE );
+        if (pump_msgs)
+            res = MsgWaitForMultipleObjects( wait_cnt, wait_handles, FALSE, INFINITE, QS_ALLEVENTS );
+        else
+            res = WaitForMultipleObjects( wait_cnt, wait_handles, FALSE, INFINITE );
+
+        if (res == WAIT_OBJECT_0 + wait_cnt)
+        {
+            MSG msg;
+            while (PeekMessageW( &msg, 0, 0, 0, PM_REMOVE ))
+            {
+                if (msg.message == WM_QUIT) return 0;
+                DispatchMessageW(&msg);
+            }
+            continue;
+        }
 
         switch (res)
         {
