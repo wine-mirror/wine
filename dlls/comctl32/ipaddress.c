@@ -387,14 +387,16 @@ static LRESULT IPADDRESS_SetAddress (const IPADDRESS_INFO *infoPtr, DWORD ip_add
 }
 
 
-static void IPADDRESS_SetFocusToField (const IPADDRESS_INFO *infoPtr, INT index)
+static LRESULT IPADDRESS_SetFocusToField (const IPADDRESS_INFO *infoPtr, INT index)
 {
-    TRACE("(index=%d)\n", index);
+    TRACE("%d\n", index);
 
     if (index > 3 || index < 0) index=0;
 
     SendMessageW (infoPtr->Part[index].EditHwnd, EM_SETSEL, 0, -1);
     SetFocus (infoPtr->Part[index].EditHwnd);
+
+    return 1;
 }
 
 
@@ -624,9 +626,8 @@ IPADDRESS_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case IPM_SETRANGE:
 	    return IPADDRESS_SetRange (infoPtr, (int)wParam, (WORD)lParam);
 
-	case IPM_SETFOCUS:
-	    IPADDRESS_SetFocusToField (infoPtr, (int)wParam);
-	    break;
+        case IPM_SETFOCUS:
+            return IPADDRESS_SetFocusToField (infoPtr, (int)wParam);
 
 	case IPM_ISBLANK:
 	    return IPADDRESS_IsBlank (infoPtr);

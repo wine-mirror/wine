@@ -105,7 +105,6 @@ static void test_IPM_SETFOCUS(void)
     ok(from == 0 && to == 0, "Unexpected selection %u x %u.\n", from, to);
 
     ret = SendMessageA(hwnd, IPM_SETFOCUS, 0, 0);
-todo_wine
     ok(ret, "Unexpected return value %u.\n", ret);
 
     SendMessageA(child_enum.fields[0], EM_GETSEL, (WPARAM)&from, (LPARAM)&to);
