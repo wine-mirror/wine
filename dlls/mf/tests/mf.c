@@ -3308,7 +3308,6 @@ static void test_evr(void)
 
     sample_count = 0;
     hr = IMFVideoSampleAllocatorCallback_GetFreeSampleCount(allocator_callback, &sample_count);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!sample_count, "Unexpected sample count %d.\n", sample_count);
 

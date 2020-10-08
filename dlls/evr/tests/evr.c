@@ -1219,12 +1219,14 @@ static void test_MFCreateVideoSampleAllocator(void)
     hr = IMFVideoSampleAllocatorCallback_SetCallback(allocator_cb, NULL);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
+    hr = IMFVideoSampleAllocatorCallback_GetFreeSampleCount(allocator_cb, NULL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
     count = 10;
     hr = IMFVideoSampleAllocatorCallback_GetFreeSampleCount(allocator_cb, &count);
-todo_wine {
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!count, "Unexpected count %d.\n", count);
-}
+
     hr = IMFVideoSampleAllocator_UninitializeSampleAllocator(allocator);
 todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
@@ -1256,10 +1258,10 @@ todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMFVideoSampleAllocatorCallback_GetFreeSampleCount(allocator_cb, &count);
-todo_wine {
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+todo_wine
     ok(count == 1, "Unexpected count %d.\n", count);
-}
+
     sample = NULL;
     hr = IMFVideoSampleAllocator_AllocateSample(allocator, &sample);
 todo_wine
@@ -1279,10 +1281,10 @@ todo_wine
         ok(get_refcount(sample) == 3, "Unexpected refcount %u.\n", get_refcount(sample));
 
     hr = IMFVideoSampleAllocatorCallback_GetFreeSampleCount(allocator_cb, &count);
-todo_wine {
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+todo_wine
     ok(count == 4, "Unexpected count %d.\n", count);
-}
+
     if (sample)
     {
         hr = IMFSample_QueryInterface(sample, &IID_IMFDesiredSample, (void **)&unk);

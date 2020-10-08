@@ -32,6 +32,7 @@ struct sample_allocator
     LONG refcount;
 
     IMFVideoSampleAllocatorNotify *callback;
+    unsigned int free_samples;
     CRITICAL_SECTION cs;
 };
 
@@ -180,9 +181,16 @@ static HRESULT WINAPI sample_allocator_callback_SetCallback(IMFVideoSampleAlloca
 static HRESULT WINAPI sample_allocator_callback_GetFreeSampleCount(IMFVideoSampleAllocatorCallback *iface,
         LONG *count)
 {
-    FIXME("%p, %p.\n", iface, count);
+    struct sample_allocator *allocator = impl_from_IMFVideoSampleAllocatorCallback(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, count);
+
+    EnterCriticalSection(&allocator->cs);
+    if (count)
+        *count = allocator->free_samples;
+    LeaveCriticalSection(&allocator->cs);
+
+    return S_OK;
 }
 
 static const IMFVideoSampleAllocatorCallbackVtbl sample_allocator_callback_vtbl =
