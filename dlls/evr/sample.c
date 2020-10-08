@@ -30,6 +30,9 @@ struct sample_allocator
     IMFVideoSampleAllocator IMFVideoSampleAllocator_iface;
     IMFVideoSampleAllocatorCallback IMFVideoSampleAllocatorCallback_iface;
     LONG refcount;
+
+    IMFVideoSampleAllocatorNotify *callback;
+    CRITICAL_SECTION cs;
 };
 
 static struct sample_allocator *impl_from_IMFVideoSampleAllocator(IMFVideoSampleAllocator *iface)
@@ -87,6 +90,9 @@ static ULONG WINAPI sample_allocator_Release(IMFVideoSampleAllocator *iface)
 
     if (!refcount)
     {
+        if (allocator->callback)
+            IMFVideoSampleAllocatorNotify_Release(allocator->callback);
+        DeleteCriticalSection(&allocator->cs);
         heap_free(allocator);
     }
 
@@ -156,9 +162,19 @@ static ULONG WINAPI sample_allocator_callback_Release(IMFVideoSampleAllocatorCal
 static HRESULT WINAPI sample_allocator_callback_SetCallback(IMFVideoSampleAllocatorCallback *iface,
         IMFVideoSampleAllocatorNotify *callback)
 {
-    FIXME("%p, %p.\n", iface, callback);
+    struct sample_allocator *allocator = impl_from_IMFVideoSampleAllocatorCallback(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, callback);
+
+    EnterCriticalSection(&allocator->cs);
+    if (allocator->callback)
+        IMFVideoSampleAllocatorNotify_Release(allocator->callback);
+    allocator->callback = callback;
+    if (allocator->callback)
+        IMFVideoSampleAllocatorNotify_AddRef(allocator->callback);
+    LeaveCriticalSection(&allocator->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI sample_allocator_callback_GetFreeSampleCount(IMFVideoSampleAllocatorCallback *iface,
@@ -191,6 +207,7 @@ HRESULT WINAPI MFCreateVideoSampleAllocator(REFIID riid, void **obj)
     object->IMFVideoSampleAllocator_iface.lpVtbl = &sample_allocator_vtbl;
     object->IMFVideoSampleAllocatorCallback_iface.lpVtbl = &sample_allocator_callback_vtbl;
     object->refcount = 1;
+    InitializeCriticalSection(&object->cs);
 
     hr = IMFVideoSampleAllocator_QueryInterface(&object->IMFVideoSampleAllocator_iface, riid, obj);
     IMFVideoSampleAllocator_Release(&object->IMFVideoSampleAllocator_iface);

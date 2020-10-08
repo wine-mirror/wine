@@ -1147,8 +1147,47 @@ static void test_MFCreateVideoMixerAndPresenter(void)
     IUnknown_Release(presenter);
 }
 
+static HRESULT WINAPI test_notify_callback_QueryInterface(IMFVideoSampleAllocatorNotify *iface,
+        REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IMFVideoSampleAllocatorNotify) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IMFVideoSampleAllocatorNotify_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI test_notify_callback_AddRef(IMFVideoSampleAllocatorNotify *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI test_notify_callback_Release(IMFVideoSampleAllocatorNotify *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI test_notify_callback_NotifyRelease(IMFVideoSampleAllocatorNotify *iface)
+{
+    return E_NOTIMPL;
+}
+
+static const IMFVideoSampleAllocatorNotifyVtbl test_notify_callback_vtbl =
+{
+    test_notify_callback_QueryInterface,
+    test_notify_callback_AddRef,
+    test_notify_callback_Release,
+    test_notify_callback_NotifyRelease,
+};
+
 static void test_MFCreateVideoSampleAllocator(void)
 {
+    IMFVideoSampleAllocatorNotify test_notify = { &test_notify_callback_vtbl };
     IMFVideoSampleAllocatorCallback *allocator_cb;
     IMFVideoSampleAllocator *allocator;
     IMFVideoMediaType *video_type;
@@ -1169,6 +1208,15 @@ static void test_MFCreateVideoSampleAllocator(void)
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMFVideoSampleAllocator_QueryInterface(allocator, &IID_IMFVideoSampleAllocatorCallback, (void **)&allocator_cb);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoSampleAllocatorCallback_SetCallback(allocator_cb, NULL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoSampleAllocatorCallback_SetCallback(allocator_cb, &test_notify);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoSampleAllocatorCallback_SetCallback(allocator_cb, NULL);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     count = 10;
