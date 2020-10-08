@@ -31,6 +31,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(conhost);
 
 struct console_window
 {
+    HDC               mem_dc;          /* memory DC holding the bitmap below */
+    HBITMAP           bitmap;          /* bitmap of display window content */
+    HFONT             font;            /* font used for rendering, usually fixed */
     unsigned int      ui_charset;      /* default UI charset */
     WCHAR            *config_key;      /* config registry key name */
     LONG              ext_leading;     /* external leading for font */
@@ -86,6 +89,34 @@ static const char *debugstr_config( const struct console_config *config )
                              config->menu_mask, config->sb_width, config->sb_height,
                              config->win_pos.X, config->win_pos.Y, config->win_width,
                              config->win_height, config->edition_mode );
+}
+
+static const char *debugstr_logfont( const LOGFONTW *lf, unsigned int ft )
+{
+    return wine_dbg_sprintf( "%s%s%s%s  lfHeight=%d lfWidth=%d lfEscapement=%d "
+                             "lfOrientation=%d lfWeight=%d lfItalic=%u lfUnderline=%u "
+                             "lfStrikeOut=%u lfCharSet=%u lfPitchAndFamily=%u lfFaceName=%s",
+                             (ft & RASTER_FONTTYPE) ? "raster" : "",
+                             (ft & TRUETYPE_FONTTYPE) ? "truetype" : "",
+                             ((ft & (RASTER_FONTTYPE|TRUETYPE_FONTTYPE)) == 0) ? "vector" : "",
+                             (ft & DEVICE_FONTTYPE) ? "|device" : "",
+                             lf->lfHeight, lf->lfWidth, lf->lfEscapement, lf->lfOrientation,
+                             lf->lfWeight, lf->lfItalic, lf->lfUnderline, lf->lfStrikeOut,
+                             lf->lfCharSet,  lf->lfPitchAndFamily, wine_dbgstr_w( lf->lfFaceName ));
+}
+
+static const char *debugstr_textmetric( const TEXTMETRICW *tm, unsigned int ft )
+{
+        return wine_dbg_sprintf( "%s%s%s%s tmHeight=%d tmAscent=%d tmDescent=%d "
+                                 "tmAveCharWidth=%d tmMaxCharWidth=%d tmWeight=%d "
+                                 "tmPitchAndFamily=%u tmCharSet=%u",
+                                 (ft & RASTER_FONTTYPE) ? "raster" : "",
+                                 (ft & TRUETYPE_FONTTYPE) ? "truetype" : "",
+                                 ((ft & (RASTER_FONTTYPE|TRUETYPE_FONTTYPE)) == 0) ? "vector" : "",
+                                 (ft & DEVICE_FONTTYPE) ? "|device" : "",
+                                 tm->tmHeight, tm->tmAscent, tm->tmDescent, tm->tmAveCharWidth,
+                                 tm->tmMaxCharWidth, tm->tmWeight, tm->tmPitchAndFamily,
+                                 tm->tmCharSet );
 }
 
 /* read the basic configuration from any console key or subkey */
@@ -232,6 +263,321 @@ static void load_config( const WCHAR *key_name, struct console_config *config )
     TRACE( "%s\n", debugstr_config( config ));
 }
 
+static void save_registry_key( HKEY key, const struct console_config *config )
+{
+    DWORD val, width, height, i;
+    WCHAR color_name[13];
+
+    TRACE( "%s", debugstr_config( config ));
+
+    for (i = 0; i < ARRAY_SIZE(config->color_map); i++)
+    {
+        wsprintfW( color_name, L"ColorTable%02d", i );
+        val = config->color_map[i];
+        RegSetValueExW( key, color_name, 0, REG_DWORD, (BYTE *)&val, sizeof(val) );
+    }
+
+    val = config->cursor_size;
+    RegSetValueExW( key, L"CursorSize", 0, REG_DWORD, (BYTE *)&val, sizeof(val) );
+
+    val = config->cursor_visible;
+    RegSetValueExW( key, L"CursorVisible", 0, REG_DWORD, (BYTE *)&val, sizeof(val) );
+
+    val = config->edition_mode;
+    RegSetValueExW( key, L"EditionMode", 0, REG_DWORD, (BYTE *)&val, sizeof(val) );
+
+    RegSetValueExW( key, L"FaceName", 0, REG_SZ, (BYTE *)&config->face_name, sizeof(config->face_name) );
+
+    val = config->font_pitch_family;
+    RegSetValueExW( key, L"FontPitchFamily", 0, REG_DWORD, (BYTE *)&val, sizeof(val) );
+
+    width  = MulDiv( config->cell_width,  USER_DEFAULT_SCREEN_DPI, GetDpiForSystem() );
+    height = MulDiv( config->cell_height, USER_DEFAULT_SCREEN_DPI, GetDpiForSystem() );
+    val = MAKELONG( width, height );
+    RegSetValueExW( key, L"FontSize", 0, REG_DWORD, (BYTE *)&val, sizeof(val) );
+
+    val = config->font_weight;
+    RegSetValueExW( key, L"FontWeight", 0, REG_DWORD, (BYTE *)&val, sizeof(val) );
+
+    val = config->history_size;
+    RegSetValueExW( key, L"HistoryBufferSize", 0, REG_DWORD, (BYTE *)&val, sizeof(val) );
+
+    val = config->history_mode;
+    RegSetValueExW( key, L"HistoryNoDup", 0, REG_DWORD, (BYTE *)&val, sizeof(val) );
+
+    val = config->insert_mode;
+    RegSetValueExW( key, L"InsertMode", 0, REG_DWORD, (BYTE *)&val, sizeof(val) );
+
+    val = config->menu_mask;
+    RegSetValueExW( key, L"MenuMask", 0, REG_DWORD, (BYTE *)&val, sizeof(val) );
+
+    val = config->popup_attr;
+    RegSetValueExW( key, L"PopupColors", 0, REG_DWORD, (BYTE *)&val, sizeof(val) );
+
+    val = config->quick_edit;
+    RegSetValueExW( key, L"QuickEdit", 0, REG_DWORD, (BYTE *)&val, sizeof(val) );
+
+    val = MAKELONG(config->sb_width, config->sb_height);
+    RegSetValueExW( key, L"ScreenBufferSize", 0, REG_DWORD, (BYTE *)&val, sizeof(val) );
+
+    val = config->attr;
+    RegSetValueExW( key, L"ScreenColors", 0, REG_DWORD, (BYTE *)&val, sizeof(val) );
+
+    val = MAKELONG( config->win_width, config->win_height );
+    RegSetValueExW( key, L"WindowSize", 0, REG_DWORD, (BYTE *)&val, sizeof(val) );
+}
+
+static void save_config( const WCHAR *key_name, const struct console_config *config )
+{
+    HKEY key, app_key;
+
+    TRACE( "%s %s\n", debugstr_w( key_name ), debugstr_config( config ));
+
+    if (RegCreateKeyW( HKEY_CURRENT_USER, L"Console", &key ))
+    {
+        ERR("Can't open registry for saving\n");
+        return;
+    }
+
+    if (key_name)
+    {
+        if (RegCreateKeyW( key, key_name, &app_key ))
+        {
+            ERR("Can't open registry for saving\n");
+        }
+        else
+        {
+            /* FIXME: maybe only save the values different from the default value ? */
+            save_registry_key( app_key, config );
+            RegCloseKey( app_key );
+        }
+    }
+    else save_registry_key( key, config );
+    RegCloseKey(key);
+}
+
+static void fill_logfont( LOGFONTW *lf, const WCHAR *name, unsigned int height, unsigned int weight )
+{
+    lf->lfHeight         = height;
+    lf->lfWidth          = 0;
+    lf->lfEscapement     = 0;
+    lf->lfOrientation    = 0;
+    lf->lfWeight         = weight;
+    lf->lfItalic         = FALSE;
+    lf->lfUnderline      = FALSE;
+    lf->lfStrikeOut      = FALSE;
+    lf->lfCharSet        = DEFAULT_CHARSET;
+    lf->lfOutPrecision   = OUT_DEFAULT_PRECIS;
+    lf->lfClipPrecision  = CLIP_DEFAULT_PRECIS;
+    lf->lfQuality        = DEFAULT_QUALITY;
+    lf->lfPitchAndFamily = FIXED_PITCH | FF_DONTCARE;
+    lstrcpyW( lf->lfFaceName, name );
+}
+
+static BOOL set_console_font( struct console *console, const LOGFONTW *logfont )
+{
+    struct font_info *font_info = &console->active->font;
+    HFONT font, old_font;
+    TEXTMETRICW tm;
+    CPINFO cpinfo;
+    HDC dc;
+
+    TRACE( "%s\n", debugstr_logfont( logfont, 0 ));
+
+    if (console->window->font && logfont->lfHeight == console->active->font.height &&
+        logfont->lfWeight == console->active->font.weight &&
+        !logfont->lfItalic && !logfont->lfUnderline && !logfont->lfStrikeOut &&
+        console->active->font.face_len == wcslen( logfont->lfFaceName ) * sizeof(WCHAR) &&
+        !memcmp( logfont->lfFaceName, console->active->font.face_name,
+                 console->active->font.face_len ))
+    {
+        TRACE( "equal to current\n" );
+        return TRUE;
+    }
+
+    if (!(dc = GetDC( console->win ))) return FALSE;
+    if (!(font = CreateFontIndirectW( logfont )))
+    {
+        ReleaseDC( console->win, dc );
+        return FALSE;
+    }
+
+    old_font = SelectObject( dc, font );
+    GetTextMetricsW( dc, &tm );
+    SelectObject( dc, old_font );
+    ReleaseDC( console->win, dc );
+
+    font_info->width  = tm.tmAveCharWidth;
+    font_info->height = tm.tmHeight + tm.tmExternalLeading;
+    font_info->weight = tm.tmWeight;
+
+    free( font_info->face_name );
+    font_info->face_len = wcslen( logfont->lfFaceName ) * sizeof(WCHAR);
+    font_info->face_name = malloc( font_info->face_len );
+    memcpy( font_info->face_name, logfont->lfFaceName, font_info->face_len );
+
+    /* FIXME: use maximum width for DBCS codepages since some chars take two cells */
+    if (GetCPInfo( console->output_cp, &cpinfo ) && cpinfo.MaxCharSize > 1)
+        font_info->width  = tm.tmMaxCharWidth;
+
+    if (console->window->font) DeleteObject( console->window->font );
+    console->window->font = font;
+    console->window->ext_leading = tm.tmExternalLeading;
+
+    if (console->window->bitmap)
+    {
+        DeleteObject(console->window->bitmap);
+        console->window->bitmap = NULL;
+    }
+    return TRUE;
+}
+
+struct font_chooser
+{
+    struct console *console;
+    int             pass;
+    BOOL            done;
+};
+
+/* check if the font described in tm is usable as a font for the renderer */
+static BOOL validate_font_metric( struct console *console, const TEXTMETRICW *tm,
+                                  DWORD type, int pass )
+{
+    switch (pass) /* we get increasingly lenient in later passes */
+    {
+    case 0:
+        if (type & RASTER_FONTTYPE) return FALSE;
+        /* fall through */
+    case 1:
+        if (type & RASTER_FONTTYPE)
+        {
+            if (tm->tmMaxCharWidth * (console->active->win.right - console->active->win.left + 1)
+                >= GetSystemMetrics(SM_CXSCREEN))
+                return FALSE;
+            if (tm->tmHeight * (console->active->win.bottom - console->active->win.top + 1)
+                >= GetSystemMetrics(SM_CYSCREEN))
+                return FALSE;
+        }
+        /* fall through */
+    case 2:
+        if (tm->tmCharSet != DEFAULT_CHARSET && tm->tmCharSet != console->window->ui_charset)
+            return FALSE;
+        /* fall through */
+    case 3:
+        if (tm->tmItalic || tm->tmUnderlined || tm->tmStruckOut) return FALSE;
+        break;
+    }
+    return TRUE;
+}
+
+/* check if the font family described in lf is usable as a font for the renderer */
+static BOOL validate_font( struct console *console, const LOGFONTW *lf, int pass )
+{
+    switch (pass) /* we get increasingly lenient in later passes */
+    {
+    case 0:
+    case 1:
+    case 2:
+        if (lf->lfCharSet != DEFAULT_CHARSET && lf->lfCharSet != console->window->ui_charset)
+            return FALSE;
+        /* fall through */
+    case 3:
+        if ((lf->lfPitchAndFamily & 3) != FIXED_PITCH) return FALSE;
+        /* fall through */
+    case 4:
+        if (lf->lfFaceName[0] == '@') return FALSE;
+        break;
+    }
+    return TRUE;
+}
+
+/* helper functions to get a decent font for the renderer */
+static int WINAPI get_first_font_sub_enum( const LOGFONTW *lf, const TEXTMETRICW *tm,
+                                           DWORD font_type, LPARAM lparam)
+{
+    struct font_chooser *fc = (struct font_chooser *)lparam;
+
+    TRACE( "%s\n", debugstr_textmetric( tm, font_type ));
+
+    if (validate_font_metric( fc->console, tm, font_type, fc->pass ))
+    {
+        LOGFONTW mlf = *lf;
+
+        /* Use the default sizes for the font (this is needed, especially for
+         * TrueType fonts, so that we get a decent size, not the max size)
+         */
+        mlf.lfWidth  = fc->console->active->font.width;
+        mlf.lfHeight = fc->console->active->font.height;
+        if (!mlf.lfHeight)
+            mlf.lfHeight = MulDiv( 16, GetDpiForSystem(), USER_DEFAULT_SCREEN_DPI );
+
+        if (set_console_font( fc->console, &mlf ))
+        {
+            struct console_config config;
+
+            fc->done = 1;
+
+            /* since we've modified the current config with new font information,
+             * set this information as the new default.
+             */
+            load_config( fc->console->window->config_key, &config );
+            config.cell_width  = fc->console->active->font.width;
+            config.cell_height = fc->console->active->font.height;
+            fc->console->active->font.face_len = wcslen( config.face_name ) * sizeof(WCHAR);
+            memcpy( fc->console->active->font.face_name, config.face_name,
+                    fc->console->active->font.face_len );
+            /* Force also its writing back to the registry so that we can get it
+             * the next time.
+             */
+            save_config( fc->console->window->config_key, &config );
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static int WINAPI get_first_font_enum( const LOGFONTW *lf, const TEXTMETRICW *tm,
+                                       DWORD font_type, LPARAM lparam )
+{
+    struct font_chooser *fc = (struct font_chooser *)lparam;
+
+    TRACE("%s\n", debugstr_logfont( lf, font_type ));
+
+    if (validate_font( fc->console, lf, fc->pass ))
+    {
+        EnumFontFamiliesW( fc->console->window->mem_dc, lf->lfFaceName,
+                           get_first_font_sub_enum, lparam );
+        return !fc->done; /* we just need the first matching one... */
+    }
+    return 1;
+}
+
+
+/* sets logfont as the new font for the console */
+static void update_console_font( struct console *console, const WCHAR *font,
+                                 unsigned int height, unsigned int weight )
+{
+    struct font_chooser fc;
+    LOGFONTW lf;
+
+    if (font[0] && height && weight)
+    {
+        fill_logfont( &lf, font, height, weight );
+        if (set_console_font( console, &lf )) return;
+    }
+
+    /* try to find an acceptable font */
+    WARN( "Couldn't match the font from registry, trying to find one\n" );
+    fc.console = console;
+    fc.done = FALSE;
+    for (fc.pass = 0; fc.pass <= 5; fc.pass++)
+    {
+        EnumFontFamiliesW( console->window->mem_dc, NULL, get_first_font_enum, (LPARAM)&fc );
+        if (fc.done) return;
+    }
+    ERR( "Couldn't find a decent font" );
+}
+
 static void apply_config( struct console *console, const struct console_config *config )
 {
     if (console->active->width != config->sb_width || console->active->height != config->sb_height)
@@ -284,6 +630,16 @@ static void apply_config( struct console *console, const struct console_config *
     console->active->win.right  = config->win_pos.X + config->win_width - 1;
     console->active->win.bottom = config->win_pos.Y + config->win_height - 1;
     memcpy( console->active->color_map, config->color_map, sizeof(config->color_map) );
+
+    if (console->active->font.width != config->cell_width ||
+        console->active->font.height != config->cell_height ||
+        console->active->font.weight != config->font_weight ||
+        console->active->font.pitch_family != config->font_pitch_family ||
+        console->active->font.face_len != wcslen( config->face_name ) * sizeof(WCHAR) ||
+        memcmp( console->active->font.face_name, config->face_name, console->active->font.face_len ))
+    {
+        update_console_font( console, config->face_name, config->cell_height, config->font_weight );
+    }
 }
 
 static LRESULT window_create( HWND hwnd, const CREATESTRUCTW *create )
