@@ -718,14 +718,49 @@ if (0)   /* Crashes on windows */
     ok(hr == S_OK, "Failed to get state, hr 0x%08x\n", hr);
     ok(timeout == 300, "Unexpected timeout value %d\n", timeout);
 
+    /* Default */
+    str = (BSTR)0xdeadbeef;
+    hr = _Connection_get_Provider(connection, &str);
+    ok(hr == S_OK, "Failed, hr 0x%08x\n", hr);
+    ok(!wcscmp(str, L"MSDASQL"), "wrong string %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    str = SysAllocString(L"MSDASQL.1");
+    hr = _Connection_put_Provider(connection, str);
+    ok(hr == S_OK, "Failed, hr 0x%08x\n", hr);
+    SysFreeString(str);
+
+    str = (BSTR)0xdeadbeef;
+    hr = _Connection_get_Provider(connection, &str);
+    ok(hr == S_OK, "Failed, hr 0x%08x\n", hr);
+    ok(!wcscmp(str, L"MSDASQL.1"), "wrong string %s\n", wine_dbgstr_w(str));
+
+    /* Restore default */
+    str = SysAllocString(L"MSDASQL");
+    hr = _Connection_put_Provider(connection, str);
+    ok(hr == S_OK, "Failed, hr 0x%08x\n", hr);
+    SysFreeString(str);
+
+    hr = _Connection_put_Provider(connection, NULL);
+    ok(hr == MAKE_ADO_HRESULT(adErrInvalidArgument), "got 0x%08x\n", hr);
+    SysFreeString(str);
+
     str = (BSTR)0xdeadbeef;
     hr = _Connection_get_ConnectionString(connection, &str);
-    ok(hr == S_OK, "Failed, hr 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(str == NULL, "got %p\n", str);
 
     str = SysAllocString(L"Provider=MSDASQL.1;Persist Security Info=False;Data Source=wine_test");
     hr = _Connection_put_ConnectionString(connection, str);
     ok(hr == S_OK, "Failed, hr 0x%08x\n", hr);
+
+    /* Show put_ConnectionString effects Provider */
+    str3 = (BSTR)0xdeadbeef;
+    hr = _Connection_get_Provider(connection, &str3);
+    ok(hr == S_OK, "Failed, hr 0x%08x\n", hr);
+    ok(str3 != NULL, "Expected value got NULL\n");
+    todo_wine ok(!wcscmp(str3, L"MSDASQL.1"), "wrong string %s\n", wine_dbgstr_w(str3));
+    SysFreeString(str3);
 
 if (0) /* Crashes on windows */
 {

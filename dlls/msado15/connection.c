@@ -53,6 +53,7 @@ struct connection
     ObjectStateEnum           state;
     LONG                      timeout;
     WCHAR                    *datasource;
+    WCHAR                    *provider;
     struct connection_point   cp_connev;
 };
 
@@ -96,6 +97,7 @@ static ULONG WINAPI connection_Release( _Connection *iface )
                 IUnknown_Release( connection->cp_connev.sinks[i] );
         }
         heap_free( connection->cp_connev.sinks );
+        heap_free( connection->provider );
         heap_free( connection->datasource );
         heap_free( connection );
     }
@@ -346,14 +348,29 @@ static HRESULT WINAPI connection_put_Mode( _Connection *iface, ConnectModeEnum m
 
 static HRESULT WINAPI connection_get_Provider( _Connection *iface, BSTR *str )
 {
-    FIXME( "%p, %p\n", iface, str );
-    return E_NOTIMPL;
+    struct connection *connection = impl_from_Connection( iface );
+    BSTR provider = NULL;
+
+    TRACE( "%p, %p\n", iface, str );
+
+    if (connection->provider && !(provider = SysAllocString( connection->provider ))) return E_OUTOFMEMORY;
+    *str = provider;
+    return S_OK;
 }
 
 static HRESULT WINAPI connection_put_Provider( _Connection *iface, BSTR str )
 {
-    FIXME( "%p, %s\n", iface, debugstr_w(str) );
-    return E_NOTIMPL;
+    struct connection *connection = impl_from_Connection( iface );
+    WCHAR *provider = NULL;
+
+    TRACE( "%p, %s\n", iface, debugstr_w(str) );
+
+    if (!str) return MAKE_ADO_HRESULT(adErrInvalidArgument);
+
+    if (!(provider = strdupW( str ))) return E_OUTOFMEMORY;
+    heap_free( connection->provider );
+    connection->provider = provider;
+    return S_OK;
 }
 
 static HRESULT WINAPI connection_get_State( _Connection *iface, LONG *state )
@@ -646,6 +663,7 @@ HRESULT Connection_create( void **obj )
     connection->state = adStateClosed;
     connection->timeout = 30;
     connection->datasource = NULL;
+    connection->provider = SysAllocString(L"MSDASQL");
 
     connection->cp_connev.conn = connection;
     connection->cp_connev.riid = &DIID_ConnectionEvents;
