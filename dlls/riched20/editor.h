@@ -76,6 +76,8 @@ ME_DisplayItem *ME_MakeDI(ME_DIType type) DECLSPEC_HIDDEN;
 void ME_DestroyDisplayItem(ME_DisplayItem *item) DECLSPEC_HIDDEN;
 void ME_DumpDocument(ME_TextBuffer *buffer) DECLSPEC_HIDDEN;
 void destroy_para(ME_TextEditor *editor, ME_DisplayItem *item) DECLSPEC_HIDDEN;
+ME_Run *run_prev( ME_Run *run ) DECLSPEC_HIDDEN;
+ME_Run *run_next( ME_Run *run ) DECLSPEC_HIDDEN;
 
 /* string.c */
 ME_String *ME_MakeStringN(LPCWSTR szText, int nMaxChars) DECLSPEC_HIDDEN;
@@ -145,6 +147,10 @@ void ME_GetCharFormat(ME_TextEditor *editor, const ME_Cursor *from,
 void ME_GetSelectionCharFormat(ME_TextEditor *editor, CHARFORMAT2W *pFmt) DECLSPEC_HIDDEN;
 void ME_GetDefaultCharFormat(ME_TextEditor *editor, CHARFORMAT2W *pFmt) DECLSPEC_HIDDEN;
 void ME_SetDefaultCharFormat(ME_TextEditor *editor, CHARFORMAT2W *mod) DECLSPEC_HIDDEN;
+static inline ME_DisplayItem *run_get_di( ME_Run *run )
+{
+    return (ME_DisplayItem *)((ptrdiff_t)run - offsetof(ME_DisplayItem, member));
+}
 
 /* caret.c */
 void ME_SetCursorToStart(ME_TextEditor *editor, ME_Cursor *cursor) DECLSPEC_HIDDEN;

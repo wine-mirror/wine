@@ -27,6 +27,26 @@ WINE_DEFAULT_DEBUG_CHANNEL(richedit);
 WINE_DECLARE_DEBUG_CHANNEL(richedit_check);
 WINE_DECLARE_DEBUG_CHANNEL(richedit_lists);
 
+ME_Run *run_next( ME_Run *run )
+{
+    ME_DisplayItem *item = run_get_di( run );
+
+    if (ME_NextRun( NULL, &item, FALSE ))
+        return &item->member.run;
+
+    return NULL;
+}
+
+ME_Run *run_prev( ME_Run *run )
+{
+    ME_DisplayItem *item = run_get_di( run );
+
+    if (ME_PrevRun( NULL, &item, FALSE ))
+        return &item->member.run;
+
+    return NULL;
+}
+
 /******************************************************************************
  * ME_CanJoinRuns
  *
