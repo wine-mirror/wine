@@ -114,9 +114,7 @@ static LPCWSTR find_arg_start(LPCWSTR cmdline)
 static void reexec_self(void)
 {
     /* restart current process as 32-bit or 64-bit with same command line */
-    static const WCHAR exe_name[] = {'\\','r','e','g','s','v','r','3','2','.','e','x','e',0};
 #ifndef _WIN64
-    static const WCHAR sysnative[] = {'\\','S','y','s','N','a','t','i','v','e',0};
     BOOL wow64;
 #endif
     WCHAR systemdir[MAX_PATH];
@@ -138,16 +136,16 @@ static void reexec_self(void)
     }
 
     GetWindowsDirectoryW(systemdir, MAX_PATH);
-    wcscat(systemdir, sysnative);
+    wcscat(systemdir, L"\\SysNative");
 #endif
 
     args = find_arg_start(GetCommandLineW());
 
     cmdline = HeapAlloc(GetProcessHeap(), 0,
-        (wcslen(systemdir)+wcslen(exe_name)+wcslen(args)+1)*sizeof(WCHAR));
+        (wcslen(systemdir)+wcslen(L"\\regsvr32.exe")+wcslen(args)+1)*sizeof(WCHAR));
 
     wcscpy(cmdline, systemdir);
-    wcscat(cmdline, exe_name);
+    wcscat(cmdline, L"\\regsvr32.exe");
     wcscat(cmdline, args);
 
     si.cb = sizeof(si);
