@@ -41,6 +41,7 @@ struct video_stream
 {
     IMFStreamSink IMFStreamSink_iface;
     IMFMediaTypeHandler IMFMediaTypeHandler_iface;
+    IMFGetService IMFGetService_iface;
     LONG refcount;
     unsigned int id;
     struct video_renderer *parent;
@@ -123,6 +124,11 @@ static struct video_stream *impl_from_IMFMediaTypeHandler(IMFMediaTypeHandler *i
     return CONTAINING_RECORD(iface, struct video_stream, IMFMediaTypeHandler_iface);
 }
 
+static struct video_stream *impl_from_stream_IMFGetService(IMFGetService *iface)
+{
+    return CONTAINING_RECORD(iface, struct video_stream, IMFGetService_iface);
+}
+
 static void video_renderer_release_services(struct video_renderer *renderer)
 {
     IMFTopologyServiceLookupClient *lookup_client;
@@ -161,6 +167,10 @@ static HRESULT WINAPI video_stream_sink_QueryInterface(IMFStreamSink *iface, REF
     else if (IsEqualIID(riid, &IID_IMFMediaTypeHandler))
     {
         *obj = &stream->IMFMediaTypeHandler_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IMFGetService))
+    {
+        *obj = &stream->IMFGetService_iface;
     }
 
     if (*obj)
@@ -415,6 +425,39 @@ static const IMFMediaTypeHandlerVtbl video_stream_type_handler_vtbl =
     video_stream_typehandler_GetMajorType,
 };
 
+static HRESULT WINAPI video_stream_get_service_QueryInterface(IMFGetService *iface, REFIID riid, void **obj)
+{
+    struct video_stream *stream = impl_from_stream_IMFGetService(iface);
+    return IMFStreamSink_QueryInterface(&stream->IMFStreamSink_iface, riid, obj);
+}
+
+static ULONG WINAPI video_stream_get_service_AddRef(IMFGetService *iface)
+{
+    struct video_stream *stream = impl_from_stream_IMFGetService(iface);
+    return IMFStreamSink_AddRef(&stream->IMFStreamSink_iface);
+}
+
+static ULONG WINAPI video_stream_get_service_Release(IMFGetService *iface)
+{
+    struct video_stream *stream = impl_from_stream_IMFGetService(iface);
+    return IMFStreamSink_Release(&stream->IMFStreamSink_iface);
+}
+
+static HRESULT WINAPI video_stream_get_service_GetService(IMFGetService *iface, REFGUID service, REFIID riid, void **obj)
+{
+    FIXME("%p, %s, %s, %p.\n", iface, debugstr_guid(service), debugstr_guid(riid), obj);
+
+    return E_NOTIMPL;
+}
+
+static const IMFGetServiceVtbl video_stream_get_service_vtbl =
+{
+    video_stream_get_service_QueryInterface,
+    video_stream_get_service_AddRef,
+    video_stream_get_service_Release,
+    video_stream_get_service_GetService,
+};
+
 static HRESULT video_renderer_stream_create(struct video_renderer *renderer, unsigned int id,
         struct video_stream **ret)
 {
@@ -426,6 +469,7 @@ static HRESULT video_renderer_stream_create(struct video_renderer *renderer, uns
 
     stream->IMFStreamSink_iface.lpVtbl = &video_stream_sink_vtbl;
     stream->IMFMediaTypeHandler_iface.lpVtbl = &video_stream_type_handler_vtbl;
+    stream->IMFGetService_iface.lpVtbl = &video_stream_get_service_vtbl;
     stream->refcount = 1;
 
     if (FAILED(hr = MFCreateEventQueue(&stream->event_queue)))
