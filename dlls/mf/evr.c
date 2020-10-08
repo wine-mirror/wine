@@ -854,12 +854,195 @@ static ULONG WINAPI video_renderer_Release(IMFVideoRenderer *iface)
     return IMFMediaSink_Release(&renderer->IMFMediaSink_iface);
 }
 
+static HRESULT video_renderer_create_mixer(IMFAttributes *attributes, IMFTransform **out)
+{
+    unsigned int flags = 0;
+    IMFActivate *activate;
+    CLSID clsid;
+    HRESULT hr;
+
+    if (attributes && SUCCEEDED(hr = IMFAttributes_GetUnknown(attributes, &MF_ACTIVATE_CUSTOM_VIDEO_MIXER_ACTIVATE,
+            &IID_IMFActivate, (void **)&activate)))
+    {
+        IMFAttributes_GetUINT32(attributes, &MF_ACTIVATE_CUSTOM_VIDEO_MIXER_FLAGS, &flags);
+        hr = IMFActivate_ActivateObject(activate, &IID_IMFTransform, (void **)out);
+        IMFActivate_Release(activate);
+        if (SUCCEEDED(hr) || !(flags & MF_ACTIVATE_CUSTOM_MIXER_ALLOWFAIL))
+            return hr;
+    }
+
+    if (!attributes || FAILED(IMFAttributes_GetGUID(attributes, &MF_ACTIVATE_CUSTOM_VIDEO_MIXER_CLSID, &clsid)))
+        memcpy(&clsid, &CLSID_MFVideoMixer9, sizeof(clsid));
+
+    return CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IMFTransform, (void **)out);
+}
+
+static HRESULT video_renderer_create_presenter(IMFAttributes *attributes, IMFVideoPresenter **out)
+{
+    unsigned int flags = 0;
+    IMFActivate *activate;
+    CLSID clsid;
+    HRESULT hr;
+
+    if (attributes && SUCCEEDED(IMFAttributes_GetUnknown(attributes, &MF_ACTIVATE_CUSTOM_VIDEO_PRESENTER_ACTIVATE,
+            &IID_IMFActivate, (void **)&activate)))
+    {
+        IMFAttributes_GetUINT32(attributes, &MF_ACTIVATE_CUSTOM_VIDEO_PRESENTER_FLAGS, &flags);
+        hr = IMFActivate_ActivateObject(activate, &IID_IMFVideoPresenter, (void **)out);
+        IMFActivate_Release(activate);
+        if (SUCCEEDED(hr) || !(flags & MF_ACTIVATE_CUSTOM_PRESENTER_ALLOWFAIL))
+            return hr;
+    }
+
+    if (!attributes || FAILED(IMFAttributes_GetGUID(attributes, &MF_ACTIVATE_CUSTOM_VIDEO_PRESENTER_CLSID, &clsid)))
+        memcpy(&clsid, &CLSID_MFVideoPresenter9, sizeof(clsid));
+
+    return CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IMFVideoPresenter, (void **)out);
+}
+
+static HRESULT video_renderer_configure_mixer(struct video_renderer *renderer)
+{
+    IMFTopologyServiceLookupClient *lookup_client;
+    HRESULT hr;
+
+    if (SUCCEEDED(hr = IMFTransform_QueryInterface(renderer->mixer, &IID_IMFTopologyServiceLookupClient,
+            (void **)&lookup_client)))
+    {
+        renderer->flags |= EVR_INIT_SERVICES;
+        if (SUCCEEDED(hr = IMFTopologyServiceLookupClient_InitServicePointers(lookup_client,
+                &renderer->IMFTopologyServiceLookup_iface)))
+        {
+            renderer->flags |= EVR_MIXER_INITED_SERVICES;
+        }
+        renderer->flags &= ~EVR_INIT_SERVICES;
+        IMFTopologyServiceLookupClient_Release(lookup_client);
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        unsigned int input_count, output_count;
+        unsigned int *ids, *oids;
+        size_t i;
+
+        /* Create stream sinks for inputs that mixer already has by default. */
+        if (SUCCEEDED(IMFTransform_GetStreamCount(renderer->mixer, &input_count, &output_count)))
+        {
+            ids = heap_calloc(input_count, sizeof(*ids));
+            oids = heap_calloc(output_count, sizeof(*oids));
+
+            if (ids && oids)
+            {
+                if (SUCCEEDED(IMFTransform_GetStreamIDs(renderer->mixer, input_count, ids, output_count, oids)))
+                {
+                    for (i = 0; i < input_count; ++i)
+                    {
+                        video_renderer_add_stream(renderer, ids[i], NULL);
+                    }
+                }
+
+            }
+
+            heap_free(ids);
+            heap_free(oids);
+        }
+    }
+
+    return hr;
+}
+
+static HRESULT video_renderer_configure_presenter(struct video_renderer *renderer)
+{
+    IMFTopologyServiceLookupClient *lookup_client;
+    HRESULT hr;
+
+    if (SUCCEEDED(hr = IMFVideoPresenter_QueryInterface(renderer->presenter, &IID_IMFTopologyServiceLookupClient,
+            (void **)&lookup_client)))
+    {
+        renderer->flags |= EVR_INIT_SERVICES;
+        if (SUCCEEDED(hr = IMFTopologyServiceLookupClient_InitServicePointers(lookup_client,
+                &renderer->IMFTopologyServiceLookup_iface)))
+        {
+            renderer->flags |= EVR_PRESENTER_INITED_SERVICES;
+        }
+        renderer->flags &= ~EVR_INIT_SERVICES;
+        IMFTopologyServiceLookupClient_Release(lookup_client);
+    }
+
+    return hr;
+}
+
+static HRESULT video_renderer_initialize(struct video_renderer *renderer, IMFTransform *mixer,
+        IMFVideoPresenter *presenter)
+{
+    HRESULT hr;
+
+    if (renderer->mixer)
+    {
+        IMFTransform_Release(renderer->mixer);
+        renderer->mixer = NULL;
+    }
+
+    if (renderer->presenter)
+    {
+        IMFVideoPresenter_Release(renderer->presenter);
+        renderer->presenter = NULL;
+    }
+
+    renderer->mixer = mixer;
+    IMFTransform_AddRef(renderer->mixer);
+
+    renderer->presenter = presenter;
+    IMFVideoPresenter_AddRef(renderer->presenter);
+
+    if (SUCCEEDED(hr = video_renderer_configure_mixer(renderer)))
+        hr = video_renderer_configure_presenter(renderer);
+
+    return hr;
+}
+
 static HRESULT WINAPI video_renderer_InitializeRenderer(IMFVideoRenderer *iface, IMFTransform *mixer,
         IMFVideoPresenter *presenter)
 {
-    FIXME("%p, %p, %p.\n", iface, mixer, presenter);
+    struct video_renderer *renderer = impl_from_IMFVideoRenderer(iface);
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %p.\n", iface, mixer, presenter);
+
+    if (mixer)
+        IMFTransform_AddRef(mixer);
+    else if (FAILED(hr = video_renderer_create_mixer(NULL, &mixer)))
+    {
+        WARN("Failed to create default mixer object, hr %#x.\n", hr);
+        return hr;
+    }
+
+    if (presenter)
+        IMFVideoPresenter_AddRef(presenter);
+    else if (FAILED(hr = video_renderer_create_presenter(NULL, &presenter)))
+    {
+        WARN("Failed to create default presenter, hr %#x.\n", hr);
+        IMFTransform_Release(mixer);
+        return hr;
+    }
+
+    EnterCriticalSection(&renderer->cs);
+
+    if (renderer->flags & EVR_SHUT_DOWN)
+        hr = MF_E_SHUTDOWN;
+    else
+    {
+        /* FIXME: check clock state */
+        /* FIXME: check that streams are not initialized */
+
+        hr = video_renderer_initialize(renderer, mixer, presenter);
+    }
+
+    LeaveCriticalSection(&renderer->cs);
+
+    IMFTransform_Release(mixer);
+    IMFVideoPresenter_Release(presenter);
+
+    return hr;
 }
 
 static const IMFVideoRendererVtbl video_renderer_vtbl =
@@ -1191,128 +1374,11 @@ static const IMediaEventSinkVtbl media_event_sink_vtbl =
     video_renderer_event_sink_Notify,
 };
 
-static HRESULT video_renderer_create_mixer(struct video_renderer *renderer, IMFAttributes *attributes,
-        IMFTransform **out)
-{
-    IMFTopologyServiceLookupClient *lookup_client;
-    unsigned int flags = 0;
-    IMFActivate *activate;
-    CLSID clsid;
-    HRESULT hr;
-
-    if (SUCCEEDED(hr = IMFAttributes_GetUnknown(attributes, &MF_ACTIVATE_CUSTOM_VIDEO_MIXER_ACTIVATE,
-            &IID_IMFActivate, (void **)&activate)))
-    {
-        IMFAttributes_GetUINT32(attributes, &MF_ACTIVATE_CUSTOM_VIDEO_MIXER_FLAGS, &flags);
-        hr = IMFActivate_ActivateObject(activate, &IID_IMFTransform, (void **)out);
-        IMFActivate_Release(activate);
-        if (FAILED(hr) && !(flags & MF_ACTIVATE_CUSTOM_MIXER_ALLOWFAIL))
-            return hr;
-    }
-
-    /* Activation object failed, use class activation. */
-    if (FAILED(hr))
-    {
-        if (FAILED(IMFAttributes_GetGUID(attributes, &MF_ACTIVATE_CUSTOM_VIDEO_MIXER_CLSID, &clsid)))
-            memcpy(&clsid, &CLSID_MFVideoMixer9, sizeof(clsid));
-        hr = CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IMFTransform, (void **)out);
-    }
-
-    if (FAILED(hr))
-    {
-        WARN("Failed to create a mixer object, hr %#x.\n", hr);
-        return hr;
-    }
-
-    if (SUCCEEDED(hr = IMFTransform_QueryInterface(*out, &IID_IMFTopologyServiceLookupClient,
-            (void **)&lookup_client)))
-    {
-        renderer->flags |= EVR_INIT_SERVICES;
-        if (SUCCEEDED(hr = IMFTopologyServiceLookupClient_InitServicePointers(lookup_client,
-                &renderer->IMFTopologyServiceLookup_iface)))
-        {
-            renderer->flags |= EVR_MIXER_INITED_SERVICES;
-        }
-        renderer->flags &= ~EVR_INIT_SERVICES;
-        IMFTopologyServiceLookupClient_Release(lookup_client);
-    }
-
-    if (SUCCEEDED(hr))
-    {
-        unsigned int input_count, output_count;
-        unsigned int *ids, *oids;
-        size_t i;
-
-        /* Create stream sinks for inputs that mixer already has by default. */
-        if (SUCCEEDED(IMFTransform_GetStreamCount(*out, &input_count, &output_count)))
-        {
-            ids = heap_calloc(input_count, sizeof(*ids));
-            oids = heap_calloc(output_count, sizeof(*oids));
-
-            if (ids && oids)
-            {
-                if (SUCCEEDED(IMFTransform_GetStreamIDs(*out, input_count, ids, output_count, oids)))
-                {
-                    for (i = 0; i < input_count; ++i)
-                    {
-                        video_renderer_add_stream(renderer, ids[i], NULL);
-                    }
-                }
-
-            }
-
-            heap_free(ids);
-            heap_free(oids);
-        }
-    }
-
-    return hr;
-}
-
-static HRESULT video_renderer_create_presenter(struct video_renderer *renderer, IMFAttributes *attributes,
-        IMFVideoPresenter **out)
-{
-    IMFTopologyServiceLookupClient *lookup_client;
-    unsigned int flags = 0;
-    IMFActivate *activate;
-    CLSID clsid;
-    HRESULT hr;
-
-    if (SUCCEEDED(IMFAttributes_GetUnknown(attributes, &MF_ACTIVATE_CUSTOM_VIDEO_PRESENTER_ACTIVATE,
-            &IID_IMFActivate, (void **)&activate)))
-    {
-        IMFAttributes_GetUINT32(attributes, &MF_ACTIVATE_CUSTOM_VIDEO_PRESENTER_FLAGS, &flags);
-        hr = IMFActivate_ActivateObject(activate, &IID_IMFVideoPresenter, (void **)out);
-        IMFActivate_Release(activate);
-        if (FAILED(hr) && !(flags & MF_ACTIVATE_CUSTOM_PRESENTER_ALLOWFAIL))
-            return hr;
-    }
-
-    if (FAILED(IMFAttributes_GetGUID(attributes, &MF_ACTIVATE_CUSTOM_VIDEO_PRESENTER_CLSID, &clsid)))
-        memcpy(&clsid, &CLSID_MFVideoPresenter9, sizeof(clsid));
-
-    if (SUCCEEDED(hr = CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IMFVideoPresenter, (void **)out)))
-    {
-        if (SUCCEEDED(hr = IMFVideoPresenter_QueryInterface(*out, &IID_IMFTopologyServiceLookupClient,
-                (void **)&lookup_client)))
-        {
-            renderer->flags |= EVR_INIT_SERVICES;
-            if (SUCCEEDED(hr = IMFTopologyServiceLookupClient_InitServicePointers(lookup_client,
-                    &renderer->IMFTopologyServiceLookup_iface)))
-            {
-                renderer->flags |= EVR_PRESENTER_INITED_SERVICES;
-            }
-            renderer->flags &= ~EVR_INIT_SERVICES;
-            IMFTopologyServiceLookupClient_Release(lookup_client);
-        }
-    }
-
-    return hr;
-}
-
 static HRESULT evr_create_object(IMFAttributes *attributes, void *user_context, IUnknown **obj)
 {
     struct video_renderer *object;
+    IMFVideoPresenter *presenter;
+    IMFTransform *mixer;
     HRESULT hr;
 
     TRACE("%p, %p, %p.\n", attributes, user_context, obj);
@@ -1335,17 +1401,29 @@ static HRESULT evr_create_object(IMFAttributes *attributes, void *user_context, 
         goto failed;
 
     /* Create mixer and presenter. */
-    if (FAILED(hr = video_renderer_create_mixer(object, attributes, &object->mixer)))
+    if (FAILED(hr = video_renderer_create_mixer(attributes, &mixer)))
         goto failed;
 
-    if (FAILED(hr = video_renderer_create_presenter(object, attributes, &object->presenter)))
+    if (FAILED(hr = video_renderer_create_presenter(attributes, &presenter)))
         goto failed;
+
+    if (FAILED(hr = video_renderer_initialize(object, mixer, presenter)))
+        goto failed;
+
+    IMFTransform_Release(mixer);
+    IMFVideoPresenter_Release(presenter);
 
     *obj = (IUnknown *)&object->IMFMediaSink_iface;
 
     return S_OK;
 
 failed:
+
+    if (mixer)
+        IMFTransform_Release(mixer);
+
+    if (presenter)
+        IMFVideoPresenter_Release(presenter);
 
     video_renderer_release_services(object);
     IMFMediaSink_Release(&object->IMFMediaSink_iface);
@@ -1394,7 +1472,6 @@ HRESULT WINAPI MFCreateVideoRendererActivate(HWND hwnd, IMFActivate **activate)
  */
 HRESULT WINAPI MFCreateVideoRenderer(REFIID riid, void **renderer)
 {
-    IMFAttributes *attributes;
     IUnknown *obj;
     HRESULT hr;
 
@@ -1402,13 +1479,7 @@ HRESULT WINAPI MFCreateVideoRenderer(REFIID riid, void **renderer)
 
     *renderer = NULL;
 
-    if (FAILED(hr = MFCreateAttributes(&attributes, 0)))
-        return hr;
-
-    hr = evr_create_object(attributes, NULL, &obj);
-    IMFAttributes_Release(attributes);
-
-    if (SUCCEEDED(hr))
+    if (SUCCEEDED(hr = evr_create_object(NULL, NULL, &obj)))
     {
         hr = IUnknown_QueryInterface(obj, riid, renderer);
         IUnknown_Release(obj);
