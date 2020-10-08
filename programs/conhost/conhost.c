@@ -1675,7 +1675,7 @@ static NTSTATUS get_output_info( struct screen_buffer *screen_buffer, size_t *ou
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS change_screen_buffer_size( struct screen_buffer *screen_buffer, int new_width, int new_height )
+NTSTATUS change_screen_buffer_size( struct screen_buffer *screen_buffer, int new_width, int new_height )
 {
     int i, old_width, old_height, copy_width, copy_height;
     char_info_t *new_data;

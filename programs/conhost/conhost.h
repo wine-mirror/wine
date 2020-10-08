@@ -131,5 +131,6 @@ struct screen_buffer
 };
 
 BOOL init_window( struct console *console );
+NTSTATUS change_screen_buffer_size( struct screen_buffer *screen_buffer, int new_width, int new_height );
 
 #endif /* RC_INVOKED */
