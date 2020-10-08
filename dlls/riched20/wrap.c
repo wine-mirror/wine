@@ -795,21 +795,17 @@ end:
 }
 
 
-static HRESULT shape_para( ME_Context *c, ME_DisplayItem *p )
+static HRESULT shape_para( ME_Context *c, ME_Paragraph *para )
 {
-    ME_DisplayItem *di;
     ME_Run *run;
     HRESULT hr;
 
-    for (di = p->next; di != p->member.para.next_para; di = di->next)
+    for (run = para_first_run( para ); run; run = run_next( run ))
     {
-        if (di->type != diRun) continue;
-        run = &di->member.run;
-
         hr = shape_run( c, run );
         if (FAILED( hr ))
         {
-            run->para->nFlags &= ~MEPF_COMPLEX;
+            para->nFlags &= ~MEPF_COMPLEX;
             return hr;
         }
     }
@@ -835,7 +831,7 @@ static void ME_WrapTextParagraph( ME_TextEditor *editor, ME_Context *c, ME_Parag
       ScriptIsComplex( tp->member.para.text->szData, tp->member.para.text->nLen, SIC_COMPLEX ) == S_OK */)
   {
       if (SUCCEEDED( itemize_para( c, para ) ))
-          shape_para( c, para_get_di( para ) );
+          shape_para( c, para );
   }
 
   wc.context = c;
