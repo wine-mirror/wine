@@ -1051,8 +1051,7 @@ static HRESULT WINAPI PngDecoder_Frame_CopyPixels(IWICBitmapFrameDecode *iface,
     PngDecoder *This = impl_from_IWICBitmapFrameDecode(iface);
     TRACE("(%p,%s,%u,%u,%p)\n", iface, debug_wic_rect(prc), cbStride, cbBufferSize, pbBuffer);
 
-    return copy_pixels(This->bpp, This->image_bits,
-        This->width, This->height, This->stride,
+    return decoder_copy_pixels(This->png_decoder, 0,
         prc, cbStride, cbBufferSize, pbBuffer);
 }
 

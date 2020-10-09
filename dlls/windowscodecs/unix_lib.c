@@ -41,6 +41,8 @@
 
 #include "wine/debug.h"
 
+WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
+
 #include "wincodecs_common.h"
 
 static const struct win32_funcs *win32_funcs;
@@ -67,6 +69,7 @@ static const struct unix_funcs unix_funcs = {
     decoder_create,
     decoder_initialize,
     decoder_get_frame_info,
+    decoder_copy_pixels,
     decoder_destroy
 };
 

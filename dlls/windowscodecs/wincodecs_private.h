@@ -286,6 +286,8 @@ struct decoder_funcs
 {
     HRESULT (CDECL *initialize)(struct decoder* This, IStream *stream, struct decoder_stat *st);
     HRESULT (CDECL *get_frame_info)(struct decoder* This, UINT frame, struct decoder_frame *info);
+    HRESULT (CDECL *copy_pixels)(struct decoder* This, UINT frame, const WICRect *prc,
+        UINT stride, UINT buffersize, BYTE *buffer);
     void (CDECL *destroy)(struct decoder* This);
 };
 
@@ -301,6 +303,8 @@ struct win32_funcs
 HRESULT CDECL decoder_create(const CLSID *decoder_clsid, struct decoder_info *info, struct decoder **result);
 HRESULT CDECL decoder_initialize(struct decoder *This, IStream *stream, struct decoder_stat *st);
 HRESULT CDECL decoder_get_frame_info(struct decoder* This, UINT frame, struct decoder_frame *info);
+HRESULT CDECL decoder_copy_pixels(struct decoder* This, UINT frame, const WICRect *prc,
+    UINT stride, UINT buffersize, BYTE *buffer);
 void CDECL decoder_destroy(struct decoder *This);
 
 HRESULT CDECL png_decoder_create(struct decoder_info *info, struct decoder **result);
@@ -310,6 +314,8 @@ struct unix_funcs
     HRESULT (CDECL *decoder_create)(const CLSID *decoder_clsid, struct decoder_info *info, struct decoder **result);
     HRESULT (CDECL *decoder_initialize)(struct decoder *This, IStream *stream, struct decoder_stat *st);
     HRESULT (CDECL *decoder_get_frame_info)(struct decoder* This, UINT frame, struct decoder_frame *info);
+    HRESULT (CDECL *decoder_copy_pixels)(struct decoder* This, UINT frame, const WICRect *prc,
+        UINT stride, UINT buffersize, BYTE *buffer);
     void (CDECL *decoder_destroy)(struct decoder* This);
 };
 

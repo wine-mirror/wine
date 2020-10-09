@@ -60,6 +60,8 @@ MAKE_FUNCPTR(png_get_io_ptr);
 MAKE_FUNCPTR(png_get_pHYs);
 MAKE_FUNCPTR(png_get_PLTE);
 MAKE_FUNCPTR(png_get_tRNS);
+MAKE_FUNCPTR(png_read_end);
+MAKE_FUNCPTR(png_read_image);
 MAKE_FUNCPTR(png_read_info);
 MAKE_FUNCPTR(png_set_bgr);
 MAKE_FUNCPTR(png_set_crc_action);
@@ -107,6 +109,8 @@ static void *load_libpng(void)
         LOAD_FUNCPTR(png_get_pHYs);
         LOAD_FUNCPTR(png_get_PLTE);
         LOAD_FUNCPTR(png_get_tRNS);
+        LOAD_FUNCPTR(png_read_end);
+        LOAD_FUNCPTR(png_read_image);
         LOAD_FUNCPTR(png_read_info);
         LOAD_FUNCPTR(png_set_bgr);
         LOAD_FUNCPTR(png_set_crc_action);
@@ -130,6 +134,8 @@ struct png_decoder
 {
     struct decoder decoder;
     struct decoder_frame decoder_frame;
+    UINT stride;
+    BYTE *image_bits;
 };
 
 static inline struct png_decoder *impl_from_decoder(struct decoder* iface)
@@ -185,6 +191,8 @@ HRESULT CDECL png_decoder_initialize(struct decoder *iface, IStream *stream, str
     png_colorp png_palette;
     int num_palette;
     int i;
+    UINT image_size;
+    png_bytep *row_pointers=NULL;
 
     png_ptr = ppng_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
     if (!png_ptr)
@@ -385,6 +393,33 @@ HRESULT CDECL png_decoder_initialize(struct decoder *iface, IStream *stream, str
         This->decoder_frame.num_colors = 0;
     }
 
+    This->stride = (This->decoder_frame.width * This->decoder_frame.bpp + 7) / 8;
+    image_size = This->stride * This->decoder_frame.height;
+
+    This->image_bits = malloc(image_size);
+    if (!This->image_bits)
+    {
+        hr = E_OUTOFMEMORY;
+        goto end;
+    }
+
+    row_pointers = malloc(sizeof(png_bytep)*This->decoder_frame.height);
+    if (!row_pointers)
+    {
+        hr = E_OUTOFMEMORY;
+        goto end;
+    }
+
+    for (i=0; i<This->decoder_frame.height; i++)
+        row_pointers[i] = This->image_bits + i * This->stride;
+
+    ppng_read_image(png_ptr, row_pointers);
+
+    free(row_pointers);
+    row_pointers = NULL;
+
+    ppng_read_end(png_ptr, end_info);
+
     st->flags = WICBitmapDecoderCapabilityCanDecodeAllImages |
                 WICBitmapDecoderCapabilityCanDecodeSomeImages |
                 WICBitmapDecoderCapabilityCanEnumerateMetadata;
@@ -394,6 +429,12 @@ HRESULT CDECL png_decoder_initialize(struct decoder *iface, IStream *stream, str
 
 end:
     ppng_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
+    free(row_pointers);
+    if (FAILED(hr))
+    {
+        free(This->image_bits);
+        This->image_bits = NULL;
+    }
     return hr;
 }
 
@@ -404,16 +445,28 @@ HRESULT CDECL png_decoder_get_frame_info(struct decoder *iface, UINT frame, stru
     return S_OK;
 }
 
+HRESULT CDECL png_decoder_copy_pixels(struct decoder *iface, UINT frame,
+    const WICRect *prc, UINT stride, UINT buffersize, BYTE *buffer)
+{
+    struct png_decoder *This = impl_from_decoder(iface);
+
+    return copy_pixels(This->decoder_frame.bpp, This->image_bits,
+        This->decoder_frame.width, This->decoder_frame.height, This->stride,
+        prc, stride, buffersize, buffer);
+}
+
 void CDECL png_decoder_destroy(struct decoder* iface)
 {
     struct png_decoder *This = impl_from_decoder(iface);
 
+    free(This->image_bits);
     RtlFreeHeap(GetProcessHeap(), 0, This);
 }
 
 static const struct decoder_funcs png_decoder_vtable = {
     png_decoder_initialize,
     png_decoder_get_frame_info,
+    png_decoder_copy_pixels,
     png_decoder_destroy
 };
 
@@ -435,6 +488,7 @@ HRESULT CDECL png_decoder_create(struct decoder_info *info, struct decoder **res
     }
 
     This->decoder.vtable = &png_decoder_vtable;
+    This->image_bits = NULL;
     *result = &This->decoder;
 
     info->container_format = GUID_ContainerFormatPng;
