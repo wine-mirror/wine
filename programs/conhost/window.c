@@ -840,6 +840,15 @@ static void update_console_font( struct console *console, const WCHAR *font,
     ERR( "Couldn't find a decent font" );
 }
 
+/* get a cell from a relative coordinate in window (takes into account the scrolling) */
+static COORD get_cell( struct console *console, LPARAM lparam )
+{
+    COORD c;
+    c.X = console->active->win.left + (short)LOWORD(lparam) / console->active->font.width;
+    c.Y = console->active->win.left + (short)HIWORD(lparam) / console->active->font.height;
+    return c;
+}
+
 /* get the console bit mask equivalent to the VK_ status in key state */
 static DWORD get_ctrl_state( BYTE *key_state)
 {
@@ -1091,6 +1100,29 @@ static void record_key_input( struct console *console, BOOL down, WPARAM wparam,
     write_console_input( console, &ir, 1, TRUE );
 }
 
+static void record_mouse_input( struct console *console, COORD c, WPARAM wparam, DWORD event )
+{
+    BYTE key_state[256];
+    INPUT_RECORD ir;
+
+    /* MOUSE_EVENTs shouldn't be sent unless ENABLE_MOUSE_INPUT is active */
+    if (!(console->mode & ENABLE_MOUSE_INPUT)) return;
+
+    ir.EventType = MOUSE_EVENT;
+    ir.Event.MouseEvent.dwMousePosition = c;
+    ir.Event.MouseEvent.dwButtonState   = 0;
+    if (wparam & MK_LBUTTON) ir.Event.MouseEvent.dwButtonState |= FROM_LEFT_1ST_BUTTON_PRESSED;
+    if (wparam & MK_MBUTTON) ir.Event.MouseEvent.dwButtonState |= FROM_LEFT_2ND_BUTTON_PRESSED;
+    if (wparam & MK_RBUTTON) ir.Event.MouseEvent.dwButtonState |= RIGHTMOST_BUTTON_PRESSED;
+    if (wparam & MK_CONTROL) ir.Event.MouseEvent.dwButtonState |= LEFT_CTRL_PRESSED;
+    if (wparam & MK_SHIFT)   ir.Event.MouseEvent.dwButtonState |= SHIFT_PRESSED;
+    if (event == MOUSE_WHEELED) ir.Event.MouseEvent.dwButtonState |= wparam & 0xFFFF0000;
+    ir.Event.MouseEvent.dwControlKeyState = get_ctrl_state( key_state );
+    ir.Event.MouseEvent.dwEventFlags = event;
+
+    write_console_input( console, &ir, 1, TRUE );
+}
+
 static void apply_config( struct console *console, const struct console_config *config )
 {
     if (console->active->width != config->sb_width || console->active->height != config->sb_height)
@@ -1155,6 +1187,17 @@ static void apply_config( struct console *console, const struct console_config *
     }
 
     update_window( console );
+}
+
+/* grays / ungrays the menu items according to their state */
+static void set_menu_details( struct console *console, HMENU menu )
+{
+    EnableMenuItem( menu, IDS_COPY, MF_BYCOMMAND |
+                    (console->window->in_selection ? MF_ENABLED : MF_GRAYED) );
+    EnableMenuItem( menu, IDS_PASTE, MF_BYCOMMAND |
+                    (IsClipboardFormatAvailable(CF_UNICODETEXT) ? MF_ENABLED : MF_GRAYED) );
+    EnableMenuItem( menu, IDS_SCROLL, MF_BYCOMMAND | MF_GRAYED );
+    EnableMenuItem( menu, IDS_SEARCH, MF_BYCOMMAND | MF_GRAYED );
 }
 
 static BOOL fill_menu( HMENU menu, BOOL sep )
@@ -1244,6 +1287,7 @@ static LRESULT WINAPI window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
                     console->active->win.left * console->active->font.width,
                     console->active->win.top  * console->active->font.height,
                     SRCCOPY );
+            if (console->window->in_selection) update_selection( console, ps.hdc );
             EndPaint( console->win, &ps );
             break;
         }
@@ -1259,6 +1303,108 @@ static LRESULT WINAPI window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
     case WM_SYSKEYDOWN:
     case WM_SYSKEYUP:
         record_key_input( console, msg == WM_SYSKEYDOWN, wparam, lparam );
+        break;
+
+    case WM_LBUTTONDOWN:
+        if (console->window->quick_edit || console->window->in_selection)
+        {
+            if (console->window->in_selection)
+                update_selection( console, 0 );
+
+            if (console->window->quick_edit && console->window->in_selection)
+            {
+                console->window->in_selection = FALSE;
+            }
+            else
+            {
+                console->window->selection_end = get_cell( console, lparam );
+                console->window->selection_start = console->window->selection_end;
+                SetCapture( console->win );
+                update_selection( console, 0 );
+                console->window->in_selection = TRUE;
+            }
+        }
+        else
+        {
+            record_mouse_input( console, get_cell(console, lparam), wparam, 0 );
+        }
+        break;
+
+    case WM_MOUSEMOVE:
+        if (console->window->quick_edit || console->window->in_selection)
+        {
+            if (GetCapture() == console->win && console->window->in_selection &&
+                (wparam & MK_LBUTTON))
+            {
+                move_selection( console, console->window->selection_start,
+                                get_cell(console, lparam) );
+            }
+        }
+        else
+        {
+            record_mouse_input( console, get_cell(console, lparam), wparam, MOUSE_MOVED );
+        }
+        break;
+
+    case WM_LBUTTONUP:
+        if (console->window->quick_edit || console->window->in_selection)
+        {
+            if (GetCapture() == console->win && console->window->in_selection)
+            {
+                move_selection( console, console->window->selection_start,
+                                get_cell(console, lparam) );
+                ReleaseCapture();
+            }
+        }
+        else
+        {
+            record_mouse_input( console, get_cell(console, lparam), wparam, 0 );
+        }
+        break;
+
+    case WM_RBUTTONDOWN:
+        if ((wparam & (MK_CONTROL|MK_SHIFT)) == console->window->menu_mask)
+        {
+            POINT       pt;
+            pt.x = (short)LOWORD(lparam);
+            pt.y = (short)HIWORD(lparam);
+            ClientToScreen( hwnd, &pt );
+            set_menu_details( console, console->window->popup_menu );
+            TrackPopupMenu( console->window->popup_menu, TPM_LEFTALIGN|TPM_TOPALIGN|TPM_RIGHTBUTTON,
+                            pt.x, pt.y, 0, hwnd, NULL );
+        }
+        else
+        {
+            record_mouse_input( console, get_cell(console, lparam), wparam, 0 );
+        }
+        break;
+
+    case WM_RBUTTONUP:
+        /* no need to track for rbutton up when opening the popup... the event will be
+         * swallowed by TrackPopupMenu */
+    case WM_MBUTTONDOWN:
+    case WM_MBUTTONUP:
+        record_mouse_input( console, get_cell(console, lparam), wparam, 0 );
+        break;
+
+    case WM_LBUTTONDBLCLK:
+    case WM_MBUTTONDBLCLK:
+    case WM_RBUTTONDBLCLK:
+        record_mouse_input( console, get_cell(console, lparam), wparam, DOUBLE_CLICK );
+        break;
+
+    case WM_SETFOCUS:
+        if (console->active->cursor_visible)
+        {
+            CreateCaret( console->win, console->window->cursor_bitmap,
+                         console->active->font.width, console->active->font.height );
+            update_window_cursor( console );
+        }
+        break;
+
+    case WM_KILLFOCUS:
+        if (console->active->cursor_visible)
+            DestroyCaret();
         break;
 
     default:
