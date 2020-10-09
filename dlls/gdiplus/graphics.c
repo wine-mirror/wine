@@ -1374,7 +1374,7 @@ static GpStatus brush_fill_pixels(GpGraphics *graphics, GpBrush *brush,
                 {
                     GpPointF point;
                     point.X = draw_points[0].X + x * x_dx + y * y_dx;
-                    point.Y = draw_points[0].Y + y * x_dy + y * y_dy;
+                    point.Y = draw_points[0].Y + x * x_dy + y * y_dy;
 
                     argb_pixels[x + y*cdwStride] = resample_bitmap_pixel(
                         &src_area, fill->bitmap_bits, bitmap->width, bitmap->height,
