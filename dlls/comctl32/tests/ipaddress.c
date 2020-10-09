@@ -98,7 +98,7 @@ static void test_IPM_SETFOCUS(void)
     EnumChildWindows(hwnd, test_child_enum_proc, (LPARAM)&child_enum);
     ok(child_enum.count == 4, "Unexpected child count %u.\n", child_enum.count);
 
-    for (i = 0; i < 3; ++i)
+    for (i = 0; i < 4; ++i)
         SendMessageA(child_enum.fields[i], EM_SETSEL, -1, 0);
 
     SendMessageA(child_enum.fields[0], EM_GETSEL, (WPARAM)&from, (LPARAM)&to);
@@ -130,7 +130,7 @@ static void test_WM_SETFOCUS(void)
 
     SetFocus(child_enum.fields[3]);
 
-    for (i = 0; i < 3; ++i)
+    for (i = 0; i < 4; ++i)
         SendMessageA(child_enum.fields[i], EM_SETSEL, -1, 0);
 
     SendMessageA(child_enum.fields[0], EM_GETSEL, (WPARAM)&from, (LPARAM)&to);
