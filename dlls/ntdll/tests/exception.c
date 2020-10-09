@@ -6423,6 +6423,172 @@ done:
     return ExceptionContinueExecution;
 }
 
+struct call_func_offsets
+{
+    unsigned int func_addr;
+    unsigned int func_param1;
+    unsigned int func_param2;
+    unsigned int ymm0_save;
+};
+#ifdef __x86_64__
+static BYTE call_func_code_set_ymm0[] =
+{
+    0x55,                         /* pushq %rbp */
+    0x48, 0xb8,                   /* mov imm,%rax */
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+
+    0x48, 0xb9,                   /* mov imm,%rcx */
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+
+    0x48, 0xba,                   /* mov imm,%rdx */
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+
+    0x48, 0xbd,                   /* mov imm,%rbp */
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+
+    0xc5, 0xfc, 0x10, 0x45, 0x00, /* vmovups (%rbp),%ymm0 */
+    0x48, 0x83, 0xec, 0x20,       /* sub $0x20,%rsp */
+    0xff, 0xd0,                   /* call *rax */
+    0x48, 0x83, 0xc4, 0x20,       /* add $0x20,%rsp */
+    0xc5, 0xfc, 0x11, 0x45, 0x00, /* vmovups %ymm0,(%rbp) */
+    0x5d,                         /* popq %rbp */
+    0xc3,                         /* ret  */
+};
+static BYTE call_func_code_reset_ymm_state[] =
+{
+    0x55,                         /* pushq %rbp */
+    0x48, 0xb8,                   /* mov imm,%rax */
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+
+    0x48, 0xb9,                   /* mov imm,%rcx */
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+
+    0x48, 0xba,                   /* mov imm,%rdx */
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+
+    0x48, 0xbd,                   /* mov imm,%rbp */
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+
+    0xc5, 0xf8, 0x77,             /* vzeroupper */
+    0x0f, 0x57, 0xc0,             /* xorps  %xmm0,%xmm0 */
+    0x48, 0x83, 0xec, 0x20,       /* sub $0x20,%rsp */
+    0xff, 0xd0,                   /* call *rax */
+    0x48, 0x83, 0xc4, 0x20,       /* add $0x20,%rsp */
+    0xc5, 0xfc, 0x11, 0x45, 0x00, /* vmovups %ymm0,(%rbp) */
+    0x5d,                         /* popq %rbp */
+    0xc3,                         /* ret  */
+};
+static const struct call_func_offsets call_func_offsets = {3, 13, 23, 33};
+#else
+static BYTE call_func_code_set_ymm0[] =
+{
+    0x55,                         /* pushl %ebp */
+    0xb8,                         /* mov imm,%eax */
+    0x00, 0x00, 0x00, 0x00,
+
+    0xb9,                         /* mov imm,%ecx */
+    0x00, 0x00, 0x00, 0x00,
+
+    0xba,                         /* mov imm,%edx */
+    0x00, 0x00, 0x00, 0x00,
+
+    0xbd,                         /* mov imm,%ebp */
+    0x00, 0x00, 0x00, 0x00,
+
+    0x81, 0xfa, 0xef, 0xbe, 0xad, 0xde,
+                                  /* cmpl $0xdeadbeef, %edx */
+    0x74, 0x01,                   /* je 1f */
+    0x52,                         /* pushl %edx */
+    0x51,                         /* 1: pushl %ecx */
+    0xc5, 0xfc, 0x10, 0x45, 0x00, /* vmovups (%ebp),%ymm0 */
+    0xff, 0xd0,                   /* call *eax */
+    0xc5, 0xfc, 0x11, 0x45, 0x00, /* vmovups %ymm0,(%ebp) */
+    0x5d,                         /* popl %ebp */
+    0xc3,                         /* ret  */
+};
+static BYTE call_func_code_reset_ymm_state[] =
+{
+    0x55,                         /* pushl %ebp */
+    0xb8,                         /* mov imm,%eax */
+    0x00, 0x00, 0x00, 0x00,
+
+    0xb9,                         /* mov imm,%ecx */
+    0x00, 0x00, 0x00, 0x00,
+
+    0xba,                         /* mov imm,%edx */
+    0x00, 0x00, 0x00, 0x00,
+
+    0xbd,                         /* mov imm,%ebp */
+    0x00, 0x00, 0x00, 0x00,
+
+    0x81, 0xfa, 0xef, 0xbe, 0xad, 0xde,
+                                  /* cmpl $0xdeadbeef, %edx */
+    0x74, 0x01,                   /* je 1f */
+    0x52,                         /* pushl %edx */
+    0x51,                         /* 1: pushl %ecx */
+    0xc5, 0xf8, 0x77,             /* vzeroupper */
+    0x0f, 0x57, 0xc0,             /* xorps  %xmm0,%xmm0 */
+    0xff, 0xd0,                   /* call *eax */
+    0xc5, 0xfc, 0x11, 0x45, 0x00, /* vmovups %ymm0,(%ebp) */
+    0x5d,                         /* popl %ebp */
+    0xc3,                         /* ret  */
+};
+static const struct call_func_offsets call_func_offsets = {2, 7, 12, 17};
+#endif
+
+static DWORD WINAPI test_extended_context_thread(void *arg)
+{
+    ULONG (WINAPI* func)(void) = code_mem;
+    static unsigned int data[8];
+    unsigned int i;
+
+    memcpy(code_mem, call_func_code_reset_ymm_state, sizeof(call_func_code_reset_ymm_state));
+    *(void **)((BYTE *)code_mem + call_func_offsets.func_addr) = SuspendThread;
+    *(void **)((BYTE *)code_mem + call_func_offsets.func_param1) = (void *)GetCurrentThread();
+    *(void **)((BYTE *)code_mem + call_func_offsets.func_param2) = (void *)0xdeadbeef;
+    *(void **)((BYTE *)code_mem + call_func_offsets.ymm0_save) = data;
+    func();
+
+    for (i = 0; i < 4; ++i)
+        ok(!data[i], "Got unexpected data %#x, i %u.\n", data[i], i);
+    for (; i < 8; ++i)
+        ok(data[i] == 0x48484848, "Got unexpected data %#x, i %u.\n", data[i], i);
+    memset(data, 0x68, sizeof(data));
+
+    memcpy(code_mem, call_func_code_set_ymm0, sizeof(call_func_code_set_ymm0));
+    *(void **)((BYTE *)code_mem + call_func_offsets.func_addr) = SuspendThread;
+    *(void **)((BYTE *)code_mem + call_func_offsets.func_param1) = (void *)GetCurrentThread();
+    *(void **)((BYTE *)code_mem + call_func_offsets.func_param2) = (void *)0xdeadbeef;
+    *(void **)((BYTE *)code_mem + call_func_offsets.ymm0_save) = data;
+    func();
+
+    memcpy(code_mem, call_func_code_reset_ymm_state, sizeof(call_func_code_reset_ymm_state));
+    *(void **)((BYTE *)code_mem + call_func_offsets.func_addr) = SuspendThread;
+    *(void **)((BYTE *)code_mem + call_func_offsets.func_param1) = (void *)GetCurrentThread();
+    *(void **)((BYTE *)code_mem + call_func_offsets.func_param2) = (void *)0xdeadbeef;
+    *(void **)((BYTE *)code_mem + call_func_offsets.ymm0_save) = data;
+    func();
+    return 0;
+}
+
+static void wait_for_thread_next_suspend(HANDLE thread)
+{
+    DWORD result;
+
+    result = ResumeThread(thread);
+    ok(result == 1, "Got unexpexted suspend count %u.\n", result);
+
+    /* NtQueryInformationThread(ThreadSuspendCount, ...) is not supported on older Windows. */
+    while (!(result = SuspendThread(thread)))
+    {
+        ResumeThread(thread);
+        Sleep(1);
+    }
+    ok(result == 1, "Got unexpexted suspend count %u.\n", result);
+    result = ResumeThread(thread);
+    ok(result == 2, "Got unexpexted suspend count %u.\n", result);
+}
+
 #define CONTEXT_NATIVE (CONTEXT_XSTATE & CONTEXT_CONTROL)
 
 static void test_extended_context(void)
@@ -6461,115 +6627,6 @@ static void test_extended_context(void)
         0xc5, 0xfc, 0x11, 0x00,       /* vmovups %ymm0,(%ax) */
         0xc3,                         /* ret  */
     };
-
-    struct call_func_offsets
-    {
-        unsigned int func_addr;
-        unsigned int func_param1;
-        unsigned int func_param2;
-        unsigned int ymm0_save;
-    };
-#ifdef __x86_64__
-    static BYTE call_func_code_set_ymm0[] =
-    {
-        0x55,                         /* pushq %rbp */
-        0x48, 0xb8,                   /* mov imm,%rax */
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-
-        0x48, 0xb9,                   /* mov imm,%rcx */
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-
-        0x48, 0xba,                   /* mov imm,%rdx */
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-
-        0x48, 0xbd,                   /* mov imm,%rbp */
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-
-        0xc5, 0xfc, 0x10, 0x45, 0x00, /* vmovups (%rbp),%ymm0 */
-        0xff, 0xd0,                   /* call *rax */
-        0xc5, 0xfc, 0x11, 0x45, 0x00, /* vmovups %ymm0,(%rbp) */
-        0x5d,                         /* popq %rbp */
-        0xc3,                         /* ret  */
-    };
-    static BYTE call_func_code_reset_ymm_state[] =
-    {
-        0x55,                         /* pushq %rbp */
-        0x48, 0xb8,                   /* mov imm,%rax */
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-
-        0x48, 0xb9,                   /* mov imm,%rcx */
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-
-        0x48, 0xba,                   /* mov imm,%rdx */
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-
-        0x48, 0xbd,                   /* mov imm,%rbp */
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-
-        0xc5, 0xf8, 0x77,             /* vzeroupper */
-        0x0f, 0x57, 0xc0,             /* xorps  %xmm0,%xmm0 */
-        0xff, 0xd0,                   /* call *rax */
-        0xc5, 0xfc, 0x11, 0x45, 0x00, /* vmovups %ymm0,(%rbp) */
-        0x5d,                         /* popq %rbp */
-        0xc3,                         /* ret  */
-    };
-    static const struct call_func_offsets call_func_offsets = {3, 13, 23, 33};
-#else
-    static BYTE call_func_code_set_ymm0[] =
-    {
-        0x55,                         /* pushl %ebp */
-        0xb8,                         /* mov imm,%eax */
-        0x00, 0x00, 0x00, 0x00,
-
-        0xb9,                         /* mov imm,%ecx */
-        0x00, 0x00, 0x00, 0x00,
-
-        0xba,                         /* mov imm,%edx */
-        0x00, 0x00, 0x00, 0x00,
-
-        0xbd,                         /* mov imm,%ebp */
-        0x00, 0x00, 0x00, 0x00,
-
-        0x81, 0xfa, 0xef, 0xbe, 0xad, 0xde,
-                                      /* cmpl $0xdeadbeef, %edx */
-        0x74, 0x01,                   /* je 1f */
-        0x52,                         /* pushl %edx */
-        0x51,                         /* 1: pushl %ecx */
-        0xc5, 0xfc, 0x10, 0x45, 0x00, /* vmovups (%ebp),%ymm0 */
-        0xff, 0xd0,                   /* call *eax */
-        0xc5, 0xfc, 0x11, 0x45, 0x00, /* vmovups %ymm0,(%ebp) */
-        0x5d,                         /* popl %ebp */
-        0xc3,                         /* ret  */
-    };
-    static BYTE call_func_code_reset_ymm_state[] =
-    {
-        0x55,                         /* pushl %ebp */
-        0xb8,                         /* mov imm,%eax */
-        0x00, 0x00, 0x00, 0x00,
-
-        0xb9,                         /* mov imm,%ecx */
-        0x00, 0x00, 0x00, 0x00,
-
-        0xba,                         /* mov imm,%edx */
-        0x00, 0x00, 0x00, 0x00,
-
-        0xbd,                         /* mov imm,%ebp */
-        0x00, 0x00, 0x00, 0x00,
-
-        0x81, 0xfa, 0xef, 0xbe, 0xad, 0xde,
-                                      /* cmpl $0xdeadbeef, %edx */
-        0x74, 0x01,                   /* je 1f */
-        0x52,                         /* pushl %edx */
-        0x51,                         /* 1: pushl %ecx */
-        0xc5, 0xf8, 0x77,             /* vzeroupper */
-        0x0f, 0x57, 0xc0,             /* xorps  %xmm0,%xmm0 */
-        0xff, 0xd0,                   /* call *eax */
-        0xc5, 0xfc, 0x11, 0x45, 0x00, /* vmovups %ymm0,(%ebp) */
-        0x5d,                         /* popl %ebp */
-        0xc3,                         /* ret  */
-    };
-    static const struct call_func_offsets call_func_offsets = {2, 7, 12, 17};
-#endif
 
     static const struct
     {
@@ -6622,6 +6679,7 @@ static void test_extended_context(void)
     CONTEXT_EX *context_ex;
     CONTEXT *context;
     unsigned data[8];
+    HANDLE thread;
     ULONG64 mask;
     XSTATE *xs;
     BOOL bret;
@@ -7396,6 +7454,92 @@ static void test_extended_context(void)
 
     for (i = 0; i < 8; ++i)
         ok(data[i] == test_extended_context_data[i], "Got unexpected data %#x, i %u.\n", data[i], i);
+
+    /* Test GetThreadContext for the other thread. */
+    thread = CreateThread(NULL, 0, test_extended_context_thread, 0, CREATE_SUSPENDED, NULL);
+    ok(!!thread, "Failed to create thread.\n");
+
+    bret = pInitializeContext(context_buffer, CONTEXT_FULL | CONTEXT_XSTATE | CONTEXT_FLOATING_POINT,
+            &context, &length);
+    ok(bret, "Got unexpected bret %#x.\n", bret);
+    memset(&xs->YmmContext, 0xcc, sizeof(xs->YmmContext));
+    context_ex = (CONTEXT_EX *)(context + 1);
+    xs = (XSTATE *)((BYTE *)context_ex + context_ex->XState.Offset);
+    pSetXStateFeaturesMask(context, 4);
+
+    bret = GetThreadContext(thread, context);
+    ok(bret, "Got unexpected bret %#x, GetLastError() %u.\n", bret, GetLastError());
+    ok(!xs->Mask, "Got unexpected Mask %s.\n", wine_dbgstr_longlong(xs->Mask));
+    ok(xs->CompactionMask == expected_compaction, "Got unexpected CompactionMask %s.\n",
+            wine_dbgstr_longlong(xs->CompactionMask));
+    for (i = 0; i < 16 * 4; ++i)
+        ok(((ULONG *)&xs->YmmContext)[i] == 0xcccccccc, "Got unexpected value %#x, i %u.\n",
+                ((ULONG *)&xs->YmmContext)[i], i);
+
+    pSetXStateFeaturesMask(context, 4);
+    memset(&xs->YmmContext, 0, sizeof(xs->YmmContext));
+    bret = SetThreadContext(thread, context);
+    ok(bret, "Got unexpected bret %#x, GetLastError() %u.\n", bret, GetLastError());
+
+    memset(&xs->YmmContext, 0xcc, sizeof(xs->YmmContext));
+    bret = GetThreadContext(thread, context);
+    ok(bret, "Got unexpected bret %#x, GetLastError() %u.\n", bret, GetLastError());
+    ok(!xs->Mask || broken(xs->Mask == 4), "Got unexpected Mask %s.\n", wine_dbgstr_longlong(xs->Mask));
+    ok(xs->CompactionMask == expected_compaction, "Got unexpected CompactionMask %s.\n",
+            wine_dbgstr_longlong(xs->CompactionMask));
+    for (i = 0; i < 16 * 4; ++i)
+        ok(((ULONG *)&xs->YmmContext)[i] == 0xcccccccc || broken(xs->Mask == 4 && !((ULONG *)&xs->YmmContext)[i]),
+                "Got unexpected value %#x, i %u.\n", ((ULONG *)&xs->YmmContext)[i], i);
+
+    pSetXStateFeaturesMask(context, 4);
+    memset(&xs->YmmContext, 0x28, sizeof(xs->YmmContext));
+    bret = SetThreadContext(thread, context);
+    ok(bret, "Got unexpected bret %#x, GetLastError() %u.\n", bret, GetLastError());
+    memset(&xs->YmmContext, 0xcc, sizeof(xs->YmmContext));
+    bret = GetThreadContext(thread, context);
+    ok(bret, "Got unexpected bret %#x, GetLastError() %u.\n", bret, GetLastError());
+    ok(xs->Mask == 4, "Got unexpected Mask %s.\n", wine_dbgstr_longlong(xs->Mask));
+    ok(xs->CompactionMask == expected_compaction, "Got unexpected CompactionMask %s.\n",
+            wine_dbgstr_longlong(xs->CompactionMask));
+    for (i = 0; i < 16 * 4; ++i)
+        ok(((ULONG *)&xs->YmmContext)[i] == 0x28282828, "Got unexpected value %#x, i %u.\n",
+                ((ULONG *)&xs->YmmContext)[i], i);
+
+    wait_for_thread_next_suspend(thread);
+
+    bret = GetThreadContext(thread, context);
+    ok(bret, "Got unexpected bret %#x, GetLastError() %u.\n", bret, GetLastError());
+    pSetXStateFeaturesMask(context, 4);
+    memset(&xs->YmmContext, 0x48, sizeof(xs->YmmContext));
+    bret = SetThreadContext(thread, context);
+    ok(bret, "Got unexpected bret %#x, GetLastError() %u.\n", bret, GetLastError());
+
+    wait_for_thread_next_suspend(thread);
+
+    memset(&xs->YmmContext, 0xcc, sizeof(xs->YmmContext));
+    bret = GetThreadContext(thread, context);
+    ok(bret, "Got unexpected bret %#x, GetLastError() %u.\n", bret, GetLastError());
+    ok(xs->Mask == 4, "Got unexpected Mask %s.\n", wine_dbgstr_longlong(xs->Mask));
+
+    for (i = 0; i < 4; ++i)
+        ok(((ULONG *)&xs->YmmContext)[i] == 0x68686868, "Got unexpected value %#x, i %u.\n",
+                ((ULONG *)&xs->YmmContext)[i], i);
+
+    wait_for_thread_next_suspend(thread);
+
+    memset(&xs->YmmContext, 0xcc, sizeof(xs->YmmContext));
+    bret = GetThreadContext(thread, context);
+    ok(bret, "Got unexpected bret %#x, GetLastError() %u.\n", bret, GetLastError());
+    ok(xs->Mask == (sizeof(void *) == 4 ? 4 : 0), "Got unexpected Mask %s.\n", wine_dbgstr_longlong(xs->Mask));
+    for (i = 0; i < 16 * 4; ++i)
+        ok(((ULONG *)&xs->YmmContext)[i] == (sizeof(void *) == 4 ? (i < 8 * 4 ? 0 : 0x48484848) : 0xcccccccc),
+                "Got unexpected value %#x, i %u.\n", ((ULONG *)&xs->YmmContext)[i], i);
+
+    bret = ResumeThread(thread);
+    ok(bret, "Got unexpected bret %#x, GetLastError() %u.\n", bret, GetLastError());
+
+    WaitForSingleObject(thread, INFINITE);
+    CloseHandle(thread);
 }
 
 struct modified_range
