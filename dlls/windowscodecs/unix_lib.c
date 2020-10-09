@@ -43,6 +43,18 @@
 
 #include "wincodecs_common.h"
 
+static const struct win32_funcs *win32_funcs;
+
+HRESULT CDECL stream_read(IStream *stream, void *buffer, ULONG read, ULONG *bytes_read)
+{
+    return win32_funcs->stream_read(stream, buffer, read, bytes_read);
+}
+
+HRESULT CDECL stream_seek(IStream *stream, LONGLONG ofs, DWORD origin, ULONGLONG *new_position)
+{
+    return win32_funcs->stream_seek(stream, ofs, origin, new_position);
+}
+
 HRESULT CDECL decoder_create(const CLSID *decoder_clsid, struct decoder_info *info, struct decoder **result)
 {
     if (IsEqualGUID(decoder_clsid, &CLSID_WICPngDecoder))
@@ -53,12 +65,15 @@ HRESULT CDECL decoder_create(const CLSID *decoder_clsid, struct decoder_info *in
 
 static const struct unix_funcs unix_funcs = {
     decoder_create,
+    decoder_initialize,
     decoder_destroy
 };
 
 NTSTATUS CDECL __wine_init_unix_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )
 {
     if (reason != DLL_PROCESS_ATTACH) return STATUS_SUCCESS;
+
+    win32_funcs = ptr_in;
 
     *(const struct unix_funcs **)ptr_out = &unix_funcs;
     return STATUS_SUCCESS;

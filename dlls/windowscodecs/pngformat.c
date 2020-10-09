@@ -446,6 +446,7 @@ typedef struct {
     IStream *stream;
     struct decoder *png_decoder;
     struct decoder_info decoder_info;
+    struct decoder_stat file_info;
     png_structp png_ptr;
     png_infop info_ptr;
     png_infop end_info;
@@ -543,6 +544,7 @@ static ULONG WINAPI PngDecoder_Release(IWICBitmapDecoder *iface)
 static HRESULT WINAPI PngDecoder_QueryCapability(IWICBitmapDecoder *iface, IStream *stream,
     DWORD *capability)
 {
+    PngDecoder *This = impl_from_IWICBitmapDecoder(iface);
     HRESULT hr;
 
     TRACE("(%p,%p,%p)\n", iface, stream, capability);
@@ -552,9 +554,7 @@ static HRESULT WINAPI PngDecoder_QueryCapability(IWICBitmapDecoder *iface, IStre
     hr = IWICBitmapDecoder_Initialize(iface, stream, WICDecodeMetadataCacheOnDemand);
     if (hr != S_OK) return hr;
 
-    *capability = WICBitmapDecoderCapabilityCanDecodeAllImages |
-                  WICBitmapDecoderCapabilityCanDecodeSomeImages;
-    /* FIXME: WICBitmapDecoderCapabilityCanEnumerateMetadata */
+    *capability = (This->file_info.flags & DECODER_FLAGS_CAPABILITY_MASK);
     return S_OK;
 }
 
@@ -594,6 +594,16 @@ static HRESULT WINAPI PngDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
     TRACE("(%p,%p,%x)\n", iface, pIStream, cacheOptions);
 
     EnterCriticalSection(&This->lock);
+
+    if (This->initialized)
+    {
+        hr = WINCODEC_ERR_WRONGSTATE;
+        goto end;
+    }
+
+    hr = decoder_initialize(This->png_decoder, pIStream, &This->file_info);
+    if (FAILED(hr))
+        goto end;
 
     /* initialize libpng */
     This->png_ptr = ppng_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
@@ -896,9 +906,12 @@ static HRESULT WINAPI PngDecoder_GetThumbnail(IWICBitmapDecoder *iface,
 static HRESULT WINAPI PngDecoder_GetFrameCount(IWICBitmapDecoder *iface,
     UINT *pCount)
 {
+    PngDecoder *This = impl_from_IWICBitmapDecoder(iface);
     if (!pCount) return E_INVALIDARG;
 
-    *pCount = 1;
+    if (!This->initialized) return WINCODEC_ERR_WRONGSTATE;
+
+    *pCount = This->file_info.frame_count;
     return S_OK;
 }
 

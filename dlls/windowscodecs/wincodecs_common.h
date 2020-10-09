@@ -16,6 +16,11 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+HRESULT CDECL decoder_initialize(struct decoder *decoder, IStream *stream, struct decoder_stat *st)
+{
+    return decoder->vtable->initialize(decoder, stream, st);
+}
+
 void CDECL decoder_destroy(struct decoder *decoder)
 {
     decoder->vtable->destroy(decoder);

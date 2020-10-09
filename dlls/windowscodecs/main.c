@@ -255,6 +255,25 @@ HRESULT write_source(IWICBitmapFrameEncode *iface,
     return hr;
 }
 
+HRESULT CDECL stream_read(IStream *stream, void *buffer, ULONG read, ULONG *bytes_read)
+{
+    return IStream_Read(stream, buffer, read, bytes_read);
+}
+
+HRESULT CDECL stream_seek(IStream *stream, LONGLONG ofs, DWORD origin, ULONGLONG *new_position)
+{
+    HRESULT hr;
+    LARGE_INTEGER ofs_large;
+    ULARGE_INTEGER pos_large;
+
+    ofs_large.QuadPart = ofs;
+    hr = IStream_Seek(stream, ofs_large, origin, &pos_large);
+    if (new_position)
+        *new_position = pos_large.QuadPart;
+
+    return hr;
+}
+
 void reverse_bgr8(UINT bytesperpixel, LPBYTE bits, UINT width, UINT height, INT stride)
 {
     UINT x, y;

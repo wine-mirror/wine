@@ -259,6 +259,14 @@ struct decoder_info
     CLSID clsid;
 };
 
+#define DECODER_FLAGS_CAPABILITY_MASK 0x1f
+
+struct decoder_stat
+{
+    DWORD flags;
+    DWORD frame_count;
+};
+
 struct decoder
 {
     const struct decoder_funcs *vtable;
@@ -266,10 +274,21 @@ struct decoder
 
 struct decoder_funcs
 {
+    HRESULT (CDECL *initialize)(struct decoder* This, IStream *stream, struct decoder_stat *st);
     void (CDECL *destroy)(struct decoder* This);
 };
 
+HRESULT CDECL stream_read(IStream *stream, void *buffer, ULONG read, ULONG *bytes_read);
+HRESULT CDECL stream_seek(IStream *stream, LONGLONG ofs, DWORD origin, ULONGLONG *new_position);
+
+struct win32_funcs
+{
+    HRESULT (CDECL *stream_read)(IStream *stream, void *buffer, ULONG read, ULONG *bytes_read);
+    HRESULT (CDECL *stream_seek)(IStream *stream, LONGLONG ofs, DWORD origin, ULONGLONG *new_position);
+};
+
 HRESULT CDECL decoder_create(const CLSID *decoder_clsid, struct decoder_info *info, struct decoder **result);
+HRESULT CDECL decoder_initialize(struct decoder *This, IStream *stream, struct decoder_stat *st);
 void CDECL decoder_destroy(struct decoder *This);
 
 HRESULT CDECL png_decoder_create(struct decoder_info *info, struct decoder **result);
@@ -277,6 +296,7 @@ HRESULT CDECL png_decoder_create(struct decoder_info *info, struct decoder **res
 struct unix_funcs
 {
     HRESULT (CDECL *decoder_create)(const CLSID *decoder_clsid, struct decoder_info *info, struct decoder **result);
+    HRESULT (CDECL *decoder_initialize)(struct decoder *This, IStream *stream, struct decoder_stat *st);
     void (CDECL *decoder_destroy)(struct decoder* This);
 };
 

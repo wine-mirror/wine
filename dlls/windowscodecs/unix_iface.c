@@ -39,9 +39,14 @@ static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
 
 static const struct unix_funcs *unix_funcs;
 
+static const struct win32_funcs win32_funcs = {
+    stream_read,
+    stream_seek
+};
+
 static BOOL WINAPI load_unixlib( INIT_ONCE *once, void *param, void **context )
 {
-    __wine_init_unix_lib( windowscodecs_module, DLL_PROCESS_ATTACH, NULL, &unix_funcs );
+    __wine_init_unix_lib( windowscodecs_module, DLL_PROCESS_ATTACH, &win32_funcs, &unix_funcs );
     return TRUE;
 }
 
@@ -61,6 +66,12 @@ static inline struct decoder_wrapper *impl_from_decoder(struct decoder* iface)
     return CONTAINING_RECORD(iface, struct decoder_wrapper, win32_decoder);
 }
 
+HRESULT CDECL decoder_wrapper_initialize(struct decoder* iface, IStream* stream, struct decoder_stat *st)
+{
+    struct decoder_wrapper* This = impl_from_decoder(iface);
+    return unix_funcs->decoder_initialize(This->unix_decoder, stream, st);
+}
+
 void CDECL decoder_wrapper_destroy(struct decoder* iface)
 {
     struct decoder_wrapper* This = impl_from_decoder(iface);
@@ -69,6 +80,7 @@ void CDECL decoder_wrapper_destroy(struct decoder* iface)
 }
 
 static const struct decoder_funcs decoder_wrapper_vtable = {
+    decoder_wrapper_initialize,
     decoder_wrapper_destroy
 };
 
