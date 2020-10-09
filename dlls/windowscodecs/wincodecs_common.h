@@ -37,6 +37,12 @@ HRESULT CDECL decoder_get_metadata_blocks(struct decoder *decoder, UINT frame, U
     return decoder->vtable->get_metadata_blocks(decoder, frame, count, blocks);
 }
 
+HRESULT CDECL decoder_get_color_context(struct decoder *decoder, UINT frame,
+    UINT num, BYTE **data, DWORD *datasize)
+{
+    return decoder->vtable->get_color_context(decoder, frame, num, data, datasize);
+}
+
 void CDECL decoder_destroy(struct decoder *decoder)
 {
     decoder->vtable->destroy(decoder);

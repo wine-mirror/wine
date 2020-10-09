@@ -275,6 +275,7 @@ struct decoder_frame
     UINT width, height;
     UINT bpp;
     double dpix, dpiy;
+    DWORD num_color_contexts;
     DWORD num_colors;
     WICColor palette[256];
 };
@@ -299,6 +300,8 @@ struct decoder_funcs
         UINT stride, UINT buffersize, BYTE *buffer);
     HRESULT (CDECL *get_metadata_blocks)(struct decoder* This, UINT frame, UINT *count,
         struct decoder_block **blocks);
+    HRESULT (CDECL *get_color_context)(struct decoder* This, UINT frame, UINT num,
+        BYTE **data, DWORD *datasize);
     void (CDECL *destroy)(struct decoder* This);
 };
 
@@ -318,6 +321,8 @@ HRESULT CDECL decoder_copy_pixels(struct decoder* This, UINT frame, const WICRec
     UINT stride, UINT buffersize, BYTE *buffer);
 HRESULT CDECL decoder_get_metadata_blocks(struct decoder* This, UINT frame, UINT *count,
     struct decoder_block **blocks);
+HRESULT CDECL decoder_get_color_context(struct decoder* This, UINT frame, UINT num,
+    BYTE **data, DWORD *datasize);
 void CDECL decoder_destroy(struct decoder *This);
 
 HRESULT CDECL png_decoder_create(struct decoder_info *info, struct decoder **result);
@@ -331,6 +336,8 @@ struct unix_funcs
         UINT stride, UINT buffersize, BYTE *buffer);
     HRESULT (CDECL *decoder_get_metadata_blocks)(struct decoder* This, UINT frame, UINT *count,
         struct decoder_block **blocks);
+    HRESULT (CDECL *decoder_get_color_context)(struct decoder* This, UINT frame, UINT num,
+        BYTE **data, DWORD *datasize);
     void (CDECL *decoder_destroy)(struct decoder* This);
 };
 

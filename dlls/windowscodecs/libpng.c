@@ -54,6 +54,7 @@ MAKE_FUNCPTR(png_error);
 MAKE_FUNCPTR(png_get_bit_depth);
 MAKE_FUNCPTR(png_get_color_type);
 MAKE_FUNCPTR(png_get_error_ptr);
+MAKE_FUNCPTR(png_get_iCCP);
 MAKE_FUNCPTR(png_get_image_height);
 MAKE_FUNCPTR(png_get_image_width);
 MAKE_FUNCPTR(png_get_io_ptr);
@@ -105,6 +106,7 @@ static void *load_libpng(void)
         LOAD_FUNCPTR(png_get_error_ptr);
         LOAD_FUNCPTR(png_get_image_height);
         LOAD_FUNCPTR(png_get_image_width);
+        LOAD_FUNCPTR(png_get_iCCP);
         LOAD_FUNCPTR(png_get_io_ptr);
         LOAD_FUNCPTR(png_get_pHYs);
         LOAD_FUNCPTR(png_get_PLTE);
@@ -137,6 +139,8 @@ struct png_decoder
     struct decoder_frame decoder_frame;
     UINT stride;
     BYTE *image_bits;
+    BYTE *color_profile;
+    DWORD color_profile_len;
 };
 
 static inline struct png_decoder *impl_from_decoder(struct decoder* iface)
@@ -194,6 +198,10 @@ HRESULT CDECL png_decoder_initialize(struct decoder *iface, IStream *stream, str
     int i;
     UINT image_size;
     png_bytep *row_pointers=NULL;
+    png_charp cp_name;
+    png_bytep cp_profile;
+    png_uint_32 cp_len;
+    int cp_compression;
 
     png_ptr = ppng_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
     if (!png_ptr)
@@ -351,6 +359,22 @@ HRESULT CDECL png_decoder_initialize(struct decoder *iface, IStream *stream, str
         This->decoder_frame.dpix = This->decoder_frame.dpiy = 96.0;
     }
 
+    ret = ppng_get_iCCP(png_ptr, info_ptr, &cp_name, &cp_compression, &cp_profile, &cp_len);
+    if (ret)
+    {
+        This->decoder_frame.num_color_contexts = 1;
+        This->color_profile_len = cp_len;
+        This->color_profile = malloc(cp_len);
+        if (!This->color_profile)
+        {
+            hr = E_OUTOFMEMORY;
+            goto end;
+        }
+        memcpy(This->color_profile, cp_profile, cp_len);
+    }
+    else
+        This->decoder_frame.num_color_contexts = 0;
+
     if (color_type == PNG_COLOR_TYPE_PALETTE)
     {
         ret = ppng_get_PLTE(png_ptr, info_ptr, &png_palette, &num_palette);
@@ -437,6 +461,8 @@ end:
     {
         free(This->image_bits);
         This->image_bits = NULL;
+        free(This->color_profile);
+        This->color_profile = NULL;
     }
     return hr;
 }
@@ -531,11 +557,28 @@ end:
     return hr;
 }
 
+HRESULT CDECL png_decoder_get_color_context(struct decoder* iface, UINT frame, UINT num,
+    BYTE **data, DWORD *datasize)
+{
+    struct png_decoder *This = impl_from_decoder(iface);
+
+    *data = RtlAllocateHeap(GetProcessHeap(), 0, This->color_profile_len);
+    *datasize = This->color_profile_len;
+
+    if (!*data)
+        return E_OUTOFMEMORY;
+
+    memcpy(*data, This->color_profile, This->color_profile_len);
+
+    return S_OK;
+}
+
 void CDECL png_decoder_destroy(struct decoder* iface)
 {
     struct png_decoder *This = impl_from_decoder(iface);
 
     free(This->image_bits);
+    free(This->color_profile);
     RtlFreeHeap(GetProcessHeap(), 0, This);
 }
 
@@ -544,6 +587,7 @@ static const struct decoder_funcs png_decoder_vtable = {
     png_decoder_get_frame_info,
     png_decoder_copy_pixels,
     png_decoder_get_metadata_blocks,
+    png_decoder_get_color_context,
     png_decoder_destroy
 };
 
@@ -566,6 +610,7 @@ HRESULT CDECL png_decoder_create(struct decoder_info *info, struct decoder **res
 
     This->decoder.vtable = &png_decoder_vtable;
     This->image_bits = NULL;
+    This->color_profile = NULL;
     *result = &This->decoder;
 
     info->container_format = GUID_ContainerFormatPng;

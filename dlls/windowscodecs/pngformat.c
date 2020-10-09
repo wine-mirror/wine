@@ -976,37 +976,34 @@ static HRESULT WINAPI PngDecoder_Frame_GetColorContexts(IWICBitmapFrameDecode *i
     UINT cCount, IWICColorContext **ppIColorContexts, UINT *pcActualCount)
 {
     PngDecoder *This = impl_from_IWICBitmapFrameDecode(iface);
-    png_charp name;
+    HRESULT hr=S_OK;
     BYTE *profile;
-    png_uint_32 len;
-    int compression_type;
-    HRESULT hr;
+    DWORD profile_len;
 
     TRACE("(%p,%u,%p,%p)\n", iface, cCount, ppIColorContexts, pcActualCount);
 
     if (!pcActualCount) return E_INVALIDARG;
 
-    EnterCriticalSection(&This->lock);
+    *pcActualCount = This->decoder_frame.num_color_contexts;
 
-    if (ppng_get_iCCP(This->png_ptr, This->info_ptr, &name, &compression_type, (void *)&profile, &len))
+    if (This->decoder_frame.num_color_contexts && cCount && ppIColorContexts)
     {
-        if (cCount && ppIColorContexts)
+        EnterCriticalSection(&This->lock);
+
+        hr = decoder_get_color_context(This->png_decoder, 0, 0,
+            &profile, &profile_len);
+
+        LeaveCriticalSection(&This->lock);
+
+        if (SUCCEEDED(hr))
         {
-            hr = IWICColorContext_InitializeFromMemory(*ppIColorContexts, profile, len);
-            if (FAILED(hr))
-            {
-                LeaveCriticalSection(&This->lock);
-                return hr;
-            }
+            hr = IWICColorContext_InitializeFromMemory(*ppIColorContexts, profile, profile_len);
+
+            HeapFree(GetProcessHeap(), 0, profile);
         }
-        *pcActualCount = 1;
     }
-    else
-        *pcActualCount = 0;
 
-    LeaveCriticalSection(&This->lock);
-
-    return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI PngDecoder_Frame_GetThumbnail(IWICBitmapFrameDecode *iface,
