@@ -453,11 +453,6 @@ static void test_hash(const struct hash_test *tests, int testLen)
 
         dataLen = sizeof(DWORD);
         result = CryptGetHashParam(hHash, HP_HASHSIZE, (BYTE *)&hashLen, &dataLen, 0);
-        if (!result)
-        {
-            skip("skipping hash tests\n");
-            return;
-        }
         ok(result && (hashLen == tests[i].hashLen), "Expected %d hash len, got %d.Error: %x\n",
             tests[i].hashLen, hashLen, GetLastError());
 

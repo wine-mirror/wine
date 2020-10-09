@@ -431,7 +431,45 @@ BOOL WINAPI CPHashData( HCRYPTPROV hprov, HCRYPTHASH hhash, const BYTE *data, DW
 
 BOOL WINAPI CPGetHashParam( HCRYPTPROV hprov, HCRYPTHASH hhash, DWORD param, BYTE *data, DWORD *len, DWORD flags )
 {
-    return FALSE;
+    struct hash *hash = (struct hash *)hhash;
+
+    TRACE( "%p, %p, %08x, %p, %p, %08x\n", (void *)hprov, (void *)hhash, param, data, len, flags );
+
+    if (hash->magic != MAGIC_HASH) return FALSE;
+
+    switch (param)
+    {
+    case HP_HASHSIZE:
+        if (sizeof(hash->len) > *len)
+        {
+            *len = sizeof(hash->len);
+            SetLastError( ERROR_MORE_DATA );
+            return FALSE;
+        }
+        *(DWORD *)data = hash->len;
+        *len = sizeof(hash->len);
+        return TRUE;
+
+    case HP_HASHVAL:
+        if (!hash->finished)
+        {
+            if (BCryptFinishHash( hash->handle, hash->value, hash->len, 0 )) return FALSE;
+            hash->finished = TRUE;
+        }
+        if (hash->len > *len)
+        {
+            *len = hash->len;
+            SetLastError( ERROR_MORE_DATA );
+            return FALSE;
+        }
+        memcpy( data, hash->value, hash->len );
+        *len = hash->len;
+        return TRUE;
+
+    default:
+        SetLastError( NTE_BAD_TYPE );
+        return FALSE;
+    }
 }
 
 BOOL WINAPI CPDeriveKey( HCRYPTPROV hprov, ALG_ID algid, HCRYPTHASH hhash, DWORD flags, HCRYPTKEY *ret_key )
