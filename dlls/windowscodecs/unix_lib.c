@@ -66,6 +66,7 @@ HRESULT CDECL decoder_create(const CLSID *decoder_clsid, struct decoder_info *in
 static const struct unix_funcs unix_funcs = {
     decoder_create,
     decoder_initialize,
+    decoder_get_frame_info,
     decoder_destroy
 };
 

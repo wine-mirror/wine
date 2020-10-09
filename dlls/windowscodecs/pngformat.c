@@ -447,6 +447,7 @@ typedef struct {
     struct decoder *png_decoder;
     struct decoder_info decoder_info;
     struct decoder_stat file_info;
+    struct decoder_frame decoder_frame;
     png_structp png_ptr;
     png_infop info_ptr;
     png_infop end_info;
@@ -604,6 +605,9 @@ static HRESULT WINAPI PngDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
     hr = decoder_initialize(This->png_decoder, pIStream, &This->file_info);
     if (FAILED(hr))
         goto end;
+
+    /* this function cannot fail in PNG decoder */
+    decoder_get_frame_info(This->png_decoder, 0, &This->decoder_frame);
 
     /* initialize libpng */
     This->png_ptr = ppng_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
@@ -991,8 +995,8 @@ static HRESULT WINAPI PngDecoder_Frame_GetSize(IWICBitmapFrameDecode *iface,
     UINT *puiWidth, UINT *puiHeight)
 {
     PngDecoder *This = impl_from_IWICBitmapFrameDecode(iface);
-    *puiWidth = This->width;
-    *puiHeight = This->height;
+    *puiWidth = This->decoder_frame.width;
+    *puiHeight = This->decoder_frame.height;
     TRACE("(%p)->(%u,%u)\n", iface, *puiWidth, *puiHeight);
     return S_OK;
 }
@@ -1003,7 +1007,7 @@ static HRESULT WINAPI PngDecoder_Frame_GetPixelFormat(IWICBitmapFrameDecode *ifa
     PngDecoder *This = impl_from_IWICBitmapFrameDecode(iface);
     TRACE("(%p,%p)\n", iface, pPixelFormat);
 
-    memcpy(pPixelFormat, This->format, sizeof(GUID));
+    memcpy(pPixelFormat, &This->decoder_frame.pixel_format, sizeof(GUID));
 
     return S_OK;
 }
@@ -1012,25 +1016,9 @@ static HRESULT WINAPI PngDecoder_Frame_GetResolution(IWICBitmapFrameDecode *ifac
     double *pDpiX, double *pDpiY)
 {
     PngDecoder *This = impl_from_IWICBitmapFrameDecode(iface);
-    png_uint_32 ret, xres, yres;
-    int unit_type;
 
-    EnterCriticalSection(&This->lock);
-
-    ret = ppng_get_pHYs(This->png_ptr, This->info_ptr, &xres, &yres, &unit_type);
-
-    if (ret && unit_type == PNG_RESOLUTION_METER)
-    {
-        *pDpiX = xres * 0.0254;
-        *pDpiY = yres * 0.0254;
-    }
-    else
-    {
-        WARN("no pHYs block present\n");
-        *pDpiX = *pDpiY = 96.0;
-    }
-
-    LeaveCriticalSection(&This->lock);
+    *pDpiX = This->decoder_frame.dpix;
+    *pDpiY = This->decoder_frame.dpiy;
 
     TRACE("(%p)->(%0.2f,%0.2f)\n", iface, *pDpiX, *pDpiY);
 
@@ -1041,80 +1029,18 @@ static HRESULT WINAPI PngDecoder_Frame_CopyPalette(IWICBitmapFrameDecode *iface,
     IWICPalette *pIPalette)
 {
     PngDecoder *This = impl_from_IWICBitmapFrameDecode(iface);
-    png_uint_32 ret, color_type, bit_depth;
-    png_colorp png_palette;
-    int num_palette;
-    WICColor palette[256];
-    png_bytep trans_alpha;
-    int num_trans;
-    png_color_16p trans_values;
-    int i;
     HRESULT hr=S_OK;
 
     TRACE("(%p,%p)\n", iface, pIPalette);
 
-    EnterCriticalSection(&This->lock);
-
-    color_type = ppng_get_color_type(This->png_ptr, This->info_ptr);
-    bit_depth = ppng_get_bit_depth(This->png_ptr, This->info_ptr);
-
-    if (color_type == PNG_COLOR_TYPE_PALETTE)
+    if (This->decoder_frame.num_colors)
     {
-        ret = ppng_get_PLTE(This->png_ptr, This->info_ptr, &png_palette, &num_palette);
-        if (!ret)
-        {
-            hr = WINCODEC_ERR_PALETTEUNAVAILABLE;
-            goto end;
-        }
-
-        if (num_palette > 256)
-        {
-            ERR("palette has %i colors?!\n", num_palette);
-            hr = E_FAIL;
-            goto end;
-        }
-
-        ret = ppng_get_tRNS(This->png_ptr, This->info_ptr, &trans_alpha, &num_trans, &trans_values);
-        if (!ret) num_trans = 0;
-
-        for (i=0; i<num_palette; i++)
-        {
-            BYTE alpha = (i < num_trans) ? trans_alpha[i] : 0xff;
-            palette[i] = (alpha << 24 |
-                          png_palette[i].red << 16|
-                          png_palette[i].green << 8|
-                          png_palette[i].blue);
-        }
-    }
-    else if (color_type == PNG_COLOR_TYPE_GRAY && bit_depth <= 8) {
-        ret = ppng_get_tRNS(This->png_ptr, This->info_ptr, &trans_alpha, &num_trans, &trans_values);
-
-        if (!ret)
-        {
-            hr = WINCODEC_ERR_PALETTEUNAVAILABLE;
-            goto end;
-        }
-
-        num_palette = 1 << bit_depth;
-
-        for (i=0; i<num_palette; i++)
-        {
-            BYTE alpha = (i == trans_values[0].gray) ? 0 : 0xff;
-            BYTE val = i * 255 / (num_palette - 1);
-            palette[i] = (alpha << 24 | val << 16 | val << 8 | val);
-        }
+        hr = IWICPalette_InitializeCustom(pIPalette, This->decoder_frame.palette, This->decoder_frame.num_colors);
     }
     else
     {
         hr = WINCODEC_ERR_PALETTEUNAVAILABLE;
     }
-
-end:
-
-    LeaveCriticalSection(&This->lock);
-
-    if (SUCCEEDED(hr))
-        hr = IWICPalette_InitializeCustom(pIPalette, palette, num_palette);
 
     return hr;
 }

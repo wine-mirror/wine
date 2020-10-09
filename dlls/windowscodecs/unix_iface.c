@@ -72,6 +72,12 @@ HRESULT CDECL decoder_wrapper_initialize(struct decoder* iface, IStream* stream,
     return unix_funcs->decoder_initialize(This->unix_decoder, stream, st);
 }
 
+HRESULT CDECL decoder_wrapper_get_frame_info(struct decoder* iface, UINT frame, struct decoder_frame *info)
+{
+    struct decoder_wrapper* This = impl_from_decoder(iface);
+    return unix_funcs->decoder_get_frame_info(This->unix_decoder, frame, info);
+}
+
 void CDECL decoder_wrapper_destroy(struct decoder* iface)
 {
     struct decoder_wrapper* This = impl_from_decoder(iface);
@@ -81,6 +87,7 @@ void CDECL decoder_wrapper_destroy(struct decoder* iface)
 
 static const struct decoder_funcs decoder_wrapper_vtable = {
     decoder_wrapper_initialize,
+    decoder_wrapper_get_frame_info,
     decoder_wrapper_destroy
 };
 

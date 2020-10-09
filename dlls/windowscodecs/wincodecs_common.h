@@ -21,6 +21,11 @@ HRESULT CDECL decoder_initialize(struct decoder *decoder, IStream *stream, struc
     return decoder->vtable->initialize(decoder, stream, st);
 }
 
+HRESULT CDECL decoder_get_frame_info(struct decoder *decoder, UINT frame, struct decoder_frame *info)
+{
+    return decoder->vtable->get_frame_info(decoder, frame, info);
+}
+
 void CDECL decoder_destroy(struct decoder *decoder)
 {
     decoder->vtable->destroy(decoder);
