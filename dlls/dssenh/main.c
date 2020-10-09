@@ -54,6 +54,17 @@ struct container
     char        name[MAX_PATH];
 };
 
+#define MAGIC_HASH (('H' << 24) | ('A' << 16) | ('S' << 8) | 'H')
+struct hash
+{
+    DWORD              magic;
+    BCRYPT_ALG_HANDLE  alg_handle;
+    BCRYPT_HASH_HANDLE handle;
+    DWORD              len;
+    UCHAR              value[64];
+    BOOL               finished;
+};
+
 static const char dss_path_fmt[] = "Software\\Wine\\Crypto\\DSS\\%s";
 
 static BOOL create_container_regkey( struct container *container, REGSAM sam, HKEY *hkey )
@@ -320,14 +331,89 @@ BOOL WINAPI CPExportKey( HCRYPTPROV hprov, HCRYPTKEY hkey, HCRYPTKEY hexpkey, DW
     return FALSE;
 }
 
+static struct hash *create_hash( ALG_ID algid )
+{
+    struct hash *ret;
+    const WCHAR *alg;
+    DWORD len;
+
+    switch (algid)
+    {
+    case CALG_MD5:
+        alg = BCRYPT_MD5_ALGORITHM;
+        len = 16;
+        break;
+
+    case CALG_SHA1:
+        alg = BCRYPT_SHA1_ALGORITHM;
+        len = 20;
+        break;
+
+    default:
+        FIXME( "unhandled algorithm %u\n", algid );
+        return 0;
+    }
+
+    if (!(ret = heap_alloc_zero( sizeof(*ret) ))) return 0;
+
+    ret->magic = MAGIC_HASH;
+    ret->len   = len;
+    if (BCryptOpenAlgorithmProvider( &ret->alg_handle, alg, MS_PRIMITIVE_PROVIDER, 0 ))
+    {
+        heap_free( ret );
+        return 0;
+    }
+    if (BCryptCreateHash( ret->alg_handle, &ret->handle, NULL, 0, NULL, 0, 0 ))
+    {
+        BCryptCloseAlgorithmProvider( ret->alg_handle, 0 );
+        heap_free( ret );
+        return 0;
+    }
+    return ret;
+}
+
 BOOL WINAPI CPCreateHash( HCRYPTPROV hprov, ALG_ID algid, HCRYPTKEY hkey, DWORD flags, HCRYPTHASH *ret_hash )
 {
-    return FALSE;
+    struct hash *hash;
+
+    TRACE( "%p, %08x, %p, %08x, %p\n", (void *)hprov, algid, (void *)hkey, flags, ret_hash );
+
+    switch (algid)
+    {
+    case CALG_MD5:
+    case CALG_SHA1:
+        break;
+
+    default:
+        FIXME( "algorithm %u not supported\n", algid );
+        SetLastError( NTE_BAD_ALGID );
+        return FALSE;
+    }
+
+    if (!(hash = create_hash( algid ))) return FALSE;
+
+    *ret_hash = (HCRYPTHASH)hash;
+    return TRUE;
 }
 
 BOOL WINAPI CPDestroyHash( HCRYPTPROV hprov, HCRYPTHASH hhash )
 {
-    return FALSE;
+    struct hash *hash = (struct hash *)hhash;
+
+    TRACE( "%p, %p\n", (void *)hprov, (void *)hhash);
+
+    if (hash->magic != MAGIC_HASH)
+    {
+        SetLastError( NTE_BAD_HASH );
+        return FALSE;
+    }
+
+    BCryptDestroyHash( hash->handle );
+    BCryptCloseAlgorithmProvider( hash->alg_handle, 0 );
+
+    hash->magic = 0;
+    heap_free( hash );
+    return TRUE;
 }
 
 BOOL WINAPI CPHashData( HCRYPTPROV hprov, HCRYPTHASH hhash, const BYTE *data, DWORD len, DWORD flags )

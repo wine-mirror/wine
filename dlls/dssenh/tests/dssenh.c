@@ -446,14 +446,14 @@ static void test_hash(const struct hash_test *tests, int testLen)
 
         /* test algid hash */
         result = CryptCreateHash(hProv, tests[i].algid, 0, 0, &hHash);
+        ok(result, "Expected creation of a hash.\n");
+
+        result = CryptHashData(hHash, data, dataLen, 0);
         if (!result)
         {
             skip("skipping hash tests\n");
             return;
         }
-        ok(result, "Expected creation of a hash.\n");
-
-        result = CryptHashData(hHash, data, dataLen, 0);
         ok(result, "Expected data to be added to hash.\n");
 
         dataLen = sizeof(DWORD);
@@ -605,14 +605,14 @@ static void test_data_encryption(const struct encrypt_test *tests, int testLen)
 
         SetLastError(0xdeadbeef);
         result = CryptCreateHash(hProv, CALG_MD5, 0, 0, &hHash);
+        ok(result, "Expected creation of a MD5 hash for key derivation.\n");
+
+        result = CryptHashData(hHash, (BYTE *)dataToHash, sizeof(dataToHash), 0);
         if (!result)
         {
             skip("skipping encryption tests\n");
             return;
         }
-        ok(result, "Expected creation of a MD5 hash for key derivation.\n");
-
-        result = CryptHashData(hHash, (BYTE *)dataToHash, sizeof(dataToHash), 0);
         ok(result, "Expected data to be added to hash for key derivation.\n");
 
         /* Derive key */
@@ -695,14 +695,14 @@ static void test_cipher_modes(const struct ciphermode_test *tests, int testLen)
 
     SetLastError(0xdeadbeef);
     result = CryptCreateHash(hProv, CALG_MD5, 0, 0, &hHash);
+    ok(result, "Expected creation of a MD5 hash for key derivation.\n");
+
+    result = CryptHashData(hHash, (BYTE *)dataToHash, sizeof(dataToHash), 0);
     if (!result)
     {
         skip("skipping ciper modes tests\n");
         return;
     }
-    ok(result, "Expected creation of a MD5 hash for key derivation.\n");
-
-    result = CryptHashData(hHash, (BYTE *)dataToHash, sizeof(dataToHash), 0);
     ok(result, "Expected data to be added to hash for key derivation.\n");
 
     /* Derive a CALG_RC2 key, but could be any other encryption cipher */
