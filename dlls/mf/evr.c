@@ -392,16 +392,47 @@ static HRESULT WINAPI video_stream_typehandler_GetMediaTypeByIndex(IMFMediaTypeH
 
 static HRESULT WINAPI video_stream_typehandler_SetCurrentMediaType(IMFMediaTypeHandler *iface, IMFMediaType *type)
 {
-    FIXME("%p, %p.\n", iface, type);
+    struct video_stream *stream = impl_from_IMFMediaTypeHandler(iface);
+    IMFVideoMediaType *video_type;
+    GUID subtype;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, type);
+
+    if (!type)
+        return E_POINTER;
+
+    if (!stream->parent)
+        return MF_E_STREAMSINK_REMOVED;
+
+    if (FAILED(hr = IMFMediaType_GetGUID(type, &MF_MT_SUBTYPE, &subtype)))
+        return hr;
+
+    /* Mixer expects special video media type instance. */
+    if (FAILED(hr = MFCreateVideoMediaTypeFromSubtype(&subtype, &video_type)))
+        return hr;
+
+    if (SUCCEEDED(hr = IMFMediaType_CopyAllItems(type, (IMFAttributes *)video_type)))
+        hr = IMFTransform_SetInputType(stream->parent->mixer, stream->id, (IMFMediaType *)video_type, 0);
+
+    IMFVideoMediaType_Release(video_type);
+
+    return hr;
 }
 
 static HRESULT WINAPI video_stream_typehandler_GetCurrentMediaType(IMFMediaTypeHandler *iface, IMFMediaType **type)
 {
-    FIXME("%p, %p.\n", iface, type);
+    struct video_stream *stream = impl_from_IMFMediaTypeHandler(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, type);
+
+    if (!type)
+        return E_POINTER;
+
+    if (!stream->parent)
+        return MF_E_STREAMSINK_REMOVED;
+
+    return IMFTransform_GetInputCurrentType(stream->parent->mixer, stream->id, type);
 }
 
 static HRESULT WINAPI video_stream_typehandler_GetMajorType(IMFMediaTypeHandler *iface, GUID *type)
