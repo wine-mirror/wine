@@ -1029,19 +1029,22 @@ static void adjust_para_y(ME_Paragraph *para, ME_Context *c, ME_DisplayItem *rep
 BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor)
 {
   ME_Paragraph *para, *next;
+  struct wine_rb_entry *entry, *next_entry;
   ME_Context c;
-  int totalWidth = editor->nTotalWidth, diff = 0, prev_width;
+  int totalWidth = editor->nTotalWidth, prev_width;
   ME_DisplayItem *repaint_start = NULL, *repaint_end = NULL;
 
-  if (!editor->first_marked_para)
-    return FALSE;
+  if (!editor->marked_paras.root) return FALSE;
 
   ME_InitContext(&c, editor, ITextHost_TxGetDC(editor->texthost));
 
-  para = &editor->first_marked_para->member.para;
-  c.pt = para->pt;
-  while (para_get_di( para ) != editor->pBuffer->pLast)
+  entry = wine_rb_head( editor->marked_paras.root );
+  while (entry)
   {
+    para = WINE_RB_ENTRY_VALUE( entry, ME_Paragraph, marked_entry );
+    next_entry = wine_rb_next( entry );
+
+    c.pt = para->pt;
     prev_width = para->nWidth;
     ME_WrapTextParagraph( editor, &c, para );
     if (prev_width == totalWidth && para->nWidth < totalWidth)
@@ -1056,11 +1059,10 @@ BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor)
 
     if (para->next_para)
     {
-      diff = c.pt.y - para->next_para->member.para.pt.y;
-      if (diff)
+      if (c.pt.y != para->next_para->member.para.pt.y)
       {
         next = para;
-        while (next->next_para && next != &para->next_marked->member.para &&
+        while (next->next_para && &next->marked_entry != next_entry &&
                next != &editor->pBuffer->pLast->member.para)
         {
           ME_MarkRepaintEnd(next->next_para, &repaint_start, &repaint_end);
@@ -1070,26 +1072,15 @@ BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor)
         }
       }
     }
-    if (para->next_marked)
-    {
-      ME_Paragraph *tmp = para;
-      para = &para->next_marked->member.para;
-      para_mark_remove( editor, tmp );
-    }
-    else
-    {
-      para_mark_remove( editor, para );
-      para = &editor->pBuffer->pLast->member.para;
-    }
-    c.pt.y = para->pt.y;
+    entry = next_entry;
   }
+  wine_rb_clear( &editor->marked_paras, NULL, NULL );
+
   editor->sizeWindow.cx = c.rcView.right-c.rcView.left;
   editor->sizeWindow.cy = c.rcView.bottom-c.rcView.top;
 
-  editor->nTotalLength = c.pt.y;
+  editor->nTotalLength = editor->pBuffer->pLast->member.para.pt.y;
   editor->nTotalWidth = totalWidth;
-  editor->pBuffer->pLast->member.para.pt.x = 0;
-  editor->pBuffer->pLast->member.para.pt.y = c.pt.y;
 
   ME_DestroyContext(&c);
 
