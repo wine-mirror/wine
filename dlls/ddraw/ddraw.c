@@ -80,6 +80,17 @@ const struct wined3d_parent_ops ddraw_null_wined3d_parent_ops =
     ddraw_null_wined3d_object_destroyed,
 };
 
+static void CDECL ddraw_swapchain_windowed_state_changed(struct wined3d_swapchain_state_parent *parent,
+        BOOL windowed)
+{
+    TRACE("parent %p, windowed %d.\n", parent, windowed);
+}
+
+static const struct wined3d_swapchain_state_parent_ops ddraw_swapchain_state_parent_ops =
+{
+    ddraw_swapchain_windowed_state_changed,
+};
+
 static inline struct ddraw *impl_from_IDirectDraw(IDirectDraw *iface)
 {
     return CONTAINING_RECORD(iface, struct ddraw, IDirectDraw_iface);
@@ -577,7 +588,7 @@ static HRESULT ddraw_attach_d3d_device(struct ddraw *ddraw, HWND window,
 
     if (ddraw->flags & DDRAW_NO3D)
         return wined3d_swapchain_create(ddraw->wined3d_device, &swapchain_desc,
-                NULL, &ddraw_null_wined3d_parent_ops, wined3d_swapchain);
+                &ddraw->state_parent, NULL, &ddraw_null_wined3d_parent_ops, wined3d_swapchain);
 
     if (!window || window == GetDesktopWindow())
     {
@@ -605,7 +616,7 @@ static HRESULT ddraw_attach_d3d_device(struct ddraw *ddraw, HWND window,
      * recursive loop until ram or emulated video memory is full. */
     ddraw->flags |= DDRAW_D3D_INITIALIZED;
     if (FAILED(hr = wined3d_swapchain_create(ddraw->wined3d_device, &swapchain_desc,
-            NULL, &ddraw_null_wined3d_parent_ops, wined3d_swapchain)))
+            &ddraw->state_parent, NULL, &ddraw_null_wined3d_parent_ops, wined3d_swapchain)))
     {
         ddraw->flags &= ~DDRAW_D3D_INITIALIZED;
         DestroyWindow(window);
@@ -5105,6 +5116,7 @@ HRESULT ddraw_init(struct ddraw *ddraw, DWORD flags, enum wined3d_device_type de
     ddraw->IDirect3D3_iface.lpVtbl = &d3d3_vtbl;
     ddraw->IDirect3D7_iface.lpVtbl = &d3d7_vtbl;
     ddraw->device_parent.ops = &ddraw_wined3d_device_parent_ops;
+    ddraw->state_parent.ops = &ddraw_swapchain_state_parent_ops;
     ddraw->numIfaces = 1;
     ddraw->ref7 = 1;
 

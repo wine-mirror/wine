@@ -811,6 +811,30 @@ static const struct wined3d_parent_ops d3d11_swapchain_wined3d_parent_ops =
     d3d11_swapchain_wined3d_object_released,
 };
 
+static inline struct d3d11_swapchain *d3d11_swapchain_from_wined3d_swapchain_state_parent(struct wined3d_swapchain_state_parent *parent)
+{
+    return CONTAINING_RECORD(parent, struct d3d11_swapchain, state_parent);
+}
+
+static void CDECL d3d11_swapchain_windowed_state_changed(struct wined3d_swapchain_state_parent *parent,
+        BOOL windowed)
+{
+    struct d3d11_swapchain *swapchain = d3d11_swapchain_from_wined3d_swapchain_state_parent(parent);
+
+    TRACE("parent %p, windowed %d.\n", parent, windowed);
+
+    if (windowed && swapchain->target)
+    {
+        IDXGIOutput_Release(swapchain->target);
+        swapchain->target = NULL;
+    }
+}
+
+static const struct wined3d_swapchain_state_parent_ops d3d11_swapchain_state_parent_ops =
+{
+    d3d11_swapchain_windowed_state_changed,
+};
+
 HRESULT d3d11_swapchain_init(struct d3d11_swapchain *swapchain, struct dxgi_device *device,
         struct wined3d_swapchain_desc *desc)
 {
@@ -840,6 +864,7 @@ HRESULT d3d11_swapchain_init(struct d3d11_swapchain *swapchain, struct dxgi_devi
     }
 
     swapchain->IDXGISwapChain1_iface.lpVtbl = &d3d11_swapchain_vtbl;
+    swapchain->state_parent.ops = &d3d11_swapchain_state_parent_ops;
     swapchain->refcount = 1;
     wined3d_mutex_lock();
     wined3d_private_store_init(&swapchain->private_store);
@@ -849,8 +874,8 @@ HRESULT d3d11_swapchain_init(struct d3d11_swapchain *swapchain, struct dxgi_devi
 
     fullscreen = !desc->windowed;
     desc->windowed = TRUE;
-    if (FAILED(hr = wined3d_swapchain_create(device->wined3d_device, desc, swapchain,
-            &d3d11_swapchain_wined3d_parent_ops, &swapchain->wined3d_swapchain)))
+    if (FAILED(hr = wined3d_swapchain_create(device->wined3d_device, desc, &swapchain->state_parent,
+            swapchain, &d3d11_swapchain_wined3d_parent_ops, &swapchain->wined3d_swapchain)))
     {
         WARN("Failed to create wined3d swapchain, hr %#x.\n", hr);
         goto cleanup;
@@ -1037,6 +1062,7 @@ struct d3d12_swapchain
     struct wined3d_private_store private_store;
 
     struct wined3d_swapchain_state *state;
+    struct wined3d_swapchain_state_parent state_parent;
 
     VkSwapchainKHR vk_swapchain;
     VkSurfaceKHR vk_surface;
@@ -2938,6 +2964,30 @@ static BOOL init_vk_funcs(struct dxgi_vk_funcs *dxgi, VkInstance vk_instance, Vk
     return TRUE;
 }
 
+static inline struct d3d12_swapchain *d3d12_swapchain_from_wined3d_swapchain_state_parent(struct wined3d_swapchain_state_parent *parent)
+{
+    return CONTAINING_RECORD(parent, struct d3d12_swapchain, state_parent);
+}
+
+static void CDECL d3d12_swapchain_windowed_state_changed(struct wined3d_swapchain_state_parent *parent,
+        BOOL windowed)
+{
+    struct d3d12_swapchain *swapchain = d3d12_swapchain_from_wined3d_swapchain_state_parent(parent);
+
+    TRACE("parent %p, windowed %d.\n", parent, windowed);
+
+    if (windowed && swapchain->target)
+    {
+        IDXGIOutput_Release(swapchain->target);
+        swapchain->target = NULL;
+    }
+}
+
+static const struct wined3d_swapchain_state_parent_ops d3d12_swapchain_state_parent_ops =
+{
+    d3d12_swapchain_windowed_state_changed,
+};
+
 static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGIFactory *factory,
         ID3D12Device *device, ID3D12CommandQueue *queue, HWND window,
         const DXGI_SWAP_CHAIN_DESC1 *swapchain_desc, const DXGI_SWAP_CHAIN_FULLSCREEN_DESC *fullscreen_desc)
@@ -2967,6 +3017,7 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
     }
 
     swapchain->IDXGISwapChain4_iface.lpVtbl = &d3d12_swapchain_vtbl;
+    swapchain->state_parent.ops = &d3d12_swapchain_state_parent_ops;
     swapchain->refcount = 1;
 
     swapchain->window = window;
@@ -3024,7 +3075,7 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
 
     dxgi_factory = unsafe_impl_from_IDXGIFactory((IDXGIFactory *)factory);
     if (FAILED(hr = wined3d_swapchain_state_create(&wined3d_desc, window, dxgi_factory->wined3d,
-            &swapchain->state)))
+            &swapchain->state_parent, &swapchain->state)))
     {
         IDXGIOutput_Release(output);
         return hr;

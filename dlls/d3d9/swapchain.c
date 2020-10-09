@@ -356,6 +356,17 @@ static const struct wined3d_parent_ops d3d9_swapchain_wined3d_parent_ops =
     d3d9_swapchain_wined3d_object_released,
 };
 
+static void CDECL d3d9_swapchain_windowed_state_changed(struct wined3d_swapchain_state_parent *parent,
+        BOOL windowed)
+{
+    TRACE("parent %p, windowed %d.\n", parent, windowed);
+}
+
+static const struct wined3d_swapchain_state_parent_ops d3d9_swapchain_state_parent_ops =
+{
+    d3d9_swapchain_windowed_state_changed,
+};
+
 static HRESULT swapchain_init(struct d3d9_swapchain *swapchain, struct d3d9_device *device,
         struct wined3d_swapchain_desc *desc, unsigned int swap_interval)
 {
@@ -363,10 +374,11 @@ static HRESULT swapchain_init(struct d3d9_swapchain *swapchain, struct d3d9_devi
 
     swapchain->refcount = 1;
     swapchain->IDirect3DSwapChain9Ex_iface.lpVtbl = &d3d9_swapchain_vtbl;
+    swapchain->state_parent.ops = &d3d9_swapchain_state_parent_ops;
     swapchain->swap_interval = swap_interval;
 
-    if (FAILED(hr = wined3d_swapchain_create(device->wined3d_device, desc, swapchain,
-            &d3d9_swapchain_wined3d_parent_ops, &swapchain->wined3d_swapchain)))
+    if (FAILED(hr = wined3d_swapchain_create(device->wined3d_device, desc, &swapchain->state_parent,
+            swapchain, &d3d9_swapchain_wined3d_parent_ops, &swapchain->wined3d_swapchain)))
     {
         WARN("Failed to create wined3d swapchain, hr %#x.\n", hr);
         return hr;

@@ -1103,19 +1103,21 @@ static void adapter_vk_copy_bo_address(struct wined3d_context *context,
     adapter_vk_unmap_bo_address(context, src, 0, NULL);
 }
 
-static HRESULT adapter_vk_create_swapchain(struct wined3d_device *device, struct wined3d_swapchain_desc *desc,
+static HRESULT adapter_vk_create_swapchain(struct wined3d_device *device,
+        struct wined3d_swapchain_desc *desc, struct wined3d_swapchain_state_parent *state_parent,
         void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_swapchain **swapchain)
 {
     struct wined3d_swapchain_vk *swapchain_vk;
     HRESULT hr;
 
-    TRACE("device %p, desc %p, parent %p, parent_ops %p, swapchain %p.\n",
-            device, desc, parent, parent_ops, swapchain);
+    TRACE("device %p, desc %p, state_parent %p, parent %p, parent_ops %p, swapchain %p.\n",
+            device, desc, state_parent, parent, parent_ops, swapchain);
 
     if (!(swapchain_vk = heap_alloc_zero(sizeof(*swapchain_vk))))
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = wined3d_swapchain_vk_init(swapchain_vk, device, desc, parent, parent_ops)))
+    if (FAILED(hr = wined3d_swapchain_vk_init(swapchain_vk, device, desc, state_parent, parent,
+            parent_ops)))
     {
         WARN("Failed to initialise swapchain, hr %#x.\n", hr);
         heap_free(swapchain_vk);

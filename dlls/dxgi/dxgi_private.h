@@ -177,6 +177,7 @@ struct d3d11_swapchain
     LONG refcount;
     struct wined3d_private_store private_store;
     struct wined3d_swapchain *wined3d_swapchain;
+    struct wined3d_swapchain_state_parent state_parent;
     IWineDXGIDevice *device;
     IDXGIFactory *factory;
 

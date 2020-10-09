@@ -2431,7 +2431,7 @@ static void test_get_containing_output(IUnknown *device, BOOL is_d3d12)
         flush_events();
         hr = IDXGISwapChain_GetFullscreenState(swapchain, &fullscreen, NULL);
         ok(hr == S_OK, "GetFullscreenState failed, hr %#x.\n", hr);
-        todo_wine_if(is_d3d12) ok(!fullscreen, "Expect swapchain not full screen.\n");
+        ok(!fullscreen, "Expect swapchain not full screen.\n");
 
         /* Move the swapchain output window to the second output */
         hr = IDXGIOutput_GetDesc(output2, &output_desc2);
@@ -2453,7 +2453,7 @@ static void test_get_containing_output(IUnknown *device, BOOL is_d3d12)
         ok(hr == S_OK, "GetDesc failed, hr %#x.\n", hr);
         hr = IDXGIOutput_GetDesc(output2, &output_desc2);
         ok(hr == S_OK, "GetDesc failed, hr %#x.\n", hr);
-        todo_wine ok(!lstrcmpW(output_desc.DeviceName, output_desc2.DeviceName),
+        ok(!lstrcmpW(output_desc.DeviceName, output_desc2.DeviceName),
                 "Expect device name %s, got %s.\n", wine_dbgstr_w(output_desc2.DeviceName),
                 wine_dbgstr_w(output_desc.DeviceName));
         IDXGIOutput_Release(output);
@@ -2465,7 +2465,7 @@ static void test_get_containing_output(IUnknown *device, BOOL is_d3d12)
         ok(hr == S_OK, "GetDesc failed, hr %#x.\n", hr);
         hr = IDXGIOutput_GetDesc(output2, &output_desc2);
         ok(hr == S_OK, "GetDesc failed, hr %#x.\n", hr);
-        todo_wine ok(!lstrcmpW(output_desc.DeviceName, output_desc2.DeviceName),
+        ok(!lstrcmpW(output_desc.DeviceName, output_desc2.DeviceName),
                 "Expect device name %s, got %s.\n", wine_dbgstr_w(output_desc2.DeviceName),
                 wine_dbgstr_w(output_desc.DeviceName));
 
@@ -6148,7 +6148,6 @@ static void test_window_association(IUnknown *device, BOOL is_d3d12)
         UINT flag;
         BOOL expect_fullscreen;
         BOOL broken_d3d10;
-        BOOL todo_on_d3d12;
     }
     tests[] =
     {
@@ -6162,15 +6161,15 @@ static void test_window_association(IUnknown *device, BOOL is_d3d12)
          * - Posting them hangs the posting thread. Another thread that keeps
          *   sending input is needed to avoid the hang. The hang is not
          *   because of flush_events(). */
-        {0, TRUE, FALSE, TRUE},
+        {0, TRUE},
         {0, FALSE},
         {DXGI_MWA_NO_WINDOW_CHANGES, FALSE},
         {DXGI_MWA_NO_WINDOW_CHANGES, FALSE},
         {DXGI_MWA_NO_ALT_ENTER, FALSE, TRUE},
         {DXGI_MWA_NO_ALT_ENTER, FALSE},
-        {DXGI_MWA_NO_PRINT_SCREEN, TRUE, FALSE, TRUE},
+        {DXGI_MWA_NO_PRINT_SCREEN, TRUE},
         {DXGI_MWA_NO_PRINT_SCREEN, FALSE},
-        {0, TRUE, FALSE, TRUE},
+        {0, TRUE},
         {0, FALSE}
     };
 

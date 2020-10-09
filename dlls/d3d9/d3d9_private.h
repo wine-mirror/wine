@@ -162,6 +162,7 @@ struct d3d9_swapchain
     IDirect3DSwapChain9Ex IDirect3DSwapChain9Ex_iface;
     LONG refcount;
     struct wined3d_swapchain *wined3d_swapchain;
+    struct wined3d_swapchain_state_parent state_parent;
     IDirect3DDevice9Ex *parent_device;
     unsigned int swap_interval;
 };
