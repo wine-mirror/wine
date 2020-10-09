@@ -862,6 +862,9 @@ static void test_default_mixer_type_negotiation(void)
     hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
     ok(hr == MF_E_NOT_INITIALIZED, "Unexpected hr %#x.\n", hr);
 
+    hr = IMFTransform_SetInputType(transform, 0, media_type, MFT_SET_TYPE_TEST_ONLY);
+    ok(hr == MF_E_NOT_INITIALIZED, "Unexpected hr %#x.\n", hr);
+
     /* Now try with device manager. */
 
     window = create_window();
@@ -881,6 +884,9 @@ static void test_default_mixer_type_negotiation(void)
 
     /* Now manager is not initialized. */
     hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
+    ok(hr == DXVA2_E_NOT_INITIALIZED, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_SetInputType(transform, 0, media_type, MFT_SET_TYPE_TEST_ONLY);
     ok(hr == DXVA2_E_NOT_INITIALIZED, "Unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDeviceManager9_ResetDevice(manager, device, token);
@@ -903,6 +909,12 @@ static void test_default_mixer_type_negotiation(void)
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     hr = IMFVideoMediaType_SetUINT32(video_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, TRUE);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_SetInputType(transform, 0, (IMFMediaType *)video_type, MFT_SET_TYPE_TEST_ONLY);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_GetInputCurrentType(transform, 0, &media_type);
+    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#x.\n", hr);
 
     hr = IMFTransform_SetInputType(transform, 0, (IMFMediaType *)video_type, 0);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);

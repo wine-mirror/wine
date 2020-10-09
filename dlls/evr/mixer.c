@@ -611,12 +611,12 @@ static int rt_formats_sort_compare(const void *left, const void *right)
 }
 
 static HRESULT video_mixer_collect_output_types(struct video_mixer *mixer, const DXVA2_VideoDesc *video_desc,
-        IDirectXVideoProcessorService *service, unsigned int device_count, const GUID *devices)
+        IDirectXVideoProcessorService *service, unsigned int device_count, const GUID *devices, unsigned int flags)
 {
     unsigned int i, j, format_count, count;
     D3DFORMAT *rt_formats = NULL, *formats, *ptr;
+    HRESULT hr = MF_E_INVALIDMEDIATYPE;
     GUID subtype;
-    HRESULT hr;
 
     count = 0;
     for (i = 0; i < device_count; ++i)
@@ -640,7 +640,7 @@ static HRESULT video_mixer_collect_output_types(struct video_mixer *mixer, const
         }
     }
 
-    if (count)
+    if (count && !(flags & MFT_SET_TYPE_TEST_ONLY))
     {
         qsort(rt_formats, count, sizeof(*rt_formats), rt_formats_sort_compare);
 
@@ -690,7 +690,8 @@ static HRESULT WINAPI video_mixer_transform_SetInputType(IMFTransform *iface, DW
 
     EnterCriticalSection(&mixer->cs);
 
-    video_mixer_clear_types(mixer);
+    if (!(flags & MFT_SET_TYPE_TEST_ONLY))
+        video_mixer_clear_types(mixer);
 
     if (!mixer->device_manager)
         hr = MF_E_NOT_INITIALIZED;
@@ -708,7 +709,8 @@ static HRESULT WINAPI video_mixer_transform_SetInputType(IMFTransform *iface, DW
                         if (SUCCEEDED(hr = IDirectXVideoProcessorService_GetVideoProcessorDeviceGuids(service, &video_desc,
                                 &count, &guids)))
                         {
-                            if (SUCCEEDED(hr = video_mixer_collect_output_types(mixer, &video_desc, service, count, guids)))
+                            if (SUCCEEDED(hr = video_mixer_collect_output_types(mixer, &video_desc, service, count,
+                                    guids, flags)) && !(flags & MFT_SET_TYPE_TEST_ONLY))
                             {
                                 GUID subtype = { 0 };
 
