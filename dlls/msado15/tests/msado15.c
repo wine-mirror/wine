@@ -676,6 +676,7 @@ static void test_Connection(void)
     LONG state, timeout;
     BSTR str, str2, str3;
     ConnectModeEnum mode;
+    CursorLocationEnum location;
 
     hr = CoCreateInstance(&CLSID_Connection, NULL, CLSCTX_INPROC_SERVER, &IID__Connection, (void**)&connection);
     ok( hr == S_OK, "got %08x\n", hr );
@@ -718,6 +719,22 @@ if (0)   /* Crashes on windows */
     hr = _Connection_get_CommandTimeout(connection, &timeout);
     ok(hr == S_OK, "Failed to get state, hr 0x%08x\n", hr);
     ok(timeout == 300, "Unexpected timeout value %d\n", timeout);
+
+    location = 0;
+    hr = _Connection_get_CursorLocation(connection, &location);
+    ok(hr == S_OK, "Failed, hr 0x%08x\n", hr);
+    ok(location == adUseServer, "Unexpected location value %d\n", location);
+
+    hr = _Connection_put_CursorLocation(connection, adUseClient);
+    ok(hr == S_OK, "Failed, hr 0x%08x\n", hr);
+
+    location = 0;
+    hr = _Connection_get_CursorLocation(connection, &location);
+    ok(hr == S_OK, "Failed, hr 0x%08x\n", hr);
+    ok(location == adUseClient, "Unexpected location value %d\n", location);
+
+    hr = _Connection_put_CursorLocation(connection, adUseServer);
+    ok(hr == S_OK, "Failed, hr 0x%08x\n", hr);
 
     mode = 0xdeadbeef;
     hr = _Connection_get_Mode(connection, &mode);
