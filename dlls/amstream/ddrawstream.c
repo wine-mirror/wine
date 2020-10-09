@@ -75,10 +75,12 @@ struct ddraw_sample
     RECT rect;
     STREAM_TIME start_time;
     STREAM_TIME end_time;
+    BOOL continuous_update;
     CONDITION_VARIABLE update_cv;
 
     struct list entry;
     HRESULT update_hr;
+    BOOL busy;
 };
 
 static HRESULT ddrawstreamsample_create(struct ddraw_stream *parent, IDirectDrawSurface *surface,
@@ -86,6 +88,7 @@ static HRESULT ddrawstreamsample_create(struct ddraw_stream *parent, IDirectDraw
 
 static void remove_queued_update(struct ddraw_sample *sample)
 {
+    sample->busy = FALSE;
     list_remove(&sample->entry);
     WakeConditionVariable(&sample->update_cv);
 }
@@ -1348,7 +1351,16 @@ static HRESULT WINAPI ddraw_meminput_Receive(IMemInputPin *iface, IMediaSample *
             sample->update_hr = process_update(sample, top_down_stride, top_down_pointer,
                     start_stream_time, end_stream_time);
 
-            remove_queued_update(sample);
+            if (sample->continuous_update && SUCCEEDED(sample->update_hr))
+            {
+                list_remove(&sample->entry);
+                list_add_tail(&sample->parent->update_queue, &sample->entry);
+            }
+            else
+            {
+                remove_queued_update(sample);
+            }
+
             LeaveCriticalSection(&stream->cs);
             return S_OK;
         }
@@ -1540,12 +1552,6 @@ static HRESULT WINAPI ddraw_sample_Update(IDirectDrawStreamSample *iface,
         return E_NOTIMPL;
     }
 
-    if (flags & ~SSUPDATE_ASYNC)
-    {
-        FIXME("Unsupported flags %#x.\n", flags);
-        return E_NOTIMPL;
-    }
-
     EnterCriticalSection(&sample->parent->cs);
 
     if (sample->parent->state != State_Running)
@@ -1559,13 +1565,16 @@ static HRESULT WINAPI ddraw_sample_Update(IDirectDrawStreamSample *iface,
         LeaveCriticalSection(&sample->parent->cs);
         return MS_S_ENDOFSTREAM;
     }
-    if (MS_S_PENDING == sample->update_hr)
+    if (sample->busy)
     {
         LeaveCriticalSection(&sample->parent->cs);
         return MS_E_BUSY;
     }
 
-    sample->update_hr = MS_S_PENDING;
+    sample->continuous_update = (flags & SSUPDATE_ASYNC) && (flags & SSUPDATE_CONTINUOUS);
+
+    sample->update_hr = MS_S_NOUPDATE;
+    sample->busy = TRUE;
     list_add_tail(&sample->parent->update_queue, &sample->entry);
     WakeConditionVariable(&sample->parent->update_queued_cv);
 
@@ -1575,7 +1584,7 @@ static HRESULT WINAPI ddraw_sample_Update(IDirectDrawStreamSample *iface,
         return MS_S_PENDING;
     }
 
-    while (sample->update_hr == MS_S_PENDING)
+    while (sample->busy)
         SleepConditionVariableCS(&sample->update_cv, &sample->parent->cs, INFINITE);
 
     LeaveCriticalSection(&sample->parent->cs);
@@ -1592,18 +1601,18 @@ static HRESULT WINAPI ddraw_sample_CompletionStatus(IDirectDrawStreamSample *ifa
 
     EnterCriticalSection(&sample->parent->cs);
 
-    if (sample->update_hr == MS_S_PENDING)
+    if (sample->busy)
     {
         if (flags & (COMPSTAT_NOUPDATEOK | COMPSTAT_ABORT))
         {
-            sample->update_hr = MS_S_NOUPDATE;
             remove_queued_update(sample);
         }
         else if (flags & COMPSTAT_WAIT)
         {
             DWORD start_time = GetTickCount();
             DWORD elapsed = 0;
-            while (sample->update_hr == MS_S_PENDING && elapsed < milliseconds)
+            sample->continuous_update = FALSE;
+            while (sample->busy && elapsed < milliseconds)
             {
                 DWORD sleep_time = milliseconds - elapsed;
                 if (!SleepConditionVariableCS(&sample->update_cv, &sample->parent->cs, sleep_time))
@@ -1613,7 +1622,7 @@ static HRESULT WINAPI ddraw_sample_CompletionStatus(IDirectDrawStreamSample *ifa
         }
     }
 
-    hr = sample->update_hr;
+    hr = sample->busy ? MS_S_PENDING : sample->update_hr;
 
     LeaveCriticalSection(&sample->parent->cs);
 
