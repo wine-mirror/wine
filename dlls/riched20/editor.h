@@ -208,9 +208,9 @@ void ME_SetDefaultParaFormat(ME_TextEditor *editor, PARAFORMAT2 *pFmt) DECLSPEC_
 void para_num_init( ME_Context *c, ME_Paragraph *para ) DECLSPEC_HIDDEN;
 void para_num_clear( struct para_num *pn ) DECLSPEC_HIDDEN;
 int get_total_width(ME_TextEditor *editor) DECLSPEC_HIDDEN;
-void mark_para_rewrap(ME_TextEditor *editor, ME_DisplayItem *para) DECLSPEC_HIDDEN;
-void add_marked_para(ME_TextEditor *editor, ME_DisplayItem *para) DECLSPEC_HIDDEN;
-void remove_marked_para(ME_TextEditor *editor, ME_DisplayItem *para) DECLSPEC_HIDDEN;
+void para_mark_rewrap( ME_TextEditor *editor, ME_Paragraph *para ) DECLSPEC_HIDDEN;
+void para_mark_add( ME_TextEditor *editor, ME_Paragraph *para ) DECLSPEC_HIDDEN;
+void para_mark_remove( ME_TextEditor *editor, ME_Paragraph *para ) DECLSPEC_HIDDEN;
 ME_Run *para_first_run( ME_Paragraph *para ) DECLSPEC_HIDDEN;
 static inline ME_DisplayItem *para_get_di(ME_Paragraph *para)
 {

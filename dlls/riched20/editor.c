@@ -2509,7 +2509,7 @@ static BOOL handle_enter(ME_TextEditor *editor)
                     para = editor->pBuffer->pFirst->member.para.next_para;
                     ME_SetDefaultParaFormat(editor, &para->member.para.fmt);
                     para->member.para.nFlags = 0;
-                    mark_para_rewrap(editor, para);
+                    para_mark_rewrap( editor, &para->member.para );
                     editor->pCursors[0].pPara = para;
                     editor->pCursors[0].pRun = ME_FindItemFwd(para, diRun);
                     editor->pCursors[1] = editor->pCursors[0];

@@ -1078,11 +1078,11 @@ BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor)
     {
       ME_DisplayItem *rem = item;
       item = item->member.para.next_marked;
-      remove_marked_para(editor, rem);
+      para_mark_remove( editor, &rem->member.para );
     }
     else
     {
-      remove_marked_para(editor, item);
+      para_mark_remove( editor, &item->member.para );
       item = editor->pBuffer->pLast;
     }
     c.pt.y = item->member.para.pt.y;

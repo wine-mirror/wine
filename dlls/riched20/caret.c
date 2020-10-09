@@ -394,7 +394,7 @@ BOOL ME_InternalDeleteText(ME_TextEditor *editor, ME_Cursor *start,
 
       c.nOffset -= nCharsToDelete;
 
-      mark_para_rewrap(editor, ME_FindItemBack(c.pRun, diParagraph));
+      para_mark_rewrap( editor, &ME_FindItemBack( c.pRun, diParagraph )->member.para );
 
       cursor = c;
       /* nChars is the number of characters that should be deleted from the
