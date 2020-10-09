@@ -189,6 +189,67 @@ static BOOL     is_wow64;
 static BOOL have_vectored_api;
 static int test_stage;
 
+#if defined(__i386__) || defined(__x86_64__)
+static void test_debugger_xstate(HANDLE thread, CONTEXT *ctx, int stage)
+{
+    char context_buffer[sizeof(CONTEXT) + sizeof(CONTEXT_EX) + sizeof(XSTATE) + 63];
+    CONTEXT_EX *c_ex;
+    NTSTATUS status;
+    YMMCONTEXT *ymm;
+    CONTEXT *xctx;
+    DWORD length;
+    XSTATE *xs;
+    M128A *xmm;
+    BOOL bret;
+
+    if (!pRtlGetEnabledExtendedFeatures || !pRtlGetEnabledExtendedFeatures(1 << XSTATE_AVX))
+        return;
+
+    if (stage == 14)
+        return;
+
+    length = sizeof(context_buffer);
+    bret = pInitializeContext(context_buffer, ctx->ContextFlags | CONTEXT_XSTATE, &xctx, &length);
+    ok(bret, "Got unexpected bret %#x, GetLastError() %u.\n", bret, GetLastError());
+
+    ymm = pLocateXStateFeature(xctx, XSTATE_AVX, &length);
+    ok(!!ymm, "Got zero ymm.\n");
+    memset(ymm, 0xcc, sizeof(*ymm));
+
+    xmm = pLocateXStateFeature(xctx, XSTATE_LEGACY_SSE, &length);
+    ok(length == sizeof(*xmm) * (sizeof(void *) == 8 ? 16 : 8), "Got unexpected length %#x.\n", length);
+    ok(!!xmm, "Got zero xmm.\n");
+    memset(xmm, 0xcc, length);
+
+    status = pNtGetContextThread(thread, xctx);
+    ok(!status, "NtSetContextThread failed with 0x%x\n", status);
+
+    c_ex = (CONTEXT_EX *)(xctx + 1);
+    xs = (XSTATE *)((char *)c_ex + c_ex->XState.Offset);
+    ok((xs->Mask & 7) == 4 || broken(!xs->Mask) /* Win7 */,
+            "Got unexpected xs->Mask %s.\n", wine_dbgstr_longlong(xs->Mask));
+
+    ok(xmm[0].Low == 0x200000001, "Got unexpected data %s.\n", wine_dbgstr_longlong(xmm[0].Low));
+    ok(xmm[0].High == 0x400000003, "Got unexpected data %s.\n", wine_dbgstr_longlong(xmm[0].High));
+
+    ok(ymm->Ymm0.Low == 0x600000005 || broken(!xs->Mask && ymm->Ymm0.Low == 0xcccccccccccccccc) /* Win7 */,
+            "Got unexpected data %s.\n", wine_dbgstr_longlong(ymm->Ymm0.Low));
+    ok(ymm->Ymm0.High == 0x800000007 || broken(!xs->Mask && ymm->Ymm0.High == 0xcccccccccccccccc) /* Win7 */,
+            "Got unexpected data %s.\n", wine_dbgstr_longlong(ymm->Ymm0.High));
+
+    xmm = pLocateXStateFeature(ctx, XSTATE_LEGACY_SSE, &length);
+    ok(!!xmm, "Got zero xmm.\n");
+
+    xmm[0].Low = 0x2828282828282828;
+    xmm[0].High = xmm[0].Low;
+    ymm->Ymm0.Low = 0x4848484848484848;
+    ymm->Ymm0.High = ymm->Ymm0.Low;
+
+    status = pNtSetContextThread(thread, xctx);
+    ok(!status, "NtSetContextThread failed with 0x%x\n", status);
+}
+#endif
+
 #ifdef __i386__
 
 #ifndef __WINE_WINTRNL_H
@@ -1055,7 +1116,7 @@ static void test_debugger(void)
                                           sizeof(stage), &size_read);
             ok(!status,"NtReadVirtualMemory failed with 0x%x\n", status);
 
-            ctx.ContextFlags = CONTEXT_FULL;
+            ctx.ContextFlags = CONTEXT_FULL | CONTEXT_EXTENDED_REGISTERS;
             status = pNtGetContextThread(pi.hThread, &ctx);
             ok(!status, "NtGetContextThread failed with 0x%x\n", status);
 
@@ -1155,6 +1216,10 @@ static void test_debugger(void)
                        "unexpected number of parameters %d, expected 0\n", de.u.Exception.ExceptionRecord.NumberParameters);
 
                     if (stage == 12|| stage == 13) continuestatus = DBG_EXCEPTION_NOT_HANDLED;
+                }
+                else if (stage == 14 || stage == 15)
+                {
+                    test_debugger_xstate(pi.hThread, &ctx, stage);
                 }
                 else
                     ok(FALSE, "unexpected stage %x\n", stage);
@@ -3330,6 +3395,10 @@ static void test_debugger(void)
                        "unexpected number of parameters %d, expected 0\n", de.u.Exception.ExceptionRecord.NumberParameters);
 
                     if (stage == 12|| stage == 13) continuestatus = DBG_EXCEPTION_NOT_HANDLED;
+                }
+                else if (stage == 14 || stage == 15)
+                {
+                    test_debugger_xstate(pi.hThread, &ctx, stage);
                 }
                 else
                     ok(FALSE, "unexpected stage %x\n", stage);
@@ -5957,6 +6026,57 @@ static void test_breakpoint(DWORD numexc)
     pRtlRemoveVectoredExceptionHandler(vectored_handler);
 }
 
+#if defined(__i386__) || defined(__x86_64__)
+static BYTE except_code_set_ymm0[] =
+{
+#ifdef __x86_64__
+    0x48,
+#endif
+    0xb8,                         /* mov imm,%ax */
+    0x00, 0x00, 0x00, 0x00,
+#ifdef __x86_64__
+    0x00, 0x00, 0x00, 0x00,
+#endif
+
+    0xc5, 0xfc, 0x10, 0x00,       /* vmovups (%ax),%ymm0 */
+    0xcc,                         /* int3 */
+    0xc5, 0xfc, 0x11, 0x00,       /* vmovups %ymm0,(%ax) */
+    0xc3,                         /* ret  */
+};
+
+static void test_debuggee_xstate(void)
+{
+    void (CDECL *func)(void) = code_mem;
+    unsigned int address_offset, i;
+    unsigned int data[8];
+
+    if (!pRtlGetEnabledExtendedFeatures || !pRtlGetEnabledExtendedFeatures(1 << XSTATE_AVX))
+    {
+        memcpy(code_mem, breakpoint_code, sizeof(breakpoint_code));
+        func();
+        return;
+    }
+
+    memcpy(code_mem, except_code_set_ymm0, sizeof(except_code_set_ymm0));
+    address_offset = sizeof(void *) == 8 ? 2 : 1;
+    *(void **)((BYTE *)code_mem + address_offset) = data;
+
+    for (i = 0; i < ARRAY_SIZE(data); ++i)
+        data[i] = i + 1;
+
+    func();
+
+    for (i = 0; i < 4; ++i)
+        ok(data[i] == (test_stage == 14 ? i + 1 : 0x28282828),
+                "Got unexpected data %#x, test_stage %u, i %u.\n", data[i], test_stage, i);
+
+    for (     ; i < ARRAY_SIZE(data); ++i)
+        ok(data[i] == (test_stage == 14 ? i + 1 : 0x48484848)
+                || broken(test_stage == 15 && data[i] == i + 1) /* Win7 */,
+                "Got unexpected data %#x, test_stage %u, i %u.\n", data[i], test_stage, i);
+}
+#endif
+
 static DWORD invalid_handle_exceptions;
 
 static LONG CALLBACK invalid_handle_vectored_handler(EXCEPTION_POINTERS *ExceptionInfo)
@@ -6593,22 +6713,6 @@ static void wait_for_thread_next_suspend(HANDLE thread)
 
 static void test_extended_context(void)
 {
-    static BYTE except_code_set_ymm0[] =
-    {
-#ifdef __x86_64__
-        0x48,
-#endif
-        0xb8,                         /* mov imm,%ax */
-        0x00, 0x00, 0x00, 0x00,
-#ifdef __x86_64__
-        0x00, 0x00, 0x00, 0x00,
-#endif
-
-        0xc5, 0xfc, 0x10, 0x00,       /* vmovups (%ax),%ymm0 */
-        0xcc,                         /* int3 */
-        0xc5, 0xfc, 0x11, 0x00,       /* vmovups %ymm0,(%ax) */
-        0xc3,                         /* ret  */
-    };
     static BYTE except_code_reset_ymm_state[] =
     {
 #ifdef __x86_64__
@@ -8029,6 +8133,12 @@ START_TEST(exception)
         test_closehandle(1, (HANDLE)0xdeadbeef);
         test_stage = 13;
         test_closehandle(0, 0); /* Special case. */
+#if defined(__i386__) || defined(__x86_64__)
+        test_stage = 14;
+        test_debuggee_xstate();
+        test_stage = 15;
+        test_debuggee_xstate();
+#endif
 
         /* rest of tests only run in parent */
         return;
