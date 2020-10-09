@@ -1011,6 +1011,44 @@ static void copy_selection( struct console *console )
     CloseClipboard();
 }
 
+static void paste_clipboard( struct console *console )
+{
+    WCHAR *ptr;
+    HANDLE h;
+
+    if (!OpenClipboard( console->win )) return;
+    h = GetClipboardData( CF_UNICODETEXT );
+    if (h && (ptr = GlobalLock( h )))
+    {
+        unsigned int i, len = GlobalSize(h) / sizeof(WCHAR);
+        INPUT_RECORD ir[2];
+        SHORT sh;
+
+        ir[0].EventType = KEY_EVENT;
+        ir[0].Event.KeyEvent.wRepeatCount = 0;
+        ir[0].Event.KeyEvent.dwControlKeyState = 0;
+        ir[0].Event.KeyEvent.bKeyDown = TRUE;
+
+        /* generate the corresponding input records */
+        for (i = 0; i < len; i++)
+        {
+            /* FIXME: the modifying keys are not generated (shift, ctrl...) */
+            sh = VkKeyScanW( ptr[i] );
+            ir[0].Event.KeyEvent.wVirtualKeyCode   = LOBYTE(sh);
+            ir[0].Event.KeyEvent.wVirtualScanCode  = MapVirtualKeyW( LOBYTE(sh), 0 );
+            ir[0].Event.KeyEvent.uChar.UnicodeChar = ptr[i];
+
+            ir[1] = ir[0];
+            ir[1].Event.KeyEvent.bKeyDown = FALSE;
+
+            write_console_input( console, ir, 2, i == len - 1 );
+        }
+        GlobalUnlock( h );
+    }
+
+    CloseClipboard();
+}
+
 /* handle keys while selecting an area */
 static void handle_selection_key( struct console *console, BOOL down, WPARAM wparam, LPARAM lparam )
 {
@@ -2254,6 +2292,53 @@ static LRESULT WINAPI window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
         default:
             return DefWindowProcW( hwnd, msg, wparam, lparam );
         }
+        break;
+
+    case WM_COMMAND:
+        switch (wparam)
+        {
+        case IDS_DEFAULT:
+            config_dialog( console, FALSE );
+            break;
+        case IDS_PROPERTIES:
+            config_dialog( console, TRUE );
+            break;
+        case IDS_MARK:
+            console->window->selection_start.X = console->window->selection_start.Y = 0;
+            console->window->selection_end.X = console->window->selection_end.Y = 0;
+            update_selection( console, 0 );
+            console->window->in_selection = TRUE;
+            break;
+        case IDS_COPY:
+            if (console->window->in_selection)
+            {
+                console->window->in_selection = FALSE;
+                update_selection( console, 0 );
+                copy_selection( console );
+            }
+            break;
+        case IDS_PASTE:
+            paste_clipboard( console );
+            break;
+        case IDS_SELECTALL:
+            console->window->selection_start.X = console->window->selection_start.Y = 0;
+            console->window->selection_end.X = console->active->width - 1;
+            console->window->selection_end.Y = console->active->height - 1;
+            update_selection( console, 0 );
+            console->window->in_selection = TRUE;
+            break;
+        case IDS_SCROLL:
+        case IDS_SEARCH:
+            FIXME( "Unhandled yet command: %lx\n", wparam );
+            break;
+        default:
+            return DefWindowProcW( hwnd, msg, wparam, lparam );
+        }
+        break;
+
+    case WM_INITMENUPOPUP:
+        if (!HIWORD(lparam)) return DefWindowProcW( hwnd, msg, wparam, lparam );
+        set_menu_details( console, GetSystemMenu(console->win, FALSE) );
         break;
 
     default:
