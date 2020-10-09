@@ -1,5 +1,6 @@
 /*
  * Copyright 2008 Maarten Lankhorst
+ * Copyright 2020 Hans Leidekker for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -418,7 +419,14 @@ BOOL WINAPI CPDestroyHash( HCRYPTPROV hprov, HCRYPTHASH hhash )
 
 BOOL WINAPI CPHashData( HCRYPTPROV hprov, HCRYPTHASH hhash, const BYTE *data, DWORD len, DWORD flags )
 {
-    return FALSE;
+    struct hash *hash = (struct hash *)hhash;
+
+    TRACE("%p, %p, %p, %u, %08x\n", (void *)hprov, (void *)hhash, data, len, flags );
+
+    if (hash->magic != MAGIC_HASH) return FALSE;
+
+    if (hash->finished || BCryptHashData( hash->handle, (UCHAR *)data, len, 0 )) return FALSE;
+    return TRUE;
 }
 
 BOOL WINAPI CPGetHashParam( HCRYPTPROV hprov, HCRYPTHASH hhash, DWORD param, BYTE *data, DWORD *len, DWORD flags )

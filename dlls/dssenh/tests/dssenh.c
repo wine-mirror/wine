@@ -449,15 +449,15 @@ static void test_hash(const struct hash_test *tests, int testLen)
         ok(result, "Expected creation of a hash.\n");
 
         result = CryptHashData(hHash, data, dataLen, 0);
+        ok(result, "Expected data to be added to hash.\n");
+
+        dataLen = sizeof(DWORD);
+        result = CryptGetHashParam(hHash, HP_HASHSIZE, (BYTE *)&hashLen, &dataLen, 0);
         if (!result)
         {
             skip("skipping hash tests\n");
             return;
         }
-        ok(result, "Expected data to be added to hash.\n");
-
-        dataLen = sizeof(DWORD);
-        result = CryptGetHashParam(hHash, HP_HASHSIZE, (BYTE *)&hashLen, &dataLen, 0);
         ok(result && (hashLen == tests[i].hashLen), "Expected %d hash len, got %d.Error: %x\n",
             tests[i].hashLen, hashLen, GetLastError());
 
@@ -608,15 +608,15 @@ static void test_data_encryption(const struct encrypt_test *tests, int testLen)
         ok(result, "Expected creation of a MD5 hash for key derivation.\n");
 
         result = CryptHashData(hHash, (BYTE *)dataToHash, sizeof(dataToHash), 0);
+        ok(result, "Expected data to be added to hash for key derivation.\n");
+
+        /* Derive key */
+        result = CryptDeriveKey(hProv, tests[i].algid, hHash, tests[i].keyLength, &pKey);
         if (!result)
         {
             skip("skipping encryption tests\n");
             return;
         }
-        ok(result, "Expected data to be added to hash for key derivation.\n");
-
-        /* Derive key */
-        result = CryptDeriveKey(hProv, tests[i].algid, hHash, tests[i].keyLength, &pKey);
         ok(result, "Expected a derived key.\n");
 
         result = CryptDestroyHash(hHash);
@@ -698,15 +698,15 @@ static void test_cipher_modes(const struct ciphermode_test *tests, int testLen)
     ok(result, "Expected creation of a MD5 hash for key derivation.\n");
 
     result = CryptHashData(hHash, (BYTE *)dataToHash, sizeof(dataToHash), 0);
+    ok(result, "Expected data to be added to hash for key derivation.\n");
+
+    /* Derive a CALG_RC2 key, but could be any other encryption cipher */
+    result = CryptDeriveKey(hProv, CALG_RC2, hHash, 40 << 16, &pKey);
     if (!result)
     {
         skip("skipping ciper modes tests\n");
         return;
     }
-    ok(result, "Expected data to be added to hash for key derivation.\n");
-
-    /* Derive a CALG_RC2 key, but could be any other encryption cipher */
-    result = CryptDeriveKey(hProv, CALG_RC2, hHash, 40 << 16, &pKey);
     ok(result, "Expected a derived key.\n");
 
     result = CryptDestroyHash(hHash);
