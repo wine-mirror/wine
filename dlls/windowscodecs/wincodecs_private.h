@@ -343,4 +343,7 @@ struct unix_funcs
 
 HRESULT get_unix_decoder(const CLSID *decoder_clsid, struct decoder_info *info, struct decoder **result);
 
+extern HRESULT CommonDecoder_CreateInstance(struct decoder *decoder,
+    const struct decoder_info *decoder_info, REFIID iid, void** ppv) DECLSPEC_HIDDEN;
+
 #endif /* WINCODECS_PRIVATE_H */
