@@ -853,11 +853,6 @@ static void test_signhash_array(HCRYPTPROV hProv, const struct signature_test *t
 
         /* Get a private key of array specified ALG_ID */
         result = CryptImportKey(hProv, tests[i].privateKey, tests[i].keyLen, 0, 0, &privKey);
-        if (!result)
-        {
-            skip("skipping sign tests\n");
-            return;
-        }
         ok(result, "Failed to imported key, got %x\n", GetLastError());
 
         /* Create hash object and add data for signature 1 */
@@ -895,6 +890,11 @@ static void test_signhash_array(HCRYPTPROV hProv, const struct signature_test *t
 
         /* Sign hash 1 */
         result = CryptSignHashA(hHash1, AT_SIGNATURE, NULL, 0, NULL, &signLen1);
+        if (!result)
+        {
+            skip("skipping sign tests\n");
+            return;
+        }
         ok(result, "Failed to get signature length, got %x\n", GetLastError());
         ok(signLen1 == 40, "Expected a 40-byte signature, got %d\n", signLen1);
 

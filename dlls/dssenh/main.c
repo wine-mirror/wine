@@ -317,13 +317,153 @@ BOOL WINAPI CPGenKey( HCRYPTPROV hprov, ALG_ID algid, DWORD flags, HCRYPTKEY *re
 
 BOOL WINAPI CPDestroyKey( HCRYPTPROV hprov, HCRYPTKEY hkey )
 {
-    return FALSE;
+    struct key *key = (struct key *)hkey;
+
+    TRACE( "%p, %p\n", (void *)hprov, (void *)hkey );
+
+    if (key->magic != MAGIC_KEY)
+    {
+        SetLastError( NTE_BAD_KEY );
+        return FALSE;
+    }
+
+    destroy_key( key );
+    return TRUE;
 }
+
+static BOOL store_key_pair( struct key *key, HKEY hkey, DWORD keyspec, DWORD flags )
+{
+    const WCHAR *value;
+    DATA_BLOB blob_in, blob_out;
+    DWORD len;
+    BYTE *data;
+    BOOL ret = TRUE;
+
+    if (!key) return TRUE;
+    if (!(value = map_keyspec_to_keypair_name( keyspec ))) return FALSE;
+
+    if (BCryptExportKey( key->handle, NULL, LEGACY_DSA_V2_PRIVATE_BLOB, NULL, 0, &len, 0 )) return FALSE;
+    if (!(data = heap_alloc( len ))) return FALSE;
+
+    if (!BCryptExportKey( key->handle, NULL, LEGACY_DSA_V2_PRIVATE_BLOB, data, len, &len, 0 ))
+    {
+        blob_in.pbData = data;
+        blob_in.cbData = len;
+        if ((ret = CryptProtectData( &blob_in, NULL, NULL, NULL, NULL, flags, &blob_out )))
+        {
+            ret = !RegSetValueExW( hkey, value, 0, REG_BINARY, blob_out.pbData, blob_out.cbData );
+            LocalFree( blob_out.pbData );
+        }
+    }
+
+    heap_free( data );
+    return ret;
+}
+
+static BOOL store_key_container_keys( struct container *container )
+{
+    HKEY hkey;
+    DWORD flags;
+    BOOL ret;
+
+    if (container->flags & CRYPT_MACHINE_KEYSET)
+        flags = CRYPTPROTECT_LOCAL_MACHINE;
+    else
+        flags = 0;
+
+    if (!create_container_regkey( container, KEY_WRITE, &hkey )) return FALSE;
+
+    ret = store_key_pair( container->exch_key, hkey, AT_KEYEXCHANGE, flags );
+    if (ret) store_key_pair( container->sign_key, hkey, AT_SIGNATURE, flags );
+    RegCloseKey( hkey );
+    return ret;
+}
+
+#define MAGIC_DSS1 ('D' | ('S' << 8) | ('S' << 16) | ('1' << 24))
+#define MAGIC_DSS2 ('D' | ('S' << 8) | ('S' << 16) | ('2' << 24))
 
 BOOL WINAPI CPImportKey( HCRYPTPROV hprov, const BYTE *data, DWORD len, HCRYPTKEY hpubkey, DWORD flags,
                          HCRYPTKEY *ret_key )
 {
-    return FALSE;
+    struct container *container = (struct container *)hprov;
+    struct key *key;
+    BLOBHEADER *hdr;
+    DSSPUBKEY *pubkey;
+    const WCHAR *type;
+    NTSTATUS status;
+
+    TRACE( "%p, %p, %u, %p, %08x, %p\n", (void *)hprov, data, len, (void *)hpubkey, flags, ret_key );
+
+    if (container->magic != MAGIC_CONTAINER) return FALSE;
+    if (len < sizeof(*hdr)) return FALSE;
+
+    hdr = (BLOBHEADER *)data;
+    if ((hdr->bType != PRIVATEKEYBLOB && hdr->bType != PUBLICKEYBLOB) || hdr->bVersion != 2 ||
+        hdr->aiKeyAlg != CALG_DSS_SIGN)
+    {
+        FIXME( "bType %u\n", hdr->bType );
+        FIXME( "bVersion %u\n", hdr->bVersion );
+        FIXME( "reserved %u\n", hdr->reserved );
+        FIXME( "aiKeyAlg %08x\n", hdr->aiKeyAlg );
+        return FALSE;
+    }
+
+    if (len < sizeof(*hdr) + sizeof(*pubkey)) return FALSE;
+    pubkey = (DSSPUBKEY *)(hdr + 1);
+
+    switch (pubkey->magic)
+    {
+    case MAGIC_DSS1:
+        type = LEGACY_DSA_V2_PUBLIC_BLOB;
+        break;
+
+    case MAGIC_DSS2:
+        type = LEGACY_DSA_V2_PRIVATE_BLOB;
+        break;
+
+    default:
+        FIXME( "unsupported key magic %08x\n", pubkey->magic );
+        return FALSE;
+    }
+
+    if (!(key = create_key( hdr->aiKeyAlg, flags ))) return FALSE;
+
+    if ((status = BCryptImportKeyPair( key->alg_handle, NULL, type, &key->handle, (UCHAR *)data, len, 0 )))
+    {
+        TRACE( "failed to import key %08x\n", status );
+        destroy_key( key );
+        return FALSE;
+    }
+
+    if (!wcscmp(type, LEGACY_DSA_V2_PRIVATE_BLOB))
+    {
+        switch (hdr->aiKeyAlg)
+        {
+        case AT_KEYEXCHANGE:
+        case CALG_DH_SF:
+            container->exch_key = key;
+            break;
+
+        case AT_SIGNATURE:
+        case CALG_DSS_SIGN:
+            container->sign_key = key;
+            break;
+
+        default:
+            FIXME( "unhandled key algorithm %u\n", hdr->aiKeyAlg );
+            destroy_key( key );
+            return FALSE;
+        }
+
+        if (!store_key_container_keys( container ))
+        {
+            destroy_key( key );
+            return FALSE;
+        }
+    }
+
+    *ret_key = (HCRYPTKEY)key;
+    return TRUE;
 }
 
 BOOL WINAPI CPExportKey( HCRYPTPROV hprov, HCRYPTKEY hkey, HCRYPTKEY hexpkey, DWORD blobtype, DWORD flags,
