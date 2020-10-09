@@ -400,8 +400,8 @@ ME_StreamOutRTFTableProps(ME_TextEditor *editor, ME_OutStream *pStream,
   if (!ME_StreamOutPrint(pStream, "\\trowd"))
     return FALSE;
   if (!editor->bEmulateVersion10) { /* v4.1 */
-    PARAFORMAT2 *pFmt = &ME_GetTableRowEnd(para)->member.para.fmt;
-    para = ME_GetTableRowStart(para);
+    PARAFORMAT2 *pFmt = &table_row_end( &para->member.para )->fmt;
+    para = para_get_di( table_row_start( &para->member.para ) );
     cell = para->member.para.next_para->member.para.pCell;
     assert(cell);
     if (pFmt->dxOffset)

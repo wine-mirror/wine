@@ -211,6 +211,8 @@ int get_total_width(ME_TextEditor *editor) DECLSPEC_HIDDEN;
 void para_mark_rewrap( ME_TextEditor *editor, ME_Paragraph *para ) DECLSPEC_HIDDEN;
 void para_mark_add( ME_TextEditor *editor, ME_Paragraph *para ) DECLSPEC_HIDDEN;
 void para_mark_remove( ME_TextEditor *editor, ME_Paragraph *para ) DECLSPEC_HIDDEN;
+ME_Paragraph *para_next( ME_Paragraph *para ) DECLSPEC_HIDDEN;
+ME_Paragraph *para_prev( ME_Paragraph *para ) DECLSPEC_HIDDEN;
 ME_Run *para_first_run( ME_Paragraph *para ) DECLSPEC_HIDDEN;
 static inline ME_DisplayItem *para_get_di(ME_Paragraph *para)
 {
@@ -273,9 +275,9 @@ ME_DisplayItem *ME_InsertTableRowStartAtParagraph(ME_TextEditor *editor,
                                                   ME_DisplayItem *para) DECLSPEC_HIDDEN;
 ME_DisplayItem *ME_InsertTableCellFromCursor(ME_TextEditor *editor) DECLSPEC_HIDDEN;
 ME_DisplayItem *ME_InsertTableRowEndFromCursor(ME_TextEditor *editor) DECLSPEC_HIDDEN;
-ME_DisplayItem *ME_GetTableRowEnd(ME_DisplayItem *para) DECLSPEC_HIDDEN;
-ME_DisplayItem *ME_GetTableRowStart(ME_DisplayItem *para) DECLSPEC_HIDDEN;
-ME_DisplayItem *ME_GetOuterParagraph(ME_DisplayItem *para) DECLSPEC_HIDDEN;
+ME_Paragraph *table_row_end( ME_Paragraph *para ) DECLSPEC_HIDDEN;
+ME_Paragraph *table_row_start( ME_Paragraph *para ) DECLSPEC_HIDDEN;
+ME_Paragraph *table_outer_para( ME_Paragraph *para ) DECLSPEC_HIDDEN;
 void ME_CheckTablesForCorruption(ME_TextEditor *editor) DECLSPEC_HIDDEN;
 void ME_ProtectPartialTableDeletion(ME_TextEditor *editor, ME_Cursor *c, int *nChars) DECLSPEC_HIDDEN;
 ME_DisplayItem* ME_AppendTableRow(ME_TextEditor *editor, ME_DisplayItem *table_row) DECLSPEC_HIDDEN;

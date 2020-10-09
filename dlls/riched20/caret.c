@@ -1033,7 +1033,7 @@ static BOOL ME_FindPixelPos(ME_TextEditor *editor, int x, int y,
     }
     else if (p->member.para.nFlags & MEPF_ROWSTART)
     {
-      p = ME_GetTableRowEnd(p);
+      p = para_get_di( table_row_end( &p->member.para ) );
     }
   }
   /* find row */
@@ -1304,7 +1304,7 @@ ME_MoveCursorLines(ME_TextEditor *editor, ME_Cursor *pCursor, int nRelOfs, BOOL 
          pOldPara->member.para.pCell != pNewPara->member.para.pCell))
     {
       /* Brought out of a cell */
-      pNewPara = ME_GetTableRowStart(pOldPara)->member.para.prev_para;
+      pNewPara = table_row_start( &pOldPara->member.para )->prev_para;
       if (pNewPara->type == diTextStart)
         return; /* At the top, so don't go anywhere. */
       pItem = ME_FindItemFwd(pNewPara, diStartRow);
@@ -1335,7 +1335,7 @@ ME_MoveCursorLines(ME_TextEditor *editor, ME_Cursor *pCursor, int nRelOfs, BOOL 
          pOldPara->member.para.pCell != pNewPara->member.para.pCell))
     {
       /* Brought out of a cell */
-      pNewPara = ME_GetTableRowEnd(pOldPara)->member.para.next_para;
+      pNewPara = table_row_end( &pOldPara->member.para )->next_para;
       if (pNewPara->type == diTextEnd)
         return; /* At the bottom, so don't go anywhere. */
       pItem = ME_FindItemFwd(pNewPara, diStartRow);

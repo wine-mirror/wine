@@ -133,52 +133,46 @@ ME_DisplayItem* ME_InsertTableRowEndFromCursor(ME_TextEditor *editor)
   return para->member.para.prev_para;
 }
 
-ME_DisplayItem* ME_GetTableRowEnd(ME_DisplayItem *para)
+ME_Paragraph* table_row_end( ME_Paragraph *para )
 {
   ME_DisplayItem *cell;
-  assert(para);
-  if (para->member.para.nFlags & MEPF_ROWEND)
-    return para;
-  if (para->member.para.nFlags & MEPF_ROWSTART)
-    para = para->member.para.next_para;
-  cell = para->member.para.pCell;
+  assert( para );
+  if (para->nFlags & MEPF_ROWEND) return para;
+  if (para->nFlags & MEPF_ROWSTART) para = para_next( para );
+  cell = para->pCell;
   assert(cell && cell->type == diCell);
   while (cell->member.cell.next_cell)
     cell = cell->member.cell.next_cell;
 
-  para = ME_FindItemFwd(cell, diParagraph);
-  assert(para && para->member.para.nFlags & MEPF_ROWEND);
+  para = &ME_FindItemFwd( cell, diParagraph )->member.para;
+  assert( para && para->nFlags & MEPF_ROWEND );
   return para;
 }
 
-ME_DisplayItem* ME_GetTableRowStart(ME_DisplayItem *para)
+ME_Paragraph* table_row_start( ME_Paragraph *para )
 {
   ME_DisplayItem *cell;
-  assert(para);
-  if (para->member.para.nFlags & MEPF_ROWSTART)
-    return para;
-  if (para->member.para.nFlags & MEPF_ROWEND)
-    para = para->member.para.prev_para;
-  cell = para->member.para.pCell;
+  assert( para );
+  if (para->nFlags & MEPF_ROWSTART) return para;
+  if (para->nFlags & MEPF_ROWEND) para = para_prev( para );
+  cell = para->pCell;
   assert(cell && cell->type == diCell);
   while (cell->member.cell.prev_cell)
     cell = cell->member.cell.prev_cell;
 
-  para = ME_FindItemBack(cell, diParagraph);
-  assert(para && para->member.para.nFlags & MEPF_ROWSTART);
+  para = &ME_FindItemBack( cell, diParagraph )->member.para;
+  assert( para && para->nFlags & MEPF_ROWSTART );
   return para;
 }
 
-ME_DisplayItem* ME_GetOuterParagraph(ME_DisplayItem *para)
+ME_Paragraph* table_outer_para( ME_Paragraph *para )
 {
-  if (para->member.para.nFlags & MEPF_ROWEND)
-    para = para->member.para.prev_para;
-  while (para->member.para.pCell)
+  if (para->nFlags & MEPF_ROWEND) para = para_prev( para );
+  while (para->pCell)
   {
-    para = ME_GetTableRowStart(para);
-    if (!para->member.para.pCell)
-      break;
-    para = ME_FindItemBack(para->member.para.pCell, diParagraph);
+    para = table_row_start( para );
+    if (!para->pCell) break;
+    para = &ME_FindItemBack( para->pCell, diParagraph )->member.para;
   }
   return para;
 }
@@ -330,7 +324,7 @@ void ME_ProtectPartialTableDeletion(ME_TextEditor *editor, ME_Cursor *c, int *nC
         while (!bTruancateDeletion &&
                next_para->member.para.nFlags & MEPF_ROWSTART)
         {
-          next_para = ME_GetTableRowEnd(next_para)->member.para.next_para;
+          next_para = table_row_end( &next_para->member.para )->next_para;
           if (next_para->member.para.nCharOfs > nOfs + *nChars)
           {
             /* End of deletion is not past the end of the table row. */
@@ -416,8 +410,8 @@ ME_DisplayItem* ME_AppendTableRow(ME_TextEditor *editor,
   assert(table_row->type == diParagraph);
   if (!editor->bEmulateVersion10) { /* v4.1 */
     ME_DisplayItem *insertedCell, *para, *cell, *prevTableEnd;
-    cell = ME_FindItemFwd(ME_GetTableRowStart(table_row), diCell);
-    prevTableEnd = ME_GetTableRowEnd(table_row);
+    cell = ME_FindItemFwd( para_get_di( table_row_start( &table_row->member.para ) ), diCell );
+    prevTableEnd = para_get_di( table_row_end( &table_row->member.para ) );
     para = prevTableEnd->member.para.next_para;
     run = ME_FindItemFwd(para, diRun);
     editor->pCursors[0].pPara = para;
@@ -484,15 +478,14 @@ static void ME_SelectOrInsertNextCell(ME_TextEditor *editor,
     {
       cell = cell->member.cell.next_cell;
     } else {
-      para = ME_GetTableRowEnd(ME_FindItemFwd(cell, diParagraph));
-      para = para->member.para.next_para;
+      para = table_row_end( &ME_FindItemFwd( cell, diParagraph )->member.para )->next_para;
       assert(para);
       if (para->member.para.nFlags & MEPF_ROWSTART) {
         cell = para->member.para.next_para->member.para.pCell;
       } else {
         /* Insert row */
         para = para->member.para.prev_para;
-        para = ME_AppendTableRow(editor, ME_GetTableRowStart(para));
+        para = ME_AppendTableRow( editor, para_get_di( table_row_start( &para->member.para ) ) );
         /* Put cursor at the start of the new table row */
         para = para->member.para.next_para;
         editor->pCursors[0].pPara = para;

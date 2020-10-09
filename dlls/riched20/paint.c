@@ -778,10 +778,10 @@ static void ME_DrawTableBorders(ME_Context *c, ME_DisplayItem *paragraph)
       if (atBottom) {
         int oldLeft = rc.left;
         width = max(ME_twips2pointsY(c, cell->border.bottom.width), 1);
-        paraAfterRow = ME_GetTableRowEnd(paragraph)->member.para.next_para;
+        paraAfterRow = table_row_end( &paragraph->member.para )->next_para;
         if (paraAfterRow->member.para.nFlags & MEPF_ROWSTART) {
           ME_DisplayItem *nextEndCell;
-          nextEndCell = ME_FindItemBack(ME_GetTableRowEnd(paraAfterRow), diCell);
+          nextEndCell = ME_FindItemBack( para_get_di( table_row_end( &paraAfterRow->member.para ) ), diCell );
           assert(nextEndCell && !nextEndCell->member.cell.next_cell);
           rc.left = c->pt.x + nextEndCell->member.cell.pt.x;
           /* FIXME: Native draws FROM the bottom of the table rather than

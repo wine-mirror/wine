@@ -55,6 +55,19 @@ void destroy_para(ME_TextEditor *editor, ME_DisplayItem *item)
     ME_DestroyDisplayItem(item);
 }
 
+/* Note para_next/prev will return the start and end doc nodes */
+ME_Paragraph *para_next( ME_Paragraph *para )
+{
+    if (para->next_para) return &para->next_para->member.para;
+    return NULL;
+}
+
+ME_Paragraph *para_prev( ME_Paragraph *para )
+{
+    if (para->prev_para) return &para->prev_para->member.para;
+    return NULL;
+}
+
 int get_total_width(ME_TextEditor *editor)
 {
     ME_Paragraph *para;

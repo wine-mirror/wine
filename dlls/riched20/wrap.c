@@ -209,7 +209,7 @@ static void ME_BeginRow(ME_WrapContext *wc)
       width -= cell->prev_cell->member.cell.nRightBoundary;
     if (!cell->prev_cell)
     {
-      int rowIndent = ME_GetTableRowEnd( para_get_di( wc->para ) )->member.para.fmt.dxStartIndent;
+      int rowIndent = table_row_end( wc->para )->fmt.dxStartIndent;
       width -= rowIndent;
     }
     cell->nWidth = max(ME_twips2pointsX(wc->context, width), 0);
@@ -843,8 +843,7 @@ static void ME_WrapTextParagraph( ME_TextEditor *editor, ME_Context *c, ME_Parag
   else
   {
     int dxStartIndent = para->fmt.dxStartIndent;
-    if (para->pCell)
-      dxStartIndent += ME_GetTableRowEnd( para_get_di( para ) )->member.para.fmt.dxOffset;
+    if (para->pCell) dxStartIndent += table_row_end( para )->fmt.dxOffset;
 
     wc.nLeftMargin = ME_twips2pointsX( c, dxStartIndent + para->fmt.dxOffset );
     wc.nFirstMargin = ME_twips2pointsX( c, dxStartIndent );
@@ -1101,8 +1100,8 @@ void ME_InvalidateParagraphRange(ME_TextEditor *editor,
 
   if (start_para)
   {
-    start_para = ME_GetOuterParagraph(start_para);
-    last_para = ME_GetOuterParagraph(last_para);
+    start_para = para_get_di( table_outer_para( &start_para->member.para ) );
+    last_para = para_get_di( table_outer_para( &last_para->member.para ) );
     rc.top += start_para->member.para.pt.y - ofs;
   } else {
     rc.top += editor->nTotalLength - ofs;
