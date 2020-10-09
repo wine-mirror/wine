@@ -43,8 +43,6 @@ static PMONITORUI pui;
 static BOOL  (WINAPI *pAddPortUI)(PCWSTR, HWND, PCWSTR, PWSTR *);
 static BOOL  (WINAPI *pConfigurePortUI)(PCWSTR, HWND, PCWSTR);
 static BOOL  (WINAPI *pDeletePortUI)(PCWSTR, HWND, PCWSTR);
-static const CHAR  fmt_comA[] = {'C','O','M','%','u',':',0};
-static const CHAR  fmt_lptA[] = {'L','P','T','%','u',':',0};
 
 static LPBYTE pi_buffer;
 static DWORD pi_numports;
@@ -304,7 +302,7 @@ START_TEST(localui)
     /* "LPT1:" - "LPT9:" */
     while (((lpt_present == NULL) || (lpt_absent == NULL)) && id < 9) {
         id++;
-        sprintf(bufferA, fmt_lptA, id);
+        sprintf(bufferA, "LPT%u:", id);
         MultiByteToWideChar( CP_ACP, 0, bufferA, -1, bufferW, ARRAY_SIZE(bufferW));
         pi2 = find_portinfo2(bufferW);
         if (pi2 && (lpt_present == NULL)) lpt_present = pi2;
@@ -315,7 +313,7 @@ START_TEST(localui)
     /* "COM1:" - "COM9:" */
     while (((com_present == NULL) || (com_absent == NULL)) && id < 9) {
         id++;
-        sprintf(bufferA, fmt_comA, id);
+        sprintf(bufferA, "COM%u:", id);
         MultiByteToWideChar( CP_ACP, 0, bufferA, -1, bufferW, ARRAY_SIZE(bufferW));
         pi2 = find_portinfo2(bufferW);
         if (pi2 && (com_present == NULL)) com_present = pi2;
