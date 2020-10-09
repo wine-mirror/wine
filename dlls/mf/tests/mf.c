@@ -3296,6 +3296,15 @@ static void test_evr(void)
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(IsEqualGUID(&guid, &MFMediaType_Video), "Unexpected type %s.\n", wine_dbgstr_guid(&guid));
 
+    /* Supported types are not advertised. */
+    hr = IMFMediaTypeHandler_GetMediaTypeCount(type_handler, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    count = 1;
+    hr = IMFMediaTypeHandler_GetMediaTypeCount(type_handler, &count);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!count, "Unexpected count %u.\n", count);
+
     IMFMediaTypeHandler_Release(type_handler);
 
     /* Stream uses an allocator. */

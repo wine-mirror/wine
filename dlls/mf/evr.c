@@ -372,9 +372,14 @@ static HRESULT WINAPI video_stream_typehandler_IsMediaTypeSupported(IMFMediaType
 
 static HRESULT WINAPI video_stream_typehandler_GetMediaTypeCount(IMFMediaTypeHandler *iface, DWORD *count)
 {
-    FIXME("%p, %p.\n", iface, count);
+    TRACE("%p, %p.\n", iface, count);
 
-    return E_NOTIMPL;
+    if (!count)
+        return E_POINTER;
+
+    *count = 0;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI video_stream_typehandler_GetMediaTypeByIndex(IMFMediaTypeHandler *iface, DWORD index,
