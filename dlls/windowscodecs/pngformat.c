@@ -444,6 +444,8 @@ typedef struct {
     IWICMetadataBlockReader IWICMetadataBlockReader_iface;
     LONG ref;
     IStream *stream;
+    struct decoder *png_decoder;
+    struct decoder_info decoder_info;
     png_structp png_ptr;
     png_infop info_ptr;
     png_infop end_info;
@@ -521,6 +523,8 @@ static ULONG WINAPI PngDecoder_Release(IWICBitmapDecoder *iface)
             IStream_Release(This->stream);
         if (This->png_ptr)
             ppng_destroy_read_struct(&This->png_ptr, &This->info_ptr, &This->end_info);
+        if (This->png_decoder)
+            decoder_destroy(This->png_decoder);
         This->lock.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->lock);
         HeapFree(GetProcessHeap(), 0, This->image_bits);
@@ -828,16 +832,18 @@ end:
 static HRESULT WINAPI PngDecoder_GetContainerFormat(IWICBitmapDecoder *iface,
     GUID *pguidContainerFormat)
 {
-    memcpy(pguidContainerFormat, &GUID_ContainerFormatPng, sizeof(GUID));
+    PngDecoder *This = impl_from_IWICBitmapDecoder(iface);
+    memcpy(pguidContainerFormat, &This->decoder_info.container_format, sizeof(GUID));
     return S_OK;
 }
 
 static HRESULT WINAPI PngDecoder_GetDecoderInfo(IWICBitmapDecoder *iface,
     IWICBitmapDecoderInfo **ppIDecoderInfo)
 {
+    PngDecoder *This = impl_from_IWICBitmapDecoder(iface);
     TRACE("(%p,%p)\n", iface, ppIDecoderInfo);
 
-    return get_decoder_info(&CLSID_WICPngDecoder, ppIDecoderInfo);
+    return get_decoder_info(&This->decoder_info.clsid, ppIDecoderInfo);
 }
 
 static HRESULT WINAPI PngDecoder_CopyPalette(IWICBitmapDecoder *iface,
@@ -1208,8 +1214,9 @@ static ULONG WINAPI PngDecoder_Block_Release(IWICMetadataBlockReader *iface)
 static HRESULT WINAPI PngDecoder_Block_GetContainerFormat(IWICMetadataBlockReader *iface,
     GUID *pguidContainerFormat)
 {
+    PngDecoder *This = impl_from_IWICMetadataBlockReader(iface);
     if (!pguidContainerFormat) return E_INVALIDARG;
-    memcpy(pguidContainerFormat, &GUID_ContainerFormatPng, sizeof(GUID));
+    memcpy(pguidContainerFormat, &This->decoder_info.block_format, sizeof(GUID));
     return S_OK;
 }
 
@@ -1311,6 +1318,13 @@ HRESULT PngDecoder_CreateInstance(REFIID iid, void** ppv)
 
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(PngDecoder));
     if (!This) return E_OUTOFMEMORY;
+
+    ret = get_unix_decoder(&CLSID_WICPngDecoder, &This->decoder_info, &This->png_decoder);
+    if (FAILED(ret))
+    {
+        HeapFree(GetProcessHeap(), 0, This);
+        return ret;
+    }
 
     This->IWICBitmapDecoder_iface.lpVtbl = &PngDecoder_Vtbl;
     This->IWICBitmapFrameDecode_iface.lpVtbl = &PngDecoder_FrameVtbl;

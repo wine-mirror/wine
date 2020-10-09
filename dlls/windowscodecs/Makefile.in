@@ -21,6 +21,7 @@ C_SRCS = \
 	imgfactory.c \
 	info.c \
 	jpegformat.c \
+	libpng.c \
 	main.c \
 	metadatahandler.c \
 	metadataquery.c \
@@ -34,6 +35,8 @@ C_SRCS = \
 	tgaformat.c \
 	tiffformat.c \
 	ungif.c \
+	unix_iface.c \
+	unix_lib.c \
 	uuid.c
 
 RC_SRCS = version.rc

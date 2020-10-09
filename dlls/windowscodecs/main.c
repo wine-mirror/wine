@@ -32,7 +32,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
+#include "wincodecs_common.h"
+
 extern BOOL WINAPI WIC_DllMain(HINSTANCE, DWORD, LPVOID) DECLSPEC_HIDDEN;
+
+HMODULE windowscodecs_module = 0;
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
@@ -41,6 +45,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     {
         case DLL_PROCESS_ATTACH:
             DisableThreadLibraryCalls(hinstDLL);
+            windowscodecs_module = hinstDLL;
             break;
         case DLL_PROCESS_DETACH:
             ReleaseComponentInfos();

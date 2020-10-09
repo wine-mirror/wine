@@ -1,0 +1,101 @@
+/*
+ * unix_iface.c - This is the Win32 side of the Unix interface.
+ *
+ * Copyright 2020 Esme Povirk
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "config.h"
+#include "wine/port.h"
+
+#include <stdarg.h>
+
+#define NONAMELESSUNION
+#define COBJMACROS
+
+#include "windef.h"
+#include "winbase.h"
+#include "objbase.h"
+#include "winternl.h"
+
+#include "wincodecs_private.h"
+
+#include "wine/debug.h"
+
+static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
+
+static const struct unix_funcs *unix_funcs;
+
+static BOOL WINAPI load_unixlib( INIT_ONCE *once, void *param, void **context )
+{
+    __wine_init_unix_lib( windowscodecs_module, DLL_PROCESS_ATTACH, NULL, &unix_funcs );
+    return TRUE;
+}
+
+static void init_unixlib(void)
+{
+    InitOnceExecuteOnce( &init_once, load_unixlib, NULL, NULL );
+}
+
+struct decoder_wrapper
+{
+    struct decoder win32_decoder;
+    struct decoder *unix_decoder;
+};
+
+static inline struct decoder_wrapper *impl_from_decoder(struct decoder* iface)
+{
+    return CONTAINING_RECORD(iface, struct decoder_wrapper, win32_decoder);
+}
+
+void CDECL decoder_wrapper_destroy(struct decoder* iface)
+{
+    struct decoder_wrapper* This = impl_from_decoder(iface);
+    unix_funcs->decoder_destroy(This->unix_decoder);
+    HeapFree(GetProcessHeap(), 0, This);
+}
+
+static const struct decoder_funcs decoder_wrapper_vtable = {
+    decoder_wrapper_destroy
+};
+
+HRESULT get_unix_decoder(const CLSID *decoder_clsid, struct decoder_info *info, struct decoder **result)
+{
+    HRESULT hr;
+    struct decoder_wrapper *wrapper;
+    struct decoder *unix_decoder;
+
+    init_unixlib();
+
+    hr = unix_funcs->decoder_create(decoder_clsid, info, &unix_decoder);
+
+    if (SUCCEEDED(hr))
+    {
+        wrapper = HeapAlloc(GetProcessHeap(), 0, sizeof(*wrapper));
+
+        if (!wrapper)
+        {
+            unix_funcs->decoder_destroy(unix_decoder);
+            return E_OUTOFMEMORY;
+        }
+
+        wrapper->win32_decoder.vtable = &decoder_wrapper_vtable;
+        wrapper->unix_decoder = unix_decoder;
+        *result = &wrapper->win32_decoder;
+    }
+
+    return hr;
+}

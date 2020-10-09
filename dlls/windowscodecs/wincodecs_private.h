@@ -247,4 +247,39 @@ static inline const char *debug_wic_rect(const WICRect *rect)
     return wine_dbg_sprintf("(%u,%u)-(%u,%u)", rect->X, rect->Y, rect->Width, rect->Height);
 }
 
+extern HMODULE windowscodecs_module;
+
+/* unixlib iface */
+struct decoder_funcs;
+
+struct decoder_info
+{
+    GUID container_format;
+    GUID block_format;
+    CLSID clsid;
+};
+
+struct decoder
+{
+    const struct decoder_funcs *vtable;
+};
+
+struct decoder_funcs
+{
+    void (CDECL *destroy)(struct decoder* This);
+};
+
+HRESULT CDECL decoder_create(const CLSID *decoder_clsid, struct decoder_info *info, struct decoder **result);
+void CDECL decoder_destroy(struct decoder *This);
+
+HRESULT CDECL png_decoder_create(struct decoder_info *info, struct decoder **result);
+
+struct unix_funcs
+{
+    HRESULT (CDECL *decoder_create)(const CLSID *decoder_clsid, struct decoder_info *info, struct decoder **result);
+    void (CDECL *decoder_destroy)(struct decoder* This);
+};
+
+HRESULT get_unix_decoder(const CLSID *decoder_clsid, struct decoder_info *info, struct decoder **result);
+
 #endif /* WINCODECS_PRIVATE_H */
