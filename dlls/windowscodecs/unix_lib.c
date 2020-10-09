@@ -70,6 +70,7 @@ static const struct unix_funcs unix_funcs = {
     decoder_initialize,
     decoder_get_frame_info,
     decoder_copy_pixels,
+    decoder_get_metadata_blocks,
     decoder_destroy
 };
 

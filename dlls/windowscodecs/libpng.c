@@ -133,6 +133,7 @@ static void *load_libpng(void)
 struct png_decoder
 {
     struct decoder decoder;
+    IStream *stream;
     struct decoder_frame decoder_frame;
     UINT stride;
     BYTE *image_bits;
@@ -425,6 +426,8 @@ HRESULT CDECL png_decoder_initialize(struct decoder *iface, IStream *stream, str
                 WICBitmapDecoderCapabilityCanEnumerateMetadata;
     st->frame_count = 1;
 
+    This->stream = stream;
+
     hr = S_OK;
 
 end:
@@ -455,6 +458,79 @@ HRESULT CDECL png_decoder_copy_pixels(struct decoder *iface, UINT frame,
         prc, stride, buffersize, buffer);
 }
 
+HRESULT CDECL png_decoder_get_metadata_blocks(struct decoder* iface,
+    UINT frame, UINT *count, struct decoder_block **blocks)
+{
+    struct png_decoder *This = impl_from_decoder(iface);
+    HRESULT hr;
+    struct decoder_block *result = NULL;
+    ULONGLONG seek;
+    BYTE chunk_type[4];
+    ULONG chunk_size;
+    ULONGLONG chunk_start;
+    ULONG metadata_blocks_size = 0;
+
+    seek = 8;
+    *count = 0;
+
+    do
+    {
+        hr = stream_seek(This->stream, seek, STREAM_SEEK_SET, &chunk_start);
+        if (FAILED(hr)) goto end;
+
+        hr = read_png_chunk(This->stream, chunk_type, NULL, &chunk_size);
+        if (FAILED(hr)) goto end;
+
+        if (chunk_type[0] >= 'a' && chunk_type[0] <= 'z' &&
+            memcmp(chunk_type, "tRNS", 4) && memcmp(chunk_type, "pHYs", 4))
+        {
+            /* This chunk is considered metadata. */
+            if (*count == metadata_blocks_size)
+            {
+                struct decoder_block *new_metadata_blocks;
+                ULONG new_metadata_blocks_size;
+
+                new_metadata_blocks_size = 4 + metadata_blocks_size * 2;
+                new_metadata_blocks = RtlAllocateHeap(GetProcessHeap(), 0,
+                    new_metadata_blocks_size * sizeof(*new_metadata_blocks));
+
+                if (!new_metadata_blocks)
+                {
+                    hr = E_OUTOFMEMORY;
+                    goto end;
+                }
+
+                memcpy(new_metadata_blocks, result,
+                    *count * sizeof(*new_metadata_blocks));
+
+                RtlFreeHeap(GetProcessHeap(), 0, result);
+                result = new_metadata_blocks;
+                metadata_blocks_size = new_metadata_blocks_size;
+            }
+
+            result[*count].offset = chunk_start;
+            result[*count].length = chunk_size + 12;
+            result[*count].options = WICMetadataCreationAllowUnknown;
+            (*count)++;
+        }
+
+        seek = chunk_start + chunk_size + 12; /* skip data and CRC */
+    } while (memcmp(chunk_type, "IEND", 4));
+
+end:
+    if (SUCCEEDED(hr))
+    {
+        *blocks = result;
+    }
+    else
+    {
+        *count = 0;
+        *blocks = NULL;
+        RtlFreeHeap(GetProcessHeap(), 0, result);
+    }
+    return hr;
+}
+
 void CDECL png_decoder_destroy(struct decoder* iface)
 {
     struct png_decoder *This = impl_from_decoder(iface);
@@ -467,6 +543,7 @@ static const struct decoder_funcs png_decoder_vtable = {
     png_decoder_initialize,
     png_decoder_get_frame_info,
     png_decoder_copy_pixels,
+    png_decoder_get_metadata_blocks,
     png_decoder_destroy
 };
 

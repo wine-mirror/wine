@@ -85,6 +85,13 @@ HRESULT CDECL decoder_wrapper_copy_pixels(struct decoder* iface, UINT frame,
     return unix_funcs->decoder_copy_pixels(This->unix_decoder, frame, prc, stride, buffersize, buffer);
 }
 
+HRESULT CDECL decoder_wrapper_get_metadata_blocks(struct decoder* iface,
+    UINT frame, UINT *count, struct decoder_block **blocks)
+{
+    struct decoder_wrapper* This = impl_from_decoder(iface);
+    return unix_funcs->decoder_get_metadata_blocks(This->unix_decoder, frame, count, blocks);
+}
+
 void CDECL decoder_wrapper_destroy(struct decoder* iface)
 {
     struct decoder_wrapper* This = impl_from_decoder(iface);
@@ -96,6 +103,7 @@ static const struct decoder_funcs decoder_wrapper_vtable = {
     decoder_wrapper_initialize,
     decoder_wrapper_get_frame_info,
     decoder_wrapper_copy_pixels,
+    decoder_wrapper_get_metadata_blocks,
     decoder_wrapper_destroy
 };
 

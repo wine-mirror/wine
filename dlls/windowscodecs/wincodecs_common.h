@@ -32,6 +32,11 @@ HRESULT CDECL decoder_copy_pixels(struct decoder *decoder, UINT frame,
     return decoder->vtable->copy_pixels(decoder, frame, prc, stride, buffersize, buffer);
 }
 
+HRESULT CDECL decoder_get_metadata_blocks(struct decoder *decoder, UINT frame, UINT *count, struct decoder_block **blocks)
+{
+    return decoder->vtable->get_metadata_blocks(decoder, frame, count, blocks);
+}
+
 void CDECL decoder_destroy(struct decoder *decoder)
 {
     decoder->vtable->destroy(decoder);
@@ -100,4 +105,50 @@ HRESULT copy_pixels(UINT bpp, const BYTE *srcbuffer,
         FIXME("cannot reliably copy bitmap data if bpp < 8\n");
         return E_FAIL;
     }
+}
+
+static inline ULONG read_ulong_be(BYTE* data)
+{
+    return data[0] << 24 | data[1] << 16 | data[2] << 8 | data[3];
+}
+
+HRESULT read_png_chunk(IStream *stream, BYTE *type, BYTE **data, ULONG *data_size)
+{
+    BYTE header[8];
+    HRESULT hr;
+    ULONG bytesread;
+
+    hr = stream_read(stream, header, 8, &bytesread);
+    if (FAILED(hr) || bytesread < 8)
+    {
+        if (SUCCEEDED(hr))
+            hr = E_FAIL;
+        return hr;
+    }
+
+    *data_size = read_ulong_be(&header[0]);
+
+    memcpy(type, &header[4], 4);
+
+    if (data)
+    {
+        *data = RtlAllocateHeap(GetProcessHeap(), 0, *data_size);
+        if (!*data)
+            return E_OUTOFMEMORY;
+
+        hr = stream_read(stream, *data, *data_size, &bytesread);
+
+        if (FAILED(hr) || bytesread < *data_size)
+        {
+            if (SUCCEEDED(hr))
+                hr = E_FAIL;
+            RtlFreeHeap(GetProcessHeap(), 0, *data);
+            *data = NULL;
+            return hr;
+        }
+
+        /* Windows ignores CRC of the chunk */
+    }
+
+    return S_OK;
 }

@@ -249,6 +249,8 @@ static inline const char *debug_wic_rect(const WICRect *rect)
 
 extern HMODULE windowscodecs_module;
 
+HRESULT read_png_chunk(IStream *stream, BYTE *type, BYTE **data, ULONG *data_size);
+
 /* unixlib iface */
 struct decoder_funcs;
 
@@ -277,6 +279,13 @@ struct decoder_frame
     WICColor palette[256];
 };
 
+struct decoder_block
+{
+    ULONGLONG offset;
+    ULONGLONG length;
+    DWORD options;
+};
+
 struct decoder
 {
     const struct decoder_funcs *vtable;
@@ -288,6 +297,8 @@ struct decoder_funcs
     HRESULT (CDECL *get_frame_info)(struct decoder* This, UINT frame, struct decoder_frame *info);
     HRESULT (CDECL *copy_pixels)(struct decoder* This, UINT frame, const WICRect *prc,
         UINT stride, UINT buffersize, BYTE *buffer);
+    HRESULT (CDECL *get_metadata_blocks)(struct decoder* This, UINT frame, UINT *count,
+        struct decoder_block **blocks);
     void (CDECL *destroy)(struct decoder* This);
 };
 
@@ -305,6 +316,8 @@ HRESULT CDECL decoder_initialize(struct decoder *This, IStream *stream, struct d
 HRESULT CDECL decoder_get_frame_info(struct decoder* This, UINT frame, struct decoder_frame *info);
 HRESULT CDECL decoder_copy_pixels(struct decoder* This, UINT frame, const WICRect *prc,
     UINT stride, UINT buffersize, BYTE *buffer);
+HRESULT CDECL decoder_get_metadata_blocks(struct decoder* This, UINT frame, UINT *count,
+    struct decoder_block **blocks);
 void CDECL decoder_destroy(struct decoder *This);
 
 HRESULT CDECL png_decoder_create(struct decoder_info *info, struct decoder **result);
@@ -316,6 +329,8 @@ struct unix_funcs
     HRESULT (CDECL *decoder_get_frame_info)(struct decoder* This, UINT frame, struct decoder_frame *info);
     HRESULT (CDECL *decoder_copy_pixels)(struct decoder* This, UINT frame, const WICRect *prc,
         UINT stride, UINT buffersize, BYTE *buffer);
+    HRESULT (CDECL *decoder_get_metadata_blocks)(struct decoder* This, UINT frame, UINT *count,
+        struct decoder_block **blocks);
     void (CDECL *decoder_destroy)(struct decoder* This);
 };
 

@@ -24,6 +24,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winternl.h"
 #include "objbase.h"
 
 #include "wincodecs_private.h"

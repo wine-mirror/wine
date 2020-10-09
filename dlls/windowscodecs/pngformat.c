@@ -44,47 +44,6 @@ static inline ULONG read_ulong_be(BYTE* data)
     return data[0] << 24 | data[1] << 16 | data[2] << 8 | data[3];
 }
 
-static HRESULT read_png_chunk(IStream *stream, BYTE *type, BYTE **data, ULONG *data_size)
-{
-    BYTE header[8];
-    HRESULT hr;
-    ULONG bytesread;
-
-    hr = IStream_Read(stream, header, 8, &bytesread);
-    if (FAILED(hr) || bytesread < 8)
-    {
-        if (SUCCEEDED(hr))
-            hr = E_FAIL;
-        return hr;
-    }
-
-    *data_size = read_ulong_be(&header[0]);
-
-    memcpy(type, &header[4], 4);
-
-    if (data)
-    {
-        *data = HeapAlloc(GetProcessHeap(), 0, *data_size);
-        if (!*data)
-            return E_OUTOFMEMORY;
-
-        hr = IStream_Read(stream, *data, *data_size, &bytesread);
-
-        if (FAILED(hr) || bytesread < *data_size)
-        {
-            if (SUCCEEDED(hr))
-                hr = E_FAIL;
-            HeapFree(GetProcessHeap(), 0, *data);
-            *data = NULL;
-            return hr;
-        }
-
-        /* Windows ignores CRC of the chunk */
-    }
-
-    return S_OK;
-}
-
 static HRESULT LoadTextMetadata(IStream *stream, const GUID *preferred_vendor,
     DWORD persist_options, MetadataItem **items, DWORD *item_count)
 {
@@ -459,7 +418,7 @@ typedef struct {
     BYTE *image_bits;
     CRITICAL_SECTION lock; /* must be held when png structures are accessed or initialized is set */
     ULONG metadata_count;
-    metadata_block_info* metadata_blocks;
+    struct decoder_block* metadata_blocks;
 } PngDecoder;
 
 static inline PngDecoder *impl_from_IWICBitmapDecoder(IWICBitmapDecoder *iface)
@@ -515,7 +474,6 @@ static ULONG WINAPI PngDecoder_Release(IWICBitmapDecoder *iface)
 {
     PngDecoder *This = impl_from_IWICBitmapDecoder(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
-    ULONG i;
 
     TRACE("(%p) refcount=%u\n", iface, ref);
 
@@ -530,11 +488,6 @@ static ULONG WINAPI PngDecoder_Release(IWICBitmapDecoder *iface)
         This->lock.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->lock);
         HeapFree(GetProcessHeap(), 0, This->image_bits);
-        for (i=0; i<This->metadata_count; i++)
-        {
-            if (This->metadata_blocks[i].reader)
-                IWICMetadataReader_Release(This->metadata_blocks[i].reader);
-        }
         HeapFree(GetProcessHeap(), 0, This->metadata_blocks);
         HeapFree(GetProcessHeap(), 0, This);
     }
@@ -587,10 +540,6 @@ static HRESULT WINAPI PngDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
     png_uint_32 transparency;
     png_color_16p trans_values;
     jmp_buf jmpbuf;
-    BYTE chunk_type[4];
-    ULONG chunk_size;
-    ULARGE_INTEGER chunk_start;
-    ULONG metadata_blocks_size = 0;
 
     TRACE("(%p,%p,%x)\n", iface, pIStream, cacheOptions);
 
@@ -783,52 +732,7 @@ static HRESULT WINAPI PngDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
 
     ppng_read_end(This->png_ptr, This->end_info);
 
-    /* Find the metadata chunks in the file. */
-    seek.QuadPart = 8;
-
-    do
-    {
-        hr = IStream_Seek(pIStream, seek, STREAM_SEEK_SET, &chunk_start);
-        if (FAILED(hr)) goto end;
-
-        hr = read_png_chunk(pIStream, chunk_type, NULL, &chunk_size);
-        if (FAILED(hr)) goto end;
-
-        if (chunk_type[0] >= 'a' && chunk_type[0] <= 'z' &&
-            memcmp(chunk_type, "tRNS", 4) && memcmp(chunk_type, "pHYs", 4))
-        {
-            /* This chunk is considered metadata. */
-            if (This->metadata_count == metadata_blocks_size)
-            {
-                metadata_block_info* new_metadata_blocks;
-                ULONG new_metadata_blocks_size;
-
-                new_metadata_blocks_size = 4 + metadata_blocks_size * 2;
-                new_metadata_blocks = HeapAlloc(GetProcessHeap(), 0,
-                    new_metadata_blocks_size * sizeof(*new_metadata_blocks));
-
-                if (!new_metadata_blocks)
-                {
-                    hr = E_OUTOFMEMORY;
-                    goto end;
-                }
-
-                memcpy(new_metadata_blocks, This->metadata_blocks,
-                    This->metadata_count * sizeof(*new_metadata_blocks));
-
-                HeapFree(GetProcessHeap(), 0, This->metadata_blocks);
-                This->metadata_blocks = new_metadata_blocks;
-                metadata_blocks_size = new_metadata_blocks_size;
-            }
-
-            This->metadata_blocks[This->metadata_count].ofs = chunk_start;
-            This->metadata_blocks[This->metadata_count].len.QuadPart = chunk_size + 12;
-            This->metadata_blocks[This->metadata_count].reader = NULL;
-            This->metadata_count++;
-        }
-
-        seek.QuadPart = chunk_start.QuadPart + chunk_size + 12; /* skip data and CRC */
-    } while (memcmp(chunk_type, "IEND", 4));
+    decoder_get_metadata_blocks(This->png_decoder, 0, &This->metadata_count, &This->metadata_blocks);
 
     This->stream = pIStream;
     IStream_AddRef(This->stream);
@@ -1185,39 +1089,34 @@ static HRESULT WINAPI PngDecoder_Block_GetReaderByIndex(IWICMetadataBlockReader 
     if (nIndex >= This->metadata_count || !ppIMetadataReader)
         return E_INVALIDARG;
 
-    if (!This->metadata_blocks[nIndex].reader)
+    hr = StreamImpl_Create(&stream);
+
+    if (SUCCEEDED(hr))
     {
-        hr = StreamImpl_Create(&stream);
+        ULARGE_INTEGER offset, length;
+
+        offset.QuadPart = This->metadata_blocks[nIndex].offset;
+        length.QuadPart = This->metadata_blocks[nIndex].length;
+        hr = IWICStream_InitializeFromIStreamRegion(stream, This->stream,
+            offset, length);
+
+        if (SUCCEEDED(hr))
+            hr = ImagingFactory_CreateInstance(&IID_IWICComponentFactory, (void**)&factory);
 
         if (SUCCEEDED(hr))
         {
-            hr = IWICStream_InitializeFromIStreamRegion(stream, This->stream,
-                This->metadata_blocks[nIndex].ofs, This->metadata_blocks[nIndex].len);
+            hr = IWICComponentFactory_CreateMetadataReaderFromContainer(factory,
+                &GUID_ContainerFormatPng, NULL, This->metadata_blocks[nIndex].options,
+                (IStream*)stream, ppIMetadataReader);
 
-            if (SUCCEEDED(hr))
-                hr = ImagingFactory_CreateInstance(&IID_IWICComponentFactory, (void**)&factory);
-
-            if (SUCCEEDED(hr))
-            {
-                hr = IWICComponentFactory_CreateMetadataReaderFromContainer(factory,
-                    &GUID_ContainerFormatPng, NULL, WICMetadataCreationAllowUnknown,
-                    (IStream*)stream, &This->metadata_blocks[nIndex].reader);
-
-                IWICComponentFactory_Release(factory);
-            }
-
-            IWICStream_Release(stream);
+            IWICComponentFactory_Release(factory);
         }
 
-        if (FAILED(hr))
-        {
-            *ppIMetadataReader = NULL;
-            return hr;
-        }
+        IWICStream_Release(stream);
     }
 
-    *ppIMetadataReader = This->metadata_blocks[nIndex].reader;
-    IWICMetadataReader_AddRef(*ppIMetadataReader);
+    if (FAILED(hr))
+        *ppIMetadataReader = NULL;
 
     return S_OK;
 }
