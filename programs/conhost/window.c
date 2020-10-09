@@ -45,6 +45,9 @@ struct console_window
     HFONT             font;            /* font used for rendering, usually fixed */
     HMENU             popup_menu;      /* popup menu triggered by right mouse click */
     HBITMAP           cursor_bitmap;   /* bitmap used for the caret */
+    BOOL              in_selection;    /* an area is being selected */
+    COORD             selection_start; /* selection coordinates */
+    COORD             selection_end;
     unsigned int      ui_charset;      /* default UI charset */
     WCHAR            *config_key;      /* config registry key name */
     LONG              ext_leading;     /* external leading for font */
@@ -837,6 +840,257 @@ static void update_console_font( struct console *console, const WCHAR *font,
     ERR( "Couldn't find a decent font" );
 }
 
+/* get the console bit mask equivalent to the VK_ status in key state */
+static DWORD get_ctrl_state( BYTE *key_state)
+{
+    unsigned int ret = 0;
+
+    GetKeyboardState(key_state);
+    if (key_state[VK_SHIFT]    & 0x80)  ret |= SHIFT_PRESSED;
+    if (key_state[VK_LCONTROL] & 0x80)  ret |= LEFT_CTRL_PRESSED;
+    if (key_state[VK_RCONTROL] & 0x80)  ret |= RIGHT_CTRL_PRESSED;
+    if (key_state[VK_LMENU]    & 0x80)  ret |= LEFT_ALT_PRESSED;
+    if (key_state[VK_RMENU]    & 0x80)  ret |= RIGHT_ALT_PRESSED;
+    if (key_state[VK_CAPITAL]  & 0x01)  ret |= CAPSLOCK_ON;
+    if (key_state[VK_NUMLOCK]  & 0x01)  ret |= NUMLOCK_ON;
+    if (key_state[VK_SCROLL]   & 0x01)  ret |= SCROLLLOCK_ON;
+
+    return ret;
+}
+
+/* get the selection rectangle */
+static void get_selection_rect( struct console *console, RECT *r )
+{
+    r->left   = (min(console->window->selection_start.X, console->window->selection_end.X) -
+                 console->active->win.left) * console->active->font.width;
+    r->top    = (min(console->window->selection_start.Y, console->window->selection_end.Y) -
+                 console->active->win.left) * console->active->font.height;
+    r->right  = (max(console->window->selection_start.X, console->window->selection_end.X) + 1 -
+                 console->active->win.left) * console->active->font.width;
+    r->bottom = (max(console->window->selection_start.Y, console->window->selection_end.Y) + 1 -
+                 console->active->win.left) * console->active->font.height;
+}
+
+static void update_selection( struct console *console, HDC ref_dc )
+{
+    HDC dc;
+    RECT r;
+
+    get_selection_rect( console, &r );
+    dc = ref_dc ? ref_dc : GetDC( console->win );
+    if (!dc) return;
+
+    if (console->win == GetFocus() && console->active->cursor_visible)
+        HideCaret( console->win );
+    InvertRect( dc, &r );
+    if (dc != ref_dc)
+        ReleaseDC( console->win, dc );
+    if (console->win == GetFocus() && console->active->cursor_visible)
+        ShowCaret( console->win );
+}
+
+static void move_selection( struct console *console, COORD c1, COORD c2 )
+{
+    RECT r;
+    HDC dc;
+
+    if (c1.X < 0 || c1.X >= console->active->width ||
+        c2.X < 0 || c2.X >= console->active->width ||
+        c1.Y < 0 || c1.Y >= console->active->height ||
+        c2.Y < 0 || c2.Y >= console->active->height)
+        return;
+
+    get_selection_rect( console, &r );
+    dc = GetDC( console->win );
+    if (dc)
+    {
+        if (console->win == GetFocus() && console->active->cursor_visible)
+            HideCaret( console->win );
+        InvertRect( dc, &r );
+    }
+    console->window->selection_start = c1;
+    console->window->selection_end   = c2;
+    if (dc)
+    {
+        get_selection_rect( console, &r );
+        InvertRect( dc, &r );
+        ReleaseDC( console->win, dc );
+        if (console->win == GetFocus() && console->active->cursor_visible)
+            ShowCaret( console->win );
+    }
+}
+
+/* copies the current selection into the clipboard */
+static void copy_selection( struct console *console )
+{
+    unsigned int w, h;
+    WCHAR *p, *buf;
+    HANDLE mem;
+
+    w = abs( console->window->selection_start.X - console->window->selection_end.X ) + 2;
+    h = abs( console->window->selection_start.Y - console->window->selection_end.Y ) + 1;
+
+    if (!OpenClipboard( console->win )) return;
+    EmptyClipboard();
+
+    mem = GlobalAlloc( GMEM_MOVEABLE, (w * h) * sizeof(WCHAR) );
+    if (mem && (p = buf = GlobalLock( mem )))
+    {
+        int x, y;
+        COORD c;
+
+        c.X = min( console->window->selection_start.X, console->window->selection_end.X );
+        c.Y = min( console->window->selection_start.Y, console->window->selection_end.Y );
+
+        for (y = c.Y; y < c.Y + h; y++)
+        {
+            WCHAR *end;
+
+            for (x = c.X; x < c.X + w; x++)
+                p[x - c.X] = console->active->data[y * console->active->width + x].ch;
+
+            /* strip spaces from the end of the line */
+            end = p + w - 1;
+            while (end > p && *(end - 1) == ' ')
+                end--;
+            *end = (y < h - 1) ? '\n' : '\0';
+            p = end + 1;
+        }
+
+        GlobalUnlock( mem );
+        if (p - buf != w * h)
+        {
+            HANDLE new_mem;
+            new_mem = GlobalReAlloc( mem, (p - buf) * sizeof(WCHAR), GMEM_MOVEABLE );
+            if (new_mem) mem = new_mem;
+        }
+        SetClipboardData( CF_UNICODETEXT, mem );
+    }
+    CloseClipboard();
+}
+
+/* handle keys while selecting an area */
+static void handle_selection_key( struct console *console, BOOL down, WPARAM wparam, LPARAM lparam )
+{
+    BYTE key_state[256];
+    COORD c1, c2;
+    DWORD state;
+
+    if (!down) return;
+    state = get_ctrl_state( key_state ) & ~(CAPSLOCK_ON|NUMLOCK_ON|SCROLLLOCK_ON);
+
+    switch (state)
+    {
+    case 0:
+        switch (wparam)
+        {
+        case VK_RETURN:
+            console->window->in_selection = FALSE;
+            update_selection( console, 0 );
+            copy_selection( console );
+            return;
+        case VK_RIGHT:
+            c1 = console->window->selection_start;
+            c2 = console->window->selection_end;
+            c1.X++; c2.X++;
+            move_selection( console, c1, c2 );
+            return;
+        case VK_LEFT:
+            c1 = console->window->selection_start;
+            c2 = console->window->selection_end;
+            c1.X--; c2.X--;
+            move_selection( console, c1, c2 );
+            return;
+        case VK_UP:
+            c1 = console->window->selection_start;
+            c2 = console->window->selection_end;
+            c1.Y--; c2.Y--;
+            move_selection( console, c1, c2 );
+            return;
+        case VK_DOWN:
+            c1 = console->window->selection_start;
+            c2 = console->window->selection_end;
+            c1.Y++; c2.Y++;
+            move_selection( console, c1, c2 );
+            return;
+        }
+        break;
+    case SHIFT_PRESSED:
+        switch (wparam)
+        {
+        case VK_RIGHT:
+            c1 = console->window->selection_start;
+            c2 = console->window->selection_end;
+            c2.X++;
+            move_selection( console, c1, c2 );
+            return;
+        case VK_LEFT:
+            c1 = console->window->selection_start;
+            c2 = console->window->selection_end;
+            c2.X--;
+            move_selection( console, c1, c2 );
+            return;
+        case VK_UP:
+            c1 = console->window->selection_start;
+            c2 = console->window->selection_end;
+            c2.Y--;
+            move_selection( console, c1, c2 );
+            return;
+        case VK_DOWN:
+            c1 = console->window->selection_start;
+            c2 = console->window->selection_end;
+            c2.Y++;
+            move_selection( console, c1, c2 );
+            return;
+        }
+        break;
+    }
+
+    if (wparam < VK_SPACE)  /* Shift, Alt, Ctrl, Num Lock etc. */
+        return;
+
+    update_selection( console, 0 );
+    console->window->in_selection = FALSE;
+}
+
+/* generate input_record from windows WM_KEYUP/WM_KEYDOWN messages */
+static void record_key_input( struct console *console, BOOL down, WPARAM wparam, LPARAM lparam )
+{
+    static WCHAR last; /* keep last char seen as feed for key up message */
+    BYTE key_state[256];
+    INPUT_RECORD ir;
+    WCHAR buf[2];
+
+    ir.EventType = KEY_EVENT;
+    ir.Event.KeyEvent.bKeyDown          = down;
+    ir.Event.KeyEvent.wRepeatCount      = LOWORD(lparam);
+    ir.Event.KeyEvent.wVirtualKeyCode   = wparam;
+    ir.Event.KeyEvent.wVirtualScanCode  = HIWORD(lparam) & 0xFF;
+    ir.Event.KeyEvent.uChar.UnicodeChar = 0;
+    ir.Event.KeyEvent.dwControlKeyState = get_ctrl_state( key_state );
+    if (lparam & (1u << 24)) ir.Event.KeyEvent.dwControlKeyState |= ENHANCED_KEY;
+
+    if (down)
+    {
+        switch (ToUnicode(wparam, HIWORD(lparam), key_state, buf, 2, 0))
+        {
+        case 2:
+            /* FIXME: should generate two events */
+            /* fall through */
+        case 1:
+            last = buf[0];
+            break;
+        default:
+            last = 0;
+            break;
+        }
+    }
+    ir.Event.KeyEvent.uChar.UnicodeChar = last;
+    if (!down) last = 0; /* FIXME: buggy HACK  */
+
+    write_console_input( console, &ir, 1, TRUE );
+}
+
 static void apply_config( struct console *console, const struct console_config *config )
 {
     if (console->active->width != config->sb_width || console->active->height != config->sb_height)
@@ -993,6 +1247,19 @@ static LRESULT WINAPI window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
             EndPaint( console->win, &ps );
             break;
         }
+
+    case WM_KEYDOWN:
+    case WM_KEYUP:
+        if (console->window->in_selection)
+            handle_selection_key( console, msg == WM_KEYDOWN, wparam, lparam );
+        else
+            record_key_input( console, msg == WM_KEYDOWN, wparam, lparam );
+        break;
+
+    case WM_SYSKEYDOWN:
+    case WM_SYSKEYUP:
+        record_key_input( console, msg == WM_SYSKEYDOWN, wparam, lparam );
+        break;
 
     default:
         return DefWindowProcW( hwnd, msg, wparam, lparam );

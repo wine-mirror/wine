@@ -1307,8 +1307,8 @@ static NTSTATUS read_console( struct console *console, size_t out_size )
 }
 
 /* add input events to a console input queue */
-static NTSTATUS write_console_input( struct console *console, const INPUT_RECORD *records,
-                                     unsigned int count, BOOL flush )
+NTSTATUS write_console_input( struct console *console, const INPUT_RECORD *records,
+                              unsigned int count, BOOL flush )
 {
     TRACE( "%u\n", count );
 
