@@ -1461,14 +1461,19 @@ static void save_context( struct xcontext *xcontext, const ucontext_t *sigcontex
     context->Dr7    = amd64_thread_data()->dr7;
     if (FPU_sig(sigcontext))
     {
+        XSTATE *xs;
+
         context->ContextFlags |= CONTEXT_FLOATING_POINT;
         context->u.FltSave = *FPU_sig(sigcontext);
         context->MxCsr = context->u.FltSave.MxCsr;
-        xcontext->xstate = XState_sig(FPU_sig(sigcontext));
-    }
-    else
-    {
-        xcontext->xstate = NULL;
+        if ((xs = XState_sig(FPU_sig(sigcontext))))
+        {
+            /* xcontext and sigcontext are both on the signal stack, so we can
+             * just reference sigcontext without overflowing 32 bit XState.Offset */
+            context_init_xstate( context, xs );
+            assert( xcontext->c_ex.XState.Offset == (BYTE *)xs - (BYTE *)&xcontext->c_ex );
+            xcontext->host_compaction_mask = xs->CompactionMask;
+        }
     }
 }
 
@@ -1531,6 +1536,7 @@ static inline NTSTATUS save_xstate( CONTEXT *context )
 static void restore_context( const struct xcontext *xcontext, ucontext_t *sigcontext )
 {
     const CONTEXT *context = &xcontext->c;
+    XSTATE *xs;
 
     amd64_thread_data()->dr0 = context->Dr0;
     amd64_thread_data()->dr1 = context->Dr1;
@@ -1540,6 +1546,8 @@ static void restore_context( const struct xcontext *xcontext, ucontext_t *sigcon
     amd64_thread_data()->dr7 = context->Dr7;
     set_sigcontext( context, sigcontext );
     if (FPU_sig(sigcontext)) *FPU_sig(sigcontext) = context->u.FltSave;
+    if ((xs = XState_sig(FPU_sig(sigcontext))))
+        xs->CompactionMask = xcontext->host_compaction_mask;
 }
 
 
@@ -1628,6 +1636,7 @@ static unsigned int get_server_context_flags( DWORD flags )
     if (flags & CONTEXT_SEGMENTS) ret |= SERVER_CTX_SEGMENTS;
     if (flags & CONTEXT_FLOATING_POINT) ret |= SERVER_CTX_FLOATING_POINT;
     if (flags & CONTEXT_DEBUG_REGISTERS) ret |= SERVER_CTX_DEBUG_REGISTERS;
+    if (flags & CONTEXT_XSTATE) ret |= SERVER_CTX_YMM_REGISTERS;
     return ret;
 }
 
@@ -1695,6 +1704,7 @@ NTSTATUS context_to_server( context_t *to, const CONTEXT *from )
         to->debug.x86_64_regs.dr6 = from->Dr6;
         to->debug.x86_64_regs.dr7 = from->Dr7;
     }
+    xstate_to_server( to, xstate_from_context( from ) );
     return STATUS_SUCCESS;
 }
 
@@ -1708,7 +1718,7 @@ NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
 {
     if (from->cpu != CPU_x86_64) return STATUS_INVALID_PARAMETER;
 
-    to->ContextFlags = CONTEXT_AMD64;
+    to->ContextFlags = CONTEXT_AMD64 | (to->ContextFlags & 0x40);
     if (from->flags & SERVER_CTX_CONTROL)
     {
         to->ContextFlags |= CONTEXT_CONTROL;
@@ -1762,6 +1772,7 @@ NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
         to->Dr6 = from->debug.x86_64_regs.dr6;
         to->Dr7 = from->debug.x86_64_regs.dr7;
     }
+    xstate_from_server( xstate_from_context( to ), from );
     return STATUS_SUCCESS;
 }
 
@@ -1831,7 +1842,7 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
 
     /* Save xstate before any calls which can potentially change volatile ymm registers.
      * E. g., debug output will clobber ymm registers. */
-    xsave_status = self ? save_xstate( context ) : STATUS_SUCCESS; /* FIXME: other thread. */
+    xsave_status = self ? save_xstate( context ) : STATUS_SUCCESS;
 
     needed_flags = context->ContextFlags & ~CONTEXT_AMD64;
 
@@ -1924,6 +1935,7 @@ static void setup_raise_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec
     struct stack_layout *stack;
     size_t stack_size;
     NTSTATUS status;
+    XSTATE *src_xs;
 
     if (rec->ExceptionCode == EXCEPTION_SINGLE_STEP)
     {
@@ -1953,7 +1965,7 @@ static void setup_raise_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec
     if (rec->ExceptionCode == EXCEPTION_BREAKPOINT) context->Rip--;
 
     stack_size = sizeof(*stack);
-    if (xcontext->xstate)
+    if ((src_xs = xstate_from_context( context )))
     {
         stack_size += (ULONG_PTR)stack_ptr - (((ULONG_PTR)stack_ptr
                 - sizeof(XSTATE)) & ~(ULONG_PTR)63);
@@ -1962,17 +1974,18 @@ static void setup_raise_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec
     stack = virtual_setup_exception( stack_ptr, stack_size, rec );
     stack->rec          = *rec;
     stack->context      = *context;
-    if (xcontext->xstate)
+    if (src_xs)
     {
         XSTATE *dst_xs = (XSTATE *)stack->xstate;
 
         assert( !((ULONG_PTR)dst_xs & 63) );
         context_init_xstate( &stack->context, stack->xstate );
+        memset( dst_xs, 0, offsetof(XSTATE, YmmContext) );
         dst_xs->CompactionMask = user_shared_data->XState.CompactionEnabled ? 0x8000000000000004 : 0;
-        if (xcontext->xstate->Mask & 4)
+        if (src_xs->Mask & 4)
         {
             dst_xs->Mask = 4;
-            memcpy( &dst_xs->YmmContext, &xcontext->xstate->YmmContext, sizeof(dst_xs->YmmContext) );
+            memcpy( &dst_xs->YmmContext, &src_xs->YmmContext, sizeof(dst_xs->YmmContext) );
         }
     }
 

@@ -1285,6 +1285,7 @@ static void copy_context( context_t *to, const context_t *from, unsigned int fla
     if (flags & SERVER_CTX_FLOATING_POINT) to->fp = from->fp;
     if (flags & SERVER_CTX_DEBUG_REGISTERS) to->debug = from->debug;
     if (flags & SERVER_CTX_EXTENDED_REGISTERS) to->ext = from->ext;
+    if (flags & SERVER_CTX_YMM_REGISTERS) to->ymm = from->ymm;
 }
 
 /* return the context flags that correspond to system regs */

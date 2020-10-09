@@ -170,6 +170,10 @@ typedef struct
     {
         unsigned char i386_regs[512];
     } ext;
+    union
+    {
+        struct { struct { unsigned __int64 low, high; } ymm_high[16]; } ymm_high_regs;
+    } ymm;
 } context_t;
 
 #define SERVER_CTX_CONTROL            0x01
@@ -178,6 +182,7 @@ typedef struct
 #define SERVER_CTX_FLOATING_POINT     0x08
 #define SERVER_CTX_DEBUG_REGISTERS    0x10
 #define SERVER_CTX_EXTENDED_REGISTERS 0x20
+#define SERVER_CTX_YMM_REGISTERS      0x40
 
 
 struct send_fd

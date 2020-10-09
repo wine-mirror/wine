@@ -886,14 +886,16 @@ static inline void save_context( struct xcontext *xcontext, const ucontext_t *si
     }
     if (fpux)
     {
+        XSTATE *xs;
+
         context->ContextFlags |= CONTEXT_FLOATING_POINT | CONTEXT_EXTENDED_REGISTERS;
         memcpy( context->ExtendedRegisters, fpux, sizeof(*fpux) );
         if (!fpu) fpux_to_fpu( &context->FloatSave, fpux );
-        xcontext->xstate = XState_sig(fpux);
-    }
-    else
-    {
-        xcontext->xstate = NULL;
+        if ((xs = XState_sig(fpux)))
+        {
+            context_init_xstate( context, xs );
+            xcontext->host_compaction_mask = xs->CompactionMask;
+        }
     }
     if (!fpu && !fpux) save_fpu( context );
 }
@@ -944,6 +946,7 @@ static inline void restore_context( const struct xcontext *xcontext, ucontext_t 
         {
             memcpy( &dst_xs->YmmContext, &src_xs->YmmContext, sizeof(dst_xs->YmmContext) );
             dst_xs->Mask |= src_xs->Mask;
+            dst_xs->CompactionMask = xcontext->host_compaction_mask;
         }
     }
     if (!fpu && !fpux) restore_fpu( context );
@@ -1023,6 +1026,7 @@ static unsigned int get_server_context_flags( DWORD flags )
     if (flags & CONTEXT_FLOATING_POINT) ret |= SERVER_CTX_FLOATING_POINT;
     if (flags & CONTEXT_DEBUG_REGISTERS) ret |= SERVER_CTX_DEBUG_REGISTERS;
     if (flags & CONTEXT_EXTENDED_REGISTERS) ret |= SERVER_CTX_EXTENDED_REGISTERS;
+    if (flags & CONTEXT_XSTATE) ret |= SERVER_CTX_YMM_REGISTERS;
     return ret;
 }
 
@@ -1095,6 +1099,7 @@ NTSTATUS context_to_server( context_t *to, const CONTEXT *from )
         to->flags |= SERVER_CTX_EXTENDED_REGISTERS;
         memcpy( to->ext.i386_regs, from->ExtendedRegisters, sizeof(to->ext.i386_regs) );
     }
+    xstate_to_server( to, xstate_from_context( from ) );
     return STATUS_SUCCESS;
 }
 
@@ -1108,7 +1113,7 @@ NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
 {
     if (from->cpu != CPU_x86) return STATUS_INVALID_PARAMETER;
 
-    to->ContextFlags = CONTEXT_i386;
+    to->ContextFlags = CONTEXT_i386 | (to->ContextFlags & 0x40);
     if (from->flags & SERVER_CTX_CONTROL)
     {
         to->ContextFlags |= CONTEXT_CONTROL;
@@ -1165,6 +1170,7 @@ NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
         to->ContextFlags |= CONTEXT_EXTENDED_REGISTERS;
         memcpy( to->ExtendedRegisters, from->ext.i386_regs, sizeof(to->ExtendedRegisters) );
     }
+    xstate_from_server( xstate_from_context( to ), from );
     return STATUS_SUCCESS;
 }
 
@@ -1246,7 +1252,7 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
 
     /* Save xstate before any calls which can potentially change volatile ymm registers.
      * E. g., debug output will clobber ymm registers. */
-    xsave_status = self ? save_xstate( context ) : STATUS_SUCCESS; /* FIXME: other thread. */
+    xsave_status = self ? save_xstate( context ) : STATUS_SUCCESS;
 
     /* debug registers require a server call */
     if (needed_flags & CONTEXT_DEBUG_REGISTERS) self = FALSE;
@@ -1293,7 +1299,6 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
         }
         if (needed_flags & CONTEXT_FLOATING_POINT) save_fpu( context );
         if (needed_flags & CONTEXT_EXTENDED_REGISTERS) save_fpux( context );
-        /* FIXME: xstate */
         /* update the cached version of the debug registers */
         if (context->ContextFlags & (CONTEXT_DEBUG_REGISTERS & ~CONTEXT_i386))
         {
@@ -1579,6 +1584,7 @@ static void setup_raise_exception( ucontext_t *sigcontext, void *stack_ptr,
 {
     CONTEXT *context = &xcontext->c;
     size_t stack_size;
+    XSTATE *src_xs;
 
     struct stack_layout
     {
@@ -1606,7 +1612,7 @@ C_ASSERT( (offsetof(struct stack_layout, xstate) == sizeof(struct stack_layout))
     if (rec->ExceptionCode == EXCEPTION_BREAKPOINT) context->Eip--;
 
     stack_size = sizeof(*stack);
-    if (xcontext->xstate)
+    if ((src_xs = xstate_from_context( context )))
     {
         stack_size += (ULONG_PTR)stack_ptr - (((ULONG_PTR)stack_ptr
                 - sizeof(XSTATE)) & ~(ULONG_PTR)63);
@@ -1616,17 +1622,18 @@ C_ASSERT( (offsetof(struct stack_layout, xstate) == sizeof(struct stack_layout))
     stack->rec          = *rec;
     stack->context      = *context;
 
-    if (xcontext->xstate)
+    if (src_xs)
     {
         XSTATE *dst_xs = (XSTATE *)stack->xstate;
 
         assert(!((ULONG_PTR)dst_xs & 63));
         context_init_xstate( &stack->context, stack->xstate );
+        memset( dst_xs, 0, offsetof(XSTATE, YmmContext) );
         dst_xs->CompactionMask = user_shared_data->XState.CompactionEnabled ? 0x8000000000000004 : 0;
-        if (xcontext->xstate->Mask & 4)
+        if (src_xs->Mask & 4)
         {
             dst_xs->Mask = 4;
-            memcpy( &dst_xs->YmmContext, &xcontext->xstate->YmmContext, sizeof(dst_xs->YmmContext) );
+            memcpy( &dst_xs->YmmContext, &src_xs->YmmContext, sizeof(dst_xs->YmmContext) );
         }
     }
 

@@ -631,8 +631,15 @@ unsigned int server_select( const select_op_t *select_op, data_size_t size, UINT
                 if (wine_server_reply_size( reply ))
                 {
                     DWORD context_flags = context->ContextFlags; /* unchanged registers are still available */
+                    XSTATE *xs = xstate_from_context( context );
+                    ULONG64 mask;
+
+                    if (xs)
+                        mask = xs->Mask;
                     context_from_server( context, &server_context );
                     context->ContextFlags |= context_flags;
+                    if (xs)
+                        xs->Mask |= mask;
                 }
             }
             SERVER_END_REQ;

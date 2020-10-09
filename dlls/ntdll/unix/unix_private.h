@@ -288,13 +288,14 @@ static inline void mutex_unlock( pthread_mutex_t *mutex )
 static inline TEB64 *NtCurrentTeb64(void) { return (TEB64 *)NtCurrentTeb()->GdiBatchCount; }
 #endif
 
-#if defined(__i386__) || defined(__x86_64__)
 struct xcontext
 {
     CONTEXT c;
-    XSTATE *xstate; /* points to xstate in sigcontext */
+    CONTEXT_EX c_ex;
+    ULONG64 host_compaction_mask;
 };
 
+#if defined(__i386__) || defined(__x86_64__)
 static inline XSTATE *xstate_from_context( const CONTEXT *context )
 {
     CONTEXT_EX *xctx = (CONTEXT_EX *)(context + 1);
@@ -308,21 +309,62 @@ static inline XSTATE *xstate_from_context( const CONTEXT *context )
 static inline void context_init_xstate( CONTEXT *context, void *xstate_buffer )
 {
     CONTEXT_EX *xctx;
-    XSTATE *xs;
 
     xctx = (CONTEXT_EX *)(context + 1);
     xctx->Legacy.Length = sizeof(CONTEXT);
     xctx->Legacy.Offset = -(LONG)sizeof(CONTEXT);
 
     xctx->XState.Length = sizeof(XSTATE);
-    xctx->XState.Offset = xstate_buffer ? (((ULONG_PTR)xstate_buffer + 63) & ~63) - (ULONG_PTR)xctx
-            : (((ULONG_PTR)context + sizeof(CONTEXT) + sizeof(CONTEXT_EX) + 63) & ~63) - (ULONG_PTR)xctx;
+    xctx->XState.Offset = (BYTE *)xstate_buffer - (BYTE *)xctx;
+
     xctx->All.Length = sizeof(CONTEXT) + xctx->XState.Offset + xctx->XState.Length;
     xctx->All.Offset = -(LONG)sizeof(CONTEXT);
     context->ContextFlags |= 0x40;
+}
 
-    xs = xstate_from_context(context);
-    memset( xs, 0, offsetof(XSTATE, YmmContext) );
+static inline void xstate_to_server( context_t *to, const XSTATE *xs )
+{
+    if (!xs)
+        return;
+
+    to->flags |= SERVER_CTX_YMM_REGISTERS;
+    if (xs->Mask & 4)
+        memcpy(&to->ymm.ymm_high_regs.ymm_high, &xs->YmmContext, sizeof(xs->YmmContext));
+    else
+        memset(&to->ymm.ymm_high_regs.ymm_high, 0, sizeof(xs->YmmContext));
+}
+
+static inline void xstate_from_server_( XSTATE *xs, const context_t *from, BOOL compaction_enabled)
+{
+    if (!xs)
+        return;
+
+    xs->Mask = 0;
+    xs->CompactionMask = compaction_enabled ? 0x8000000000000004 : 0;
+
+    if (from->flags & SERVER_CTX_YMM_REGISTERS)
+    {
+        unsigned long *src = (unsigned long *)&from->ymm.ymm_high_regs.ymm_high;
+        unsigned int i;
+
+        for (i = 0; i < sizeof(xs->YmmContext) / sizeof(unsigned long); ++i)
+            if (src[i])
+            {
+                memcpy( &xs->YmmContext, &from->ymm.ymm_high_regs.ymm_high, sizeof(xs->YmmContext) );
+                xs->Mask = 4;
+                break;
+            }
+    }
+}
+#define xstate_from_server( xs, from ) xstate_from_server_( xs, from, user_shared_data->XState.CompactionEnabled )
+
+#else
+static inline XSTATE *xstate_from_context( const CONTEXT *context )
+{
+    return NULL;
+}
+static inline void context_init_xstate( CONTEXT *context, void *xstate_buffer )
+{
 }
 #endif
 

@@ -344,7 +344,6 @@ NTSTATUS send_debug_event( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_c
     DWORD i;
     obj_handle_t handle = 0;
     client_ptr_t params[EXCEPTION_MAXIMUM_PARAMETERS];
-    CONTEXT exception_context = *context;
     select_op_t select_op;
     sigset_t old_set;
 
@@ -370,10 +369,22 @@ NTSTATUS send_debug_event( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_c
 
     if (handle)
     {
+        struct xcontext exception_context;
+        DECLSPEC_ALIGN(64) XSTATE xs;
+        XSTATE *src_xs;
+
         select_op.wait.op = SELECT_WAIT;
         select_op.wait.handles[0] = handle;
+
+        exception_context.c = *context;
+        if ((src_xs = xstate_from_context( context )))
+        {
+            context_init_xstate( &exception_context.c, &xs );
+            memcpy( &xs, src_xs, sizeof(xs) );
+        }
+
         server_select( &select_op, offsetof( select_op_t, wait.handles[1] ), SELECT_INTERRUPTIBLE,
-                       TIMEOUT_INFINITE, &exception_context, NULL, NULL );
+                       TIMEOUT_INFINITE, &exception_context.c, NULL, NULL );
 
         SERVER_START_REQ( get_exception_status )
         {
@@ -381,7 +392,12 @@ NTSTATUS send_debug_event( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_c
             ret = wine_server_call( req );
         }
         SERVER_END_REQ;
-        if (ret >= 0) *context = exception_context;
+        if (ret >= 0)
+        {
+            *context = exception_context.c;
+            if (src_xs)
+                memcpy( src_xs, &xs, sizeof(xs) );
+        }
     }
 
     pthread_sigmask( SIG_SETMASK, &old_set, NULL );
@@ -632,7 +648,7 @@ static NTSTATUS wow64_context_from_server( WOW64_CONTEXT *to, const context_t *f
 {
     if (from->cpu != CPU_x86) return STATUS_INVALID_PARAMETER;
 
-    to->ContextFlags = WOW64_CONTEXT_i386;
+    to->ContextFlags = WOW64_CONTEXT_i386 | (to->ContextFlags & 0x40);
     if (from->flags & SERVER_CTX_CONTROL)
     {
         to->ContextFlags |= WOW64_CONTEXT_CONTROL;
@@ -688,6 +704,12 @@ static NTSTATUS wow64_context_from_server( WOW64_CONTEXT *to, const context_t *f
     {
         to->ContextFlags |= WOW64_CONTEXT_EXTENDED_REGISTERS;
         memcpy( to->ExtendedRegisters, from->ext.i386_regs, sizeof(to->ExtendedRegisters) );
+    }
+    if ((to->ContextFlags & WOW64_CONTEXT_XSTATE) == WOW64_CONTEXT_XSTATE)
+    {
+        CONTEXT_EX *c_ex = (CONTEXT_EX *)(to + 1);
+
+        xstate_from_server( (XSTATE *)((BYTE *)c_ex + c_ex->XState.Offset), from );
     }
     return STATUS_SUCCESS;
 }
@@ -757,6 +779,12 @@ static void wow64_context_to_server( context_t *to, const WOW64_CONTEXT *from )
     {
         to->flags |= SERVER_CTX_EXTENDED_REGISTERS;
         memcpy( to->ext.i386_regs, from->ExtendedRegisters, sizeof(to->ext.i386_regs) );
+    }
+    if (flags & WOW64_CONTEXT_XSTATE)
+    {
+        CONTEXT_EX *c_ex = (CONTEXT_EX *)(from + 1);
+
+        xstate_to_server( to, (XSTATE *)((BYTE *)c_ex + c_ex->XState.Offset) );
     }
 }
 

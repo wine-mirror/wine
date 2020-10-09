@@ -620,6 +620,9 @@ static void dump_varargs_context( const char *prefix, data_size_t size )
         if (ctx.flags & SERVER_CTX_EXTENDED_REGISTERS)
             dump_uints( ",extended=", (const unsigned int *)ctx.ext.i386_regs,
                         sizeof(ctx.ext.i386_regs) / sizeof(int) );
+        if (ctx.flags & SERVER_CTX_YMM_REGISTERS)
+            dump_uints( ",ymm_high=", (const unsigned int *)ctx.ymm.ymm_high_regs.ymm_high,
+                        sizeof(ctx.ymm.ymm_high_regs) / sizeof(int) );
         break;
     case CPU_x86_64:
         if (ctx.flags & SERVER_CTX_CONTROL)
@@ -669,6 +672,9 @@ static void dump_varargs_context( const char *prefix, data_size_t size )
                          (unsigned int)(ctx.fp.x86_64_regs.fpregs[i].low >> 32),
                          (unsigned int)ctx.fp.x86_64_regs.fpregs[i].low );
         }
+        if (ctx.flags & SERVER_CTX_YMM_REGISTERS)
+            dump_uints( ",ymm_high=", (const unsigned int *)ctx.ymm.ymm_high_regs.ymm_high,
+                        sizeof(ctx.ymm.ymm_high_regs) / sizeof(int) );
         break;
     case CPU_POWERPC:
         if (ctx.flags & SERVER_CTX_CONTROL)
