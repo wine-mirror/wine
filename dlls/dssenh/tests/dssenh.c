@@ -323,6 +323,7 @@ static void test_keylength_array(HCRYPTPROV hProv,const struct keylength_test *t
 static void test_keylength(void)
 {
     HCRYPTPROV hProv = 0;
+    HCRYPTKEY key;
     BOOL result;
 
     /* acquire base dss provider */
@@ -333,6 +334,17 @@ static void test_keylength(void)
         skip("DSSENH is currently not available, skipping key length tests.\n");
         return;
     }
+    ok(result, "Expected no errors.\n");
+
+    result = CryptGenKey(hProv, AT_SIGNATURE, 0, &key);
+    todo_wine ok(result, "Expected no errors.\n");
+    if (!result)
+    {
+        skip("skipping key length tests\n");
+        return;
+    }
+
+    result = CryptDestroyKey(key);
     ok(result, "Expected no errors.\n");
 
     /* perform keylength tests */
@@ -434,6 +446,11 @@ static void test_hash(const struct hash_test *tests, int testLen)
 
         /* test algid hash */
         result = CryptCreateHash(hProv, tests[i].algid, 0, 0, &hHash);
+        if (!result)
+        {
+            skip("skipping hash tests\n");
+            return;
+        }
         ok(result, "Expected creation of a hash.\n");
 
         result = CryptHashData(hHash, data, dataLen, 0);
@@ -588,6 +605,11 @@ static void test_data_encryption(const struct encrypt_test *tests, int testLen)
 
         SetLastError(0xdeadbeef);
         result = CryptCreateHash(hProv, CALG_MD5, 0, 0, &hHash);
+        if (!result)
+        {
+            skip("skipping encryption tests\n");
+            return;
+        }
         ok(result, "Expected creation of a MD5 hash for key derivation.\n");
 
         result = CryptHashData(hHash, (BYTE *)dataToHash, sizeof(dataToHash), 0);
@@ -673,6 +695,11 @@ static void test_cipher_modes(const struct ciphermode_test *tests, int testLen)
 
     SetLastError(0xdeadbeef);
     result = CryptCreateHash(hProv, CALG_MD5, 0, 0, &hHash);
+    if (!result)
+    {
+        skip("skipping ciper modes tests\n");
+        return;
+    }
     ok(result, "Expected creation of a MD5 hash for key derivation.\n");
 
     result = CryptHashData(hHash, (BYTE *)dataToHash, sizeof(dataToHash), 0);
@@ -831,6 +858,11 @@ static void test_signhash_array(HCRYPTPROV hProv, const struct signature_test *t
 
         /* Get a private key of array specified ALG_ID */
         result = CryptImportKey(hProv, tests[i].privateKey, tests[i].keyLen, 0, 0, &privKey);
+        if (!result)
+        {
+            skip("skipping sign tests\n");
+            return;
+        }
         ok(result, "Failed to imported key, got %x\n", GetLastError());
 
         /* Create hash object and add data for signature 1 */
@@ -1084,6 +1116,11 @@ static void test_keyExchange_baseDSS(HCRYPTPROV hProv, const struct keyExchange_
 
         /* Generate key exchange keys for user1 and user2 */
         result = CryptGenKey(hProv, tests[i].algid, 512 << 16 | CRYPT_PREGEN, &privKey1);
+        if (!result)
+        {
+            skip("skipping key exchange tests\n");
+            return;
+        }
         ok(!result && GetLastError() == NTE_BAD_ALGID,
            "Expected NTE_BAD_ALGID, got %x\n", GetLastError());
 
@@ -1233,6 +1270,11 @@ static void test_keyExchange_dssDH(HCRYPTPROV hProv, const struct keyExchange_te
 
         /* Generate key exchange keys for user1 and user2 */
         result = CryptGenKey(hProv, tests[i].algid, 512 << 16 | CRYPT_PREGEN, &privKey1);
+        if (!result)
+        {
+            skip("skipping key exchange tests\n");
+            return;
+        }
         ok(result, "Failed to generate a key for user1, got %x\n", GetLastError());
 
         result = CryptGenKey(hProv, tests[i].algid, 512 << 16 | CRYPT_PREGEN, &privKey2);
