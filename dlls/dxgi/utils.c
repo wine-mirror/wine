@@ -520,7 +520,7 @@ unsigned int wined3d_bind_flags_from_dxgi_usage(DXGI_USAGE dxgi_usage)
 
 #define DXGI_WINED3D_SWAPCHAIN_FLAGS \
         (WINED3D_SWAPCHAIN_USE_CLOSEST_MATCHING_MODE | WINED3D_SWAPCHAIN_RESTORE_WINDOW_RECT \
-        | WINED3D_SWAPCHAIN_HOOK | WINED3D_SWAPCHAIN_RESTORE_WINDOW_STATE)
+        | WINED3D_SWAPCHAIN_REGISTER_STATE | WINED3D_SWAPCHAIN_RESTORE_WINDOW_STATE)
 
 unsigned int dxgi_swapchain_flags_from_wined3d(unsigned int wined3d_flags)
 {

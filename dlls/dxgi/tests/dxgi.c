@@ -6272,7 +6272,6 @@ static void test_window_association(IUnknown *device, BOOL is_d3d12)
             output = NULL;
             hr = IDXGISwapChain_GetFullscreenState(swapchain, &fullscreen, &output);
             ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
-            todo_wine_if(is_d3d12 && tests[i].todo_on_d3d12)
             ok(fullscreen == tests[i].expect_fullscreen
                     || broken(tests[i].broken_d3d10 && fullscreen),
                     "Test %u: Got unexpected fullscreen %#x.\n", i, fullscreen);

@@ -904,7 +904,7 @@ enum wined3d_shader_type
 #define WINED3D_SWAPCHAIN_RESTORE_WINDOW_RECT                   0x00004000u
 #define WINED3D_SWAPCHAIN_GDI_COMPATIBLE                        0x00008000u
 #define WINED3D_SWAPCHAIN_IMPLICIT                              0x00010000u
-#define WINED3D_SWAPCHAIN_HOOK                                  0x00020000u
+#define WINED3D_SWAPCHAIN_REGISTER_STATE                        0x00020000u
 #define WINED3D_SWAPCHAIN_NO_WINDOW_CHANGES                     0x00040000u
 #define WINED3D_SWAPCHAIN_RESTORE_WINDOW_STATE                  0x00080000u
 
@@ -2804,7 +2804,7 @@ void __cdecl wined3d_swapchain_set_palette(struct wined3d_swapchain *swapchain, 
 void __cdecl wined3d_swapchain_set_window(struct wined3d_swapchain *swapchain, HWND window);
 
 HRESULT __cdecl wined3d_swapchain_state_create(const struct wined3d_swapchain_desc *desc,
-        HWND window, struct wined3d_swapchain_state **state);
+        HWND window, struct wined3d *wined3d, struct wined3d_swapchain_state **state);
 void __cdecl wined3d_swapchain_state_destroy(struct wined3d_swapchain_state *state);
 BOOL __cdecl wined3d_swapchain_state_is_windowed(const struct wined3d_swapchain_state *state);
 HRESULT __cdecl wined3d_swapchain_state_resize_target(struct wined3d_swapchain_state *state,

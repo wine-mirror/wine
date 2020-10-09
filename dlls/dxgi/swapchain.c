@@ -2272,18 +2272,37 @@ static HRESULT STDMETHODCALLTYPE d3d12_swapchain_GetFullscreenState(IDXGISwapCha
         BOOL *fullscreen, IDXGIOutput **target)
 {
     struct d3d12_swapchain *swapchain = d3d12_swapchain_from_IDXGISwapChain4(iface);
+    BOOL windowed;
+    HRESULT hr;
 
     TRACE("iface %p, fullscreen %p, target %p.\n", iface, fullscreen, target);
 
-    if (fullscreen)
+    if (fullscreen || target)
     {
         wined3d_mutex_lock();
-        *fullscreen = !wined3d_swapchain_state_is_windowed(swapchain->state);
+        windowed = wined3d_swapchain_state_is_windowed(swapchain->state);
         wined3d_mutex_unlock();
     }
 
-    if (target && (*target = swapchain->target))
-        IDXGIOutput_AddRef(*target);
+    if (fullscreen)
+        *fullscreen = !windowed;
+
+    if (target)
+    {
+        if (!windowed)
+        {
+            if (!swapchain->target && FAILED(hr = IDXGISwapChain4_GetContainingOutput(iface,
+                    &swapchain->target)))
+                return hr;
+
+            *target = swapchain->target;
+            IDXGIOutput_AddRef(*target);
+        }
+        else
+        {
+            *target = NULL;
+        }
+    }
 
     return S_OK;
 }
@@ -2927,6 +2946,7 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
     struct wined3d_swapchain_desc wined3d_desc;
     VkWin32SurfaceCreateInfoKHR surface_desc;
     VkPhysicalDevice vk_physical_device;
+    struct dxgi_factory *dxgi_factory;
     VkFenceCreateInfo fence_desc;
     uint32_t queue_family_index;
     VkSurfaceKHR vk_surface;
@@ -3002,7 +3022,9 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
         return hr;
     }
 
-    if (FAILED(hr = wined3d_swapchain_state_create(&wined3d_desc, window, &swapchain->state)))
+    dxgi_factory = unsafe_impl_from_IDXGIFactory((IDXGIFactory *)factory);
+    if (FAILED(hr = wined3d_swapchain_state_create(&wined3d_desc, window, dxgi_factory->wined3d,
+            &swapchain->state)))
     {
         IDXGIOutput_Release(output);
         return hr;
