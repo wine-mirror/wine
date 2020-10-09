@@ -13,6 +13,7 @@ HKLM
                         val '37' = s 'c_037.nls'
                         val '437' = s 'c_437.nls'
                         val '500' = s 'c_500.nls'
+                        val '708' = s 'c_708.nls'
                         val '737' = s 'c_737.nls'
                         val '775' = s 'c_775.nls'
                         val '850' = s 'c_850.nls'
