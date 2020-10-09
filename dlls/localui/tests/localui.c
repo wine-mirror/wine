@@ -43,13 +43,8 @@ static PMONITORUI pui;
 static BOOL  (WINAPI *pAddPortUI)(PCWSTR, HWND, PCWSTR, PWSTR *);
 static BOOL  (WINAPI *pConfigurePortUI)(PCWSTR, HWND, PCWSTR);
 static BOOL  (WINAPI *pDeletePortUI)(PCWSTR, HWND, PCWSTR);
-
-static const WCHAR does_not_existW[] = {'d','o','e','s','_','n','o','t','_','e','x','i','s','t',0};
-static const WCHAR emptyW[] = {0};
 static const CHAR  fmt_comA[] = {'C','O','M','%','u',':',0};
 static const CHAR  fmt_lptA[] = {'L','P','T','%','u',':',0};
-static const WCHAR localportW[] = {'L','o','c','a','l',' ','P','o','r','t',0};
-static const WCHAR portname_fileW[] = {'F','I','L','E',':',0};
 
 static LPBYTE pi_buffer;
 static DWORD pi_numports;
@@ -148,14 +143,14 @@ static void test_AddPortUI(void)
         "ERROR_INVALID_PRINTER_NAME)\n", res, GetLastError());
 
     SetLastError(0xdeadbeef);
-    res = pAddPortUI(NULL, NULL, emptyW, NULL);
+    res = pAddPortUI(NULL, NULL, L"", NULL);
     ok( !res &&
         ((GetLastError() == ERROR_UNKNOWN_PORT) || (GetLastError() == ERROR_INVALID_PRINTER_NAME)),
         "got %d with %u (expected '0' with: ERROR_UNKNOWN_PORT or "
         "ERROR_INVALID_PRINTER_NAME)\n", res, GetLastError());
 
     SetLastError(0xdeadbeef);
-    res = pAddPortUI(NULL, NULL, does_not_existW, NULL);
+    res = pAddPortUI(NULL, NULL, L"does_not_exist", NULL);
     ok( !res &&
         ((GetLastError() == ERROR_UNKNOWN_PORT) || (GetLastError() == ERROR_INVALID_PRINTER_NAME)),
         "got %d with %u (expected '0' with: ERROR_UNKNOWN_PORT or "
@@ -172,7 +167,7 @@ static void test_AddPortUI(void)
          * - When the new port starts with "COM" or "LPT",
          *   FALSE is returned with ERROR_NOT_SUPPORTED on windows
          */
-        res = pAddPortUI(NULL, NULL, localportW, &new_portname);
+        res = pAddPortUI(NULL, NULL, L"Local Port", &new_portname);
         ok( res ||
             (GetLastError() == ERROR_CANCELLED) ||
             (GetLastError() == ERROR_ACCESS_DENIED) ||
@@ -205,7 +200,7 @@ static void test_ConfigurePortUI(void)
         "ERROR_INVALID_PRINTER_NAME)\n", res, GetLastError());
 
     SetLastError(0xdeadbeef);
-    res = pConfigurePortUI(NULL, NULL, emptyW);
+    res = pConfigurePortUI(NULL, NULL, L"");
     ok( !res &&
         ((GetLastError() == ERROR_UNKNOWN_PORT) || (GetLastError() == ERROR_INVALID_PRINTER_NAME)),
         "got %d with %u (expected '0' with: ERROR_UNKNOWN_PORT or "
@@ -213,7 +208,7 @@ static void test_ConfigurePortUI(void)
 
 
     SetLastError(0xdeadbeef);
-    res = pConfigurePortUI(NULL, NULL, does_not_existW);
+    res = pConfigurePortUI(NULL, NULL, L"does_not_exist");
     ok( !res &&
         ((GetLastError() == ERROR_UNKNOWN_PORT) || (GetLastError() == ERROR_INVALID_PRINTER_NAME)),
         "got %d with %u (expected '0' with: ERROR_UNKNOWN_PORT or "
@@ -258,7 +253,7 @@ static void test_ConfigurePortUI(void)
 
     if (winetest_interactive && file_present) {
         SetLastError(0xdeadbeef);
-        res = pConfigurePortUI(NULL, NULL, portname_fileW);
+        res = pConfigurePortUI(NULL, NULL, L"FILE:");
         ok( !res &&
             ((GetLastError() == ERROR_CANCELLED) || (GetLastError() == ERROR_ACCESS_DENIED)),
             "got %d with %u (expected '0' with: ERROR_CANCELLED or "
@@ -300,7 +295,7 @@ START_TEST(localui)
     /* find installed ports */
 
     /* "FILE:" */
-    file_present = find_portinfo2(portname_fileW);
+    file_present = find_portinfo2(L"FILE:");
 
     if (!pi_numports)   /* Nothing to test without a port */
         return;
