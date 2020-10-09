@@ -823,7 +823,7 @@ msgstr "Zameniť vo vý&bere"
 #: dlls/comdlg32/comdlg32.rc:363 dlls/comdlg32/comdlg32.rc:403
 #: dlls/ieframe/ieframe.rc:42 dlls/shdoclc/shdoclc.rc:61
 #: dlls/shell32/shell32.rc:108 programs/clock/clock.rc:31
-#: programs/wineconsole/wineconsole.rc:30
+#: programs/conhost/conhost.rc:33 programs/wineconsole/wineconsole.rc:30
 msgid "&Properties"
 msgstr "&Vlastnosti"
 
@@ -3286,8 +3286,9 @@ msgstr "Vyst&rihnúť"
 #: dlls/shdoclc/shdoclc.rc:94 dlls/shdoclc/shdoclc.rc:118
 #: dlls/shdoclc/shdoclc.rc:133 dlls/shdoclc/shdoclc.rc:160
 #: dlls/shdoclc/shdoclc.rc:184 dlls/shell32/shell32.rc:102
-#: dlls/user32/user32.rc:61 programs/wineconsole/wineconsole.rc:32
-#: programs/winhlp32/winhlp32.rc:40 programs/wordpad/wordpad.rc:113
+#: dlls/user32/user32.rc:61 programs/conhost/conhost.rc:35
+#: programs/wineconsole/wineconsole.rc:32 programs/winhlp32/winhlp32.rc:40
+#: programs/wordpad/wordpad.rc:113
 #, fuzzy
 msgid "&Copy"
 msgstr ""
@@ -8920,7 +8921,8 @@ msgstr "Zdroj:"
 #: dlls/shdoclc/shdoclc.rc:82 dlls/shdoclc/shdoclc.rc:95
 #: dlls/shdoclc/shdoclc.rc:135 dlls/shdoclc/shdoclc.rc:162
 #: dlls/shdoclc/shdoclc.rc:186 dlls/user32/user32.rc:62
-#: programs/wineconsole/wineconsole.rc:33 programs/wordpad/wordpad.rc:114
+#: programs/conhost/conhost.rc:36 programs/wineconsole/wineconsole.rc:33
+#: programs/wordpad/wordpad.rc:114
 msgid "&Paste"
 msgstr "V&ložiť"
 
@@ -12802,6 +12804,58 @@ msgid ""
 " hexadecimal (0x34) or octal (056).\n"
 msgstr ""
 
+#: programs/conhost/conhost.rc:31 programs/notepad/notepad.rc:41
+#: programs/regedit/regedit.rc:43 programs/wineconsole/wineconsole.rc:28
+#: programs/winhlp32/winhlp32.rc:39 programs/wordpad/wordpad.rc:42
+msgid "&Edit"
+msgstr "&Upraviť"
+
+#: programs/conhost/conhost.rc:32 programs/wineconsole/wineconsole.rc:29
+msgid "Set &Defaults"
+msgstr ""
+
+#: programs/conhost/conhost.rc:34 programs/wineconsole/wineconsole.rc:31
+msgid "&Mark"
+msgstr ""
+
+#: programs/conhost/conhost.rc:37 programs/wineconsole/wineconsole.rc:34
+msgid "&Select all"
+msgstr ""
+
+#: programs/conhost/conhost.rc:38 programs/wineconsole/wineconsole.rc:35
+msgid "Sc&roll"
+msgstr ""
+
+#: programs/conhost/conhost.rc:39 programs/wineconsole/wineconsole.rc:36
+msgid "S&earch"
+msgstr ""
+
+#: programs/conhost/conhost.rc:42 programs/wineconsole/wineconsole.rc:39
+msgid "Setup - Default settings"
+msgstr ""
+
+#: programs/conhost/conhost.rc:43 programs/wineconsole/wineconsole.rc:40
+msgid "Setup - Current settings"
+msgstr ""
+
+#: programs/conhost/conhost.rc:44 programs/wineconsole/wineconsole.rc:41
+msgid "Configuration error"
+msgstr ""
+
+#: programs/conhost/conhost.rc:45 programs/wineconsole/wineconsole.rc:42
+msgid ""
+"The size of the screen buffer must be greater than or equal to the size of "
+"the window."
+msgstr ""
+
+#: programs/conhost/conhost.rc:40 programs/wineconsole/wineconsole.rc:37
+msgid "Each character is %1!u! pixels wide and %2!u! pixels high"
+msgstr ""
+
+#: programs/conhost/conhost.rc:41 programs/wineconsole/wineconsole.rc:38
+msgid "This is a test"
+msgstr ""
+
 #: programs/dxdiag/dxdiag.rc:30
 msgid "DirectX Diagnostic Tool"
 msgstr ""
@@ -13217,12 +13271,6 @@ msgstr "Nastavenia str&any..."
 #: programs/notepad/notepad.rc:37
 msgid "P&rinter Setup..."
 msgstr "N&astavenia tlačiarne..."
-
-#: programs/notepad/notepad.rc:41 programs/regedit/regedit.rc:43
-#: programs/wineconsole/wineconsole.rc:28 programs/winhlp32/winhlp32.rc:39
-#: programs/wordpad/wordpad.rc:42
-msgid "&Edit"
-msgstr "&Upraviť"
 
 #: programs/notepad/notepad.rc:42 programs/wordpad/wordpad.rc:44
 msgid "&Undo\tCtrl+Z"
@@ -16514,52 +16562,6 @@ msgstr ""
 
 #: programs/wineconsole/wineconsole.rc:131
 msgid "Modify only current session"
-msgstr ""
-
-#: programs/wineconsole/wineconsole.rc:29
-msgid "Set &Defaults"
-msgstr ""
-
-#: programs/wineconsole/wineconsole.rc:31
-msgid "&Mark"
-msgstr ""
-
-#: programs/wineconsole/wineconsole.rc:34
-msgid "&Select all"
-msgstr ""
-
-#: programs/wineconsole/wineconsole.rc:35
-msgid "Sc&roll"
-msgstr ""
-
-#: programs/wineconsole/wineconsole.rc:36
-msgid "S&earch"
-msgstr ""
-
-#: programs/wineconsole/wineconsole.rc:39
-msgid "Setup - Default settings"
-msgstr ""
-
-#: programs/wineconsole/wineconsole.rc:40
-msgid "Setup - Current settings"
-msgstr ""
-
-#: programs/wineconsole/wineconsole.rc:41
-msgid "Configuration error"
-msgstr ""
-
-#: programs/wineconsole/wineconsole.rc:42
-msgid ""
-"The size of the screen buffer must be greater than or equal to the size of "
-"the window."
-msgstr ""
-
-#: programs/wineconsole/wineconsole.rc:37
-msgid "Each character is %1!u! pixels wide and %2!u! pixels high"
-msgstr ""
-
-#: programs/wineconsole/wineconsole.rc:38
-msgid "This is a test"
 msgstr ""
 
 #: programs/wineconsole/wineconsole.rc:44

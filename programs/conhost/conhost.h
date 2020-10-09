@@ -142,3 +142,24 @@ static inline void empty_update_rect( struct screen_buffer *screen_buffer, RECT 
 }
 
 #endif /* RC_INVOKED */
+
+/* strings */
+#define IDS_EDIT                0x100
+#define IDS_DEFAULT             0x101
+#define IDS_PROPERTIES          0x102
+
+#define IDS_MARK                0x110
+#define IDS_COPY                0x111
+#define IDS_PASTE               0x112
+#define IDS_SELECTALL           0x113
+#define IDS_SCROLL              0x114
+#define IDS_SEARCH              0x115
+
+#define IDS_DLG_TIT_DEFAULT     0x120
+#define IDS_DLG_TIT_CURRENT     0x121
+#define IDS_DLG_TIT_ERROR       0x122
+
+#define IDS_DLG_ERR_SBWINSIZE   0x130
+
+#define IDS_FNT_DISPLAY         0x200
+#define IDS_FNT_PREVIEW         0x201

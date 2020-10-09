@@ -808,7 +808,7 @@ msgstr "Remplacer &tout"
 #: dlls/comdlg32/comdlg32.rc:363 dlls/comdlg32/comdlg32.rc:403
 #: dlls/ieframe/ieframe.rc:42 dlls/shdoclc/shdoclc.rc:61
 #: dlls/shell32/shell32.rc:108 programs/clock/clock.rc:31
-#: programs/wineconsole/wineconsole.rc:30
+#: programs/conhost/conhost.rc:33 programs/wineconsole/wineconsole.rc:30
 msgid "&Properties"
 msgstr "&Propriétés"
 
@@ -3357,8 +3357,9 @@ msgstr "&Couper"
 #: dlls/shdoclc/shdoclc.rc:94 dlls/shdoclc/shdoclc.rc:118
 #: dlls/shdoclc/shdoclc.rc:133 dlls/shdoclc/shdoclc.rc:160
 #: dlls/shdoclc/shdoclc.rc:184 dlls/shell32/shell32.rc:102
-#: dlls/user32/user32.rc:61 programs/wineconsole/wineconsole.rc:32
-#: programs/winhlp32/winhlp32.rc:40 programs/wordpad/wordpad.rc:113
+#: dlls/user32/user32.rc:61 programs/conhost/conhost.rc:35
+#: programs/wineconsole/wineconsole.rc:32 programs/winhlp32/winhlp32.rc:40
+#: programs/wordpad/wordpad.rc:113
 msgid "&Copy"
 msgstr "C&opier"
 
@@ -9038,7 +9039,8 @@ msgstr "Source :"
 #: dlls/shdoclc/shdoclc.rc:82 dlls/shdoclc/shdoclc.rc:95
 #: dlls/shdoclc/shdoclc.rc:135 dlls/shdoclc/shdoclc.rc:162
 #: dlls/shdoclc/shdoclc.rc:186 dlls/user32/user32.rc:62
-#: programs/wineconsole/wineconsole.rc:33 programs/wordpad/wordpad.rc:114
+#: programs/conhost/conhost.rc:36 programs/wineconsole/wineconsole.rc:33
+#: programs/wordpad/wordpad.rc:114
 msgid "&Paste"
 msgstr "Co&ller"
 
@@ -13408,6 +13410,60 @@ msgstr ""
 "Nombre mal formé : doit être décimal (12),\n"
 " hexadécimal (0x34) ou octal (056).\n"
 
+#: programs/conhost/conhost.rc:31 programs/notepad/notepad.rc:41
+#: programs/regedit/regedit.rc:43 programs/wineconsole/wineconsole.rc:28
+#: programs/winhlp32/winhlp32.rc:39 programs/wordpad/wordpad.rc:42
+msgid "&Edit"
+msgstr "É&dition"
+
+#: programs/conhost/conhost.rc:32 programs/wineconsole/wineconsole.rc:29
+msgid "Set &Defaults"
+msgstr "Paramètres par &défaut"
+
+#: programs/conhost/conhost.rc:34 programs/wineconsole/wineconsole.rc:31
+msgid "&Mark"
+msgstr "&Marquer"
+
+#: programs/conhost/conhost.rc:37 programs/wineconsole/wineconsole.rc:34
+msgid "&Select all"
+msgstr "&Tout sélectionner"
+
+#: programs/conhost/conhost.rc:38 programs/wineconsole/wineconsole.rc:35
+msgid "Sc&roll"
+msgstr "&Défiler"
+
+#: programs/conhost/conhost.rc:39 programs/wineconsole/wineconsole.rc:36
+msgid "S&earch"
+msgstr "&Rechercher"
+
+#: programs/conhost/conhost.rc:42 programs/wineconsole/wineconsole.rc:39
+msgid "Setup - Default settings"
+msgstr "Configuration - paramètres par défaut"
+
+#: programs/conhost/conhost.rc:43 programs/wineconsole/wineconsole.rc:40
+msgid "Setup - Current settings"
+msgstr "Configuration - paramètres actuels"
+
+#: programs/conhost/conhost.rc:44 programs/wineconsole/wineconsole.rc:41
+msgid "Configuration error"
+msgstr "Erreur de configuration"
+
+#: programs/conhost/conhost.rc:45 programs/wineconsole/wineconsole.rc:42
+msgid ""
+"The size of the screen buffer must be greater than or equal to the size of "
+"the window."
+msgstr ""
+"La taille du tampon écran doit être plus grande ou égale à celle du tampon "
+"de la fenêtre"
+
+#: programs/conhost/conhost.rc:40 programs/wineconsole/wineconsole.rc:37
+msgid "Each character is %1!u! pixels wide and %2!u! pixels high"
+msgstr "Chaque caractère fait %1!u! pixels de large sur %2!u! pixels de haut"
+
+#: programs/conhost/conhost.rc:41 programs/wineconsole/wineconsole.rc:38
+msgid "This is a test"
+msgstr "Ceci est un test"
+
 #: programs/dxdiag/dxdiag.rc:30
 msgid "DirectX Diagnostic Tool"
 msgstr "Outil de diagnostic DirectX"
@@ -13808,12 +13864,6 @@ msgstr "&Mise en page..."
 #: programs/notepad/notepad.rc:37
 msgid "P&rinter Setup..."
 msgstr "&Configuration de l'imprimante..."
-
-#: programs/notepad/notepad.rc:41 programs/regedit/regedit.rc:43
-#: programs/wineconsole/wineconsole.rc:28 programs/winhlp32/winhlp32.rc:39
-#: programs/wordpad/wordpad.rc:42
-msgid "&Edit"
-msgstr "É&dition"
 
 #: programs/notepad/notepad.rc:42 programs/wordpad/wordpad.rc:44
 msgid "&Undo\tCtrl+Z"
@@ -17280,54 +17330,6 @@ msgstr "Sauver les paramètres pour les prochaines sessions"
 #: programs/wineconsole/wineconsole.rc:131
 msgid "Modify only current session"
 msgstr "Appliquer uniquement à la session courante"
-
-#: programs/wineconsole/wineconsole.rc:29
-msgid "Set &Defaults"
-msgstr "Paramètres par &défaut"
-
-#: programs/wineconsole/wineconsole.rc:31
-msgid "&Mark"
-msgstr "&Marquer"
-
-#: programs/wineconsole/wineconsole.rc:34
-msgid "&Select all"
-msgstr "&Tout sélectionner"
-
-#: programs/wineconsole/wineconsole.rc:35
-msgid "Sc&roll"
-msgstr "&Défiler"
-
-#: programs/wineconsole/wineconsole.rc:36
-msgid "S&earch"
-msgstr "&Rechercher"
-
-#: programs/wineconsole/wineconsole.rc:39
-msgid "Setup - Default settings"
-msgstr "Configuration - paramètres par défaut"
-
-#: programs/wineconsole/wineconsole.rc:40
-msgid "Setup - Current settings"
-msgstr "Configuration - paramètres actuels"
-
-#: programs/wineconsole/wineconsole.rc:41
-msgid "Configuration error"
-msgstr "Erreur de configuration"
-
-#: programs/wineconsole/wineconsole.rc:42
-msgid ""
-"The size of the screen buffer must be greater than or equal to the size of "
-"the window."
-msgstr ""
-"La taille du tampon écran doit être plus grande ou égale à celle du tampon "
-"de la fenêtre"
-
-#: programs/wineconsole/wineconsole.rc:37
-msgid "Each character is %1!u! pixels wide and %2!u! pixels high"
-msgstr "Chaque caractère fait %1!u! pixels de large sur %2!u! pixels de haut"
-
-#: programs/wineconsole/wineconsole.rc:38
-msgid "This is a test"
-msgstr "Ceci est un test"
 
 #: programs/wineconsole/wineconsole.rc:44
 msgid "wineconsole: Couldn't parse event id\n"

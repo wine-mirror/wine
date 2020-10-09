@@ -43,6 +43,7 @@ struct console_window
     HDC               mem_dc;          /* memory DC holding the bitmap below */
     HBITMAP           bitmap;          /* bitmap of display window content */
     HFONT             font;            /* font used for rendering, usually fixed */
+    HMENU             popup_menu;      /* popup menu triggered by right mouse click */
     HBITMAP           cursor_bitmap;   /* bitmap used for the caret */
     unsigned int      ui_charset;      /* default UI charset */
     WCHAR            *config_key;      /* config registry key name */
@@ -902,14 +903,58 @@ static void apply_config( struct console *console, const struct console_config *
     update_window( console );
 }
 
+static BOOL fill_menu( HMENU menu, BOOL sep )
+{
+    HINSTANCE module = GetModuleHandleW( NULL );
+    HMENU sub_menu;
+    WCHAR buff[256];
+
+    if (!menu) return FALSE;
+
+    sub_menu = CreateMenu();
+    if (!sub_menu) return FALSE;
+
+    LoadStringW( module, IDS_MARK, buff, ARRAY_SIZE(buff) );
+    InsertMenuW( sub_menu, -1, MF_BYPOSITION|MF_STRING, IDS_MARK, buff );
+    LoadStringW( module, IDS_COPY, buff, ARRAY_SIZE(buff) );
+    InsertMenuW( sub_menu, -1, MF_BYPOSITION|MF_STRING, IDS_COPY, buff );
+    LoadStringW( module, IDS_PASTE, buff, ARRAY_SIZE(buff) );
+    InsertMenuW( sub_menu, -1, MF_BYPOSITION|MF_STRING, IDS_PASTE, buff );
+    LoadStringW( module, IDS_SELECTALL, buff, ARRAY_SIZE(buff) );
+    InsertMenuW( sub_menu, -1, MF_BYPOSITION|MF_STRING, IDS_SELECTALL, buff );
+    LoadStringW( module, IDS_SCROLL, buff, ARRAY_SIZE(buff) );
+    InsertMenuW( sub_menu, -1, MF_BYPOSITION|MF_STRING, IDS_SCROLL, buff );
+    LoadStringW( module, IDS_SEARCH, buff, ARRAY_SIZE(buff) );
+    InsertMenuW( sub_menu, -1, MF_BYPOSITION|MF_STRING, IDS_SEARCH, buff );
+
+    if (sep) InsertMenuW( menu, -1, MF_BYPOSITION|MF_SEPARATOR, 0, NULL );
+    LoadStringW( module, IDS_EDIT, buff, ARRAY_SIZE(buff) );
+    InsertMenuW( menu, -1, MF_BYPOSITION|MF_STRING|MF_POPUP, (UINT_PTR)sub_menu, buff );
+    LoadStringW( module, IDS_DEFAULT, buff, ARRAY_SIZE(buff) );
+    InsertMenuW( menu, -1, MF_BYPOSITION|MF_STRING, IDS_DEFAULT, buff );
+    LoadStringW( module, IDS_PROPERTIES, buff, ARRAY_SIZE(buff) );
+    InsertMenuW( menu, -1, MF_BYPOSITION|MF_STRING, IDS_PROPERTIES, buff );
+
+    return TRUE;
+}
+
 static LRESULT window_create( HWND hwnd, const CREATESTRUCTW *create )
 {
     struct console *console = create->lpCreateParams;
+    HMENU sys_menu;
 
     TRACE( "%p\n", hwnd );
 
     SetWindowLongPtrW( hwnd, 0, (DWORD_PTR)console );
     console->win = hwnd;
+
+    sys_menu = GetSystemMenu( hwnd, FALSE );
+    if (!sys_menu) return 0;
+    console->window->popup_menu = CreatePopupMenu();
+    if (!console->window->popup_menu) return 0;
+
+    fill_menu( sys_menu, TRUE );
+    fill_menu( console->window->popup_menu, FALSE );
 
     console->window->mem_dc = CreateCompatibleDC( 0 );
     return 0;
