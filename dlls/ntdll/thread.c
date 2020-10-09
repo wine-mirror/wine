@@ -392,7 +392,7 @@ NTSTATUS WINAPI DECLSPEC_HOTPATCH RtlFlsFree( ULONG index )
 {
     unsigned int chunk_index, idx;
     FLS_INFO_CHUNK *chunk;
-    TEB_FLS_DATA *fls;
+    LIST_ENTRY *entry;
 
     lock_fls_data();
 
@@ -410,10 +410,15 @@ NTSTATUS WINAPI DECLSPEC_HOTPATCH RtlFlsFree( ULONG index )
         return STATUS_INVALID_PARAMETER;
     }
 
-    if ((fls = NtCurrentTeb()->FlsSlots) && fls->fls_data_chunks[chunk_index])
+    for (entry = fls_data.fls_list_head.Flink; entry != &fls_data.fls_list_head; entry = entry->Flink)
     {
-        /* FIXME: call Fls callback */
-        fls->fls_data_chunks[chunk_index][idx + 1] = NULL;
+        TEB_FLS_DATA *fls = CONTAINING_RECORD(entry, TEB_FLS_DATA, fls_list_entry);
+
+        if (fls->fls_data_chunks[chunk_index])
+        {
+            /* FIXME: call Fls callback */
+            fls->fls_data_chunks[chunk_index][idx + 1] = NULL;
+        }
     }
 
     --chunk->count;
