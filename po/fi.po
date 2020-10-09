@@ -76,22 +76,23 @@ msgstr "Tukitietoja"
 #: dlls/shlwapi/shlwapi.rc:44 dlls/twain_32/twain.rc:32
 #: dlls/user32/user32.rc:83 dlls/user32/user32.rc:98 dlls/wininet/wininet.rc:62
 #: dlls/wininet/wininet.rc:82 dlls/winspool.drv/winspool.rc:42
-#: programs/net/net.rc:47 programs/notepad/notepad.rc:117
-#: programs/oleview/oleview.rc:161 programs/oleview/oleview.rc:174
-#: programs/progman/progman.rc:106 programs/progman/progman.rc:124
-#: programs/progman/progman.rc:142 programs/progman/progman.rc:158
-#: programs/progman/progman.rc:180 programs/progman/progman.rc:199
-#: programs/progman/progman.rc:216 programs/regedit/regedit.rc:296
-#: programs/regedit/regedit.rc:307 programs/regedit/regedit.rc:320
-#: programs/regedit/regedit.rc:336 programs/regedit/regedit.rc:349
-#: programs/regedit/regedit.rc:362 programs/taskmgr/taskmgr.rc:442
-#: programs/taskmgr/taskmgr.rc:517 programs/winecfg/winecfg.rc:213
-#: programs/winecfg/winecfg.rc:223 programs/wineconsole/wineconsole.rc:133
-#: programs/winefile/winefile.rc:127 programs/winefile/winefile.rc:150
-#: programs/winefile/winefile.rc:180 programs/winemine/winemine.rc:73
-#: programs/winemine/winemine.rc:84 programs/winemine/winemine.rc:98
-#: programs/wordpad/wordpad.rc:215 programs/wordpad/wordpad.rc:226
-#: programs/wordpad/wordpad.rc:244 programs/wordpad/wordpad.rc:257
+#: programs/conhost/conhost.rc:126 programs/net/net.rc:47
+#: programs/notepad/notepad.rc:117 programs/oleview/oleview.rc:161
+#: programs/oleview/oleview.rc:174 programs/progman/progman.rc:106
+#: programs/progman/progman.rc:124 programs/progman/progman.rc:142
+#: programs/progman/progman.rc:158 programs/progman/progman.rc:180
+#: programs/progman/progman.rc:199 programs/progman/progman.rc:216
+#: programs/regedit/regedit.rc:296 programs/regedit/regedit.rc:307
+#: programs/regedit/regedit.rc:320 programs/regedit/regedit.rc:336
+#: programs/regedit/regedit.rc:349 programs/regedit/regedit.rc:362
+#: programs/taskmgr/taskmgr.rc:442 programs/taskmgr/taskmgr.rc:517
+#: programs/winecfg/winecfg.rc:213 programs/winecfg/winecfg.rc:223
+#: programs/wineconsole/wineconsole.rc:133 programs/winefile/winefile.rc:127
+#: programs/winefile/winefile.rc:150 programs/winefile/winefile.rc:180
+#: programs/winemine/winemine.rc:73 programs/winemine/winemine.rc:84
+#: programs/winemine/winemine.rc:98 programs/wordpad/wordpad.rc:215
+#: programs/wordpad/wordpad.rc:226 programs/wordpad/wordpad.rc:244
+#: programs/wordpad/wordpad.rc:257
 msgid "OK"
 msgstr "OK"
 
@@ -180,22 +181,22 @@ msgstr "&Asenna"
 #: dlls/shell32/shell32.rc:342 dlls/shlwapi/shlwapi.rc:45
 #: dlls/twain_32/twain.rc:33 dlls/user32/user32.rc:84 dlls/user32/user32.rc:99
 #: dlls/wininet/wininet.rc:63 dlls/wininet/wininet.rc:83
-#: dlls/winspool.drv/winspool.rc:43 programs/notepad/notepad.rc:118
-#: programs/oleview/oleview.rc:162 programs/oleview/oleview.rc:175
-#: programs/progman/progman.rc:107 programs/progman/progman.rc:125
-#: programs/progman/progman.rc:143 programs/progman/progman.rc:159
-#: programs/progman/progman.rc:181 programs/progman/progman.rc:200
-#: programs/progman/progman.rc:217 programs/regedit/regedit.rc:297
-#: programs/regedit/regedit.rc:308 programs/regedit/regedit.rc:321
-#: programs/regedit/regedit.rc:337 programs/regedit/regedit.rc:350
-#: programs/regedit/regedit.rc:363 programs/taskmgr/taskmgr.rc:443
-#: programs/taskmgr/taskmgr.rc:518 programs/wineboot/wineboot.rc:34
-#: programs/winecfg/winecfg.rc:214 programs/winecfg/winecfg.rc:224
-#: programs/wineconsole/wineconsole.rc:134 programs/winefile/winefile.rc:128
-#: programs/winefile/winefile.rc:151 programs/winefile/winefile.rc:181
-#: programs/winemine/winemine.rc:99 programs/wordpad/wordpad.rc:216
-#: programs/wordpad/wordpad.rc:227 programs/wordpad/wordpad.rc:245
-#: programs/wordpad/wordpad.rc:258
+#: dlls/winspool.drv/winspool.rc:43 programs/conhost/conhost.rc:127
+#: programs/notepad/notepad.rc:118 programs/oleview/oleview.rc:162
+#: programs/oleview/oleview.rc:175 programs/progman/progman.rc:107
+#: programs/progman/progman.rc:125 programs/progman/progman.rc:143
+#: programs/progman/progman.rc:159 programs/progman/progman.rc:181
+#: programs/progman/progman.rc:200 programs/progman/progman.rc:217
+#: programs/regedit/regedit.rc:297 programs/regedit/regedit.rc:308
+#: programs/regedit/regedit.rc:321 programs/regedit/regedit.rc:337
+#: programs/regedit/regedit.rc:350 programs/regedit/regedit.rc:363
+#: programs/taskmgr/taskmgr.rc:443 programs/taskmgr/taskmgr.rc:518
+#: programs/wineboot/wineboot.rc:34 programs/winecfg/winecfg.rc:214
+#: programs/winecfg/winecfg.rc:224 programs/wineconsole/wineconsole.rc:134
+#: programs/winefile/winefile.rc:128 programs/winefile/winefile.rc:151
+#: programs/winefile/winefile.rc:181 programs/winemine/winemine.rc:99
+#: programs/wordpad/wordpad.rc:216 programs/wordpad/wordpad.rc:227
+#: programs/wordpad/wordpad.rc:245 programs/wordpad/wordpad.rc:258
 msgid "Cancel"
 msgstr "Peruuta"
 
@@ -644,7 +645,8 @@ msgstr "&Koko"
 msgid "&Source"
 msgstr "Lä&hde"
 
-#: dlls/comdlg32/comdlg32.rc:251 programs/wineconsole/wineconsole.rc:83
+#: dlls/comdlg32/comdlg32.rc:251 programs/conhost/conhost.rc:76
+#: programs/wineconsole/wineconsole.rc:83
 msgid "Font"
 msgstr "Fontit"
 
@@ -792,7 +794,7 @@ msgstr "Korvaa ka&ikki"
 #: dlls/comdlg32/comdlg32.rc:363 dlls/comdlg32/comdlg32.rc:403
 #: dlls/ieframe/ieframe.rc:42 dlls/shdoclc/shdoclc.rc:61
 #: dlls/shell32/shell32.rc:108 programs/clock/clock.rc:31
-#: programs/conhost/conhost.rc:33 programs/wineconsole/wineconsole.rc:30
+#: programs/conhost/conhost.rc:34 programs/wineconsole/wineconsole.rc:30
 msgid "&Properties"
 msgstr "&Ominaisuudet"
 
@@ -3314,7 +3316,7 @@ msgstr "&Leikkaa"
 #: dlls/shdoclc/shdoclc.rc:94 dlls/shdoclc/shdoclc.rc:118
 #: dlls/shdoclc/shdoclc.rc:133 dlls/shdoclc/shdoclc.rc:160
 #: dlls/shdoclc/shdoclc.rc:184 dlls/shell32/shell32.rc:102
-#: dlls/user32/user32.rc:61 programs/conhost/conhost.rc:35
+#: dlls/user32/user32.rc:61 programs/conhost/conhost.rc:36
 #: programs/wineconsole/wineconsole.rc:32 programs/winhlp32/winhlp32.rc:40
 #: programs/wordpad/wordpad.rc:113
 msgid "&Copy"
@@ -3384,8 +3386,8 @@ msgstr "Alkuun"
 msgid "Sync"
 msgstr "Synkronoi"
 
-#: dlls/hhctrl.ocx/hhctrl.rc:50 programs/wineconsole/wineconsole.rc:58
-#: programs/wordpad/wordpad.rc:166
+#: dlls/hhctrl.ocx/hhctrl.rc:50 programs/conhost/conhost.rc:51
+#: programs/wineconsole/wineconsole.rc:58 programs/wordpad/wordpad.rc:166
 msgid "Options"
 msgstr "Valinnat"
 
@@ -8677,7 +8679,7 @@ msgstr "Lähde:"
 #: dlls/shdoclc/shdoclc.rc:82 dlls/shdoclc/shdoclc.rc:95
 #: dlls/shdoclc/shdoclc.rc:135 dlls/shdoclc/shdoclc.rc:162
 #: dlls/shdoclc/shdoclc.rc:186 dlls/user32/user32.rc:62
-#: programs/conhost/conhost.rc:36 programs/wineconsole/wineconsole.rc:33
+#: programs/conhost/conhost.rc:37 programs/wineconsole/wineconsole.rc:33
 #: programs/wordpad/wordpad.rc:114
 msgid "&Paste"
 msgstr "L&iitä"
@@ -10712,7 +10714,7 @@ msgid "&Move"
 msgstr "Sii&rrä"
 
 #: dlls/user32/user32.rc:32 dlls/user32/user32.rc:45
-#: programs/wineconsole/wineconsole.rc:91
+#: programs/conhost/conhost.rc:84 programs/wineconsole/wineconsole.rc:91
 msgid "&Size"
 msgstr "&Muuta kokoa"
 
@@ -12850,55 +12852,167 @@ msgstr ""
 "Luvun muoto ei kelpaa – täytyy olla desimaaliluku (12),\n"
 " heksadesimaaliluku (0x34) tai oktaaliluku (056).\n"
 
-#: programs/conhost/conhost.rc:31 programs/notepad/notepad.rc:41
+#: programs/conhost/conhost.rc:54 programs/wineconsole/wineconsole.rc:61
+msgid "Cursor size"
+msgstr "Kursorin koko"
+
+#: programs/conhost/conhost.rc:55 programs/wineconsole/wineconsole.rc:62
+msgid "&Small"
+msgstr "&Pieni"
+
+#: programs/conhost/conhost.rc:56 programs/wineconsole/wineconsole.rc:63
+msgid "&Medium"
+msgstr "&Keskikoko"
+
+#: programs/conhost/conhost.rc:57 programs/wineconsole/wineconsole.rc:64
+msgid "&Large"
+msgstr "&Suuri"
+
+#: programs/conhost/conhost.rc:59 programs/wineconsole/wineconsole.rc:66
+msgid "Command history"
+msgstr "Komentohistoria"
+
+#: programs/conhost/conhost.rc:60 programs/wineconsole/wineconsole.rc:67
+msgid "&Buffer size:"
+msgstr "P&uskurin koko:"
+
+#: programs/conhost/conhost.rc:63 programs/wineconsole/wineconsole.rc:70
+msgid "&Remove duplicates"
+msgstr "P&oista toistuvat"
+
+#: programs/conhost/conhost.rc:65 programs/wineconsole/wineconsole.rc:72
+msgid "Popup menu"
+msgstr "Ponnahdusvalikko"
+
+#: programs/conhost/conhost.rc:66 programs/wineconsole/wineconsole.rc:73
+msgid "&Control"
+msgstr "&Control"
+
+#: programs/conhost/conhost.rc:67 programs/wineconsole/wineconsole.rc:74
+msgid "S&hift"
+msgstr "S&hift"
+
+#: programs/conhost/conhost.rc:69 programs/wineconsole/wineconsole.rc:76
+msgid "Console"
+msgstr "Konsoli"
+
+#: programs/conhost/conhost.rc:70 programs/wineconsole/wineconsole.rc:77
+msgid "&Quick Edit mode"
+msgstr "Pika&muokkaustila"
+
+#: programs/conhost/conhost.rc:71 programs/wineconsole/wineconsole.rc:78
+msgid "&Insert mode"
+msgstr "&Lisäystila"
+
+#: programs/conhost/conhost.rc:79 programs/wineconsole/wineconsole.rc:86
+msgid "&Font"
+msgstr "&Fontit"
+
+#: programs/conhost/conhost.rc:81 programs/wineconsole/wineconsole.rc:88
+msgid "&Color"
+msgstr "&Väri"
+
+#: programs/conhost/conhost.rc:92 programs/wineconsole/wineconsole.rc:99
+msgid "Configuration"
+msgstr "Valinnat"
+
+#: programs/conhost/conhost.rc:95 programs/wineconsole/wineconsole.rc:102
+msgid "Buffer zone"
+msgstr "Puskurivyöhyke"
+
+#: programs/conhost/conhost.rc:96 programs/wineconsole/wineconsole.rc:103
+msgid "&Width:"
+msgstr "&Leveys:"
+
+#: programs/conhost/conhost.rc:99 programs/wineconsole/wineconsole.rc:106
+msgid "&Height:"
+msgstr "&Korkeus:"
+
+#: programs/conhost/conhost.rc:103 programs/wineconsole/wineconsole.rc:110
+msgid "Window size"
+msgstr "Ikkunan koko"
+
+#: programs/conhost/conhost.rc:104 programs/wineconsole/wineconsole.rc:111
+msgid "W&idth:"
+msgstr "L&eveys:"
+
+#: programs/conhost/conhost.rc:107 programs/wineconsole/wineconsole.rc:114
+msgid "H&eight:"
+msgstr "K&orkeus:"
+
+#: programs/conhost/conhost.rc:111 programs/wineconsole/wineconsole.rc:118
+msgid "End of program"
+msgstr "Ohjelman loppu"
+
+#: programs/conhost/conhost.rc:112 programs/wineconsole/wineconsole.rc:119
+msgid "&Close console"
+msgstr "&Sulje konsoli"
+
+#: programs/conhost/conhost.rc:114 programs/wineconsole/wineconsole.rc:121
+msgid "Edition"
+msgstr "Versio"
+
+#: programs/conhost/conhost.rc:120 programs/wineconsole/wineconsole.rc:127
+msgid "Console parameters"
+msgstr "Konsolin parametrit"
+
+#: programs/conhost/conhost.rc:123 programs/wineconsole/wineconsole.rc:130
+msgid "Retain these settings for later sessions"
+msgstr "Muista nämä asetukset myöhempää varten"
+
+#: programs/conhost/conhost.rc:124 programs/wineconsole/wineconsole.rc:131
+msgid "Modify only current session"
+msgstr "Muokkaa vain nykyistä istuntoa"
+
+#: programs/conhost/conhost.rc:32 programs/notepad/notepad.rc:41
 #: programs/regedit/regedit.rc:43 programs/wineconsole/wineconsole.rc:28
 #: programs/winhlp32/winhlp32.rc:39 programs/wordpad/wordpad.rc:42
 msgid "&Edit"
 msgstr "&Muokkaa"
 
-#: programs/conhost/conhost.rc:32 programs/wineconsole/wineconsole.rc:29
+#: programs/conhost/conhost.rc:33 programs/wineconsole/wineconsole.rc:29
 msgid "Set &Defaults"
 msgstr "Aseta &oletukset"
 
-#: programs/conhost/conhost.rc:34 programs/wineconsole/wineconsole.rc:31
+#: programs/conhost/conhost.rc:35 programs/wineconsole/wineconsole.rc:31
 msgid "&Mark"
 msgstr "&Merkki"
 
-#: programs/conhost/conhost.rc:37 programs/wineconsole/wineconsole.rc:34
+#: programs/conhost/conhost.rc:38 programs/wineconsole/wineconsole.rc:34
 msgid "&Select all"
 msgstr "&Valitse kaikki"
 
-#: programs/conhost/conhost.rc:38 programs/wineconsole/wineconsole.rc:35
+#: programs/conhost/conhost.rc:39 programs/wineconsole/wineconsole.rc:35
 msgid "Sc&roll"
 msgstr "V&ieritä"
 
-#: programs/conhost/conhost.rc:39 programs/wineconsole/wineconsole.rc:36
+#: programs/conhost/conhost.rc:40 programs/wineconsole/wineconsole.rc:36
 msgid "S&earch"
 msgstr "&Etsi"
 
-#: programs/conhost/conhost.rc:42 programs/wineconsole/wineconsole.rc:39
+#: programs/conhost/conhost.rc:43 programs/wineconsole/wineconsole.rc:39
 msgid "Setup - Default settings"
 msgstr "Asetukset - Oletusasetukset"
 
-#: programs/conhost/conhost.rc:43 programs/wineconsole/wineconsole.rc:40
+#: programs/conhost/conhost.rc:44 programs/wineconsole/wineconsole.rc:40
 msgid "Setup - Current settings"
 msgstr "Asetukset - Nykyiset asetukset"
 
-#: programs/conhost/conhost.rc:44 programs/wineconsole/wineconsole.rc:41
+#: programs/conhost/conhost.rc:45 programs/wineconsole/wineconsole.rc:41
 msgid "Configuration error"
 msgstr "Virhe asetuksissa"
 
-#: programs/conhost/conhost.rc:45 programs/wineconsole/wineconsole.rc:42
+#: programs/conhost/conhost.rc:46 programs/wineconsole/wineconsole.rc:42
 msgid ""
 "The size of the screen buffer must be greater than or equal to the size of "
 "the window."
 msgstr "Näyttöpuskurin on oltava vähintään ikkunan kokoinen."
 
-#: programs/conhost/conhost.rc:40 programs/wineconsole/wineconsole.rc:37
+#: programs/conhost/conhost.rc:41 programs/wineconsole/wineconsole.rc:37
 msgid "Each character is %1!u! pixels wide and %2!u! pixels high"
 msgstr "Jokainen merkki on %1!u! pikseliä leveä ja %2!u! pikseliä korkea"
 
-#: programs/conhost/conhost.rc:41 programs/wineconsole/wineconsole.rc:38
+#: programs/conhost/conhost.rc:42 programs/wineconsole/wineconsole.rc:38
 msgid "This is a test"
 msgstr "Tämä on testi"
 
@@ -16473,118 +16587,6 @@ msgstr "Valikon korostus"
 #: programs/winecfg/winecfg.rc:129
 msgid "Menu Bar"
 msgstr "Valikkopalkki"
-
-#: programs/wineconsole/wineconsole.rc:61
-msgid "Cursor size"
-msgstr "Kursorin koko"
-
-#: programs/wineconsole/wineconsole.rc:62
-msgid "&Small"
-msgstr "&Pieni"
-
-#: programs/wineconsole/wineconsole.rc:63
-msgid "&Medium"
-msgstr "&Keskikoko"
-
-#: programs/wineconsole/wineconsole.rc:64
-msgid "&Large"
-msgstr "&Suuri"
-
-#: programs/wineconsole/wineconsole.rc:66
-msgid "Command history"
-msgstr "Komentohistoria"
-
-#: programs/wineconsole/wineconsole.rc:67
-msgid "&Buffer size:"
-msgstr "P&uskurin koko:"
-
-#: programs/wineconsole/wineconsole.rc:70
-msgid "&Remove duplicates"
-msgstr "P&oista toistuvat"
-
-#: programs/wineconsole/wineconsole.rc:72
-msgid "Popup menu"
-msgstr "Ponnahdusvalikko"
-
-#: programs/wineconsole/wineconsole.rc:73
-msgid "&Control"
-msgstr "&Control"
-
-#: programs/wineconsole/wineconsole.rc:74
-msgid "S&hift"
-msgstr "S&hift"
-
-#: programs/wineconsole/wineconsole.rc:76
-msgid "Console"
-msgstr "Konsoli"
-
-#: programs/wineconsole/wineconsole.rc:77
-msgid "&Quick Edit mode"
-msgstr "Pika&muokkaustila"
-
-#: programs/wineconsole/wineconsole.rc:78
-msgid "&Insert mode"
-msgstr "&Lisäystila"
-
-#: programs/wineconsole/wineconsole.rc:86
-msgid "&Font"
-msgstr "&Fontit"
-
-#: programs/wineconsole/wineconsole.rc:88
-msgid "&Color"
-msgstr "&Väri"
-
-#: programs/wineconsole/wineconsole.rc:99
-msgid "Configuration"
-msgstr "Valinnat"
-
-#: programs/wineconsole/wineconsole.rc:102
-msgid "Buffer zone"
-msgstr "Puskurivyöhyke"
-
-#: programs/wineconsole/wineconsole.rc:103
-msgid "&Width:"
-msgstr "&Leveys:"
-
-#: programs/wineconsole/wineconsole.rc:106
-msgid "&Height:"
-msgstr "&Korkeus:"
-
-#: programs/wineconsole/wineconsole.rc:110
-msgid "Window size"
-msgstr "Ikkunan koko"
-
-#: programs/wineconsole/wineconsole.rc:111
-msgid "W&idth:"
-msgstr "L&eveys:"
-
-#: programs/wineconsole/wineconsole.rc:114
-msgid "H&eight:"
-msgstr "K&orkeus:"
-
-#: programs/wineconsole/wineconsole.rc:118
-msgid "End of program"
-msgstr "Ohjelman loppu"
-
-#: programs/wineconsole/wineconsole.rc:119
-msgid "&Close console"
-msgstr "&Sulje konsoli"
-
-#: programs/wineconsole/wineconsole.rc:121
-msgid "Edition"
-msgstr "Versio"
-
-#: programs/wineconsole/wineconsole.rc:127
-msgid "Console parameters"
-msgstr "Konsolin parametrit"
-
-#: programs/wineconsole/wineconsole.rc:130
-msgid "Retain these settings for later sessions"
-msgstr "Muista nämä asetukset myöhempää varten"
-
-#: programs/wineconsole/wineconsole.rc:131
-msgid "Modify only current session"
-msgstr "Muokkaa vain nykyistä istuntoa"
 
 #: programs/wineconsole/wineconsole.rc:44
 msgid "wineconsole: Couldn't parse event id\n"

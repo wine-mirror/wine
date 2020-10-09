@@ -84,22 +84,23 @@ msgstr "פרטי תמיכה"
 #: dlls/shlwapi/shlwapi.rc:44 dlls/twain_32/twain.rc:32
 #: dlls/user32/user32.rc:83 dlls/user32/user32.rc:98 dlls/wininet/wininet.rc:62
 #: dlls/wininet/wininet.rc:82 dlls/winspool.drv/winspool.rc:42
-#: programs/net/net.rc:47 programs/notepad/notepad.rc:117
-#: programs/oleview/oleview.rc:161 programs/oleview/oleview.rc:174
-#: programs/progman/progman.rc:106 programs/progman/progman.rc:124
-#: programs/progman/progman.rc:142 programs/progman/progman.rc:158
-#: programs/progman/progman.rc:180 programs/progman/progman.rc:199
-#: programs/progman/progman.rc:216 programs/regedit/regedit.rc:296
-#: programs/regedit/regedit.rc:307 programs/regedit/regedit.rc:320
-#: programs/regedit/regedit.rc:336 programs/regedit/regedit.rc:349
-#: programs/regedit/regedit.rc:362 programs/taskmgr/taskmgr.rc:442
-#: programs/taskmgr/taskmgr.rc:517 programs/winecfg/winecfg.rc:213
-#: programs/winecfg/winecfg.rc:223 programs/wineconsole/wineconsole.rc:133
-#: programs/winefile/winefile.rc:127 programs/winefile/winefile.rc:150
-#: programs/winefile/winefile.rc:180 programs/winemine/winemine.rc:73
-#: programs/winemine/winemine.rc:84 programs/winemine/winemine.rc:98
-#: programs/wordpad/wordpad.rc:215 programs/wordpad/wordpad.rc:226
-#: programs/wordpad/wordpad.rc:244 programs/wordpad/wordpad.rc:257
+#: programs/conhost/conhost.rc:126 programs/net/net.rc:47
+#: programs/notepad/notepad.rc:117 programs/oleview/oleview.rc:161
+#: programs/oleview/oleview.rc:174 programs/progman/progman.rc:106
+#: programs/progman/progman.rc:124 programs/progman/progman.rc:142
+#: programs/progman/progman.rc:158 programs/progman/progman.rc:180
+#: programs/progman/progman.rc:199 programs/progman/progman.rc:216
+#: programs/regedit/regedit.rc:296 programs/regedit/regedit.rc:307
+#: programs/regedit/regedit.rc:320 programs/regedit/regedit.rc:336
+#: programs/regedit/regedit.rc:349 programs/regedit/regedit.rc:362
+#: programs/taskmgr/taskmgr.rc:442 programs/taskmgr/taskmgr.rc:517
+#: programs/winecfg/winecfg.rc:213 programs/winecfg/winecfg.rc:223
+#: programs/wineconsole/wineconsole.rc:133 programs/winefile/winefile.rc:127
+#: programs/winefile/winefile.rc:150 programs/winefile/winefile.rc:180
+#: programs/winemine/winemine.rc:73 programs/winemine/winemine.rc:84
+#: programs/winemine/winemine.rc:98 programs/wordpad/wordpad.rc:215
+#: programs/wordpad/wordpad.rc:226 programs/wordpad/wordpad.rc:244
+#: programs/wordpad/wordpad.rc:257
 msgid "OK"
 msgstr "אישור"
 
@@ -188,22 +189,22 @@ msgstr "ה&תקנה"
 #: dlls/shell32/shell32.rc:342 dlls/shlwapi/shlwapi.rc:45
 #: dlls/twain_32/twain.rc:33 dlls/user32/user32.rc:84 dlls/user32/user32.rc:99
 #: dlls/wininet/wininet.rc:63 dlls/wininet/wininet.rc:83
-#: dlls/winspool.drv/winspool.rc:43 programs/notepad/notepad.rc:118
-#: programs/oleview/oleview.rc:162 programs/oleview/oleview.rc:175
-#: programs/progman/progman.rc:107 programs/progman/progman.rc:125
-#: programs/progman/progman.rc:143 programs/progman/progman.rc:159
-#: programs/progman/progman.rc:181 programs/progman/progman.rc:200
-#: programs/progman/progman.rc:217 programs/regedit/regedit.rc:297
-#: programs/regedit/regedit.rc:308 programs/regedit/regedit.rc:321
-#: programs/regedit/regedit.rc:337 programs/regedit/regedit.rc:350
-#: programs/regedit/regedit.rc:363 programs/taskmgr/taskmgr.rc:443
-#: programs/taskmgr/taskmgr.rc:518 programs/wineboot/wineboot.rc:34
-#: programs/winecfg/winecfg.rc:214 programs/winecfg/winecfg.rc:224
-#: programs/wineconsole/wineconsole.rc:134 programs/winefile/winefile.rc:128
-#: programs/winefile/winefile.rc:151 programs/winefile/winefile.rc:181
-#: programs/winemine/winemine.rc:99 programs/wordpad/wordpad.rc:216
-#: programs/wordpad/wordpad.rc:227 programs/wordpad/wordpad.rc:245
-#: programs/wordpad/wordpad.rc:258
+#: dlls/winspool.drv/winspool.rc:43 programs/conhost/conhost.rc:127
+#: programs/notepad/notepad.rc:118 programs/oleview/oleview.rc:162
+#: programs/oleview/oleview.rc:175 programs/progman/progman.rc:107
+#: programs/progman/progman.rc:125 programs/progman/progman.rc:143
+#: programs/progman/progman.rc:159 programs/progman/progman.rc:181
+#: programs/progman/progman.rc:200 programs/progman/progman.rc:217
+#: programs/regedit/regedit.rc:297 programs/regedit/regedit.rc:308
+#: programs/regedit/regedit.rc:321 programs/regedit/regedit.rc:337
+#: programs/regedit/regedit.rc:350 programs/regedit/regedit.rc:363
+#: programs/taskmgr/taskmgr.rc:443 programs/taskmgr/taskmgr.rc:518
+#: programs/wineboot/wineboot.rc:34 programs/winecfg/winecfg.rc:214
+#: programs/winecfg/winecfg.rc:224 programs/wineconsole/wineconsole.rc:134
+#: programs/winefile/winefile.rc:128 programs/winefile/winefile.rc:151
+#: programs/winefile/winefile.rc:181 programs/winemine/winemine.rc:99
+#: programs/wordpad/wordpad.rc:216 programs/wordpad/wordpad.rc:227
+#: programs/wordpad/wordpad.rc:245 programs/wordpad/wordpad.rc:258
 msgid "Cancel"
 msgstr "ביטול"
 
@@ -659,7 +660,8 @@ msgstr "&גודל"
 msgid "&Source"
 msgstr "מ&קור"
 
-#: dlls/comdlg32/comdlg32.rc:251 programs/wineconsole/wineconsole.rc:83
+#: dlls/comdlg32/comdlg32.rc:251 programs/conhost/conhost.rc:76
+#: programs/wineconsole/wineconsole.rc:83
 msgid "Font"
 msgstr "גופן"
 
@@ -811,7 +813,7 @@ msgstr "החלפת ה&כול"
 #: dlls/comdlg32/comdlg32.rc:363 dlls/comdlg32/comdlg32.rc:403
 #: dlls/ieframe/ieframe.rc:42 dlls/shdoclc/shdoclc.rc:61
 #: dlls/shell32/shell32.rc:108 programs/clock/clock.rc:31
-#: programs/conhost/conhost.rc:33 programs/wineconsole/wineconsole.rc:30
+#: programs/conhost/conhost.rc:34 programs/wineconsole/wineconsole.rc:30
 msgid "&Properties"
 msgstr "מ&אפיינים"
 
@@ -3334,7 +3336,7 @@ msgstr "ג&זירה"
 #: dlls/shdoclc/shdoclc.rc:94 dlls/shdoclc/shdoclc.rc:118
 #: dlls/shdoclc/shdoclc.rc:133 dlls/shdoclc/shdoclc.rc:160
 #: dlls/shdoclc/shdoclc.rc:184 dlls/shell32/shell32.rc:102
-#: dlls/user32/user32.rc:61 programs/conhost/conhost.rc:35
+#: dlls/user32/user32.rc:61 programs/conhost/conhost.rc:36
 #: programs/wineconsole/wineconsole.rc:32 programs/winhlp32/winhlp32.rc:40
 #: programs/wordpad/wordpad.rc:113
 msgid "&Copy"
@@ -3404,8 +3406,8 @@ msgstr "דף הבית"
 msgid "Sync"
 msgstr "סנכרון"
 
-#: dlls/hhctrl.ocx/hhctrl.rc:50 programs/wineconsole/wineconsole.rc:58
-#: programs/wordpad/wordpad.rc:166
+#: dlls/hhctrl.ocx/hhctrl.rc:50 programs/conhost/conhost.rc:51
+#: programs/wineconsole/wineconsole.rc:58 programs/wordpad/wordpad.rc:166
 msgid "Options"
 msgstr "אפשרויות"
 
@@ -9128,7 +9130,7 @@ msgstr "מקור:"
 #: dlls/shdoclc/shdoclc.rc:82 dlls/shdoclc/shdoclc.rc:95
 #: dlls/shdoclc/shdoclc.rc:135 dlls/shdoclc/shdoclc.rc:162
 #: dlls/shdoclc/shdoclc.rc:186 dlls/user32/user32.rc:62
-#: programs/conhost/conhost.rc:36 programs/wineconsole/wineconsole.rc:33
+#: programs/conhost/conhost.rc:37 programs/wineconsole/wineconsole.rc:33
 #: programs/wordpad/wordpad.rc:114
 msgid "&Paste"
 msgstr "ה&דבקה"
@@ -11238,7 +11240,7 @@ msgid "&Move"
 msgstr "ה&זזה"
 
 #: dlls/user32/user32.rc:32 dlls/user32/user32.rc:45
-#: programs/wineconsole/wineconsole.rc:91
+#: programs/conhost/conhost.rc:84 programs/wineconsole/wineconsole.rc:91
 msgid "&Size"
 msgstr "ג&ודל"
 
@@ -13049,45 +13051,172 @@ msgid ""
 " hexadecimal (0x34) or octal (056).\n"
 msgstr ""
 
-#: programs/conhost/conhost.rc:31 programs/notepad/notepad.rc:41
+#: programs/conhost/conhost.rc:54 programs/wineconsole/wineconsole.rc:61
+msgid "Cursor size"
+msgstr "גודל הסמן"
+
+#: programs/conhost/conhost.rc:55 programs/wineconsole/wineconsole.rc:62
+msgid "&Small"
+msgstr "&קטן"
+
+#: programs/conhost/conhost.rc:56 programs/wineconsole/wineconsole.rc:63
+msgid "&Medium"
+msgstr "&בינוני"
+
+#: programs/conhost/conhost.rc:57 programs/wineconsole/wineconsole.rc:64
+msgid "&Large"
+msgstr "&גדול"
+
+#: programs/conhost/conhost.rc:59 programs/wineconsole/wineconsole.rc:66
+msgid "Command history"
+msgstr "היסטוריית הפקודות"
+
+#: programs/conhost/conhost.rc:60 programs/wineconsole/wineconsole.rc:67
+#, fuzzy
+#| msgid "Buffer zone"
+msgid "&Buffer size:"
+msgstr "אזור האגירה"
+
+#: programs/conhost/conhost.rc:63 programs/wineconsole/wineconsole.rc:70
+#, fuzzy
+#| msgid "&Remove doubles"
+msgid "&Remove duplicates"
+msgstr "ה&סרת כפולים"
+
+#: programs/conhost/conhost.rc:65 programs/wineconsole/wineconsole.rc:72
+msgid "Popup menu"
+msgstr "התפריט הקובץ"
+
+#: programs/conhost/conhost.rc:66 programs/wineconsole/wineconsole.rc:73
+msgid "&Control"
+msgstr "&Control"
+
+#: programs/conhost/conhost.rc:67 programs/wineconsole/wineconsole.rc:74
+msgid "S&hift"
+msgstr "S&hift"
+
+#: programs/conhost/conhost.rc:69 programs/wineconsole/wineconsole.rc:76
+#, fuzzy
+#| msgid "&Close console"
+msgid "Console"
+msgstr "סגירת ה&מסוף"
+
+#: programs/conhost/conhost.rc:70 programs/wineconsole/wineconsole.rc:77
+#, fuzzy
+#| msgid "Quick edit"
+msgid "&Quick Edit mode"
+msgstr "עריכה מהירה"
+
+#: programs/conhost/conhost.rc:71 programs/wineconsole/wineconsole.rc:78
+#, fuzzy
+#| msgid "&Expert mode"
+msgid "&Insert mode"
+msgstr "מצב &מומחה"
+
+#: programs/conhost/conhost.rc:79 programs/wineconsole/wineconsole.rc:86
+msgid "&Font"
+msgstr "&גופן"
+
+#: programs/conhost/conhost.rc:81 programs/wineconsole/wineconsole.rc:88
+msgid "&Color"
+msgstr "&צבע"
+
+#: programs/conhost/conhost.rc:92 programs/wineconsole/wineconsole.rc:99
+#, fuzzy
+msgid "Configuration"
+msgstr " תצוגה "
+
+#: programs/conhost/conhost.rc:95 programs/wineconsole/wineconsole.rc:102
+msgid "Buffer zone"
+msgstr "אזור האגירה"
+
+#: programs/conhost/conhost.rc:96 programs/wineconsole/wineconsole.rc:103
+#, fuzzy
+msgid "&Width:"
+msgstr "&רוחב :"
+
+#: programs/conhost/conhost.rc:99 programs/wineconsole/wineconsole.rc:106
+#, fuzzy
+msgid "&Height:"
+msgstr "&גובה :"
+
+#: programs/conhost/conhost.rc:103 programs/wineconsole/wineconsole.rc:110
+msgid "Window size"
+msgstr "גודל החלון"
+
+#: programs/conhost/conhost.rc:104 programs/wineconsole/wineconsole.rc:111
+#, fuzzy
+msgid "W&idth:"
+msgstr "&גובה :"
+
+#: programs/conhost/conhost.rc:107 programs/wineconsole/wineconsole.rc:114
+#, fuzzy
+msgid "H&eight:"
+msgstr "&רוחב :"
+
+#: programs/conhost/conhost.rc:111 programs/wineconsole/wineconsole.rc:118
+msgid "End of program"
+msgstr "סיום התכנית"
+
+#: programs/conhost/conhost.rc:112 programs/wineconsole/wineconsole.rc:119
+msgid "&Close console"
+msgstr "סגירת ה&מסוף"
+
+#: programs/conhost/conhost.rc:114 programs/wineconsole/wineconsole.rc:121
+msgid "Edition"
+msgstr "מצב עריכה"
+
+#: programs/conhost/conhost.rc:120 programs/wineconsole/wineconsole.rc:127
+msgid "Console parameters"
+msgstr "הפרמטרים של המסוף"
+
+#: programs/conhost/conhost.rc:123 programs/wineconsole/wineconsole.rc:130
+msgid "Retain these settings for later sessions"
+msgstr "שמירת הגדרות אלו להפעלות הבאות"
+
+#: programs/conhost/conhost.rc:124 programs/wineconsole/wineconsole.rc:131
+msgid "Modify only current session"
+msgstr "שינוי בהפעלה הנוכחית בלבד"
+
+#: programs/conhost/conhost.rc:32 programs/notepad/notepad.rc:41
 #: programs/regedit/regedit.rc:43 programs/wineconsole/wineconsole.rc:28
 #: programs/winhlp32/winhlp32.rc:39 programs/wordpad/wordpad.rc:42
 msgid "&Edit"
 msgstr "&עריכה"
 
-#: programs/conhost/conhost.rc:32 programs/wineconsole/wineconsole.rc:29
+#: programs/conhost/conhost.rc:33 programs/wineconsole/wineconsole.rc:29
 msgid "Set &Defaults"
 msgstr "הגדרת &בררות מחדל"
 
-#: programs/conhost/conhost.rc:34 programs/wineconsole/wineconsole.rc:31
+#: programs/conhost/conhost.rc:35 programs/wineconsole/wineconsole.rc:31
 msgid "&Mark"
 msgstr "&סימון"
 
-#: programs/conhost/conhost.rc:37 programs/wineconsole/wineconsole.rc:34
+#: programs/conhost/conhost.rc:38 programs/wineconsole/wineconsole.rc:34
 msgid "&Select all"
 msgstr "בחירת ה&כול"
 
-#: programs/conhost/conhost.rc:38 programs/wineconsole/wineconsole.rc:35
+#: programs/conhost/conhost.rc:39 programs/wineconsole/wineconsole.rc:35
 msgid "Sc&roll"
 msgstr "&גלילה"
 
-#: programs/conhost/conhost.rc:39 programs/wineconsole/wineconsole.rc:36
+#: programs/conhost/conhost.rc:40 programs/wineconsole/wineconsole.rc:36
 msgid "S&earch"
 msgstr "&חיפוש"
 
-#: programs/conhost/conhost.rc:42 programs/wineconsole/wineconsole.rc:39
+#: programs/conhost/conhost.rc:43 programs/wineconsole/wineconsole.rc:39
 msgid "Setup - Default settings"
 msgstr "תצורה - הגדרות בררת המחדל"
 
-#: programs/conhost/conhost.rc:43 programs/wineconsole/wineconsole.rc:40
+#: programs/conhost/conhost.rc:44 programs/wineconsole/wineconsole.rc:40
 msgid "Setup - Current settings"
 msgstr "תצורה - ההגדרות הנוכחיות"
 
-#: programs/conhost/conhost.rc:44 programs/wineconsole/wineconsole.rc:41
+#: programs/conhost/conhost.rc:45 programs/wineconsole/wineconsole.rc:41
 msgid "Configuration error"
 msgstr "שגיאת תצוגה"
 
-#: programs/conhost/conhost.rc:45 programs/wineconsole/wineconsole.rc:42
+#: programs/conhost/conhost.rc:46 programs/wineconsole/wineconsole.rc:42
 #, fuzzy
 #| msgid "Screen buffer size must be greater or equal to the window's one"
 msgid ""
@@ -13095,12 +13224,12 @@ msgid ""
 "the window."
 msgstr "גודל מאגר המסך חייב להיות גדול או שווה לזה של החלון"
 
-#: programs/conhost/conhost.rc:40 programs/wineconsole/wineconsole.rc:37
+#: programs/conhost/conhost.rc:41 programs/wineconsole/wineconsole.rc:37
 #, fuzzy
 msgid "Each character is %1!u! pixels wide and %2!u! pixels high"
 msgstr "כל תו הוא ברוחב %ld פיקסלים על גובה של %ld פיקסלים"
 
-#: programs/conhost/conhost.rc:41 programs/wineconsole/wineconsole.rc:38
+#: programs/conhost/conhost.rc:42 programs/wineconsole/wineconsole.rc:38
 msgid "This is a test"
 msgstr "זוהי בדיקה"
 
@@ -16819,133 +16948,6 @@ msgstr "הדגשה בתפריט"
 #, fuzzy
 msgid "Menu Bar"
 msgstr "סרגל תפריטים"
-
-#: programs/wineconsole/wineconsole.rc:61
-msgid "Cursor size"
-msgstr "גודל הסמן"
-
-#: programs/wineconsole/wineconsole.rc:62
-msgid "&Small"
-msgstr "&קטן"
-
-#: programs/wineconsole/wineconsole.rc:63
-msgid "&Medium"
-msgstr "&בינוני"
-
-#: programs/wineconsole/wineconsole.rc:64
-msgid "&Large"
-msgstr "&גדול"
-
-#: programs/wineconsole/wineconsole.rc:66
-msgid "Command history"
-msgstr "היסטוריית הפקודות"
-
-#: programs/wineconsole/wineconsole.rc:67
-#, fuzzy
-#| msgid "Buffer zone"
-msgid "&Buffer size:"
-msgstr "אזור האגירה"
-
-#: programs/wineconsole/wineconsole.rc:70
-#, fuzzy
-#| msgid "&Remove doubles"
-msgid "&Remove duplicates"
-msgstr "ה&סרת כפולים"
-
-#: programs/wineconsole/wineconsole.rc:72
-msgid "Popup menu"
-msgstr "התפריט הקובץ"
-
-#: programs/wineconsole/wineconsole.rc:73
-msgid "&Control"
-msgstr "&Control"
-
-#: programs/wineconsole/wineconsole.rc:74
-msgid "S&hift"
-msgstr "S&hift"
-
-#: programs/wineconsole/wineconsole.rc:76
-#, fuzzy
-#| msgid "&Close console"
-msgid "Console"
-msgstr "סגירת ה&מסוף"
-
-#: programs/wineconsole/wineconsole.rc:77
-#, fuzzy
-#| msgid "Quick edit"
-msgid "&Quick Edit mode"
-msgstr "עריכה מהירה"
-
-#: programs/wineconsole/wineconsole.rc:78
-#, fuzzy
-#| msgid "&Expert mode"
-msgid "&Insert mode"
-msgstr "מצב &מומחה"
-
-#: programs/wineconsole/wineconsole.rc:86
-msgid "&Font"
-msgstr "&גופן"
-
-#: programs/wineconsole/wineconsole.rc:88
-msgid "&Color"
-msgstr "&צבע"
-
-#: programs/wineconsole/wineconsole.rc:99
-#, fuzzy
-msgid "Configuration"
-msgstr " תצוגה "
-
-#: programs/wineconsole/wineconsole.rc:102
-msgid "Buffer zone"
-msgstr "אזור האגירה"
-
-#: programs/wineconsole/wineconsole.rc:103
-#, fuzzy
-msgid "&Width:"
-msgstr "&רוחב :"
-
-#: programs/wineconsole/wineconsole.rc:106
-#, fuzzy
-msgid "&Height:"
-msgstr "&גובה :"
-
-#: programs/wineconsole/wineconsole.rc:110
-msgid "Window size"
-msgstr "גודל החלון"
-
-#: programs/wineconsole/wineconsole.rc:111
-#, fuzzy
-msgid "W&idth:"
-msgstr "&גובה :"
-
-#: programs/wineconsole/wineconsole.rc:114
-#, fuzzy
-msgid "H&eight:"
-msgstr "&רוחב :"
-
-#: programs/wineconsole/wineconsole.rc:118
-msgid "End of program"
-msgstr "סיום התכנית"
-
-#: programs/wineconsole/wineconsole.rc:119
-msgid "&Close console"
-msgstr "סגירת ה&מסוף"
-
-#: programs/wineconsole/wineconsole.rc:121
-msgid "Edition"
-msgstr "מצב עריכה"
-
-#: programs/wineconsole/wineconsole.rc:127
-msgid "Console parameters"
-msgstr "הפרמטרים של המסוף"
-
-#: programs/wineconsole/wineconsole.rc:130
-msgid "Retain these settings for later sessions"
-msgstr "שמירת הגדרות אלו להפעלות הבאות"
-
-#: programs/wineconsole/wineconsole.rc:131
-msgid "Modify only current session"
-msgstr "שינוי בהפעלה הנוכחית בלבד"
 
 #: programs/wineconsole/wineconsole.rc:44
 msgid "wineconsole: Couldn't parse event id\n"

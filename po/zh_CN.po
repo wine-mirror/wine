@@ -74,22 +74,23 @@ msgstr "技术支持信息"
 #: dlls/shlwapi/shlwapi.rc:44 dlls/twain_32/twain.rc:32
 #: dlls/user32/user32.rc:83 dlls/user32/user32.rc:98 dlls/wininet/wininet.rc:62
 #: dlls/wininet/wininet.rc:82 dlls/winspool.drv/winspool.rc:42
-#: programs/net/net.rc:47 programs/notepad/notepad.rc:117
-#: programs/oleview/oleview.rc:161 programs/oleview/oleview.rc:174
-#: programs/progman/progman.rc:106 programs/progman/progman.rc:124
-#: programs/progman/progman.rc:142 programs/progman/progman.rc:158
-#: programs/progman/progman.rc:180 programs/progman/progman.rc:199
-#: programs/progman/progman.rc:216 programs/regedit/regedit.rc:296
-#: programs/regedit/regedit.rc:307 programs/regedit/regedit.rc:320
-#: programs/regedit/regedit.rc:336 programs/regedit/regedit.rc:349
-#: programs/regedit/regedit.rc:362 programs/taskmgr/taskmgr.rc:442
-#: programs/taskmgr/taskmgr.rc:517 programs/winecfg/winecfg.rc:213
-#: programs/winecfg/winecfg.rc:223 programs/wineconsole/wineconsole.rc:133
-#: programs/winefile/winefile.rc:127 programs/winefile/winefile.rc:150
-#: programs/winefile/winefile.rc:180 programs/winemine/winemine.rc:73
-#: programs/winemine/winemine.rc:84 programs/winemine/winemine.rc:98
-#: programs/wordpad/wordpad.rc:215 programs/wordpad/wordpad.rc:226
-#: programs/wordpad/wordpad.rc:244 programs/wordpad/wordpad.rc:257
+#: programs/conhost/conhost.rc:126 programs/net/net.rc:47
+#: programs/notepad/notepad.rc:117 programs/oleview/oleview.rc:161
+#: programs/oleview/oleview.rc:174 programs/progman/progman.rc:106
+#: programs/progman/progman.rc:124 programs/progman/progman.rc:142
+#: programs/progman/progman.rc:158 programs/progman/progman.rc:180
+#: programs/progman/progman.rc:199 programs/progman/progman.rc:216
+#: programs/regedit/regedit.rc:296 programs/regedit/regedit.rc:307
+#: programs/regedit/regedit.rc:320 programs/regedit/regedit.rc:336
+#: programs/regedit/regedit.rc:349 programs/regedit/regedit.rc:362
+#: programs/taskmgr/taskmgr.rc:442 programs/taskmgr/taskmgr.rc:517
+#: programs/winecfg/winecfg.rc:213 programs/winecfg/winecfg.rc:223
+#: programs/wineconsole/wineconsole.rc:133 programs/winefile/winefile.rc:127
+#: programs/winefile/winefile.rc:150 programs/winefile/winefile.rc:180
+#: programs/winemine/winemine.rc:73 programs/winemine/winemine.rc:84
+#: programs/winemine/winemine.rc:98 programs/wordpad/wordpad.rc:215
+#: programs/wordpad/wordpad.rc:226 programs/wordpad/wordpad.rc:244
+#: programs/wordpad/wordpad.rc:257
 msgid "OK"
 msgstr "确定"
 
@@ -177,22 +178,22 @@ msgstr "安装(&I)"
 #: dlls/shell32/shell32.rc:342 dlls/shlwapi/shlwapi.rc:45
 #: dlls/twain_32/twain.rc:33 dlls/user32/user32.rc:84 dlls/user32/user32.rc:99
 #: dlls/wininet/wininet.rc:63 dlls/wininet/wininet.rc:83
-#: dlls/winspool.drv/winspool.rc:43 programs/notepad/notepad.rc:118
-#: programs/oleview/oleview.rc:162 programs/oleview/oleview.rc:175
-#: programs/progman/progman.rc:107 programs/progman/progman.rc:125
-#: programs/progman/progman.rc:143 programs/progman/progman.rc:159
-#: programs/progman/progman.rc:181 programs/progman/progman.rc:200
-#: programs/progman/progman.rc:217 programs/regedit/regedit.rc:297
-#: programs/regedit/regedit.rc:308 programs/regedit/regedit.rc:321
-#: programs/regedit/regedit.rc:337 programs/regedit/regedit.rc:350
-#: programs/regedit/regedit.rc:363 programs/taskmgr/taskmgr.rc:443
-#: programs/taskmgr/taskmgr.rc:518 programs/wineboot/wineboot.rc:34
-#: programs/winecfg/winecfg.rc:214 programs/winecfg/winecfg.rc:224
-#: programs/wineconsole/wineconsole.rc:134 programs/winefile/winefile.rc:128
-#: programs/winefile/winefile.rc:151 programs/winefile/winefile.rc:181
-#: programs/winemine/winemine.rc:99 programs/wordpad/wordpad.rc:216
-#: programs/wordpad/wordpad.rc:227 programs/wordpad/wordpad.rc:245
-#: programs/wordpad/wordpad.rc:258
+#: dlls/winspool.drv/winspool.rc:43 programs/conhost/conhost.rc:127
+#: programs/notepad/notepad.rc:118 programs/oleview/oleview.rc:162
+#: programs/oleview/oleview.rc:175 programs/progman/progman.rc:107
+#: programs/progman/progman.rc:125 programs/progman/progman.rc:143
+#: programs/progman/progman.rc:159 programs/progman/progman.rc:181
+#: programs/progman/progman.rc:200 programs/progman/progman.rc:217
+#: programs/regedit/regedit.rc:297 programs/regedit/regedit.rc:308
+#: programs/regedit/regedit.rc:321 programs/regedit/regedit.rc:337
+#: programs/regedit/regedit.rc:350 programs/regedit/regedit.rc:363
+#: programs/taskmgr/taskmgr.rc:443 programs/taskmgr/taskmgr.rc:518
+#: programs/wineboot/wineboot.rc:34 programs/winecfg/winecfg.rc:214
+#: programs/winecfg/winecfg.rc:224 programs/wineconsole/wineconsole.rc:134
+#: programs/winefile/winefile.rc:128 programs/winefile/winefile.rc:151
+#: programs/winefile/winefile.rc:181 programs/winemine/winemine.rc:99
+#: programs/wordpad/wordpad.rc:216 programs/wordpad/wordpad.rc:227
+#: programs/wordpad/wordpad.rc:245 programs/wordpad/wordpad.rc:258
 msgid "Cancel"
 msgstr "取消"
 
@@ -636,7 +637,8 @@ msgstr "纸张大小(&Z)"
 msgid "&Source"
 msgstr "纸张来源(&S)"
 
-#: dlls/comdlg32/comdlg32.rc:251 programs/wineconsole/wineconsole.rc:83
+#: dlls/comdlg32/comdlg32.rc:251 programs/conhost/conhost.rc:76
+#: programs/wineconsole/wineconsole.rc:83
 msgid "Font"
 msgstr "字体"
 
@@ -784,7 +786,7 @@ msgstr "全部替换(&A)"
 #: dlls/comdlg32/comdlg32.rc:363 dlls/comdlg32/comdlg32.rc:403
 #: dlls/ieframe/ieframe.rc:42 dlls/shdoclc/shdoclc.rc:61
 #: dlls/shell32/shell32.rc:108 programs/clock/clock.rc:31
-#: programs/conhost/conhost.rc:33 programs/wineconsole/wineconsole.rc:30
+#: programs/conhost/conhost.rc:34 programs/wineconsole/wineconsole.rc:30
 msgid "&Properties"
 msgstr "属性(&P)"
 
@@ -3272,7 +3274,7 @@ msgstr "剪切(&T)"
 #: dlls/shdoclc/shdoclc.rc:94 dlls/shdoclc/shdoclc.rc:118
 #: dlls/shdoclc/shdoclc.rc:133 dlls/shdoclc/shdoclc.rc:160
 #: dlls/shdoclc/shdoclc.rc:184 dlls/shell32/shell32.rc:102
-#: dlls/user32/user32.rc:61 programs/conhost/conhost.rc:35
+#: dlls/user32/user32.rc:61 programs/conhost/conhost.rc:36
 #: programs/wineconsole/wineconsole.rc:32 programs/winhlp32/winhlp32.rc:40
 #: programs/wordpad/wordpad.rc:113
 msgid "&Copy"
@@ -3342,8 +3344,8 @@ msgstr "首页"
 msgid "Sync"
 msgstr "同步"
 
-#: dlls/hhctrl.ocx/hhctrl.rc:50 programs/wineconsole/wineconsole.rc:58
-#: programs/wordpad/wordpad.rc:166
+#: dlls/hhctrl.ocx/hhctrl.rc:50 programs/conhost/conhost.rc:51
+#: programs/wineconsole/wineconsole.rc:58 programs/wordpad/wordpad.rc:166
 msgid "Options"
 msgstr "选项"
 
@@ -8630,7 +8632,7 @@ msgstr "源文件："
 #: dlls/shdoclc/shdoclc.rc:82 dlls/shdoclc/shdoclc.rc:95
 #: dlls/shdoclc/shdoclc.rc:135 dlls/shdoclc/shdoclc.rc:162
 #: dlls/shdoclc/shdoclc.rc:186 dlls/user32/user32.rc:62
-#: programs/conhost/conhost.rc:36 programs/wineconsole/wineconsole.rc:33
+#: programs/conhost/conhost.rc:37 programs/wineconsole/wineconsole.rc:33
 #: programs/wordpad/wordpad.rc:114
 msgid "&Paste"
 msgstr "粘贴(&P)"
@@ -10648,7 +10650,7 @@ msgid "&Move"
 msgstr "移动(&M)"
 
 #: dlls/user32/user32.rc:32 dlls/user32/user32.rc:45
-#: programs/wineconsole/wineconsole.rc:91
+#: programs/conhost/conhost.rc:84 programs/wineconsole/wineconsole.rc:91
 msgid "&Size"
 msgstr "大小(&S)"
 
@@ -12671,55 +12673,167 @@ msgstr ""
 "数字的格式错误 - 必须是十进制 (12),\n"
 " 十六进制 (0x34) 或者八进制 (056)。\n"
 
-#: programs/conhost/conhost.rc:31 programs/notepad/notepad.rc:41
+#: programs/conhost/conhost.rc:54 programs/wineconsole/wineconsole.rc:61
+msgid "Cursor size"
+msgstr "光标尺寸"
+
+#: programs/conhost/conhost.rc:55 programs/wineconsole/wineconsole.rc:62
+msgid "&Small"
+msgstr "小(&S)"
+
+#: programs/conhost/conhost.rc:56 programs/wineconsole/wineconsole.rc:63
+msgid "&Medium"
+msgstr "中(&M)"
+
+#: programs/conhost/conhost.rc:57 programs/wineconsole/wineconsole.rc:64
+msgid "&Large"
+msgstr "大(&L)"
+
+#: programs/conhost/conhost.rc:59 programs/wineconsole/wineconsole.rc:66
+msgid "Command history"
+msgstr "命令历史"
+
+#: programs/conhost/conhost.rc:60 programs/wineconsole/wineconsole.rc:67
+msgid "&Buffer size:"
+msgstr "缓冲区大小(&B)："
+
+#: programs/conhost/conhost.rc:63 programs/wineconsole/wineconsole.rc:70
+msgid "&Remove duplicates"
+msgstr "删除重复(&R)"
+
+#: programs/conhost/conhost.rc:65 programs/wineconsole/wineconsole.rc:72
+msgid "Popup menu"
+msgstr "弹出菜单"
+
+#: programs/conhost/conhost.rc:66 programs/wineconsole/wineconsole.rc:73
+msgid "&Control"
+msgstr "&Control"
+
+#: programs/conhost/conhost.rc:67 programs/wineconsole/wineconsole.rc:74
+msgid "S&hift"
+msgstr "S&hift"
+
+#: programs/conhost/conhost.rc:69 programs/wineconsole/wineconsole.rc:76
+msgid "Console"
+msgstr "控制台"
+
+#: programs/conhost/conhost.rc:70 programs/wineconsole/wineconsole.rc:77
+msgid "&Quick Edit mode"
+msgstr "快速编辑模式(&Q)"
+
+#: programs/conhost/conhost.rc:71 programs/wineconsole/wineconsole.rc:78
+msgid "&Insert mode"
+msgstr "插入模式(&I)"
+
+#: programs/conhost/conhost.rc:79 programs/wineconsole/wineconsole.rc:86
+msgid "&Font"
+msgstr "字体(&F)"
+
+#: programs/conhost/conhost.rc:81 programs/wineconsole/wineconsole.rc:88
+msgid "&Color"
+msgstr "颜色(&C)"
+
+#: programs/conhost/conhost.rc:92 programs/wineconsole/wineconsole.rc:99
+msgid "Configuration"
+msgstr "配置"
+
+#: programs/conhost/conhost.rc:95 programs/wineconsole/wineconsole.rc:102
+msgid "Buffer zone"
+msgstr "缓冲区"
+
+#: programs/conhost/conhost.rc:96 programs/wineconsole/wineconsole.rc:103
+msgid "&Width:"
+msgstr "宽度(&W)："
+
+#: programs/conhost/conhost.rc:99 programs/wineconsole/wineconsole.rc:106
+msgid "&Height:"
+msgstr "高度(&H)："
+
+#: programs/conhost/conhost.rc:103 programs/wineconsole/wineconsole.rc:110
+msgid "Window size"
+msgstr "窗口大小"
+
+#: programs/conhost/conhost.rc:104 programs/wineconsole/wineconsole.rc:111
+msgid "W&idth:"
+msgstr "宽度(&I)："
+
+#: programs/conhost/conhost.rc:107 programs/wineconsole/wineconsole.rc:114
+msgid "H&eight:"
+msgstr "高度(&E)："
+
+#: programs/conhost/conhost.rc:111 programs/wineconsole/wineconsole.rc:118
+msgid "End of program"
+msgstr "当程序退出后"
+
+#: programs/conhost/conhost.rc:112 programs/wineconsole/wineconsole.rc:119
+msgid "&Close console"
+msgstr "关闭控制台(&C)"
+
+#: programs/conhost/conhost.rc:114 programs/wineconsole/wineconsole.rc:121
+msgid "Edition"
+msgstr "版本"
+
+#: programs/conhost/conhost.rc:120 programs/wineconsole/wineconsole.rc:127
+msgid "Console parameters"
+msgstr "控制台参数"
+
+#: programs/conhost/conhost.rc:123 programs/wineconsole/wineconsole.rc:130
+msgid "Retain these settings for later sessions"
+msgstr "保留当前配置以便以后使用"
+
+#: programs/conhost/conhost.rc:124 programs/wineconsole/wineconsole.rc:131
+msgid "Modify only current session"
+msgstr "仅修改当前会话"
+
+#: programs/conhost/conhost.rc:32 programs/notepad/notepad.rc:41
 #: programs/regedit/regedit.rc:43 programs/wineconsole/wineconsole.rc:28
 #: programs/winhlp32/winhlp32.rc:39 programs/wordpad/wordpad.rc:42
 msgid "&Edit"
 msgstr "编辑(&E)"
 
-#: programs/conhost/conhost.rc:32 programs/wineconsole/wineconsole.rc:29
+#: programs/conhost/conhost.rc:33 programs/wineconsole/wineconsole.rc:29
 msgid "Set &Defaults"
 msgstr "设置默认值(&D)"
 
-#: programs/conhost/conhost.rc:34 programs/wineconsole/wineconsole.rc:31
+#: programs/conhost/conhost.rc:35 programs/wineconsole/wineconsole.rc:31
 msgid "&Mark"
 msgstr "标记(&M)"
 
-#: programs/conhost/conhost.rc:37 programs/wineconsole/wineconsole.rc:34
+#: programs/conhost/conhost.rc:38 programs/wineconsole/wineconsole.rc:34
 msgid "&Select all"
 msgstr "全选(&S)"
 
-#: programs/conhost/conhost.rc:38 programs/wineconsole/wineconsole.rc:35
+#: programs/conhost/conhost.rc:39 programs/wineconsole/wineconsole.rc:35
 msgid "Sc&roll"
 msgstr "滚动(&R)"
 
-#: programs/conhost/conhost.rc:39 programs/wineconsole/wineconsole.rc:36
+#: programs/conhost/conhost.rc:40 programs/wineconsole/wineconsole.rc:36
 msgid "S&earch"
 msgstr "搜索(&E)"
 
-#: programs/conhost/conhost.rc:42 programs/wineconsole/wineconsole.rc:39
+#: programs/conhost/conhost.rc:43 programs/wineconsole/wineconsole.rc:39
 msgid "Setup - Default settings"
 msgstr "配置 - 默认设置"
 
-#: programs/conhost/conhost.rc:43 programs/wineconsole/wineconsole.rc:40
+#: programs/conhost/conhost.rc:44 programs/wineconsole/wineconsole.rc:40
 msgid "Setup - Current settings"
 msgstr "配置 - 当前设置"
 
-#: programs/conhost/conhost.rc:44 programs/wineconsole/wineconsole.rc:41
+#: programs/conhost/conhost.rc:45 programs/wineconsole/wineconsole.rc:41
 msgid "Configuration error"
 msgstr "配置错误"
 
-#: programs/conhost/conhost.rc:45 programs/wineconsole/wineconsole.rc:42
+#: programs/conhost/conhost.rc:46 programs/wineconsole/wineconsole.rc:42
 msgid ""
 "The size of the screen buffer must be greater than or equal to the size of "
 "the window."
 msgstr "屏幕缓冲器大小必须大于或等于窗口的大小。"
 
-#: programs/conhost/conhost.rc:40 programs/wineconsole/wineconsole.rc:37
+#: programs/conhost/conhost.rc:41 programs/wineconsole/wineconsole.rc:37
 msgid "Each character is %1!u! pixels wide and %2!u! pixels high"
 msgstr "每个字符都是 %1!u! 像素宽，%2!u! 像素高"
 
-#: programs/conhost/conhost.rc:41 programs/wineconsole/wineconsole.rc:38
+#: programs/conhost/conhost.rc:42 programs/wineconsole/wineconsole.rc:38
 msgid "This is a test"
 msgstr "This is a test 这是测试"
 
@@ -16258,118 +16372,6 @@ msgstr "菜单高亮"
 #: programs/winecfg/winecfg.rc:129
 msgid "Menu Bar"
 msgstr "菜单栏"
-
-#: programs/wineconsole/wineconsole.rc:61
-msgid "Cursor size"
-msgstr "光标尺寸"
-
-#: programs/wineconsole/wineconsole.rc:62
-msgid "&Small"
-msgstr "小(&S)"
-
-#: programs/wineconsole/wineconsole.rc:63
-msgid "&Medium"
-msgstr "中(&M)"
-
-#: programs/wineconsole/wineconsole.rc:64
-msgid "&Large"
-msgstr "大(&L)"
-
-#: programs/wineconsole/wineconsole.rc:66
-msgid "Command history"
-msgstr "命令历史"
-
-#: programs/wineconsole/wineconsole.rc:67
-msgid "&Buffer size:"
-msgstr "缓冲区大小(&B)："
-
-#: programs/wineconsole/wineconsole.rc:70
-msgid "&Remove duplicates"
-msgstr "删除重复(&R)"
-
-#: programs/wineconsole/wineconsole.rc:72
-msgid "Popup menu"
-msgstr "弹出菜单"
-
-#: programs/wineconsole/wineconsole.rc:73
-msgid "&Control"
-msgstr "&Control"
-
-#: programs/wineconsole/wineconsole.rc:74
-msgid "S&hift"
-msgstr "S&hift"
-
-#: programs/wineconsole/wineconsole.rc:76
-msgid "Console"
-msgstr "控制台"
-
-#: programs/wineconsole/wineconsole.rc:77
-msgid "&Quick Edit mode"
-msgstr "快速编辑模式(&Q)"
-
-#: programs/wineconsole/wineconsole.rc:78
-msgid "&Insert mode"
-msgstr "插入模式(&I)"
-
-#: programs/wineconsole/wineconsole.rc:86
-msgid "&Font"
-msgstr "字体(&F)"
-
-#: programs/wineconsole/wineconsole.rc:88
-msgid "&Color"
-msgstr "颜色(&C)"
-
-#: programs/wineconsole/wineconsole.rc:99
-msgid "Configuration"
-msgstr "配置"
-
-#: programs/wineconsole/wineconsole.rc:102
-msgid "Buffer zone"
-msgstr "缓冲区"
-
-#: programs/wineconsole/wineconsole.rc:103
-msgid "&Width:"
-msgstr "宽度(&W)："
-
-#: programs/wineconsole/wineconsole.rc:106
-msgid "&Height:"
-msgstr "高度(&H)："
-
-#: programs/wineconsole/wineconsole.rc:110
-msgid "Window size"
-msgstr "窗口大小"
-
-#: programs/wineconsole/wineconsole.rc:111
-msgid "W&idth:"
-msgstr "宽度(&I)："
-
-#: programs/wineconsole/wineconsole.rc:114
-msgid "H&eight:"
-msgstr "高度(&E)："
-
-#: programs/wineconsole/wineconsole.rc:118
-msgid "End of program"
-msgstr "当程序退出后"
-
-#: programs/wineconsole/wineconsole.rc:119
-msgid "&Close console"
-msgstr "关闭控制台(&C)"
-
-#: programs/wineconsole/wineconsole.rc:121
-msgid "Edition"
-msgstr "版本"
-
-#: programs/wineconsole/wineconsole.rc:127
-msgid "Console parameters"
-msgstr "控制台参数"
-
-#: programs/wineconsole/wineconsole.rc:130
-msgid "Retain these settings for later sessions"
-msgstr "保留当前配置以便以后使用"
-
-#: programs/wineconsole/wineconsole.rc:131
-msgid "Modify only current session"
-msgstr "仅修改当前会话"
 
 #: programs/wineconsole/wineconsole.rc:44
 msgid "wineconsole: Couldn't parse event id\n"

@@ -618,6 +618,39 @@ static void update_window( struct console *console )
     console->window->update_state = UPDATE_NONE;
 }
 
+/* get the relevant information from the font described in lf and store them in config */
+static HFONT select_font_config( struct console_config *config, unsigned int cp, HWND hwnd,
+                                 const LOGFONTW *lf )
+{
+    HFONT font, old_font;
+    TEXTMETRICW tm;
+    CPINFO cpinfo;
+    HDC dc;
+
+    if (!(dc = GetDC( hwnd ))) return NULL;
+    if (!(font = CreateFontIndirectW( lf )))
+    {
+        ReleaseDC( hwnd, dc );
+        return NULL;
+    }
+
+    old_font = SelectObject( dc, font );
+    GetTextMetricsW( dc, &tm );
+    SelectObject( dc, old_font );
+    ReleaseDC( hwnd, dc );
+
+    config->cell_width  = tm.tmAveCharWidth;
+    config->cell_height = tm.tmHeight + tm.tmExternalLeading;
+    config->font_weight = tm.tmWeight;
+    lstrcpyW( config->face_name, lf->lfFaceName );
+
+    /* FIXME: use maximum width for DBCS codepages since some chars take two cells */
+    if (GetCPInfo( cp, &cpinfo ) && cpinfo.MaxCharSize > 1)
+        config->cell_width  = tm.tmMaxCharWidth;
+
+    return font;
+}
+
 static void fill_logfont( LOGFONTW *lf, const WCHAR *name, unsigned int height, unsigned int weight )
 {
     lf->lfHeight         = height;
@@ -1123,6 +1156,648 @@ static void record_mouse_input( struct console *console, COORD c, WPARAM wparam,
     write_console_input( console, &ir, 1, TRUE );
 }
 
+struct dialog_info
+{
+    struct console        *console;
+    struct console_config  config;
+    HWND                   dialog;      /* handle to active propsheet */
+    int                    font_count;  /* number of fonts */
+    struct dialog_font_info
+    {
+        unsigned int  height;
+        unsigned int  weight;
+        WCHAR         faceName[LF_FACESIZE];
+    } *font;  /* array of fonts */
+};
+
+/* dialog proc for the option property sheet */
+static INT_PTR WINAPI option_dialog_proc( HWND dialog, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    struct dialog_info *di;
+    unsigned int idc;
+
+    switch (msg)
+    {
+    case WM_INITDIALOG:
+        di = (struct dialog_info *)((PROPSHEETPAGEA *)lparam)->lParam;
+        di->dialog = dialog;
+        SetWindowLongPtrW( dialog, DWLP_USER, (LONG_PTR)di );
+
+        SendMessageW( GetDlgItem( dialog, IDC_OPT_HIST_SIZE_UD ), UDM_SETRANGE, 0, MAKELPARAM(500, 0) );
+
+        if (di->config.cursor_size <= 25)       idc = IDC_OPT_CURSOR_SMALL;
+        else if (di->config.cursor_size <= 50)  idc = IDC_OPT_CURSOR_MEDIUM;
+        else                                    idc = IDC_OPT_CURSOR_LARGE;
+
+        SendDlgItemMessageW( dialog, idc, BM_SETCHECK, BST_CHECKED, 0 );
+        SetDlgItemInt( dialog, IDC_OPT_HIST_SIZE, di->config.history_size, FALSE );
+        SendDlgItemMessageW( dialog, IDC_OPT_HIST_NODOUBLE, BM_SETCHECK,
+                             (di->config.history_mode) ? BST_CHECKED : BST_UNCHECKED, 0 );
+        SendDlgItemMessageW( dialog, IDC_OPT_INSERT_MODE, BM_SETCHECK,
+                             (di->config.insert_mode) ? BST_CHECKED : BST_UNCHECKED, 0 );
+        SendDlgItemMessageW( dialog, IDC_OPT_CONF_CTRL, BM_SETCHECK,
+                             (di->config.menu_mask & MK_CONTROL) ? BST_CHECKED : BST_UNCHECKED, 0 );
+        SendDlgItemMessageW( dialog, IDC_OPT_CONF_SHIFT, BM_SETCHECK,
+                             (di->config.menu_mask & MK_SHIFT) ? BST_CHECKED : BST_UNCHECKED, 0 );
+        SendDlgItemMessageW( dialog, IDC_OPT_QUICK_EDIT, BM_SETCHECK,
+                             (di->config.quick_edit) ? BST_CHECKED : BST_UNCHECKED, 0 );
+        return FALSE; /* because we set the focus */
+
+    case WM_COMMAND:
+        break;
+
+    case WM_NOTIFY:
+    {
+        NMHDR *nmhdr = (NMHDR*)lparam;
+        DWORD val;
+        BOOL done;
+
+        di = (struct dialog_info *)GetWindowLongPtrW( dialog, DWLP_USER );
+
+        switch (nmhdr->code)
+        {
+        case PSN_SETACTIVE:
+            /* needed in propsheet to keep properly the selected radio button
+             * otherwise, the focus would be set to the first tab stop in the
+             * propsheet, which would always activate the first radio button
+             */
+            if (IsDlgButtonChecked( dialog, IDC_OPT_CURSOR_SMALL ) == BST_CHECKED)
+                idc = IDC_OPT_CURSOR_SMALL;
+            else if (IsDlgButtonChecked( dialog, IDC_OPT_CURSOR_MEDIUM ) == BST_CHECKED)
+                idc = IDC_OPT_CURSOR_MEDIUM;
+            else
+                idc = IDC_OPT_CURSOR_LARGE;
+            PostMessageW( dialog, WM_NEXTDLGCTL, (WPARAM)GetDlgItem( dialog, idc ), TRUE );
+            di->dialog = dialog;
+            break;
+        case PSN_APPLY:
+            if (IsDlgButtonChecked( dialog, IDC_OPT_CURSOR_SMALL ) == BST_CHECKED) val = 25;
+            else if (IsDlgButtonChecked( dialog, IDC_OPT_CURSOR_MEDIUM ) == BST_CHECKED) val = 50;
+            else val = 100;
+            di->config.cursor_size = val;
+
+            val = GetDlgItemInt( dialog, IDC_OPT_HIST_SIZE, &done, FALSE );
+            if (done) di->config.history_size = val;
+
+            val = (IsDlgButtonChecked( dialog, IDC_OPT_HIST_NODOUBLE ) & BST_CHECKED) != 0;
+            di->config.history_mode = val;
+
+            val = (IsDlgButtonChecked( dialog, IDC_OPT_INSERT_MODE ) & BST_CHECKED) != 0;
+            di->config.insert_mode = val;
+
+            val = 0;
+            if (IsDlgButtonChecked( dialog, IDC_OPT_CONF_CTRL ) & BST_CHECKED)  val |= MK_CONTROL;
+            if (IsDlgButtonChecked( dialog, IDC_OPT_CONF_SHIFT ) & BST_CHECKED) val |= MK_SHIFT;
+            di->config.menu_mask = val;
+
+            val = (IsDlgButtonChecked( dialog, IDC_OPT_QUICK_EDIT ) & BST_CHECKED) != 0;
+            di->config.quick_edit = val;
+
+            SetWindowLongPtrW( dialog, DWLP_MSGRESULT, PSNRET_NOERROR );
+            return TRUE;
+        default:
+            return FALSE;
+        }
+        break;
+    }
+    default:
+        return FALSE;
+    }
+    return TRUE;
+}
+
+static COLORREF get_color( struct dialog_info *di, unsigned int idc )
+{
+    LONG_PTR index;
+
+    index = GetWindowLongPtrW(GetDlgItem( di->dialog, idc ), 0);
+    return di->config.color_map[index];
+}
+
+/* window proc for font previewer in font property sheet */
+static LRESULT WINAPI font_preview_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    switch (msg)
+    {
+    case WM_CREATE:
+        SetWindowLongPtrW( hwnd, 0, 0 );
+        break;
+
+    case WM_GETFONT:
+        return GetWindowLongPtrW( hwnd, 0 );
+
+    case WM_SETFONT:
+        SetWindowLongPtrW( hwnd, 0, wparam );
+        if (LOWORD(lparam))
+        {
+            InvalidateRect( hwnd, NULL, TRUE );
+            UpdateWindow( hwnd );
+        }
+        break;
+
+    case WM_DESTROY:
+        {
+            HFONT font = (HFONT)GetWindowLongPtrW( hwnd, 0 );
+            if (font) DeleteObject( font );
+            break;
+        }
+
+    case WM_PAINT:
+        {
+            struct dialog_info *di;
+            HFONT font, old_font;
+            PAINTSTRUCT ps;
+            int size_idx;
+
+            di = (struct dialog_info *)GetWindowLongPtrW( GetParent( hwnd ), DWLP_USER );
+            BeginPaint( hwnd, &ps );
+
+            size_idx = SendDlgItemMessageW( di->dialog, IDC_FNT_LIST_SIZE, LB_GETCURSEL, 0, 0 );
+            font = (HFONT)GetWindowLongPtrW( hwnd, 0 );
+            if (font)
+            {
+                static const WCHAR ascii[] = L"ASCII: abcXYZ";
+                COLORREF bkcolor;
+                WCHAR buf[256];
+                int len;
+
+                old_font = SelectObject( ps.hdc, font );
+                bkcolor = get_color( di, IDC_FNT_COLOR_BK );
+                FillRect( ps.hdc, &ps.rcPaint, CreateSolidBrush( bkcolor ));
+                SetBkColor( ps.hdc, bkcolor );
+                SetTextColor( ps.hdc, get_color( di, IDC_FNT_COLOR_FG ));
+                len = LoadStringW( GetModuleHandleW(NULL), IDS_FNT_PREVIEW, buf, ARRAY_SIZE(buf) );
+                if (len) TextOutW( ps.hdc, 0, 0, buf, len );
+                TextOutW( ps.hdc, 0, di->font[size_idx].height, ascii, ARRAY_SIZE(ascii) - 1 );
+                SelectObject( ps.hdc, old_font );
+            }
+            EndPaint( hwnd, &ps );
+            break;
+        }
+
+    default:
+        return DefWindowProcW( hwnd, msg, wparam, lparam );
+    }
+    return 0;
+}
+
+/* window proc for color previewer */
+static LRESULT WINAPI color_preview_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    switch (msg)
+    {
+    case WM_PAINT:
+        {
+            struct dialog_info *di;
+            PAINTSTRUCT ps;
+            RECT client, r;
+            int i, step;
+            HBRUSH brush;
+
+            BeginPaint( hwnd, &ps );
+            GetClientRect( hwnd, &client );
+            step = client.right / 8;
+
+            di = (struct dialog_info *)GetWindowLongPtrW( GetParent(hwnd), DWLP_USER );
+
+            for (i = 0; i < 16; i++)
+            {
+                r.top = (i / 8) * (client.bottom / 2);
+                r.bottom = r.top + client.bottom / 2;
+                r.left = (i & 7) * step;
+                r.right = r.left + step;
+                brush = CreateSolidBrush( di->config.color_map[i] );
+                FillRect( ps.hdc, &r, brush );
+                DeleteObject( brush );
+                if (GetWindowLongW( hwnd, 0 ) == i)
+                {
+                    HPEN old_pen;
+                    int i = 2;
+
+                    old_pen = SelectObject( ps.hdc, GetStockObject( WHITE_PEN ));
+                    r.right--; r.bottom--;
+                    for (;;)
+                    {
+                        MoveToEx( ps.hdc, r.left, r.bottom, NULL );
+                        LineTo( ps.hdc, r.left, r.top );
+                        LineTo( ps.hdc, r.right, r.top );
+                        SelectObject( ps.hdc, GetStockObject( BLACK_PEN ));
+                        LineTo( ps.hdc, r.right, r.bottom );
+                        LineTo( ps.hdc, r.left, r.bottom );
+                        if (--i == 0) break;
+                        r.left++; r.top++; r.right--; r.bottom--;
+                        SelectObject( ps.hdc, GetStockObject( WHITE_PEN ));
+                    }
+                    SelectObject( ps.hdc, old_pen );
+                }
+            }
+            EndPaint( hwnd, &ps );
+            break;
+        }
+
+    case WM_LBUTTONDOWN:
+        {
+            int i, step;
+            RECT client;
+
+            GetClientRect( hwnd, &client );
+            step = client.right / 8;
+            i = (HIWORD(lparam) >= client.bottom / 2) ? 8 : 0;
+            i += LOWORD(lparam) / step;
+            SetWindowLongW( hwnd, 0, i );
+            InvalidateRect( GetDlgItem( GetParent( hwnd ), IDC_FNT_PREVIEW ), NULL, FALSE );
+            InvalidateRect( hwnd, NULL, FALSE );
+            break;
+        }
+
+    default:
+        return DefWindowProcW( hwnd, msg, wparam, lparam );
+    }
+    return 0;
+}
+
+/* enumerates all the font names with at least one valid font */
+static int WINAPI font_enum_size2( const LOGFONTW *lf, const TEXTMETRICW *tm,
+                                   DWORD font_type, LPARAM lparam )
+{
+    struct dialog_info *di = (struct dialog_info *)lparam;
+    TRACE( "%s\n", debugstr_textmetric( tm, font_type ));
+    if (validate_font_metric( di->console, tm, font_type, 0 )) di->font_count++;
+    return 1;
+}
+
+static int WINAPI font_enum( const LOGFONTW *lf, const TEXTMETRICW *tm,
+                             DWORD font_type, LPARAM lparam )
+{
+    struct dialog_info *di = (struct dialog_info *)lparam;
+
+    TRACE( "%s\n", debugstr_logfont( lf, font_type ));
+
+    if (validate_font( di->console, lf, 0 ))
+    {
+        if (font_type & RASTER_FONTTYPE)
+        {
+            di->font_count = 0;
+            EnumFontFamiliesW( di->console->window->mem_dc, lf->lfFaceName,
+                               font_enum_size2, (LPARAM)di );
+        }
+        else
+            di->font_count = 1;
+
+        if (di->font_count)
+            SendDlgItemMessageW( di->dialog, IDC_FNT_LIST_FONT, LB_ADDSTRING,
+                                 0, (LPARAM)lf->lfFaceName );
+    }
+    return 1;
+}
+
+static int WINAPI font_enum_size( const LOGFONTW *lf, const TEXTMETRICW *tm,
+                                  DWORD font_type, LPARAM lparam )
+{
+    struct dialog_info *di = (struct dialog_info *)lparam;
+    WCHAR buf[32];
+
+    TRACE( "%s\n", debugstr_textmetric( tm, font_type ));
+
+    if (di->font_count == 0 && !(font_type & RASTER_FONTTYPE))
+    {
+        static const int sizes[] = {8,9,10,11,12,14,16,18,20,22,24,26,28,36,48,72};
+        int i;
+
+        di->font_count = ARRAY_SIZE(sizes);
+        di->font = malloc( di->font_count * sizeof(di->font[0]) );
+        for (i = 0; i < di->font_count; i++)
+        {
+            /* drop sizes where window size wouldn't fit on screen */
+            if (sizes[i] * di->config.win_height > GetSystemMetrics( SM_CYSCREEN ))
+            {
+                di->font_count = i;
+                break;
+            }
+            di->font[i].height = sizes[i];
+            di->font[i].weight = 400;
+            lstrcpyW( di->font[i].faceName, lf->lfFaceName );
+            wsprintfW( buf, L"%d", sizes[i] );
+            SendDlgItemMessageW( di->dialog, IDC_FNT_LIST_SIZE, LB_INSERTSTRING, i, (LPARAM)buf );
+        }
+        /* don't need to enumerate other */
+        return 0;
+    }
+
+    if (validate_font_metric( di->console, tm, font_type, 0 ))
+    {
+        int idx = 0;
+
+        /* we want the string to be sorted with a numeric order, not a lexicographic...
+         * do the job by hand... get where to insert the new string
+         */
+        while (idx < di->font_count && tm->tmHeight > di->font[idx].height)
+            idx++;
+        while (idx < di->font_count &&
+               tm->tmHeight == di->font[idx].height &&
+               tm->tmWeight > di->font[idx].weight)
+            idx++;
+        if (idx == di->font_count ||
+            tm->tmHeight != di->font[idx].height ||
+            tm->tmWeight < di->font[idx].weight)
+        {
+            /* here we need to add the new entry */
+            wsprintfW( buf, L"%d", tm->tmHeight );
+            SendDlgItemMessageW( di->dialog, IDC_FNT_LIST_SIZE, LB_INSERTSTRING, idx, (LPARAM)buf );
+
+            /* now grow our arrays and insert the values at the same index than in the list box */
+            if (di->font_count)
+            {
+                di->font = realloc( di->font, sizeof(*di->font) * (di->font_count + 1) );
+                if (idx != di->font_count)
+                    memmove( &di->font[idx + 1], &di->font[idx],
+                             (di->font_count - idx) * sizeof(*di->font) );
+            }
+            else
+                di->font = malloc( sizeof(*di->font) );
+            di->font[idx].height = tm->tmHeight;
+            di->font[idx].weight = tm->tmWeight;
+            lstrcpyW( di->font[idx].faceName, lf->lfFaceName );
+            di->font_count++;
+        }
+    }
+    return 1;
+}
+
+static BOOL select_font( struct dialog_info *di )
+{
+    struct console_config config;
+    int font_idx, size_idx;
+    HFONT font, old_font;
+    DWORD_PTR args[2];
+    WCHAR buf[256];
+    WCHAR fmt[128];
+    LOGFONTW lf;
+
+    font_idx = SendDlgItemMessageW( di->dialog, IDC_FNT_LIST_FONT, LB_GETCURSEL, 0, 0 );
+    size_idx = SendDlgItemMessageW( di->dialog, IDC_FNT_LIST_SIZE, LB_GETCURSEL, 0, 0 );
+
+    if (font_idx < 0 || size_idx < 0 || size_idx >= di->font_count)
+        return FALSE;
+
+    fill_logfont( &lf, di->font[size_idx].faceName, di->font[size_idx].height,
+                  di->font[size_idx].weight );
+    font = select_font_config( &config, di->console->output_cp, di->console->win, &lf );
+    if (!font) return FALSE;
+
+    if (config.cell_height != di->font[size_idx].height)
+        TRACE( "mismatched heights (%u<>%u)\n", config.cell_height, di->font[size_idx].height );
+
+    old_font = (HFONT)SendDlgItemMessageW( di->dialog, IDC_FNT_PREVIEW, WM_GETFONT, 0, 0 );
+    SendDlgItemMessageW( di->dialog, IDC_FNT_PREVIEW, WM_SETFONT, (WPARAM)font, TRUE );
+    if (old_font) DeleteObject( old_font );
+
+    LoadStringW( GetModuleHandleW(NULL), IDS_FNT_DISPLAY, fmt, ARRAY_SIZE(fmt) );
+    args[0] = config.cell_width;
+    args[1] = config.cell_height;
+    FormatMessageW( FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ARGUMENT_ARRAY,
+                    fmt, 0, 0, buf, ARRAY_SIZE(buf), (__ms_va_list*)args );
+
+    SendDlgItemMessageW( di->dialog, IDC_FNT_FONT_INFO, WM_SETTEXT, 0, (LPARAM)buf );
+    return TRUE;
+}
+
+/* fills the size list box according to selected family in font LB */
+static BOOL fill_list_size( struct dialog_info *di, BOOL init )
+{
+    WCHAR face_name[LF_FACESIZE];
+    int idx = 0;
+
+    idx = SendDlgItemMessageW( di->dialog, IDC_FNT_LIST_FONT, LB_GETCURSEL, 0, 0 );
+    if (idx < 0) return FALSE;
+
+    SendDlgItemMessageW( di->dialog, IDC_FNT_LIST_FONT, LB_GETTEXT, idx, (LPARAM)face_name );
+    SendDlgItemMessageW( di->dialog, IDC_FNT_LIST_SIZE, LB_RESETCONTENT, 0, 0 );
+    free( di->font );
+    di->font_count = 0;
+    di->font = NULL;
+
+    EnumFontFamiliesW( di->console->window->mem_dc, face_name, font_enum_size, (LPARAM)di );
+
+    if (init)
+    {
+        int ref = -1;
+        for (idx = 0; idx < di->font_count; idx++)
+        {
+            if (!lstrcmpW( di->font[idx].faceName, di->config.face_name ) &&
+                di->font[idx].height == di->config.cell_height &&
+                di->font[idx].weight == di->config.font_weight)
+            {
+                if (ref == -1) ref = idx;
+                else TRACE("Several matches found: ref=%d idx=%d\n", ref, idx);
+            }
+        }
+        idx = (ref == -1) ? 0 : ref;
+    }
+
+    SendDlgItemMessageW( di->dialog, IDC_FNT_LIST_SIZE, LB_SETCURSEL, idx, 0 );
+    select_font( di );
+    return TRUE;
+}
+
+static BOOL fill_list_font( struct dialog_info *di )
+{
+    SendDlgItemMessageW( di->dialog, IDC_FNT_LIST_FONT, LB_RESETCONTENT, 0, 0 );
+    EnumFontFamiliesW( di->console->window->mem_dc, NULL, font_enum, (LPARAM)di );
+    if (SendDlgItemMessageW( di->dialog, IDC_FNT_LIST_FONT, LB_SELECTSTRING,
+                             -1, (LPARAM)di->config.face_name ) == LB_ERR)
+        SendDlgItemMessageW( di->dialog, IDC_FNT_LIST_FONT, LB_SETCURSEL, 0, 0 );
+    fill_list_size( di, TRUE );
+    return TRUE;
+}
+
+/* dialog proc for the font property sheet */
+static INT_PTR WINAPI font_dialog_proc( HWND dialog, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    struct dialog_info *di;
+
+    switch (msg)
+    {
+    case WM_INITDIALOG:
+        di = (struct dialog_info *)((PROPSHEETPAGEA*)lparam)->lParam;
+        di->dialog = dialog;
+        SetWindowLongPtrW( dialog, DWLP_USER, (DWORD_PTR)di );
+        /* remove dialog from this control, font will be reset when listboxes are filled */
+        SendDlgItemMessageW( dialog, IDC_FNT_PREVIEW, WM_SETFONT, 0, 0 );
+        fill_list_font( di );
+        SetWindowLongW( GetDlgItem( dialog, IDC_FNT_COLOR_BK ), 0, (di->config.attr >> 4) & 0x0F );
+        SetWindowLongW( GetDlgItem( dialog, IDC_FNT_COLOR_FG ), 0, di->config.attr & 0x0F );
+        break;
+
+    case WM_COMMAND:
+        di = (struct dialog_info *)GetWindowLongPtrW( dialog, DWLP_USER );
+        switch (LOWORD(wparam))
+        {
+        case IDC_FNT_LIST_FONT:
+            if (HIWORD(wparam) == LBN_SELCHANGE)
+                fill_list_size( di, FALSE );
+            break;
+        case IDC_FNT_LIST_SIZE:
+            if (HIWORD(wparam) == LBN_SELCHANGE)
+                select_font( di );
+            break;
+        }
+        break;
+
+    case WM_NOTIFY:
+        {
+            NMHDR *nmhdr = (NMHDR*)lparam;
+            DWORD val;
+
+            di = (struct dialog_info*)GetWindowLongPtrW( dialog, DWLP_USER );
+            switch (nmhdr->code)
+            {
+            case PSN_SETACTIVE:
+                di->dialog = dialog;
+                break;
+            case PSN_APPLY:
+                val = SendDlgItemMessageW( dialog, IDC_FNT_LIST_SIZE, LB_GETCURSEL, 0, 0 );
+                if (val < di->font_count)
+                {
+                    LOGFONTW lf;
+
+                    fill_logfont( &lf, di->font[val].faceName, di->font[val].height, di->font[val].weight );
+                    DeleteObject( select_font_config( &di->config, di->console->output_cp,
+                                                      di->console->win, &lf ));
+                }
+
+                val = (GetWindowLongW( GetDlgItem( dialog, IDC_FNT_COLOR_BK ), 0 ) << 4) |
+                    GetWindowLongW( GetDlgItem( dialog, IDC_FNT_COLOR_FG ), 0 );
+                di->config.attr = val;
+                SetWindowLongPtrW( dialog, DWLP_MSGRESULT, PSNRET_NOERROR );
+                return TRUE;
+            default:
+                return FALSE;
+            }
+            break;
+        }
+    default:
+        return FALSE;
+    }
+    return TRUE;
+}
+
+/* dialog proc for the config property sheet */
+static INT_PTR WINAPI config_dialog_proc( HWND dialog, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    struct dialog_info *di;
+    int max_ud = 2000;
+
+    switch (msg)
+    {
+    case WM_INITDIALOG:
+        di = (struct dialog_info *)((PROPSHEETPAGEA*)lparam)->lParam;
+        di->dialog = dialog;
+
+        SetWindowLongPtrW( dialog, DWLP_USER, (DWORD_PTR)di );
+        SetDlgItemInt( dialog, IDC_CNF_SB_WIDTH,   di->config.sb_width,   FALSE );
+        SetDlgItemInt( dialog, IDC_CNF_SB_HEIGHT,  di->config.sb_height,  FALSE );
+        SetDlgItemInt( dialog, IDC_CNF_WIN_WIDTH,  di->config.win_width,  FALSE );
+        SetDlgItemInt( dialog, IDC_CNF_WIN_HEIGHT, di->config.win_height, FALSE );
+
+        SendMessageW( GetDlgItem(dialog, IDC_CNF_WIN_HEIGHT_UD), UDM_SETRANGE, 0, MAKELPARAM(max_ud, 0));
+        SendMessageW( GetDlgItem(dialog, IDC_CNF_WIN_WIDTH_UD),  UDM_SETRANGE, 0, MAKELPARAM(max_ud, 0));
+        SendMessageW( GetDlgItem(dialog, IDC_CNF_SB_HEIGHT_UD),  UDM_SETRANGE, 0, MAKELPARAM(max_ud, 0));
+        SendMessageW( GetDlgItem(dialog, IDC_CNF_SB_WIDTH_UD),   UDM_SETRANGE, 0, MAKELPARAM(max_ud, 0));
+
+        SendDlgItemMessageW( dialog, IDC_CNF_CLOSE_EXIT, BM_SETCHECK, BST_CHECKED, 0 );
+
+        SendDlgItemMessageW( dialog, IDC_CNF_EDITION_MODE, CB_ADDSTRING, 0, (LPARAM)L"Win32" );
+        SendDlgItemMessageW( dialog, IDC_CNF_EDITION_MODE, CB_ADDSTRING, 0, (LPARAM)L"Emacs" );
+        SendDlgItemMessageW( dialog, IDC_CNF_EDITION_MODE, CB_SETCURSEL, di->config.edition_mode, 0 );
+        break;
+
+    case WM_NOTIFY:
+        {
+            NMHDR *nmhdr = (NMHDR*)lparam;
+            int win_w, win_h, sb_w, sb_h;
+            BOOL st1, st2;
+
+            di = (struct dialog_info *)GetWindowLongPtrW( dialog, DWLP_USER );
+            switch (nmhdr->code)
+            {
+            case PSN_SETACTIVE:
+                di->dialog = dialog;
+                break;
+            case PSN_APPLY:
+                sb_w = GetDlgItemInt( dialog, IDC_CNF_SB_WIDTH,  &st1, FALSE );
+                sb_h = GetDlgItemInt( dialog, IDC_CNF_SB_HEIGHT, &st2, FALSE );
+                if (!st1 || ! st2)
+                {
+                    SetWindowLongPtrW( dialog, DWLP_MSGRESULT, PSNRET_INVALID );
+                    return TRUE;
+                }
+                win_w = GetDlgItemInt( dialog, IDC_CNF_WIN_WIDTH,  &st1, FALSE );
+                win_h = GetDlgItemInt( dialog, IDC_CNF_WIN_HEIGHT, &st2, FALSE );
+                if (!st1 || !st2)
+                {
+                    SetWindowLongPtrW( dialog, DWLP_MSGRESULT, PSNRET_INVALID );
+                    return TRUE;
+                }
+                if (win_w > sb_w || win_h > sb_h)
+                {
+                    WCHAR cap[256];
+                    WCHAR txt[256];
+
+                    LoadStringW( GetModuleHandleW(NULL), IDS_DLG_TIT_ERROR, cap, ARRAY_SIZE(cap) );
+                    LoadStringW( GetModuleHandleW(NULL), IDS_DLG_ERR_SBWINSIZE, txt, ARRAY_SIZE(txt) );
+
+                    MessageBoxW( dialog, txt, cap, MB_OK );
+                    SetWindowLongPtrW( dialog, DWLP_MSGRESULT, PSNRET_INVALID );
+                    return TRUE;
+                }
+                di->config.win_width  = win_w;
+                di->config.win_height = win_h;
+                di->config.sb_width  = sb_w;
+                di->config.sb_height = sb_h;
+
+                di->config.edition_mode = SendDlgItemMessageW( dialog, IDC_CNF_EDITION_MODE,
+                                                               CB_GETCURSEL, 0, 0 );
+                SetWindowLongPtrW( dialog, DWLP_MSGRESULT, PSNRET_NOERROR );
+                return TRUE;
+            default:
+                return FALSE;
+            }
+            break;
+        }
+    default:
+        return FALSE;
+    }
+    return TRUE;
+}
+
+/* dialog proc for choosing how to handle modification to the console settings */
+static INT_PTR WINAPI save_dialog_proc( HWND dialog, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    switch (msg)
+    {
+    case WM_INITDIALOG:
+        SendDlgItemMessageW( dialog, IDC_SAV_SESSION, BM_SETCHECK, BST_CHECKED, 0 );
+        break;
+
+    case WM_COMMAND:
+        switch (LOWORD(wparam))
+        {
+        case IDOK:
+            EndDialog( dialog,
+                       (IsDlgButtonChecked(dialog, IDC_SAV_SAVE) == BST_CHECKED) ?
+                       IDC_SAV_SAVE : IDC_SAV_SESSION );
+            break;
+        case IDCANCEL:
+            EndDialog( dialog, IDCANCEL ); break;
+        }
+        break;
+    default:
+        return FALSE;
+    }
+    return TRUE;
+}
+
 static void apply_config( struct console *console, const struct console_config *config )
 {
     if (console->active->width != config->sb_width || console->active->height != config->sb_height)
@@ -1187,6 +1862,166 @@ static void apply_config( struct console *console, const struct console_config *
     }
 
     update_window( console );
+}
+
+static void current_config( struct console *console, struct console_config *config )
+{
+    size_t len;
+
+    config->menu_mask  = console->window->menu_mask;
+    config->quick_edit = console->window->quick_edit;
+
+    config->edition_mode = console->edition_mode;
+    config->history_mode = console->history_mode;
+    config->history_size = console->history_size;
+
+    config->insert_mode = (console->mode & (ENABLE_INSERT_MODE|ENABLE_EXTENDED_FLAGS)) ==
+        (ENABLE_INSERT_MODE|ENABLE_EXTENDED_FLAGS);
+
+    config->cursor_size = console->active->cursor_size;
+    config->cursor_visible = console->active->cursor_visible;
+    config->attr = console->active->attr;
+    config->popup_attr = console->active->popup_attr;
+    memcpy( config->color_map, console->active->color_map, sizeof(config->color_map) );
+
+    config->win_height  = console->active->win.bottom - console->active->win.top + 1;
+    config->win_width   = console->active->win.right - console->active->win.left + 1;
+    config->cell_width  = console->active->font.width;
+    config->cell_height = console->active->font.height;
+    config->font_weight = console->active->font.weight;
+    config->font_pitch_family = console->active->font.pitch_family;
+    len = min( ARRAY_SIZE(config->face_name) - 1, console->active->font.face_len / sizeof(WCHAR) );
+    if (len) memcpy( config->face_name, console->active->font.face_name, len * sizeof(WCHAR) );
+    config->face_name[len] = 0;
+
+    config->sb_width  = console->active->width;
+    config->sb_height = console->active->height;
+
+    config->win_width  = console->active->win.right - console->active->win.left + 1;
+    config->win_height = console->active->win.bottom - console->active->win.top + 1;
+    config->win_pos.X  = console->active->win.left;
+    config->win_pos.Y  = console->active->win.top;
+}
+
+/* run the dialog box to set up the console options */
+static BOOL config_dialog( struct console *console, BOOL current )
+{
+    struct console_config prev_config;
+    struct dialog_info di;
+    PROPSHEETHEADERW header;
+    HPROPSHEETPAGE pages[3];
+    PROPSHEETPAGEW psp;
+    WNDCLASSW wndclass;
+    WCHAR buff[256];
+    BOOL modify_session = FALSE;
+    BOOL save = FALSE;
+
+    InitCommonControls();
+
+    memset( &di, 0, sizeof(di) );
+    di.console = console;
+    if (!current)
+    {
+        load_config( NULL, &di.config );
+        save = TRUE;
+    }
+    else current_config( console, &di.config );
+    prev_config = di.config;
+    di.font_count = 0;
+    di.font = NULL;
+
+    wndclass.style         = 0;
+    wndclass.lpfnWndProc   = font_preview_proc;
+    wndclass.cbClsExtra    = 0;
+    wndclass.cbWndExtra    = sizeof(HFONT);
+    wndclass.hInstance     = GetModuleHandleW( NULL );
+    wndclass.hIcon         = 0;
+    wndclass.hCursor       = LoadCursorW( 0, (const WCHAR *)IDC_ARROW );
+    wndclass.hbrBackground = GetStockObject( BLACK_BRUSH );
+    wndclass.lpszMenuName  = NULL;
+    wndclass.lpszClassName = L"WineConFontPreview";
+    RegisterClassW( &wndclass );
+
+    wndclass.style         = 0;
+    wndclass.lpfnWndProc   = color_preview_proc;
+    wndclass.cbClsExtra    = 0;
+    wndclass.cbWndExtra    = sizeof(DWORD);
+    wndclass.hInstance     = GetModuleHandleW( NULL );
+    wndclass.hIcon         = 0;
+    wndclass.hCursor       = LoadCursorW( 0, (const WCHAR *)IDC_ARROW );
+    wndclass.hbrBackground = GetStockObject( BLACK_BRUSH );
+    wndclass.lpszMenuName  = NULL;
+    wndclass.lpszClassName = L"WineConColorPreview";
+    RegisterClassW( &wndclass );
+
+    memset( &psp, 0, sizeof(psp) );
+    psp.dwSize = sizeof(psp);
+    psp.dwFlags = 0;
+    psp.hInstance = wndclass.hInstance;
+    psp.lParam = (LPARAM)&di;
+
+    psp.u.pszTemplate = MAKEINTRESOURCEW(IDD_OPTION);
+    psp.pfnDlgProc = option_dialog_proc;
+    pages[0] = CreatePropertySheetPageW( &psp );
+
+    psp.u.pszTemplate = MAKEINTRESOURCEW(IDD_FONT);
+    psp.pfnDlgProc = font_dialog_proc;
+    pages[1] = CreatePropertySheetPageW( &psp );
+
+    psp.u.pszTemplate = MAKEINTRESOURCEW(IDD_CONFIG);
+    psp.pfnDlgProc = config_dialog_proc;
+    pages[2] = CreatePropertySheetPageW( &psp );
+
+    memset( &header, 0, sizeof(header) );
+    header.dwSize = sizeof(header);
+
+    if (!LoadStringW( GetModuleHandleW( NULL ),
+                      current ? IDS_DLG_TIT_CURRENT : IDS_DLG_TIT_DEFAULT,
+                      buff, ARRAY_SIZE(buff) ))
+        wcscpy( buff, L"Setup" );
+
+    header.pszCaption = buff;
+    header.nPages     = 3;
+    header.hwndParent = console->win;
+    header.u3.phpage  = pages;
+    header.dwFlags    = PSH_NOAPPLYNOW;
+    PropertySheetW( &header );
+
+    if (!memcmp( &prev_config, &di.config, sizeof(prev_config) ))
+        return TRUE;
+
+    TRACE( "%s\n", debugstr_config(&di.config) );
+
+    if (!save)
+    {
+        switch (DialogBoxW( GetModuleHandleW( NULL ), MAKEINTRESOURCEW(IDD_SAVE_SETTINGS),
+                            console->win, save_dialog_proc ))
+        {
+        case IDC_SAV_SAVE:
+            save = TRUE;
+            modify_session = TRUE;
+            break;
+        case IDC_SAV_SESSION:
+            modify_session = TRUE;
+            break;
+        default:
+            ERR( "dialog failed\n" );
+            /* fall through */
+        case IDCANCEL:
+            modify_session = FALSE;
+            save = FALSE;
+            break;
+        }
+    }
+
+    if (modify_session)
+    {
+        apply_config( console, &di.config );
+        update_window( di.console );
+    }
+    if (save)
+        save_config( current ? console->window->config_key : NULL, &di.config );
+    return TRUE;
 }
 
 /* grays / ungrays the menu items according to their state */
@@ -1405,6 +2240,20 @@ static LRESULT WINAPI window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
     case WM_KILLFOCUS:
         if (console->active->cursor_visible)
             DestroyCaret();
+        break;
+
+    case WM_SYSCOMMAND:
+        switch (wparam)
+        {
+        case IDS_DEFAULT:
+            config_dialog( console, FALSE );
+            break;
+        case IDS_PROPERTIES:
+            config_dialog( console, TRUE );
+            break;
+        default:
+            return DefWindowProcW( hwnd, msg, wparam, lparam );
+        }
         break;
 
     default:

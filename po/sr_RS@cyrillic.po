@@ -77,22 +77,23 @@ msgstr "Подршка"
 #: dlls/shlwapi/shlwapi.rc:44 dlls/twain_32/twain.rc:32
 #: dlls/user32/user32.rc:83 dlls/user32/user32.rc:98 dlls/wininet/wininet.rc:62
 #: dlls/wininet/wininet.rc:82 dlls/winspool.drv/winspool.rc:42
-#: programs/net/net.rc:47 programs/notepad/notepad.rc:117
-#: programs/oleview/oleview.rc:161 programs/oleview/oleview.rc:174
-#: programs/progman/progman.rc:106 programs/progman/progman.rc:124
-#: programs/progman/progman.rc:142 programs/progman/progman.rc:158
-#: programs/progman/progman.rc:180 programs/progman/progman.rc:199
-#: programs/progman/progman.rc:216 programs/regedit/regedit.rc:296
-#: programs/regedit/regedit.rc:307 programs/regedit/regedit.rc:320
-#: programs/regedit/regedit.rc:336 programs/regedit/regedit.rc:349
-#: programs/regedit/regedit.rc:362 programs/taskmgr/taskmgr.rc:442
-#: programs/taskmgr/taskmgr.rc:517 programs/winecfg/winecfg.rc:213
-#: programs/winecfg/winecfg.rc:223 programs/wineconsole/wineconsole.rc:133
-#: programs/winefile/winefile.rc:127 programs/winefile/winefile.rc:150
-#: programs/winefile/winefile.rc:180 programs/winemine/winemine.rc:73
-#: programs/winemine/winemine.rc:84 programs/winemine/winemine.rc:98
-#: programs/wordpad/wordpad.rc:215 programs/wordpad/wordpad.rc:226
-#: programs/wordpad/wordpad.rc:244 programs/wordpad/wordpad.rc:257
+#: programs/conhost/conhost.rc:126 programs/net/net.rc:47
+#: programs/notepad/notepad.rc:117 programs/oleview/oleview.rc:161
+#: programs/oleview/oleview.rc:174 programs/progman/progman.rc:106
+#: programs/progman/progman.rc:124 programs/progman/progman.rc:142
+#: programs/progman/progman.rc:158 programs/progman/progman.rc:180
+#: programs/progman/progman.rc:199 programs/progman/progman.rc:216
+#: programs/regedit/regedit.rc:296 programs/regedit/regedit.rc:307
+#: programs/regedit/regedit.rc:320 programs/regedit/regedit.rc:336
+#: programs/regedit/regedit.rc:349 programs/regedit/regedit.rc:362
+#: programs/taskmgr/taskmgr.rc:442 programs/taskmgr/taskmgr.rc:517
+#: programs/winecfg/winecfg.rc:213 programs/winecfg/winecfg.rc:223
+#: programs/wineconsole/wineconsole.rc:133 programs/winefile/winefile.rc:127
+#: programs/winefile/winefile.rc:150 programs/winefile/winefile.rc:180
+#: programs/winemine/winemine.rc:73 programs/winemine/winemine.rc:84
+#: programs/winemine/winemine.rc:98 programs/wordpad/wordpad.rc:215
+#: programs/wordpad/wordpad.rc:226 programs/wordpad/wordpad.rc:244
+#: programs/wordpad/wordpad.rc:257
 msgid "OK"
 msgstr "У реду"
 
@@ -182,22 +183,22 @@ msgstr "&Инсталирај"
 #: dlls/shell32/shell32.rc:342 dlls/shlwapi/shlwapi.rc:45
 #: dlls/twain_32/twain.rc:33 dlls/user32/user32.rc:84 dlls/user32/user32.rc:99
 #: dlls/wininet/wininet.rc:63 dlls/wininet/wininet.rc:83
-#: dlls/winspool.drv/winspool.rc:43 programs/notepad/notepad.rc:118
-#: programs/oleview/oleview.rc:162 programs/oleview/oleview.rc:175
-#: programs/progman/progman.rc:107 programs/progman/progman.rc:125
-#: programs/progman/progman.rc:143 programs/progman/progman.rc:159
-#: programs/progman/progman.rc:181 programs/progman/progman.rc:200
-#: programs/progman/progman.rc:217 programs/regedit/regedit.rc:297
-#: programs/regedit/regedit.rc:308 programs/regedit/regedit.rc:321
-#: programs/regedit/regedit.rc:337 programs/regedit/regedit.rc:350
-#: programs/regedit/regedit.rc:363 programs/taskmgr/taskmgr.rc:443
-#: programs/taskmgr/taskmgr.rc:518 programs/wineboot/wineboot.rc:34
-#: programs/winecfg/winecfg.rc:214 programs/winecfg/winecfg.rc:224
-#: programs/wineconsole/wineconsole.rc:134 programs/winefile/winefile.rc:128
-#: programs/winefile/winefile.rc:151 programs/winefile/winefile.rc:181
-#: programs/winemine/winemine.rc:99 programs/wordpad/wordpad.rc:216
-#: programs/wordpad/wordpad.rc:227 programs/wordpad/wordpad.rc:245
-#: programs/wordpad/wordpad.rc:258
+#: dlls/winspool.drv/winspool.rc:43 programs/conhost/conhost.rc:127
+#: programs/notepad/notepad.rc:118 programs/oleview/oleview.rc:162
+#: programs/oleview/oleview.rc:175 programs/progman/progman.rc:107
+#: programs/progman/progman.rc:125 programs/progman/progman.rc:143
+#: programs/progman/progman.rc:159 programs/progman/progman.rc:181
+#: programs/progman/progman.rc:200 programs/progman/progman.rc:217
+#: programs/regedit/regedit.rc:297 programs/regedit/regedit.rc:308
+#: programs/regedit/regedit.rc:321 programs/regedit/regedit.rc:337
+#: programs/regedit/regedit.rc:350 programs/regedit/regedit.rc:363
+#: programs/taskmgr/taskmgr.rc:443 programs/taskmgr/taskmgr.rc:518
+#: programs/wineboot/wineboot.rc:34 programs/winecfg/winecfg.rc:214
+#: programs/winecfg/winecfg.rc:224 programs/wineconsole/wineconsole.rc:134
+#: programs/winefile/winefile.rc:128 programs/winefile/winefile.rc:151
+#: programs/winefile/winefile.rc:181 programs/winemine/winemine.rc:99
+#: programs/wordpad/wordpad.rc:216 programs/wordpad/wordpad.rc:227
+#: programs/wordpad/wordpad.rc:245 programs/wordpad/wordpad.rc:258
 msgid "Cancel"
 msgstr "Откажи"
 
@@ -660,7 +661,8 @@ msgstr "&Величина"
 msgid "&Source"
 msgstr "&Извор"
 
-#: dlls/comdlg32/comdlg32.rc:251 programs/wineconsole/wineconsole.rc:83
+#: dlls/comdlg32/comdlg32.rc:251 programs/conhost/conhost.rc:76
+#: programs/wineconsole/wineconsole.rc:83
 msgid "Font"
 msgstr "Фонт"
 
@@ -812,7 +814,7 @@ msgstr "Замени &све"
 #: dlls/comdlg32/comdlg32.rc:363 dlls/comdlg32/comdlg32.rc:403
 #: dlls/ieframe/ieframe.rc:42 dlls/shdoclc/shdoclc.rc:61
 #: dlls/shell32/shell32.rc:108 programs/clock/clock.rc:31
-#: programs/conhost/conhost.rc:33 programs/wineconsole/wineconsole.rc:30
+#: programs/conhost/conhost.rc:34 programs/wineconsole/wineconsole.rc:30
 msgid "&Properties"
 msgstr "&Својства"
 
@@ -3346,7 +3348,7 @@ msgstr "&Исеци"
 #: dlls/shdoclc/shdoclc.rc:94 dlls/shdoclc/shdoclc.rc:118
 #: dlls/shdoclc/shdoclc.rc:133 dlls/shdoclc/shdoclc.rc:160
 #: dlls/shdoclc/shdoclc.rc:184 dlls/shell32/shell32.rc:102
-#: dlls/user32/user32.rc:61 programs/conhost/conhost.rc:35
+#: dlls/user32/user32.rc:61 programs/conhost/conhost.rc:36
 #: programs/wineconsole/wineconsole.rc:32 programs/winhlp32/winhlp32.rc:40
 #: programs/wordpad/wordpad.rc:113
 msgid "&Copy"
@@ -3422,8 +3424,8 @@ msgstr "Почетна"
 msgid "Sync"
 msgstr "Усклади"
 
-#: dlls/hhctrl.ocx/hhctrl.rc:50 programs/wineconsole/wineconsole.rc:58
-#: programs/wordpad/wordpad.rc:166
+#: dlls/hhctrl.ocx/hhctrl.rc:50 programs/conhost/conhost.rc:51
+#: programs/wineconsole/wineconsole.rc:58 programs/wordpad/wordpad.rc:166
 msgid "Options"
 msgstr "Опције"
 
@@ -9158,7 +9160,7 @@ msgstr "Извор:"
 #: dlls/shdoclc/shdoclc.rc:82 dlls/shdoclc/shdoclc.rc:95
 #: dlls/shdoclc/shdoclc.rc:135 dlls/shdoclc/shdoclc.rc:162
 #: dlls/shdoclc/shdoclc.rc:186 dlls/user32/user32.rc:62
-#: programs/conhost/conhost.rc:36 programs/wineconsole/wineconsole.rc:33
+#: programs/conhost/conhost.rc:37 programs/wineconsole/wineconsole.rc:33
 #: programs/wordpad/wordpad.rc:114
 msgid "&Paste"
 msgstr "&Убаци"
@@ -11268,7 +11270,7 @@ msgid "&Move"
 msgstr "Пр&емести"
 
 #: dlls/user32/user32.rc:32 dlls/user32/user32.rc:45
-#: programs/wineconsole/wineconsole.rc:91
+#: programs/conhost/conhost.rc:84 programs/wineconsole/wineconsole.rc:91
 msgid "&Size"
 msgstr "&Величина"
 
@@ -13071,60 +13073,189 @@ msgid ""
 " hexadecimal (0x34) or octal (056).\n"
 msgstr ""
 
-#: programs/conhost/conhost.rc:31 programs/notepad/notepad.rc:41
+#: programs/conhost/conhost.rc:54 programs/wineconsole/wineconsole.rc:61
+msgid "Cursor size"
+msgstr ""
+
+#: programs/conhost/conhost.rc:55 programs/wineconsole/wineconsole.rc:62
+msgid "&Small"
+msgstr ""
+
+#: programs/conhost/conhost.rc:56 programs/wineconsole/wineconsole.rc:63
+msgid "&Medium"
+msgstr ""
+
+#: programs/conhost/conhost.rc:57 programs/wineconsole/wineconsole.rc:64
+msgid "&Large"
+msgstr ""
+
+#: programs/conhost/conhost.rc:59 programs/wineconsole/wineconsole.rc:66
+msgid "Command history"
+msgstr ""
+
+#: programs/conhost/conhost.rc:60 programs/wineconsole/wineconsole.rc:67
+msgid "&Buffer size:"
+msgstr ""
+
+#: programs/conhost/conhost.rc:63 programs/wineconsole/wineconsole.rc:70
+#, fuzzy
+msgid "&Remove duplicates"
+msgstr "&Уклони..."
+
+#: programs/conhost/conhost.rc:65 programs/wineconsole/wineconsole.rc:72
+#, fuzzy
+msgid "Popup menu"
+msgstr "искачући мени"
+
+#: programs/conhost/conhost.rc:66 programs/wineconsole/wineconsole.rc:73
+#, fuzzy
+msgid "&Control"
+msgstr "Додај контролу"
+
+#: programs/conhost/conhost.rc:67 programs/wineconsole/wineconsole.rc:74
+msgid "S&hift"
+msgstr ""
+
+#: programs/conhost/conhost.rc:69 programs/wineconsole/wineconsole.rc:76
+#, fuzzy
+msgid "Console"
+msgstr "прозор"
+
+#: programs/conhost/conhost.rc:70 programs/wineconsole/wineconsole.rc:77
+msgid "&Quick Edit mode"
+msgstr ""
+
+#: programs/conhost/conhost.rc:71 programs/wineconsole/wineconsole.rc:78
+#, fuzzy
+#| msgid "Insert Object"
+msgid "&Insert mode"
+msgstr "Унос објекта"
+
+#: programs/conhost/conhost.rc:79 programs/wineconsole/wineconsole.rc:86
+#, fuzzy
+msgid "&Font"
+msgstr "Фонтови"
+
+#: programs/conhost/conhost.rc:81 programs/wineconsole/wineconsole.rc:88
+#, fuzzy
+msgid "&Color"
+msgstr "&Колона"
+
+#: programs/conhost/conhost.rc:92 programs/wineconsole/wineconsole.rc:99
+#, fuzzy
+msgid "Configuration"
+msgstr "Грешка у радњама"
+
+#: programs/conhost/conhost.rc:95 programs/wineconsole/wineconsole.rc:102
+msgid "Buffer zone"
+msgstr ""
+
+#: programs/conhost/conhost.rc:96 programs/wineconsole/wineconsole.rc:103
+msgid "&Width:"
+msgstr ""
+
+#: programs/conhost/conhost.rc:99 programs/wineconsole/wineconsole.rc:106
+#, fuzzy
+msgid "&Height:"
+msgstr "&Десно:"
+
+#: programs/conhost/conhost.rc:103 programs/wineconsole/wineconsole.rc:110
+#, fuzzy
+msgid "Window size"
+msgstr "&Прозор"
+
+#: programs/conhost/conhost.rc:104 programs/wineconsole/wineconsole.rc:111
+msgid "W&idth:"
+msgstr ""
+
+#: programs/conhost/conhost.rc:107 programs/wineconsole/wineconsole.rc:114
+#, fuzzy
+msgid "H&eight:"
+msgstr "&Десно:"
+
+#: programs/conhost/conhost.rc:111 programs/wineconsole/wineconsole.rc:118
+#, fuzzy
+msgid "End of program"
+msgstr "Чекање програма"
+
+#: programs/conhost/conhost.rc:112 programs/wineconsole/wineconsole.rc:119
+#, fuzzy
+msgid "&Close console"
+msgstr "прозор"
+
+#: programs/conhost/conhost.rc:114 programs/wineconsole/wineconsole.rc:121
+#, fuzzy
+msgid "Edition"
+msgstr "&Уређивање"
+
+#: programs/conhost/conhost.rc:120 programs/wineconsole/wineconsole.rc:127
+#, fuzzy
+msgid "Console parameters"
+msgstr ""
+"Грешка: унесени су непознати или неисправни параметри наредбене линије\n"
+
+#: programs/conhost/conhost.rc:123 programs/wineconsole/wineconsole.rc:130
+msgid "Retain these settings for later sessions"
+msgstr ""
+
+#: programs/conhost/conhost.rc:124 programs/wineconsole/wineconsole.rc:131
+msgid "Modify only current session"
+msgstr ""
+
+#: programs/conhost/conhost.rc:32 programs/notepad/notepad.rc:41
 #: programs/regedit/regedit.rc:43 programs/wineconsole/wineconsole.rc:28
 #: programs/winhlp32/winhlp32.rc:39 programs/wordpad/wordpad.rc:42
 msgid "&Edit"
 msgstr "&Уређивање"
 
-#: programs/conhost/conhost.rc:32 programs/wineconsole/wineconsole.rc:29
+#: programs/conhost/conhost.rc:33 programs/wineconsole/wineconsole.rc:29
 #, fuzzy
 msgid "Set &Defaults"
 msgstr "Подразумевано"
 
-#: programs/conhost/conhost.rc:34 programs/wineconsole/wineconsole.rc:31
+#: programs/conhost/conhost.rc:35 programs/wineconsole/wineconsole.rc:31
 msgid "&Mark"
 msgstr ""
 
-#: programs/conhost/conhost.rc:37 programs/wineconsole/wineconsole.rc:34
+#: programs/conhost/conhost.rc:38 programs/wineconsole/wineconsole.rc:34
 #, fuzzy
 msgid "&Select all"
 msgstr "Изабери &све"
 
-#: programs/conhost/conhost.rc:38 programs/wineconsole/wineconsole.rc:35
+#: programs/conhost/conhost.rc:39 programs/wineconsole/wineconsole.rc:35
 #, fuzzy
 msgid "Sc&roll"
 msgstr "Помери нагоре"
 
-#: programs/conhost/conhost.rc:39 programs/wineconsole/wineconsole.rc:36
+#: programs/conhost/conhost.rc:40 programs/wineconsole/wineconsole.rc:36
 #, fuzzy
 msgid "S&earch"
 msgstr "&Претрага"
 
-#: programs/conhost/conhost.rc:42 programs/wineconsole/wineconsole.rc:39
+#: programs/conhost/conhost.rc:43 programs/wineconsole/wineconsole.rc:39
 msgid "Setup - Default settings"
 msgstr ""
 
-#: programs/conhost/conhost.rc:43 programs/wineconsole/wineconsole.rc:40
+#: programs/conhost/conhost.rc:44 programs/wineconsole/wineconsole.rc:40
 msgid "Setup - Current settings"
 msgstr ""
 
-#: programs/conhost/conhost.rc:44 programs/wineconsole/wineconsole.rc:41
+#: programs/conhost/conhost.rc:45 programs/wineconsole/wineconsole.rc:41
 #, fuzzy
 msgid "Configuration error"
 msgstr "Грешка у радњама"
 
-#: programs/conhost/conhost.rc:45 programs/wineconsole/wineconsole.rc:42
+#: programs/conhost/conhost.rc:46 programs/wineconsole/wineconsole.rc:42
 msgid ""
 "The size of the screen buffer must be greater than or equal to the size of "
 "the window."
 msgstr ""
 
-#: programs/conhost/conhost.rc:40 programs/wineconsole/wineconsole.rc:37
+#: programs/conhost/conhost.rc:41 programs/wineconsole/wineconsole.rc:37
 msgid "Each character is %1!u! pixels wide and %2!u! pixels high"
 msgstr ""
 
-#: programs/conhost/conhost.rc:41 programs/wineconsole/wineconsole.rc:38
+#: programs/conhost/conhost.rc:42 programs/wineconsole/wineconsole.rc:38
 msgid "This is a test"
 msgstr ""
 
@@ -16824,135 +16955,6 @@ msgstr ""
 #, fuzzy
 msgid "Menu Bar"
 msgstr "линија менија"
-
-#: programs/wineconsole/wineconsole.rc:61
-msgid "Cursor size"
-msgstr ""
-
-#: programs/wineconsole/wineconsole.rc:62
-msgid "&Small"
-msgstr ""
-
-#: programs/wineconsole/wineconsole.rc:63
-msgid "&Medium"
-msgstr ""
-
-#: programs/wineconsole/wineconsole.rc:64
-msgid "&Large"
-msgstr ""
-
-#: programs/wineconsole/wineconsole.rc:66
-msgid "Command history"
-msgstr ""
-
-#: programs/wineconsole/wineconsole.rc:67
-msgid "&Buffer size:"
-msgstr ""
-
-#: programs/wineconsole/wineconsole.rc:70
-#, fuzzy
-msgid "&Remove duplicates"
-msgstr "&Уклони..."
-
-#: programs/wineconsole/wineconsole.rc:72
-#, fuzzy
-msgid "Popup menu"
-msgstr "искачући мени"
-
-#: programs/wineconsole/wineconsole.rc:73
-#, fuzzy
-msgid "&Control"
-msgstr "Додај контролу"
-
-#: programs/wineconsole/wineconsole.rc:74
-msgid "S&hift"
-msgstr ""
-
-#: programs/wineconsole/wineconsole.rc:76
-#, fuzzy
-msgid "Console"
-msgstr "прозор"
-
-#: programs/wineconsole/wineconsole.rc:77
-msgid "&Quick Edit mode"
-msgstr ""
-
-#: programs/wineconsole/wineconsole.rc:78
-#, fuzzy
-#| msgid "Insert Object"
-msgid "&Insert mode"
-msgstr "Унос објекта"
-
-#: programs/wineconsole/wineconsole.rc:86
-#, fuzzy
-msgid "&Font"
-msgstr "Фонтови"
-
-#: programs/wineconsole/wineconsole.rc:88
-#, fuzzy
-msgid "&Color"
-msgstr "&Колона"
-
-#: programs/wineconsole/wineconsole.rc:99
-#, fuzzy
-msgid "Configuration"
-msgstr "Грешка у радњама"
-
-#: programs/wineconsole/wineconsole.rc:102
-msgid "Buffer zone"
-msgstr ""
-
-#: programs/wineconsole/wineconsole.rc:103
-msgid "&Width:"
-msgstr ""
-
-#: programs/wineconsole/wineconsole.rc:106
-#, fuzzy
-msgid "&Height:"
-msgstr "&Десно:"
-
-#: programs/wineconsole/wineconsole.rc:110
-#, fuzzy
-msgid "Window size"
-msgstr "&Прозор"
-
-#: programs/wineconsole/wineconsole.rc:111
-msgid "W&idth:"
-msgstr ""
-
-#: programs/wineconsole/wineconsole.rc:114
-#, fuzzy
-msgid "H&eight:"
-msgstr "&Десно:"
-
-#: programs/wineconsole/wineconsole.rc:118
-#, fuzzy
-msgid "End of program"
-msgstr "Чекање програма"
-
-#: programs/wineconsole/wineconsole.rc:119
-#, fuzzy
-msgid "&Close console"
-msgstr "прозор"
-
-#: programs/wineconsole/wineconsole.rc:121
-#, fuzzy
-msgid "Edition"
-msgstr "&Уређивање"
-
-#: programs/wineconsole/wineconsole.rc:127
-#, fuzzy
-msgid "Console parameters"
-msgstr ""
-"Грешка: унесени су непознати или неисправни параметри наредбене линије\n"
-
-#: programs/wineconsole/wineconsole.rc:130
-msgid "Retain these settings for later sessions"
-msgstr ""
-
-#: programs/wineconsole/wineconsole.rc:131
-msgid "Modify only current session"
-msgstr ""
 
 #: programs/wineconsole/wineconsole.rc:44
 msgid "wineconsole: Couldn't parse event id\n"
