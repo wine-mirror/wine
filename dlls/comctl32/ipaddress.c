@@ -354,7 +354,7 @@ static BOOL IPADDRESS_SetRange (IPADDRESS_INFO *infoPtr, int index, WORD range)
 }
 
 
-static void IPADDRESS_ClearAddress (const IPADDRESS_INFO *infoPtr)
+static LRESULT IPADDRESS_ClearAddress (const IPADDRESS_INFO *infoPtr)
 {
     int i;
 
@@ -362,6 +362,8 @@ static void IPADDRESS_ClearAddress (const IPADDRESS_INFO *infoPtr)
 
     for (i = 0; i < 4; i++)
         SetWindowTextW (infoPtr->Part[i].EditHwnd, L"");
+
+    return 1;
 }
 
 
@@ -614,8 +616,7 @@ IPADDRESS_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             return 0;
 
         case IPM_CLEARADDRESS:
-            IPADDRESS_ClearAddress (infoPtr);
-	    break;
+            return IPADDRESS_ClearAddress (infoPtr);
 
         case IPM_SETADDRESS:
             return IPADDRESS_SetAddress (infoPtr, (DWORD)lParam);

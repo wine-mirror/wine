@@ -144,6 +144,47 @@ static void test_WM_SETFOCUS(void)
     DestroyWindow(hwnd);
 }
 
+static void test_IPM_CLEARADDRESS(void)
+{
+    struct child_enum child_enum = {{ 0 }};
+    char buff[16];
+    int i, ret;
+    HWND hwnd;
+
+    hwnd = create_ipaddress_control();
+    ok(!!hwnd, "Failed to create control.\n");
+
+    ret = SendMessageA(hwnd, IPM_SETADDRESS, 0, MAKEIPADDRESS(0, 1, 2, 3));
+    ok(ret == 1, "Unexpected return value %d.\n", ret);
+
+    EnumChildWindows(hwnd, test_child_enum_proc, (LPARAM)&child_enum);
+    ok(child_enum.count == 4, "Unexpected child count %u.\n", child_enum.count);
+
+    ret = SendMessageA(hwnd, IPM_SETADDRESS, 0, MAKEIPADDRESS(1, 2, 3, 4));
+    ok(ret == 1, "Unexpected return value %d.\n", ret);
+
+    ret = GetWindowTextA(hwnd, buff, ARRAY_SIZE(buff));
+    ok(ret == 7, "Unexpected return value %d.\n", ret);
+    ok(!strcmp(buff, "1.2.3.4"), "Unexpected address %s.\n", buff);
+
+    ret = SendMessageA(hwnd, IPM_CLEARADDRESS, 0, 0);
+    ok(ret, "Unexpected return value %d.\n", ret);
+
+    ret = GetWindowTextA(hwnd, buff, ARRAY_SIZE(buff));
+    ok(ret == 7, "Unexpected return value %d.\n", ret);
+    ok(!strcmp(buff, "0.0.0.0"), "Unexpected address %s.\n", buff);
+
+    for (i = 0; i < 4; ++i)
+    {
+        buff[0] = 1;
+        ret = GetWindowTextA(child_enum.fields[i], buff, ARRAY_SIZE(buff));
+        ok(ret == 0, "Unexpected return value %d.\n", ret);
+        ok(!*buff, "Unexpected field text %s.\n", buff);
+    }
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(ipaddress)
 {
     ULONG_PTR cookie;
@@ -152,6 +193,7 @@ START_TEST(ipaddress)
     test_get_set_text();
     test_IPM_SETFOCUS();
     test_WM_SETFOCUS();
+    test_IPM_CLEARADDRESS();
 
     if (!load_v6_module(&cookie, &ctxt))
         return;
@@ -159,6 +201,7 @@ START_TEST(ipaddress)
     test_get_set_text();
     test_IPM_SETFOCUS();
     test_WM_SETFOCUS();
+    test_IPM_CLEARADDRESS();
 
     unload_v6_module(cookie, ctxt);
 }
