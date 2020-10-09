@@ -29,11 +29,7 @@
 
 #include "werapi.h"
 #include "wine/test.h"
-
-static const WCHAR appcrash[] = {'A','P','P','C','R','A','S','H',0};
-static const WCHAR backslash[] = {'\\',0};
-static const WCHAR empty[] = {0};
-static const WCHAR winetest_wer[] = {'w','i','n','e','t','e','s','t','_','w','e','r','.','e','x','e',0};
+static const WCHAR winetest_wer[] = L"winetest_wer.exe";
 
 /* ###### */
 
@@ -51,7 +47,7 @@ static void test_WerAddExcludedApplication(void)
     hr = WerAddExcludedApplication(NULL, FALSE);
     ok(hr == E_INVALIDARG, "got 0x%x (expected E_INVALIDARG)\n", hr);
 
-    hr = WerAddExcludedApplication(empty, FALSE);
+    hr = WerAddExcludedApplication(L"", FALSE);
     ok(hr == E_INVALIDARG, "got 0x%x (expected E_INVALIDARG)\n", hr);
 
     hr = WerAddExcludedApplication(winetest_wer, FALSE);
@@ -74,7 +70,7 @@ static void test_WerAddExcludedApplication(void)
         hr = WerRemoveExcludedApplication(buffer, FALSE);
         ok(hr == S_OK, "got 0x%x (expected S_OK)\n", hr);
 
-        lstrcatW(buffer, backslash);
+        lstrcatW(buffer, L"\\");
         hr = WerAddExcludedApplication(buffer, FALSE);
         ok(hr == E_INVALIDARG, "got 0x%x (expected E_INVALIDARG)\n", hr);
 
@@ -106,7 +102,7 @@ static void test_WerRemoveExcludedApplication(void)
     hr = WerRemoveExcludedApplication(NULL, FALSE);
     ok(hr == E_INVALIDARG, "got 0x%x (expected E_INVALIDARG)\n", hr);
 
-    hr = WerRemoveExcludedApplication(empty, FALSE);
+    hr = WerRemoveExcludedApplication(L"", FALSE);
     ok(hr == E_INVALIDARG, "got 0x%x (expected E_INVALIDARG)\n", hr);
 
     hr = WerRemoveExcludedApplication(winetest_wer, FALSE);
@@ -130,7 +126,7 @@ static void test_WerRemoveExcludedApplication(void)
         hr = WerRemoveExcludedApplication(buffer, FALSE);
         ok(hr == S_OK, "got 0x%x (expected S_OK)\n", hr);
 
-        lstrcatW(buffer, backslash);
+        lstrcatW(buffer, L"\\");
         hr = WerAddExcludedApplication(buffer, FALSE);
         ok(hr == E_INVALIDARG, "got 0x%x (expected E_INVALIDARG)\n", hr);
         hr = WerRemoveExcludedApplication(buffer, FALSE);
@@ -152,7 +148,7 @@ static void  test_WerReportCloseHandle(void)
     HREPORT report;
 
     report = (void *) 0xdeadbeef;
-    hr = WerReportCreate(appcrash, WerReportCritical, NULL, &report);
+    hr = WerReportCreate(L"APPCRASH", WerReportCritical, NULL, &report);
     ok(hr == S_OK, "got 0x%x and %p (expected S_OK)\n", hr, report);
 
     if (!report) {
@@ -183,7 +179,7 @@ static void  test_WerReportCreate(void)
 
     report = (void *) 0xdeadbeef;
     /* test a simple valid case */
-    hr = WerReportCreate(appcrash, WerReportCritical, NULL, &report);
+    hr = WerReportCreate(L"APPCRASH", WerReportCritical, NULL, &report);
     ok(hr == S_OK, "got 0x%x and %p (expected S_OK)\n", hr, report);
 
     if (!report) {
@@ -195,7 +191,7 @@ static void  test_WerReportCreate(void)
     ok(hr == S_OK, "got 0x%x for %p (expected S_OK)\n", hr, report);
 
     /* the ptr to store the created handle is always needed */
-    hr = WerReportCreate(appcrash, WerReportCritical, NULL, NULL);
+    hr = WerReportCreate(L"APPCRASH", WerReportCritical, NULL, NULL);
     ok(hr == E_INVALIDARG, "got 0x%x (expected E_INVALIDARG)\n", hr);
 
     /* the event type must be a valid string */
@@ -204,13 +200,13 @@ static void  test_WerReportCreate(void)
     ok(hr == E_INVALIDARG, "got 0x%x and %p(expected E_INVALIDARG)\n", hr, report);
 
     report = (void *) 0xdeadbeef;
-    hr = WerReportCreate(empty, WerReportCritical, NULL, &report);
+    hr = WerReportCreate(L"", WerReportCritical, NULL, &report);
     ok(hr == E_INVALIDARG, "got 0x%x and %p(expected E_INVALIDARG)\n", hr, report);
 
     /* a valid WER_REPORT_TYPE works */
     for (i = 0; i < WerReportInvalid; i++) {
         report = (void *) 0xdeadbeef;
-        hr = WerReportCreate(appcrash, i, NULL, &report);
+        hr = WerReportCreate(L"APPCRASH", i, NULL, &report);
         ok(hr == S_OK, "%d: got 0x%x and %p (expected S_OK)\n", i, hr, report);
 
         hr = WerReportCloseHandle(report);
@@ -222,7 +218,7 @@ static void  test_WerReportCreate(void)
        but older windows versions did not check the report type and WerReportCreate always succeeded */
 
     report = (void *) 0xdeadbeef;
-    hr = WerReportCreate(appcrash, WerReportInvalid, NULL, &report);
+    hr = WerReportCreate(L"APPCRASH", WerReportInvalid, NULL, &report);
     ok((hr == E_INVALIDARG) | broken(hr == S_OK),
         "%d: got 0x%x and %p (expected E_INVALIDARG or a broken S_OK)\n", i, hr, report);
     if (hr == S_OK) {
@@ -231,7 +227,7 @@ static void  test_WerReportCreate(void)
     }
 
     report = (void *) 0xdeadbeef;
-    hr = WerReportCreate(appcrash, 42, NULL, &report);
+    hr = WerReportCreate(L"APPCRASH", 42, NULL, &report);
     ok((hr == E_INVALIDARG) | broken(hr == S_OK),
         "%d: got 0x%x and %p (expected E_INVALIDARG or a broken S_OK)\n", i, hr, report);
     if (hr == S_OK) {
@@ -243,7 +239,7 @@ static void  test_WerReportCreate(void)
     memset(table, 0, sizeof(table));
     for (i = 0; i < (ARRAY_SIZE(table) - 1); i++) {
         report = (void *) 0xdeadbeef;
-        hr = WerReportCreate(appcrash, WerReportCritical, NULL, &table[i]);
+        hr = WerReportCreate(L"APPCRASH", WerReportCritical, NULL, &table[i]);
         ok(hr == S_OK, "%02d: got 0x%x and %p (expected S_OK)\n", i, hr, table[i]);
     }
 
