@@ -744,6 +744,7 @@ static void test_Command(void)
     Command25 *command25;
     CommandTypeEnum cmd_type = adCmdUnspecified;
     BSTR cmd_text = (BSTR)"test";
+    _Connection *connection;
 
     hr = CoCreateInstance( &CLSID_Command, NULL, CLSCTX_INPROC_SERVER, &IID__Command, (void **)&command );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -796,6 +797,14 @@ static void test_Command(void)
     hr = _Command_get_CommandText( command,  &cmd_text );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( !wcscmp( L"test", cmd_text ), "got %p\n", wine_dbgstr_w( cmd_text ) );
+
+    connection = (_Connection*)0xdeadbeef;
+    hr = _Command_get_ActiveConnection( command,  &connection );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( connection == NULL, "got %p\n", connection );
+
+    hr = _Command_putref_ActiveConnection( command,  NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
 
     _Command_Release( command );
 }

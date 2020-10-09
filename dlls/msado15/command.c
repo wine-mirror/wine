@@ -35,6 +35,7 @@ struct command
     LONG             ref;
     CommandTypeEnum  type;
     BSTR             text;
+    _Connection     *connection;
 };
 
 static inline struct command *impl_from_Command( _Command *iface )
@@ -80,6 +81,7 @@ static ULONG WINAPI command_Release( _Command *iface )
     if (!ref)
     {
         TRACE( "destroying %p\n", command );
+        if (command->connection) _Connection_Release(command->connection);
         heap_free( command->text );
         heap_free( command );
     }
@@ -121,14 +123,23 @@ static HRESULT WINAPI command_get_Properties( _Command *iface, Properties **prop
 
 static HRESULT WINAPI command_get_ActiveConnection( _Command *iface, _Connection **connection )
 {
-    FIXME( "%p, %p\n", iface, connection );
-    return E_NOTIMPL;
+    struct command *command = impl_from_Command( iface );
+    TRACE( "%p, %p\n", iface, connection );
+
+    *connection = command->connection;
+    if (command->connection) _Connection_AddRef(command->connection);
+    return S_OK;
 }
 
 static HRESULT WINAPI command_putref_ActiveConnection( _Command *iface, _Connection *connection )
 {
-    FIXME( "%p, %p\n", iface, connection );
-    return E_NOTIMPL;
+    struct command *command = impl_from_Command( iface );
+    TRACE( "%p, %p\n", iface, connection );
+
+    if (command->connection) _Connection_Release(command->connection);
+    command->connection = connection;
+    if (command->connection) _Connection_AddRef(command->connection);
+    return S_OK;
 }
 
 static HRESULT WINAPI command_put_ActiveConnection( _Command *iface, VARIANT connection )
@@ -343,6 +354,7 @@ HRESULT Command_create( void **obj )
     command->Command_iface.lpVtbl = &command_vtbl;
     command->type = adCmdUnknown;
     command->text = NULL;
+    command->connection = NULL;
     command->ref = 1;
 
     *obj = &command->Command_iface;
