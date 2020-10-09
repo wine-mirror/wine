@@ -3194,6 +3194,10 @@ fail:
 void WINAPI LdrShutdownProcess(void)
 {
     TRACE("()\n");
+
+    if (!process_detaching)
+        RtlProcessFlsData( NtCurrentTeb()->FlsSlots, 1 );
+
     process_detaching = TRUE;
     process_detach();
 }
@@ -3228,6 +3232,8 @@ void WINAPI LdrShutdownThread(void)
     /* don't do any detach calls if process is exiting */
     if (process_detaching) return;
 
+    RtlProcessFlsData( NtCurrentTeb()->FlsSlots, 1 );
+
     RtlEnterCriticalSection( &loader_section );
     wm = get_modref( NtCurrentTeb()->Peb->ImageBaseAddress );
 
@@ -3254,7 +3260,7 @@ void WINAPI LdrShutdownThread(void)
         for (i = 0; i < tls_module_count; i++) RtlFreeHeap( GetProcessHeap(), 0, pointers[i] );
         RtlFreeHeap( GetProcessHeap(), 0, pointers );
     }
-    RtlProcessFlsData( NtCurrentTeb()->FlsSlots, 3 );
+    RtlProcessFlsData( NtCurrentTeb()->FlsSlots, 2 );
     NtCurrentTeb()->FlsSlots = NULL;
     RtlFreeHeap( GetProcessHeap(), 0, NtCurrentTeb()->TlsExpansionSlots );
     NtCurrentTeb()->TlsExpansionSlots = NULL;

@@ -374,7 +374,7 @@ NTSTATUS WINAPI DECLSPEC_HOTPATCH RtlFlsAlloc( PFLS_CALLBACK_FUNCTION callback, 
     }
 
     ++chunk->count;
-    chunk->callbacks[index].callback = callback ? callback : (void *)~(ULONG_PTR)0;
+    chunk->callbacks[index].callback = callback ? callback : (PFLS_CALLBACK_FUNCTION)~(ULONG_PTR)0;
 
     if ((*ret_index = fls_index_from_chunk_index( chunk_index, index )) > fls_data.fls_high_index)
         fls_data.fls_high_index = *ret_index;
@@ -390,6 +390,7 @@ NTSTATUS WINAPI DECLSPEC_HOTPATCH RtlFlsAlloc( PFLS_CALLBACK_FUNCTION callback, 
  */
 NTSTATUS WINAPI DECLSPEC_HOTPATCH RtlFlsFree( ULONG index )
 {
+    PFLS_CALLBACK_FUNCTION callback;
     unsigned int chunk_index, idx;
     FLS_INFO_CHUNK *chunk;
     LIST_ENTRY *entry;
@@ -404,7 +405,7 @@ NTSTATUS WINAPI DECLSPEC_HOTPATCH RtlFlsFree( ULONG index )
 
     chunk_index = fls_chunk_index_from_index( index, &idx );
     if (!(chunk = fls_data.fls_callback_chunks[chunk_index])
-            || !chunk->callbacks[idx].callback)
+            || !(callback = chunk->callbacks[idx].callback))
     {
         unlock_fls_data();
         return STATUS_INVALID_PARAMETER;
@@ -414,9 +415,15 @@ NTSTATUS WINAPI DECLSPEC_HOTPATCH RtlFlsFree( ULONG index )
     {
         TEB_FLS_DATA *fls = CONTAINING_RECORD(entry, TEB_FLS_DATA, fls_list_entry);
 
-        if (fls->fls_data_chunks[chunk_index])
+        if (fls->fls_data_chunks[chunk_index] && fls->fls_data_chunks[chunk_index][idx + 1])
         {
-            /* FIXME: call Fls callback */
+            if (callback != (void *)~(ULONG_PTR)0)
+            {
+                TRACE_(relay)("Calling FLS callback %p, arg %p.\n", callback,
+                        fls->fls_data_chunks[chunk_index][idx + 1]);
+
+                callback( fls->fls_data_chunks[chunk_index][idx + 1] );
+            }
             fls->fls_data_chunks[chunk_index][idx + 1] = NULL;
         }
     }
@@ -481,7 +488,7 @@ NTSTATUS WINAPI DECLSPEC_HOTPATCH RtlFlsGetValue( ULONG index, void **data )
 void WINAPI DECLSPEC_HOTPATCH RtlProcessFlsData( void *teb_fls_data, ULONG flags )
 {
     TEB_FLS_DATA *fls = teb_fls_data;
-    unsigned int i;
+    unsigned int i, index;
 
     TRACE_(thread)( "teb_fls_data %p, flags %#x.\n", teb_fls_data, flags );
 
@@ -494,6 +501,29 @@ void WINAPI DECLSPEC_HOTPATCH RtlProcessFlsData( void *teb_fls_data, ULONG flags
     if (flags & 1)
     {
         lock_fls_data();
+        for (i = 0; i < ARRAY_SIZE(fls->fls_data_chunks); ++i)
+        {
+            if (!fls->fls_data_chunks[i] || !fls_data.fls_callback_chunks[i]
+                    || !fls_data.fls_callback_chunks[i]->count)
+                continue;
+
+            for (index = 0; index < fls_chunk_size( i ); ++index)
+            {
+                PFLS_CALLBACK_FUNCTION callback = fls_data.fls_callback_chunks[i]->callbacks[index].callback;
+
+                if (!fls->fls_data_chunks[i][index + 1])
+                    continue;
+
+                if (callback && callback != (void *)~(ULONG_PTR)0)
+                {
+                    TRACE_(relay)("Calling FLS callback %p, arg %p.\n", callback,
+                            fls->fls_data_chunks[i][index + 1]);
+
+                    callback( fls->fls_data_chunks[i][index + 1] );
+                }
+                fls->fls_data_chunks[i][index + 1] = NULL;
+            }
+        }
         /* Not using RemoveEntryList() as Windows does not zero list entry here. */
         fls->fls_list_entry.Flink->Blink = fls->fls_list_entry.Blink;
         fls->fls_list_entry.Blink->Flink = fls->fls_list_entry.Flink;

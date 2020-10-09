@@ -223,8 +223,11 @@ static unsigned int check_linked_list(const LIST_ENTRY *le, const LIST_ENTRY *se
     return count;
 }
 
+static unsigned int test_fls_callback_call_count;
+
 static void WINAPI test_fls_callback(void *data)
 {
+    ++test_fls_callback_call_count;
 }
 
 static unsigned int test_fls_chunk_size(unsigned int chunk_index)
@@ -377,8 +380,11 @@ static void test_FiberLocalStorage(void)
             ok(status == STATUS_INVALID_PARAMETER, "Got unexpected status %#x.\n", status);
 
             g_fls_data->fls_callback_chunks[j]->callbacks[index].callback = test_fls_callback;
+            test_fls_callback_call_count = 0;
             status = pRtlFlsFree(fls_indices[0x10]);
             ok(!status, "Got unexpected status %#x.\n", status);
+            ok(test_fls_callback_call_count == 1, "Got unexpected callback call count %u.\n",
+                    test_fls_callback_call_count);
 
             ok(!fls_data->fls_data_chunks[j][0], "Got unexpected fls_data->fls_data_chunks[%u][0] %p.\n",
                     j, fls_data->fls_data_chunks[j][0]);
@@ -405,7 +411,7 @@ static void test_FiberLocalStorage(void)
             ok(val == (void *)0xdeadbeef, "Got unexpected val %p.\n", val);
             ok(!new_fls_data, "Got unexpected teb->FlsSlots %p.\n", new_fls_data);
 
-            status = pRtlFlsSetValue(fls_indices[1], NULL);
+            status = pRtlFlsSetValue(fls_indices[1], (void *)(ULONG_PTR)0x28);
             new_fls_data = teb->FlsSlots;
             ok(!status, "Got unexpected status %#x.\n", status);
             ok(!!new_fls_data, "Got unexpected teb->FlsSlots %p.\n", new_fls_data);
@@ -450,11 +456,15 @@ static void test_FiberLocalStorage(void)
             ok(result == WAIT_OBJECT_0, "Got unexpected result %u.\n", result);
             teb->FlsSlots = NULL;
 
+            test_fls_callback_call_count = 0;
             saved_entry = new_fls_data->fls_list_entry;
             pRtlProcessFlsData(new_fls_data, 1);
             ok(!teb->FlsSlots, "Got unexpected teb->FlsSlots %p.\n", teb->FlsSlots);
 
             teb->FlsSlots = fls_data;
+            ok(test_fls_callback_call_count == 1, "Got unexpected callback call count %u.\n",
+                    test_fls_callback_call_count);
+
             SetEvent(test_fiberlocalstorage_done_event);
             WaitForSingleObject(hthread, INFINITE);
             CloseHandle(hthread);
@@ -467,7 +477,13 @@ static void test_FiberLocalStorage(void)
                     saved_entry.Blink);
             size = HeapSize(GetProcessHeap(), 0, new_fls_data);
             ok(size == sizeof(*new_fls_data), "Got unexpected size %p.\n", (void *)size);
+            test_fls_callback_call_count = 0;
+            i = test_fls_chunk_index_from_index(fls_indices[1], &index);
+            new_fls_data->fls_data_chunks[i][index + 1] = (void *)(ULONG_PTR)0x28;
             pRtlProcessFlsData(new_fls_data, 2);
+            ok(!test_fls_callback_call_count, "Got unexpected callback call count %u.\n",
+                    test_fls_callback_call_count);
+
             if (0)
             {
                 /* crashes on Windows. */
@@ -676,7 +692,7 @@ static void test_FiberLocalStorageCallback(PFLS_CALLBACK_FUNCTION cbfunc)
 
     ret = pFlsFree( fls );
     ok(ret, "FlsFree failed with error %u\n", GetLastError() );
-    todo_wine ok( cbCount == 1, "Wrong callback count: %d\n", cbCount );
+    ok( cbCount == 1, "Wrong callback count: %d\n", cbCount );
 
     /* Test that callback is not executed if value is NULL */
     cbCount = 0;
@@ -741,14 +757,14 @@ static void test_FiberLocalStorageWithFibers(PFLS_CALLBACK_FUNCTION cbfunc)
     fls_value_to_set = val1;
     pDeleteFiber(fibers[1]);
     ok(fiberCount == 0, "Wrong fiber count: %d\n", fiberCount);
-    todo_wine ok(cbCount == 1, "Wrong callback count: %d\n", cbCount);
+    ok(cbCount == 1, "Wrong callback count: %d\n", cbCount);
 
     fiberCount = 0;
     cbCount = 0;
     fls_value_to_set = val2;
     pFlsFree(fls_index_to_set);
     ok(fiberCount == 0, "Wrong fiber count: %d\n", fiberCount);
-    todo_wine ok(cbCount == 2, "Wrong callback count: %d\n", cbCount);
+    ok(cbCount == 2, "Wrong callback count: %d\n", cbCount);
 
     fiberCount = 0;
     cbCount = 0;

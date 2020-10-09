@@ -2318,12 +2318,34 @@ static VOID WINAPI fls_callback(PVOID lpFlsData)
     InterlockedIncrement(&fls_callback_count);
 }
 
+static LIST_ENTRY *fls_list_head;
+
+static unsigned int check_linked_list(const LIST_ENTRY *le, const LIST_ENTRY *search_entry, unsigned int *index_found)
+{
+    unsigned int count = 0;
+    LIST_ENTRY *entry;
+
+    *index_found = ~0;
+
+    for (entry = le->Flink; entry != le; entry = entry->Flink)
+    {
+        if (entry == search_entry)
+        {
+            ok(*index_found == ~0, "Duplicate list entry.\n");
+            *index_found = count;
+        }
+        ++count;
+    }
+    return count;
+}
+
 static BOOL WINAPI dll_entry_point(HINSTANCE hinst, DWORD reason, LPVOID param)
 {
     static LONG noop_thread_started;
-    static DWORD fls_index = FLS_OUT_OF_INDEXES;
+    static DWORD fls_index = FLS_OUT_OF_INDEXES, fls_index2 = FLS_OUT_OF_INDEXES;
     static int fls_count = 0;
     static int thread_detach_count = 0;
+    static int thread_count;
     DWORD ret;
 
     ok(!inside_loader_lock, "inside_loader_lock should not be set\n");
@@ -2352,8 +2374,11 @@ static BOOL WINAPI dll_entry_point(HINSTANCE hinst, DWORD reason, LPVOID param)
             bret = pFlsSetValue(fls_index, (void*) 0x31415);
             ok(bret, "FlsSetValue failed\n");
             fls_count++;
-        }
 
+            fls_index2 = pFlsAlloc(&fls_callback);
+            ok(fls_index2 != FLS_OUT_OF_INDEXES, "FlsAlloc returned %d\n", ret);
+        }
+        ++thread_count;
         break;
     case DLL_PROCESS_DETACH:
     {
@@ -2423,18 +2448,12 @@ todo_wine
             void* value;
             SetLastError(0xdeadbeef);
             value = pFlsGetValue(fls_index);
-            todo_wine
-            {
-                ok(broken(value == (void*) 0x31415) || /* Win2k3 */
-                   value == NULL, "FlsGetValue returned %p, expected NULL\n", value);
-            }
+            ok(broken(value == (void*) 0x31415) || /* Win2k3 */
+                value == NULL, "FlsGetValue returned %p, expected NULL\n", value);
             ok(GetLastError() == ERROR_SUCCESS, "FlsGetValue failed with error %u\n", GetLastError());
-            todo_wine
-            {
-                ok(broken(fls_callback_count == thread_detach_count) || /* Win2k3 */
-                   fls_callback_count == thread_detach_count + 1,
-                   "wrong FLS callback count %d, expected %d\n", fls_callback_count, thread_detach_count + 1);
-            }
+            ok(broken(fls_callback_count == thread_detach_count) || /* Win2k3 */
+                fls_callback_count == thread_detach_count + 1,
+                "wrong FLS callback count %d, expected %d\n", fls_callback_count, thread_detach_count + 1);
         }
         if (pFlsFree)
         {
@@ -2443,11 +2462,8 @@ todo_wine
             ret = pFlsFree(fls_index);
             ok(ret, "FlsFree failed with error %u\n", GetLastError());
             fls_index = FLS_OUT_OF_INDEXES;
-            todo_wine
-            {
-                ok(fls_callback_count == fls_count,
-                   "wrong FLS callback count %d, expected %d\n", fls_callback_count, fls_count);
-            }
+            ok(fls_callback_count == fls_count,
+                "wrong FLS callback count %d, expected %d\n", fls_callback_count, fls_count);
         }
 
         ok(attached_thread_count >= 2, "attached thread count should be >= 2\n");
@@ -2611,6 +2627,8 @@ todo_wine
     case DLL_THREAD_ATTACH:
         trace("dll: %p, DLL_THREAD_ATTACH, %p\n", hinst, param);
 
+        ++thread_count;
+
         ret = pRtlDllShutdownInProgress();
         ok(!ret, "RtlDllShutdownInProgress returned %d\n", ret);
 
@@ -2638,6 +2656,7 @@ todo_wine
         break;
     case DLL_THREAD_DETACH:
         trace("dll: %p, DLL_THREAD_DETACH, %p\n", hinst, param);
+        --thread_count;
         thread_detach_count++;
 
         ret = pRtlDllShutdownInProgress();
@@ -2656,15 +2675,25 @@ todo_wine
          */
         if (pFlsGetValue && fls_index != FLS_OUT_OF_INDEXES)
         {
+            unsigned int index, count;
             void* value;
+            BOOL bret;
+
             SetLastError(0xdeadbeef);
             value = pFlsGetValue(fls_index);
-            todo_wine
-            {
-                ok(broken(value == (void*) 0x31415) || /* Win2k3 */
-                   !value, "FlsGetValue returned %p, expected NULL\n", value);
-            }
+            ok(broken(value == (void*) 0x31415) || /* Win2k3 */
+                !value, "FlsGetValue returned %p, expected NULL\n", value);
             ok(GetLastError() == ERROR_SUCCESS, "FlsGetValue failed with error %u\n", GetLastError());
+
+            bret = pFlsSetValue(fls_index2, (void*) 0x31415);
+            ok(bret, "FlsSetValue failed\n");
+
+            if (fls_list_head)
+            {
+                count = check_linked_list(fls_list_head, &NtCurrentTeb()->FlsSlots->fls_list_entry, &index);
+                ok(count <= thread_count, "Got unexpected count %u, thread_count %u.\n", count, thread_count);
+                ok(index == ~0, "Got unexpected index %u.\n", index);
+            }
         }
 
         break;
@@ -2688,6 +2717,12 @@ static void child_process(const char *dll_name, DWORD target_offset)
     DWORD_PTR affinity;
 
     trace("phase %d: writing %p at %#x\n", test_dll_phase, dll_entry_point, target_offset);
+
+    if (pFlsAlloc)
+    {
+        fls_list_head = NtCurrentTeb()->Peb->FlsListHead.Flink ? &NtCurrentTeb()->Peb->FlsListHead
+                : NtCurrentTeb()->FlsSlots->fls_list_entry.Flink;
+    }
 
     SetLastError(0xdeadbeef);
     mutex = CreateMutexW(NULL, FALSE, NULL);
