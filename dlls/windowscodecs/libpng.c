@@ -61,7 +61,6 @@ MAKE_FUNCPTR(png_get_io_ptr);
 MAKE_FUNCPTR(png_get_pHYs);
 MAKE_FUNCPTR(png_get_PLTE);
 MAKE_FUNCPTR(png_get_tRNS);
-MAKE_FUNCPTR(png_read_end);
 MAKE_FUNCPTR(png_read_image);
 MAKE_FUNCPTR(png_read_info);
 MAKE_FUNCPTR(png_set_bgr);
@@ -111,7 +110,6 @@ static void *load_libpng(void)
         LOAD_FUNCPTR(png_get_pHYs);
         LOAD_FUNCPTR(png_get_PLTE);
         LOAD_FUNCPTR(png_get_tRNS);
-        LOAD_FUNCPTR(png_read_end);
         LOAD_FUNCPTR(png_read_image);
         LOAD_FUNCPTR(png_read_info);
         LOAD_FUNCPTR(png_set_bgr);
@@ -183,7 +181,6 @@ HRESULT CDECL png_decoder_initialize(struct decoder *iface, IStream *stream, str
     struct png_decoder *This = impl_from_decoder(iface);
     png_structp png_ptr;
     png_infop info_ptr;
-    png_infop end_info;
     jmp_buf jmpbuf;
     HRESULT hr = E_FAIL;
     int color_type, bit_depth;
@@ -213,13 +210,6 @@ HRESULT CDECL png_decoder_initialize(struct decoder *iface, IStream *stream, str
     if (!info_ptr)
     {
         ppng_destroy_read_struct(&png_ptr, NULL, NULL);
-        return E_FAIL;
-    }
-
-    end_info = ppng_create_info_struct(png_ptr);
-    if (!end_info)
-    {
-        ppng_destroy_read_struct(&png_ptr, &info_ptr, NULL);
         return E_FAIL;
     }
 
@@ -443,7 +433,7 @@ HRESULT CDECL png_decoder_initialize(struct decoder *iface, IStream *stream, str
     free(row_pointers);
     row_pointers = NULL;
 
-    ppng_read_end(png_ptr, end_info);
+    /* png_read_end intentionally not called to not seek to the end of the file */
 
     st->flags = WICBitmapDecoderCapabilityCanDecodeAllImages |
                 WICBitmapDecoderCapabilityCanDecodeSomeImages |
@@ -455,7 +445,7 @@ HRESULT CDECL png_decoder_initialize(struct decoder *iface, IStream *stream, str
     hr = S_OK;
 
 end:
-    ppng_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
+    ppng_destroy_read_struct(&png_ptr, &info_ptr, NULL);
     free(row_pointers);
     if (FAILED(hr))
     {
