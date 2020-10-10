@@ -720,7 +720,7 @@ static HRESULT WINAPI upnpnat_get_StaticPortMappingCollection(IUPnPNAT *iface, I
     FIXME("%p, %p\n", This, collection);
     if(collection)
         *collection = NULL;
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI upnpnat_get_DynamicPortMappingCollection(IUPnPNAT *iface, IDynamicPortMappingCollection **collection)
