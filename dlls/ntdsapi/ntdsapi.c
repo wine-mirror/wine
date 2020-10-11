@@ -130,10 +130,9 @@ DWORD WINAPI DsMakeSpnW(LPCWSTR svc_class, LPCWSTR svc_name,
 
     if (inst_port)
     {
-        static const WCHAR percentU[] = {'%','u',0};
         *p = ':';
         p++;
-        wsprintfW(p, percentU, inst_port);
+        wsprintfW(p, L"%u", inst_port);
         p += lstrlenW(p);
     }
 

@@ -33,15 +33,15 @@ static void test_DsMakeSpn(void)
     DWORD ret;
     WCHAR spn[256];
     DWORD spn_length;
-    static const WCHAR wszServiceClass[] = {'c','l','a','s','s',0};
-    static const WCHAR wszServiceHost[] = {'h','o','s','t',0};
-    static const WCHAR wszInstanceName[] = {'i','n','s','t','a','n','c','e',0};
-    static const WCHAR wszReferrer[] = {'r','e','f','e','r','r','e','r',0};
-    static const WCHAR wszSpn1[] = {'c','l','a','s','s','/','h','o','s','t',0};
-    static const WCHAR wszSpn2[] = {'c','l','a','s','s','/','i','n','s','t','a','n','c','e','/','h','o','s','t',0};
-    static const WCHAR wszSpn3[] = {'c','l','a','s','s','/','i','n','s','t','a','n','c','e',':','5','5','5','/','h','o','s','t',0};
-    static const WCHAR wszSpn4[] = {'c','l','a','s','s','/','i','n','s','t','a','n','c','e',':','5','5','5','/','h','o','s','t',0};
-    static const WCHAR wszSpn5[] = {'c','l','a','s','s','/','h','o','s','t',':','5','5','5',0};
+    static const WCHAR wszServiceClass[] = L"class";
+    static const WCHAR wszServiceHost[] = L"host";
+    static const WCHAR wszInstanceName[] = L"instance";
+    static const WCHAR wszReferrer[] = L"referrer";
+    static const WCHAR wszSpn1[] = L"class/host";
+    static const WCHAR wszSpn2[] = L"class/instance/host";
+    static const WCHAR wszSpn3[] = L"class/instance:555/host";
+    static const WCHAR wszSpn4[] = L"class/instance:555/host";
+    static const WCHAR wszSpn5[] = L"class/host:555";
 
     spn[0] = '\0';
 
@@ -86,9 +86,9 @@ static void test_DsMakeSpn(void)
 
 static void test_DsClientMakeSpnForTargetServer(void)
 {
-    static const WCHAR classW[] = {'c','l','a','s','s',0};
-    static const WCHAR hostW[] = {'h','o','s','t','.','d','o','m','a','i','n',0};
-    static const WCHAR resultW[] = {'c','l','a','s','s','/','h','o','s','t','.','d','o','m','a','i','n',0};
+    static const WCHAR classW[] = L"class";
+    static const WCHAR hostW[] = L"host.domain";
+    static const WCHAR resultW[] = L"class/host.domain";
     DWORD ret, len;
     WCHAR buf[256];
 
