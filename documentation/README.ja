@@ -19,6 +19,14 @@ READMEというファイル]を含むディレクトリ）から、以下を実�
 ./configure
 make
 
+それから次のいずれか、Wineをインストールするか:
+
+make install
+
+または、Wineをビルドディレクトリから直接実行してください:
+
+./wine notepad
+
 "wine program"のようにプログラムを実行してください。更なる情報や
 問題解決については、このファイルの残りの部分、Wineのmanページや、
 特にhttps://www.winehq.orgで見つかる豊富な情報を読んでください。
