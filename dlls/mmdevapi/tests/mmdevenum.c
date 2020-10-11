@@ -218,6 +218,13 @@ static void test_ActivateAudioInterfaceAsync(void)
 
     h_mmdev = LoadLibraryA("mmdevapi.dll");
 
+    pActivateAudioInterfaceAsync = (void*)GetProcAddress(h_mmdev, "ActivateAudioInterfaceAsync");
+    if (!pActivateAudioInterfaceAsync)
+    {
+        win_skip("ActivateAudioInterfaceAsync is not supported on Win <= 7\n");
+        return;
+    }
+
     /* some applications look this up by ordinal */
     pActivateAudioInterfaceAsync = (void*)GetProcAddress(h_mmdev, (char *)17);
     ok(pActivateAudioInterfaceAsync != NULL, "mmdevapi.ActivateAudioInterfaceAsync missing!\n");

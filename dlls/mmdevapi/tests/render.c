@@ -154,8 +154,11 @@ static void test_audioclient(void)
 
     hr = IMMDevice_Activate(dev, &IID_IAudioClient2, CLSCTX_INPROC_SERVER,
             NULL, (void**)&ac2);
-    ok(hr == S_OK, "IAudioClient2 Activation failed with %08x\n", hr);
-    IAudioClient2_Release(ac2);
+    ok(hr == S_OK ||
+       broken(hr == E_NOINTERFACE) /* win7 */,
+       "IAudioClient2 Activation failed with %08x\n", hr);
+    if(hr == S_OK)
+        IAudioClient2_Release(ac2);
 
     hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
             NULL, (void**)&ac);
@@ -262,39 +265,42 @@ static void test_audioclient(void)
     }
 
     hr = IAudioClient_QueryInterface(ac, &IID_IAudioClient2, (void**)&ac2);
-    ok(hr == S_OK, "Failed to query IAudioClient2 interface: %08x\n", hr);
+    if (hr == S_OK)
+    {
+        hr = IAudioClient2_IsOffloadCapable(ac2, AudioCategory_BackgroundCapableMedia, NULL);
+        ok(hr == E_INVALIDARG, "IsOffloadCapable gave wrong error: %08x\n", hr);
 
-    hr = IAudioClient2_IsOffloadCapable(ac2, AudioCategory_BackgroundCapableMedia, NULL);
-    ok(hr == E_INVALIDARG, "IsOffloadCapable gave wrong error: %08x\n", hr);
+        hr = IAudioClient2_IsOffloadCapable(ac2, AudioCategory_BackgroundCapableMedia, &offload_capable);
+        ok(hr == S_OK, "IsOffloadCapable failed: %08x\n", hr);
 
-    hr = IAudioClient2_IsOffloadCapable(ac2, AudioCategory_BackgroundCapableMedia, &offload_capable);
-    ok(hr == S_OK, "IsOffloadCapable failed: %08x\n", hr);
+        hr = IAudioClient2_SetClientProperties(ac2, NULL);
+        ok(hr == E_POINTER, "SetClientProperties with NULL props gave wrong error: %08x\n", hr);
 
-    hr = IAudioClient2_SetClientProperties(ac2, NULL);
-    ok(hr == E_POINTER, "SetClientProperties with NULL props gave wrong error: %08x\n", hr);
+        client_props.cbSize = 0;
+        client_props.bIsOffload = FALSE;
+        client_props.eCategory = AudioCategory_BackgroundCapableMedia;
+        client_props.Options = 0;
 
-    client_props.cbSize = 0;
-    client_props.bIsOffload = FALSE;
-    client_props.eCategory = AudioCategory_BackgroundCapableMedia;
-    client_props.Options = 0;
+        hr = IAudioClient2_SetClientProperties(ac2, &client_props);
+        ok(hr == E_INVALIDARG, "SetClientProperties with invalid cbSize gave wrong error: %08x\n", hr);
 
-    hr = IAudioClient2_SetClientProperties(ac2, &client_props);
-    ok(hr == E_INVALIDARG, "SetClientProperties with invalid cbSize gave wrong error: %08x\n", hr);
+        client_props.cbSize = sizeof(client_props);
+        client_props.bIsOffload = TRUE;
 
-    client_props.cbSize = sizeof(client_props);
-    client_props.bIsOffload = TRUE;
+        hr = IAudioClient2_SetClientProperties(ac2, &client_props);
+        if(!offload_capable)
+            ok(hr == AUDCLNT_E_ENDPOINT_OFFLOAD_NOT_CAPABLE, "SetClientProperties(offload) gave wrong error: %08x\n", hr);
+        else
+            ok(hr == S_OK, "SetClientProperties(offload) failed: %08x\n", hr);
 
-    hr = IAudioClient2_SetClientProperties(ac2, &client_props);
-    if(!offload_capable)
-        ok(hr == AUDCLNT_E_ENDPOINT_OFFLOAD_NOT_CAPABLE, "SetClientProperties(offload) gave wrong error: %08x\n", hr);
+        client_props.bIsOffload = FALSE;
+        hr = IAudioClient2_SetClientProperties(ac2, &client_props);
+        ok(hr == S_OK, "SetClientProperties failed: %08x\n", hr);
+
+        IAudioClient2_Release(ac2);
+    }
     else
-        ok(hr == S_OK, "SetClientProperties(offload) failed: %08x\n", hr);
-
-    client_props.bIsOffload = FALSE;
-    hr = IAudioClient2_SetClientProperties(ac2, &client_props);
-    ok(hr == S_OK, "SetClientProperties failed: %08x\n", hr);
-
-    IAudioClient2_Release(ac2);
+        win_skip("IAudioClient2 is not present on Win <= 7\n");
 
     hr = IAudioClient_QueryInterface(ac, &IID_IAudioClient3, (void**)&ac3);
     ok(hr == S_OK ||
