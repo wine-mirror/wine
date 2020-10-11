@@ -26,7 +26,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(plugplay);
 
-static WCHAR plugplayW[] = {'P','l','u','g','P','l','a','y',0};
+static WCHAR plugplayW[] = L"PlugPlay";
 
 static SERVICE_STATUS_HANDLE service_handle;
 static HANDLE stop_event;
