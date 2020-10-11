@@ -4029,6 +4029,7 @@ static void output_stub_makefile( struct makefile *make )
     }
 
     output_filenames( targets );
+    output_filenames( make->clean_files );
     output( ":\n" );
     output( "\t@cd %s && $(MAKE) %s/$@\n", get_relative_path( make->obj_dir, "" ), make->obj_dir );
     output( ".PHONY:" );
