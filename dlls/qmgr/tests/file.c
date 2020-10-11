@@ -28,11 +28,8 @@
 #include "bits.h"
 
 /* Globals used by many tests */
-static const WCHAR test_remoteName[] = {'r','e','m','o','t','e', 0};
-static const WCHAR test_localName[] = {'l','o','c','a','l', 0};
 static WCHAR test_localFile[MAX_PATH];
 static  WCHAR test_remoteUrl[MAX_PATH];
-static const WCHAR test_displayName[] = {'T','e','s','t', 0};
 static IBackgroundCopyJob *test_job;
 static IBackgroundCopyManager *test_manager;
 static IEnumBackgroundCopyFiles *test_enumFiles;
@@ -76,10 +73,10 @@ static HRESULT test_create_manager(void)
         IBackgroundCopyJob *job;
         GUID jobId;
 
-        hres = IBackgroundCopyManager_CreateJob(manager, test_displayName, BG_JOB_TYPE_DOWNLOAD, &jobId, &job);
+        hres = IBackgroundCopyManager_CreateJob(manager, L"Test", BG_JOB_TYPE_DOWNLOAD, &jobId, &job);
         if (hres == S_OK)
         {
-            hres = addFileHelper(job, test_localName, test_remoteName);
+            hres = addFileHelper(job, L"local", L"remote");
             if (hres != S_OK)
                 win_skip("AddFile() with file:// protocol failed. Tests will be skipped.\n");
             IBackgroundCopyJob_Release(job);
@@ -106,7 +103,7 @@ static BOOL setup(void)
     if(hres != S_OK)
         return FALSE;
 
-    hres = IBackgroundCopyManager_CreateJob(test_manager, test_displayName,
+    hres = IBackgroundCopyManager_CreateJob(test_manager, L"Test",
             BG_JOB_TYPE_DOWNLOAD, &test_jobId, &test_job);
     if(hres != S_OK)
     {
@@ -114,7 +111,7 @@ static BOOL setup(void)
         return FALSE;
     }
 
-    if (addFileHelper(test_job, test_localName, test_remoteName) != S_OK
+    if (addFileHelper(test_job, L"local", L"remote") != S_OK
         || IBackgroundCopyJob_EnumFiles(test_job, &test_enumFiles) != S_OK)
     {
         IBackgroundCopyJob_Release(test_job);

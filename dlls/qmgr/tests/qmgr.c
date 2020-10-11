@@ -50,7 +50,6 @@ static HRESULT test_create_manager(void)
 static void test_CreateJob(void)
 {
     /* Job information */
-    static const WCHAR copyNameW[] = {'T', 'e', 's', 't', 0};
     IBackgroundCopyJob* job = NULL;
     GUID tmpId;
     HRESULT hres;
@@ -64,9 +63,7 @@ static void test_CreateJob(void)
     ok(hres == S_OK, "got 0x%08x\n", hres);
 
     /* Create bits job */
-    hres = IBackgroundCopyManager_CreateJob(manager, copyNameW,
-                                            BG_JOB_TYPE_DOWNLOAD, &tmpId,
-                                            &job);
+    hres = IBackgroundCopyManager_CreateJob(manager, L"Test", BG_JOB_TYPE_DOWNLOAD, &tmpId, &job);
     ok(hres == S_OK, "CreateJob failed: %08x\n", hres);
 
     res = IBackgroundCopyJob_Release(job);
@@ -78,8 +75,6 @@ static void test_EnumJobs(void)
 {
     /* Job Enumerator */
     IEnumBackgroundCopyJobs* enumJobs;
-
-    static const WCHAR copyNameW[] = {'T', 'e', 's', 't', 0};
     IBackgroundCopyManager *manager = NULL;
     IBackgroundCopyJob *job = NULL;
     HRESULT hres;
@@ -91,9 +86,7 @@ static void test_EnumJobs(void)
                             (void **) &manager);
     ok(hres == S_OK, "got 0x%08x\n", hres);
 
-    hres = IBackgroundCopyManager_CreateJob(manager, copyNameW,
-                                            BG_JOB_TYPE_DOWNLOAD, &tmpId,
-                                            &job);
+    hres = IBackgroundCopyManager_CreateJob(manager, L"Test", BG_JOB_TYPE_DOWNLOAD, &tmpId, &job);
     ok(hres == S_OK, "got 0x%08x\n", hres);
 
     hres = IBackgroundCopyManager_EnumJobs(manager, 0, &enumJobs);
@@ -107,7 +100,6 @@ static void test_EnumJobs(void)
 
 static void run_child(WCHAR *secret)
 {
-    static const WCHAR format[] = {'%','s',' ','q','m','g','r',' ','%','s', 0};
     WCHAR cmdline[MAX_PATH];
     PROCESS_INFORMATION info;
     STARTUPINFOW startup;
@@ -115,7 +107,7 @@ static void run_child(WCHAR *secret)
     memset(&startup, 0, sizeof startup);
     startup.cb = sizeof startup;
 
-    wsprintfW(cmdline, format, progname, secret);
+    wsprintfW(cmdline, L"%s qmgr %s", progname, secret);
     ok(CreateProcessW(NULL, cmdline, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info), "CreateProcess\n");
     wait_child_process(info.hProcess);
     ok(CloseHandle(info.hProcess), "CloseHandle\n");
@@ -144,7 +136,6 @@ static void do_child(const char *secretA)
 
 static void test_globalness(void)
 {
-    static const WCHAR format[] = {'t','e','s','t','_','%','u', 0};
     WCHAR secretName[MAX_PATH];
     IEnumBackgroundCopyJobs* enumJobs;
     IBackgroundCopyManager *manager = NULL;
@@ -154,7 +145,7 @@ static void test_globalness(void)
                             (void **) &manager);
     ok(hres == S_OK, "got 0x%08x\n", hres);
 
-    wsprintfW(secretName, format, GetTickCount());
+    wsprintfW(secretName, L"test_%u", GetTickCount());
     run_child(secretName);
 
     hres = IBackgroundCopyManager_EnumJobs(manager, 0, &enumJobs);

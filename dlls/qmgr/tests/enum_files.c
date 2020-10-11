@@ -29,11 +29,6 @@
 
 /* Globals used by many tests */
 #define NUM_FILES 2             /* At least two.  */
-static const WCHAR test_remoteNameA[] = {'r','e','m','o','t','e','A', 0};
-static const WCHAR test_localNameA[] = {'l','o','c','a','l','A', 0};
-static const WCHAR test_remoteNameB[] = {'r','e','m','o','t','e','B', 0};
-static const WCHAR test_localNameB[] = {'l','o','c','a','l','B', 0};
-static const WCHAR test_displayName[] = {'T', 'e', 's', 't', 0};
 static const ULONG test_fileCount = NUM_FILES;
 static IBackgroundCopyJob *test_job;
 static IBackgroundCopyManager *test_manager;
@@ -79,10 +74,10 @@ static HRESULT test_create_manager(void)
         IBackgroundCopyJob *job;
         GUID jobId;
 
-        hres = IBackgroundCopyManager_CreateJob(manager, test_displayName, BG_JOB_TYPE_DOWNLOAD, &jobId, &job);
+        hres = IBackgroundCopyManager_CreateJob(manager, L"Test", BG_JOB_TYPE_DOWNLOAD, &jobId, &job);
         if (hres == S_OK)
         {
-            hres = addFileHelper(job, test_localNameA, test_remoteNameA);
+            hres = addFileHelper(job, L"localA", L"remoteA");
             if (hres != S_OK)
                 win_skip("AddFile() with file:// protocol failed. Tests will be skipped.\n");
             IBackgroundCopyJob_Release(job);
@@ -105,17 +100,16 @@ static BOOL setup(void)
     if(hres != S_OK)
         return FALSE;
 
-    hres = IBackgroundCopyManager_CreateJob(test_manager, test_displayName,
-                                            BG_JOB_TYPE_DOWNLOAD, &test_jobId,
-                                            &test_job);
+    hres = IBackgroundCopyManager_CreateJob(test_manager, L"Test", BG_JOB_TYPE_DOWNLOAD,
+                                            &test_jobId, &test_job);
     if(hres != S_OK)
     {
         IBackgroundCopyManager_Release(test_manager);
         return FALSE;
     }
 
-    if (addFileHelper(test_job, test_localNameA, test_remoteNameA) != S_OK
-        || addFileHelper(test_job, test_localNameB, test_remoteNameB) != S_OK
+    if (addFileHelper(test_job, L"localA", L"remoteA") != S_OK
+        || addFileHelper(test_job, L"localB", L"remoteB") != S_OK
         || IBackgroundCopyJob_EnumFiles(test_job, &test_enumFiles) != S_OK)
     {
         IBackgroundCopyJob_Release(test_job);

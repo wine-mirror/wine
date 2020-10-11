@@ -105,7 +105,6 @@ VOID WINAPI
 ServiceMain(DWORD dwArgc, LPWSTR *lpszArgv)
 {
     HANDLE fileTxThread;
-    static const WCHAR qmgr_nameW[] = {'B','I','T','S',0};
     DWORD threadId;
     TRACE("\n");
 
@@ -115,7 +114,7 @@ ServiceMain(DWORD dwArgc, LPWSTR *lpszArgv)
         return;
     }
 
-    status_handle = RegisterServiceCtrlHandlerExW(qmgr_nameW, ServiceHandler, NULL);
+    status_handle = RegisterServiceCtrlHandlerExW(L"BITS", ServiceHandler, NULL);
     if (!status_handle) {
         ERR("failed to register handler: %u\n", GetLastError());
         return;

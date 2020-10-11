@@ -26,8 +26,6 @@
 #include "bits.h"
 
 /* Globals used by many tests */
-static const WCHAR test_displayNameA[] = {'T','e','s','t','A', 0};
-static const WCHAR test_displayNameB[] = {'T','e','s','t','B', 0};
 static IBackgroundCopyManager *test_manager;
 static IBackgroundCopyJob *test_jobA;
 static IBackgroundCopyJob *test_jobB;
@@ -54,9 +52,8 @@ static BOOL setup(void)
     if(hres != S_OK)
         return FALSE;
 
-    hres = IBackgroundCopyManager_CreateJob(test_manager, test_displayNameA,
-                                            BG_JOB_TYPE_DOWNLOAD, &test_jobIdA,
-                                            &test_jobA);
+    hres = IBackgroundCopyManager_CreateJob(test_manager, L"TestA", BG_JOB_TYPE_DOWNLOAD,
+                                            &test_jobIdA, &test_jobA);
     if(hres != S_OK)
         return FALSE;
 
@@ -64,9 +61,8 @@ static BOOL setup(void)
     if(hres != S_OK)
         return FALSE;
 
-    hres = IBackgroundCopyManager_CreateJob(test_manager, test_displayNameB,
-                                            BG_JOB_TYPE_DOWNLOAD, &test_jobIdB,
-                                            &test_jobB);
+    hres = IBackgroundCopyManager_CreateJob(test_manager, L"TestB", BG_JOB_TYPE_DOWNLOAD,
+                                            &test_jobIdB, &test_jobB);
     if(hres != S_OK)
         return FALSE;
 

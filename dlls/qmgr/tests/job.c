@@ -29,7 +29,6 @@
 #include "bits2_5.h"
 
 /* Globals used by many tests */
-static const WCHAR test_displayName[] = {'T', 'e', 's', 't', 0};
 static WCHAR test_remotePathA[MAX_PATH];
 static WCHAR test_remotePathB[MAX_PATH];
 static WCHAR test_localPathA[MAX_PATH];
@@ -62,7 +61,7 @@ static HRESULT test_create_manager(void)
 static void init_paths(void)
 {
     WCHAR tmpDir[MAX_PATH];
-    WCHAR prefix[] = {'q', 'm', 'g', 'r', 0};
+    WCHAR prefix[] = L"qmgr";
 
     GetTempPathW(MAX_PATH, tmpDir);
 
@@ -89,8 +88,7 @@ static BOOL setup(void)
     if(hres != S_OK)
         return FALSE;
 
-    hres = IBackgroundCopyManager_CreateJob(test_manager, test_displayName,
-                                            test_type, &test_jobId, &test_job);
+    hres = IBackgroundCopyManager_CreateJob(test_manager, L"Test", test_type, &test_jobId, &test_job);
     if(hres != S_OK)
     {
         IBackgroundCopyManager_Release(test_manager);
@@ -119,7 +117,7 @@ static BOOL check_bits20(void)
                             (void **)&manager);
     if (hres != S_OK) return FALSE;
 
-    hres = IBackgroundCopyManager_CreateJob(manager, test_displayName, test_type, &test_jobId, &job);
+    hres = IBackgroundCopyManager_CreateJob(manager, L"Test", test_type, &test_jobId, &job);
     if (hres != S_OK)
     {
         IBackgroundCopyManager_Release(manager);
@@ -152,7 +150,7 @@ static BOOL check_bits25(void)
                             (void **)&manager);
     if (hres != S_OK) return FALSE;
 
-    hres = IBackgroundCopyManager_CreateJob(manager, test_displayName, test_type, &test_jobId, &job);
+    hres = IBackgroundCopyManager_CreateJob(manager, L"Test", test_type, &test_jobId, &job);
     if (hres != S_OK)
     {
         IBackgroundCopyManager_Release(manager);
@@ -203,7 +201,7 @@ static void test_GetName(void)
 
     hres = IBackgroundCopyJob_GetDisplayName(test_job, &displayName);
     ok(hres == S_OK, "GetName failed: %08x\n", hres);
-    ok(lstrcmpW(displayName, test_displayName) == 0, "Got incorrect type\n");
+    ok(lstrcmpW(displayName, L"Test") == 0, "Got incorrect type\n");
     CoTaskMemFree(displayName);
 }
 
@@ -390,7 +388,6 @@ static void test_CompleteLocal(void)
 /* Test a complete transfer for local files */
 static void test_CompleteLocalURL(void)
 {
-    static const WCHAR prot[] = {'f','i','l','e',':','/','/', 0};
     static const int timeout_sec = 30;
     WCHAR *urlA, *urlB;
     HRESULT hres;
@@ -414,9 +411,9 @@ static void test_CompleteLocalURL(void)
         return;
     }
 
-    lstrcpyW(urlA, prot);
+    lstrcpyW(urlA, L"file://");
     lstrcatW(urlA, test_remotePathA);
-    lstrcpyW(urlB, prot);
+    lstrcpyW(urlB, L"file://");
     lstrcatW(urlB, test_remotePathB);
 
     hres = IBackgroundCopyJob_AddFile(test_job, urlA, test_localPathA);
@@ -506,10 +503,7 @@ static void test_Cancel(void)
 
 static void test_HttpOptions(void)
 {
-    static const WCHAR urlW[] =
-        {'h','t','t','p',':','/','/','t','e','s','t','.','w','i','n','e','h','q','.','o','r','g','/',0};
-    static const WCHAR winetestW[] =
-        {'W','i','n','e',':',' ','t','e','s','t','\r','\n',0};
+    static const WCHAR winetestW[] = L"Wine: test\r\n";
     static const unsigned int timeout = 30;
     HRESULT hr;
     IBackgroundCopyJobHttpOptions *options;
@@ -520,7 +514,7 @@ static void test_HttpOptions(void)
     ULONG flags, orig_flags;
 
     DeleteFileW(test_localPathA);
-    hr = IBackgroundCopyJob_AddFile(test_job, urlW, test_localPathA);
+    hr = IBackgroundCopyJob_AddFile(test_job, L"http://test.winehq.org/", test_localPathA);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IBackgroundCopyJob_QueryInterface(test_job, &IID_IBackgroundCopyJobHttpOptions, (void **)&options);
