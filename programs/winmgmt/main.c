@@ -24,7 +24,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winmgmt);
 
-static WCHAR winmgmtW[] = {'W','i','n','m','g','m','t',0};
+static WCHAR winmgmtW[] = L"Winmgmt";
 
 static SERVICE_STATUS_HANDLE service_handle;
 static HANDLE stop_event;
