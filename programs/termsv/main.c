@@ -24,7 +24,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(termsv);
 
-static WCHAR termserviceW[] = {'T','e','r','m','S','e','r','v','i','c','e',0};
+static WCHAR termserviceW[] = L"TermService";
 
 static SERVICE_STATUS_HANDLE service_handle;
 static HANDLE stop_event;
