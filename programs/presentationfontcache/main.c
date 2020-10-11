@@ -24,7 +24,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(fontcache);
 
-static WCHAR fontcacheW[] = {'F','o','n','t','C','a','c','h','e','3','.','0','.','0','.','0',0};
+static WCHAR fontcacheW[] = L"FontCache3.0.0.0";
 
 static SERVICE_STATUS_HANDLE service_handle;
 static HANDLE stop_event;
