@@ -25,7 +25,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(spoolsv);
 
-static WCHAR spoolerW[] = {'S','p','o','o','l','e','r',0};
+static WCHAR spoolerW[] = L"Spooler";
 
 static SERVICE_STATUS_HANDLE service_handle;
 static HANDLE stop_event;
