@@ -35,28 +35,18 @@ static BOOL check_native_ie(void)
     void* buf;
     BOOL ret = TRUE;
     LPWORD translation;
-
-    static const WCHAR browseui_dllW[] = {'b','r','o','w','s','e','u','i','.','d','l','l',0};
-    static const WCHAR wineW[] = {'W','i','n','e',0};
-    static const WCHAR translationW[] =
-        {'\\','V','a','r','F','i','l','e','I','n','f','o',
-         '\\','T','r','a','n','s','l','a','t','i','o','n',0};
-    static const WCHAR file_desc_fmtW[] =
-        {'\\','S','t','r','i','n','g','F','i','l','e','I','n','f','o',
-         '\\','%','0','4','x','%','0','4','x',
-         '\\','F','i','l','e','D','e','s','c','r','i','p','t','i','o','n',0};
     WCHAR file_desc_strW[48];
 
-    size = GetFileVersionInfoSizeW(browseui_dllW, &handle);
+    size = GetFileVersionInfoSizeW(L"browseui.dll", &handle);
     if(!size)
         return TRUE;
 
     buf = HeapAlloc(GetProcessHeap(), 0, size);
-    GetFileVersionInfoW(browseui_dllW, 0, size,buf);
-    if (VerQueryValueW(buf, translationW, (void **)&translation, &bytes))
+    GetFileVersionInfoW(L"browseui.dll", 0, size,buf);
+    if (VerQueryValueW(buf, L"\\VarFileInfo\\Translation", (void **)&translation, &bytes))
     {
-        wsprintfW(file_desc_strW, file_desc_fmtW, translation[0], translation[1]);
-        ret = !VerQueryValueW(buf, file_desc_strW, (void**)&file_desc, &bytes) || !wcsstr(file_desc, wineW);
+        wsprintfW(file_desc_strW, L"\\StringFileInfo\\%04x%04x\\FileDescription", translation[0], translation[1]);
+        ret = !VerQueryValueW(buf, file_desc_strW, (void**)&file_desc, &bytes) || !wcsstr(file_desc, L"Wine");
     }
 
     HeapFree(GetProcessHeap(), 0, buf);
@@ -78,13 +68,10 @@ static DWORD register_iexplore(BOOL doregister)
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE prev, WCHAR *cmdline, int show)
 {
-    static const WCHAR regserverW[] = {'r','e','g','s','e','r','v','e','r',0};
-    static const WCHAR unregserverW[] = {'u','n','r','e','g','s','e','r','v','e','r',0};
-
     if(*cmdline == '-' || *cmdline == '/') {
-        if(!wcsicmp(cmdline+1, regserverW))
+        if(!wcsicmp(cmdline+1, L"regserver"))
             return register_iexplore(TRUE);
-        if(!wcsicmp(cmdline+1, unregserverW))
+        if(!wcsicmp(cmdline+1, L"unregserver"))
             return register_iexplore(FALSE);
     }
 
