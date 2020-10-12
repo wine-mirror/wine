@@ -1053,6 +1053,11 @@ void WCMD_run_program (WCHAR *command, BOOL called)
   firstParam = WCMD_parameter(command, 0, NULL, FALSE, TRUE);
   if (!firstParam) return;
 
+  if (!firstParam[0]) {
+      errorlevel = 0;
+      return;
+  }
+
   /* Calculate the search path and stem to search for */
   if (wcspbrk (firstParam, delims) == NULL) {  /* No explicit path given, search path */
     static const WCHAR curDir[] = {'.',';','\0'};

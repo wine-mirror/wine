@@ -3149,6 +3149,9 @@ echo %ErrorLevel% should be 7
 if errorlevel 7 echo setting var worked too well, bad
 call :setError 3
 echo %ErrorLevel% should still be 7
+rem Verify that (call ) sets errorlevel to 0
+(call )
+if errorlevel 1 echo errorlevel should have been 0
 
 echo ------------ Testing GOTO ------------
 if a==a goto dest1
