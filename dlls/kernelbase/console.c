@@ -326,9 +326,10 @@ BOOL WINAPI AllocConsole(void)
 {
     SECURITY_ATTRIBUTES inheritable_attr = { sizeof(inheritable_attr), NULL, TRUE };
     STARTUPINFOW app_si, console_si;
-    WCHAR buffer[1024], cmd[256];
+    HANDLE server, console = NULL;
+    WCHAR buffer[1024], cmd[256], conhost_path[MAX_PATH];
     PROCESS_INFORMATION pi;
-    HANDLE event, console;
+    void *redir;
     BOOL ret;
 
     TRACE("()\n");
@@ -342,6 +343,8 @@ BOOL WINAPI AllocConsole(void)
         SetLastError( ERROR_ACCESS_DENIED );
         return FALSE;
     }
+
+    if (!(server = create_console_server()) || !(console = create_console_reference( server ))) goto error;
 
     GetStartupInfoW(&app_si);
 
@@ -372,30 +375,27 @@ BOOL WINAPI AllocConsole(void)
         console_si.lpTitle = buffer;
     }
 
-    if (!(event = CreateEventW( &inheritable_attr, TRUE, FALSE, NULL ))) goto error;
+    swprintf( conhost_path, ARRAY_SIZE(conhost_path), L"%s\\conhost.exe", system_dir );
+    swprintf( cmd, ARRAY_SIZE(cmd),  L"\"%s\" --server 0x%x", conhost_path, condrv_handle( server ));
+    Wow64DisableWow64FsRedirection( &redir );
+    ret = CreateProcessW( conhost_path, cmd, NULL, NULL, TRUE, DETACHED_PROCESS, NULL, NULL, &console_si, &pi );
+    Wow64RevertWow64FsRedirection( redir );
 
-    swprintf( cmd, ARRAY_SIZE(cmd),  L"wineconsole --use-event=%ld", (DWORD_PTR)event );
-    if ((ret = CreateProcessW( NULL, cmd, NULL, NULL, TRUE, DETACHED_PROCESS, NULL, NULL, &console_si, &pi )))
-    {
-        HANDLE wait_handles[2] = { event, pi.hProcess };
-        ret = WaitForMultipleObjects( ARRAY_SIZE(wait_handles), wait_handles, FALSE, INFINITE ) == WAIT_OBJECT_0;
-        CloseHandle( pi.hThread );
-        CloseHandle( pi.hProcess );
-    }
-    CloseHandle( event );
-    if (!ret || !init_console_std_handles( !(app_si.dwFlags & STARTF_USESTDHANDLES) )) goto error;
-    console = CreateFileW( L"CONIN$", GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE, 0, NULL, OPEN_EXISTING, 0, 0 );
-    if (console == INVALID_HANDLE_VALUE) goto error;
+    if (!ret || !create_console_connection( console)) goto error;
+    if (!init_console_std_handles( !(app_si.dwFlags & STARTF_USESTDHANDLES) )) goto error;
+
     RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle = console;
-
     TRACE( "Started wineconsole pid=%08x tid=%08x\n", pi.dwProcessId, pi.dwThreadId );
 
+    CloseHandle( server );
     RtlLeaveCriticalSection( &console_section );
     SetLastError( ERROR_SUCCESS );
     return TRUE;
 
 error:
     ERR("Can't allocate console\n");
+    NtClose( console );
+    NtClose( server );
     FreeConsole();
     RtlLeaveCriticalSection( &console_section );
     return FALSE;
