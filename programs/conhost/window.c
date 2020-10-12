@@ -2310,6 +2310,72 @@ static LRESULT WINAPI window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
                            max( HIWORD(lparam) / console->active->font.height, 20 ));
         break;
 
+    case WM_HSCROLL:
+        {
+            int win_width = console->active->win.right - console->active->win.left + 1;
+            int x = console->active->win.left;
+
+            switch (LOWORD(wparam))
+            {
+            case SB_PAGEUP:     x -= 8;              break;
+            case SB_PAGEDOWN:   x += 8;              break;
+            case SB_LINEUP:     x--;                 break;
+            case SB_LINEDOWN:   x++;                 break;
+            case SB_THUMBTRACK: x = HIWORD(wparam);  break;
+            default:                                 break;
+            }
+            x = min( max( x, 0 ), console->active->width - win_width );
+            if (x != console->active->win.left)
+            {
+                console->active->win.left  = x;
+                console->active->win.right = x + win_width - 1;
+                update_window( console );
+            }
+            break;
+        }
+
+    case WM_MOUSEWHEEL:
+        if (console->active->height <= console->active->win.bottom - console->active->win.top + 1)
+        {
+            record_mouse_input(console,  get_cell(console, lparam), wparam, MOUSE_WHEELED);
+            break;
+        }
+        /* else fallthrough */
+    case WM_VSCROLL:
+        {
+            int win_height = console->active->win.bottom - console->active->win.top + 1;
+            int y = console->active->win.top;
+
+            if (msg == WM_MOUSEWHEEL)
+            {
+                UINT scroll_lines = 3;
+                SystemParametersInfoW( SPI_GETWHEELSCROLLLINES, 0, &scroll_lines, 0 );
+                scroll_lines *= -GET_WHEEL_DELTA_WPARAM(wparam) / WHEEL_DELTA;
+                y += scroll_lines;
+            }
+            else
+            {
+                switch (LOWORD(wparam))
+                {
+                case SB_PAGEUP:     y -= 8;              break;
+                case SB_PAGEDOWN:   y += 8;              break;
+                case SB_LINEUP:     y--;                 break;
+                case SB_LINEDOWN:   y++;                 break;
+                case SB_THUMBTRACK: y = HIWORD(wparam);  break;
+                default:                                 break;
+                }
+            }
+
+            y = min( max( y, 0 ), console->active->height - win_height );
+            if (y != console->active->win.top)
+            {
+                console->active->win.top    = y;
+                console->active->win.bottom = y + win_height - 1;
+                update_window( console );
+            }
+            break;
+        }
+
     case WM_SYSCOMMAND:
         switch (wparam)
         {
