@@ -87,12 +87,11 @@ msgstr "지원 정보"
 #: programs/regedit/regedit.rc:349 programs/regedit/regedit.rc:362
 #: programs/taskmgr/taskmgr.rc:442 programs/taskmgr/taskmgr.rc:517
 #: programs/winecfg/winecfg.rc:213 programs/winecfg/winecfg.rc:223
-#: programs/wineconsole/wineconsole.rc:133 programs/winefile/winefile.rc:127
-#: programs/winefile/winefile.rc:150 programs/winefile/winefile.rc:180
-#: programs/winemine/winemine.rc:73 programs/winemine/winemine.rc:84
-#: programs/winemine/winemine.rc:98 programs/wordpad/wordpad.rc:215
-#: programs/wordpad/wordpad.rc:226 programs/wordpad/wordpad.rc:244
-#: programs/wordpad/wordpad.rc:257
+#: programs/winefile/winefile.rc:127 programs/winefile/winefile.rc:150
+#: programs/winefile/winefile.rc:180 programs/winemine/winemine.rc:73
+#: programs/winemine/winemine.rc:84 programs/winemine/winemine.rc:98
+#: programs/wordpad/wordpad.rc:215 programs/wordpad/wordpad.rc:226
+#: programs/wordpad/wordpad.rc:244 programs/wordpad/wordpad.rc:257
 msgid "OK"
 msgstr "확인"
 
@@ -193,11 +192,11 @@ msgstr "설치(&I)"
 #: programs/regedit/regedit.rc:350 programs/regedit/regedit.rc:363
 #: programs/taskmgr/taskmgr.rc:443 programs/taskmgr/taskmgr.rc:518
 #: programs/wineboot/wineboot.rc:34 programs/winecfg/winecfg.rc:214
-#: programs/winecfg/winecfg.rc:224 programs/wineconsole/wineconsole.rc:134
-#: programs/winefile/winefile.rc:128 programs/winefile/winefile.rc:151
-#: programs/winefile/winefile.rc:181 programs/winemine/winemine.rc:99
-#: programs/wordpad/wordpad.rc:216 programs/wordpad/wordpad.rc:227
-#: programs/wordpad/wordpad.rc:245 programs/wordpad/wordpad.rc:258
+#: programs/winecfg/winecfg.rc:224 programs/winefile/winefile.rc:128
+#: programs/winefile/winefile.rc:151 programs/winefile/winefile.rc:181
+#: programs/winemine/winemine.rc:99 programs/wordpad/wordpad.rc:216
+#: programs/wordpad/wordpad.rc:227 programs/wordpad/wordpad.rc:245
+#: programs/wordpad/wordpad.rc:258
 msgid "Cancel"
 msgstr "취소"
 
@@ -649,7 +648,6 @@ msgid "&Source"
 msgstr "원본(&S)"
 
 #: dlls/comdlg32/comdlg32.rc:251 programs/conhost/conhost.rc:76
-#: programs/wineconsole/wineconsole.rc:83
 msgid "Font"
 msgstr "글꼴"
 
@@ -799,7 +797,7 @@ msgstr "모두 바꾸기(&A)"
 #: dlls/comdlg32/comdlg32.rc:363 dlls/comdlg32/comdlg32.rc:403
 #: dlls/ieframe/ieframe.rc:42 dlls/shdoclc/shdoclc.rc:61
 #: dlls/shell32/shell32.rc:108 programs/clock/clock.rc:31
-#: programs/conhost/conhost.rc:34 programs/wineconsole/wineconsole.rc:30
+#: programs/conhost/conhost.rc:34
 msgid "&Properties"
 msgstr "속성(&P)"
 
@@ -3309,8 +3307,7 @@ msgstr "잘라내기(&T)"
 #: dlls/shdoclc/shdoclc.rc:133 dlls/shdoclc/shdoclc.rc:160
 #: dlls/shdoclc/shdoclc.rc:184 dlls/shell32/shell32.rc:102
 #: dlls/user32/user32.rc:61 programs/conhost/conhost.rc:36
-#: programs/wineconsole/wineconsole.rc:32 programs/winhlp32/winhlp32.rc:40
-#: programs/wordpad/wordpad.rc:113
+#: programs/winhlp32/winhlp32.rc:40 programs/wordpad/wordpad.rc:113
 msgid "&Copy"
 msgstr "복사(&C)"
 
@@ -3379,7 +3376,7 @@ msgid "Sync"
 msgstr "동기화"
 
 #: dlls/hhctrl.ocx/hhctrl.rc:50 programs/conhost/conhost.rc:51
-#: programs/wineconsole/wineconsole.rc:58 programs/wordpad/wordpad.rc:166
+#: programs/wordpad/wordpad.rc:166
 msgid "Options"
 msgstr "옵션"
 
@@ -8728,8 +8725,7 @@ msgstr "원본:"
 #: dlls/shdoclc/shdoclc.rc:82 dlls/shdoclc/shdoclc.rc:95
 #: dlls/shdoclc/shdoclc.rc:135 dlls/shdoclc/shdoclc.rc:162
 #: dlls/shdoclc/shdoclc.rc:186 dlls/user32/user32.rc:62
-#: programs/conhost/conhost.rc:37 programs/wineconsole/wineconsole.rc:33
-#: programs/wordpad/wordpad.rc:114
+#: programs/conhost/conhost.rc:37 programs/wordpad/wordpad.rc:114
 msgid "&Paste"
 msgstr "붙여넣기(&P)"
 
@@ -10778,7 +10774,7 @@ msgid "&Move"
 msgstr "이동(&M)"
 
 #: dlls/user32/user32.rc:32 dlls/user32/user32.rc:45
-#: programs/conhost/conhost.rc:84 programs/wineconsole/wineconsole.rc:91
+#: programs/conhost/conhost.rc:84
 msgid "&Size"
 msgstr "크기(&S)"
 
@@ -12912,167 +12908,167 @@ msgstr ""
 "잘못된 형식의 숫자 - 십진수(12)나,\n"
 "16진수(0x34)나 팔진수(056)중의 하나이어야 합니다.\n"
 
-#: programs/conhost/conhost.rc:54 programs/wineconsole/wineconsole.rc:61
+#: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "커서 크기"
 
-#: programs/conhost/conhost.rc:55 programs/wineconsole/wineconsole.rc:62
+#: programs/conhost/conhost.rc:55
 msgid "&Small"
 msgstr "작게(&S)"
 
-#: programs/conhost/conhost.rc:56 programs/wineconsole/wineconsole.rc:63
+#: programs/conhost/conhost.rc:56
 msgid "&Medium"
 msgstr "중간(&M)"
 
-#: programs/conhost/conhost.rc:57 programs/wineconsole/wineconsole.rc:64
+#: programs/conhost/conhost.rc:57
 msgid "&Large"
 msgstr "크게(&L)"
 
-#: programs/conhost/conhost.rc:59 programs/wineconsole/wineconsole.rc:66
+#: programs/conhost/conhost.rc:59
 msgid "Command history"
 msgstr "명령 기록"
 
-#: programs/conhost/conhost.rc:60 programs/wineconsole/wineconsole.rc:67
+#: programs/conhost/conhost.rc:60
 msgid "&Buffer size:"
 msgstr "버퍼 크기(&B):"
 
-#: programs/conhost/conhost.rc:63 programs/wineconsole/wineconsole.rc:70
+#: programs/conhost/conhost.rc:63
 msgid "&Remove duplicates"
 msgstr "중복 제거(&R)"
 
-#: programs/conhost/conhost.rc:65 programs/wineconsole/wineconsole.rc:72
+#: programs/conhost/conhost.rc:65
 msgid "Popup menu"
 msgstr "팝업 메뉴"
 
-#: programs/conhost/conhost.rc:66 programs/wineconsole/wineconsole.rc:73
+#: programs/conhost/conhost.rc:66
 msgid "&Control"
 msgstr "컨트롤(&C)"
 
-#: programs/conhost/conhost.rc:67 programs/wineconsole/wineconsole.rc:74
+#: programs/conhost/conhost.rc:67
 msgid "S&hift"
 msgstr "쉬프트(&H)"
 
-#: programs/conhost/conhost.rc:69 programs/wineconsole/wineconsole.rc:76
+#: programs/conhost/conhost.rc:69
 msgid "Console"
 msgstr "콘솔"
 
-#: programs/conhost/conhost.rc:70 programs/wineconsole/wineconsole.rc:77
+#: programs/conhost/conhost.rc:70
 msgid "&Quick Edit mode"
 msgstr "빠른 편집 모드(&Q)"
 
-#: programs/conhost/conhost.rc:71 programs/wineconsole/wineconsole.rc:78
+#: programs/conhost/conhost.rc:71
 msgid "&Insert mode"
 msgstr "삽입 모드(&I)"
 
-#: programs/conhost/conhost.rc:79 programs/wineconsole/wineconsole.rc:86
+#: programs/conhost/conhost.rc:79
 msgid "&Font"
 msgstr "글꼴(&F)"
 
-#: programs/conhost/conhost.rc:81 programs/wineconsole/wineconsole.rc:88
+#: programs/conhost/conhost.rc:81
 msgid "&Color"
 msgstr "색상(&C)"
 
-#: programs/conhost/conhost.rc:92 programs/wineconsole/wineconsole.rc:99
+#: programs/conhost/conhost.rc:92
 msgid "Configuration"
 msgstr "설정"
 
-#: programs/conhost/conhost.rc:95 programs/wineconsole/wineconsole.rc:102
+#: programs/conhost/conhost.rc:95
 msgid "Buffer zone"
 msgstr "버퍼 존"
 
-#: programs/conhost/conhost.rc:96 programs/wineconsole/wineconsole.rc:103
+#: programs/conhost/conhost.rc:96
 msgid "&Width:"
 msgstr "너비(&W):"
 
-#: programs/conhost/conhost.rc:99 programs/wineconsole/wineconsole.rc:106
+#: programs/conhost/conhost.rc:99
 msgid "&Height:"
 msgstr "높이(&H):"
 
-#: programs/conhost/conhost.rc:103 programs/wineconsole/wineconsole.rc:110
+#: programs/conhost/conhost.rc:103
 msgid "Window size"
 msgstr "창 크기"
 
-#: programs/conhost/conhost.rc:104 programs/wineconsole/wineconsole.rc:111
+#: programs/conhost/conhost.rc:104
 msgid "W&idth:"
 msgstr "너비(&I) :"
 
-#: programs/conhost/conhost.rc:107 programs/wineconsole/wineconsole.rc:114
+#: programs/conhost/conhost.rc:107
 msgid "H&eight:"
 msgstr "높이(&E) :"
 
-#: programs/conhost/conhost.rc:111 programs/wineconsole/wineconsole.rc:118
+#: programs/conhost/conhost.rc:111
 msgid "End of program"
 msgstr "프로그램의 끝"
 
-#: programs/conhost/conhost.rc:112 programs/wineconsole/wineconsole.rc:119
+#: programs/conhost/conhost.rc:112
 msgid "&Close console"
 msgstr "콘솔 닫기(&C)"
 
-#: programs/conhost/conhost.rc:114 programs/wineconsole/wineconsole.rc:121
+#: programs/conhost/conhost.rc:114
 msgid "Edition"
 msgstr "에디션"
 
-#: programs/conhost/conhost.rc:120 programs/wineconsole/wineconsole.rc:127
+#: programs/conhost/conhost.rc:120
 msgid "Console parameters"
 msgstr "콘솔 매개변수"
 
-#: programs/conhost/conhost.rc:123 programs/wineconsole/wineconsole.rc:130
+#: programs/conhost/conhost.rc:123
 msgid "Retain these settings for later sessions"
 msgstr "나중의 세션을 위해 설정 보존"
 
-#: programs/conhost/conhost.rc:124 programs/wineconsole/wineconsole.rc:131
+#: programs/conhost/conhost.rc:124
 msgid "Modify only current session"
 msgstr "오직 현재의 세션만 변경"
 
 #: programs/conhost/conhost.rc:32 programs/notepad/notepad.rc:41
-#: programs/regedit/regedit.rc:43 programs/wineconsole/wineconsole.rc:28
-#: programs/winhlp32/winhlp32.rc:39 programs/wordpad/wordpad.rc:42
+#: programs/regedit/regedit.rc:43 programs/winhlp32/winhlp32.rc:39
+#: programs/wordpad/wordpad.rc:42
 msgid "&Edit"
 msgstr "편집(&E)"
 
-#: programs/conhost/conhost.rc:33 programs/wineconsole/wineconsole.rc:29
+#: programs/conhost/conhost.rc:33
 msgid "Set &Defaults"
 msgstr "기본으로 설정(&D)"
 
-#: programs/conhost/conhost.rc:35 programs/wineconsole/wineconsole.rc:31
+#: programs/conhost/conhost.rc:35
 msgid "&Mark"
 msgstr "마크(&M)"
 
-#: programs/conhost/conhost.rc:38 programs/wineconsole/wineconsole.rc:34
+#: programs/conhost/conhost.rc:38
 msgid "&Select all"
 msgstr "모두 선택(&S)"
 
-#: programs/conhost/conhost.rc:39 programs/wineconsole/wineconsole.rc:35
+#: programs/conhost/conhost.rc:39
 msgid "Sc&roll"
 msgstr "스크롤(&R)"
 
-#: programs/conhost/conhost.rc:40 programs/wineconsole/wineconsole.rc:36
+#: programs/conhost/conhost.rc:40
 msgid "S&earch"
 msgstr "검색(&E)"
 
-#: programs/conhost/conhost.rc:43 programs/wineconsole/wineconsole.rc:39
+#: programs/conhost/conhost.rc:43
 msgid "Setup - Default settings"
 msgstr "설치 - 기본 설정"
 
-#: programs/conhost/conhost.rc:44 programs/wineconsole/wineconsole.rc:40
+#: programs/conhost/conhost.rc:44
 msgid "Setup - Current settings"
 msgstr "설치 - 현재 설정"
 
-#: programs/conhost/conhost.rc:45 programs/wineconsole/wineconsole.rc:41
+#: programs/conhost/conhost.rc:45
 msgid "Configuration error"
 msgstr "설정 오류"
 
-#: programs/conhost/conhost.rc:46 programs/wineconsole/wineconsole.rc:42
+#: programs/conhost/conhost.rc:46
 msgid ""
 "The size of the screen buffer must be greater than or equal to the size of "
 "the window."
 msgstr "스크린 버퍼 크기는 Windows 크기보다 크거나 같아야 합니다."
 
-#: programs/conhost/conhost.rc:41 programs/wineconsole/wineconsole.rc:37
+#: programs/conhost/conhost.rc:41
 msgid "Each character is %1!u! pixels wide and %2!u! pixels high"
 msgstr "각각의 글자는 %1!u!  픽셀 너비에 %2!u! 픽셀 높이를 가집니다"
 
-#: programs/conhost/conhost.rc:42 programs/wineconsole/wineconsole.rc:38
+#: programs/conhost/conhost.rc:42
 msgid "This is a test"
 msgstr "이것은 테스트입니다"
 
@@ -16637,61 +16633,13 @@ msgstr "메뉴 하이라이트"
 msgid "Menu Bar"
 msgstr "메뉴바"
 
-#: programs/wineconsole/wineconsole.rc:44
-msgid "wineconsole: Couldn't parse event id\n"
-msgstr "wineconsole: 이벤트 id를 붙여 넣을 수 없습니다\n"
-
-#: programs/wineconsole/wineconsole.rc:45
-msgid "wineconsole: Invalid backend\n"
-msgstr "wineconsole: 올바르지 않은 백엔드\n"
-
-#: programs/wineconsole/wineconsole.rc:46
-msgid "wineconsole: Unrecognized command line option\n"
-msgstr "wineconsole: 이해할 수 없는 명령 라인 옵션\n"
-
-#: programs/wineconsole/wineconsole.rc:47
-msgid "Starts a program in a Wine console\n"
-msgstr "Wine 콘솔에서 프로그램 시작\n"
-
-#: programs/wineconsole/wineconsole.rc:48
+#: programs/wineconsole/wineconsole.rc:29
 msgid ""
 "wineconsole: Starting program %s failed.\n"
 "The command is invalid.\n"
 msgstr ""
 "wineconsole: 프로그램 %s 시작 실패.\n"
 "이 명령은 올바르지 않습니다.\n"
-
-#: programs/wineconsole/wineconsole.rc:50
-msgid ""
-"\n"
-"Usage:\n"
-"  wineconsole [options] <command>\n"
-"\n"
-"Options:\n"
-msgstr ""
-"\n"
-"사용법:\n"
-"  wineconsole [옵션] <명령>\n"
-"\n"
-"옵션:\n"
-
-#: programs/wineconsole/wineconsole.rc:51
-msgid "  <command>                The Wine program to launch in the console.\n"
-msgstr "  <명령>                 The Wine 프로그램은 콘솔을 통해서 시작됨.\n"
-
-#: programs/wineconsole/wineconsole.rc:52
-msgid ""
-"\n"
-"Example:\n"
-"  wineconsole cmd\n"
-"Starts the Wine command prompt in a Wine console.\n"
-"\n"
-msgstr ""
-"\n"
-"예:\n"
-"  wineconsole cmd\n"
-"Wine 콘솔에서 Wine 명령 프롬프트 시작.\n"
-"\n"
 
 #: programs/winedbg/winedbg.rc:50 programs/winedbg/winedbg.rc:38
 msgid "Program Error"

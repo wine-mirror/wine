@@ -8,10 +8,6 @@ wineconsole \- The Wine console
 .B wineconsole
 is the Wine console manager, used to run console commands and applications. It allows running the
 console either in the current terminal (\fIcurses\fR) or in a newly made window (\fIuser\fR).
-.SH "OPTIONS"
-.IP \fB\-\-backend=\fR{\fIuser\fR|\fIcurses\fR}
-If \fIuser\fR is chosen, a new window will be created for the console. The \fIcurses\fR option will make
-wineconsole try to setup the current terminal as a Wine console.
 .SH BUGS
 Bugs can be reported on the
 .UR https://bugs.winehq.org

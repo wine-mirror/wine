@@ -88,12 +88,11 @@ msgstr "Támogatási információ"
 #: programs/regedit/regedit.rc:349 programs/regedit/regedit.rc:362
 #: programs/taskmgr/taskmgr.rc:442 programs/taskmgr/taskmgr.rc:517
 #: programs/winecfg/winecfg.rc:213 programs/winecfg/winecfg.rc:223
-#: programs/wineconsole/wineconsole.rc:133 programs/winefile/winefile.rc:127
-#: programs/winefile/winefile.rc:150 programs/winefile/winefile.rc:180
-#: programs/winemine/winemine.rc:73 programs/winemine/winemine.rc:84
-#: programs/winemine/winemine.rc:98 programs/wordpad/wordpad.rc:215
-#: programs/wordpad/wordpad.rc:226 programs/wordpad/wordpad.rc:244
-#: programs/wordpad/wordpad.rc:257
+#: programs/winefile/winefile.rc:127 programs/winefile/winefile.rc:150
+#: programs/winefile/winefile.rc:180 programs/winemine/winemine.rc:73
+#: programs/winemine/winemine.rc:84 programs/winemine/winemine.rc:98
+#: programs/wordpad/wordpad.rc:215 programs/wordpad/wordpad.rc:226
+#: programs/wordpad/wordpad.rc:244 programs/wordpad/wordpad.rc:257
 msgid "OK"
 msgstr "OK"
 
@@ -196,11 +195,11 @@ msgstr "&Telepítés"
 #: programs/regedit/regedit.rc:350 programs/regedit/regedit.rc:363
 #: programs/taskmgr/taskmgr.rc:443 programs/taskmgr/taskmgr.rc:518
 #: programs/wineboot/wineboot.rc:34 programs/winecfg/winecfg.rc:214
-#: programs/winecfg/winecfg.rc:224 programs/wineconsole/wineconsole.rc:134
-#: programs/winefile/winefile.rc:128 programs/winefile/winefile.rc:151
-#: programs/winefile/winefile.rc:181 programs/winemine/winemine.rc:99
-#: programs/wordpad/wordpad.rc:216 programs/wordpad/wordpad.rc:227
-#: programs/wordpad/wordpad.rc:245 programs/wordpad/wordpad.rc:258
+#: programs/winecfg/winecfg.rc:224 programs/winefile/winefile.rc:128
+#: programs/winefile/winefile.rc:151 programs/winefile/winefile.rc:181
+#: programs/winemine/winemine.rc:99 programs/wordpad/wordpad.rc:216
+#: programs/wordpad/wordpad.rc:227 programs/wordpad/wordpad.rc:245
+#: programs/wordpad/wordpad.rc:258
 msgid "Cancel"
 msgstr "Mégse"
 
@@ -669,7 +668,6 @@ msgid "&Source"
 msgstr "Fo&rrás"
 
 #: dlls/comdlg32/comdlg32.rc:251 programs/conhost/conhost.rc:76
-#: programs/wineconsole/wineconsole.rc:83
 msgid "Font"
 msgstr "Betûtípus"
 
@@ -819,7 +817,7 @@ msgstr "M&indent cserél"
 #: dlls/comdlg32/comdlg32.rc:363 dlls/comdlg32/comdlg32.rc:403
 #: dlls/ieframe/ieframe.rc:42 dlls/shdoclc/shdoclc.rc:61
 #: dlls/shell32/shell32.rc:108 programs/clock/clock.rc:31
-#: programs/conhost/conhost.rc:34 programs/wineconsole/wineconsole.rc:30
+#: programs/conhost/conhost.rc:34
 msgid "&Properties"
 msgstr "&Tulajdonságok"
 
@@ -3375,8 +3373,7 @@ msgstr "Kivá&gás"
 #: dlls/shdoclc/shdoclc.rc:133 dlls/shdoclc/shdoclc.rc:160
 #: dlls/shdoclc/shdoclc.rc:184 dlls/shell32/shell32.rc:102
 #: dlls/user32/user32.rc:61 programs/conhost/conhost.rc:36
-#: programs/wineconsole/wineconsole.rc:32 programs/winhlp32/winhlp32.rc:40
-#: programs/wordpad/wordpad.rc:113
+#: programs/winhlp32/winhlp32.rc:40 programs/wordpad/wordpad.rc:113
 msgid "&Copy"
 msgstr "&Másolás"
 
@@ -3445,7 +3442,7 @@ msgid "Sync"
 msgstr "Szink."
 
 #: dlls/hhctrl.ocx/hhctrl.rc:50 programs/conhost/conhost.rc:51
-#: programs/wineconsole/wineconsole.rc:58 programs/wordpad/wordpad.rc:166
+#: programs/wordpad/wordpad.rc:166
 msgid "Options"
 msgstr "Opciók"
 
@@ -9074,8 +9071,7 @@ msgstr "Forrás:"
 #: dlls/shdoclc/shdoclc.rc:82 dlls/shdoclc/shdoclc.rc:95
 #: dlls/shdoclc/shdoclc.rc:135 dlls/shdoclc/shdoclc.rc:162
 #: dlls/shdoclc/shdoclc.rc:186 dlls/user32/user32.rc:62
-#: programs/conhost/conhost.rc:37 programs/wineconsole/wineconsole.rc:33
-#: programs/wordpad/wordpad.rc:114
+#: programs/conhost/conhost.rc:37 programs/wordpad/wordpad.rc:114
 msgid "&Paste"
 msgstr "&Beillesztés"
 
@@ -11187,7 +11183,7 @@ msgid "&Move"
 msgstr "Át&helyzés"
 
 #: dlls/user32/user32.rc:32 dlls/user32/user32.rc:45
-#: programs/conhost/conhost.rc:84 programs/wineconsole/wineconsole.rc:91
+#: programs/conhost/conhost.rc:84
 msgid "&Size"
 msgstr "&Méret"
 
@@ -13428,167 +13424,167 @@ msgid ""
 " hexadecimal (0x34) or octal (056).\n"
 msgstr ""
 
-#: programs/conhost/conhost.rc:54 programs/wineconsole/wineconsole.rc:61
+#: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Kurzor mérete"
 
-#: programs/conhost/conhost.rc:55 programs/wineconsole/wineconsole.rc:62
+#: programs/conhost/conhost.rc:55
 msgid "&Small"
 msgstr "&Kicsi"
 
-#: programs/conhost/conhost.rc:56 programs/wineconsole/wineconsole.rc:63
+#: programs/conhost/conhost.rc:56
 msgid "&Medium"
 msgstr "K&özepes"
 
-#: programs/conhost/conhost.rc:57 programs/wineconsole/wineconsole.rc:64
+#: programs/conhost/conhost.rc:57
 msgid "&Large"
 msgstr "&Nagy"
 
-#: programs/conhost/conhost.rc:59 programs/wineconsole/wineconsole.rc:66
+#: programs/conhost/conhost.rc:59
 msgid "Command history"
 msgstr "Parancs előzmény"
 
-#: programs/conhost/conhost.rc:60 programs/wineconsole/wineconsole.rc:67
+#: programs/conhost/conhost.rc:60
 #, fuzzy
 #| msgid "Buffer zone"
 msgid "&Buffer size:"
 msgstr "Puffer zóna"
 
-#: programs/conhost/conhost.rc:63 programs/wineconsole/wineconsole.rc:70
+#: programs/conhost/conhost.rc:63
 #, fuzzy
 #| msgid "&Remove doubles"
 msgid "&Remove duplicates"
 msgstr "Kettőzések &eltávolítása"
 
-#: programs/conhost/conhost.rc:65 programs/wineconsole/wineconsole.rc:72
+#: programs/conhost/conhost.rc:65
 msgid "Popup menu"
 msgstr "Előbukkanó menü"
 
-#: programs/conhost/conhost.rc:66 programs/wineconsole/wineconsole.rc:73
+#: programs/conhost/conhost.rc:66
 msgid "&Control"
 msgstr "&Vezérlés"
 
-#: programs/conhost/conhost.rc:67 programs/wineconsole/wineconsole.rc:74
+#: programs/conhost/conhost.rc:67
 msgid "S&hift"
 msgstr "S&hift"
 
-#: programs/conhost/conhost.rc:69 programs/wineconsole/wineconsole.rc:76
+#: programs/conhost/conhost.rc:69
 #, fuzzy
 #| msgid "&Close console"
 msgid "Console"
 msgstr "&Konsol bezárása"
 
-#: programs/conhost/conhost.rc:70 programs/wineconsole/wineconsole.rc:77
+#: programs/conhost/conhost.rc:70
 #, fuzzy
 #| msgid "Quick edit"
 msgid "&Quick Edit mode"
 msgstr "Gyors szerkesztés"
 
-#: programs/conhost/conhost.rc:71 programs/wineconsole/wineconsole.rc:78
+#: programs/conhost/conhost.rc:71
 #, fuzzy
 #| msgid "&Expert mode"
 msgid "&Insert mode"
 msgstr "&Bővített mód"
 
-#: programs/conhost/conhost.rc:79 programs/wineconsole/wineconsole.rc:86
+#: programs/conhost/conhost.rc:79
 msgid "&Font"
 msgstr "&Betűtípus"
 
-#: programs/conhost/conhost.rc:81 programs/wineconsole/wineconsole.rc:88
+#: programs/conhost/conhost.rc:81
 msgid "&Color"
 msgstr "&Szín"
 
-#: programs/conhost/conhost.rc:92 programs/wineconsole/wineconsole.rc:99
+#: programs/conhost/conhost.rc:92
 msgid "Configuration"
 msgstr "Beállítás"
 
-#: programs/conhost/conhost.rc:95 programs/wineconsole/wineconsole.rc:102
+#: programs/conhost/conhost.rc:95
 msgid "Buffer zone"
 msgstr "Puffer zóna"
 
-#: programs/conhost/conhost.rc:96 programs/wineconsole/wineconsole.rc:103
+#: programs/conhost/conhost.rc:96
 msgid "&Width:"
 msgstr "&Szélesség:"
 
-#: programs/conhost/conhost.rc:99 programs/wineconsole/wineconsole.rc:106
+#: programs/conhost/conhost.rc:99
 msgid "&Height:"
 msgstr "&Magasság:"
 
-#: programs/conhost/conhost.rc:103 programs/wineconsole/wineconsole.rc:110
+#: programs/conhost/conhost.rc:103
 msgid "Window size"
 msgstr "Ablak méret"
 
-#: programs/conhost/conhost.rc:104 programs/wineconsole/wineconsole.rc:111
+#: programs/conhost/conhost.rc:104
 msgid "W&idth:"
 msgstr "S&zélesség:"
 
-#: programs/conhost/conhost.rc:107 programs/wineconsole/wineconsole.rc:114
+#: programs/conhost/conhost.rc:107
 msgid "H&eight:"
 msgstr "M&agasság:"
 
-#: programs/conhost/conhost.rc:111 programs/wineconsole/wineconsole.rc:118
+#: programs/conhost/conhost.rc:111
 msgid "End of program"
 msgstr "Program vége"
 
-#: programs/conhost/conhost.rc:112 programs/wineconsole/wineconsole.rc:119
+#: programs/conhost/conhost.rc:112
 msgid "&Close console"
 msgstr "&Konsol bezárása"
 
-#: programs/conhost/conhost.rc:114 programs/wineconsole/wineconsole.rc:121
+#: programs/conhost/conhost.rc:114
 msgid "Edition"
 msgstr "Verzió kiadás"
 
-#: programs/conhost/conhost.rc:120 programs/wineconsole/wineconsole.rc:127
+#: programs/conhost/conhost.rc:120
 msgid "Console parameters"
 msgstr "Konsol paraméterek"
 
-#: programs/conhost/conhost.rc:123 programs/wineconsole/wineconsole.rc:130
+#: programs/conhost/conhost.rc:123
 msgid "Retain these settings for later sessions"
 msgstr "Beállítások mentése"
 
-#: programs/conhost/conhost.rc:124 programs/wineconsole/wineconsole.rc:131
+#: programs/conhost/conhost.rc:124
 msgid "Modify only current session"
 msgstr "Csak az aktuális munkafolyamat módosítása"
 
 #: programs/conhost/conhost.rc:32 programs/notepad/notepad.rc:41
-#: programs/regedit/regedit.rc:43 programs/wineconsole/wineconsole.rc:28
-#: programs/winhlp32/winhlp32.rc:39 programs/wordpad/wordpad.rc:42
+#: programs/regedit/regedit.rc:43 programs/winhlp32/winhlp32.rc:39
+#: programs/wordpad/wordpad.rc:42
 msgid "&Edit"
 msgstr "S&zerkesztés"
 
-#: programs/conhost/conhost.rc:33 programs/wineconsole/wineconsole.rc:29
+#: programs/conhost/conhost.rc:33
 msgid "Set &Defaults"
 msgstr "Ala&pértékek"
 
-#: programs/conhost/conhost.rc:35 programs/wineconsole/wineconsole.rc:31
+#: programs/conhost/conhost.rc:35
 msgid "&Mark"
 msgstr "&Jelölés"
 
-#: programs/conhost/conhost.rc:38 programs/wineconsole/wineconsole.rc:34
+#: programs/conhost/conhost.rc:38
 msgid "&Select all"
 msgstr "&Az összes kijelölése"
 
-#: programs/conhost/conhost.rc:39 programs/wineconsole/wineconsole.rc:35
+#: programs/conhost/conhost.rc:39
 msgid "Sc&roll"
 msgstr "&Görgetés"
 
-#: programs/conhost/conhost.rc:40 programs/wineconsole/wineconsole.rc:36
+#: programs/conhost/conhost.rc:40
 msgid "S&earch"
 msgstr "&Keresés"
 
-#: programs/conhost/conhost.rc:43 programs/wineconsole/wineconsole.rc:39
+#: programs/conhost/conhost.rc:43
 msgid "Setup - Default settings"
 msgstr "Beállítás - alapértelmezett beállítások"
 
-#: programs/conhost/conhost.rc:44 programs/wineconsole/wineconsole.rc:40
+#: programs/conhost/conhost.rc:44
 msgid "Setup - Current settings"
 msgstr "Beállítás - aktuális beállítások"
 
-#: programs/conhost/conhost.rc:45 programs/wineconsole/wineconsole.rc:41
+#: programs/conhost/conhost.rc:45
 msgid "Configuration error"
 msgstr "Beállítási hiba"
 
-#: programs/conhost/conhost.rc:46 programs/wineconsole/wineconsole.rc:42
+#: programs/conhost/conhost.rc:46
 #, fuzzy
 #| msgid "Screen buffer size must be greater or equal to the window's one"
 msgid ""
@@ -13597,11 +13593,11 @@ msgid ""
 msgstr ""
 "Képernyő pufferméretnek nagyobbnak egy egyenlőnek kell lennie az ablakénál"
 
-#: programs/conhost/conhost.rc:41 programs/wineconsole/wineconsole.rc:37
+#: programs/conhost/conhost.rc:41
 msgid "Each character is %1!u! pixels wide and %2!u! pixels high"
 msgstr "Minden karakter %1!u! pixel széles és %2!u! pixel magas"
 
-#: programs/conhost/conhost.rc:42 programs/wineconsole/wineconsole.rc:38
+#: programs/conhost/conhost.rc:42
 msgid "This is a test"
 msgstr "Ez egy teszt"
 
@@ -17307,61 +17303,13 @@ msgstr "Menü kiemelés"
 msgid "Menu Bar"
 msgstr "Menüsor"
 
-#: programs/wineconsole/wineconsole.rc:44
-msgid "wineconsole: Couldn't parse event id\n"
-msgstr "wineconsole: Nem lehet felbontani az esemény id-t\n"
-
-#: programs/wineconsole/wineconsole.rc:45
-msgid "wineconsole: Invalid backend\n"
-msgstr "wineconsole: Érvénytelen backend\n"
-
-#: programs/wineconsole/wineconsole.rc:46
-msgid "wineconsole: Unrecognized command line option\n"
-msgstr "wineconsole: Felismerhetetlen parancssor opció\n"
-
-#: programs/wineconsole/wineconsole.rc:47
-msgid "Starts a program in a Wine console\n"
-msgstr "Program indítása a Wine konzolból\n"
-
-#: programs/wineconsole/wineconsole.rc:48
+#: programs/wineconsole/wineconsole.rc:29
 msgid ""
 "wineconsole: Starting program %s failed.\n"
 "The command is invalid.\n"
 msgstr ""
 "wineconsole: %s program indítása nem sikerült.\n"
 "A parancs érvénytelen.\n"
-
-#: programs/wineconsole/wineconsole.rc:50
-msgid ""
-"\n"
-"Usage:\n"
-"  wineconsole [options] <command>\n"
-"\n"
-"Options:\n"
-msgstr ""
-"\n"
-"Használate:\n"
-"  wineconsole [opciók] <parancs>\n"
-"\n"
-"Opciók:\n"
-
-#: programs/wineconsole/wineconsole.rc:51
-msgid "  <command>                The Wine program to launch in the console.\n"
-msgstr "  <parancs>                A Wine program hajtja végre a konzolban.\n"
-
-#: programs/wineconsole/wineconsole.rc:52
-msgid ""
-"\n"
-"Example:\n"
-"  wineconsole cmd\n"
-"Starts the Wine command prompt in a Wine console.\n"
-"\n"
-msgstr ""
-"\n"
-"Példa:\n"
-"  wineconsole cmd\n"
-"Elindítja a Wine parancssort a Wine konzolban.\n"
-"\n"
 
 #: programs/winedbg/winedbg.rc:50 programs/winedbg/winedbg.rc:38
 msgid "Program Error"

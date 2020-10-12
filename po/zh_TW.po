@@ -86,12 +86,11 @@ msgstr "技術支援資訊"
 #: programs/regedit/regedit.rc:349 programs/regedit/regedit.rc:362
 #: programs/taskmgr/taskmgr.rc:442 programs/taskmgr/taskmgr.rc:517
 #: programs/winecfg/winecfg.rc:213 programs/winecfg/winecfg.rc:223
-#: programs/wineconsole/wineconsole.rc:133 programs/winefile/winefile.rc:127
-#: programs/winefile/winefile.rc:150 programs/winefile/winefile.rc:180
-#: programs/winemine/winemine.rc:73 programs/winemine/winemine.rc:84
-#: programs/winemine/winemine.rc:98 programs/wordpad/wordpad.rc:215
-#: programs/wordpad/wordpad.rc:226 programs/wordpad/wordpad.rc:244
-#: programs/wordpad/wordpad.rc:257
+#: programs/winefile/winefile.rc:127 programs/winefile/winefile.rc:150
+#: programs/winefile/winefile.rc:180 programs/winemine/winemine.rc:73
+#: programs/winemine/winemine.rc:84 programs/winemine/winemine.rc:98
+#: programs/wordpad/wordpad.rc:215 programs/wordpad/wordpad.rc:226
+#: programs/wordpad/wordpad.rc:244 programs/wordpad/wordpad.rc:257
 msgid "OK"
 msgstr "確定"
 
@@ -190,11 +189,11 @@ msgstr "安裝(&I)"
 #: programs/regedit/regedit.rc:350 programs/regedit/regedit.rc:363
 #: programs/taskmgr/taskmgr.rc:443 programs/taskmgr/taskmgr.rc:518
 #: programs/wineboot/wineboot.rc:34 programs/winecfg/winecfg.rc:214
-#: programs/winecfg/winecfg.rc:224 programs/wineconsole/wineconsole.rc:134
-#: programs/winefile/winefile.rc:128 programs/winefile/winefile.rc:151
-#: programs/winefile/winefile.rc:181 programs/winemine/winemine.rc:99
-#: programs/wordpad/wordpad.rc:216 programs/wordpad/wordpad.rc:227
-#: programs/wordpad/wordpad.rc:245 programs/wordpad/wordpad.rc:258
+#: programs/winecfg/winecfg.rc:224 programs/winefile/winefile.rc:128
+#: programs/winefile/winefile.rc:151 programs/winefile/winefile.rc:181
+#: programs/winemine/winemine.rc:99 programs/wordpad/wordpad.rc:216
+#: programs/wordpad/wordpad.rc:227 programs/wordpad/wordpad.rc:245
+#: programs/wordpad/wordpad.rc:258
 msgid "Cancel"
 msgstr "取消"
 
@@ -645,7 +644,6 @@ msgid "&Source"
 msgstr "來源(&S)"
 
 #: dlls/comdlg32/comdlg32.rc:251 programs/conhost/conhost.rc:76
-#: programs/wineconsole/wineconsole.rc:83
 msgid "Font"
 msgstr "字型"
 
@@ -795,7 +793,7 @@ msgstr "取代全部(&A)"
 #: dlls/comdlg32/comdlg32.rc:363 dlls/comdlg32/comdlg32.rc:403
 #: dlls/ieframe/ieframe.rc:42 dlls/shdoclc/shdoclc.rc:61
 #: dlls/shell32/shell32.rc:108 programs/clock/clock.rc:31
-#: programs/conhost/conhost.rc:34 programs/wineconsole/wineconsole.rc:30
+#: programs/conhost/conhost.rc:34
 msgid "&Properties"
 msgstr "屬性(&P)"
 
@@ -3305,8 +3303,7 @@ msgstr "剪下(&T)"
 #: dlls/shdoclc/shdoclc.rc:133 dlls/shdoclc/shdoclc.rc:160
 #: dlls/shdoclc/shdoclc.rc:184 dlls/shell32/shell32.rc:102
 #: dlls/user32/user32.rc:61 programs/conhost/conhost.rc:36
-#: programs/wineconsole/wineconsole.rc:32 programs/winhlp32/winhlp32.rc:40
-#: programs/wordpad/wordpad.rc:113
+#: programs/winhlp32/winhlp32.rc:40 programs/wordpad/wordpad.rc:113
 msgid "&Copy"
 msgstr "複製(&C)"
 
@@ -3375,7 +3372,7 @@ msgid "Sync"
 msgstr "同步"
 
 #: dlls/hhctrl.ocx/hhctrl.rc:50 programs/conhost/conhost.rc:51
-#: programs/wineconsole/wineconsole.rc:58 programs/wordpad/wordpad.rc:166
+#: programs/wordpad/wordpad.rc:166
 msgid "Options"
 msgstr "選項"
 
@@ -9010,8 +9007,7 @@ msgstr "原始檔案："
 #: dlls/shdoclc/shdoclc.rc:82 dlls/shdoclc/shdoclc.rc:95
 #: dlls/shdoclc/shdoclc.rc:135 dlls/shdoclc/shdoclc.rc:162
 #: dlls/shdoclc/shdoclc.rc:186 dlls/user32/user32.rc:62
-#: programs/conhost/conhost.rc:37 programs/wineconsole/wineconsole.rc:33
-#: programs/wordpad/wordpad.rc:114
+#: programs/conhost/conhost.rc:37 programs/wordpad/wordpad.rc:114
 msgid "&Paste"
 msgstr "貼上(&P)"
 
@@ -11096,7 +11092,7 @@ msgid "&Move"
 msgstr "移動(&M)"
 
 #: dlls/user32/user32.rc:32 dlls/user32/user32.rc:45
-#: programs/conhost/conhost.rc:84 programs/wineconsole/wineconsole.rc:91
+#: programs/conhost/conhost.rc:84
 msgid "&Size"
 msgstr "大小(&S)"
 
@@ -13434,167 +13430,167 @@ msgstr ""
 "不當的數字形式 - 必須是十進位 (12)、\n"
 " 十六進位 (0x34) 或八進位 (056) 之一。\n"
 
-#: programs/conhost/conhost.rc:54 programs/wineconsole/wineconsole.rc:61
+#: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "游標大小"
 
-#: programs/conhost/conhost.rc:55 programs/wineconsole/wineconsole.rc:62
+#: programs/conhost/conhost.rc:55
 msgid "&Small"
 msgstr "小(&S)"
 
-#: programs/conhost/conhost.rc:56 programs/wineconsole/wineconsole.rc:63
+#: programs/conhost/conhost.rc:56
 msgid "&Medium"
 msgstr "中(&M)"
 
-#: programs/conhost/conhost.rc:57 programs/wineconsole/wineconsole.rc:64
+#: programs/conhost/conhost.rc:57
 msgid "&Large"
 msgstr "大(&L)"
 
-#: programs/conhost/conhost.rc:59 programs/wineconsole/wineconsole.rc:66
+#: programs/conhost/conhost.rc:59
 msgid "Command history"
 msgstr "指令歷程"
 
-#: programs/conhost/conhost.rc:60 programs/wineconsole/wineconsole.rc:67
+#: programs/conhost/conhost.rc:60
 #, fuzzy
 #| msgid "Buffer zone"
 msgid "&Buffer size:"
 msgstr "緩衝區域"
 
-#: programs/conhost/conhost.rc:63 programs/wineconsole/wineconsole.rc:70
+#: programs/conhost/conhost.rc:63
 #, fuzzy
 #| msgid "&Remove doubles"
 msgid "&Remove duplicates"
 msgstr "刪除連續相同的指令(&R)"
 
-#: programs/conhost/conhost.rc:65 programs/wineconsole/wineconsole.rc:72
+#: programs/conhost/conhost.rc:65
 msgid "Popup menu"
 msgstr "彈出功能表"
 
-#: programs/conhost/conhost.rc:66 programs/wineconsole/wineconsole.rc:73
+#: programs/conhost/conhost.rc:66
 msgid "&Control"
 msgstr "&Control"
 
-#: programs/conhost/conhost.rc:67 programs/wineconsole/wineconsole.rc:74
+#: programs/conhost/conhost.rc:67
 msgid "S&hift"
 msgstr "S&hift"
 
-#: programs/conhost/conhost.rc:69 programs/wineconsole/wineconsole.rc:76
+#: programs/conhost/conhost.rc:69
 #, fuzzy
 #| msgid "&Close console"
 msgid "Console"
 msgstr "關閉虛擬終端(&C)"
 
-#: programs/conhost/conhost.rc:70 programs/wineconsole/wineconsole.rc:77
+#: programs/conhost/conhost.rc:70
 #, fuzzy
 #| msgid "Quick edit"
 msgid "&Quick Edit mode"
 msgstr "快速編輯"
 
-#: programs/conhost/conhost.rc:71 programs/wineconsole/wineconsole.rc:78
+#: programs/conhost/conhost.rc:71
 #, fuzzy
 #| msgid "&Expert mode"
 msgid "&Insert mode"
 msgstr "專家模式(&E)"
 
-#: programs/conhost/conhost.rc:79 programs/wineconsole/wineconsole.rc:86
+#: programs/conhost/conhost.rc:79
 msgid "&Font"
 msgstr "字型(&F)"
 
-#: programs/conhost/conhost.rc:81 programs/wineconsole/wineconsole.rc:88
+#: programs/conhost/conhost.rc:81
 msgid "&Color"
 msgstr "顏色(&C)"
 
-#: programs/conhost/conhost.rc:92 programs/wineconsole/wineconsole.rc:99
+#: programs/conhost/conhost.rc:92
 msgid "Configuration"
 msgstr "組態"
 
-#: programs/conhost/conhost.rc:95 programs/wineconsole/wineconsole.rc:102
+#: programs/conhost/conhost.rc:95
 msgid "Buffer zone"
 msgstr "緩衝區域"
 
-#: programs/conhost/conhost.rc:96 programs/wineconsole/wineconsole.rc:103
+#: programs/conhost/conhost.rc:96
 msgid "&Width:"
 msgstr "寬度(&W)："
 
-#: programs/conhost/conhost.rc:99 programs/wineconsole/wineconsole.rc:106
+#: programs/conhost/conhost.rc:99
 msgid "&Height:"
 msgstr "高度(&H)："
 
-#: programs/conhost/conhost.rc:103 programs/wineconsole/wineconsole.rc:110
+#: programs/conhost/conhost.rc:103
 msgid "Window size"
 msgstr "視窗大小"
 
-#: programs/conhost/conhost.rc:104 programs/wineconsole/wineconsole.rc:111
+#: programs/conhost/conhost.rc:104
 msgid "W&idth:"
 msgstr "寬度(&I)："
 
-#: programs/conhost/conhost.rc:107 programs/wineconsole/wineconsole.rc:114
+#: programs/conhost/conhost.rc:107
 msgid "H&eight:"
 msgstr "高度(&E)："
 
-#: programs/conhost/conhost.rc:111 programs/wineconsole/wineconsole.rc:118
+#: programs/conhost/conhost.rc:111
 msgid "End of program"
 msgstr "當程式結束後"
 
-#: programs/conhost/conhost.rc:112 programs/wineconsole/wineconsole.rc:119
+#: programs/conhost/conhost.rc:112
 msgid "&Close console"
 msgstr "關閉虛擬終端(&C)"
 
-#: programs/conhost/conhost.rc:114 programs/wineconsole/wineconsole.rc:121
+#: programs/conhost/conhost.rc:114
 msgid "Edition"
 msgstr "Edition"
 
-#: programs/conhost/conhost.rc:120 programs/wineconsole/wineconsole.rc:127
+#: programs/conhost/conhost.rc:120
 msgid "Console parameters"
 msgstr "虛擬終端執行參數"
 
-#: programs/conhost/conhost.rc:123 programs/wineconsole/wineconsole.rc:130
+#: programs/conhost/conhost.rc:123
 msgid "Retain these settings for later sessions"
 msgstr "保留當前配置以便下次使用"
 
-#: programs/conhost/conhost.rc:124 programs/wineconsole/wineconsole.rc:131
+#: programs/conhost/conhost.rc:124
 msgid "Modify only current session"
 msgstr "僅修改目前的工作階段"
 
 #: programs/conhost/conhost.rc:32 programs/notepad/notepad.rc:41
-#: programs/regedit/regedit.rc:43 programs/wineconsole/wineconsole.rc:28
-#: programs/winhlp32/winhlp32.rc:39 programs/wordpad/wordpad.rc:42
+#: programs/regedit/regedit.rc:43 programs/winhlp32/winhlp32.rc:39
+#: programs/wordpad/wordpad.rc:42
 msgid "&Edit"
 msgstr "編輯(&E)"
 
-#: programs/conhost/conhost.rc:33 programs/wineconsole/wineconsole.rc:29
+#: programs/conhost/conhost.rc:33
 msgid "Set &Defaults"
 msgstr "設為預設值(&D)"
 
-#: programs/conhost/conhost.rc:35 programs/wineconsole/wineconsole.rc:31
+#: programs/conhost/conhost.rc:35
 msgid "&Mark"
 msgstr "標記(&M)"
 
-#: programs/conhost/conhost.rc:38 programs/wineconsole/wineconsole.rc:34
+#: programs/conhost/conhost.rc:38
 msgid "&Select all"
 msgstr "全選(&S)"
 
-#: programs/conhost/conhost.rc:39 programs/wineconsole/wineconsole.rc:35
+#: programs/conhost/conhost.rc:39
 msgid "Sc&roll"
 msgstr "捲動(&R)"
 
-#: programs/conhost/conhost.rc:40 programs/wineconsole/wineconsole.rc:36
+#: programs/conhost/conhost.rc:40
 msgid "S&earch"
 msgstr "搜尋(&E)"
 
-#: programs/conhost/conhost.rc:43 programs/wineconsole/wineconsole.rc:39
+#: programs/conhost/conhost.rc:43
 msgid "Setup - Default settings"
 msgstr "設定 - 預設設定"
 
-#: programs/conhost/conhost.rc:44 programs/wineconsole/wineconsole.rc:40
+#: programs/conhost/conhost.rc:44
 msgid "Setup - Current settings"
 msgstr "設定 - 目前設定"
 
-#: programs/conhost/conhost.rc:45 programs/wineconsole/wineconsole.rc:41
+#: programs/conhost/conhost.rc:45
 msgid "Configuration error"
 msgstr "組態錯誤"
 
-#: programs/conhost/conhost.rc:46 programs/wineconsole/wineconsole.rc:42
+#: programs/conhost/conhost.rc:46
 #, fuzzy
 #| msgid "Screen buffer size must be greater or equal to the window's one"
 msgid ""
@@ -13602,11 +13598,11 @@ msgid ""
 "the window."
 msgstr "螢幕緩衝區大小必須大於或等於視窗緩衝區"
 
-#: programs/conhost/conhost.rc:41 programs/wineconsole/wineconsole.rc:37
+#: programs/conhost/conhost.rc:41
 msgid "Each character is %1!u! pixels wide and %2!u! pixels high"
 msgstr "每個字元都是 %1!u! 個像素寬，%2!u! 個像素高"
 
-#: programs/conhost/conhost.rc:42 programs/wineconsole/wineconsole.rc:38
+#: programs/conhost/conhost.rc:42
 msgid "This is a test"
 msgstr "這是一段測試訊息"
 
@@ -17229,61 +17225,13 @@ msgstr "選單高亮度"
 msgid "Menu Bar"
 msgstr "選單列"
 
-#: programs/wineconsole/wineconsole.rc:44
-msgid "wineconsole: Couldn't parse event id\n"
-msgstr "wineconsole：無法剖析事件識別號\n"
-
-#: programs/wineconsole/wineconsole.rc:45
-msgid "wineconsole: Invalid backend\n"
-msgstr "wineconsole：無效的後端程式\n"
-
-#: programs/wineconsole/wineconsole.rc:46
-msgid "wineconsole: Unrecognized command line option\n"
-msgstr "wineconsole：無法辨識的命令列選項\n"
-
-#: programs/wineconsole/wineconsole.rc:47
-msgid "Starts a program in a Wine console\n"
-msgstr "在 Wine 主控臺中啟始一個程式\n"
-
-#: programs/wineconsole/wineconsole.rc:48
+#: programs/wineconsole/wineconsole.rc:29
 msgid ""
 "wineconsole: Starting program %s failed.\n"
 "The command is invalid.\n"
 msgstr ""
 "wineconsole：啟始程式 %s 時失敗。\n"
 "命令無效。\n"
-
-#: programs/wineconsole/wineconsole.rc:50
-msgid ""
-"\n"
-"Usage:\n"
-"  wineconsole [options] <command>\n"
-"\n"
-"Options:\n"
-msgstr ""
-"\n"
-"用法：\n"
-"  wineconsole [選項] <命令>\n"
-"\n"
-"選項：\n"
-
-#: programs/wineconsole/wineconsole.rc:51
-msgid "  <command>                The Wine program to launch in the console.\n"
-msgstr "  <命令>                   要在主控臺中啟動的 Wine 程式。\n"
-
-#: programs/wineconsole/wineconsole.rc:52
-msgid ""
-"\n"
-"Example:\n"
-"  wineconsole cmd\n"
-"Starts the Wine command prompt in a Wine console.\n"
-"\n"
-msgstr ""
-"\n"
-"範例：\n"
-"  wineconsole cmd\n"
-"在 Wine 主控臺中啟始 Wine 指令提示符號。\n"
-"\n"
 
 #: programs/winedbg/winedbg.rc:50 programs/winedbg/winedbg.rc:38
 msgid "Program Error"

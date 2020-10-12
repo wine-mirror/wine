@@ -89,12 +89,11 @@ msgstr "Información de Soporte"
 #: programs/regedit/regedit.rc:349 programs/regedit/regedit.rc:362
 #: programs/taskmgr/taskmgr.rc:442 programs/taskmgr/taskmgr.rc:517
 #: programs/winecfg/winecfg.rc:213 programs/winecfg/winecfg.rc:223
-#: programs/wineconsole/wineconsole.rc:133 programs/winefile/winefile.rc:127
-#: programs/winefile/winefile.rc:150 programs/winefile/winefile.rc:180
-#: programs/winemine/winemine.rc:73 programs/winemine/winemine.rc:84
-#: programs/winemine/winemine.rc:98 programs/wordpad/wordpad.rc:215
-#: programs/wordpad/wordpad.rc:226 programs/wordpad/wordpad.rc:244
-#: programs/wordpad/wordpad.rc:257
+#: programs/winefile/winefile.rc:127 programs/winefile/winefile.rc:150
+#: programs/winefile/winefile.rc:180 programs/winemine/winemine.rc:73
+#: programs/winemine/winemine.rc:84 programs/winemine/winemine.rc:98
+#: programs/wordpad/wordpad.rc:215 programs/wordpad/wordpad.rc:226
+#: programs/wordpad/wordpad.rc:244 programs/wordpad/wordpad.rc:257
 msgid "OK"
 msgstr "Aceptar"
 
@@ -196,11 +195,11 @@ msgstr "&Instalar"
 #: programs/regedit/regedit.rc:350 programs/regedit/regedit.rc:363
 #: programs/taskmgr/taskmgr.rc:443 programs/taskmgr/taskmgr.rc:518
 #: programs/wineboot/wineboot.rc:34 programs/winecfg/winecfg.rc:214
-#: programs/winecfg/winecfg.rc:224 programs/wineconsole/wineconsole.rc:134
-#: programs/winefile/winefile.rc:128 programs/winefile/winefile.rc:151
-#: programs/winefile/winefile.rc:181 programs/winemine/winemine.rc:99
-#: programs/wordpad/wordpad.rc:216 programs/wordpad/wordpad.rc:227
-#: programs/wordpad/wordpad.rc:245 programs/wordpad/wordpad.rc:258
+#: programs/winecfg/winecfg.rc:224 programs/winefile/winefile.rc:128
+#: programs/winefile/winefile.rc:151 programs/winefile/winefile.rc:181
+#: programs/winemine/winemine.rc:99 programs/wordpad/wordpad.rc:216
+#: programs/wordpad/wordpad.rc:227 programs/wordpad/wordpad.rc:245
+#: programs/wordpad/wordpad.rc:258
 msgid "Cancel"
 msgstr "Cancelar"
 
@@ -653,7 +652,6 @@ msgid "&Source"
 msgstr "O&rigen"
 
 #: dlls/comdlg32/comdlg32.rc:251 programs/conhost/conhost.rc:76
-#: programs/wineconsole/wineconsole.rc:83
 msgid "Font"
 msgstr "Fuente"
 
@@ -801,7 +799,7 @@ msgstr "Reemplazar &todo"
 #: dlls/comdlg32/comdlg32.rc:363 dlls/comdlg32/comdlg32.rc:403
 #: dlls/ieframe/ieframe.rc:42 dlls/shdoclc/shdoclc.rc:61
 #: dlls/shell32/shell32.rc:108 programs/clock/clock.rc:31
-#: programs/conhost/conhost.rc:34 programs/wineconsole/wineconsole.rc:30
+#: programs/conhost/conhost.rc:34
 msgid "&Properties"
 msgstr "&Propiedades"
 
@@ -3347,8 +3345,7 @@ msgstr "Co&rtar"
 #: dlls/shdoclc/shdoclc.rc:133 dlls/shdoclc/shdoclc.rc:160
 #: dlls/shdoclc/shdoclc.rc:184 dlls/shell32/shell32.rc:102
 #: dlls/user32/user32.rc:61 programs/conhost/conhost.rc:36
-#: programs/wineconsole/wineconsole.rc:32 programs/winhlp32/winhlp32.rc:40
-#: programs/wordpad/wordpad.rc:113
+#: programs/winhlp32/winhlp32.rc:40 programs/wordpad/wordpad.rc:113
 msgid "&Copy"
 msgstr "&Copiar"
 
@@ -3417,7 +3414,7 @@ msgid "Sync"
 msgstr "Sincronizar"
 
 #: dlls/hhctrl.ocx/hhctrl.rc:50 programs/conhost/conhost.rc:51
-#: programs/wineconsole/wineconsole.rc:58 programs/wordpad/wordpad.rc:166
+#: programs/wordpad/wordpad.rc:166
 msgid "Options"
 msgstr "Opciones"
 
@@ -8995,8 +8992,7 @@ msgstr "Origen:"
 #: dlls/shdoclc/shdoclc.rc:82 dlls/shdoclc/shdoclc.rc:95
 #: dlls/shdoclc/shdoclc.rc:135 dlls/shdoclc/shdoclc.rc:162
 #: dlls/shdoclc/shdoclc.rc:186 dlls/user32/user32.rc:62
-#: programs/conhost/conhost.rc:37 programs/wineconsole/wineconsole.rc:33
-#: programs/wordpad/wordpad.rc:114
+#: programs/conhost/conhost.rc:37 programs/wordpad/wordpad.rc:114
 msgid "&Paste"
 msgstr "&Pegar"
 
@@ -11053,7 +11049,7 @@ msgid "&Move"
 msgstr "&Mover"
 
 #: dlls/user32/user32.rc:32 dlls/user32/user32.rc:45
-#: programs/conhost/conhost.rc:84 programs/wineconsole/wineconsole.rc:91
+#: programs/conhost/conhost.rc:84
 msgid "&Size"
 msgstr "&Tamaño"
 
@@ -13286,167 +13282,167 @@ msgid ""
 " hexadecimal (0x34) or octal (056).\n"
 msgstr ""
 
-#: programs/conhost/conhost.rc:54 programs/wineconsole/wineconsole.rc:61
+#: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Tamaño del cursor"
 
-#: programs/conhost/conhost.rc:55 programs/wineconsole/wineconsole.rc:62
+#: programs/conhost/conhost.rc:55
 msgid "&Small"
 msgstr "&Pequeño"
 
-#: programs/conhost/conhost.rc:56 programs/wineconsole/wineconsole.rc:63
+#: programs/conhost/conhost.rc:56
 msgid "&Medium"
 msgstr "&Mediano"
 
-#: programs/conhost/conhost.rc:57 programs/wineconsole/wineconsole.rc:64
+#: programs/conhost/conhost.rc:57
 msgid "&Large"
 msgstr "&Grande"
 
-#: programs/conhost/conhost.rc:59 programs/wineconsole/wineconsole.rc:66
+#: programs/conhost/conhost.rc:59
 msgid "Command history"
 msgstr "Historial de comandos"
 
-#: programs/conhost/conhost.rc:60 programs/wineconsole/wineconsole.rc:67
+#: programs/conhost/conhost.rc:60
 #, fuzzy
 #| msgid "Buffer zone"
 msgid "&Buffer size:"
 msgstr "Zona de búfer"
 
-#: programs/conhost/conhost.rc:63 programs/wineconsole/wineconsole.rc:70
+#: programs/conhost/conhost.rc:63
 #, fuzzy
 #| msgid "&Remove doubles"
 msgid "&Remove duplicates"
 msgstr "&Eliminar duplicados"
 
-#: programs/conhost/conhost.rc:65 programs/wineconsole/wineconsole.rc:72
+#: programs/conhost/conhost.rc:65
 msgid "Popup menu"
 msgstr "Menú emergente"
 
-#: programs/conhost/conhost.rc:66 programs/wineconsole/wineconsole.rc:73
+#: programs/conhost/conhost.rc:66
 msgid "&Control"
 msgstr "&Control"
 
-#: programs/conhost/conhost.rc:67 programs/wineconsole/wineconsole.rc:74
+#: programs/conhost/conhost.rc:67
 msgid "S&hift"
 msgstr "S&hift"
 
-#: programs/conhost/conhost.rc:69 programs/wineconsole/wineconsole.rc:76
+#: programs/conhost/conhost.rc:69
 #, fuzzy
 #| msgid "&Close console"
 msgid "Console"
 msgstr "&Cerrar consola"
 
-#: programs/conhost/conhost.rc:70 programs/wineconsole/wineconsole.rc:77
+#: programs/conhost/conhost.rc:70
 #, fuzzy
 #| msgid "Quick edit"
 msgid "&Quick Edit mode"
 msgstr "Edición rápida"
 
-#: programs/conhost/conhost.rc:71 programs/wineconsole/wineconsole.rc:78
+#: programs/conhost/conhost.rc:71
 #, fuzzy
 #| msgid "&Expert mode"
 msgid "&Insert mode"
 msgstr "Modo &Experto"
 
-#: programs/conhost/conhost.rc:79 programs/wineconsole/wineconsole.rc:86
+#: programs/conhost/conhost.rc:79
 msgid "&Font"
 msgstr "&Fuente"
 
-#: programs/conhost/conhost.rc:81 programs/wineconsole/wineconsole.rc:88
+#: programs/conhost/conhost.rc:81
 msgid "&Color"
 msgstr "&Color"
 
-#: programs/conhost/conhost.rc:92 programs/wineconsole/wineconsole.rc:99
+#: programs/conhost/conhost.rc:92
 msgid "Configuration"
 msgstr "Configuración"
 
-#: programs/conhost/conhost.rc:95 programs/wineconsole/wineconsole.rc:102
+#: programs/conhost/conhost.rc:95
 msgid "Buffer zone"
 msgstr "Zona de búfer"
 
-#: programs/conhost/conhost.rc:96 programs/wineconsole/wineconsole.rc:103
+#: programs/conhost/conhost.rc:96
 msgid "&Width:"
 msgstr "&Anchura:"
 
-#: programs/conhost/conhost.rc:99 programs/wineconsole/wineconsole.rc:106
+#: programs/conhost/conhost.rc:99
 msgid "&Height:"
 msgstr "&Altura:"
 
-#: programs/conhost/conhost.rc:103 programs/wineconsole/wineconsole.rc:110
+#: programs/conhost/conhost.rc:103
 msgid "Window size"
 msgstr "Tamaño de ventana"
 
-#: programs/conhost/conhost.rc:104 programs/wineconsole/wineconsole.rc:111
+#: programs/conhost/conhost.rc:104
 msgid "W&idth:"
 msgstr "A&nchura:"
 
-#: programs/conhost/conhost.rc:107 programs/wineconsole/wineconsole.rc:114
+#: programs/conhost/conhost.rc:107
 msgid "H&eight:"
 msgstr "A&ltura:"
 
-#: programs/conhost/conhost.rc:111 programs/wineconsole/wineconsole.rc:118
+#: programs/conhost/conhost.rc:111
 msgid "End of program"
 msgstr "Fin del programa"
 
-#: programs/conhost/conhost.rc:112 programs/wineconsole/wineconsole.rc:119
+#: programs/conhost/conhost.rc:112
 msgid "&Close console"
 msgstr "&Cerrar consola"
 
-#: programs/conhost/conhost.rc:114 programs/wineconsole/wineconsole.rc:121
+#: programs/conhost/conhost.rc:114
 msgid "Edition"
 msgstr "Edición"
 
-#: programs/conhost/conhost.rc:120 programs/wineconsole/wineconsole.rc:127
+#: programs/conhost/conhost.rc:120
 msgid "Console parameters"
 msgstr "Parámetros de consola"
 
-#: programs/conhost/conhost.rc:123 programs/wineconsole/wineconsole.rc:130
+#: programs/conhost/conhost.rc:123
 msgid "Retain these settings for later sessions"
 msgstr "Guardar esta configuración para sesiones posteriores"
 
-#: programs/conhost/conhost.rc:124 programs/wineconsole/wineconsole.rc:131
+#: programs/conhost/conhost.rc:124
 msgid "Modify only current session"
 msgstr "Modificar sólo la sesión actual"
 
 #: programs/conhost/conhost.rc:32 programs/notepad/notepad.rc:41
-#: programs/regedit/regedit.rc:43 programs/wineconsole/wineconsole.rc:28
-#: programs/winhlp32/winhlp32.rc:39 programs/wordpad/wordpad.rc:42
+#: programs/regedit/regedit.rc:43 programs/winhlp32/winhlp32.rc:39
+#: programs/wordpad/wordpad.rc:42
 msgid "&Edit"
 msgstr "&Editar"
 
-#: programs/conhost/conhost.rc:33 programs/wineconsole/wineconsole.rc:29
+#: programs/conhost/conhost.rc:33
 msgid "Set &Defaults"
 msgstr "Por &defecto"
 
-#: programs/conhost/conhost.rc:35 programs/wineconsole/wineconsole.rc:31
+#: programs/conhost/conhost.rc:35
 msgid "&Mark"
 msgstr "&Marcar"
 
-#: programs/conhost/conhost.rc:38 programs/wineconsole/wineconsole.rc:34
+#: programs/conhost/conhost.rc:38
 msgid "&Select all"
 msgstr "&Seleccionar todo"
 
-#: programs/conhost/conhost.rc:39 programs/wineconsole/wineconsole.rc:35
+#: programs/conhost/conhost.rc:39
 msgid "Sc&roll"
 msgstr "Desplaza&r"
 
-#: programs/conhost/conhost.rc:40 programs/wineconsole/wineconsole.rc:36
+#: programs/conhost/conhost.rc:40
 msgid "S&earch"
 msgstr "&Buscar"
 
-#: programs/conhost/conhost.rc:43 programs/wineconsole/wineconsole.rc:39
+#: programs/conhost/conhost.rc:43
 msgid "Setup - Default settings"
 msgstr "Configuración - Valores por defecto"
 
-#: programs/conhost/conhost.rc:44 programs/wineconsole/wineconsole.rc:40
+#: programs/conhost/conhost.rc:44
 msgid "Setup - Current settings"
 msgstr "Configuración - Valores actuales"
 
-#: programs/conhost/conhost.rc:45 programs/wineconsole/wineconsole.rc:41
+#: programs/conhost/conhost.rc:45
 msgid "Configuration error"
 msgstr "Error de configuración"
 
-#: programs/conhost/conhost.rc:46 programs/wineconsole/wineconsole.rc:42
+#: programs/conhost/conhost.rc:46
 #, fuzzy
 #| msgid "Screen buffer size must be greater or equal to the window's one"
 msgid ""
@@ -13456,11 +13452,11 @@ msgstr ""
 "El tamaño del búfer de la pantalla debe ser mayor o igual que el de la "
 "ventana"
 
-#: programs/conhost/conhost.rc:41 programs/wineconsole/wineconsole.rc:37
+#: programs/conhost/conhost.rc:41
 msgid "Each character is %1!u! pixels wide and %2!u! pixels high"
 msgstr "Cada carácter tiene %1!u! píxeles de ancho por %2!u! píxeles de alto"
 
-#: programs/conhost/conhost.rc:42 programs/wineconsole/wineconsole.rc:38
+#: programs/conhost/conhost.rc:42
 msgid "This is a test"
 msgstr "Esto es una prueba"
 
@@ -17162,63 +17158,13 @@ msgstr "Resaltado del menú"
 msgid "Menu Bar"
 msgstr "Barra de menú"
 
-#: programs/wineconsole/wineconsole.rc:44
-msgid "wineconsole: Couldn't parse event id\n"
-msgstr "wineconsole: No se pudo procesar el id del evento\n"
-
-#: programs/wineconsole/wineconsole.rc:45
-msgid "wineconsole: Invalid backend\n"
-msgstr "wineconsole: Final inválido\n"
-
-#: programs/wineconsole/wineconsole.rc:46
-msgid "wineconsole: Unrecognized command line option\n"
-msgstr "wineconsole: Línea de comando no reconocida\n"
-
-#: programs/wineconsole/wineconsole.rc:47
-msgid "Starts a program in a Wine console\n"
-msgstr "Inicia un programa en una consola de Wine\n"
-
-#: programs/wineconsole/wineconsole.rc:48
+#: programs/wineconsole/wineconsole.rc:29
 msgid ""
 "wineconsole: Starting program %s failed.\n"
 "The command is invalid.\n"
 msgstr ""
 "wineconsole: El arranque del programa %s falló.\n"
 "El comando es inválido.\n"
-
-#: programs/wineconsole/wineconsole.rc:50
-msgid ""
-"\n"
-"Usage:\n"
-"  wineconsole [options] <command>\n"
-"\n"
-"Options:\n"
-msgstr ""
-"\n"
-"Uso:\n"
-"  wineconsole [opciones] <comando>\n"
-"\n"
-"Opciones:\n"
-
-#: programs/wineconsole/wineconsole.rc:51
-msgid "  <command>                The Wine program to launch in the console.\n"
-msgstr ""
-"  <comando>                 El programa de Wine que se iniciará en la "
-"consola.\n"
-
-#: programs/wineconsole/wineconsole.rc:52
-msgid ""
-"\n"
-"Example:\n"
-"  wineconsole cmd\n"
-"Starts the Wine command prompt in a Wine console.\n"
-"\n"
-msgstr ""
-"\n"
-"Ejemplo:\n"
-"  wineconsole cmd\n"
-"Inicia el símbolo del sistema de Wine en una consola Wine.\n"
-"\n"
 
 #: programs/winedbg/winedbg.rc:50 programs/winedbg/winedbg.rc:38
 msgid "Program Error"
