@@ -27,6 +27,7 @@
 #include "bcrypt.h"
 #include "objbase.h"
 #include "rpcproxy.h"
+#include "ntsecapi.h"
 
 #include "wine/debug.h"
 #include "wine/heap.h"
@@ -496,6 +497,17 @@ BOOL WINAPI CPDuplicateKey( HCRYPTPROV hprov, HCRYPTKEY hkey, DWORD *reserved, D
     if (!(ret = duplicate_key( key ))) return FALSE;
     *ret_key = (HCRYPTKEY)ret;
     return TRUE;
+}
+
+BOOL WINAPI CPGenRandom( HCRYPTPROV hprov, DWORD len, BYTE *buffer )
+{
+    struct container *container = (struct container *)hprov;
+
+    TRACE( "%p, %u, %p\n", (void *)hprov, len, buffer );
+
+    if (container->magic != MAGIC_CONTAINER) return FALSE;
+
+    return RtlGenRandom( buffer, len );
 }
 
 static struct hash *create_hash( ALG_ID algid )

@@ -9,7 +9,7 @@
 @ stub CPEncrypt
 @ stdcall CPExportKey(ptr ptr ptr long long ptr ptr)
 @ stdcall CPGenKey(ptr long long ptr)
-@ stub CPGenRandom
+@ stdcall CPGenRandom(ptr long ptr)
 @ stdcall CPGetHashParam(ptr ptr long ptr ptr long)
 @ stub CPGetKeyParam
 @ stdcall CPGetProvParam(ptr long ptr ptr long)
