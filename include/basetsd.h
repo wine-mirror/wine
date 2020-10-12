@@ -265,6 +265,8 @@ typedef ULONG_PTR SIZE_T, *PSIZE_T;
 
 typedef ULONG_PTR KAFFINITY, *PKAFFINITY;
 
+#define MINLONGLONG             ((LONGLONG)~MAXLONGLONG)
+
 /* Some Wine-specific definitions */
 
 /* Architecture dependent settings. */

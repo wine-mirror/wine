@@ -531,6 +531,9 @@ todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     IUnknown_Release(unk);
 
+    hr = IMFTransform_SetOutputBounds(transform, 100, 10);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
     hr = IMFTransform_QueryInterface(transform, &IID_IMFVideoDeviceID, (void **)&deviceid);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 

@@ -79,6 +79,8 @@ struct video_mixer
     IMFAttributes *attributes;
     IMFAttributes *internal_attributes;
     unsigned int mixing_flags;
+    LONGLONG lower_bound;
+    LONGLONG upper_bound;
     CRITICAL_SECTION cs;
 };
 
@@ -814,9 +816,18 @@ static HRESULT WINAPI video_mixer_transform_GetOutputStatus(IMFTransform *iface,
 
 static HRESULT WINAPI video_mixer_transform_SetOutputBounds(IMFTransform *iface, LONGLONG lower, LONGLONG upper)
 {
-    FIXME("%p, %s, %s.\n", iface, wine_dbgstr_longlong(lower), wine_dbgstr_longlong(upper));
+    struct video_mixer *mixer = impl_from_IMFTransform(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %s, %s.\n", iface, wine_dbgstr_longlong(lower), wine_dbgstr_longlong(upper));
+
+    EnterCriticalSection(&mixer->cs);
+
+    mixer->lower_bound = lower;
+    mixer->upper_bound = upper;
+
+    LeaveCriticalSection(&mixer->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI video_mixer_transform_ProcessEvent(IMFTransform *iface, DWORD id, IMFMediaEvent *event)
@@ -1879,6 +1890,8 @@ HRESULT evr_mixer_create(IUnknown *outer, void **out)
     object->outer_unk = outer ? outer : &object->IUnknown_inner;
     object->refcount = 1;
     object->input_count = 1;
+    object->lower_bound = MFT_OUTPUT_BOUND_LOWER_UNBOUNDED;
+    object->upper_bound = MFT_OUTPUT_BOUND_UPPER_UNBOUNDED;
     video_mixer_init_input(&object->inputs[0]);
     InitializeCriticalSection(&object->cs);
     if (FAILED(hr = MFCreateAttributes(&object->attributes, 0)))
