@@ -919,7 +919,7 @@ static void adjust_para_y( ME_Paragraph *para, ME_Context *c, struct repaint_ran
     if (para->nFlags & MEPF_ROWSTART)
     {
         ME_DisplayItem *cell = ME_FindItemFwd( para_get_di( para ), diCell);
-        ME_DisplayItem *endRowPara;
+        ME_Paragraph *end_row_para = table_row_end( para );
         int borderWidth = 0;
         cell->member.cell.pt = c->pt;
         /* Offset the text by the largest top border width. */
@@ -928,8 +928,6 @@ static void adjust_para_y( ME_Paragraph *para, ME_Context *c, struct repaint_ran
             borderWidth = max(borderWidth, cell->member.cell.border.top.width);
             cell = cell->member.cell.next_cell;
         }
-        endRowPara = ME_FindItemFwd(cell, diParagraph);
-        assert(endRowPara->member.para.nFlags & MEPF_ROWEND);
         if (borderWidth > 0)
         {
             borderWidth = max(ME_twips2pointsY(c, borderWidth), 1);
@@ -940,22 +938,21 @@ static void adjust_para_y( ME_Paragraph *para, ME_Context *c, struct repaint_ran
             }
             c->pt.y += borderWidth;
         }
-        if (endRowPara->member.para.fmt.dxStartIndent > 0)
+        if (end_row_para->fmt.dxStartIndent > 0)
         {
-            int dxStartIndent = endRowPara->member.para.fmt.dxStartIndent;
             cell = ME_FindItemFwd( para_get_di( para ), diCell);
-            cell->member.cell.pt.x += ME_twips2pointsX(c, dxStartIndent);
+            cell->member.cell.pt.x += ME_twips2pointsX( c, end_row_para->fmt.dxStartIndent );
             c->pt.x = cell->member.cell.pt.x;
         }
     }
     else if (para->nFlags & MEPF_ROWEND)
     {
         /* Set all the cells to the height of the largest cell */
-        ME_DisplayItem *startRowPara;
+        ME_Paragraph *start_row_para = table_row_start( para );
         int prevHeight, nHeight, bottomBorder = 0;
         ME_DisplayItem *cell = ME_FindItemBack( para_get_di( para ), diCell );
         para->nWidth = cell->member.cell.pt.x + cell->member.cell.nWidth;
-        if (!(para->next_para->member.para.nFlags & MEPF_ROWSTART))
+        if (!(para_next( para )->nFlags & MEPF_ROWSTART))
         {
             /* Last row, the bottom border is added to the height. */
             cell = cell->member.cell.prev_cell;
@@ -979,9 +976,8 @@ static void adjust_para_y( ME_Paragraph *para, ME_Context *c, struct repaint_ran
             cell->member.cell.nHeight = nHeight;
         }
         /* Also set the height of the start row paragraph */
-        startRowPara = ME_FindItemBack(cell, diParagraph);
-        startRowPara->member.para.nHeight = nHeight;
-        c->pt.x = startRowPara->member.para.pt.x;
+        start_row_para->nHeight = nHeight;
+        c->pt.x = start_row_para->pt.x;
         c->pt.y = cell->member.cell.pt.y + nHeight;
         if (prevHeight < nHeight)
         {
@@ -996,7 +992,7 @@ static void adjust_para_y( ME_Paragraph *para, ME_Context *c, struct repaint_ran
             }
         }
     }
-    else if (para->pCell && para->pCell != para->next_para->member.para.pCell)
+    else if (para->pCell && para->pCell != para_next( para )->pCell)
     {
         /* The next paragraph is in the next cell in the table row. */
         ME_Cell *cell = &para->pCell->member.cell;
