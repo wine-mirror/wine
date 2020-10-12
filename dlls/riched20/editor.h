@@ -189,7 +189,7 @@ void ME_DestroyContext(ME_Context *c) DECLSPEC_HIDDEN;
 
 /* wrap.c */
 BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor) DECLSPEC_HIDDEN;
-void ME_InvalidateParagraphRange(ME_TextEditor *editor, ME_DisplayItem *start_para, ME_DisplayItem *last_para) DECLSPEC_HIDDEN;
+void para_range_invalidate( ME_TextEditor *editor, ME_Paragraph *start_para, ME_Paragraph *last_para ) DECLSPEC_HIDDEN;
 void ME_SendRequestResize(ME_TextEditor *editor, BOOL force) DECLSPEC_HIDDEN;
 
 /* para.c */

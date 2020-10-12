@@ -1356,7 +1356,7 @@ ME_InvalidateSelection(ME_TextEditor *editor)
   }
 
   if (repaint_start)
-    ME_InvalidateParagraphRange(editor, repaint_start, repaint_end);
+    para_range_invalidate( editor, &repaint_start->member.para, &repaint_end->member.para );
   /* remember the last invalidated position */
   ME_GetSelectionOfs(editor, &editor->nLastSelStart, &editor->nLastSelEnd);
   ME_GetSelectionParas(editor, &editor->pLastSelStartPara, &editor->pLastSelEndPara);
