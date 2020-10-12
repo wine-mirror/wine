@@ -903,16 +903,18 @@ static void ME_WrapTextParagraph( ME_TextEditor *editor, ME_Context *c, ME_Parag
   editor->total_rows += wc.nRow;
 }
 
-static void ME_MarkRepaintEnd(ME_DisplayItem *para,
-                              ME_DisplayItem **repaint_start,
-                              ME_DisplayItem **repaint_end)
+struct repaint_range
 {
-    if (!*repaint_start)
-      *repaint_start = para;
-    *repaint_end = para;
+    ME_DisplayItem *start, *end;
+};
+
+static void update_repaint( ME_DisplayItem *para, struct repaint_range *repaint )
+{
+    if (!repaint->start) repaint->start = para;
+    repaint->end = para;
 }
 
-static void adjust_para_y(ME_Paragraph *para, ME_Context *c, ME_DisplayItem *repaint_start, ME_DisplayItem *repaint_end)
+static void adjust_para_y( ME_Paragraph *para, ME_Context *c, struct repaint_range *repaint )
 {
     if (para->nFlags & MEPF_ROWSTART)
     {
@@ -985,11 +987,11 @@ static void adjust_para_y(ME_Paragraph *para, ME_Context *c, ME_DisplayItem *rep
         {
             /* The height of the cells has grown, so invalidate the bottom of
              * the cells. */
-            ME_MarkRepaintEnd( para_get_di( para ) , &repaint_start, &repaint_end );
+            update_repaint( para_get_di( para ), repaint );
             cell = ME_FindItemBack( para_get_di( para ), diCell );
             while (cell)
             {
-                ME_MarkRepaintEnd(ME_FindItemBack(cell, diParagraph), &repaint_start, &repaint_end);
+                update_repaint( ME_FindItemBack(cell, diParagraph), repaint );
                 cell = cell->member.cell.prev_cell;
             }
         }
@@ -1031,7 +1033,7 @@ BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor)
   struct wine_rb_entry *entry, *next_entry;
   ME_Context c;
   int totalWidth = editor->nTotalWidth, prev_width;
-  ME_DisplayItem *repaint_start = NULL, *repaint_end = NULL;
+  struct repaint_range repaint = { NULL, NULL };
 
   if (!editor->marked_paras.root) return FALSE;
 
@@ -1052,9 +1054,9 @@ BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor)
       totalWidth = max(totalWidth, para->nWidth);
 
     if (!para->nCharOfs)
-      ME_MarkRepaintEnd( para->prev_para, &repaint_start, &repaint_end );
-    ME_MarkRepaintEnd( para_get_di( para ), &repaint_start, &repaint_end );
-    adjust_para_y( para, &c, repaint_start, repaint_end );
+      update_repaint( para->prev_para, &repaint );
+    update_repaint( para_get_di( para ), &repaint );
+    adjust_para_y( para, &c, &repaint );
 
     if (para->next_para)
     {
@@ -1064,9 +1066,9 @@ BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor)
         while (next->next_para && &next->marked_entry != next_entry &&
                next != &editor->pBuffer->pLast->member.para)
         {
-          ME_MarkRepaintEnd(next->next_para, &repaint_start, &repaint_end);
+          update_repaint( next->next_para, &repaint );
           next->next_para->member.para.pt.y = c.pt.y;
-          adjust_para_y( &next->next_para->member.para, &c, repaint_start, repaint_end );
+          adjust_para_y( &next->next_para->member.para, &c, &repaint );
           next = &next->next_para->member.para;
         }
       }
@@ -1083,9 +1085,9 @@ BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor)
 
   ME_DestroyContext(&c);
 
-  if (repaint_start || editor->nTotalLength < editor->nLastTotalLength)
-    ME_InvalidateParagraphRange(editor, repaint_start, repaint_end);
-  return !!repaint_start;
+  if (repaint.start || editor->nTotalLength < editor->nLastTotalLength)
+    ME_InvalidateParagraphRange(editor, repaint.start, repaint.end);
+  return !!repaint.start;
 }
 
 void ME_InvalidateParagraphRange(ME_TextEditor *editor,
