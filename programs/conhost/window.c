@@ -2062,6 +2062,29 @@ static BOOL config_dialog( struct console *console, BOOL current )
     return TRUE;
 }
 
+static void resize_window( struct console *console, int width, int height )
+{
+    struct console_config config;
+
+    current_config( console, &config );
+    config.win_width  = width;
+    config.win_height = height;
+
+    /* auto size screen-buffer if it's now smaller than window */
+    if (config.sb_width < config.win_width)
+        config.sb_width = config.win_width;
+    if (config.sb_height < config.win_height)
+        config.sb_height = config.win_height;
+
+    /* and reset window pos so that we don't display outside of the screen-buffer */
+    if (config.win_pos.X + config.win_width > config.sb_width)
+        config.win_pos.X = config.sb_width - config.win_width;
+    if (config.win_pos.Y + config.win_height > config.sb_height)
+        config.win_pos.Y = config.sb_height - config.win_height;
+
+    apply_config( console, &config );
+}
+
 /* grays / ungrays the menu items according to their state */
 static void set_menu_details( struct console *console, HMENU menu )
 {
@@ -2278,6 +2301,13 @@ static LRESULT WINAPI window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
     case WM_KILLFOCUS:
         if (console->active->cursor_visible)
             DestroyCaret();
+        break;
+
+    case WM_SIZE:
+        if (console->window->update_state != UPDATE_BUSY)
+            resize_window( console,
+                           max( LOWORD(lparam) / console->active->font.width, 20 ),
+                           max( HIWORD(lparam) / console->active->font.height, 20 ));
         break;
 
     case WM_SYSCOMMAND:
