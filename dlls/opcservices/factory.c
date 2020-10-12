@@ -320,7 +320,6 @@ static HRESULT WINAPI opc_factory_CreatePackageRootUri(IOpcFactory *iface, IOpcU
 
 static HRESULT WINAPI opc_factory_CreatePartUri(IOpcFactory *iface, LPCWSTR uri, IOpcPartUri **out)
 {
-    static const WCHAR rootW[] = {'/',0};
     IUri *part_uri, *root_uri, *combined;
     HRESULT hr;
 
@@ -337,7 +336,7 @@ static HRESULT WINAPI opc_factory_CreatePartUri(IOpcFactory *iface, LPCWSTR uri,
         return hr;
     }
 
-    if (FAILED(hr = CreateUri(rootW, Uri_CREATE_ALLOW_RELATIVE, 0, &root_uri)))
+    if (FAILED(hr = CreateUri(L"/", Uri_CREATE_ALLOW_RELATIVE, 0, &root_uri)))
     {
         WARN("Failed to create root uri, hr %#x.\n", hr);
         IUri_Release(part_uri);

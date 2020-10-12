@@ -1201,12 +1201,11 @@ static HRESULT opc_relationship_create(struct opc_relationship_set *set, const W
         relationship->id = CoTaskMemAlloc(10 * sizeof(WCHAR));
         if (relationship->id)
         {
-            static const WCHAR fmtW[] = {'R','%','0','8','X',0};
             DWORD generated;
 
             /* FIXME: test that generated id is unique */
             RtlGenRandom(&generated, sizeof(generated));
-            swprintf(relationship->id, 10, fmtW, generated);
+            swprintf(relationship->id, 10, L"R%08X", generated);
 
             if (opc_relationshipset_get_rel(set, relationship->id))
             {
@@ -1733,31 +1732,18 @@ static HRESULT opc_package_collect_content_types(IOpcPackage *package, struct co
 
 static HRESULT opc_package_write_default_type(const WCHAR *ext, const WCHAR *type, IXmlWriter *writer)
 {
-    static const WCHAR contenttypeW[] = {'C','o','n','t','e','n','t','T','y','p','e',0};
-    static const WCHAR extensionW[] = {'E','x','t','e','n','s','i','o','n',0};
-    static const WCHAR defaultW[] = {'D','e','f','a','u','l','t',0};
     HRESULT hr;
 
-    hr = IXmlWriter_WriteStartElement(writer, NULL, defaultW, NULL);
+    hr = IXmlWriter_WriteStartElement(writer, NULL, L"Default", NULL);
     if (SUCCEEDED(hr))
-        hr = IXmlWriter_WriteAttributeString(writer, NULL, extensionW, NULL, ext);
+        hr = IXmlWriter_WriteAttributeString(writer, NULL, L"Extension", NULL, ext);
     if (SUCCEEDED(hr))
-        hr = IXmlWriter_WriteAttributeString(writer, NULL, contenttypeW, NULL, type);
+        hr = IXmlWriter_WriteAttributeString(writer, NULL, L"ContentType", NULL, type);
     return hr;
 }
 
 static HRESULT opc_package_write_contenttypes(IOpcPackage *package, struct zip_archive *archive, IXmlWriter *writer)
 {
-    static const WCHAR uriW[] = {'h','t','t','p',':','/','/','s','c','h','e','m','a','s','.','o','p','e','n','x','m','l','f','o','r','m','a','t','s','.','o','r','g','/',
-            'p','a','c','k','a','g','e','/','2','0','0','6','/','c','o','n','t','e','n','t','-','t','y','p','e','s',0};
-    static const WCHAR relstypeW[] = {'a','p','p','l','i','c','a','t','i','o','n','/','v','n','d','.','o','p','e','n','x','m','l','f','o','r','m','a','t','s','-',
-            'p','a','c','k','a','g','e','.','r','e','l','a','t','i','o','n','s','h','i','p','s','+','x','m','l',0};
-    static const WCHAR contenttypesW[] = {'[','C','o','n','t','e','n','t','_','T','y','p','e','s',']','.','x','m','l',0};
-    static const WCHAR contenttypeW[] = {'C','o','n','t','e','n','t','T','y','p','e',0};
-    static const WCHAR overrideW[] = {'O','v','e','r','r','i','d','e',0};
-    static const WCHAR partnameW[] = {'P','a','r','t','N','a','m','e',0};
-    static const WCHAR typesW[] = {'T','y','p','e','s',0};
-    static const WCHAR relsW[] = {'r','e','l','s',0};
     struct content_type *content_type, *content_type2;
     struct content_types types;
     IStream *content = NULL;
@@ -1774,11 +1760,13 @@ static HRESULT opc_package_write_contenttypes(IOpcPackage *package, struct zip_a
     if (SUCCEEDED(hr))
         hr = IXmlWriter_WriteStartDocument(writer, XmlStandalone_Omit);
     if (SUCCEEDED(hr))
-        hr = IXmlWriter_WriteStartElement(writer, NULL, typesW, uriW);
+        hr = IXmlWriter_WriteStartElement(writer, NULL, L"Types",
+                L"http://schemas.openxmlformats.org/package/2006/content-types");
 
     if (SUCCEEDED(hr) && types.has_rels_part)
     {
-        hr = opc_package_write_default_type(relsW, relstypeW, writer);
+        hr = opc_package_write_default_type(L"rels",
+                L"application/vnd.openxmlformats-package.relationships+xml", writer);
         if (SUCCEEDED(hr))
             hr = IXmlWriter_WriteEndElement(writer);
     }
@@ -1799,17 +1787,17 @@ static HRESULT opc_package_write_contenttypes(IOpcPackage *package, struct zip_a
             BSTR name = NULL;
 
             if (SUCCEEDED(hr))
-                hr = IXmlWriter_WriteStartElement(writer, NULL, overrideW, NULL);
+                hr = IXmlWriter_WriteStartElement(writer, NULL, L"Override", NULL);
             if (SUCCEEDED(hr))
                 hr = IOpcPart_GetName(content_type->u.override.part, &uri);
             if (SUCCEEDED(hr))
                 hr = IOpcPartUri_GetRawUri(uri, &name);
             if (SUCCEEDED(hr))
-                hr = IXmlWriter_WriteAttributeString(writer, NULL, partnameW, NULL, name);
+                hr = IXmlWriter_WriteAttributeString(writer, NULL, L"PartName", NULL, name);
             if (SUCCEEDED(hr))
                 hr = IOpcPart_GetContentType(content_type->u.override.part, &type);
             if (SUCCEEDED(hr))
-                hr = IXmlWriter_WriteAttributeString(writer, NULL, contenttypeW, NULL, type);
+                hr = IXmlWriter_WriteAttributeString(writer, NULL, L"ContentType", NULL, type);
 
             if (uri)
                 IOpcPartUri_Release(uri);
@@ -1831,7 +1819,7 @@ static HRESULT opc_package_write_contenttypes(IOpcPackage *package, struct zip_a
         hr = IXmlWriter_Flush(writer);
 
     if (SUCCEEDED(hr))
-        hr = compress_add_file(archive, contenttypesW, content, OPC_COMPRESSION_NORMAL);
+        hr = compress_add_file(archive, L"[Content_Types].xml", content, OPC_COMPRESSION_NORMAL);
 
     if (content)
         IStream_Release(content);
@@ -1841,16 +1829,12 @@ static HRESULT opc_package_write_contenttypes(IOpcPackage *package, struct zip_a
 
 static HRESULT opc_package_write_rel(IOpcRelationship *rel, IXmlWriter *writer)
 {
-    static const WCHAR relationshipW[] = {'R','e','l','a','t','i','o','n','s','h','i','p',0};
-    static const WCHAR targetW[] = {'T','a','r','g','e','t',0};
-    static const WCHAR typeW[] = {'T','y','p','e',0};
-    static const WCHAR idW[] = {'I','d',0};
     BSTR target_uri;
     HRESULT hr;
     WCHAR *str;
     IUri *uri;
 
-    if (FAILED(hr = IXmlWriter_WriteStartElement(writer, NULL, relationshipW, NULL)))
+    if (FAILED(hr = IXmlWriter_WriteStartElement(writer, NULL, L"Relationship", NULL)))
         return hr;
 
     if (FAILED(hr = IOpcRelationship_GetTargetUri(rel, &uri)))
@@ -1859,7 +1843,7 @@ static HRESULT opc_package_write_rel(IOpcRelationship *rel, IXmlWriter *writer)
     IUri_GetRawUri(uri, &target_uri);
     IUri_Release(uri);
 
-    hr = IXmlWriter_WriteAttributeString(writer, NULL, targetW, NULL, target_uri);
+    hr = IXmlWriter_WriteAttributeString(writer, NULL, L"Target", NULL, target_uri);
     SysFreeString(target_uri);
     if (FAILED(hr))
         return hr;
@@ -1867,7 +1851,7 @@ static HRESULT opc_package_write_rel(IOpcRelationship *rel, IXmlWriter *writer)
     if (FAILED(hr = IOpcRelationship_GetId(rel, &str)))
         return hr;
 
-    hr = IXmlWriter_WriteAttributeString(writer, NULL, idW, NULL, str);
+    hr = IXmlWriter_WriteAttributeString(writer, NULL, L"Id", NULL, str);
     CoTaskMemFree(str);
     if (FAILED(hr))
         return hr;
@@ -1875,7 +1859,7 @@ static HRESULT opc_package_write_rel(IOpcRelationship *rel, IXmlWriter *writer)
     if (FAILED(hr = IOpcRelationship_GetRelationshipType(rel, &str)))
         return hr;
 
-    hr = IXmlWriter_WriteAttributeString(writer, NULL, typeW, NULL, str);
+    hr = IXmlWriter_WriteAttributeString(writer, NULL, L"Type", NULL, str);
     CoTaskMemFree(str);
     if (FAILED(hr))
         return hr;
@@ -1886,9 +1870,6 @@ static HRESULT opc_package_write_rel(IOpcRelationship *rel, IXmlWriter *writer)
 static HRESULT opc_package_write_rels(struct zip_archive *archive, IOpcRelationshipSet *rels,
         IOpcUri *uri, IXmlWriter *writer)
 {
-    static const WCHAR uriW[] = {'h','t','t','p',':','/','/','s','c','h','e','m','a','s','.','o','p','e','n','x','m','l','f','o','r','m','a','t','s','.','o','r','g','/',
-            'p','a','c','k','a','g','e','/','2','0','0','6','/','r','e','l','a','t','i','o','n','s','h','i','p','s',0};
-    static const WCHAR relationshipsW[] = {'R','e','l','a','t','i','o','n','s','h','i','p','s',0};
     IOpcRelationshipEnumerator *enumerator;
     BSTR rels_part_uri = NULL;
     IOpcPartUri *rels_uri;
@@ -1916,7 +1897,8 @@ static HRESULT opc_package_write_rels(struct zip_archive *archive, IOpcRelations
     if (SUCCEEDED(hr))
         hr = IXmlWriter_WriteStartDocument(writer, XmlStandalone_Yes);
     if (SUCCEEDED(hr))
-        hr = IXmlWriter_WriteStartElement(writer, NULL, relationshipsW, uriW);
+        hr = IXmlWriter_WriteStartElement(writer, NULL, L"Relationships",
+                L"http://schemas.openxmlformats.org/package/2006/relationships");
 
     while (has_next)
     {

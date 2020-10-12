@@ -449,8 +449,8 @@ static const IOpcPartUriVtbl opc_part_uri_vtbl =
 
 static IUri *opc_part_uri_get_rels_uri(IUri *uri)
 {
-    static const WCHAR relsdirW[] = {'/','_','r','e','l','s',0};
-    static const WCHAR relsextW[] = {'.','r','e','l','s',0};
+    static const WCHAR relsdirW[] = L"/_rels";
+    static const WCHAR relsextW[] = L".rels";
     WCHAR *start = NULL, *end, *ret;
     IUri *rels_uri;
     HRESULT hr;
@@ -578,7 +578,6 @@ HRESULT opc_part_uri_create(IUri *uri, struct opc_uri *source_uri, IOpcPartUri *
 
 HRESULT opc_root_uri_create(IOpcUri **out)
 {
-    static const WCHAR rootW[] = {'/',0};
     struct opc_uri *obj;
     HRESULT hr;
     IUri *uri;
@@ -588,7 +587,7 @@ HRESULT opc_root_uri_create(IOpcUri **out)
     if (!(obj = heap_alloc_zero(sizeof(*obj))))
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = CreateUri(rootW, Uri_CREATE_ALLOW_RELATIVE, 0, &uri)))
+    if (FAILED(hr = CreateUri(L"/", Uri_CREATE_ALLOW_RELATIVE, 0, &uri)))
     {
         WARN("Failed to create rels uri, hr %#x.\n", hr);
         heap_free(obj);
