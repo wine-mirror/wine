@@ -47,8 +47,8 @@ struct input_stream
 
 struct output_stream
 {
-    IMFVideoMediaType *media_type;
-    IMFVideoMediaType **media_types;
+    IMFMediaType *media_type;
+    IMFMediaType **media_types;
     unsigned int type_count;
 };
 
@@ -175,11 +175,11 @@ static void video_mixer_clear_types(struct video_mixer *mixer)
     }
     for (i = 0; i < mixer->output.type_count; ++i)
     {
-        IMFVideoMediaType_Release(mixer->output.media_types[i]);
+        IMFMediaType_Release(mixer->output.media_types[i]);
     }
     heap_free(mixer->output.media_types);
     if (mixer->output.media_type)
-        IMFVideoMediaType_Release(mixer->output.media_type);
+        IMFMediaType_Release(mixer->output.media_type);
     mixer->output.media_type = NULL;
 }
 
@@ -662,7 +662,7 @@ static HRESULT video_mixer_collect_output_types(struct video_mixer *mixer, const
             for (i = 0; i < count; ++i)
             {
                 subtype.Data1 = rt_formats[i];
-                MFCreateVideoMediaTypeFromSubtype(&subtype, &mixer->output.media_types[i]);
+                MFCreateVideoMediaTypeFromSubtype(&subtype, (IMFVideoMediaType **)&mixer->output.media_types[i]);
             }
             mixer->output.type_count = count;
         }
