@@ -92,6 +92,7 @@ static void test_device_manager(void)
     UINT token, count;
     IDirect3D9 *d3d;
     HWND window;
+    GUID *guids;
     HRESULT hr;
     RECT rect;
 
@@ -308,6 +309,11 @@ static void test_device_manager(void)
     video_desc.SampleWidth = 64;
     video_desc.SampleHeight = 64;
     video_desc.Format = D3DFMT_A8R8G8B8;
+
+    hr = IDirectXVideoProcessorService_GetVideoProcessorDeviceGuids(proc_service, &video_desc, &count, &guids);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(count, "Unexpected format count %u.\n", count);
+    CoTaskMemFree(guids);
 
     count = 0;
     hr = IDirectXVideoProcessorService_GetVideoProcessorRenderTargets(proc_service, &DXVA2_VideoProcSoftwareDevice,
