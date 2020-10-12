@@ -1083,7 +1083,7 @@ static void test_default_presenter(void)
     ok(present_params.hDeviceWindow == GetDesktopWindow(), "Unexpected device window.\n");
     ok(present_params.Windowed, "Unexpected windowed mode.\n");
     ok(present_params.SwapEffect == D3DSWAPEFFECT_COPY, "Unexpected swap effect.\n");
-    ok(present_params.Flags == D3DPRESENTFLAG_VIDEO, "Unexpected flags.\n");
+    ok(present_params.Flags & D3DPRESENTFLAG_VIDEO, "Unexpected flags %#x.\n", present_params.Flags);
     ok(present_params.PresentationInterval == D3DPRESENT_INTERVAL_IMMEDIATE, "Unexpected present interval.\n");
 
     IDirect3DDevice9_Release(d3d_device);
