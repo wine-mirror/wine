@@ -1576,3 +1576,16 @@ HRESULT __RPC_STUB IColumnsInfo_MapColumnIDs_Stub(IColumnsInfo* This, DBORDINAL 
     FIXME("(%p)->(%lu %p %p %p): stub\n", This, column_ids, dbids, columns, error);
     return E_NOTIMPL;
 }
+
+HRESULT CALLBACK IGetDataSource_GetDataSource_Proxy(IGetDataSource* This, REFIID riid, IUnknown **datasource)
+{
+    FIXME("(%p)->(%s %p): stub\n", This, debugstr_guid(riid), datasource);
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB IGetDataSource_GetDataSource_Stub(IGetDataSource* This, REFIID riid, IUnknown **datasource,
+    IErrorInfo **error)
+{
+    FIXME("(%p)->(%s %p %p): stub\n", This, debugstr_guid(riid), datasource, error);
+    return E_NOTIMPL;
+}

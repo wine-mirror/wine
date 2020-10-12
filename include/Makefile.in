@@ -307,6 +307,7 @@ SOURCES = \
 	gdiplusmetaheader.h \
 	gdipluspixelformats.h \
 	gdiplustypes.h \
+	getdts.idl \
 	guiddef.h \
 	hidusage.h \
 	highlevelmonitorconfigurationapi.h \
