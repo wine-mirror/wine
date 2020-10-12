@@ -738,9 +738,43 @@ static HRESULT WINAPI video_mixer_transform_SetInputType(IMFTransform *iface, DW
 
 static HRESULT WINAPI video_mixer_transform_SetOutputType(IMFTransform *iface, DWORD id, IMFMediaType *type, DWORD flags)
 {
-    FIXME("%p, %u, %p, %#x.\n", iface, id, type, flags);
+    const unsigned int equality_flags = MF_MEDIATYPE_EQUAL_MAJOR_TYPES |
+            MF_MEDIATYPE_EQUAL_FORMAT_TYPES | MF_MEDIATYPE_EQUAL_FORMAT_DATA;
+    struct video_mixer *mixer = impl_from_IMFTransform(iface);
+    HRESULT hr = MF_E_INVALIDMEDIATYPE;
+    unsigned int i, compare_flags;
 
-    return E_NOTIMPL;
+    TRACE("%p, %u, %p, %#x.\n", iface, id, type, flags);
+
+    if (id)
+        return MF_E_INVALIDSTREAMNUMBER;
+
+    EnterCriticalSection(&mixer->cs);
+
+    for (i = 0; i < mixer->output.type_count; ++i)
+    {
+        compare_flags = 0;
+        if (FAILED(IMFMediaType_IsEqual(type, mixer->output.media_types[i], &compare_flags)))
+            continue;
+
+        if ((compare_flags & equality_flags) == equality_flags)
+        {
+            hr = S_OK;
+            break;
+        }
+    }
+
+    if (SUCCEEDED(hr) && !(flags & MFT_SET_TYPE_TEST_ONLY))
+    {
+        if (mixer->output.media_type)
+            IMFMediaType_Release(mixer->output.media_type);
+        mixer->output.media_type = type;
+        IMFMediaType_AddRef(mixer->output.media_type);
+    }
+
+    LeaveCriticalSection(&mixer->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI video_mixer_transform_GetInputCurrentType(IMFTransform *iface, DWORD id, IMFMediaType **type)

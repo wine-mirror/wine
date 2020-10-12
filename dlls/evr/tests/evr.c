@@ -958,10 +958,11 @@ todo_wine
     hr = IMFTransform_GetOutputAvailableType(transform, 0, 0, &media_type);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
+    hr = IMFTransform_SetOutputType(transform, 1, media_type, 0);
+    ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#x.\n", hr);
+
     hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    IMFMediaType_Release(media_type);
 
     hr = IMFVideoProcessor_GetVideoProcessorMode(processor, &guid);
 todo_wine
@@ -972,6 +973,12 @@ todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     if (SUCCEEDED(hr))
         CoTaskMemFree(guids);
+
+    hr = IMFTransform_GetOutputCurrentType(transform, 0, &media_type2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(media_type == media_type2, "Unexpected media type instance.\n");
+    IMFMediaType_Release(media_type2);
+    IMFMediaType_Release(media_type);
 
     IMFVideoProcessor_Release(processor);
 
