@@ -471,6 +471,33 @@ BOOL WINAPI CPExportKey( HCRYPTPROV hprov, HCRYPTKEY hkey, HCRYPTKEY hexpkey, DW
     return FALSE;
 }
 
+static struct key *duplicate_key( const struct key *key )
+{
+    struct key *ret;
+
+    if (!(ret = create_key( key->algid, key->flags ))) return NULL;
+
+    if (BCryptDuplicateKey( key->handle, &ret->handle, NULL, 0, 0 ))
+    {
+        heap_free( ret );
+        return NULL;
+    }
+    return ret;
+}
+
+BOOL WINAPI CPDuplicateKey( HCRYPTPROV hprov, HCRYPTKEY hkey, DWORD *reserved, DWORD flags, HCRYPTKEY *ret_key )
+{
+    struct key *key = (struct key *)hkey, *ret;
+
+    TRACE( "%p, %p, %p, %08x, %p\n", (void *)hprov, (void *)hkey, reserved, flags, ret_key );
+
+    if (key->magic != MAGIC_KEY) return FALSE;
+
+    if (!(ret = duplicate_key( key ))) return FALSE;
+    *ret_key = (HCRYPTKEY)ret;
+    return TRUE;
+}
+
 static struct hash *create_hash( ALG_ID algid )
 {
     struct hash *ret;
