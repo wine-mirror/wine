@@ -641,8 +641,12 @@ BOOL WINAPI CPHashData( HCRYPTPROV hprov, HCRYPTHASH hhash, const BYTE *data, DW
 
     if (hash->magic != MAGIC_HASH) return FALSE;
 
-    if (hash->finished || BCryptHashData( hash->handle, (UCHAR *)data, len, 0 )) return FALSE;
-    return TRUE;
+    if (hash->finished)
+    {
+        SetLastError( NTE_BAD_HASH_STATE );
+        return FALSE;
+    }
+    return !BCryptHashData( hash->handle, (UCHAR *)data, len, 0 );
 }
 
 BOOL WINAPI CPGetHashParam( HCRYPTPROV hprov, HCRYPTHASH hhash, DWORD param, BYTE *data, DWORD *len, DWORD flags )

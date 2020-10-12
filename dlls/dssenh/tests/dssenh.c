@@ -1440,7 +1440,7 @@ static void test_duplicate_hash(void)
     SetLastError(0xdeadbeef);
     result = CryptHashData(hhash, (const BYTE *)"winetest", sizeof("winetest"), 0);
     ok(!result, "success\n");
-    todo_wine ok(GetLastError() == NTE_BAD_HASH_STATE, "got %08x\n", GetLastError());
+    ok(GetLastError() == NTE_BAD_HASH_STATE, "got %08x\n", GetLastError());
 
     result = CryptDuplicateHash(hhash, NULL, 0, &hhash2);
     ok(result, "got %08x\n", GetLastError());
@@ -1448,7 +1448,7 @@ static void test_duplicate_hash(void)
     SetLastError(0xdeadbeef);
     result = CryptHashData(hhash2, (const BYTE *)"winetest", sizeof("winetest"), 0);
     ok(!result, "success\n");
-    todo_wine ok(GetLastError() == NTE_BAD_HASH_STATE, "got %08x\n", GetLastError());
+    ok(GetLastError() == NTE_BAD_HASH_STATE, "got %08x\n", GetLastError());
 
     len = sizeof(buf);
     result = CryptGetHashParam(hhash2, HP_HASHVAL, buf, &len, 0);
