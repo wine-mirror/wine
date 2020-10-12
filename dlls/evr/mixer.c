@@ -40,7 +40,7 @@ struct input_stream
 {
     unsigned int id;
     IMFAttributes *attributes;
-    IMFVideoMediaType *media_type;
+    IMFMediaType *media_type;
     MFVideoNormalizedRect rect;
     unsigned int zorder;
 };
@@ -170,7 +170,7 @@ static void video_mixer_clear_types(struct video_mixer *mixer)
     for (i = 0; i < mixer->input_count; ++i)
     {
         if (mixer->inputs[i].media_type)
-            IMFVideoMediaType_Release(mixer->inputs[i].media_type);
+            IMFMediaType_Release(mixer->inputs[i].media_type);
         mixer->inputs[i].media_type = NULL;
     }
     for (i = 0; i < mixer->output.type_count; ++i)
@@ -714,14 +714,8 @@ static HRESULT WINAPI video_mixer_transform_SetInputType(IMFTransform *iface, DW
                             if (SUCCEEDED(hr = video_mixer_collect_output_types(mixer, &video_desc, service, count,
                                     guids, flags)) && !(flags & MFT_SET_TYPE_TEST_ONLY))
                             {
-                                GUID subtype = { 0 };
-
-                                if (FAILED(hr = IMFMediaType_GetGUID(media_type, &MF_MT_SUBTYPE, &subtype)))
-                                    WARN("Failed to get subtype %#x.\n", hr);
-
-                                if (SUCCEEDED(hr = MFCreateVideoMediaTypeFromSubtype(&subtype, &mixer->inputs[0].media_type)))
+                                if (SUCCEEDED(hr = MFCreateMediaType(&mixer->inputs[0].media_type)))
                                     hr = IMFMediaType_CopyAllItems(media_type, (IMFAttributes *)mixer->inputs[0].media_type);
-
                             }
                             CoTaskMemFree(guids);
                         }
