@@ -96,20 +96,32 @@ static struct presentation_desc *impl_from_IMFPresentationDescriptor(IMFPresenta
 
 static HRESULT WINAPI mediatype_QueryInterface(IMFMediaType *iface, REFIID riid, void **out)
 {
+    struct media_type *media_type = impl_from_IMFMediaType(iface);
+    GUID major = { 0 };
+
     TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), out);
 
-    if (IsEqualIID(riid, &IID_IMFMediaType) ||
+    attributes_GetGUID(&media_type->attributes, &MF_MT_MAJOR_TYPE, &major);
+
+    if (IsEqualGUID(&major, &MFMediaType_Video) && IsEqualIID(riid, &IID_IMFVideoMediaType))
+    {
+        *out = &media_type->IMFVideoMediaType_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IMFMediaType) ||
             IsEqualIID(riid, &IID_IMFAttributes) ||
             IsEqualIID(riid, &IID_IUnknown))
     {
-        *out = iface;
-        IMFMediaType_AddRef(iface);
-        return S_OK;
+        *out = &media_type->IMFMediaType_iface;
+    }
+    else
+    {
+        WARN("Unsupported %s.\n", debugstr_guid(riid));
+        *out = NULL;
+        return E_NOINTERFACE;
     }
 
-    WARN("Unsupported %s.\n", debugstr_guid(riid));
-    *out = NULL;
-    return E_NOINTERFACE;
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
 }
 
 static ULONG WINAPI mediatype_AddRef(IMFMediaType *iface)
@@ -613,48 +625,20 @@ static const IMFMediaTypeVtbl mediatypevtbl =
 
 static HRESULT WINAPI video_mediatype_QueryInterface(IMFVideoMediaType *iface, REFIID riid, void **out)
 {
-    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), out);
-
-    if (IsEqualIID(riid, &IID_IMFVideoMediaType) ||
-            IsEqualIID(riid, &IID_IMFMediaType) ||
-            IsEqualIID(riid, &IID_IMFAttributes) ||
-            IsEqualIID(riid, &IID_IUnknown))
-    {
-        *out = iface;
-        IMFVideoMediaType_AddRef(iface);
-        return S_OK;
-    }
-
-    WARN("Unsupported %s.\n", debugstr_guid(riid));
-    *out = NULL;
-    return E_NOINTERFACE;
+    struct media_type *media_type = impl_from_IMFVideoMediaType(iface);
+    return IMFMediaType_QueryInterface(&media_type->IMFMediaType_iface, riid, out);
 }
 
 static ULONG WINAPI video_mediatype_AddRef(IMFVideoMediaType *iface)
 {
     struct media_type *media_type = impl_from_IMFVideoMediaType(iface);
-    ULONG refcount = InterlockedIncrement(&media_type->attributes.ref);
-
-    TRACE("%p, refcount %u.\n", iface, refcount);
-
-    return refcount;
+    return IMFMediaType_AddRef(&media_type->IMFMediaType_iface);
 }
 
 static ULONG WINAPI video_mediatype_Release(IMFVideoMediaType *iface)
 {
     struct media_type *media_type = impl_from_IMFVideoMediaType(iface);
-    ULONG refcount = InterlockedDecrement(&media_type->attributes.ref);
-
-    TRACE("%p, refcount %u.\n", iface, refcount);
-
-    if (!refcount)
-    {
-        clear_attributes_object(&media_type->attributes);
-        CoTaskMemFree(media_type->video_format);
-        heap_free(media_type);
-    }
-
-    return refcount;
+    return IMFMediaType_Release(&media_type->IMFMediaType_iface);
 }
 
 static HRESULT WINAPI video_mediatype_GetItem(IMFVideoMediaType *iface, REFGUID key, PROPVARIANT *value)
@@ -1039,6 +1023,28 @@ static const IMFVideoMediaTypeVtbl videomediatypevtbl =
     video_mediatype_GetVideoRepresentation,
 };
 
+static HRESULT create_media_type(struct media_type **ret)
+{
+    struct media_type *object;
+    HRESULT hr;
+
+    object = heap_alloc_zero(sizeof(*object));
+    if (!object)
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = init_attributes_object(&object->attributes, 0)))
+    {
+        heap_free(object);
+        return hr;
+    }
+    object->IMFMediaType_iface.lpVtbl = &mediatypevtbl;
+    object->IMFVideoMediaType_iface.lpVtbl = &videomediatypevtbl;
+
+    *ret = object;
+
+    return S_OK;
+}
+
 /***********************************************************************
  *      MFCreateMediaType (mfplat.@)
  */
@@ -1052,16 +1058,8 @@ HRESULT WINAPI MFCreateMediaType(IMFMediaType **media_type)
     if (!media_type)
         return E_INVALIDARG;
 
-    object = heap_alloc(sizeof(*object));
-    if (!object)
-        return E_OUTOFMEMORY;
-
-    if (FAILED(hr = init_attributes_object(&object->attributes, 0)))
-    {
-        heap_free(object);
+    if (FAILED(hr = create_media_type(&object)))
         return hr;
-    }
-    object->IMFMediaType_iface.lpVtbl = &mediatypevtbl;
 
     *media_type = &object->IMFMediaType_iface;
 
@@ -2633,19 +2631,11 @@ HRESULT WINAPI MFCreateVideoMediaTypeFromSubtype(const GUID *subtype, IMFVideoMe
     if (!media_type)
         return E_INVALIDARG;
 
-    object = heap_alloc(sizeof(*object));
-    if (!object)
-        return E_OUTOFMEMORY;
-
-    if (FAILED(hr = init_attributes_object(&object->attributes, 0)))
-    {
-        heap_free(object);
+    if (FAILED(hr = create_media_type(&object)))
         return hr;
-    }
-    object->IMFVideoMediaType_iface.lpVtbl = &videomediatypevtbl;
 
-    IMFVideoMediaType_SetGUID(&object->IMFVideoMediaType_iface, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
-    IMFVideoMediaType_SetGUID(&object->IMFVideoMediaType_iface, &MF_MT_SUBTYPE, subtype);
+    IMFMediaType_SetGUID(&object->IMFMediaType_iface, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
+    IMFMediaType_SetGUID(&object->IMFMediaType_iface, &MF_MT_SUBTYPE, subtype);
 
     *media_type = &object->IMFVideoMediaType_iface;
 

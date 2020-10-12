@@ -763,8 +763,10 @@ static void init_functions(void)
 static void test_media_type(void)
 {
     IMFMediaType *mediatype, *mediatype2;
+    IMFVideoMediaType *video_type;
+    IUnknown *unk, *unk2;
+    DWORD count, flags;
     BOOL compressed;
-    DWORD flags;
     HRESULT hr;
     GUID guid;
 
@@ -861,6 +863,55 @@ if(0)
             "Unexpected flags %#x.\n", flags);
 
     IMFMediaType_Release(mediatype2);
+    IMFMediaType_Release(mediatype);
+
+    /* IMFVideoMediaType */
+    hr = MFCreateMediaType(&mediatype);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaType_QueryInterface(mediatype, &IID_IMFVideoMediaType, (void **)&unk);
+    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
+    hr = IMFMediaType_QueryInterface(mediatype, &IID_IUnknown, (void **)&unk);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(unk == (IUnknown *)mediatype, "Unexpected pointer.\n");
+    IUnknown_Release(unk);
+
+    hr = IMFMediaType_SetGUID(mediatype, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
+    ok(hr == S_OK, "Failed to set GUID value, hr %#x.\n", hr);
+
+    hr = IMFMediaType_QueryInterface(mediatype, &IID_IMFVideoMediaType, (void **)&unk);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IUnknown_QueryInterface(unk, &IID_IUnknown, (void **)&unk2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(unk2 == (IUnknown *)mediatype, "Unexpected pointer.\n");
+    IUnknown_Release(unk2);
+    IUnknown_Release(unk);
+
+    hr = MFCreateVideoMediaTypeFromSubtype(&MFVideoFormat_RGB555, &video_type);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMFVideoMediaType_QueryInterface(video_type, &IID_IMFMediaType, (void **)&unk);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IUnknown_Release(unk);
+
+    hr = IMFVideoMediaType_QueryInterface(video_type, &IID_IMFVideoMediaType, (void **)&unk);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IUnknown_Release(unk);
+
+    /* Major and subtype are set on creation. */
+    hr = IMFVideoMediaType_GetCount(video_type, &count);
+    ok(count == 2, "Unexpected attribute count %#x.\n", hr);
+
+    hr = IMFVideoMediaType_DeleteAllItems(video_type);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoMediaType_GetCount(video_type, &count);
+    ok(!count, "Unexpected attribute count %#x.\n", hr);
+
+    hr = IMFVideoMediaType_QueryInterface(video_type, &IID_IMFVideoMediaType, (void **)&unk);
+    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
+
+    IMFVideoMediaType_Release(video_type);
+
     IMFMediaType_Release(mediatype);
 }
 
