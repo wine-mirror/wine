@@ -161,7 +161,7 @@ CCLogicalORExpression
 CCLogicalANDExpression
     : CCBitwiseORExpression         { $$ = $1; }
     | CCBitwiseANDExpression tAND CCBitwiseORExpression
-                                    { FIXME("'&&' expression not implemented\n"); ctx->hres = E_NOTIMPL; YYABORT; }
+                                    { $$ = ccval_bool(get_ccbool($1) && get_ccbool($3)); }
 
 CCBitwiseORExpression
     : CCBitwiseXORExpression        { $$ = $1; }
