@@ -2011,6 +2011,7 @@ __ASM_GLOBAL_FUNC( call_user_apc_dispatcher,
                    "jrcxz 1f\n\t"
                    "movq 0x98(%rcx),%rax\n\t"       /* context_ptr->Rsp */
                    "leaq -0x5c0(%rax),%rsp\n\t"     /* sizeof(CONTEXT) + offsetof(frame,ret_addr) */
+                   "andq $~15,%rsp\n\t"
                    "jmp 2f\n"
                    "1:\tmovq 0x328(%rbx),%rax\n\t"  /* amd64_thread_data()->syscall_frame */
                    "leaq -0x4d0(%rax),%rsp\n\t"
