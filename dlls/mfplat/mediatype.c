@@ -39,6 +39,7 @@ struct media_type
     struct attributes attributes;
     IMFMediaType IMFMediaType_iface;
     IMFVideoMediaType IMFVideoMediaType_iface;
+    IMFAudioMediaType IMFAudioMediaType_iface;
     MFVIDEOFORMAT *video_format;
 };
 
@@ -79,6 +80,11 @@ static struct media_type *impl_from_IMFVideoMediaType(IMFVideoMediaType *iface)
     return CONTAINING_RECORD(iface, struct media_type, IMFVideoMediaType_iface);
 }
 
+static struct media_type *impl_from_IMFAudioMediaType(IMFAudioMediaType *iface)
+{
+    return CONTAINING_RECORD(iface, struct media_type, IMFAudioMediaType_iface);
+}
+
 static inline struct stream_desc *impl_from_IMFStreamDescriptor(IMFStreamDescriptor *iface)
 {
     return CONTAINING_RECORD(iface, struct stream_desc, IMFStreamDescriptor_iface);
@@ -106,6 +112,10 @@ static HRESULT WINAPI mediatype_QueryInterface(IMFMediaType *iface, REFIID riid,
     if (IsEqualGUID(&major, &MFMediaType_Video) && IsEqualIID(riid, &IID_IMFVideoMediaType))
     {
         *out = &media_type->IMFVideoMediaType_iface;
+    }
+    else if (IsEqualGUID(&major, &MFMediaType_Audio) && IsEqualIID(riid, &IID_IMFAudioMediaType))
+    {
+        *out = &media_type->IMFAudioMediaType_iface;
     }
     else if (IsEqualIID(riid, &IID_IMFMediaType) ||
             IsEqualIID(riid, &IID_IMFAttributes) ||
@@ -1023,6 +1033,389 @@ static const IMFVideoMediaTypeVtbl videomediatypevtbl =
     video_mediatype_GetVideoRepresentation,
 };
 
+static HRESULT WINAPI audio_mediatype_QueryInterface(IMFAudioMediaType *iface, REFIID riid, void **out)
+{
+    struct media_type *media_type = impl_from_IMFAudioMediaType(iface);
+    return IMFMediaType_QueryInterface(&media_type->IMFMediaType_iface, riid, out);
+}
+
+static ULONG WINAPI audio_mediatype_AddRef(IMFAudioMediaType *iface)
+{
+    struct media_type *media_type = impl_from_IMFAudioMediaType(iface);
+    return IMFMediaType_AddRef(&media_type->IMFMediaType_iface);
+}
+
+static ULONG WINAPI audio_mediatype_Release(IMFAudioMediaType *iface)
+{
+    struct media_type *media_type = impl_from_IMFAudioMediaType(iface);
+    return IMFMediaType_Release(&media_type->IMFMediaType_iface);
+}
+
+static HRESULT WINAPI audio_mediatype_GetItem(IMFAudioMediaType *iface, REFGUID key, PROPVARIANT *value)
+{
+    struct media_type *media_type = impl_from_IMFAudioMediaType(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
+
+    return attributes_GetItem(&media_type->attributes, key, value);
+}
+
+static HRESULT WINAPI audio_mediatype_GetItemType(IMFAudioMediaType *iface, REFGUID key, MF_ATTRIBUTE_TYPE *type)
+{
+    struct media_type *media_type = impl_from_IMFAudioMediaType(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), type);
+
+    return attributes_GetItemType(&media_type->attributes, key, type);
+}
+
+static HRESULT WINAPI audio_mediatype_CompareItem(IMFAudioMediaType *iface, REFGUID key, REFPROPVARIANT value, BOOL *result)
+{
+    struct media_type *media_type = impl_from_IMFAudioMediaType(iface);
+
+    TRACE("%p, %s, %s, %p.\n", iface, debugstr_attr(key), debugstr_propvar(value), result);
+
+    return attributes_CompareItem(&media_type->attributes, key, value, result);
+}
+
+static HRESULT WINAPI audio_mediatype_Compare(IMFAudioMediaType *iface, IMFAttributes *attrs,
+        MF_ATTRIBUTES_MATCH_TYPE type, BOOL *result)
+{
+    struct media_type *media_type = impl_from_IMFAudioMediaType(iface);
+
+    TRACE("%p, %p, %d, %p.\n", iface, attrs, type, result);
+
+    return attributes_Compare(&media_type->attributes, attrs, type, result);
+}
+
+static HRESULT WINAPI audio_mediatype_GetUINT32(IMFAudioMediaType *iface, REFGUID key, UINT32 *value)
+{
+    struct media_type *media_type = impl_from_IMFAudioMediaType(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
+
+    return attributes_GetUINT32(&media_type->attributes, key, value);
+}
+
+static HRESULT WINAPI audio_mediatype_GetUINT64(IMFAudioMediaType *iface, REFGUID key, UINT64 *value)
+{
+    struct media_type *media_type = impl_from_IMFAudioMediaType(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
+
+    return attributes_GetUINT64(&media_type->attributes, key, value);
+}
+
+static HRESULT WINAPI audio_mediatype_GetDouble(IMFAudioMediaType *iface, REFGUID key, double *value)
+{
+    struct media_type *media_type = impl_from_IMFAudioMediaType(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
+
+    return attributes_GetDouble(&media_type->attributes, key, value);
+}
+
+static HRESULT WINAPI audio_mediatype_GetGUID(IMFAudioMediaType *iface, REFGUID key, GUID *value)
+{
+    struct media_type *media_type = impl_from_IMFAudioMediaType(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), value);
+
+    return attributes_GetGUID(&media_type->attributes, key, value);
+}
+
+static HRESULT WINAPI audio_mediatype_GetStringLength(IMFAudioMediaType *iface, REFGUID key, UINT32 *length)
+{
+    struct media_type *media_type = impl_from_IMFAudioMediaType(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), length);
+
+    return attributes_GetStringLength(&media_type->attributes, key, length);
+}
+
+static HRESULT WINAPI audio_mediatype_GetString(IMFAudioMediaType *iface, REFGUID key, WCHAR *value,
+        UINT32 size, UINT32 *length)
+{
+    struct media_type *media_type = impl_from_IMFAudioMediaType(iface);
+
+    TRACE("%p, %s, %p, %u, %p.\n", iface, debugstr_attr(key), value, size, length);
+
+    return attributes_GetString(&media_type->attributes, key, value, size, length);
+}
+
+static HRESULT WINAPI audio_mediatype_GetAllocatedString(IMFAudioMediaType *iface, REFGUID key,
+        WCHAR **value, UINT32 *length)
+{
+    struct media_type *media_type = impl_from_IMFAudioMediaType(iface);
+
+    TRACE("%p, %s, %p, %p.\n", iface, debugstr_attr(key), value, length);
+
+    return attributes_GetAllocatedString(&media_type->attributes, key, value, length);
+}
+
+static HRESULT WINAPI audio_mediatype_GetBlobSize(IMFAudioMediaType *iface, REFGUID key, UINT32 *size)
+{
+    struct media_type *media_type = impl_from_IMFAudioMediaType(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), size);
+
+    return attributes_GetBlobSize(&media_type->attributes, key, size);
+}
+
+static HRESULT WINAPI audio_mediatype_GetBlob(IMFAudioMediaType *iface, REFGUID key, UINT8 *buf,
+        UINT32 bufsize, UINT32 *blobsize)
+{
+    struct media_type *media_type = impl_from_IMFAudioMediaType(iface);
+
+    TRACE("%p, %s, %p, %u, %p.\n", iface, debugstr_attr(key), buf, bufsize, blobsize);
+
+    return attributes_GetBlob(&media_type->attributes, key, buf, bufsize, blobsize);
+}
+
+static HRESULT WINAPI audio_mediatype_GetAllocatedBlob(IMFAudioMediaType *iface, REFGUID key, UINT8 **buf, UINT32 *size)
+{
+    struct media_type *media_type = impl_from_IMFAudioMediaType(iface);
+
+    TRACE("%p, %s, %p, %p.\n", iface, debugstr_attr(key), buf, size);
+
+    return attributes_GetAllocatedBlob(&media_type->attributes, key, buf, size);
+}
+
+static HRESULT WINAPI audio_mediatype_GetUnknown(IMFAudioMediaType *iface, REFGUID key, REFIID riid, void **obj)
+{
+    struct media_type *media_type = impl_from_IMFAudioMediaType(iface);
+
+    TRACE("%p, %s, %s, %p.\n", iface, debugstr_attr(key), debugstr_guid(riid), obj);
+
+    return attributes_GetUnknown(&media_type->attributes, key, riid, obj);
+}
+
+static HRESULT WINAPI audio_mediatype_SetItem(IMFAudioMediaType *iface, REFGUID key, REFPROPVARIANT value)
+{
+    struct media_type *media_type = impl_from_IMFAudioMediaType(iface);
+
+    TRACE("%p, %s, %s.\n", iface, debugstr_attr(key), debugstr_propvar(value));
+
+    return attributes_SetItem(&media_type->attributes, key, value);
+}
+
+static HRESULT WINAPI audio_mediatype_DeleteItem(IMFAudioMediaType *iface, REFGUID key)
+{
+    struct media_type *media_type = impl_from_IMFAudioMediaType(iface);
+
+    TRACE("%p, %s.\n", iface, debugstr_attr(key));
+
+    return attributes_DeleteItem(&media_type->attributes, key);
+}
+
+static HRESULT WINAPI audio_mediatype_DeleteAllItems(IMFAudioMediaType *iface)
+{
+    struct media_type *media_type = impl_from_IMFAudioMediaType(iface);
+
+    TRACE("%p.\n", iface);
+
+    return attributes_DeleteAllItems(&media_type->attributes);
+}
+
+static HRESULT WINAPI audio_mediatype_SetUINT32(IMFAudioMediaType *iface, REFGUID key, UINT32 value)
+{
+    struct media_type *media_type = impl_from_IMFAudioMediaType(iface);
+
+    TRACE("%p, %s, %u.\n", iface, debugstr_attr(key), value);
+
+    return attributes_SetUINT32(&media_type->attributes, key, value);
+}
+
+static HRESULT WINAPI audio_mediatype_SetUINT64(IMFAudioMediaType *iface, REFGUID key, UINT64 value)
+{
+    struct media_type *media_type = impl_from_IMFAudioMediaType(iface);
+
+    TRACE("%p, %s, %s.\n", iface, debugstr_attr(key), wine_dbgstr_longlong(value));
+
+    return attributes_SetUINT64(&media_type->attributes, key, value);
+}
+
+static HRESULT WINAPI audio_mediatype_SetDouble(IMFAudioMediaType *iface, REFGUID key, double value)
+{
+    struct media_type *media_type = impl_from_IMFAudioMediaType(iface);
+
+    TRACE("%p, %s, %f.\n", iface, debugstr_attr(key), value);
+
+    return attributes_SetDouble(&media_type->attributes, key, value);
+}
+
+static HRESULT WINAPI audio_mediatype_SetGUID(IMFAudioMediaType *iface, REFGUID key, REFGUID value)
+{
+    struct media_type *media_type = impl_from_IMFAudioMediaType(iface);
+
+    TRACE("%p, %s, %s.\n", iface, debugstr_attr(key), debugstr_mf_guid(value));
+
+    return attributes_SetGUID(&media_type->attributes, key, value);
+}
+
+static HRESULT WINAPI audio_mediatype_SetString(IMFAudioMediaType *iface, REFGUID key, const WCHAR *value)
+{
+    struct media_type *media_type = impl_from_IMFAudioMediaType(iface);
+
+    TRACE("%p, %s, %s.\n", iface, debugstr_attr(key), debugstr_w(value));
+
+    return attributes_SetString(&media_type->attributes, key, value);
+}
+
+static HRESULT WINAPI audio_mediatype_SetBlob(IMFAudioMediaType *iface, REFGUID key, const UINT8 *buf, UINT32 size)
+{
+    struct media_type *media_type = impl_from_IMFAudioMediaType(iface);
+
+    TRACE("%p, %s, %p, %u.\n", iface, debugstr_attr(key), buf, size);
+
+    return attributes_SetBlob(&media_type->attributes, key, buf, size);
+}
+
+static HRESULT WINAPI audio_mediatype_SetUnknown(IMFAudioMediaType *iface, REFGUID key, IUnknown *unknown)
+{
+    struct media_type *media_type = impl_from_IMFAudioMediaType(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_attr(key), unknown);
+
+    return attributes_SetUnknown(&media_type->attributes, key, unknown);
+}
+
+static HRESULT WINAPI audio_mediatype_LockStore(IMFAudioMediaType *iface)
+{
+    struct media_type *media_type = impl_from_IMFAudioMediaType(iface);
+
+    TRACE("%p.\n", iface);
+
+    return attributes_LockStore(&media_type->attributes);
+}
+
+static HRESULT WINAPI audio_mediatype_UnlockStore(IMFAudioMediaType *iface)
+{
+    struct media_type *media_type = impl_from_IMFAudioMediaType(iface);
+
+    TRACE("%p.\n", iface);
+
+    return attributes_UnlockStore(&media_type->attributes);
+}
+
+static HRESULT WINAPI audio_mediatype_GetCount(IMFAudioMediaType *iface, UINT32 *count)
+{
+    struct media_type *media_type = impl_from_IMFAudioMediaType(iface);
+
+    TRACE("%p, %p.\n", iface, count);
+
+    return attributes_GetCount(&media_type->attributes, count);
+}
+
+static HRESULT WINAPI audio_mediatype_GetItemByIndex(IMFAudioMediaType *iface, UINT32 index, GUID *key, PROPVARIANT *value)
+{
+    struct media_type *media_type = impl_from_IMFAudioMediaType(iface);
+
+    TRACE("%p, %u, %p, %p.\n", iface, index, key, value);
+
+    return attributes_GetItemByIndex(&media_type->attributes, index, key, value);
+}
+
+static HRESULT WINAPI audio_mediatype_CopyAllItems(IMFAudioMediaType *iface, IMFAttributes *dest)
+{
+    struct media_type *media_type = impl_from_IMFAudioMediaType(iface);
+
+    TRACE("%p, %p.\n", iface, dest);
+
+    return attributes_CopyAllItems(&media_type->attributes, dest);
+}
+
+static HRESULT WINAPI audio_mediatype_GetMajorType(IMFAudioMediaType *iface, GUID *guid)
+{
+    struct media_type *media_type = impl_from_IMFAudioMediaType(iface);
+
+    TRACE("%p, %p.\n", iface, guid);
+
+    return attributes_GetGUID(&media_type->attributes, &MF_MT_MAJOR_TYPE, guid);
+}
+
+static HRESULT WINAPI audio_mediatype_IsCompressedFormat(IMFAudioMediaType *iface, BOOL *compressed)
+{
+    struct media_type *media_type = impl_from_IMFAudioMediaType(iface);
+
+    TRACE("%p, %p.\n", iface, compressed);
+
+    return mediatype_is_compressed(media_type, compressed);
+}
+
+static HRESULT WINAPI audio_mediatype_IsEqual(IMFAudioMediaType *iface, IMFMediaType *type, DWORD *flags)
+{
+    struct media_type *media_type = impl_from_IMFAudioMediaType(iface);
+
+    TRACE("%p, %p, %p.\n", iface, type, flags);
+
+    return media_type_is_equal(media_type, type, flags);
+}
+
+static HRESULT WINAPI audio_mediatype_GetRepresentation(IMFAudioMediaType *iface, GUID guid, void **representation)
+{
+    FIXME("%p, %s, %p.\n", iface, debugstr_guid(&guid), representation);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI audio_mediatype_FreeRepresentation(IMFAudioMediaType *iface, GUID guid, void *representation)
+{
+    FIXME("%p, %s, %p.\n", iface, debugstr_guid(&guid), representation);
+
+    return E_NOTIMPL;
+}
+
+static const WAVEFORMATEX * WINAPI audio_mediatype_GetAudioFormat(IMFAudioMediaType *iface)
+{
+    FIXME("%p.\n", iface);
+
+    return NULL;
+}
+
+static const IMFAudioMediaTypeVtbl audiomediatypevtbl =
+{
+    audio_mediatype_QueryInterface,
+    audio_mediatype_AddRef,
+    audio_mediatype_Release,
+    audio_mediatype_GetItem,
+    audio_mediatype_GetItemType,
+    audio_mediatype_CompareItem,
+    audio_mediatype_Compare,
+    audio_mediatype_GetUINT32,
+    audio_mediatype_GetUINT64,
+    audio_mediatype_GetDouble,
+    audio_mediatype_GetGUID,
+    audio_mediatype_GetStringLength,
+    audio_mediatype_GetString,
+    audio_mediatype_GetAllocatedString,
+    audio_mediatype_GetBlobSize,
+    audio_mediatype_GetBlob,
+    audio_mediatype_GetAllocatedBlob,
+    audio_mediatype_GetUnknown,
+    audio_mediatype_SetItem,
+    audio_mediatype_DeleteItem,
+    audio_mediatype_DeleteAllItems,
+    audio_mediatype_SetUINT32,
+    audio_mediatype_SetUINT64,
+    audio_mediatype_SetDouble,
+    audio_mediatype_SetGUID,
+    audio_mediatype_SetString,
+    audio_mediatype_SetBlob,
+    audio_mediatype_SetUnknown,
+    audio_mediatype_LockStore,
+    audio_mediatype_UnlockStore,
+    audio_mediatype_GetCount,
+    audio_mediatype_GetItemByIndex,
+    audio_mediatype_CopyAllItems,
+    audio_mediatype_GetMajorType,
+    audio_mediatype_IsCompressedFormat,
+    audio_mediatype_IsEqual,
+    audio_mediatype_GetRepresentation,
+    audio_mediatype_FreeRepresentation,
+    audio_mediatype_GetAudioFormat,
+};
+
 static HRESULT create_media_type(struct media_type **ret)
 {
     struct media_type *object;
@@ -1039,6 +1432,7 @@ static HRESULT create_media_type(struct media_type **ret)
     }
     object->IMFMediaType_iface.lpVtbl = &mediatypevtbl;
     object->IMFVideoMediaType_iface.lpVtbl = &videomediatypevtbl;
+    object->IMFAudioMediaType_iface.lpVtbl = &audiomediatypevtbl;
 
     *ret = object;
 

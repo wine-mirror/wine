@@ -881,10 +881,22 @@ if(0)
 
     hr = IMFMediaType_QueryInterface(mediatype, &IID_IMFVideoMediaType, (void **)&unk);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
     hr = IUnknown_QueryInterface(unk, &IID_IUnknown, (void **)&unk2);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(unk2 == (IUnknown *)mediatype, "Unexpected pointer.\n");
     IUnknown_Release(unk2);
+
+    hr = IUnknown_QueryInterface(unk, &IID_IMFAttributes, (void **)&unk2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(unk2 == (IUnknown *)mediatype, "Unexpected pointer.\n");
+    IUnknown_Release(unk2);
+
+    hr = IUnknown_QueryInterface(unk, &IID_IMFMediaType, (void **)&unk2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(unk2 == (IUnknown *)mediatype, "Unexpected pointer.\n");
+    IUnknown_Release(unk2);
+
     IUnknown_Release(unk);
 
     hr = MFCreateVideoMediaTypeFromSubtype(&MFVideoFormat_RGB555, &video_type);
@@ -911,6 +923,42 @@ if(0)
     ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
 
     IMFVideoMediaType_Release(video_type);
+
+    IMFMediaType_Release(mediatype);
+
+    /* IMFAudioMediaType */
+    hr = MFCreateMediaType(&mediatype);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaType_QueryInterface(mediatype, &IID_IMFAudioMediaType, (void **)&unk);
+    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
+    hr = IMFMediaType_QueryInterface(mediatype, &IID_IUnknown, (void **)&unk);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(unk == (IUnknown *)mediatype, "Unexpected pointer.\n");
+    IUnknown_Release(unk);
+
+    hr = IMFMediaType_SetGUID(mediatype, &MF_MT_MAJOR_TYPE, &MFMediaType_Audio);
+    ok(hr == S_OK, "Failed to set GUID value, hr %#x.\n", hr);
+
+    hr = IMFMediaType_QueryInterface(mediatype, &IID_IMFAudioMediaType, (void **)&unk);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IUnknown_QueryInterface(unk, &IID_IUnknown, (void **)&unk2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(unk2 == (IUnknown *)mediatype, "Unexpected pointer.\n");
+    IUnknown_Release(unk2);
+
+    hr = IUnknown_QueryInterface(unk, &IID_IMFAttributes, (void **)&unk2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(unk2 == (IUnknown *)mediatype, "Unexpected pointer.\n");
+    IUnknown_Release(unk2);
+
+    hr = IUnknown_QueryInterface(unk, &IID_IMFMediaType, (void **)&unk2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(unk2 == (IUnknown *)mediatype, "Unexpected pointer.\n");
+    IUnknown_Release(unk2);
+
+    IUnknown_Release(unk);
 
     IMFMediaType_Release(mediatype);
 }
