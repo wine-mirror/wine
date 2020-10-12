@@ -59,7 +59,6 @@ struct container
 struct hash
 {
     DWORD              magic;
-    BCRYPT_ALG_HANDLE  alg_handle;
     BCRYPT_HASH_HANDLE handle;
     DWORD              len;
     UCHAR              value[64];
@@ -475,6 +474,7 @@ BOOL WINAPI CPExportKey( HCRYPTPROV hprov, HCRYPTKEY hkey, HCRYPTKEY hexpkey, DW
 static struct hash *create_hash( ALG_ID algid )
 {
     struct hash *ret;
+    BCRYPT_ALG_HANDLE alg_handle;
     const WCHAR *alg;
     DWORD len;
 
@@ -492,24 +492,26 @@ static struct hash *create_hash( ALG_ID algid )
 
     default:
         FIXME( "unhandled algorithm %u\n", algid );
-        return 0;
+        return NULL;
     }
 
-    if (!(ret = heap_alloc_zero( sizeof(*ret) ))) return 0;
+    if (!(ret = heap_alloc_zero( sizeof(*ret) ))) return NULL;
 
     ret->magic = MAGIC_HASH;
     ret->len   = len;
-    if (BCryptOpenAlgorithmProvider( &ret->alg_handle, alg, MS_PRIMITIVE_PROVIDER, 0 ))
+    if (BCryptOpenAlgorithmProvider( &alg_handle, alg, MS_PRIMITIVE_PROVIDER, 0 ))
     {
         heap_free( ret );
-        return 0;
+        return NULL;
     }
-    if (BCryptCreateHash( ret->alg_handle, &ret->handle, NULL, 0, NULL, 0, 0 ))
+    if (BCryptCreateHash( alg_handle, &ret->handle, NULL, 0, NULL, 0, 0 ))
     {
-        BCryptCloseAlgorithmProvider( ret->alg_handle, 0 );
+        BCryptCloseAlgorithmProvider( alg_handle, 0 );
         heap_free( ret );
-        return 0;
+        return NULL;
     }
+
+    BCryptCloseAlgorithmProvider( alg_handle, 0 );
     return ret;
 }
 
@@ -537,6 +539,14 @@ BOOL WINAPI CPCreateHash( HCRYPTPROV hprov, ALG_ID algid, HCRYPTKEY hkey, DWORD 
     return TRUE;
 }
 
+static void destroy_hash( struct hash *hash )
+{
+    if (!hash) return;
+    BCryptDestroyHash( hash->handle );
+    hash->magic = 0;
+    heap_free( hash );
+}
+
 BOOL WINAPI CPDestroyHash( HCRYPTPROV hprov, HCRYPTHASH hhash )
 {
     struct hash *hash = (struct hash *)hhash;
@@ -549,11 +559,7 @@ BOOL WINAPI CPDestroyHash( HCRYPTPROV hprov, HCRYPTHASH hhash )
         return FALSE;
     }
 
-    BCryptDestroyHash( hash->handle );
-    BCryptCloseAlgorithmProvider( hash->alg_handle, 0 );
-
-    hash->magic = 0;
-    heap_free( hash );
+    destroy_hash( hash );
     return TRUE;
 }
 
