@@ -222,49 +222,38 @@ void ME_GetCursorCoordinates(ME_TextEditor *editor, ME_Cursor *pCursor,
                              int *x, int *y, int *height)
 {
   ME_DisplayItem *row;
-  ME_DisplayItem *run = pCursor->pRun;
-  ME_DisplayItem *para = pCursor->pPara;
-  ME_DisplayItem *pSizeRun = run;
+  ME_Run *run = &pCursor->pRun->member.run;
+  ME_Paragraph *para = &pCursor->pPara->member.para;
+  ME_Run *size_run = run, *prev;
   ME_Context c;
   int run_x;
 
   assert(height && x && y);
-  assert(~para->member.para.nFlags & MEPF_REWRAP);
-  assert(run && run->type == diRun);
-  assert(para && para->type == diParagraph);
+  assert(~para->nFlags & MEPF_REWRAP);
 
-  row = ME_FindItemBack(run, diStartRowOrParagraph);
+  row = ME_FindItemBack( run_get_di( run ), diStartRowOrParagraph );
   assert(row && row->type == diStartRow);
 
   ME_InitContext(&c, editor, ITextHost_TxGetDC(editor->texthost));
 
-  if (!pCursor->nOffset)
-  {
-    ME_DisplayItem *prev = ME_FindItemBack(run, diRunOrParagraph);
-    assert(prev);
-    if (prev->type == diRun)
-      pSizeRun = prev;
-  }
+  if (!pCursor->nOffset && (prev = run_prev( run ))) size_run = prev;
+
   if (editor->bCaretAtEnd && !pCursor->nOffset &&
-      run == ME_FindItemFwd(row, diRun))
+      run == &ME_FindItemFwd( row, diRun )->member.run)
   {
     ME_DisplayItem *tmp = ME_FindItemBack(row, diRunOrParagraph);
-    assert(tmp);
     if (tmp->type == diRun)
     {
       row = ME_FindItemBack(tmp, diStartRow);
-      pSizeRun = run = tmp;
-      assert(run);
-      assert(run->type == diRun);
+      size_run = run = &tmp->member.run;
     }
   }
-  run_x = ME_PointFromCharContext( &c, &run->member.run, pCursor->nOffset, TRUE );
+  run_x = ME_PointFromCharContext( &c, run, pCursor->nOffset, TRUE );
 
-  *height = pSizeRun->member.run.nAscent + pSizeRun->member.run.nDescent;
-  *x = c.rcView.left + run->member.run.pt.x + run_x - editor->horz_si.nPos;
-  *y = c.rcView.top + para->member.para.pt.y + row->member.row.nBaseline
-       + run->member.run.pt.y - pSizeRun->member.run.nAscent
-       - editor->vert_si.nPos;
+  *height = size_run->nAscent + size_run->nDescent;
+  *x = c.rcView.left + run->pt.x + run_x - editor->horz_si.nPos;
+  *y = c.rcView.top + para->pt.y + row->member.row.nBaseline
+       + run->pt.y - size_run->nAscent - editor->vert_si.nPos;
   ME_DestroyContext(&c);
   return;
 }
