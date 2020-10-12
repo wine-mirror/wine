@@ -34,7 +34,7 @@ void wined3d_swapchain_cleanup(struct wined3d_swapchain *swapchain)
 
     TRACE("Destroying swapchain %p.\n", swapchain);
 
-    wined3d_swapchain_state_unregister(&swapchain->state);
+    wined3d_swapchain_state_cleanup(&swapchain->state);
     wined3d_swapchain_set_gamma_ramp(swapchain, 0, &swapchain->orig_gamma);
 
     /* Release the swapchain's draw buffers. Make sure swapchain->back_buffers[0]
@@ -1359,7 +1359,8 @@ static HRESULT wined3d_swapchain_init(struct wined3d_swapchain *swapchain, struc
     if (FAILED(hr = wined3d_swapchain_state_init(&swapchain->state, desc, window, device->wined3d, state_parent)))
     {
         ERR("Failed to initialise swapchain state, hr %#x.\n", hr);
-        goto err;
+        wined3d_mutex_unlock();
+        return hr;
     }
 
     swapchain->swapchain_ops = swapchain_ops;
@@ -1565,6 +1566,7 @@ err:
         wined3d_texture_decref(swapchain->front_buffer);
     }
 
+    wined3d_swapchain_state_cleanup(&swapchain->state);
     wined3d_mutex_unlock();
 
     return hr;
@@ -2290,7 +2292,7 @@ BOOL CDECL wined3d_swapchain_state_is_windowed(const struct wined3d_swapchain_st
 
 void CDECL wined3d_swapchain_state_destroy(struct wined3d_swapchain_state *state)
 {
-    wined3d_swapchain_state_unregister(state);
+    wined3d_swapchain_state_cleanup(state);
     heap_free(state);
 }
 

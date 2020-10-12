@@ -817,7 +817,7 @@ void wined3d_swapchain_state_register(struct wined3d_swapchain_state *state,
     wined3d_wndproc_mutex_unlock();
 }
 
-void wined3d_swapchain_state_unregister(struct wined3d_swapchain_state *state)
+static void wined3d_swapchain_state_unregister(struct wined3d_swapchain_state *state)
 {
     struct wined3d_registered_swapchain_state *state_entry, *last_state_entry;
     struct wined3d_window_hook *hook, *last_hook;
@@ -848,6 +848,11 @@ void wined3d_swapchain_state_unregister(struct wined3d_swapchain_state *state)
     }
 
     wined3d_wndproc_mutex_unlock();
+}
+
+void wined3d_swapchain_state_cleanup(struct wined3d_swapchain_state *state)
+{
+    wined3d_swapchain_state_unregister(state);
 }
 
 /* At process attach */
