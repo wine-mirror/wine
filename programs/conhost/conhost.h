@@ -88,7 +88,6 @@ struct console
     struct edit_line       edit_line;           /* edit line context */
     struct console_window *window;
     WCHAR                 *title;               /* console title */
-    size_t                 title_len;           /* length of console title */
     struct history_line  **history;             /* lines history */
     unsigned int           history_size;        /* number of entries in history array */
     unsigned int           history_index;       /* number of used entries in history array */

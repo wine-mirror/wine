@@ -2271,12 +2271,12 @@ static NTSTATUS set_console_title( struct console *console, const WCHAR *in_titl
 
     if (size)
     {
-        if (!(title = malloc( size ))) return STATUS_NO_MEMORY;
+        if (!(title = malloc( size + sizeof(WCHAR) ))) return STATUS_NO_MEMORY;
         memcpy( title, in_title, size );
+        title[size / sizeof(WCHAR)] = 0;
     }
     free( console->title );
-    console->title     = title;
-    console->title_len = size;
+    console->title = title;
 
     if (console->tty_output)
     {
@@ -2284,9 +2284,11 @@ static NTSTATUS set_console_title( struct console *console, const WCHAR *in_titl
         char *vt;
 
         tty_write( console, "\x1b]0;", 4 );
-        len = WideCharToMultiByte( get_tty_cp( console ), 0, console->title, size / sizeof(WCHAR), NULL, 0, NULL, NULL);
+        len = WideCharToMultiByte( get_tty_cp( console ), 0, console->title, size / sizeof(WCHAR),
+                                   NULL, 0, NULL, NULL);
         if ((vt = tty_alloc_buffer( console, len )))
-            WideCharToMultiByte( get_tty_cp( console ), 0, console->title, size / sizeof(WCHAR), vt, len, NULL, NULL );
+            WideCharToMultiByte( get_tty_cp( console ), 0, console->title, size / sizeof(WCHAR),
+                                 vt, len, NULL, NULL );
         tty_write( console, "\x07", 1 );
         tty_sync( console );
     }
@@ -2503,10 +2505,9 @@ static NTSTATUS console_input_ioctl( struct console *console, unsigned int code,
         {
             WCHAR *result;
             if (in_size) return STATUS_INVALID_PARAMETER;
-            TRACE( "returning title %s\n", debugstr_wn(console->title,
-                                                       console->title_len / sizeof(WCHAR)) );
-            if (!(result = alloc_ioctl_buffer( *out_size = min( *out_size, console->title_len ))))
-                return STATUS_NO_MEMORY;
+            TRACE( "returning title %s\n", debugstr_w(console->title) );
+            *out_size = min( *out_size, console->title ? wcslen( console->title ) * sizeof(WCHAR) : 0 );
+            if (!(result = alloc_ioctl_buffer( *out_size ))) return STATUS_NO_MEMORY;
             if (*out_size) memcpy( result, console->title, *out_size );
             return STATUS_SUCCESS;
         }
