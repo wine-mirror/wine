@@ -308,13 +308,13 @@ BOOL ME_InternalDeleteText(ME_TextEditor *editor, ME_Cursor *start,
   int nOfs = ME_GetCursorOfs(start), text_len = ME_GetTextLength( editor );
   int shift = 0;
   int totalChars = nChars;
-  ME_DisplayItem *start_para;
+  ME_Paragraph *start_para;
   BOOL delete_all = FALSE;
 
   /* Prevent deletion past last end of paragraph run. */
   nChars = min(nChars, text_len - nOfs);
   if (nChars == text_len) delete_all = TRUE;
-  start_para = c.pPara;
+  start_para = &c.pPara->member.para;
 
   if (!bForce)
   {
@@ -349,19 +349,19 @@ BOOL ME_InternalDeleteText(ME_TextEditor *editor, ME_Cursor *start,
                              run->nCharOfs);
       if (!editor->bEmulateVersion10) /* v4.1 */
       {
-        ME_DisplayItem *next_para = ME_FindItemFwd(c.pRun, diParagraphOrEnd);
-        ME_DisplayItem *this_para = next_para->member.para.prev_para;
+        ME_Paragraph *this_para = run->para;
+        ME_Paragraph *next_para = para_next( this_para );
 
         /* The end of paragraph before a table row is only deleted if there
          * is nothing else on the line before it. */
-        if (this_para == start_para &&
-            next_para->member.para.nFlags & MEPF_ROWSTART)
+        if (this_para == start_para && next_para->nFlags & MEPF_ROWSTART)
         {
           /* If the paragraph will be empty, then it should be deleted, however
            * it still might have text right now which would inherit the
            * MEPF_STARTROW property if we joined it right now.
            * Instead we will delete it after the preceding text is deleted. */
-          if (nOfs > this_para->member.para.nCharOfs) {
+          if (nOfs > this_para->nCharOfs)
+          {
             /* Skip this end of line. */
             nChars -= (eollen < nChars) ? eollen : nChars;
             continue;
@@ -383,7 +383,7 @@ BOOL ME_InternalDeleteText(ME_TextEditor *editor, ME_Cursor *start,
 
       c.nOffset -= nCharsToDelete;
 
-      para_mark_rewrap( editor, &ME_FindItemBack( c.pRun, diParagraph )->member.para );
+      para_mark_rewrap( editor, c.pRun->member.run.para );
 
       cursor = c;
       /* nChars is the number of characters that should be deleted from the
@@ -447,7 +447,7 @@ BOOL ME_InternalDeleteText(ME_TextEditor *editor, ME_Cursor *start,
       continue;
     }
   }
-  if (delete_all) ME_SetDefaultParaFormat( editor, &start_para->member.para.fmt );
+  if (delete_all) ME_SetDefaultParaFormat( editor, &start_para->fmt );
   return TRUE;
 }
 
