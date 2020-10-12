@@ -2292,6 +2292,8 @@ static NTSTATUS set_console_title( struct console *console, const WCHAR *in_titl
         tty_write( console, "\x07", 1 );
         tty_sync( console );
     }
+    if (console->win)
+        SetWindowTextW( console->win, console->title );
     return STATUS_SUCCESS;
 }
 
@@ -2755,7 +2757,10 @@ int __cdecl wmain(int argc, WCHAR *argv[])
     }
     else
     {
+        STARTUPINFOW si;
         if (!init_window( &console )) return 1;
+        GetStartupInfoW( &si );
+        set_console_title( &console, si.lpTitle, wcslen( si.lpTitle ) * sizeof(WCHAR) );
         ShowWindow( console.win, SW_SHOW );
     }
 
