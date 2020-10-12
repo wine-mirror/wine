@@ -1413,6 +1413,58 @@ static void test_key_exchange(void)
     ok(result, "Failed to release CSP provider.\n");
 }
 
+static void test_duplicate_hash(void)
+{
+    static const char expected[] =
+        {0xb9,0x7b,0xed,0xd4,0x7b,0xd8,0xa0,0xcd,0x6c,0xba,0xce,0xe9,0xb1,0x36,0xbb,0x00,0x27,0xe3,0x95,0x21};
+    HCRYPTPROV hprov;
+    HCRYPTHASH hhash, hhash2;
+    BYTE buf[20];
+    DWORD len;
+    BOOL result;
+
+    result = CryptAcquireContextA(&hprov, NULL, MS_DEF_DSS_PROV_A, PROV_DSS, CRYPT_VERIFYCONTEXT);
+    ok(result, "got %08x\n", GetLastError());
+
+    result = CryptCreateHash(hprov, CALG_SHA, 0, 0, &hhash);
+    ok(result, "got %08x\n", GetLastError());
+
+    result = CryptHashData(hhash, (const BYTE *)"winetest", sizeof("winetest"), 0);
+    ok(result, "got %08x\n", GetLastError());
+
+    len = sizeof(buf);
+    result = CryptGetHashParam(hhash, HP_HASHVAL, buf, &len, 0);
+    ok(result, "got %08x\n", GetLastError());
+    ok(!memcmp(buf, expected, sizeof(expected)), "wrong data\n");
+
+    SetLastError(0xdeadbeef);
+    result = CryptHashData(hhash, (const BYTE *)"winetest", sizeof("winetest"), 0);
+    ok(!result, "success\n");
+    todo_wine ok(GetLastError() == NTE_BAD_HASH_STATE, "got %08x\n", GetLastError());
+
+    result = CryptDuplicateHash(hhash, NULL, 0, &hhash2);
+    ok(result, "got %08x\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    result = CryptHashData(hhash2, (const BYTE *)"winetest", sizeof("winetest"), 0);
+    ok(!result, "success\n");
+    todo_wine ok(GetLastError() == NTE_BAD_HASH_STATE, "got %08x\n", GetLastError());
+
+    len = sizeof(buf);
+    result = CryptGetHashParam(hhash2, HP_HASHVAL, buf, &len, 0);
+    ok(result, "got %08x\n", GetLastError());
+    ok(!memcmp(buf, expected, sizeof(expected)), "wrong data\n");
+
+    result = CryptDestroyHash(hhash2);
+    ok(result, "got %08x\n", GetLastError());
+
+    result = CryptDestroyHash(hhash);
+    ok(result, "got %08x\n", GetLastError());
+
+    result = CryptReleaseContext(hprov, 0);
+    ok(result, "got %08x\n", GetLastError());
+}
+
 START_TEST(dssenh)
 {
     test_acquire_context();
@@ -1422,4 +1474,5 @@ START_TEST(dssenh)
     test_cipher_modes(ciphermode_data, ARRAY_SIZE(ciphermode_data));
     test_verify_signature();
     test_key_exchange();
+    test_duplicate_hash();
 }

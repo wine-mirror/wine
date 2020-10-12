@@ -563,6 +563,37 @@ BOOL WINAPI CPDestroyHash( HCRYPTPROV hprov, HCRYPTHASH hhash )
     return TRUE;
 }
 
+static struct hash *duplicate_hash( const struct hash *hash )
+{
+    struct hash *ret;
+
+    if (!(ret = heap_alloc( sizeof(*ret) ))) return NULL;
+
+    ret->magic = hash->magic;
+    ret->len   = hash->len;
+    if (BCryptDuplicateHash( hash->handle, &ret->handle, NULL, 0, 0 ))
+    {
+        heap_free( ret );
+        return NULL;
+    }
+    memcpy( ret->value, hash->value, sizeof(hash->value) );
+    ret->finished = hash->finished;
+    return ret;
+}
+
+BOOL WINAPI CPDuplicateHash( HCRYPTPROV hprov, HCRYPTHASH hhash, DWORD *reserved, DWORD flags, HCRYPTHASH *ret_hash )
+{
+    struct hash *hash = (struct hash *)hhash, *ret;
+
+    TRACE( "%p, %p, %p, %08x, %p\n", (void *)hprov, (void *)hhash, reserved, flags, ret_hash );
+
+    if (hash->magic != MAGIC_HASH) return FALSE;
+
+    if (!(ret = duplicate_hash( hash ))) return FALSE;
+    *ret_hash = (HCRYPTHASH)ret;
+    return TRUE;
+}
+
 BOOL WINAPI CPHashData( HCRYPTPROV hprov, HCRYPTHASH hhash, const BYTE *data, DWORD len, DWORD flags )
 {
     struct hash *hash = (struct hash *)hhash;

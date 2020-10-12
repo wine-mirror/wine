@@ -4,7 +4,7 @@
 @ stdcall CPDeriveKey(ptr long ptr long ptr)
 @ stdcall CPDestroyHash(ptr ptr)
 @ stdcall CPDestroyKey(ptr ptr)
-@ stub CPDuplicateHash
+@ stdcall CPDuplicateHash(ptr ptr ptr long ptr)
 @ stub CPDuplicateKey
 @ stub CPEncrypt
 @ stdcall CPExportKey(ptr ptr ptr long long ptr ptr)
