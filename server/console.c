@@ -56,22 +56,9 @@ struct console_input
     struct object                obj;           /* object header */
     int                          num_proc;      /* number of processes attached to this console */
     struct thread               *renderer;      /* console renderer thread */
-    int                          mode;          /* input mode */
     struct screen_buffer        *active;        /* active screen buffer */
-    int                          recnum;        /* number of input records */
-    INPUT_RECORD                *records;       /* input records */
     struct console_input_events *evt;           /* synchronization event with renderer */
     struct console_server       *server;        /* console server object */
-    WCHAR                       *title;         /* console title */
-    data_size_t                  title_len;     /* length of console title */
-    struct history_line        **history;       /* lines history */
-    int                          history_size;  /* number of entries in history array */
-    int                          history_index; /* number of used entries in history array */
-    int                          history_mode;  /* mode of history (non zero means remove doubled strings */
-    int                          edition_mode;  /* index to edition mode flavors */
-    int                          input_cp;      /* console input codepage */
-    int                          output_cp;     /* console output codepage */
-    user_handle_t                win;           /* window handle if backend supports it */
     unsigned int                 last_id;       /* id of last created console buffer */
     struct event                *event;         /* event to wait on for input queue */
     struct fd                   *fd;            /* for bare console, attached input fd */
@@ -572,34 +559,18 @@ static struct object *create_console_input(void)
         return NULL;
 
     console_input->renderer      = NULL;
-    console_input->mode          = ENABLE_PROCESSED_INPUT | ENABLE_LINE_INPUT |
-                                   ENABLE_ECHO_INPUT | ENABLE_MOUSE_INPUT | ENABLE_INSERT_MODE |
-                                   ENABLE_EXTENDED_FLAGS;
     console_input->num_proc      = 0;
     console_input->active        = NULL;
-    console_input->recnum        = 0;
-    console_input->records       = NULL;
     console_input->evt           = NULL;
     console_input->server        = NULL;
-    console_input->title         = NULL;
-    console_input->title_len     = 0;
-    console_input->history_size  = 50;
-    console_input->history       = calloc( console_input->history_size, sizeof(*console_input->history) );
-    console_input->history_index = 0;
-    console_input->history_mode  = 0;
-    console_input->edition_mode  = 0;
-    console_input->input_cp      = 0;
-    console_input->output_cp     = 0;
-    console_input->win           = 0;
     console_input->event         = create_event( NULL, NULL, 0, 1, 0, NULL );
     console_input->fd            = NULL;
     console_input->last_id       = 0;
     init_async_queue( &console_input->ioctl_q );
     init_async_queue( &console_input->read_q );
 
-    if (!console_input->history || !console_input->event)
+    if (!console_input->event)
     {
-        console_input->history_size = 0;
         release_object( console_input );
         return NULL;
     }
@@ -899,9 +870,8 @@ static void console_input_dump( struct object *obj, int verbose )
 
 static void console_input_destroy( struct object *obj )
 {
-    struct console_input*	console_in = (struct console_input *)obj;
-    struct screen_buffer*	curr;
-    int				i;
+    struct console_input *console_in = (struct console_input *)obj;
+    struct screen_buffer *curr;
 
     assert( obj->ops == &console_input_ops );
 
@@ -910,9 +880,6 @@ static void console_input_destroy( struct object *obj )
         assert( console_in->server->console == console_in );
         disconnect_console_server( console_in->server );
     }
-
-    free( console_in->title );
-    free( console_in->records );
 
     if (console_in->active) release_object( console_in->active );
     console_in->active = NULL;
@@ -930,10 +897,6 @@ static void console_input_destroy( struct object *obj )
         release_object( console_in->event );
     if (console_in->fd)
         release_object( console_in->fd );
-
-    for (i = 0; i < console_in->history_size; i++)
-        free( console_in->history[i] );
-    free( console_in->history );
 }
 
 static struct object *create_console_connection( struct console_input *console )
