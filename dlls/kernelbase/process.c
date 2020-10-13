@@ -1278,7 +1278,7 @@ BOOL WINAPI BaseFlushAppcompatCache(void)
 /***********************************************************************
  *           GetCommandLineA   (kernelbase.@)
  */
-LPSTR WINAPI DECLSPEC_HOTPATCH GetCommandLineA(void)
+LPSTR WINAPI GetCommandLineA(void)
 {
     return command_lineA;
 }
@@ -1287,7 +1287,7 @@ LPSTR WINAPI DECLSPEC_HOTPATCH GetCommandLineA(void)
 /***********************************************************************
  *           GetCommandLineW   (kernelbase.@)
  */
-LPWSTR WINAPI DECLSPEC_HOTPATCH GetCommandLineW(void)
+LPWSTR WINAPI GetCommandLineW(void)
 {
     return command_lineW;
 }
