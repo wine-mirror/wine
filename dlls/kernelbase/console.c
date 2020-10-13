@@ -1183,46 +1183,12 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetConsoleCursorInfo( HANDLE handle, CONSOLE_CURSO
 BOOL WINAPI DECLSPEC_HOTPATCH SetConsoleCursorPosition( HANDLE handle, COORD pos )
 {
     struct condrv_output_info_params params = { SET_CONSOLE_OUTPUT_INFO_CURSOR_POS };
-    CONSOLE_SCREEN_BUFFER_INFO info;
-    int w, h, do_move = 0;
 
     TRACE( "%p %d %d\n", handle, pos.X, pos.Y );
 
     params.info.cursor_x = pos.X;
     params.info.cursor_y = pos.Y;
-    if (!console_ioctl( handle, IOCTL_CONDRV_SET_OUTPUT_INFO, &params, sizeof(params), NULL, 0, NULL ))
-        return FALSE;
-
-    if (!GetConsoleScreenBufferInfo( handle, &info )) return FALSE;
-
-    /* if cursor is no longer visible, scroll the visible window... */
-    w = info.srWindow.Right - info.srWindow.Left + 1;
-    h = info.srWindow.Bottom - info.srWindow.Top + 1;
-    if (pos.X < info.srWindow.Left)
-    {
-	info.srWindow.Left = min(pos.X, info.dwSize.X - w);
-	do_move = 1;
-    }
-    else if (pos.X > info.srWindow.Right)
-    {
-	info.srWindow.Left = max(pos.X, w) - w + 1;
-	do_move = 1;
-    }
-    info.srWindow.Right = info.srWindow.Left + w - 1;
-
-    if (pos.Y < info.srWindow.Top)
-    {
-	info.srWindow.Top = min(pos.Y, info.dwSize.Y - h);
-	do_move = 1;
-    }
-    else if (pos.Y > info.srWindow.Bottom)
-    {
-	info.srWindow.Top = max(pos.Y, h) - h + 1;
-	do_move = 1;
-    }
-    info.srWindow.Bottom = info.srWindow.Top + h - 1;
-
-    return !do_move || SetConsoleWindowInfo( handle, TRUE, &info.srWindow );
+    return console_ioctl( handle, IOCTL_CONDRV_SET_OUTPUT_INFO, &params, sizeof(params), NULL, 0, NULL );
 }
 
 
