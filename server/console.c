@@ -846,22 +846,6 @@ struct thread *console_get_renderer( struct console_input *console )
     return console->renderer;
 }
 
-static struct console_input* console_input_get( obj_handle_t handle, unsigned access )
-{
-    struct console_input*	console = NULL;
-
-    if (handle)
-	console = (struct console_input *)get_handle_obj( current->process, handle,
-							  access, &console_input_ops );
-    else if (current->process->console)
-    {
-	console = (struct console_input *)grab_object( current->process->console );
-    }
-
-    if (!console && !get_error()) set_error(STATUS_INVALID_PARAMETER);
-    return console;
-}
-
 struct console_signal_info
 {
     struct console_input        *console;
@@ -1239,57 +1223,6 @@ static int set_output_info( struct screen_buffer *screen_buffer,
     }
 
     return 1;
-}
-
-/* appends a new line to history (history is a fixed size array) */
-static void console_input_append_hist( struct console_input* console, const WCHAR* buf, data_size_t len )
-{
-    struct history_line *ptr;
-
-    if (!console || !console->history_size)
-    {
-	set_error( STATUS_INVALID_PARAMETER ); /* FIXME */
-	return;
-    }
-
-    len = (len / sizeof(WCHAR)) * sizeof(WCHAR);
-    if (console->history_mode && console->history_index &&
-        console->history[console->history_index - 1]->len == len &&
-        !memcmp( console->history[console->history_index - 1]->text, buf, len ))
-    {
-        /* don't duplicate entry */
-	set_error( STATUS_ALIAS_EXISTS );
-	return;
-    }
-    if (!(ptr = mem_alloc( offsetof( struct history_line, text[len / sizeof(WCHAR)] )))) return;
-    ptr->len = len;
-    memcpy( ptr->text, buf, len );
-
-    if (console->history_index < console->history_size)
-    {
-	console->history[console->history_index++] = ptr;
-    }
-    else
-    {
-	free( console->history[0]) ;
-	memmove( &console->history[0], &console->history[1],
-		 (console->history_size - 1) * sizeof(*console->history) );
-	console->history[console->history_size - 1] = ptr;
-    }
-}
-
-/* returns a line from the cache */
-static data_size_t console_input_get_hist( struct console_input *console, int index )
-{
-    data_size_t ret = 0;
-
-    if (index >= console->history_index) set_error( STATUS_INVALID_PARAMETER );
-    else
-    {
-        ret = console->history[index]->len;
-        set_reply_data( console->history[index]->text, min( ret, get_reply_max_size() ));
-    }
-    return ret;
 }
 
 /* dumb dump */
@@ -2540,92 +2473,6 @@ struct object *create_console_device( struct object *root, const struct unicode_
                                       unsigned int attr, const struct security_descriptor *sd )
 {
     return create_named_object( root, &console_device_ops, name, attr, sd );
-}
-
-/* allocate a console for the renderer */
-DECL_HANDLER(alloc_console)
-{
-    struct process *process;
-    struct console_input *console;
-    int attach = 0;
-
-    switch (req->pid)
-    {
-    case 0:
-        /* console to be attached to parent process */
-        if (!(process = get_process_from_id( current->process->parent_id )))
-        {
-            set_error( STATUS_ACCESS_DENIED );
-            return;
-        }
-        attach = 1;
-        break;
-    default:
-        /* console to be attached to req->pid */
-        if (!(process = get_process_from_id( req->pid ))) return;
-    }
-
-    if (attach && process->console)
-    {
-        set_error( STATUS_ACCESS_DENIED );
-    }
-    else if ((console = (struct console_input*)create_console_input()))
-    {
-        if ((reply->handle_in = alloc_handle( current->process, console, req->access,
-                                              req->attributes )) && attach)
-        {
-            process->console = (struct console_input*)grab_object( console );
-            console->num_proc++;
-        }
-        release_object( console );
-    }
-    release_object( process );
-}
-
-/* free the console of the current process */
-DECL_HANDLER(free_console)
-{
-    free_console( current->process );
-}
-
-/* appends a string to console's history */
-DECL_HANDLER(append_console_input_history)
-{
-    struct console_input *console;
-
-    if (!(console = console_input_get( req->handle, FILE_WRITE_PROPERTIES ))) return;
-    console_input_append_hist( console, get_req_data(), get_req_data_size() );
-    release_object( console );
-}
-
-/* appends a string to console's history */
-DECL_HANDLER(get_console_input_history)
-{
-    struct console_input *console;
-
-    if (!(console = console_input_get( req->handle, FILE_READ_PROPERTIES ))) return;
-    reply->total = console_input_get_hist( console, req->index );
-    release_object( console );
-}
-
-/* creates a screen buffer */
-DECL_HANDLER(create_console_output)
-{
-    struct console_input *console;
-    struct object        *screen_buffer;
-
-    if (!(console = console_input_get( req->handle_in, FILE_WRITE_PROPERTIES )))
-        return;
-
-    screen_buffer = create_console_output( console );
-    if (screen_buffer)
-    {
-        /* FIXME: should store sharing and test it when opening the CONOUT$ device
-         * see file.c on how this could be done */
-        reply->handle_out = alloc_handle( current->process, screen_buffer, req->access, req->attributes );
-        release_object( screen_buffer );
-    }
-    release_object( console );
 }
 
 /* get console which renderer is 'current' */

@@ -1429,54 +1429,12 @@ enum server_fd_type
     obj_handle_t deferred;      /* handle to the socket for which accept() is deferred */
 @END
 
-/* Allocate a console (only used by a console renderer) */
-@REQ(alloc_console)
-    unsigned int access;        /* wanted access rights */
-    unsigned int attributes;    /* object attributes */
-    process_id_t pid;           /* pid of process which shall be attached to the console */
-@REPLY
-    obj_handle_t handle_in;     /* handle to console input */
-@END
-
-
-/* Free the console of the current process */
-@REQ(free_console)
-@END
-
 
 /* Get the input queue wait event */
 @REQ(get_console_wait_event)
     obj_handle_t handle;        /* handle to the console */
 @REPLY
     obj_handle_t event;
-@END
-
-
-/* appends a string to console's history */
-@REQ(append_console_input_history)
-    obj_handle_t handle;        /* handle to console input, or 0 for process' console */
-    VARARG(line,unicode_str);   /* line to add */
-@END
-
-
-/* appends a string to console's history */
-@REQ(get_console_input_history)
-    obj_handle_t handle;        /* handle to console input, or 0 for process' console */
-    int          index;         /* index to get line from */
-@REPLY
-    int          total;         /* total length of line in Unicode chars */
-    VARARG(line,unicode_str);   /* line to add */
-@END
-
-
-/* creates a new screen buffer on process' console */
-@REQ(create_console_output)
-    obj_handle_t handle_in;     /* handle to console input, or 0 for process' console */
-    unsigned int access;        /* wanted access rights */
-    unsigned int attributes;    /* object attributes */
-    unsigned int share;         /* sharing credentials */
-@REPLY
-    obj_handle_t handle_out;    /* handle to the screen buffer */
 @END
 
 
