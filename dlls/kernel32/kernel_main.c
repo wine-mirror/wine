@@ -30,7 +30,6 @@
 #include "winternl.h"
 
 #include "kernel_private.h"
-#include "console_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(process);

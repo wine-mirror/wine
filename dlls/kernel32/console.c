@@ -41,7 +41,6 @@
 #include "wine/exception.h"
 #include "wine/debug.h"
 #include "excpt.h"
-#include "console_private.h"
 #include "kernel_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(console);
@@ -243,10 +242,6 @@ DWORD WINAPI GetConsoleTitleA(LPSTR title, DWORD size)
 }
 
 
-static WCHAR*	S_EditString /* = NULL */;
-static unsigned S_EditStrPos /* = 0 */;
-
-
 /***********************************************************************
  *            ReadConsoleA   (KERNEL32.@)
  */
@@ -274,76 +269,23 @@ BOOL WINAPI ReadConsoleA( HANDLE handle, LPVOID buffer, DWORD length, DWORD *ret
 /***********************************************************************
  *            ReadConsoleW   (KERNEL32.@)
  */
-BOOL WINAPI ReadConsoleW(HANDLE hConsoleInput, LPVOID lpBuffer,
-			 DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, LPVOID lpReserved)
+BOOL WINAPI ReadConsoleW( HANDLE handle, void *buffer, DWORD length, DWORD *count, void *reserved )
 {
-    IO_STATUS_BLOCK io;
-    DWORD	charsread;
-    LPWSTR	xbuf = lpBuffer;
-    DWORD	mode;
+    BOOL ret;
 
-    TRACE("(%p,%p,%d,%p,%p)\n",
-	  hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, lpReserved);
+    TRACE( "(%p,%p,%d,%p,%p)\n", handle, buffer, length, count, reserved );
 
-    if (nNumberOfCharsToRead > INT_MAX)
+    if (length > INT_MAX)
     {
         SetLastError(ERROR_NOT_ENOUGH_MEMORY);
         return FALSE;
     }
 
-    if (!NtDeviceIoControlFile(hConsoleInput, NULL, NULL, NULL, &io, IOCTL_CONDRV_READ_CONSOLE, NULL, 0, lpBuffer,
-                               nNumberOfCharsToRead * sizeof(WCHAR)))
-    {
-        if (lpNumberOfCharsRead) *lpNumberOfCharsRead = io.Information / sizeof(WCHAR);
-        return TRUE;
-    }
-
-    if (!GetConsoleMode(hConsoleInput, &mode))
-        return FALSE;
-    if (mode & ENABLE_LINE_INPUT)
-    {
-	if (!S_EditString || S_EditString[S_EditStrPos] == 0)
-	{
-	    HeapFree(GetProcessHeap(), 0, S_EditString);
-	    if (!(S_EditString = CONSOLE_Readline(hConsoleInput, TRUE)))
-		return FALSE;
-	    S_EditStrPos = 0;
-	}
-	charsread = lstrlenW(&S_EditString[S_EditStrPos]);
-	if (charsread > nNumberOfCharsToRead) charsread = nNumberOfCharsToRead;
-	memcpy(xbuf, &S_EditString[S_EditStrPos], charsread * sizeof(WCHAR));
-	S_EditStrPos += charsread;
-    }
-    else
-    {
-	INPUT_RECORD 	ir;
-        DWORD           timeout = INFINITE;
-
-	/* FIXME: should we read at least 1 char? The SDK does not say */
-	/* wait for at least one available input record (it doesn't mean we'll have
-	 * chars stored in xbuf...)
-	 *
-	 * Although SDK doc keeps silence about 1 char, SDK examples assume
-	 * that we should wait for at least one character (not key). --KS
-	 */
-	charsread = 0;
-        do 
-	{
-	    if (read_console_input(hConsoleInput, &ir, timeout) != rci_gotone) break;
-	    if (ir.EventType == KEY_EVENT && ir.Event.KeyEvent.bKeyDown &&
-		ir.Event.KeyEvent.uChar.UnicodeChar)
-	    {
-		xbuf[charsread++] = ir.Event.KeyEvent.uChar.UnicodeChar;
-		timeout = 0;
-	    }
-        } while (charsread < nNumberOfCharsToRead);
-        /* nothing has been read */
-        if (timeout == INFINITE) return FALSE;
-    }
-
-    if (lpNumberOfCharsRead) *lpNumberOfCharsRead = charsread;
-
-    return TRUE;
+    ret = DeviceIoControl( handle, IOCTL_CONDRV_READ_CONSOLE, NULL, 0, buffer,
+                           length * sizeof(WCHAR), count, NULL );
+    if (ret) *count /= sizeof(WCHAR);
+    else SetLastError( ERROR_INVALID_HANDLE );
+    return ret;
 }
 
 
@@ -398,26 +340,6 @@ BOOL WINAPI DECLSPEC_HOTPATCH WriteConsoleW( HANDLE handle, const void *buffer, 
 
 
 /******************************************************************
- *		CONSOLE_FillLineUniform
- *
- * Helper function for ScrollConsoleScreenBufferW
- * Fills a part of a line with a constant character info
- */
-void CONSOLE_FillLineUniform(HANDLE hConsoleOutput, int i, int j, int len, LPCHAR_INFO lpFill)
-{
-    struct condrv_fill_output_params params;
-
-    params.mode  = CHAR_INFO_MODE_TEXTATTR;
-    params.x     = i;
-    params.y     = j;
-    params.count = len;
-    params.wrap  = FALSE;
-    params.ch    = lpFill->Char.UnicodeChar;
-    params.attr  = lpFill->Attributes;
-    DeviceIoControl( hConsoleOutput, IOCTL_CONDRV_FILL_OUTPUT, &params, sizeof(params), NULL, 0, NULL, NULL );
-}
-
-/******************************************************************
  *              GetConsoleDisplayMode  (KERNEL32.@)
  */
 BOOL WINAPI GetConsoleDisplayMode(LPDWORD lpModeFlags)
@@ -442,88 +364,6 @@ BOOL WINAPI SetConsoleDisplayMode(HANDLE hConsoleOutput, DWORD dwFlags,
         return FALSE;
     }
     return TRUE;
-}
-
-
-/* ====================================================================
- *
- * Console manipulation functions
- *
- * ====================================================================*/
-
-/* some missing functions...
- * FIXME: those are likely to be defined as undocumented function in kernel32 (or part of them)
- * should get the right API and implement them
- *	SetConsoleCommandHistoryMode
- *	SetConsoleNumberOfCommands[AW]
- */
-int CONSOLE_GetHistory(int idx, WCHAR* buf, int buf_len)
-{
-    int len = 0;
-
-    SERVER_START_REQ( get_console_input_history )
-    {
-        req->handle = 0;
-        req->index = idx;
-        if (buf && buf_len > 1)
-        {
-            wine_server_set_reply( req, buf, (buf_len - 1) * sizeof(WCHAR) );
-        }
-        if (!wine_server_call_err( req ))
-        {
-            if (buf) buf[wine_server_reply_size(reply) / sizeof(WCHAR)] = 0;
-            len = reply->total / sizeof(WCHAR) + 1;
-        }
-    }
-    SERVER_END_REQ;
-    return len;
-}
-
-/******************************************************************
- *		CONSOLE_AppendHistory
- *
- *
- */
-BOOL	CONSOLE_AppendHistory(const WCHAR* ptr)
-{
-    size_t	len = lstrlenW(ptr);
-    BOOL	ret;
-
-    while (len && (ptr[len - 1] == '\n' || ptr[len - 1] == '\r')) len--;
-    if (!len) return FALSE;
-
-    SERVER_START_REQ( append_console_input_history )
-    {
-        req->handle = 0;
-        wine_server_add_data( req, ptr, len * sizeof(WCHAR) );
-        ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-    return ret;
-}
-
-/******************************************************************
- *		CONSOLE_GetNumHistoryEntries
- *
- *
- */
-unsigned CONSOLE_GetNumHistoryEntries(HANDLE console)
-{
-    struct condrv_input_info info;
-    BOOL ret = DeviceIoControl( console, IOCTL_CONDRV_GET_INPUT_INFO, NULL, 0, &info, sizeof(info), NULL, NULL );
-    return ret ? info.history_index : ~0;
-}
-
-/******************************************************************
- *		CONSOLE_GetEditionMode
- *
- *
- */
-BOOL CONSOLE_GetEditionMode(HANDLE hConIn, int* mode)
-{
-    struct condrv_input_info info;
-    return DeviceIoControl( hConIn, IOCTL_CONDRV_GET_INPUT_INFO, NULL, 0, &info, sizeof(info), NULL, NULL )
-        ? info.edition_mode : 0;
 }
 
 /******************************************************************

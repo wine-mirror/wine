@@ -10,7 +10,6 @@ C_SRCS = \
 	computername.c \
 	console.c \
 	debugger.c \
-	editline.c \
 	file.c \
 	heap.c \
 	kernel_main.c \
