@@ -95,6 +95,8 @@ struct VkDevice_T
     struct wine_vk_mapping mapping;
 };
 
+struct wine_debug_utils_messenger;
+
 struct VkInstance_T
 {
     struct wine_vk_base base;
@@ -110,6 +112,9 @@ struct VkInstance_T
     VkBool32 enable_wrapper_list;
     struct list wrappers;
     SRWLOCK wrapper_lock;
+
+    struct wine_debug_utils_messenger *utils_messengers;
+    uint32_t utils_messenger_count;
 
     unsigned int quirks;
 
@@ -156,6 +161,30 @@ static inline struct wine_cmd_pool *wine_cmd_pool_from_handle(VkCommandPool hand
 static inline VkCommandPool wine_cmd_pool_to_handle(struct wine_cmd_pool *cmd_pool)
 {
     return (VkCommandPool)(uintptr_t)cmd_pool;
+}
+
+struct wine_debug_utils_messenger
+{
+    struct VkInstance_T *instance; /* parent */
+    VkDebugUtilsMessengerEXT debug_messenger; /* native messenger */
+
+    /* application callback + data */
+    PFN_vkDebugUtilsMessengerCallbackEXT user_callback;
+    void *user_data;
+
+    struct wine_vk_mapping mapping;
+};
+
+static inline struct wine_debug_utils_messenger *wine_debug_utils_messenger_from_handle(
+        VkDebugUtilsMessengerEXT handle)
+{
+    return (struct wine_debug_utils_messenger *)(uintptr_t)handle;
+}
+
+static inline VkDebugUtilsMessengerEXT wine_debug_utils_messenger_to_handle(
+        struct wine_debug_utils_messenger *debug_messenger)
+{
+    return (VkDebugUtilsMessengerEXT)(uintptr_t)debug_messenger;
 }
 
 void *wine_vk_get_device_proc_addr(const char *name) DECLSPEC_HIDDEN;
