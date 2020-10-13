@@ -1671,6 +1671,36 @@ call ok(x.getProp.prop.prop = 3, "x.getProp.prop.prop = " & x.getProp.prop.prop)
 ok getVT(x) = "VT_DISPATCH*", "getVT(x) = " & getVT(x)
 todo_wine_ok getVT(x()) = "VT_BSTR", "getVT(x()) = " & getVT(x())
 
+funcCalled = ""
+class DefaultSubTest1
+ Public  default Sub init(a)
+    funcCalled = "init" & a
+ end sub
+end class
+
+Set obj = New DefaultSubTest1
+obj.init(1)
+call ok(funcCalled = "init1","funcCalled=" & funcCalled)
+funcCalled = ""
+obj(2)
+call ok(funcCalled = "init2","funcCalled=" & funcCalled)
+
+class DefaultSubTest2
+ Public Default Function init
+    funcCalled = "init"
+ end function
+end class
+
+Set obj = New DefaultSubTest2
+funcCalled = ""
+obj.init()
+call ok(funcCalled = "init","funcCalled=" & funcCalled)
+funcCalled = ""
+' todo this is not yet supported
+'funcCalled = ""
+'obj()
+'call ok(funcCalled = "init","funcCalled=" & funcCalled)
+
 with nothing
 end with
 

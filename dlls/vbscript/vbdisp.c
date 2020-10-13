@@ -38,11 +38,9 @@ static BOOL get_func_id(vbdisp_t *This, const WCHAR *name, vbdisp_invoke_type_t 
 {
     unsigned i;
 
-    for(i = invoke_type == VBDISP_ANY ? 0 : 1; i < This->desc->func_cnt; i++) {
+    for(i = 0; i < This->desc->func_cnt; i++) {
         if(invoke_type == VBDISP_ANY) {
             if(!search_private && !This->desc->funcs[i].is_public)
-                continue;
-            if(!i && !This->desc->funcs[0].name) /* default value may not exist */
                 continue;
         }else {
             if(!This->desc->funcs[i].entries[invoke_type]
@@ -50,7 +48,7 @@ static BOOL get_func_id(vbdisp_t *This, const WCHAR *name, vbdisp_invoke_type_t 
                 continue;
         }
 
-        if(!wcsicmp(This->desc->funcs[i].name, name)) {
+        if(This->desc->funcs[i].name && !wcsicmp(This->desc->funcs[i].name, name)) {
             *id = i;
             return TRUE;
         }
