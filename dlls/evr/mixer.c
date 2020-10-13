@@ -714,8 +714,10 @@ static HRESULT WINAPI video_mixer_transform_SetInputType(IMFTransform *iface, DW
                             if (SUCCEEDED(hr = video_mixer_collect_output_types(mixer, &video_desc, service, count,
                                     guids, flags)) && !(flags & MFT_SET_TYPE_TEST_ONLY))
                             {
-                                if (SUCCEEDED(hr = MFCreateMediaType(&mixer->inputs[0].media_type)))
-                                    hr = IMFMediaType_CopyAllItems(media_type, (IMFAttributes *)mixer->inputs[0].media_type);
+                                if (mixer->inputs[0].media_type)
+                                    IMFMediaType_Release(mixer->inputs[0].media_type);
+                                mixer->inputs[0].media_type = media_type;
+                                IMFMediaType_AddRef(mixer->inputs[0].media_type);
                             }
                             CoTaskMemFree(guids);
                         }

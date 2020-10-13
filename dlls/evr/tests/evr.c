@@ -31,8 +31,6 @@
 
 static const WCHAR sink_id[] = {'E','V','R',' ','I','n','p','u','t','0',0};
 
-static HRESULT (WINAPI *pMFCreateVideoMediaTypeFromSubtype)(const GUID *subtype, IMFVideoMediaType **video_type);
-
 static void set_rect(MFVideoNormalizedRect *rect, float left, float top, float right, float bottom)
 {
     rect->left = left;
@@ -416,6 +414,23 @@ static void test_pin_info(void)
     IPin_Release(pin);
     ref = IBaseFilter_Release(filter);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
+static IMFMediaType * create_video_type(const GUID *subtype)
+{
+    IMFMediaType *video_type;
+    HRESULT hr;
+
+    hr = MFCreateMediaType(&video_type);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaType_SetGUID(video_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaType_SetGUID(video_type, &MF_MT_SUBTYPE, subtype);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    return video_type;
 }
 
 static void test_default_mixer(void)
@@ -829,9 +844,9 @@ static void test_default_mixer_type_negotiation(void)
     IMFMediaType *media_type, *media_type2;
     IDirect3DDeviceManager9 *manager;
     DXVA2_VideoProcessorCaps caps;
-    IMFVideoMediaType *video_type;
     IMFVideoProcessor *processor;
     IDirect3DDevice9 *device;
+    IMFMediaType *video_type;
     IMFTransform *transform;
     GUID guid, *guids;
     IDirect3D9 *d3d;
@@ -840,12 +855,6 @@ static void test_default_mixer_type_negotiation(void)
     DWORD count;
     HRESULT hr;
     UINT token;
-
-    if (!pMFCreateVideoMediaTypeFromSubtype)
-    {
-        win_skip("Skipping mixer types tests.\n");
-        return;
-    }
 
     hr = MFCreateVideoMixer(NULL, &IID_IDirect3DDevice9, &IID_IMFTransform, (void **)&transform);
     ok(hr == S_OK, "Failed to create default mixer, hr %#x.\n", hr);
@@ -906,31 +915,30 @@ static void test_default_mixer_type_negotiation(void)
     ok(hr == MF_E_INVALIDMEDIATYPE, "Unexpected hr %#x.\n", hr);
     IMFMediaType_Release(media_type);
 
-    hr = pMFCreateVideoMediaTypeFromSubtype(&MFVideoFormat_RGB32, &video_type);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    video_type = create_video_type(&MFVideoFormat_RGB32);
 
     /* Partially initialized type. */
-    hr = IMFTransform_SetInputType(transform, 0, (IMFMediaType *)video_type, 0);
+    hr = IMFTransform_SetInputType(transform, 0, video_type, 0);
     ok(hr == MF_E_INVALIDMEDIATYPE, "Unexpected hr %#x.\n", hr);
 
     /* Only required data - frame size and uncompressed marker. */
-    hr = IMFVideoMediaType_SetUINT64(video_type, &MF_MT_FRAME_SIZE, (UINT64)640 << 32 | 480);
+    hr = IMFMediaType_SetUINT64(video_type, &MF_MT_FRAME_SIZE, (UINT64)640 << 32 | 480);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    hr = IMFVideoMediaType_SetUINT32(video_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, TRUE);
+    hr = IMFMediaType_SetUINT32(video_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, TRUE);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
-    hr = IMFTransform_SetInputType(transform, 0, (IMFMediaType *)video_type, MFT_SET_TYPE_TEST_ONLY);
+    hr = IMFTransform_SetInputType(transform, 0, video_type, MFT_SET_TYPE_TEST_ONLY);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMFTransform_GetInputCurrentType(transform, 0, &media_type);
     ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#x.\n", hr);
 
-    hr = IMFTransform_SetInputType(transform, 0, (IMFMediaType *)video_type, 0);
+    hr = IMFTransform_SetInputType(transform, 0, video_type, 0);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMFTransform_GetInputCurrentType(transform, 0, &media_type);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    ok(media_type != (IMFMediaType *)video_type, "Unexpected media type instance.\n");
+    ok(media_type == video_type, "Unexpected media type instance.\n");
 
     hr = IMFTransform_GetInputCurrentType(transform, 0, &media_type2);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
@@ -951,7 +959,7 @@ todo_wine
 
     hr = IMFTransform_GetInputCurrentType(transform, 0, &media_type);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    ok(media_type != (IMFMediaType *)video_type, "Unexpected pointer.\n");
+    ok(media_type == video_type, "Unexpected pointer.\n");
     hr = IMFMediaType_QueryInterface(media_type, &IID_IMFVideoMediaType, (void **)&unk);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     IUnknown_Release(unk);
@@ -988,7 +996,7 @@ todo_wine
 
     IMFVideoProcessor_Release(processor);
 
-    IMFVideoMediaType_Release(video_type);
+    IMFMediaType_Release(video_type);
 
     IDirect3DDeviceManager9_Release(manager);
 
@@ -1217,11 +1225,10 @@ static void test_MFCreateVideoSampleAllocator(void)
 {
     IMFVideoSampleAllocatorNotify test_notify = { &test_notify_callback_vtbl };
     IMFVideoSampleAllocatorCallback *allocator_cb;
+    IMFMediaType *media_type, *video_type;
     IMFVideoSampleAllocator *allocator;
-    IMFVideoMediaType *video_type;
     IMFSample *sample, *sample2;
     IDirect3DSurface9 *surface;
-    IMFMediaType *media_type;
     IMFMediaBuffer *buffer;
     IMFGetService *gs;
     IUnknown *unk;
@@ -1271,17 +1278,16 @@ todo_wine
 todo_wine
     ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
 
-    hr = MFCreateVideoMediaTypeFromSubtype(&MFVideoFormat_RGB32, &video_type);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    video_type = create_video_type(&MFVideoFormat_RGB32);
 
-    hr = IMFVideoSampleAllocator_InitializeSampleAllocator(allocator, 2, (IMFMediaType *)video_type);
+    hr = IMFVideoSampleAllocator_InitializeSampleAllocator(allocator, 2, video_type);
 todo_wine
     ok(hr == MF_E_INVALIDMEDIATYPE, "Unexpected hr %#x.\n", hr);
 
     /* Frame size is required. */
-    hr = IMFVideoMediaType_SetUINT64(video_type, &MF_MT_FRAME_SIZE, (UINT64) 320 << 32 | 240);
+    hr = IMFMediaType_SetUINT64(video_type, &MF_MT_FRAME_SIZE, (UINT64) 320 << 32 | 240);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    hr = IMFVideoSampleAllocator_InitializeSampleAllocator(allocator, 0, (IMFMediaType *)video_type);
+    hr = IMFVideoSampleAllocator_InitializeSampleAllocator(allocator, 0, video_type);
 todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
@@ -1302,7 +1308,7 @@ todo_wine
     ok(hr == MF_E_SAMPLEALLOCATOR_EMPTY, "Unexpected hr %#x.\n", hr);
 
     /* Reinitialize with active sample. */
-    hr = IMFVideoSampleAllocator_InitializeSampleAllocator(allocator, 4, (IMFMediaType *)video_type);
+    hr = IMFVideoSampleAllocator_InitializeSampleAllocator(allocator, 4, video_type);
 todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     if (sample)
@@ -1640,7 +1646,7 @@ static void test_presenter_native_video_size(void)
     IMFTransform *mixer;
     SIZE size, ratio;
     HRESULT hr;
-    IMFVideoMediaType *video_type;
+    IMFMediaType *video_type;
     IDirect3DDeviceManager9 *dm;
 
     hr = MFCreateVideoMixer(NULL, &IID_IDirect3DDevice9, &IID_IMFTransform, (void **)&mixer);
@@ -1680,15 +1686,14 @@ static void test_presenter_native_video_size(void)
 
     IDirect3DDeviceManager9_Release(dm);
 
-    hr = pMFCreateVideoMediaTypeFromSubtype(&MFVideoFormat_RGB32, &video_type);
+    video_type = create_video_type(&MFVideoFormat_RGB32);
+
+    hr = IMFMediaType_SetUINT64(video_type, &MF_MT_FRAME_SIZE, (UINT64)640 << 32 | 480);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMFMediaType_SetUINT32(video_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, TRUE);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
-    hr = IMFVideoMediaType_SetUINT64(video_type, &MF_MT_FRAME_SIZE, (UINT64)640 << 32 | 480);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    hr = IMFVideoMediaType_SetUINT32(video_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, TRUE);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-
-    hr = IMFTransform_SetInputType(mixer, 0, (IMFMediaType *)video_type, 0);
+    hr = IMFTransform_SetInputType(mixer, 0, video_type, 0);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     /* Native video size is cached on initialization. */
@@ -1704,10 +1709,10 @@ static void test_presenter_native_video_size(void)
             "Unexpected ratio %u x %u.\n", ratio.cx, ratio.cy);
 
     /* Update input type. */
-    hr = IMFVideoMediaType_SetUINT64(video_type, &MF_MT_FRAME_SIZE, (UINT64)320 << 32 | 240);
+    hr = IMFMediaType_SetUINT64(video_type, &MF_MT_FRAME_SIZE, (UINT64)320 << 32 | 240);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
-    hr = IMFTransform_SetInputType(mixer, 0, (IMFMediaType *)video_type, 0);
+    hr = IMFTransform_SetInputType(mixer, 0, video_type, 0);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMFVideoDisplayControl_GetNativeVideoSize(display_control, &size, &ratio);
@@ -1726,7 +1731,7 @@ static void test_presenter_native_video_size(void)
     ok((ratio.cx == 4 && ratio.cy == 3) || broken(!memcmp(&ratio, &size, sizeof(ratio))) /* < Win10 */,
             "Unexpected ratio %u x %u.\n", ratio.cx, ratio.cy);
 
-    IMFVideoMediaType_Release(video_type);
+    IMFMediaType_Release(video_type);
     IMFVideoDisplayControl_Release(display_control);
     IMFVideoPresenter_Release(presenter);
     IMFTransform_Release(mixer);
@@ -1929,8 +1934,6 @@ static void test_mixer_zorder(void)
 START_TEST(evr)
 {
     CoInitialize(NULL);
-
-    pMFCreateVideoMediaTypeFromSubtype = (void *)GetProcAddress(GetModuleHandleA("mfplat.dll"), "MFCreateVideoMediaTypeFromSubtype");
 
     test_aggregation();
     test_interfaces();
