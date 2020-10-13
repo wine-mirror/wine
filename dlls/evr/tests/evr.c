@@ -29,7 +29,7 @@
 #include "initguid.h"
 #include "evr9.h"
 
-static const WCHAR sink_id[] = {'E','V','R',' ','I','n','p','u','t','0',0};
+static const WCHAR sink_id[] = L"EVR Input0";
 
 static void set_rect(MFVideoNormalizedRect *rect, float left, float top, float right, float bottom)
 {
