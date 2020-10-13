@@ -258,22 +258,6 @@ struct screen_buffer
     struct list           entry;         /* entry in list of all screen buffers */
     struct console_input *input;         /* associated console input */
     unsigned int          id;            /* buffer id */
-    unsigned int          mode;          /* output mode */
-    int                   cursor_size;   /* size of cursor (percentage filled) */
-    int                   cursor_visible;/* cursor visibility flag */
-    int                   cursor_x;      /* position of cursor */
-    int                   cursor_y;      /* position of cursor */
-    int                   width;         /* size (w-h) of the screen buffer */
-    int                   height;
-    int                   max_width;     /* size (w-h) of the window given font size */
-    int                   max_height;
-    char_info_t          *data;          /* the data for each cell - a width x height matrix */
-    unsigned short        attr;          /* default fill attributes (screen colors) */
-    unsigned short        popup_attr;    /* pop-up color attributes */
-    unsigned int          color_map[16]; /* color table */
-    rectangle_t           win;           /* current visible window on the screen buffer *
-					  * as seen in wineconsole */
-    struct font_info      font;          /* console font information */
     struct fd            *fd;            /* for bare console, attached output fd */
     struct async_queue    ioctl_q;       /* ioctl queue */
 };
@@ -411,8 +395,6 @@ static const struct fd_ops console_connection_fd_ops =
 };
 
 static struct list screen_buffer_list = LIST_INIT(screen_buffer_list);
-
-static const char_info_t empty_char_info = { ' ', 0x000f };  /* white on black space */
 
 static struct fd *console_input_get_fd( struct object* obj )
 {
@@ -649,47 +631,17 @@ static void disconnect_console_server( struct console_server *server )
 
 static void set_active_screen_buffer( struct console_input *console_input, struct screen_buffer *screen_buffer )
 {
-    struct condrv_renderer_event evt;
-
     if (console_input->active == screen_buffer) return;
     if (console_input->active) release_object( console_input->active );
     console_input->active = (struct screen_buffer *)grab_object( screen_buffer );
 
     if (console_input->server) queue_host_ioctl( console_input->server, IOCTL_CONDRV_ACTIVATE,
                                                  screen_buffer->id, NULL, NULL );
-
-    evt.event = CONSOLE_RENDERER_SB_RESIZE_EVENT;
-    evt.u.resize.width  = screen_buffer->width;
-    evt.u.resize.height = screen_buffer->height;
-    console_input_events_append( console_input, &evt );
-
-    evt.event = CONSOLE_RENDERER_DISPLAY_EVENT;
-    evt.u.display.left   = screen_buffer->win.left;
-    evt.u.display.top    = screen_buffer->win.top;
-    evt.u.display.width  = screen_buffer->win.right - screen_buffer->win.left + 1;
-    evt.u.display.height = screen_buffer->win.bottom - screen_buffer->win.top + 1;
-    console_input_events_append( console_input, &evt );
-
-    evt.event = CONSOLE_RENDERER_UPDATE_EVENT;
-    evt.u.update.top    = 0;
-    evt.u.update.bottom = screen_buffer->height - 1;
-    console_input_events_append( console_input, &evt );
-
-    evt.event = CONSOLE_RENDERER_CURSOR_GEOM_EVENT;
-    evt.u.cursor_geom.size    = screen_buffer->cursor_size;
-    evt.u.cursor_geom.visible = screen_buffer->cursor_visible;
-    console_input_events_append( console_input, &evt );
-
-    evt.event = CONSOLE_RENDERER_CURSOR_POS_EVENT;
-    evt.u.cursor_pos.x = screen_buffer->cursor_x;
-    evt.u.cursor_pos.y = screen_buffer->cursor_y;
-    console_input_events_append( console_input, &evt );
 }
 
 static struct object *create_console_output( struct console_input *console_input )
 {
     struct screen_buffer *screen_buffer;
-    int	i;
 
     if (console_input->last_id == ~0)
     {
@@ -700,31 +652,8 @@ static struct object *create_console_output( struct console_input *console_input
     if (!(screen_buffer = alloc_object( &screen_buffer_ops )))
         return NULL;
 
-    screen_buffer->id             = ++console_input->last_id;
-    screen_buffer->mode           = ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT;
-    screen_buffer->input          = console_input;
-    screen_buffer->cursor_size    = 100;
-    screen_buffer->cursor_visible = 1;
-    screen_buffer->width          = 80;
-    screen_buffer->height         = 150;
-    screen_buffer->max_width      = 80;
-    screen_buffer->max_height     = 25;
-    screen_buffer->cursor_x       = 0;
-    screen_buffer->cursor_y       = 0;
-    screen_buffer->attr           = 0x0F;
-    screen_buffer->popup_attr     = 0xF5;
-    screen_buffer->win.left       = 0;
-    screen_buffer->win.right      = screen_buffer->max_width - 1;
-    screen_buffer->win.top        = 0;
-    screen_buffer->win.bottom     = screen_buffer->max_height - 1;
-    screen_buffer->data           = NULL;
-    screen_buffer->font.width     = 0;
-    screen_buffer->font.height    = 0;
-    screen_buffer->font.weight    = FW_NORMAL;
-    screen_buffer->font.pitch_family  = FIXED_PITCH | FF_DONTCARE;
-    screen_buffer->font.face_name = NULL;
-    screen_buffer->font.face_len  = 0;
-    memset( screen_buffer->color_map, 0, sizeof(screen_buffer->color_map) );
+    screen_buffer->id    = ++console_input->last_id;
+    screen_buffer->input = console_input;
     init_async_queue( &screen_buffer->ioctl_q );
     list_add_head( &screen_buffer_list, &screen_buffer->entry );
 
@@ -736,19 +665,6 @@ static struct object *create_console_output( struct console_input *console_input
         return NULL;
     }
     allow_fd_caching(screen_buffer->fd);
-
-    if (!(screen_buffer->data = malloc( screen_buffer->width * screen_buffer->height *
-                                        sizeof(*screen_buffer->data) )))
-    {
-        release_object( screen_buffer );
-        return NULL;
-    }
-    /* clear the first row */
-    for (i = 0; i < screen_buffer->width; i++) screen_buffer->data[i] = empty_char_info;
-    /* and copy it to all other rows */
-    for (i = 1; i < screen_buffer->height; i++)
-        memcpy( &screen_buffer->data[i * screen_buffer->width], screen_buffer->data,
-                screen_buffer->width * sizeof(char_info_t) );
 
     if (console_input->server) queue_host_ioctl( console_input->server, IOCTL_CONDRV_INIT_OUTPUT,
                                                  screen_buffer->id, NULL, NULL );
@@ -966,8 +882,6 @@ static void screen_buffer_destroy( struct object *obj )
                           screen_buffer->id, NULL, NULL );
     if (screen_buffer->fd) release_object( screen_buffer->fd );
     free_async_queue( &screen_buffer->ioctl_q );
-    free( screen_buffer->data );
-    free( screen_buffer->font.face_name );
 }
 
 static struct object *screen_buffer_open_file( struct object *obj, unsigned int access,
