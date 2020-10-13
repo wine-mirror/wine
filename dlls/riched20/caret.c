@@ -671,7 +671,7 @@ int ME_MoveCursorChars(ME_TextEditor *editor, ME_Cursor *cursor, int nRelOfs, BO
     {
       /* new offset in the same paragraph */
       do {
-        cursor->pRun = ME_FindItemBack(cursor->pRun, diRun);
+        cursor->pRun = run_get_di( run_prev( &cursor->pRun->member.run ) );
       } while (cursor->nOffset < cursor->pRun->member.run.nCharOfs);
       cursor->nOffset -= cursor->pRun->member.run.nCharOfs;
       return nRelOfs;
@@ -688,27 +688,29 @@ int ME_MoveCursorChars(ME_TextEditor *editor, ME_Cursor *cursor, int nRelOfs, BO
 
     /* new offset in a previous paragraph */
     do {
-      cursor->pPara = cursor->pPara->member.para.prev_para;
+      cursor->pPara = para_get_di( para_prev( &cursor->pPara->member.para ) );
     } while (cursor->nOffset < cursor->pPara->member.para.nCharOfs);
     cursor->nOffset -= cursor->pPara->member.para.nCharOfs;
 
-    cursor->pRun = ME_FindItemBack(cursor->pPara->member.para.next_para, diRun);
+    cursor->pRun = run_get_di( para_end_run( &cursor->pPara->member.para ) );
     while (cursor->nOffset < cursor->pRun->member.run.nCharOfs) {
-      cursor->pRun = ME_FindItemBack(cursor->pRun, diRun);
+      cursor->pRun = run_get_di( run_prev( &cursor->pRun->member.run ) );
     }
     cursor->nOffset -= cursor->pRun->member.run.nCharOfs;
-  } else if (cursor->nOffset >= cursor->pRun->member.run.len) {
-    ME_DisplayItem *next_para;
+  }
+  else if (cursor->nOffset >= cursor->pRun->member.run.len)
+  {
+    ME_Paragraph *next_para;
     int new_offset;
 
     new_offset = ME_GetCursorOfs(cursor);
-    next_para = cursor->pPara->member.para.next_para;
-    if (new_offset < next_para->member.para.nCharOfs)
+    next_para = para_next( &cursor->pPara->member.para );
+    if (new_offset < next_para->nCharOfs)
     {
       /* new offset in the same paragraph */
       do {
         cursor->nOffset -= cursor->pRun->member.run.len;
-        cursor->pRun = ME_FindItemFwd(cursor->pRun, diRun);
+        cursor->pRun = run_get_di( run_next( &cursor->pRun->member.run ) );
       } while (cursor->nOffset >= cursor->pRun->member.run.len);
       return nRelOfs;
     }
@@ -723,16 +725,16 @@ int ME_MoveCursorChars(ME_TextEditor *editor, ME_Cursor *cursor, int nRelOfs, BO
 
     /* new offset in a following paragraph */
     do {
-      cursor->pPara = next_para;
-      next_para = next_para->member.para.next_para;
-    } while (new_offset >= next_para->member.para.nCharOfs);
+      cursor->pPara = para_get_di( next_para );
+      next_para = para_next( next_para );
+    } while (new_offset >= next_para->nCharOfs);
 
     cursor->nOffset = new_offset - cursor->pPara->member.para.nCharOfs;
-    cursor->pRun = ME_FindItemFwd(cursor->pPara, diRun);
+    cursor->pRun = run_get_di( para_first_run( &cursor->pPara->member.para ) );
     while (cursor->nOffset >= cursor->pRun->member.run.len)
     {
       cursor->nOffset -= cursor->pRun->member.run.len;
-      cursor->pRun = ME_FindItemFwd(cursor->pRun, diRun);
+      cursor->pRun = run_get_di( run_next( &cursor->pRun->member.run ) );
     }
   } /* else new offset is in the same run */
   return nRelOfs;
@@ -742,8 +744,8 @@ int ME_MoveCursorChars(ME_TextEditor *editor, ME_Cursor *cursor, int nRelOfs, BO
 BOOL
 ME_MoveCursorWords(ME_TextEditor *editor, ME_Cursor *cursor, int nRelOfs)
 {
-  ME_DisplayItem *pRun = cursor->pRun, *pOtherRun;
-  ME_DisplayItem *pPara = cursor->pPara;
+  ME_Run *run = &cursor->pRun->member.run, *other_run;
+  ME_Paragraph *para = &cursor->pPara->member.para;
   int nOffset = cursor->nOffset;
 
   if (nRelOfs == -1)
@@ -751,40 +753,33 @@ ME_MoveCursorWords(ME_TextEditor *editor, ME_Cursor *cursor, int nRelOfs)
     /* Backward movement */
     while (TRUE)
     {
-      nOffset = ME_CallWordBreakProc(editor, get_text( &pRun->member.run, 0 ),
-                                     pRun->member.run.len, nOffset, WB_MOVEWORDLEFT);
-      if (nOffset)
-        break;
-      pOtherRun = ME_FindItemBack(pRun, diRunOrParagraph);
-      if (pOtherRun->type == diRun)
+      nOffset = ME_CallWordBreakProc( editor, get_text( run, 0 ), run->len, nOffset, WB_MOVEWORDLEFT );
+      if (nOffset) break;
+      other_run = run_prev( run );
+      if (other_run)
       {
-        if (ME_CallWordBreakProc(editor, get_text( &pOtherRun->member.run, 0 ),
-                                 pOtherRun->member.run.len,
-                                 pOtherRun->member.run.len - 1,
-                                 WB_ISDELIMITER)
-            && !(pRun->member.run.nFlags & MERF_ENDPARA)
-            && !(cursor->pRun == pRun && cursor->nOffset == 0)
-            && !ME_CallWordBreakProc(editor, get_text( &pRun->member.run, 0 ),
-                                     pRun->member.run.len, 0,
-                                     WB_ISDELIMITER))
+        if (ME_CallWordBreakProc( editor, get_text( other_run, 0 ), other_run->len, other_run->len - 1, WB_ISDELIMITER )
+            && !(run->nFlags & MERF_ENDPARA)
+            && !(&cursor->pRun->member.run == run && cursor->nOffset == 0)
+            && !ME_CallWordBreakProc( editor, get_text( run, 0 ), run->len, 0, WB_ISDELIMITER ))
           break;
-        pRun = pOtherRun;
-        nOffset = pOtherRun->member.run.len;
+        run = other_run;
+        nOffset = other_run->len;
       }
-      else if (pOtherRun->type == diParagraph)
+      else
       {
-        if (cursor->pRun == pRun && cursor->nOffset == 0)
+        if (&cursor->pRun->member.run == run && cursor->nOffset == 0)
         {
-          pPara = pOtherRun;
+          para = run->para;
           /* Skip empty start of table row paragraph */
-          if (pPara->member.para.prev_para->member.para.nFlags & MEPF_ROWSTART)
-            pPara = pPara->member.para.prev_para;
+          if (para_prev( para )->nFlags & MEPF_ROWSTART)
+            para = para_prev( para );
           /* Paragraph breaks are treated as separate words */
-          if (pPara->member.para.prev_para->type == diTextStart)
+          if (para_get_di( para_prev( para ) )->type == diTextStart)
             return FALSE;
 
-          pRun = ME_FindItemBack(pPara, diRun);
-          pPara = pPara->member.para.prev_para;
+          para = para_prev( para );
+          run = para_end_run( para );
         }
         break;
       }
@@ -797,43 +792,35 @@ ME_MoveCursorWords(ME_TextEditor *editor, ME_Cursor *cursor, int nRelOfs)
     
     while (TRUE)
     {
-      if (last_delim && !ME_CallWordBreakProc(editor, get_text( &pRun->member.run, 0 ),
-                                              pRun->member.run.len, nOffset, WB_ISDELIMITER))
+      if (last_delim && !ME_CallWordBreakProc( editor, get_text( run, 0 ), run->len, nOffset, WB_ISDELIMITER ))
         break;
-      nOffset = ME_CallWordBreakProc(editor, get_text( &pRun->member.run, 0 ),
-                                     pRun->member.run.len, nOffset, WB_MOVEWORDRIGHT);
-      if (nOffset < pRun->member.run.len)
-        break;
-      pOtherRun = ME_FindItemFwd(pRun, diRunOrParagraphOrEnd);
-      if (pOtherRun->type == diRun)
+      nOffset = ME_CallWordBreakProc( editor, get_text( run, 0 ), run->len, nOffset, WB_MOVEWORDRIGHT );
+      if (nOffset < run->len) break;
+      other_run = run_next( run );
+      if (other_run)
       {
-        last_delim = ME_CallWordBreakProc(editor, get_text( &pRun->member.run, 0 ),
-                                          pRun->member.run.len, nOffset - 1, WB_ISDELIMITER);
-        pRun = pOtherRun;
+        last_delim = ME_CallWordBreakProc( editor, get_text( run, 0 ), run->len, nOffset - 1, WB_ISDELIMITER );
+        run = other_run;
         nOffset = 0;
       }
-      else if (pOtherRun->type == diParagraph)
+      else
       {
-        if (pOtherRun->member.para.nFlags & MEPF_ROWSTART)
-            pOtherRun = pOtherRun->member.para.next_para;
-        if (cursor->pRun == pRun) {
-          pPara = pOtherRun;
-          pRun = ME_FindItemFwd(pPara, diRun);
+        para = para_next( para );
+        if (para_get_di( para )->type == diTextEnd)
+        {
+          if (&cursor->pRun->member.run == run) return FALSE;
+          nOffset = 0;
+          break;
         }
-        nOffset = 0;
-        break;
-      }
-      else /* diTextEnd */
-      {
-        if (cursor->pRun == pRun)
-          return FALSE;
+        if (para->nFlags & MEPF_ROWSTART) para = para_next( para );
+        if (&cursor->pRun->member.run == run) run = para_first_run( para );
         nOffset = 0;
         break;
       }
     }
   }
-  cursor->pPara = pPara;
-  cursor->pRun = pRun;
+  cursor->pPara = para_get_di( para );
+  cursor->pRun = run_get_di( run );
   cursor->nOffset = nOffset;
   return TRUE;
 }
