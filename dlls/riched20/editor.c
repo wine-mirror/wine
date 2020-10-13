@@ -280,6 +280,10 @@ static ME_TextBuffer *ME_MakeText(void) {
   return buf;
 }
 
+ME_Paragraph *editor_first_para( ME_TextEditor *editor )
+{
+    return para_next( &editor->pBuffer->pFirst->member.para );
+}
 
 static LRESULT ME_StreamInText(ME_TextEditor *editor, DWORD dwFormat, ME_InStream *stream, ME_Style *style)
 {

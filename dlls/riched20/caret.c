@@ -892,41 +892,41 @@ int ME_GetCursorOfs(const ME_Cursor *cursor)
 }
 
 /* Helper function for ME_FindPixelPos to find paragraph within tables */
-static ME_DisplayItem* ME_FindPixelPosInTableRow(int x, int y,
-                                                 ME_DisplayItem *para)
+static ME_Paragraph *pixel_pos_in_table_row( int x, int y, ME_Paragraph *para )
 {
   ME_DisplayItem *cell, *next_cell;
-  assert(para->member.para.nFlags & MEPF_ROWSTART);
-  cell = para->member.para.next_para->member.para.pCell;
+
+  assert( para->nFlags & MEPF_ROWSTART );
+  cell = para_next( para )->pCell;
   assert(cell);
 
   /* find the cell we are in */
-  while ((next_cell = cell->member.cell.next_cell) != NULL) {
+  while ((next_cell = cell->member.cell.next_cell) != NULL)
+  {
     if (x < next_cell->member.cell.pt.x)
     {
-      para = ME_FindItemFwd(cell, diParagraph);
+      para = &ME_FindItemFwd( cell, diParagraph )->member.para;
       /* Found the cell, but there might be multiple paragraphs in
        * the cell, so need to search down the cell for the paragraph. */
-      while (cell == para->member.para.pCell) {
-        if (y < para->member.para.pt.y + para->member.para.nHeight)
+      while (cell == para->pCell)
+      {
+        if (y < para->pt.y + para->nHeight)
         {
-          if (para->member.para.nFlags & MEPF_ROWSTART)
-            return ME_FindPixelPosInTableRow(x, y, para);
-          else
-            return para;
+          if (para->nFlags & MEPF_ROWSTART) return pixel_pos_in_table_row( x, y, para );
+          else return para;
         }
-        para = para->member.para.next_para;
+        para = para_next( para );
       }
       /* Past the end of the cell, so go back to the last cell paragraph */
-      return para->member.para.prev_para;
+      return para_prev( para );
     }
     cell = next_cell;
   }
   /* Return table row delimiter */
-  para = ME_FindItemFwd(cell, diParagraph);
-  assert(para->member.para.nFlags & MEPF_ROWEND);
-  assert(para->member.para.fmt.dwMask & PFM_TABLEROWDELIMITER);
-  assert(para->member.para.fmt.wEffects & PFE_TABLEROWDELIMITER);
+  para = table_row_end( para );
+  assert( para->nFlags & MEPF_ROWEND );
+  assert( para->fmt.dwMask & PFM_TABLEROWDELIMITER );
+  assert( para->fmt.wEffects & PFE_TABLEROWDELIMITER );
   return para;
 }
 
@@ -986,7 +986,7 @@ static BOOL ME_FindRunInRow(ME_TextEditor *editor, ME_DisplayItem *pRow,
 static BOOL ME_FindPixelPos(ME_TextEditor *editor, int x, int y,
                             ME_Cursor *result, BOOL *is_eol, BOOL final_eop)
 {
-  ME_DisplayItem *p = editor->pBuffer->pFirst->member.para.next_para;
+  ME_Paragraph *para = editor_first_para( editor );
   ME_DisplayItem *row = NULL;
   BOOL isExact = TRUE;
 
@@ -997,19 +997,19 @@ static BOOL ME_FindPixelPos(ME_TextEditor *editor, int x, int y,
     *is_eol = FALSE;
 
   /* find paragraph */
-  for (; p != editor->pBuffer->pLast; p = p->member.para.next_para)
+  for (; para_next( para ); para = para_next( para ))
   {
-    if (y < p->member.para.pt.y + p->member.para.nHeight)
+    if (y < para->pt.y + para->nHeight)
     {
-      if (p->member.para.nFlags & MEPF_ROWSTART)
-        p = ME_FindPixelPosInTableRow(x, y, p);
-      y -= p->member.para.pt.y;
-      row = ME_FindItemFwd(p, diStartRow);
+      if (para->nFlags & MEPF_ROWSTART)
+        para = pixel_pos_in_table_row( x, y, para );
+      y -= para->pt.y;
+      row = ME_FindItemFwd( para_get_di( para ), diStartRow);
       break;
     }
-    else if (p->member.para.nFlags & MEPF_ROWSTART)
+    else if (para->nFlags & MEPF_ROWSTART)
     {
-      p = para_get_di( table_row_end( &p->member.para ) );
+      para = table_row_end( para );
     }
   }
   /* find row */
@@ -1029,7 +1029,7 @@ static BOOL ME_FindPixelPos(ME_TextEditor *editor, int x, int y,
      * rather than the end of the text, so the x position will be used to
      * determine the offset closest to the pixel position. */
     isExact = FALSE;
-    row = ME_FindItemBack(p, diStartRow);
+    row = ME_FindItemBack( para_get_di( para ), diStartRow);
   }
 
   if (row) return ME_FindRunInRow( editor, row, x, result, is_eol ) && isExact;

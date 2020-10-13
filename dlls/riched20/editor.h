@@ -268,6 +268,7 @@ void ME_StreamInFill(ME_InStream *stream) DECLSPEC_HIDDEN;
 extern BOOL me_debug DECLSPEC_HIDDEN;
 void ME_ReplaceSel(ME_TextEditor *editor, BOOL can_undo, const WCHAR *str, int len) DECLSPEC_HIDDEN;
 int set_selection( ME_TextEditor *editor, int to, int from ) DECLSPEC_HIDDEN;
+ME_Paragraph *editor_first_para( ME_TextEditor *editor ) DECLSPEC_HIDDEN;
 
 /* table.c */
 BOOL ME_IsInTable(ME_DisplayItem *pItem) DECLSPEC_HIDDEN;
