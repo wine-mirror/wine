@@ -2080,6 +2080,11 @@ static bool wined3d_context_vk_update_graphics_pipeline_key(struct wined3d_conte
                 key->ds_desc.back.reference = state->render_states[WINED3D_RS_STENCILREF]
                         & ((1 << state->fb.depth_stencil->format->stencil_size) - 1);
             }
+            else
+            {
+                memset(&key->ds_desc.front, 0, sizeof(key->ds_desc.front));
+                memset(&key->ds_desc.back, 0, sizeof(key->ds_desc.back));
+            }
         }
         else
         {
