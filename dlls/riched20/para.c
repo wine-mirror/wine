@@ -131,7 +131,7 @@ void ME_MakeFirstParagraph(ME_TextEditor *editor)
   HFONT hf;
   ME_TextBuffer *text = editor->pBuffer;
   ME_DisplayItem *para = make_para(editor);
-  ME_DisplayItem *run;
+  ME_Run *run;
   ME_Style *style;
   int eol_len;
 
@@ -177,15 +177,14 @@ void ME_MakeFirstParagraph(ME_TextEditor *editor)
   eol_len = editor->bEmulateVersion10 ? 2 : 1;
   para->member.para.text = ME_MakeStringN( cr_lf, eol_len );
 
-  run = ME_MakeRun(style, MERF_ENDPARA);
-  run->member.run.nCharOfs = 0;
-  run->member.run.len = eol_len;
-  run->member.run.para = &para->member.para;
-
-  para->member.para.eop_run = &run->member.run;
+  run = run_create( style, MERF_ENDPARA );
+  run->nCharOfs = 0;
+  run->len = eol_len;
+  run->para = &para->member.para;
+  para->member.para.eop_run = run;
 
   ME_InsertBefore(text->pLast, para);
-  ME_InsertBefore(text->pLast, run);
+  ME_InsertBefore(text->pLast, run_get_di( run ));
   para->member.para.prev_para = text->pFirst;
   para->member.para.next_para = text->pLast;
   text->pFirst->member.para.next_para = para;
@@ -523,7 +522,7 @@ ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *run,
   ME_DisplayItem *next_para = NULL;
   ME_DisplayItem *run_para = NULL;
   ME_DisplayItem *new_para = make_para(editor);
-  ME_DisplayItem *end_run;
+  ME_Run *end_run;
   int ofs, i;
   ME_DisplayItem *pp;
   int run_flags = MERF_ENDPARA;
@@ -549,10 +548,10 @@ ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *run,
 
   new_para->member.para.text = ME_VSplitString( run_para->member.para.text, run->member.run.nCharOfs );
 
-  end_run = ME_MakeRun(style, run_flags);
-  ofs = end_run->member.run.nCharOfs = run->member.run.nCharOfs;
-  end_run->member.run.len = eol_len;
-  end_run->member.run.para = run->member.run.para;
+  end_run = run_create( style, run_flags );
+  ofs = end_run->nCharOfs = run->member.run.nCharOfs;
+  end_run->len = eol_len;
+  end_run->para = run->member.run.para;
   ME_AppendString( run_para->member.para.text, eol_str, eol_len );
   next_para = run_para->member.para.next_para;
   assert(next_para == ME_FindItemFwd(run_para, diParagraphOrEnd));
@@ -592,11 +591,11 @@ ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *run,
 
   /* insert end run of the old paragraph, and new paragraph, into DI double linked list */
   ME_InsertBefore(run, new_para);
-  ME_InsertBefore(new_para, end_run);
+  ME_InsertBefore( new_para, run_get_di( end_run ));
 
   /* Fix up the paras' eop_run ptrs */
   new_para->member.para.eop_run = run_para->member.para.eop_run;
-  run_para->member.para.eop_run = &end_run->member.run;
+  run_para->member.para.eop_run = end_run;
 
   if (!editor->bEmulateVersion10) { /* v4.1 */
     if (paraFlags & (MEPF_ROWSTART|MEPF_CELL))

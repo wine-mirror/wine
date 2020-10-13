@@ -273,63 +273,67 @@ void run_join( ME_TextEditor *editor, ME_Run *run )
  * Does the most basic job of splitting a run into two - it does not
  * update the positions and extents.
  */
-ME_DisplayItem *ME_SplitRunSimple(ME_TextEditor *editor, ME_Cursor *cursor)
+ME_DisplayItem *ME_SplitRunSimple( ME_TextEditor *editor, ME_Cursor *cursor )
 {
-  ME_DisplayItem *run = cursor->pRun;
-  ME_DisplayItem *new_run;
-  int i;
-  int nOffset = cursor->nOffset;
+    ME_Run *run = &cursor->pRun->member.run, *new_run;
+    int i;
+    int nOffset = cursor->nOffset;
 
-  assert(!(run->member.run.nFlags & MERF_NONTEXT));
+    assert( !(run->nFlags & MERF_NONTEXT) );
 
-  new_run = ME_MakeRun(run->member.run.style,
-                       run->member.run.nFlags & MERF_SPLITMASK);
-  new_run->member.run.nCharOfs = run->member.run.nCharOfs + nOffset;
-  new_run->member.run.len = run->member.run.len - nOffset;
-  new_run->member.run.para = run->member.run.para;
-  run->member.run.len = nOffset;
-  cursor->pRun = new_run;
-  cursor->nOffset = 0;
+    new_run = run_create( run->style, run->nFlags & MERF_SPLITMASK );
+    new_run->nCharOfs = run->nCharOfs + nOffset;
+    new_run->len = run->len - nOffset;
+    new_run->para = run->para;
+    run->len = nOffset;
+    cursor->pRun = run_get_di( new_run );
+    cursor->nOffset = 0;
 
-  ME_InsertBefore(run->next, new_run);
+    ME_InsertBefore( run_get_di( run )->next, run_get_di( new_run ) );
 
-  ME_UpdateRunFlags(editor, &run->member.run);
-  ME_UpdateRunFlags(editor, &new_run->member.run);
-  for (i = 0; i < editor->nCursors; i++) {
-    if (editor->pCursors[i].pRun == run &&
-        editor->pCursors[i].nOffset >= nOffset) {
-      editor->pCursors[i].pRun = new_run;
-      editor->pCursors[i].nOffset -= nOffset;
+    ME_UpdateRunFlags( editor, run );
+    ME_UpdateRunFlags( editor, new_run );
+    for (i = 0; i < editor->nCursors; i++)
+    {
+        if (editor->pCursors[i].pRun == run_get_di( run ) &&
+            editor->pCursors[i].nOffset >= nOffset)
+        {
+            editor->pCursors[i].pRun = run_get_di( new_run );
+            editor->pCursors[i].nOffset -= nOffset;
+        }
     }
-  }
-  para_mark_rewrap( editor, &cursor->pPara->member.para );
-  return run;
+    para_mark_rewrap( editor, run->para );
+    return run_get_di( run );
 }
 
 /******************************************************************************
- * ME_MakeRun
+ * run_create
  * 
  * A helper function to create run structures quickly.
  */   
-ME_DisplayItem *ME_MakeRun(ME_Style *s, int nFlags)
+ME_Run *run_create( ME_Style *s, int flags )
 {
-  ME_DisplayItem *item = ME_MakeDI(diRun);
-  item->member.run.style = s;
-  item->member.run.reobj = NULL;
-  item->member.run.nFlags = nFlags;
-  item->member.run.nCharOfs = -1;
-  item->member.run.len = 0;
-  item->member.run.para = NULL;
-  item->member.run.num_glyphs = 0;
-  item->member.run.max_glyphs = 0;
-  item->member.run.glyphs = NULL;
-  item->member.run.vis_attrs = NULL;
-  item->member.run.advances = NULL;
-  item->member.run.offsets = NULL;
-  item->member.run.max_clusters = 0;
-  item->member.run.clusters = NULL;
-  ME_AddRefStyle(s);
-  return item;
+    ME_DisplayItem *item = ME_MakeDI( diRun );
+    ME_Run *run = &item->member.run;
+
+    if (!item) return NULL;
+
+    ME_AddRefStyle( s );
+    run->style = s;
+    run->reobj = NULL;
+    run->nFlags = flags;
+    run->nCharOfs = -1;
+    run->len = 0;
+    run->para = NULL;
+    run->num_glyphs = 0;
+    run->max_glyphs = 0;
+    run->glyphs = NULL;
+    run->vis_attrs = NULL;
+    run->advances = NULL;
+    run->offsets = NULL;
+    run->max_clusters = 0;
+    run->clusters = NULL;
+    return run;
 }
 
 /******************************************************************************
@@ -343,7 +347,8 @@ ME_DisplayItem *
 ME_InsertRunAtCursor(ME_TextEditor *editor, ME_Cursor *cursor, ME_Style *style,
                      const WCHAR *str, int len, int flags)
 {
-  ME_DisplayItem *pDI, *insert_before = cursor->pRun, *prev;
+  ME_DisplayItem *insert_before = cursor->pRun, *prev;
+  ME_Run *run;
 
   if (cursor->nOffset)
   {
@@ -362,18 +367,18 @@ ME_InsertRunAtCursor(ME_TextEditor *editor, ME_Cursor *cursor, ME_Style *style,
   add_undo_delete_run( editor, insert_before->member.run.para->nCharOfs +
                        insert_before->member.run.nCharOfs, len );
 
-  pDI = ME_MakeRun(style, flags);
-  pDI->member.run.nCharOfs = insert_before->member.run.nCharOfs;
-  pDI->member.run.len = len;
-  pDI->member.run.para = insert_before->member.run.para;
-  ME_InsertString( pDI->member.run.para->text, pDI->member.run.nCharOfs, str, len );
-  ME_InsertBefore( insert_before, pDI );
+  run = run_create( style, flags );
+  run->nCharOfs = insert_before->member.run.nCharOfs;
+  run->len = len;
+  run->para = insert_before->member.run.para;
+  ME_InsertString( run->para->text, run->nCharOfs, str, len );
+  ME_InsertBefore( insert_before, run_get_di( run ) );
   TRACE("Shift length:%d\n", len);
   ME_PropagateCharOffset( insert_before, len );
   para_mark_rewrap( editor, insert_before->member.run.para );
 
   /* Move any cursors that were at the end of the previous run to the end of the inserted run */
-  prev = ME_FindItemBack( pDI, diRun );
+  prev = ME_FindItemBack( run_get_di( run ), diRun );
   if (prev)
   {
     int i;
@@ -383,13 +388,13 @@ ME_InsertRunAtCursor(ME_TextEditor *editor, ME_Cursor *cursor, ME_Style *style,
       if (editor->pCursors[i].pRun == prev &&
           editor->pCursors[i].nOffset == prev->member.run.len)
       {
-        editor->pCursors[i].pRun = pDI;
+        editor->pCursors[i].pRun = run_get_di( run );
         editor->pCursors[i].nOffset = len;
       }
     }
   }
 
-  return pDI;
+  return run_get_di( run );
 }
 
 static BOOL run_is_splittable( const ME_Run *run )
