@@ -357,116 +357,6 @@ BOOL WINAPI GetNumberOfConsoleMouseButtons(LPDWORD nrofbuttons)
     return TRUE;
 }
 
-/******************************************************************
- *		CONSOLE_WriteChars
- *
- * WriteConsoleOutput helper: hides server call semantics
- * writes a string at a given pos with standard attribute
- */
-static int CONSOLE_WriteChars(HANDLE handle, const WCHAR *str, size_t length, COORD *coord)
-{
-    struct condrv_output_params *params;
-    DWORD written = 0, size;
-
-    if (!length) return 0;
-
-    size = sizeof(*params) + length * sizeof(WCHAR);
-    if (!(params = HeapAlloc( GetProcessHeap(), 0, size ))) return FALSE;
-    params->mode   = CHAR_INFO_MODE_TEXTSTDATTR;
-    params->x      = coord->X;
-    params->y      = coord->Y;
-    params->width  = 0;
-    memcpy( params + 1, str, length * sizeof(*str) );
-    if (DeviceIoControl( handle, IOCTL_CONDRV_WRITE_OUTPUT, params, size,
-                         &written, sizeof(written), NULL, NULL ))
-        coord->X += written;
-    HeapFree( GetProcessHeap(), 0, params );
-    return written;
-}
-
-/******************************************************************
- *		next_line
- *
- * WriteConsoleOutput helper: handles passing to next line (+scrolling if necessary)
- *
- */
-static BOOL next_line(HANDLE hCon, CONSOLE_SCREEN_BUFFER_INFO* csbi)
-{
-    SMALL_RECT	src;
-    CHAR_INFO	ci;
-    COORD	dst;
-
-    csbi->dwCursorPosition.X = 0;
-    csbi->dwCursorPosition.Y++;
-
-    if (csbi->dwCursorPosition.Y < csbi->dwSize.Y) return TRUE;
-
-    src.Top    = 1;
-    src.Bottom = csbi->dwSize.Y - 1;
-    src.Left   = 0;
-    src.Right  = csbi->dwSize.X - 1;
-
-    dst.X      = 0;
-    dst.Y      = 0;
-
-    ci.Attributes = csbi->wAttributes;
-    ci.Char.UnicodeChar = ' ';
-
-    csbi->dwCursorPosition.Y--;
-    if (!ScrollConsoleScreenBufferW(hCon, &src, NULL, dst, &ci))
-        return FALSE;
-    return TRUE;
-}
-
-/******************************************************************
- *		write_block
- *
- * WriteConsoleOutput helper: writes a block of non special characters
- * Block can spread on several lines, and wrapping, if needed, is
- * handled
- *
- */
-static BOOL write_block(HANDLE hCon, CONSOLE_SCREEN_BUFFER_INFO* csbi,
-                        DWORD mode, LPCWSTR ptr, int len)
-{
-    int	blk;	/* number of chars to write on current line */
-    int done;   /* number of chars already written */
-
-    if (len <= 0) return TRUE;
-
-    if (mode & ENABLE_WRAP_AT_EOL_OUTPUT) /* writes remaining on next line */
-    {
-        for (done = 0; done < len; done += blk)
-        {
-            blk = min(len - done, csbi->dwSize.X - csbi->dwCursorPosition.X);
-
-            if (CONSOLE_WriteChars(hCon, ptr + done, blk, &csbi->dwCursorPosition) != blk)
-                return FALSE;
-            if (csbi->dwCursorPosition.X == csbi->dwSize.X && !next_line(hCon, csbi))
-                return FALSE;
-        }
-    }
-    else
-    {
-        int     pos = csbi->dwCursorPosition.X;
-        /* FIXME: we could reduce the number of loops
-         * but, in most cases we wouldn't gain lots of time (it would only
-         * happen if we're asked to overwrite more than twice the part of the line,
-         * which is unlikely
-         */
-        for (done = 0; done < len; done += blk)
-        {
-            blk = min(len - done, csbi->dwSize.X - csbi->dwCursorPosition.X);
-
-            csbi->dwCursorPosition.X = pos;
-            if (CONSOLE_WriteChars(hCon, ptr + done, blk, &csbi->dwCursorPosition) != blk)
-                return FALSE;
-        }
-    }
-
-    return TRUE;
-}
-
 
 /***********************************************************************
  *            WriteConsoleA   (KERNEL32.@)
@@ -492,95 +382,18 @@ BOOL WINAPI DECLSPEC_HOTPATCH WriteConsoleA( HANDLE handle, LPCVOID buffer, DWOR
 /***********************************************************************
  *            WriteConsoleW   (KERNEL32.@)
  */
-BOOL WINAPI WriteConsoleW(HANDLE hConsoleOutput, LPCVOID lpBuffer, DWORD nNumberOfCharsToWrite,
-			  LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved)
+BOOL WINAPI DECLSPEC_HOTPATCH WriteConsoleW( HANDLE handle, const void *buffer, DWORD length,
+                                             DWORD *written, void *reserved )
 {
-    DWORD			mode;
-    DWORD			nw = 0;
-    const WCHAR*		psz = lpBuffer;
-    CONSOLE_SCREEN_BUFFER_INFO	csbi;
-    int				k, first = 0;
-    IO_STATUS_BLOCK io;
+    BOOL ret;
 
-    TRACE("%p %s %d %p %p\n",
-	  hConsoleOutput, debugstr_wn(lpBuffer, nNumberOfCharsToWrite),
-	  nNumberOfCharsToWrite, lpNumberOfCharsWritten, lpReserved);
+    TRACE( "(%p,%s,%d,%p,%p)\n", handle, debugstr_wn(buffer, length), length, written, reserved );
 
-    if (lpNumberOfCharsWritten) *lpNumberOfCharsWritten = 0;
-
-    if (!NtDeviceIoControlFile(hConsoleOutput, NULL, NULL, NULL, &io, IOCTL_CONDRV_WRITE_CONSOLE, (void *)lpBuffer,
-                               nNumberOfCharsToWrite * sizeof(WCHAR), NULL, 0))
-    {
-        if (lpNumberOfCharsWritten) *lpNumberOfCharsWritten = nNumberOfCharsToWrite;
-        return TRUE;
-    }
-
-    if (!GetConsoleMode(hConsoleOutput, &mode) || !GetConsoleScreenBufferInfo(hConsoleOutput, &csbi))
-	return FALSE;
-
-    if (!nNumberOfCharsToWrite) return TRUE;
-
-    if (mode & ENABLE_PROCESSED_OUTPUT)
-    {
-	unsigned int	i;
-
-	for (i = 0; i < nNumberOfCharsToWrite; i++)
-	{
-	    switch (psz[i])
-	    {
-	    case '\b': case '\t': case '\n': case '\a': case '\r':
-		/* don't handle here the i-th char... done below */
-		if ((k = i - first) > 0)
-		{
-		    if (!write_block(hConsoleOutput, &csbi, mode, &psz[first], k))
-			goto the_end;
-		    nw += k;
-		}
-		first = i + 1;
-		nw++;
-	    }
-	    switch (psz[i])
-	    {
-	    case '\b':
-		if (csbi.dwCursorPosition.X > 0) csbi.dwCursorPosition.X--;
-		break;
-	    case '\t':
-	        {
-		    static const WCHAR tmp[] = {' ',' ',' ',' ',' ',' ',' ',' '};
-		    if (!write_block(hConsoleOutput, &csbi, mode, tmp,
-				     ((csbi.dwCursorPosition.X + 8) & ~7) - csbi.dwCursorPosition.X))
-			goto the_end;
-		}
-		break;
-	    case '\n':
-		next_line(hConsoleOutput, &csbi);
-		break;
- 	    case '\a':
-		Beep(400, 300);
- 		break;
-	    case '\r':
-		csbi.dwCursorPosition.X = 0;
-		break;
-	    default:
-		break;
-	    }
-	}
-    }
-
-    /* write the remaining block (if any) if processed output is enabled, or the
-     * entire buffer otherwise
-     */
-    if ((k = nNumberOfCharsToWrite - first) > 0)
-    {
-	if (!write_block(hConsoleOutput, &csbi, mode, &psz[first], k))
-	    goto the_end;
-	nw += k;
-    }
-
- the_end:
-    SetConsoleCursorPosition(hConsoleOutput, csbi.dwCursorPosition);
-    if (lpNumberOfCharsWritten) *lpNumberOfCharsWritten = nw;
-    return nw != 0;
+    ret = DeviceIoControl( handle, IOCTL_CONDRV_WRITE_CONSOLE, (void *)buffer,
+                           length * sizeof(WCHAR), NULL, 0, NULL, NULL );
+    if (written) *written = ret ? length : 0;
+    if (!ret) SetLastError( ERROR_INVALID_HANDLE );
+    return ret;
 }
 
 
