@@ -60,6 +60,16 @@ struct wine_vk_base
     UINT_PTR loader_magic;
 };
 
+/* Some extensions have callbacks for those we need to be able to
+ * get the wine wrapper for a native handle
+ */
+struct wine_vk_mapping
+{
+    struct list link;
+    uint64_t native_handle;
+    uint64_t wine_wrapped_handle;
+};
+
 struct VkCommandBuffer_T
 {
     struct wine_vk_base base;
@@ -67,18 +77,22 @@ struct VkCommandBuffer_T
     VkCommandBuffer command_buffer; /* native command buffer */
 
     struct list pool_link;
+    struct wine_vk_mapping mapping;
 };
 
 struct VkDevice_T
 {
     struct wine_vk_base base;
     struct vulkan_device_funcs funcs;
+    struct VkPhysicalDevice_T *phys_dev; /* parent */
     VkDevice device; /* native device */
 
     struct VkQueue_T **queues;
     uint32_t max_queue_families;
 
     unsigned int quirks;
+
+    struct wine_vk_mapping mapping;
 };
 
 struct VkInstance_T
@@ -93,7 +107,13 @@ struct VkInstance_T
     struct VkPhysicalDevice_T **phys_devs;
     uint32_t phys_dev_count;
 
+    VkBool32 enable_wrapper_list;
+    struct list wrappers;
+    SRWLOCK wrapper_lock;
+
     unsigned int quirks;
+
+    struct wine_vk_mapping mapping;
 };
 
 struct VkPhysicalDevice_T
@@ -104,6 +124,8 @@ struct VkPhysicalDevice_T
 
     VkExtensionProperties *extensions;
     uint32_t extension_count;
+
+    struct wine_vk_mapping mapping;
 };
 
 struct VkQueue_T
@@ -113,6 +135,8 @@ struct VkQueue_T
     VkQueue queue; /* native queue */
 
     VkDeviceQueueCreateFlags flags;
+
+    struct wine_vk_mapping mapping;
 };
 
 struct wine_cmd_pool
@@ -120,6 +144,8 @@ struct wine_cmd_pool
     VkCommandPool command_pool;
 
     struct list command_buffers;
+
+    struct wine_vk_mapping mapping;
 };
 
 static inline struct wine_cmd_pool *wine_cmd_pool_from_handle(VkCommandPool handle)
