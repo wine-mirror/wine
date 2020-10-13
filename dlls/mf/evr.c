@@ -419,6 +419,8 @@ static HRESULT WINAPI video_stream_typehandler_SetCurrentMediaType(IMFMediaTypeH
         return MF_E_STREAMSINK_REMOVED;
 
     hr = IMFTransform_SetInputType(stream->parent->mixer, stream->id, type, 0);
+    if (SUCCEEDED(hr) && !stream->id)
+        hr = IMFVideoPresenter_ProcessMessage(stream->parent->presenter, MFVP_MESSAGE_INVALIDATEMEDIATYPE, 0);
 
     return hr;
 }
