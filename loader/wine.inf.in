@@ -3031,6 +3031,17 @@ HKLM,%CurrentVersionNT%\Time Zones\Eastern Standard Time\Dynamic DST,"2006",1,2c
 HKLM,%CurrentVersionNT%\Time Zones\Eastern Standard Time\Dynamic DST,"2007",1,2c,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0b,00,00,00,01,00,02,00,00,00,00,00,00,00,00,00,03,00,00,00,02,00,02,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\Eastern Standard Time\Dynamic DST,"FirstEntry",0x10001,"2006"
 HKLM,%CurrentVersionNT%\Time Zones\Eastern Standard Time\Dynamic DST,"LastEntry",0x10001,"2007"
+HKLM,%CurrentVersionNT%\Time Zones\Eastern Standard Time (Mexico),"Display",,"America/Cancun"
+HKLM,%CurrentVersionNT%\Time Zones\Eastern Standard Time (Mexico),"Dlt",,"Eastern Daylight Time (Mexico)"
+HKLM,%CurrentVersionNT%\Time Zones\Eastern Standard Time (Mexico),"MUI_Dlt",,"@tzres.dll,-59537"
+HKLM,%CurrentVersionNT%\Time Zones\Eastern Standard Time (Mexico),"MUI_Std",,"@tzres.dll,-59536"
+HKLM,%CurrentVersionNT%\Time Zones\Eastern Standard Time (Mexico),"Std",,"Eastern Standard Time (Mexico)"
+HKLM,%CurrentVersionNT%\Time Zones\Eastern Standard Time (Mexico),"TZI",1,2c,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Eastern Standard Time (Mexico)\Dynamic DST,"2014",1,68,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,00,00,05,00,02,00,00,00,00,00,00,00,00,00,04,00,00,00,01,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Eastern Standard Time (Mexico)\Dynamic DST,"2015",1,68,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,01,00,04,00,01,00,00,00,00,00,00,00,00,00,00,00,02,00,00,00,01,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Eastern Standard Time (Mexico)\Dynamic DST,"2016",1,2c,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Eastern Standard Time (Mexico)\Dynamic DST,"FirstEntry",0x10001,"2014"
+HKLM,%CurrentVersionNT%\Time Zones\Eastern Standard Time (Mexico)\Dynamic DST,"LastEntry",0x10001,"2016"
 HKLM,%CurrentVersionNT%\Time Zones\Egypt Standard Time,"Display",,"Africa/Cairo"
 HKLM,%CurrentVersionNT%\Time Zones\Egypt Standard Time,"Dlt",,"Egypt Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Egypt Standard Time,"MUI_Dlt",,"@tzres.dll,-59425"
