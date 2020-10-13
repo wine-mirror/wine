@@ -584,7 +584,6 @@ HANDLE get_console_wait_handle( HANDLE handle )
 BOOL WINAPI DECLSPEC_HOTPATCH FreeConsole(void)
 {
     HANDLE event;
-    BOOL ret;
 
     RtlEnterCriticalSection( &console_section );
 
@@ -599,15 +598,10 @@ BOOL WINAPI DECLSPEC_HOTPATCH FreeConsole(void)
     if (console_flags & CONSOLE_ERROR_HANDLE)  NtClose( GetStdHandle( STD_ERROR_HANDLE ));
     console_flags = 0;
 
-    SERVER_START_REQ( free_console )
-    {
-        ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
     if ((event = InterlockedExchangePointer( &console_wait_event, NULL ))) NtClose( event );
 
     RtlLeaveCriticalSection( &console_section );
-    return ret;
+    return TRUE;
 }
 
 
