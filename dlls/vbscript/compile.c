@@ -1668,6 +1668,7 @@ static BOOL lookup_class_funcs(class_desc_t *class_desc, const WCHAR *name)
 static HRESULT compile_class(compile_ctx_t *ctx, class_decl_t *class_decl)
 {
     function_decl_t *func_decl, *func_prop_decl;
+    BOOL is_default, have_default = FALSE;
     class_desc_t *class_desc;
     dim_decl_t *prop_decl;
     unsigned i;
@@ -1690,14 +1691,21 @@ static HRESULT compile_class(compile_ctx_t *ctx, class_decl_t *class_decl)
     if(!class_desc->name)
         return E_OUTOFMEMORY;
 
-    class_desc->func_cnt = 1; /* always allocate slot for default getter */
+    class_desc->func_cnt = 1; /* always allocate slot for default getter or method */
 
     for(func_decl = class_decl->funcs; func_decl; func_decl = func_decl->next) {
+        is_default = FALSE;
         for(func_prop_decl = func_decl; func_prop_decl; func_prop_decl = func_prop_decl->next_prop_func) {
-            if(func_prop_decl->is_default)
+            if(func_prop_decl->is_default) {
+                if(have_default) {
+                    FIXME("multiple default getters or methods\n");
+                    return E_FAIL;
+                }
+                is_default = have_default = TRUE;
                 break;
+            }
         }
-        if(!func_prop_decl)
+        if(!is_default)
             class_desc->func_cnt++;
     }
 

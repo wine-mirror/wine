@@ -993,7 +993,7 @@ static function_decl_t *new_function_decl(parser_ctx_t *ctx, const WCHAR *name, 
     BOOL is_default = FALSE;
 
     if(storage_flags & STORAGE_IS_DEFAULT) {
-        if(type == FUNC_PROPGET) {
+        if(type == FUNC_PROPGET || type == FUNC_FUNCTION || type == FUNC_SUB) {
             is_default = TRUE;
         }else {
             FIXME("Invalid default property\n");
