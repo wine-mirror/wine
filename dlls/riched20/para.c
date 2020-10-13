@@ -116,6 +116,11 @@ ME_Run *para_first_run( ME_Paragraph *para )
     return NULL;
 }
 
+ME_Run *para_end_run( ME_Paragraph *para )
+{
+    return para->eop_run;
+}
+
 void ME_MakeFirstParagraph(ME_TextEditor *editor)
 {
   static const WCHAR cr_lf[] = {'\r','\n',0};

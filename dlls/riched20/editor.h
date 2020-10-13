@@ -214,6 +214,7 @@ void para_mark_remove( ME_TextEditor *editor, ME_Paragraph *para ) DECLSPEC_HIDD
 ME_Paragraph *para_next( ME_Paragraph *para ) DECLSPEC_HIDDEN;
 ME_Paragraph *para_prev( ME_Paragraph *para ) DECLSPEC_HIDDEN;
 ME_Run *para_first_run( ME_Paragraph *para ) DECLSPEC_HIDDEN;
+ME_Run *para_end_run( ME_Paragraph *para ) DECLSPEC_HIDDEN;
 static inline ME_DisplayItem *para_get_di(ME_Paragraph *para)
 {
     return (ME_DisplayItem *)((ptrdiff_t)para - offsetof(ME_DisplayItem, member));

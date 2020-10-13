@@ -579,7 +579,8 @@ void ME_InsertTextFromCursor(ME_TextEditor *editor, int nCursor,
       ME_InternalInsertTextFromCursor(editor, nCursor, &tab, 1, style, MERF_TAB);
       pos++;
     } else { /* handle EOLs */
-      ME_DisplayItem *tp, *end_run, *run, *prev;
+      ME_Run *end_run, *run, *prev;
+      ME_Paragraph *new_para;
       int eol_len = 0;
 
       /* Check if new line is allowed for this control */
@@ -619,31 +620,30 @@ void ME_InsertTextFromCursor(ME_TextEditor *editor, int nCursor,
 
         if (p->nOffset == p->pRun->member.run.len)
         {
-           run = ME_FindItemFwd( p->pRun, diRun );
-           if (!run) run = p->pRun;
+           run = run_next( &p->pRun->member.run );
+           if (!run) run = &p->pRun->member.run;
         }
         else
         {
           if (p->nOffset) ME_SplitRunSimple(editor, p);
-          run = p->pRun;
+          run = &p->pRun->member.run;
         }
 
-        tp = ME_SplitParagraph(editor, run, style, eol_str, eol_len, 0);
-
-        end_run = ME_FindItemBack(tp, diRun);
+        new_para = &ME_SplitParagraph( editor, run_get_di( run ), style, eol_str, eol_len, 0 )->member.para;
+        end_run = para_end_run( para_prev( new_para ) );
 
         /* Move any cursors that were at the end of the previous run to the beginning of the new para */
-        prev = ME_FindItemBack( end_run, diRun );
+        prev = run_prev( end_run );
         if (prev)
         {
           int i;
           for (i = 0; i < editor->nCursors; i++)
           {
-            if (editor->pCursors[i].pRun == prev &&
-                editor->pCursors[i].nOffset == prev->member.run.len)
+            if (editor->pCursors[i].pRun == run_get_di( prev ) &&
+                editor->pCursors[i].nOffset == prev->len)
             {
-              editor->pCursors[i].pPara = tp;
-              editor->pCursors[i].pRun = run;
+              editor->pCursors[i].pPara = para_get_di( new_para );
+              editor->pCursors[i].pRun = run_get_di( run );
               editor->pCursors[i].nOffset = 0;
             }
           }
