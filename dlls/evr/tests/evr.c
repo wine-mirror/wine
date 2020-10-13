@@ -658,6 +658,12 @@ todo_wine
     attributes = NULL;
     hr = IMFTransform_GetInputStreamAttributes(transform, 0, &attributes);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMFAttributes_GetCount(attributes, &count);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(count == 1, "Unexpected count %u.\n", count);
+    hr = IMFAttributes_GetUINT32(attributes, &MF_SA_REQUIRED_SAMPLE_COUNT, &count);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(count == 1, "Unexpected count %u.\n", count);
     ok(!!attributes, "Unexpected attributes.\n");
 
     attributes2 = NULL;
