@@ -138,4 +138,7 @@ void *wine_vk_get_instance_proc_addr(const char *name) DECLSPEC_HIDDEN;
 BOOL wine_vk_device_extension_supported(const char *name) DECLSPEC_HIDDEN;
 BOOL wine_vk_instance_extension_supported(const char *name) DECLSPEC_HIDDEN;
 
+BOOL wine_vk_is_type_wrapped(VkObjectType type) DECLSPEC_HIDDEN;
+uint64_t wine_vk_unwrap_handle(VkObjectType type, uint64_t handle) DECLSPEC_HIDDEN;
+
 #endif /* __WINE_VULKAN_PRIVATE_H */

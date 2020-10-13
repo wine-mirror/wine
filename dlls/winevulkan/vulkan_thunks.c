@@ -6254,3 +6254,35 @@ BOOL wine_vk_instance_extension_supported(const char *name)
     }
     return FALSE;
 }
+
+BOOL wine_vk_is_type_wrapped(VkObjectType type)
+{
+    return FALSE ||
+        type == VK_OBJECT_TYPE_COMMAND_BUFFER ||
+        type == VK_OBJECT_TYPE_COMMAND_POOL ||
+        type == VK_OBJECT_TYPE_DEVICE ||
+        type == VK_OBJECT_TYPE_INSTANCE ||
+        type == VK_OBJECT_TYPE_PHYSICAL_DEVICE ||
+        type == VK_OBJECT_TYPE_QUEUE;
+}
+
+uint64_t wine_vk_unwrap_handle(VkObjectType type, uint64_t handle)
+{
+    switch(type)
+    {
+    case VK_OBJECT_TYPE_COMMAND_BUFFER:
+        return (uint64_t) (uintptr_t) ((VkCommandBuffer) (uintptr_t) handle)->command_buffer;
+    case VK_OBJECT_TYPE_COMMAND_POOL:
+        return (uint64_t) wine_cmd_pool_from_handle(handle)->command_pool;
+    case VK_OBJECT_TYPE_DEVICE:
+        return (uint64_t) (uintptr_t) ((VkDevice) (uintptr_t) handle)->device;
+    case VK_OBJECT_TYPE_INSTANCE:
+        return (uint64_t) (uintptr_t) ((VkInstance) (uintptr_t) handle)->instance;
+    case VK_OBJECT_TYPE_PHYSICAL_DEVICE:
+        return (uint64_t) (uintptr_t) ((VkPhysicalDevice) (uintptr_t) handle)->phys_dev;
+    case VK_OBJECT_TYPE_QUEUE:
+        return (uint64_t) (uintptr_t) ((VkQueue) (uintptr_t) handle)->queue;
+    default:
+       return handle;
+    }
+}

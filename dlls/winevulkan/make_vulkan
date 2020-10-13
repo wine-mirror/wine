@@ -371,20 +371,21 @@ class VkEnum(object):
             # Value is either a value or a bitpos, only one can exist.
             value = v.attrib.get("value")
             alias_name = v.attrib.get("alias")
+            comment = v.attrib.get("comment")
             if alias_name:
                 alias = next(x for x in values if x.name == alias_name)
-                values.append(VkEnumValue(v.attrib.get("name"), value=alias.value, hex=alias.hex))
+                values.append(VkEnumValue(v.attrib.get("name"), value=alias.value, hex=alias.hex, comment=comment))
             elif value:
                 # Some values are in hex form. We want to preserve the hex representation
                 # at least when we convert back to a string. Internally we want to use int.
                 if "0x" in value:
-                    values.append(VkEnumValue(v.attrib.get("name"), value=int(value, 0), hex=True))
+                    values.append(VkEnumValue(v.attrib.get("name"), value=int(value, 0), hex=True, comment=comment))
                 else:
-                    values.append(VkEnumValue(v.attrib.get("name"), value=int(value, 0)))
+                    values.append(VkEnumValue(v.attrib.get("name"), value=int(value, 0), comment=comment))
             else:
                 # bitmask
                 value = 1 << int(v.attrib.get("bitpos"))
-                values.append(VkEnumValue(v.attrib.get("name"), value=value, hex=True))
+                values.append(VkEnumValue(v.attrib.get("name"), value=value, hex=True, comment=comment))
 
         # vulkan.h contains a *_MAX_ENUM value set to 32-bit at the time of writing,
         # which is to prepare for extensions as they can add values and hence affect
@@ -435,11 +436,12 @@ class VkEnum(object):
 
 
 class VkEnumValue(object):
-    def __init__(self, name, value=None, hex=False, alias=None):
+    def __init__(self, name, value=None, hex=False, alias=None, comment=None):
         self.name = name
         self.value = value
         self.hex = hex
         self.alias = alias
+        self.comment = comment
 
     def __repr__(self):
         if self.is_alias():
@@ -885,6 +887,7 @@ class VkHandle(object):
         self.parent = parent
         self.alias = alias
         self.required = False
+        self.object_type = None
 
     @staticmethod
     def from_alias(handle, alias):
@@ -939,9 +942,6 @@ class VkHandle(object):
     def native_handle(self, name):
         """ Provide access to the native handle of a wrapped object. """
 
-        # Remember to add any new native handle whose parent is VkDevice
-        # to unwrap_object_handle() in vulkan.c
-
         if self.name == "VkCommandPool":
             return "wine_cmd_pool_from_handle({0})->command_pool".format(name)
 
@@ -964,6 +964,9 @@ class VkHandle(object):
         if self.is_dispatchable():
             LOGGER.error("Unhandled native handle for: {0}".format(self.name))
         return None
+
+    def is_wrapped(self):
+        return self.native_handle("test") is not None
 
 
 class VkMember(object):
@@ -2276,6 +2279,36 @@ class VkGenerator(object):
         f.write("            return TRUE;\n")
         f.write("    }\n")
         f.write("    return FALSE;\n")
+        f.write("}\n\n")
+
+        f.write("BOOL wine_vk_is_type_wrapped(VkObjectType type)\n")
+        f.write("{\n")
+        f.write("    return FALSE")
+        for handle in self.registry.handles:
+            if not handle.is_required() or not handle.is_wrapped() or handle.is_alias():
+                continue
+            f.write(" ||\n        type == {}".format(handle.object_type))
+        f.write(";\n")
+        f.write("}\n\n")
+
+        f.write("uint64_t wine_vk_unwrap_handle(VkObjectType type, uint64_t handle)\n")
+        f.write("{\n")
+        f.write("    switch(type)\n")
+        f.write("    {\n")
+        for handle in self.registry.handles:
+            if not handle.is_required() or not handle.is_wrapped() or handle.is_alias():
+                continue
+            f.write("    case {}:\n".format(handle.object_type))
+            if handle.is_dispatchable():
+                f.write("        return (uint64_t) (uintptr_t) ")
+                f.write(handle.native_handle("(({}) (uintptr_t) handle)".format(handle.name)))
+            else:
+                f.write("        return (uint64_t) ")
+                f.write(handle.native_handle("handle"))
+            f.write(";\n");
+        f.write("    default:\n")
+        f.write("       return handle;\n")
+        f.write("    }\n")
         f.write("}\n")
 
     def generate_thunks_h(self, f, prefix):
@@ -2619,6 +2652,8 @@ class VkRegistry(object):
         self._parse_features(root)
         self._parse_extensions(root)
 
+        self._match_object_types()
+
         self.copyright = root.find('./comment').text
 
     def _is_feature_supported(self, feature):
@@ -2688,6 +2723,26 @@ class VkRegistry(object):
                 mark_struct_dependencies(struct, self.types)
             elif type_info["category"] == "bitmask":
                 mark_bitmask_dependencies(type_info["data"], self.types)
+
+    def _match_object_types(self):
+        """ Matches each handle with the correct object type. """
+        for handle in self.handles:
+            if not handle.is_required() or handle.is_alias():
+                continue
+            for value in self.enums["VkObjectType"].values:
+                if value.comment == handle.name:
+                    handle.object_type = value.name
+                    break
+            else:
+                LOGGER.warning("No object type found for {}".format(handle.name))
+
+        for handle in self.handles:
+            if not handle.is_required() or not handle.is_alias():
+                continue
+            # Use the object type of the alias
+            handle.object_type = handle.alias.object_type
+            if not handle.object_type:
+                LOGGER.warning("No object type found for {}".format(handle.name))
 
     def _parse_commands(self, root):
         """ Parse command section containing the Vulkan function calls. """
@@ -2782,10 +2837,12 @@ class VkRegistry(object):
             if only_aliased and not aliased:
                 return
 
+            comment = enum_elem.attrib.get("comment")
+
             if "bitpos" in enum_elem.keys():
                 # We need to add an extra value to an existing enum type.
                 # E.g. VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_CUBIC_BIT_IMG to VkFormatFeatureFlagBits.
-                enum.add(VkEnumValue(enum_elem.attrib["name"], value=(1 << int(enum_elem.attrib["bitpos"])), hex=True))
+                enum.add(VkEnumValue(enum_elem.attrib["name"], value=(1 << int(enum_elem.attrib["bitpos"])), hex=True, comment=comment))
 
             elif "offset" in enum_elem.keys():
                 # Extensions promoted to Core, have the extension number as part
@@ -2802,12 +2859,12 @@ class VkRegistry(object):
                 if direction is not None:
                     value = -value
 
-                enum.add(VkEnumValue(enum_elem.attrib["name"], value=value))
+                enum.add(VkEnumValue(enum_elem.attrib["name"], value=value, comment=comment))
 
             elif "value" in enum_elem.keys():
-                enum.add(VkEnumValue(enum_elem.attrib["name"], value=int(enum_elem.attrib["value"])))
+                enum.add(VkEnumValue(enum_elem.attrib["name"], value=int(enum_elem.attrib["value"]), comment=comment))
             elif "alias" in enum_elem.keys():
-                enum.add(VkEnumValue(enum_elem.attrib["name"], alias=enum_elem.attrib["alias"]))
+                enum.add(VkEnumValue(enum_elem.attrib["name"], alias=enum_elem.attrib["alias"], comment=comment))
 
         elif "value" in enum_elem.keys():
             # Constants are not aliased, no need to add them here, they'll get added later on.
