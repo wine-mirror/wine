@@ -1289,7 +1289,7 @@ LPSTR WINAPI DECLSPEC_HOTPATCH GetCommandLineA(void)
  */
 LPWSTR WINAPI DECLSPEC_HOTPATCH GetCommandLineW(void)
 {
-    return NtCurrentTeb()->Peb->ProcessParameters->CommandLine.Buffer;
+    return command_lineW;
 }
 
 

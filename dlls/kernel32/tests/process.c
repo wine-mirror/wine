@@ -872,6 +872,7 @@ static void test_CommandLine(void)
     PROCESS_INFORMATION	info;
     STARTUPINFOA	startup;
     BOOL                ret;
+    LPWSTR              cmdline, cmdline_backup;
 
     memset(&startup, 0, sizeof(startup));
     startup.cb = sizeof(startup);
@@ -1074,6 +1075,16 @@ static void test_CommandLine(void)
     ret = CreateProcessA(NULL, buffer2, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info);
     ok(!ret, "CreateProcessA unexpectedly succeeded\n");
     ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
+
+    /* Test whether GetCommandLineW reads directly from TEB or from a cached address */
+    cmdline = GetCommandLineW();
+    ok(cmdline == NtCurrentTeb()->Peb->ProcessParameters->CommandLine.Buffer, "Expected address from TEB, got %p\n", cmdline);
+
+    cmdline_backup = cmdline;
+    NtCurrentTeb()->Peb->ProcessParameters->CommandLine.Buffer = NULL;
+    cmdline = GetCommandLineW();
+    ok(cmdline == cmdline_backup, "Expected cached address from TEB, got %p\n", cmdline);
+    NtCurrentTeb()->Peb->ProcessParameters->CommandLine.Buffer = cmdline_backup;
 }
 
 static void test_Directory(void)
