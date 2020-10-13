@@ -384,6 +384,43 @@ static const IMFMediaStreamVtbl media_stream_vtbl =
     media_stream_RequestSample
 };
 
+/* Setup a chain of elements which should hopefully allow transformations to any IMFMediaType
+   the user throws at us through gstreamer's caps negotiation. */
+static HRESULT media_stream_connect_to_sink(struct media_stream *stream)
+{
+    GstCaps *source_caps = gst_pad_get_current_caps(stream->their_src);
+    const gchar *stream_type;
+
+    if (!source_caps)
+        return E_FAIL;
+
+    stream_type = gst_structure_get_name(gst_caps_get_structure(source_caps, 0));
+    gst_caps_unref(source_caps);
+
+    if (!strcmp(stream_type, "video/x-raw"))
+    {
+        GstElement *videoconvert = gst_element_factory_make("videoconvert", NULL);
+
+        gst_bin_add(GST_BIN(stream->parent_source->container), videoconvert);
+
+        stream->my_sink = gst_element_get_static_pad(videoconvert, "sink");
+
+        if (!gst_element_link(videoconvert, stream->appsink))
+            return E_FAIL;
+
+        gst_element_sync_state_with_parent(videoconvert);
+    }
+    else
+    {
+        stream->my_sink = gst_element_get_static_pad(stream->appsink, "sink");
+    }
+
+    if (gst_pad_link(stream->their_src, stream->my_sink) != GST_PAD_LINK_OK)
+        return E_FAIL;
+
+    return S_OK;
+}
+
 static HRESULT new_media_stream(struct media_source *source, GstPad *pad, DWORD stream_id, struct media_stream **out_stream)
 {
     struct media_stream *object = heap_alloc_zero(sizeof(*object));
@@ -414,8 +451,8 @@ static HRESULT new_media_stream(struct media_source *source, GstPad *pad, DWORD 
     g_object_set(object->appsink, "sync", FALSE, NULL);
     g_object_set(object->appsink, "max-buffers", 5, NULL);
 
-    object->my_sink = gst_element_get_static_pad(object->appsink, "sink");
-    gst_pad_link(object->their_src, object->my_sink);
+    if (FAILED(hr = media_stream_connect_to_sink(object)))
+        goto fail;
 
     gst_element_sync_state_with_parent(object->appsink);
 
@@ -435,28 +472,88 @@ static HRESULT media_stream_init_desc(struct media_stream *stream)
 {
     GstCaps *current_caps = gst_pad_get_current_caps(stream->their_src);
     IMFMediaTypeHandler *type_handler;
+    IMFMediaType **stream_types = NULL;
     IMFMediaType *stream_type = NULL;
+    DWORD type_count = 0;
+    const gchar *major_type;
+    unsigned int i;
     HRESULT hr;
 
-    stream_type = mf_media_type_from_caps(current_caps);
-    gst_caps_unref(current_caps);
-    if (!stream_type)
+    major_type = gst_structure_get_name(gst_caps_get_structure(current_caps, 0));
+
+    if (!strcmp(major_type, "video/x-raw"))
+    {
+        /* These are the most common native output types of decoders:
+            https://docs.microsoft.com/en-us/windows/win32/medfound/mft-decoder-expose-output-types-in-native-order */
+        static const GUID *const video_types[] =
+        {
+            &MFVideoFormat_NV12,
+            &MFVideoFormat_YV12,
+            &MFVideoFormat_YUY2,
+            &MFVideoFormat_IYUV,
+            &MFVideoFormat_I420,
+        };
+
+        IMFMediaType *base_type = mf_media_type_from_caps(current_caps);
+        GUID base_subtype;
+
+        IMFMediaType_GetGUID(base_type, &MF_MT_SUBTYPE, &base_subtype);
+
+        stream_types = heap_alloc( sizeof(IMFMediaType *) * ARRAY_SIZE(video_types) + 1);
+
+        stream_types[0] = base_type;
+        type_count = 1;
+
+        for (i = 0; i < ARRAY_SIZE(video_types); i++)
+        {
+            IMFMediaType *new_type;
+
+            if (IsEqualGUID(&base_subtype, video_types[i]))
+                continue;
+
+            if (FAILED(hr = MFCreateMediaType(&new_type)))
+                goto done;
+            stream_types[type_count++] = new_type;
+
+            if (FAILED(hr = IMFMediaType_CopyAllItems(base_type, (IMFAttributes *) new_type)))
+                goto done;
+            if (FAILED(hr = IMFMediaType_SetGUID(new_type, &MF_MT_SUBTYPE, video_types[i])))
+                goto done;
+        }
+    }
+    else
+    {
+        stream_type = mf_media_type_from_caps(current_caps);
+        if (stream_type)
+        {
+            stream_types = &stream_type;
+            type_count = 1;
+        }
+    }
+
+    if (!type_count)
+    {
+        ERR("Failed to establish an IMFMediaType from any of the possible stream caps!\n");
         return E_FAIL;
+    }
 
-    hr = MFCreateStreamDescriptor(stream->stream_id, 1, &stream_type, &stream->descriptor);
-
-    IMFMediaType_Release(stream_type);
-
-    if (FAILED(hr))
-        return hr;
+    if (FAILED(hr = MFCreateStreamDescriptor(stream->stream_id, type_count, stream_types, &stream->descriptor)))
+        goto done;
 
     if (FAILED(hr = IMFStreamDescriptor_GetMediaTypeHandler(stream->descriptor, &type_handler)))
-        return hr;
+        goto done;
 
-    hr = IMFMediaTypeHandler_SetCurrentMediaType(type_handler, stream_type);
+    if (FAILED(hr = IMFMediaTypeHandler_SetCurrentMediaType(type_handler, stream_types[0])))
+        goto done;
 
-    IMFMediaTypeHandler_Release(type_handler);
-
+done:
+    gst_caps_unref(current_caps);
+    if (type_handler)
+        IMFMediaTypeHandler_Release(type_handler);
+    for (i = 0; i < type_count; i++)
+        IMFMediaType_Release(stream_types[i]);
+    if (stream_types != &stream_type)
+        heap_free(stream_types);
     return hr;
 }
 
