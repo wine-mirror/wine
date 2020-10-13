@@ -7,6 +7,7 @@
  * Copyright 1998 Marcus Meissner
  * Copyright 2001,2002,2004,2005,2010 Eric Pouech
  * Copyright 2001 Alexandre Julliard
+ * Copyright 2020 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1655,6 +1656,90 @@ BOOL WINAPI DECLSPEC_HOTPATCH WriteConsoleOutputCharacterW( HANDLE handle, LPCWS
     memcpy( params + 1, str, length * sizeof(*str) );
     ret = console_ioctl( handle, IOCTL_CONDRV_WRITE_OUTPUT, params, size, written, sizeof(*written), NULL );
     HeapFree( GetProcessHeap(), 0, params );
+    return ret;
+}
+
+
+/***********************************************************************
+ *            ReadConsoleA   (kernelbase.@)
+ */
+BOOL WINAPI ReadConsoleA( HANDLE handle, void *buffer, DWORD length, DWORD *ret_count, void *reserved )
+{
+    LPWSTR strW = HeapAlloc( GetProcessHeap(), 0, length * sizeof(WCHAR) );
+    DWORD count = 0;
+    BOOL ret;
+
+    if (!strW)
+    {
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        return FALSE;
+    }
+    if ((ret = ReadConsoleW( handle, strW, length, &count, NULL )))
+    {
+        count = WideCharToMultiByte( GetConsoleCP(), 0, strW, count, buffer, length, NULL, NULL );
+        if (ret_count) *ret_count = count;
+    }
+    HeapFree( GetProcessHeap(), 0, strW );
+    return ret;
+}
+
+
+/***********************************************************************
+ *            ReadConsoleW   (kernelbase.@)
+ */
+BOOL WINAPI ReadConsoleW( HANDLE handle, void *buffer, DWORD length, DWORD *count, void *reserved )
+{
+    BOOL ret;
+
+    TRACE( "(%p,%p,%d,%p,%p)\n", handle, buffer, length, count, reserved );
+
+    if (length > INT_MAX)
+    {
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+        return FALSE;
+    }
+
+    ret = console_ioctl( handle, IOCTL_CONDRV_READ_CONSOLE, NULL, 0, buffer,
+                         length * sizeof(WCHAR), count );
+    if (ret) *count /= sizeof(WCHAR);
+    return ret;
+}
+
+
+/***********************************************************************
+ *            WriteConsoleA   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH WriteConsoleA( HANDLE handle, const void *buffer, DWORD length,
+                                             DWORD *written, void *reserved )
+{
+    UINT cp = GetConsoleOutputCP();
+    LPWSTR strW;
+    DWORD lenW;
+    BOOL ret;
+
+    if (written) *written = 0;
+    lenW = MultiByteToWideChar( cp, 0, buffer, length, NULL, 0 );
+    if (!(strW = HeapAlloc( GetProcessHeap(), 0, lenW * sizeof(WCHAR) ))) return FALSE;
+    MultiByteToWideChar( cp, 0, buffer, length, strW, lenW );
+    ret = WriteConsoleW( handle, strW, lenW, written, 0 );
+    HeapFree( GetProcessHeap(), 0, strW );
+    return ret;
+}
+
+
+/***********************************************************************
+ *            WriteConsoleW   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH WriteConsoleW( HANDLE handle, const void *buffer, DWORD length,
+                                             DWORD *written, void *reserved )
+{
+    BOOL ret;
+
+    TRACE( "(%p,%s,%d,%p,%p)\n", handle, debugstr_wn(buffer, length), length, written, reserved );
+
+    ret = console_ioctl( handle, IOCTL_CONDRV_WRITE_CONSOLE, (void *)buffer,
+                         length * sizeof(WCHAR), NULL, 0, NULL );
+    if (written) *written = ret ? length : 0;
     return ret;
 }
 

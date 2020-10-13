@@ -1193,7 +1193,7 @@
 @ stdcall -import QueueUserWorkItem(ptr ptr long)
 @ stdcall -import RaiseException(long long long ptr)
 # @ stub RaiseFailFastException
-@ stdcall ReadConsoleA(long ptr long ptr ptr)
+@ stdcall -import ReadConsoleA(long ptr long ptr ptr)
 @ stdcall -import ReadConsoleInputA(long ptr long ptr)
 @ stub ReadConsoleInputExA
 @ stub ReadConsoleInputExW
@@ -1203,7 +1203,7 @@
 @ stdcall -import ReadConsoleOutputCharacterA(long ptr long long ptr)
 @ stdcall -import ReadConsoleOutputCharacterW(long ptr long long ptr)
 @ stdcall -import ReadConsoleOutputW(long ptr long long ptr)
-@ stdcall ReadConsoleW(long ptr long ptr ptr)
+@ stdcall -import ReadConsoleW(long ptr long ptr ptr)
 @ stdcall -import ReadDirectoryChangesW(long ptr long long long ptr ptr ptr)
 @ stdcall ReadFile(long ptr long ptr ptr) KERNEL32_ReadFile
 @ stdcall -import ReadFileEx(long ptr long ptr ptr)
@@ -1619,7 +1619,7 @@
 @ stdcall -import Wow64RevertWow64FsRedirection(ptr)
 @ stdcall Wow64SetThreadContext(long ptr)
 # @ stub Wow64SuspendThread
-@ stdcall WriteConsoleA(long ptr long ptr ptr)
+@ stdcall -import WriteConsoleA(long ptr long ptr ptr)
 @ stdcall -import WriteConsoleInputA(long ptr long ptr)
 @ stub WriteConsoleInputVDMA
 @ stub WriteConsoleInputVDMW
@@ -1629,7 +1629,7 @@
 @ stdcall -import WriteConsoleOutputCharacterA(long ptr long long ptr)
 @ stdcall -import WriteConsoleOutputCharacterW(long ptr long long ptr)
 @ stdcall -import WriteConsoleOutputW(long ptr long long ptr)
-@ stdcall WriteConsoleW(long ptr long ptr ptr)
+@ stdcall -import WriteConsoleW(long ptr long ptr ptr)
 @ stdcall WriteFile(long ptr long ptr ptr) KERNEL32_WriteFile
 @ stdcall -import WriteFileEx(long ptr long ptr ptr)
 @ stdcall -import WriteFileGather(long ptr long ptr ptr)

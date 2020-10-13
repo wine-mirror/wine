@@ -1237,7 +1237,7 @@
 @ stdcall RaiseException(long long long ptr)
 # @ stub RaiseFailFastException
 @ stdcall ReOpenFile(ptr long long long)
-@ stdcall ReadConsoleA(long ptr long ptr ptr) kernel32.ReadConsoleA
+@ stdcall ReadConsoleA(long ptr long ptr ptr)
 @ stdcall ReadConsoleInputA(long ptr long ptr)
 @ stub ReadConsoleInputExA
 @ stub ReadConsoleInputExW
@@ -1247,7 +1247,7 @@
 @ stdcall ReadConsoleOutputCharacterA(long ptr long long ptr)
 @ stdcall ReadConsoleOutputCharacterW(long ptr long long ptr)
 @ stdcall ReadConsoleOutputW(long ptr long long ptr)
-@ stdcall ReadConsoleW(long ptr long ptr ptr) kernel32.ReadConsoleW
+@ stdcall ReadConsoleW(long ptr long ptr ptr)
 @ stdcall ReadDirectoryChangesW(long ptr long long long ptr ptr ptr)
 @ stdcall ReadFile(long ptr long ptr ptr)
 @ stdcall ReadFileEx(long ptr long ptr ptr)
@@ -1721,7 +1721,7 @@
 @ stdcall Wow64RevertWow64FsRedirection(ptr)
 # @ stub Wow64SetThreadDefaultGuestMachine
 # @ stub -arch=i386 Wow64Transition
-@ stdcall WriteConsoleA(long ptr long ptr ptr) kernel32.WriteConsoleA
+@ stdcall WriteConsoleA(long ptr long ptr ptr)
 @ stdcall WriteConsoleInputA(long ptr long ptr)
 @ stdcall WriteConsoleInputW(long ptr long ptr)
 @ stdcall WriteConsoleOutputA(long ptr long long ptr)
@@ -1729,7 +1729,7 @@
 @ stdcall WriteConsoleOutputCharacterA(long ptr long long ptr)
 @ stdcall WriteConsoleOutputCharacterW(long ptr long long ptr)
 @ stdcall WriteConsoleOutputW(long ptr long long ptr)
-@ stdcall WriteConsoleW(long ptr long ptr ptr) kernel32.WriteConsoleW
+@ stdcall WriteConsoleW(long ptr long ptr ptr)
 @ stdcall WriteFile(long ptr long ptr ptr)
 @ stdcall WriteFileEx(long ptr long ptr ptr)
 @ stdcall WriteFileGather(long ptr long ptr ptr)

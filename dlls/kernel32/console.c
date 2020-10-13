@@ -243,53 +243,6 @@ DWORD WINAPI GetConsoleTitleA(LPSTR title, DWORD size)
 
 
 /***********************************************************************
- *            ReadConsoleA   (KERNEL32.@)
- */
-BOOL WINAPI ReadConsoleA( HANDLE handle, LPVOID buffer, DWORD length, DWORD *ret_count, void *reserved )
-{
-    LPWSTR strW = HeapAlloc( GetProcessHeap(), 0, length * sizeof(WCHAR) );
-    DWORD count = 0;
-    BOOL ret;
-
-    if (!strW)
-    {
-        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-        return FALSE;
-    }
-    if ((ret = ReadConsoleW( handle, strW, length, &count, NULL )))
-    {
-        count = WideCharToMultiByte( GetConsoleCP(), 0, strW, count, buffer, length, NULL, NULL );
-        if (ret_count) *ret_count = count;
-    }
-    HeapFree( GetProcessHeap(), 0, strW );
-    return ret;
-}
-
-
-/***********************************************************************
- *            ReadConsoleW   (KERNEL32.@)
- */
-BOOL WINAPI ReadConsoleW( HANDLE handle, void *buffer, DWORD length, DWORD *count, void *reserved )
-{
-    BOOL ret;
-
-    TRACE( "(%p,%p,%d,%p,%p)\n", handle, buffer, length, count, reserved );
-
-    if (length > INT_MAX)
-    {
-        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-        return FALSE;
-    }
-
-    ret = DeviceIoControl( handle, IOCTL_CONDRV_READ_CONSOLE, NULL, 0, buffer,
-                           length * sizeof(WCHAR), count, NULL );
-    if (ret) *count /= sizeof(WCHAR);
-    else SetLastError( ERROR_INVALID_HANDLE );
-    return ret;
-}
-
-
-/***********************************************************************
  *            GetNumberOfConsoleMouseButtons   (KERNEL32.@)
  */
 BOOL WINAPI GetNumberOfConsoleMouseButtons(LPDWORD nrofbuttons)
@@ -297,45 +250,6 @@ BOOL WINAPI GetNumberOfConsoleMouseButtons(LPDWORD nrofbuttons)
     FIXME("(%p): stub\n", nrofbuttons);
     *nrofbuttons = 2;
     return TRUE;
-}
-
-
-/***********************************************************************
- *            WriteConsoleA   (KERNEL32.@)
- */
-BOOL WINAPI DECLSPEC_HOTPATCH WriteConsoleA( HANDLE handle, LPCVOID buffer, DWORD length,
-                                             DWORD *written, void *reserved )
-{
-    UINT cp = GetConsoleOutputCP();
-    LPWSTR strW;
-    DWORD lenW;
-    BOOL ret;
-
-    if (written) *written = 0;
-    lenW = MultiByteToWideChar( cp, 0, buffer, length, NULL, 0 );
-    if (!(strW = HeapAlloc( GetProcessHeap(), 0, lenW * sizeof(WCHAR) ))) return FALSE;
-    MultiByteToWideChar( cp, 0, buffer, length, strW, lenW );
-    ret = WriteConsoleW( handle, strW, lenW, written, 0 );
-    HeapFree( GetProcessHeap(), 0, strW );
-    return ret;
-}
-
-
-/***********************************************************************
- *            WriteConsoleW   (KERNEL32.@)
- */
-BOOL WINAPI DECLSPEC_HOTPATCH WriteConsoleW( HANDLE handle, const void *buffer, DWORD length,
-                                             DWORD *written, void *reserved )
-{
-    BOOL ret;
-
-    TRACE( "(%p,%s,%d,%p,%p)\n", handle, debugstr_wn(buffer, length), length, written, reserved );
-
-    ret = DeviceIoControl( handle, IOCTL_CONDRV_WRITE_CONSOLE, (void *)buffer,
-                           length * sizeof(WCHAR), NULL, 0, NULL, NULL );
-    if (written) *written = ret ? length : 0;
-    if (!ret) SetLastError( ERROR_INVALID_HANDLE );
-    return ret;
 }
 
 
