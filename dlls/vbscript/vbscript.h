@@ -314,7 +314,6 @@ typedef enum {
     FUNC_PROPGET,
     FUNC_PROPLET,
     FUNC_PROPSET,
-    FUNC_DEFGET
 } function_type_t;
 
 typedef struct {

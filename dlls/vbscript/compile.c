@@ -1468,7 +1468,6 @@ static HRESULT compile_func(compile_ctx_t *ctx, statement_t *stat, function_t *f
     case FUNC_PROPGET:
     case FUNC_PROPLET:
     case FUNC_PROPSET:
-    case FUNC_DEFGET:
         ctx->prop_end_label = alloc_label(ctx);
         if(!ctx->prop_end_label)
             return E_OUTOFMEMORY;
@@ -1630,7 +1629,6 @@ static HRESULT create_class_funcprop(compile_ctx_t *ctx, function_decl_t *func_d
         case FUNC_FUNCTION:
         case FUNC_SUB:
         case FUNC_PROPGET:
-        case FUNC_DEFGET:
             invoke_type = VBDISP_CALLGET;
             break;
         case FUNC_PROPLET:
@@ -1696,7 +1694,7 @@ static HRESULT compile_class(compile_ctx_t *ctx, class_decl_t *class_decl)
 
     for(func_decl = class_decl->funcs; func_decl; func_decl = func_decl->next) {
         for(func_prop_decl = func_decl; func_prop_decl; func_prop_decl = func_prop_decl->next_prop_func) {
-            if(func_prop_decl->type == FUNC_DEFGET)
+            if(func_prop_decl->is_default)
                 break;
         }
         if(!func_prop_decl)
@@ -1710,7 +1708,7 @@ static HRESULT compile_class(compile_ctx_t *ctx, class_decl_t *class_decl)
 
     for(func_decl = class_decl->funcs, i=1; func_decl; func_decl = func_decl->next, i++) {
         for(func_prop_decl = func_decl; func_prop_decl; func_prop_decl = func_prop_decl->next_prop_func) {
-            if(func_prop_decl->type == FUNC_DEFGET) {
+            if(func_prop_decl->is_default) {
                 i--;
                 break;
             }

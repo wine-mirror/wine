@@ -184,6 +184,7 @@ typedef struct _function_decl_t {
     const WCHAR *name;
     function_type_t type;
     BOOL is_public;
+    BOOL is_default;
     arg_decl_t *args;
     statement_t *body;
     struct _function_decl_t *next;

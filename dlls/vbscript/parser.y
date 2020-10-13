@@ -990,10 +990,11 @@ static function_decl_t *new_function_decl(parser_ctx_t *ctx, const WCHAR *name, 
         unsigned storage_flags, arg_decl_t *arg_decl, statement_t *body)
 {
     function_decl_t *decl;
+    BOOL is_default = FALSE;
 
     if(storage_flags & STORAGE_IS_DEFAULT) {
         if(type == FUNC_PROPGET) {
-            type = FUNC_DEFGET;
+            is_default = TRUE;
         }else {
             FIXME("Invalid default property\n");
             ctx->hres = E_FAIL;
@@ -1008,6 +1009,7 @@ static function_decl_t *new_function_decl(parser_ctx_t *ctx, const WCHAR *name, 
     decl->name = name;
     decl->type = type;
     decl->is_public = !(storage_flags & STORAGE_IS_PRIVATE);
+    decl->is_default = is_default;
     decl->args = arg_decl;
     decl->body = body;
     decl->next = NULL;

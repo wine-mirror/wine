@@ -177,7 +177,7 @@ static HRESULT invoke_vbdisp(vbdisp_t *This, DISPID id, DWORD flags, BOOL extern
         switch(flags) {
         case DISPATCH_PROPERTYGET:
             func = This->desc->funcs[id].entries[VBDISP_CALLGET];
-            if(!func || (func->type != FUNC_PROPGET && func->type != FUNC_DEFGET)) {
+            if(!func || func->type != FUNC_PROPGET) {
                 WARN("no getter\n");
                 return DISP_E_MEMBERNOTFOUND;
             }

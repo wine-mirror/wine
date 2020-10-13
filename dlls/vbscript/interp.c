@@ -134,7 +134,7 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
     DISPID id;
     HRESULT hres;
 
-    if((ctx->func->type == FUNC_FUNCTION || ctx->func->type == FUNC_PROPGET || ctx->func->type == FUNC_DEFGET)
+    if((ctx->func->type == FUNC_FUNCTION || ctx->func->type == FUNC_PROPGET)
        && !wcsicmp(name, ctx->func->name)) {
         ref->type = REF_VAR;
         ref->u.v = &ctx->ret_val;
