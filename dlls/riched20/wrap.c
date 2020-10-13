@@ -714,7 +714,7 @@ static void ME_PrepareParagraphForWrapping( ME_TextEditor *editor, ME_Context *c
         if (p->type == diRun)
         {
             while (p->next->type == diRun && ME_CanJoinRuns( &p->member.run, &p->next->member.run ))
-                ME_JoinRuns( c->editor, p );
+                run_join( c->editor, &p->member.run );
         }
     }
 }

@@ -237,31 +237,34 @@ void ME_RunOfsFromCharOfs(ME_TextEditor *editor,
 }
 
 /******************************************************************************
- * ME_JoinRuns
+ * run_join
  * 
  * Merges two adjacent runs, the one given as a parameter and the next one.
  */    
-void ME_JoinRuns(ME_TextEditor *editor, ME_DisplayItem *p)
+void run_join( ME_TextEditor *editor, ME_Run *run )
 {
-  ME_DisplayItem *pNext = p->next;
+  ME_Run *next = run_next( run );
   int i;
-  assert(p->type == diRun && pNext->type == diRun);
-  assert(p->member.run.nCharOfs != -1);
-  para_mark_rewrap( editor, &ME_GetParagraph( p )->member.para );
+
+  assert( run );
+  assert( run->nCharOfs != -1 );
+  para_mark_rewrap( editor, run->para );
 
   /* Update all cursors so that they don't contain the soon deleted run */
-  for (i=0; i<editor->nCursors; i++) {
-    if (editor->pCursors[i].pRun == pNext) {
-      editor->pCursors[i].pRun = p;
-      editor->pCursors[i].nOffset += p->member.run.len;
+  for (i = 0; i < editor->nCursors; i++)
+  {
+    if (&editor->pCursors[i].pRun->member.run == next)
+    {
+      editor->pCursors[i].pRun = run_get_di( run );
+      editor->pCursors[i].nOffset += run->len;
     }
   }
 
-  p->member.run.len += pNext->member.run.len;
-  ME_Remove(pNext);
-  ME_DestroyDisplayItem(pNext);
-  ME_UpdateRunFlags(editor, &p->member.run);
-  ME_CheckCharOffsets(editor);
+  run->len += next->len;
+  ME_Remove( run_get_di( next ) );
+  ME_DestroyDisplayItem( run_get_di( next ) );
+  ME_UpdateRunFlags( editor, run );
+  ME_CheckCharOffsets( editor );
 }
 
 /******************************************************************************
