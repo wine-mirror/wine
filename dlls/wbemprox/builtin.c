@@ -1320,7 +1320,7 @@ static enum fill_status fill_bios( struct table *table, const struct expr *cond 
 
 static enum fill_status fill_cdromdrive( struct table *table, const struct expr *cond )
 {
-    WCHAR drive[3], root[] = {'A',':','\\',0};
+    WCHAR drive[3], root[] = L"A:\\";
     struct record_cdromdrive *rec;
     UINT i, row = 0, offset = 0;
     DWORD drives = GetLogicalDrives();
@@ -1846,7 +1846,7 @@ static enum fill_status fill_datafile( struct table *table, const struct expr *c
 {
     struct record_datafile *rec;
     UINT i, len, row = 0, offset = 0, num_expected_rows;
-    WCHAR *glob = NULL, *path = NULL, *new_path, root[] = {'A',':','\\',0};
+    WCHAR *glob = NULL, *path = NULL, *new_path, root[] = L"A:\\";
     DWORD drives = GetLogicalDrives();
     WIN32_FIND_DATAW data;
     HANDLE handle;
@@ -1974,7 +1974,7 @@ static enum fill_status fill_directory( struct table *table, const struct expr *
 {
     struct record_directory *rec;
     UINT i, len, row = 0, offset = 0, num_expected_rows;
-    WCHAR *glob = NULL, *path = NULL, *new_path, root[] = {'A',':','\\',0};
+    WCHAR *glob = NULL, *path = NULL, *new_path, root[] = L"A:\\";
     DWORD drives = GetLogicalDrives();
     WIN32_FIND_DATAW data;
     HANDLE handle;
@@ -2071,7 +2071,7 @@ done:
 
 static UINT64 get_freespace( const WCHAR *dir, UINT64 *disksize )
 {
-    WCHAR root[] = {'\\','\\','.','\\','A',':',0};
+    WCHAR root[] = L"\\\\.\\A:";
     ULARGE_INTEGER free;
     DISK_GEOMETRY_EX info;
     HANDLE handle;
@@ -2130,7 +2130,7 @@ done:
 static enum fill_status fill_diskdrive( struct table *table, const struct expr *cond )
 {
     static const WCHAR fmtW[] = L"\\\\\\\\.\\\\PHYSICALDRIVE%u";
-    WCHAR device_id[ARRAY_SIZE( fmtW ) + 10], root[] = {'A',':','\\',0};
+    WCHAR device_id[ARRAY_SIZE( fmtW ) + 10], root[] = L"A:\\";
     struct record_diskdrive *rec;
     UINT i, row = 0, offset = 0, index = 0, type;
     UINT64 size = 1024 * 1024 * 1024;
@@ -2283,7 +2283,7 @@ static WCHAR *get_filesystem( const WCHAR *root )
 
 static enum fill_status fill_diskpartition( struct table *table, const struct expr *cond )
 {
-    WCHAR device_id[32], root[] = {'A',':','\\',0};
+    WCHAR device_id[32], root[] = L"A:\\";
     struct record_diskpartition *rec;
     UINT i, row = 0, offset = 0, type, index = 0;
     UINT64 size = 1024 * 1024 * 1024;
@@ -2435,7 +2435,7 @@ static WCHAR *get_volumeserialnumber( const WCHAR *root )
 
 static enum fill_status fill_logicaldisk( struct table *table, const struct expr *cond )
 {
-    WCHAR device_id[3], root[] = {'A',':','\\',0};
+    WCHAR device_id[3], root[] = L"A:\\";
     struct record_logicaldisk *rec;
     UINT i, row = 0, offset = 0, type;
     UINT64 size = 1024 * 1024 * 1024;
