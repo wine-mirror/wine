@@ -959,6 +959,7 @@ static void output_delayed_imports( const DLLSPEC *spec )
         {
             struct import_func *func = &import->imports[j];
             const char *name = func->name ? func->name : func->export_name;
+            output( "__imp_%s:\n", asm_name( name ));
             output( "\t%s .L__wine_delay_imp_%s_%s\n",
                     get_asm_ptr_keyword(), import->c_name, name );
         }
