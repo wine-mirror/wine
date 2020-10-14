@@ -722,8 +722,8 @@ static void test_surface_sample(void)
     IMFDesiredSample *desired_sample;
     IMFMediaBuffer *buffer, *buffer2;
     IDirect3DSwapChain9 *swapchain;
+    DWORD flags, count, length;
     IDirect3DDevice9 *device;
-    DWORD count, length;
     IMFSample *sample;
     LONGLONG duration;
     IDirect3D9 *d3d;
@@ -751,9 +751,7 @@ static void test_surface_sample(void)
     IDirect3DSwapChain9_Release(swapchain);
 
     hr = MFCreateVideoSampleFromSurface((IUnknown *)backbuffer, &sample);
-todo_wine
     ok(hr == S_OK, "Failed to create surface sample, hr %#x.\n", hr);
-    if (FAILED(hr)) goto done;
 
     hr = IMFSample_QueryInterface(sample, &IID_IMFTrackedSample, (void **)&unk);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
@@ -778,8 +776,10 @@ todo_wine
     ok(hr == S_OK, "Failed to get attribute count, hr %#x.\n", hr);
     ok(!count, "Unexpected attribute count.\n");
 
+    count = 0;
     hr = IMFSample_GetBufferCount(sample, &count);
     ok(hr == S_OK, "Failed to get buffer count, hr %#x.\n", hr);
+todo_wine
     ok(count == 1, "Unexpected attribute count.\n");
 
     hr = IMFSample_GetTotalLength(sample, &length);
@@ -793,8 +793,11 @@ todo_wine
     ok(hr == MF_E_NO_SAMPLE_TIMESTAMP, "Unexpected hr %#x.\n", hr);
 
     hr = IMFSample_GetBufferByIndex(sample, 0, &buffer);
+todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
+if (SUCCEEDED(hr))
+{
     hr = IMFMediaBuffer_GetMaxLength(buffer, &length);
     ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
 
@@ -829,6 +832,17 @@ todo_wine
     ok(!count, "Unexpected attribute count.\n");
 
     IMFMediaBuffer_Release(buffer);
+}
+    hr = IMFSample_GetSampleFlags(sample, &flags);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFSample_SetSampleFlags(sample, 0x123);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    flags = 0;
+    hr = IMFSample_GetSampleFlags(sample, &flags);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(flags == 0x123, "Unexpected flags %#x.\n", flags);
 
     IMFSample_Release(sample);
 
@@ -1931,6 +1945,83 @@ static void test_mixer_zorder(void)
     IMFTransform_Release(mixer);
 }
 
+static void test_mixer_samples(void)
+{
+    IDirect3DDeviceManager9 *manager;
+    MFT_OUTPUT_DATA_BUFFER buffer;
+    IDirect3DDevice9 *device;
+    IMFMediaType *video_type;
+    IMFTransform *mixer;
+    IMFSample *sample;
+    IDirect3D9 *d3d;
+    DWORD status;
+    HWND window;
+    UINT token;
+    HRESULT hr;
+
+    window = create_window();
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    hr = MFCreateVideoMixer(NULL, &IID_IDirect3DDevice9, &IID_IMFTransform, (void **)&mixer);
+    ok(hr == S_OK, "Failed to create a mixer, hr %#x.\n", hr);
+
+    /* Configure device and media types. */
+    hr = DXVA2CreateDirect3DDeviceManager9(&token, &manager);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDeviceManager9_ResetDevice(manager, device, token);
+    ok(hr == S_OK, "Failed to set a device, hr %#x.\n", hr);
+
+    hr = IMFTransform_ProcessMessage(mixer, MFT_MESSAGE_SET_D3D_MANAGER, (ULONG_PTR)manager);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    IDirect3DDeviceManager9_Release(manager);
+
+    video_type = create_video_type(&MFVideoFormat_RGB32);
+
+    hr = IMFMediaType_SetUINT64(video_type, &MF_MT_FRAME_SIZE, (UINT64)640 << 32 | 480);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMFMediaType_SetUINT32(video_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, TRUE);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_SetInputType(mixer, 0, video_type, 0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_SetOutputType(mixer, 0, video_type, 0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    IMFMediaType_Release(video_type);
+
+    memset(&buffer, 0, sizeof(buffer));
+    hr = IMFTransform_ProcessOutput(mixer, 0, 1, &buffer, &status);
+todo_wine
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = MFCreateSample(&sample);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    buffer.pSample = sample;
+    hr = IMFTransform_ProcessOutput(mixer, 0, 1, &buffer, &status);
+todo_wine
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    IMFSample_Release(sample);
+
+    IMFTransform_Release(mixer);
+
+    IDirect3DDevice9_Release(device);
+
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(evr)
 {
     CoInitialize(NULL);
@@ -1951,6 +2042,7 @@ START_TEST(evr)
     test_presenter_ar_mode();
     test_mixer_output_rectangle();
     test_mixer_zorder();
+    test_mixer_samples();
 
     CoUninitialize();
 }

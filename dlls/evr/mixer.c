@@ -1947,10 +1947,3 @@ HRESULT evr_mixer_create(IUnknown *outer, void **out)
 
     return S_OK;
 }
-
-HRESULT WINAPI MFCreateVideoSampleFromSurface(IUnknown *surface, IMFSample **sample)
-{
-    FIXME("%p, %p.\n", surface, sample);
-
-    return E_NOTIMPL;
-}
