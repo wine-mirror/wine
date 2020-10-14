@@ -11,3 +11,5 @@ C_SRCS = \
 	timeline.c
 
 IDL_SRCS = qedit_classes.idl
+
+RC_SRCS = version.rc
