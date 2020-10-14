@@ -10,3 +10,5 @@ C_SRCS = \
 
 IDL_SRCS = \
 	qasf_classes.idl
+
+RC_SRCS = version.rc
