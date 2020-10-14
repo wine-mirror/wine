@@ -48,6 +48,16 @@ static const char *debugstr_time(LONGLONG time)
     return wine_dbg_sprintf("%s", rev);
 }
 
+struct surface_buffer
+{
+    IMFMediaBuffer IMFMediaBuffer_iface;
+    IMFGetService IMFGetService_iface;
+    LONG refcount;
+
+    IUnknown *surface;
+    ULONG length;
+};
+
 struct video_sample
 {
     IMFSample IMFSample_iface;
@@ -78,6 +88,16 @@ static struct video_sample *impl_from_IMFTrackedSample(IMFTrackedSample *iface)
 static struct video_sample *impl_from_IMFDesiredSample(IMFDesiredSample *iface)
 {
     return CONTAINING_RECORD(iface, struct video_sample, IMFDesiredSample_iface);
+}
+
+static struct surface_buffer *impl_from_IMFMediaBuffer(IMFMediaBuffer *iface)
+{
+    return CONTAINING_RECORD(iface, struct surface_buffer, IMFMediaBuffer_iface);
+}
+
+static struct surface_buffer *impl_from_IMFGetService(IMFGetService *iface)
+{
+    return CONTAINING_RECORD(iface, struct surface_buffer, IMFGetService_iface);
 }
 
 struct sample_allocator
@@ -929,15 +949,170 @@ static const IMFDesiredSampleVtbl desired_video_sample_vtbl =
     desired_video_sample_Clear,
 };
 
+static HRESULT WINAPI surface_buffer_QueryInterface(IMFMediaBuffer *iface, REFIID riid, void **obj)
+{
+    struct surface_buffer *buffer = impl_from_IMFMediaBuffer(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
+
+    if (IsEqualIID(riid, &IID_IMFMediaBuffer) || IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = &buffer->IMFMediaBuffer_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IMFGetService))
+    {
+        *obj = &buffer->IMFGetService_iface;
+    }
+    else
+    {
+        WARN("Unsupported interface %s.\n", debugstr_guid(riid));
+        *obj = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown *)*obj);
+    return S_OK;
+}
+
+static ULONG WINAPI surface_buffer_AddRef(IMFMediaBuffer *iface)
+{
+    struct surface_buffer *buffer = impl_from_IMFMediaBuffer(iface);
+    ULONG refcount = InterlockedIncrement(&buffer->refcount);
+
+    TRACE("%p, refcount %u.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI surface_buffer_Release(IMFMediaBuffer *iface)
+{
+    struct surface_buffer *buffer = impl_from_IMFMediaBuffer(iface);
+    ULONG refcount = InterlockedDecrement(&buffer->refcount);
+
+    TRACE("%p, refcount %u.\n", iface, refcount);
+
+    if (!refcount)
+    {
+        IUnknown_Release(buffer->surface);
+        heap_free(buffer);
+    }
+
+    return refcount;
+}
+
+static HRESULT WINAPI surface_buffer_Lock(IMFMediaBuffer *iface, BYTE **data, DWORD *maxlength, DWORD *length)
+{
+    TRACE("%p, %p, %p, %p.\n", iface, data, maxlength, length);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI surface_buffer_Unlock(IMFMediaBuffer *iface)
+{
+    TRACE("%p.\n", iface);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI surface_buffer_GetCurrentLength(IMFMediaBuffer *iface, DWORD *length)
+{
+    struct surface_buffer *buffer = impl_from_IMFMediaBuffer(iface);
+
+    TRACE("%p.\n", iface);
+
+    *length = buffer->length;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI surface_buffer_SetCurrentLength(IMFMediaBuffer *iface, DWORD length)
+{
+    struct surface_buffer *buffer = impl_from_IMFMediaBuffer(iface);
+
+    TRACE("%p.\n", iface);
+
+    buffer->length = length;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI surface_buffer_GetMaxLength(IMFMediaBuffer *iface, DWORD *length)
+{
+    TRACE("%p.\n", iface);
+
+    return E_NOTIMPL;
+}
+
+static const IMFMediaBufferVtbl surface_buffer_vtbl =
+{
+    surface_buffer_QueryInterface,
+    surface_buffer_AddRef,
+    surface_buffer_Release,
+    surface_buffer_Lock,
+    surface_buffer_Unlock,
+    surface_buffer_GetCurrentLength,
+    surface_buffer_SetCurrentLength,
+    surface_buffer_GetMaxLength,
+};
+
+static HRESULT WINAPI surface_buffer_gs_QueryInterface(IMFGetService *iface, REFIID riid, void **obj)
+{
+    struct surface_buffer *buffer = impl_from_IMFGetService(iface);
+    return IMFMediaBuffer_QueryInterface(&buffer->IMFMediaBuffer_iface, riid, obj);
+}
+
+static ULONG WINAPI surface_buffer_gs_AddRef(IMFGetService *iface)
+{
+    struct surface_buffer *buffer = impl_from_IMFGetService(iface);
+    return IMFMediaBuffer_AddRef(&buffer->IMFMediaBuffer_iface);
+}
+
+static ULONG WINAPI surface_buffer_gs_Release(IMFGetService *iface)
+{
+    struct surface_buffer *buffer = impl_from_IMFGetService(iface);
+    return IMFMediaBuffer_Release(&buffer->IMFMediaBuffer_iface);
+}
+
+static HRESULT WINAPI surface_buffer_gs_GetService(IMFGetService *iface, REFGUID service, REFIID riid, void **obj)
+{
+    FIXME("%p, %s, %s, %p.\n", iface, debugstr_guid(service), debugstr_guid(riid), obj);
+
+    return E_NOTIMPL;
+}
+
+static const IMFGetServiceVtbl surface_buffer_gs_vtbl =
+{
+    surface_buffer_gs_QueryInterface,
+    surface_buffer_gs_AddRef,
+    surface_buffer_gs_Release,
+    surface_buffer_gs_GetService,
+};
+
+static HRESULT create_surface_buffer(IUnknown *surface, IMFMediaBuffer **buffer)
+{
+    struct surface_buffer *object;
+
+    if (!(object = heap_alloc_zero(sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    object->IMFMediaBuffer_iface.lpVtbl = &surface_buffer_vtbl;
+    object->IMFGetService_iface.lpVtbl = &surface_buffer_gs_vtbl;
+    object->refcount = 1;
+    object->surface = surface;
+    IUnknown_AddRef(object->surface);
+
+    *buffer = &object->IMFMediaBuffer_iface;
+
+    return S_OK;
+}
+
 HRESULT WINAPI MFCreateVideoSampleFromSurface(IUnknown *surface, IMFSample **sample)
 {
     struct video_sample *object;
+    IMFMediaBuffer *buffer = NULL;
     HRESULT hr;
 
     TRACE("%p, %p.\n", surface, sample);
-
-    if (surface)
-        FIXME("Create surface buffer.\n");
 
     if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
@@ -952,6 +1127,15 @@ HRESULT WINAPI MFCreateVideoSampleFromSurface(IUnknown *surface, IMFSample **sam
         heap_free(object);
         return hr;
     }
+
+    if (surface && FAILED(hr = create_surface_buffer(surface, &buffer)))
+    {
+        IMFSample_Release(&object->IMFSample_iface);
+        return hr;
+    }
+
+    if (buffer)
+        IMFSample_AddBuffer(object->sample, buffer);
 
     *sample = &object->IMFSample_iface;
 

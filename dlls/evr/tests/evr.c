@@ -750,6 +750,10 @@ static void test_surface_sample(void)
 
     IDirect3DSwapChain9_Release(swapchain);
 
+    hr = MFCreateVideoSampleFromSurface(NULL, &sample);
+    ok(hr == S_OK, "Failed to create surface sample, hr %#x.\n", hr);
+    IMFSample_Release(sample);
+
     hr = MFCreateVideoSampleFromSurface((IUnknown *)backbuffer, &sample);
     ok(hr == S_OK, "Failed to create surface sample, hr %#x.\n", hr);
 
@@ -808,7 +812,6 @@ static void test_surface_sample(void)
     count = 0;
     hr = IMFSample_GetBufferCount(sample, &count);
     ok(hr == S_OK, "Failed to get buffer count, hr %#x.\n", hr);
-todo_wine
     ok(count == 1, "Unexpected attribute count.\n");
 
     hr = IMFSample_GetTotalLength(sample, &length);
@@ -822,11 +825,8 @@ todo_wine
     ok(hr == MF_E_NO_SAMPLE_TIMESTAMP, "Unexpected hr %#x.\n", hr);
 
     hr = IMFSample_GetBufferByIndex(sample, 0, &buffer);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
-if (SUCCEEDED(hr))
-{
     hr = IMFMediaBuffer_GetMaxLength(buffer, &length);
     ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
 
@@ -834,7 +834,17 @@ if (SUCCEEDED(hr))
     ok(hr == S_OK, "Failed to get length, hr %#x.\n", hr);
     ok(!length, "Unexpected length %u.\n", length);
 
+    hr = IMFMediaBuffer_SetCurrentLength(buffer, 16);
+    ok(hr == S_OK, "Failed to get length, hr %#x.\n", hr);
+
+    hr = IMFMediaBuffer_GetCurrentLength(buffer, &length);
+    ok(hr == S_OK, "Failed to get length, hr %#x.\n", hr);
+    ok(length == 16, "Unexpected length %u.\n", length);
+
     hr = IMFMediaBuffer_Lock(buffer, &data, NULL, NULL);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaBuffer_Unlock(buffer);
     ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
 
     hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMF2DBuffer, (void **)&unk);
@@ -861,7 +871,7 @@ if (SUCCEEDED(hr))
     ok(!count, "Unexpected attribute count.\n");
 
     IMFMediaBuffer_Release(buffer);
-}
+
     hr = IMFSample_GetSampleFlags(sample, &flags);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
