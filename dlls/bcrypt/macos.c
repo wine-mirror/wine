@@ -259,6 +259,12 @@ static void CDECL key_asymmetric_destroy( struct key *key )
 {
 }
 
+static NTSTATUS CDECL key_asymmetric_duplicate( struct key *key_orig, struct key *key_copy )
+{
+    FIXME( "not implemented on Mac\n" );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
 static const struct key_funcs key_funcs =
 {
     key_set_property,
@@ -271,6 +277,7 @@ static const struct key_funcs key_funcs =
     key_symmetric_destroy,
     key_asymmetric_init,
     key_asymmetric_generate,
+    key_asymmetric_duplicate,
     key_asymmetric_sign,
     key_asymmetric_verify,
     key_asymmetric_destroy,

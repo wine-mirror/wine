@@ -1011,36 +1011,6 @@ static NTSTATUS key_export( struct key *key, const WCHAR *type, UCHAR *output, U
     return STATUS_NOT_IMPLEMENTED;
 }
 
-static NTSTATUS key_duplicate( struct key *key_orig, struct key *key_copy )
-{
-    UCHAR *buffer;
-
-    memset( key_copy, 0, sizeof(*key_copy) );
-    key_copy->hdr    = key_orig->hdr;
-    key_copy->alg_id = key_orig->alg_id;
-
-    if (key_is_symmetric( key_orig ))
-    {
-        if (!(buffer = heap_alloc( key_orig->u.s.secret_len ))) return STATUS_NO_MEMORY;
-        memcpy( buffer, key_orig->u.s.secret, key_orig->u.s.secret_len );
-
-        key_copy->u.s.mode       = key_orig->u.s.mode;
-        key_copy->u.s.block_size = key_orig->u.s.block_size;
-        key_copy->u.s.secret     = buffer;
-        key_copy->u.s.secret_len = key_orig->u.s.secret_len;
-    }
-    else
-    {
-        if (!(buffer = heap_alloc( key_orig->u.a.pubkey_len ))) return STATUS_NO_MEMORY;
-        memcpy( buffer, key_orig->u.a.pubkey, key_orig->u.a.pubkey_len );
-
-        key_copy->u.a.pubkey     = buffer;
-        key_copy->u.a.pubkey_len = key_orig->u.a.pubkey_len;
-    }
-
-    return STATUS_SUCCESS;
-}
-
 static NTSTATUS key_encrypt( struct key *key,  UCHAR *input, ULONG input_len, void *padding, UCHAR *iv,
                              ULONG iv_len, UCHAR *output, ULONG output_len, ULONG *ret_len, ULONG flags )
 {
@@ -1482,6 +1452,56 @@ NTSTATUS WINAPI BCryptExportKey( BCRYPT_KEY_HANDLE export_key, BCRYPT_KEY_HANDLE
     return key_export( key, type, output, output_len, size );
 }
 
+static NTSTATUS key_duplicate( struct key *key_orig, struct key *key_copy )
+{
+    UCHAR *buffer;
+    NTSTATUS status;
+
+    memset( key_copy, 0, sizeof(*key_copy) );
+    key_copy->hdr    = key_orig->hdr;
+    key_copy->alg_id = key_orig->alg_id;
+
+    if (key_is_symmetric( key_orig ))
+    {
+        if (!(buffer = heap_alloc( key_orig->u.s.secret_len ))) return STATUS_NO_MEMORY;
+        memcpy( buffer, key_orig->u.s.secret, key_orig->u.s.secret_len );
+
+        key_copy->u.s.mode       = key_orig->u.s.mode;
+        key_copy->u.s.block_size = key_orig->u.s.block_size;
+        key_copy->u.s.secret     = buffer;
+        key_copy->u.s.secret_len = key_orig->u.s.secret_len;
+    }
+    else
+    {
+        if (!(buffer = heap_alloc( key_orig->u.a.pubkey_len ))) return STATUS_NO_MEMORY;
+        memcpy( buffer, key_orig->u.a.pubkey, key_orig->u.a.pubkey_len );
+
+        key_copy->u.a.pubkey     = buffer;
+        key_copy->u.a.pubkey_len = key_orig->u.a.pubkey_len;
+
+        if ((status = key_funcs->key_asymmetric_duplicate( key_orig, key_copy ))) return status;
+    }
+
+    return STATUS_SUCCESS;
+}
+
+static void key_destroy( struct key *key )
+{
+    if (key_is_symmetric( key ))
+    {
+        key_funcs->key_symmetric_destroy( key );
+        heap_free( key->u.s.vector );
+        heap_free( key->u.s.secret );
+    }
+    else
+    {
+        key_funcs->key_asymmetric_destroy( key );
+        heap_free( key->u.a.pubkey );
+    }
+    key->hdr.magic = 0;
+    heap_free( key );
+}
+
 NTSTATUS WINAPI BCryptDuplicateKey( BCRYPT_KEY_HANDLE handle, BCRYPT_KEY_HANDLE *handle_copy,
                                     UCHAR *object, ULONG object_len, ULONG flags )
 {
@@ -1498,7 +1518,7 @@ NTSTATUS WINAPI BCryptDuplicateKey( BCRYPT_KEY_HANDLE handle, BCRYPT_KEY_HANDLE 
 
     if ((status = key_duplicate( key_orig, key_copy )))
     {
-        heap_free( key_copy );
+        key_destroy( key_copy );
         return status;
     }
 
@@ -1564,19 +1584,8 @@ NTSTATUS WINAPI BCryptDestroyKey( BCRYPT_KEY_HANDLE handle )
     TRACE( "%p\n", handle );
 
     if (!key || key->hdr.magic != MAGIC_KEY) return STATUS_INVALID_HANDLE;
-    if (key_is_symmetric( key ))
-    {
-        key_funcs->key_symmetric_destroy( key );
-        heap_free( key->u.s.vector );
-        heap_free( key->u.s.secret );
-    }
-    else
-    {
-        key_funcs->key_asymmetric_destroy( key );
-        heap_free( key->u.a.pubkey );
-    }
-    key->hdr.magic = 0;
-    heap_free( key );
+
+    key_destroy( key );
     return STATUS_SUCCESS;
 }
 

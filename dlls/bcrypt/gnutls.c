@@ -106,6 +106,9 @@ static int (*pgnutls_privkey_export_rsa_raw)(gnutls_privkey_t, gnutls_datum_t *,
 static int (*pgnutls_privkey_export_dsa_raw)(gnutls_privkey_t, gnutls_datum_t *, gnutls_datum_t *, gnutls_datum_t *,
                                              gnutls_datum_t *, gnutls_datum_t *);
 static int (*pgnutls_privkey_generate)(gnutls_privkey_t, gnutls_pk_algorithm_t, unsigned int, unsigned int);
+static int (*pgnutls_privkey_import_rsa_raw)(gnutls_privkey_t, const gnutls_datum_t *, const gnutls_datum_t *,
+                                             const gnutls_datum_t *, const gnutls_datum_t *, const gnutls_datum_t *,
+                                             const gnutls_datum_t *, const gnutls_datum_t *, const gnutls_datum_t *);
 
 /* Not present in gnutls version < 3.6.0 */
 static int (*pgnutls_decode_rs_value)(const gnutls_datum_t *, gnutls_datum_t *, gnutls_datum_t *);
@@ -203,6 +206,13 @@ static int compat_gnutls_privkey_generate(gnutls_privkey_t key, gnutls_pk_algori
 static int compat_gnutls_decode_rs_value(const gnutls_datum_t * sig_value, gnutls_datum_t * r, gnutls_datum_t * s)
 {
     return GNUTLS_E_INTERNAL_ERROR;
+}
+
+static int compat_gnutls_privkey_import_rsa_raw(gnutls_privkey_t key, const gnutls_datum_t *m, const gnutls_datum_t *e,
+                                                const gnutls_datum_t *d, const gnutls_datum_t *p, const gnutls_datum_t *q,
+                                                const gnutls_datum_t *u, const gnutls_datum_t *e1, const gnutls_datum_t *e2)
+{
+    return GNUTLS_E_UNKNOWN_PK_ALGORITHM;
 }
 
 static void gnutls_log( int level, const char *msg )
@@ -314,6 +324,11 @@ static BOOL gnutls_initialize(void)
     {
         WARN("gnutls_decode_rs_value not found\n");
         pgnutls_decode_rs_value = compat_gnutls_decode_rs_value;
+    }
+    if (!(pgnutls_privkey_import_rsa_raw = dlsym( libgnutls_handle, "gnutls_privkey_import_rsa_raw" )))
+    {
+        WARN("gnutls_privkey_import_rsa_raw not found\n");
+        pgnutls_privkey_import_rsa_raw = compat_gnutls_privkey_import_rsa_raw;
     }
 
     if (TRACE_ON( bcrypt ))
@@ -1733,6 +1748,84 @@ static void CDECL key_asymmetric_destroy( struct key *key )
     if (key_data(key)->privkey) pgnutls_privkey_deinit( key_data(key)->privkey );
 }
 
+static NTSTATUS CDECL key_asymmetric_duplicate( struct key *key_orig, struct key *key_copy )
+{
+    int ret;
+
+    if (!key_data(key_orig)->privkey) return STATUS_SUCCESS;
+
+    if ((ret = pgnutls_privkey_init( &key_data(key_copy)->privkey )))
+    {
+        pgnutls_perror( ret );
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    switch (key_orig->alg_id)
+    {
+    case ALG_ID_RSA:
+    case ALG_ID_RSA_SIGN:
+    {
+        gnutls_datum_t m, e, d, p, q, u, e1, e2;
+        if ((ret = pgnutls_privkey_export_rsa_raw( key_data(key_orig)->privkey, &m, &e, &d, &p, &q, &u, &e1, &e2 )))
+        {
+            pgnutls_perror( ret );
+            return STATUS_INTERNAL_ERROR;
+        }
+        ret = pgnutls_privkey_import_rsa_raw( key_data(key_copy)->privkey, &m, &e, &d, &p, &q, &u, &e1, &e2 );
+        free( m.data ); free( e.data ); free( d.data ); free( p.data ); free( q.data ); free( u.data );
+        free( e1.data ); free( e2.data );
+        if (ret)
+        {
+            pgnutls_perror( ret );
+            return STATUS_INTERNAL_ERROR;
+        }
+        break;
+    }
+    case ALG_ID_DSA:
+    {
+        gnutls_datum_t p, q, g, y, x;
+        if ((ret = pgnutls_privkey_export_dsa_raw( key_data(key_orig)->privkey, &p, &q, &g, &y, &x )))
+        {
+            pgnutls_perror( ret );
+            return STATUS_INTERNAL_ERROR;
+        }
+        ret = pgnutls_privkey_import_dsa_raw( key_data(key_copy)->privkey, &p, &q, &g, &y, &x );
+        free( p.data ); free( q.data ); free( g.data ); free( y.data ); free( x.data );
+        if (ret)
+        {
+            pgnutls_perror( ret );
+            return STATUS_INTERNAL_ERROR;
+        }
+        break;
+    }
+    case ALG_ID_ECDH_P256:
+    case ALG_ID_ECDSA_P256:
+    case ALG_ID_ECDSA_P384:
+    {
+        gnutls_ecc_curve_t curve;
+        gnutls_datum_t x, y, k;
+        if ((ret = pgnutls_privkey_export_ecc_raw( key_data(key_orig)->privkey, &curve, &x, &y, &k )))
+        {
+            pgnutls_perror( ret );
+            return STATUS_INTERNAL_ERROR;
+        }
+        ret = pgnutls_privkey_import_ecc_raw( key_data(key_copy)->privkey, curve, &x, &y, &k );
+        free( x.data ); free( y.data ); free( k.data );
+        if (ret)
+        {
+            pgnutls_perror( ret );
+            return STATUS_INTERNAL_ERROR;
+        }
+        break;
+    }
+    default:
+        ERR( "unhandled algorithm %u\n", key_orig->alg_id );
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    return STATUS_SUCCESS;
+}
+
 static const struct key_funcs key_funcs =
 {
     key_set_property,
@@ -1745,6 +1838,7 @@ static const struct key_funcs key_funcs =
     key_symmetric_destroy,
     key_asymmetric_init,
     key_asymmetric_generate,
+    key_asymmetric_duplicate,
     key_asymmetric_sign,
     key_asymmetric_verify,
     key_asymmetric_destroy,
