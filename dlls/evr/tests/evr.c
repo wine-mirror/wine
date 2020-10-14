@@ -721,11 +721,11 @@ static void test_surface_sample(void)
     IDirect3DSurface9 *backbuffer = NULL;
     IMFDesiredSample *desired_sample;
     IMFMediaBuffer *buffer, *buffer2;
+    LONGLONG duration, time1, time2;
     IDirect3DSwapChain9 *swapchain;
     DWORD flags, count, length;
     IDirect3DDevice9 *device;
     IMFSample *sample;
-    LONGLONG duration;
     IDirect3D9 *d3d;
     IUnknown *unk;
     HWND window;
@@ -764,7 +764,36 @@ static void test_surface_sample(void)
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!count, "Unexpected attribute count %u.\n", count);
 
+    hr = IMFDesiredSample_GetDesiredSampleTimeAndDuration(desired_sample, NULL, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFDesiredSample_GetDesiredSampleTimeAndDuration(desired_sample, NULL, &time2);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFDesiredSample_GetDesiredSampleTimeAndDuration(desired_sample, &time1, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFDesiredSample_GetDesiredSampleTimeAndDuration(desired_sample, &time1, &time2);
+    ok(hr == MF_E_NOT_AVAILABLE, "Unexpected hr %#x.\n", hr);
+
     IMFDesiredSample_SetDesiredSampleTimeAndDuration(desired_sample, 123, 456);
+
+    time1 = time2 = 0;
+    hr = IMFDesiredSample_GetDesiredSampleTimeAndDuration(desired_sample, &time1, &time2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(time1 == 123 && time2 == 456, "Unexpected time values.\n");
+
+    IMFDesiredSample_SetDesiredSampleTimeAndDuration(desired_sample, 0, 0);
+
+    time1 = time2 = 1;
+    hr = IMFDesiredSample_GetDesiredSampleTimeAndDuration(desired_sample, &time1, &time2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(time1 == 0 && time2 == 0, "Unexpected time values.\n");
+
+    IMFDesiredSample_Clear(desired_sample);
+
+    hr = IMFDesiredSample_GetDesiredSampleTimeAndDuration(desired_sample, &time1, &time2);
+    ok(hr == MF_E_NOT_AVAILABLE, "Unexpected hr %#x.\n", hr);
 
     hr = IMFSample_GetCount(sample, &count);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);

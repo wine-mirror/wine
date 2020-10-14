@@ -59,6 +59,10 @@ struct video_sample
 
     IMFAsyncResult *tracked_result;
     LONG tracked_refcount;
+
+    LONGLONG desired_time;
+    LONGLONG desired_duration;
+    BOOL desired_set;
 };
 
 static struct video_sample *impl_from_IMFSample(IMFSample *iface)
@@ -869,20 +873,50 @@ static ULONG WINAPI desired_video_sample_Release(IMFDesiredSample *iface)
 static HRESULT WINAPI desired_video_sample_GetDesiredSampleTimeAndDuration(IMFDesiredSample *iface,
         LONGLONG *sample_time, LONGLONG *sample_duration)
 {
-    FIXME("%p, %p, %p.\n", iface, sample_time, sample_duration);
+    struct video_sample *sample = impl_from_IMFDesiredSample(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %p.\n", iface, sample_time, sample_duration);
+
+    if (!sample_time || !sample_duration)
+        return E_POINTER;
+
+    IMFSample_LockStore(sample->sample);
+    if (sample->desired_set)
+    {
+        *sample_time = sample->desired_time;
+        *sample_duration = sample->desired_duration;
+    }
+    else
+        hr = MF_E_NOT_AVAILABLE;
+    IMFSample_UnlockStore(sample->sample);
+
+    return hr;
 }
 
 static void WINAPI desired_video_sample_SetDesiredSampleTimeAndDuration(IMFDesiredSample *iface,
         LONGLONG sample_time, LONGLONG sample_duration)
 {
-    FIXME("%p, %s, %s.\n", iface, debugstr_time(sample_time), debugstr_time(sample_duration));
+    struct video_sample *sample = impl_from_IMFDesiredSample(iface);
+
+    TRACE("%p, %s, %s.\n", iface, debugstr_time(sample_time), debugstr_time(sample_duration));
+
+    IMFSample_LockStore(sample->sample);
+    sample->desired_set = TRUE;
+    sample->desired_time = sample_time;
+    sample->desired_duration = sample_duration;
+    IMFSample_UnlockStore(sample->sample);
 }
 
 static void WINAPI desired_video_sample_Clear(IMFDesiredSample *iface)
 {
-    FIXME("%p.\n", iface);
+    struct video_sample *sample = impl_from_IMFDesiredSample(iface);
+
+    TRACE("%p.\n", iface);
+
+    IMFSample_LockStore(sample->sample);
+    sample->desired_set = FALSE;
+    IMFSample_UnlockStore(sample->sample);
 }
 
 static const IMFDesiredSampleVtbl desired_video_sample_vtbl =
