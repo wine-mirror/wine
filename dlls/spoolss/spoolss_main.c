@@ -38,8 +38,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(spoolss);
 
 static HMODULE hwinspool;
 
-static const WCHAR winspooldrvW[] = {'w','i','n','s','p','o','o','l','.','d','r','v',0};
-
 /******************************************************************************
  *
  */
@@ -232,7 +230,7 @@ BOOL WINAPI SplInitializeWinSpoolDrv(LPVOID * table)
 
     TRACE("(%p)\n", table);
 
-    hwinspool = LoadLibraryW(winspooldrvW);
+    hwinspool = LoadLibraryW(L"winspool.drv");
     if (!hwinspool) return FALSE;
 
     table[0] = (void *) GetProcAddress(hwinspool, "OpenPrinterW");

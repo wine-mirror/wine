@@ -151,7 +151,7 @@ static CRITICAL_SECTION backend_cs = { &backend_cs_debug, -1, 0, 0, 0, 0 };
 
 /* ################################ */
 
-static WCHAR localsplW[] = {'l','o','c','a','l','s','p','l','.','d','l','l',0};
+static WCHAR localsplW[] = L"localspl.dll";
 
 /******************************************************************
  * strdupW [internal]
