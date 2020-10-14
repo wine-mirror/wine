@@ -759,7 +759,24 @@ BOOL WINAPI CPSignHash( HCRYPTPROV hprov, HCRYPTHASH hhash, DWORD keyspec, const
 BOOL WINAPI CPVerifySignature( HCRYPTPROV hprov, HCRYPTHASH hhash, const BYTE *sig, DWORD siglen, HCRYPTKEY hpubkey,
                                const WCHAR *desc, DWORD flags )
 {
-    return FALSE;
+    struct hash *hash = (struct hash *)hhash;
+    struct key *key = (struct key *)hpubkey;
+    UCHAR hashval[MAX_HASH_LEN];
+    ULONG hashlen = sizeof(hashval);
+
+    TRACE( "%p, %p, %p, %u %p, %s, %08x\n", (void *)hprov, (void *)hhash, sig, siglen, (void *)hpubkey,
+           debugstr_w(desc), flags );
+
+    if (hash->magic != MAGIC_HASH || key->magic != MAGIC_KEY) return FALSE;
+    if (flags)
+    {
+        FIXME( "flags %08x not supported\n", flags );
+        return FALSE;
+    }
+
+    if (!CPGetHashParam( hprov, hhash, HP_HASHVAL, hashval, &hashlen, 0 )) return FALSE;
+
+    return !BCryptVerifySignature( key->handle, NULL, hashval, hashlen, (UCHAR *)sig, siglen, 0 );
 }
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
