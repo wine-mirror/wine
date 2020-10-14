@@ -2396,14 +2396,10 @@ static NTSTATUS console_input_ioctl( struct console *console, unsigned int code,
             TRACE( "get info\n" );
             if (in_size || *out_size != sizeof(*info)) return STATUS_INVALID_PARAMETER;
             if (!(info = alloc_ioctl_buffer( sizeof(*info )))) return STATUS_NO_MEMORY;
-            info->history_mode  = console->history_mode;
-            info->history_size  = console->history_size;
-            info->history_index = console->history_index;
-            info->edition_mode  = console->edition_mode;
-            info->input_cp      = console->input_cp;
-            info->output_cp     = console->output_cp;
-            info->win           = condrv_handle( console->win );
-            info->input_count   = console->record_count;
+            info->input_cp    = console->input_cp;
+            info->output_cp   = console->output_cp;
+            info->win         = condrv_handle( console->win );
+            info->input_count = console->record_count;
             return STATUS_SUCCESS;
         }
 
