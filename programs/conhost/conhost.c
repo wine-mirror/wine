@@ -1731,7 +1731,6 @@ static NTSTATUS set_output_info( struct screen_buffer *screen_buffer,
                                  const struct condrv_output_info_params *params, size_t extra_size )
 {
     const struct condrv_output_info *info = &params->info;
-    WCHAR *font_name;
     NTSTATUS status;
 
     TRACE( "%p\n", screen_buffer );
@@ -1824,30 +1823,6 @@ static NTSTATUS set_output_info( struct screen_buffer *screen_buffer,
     {
         screen_buffer->max_width  = info->max_width;
         screen_buffer->max_height = info->max_height;
-    }
-    if (params->mask & SET_CONSOLE_OUTPUT_INFO_COLORTABLE)
-    {
-        memcpy( screen_buffer->color_map, info->color_map, sizeof(screen_buffer->color_map) );
-    }
-    if (params->mask & SET_CONSOLE_OUTPUT_INFO_FONT)
-    {
-        screen_buffer->font.width  = info->font_width;
-        screen_buffer->font.height = info->font_height;
-        screen_buffer->font.weight = info->font_weight;
-        screen_buffer->font.pitch_family = info->font_pitch_family;
-        if (extra_size)
-        {
-            const WCHAR *params_font = (const WCHAR *)(params + 1);
-            extra_size = extra_size / sizeof(WCHAR) * sizeof(WCHAR);
-            font_name = malloc( extra_size );
-            if (font_name)
-            {
-                memcpy( font_name, params_font, extra_size );
-                free( screen_buffer->font.face_name );
-                screen_buffer->font.face_name = font_name;
-                screen_buffer->font.face_len  = extra_size;
-            }
-        }
     }
 
     if (is_active( screen_buffer ))
