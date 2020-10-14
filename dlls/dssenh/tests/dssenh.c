@@ -889,12 +889,8 @@ static void test_signhash_array(HCRYPTPROV hProv, const struct signature_test *t
         ok(!memcmp(hashValue1, hashValue2, hashLen2), "Hashes were not identical.\n");
 
         /* Sign hash 1 */
+        signLen1 = 0;
         result = CryptSignHashA(hHash1, AT_SIGNATURE, NULL, 0, NULL, &signLen1);
-        if (!result)
-        {
-            skip("skipping sign tests\n");
-            return;
-        }
         ok(result, "Failed to get signature length, got %x\n", GetLastError());
         ok(signLen1 == 40, "Expected a 40-byte signature, got %d\n", signLen1);
 
@@ -902,6 +898,7 @@ static void test_signhash_array(HCRYPTPROV hProv, const struct signature_test *t
         ok(result, "Failed to sign hash, got %x\n", GetLastError());
 
         /* Sign hash 2 */
+        signLen2 = 0;
         result = CryptSignHashA(hHash2, AT_SIGNATURE, NULL, 0, NULL, &signLen2);
         ok(result, "Failed to get signature length, got %x\n", GetLastError());
         ok(signLen2 == 40, "Expected a 40-byte signature, got %d\n", signLen2);
@@ -943,6 +940,11 @@ static void test_signhash_array(HCRYPTPROV hProv, const struct signature_test *t
 
         /* Verify signed hash 1 */
         result = CryptVerifySignatureA(hHash1, signValue1, sizeof(signValue1), pubKey, NULL, 0);
+        if (!result)
+        {
+            skip("skipping sign tests\n");
+            return;
+        }
         ok(result, "Failed to verify signature, got %x\n", GetLastError());
 
         result = CryptCreateHash(hProv, CALG_SHA, 0, 0, &hHash2);

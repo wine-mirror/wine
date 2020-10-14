@@ -718,10 +718,42 @@ BOOL WINAPI CPDeriveKey( HCRYPTPROV hprov, ALG_ID algid, HCRYPTHASH hhash, DWORD
     return FALSE;
 }
 
+static DWORD get_signature_length( DWORD algid )
+{
+    switch (algid)
+    {
+    case AT_SIGNATURE:
+    case CALG_DSS_SIGN: return 40;
+    default:
+        FIXME( "unhandled algorithm %u\n", algid );
+        return 0;
+    }
+}
+
+#define MAX_HASH_LEN 20
 BOOL WINAPI CPSignHash( HCRYPTPROV hprov, HCRYPTHASH hhash, DWORD keyspec, const WCHAR *desc, DWORD flags, BYTE *sig,
                         DWORD *siglen )
 {
-    return FALSE;
+    struct container *container = (struct container *)hprov;
+    struct hash *hash = (struct hash *)hhash;
+    UCHAR hashval[MAX_HASH_LEN];
+    ULONG len, hashlen = sizeof(hashval);
+
+    TRACE( "%p, %p, %u, %s, %08x, %p, %p\n", (void *)hprov, (void *)hhash, keyspec, debugstr_w(desc), flags, sig,
+           siglen );
+
+    if (container->magic != MAGIC_CONTAINER || !container->sign_key) return FALSE;
+    if (hash->magic != MAGIC_HASH) return FALSE;
+
+    if (!(len = get_signature_length( container->sign_key->algid ))) return FALSE;
+    if (!CPGetHashParam( hprov, hhash, HP_HASHVAL, hashval, &hashlen, 0 )) return FALSE;
+    if (*siglen < len)
+    {
+        *siglen = len;
+        return TRUE;
+    }
+
+    return !BCryptSignHash( container->sign_key->handle, NULL, hashval, hashlen, sig, *siglen, siglen, 0 );
 }
 
 BOOL WINAPI CPVerifySignature( HCRYPTPROV hprov, HCRYPTHASH hhash, const BYTE *sig, DWORD siglen, HCRYPTKEY hpubkey,
