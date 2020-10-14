@@ -1049,8 +1049,6 @@ BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor)
     else
       totalWidth = max(totalWidth, para->nWidth);
 
-    if (!para->nCharOfs)
-      update_repaint( para_prev( para ), &repaint );
     update_repaint( para, &repaint );
     adjust_para_y( para, &c, &repaint );
 
