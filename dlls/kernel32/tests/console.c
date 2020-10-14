@@ -2981,6 +2981,7 @@ static void test_ReadConsole(HANDLE input)
 {
     DWORD ret, bytes;
     char buf[1024];
+    HANDLE output;
 
     SetLastError(0xdeadbeef);
     ret = GetFileSize(input, NULL);
@@ -3015,6 +3016,23 @@ static void test_ReadConsole(HANDLE input)
        GetLastError() == ERROR_NOACCESS, /* Win 8, 10 */
        "expected ERROR_NOT_ENOUGH_MEMORY, got %d\n", GetLastError());
     ok(bytes == 0xdeadbeef, "expected 0xdeadbeef, got %#x\n", bytes);
+
+    output = CreateFileA("CONOUT$", GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
+    ok(output != INVALID_HANDLE_VALUE, "Could not open console\n");
+
+    ret = ReadConsoleW(output, buf, sizeof(buf) / sizeof(WCHAR), &bytes, NULL);
+    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
+       "ReadConsoleW returned %x(%u)\n", ret, GetLastError());
+
+    ret = ReadConsoleA(output, buf, sizeof(buf), &bytes, NULL);
+    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
+       "ReadConsoleA returned %x(%u)\n", ret, GetLastError());
+
+    ret = ReadFile(output, buf, sizeof(buf), &bytes, NULL);
+    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
+       "ReadFile returned %x(%u)\n", ret, GetLastError());
+
+    CloseHandle(output);
 }
 
 static void test_GetCurrentConsoleFont(HANDLE std_output)

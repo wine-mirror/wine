@@ -848,7 +848,8 @@ static int screen_buffer_ioctl( struct fd *fd, ioctl_code_t code, struct async *
         return 1;
 
     default:
-        if (!screen_buffer->input || !screen_buffer->input->server || code >> 16 != FILE_DEVICE_CONSOLE)
+        if (!screen_buffer->input || !screen_buffer->input->server || code >> 16 != FILE_DEVICE_CONSOLE ||
+            is_blocking_read_ioctl( code ))
         {
             set_error( STATUS_INVALID_HANDLE );
             return 0;
