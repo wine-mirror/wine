@@ -659,7 +659,7 @@ static void edit_line_find_in_history( struct console *console )
     unsigned int len, oldoffset;
     WCHAR *line;
 
-    if (ctx->history_index && ctx->history_index == console->history_index + 1)
+    if (ctx->history_index && ctx->history_index == console->history_index)
     {
         start_pos--;
         ctx->history_index--;
