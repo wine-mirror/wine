@@ -8,3 +8,5 @@ C_SRCS = \
 
 IDL_SRCS = \
 	dsdmo.idl
+
+RC_SRCS = version.rc
