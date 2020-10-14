@@ -2111,10 +2111,7 @@ static NTSTATUS fill_output( struct screen_buffer *screen_buffer, const struct c
     dest = screen_buffer->data + min( params->y * screen_buffer->width + params->x,
                                       screen_buffer->height * screen_buffer->width );
 
-    if (params->wrap)
-        end = screen_buffer->data + screen_buffer->height * screen_buffer->width;
-    else
-        end = screen_buffer->data + (params->y + 1) * screen_buffer->width;
+    end = screen_buffer->data + screen_buffer->height * screen_buffer->width;
 
     count = params->count;
     if (count > end - dest) count = end - dest;

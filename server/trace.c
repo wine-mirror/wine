@@ -115,16 +115,15 @@ static void dump_ioctl_code( const char *prefix, const ioctl_code_t *code )
     {
 #define CASE(c) case c: fprintf( stderr, "%s%s", prefix, #c ); break
         CASE(IOCTL_CONDRV_ACTIVATE);
-        CASE(IOCTL_CONDRV_ATTACH_RENDERER);
         CASE(IOCTL_CONDRV_BIND_PID);
         CASE(IOCTL_CONDRV_CTRL_EVENT);
         CASE(IOCTL_CONDRV_FILL_OUTPUT);
         CASE(IOCTL_CONDRV_GET_INPUT_INFO);
         CASE(IOCTL_CONDRV_GET_MODE);
         CASE(IOCTL_CONDRV_GET_OUTPUT_INFO);
-        CASE(IOCTL_CONDRV_GET_RENDERER_EVENTS);
         CASE(IOCTL_CONDRV_GET_TITLE);
         CASE(IOCTL_CONDRV_PEEK);
+        CASE(IOCTL_CONDRV_READ_CONSOLE);
         CASE(IOCTL_CONDRV_READ_INPUT);
         CASE(IOCTL_CONDRV_READ_OUTPUT);
         CASE(IOCTL_CONDRV_SET_MODE);

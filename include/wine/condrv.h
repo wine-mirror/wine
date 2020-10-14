@@ -56,10 +56,6 @@
 /* console server ioctls */
 #define IOCTL_CONDRV_SETUP_INPUT           CTL_CODE(FILE_DEVICE_CONSOLE, 60, METHOD_BUFFERED, FILE_ANY_ACCESS)
 
-/* console renderer ioctls */
-#define IOCTL_CONDRV_GET_RENDERER_EVENTS   CTL_CODE(FILE_DEVICE_CONSOLE, 70, METHOD_BUFFERED, FILE_READ_ACCESS)
-#define IOCTL_CONDRV_ATTACH_RENDERER       CTL_CODE(FILE_DEVICE_CONSOLE, 71, METHOD_BUFFERED, FILE_READ_ACCESS)
-
 /* ioctls used for communication between driver and host */
 #define IOCTL_CONDRV_INIT_OUTPUT           CTL_CODE(FILE_DEVICE_CONSOLE, 90, METHOD_BUFFERED, 0)
 #define IOCTL_CONDRV_CLOSE_OUTPUT          CTL_CODE(FILE_DEVICE_CONSOLE, 91, METHOD_BUFFERED, 0)
@@ -186,54 +182,6 @@ struct condrv_scroll_params
     COORD        origin;              /* destination coordinates */
     SMALL_RECT   clip;                /* clipping rectangle */
     char_info_t  fill;                /* empty character info */
-};
-
-/* IOCTL_CONDRV_GET_RENDERER_EVENTS result */
-struct condrv_renderer_event
-{
-    short event;
-    union
-    {
-        struct
-        {
-            short top;
-            short bottom;
-        } update;
-        struct
-        {
-            short width;
-            short height;
-        } resize;
-        struct
-        {
-            short x;
-            short y;
-        } cursor_pos;
-        struct
-        {
-            short visible;
-            short size;
-        } cursor_geom;
-        struct
-        {
-            short left;
-            short top;
-            short width;
-            short height;
-        } display;
-    } u;
-};
-
-enum condrv_renderer_event_type
-{
-    CONSOLE_RENDERER_NONE_EVENT,
-    CONSOLE_RENDERER_TITLE_EVENT,
-    CONSOLE_RENDERER_SB_RESIZE_EVENT,
-    CONSOLE_RENDERER_UPDATE_EVENT,
-    CONSOLE_RENDERER_CURSOR_POS_EVENT,
-    CONSOLE_RENDERER_CURSOR_GEOM_EVENT,
-    CONSOLE_RENDERER_DISPLAY_EVENT,
-    CONSOLE_RENDERER_EXIT_EVENT,
 };
 
 /* IOCTL_CONDRV_CTRL_EVENT params */
