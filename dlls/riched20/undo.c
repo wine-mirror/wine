@@ -383,9 +383,9 @@ static void ME_PlayUndoItem(ME_TextEditor *editor, struct undo_item *undo)
     ME_DisplayItem *this_para, *new_para;
     BOOL bFixRowStart;
     int paraFlags = undo->u.split_para.flags & (MEPF_ROWSTART|MEPF_CELL|MEPF_ROWEND);
+
     ME_CursorFromCharOfs(editor, undo->u.split_para.pos, &tmp);
-    if (tmp.nOffset)
-      ME_SplitRunSimple(editor, &tmp);
+    if (tmp.nOffset) run_split( editor, &tmp );
     this_para = tmp.pPara;
     bFixRowStart = this_para->member.para.nFlags & MEPF_ROWSTART;
     if (bFixRowStart)

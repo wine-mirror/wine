@@ -132,7 +132,7 @@ int ME_PointFromCharContext(ME_Context *c, ME_Run *pRun, int nOffset, BOOL visua
 int ME_PointFromChar(ME_TextEditor *editor, ME_Run *pRun, int nOffset, BOOL visual_order) DECLSPEC_HIDDEN;
 BOOL ME_CanJoinRuns(const ME_Run *run1, const ME_Run *run2) DECLSPEC_HIDDEN;
 void run_join( ME_TextEditor *editor, ME_Run *run ) DECLSPEC_HIDDEN;
-ME_DisplayItem *ME_SplitRunSimple(ME_TextEditor *editor, ME_Cursor *cursor) DECLSPEC_HIDDEN;
+ME_Run *run_split( ME_TextEditor *editor, ME_Cursor *cursor ) DECLSPEC_HIDDEN;
 void ME_UpdateRunFlags(ME_TextEditor *editor, ME_Run *run) DECLSPEC_HIDDEN;
 SIZE ME_GetRunSizeCommon(ME_Context *c, const ME_Paragraph *para, ME_Run *run, int nLen,
                          int startx, int *pAscent, int *pDescent) DECLSPEC_HIDDEN;

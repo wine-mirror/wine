@@ -268,12 +268,12 @@ void run_join( ME_TextEditor *editor, ME_Run *run )
 }
 
 /******************************************************************************
- * ME_SplitRunSimple
+ * run_split
  *
  * Does the most basic job of splitting a run into two - it does not
  * update the positions and extents.
  */
-ME_DisplayItem *ME_SplitRunSimple( ME_TextEditor *editor, ME_Cursor *cursor )
+ME_Run *run_split( ME_TextEditor *editor, ME_Cursor *cursor )
 {
     ME_Run *run = &cursor->pRun->member.run, *new_run;
     int i;
@@ -303,7 +303,7 @@ ME_DisplayItem *ME_SplitRunSimple( ME_TextEditor *editor, ME_Cursor *cursor )
         }
     }
     para_mark_rewrap( editor, run->para );
-    return run_get_di( run );
+    return run;
 }
 
 /******************************************************************************
@@ -359,7 +359,7 @@ ME_InsertRunAtCursor(ME_TextEditor *editor, ME_Cursor *cursor, ME_Style *style,
     }
     else
     {
-      ME_SplitRunSimple( editor, cursor );
+      run_split( editor, cursor );
       insert_before = cursor->pRun;
     }
   }
@@ -756,12 +756,12 @@ void ME_SetCharFormat(ME_TextEditor *editor, ME_Cursor *start, ME_Cursor *end, C
     start_run = ME_FindItemFwd( start->pRun, diRun );
   else if (start->nOffset)
   {
-    /* SplitRunSimple may or may not update the cursors, depending on whether they
+    /* run_split() may or may not update the cursors, depending on whether they
      * are selection cursors, but we need to make sure they are valid. */
     int split_offset = start->nOffset;
-    ME_DisplayItem *split_run = ME_SplitRunSimple(editor, start);
+    ME_Run *split_run = run_split( editor, start );
     start_run = start->pRun;
-    if (end && end->pRun == split_run)
+    if (end && &end->pRun->member.run == split_run)
     {
       end->pRun = start->pRun;
       end->nOffset -= split_offset;
@@ -774,7 +774,7 @@ void ME_SetCharFormat(ME_TextEditor *editor, ME_Cursor *start, ME_Cursor *end, C
       end_run = ME_FindItemFwd( end->pRun, diRun );
     else
     {
-      if (end->nOffset) ME_SplitRunSimple(editor, end);
+      if (end->nOffset) run_split( editor, end );
       end_run = end->pRun;
     }
   }

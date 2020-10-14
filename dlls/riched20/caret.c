@@ -607,7 +607,9 @@ void ME_InsertTextFromCursor(ME_TextEditor *editor, int nCursor,
         /* handle special \r\r\n sequence (richedit 2.x and higher only) */
         WCHAR space = ' ';
         ME_InternalInsertTextFromCursor(editor, nCursor, &space, 1, style, 0);
-      } else {
+      }
+      else
+      {
         const WCHAR cr = '\r', *eol_str = str;
 
         if (!editor->bEmulateVersion10)
@@ -625,7 +627,7 @@ void ME_InsertTextFromCursor(ME_TextEditor *editor, int nCursor,
         }
         else
         {
-          if (p->nOffset) ME_SplitRunSimple(editor, p);
+          if (p->nOffset) run_split( editor, p );
           run = &p->pRun->member.run;
         }
 

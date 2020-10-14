@@ -66,8 +66,8 @@ static ME_DisplayItem* ME_InsertEndParaFromCursor(ME_TextEditor *editor,
   ME_Style *pStyle = ME_GetInsertStyle(editor, nCursor);
   ME_DisplayItem *tp;
   ME_Cursor* cursor = &editor->pCursors[nCursor];
-  if (cursor->nOffset)
-    ME_SplitRunSimple(editor, cursor);
+
+  if (cursor->nOffset) run_split( editor, cursor );
 
   tp = ME_SplitParagraph(editor, cursor->pRun, pStyle, eol_str, eol_len, paraFlags);
   ME_ReleaseStyle(pStyle);

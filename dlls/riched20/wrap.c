@@ -139,7 +139,7 @@ static ME_Run *split_run_extents( ME_WrapContext *wc, ME_Run *run, int nVChar )
   TRACE("Before split: %s(%d, %d)\n", debugstr_run( run ),
         run->pt.x, run->pt.y);
 
-  ME_SplitRunSimple(editor, &cursor);
+  run_split( editor, &cursor );
 
   run2 = &cursor.pRun->member.run;
   run2->script_analysis = run->script_analysis;
@@ -776,7 +776,7 @@ static HRESULT itemize_para( ME_Context *c, ME_Paragraph *para )
         if (run->nCharOfs + run->len > items[cur_item+1].iCharPos)
         {
             ME_Cursor cursor = {para_get_di( para ), run_get_di( run ), items[cur_item+1].iCharPos - run->nCharOfs};
-            ME_SplitRunSimple( c->editor, &cursor );
+            run_split( c->editor, &cursor );
         }
     }
 
