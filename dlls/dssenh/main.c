@@ -17,7 +17,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-
 #include <stdarg.h>
 
 #include "windef.h"
@@ -469,7 +468,29 @@ BOOL WINAPI CPImportKey( HCRYPTPROV hprov, const BYTE *data, DWORD len, HCRYPTKE
 BOOL WINAPI CPExportKey( HCRYPTPROV hprov, HCRYPTKEY hkey, HCRYPTKEY hexpkey, DWORD blobtype, DWORD flags,
                          BYTE *data, DWORD *len )
 {
-    return FALSE;
+    struct key *key = (struct key *)hkey;
+
+    TRACE( "%p, %p, %p, %08x, %08x, %p, %p\n", (void *)hprov, (void *)hkey, (void *)hexpkey, blobtype, flags,
+           data, len );
+
+    if (key->magic != MAGIC_KEY) return FALSE;
+    if (hexpkey)
+    {
+        FIXME( "export key not supported\n" );
+        return FALSE;
+    }
+    if (blobtype != PUBLICKEYBLOB)
+    {
+        FIXME( "blob type %u not supported\n", blobtype );
+        return FALSE;
+    }
+    if (flags)
+    {
+        FIXME( "flags %08x not supported\n", flags );
+        return FALSE;
+    }
+
+    return !BCryptExportKey( key->handle, NULL, LEGACY_DSA_V2_PUBLIC_BLOB, data, *len, len, 0 );
 }
 
 static struct key *duplicate_key( const struct key *key )
