@@ -30,23 +30,23 @@
 /* Compressed file names end with underscore. */
 static char filename [] = "testfile.xxx";
 static char filename_[] = "testfile.xx_";
-static WCHAR filenameW [] = {'t','e','s','t','f','i','l','e','.','x','x','x',0};
-static WCHAR filenameW_[] = {'t','e','s','t','f','i','l','e','.','x','x','_',0};
+static WCHAR filenameW [] = L"testfile.xxx";
+static WCHAR filenameW_[] = L"testfile.xx_";
 
 static char dotless [] = "dotless";
 static char dotless_[] = "dotless._";
-static WCHAR dotlessW [] = {'d','o','t','l','e','s','s', 0};
-static WCHAR dotlessW_[] = {'d','o','t','l','e','s','s','.','_', 0};
+static WCHAR dotlessW [] = L"dotless";
+static WCHAR dotlessW_[] = L"dotless._";
 
 static char extless [] = "extless.";
 static char extless_[] = "extless._";
-static WCHAR extlessW [] = {'e','x','t','l','e','s','s','.', 0};
-static WCHAR extlessW_[] = {'e','x','t','l','e','s','s','.','_', 0};
+static WCHAR extlessW [] = L"extless.";
+static WCHAR extlessW_[] = L"extless._";
 
 static char _terminated [] = "_terminated.xxxx_";
 static char _terminated_[] = "_terminated.xxxx_";
-static WCHAR _terminatedW [] = {'_','t','e','r','m','i','n','a','t','e','d','.','x','x','x','x','_', 0};
-static WCHAR _terminatedW_[] = {'_','t','e','r','m','i','n','a','t','e','d','.','x','x','x','x','_', 0};
+static WCHAR _terminatedW [] = L"_terminated.xxxx_";
+static WCHAR _terminatedW_[] = L"_terminated.xxxx_";
 
 static char filename2[] = "testfile.yyy";
 
@@ -700,7 +700,7 @@ static void test_LZOpenFileW(void)
   OFSTRUCT test;
   DWORD retval;
   INT file;
-  static WCHAR badfilenameW[] = {'b','a','d','f','i','l','e','n','a','m','e','.','x','t','n',0};
+  static WCHAR badfilenameW[] = L"badfilename.xtn";
   char expected[MAX_PATH];
 
   SetLastError(0xfaceabee);
