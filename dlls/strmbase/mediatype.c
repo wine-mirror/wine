@@ -21,6 +21,7 @@
 
 #include "strmbase_private.h"
 #include "dvdmedia.h"
+#include "dxva.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(strmbase);
 
@@ -132,6 +133,14 @@ void strmbase_dump_media_type(const AM_MEDIA_TYPE *mt)
         if (vih->dwCopyProtectFlags) TRACE("copy-protection flags %#x, ", vih->dwCopyProtectFlags);
         TRACE("aspect ratio %u/%u, ", vih->dwPictAspectRatioX, vih->dwPictAspectRatioY);
         if (vih->u.dwControlFlags) TRACE("control flags %#x, ", vih->u.dwControlFlags);
+        if (vih->u.dwControlFlags & AMCONTROL_COLORINFO_PRESENT)
+        {
+            const DXVA_ExtendedFormat *colorimetry = (const DXVA_ExtendedFormat *)&vih->u.dwControlFlags;
+
+            TRACE("chroma site %#x, range %#x, matrix %#x, lighting %#x, primaries %#x, transfer function %#x, ",
+                    colorimetry->VideoChromaSubsampling, colorimetry->NominalRange, colorimetry->VideoTransferMatrix,
+                    colorimetry->VideoLighting, colorimetry->VideoPrimaries, colorimetry->VideoTransferFunction);
+        }
         TRACE("size %dx%d, %u planes, %u bpp, compression %s, image size %u",
                 vih->bmiHeader.biWidth, vih->bmiHeader.biHeight, vih->bmiHeader.biPlanes,
                 vih->bmiHeader.biBitCount, debugstr_fourcc(vih->bmiHeader.biCompression),
