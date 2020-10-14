@@ -471,7 +471,7 @@ ME_InternalInsertTextFromCursor(ME_TextEditor *editor, int nCursor,
   
   assert(p->pRun->type == diRun);
   
-  return ME_InsertRunAtCursor(editor, p, style, str, len, flags);
+  return run_get_di( run_insert( editor, p, style, str, len, flags ) );
 }
 
 static struct re_object* create_re_object(const REOBJECT *reo)

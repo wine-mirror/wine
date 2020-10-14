@@ -119,8 +119,8 @@ int ME_RowNumberFromCharOfs(ME_TextEditor *editor, int nOfs) DECLSPEC_HIDDEN;
 
 /* run.c */
 ME_Run *run_create( ME_Style *s, int nFlags ) DECLSPEC_HIDDEN;
-ME_DisplayItem *ME_InsertRunAtCursor(ME_TextEditor *editor, ME_Cursor *cursor,
-                                     ME_Style *style, const WCHAR *str, int len, int flags) DECLSPEC_HIDDEN;
+ME_Run *run_insert( ME_TextEditor *editor, ME_Cursor *cursor,
+                    ME_Style *style, const WCHAR *str, int len, int flags ) DECLSPEC_HIDDEN;
 void ME_CheckCharOffsets(ME_TextEditor *editor) DECLSPEC_HIDDEN;
 void ME_PropagateCharOffset(ME_DisplayItem *p, int shift) DECLSPEC_HIDDEN;
 /* this one accounts for 1/2 char tolerance */
@@ -133,6 +133,7 @@ void run_join( ME_TextEditor *editor, ME_Run *run ) DECLSPEC_HIDDEN;
 ME_Run *run_next( ME_Run *run ) DECLSPEC_HIDDEN;
 ME_Run *run_next_all_paras( ME_Run *run ) DECLSPEC_HIDDEN;
 ME_Run *run_prev( ME_Run *run ) DECLSPEC_HIDDEN;
+ME_Run *run_prev_all_paras( ME_Run *run ) DECLSPEC_HIDDEN;
 ME_Run *run_split( ME_TextEditor *editor, ME_Cursor *cursor ) DECLSPEC_HIDDEN;
 void ME_UpdateRunFlags(ME_TextEditor *editor, ME_Run *run) DECLSPEC_HIDDEN;
 SIZE ME_GetRunSizeCommon(ME_Context *c, const ME_Paragraph *para, ME_Run *run, int nLen,

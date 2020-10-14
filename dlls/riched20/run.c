@@ -57,6 +57,16 @@ ME_Run *run_next_all_paras( ME_Run *run )
     return NULL;
 }
 
+ME_Run *run_prev_all_paras( ME_Run *run )
+{
+    ME_DisplayItem *item = run_get_di( run ), *dummy = para_get_di( run->para );
+
+    if (ME_PrevRun( &dummy, &item, TRUE ))
+        return &item->member.run;
+
+    return NULL;
+}
+
 /******************************************************************************
  * ME_CanJoinRuns
  *
@@ -347,56 +357,53 @@ ME_Run *run_create( ME_Style *s, int flags )
 }
 
 /******************************************************************************
- * ME_InsertRunAtCursor
+ * run_insert
  *
  * Inserts a new run with given style, flags and content at a given position,
  * which is passed as a cursor structure (which consists of a run and 
  * a run-relative character offset).
  */
-ME_DisplayItem *
-ME_InsertRunAtCursor(ME_TextEditor *editor, ME_Cursor *cursor, ME_Style *style,
-                     const WCHAR *str, int len, int flags)
+ME_Run *run_insert( ME_TextEditor *editor, ME_Cursor *cursor, ME_Style *style,
+                    const WCHAR *str, int len, int flags )
 {
-  ME_DisplayItem *insert_before = cursor->pRun, *prev;
-  ME_Run *run;
+  ME_Run *insert_before = &cursor->pRun->member.run, *run, *prev;
 
   if (cursor->nOffset)
   {
-    if (cursor->nOffset == cursor->pRun->member.run.len)
+    if (cursor->nOffset == insert_before->len)
     {
-      insert_before = ME_FindItemFwd( cursor->pRun, diRun );
-      if (!insert_before) insert_before = cursor->pRun; /* Always insert before the final eop run */
+      insert_before = run_next_all_paras( insert_before );
+      if (!insert_before) insert_before = &cursor->pRun->member.run; /* Always insert before the final eop run */
     }
     else
     {
       run_split( editor, cursor );
-      insert_before = cursor->pRun;
+      insert_before = &cursor->pRun->member.run;
     }
   }
 
-  add_undo_delete_run( editor, insert_before->member.run.para->nCharOfs +
-                       insert_before->member.run.nCharOfs, len );
+  add_undo_delete_run( editor, insert_before->para->nCharOfs + insert_before->nCharOfs, len );
 
   run = run_create( style, flags );
-  run->nCharOfs = insert_before->member.run.nCharOfs;
+  run->nCharOfs = insert_before->nCharOfs;
   run->len = len;
-  run->para = insert_before->member.run.para;
+  run->para = insert_before->para;
   ME_InsertString( run->para->text, run->nCharOfs, str, len );
-  ME_InsertBefore( insert_before, run_get_di( run ) );
+  ME_InsertBefore( run_get_di( insert_before ), run_get_di( run ) );
   TRACE("Shift length:%d\n", len);
-  ME_PropagateCharOffset( insert_before, len );
-  para_mark_rewrap( editor, insert_before->member.run.para );
+  ME_PropagateCharOffset( run_get_di( insert_before ), len );
+  para_mark_rewrap( editor, insert_before->para );
 
   /* Move any cursors that were at the end of the previous run to the end of the inserted run */
-  prev = ME_FindItemBack( run_get_di( run ), diRun );
+  prev = run_prev_all_paras( run );
   if (prev)
   {
     int i;
 
     for (i = 0; i < editor->nCursors; i++)
     {
-      if (editor->pCursors[i].pRun == prev &&
-          editor->pCursors[i].nOffset == prev->member.run.len)
+      if (editor->pCursors[i].pRun == run_get_di( prev ) &&
+          editor->pCursors[i].nOffset == prev->len)
       {
         editor->pCursors[i].pRun = run_get_di( run );
         editor->pCursors[i].nOffset = len;
@@ -404,7 +411,7 @@ ME_InsertRunAtCursor(ME_TextEditor *editor, ME_Cursor *cursor, ME_Style *style,
     }
   }
 
-  return run_get_di( run );
+  return run;
 }
 
 static BOOL run_is_splittable( const ME_Run *run )

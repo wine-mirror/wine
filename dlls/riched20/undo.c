@@ -357,10 +357,9 @@ static void ME_PlayUndoItem(ME_TextEditor *editor, struct undo_item *undo)
   {
     ME_Cursor tmp;
     ME_CursorFromCharOfs(editor, undo->u.insert_run.pos, &tmp);
-    ME_InsertRunAtCursor(editor, &tmp, undo->u.insert_run.style,
-                         undo->u.insert_run.str,
-                         undo->u.insert_run.len,
-                         undo->u.insert_run.flags);
+    run_insert( editor, &tmp, undo->u.insert_run.style,
+                undo->u.insert_run.str, undo->u.insert_run.len,
+                undo->u.insert_run.flags );
     break;
   }
   case undo_delete_run:
