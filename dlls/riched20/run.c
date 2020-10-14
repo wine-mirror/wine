@@ -47,6 +47,16 @@ ME_Run *run_prev( ME_Run *run )
     return NULL;
 }
 
+ME_Run *run_next_all_paras( ME_Run *run )
+{
+    ME_DisplayItem *item = run_get_di( run ), *dummy = para_get_di( run->para );
+
+    if (ME_NextRun( &dummy, &item, TRUE ))
+        return &item->member.run;
+
+    return NULL;
+}
+
 /******************************************************************************
  * ME_CanJoinRuns
  *
@@ -745,22 +755,22 @@ void ME_SetSelectionCharFormat(ME_TextEditor *editor, CHARFORMAT2W *pFmt)
  *
  * If no text is selected, then nothing is done.
  */
-void ME_SetCharFormat(ME_TextEditor *editor, ME_Cursor *start, ME_Cursor *end, CHARFORMAT2W *pFmt)
+void ME_SetCharFormat( ME_TextEditor *editor, ME_Cursor *start, ME_Cursor *end, CHARFORMAT2W *fmt )
 {
-  ME_DisplayItem *run, *start_run = start->pRun, *end_run = NULL;
+  ME_Run *run, *start_run = &start->pRun->member.run, *end_run = NULL;
 
   if (end && start->pRun == end->pRun && start->nOffset == end->nOffset)
     return;
 
   if (start->nOffset == start->pRun->member.run.len)
-    start_run = ME_FindItemFwd( start->pRun, diRun );
+    start_run = run_next_all_paras( &start->pRun->member.run );
   else if (start->nOffset)
   {
     /* run_split() may or may not update the cursors, depending on whether they
      * are selection cursors, but we need to make sure they are valid. */
     int split_offset = start->nOffset;
     ME_Run *split_run = run_split( editor, start );
-    start_run = start->pRun;
+    start_run = &start->pRun->member.run;
     if (end && &end->pRun->member.run == split_run)
     {
       end->pRun = start->pRun;
@@ -771,26 +781,26 @@ void ME_SetCharFormat(ME_TextEditor *editor, ME_Cursor *start, ME_Cursor *end, C
   if (end)
   {
     if (end->nOffset == end->pRun->member.run.len)
-      end_run = ME_FindItemFwd( end->pRun, diRun );
+      end_run = run_next_all_paras( &end->pRun->member.run );
     else
     {
       if (end->nOffset) run_split( editor, end );
-      end_run = end->pRun;
+      end_run = &end->pRun->member.run;
     }
   }
 
-  for (run = start_run; run != end_run; run = ME_FindItemFwd( run, diRun ))
+  for (run = start_run; run != end_run; run = run_next_all_paras( run ))
   {
-    ME_Style *new_style = ME_ApplyStyle(editor, run->member.run.style, pFmt);
-    ME_Paragraph *para = run->member.run.para;
+    ME_Style *new_style = ME_ApplyStyle( editor, run->style, fmt );
+    ME_Paragraph *para = run->para;
 
-    add_undo_set_char_fmt( editor, run->member.run.para->nCharOfs + run->member.run.nCharOfs,
-                           run->member.run.len, &run->member.run.style->fmt );
-    ME_ReleaseStyle(run->member.run.style);
-    run->member.run.style = new_style;
+    add_undo_set_char_fmt( editor, para->nCharOfs + run->nCharOfs,
+                           run->len, &run->style->fmt );
+    ME_ReleaseStyle( run->style );
+    run->style = new_style;
 
     /* The para numbering style depends on the eop style */
-    if ((run->member.run.nFlags & MERF_ENDPARA) && para->para_num.style)
+    if ((run->nFlags & MERF_ENDPARA) && para->para_num.style)
     {
       ME_ReleaseStyle(para->para_num.style);
       para->para_num.style = NULL;

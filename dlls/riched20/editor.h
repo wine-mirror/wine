@@ -76,8 +76,6 @@ ME_DisplayItem *ME_MakeDI(ME_DIType type) DECLSPEC_HIDDEN;
 void ME_DestroyDisplayItem(ME_DisplayItem *item) DECLSPEC_HIDDEN;
 void ME_DumpDocument(ME_TextBuffer *buffer) DECLSPEC_HIDDEN;
 void destroy_para(ME_TextEditor *editor, ME_DisplayItem *item) DECLSPEC_HIDDEN;
-ME_Run *run_prev( ME_Run *run ) DECLSPEC_HIDDEN;
-ME_Run *run_next( ME_Run *run ) DECLSPEC_HIDDEN;
 
 /* string.c */
 ME_String *ME_MakeStringN(LPCWSTR szText, int nMaxChars) DECLSPEC_HIDDEN;
@@ -132,6 +130,9 @@ int ME_PointFromCharContext(ME_Context *c, ME_Run *pRun, int nOffset, BOOL visua
 int ME_PointFromChar(ME_TextEditor *editor, ME_Run *pRun, int nOffset, BOOL visual_order) DECLSPEC_HIDDEN;
 BOOL ME_CanJoinRuns(const ME_Run *run1, const ME_Run *run2) DECLSPEC_HIDDEN;
 void run_join( ME_TextEditor *editor, ME_Run *run ) DECLSPEC_HIDDEN;
+ME_Run *run_next( ME_Run *run ) DECLSPEC_HIDDEN;
+ME_Run *run_next_all_paras( ME_Run *run ) DECLSPEC_HIDDEN;
+ME_Run *run_prev( ME_Run *run ) DECLSPEC_HIDDEN;
 ME_Run *run_split( ME_TextEditor *editor, ME_Cursor *cursor ) DECLSPEC_HIDDEN;
 void ME_UpdateRunFlags(ME_TextEditor *editor, ME_Run *run) DECLSPEC_HIDDEN;
 SIZE ME_GetRunSizeCommon(ME_Context *c, const ME_Paragraph *para, ME_Run *run, int nLen,
