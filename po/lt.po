@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2020-10-08 00:09+0300\n"
+"PO-Revision-Date: 2020-10-14 12:00+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -10562,16 +10562,12 @@ msgid "Egypt Daylight Time"
 msgstr "Egipto vasaros laikas"
 
 #: dlls/tzres/tzres.rc:104
-#, fuzzy
-#| msgid "Central Standard Time (Mexico)"
 msgid "Eastern Standard Time (Mexico)"
-msgstr "Centrinis juostinis laikas (Meksika)"
+msgstr "Rytinis juostinis laikas (Meksika)"
 
 #: dlls/tzres/tzres.rc:105
-#, fuzzy
-#| msgid "Central Daylight Time (Mexico)"
 msgid "Eastern Daylight Time (Mexico)"
-msgstr "Centrinis vasaros laikas (Meksika)"
+msgstr "Rytinis vasaros laikas (Meksika)"
 
 #: dlls/tzres/tzres.rc:148
 msgid "Mauritius Standard Time"
