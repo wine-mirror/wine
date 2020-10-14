@@ -1075,9 +1075,14 @@ static ULONG WINAPI surface_buffer_gs_Release(IMFGetService *iface)
 
 static HRESULT WINAPI surface_buffer_gs_GetService(IMFGetService *iface, REFGUID service, REFIID riid, void **obj)
 {
-    FIXME("%p, %s, %s, %p.\n", iface, debugstr_guid(service), debugstr_guid(riid), obj);
+    struct surface_buffer *buffer = impl_from_IMFGetService(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %s, %s, %p.\n", iface, debugstr_guid(service), debugstr_guid(riid), obj);
+
+    if (IsEqualGUID(service, &MR_BUFFER_SERVICE))
+        return IUnknown_QueryInterface(buffer->surface, riid, obj);
+
+    return E_NOINTERFACE;
 }
 
 static const IMFGetServiceVtbl surface_buffer_gs_vtbl =

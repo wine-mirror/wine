@@ -718,7 +718,7 @@ todo_wine
 
 static void test_surface_sample(void)
 {
-    IDirect3DSurface9 *backbuffer = NULL;
+    IDirect3DSurface9 *backbuffer = NULL, *surface;
     IMFDesiredSample *desired_sample;
     IMFMediaBuffer *buffer, *buffer2;
     LONGLONG duration, time1, time2;
@@ -869,6 +869,16 @@ static void test_surface_sample(void)
     hr = IMFSample_GetBufferCount(sample, &count);
     ok(hr == S_OK, "Failed to get buffer count, hr %#x.\n", hr);
     ok(!count, "Unexpected attribute count.\n");
+
+    hr = MFGetService((IUnknown *)buffer, &MR_BUFFER_SERVICE, &IID_IDirect3DSurface9, (void **)&surface);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(surface == backbuffer, "Unexpected instance.\n");
+    IDirect3DSurface9_Release(surface);
+
+    hr = MFGetService((IUnknown *)buffer, &MR_BUFFER_SERVICE, &IID_IUnknown, (void **)&surface);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(surface == backbuffer, "Unexpected instance.\n");
+    IDirect3DSurface9_Release(surface);
 
     IMFMediaBuffer_Release(buffer);
 
