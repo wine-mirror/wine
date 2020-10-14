@@ -184,14 +184,16 @@ struct keylength_test {
     BOOL expectedResult;
     DWORD expectedError;
     DWORD brokenError;
+    int todo_result;
+    int todo_error;
 };
 
 static const struct keylength_test baseDSS_keylength[] = {
     /* AT_KEYEXCHANGE is not supported by the base DSS provider */
-    {AT_KEYEXCHANGE, 448 << 16, FALSE, NTE_BAD_ALGID},
-    {AT_KEYEXCHANGE, 512 << 16, FALSE, NTE_BAD_ALGID},
-    {AT_KEYEXCHANGE, 1024 << 16, FALSE, NTE_BAD_ALGID},
-    {AT_KEYEXCHANGE, 1088 << 16, FALSE, NTE_BAD_ALGID},
+    {AT_KEYEXCHANGE, 448 << 16, FALSE, NTE_BAD_ALGID, 0, 0, 1},
+    {AT_KEYEXCHANGE, 512 << 16, FALSE, NTE_BAD_ALGID, 0, 0, 1},
+    {AT_KEYEXCHANGE, 1024 << 16, FALSE, NTE_BAD_ALGID, 0, 0, 1},
+    {AT_KEYEXCHANGE, 1088 << 16, FALSE, NTE_BAD_ALGID, 0, 0, 1},
     /* min 512 max 1024 increment by 64 */
     {AT_SIGNATURE, 448 << 16, FALSE, NTE_BAD_FLAGS},
     {AT_SIGNATURE, 512 << 16, TRUE},
@@ -200,15 +202,15 @@ static const struct keylength_test baseDSS_keylength[] = {
     {AT_SIGNATURE, 1024 << 16, TRUE},
     {AT_SIGNATURE, 1088 << 16, FALSE, NTE_BAD_FLAGS},
     /* CALG_DH_EPHEM is not supported by the base DSS provider */
-    {CALG_DH_EPHEM, 448 << 16, FALSE, NTE_BAD_ALGID},
-    {CALG_DH_EPHEM, 512 << 16, FALSE, NTE_BAD_ALGID},
-    {CALG_DH_EPHEM, 1024 << 16, FALSE, NTE_BAD_ALGID},
-    {CALG_DH_EPHEM, 1088 << 16, FALSE, NTE_BAD_ALGID},
+    {CALG_DH_EPHEM, 448 << 16, FALSE, NTE_BAD_ALGID, 0, 0, 1},
+    {CALG_DH_EPHEM, 512 << 16, FALSE, NTE_BAD_ALGID, 0, 0, 1},
+    {CALG_DH_EPHEM, 1024 << 16, FALSE, NTE_BAD_ALGID, 0, 0, 1},
+    {CALG_DH_EPHEM, 1088 << 16, FALSE, NTE_BAD_ALGID, 0, 0, 1},
     /* CALG_DH_SF is not supported by the base DSS provider */
-    {CALG_DH_SF, 448 << 16, FALSE, NTE_BAD_ALGID},
-    {CALG_DH_SF, 512 << 16, FALSE, NTE_BAD_ALGID},
-    {CALG_DH_SF, 1024 << 16, FALSE, NTE_BAD_ALGID},
-    {CALG_DH_SF, 1088 << 16, FALSE, NTE_BAD_ALGID},
+    {CALG_DH_SF, 448 << 16, FALSE, NTE_BAD_ALGID, 0, 0, 1},
+    {CALG_DH_SF, 512 << 16, FALSE, NTE_BAD_ALGID, 0, 0, 1},
+    {CALG_DH_SF, 1024 << 16, FALSE, NTE_BAD_ALGID, 0, 0, 1},
+    {CALG_DH_SF, 1088 << 16, FALSE, NTE_BAD_ALGID, 0, 0, 1},
     /* min 512 max 1024, increment by 64 */
     {CALG_DSS_SIGN, 448 << 16, FALSE, NTE_BAD_FLAGS},
     {CALG_DSS_SIGN, 512 << 16, TRUE},
@@ -221,10 +223,10 @@ static const struct keylength_test baseDSS_keylength[] = {
 static const struct keylength_test dssDH_keylength[] = {
     /* min 512 max 1024, increment by 64 */
     {AT_KEYEXCHANGE, 448 << 16, FALSE, NTE_BAD_FLAGS},
-    {AT_KEYEXCHANGE, 512 << 16, TRUE},
-    {AT_KEYEXCHANGE, 513 << 16, FALSE, NTE_BAD_FLAGS},
-    {AT_KEYEXCHANGE, 768 << 16, TRUE},
-    {AT_KEYEXCHANGE, 1024 << 16, TRUE},
+    {AT_KEYEXCHANGE, 512 << 16, TRUE, 0, 0, 1},
+    {AT_KEYEXCHANGE, 513 << 16, FALSE, NTE_BAD_FLAGS, 0, 0, 1},
+    {AT_KEYEXCHANGE, 768 << 16, TRUE, 0, 0, 1},
+    {AT_KEYEXCHANGE, 1024 << 16, TRUE, 0, 0, 1},
     {AT_KEYEXCHANGE, 1088 << 16, FALSE, NTE_BAD_FLAGS},
     {AT_SIGNATURE, 448 << 16, FALSE, NTE_BAD_FLAGS},
     {AT_SIGNATURE, 512 << 16, TRUE},
@@ -233,16 +235,16 @@ static const struct keylength_test dssDH_keylength[] = {
     {AT_SIGNATURE, 1024 << 16, TRUE},
     {AT_SIGNATURE, 1088 << 16, FALSE, NTE_BAD_FLAGS},
     {CALG_DH_EPHEM, 448 << 16, FALSE, NTE_BAD_FLAGS},
-    {CALG_DH_EPHEM, 512 << 16, TRUE},
-    {CALG_DH_EPHEM, 513 << 16, FALSE, NTE_BAD_FLAGS},
-    {CALG_DH_EPHEM, 768 << 16, TRUE},
-    {CALG_DH_EPHEM, 1024 << 16, TRUE},
+    {CALG_DH_EPHEM, 512 << 16, TRUE, 0, 0, 1},
+    {CALG_DH_EPHEM, 513 << 16, FALSE, NTE_BAD_FLAGS, 0, 0, 1},
+    {CALG_DH_EPHEM, 768 << 16, TRUE, 0, 0, 1},
+    {CALG_DH_EPHEM, 1024 << 16, TRUE, 0, 0, 1},
     {CALG_DH_EPHEM, 1088 << 16, FALSE, NTE_BAD_FLAGS},
     {CALG_DH_SF, 448 << 16, FALSE, NTE_BAD_FLAGS},
-    {CALG_DH_SF, 512 << 16, TRUE},
-    {CALG_DH_SF, 513 << 16, FALSE, NTE_BAD_FLAGS},
-    {CALG_DH_SF, 768 << 16, TRUE},
-    {CALG_DH_SF, 1024 << 16, TRUE},
+    {CALG_DH_SF, 512 << 16, TRUE, 0, 0, 1},
+    {CALG_DH_SF, 513 << 16, FALSE, NTE_BAD_FLAGS, 0, 0, 1},
+    {CALG_DH_SF, 768 << 16, TRUE, 0, 0, 1},
+    {CALG_DH_SF, 1024 << 16, TRUE, 0, 0, 1},
     {CALG_DH_SF, 1088 << 16, FALSE, NTE_BAD_FLAGS},
     {CALG_DSS_SIGN, 448 << 16, FALSE, NTE_BAD_FLAGS},
     {CALG_DSS_SIGN, 512 << 16, TRUE},
@@ -255,12 +257,12 @@ static const struct keylength_test dssDH_keylength[] = {
 static const struct keylength_test dssENH_keylength[] = {
     /* min 512 max 1024 (AT_KEYEXCHANGE, CALG_DH_EPHEM, CALG_DH_SF max 4096), increment by 64*/
     {AT_KEYEXCHANGE, 448 << 16, FALSE, NTE_BAD_FLAGS},
-    {AT_KEYEXCHANGE, 512 << 16, TRUE},
-    {AT_KEYEXCHANGE, 513 << 16, FALSE, NTE_BAD_FLAGS},
-    {AT_KEYEXCHANGE, 768 << 16, TRUE},
-    {AT_KEYEXCHANGE, 1024 << 16, TRUE},
-    {AT_KEYEXCHANGE, 1088 << 16, TRUE},
-    {AT_KEYEXCHANGE, 2048 << 16, TRUE},
+    {AT_KEYEXCHANGE, 512 << 16, TRUE, 0, 0, 1},
+    {AT_KEYEXCHANGE, 513 << 16, FALSE, NTE_BAD_FLAGS, 0, 0, 1},
+    {AT_KEYEXCHANGE, 768 << 16, TRUE, 0, 0, 1},
+    {AT_KEYEXCHANGE, 1024 << 16, TRUE, 0, 0, 1},
+    {AT_KEYEXCHANGE, 1088 << 16, TRUE, 0, 0, 1},
+    {AT_KEYEXCHANGE, 2048 << 16, TRUE, 0, 0, 1},
     /* Keylength too large - test bot timeout.
     {AT_KEYEXCHANGE, 3072 << 16, TRUE},
     {AT_KEYEXCHANGE, 4096 << 16, TRUE}, */
@@ -272,20 +274,20 @@ static const struct keylength_test dssENH_keylength[] = {
     {AT_SIGNATURE, 1024 << 16, TRUE},
     {AT_SIGNATURE, 1032 << 16, FALSE, NTE_BAD_FLAGS},
     {CALG_DH_EPHEM, 448 << 16, FALSE, NTE_BAD_FLAGS},
-    {CALG_DH_EPHEM, 512 << 16, TRUE},
-    {CALG_DH_EPHEM, 513 << 16, FALSE, NTE_BAD_FLAGS},
-    {CALG_DH_EPHEM, 768 << 16, TRUE},
-    {CALG_DH_EPHEM, 1024 << 16, TRUE},
+    {CALG_DH_EPHEM, 512 << 16, TRUE, 0, 0, 1},
+    {CALG_DH_EPHEM, 513 << 16, FALSE, NTE_BAD_FLAGS, 0, 0, 1},
+    {CALG_DH_EPHEM, 768 << 16, TRUE, 0, 0, 1},
+    {CALG_DH_EPHEM, 1024 << 16, TRUE, 0, 0, 1},
     {CALG_DH_EPHEM, 1040 << 16, FALSE, NTE_BAD_FLAGS},
-    {CALG_DH_EPHEM, 1088 << 16, TRUE},
+    {CALG_DH_EPHEM, 1088 << 16, TRUE, 0, 0, 1},
     {CALG_DH_EPHEM, 4160 << 16, FALSE, NTE_BAD_FLAGS},
     {CALG_DH_SF, 448 << 16, FALSE, NTE_BAD_FLAGS},
-    {CALG_DH_SF, 512 << 16, TRUE},
-    {CALG_DH_SF, 513 << 16, FALSE, NTE_BAD_FLAGS},
-    {CALG_DH_SF, 768 << 16, TRUE},
-    {CALG_DH_SF, 1024 << 16, TRUE},
+    {CALG_DH_SF, 512 << 16, TRUE, 0, 0, 1},
+    {CALG_DH_SF, 513 << 16, FALSE, NTE_BAD_FLAGS, 0, 0, 1},
+    {CALG_DH_SF, 768 << 16, TRUE, 0, 0, 1},
+    {CALG_DH_SF, 1024 << 16, TRUE, 0, 0, 1},
     {CALG_DH_SF, 1032 << 16, FALSE, NTE_BAD_FLAGS},
-    {CALG_DH_SF, 1088 << 16, TRUE},
+    {CALG_DH_SF, 1088 << 16, TRUE, 0, 0, 1},
     {CALG_DH_SF, 4160 << 16, FALSE, NTE_BAD_FLAGS},
     {CALG_DSS_SIGN, 448 << 16, FALSE, NTE_BAD_FLAGS},
     {CALG_DSS_SIGN, 512 << 16, TRUE},
@@ -307,16 +309,22 @@ static void test_keylength_array(HCRYPTPROV hProv,const struct keylength_test *t
         result = CryptGenKey(hProv, tests[i].algid, tests[i].flags, &key);
 
         /* success */
-        if(tests[i].expectedResult)
+        if (tests[i].expectedResult)
         {
-            ok(result, "%d: Expected a key, got %08x\n", i, GetLastError());
-            result = CryptDestroyKey(key);
-            ok(result, "Expected no errors.\n");
+            todo_wine_if (tests[i].todo_result) ok(result, "%d: got %08x\n", i, GetLastError());
+            if (result)
+            {
+                result = CryptDestroyKey(key);
+                ok(result, "%d: got %08x\n", i, GetLastError());
+            }
         }
         else
-            ok(!result && (GetLastError() == tests[i].expectedError ||
-                           broken(GetLastError() == tests[i].brokenError)),
-               "%d: got %x.\n", i, GetLastError());
+        {
+            todo_wine_if (tests[i].todo_result) ok(!result, "%d: got %x\n", i, GetLastError());
+            todo_wine_if (tests[i].todo_error)
+                ok(GetLastError() == tests[i].expectedError ||
+                   broken(GetLastError() == tests[i].brokenError), "%d: got %08x\n", i, GetLastError());
+        }
     }
 }
 
@@ -337,12 +345,7 @@ static void test_keylength(void)
     ok(result, "Expected no errors.\n");
 
     result = CryptGenKey(hProv, AT_SIGNATURE, 0, &key);
-    todo_wine ok(result, "Expected no errors.\n");
-    if (!result)
-    {
-        skip("skipping key length tests\n");
-        return;
-    }
+    ok(result, "Expected no errors.\n");
 
     result = CryptDestroyKey(key);
     ok(result, "Expected no errors.\n");

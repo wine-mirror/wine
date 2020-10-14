@@ -19,6 +19,8 @@
 
 #include <stdarg.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "wincrypt.h"
@@ -309,27 +311,6 @@ BOOL WINAPI CPGetProvParam( HCRYPTPROV hprov, DWORD param, BYTE *data, DWORD *le
     return FALSE;
 }
 
-BOOL WINAPI CPGenKey( HCRYPTPROV hprov, ALG_ID algid, DWORD flags, HCRYPTKEY *ret_key )
-{
-    return FALSE;
-}
-
-BOOL WINAPI CPDestroyKey( HCRYPTPROV hprov, HCRYPTKEY hkey )
-{
-    struct key *key = (struct key *)hkey;
-
-    TRACE( "%p, %p\n", (void *)hprov, (void *)hkey );
-
-    if (key->magic != MAGIC_KEY)
-    {
-        SetLastError( NTE_BAD_KEY );
-        return FALSE;
-    }
-
-    destroy_key( key );
-    return TRUE;
-}
-
 static BOOL store_key_pair( struct key *key, HKEY hkey, DWORD keyspec, DWORD flags )
 {
     const WCHAR *value;
@@ -376,6 +357,112 @@ static BOOL store_key_container_keys( struct container *container )
     if (ret) store_key_pair( container->sign_key, hkey, AT_SIGNATURE, flags );
     RegCloseKey( hkey );
     return ret;
+}
+
+static struct key *duplicate_key( const struct key *key )
+{
+    struct key *ret;
+
+    if (!(ret = create_key( key->algid, key->flags ))) return NULL;
+
+    if (BCryptDuplicateKey( key->handle, &ret->handle, NULL, 0, 0 ))
+    {
+        heap_free( ret );
+        return NULL;
+    }
+    return ret;
+}
+
+static BOOL generate_key( struct container *container, ALG_ID algid, DWORD bitlen, DWORD flags, HCRYPTKEY *ret_key )
+{
+    struct key *key, *sign_key;
+    NTSTATUS status;
+
+    if (!(key = create_key( algid, flags ))) return FALSE;
+
+    if ((status = BCryptGenerateKeyPair( key->alg_handle, &key->handle, bitlen, 0 )))
+    {
+        ERR( "failed to generate key %08x\n", status );
+        destroy_key( key );
+        return FALSE;
+    }
+    if ((status = BCryptFinalizeKeyPair( key->handle, 0 )))
+    {
+        ERR( "failed to finalize key %08x\n", status );
+        destroy_key( key );
+        return FALSE;
+    }
+
+    switch (algid)
+    {
+    case AT_SIGNATURE:
+    case CALG_DSS_SIGN:
+        if (!(sign_key = duplicate_key( key )))
+        {
+            destroy_key( key );
+            return FALSE;
+        }
+        destroy_key( container->sign_key );
+        container->sign_key = sign_key;
+        break;
+
+    default:
+        FIXME( "unhandled algorithm %08x\n", algid );
+        return FALSE;
+    }
+
+    if (!store_key_container_keys( container ))
+    {
+        destroy_key( key );
+        return FALSE;
+    }
+
+    *ret_key = (HCRYPTKEY)key;
+    return TRUE;
+}
+
+BOOL WINAPI CPGenKey( HCRYPTPROV hprov, ALG_ID algid, DWORD flags, HCRYPTKEY *ret_key )
+{
+    static const unsigned int supported_key_lengths[] = { 512, 768, 1024 };
+    struct container *container = (struct container *)hprov;
+    ULONG i, bitlen = HIWORD(flags) ? HIWORD(flags) : 1024;
+
+    TRACE( "%p, %08x, %08x, %p\n", (void *)hprov, algid, flags, ret_key );
+
+    if (container->magic != MAGIC_CONTAINER) return FALSE;
+
+    if (bitlen % 2)
+    {
+        SetLastError( STATUS_INVALID_PARAMETER );
+        return FALSE;
+    }
+    for (i = 0; i < ARRAY_SIZE(supported_key_lengths); i++)
+    {
+        if (bitlen == supported_key_lengths[i]) break;
+    }
+    if (i >= ARRAY_SIZE(supported_key_lengths))
+    {
+        SetLastError( NTE_BAD_FLAGS );
+        return FALSE;
+    }
+
+    return generate_key( container, algid, bitlen, LOWORD(flags), ret_key );
+}
+
+BOOL WINAPI CPDestroyKey( HCRYPTPROV hprov, HCRYPTKEY hkey )
+{
+    struct key *key = (struct key *)hkey;
+
+    TRACE( "%p, %p\n", (void *)hprov, (void *)hkey );
+
+    if (key->magic != MAGIC_KEY)
+    {
+        SetLastError( NTE_BAD_KEY );
+        return FALSE;
+    }
+
+    destroy_key( key );
+    return TRUE;
 }
 
 #define MAGIC_DSS1 ('D' | ('S' << 8) | ('S' << 16) | ('1' << 24))
@@ -491,20 +578,6 @@ BOOL WINAPI CPExportKey( HCRYPTPROV hprov, HCRYPTKEY hkey, HCRYPTKEY hexpkey, DW
     }
 
     return !BCryptExportKey( key->handle, NULL, LEGACY_DSA_V2_PUBLIC_BLOB, data, *len, len, 0 );
-}
-
-static struct key *duplicate_key( const struct key *key )
-{
-    struct key *ret;
-
-    if (!(ret = create_key( key->algid, key->flags ))) return NULL;
-
-    if (BCryptDuplicateKey( key->handle, &ret->handle, NULL, 0, 0 ))
-    {
-        heap_free( ret );
-        return NULL;
-    }
-    return ret;
 }
 
 BOOL WINAPI CPDuplicateKey( HCRYPTPROV hprov, HCRYPTKEY hkey, DWORD *reserved, DWORD flags, HCRYPTKEY *ret_key )
