@@ -2153,6 +2153,9 @@ static unsigned int write_nonsimple_pointer(FILE *file, const attr_list_t *attrs
         type_t *ref = type_pointer_get_ref_type(type);
         if(is_declptr(ref) && !is_user_type(ref))
             flags |= FC_POINTER_DEREF;
+        if (pointer_type != FC_RP) {
+            flags |= get_attrv(type->attrs, ATTR_ALLOCATE);
+        }
     }
 
     print_file(file, 2, "0x%x, 0x%x,\t\t/* %s",
@@ -2165,6 +2168,10 @@ static unsigned int write_nonsimple_pointer(FILE *file, const attr_list_t *attrs
             fprintf(file, " [allocated_on_stack]");
         if (flags & FC_POINTER_DEREF)
             fprintf(file, " [pointer_deref]");
+        if (flags & FC_DONT_FREE)
+            fprintf(file, " [dont_free]");
+        if (flags & FC_ALLOCATE_ALL_NODES)
+            fprintf(file, " [all_nodes]");
         fprintf(file, " */\n");
     }
 
