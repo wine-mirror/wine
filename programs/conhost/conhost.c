@@ -2448,55 +2448,10 @@ static NTSTATUS console_input_ioctl( struct console *console, unsigned int code,
             const struct condrv_input_info_params *params = in_data;
             TRACE( "set info\n" );
             if (in_size != sizeof(*params) || *out_size) return STATUS_INVALID_PARAMETER;
-            if (params->mask & SET_CONSOLE_INPUT_INFO_HISTORY_MODE)
-            {
-                console->history_mode = params->info.history_mode;
-            }
-            if ((params->mask & SET_CONSOLE_INPUT_INFO_HISTORY_SIZE) &&
-                console->history_size != params->info.history_size)
-            {
-                struct history_line **mem = NULL;
-                int i, delta;
-
-                if (params->info.history_size)
-                {
-                    if (!(mem = malloc( params->info.history_size * sizeof(*mem) )))
-                        return STATUS_NO_MEMORY;
-                    memset( mem, 0, params->info.history_size * sizeof(*mem) );
-                }
-
-                delta = (console->history_index > params->info.history_size)
-                    ? (console->history_index - params->info.history_size) : 0;
-
-                for (i = delta; i < console->history_index; i++)
-                {
-                    mem[i - delta] = console->history[i];
-                    console->history[i] = NULL;
-                }
-                console->history_index -= delta;
-
-                for (i = 0; i < console->history_size; i++)
-                    free( console->history[i] );
-                free( console->history );
-                console->history = mem;
-                console->history_size = params->info.history_size;
-            }
-            if (params->mask & SET_CONSOLE_INPUT_INFO_EDITION_MODE)
-            {
-                console->edition_mode = params->info.edition_mode;
-            }
             if (params->mask & SET_CONSOLE_INPUT_INFO_INPUT_CODEPAGE)
-            {
                 console->input_cp = params->info.input_cp;
-            }
             if (params->mask & SET_CONSOLE_INPUT_INFO_OUTPUT_CODEPAGE)
-            {
                 console->output_cp = params->info.output_cp;
-            }
-            if (params->mask & SET_CONSOLE_INPUT_INFO_WIN)
-            {
-                console->win = wine_server_ptr_handle( params->info.win );
-            }
             return STATUS_SUCCESS;
         }
 
