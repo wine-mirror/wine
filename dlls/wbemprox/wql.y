@@ -637,38 +637,25 @@ struct wql_keyword
 #define MIN_TOKEN_LEN 2
 #define MAX_TOKEN_LEN 11
 
-static const WCHAR andW[] = {'A','N','D'};
-static const WCHAR associatorsW[] = {'A','S','S','O','C','I','A','T','O','R','S'};
-static const WCHAR byW[] = {'B','Y'};
-static const WCHAR falseW[] = {'F','A','L','S','E'};
-static const WCHAR fromW[] = {'F','R','O','M'};
-static const WCHAR isW[] = {'I','S'};
-static const WCHAR likeW[] = {'L','I','K','E'};
-static const WCHAR notW[] = {'N','O','T'};
-static const WCHAR nullW[] = {'N','U','L','L'};
-static const WCHAR ofW[] = {'O','F'};
-static const WCHAR orW[] = {'O','R'};
-static const WCHAR selectW[] = {'S','E','L','E','C','T'};
-static const WCHAR trueW[] = {'T','R','U','E'};
-static const WCHAR whereW[] = {'W','H','E','R','E'};
-
+#define X(str)  str, ARRAY_SIZE(str) - 1
 static const struct wql_keyword keyword_table[] =
 {
-    { andW,         ARRAY_SIZE(andW),         TK_AND },
-    { associatorsW, ARRAY_SIZE(associatorsW), TK_ASSOCIATORS },
-    { byW,          ARRAY_SIZE(byW),          TK_BY },
-    { falseW,       ARRAY_SIZE(falseW),       TK_FALSE },
-    { fromW,        ARRAY_SIZE(fromW),        TK_FROM },
-    { isW,          ARRAY_SIZE(isW),          TK_IS },
-    { likeW,        ARRAY_SIZE(likeW),        TK_LIKE },
-    { notW,         ARRAY_SIZE(notW),         TK_NOT },
-    { nullW,        ARRAY_SIZE(nullW),        TK_NULL },
-    { ofW,          ARRAY_SIZE(ofW),          TK_OF },
-    { orW,          ARRAY_SIZE(orW),          TK_OR },
-    { selectW,      ARRAY_SIZE(selectW),      TK_SELECT },
-    { trueW,        ARRAY_SIZE(trueW),        TK_TRUE },
-    { whereW,       ARRAY_SIZE(whereW),       TK_WHERE }
+    { X(L"AND"),         TK_AND },
+    { X(L"ASSOCIATORS"), TK_ASSOCIATORS },
+    { X(L"BY"),          TK_BY },
+    { X(L"FALSE"),       TK_FALSE },
+    { X(L"FROM"),        TK_FROM },
+    { X(L"IS"),          TK_IS },
+    { X(L"LIKE"),        TK_LIKE },
+    { X(L"NOT"),         TK_NOT },
+    { X(L"NULL"),        TK_NULL },
+    { X(L"OF"),          TK_OF },
+    { X(L"OR"),          TK_OR },
+    { X(L"SELECT"),      TK_SELECT },
+    { X(L"TRUE"),        TK_TRUE },
+    { X(L"WHERE"),       TK_WHERE }
 };
+#undef X
 
 static int __cdecl cmp_keyword( const void *arg1, const void *arg2 )
 {
