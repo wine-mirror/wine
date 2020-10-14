@@ -115,7 +115,6 @@ enum char_info_mode
     CHAR_INFO_MODE_TEXT,              /* characters only */
     CHAR_INFO_MODE_ATTR,              /* attributes only */
     CHAR_INFO_MODE_TEXTATTR,          /* both characters and attributes */
-    CHAR_INFO_MODE_TEXTSTDATTR,       /* characters but use standard attributes */
 };
 
 /* IOCTL_CONDRV_GET_OUTPUT_INFO result */

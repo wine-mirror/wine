@@ -1963,10 +1963,6 @@ static NTSTATUS write_output( struct screen_buffer *screen_buffer, const struct 
         case CHAR_INFO_MODE_TEXTATTR:
             *dest = *(const char_info_t *)src;
             break;
-        case CHAR_INFO_MODE_TEXTSTDATTR:
-            dest->ch   = *(const WCHAR *)src;
-            dest->attr = screen_buffer->attr;
-            break;
         default:
             return STATUS_INVALID_PARAMETER;
         }
@@ -2129,13 +2125,6 @@ static NTSTATUS fill_output( struct screen_buffer *screen_buffer, const struct c
         {
             dest[i].ch   = params->ch;
             dest[i].attr = params->attr;
-        }
-        break;
-    case CHAR_INFO_MODE_TEXTSTDATTR:
-        for (i = 0; i < count; i++)
-        {
-            dest[i].ch   = params->ch;
-            dest[i].attr = screen_buffer->attr;
         }
         break;
     default:
