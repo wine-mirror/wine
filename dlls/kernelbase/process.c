@@ -746,7 +746,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetExitCodeProcess( HANDLE process, LPDWORD exit_c
     PROCESS_BASIC_INFORMATION pbi;
 
     status = NtQueryInformationProcess( process, ProcessBasicInformation, &pbi, sizeof(pbi), NULL );
-    if (status && exit_code) *exit_code = pbi.ExitStatus;
+    if (!status && exit_code) *exit_code = pbi.ExitStatus;
     return set_ntstatus( status );
 }
 
