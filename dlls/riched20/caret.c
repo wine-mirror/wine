@@ -774,12 +774,10 @@ ME_MoveCursorWords(ME_TextEditor *editor, ME_Cursor *cursor, int nRelOfs)
         {
           para = run->para;
           /* Skip empty start of table row paragraph */
-          if (para_prev( para )->nFlags & MEPF_ROWSTART)
+          if (para_prev( para ) && para_prev( para )->nFlags & MEPF_ROWSTART)
             para = para_prev( para );
           /* Paragraph breaks are treated as separate words */
-          if (para_get_di( para_prev( para ) )->type == diTextStart)
-            return FALSE;
-
+          if (!para_prev( para )) return FALSE;
           para = para_prev( para );
           run = para_end_run( para );
         }

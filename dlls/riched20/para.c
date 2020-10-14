@@ -64,7 +64,7 @@ ME_Paragraph *para_next( ME_Paragraph *para )
 
 ME_Paragraph *para_prev( ME_Paragraph *para )
 {
-    if (para->prev_para) return &para->prev_para->member.para;
+    if (para->prev_para && para->prev_para->type == diParagraph) return &para->prev_para->member.para;
     return NULL;
 }
 
