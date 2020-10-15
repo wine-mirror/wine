@@ -3245,6 +3245,7 @@ static void test_evr(void)
     IMFClockStateSink *clock_sink;
     IMFMediaSinkPreroll *preroll;
     IMFMediaSink *sink, *sink2;
+    IMFAttributes *attributes;
     IMFActivate *activate;
     DWORD flags, count;
     LONG sample_count;
@@ -3282,6 +3283,17 @@ static void test_evr(void)
 
     hr = IMFActivate_ActivateObject(activate, &IID_IMFMediaSink, (void **)&sink);
     ok(hr == S_OK, "Failed to activate, hr %#x.\n", hr);
+
+    hr = IMFMediaSink_QueryInterface(sink, &IID_IMFAttributes, (void **)&attributes);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMFAttributes_QueryInterface(attributes, &IID_IMFMediaSink, (void **)&unk);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IUnknown_Release(unk);
+    hr = IMFAttributes_GetCount(attributes, &count);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+todo_wine
+    ok(!!count, "Unexpected count %u.\n", count);
+    IMFAttributes_Release(attributes);
 
     /* Primary stream type handler. */
     hr = IMFMediaSink_GetStreamSinkById(sink, 0, &stream_sink);

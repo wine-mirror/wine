@@ -59,9 +59,11 @@ struct video_renderer
     IMFGetService IMFGetService_iface;
     IMFTopologyServiceLookup IMFTopologyServiceLookup_iface;
     IMediaEventSink IMediaEventSink_iface;
+    IMFAttributes IMFAttributes_iface;
     LONG refcount;
 
     IMFMediaEventQueue *event_queue;
+    IMFAttributes *attributes;
     IMFPresentationClock *clock;
 
     IMFTransform *mixer;
@@ -113,6 +115,11 @@ static struct video_renderer *impl_from_IMFTopologyServiceLookup(IMFTopologyServ
 static struct video_renderer *impl_from_IMediaEventSink(IMediaEventSink *iface)
 {
     return CONTAINING_RECORD(iface, struct video_renderer, IMediaEventSink_iface);
+}
+
+static struct video_renderer *impl_from_IMFAttributes(IMFAttributes *iface)
+{
+    return CONTAINING_RECORD(iface, struct video_renderer, IMFAttributes_iface);
 }
 
 static struct video_stream *impl_from_IMFStreamSink(IMFStreamSink *iface)
@@ -579,6 +586,10 @@ static HRESULT WINAPI video_renderer_sink_QueryInterface(IMFMediaSink *iface, RE
     {
         *obj = &renderer->IMFGetService_iface;
     }
+    else if (IsEqualIID(riid, &IID_IMFAttributes))
+    {
+        *obj = &renderer->IMFAttributes_iface;
+    }
     else
     {
         WARN("Unsupported interface %s.\n", debugstr_guid(riid));
@@ -616,6 +627,8 @@ static ULONG WINAPI video_renderer_sink_Release(IMFMediaSink *iface)
             IMFVideoPresenter_Release(renderer->presenter);
         if (renderer->clock)
             IMFPresentationClock_Release(renderer->clock);
+        if (renderer->attributes)
+            IMFAttributes_Release(renderer->attributes);
         DeleteCriticalSection(&renderer->cs);
         heap_free(renderer);
     }
@@ -1504,6 +1517,342 @@ static const IMediaEventSinkVtbl media_event_sink_vtbl =
     video_renderer_event_sink_Notify,
 };
 
+static HRESULT WINAPI video_renderer_attributes_QueryInterface(IMFAttributes *iface, REFIID riid, void **obj)
+{
+    struct video_renderer *renderer = impl_from_IMFAttributes(iface);
+    return IMFMediaSink_QueryInterface(&renderer->IMFMediaSink_iface, riid, obj);
+}
+
+static ULONG WINAPI video_renderer_attributes_AddRef(IMFAttributes *iface)
+{
+    struct video_renderer *renderer = impl_from_IMFAttributes(iface);
+    return IMFMediaSink_AddRef(&renderer->IMFMediaSink_iface);
+}
+
+static ULONG WINAPI video_renderer_attributes_Release(IMFAttributes *iface)
+{
+    struct video_renderer *renderer = impl_from_IMFAttributes(iface);
+    return IMFMediaSink_Release(&renderer->IMFMediaSink_iface);
+}
+
+static HRESULT WINAPI video_renderer_attributes_GetItem(IMFAttributes *iface, REFGUID key, PROPVARIANT *value)
+{
+    struct video_renderer *renderer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(key), value);
+
+    return IMFAttributes_GetItem(renderer->attributes, key, value);
+}
+
+static HRESULT WINAPI video_renderer_attributes_GetItemType(IMFAttributes *iface, REFGUID key, MF_ATTRIBUTE_TYPE *type)
+{
+    struct video_renderer *renderer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(key), type);
+
+    return IMFAttributes_GetItemType(renderer->attributes, key, type);
+}
+
+static HRESULT WINAPI video_renderer_attributes_CompareItem(IMFAttributes *iface, REFGUID key, REFPROPVARIANT value,
+        BOOL *result)
+{
+    struct video_renderer *renderer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p, %p.\n", iface, debugstr_guid(key), value, result);
+
+    return IMFAttributes_CompareItem(renderer->attributes, key, value, result);
+}
+
+static HRESULT WINAPI video_renderer_attributes_Compare(IMFAttributes *iface, IMFAttributes *theirs,
+        MF_ATTRIBUTES_MATCH_TYPE type, BOOL *result)
+{
+    struct video_renderer *renderer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %p, %d, %p.\n", iface, theirs, type, result);
+
+    return IMFAttributes_Compare(renderer->attributes, theirs, type, result);
+}
+
+static HRESULT WINAPI video_renderer_attributes_GetUINT32(IMFAttributes *iface, REFGUID key, UINT32 *value)
+{
+    struct video_renderer *renderer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(key), value);
+
+    return IMFAttributes_GetUINT32(renderer->attributes, key, value);
+}
+
+static HRESULT WINAPI video_renderer_attributes_GetUINT64(IMFAttributes *iface, REFGUID key, UINT64 *value)
+{
+    struct video_renderer *renderer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(key), value);
+
+    return IMFAttributes_GetUINT64(renderer->attributes, key, value);
+}
+
+static HRESULT WINAPI video_renderer_attributes_GetDouble(IMFAttributes *iface, REFGUID key, double *value)
+{
+    struct video_renderer *renderer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(key), value);
+
+    return IMFAttributes_GetDouble(renderer->attributes, key, value);
+}
+
+static HRESULT WINAPI video_renderer_attributes_GetGUID(IMFAttributes *iface, REFGUID key, GUID *value)
+{
+    struct video_renderer *renderer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(key), value);
+
+    return IMFAttributes_GetGUID(renderer->attributes, key, value);
+}
+
+static HRESULT WINAPI video_renderer_attributes_GetStringLength(IMFAttributes *iface, REFGUID key,
+        UINT32 *length)
+{
+    struct video_renderer *renderer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(key), length);
+
+    return IMFAttributes_GetStringLength(renderer->attributes, key, length);
+}
+
+static HRESULT WINAPI video_renderer_attributes_GetString(IMFAttributes *iface, REFGUID key, WCHAR *value,
+        UINT32 size, UINT32 *length)
+{
+    struct video_renderer *renderer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p, %u, %p.\n", iface, debugstr_guid(key), value, size, length);
+
+    return IMFAttributes_GetString(renderer->attributes, key, value, size, length);
+}
+
+static HRESULT WINAPI video_renderer_attributes_GetAllocatedString(IMFAttributes *iface, REFGUID key,
+        WCHAR **value, UINT32 *length)
+{
+    struct video_renderer *renderer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p, %p.\n", iface, debugstr_guid(key), value, length);
+
+    return IMFAttributes_GetAllocatedString(renderer->attributes, key, value, length);
+}
+
+static HRESULT WINAPI video_renderer_attributes_GetBlobSize(IMFAttributes *iface, REFGUID key, UINT32 *size)
+{
+    struct video_renderer *renderer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(key), size);
+
+    return IMFAttributes_GetBlobSize(renderer->attributes, key, size);
+}
+
+static HRESULT WINAPI video_renderer_attributes_GetBlob(IMFAttributes *iface, REFGUID key, UINT8 *buf,
+         UINT32 bufsize, UINT32 *blobsize)
+{
+    struct video_renderer *renderer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p, %u, %p.\n", iface, debugstr_guid(key), buf, bufsize, blobsize);
+
+    return IMFAttributes_GetBlob(renderer->attributes, key, buf, bufsize, blobsize);
+}
+
+static HRESULT WINAPI video_renderer_attributes_GetAllocatedBlob(IMFAttributes *iface, REFGUID key,
+        UINT8 **buf, UINT32 *size)
+{
+    struct video_renderer *renderer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p, %p.\n", iface, debugstr_guid(key), buf, size);
+
+    return IMFAttributes_GetAllocatedBlob(renderer->attributes, key, buf, size);
+}
+
+static HRESULT WINAPI video_renderer_attributes_GetUnknown(IMFAttributes *iface, REFGUID key, REFIID riid, void **out)
+{
+    struct video_renderer *renderer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %s, %p.\n", iface, debugstr_guid(key), debugstr_guid(riid), out);
+
+    return IMFAttributes_GetUnknown(renderer->attributes, key, riid, out);
+}
+
+static HRESULT WINAPI video_renderer_attributes_SetItem(IMFAttributes *iface, REFGUID key, REFPROPVARIANT value)
+{
+    struct video_renderer *renderer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(key), value);
+
+    return IMFAttributes_SetItem(renderer->attributes, key, value);
+}
+
+static HRESULT WINAPI video_renderer_attributes_DeleteItem(IMFAttributes *iface, REFGUID key)
+{
+    struct video_renderer *renderer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s.\n", iface, debugstr_guid(key));
+
+    return IMFAttributes_DeleteItem(renderer->attributes, key);
+}
+
+static HRESULT WINAPI video_renderer_attributes_DeleteAllItems(IMFAttributes *iface)
+{
+    struct video_renderer *renderer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p.\n", iface);
+
+    return IMFAttributes_DeleteAllItems(renderer->attributes);
+}
+
+static HRESULT WINAPI video_renderer_attributes_SetUINT32(IMFAttributes *iface, REFGUID key, UINT32 value)
+{
+    struct video_renderer *renderer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %u.\n", iface, debugstr_guid(key), value);
+
+    return IMFAttributes_SetUINT32(renderer->attributes, key, value);
+}
+
+static HRESULT WINAPI video_renderer_attributes_SetUINT64(IMFAttributes *iface, REFGUID key, UINT64 value)
+{
+    struct video_renderer *renderer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %s.\n", iface, debugstr_guid(key), wine_dbgstr_longlong(value));
+
+    return IMFAttributes_SetUINT64(renderer->attributes, key, value);
+}
+
+static HRESULT WINAPI video_renderer_attributes_SetDouble(IMFAttributes *iface, REFGUID key, double value)
+{
+    struct video_renderer *renderer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %f.\n", iface, debugstr_guid(key), value);
+
+    return IMFAttributes_SetDouble(renderer->attributes, key, value);
+}
+
+static HRESULT WINAPI video_renderer_attributes_SetGUID(IMFAttributes *iface, REFGUID key, REFGUID value)
+{
+    struct video_renderer *renderer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %s.\n", iface, debugstr_guid(key), debugstr_guid(value));
+
+    return IMFAttributes_SetGUID(renderer->attributes, key, value);
+}
+
+static HRESULT WINAPI video_renderer_attributes_SetString(IMFAttributes *iface, REFGUID key,
+        const WCHAR *value)
+{
+    struct video_renderer *renderer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %s.\n", iface, debugstr_guid(key), debugstr_w(value));
+
+    return IMFAttributes_SetString(renderer->attributes, key, value);
+}
+
+static HRESULT WINAPI video_renderer_attributes_SetBlob(IMFAttributes *iface, REFGUID key,
+        const UINT8 *buf, UINT32 size)
+{
+    struct video_renderer *renderer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p, %u.\n", iface, debugstr_guid(key), buf, size);
+
+    return IMFAttributes_SetBlob(renderer->attributes, key, buf, size);
+}
+
+static HRESULT WINAPI video_renderer_attributes_SetUnknown(IMFAttributes *iface, REFGUID key,
+        IUnknown *unknown)
+{
+    struct video_renderer *renderer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(key), unknown);
+
+    return IMFAttributes_SetUnknown(renderer->attributes, key, unknown);
+}
+
+static HRESULT WINAPI video_renderer_attributes_LockStore(IMFAttributes *iface)
+{
+    struct video_renderer *renderer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p.\n", iface);
+
+    return IMFAttributes_LockStore(renderer->attributes);
+}
+
+static HRESULT WINAPI video_renderer_attributes_UnlockStore(IMFAttributes *iface)
+{
+    struct video_renderer *renderer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p.\n", iface);
+
+    return IMFAttributes_UnlockStore(renderer->attributes);
+}
+
+static HRESULT WINAPI video_renderer_attributes_GetCount(IMFAttributes *iface, UINT32 *count)
+{
+    struct video_renderer *renderer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %p.\n", iface, count);
+
+    return IMFAttributes_GetCount(renderer->attributes, count);
+}
+
+static HRESULT WINAPI video_renderer_attributes_GetItemByIndex(IMFAttributes *iface, UINT32 index,
+        GUID *key, PROPVARIANT *value)
+{
+    struct video_renderer *renderer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %u, %p, %p.\n", iface, index, key, value);
+
+    return IMFAttributes_GetItemByIndex(renderer->attributes, index, key, value);
+}
+
+static HRESULT WINAPI video_renderer_attributes_CopyAllItems(IMFAttributes *iface, IMFAttributes *dest)
+{
+    struct video_renderer *renderer = impl_from_IMFAttributes(iface);
+
+    TRACE("%p, %p.\n", iface, dest);
+
+    return IMFAttributes_CopyAllItems(renderer->attributes, dest);
+}
+
+static const IMFAttributesVtbl video_renderer_attributes_vtbl =
+{
+    video_renderer_attributes_QueryInterface,
+    video_renderer_attributes_AddRef,
+    video_renderer_attributes_Release,
+    video_renderer_attributes_GetItem,
+    video_renderer_attributes_GetItemType,
+    video_renderer_attributes_CompareItem,
+    video_renderer_attributes_Compare,
+    video_renderer_attributes_GetUINT32,
+    video_renderer_attributes_GetUINT64,
+    video_renderer_attributes_GetDouble,
+    video_renderer_attributes_GetGUID,
+    video_renderer_attributes_GetStringLength,
+    video_renderer_attributes_GetString,
+    video_renderer_attributes_GetAllocatedString,
+    video_renderer_attributes_GetBlobSize,
+    video_renderer_attributes_GetBlob,
+    video_renderer_attributes_GetAllocatedBlob,
+    video_renderer_attributes_GetUnknown,
+    video_renderer_attributes_SetItem,
+    video_renderer_attributes_DeleteItem,
+    video_renderer_attributes_DeleteAllItems,
+    video_renderer_attributes_SetUINT32,
+    video_renderer_attributes_SetUINT64,
+    video_renderer_attributes_SetDouble,
+    video_renderer_attributes_SetGUID,
+    video_renderer_attributes_SetString,
+    video_renderer_attributes_SetBlob,
+    video_renderer_attributes_SetUnknown,
+    video_renderer_attributes_LockStore,
+    video_renderer_attributes_UnlockStore,
+    video_renderer_attributes_GetCount,
+    video_renderer_attributes_GetItemByIndex,
+    video_renderer_attributes_CopyAllItems,
+};
+
 static HRESULT evr_create_object(IMFAttributes *attributes, void *user_context, IUnknown **obj)
 {
     struct video_renderer *object;
@@ -1524,10 +1873,14 @@ static HRESULT evr_create_object(IMFAttributes *attributes, void *user_context, 
     object->IMFGetService_iface.lpVtbl = &video_renderer_get_service_vtbl;
     object->IMFTopologyServiceLookup_iface.lpVtbl = &video_renderer_service_lookup_vtbl;
     object->IMediaEventSink_iface.lpVtbl = &media_event_sink_vtbl;
+    object->IMFAttributes_iface.lpVtbl = &video_renderer_attributes_vtbl;
     object->refcount = 1;
     InitializeCriticalSection(&object->cs);
 
     if (FAILED(hr = MFCreateEventQueue(&object->event_queue)))
+        goto failed;
+
+    if (FAILED(hr = MFCreateAttributes(&object->attributes, 0)))
         goto failed;
 
     /* Create mixer and presenter. */
