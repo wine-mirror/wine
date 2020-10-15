@@ -444,7 +444,7 @@ static HRESULT get_textfont_prop_for_pos(const IRichEditOleImpl *reole, int pos,
     fmt.cbSize = sizeof(fmt);
     fmt.dwMask = textfont_prop_masks[propid][0];
 
-    ME_CursorFromCharOfs(reole->editor, pos, &from);
+    cursor_from_char_ofs( reole->editor, pos, &from );
     to = from;
     ME_MoveCursorChars(reole->editor, &to, 1, FALSE);
     ME_GetCharFormat(reole->editor, &from, &to, &fmt);
@@ -662,7 +662,8 @@ static void textrange_set_font(ITextRange *range, ITextFont *font)
         fmt.wWeight = value;
     }
 
-    if (fmt.dwMask) {
+    if (fmt.dwMask)
+    {
         const IRichEditOleImpl *reole = get_range_reole(range);
         ME_Cursor from, to;
         LONG start, end;
@@ -670,8 +671,8 @@ static void textrange_set_font(ITextRange *range, ITextFont *font)
         ITextRange_GetStart(range, &start);
         ITextRange_GetEnd(range, &end);
 
-        ME_CursorFromCharOfs(reole->editor, start, &from);
-        ME_CursorFromCharOfs(reole->editor, end, &to);
+        cursor_from_char_ofs( reole->editor, start, &from );
+        cursor_from_char_ofs( reole->editor, end, &to );
         ME_SetCharFormat(reole->editor, &from, &to, &fmt);
     }
 }
@@ -828,8 +829,8 @@ static HRESULT set_textfont_prop(ITextFontImpl *font, enum textfont_prop_id prop
     ITextRange_GetStart(font->range, &start);
     ITextRange_GetEnd(font->range, &end);
 
-    ME_CursorFromCharOfs(reole->editor, start, &from);
-    ME_CursorFromCharOfs(reole->editor, end, &to);
+    cursor_from_char_ofs( reole->editor, start, &from );
+    cursor_from_char_ofs( reole->editor, end, &to );
     ME_SetCharFormat(reole->editor, &from, &to, &fmt);
 
     return S_OK;
@@ -1349,12 +1350,15 @@ IRichEditOle_fnGetClipboardData(IRichEditOle *me, CHARRANGE *lpchrg,
     TRACE("(%p,%p,%d)\n",This, lpchrg, reco);
     if(!lplpdataobj)
         return E_INVALIDARG;
-    if(!lpchrg) {
+    if(!lpchrg)
+    {
         int nFrom, nTo, nStartCur = ME_GetSelectionOfs(This->editor, &nFrom, &nTo);
         start = This->editor->pCursors[nStartCur];
         nChars = nTo - nFrom;
-    } else {
-        ME_CursorFromCharOfs(This->editor, lpchrg->cpMin, &start);
+    }
+    else
+    {
+        cursor_from_char_ofs( This->editor, lpchrg->cpMin, &start );
         nChars = lpchrg->cpMax - lpchrg->cpMin;
     }
     return ME_GetDataObject(This->editor, &start, nChars, lplpdataobj);
@@ -1385,7 +1389,7 @@ IRichEditOle_fnGetObject(IRichEditOle *me, LONG iob,
         ME_Cursor cursor;
 
         TRACE("character offset: %d\n", lpreobject->cp);
-        ME_CursorFromCharOfs(This->editor, lpreobject->cp, &cursor);
+        cursor_from_char_ofs( This->editor, lpreobject->cp, &cursor );
         if (!cursor.pRun->member.run.reobj)
             return E_INVALIDARG;
         else
@@ -1647,8 +1651,8 @@ static HRESULT WINAPI ITextRange_fnGetText(ITextRange *me, BSTR *str)
     }
 
     editor = This->child.reole->editor;
-    ME_CursorFromCharOfs(editor, This->start, &start);
-    ME_CursorFromCharOfs(editor, This->end, &end);
+    cursor_from_char_ofs( editor, This->start, &start );
+    cursor_from_char_ofs( editor, This->end, &end );
 
     length = This->end - This->start;
     *str = SysAllocStringLen(NULL, length);
@@ -1676,12 +1680,14 @@ static HRESULT WINAPI ITextRange_fnSetText(ITextRange *me, BSTR str)
     editor = This->child.reole->editor;
 
     /* delete only where's something to delete */
-    if (This->start != This->end) {
-        ME_CursorFromCharOfs(editor, This->start, &cursor);
+    if (This->start != This->end)
+    {
+        cursor_from_char_ofs( editor, This->start, &cursor );
         ME_InternalDeleteText(editor, &cursor, This->end - This->start, FALSE);
     }
 
-    if (!str || !*str) {
+    if (!str || !*str)
+    {
         /* will update this range as well */
         textranges_update_ranges(This->child.reole, This->start, This->end, RANGE_UPDATE_DELETE);
         return S_OK;
@@ -1690,7 +1696,7 @@ static HRESULT WINAPI ITextRange_fnSetText(ITextRange *me, BSTR str)
     /* it's safer not to rely on stored BSTR length */
     len = lstrlenW(str);
     cursor = editor->pCursors[0];
-    ME_CursorFromCharOfs(editor, This->start, &editor->pCursors[0]);
+    cursor_from_char_ofs( editor, This->start, &editor->pCursors[0] );
     style = ME_GetInsertStyle(editor, 0);
     ME_InsertTextFromCursor(editor, 0, str, len, style);
     ME_ReleaseStyle(style);
@@ -1729,7 +1735,7 @@ static HRESULT WINAPI ITextRange_fnGetChar(ITextRange *me, LONG *pch)
         return E_INVALIDARG;
 
     editor = This->child.reole->editor;
-    ME_CursorFromCharOfs(editor, This->start, &cursor);
+    cursor_from_char_ofs( editor, This->start, &cursor );
     return range_GetChar(editor, &cursor, pch);
 }
 
@@ -2213,18 +2219,16 @@ static HRESULT textrange_endof(ITextRange *range, ME_TextEditor *editor, LONG un
     {
         moved = 0;
         new_end = old_end;
-        if (old_end == 0) {
+        if (old_end == 0)
+        {
             ME_Cursor cursor;
-            ME_CursorFromCharOfs(editor, old_end, &cursor);
+            cursor_from_char_ofs( editor, old_end, &cursor );
             moved = ME_MoveCursorChars(editor, &cursor, 1, TRUE);
             new_end = old_end + moved;
-        } else {
-            if (extend == tomMove) {
-                if (old_start != old_end) {
-                    moved = 1;
-                }
-            }
         }
+        else if (extend == tomMove && old_start != old_end)
+            moved = 1;
+
         ITextRange_SetEnd(range, new_end);
         if (extend == tomMove)
             ITextRange_SetStart(range, new_end);
@@ -2275,32 +2279,36 @@ static HRESULT textrange_move(ITextRange *range, ME_TextEditor *editor, LONG uni
     {
         ME_Cursor cursor;
 
-        if (count > 0) {
-            ME_CursorFromCharOfs(editor, old_end, &cursor);
+        if (count > 0)
+        {
+            cursor_from_char_ofs( editor, old_end, &cursor );
             move_by = count;
             if (old_start != old_end)
                 --move_by;
-        } else {
-            ME_CursorFromCharOfs(editor, old_start, &cursor);
+        }
+        else
+        {
+            cursor_from_char_ofs( editor, old_start, &cursor );
             move_by = count;
             if (old_start != old_end)
                 ++move_by;
         }
         moved = ME_MoveCursorChars(editor, &cursor, move_by, FALSE);
-        if (count > 0) {
+        if (count > 0)
+        {
             new_end = old_end + moved;
             new_start = new_end;
             if (old_start != old_end)
                 ++moved;
-        } else {
+        }
+        else
+        {
             new_start = old_start + moved;
             new_end = new_start;
             if (old_start != old_end)
                 --moved;
         }
-        if (delta) {
-            *delta = moved;
-        }
+        if (delta) *delta = moved;
         break;
     }
     default:
@@ -2348,7 +2356,7 @@ static HRESULT textrange_movestart(ITextRange *range, ME_TextEditor *editor, LON
         ME_Cursor cursor;
         LONG moved;
 
-        ME_CursorFromCharOfs(editor, old_start, &cursor);
+        cursor_from_char_ofs( editor, old_start, &cursor );
         moved = ME_MoveCursorChars(editor, &cursor, count, FALSE);
         new_start = old_start + moved;
         new_end = old_end;
@@ -2404,7 +2412,7 @@ static HRESULT textrange_moveend(ITextRange *range, ME_TextEditor *editor, LONG 
         ME_Cursor cursor;
         LONG moved;
 
-        ME_CursorFromCharOfs(editor, old_end, &cursor);
+        cursor_from_char_ofs( editor, old_end, &cursor );
         moved = ME_MoveCursorChars(editor, &cursor, count, TRUE);
         new_start = old_start;
         new_end = old_end + moved;
@@ -2700,11 +2708,11 @@ static HRESULT WINAPI ITextRange_fnScrollIntoView(ITextRange *me, LONG value)
     switch (value)
     {
     case tomStart:
-        ME_CursorFromCharOfs(editor, This->start, &cursor);
+        cursor_from_char_ofs( editor, This->start, &cursor );
         ME_GetCursorCoordinates(editor, &cursor, &x, &y, &height);
         break;
     case tomEnd:
-        ME_CursorFromCharOfs(editor, This->end, &cursor);
+        cursor_from_char_ofs( editor, This->end, &cursor );
         ME_GetCursorCoordinates(editor, &cursor, &x, &y, &height);
         break;
     default:

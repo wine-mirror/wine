@@ -1788,7 +1788,7 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
     /* put the cursor at the top */
     if (!(format & SFF_SELECTION))
       set_selection_cursors(editor, 0, 0);
-    ME_CursorFromCharOfs(editor, from, &start);
+    cursor_from_char_ofs( editor, from, &start );
     ME_UpdateLinkAttribute(editor, &start, to - from);
   }
 
@@ -1917,12 +1917,11 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
     /* If possible, find the character before where the search starts */
     if ((flags & FR_WHOLEWORD) && nMin)
     {
-      ME_CursorFromCharOfs(editor, nMin - 1, &cursor);
+      cursor_from_char_ofs( editor, nMin - 1, &cursor );
       wLastChar = *get_text( &cursor.pRun->member.run, cursor.nOffset );
       ME_MoveCursorChars(editor, &cursor, 1, FALSE);
-    } else {
-      ME_CursorFromCharOfs(editor, nMin, &cursor);
     }
+    else cursor_from_char_ofs( editor, nMin, &cursor );
 
     while (cursor.pRun && ME_GetCursorOfs(&cursor) + nLen <= nMax)
     {
@@ -1993,12 +1992,11 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
     /* If possible, find the character after where the search ends */
     if ((flags & FR_WHOLEWORD) && nMax < nTextLen - 1)
     {
-      ME_CursorFromCharOfs(editor, nMax + 1, &cursor);
+      cursor_from_char_ofs( editor, nMax + 1, &cursor );
       wLastChar = *get_text( &cursor.pRun->member.run, cursor.nOffset );
       ME_MoveCursorChars(editor, &cursor, -1, FALSE);
-    } else {
-      ME_CursorFromCharOfs(editor, nMax, &cursor);
     }
+    else cursor_from_char_ofs( editor, nMax, &cursor );
 
     while (cursor.pRun && ME_GetCursorOfs(&cursor) - nLen >= nMin)
     {
@@ -3009,7 +3007,7 @@ static LONG ME_GetSelectionType(ME_TextEditor *editor)
         {
             ME_Cursor cursor;
 
-            ME_CursorFromCharOfs(editor, start + i, &cursor);
+            cursor_from_char_ofs( editor, start + i, &cursor );
             if (cursor.pRun->member.run.reobj)
                 object_count++;
             else
@@ -4205,7 +4203,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
       nEnd = textlength;
     if (nStart >= nEnd) return 0;
 
-    ME_CursorFromCharOfs(editor, nStart, &start);
+    cursor_from_char_ofs( editor, nStart, &start );
     return ME_GetTextRange(editor, rng->lpstrText, &start, nEnd - nStart, unicode);
   }
   case EM_GETLINE:
@@ -4313,7 +4311,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   {
     ME_DisplayItem *item, *item_end;
     int nChars = 0, nThisLineOfs = 0, nNextLineOfs = 0;
-    ME_DisplayItem *para, *run;
+    ME_Cursor cursor;
 
     if (wParam > ME_GetTextLength(editor))
       return 0;
@@ -4322,19 +4320,20 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
       FIXME("EM_LINELENGTH: returning number of unselected characters on lines with selection unsupported.\n");
       return 0;
     }
-    ME_RunOfsFromCharOfs(editor, wParam, &para, &run, NULL);
-    item = ME_RowStart(run);
-    nThisLineOfs = ME_CharOfsFromRunOfs(editor, para, ME_FindItemFwd(item, diRun), 0);
+    cursor_from_char_ofs( editor, wParam, &cursor );
+    item = ME_RowStart( cursor.pRun );
+    nThisLineOfs = ME_CharOfsFromRunOfs( editor, cursor.pPara, ME_FindItemFwd( item, diRun ), 0 );
     item_end = ME_FindItemFwd(item, diStartRowOrParagraphOrEnd);
-    if (item_end->type == diStartRow) {
-      nNextLineOfs = ME_CharOfsFromRunOfs(editor, para, ME_FindItemFwd(item_end, diRun), 0);
-    } else {
+    if (item_end->type == diStartRow)
+      nNextLineOfs = ME_CharOfsFromRunOfs(editor, cursor.pPara, ME_FindItemFwd( item_end, diRun ), 0);
+    else
+    {
       ME_DisplayItem *endRun = ME_FindItemBack(item_end, diRun);
       assert(endRun && endRun->member.run.nFlags & MERF_ENDPARA);
       nNextLineOfs = item_end->member.para.nCharOfs - endRun->member.run.len;
     }
     nChars = nNextLineOfs - nThisLineOfs;
-    TRACE("EM_LINELENGTH(%ld)==%d\n",wParam, nChars);
+    TRACE("EM_LINELENGTH(%ld)==%d\n", wParam, nChars);
     return nChars;
   }
   case EM_EXLIMITTEXT:
@@ -4424,8 +4423,8 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   }
   case EM_POSFROMCHAR:
   {
-    ME_DisplayItem *pPara, *pRun;
-    int nCharOfs, nOffset, nLength;
+    ME_Cursor cursor;
+    int nCharOfs, nLength;
     POINTL pt = {0,0};
 
     nCharOfs = wParam;
@@ -4436,11 +4435,11 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     nCharOfs = min(nCharOfs, nLength);
     nCharOfs = max(nCharOfs, 0);
 
-    ME_RunOfsFromCharOfs(editor, nCharOfs, &pPara, &pRun, &nOffset);
-    assert(pRun->type == diRun);
-    pt.y = pRun->member.run.pt.y;
-    pt.x = pRun->member.run.pt.x + ME_PointFromChar(editor, &pRun->member.run, nOffset, TRUE);
-    pt.y += pPara->member.para.pt.y + editor->rcFormat.top;
+    cursor_from_char_ofs( editor, nCharOfs, &cursor );
+    pt.y = cursor.pRun->member.run.pt.y;
+    pt.x = cursor.pRun->member.run.pt.x +
+        ME_PointFromChar( editor, &cursor.pRun->member.run, cursor.nOffset, TRUE );
+    pt.y += cursor.pPara->member.para.pt.y + editor->rcFormat.top;
     pt.x += editor->rcFormat.left;
 
     pt.x -= editor->horz_si.nPos;

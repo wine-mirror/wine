@@ -201,7 +201,7 @@ int set_selection_cursors(ME_TextEditor *editor, int from, int to)
     return len;
   }
 
-  ME_CursorFromCharOfs(editor, from, &editor->pCursors[1]);
+  cursor_from_char_ofs( editor, from, &editor->pCursors[1] );
   editor->pCursors[0] = editor->pCursors[1];
   ME_MoveCursorChars(editor, &editor->pCursors[0], to - from, FALSE);
   /* Selection is not allowed in the middle of an end paragraph run. */
@@ -326,7 +326,7 @@ BOOL ME_InternalDeleteText(ME_TextEditor *editor, ME_Cursor *start,
   while(nChars > 0)
   {
     ME_Run *run;
-    ME_CursorFromCharOfs(editor, nOfs+nChars, &c);
+    cursor_from_char_ofs( editor, nOfs + nChars, &c );
     if (!c.nOffset &&
         nOfs+nChars == (c.pRun->member.run.nCharOfs
                         + c.pPara->member.para.nCharOfs))

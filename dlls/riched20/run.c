@@ -202,58 +202,38 @@ int ME_CharOfsFromRunOfs(ME_TextEditor *editor, const ME_DisplayItem *pPara,
 }
 
 /******************************************************************************
- * ME_CursorFromCharOfs
+ * cursor_from_char_ofs
  *
  * Converts a character offset (relative to the start of the document) to
  * a cursor structure (which contains a run and a position relative to that
  * run).
  */
-void ME_CursorFromCharOfs(ME_TextEditor *editor, int nCharOfs, ME_Cursor *pCursor)
+void cursor_from_char_ofs( ME_TextEditor *editor, int char_ofs, ME_Cursor *cursor )
 {
-  ME_RunOfsFromCharOfs(editor, nCharOfs, &pCursor->pPara,
-                       &pCursor->pRun, &pCursor->nOffset);
-}
+    ME_Paragraph *para;
+    ME_Run *run;
 
-/******************************************************************************
- * ME_RunOfsFromCharOfs
- *
- * Find a run and relative character offset given an absolute character offset
- * (absolute offset being an offset relative to the start of the document).
- * Kind of a "global to local" offset conversion.
- */
-void ME_RunOfsFromCharOfs(ME_TextEditor *editor,
-                          int nCharOfs,
-                          ME_DisplayItem **ppPara,
-                          ME_DisplayItem **ppRun,
-                          int *pOfs)
-{
-  ME_DisplayItem *item, *next_item;
+    char_ofs = min( max( char_ofs, 0 ), ME_GetTextLength( editor ) );
 
-  nCharOfs = max(nCharOfs, 0);
-  nCharOfs = min(nCharOfs, ME_GetTextLength(editor));
+    /* Find the paragraph at the offset. */
+    for (para = editor_first_para( editor );
+         para_next( para )->nCharOfs <= char_ofs;
+         para = para_next( para ))
+        ;
 
-  /* Find the paragraph at the offset. */
-  next_item = editor->pBuffer->pFirst->member.para.next_para;
-  do {
-    item = next_item;
-    next_item = item->member.para.next_para;
-  } while (next_item->member.para.nCharOfs <= nCharOfs);
-  assert(item->type == diParagraph);
-  nCharOfs -= item->member.para.nCharOfs;
-  if (ppPara) *ppPara = item;
+    char_ofs -= para->nCharOfs;
 
-  /* Find the run at the offset. */
-  next_item = ME_FindItemFwd(item, diRun);
-  do {
-    item = next_item;
-    next_item = ME_FindItemFwd(item, diRunOrParagraphOrEnd);
-  } while (next_item->type == diRun &&
-           next_item->member.run.nCharOfs <= nCharOfs);
-  assert(item->type == diRun);
-  nCharOfs -= item->member.run.nCharOfs;
+    /* Find the run at the offset. */
+    for (run = para_first_run( para );
+         run_next( run ) && run_next( run )->nCharOfs <= char_ofs;
+         run = run_next( run ))
+        ;
 
-  if (ppRun) *ppRun = item;
-  if (pOfs) *pOfs = nCharOfs;
+    char_ofs -= run->nCharOfs;
+
+    cursor->pPara = para_get_di( para );
+    cursor->pRun = run_get_di( run );
+    cursor->nOffset = char_ofs;
 }
 
 /******************************************************************************

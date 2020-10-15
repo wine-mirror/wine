@@ -269,7 +269,7 @@ DECLSPEC_HIDDEN HRESULT __thiscall fnTextSrv_TxGetText(ITextServices *iface, BST
       if (bstr == NULL)
          return E_OUTOFMEMORY;
 
-      ME_CursorFromCharOfs(This->editor, 0, &start);
+      cursor_from_char_ofs( This->editor, 0, &start );
       ME_GetTextW(This->editor, bstr, length, &start, INT_MAX, FALSE, FALSE);
       *pbstrText = bstr;
    } else {
