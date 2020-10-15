@@ -1215,21 +1215,23 @@ void ME_MouseMove(ME_TextEditor *editor, int x, int y)
 
 static int ME_GetXForArrow(ME_TextEditor *editor, ME_Cursor *pCursor)
 {
-  ME_DisplayItem *pRun = pCursor->pRun;
+  ME_Run *run = &pCursor->pRun->member.run;
   int x;
 
   if (editor->nUDArrowX != -1)
     x = editor->nUDArrowX;
-  else {
+  else
+  {
     if (editor->bCaretAtEnd)
     {
-      pRun = ME_FindItemBack(pRun, diRun);
-      assert(pRun);
-      x = pRun->member.run.pt.x + pRun->member.run.nWidth;
+      run = run_prev_all_paras( run );
+      assert( run );
+      x = run->pt.x + run->nWidth;
     }
-    else {
-      x = pRun->member.run.pt.x;
-      x += ME_PointFromChar(editor, &pRun->member.run, pCursor->nOffset, TRUE);
+    else
+    {
+      x = run->pt.x;
+      x += ME_PointFromChar( editor, run, pCursor->nOffset, TRUE );
     }
     editor->nUDArrowX = x;
   }
