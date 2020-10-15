@@ -1705,6 +1705,15 @@ BOOL WINAPI DECLSPEC_HOTPATCH WriteConsoleW( HANDLE handle, const void *buffer, 
 
 
 /***********************************************************************
+ *            FlushConsoleInputBuffer   (kernelbase.@)
+ */
+BOOL WINAPI FlushConsoleInputBuffer( HANDLE handle )
+{
+    return console_ioctl( handle, IOCTL_CONDRV_FLUSH, NULL, 0, NULL, 0, NULL );
+}
+
+
+/***********************************************************************
  *           Beep   (kernelbase.@)
  */
 BOOL WINAPI Beep( DWORD frequency, DWORD duration )

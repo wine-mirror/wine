@@ -149,15 +149,6 @@ HANDLE WINAPI GetConsoleInputWaitHandle(void)
 
 
 /***********************************************************************
- *            FlushConsoleInputBuffer   (KERNEL32.@)
- */
-BOOL WINAPI FlushConsoleInputBuffer( HANDLE handle )
-{
-    return DeviceIoControl( handle, IOCTL_CONDRV_FLUSH, NULL, 0, NULL, 0, NULL, NULL );
-}
-
-
-/***********************************************************************
  *            SetConsoleTitleA   (KERNEL32.@)
  */
 BOOL WINAPI SetConsoleTitleA( LPCSTR title )

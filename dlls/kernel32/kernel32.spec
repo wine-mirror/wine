@@ -517,7 +517,7 @@
 @ stdcall -import FlsFree(long)
 @ stdcall -import FlsGetValue(long)
 @ stdcall -import FlsSetValue(long ptr)
-@ stdcall FlushConsoleInputBuffer(long)
+@ stdcall -import FlushConsoleInputBuffer(long)
 @ stdcall FlushFileBuffers(long) KERNEL32_FlushFileBuffers
 @ stdcall -import FlushInstructionCache(long long long)
 @ stdcall FlushProcessWriteBuffers() ntdll.NtFlushProcessWriteBuffers

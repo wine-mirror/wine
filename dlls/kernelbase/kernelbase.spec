@@ -381,7 +381,7 @@
 @ stdcall FlsFree(long)
 @ stdcall FlsGetValue(long)
 @ stdcall FlsSetValue(long ptr)
-@ stdcall FlushConsoleInputBuffer(long) kernel32.FlushConsoleInputBuffer
+@ stdcall FlushConsoleInputBuffer(long)
 @ stdcall FlushFileBuffers(long)
 @ stdcall FlushInstructionCache(long long long)
 @ stdcall FlushProcessWriteBuffers() ntdll.NtFlushProcessWriteBuffers
