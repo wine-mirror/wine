@@ -249,12 +249,14 @@ static void create_session( unsigned int id )
     static const WCHAR dir_bnolinksW[] = {'B','N','O','L','I','N','K','S'};
     static const WCHAR dir_bnoW[] = {'B','a','s','e','N','a','m','e','d','O','b','j','e','c','t','s'};
     static const WCHAR dir_dosdevicesW[] = {'D','o','s','D','e','v','i','c','e','s'};
+    static const WCHAR dir_nlsW[] = {'N','L','S'};
     static const WCHAR dir_windowsW[] = {'W','i','n','d','o','w','s'};
     static const WCHAR dir_winstationsW[] = {'W','i','n','d','o','w','S','t','a','t','i','o','n','s'};
     static const struct unicode_str dir_sessions_str = {dir_sessionsW, sizeof(dir_sessionsW)};
     static const struct unicode_str dir_bnolinks_str = {dir_bnolinksW, sizeof(dir_bnolinksW)};
     static const struct unicode_str dir_bno_str = {dir_bnoW, sizeof(dir_bnoW)};
     static const struct unicode_str dir_dosdevices_str = {dir_dosdevicesW, sizeof(dir_dosdevicesW)};
+    static const struct unicode_str dir_nls_str = {dir_nlsW, sizeof(dir_nlsW)};
     static const struct unicode_str dir_windows_str = {dir_windowsW, sizeof(dir_windowsW)};
     static const struct unicode_str dir_winstations_str = {dir_winstationsW, sizeof(dir_winstationsW)};
 
@@ -278,6 +280,7 @@ static void create_session( unsigned int id )
         dir_bno_global = create_directory( &root_directory->obj, &dir_bno_str, OBJ_PERMANENT, HASH_SIZE, NULL );
         dir_sessions   = create_directory( &root_directory->obj, &dir_sessions_str, OBJ_PERMANENT, HASH_SIZE, NULL );
         dir_bnolinks   = create_directory( &dir_sessions->obj, &dir_bnolinks_str, OBJ_PERMANENT, HASH_SIZE, NULL );
+        release_object( create_directory( &root_directory->obj, &dir_nls_str, OBJ_PERMANENT, HASH_SIZE, NULL ));
         release_object( dir_bno_global );
         release_object( dir_bnolinks );
         release_object( dir_sessions );
