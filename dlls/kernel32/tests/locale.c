@@ -4131,7 +4131,7 @@ static void test_GetCPInfo(void)
             status = pNtGetNlsSectionPtr( i, 9999, NULL, &ptr, &size );
             switch (i)
             {
-            case 9:  /* unknown */
+            case 9:  /* sortkeys */
             case 13: /* unknown */
                 ok( status == STATUS_INVALID_PARAMETER_1 || status == STATUS_INVALID_PARAMETER_3, /* vista */
                     "%u: failed %x\n", i, status );
@@ -4160,9 +4160,9 @@ static void test_GetCPInfo(void)
             status = pNtGetNlsSectionPtr( 10, 0, NULL, &ptr2, &size );
             ok( ptr != ptr2, "got same pointer\n" );
             ret = UnmapViewOfFile( ptr );
-            todo_wine ok( ret, "UnmapViewOfFile failed err %u\n", GetLastError() );
+            ok( ret, "UnmapViewOfFile failed err %u\n", GetLastError() );
             ret = UnmapViewOfFile( ptr2 );
-            todo_wine ok( ret, "UnmapViewOfFile failed err %u\n", GetLastError() );
+            ok( ret, "UnmapViewOfFile failed err %u\n", GetLastError() );
         }
 
         /* codepage tables */
@@ -4182,7 +4182,7 @@ static void test_GetCPInfo(void)
             ok( !table.DBCSCodePage, "wrong dbcs %u\n", table.DBCSCodePage );
         }
         ret = UnmapViewOfFile( ptr );
-        todo_wine ok( ret, "UnmapViewOfFile failed err %u\n", GetLastError() );
+        ok( ret, "UnmapViewOfFile failed err %u\n", GetLastError() );
 
         status = pNtGetNlsSectionPtr( 11, 936, NULL, &ptr, &size );
         ok( !status, "failed %x\n", status );
@@ -4220,7 +4220,7 @@ static void test_GetCPInfo(void)
             }
         }
         ret = UnmapViewOfFile( ptr );
-        todo_wine ok( ret, "UnmapViewOfFile failed err %u\n", GetLastError() );
+        ok( ret, "UnmapViewOfFile failed err %u\n", GetLastError() );
 
         /* normalization tables */
 
@@ -4238,7 +4238,7 @@ static void test_GetCPInfo(void)
                 if (status) break;
                 ok( size > 0x8000 && size <= 0x30000 , "wrong size %lx\n", size );
                 ret = UnmapViewOfFile( ptr );
-                todo_wine ok( ret, "UnmapViewOfFile failed err %u\n", GetLastError() );
+                ok( ret, "UnmapViewOfFile failed err %u\n", GetLastError() );
                 break;
             default:
                 ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "%u: failed %x\n", i, status );
