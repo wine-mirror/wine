@@ -2594,28 +2594,53 @@ static HRESULT WINAPI ITextRange_fnDelete(ITextRange *me, LONG unit, LONG count,
     return E_NOTIMPL;
 }
 
+static HRESULT textrange_copy_or_cut( ITextRange *range, ME_TextEditor *editor, BOOL cut, VARIANT *v )
+{
+    LONG start, end;
+    ME_Cursor cursor;
+    IDataObject **data_out = NULL;
+
+    ITextRange_GetStart( range, &start );
+    ITextRange_GetEnd( range, &end );
+    if (start == end)
+    {
+        /* If the range is empty, all text is copied */
+        LONG prev_end = end;
+        ITextRange_SetEnd( range, MAXLONG );
+        start = 0;
+        ITextRange_GetEnd( range, &end );
+        ITextRange_SetEnd( range, prev_end );
+    }
+    cursor_from_char_ofs( editor, start, &cursor );
+
+    if (v && V_VT(v) == (VT_UNKNOWN | VT_BYREF) && V_UNKNOWNREF( v ))
+        data_out = (IDataObject **)V_UNKNOWNREF( v );
+
+    return editor_copy_or_cut( editor, cut, &cursor, end - start, data_out );
+}
+
 static HRESULT WINAPI ITextRange_fnCut(ITextRange *me, VARIANT *v)
 {
     ITextRangeImpl *This = impl_from_ITextRange(me);
 
-    FIXME("(%p)->(%p): stub\n", This, v);
+    TRACE("(%p)->(%p)\n", This, v);
 
     if (!This->child.reole)
         return CO_E_RELEASED;
 
-    return E_NOTIMPL;
+    return textrange_copy_or_cut(me, This->child.reole->editor, TRUE, v);
 }
 
 static HRESULT WINAPI ITextRange_fnCopy(ITextRange *me, VARIANT *v)
 {
     ITextRangeImpl *This = impl_from_ITextRange(me);
 
-    FIXME("(%p)->(%p): stub\n", This, v);
+    TRACE("(%p)->(%p)\n", This, v);
 
     if (!This->child.reole)
         return CO_E_RELEASED;
 
-    return E_NOTIMPL;
+    return textrange_copy_or_cut(me, This->child.reole->editor, FALSE, v);
 }
 
 static HRESULT WINAPI ITextRange_fnPaste(ITextRange *me, VARIANT *v, LONG format)
@@ -5365,25 +5390,35 @@ static HRESULT WINAPI ITextSelection_fnDelete(ITextSelection *me, LONG unit, LON
 static HRESULT WINAPI ITextSelection_fnCut(ITextSelection *me, VARIANT *v)
 {
     ITextSelectionImpl *This = impl_from_ITextSelection(me);
+    ITextRange *range = NULL;
+    HRESULT hr;
 
-    FIXME("(%p)->(%p): stub\n", This, v);
+    TRACE("(%p)->(%p): stub\n", This, v);
 
     if (!This->reOle)
         return CO_E_RELEASED;
 
-    return E_NOTIMPL;
+    ITextSelection_QueryInterface(me, &IID_ITextRange, (void**)&range);
+    hr = textrange_copy_or_cut(range, This->reOle->editor, TRUE, v);
+    ITextRange_Release(range);
+    return hr;
 }
 
 static HRESULT WINAPI ITextSelection_fnCopy(ITextSelection *me, VARIANT *v)
 {
     ITextSelectionImpl *This = impl_from_ITextSelection(me);
+    ITextRange *range = NULL;
+    HRESULT hr;
 
-    FIXME("(%p)->(%p): stub\n", This, v);
+    TRACE("(%p)->(%p)\n", This, v);
 
     if (!This->reOle)
         return CO_E_RELEASED;
 
-    return E_NOTIMPL;
+    ITextSelection_QueryInterface(me, &IID_ITextRange, (void**)&range);
+    hr = textrange_copy_or_cut(range, This->reOle->editor, FALSE, v);
+    ITextRange_Release(range);
+    return hr;
 }
 
 static HRESULT WINAPI ITextSelection_fnPaste(ITextSelection *me, VARIANT *v, LONG format)

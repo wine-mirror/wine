@@ -2333,52 +2333,70 @@ done:
     return hr == S_OK;
 }
 
-static BOOL ME_Copy(ME_TextEditor *editor, const ME_Cursor *start, int nChars)
+static HRESULT editor_copy( ME_TextEditor *editor, ME_Cursor *start, int chars, IDataObject **data_out )
 {
-  LPDATAOBJECT dataObj = NULL;
-  HRESULT hr = S_OK;
+    IDataObject *data = NULL;
+    HRESULT hr = S_OK;
 
-  if (editor->cPasswordMask)
-    return FALSE; /* Copying or Cutting masked text isn't allowed */
+    if (editor->lpOleCallback)
+    {
+        CHARRANGE range;
+        range.cpMin = ME_GetCursorOfs( start );
+        range.cpMax = range.cpMin + chars;
+        hr = IRichEditOleCallback_GetClipboardData( editor->lpOleCallback, &range, RECO_COPY, &data );
+    }
 
-  if(editor->lpOleCallback)
-  {
-    CHARRANGE range;
-    range.cpMin = ME_GetCursorOfs(start);
-    range.cpMax = range.cpMin + nChars;
-    hr = IRichEditOleCallback_GetClipboardData(editor->lpOleCallback, &range, RECO_COPY, &dataObj);
-  }
-  if(FAILED(hr) || !dataObj)
-    hr = ME_GetDataObject(editor, start, nChars, &dataObj);
-  if(SUCCEEDED(hr)) {
-    hr = OleSetClipboard(dataObj);
-    IDataObject_Release(dataObj);
-  }
-  return SUCCEEDED(hr);
+    if (FAILED( hr ) || !data)
+        hr = ME_GetDataObject( editor, start, chars, &data );
+
+    if (SUCCEEDED( hr ))
+    {
+        if (data_out)
+            *data_out = data;
+        else
+        {
+            hr = OleSetClipboard( data );
+            IDataObject_Release( data );
+        }
+    }
+
+    return hr;
 }
 
-static BOOL copy_or_cut(ME_TextEditor *editor, BOOL cut)
+HRESULT editor_copy_or_cut( ME_TextEditor *editor, BOOL cut, ME_Cursor *start, int count,
+                            IDataObject **data_out )
 {
-    BOOL result;
-    int offs, num_chars;
-    int start_cursor = ME_GetSelectionOfs(editor, &offs, &num_chars);
-    ME_Cursor *sel_start = &editor->pCursors[start_cursor];
+    HRESULT hr;
 
     if (cut && (editor->styleFlags & ES_READONLY))
     {
-        MessageBeep(MB_ICONERROR);
-        return FALSE;
+        return E_ACCESSDENIED;
     }
 
-    num_chars -= offs;
-    result = ME_Copy(editor, sel_start, num_chars);
-    if (result && cut)
+    hr = editor_copy( editor, start, count, data_out );
+    if (SUCCEEDED(hr) && cut)
     {
-        ME_InternalDeleteText(editor, sel_start, num_chars, FALSE);
-        ME_CommitUndo(editor);
-        ME_UpdateRepaint(editor, TRUE);
+        ME_InternalDeleteText( editor, start, count, FALSE );
+        ME_CommitUndo( editor );
+        ME_UpdateRepaint( editor, TRUE );
     }
-    return result;
+    return hr;
+}
+
+static BOOL copy_or_cut( ME_TextEditor *editor, BOOL cut )
+{
+    HRESULT hr;
+    int offs, count;
+    int start_cursor = ME_GetSelectionOfs( editor, &offs, &count );
+    ME_Cursor *sel_start = &editor->pCursors[start_cursor];
+
+    if (editor->cPasswordMask) return FALSE;
+
+    count -= offs;
+    hr = editor_copy_or_cut( editor, cut, sel_start, count, NULL );
+    if (FAILED( hr )) MessageBeep( MB_ICONERROR );
+
+    return SUCCEEDED( hr );
 }
 
 /* helper to send a msg filter notification */

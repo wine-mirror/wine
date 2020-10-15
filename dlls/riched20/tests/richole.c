@@ -4012,6 +4012,79 @@ static void test_character_movement(void)
   ITextRange_Release(range);
 }
 
+#define CLIPBOARD_RANGE_CONTAINS(range, start, end, expected) _clipboard_range_contains(range, start, end, expected, __LINE__, 0);
+#define TODO_CLIPBOARD_RANGE_CONTAINS(range, start, end, expected) _clipboard_range_contains(range, start, end, expected, __LINE__, 1);
+static void _clipboard_range_contains(ITextRange *range, LONG start, LONG end, const char *expected, int line, int todo)
+{
+  HRESULT hr;
+  BOOL clipboard_open;
+  HGLOBAL global;
+  const char *clipboard_text;
+
+  hr = ITextRange_SetRange(range, start, end);
+  ok_(__FILE__,line)(SUCCEEDED(hr), "SetRange failed: 0x%08x\n", hr);
+  hr = ITextRange_Copy(range, NULL);
+  ok_(__FILE__,line)(hr == S_OK, "Copy failed: 0x%08x\n", hr);
+
+  clipboard_open = OpenClipboard(NULL);
+  ok_(__FILE__,line)(clipboard_open, "OpenClipboard failed: %d\n", GetLastError());
+  global = GetClipboardData(CF_TEXT);
+  ok_(__FILE__,line)(global != NULL, "GetClipboardData failed: %p\n", global);
+  clipboard_text = GlobalLock(global);
+  ok_(__FILE__,line)(clipboard_text != NULL, "GlobalLock failed: %p\n", clipboard_text);
+  todo_wine_if(todo) ok_(__FILE__,line)(!strcmp(expected, clipboard_text), "unexpected contents: %s\n", wine_dbgstr_a(clipboard_text));
+  GlobalUnlock(global);
+  CloseClipboard();
+}
+
+static void test_clipboard(void)
+{
+  static const char text_in[] = "ab\n c";
+  IRichEditOle *reole = NULL;
+  ITextDocument *doc = NULL;
+  ITextRange *range;
+  ITextSelection *selection;
+  HRESULT hr;
+  HWND hwnd;
+
+  create_interfaces(&hwnd, &reole, &doc, &selection);
+  SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)text_in);
+
+  hr = ITextDocument_Range(doc, 0, 0, &range);
+  ok(hr == S_OK, "got 0x%08x\n", hr);
+
+  CLIPBOARD_RANGE_CONTAINS(range, 0, 5, "ab\r\n c")
+  CLIPBOARD_RANGE_CONTAINS(range, 0, 0, "ab\r\n c")
+  CLIPBOARD_RANGE_CONTAINS(range, 1, 1, "ab\r\n c")
+  CLIPBOARD_RANGE_CONTAINS(range, 0, 1, "a")
+  CLIPBOARD_RANGE_CONTAINS(range, 5, 6, "")
+
+  /* Setting password char does not stop Copy */
+  SendMessageA(hwnd, EM_SETPASSWORDCHAR, '*', 0);
+  CLIPBOARD_RANGE_CONTAINS(range, 0, 1, "a")
+
+  /* Cut can be undone */
+  hr = ITextRange_SetRange(range, 0, 1);
+  ok(SUCCEEDED(hr), "SetRange failed: 0x%08x\n", hr);
+  hr = ITextRange_Cut(range, NULL);
+  ok(hr == S_OK, "Cut failed: 0x%08x\n", hr);
+  CLIPBOARD_RANGE_CONTAINS(range, 0, 4, "b\r\n c");
+  hr = ITextDocument_Undo(doc, 1, NULL);
+  todo_wine ok(hr == S_OK, "Undo failed: 0x%08x\n", hr);
+  TODO_CLIPBOARD_RANGE_CONTAINS(range, 0, 5, "ab\r\n c");
+
+  /* Cannot cut when read-only */
+  SendMessageA(hwnd, EM_SETREADONLY, TRUE, 0);
+  hr = ITextRange_SetRange(range, 0, 1);
+  ok(SUCCEEDED(hr), "SetRange failed: 0x%08x\n", hr);
+  hr = ITextRange_Cut(range, NULL);
+  ok(hr == E_ACCESSDENIED, "got 0x%08x\n", hr);
+
+  release_interfaces(&hwnd, &reole, &doc, NULL);
+  ITextSelection_Release(selection);
+  ITextRange_Release(range);
+}
+
 START_TEST(richole)
 {
   /* Must explicitly LoadLibrary(). The test has no references to functions in
@@ -4052,4 +4125,5 @@ START_TEST(richole)
   test_Expand();
   test_MoveEnd_story();
   test_character_movement();
+  test_clipboard();
 }
