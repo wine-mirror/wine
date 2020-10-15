@@ -637,7 +637,7 @@ UINT WINAPI DECLSPEC_HOTPATCH GetConsoleCP(void)
     if (!console_ioctl( RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle,
                          IOCTL_CONDRV_GET_INPUT_INFO, NULL, 0, &info, sizeof(info), NULL ))
         return 0;
-    return info.input_cp ? info.input_cp : GetOEMCP();
+    return info.input_cp;
 }
 
 
@@ -710,7 +710,7 @@ UINT WINAPI DECLSPEC_HOTPATCH GetConsoleOutputCP(void)
     if (!console_ioctl( RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle,
                          IOCTL_CONDRV_GET_INPUT_INFO, NULL, 0, &info, sizeof(info), NULL ))
         return 0;
-    return info.output_cp ? info.output_cp : GetOEMCP();
+    return info.output_cp;
 }
 
 
@@ -1092,12 +1092,6 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetConsoleCP( UINT cp )
 {
     struct condrv_input_info_params params = { SET_CONSOLE_INPUT_INFO_INPUT_CODEPAGE };
 
-    if (!IsValidCodePage( cp ))
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return FALSE;
-    }
-
     params.info.input_cp = cp;
     return console_ioctl( RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle,
                           IOCTL_CONDRV_SET_INPUT_INFO, &params, sizeof(params), NULL, 0, NULL );
@@ -1236,12 +1230,6 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetConsoleMode( HANDLE handle, DWORD mode )
 BOOL WINAPI DECLSPEC_HOTPATCH SetConsoleOutputCP( UINT cp )
 {
     struct condrv_input_info_params params = { SET_CONSOLE_INPUT_INFO_OUTPUT_CODEPAGE };
-
-    if (!IsValidCodePage( cp ))
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return FALSE;
-    }
 
     params.info.output_cp = cp;
     return console_ioctl( RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle,

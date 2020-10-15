@@ -2407,9 +2407,15 @@ static NTSTATUS console_input_ioctl( struct console *console, unsigned int code,
             TRACE( "set info\n" );
             if (in_size != sizeof(*params) || *out_size) return STATUS_INVALID_PARAMETER;
             if (params->mask & SET_CONSOLE_INPUT_INFO_INPUT_CODEPAGE)
+            {
+                if (!IsValidCodePage( params->info.input_cp )) return STATUS_INVALID_PARAMETER;
                 console->input_cp = params->info.input_cp;
+            }
             if (params->mask & SET_CONSOLE_INPUT_INFO_OUTPUT_CODEPAGE)
+            {
+                if (!IsValidCodePage( params->info.output_cp )) return STATUS_INVALID_PARAMETER;
                 console->output_cp = params->info.output_cp;
+            }
             return STATUS_SUCCESS;
         }
 
