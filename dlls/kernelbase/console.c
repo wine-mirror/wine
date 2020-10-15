@@ -1373,8 +1373,7 @@ BOOL WINAPI ReadConsoleInputA( HANDLE handle, INPUT_RECORD *buffer, DWORD length
  */
 BOOL WINAPI ReadConsoleInputW( HANDLE handle, INPUT_RECORD *buffer, DWORD length, DWORD *count )
 {
-    int blocking = 1;
-    if (!console_ioctl( handle, IOCTL_CONDRV_READ_INPUT, &blocking, sizeof(blocking),
+    if (!console_ioctl( handle, IOCTL_CONDRV_READ_INPUT, NULL, 0,
                         buffer, length * sizeof(*buffer), count ))
         return FALSE;
     *count /= sizeof(*buffer);

@@ -2358,11 +2358,9 @@ static NTSTATUS console_input_ioctl( struct console *console, unsigned int code,
 
     case IOCTL_CONDRV_READ_INPUT:
         {
-            unsigned int blocking;
-            if (in_size && in_size != sizeof(blocking)) return STATUS_INVALID_PARAMETER;
+            if (in_size) return STATUS_INVALID_PARAMETER;
             ensure_tty_input_thread( console );
-            blocking = in_size && *(unsigned int *)in_data;
-            if (blocking && !console->record_count && *out_size)
+            if (!console->record_count && *out_size)
             {
                 TRACE( "pending read\n" );
                 console->read_ioctl = IOCTL_CONDRV_READ_INPUT;
