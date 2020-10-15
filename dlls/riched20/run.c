@@ -816,9 +816,9 @@ void ME_SetCharFormat( ME_TextEditor *editor, ME_Cursor *start, ME_Cursor *end, 
   }
 }
 
-static void ME_GetRunCharFormat(ME_TextEditor *editor, ME_DisplayItem *run, CHARFORMAT2W *pFmt)
+static void run_copy_char_fmt( ME_Run *run, CHARFORMAT2W *fmt )
 {
-  ME_CopyCharFormat(pFmt, &run->member.run.style->fmt);
+    ME_CopyCharFormat( fmt, &run->style->fmt );
 }
 
 /******************************************************************************
@@ -856,33 +856,25 @@ void ME_GetSelectionCharFormat(ME_TextEditor *editor, CHARFORMAT2W *pFmt)
  * Returns the style consisting of those attributes which are consistently set
  * in the whole character range.
  */
-void ME_GetCharFormat(ME_TextEditor *editor, const ME_Cursor *from,
-                      const ME_Cursor *to, CHARFORMAT2W *pFmt)
+void ME_GetCharFormat( ME_TextEditor *editor, const ME_Cursor *from,
+                       const ME_Cursor *to, CHARFORMAT2W *fmt )
 {
-  ME_DisplayItem *run, *run_end;
+  ME_Run *run, *run_end, *prev_run;
   CHARFORMAT2W tmp;
 
-  run = from->pRun;
+  run = &from->pRun->member.run;
   /* special case - if selection is empty, take previous char's formatting */
   if (from->pRun == to->pRun && from->nOffset == to->nOffset)
   {
-    if (!from->nOffset)
-    {
-      ME_DisplayItem *tmp_run = ME_FindItemBack(run, diRunOrParagraph);
-      if (tmp_run->type == diRun) {
-        ME_GetRunCharFormat(editor, tmp_run, pFmt);
-        return;
-      }
-    }
-    ME_GetRunCharFormat(editor, run, pFmt);
+    if (!from->nOffset && (prev_run = run_prev( run ))) run = prev_run;
+    run_copy_char_fmt( run, fmt );
     return;
   }
 
-  run_end = to->pRun;
-  if (!to->nOffset)
-    run_end = ME_FindItemBack(run_end, diRun);
+  run_end = &to->pRun->member.run;
+  if (!to->nOffset) run_end = run_prev_all_paras( run_end );
 
-  ME_GetRunCharFormat(editor, run, pFmt);
+  run_copy_char_fmt( run, fmt );
 
   if (run == run_end) return;
 
@@ -891,40 +883,37 @@ void ME_GetCharFormat(ME_TextEditor *editor, const ME_Cursor *from,
     DWORD dwAttribs = CFM_SIZE | CFM_FACE | CFM_COLOR | CFM_UNDERLINETYPE;
     DWORD dwEffects = CFM_BOLD | CFM_ITALIC | CFM_UNDERLINE | CFM_STRIKEOUT | CFM_PROTECTED | CFM_LINK | CFM_SUPERSCRIPT;
 
-    run = ME_FindItemFwd(run, diRun);
+    run = run_next_all_paras( run );
 
-    ZeroMemory(&tmp, sizeof(tmp));
+    memset( &tmp, 0, sizeof(tmp) );
     tmp.cbSize = sizeof(tmp);
-    ME_GetRunCharFormat(editor, run, &tmp);
+    run_copy_char_fmt( run, &tmp );
 
     assert((tmp.dwMask & dwAttribs) == dwAttribs);
     /* reset flags that differ */
 
-    if (pFmt->yHeight != tmp.yHeight)
-      pFmt->dwMask &= ~CFM_SIZE;
-    if (pFmt->dwMask & CFM_FACE)
+    if (fmt->yHeight != tmp.yHeight) fmt->dwMask &= ~CFM_SIZE;
+    if (fmt->dwMask & CFM_FACE)
     {
       if (!(tmp.dwMask & CFM_FACE))
-        pFmt->dwMask &= ~CFM_FACE;
-      else if (wcscmp(pFmt->szFaceName, tmp.szFaceName) ||
-          pFmt->bPitchAndFamily != tmp.bPitchAndFamily)
-        pFmt->dwMask &= ~CFM_FACE;
+        fmt->dwMask &= ~CFM_FACE;
+      else if (wcscmp( fmt->szFaceName, tmp.szFaceName ) ||
+               fmt->bPitchAndFamily != tmp.bPitchAndFamily)
+        fmt->dwMask &= ~CFM_FACE;
     }
-    if (pFmt->yHeight != tmp.yHeight)
-      pFmt->dwMask &= ~CFM_SIZE;
-    if (pFmt->bUnderlineType != tmp.bUnderlineType)
-      pFmt->dwMask &= ~CFM_UNDERLINETYPE;
-    if (pFmt->dwMask & CFM_COLOR)
+    if (fmt->yHeight != tmp.yHeight) fmt->dwMask &= ~CFM_SIZE;
+    if (fmt->bUnderlineType != tmp.bUnderlineType) fmt->dwMask &= ~CFM_UNDERLINETYPE;
+    if (fmt->dwMask & CFM_COLOR)
     {
-      if (!((pFmt->dwEffects&CFE_AUTOCOLOR) & (tmp.dwEffects&CFE_AUTOCOLOR)))
+      if (!((fmt->dwEffects&CFE_AUTOCOLOR) & (tmp.dwEffects&CFE_AUTOCOLOR)))
       {
-        if (pFmt->crTextColor != tmp.crTextColor)
-          pFmt->dwMask &= ~CFM_COLOR;
+        if (fmt->crTextColor != tmp.crTextColor)
+          fmt->dwMask &= ~CFM_COLOR;
       }
     }
 
-    pFmt->dwMask &= ~((pFmt->dwEffects ^ tmp.dwEffects) & dwEffects);
-    pFmt->dwEffects = tmp.dwEffects;
+    fmt->dwMask &= ~((fmt->dwEffects ^ tmp.dwEffects) & dwEffects);
+    fmt->dwEffects = tmp.dwEffects;
 
   } while(run != run_end);
 }
