@@ -1970,6 +1970,63 @@ static void test_WriteConsoleInputW(HANDLE input_handle)
     ok(ret == TRUE, "Expected SetConsoleMode to return TRUE, got %d\n", ret);
 }
 
+static void test_FlushConsoleInputBuffer(HANDLE input, HANDLE output)
+{
+    INPUT_RECORD record;
+    DWORD count;
+    BOOL ret;
+
+    ret = FlushConsoleInputBuffer(input);
+    ok(ret, "FlushConsoleInputBuffer failed: %u\n", GetLastError());
+
+    ret = GetNumberOfConsoleInputEvents(input, &count);
+    ok(ret, "GetNumberOfConsoleInputEvents failed: %u\n", GetLastError());
+    ok(count == 0, "Expected count to be 0, got %u\n", count);
+
+    record.EventType = KEY_EVENT;
+    record.Event.KeyEvent.bKeyDown = 1;
+    record.Event.KeyEvent.wRepeatCount = 1;
+    record.Event.KeyEvent.wVirtualKeyCode = VK_RETURN;
+    record.Event.KeyEvent.wVirtualScanCode = VK_RETURN;
+    record.Event.KeyEvent.uChar.UnicodeChar = '\r';
+    record.Event.KeyEvent.dwControlKeyState = 0;
+    ret = WriteConsoleInputW(input, &record, 1, &count);
+    ok(ret, "WriteConsoleInputW failed: %u\n", GetLastError());
+
+    ret = GetNumberOfConsoleInputEvents(input, &count);
+    ok(ret, "GetNumberOfConsoleInputEvents failed: %u\n", GetLastError());
+    ok(count == 1, "Expected count to be 0, got %u\n", count);
+
+    ret = FlushConsoleInputBuffer(input);
+    ok(ret, "FlushConsoleInputBuffer failed: %u\n", GetLastError());
+
+    ret = GetNumberOfConsoleInputEvents(input, &count);
+    ok(ret, "GetNumberOfConsoleInputEvents failed: %u\n", GetLastError());
+    ok(count == 0, "Expected count to be 0, got %u\n", count);
+
+    ret = WriteConsoleInputW(input, &record, 1, &count);
+    ok(ret, "WriteConsoleInputW failed: %u\n", GetLastError());
+
+    ret = GetNumberOfConsoleInputEvents(input, &count);
+    ok(ret, "GetNumberOfConsoleInputEvents failed: %u\n", GetLastError());
+    ok(count == 1, "Expected count to be 0, got %u\n", count);
+
+    ret = FlushFileBuffers(input);
+    ok(ret, "FlushFileBuffers failed: %u\n", GetLastError());
+
+    ret = GetNumberOfConsoleInputEvents(input, &count);
+    ok(ret, "GetNumberOfConsoleInputEvents failed: %u\n", GetLastError());
+    ok(count == 0, "Expected count to be 0, got %u\n", count);
+
+    ret = FlushConsoleInputBuffer(output);
+    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "FlushConsoleInputBuffer returned: %x(%u)\n",
+       ret, GetLastError());
+
+    ret = FlushFileBuffers(output);
+    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "FlushFileBuffers returned: %x(%u)\n",
+       ret, GetLastError());
+}
+
 static void test_WriteConsoleOutputCharacterA(HANDLE output_handle)
 {
     static const char output[] = {'a', 0};
@@ -4269,6 +4326,7 @@ START_TEST(console)
     test_GetNumberOfConsoleInputEvents(hConIn);
     test_WriteConsoleInputA(hConIn);
     test_WriteConsoleInputW(hConIn);
+    test_FlushConsoleInputBuffer(hConIn, hConOut);
     test_WriteConsoleOutputCharacterA(hConOut);
     test_WriteConsoleOutputCharacterW(hConOut);
     test_WriteConsoleOutputAttribute(hConOut);
