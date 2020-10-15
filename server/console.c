@@ -3,6 +3,7 @@
  *
  * Copyright (C) 1998 Alexandre Julliard
  *               2001 Eric Pouech
+ * Copyright 2020 Jacek Caban for CodeWeavers
  *
  *
  * This library is free software; you can redistribute it and/or
@@ -96,6 +97,7 @@ static const struct object_ops console_input_ops =
 };
 
 static enum server_fd_type console_get_fd_type( struct fd *fd );
+static int console_input_flush( struct fd *fd, struct async *async );
 static int console_input_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 
 static const struct fd_ops console_input_fd_ops =
@@ -105,7 +107,7 @@ static const struct fd_ops console_input_fd_ops =
     console_get_fd_type,          /* get_fd_type */
     no_fd_read,                   /* read */
     no_fd_write,                  /* write */
-    no_fd_flush,                  /* flush */
+    console_input_flush,          /* flush */
     no_fd_get_file_info,          /* get_file_info */
     no_fd_get_volume_info,        /* get_volume_info */
     console_input_ioctl,          /* ioctl */
@@ -409,7 +411,7 @@ static int queue_host_ioctl( struct console_server *server, unsigned int code, u
     list_add_tail( &server->queue, &ioctl->entry );
     wake_up( &server->obj, 0 );
     if (async) set_error( STATUS_PENDING );
-    return 0;
+    return 1;
 }
 
 static void disconnect_console_server( struct console_server *server )
@@ -829,6 +831,18 @@ static int console_input_ioctl( struct fd *fd, ioctl_code_t code, struct async *
         }
         return queue_host_ioctl( console->server, code, 0, async, &console->ioctl_q );
     }
+}
+
+static int console_input_flush( struct fd *fd, struct async *async )
+{
+    struct console_input *console = get_fd_user( fd );
+
+    if (!console->server)
+    {
+        set_error( STATUS_INVALID_HANDLE );
+        return 0;
+    }
+    return queue_host_ioctl( console->server, IOCTL_CONDRV_FLUSH, 0, NULL, NULL );
 }
 
 static int screen_buffer_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
