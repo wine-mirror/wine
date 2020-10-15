@@ -460,20 +460,6 @@ BOOL ME_DeleteTextAtCursor(ME_TextEditor *editor, int nCursor, int nChars)
                                nChars, FALSE);
 }
 
-static ME_DisplayItem *
-ME_InternalInsertTextFromCursor(ME_TextEditor *editor, int nCursor,
-                                const WCHAR *str, int len, ME_Style *style,
-                                int flags)
-{
-  ME_Cursor *p = &editor->pCursors[nCursor];
-
-  editor->bCaretAtEnd = FALSE;
-  
-  assert(p->pRun->type == diRun);
-  
-  return run_get_di( run_insert( editor, p, style, str, len, flags ) );
-}
-
 static struct re_object* create_re_object(const REOBJECT *reo)
 {
   struct re_object *reobj = heap_alloc(sizeof(*reobj));
@@ -489,96 +475,98 @@ static struct re_object* create_re_object(const REOBJECT *reo)
 
 void ME_InsertOLEFromCursor(ME_TextEditor *editor, const REOBJECT* reo, int nCursor)
 {
-  ME_Style              *pStyle = ME_GetInsertStyle(editor, nCursor);
-  ME_DisplayItem        *di;
-  WCHAR                 space = ' ';
-  ME_DisplayItem        *di_prev = NULL;
-  struct re_object      *reobj_prev = NULL;
-  
+  ME_Style *style = ME_GetInsertStyle( editor, nCursor );
+  ME_Run *run, *prev;
+  const WCHAR space = ' ';
+  struct re_object *reobj_prev = NULL;
+  ME_Cursor *cursor = editor->pCursors + nCursor;
+
   /* FIXME no no no */
   if (ME_IsSelection(editor))
     ME_DeleteSelection(editor);
 
-  di = ME_InternalInsertTextFromCursor(editor, nCursor, &space, 1, pStyle,
-                                       MERF_GRAPHICS);
-  di->member.run.reobj = create_re_object(reo);
+  run = run_insert( editor, cursor, style, &space, 1, MERF_GRAPHICS );
+  editor->bCaretAtEnd = FALSE;
 
-  di_prev = di;
-  while (ME_PrevRun(NULL, &di_prev, TRUE))
+  run->reobj = create_re_object( reo );
+
+  prev = run;
+  while ((prev = run_prev_all_paras( prev )))
   {
-    if (di_prev->member.run.reobj)
+    if (prev->reobj)
     {
-      reobj_prev = di_prev->member.run.reobj;
+      reobj_prev = prev->reobj;
       break;
     }
   }
   if (reobj_prev)
-    list_add_after(&reobj_prev->entry, &di->member.run.reobj->entry);
+    list_add_after(&reobj_prev->entry, &run->reobj->entry);
   else
-    list_add_head(&editor->reobj_list, &di->member.run.reobj->entry);
+    list_add_head(&editor->reobj_list, &run->reobj->entry);
 
-  ME_ReleaseStyle(pStyle);
+  ME_ReleaseStyle( style );
 }
 
 
 void ME_InsertEndRowFromCursor(ME_TextEditor *editor, int nCursor)
 {
-  ME_Style              *pStyle = ME_GetInsertStyle(editor, nCursor);
-  WCHAR                 space = ' ';
+  ME_Style *style = ME_GetInsertStyle( editor, nCursor );
+  const WCHAR space = ' ';
+  ME_Cursor *cursor = editor->pCursors + nCursor;
 
   /* FIXME no no no */
   if (ME_IsSelection(editor))
     ME_DeleteSelection(editor);
 
-  ME_InternalInsertTextFromCursor(editor, nCursor, &space, 1, pStyle,
-                                  MERF_ENDROW);
-  ME_ReleaseStyle(pStyle);
+  run_insert( editor, cursor, style, &space, 1, MERF_ENDROW );
+  editor->bCaretAtEnd = FALSE;
+
+  ME_ReleaseStyle( style );
 }
 
 
 void ME_InsertTextFromCursor(ME_TextEditor *editor, int nCursor, 
-  const WCHAR *str, int len, ME_Style *style)
+                             const WCHAR *str, int len, ME_Style *style)
 {
   const WCHAR *pos;
-  ME_Cursor *p = NULL;
+  ME_Cursor *cursor = editor->pCursors + nCursor;
   int oldLen;
 
   /* FIXME really HERE ? */
   if (ME_IsSelection(editor))
     ME_DeleteSelection(editor);
 
-  /* FIXME: is this too slow? */
-  /* Didn't affect performance for WM_SETTEXT (around 50sec/30K) */
   oldLen = ME_GetTextLength(editor);
 
   /* text operations set modified state */
   editor->nModifyStep = 1;
+  editor->bCaretAtEnd = FALSE;
 
   assert(style);
 
-  assert(nCursor>=0 && nCursor<editor->nCursors);
-  if (len == -1)
-    len = lstrlenW(str);
+  if (len == -1) len = lstrlenW( str );
 
   /* grow the text limit to fit our text */
-  if(editor->nTextLimit < oldLen +len)
-    editor->nTextLimit = oldLen + len;
+  if (editor->nTextLimit < oldLen + len) editor->nTextLimit = oldLen + len;
 
   pos = str;
 
   while (len)
   {
     /* FIXME this sucks - no respect for unicode (what else can be a line separator in unicode?) */
-    while(pos - str < len && *pos != '\r' && *pos != '\n' && *pos != '\t')
+    while (pos - str < len && *pos != '\r' && *pos != '\n' && *pos != '\t')
       pos++;
 
-    if (pos != str) { /* handle text */
-      ME_InternalInsertTextFromCursor(editor, nCursor, str, pos-str, style, 0);
-    } else if (*pos == '\t') { /* handle tabs */
-      WCHAR tab = '\t';
-      ME_InternalInsertTextFromCursor(editor, nCursor, &tab, 1, style, MERF_TAB);
+    if (pos != str) /* handle text */
+      run_insert( editor, cursor, style, str, pos - str, 0 );
+    else if (*pos == '\t') /* handle tabs */
+    {
+      const WCHAR tab = '\t';
+      run_insert( editor, cursor, style, &tab, 1, MERF_TAB );
       pos++;
-    } else { /* handle EOLs */
+    }
+    else /* handle EOLs */
+    {
       ME_Run *end_run, *run, *prev;
       ME_Paragraph *new_para;
       int eol_len = 0;
@@ -596,7 +584,9 @@ void ME_InsertTextFromCursor(ME_TextEditor *editor, int nCursor,
           eol_len = 3;
         else
           eol_len = 1;
-      } else {
+      }
+      else
+      {
         assert(*pos == '\n');
         eol_len = 1;
       }
@@ -605,8 +595,8 @@ void ME_InsertTextFromCursor(ME_TextEditor *editor, int nCursor,
       if (!editor->bEmulateVersion10 && eol_len == 3)
       {
         /* handle special \r\r\n sequence (richedit 2.x and higher only) */
-        WCHAR space = ' ';
-        ME_InternalInsertTextFromCursor(editor, nCursor, &space, 1, style, 0);
+        const WCHAR space = ' ';
+        run_insert( editor, cursor, style, &space, 1, 0 );
       }
       else
       {
@@ -618,17 +608,15 @@ void ME_InsertTextFromCursor(ME_TextEditor *editor, int nCursor,
           eol_len = 1;
         }
 
-        p = &editor->pCursors[nCursor];
-
-        if (p->nOffset == p->pRun->member.run.len)
+        if (cursor->nOffset == cursor->pRun->member.run.len)
         {
-           run = run_next( &p->pRun->member.run );
-           if (!run) run = &p->pRun->member.run;
+           run = run_next( &cursor->pRun->member.run );
+           if (!run) run = &cursor->pRun->member.run;
         }
         else
         {
-          if (p->nOffset) run_split( editor, p );
-          run = &p->pRun->member.run;
+          if (cursor->nOffset) run_split( editor, cursor );
+          run = &cursor->pRun->member.run;
         }
 
         new_para = &ME_SplitParagraph( editor, run_get_di( run ), style, eol_str, eol_len, 0 )->member.para;
