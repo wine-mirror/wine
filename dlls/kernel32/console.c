@@ -148,38 +148,12 @@ HANDLE WINAPI GetConsoleInputWaitHandle(void)
 }
 
 
-/******************************************************************************
- * read_console_input
- *
- * Helper function for ReadConsole, ReadConsoleInput and FlushConsoleInputBuffer
- *
- * Returns
- *      0 for error, 1 for no INPUT_RECORD ready, 2 with INPUT_RECORD ready
- */
-enum read_console_input_return {rci_error = 0, rci_timeout = 1, rci_gotone = 2};
-
-static enum read_console_input_return read_console_input(HANDLE handle, PINPUT_RECORD ir, DWORD timeout)
-{
-    int blocking = timeout != 0;
-    DWORD read_bytes;
-
-    if (!DeviceIoControl( handle, IOCTL_CONDRV_READ_INPUT, &blocking, sizeof(blocking), ir, sizeof(*ir), &read_bytes, NULL ))
-        return rci_error;
-    return read_bytes ? rci_gotone : rci_timeout;
-}
-
-
 /***********************************************************************
  *            FlushConsoleInputBuffer   (KERNEL32.@)
  */
 BOOL WINAPI FlushConsoleInputBuffer( HANDLE handle )
 {
-    enum read_console_input_return      last;
-    INPUT_RECORD                        ir;
-
-    while ((last = read_console_input(handle, &ir, 0)) == rci_gotone);
-
-    return last == rci_timeout;
+    return DeviceIoControl( handle, IOCTL_CONDRV_FLUSH, NULL, 0, NULL, 0, NULL, NULL );
 }
 
 

@@ -2321,8 +2321,8 @@ static NTSTATUS screen_buffer_ioctl( struct screen_buffer *screen_buffer, unsign
         return scroll_output( screen_buffer, in_data );
 
     default:
-        FIXME( "unsupported ioctl %x\n", code );
-        return STATUS_NOT_SUPPORTED;
+        WARN( "invalid ioctl %x\n", code );
+        return STATUS_INVALID_HANDLE;
     }
 }
 
@@ -2437,6 +2437,12 @@ static NTSTATUS console_input_ioctl( struct console *console, unsigned int code,
             tty_write( console, "\a", 1 );
             tty_sync( console );
         }
+        return STATUS_SUCCESS;
+
+    case IOCTL_CONDRV_FLUSH:
+        if (in_size || *out_size) return STATUS_INVALID_PARAMETER;
+        TRACE( "flush\n" );
+        console->record_count = 0;
         return STATUS_SUCCESS;
 
     default:
