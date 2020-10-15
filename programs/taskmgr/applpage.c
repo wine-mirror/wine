@@ -238,10 +238,6 @@ static BOOL CALLBACK EnumWindowsProc(HWND hWnd, LPARAM lParam)
     HICON hIcon;
     WCHAR wszText[256];
     BOOL  bLargeIcon = TaskManagerSettings.View_LargeIcons;
-    BOOL  bHung = FALSE;
-    typedef int (__stdcall *IsHungAppWindowProc)(HWND);
-    IsHungAppWindowProc IsHungAppWindow;
-
 
     /* Skip our window */
     if (hWnd == hMainWnd)
@@ -270,14 +266,7 @@ static BOOL CALLBACK EnumWindowsProc(HWND hWnd, LPARAM lParam)
     if (!hIcon)
         hIcon = LoadIconW(hInst, bLargeIcon ? MAKEINTRESOURCEW(IDI_WINDOW) : MAKEINTRESOURCEW(IDI_WINDOWSM));
 
-    bHung = FALSE;
-
-    IsHungAppWindow = (IsHungAppWindowProc)(FARPROC)GetProcAddress(GetModuleHandleW(wszUser32), "IsHungAppWindow");
-
-    if (IsHungAppWindow)
-        bHung = IsHungAppWindow(hWnd);
-
-    AddOrUpdateHwnd(hWnd, wszText, hIcon, bHung);
+    AddOrUpdateHwnd(hWnd, wszText, hIcon, IsHungAppWindow(hWnd));
 
     return TRUE;
 }
