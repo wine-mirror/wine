@@ -3291,7 +3291,6 @@ static void test_evr(void)
     IUnknown_Release(unk);
     hr = IMFAttributes_GetCount(attributes, &count);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-todo_wine
     ok(!!count, "Unexpected count %u.\n", count);
     IMFAttributes_Release(attributes);
 

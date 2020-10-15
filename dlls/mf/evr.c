@@ -1896,6 +1896,18 @@ static HRESULT evr_create_object(IMFAttributes *attributes, void *user_context, 
     IMFTransform_Release(mixer);
     IMFVideoPresenter_Release(presenter);
 
+    /* Default attributes */
+    IMFAttributes_SetUINT32(object->attributes, &EVRConfig_ForceBob, 0);
+    IMFAttributes_SetUINT32(object->attributes, &EVRConfig_AllowDropToBob, 0);
+    IMFAttributes_SetUINT32(object->attributes, &EVRConfig_ForceThrottle, 0);
+    IMFAttributes_SetUINT32(object->attributes, &EVRConfig_AllowDropToThrottle, 0);
+    IMFAttributes_SetUINT32(object->attributes, &EVRConfig_ForceHalfInterlace, 0);
+    IMFAttributes_SetUINT32(object->attributes, &EVRConfig_AllowDropToHalfInterlace, 0);
+    IMFAttributes_SetUINT32(object->attributes, &EVRConfig_ForceScaling, 0);
+    IMFAttributes_SetUINT32(object->attributes, &EVRConfig_AllowScaling, 0);
+    IMFAttributes_SetUINT32(object->attributes, &EVRConfig_ForceBatching, 0);
+    IMFAttributes_SetUINT32(object->attributes, &EVRConfig_AllowBatching, 0);
+
     *obj = (IUnknown *)&object->IMFMediaSink_iface;
 
     return S_OK;
