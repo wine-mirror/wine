@@ -561,7 +561,7 @@ static HRESULT WINAPI spvoice_GetVoice(ISpVoice *iface, ISpObjectToken **token)
 {
     FIXME("(%p, %p): stub.\n", iface, token);
 
-    return E_NOTIMPL;
+    return token_create(NULL, &IID_ISpObjectToken, (void **)token);
 }
 
 static HRESULT WINAPI spvoice_Speak(ISpVoice *iface, const WCHAR *contents, DWORD flags, ULONG *number)
