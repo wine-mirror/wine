@@ -319,20 +319,6 @@ BOOL WINAPI KERNEL32_WriteFile( HANDLE file, LPCVOID buffer, DWORD count,
 }
 
 
-/*************************************************************************
- *           FlushFileBuffers   (KERNEL32.@)
- */
-BOOL WINAPI KERNEL32_FlushFileBuffers( HANDLE file )
-{
-    IO_STATUS_BLOCK iosb;
-
-    /* this will fail (as expected) for an output handle */
-    if (is_console_handle( file )) return FlushConsoleInputBuffer( file );
-
-    return set_ntstatus( NtFlushBuffersFile( file, &iosb ));
-}
-
-
 /***********************************************************************
  *           DosDateTimeToFileTime   (KERNEL32.@)
  */
