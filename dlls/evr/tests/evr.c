@@ -1994,16 +1994,82 @@ static void test_mixer_zorder(void)
     IMFTransform_Release(mixer);
 }
 
+static IDirect3DSurface9 * create_surface(IDirect3DDeviceManager9 *manager, unsigned int width,
+        unsigned int height)
+{
+    IDirectXVideoAccelerationService *service;
+    IDirect3DSurface9 *surface = NULL;
+    IDirect3DDevice9 *device;
+    HANDLE handle;
+    HRESULT hr;
+
+    hr = IDirect3DDeviceManager9_OpenDeviceHandle(manager, &handle);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDeviceManager9_LockDevice(manager, handle, &device, TRUE);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDeviceManager9_GetVideoService(manager, handle, &IID_IDirectXVideoProcessorService,
+            (void **)&service);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IDirectXVideoAccelerationService_CreateSurface(service, width, height, 0, D3DFMT_A8R8G8B8,
+            D3DPOOL_DEFAULT, 0, DXVA2_VideoProcessorRenderTarget, &surface, NULL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    IDirectXVideoAccelerationService_Release(service);
+
+    hr = IDirect3DDevice9_ColorFill(device, surface, NULL, D3DCOLOR_ARGB(0x10, 0xff, 0x00, 0x00));
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    IDirect3DDevice9_Release(device);
+
+    hr = IDirect3DDeviceManager9_UnlockDevice(manager, handle, FALSE);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDeviceManager9_CloseDeviceHandle(manager, handle);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    return surface;
+}
+
+/* Format is assumed as 32bpp */
+static DWORD get_surface_color(IDirect3DSurface9 *surface, unsigned int x, unsigned int y)
+{
+    D3DLOCKED_RECT locked_rect = { 0 };
+    D3DSURFACE_DESC desc;
+    DWORD *row, color;
+    HRESULT hr;
+
+    hr = IDirect3DSurface9_GetDesc(surface, &desc);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(x < desc.Width && y < desc.Height, "Invalid coordinate.\n");
+    if (x >= desc.Width || y >= desc.Height) return 0;
+
+    hr = IDirect3DSurface9_LockRect(surface, &locked_rect, NULL, 0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    row = (DWORD *)((char *)locked_rect.pBits + y * locked_rect.Pitch);
+    color = row[x];
+
+    hr = IDirect3DSurface9_UnlockRect(surface);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    return color;
+}
+
 static void test_mixer_samples(void)
 {
     IDirect3DDeviceManager9 *manager;
     MFT_OUTPUT_DATA_BUFFER buffer;
+    IDirect3DSurface9 *surface;
+    IMFDesiredSample *desired;
     IDirect3DDevice9 *device;
     IMFMediaType *video_type;
+    DWORD color, status;
     IMFTransform *mixer;
     IMFSample *sample;
     IDirect3D9 *d3d;
-    DWORD status;
     HWND window;
     UINT token;
     HRESULT hr;
@@ -2030,8 +2096,6 @@ static void test_mixer_samples(void)
     hr = IMFTransform_ProcessMessage(mixer, MFT_MESSAGE_SET_D3D_MANAGER, (ULONG_PTR)manager);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
-    IDirect3DDeviceManager9_Release(manager);
-
     video_type = create_video_type(&MFVideoFormat_RGB32);
 
     hr = IMFMediaType_SetUINT64(video_type, &MF_MT_FRAME_SIZE, (UINT64)640 << 32 | 480);
@@ -2052,6 +2116,7 @@ static void test_mixer_samples(void)
 todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
+    /* It needs a sample with a backing surface. */
     hr = MFCreateSample(&sample);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
@@ -2062,9 +2127,41 @@ todo_wine
 
     IMFSample_Release(sample);
 
+    surface = create_surface(manager, 64, 64);
+
+    hr = MFCreateVideoSampleFromSurface((IUnknown *)surface, &sample);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFSample_QueryInterface(sample, &IID_IMFDesiredSample, (void **)&desired);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    buffer.pSample = sample;
+    hr = IMFTransform_ProcessOutput(mixer, 0, 1, &buffer, &status);
+todo_wine
+    ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "Unexpected hr %#x.\n", hr);
+
+    color = get_surface_color(surface, 0, 0);
+    ok(color == D3DCOLOR_ARGB(0x10, 0xff, 0x00, 0x00), "Unexpected color %#x.\n", color);
+
+    /* Streaming is not started yet. Output is colored black, but only if desired timestamps were set. */
+    IMFDesiredSample_SetDesiredSampleTimeAndDuration(desired, 100, 0);
+
+    hr = IMFTransform_ProcessOutput(mixer, 0, 1, &buffer, &status);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    color = get_surface_color(surface, 0, 0);
+todo_wine
+    ok(!color, "Unexpected color %#x.\n", color);
+
+    IMFSample_Release(sample);
+
+    IDirect3DSurface9_Release(surface);
+
     IMFTransform_Release(mixer);
 
     IDirect3DDevice9_Release(device);
+    IDirect3DDeviceManager9_Release(manager);
 
 done:
     IDirect3D9_Release(d3d);
