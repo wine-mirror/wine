@@ -4322,15 +4322,15 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     }
     cursor_from_char_ofs( editor, wParam, &cursor );
     item = ME_RowStart( cursor.pRun );
-    nThisLineOfs = ME_CharOfsFromRunOfs( editor, cursor.pPara, ME_FindItemFwd( item, diRun ), 0 );
+    nThisLineOfs = run_char_ofs( &ME_FindItemFwd( item, diRun )->member.run, 0 );
     item_end = ME_FindItemFwd(item, diStartRowOrParagraphOrEnd);
     if (item_end->type == diStartRow)
-      nNextLineOfs = ME_CharOfsFromRunOfs(editor, cursor.pPara, ME_FindItemFwd( item_end, diRun ), 0);
+      nNextLineOfs = run_char_ofs( &ME_FindItemFwd( item_end, diRun )->member.run, 0 );
     else
     {
       ME_DisplayItem *endRun = ME_FindItemBack(item_end, diRun);
       assert(endRun && endRun->member.run.nFlags & MERF_ENDPARA);
-      nNextLineOfs = item_end->member.para.nCharOfs - endRun->member.run.len;
+      nNextLineOfs = run_char_ofs( &endRun->member.run, 0 );
     }
     nChars = nNextLineOfs - nThisLineOfs;
     TRACE("EM_LINELENGTH(%ld)==%d\n", wParam, nChars);

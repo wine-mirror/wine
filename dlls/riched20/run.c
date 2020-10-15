@@ -187,18 +187,15 @@ void ME_CheckCharOffsets(ME_TextEditor *editor)
 }
 
 /******************************************************************************
- * ME_CharOfsFromRunOfs
+ * run_char_ofs
  *
- * Converts a character position relative to the start of the run, to a
+ * Converts a character position relative to the start of the run to a
  * character position relative to the start of the document.
- * Kind of a "local to global" offset conversion.
  */
-int ME_CharOfsFromRunOfs(ME_TextEditor *editor, const ME_DisplayItem *pPara,
-                         const ME_DisplayItem *pRun, int nOfs)
+
+int run_char_ofs( ME_Run *run, int ofs )
 {
-  assert(pRun && pRun->type == diRun);
-  assert(pPara && pPara->type == diParagraph);
-  return pPara->member.para.nCharOfs + pRun->member.run.nCharOfs + nOfs;
+    return run->para->nCharOfs + run->nCharOfs + ofs;
 }
 
 /******************************************************************************
