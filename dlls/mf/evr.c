@@ -35,6 +35,13 @@ enum video_renderer_flags
     EVR_PRESENTER_INITED_SERVICES = 0x8,
 };
 
+enum video_renderer_state
+{
+    EVR_STATE_STOPPED = 0,
+    EVR_STATE_RUNNING,
+    EVR_STATE_PAUSED,
+};
+
 enum video_stream_flags
 {
     EVR_STREAM_PREROLLING = 0x1,
@@ -77,6 +84,7 @@ struct video_renderer
     IMFTransform *mixer;
     IMFVideoPresenter *presenter;
     unsigned int flags;
+    unsigned int state;
 
     struct video_stream **streams;
     size_t stream_size;
@@ -1338,30 +1346,98 @@ static ULONG WINAPI video_renderer_clock_sink_Release(IMFClockStateSink *iface)
 
 static HRESULT WINAPI video_renderer_clock_sink_OnClockStart(IMFClockStateSink *iface, MFTIME systime, LONGLONG offset)
 {
-    FIXME("%p, %s, %s.\n", iface, debugstr_time(systime), debugstr_time(offset));
+    struct video_renderer *renderer = impl_from_IMFClockStateSink(iface);
+    size_t i;
 
-    return E_NOTIMPL;
+    TRACE("%p, %s, %s.\n", iface, debugstr_time(systime), debugstr_time(offset));
+
+    EnterCriticalSection(&renderer->cs);
+
+    for (i = 0; i < renderer->stream_count; ++i)
+    {
+        struct video_stream *stream = renderer->streams[i];
+
+        IMFMediaEventQueue_QueueEventParamVar(stream->event_queue, MEStreamSinkStarted, &GUID_NULL, S_OK, NULL);
+
+        EnterCriticalSection(&stream->cs);
+        if (!(stream->flags & EVR_STREAM_PREROLLED))
+            IMFMediaEventQueue_QueueEventParamVar(stream->event_queue, MEStreamSinkRequestSample,
+                    &GUID_NULL, S_OK, NULL);
+        stream->flags |= EVR_STREAM_PREROLLED;
+        LeaveCriticalSection(&stream->cs);
+    }
+    renderer->state = EVR_STATE_RUNNING;
+
+    LeaveCriticalSection(&renderer->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI video_renderer_clock_sink_OnClockStop(IMFClockStateSink *iface, MFTIME systime)
 {
-    FIXME("%p, %s.\n", iface, debugstr_time(systime));
+    struct video_renderer *renderer = impl_from_IMFClockStateSink(iface);
+    size_t i;
 
-    return E_NOTIMPL;
+    TRACE("%p, %s.\n", iface, debugstr_time(systime));
+
+    EnterCriticalSection(&renderer->cs);
+
+    for (i = 0; i < renderer->stream_count; ++i)
+    {
+        struct video_stream *stream = renderer->streams[i];
+        IMFMediaEventQueue_QueueEventParamVar(stream->event_queue, MEStreamSinkStopped, &GUID_NULL, S_OK, NULL);
+
+        EnterCriticalSection(&stream->cs);
+        stream->flags &= ~EVR_STREAM_PREROLLED;
+        LeaveCriticalSection(&stream->cs);
+    }
+    renderer->state = EVR_STATE_STOPPED;
+
+    LeaveCriticalSection(&renderer->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI video_renderer_clock_sink_OnClockPause(IMFClockStateSink *iface, MFTIME systime)
 {
-    FIXME("%p, %s.\n", iface, debugstr_time(systime));
+    struct video_renderer *renderer = impl_from_IMFClockStateSink(iface);
+    size_t i;
 
-    return E_NOTIMPL;
+    TRACE("%p, %s.\n", iface, debugstr_time(systime));
+
+    EnterCriticalSection(&renderer->cs);
+
+    for (i = 0; i < renderer->stream_count; ++i)
+    {
+        struct video_stream *stream = renderer->streams[i];
+        IMFMediaEventQueue_QueueEventParamVar(stream->event_queue, MEStreamSinkPaused, &GUID_NULL, S_OK, NULL);
+    }
+    renderer->state = EVR_STATE_PAUSED;
+
+    LeaveCriticalSection(&renderer->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI video_renderer_clock_sink_OnClockRestart(IMFClockStateSink *iface, MFTIME systime)
 {
-    FIXME("%p, %s.\n", iface, debugstr_time(systime));
+    struct video_renderer *renderer = impl_from_IMFClockStateSink(iface);
+    size_t i;
 
-    return E_NOTIMPL;
+    TRACE("%p, %s.\n", iface, debugstr_time(systime));
+
+    EnterCriticalSection(&renderer->cs);
+
+    for (i = 0; i < renderer->stream_count; ++i)
+    {
+        struct video_stream *stream = renderer->streams[i];
+        IMFMediaEventQueue_QueueEventParamVar(stream->event_queue, MEStreamSinkStarted, &GUID_NULL, S_OK, NULL);
+    }
+    renderer->state = EVR_STATE_RUNNING;
+
+    LeaveCriticalSection(&renderer->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI video_renderer_clock_sink_OnClockSetRate(IMFClockStateSink *iface, MFTIME systime, float rate)
