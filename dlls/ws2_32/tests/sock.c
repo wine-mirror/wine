@@ -4956,25 +4956,6 @@ static void get_event_details(int event, int *bit, char *name)
     }
 }
 
-static const char *dbgstr_event_seq(const LPARAM *seq)
-{
-    static char message[1024];
-    char name[12];
-    int len = 1;
-
-    message[0] = '[';
-    message[1] = 0;
-    while (*seq)
-    {
-        get_event_details(WSAGETSELECTEVENT(*seq), NULL, name);
-        len += sprintf(message + len, "%s(%d) ", name, WSAGETSELECTERROR(*seq));
-        seq++;
-    }
-    if (len > 1) len--;
-    strcpy( message + len, "]" );
-    return message;
-}
-
 static char *dbgstr_event_seq_result(SOCKET s, WSANETWORKEVENTS *netEvents)
 {
     static char message[1024];
@@ -5105,7 +5086,7 @@ static int match_event_sequence(SOCKET s, WSANETWORKEVENTS *netEvents, const LPA
 }
 
 /* checks for a sequence of events, (order only checked if window is used) */
-static void ok_event_sequence(SOCKET s, HANDLE hEvent, const LPARAM *seq, const LPARAM **broken_seqs, int completelyBroken)
+static void ok_event_sequence(SOCKET s, HANDLE hEvent, const LPARAM *seq)
 {
     MSG msg;
     WSANETWORKEVENTS events, *netEvents = NULL;
@@ -5139,28 +5120,7 @@ static void ok_event_sequence(SOCKET s, HANDLE hEvent, const LPARAM *seq, const 
         }
     }
 
-    if (match_event_sequence(s, netEvents, seq))
-    {
-        winetest_ok(1, "Sequence matches expected: %s\n", dbgstr_event_seq(seq));
-        flush_events(s, hEvent);
-        return;
-    }
-
-    if (broken_seqs)
-    {
-        for (; *broken_seqs; broken_seqs++)
-        {
-            if (match_event_sequence(s, netEvents, *broken_seqs))
-            {
-                winetest_ok(broken(1), "Sequence matches broken: %s, expected %s\n", dbgstr_event_seq_result(s, netEvents), dbgstr_event_seq(seq));
-                flush_events(s, hEvent);
-                return;
-            }
-        }
-    }
-
-    winetest_ok(broken(completelyBroken), "Expected event sequence %s, got %s\n", dbgstr_event_seq(seq),
-                dbgstr_event_seq_result(s, netEvents));
+    winetest_ok(match_event_sequence(s, netEvents, seq), "Got sequence %s\n", dbgstr_event_seq_result(s, netEvents));
     flush_events(s, hEvent);
 }
 
@@ -5188,18 +5148,12 @@ static void test_events(int useMessages)
     DWORD dwRet;
     BOOL bret;
     static char szClassName[] = "wstestclass";
-    const LPARAM *broken_seq[3];
     static const LPARAM empty_seq[] = { 0 };
-    static const LPARAM close_seq[] = { WSAMAKESELECTREPLY(FD_CLOSE, 0), 0 };
     static const LPARAM write_seq[] = { WSAMAKESELECTREPLY(FD_WRITE, 0), 0 };
     static const LPARAM read_seq[] = { WSAMAKESELECTREPLY(FD_READ, 0), 0 };
     static const LPARAM oob_seq[] = { WSAMAKESELECTREPLY(FD_OOB, 0), 0 };
     static const LPARAM connect_seq[] = { WSAMAKESELECTREPLY(FD_CONNECT, 0),
                                           WSAMAKESELECTREPLY(FD_WRITE, 0), 0 };
-    static const LPARAM read_read_seq[] = { WSAMAKESELECTREPLY(FD_READ, 0),
-                                            WSAMAKESELECTREPLY(FD_READ, 0), 0 };
-    static const LPARAM read_write_seq[] = { WSAMAKESELECTREPLY(FD_READ, 0),
-                                             WSAMAKESELECTREPLY(FD_WRITE, 0), 0 };
     static const LPARAM read_close_seq[] = { WSAMAKESELECTREPLY(FD_READ, 0),
                                              WSAMAKESELECTREPLY(FD_CLOSE, 0), 0 };
 
@@ -5328,55 +5282,51 @@ static void test_events(int useMessages)
     ov2.hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
 
     /* FD_WRITE should be set initially, and allow us to send at least 1 byte */
-    ok_event_seq(src, hEvent, connect_seq, NULL, 1);
-    ok_event_seq(src2, hEvent2, connect_seq, NULL, 1);
-    /* broken on all windows - FD_CONNECT error is garbage */
+    ok_event_seq(src, hEvent, connect_seq);
+    ok_event_seq(src2, hEvent2, connect_seq);
 
     /* Test simple send/recv */
     SetLastError(0xdeadbeef);
     ret = send(dst, buffer, 100, 0);
     ok(ret == 100, "Failed to send buffer %d err %d\n", ret, GetLastError());
     ok(GetLastError() == ERROR_SUCCESS, "Expected 0, got %d\n", GetLastError());
-    ok_event_seq(src, hEvent, read_seq, NULL, 0);
+    ok_event_seq(src, hEvent, read_seq);
 
     SetLastError(0xdeadbeef);
     ret = recv(src, buffer, 1, MSG_PEEK);
     ok(ret == 1, "Failed to peek at recv buffer %d err %d\n", ret, GetLastError());
     ok(GetLastError() == ERROR_SUCCESS, "Expected 0, got %d\n", GetLastError());
-    ok_event_seq(src, hEvent, read_seq, NULL, 0);
+    ok_event_seq(src, hEvent, read_seq);
 
     SetLastError(0xdeadbeef);
     ret = recv(src, buffer, 50, 0);
     ok(ret == 50, "Failed to recv buffer %d err %d\n", ret, GetLastError());
     ok(GetLastError() == ERROR_SUCCESS, "Expected 0, got %d\n", GetLastError());
-    ok_event_seq(src, hEvent, read_seq, NULL, 0);
+    ok_event_seq(src, hEvent, read_seq);
 
     ret = recv(src, buffer, 50, 0);
     ok(ret == 50, "Failed to recv buffer %d err %d\n", ret, GetLastError());
-    ok_event_seq(src, hEvent, empty_seq, NULL, 0);
+    ok_event_seq(src, hEvent, empty_seq);
 
     /* fun fact - events are re-enabled even on failure, but only for messages */
     ret = send(dst, "1", 1, 0);
     ok(ret == 1, "Failed to send buffer %d err %d\n", ret, GetLastError());
-    ok_event_seq(src, hEvent, read_seq, NULL, 0);
+    ok_event_seq(src, hEvent, read_seq);
 
     ret = recv(src, buffer, -1, 0);
-    ok(ret == SOCKET_ERROR && (GetLastError() == WSAEFAULT || GetLastError() == WSAENOBUFS),
-       "Failed to recv buffer %d err %d\n", ret, GetLastError());
+    ok(ret == SOCKET_ERROR, "expected failure\n");
+    ok(WSAGetLastError() == WSAEFAULT || WSAGetLastError() == WSAENOBUFS /* < 7 */,
+            "got error %u\n", WSAGetLastError());
     if (useMessages)
-    {
-        broken_seq[0] = empty_seq; /* win9x */
-        broken_seq[1] = NULL;
-        todo_wine ok_event_seq(src, hEvent, read_seq, broken_seq, 0);
-    }
+        todo_wine ok_event_seq(src, hEvent, read_seq);
     else
-        ok_event_seq(src, hEvent, empty_seq, NULL, 0);
+        ok_event_seq(src, hEvent, empty_seq);
 
     SetLastError(0xdeadbeef);
     ret = recv(src, buffer, 1, 0);
     ok(ret == 1, "Failed to recv buffer %d err %d\n", ret, GetLastError());
     ok(GetLastError() == ERROR_SUCCESS, "Expected 0, got %d\n", GetLastError());
-    ok_event_seq(src, hEvent, empty_seq, NULL, 0);
+    ok_event_seq(src, hEvent, empty_seq);
 
     /* Interaction with overlapped */
     bufs.len = sizeof(char);
@@ -5393,39 +5343,31 @@ static void test_events(int useMessages)
 
     ret = send(dst, "12", 2, 0);
     ok(ret == 2, "Failed to send buffer %d err %d\n", ret, GetLastError());
-    broken_seq[0] = read_read_seq; /* win9x */
-    broken_seq[1] = NULL;
-    ok_event_seq(src, hEvent, empty_seq, broken_seq, 0);
+    ok_event_seq(src, hEvent, empty_seq);
 
     dwRet = WaitForSingleObject(ov.hEvent, 100);
-    ok(dwRet == WAIT_OBJECT_0, "Failed to wait for recv message: %d - %d\n", dwRet, GetLastError());
-    if (dwRet == WAIT_OBJECT_0)
-    {
-        bret = GetOverlappedResult((HANDLE)src, &ov, &bytesReturned, FALSE);
-        ok((bret && bytesReturned == 1) || broken(!bret && GetLastError() == ERROR_IO_INCOMPLETE) /* win9x */,
-           "Got %d instead of 1 (%d - %d)\n", bytesReturned, bret, GetLastError());
-        ok(buffer[0] == '1', "Got %c instead of 1\n", buffer[0]);
-    }
+    ok(!dwRet, "got %u\n", dwRet);
+    bret = GetOverlappedResult((HANDLE)src, &ov, &bytesReturned, FALSE);
+    ok(bret, "got error %u\n", GetLastError());
+    ok(bytesReturned == 1, "got %u bytes\n", bytesReturned);
+    ok(buffer[0] == '1', "Got %c instead of 2\n", buffer[0]);
 
     dwRet = WaitForSingleObject(ov2.hEvent, 100);
-    ok(dwRet == WAIT_OBJECT_0, "Failed to wait for recv message: %d - %d\n", dwRet, GetLastError());
-    if (dwRet == WAIT_OBJECT_0)
-    {
-        bret = GetOverlappedResult((HANDLE)src, &ov2, &bytesReturned, FALSE);
-        ok((bret && bytesReturned == 1) || broken(!bret && GetLastError() == ERROR_IO_INCOMPLETE) /* win9x */,
-           "Got %d instead of 1 (%d - %d)\n", bytesReturned, bret, GetLastError());
-        ok(buffer[1] == '2', "Got %c instead of 2\n", buffer[1]);
-    }
+    ok(!dwRet, "got %u\n", dwRet);
+    bret = GetOverlappedResult((HANDLE)src, &ov2, &bytesReturned, FALSE);
+    ok(bret, "got error %u\n", GetLastError());
+    ok(bytesReturned == 1, "got %u bytes\n", bytesReturned);
+    ok(buffer[1] == '2', "Got %c instead of 2\n", buffer[0]);
 
     SetLastError(0xdeadbeef);
     ret = send(dst, "1", 1, 0);
     ok(ret == 1, "Failed to send buffer %d err %d\n", ret, GetLastError());
     ok(GetLastError() == ERROR_SUCCESS, "Expected 0, got %d\n", GetLastError());
-    ok_event_seq(src, hEvent, read_seq, NULL, 0);
+    ok_event_seq(src, hEvent, read_seq);
 
     ret = recv(src, buffer, 1, 0);
     ok(ret == 1, "Failed to empty buffer: %d - %d\n", ret, GetLastError());
-    ok_event_seq(src, hEvent, empty_seq, NULL, 0);
+    ok_event_seq(src, hEvent, empty_seq);
 
     /* Notifications are delivered as soon as possible, blocked only on
      * async requests on the same type */
@@ -5435,44 +5377,33 @@ static void test_events(int useMessages)
     ok(ret == SOCKET_ERROR && GetLastError() == ERROR_IO_PENDING,
        "WSARecv failed - %d error %d\n", ret, GetLastError());
 
-    if (0) {
     ret = send(dst, "1", 1, MSG_OOB);
     ok(ret == 1, "Failed to send buffer %d err %d\n", ret, GetLastError());
-    ok_event_seq(src, hEvent, oob_seq, NULL, 0);
-    }
+    todo_wine ok_event_seq(src, hEvent, oob_seq);
 
     dwRet = WaitForSingleObject(ov.hEvent, 100);
     ok(dwRet == WAIT_TIMEOUT, "OOB message activated read?: %d - %d\n", dwRet, GetLastError());
 
     ret = send(dst, "2", 1, 0);
     ok(ret == 1, "Failed to send buffer %d err %d\n", ret, GetLastError());
-    broken_seq[0] = read_seq;  /* win98 */
-    broken_seq[1] = NULL;
-    ok_event_seq(src, hEvent, empty_seq, broken_seq, 0);
+    ok_event_seq(src, hEvent, empty_seq);
 
     dwRet = WaitForSingleObject(ov.hEvent, 100);
-    ok(dwRet == WAIT_OBJECT_0 || broken(dwRet == WAIT_TIMEOUT),
-       "Failed to wait for recv message: %d - %d\n", dwRet, GetLastError());
-    if (dwRet == WAIT_OBJECT_0)
-    {
-        bret = GetOverlappedResult((HANDLE)src, &ov, &bytesReturned, FALSE);
-        ok((bret && bytesReturned == 1) || broken(!bret && GetLastError() == ERROR_IO_INCOMPLETE) /* win9x */,
-           "Got %d instead of 1 (%d - %d)\n", bytesReturned, bret, GetLastError());
-        ok(buffer[0] == '2', "Got %c instead of 2\n", buffer[0]);
-    }
+    ok(!dwRet, "got %u\n", dwRet);
+    bret = GetOverlappedResult((HANDLE)src, &ov, &bytesReturned, FALSE);
+    ok(bret, "got error %u\n", GetLastError());
+    ok(bytesReturned == 1, "got %u bytes\n", bytesReturned);
+    ok(buffer[0] == '2', "Got %c instead of 2\n", buffer[0]);
 
-    if (0) {
     ret = recv(src, buffer, 1, MSG_OOB);
     todo_wine ok(ret == 1, "Failed to empty buffer: %d - %d\n", ret, GetLastError());
-    /* We get OOB notification, but no data on wine */
-    ok_event_seq(src, hEvent, empty_seq, NULL, 0);
-    }
+    ok_event_seq(src, hEvent, empty_seq);
 
     /* Flood the send queue */
     hThread = CreateThread(NULL, 0, drain_socket_thread, &dst, 0, &id);
 
     /* Now FD_WRITE should not be set, because the socket send buffer isn't full yet */
-    ok_event_seq(src, hEvent, empty_seq, NULL, 0);
+    ok_event_seq(src, hEvent, empty_seq);
 
     /* Now if we send a ton of data and the 'server' does not drain it fast
      * enough (set drain_pause to be sure), the socket send buffer will only
@@ -5486,10 +5417,7 @@ static void test_events(int useMessages)
     } while (ret == bufferSize);
     drain_pause = FALSE;
     ok(ret >= 0 || WSAGetLastError() == WSAEWOULDBLOCK, "got error %u\n", WSAGetLastError());
-    Sleep(400); /* win9x */
-    broken_seq[0] = read_write_seq;
-    broken_seq[1] = NULL;
-    ok_event_seq(src, hEvent, write_seq, broken_seq, 0);
+    ok_event_seq(src, hEvent, write_seq);
 
     /* Test how FD_CLOSE is handled */
     ret = send(dst, "12", 2, 0);
@@ -5502,21 +5430,16 @@ static void test_events(int useMessages)
 
     /* We can never implement this in wine, best we can hope for is
        sending FD_CLOSE after the reads complete */
-    broken_seq[0] = read_seq;  /* win9x */
-    broken_seq[1] = NULL;
-    todo_wine ok_event_seq(src, hEvent, read_close_seq, broken_seq, 0);
+    todo_wine ok_event_seq(src, hEvent, read_close_seq);
 
     ret = recv(src, buffer, 1, 0);
     ok(ret == 1, "Failed to empty buffer: %d - %d\n", ret, GetLastError());
-    ok_event_seq(src, hEvent, read_seq, NULL, 0);
+    ok_event_seq(src, hEvent, read_seq);
 
     ret = recv(src, buffer, 1, 0);
     ok(ret == 1, "Failed to empty buffer: %d - %d\n", ret, GetLastError());
     /* want it? it's here, but you can't have it */
-    broken_seq[0] = close_seq;  /* win9x */
-    broken_seq[1] = NULL;
-    todo_wine ok_event_seq(src, hEvent, empty_seq, /* wine sends FD_CLOSE here */
-                           broken_seq, 0);
+    todo_wine ok_event_seq(src, hEvent, empty_seq);
 
     /* Test how FD_CLOSE is handled */
     ret = send(dst2, "12", 2, 0);
@@ -5526,32 +5449,23 @@ static void test_events(int useMessages)
     shutdown(dst2, SD_SEND);
     Sleep(200);
 
-    /* Some of the below are technically todo_wine, but our event sequence is still valid, so to prevent
-       regressions, don't mark them as todo_wine, and mark windows as broken */
-    broken_seq[0] = read_close_seq;
-    broken_seq[1] = close_seq;
-    broken_seq[2] = NULL;
-    ok_event_seq(src2, hEvent2, read_seq, broken_seq, 0);
+    todo_wine ok_event_seq(src2, hEvent2, read_close_seq);
 
     ret = recv(src2, buffer, 1, 0);
-    ok(ret == 1 || broken(!ret), "Failed to empty buffer: %d - %d\n", ret, GetLastError());
-    broken_seq[0] = close_seq;  /* win98 */
-    broken_seq[1] = NULL;
-    ok_event_seq(src2, hEvent2, read_seq, broken_seq, 0);
+    ok(ret == 1, "got ret %d, error %u\n", ret, WSAGetLastError());
+    ok_event_seq(src2, hEvent2, read_seq);
 
     ret = recv(src2, buffer, 1, 0);
-    ok(ret == 1 || broken(!ret), "Failed to empty buffer: %d - %d\n", ret, GetLastError());
-    broken_seq[0] = empty_seq;
-    broken_seq[1] = NULL;
-    ok_event_seq(src2, hEvent2, close_seq, broken_seq, 0);
+    ok(ret == 1, "got ret %d, error %u\n", ret, WSAGetLastError());
+    todo_wine ok_event_seq(src2, hEvent2, empty_seq);
 
     ret = send(src2, "1", 1, 0);
     ok(ret == 1, "Sending to half-closed socket failed %d err %d\n", ret, GetLastError());
-    ok_event_seq(src2, hEvent2, empty_seq, NULL, 0);
+    ok_event_seq(src2, hEvent2, empty_seq);
 
     ret = send(src2, "1", 1, 0);
     ok(ret == 1, "Sending to half-closed socket failed %d err %d\n", ret, GetLastError());
-    ok_event_seq(src2, hEvent2, empty_seq, NULL, 0);
+    ok_event_seq(src2, hEvent2, empty_seq);
 
     if (useMessages)
     {
