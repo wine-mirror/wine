@@ -47,6 +47,7 @@ struct video_stream
     struct video_renderer *parent;
     IMFMediaEventQueue *event_queue;
     IMFVideoSampleAllocator *allocator;
+    CRITICAL_SECTION cs;
 };
 
 struct video_renderer
@@ -213,6 +214,7 @@ static ULONG WINAPI video_stream_sink_Release(IMFStreamSink *iface)
             IMFMediaEventQueue_Release(stream->event_queue);
         if (stream->allocator)
             IMFVideoSampleAllocator_Release(stream->allocator);
+        DeleteCriticalSection(&stream->cs);
         heap_free(stream);
     }
 
@@ -260,20 +262,23 @@ static HRESULT WINAPI video_stream_sink_QueueEvent(IMFStreamSink *iface, MediaEv
 static HRESULT WINAPI video_stream_sink_GetMediaSink(IMFStreamSink *iface, IMFMediaSink **sink)
 {
     struct video_stream *stream = impl_from_IMFStreamSink(iface);
+    HRESULT hr = S_OK;
 
     TRACE("%p, %p.\n", iface, sink);
 
+    EnterCriticalSection(&stream->cs);
     if (!stream->parent)
-        return MF_E_STREAMSINK_REMOVED;
+        hr = MF_E_STREAMSINK_REMOVED;
+    else if (!sink)
+        hr = E_POINTER;
+    else
+    {
+        *sink = &stream->parent->IMFMediaSink_iface;
+        IMFMediaSink_AddRef(*sink);
+    }
+    LeaveCriticalSection(&stream->cs);
 
-    if (!sink)
-        return E_POINTER;
-
-    /* FIXME: not entirely safe if sink is being shut down. */
-    *sink = &stream->parent->IMFMediaSink_iface;
-    IMFMediaSink_AddRef(*sink);
-
-    return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI video_stream_sink_GetIdentifier(IMFStreamSink *iface, DWORD *id)
@@ -533,6 +538,7 @@ static HRESULT video_renderer_stream_create(struct video_renderer *renderer, uns
     stream->IMFMediaTypeHandler_iface.lpVtbl = &video_stream_type_handler_vtbl;
     stream->IMFGetService_iface.lpVtbl = &video_stream_get_service_vtbl;
     stream->refcount = 1;
+    InitializeCriticalSection(&stream->cs);
 
     if (FAILED(hr = MFCreateEventQueue(&stream->event_queue)))
         goto failed;
@@ -894,10 +900,15 @@ static HRESULT WINAPI video_renderer_sink_Shutdown(IMFMediaSink *iface)
     /* Detach streams from the sink. */
     for (i = 0; i < renderer->stream_count; ++i)
     {
-        IMFMediaSink_Release(&renderer->streams[i]->parent->IMFMediaSink_iface);
-        renderer->streams[i]->parent = NULL;
-        IMFMediaEventQueue_Shutdown(renderer->streams[i]->event_queue);
-        IMFStreamSink_Release(&renderer->streams[i]->IMFStreamSink_iface);
+        struct video_stream *stream = renderer->streams[i];
+
+        EnterCriticalSection(&stream->cs);
+        stream->parent = NULL;
+        LeaveCriticalSection(&stream->cs);
+
+        IMFMediaEventQueue_Shutdown(stream->event_queue);
+        IMFStreamSink_Release(&stream->IMFStreamSink_iface);
+        IMFMediaSink_Release(iface);
         renderer->streams[i] = NULL;
     }
     heap_free(renderer->streams);
