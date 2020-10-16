@@ -39,6 +39,7 @@ DEFINE_GUID(MFVideoFormat_ABGR32, 0x00000020, 0x0000, 0x0010, 0x80, 0x00, 0x00, 
 #include "mferror.h"
 #include "mfidl.h"
 #include "initguid.h"
+#include "uuids.h"
 #include "mmdeviceapi.h"
 #include "audioclient.h"
 #include "evr.h"
@@ -3237,6 +3238,7 @@ static void test_evr(void)
 {
     IMFVideoSampleAllocatorCallback *allocator_callback;
     IMFStreamSink *stream_sink, *stream_sink2;
+    IMFVideoDisplayControl *display_control;
     IMFMediaType *media_type, *media_type2;
     IMFMediaEventGenerator *ev_generator;
     IMFVideoSampleAllocator *allocator;
@@ -3292,6 +3294,15 @@ static void test_evr(void)
     hr = IMFAttributes_GetCount(attributes, &count);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!!count, "Unexpected count %u.\n", count);
+    /* Rendering preferences are not immediately propagated to the presenter. */
+    hr = IMFAttributes_SetUINT32(attributes, &EVRConfig_ForceBob, 1);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = MFGetService((IUnknown *)sink, &MR_VIDEO_RENDER_SERVICE, &IID_IMFVideoDisplayControl, (void **)&display_control);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMFVideoDisplayControl_GetRenderingPrefs(display_control, &flags);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!flags, "Unexpected flags %#x.\n", flags);
+    IMFVideoDisplayControl_Release(display_control);
     IMFAttributes_Release(attributes);
 
     /* Primary stream type handler. */
