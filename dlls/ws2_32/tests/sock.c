@@ -7334,15 +7334,13 @@ static void test_AcceptEx(void)
     DWORD dwret;
 
     memset(&overlapped, 0, sizeof(overlapped));
+    overlapped.hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
 
     listener = socket(AF_INET, SOCK_STREAM, 0);
     ok(listener != INVALID_SOCKET, "failed to create socket, error %u\n", WSAGetLastError());
 
     acceptor = socket(AF_INET, SOCK_STREAM, 0);
     ok(acceptor != INVALID_SOCKET, "failed to create socket, error %u\n", WSAGetLastError());
-
-    connector = socket(AF_INET, SOCK_STREAM, 0);
-    ok(connector != INVALID_SOCKET, "failed to create socket, error %u\n", WSAGetLastError());
 
     memset(&bindAddress, 0, sizeof(bindAddress));
     bindAddress.sin_family = AF_INET;
@@ -7408,8 +7406,101 @@ todo_wine
         "AcceptEx on too small local address size returned %d + errno %d\n",
         bret, WSAGetLastError());
     ok(overlapped.Internal == STATUS_PENDING, "got %08x\n", (ULONG)overlapped.Internal);
-    bret = CancelIo((HANDLE) listener);
-    ok(bret, "Failed to cancel pending accept socket\n");
+
+    connector = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ok(connector != -1, "failed to create socket, error %u\n", WSAGetLastError());
+    iret = connect(connector, (struct sockaddr *)&bindAddress, sizeof(bindAddress));
+    ok(!iret, "failed to connect, error %u\n", WSAGetLastError());
+    iret = getsockname(connector, (struct sockaddr *)&peerAddress, &remoteSize);
+    ok(!iret, "getsockname failed, error %u\n", WSAGetLastError());
+
+    dwret = WaitForSingleObject(overlapped.hEvent, 1000);
+    ok(!dwret, "wait failed\n");
+    bret = GetOverlappedResult((HANDLE)listener, &overlapped, &bytesReturned, FALSE);
+    ok(bret, "got error %u\n", GetLastError());
+    ok(!(NTSTATUS)overlapped.Internal, "got %#lx\n", overlapped.Internal);
+    ok(!bytesReturned, "got size %u\n", bytesReturned);
+
+    readBindAddress = readRemoteAddress = (struct sockaddr_in *)0xdeadbeef;
+    localSize = remoteSize = 0xdeadbeef;
+    pGetAcceptExSockaddrs(buffer, 0, 0, sizeof(struct sockaddr_in) + 16,
+            (struct sockaddr **)&readBindAddress, &localSize, (struct sockaddr **)&readRemoteAddress, &remoteSize);
+    todo_wine ok(readBindAddress == (struct sockaddr_in *)0xdeadbeef, "got local addr %p\n", readBindAddress);
+    ok(!memcmp(readRemoteAddress, &peerAddress, sizeof(peerAddress)), "remote addr didn't match\n");
+    todo_wine ok(localSize == 0xdeadbeef, "got local size %u\n", localSize);
+    ok(remoteSize == sizeof(struct sockaddr_in), "got remote size %u\n", remoteSize);
+
+    closesocket(connector);
+    closesocket(acceptor);
+
+    acceptor = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ok(acceptor != -1, "failed to create socket, error %u\n", WSAGetLastError());
+
+    overlapped.Internal = 0xdeadbeef;
+    bret = pAcceptEx(listener, acceptor, buffer, 0, 3,
+            sizeof(struct sockaddr_in) + 16, &bytesReturned, &overlapped);
+    ok(!bret && WSAGetLastError() == ERROR_IO_PENDING, "got %d, error %u\n", bret, WSAGetLastError());
+    ok((NTSTATUS)overlapped.Internal == STATUS_PENDING, "got %#lx\n", overlapped.Internal);
+
+    connector = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ok(connector != -1, "failed to create socket, error %u\n", WSAGetLastError());
+    iret = connect(connector, (struct sockaddr *)&bindAddress, sizeof(bindAddress));
+    ok(!iret, "failed to connect, error %u\n", WSAGetLastError());
+
+    dwret = WaitForSingleObject(overlapped.hEvent, 1000);
+    ok(!dwret, "wait failed\n");
+    bytesReturned = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    bret = GetOverlappedResult((HANDLE)listener, &overlapped, &bytesReturned, FALSE);
+    todo_wine ok(!bret, "expected failure\n");
+    todo_wine ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got error %u\n", GetLastError());
+    todo_wine ok((NTSTATUS)overlapped.Internal == STATUS_BUFFER_TOO_SMALL, "got %#lx\n", overlapped.Internal);
+    ok(!bytesReturned, "got size %u\n", bytesReturned);
+
+    closesocket(acceptor);
+
+    /* The above connection request is not accepted. */
+    acceptor = accept(listener, NULL, NULL);
+    todo_wine ok(acceptor != INVALID_SOCKET, "failed to accept, error %u\n", WSAGetLastError());
+    closesocket(acceptor);
+
+    closesocket(connector);
+
+    acceptor = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ok(acceptor != -1, "failed to create socket, error %u\n", WSAGetLastError());
+
+    overlapped.Internal = 0xdeadbeef;
+    bret = pAcceptEx(listener, acceptor, buffer, 0, sizeof(struct sockaddr_in) + 4,
+            sizeof(struct sockaddr_in) + 16, &bytesReturned, &overlapped);
+    ok(!bret && WSAGetLastError() == ERROR_IO_PENDING, "got %d, error %u\n", bret, WSAGetLastError());
+    ok((NTSTATUS)overlapped.Internal == STATUS_PENDING, "got %#lx\n", overlapped.Internal);
+
+    connector = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ok(connector != -1, "failed to create socket, error %u\n", WSAGetLastError());
+    iret = connect(connector, (struct sockaddr *)&bindAddress, sizeof(bindAddress));
+    ok(!iret, "failed to connect, error %u\n", WSAGetLastError());
+
+    dwret = WaitForSingleObject(overlapped.hEvent, 1000);
+    ok(!dwret, "wait failed\n");
+    bytesReturned = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    bret = GetOverlappedResult((HANDLE)listener, &overlapped, &bytesReturned, FALSE);
+    todo_wine ok(!bret, "expected failure\n");
+    todo_wine ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got error %u\n", GetLastError());
+    todo_wine ok((NTSTATUS)overlapped.Internal == STATUS_BUFFER_TOO_SMALL, "got %#lx\n", overlapped.Internal);
+    ok(!bytesReturned, "got size %u\n", bytesReturned);
+
+    closesocket(acceptor);
+
+    /* The above connection request is not accepted. */
+    acceptor = accept(listener, NULL, NULL);
+    todo_wine ok(acceptor != INVALID_SOCKET, "failed to accept, error %u\n", WSAGetLastError());
+    closesocket(acceptor);
+
+    closesocket(connector);
+
+    acceptor = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ok(acceptor != -1, "failed to create socket, error %u\n", WSAGetLastError());
 
     overlapped.Internal = 0xdeadbeef;
     bret = pAcceptEx(listener, acceptor, buffer, 0, sizeof(struct sockaddr_in) + 15,
@@ -7446,8 +7537,6 @@ todo_wine
     bret = pAcceptEx(listener, acceptor, buffer, 0, 0, 0, &bytesReturned, NULL);
     ok(bret == FALSE && WSAGetLastError() == ERROR_INVALID_PARAMETER, "AcceptEx on a NULL overlapped "
         "returned %d + errno %d\n", bret, WSAGetLastError());
-
-    overlapped.hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
 
     overlapped.Internal = 0xdeadbeef;
     bret = pAcceptEx(listener, acceptor, buffer, 0,
@@ -7499,6 +7588,8 @@ todo_wine
         ok(overlapped.Internal == STATUS_PENDING, "got %08x\n", (ULONG)overlapped.Internal);
     }
 
+    connector = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ok(connector != -1, "failed to create socket, error %u\n", WSAGetLastError());
     overlapped.Internal = 0xdeadbeef;
     iret = connect(connector, (struct sockaddr*)&bindAddress, sizeof(bindAddress));
     ok(iret == 0, "connecting to accepting socket failed, error %d\n", WSAGetLastError());
