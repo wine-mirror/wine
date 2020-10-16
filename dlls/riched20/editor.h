@@ -198,7 +198,6 @@ void ME_SendRequestResize(ME_TextEditor *editor, BOOL force) DECLSPEC_HIDDEN;
 ME_DisplayItem *ME_GetParagraph(ME_DisplayItem *run) DECLSPEC_HIDDEN;
 void ME_GetSelectionParas(ME_TextEditor *editor, ME_DisplayItem **para, ME_DisplayItem **para_end) DECLSPEC_HIDDEN;
 void ME_MakeFirstParagraph(ME_TextEditor *editor) DECLSPEC_HIDDEN;
-ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *rp, ME_Style *style, const WCHAR *eol_str, int eol_len, int paraFlags) DECLSPEC_HIDDEN;
 ME_DisplayItem *ME_JoinParagraphs(ME_TextEditor *editor, ME_DisplayItem *tp,
                                   BOOL keepFirstParaFormat) DECLSPEC_HIDDEN;
 void ME_DumpParaStyle(ME_Paragraph *s) DECLSPEC_HIDDEN;
@@ -207,16 +206,19 @@ BOOL ME_SetSelectionParaFormat(ME_TextEditor *editor, const PARAFORMAT2 *pFmt) D
 void ME_GetSelectionParaFormat(ME_TextEditor *editor, PARAFORMAT2 *pFmt) DECLSPEC_HIDDEN;
 void ME_MarkAllForWrapping(ME_TextEditor *editor) DECLSPEC_HIDDEN;
 void ME_SetDefaultParaFormat(ME_TextEditor *editor, PARAFORMAT2 *pFmt) DECLSPEC_HIDDEN;
-void para_num_init( ME_Context *c, ME_Paragraph *para ) DECLSPEC_HIDDEN;
-void para_num_clear( struct para_num *pn ) DECLSPEC_HIDDEN;
 int get_total_width(ME_TextEditor *editor) DECLSPEC_HIDDEN;
-void para_mark_rewrap( ME_TextEditor *editor, ME_Paragraph *para ) DECLSPEC_HIDDEN;
+ME_Run *para_end_run( ME_Paragraph *para ) DECLSPEC_HIDDEN;
+ME_Run *para_first_run( ME_Paragraph *para ) DECLSPEC_HIDDEN;
 void para_mark_add( ME_TextEditor *editor, ME_Paragraph *para ) DECLSPEC_HIDDEN;
 void para_mark_remove( ME_TextEditor *editor, ME_Paragraph *para ) DECLSPEC_HIDDEN;
+void para_mark_rewrap( ME_TextEditor *editor, ME_Paragraph *para ) DECLSPEC_HIDDEN;
 ME_Paragraph *para_next( ME_Paragraph *para ) DECLSPEC_HIDDEN;
+void para_num_clear( struct para_num *pn ) DECLSPEC_HIDDEN;
+void para_num_init( ME_Context *c, ME_Paragraph *para ) DECLSPEC_HIDDEN;
 ME_Paragraph *para_prev( ME_Paragraph *para ) DECLSPEC_HIDDEN;
-ME_Run *para_first_run( ME_Paragraph *para ) DECLSPEC_HIDDEN;
-ME_Run *para_end_run( ME_Paragraph *para ) DECLSPEC_HIDDEN;
+ME_Paragraph *para_split( ME_TextEditor *editor, ME_Run *run, ME_Style *style,
+                          const WCHAR *eol_str, int eol_len, int paraFlags ) DECLSPEC_HIDDEN;
+
 static inline ME_DisplayItem *para_get_di(ME_Paragraph *para)
 {
     return (ME_DisplayItem *)((ptrdiff_t)para - offsetof(ME_DisplayItem, member));

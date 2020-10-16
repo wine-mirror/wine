@@ -379,29 +379,29 @@ static void ME_PlayUndoItem(ME_TextEditor *editor, struct undo_item *undo)
   case undo_split_para:
   {
     ME_Cursor tmp;
-    ME_DisplayItem *this_para, *new_para;
+    ME_Paragraph *this_para, *new_para;
     BOOL bFixRowStart;
     int paraFlags = undo->u.split_para.flags & (MEPF_ROWSTART|MEPF_CELL|MEPF_ROWEND);
 
     cursor_from_char_ofs( editor, undo->u.split_para.pos, &tmp );
     if (tmp.nOffset) run_split( editor, &tmp );
-    this_para = tmp.pPara;
-    bFixRowStart = this_para->member.para.nFlags & MEPF_ROWSTART;
+    this_para = &tmp.pPara->member.para;
+    bFixRowStart = this_para->nFlags & MEPF_ROWSTART;
     if (bFixRowStart)
     {
       /* Re-insert the paragraph before the table, making sure the nFlag value
        * is correct. */
-      this_para->member.para.nFlags &= ~MEPF_ROWSTART;
+      this_para->nFlags &= ~MEPF_ROWSTART;
     }
-    new_para = ME_SplitParagraph(editor, tmp.pRun, tmp.pRun->member.run.style,
-                                 undo->u.split_para.eol_str->szData, undo->u.split_para.eol_str->nLen, paraFlags);
+    new_para = para_split( editor, &tmp.pRun->member.run, tmp.pRun->member.run.style,
+                           undo->u.split_para.eol_str->szData, undo->u.split_para.eol_str->nLen, paraFlags );
     if (bFixRowStart)
-      new_para->member.para.nFlags |= MEPF_ROWSTART;
-    new_para->member.para.fmt = undo->u.split_para.fmt;
-    new_para->member.para.border = undo->u.split_para.border;
+      new_para->nFlags |= MEPF_ROWSTART;
+    new_para->fmt = undo->u.split_para.fmt;
+    new_para->border = undo->u.split_para.border;
     if (paraFlags)
     {
-      ME_DisplayItem *pCell = new_para->member.para.pCell;
+      ME_DisplayItem *pCell = new_para->pCell;
       pCell->member.cell.nRightBoundary = undo->u.split_para.cell_right_boundary;
       pCell->member.cell.border = undo->u.split_para.cell_border;
     }

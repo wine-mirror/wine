@@ -64,16 +64,16 @@ static ME_DisplayItem* ME_InsertEndParaFromCursor(ME_TextEditor *editor,
                                                   int paraFlags)
 {
   ME_Style *pStyle = ME_GetInsertStyle(editor, nCursor);
-  ME_DisplayItem *tp;
+  ME_Paragraph *para;
   ME_Cursor* cursor = &editor->pCursors[nCursor];
 
   if (cursor->nOffset) run_split( editor, cursor );
 
-  tp = ME_SplitParagraph(editor, cursor->pRun, pStyle, eol_str, eol_len, paraFlags);
+  para = para_split( editor, &cursor->pRun->member.run, pStyle, eol_str, eol_len, paraFlags );
   ME_ReleaseStyle(pStyle);
-  cursor->pPara = tp;
-  cursor->pRun = ME_FindItemFwd(tp, diRun);
-  return tp;
+  cursor->pPara = para_get_di( para );
+  cursor->pRun = run_get_di( para_first_run( para ) );
+  return para_get_di( para );
 }
 
 ME_DisplayItem* ME_InsertTableRowStartFromCursor(ME_TextEditor *editor)

@@ -619,7 +619,7 @@ void ME_InsertTextFromCursor(ME_TextEditor *editor, int nCursor,
           run = &cursor->pRun->member.run;
         }
 
-        new_para = &ME_SplitParagraph( editor, run_get_di( run ), style, eol_str, eol_len, 0 )->member.para;
+        new_para = para_split( editor, run, style, eol_str, eol_len, 0 );
         end_run = para_end_run( para_prev( new_para ) );
 
         /* Move any cursors that were at the end of the previous run to the beginning of the new para */
